@@ -4,8 +4,8 @@ module.exports = function (environment) {
   const ENV = {
     modulePrefix: 'picasa-ember',
     environment,
-    rootURL: '/',
-    locationType: 'history',
+    rootURL: process.env.EMBER_CLI_ELECTRON ? '' : '/',
+    locationType: process.env.EMBER_CLI_ELECTRON ? 'hash' : 'history',
     EmberENV: {
       EXTEND_PROTOTYPES: false,
       FEATURES: {
