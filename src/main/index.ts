@@ -1,7 +1,13 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import log4js from 'log4js'
+import { initThumbnailService } from './thumbnail'
 import icon from '../../resources/icon.png?asset'
+
+const PROD_MODE = process.env.NODE_ENV === 'production'
+const logger = log4js.getLogger('main')
+logger.level = PROD_MODE ? 'info' : 'debug'
 
 function createWindow(): void {
   // Create the browser window.
@@ -33,6 +39,9 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  // Setup Thumbnail Service
+  initThumbnailService(ipcMain, mainWindow, logger)
 }
 
 // This method will be called when Electron has finished
@@ -54,7 +63,9 @@ app.whenReady().then(() => {
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
   })
 })
 
