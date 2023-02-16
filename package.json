@@ -26,8 +26,7 @@
     "log4js": "^6.7.1",
     "querystring": "^0.2.1",
     "sharp": "^0.31.3",
-    "vue-split-view": "^1.0.0",
-    "vue3-treeview": "^0.4.1"
+    "vue-split-view": "^1.0.0"
   },
   "devDependencies": {
     "@electron-toolkit/tsconfig": "^1.0.1",

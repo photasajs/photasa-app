@@ -30,8 +30,17 @@ const treeData: TreeProps['treeData'] = [
 const expandedKeys = ref<string[]>(['0-0-0', '0-0-1'])
 const selectedKeys = ref<string[]>(['0-0-0', '0-0-1'])
 const checkedKeys = ref<string[]>(['0-0-0', '0-0-1'])
-const selectedKeys1 = ref<string[]>(['2'])
-//const selectedKeys2 = ref<string[]>(['1'])
+
+const tree = ref({
+  dir: 'horizontal', // Left | Right
+  // Other split
+  first: {
+    dir: 'vertical',
+    first: 0, // these numbers represents the views slot ID
+    second: 2
+  },
+  second: 1
+})
 
 watch(expandedKeys, () => {
   console.log('expandedKeys', expandedKeys)
@@ -47,20 +56,28 @@ watch(checkedKeys, () => {
 <template>
   <a-layout>
     <a-layout-header class="header">
-      <div class="logo" />
-      <a-menu
-        v-model:selectedKeys="selectedKeys1"
-        theme="dark"
-        mode="horizontal"
-        :style="{ lineHeight: '64px' }"
-      >
-        <a-menu-item key="1">nav 1</a-menu-item>
-        <a-menu-item key="2">nav 2</a-menu-item>
-        <a-menu-item key="3">nav 3</a-menu-item>
-      </a-menu>
+      <a-dropdown>
+        <a class="ant-dropdown-link" @click.prevent>
+          Hover me
+          <DownOutlined />
+        </a>
+        <template #overlay>
+          <a-menu>
+            <a-menu-item>
+              <a href="javascript:;">1st menu item</a>
+            </a-menu-item>
+            <a-menu-item>
+              <a href="javascript:;">2nd menu item</a>
+            </a-menu-item>
+            <a-menu-item>
+              <a href="javascript:;">3rd menu item</a>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
     </a-layout-header>
     <a-layout>
-      <split-view>
+      <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
         <template #A>
           <a-tree
             v-model:expandedKeys="expandedKeys"
