@@ -24,6 +24,7 @@
     "@electron-toolkit/utils": "^1.0.2",
     "electron-updater": "^5.3.0",
     "log4js": "^6.7.1",
+    "pinia": "^2.0.30",
     "querystring": "^0.2.1",
     "sharp": "^0.31.3",
     "vue-split-view": "^1.0.0"

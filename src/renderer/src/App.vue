@@ -1,56 +1,7 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import type { TreeProps } from 'ant-design-vue'
-import { ref, watch } from 'vue'
 import SplitView from 'vue-split-view'
-
-const treeData: TreeProps['treeData'] = [
-  {
-    title: 'parent 1',
-    key: '0-0',
-    children: [
-      {
-        title: 'parent 1-0',
-        key: '0-0-0',
-        disabled: true,
-        children: [
-          { title: 'leaf', key: '0-0-0-0', disableCheckbox: true },
-          { title: 'leaf', key: '0-0-0-1' }
-        ]
-      },
-      {
-        title: 'parent 1-1',
-        key: '0-0-1',
-        children: [{ key: '0-0-1-0', title: 'sss' }]
-      }
-    ]
-  }
-]
-
-const expandedKeys = ref<string[]>(['0-0-0', '0-0-1'])
-const selectedKeys = ref<string[]>(['0-0-0', '0-0-1'])
-const checkedKeys = ref<string[]>(['0-0-0', '0-0-1'])
-
-const tree = ref({
-  dir: 'horizontal', // Left | Right
-  // Other split
-  first: {
-    dir: 'vertical',
-    first: 0, // these numbers represents the views slot ID
-    second: 2
-  },
-  second: 1
-})
-
-watch(expandedKeys, () => {
-  console.log('expandedKeys', expandedKeys)
-})
-watch(selectedKeys, () => {
-  console.log('selectedKeys', selectedKeys)
-})
-watch(checkedKeys, () => {
-  console.log('checkedKeys', checkedKeys)
-})
+import FolderList from './components/FolderList.vue'
 </script>
 
 <template>
@@ -79,18 +30,7 @@ watch(checkedKeys, () => {
     <a-layout>
       <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
         <template #A>
-          <a-tree
-            v-model:expandedKeys="expandedKeys"
-            v-model:selectedKeys="selectedKeys"
-            v-model:checkedKeys="checkedKeys"
-            checkable
-            :tree-data="treeData"
-          >
-            <template #title="{ title, key }">
-              <span v-if="key === '0-0-1-0'" style="color: #1890ff">{{ title }}</span>
-              <template v-else>{{ title }}</template>
-            </template>
-          </a-tree>
+          <FolderList></FolderList>
         </template>
 
         <template #B>
