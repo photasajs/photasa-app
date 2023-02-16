@@ -26,6 +26,7 @@
     "log4js": "^6.7.1",
     "querystring": "^0.2.1",
     "sharp": "^0.31.3",
+    "vue-split-view": "^1.0.0",
     "vue3-treeview": "^0.4.1"
   },
   "devDependencies": {
@@ -36,6 +37,7 @@
     "@vitejs/plugin-vue": "^4.0.0",
     "@vue/eslint-config-prettier": "^7.0.0",
     "@vue/eslint-config-typescript": "^11.0.2",
+    "ant-design-vue": "^3.2.15",
     "electron": "^23.0.0",
     "electron-builder": "^23.6.0",
     "electron-vite": "^1.0.19",

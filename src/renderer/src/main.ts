@@ -1,15 +1,8 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 
-// Vuetify
-import 'vuetify/styles'
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
+import Antd from 'ant-design-vue'
+import 'ant-design-vue/dist/antd.css'
+import './assets/css/styles.less'
 
-const vuetify = createVuetify({
-  components,
-  directives
-})
-
-createApp(App).use(vuetify).mount('#app')
+createApp(App).use(Antd).mount('#app')
