@@ -1,9 +1,11 @@
 // stores/photos.js
 import { defineStore } from "pinia";
 
+const DEFAULT_DESKTOP_PATH = "/Users/albert.li/Desktop/";
+
 export const photosStore = defineStore("photos", {
     state: () => {
-        return { paths: ["/Users/albert.li/Desktop/"], files: new Set() };
+        return { paths: [DEFAULT_DESKTOP_PATH], files: new Set() };
     },
     persist: true,
     actions: {

@@ -1,38 +1,37 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
+import { ref } from "vue";
+import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
 import FolderList from "./components/FolderList.vue";
 import { photosStore } from "@renderer/stores/photos";
+import { startWatching } from "@renderer/utils/api";
+import type { WatchState } from "src/preload/index.d";
 
 const store = photosStore();
-const { ipcRenderer } = window.electron;
-// Start file watching
-ipcRenderer?.send("picasa:start-file-watch", {
-    paths: JSON.parse(JSON.stringify(store.paths)),
-});
+const visible = ref(false);
 
-// Response to event then save to pinia store
-ipcRenderer?.on("picasa:file-add", (_, { isFile, path }) => {
-    console.log("picasa:file-add", isFile, path);
-    if (path.indexOf(".jpeg") > 0) {
-        store.addFile(path);
-    }
-});
-ipcRenderer?.on("picasa:file-change", (_, { isFile, path }) => {
-    console.log("picasa:file-change", isFile, path);
-});
-ipcRenderer?.on("picasa:file-unlink", (_, { isFile, path }) => {
-    console.log("picasa:file-unlink", isFile, path);
-});
-ipcRenderer?.on("picasa:file-error", (_, { error }) => {
-    console.log("picasa:file-error", error);
-});
-ipcRenderer?.on("picasa:file-ready", () => {
-    console.log("picasa:file-ready");
-});
-ipcRenderer?.on("picasa:file-raw", (_, { isFile, path }) => {
-    console.log("picasa:file-raw", isFile, path);
-});
+startWatching(
+    {
+        paths: JSON.parse(JSON.stringify(store.paths)),
+    },
+    (state: WatchState) => {
+        console.log("state", state);
+        if (state.action === "add") {
+            if (state.path && state.path.indexOf(".jpeg") > 0) {
+                store.addFile(state.path);
+            }
+        }
+    },
+);
+
+function handleOk(): void {
+    visible.value = false;
+}
+
+function handleImport(): void {
+    visible.value = true;
+}
 </script>
 
 <template>
@@ -46,7 +45,7 @@ ipcRenderer?.on("picasa:file-raw", (_, { isFile, path }) => {
                 <template #overlay>
                     <a-menu>
                         <a-menu-item>
-                            <a href="javascript:;">1st menu item</a>
+                            <a href="javascript:;" @click="handleImport">Import Photos</a>
                         </a-menu-item>
                         <a-menu-item>
                             <a href="javascript:;">2nd menu item</a>
@@ -87,6 +86,9 @@ ipcRenderer?.on("picasa:file-raw", (_, { isFile, path }) => {
         </a-layout>
         <a-layout-footer>Footer</a-layout-footer>
     </a-layout>
+    <a-modal v-model:visible="visible" title="Basic Modal" @ok="handleOk">
+        <ImportPhotos></ImportPhotos>
+    </a-modal>
 </template>
 
 <style lang="less">

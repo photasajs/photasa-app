@@ -1,8 +1,12 @@
 import { contextBridge } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
-
+import { startWatching } from "./fs-watch";
+import { importPhotos } from "./photo-import";
 // Custom APIs for renderer
-const api = {};
+const api = {
+    startWatching,
+    importPhotos,
+};
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

@@ -1,6 +1,6 @@
 # picasa-vue
 
-An Electron application with Vue and TypesSript
+Another Picasa App powered by [Electron Vite](https://evite.netlify.app/)
 
 ## Recommended IDE Setup
 
