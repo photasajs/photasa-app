@@ -30,7 +30,7 @@ export function ensureDir(action: FileAction): Observable<FileAction> {
     return from(promise);
 }
 
-export function scanFolder(source, target): Observable<FileAction> {
+export function scanFolder(source: string, target: string): Observable<FileAction> {
     return new Observable<FileAction>((subscriber: Subscriber<FileAction>) => {
         klaw(source)
             .on("data", (item) => {
@@ -40,8 +40,8 @@ export function scanFolder(source, target): Observable<FileAction> {
                         name: path.basename(item.path),
                         created: item.stats.birthtime,
                         target,
-                        notImage: false,
-                        targetDir: path.dirname(item.path),
+                        isImage: false,
+                        targetDir: "",
                     });
                 }
             })
@@ -51,7 +51,7 @@ export function scanFolder(source, target): Observable<FileAction> {
     }).pipe(
         mergeMap((action: FileAction) => {
             return isImage(action.file).then((isImage) => {
-                action.notImage = isImage;
+                action.isImage = isImage;
                 return action;
             });
         }),
@@ -70,7 +70,7 @@ export function scanCurrentFolder(source, depth): Observable<FileAction> {
                             name: path.basename(item.path),
                             created: item.stats.birthtime,
                             targetDir: path.dirname(item.path),
-                            notImage: isImage,
+                            isImage,
                         });
                     });
                 }

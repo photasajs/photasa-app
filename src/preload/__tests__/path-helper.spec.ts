@@ -18,7 +18,7 @@ describe("path-helper", () => {
             const action: FileAction = {
                 target: "/test/test/test",
                 file: "/text.txt",
-                notImage: false,
+                isImage: false,
                 targetName: "test.md",
                 name: "",
                 targetDir: "",

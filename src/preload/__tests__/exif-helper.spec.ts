@@ -20,7 +20,7 @@ describe("exif-helper", () => {
             resolveExifDate({
                 file: IMAGE_PATH,
                 name: "",
-                notImage: false,
+                isImage: false,
                 targetDir: "",
             }),
         );

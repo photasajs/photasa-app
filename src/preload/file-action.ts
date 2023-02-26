@@ -3,7 +3,7 @@ export interface FileAction {
     name: string;
     created?: Date;
     targetName?: string;
-    notImage: boolean;
+    isImage: boolean;
     target?: string;
     targetDir: string;
 }

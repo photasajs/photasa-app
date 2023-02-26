@@ -48,7 +48,7 @@ export function resolveExifDate(action: FileAction): Observable<FileAction> {
     });
     return from(promise).pipe(
         catchError(() => {
-            action.notImage = true;
+            action.isImage = false;
             return of(action);
         }),
     );
