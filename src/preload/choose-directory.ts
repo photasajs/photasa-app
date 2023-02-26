@@ -1,10 +1,7 @@
 import { electronAPI } from "@electron-toolkit/preload";
+import type { DirectorySelection } from "./index.d";
 
 const { ipcRenderer } = electronAPI;
-
-export interface DirectorySelection {
-    filePaths: string[];
-}
 
 export function chooseDirectory(): Promise<DirectorySelection> {
     // Start file watching

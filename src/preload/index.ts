@@ -3,6 +3,7 @@ import { electronAPI } from "@electron-toolkit/preload";
 import { startWatching } from "./fs-watch";
 import { importPhotos } from "./photo-import";
 import { chooseDirectory } from "./choose-directory";
+
 // Custom APIs for renderer
 const api = {
     startWatching,

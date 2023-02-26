@@ -7,13 +7,14 @@ import FolderList from "./components/FolderList.vue";
 import { photosStore } from "@renderer/stores/photos";
 import { startWatching } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
+import { deepCopy } from "./utils/object";
 
 const store = photosStore();
 const visible = ref(false);
 
 startWatching(
     {
-        paths: JSON.parse(JSON.stringify(store.paths)),
+        paths: deepCopy(store.paths),
     },
     (state: WatchState) => {
         console.log("state", state);

@@ -1,17 +1,15 @@
-import { from, Observable } from "rxjs";
+import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
 import { ensureDir, scanFolder } from "./path-helper";
-import type { FileAction } from "./file-action";
-
-export type ImportCallback = (action: FileAction | string | undefined) => void;
+import type { ImportCallback } from "./index.d";
 
 /**
  * Import photos from folders
  *
  * @param folders  folders to import
  * @param target target folder to save
- * @returns Observable<FileAction>
+ * @param callback callback function to info the state
  */
 export function importPhotos(folders: string[], target: string, callback: ImportCallback): void {
     from(folders)
@@ -23,11 +21,20 @@ export function importPhotos(folders: string[], target: string, callback: Import
         )
         .subscribe({
             next: (action) => {
-                callback(action);
+                callback({
+                    type: "next",
+                    action,
+                });
             },
-            error: (error) => callback(error.message),
+            error: (error) =>
+                callback({
+                    type: "error",
+                    error,
+                }),
             complete: () => {
-                callback(undefined);
+                callback({
+                    type: "complete",
+                });
             },
         });
 }

@@ -3,6 +3,7 @@
 import type { UnwrapRef } from "vue";
 import { reactive, ref } from "vue";
 import { photosStore } from "@renderer/stores/photos";
+import { chooseDirectory, importPhotos } from "@renderer/utils/api";
 
 interface FormState {
     name: string;
@@ -28,28 +29,46 @@ const formState: UnwrapRef<FormState> = reactive({
     targetDir: store.paths[0],
 });
 
+type ImportArgs = {
+    type: "next" | "error" | "complete";
+    action?: {
+        targetFileName: string;
+    };
+    error?: {
+        message: string;
+    };
+};
+
+const handler: Record<string, (args: ImportArgs | undefined) => void> = {
+    next: (args): void => {
+        if (args?.action?.targetFileName) {
+            processed.push(args.action.targetFileName);
+        }
+    },
+    error: (args): void => {
+        if (args?.error?.message) {
+            processed.push(args.error.message);
+        }
+        visible.value = false;
+    },
+    complete: (): void => {
+        visible.value = false;
+    },
+};
+
 function onImport(): void {
     visible.value = true;
 
     const dir = `${formState.name}`;
     const paths = [...store.paths];
-    window.api.importPhotos([dir], paths[0], (action) => {
-        if (!action) {
-            visible.value = false;
-            return;
-        }
-        if (typeof action === "string") {
-            processed.push(action as string);
-            visible.value = false;
-        } else {
-            processed.push(action.targetFileName);
-        }
+    importPhotos([dir], paths[0], (args) => {
+        handler[args.type]?.call(null, args);
     });
 }
 
 function onChoose(): void {
     processed.splice(0, processed.length);
-    window.api.chooseDirectory().then(({ filePaths }) => {
+    chooseDirectory().then(({ filePaths }) => {
         if (filePaths.length > 0) {
             formState.name = filePaths[0];
         }
