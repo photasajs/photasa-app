@@ -4,7 +4,7 @@ import { firstValueFrom } from "rxjs";
 import { copyFile } from "../file-helper";
 
 const IMAGE_PATH = path.join(__dirname, "./photos/test.jpg");
-const TEST_PATH = path.join(__dirname, "./tests/");
+const TEST_PATH = path.join(__dirname, "./copy/");
 
 describe("copyFile", () => {
     beforeEach(() => {

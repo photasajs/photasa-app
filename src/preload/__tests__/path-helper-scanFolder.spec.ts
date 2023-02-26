@@ -2,7 +2,7 @@ import { scanFolder } from "../path-helper";
 import path from "path";
 
 const IMAGE_PATH = path.join(__dirname, "./photos/");
-const TEST_PATH = path.join(__dirname, "./test/");
+const TEST_PATH = path.join(__dirname, "./scan/");
 
 describe("path-helper", () => {
     describe("scanFolder", () => {
@@ -11,14 +11,10 @@ describe("path-helper", () => {
             let count = 0;
             scanFolder(IMAGE_PATH, TEST_PATH).subscribe({
                 next(action) {
-                    expect(action.file).toBe(
-                        "/Users/albert.li/ws/prj/picasa/picasa-vue/src/preload/__tests__/photos/test.jpg",
-                    );
+                    expect(action.file).toBe(path.join(__dirname, "/photos/test.jpg"));
                     expect(action.name).toBe("test.jpg");
-                    expect(action.targetDir).toBe(
-                        "/Users/albert.li/ws/prj/picasa/picasa-vue/src/preload/__tests__",
-                    );
-                    expect(action.notImage).toBe(true);
+                    expect(action.targetName).toBe("2018/20180920");
+                    expect(action.isImage).toBeTruthy();
 
                     count++;
                 },
