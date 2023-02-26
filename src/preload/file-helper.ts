@@ -28,7 +28,7 @@ export function fileExistSync(filepath, options?): boolean {
 export function copyFile(action): Observable<FileAction> {
     // copy file to target as 年/月/日
     action.targetFileName = path.basename(action.file);
-    action.targetFullPath = `${action.targetDir}/${action.targetFileName}`;
+    action.targetFullPath = path.join(action.targetDir, action.targetFileName);
     let count = 1;
     let exist = fileExistSync(action.targetFullPath);
     while (exist) {

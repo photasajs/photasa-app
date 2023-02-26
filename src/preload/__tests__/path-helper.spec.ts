@@ -7,6 +7,10 @@ jest.mock("fs");
 jest.mock("fs/promises");
 
 describe("path-helper", () => {
+    beforeEach(() => {
+        vol.reset();
+    });
+
     describe("toFullPath", () => {
         it("should return full path", () => {
             expect(toFullPath("test", { root: "root" })).toBe("root/test");

@@ -1,0 +1,46 @@
+import fs from "fs-extra";
+import path from "path";
+import { firstValueFrom } from "rxjs";
+import { copyFile } from "../file-helper";
+
+const IMAGE_PATH = path.join(__dirname, "./photos/test.jpg");
+const TEST_PATH = path.join(__dirname, "./tests/");
+
+describe("copyFile", () => {
+    beforeEach(() => {
+        if (fs.existsSync(TEST_PATH)) {
+            fs.removeSync(TEST_PATH);
+        }
+    });
+
+    afterEach(() => {
+        if (fs.existsSync(TEST_PATH)) {
+            fs.removeSync(TEST_PATH);
+        }
+    });
+
+    it("should copy file", async () => {
+        await fs.ensureDir(TEST_PATH);
+
+        await firstValueFrom(
+            copyFile({
+                file: IMAGE_PATH,
+                name: path.basename(IMAGE_PATH),
+                targetDir: TEST_PATH,
+                create: new Date("2018-09-20T19:25:22.000Z"),
+            }),
+        );
+
+        expect(fs.existsSync(path.join(TEST_PATH, "test.jpg"))).toBeTruthy();
+
+        await firstValueFrom(
+            copyFile({
+                file: IMAGE_PATH,
+                name: path.basename(IMAGE_PATH),
+                targetDir: TEST_PATH,
+                create: new Date("2018-09-20T19:25:22.000Z"),
+            }),
+        );
+        expect(fs.existsSync(path.join(TEST_PATH, "test_1.jpg"))).toBeTruthy();
+    });
+});

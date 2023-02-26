@@ -6,11 +6,10 @@ jest.mock("fs");
 jest.mock("fs/promises");
 
 describe("file-helper", () => {
+    beforeEach(() => {
+        vol.reset();
+    });
     describe("fileExistSync", () => {
-        beforeEach(() => {
-            vol.reset();
-        });
-
         it("should return false if file didn't exist", () => {
             const result = fileExistSync("test");
             expect(result).toBe(false);
@@ -27,6 +26,7 @@ describe("file-helper", () => {
         it("should return true if file exists when option is empty", async () => {
             const fileName = "/test.txt";
 
+            await fs.createFile(fileName);
             await fs.writeFile(fileName, "test");
 
             const result = fileExistSync(fileName);
