@@ -9,7 +9,7 @@ export type PhotoState = {
 };
 
 export const usePhotosStore = defineStore("photos", {
-    state: (): PhotoState => {
+    state: () => {
         const paths = [DEFAULT_DESKTOP_PATH];
         const files = new Map();
         paths.forEach((path) => {
@@ -32,7 +32,7 @@ export const usePhotosStore = defineStore("photos", {
         addFile(file) {
             const path = this.paths.find((path) => file.startsWith(path)) ?? "";
             // Files is set. will not add duplicate file
-            if (!this.files.has(path)) {
+            if (!this.files?.has?.call(this.files, path)) {
                 this.files.set(path, new Set());
             }
             this.files.get(path)?.add(file);

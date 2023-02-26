@@ -1,7 +1,7 @@
 import { createApp, Plugin } from "vue";
 import App from "./App.vue";
 import { createPinia } from "pinia";
-import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
+//import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import Antd from "ant-design-vue";
 import "ant-design-vue/dist/antd.css";
 import "./assets/css/styles.less";
@@ -15,7 +15,7 @@ Bugsnag.start({
 
 const bugsnagVue = Bugsnag.getPlugin("vue");
 const pinia = createPinia();
-pinia.use(piniaPluginPersistedstate);
+//pinia.use(piniaPluginPersistedstate);
 
 createApp(App)
     .use(<Plugin>bugsnagVue)
