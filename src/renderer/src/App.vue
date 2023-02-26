@@ -61,7 +61,7 @@ function handleImport(): void {
                 </template>
             </a-dropdown>
         </a-layout-header>
-        <a-layout>
+        <a-layout class="content">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <FolderList></FolderList>
@@ -96,6 +96,9 @@ function handleImport(): void {
 </template>
 
 <style lang="less">
+.content {
+    height: calc(100vh - 134px);
+}
 #components-layout-demo-basic .code-box-demo {
     text-align: center;
 }

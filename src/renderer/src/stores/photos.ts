@@ -3,13 +3,13 @@ import { defineStore } from "pinia";
 
 const DEFAULT_DESKTOP_PATH = "/Users/albert.li/Desktop/";
 
-export type PhotoState = {
+type PhotoState = {
     paths: string[];
     files: Map<string, Set<string>>;
 };
 
 export const usePhotosStore = defineStore("photos", {
-    state: () => {
+    state: (): PhotoState => {
         const paths = [DEFAULT_DESKTOP_PATH];
         const files = new Map();
         paths.forEach((path) => {
@@ -20,7 +20,6 @@ export const usePhotosStore = defineStore("photos", {
             files,
         };
     },
-    persist: true,
     actions: {
         addPtah(path) {
             if (this.paths.indexOf(path) < 0) {
@@ -32,7 +31,7 @@ export const usePhotosStore = defineStore("photos", {
         addFile(file) {
             const path = this.paths.find((path) => file.startsWith(path)) ?? "";
             // Files is set. will not add duplicate file
-            if (!this.files?.has?.call(this.files, path)) {
+            if (!this.files.has(path)) {
                 this.files.set(path, new Set());
             }
             this.files.get(path)?.add(file);
