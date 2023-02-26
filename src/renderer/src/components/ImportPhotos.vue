@@ -1,7 +1,8 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 import type { UnwrapRef } from "vue";
-import { reactive, toRaw } from "vue";
+import { reactive, ref } from "vue";
+import { photosStore } from "@renderer/stores/photos";
 
 interface FormState {
     name: string;
@@ -9,8 +10,13 @@ interface FormState {
     type: string[];
     resource: string;
     desc: string;
+    targetDir: string;
 }
 
+const store = photosStore();
+
+const visible = ref(false);
+const processed = reactive<string[]>([]);
 const labelCol = reactive({ style: { width: "150px" } });
 const wrapperCol = reactive({ span: 14 });
 const formState: UnwrapRef<FormState> = reactive({
@@ -19,17 +25,43 @@ const formState: UnwrapRef<FormState> = reactive({
     type: [],
     resource: "",
     desc: "",
+    targetDir: store.paths[0],
 });
 
-function onSubmit(): void {
-    console.log("submit!", toRaw(formState));
+function onImport(): void {
+    visible.value = true;
+
+    const dir = `${formState.name}`;
+    const paths = [...store.paths];
+    window.api.importPhotos([dir], paths[0], (action) => {
+        if (!action) {
+            visible.value = false;
+            return;
+        }
+        if (typeof action === "string") {
+            processed.push(action as string);
+            visible.value = false;
+        } else {
+            processed.push(action.targetFileName);
+        }
+    });
+}
+
+function onChoose(): void {
+    processed.splice(0, processed.length);
+    window.api.chooseDirectory().then(({ filePaths }) => {
+        if (filePaths.length > 0) {
+            formState.name = filePaths[0];
+        }
+    });
 }
 </script>
 
 <template>
     <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
-        <a-form-item label="Activity name">
+        <a-form-item label="Choose a folder to import">
             <a-input v-model:value="formState.name" />
+            <a-button type="primary" @click="onChoose">Choose Directory</a-button>
         </a-form-item>
         <a-form-item label="Instant delivery">
             <a-switch v-model:checked="formState.delivery" />
@@ -47,12 +79,32 @@ function onSubmit(): void {
                 <a-radio value="2">Venue</a-radio>
             </a-radio-group>
         </a-form-item>
-        <a-form-item label="Activity form">
-            <a-input v-model:value="formState.desc" type="textarea" />
+        <a-form-item label="Target Directory">
+            <a-input v-model:value="formState.targetDir" type="textarea" />
         </a-form-item>
         <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
-            <a-button type="primary" @click="onSubmit">Create</a-button>
+            <a-button type="primary" @click="onImport">Import</a-button>
             <a-button style="margin-left: 10px">Cancel</a-button>
         </a-form-item>
     </a-form>
+    <a-modal v-model:visible="visible" :mask-closable="false" :closable="false" title="Importing">
+        <template #footer> </template>
+        <a-list size="small" bordered :data-source="processed" class="import-message-list">
+            <template #renderItem="{ item }">
+                <a-list-item>{{ item }}</a-list-item>
+            </template>
+            <template #header>
+                <div>Header</div>
+            </template>
+            <template #footer>
+                <div>Footer</div>
+            </template>
+        </a-list>
+    </a-modal>
 </template>
+<style scoped lang="less">
+.import-message-list {
+    height: 300px;
+    overflow: auto;
+}
+</style>

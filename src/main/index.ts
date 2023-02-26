@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from "electron";
+import { app, shell, BrowserWindow, ipcMain, dialog, screen } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import log4js from "log4js";
@@ -12,10 +12,11 @@ const logger = log4js.getLogger("main");
 logger.level = PROD_MODE ? "info" : "debug";
 
 function createWindow(): void {
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     // Create the browser window.
     const mainWindow = new BrowserWindow({
-        width: 900,
-        height: 670,
+        width: (width * 4) / 5,
+        height: height - 200,
         show: false,
         autoHideMenuBar: true,
         ...(process.platform === "linux" ? { icon } : {}),
@@ -41,6 +42,19 @@ function createWindow(): void {
     } else {
         mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
     }
+
+    ipcMain.on("picasa:choose-directory", () => {
+        dialog
+            .showOpenDialog(mainWindow, {
+                properties: ["openDirectory"],
+            })
+            .then(({ filePaths }) => {
+                mainWindow?.webContents.send("picasa:selected-directory", { filePaths });
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    });
 
     // Setup Thumbnail Service
     initThumbnailService(ipcMain, logger);

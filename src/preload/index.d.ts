@@ -13,12 +13,14 @@ interface WatchState {
     path?: string;
     error?: Error;
 }
-
+// contextBridge can only return few type, Promise is support, but rxjs is not.
 declare global {
     interface Window {
         electron: ElectronAPI;
         api: {
             startWatching: (config: WatchConfig, callback: WatchCallback) => void;
+            importPhotos: (paths: string[], target: string, callback: ImportCallback) => void;
+            chooseDirectory: () => Promise<DirectorySelection>;
         };
     }
 }

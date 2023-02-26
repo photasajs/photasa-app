@@ -45,13 +45,13 @@ function handleImport(): void {
                 <template #overlay>
                     <a-menu>
                         <a-menu-item>
-                            <a href="javascript:;" @click="handleImport">Import Photos</a>
+                            <a @click="handleImport">Import Photos</a>
                         </a-menu-item>
                         <a-menu-item>
-                            <a href="javascript:;">2nd menu item</a>
+                            <a>2nd menu item</a>
                         </a-menu-item>
                         <a-menu-item>
-                            <a href="javascript:;">3rd menu item</a>
+                            <a>3rd menu item</a>
                         </a-menu-item>
                     </a-menu>
                 </template>
@@ -86,7 +86,7 @@ function handleImport(): void {
         </a-layout>
         <a-layout-footer>Footer</a-layout-footer>
     </a-layout>
-    <a-modal v-model:visible="visible" title="Basic Modal" @ok="handleOk">
+    <a-modal v-model:visible="visible" :mask-closable="false" title="Basic Modal" @ok="handleOk">
         <ImportPhotos></ImportPhotos>
     </a-modal>
 </template>
