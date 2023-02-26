@@ -1,37 +1,34 @@
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-//import type { TreeProps } from "ant-design-vue";
-import { photosStore } from "@renderer/stores/photos";
+import type { DataNode } from "ant-design-vue/es/tree";
+import { usePhotosStore } from "@renderer/stores/photos";
 
-const store = photosStore();
+const store = usePhotosStore();
 
-const expandedKeys = ref<string[]>(["0-0-0", "0-0-1"]);
-const selectedKeys = ref<string[]>(["0-0-0", "0-0-1"]);
-const checkedKeys = ref<string[]>(["0-0-0", "0-0-1"]);
+const expandedKeys = ref<string[]>(store.paths);
+const selectedKeys = ref<string[]>(store.paths);
+const checkedKeys = ref<string[]>([]);
 
 const treeData = computed(() => {
-    return store.paths.map((path) => [
-        {
-            title: path,
-            key: "0-0",
-            children: [
-                {
-                    title: "parent 1-0",
-                    key: "0-0-0",
-                    disabled: true,
-                    children: [
-                        { title: "leaf", key: "0-0-0-0", disableCheckbox: true },
-                        { title: "leaf", key: "0-0-0-1" },
-                    ],
-                },
-                {
-                    title: "parent 1-1",
-                    key: "0-0-1",
-                    children: [{ key: "0-0-1-0", title: "sss" }],
-                },
-            ],
-        },
-    ]);
+    return store.paths
+        .map((path) => {
+            const children: DataNode[] = [];
+            store.files.get(path)?.forEach((file) => {
+                children.push({
+                    title: file,
+                    key: file,
+                });
+            });
+            return {
+                title: path,
+                key: path,
+                children,
+            };
+        })
+        .reduce((acc: DataNode[], cur: DataNode): DataNode[] => {
+            acc.push(cur);
+            return acc;
+        }, []);
 });
 
 watch(expandedKeys, () => {

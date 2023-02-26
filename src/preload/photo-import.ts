@@ -3,7 +3,9 @@ import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
 import { ensureDir, scanFolder } from "./path-helper";
 import type { ImportCallback } from "./index.d";
+import log4js from "log4js";
 
+const logger = log4js.getLogger("photo-import");
 /**
  * Import photos from folders
  *
@@ -21,17 +23,21 @@ export function importPhotos(folders: string[], target: string, callback: Import
         )
         .subscribe({
             next: (action) => {
+                logger.debug("next", action);
                 callback({
                     type: "next",
                     action,
                 });
             },
-            error: (error) =>
+            error: (error) => {
+                logger.debug("error", error);
                 callback({
                     type: "error",
                     error,
-                }),
+                });
+            },
             complete: () => {
+                logger.debug("complete");
                 callback({
                     type: "complete",
                 });

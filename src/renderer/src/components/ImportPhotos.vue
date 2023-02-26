@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import type { UnwrapRef } from "vue";
 import { reactive, ref } from "vue";
-import { photosStore } from "@renderer/stores/photos";
+import { usePhotosStore } from "@renderer/stores/photos";
 import { chooseDirectory, importPhotos } from "@renderer/utils/api";
 
 interface FormState {
@@ -14,7 +14,7 @@ interface FormState {
     targetDir: string;
 }
 
-const store = photosStore();
+const store = usePhotosStore();
 
 const visible = ref(false);
 const processed = reactive<string[]>([]);

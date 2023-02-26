@@ -15,8 +15,8 @@ function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     // Create the browser window.
     const mainWindow = new BrowserWindow({
-        width: (width * 4) / 5,
-        height: height - 200,
+        width,
+        height,
         show: false,
         autoHideMenuBar: true,
         ...(process.platform === "linux" ? { icon } : {}),

@@ -1,25 +1,28 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 import { ref } from "vue";
+import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
 import FolderList from "./components/FolderList.vue";
-import { photosStore } from "@renderer/stores/photos";
+import { usePhotosStore } from "@renderer/stores/photos";
 import { startWatching } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
 
-const store = photosStore();
+const store = usePhotosStore();
+const { paths } = storeToRefs(store);
+
 const visible = ref(false);
 
 startWatching(
     {
-        paths: deepCopy(store.paths),
+        paths: deepCopy(paths.value),
     },
     (state: WatchState) => {
         console.log("state", state);
         if (state.action === "add") {
-            if (state.path && state.path.indexOf(".jpeg") > 0) {
+            if (state.path && state.path.indexOf(".jpg") > 0) {
                 store.addFile(state.path);
             }
         }
