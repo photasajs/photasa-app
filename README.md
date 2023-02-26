@@ -8,16 +8,36 @@ Another Picasa App powered by [Electron Vite](https://evite.netlify.app/)
 
 ## Project Setup
 
+### Bundle for Electron
+
+Electron doesn't support ESM yet, then if a package is ESM, it will not be able to be used in electron.
+
+There are 3 section in electron.vite.config.js, For preload script, use @rollup/plugin-babel to re-bundle esm into cjs (commonjs)
+
+```javascript
+module.export = { 
+    preload: {
+        plugins: [externalizeDepsPlugin(), babel({ babelHelpers: "bundled" })],
+    },
+}
+```
+
+And any package used for preload only, should be in devDependencies, as it will be bundled.
+
+For other commonjs package, electron-builder package will package it properly.
+
 ### Install
 
 ```bash
-$ npm install
+$ yarn install
 ```
+
+
 
 ### Development
 
 ```bash
-$ npm run dev
+$ yarn dev
 ```
 
 ### Build
