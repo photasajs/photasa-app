@@ -10,6 +10,7 @@ import { usePhotosStore } from "@renderer/stores/photos";
 import { startWatching } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
+import Preference from "./components/Preference.vue";
 
 const store = usePhotosStore();
 const { paths } = storeToRefs(store);
@@ -29,12 +30,22 @@ startWatching(
     },
 );
 
+const showPreference = ref(false);
+
 function handleOk(): void {
     visible.value = false;
 }
 
 function handleImport(): void {
     visible.value = true;
+}
+
+function handlePreferenceOk(): void {
+    showPreference.value = false;
+}
+
+function handleSetting(): void {
+    showPreference.value = true;
 }
 </script>
 
@@ -52,7 +63,7 @@ function handleImport(): void {
                             <a @click="handleImport">Import Photos</a>
                         </a-menu-item>
                         <a-menu-item>
-                            <a>2nd menu item</a>
+                            <a @click="handleSetting">Preference</a>
                         </a-menu-item>
                         <a-menu-item>
                             <a>3rd menu item</a>
@@ -87,6 +98,15 @@ function handleImport(): void {
     </a-layout>
     <a-modal v-model:visible="visible" :mask-closable="false" title="Basic Modal" @ok="handleOk">
         <ImportPhotos></ImportPhotos>
+    </a-modal>
+    <a-modal
+        v-model:visible="showPreference"
+        :mask-closable="false"
+        title="Basic Modal"
+        width="800px"
+        @ok="handlePreferenceOk"
+    >
+        <Preference></Preference>
     </a-modal>
 </template>
 
