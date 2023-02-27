@@ -4,6 +4,7 @@ import { ref } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
+import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { startWatching } from "@renderer/utils/api";
@@ -20,7 +21,6 @@ startWatching(
         paths: deepCopy(paths.value),
     },
     (state: WatchState) => {
-        console.log("state", state);
         if (state.action === "add") {
             if (state.path && state.path.indexOf(".jpg") > 0) {
                 store.addFile(state.path);
@@ -82,7 +82,7 @@ function handleImport(): void {
                                 minHeight: '280px',
                             }"
                         >
-                            Content
+                            <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
                 </template>
