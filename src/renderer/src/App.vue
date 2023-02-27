@@ -7,7 +7,7 @@ import SplitView from "./components/SplitView.vue";
 import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
-import { startWatching } from "@renderer/utils/api";
+import { startWatching, setupMenu } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
@@ -29,53 +29,42 @@ startWatching(
         }
     },
 );
-
+setupMenu({
+    onImportPhotos: () => {
+        visible.value = true;
+    },
+    onPreference: () => {
+        showPreference.value = true;
+    },
+});
 const showPreference = ref(false);
 
 function handleOk(): void {
     visible.value = false;
 }
 
-function handleImport(): void {
-    visible.value = true;
-}
-
 function handlePreferenceOk(): void {
     showPreference.value = false;
-}
-
-function handleSetting(): void {
-    showPreference.value = true;
 }
 </script>
 
 <template>
     <a-layout>
-        <a-layout-header class="header">
-            <a-dropdown>
-                <a class="ant-dropdown-link" @click.prevent>
-                    Hover me
-                    <DownOutlined />
-                </a>
-                <template #overlay>
-                    <a-menu>
-                        <a-menu-item>
-                            <a @click="handleImport">Import Photos</a>
-                        </a-menu-item>
-                        <a-menu-item>
-                            <a @click="handleSetting">Preference</a>
-                        </a-menu-item>
-                        <a-menu-item>
-                            <a>3rd menu item</a>
-                        </a-menu-item>
-                    </a-menu>
-                </template>
-            </a-dropdown>
-        </a-layout-header>
         <a-layout class="content">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
-                    <FolderList></FolderList>
+                    <a-layout class="image-content">
+                        <a-layout-content
+                            :style="{
+                                background: '#fff',
+                                margin: 0,
+                                padding: '24px 0 0 0',
+                                minHeight: '280px',
+                            }"
+                        >
+                            <FolderList></FolderList>
+                        </a-layout-content>
+                    </a-layout>
                 </template>
 
                 <template #B>
@@ -83,7 +72,6 @@ function handleSetting(): void {
                         <a-layout-content
                             :style="{
                                 background: '#fff',
-                                padding: '24px',
                                 margin: 0,
                                 minHeight: '280px',
                             }"
@@ -112,7 +100,7 @@ function handleSetting(): void {
 
 <style lang="less">
 .content {
-    height: calc(100vh - 134px);
+    height: calc(100vh - 70px);
 }
 #components-layout-demo-basic .code-box-demo {
     text-align: center;

@@ -16,3 +16,13 @@ export function importPhotos(paths: string[], target: string, callback: ImportCa
 export function chooseDirectory(): Promise<DirectorySelection> {
     return window.api.chooseDirectory();
 }
+
+export interface MenuCallback {
+    onPreference: () => void;
+    onImportPhotos: () => void;
+}
+
+export function setupMenu(callback: MenuCallback): void {
+    window.electron.ipcRenderer.on("picasa:open-preference", callback.onPreference);
+    window.electron.ipcRenderer.on("picasa:import-photos", callback.onImportPhotos);
+}

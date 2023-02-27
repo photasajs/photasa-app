@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import log4js from "log4js";
 import { initThumbnailService } from "./thumbnail";
 import { initFileWatcher } from "./fs-watch";
+import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 
@@ -26,6 +27,8 @@ function createWindow(): void {
             webSecurity: false, // enable to load local source
         },
     });
+
+    createMenu(mainWindow);
 
     mainWindow.on("ready-to-show", () => {
         mainWindow.show();
