@@ -44,20 +44,30 @@ const cards = computed(() => {
     <a-card v-for="card in cards" :key="card.title" :title="card.title">
         <div class="image-list">
             <ul>
-                <li v-for="image in card.images" :key="image.key">
-                    <a-image :width="200" :height="200" :src="image.src" :fallback="fallback" />
+                <li
+                    v-for="image in card.images"
+                    :key="image.key"
+                    :width="150"
+                    :height="150"
+                    class="image-item"
+                >
+                    <a-image :width="150" :height="150" :src="image.src" :fallback="fallback" />
                 </li>
             </ul>
         </div>
     </a-card>
 </template>
-<style lang="less" scoped>
+<style lang="less">
 .image-list {
     height: 100%;
     overflow: auto;
+
     ul {
         list-style-type: none;
         li {
+            .ant-image {
+                overflow: hidden;
+            }
             margin-top: 0px;
             margin-left: 0px;
             margin-right: 10px;
