@@ -65,7 +65,7 @@ const formItemLayout = computed(() => {
                         <a-button type="primary" @click="onChoose">Choose Directory</a-button>
                     </a-space>
                 </a-form-item>
-                <a-form-item label="Thumbnail Image Size">
+                <a-form-item :label="`Thumbnail Image Size: ${thumbnailSize}px`">
                     <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
                 </a-form-item>
             </a-form>
