@@ -5,6 +5,7 @@ import { storeToRefs } from "pinia";
 
 type Card = {
     title: string;
+    parts: string[];
     images: Image[];
 };
 
@@ -33,6 +34,7 @@ const cards = computed(() => {
         cards.push({
             title: key,
             images,
+            parts: key.split("/"),
         });
     });
 
@@ -42,6 +44,9 @@ const cards = computed(() => {
 
 <template>
     <a-card v-for="card in cards" :key="card.title" :title="card.title">
+        <a-breadcrumb style="margin: 16px 0">
+            <a-breadcrumb-item v-for="part in card.parts" :key="part">{{ part }}</a-breadcrumb-item>
+        </a-breadcrumb>
         <div class="image-list">
             <ul>
                 <li
