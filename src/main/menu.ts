@@ -23,7 +23,6 @@ export function createMenu(mainWindow: BrowserWindow): void {
         {
             label: "File",
             submenu: [
-                isMac ? { role: "close" } : { role: "quit" },
                 {
                     label: "Preference",
                     click(): void {
@@ -36,6 +35,8 @@ export function createMenu(mainWindow: BrowserWindow): void {
                         mainWindow.webContents?.send("picasa:import-photos");
                     },
                 },
+
+                isMac ? { role: "close" } : { role: "quit" },
             ],
         },
         {

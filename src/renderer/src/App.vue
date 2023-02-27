@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -11,7 +11,9 @@ import { startWatching, setupMenu } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const store = usePhotosStore();
 const { paths } = storeToRefs(store);
 
@@ -36,6 +38,12 @@ setupMenu({
     onPreference: () => {
         showPreference.value = true;
     },
+});
+
+const msg = computed(() => {
+    return {
+        settings: t("preference.settings"),
+    };
 });
 const showPreference = ref(false);
 
@@ -90,7 +98,7 @@ function handlePreferenceOk(): void {
     <a-modal
         v-model:visible="showPreference"
         :mask-closable="false"
-        title="Basic Modal"
+        :title="msg.settings"
         width="800px"
         @ok="handlePreferenceOk"
     >

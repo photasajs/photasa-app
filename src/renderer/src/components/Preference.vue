@@ -5,11 +5,13 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectory } from "@renderer/utils/api";
 import { storeToRefs } from "pinia";
 import type { TabsProps } from "ant-design-vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 interface FormState {
     name: string;
 }
-
 const store = usePreferenceStore();
 const { paths, thumbnailSize } = storeToRefs(store);
 
@@ -25,6 +27,16 @@ const mode = ref<TabsProps["tabPosition"]>("left");
 const formState: UnwrapRef<FormState> = reactive({
     name: "",
 });
+const msg = computed(() => {
+    return {
+        watchFolderList: t("preference.watchFolderList"),
+        chooseDirectory: t("preference.chooseDirectory"),
+        thumbnailSize: t("preference.thumbnailSize"),
+        tabs: {
+            general: t("preference.tabs.general"),
+        },
+    };
+});
 const formlayout = ref("vertical");
 const formItemLayout = computed(() => {
     return formlayout.value === "horizontal"
@@ -38,9 +50,9 @@ const formItemLayout = computed(() => {
 
 <template>
     <a-tabs v-model:activeKey="activeKey" :tab-position="mode" :style="{ minHeight: '50vh' }">
-        <a-tab-pane :key="1" tab="General">
+        <a-tab-pane :key="1" :tab="msg.tabs.general">
             <a-form :model="formState" v-bind="formItemLayout" :layout="formlayout">
-                <a-form-item label="Choose a folder to import">
+                <a-form-item :label="msg.watchFolderList">
                     <a-space direction="vertical">
                         <a-list
                             size="small"
@@ -58,14 +70,14 @@ const formItemLayout = computed(() => {
                             <template #renderItem="{ item }">
                                 <a-list-item>{{ item }}</a-list-item>
                             </template>
-                            <template #footer>
-                                <div></div>
-                            </template>
+                            <template #footer> </template>
                         </a-list>
-                        <a-button type="primary" @click="onChoose">Choose Directory</a-button>
+                        <a-button type="primary" @click="onChoose">{{
+                            msg.chooseDirectory
+                        }}</a-button>
                     </a-space>
                 </a-form-item>
-                <a-form-item :label="`Thumbnail Image Size: ${thumbnailSize}px`">
+                <a-form-item :label="`${msg.thumbnailSize}: ${thumbnailSize}px`">
                     <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
                 </a-form-item>
             </a-form>

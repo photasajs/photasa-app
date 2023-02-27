@@ -52,3 +52,16 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+# Troubleshooting
+
+## vue-i18n
+
+Must turn on `script-src 'unsafe-eval'` to allow handling of json
+
+```html
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' https://sessions.bugsnag.com/ https://notify.bugsnag.com/; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self';"
+    /> 
+```
