@@ -8,11 +8,10 @@ import type { TabsProps } from "ant-design-vue";
 
 interface FormState {
     name: string;
-    paths: string[];
 }
 
 const store = usePreferenceStore();
-const { paths } = storeToRefs(store);
+const { paths, thumbnailSize } = storeToRefs(store);
 
 function onChoose(): void {
     chooseDirectory().then(({ filePaths }) => {
@@ -25,7 +24,6 @@ const activeKey = ref(1);
 const mode = ref<TabsProps["tabPosition"]>("left");
 const formState: UnwrapRef<FormState> = reactive({
     name: "",
-    paths: paths.value,
 });
 const formlayout = ref("vertical");
 const formItemLayout = computed(() => {
@@ -66,6 +64,9 @@ const formItemLayout = computed(() => {
                         </a-list>
                         <a-button type="primary" @click="onChoose">Choose Directory</a-button>
                     </a-space>
+                </a-form-item>
+                <a-form-item label="Thumbnail Image Size">
+                    <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
                 </a-form-item>
             </a-form>
         </a-tab-pane>

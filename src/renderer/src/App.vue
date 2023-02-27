@@ -95,6 +95,7 @@ function handlePreferenceOk(): void {
         @ok="handlePreferenceOk"
     >
         <Preference></Preference>
+        <template #footer></template>
     </a-modal>
 </template>
 

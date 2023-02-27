@@ -5,13 +5,14 @@ const DEFAULT_DESKTOP_PATH = "/Users/albert.li/Desktop/";
 
 type PreferenceState = {
     paths: string[];
+    thumbnailSize: number;
 };
 
 export const usePreferenceStore = defineStore("preference", {
     state: (): PreferenceState => {
-        const paths = [DEFAULT_DESKTOP_PATH];
         return {
-            paths,
+            paths: [DEFAULT_DESKTOP_PATH],
+            thumbnailSize: 150,
         };
     },
     persist: true,
@@ -21,6 +22,9 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths.push(path);
                 this.paths = this.paths.sort();
             }
+        },
+        updateThumbnailSize(size) {
+            this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
     },
 });
