@@ -2,9 +2,10 @@
     "preference": {
         "settings": "设置",
         "tabs": {
-            "general": "常规"
+            "general": "常规",
+            "about": "关于"
         },
-        "watchFolderList": "Picasa可以管理下列目录中的照片和视频",
+        "watchFolderList": "仓廪图司可以管理下列目录中的照片和视频",
         "chooseDirectory": "选择目录并添加到列表",
         "thumbnailSize": "缩略图大小"
     }

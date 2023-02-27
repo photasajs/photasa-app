@@ -6,6 +6,7 @@ import { chooseDirectory } from "@renderer/utils/api";
 import { storeToRefs } from "pinia";
 import type { TabsProps } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
+import About from "./About.vue";
 
 const { t } = useI18n();
 
@@ -34,6 +35,7 @@ const msg = computed(() => {
         thumbnailSize: t("preference.thumbnailSize"),
         tabs: {
             general: t("preference.tabs.general"),
+            about: t("preference.tabs.about"),
         },
     };
 });
@@ -81,6 +83,9 @@ const formItemLayout = computed(() => {
                     <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
                 </a-form-item>
             </a-form>
+        </a-tab-pane>
+        <a-tab-pane :key="2" :tab="msg.tabs.about">
+            <About></About>
         </a-tab-pane>
     </a-tabs>
 </template>
