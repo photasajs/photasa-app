@@ -2346,6 +2346,11 @@ cacheable-request@^7.0.2:
     normalize-url "^6.0.1"
     responselike "^2.0.0"
 
+caf@^15.0.1:
+  version "15.0.1"
+  resolved "https://registry.yarnpkg.com/caf/-/caf-15.0.1.tgz#28f1f17bd93dc4b5d95207ad07066eddf4768160"
+  integrity sha512-Xp/IK6vMwujxWZXra7djdYzPdPnEQKa7Mudu2wZgDQ3TJry1I0TgtjEgwZHpoBcMp68j4fb0/FZ1SJyMEgJrXQ==
+
 callsites@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/callsites/-/callsites-3.1.0.tgz#b3630abd8943432f54b3f0519238e33cd7df2f73"
@@ -5900,6 +5905,13 @@ vite@^4.1.1:
     rollup "^3.10.0"
   optionalDependencies:
     fsevents "~2.3.2"
+
+vue-concurrency@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/vue-concurrency/-/vue-concurrency-4.0.0.tgz#9255a5e008aace5f285de496e3988a8a28dce168"
+  integrity sha512-YOLrHang8w15bMOpftw6iPsoqlZT/u5zsblnT+CrVvc2HZ0eP76hjj77sgepHxB6FRcN3dlFXDNBMQ6iZzpiNw==
+  dependencies:
+    caf "^15.0.1"
 
 vue-demi@*:
   version "0.13.11"

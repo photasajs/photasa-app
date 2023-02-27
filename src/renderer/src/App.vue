@@ -68,7 +68,7 @@ function handleImport(): void {
                 </template>
 
                 <template #B>
-                    <a-layout style="padding: 0 24px 24px">
+                    <a-layout class="image-content">
                         <a-layout-content
                             :style="{
                                 background: '#fff',
