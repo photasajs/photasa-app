@@ -6,7 +6,6 @@ import { initThumbnailService } from "./thumbnail";
 import { initFileWatcher } from "./fs-watch";
 import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
-import Bugsnag from "@bugsnag/electron";
 
 const PROD_MODE = process.env.NODE_ENV === "production";
 const logger = log4js.getLogger("main");
@@ -89,8 +88,6 @@ app.whenReady().then(() => {
             createWindow();
         }
     });
-
-    Bugsnag.start({ apiKey: "905f9713071b76d7cd04cb3b19e4c730" });
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

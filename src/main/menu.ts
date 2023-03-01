@@ -2,24 +2,26 @@ import { app, shell, Menu, BrowserWindow } from "electron";
 
 export function createMenu(mainWindow: BrowserWindow): void {
     const isMac = process.platform === "darwin";
-    const appMenu: Electron.MenuItemConstructorOptions = isMac
-        ? {
-              label: app.name,
-              submenu: [
-                  { role: "about" },
-                  { type: "separator" },
-                  { role: "services" },
-                  { type: "separator" },
-                  { role: "hide" },
-                  { role: "hideOthers" },
-                  { role: "unhide" },
-                  { type: "separator" },
-                  { role: "quit" },
-              ],
-          }
-        : {};
+    const appMenu: Electron.MenuItemConstructorOptions[] = isMac
+        ? [
+              {
+                  label: app.name,
+                  submenu: [
+                      { role: "about" },
+                      { type: "separator" },
+                      { role: "services" },
+                      { type: "separator" },
+                      { role: "hide" },
+                      { role: "hideOthers" },
+                      { role: "unhide" },
+                      { type: "separator" },
+                      { role: "quit" },
+                  ],
+              },
+          ]
+        : [];
     const template: Electron.MenuItemConstructorOptions[] = [
-        appMenu,
+        ...appMenu,
         {
             label: "File",
             submenu: [

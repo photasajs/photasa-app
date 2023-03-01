@@ -22,7 +22,6 @@
         "coverage": "jest --config jest.config.js --coverage"
     },
     "dependencies": {
-        "@bugsnag/electron": "^7.20.0",
         "@bugsnag/js": "^7.20.0",
         "@bugsnag/plugin-vue": "^7.19.0",
         "@electron-toolkit/preload": "^1.0.3",
@@ -31,6 +30,7 @@
         "chokidar": "^3.5.3",
         "electron-updater": "^5.3.0",
         "exifreader": "^4.9.1",
+        "fs-extra": "^11.1.0",
         "is-video": "^1.0.1",
         "log4js": "^6.7.1",
         "moment": "^2.29.4",
@@ -77,7 +77,7 @@
         "webpack": "^5.75.0"
     },
     "volta": {
-        "node": "16.16.0",
-        "yarn": "1.22.17"
+        "node": "16.17.0",
+        "yarn": "1.22.19"
     }
 }
