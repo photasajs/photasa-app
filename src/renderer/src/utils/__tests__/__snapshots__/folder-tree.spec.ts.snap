@@ -1,5 +1,50 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`buildDataNode should build path tree node when root exist 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "isLeaf": true,
+                "key": "test.jpg",
+                "title": "/test/Goodbye/asas/test.jpg",
+              },
+            ],
+            "key": "asas",
+            "title": "asas",
+          },
+        ],
+        "key": "Goodbye",
+        "title": "Goodbye",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "isLeaf": true,
+                "key": "test2.jpg",
+                "title": "/test/go/sdks/test2.jpg",
+              },
+            ],
+            "key": "sdks",
+            "title": "sdks",
+          },
+        ],
+        "key": "go",
+        "title": "go",
+      },
+    ],
+    "key": "/test",
+    "title": "test",
+  },
+]
+`;
+
 exports[`buildDataNode should build path tree node with multiple 1`] = `
 [
   {

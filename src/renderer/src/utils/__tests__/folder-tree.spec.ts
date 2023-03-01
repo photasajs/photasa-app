@@ -21,4 +21,16 @@ describe("buildDataNode", () => {
         buildDataNode(roots, "/test/go/test2.jpg");
         expect(roots).toMatchSnapshot();
     });
+
+    it("should build path tree node when root exist", () => {
+        const roots = [
+            {
+                key: "/test",
+                title: "test",
+            },
+        ];
+        buildDataNode(roots, "/test/Goodbye/asas/test.jpg");
+        buildDataNode(roots, "/test/go/sdks/test2.jpg");
+        expect(roots).toMatchSnapshot();
+    });
 });
