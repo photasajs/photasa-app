@@ -1,0 +1,83 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`buildDataNode should build path tree node with multiple 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "isLeaf": true,
+            "key": "test.jpg",
+            "title": "/test/Goodbye/test.jpg",
+          },
+        ],
+        "key": "Goodbye",
+        "title": "Goodbye",
+      },
+      {
+        "children": [
+          {
+            "isLeaf": true,
+            "key": "test2.jpg",
+            "title": "/test/go/test2.jpg",
+          },
+        ],
+        "key": "go",
+        "title": "go",
+      },
+    ],
+    "key": "test",
+    "title": "test",
+  },
+]
+`;
+
+exports[`buildDataNode should build path tree node with one path 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "isLeaf": true,
+            "key": "test.jpg",
+            "title": "/test/Goodbye/test.jpg",
+          },
+          {
+            "isLeaf": true,
+            "key": "test2.jpg",
+            "title": "/test/Goodbye/test2.jpg",
+          },
+        ],
+        "key": "Goodbye",
+        "title": "Goodbye",
+      },
+    ],
+    "key": "test",
+    "title": "test",
+  },
+]
+`;
+
+exports[`buildDataNode should return a DataNode 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "isLeaf": true,
+            "key": "test.jpg",
+            "title": "test/google.com/test.jpg",
+          },
+        ],
+        "key": "google.com",
+        "title": "google.com",
+      },
+    ],
+    "key": "test",
+    "title": "test",
+  },
+]
+`;
