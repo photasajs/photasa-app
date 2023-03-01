@@ -7,6 +7,7 @@ import SplitView from "./components/SplitView.vue";
 import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
+import { usePreferenceStore } from "@renderer/stores/preference";
 import { startWatching, setupMenu } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
@@ -14,9 +15,9 @@ import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
-const store = usePhotosStore();
-const { paths } = storeToRefs(store);
 
+const { paths } = storeToRefs(usePreferenceStore());
+const { addFile } = usePhotosStore();
 const visible = ref(false);
 
 startWatching(
@@ -26,7 +27,7 @@ startWatching(
     (state: WatchState) => {
         if (state.action === "add") {
             if (state.path && state.path.indexOf(".jpg") > 0) {
-                store.addFile(state.path);
+                addFile(state.path);
             }
         }
     },

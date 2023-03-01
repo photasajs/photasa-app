@@ -21,13 +21,6 @@ export const usePhotosStore = defineStore("photos", {
         };
     },
     actions: {
-        addPtah(path) {
-            if (this.paths.indexOf(path) < 0) {
-                this.paths.push(path);
-                this.paths = this.paths.sort();
-                this.files.set(path, new Set());
-            }
-        },
         addFile(file) {
             const path = this.paths.find((path) => file.startsWith(path)) ?? "";
             // Files is set. will not add duplicate file
