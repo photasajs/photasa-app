@@ -105,6 +105,55 @@ exports[`buildDataNode should build path tree node with one path 1`] = `
 ]
 `;
 
+exports[`buildDataNode should build path tree node without duplication 1`] = `
+[
+  {
+    "key": "/User/albert.li/Desktop",
+    "title": "/User/albert.li/Desktop",
+  },
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "isLeaf": true,
+                        "key": "image0-15.jpg",
+                        "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
+                      },
+                      {
+                        "isLeaf": true,
+                        "key": "image1-1.jpg",
+                        "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
+                      },
+                    ],
+                    "key": "19610000_天津_老爸戎装",
+                    "title": "19610000_天津_老爸戎装",
+                  },
+                ],
+                "key": "196X",
+                "title": "196X",
+              },
+            ],
+            "key": "Desktop",
+            "title": "Desktop",
+          },
+        ],
+        "key": "albert.li",
+        "title": "albert.li",
+      },
+    ],
+    "key": "Users",
+    "title": "Users",
+  },
+]
+`;
+
 exports[`buildDataNode should return a DataNode 1`] = `
 [
   {

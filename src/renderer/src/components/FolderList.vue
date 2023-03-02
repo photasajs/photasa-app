@@ -2,24 +2,26 @@
 import { ref, watch, computed } from "vue";
 import type { DataNode } from "ant-design-vue/es/tree";
 import { usePhotosStore } from "@renderer/stores/photos";
+import { usePreferenceStore } from "@renderer/stores/preference";
 import { buildDataNode } from "@renderer/utils/folder-tree";
 
-const store = usePhotosStore();
+const photosStore = usePhotosStore();
+const preferenceStore = usePreferenceStore();
 
-const expandedKeys = ref<string[]>(store.paths);
-const selectedKeys = ref<string[]>(store.paths);
+const expandedKeys = ref<string[]>(photosStore.paths);
+const selectedKeys = ref<string[]>(photosStore.paths);
 const checkedKeys = ref<string[]>([]);
 
 const treeData = computed((): DataNode[] => {
     const roots: DataNode[] = [];
-    store.paths.forEach((path) => {
+    preferenceStore.paths.forEach((path) => {
         roots.push({
             title: path,
             key: path,
             children: [],
         });
 
-        store.files.get(path)?.forEach((file) => {
+        photosStore.files.get(path)?.forEach((file) => {
             buildDataNode(roots, file);
         });
     });

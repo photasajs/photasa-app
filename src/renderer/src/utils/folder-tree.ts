@@ -37,12 +37,17 @@ export function buildDataNode(roots: DataNode[], path: string): void {
 
 function traverseTree(root: DataNode, pathParts: string[], path: string): DataNode {
     normalizeRoot(root);
+
     if (pathParts.length <= 1) {
-        root.children?.push({
-            key: pathParts[0],
-            title: path,
-            isLeaf: true,
-        });
+        const child = root.children?.find((node) => node.key === pathParts[0]);
+
+        if (!child) {
+            root.children?.push({
+                key: pathParts[0],
+                title: path,
+                isLeaf: true,
+            });
+        }
         return root;
     }
 

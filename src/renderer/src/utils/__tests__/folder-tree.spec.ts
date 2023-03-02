@@ -33,4 +33,18 @@ describe("buildDataNode", () => {
         buildDataNode(roots, "/test/go/sdks/test2.jpg");
         expect(roots).toMatchSnapshot();
     });
+
+    it("should build path tree node without duplication", () => {
+        const roots = [
+            {
+                key: "/User/albert.li/Desktop",
+                title: "/User/albert.li/Desktop",
+            },
+        ];
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg");
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg");
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg");
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg");
+        expect(roots).toMatchSnapshot();
+    });
 });
