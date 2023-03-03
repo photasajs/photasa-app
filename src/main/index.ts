@@ -59,6 +59,10 @@ function createWindow(): void {
             });
     });
 
+    ipcMain.handle("picasa:get-directory", async (_, args) => {
+        return app.getPath(args.name);
+    });
+
     // Setup Thumbnail Service
     initThumbnailService(ipcMain, logger);
     // Setup File Watch Service

@@ -1,5 +1,5 @@
 import { electronAPI } from "@electron-toolkit/preload";
-import type { DirectorySelection } from "./index.d";
+import type { DirectorySelection, PathName } from "./index.d";
 
 const { ipcRenderer } = electronAPI;
 
@@ -12,5 +12,12 @@ export function chooseDirectory(): Promise<DirectorySelection> {
         ipcRenderer?.on("picasa:selected-directory", (_, arg) => {
             resolve(arg);
         });
+    });
+}
+
+export function getDirectory(name: PathName): Promise<string> {
+    // Start file watching
+    return ipcRenderer?.invoke("picasa:get-directory", {
+        name,
     });
 }

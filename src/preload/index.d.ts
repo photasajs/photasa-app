@@ -4,6 +4,7 @@ import type { DirectorySelection } from "./choose-directory";
 type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (action: FileAction | string | undefined) => void;
+type PathName = "home" | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
 
 interface DirectorySelection {
     filePaths: string[];
@@ -26,6 +27,7 @@ declare global {
             startWatching: (config: WatchConfig, callback: WatchCallback) => void;
             importPhotos: (paths: string[], target: string, callback: ImportCallback) => void;
             chooseDirectory: () => Promise<DirectorySelection>;
+            getDirectory: (name: PathName) => Promise<string>;
         };
     }
 }

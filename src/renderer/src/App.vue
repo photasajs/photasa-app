@@ -8,15 +8,15 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { startWatching, setupMenu } from "@renderer/utils/api";
+import { startWatching, setupMenu, getDirectory } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
-
-const { paths } = storeToRefs(usePreferenceStore());
+const preferenceStore = usePreferenceStore();
+const { paths } = storeToRefs(preferenceStore);
 const { addFile } = usePhotosStore();
 const visible = ref(false);
 
@@ -55,10 +55,18 @@ function handleOk(): void {
 function handlePreferenceOk(): void {
     showPreference.value = false;
 }
+
+const loading = ref(false);
+
+getDirectory("desktop").then((dir) => {
+    preferenceStore.addPath(dir);
+    loading.value = false;
+});
 </script>
 
 <template>
-    <a-layout>
+    <a-spin v-if="loading" />
+    <a-layout v-else>
         <a-layout class="content">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>

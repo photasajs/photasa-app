@@ -3,6 +3,7 @@ import type {
     WatchCallback,
     ImportCallback,
     DirectorySelection,
+    PathName,
 } from "src/preload/index.d";
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
@@ -25,4 +26,8 @@ export interface MenuCallback {
 export function setupMenu(callback: MenuCallback): void {
     window.electron.ipcRenderer.on("picasa:open-preference", callback.onPreference);
     window.electron.ipcRenderer.on("picasa:import-photos", callback.onImportPhotos);
+}
+
+export function getDirectory(name: PathName): Promise<string> {
+    return window.api.getDirectory(name);
 }
