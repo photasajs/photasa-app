@@ -54,7 +54,7 @@ const cards = computed(() => {
             </a-breadcrumb>
         </template>
         <div class="image-list">
-            <ul>
+            <ul v-if="card.images.length > 0">
                 <li
                     v-for="image in card.images"
                     :key="image.key"
@@ -70,6 +70,7 @@ const cards = computed(() => {
                     />
                 </li>
             </ul>
+            <a-empty v-else />
         </div>
     </a-card>
 </template>

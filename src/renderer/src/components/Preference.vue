@@ -7,6 +7,7 @@ import { storeToRefs } from "pinia";
 import type { TabsProps } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import About from "./About.vue";
+import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 
 const { t } = useI18n();
 
@@ -48,6 +49,10 @@ const formItemLayout = computed(() => {
           }
         : {};
 });
+
+function handleRemove(item): void {
+    store.removePath(item);
+}
 </script>
 
 <template>
@@ -70,7 +75,28 @@ const formItemLayout = computed(() => {
                                 </a-descriptions>
                             </template>
                             <template #renderItem="{ item }">
-                                <a-list-item>{{ item }}</a-list-item>
+                                <a-list-item>
+                                    <template #actions>
+                                        <a-button @click="handleRemove(item)"
+                                            ><close-outlined
+                                        /></a-button>
+                                    </template>
+                                    <a-skeleton
+                                        avatar
+                                        :title="false"
+                                        :loading="!!item.loading"
+                                        active
+                                    >
+                                        <a-list-item-meta>
+                                            <template #title>
+                                                {{ item }}
+                                            </template>
+                                            <template #avatar>
+                                                <folder-two-tone />
+                                            </template>
+                                        </a-list-item-meta>
+                                    </a-skeleton>
+                                </a-list-item>
                             </template>
                             <template #footer> </template>
                         </a-list>

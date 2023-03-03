@@ -26,5 +26,11 @@ export const usePreferenceStore = defineStore("preference", {
         updateThumbnailSize(size) {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
+        removePath(path: string): void {
+            const index = this.paths.indexOf(path);
+            if (index >= 0) {
+                this.paths.splice(index, 1);
+            }
+        },
     },
 });
