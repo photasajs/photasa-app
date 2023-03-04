@@ -4,11 +4,17 @@ import { mergePath } from "./path";
 const FolderFiles: Record<string, Set<string>> = {};
 
 function updateFileList(key, fileList: Set<string>): void {
-    FolderFiles[key] = new Set([...(FolderFiles[key] ?? []), ...fileList]);
+    const normalizedKey = mergePath(key, "");
+    FolderFiles[normalizedKey] = new Set([...(FolderFiles[normalizedKey] ?? []), ...fileList]);
 }
 
 export function getFolderFiles(key: string): Set<string> {
-    return FolderFiles[key] || new Set();
+    const normalizedKey = mergePath(key, "");
+    return FolderFiles[normalizedKey] || new Set();
+}
+
+export function resetFileList(): void {
+    Object.keys(FolderFiles).forEach((key) => delete FolderFiles[key]);
 }
 
 function normalizeRoot(root: DataNode): void {
@@ -16,6 +22,7 @@ function normalizeRoot(root: DataNode): void {
         root.children = [];
     }
 }
+
 export function buildDataNode(roots: DataNode[], path: string): void {
     let pathParts = path.split("/").filter((part) => part !== "");
     if (pathParts.length === 0) {
@@ -23,7 +30,7 @@ export function buildDataNode(roots: DataNode[], path: string): void {
     }
     if (pathParts.length === 1) {
         roots.push({
-            key: path,
+            key: mergePath(path),
             title: path,
             children: [],
         });
@@ -33,7 +40,7 @@ export function buildDataNode(roots: DataNode[], path: string): void {
     let root = roots.find((node) => path.indexOf(node.key as string) >= 0);
     if (!root) {
         root = {
-            key: pathParts[0],
+            key: mergePath(pathParts[0]),
             title: pathParts[0],
             children: [],
         };
@@ -58,7 +65,7 @@ function traverseTree(root: DataNode, pathParts: string[], path: string): DataNo
     let child = root.children?.find((node) => path.indexOf(node.key as string) >= 0);
     if (!child) {
         child = {
-            key: mergePath(root.key, pathParts[0]),
+            key: mergePath(root.key as string, pathParts[0]),
             title: pathParts[0],
             children: [],
         };

@@ -5,6 +5,6 @@ export function normalizePath(path: string): string {
     return mergePath(path, "");
 }
 
-export function mergePath(left, right): string {
+export function mergePath(left: string, right = ""): string {
     return `/${trim(left, "/")}/${trim(right, "/")}`;
 }

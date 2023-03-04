@@ -1,146 +1,139 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Folder Tree should build path tree node when root exist 1`] = `
-[
-  {
-    "children": [
-      {
-        "children": [
-          {
-            "children": [
-              {
-                "isLeaf": true,
-                "key": "/test/Goodbye/asas/test.jpg",
-                "title": "/test/Goodbye/asas/test.jpg",
-              },
-            ],
-            "key": "/test/Goodbye/asas",
-            "title": "asas",
-          },
-        ],
-        "key": "/test/Goodbye",
-        "title": "Goodbye",
-      },
-      {
-        "children": [
-          {
-            "children": [
-              {
-                "isLeaf": true,
-                "key": "/test/go/sdks/test2.jpg",
-                "title": "/test/go/sdks/test2.jpg",
-              },
-            ],
-            "key": "/test/go/sdks",
-            "title": "sdks",
-          },
-        ],
-        "key": "/test/go",
-        "title": "go",
-      },
-    ],
-    "key": "/test",
-    "title": "test",
+{
+  "fileList1": Set {
+    "/test/Goodbye/asas/test.jpg",
+    "/test/go/sdks/test2.jpg",
   },
-]
+  "fileList2": Set {
+    "/test/Goodbye/asas/test.jpg",
+  },
+  "fileList3": Set {},
+  "roots": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "children": [],
+              "key": "/test/Goodbye/asas",
+              "title": "asas",
+            },
+          ],
+          "key": "/test/Goodbye",
+          "title": "Goodbye",
+        },
+        {
+          "children": [
+            {
+              "children": [],
+              "key": "/test/go/sdks",
+              "title": "sdks",
+            },
+          ],
+          "key": "/test/go",
+          "title": "go",
+        },
+      ],
+      "key": "/test/",
+      "title": "test",
+    },
+  ],
+}
 `;
 
 exports[`Folder Tree should build path tree node with multiple 1`] = `
-[
-  {
-    "children": [
-      {
-        "children": [
-          {
-            "isLeaf": true,
-            "key": "/test/Goodbye/test.jpg",
-            "title": "/test/Goodbye/test.jpg",
-          },
-        ],
-        "key": "test/Goodbye",
-        "title": "Goodbye",
-      },
-      {
-        "children": [
-          {
-            "isLeaf": true,
-            "key": "/test/go/test2.jpg",
-            "title": "/test/go/test2.jpg",
-          },
-        ],
-        "key": "test/go",
-        "title": "go",
-      },
-    ],
-    "key": "test",
-    "title": "test",
+{
+  "fileList1": Set {
+    "/test/Goodbye/test.jpg",
+    "/test/go/test2.jpg",
   },
-]
+  "fileList2": Set {
+    "/test/go/test2.jpg",
+  },
+  "fileList3": Set {
+    "/test/Goodbye/test.jpg",
+  },
+  "roots": [
+    {
+      "children": [
+        {
+          "children": [],
+          "key": "/test/Goodbye",
+          "title": "Goodbye",
+        },
+        {
+          "children": [],
+          "key": "/test/go",
+          "title": "go",
+        },
+      ],
+      "key": "/test/",
+      "title": "test",
+    },
+  ],
+}
 `;
 
 exports[`Folder Tree should build path tree node with one path 1`] = `
-[
-  {
-    "children": [
-      {
-        "children": [
-          {
-            "isLeaf": true,
-            "key": "/test/Goodbye/test.jpg",
-            "title": "/test/Goodbye/test.jpg",
-          },
-          {
-            "isLeaf": true,
-            "key": "/test/Goodbye/test2.jpg",
-            "title": "/test/Goodbye/test2.jpg",
-          },
-        ],
-        "key": "test/Goodbye",
-        "title": "Goodbye",
-      },
-    ],
-    "key": "test",
-    "title": "test",
+{
+  "fileList1": Set {
+    "/test/Goodbye/test.jpg",
+    "/test/Goodbye/test2.jpg",
   },
-]
+  "fileList2": Set {
+    "/test/Goodbye/test.jpg",
+    "/test/Goodbye/test2.jpg",
+  },
+  "roots": [
+    {
+      "children": [
+        {
+          "children": [],
+          "key": "/test/Goodbye",
+          "title": "Goodbye",
+        },
+      ],
+      "key": "/test/",
+      "title": "test",
+    },
+  ],
+}
 `;
 
 exports[`Folder Tree should build path tree node without duplication 1`] = `
-[
-  {
-    "children": [
-      {
-        "children": [
-          {
-            "children": [
-              {
-                "isLeaf": true,
-                "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
-                "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
-              },
-              {
-                "isLeaf": true,
-                "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
-                "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
-              },
-              {
-                "isLeaf": true,
-                "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
-                "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
-              },
-            ],
-            "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装",
-            "title": "19610000_天津_老爸戎装",
-          },
-        ],
-        "key": "/Users/albert.li/Desktop/196X",
-        "title": "196X",
-      },
-    ],
-    "key": "/Users/albert.li/Desktop",
-    "title": "/Uses/albert.li/Desktop",
+{
+  "fileList1": Set {
+    "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
+    "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
+    "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
   },
-]
+  "fileList2": Set {
+    "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
+    "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
+    "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
+  },
+  "roots": [
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "children": [],
+              "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装",
+              "title": "19610000_天津_老爸戎装",
+            },
+          ],
+          "key": "/Users/albert.li/Desktop/196X",
+          "title": "196X",
+        },
+      ],
+      "key": "/Users/albert.li/Desktop/",
+      "title": "/Uses/albert.li/Desktop",
+    },
+  ],
+}
 `;
 
 exports[`Folder Tree should create path file list 1`] = `
@@ -153,23 +146,25 @@ Set {
 `;
 
 exports[`Folder Tree should return a DataNode 1`] = `
-[
-  {
-    "children": [
-      {
-        "children": [
-          {
-            "isLeaf": true,
-            "key": "test/google.com/test.jpg",
-            "title": "test/google.com/test.jpg",
-          },
-        ],
-        "key": "test/google.com",
-        "title": "google.com",
-      },
-    ],
-    "key": "test",
-    "title": "test",
+{
+  "fileList1": Set {
+    "/test/google.com/test.jpg",
   },
-]
+  "fileList2": Set {
+    "/test/google.com/test.jpg",
+  },
+  "roots": [
+    {
+      "children": [
+        {
+          "children": [],
+          "key": "/test/google.com",
+          "title": "google.com",
+        },
+      ],
+      "key": "/test/",
+      "title": "test",
+    },
+  ],
+}
 `;
