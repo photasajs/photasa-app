@@ -1,24 +1,28 @@
 // stores/photos.js
 import { defineStore } from "pinia";
 
-const DEFAULT_DESKTOP_PATH = "/Users/albert.li/Desktop/";
-
 type PreferenceState = {
     paths: string[];
     thumbnailSize: number;
+    firstTime: boolean;
 };
 
 export const usePreferenceStore = defineStore("preference", {
     state: (): PreferenceState => {
         return {
-            paths: [DEFAULT_DESKTOP_PATH],
+            paths: [],
             thumbnailSize: 150,
+            firstTime: true,
         };
     },
     persist: true,
     actions: {
         addPath(path) {
-            if (this.paths.indexOf(path) < 0) {
+            if (this.firstTime) {
+                this.firstTime = false;
+                this.paths = [];
+                this.paths.push(path);
+            } else if (this.paths.indexOf(path) < 0) {
                 this.paths.push(path);
                 this.paths = this.paths.sort();
             }

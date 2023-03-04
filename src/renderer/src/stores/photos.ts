@@ -1,28 +1,20 @@
 // stores/photos.js
 import { defineStore } from "pinia";
 
-const DEFAULT_DESKTOP_PATH = "/Users/albert.li/Desktop/";
-
 type PhotoState = {
-    paths: string[];
     files: Map<string, Set<string>>;
 };
 
 export const usePhotosStore = defineStore("photos", {
     state: (): PhotoState => {
-        const paths = [DEFAULT_DESKTOP_PATH];
         const files = new Map();
-        paths.forEach((path) => {
-            files.set(path, new Set());
-        });
         return {
-            paths,
             files,
         };
     },
     actions: {
-        addFile(file) {
-            const path = this.paths.find((path) => file.startsWith(path)) ?? "";
+        addFile(paths, file) {
+            const path = paths.find((path) => file.startsWith(path)) ?? "";
             // Files is set. will not add duplicate file
             if (!this.files.has(path)) {
                 this.files.set(path, new Set());

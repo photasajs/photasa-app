@@ -37,8 +37,8 @@ describe("buildDataNode", () => {
     it("should build path tree node without duplication", () => {
         const roots = [
             {
-                key: "/User/albert.li/Desktop",
-                title: "/User/albert.li/Desktop",
+                key: "/Users/albert.li/Desktop",
+                title: "/Uses/albert.li/Desktop",
             },
         ];
         buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg");

@@ -15,38 +15,18 @@ import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+const { addFile } = usePhotosStore();
 const preferenceStore = usePreferenceStore();
 const { paths } = storeToRefs(preferenceStore);
-const { addFile } = usePhotosStore();
+const { addPath } = preferenceStore;
 const visible = ref(false);
-
-startWatching(
-    {
-        paths: deepCopy(paths.value),
-    },
-    (state: WatchState) => {
-        if (state.action === "add") {
-            if (state.path && state.path.indexOf(".jpg") > 0) {
-                addFile(state.path);
-            }
-        }
-    },
-);
-setupMenu({
-    onImportPhotos: () => {
-        visible.value = true;
-    },
-    onPreference: () => {
-        showPreference.value = true;
-    },
-});
-
 const msg = computed(() => {
     return {
         settings: t("preference.settings"),
     };
 });
 const showPreference = ref(false);
+const loading = ref(false);
 
 function handleOk(): void {
     visible.value = false;
@@ -56,11 +36,33 @@ function handlePreferenceOk(): void {
     showPreference.value = false;
 }
 
-const loading = ref(false);
-
 getDirectory("desktop").then((dir) => {
-    preferenceStore.addPath(dir);
+    // Desktop directory is ready
+    addPath(dir);
     loading.value = false;
+
+    // start watching folders
+    startWatching(
+        {
+            paths: deepCopy(paths.value),
+        },
+        (state: WatchState) => {
+            if (state.action === "add") {
+                if (state.path && state.path.indexOf(".jpg") > 0) {
+                    addFile(paths.value, state.path);
+                }
+            }
+        },
+    );
+});
+
+setupMenu({
+    onImportPhotos: () => {
+        visible.value = true;
+    },
+    onPreference: () => {
+        showPreference.value = true;
+    },
 });
 </script>
 

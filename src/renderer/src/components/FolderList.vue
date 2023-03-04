@@ -4,24 +4,26 @@ import type { DataNode } from "ant-design-vue/es/tree";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { buildDataNode } from "@renderer/utils/folder-tree";
+import { storeToRefs } from "pinia";
 
 const photosStore = usePhotosStore();
 const preferenceStore = usePreferenceStore();
-
-const expandedKeys = ref<string[]>(photosStore.paths);
-const selectedKeys = ref<string[]>(photosStore.paths);
+const { files } = storeToRefs(photosStore);
+const { paths } = storeToRefs(preferenceStore);
+const expandedKeys = ref<string[]>(preferenceStore.paths);
+const selectedKeys = ref<string[]>(preferenceStore.paths);
 const checkedKeys = ref<string[]>([]);
 
 const treeData = computed((): DataNode[] => {
     const roots: DataNode[] = [];
-    preferenceStore.paths.forEach((path) => {
+    paths.value.forEach((path) => {
         roots.push({
             title: path,
             key: path,
             children: [],
         });
 
-        photosStore.files.get(path)?.forEach((file) => {
+        files.value.get(path)?.forEach((file) => {
             buildDataNode(roots, file);
         });
     });
