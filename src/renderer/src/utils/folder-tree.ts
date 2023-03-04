@@ -43,7 +43,7 @@ function traverseTree(root: DataNode, pathParts: string[], path: string): DataNo
 
         if (!child) {
             root.children?.push({
-                key: pathParts[0],
+                key: path,
                 title: path,
                 isLeaf: true,
             });
