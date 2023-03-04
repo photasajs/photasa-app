@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`buildDataNode should build path tree node when root exist 1`] = `
+exports[`Folder Tree should build path tree node when root exist 1`] = `
 [
   {
     "children": [
@@ -10,15 +10,15 @@ exports[`buildDataNode should build path tree node when root exist 1`] = `
             "children": [
               {
                 "isLeaf": true,
-                "key": "test.jpg",
+                "key": "/test/Goodbye/asas/test.jpg",
                 "title": "/test/Goodbye/asas/test.jpg",
               },
             ],
-            "key": "asas",
+            "key": "/test/Goodbye/asas",
             "title": "asas",
           },
         ],
-        "key": "Goodbye",
+        "key": "/test/Goodbye",
         "title": "Goodbye",
       },
       {
@@ -27,15 +27,15 @@ exports[`buildDataNode should build path tree node when root exist 1`] = `
             "children": [
               {
                 "isLeaf": true,
-                "key": "test2.jpg",
+                "key": "/test/go/sdks/test2.jpg",
                 "title": "/test/go/sdks/test2.jpg",
               },
             ],
-            "key": "sdks",
+            "key": "/test/go/sdks",
             "title": "sdks",
           },
         ],
-        "key": "go",
+        "key": "/test/go",
         "title": "go",
       },
     ],
@@ -45,7 +45,7 @@ exports[`buildDataNode should build path tree node when root exist 1`] = `
 ]
 `;
 
-exports[`buildDataNode should build path tree node with multiple 1`] = `
+exports[`Folder Tree should build path tree node with multiple 1`] = `
 [
   {
     "children": [
@@ -53,22 +53,22 @@ exports[`buildDataNode should build path tree node with multiple 1`] = `
         "children": [
           {
             "isLeaf": true,
-            "key": "test.jpg",
+            "key": "/test/Goodbye/test.jpg",
             "title": "/test/Goodbye/test.jpg",
           },
         ],
-        "key": "Goodbye",
+        "key": "test/Goodbye",
         "title": "Goodbye",
       },
       {
         "children": [
           {
             "isLeaf": true,
-            "key": "test2.jpg",
+            "key": "/test/go/test2.jpg",
             "title": "/test/go/test2.jpg",
           },
         ],
-        "key": "go",
+        "key": "test/go",
         "title": "go",
       },
     ],
@@ -78,7 +78,7 @@ exports[`buildDataNode should build path tree node with multiple 1`] = `
 ]
 `;
 
-exports[`buildDataNode should build path tree node with one path 1`] = `
+exports[`Folder Tree should build path tree node with one path 1`] = `
 [
   {
     "children": [
@@ -86,16 +86,16 @@ exports[`buildDataNode should build path tree node with one path 1`] = `
         "children": [
           {
             "isLeaf": true,
-            "key": "test.jpg",
+            "key": "/test/Goodbye/test.jpg",
             "title": "/test/Goodbye/test.jpg",
           },
           {
             "isLeaf": true,
-            "key": "test2.jpg",
+            "key": "/test/Goodbye/test2.jpg",
             "title": "/test/Goodbye/test2.jpg",
           },
         ],
-        "key": "Goodbye",
+        "key": "test/Goodbye",
         "title": "Goodbye",
       },
     ],
@@ -105,7 +105,7 @@ exports[`buildDataNode should build path tree node with one path 1`] = `
 ]
 `;
 
-exports[`buildDataNode should build path tree node without duplication 1`] = `
+exports[`Folder Tree should build path tree node without duplication 1`] = `
 [
   {
     "children": [
@@ -115,25 +115,25 @@ exports[`buildDataNode should build path tree node without duplication 1`] = `
             "children": [
               {
                 "isLeaf": true,
-                "key": "image0-15.jpg",
+                "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
                 "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
               },
               {
                 "isLeaf": true,
-                "key": "image1-1.jpg",
+                "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
                 "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
               },
               {
                 "isLeaf": true,
-                "key": "image1-2.jpg",
+                "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
                 "title": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
               },
             ],
-            "key": "19610000_天津_老爸戎装",
+            "key": "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装",
             "title": "19610000_天津_老爸戎装",
           },
         ],
-        "key": "196X",
+        "key": "/Users/albert.li/Desktop/196X",
         "title": "196X",
       },
     ],
@@ -143,7 +143,16 @@ exports[`buildDataNode should build path tree node without duplication 1`] = `
 ]
 `;
 
-exports[`buildDataNode should return a DataNode 1`] = `
+exports[`Folder Tree should create path file list 1`] = `
+Set {
+  "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
+  "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
+  "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
+  "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-3.jpg",
+}
+`;
+
+exports[`Folder Tree should return a DataNode 1`] = `
 [
   {
     "children": [
@@ -151,11 +160,11 @@ exports[`buildDataNode should return a DataNode 1`] = `
         "children": [
           {
             "isLeaf": true,
-            "key": "test.jpg",
+            "key": "test/google.com/test.jpg",
             "title": "test/google.com/test.jpg",
           },
         ],
-        "key": "google.com",
+        "key": "test/google.com",
         "title": "google.com",
       },
     ],

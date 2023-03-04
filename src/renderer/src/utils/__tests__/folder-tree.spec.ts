@@ -1,6 +1,6 @@
-import { buildDataNode } from "../folder-tree";
+import { buildDataNode, getFolderFiles } from "../folder-tree";
 
-describe("buildDataNode", () => {
+describe("Folder Tree", () => {
     it("should return a DataNode", () => {
         const roots = [];
         const path = "test/google.com/test.jpg";
@@ -46,5 +46,19 @@ describe("buildDataNode", () => {
         buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg");
         buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg");
         expect(roots).toMatchSnapshot();
+    });
+    it("should create path file list", () => {
+        const roots = [
+            {
+                key: "/Users/albert.li/Desktop",
+                title: "/Uses/albert.li/Desktop",
+            },
+        ];
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg");
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg");
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg");
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg");
+        buildDataNode(roots, "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-3.jpg");
+        expect(getFolderFiles("/Users/albert.li/Desktop")).toMatchSnapshot();
     });
 });

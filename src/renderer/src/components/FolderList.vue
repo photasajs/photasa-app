@@ -10,9 +10,9 @@ const photosStore = usePhotosStore();
 const preferenceStore = usePreferenceStore();
 const { files } = storeToRefs(photosStore);
 const { paths } = storeToRefs(preferenceStore);
-const expandedKeys = ref<string[]>(preferenceStore.paths);
-const selectedKeys = ref<string[]>(preferenceStore.paths);
-const checkedKeys = ref<string[]>([]);
+
+const expandedKeys = ref<string[]>([preferenceStore.paths[0]]);
+const selectedKeys = ref<string[]>([preferenceStore.paths[0]]);
 
 const treeData = computed((): DataNode[] => {
     const roots: DataNode[] = [];
@@ -35,9 +35,7 @@ watch(expandedKeys, () => {
 });
 watch(selectedKeys, () => {
     console.log("selectedKeys", selectedKeys);
-});
-watch(checkedKeys, () => {
-    console.log("checkedKeys", checkedKeys);
+    photosStore.setCurrentFolder(selectedKeys.value[0]);
 });
 </script>
 
@@ -45,8 +43,6 @@ watch(checkedKeys, () => {
     <a-tree
         v-model:expandedKeys="expandedKeys"
         v-model:selectedKeys="selectedKeys"
-        v-model:checkedKeys="checkedKeys"
-        checkable
         :tree-data="treeData"
     >
         <template #title="{ title, key }">

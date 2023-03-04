@@ -18,6 +18,8 @@ interface WatchState {
     isFile?: boolean;
     path?: string;
     error?: Error;
+    isImage: boolean;
+    isVideo: boolean;
 }
 // contextBridge can only return few type, Promise is support, but rxjs is not.
 declare global {

@@ -36,6 +36,10 @@ function handlePreferenceOk(): void {
     showPreference.value = false;
 }
 
+function isMedia(state: WatchState): boolean {
+    return state.isImage || state.isVideo;
+}
+
 getDirectory("desktop").then((dir) => {
     // Desktop directory is ready
     addPath(dir);
@@ -48,7 +52,7 @@ getDirectory("desktop").then((dir) => {
         },
         (state: WatchState) => {
             if (state.action === "add") {
-                if (state.path && state.path.indexOf(".jpg") > 0) {
+                if (state.path != null && isMedia(state)) {
                     addFile(paths.value, state.path);
                 }
             }

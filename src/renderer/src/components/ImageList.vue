@@ -16,7 +16,7 @@ type Image = {
 };
 const store = usePhotosStore();
 
-const { files } = storeToRefs(store);
+const { files, currentFolder } = storeToRefs(store);
 const { thumbnailSize } = storeToRefs(usePreferenceStore());
 
 const fallback = ref(
@@ -28,10 +28,12 @@ const cards = computed(() => {
     files.value.forEach((value, key) => {
         const images: Image[] = [];
         value.forEach((value) => {
-            images.push({
-                key: value,
-                src: `file://${value}`,
-            });
+            if (value.indexOf(currentFolder.value) >= 0) {
+                images.push({
+                    key: value,
+                    src: `file://${value}`,
+                });
+            }
         });
         cards.push({
             title: key,

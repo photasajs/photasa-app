@@ -11,7 +11,3 @@ export async function isImage(path): Promise<boolean> {
     const type = await getImageType(path);
     return type !== undefined || isVideo(path);
 }
-
-export function isVideo(path): boolean {
-    return isVideo(path);
-}

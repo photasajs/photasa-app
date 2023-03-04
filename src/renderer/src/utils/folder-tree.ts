@@ -1,5 +1,15 @@
 import type { DataNode } from "ant-design-vue/es/tree";
 
+const FolderFiles: Record<string, Set<string>> = {};
+
+function updateFileList(key, fileList: Set<string>): void {
+    FolderFiles[key] = new Set([...(FolderFiles[key] ?? []), ...fileList]);
+}
+
+export function getFolderFiles(key: string): Set<string> {
+    return FolderFiles[key] || new Set();
+}
+
 function normalizeRoot(root: DataNode): void {
     if (!root.children) {
         root.children = [];
@@ -39,7 +49,7 @@ function traverseTree(root: DataNode, pathParts: string[], path: string): DataNo
     normalizeRoot(root);
 
     if (pathParts.length <= 1) {
-        const child = root.children?.find((node) => node.key === pathParts[0]);
+        const child = root.children?.find((node) => node.key === path);
 
         if (!child) {
             root.children?.push({
@@ -48,21 +58,25 @@ function traverseTree(root: DataNode, pathParts: string[], path: string): DataNo
                 isLeaf: true,
             });
         }
+        // Leaf node, add file to root's list
+        updateFileList(root.key as string, new Set([path]));
         return root;
     }
 
-    let child = root.children?.find((node) => node.key === pathParts[0]);
+    let child = root.children?.find((node) => path.indexOf(node.key as string) >= 0);
     if (!child) {
         child = {
-            key: pathParts[0],
+            key: `${root.key}/${pathParts[0]}`,
             title: pathParts[0],
             children: [],
         };
 
         root.children?.push(child);
-
-        return traverseTree(child, pathParts.slice(1), path);
     }
 
-    return traverseTree(child, pathParts.slice(1), path);
+    traverseTree(child, pathParts.slice(1), path);
+
+    updateFileList(root.key as string, getFolderFiles(child.key as string));
+
+    return child;
 }
