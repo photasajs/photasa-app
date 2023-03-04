@@ -40,6 +40,7 @@ specifiers:
   motion: ^10.15.5
   pinia: ^2.0.32
   pinia-plugin-persistedstate: 3.1.0
+  prebuild-install: ^7.1.1
   prettier: ^2.8.4
   querystring: ^0.2.1
   radash: ^10.7.0
@@ -75,6 +76,7 @@ dependencies:
   motion: 10.15.5
   pinia: 2.0.32_hmuptsblhheur2tugfgucj7gc4
   pinia-plugin-persistedstate: 3.1.0_pinia@2.0.32
+  prebuild-install: 7.1.1
   querystring: 0.2.1
   radash: 10.7.0
   rxjs: 7.8.0
