@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
+import { getFolderFiles } from "@renderer/utils/folder-tree";
 
 type Card = {
     title: string;
@@ -16,7 +17,7 @@ type Image = {
 };
 const store = usePhotosStore();
 
-const { files, currentFolder } = storeToRefs(store);
+const { currentFolder } = storeToRefs(store);
 const { thumbnailSize } = storeToRefs(usePreferenceStore());
 
 const fallback = ref(
@@ -26,7 +27,7 @@ const fallback = ref(
 const cards = computed(() => {
     const cards: Card[] = [];
     const images: Image[] = [];
-    files.value.get(currentFolder.value)?.forEach((value) => {
+    getFolderFiles(currentFolder.value)?.forEach((value) => {
         if (value.indexOf(currentFolder.value) >= 0) {
             images.push({
                 key: value,
