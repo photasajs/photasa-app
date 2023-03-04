@@ -6,6 +6,14 @@ type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (action: FileAction | string | undefined) => void;
 type PathName = "home" | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
 
+
+interface ThumbnailRequest {
+    path: string,
+    thumbnail: string,
+    width: number,
+    height: number,
+
+}
 interface DirectorySelection {
     filePaths: string[];
 }
@@ -20,6 +28,7 @@ interface WatchState {
     error?: Error;
     isImage: boolean;
     isVideo: boolean;
+    thumbnail: string;
 }
 // contextBridge can only return few type, Promise is support, but rxjs is not.
 declare global {
@@ -31,6 +40,7 @@ declare global {
             importPhotos: (paths: string[], target: string, callback: ImportCallback) => void;
             chooseDirectory: () => Promise<DirectorySelection>;
             getDirectory: (name: PathName) => Promise<string>;
+            createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
         };
     }
 }

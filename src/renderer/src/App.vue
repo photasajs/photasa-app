@@ -8,7 +8,7 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { startWatching, setupMenu, getDirectory, stopWatching } from "@renderer/utils/api";
+import { startWatching, setupMenu, getDirectory, stopWatching, createThumbnail } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
@@ -19,7 +19,7 @@ const photosStore = usePhotosStore();
 const { addFile } = photosStore;
 const { processingFile, currentFolder } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
-const { paths } = storeToRefs(preferenceStore);
+const { paths, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
 const visible = ref(false);
 const msg = computed(() => {
@@ -62,7 +62,8 @@ function startFileWatching(dirs): void {
             if (state.action === "add") {
                 if (state.path != null && isMedia(state)) {
                     processingFile.value = state.path ?? "";
-                    addFile(paths.value, state.path);
+
+                    addFile(paths.value, state.thumbnail);
                 }
             }
         },

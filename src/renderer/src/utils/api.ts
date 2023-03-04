@@ -4,6 +4,7 @@ import type {
     ImportCallback,
     DirectorySelection,
     PathName,
+    ThumbnailRequest,
 } from "src/preload/index.d";
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
@@ -34,4 +35,10 @@ export function setupMenu(callback: MenuCallback): void {
 
 export function getDirectory(name: PathName): Promise<string> {
     return window.api.getDirectory(name);
+}
+
+
+export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest>{
+    return window.api.createThumbnail(request);
+
 }

@@ -3,6 +3,7 @@ import { electronAPI } from "@electron-toolkit/preload";
 import { isImage } from "./image-helper";
 import isVideo from "is-video";
 import path from "path";
+import { ensureDirSync } from "fs-extra";
 
 const { ipcRenderer } = electronAPI;
 
@@ -25,20 +26,26 @@ function invokeCallback(args, callback: WatchCallback): void {
         }
         return;
     }
+    // Skip any thing start with dot
+    const fileName = path.basename(args.path);
+    if (fileName.startsWith(".") || args.path.indexOf(".picasaoriginal") >= 0) {
+        return;
+    }
 
     isImage(args.path).then((image) => {
         // Notify only action is error or ready
 
-        // Skip any thing start with dot
-        const fileName = path.basename(args.path);
-        if (fileName.startsWith(".")) {
-            return;
-        }
+
 
         // Only notify image and video
         args.isVideo = isVideo(args.path);
         args.isImage = image;
         if (args.isImage || args.isVideo) {
+            // Prepare thumbnail path
+            const dir = path.join(path.dirname(args.path), ".picasaoriginal");;
+            const thumbnail = path.join(dir, `thumbnail-${path.basename(args.path)}`)
+            args.thumbnail = thumbnail;
+            ensureDirSync(path.join(dir, ".picasaoriginal"));
             callback(args);
         }
     });
