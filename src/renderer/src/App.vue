@@ -15,7 +15,9 @@ import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
-const { addFile } = usePhotosStore();
+const photosStore = usePhotosStore();
+const { addFile } = photosStore;
+const { processingFile, currentFolder } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
 const { paths } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
@@ -59,6 +61,7 @@ function startFileWatching(dirs): void {
         (state: WatchState) => {
             if (state.action === "add") {
                 if (state.path != null && isMedia(state)) {
+                    processingFile.value = state.path ?? "";
                     addFile(paths.value, state.path);
                 }
             }
@@ -67,6 +70,7 @@ function startFileWatching(dirs): void {
 }
 
 getDirectory("desktop").then((dir) => {
+    currentFolder.value = paths.value[0];
     if (paths.value.length > 0) {
         startFileWatching(paths.value);
     }
@@ -77,6 +81,7 @@ getDirectory("desktop").then((dir) => {
     }
 
     loading.value = false;
+
 });
 
 setupMenu({
@@ -96,14 +101,12 @@ setupMenu({
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <a-layout class="image-content">
-                        <a-layout-content
-                            :style="{
-                                background: '#fff',
-                                margin: 0,
-                                padding: '24px 0 0 0',
-                                minHeight: '280px',
-                            }"
-                        >
+                        <a-layout-content :style="{
+                            background: '#fff',
+                            margin: 0,
+                            padding: '24px 0 0 0',
+                            minHeight: '280px',
+                        }">
                             <FolderList></FolderList>
                         </a-layout-content>
                     </a-layout>
@@ -111,30 +114,23 @@ setupMenu({
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content
-                            :style="{
-                                margin: 0,
-                                minHeight: '280px',
-                            }"
-                        >
+                        <a-layout-content :style="{
+                            margin: 0,
+                            minHeight: '280px',
+                        }">
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
                 </template>
             </split-view>
         </a-layout>
-        <a-layout-footer>Footer</a-layout-footer>
+        <a-layout-footer>{{ processingFile }}</a-layout-footer>
     </a-layout>
     <a-modal v-model:visible="visible" :mask-closable="false" title="Basic Modal" @ok="handleOk">
         <ImportPhotos></ImportPhotos>
     </a-modal>
-    <a-modal
-        v-model:visible="showPreference"
-        :mask-closable="false"
-        :title="msg.settings"
-        width="800px"
-        @ok="handlePreferenceOk"
-    >
+    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
+        @ok="handlePreferenceOk">
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -144,6 +140,7 @@ setupMenu({
 .content {
     height: calc(100vh - 70px);
 }
+
 #components-layout-demo-basic .code-box-demo {
     text-align: center;
 }
@@ -187,7 +184,7 @@ setupMenu({
     background: #107bcb;
 }
 
-#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
+#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
     margin-top: 48px;
 }
 </style>

@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 type PhotoState = {
     files: Map<string, Set<string>>;
     currentFolder: string;
+    processingFile: string;
 };
 
 export const usePhotosStore = defineStore("photos", {
@@ -12,6 +13,7 @@ export const usePhotosStore = defineStore("photos", {
         return {
             files,
             currentFolder: "",
+            processingFile: ""
         };
     },
     actions: {
