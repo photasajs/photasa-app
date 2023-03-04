@@ -22,7 +22,10 @@ export const usePreferenceStore = defineStore("preference", {
                 this.firstTime = false;
                 this.paths = [];
                 this.paths.push(path);
-            } else if (this.paths.indexOf(path) < 0) {
+                return;
+            }
+
+            if (!this.paths.find((p) => path.indexOf(p) >= 0)) {
                 this.paths.push(path);
                 this.paths = this.paths.sort();
             }

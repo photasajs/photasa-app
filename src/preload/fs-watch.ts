@@ -7,11 +7,27 @@ import path from "path";
 const { ipcRenderer } = electronAPI;
 
 function invokeCallback(args, callback: WatchCallback): void {
-    isImage(args.path).then((image) => {
-        // Notify only action is error or ready
-        if (args.isNotify) {
+    // Path is empty skip it.
+    if (args.paths?.length <= 0) {
+        return;
+    }
+
+    // Notify only action is error or ready
+    if (args.isNotify) {
+        callback(args);
+        return;
+    }
+
+    // Directory skip hidden
+    if (!args.isFile) {
+        if (path.basename(args.path).startsWith(".")) {
             callback(args);
         }
+        return;
+    }
+
+    isImage(args.path).then((image) => {
+        // Notify only action is error or ready
 
         // Skip any thing start with dot
         if (path.basename(args.path).startsWith(".")) {
@@ -25,6 +41,11 @@ function invokeCallback(args, callback: WatchCallback): void {
             callback(args);
         }
     });
+}
+
+export function stopWatching(): Promise<void> {
+    // Stop file watching
+    return ipcRenderer?.invoke("picasa:stop-file-watch");
 }
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {

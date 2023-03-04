@@ -8,6 +8,9 @@ export async function getImageType(path: string): Promise<ImageTypeResult | unde
 }
 
 export async function isImage(path): Promise<boolean> {
+    if (isVideo(path)) {
+        return true;
+    }
     const type = await getImageType(path);
-    return type !== undefined || isVideo(path);
+    return type !== undefined;
 }

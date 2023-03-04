@@ -49,15 +49,6 @@ function traverseTree(root: DataNode, pathParts: string[], path: string): DataNo
     normalizeRoot(root);
 
     if (pathParts.length <= 1) {
-        const child = root.children?.find((node) => node.key === path);
-
-        if (!child) {
-            root.children?.push({
-                key: path,
-                title: path,
-                isLeaf: true,
-            });
-        }
         // Leaf node, add file to root's list
         updateFileList(root.key as string, new Set([path]));
         return root;

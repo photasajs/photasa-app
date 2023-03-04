@@ -27,6 +27,7 @@ declare global {
         electron: ElectronAPI;
         api: {
             startWatching: (config: WatchConfig, callback: WatchCallback) => void;
+            stopWatching: () => Promise<void>;
             importPhotos: (paths: string[], target: string, callback: ImportCallback) => void;
             chooseDirectory: () => Promise<DirectorySelection>;
             getDirectory: (name: PathName) => Promise<string>;

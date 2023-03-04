@@ -25,21 +25,20 @@ const fallback = ref(
 
 const cards = computed(() => {
     const cards: Card[] = [];
-    files.value.forEach((value, key) => {
-        const images: Image[] = [];
-        value.forEach((value) => {
-            if (value.indexOf(currentFolder.value) >= 0) {
-                images.push({
-                    key: value,
-                    src: `file://${value}`,
-                });
-            }
-        });
-        cards.push({
-            title: key,
-            images,
-            parts: key.split("/"),
-        });
+    const images: Image[] = [];
+    files.value.get(currentFolder.value)?.forEach((value) => {
+        if (value.indexOf(currentFolder.value) >= 0) {
+            images.push({
+                key: value,
+                src: `file://${value}`,
+            });
+        }
+    });
+
+    cards.push({
+        title: currentFolder.value,
+        images,
+        parts: currentFolder.value.split("/"),
     });
 
     return cards;

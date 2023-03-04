@@ -4,7 +4,7 @@ import type { Logger } from "log4js";
 
 let FileWatherHandler: FSWatcher | undefined;
 export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger: Logger): void {
-    ipc.on("picasa:stop-file-watch", () => {
+    ipc.handle("picasa:stop-file-watch", () => {
         logger.info("Stop watching files......");
         FileWatherHandler?.close();
     });

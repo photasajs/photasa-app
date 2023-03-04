@@ -8,6 +8,7 @@ import type { TabsProps } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import About from "./About.vue";
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
+import { notification } from "ant-design-vue";
 
 const { t } = useI18n();
 
@@ -17,11 +18,25 @@ interface FormState {
 const store = usePreferenceStore();
 const { paths, thumbnailSize } = storeToRefs(store);
 
+function isDuplicate(path: string): boolean {
+    return paths.value.includes(path);
+}
 function onChoose(): void {
     chooseDirectory().then(({ filePaths }) => {
-        if (filePaths.length > 0) {
-            store.addPath(filePaths[0]);
+        if (isDuplicate(filePaths[0])) {
+            openNotificationWithIcon(
+                "warning",
+                "Duplicate folder",
+                `The folder [${filePaths[0]}] is already in the list`,
+            );
+            return;
         }
+        if (filePaths.length <= 0) {
+            openNotificationWithIcon("info", "Empty Path", "Please select a folder");
+            return;
+        }
+
+        store.addPath(filePaths[0]);
     });
 }
 const activeKey = ref(1);
@@ -49,6 +64,13 @@ const formItemLayout = computed(() => {
           }
         : {};
 });
+
+function openNotificationWithIcon(type: string, message, description): void {
+    notification[type]({
+        message,
+        description,
+    });
+}
 
 function handleRemove(item): void {
     store.removePath(item);

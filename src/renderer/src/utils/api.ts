@@ -10,6 +10,10 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
     window.api.startWatching(config, callback);
 }
 
+export function stopWatching(): Promise<void> {
+    return window.api.stopWatching();
+}
+
 export function importPhotos(paths: string[], target: string, callback: ImportCallback): void {
     window.api.importPhotos(paths, target, callback);
 }

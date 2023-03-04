@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -8,7 +8,7 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { startWatching, setupMenu, getDirectory } from "@renderer/utils/api";
+import { startWatching, setupMenu, getDirectory, stopWatching } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
@@ -40,15 +40,21 @@ function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;
 }
 
-getDirectory("desktop").then((dir) => {
-    // Desktop directory is ready
-    addPath(dir);
-    loading.value = false;
+watch(
+    () => paths,
+    () => {
+        // Stop current watching, then start a new one
+        stopWatching().then(() => {
+            startFileWatching(paths.value);
+        });
+    },
+);
 
+function startFileWatching(dirs): void {
     // start watching folders
     startWatching(
         {
-            paths: deepCopy(paths.value),
+            paths: deepCopy(dirs),
         },
         (state: WatchState) => {
             if (state.action === "add") {
@@ -58,6 +64,19 @@ getDirectory("desktop").then((dir) => {
             }
         },
     );
+}
+
+getDirectory("desktop").then((dir) => {
+    if (paths.value.length > 0) {
+        startFileWatching(paths.value);
+    }
+
+    // Desktop directory is ready
+    if (paths.value.find((p) => dir.indexOf(p) < 0)) {
+        addPath(dir);
+    }
+
+    loading.value = false;
 });
 
 setupMenu({
@@ -94,7 +113,6 @@ setupMenu({
                     <a-layout class="image-content">
                         <a-layout-content
                             :style="{
-                                background: '#fff',
                                 margin: 0,
                                 minHeight: '280px',
                             }"
