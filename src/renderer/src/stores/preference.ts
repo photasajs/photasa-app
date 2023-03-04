@@ -1,5 +1,6 @@
 // stores/photos.js
 import { defineStore } from "pinia";
+import { normalizePath } from "@renderer/utils/path";
 
 type PreferenceState = {
     paths: string[];
@@ -24,6 +25,8 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths.push(path);
                 return;
             }
+
+            path = normalizePath(path);
 
             if (!this.paths.find((p) => path.indexOf(p) >= 0)) {
                 this.paths.push(path);

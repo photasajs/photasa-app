@@ -1,4 +1,5 @@
 import type { DataNode } from "ant-design-vue/es/tree";
+import { mergePath } from "./path";
 
 const FolderFiles: Record<string, Set<string>> = {};
 
@@ -57,7 +58,7 @@ function traverseTree(root: DataNode, pathParts: string[], path: string): DataNo
     let child = root.children?.find((node) => path.indexOf(node.key as string) >= 0);
     if (!child) {
         child = {
-            key: `${root.key}/${pathParts[0]}`,
+            key: mergePath(root.key, pathParts[0]),
             title: pathParts[0],
             children: [],
         };
