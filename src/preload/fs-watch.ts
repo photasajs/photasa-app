@@ -30,7 +30,8 @@ function invokeCallback(args, callback: WatchCallback): void {
         // Notify only action is error or ready
 
         // Skip any thing start with dot
-        if (path.basename(args.path).startsWith(".")) {
+        const fileName = path.basename(args.path);
+        if (fileName.startsWith(".")) {
             return;
         }
 
