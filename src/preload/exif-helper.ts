@@ -2,7 +2,7 @@ import { of, from, Observable } from "rxjs";
 import { catchError } from "rxjs/operators";
 import moment from "moment";
 import fs from "fs-extra";
-import ExifReader, { Tags, XmpTags, IccTags } from "exifreader";
+import ExifReader, { Tags, XmpTags, IccTags, StringArrayTag } from "exifreader";
 import isImage from "is-image";
 import { FileAction } from "./file-action";
 
