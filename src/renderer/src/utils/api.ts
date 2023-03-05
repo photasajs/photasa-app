@@ -6,6 +6,7 @@ import type {
     PathName,
     ThumbnailRequest,
 } from "src/preload/index.d";
+import { useTask } from "vue-concurrency";
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
     window.api.startWatching(config, callback);
@@ -37,8 +38,9 @@ export function getDirectory(name: PathName): Promise<string> {
     return window.api.getDirectory(name);
 }
 
-
-export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest>{
-    return window.api.createThumbnail(request);
-
-}
+export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
+    const result = yield window.api.createThumbnail(request);
+    return result;
+})
+    .enqueue()
+    .maxConcurrency(3);

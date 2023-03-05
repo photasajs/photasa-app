@@ -13,7 +13,7 @@ import {
     setupMenu,
     getDirectory,
     stopWatching,
-    createThumbnail,
+    createThumbnailTask,
 } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
@@ -79,18 +79,25 @@ function startFileWatching(dirs): void {
                 }
                 // Skip any thing start with dot
                 if (parts.includes(".picasaoriginals")) {
-                    console.log(parts);
                     return;
                 }
 
                 if (isMedia(state)) {
                     processingFile.value = state.path ?? "";
 
-                    console.log(state.path);
-                    addFile(paths.value, {
-                        path: state.path as string,
-                        thumbnail: state.thumbnail,
-                    });
+                    createThumbnailTask
+                        .perform({
+                            path: state.path as string,
+                            thumbnail: state.thumbnail as string,
+                            width: thumbnailSize.value,
+                            height: thumbnailSize.value,
+                        })
+                        .then(() => {
+                            addFile(paths.value, {
+                                path: state.path as string,
+                                thumbnail: state.thumbnail,
+                            });
+                        });
                 }
             }
         },
