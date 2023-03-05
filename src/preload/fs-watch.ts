@@ -1,54 +1,24 @@
 import type { WatchConfig, WatchCallback } from "./index.d";
 import { electronAPI } from "@electron-toolkit/preload";
-import { isImage } from "./image-helper";
+import isImage from "is-image";
 import isVideo from "is-video";
 import path from "path";
-import { ensureDirSync } from "fs-extra";
 
 const { ipcRenderer } = electronAPI;
 
 function invokeCallback(args, callback: WatchCallback): void {
-    // Path is empty skip it.
-    if (args.paths?.length <= 0) {
-        return;
-    }
-
-    // Notify only action is error or ready
-    if (args.isNotify) {
-        callback(args);
-        return;
-    }
-
-    // Directory skip hidden
-    if (!args.isFile) {
-        if (path.basename(args.path).startsWith(".")) {
-            callback(args);
-        }
-        return;
-    }
-    // Skip any thing start with dot
-    const fileName = path.basename(args.path);
-    if (fileName.startsWith(".") || args.path.indexOf(".picasaoriginal") >= 0) {
-        return;
-    }
-
-    isImage(args.path).then((image) => {
-        // Notify only action is error or ready
-
-
-
+    if (args.isFile) {
         // Only notify image and video
         args.isVideo = isVideo(args.path);
-        args.isImage = image;
-        if (args.isImage || args.isVideo) {
-            // Prepare thumbnail path
-            const dir = path.join(path.dirname(args.path), ".picasaoriginal");;
-            const thumbnail = path.join(dir, `thumbnail-${path.basename(args.path)}`)
-            args.thumbnail = thumbnail;
-            ensureDirSync(path.join(dir, ".picasaoriginal"));
-            callback(args);
-        }
-    });
+        args.isImage = isImage(args.path);
+
+        // Prepare thumbnail path
+        const dir = path.join(path.dirname(args.path), ".picasaoriginals");
+        const thumbnail = path.join(dir, `thumbnail-${path.basename(args.path)}`);
+        args.thumbnail = thumbnail;
+    }
+
+    callback(args);
 }
 
 export function stopWatching(): Promise<void> {

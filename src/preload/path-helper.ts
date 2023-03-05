@@ -1,10 +1,10 @@
 import klaw from "klaw";
 import path from "path";
 import type { FileAction } from "./file-action";
-import { from, mergeMap, Observable, Subscriber } from "rxjs";
+import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
-import { isImage } from "./image-helper";
+import isImage from "is-image";
 
 export interface PathOption {
     root?: string;
@@ -49,11 +49,9 @@ export function scanFolder(source: string, target: string): Observable<FileActio
                 subscriber.complete();
             });
     }).pipe(
-        mergeMap((action: FileAction) => {
-            return isImage(action.file).then((isImage) => {
-                action.isImage = isImage;
-                return action;
-            });
+        map((action: FileAction) => {
+            action.isImage = isImage(action.file);
+            return action;
         }),
         mergeMap((action: FileAction) => resolveExifDate(action)),
     );
@@ -64,14 +62,12 @@ export function scanCurrentFolder(source, depth): Observable<FileAction> {
         klaw(source, { depthLimit: depth || 1 })
             .on("data", (item) => {
                 if (item.stats.isDirectory() && item.path != source) {
-                    isImage(item.path).then((isImage) => {
-                        subscriber.next({
-                            file: item.path,
-                            name: path.basename(item.path),
-                            created: item.stats.birthtime,
-                            targetDir: path.dirname(item.path),
-                            isImage,
-                        });
+                    subscriber.next({
+                        file: item.path,
+                        name: path.basename(item.path),
+                        created: item.stats.birthtime,
+                        targetDir: path.dirname(item.path),
+                        isImage: isImage(item.path),
                     });
                 }
             })

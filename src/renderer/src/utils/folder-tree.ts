@@ -1,14 +1,19 @@
 import type { DataNode } from "ant-design-vue/es/tree";
 import { mergePath } from "./path";
 
-const FolderFiles: Record<string, Set<string>> = {};
+export type Photo = {
+    path: string;
+    thumbnail: string;
+};
 
-function updateFileList(key, fileList: Set<string>): void {
+const FolderFiles: Record<string, Set<Photo>> = {};
+
+function updateFileList(key, fileList: Set<Photo>): void {
     const normalizedKey = mergePath(key, "");
     FolderFiles[normalizedKey] = new Set([...(FolderFiles[normalizedKey] ?? []), ...fileList]);
 }
 
-export function getFolderFiles(key: string): Set<string> {
+export function getFolderFiles(key: string): Set<Photo> {
     const normalizedKey = mergePath(key, "");
     return FolderFiles[normalizedKey] || new Set();
 }
@@ -23,21 +28,21 @@ function normalizeRoot(root: DataNode): void {
     }
 }
 
-export function buildDataNode(roots: DataNode[], path: string): void {
-    let pathParts = path.split("/").filter((part) => part !== "");
+export function buildDataNode(roots: DataNode[], file: Photo): void {
+    let pathParts = file.path.split("/").filter((part) => part !== "");
     if (pathParts.length === 0) {
         return;
     }
     if (pathParts.length === 1) {
         roots.push({
-            key: mergePath(path),
-            title: path,
+            key: mergePath(file.path),
+            title: file.path,
             children: [],
         });
         return;
     }
 
-    let root = roots.find((node) => path.indexOf(node.key as string) >= 0);
+    let root = roots.find((node) => file.path.indexOf(node.key as string) >= 0);
     if (!root) {
         root = {
             key: mergePath(pathParts[0]),
@@ -46,23 +51,23 @@ export function buildDataNode(roots: DataNode[], path: string): void {
         };
         roots.push(root);
     }
-    pathParts = path
+    pathParts = file.path
         .replace(root.key as string, "")
         .split("/")
         .filter((part) => part !== "");
-    traverseTree(root, pathParts, path);
+    traverseTree(root, pathParts, file);
 }
 
-function traverseTree(root: DataNode, pathParts: string[], path: string): DataNode {
+function traverseTree(root: DataNode, pathParts: string[], file: Photo): DataNode {
     normalizeRoot(root);
 
     if (pathParts.length <= 1) {
         // Leaf node, add file to root's list
-        updateFileList(root.key as string, new Set([path]));
+        updateFileList(root.key as string, new Set([file]));
         return root;
     }
 
-    let child = root.children?.find((node) => path.indexOf(node.key as string) >= 0);
+    let child = root.children?.find((node) => file.path.indexOf(node.key as string) >= 0);
     if (!child) {
         child = {
             key: mergePath(root.key as string, pathParts[0]),
@@ -73,7 +78,7 @@ function traverseTree(root: DataNode, pathParts: string[], path: string): DataNo
         root.children?.push(child);
     }
 
-    traverseTree(child, pathParts.slice(1), path);
+    traverseTree(child, pathParts.slice(1), file);
 
     updateFileList(root.key as string, getFolderFiles(child.key as string));
 
