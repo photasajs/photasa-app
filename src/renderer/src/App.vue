@@ -78,7 +78,8 @@ function startFileWatching(dirs): void {
                     return;
                 }
                 // Skip any thing start with dot
-                if (parts.includes(".picasaoriginals")) {
+                const fileName = parts[parts.length - 1];
+                if (fileName.startsWith(".") || parts.includes(".picasaoriginals")) {
                     return;
                 }
 

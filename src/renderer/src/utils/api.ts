@@ -5,6 +5,7 @@ import type {
     DirectorySelection,
     PathName,
     ThumbnailRequest,
+    ImageInfo,
 } from "src/preload/index.d";
 import { useTask } from "vue-concurrency";
 
@@ -44,3 +45,7 @@ export const createThumbnailTask = useTask(function* (_, request: ThumbnailReque
 })
     .enqueue()
     .maxConcurrency(3);
+
+export function getImageType(path: string): Promise<ImageInfo> {
+    return window.api.getImageType(path);
+}
