@@ -24,6 +24,7 @@
     "dependencies": {
         "@ant-design/icons-vue": "^6.1.0",
         "@babel/core": "7.21.0",
+        "@bugsnag/electron": "^7.20.0",
         "@bugsnag/js": "7.20.0",
         "@bugsnag/plugin-vue": "7.19.0",
         "@electron-toolkit/preload": "1.0.3",

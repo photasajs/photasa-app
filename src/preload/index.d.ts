@@ -6,13 +6,11 @@ type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (action: FileAction | string | undefined) => void;
 type PathName = "home" | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
 
-
 interface ThumbnailRequest {
-    path: string,
-    thumbnail: string,
-    width: number,
-    height: number,
-
+    path: string;
+    thumbnail: string;
+    width: number;
+    height: number;
 }
 interface DirectorySelection {
     filePaths: string[];

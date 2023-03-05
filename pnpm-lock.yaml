@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 specifiers:
   '@ant-design/icons-vue': ^6.1.0
   '@babel/core': 7.21.0
+  '@bugsnag/electron': ^7.20.0
   '@bugsnag/js': 7.20.0
   '@bugsnag/plugin-vue': 7.19.0
   '@electron-toolkit/preload': 1.0.3
@@ -62,6 +63,7 @@ specifiers:
 dependencies:
   '@ant-design/icons-vue': 6.1.0_vue@3.2.47
   '@babel/core': 7.21.0
+  '@bugsnag/electron': 7.20.0
   '@bugsnag/js': 7.20.0
   '@bugsnag/plugin-vue': 7.19.0
   '@electron-toolkit/preload': 1.0.3_electron@23.0.0
@@ -514,6 +516,63 @@ packages:
     resolution: {integrity: sha512-cIwzC93r3PQ/INeuwtZwkZIG2K8WWN0rRLZQhu+mr48Ay+i6sEki4GYfTsflse7hZ1BeDWrNb/Q9vgY3B31xHQ==}
     dev: false
 
+  /@bugsnag/delivery-electron/7.19.0_qm2ibapw5zphyfojo4akezzblu:
+    resolution: {integrity: sha512-L1drJ2ldYqlodDCqGR3wL0voHE6BjcE0oCDBwnv2Kz01nAkISNmy5E4nMwSjJwbwJaniDXA8/pTMRynWZMO8Ww==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+      '@bugsnag/electron-network-status': ^7.10.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      '@bugsnag/electron-network-status': 7.19.0_@bugsnag+core@7.19.0
+    dev: false
+
+  /@bugsnag/electron-filestore/7.16.2:
+    resolution: {integrity: sha512-nMoSwsIIePj+JJOG/FDRtcKYhax3kF297KcejEVXP42LBqZpDAROaMrgsFxH6E3RTab4P8hyyYD1t3Ffjh+aag==}
+    dev: false
+
+  /@bugsnag/electron-network-status/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-GnQFudrNDEnAmCDit5liFTXRHGmi8ZnGgwXD7LTQTzOxL0+KEvvS0G4CeXl1A5h6y/QhpxYGyLV6tfw5ppf8QA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.10.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/electron/7.20.0:
+    resolution: {integrity: sha512-KI0lWw196VbmeScvjuDUSZS5X0h8btxRY6S1ITj0Ovbg9xobdTUrVfh4/6NNLLsUvmxZoD+ZYuwoPKJjxE0bBQ==}
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      '@bugsnag/delivery-electron': 7.19.0_qm2ibapw5zphyfojo4akezzblu
+      '@bugsnag/electron-filestore': 7.16.2
+      '@bugsnag/electron-network-status': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-console-breadcrumbs': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-app': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-app-breadcrumbs': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-client-state-manager': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-client-state-persistence': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-deliver-minidumps': 7.19.0_qm2ibapw5zphyfojo4akezzblu
+      '@bugsnag/plugin-electron-device': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-ipc': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-net-breadcrumbs': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-network-status': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-preload-error': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-process-info': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-renderer-client-state-updates': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-electron-renderer-event-data': 7.19.0_rwtkkddjzoamiy4slflv2i4avi
+      '@bugsnag/plugin-electron-renderer-strip-project-root': 7.19.0
+      '@bugsnag/plugin-electron-session': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-interaction-breadcrumbs': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-internal-callback-marker': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-network-breadcrumbs': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-node-surrounding-code': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-node-uncaught-exception': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-node-unhandled-rejection': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-stackframe-path-normaliser': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-strip-project-root': 7.19.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-window-onerror': 7.20.0_@bugsnag+core@7.19.0
+      '@bugsnag/plugin-window-unhandled-rejection': 7.19.0_@bugsnag+core@7.19.0
+    dev: false
+
   /@bugsnag/js/7.20.0:
     resolution: {integrity: sha512-lhUUSOveE8fP10RagAINqBmuH+eoOpyUOiTN1WRkjHUevWG0LZjRRUWEGN3AA+ZyTphmC6ljd2qE3/64qfOSGQ==}
     dependencies:
@@ -532,6 +591,216 @@ packages:
       stack-generator: 2.0.10
     dev: false
 
+  /@bugsnag/plugin-browser-session/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-AdgKF9lnavWFSOVbldrTfE59vorcfUlxECorHucjZ5/Az9ctJxDWC1HceAT+diEMcdFgVmivKiiqegEcyCsDdw==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-console-breadcrumbs/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-ZHqPAK0WpbvWjj2wwSV8+C8+K9TOyQsfZnRJ7lIadbeUUJORmFRnG0vUHKBvwxMP7bqCj8fOe/S0kKF3dfMMKA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-app-breadcrumbs/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-ALCfw0RV3tqi/A1yTzfl8S74WXMcR3FATHucmLZITF71an9hMti2G17MX8BllQMp9Db8oA0/j2c0ZQ4C2xc9jA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      lodash.debounce: 4.0.8
+    dev: false
+
+  /@bugsnag/plugin-electron-app/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-3FkA0dSb3y3Mc1YoKb0c/6yn3blQNiVWcXcey7pCGleG+kZOLTWVZVqNKAFb60TLd9r0nk0ge94My8SJ+phWRQ==}
+    requiresBuild: true
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      bindings: 1.5.0
+    dev: false
+
+  /@bugsnag/plugin-electron-client-state-manager/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-UseMfMFY46wMKJterc5C9dDAslrGTDuejNo950nHVRZQH0Lm3HRJorIfKwIvRDCfBFhBXqB5AIAy8yakV9/7Dw==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-client-state-persistence/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-CuRx1Mj3xjfKr+8CpTTlhFlvqGEEaUWJnipHOaYDuzlJk/N96yUokdxgvZujhYujiUX2JzKpfZPQOGAvhzpuxw==}
+    requiresBuild: true
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      bindings: 1.5.0
+    dev: false
+
+  /@bugsnag/plugin-electron-deliver-minidumps/7.19.0_qm2ibapw5zphyfojo4akezzblu:
+    resolution: {integrity: sha512-mZXonp+WYRopogsk+mYpeqx3F2jTWsOdTNmtCw3Ma8ZCksPwxgJsHwW4DLidS5AFqFfAm8rbAPpMrfndo615NA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+      '@bugsnag/electron-network-status': ^7.10.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      '@bugsnag/electron-network-status': 7.19.0_@bugsnag+core@7.19.0
+      form-data: 4.0.0
+    dev: false
+
+  /@bugsnag/plugin-electron-device/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-Ljc1EmGlslYgmDPomHN2Lx2rA1nrL9QoAoXWC4SdCFK/sLRYHsnmTclstTr/9nPUHQQoBAGOJutMKtF2UD2B+g==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-ipc/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-k+DuMoeJrWrzDJY2MIE2k77CmKCU0R/4p+yBAwC+vlYAlEcG9MZMEZkGETTtFKM3jQViIsFGoqP5PvO9MkbOaA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      '@bugsnag/safe-json-stringify': 6.0.0
+    dev: false
+
+  /@bugsnag/plugin-electron-net-breadcrumbs/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-imLAGnfTts8qrwo+htZYW7787CZNcPt3zp/TSUWaduDzsPxFFaWM0ufzSxY4M3bSPNSknUa4xpy41nr6fyojYA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-network-status/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-p0+5cRFVT8IVTLW5C0OKfVWWWQSd7KCNAQUVWSyFerS+lCNo1bi9zwKmERwr0xLaP5yZmGxHwQRqgk8nM6RthQ==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-preload-error/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-cOFq63D3AYUdVtOv3wyzTZHy7bX7ar0Cyeqo14tGSdXWN5aujCSzFUqa+bGy0Cvzdv0Ebc2GtWfvUR9IUAJa9w==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-process-info/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-J40GeqF/qXZxs3ZDrTjsxFLA7+MrFbRm1THgZ27UB1EQgIAQFwlRva7tgRm/jOEC80NmBWSfNT2kH9Lyu1BHig==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-renderer-client-state-updates/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-LMl6bQ1ubbLxcJsBOMLYme0nxCDiZ+8oo2rY9QQwls58HpmoLy17F+V8bynJD5891aPBE0Ve1k2GGsIyNqzngA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-renderer-event-data/7.19.0_rwtkkddjzoamiy4slflv2i4avi:
+    resolution: {integrity: sha512-vrGuHl7qoF8eJIyaEfCNvyGj932GjEix+sFgCPhM6j9fcVXOKx1UokBwxzzurcfBycWmCi5I7Pk5v0uCDMhNRA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+      '@bugsnag/plugin-electron-renderer-strip-project-root': ^7.10.0-alpha.1
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      '@bugsnag/plugin-electron-renderer-strip-project-root': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-electron-renderer-strip-project-root/7.19.0:
+    resolution: {integrity: sha512-neOhkKOSP5uNuhVYtbMyAPhjAvvkRQqh03Y3yt2bHHQZCGO1K/3hstzr2J0sd7pr50ykVJpj9Eq7kKAGpfnAeQ==}
+    dev: false
+
+  /@bugsnag/plugin-electron-session/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-FW5ozdETWI6xjdyegOvQLSKm1gw5wOOxa/UrgnrXABOSDh8bA7161812V9U8ZhGic/ySBWKHHLvU7SbRoTT09A==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      '@bugsnag/plugin-browser-session': 7.19.0_@bugsnag+core@7.19.0
+    dev: false
+
+  /@bugsnag/plugin-interaction-breadcrumbs/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-yGE+LTDzXz8c1T3aEi2Uheb8L6JqH+ZEZG50OeQsCV9pA6LDegvuti8lhrUhThn1Hn1WW2EGN7J4DVUbOH29yg==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-internal-callback-marker/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-Kdi9rgD9grBtU5n0Bb4REZCEgbDDjkXSwt4VMKNON76KAacdwTe/IyIlFfhxXov0L6pTg8p9We/lj7aCW0lQJA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.9.2
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-network-breadcrumbs/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-Farc0XuUoxv10kJE65zfgZlqujR7TDu8QjwxA4YDxEE41kFM8TAw0CAK15WkQK1UTsNACiiAETZGyU279eB65Q==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-node-surrounding-code/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-AlvL1M48LAN1zxPsd2A6EOoImKJGVL254HEmZhazxGsrXHRvodkeB9qsNLd5MRYQ+xNeIcK18MlBrLx7/f0b7Q==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+      byline: 5.0.0
+      pump: 3.0.0
+    dev: false
+
+  /@bugsnag/plugin-node-uncaught-exception/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-frjBZxFHyiv9Uc+sCXyruADA1Z/LWGBaopIYaBwDo4BR3Cz5e/TUm/CE9L3DO5niqmP85g7DJGotim2wVaXQog==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-node-unhandled-rejection/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-EEU0YaFtbbcDRnRHoyV5R9PbyuuGDqJsfys67X8DNMdmPs7C6e0FQarBhJ3G3tY+oso8vg+CRuciwLZNU/ViUw==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-stackframe-path-normaliser/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-rqlBHZkFeIQ5pKdgCwk57AfDle+MxhHsDRNwkE4olGS7O8s5Bf1stkFXkm/1ZA5ZAe2jKlHXpilXdIMm8r66Lg==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-strip-project-root/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-1S+b+TAsYORbrtGErL8AQzNsZjLLzvuLfopShERSBMEmj5b5ISSTTywWfl9+UJIiCz356tx9wr/Rx9rrp17u5w==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
   /@bugsnag/plugin-vue/7.19.0:
     resolution: {integrity: sha512-onZNsIkEw8OdHQHjp1cdE/k3rTn/sLFtLWYew2/7LKZq+cJxXkQF8QWbWs5P43M7aPPWr8rHzXYfSf3+PUyW/w==}
     peerDependencies:
@@ -539,6 +808,22 @@ packages:
     peerDependenciesMeta:
       '@bugsnag/core':
         optional: true
+    dev: false
+
+  /@bugsnag/plugin-window-onerror/7.20.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-8U6W934jGy7N3SRoc7MpBr2drWkhp3gK+Spe9156D5aAmd7Gq6tm8GYksF/7Tx9mqPSwyS00lloeGWfjQHHqJA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
+    dev: false
+
+  /@bugsnag/plugin-window-unhandled-rejection/7.19.0_@bugsnag+core@7.19.0:
+    resolution: {integrity: sha512-LIYwTLPUUQuebUJLyvJ2As4yE7EaoWvrgJh1RFcAO5fvak2eHlKgcLc8hPGgjH2PZTK/BGhMMbKlteoXH6uuJA==}
+    peerDependencies:
+      '@bugsnag/core': ^7.0.0
+    dependencies:
+      '@bugsnag/core': 7.19.0
     dev: false
 
   /@bugsnag/safe-json-stringify/6.0.0:
@@ -2166,7 +2451,6 @@ packages:
 
   /asynckit/0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
-    dev: true
 
   /at-least-node/1.0.0:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
@@ -2255,6 +2539,12 @@ packages:
   /binary-extensions/2.2.0:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
     engines: {node: '>=8'}
+    dev: false
+
+  /bindings/1.5.0:
+    resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
+    dependencies:
+      file-uri-to-path: 1.0.0
     dev: false
 
   /bl/4.1.0:
@@ -2576,7 +2866,6 @@ packages:
     engines: {node: '>= 0.8'}
     dependencies:
       delayed-stream: 1.0.0
-    dev: true
 
   /commander/2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
@@ -2745,7 +3034,6 @@ packages:
   /delayed-stream/1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
     engines: {node: '>=0.4.0'}
-    dev: true
 
   /detect-libc/2.0.1:
     resolution: {integrity: sha512-463v3ZeIrcWtdgIg6vI6XUncguvr2TnGl4SzDXinkt9mSLpBJKXT3mW6xT3VQdDN11+WVs29pgvivTc4Lp8v+w==}
@@ -3364,6 +3652,10 @@ packages:
       token-types: 5.0.1
     dev: true
 
+  /file-uri-to-path/1.0.0:
+    resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
+    dev: false
+
   /filelist/1.0.4:
     resolution: {integrity: sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==}
     dependencies:
@@ -3410,7 +3702,6 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
-    dev: true
 
   /fs-constants/1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}
@@ -4514,6 +4805,10 @@ packages:
     resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
     dev: true
 
+  /lodash.debounce/4.0.8:
+    resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
+    dev: false
+
   /lodash.escaperegexp/4.1.2:
     resolution: {integrity: sha512-TM9YBvyC84ZxE3rgfefxUWiQKLilstD6k7PTGt6wfbtXF8ixIJLOL3VYyV/z+ZiPLsVxAsKAFVwWlWeb2Y8Yyw==}
     dev: false
@@ -4642,14 +4937,12 @@ packages:
   /mime-db/1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
     engines: {node: '>= 0.6'}
-    dev: true
 
   /mime-types/2.1.35:
     resolution: {integrity: sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==}
     engines: {node: '>= 0.6'}
     dependencies:
       mime-db: 1.52.0
-    dev: true
 
   /mime/1.6.0:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}

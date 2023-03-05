@@ -70,7 +70,10 @@ const cards = computed(() => {
                         :width="thumbnailSize"
                         :height="thumbnailSize"
                         :src="image.src"
-                        :fallback="image.fallback"
+                        :fallback="fallback"
+                        :preview="{
+                            src: image.fallback,
+                        }"
                     />
                 </li>
             </ul>
