@@ -30,6 +30,9 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
     // Start file watching
     ipcRenderer?.send("picasa:start-file-watch", {
         paths: JSON.parse(JSON.stringify(config.paths)),
+        options: {
+            ignored: ".picasaoriginals",
+        },
     });
 
     // Response to event then save to pinia store
