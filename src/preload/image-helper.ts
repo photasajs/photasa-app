@@ -11,16 +11,7 @@ export async function getImageType(path: string): Promise<ImageTypeResult | unde
     return await imageType(buffer);
 }
 
-export async function isImage(path): Promise<boolean> {
-    if (isVideo(path)) {
-        return true;
-    }
-    const type = await getImageType(path);
-    return type !== undefined;
-}
-
-
-export function createThumbnail( request: ThumbnailRequest): Promise<ThumbnailRequest> {
+export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
     // Start file watching
     return ipcRenderer.invoke("picasa:create-thumbnail", request);
 }

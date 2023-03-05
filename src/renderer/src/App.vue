@@ -8,7 +8,13 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { startWatching, setupMenu, getDirectory, stopWatching, createThumbnail } from "@renderer/utils/api";
+import {
+    startWatching,
+    setupMenu,
+    getDirectory,
+    stopWatching,
+    createThumbnail,
+} from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
@@ -60,10 +66,31 @@ function startFileWatching(dirs): void {
         },
         (state: WatchState) => {
             if (state.action === "add") {
-                if (state.path != null && isMedia(state)) {
+                const path = state.path ?? "";
+                // Path is empty skip it.
+                if (path.length <= 0) {
+                    return;
+                }
+                const parts = path.split("/");
+
+                // Directory skip hidden
+                if (!state.isFile) {
+                    return;
+                }
+                // Skip any thing start with dot
+                if (parts.includes(".picasaoriginals")) {
+                    console.log(parts);
+                    return;
+                }
+
+                if (isMedia(state)) {
                     processingFile.value = state.path ?? "";
 
-                    addFile(paths.value, state.thumbnail);
+                    console.log(state.path);
+                    addFile(paths.value, {
+                        path: state.path as string,
+                        thumbnail: state.thumbnail,
+                    });
                 }
             }
         },
@@ -82,7 +109,6 @@ getDirectory("desktop").then((dir) => {
     }
 
     loading.value = false;
-
 });
 
 setupMenu({
@@ -102,12 +128,14 @@ setupMenu({
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            background: '#fff',
-                            margin: 0,
-                            padding: '24px 0 0 0',
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content
+                            :style="{
+                                background: '#fff',
+                                margin: 0,
+                                padding: '24px 0 0 0',
+                                minHeight: '280px',
+                            }"
+                        >
                             <FolderList></FolderList>
                         </a-layout-content>
                     </a-layout>
@@ -115,10 +143,12 @@ setupMenu({
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            margin: 0,
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content
+                            :style="{
+                                margin: 0,
+                                minHeight: '280px',
+                            }"
+                        >
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
@@ -130,8 +160,13 @@ setupMenu({
     <a-modal v-model:visible="visible" :mask-closable="false" title="Basic Modal" @ok="handleOk">
         <ImportPhotos></ImportPhotos>
     </a-modal>
-    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
-        @ok="handlePreferenceOk">
+    <a-modal
+        v-model:visible="showPreference"
+        :mask-closable="false"
+        :title="msg.settings"
+        width="800px"
+        @ok="handlePreferenceOk"
+    >
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -185,7 +220,7 @@ setupMenu({
     background: #107bcb;
 }
 
-#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
+#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
     margin-top: 48px;
 }
 </style>

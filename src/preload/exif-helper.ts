@@ -3,11 +3,11 @@ import { catchError } from "rxjs/operators";
 import moment from "moment";
 import fs from "fs-extra";
 import ExifReader, { StringArrayTag } from "exifreader";
-import { isImage } from "./image-helper";
+import isImage from "is-image";
 import { FileAction } from "./file-action";
 
 export async function checkExifDate(filePath: string): Promise<StringArrayTag | undefined> {
-    const image = await isImage(filePath);
+    const image = isImage(filePath);
     return new Promise((resolve, reject) => {
         if (image) {
             fs.readFile(filePath, function (error, data) {

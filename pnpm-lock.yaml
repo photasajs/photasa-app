@@ -29,6 +29,7 @@ specifiers:
   exifreader: ^4.9.2
   fs-extra: ^11.1.0
   image-type: ^5.2.0
+  is-image: ^3.1.0
   is-video: ^1.0.1
   jest: 29.4.3
   klaw: ^4.1.0
@@ -70,6 +71,7 @@ dependencies:
   electron-updater: 5.3.0
   exifreader: 4.9.2
   fs-extra: 11.1.0
+  is-image: 3.1.0
   is-video: 1.0.1
   log4js: 6.8.0
   moment: 2.29.4
@@ -3818,6 +3820,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       is-extglob: 2.1.1
+
+  /is-image/3.1.0:
+    resolution: {integrity: sha512-0sJQkCqLMZzyYl3XNYKjGnZDoZQ7dNOjKh9eFeS5OEu4y8UDPaI9szML8sB1pBVpqfYt/wmRy6e7TwZHkT0KIg==}
+    engines: {node: '>=8'}
+    dev: false
 
   /is-number/7.0.0:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}

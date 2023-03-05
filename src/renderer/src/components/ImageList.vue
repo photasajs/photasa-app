@@ -14,6 +14,7 @@ type Card = {
 type Image = {
     key: string;
     src: string;
+    fallback: string;
 };
 const store = usePhotosStore();
 
@@ -27,11 +28,12 @@ const fallback = ref(
 const cards = computed(() => {
     const cards: Card[] = [];
     const images: Image[] = [];
-    getFolderFiles(currentFolder.value)?.forEach((value) => {
-        if (value.indexOf(currentFolder.value) >= 0) {
+    getFolderFiles(currentFolder.value)?.forEach((file) => {
+        if (file.path.indexOf(currentFolder.value) >= 0) {
             images.push({
-                key: value,
-                src: `file://${value}`,
+                key: file.path,
+                src: `file://${file.thumbnail}`,
+                fallback: `file://${file.path}`,
             });
         }
     });
@@ -68,7 +70,7 @@ const cards = computed(() => {
                         :width="thumbnailSize"
                         :height="thumbnailSize"
                         :src="image.src"
-                        :fallback="fallback"
+                        :fallback="image.fallback"
                     />
                 </li>
             </ul>
