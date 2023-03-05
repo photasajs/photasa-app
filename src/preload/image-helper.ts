@@ -1,14 +1,18 @@
 import { readChunk } from "read-chunk";
-import imageType, { minimumBytes, ImageTypeResult } from "image-type";
-import isVideo from "is-video";
+import imageType, { minimumBytes } from "image-type";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { ThumbnailRequest } from "./index.d";
-
+import type { ThumbnailRequest, ImageInfo } from "./index.d";
+import { getExifInfo } from "./exif-helper";
 const { ipcRenderer } = electronAPI;
 
-export async function getImageType(path: string): Promise<ImageTypeResult | undefined> {
+export async function getImageType(path: string): Promise<ImageInfo> {
     const buffer = await readChunk(path, { length: minimumBytes });
-    return await imageType(buffer);
+    const tags = await getExifInfo(path);
+    const result = await imageType(buffer);
+    return {
+        imageType: result,
+        tags,
+    };
 }
 
 export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {

@@ -1,5 +1,4 @@
 import { ElectronAPI } from "@electron-toolkit/preload";
-import type { DirectorySelection } from "./choose-directory";
 
 type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
@@ -12,6 +11,12 @@ interface ThumbnailRequest {
     width: number;
     height: number;
 }
+
+interface ImageInfo {
+    imageType: ImageTypeResult;
+    tags: Tags | IccTags | XmpTags | undefined;
+}
+
 interface DirectorySelection {
     filePaths: string[];
 }
@@ -39,6 +44,7 @@ declare global {
             chooseDirectory: () => Promise<DirectorySelection>;
             getDirectory: (name: PathName) => Promise<string>;
             createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
+            getImageType: (path: string) => Promise<ImageInfo>;
         };
     }
 }

@@ -2,9 +2,30 @@ import { of, from, Observable } from "rxjs";
 import { catchError } from "rxjs/operators";
 import moment from "moment";
 import fs from "fs-extra";
-import ExifReader, { StringArrayTag } from "exifreader";
+import ExifReader, { Tags, XmpTags, IccTags } from "exifreader";
 import isImage from "is-image";
 import { FileAction } from "./file-action";
+
+export function getExifInfo(path: string): Promise<Tags | XmpTags | IccTags | undefined> {
+    return new Promise((resolve, reject) => {
+        fs.readFile(path, function (error, data) {
+            if (error) {
+                reject(error);
+            } else {
+                try {
+                    const tags = ExifReader.load(data.buffer);
+                    // The MakerNote tag can be really large. Remove it to lower memory
+                    // usage if you're parsing a lot of files and saving the tags.
+                    delete tags["MakerNote"];
+                    resolve(tags);
+                } catch (error) {
+                    // Most time. it's not a image file which have exif.
+                    resolve(undefined);
+                }
+            }
+        });
+    });
+}
 
 export async function checkExifDate(filePath: string): Promise<StringArrayTag | undefined> {
     const image = isImage(filePath);
