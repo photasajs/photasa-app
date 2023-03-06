@@ -30,9 +30,6 @@ const treeData = computed((): DataNode[] => {
     return roots;
 });
 
-watch(expandedKeys, () => {
-    console.log("expandedKeys", expandedKeys);
-});
 watch(selectedKeys, () => {
     console.log("selectedKeys", selectedKeys);
     photosStore.setCurrentFolder(selectedKeys.value[0]);
@@ -46,7 +43,7 @@ watch(selectedKeys, () => {
         :tree-data="treeData"
     >
         <template #title="{ title, key }">
-            <span v-if="key === '0-0-1-0'" style="color: #1890ff">{{ title }}</span>
+            <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
             <template v-else>{{ title }}</template>
         </template>
     </a-tree>

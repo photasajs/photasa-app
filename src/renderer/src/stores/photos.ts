@@ -27,7 +27,9 @@ export const usePhotosStore = defineStore("photos", {
             this.files.get(path)?.add(file);
         },
         setCurrentFolder(folder: string): void {
-            this.currentFolder = folder;
+            if (folder.length > 0) {
+                this.currentFolder = folder;
+            }
         },
     },
 });
