@@ -7,11 +7,5 @@
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "window.title": "${activeEditorShort}${separator}${rootName}${separator}${profileName} ${separator} [Branch: main]",
-  "cSpell.words": [
-    "esmodule",
-    "memfs",
-    "strtok"
-  ]
+  }
 }

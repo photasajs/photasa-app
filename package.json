@@ -46,6 +46,7 @@
         "querystring": "^0.2.1",
         "radash": "^10.7.0",
         "rxjs": "^7.8.0",
+        "sass": "^1.58.3",
         "sharp": "^0.31.3",
         "super-expressive": "^1.4.2",
         "vue-concurrency": "^4.0.0",
