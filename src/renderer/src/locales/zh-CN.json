@@ -8,5 +8,16 @@
         "watchFolderList": "仓廪图司可以管理下列目录中的照片和视频",
         "chooseDirectory": "选择目录并添加到列表",
         "thumbnailSize": "缩略图大小"
+    },
+    "import": {
+        "photos": "导入照片",
+        "allowDuplicateRename": "允许重命名重复的照片",
+        "targetDirectory": "导出目录",
+        "chooseDirectory": "选择导入目录",
+        "buttton": {
+            "import": "导入",
+            "cancel": "取消",
+            "ok": "确定"
+        }
     }
 }

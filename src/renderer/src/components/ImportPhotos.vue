@@ -1,28 +1,42 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import type { UnwrapRef } from "vue";
+import { UnwrapRef, computed } from "vue";
 import { reactive, ref } from "vue";
-import { usePhotosStore } from "@renderer/stores/photos";
+import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectory, importPhotos } from "@renderer/utils/api";
+import type { SelectProps } from "ant-design-vue";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
 
 interface FormState {
     name: string;
-    delivery: boolean;
+    allowDuplicateRename: boolean;
     type: string[];
     resource: string;
     desc: string;
     targetDir: string;
 }
+const { t } = useI18n();
+const label = computed(() => {
+    return {
+        photos: t("import.photos"),
+        chooseDirectory: t("import.chooseDirectory"),
+        targetDirectory: t("import.targetDirectory"),
+        allowDuplicateRename: t("import.allowDuplicateRename"),
+        import: t("import.button.import"),
+        cancel: t("import.button.cancel"),
+    };
+});
 
-const store = usePhotosStore();
-
+const store = usePreferenceStore();
+const { paths } = storeToRefs(store);
 const visible = ref(false);
 const processed = reactive<string[]>([]);
 const labelCol = reactive({ style: { width: "150px" } });
 const wrapperCol = reactive({ span: 14 });
 const formState: UnwrapRef<FormState> = reactive({
     name: "",
-    delivery: false,
+    allowDuplicateRename: true,
     type: [],
     resource: "",
     desc: "",
@@ -74,16 +88,25 @@ function onChoose(): void {
         }
     });
 }
+
+const pathOptions = computed<SelectProps["options"]>(() => {
+    return paths.value.map((path) => {
+        return {
+            value: path,
+            label: path,
+        };
+    });
+});
 </script>
 
 <template>
     <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
-        <a-form-item label="Choose a folder to import">
+        <a-form-item :label="label.chooseDirectory">
             <a-input v-model:value="formState.name" />
             <a-button type="primary" @click="onChoose">Choose Directory</a-button>
         </a-form-item>
-        <a-form-item label="Instant delivery">
-            <a-switch v-model:checked="formState.delivery" />
+        <a-form-item :label="label.allowDuplicateRename">
+            <a-switch v-model:checked="formState.allowDuplicateRename" />
         </a-form-item>
         <a-form-item label="Activity type">
             <a-checkbox-group v-model:value="formState.type">
@@ -99,7 +122,12 @@ function onChoose(): void {
             </a-radio-group>
         </a-form-item>
         <a-form-item label="Target Directory">
-            <a-input v-model:value="formState.targetDir" type="textarea" />
+            <a-select
+                ref="select"
+                v-model:value="formState.targetDir"
+                style="width: 100%"
+                :options="pathOptions"
+            ></a-select>
         </a-form-item>
         <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
             <a-button type="primary" @click="onImport">Import</a-button>

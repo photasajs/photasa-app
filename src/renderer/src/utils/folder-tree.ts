@@ -76,6 +76,7 @@ function traverseTree(root: DataNode, pathParts: string[], file: Photo): DataNod
         };
 
         root.children?.push(child);
+        root.children = root.children?.sort();
     }
 
     traverseTree(child, pathParts.slice(1), file);
