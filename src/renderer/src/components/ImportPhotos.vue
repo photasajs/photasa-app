@@ -16,6 +16,18 @@ interface FormState {
     desc: string;
     targetDir: string;
 }
+
+// Define props and emits
+const props = withDefaults(
+    defineProps<{
+        show: boolean;
+    }>(),
+    {
+        show: () => false,
+    },
+);
+const emit = defineEmits<{ (e: "update:show", show: boolean): void }>();
+
 const { t } = useI18n();
 const label = computed(() => {
     return {
@@ -30,7 +42,6 @@ const label = computed(() => {
 
 const store = usePreferenceStore();
 const { paths } = storeToRefs(store);
-const visible = ref(false);
 const processed = reactive<string[]>([]);
 const labelCol = reactive({ style: { width: "150px" } });
 const wrapperCol = reactive({ span: 14 });
@@ -42,6 +53,15 @@ const formState: UnwrapRef<FormState> = reactive({
     desc: "",
     targetDir: store.paths[0],
 });
+const showConfigModal = computed({
+    get() {
+        return props.show;
+    },
+    set(value) {
+        emit("update:show", value);
+    },
+});
+const visible = ref(false);
 
 type ImportArgs = {
     type: "next" | "error" | "complete";
@@ -63,15 +83,15 @@ const handler: Record<string, (args: ImportArgs | undefined) => void> = {
         if (args?.error?.message) {
             processed.push(args.error.message);
         }
-        visible.value = false;
+        showConfigModal.value = false;
     },
     complete: (): void => {
-        visible.value = false;
+        showConfigModal.value = false;
     },
 };
 
 function onImport(): void {
-    visible.value = true;
+    showConfigModal.value = true;
 
     const dir = `${formState.name}`;
     const paths = [...store.paths];
@@ -100,40 +120,47 @@ const pathOptions = computed<SelectProps["options"]>(() => {
 </script>
 
 <template>
-    <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
-        <a-form-item :label="label.chooseDirectory">
-            <a-input v-model:value="formState.name" />
-            <a-button type="primary" @click="onChoose">Choose Directory</a-button>
-        </a-form-item>
-        <a-form-item :label="label.allowDuplicateRename">
-            <a-switch v-model:checked="formState.allowDuplicateRename" />
-        </a-form-item>
-        <a-form-item label="Activity type">
-            <a-checkbox-group v-model:value="formState.type">
-                <a-checkbox value="1" name="type">Online</a-checkbox>
-                <a-checkbox value="2" name="type">Promotion</a-checkbox>
-                <a-checkbox value="3" name="type">Offline</a-checkbox>
-            </a-checkbox-group>
-        </a-form-item>
-        <a-form-item label="Resources">
-            <a-radio-group v-model:value="formState.resource">
-                <a-radio value="1">Sponsor</a-radio>
-                <a-radio value="2">Venue</a-radio>
-            </a-radio-group>
-        </a-form-item>
-        <a-form-item label="Target Directory">
-            <a-select
-                ref="select"
-                v-model:value="formState.targetDir"
-                style="width: 100%"
-                :options="pathOptions"
-            ></a-select>
-        </a-form-item>
-        <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
-            <a-button type="primary" @click="onImport">Import</a-button>
-            <a-button style="margin-left: 10px">Cancel</a-button>
-        </a-form-item>
-    </a-form>
+    <a-modal
+        v-model:visible="showConfigModal"
+        :mask-closable="false"
+        :title="label.photos"
+        @ok="onImport"
+    >
+        <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
+            <a-form-item :label="label.chooseDirectory">
+                <a-input v-model:value="formState.name" />
+                <a-button type="primary" @click="onChoose">Choose Directory</a-button>
+            </a-form-item>
+            <a-form-item :label="label.allowDuplicateRename">
+                <a-switch v-model:checked="formState.allowDuplicateRename" />
+            </a-form-item>
+            <a-form-item label="Activity type">
+                <a-checkbox-group v-model:value="formState.type">
+                    <a-checkbox value="1" name="type">Online</a-checkbox>
+                    <a-checkbox value="2" name="type">Promotion</a-checkbox>
+                    <a-checkbox value="3" name="type">Offline</a-checkbox>
+                </a-checkbox-group>
+            </a-form-item>
+            <a-form-item label="Resources">
+                <a-radio-group v-model:value="formState.resource">
+                    <a-radio value="1">Sponsor</a-radio>
+                    <a-radio value="2">Venue</a-radio>
+                </a-radio-group>
+            </a-form-item>
+            <a-form-item label="Target Directory">
+                <a-select
+                    ref="select"
+                    v-model:value="formState.targetDir"
+                    style="width: 100%"
+                    :options="pathOptions"
+                ></a-select>
+            </a-form-item>
+            <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
+                <a-button type="primary" @click="onImport">Import</a-button>
+                <a-button style="margin-left: 10px">Cancel</a-button>
+            </a-form-item>
+        </a-form>
+    </a-modal>
     <a-modal v-model:visible="visible" :mask-closable="false" :closable="false" title="Importing">
         <template #footer> </template>
         <a-list size="small" bordered :data-source="processed" class="import-message-list">
