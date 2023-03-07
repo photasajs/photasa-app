@@ -3,7 +3,6 @@ import { ref, computed, reactive } from "vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getFolderFiles } from "@renderer/utils/folder-tree";
 import { getImageType } from "@renderer/utils/api";
 import { trim } from "radash";
 import type { ImageTypeResult } from "image-type";
@@ -33,6 +32,7 @@ type ImageMeta = {
 const store = usePhotosStore();
 
 const { currentFolder } = storeToRefs(store);
+const { getFolderFiles } = store;
 const { thumbnailSize } = storeToRefs(usePreferenceStore());
 const showInfo = ref(false);
 const loadingInfo = ref(false);
@@ -93,6 +93,7 @@ function openImageMeta(image: Image): void {
                 }}</a-breadcrumb-item>
             </a-breadcrumb>
         </template>
+
         <div class="image-list">
             <ul v-if="card.images.length > 0">
                 <li

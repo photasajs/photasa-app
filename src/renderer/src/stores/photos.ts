@@ -1,11 +1,13 @@
 // stores/photos.js
 import { defineStore } from "pinia";
 import type { Photo } from "@renderer/utils/folder-tree";
+import { mergePath } from "@renderer/utils/path";
 
 type PhotoState = {
     files: Map<string, Set<Photo>>;
     currentFolder: string;
     processingFile: string;
+    folderFiles: Record<string, Set<Photo>>;
 };
 
 export const usePhotosStore = defineStore("photos", {
@@ -15,6 +17,7 @@ export const usePhotosStore = defineStore("photos", {
             files,
             currentFolder: "",
             processingFile: "",
+            folderFiles: {},
         };
     },
     actions: {
@@ -30,6 +33,19 @@ export const usePhotosStore = defineStore("photos", {
             if (folder.length > 0) {
                 this.currentFolder = folder;
             }
+        },
+
+        updateFileList(key: string, fileList: Set<Photo>): void {
+            const normalizedKey = mergePath(key, "");
+            this.folderFiles[normalizedKey] = new Set([
+                ...(this.folderFiles[normalizedKey] ?? []),
+                ...fileList,
+            ]);
+        },
+
+        getFolderFiles(key: string): Set<Photo> {
+            const normalizedKey = mergePath(key, "");
+            return this.folderFiles[normalizedKey] || new Set();
         },
     },
 });

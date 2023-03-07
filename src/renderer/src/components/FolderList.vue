@@ -10,6 +10,7 @@ const photosStore = usePhotosStore();
 const preferenceStore = usePreferenceStore();
 const { files } = storeToRefs(photosStore);
 const { paths } = storeToRefs(preferenceStore);
+const { updateFileList, getFolderFiles } = photosStore;
 
 const expandedKeys = ref<string[]>([preferenceStore.paths[0]]);
 const selectedKeys = ref<string[]>([preferenceStore.paths[0]]);
@@ -24,7 +25,10 @@ const treeData = computed((): DataNode[] => {
         });
 
         files.value.get(path)?.forEach((file) => {
-            buildDataNode(roots, file);
+            buildDataNode(roots, file, {
+                updateFileList,
+                getFolderFiles,
+            });
         });
     });
     return roots;
