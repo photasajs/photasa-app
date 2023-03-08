@@ -124,12 +124,17 @@ const pathOptions = computed<SelectProps["options"]>(() => {
         v-model:visible="showConfigModal"
         :mask-closable="false"
         :title="label.photos"
+        width="800px"
+        :ok-text="label.import"
+        :cancel-text="label.cancel"
         @ok="onImport"
     >
         <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
             <a-form-item :label="label.chooseDirectory">
-                <a-input v-model:value="formState.name" />
-                <a-button type="primary" @click="onChoose">Choose Directory</a-button>
+                <a-space>
+                    <a-input v-model:value="formState.name" width="800px" />
+                    <a-button type="primary" @click="onChoose">...</a-button>
+                </a-space>
             </a-form-item>
             <a-form-item :label="label.allowDuplicateRename">
                 <a-switch v-model:checked="formState.allowDuplicateRename" />
@@ -147,17 +152,13 @@ const pathOptions = computed<SelectProps["options"]>(() => {
                     <a-radio value="2">Venue</a-radio>
                 </a-radio-group>
             </a-form-item>
-            <a-form-item label="Target Directory">
+            <a-form-item :label="label.targetDirectory">
                 <a-select
                     ref="select"
                     v-model:value="formState.targetDir"
                     style="width: 100%"
                     :options="pathOptions"
                 ></a-select>
-            </a-form-item>
-            <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
-                <a-button type="primary" @click="onImport">Import</a-button>
-                <a-button style="margin-left: 10px">Cancel</a-button>
             </a-form-item>
         </a-form>
     </a-modal>
