@@ -3,11 +3,12 @@ import { ref, computed, reactive } from "vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getFolderFiles } from "@renderer/utils/folder-tree";
 import { getImageType } from "@renderer/utils/api";
 import { trim } from "radash";
 import type { ImageTypeResult } from "image-type";
+import { JsonTreeView } from "json-tree-view-vue3";
 import type { Tags, XmpTags, IccTags } from "exifreader";
+
 type Card = {
     title: string;
     parts: string[];
@@ -24,11 +25,14 @@ type ImageMeta = {
     imageType: ImageTypeResult;
     tags: Tags | XmpTags | IccTags;
     path: string;
+    maxDepth: number;
+    json: string;
 };
 
 const store = usePhotosStore();
 
 const { currentFolder } = storeToRefs(store);
+const { getFolderFiles } = store;
 const { thumbnailSize } = storeToRefs(usePreferenceStore());
 const showInfo = ref(false);
 const loadingInfo = ref(false);
@@ -62,6 +66,8 @@ const imageMeta = reactive<ImageMeta>({
     imageType: {} as ImageTypeResult,
     tags: {},
     path: "",
+    maxDepth: 3,
+    json: "",
 });
 
 function openImageMeta(image: Image): void {
@@ -71,6 +77,7 @@ function openImageMeta(image: Image): void {
     getImageType(path).then((info) => {
         loadingInfo.value = false;
         imageMeta.imageType = info.imageType ?? {};
+        imageMeta.json = JSON.stringify(info.tags ?? {});
         imageMeta.tags = info.tags ?? {};
         imageMeta.path = path;
     });
@@ -86,6 +93,7 @@ function openImageMeta(image: Image): void {
                 }}</a-breadcrumb-item>
             </a-breadcrumb>
         </template>
+
         <div class="image-list">
             <ul v-if="card.images.length > 0">
                 <li
@@ -129,16 +137,32 @@ function openImageMeta(image: Image): void {
         placement="right"
     >
         <a-spin :spinning="loadingInfo">
-            <a-descriptions title="Image Info" layout="vertical" bordered>
+            <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
+                <a-descriptions-item label="Image Width">{{
+                    imageMeta.tags["Image Width"].value
+                }}</a-descriptions-item>
+                <a-descriptions-item label="Image Height">{{
+                    imageMeta.tags["Image Height"].value
+                }}</a-descriptions-item>
                 <a-descriptions-item label="MIME Type">{{
                     imageMeta.imageType.mime
                 }}</a-descriptions-item>
                 <a-descriptions-item label="MIME Type">{{
                     imageMeta.imageType.ext
                 }}</a-descriptions-item>
-                <a-descriptions-item label="Location">{{ imageMeta.path }}</a-descriptions-item>
-                <a-descriptions-item label="Status" :span="3">
-                    {{ imageMeta.tags }}
+                <a-descriptions-item label="Location" :span="2">{{
+                    imageMeta.path
+                }}</a-descriptions-item>
+                <a-descriptions-item label="Status" :span="2">
+                    <a-layout
+                        :style="{
+                            height: '100%',
+                            width: '265px',
+                            overflow: 'auto',
+                        }"
+                    >
+                        <JsonTreeView :data="imageMeta.json" :max-depth="imageMeta.maxDepth" />
+                    </a-layout>
                 </a-descriptions-item>
             </a-descriptions>
         </a-spin>

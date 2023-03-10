@@ -15,11 +15,12 @@ Bugsnag.start({
 const PROD_MODE = process.env.NODE_ENV === "production";
 const logger = log4js.getLogger("main");
 logger.level = PROD_MODE ? "info" : "debug";
+let mainWindow: BrowserWindow;
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     // Create the browser window.
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width,
         height,
         show: false,
@@ -106,6 +107,7 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
     }
+    mainWindow = null;
 });
 
 // In this file you can include the rest of your app"s specific main process

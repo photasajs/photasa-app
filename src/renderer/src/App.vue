@@ -165,9 +165,9 @@ setupMenu({
         </a-layout>
         <a-layout-footer>{{ processingFile }}</a-layout-footer>
     </a-layout>
-    <a-modal v-model:visible="visible" :mask-closable="false" title="Basic Modal" @ok="handleOk">
-        <ImportPhotos></ImportPhotos>
-    </a-modal>
+
+    <ImportPhotos v-model:show="visible"></ImportPhotos>
+
     <a-modal
         v-model:visible="showPreference"
         :mask-closable="false"

@@ -1,33 +1,67 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import type { UnwrapRef } from "vue";
+import { UnwrapRef, computed } from "vue";
 import { reactive, ref } from "vue";
-import { usePhotosStore } from "@renderer/stores/photos";
+import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectory, importPhotos } from "@renderer/utils/api";
+import type { SelectProps } from "ant-design-vue";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
 
 interface FormState {
     name: string;
-    delivery: boolean;
+    allowDuplicateRename: boolean;
     type: string[];
     resource: string;
     desc: string;
     targetDir: string;
 }
 
-const store = usePhotosStore();
+// Define props and emits
+const props = withDefaults(
+    defineProps<{
+        show: boolean;
+    }>(),
+    {
+        show: () => false,
+    },
+);
+const emit = defineEmits<{ (e: "update:show", show: boolean): void }>();
 
-const visible = ref(false);
+const { t } = useI18n();
+const label = computed(() => {
+    return {
+        photos: t("import.photos"),
+        chooseDirectory: t("import.chooseDirectory"),
+        targetDirectory: t("import.targetDirectory"),
+        allowDuplicateRename: t("import.allowDuplicateRename"),
+        import: t("import.button.import"),
+        cancel: t("import.button.cancel"),
+    };
+});
+
+const store = usePreferenceStore();
+const { paths } = storeToRefs(store);
 const processed = reactive<string[]>([]);
 const labelCol = reactive({ style: { width: "150px" } });
 const wrapperCol = reactive({ span: 14 });
 const formState: UnwrapRef<FormState> = reactive({
     name: "",
-    delivery: false,
+    allowDuplicateRename: true,
     type: [],
     resource: "",
     desc: "",
     targetDir: store.paths[0],
 });
+const showConfigModal = computed({
+    get() {
+        return props.show;
+    },
+    set(value) {
+        emit("update:show", value);
+    },
+});
+const showProgressModal = ref(false);
 
 type ImportArgs = {
     type: "next" | "error" | "complete";
@@ -49,19 +83,18 @@ const handler: Record<string, (args: ImportArgs | undefined) => void> = {
         if (args?.error?.message) {
             processed.push(args.error.message);
         }
-        visible.value = false;
+        showProgressModal.value = false;
     },
     complete: (): void => {
-        visible.value = false;
+        showProgressModal.value = false;
     },
 };
 
 function onImport(): void {
-    visible.value = true;
+    showProgressModal.value = true;
 
     const dir = `${formState.name}`;
-    const paths = [...store.paths];
-    importPhotos([dir], paths[0], (args) => {
+    importPhotos([dir], formState.targetDir, (args) => {
         handler[args.type]?.call(null, args);
     });
 }
@@ -74,50 +107,75 @@ function onChoose(): void {
         }
     });
 }
+
+const pathOptions = computed<SelectProps["options"]>(() => {
+    return paths.value.map((path) => {
+        return {
+            value: path,
+            label: path,
+        };
+    });
+});
 </script>
 
 <template>
-    <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
-        <a-form-item label="Choose a folder to import">
-            <a-input v-model:value="formState.name" />
-            <a-button type="primary" @click="onChoose">Choose Directory</a-button>
-        </a-form-item>
-        <a-form-item label="Instant delivery">
-            <a-switch v-model:checked="formState.delivery" />
-        </a-form-item>
-        <a-form-item label="Activity type">
-            <a-checkbox-group v-model:value="formState.type">
-                <a-checkbox value="1" name="type">Online</a-checkbox>
-                <a-checkbox value="2" name="type">Promotion</a-checkbox>
-                <a-checkbox value="3" name="type">Offline</a-checkbox>
-            </a-checkbox-group>
-        </a-form-item>
-        <a-form-item label="Resources">
-            <a-radio-group v-model:value="formState.resource">
-                <a-radio value="1">Sponsor</a-radio>
-                <a-radio value="2">Venue</a-radio>
-            </a-radio-group>
-        </a-form-item>
-        <a-form-item label="Target Directory">
-            <a-input v-model:value="formState.targetDir" type="textarea" />
-        </a-form-item>
-        <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
-            <a-button type="primary" @click="onImport">Import</a-button>
-            <a-button style="margin-left: 10px">Cancel</a-button>
-        </a-form-item>
-    </a-form>
-    <a-modal v-model:visible="visible" :mask-closable="false" :closable="false" title="Importing">
+    <a-modal
+        v-model:visible="showConfigModal"
+        :mask-closable="false"
+        :title="label.photos"
+        width="800px"
+        :ok-text="label.import"
+        :cancel-text="label.cancel"
+        @ok="onImport"
+    >
+        <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
+            <a-form-item :label="label.chooseDirectory">
+                <a-space>
+                    <a-input v-model:value="formState.name" width="800px" />
+                    <a-button type="primary" @click="onChoose">...</a-button>
+                </a-space>
+            </a-form-item>
+            <a-form-item :label="label.allowDuplicateRename">
+                <a-switch v-model:checked="formState.allowDuplicateRename" />
+            </a-form-item>
+            <a-form-item label="Activity type">
+                <a-checkbox-group v-model:value="formState.type">
+                    <a-checkbox value="1" name="type">Online</a-checkbox>
+                    <a-checkbox value="2" name="type">Promotion</a-checkbox>
+                    <a-checkbox value="3" name="type">Offline</a-checkbox>
+                </a-checkbox-group>
+            </a-form-item>
+            <a-form-item label="Resources">
+                <a-radio-group v-model:value="formState.resource">
+                    <a-radio value="1">Sponsor</a-radio>
+                    <a-radio value="2">Venue</a-radio>
+                </a-radio-group>
+            </a-form-item>
+            <a-form-item :label="label.targetDirectory">
+                <a-select
+                    ref="select"
+                    v-model:value="formState.targetDir"
+                    style="width: 100%"
+                    :options="pathOptions"
+                ></a-select>
+            </a-form-item>
+        </a-form>
+    </a-modal>
+    <a-modal
+        v-model:visible="showProgressModal"
+        :mask-closable="false"
+        :closable="false"
+        title="Importing"
+    >
         <template #footer> </template>
         <a-list size="small" bordered :data-source="processed" class="import-message-list">
             <template #renderItem="{ item }">
                 <a-list-item>{{ item }}</a-list-item>
             </template>
             <template #header>
-                <div>Header</div>
+                <a-spin></a-spin>
             </template>
-            <template #footer>
-                <div>Footer</div>
-            </template>
+            <template #footer></template>
         </a-list>
     </a-modal>
 </template>

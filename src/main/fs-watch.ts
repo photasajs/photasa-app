@@ -10,6 +10,10 @@ export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger:
     });
 
     ipc.on("picasa:start-file-watch", (_event: IpcMainEvent, args) => {
+        // If handler is opened, close it.
+        if (FileWatherHandler) {
+            FileWatherHandler?.close();
+        }
         logger.info("Start watching files: ", args.paths);
         FileWatherHandler = chokidar.watch(args.paths, args.options);
         FileWatherHandler.on("add", (path) => {

@@ -15,7 +15,7 @@ Electron doesn't support ESM yet, then if a package is ESM, it will not be able 
 There are 3 section in electron.vite.config.js, For preload script, use @rollup/plugin-babel to re-bundle esm into cjs (commonjs)
 
 ```javascript
-module.export = { 
+module.export = {
     preload: {
         plugins: [externalizeDepsPlugin(), babel({ babelHelpers: "bundled" })],
     },
@@ -29,15 +29,13 @@ For other commonjs package, electron-builder package will package it properly.
 ### Install
 
 ```bash
-$ yarn install
+    yarn install
 ```
-
-
 
 ### Development
 
 ```bash
-$ yarn dev
+    yarn dev
 ```
 
 ### Build
@@ -63,5 +61,5 @@ Must turn on `script-src 'unsafe-eval'` to allow handling of json
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self' https://sessions.bugsnag.com/ https://notify.bugsnag.com/; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self';"
-    /> 
+    />
 ```

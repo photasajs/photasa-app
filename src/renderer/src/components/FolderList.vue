@@ -10,6 +10,7 @@ const photosStore = usePhotosStore();
 const preferenceStore = usePreferenceStore();
 const { files } = storeToRefs(photosStore);
 const { paths } = storeToRefs(preferenceStore);
+const { updateFileList, getFolderFiles } = photosStore;
 
 const expandedKeys = ref<string[]>([preferenceStore.paths[0]]);
 const selectedKeys = ref<string[]>([preferenceStore.paths[0]]);
@@ -24,15 +25,15 @@ const treeData = computed((): DataNode[] => {
         });
 
         files.value.get(path)?.forEach((file) => {
-            buildDataNode(roots, file);
+            buildDataNode(roots, file, {
+                updateFileList,
+                getFolderFiles,
+            });
         });
     });
     return roots;
 });
 
-watch(expandedKeys, () => {
-    console.log("expandedKeys", expandedKeys);
-});
 watch(selectedKeys, () => {
     console.log("selectedKeys", selectedKeys);
     photosStore.setCurrentFolder(selectedKeys.value[0]);
@@ -46,7 +47,7 @@ watch(selectedKeys, () => {
         :tree-data="treeData"
     >
         <template #title="{ title, key }">
-            <span v-if="key === '0-0-1-0'" style="color: #1890ff">{{ title }}</span>
+            <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
             <template v-else>{{ title }}</template>
         </template>
     </a-tree>
