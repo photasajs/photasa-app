@@ -61,7 +61,7 @@ const showConfigModal = computed({
         emit("update:show", value);
     },
 });
-const visible = ref(false);
+const showProgressModal = ref(false);
 
 type ImportArgs = {
     type: "next" | "error" | "complete";
@@ -83,19 +83,18 @@ const handler: Record<string, (args: ImportArgs | undefined) => void> = {
         if (args?.error?.message) {
             processed.push(args.error.message);
         }
-        showConfigModal.value = false;
+        showProgressModal.value = false;
     },
     complete: (): void => {
-        showConfigModal.value = false;
+        showProgressModal.value = false;
     },
 };
 
 function onImport(): void {
-    showConfigModal.value = true;
+    showProgressModal.value = true;
 
     const dir = `${formState.name}`;
-    const paths = [...store.paths];
-    importPhotos([dir], paths[0], (args) => {
+    importPhotos([dir], formState.targetDir, (args) => {
         handler[args.type]?.call(null, args);
     });
 }
@@ -162,18 +161,21 @@ const pathOptions = computed<SelectProps["options"]>(() => {
             </a-form-item>
         </a-form>
     </a-modal>
-    <a-modal v-model:visible="visible" :mask-closable="false" :closable="false" title="Importing">
+    <a-modal
+        v-model:visible="showProgressModal"
+        :mask-closable="false"
+        :closable="false"
+        title="Importing"
+    >
         <template #footer> </template>
         <a-list size="small" bordered :data-source="processed" class="import-message-list">
             <template #renderItem="{ item }">
                 <a-list-item>{{ item }}</a-list-item>
             </template>
             <template #header>
-                <div>Header</div>
+                <a-spin></a-spin>
             </template>
-            <template #footer>
-                <div>Footer</div>
-            </template>
+            <template #footer></template>
         </a-list>
     </a-modal>
 </template>

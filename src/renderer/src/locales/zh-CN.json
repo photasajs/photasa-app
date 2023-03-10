@@ -14,7 +14,7 @@
         "allowDuplicateRename": "允许重命名重复的照片",
         "targetDirectory": "导出目录",
         "chooseDirectory": "选择导入目录",
-        "buttton": {
+        "button": {
             "import": "导入",
             "cancel": "取消",
             "ok": "确定"
