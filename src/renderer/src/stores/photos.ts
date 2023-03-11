@@ -29,8 +29,21 @@ export const usePhotosStore = defineStore("photos", {
             }
             this.files.get(path)?.add(file);
         },
+        removeFile(paths: string[], file: Photo): void {
+            const path = paths.find((path) => file.path.startsWith(path)) ?? "";
+            // Files is set. will not add duplicate file
+
+            const files = this.files.get(path);
+            if (files) {
+                files.forEach((item) => {
+                    if (item.path === file.path) {
+                        files.delete(item);
+                    }
+                });
+            }
+        },
         setCurrentFolder(folder: string): void {
-            if (folder.length > 0) {
+            if (folder?.length > 0) {
                 this.currentFolder = folder;
             }
         },
@@ -41,6 +54,15 @@ export const usePhotosStore = defineStore("photos", {
                 ...(this.folderFiles[normalizedKey] ?? []),
                 ...fileList,
             ]);
+        },
+        removeFromFileList(photo: Photo): void {
+            Object.keys(this.folderFiles).forEach((key) => {
+                for (const item of this.folderFiles[key]) {
+                    if (item.path === photo.path) {
+                        this.folderFiles[key].delete(item);
+                    }
+                }
+            });
         },
 
         getFolderFiles(key: string): Set<Photo> {
