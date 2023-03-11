@@ -44,24 +44,27 @@ const mode = ref<TabsProps["tabPosition"]>("left");
 const formState: UnwrapRef<FormState> = reactive({
     name: "",
 });
-const msg = computed(() => {
+const label = computed(() => {
     return {
         watchFolderList: t("preference.watchFolderList"),
         chooseDirectory: t("preference.chooseDirectory"),
         thumbnailSize: t("preference.thumbnailSize"),
+        folderList: t("preference.folderList"),
+        folderListUsage: t("preference.folderListUsage"),
+        folderListDesc: t("preference.folderListDesc"),
         tabs: {
             general: t("preference.tabs.general"),
             about: t("preference.tabs.about"),
         },
     };
 });
-const formlayout = ref("vertical");
+const formLayout = ref("vertical");
 const formItemLayout = computed(() => {
-    return formlayout.value === "horizontal"
+    return formLayout.value === "horizontal"
         ? {
-              labelCol: { span: 4 },
-              wrapperCol: { span: 14 },
-          }
+            labelCol: { span: 4 },
+            wrapperCol: { span: 14 },
+        }
         : {};
 });
 
@@ -79,36 +82,23 @@ function handleRemove(item): void {
 
 <template>
     <a-tabs v-model:activeKey="activeKey" :tab-position="mode" :style="{ minHeight: '50vh' }">
-        <a-tab-pane :key="1" :tab="msg.tabs.general">
-            <a-form :model="formState" v-bind="formItemLayout" :layout="formlayout">
-                <a-form-item :label="msg.watchFolderList">
+        <a-tab-pane :key="1" :tab="label.tabs.general">
+            <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
+                <a-form-item :label="label.watchFolderList">
                     <a-space direction="vertical">
-                        <a-list
-                            size="small"
-                            bordered
-                            :data-source="paths"
-                            class="import-message-list"
-                        >
+                        <a-list size="small" bordered :data-source="paths" class="import-message-list">
                             <template #header>
-                                <a-descriptions title="Folder List">
-                                    <a-descriptions-item label="Usage"
-                                        >Watch change in the folder</a-descriptions-item
-                                    >
+                                <a-descriptions :title="label.folderList">
+                                    <a-descriptions-item :label="label.folderListUsage">{{ label.folderListDesc
+                                    }}</a-descriptions-item>
                                 </a-descriptions>
                             </template>
                             <template #renderItem="{ item }">
                                 <a-list-item>
                                     <template #actions>
-                                        <a-button @click="handleRemove(item)"
-                                            ><close-outlined
-                                        /></a-button>
+                                        <a-button @click="handleRemove(item)"><close-outlined /></a-button>
                                     </template>
-                                    <a-skeleton
-                                        avatar
-                                        :title="false"
-                                        :loading="!!item.loading"
-                                        active
-                                    >
+                                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                                         <a-list-item-meta>
                                             <template #title>
                                                 {{ item }}
@@ -123,16 +113,16 @@ function handleRemove(item): void {
                             <template #footer> </template>
                         </a-list>
                         <a-button type="primary" @click="onChoose">{{
-                            msg.chooseDirectory
+                            label.chooseDirectory
                         }}</a-button>
                     </a-space>
                 </a-form-item>
-                <a-form-item :label="`${msg.thumbnailSize}: ${thumbnailSize}px`">
+                <a-form-item :label="`${label.thumbnailSize}: ${thumbnailSize}px`">
                     <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
                 </a-form-item>
             </a-form>
         </a-tab-pane>
-        <a-tab-pane :key="2" :tab="msg.tabs.about">
+        <a-tab-pane :key="2" :tab="label.tabs.about">
             <About></About>
         </a-tab-pane>
     </a-tabs>
