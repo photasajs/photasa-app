@@ -3,7 +3,7 @@ import { electronAPI } from "@electron-toolkit/preload";
 import { startWatching, stopWatching } from "./fs-watch";
 import { importPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
-import { createThumbnail, getImageType } from "./image-helper";
+import { createThumbnail, getImageType, removeThumbnail } from "./image-helper";
 
 // Custom APIs for renderer
 const api = {
@@ -14,6 +14,7 @@ const api = {
     getDirectory,
     createThumbnail,
     getImageType,
+    removeThumbnail,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

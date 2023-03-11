@@ -8,11 +8,11 @@ const { ipcRenderer } = electronAPI;
 
 function invokeCallback(args, callback: WatchCallback): void {
     if (args.isFile) {
-        // Only notify image and video
+        // Use file name to check if it is a video or image
         args.isVideo = isVideo(args.path);
         args.isImage = isImage(args.path);
 
-        // Prepare thumbnail path
+        // Prepare thumbnail path for image
         const dir = path.join(path.dirname(args.path), ".picasaoriginals");
         const thumbnail = path.join(dir, `thumbnail-${path.basename(args.path)}`);
         args.thumbnail = thumbnail;
@@ -43,7 +43,7 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
         invokeCallback({ action: "change", isFile, path }, callback);
     });
     ipcRenderer?.on("picasa:file-unlink", (_, { isFile, path }) => {
-        invokeCallback({ action: "unlink", isFile, path }, callback);
+        invokeCallback({ action: "delete", isFile, path }, callback);
     });
     ipcRenderer?.on("picasa:file-raw", (_, { isFile, path }) => {
         invokeCallback({ action: "raw", isFile, path }, callback);

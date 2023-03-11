@@ -19,3 +19,8 @@ export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailReq
     // Start file watching
     return ipcRenderer.invoke("picasa:create-thumbnail", request);
 }
+
+export function removeThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
+    // Start file watching
+    return ipcRenderer.invoke("picasa:remove-thumbnail", request);
+}

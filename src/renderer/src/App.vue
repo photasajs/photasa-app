@@ -14,6 +14,7 @@ import {
     getDirectory,
     stopWatching,
     createThumbnailTask,
+    removeThumbnailTask,
 } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/index.d";
 import { deepCopy } from "./utils/object";
@@ -22,7 +23,7 @@ import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
-const { addFile } = photosStore;
+const { addFile, removeFile, removeFromFileList } = photosStore;
 const { processingFile, currentFolder } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
 const { paths, thumbnailSize } = storeToRefs(preferenceStore);
@@ -35,10 +36,6 @@ const msg = computed(() => {
 });
 const showPreference = ref(false);
 const loading = ref(false);
-
-function handleOk(): void {
-    visible.value = false;
-}
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
@@ -58,6 +55,76 @@ watch(
     },
 );
 
+function handleAddFile(state): void {
+    // Directory skip hidden
+    if (!state.isFile) {
+        return;
+    }
+
+    const path = state.path ?? "";
+    // Path is empty skip it.
+    if (path.length <= 0) {
+        return;
+    }
+
+    const parts = path.split("/");
+
+    // Skip any thing start with dot
+    const fileName = parts[parts.length - 1];
+    if (fileName.startsWith(".") || parts.includes(".picasaoriginals")) {
+        return;
+    }
+
+    if (isMedia(state)) {
+        processingFile.value = state.path ?? "";
+
+        createThumbnailTask
+            .perform({
+                path: state.path as string,
+                thumbnail: state.thumbnail as string,
+                width: thumbnailSize.value,
+                height: thumbnailSize.value,
+            })
+            .then(() => {
+                addFile(paths.value, {
+                    path: state.path as string,
+                    thumbnail: state.thumbnail,
+                });
+            });
+    }
+}
+
+function handleDeleteFile(state): void {
+    // Directory skip hidden
+    if (!state.isFile) {
+        return;
+    }
+
+    if (isMedia(state)) {
+        removeThumbnailTask.perform({
+            path: state.path as string,
+            thumbnail: state.thumbnail,
+            width: thumbnailSize.value,
+            height: thumbnailSize.value,
+        });
+
+        removeFile(paths.value, {
+            path: state.path as string,
+            thumbnail: state.thumbnail,
+        });
+
+        removeFromFileList({
+            path: state.path as string,
+            thumbnail: state.thumbnail,
+        });
+    }
+}
+
+const actions = {
+    add: handleAddFile,
+    delete: handleDeleteFile,
+};
+
 function startFileWatching(dirs): void {
     // start watching folders
     startWatching(
@@ -65,42 +132,8 @@ function startFileWatching(dirs): void {
             paths: deepCopy(dirs),
         },
         (state: WatchState) => {
-            if (state.action === "add") {
-                const path = state.path ?? "";
-                // Path is empty skip it.
-                if (path.length <= 0) {
-                    return;
-                }
-                const parts = path.split("/");
-
-                // Directory skip hidden
-                if (!state.isFile) {
-                    return;
-                }
-                // Skip any thing start with dot
-                const fileName = parts[parts.length - 1];
-                if (fileName.startsWith(".") || parts.includes(".picasaoriginals")) {
-                    return;
-                }
-
-                if (isMedia(state)) {
-                    processingFile.value = state.path ?? "";
-
-                    createThumbnailTask
-                        .perform({
-                            path: state.path as string,
-                            thumbnail: state.thumbnail as string,
-                            width: thumbnailSize.value,
-                            height: thumbnailSize.value,
-                        })
-                        .then(() => {
-                            addFile(paths.value, {
-                                path: state.path as string,
-                                thumbnail: state.thumbnail,
-                            });
-                        });
-                }
-            }
+            const handler = actions[state.action ?? ""];
+            handler?.apply(null, [state]);
         },
     );
 }

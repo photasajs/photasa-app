@@ -46,6 +46,13 @@ export const createThumbnailTask = useTask(function* (_, request: ThumbnailReque
     .enqueue()
     .maxConcurrency(3);
 
+export const removeThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
+    const result = yield window.api.removeThumbnail(request);
+    return result;
+})
+    .enqueue()
+    .maxConcurrency(1);
+
 export function getImageType(path: string): Promise<ImageInfo> {
     return window.api.getImageType(path);
 }

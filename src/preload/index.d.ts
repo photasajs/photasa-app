@@ -44,6 +44,7 @@ declare global {
             chooseDirectory: () => Promise<DirectorySelection>;
             getDirectory: (name: PathName) => Promise<string>;
             createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
+            removeThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
             getImageType: (path: string) => Promise<ImageInfo>;
         };
     }
