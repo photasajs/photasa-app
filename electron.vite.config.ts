@@ -18,5 +18,12 @@ export default defineConfig({
             },
         },
         plugins: [vue()],
+        css: {
+            preprocessorOptions: {
+                less: {
+                    javascriptEnabled: true,
+                },
+            },
+        },
     },
 });

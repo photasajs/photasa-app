@@ -6,6 +6,7 @@ type PreferenceState = {
     paths: string[];
     thumbnailSize: number;
     firstTime: boolean;
+    darkMode: boolean;
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -14,6 +15,7 @@ export const usePreferenceStore = defineStore("preference", {
             paths: [],
             thumbnailSize: 150,
             firstTime: true,
+            darkMode: false,
         };
     },
     persist: true,

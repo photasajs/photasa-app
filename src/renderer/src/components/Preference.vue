@@ -16,7 +16,7 @@ interface FormState {
     name: string;
 }
 const store = usePreferenceStore();
-const { paths, thumbnailSize } = storeToRefs(store);
+const { paths, thumbnailSize, darkMode } = storeToRefs(store);
 
 function isDuplicate(path: string): boolean {
     return paths.value.includes(path);
@@ -52,9 +52,11 @@ const label = computed(() => {
         folderList: t("preference.folderList"),
         folderListUsage: t("preference.folderListUsage"),
         folderListDesc: t("preference.folderListDesc"),
+        darkMode: t("preference.darkMode"),
         tabs: {
             general: t("preference.tabs.general"),
             about: t("preference.tabs.about"),
+            theme: t("preference.tabs.theme"),
         },
     };
 });
@@ -122,7 +124,14 @@ function handleRemove(item): void {
                 </a-form-item>
             </a-form>
         </a-tab-pane>
-        <a-tab-pane :key="2" :tab="label.tabs.about">
+        <a-tab-pane :key="2" :tab="label.tabs.theme">
+            <a-form :model="formState" v-bind="formItemLayout" layout="horizontal">
+                <a-form-item :label="label.darkMode">
+                    <a-switch v-model:checked="darkMode" />
+                </a-form-item>
+            </a-form>
+        </a-tab-pane>
+        <a-tab-pane :key="3" :tab="label.tabs.about">
             <About></About>
         </a-tab-pane>
     </a-tabs>

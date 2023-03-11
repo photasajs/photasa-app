@@ -26,7 +26,7 @@ const photosStore = usePhotosStore();
 const { addFile, removeFile, removeFromFileList } = photosStore;
 const { processingFile, currentFolder } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
-const { paths, thumbnailSize } = storeToRefs(preferenceStore);
+const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
 const visible = ref(false);
 const msg = computed(() => {
@@ -45,6 +45,22 @@ function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;
 }
 
+function updateTheme(): void {
+    if (darkMode.value) {
+        document.body.classList.add("dark");
+        document.body.classList.remove("light");
+    } else {
+        document.body.classList.remove("dark");
+        document.body.classList.add("light");
+    }
+}
+
+watch(
+    darkMode,
+    () => {
+        updateTheme();
+    },
+)
 watch(
     () => paths,
     () => {
@@ -160,6 +176,7 @@ setupMenu({
         showPreference.value = true;
     },
 });
+
 </script>
 
 <template>
@@ -169,14 +186,11 @@ setupMenu({
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <a-layout class="image-content">
-                        <a-layout-content
-                            :style="{
-                                background: '#fff',
-                                margin: 0,
-                                padding: '24px 0 0 0',
-                                minHeight: '280px',
-                            }"
-                        >
+                        <a-layout-content :style="{
+                            margin: 0,
+                            padding: '24px 0 0 0',
+                            minHeight: '280px',
+                        }">
                             <FolderList></FolderList>
                         </a-layout-content>
                     </a-layout>
@@ -184,12 +198,10 @@ setupMenu({
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content
-                            :style="{
-                                margin: 0,
-                                minHeight: '280px',
-                            }"
-                        >
+                        <a-layout-content :style="{
+                            margin: 0,
+                            minHeight: '280px',
+                        }">
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
@@ -201,13 +213,8 @@ setupMenu({
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal
-        v-model:visible="showPreference"
-        :mask-closable="false"
-        :title="msg.settings"
-        width="800px"
-        @ok="handlePreferenceOk"
-    >
+    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
+        @ok="handlePreferenceOk">
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -261,7 +268,7 @@ setupMenu({
     background: #107bcb;
 }
 
-#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
+#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
     margin-top: 48px;
 }
 </style>
