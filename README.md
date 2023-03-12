@@ -1,4 +1,4 @@
-# picasa-vue
+# Photasa
 
 Another Picasa App powered by [Electron Vite](https://evite.netlify.app/)
 

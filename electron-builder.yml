@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.thepicasa.photasa
 productName: Photasa
 directories:
   buildResources: build
