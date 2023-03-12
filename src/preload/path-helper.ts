@@ -5,9 +5,6 @@ import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
-import { electronAPI } from "@electron-toolkit/preload";
-
-const { ipcRenderer } = electronAPI;
 
 export interface PathOption {
     root?: string;
@@ -17,6 +14,12 @@ export interface FileException {
     code?: string;
 }
 
+/**
+ * Return path combined with root
+ * @param filepath
+ * @param options
+ * @returns
+ */
 export function toFullPath(filepath: string, options: PathOption): string {
     const _options = options || {};
     const root = _options.root;
@@ -45,6 +48,8 @@ export function scanFolder(source: string, target: string): Observable<FileActio
                         target,
                         isImage: false,
                         targetDir: "",
+                        targetFileName: "",
+                        targetFullPath: "",
                     });
                 }
             })
@@ -60,11 +65,8 @@ export function scanFolder(source: string, target: string): Observable<FileActio
     );
 }
 
-export function openInFinder(path: string): void {
-    ipcRenderer.send("picasa:open-in-finder", { path });
-}
 
-export function scanCurrentFolder(source, depth): Observable<FileAction> {
+export function scanCurrentFolder(source: string, depth: number): Observable<FileAction> {
     return new Observable<FileAction>((subscriber: Subscriber<FileAction>) => {
         klaw(source, { depthLimit: depth || 1 })
             .on("data", (item) => {
@@ -75,6 +77,8 @@ export function scanCurrentFolder(source, depth): Observable<FileAction> {
                         created: item.stats.birthtime,
                         targetDir: path.dirname(item.path),
                         isImage: isImage(item.path),
+                        targetFileName: "",
+                        targetFullPath: "",
                     });
                 }
             })

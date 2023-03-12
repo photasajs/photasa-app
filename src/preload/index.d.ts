@@ -1,4 +1,5 @@
 import { ElectronAPI } from "@electron-toolkit/preload";
+import { PathLike } from "fs";
 
 type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;

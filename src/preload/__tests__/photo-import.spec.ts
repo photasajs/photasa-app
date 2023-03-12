@@ -20,9 +20,9 @@ describe("photo-import", () => {
 
     it("should import photos", (done) => {
         expect.assertions(2);
-        importPhotos([IMAGE_PATH], TEST_PATH).subscribe({
-            next(result) {
-                expect(result).toStrictEqual({
+        importPhotos([IMAGE_PATH], TEST_PATH, (args) => {
+            if (args.type === "next") {
+                expect(args.action).toStrictEqual({
                     created: new Date("2018-09-20T19:25:22.000Z"),
                     file: path.join(__dirname, "/photos/test.jpg"),
                     isImage: true,
@@ -33,14 +33,12 @@ describe("photo-import", () => {
                     targetFullPath: path.join(__dirname, "/tests/2018/20180920/test.jpg"),
                     targetName: "2018/20180920",
                 });
-            },
-            error(err) {
-                throw err;
-            },
-            complete() {
+            } else if (args.type === "error") {
+                throw args.error;
+            } else if (args.type === "complete") {
                 expect(fs.existsSync(path.join(TEST_PATH, "2018/20180920/test.jpg"))).toBeTruthy();
                 done();
-            },
+            }
         });
     });
 });

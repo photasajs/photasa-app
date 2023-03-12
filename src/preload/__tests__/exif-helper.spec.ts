@@ -22,6 +22,8 @@ describe("exif-helper", () => {
                 name: "",
                 isImage: false,
                 targetDir: "",
+                targetFileName: "",
+                targetFullPath: "",
             }),
         );
         expect(date.created?.toString()).toBe(

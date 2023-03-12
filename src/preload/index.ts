@@ -4,7 +4,7 @@ import { startWatching, stopWatching } from "./fs-watch";
 import { importPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
 import { createThumbnail, getImageType, removeThumbnail } from "./image-helper";
-import { openInFinder } from "./path-helper";
+import { openInFinder } from "./shell-helper";
 
 // Custom APIs for renderer
 const api = {

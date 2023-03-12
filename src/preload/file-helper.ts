@@ -1,14 +1,10 @@
 import fs from "fs-extra";
 import path from "path";
 import { Observable, from } from "rxjs";
-import { FileAction } from "./file-action";
-import { toFullPath } from "./path-helper";
+import type { FileAction, FileException } from "./file-action";
+import { PathOption, toFullPath } from "./path-helper";
 
-export interface FileException {
-    code?: string;
-}
-
-export function fileExistSync(filepath, options?): boolean {
+export function fileExistSync(filepath: string, options?: PathOption): boolean {
     const _filepath = filepath || "";
     const _options = options || {};
     try {
@@ -25,7 +21,7 @@ export function fileExistSync(filepath, options?): boolean {
     }
 }
 
-export function copyFile(action): Observable<FileAction> {
+export function copyFile(action: FileAction): Observable<FileAction> {
     // copy file to target as 年/月/日
     action.targetFileName = path.basename(action.file);
     action.targetFullPath = path.join(action.targetDir, action.targetFileName);

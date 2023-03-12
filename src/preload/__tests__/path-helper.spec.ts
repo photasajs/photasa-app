@@ -26,6 +26,8 @@ describe("path-helper", () => {
                 targetName: "test.md",
                 name: "",
                 targetDir: "",
+                targetFileName: "",
+                targetFullPath: "",
             };
 
             await firstValueFrom<FileAction>(ensureDir(action));

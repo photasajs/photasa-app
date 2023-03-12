@@ -6,4 +6,10 @@ export interface FileAction {
     isImage: boolean;
     target?: string;
     targetDir: string;
+    targetFileName: string;
+    targetFullPath: string;
+}
+
+export interface FileException {
+    code?: string;
 }

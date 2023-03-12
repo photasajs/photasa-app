@@ -27,7 +27,10 @@ describe("copyFile", () => {
                 file: IMAGE_PATH,
                 name: path.basename(IMAGE_PATH),
                 targetDir: TEST_PATH,
-                create: new Date("2018-09-20T19:25:22.000Z"),
+                created: new Date("2018-09-20T19:25:22.000Z"),
+                isImage: false,
+                targetFileName: "",
+                targetFullPath: ""
             }),
         );
 
@@ -38,7 +41,10 @@ describe("copyFile", () => {
                 file: IMAGE_PATH,
                 name: path.basename(IMAGE_PATH),
                 targetDir: TEST_PATH,
-                create: new Date("2018-09-20T19:25:22.000Z"),
+                created: new Date("2018-09-20T19:25:22.000Z"),
+                isImage: true,
+                targetFileName: "",
+                targetFullPath: ""
             }),
         );
         expect(fs.existsSync(path.join(TEST_PATH, "test_1.jpg"))).toBeTruthy();

@@ -1,5 +1,5 @@
 import type { DataNode } from "ant-design-vue/es/tree";
-import { mergePath } from "@renderer/utils/path";
+import { mergePath } from "./path";
 
 export type Photo = {
     path: string;

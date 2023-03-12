@@ -14,6 +14,7 @@ specifiers:
   '@rushstack/eslint-patch': ^1.2.0
   '@types/fs-extra': 11.0.1
   '@types/jest': ^29.4.0
+  '@types/klaw': ^3.0.3
   '@types/node': 16.18.11
   '@types/read-chunk': ^3.1.0
   '@vitejs/plugin-vue': ^4.0.0
@@ -105,6 +106,7 @@ devDependencies:
   '@rollup/plugin-babel': 6.0.3_@babel+core@7.21.0
   '@rushstack/eslint-patch': 1.2.0
   '@types/jest': 29.4.0
+  '@types/klaw': 3.0.3
   '@types/node': 16.18.11
   '@types/read-chunk': 3.1.0
   '@vitejs/plugin-vue': 4.0.0_vite@4.1.4+vue@3.2.47
@@ -1776,6 +1778,12 @@ packages:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
       '@types/node': 16.18.11
+
+  /@types/klaw/3.0.3:
+    resolution: {integrity: sha512-mXlRDFbTLpVysvxahXUQav0hFctgu3Fqr2xmSrpf/ptO/FwOp7SFEGsJkEihwshMbof3/BIiVJ/o42cuOOuv6g==}
+    dependencies:
+      '@types/node': 16.18.11
+    dev: true
 
   /@types/minimatch/5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
