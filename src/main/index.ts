@@ -24,6 +24,7 @@ function createWindow(): void {
         width,
         height,
         show: false,
+        title: "Photasa",
         autoHideMenuBar: true,
         ...(process.platform === "linux" ? { icon } : {}),
         webPreferences: {
