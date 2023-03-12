@@ -5,6 +5,9 @@ import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
+import { electronAPI } from "@electron-toolkit/preload";
+
+const { ipcRenderer } = electronAPI;
 
 export interface PathOption {
     root?: string;
@@ -55,6 +58,10 @@ export function scanFolder(source: string, target: string): Observable<FileActio
         }),
         mergeMap((action: FileAction) => resolveExifDate(action)),
     );
+}
+
+export function openInFinder(path: string): void {
+    ipcRenderer.send("picasa:open-in-finder", { path });
 }
 
 export function scanCurrentFolder(source, depth): Observable<FileAction> {

@@ -9,6 +9,7 @@ import type { ImageTypeResult } from "image-type";
 import { JsonTreeView } from "json-tree-view-vue3";
 import type { Tags, XmpTags, IccTags } from "exifreader";
 import { useI18n } from "vue-i18n";
+import { openInFinder } from "@renderer/utils/api";
 
 const { t } = useI18n();
 
@@ -92,6 +93,11 @@ function openImageMeta(image: Image): void {
         imageMeta.path = path;
     });
 }
+
+function openFileInFilder(image: Image): void {
+    const path = `/${trim(image.fallback, "file://")}`;
+    openInFinder(path);
+}
 </script>
 
 <template>
@@ -130,7 +136,9 @@ function openImageMeta(image: Image): void {
                                 <a-menu-item key="1" @click="openImageMeta(image)">{{
                                     label.getInfo
                                 }}</a-menu-item>
-                                <a-menu-item key="2">{{ label.open }}</a-menu-item>
+                                <a-menu-item key="2" @click="openFileInFilder(image)">{{
+                                    label.open
+                                }}</a-menu-item>
                             </a-menu>
                         </template>
                     </a-dropdown>

@@ -56,3 +56,7 @@ export const removeThumbnailTask = useTask(function* (_, request: ThumbnailReque
 export function getImageType(path: string): Promise<ImageInfo> {
     return window.api.getImageType(path);
 }
+
+export function openInFinder(path: string): void {
+    window.api.openInFinder(path);
+}
