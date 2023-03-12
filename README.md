@@ -95,3 +95,9 @@ Still need to run on different OS to have a prebuilt libvips properly with HEIC.
     }
 }
 ```
+
+### Can't find sharp-darwin-arm64v8.node
+
+```shell
+npm rebuild --platform=darwin --arch=arm64 sharp
+```
