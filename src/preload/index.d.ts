@@ -46,6 +46,7 @@ declare global {
             createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
             removeThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
             getImageType: (path: string) => Promise<ImageInfo>;
+            openInFinder: (path: string) => void;
         };
     }
 }

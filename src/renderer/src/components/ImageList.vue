@@ -9,6 +9,7 @@ import type { ImageTypeResult } from "image-type";
 import { JsonTreeView } from "json-tree-view-vue3";
 import type { Tags, XmpTags, IccTags } from "exifreader";
 import { useI18n } from "vue-i18n";
+import { openInFinder } from "@renderer/utils/api";
 
 const { t } = useI18n();
 
@@ -76,7 +77,7 @@ const imageMeta = reactive<ImageMeta>({
 const label = computed(() => {
     return {
         getInfo: t("menu.getInfo"),
-        open: t("menu.open")
+        open: t("menu.open"),
     };
 });
 
@@ -92,6 +93,11 @@ function openImageMeta(image: Image): void {
         imageMeta.path = path;
     });
 }
+
+function openFileInFilder(image: Image): void {
+    const path = `/${trim(image.fallback, "file://")}`;
+    openInFinder(path);
+}
 </script>
 
 <template>
@@ -106,18 +112,33 @@ function openImageMeta(image: Image): void {
 
         <div class="image-list">
             <ul v-if="card.images.length > 0">
-                <li v-for="image in card.images" :key="image.key" :width="150" :height="150" class="image-item">
+                <li
+                    v-for="image in card.images"
+                    :key="image.key"
+                    :width="150"
+                    :height="150"
+                    class="image-item"
+                >
                     <a-dropdown :trigger="['contextmenu']">
                         <a-card hoverable>
-                            <a-image :width="thumbnailSize" :height="thumbnailSize" :src="image.src" :fallback="fallback"
+                            <a-image
+                                :width="thumbnailSize"
+                                :height="thumbnailSize"
+                                :src="image.src"
+                                :fallback="fallback"
                                 :preview="{
                                     src: image.fallback,
-                                }" />
+                                }"
+                            />
                         </a-card>
                         <template #overlay>
                             <a-menu>
-                                <a-menu-item key="1" @click="openImageMeta(image)">{{ label.getInfo }}</a-menu-item>
-                                <a-menu-item key="2">{{ label.open }}</a-menu-item>
+                                <a-menu-item key="1" @click="openImageMeta(image)">{{
+                                    label.getInfo
+                                }}</a-menu-item>
+                                <a-menu-item key="2" @click="openFileInFilder(image)">{{
+                                    label.open
+                                }}</a-menu-item>
                             </a-menu>
                         </template>
                     </a-dropdown>
@@ -126,7 +147,13 @@ function openImageMeta(image: Image): void {
             <a-empty v-else />
         </div>
     </a-card>
-    <a-drawer v-model:visible="showInfo" class="custom-class" style="color: red" title="Basic Drawer" placement="right">
+    <a-drawer
+        v-model:visible="showInfo"
+        class="custom-class"
+        style="color: red"
+        title="Basic Drawer"
+        placement="right"
+    >
         <a-spin :spinning="loadingInfo">
             <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
                 <a-descriptions-item label="Image Width">{{
@@ -145,11 +172,13 @@ function openImageMeta(image: Image): void {
                     imageMeta.path
                 }}</a-descriptions-item>
                 <a-descriptions-item label="Status" :span="2">
-                    <a-layout :style="{
-                        height: '100%',
-                        width: '265px',
-                        overflow: 'auto',
-                    }">
+                    <a-layout
+                        :style="{
+                            height: '100%',
+                            width: '265px',
+                            overflow: 'auto',
+                        }"
+                    >
                         <JsonTreeView :data="imageMeta.json" :max-depth="imageMeta.maxDepth" />
                     </a-layout>
                 </a-descriptions-item>

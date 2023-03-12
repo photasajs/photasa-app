@@ -70,6 +70,10 @@ function createWindow(): void {
         return app.getPath(args.name);
     });
 
+    ipcMain.on("picasa:open-in-finder", (_, args) => {
+        shell.showItemInFolder(args.path);
+    });
+
     // Setup Thumbnail Service
     initThumbnailService(ipcMain, logger);
     // Setup File Watch Service

@@ -4,6 +4,7 @@ import { startWatching, stopWatching } from "./fs-watch";
 import { importPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
 import { createThumbnail, getImageType, removeThumbnail } from "./image-helper";
+import { openInFinder } from "./path-helper";
 
 // Custom APIs for renderer
 const api = {
@@ -15,6 +16,7 @@ const api = {
     createThumbnail,
     getImageType,
     removeThumbnail,
+    openInFinder,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

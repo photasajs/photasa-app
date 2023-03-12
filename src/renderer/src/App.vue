@@ -55,17 +55,21 @@ function updateTheme(): void {
     }
 }
 
+// Set Dark/Light theme node
 watch(darkMode, () => {
     updateTheme();
 });
+
+// vue3 watch for array, should specify deep as true
 watch(
-    () => paths,
+    paths,
     () => {
         // Stop current watching, then start a new one
         stopWatching().then(() => {
             startFileWatching(paths.value);
         });
     },
+    { deep: true },
 );
 
 function handleAddFile(state): void {
@@ -152,17 +156,21 @@ function startFileWatching(dirs): void {
 }
 
 getDirectory("desktop").then((dir) => {
-    currentFolder.value = paths.value[0];
-    if (paths.value.length > 0) {
-        startFileWatching(paths.value);
-    }
-
     // Desktop directory is ready
     if (paths.value.find((p) => dir.indexOf(p) < 0)) {
         addPath(dir);
     }
 
     loading.value = false;
+
+    // Set to current folder
+    currentFolder.value = paths.value[0];
+    if (paths.value.length > 0) {
+        startFileWatching(paths.value);
+    } else {
+        // Open preference to config
+        showPreference.value = true;
+    }
 });
 
 setupMenu({
