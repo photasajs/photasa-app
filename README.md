@@ -63,3 +63,11 @@ Must turn on `script-src 'unsafe-eval'` to allow handling of json
       content="default-src 'self' https://sessions.bugsnag.com/ https://notify.bugsnag.com/; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self';"
     />
 ```
+
+## HEIC for sharp
+
+[sharp requires global installed libvips which support HEIF](https://github.com/lovell/sharp/issues/2218)
+
+```shell
+brew install vips
+```
