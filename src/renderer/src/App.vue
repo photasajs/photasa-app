@@ -55,12 +55,9 @@ function updateTheme(): void {
     }
 }
 
-watch(
-    darkMode,
-    () => {
-        updateTheme();
-    },
-)
+watch(darkMode, () => {
+    updateTheme();
+});
 watch(
     () => paths,
     () => {
@@ -177,6 +174,7 @@ setupMenu({
     },
 });
 
+document.title = t("app.title");
 </script>
 
 <template>
@@ -186,11 +184,13 @@ setupMenu({
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            margin: 0,
-                            padding: '24px 0 0 0',
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content
+                            :style="{
+                                margin: 0,
+                                padding: '24px 0 0 0',
+                                minHeight: '280px',
+                            }"
+                        >
                             <FolderList></FolderList>
                         </a-layout-content>
                     </a-layout>
@@ -198,10 +198,12 @@ setupMenu({
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            margin: 0,
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content
+                            :style="{
+                                margin: 0,
+                                minHeight: '280px',
+                            }"
+                        >
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
@@ -213,8 +215,13 @@ setupMenu({
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
-        @ok="handlePreferenceOk">
+    <a-modal
+        v-model:visible="showPreference"
+        :mask-closable="false"
+        :title="msg.settings"
+        width="800px"
+        @ok="handlePreferenceOk"
+    >
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -268,7 +275,7 @@ setupMenu({
     background: #107bcb;
 }
 
-#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
+#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
     margin-top: 48px;
 }
 </style>

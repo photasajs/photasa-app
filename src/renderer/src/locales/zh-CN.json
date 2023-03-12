@@ -1,4 +1,7 @@
 {
+    "app": {
+        "title": "仓廪图司"
+    },
     "preference": {
         "settings": "设置",
         "tabs": {

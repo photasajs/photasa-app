@@ -12,7 +12,7 @@ asarUnpack:
   - resources/*
 afterSign: build/notarize.js
 win:
-  executableName: photasa
+  executableName: Photasa
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
