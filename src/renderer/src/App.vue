@@ -55,17 +55,21 @@ function updateTheme(): void {
     }
 }
 
+// Set Dark/Light theme node
 watch(darkMode, () => {
     updateTheme();
 });
+
+// vue3 watch for array, should specify deep as true
 watch(
-    () => paths,
+    paths,
     () => {
         // Stop current watching, then start a new one
         stopWatching().then(() => {
             startFileWatching(paths.value);
         });
     },
+    { deep: true },
 );
 
 function handleAddFile(state): void {
