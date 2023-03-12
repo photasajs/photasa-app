@@ -64,9 +64,9 @@ const formLayout = ref("vertical");
 const formItemLayout = computed(() => {
     return formLayout.value === "horizontal"
         ? {
-            labelCol: { span: 4 },
-            wrapperCol: { span: 14 },
-        }
+              labelCol: { span: 4 },
+              wrapperCol: { span: 14 },
+          }
         : {};
 });
 
@@ -88,19 +88,32 @@ function handleRemove(item): void {
             <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
                 <a-form-item :label="label.watchFolderList">
                     <a-space direction="vertical">
-                        <a-list size="small" bordered :data-source="paths" class="import-message-list">
+                        <a-list
+                            size="small"
+                            bordered
+                            :data-source="paths"
+                            class="import-message-list"
+                        >
                             <template #header>
                                 <a-descriptions :title="label.folderList">
-                                    <a-descriptions-item :label="label.folderListUsage">{{ label.folderListDesc
+                                    <a-descriptions-item :label="label.folderListUsage">{{
+                                        label.folderListDesc
                                     }}</a-descriptions-item>
                                 </a-descriptions>
                             </template>
                             <template #renderItem="{ item }">
                                 <a-list-item>
                                     <template #actions>
-                                        <a-button @click="handleRemove(item)"><close-outlined /></a-button>
+                                        <a-button @click="handleRemove(item)"
+                                            ><close-outlined
+                                        /></a-button>
                                     </template>
-                                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                                    <a-skeleton
+                                        avatar
+                                        :title="false"
+                                        :loading="!!item.loading"
+                                        active
+                                    >
                                         <a-list-item-meta>
                                             <template #title>
                                                 {{ item }}
