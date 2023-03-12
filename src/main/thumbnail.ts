@@ -39,7 +39,7 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
                 logger.info(i);
             });
     } catch (e) {
-        logger.error(e);
+        logger.error("Failed to create thumbnail: " + arg.path + " due to: " + e)
     }
     return arg;
 }

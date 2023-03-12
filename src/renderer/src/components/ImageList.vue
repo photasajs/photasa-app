@@ -60,7 +60,7 @@ const cards = computed(() => {
     cards.push({
         title: currentFolder.value,
         images,
-        parts: currentFolder.value.split("/"),
+        parts: currentFolder.value?.split("/"),
     });
 
     return cards;

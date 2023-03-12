@@ -2,10 +2,10 @@
     "name": "photasa",
     "productName": "Photasa",
     "version": "1.0.0",
-    "description": "An Electron application with Vue and TypeScript",
+    "description": "Another picasa like photo manager",
     "main": "./out/main/index.js",
-    "author": "example.com",
-    "homepage": "https://www.electronjs.org",
+    "author": "Albert Li <albert_lee@hotmail.com>",
+    "homepage": "https://www.thepicasa.com",
     "scripts": {
         "format": "prettier --write .",
         "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",

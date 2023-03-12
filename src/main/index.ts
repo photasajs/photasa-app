@@ -15,7 +15,7 @@ Bugsnag.start({
 const PROD_MODE = process.env.NODE_ENV === "production";
 const logger = log4js.getLogger("main");
 logger.level = PROD_MODE ? "info" : "debug";
-let mainWindow: BrowserWindow;
+let mainWindow: BrowserWindow | undefined | null;
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -37,7 +37,7 @@ function createWindow(): void {
     createMenu(mainWindow);
 
     mainWindow.on("ready-to-show", () => {
-        mainWindow.show();
+        mainWindow?.show();
     });
 
     mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -54,16 +54,19 @@ function createWindow(): void {
     }
 
     ipcMain.on("picasa:choose-directory", () => {
-        dialog
-            .showOpenDialog(mainWindow, {
-                properties: ["openDirectory"],
-            })
-            .then(({ filePaths }) => {
-                mainWindow?.webContents.send("picasa:selected-directory", { filePaths });
-            })
-            .catch((err) => {
-                console.log(err);
-            });
+        if (mainWindow) {
+            dialog
+
+                .showOpenDialog(mainWindow, {
+                    properties: ["openDirectory"],
+                })
+                .then(({ filePaths }) => {
+                    mainWindow?.webContents.send("picasa:selected-directory", { filePaths });
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        }
     });
 
     ipcMain.handle("picasa:get-directory", async (_, args) => {
