@@ -8,25 +8,18 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import {
-    startWatching,
-    setupMenu,
-    getDirectory,
-    stopWatching,
-    createThumbnailTask,
-    removeThumbnailTask,
-} from "@renderer/utils/api";
-import type { WatchState } from "src/preload/index.d";
+import { startWatching, setupMenu, getDirectory, stopWatching } from "@renderer/utils/api";
+import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
+import type { WatchState } from "src/preload/index.d";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
-const { addFile, removeFile, removeFromFileList } = photosStore;
 const { processingFile, currentFolder } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
-const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
+const { paths, darkMode } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
 const visible = ref(false);
 const msg = computed(() => {
@@ -39,10 +32,6 @@ const loading = ref(false);
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
-}
-
-function isMedia(state: WatchState): boolean {
-    return state.isImage || state.isVideo;
 }
 
 function updateTheme(): void {
@@ -72,74 +61,9 @@ watch(
     { deep: true },
 );
 
-function handleAddFile(state): void {
-    // Directory skip hidden
-    if (!state.isFile) {
-        return;
-    }
-
-    const path = state.path ?? "";
-    // Path is empty skip it.
-    if (path.length <= 0) {
-        return;
-    }
-
-    const parts = path.split("/");
-
-    // Skip any thing start with dot
-    const fileName = parts[parts.length - 1];
-    if (fileName.startsWith(".") || parts.includes(".picasaoriginals")) {
-        return;
-    }
-
-    if (isMedia(state)) {
-        processingFile.value = state.path ?? "";
-
-        createThumbnailTask
-            .perform({
-                path: state.path as string,
-                thumbnail: state.thumbnail as string,
-                width: thumbnailSize.value,
-                height: thumbnailSize.value,
-            })
-            .then(() => {
-                addFile(paths.value, {
-                    path: state.path as string,
-                    thumbnail: state.thumbnail,
-                });
-            });
-    }
-}
-
-function handleDeleteFile(state): void {
-    // Directory skip hidden
-    if (!state.isFile) {
-        return;
-    }
-
-    if (isMedia(state)) {
-        removeThumbnailTask.perform({
-            path: state.path as string,
-            thumbnail: state.thumbnail,
-            width: thumbnailSize.value,
-            height: thumbnailSize.value,
-        });
-
-        removeFile(paths.value, {
-            path: state.path as string,
-            thumbnail: state.thumbnail,
-        });
-
-        removeFromFileList({
-            path: state.path as string,
-            thumbnail: state.thumbnail,
-        });
-    }
-}
-
 const actions = {
-    add: handleAddFile,
-    delete: handleDeleteFile,
+    add: handleAddFileTask,
+    delete: handleDeleteFileTask,
 };
 
 function startFileWatching(dirs): void {
@@ -150,7 +74,7 @@ function startFileWatching(dirs): void {
         },
         (state: WatchState) => {
             const handler = actions[state.action ?? ""];
-            handler?.apply(null, [state]);
+            handler?.perform(state, photosStore, preferenceStore);
         },
     );
 }
