@@ -28,6 +28,7 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
     await ensureDir(path.dirname(arg.thumbnail));
 
     try {
+        logger.info("Creating thumbnail for : " + arg.path);
         await sharp(arg.path)
             .resize(arg.width, arg.height, {
                 fit: sharp.fit.inside,
@@ -39,7 +40,7 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
                 logger.info(i);
             });
     } catch (e) {
-        logger.error("Failed to create thumbnail: " + arg.path + " due to: " + e)
+        logger.error("Failed to create thumbnail: " + arg.path + " due to: " + e);
     }
     return arg;
 }

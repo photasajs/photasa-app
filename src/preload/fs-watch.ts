@@ -31,7 +31,8 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
     ipcRenderer?.send("picasa:start-file-watch", {
         paths: JSON.parse(JSON.stringify(config.paths)),
         options: {
-            ignored: ".picasaoriginals",
+            ignored: /(^|[/\\])\../,
+            ignoreInitial: true,
         },
     });
 
