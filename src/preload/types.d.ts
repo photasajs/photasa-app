@@ -4,6 +4,8 @@ type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (action: FileAction | string | undefined) => void;
 type ScanCallback = (action: FileAction | string | undefined) => void;
+type LoadCallback = (action: string, config?: string) => void
+
 type PathName = "home" | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
 
 interface PhotoAction {
@@ -73,6 +75,7 @@ declare global {
             openInFinder: (path: string) => void;
             getPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
             updatePhotoList: (photo: string) => Promise<PhotasaConfig>;
+            loadPhotasaConfigs: (paths: string[], callback: LoadCallback) => void;
         };
     }
 }

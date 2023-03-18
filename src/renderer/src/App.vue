@@ -8,16 +8,17 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { startWatching, setupMenu, getDirectory, stopWatching } from "@renderer/utils/api";
+import { startWatching, setupMenu, getDirectory, stopWatching, loadPhotasaConfigs, getPhotasaConfigTask } from "@renderer/utils/api";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { WatchState } from "../../preload/types";
+import type { PhotasaConfig, WatchState } from "../../preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile, currentFolder } = storeToRefs(photosStore);
+const { addFile } = photosStore;
 const preferenceStore = usePreferenceStore();
 const { paths, darkMode } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
@@ -95,6 +96,22 @@ getDirectory("desktop").then((dir) => {
         // Open preference to config
         showPreference.value = true;
     }
+    return paths.value;
+}).then((configPaths: string[]) => {
+    loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
+        if (action === "next" && config) {
+            getPhotasaConfigTask.perform(config)
+                .then((photasaConfig: PhotasaConfig) => {
+                    photasaConfig.photoList.forEach(photo => {
+                        addFile(paths.value, {
+                            path: photo.path,
+                            thumbnail: photo.thumbnail,
+                        });
+                    });
+                });
+        }
+
+    });
 });
 
 setupMenu({

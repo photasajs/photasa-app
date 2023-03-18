@@ -89,3 +89,22 @@ export function walkthroughFolder(source: string): Observable<PhotoPath> {
             });
     });
 }
+
+export function enumeratePhotasaConfigs(paths: string[]): Observable<string> {
+    return from(paths).pipe(mergeMap(path => walkForPhotasaConfig(path)));
+}
+
+function walkForPhotasaConfig(source: string): Observable<string> {
+    return new Observable<string>((subscriber: Subscriber<string>) => {
+        klaw(source)
+            .on("data", (item) => {
+                const basename = path.basename(item.path);
+                if (!item.stats.isDirectory() && basename === ".photasa.json") {
+                    subscriber.next(path.dirname(item.path));
+                }
+            })
+            .on("end", () => {
+                subscriber.complete();
+            });
+    });
+}

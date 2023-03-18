@@ -8,6 +8,7 @@ import type {
     ImageInfo,
     ScanCallback,
     PhotasaConfig,
+    LoadCallback,
 } from "src/preload/types";
 import { useTask } from "vue-concurrency";
 
@@ -73,4 +74,16 @@ export async function updatePhotoList(photoPath: string): Promise<PhotasaConfig>
 
 export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return window.api.getPhotasaConfig(folder);
+}
+
+export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
+    const result = yield getPhotasaConfig(folder);
+    return result;
+})
+    .enqueue()
+    .maxConcurrency(1);
+
+
+export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
+    window.api.loadPhotasaConfigs(paths, callback);
 }

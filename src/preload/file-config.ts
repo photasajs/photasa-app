@@ -1,8 +1,10 @@
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig } from "./types";
+import type { PhotasaConfig, LoadCallback } from "./types";
 import * as R from "ramda";
 import { buildThumbnailPath } from "./image-helper";
+import { enumeratePhotasaConfigs } from "./path-helper";
+
 
 const PHOTASA_VERSION = "1.0";
 
@@ -70,4 +72,19 @@ export async function updatePhotoList(photoPath: string): Promise<PhotasaConfig>
 export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     const meta = await readConfig(folder, false);
     return parseConfig(meta.data);
+}
+
+
+export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
+    enumeratePhotasaConfigs(paths).subscribe({
+        next: (configPath) => {
+            callback("next", configPath);
+        },
+        error: (err) => {
+            callback("error", err.message);
+        },
+        complete: () => {
+            callback("complete");
+        }
+    });
 }
