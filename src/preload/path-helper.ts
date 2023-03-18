@@ -1,3 +1,4 @@
+import { useTask } from "vue-concurrency";
 import klaw from "klaw";
 import path from "path";
 import type { FileAction } from "./file-action";
@@ -5,6 +6,7 @@ import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
+import isVideo from "is-video";
 
 export interface PathOption {
     root?: string;
@@ -12,6 +14,12 @@ export interface PathOption {
 
 export interface FileException {
     code?: string;
+}
+
+export interface PhotoPath {
+    path: string;
+    isImage: boolean;
+    isVideo: boolean;
 }
 
 /**
@@ -47,6 +55,7 @@ export function scanFolder(source: string, target: string): Observable<FileActio
                         created: item.stats.birthtime,
                         target,
                         isImage: false,
+                        isVideo: false,
                         targetDir: "",
                         targetFileName: "",
                         targetFullPath: "",
@@ -59,26 +68,23 @@ export function scanFolder(source: string, target: string): Observable<FileActio
     }).pipe(
         map((action: FileAction) => {
             action.isImage = isImage(action.file);
+            action.isVideo = isVideo(action.file);
             return action;
         }),
         mergeMap((action: FileAction) => resolveExifDate(action)),
     );
 }
 
-
-export function scanCurrentFolder(source: string, depth: number): Observable<FileAction> {
-    return new Observable<FileAction>((subscriber: Subscriber<FileAction>) => {
-        klaw(source, { depthLimit: depth || 1 })
+export function walkthroughFolder(source: string): Observable<PhotoPath> {
+    return new Observable<PhotoPath>((subscriber: Subscriber<PhotoPath>) => {
+        debugger;
+        klaw(source)
             .on("data", (item) => {
-                if (item.stats.isDirectory() && item.path != source) {
+                if (!item.stats.isDirectory() && item.path != source) {
                     subscriber.next({
-                        file: item.path,
-                        name: path.basename(item.path),
-                        created: item.stats.birthtime,
-                        targetDir: path.dirname(item.path),
+                        path: item.path,
                         isImage: isImage(item.path),
-                        targetFileName: "",
-                        targetFullPath: "",
+                        isVideo: isVideo(item.path),
                     });
                 }
             })

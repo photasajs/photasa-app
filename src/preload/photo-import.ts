@@ -1,8 +1,8 @@
 import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
-import { ensureDir, scanFolder } from "./path-helper";
-import type { ImportCallback } from "./index.d";
+import { ensureDir, scanFolder, walkthroughFolder } from "./path-helper";
+import type { ImportCallback, ScanCallback } from "./index.d";
 import log4js from "log4js";
 
 const logger = log4js.getLogger("photo-import");
@@ -21,6 +21,33 @@ export function importPhotos(folders: string[], target: string, callback: Import
             mergeMap((action) => ensureDir(action)),
             concatMap((action) => copyFile(action)), // copy file should be concatMap.
         )
+        .subscribe({
+            next: (action) => {
+                logger.debug("next", action);
+                callback({
+                    type: "next",
+                    action,
+                });
+            },
+            error: (error) => {
+                logger.debug("error", error);
+                callback({
+                    type: "error",
+                    error,
+                });
+            },
+            complete: () => {
+                logger.debug("complete");
+                callback({
+                    type: "complete",
+                });
+            },
+        });
+}
+
+export function scanPhotos(folder: string, callback: ScanCallback): void {
+    walkthroughFolder(folder)
+        .pipe(filter((action) => action.isImage || action.isVideo))
         .subscribe({
             next: (action) => {
                 logger.debug("next", action);

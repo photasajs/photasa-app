@@ -6,6 +6,8 @@ import type {
     PathName,
     ThumbnailRequest,
     ImageInfo,
+    ScanCallback,
+    PhotasaConfig,
 } from "src/preload/index.d";
 import { useTask } from "vue-concurrency";
 
@@ -59,4 +61,16 @@ export function getImageType(path: string): Promise<ImageInfo> {
 
 export function openInFinder(path: string): void {
     window.api.openInFinder(path);
+}
+
+export function scanPhotos(folder: string, callback: ScanCallback): void {
+    window.api.scanPhotos(folder, callback);
+}
+
+export async function updatePhotoList(photoPath: string): Promise<PhotasaConfig> {
+    return window.api.updatePhotoList(photoPath);
+}
+
+export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
+    return window.api.getPhotasaConfig(folder);
 }
