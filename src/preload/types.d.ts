@@ -17,6 +17,13 @@ interface Photo {
     history: PhotoAction[];
 }
 
+interface PhotoPath {
+    path: string;
+    thumbnail: string;
+    isImage: boolean;
+    isVideo: boolean;
+}
+
 interface PhotasaConfig {
     version: string;
     photoList: Photo[];

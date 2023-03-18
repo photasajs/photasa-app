@@ -7,6 +7,7 @@ import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
 import { buildThumbnailPath } from "./image-helper";
+import type { PhotoPath } from "./types";
 
 export interface PathOption {
     root?: string;
@@ -16,12 +17,6 @@ export interface FileException {
     code?: string;
 }
 
-export interface PhotoPath {
-    path: string;
-    thumbnail: string;
-    isImage: boolean;
-    isVideo: boolean;
-}
 
 /**
  * Return path combined with root

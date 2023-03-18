@@ -2,7 +2,8 @@
 <script setup lang="ts">
 import { ref, reactive, UnwrapRef, computed } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { chooseDirectory, updatePhotoList } from "@renderer/utils/api";
+import { usePhotosStore } from "@renderer/stores/photos";
+import { chooseDirectory, createThumbnailTask, updatePhotoList } from "@renderer/utils/api";
 import { storeToRefs } from "pinia";
 import type { TabsProps } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
@@ -10,15 +11,21 @@ import About from "./About.vue";
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
 import { scanPhotos } from "@renderer/utils/api";
-import { PhotoAction } from "src/preload/";
+import type { PhotoPath } from "../../../preload/types";
+
 
 const { t } = useI18n();
 
 interface FormState {
     name: string;
 }
-const store = usePreferenceStore();
-const { paths, thumbnailSize, darkMode } = storeToRefs(store);
+
+const preferenceStore = usePreferenceStore();
+const { addPath, removePath } = preferenceStore;
+const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
+
+const photosStore = usePhotosStore();
+const { addFile } = photosStore;
 
 function isDuplicate(path: string): boolean {
     return paths.value.includes(path);
@@ -26,7 +33,7 @@ function isDuplicate(path: string): boolean {
 
 type ScanArgs = {
     type: "next" | "error" | "complete";
-    action?: PhotoAction;
+    action?: PhotoPath;
     error?: {
         message: string;
     };
@@ -37,7 +44,25 @@ const handler: Record<string, (args: ScanArgs | undefined) => void> = {
     next: (args): void => {
         if (args?.action?.path) {
             processed.push(args.action.path);
-            updatePhotoList(args.action.path);
+            // Save to .photasa.json
+            updatePhotoList(args.action.path)
+                // Create thumbnail
+                .then((photasaConfig) => {
+                    return createThumbnailTask.perform({
+                        path: args.action?.path as string,
+                        thumbnail: args.action?.thumbnail as string,
+                        width: thumbnailSize.value,
+                        height: thumbnailSize.value,
+                    }).then(() => {
+                        // Add to fileList
+                        photasaConfig.photoList.forEach(p => {
+                            addFile(paths.value, {
+                                path: p.path,
+                                thumbnail: p.thumbnail,
+                            })
+                        })
+                    })
+                });
         }
     },
     error: (args): void => {
@@ -65,7 +90,7 @@ function onChoose(): void {
             return;
         }
 
-        store.addPath(filePaths[0]);
+        addPath(filePaths[0]);
         showScanning.value = true;
         scanPhotos(filePaths[0], (args) => {
             handler[args.type]?.call(null, args);
@@ -99,9 +124,9 @@ const formLayout = ref("vertical");
 const formItemLayout = computed(() => {
     return formLayout.value === "horizontal"
         ? {
-              labelCol: { span: 4 },
-              wrapperCol: { span: 14 },
-          }
+            labelCol: { span: 4 },
+            wrapperCol: { span: 14 },
+        }
         : {};
 });
 
@@ -113,7 +138,7 @@ function openNotificationWithIcon(type: string, message, description): void {
 }
 
 function handleRemove(item): void {
-    store.removePath(item);
+    removePath(item);
 }
 </script>
 
@@ -123,12 +148,7 @@ function handleRemove(item): void {
             <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
                 <a-form-item :label="label.watchFolderList">
                     <a-space direction="vertical">
-                        <a-list
-                            size="small"
-                            bordered
-                            :data-source="paths"
-                            class="import-message-list"
-                        >
+                        <a-list size="small" bordered :data-source="paths" class="import-message-list">
                             <template #header>
                                 <a-descriptions :title="label.folderList">
                                     <a-descriptions-item :label="label.folderListUsage">{{
@@ -139,16 +159,9 @@ function handleRemove(item): void {
                             <template #renderItem="{ item }">
                                 <a-list-item>
                                     <template #actions>
-                                        <a-button @click="handleRemove(item)"
-                                            ><close-outlined
-                                        /></a-button>
+                                        <a-button @click="handleRemove(item)"><close-outlined /></a-button>
                                     </template>
-                                    <a-skeleton
-                                        avatar
-                                        :title="false"
-                                        :loading="!!item.loading"
-                                        active
-                                    >
+                                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                                         <a-list-item-meta>
                                             <template #title>
                                                 {{ item }}
@@ -183,12 +196,7 @@ function handleRemove(item): void {
             <About></About>
         </a-tab-pane>
     </a-tabs>
-    <a-modal
-        v-model:visible="showScanning"
-        :mask-closable="false"
-        :title="label.scanning"
-        width="800px"
-    >
+    <a-modal v-model:visible="showScanning" :mask-closable="false" :title="label.scanning" width="800px">
         <div>{{ processed }}</div>
         <template #footer></template>
     </a-modal>

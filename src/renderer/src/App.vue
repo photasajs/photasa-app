@@ -13,7 +13,7 @@ import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { WatchState } from "src/preload/types";
+import type { WatchState } from "../../preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
