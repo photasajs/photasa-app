@@ -1,4 +1,3 @@
-import { useTask } from "vue-concurrency";
 import klaw from "klaw";
 import path from "path";
 import type { FileAction } from "./file-action";
@@ -7,6 +6,7 @@ import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
+import { buildThumbnailPath } from "./image-helper";
 
 export interface PathOption {
     root?: string;
@@ -18,6 +18,7 @@ export interface FileException {
 
 export interface PhotoPath {
     path: string;
+    thumbnail: string;
     isImage: boolean;
     isVideo: boolean;
 }
@@ -77,12 +78,12 @@ export function scanFolder(source: string, target: string): Observable<FileActio
 
 export function walkthroughFolder(source: string): Observable<PhotoPath> {
     return new Observable<PhotoPath>((subscriber: Subscriber<PhotoPath>) => {
-        debugger;
         klaw(source)
             .on("data", (item) => {
                 if (!item.stats.isDirectory() && item.path != source) {
                     subscriber.next({
                         path: item.path,
+                        thumbnail: buildThumbnailPath(item.path),
                         isImage: isImage(item.path),
                         isVideo: isVideo(item.path),
                     });

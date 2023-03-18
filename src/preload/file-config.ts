@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import type { PhotasaConfig } from "./index.d";
 import * as R from "ramda";
+import { buildThumbnailPath } from "./image-helper";
 
 const PHOTASA_VERSION = "1.0";
 
@@ -55,8 +56,12 @@ export async function updatePhotoList(photoPath: string): Promise<PhotasaConfig>
     if (!photo) {
         photasaConfig.photoList.push({
             path: photoPath,
+            thumbnail: buildThumbnailPath(photoPath),
             history: [],
         });
+        writeConfig(meta.dir, photasaConfig);
+    } else if (!photo.thumbnail) {
+        photo.thumbnail = buildThumbnailPath(photoPath);
         writeConfig(meta.dir, photasaConfig);
     }
     return photasaConfig;

@@ -13,6 +13,7 @@ interface PhotoAction {
 }
 interface Photo {
     path: string; // relative path
+    thumbnail: string;
     history: PhotoAction[];
 }
 

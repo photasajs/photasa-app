@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, reactive } from "vue";
+import { ref, computed, reactive, watch } from "vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getImageType } from "@renderer/utils/api";
+import { createThumbnailTask, getImageType, getPhotasaConfig } from "@renderer/utils/api";
 import { trim } from "radash";
 import type { ImageTypeResult } from "image-type";
 import { JsonTreeView } from "json-tree-view-vue3";
@@ -36,8 +36,8 @@ type ImageMeta = {
 const store = usePhotosStore();
 
 const { currentFolder } = storeToRefs(store);
-const { getFolderFiles } = store;
-const { thumbnailSize } = storeToRefs(usePreferenceStore());
+const { getFolderFiles, addFile } = store;
+const { thumbnailSize, paths } = storeToRefs(usePreferenceStore());
 const showInfo = ref(false);
 const loadingInfo = ref(false);
 const fallback = ref(
@@ -45,10 +45,38 @@ const fallback = ref(
 );
 
 const mouseEnterDelay = ref(0.5);
+const images = reactive<Image[]>([]);
+
+watch(currentFolder, async (newVal) => {
+    if (newVal) {
+        const photasasConfig = await getPhotasaConfig(currentFolder.value);
+        photasasConfig.photoList.forEach((config) => {
+            images.push({
+                key: config.path,
+                src: `file://${config.thumbnail}`,
+                fallback: `file://${config.path}`,
+            });
+            createThumbnailTask
+                .perform({
+                    path: config.path as string,
+                    thumbnail: config.thumbnail as string,
+                    width: thumbnailSize.value,
+                    height: thumbnailSize.value,
+                })
+                .then(() => {
+                    addFile(paths.value, {
+                        path: config.path as string,
+                        thumbnail: config.thumbnail,
+                    });
+                });
+        });
+    }
+});
 
 const cards = computed(() => {
     const cards: Card[] = [];
     const images: Image[] = [];
+
     getFolderFiles(currentFolder.value)?.forEach((file) => {
         if (file.path.indexOf(currentFolder.value) >= 0) {
             images.push({

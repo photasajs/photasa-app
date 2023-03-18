@@ -10,6 +10,7 @@ import About from "./About.vue";
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
 import { scanPhotos } from "@renderer/utils/api";
+import { PhotoAction } from "src/preload/";
 
 const { t } = useI18n();
 
@@ -25,11 +26,7 @@ function isDuplicate(path: string): boolean {
 
 type ScanArgs = {
     type: "next" | "error" | "complete";
-    action?: {
-        path: string;
-        isImage: boolean;
-        isVideo: boolean;
-    };
+    action?: PhotoAction;
     error?: {
         message: string;
     };
