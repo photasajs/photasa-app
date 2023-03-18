@@ -1,6 +1,6 @@
 import { useTask } from "vue-concurrency";
 import { createThumbnailTask, removeThumbnailTask } from "@renderer/utils/api";
-import type { WatchState } from "src/preload/index.d";
+import type { WatchState } from "src/preload/types";
 
 function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;

@@ -2,7 +2,7 @@ import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
 import { ensureDir, scanFolder, walkthroughFolder } from "./path-helper";
-import type { ImportCallback, ScanCallback } from "./index.d";
+import type { ImportCallback, ScanCallback } from "./types";
 import log4js from "log4js";
 
 const logger = log4js.getLogger("photo-import");

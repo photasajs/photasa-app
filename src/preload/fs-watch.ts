@@ -1,4 +1,4 @@
-import type { WatchConfig, WatchCallback } from "./index.d";
+import type { WatchConfig, WatchCallback } from "./types";
 import { electronAPI } from "@electron-toolkit/preload";
 import isImage from "is-image";
 import isVideo from "is-video";

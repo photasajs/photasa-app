@@ -1,7 +1,7 @@
 import { readChunk } from "read-chunk";
 import imageType, { minimumBytes } from "image-type";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { ThumbnailRequest, ImageInfo } from "./index.d";
+import type { ThumbnailRequest, ImageInfo } from "./types";
 import { getExifInfo } from "./exif-helper";
 import path from "path";
 

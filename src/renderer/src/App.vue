@@ -13,7 +13,7 @@ import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { WatchState } from "src/preload/index.d";
+import type { WatchState } from "src/preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
@@ -116,13 +116,11 @@ document.title = t("app.title");
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <a-layout class="image-content">
-                        <a-layout-content
-                            :style="{
-                                margin: 0,
-                                padding: '24px 0 0 0',
-                                minHeight: '280px',
-                            }"
-                        >
+                        <a-layout-content :style="{
+                            margin: 0,
+                            padding: '24px 0 0 0',
+                            minHeight: '280px',
+                        }">
                             <FolderList></FolderList>
                         </a-layout-content>
                     </a-layout>
@@ -130,12 +128,10 @@ document.title = t("app.title");
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content
-                            :style="{
-                                margin: 0,
-                                minHeight: '280px',
-                            }"
-                        >
+                        <a-layout-content :style="{
+                            margin: 0,
+                            minHeight: '280px',
+                        }">
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
@@ -147,13 +143,8 @@ document.title = t("app.title");
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal
-        v-model:visible="showPreference"
-        :mask-closable="false"
-        :title="msg.settings"
-        width="800px"
-        @ok="handlePreferenceOk"
-    >
+    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
+        @ok="handlePreferenceOk">
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -207,7 +198,7 @@ document.title = t("app.title");
     background: #107bcb;
 }
 
-#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
+#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
     margin-top: 48px;
 }
 </style>

@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig } from "./index.d";
+import type { PhotasaConfig } from "./types";
 import * as R from "ramda";
 import { buildThumbnailPath } from "./image-helper";
 
