@@ -1,7 +1,7 @@
 import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
-import { ensureDir, scanFolder, walkthroughFolder } from "./path-helper";
+import { ensureDir, scanFolder, walkthroughFolder, shouldIgnorePhotasaPath } from "./path-helper";
 import type { ImportCallback, ScanCallback } from "./types";
 import log4js from "log4js";
 
@@ -51,10 +51,12 @@ export function scanPhotos(folder: string, callback: ScanCallback): void {
         .subscribe({
             next: (action) => {
                 logger.debug("next", action);
-                callback({
-                    type: "next",
-                    action,
-                });
+                if (!shouldIgnorePhotasaPath(action.path)) {
+                    callback({
+                        type: "next",
+                        action,
+                    });
+                }
             },
             error: (error) => {
                 logger.debug("error", error);

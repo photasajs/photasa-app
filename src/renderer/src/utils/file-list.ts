@@ -1,5 +1,5 @@
 import { useTask } from "vue-concurrency";
-import { createThumbnailTask, removeThumbnailTask } from "@renderer/utils/api";
+import { createThumbnailTask, removeThumbnailTask, updatePhotoList } from "@renderer/utils/api";
 import type { WatchState } from "src/preload/types";
 
 function isMedia(state: WatchState): boolean {
@@ -44,6 +44,7 @@ async function handleAddFile(state, photosStore, preferenceStore): Promise<void>
                 height: preferenceStore.thumbnailSize,
             })
             .then(() => {
+                updatePhotoList(state.path);
                 addFile(preferenceStore.paths, {
                     path: state.path as string,
                     thumbnail: state.thumbnail,

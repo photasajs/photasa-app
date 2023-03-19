@@ -13,7 +13,6 @@ import { notification } from "ant-design-vue";
 import { scanPhotos } from "@renderer/utils/api";
 import type { PhotoPath } from "../../../preload/types";
 
-
 const { t } = useI18n();
 
 interface FormState {
@@ -48,20 +47,22 @@ const handler: Record<string, (args: ScanArgs | undefined) => void> = {
             updatePhotoList(args.action.path)
                 // Create thumbnail
                 .then((photasaConfig) => {
-                    return createThumbnailTask.perform({
-                        path: args.action?.path as string,
-                        thumbnail: args.action?.thumbnail as string,
-                        width: thumbnailSize.value,
-                        height: thumbnailSize.value,
-                    }).then(() => {
-                        // Add to fileList
-                        photasaConfig.photoList.forEach(p => {
-                            addFile(paths.value, {
-                                path: p.path,
-                                thumbnail: p.thumbnail,
-                            })
+                    return createThumbnailTask
+                        .perform({
+                            path: args.action?.path as string,
+                            thumbnail: args.action?.thumbnail as string,
+                            width: thumbnailSize.value,
+                            height: thumbnailSize.value,
                         })
-                    })
+                        .then(() => {
+                            // Add to fileList
+                            photasaConfig.photoList.forEach((p) => {
+                                addFile(paths.value, {
+                                    path: p.path,
+                                    thumbnail: p.thumbnail,
+                                });
+                            });
+                        });
                 });
         }
     },
@@ -124,9 +125,9 @@ const formLayout = ref("vertical");
 const formItemLayout = computed(() => {
     return formLayout.value === "horizontal"
         ? {
-            labelCol: { span: 4 },
-            wrapperCol: { span: 14 },
-        }
+              labelCol: { span: 4 },
+              wrapperCol: { span: 14 },
+          }
         : {};
 });
 
@@ -148,7 +149,12 @@ function handleRemove(item): void {
             <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
                 <a-form-item :label="label.watchFolderList">
                     <a-space direction="vertical">
-                        <a-list size="small" bordered :data-source="paths" class="import-message-list">
+                        <a-list
+                            size="small"
+                            bordered
+                            :data-source="paths"
+                            class="import-message-list"
+                        >
                             <template #header>
                                 <a-descriptions :title="label.folderList">
                                     <a-descriptions-item :label="label.folderListUsage">{{
@@ -159,9 +165,16 @@ function handleRemove(item): void {
                             <template #renderItem="{ item }">
                                 <a-list-item>
                                     <template #actions>
-                                        <a-button @click="handleRemove(item)"><close-outlined /></a-button>
+                                        <a-button @click="handleRemove(item)"
+                                            ><close-outlined
+                                        /></a-button>
                                     </template>
-                                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                                    <a-skeleton
+                                        avatar
+                                        :title="false"
+                                        :loading="!!item.loading"
+                                        active
+                                    >
                                         <a-list-item-meta>
                                             <template #title>
                                                 {{ item }}
@@ -196,7 +209,12 @@ function handleRemove(item): void {
             <About></About>
         </a-tab-pane>
     </a-tabs>
-    <a-modal v-model:visible="showScanning" :mask-closable="false" :title="label.scanning" width="800px">
+    <a-modal
+        v-model:visible="showScanning"
+        :mask-closable="false"
+        :title="label.scanning"
+        width="800px"
+    >
         <div>{{ processed }}</div>
         <template #footer></template>
     </a-modal>

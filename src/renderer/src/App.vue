@@ -8,7 +8,14 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { startWatching, setupMenu, getDirectory, stopWatching, loadPhotasaConfigs, getPhotasaConfigTask } from "@renderer/utils/api";
+import {
+    startWatching,
+    setupMenu,
+    getDirectory,
+    stopWatching,
+    loadPhotasaConfigs,
+    getPhotasaConfigTask,
+} from "@renderer/utils/api";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
@@ -80,39 +87,39 @@ function startFileWatching(dirs): void {
     );
 }
 
-getDirectory("desktop").then((dir) => {
-    // Desktop directory is ready
-    if (paths.value.find((p) => dir.indexOf(p) < 0)) {
-        addPath(dir);
-    }
+getDirectory("desktop")
+    .then((dir) => {
+        // Desktop directory is ready
+        if (paths.value.find((p) => dir.indexOf(p) < 0)) {
+            addPath(dir);
+        }
 
-    loading.value = false;
+        loading.value = false;
 
-    // Set to current folder
-    currentFolder.value = paths.value[0];
-    if (paths.value.length > 0) {
-        startFileWatching(paths.value);
-    } else {
-        // Open preference to config
-        showPreference.value = true;
-    }
-    return paths.value;
-}).then((configPaths: string[]) => {
-    loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
-        if (action === "next" && config) {
-            getPhotasaConfigTask.perform(config)
-                .then((photasaConfig: PhotasaConfig) => {
-                    photasaConfig.photoList.forEach(photo => {
+        // Set to current folder
+        currentFolder.value = paths.value[0];
+        if (paths.value.length > 0) {
+            startFileWatching(paths.value);
+        } else {
+            // Open preference to config
+            showPreference.value = true;
+        }
+        return paths.value;
+    })
+    .then((configPaths: string[]) => {
+        loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
+            if (action === "next" && config) {
+                getPhotasaConfigTask.perform(config).then((photasaConfig: PhotasaConfig) => {
+                    photasaConfig.photoList.forEach((photo) => {
                         addFile(paths.value, {
                             path: photo.path,
                             thumbnail: photo.thumbnail,
                         });
                     });
                 });
-        }
-
+            }
+        });
     });
-});
 
 setupMenu({
     onImportPhotos: () => {
@@ -133,11 +140,13 @@ document.title = t("app.title");
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            margin: 0,
-                            padding: '24px 0 0 0',
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content
+                            :style="{
+                                margin: 0,
+                                padding: '24px 0 0 0',
+                                minHeight: '280px',
+                            }"
+                        >
                             <FolderList></FolderList>
                         </a-layout-content>
                     </a-layout>
@@ -145,10 +154,12 @@ document.title = t("app.title");
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            margin: 0,
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content
+                            :style="{
+                                margin: 0,
+                                minHeight: '280px',
+                            }"
+                        >
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
@@ -160,8 +171,13 @@ document.title = t("app.title");
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
-        @ok="handlePreferenceOk">
+    <a-modal
+        v-model:visible="showPreference"
+        :mask-closable="false"
+        :title="msg.settings"
+        width="800px"
+        @ok="handlePreferenceOk"
+    >
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -215,7 +231,7 @@ document.title = t("app.title");
     background: #107bcb;
 }
 
-#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
+#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
     margin-top: 48px;
 }
 </style>

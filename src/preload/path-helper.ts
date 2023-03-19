@@ -17,7 +17,6 @@ export interface FileException {
     code?: string;
 }
 
-
 /**
  * Return path combined with root
  * @param filepath
@@ -91,7 +90,7 @@ export function walkthroughFolder(source: string): Observable<PhotoPath> {
 }
 
 export function enumeratePhotasaConfigs(paths: string[]): Observable<string> {
-    return from(paths).pipe(mergeMap(path => walkForPhotasaConfig(path)));
+    return from(paths).pipe(mergeMap((path) => walkForPhotasaConfig(path)));
 }
 
 function walkForPhotasaConfig(source: string): Observable<string> {
@@ -107,4 +106,10 @@ function walkForPhotasaConfig(source: string): Observable<string> {
                 subscriber.complete();
             });
     });
+}
+
+export function shouldIgnorePhotasaPath(photoPath: string): boolean {
+    return (
+        photoPath.indexOf(".photasaoriginals") >= 0 || photoPath.indexOf(".picasaoriginals") >= 0
+    );
 }
