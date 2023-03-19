@@ -8,6 +8,7 @@ type PreferenceState = {
     firstTime: boolean;
     darkMode: boolean;
     lastOpenedFolder: string;
+    locale: string;
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -18,6 +19,7 @@ export const usePreferenceStore = defineStore("preference", {
             firstTime: true,
             darkMode: false,
             lastOpenedFolder: "",
+            locale: "zh-CN",
         };
     },
     persist: true,

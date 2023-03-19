@@ -5,7 +5,9 @@ import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { buildDataNode } from "@renderer/utils/folder-tree";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const photosStore = usePhotosStore();
 const preferenceStore = usePreferenceStore();
 const { files } = storeToRefs(photosStore);
@@ -41,10 +43,19 @@ watch(selectedKeys, () => {
 </script>
 
 <template>
-    <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
-        <template #title="{ title, key }">
-            <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
-            <template v-else>{{ title }}</template>
+    <a-card>
+        <template #title>
+            <a-breadcrumb style="margin: 16px 0">
+                <a-breadcrumb-item>{{
+                    t("app.folderList")
+                }}</a-breadcrumb-item>
+            </a-breadcrumb>
         </template>
-    </a-tree>
+        <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
+            <template #title="{ title, key }">
+                <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
+                <template v-else>{{ title }}</template>
+            </template>
+        </a-tree>
+    </a-card>
 </template>

@@ -19,18 +19,6 @@ interface FormState {
     name: string;
 }
 
-const preferenceStore = usePreferenceStore();
-const { addPath, removePath } = preferenceStore;
-const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
-
-const photosStore = usePhotosStore();
-const { processingFile } = storeToRefs(photosStore);
-const { addFile } = photosStore;
-
-function isDuplicate(path: string): boolean {
-    return paths.value.includes(path);
-}
-
 type ScanArgs = {
     type: "next" | "error" | "complete";
     action?: PhotoPath;
@@ -39,32 +27,81 @@ type ScanArgs = {
     };
 };
 
-const processed = reactive<string[]>([]);
+const preferenceStore = usePreferenceStore();
+const { addPath, removePath } = preferenceStore;
+const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
+
+const photosStore = usePhotosStore();
+const { processingFile } = storeToRefs(photosStore);
+const { addFile } = photosStore;
+
+const activeKey = ref(1);
+const showScanning = ref(false);
+const mode = ref<TabsProps["tabPosition"]>("left");
+const formState: UnwrapRef<FormState> = reactive({
+    name: "",
+});
+
+const label = computed(() => {
+    return {
+        watchFolderList: t("preference.watchFolderList"),
+        chooseDirectory: t("preference.chooseDirectory"),
+        thumbnailSize: t("preference.thumbnailSize"),
+        folderList: t("preference.folderList"),
+        folderListUsage: t("preference.folderListUsage"),
+        folderListDesc: t("preference.folderListDesc"),
+        darkMode: t("preference.darkMode"),
+        scanning: t("preference.scanning"),
+        tabs: {
+            general: t("preference.tabs.general"),
+            about: t("preference.tabs.about"),
+            theme: t("preference.tabs.theme"),
+        },
+    };
+});
+const formLayout = ref("vertical");
+const formItemLayout = computed(() => {
+    return formLayout.value === "horizontal"
+        ? {
+            labelCol: { span: 4 },
+            wrapperCol: { span: 14 },
+        }
+        : {};
+});
+
+function isDuplicate(path: string): boolean {
+    return paths.value.includes(path);
+}
+
+async function processScannedFile(args: ScanArgs): Promise<void> {
+    if (!args.action?.path) {
+        return;
+    }
+    // Save to .photasa.json
+    const photasaConfig = await updatePhotoList(args.action.path)
+
+    await createThumbnailTask
+        .perform({
+            path: args.action?.path as string,
+            thumbnail: args.action?.thumbnail as string,
+            width: thumbnailSize.value,
+            height: thumbnailSize.value,
+        })
+    // Add to fileList
+    photasaConfig.photoList.forEach((p) => {
+        addFile(paths.value, {
+            path: p.path,
+            thumbnail: p.thumbnail,
+        });
+    });
+
+}
+
 const handler: Record<string, (args: ScanArgs | undefined) => void> = {
     next: (args): void => {
         if (args?.action?.path) {
             processingFile.value = args.action.path;
-            // Save to .photasa.json
-            updatePhotoList(args.action.path)
-                // Create thumbnail
-                .then((photasaConfig) => {
-                    return createThumbnailTask
-                        .perform({
-                            path: args.action?.path as string,
-                            thumbnail: args.action?.thumbnail as string,
-                            width: thumbnailSize.value,
-                            height: thumbnailSize.value,
-                        })
-                        .then(() => {
-                            // Add to fileList
-                            photasaConfig.photoList.forEach((p) => {
-                                addFile(paths.value, {
-                                    path: p.path,
-                                    thumbnail: p.thumbnail,
-                                });
-                            });
-                        });
-                });
+            processScannedFile(args);
         }
     },
     error: (args): void => {
@@ -74,6 +111,8 @@ const handler: Record<string, (args: ScanArgs | undefined) => void> = {
     },
     complete: (): void => {
         showScanning.value = false;
+        processingFile.value = t("status.scanned");
+        openNotificationWithIcon("info", "Scan Complete", "Folder is scanned");
     },
 };
 
@@ -99,38 +138,7 @@ function onChoose(): void {
         });
     });
 }
-const activeKey = ref(1);
-const showScanning = ref(false);
-const mode = ref<TabsProps["tabPosition"]>("left");
-const formState: UnwrapRef<FormState> = reactive({
-    name: "",
-});
-const label = computed(() => {
-    return {
-        watchFolderList: t("preference.watchFolderList"),
-        chooseDirectory: t("preference.chooseDirectory"),
-        thumbnailSize: t("preference.thumbnailSize"),
-        folderList: t("preference.folderList"),
-        folderListUsage: t("preference.folderListUsage"),
-        folderListDesc: t("preference.folderListDesc"),
-        darkMode: t("preference.darkMode"),
-        scanning: t("preference.scanning"),
-        tabs: {
-            general: t("preference.tabs.general"),
-            about: t("preference.tabs.about"),
-            theme: t("preference.tabs.theme"),
-        },
-    };
-});
-const formLayout = ref("vertical");
-const formItemLayout = computed(() => {
-    return formLayout.value === "horizontal"
-        ? {
-              labelCol: { span: 4 },
-              wrapperCol: { span: 14 },
-          }
-        : {};
-});
+
 
 function openNotificationWithIcon(type: string, message, description): void {
     notification[type]({
@@ -150,12 +158,7 @@ function handleRemove(item): void {
             <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
                 <a-form-item :label="label.watchFolderList">
                     <a-space direction="vertical">
-                        <a-list
-                            size="small"
-                            bordered
-                            :data-source="paths"
-                            class="import-message-list"
-                        >
+                        <a-list size="small" bordered :data-source="paths" class="import-message-list">
                             <template #header>
                                 <a-descriptions :title="label.folderList">
                                     <a-descriptions-item :label="label.folderListUsage">{{
@@ -166,16 +169,9 @@ function handleRemove(item): void {
                             <template #renderItem="{ item }">
                                 <a-list-item>
                                     <template #actions>
-                                        <a-button @click="handleRemove(item)"
-                                            ><close-outlined
-                                        /></a-button>
+                                        <a-button @click="handleRemove(item)"><close-outlined /></a-button>
                                     </template>
-                                    <a-skeleton
-                                        avatar
-                                        :title="false"
-                                        :loading="!!item.loading"
-                                        active
-                                    >
+                                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                                         <a-list-item-meta>
                                             <template #title>
                                                 {{ item }}
@@ -210,14 +206,12 @@ function handleRemove(item): void {
             <About></About>
         </a-tab-pane>
     </a-tabs>
-    <a-modal
-        v-model:visible="showScanning"
-        :mask-closable="false"
-        :title="label.scanning"
-        width="800px"
-    >
-        <div>{{ processed }}</div>
-        <template #footer></template>
+    <a-modal v-model:visible="showScanning" :mask-closable="false" :title="label.scanning" width="800px">
+        <a-spin>
+            <div>{{ }}</div>
+        </a-spin>
+        <template #footer>{{ processingFile }}</template>
+
     </a-modal>
 </template>
 <style scoped lang="less">
