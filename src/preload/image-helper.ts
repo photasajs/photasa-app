@@ -10,7 +10,7 @@ const { ipcRenderer } = electronAPI;
 export function buildThumbnailPath(photoPath: string): string {
     // Prepare thumbnail path for image
     const dir = path.join(path.dirname(photoPath), ".photasaoriginals");
-    return path.join(dir, `thumbnail-${path.basename(photoPath)}`);
+    return path.join(dir, `thumbnail-${path.basename(photoPath)}.png`);
 }
 export async function getImageType(path: string): Promise<ImageInfo> {
     const buffer = await readChunk(path, { length: minimumBytes });
