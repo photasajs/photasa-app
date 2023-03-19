@@ -41,11 +41,7 @@ watch(selectedKeys, () => {
 </script>
 
 <template>
-    <a-tree
-        v-model:expandedKeys="expandedKeys"
-        v-model:selectedKeys="selectedKeys"
-        :tree-data="treeData"
-    >
+    <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
         <template #title="{ title, key }">
             <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
             <template v-else>{{ title }}</template>
