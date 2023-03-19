@@ -8,16 +8,24 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { startWatching, setupMenu, getDirectory, stopWatching } from "@renderer/utils/api";
+import {
+    startWatching,
+    setupMenu,
+    getDirectory,
+    stopWatching,
+    loadPhotasaConfigs,
+    getPhotasaConfigTask,
+} from "@renderer/utils/api";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { WatchState } from "src/preload/index.d";
+import type { PhotasaConfig, WatchState } from "../../preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile, currentFolder } = storeToRefs(photosStore);
+const { addFile } = photosStore;
 const preferenceStore = usePreferenceStore();
 const { paths, darkMode } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
@@ -79,23 +87,39 @@ function startFileWatching(dirs): void {
     );
 }
 
-getDirectory("desktop").then((dir) => {
-    // Desktop directory is ready
-    if (paths.value.find((p) => dir.indexOf(p) < 0)) {
-        addPath(dir);
-    }
+getDirectory("desktop")
+    .then((dir) => {
+        // Desktop directory is ready
+        if (paths.value.find((p) => dir.indexOf(p) < 0)) {
+            addPath(dir);
+        }
 
-    loading.value = false;
+        loading.value = false;
 
-    // Set to current folder
-    currentFolder.value = paths.value[0];
-    if (paths.value.length > 0) {
-        startFileWatching(paths.value);
-    } else {
-        // Open preference to config
-        showPreference.value = true;
-    }
-});
+        // Set to current folder
+        currentFolder.value = paths.value[0];
+        if (paths.value.length > 0) {
+            startFileWatching(paths.value);
+        } else {
+            // Open preference to config
+            showPreference.value = true;
+        }
+        return paths.value;
+    })
+    .then((configPaths: string[]) => {
+        loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
+            if (action === "next" && config) {
+                getPhotasaConfigTask.perform(config).then((photasaConfig: PhotasaConfig) => {
+                    photasaConfig.photoList.forEach((photo) => {
+                        addFile(paths.value, {
+                            path: photo.path,
+                            thumbnail: photo.thumbnail,
+                        });
+                    });
+                });
+            }
+        });
+    });
 
 setupMenu({
     onImportPhotos: () => {

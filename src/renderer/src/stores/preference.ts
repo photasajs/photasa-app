@@ -7,6 +7,7 @@ type PreferenceState = {
     thumbnailSize: number;
     firstTime: boolean;
     darkMode: boolean;
+    lastOpenedFolder: string;
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -16,6 +17,7 @@ export const usePreferenceStore = defineStore("preference", {
             thumbnailSize: 150,
             firstTime: true,
             darkMode: false,
+            lastOpenedFolder: "",
         };
     },
     persist: true,

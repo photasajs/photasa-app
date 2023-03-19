@@ -1,22 +1,27 @@
 import { contextBridge } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
 import { startWatching, stopWatching } from "./fs-watch";
-import { importPhotos } from "./photo-import";
+import { importPhotos, scanPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
 import { createThumbnail, getImageType, removeThumbnail } from "./image-helper";
 import { openInFinder } from "./shell-helper";
+import { updatePhotoList, getPhotasaConfig, loadPhotasaConfigs } from "./file-config";
 
 // Custom APIs for renderer
 const api = {
     startWatching,
     stopWatching,
     importPhotos,
+    scanPhotos,
     chooseDirectory,
     getDirectory,
     createThumbnail,
     getImageType,
     removeThumbnail,
     openInFinder,
+    updatePhotoList,
+    getPhotasaConfig,
+    loadPhotasaConfigs,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

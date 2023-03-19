@@ -81,7 +81,8 @@ function traverseTree(
 
     traverseTree(child, pathParts.slice(1), file, callback);
 
-    callback.updateFileList(root.key as string, callback.getFolderFiles(child.key as string));
+    // TODO: DISABLE, add child file list to parent may cause perf issue
+    // callback.updateFileList(root.key as string, callback.getFolderFiles(child.key as string));
 
     return child;
 }

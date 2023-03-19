@@ -5,6 +5,9 @@ import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
+import isVideo from "is-video";
+import { buildThumbnailPath } from "./image-helper";
+import type { PhotoPath } from "./types";
 
 export interface PathOption {
     root?: string;
@@ -47,6 +50,7 @@ export function scanFolder(source: string, target: string): Observable<FileActio
                         created: item.stats.birthtime,
                         target,
                         isImage: false,
+                        isVideo: false,
                         targetDir: "",
                         targetFileName: "",
                         targetFullPath: "",
@@ -59,26 +63,23 @@ export function scanFolder(source: string, target: string): Observable<FileActio
     }).pipe(
         map((action: FileAction) => {
             action.isImage = isImage(action.file);
+            action.isVideo = isVideo(action.file);
             return action;
         }),
         mergeMap((action: FileAction) => resolveExifDate(action)),
     );
 }
 
-
-export function scanCurrentFolder(source: string, depth: number): Observable<FileAction> {
-    return new Observable<FileAction>((subscriber: Subscriber<FileAction>) => {
-        klaw(source, { depthLimit: depth || 1 })
+export function walkthroughFolder(source: string): Observable<PhotoPath> {
+    return new Observable<PhotoPath>((subscriber: Subscriber<PhotoPath>) => {
+        klaw(source)
             .on("data", (item) => {
-                if (item.stats.isDirectory() && item.path != source) {
+                if (!item.stats.isDirectory() && item.path != source) {
                     subscriber.next({
-                        file: item.path,
-                        name: path.basename(item.path),
-                        created: item.stats.birthtime,
-                        targetDir: path.dirname(item.path),
+                        path: item.path,
+                        thumbnail: buildThumbnailPath(item.path),
                         isImage: isImage(item.path),
-                        targetFileName: "",
-                        targetFullPath: "",
+                        isVideo: isVideo(item.path),
                     });
                 }
             })
@@ -86,4 +87,29 @@ export function scanCurrentFolder(source: string, depth: number): Observable<Fil
                 subscriber.complete();
             });
     });
+}
+
+export function enumeratePhotasaConfigs(paths: string[]): Observable<string> {
+    return from(paths).pipe(mergeMap((path) => walkForPhotasaConfig(path)));
+}
+
+function walkForPhotasaConfig(source: string): Observable<string> {
+    return new Observable<string>((subscriber: Subscriber<string>) => {
+        klaw(source)
+            .on("data", (item) => {
+                const basename = path.basename(item.path);
+                if (!item.stats.isDirectory() && basename === ".photasa.json") {
+                    subscriber.next(path.dirname(item.path));
+                }
+            })
+            .on("end", () => {
+                subscriber.complete();
+            });
+    });
+}
+
+export function shouldIgnorePhotasaPath(photoPath: string): boolean {
+    return (
+        photoPath.indexOf(".photasaoriginals") >= 0 || photoPath.indexOf(".picasaoriginals") >= 0
+    );
 }

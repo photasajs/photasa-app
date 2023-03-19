@@ -2,25 +2,80 @@
 <script setup lang="ts">
 import { ref, reactive, UnwrapRef, computed } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { chooseDirectory } from "@renderer/utils/api";
+import { usePhotosStore } from "@renderer/stores/photos";
+import { chooseDirectory, createThumbnailTask, updatePhotoList } from "@renderer/utils/api";
 import { storeToRefs } from "pinia";
 import type { TabsProps } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import About from "./About.vue";
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
+import { scanPhotos } from "@renderer/utils/api";
+import type { PhotoPath } from "../../../preload/types";
 
 const { t } = useI18n();
 
 interface FormState {
     name: string;
 }
-const store = usePreferenceStore();
-const { paths, thumbnailSize, darkMode } = storeToRefs(store);
+
+const preferenceStore = usePreferenceStore();
+const { addPath, removePath } = preferenceStore;
+const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
+
+const photosStore = usePhotosStore();
+const { addFile } = photosStore;
 
 function isDuplicate(path: string): boolean {
     return paths.value.includes(path);
 }
+
+type ScanArgs = {
+    type: "next" | "error" | "complete";
+    action?: PhotoPath;
+    error?: {
+        message: string;
+    };
+};
+
+const processed = reactive<string[]>([]);
+const handler: Record<string, (args: ScanArgs | undefined) => void> = {
+    next: (args): void => {
+        if (args?.action?.path) {
+            processed.push(args.action.path);
+            // Save to .photasa.json
+            updatePhotoList(args.action.path)
+                // Create thumbnail
+                .then((photasaConfig) => {
+                    return createThumbnailTask
+                        .perform({
+                            path: args.action?.path as string,
+                            thumbnail: args.action?.thumbnail as string,
+                            width: thumbnailSize.value,
+                            height: thumbnailSize.value,
+                        })
+                        .then(() => {
+                            // Add to fileList
+                            photasaConfig.photoList.forEach((p) => {
+                                addFile(paths.value, {
+                                    path: p.path,
+                                    thumbnail: p.thumbnail,
+                                });
+                            });
+                        });
+                });
+        }
+    },
+    error: (args): void => {
+        if (args?.error?.message) {
+            processed.push(args.error.message);
+        }
+    },
+    complete: (): void => {
+        showScanning.value = false;
+    },
+};
+
 function onChoose(): void {
     chooseDirectory().then(({ filePaths }) => {
         if (isDuplicate(filePaths[0])) {
@@ -36,10 +91,15 @@ function onChoose(): void {
             return;
         }
 
-        store.addPath(filePaths[0]);
+        addPath(filePaths[0]);
+        showScanning.value = true;
+        scanPhotos(filePaths[0], (args) => {
+            handler[args.type]?.call(null, args);
+        });
     });
 }
 const activeKey = ref(1);
+const showScanning = ref(false);
 const mode = ref<TabsProps["tabPosition"]>("left");
 const formState: UnwrapRef<FormState> = reactive({
     name: "",
@@ -53,6 +113,7 @@ const label = computed(() => {
         folderListUsage: t("preference.folderListUsage"),
         folderListDesc: t("preference.folderListDesc"),
         darkMode: t("preference.darkMode"),
+        scanning: t("preference.scanning"),
         tabs: {
             general: t("preference.tabs.general"),
             about: t("preference.tabs.about"),
@@ -78,7 +139,7 @@ function openNotificationWithIcon(type: string, message, description): void {
 }
 
 function handleRemove(item): void {
-    store.removePath(item);
+    removePath(item);
 }
 </script>
 
@@ -148,6 +209,15 @@ function handleRemove(item): void {
             <About></About>
         </a-tab-pane>
     </a-tabs>
+    <a-modal
+        v-model:visible="showScanning"
+        :mask-closable="false"
+        :title="label.scanning"
+        width="800px"
+    >
+        <div>{{ processed }}</div>
+        <template #footer></template>
+    </a-modal>
 </template>
 <style scoped lang="less">
 .import-message-list {

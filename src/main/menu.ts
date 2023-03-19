@@ -36,9 +36,7 @@ export function createMenu(mainWindow: BrowserWindow): void {
                     click(): void {
                         mainWindow.webContents?.send("picasa:import-photos");
                     },
-                },
-
-                isMac ? { role: "close" } : { role: "quit" },
+                }
             ],
         },
         {
@@ -69,7 +67,7 @@ export function createMenu(mainWindow: BrowserWindow): void {
                 { role: "togglefullscreen" },
             ],
         },
-        { role: "window", submenu: [{ role: "minimize" }, { role: "close" }] },
+        { role: "window", submenu: [{ role: "minimize" }] },
         {
             role: "help",
             submenu: [

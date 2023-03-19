@@ -1,10 +1,17 @@
 import { readChunk } from "read-chunk";
 import imageType, { minimumBytes } from "image-type";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { ThumbnailRequest, ImageInfo } from "./index.d";
+import type { ThumbnailRequest, ImageInfo } from "./types";
 import { getExifInfo } from "./exif-helper";
+import path from "path";
+
 const { ipcRenderer } = electronAPI;
 
+export function buildThumbnailPath(photoPath: string): string {
+    // Prepare thumbnail path for image
+    const dir = path.join(path.dirname(photoPath), ".photasaoriginals");
+    return path.join(dir, `thumbnail-${path.basename(photoPath)}.png`);
+}
 export async function getImageType(path: string): Promise<ImageInfo> {
     const buffer = await readChunk(path, { length: minimumBytes });
     const tags = await getExifInfo(path);

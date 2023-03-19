@@ -1,8 +1,8 @@
-import type { WatchConfig, WatchCallback } from "./index.d";
+import type { WatchConfig, WatchCallback } from "./types";
 import { electronAPI } from "@electron-toolkit/preload";
 import isImage from "is-image";
 import isVideo from "is-video";
-import path from "path";
+import { buildThumbnailPath } from "./image-helper";
 
 const { ipcRenderer } = electronAPI;
 
@@ -13,8 +13,7 @@ function invokeCallback(args, callback: WatchCallback): void {
         args.isImage = isImage(args.path);
 
         // Prepare thumbnail path for image
-        const dir = path.join(path.dirname(args.path), ".picasaoriginals");
-        const thumbnail = path.join(dir, `thumbnail-${path.basename(args.path)}`);
+        const thumbnail = buildThumbnailPath(args.path);
         args.thumbnail = thumbnail;
     }
 

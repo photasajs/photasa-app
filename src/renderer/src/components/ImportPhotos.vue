@@ -120,8 +120,15 @@ const pathOptions = computed<SelectProps["options"]>(() => {
 </script>
 
 <template>
-    <a-modal v-model:visible="showConfigModal" :mask-closable="false" :title="label.photos" width="800px"
-        :ok-text="label.import" :cancel-text="label.cancel" @ok="onImport">
+    <a-modal
+        v-model:visible="showConfigModal"
+        :mask-closable="false"
+        :title="label.photos"
+        width="800px"
+        :ok-text="label.import"
+        :cancel-text="label.cancel"
+        @ok="onImport"
+    >
         <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol">
             <a-form-item :label="label.chooseDirectory">
                 <a-space>
@@ -146,12 +153,21 @@ const pathOptions = computed<SelectProps["options"]>(() => {
                 </a-radio-group>
             </a-form-item>
             <a-form-item :label="label.targetDirectory">
-                <a-select ref="select" v-model:value="formState.targetDir" style="width: 100%"
-                    :options="pathOptions"></a-select>
+                <a-select
+                    ref="select"
+                    v-model:value="formState.targetDir"
+                    style="width: 100%"
+                    :options="pathOptions"
+                ></a-select>
             </a-form-item>
         </a-form>
     </a-modal>
-    <a-modal v-model:visible="showProgressModal" :mask-closable="false" :closable="false" title="Importing">
+    <a-modal
+        v-model:visible="showProgressModal"
+        :mask-closable="false"
+        :closable="false"
+        title="Importing"
+    >
         <template #footer> </template>
         <a-list size="small" bordered :data-source="processed" class="import-message-list">
             <template #renderItem="{ item }">
