@@ -11,11 +11,11 @@ const { t } = useI18n();
 const photosStore = usePhotosStore();
 const preferenceStore = usePreferenceStore();
 const { files } = storeToRefs(photosStore);
-const { paths } = storeToRefs(preferenceStore);
+const { paths, currentFolder } = storeToRefs(preferenceStore);
 const { updateFileList, getFolderFiles } = photosStore;
 
 const expandedKeys = ref<string[]>([preferenceStore.paths[0]]);
-const selectedKeys = ref<string[]>([preferenceStore.paths[0]]);
+const selectedKeys = ref<string[]>([currentFolder.value]);
 
 const treeData = computed((): DataNode[] => {
     const roots: DataNode[] = [];
@@ -37,8 +37,7 @@ const treeData = computed((): DataNode[] => {
 });
 
 watch(selectedKeys, () => {
-    console.log("selectedKeys", selectedKeys);
-    photosStore.setCurrentFolder(selectedKeys.value[0]);
+    currentFolder.value = selectedKeys.value[0];
 });
 </script>
 
@@ -46,12 +45,14 @@ watch(selectedKeys, () => {
     <a-card>
         <template #title>
             <a-breadcrumb style="margin: 16px 0">
-                <a-breadcrumb-item>{{
-                    t("app.folderList")
-                }}</a-breadcrumb-item>
+                <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
             </a-breadcrumb>
         </template>
-        <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
+        <a-tree
+            v-model:expandedKeys="expandedKeys"
+            v-model:selectedKeys="selectedKeys"
+            :tree-data="treeData"
+        >
             <template #title="{ title, key }">
                 <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
                 <template v-else>{{ title }}</template>

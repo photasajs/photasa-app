@@ -4,7 +4,7 @@ type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (action: FileAction | string | undefined) => void;
 type ScanCallback = (action: FileAction | string | undefined) => void;
-type LoadCallback = (action: string, config?: string) => void
+type LoadCallback = (action: string, config?: string) => void;
 
 type PathName = "home" | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
 
@@ -29,6 +29,7 @@ interface PhotoPath {
 interface PhotasaConfig {
     version: string;
     photoList: Photo[];
+    lastModified: number;
 }
 interface ThumbnailRequest {
     path: string;

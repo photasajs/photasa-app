@@ -83,7 +83,6 @@ export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
     .enqueue()
     .maxConcurrency(1);
 
-
 export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
     window.api.loadPhotasaConfigs(paths, callback);
 }

@@ -5,7 +5,6 @@ import * as R from "ramda";
 import { buildThumbnailPath } from "./image-helper";
 import { enumeratePhotasaConfigs } from "./path-helper";
 
-
 const PHOTASA_VERSION = "1.0";
 
 async function ensureConfig(photo: string, isFile = true): Promise<string> {
@@ -25,12 +24,17 @@ async function readConfig(photo: string, isFile = true): Promise<{ data: string;
 }
 
 async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Promise<void> {
+    photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
-    await fs.writeFile(configPath, data);
+    await fs.writeFile(configPath, data, { encoding: "utf8", flag: "w" });
 }
 
 function fromJson(data: string): PhotasaConfig {
-    return <PhotasaConfig>JSON.parse(data);
+    try {
+        return <PhotasaConfig>JSON.parse(data);
+    } catch {
+        return <PhotasaConfig>{};
+    }
 }
 
 function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
@@ -74,7 +78,6 @@ export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return parseConfig(meta.data);
 }
 
-
 export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
     enumeratePhotasaConfigs(paths).subscribe({
         next: (configPath) => {
@@ -85,6 +88,6 @@ export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): voi
         },
         complete: () => {
             callback("complete");
-        }
+        },
     });
 }

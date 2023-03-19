@@ -42,7 +42,7 @@ function createScreenshot(arg, logger: Logger): Promise<string> {
                 resolve(arg.thumbnail);
             })
             .screenshots({
-                timestamps: ["50%"],
+                timestamps: [15.5],
                 filename: path.basename(arg.thumbnail),
                 folder: path.dirname(arg.thumbnail),
                 size: `${arg.width}x${arg.height}`,

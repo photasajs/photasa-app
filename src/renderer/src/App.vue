@@ -20,14 +20,14 @@ import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { PhotasaConfig, WatchState } from "../../preload/types";
+import type { PhotasaConfig, WatchState } from "src/preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
-const { processingFile, currentFolder } = storeToRefs(photosStore);
+const { processingFile } = storeToRefs(photosStore);
 const { addFile } = photosStore;
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode } = storeToRefs(preferenceStore);
+const { paths, darkMode, currentFolder } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
 const visible = ref(false);
 const msg = computed(() => {
@@ -152,23 +152,34 @@ document.title = t("app.title");
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            margin: 0,
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content
+                            :style="{
+                                margin: 0,
+                                minHeight: '280px',
+                            }"
+                        >
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
                 </template>
             </split-view>
         </a-layout>
-        <a-layout-footer>{{ processingFile }}</a-layout-footer>
+        <a-layout-footer>
+            <a-space>
+                <a-typography-text type="success">{{ processingFile }}</a-typography-text>
+            </a-space>
+        </a-layout-footer>
     </a-layout>
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
-        @ok="handlePreferenceOk">
+    <a-modal
+        v-model:visible="showPreference"
+        :mask-closable="false"
+        :title="msg.settings"
+        width="800px"
+        @ok="handlePreferenceOk"
+    >
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -222,7 +233,7 @@ document.title = t("app.title");
     background: #107bcb;
 }
 
-#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
+#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
     margin-top: 48px;
 }
 </style>

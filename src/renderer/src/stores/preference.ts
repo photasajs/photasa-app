@@ -9,6 +9,8 @@ type PreferenceState = {
     darkMode: boolean;
     lastOpenedFolder: string;
     locale: string;
+    scanningFolder: string[];
+    currentFolder: string;
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -20,6 +22,8 @@ export const usePreferenceStore = defineStore("preference", {
             darkMode: false,
             lastOpenedFolder: "",
             locale: "zh-CN",
+            scanningFolder: [],
+            currentFolder: "",
         };
     },
     persist: true,
@@ -37,6 +41,9 @@ export const usePreferenceStore = defineStore("preference", {
             if (!this.paths.find((p) => path.indexOf(p) >= 0)) {
                 this.paths.push(path);
                 this.paths = this.paths.sort();
+
+                // Add to scanning queue, if app is quit, next time start will rescan it.
+                this.scanningFolder.push(path);
             }
         },
         updateThumbnailSize(size) {

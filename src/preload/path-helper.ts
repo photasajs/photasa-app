@@ -108,6 +108,11 @@ function walkForPhotasaConfig(source: string): Observable<string> {
     });
 }
 
+export function isHiddenFile(file: string): boolean {
+    const basename = path.basename(file);
+    return basename.startsWith(".");
+}
+
 export function shouldIgnorePhotasaPath(photoPath: string): boolean {
     return (
         photoPath.indexOf(".photasaoriginals") >= 0 || photoPath.indexOf(".picasaoriginals") >= 0
