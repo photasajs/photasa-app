@@ -24,6 +24,7 @@ const { addPath, removePath } = preferenceStore;
 const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
 
 const photosStore = usePhotosStore();
+const { processingFile } = storeToRefs(photosStore);
 const { addFile } = photosStore;
 
 function isDuplicate(path: string): boolean {
@@ -42,7 +43,7 @@ const processed = reactive<string[]>([]);
 const handler: Record<string, (args: ScanArgs | undefined) => void> = {
     next: (args): void => {
         if (args?.action?.path) {
-            processed.push(args.action.path);
+            processingFile.value = args.action.path;
             // Save to .photasa.json
             updatePhotoList(args.action.path)
                 // Create thumbnail
@@ -68,7 +69,7 @@ const handler: Record<string, (args: ScanArgs | undefined) => void> = {
     },
     error: (args): void => {
         if (args?.error?.message) {
-            processed.push(args.error.message);
+            processingFile.value = args.error.message;
         }
     },
     complete: (): void => {
