@@ -1,6 +1,7 @@
 {
     "app": {
-        "title": "仓廪图司"
+        "title": "仓廪图司",
+        "folderList": "目录列表"
     },
     "preference": {
         "settings": "设置",
@@ -32,5 +33,17 @@
     "menu": {
         "getInfo": "照片信息",
         "open": "在文件管理器中打开"
+    },
+    "notification": {
+        "info": "提示",
+        "warn": "注意",
+        "error": "错误"
+    },
+    "status": {
+        "ready": "准备就绪",
+        "loadingConfig": "加载照片库信息",
+        "processing": "正在处理 [%s]",
+        "scanned": "处理完毕"
     }
+
 }

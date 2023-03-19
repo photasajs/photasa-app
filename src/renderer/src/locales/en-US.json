@@ -17,7 +17,7 @@
         "buttton": {
             "import": "导入",
             "cancel": "取消",
-            "ok": "确定"
+            "ok": "OK"
         }
     }
 }

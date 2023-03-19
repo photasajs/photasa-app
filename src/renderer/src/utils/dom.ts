@@ -1,4 +1,4 @@
-import type { Position } from "src/renderer/src/types/position";
+import type { Position } from "@renderer/types/position";
 
 export function getPosition(target: HTMLElement): Position {
     let xPosition = 0;
