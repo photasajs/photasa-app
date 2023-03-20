@@ -115,6 +115,9 @@ export function isHiddenFile(file: string): boolean {
 
 export function shouldIgnorePhotasaPath(photoPath: string): boolean {
     return (
-        photoPath.indexOf(".photasaoriginals") >= 0 || photoPath.indexOf(".picasaoriginals") >= 0
+        photoPath.indexOf(".photasaoriginals") >= 0 ||
+        photoPath.indexOf(".picasaoriginals") >= 0 ||
+        photoPath.indexOf(".photasaoriginal") >= 0 ||
+        photoPath.indexOf(".picasaoriginal") >= 0
     );
 }

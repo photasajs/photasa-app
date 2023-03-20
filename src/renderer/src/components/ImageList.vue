@@ -10,6 +10,7 @@ import { JsonTreeView } from "json-tree-view-vue3";
 import type { Tags, XmpTags, IccTags } from "exifreader";
 import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api";
+import { Photo } from "@renderer/utils/folder-tree";
 
 const { t } = useI18n();
 
@@ -23,6 +24,7 @@ type Image = {
     key: string;
     src: string;
     fallback: string;
+    raw: string; // For Heic file, it's the original file
 };
 
 type ImageMeta = {
@@ -47,15 +49,23 @@ const fallback = ref(
 const mouseEnterDelay = ref(0.5);
 const images = reactive<Image[]>([]);
 
+function toImage(file: Photo): Image {
+    const preview =
+        file.path.indexOf(".heic") >= 0
+            ? file.thumbnail.replace(".heic.png", ".jpeg").replace("thumbnail-", "")
+            : file.path;
+    return {
+        key: file.path,
+        src: `file://${file.thumbnail}`,
+        fallback: `file://${preview}`,
+        raw: `file://${file.path}`,
+    };
+}
 watch(currentFolder, async (newVal) => {
     if (newVal) {
         const photasasConfig = await getPhotasaConfig(currentFolder.value);
         photasasConfig.photoList.forEach((config) => {
-            images.push({
-                key: config.path,
-                src: `file://${config.thumbnail}`,
-                fallback: `file://${config.path}`,
-            });
+            images.push(toImage(config));
             createThumbnailTask
                 .perform({
                     path: config.path as string,
@@ -79,11 +89,7 @@ const cards = computed(() => {
 
     getFolderFiles(currentFolder.value)?.forEach((file) => {
         if (file.path.indexOf(currentFolder.value) >= 0) {
-            images.push({
-                key: file.path,
-                src: `file://${file.thumbnail}`,
-                fallback: `file://${file.path}`,
-            });
+            images.push(toImage(file));
         }
     });
 
@@ -114,7 +120,7 @@ const label = computed(() => {
 function openImageMeta(image: Image): void {
     showInfo.value = true;
     loadingInfo.value = true;
-    const path = `/${trim(image.fallback, "file://")}`;
+    const path = `/${trim(image.raw, "file://")}`;
     getImageType(path).then((info) => {
         loadingInfo.value = false;
         imageMeta.imageType = info.imageType ?? {};
@@ -125,7 +131,7 @@ function openImageMeta(image: Image): void {
 }
 
 function openFileInFilder(image: Image): void {
-    const path = `/${trim(image.fallback, "file://")}`;
+    const path = `/${trim(image.raw, "file://")}`;
     openInFinder(path);
 }
 </script>
@@ -153,7 +159,7 @@ function openFileInFilder(image: Image): void {
                         <a-tooltip
                             placement="rightBottom"
                             :mouse-enter-delay="mouseEnterDelay"
-                            :title="image.fallback"
+                            :title="image.raw"
                         >
                             <a-card hoverable>
                                 <a-image

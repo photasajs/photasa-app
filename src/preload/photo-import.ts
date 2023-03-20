@@ -23,7 +23,13 @@ export function importPhotos(folders: string[], target: string, callback: Import
     from(folders)
         .pipe(
             mergeMap((folder) => scanFolder(folder, target)),
-            filter((action) => action.isImage),
+            filter((action) => {
+                return (
+                    (action.isImage || action.isVideo) && // Image or video
+                    !shouldIgnorePhotasaPath(action.file) && // Not in ignore list such as .photasaoriginals or .picasaoriginals
+                    !isHiddenFile(action.file)
+                );
+            }),
             mergeMap((action) => ensureDir(action)),
             concatMap((action) => copyFile(action)), // copy file should be concatMap.
         )
