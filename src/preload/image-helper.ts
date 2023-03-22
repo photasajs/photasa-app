@@ -12,6 +12,7 @@ export function buildThumbnailPath(photoPath: string): string {
     const dir = path.join(path.dirname(photoPath), ".photasaoriginals");
     return path.join(dir, `thumbnail-${path.basename(photoPath)}.png`);
 }
+
 export async function getImageType(path: string): Promise<ImageInfo> {
     const buffer = await readChunk(path, { length: minimumBytes });
     const tags = await getExifInfo(path);

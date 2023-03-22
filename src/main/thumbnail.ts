@@ -82,6 +82,7 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
     if (isExist) {
         return Promise.resolve(arg);
     }
+
     await ensureDir(path.dirname(arg.thumbnail));
 
     let isHeic = checkHEIC(arg.path);

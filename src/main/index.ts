@@ -12,9 +12,9 @@ Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
 });
 
-const PROD_MODE = process.env.NODE_ENV === "production";
+const DEV_MODE = process.env.NODE_ENV === "development";
 const logger = log4js.getLogger("main");
-logger.level = PROD_MODE ? "info" : "debug";
+logger.level = DEV_MODE ? "debug" : "info";
 let mainWindow: BrowserWindow | undefined | null;
 
 function createWindow(): void {
@@ -38,6 +38,10 @@ function createWindow(): void {
 
     mainWindow.on("ready-to-show", () => {
         mainWindow?.show();
+
+        if (!DEV_MODE) {
+            mainWindow?.webContents.openDevTools();
+        }
     });
 
     mainWindow.webContents.setWindowOpenHandler((details) => {
