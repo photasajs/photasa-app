@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, screen } from "electron";
+import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import log4js from "log4js";
@@ -7,6 +7,7 @@ import { initFileWatcher } from "./fs-watch";
 import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
+import isDev from "electron-is-dev";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -30,7 +31,7 @@ function createWindow(): void {
         webPreferences: {
             preload: join(__dirname, "../preload/index.js"),
             sandbox: false,
-            webSecurity: false, // enable to load local source
+            webSecurity: !isDev, // enable to load local source
         },
     });
 
@@ -109,6 +110,11 @@ app.whenReady().then(() => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
         }
+    });
+    // @see https://github.com/electron/electron/issues/23757#issuecomment-640146333
+    protocol.registerFileProtocol("file", (request, callback) => {
+        const pathname = decodeURIComponent(request.url.replace("file:///", ""));
+        callback(pathname);
     });
 });
 

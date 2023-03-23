@@ -13,6 +13,7 @@ import { openInFinder } from "@renderer/utils/api";
 import { Photo } from "@renderer/utils/folder-tree";
 import type { ThumbnailRequest } from "src/preload/types";
 import { UseElementVisibility } from "@vueuse/components";
+
 const { t } = useI18n();
 
 type Card = {
@@ -94,11 +95,11 @@ watch(currentFolder, async (newVal) => {
 
         Promise.all(promises).then(() => {
             loadingPhotasaConfig.value = false;
-
-            if (imageList.value) {
-                (imageList.value as HTMLElement).scrollTo(0, 0);
-            }
         });
+
+        if (imageList.value) {
+            (imageList.value as HTMLElement).scrollTo(0, 0);
+        }
     }
 });
 

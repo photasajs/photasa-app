@@ -21,6 +21,7 @@ import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 import type { PhotasaConfig, WatchState } from "src/preload/types";
+import { watchArray } from "@vueuse/core";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
@@ -58,7 +59,7 @@ watch(darkMode, () => {
 });
 
 // vue3 watch for array, should specify deep as true
-watch(
+watchArray(
     paths,
     () => {
         // Stop current watching, then start a new one
