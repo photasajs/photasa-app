@@ -107,6 +107,9 @@ getDirectory("desktop")
         processingFile.value = t("status.loadingConfig");
         loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
             if (action === "next" && config) {
+                processingFile.value = t("status.loadingConfig", {
+                    config,
+                });
                 addFile(paths.value, {
                     path: config,
                     thumbnail: "",

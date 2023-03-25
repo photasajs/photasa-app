@@ -22,7 +22,7 @@ export const usePhotosStore = defineStore("photos", {
     },
     actions: {
         /**
-         * Add file to corresponding folder which is watched.
+         * Add photasa config file to store, which will be used to build folder tree node
          * @param paths All watched paths
          * @param file File to add
          */

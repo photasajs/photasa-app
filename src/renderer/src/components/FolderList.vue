@@ -14,7 +14,7 @@ const { files } = storeToRefs(photosStore);
 const { paths, currentFolder } = storeToRefs(preferenceStore);
 const { updateFileList, getFolderFiles } = photosStore;
 
-const expandedKeys = ref<string[]>([preferenceStore.paths[0]]);
+const expandedKeys = ref<string[]>([...paths.value]);
 const selectedKeys = ref<string[]>([currentFolder.value]);
 
 const treeData = computed((): DataNode[] => {
