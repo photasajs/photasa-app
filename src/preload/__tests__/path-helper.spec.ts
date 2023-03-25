@@ -23,6 +23,7 @@ describe("path-helper", () => {
                 target: "/test/test/test",
                 file: "/text.txt",
                 isImage: false,
+                isVideo: false,
                 targetName: "test.md",
                 name: "",
                 targetDir: "",

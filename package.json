@@ -46,6 +46,7 @@
         "ffprobe-static": "^3.1.0",
         "fluent-ffmpeg": "^2.1.2",
         "fs-extra": "^11.1.0",
+        "glob": "^9.3.2",
         "heic-convert": "^1.2.4",
         "is-image": "^3.1.0",
         "is-video": "^1.0.1",

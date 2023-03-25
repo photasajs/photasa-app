@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -30,12 +30,8 @@ const { addFile } = photosStore;
 const preferenceStore = usePreferenceStore();
 const { paths, darkMode, currentFolder } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
+
 const visible = ref(false);
-const msg = computed(() => {
-    return {
-        settings: t("preference.settings"),
-    };
-});
 const showPreference = ref(false);
 const loading = ref(false);
 
@@ -111,13 +107,9 @@ getDirectory("desktop")
         processingFile.value = t("status.loadingConfig");
         loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
             if (action === "next" && config) {
-                getPhotasaConfigTask.perform(config).then((photasaConfig: PhotasaConfig) => {
-                    photasaConfig.photoList.forEach((photo) => {
-                        addFile(paths.value, {
-                            path: photo.path,
-                            thumbnail: photo.thumbnail,
-                        });
-                    });
+                addFile(paths.value, {
+                    path: config,
+                    thumbnail: "",
                 });
             }
             if (action === "complete") {
@@ -177,7 +169,7 @@ document.title = t("app.title");
     <a-modal
         v-model:visible="showPreference"
         :mask-closable="false"
-        :title="msg.settings"
+        :title="t('preference.settings')"
         width="800px"
         @ok="handlePreferenceOk"
     >

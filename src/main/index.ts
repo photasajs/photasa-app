@@ -8,6 +8,7 @@ import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
+import { glob } from "glob";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -80,6 +81,24 @@ function createWindow(): void {
 
     ipcMain.on("picasa:open-in-finder", (_, args) => {
         shell.showItemInFolder(args.path);
+    });
+
+    ipcMain.handle("picasa:query-config", async (_, args) => {
+        let result: string[] = [];
+        const pattern = `**/*.photasa.json`;
+        const promises: Promise<void>[] = [];
+        args.paths.forEach(async (target) => {
+            // use glob to get files
+            const p = glob(pattern, {
+                cwd: target,
+                dot: true,
+            }).then((list) => {
+                result = result.concat(list.map((cfg) => join(target, cfg)));
+            });
+            promises.push(p);
+        });
+
+        return Promise.all(promises).then(() => result);
     });
 
     // Setup Thumbnail Service

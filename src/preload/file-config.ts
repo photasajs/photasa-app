@@ -3,7 +3,8 @@ import path from "path";
 import type { PhotasaConfig, LoadCallback } from "./types";
 import * as R from "ramda";
 import { buildThumbnailPath } from "./image-helper";
-import { enumeratePhotasaConfigs } from "./path-helper";
+import { queryPhotasaConfigs } from "./query-config";
+import { from } from "rxjs";
 
 const PHOTASA_VERSION = "1.0";
 
@@ -78,8 +79,9 @@ export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return parseConfig(meta.data);
 }
 
-export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
-    enumeratePhotasaConfigs(paths).subscribe({
+export async function loadPhotasaConfigs(paths: string[], callback: LoadCallback): Promise<void> {
+    const list = await queryPhotasaConfigs(paths);
+    from(list).subscribe({
         next: (configPath) => {
             callback("next", configPath);
         },

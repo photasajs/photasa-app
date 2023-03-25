@@ -8,7 +8,7 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import { buildThumbnailPath } from "./image-helper";
 import type { PhotoPath } from "./types";
-
+import { glob } from "glob";
 export interface PathOption {
     root?: string;
 }
@@ -94,6 +94,7 @@ export function enumeratePhotasaConfigs(paths: string[]): Observable<string> {
 }
 
 function walkForPhotasaConfig(source: string): Observable<string> {
+    glob;
     return new Observable<string>((subscriber: Subscriber<string>) => {
         klaw(source)
             .on("data", (item) => {
