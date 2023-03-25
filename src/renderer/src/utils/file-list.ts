@@ -1,5 +1,5 @@
 import { useTask } from "vue-concurrency";
-import { createThumbnailTask, isFileUnderFolder, removeThumbnailTask, updatePhotoList } from "@renderer/utils/api";
+import { createThumbnailTask, isFileUnderFolder, removeThumbnailTask, addToPhotoList, removeFromPhotoList } from "@renderer/utils/api";
 import type { WatchState, PhotasaConfig } from "src/preload/types";
 
 function isMedia(state: WatchState): boolean {
@@ -15,7 +15,7 @@ export const handleAddFileTask = useTask(function* (_, state, photosStore, prefe
 async function handleAddFile(state, photosStore, preferenceStore): Promise<void> {
     const { addPhotasaConfigFile } = photosStore;
     // Directory skip hidden or empty path
-    if (!state.isFile || state.path?.length > 0) {
+    if (!state.isFile || state.path?.length < 0) {
         return;
     }
 
@@ -36,7 +36,7 @@ async function handleAddFile(state, photosStore, preferenceStore): Promise<void>
                 height: preferenceStore.thumbnailSize,
             })
             .then(() => {
-                return updatePhotoList(state.path);
+                return addToPhotoList(state.path);
             })
             .then((result: { path: string, config: PhotasaConfig }) => {
                 // if the file is in the current folder, update the current folder config
@@ -61,7 +61,7 @@ export const handleDeleteFileTask = useTask(function* (_, state, photosStore, pr
 function handleDeleteFile(state, photosStore, preferenceStore): void {
     const { removeFile, removeFromFileList } = photosStore;
     // Directory skip hidden
-    if (!state.isFile) {
+    if (!state.isFile || state.path?.length < 0) {
         return;
     }
 
@@ -73,10 +73,12 @@ function handleDeleteFile(state, photosStore, preferenceStore): void {
             height: preferenceStore.thumbnailSize,
         });
 
-        removeFile(preferenceStore.paths, {
-            path: state.path as string,
-            thumbnail: state.thumbnail,
-        });
+        removeFromPhotoList(state.path)
+            .then(result => {
+                if (isFileUnderFolder(result.path, preferenceStore.currentFolder)) {
+                    preferenceStore.currentFolderConfig = result.config;
+                }
+            });
 
         removeFromFileList({
             path: state.path as string,

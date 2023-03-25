@@ -4,7 +4,7 @@ import type { Photo } from "@renderer/utils/folder-tree";
 import { mergePath } from "@renderer/utils/path";
 
 type PhotoState = {
-    files: Map<string, Map<string, Photo>>;
+    files: Map<string, Map<string, Photo>>; // Photasa Config file list
     currentFolder: string;
     processingFile: string;
     folderFiles: Record<string, Set<Photo>>;

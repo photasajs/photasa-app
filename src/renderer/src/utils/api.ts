@@ -68,8 +68,12 @@ export function scanPhotos(folder: string, callback: ScanCallback): void {
     window.api.scanPhotos(folder, callback);
 }
 
-export async function updatePhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
-    return window.api.updatePhotoList(photoPath);
+export async function addToPhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
+    return window.api.addToPhotoList(photoPath);
+}
+
+export async function removeFromPhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
+    return window.api.removeFromPhotoList(photoPath);
 }
 
 export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
@@ -94,3 +98,4 @@ export function scanSubfolders(folder): Promise<string[]> {
 export function isFileUnderFolder(file: string, folder: string): boolean {
     return window.api.isFileUnderFolder(file, folder);
 }
+

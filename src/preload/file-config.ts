@@ -56,7 +56,7 @@ const parseConfig = R.compose(normalizeConfig, fromJson);
  * @param photo path of photo
  * @returns path of .photasa.json
  */
-export async function updatePhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
+export async function addToPhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
     const meta = await readConfig(photoPath);
     const photasaConfig = parseConfig(meta.data);
     const photo = photasaConfig.photoList.find((p) => p.path === photoPath);
@@ -70,6 +70,28 @@ export async function updatePhotoList(photoPath: string): Promise<{path: string,
         writeConfig(meta.dir, photasaConfig);
     } else if (!photo.thumbnail) {
         photo.thumbnail = buildThumbnailPath(photoPath);
+        writeConfig(meta.dir, photasaConfig);
+    }
+    return {
+        path: meta.dir,
+        config: photasaConfig,
+    };
+}
+
+
+/**
+ * Remove photo to .photasa.json
+ *
+ * @param photo path of photo
+ * @returns path of .photasa.json and config of photasa
+ */
+export async function removeFromPhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
+    const meta = await readConfig(photoPath);
+    const photasaConfig = parseConfig(meta.data);
+    const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === photoPath);
+
+    if (photoIndex >= 0) {
+        photasaConfig.photoList.splice(photoIndex, 1);
         writeConfig(meta.dir, photasaConfig);
     }
     return {

@@ -1,5 +1,5 @@
 import { useTask } from "vue-concurrency";
-import { createThumbnailTask, scanPhotos, updatePhotoList } from "@renderer/utils/api";
+import { createThumbnailTask, scanPhotos, addToPhotoList } from "@renderer/utils/api";
 import type { PhotoPath, ScanCallback } from "src/preload/types";
 
 export type ScanArgs = {
@@ -23,7 +23,7 @@ export const processScannedFileTask = useTask(function* (_, args: ScanArgs, thum
     });
 
     // Save to .photasa.json
-    return yield updatePhotoList(args.action.path);
+    return yield addToPhotoList(args.action.path);
 })
     .enqueue()
     .maxConcurrency(1);

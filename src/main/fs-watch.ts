@@ -29,9 +29,11 @@ export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger:
                 mainWindow?.webContents.send("picasa:file-change", { isFile: true, path });
             })
             .on("unlink", (path) => {
+                logger.info(`Delete file ${path}`);
                 mainWindow?.webContents.send("picasa:file-unlink", { isFile: true, path });
             })
             .on("unlinkDir", (path) => {
+                logger.info(`Delete folder ${path}`);
                 mainWindow?.webContents.send("picasa:file-unlink", { isFile: false, path });
             })
             .on("error", (error) => {

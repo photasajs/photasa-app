@@ -1,10 +1,10 @@
-import { updatePhotoList, getPhotasaConfig } from "../file-config";
+import { addToPhotoList, getPhotasaConfig } from "../file-config";
 import { vol } from "memfs";
 
 jest.mock("fs");
 jest.mock("fs/promises");
 
-describe("updatePhotoList", () => {
+describe("addToPhotoList", () => {
     beforeEach(() => {
         vol.reset();
     });
@@ -19,7 +19,7 @@ describe("updatePhotoList", () => {
             [photoPath]: "1",
         });
 
-        const result = await updatePhotoList(photoPath);
+        const result = await addToPhotoList(photoPath);
 
         expect(result.config.photoList.length).toBe(1);
         expect(result.config.photoList[0].path).toBe(photoPath);
@@ -38,7 +38,7 @@ describe("updatePhotoList", () => {
         expect(config.photoList.length).toBe(1);
         expect(config.photoList[0].path).toBe(photoPath);
 
-        const result2 = await updatePhotoList(photoPath);
+        const result2 = await addToPhotoList(photoPath);
         expect(result2.config.photoList.length).toBe(1);
         expect(result2.config.photoList[0].path).toBe(photoPath);
     });
@@ -53,11 +53,11 @@ describe("updatePhotoList", () => {
             [configPath]: JSON.stringify({ photoList: [{ path: photoPath }] }),
         });
 
-        let result2 = await updatePhotoList(photoPath);
+        let result2 = await addToPhotoList(photoPath);
         expect(result2.config.photoList.length).toBe(1);
         expect(result2.config.photoList[0].path).toBe(photoPath);
 
-        result2 = await updatePhotoList(photoPath1);
+        result2 = await addToPhotoList(photoPath1);
         expect(result2.config.photoList.length).toBe(2);
         expect(result2.config.photoList[1].path).toBe(photoPath1);
     });

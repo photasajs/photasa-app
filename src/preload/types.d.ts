@@ -75,7 +75,8 @@ declare global {
             getImageType: (path: string) => Promise<ImageInfo>;
             openInFinder: (path: string) => void;
             getPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
-            updatePhotoList: (photo: string) => Promise<{path: string, config: PhotasaConfig}>;
+            addToPhotoList: (photo: string) => Promise<{ path: string, config: PhotasaConfig }>;
+            removeFromPhotoList: (photo: string) => Promise<{ path: string, config: PhotasaConfig }>;
             loadPhotasaConfigs: (paths: string[], callback: LoadCallback) => void;
             scanSubfolders: (folder: string) => Promise<string[]>;
             isFileUnderFolder: (file: string, folder: string) => boolean;
