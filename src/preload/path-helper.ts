@@ -104,3 +104,8 @@ export function shouldIgnorePhotasaPath(photoPath: string): boolean {
         photoPath.indexOf(".AppleDouble") >= 0
     );
 }
+
+export function isFileUnderFolder(file: string, folder: string): boolean {
+    const dirname = path.dirname(file);
+    return dirname === path.normalize(folder);
+}

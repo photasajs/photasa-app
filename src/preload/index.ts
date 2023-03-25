@@ -7,6 +7,7 @@ import { createThumbnail, getImageType, removeThumbnail } from "./image-helper";
 import { openInFinder } from "./shell-helper";
 import { updatePhotoList, getPhotasaConfig, loadPhotasaConfigs } from "./file-config";
 import { scanSubfolders } from "./query-config";
+import { isFileUnderFolder } from "./path-helper";
 
 // Custom APIs for renderer
 const api = {
@@ -24,6 +25,7 @@ const api = {
     getPhotasaConfig,
     loadPhotasaConfigs,
     scanSubfolders,
+    isFileUnderFolder,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

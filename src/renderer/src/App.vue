@@ -26,7 +26,7 @@ import { watchArray } from "@vueuse/core";
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
-const { addFile } = photosStore;
+const { addPhotasaConfigFile } = photosStore;
 const preferenceStore = usePreferenceStore();
 const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
     storeToRefs(preferenceStore);
@@ -73,7 +73,7 @@ function runOverQueue(): void {
     const args = queue.shift();
     if (args?.action?.path) {
         processScannedFileTask.perform(args, thumbnailSize.value).then((configPath: string) => {
-            addFile(paths.value, {
+            addPhotasaConfigFile(paths.value, {
                 path: configPath,
                 thumbnail: "",
             });
@@ -85,7 +85,7 @@ function runOverQueue(): void {
     }
 }
 
-const handler: Record<string, (args: ScanArgs | undefined) => void> = {
+const scanningHandler: Record<string, (args: ScanArgs | undefined) => void> = {
     next: (args): void => {
         if (args?.action?.path) {
             queue.push(args);
@@ -113,7 +113,7 @@ const handler: Record<string, (args: ScanArgs | undefined) => void> = {
 function startScanning(): void {
     if (scanningFolder.value.length > 0) {
         scanPhotosTask.perform(scanningFolder.value[0], (args) => {
-            handler[args.type]?.call(null, args);
+            scanningHandler[args.type]?.call(null, args);
         });
     }
 }
@@ -161,10 +161,10 @@ getDirectory("desktop")
         processingFile.value = t("status.loadingConfig");
         loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
             if (action === "next" && config) {
-                processingFile.value = t("status.loadingConfig", {
+                processingFile.value = t("status.readingConfig", {
                     config,
                 });
-                addFile(paths.value, {
+                addPhotasaConfigFile(paths.value, {
                     path: config,
                     thumbnail: "",
                 });
@@ -174,6 +174,7 @@ getDirectory("desktop")
             }
         });
 
+        // Start to check if any leftover folder need to scan
         startScanning();
     });
 
@@ -186,7 +187,9 @@ setupMenu({
     },
 });
 
+// Update title
 document.title = t("app.title");
+
 </script>
 
 <template>
@@ -204,12 +207,10 @@ document.title = t("app.title");
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content
-                            :style="{
-                                margin: 0,
-                                minHeight: '280px',
-                            }"
-                        >
+                        <a-layout-content :style="{
+                            margin: 0,
+                            minHeight: '280px',
+                        }">
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
@@ -225,13 +226,8 @@ document.title = t("app.title");
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal
-        v-model:visible="showPreference"
-        :mask-closable="false"
-        :title="t('preference.settings')"
-        width="800px"
-        @ok="handlePreferenceOk"
-    >
+    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="t('preference.settings')" width="800px"
+        @ok="handlePreferenceOk">
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -285,7 +281,7 @@ document.title = t("app.title");
     background: #107bcb;
 }
 
-#components-layout-demo-basic > .code-box-demo > .ant-layout + .ant-layout {
+#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
     margin-top: 48px;
 }
 </style>

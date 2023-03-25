@@ -26,7 +26,7 @@ export const usePhotosStore = defineStore("photos", {
          * @param paths All watched paths
          * @param file File to add
          */
-        addFile(paths: string[], file: Photo): void {
+        addPhotasaConfigFile(paths: string[], file: Photo): void {
             // Find root folder which is watched.
             const path = paths.find((path) => file.path.startsWith(path)) ?? "";
 

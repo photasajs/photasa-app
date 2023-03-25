@@ -19,10 +19,10 @@ describe("updatePhotoList", () => {
             [photoPath]: "1",
         });
 
-        const config = await updatePhotoList(photoPath);
+        const result = await updatePhotoList(photoPath);
 
-        expect(config.photoList.length).toBe(1);
-        expect(config.photoList[0].path).toBe(photoPath);
+        expect(result.config.photoList.length).toBe(1);
+        expect(result.config.photoList[0].path).toBe(photoPath);
     });
 
     it("shouldn't add photo to .photasa.json", async () => {
@@ -38,9 +38,9 @@ describe("updatePhotoList", () => {
         expect(config.photoList.length).toBe(1);
         expect(config.photoList[0].path).toBe(photoPath);
 
-        const config2 = await updatePhotoList(photoPath);
-        expect(config2.photoList.length).toBe(1);
-        expect(config2.photoList[0].path).toBe(photoPath);
+        const result2 = await updatePhotoList(photoPath);
+        expect(result2.config.photoList.length).toBe(1);
+        expect(result2.config.photoList[0].path).toBe(photoPath);
     });
 
     it("should add more photos to .photasa.json", async () => {
@@ -53,12 +53,12 @@ describe("updatePhotoList", () => {
             [configPath]: JSON.stringify({ photoList: [{ path: photoPath }] }),
         });
 
-        let config2 = await updatePhotoList(photoPath);
-        expect(config2.photoList.length).toBe(1);
-        expect(config2.photoList[0].path).toBe(photoPath);
+        let result2 = await updatePhotoList(photoPath);
+        expect(result2.config.photoList.length).toBe(1);
+        expect(result2.config.photoList[0].path).toBe(photoPath);
 
-        config2 = await updatePhotoList(photoPath1);
-        expect(config2.photoList.length).toBe(2);
-        expect(config2.photoList[1].path).toBe(photoPath1);
+        result2 = await updatePhotoList(photoPath1);
+        expect(result2.config.photoList.length).toBe(2);
+        expect(result2.config.photoList[1].path).toBe(photoPath1);
     });
 });

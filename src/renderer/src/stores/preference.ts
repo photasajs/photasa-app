@@ -2,6 +2,7 @@
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
+import type { PhotasaConfig } from "src/preload/types";
 
 type PreferenceState = {
     paths: string[];
@@ -13,6 +14,7 @@ type PreferenceState = {
     scanningFolder: string[];
     currentFolder: string;
     scannedFolder: string;
+    currentFolderConfig: PhotasaConfig;
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -27,6 +29,7 @@ export const usePreferenceStore = defineStore("preference", {
             scanningFolder: [],
             currentFolder: "",
             scannedFolder: "",
+            currentFolderConfig: <PhotasaConfig>{}
         };
     },
     persist: true,

@@ -6,12 +6,15 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { buildDataNode } from "@renderer/utils/folder-tree";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
+import type { PhotasaConfig } from "src/preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
-const preferenceStore = usePreferenceStore();
 const { files } = storeToRefs(photosStore);
-const { paths, currentFolder } = storeToRefs(preferenceStore);
+
+const preferenceStore = usePreferenceStore();
+
+const { paths, currentFolder, currentFolderConfig } = storeToRefs(preferenceStore);
 const { updateFileList, getFolderFiles } = photosStore;
 
 const expandedKeys = ref<string[]>([...paths.value]);
@@ -37,7 +40,11 @@ const treeData = computed((): DataNode[] => {
 });
 
 watch(selectedKeys, () => {
-    currentFolder.value = selectedKeys.value[0];
+    if (currentFolder.value !== selectedKeys.value[0]) {
+        // Current folder changed, update current folder and reset photasa config
+        currentFolder.value = selectedKeys.value[0];
+        currentFolderConfig.value = <PhotasaConfig>{};
+    }
 });
 </script>
 
@@ -48,11 +55,7 @@ watch(selectedKeys, () => {
                 <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
             </a-breadcrumb>
         </template>
-        <a-tree
-            v-model:expandedKeys="expandedKeys"
-            v-model:selectedKeys="selectedKeys"
-            :tree-data="treeData"
-        >
+        <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
             <template #title="{ title, key }">
                 <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
                 <template v-else>{{ title }}</template>
