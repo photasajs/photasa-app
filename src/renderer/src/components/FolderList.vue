@@ -57,9 +57,35 @@ watch(selectedKeys, () => {
         </template>
         <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
             <template #title="{ title, key }">
-                <span v-if="paths.includes(key)" style="color: #1890ff">{{ title }}</span>
-                <template v-else>{{ title }}</template>
+                <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
+                <template v-else>
+                    <a-dropdown :trigger="['contextmenu']">
+
+                        <span class="folder-node">{{ title }}</span>
+
+                        <template #overlay>
+                            <a-menu>
+                                <a-menu-item key="1">{{
+                                    t("menu.getInfo")
+                                }}</a-menu-item>
+                                <a-menu-item key="2">{{
+                                    t("menu.open")
+                                }}</a-menu-item>
+                            </a-menu>
+                        </template>
+                    </a-dropdown>
+
+                </template>
             </template>
         </a-tree>
     </a-card>
 </template>
+<style lang="scss">
+.root-folder-node {
+    color: #1890ff
+}
+
+.folder-node {
+    white-space: nowrap;
+}
+</style>
