@@ -14,22 +14,25 @@ import {
     getDirectory,
     stopWatching,
     loadPhotasaConfigs,
-    getPhotasaConfigTask,
 } from "@renderer/utils/api";
+import { processScannedFileTask, scanPhotosTask, ScanArgs } from "@renderer/utils/scan-folder";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { PhotasaConfig, WatchState } from "src/preload/types";
+import type { WatchState } from "src/preload/types";
 import { watchArray } from "@vueuse/core";
+import { notification } from "ant-design-vue";
+import type { PhotasaConfig } from "src/preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const { addFile } = photosStore;
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode, currentFolder } = storeToRefs(preferenceStore);
-const { addPath } = preferenceStore;
+const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize } =
+    storeToRefs(preferenceStore);
+const { addPath, completeScanPath } = preferenceStore;
 
 const visible = ref(false);
 const showPreference = ref(false);
@@ -65,6 +68,44 @@ watchArray(
     },
     { deep: true },
 );
+
+const handler: Record<string, (args: ScanArgs | undefined) => void> = {
+    next: (args): void => {
+        if (args?.action?.path) {
+            processingFile.value = args.action.path;
+            processScannedFileTask.perform(args, thumbnailSize.value).then((configPath: string) => {
+                addFile(paths.value, {
+                    path: configPath,
+                    thumbnail: "",
+                });
+            });
+        }
+    },
+    error: (args): void => {
+        if (args?.error?.message) {
+            processingFile.value = args.error.message;
+        }
+    },
+    complete: (args): void => {
+        processingFile.value = t("status.scanned");
+        if (args?.action?.path) {
+            completeScanPath(args.action.path);
+            processingFile.value = t("status.scanComplete", {
+                path: args.action.path,
+            });
+        }
+    },
+};
+
+function startScanning(): void {
+    if (scanningFolder.value.length > 0) {
+        scanPhotosTask.perform(scanningFolder.value[0], (args) => {
+            handler[args.type]?.call(null, args);
+        });
+    }
+}
+
+watchArray(scanningFolder, startScanning, { deep: true });
 
 const actions = {
     add: handleAddFileTask,
@@ -119,6 +160,8 @@ getDirectory("desktop")
                 processingFile.value = t("status.ready");
             }
         });
+
+        startScanning();
     });
 
 setupMenu({

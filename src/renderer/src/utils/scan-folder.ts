@@ -1,6 +1,6 @@
 import { useTask } from "vue-concurrency";
 import { createThumbnailTask, scanPhotos, updatePhotoList } from "@renderer/utils/api";
-import type { PhotasaConfig, PhotoPath, ScanCallback } from "src/preload/types";
+import type { PhotoPath, ScanCallback } from "src/preload/types";
 
 export type ScanArgs = {
     type: "next" | "error" | "complete";

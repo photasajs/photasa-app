@@ -1,17 +1,15 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { ref, reactive, UnwrapRef, computed, onActivated } from "vue";
+import { ref, reactive, UnwrapRef, computed } from "vue";
 import { storeToRefs } from "pinia";
 import type { TabsProps } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { usePhotosStore } from "@renderer/stores/photos";
-import { chooseDirectory } from "@renderer/utils/api";
+import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
 
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
-import type { PhotasaConfig } from "src/preload/types";
-import { processScannedFileTask, scanPhotosTask, ScanArgs } from "@renderer/utils/scan-folder";
 
 import About from "./About.vue";
 
@@ -22,12 +20,11 @@ interface FormState {
 }
 
 const preferenceStore = usePreferenceStore();
-const { addPath, removePath } = preferenceStore;
-const { paths, thumbnailSize, darkMode, scanningFolder } = storeToRefs(preferenceStore);
+const { addPath, removePath, addScanFolder } = preferenceStore;
+const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
 
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
-const { addFile } = photosStore;
 
 const activeKey = ref(1);
 const showScanning = ref(false);
@@ -67,38 +64,6 @@ function isDuplicate(path: string): boolean {
     return paths.value.includes(path);
 }
 
-const handler: Record<string, (args: ScanArgs | undefined) => void> = {
-    next: (args): void => {
-        if (args?.action?.path) {
-            processingFile.value = args.action.path;
-            processScannedFileTask
-                .perform(args, thumbnailSize.value)
-                .then((photasaConfig: PhotasaConfig) => {
-                    // Add to fileList
-                    photasaConfig.photoList.forEach((p) => {
-                        addFile(paths.value, {
-                            path: p.path,
-                            thumbnail: p.thumbnail,
-                        });
-                    });
-                });
-        }
-    },
-    error: (args): void => {
-        if (args?.error?.message) {
-            processingFile.value = args.error.message;
-        }
-    },
-    complete: (): void => {
-        processingFile.value = t("status.scanned");
-        openNotificationWithIcon(
-            "info",
-            t("notification.scan.title"),
-            t("notification.scan.message"),
-        );
-    },
-};
-
 function onChoose(): void {
     chooseDirectory().then(({ filePaths }) => {
         if (isDuplicate(filePaths[0])) {
@@ -116,7 +81,9 @@ function onChoose(): void {
 
         addPath(filePaths[0]);
 
-        startScanningTask();
+        scanSubfolders(filePaths[0]).then((folders) => {
+            folders.forEach((f) => addScanFolder(f));
+        });
     });
 }
 
@@ -130,26 +97,6 @@ function openNotificationWithIcon(type: string, message, description): void {
 function handleRemove(item): void {
     removePath(item);
 }
-
-function startScanningTask(): void {
-    scanningFolder.value.forEach((folder) => {
-        scanPhotosTask
-            .perform(folder, (args) => {
-                handler[args.type]?.call(null, args);
-            })
-            .then(() => {
-                const index = scanningFolder.value.findIndex((f) => f === folder);
-                if (index > -1) {
-                    scanningFolder.value.splice(index, 1);
-                }
-            });
-    });
-}
-
-// Component mounted, check if any folder is waiting to be scanned
-onActivated(() => {
-    startScanningTask();
-});
 </script>
 
 <template>

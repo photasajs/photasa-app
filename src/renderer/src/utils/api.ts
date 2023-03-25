@@ -68,7 +68,7 @@ export function scanPhotos(folder: string, callback: ScanCallback): void {
     window.api.scanPhotos(folder, callback);
 }
 
-export async function updatePhotoList(photoPath: string): Promise<PhotasaConfig> {
+export async function updatePhotoList(photoPath: string): Promise<string> {
     return window.api.updatePhotoList(photoPath);
 }
 
@@ -85,4 +85,8 @@ export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
 
 export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
     window.api.loadPhotasaConfigs(paths, callback);
+}
+
+export function scanSubfolders(folder): Promise<string[]> {
+    return window.api.scanSubfolders(folder);
 }

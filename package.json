@@ -51,6 +51,7 @@
         "is-image": "^3.1.0",
         "is-video": "^1.0.1",
         "json-tree-view-vue3": "^0.2.3",
+        "klaw-sync": "^6.0.0",
         "log4js": "^6.8.0",
         "moment": "^2.29.4",
         "motion": "^10.15.5",

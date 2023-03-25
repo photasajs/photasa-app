@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
-import { join } from "path";
+import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import log4js from "log4js";
 import { initThumbnailService } from "./thumbnail";
@@ -9,6 +9,7 @@ import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
 import { glob } from "glob";
+import klawSync from "klaw-sync";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -30,7 +31,7 @@ function createWindow(): void {
         autoHideMenuBar: true,
         ...(process.platform === "linux" ? { icon } : {}),
         webPreferences: {
-            preload: join(__dirname, "../preload/index.js"),
+            preload: path.join(__dirname, "../preload/index.js"),
             sandbox: false,
             webSecurity: !isDev, // enable to load local source
         },
@@ -56,7 +57,7 @@ function createWindow(): void {
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
         mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
     } else {
-        mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+        mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
     }
 
     ipcMain.on("picasa:choose-directory", () => {
@@ -93,12 +94,22 @@ function createWindow(): void {
                 cwd: target,
                 dot: true,
             }).then((list) => {
-                result = result.concat(list.map((cfg) => join(target, cfg)));
+                result = result.concat(list.map((cfg) => path.join(target, cfg)));
             });
             promises.push(p);
         });
 
         return Promise.all(promises).then(() => result);
+    });
+
+    ipcMain.handle("picasa:sub-folders", (_, args) => {
+        const filterFn = (item: { path: string }): boolean => {
+            const basename = path.basename(item.path as string);
+            return basename === "." || basename[0] !== ".";
+        };
+        const folders = klawSync(args.parent, { nofile: true, depthLimit: 0, filter: filterFn });
+
+        return folders.map((item) => item.path);
     });
 
     // Setup Thumbnail Service

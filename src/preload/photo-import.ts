@@ -4,7 +4,7 @@ import { copyFile } from "./file-helper";
 import {
     ensureDir,
     scanFolder,
-    walkthroughFolder,
+    walkthroughFiles,
     shouldIgnorePhotasaPath,
     isHiddenFile,
 } from "./path-helper";
@@ -58,7 +58,7 @@ export function importPhotos(folders: string[], target: string, callback: Import
 }
 
 export function scanPhotos(folder: string, callback: ScanCallback): void {
-    walkthroughFolder(folder)
+    walkthroughFiles(folder)
         .pipe(filter((action) => action.isImage || action.isVideo))
         .subscribe({
             next: (action) => {
@@ -81,6 +81,9 @@ export function scanPhotos(folder: string, callback: ScanCallback): void {
                 logger.debug("complete");
                 callback({
                     type: "complete",
+                    action: {
+                        path: folder,
+                    },
                 });
             },
         });

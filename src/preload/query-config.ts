@@ -5,3 +5,7 @@ const { ipcRenderer } = electronAPI;
 export async function queryPhotasaConfigs(paths: string[]): Promise<string[]> {
     return ipcRenderer.invoke("picasa:query-config", { paths });
 }
+
+export async function scanSubfolders(folder: string): Promise<string[]> {
+    return ipcRenderer.invoke("picasa:sub-folders", { parent: folder });
+}

@@ -44,9 +44,11 @@ async function handleAddFile(state, photosStore, preferenceStore): Promise<void>
                 height: preferenceStore.thumbnailSize,
             })
             .then(() => {
-                updatePhotoList(state.path);
+                return updatePhotoList(state.path);
+            })
+            .then((configPath) => {
                 addFile(preferenceStore.paths, {
-                    path: state.path as string,
+                    path: configPath,
                     thumbnail: state.thumbnail,
                 });
             });
