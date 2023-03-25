@@ -100,6 +100,7 @@ export function shouldIgnorePhotasaPath(photoPath: string): boolean {
         photoPath.indexOf(".photasaoriginals") >= 0 ||
         photoPath.indexOf(".picasaoriginals") >= 0 ||
         photoPath.indexOf(".photasaoriginal") >= 0 ||
-        photoPath.indexOf(".picasaoriginal") >= 0
+        photoPath.indexOf(".picasaoriginal") >= 0 ||
+        photoPath.indexOf(".AppleDouble") >= 0
     );
 }

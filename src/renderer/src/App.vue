@@ -22,15 +22,13 @@ import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 import type { WatchState } from "src/preload/types";
 import { watchArray } from "@vueuse/core";
-import { notification } from "ant-design-vue";
-import type { PhotasaConfig } from "src/preload/types";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const { addFile } = photosStore;
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize } =
+const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
     storeToRefs(preferenceStore);
 const { addPath, completeScanPath } = preferenceStore;
 
@@ -69,16 +67,31 @@ watchArray(
     { deep: true },
 );
 
+const queue: ScanArgs[] = [];
+
+function runOverQueue(): void {
+    const args = queue.shift();
+    if (args?.action?.path) {
+        processScannedFileTask.perform(args, thumbnailSize.value).then((configPath: string) => {
+            addFile(paths.value, {
+                path: configPath,
+                thumbnail: "",
+            });
+            processingFile.value = args.action?.path as string;
+            runOverQueue();
+        });
+    } else {
+        completeScanPath(scannedFolder.value);
+    }
+}
+
 const handler: Record<string, (args: ScanArgs | undefined) => void> = {
     next: (args): void => {
         if (args?.action?.path) {
-            processingFile.value = args.action.path;
-            processScannedFileTask.perform(args, thumbnailSize.value).then((configPath: string) => {
-                addFile(paths.value, {
-                    path: configPath,
-                    thumbnail: "",
-                });
-            });
+            queue.push(args);
+            if (processScannedFileTask.isIdle) {
+                runOverQueue();
+            }
         }
     },
     error: (args): void => {
@@ -89,7 +102,7 @@ const handler: Record<string, (args: ScanArgs | undefined) => void> = {
     complete: (args): void => {
         processingFile.value = t("status.scanned");
         if (args?.action?.path) {
-            completeScanPath(args.action.path);
+            scannedFolder.value = args.action.path;
             processingFile.value = t("status.scanComplete", {
                 path: args.action.path,
             });

@@ -12,6 +12,7 @@ type PreferenceState = {
     locale: string;
     scanningFolder: string[];
     currentFolder: string;
+    scannedFolder: string;
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -25,6 +26,7 @@ export const usePreferenceStore = defineStore("preference", {
             locale: "zh-CN",
             scanningFolder: [],
             currentFolder: "",
+            scannedFolder: "",
         };
     },
     persist: true,
@@ -45,6 +47,9 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         addScanFolder(folder: string) {
+            if (!Array.isArray(this.scanningFolder)) {
+                this.scanningFolder = [];
+            }
             if (!this.scanningFolder.find((p) => p === folder)) {
                 this.scanningFolder.push(folder);
             }

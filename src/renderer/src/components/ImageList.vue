@@ -96,10 +96,6 @@ watch(currentFolder, async (newVal) => {
         Promise.all(promises).then(() => {
             loadingPhotasaConfig.value = false;
         });
-
-        if (imageList.value) {
-            (imageList.value as HTMLElement).scrollTo(0, 0);
-        }
     }
 });
 
