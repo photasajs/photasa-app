@@ -29,7 +29,7 @@ export const usePreferenceStore = defineStore("preference", {
             scanningFolder: [],
             currentFolder: "",
             scannedFolder: "",
-            currentFolderConfig: <PhotasaConfig>{}
+            currentFolderConfig: <PhotasaConfig>{},
         };
     },
     persist: true,

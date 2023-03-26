@@ -234,14 +234,13 @@ document.title = t("app.title");
         :mask-closable="false"
         :title="t('preference.settings')"
         width="800px"
-        @ok="handlePreferenceOk"
-    >
+        @ok="handlePreferenceOk">
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
 </template>
 
-<style lang="less">
+<style lang="scss">
 .content .image-content {
     height: calc(100vh - 70px);
 }
