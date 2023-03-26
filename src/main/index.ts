@@ -53,6 +53,7 @@ function createWindow(): void {
             sandbox: false,
             webSecurity: !isDev, // enable to load local source
         },
+        titleBarStyle: "hiddenInset",
     });
 
     createMenu(mainWindow);

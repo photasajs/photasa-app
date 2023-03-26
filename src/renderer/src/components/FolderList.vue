@@ -57,25 +57,22 @@ watch(selectedKeys, () => {
         </template>
         <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
             <template #title="{ title, key }">
-                <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
-                <template v-else>
-                    <a-dropdown :trigger="['contextmenu']">
-
+                <a-dropdown :trigger="['contextmenu']">
+                    <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
+                    <template v-else>
                         <span class="folder-node">{{ title }}</span>
-
-                        <template #overlay>
-                            <a-menu>
-                                <a-menu-item key="1">{{
-                                    t("menu.getInfo")
-                                }}</a-menu-item>
-                                <a-menu-item key="2">{{
-                                    t("menu.open")
-                                }}</a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
-
-                </template>
+                    </template>
+                    <template #overlay>
+                        <a-menu>
+                            <a-menu-item key="1">{{
+                                t("menu.getInfo")
+                            }}</a-menu-item>
+                            <a-menu-item key="2">{{
+                                t("menu.open")
+                            }}</a-menu-item>
+                        </a-menu>
+                    </template>
+                </a-dropdown>
             </template>
         </a-tree>
     </a-card>
@@ -85,7 +82,7 @@ watch(selectedKeys, () => {
     color: #1890ff
 }
 
-.folder-node {
+.folder-node .root-folder-node {
     white-space: nowrap;
 }
 </style>
