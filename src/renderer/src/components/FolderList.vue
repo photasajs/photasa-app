@@ -51,11 +51,15 @@ watch(selectedKeys, () => {
 <template>
     <a-card>
         <template #title>
-            <a-breadcrumb style="margin: 16px 0">
+            <a-breadcrumb class="folder-list-header">
                 <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
             </a-breadcrumb>
         </template>
-        <a-tree v-model:expandedKeys="expandedKeys" v-model:selectedKeys="selectedKeys" :tree-data="treeData">
+        <a-tree
+            v-model:expandedKeys="expandedKeys"
+            v-model:selectedKeys="selectedKeys"
+            :tree-data="treeData"
+        >
             <template #title="{ title, key }">
                 <a-dropdown :trigger="['contextmenu']">
                     <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
@@ -64,12 +68,8 @@ watch(selectedKeys, () => {
                     </template>
                     <template #overlay>
                         <a-menu>
-                            <a-menu-item key="1">{{
-                                t("menu.getInfo")
-                            }}</a-menu-item>
-                            <a-menu-item key="2">{{
-                                t("menu.open")
-                            }}</a-menu-item>
+                            <a-menu-item key="1">{{ t("menu.getInfo") }}</a-menu-item>
+                            <a-menu-item key="2">{{ t("menu.open") }}</a-menu-item>
                         </a-menu>
                     </template>
                 </a-dropdown>
@@ -79,10 +79,15 @@ watch(selectedKeys, () => {
 </template>
 <style lang="scss">
 .root-folder-node {
-    color: #1890ff
+    color: #1890ff;
 }
 
 .folder-node .root-folder-node {
     white-space: nowrap;
+}
+
+.folder-list-header {
+    height: 32px;
+    line-height: 32px;
 }
 </style>

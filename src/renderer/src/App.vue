@@ -199,6 +199,9 @@ document.title = t("app.title");
 <template>
     <a-spin v-if="loading" />
     <a-layout v-else>
+        <a-layout-header class="app-header">
+            <span>{{ t("app.title") }}</span>
+        </a-layout-header>
         <a-layout class="content">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
@@ -220,7 +223,7 @@ document.title = t("app.title");
                 </template>
             </split-view>
         </a-layout>
-        <a-layout-footer>
+        <a-layout-footer class="app-footer">
             <a-space>
                 <a-typography-text type="success">{{ processingFile }}</a-typography-text>
             </a-space>
@@ -234,7 +237,8 @@ document.title = t("app.title");
         :mask-closable="false"
         :title="t('preference.settings')"
         width="800px"
-        @ok="handlePreferenceOk">
+        @ok="handlePreferenceOk"
+    >
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
@@ -248,5 +252,22 @@ document.title = t("app.title");
 .image-list {
     margin: 0;
     height: 100%;
+}
+.dark .app-header,
+.app-header {
+    height: 36px;
+    margin-left: 36px;
+    line-height: 36px;
+    justify-content: center;
+    user-select: none;
+    -webkit-app-region: drag;
+}
+.dark .app-footer,
+.app-footer {
+    padding: 0;
+    height: 32px;
+    margin-left: 36px;
+    line-height: 32px;
+    justify-content: center;
 }
 </style>
