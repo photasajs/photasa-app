@@ -4,7 +4,7 @@ import type { Photo } from "@renderer/utils/folder-tree";
 import { mergePath } from "@renderer/utils/path";
 
 type PhotoState = {
-    files: Map<string, Map<string, Photo>>;
+    files: Map<string, Map<string, Photo>>; // Photasa Config file list
     currentFolder: string;
     processingFile: string;
     folderFiles: Record<string, Set<Photo>>;
@@ -21,12 +21,20 @@ export const usePhotosStore = defineStore("photos", {
         };
     },
     actions: {
+        addPhotasaConfigFiles(paths: string[], files: string[]): void {
+            files.forEach((file) => {
+                this.addPhotasaConfigFile(paths, {
+                    path: file,
+                    thumbnail: "",
+                });
+            });
+        },
         /**
-         * Add file to corresponding folder which is watched.
+         * Add photasa config file to store, which will be used to build folder tree node
          * @param paths All watched paths
          * @param file File to add
          */
-        addFile(paths: string[], file: Photo): void {
+        addPhotasaConfigFile(paths: string[], file: Photo): void {
             // Find root folder which is watched.
             const path = paths.find((path) => file.path.startsWith(path)) ?? "";
 

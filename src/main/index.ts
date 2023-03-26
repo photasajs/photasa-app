@@ -1,5 +1,5 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, screen } from "electron";
-import { join } from "path";
+import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
+import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import log4js from "log4js";
 import { initThumbnailService } from "./thumbnail";
@@ -7,15 +7,36 @@ import { initFileWatcher } from "./fs-watch";
 import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
+import isDev from "electron-is-dev";
+import { Glob } from "glob";
+import klawSync from "klaw-sync";
+import { mergeMap, from, Observable, Subscriber } from "rxjs";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
 });
 
-const PROD_MODE = process.env.NODE_ENV === "production";
+const DEV_MODE = process.env.NODE_ENV === "development";
 const logger = log4js.getLogger("main");
-logger.level = PROD_MODE ? "info" : "debug";
+logger.level = DEV_MODE ? "debug" : "info";
 let mainWindow: BrowserWindow | undefined | null;
+
+function globPhotasaConfigFromFolders(folder: string): Observable<string> {
+    const pattern = `**/*.photasa.json`;
+    return new Observable<string>((subscriber: Subscriber<string>) => {
+        const g3 = new Glob(pattern, {
+            cwd: folder,
+            dot: true,
+        });
+        g3.stream()
+            .on("data", (photasa) => {
+                subscriber.next(path.join(folder, photasa));
+            })
+            .on("end", () => {
+                subscriber.complete();
+            });
+    });
+}
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -28,9 +49,9 @@ function createWindow(): void {
         autoHideMenuBar: true,
         ...(process.platform === "linux" ? { icon } : {}),
         webPreferences: {
-            preload: join(__dirname, "../preload/index.js"),
+            preload: path.join(__dirname, "../preload/index.js"),
             sandbox: false,
-            webSecurity: false, // enable to load local source
+            webSecurity: !isDev, // enable to load local source
         },
     });
 
@@ -38,6 +59,10 @@ function createWindow(): void {
 
     mainWindow.on("ready-to-show", () => {
         mainWindow?.show();
+
+        if (!DEV_MODE) {
+            mainWindow?.webContents.openDevTools();
+        }
     });
 
     mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -50,7 +75,7 @@ function createWindow(): void {
     if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
         mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
     } else {
-        mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+        mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
     }
 
     ipcMain.on("picasa:choose-directory", () => {
@@ -75,6 +100,44 @@ function createWindow(): void {
 
     ipcMain.on("picasa:open-in-finder", (_, args) => {
         shell.showItemInFolder(args.path);
+    });
+
+    const BUFFER_SIZE = 60;
+    ipcMain.on("picasa:query-config", async (_, args: { paths: string[] }) => {
+        const queue: string[] = [];
+        from(args.paths)
+            .pipe(mergeMap((target) => globPhotasaConfigFromFolders(target)))
+            .subscribe({
+                next: (photasa) => {
+                    queue.push(photasa);
+                    if (queue.length >= BUFFER_SIZE) {
+                        mainWindow?.webContents.send("picasa:photasa-config", {
+                            action: "next",
+                            paths: [...queue],
+                        });
+                        queue.splice(0, queue.length);
+                    }
+                },
+                error: (err) => {
+                    mainWindow?.webContents.send("picasa:photasa-config", { action: "error", err });
+                },
+                complete: () => {
+                    mainWindow?.webContents.send("picasa:photasa-config", {
+                        action: "complete",
+                        paths: [...queue],
+                    });
+                },
+            });
+    });
+
+    ipcMain.handle("picasa:sub-folders", (_, args) => {
+        const filterFn = (item: { path: string }): boolean => {
+            const basename = path.basename(item.path as string);
+            return basename === "." || basename[0] !== ".";
+        };
+        const folders = klawSync(args.parent, { nofile: true, depthLimit: 0, filter: filterFn });
+
+        return folders.map((item) => item.path);
     });
 
     // Setup Thumbnail Service
@@ -105,6 +168,11 @@ app.whenReady().then(() => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
         }
+    });
+    // @see https://github.com/electron/electron/issues/23757#issuecomment-640146333
+    protocol.registerFileProtocol("file", (request, callback) => {
+        const pathname = decodeURIComponent(request.url.replace("file:///", ""));
+        callback(pathname);
     });
 });
 

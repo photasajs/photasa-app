@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -14,29 +14,28 @@ import {
     getDirectory,
     stopWatching,
     loadPhotasaConfigs,
-    getPhotasaConfigTask,
 } from "@renderer/utils/api";
+import { processScannedFileTask, scanPhotosTask, ScanArgs } from "@renderer/utils/scan-folder";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { PhotasaConfig, WatchState } from "../../preload/types";
+import type { PhotasaConfig, WatchState } from "src/preload/types";
+import { watchArray } from "@vueuse/core";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
-const { processingFile, currentFolder } = storeToRefs(photosStore);
-const { addFile } = photosStore;
+const { processingFile } = storeToRefs(photosStore);
+const { addPhotasaConfigFiles, addPhotasaConfigFile } = photosStore;
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode } = storeToRefs(preferenceStore);
-const { addPath } = preferenceStore;
+const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
+    storeToRefs(preferenceStore);
+const { addPath, completeScanPath } = preferenceStore;
+
 const visible = ref(false);
-const msg = computed(() => {
-    return {
-        settings: t("preference.settings"),
-    };
-});
 const showPreference = ref(false);
 const loading = ref(false);
+const loadingConfigs = ref(false);
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
@@ -58,7 +57,7 @@ watch(darkMode, () => {
 });
 
 // vue3 watch for array, should specify deep as true
-watch(
+watchArray(
     paths,
     () => {
         // Stop current watching, then start a new one
@@ -68,6 +67,61 @@ watch(
     },
     { deep: true },
 );
+
+const queue: ScanArgs[] = [];
+
+function runOverQueue(): void {
+    const args = queue.shift();
+    if (args?.action?.path) {
+        processScannedFileTask
+            .perform(args, thumbnailSize.value)
+            .then((photasa: { path: string; config: PhotasaConfig }) => {
+                addPhotasaConfigFile(paths.value, {
+                    path: photasa.path,
+                    thumbnail: "",
+                });
+                processingFile.value = args.action?.path as string;
+                runOverQueue();
+            });
+    } else {
+        completeScanPath(scannedFolder.value);
+    }
+}
+
+const scanningHandler: Record<string, (args: ScanArgs | undefined) => void> = {
+    next: (args): void => {
+        if (args?.action?.path) {
+            queue.push(args);
+            if (processScannedFileTask.isIdle) {
+                runOverQueue();
+            }
+        }
+    },
+    error: (args): void => {
+        if (args?.error?.message) {
+            processingFile.value = args.error.message;
+        }
+    },
+    complete: (args): void => {
+        processingFile.value = t("status.scanned");
+        if (args?.action?.path) {
+            scannedFolder.value = args.action.path;
+            processingFile.value = t("status.scanComplete", {
+                path: args.action.path,
+            });
+        }
+    },
+};
+
+function startScanning(): void {
+    if (scanningFolder.value.length > 0) {
+        scanPhotosTask.perform(scanningFolder.value[0], (args) => {
+            scanningHandler[args.type]?.call(null, args);
+        });
+    }
+}
+
+watchArray(scanningFolder, startScanning, { deep: true });
 
 const actions = {
     add: handleAddFileTask,
@@ -87,6 +141,19 @@ function startFileWatching(dirs): void {
     );
 }
 
+const loadHandler = {
+    next: (configs: string[]): void => {
+        if (configs.length > 0) {
+            addPhotasaConfigFiles(paths.value, configs);
+        }
+    },
+    complete: (configs: string[]): void => {
+        processingFile.value = t("status.ready");
+        if (configs.length > 0) {
+            addPhotasaConfigFiles(paths.value, configs);
+        }
+    },
+};
 getDirectory("desktop")
     .then((dir) => {
         // Desktop directory is ready
@@ -108,21 +175,12 @@ getDirectory("desktop")
     })
     .then((configPaths: string[]) => {
         processingFile.value = t("status.loadingConfig");
-        loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
-            if (action === "next" && config) {
-                getPhotasaConfigTask.perform(config).then((photasaConfig: PhotasaConfig) => {
-                    photasaConfig.photoList.forEach((photo) => {
-                        addFile(paths.value, {
-                            path: photo.path,
-                            thumbnail: photo.thumbnail,
-                        });
-                    });
-                });
-            }
-            if (action === "complete") {
-                processingFile.value = t("status.ready");
-            }
+        loadPhotasaConfigs([...configPaths], (action: string, configs: string[]) => {
+            loadHandler[action]?.call(null, configs);
         });
+
+        // Start to check if any leftover folder need to scan
+        startScanning();
     });
 
 setupMenu({
@@ -134,6 +192,7 @@ setupMenu({
     },
 });
 
+// Update title
 document.title = t("app.title");
 </script>
 
@@ -145,84 +204,50 @@ document.title = t("app.title");
                 <template #A>
                     <a-layout class="image-content">
                         <a-layout-content>
-                            <FolderList></FolderList>
+                            <a-spin :spinning="loadingConfigs">
+                                <FolderList></FolderList>
+                            </a-spin>
                         </a-layout-content>
                     </a-layout>
                 </template>
 
                 <template #B>
                     <a-layout class="image-content">
-                        <a-layout-content :style="{
-                            margin: 0,
-                            minHeight: '280px',
-                        }">
+                        <a-layout-content class="image-list">
                             <ImageList></ImageList>
                         </a-layout-content>
                     </a-layout>
                 </template>
             </split-view>
         </a-layout>
-        <a-layout-footer>{{ processingFile }}</a-layout-footer>
+        <a-layout-footer>
+            <a-space>
+                <a-typography-text type="success">{{ processingFile }}</a-typography-text>
+            </a-space>
+        </a-layout-footer>
     </a-layout>
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="msg.settings" width="800px"
-        @ok="handlePreferenceOk">
+    <a-modal
+        v-model:visible="showPreference"
+        :mask-closable="false"
+        :title="t('preference.settings')"
+        width="800px"
+        @ok="handlePreferenceOk"
+    >
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
 </template>
 
 <style lang="less">
-.content {
+.content .image-content {
     height: calc(100vh - 70px);
 }
 
-#components-layout-demo-basic .code-box-demo {
-    text-align: center;
-}
-
-#components-layout-demo-basic .ant-layout-header,
-#components-layout-demo-basic .ant-layout-footer {
-    color: #fff;
-    background: #7dbcea;
-}
-
-[data-theme="dark"] #components-layout-demo-basic .ant-layout-header {
-    background: #6aa0c7;
-}
-
-[data-theme="dark"] #components-layout-demo-basic .ant-layout-footer {
-    background: #6aa0c7;
-}
-
-#components-layout-demo-basic .ant-layout-footer {
-    line-height: 1.5;
-}
-
-#components-layout-demo-basic .ant-layout-sider {
-    color: #fff;
-    line-height: 120px;
-    background: #3ba0e9;
-}
-
-[data-theme="dark"] #components-layout-demo-basic .ant-layout-sider {
-    background: #3499ec;
-}
-
-#components-layout-demo-basic .ant-layout-content {
-    min-height: 120px;
-    color: #fff;
-    line-height: 120px;
-    background: rgba(16, 142, 233, 1);
-}
-
-[data-theme="dark"] #components-layout-demo-basic .ant-layout-content {
-    background: #107bcb;
-}
-
-#components-layout-demo-basic>.code-box-demo>.ant-layout+.ant-layout {
-    margin-top: 48px;
+.image-list {
+    margin: 0;
+    height: 100%;
 }
 </style>

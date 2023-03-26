@@ -3,8 +3,8 @@ import path from "path";
 import type { PhotasaConfig, LoadCallback } from "./types";
 import * as R from "ramda";
 import { buildThumbnailPath } from "./image-helper";
-import { enumeratePhotasaConfigs } from "./path-helper";
-
+import { queryPhotasaConfigs } from "./query-config";
+import { from } from "rxjs";
 
 const PHOTASA_VERSION = "1.0";
 
@@ -25,12 +25,17 @@ async function readConfig(photo: string, isFile = true): Promise<{ data: string;
 }
 
 async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Promise<void> {
+    photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
-    await fs.writeFile(configPath, data);
+    await fs.writeFile(configPath, data, { encoding: "utf8", flag: "w" });
 }
 
 function fromJson(data: string): PhotasaConfig {
-    return <PhotasaConfig>JSON.parse(data);
+    try {
+        return <PhotasaConfig>JSON.parse(data);
+    } catch {
+        return <PhotasaConfig>{};
+    }
 }
 
 function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
@@ -49,8 +54,11 @@ const parseConfig = R.compose(normalizeConfig, fromJson);
  * Add photo to .photasa.json
  *
  * @param photo path of photo
+ * @returns path of .photasa.json
  */
-export async function updatePhotoList(photoPath: string): Promise<PhotasaConfig> {
+export async function addToPhotoList(
+    photoPath: string,
+): Promise<{ path: string; config: PhotasaConfig }> {
     const meta = await readConfig(photoPath);
     const photasaConfig = parseConfig(meta.data);
     const photo = photasaConfig.photoList.find((p) => p.path === photoPath);
@@ -66,7 +74,33 @@ export async function updatePhotoList(photoPath: string): Promise<PhotasaConfig>
         photo.thumbnail = buildThumbnailPath(photoPath);
         writeConfig(meta.dir, photasaConfig);
     }
-    return photasaConfig;
+    return {
+        path: meta.dir,
+        config: photasaConfig,
+    };
+}
+
+/**
+ * Remove photo to .photasa.json
+ *
+ * @param photo path of photo
+ * @returns path of .photasa.json and config of photasa
+ */
+export async function removeFromPhotoList(
+    photoPath: string,
+): Promise<{ path: string; config: PhotasaConfig }> {
+    const meta = await readConfig(photoPath);
+    const photasaConfig = parseConfig(meta.data);
+    const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === photoPath);
+
+    if (photoIndex >= 0) {
+        photasaConfig.photoList.splice(photoIndex, 1);
+        writeConfig(meta.dir, photasaConfig);
+    }
+    return {
+        path: meta.dir,
+        config: photasaConfig,
+    };
 }
 
 export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
@@ -74,17 +108,8 @@ export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return parseConfig(meta.data);
 }
 
-
-export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
-    enumeratePhotasaConfigs(paths).subscribe({
-        next: (configPath) => {
-            callback("next", configPath);
-        },
-        error: (err) => {
-            callback("error", err.message);
-        },
-        complete: () => {
-            callback("complete");
-        }
+export async function loadPhotasaConfigs(paths: string[], callback: LoadCallback): Promise<void> {
+    queryPhotasaConfigs(paths, (action, path) => {
+        callback(action, path);
     });
 }

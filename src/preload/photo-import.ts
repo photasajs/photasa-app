@@ -1,7 +1,13 @@
 import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
-import { ensureDir, scanFolder, walkthroughFolder, shouldIgnorePhotasaPath } from "./path-helper";
+import {
+    ensureDir,
+    scanFolder,
+    walkthroughFiles,
+    shouldIgnorePhotasaPath,
+    isHiddenFile,
+} from "./path-helper";
 import type { ImportCallback, ScanCallback } from "./types";
 import log4js from "log4js";
 
@@ -17,7 +23,13 @@ export function importPhotos(folders: string[], target: string, callback: Import
     from(folders)
         .pipe(
             mergeMap((folder) => scanFolder(folder, target)),
-            filter((action) => action.isImage),
+            filter((action) => {
+                return (
+                    (action.isImage || action.isVideo) && // Image or video
+                    !shouldIgnorePhotasaPath(action.file) && // Not in ignore list such as .photasaoriginals or .picasaoriginals
+                    !isHiddenFile(action.file)
+                );
+            }),
             mergeMap((action) => ensureDir(action)),
             concatMap((action) => copyFile(action)), // copy file should be concatMap.
         )
@@ -46,12 +58,12 @@ export function importPhotos(folders: string[], target: string, callback: Import
 }
 
 export function scanPhotos(folder: string, callback: ScanCallback): void {
-    walkthroughFolder(folder)
+    walkthroughFiles(folder)
         .pipe(filter((action) => action.isImage || action.isVideo))
         .subscribe({
             next: (action) => {
                 logger.debug("next", action);
-                if (!shouldIgnorePhotasaPath(action.path)) {
+                if (!shouldIgnorePhotasaPath(action.path) && !isHiddenFile(action.path)) {
                     callback({
                         type: "next",
                         action,
@@ -69,6 +81,9 @@ export function scanPhotos(folder: string, callback: ScanCallback): void {
                 logger.debug("complete");
                 callback({
                     type: "complete",
+                    action: {
+                        path: folder,
+                    },
                 });
             },
         });

@@ -4,7 +4,8 @@ type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (action: FileAction | string | undefined) => void;
 type ScanCallback = (action: FileAction | string | undefined) => void;
-type LoadCallback = (action: string, config?: string) => void
+type LoadCallback = (action: string, paths: string[]) => void;
+type ConfigCallback = (action: string, paths: string[]) => void;
 
 type PathName = "home" | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
 
@@ -29,6 +30,7 @@ interface PhotoPath {
 interface PhotasaConfig {
     version: string;
     photoList: Photo[];
+    lastModified: number;
 }
 interface ThumbnailRequest {
     path: string;
@@ -74,8 +76,13 @@ declare global {
             getImageType: (path: string) => Promise<ImageInfo>;
             openInFinder: (path: string) => void;
             getPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
-            updatePhotoList: (photo: string) => Promise<PhotasaConfig>;
+            addToPhotoList: (photo: string) => Promise<{ path: string; config: PhotasaConfig }>;
+            removeFromPhotoList: (
+                photo: string,
+            ) => Promise<{ path: string; config: PhotasaConfig }>;
             loadPhotasaConfigs: (paths: string[], callback: LoadCallback) => void;
+            scanSubfolders: (folder: string) => Promise<string[]>;
+            isFileUnderFolder: (file: string, folder: string) => boolean;
         };
     }
 }

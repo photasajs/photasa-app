@@ -70,8 +70,9 @@ export function scanFolder(source: string, target: string): Observable<FileActio
     );
 }
 
-export function walkthroughFolder(source: string): Observable<PhotoPath> {
+export function walkthroughFiles(source: string): Observable<PhotoPath> {
     return new Observable<PhotoPath>((subscriber: Subscriber<PhotoPath>) => {
+        // Only scan current folder
         klaw(source)
             .on("data", (item) => {
                 if (!item.stats.isDirectory() && item.path != source) {
@@ -89,27 +90,22 @@ export function walkthroughFolder(source: string): Observable<PhotoPath> {
     });
 }
 
-export function enumeratePhotasaConfigs(paths: string[]): Observable<string> {
-    return from(paths).pipe(mergeMap((path) => walkForPhotasaConfig(path)));
-}
-
-function walkForPhotasaConfig(source: string): Observable<string> {
-    return new Observable<string>((subscriber: Subscriber<string>) => {
-        klaw(source)
-            .on("data", (item) => {
-                const basename = path.basename(item.path);
-                if (!item.stats.isDirectory() && basename === ".photasa.json") {
-                    subscriber.next(path.dirname(item.path));
-                }
-            })
-            .on("end", () => {
-                subscriber.complete();
-            });
-    });
+export function isHiddenFile(file: string): boolean {
+    const basename = path.basename(file);
+    return basename.startsWith(".");
 }
 
 export function shouldIgnorePhotasaPath(photoPath: string): boolean {
     return (
-        photoPath.indexOf(".photasaoriginals") >= 0 || photoPath.indexOf(".picasaoriginals") >= 0
+        photoPath.indexOf(".photasaoriginals") >= 0 ||
+        photoPath.indexOf(".picasaoriginals") >= 0 ||
+        photoPath.indexOf(".photasaoriginal") >= 0 ||
+        photoPath.indexOf(".picasaoriginal") >= 0 ||
+        photoPath.indexOf(".AppleDouble") >= 0
     );
+}
+
+export function isFileUnderFolder(file: string, folder: string): boolean {
+    const dirname = path.dirname(file);
+    return dirname === path.normalize(folder);
 }

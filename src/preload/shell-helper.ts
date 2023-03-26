@@ -1,4 +1,3 @@
-
 import { electronAPI } from "@electron-toolkit/preload";
 
 const { ipcRenderer } = electronAPI;

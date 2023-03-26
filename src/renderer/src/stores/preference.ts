@@ -1,6 +1,8 @@
 // stores/photos.js
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
+import { scanPhotosTask } from "@renderer/utils/scan-folder";
+import type { PhotasaConfig } from "src/preload/types";
 
 type PreferenceState = {
     paths: string[];
@@ -9,6 +11,10 @@ type PreferenceState = {
     darkMode: boolean;
     lastOpenedFolder: string;
     locale: string;
+    scanningFolder: string[];
+    currentFolder: string;
+    scannedFolder: string;
+    currentFolderConfig: PhotasaConfig;
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -20,6 +26,10 @@ export const usePreferenceStore = defineStore("preference", {
             darkMode: false,
             lastOpenedFolder: "",
             locale: "zh-CN",
+            scanningFolder: [],
+            currentFolder: "",
+            scannedFolder: "",
+            currentFolderConfig: <PhotasaConfig>{}
         };
     },
     persist: true,
@@ -39,14 +49,34 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths = this.paths.sort();
             }
         },
-        updateThumbnailSize(size) {
+        addScanFolder(folder: string) {
+            if (!Array.isArray(this.scanningFolder)) {
+                this.scanningFolder = [];
+            }
+            if (!this.scanningFolder.find((p) => p === folder)) {
+                this.scanningFolder.push(folder);
+            }
+        },
+        updateThumbnailSize(size: number) {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
+        },
+        completeScanPath(folder: string): void {
+            const index = this.scanningFolder.findIndex((f) => f === folder);
+            if (index > -1) {
+                this.scanningFolder.splice(index, 1);
+            }
         },
         removePath(path: string): void {
             const index = this.paths.indexOf(path);
             if (index >= 0) {
                 this.paths.splice(index, 1);
             }
+
+            if (scanPhotosTask.isRunning) {
+                scanPhotosTask.cancelAll();
+            }
+
+            this.completeScanPath(path);
         },
     },
 });

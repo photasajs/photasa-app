@@ -1,17 +1,17 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 import { ref, reactive, UnwrapRef, computed } from "vue";
-import { usePreferenceStore } from "@renderer/stores/preference";
-import { usePhotosStore } from "@renderer/stores/photos";
-import { chooseDirectory, createThumbnailTask, updatePhotoList } from "@renderer/utils/api";
 import { storeToRefs } from "pinia";
 import type { TabsProps } from "ant-design-vue";
 import { useI18n } from "vue-i18n";
-import About from "./About.vue";
+import { usePreferenceStore } from "@renderer/stores/preference";
+import { usePhotosStore } from "@renderer/stores/photos";
+import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
+
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
-import { scanPhotos } from "@renderer/utils/api";
-import type { PhotoPath } from "../../../preload/types";
+
+import About from "./About.vue";
 
 const { t } = useI18n();
 
@@ -19,21 +19,12 @@ interface FormState {
     name: string;
 }
 
-type ScanArgs = {
-    type: "next" | "error" | "complete";
-    action?: PhotoPath;
-    error?: {
-        message: string;
-    };
-};
-
 const preferenceStore = usePreferenceStore();
-const { addPath, removePath } = preferenceStore;
+const { addPath, removePath, addScanFolder } = preferenceStore;
 const { paths, thumbnailSize, darkMode } = storeToRefs(preferenceStore);
 
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
-const { addFile } = photosStore;
 
 const activeKey = ref(1);
 const showScanning = ref(false);
@@ -63,9 +54,9 @@ const formLayout = ref("vertical");
 const formItemLayout = computed(() => {
     return formLayout.value === "horizontal"
         ? {
-            labelCol: { span: 4 },
-            wrapperCol: { span: 14 },
-        }
+              labelCol: { span: 4 },
+              wrapperCol: { span: 14 },
+          }
         : {};
 });
 
@@ -73,56 +64,13 @@ function isDuplicate(path: string): boolean {
     return paths.value.includes(path);
 }
 
-async function processScannedFile(args: ScanArgs): Promise<void> {
-    if (!args.action?.path) {
-        return;
-    }
-    // Save to .photasa.json
-    const photasaConfig = await updatePhotoList(args.action.path)
-
-    await createThumbnailTask
-        .perform({
-            path: args.action?.path as string,
-            thumbnail: args.action?.thumbnail as string,
-            width: thumbnailSize.value,
-            height: thumbnailSize.value,
-        })
-    // Add to fileList
-    photasaConfig.photoList.forEach((p) => {
-        addFile(paths.value, {
-            path: p.path,
-            thumbnail: p.thumbnail,
-        });
-    });
-
-}
-
-const handler: Record<string, (args: ScanArgs | undefined) => void> = {
-    next: (args): void => {
-        if (args?.action?.path) {
-            processingFile.value = args.action.path;
-            processScannedFile(args);
-        }
-    },
-    error: (args): void => {
-        if (args?.error?.message) {
-            processingFile.value = args.error.message;
-        }
-    },
-    complete: (): void => {
-        showScanning.value = false;
-        processingFile.value = t("status.scanned");
-        openNotificationWithIcon("info", "Scan Complete", "Folder is scanned");
-    },
-};
-
 function onChoose(): void {
     chooseDirectory().then(({ filePaths }) => {
         if (isDuplicate(filePaths[0])) {
             openNotificationWithIcon(
                 "warning",
-                "Duplicate folder",
-                `The folder [${filePaths[0]}] is already in the list`,
+                t("notification.duplicatePath.title"),
+                t("notification.duplicatePath.message", { path: filePaths[0] }),
             );
             return;
         }
@@ -132,13 +80,12 @@ function onChoose(): void {
         }
 
         addPath(filePaths[0]);
-        showScanning.value = true;
-        scanPhotos(filePaths[0], (args) => {
-            handler[args.type]?.call(null, args);
+
+        scanSubfolders(filePaths[0]).then((folders) => {
+            folders.forEach((f) => addScanFolder(f));
         });
     });
 }
-
 
 function openNotificationWithIcon(type: string, message, description): void {
     notification[type]({
@@ -158,7 +105,12 @@ function handleRemove(item): void {
             <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
                 <a-form-item :label="label.watchFolderList">
                     <a-space direction="vertical">
-                        <a-list size="small" bordered :data-source="paths" class="import-message-list">
+                        <a-list
+                            size="small"
+                            bordered
+                            :data-source="paths"
+                            class="import-message-list"
+                        >
                             <template #header>
                                 <a-descriptions :title="label.folderList">
                                     <a-descriptions-item :label="label.folderListUsage">{{
@@ -169,9 +121,16 @@ function handleRemove(item): void {
                             <template #renderItem="{ item }">
                                 <a-list-item>
                                     <template #actions>
-                                        <a-button @click="handleRemove(item)"><close-outlined /></a-button>
+                                        <a-button @click="handleRemove(item)"
+                                            ><close-outlined
+                                        /></a-button>
                                     </template>
-                                    <a-skeleton avatar :title="false" :loading="!!item.loading" active>
+                                    <a-skeleton
+                                        avatar
+                                        :title="false"
+                                        :loading="!!item.loading"
+                                        active
+                                    >
                                         <a-list-item-meta>
                                             <template #title>
                                                 {{ item }}
@@ -206,12 +165,16 @@ function handleRemove(item): void {
             <About></About>
         </a-tab-pane>
     </a-tabs>
-    <a-modal v-model:visible="showScanning" :mask-closable="false" :title="label.scanning" width="800px">
+    <a-modal
+        v-model:visible="showScanning"
+        :mask-closable="false"
+        :title="label.scanning"
+        width="800px"
+    >
         <a-spin>
-            <div>{{ }}</div>
+            <div>{{}}</div>
         </a-spin>
         <template #footer>{{ processingFile }}</template>
-
     </a-modal>
 </template>
 <style scoped lang="less">

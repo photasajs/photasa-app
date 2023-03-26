@@ -1,6 +1,12 @@
 import { useTask } from "vue-concurrency";
-import { createThumbnailTask, removeThumbnailTask, updatePhotoList } from "@renderer/utils/api";
-import type { WatchState } from "src/preload/types";
+import {
+    createThumbnailTask,
+    isFileUnderFolder,
+    removeThumbnailTask,
+    addToPhotoList,
+    removeFromPhotoList,
+} from "@renderer/utils/api";
+import type { WatchState, PhotasaConfig } from "src/preload/types";
 
 function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;
@@ -13,19 +19,13 @@ export const handleAddFileTask = useTask(function* (_, state, photosStore, prefe
     .maxConcurrency(1);
 
 async function handleAddFile(state, photosStore, preferenceStore): Promise<void> {
-    const { addFile } = photosStore;
-    // Directory skip hidden
-    if (!state.isFile) {
+    const { addPhotasaConfigFile } = photosStore;
+    // Directory skip hidden or empty path
+    if (!state.isFile || state.path?.length < 0) {
         return;
     }
 
-    const path = state.path ?? "";
-    // Path is empty skip it.
-    if (path.length <= 0) {
-        return;
-    }
-
-    const parts = path.split("/");
+    const parts = (state.path ?? "").split("/");
 
     // Skip any thing start with dot
     const fileName = parts[parts.length - 1];
@@ -34,8 +34,6 @@ async function handleAddFile(state, photosStore, preferenceStore): Promise<void>
     }
 
     if (isMedia(state)) {
-        // state.processingFile.value = state.path ?? "";
-
         await createThumbnailTask
             .perform({
                 path: state.path as string,
@@ -44,9 +42,16 @@ async function handleAddFile(state, photosStore, preferenceStore): Promise<void>
                 height: preferenceStore.thumbnailSize,
             })
             .then(() => {
-                updatePhotoList(state.path);
-                addFile(preferenceStore.paths, {
-                    path: state.path as string,
+                return addToPhotoList(state.path);
+            })
+            .then((result: { path: string; config: PhotasaConfig }) => {
+                // if the file is in the current folder, update the current folder config
+                // check after replace current folder, if any string still exist
+                if (isFileUnderFolder(result.path, preferenceStore.currentFolder)) {
+                    preferenceStore.currentFolderConfig = result.config;
+                }
+                addPhotasaConfigFile(preferenceStore.paths, {
+                    path: result.path,
                     thumbnail: state.thumbnail,
                 });
             });
@@ -60,9 +65,9 @@ export const handleDeleteFileTask = useTask(function* (_, state, photosStore, pr
     .maxConcurrency(1);
 
 function handleDeleteFile(state, photosStore, preferenceStore): void {
-    const { removeFile, removeFromFileList } = photosStore;
+    const { removeFromFileList } = photosStore;
     // Directory skip hidden
-    if (!state.isFile) {
+    if (!state.isFile || state.path?.length < 0) {
         return;
     }
 
@@ -74,9 +79,10 @@ function handleDeleteFile(state, photosStore, preferenceStore): void {
             height: preferenceStore.thumbnailSize,
         });
 
-        removeFile(preferenceStore.paths, {
-            path: state.path as string,
-            thumbnail: state.thumbnail,
+        removeFromPhotoList(state.path).then((result) => {
+            if (isFileUnderFolder(result.path, preferenceStore.currentFolder)) {
+                preferenceStore.currentFolderConfig = result.config;
+            }
         });
 
         removeFromFileList({

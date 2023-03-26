@@ -37,13 +37,22 @@
     "notification": {
         "info": "提示",
         "warn": "注意",
-        "error": "错误"
+        "error": "错误",
+        "scan": {
+            "title": "扫描目录",
+            "message": "目录已扫描完毕，照片已导入到仓廪图司。"
+        },
+        "duplicatePath": {
+            "title": "重复的目录",
+            "message": "目录[{folder}]已存在于仓廪图司中。"
+        }
     },
     "status": {
         "ready": "准备就绪",
-        "loadingConfig": "加载照片库信息",
-        "processing": "正在处理 [%s]",
-        "scanned": "处理完毕"
+        "readingConfig": "加载照片库信息 [{config}]",
+        "loadingConfig": "读取照片库信息",
+        "processing": "正在处理 [{file}]",
+        "scanned": "处理完毕",
+        "scanComplete": "目录[{path}]已处理完毕"
     }
-
 }
