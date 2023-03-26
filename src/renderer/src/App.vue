@@ -22,6 +22,7 @@ import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 import type { PhotasaConfig, WatchState } from "src/preload/types";
 import { watchArray } from "@vueuse/core";
+import { SettingFilled } from "@ant-design/icons-vue";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
@@ -39,6 +40,9 @@ const loadingConfigs = ref(false);
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
+}
+function openPreference(): void {
+    showPreference.value = true;
 }
 
 function updateTheme(): void {
@@ -199,9 +203,16 @@ document.title = t("app.title");
 <template>
     <a-spin v-if="loading" />
     <a-layout v-else>
-        <a-layout-header class="app-header">
-            <span>{{ t("app.title") }}</span>
-        </a-layout-header>
+        <header class="app-header">
+            <a-space class="title-header">
+                <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
+            </a-space>
+            <a-space class="setting-header">
+                <a-button shape="circle" @click="openPreference">
+                    <template #icon><SettingFilled /></template>
+                </a-button>
+            </a-space>
+        </header>
         <a-layout class="content">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
@@ -223,11 +234,11 @@ document.title = t("app.title");
                 </template>
             </split-view>
         </a-layout>
-        <a-layout-footer class="app-footer">
+        <footer class="app-footer">
             <a-space>
                 <a-typography-text type="success">{{ processingFile }}</a-typography-text>
             </a-space>
-        </a-layout-footer>
+        </footer>
     </a-layout>
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
@@ -244,7 +255,7 @@ document.title = t("app.title");
     </a-modal>
 </template>
 
-<style lang="scss">
+<style lang="less">
 .content .image-content {
     height: calc(100vh - 70px);
 }
@@ -253,21 +264,29 @@ document.title = t("app.title");
     margin: 0;
     height: 100%;
 }
-.dark .app-header,
+
 .app-header {
     height: 36px;
     margin-left: 36px;
+    padding-left: 50px;
     line-height: 36px;
-    justify-content: center;
+    display: flex;
+}
+.title-header {
+    flex-grow: 1;
     user-select: none;
     -webkit-app-region: drag;
 }
-.dark .app-footer,
+.setting-header {
+    float: right;
+    margin-right: 16px;
+}
+
 .app-footer {
     padding: 0;
     height: 32px;
-    margin-left: 36px;
     line-height: 32px;
+    padding-left: 20px;
     justify-content: center;
 }
 </style>
