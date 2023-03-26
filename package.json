@@ -31,6 +31,7 @@
         "@bugsnag/electron": "^7.20.0",
         "@bugsnag/js": "7.20.0",
         "@bugsnag/plugin-vue": "7.19.0",
+        "@cloudgeek/vue3-video-player": "^0.3.10",
         "@electron-toolkit/preload": "1.0.3",
         "@electron-toolkit/utils": "1.0.2",
         "@types/fs-extra": "11.0.1",
