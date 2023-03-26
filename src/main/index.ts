@@ -8,7 +8,7 @@ import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
-import { glob, Glob } from "glob";
+import { Glob } from "glob";
 import klawSync from "klaw-sync";
 import { mergeMap, from, Observable, Subscriber } from "rxjs";
 
