@@ -97,7 +97,7 @@ const imageMeta = reactive<ImageMeta>({
 
 async function rebuildThumbnail(image: Image): Promise<void> {
     await createThumbnailTask.perform({
-        path: image.fallback as string,
+        path: image.raw ?? image.fallback,
         thumbnail: image.src as string,
         width: thumbnailSize.value,
         height: thumbnailSize.value,
@@ -174,7 +174,7 @@ function openFileInFilder(image: Image): void {
                                         t("menu.getInfo")
                                     }}</a-menu-item>
                                     <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
-                                       t("menu.rebuildThumbnail")
+                                        t("menu.rebuildThumbnail")
                                     }}</a-menu-item>
                                     <a-menu-item key="2" @click="openFileInFilder(image)">{{
                                         t("menu.open")

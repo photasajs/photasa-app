@@ -1,12 +1,11 @@
 import isVideo from "is-video";
-import { ensureDir, exists, remove, readFile, writeFile } from "fs-extra";
+import { ensureDir, exists, remove, readFile } from "fs-extra";
 import sharp from "sharp";
 import type { IpcMain } from "electron";
 import type { Logger } from "log4js";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import convert from "heic-convert";
-import { lookup } from "dns";
+import decode from "heic-decode";
 
 //Get the paths to the packaged versions of the binaries we want to use
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked");
@@ -60,21 +59,27 @@ function createScreenshot(arg, logger: Logger): Promise<string> {
     });
 }
 
-async function extractPngFromHeic(arg, logger: Logger): Promise<string> {
+async function extractJpegFromHeic(arg, logger: Logger): Promise<string> {
     const fileName = path.basename(arg.path, path.extname(arg.path));
     const previewName = path.join(path.dirname(arg.path), `.photasaoriginals/${fileName}.jpeg`);
     const inputBuffer = await readFile(arg.path);
     try {
-        const outputBuffer = await convert({
-            buffer: inputBuffer, // the HEIC file buffer
-            format: "JPEG", // output format
-            quality: 1, // the jpeg compression quality, between 0 and 1
-        });
+        logger.info("Decode HEIC for : " + arg.path);
+        const image = await decode({ buffer: inputBuffer });
 
-        logger.info("Creating preview for : " + arg.path);
-        await writeFile(previewName, outputBuffer);
+        await sharp(image.data, {
+            raw: {
+                width: image.width,
+                height: image.height,
+                channels: 4,
+            },
+        })
+            .toFormat("jpeg")
+            .toFile(previewName);
+
         return previewName;
-    } catch {
+    } catch (e) {
+        logger.error(e);
         return "";
     }
 }
@@ -92,8 +97,7 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
     let isHeic = checkHEIC(arg.path);
     // If it's a HEIC file, we need to convert it to a PNG first for preview
     if (isHeic) {
-        arg.preview = await extractPngFromHeic(arg, logger);
-
+        arg.preview = await extractJpegFromHeic(arg, logger);
         // Convert may failed, then it's not HEIC
         isHeic = arg.preview !== "";
     }

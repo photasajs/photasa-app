@@ -48,7 +48,7 @@
         "fluent-ffmpeg": "^2.1.2",
         "fs-extra": "^11.1.1",
         "glob": "^9.3.2",
-        "heic-convert": "^1.2.4",
+        "heic-decode": "^1.1.2",
         "is-image": "^3.1.0",
         "is-video": "^1.0.1",
         "json-tree-view-vue3": "^0.2.3",
