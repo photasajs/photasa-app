@@ -8,8 +8,9 @@ import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
-import { glob } from "glob";
+import { glob, Glob } from "glob";
 import klawSync from "klaw-sync";
+import { mergeMap, from, Observable, Subscriber } from "rxjs";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -19,6 +20,23 @@ const DEV_MODE = process.env.NODE_ENV === "development";
 const logger = log4js.getLogger("main");
 logger.level = DEV_MODE ? "debug" : "info";
 let mainWindow: BrowserWindow | undefined | null;
+
+function queryFolder(folder: string): Observable<string> {
+    const pattern = `**/*.photasa.json`;
+    return new Observable<string>((subscriber: Subscriber<string>) => {
+        const g3 = new Glob(pattern, {
+            cwd: folder,
+            dot: true,
+        });
+        g3.stream()
+            .on("data", (photasa) => {
+                subscriber.next(path.join(folder, photasa));
+            })
+            .on("end", () => {
+                subscriber.complete();
+            });
+    });
+}
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -84,22 +102,31 @@ function createWindow(): void {
         shell.showItemInFolder(args.path);
     });
 
-    ipcMain.handle("picasa:query-config", async (_, args) => {
-        let result: string[] = [];
-        const pattern = `**/*.photasa.json`;
-        const promises: Promise<void>[] = [];
-        args.paths.forEach(async (target) => {
-            // use glob to get files
-            const p = glob(pattern, {
-                cwd: target,
-                dot: true,
-            }).then((list) => {
-                result = result.concat(list.map((cfg) => path.join(target, cfg)));
+    ipcMain.on("picasa:query-config", async (_, args: { paths: string[] }) => {
+        const queue: string[] = [];
+        from(args.paths)
+            .pipe(mergeMap((target) => queryFolder(target)))
+            .subscribe({
+                next: (photasa) => {
+                    queue.push(photasa);
+                    if (queue.length >= 30) {
+                        mainWindow?.webContents.send("picasa:photasa-config", {
+                            action: "next",
+                            paths: [...queue],
+                        });
+                        queue.splice(0, queue.length);
+                    }
+                },
+                error: (err) => {
+                    mainWindow?.webContents.send("picasa:photasa-config", { action: "error", err });
+                },
+                complete: () => {
+                    mainWindow?.webContents.send("picasa:photasa-config", {
+                        action: "complete",
+                        paths: [...queue],
+                    });
+                },
             });
-            promises.push(p);
-        });
-
-        return Promise.all(promises).then(() => result);
     });
 
     ipcMain.handle("picasa:sub-folders", (_, args) => {

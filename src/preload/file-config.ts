@@ -56,7 +56,9 @@ const parseConfig = R.compose(normalizeConfig, fromJson);
  * @param photo path of photo
  * @returns path of .photasa.json
  */
-export async function addToPhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
+export async function addToPhotoList(
+    photoPath: string,
+): Promise<{ path: string; config: PhotasaConfig }> {
     const meta = await readConfig(photoPath);
     const photasaConfig = parseConfig(meta.data);
     const photo = photasaConfig.photoList.find((p) => p.path === photoPath);
@@ -78,14 +80,15 @@ export async function addToPhotoList(photoPath: string): Promise<{path: string, 
     };
 }
 
-
 /**
  * Remove photo to .photasa.json
  *
  * @param photo path of photo
  * @returns path of .photasa.json and config of photasa
  */
-export async function removeFromPhotoList(photoPath: string): Promise<{path: string, config: PhotasaConfig}> {
+export async function removeFromPhotoList(
+    photoPath: string,
+): Promise<{ path: string; config: PhotasaConfig }> {
     const meta = await readConfig(photoPath);
     const photasaConfig = parseConfig(meta.data);
     const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === photoPath);
@@ -106,16 +109,7 @@ export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
 }
 
 export async function loadPhotasaConfigs(paths: string[], callback: LoadCallback): Promise<void> {
-    const list = await queryPhotasaConfigs(paths);
-    from(list).subscribe({
-        next: (configPath) => {
-            callback("next", configPath);
-        },
-        error: (err) => {
-            callback("error", err.message);
-        },
-        complete: () => {
-            callback("complete");
-        },
+    queryPhotasaConfigs(paths, (action, path) => {
+        callback(action, path);
     });
 }

@@ -20,13 +20,13 @@ import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { WatchState } from "src/preload/types";
+import type { PhotasaConfig, WatchState } from "src/preload/types";
 import { watchArray } from "@vueuse/core";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
-const { addPhotasaConfigFile } = photosStore;
+const { addPhotasaConfigFiles, addPhotasaConfigFile } = photosStore;
 const preferenceStore = usePreferenceStore();
 const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
     storeToRefs(preferenceStore);
@@ -35,6 +35,7 @@ const { addPath, completeScanPath } = preferenceStore;
 const visible = ref(false);
 const showPreference = ref(false);
 const loading = ref(false);
+const loadingConfigs = ref(false);
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
@@ -72,14 +73,16 @@ const queue: ScanArgs[] = [];
 function runOverQueue(): void {
     const args = queue.shift();
     if (args?.action?.path) {
-        processScannedFileTask.perform(args, thumbnailSize.value).then((configPath: string) => {
-            addPhotasaConfigFile(paths.value, {
-                path: configPath,
-                thumbnail: "",
+        processScannedFileTask
+            .perform(args, thumbnailSize.value)
+            .then((photasa: { path: string; config: PhotasaConfig }) => {
+                addPhotasaConfigFile(paths.value, {
+                    path: photasa.path,
+                    thumbnail: "",
+                });
+                processingFile.value = args.action?.path as string;
+                runOverQueue();
             });
-            processingFile.value = args.action?.path as string;
-            runOverQueue();
-        });
     } else {
         completeScanPath(scannedFolder.value);
     }
@@ -138,6 +141,19 @@ function startFileWatching(dirs): void {
     );
 }
 
+const loadHandler = {
+    next: (configs: string[]): void => {
+        if (configs.length > 0) {
+            addPhotasaConfigFiles(paths.value, configs);
+        }
+    },
+    complete: (configs: string[]): void => {
+        processingFile.value = t("status.ready");
+        if (configs.length > 0) {
+            addPhotasaConfigFiles(paths.value, configs);
+        }
+    },
+};
 getDirectory("desktop")
     .then((dir) => {
         // Desktop directory is ready
@@ -159,19 +175,8 @@ getDirectory("desktop")
     })
     .then((configPaths: string[]) => {
         processingFile.value = t("status.loadingConfig");
-        loadPhotasaConfigs([...configPaths], (action: string, config?: string) => {
-            if (action === "next" && config) {
-                processingFile.value = t("status.readingConfig", {
-                    config,
-                });
-                addPhotasaConfigFile(paths.value, {
-                    path: config,
-                    thumbnail: "",
-                });
-            }
-            if (action === "complete") {
-                processingFile.value = t("status.ready");
-            }
+        loadPhotasaConfigs([...configPaths], (action: string, configs: string[]) => {
+            loadHandler[action]?.call(null, configs);
         });
 
         // Start to check if any leftover folder need to scan
@@ -189,7 +194,6 @@ setupMenu({
 
 // Update title
 document.title = t("app.title");
-
 </script>
 
 <template>
@@ -200,7 +204,9 @@ document.title = t("app.title");
                 <template #A>
                     <a-layout class="image-content">
                         <a-layout-content>
-                            <FolderList></FolderList>
+                            <a-spin :spinning="loadingConfigs">
+                                <FolderList></FolderList>
+                            </a-spin>
                         </a-layout-content>
                     </a-layout>
                 </template>
@@ -223,8 +229,13 @@ document.title = t("app.title");
 
     <ImportPhotos v-model:show="visible"></ImportPhotos>
 
-    <a-modal v-model:visible="showPreference" :mask-closable="false" :title="t('preference.settings')" width="800px"
-        @ok="handlePreferenceOk">
+    <a-modal
+        v-model:visible="showPreference"
+        :mask-closable="false"
+        :title="t('preference.settings')"
+        width="800px"
+        @ok="handlePreferenceOk"
+    >
         <Preference></Preference>
         <template #footer></template>
     </a-modal>

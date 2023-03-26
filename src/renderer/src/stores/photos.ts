@@ -21,6 +21,14 @@ export const usePhotosStore = defineStore("photos", {
         };
     },
     actions: {
+        addPhotasaConfigFiles(paths: string[], files: string[]): void {
+            files.forEach((file) => {
+                this.addPhotasaConfigFile(paths, {
+                    path: file,
+                    thumbnail: "",
+                });
+            });
+        },
         /**
          * Add photasa config file to store, which will be used to build folder tree node
          * @param paths All watched paths
