@@ -6,6 +6,7 @@ import type { Logger } from "log4js";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import convert from "heic-convert";
+import { lookup } from "dns";
 
 //Get the paths to the packaged versions of the binaries we want to use
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked");
@@ -29,6 +30,7 @@ export async function removeThumbnail(arg, logger: Logger): Promise<string> {
     }
 
     try {
+        logger.info("Cleaning thumbnail for : " + arg.path);
         await remove(arg.thumbnail);
     } catch (e) {
         logger.error(e);
@@ -79,9 +81,11 @@ async function extractPngFromHeic(arg, logger: Logger): Promise<string> {
 
 export async function createThumbnail(arg, logger: Logger): Promise<string> {
     const isExist = await exists(arg.thumbnail);
-    if (isExist) {
+    if (!arg.always && isExist) {
         return Promise.resolve(arg);
     }
+
+    await removeThumbnail(arg, logger);
 
     await ensureDir(path.dirname(arg.thumbnail));
 

@@ -2,7 +2,7 @@
 import { ref, computed, reactive, watch } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getImageType, getPhotasaConfig } from "@renderer/utils/api";
+import { createThumbnailTask, getImageType, getPhotasaConfig } from "@renderer/utils/api";
 import { trim } from "radash";
 import type { ImageTypeResult } from "image-type";
 import { JsonTreeView } from "json-tree-view-vue3";
@@ -73,9 +73,10 @@ watch(currentFolder, async (newVal) => {
 const cards = computed(() => {
     const cards: Card[] = [];
 
-    const images = currentFolderConfig.value.photoList?.map((config) => {
-        return toImage(config);
-    }) ?? [];
+    const images =
+        currentFolderConfig.value.photoList?.map((config) => {
+            return toImage(config);
+        }) ?? [];
 
     cards.push({
         title: currentFolder.value,
@@ -94,12 +95,18 @@ const imageMeta = reactive<ImageMeta>({
     json: "",
 });
 
-const label = computed(() => {
-    return {
-        getInfo: t("menu.getInfo"),
-        open: t("menu.open"),
-    };
-});
+async function rebuildThumbnail(image: Image): Promise<void> {
+    await createThumbnailTask.perform({
+        path: image.fallback as string,
+        thumbnail: image.src as string,
+        width: thumbnailSize.value,
+        height: thumbnailSize.value,
+        always: true,
+    });
+
+    // force to render the component
+    image.src = `${image.src}?${Date.now()}`;
+}
 
 function openImageMeta(image: Image): void {
     showInfo.value = true;
@@ -133,15 +140,30 @@ function openFileInFilder(image: Image): void {
 
             <div class="image-list">
                 <ul v-if="card.images.length > 0" ref="imageList">
-                    <li v-for="image in card.images" :key="image.key" :width="150" :height="150" class="image-item">
+                    <li
+                        v-for="image in card.images"
+                        :key="image.key"
+                        :width="150"
+                        :height="150"
+                        class="image-item"
+                    >
                         <a-dropdown :trigger="['contextmenu']">
-                            <a-tooltip placement="rightBottom" :mouse-enter-delay="mouseEnterDelay" :title="image.raw">
+                            <a-tooltip
+                                placement="rightBottom"
+                                :mouse-enter-delay="mouseEnterDelay"
+                                :title="image.raw"
+                            >
                                 <a-card hoverable>
                                     <UseElementVisibility>
-                                        <a-image :width="thumbnailSize" :height="thumbnailSize" :src="image.src"
-                                            :fallback="fallback" :preview="{
+                                        <a-image
+                                            :width="thumbnailSize"
+                                            :height="thumbnailSize"
+                                            :src="image.src"
+                                            :fallback="fallback"
+                                            :preview="{
                                                 src: image.fallback,
-                                            }" />
+                                            }"
+                                        />
                                     </UseElementVisibility>
                                 </a-card>
                             </a-tooltip>
@@ -149,10 +171,13 @@ function openFileInFilder(image: Image): void {
                             <template #overlay>
                                 <a-menu>
                                     <a-menu-item key="1" @click="openImageMeta(image)">{{
-                                        label.getInfo
+                                        t("menu.getInfo")
+                                    }}</a-menu-item>
+                                    <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
+                                       t("menu.rebuildThumbnail")
                                     }}</a-menu-item>
                                     <a-menu-item key="2" @click="openFileInFilder(image)">{{
-                                        label.open
+                                        t("menu.open")
                                     }}</a-menu-item>
                                 </a-menu>
                             </template>
@@ -163,7 +188,13 @@ function openFileInFilder(image: Image): void {
             </div>
         </a-card>
     </a-spin>
-    <a-drawer v-model:visible="showInfo" class="custom-class" style="color: red" title="Basic Drawer" placement="right">
+    <a-drawer
+        v-model:visible="showInfo"
+        class="custom-class"
+        style="color: red"
+        title="Basic Drawer"
+        placement="right"
+    >
         <a-spin :spinning="loadingInfo">
             <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
                 <a-descriptions-item label="Image Width">{{
@@ -182,11 +213,13 @@ function openFileInFilder(image: Image): void {
                     imageMeta.path
                 }}</a-descriptions-item>
                 <a-descriptions-item label="Status" :span="2">
-                    <a-layout :style="{
-                        height: '100%',
-                        width: '265px',
-                        overflow: 'auto',
-                    }">
+                    <a-layout
+                        :style="{
+                            height: '100%',
+                            width: '265px',
+                            overflow: 'auto',
+                        }"
+                    >
                         <JsonTreeView :data="imageMeta.json" :max-depth="imageMeta.maxDepth" />
                     </a-layout>
                 </a-descriptions-item>

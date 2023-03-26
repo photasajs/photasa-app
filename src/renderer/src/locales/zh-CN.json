@@ -32,7 +32,8 @@
     },
     "menu": {
         "getInfo": "照片信息",
-        "open": "在文件管理器中打开"
+        "open": "在文件管理器中打开",
+        "rebuildThumbnail": "重建缩略图"
     },
     "notification": {
         "info": "提示",
