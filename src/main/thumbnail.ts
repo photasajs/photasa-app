@@ -38,19 +38,19 @@ export async function removeThumbnail(arg, logger: Logger): Promise<string> {
 }
 
 function createScreenshot(arg, logger: Logger): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         ffmpeg(arg.path)
             .on("filenames", function (filenames) {
                 logger.info("Will generate screenshot: " + filenames.join(", "));
             })
             .on("error", function (err) {
-                reject(err);
+                logger.error(err);
             })
             .on("end", function () {
                 resolve(arg.thumbnail);
             })
             .screenshots({
-                timestamps: [15.5],
+                timestamps: ["1%"],
                 filename: path.basename(arg.thumbnail),
                 folder: path.dirname(arg.thumbnail),
                 size: `${arg.width}x${arg.height}`,
@@ -102,7 +102,8 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
             const target = isHeic ? arg.preview : arg.path;
             await sharp(target)
                 .resize(arg.width, arg.height, {
-                    fit: sharp.fit.inside,
+                    fit: sharp.fit.contain,
+                    background: "white",
                     withoutEnlargement: arg.withoutEnlargement,
                 })
                 .toFormat("png")

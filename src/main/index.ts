@@ -21,7 +21,7 @@ const logger = log4js.getLogger("main");
 logger.level = DEV_MODE ? "debug" : "info";
 let mainWindow: BrowserWindow | undefined | null;
 
-function queryFolder(folder: string): Observable<string> {
+function globPhotasaConfigFromFolders(folder: string): Observable<string> {
     const pattern = `**/*.photasa.json`;
     return new Observable<string>((subscriber: Subscriber<string>) => {
         const g3 = new Glob(pattern, {
@@ -102,14 +102,15 @@ function createWindow(): void {
         shell.showItemInFolder(args.path);
     });
 
+    const BUFFER_SIZE = 60;
     ipcMain.on("picasa:query-config", async (_, args: { paths: string[] }) => {
         const queue: string[] = [];
         from(args.paths)
-            .pipe(mergeMap((target) => queryFolder(target)))
+            .pipe(mergeMap((target) => globPhotasaConfigFromFolders(target)))
             .subscribe({
                 next: (photasa) => {
                     queue.push(photasa);
-                    if (queue.length >= 30) {
+                    if (queue.length >= BUFFER_SIZE) {
                         mainWindow?.webContents.send("picasa:photasa-config", {
                             action: "next",
                             paths: [...queue],
