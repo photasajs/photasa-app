@@ -11,5 +11,6 @@ declare global {
     interface Window {
         electron: unknown;
         api: unknown;
+        __heic2any__worker: Worker;
     }
 }

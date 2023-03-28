@@ -208,9 +208,7 @@ document.title = t("app.title");
                 <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
             </a-space>
             <a-space class="setting-header">
-                <a-button shape="circle" @click="openPreference">
-                    <template #icon><SettingFilled /></template>
-                </a-button>
+                <SettingFilled @click="openPreference" />
             </a-space>
         </header>
         <a-layout class="content">

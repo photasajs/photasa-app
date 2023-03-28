@@ -65,6 +65,7 @@ interface WatchState {
 declare global {
     interface Window {
         electron: ElectronAPI;
+        __heic2any__worker: Worker;
         api: {
             startWatching: (config: WatchConfig, callback: WatchCallback) => void;
             stopWatching: () => Promise<void>;
