@@ -72,7 +72,7 @@ async function decodeHeic(filePath: string): Promise<ImageData[]> {
     return await decodeBuffer(encodedHeicBuffer);
 }
 
-async function createCachedImage(filePath: string, image: ImageData): Promise<string> {
+async function createPreviewImage(filePath: string, image: ImageData): Promise<string> {
     const fileName = path.basename(filePath, path.extname(filePath));
     const previewName = path.join(path.dirname(filePath), `.photasaoriginals/${fileName}.jpeg`);
     try {
@@ -97,10 +97,11 @@ export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailReq
     if (heicExtensionRE.test(request.path)) {
         return decodeHeic(request.path)
             .then((imageData) => {
-                return createCachedImage(request.path, imageData[0]);
+                return createPreviewImage(request.path, imageData[0]);
             })
-            .then(() => {
-                return request;
+            .then((previewName) => {
+                request.preview = previewName;
+                return ipcRenderer.invoke("picasa:create-thumbnail", request);
             });
     }
     // Start file watching

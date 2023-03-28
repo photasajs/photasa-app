@@ -1,12 +1,10 @@
 import isVideo from "is-video";
-import { ensureDir, exists, remove, readFile } from "fs-extra";
+import { ensureDir, exists, remove } from "fs-extra";
 import sharp from "sharp";
 import type { IpcMain } from "electron";
 import type { Logger } from "log4js";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import decode from "heic-decode";
-
 //Get the paths to the packaged versions of the binaries we want to use
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked");
 const ffprobePath = require("ffprobe-static").path.replace("app.asar", "app.asar.unpacked");
@@ -59,31 +57,6 @@ function createScreenshot(arg, logger: Logger): Promise<string> {
     });
 }
 
-async function extractJpegFromHeic(arg, logger: Logger): Promise<string> {
-    const fileName = path.basename(arg.path, path.extname(arg.path));
-    const previewName = path.join(path.dirname(arg.path), `.photasaoriginals/${fileName}.jpeg`);
-    const inputBuffer = await readFile(arg.path);
-    try {
-        logger.info("Decode HEIC for : " + arg.path);
-        const image = await decode({ buffer: inputBuffer });
-
-        await sharp(image.data, {
-            raw: {
-                width: image.width,
-                height: image.height,
-                channels: 4,
-            },
-        })
-            .toFormat("jpeg")
-            .toFile(previewName);
-
-        return previewName;
-    } catch (e) {
-        logger.error(e);
-        return "";
-    }
-}
-
 export async function createThumbnail(arg, logger: Logger): Promise<string> {
     const isExist = await exists(arg.thumbnail);
     if (!arg.always && isExist) {
@@ -94,13 +67,7 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
 
     await ensureDir(path.dirname(arg.thumbnail));
 
-    let isHeic = checkHEIC(arg.path);
-    // If it's a HEIC file, we need to convert it to a PNG first for preview
-    if (isHeic) {
-        arg.preview = await extractJpegFromHeic(arg, logger);
-        // Convert may failed, then it's not HEIC
-        isHeic = arg.preview !== "";
-    }
+    const isHeic = checkHEIC(arg.path);
 
     try {
         logger.info("Creating thumbnail for : " + arg.path);
@@ -109,6 +76,7 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
         } else {
             const target = isHeic ? arg.preview : arg.path;
             await sharp(target)
+                .rotate()
                 .resize(arg.width, arg.height, {
                     fit: sharp.fit.contain,
                     background: "white",

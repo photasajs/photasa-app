@@ -38,6 +38,7 @@ interface ThumbnailRequest {
     width: number;
     height: number;
     always?: boolean;
+    preview: string;
 }
 
 interface ImageInfo {
