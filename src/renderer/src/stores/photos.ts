@@ -29,7 +29,6 @@ export const usePhotosStore = defineStore("photos", {
                 });
             });
         },
-
         /**
          * Add photasa config file to store, which will be used to build folder tree node
          * @param paths All watched paths

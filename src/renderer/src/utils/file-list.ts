@@ -55,8 +55,6 @@ async function handleAddFile(state, photosStore, preferenceStore): Promise<void>
                     path: result.path,
                     thumbnail: state.thumbnail,
                 });
-
-                preferenceStore.cacheTreeNodePath(result.path);
             });
     }
 }

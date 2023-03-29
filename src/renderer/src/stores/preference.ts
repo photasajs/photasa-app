@@ -15,7 +15,6 @@ type PreferenceState = {
     currentFolder: string;
     scannedFolder: string;
     currentFolderConfig: PhotasaConfig;
-    treeNodes: string[]; // Store longest path to rebuild folder tree
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -31,7 +30,6 @@ export const usePreferenceStore = defineStore("preference", {
             currentFolder: "",
             scannedFolder: "",
             currentFolderConfig: <PhotasaConfig>{},
-            treeNodes: [],
         };
     },
     persist: true,
@@ -57,25 +55,6 @@ export const usePreferenceStore = defineStore("preference", {
             }
             if (!this.scanningFolder.find((p) => p === folder)) {
                 this.scanningFolder.push(folder);
-            }
-        },
-        /**
-         * Cache longest path to rebuild folder tree
-         * @param path path to cache
-         */
-        cacheTreeNodePath(path: string) {
-            // Find longest path
-            const index = this.treeNodes.findIndex((p) => path.indexOf(p) >= 0);
-            if (index >= 0) {
-                // remove it
-                this.treeNodes.splice(index, 1);
-            }
-            this.treeNodes.push(path);
-        },
-        removeTreeNodePath(path: string) {
-            const index = this.treeNodes.findIndex((p) => p === path);
-            if (index >= 0) {
-                this.treeNodes.splice(index, 1);
             }
         },
         updateThumbnailSize(size: number) {

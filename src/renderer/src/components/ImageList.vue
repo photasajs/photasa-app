@@ -10,7 +10,6 @@ import type { Tags, XmpTags, IccTags } from "exifreader";
 import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api";
 import { Photo } from "@renderer/utils/folder-tree";
-import { UseElementVisibility } from "@vueuse/components";
 import LazyImage from "./LazyImage.vue";
 
 const { t } = useI18n();
@@ -24,6 +23,7 @@ type Card = {
 type Image = {
     key: string;
     src: string;
+    thumbnail: string;
     fallback: string;
     raw: string; // For Heic file, it's the original file
 };
@@ -58,6 +58,7 @@ function toImage(file: Photo): Image {
     return {
         key: file.path,
         src: `file://${file.thumbnail}`,
+        thumbnail: `file://${file.thumbnail}`,
         fallback: `file://${preview}`,
         raw: `file://${file.path}`,
     };
@@ -107,7 +108,7 @@ async function rebuildThumbnail(image: Image): Promise<void> {
     });
 
     // force to render the component
-    image.src = `${image.src}?${Date.now()}`;
+    image.thumbnail = `${image.src}?${Date.now()}`;
 }
 
 function openImageMeta(image: Image): void {
@@ -159,7 +160,7 @@ function openFileInFilder(image: Image): void {
                                     <LazyImage
                                         :width="thumbnailSize"
                                         :height="thumbnailSize"
-                                        :src="image.src"
+                                        :src="image.thumbnail"
                                         :fallback="fallback"
                                         :preview="image.fallback"
                                     />

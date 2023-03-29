@@ -7,6 +7,7 @@ import path from "path";
 import config from "./config";
 import heic2any from "heic2any";
 import sharp from "sharp";
+import { exists } from "fs-extra";
 
 const { ipcRenderer } = electronAPI;
 const heicExtensionRE = new RegExp(`\\.(${config.acceptedHeicExtensions.join("|")})$`, "i");
@@ -72,9 +73,7 @@ async function decodeHeic(filePath: string): Promise<ImageData[]> {
     return await decodeBuffer(encodedHeicBuffer);
 }
 
-async function createPreviewImage(filePath: string, image: ImageData): Promise<string> {
-    const fileName = path.basename(filePath, path.extname(filePath));
-    const previewName = path.join(path.dirname(filePath), `.photasaoriginals/${fileName}.jpeg`);
+async function createPreviewImage(previewName: string, image: ImageData): Promise<string> {
     try {
         await sharp(image.data, {
             raw: {
@@ -95,17 +94,28 @@ async function createPreviewImage(filePath: string, image: ImageData): Promise<s
 
 export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
     if (heicExtensionRE.test(request.path)) {
-        return decodeHeic(request.path)
-            .then((imageData) => {
-                return createPreviewImage(request.path, imageData[0]);
-            })
-            .then((previewName) => {
-                request.preview = previewName;
-                return ipcRenderer.invoke("picasa:create-thumbnail", request);
-            });
+        const fileName = path.basename(request.path, path.extname(request.path));
+        const previewName = path.join(
+            path.dirname(request.path),
+            `.photasaoriginals/${fileName}.jpeg`,
+        );
+        return exists(previewName).then((isExist) => {
+            if (isExist && !request.always) {
+                return previewName;
+            }
+            return decodeHeic(request.path)
+                .then((imageData) => {
+                    return createPreviewImage(previewName, imageData[0]);
+                })
+                .then((previewName) => {
+                    request.preview = previewName;
+                    return ipcRenderer.invoke("picasa:create-thumbnail", request);
+                });
+        });
+    } else {
+        // Start file watching
+        return ipcRenderer.invoke("picasa:create-thumbnail", request);
     }
-    // Start file watching
-    return ipcRenderer.invoke("picasa:create-thumbnail", request);
 }
 
 export function removeThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
