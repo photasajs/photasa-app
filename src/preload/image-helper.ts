@@ -99,16 +99,16 @@ export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailReq
             path.dirname(request.path),
             `.photasaoriginals/${fileName}.jpeg`,
         );
+        request.preview = previewName;
         return exists(previewName).then((isExist) => {
             if (isExist && !request.always) {
-                return previewName;
+                return request;
             }
             return decodeHeic(request.path)
                 .then((imageData) => {
                     return createPreviewImage(previewName, imageData[0]);
                 })
-                .then((previewName) => {
-                    request.preview = previewName;
+                .then(() => {
                     return ipcRenderer.invoke("picasa:create-thumbnail", request);
                 });
         });
