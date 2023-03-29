@@ -82,7 +82,11 @@ watch(selectedKeys, () => {
     color: #1890ff;
 }
 
-.folder-node .root-folder-node {
+.folder-node {
+    white-space: nowrap;
+}
+
+.root-folder-node {
     white-space: nowrap;
 }
 

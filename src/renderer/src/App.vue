@@ -8,13 +8,7 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import {
-    startWatching,
-    setupMenu,
-    getDirectory,
-    stopWatching,
-    loadPhotasaConfigs,
-} from "@renderer/utils/api";
+import { startWatching, setupMenu, getDirectory, stopWatching } from "@renderer/utils/api";
 import { processScannedFileTask, scanPhotosTask, ScanArgs } from "@renderer/utils/scan-folder";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
@@ -27,11 +21,11 @@ import { SettingFilled } from "@ant-design/icons-vue";
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
-const { addPhotasaConfigFiles, addPhotasaConfigFile } = photosStore;
+const { addPhotasaConfigFile } = photosStore;
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
+const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder, treeNodes } =
     storeToRefs(preferenceStore);
-const { addPath, completeScanPath } = preferenceStore;
+const { addPath, completeScanPath, cacheTreeNodePath } = preferenceStore;
 
 const visible = ref(false);
 const showPreference = ref(false);
@@ -84,6 +78,7 @@ function runOverQueue(): void {
                     path: photasa.path,
                     thumbnail: "",
                 });
+                cacheTreeNodePath(photasa.path);
                 processingFile.value = args.action?.path as string;
                 runOverQueue();
             });
@@ -144,7 +139,7 @@ function startFileWatching(dirs): void {
         },
     );
 }
-
+/*
 const loadHandler = {
     next: (configs: string[]): void => {
         if (configs.length > 0) {
@@ -158,6 +153,7 @@ const loadHandler = {
         }
     },
 };
+*/
 getDirectory("desktop")
     .then((dir) => {
         // Desktop directory is ready
@@ -177,10 +173,17 @@ getDirectory("desktop")
         }
         return paths.value;
     })
-    .then((configPaths: string[]) => {
-        processingFile.value = t("status.loadingConfig");
+    .then(() => {
+        /* processingFile.value = t("status.loadingConfig");
         loadPhotasaConfigs([...configPaths], (action: string, configs: string[]) => {
             loadHandler[action]?.call(null, configs);
+        });
+        */
+        treeNodes.value.forEach((node) => {
+            addPhotasaConfigFile(paths.value, {
+                path: node,
+                thumbnail: "",
+            });
         });
 
         // Start to check if any leftover folder need to scan
@@ -256,6 +259,8 @@ document.title = t("app.title");
 <style lang="less">
 .content .image-content {
     height: calc(100vh - 70px);
+    overflow-y: overlay;
+    margin: auto;
 }
 
 .image-list {

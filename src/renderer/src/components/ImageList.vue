@@ -11,6 +11,7 @@ import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api";
 import { Photo } from "@renderer/utils/folder-tree";
 import { UseElementVisibility } from "@vueuse/components";
+import LazyImage from "./LazyImage.vue";
 
 const { t } = useI18n();
 
@@ -102,6 +103,7 @@ async function rebuildThumbnail(image: Image): Promise<void> {
         width: thumbnailSize.value,
         height: thumbnailSize.value,
         always: true,
+        preview: "",
     });
 
     // force to render the component
@@ -154,17 +156,13 @@ function openFileInFilder(image: Image): void {
                                 :title="image.raw"
                             >
                                 <a-card hoverable>
-                                    <UseElementVisibility>
-                                        <a-image
-                                            :width="thumbnailSize"
-                                            :height="thumbnailSize"
-                                            :src="image.src"
-                                            :fallback="fallback"
-                                            :preview="{
-                                                src: image.fallback,
-                                            }"
-                                        />
-                                    </UseElementVisibility>
+                                    <LazyImage
+                                        :width="thumbnailSize"
+                                        :height="thumbnailSize"
+                                        :src="image.src"
+                                        :fallback="fallback"
+                                        :preview="image.fallback"
+                                    />
                                 </a-card>
                             </a-tooltip>
 

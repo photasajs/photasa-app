@@ -73,7 +73,7 @@ type ImportArgs = {
     };
 };
 
-const handler: Record<string, (args: ImportArgs | undefined) => void> = {
+const importHandler: Record<string, (args: ImportArgs | undefined) => void> = {
     next: (args): void => {
         if (args?.action?.targetFileName) {
             processed.push(args.action.targetFileName);
@@ -96,7 +96,7 @@ function onImport(): void {
 
     const dir = `${formState.name}`;
     importPhotos([dir], formState.targetDir, (args) => {
-        handler[args.type]?.call(null, args);
+        importHandler[args.type]?.call(null, args);
     });
 }
 

@@ -15,11 +15,13 @@ export const processScannedFileTask = useTask(function* (_, args: ScanArgs, thum
         return;
     }
 
+    // Create a thumbnail
     yield createThumbnailTask.perform({
         path: args.action?.path as string,
         thumbnail: args.action?.thumbnail as string,
         width: thumbnailSize,
         height: thumbnailSize,
+        preview: "",
     });
 
     // Save to .photasa.json
