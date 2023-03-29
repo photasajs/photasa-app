@@ -48,7 +48,7 @@ const fallback = ref(
 
 const imageList = ref(null);
 
-const mouseEnterDelay = ref(0.5);
+const mouseEnterDelay = ref(3);
 
 function toImage(file: Photo): Image {
     const preview =

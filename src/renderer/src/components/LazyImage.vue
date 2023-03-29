@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UseElementVisibility } from "@vueuse/components";
+import { useIntersectionObserver } from "@vueuse/core";
 import { onMounted, ref, toRefs, watch } from "vue";
 import { prefetchImageTask } from "@renderer/utils/image-prefetch";
 
@@ -34,18 +34,25 @@ async function prefetchImage(imageSrc: string): Promise<void> {
 onMounted(() => {
     prefetchImage(src.value);
 });
+
+const target = ref(null);
+const targetIsVisible = ref(false);
+
+useIntersectionObserver(target, ([{ isIntersecting }], _) => {
+    targetIsVisible.value = isIntersecting;
+});
 </script>
 
 <template>
-    <UseElementVisibility
-        v-slot="{ isVisible }"
+    <div
+        ref="target"
         :style="{
             width: width + 'px',
             height: height + 'px',
         }"
     >
         <a-image
-            v-if="isVisible && isReady"
+            v-if="targetIsVisible && isReady"
             :width="width"
             :height="height"
             :src="actualSrc"
@@ -54,5 +61,5 @@ onMounted(() => {
                 src: preview,
             }"
         />
-    </UseElementVisibility>
+    </div>
 </template>
