@@ -38,7 +38,7 @@ onMounted(() => {
 const target = ref(null);
 const targetIsVisible = ref(false);
 
-useIntersectionObserver(target, ([{ isIntersecting }], _) => {
+useIntersectionObserver(target, ([{ isIntersecting }]) => {
     targetIsVisible.value = isIntersecting;
 });
 </script>
@@ -46,20 +46,29 @@ useIntersectionObserver(target, ([{ isIntersecting }], _) => {
 <template>
     <div
         ref="target"
+        class="thumbnail-image"
         :style="{
             width: width + 'px',
             height: height + 'px',
         }"
     >
-        <a-image
-            v-if="targetIsVisible && isReady"
-            :width="width"
-            :height="height"
-            :src="actualSrc"
-            :fallback="fallback"
-            :preview="{
-                src: preview,
-            }"
-        />
+        <a-spin :spinning="targetIsVisible && !isReady">
+            <a-image
+                v-if="targetIsVisible && isReady"
+                :width="width"
+                :height="height"
+                :src="actualSrc"
+                :fallback="fallback"
+                :preview="{
+                    src: preview,
+                }"
+                :style="{ margin: 'auto' }"
+            />
+        </a-spin>
     </div>
 </template>
+<style lang="less">
+.thumbnail-image .ant-image {
+    display: flex;
+}
+</style>

@@ -22,6 +22,7 @@ async function createPreviewImage(arg, logger: Logger): Promise<string> {
         logger.info("Decode HEIC for : " + arg.path);
         const image = await decode({ buffer: inputBuffer });
 
+        logger.info("Create Preview for : " + arg.path);
         await sharp(image.data, {
             raw: {
                 width: image.width,
@@ -46,7 +47,7 @@ export async function removeThumbnail(arg, logger: Logger): Promise<string> {
     }
 
     try {
-        logger.info("Cleaning thumbnail for : " + arg.path);
+        logger.info("Delete thumbnail for : " + arg.path);
         await remove(arg.thumbnail);
     } catch (e) {
         logger.error(e);
@@ -55,11 +56,65 @@ export async function removeThumbnail(arg, logger: Logger): Promise<string> {
     return arg;
 }
 
-function createScreenshot(arg, logger: Logger): Promise<string> {
+export type VideoSize = {
+    width: number;
+    height: number;
+};
+
+function ratioStringToParts(str): number[] {
+    return str.split(":").map((n) => parseInt(n, 10));
+}
+
+function getOptimalThumbnailResolution(videoDimension: VideoSize, arg): VideoSize {
+    if (videoDimension.width > videoDimension.height) {
+        return {
+            width: arg.width,
+            height: Math.round((arg.width * videoDimension.height) / videoDimension.width),
+        };
+    } else {
+        return {
+            width: Math.round((arg.height * videoDimension.width) / videoDimension.height),
+            height: arg.height,
+        };
+    }
+}
+
+function getVideoDimension(video): Promise<VideoSize> {
+    return new Promise((resolve, reject) => {
+        ffmpeg.ffprobe(video, (err, metadata) => {
+            if (err) return reject(err);
+
+            const stream = metadata.streams.find((stream) => stream.codec_type === "video");
+
+            const darString = stream.display_aspect_ratio;
+
+            // ffprobe returns aspect ratios of "0:1" or `undefined` if they're not specified.
+            // https://trac.ffmpeg.org/ticket/3798
+            if (darString && darString !== "0:1") {
+                // The DAR is specified so use it directly
+                const [widthRatioPart, heightRatioPart] = ratioStringToParts(darString);
+                const inverseDar = heightRatioPart / widthRatioPart;
+                resolve({
+                    width: stream.width,
+                    height: stream.width * inverseDar,
+                });
+            } else {
+                // DAR not specified so assume square pixels (use sample resolution as-is).
+                resolve({
+                    width: stream.width,
+                    height: stream.height,
+                });
+            }
+        });
+    });
+}
+async function createScreenshot(arg, logger: Logger): Promise<string> {
+    const dimension = await getVideoDimension(arg.path);
     return new Promise((resolve) => {
+        const size = getOptimalThumbnailResolution(dimension, arg);
         ffmpeg(arg.path)
             .on("filenames", function (filenames) {
-                logger.info("Will generate screenshot: " + filenames.join(", "));
+                logger.info("Generate Screenshot: " + filenames.join(", "));
             })
             .on("error", function (err) {
                 logger.error(err);
@@ -71,7 +126,7 @@ function createScreenshot(arg, logger: Logger): Promise<string> {
                 timestamps: ["1%"],
                 filename: path.basename(arg.thumbnail),
                 folder: path.dirname(arg.thumbnail),
-                size: `${arg.width}x${arg.height}`,
+                size: `${size.width}x${arg.heigh}`,
             });
     });
 }
@@ -95,15 +150,16 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
     }
 
     try {
-        logger.info("Creating thumbnail for : " + arg.path);
         if (isVideo(arg.path)) {
+            logger.info("Create video thumbnail for : " + arg.path);
             await createScreenshot(arg, logger);
         } else {
+            logger.info("Create image thumbnail for : " + arg.path);
             const target = isHeic ? arg.preview : arg.path;
             await sharp(target)
                 .rotate()
                 .resize(arg.width, arg.height, {
-                    fit: sharp.fit.contain,
+                    fit: sharp.fit.inside,
                     background: "white",
                     withoutEnlargement: arg.withoutEnlargement,
                 })

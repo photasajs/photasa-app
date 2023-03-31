@@ -23,37 +23,6 @@ export function createMenu(mainWindow: BrowserWindow): void {
     const template: Electron.MenuItemConstructorOptions[] = [
         ...appMenu,
         {
-            label: "File",
-            submenu: [
-                {
-                    label: "Preference",
-                    click(): void {
-                        mainWindow.webContents?.send("picasa:open-preference");
-                    },
-                },
-                {
-                    label: "Import Photos from ...",
-                    click(): void {
-                        mainWindow.webContents?.send("picasa:import-photos");
-                    },
-                }
-            ],
-        },
-        {
-            label: "Edit",
-            submenu: [
-                { role: "undo" },
-                { role: "redo" },
-                { type: "separator" },
-                { role: "cut" },
-                { role: "copy" },
-                { role: "paste" },
-                { role: "pasteAndMatchStyle" },
-                { role: "delete" },
-                { role: "selectAll" },
-            ],
-        },
-        {
             label: "View",
             submenu: [
                 { role: "reload" },
@@ -74,7 +43,7 @@ export function createMenu(mainWindow: BrowserWindow): void {
                 {
                     label: "Learn More",
                     click(): void {
-                        shell.openExternal("https://electron.atom.io");
+                        shell.openExternal("https://wwww.thepicasa.com");
                     },
                 },
             ],

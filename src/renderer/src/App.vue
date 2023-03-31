@@ -22,7 +22,7 @@ import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 import type { PhotasaConfig, WatchState } from "src/preload/types";
 import { watchArray } from "@vueuse/core";
-import { SettingFilled } from "@ant-design/icons-vue";
+import { SettingOutlined, ImportOutlined } from "@ant-design/icons-vue";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
@@ -33,17 +33,10 @@ const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFo
     storeToRefs(preferenceStore);
 const { addPath, completeScanPath } = preferenceStore;
 
-const visible = ref(false);
+const showImport = ref(false);
 const showPreference = ref(false);
 const loading = ref(false);
 const loadingConfigs = ref(false);
-
-function handlePreferenceOk(): void {
-    showPreference.value = false;
-}
-function openPreference(): void {
-    showPreference.value = true;
-}
 
 function updateTheme(): void {
     if (darkMode.value) {
@@ -163,7 +156,7 @@ const loadHandler = {
 getDirectory("desktop")
     .then((dir) => {
         // Desktop directory is ready
-        if (paths.value.find((p) => dir.indexOf(p) < 0)) {
+        if (paths.value.length === 0) {
             addPath(dir);
         }
 
@@ -188,15 +181,15 @@ getDirectory("desktop")
         // Start to check if any leftover folder need to scan
         startScanning();
     });
-
-setupMenu({
-    onImportPhotos: () => {
-        visible.value = true;
-    },
-    onPreference: () => {
-        showPreference.value = true;
-    },
-});
+function handlePreferenceOk(): void {
+    showPreference.value = false;
+}
+function openPreference(): void {
+    showPreference.value = true;
+}
+function openImportPhotos(): void {
+    showImport.value = true;
+}
 
 // Update title
 document.title = t("app.title");
@@ -210,7 +203,8 @@ document.title = t("app.title");
                 <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
             </a-space>
             <a-space class="setting-header">
-                <SettingFilled @click="openPreference" />
+                <ImportOutlined @click="openImportPhotos"></ImportOutlined>
+                <SettingOutlined @click="openPreference" />
             </a-space>
         </header>
         <a-layout class="content">
@@ -241,7 +235,7 @@ document.title = t("app.title");
         </footer>
     </a-layout>
 
-    <ImportPhotos v-model:show="visible"></ImportPhotos>
+    <ImportPhotos v-model:show="showImport"></ImportPhotos>
 
     <a-modal
         v-model:visible="showPreference"
