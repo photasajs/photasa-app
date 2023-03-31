@@ -2,6 +2,7 @@ import { resolve } from "path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import vue from "@vitejs/plugin-vue";
 import { babel } from "@rollup/plugin-babel";
+import { comlink } from "vite-plugin-comlink";
 
 export default defineConfig({
     main: {
@@ -17,7 +18,7 @@ export default defineConfig({
                 "@preload": resolve("src/preload/"),
             },
         },
-        plugins: [vue()],
+        plugins: [vue(), comlink()],
         css: {
             preprocessorOptions: {
                 less: {

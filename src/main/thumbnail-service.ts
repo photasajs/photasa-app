@@ -33,7 +33,7 @@ export default class ThumbnailService {
         });
     }
 
-    createThumbnail(arg): Promise<string> {
+    private createThumbnail(arg): Promise<string> {
         return new Promise((resolve) => {
             this.promises[`${this.queueId}`] = resolve;
             this.worker.postMessage(
@@ -43,7 +43,7 @@ export default class ThumbnailService {
         });
     }
 
-    removeThumbnail(arg): Promise<string> {
+    private removeThumbnail(arg): Promise<string> {
         return new Promise((resolve) => {
             this.promises[`${this.queueId}`] = resolve;
             this.worker?.postMessage(

@@ -1,5 +1,6 @@
 import isVideo from "is-video";
-import { ensureDir, exists, remove } from "fs-extra";
+import { ensureDir, exists, remove, readFile } from "fs-extra";
+import decode from "heic-decode";
 import type { Logger } from "log4js";
 import sharp from "sharp";
 import path from "path";
@@ -11,12 +12,31 @@ const ffprobePath = require("ffprobe-static").path.replace("app.asar", "app.asar
 //tell the ffmpeg package where it can find the needed binaries.
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
+const heicExtensionRE = new RegExp(`\\.(${["heic", "heif"].join("|")})$`, "i");
 
-function checkHEIC(file: string): boolean {
-    if (file.indexOf(".heic") >= 0) {
-        return true;
+async function createPreviewImage(arg, logger: Logger): Promise<string> {
+    const fileName = path.basename(arg.path, path.extname(arg.path));
+    const previewName = path.join(path.dirname(arg.path), `.photasaoriginals/${fileName}.jpeg`);
+    const inputBuffer = await readFile(arg.path);
+    try {
+        logger.info("Decode HEIC for : " + arg.path);
+        const image = await decode({ buffer: inputBuffer });
+
+        await sharp(image.data, {
+            raw: {
+                width: image.width,
+                height: image.height,
+                channels: 4,
+            },
+        })
+            .toFormat("jpeg")
+            .toFile(previewName);
+
+        return previewName;
+    } catch (e) {
+        logger.error(e);
+        return "";
     }
-    return false;
 }
 
 export async function removeThumbnail(arg, logger: Logger): Promise<string> {
@@ -66,7 +86,13 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
 
     await ensureDir(path.dirname(arg.thumbnail));
 
-    const isHeic = checkHEIC(arg.path);
+    let isHeic = heicExtensionRE.test(arg.path);
+    // If it's a HEIC file, we need to convert it to a PNG first for preview
+    if (isHeic) {
+        arg.preview = await createPreviewImage(arg, logger);
+        // Convert may failed, then it's not HEIC
+        isHeic = arg.preview !== "";
+    }
 
     try {
         logger.info("Creating thumbnail for : " + arg.path);

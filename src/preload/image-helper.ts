@@ -4,13 +4,8 @@ import { electronAPI } from "@electron-toolkit/preload";
 import type { ThumbnailRequest, ImageInfo } from "./types";
 import { getExifInfo } from "./exif-helper";
 import path from "path";
-import config from "./config";
-import heic2any from "heic2any";
-import sharp from "sharp";
-import { exists } from "fs-extra";
 
 const { ipcRenderer } = electronAPI;
-const heicExtensionRE = new RegExp(`\\.(${config.acceptedHeicExtensions.join("|")})$`, "i");
 
 export function buildThumbnailPath(photoPath: string): string {
     // Prepare thumbnail path for image
@@ -26,25 +21,6 @@ export async function getImageType(path: string): Promise<ImageInfo> {
         imageType: result,
         tags,
     };
-}
-
-// Workaround: Prevent tree-shaking from removing `heic2any`.
-heic2any["__dummy"] = 1;
-
-function decodeBuffer(buffer: ArrayBuffer): Promise<ImageData[]> {
-    return new Promise((resolve, reject) => {
-        const id = (Math.random() * new Date().getTime()).toString();
-        const message = { id, buffer };
-        window.__heic2any__worker.postMessage(message);
-        window.__heic2any__worker.addEventListener("message", (message) => {
-            if (message.data.id === id) {
-                if (message.data.error) {
-                    return reject(message.data.error);
-                }
-                return resolve(message.data.imageDataArr);
-            }
-        });
-    });
 }
 
 export function fileUrlFromPath(path: string): string {
@@ -68,53 +44,8 @@ export function fileUrlFromPath(path: string): string {
     return encodeURI(`file:${path}`).replace(/[?#]/g, encodeURIComponent);
 }
 
-async function decodeHeic(filePath: string): Promise<ImageData[]> {
-    const encodedHeicBuffer = await (await fetch(fileUrlFromPath(filePath))).arrayBuffer();
-    return await decodeBuffer(encodedHeicBuffer);
-}
-
-async function createPreviewImage(previewName: string, image: ImageData): Promise<string> {
-    try {
-        await sharp(image.data, {
-            raw: {
-                width: image.width,
-                height: image.height,
-                channels: 4,
-            },
-        })
-            .toFormat("jpeg")
-            .toFile(previewName);
-
-        return previewName;
-    } catch (e) {
-        console.error(e);
-        return "";
-    }
-}
-
 export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
-    if (heicExtensionRE.test(request.path)) {
-        const fileName = path.basename(request.path, path.extname(request.path));
-        const previewName = path.join(
-            path.dirname(request.path),
-            `.photasaoriginals/${fileName}.jpeg`,
-        );
-        return exists(previewName).then((isExist) => {
-            if (isExist && !request.always) {
-                return request;
-            }
-            return decodeHeic(request.path)
-                .then((imageData) => {
-                    return createPreviewImage(previewName, imageData[0]);
-                })
-                .then((previewName) => {
-                    request.preview = previewName;
-                    return ipcRenderer.invoke("picasa:create-thumbnail", request);
-                });
-        });
-    } else {
-        return ipcRenderer.invoke("picasa:create-thumbnail", request);
-    }
+    return ipcRenderer.invoke("picasa:create-thumbnail", request);
 }
 
 export function removeThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
