@@ -1,8 +1,7 @@
 import isVideo from "is-video";
 import { ensureDir, exists, remove } from "fs-extra";
-import sharp from "sharp";
-import type { IpcMain } from "electron";
 import type { Logger } from "log4js";
+import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 //Get the paths to the packaged versions of the binaries we want to use
@@ -92,13 +91,4 @@ export async function createThumbnail(arg, logger: Logger): Promise<string> {
         logger.error("Failed to create thumbnail: " + arg.path + " due to: " + e);
     }
     return arg;
-}
-
-export function initThumbnailService(ipc: IpcMain, logger: Logger): void {
-    ipc.handle("picasa:create-thumbnail", async (_, arg) => {
-        return await createThumbnail(arg, logger);
-    });
-    ipc.handle("picasa:remove-thumbnail", async (_, arg) => {
-        return await removeThumbnail(arg, logger);
-    });
 }

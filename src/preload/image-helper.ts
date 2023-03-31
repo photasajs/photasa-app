@@ -99,7 +99,6 @@ export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailReq
             path.dirname(request.path),
             `.photasaoriginals/${fileName}.jpeg`,
         );
-        request.preview = previewName;
         return exists(previewName).then((isExist) => {
             if (isExist && !request.always) {
                 return request;
@@ -108,12 +107,12 @@ export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailReq
                 .then((imageData) => {
                     return createPreviewImage(previewName, imageData[0]);
                 })
-                .then(() => {
+                .then((previewName) => {
+                    request.preview = previewName;
                     return ipcRenderer.invoke("picasa:create-thumbnail", request);
                 });
         });
     } else {
-        // Start file watching
         return ipcRenderer.invoke("picasa:create-thumbnail", request);
     }
 }

@@ -1,8 +1,8 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
+
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import log4js from "log4js";
-import { initThumbnailService } from "./thumbnail";
 import { initFileWatcher } from "./fs-watch";
 import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
@@ -11,6 +11,7 @@ import isDev from "electron-is-dev";
 import { Glob } from "glob";
 import klawSync from "klaw-sync";
 import { mergeMap, from, Observable, Subscriber } from "rxjs";
+import ThumbnailService from "./thumbnail-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -103,7 +104,7 @@ function createWindow(): void {
         shell.showItemInFolder(args.path);
     });
 
-    const BUFFER_SIZE = 60;
+    const BUFFER_SIZE = 30;
     ipcMain.on("picasa:query-config", async (_, args: { paths: string[] }) => {
         const queue: string[] = [];
         from(args.paths)
@@ -142,7 +143,7 @@ function createWindow(): void {
     });
 
     // Setup Thumbnail Service
-    initThumbnailService(ipcMain, logger);
+    new ThumbnailService(ipcMain);
     // Setup File Watch Service
     initFileWatcher(ipcMain, mainWindow, logger);
 }

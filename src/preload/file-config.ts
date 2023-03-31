@@ -4,7 +4,6 @@ import type { PhotasaConfig, LoadCallback } from "./types";
 import * as R from "ramda";
 import { buildThumbnailPath } from "./image-helper";
 import { queryPhotasaConfigs } from "./query-config";
-import { from } from "rxjs";
 
 const PHOTASA_VERSION = "1.0";
 
