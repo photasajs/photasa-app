@@ -10,17 +10,17 @@ import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import {
     startWatching,
-    setupMenu,
     getDirectory,
     stopWatching,
     loadPhotasaConfigs,
+    resetPhotasaConfig,
 } from "@renderer/utils/api";
-import { processScannedFileTask, scanPhotosTask, ScanArgs } from "@renderer/utils/scan-folder";
+import { processScannedFileTask, scanPhotosTask } from "@renderer/utils/scan-folder";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { PhotasaConfig, WatchState } from "src/preload/types";
+import type { PhotasaConfig, WatchState, ScanArgs } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined } from "@ant-design/icons-vue";
 
@@ -29,8 +29,15 @@ const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const { addPhotasaConfigFile, addPhotasaConfigFiles } = photosStore;
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
-    storeToRefs(preferenceStore);
+const {
+    paths,
+    darkMode,
+    currentFolder,
+    scanningFolder,
+    scanningFolderAction,
+    thumbnailSize,
+    scannedFolder,
+} = storeToRefs(preferenceStore);
 const { addPath, completeScanPath } = preferenceStore;
 
 const showImport = ref(false);
@@ -107,19 +114,31 @@ const scanningHandler: Record<string, (args: ScanArgs | undefined) => void> = {
                 path: args.action.path,
             });
         }
+        if (queue.length === 0) {
+            completeScanPath(scannedFolder.value);
+        }
     },
 };
 
-function startScanning(): void {
-    scanningFolder.value = [];
+async function startScanning(): Promise<void> {
     if (scanningFolder.value.length > 0) {
-        scanPhotosTask.perform(scanningFolder.value[0], (args) => {
+        const scanAction = deepCopy(scanningFolder.value[0]);
+        if (scanAction.action === "rescan") {
+            await resetPhotasaConfig(scanAction.path);
+        }
+        scanPhotosTask.perform(scanAction, (args) => {
             scanningHandler[args.type]?.call(null, args);
         });
     }
 }
 
-watchArray(scanningFolder, startScanning, { deep: true });
+watchArray(
+    scanningFolder,
+    () => {
+        startScanning();
+    },
+    { deep: true },
+);
 
 const actions = {
     add: handleAddFileTask,

@@ -33,7 +33,9 @@
     "menu": {
         "getInfo": "照片信息",
         "open": "在文件管理器中打开",
-        "rebuildThumbnail": "重建缩略图"
+        "rebuildThumbnail": "重建缩略图",
+        "getConfig": "获取照片库信息",
+        "rescan": "重新扫描目录"
     },
     "notification": {
         "info": "提示",
@@ -46,6 +48,10 @@
         "duplicatePath": {
             "title": "重复的目录",
             "message": "目录[{folder}]已存在于仓廪图司中。"
+        },
+        "emptyPath": {
+            "title": "选择目录",
+            "message": "请选择目录，然后完成添加操作。"
         }
     },
     "status": {
@@ -55,5 +61,11 @@
         "processing": "正在处理 [{file}]",
         "scanned": "处理完毕",
         "scanComplete": "目录[{path}]已处理完毕"
+    },
+    "button": {
+        "import": "导入",
+        "cancel": "取消",
+        "ok": "确定",
+        "fixConfig": "修复照片库信息"
     }
 }

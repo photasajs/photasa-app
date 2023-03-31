@@ -90,7 +90,7 @@ function getVideoDimension(video): Promise<VideoSize> {
 
             // ffprobe returns aspect ratios of "0:1" or `undefined` if they're not specified.
             // https://trac.ffmpeg.org/ticket/3798
-            if (darString && darString !== "0:1") {
+            if (darString && darString !== "0:1" && darString !== "N/A") {
                 // The DAR is specified so use it directly
                 const [widthRatioPart, heightRatioPart] = ratioStringToParts(darString);
                 const inverseDar = heightRatioPart / widthRatioPart;
@@ -126,7 +126,7 @@ async function createScreenshot(arg, logger: Logger): Promise<string> {
                 timestamps: ["1%"],
                 filename: path.basename(arg.thumbnail),
                 folder: path.dirname(arg.thumbnail),
-                size: `${size.width}x${arg.heigh}`,
+                size: `${size.width}x${size.height}`,
             });
     });
 }

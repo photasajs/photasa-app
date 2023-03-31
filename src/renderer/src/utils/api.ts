@@ -9,6 +9,7 @@ import type {
     ScanCallback,
     PhotasaConfig,
     LoadCallback,
+    ScanAction,
 } from "src/preload/types";
 import { useTask } from "vue-concurrency";
 
@@ -72,7 +73,7 @@ export function openInFinder(path: string): void {
     window.api.openInFinder(path);
 }
 
-export function scanPhotos(folder: string, callback: ScanCallback): void {
+export function scanPhotos(folder: ScanAction, callback: ScanCallback): void {
     window.api.scanPhotos(folder, callback);
 }
 
@@ -109,4 +110,12 @@ export function scanSubfolders(folder): Promise<string[]> {
 
 export function isFileUnderFolder(file: string, folder: string): boolean {
     return window.api.isFileUnderFolder(file, folder);
+}
+
+export function resetPhotasaConfig(folder: string): Promise<PhotasaConfig> {
+    return window.api.resetPhotasaConfig(folder);
+}
+
+export function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
+    return window.api.fixPhotasaConfig(folder);
 }

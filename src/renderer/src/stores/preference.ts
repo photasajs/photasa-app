@@ -2,7 +2,7 @@
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import type { PhotasaConfig } from "src/preload/types";
+import type { PhotasaConfig, ScanAction } from "src/preload/types";
 
 type PreferenceState = {
     paths: string[];
@@ -11,7 +11,7 @@ type PreferenceState = {
     darkMode: boolean;
     lastOpenedFolder: string;
     locale: string;
-    scanningFolder: string[];
+    scanningFolder: ScanAction[];
     currentFolder: string;
     scannedFolder: string;
     currentFolderConfig: PhotasaConfig;
@@ -49,19 +49,19 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths = this.paths.sort();
             }
         },
-        addScanFolder(folder: string) {
+        addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
             if (!Array.isArray(this.scanningFolder)) {
                 this.scanningFolder = [];
             }
-            if (!this.scanningFolder.find((p) => p === folder)) {
-                this.scanningFolder.push(folder);
+            if (action === "rescan" || !this.scanningFolder.find((p) => p.path === folder)) {
+                this.scanningFolder.push({ path: folder, action });
             }
         },
         updateThumbnailSize(size: number) {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
-            const index = this.scanningFolder.findIndex((f) => f === folder);
+            const index = this.scanningFolder.findIndex((f) => f.path === folder);
             if (index > -1) {
                 this.scanningFolder.splice(index, 1);
             }

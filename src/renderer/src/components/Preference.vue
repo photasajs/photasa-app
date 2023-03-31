@@ -35,7 +35,6 @@ const formState: UnwrapRef<FormState> = reactive({
 
 const label = computed(() => {
     return {
-        watchFolderList: t("preference.watchFolderList"),
         chooseDirectory: t("preference.chooseDirectory"),
         thumbnailSize: t("preference.thumbnailSize"),
         folderList: t("preference.folderList"),
@@ -75,15 +74,23 @@ function onChoose(): void {
             return;
         }
         if (filePaths.length <= 0) {
-            openNotificationWithIcon("info", "Empty Path", "Please select a folder");
+            openNotificationWithIcon(
+                "info",
+                t("notification.emptyPath.title"),
+                t("notification.emptyPath.message"),
+            );
             return;
         }
 
         addPath(filePaths[0]);
 
+        // Add Level 1 Subfolders
         scanSubfolders(filePaths[0]).then((folders) => {
-            folders.forEach((f) => addScanFolder(f));
+            folders.forEach((f) => addScanFolder(f, "scan"));
         });
+
+        // Add Self
+        addScanFolder(filePaths[0], "current");
     });
 }
 
@@ -103,7 +110,7 @@ function handleRemove(item): void {
     <a-tabs v-model:activeKey="activeKey" :tab-position="mode" :style="{ minHeight: '50vh' }">
         <a-tab-pane :key="1" :tab="label.tabs.general">
             <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
-                <a-form-item :label="label.watchFolderList">
+                <a-form-item :label="t('preference.watchFolderList')">
                     <a-space direction="vertical">
                         <a-list
                             size="small"
@@ -149,7 +156,7 @@ function handleRemove(item): void {
                         }}</a-button>
                     </a-space>
                 </a-form-item>
-                <a-form-item :label="`${label.thumbnailSize}: ${thumbnailSize}px`">
+                <a-form-item :label="`${label.thumbnailSize} : ${thumbnailSize}px`">
                     <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
                 </a-form-item>
             </a-form>

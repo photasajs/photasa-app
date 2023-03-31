@@ -48,7 +48,7 @@ const fallback = ref(
 
 const imageList = ref(null);
 
-const mouseEnterDelay = ref(3);
+const mouseEnterDelay = ref(1.5);
 
 function toImage(file: Photo): Image {
     const preview =
@@ -57,10 +57,10 @@ function toImage(file: Photo): Image {
             : file.path;
     return {
         key: file.path,
-        src: `file://${file.thumbnail}`,
-        thumbnail: `file://${file.thumbnail}`,
-        fallback: `file://${preview}`,
-        raw: `file://${file.path}`,
+        src: `file://${currentFolder.value}/${file.thumbnail}`,
+        thumbnail: `file://${currentFolder.value}/${file.thumbnail}`,
+        fallback: `file://${currentFolder.value}/${preview}`,
+        raw: `file://${currentFolder.value}/${file.path}`,
     };
 }
 

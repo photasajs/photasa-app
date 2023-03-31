@@ -104,30 +104,21 @@ function createWindow(): void {
         shell.showItemInFolder(args.path);
     });
 
-    const BUFFER_SIZE = 30;
     ipcMain.on("picasa:query-config", async (_, args: { paths: string[] }) => {
-        const queue: string[] = [];
         from(args.paths)
             .pipe(mergeMap((target) => globPhotasaConfigFromFolders(target)))
             .subscribe({
                 next: (photasa) => {
-                    queue.push(photasa);
-                    if (queue.length >= BUFFER_SIZE) {
-                        mainWindow?.webContents.send("picasa:photasa-config", {
-                            action: "next",
-                            paths: [...queue],
-                        });
-                        queue.splice(0, queue.length);
-                    }
+                    mainWindow?.webContents.send("picasa:photasa-config", {
+                        action: "next",
+                        paths: [photasa],
+                    });
                 },
                 error: (err) => {
                     mainWindow?.webContents.send("picasa:photasa-config", { action: "error", err });
                 },
                 complete: () => {
-                    mainWindow?.webContents.send("picasa:photasa-config", {
-                        action: "complete",
-                        paths: [...queue],
-                    });
+                    mainWindow?.webContents.send("picasa:photasa-config", { action: "complete" });
                 },
             });
     });

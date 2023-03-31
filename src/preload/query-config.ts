@@ -7,7 +7,7 @@ export function queryPhotasaConfigs(paths: string[], callback: ConfigCallback): 
     ipcRenderer.send("picasa:query-config", { paths });
 
     ipcRenderer.on("picasa:photasa-config", (_, args) => {
-        callback(args.action, args.paths || [args.err.message]);
+        callback(args.action, args.paths || [args.err?.message ?? ""]);
     });
 }
 

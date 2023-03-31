@@ -1,14 +1,8 @@
 import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
-import {
-    ensureDir,
-    scanFolder,
-    walkthroughFiles,
-    shouldIgnorePhotasaPath,
-    isHiddenFile,
-} from "./path-helper";
-import type { ImportCallback, ScanCallback } from "./types";
+import { ensureDir, scanFolder, walkthroughFiles } from "./path-helper";
+import type { ImportCallback, ScanAction, ScanCallback } from "./types";
 import log4js from "log4js";
 
 const logger = log4js.getLogger("photo-import");
@@ -24,11 +18,7 @@ export function importPhotos(folders: string[], target: string, callback: Import
         .pipe(
             mergeMap((folder) => scanFolder(folder, target)),
             filter((action) => {
-                return (
-                    (action.isImage || action.isVideo) && // Image or video
-                    !shouldIgnorePhotasaPath(action.file) && // Not in ignore list such as .photasaoriginals or .picasaoriginals
-                    !isHiddenFile(action.file)
-                );
+                return action.isImage || action.isVideo;
             }),
             mergeMap((action) => ensureDir(action)),
             concatMap((action) => copyFile(action)), // copy file should be concatMap.
@@ -57,18 +47,16 @@ export function importPhotos(folders: string[], target: string, callback: Import
         });
 }
 
-export function scanPhotos(folder: string, callback: ScanCallback): void {
-    walkthroughFiles(folder)
+export function scanPhotos(scan: ScanAction, callback: ScanCallback): void {
+    walkthroughFiles(scan)
         .pipe(filter((action) => action.isImage || action.isVideo))
         .subscribe({
             next: (action) => {
                 logger.debug("next", action);
-                if (!shouldIgnorePhotasaPath(action.path) && !isHiddenFile(action.path)) {
-                    callback({
-                        type: "next",
-                        action,
-                    });
-                }
+                callback({
+                    type: "next",
+                    action,
+                });
             },
             error: (error) => {
                 logger.debug("error", error);
@@ -82,7 +70,7 @@ export function scanPhotos(folder: string, callback: ScanCallback): void {
                 callback({
                     type: "complete",
                     action: {
-                        path: folder,
+                        path: scan.path,
                     },
                 });
             },

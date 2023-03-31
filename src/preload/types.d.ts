@@ -41,6 +41,18 @@ interface ThumbnailRequest {
     preview: string;
 }
 
+interface ScanAction {
+    path: string;
+    action: "scan" | "rescan" | "current"; // scan: new folder, rescan: existing folder, current: only current folder
+}
+
+interface ScanArgs {
+    type: "next" | "error" | "complete";
+    action?: PhotoPath;
+    error?: {
+        message: string;
+    };
+}
 interface ImageInfo {
     imageType: ImageTypeResult;
     tags: Tags | IccTags | XmpTags | undefined;
@@ -71,7 +83,7 @@ declare global {
             startWatching: (config: WatchConfig, callback: WatchCallback) => void;
             stopWatching: () => Promise<void>;
             importPhotos: (paths: string[], target: string, callback: ImportCallback) => void;
-            scanPhotos: (folder: string, callback: ScanCallback) => void;
+            scanPhotos: (folder: ScanAction, callback: ScanCallback) => void;
             chooseDirectory: () => Promise<DirectorySelection>;
             getDirectory: (name: PathName) => Promise<string>;
             createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
@@ -86,6 +98,10 @@ declare global {
             loadPhotasaConfigs: (paths: string[], callback: LoadCallback) => void;
             scanSubfolders: (folder: string) => Promise<string[]>;
             isFileUnderFolder: (file: string, folder: string) => boolean;
+            toThumbnailName: (file: string) => string;
+            toFileName: (file: string) => string;
+            fixPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
+            resetPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
         };
     }
 }

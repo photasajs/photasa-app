@@ -7,10 +7,16 @@ import path from "path";
 
 const { ipcRenderer } = electronAPI;
 
+export const PHOTASA_ORIGINALS = ".photasaoriginals";
+
 export function buildThumbnailPath(photoPath: string): string {
     // Prepare thumbnail path for image
-    const dir = path.join(path.dirname(photoPath), ".photasaoriginals");
+    const dir = path.join(path.dirname(photoPath), PHOTASA_ORIGINALS);
     return path.join(dir, `thumbnail-${path.basename(photoPath)}.png`);
+}
+
+export function toRelativeThumbnailPath(photoPath: string): string {
+    return path.join(PHOTASA_ORIGINALS, `thumbnail-${path.basename(photoPath)}.png`);
 }
 
 export async function getImageType(path: string): Promise<ImageInfo> {

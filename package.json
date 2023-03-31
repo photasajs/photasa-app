@@ -67,6 +67,7 @@
         "sass": "^1.60.0",
         "sharp": "^0.32.0",
         "super-expressive": "^1.4.2",
+        "through2": "^4.0.2",
         "vue-concurrency": "^4.0.1",
         "vue-i18n": "9.2.2"
     },
