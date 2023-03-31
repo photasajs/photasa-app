@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -21,7 +21,7 @@ import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 import type { PhotasaConfig, WatchState } from "src/preload/types";
-import { watchArray } from "@vueuse/core";
+import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined } from "@ant-design/icons-vue";
 
 const { t } = useI18n();
@@ -181,6 +181,7 @@ getDirectory("desktop")
         // Start to check if any leftover folder need to scan
         startScanning();
     });
+
 function handlePreferenceOk(): void {
     showPreference.value = false;
 }
@@ -192,7 +193,10 @@ function openImportPhotos(): void {
 }
 
 // Update title
-document.title = t("app.title");
+const title = computed(() => {
+    return `${t("app.title")} - ${currentFolder.value}`;
+});
+useTitle(title);
 </script>
 
 <template>
