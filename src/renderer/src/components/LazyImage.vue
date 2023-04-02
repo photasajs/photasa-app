@@ -11,15 +11,20 @@ const props = defineProps<{
     preview: string;
     fallback: string;
     isVideo: boolean;
+    raw: string;
 }>();
 
-const { src, height, width, preview, fallback, isVideo } = toRefs(props);
+const { src, raw, height, width, preview, fallback, isVideo } = toRefs(props);
 const isReady = ref(false);
 const actualSrc = ref("");
 
 watch(src, () => {
-    isReady.value = false;
-    prefetchImage(src.value);
+    if (!isVideo.value) {
+        isReady.value = false;
+        prefetchImage(src.value);
+    } else {
+        isReady.value = true;
+    }
 });
 
 async function prefetchImage(imageSrc: string): Promise<void> {
@@ -47,10 +52,13 @@ const previewIsVisible = ref(false);
 const videoPlayerIsVisible = ref(false);
 function handleImageClick(): void {
     if (isVideo.value) {
-        previewIsVisible.value = true;
-    } else {
         videoPlayerIsVisible.value = true;
+    } else {
+        previewIsVisible.value = true;
     }
+}
+function getContainer(): HTMLElement {
+    return document.querySelector(".app-container") ?? document.body;
 }
 </script>
 
@@ -73,6 +81,7 @@ function handleImageClick(): void {
                 :preview="{
                     src: preview,
                     visible: previewIsVisible,
+                    getContainer: getContainer,
                 }"
                 :style="{ margin: 'auto' }"
                 @click="handleImageClick()"
@@ -80,27 +89,26 @@ function handleImageClick(): void {
         </a-spin>
     </div>
     <a-modal v-model:visible="videoPlayerIsVisible" width="100%" wrap-class-name="full-modal">
-        <video-player :src="src" :poster="fallback" controls :loop="true" :volume="0.6" />
+        <video-player
+            v-if="isVideo"
+            :class="['video-player', 'vjs-big-play-centered']"
+            :src="raw"
+            :poster="preview"
+            playsinline
+            controls
+            :loop="true"
+            :volume="0.6"
+        />
+        <template #footer></template>
     </a-modal>
 </template>
 <style lang="less">
 .thumbnail-image .ant-image {
     display: flex;
 }
-.full-modal {
-    .ant-modal {
-        max-width: 100%;
-        top: 0;
-        padding-bottom: 0;
-        margin: 0;
-    }
-    .ant-modal-content {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh);
-    }
-    .ant-modal-body {
-        flex: 1;
-    }
+.video-player {
+    position: relative;
+    width: 100%;
+    height: 60vh;
 }
 </style>

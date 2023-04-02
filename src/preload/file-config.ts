@@ -4,6 +4,7 @@ import type { PhotasaConfig, LoadCallback } from "./types";
 import * as R from "ramda";
 import { toRelativeThumbnailPath } from "./image-helper";
 import { queryPhotasaConfigs } from "./query-config";
+import isVideo from "is-video";
 
 const PHOTASA_VERSION = "1.0";
 
@@ -68,6 +69,7 @@ export async function addToPhotoList(
             path: fileName,
             thumbnail: thumbnailName,
             history: [],
+            isVideo: isVideo(photoPath),
         });
         writeConfig(meta.dir, photasaConfig);
     } else if (!photo.thumbnail) {
@@ -123,6 +125,7 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     const meta = await readConfig(folder, false);
     const config = parseConfig(meta.data);
     config.photoList.forEach((photo) => {
+        photo.isVideo = isVideo(photo.path);
         photo.path = toFileName(photo.path);
         photo.thumbnail = toThumbnailName(photo.thumbnail);
     });

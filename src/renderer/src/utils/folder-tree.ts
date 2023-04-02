@@ -4,6 +4,7 @@ import { mergePath } from "./path";
 export type Photo = {
     path: string;
     thumbnail: string;
+    isVideo: boolean;
 };
 
 export type BuildDataNodeCallback = {

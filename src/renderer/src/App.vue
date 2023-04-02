@@ -29,15 +29,8 @@ const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const { addPhotasaConfigFile, addPhotasaConfigFiles } = photosStore;
 const preferenceStore = usePreferenceStore();
-const {
-    paths,
-    darkMode,
-    currentFolder,
-    scanningFolder,
-    scanningFolderAction,
-    thumbnailSize,
-    scannedFolder,
-} = storeToRefs(preferenceStore);
+const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
+    storeToRefs(preferenceStore);
 const { addPath, completeScanPath } = preferenceStore;
 
 const showImport = ref(false);
@@ -230,7 +223,7 @@ useTitle(title);
                 <SettingOutlined @click="openPreference" />
             </a-space>
         </header>
-        <a-layout class="content">
+        <a-layout class="content app-container">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
                     <a-layout class="image-content">
