@@ -1,4 +1,4 @@
-import createWorker from "./worker?nodeWorker";
+import createWorker from "./thumbnail-worker?nodeWorker";
 import type { IpcMain } from "electron";
 
 type ThumbnailWorker = {

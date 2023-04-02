@@ -8,10 +8,10 @@ import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
-import { Glob } from "glob";
 import klawSync from "klaw-sync";
-import { mergeMap, from, Observable, Subscriber } from "rxjs";
 import ThumbnailService from "./thumbnail-service";
+import ConfigService from "./config-service";
+import ScanService from "./scan-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -21,23 +21,6 @@ const DEV_MODE = process.env.NODE_ENV === "development";
 const logger = log4js.getLogger("main");
 logger.level = DEV_MODE ? "debug" : "info";
 let mainWindow: BrowserWindow | undefined | null;
-
-function globPhotasaConfigFromFolders(folder: string): Observable<string> {
-    const pattern = `**/*.photasa.json`;
-    return new Observable<string>((subscriber: Subscriber<string>) => {
-        const g3 = new Glob(pattern, {
-            cwd: folder,
-            dot: true,
-        });
-        g3.stream()
-            .on("data", (photasa) => {
-                subscriber.next(path.join(folder, photasa));
-            })
-            .on("end", () => {
-                subscriber.complete();
-            });
-    });
-}
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -104,25 +87,6 @@ function createWindow(): void {
         shell.showItemInFolder(args.path);
     });
 
-    ipcMain.on("picasa:query-config", async (_, args: { paths: string[] }) => {
-        from(args.paths)
-            .pipe(mergeMap((target) => globPhotasaConfigFromFolders(target)))
-            .subscribe({
-                next: (photasa) => {
-                    mainWindow?.webContents.send("picasa:photasa-config", {
-                        action: "next",
-                        paths: [photasa],
-                    });
-                },
-                error: (err) => {
-                    mainWindow?.webContents.send("picasa:photasa-config", { action: "error", err });
-                },
-                complete: () => {
-                    mainWindow?.webContents.send("picasa:photasa-config", { action: "complete" });
-                },
-            });
-    });
-
     ipcMain.handle("picasa:sub-folders", (_, args) => {
         const filterFn = (item: { path: string }): boolean => {
             const basename = path.basename(item.path as string);
@@ -135,6 +99,9 @@ function createWindow(): void {
 
     // Setup Thumbnail Service
     new ThumbnailService(ipcMain);
+    new ConfigService(ipcMain, mainWindow);
+    new ScanService(ipcMain, mainWindow);
+
     // Setup File Watch Service
     initFileWatcher(ipcMain, mainWindow, logger);
 }

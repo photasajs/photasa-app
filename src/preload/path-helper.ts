@@ -8,7 +8,6 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import { buildThumbnailPath } from "./image-helper";
 import type { PhotoPath, ScanAction } from "./types";
-import through2 from "through2";
 export interface PathOption {
     root?: string;
 }

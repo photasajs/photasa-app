@@ -10,26 +10,6 @@ const port = parentPort;
 if (!port) {
     throw new Error("IllegalState");
 }
-/*
-function queryConfig(args) {
-    from(args.paths)
-        .pipe(mergeMap((target) => globPhotasaConfigFromFolders(target)))
-        .subscribe({
-            next: (photasa) => {
-                mainWindow?.webContents.send("picasa:photasa-config", {
-                    action: "next",
-                    paths: [photasa],
-                });
-            },
-            error: (err) => {
-                mainWindow?.webContents.send("picasa:photasa-config", { action: "error", err });
-            },
-            complete: () => {
-                mainWindow?.webContents.send("picasa:photasa-config", { action: "complete" });
-            },
-        });
-}
-*/
 
 port.on("message", (message) => {
     const result = JSON.parse(message);
