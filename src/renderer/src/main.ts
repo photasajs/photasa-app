@@ -11,6 +11,8 @@ import { createI18n } from "vue-i18n";
 import enUS from "./locales/en-US.json";
 import zhCN from "./locales/zh-CN.json";
 import jaJP from "./locales/ja-JP.json";
+import VueVideoPlayer from "@videojs-player/vue";
+import "video.js/dist/video-js.css";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -38,6 +40,7 @@ pinia.use(piniaPluginPersistedstate);
 
 createApp(App)
     .use(i18n)
+    .use(VueVideoPlayer)
     .use(<Plugin>bugsnagVue)
     .use(pinia)
     .use(Antd)

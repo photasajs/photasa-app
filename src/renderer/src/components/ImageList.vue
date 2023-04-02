@@ -11,6 +11,7 @@ import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api";
 import { Photo } from "@renderer/utils/folder-tree";
 import LazyImage from "./LazyImage.vue";
+import isVideo from "is-video";
 
 const { t } = useI18n();
 
@@ -26,6 +27,7 @@ type Image = {
     thumbnail: string;
     fallback: string;
     raw: string; // For Heic file, it's the original file
+    isVideo: boolean;
 };
 
 type ImageMeta = {
@@ -61,6 +63,7 @@ function toImage(file: Photo): Image {
         thumbnail: `file://${currentFolder.value}/${file.thumbnail}`,
         fallback: `file://${currentFolder.value}/${preview}`,
         raw: `file://${currentFolder.value}/${file.path}`,
+        isVideo: isVideo(file.path),
     };
 }
 
@@ -163,6 +166,7 @@ function openFileInFilder(image: Image): void {
                                         :src="image.thumbnail"
                                         :fallback="fallback"
                                         :preview="image.fallback"
+                                        :is-video="image.isVideo"
                                     />
                                 </a-card>
                             </a-tooltip>

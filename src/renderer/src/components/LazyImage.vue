@@ -10,9 +10,10 @@ const props = defineProps<{
     width: number;
     preview: string;
     fallback: string;
+    isVideo: boolean;
 }>();
 
-const { src, height, width, preview, fallback } = toRefs(props);
+const { src, height, width, preview, fallback, isVideo } = toRefs(props);
 const isReady = ref(false);
 const actualSrc = ref("");
 
@@ -41,6 +42,16 @@ const targetIsVisible = ref(false);
 useIntersectionObserver(target, ([{ isIntersecting }]) => {
     targetIsVisible.value = isIntersecting;
 });
+
+const previewIsVisible = ref(false);
+const videoPlayerIsVisible = ref(false);
+function handleImageClick(): void {
+    if (isVideo.value) {
+        previewIsVisible.value = true;
+    } else {
+        videoPlayerIsVisible.value = true;
+    }
+}
 </script>
 
 <template>
@@ -61,14 +72,35 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
                 :fallback="fallback"
                 :preview="{
                     src: preview,
+                    visible: previewIsVisible,
                 }"
                 :style="{ margin: 'auto' }"
+                @click="handleImageClick()"
             />
         </a-spin>
     </div>
+    <a-modal v-model:visible="videoPlayerIsVisible" width="100%" wrap-class-name="full-modal">
+        <video-player :src="src" :poster="fallback" controls :loop="true" :volume="0.6" />
+    </a-modal>
 </template>
 <style lang="less">
 .thumbnail-image .ant-image {
     display: flex;
+}
+.full-modal {
+    .ant-modal {
+        max-width: 100%;
+        top: 0;
+        padding-bottom: 0;
+        margin: 0;
+    }
+    .ant-modal-content {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh);
+    }
+    .ant-modal-body {
+        flex: 1;
+    }
 }
 </style>
