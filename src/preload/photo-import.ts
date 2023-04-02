@@ -5,7 +5,7 @@ import { ensureDir, scanFolder } from "./path-helper";
 import type { ImportCallback, ScanAction, ScanCallback } from "./types";
 import log4js from "log4js";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { FileAction } from "./file-action";
+import type { FileAction } from "./types";
 
 const { ipcRenderer } = electronAPI;
 

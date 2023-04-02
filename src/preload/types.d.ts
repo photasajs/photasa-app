@@ -2,12 +2,29 @@ import { ElectronAPI } from "@electron-toolkit/preload";
 
 type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
-type ImportCallback = (action: FileAction | string | undefined) => void;
+type ImportCallback = (param: { type: string; action: FileAction }) => void;
 type ScanCallback = (action: FileAction | string | undefined) => void;
 type LoadCallback = (action: string, paths: string[]) => void;
 type ConfigCallback = (action: string, paths: string[]) => void;
 
 type PathName = "home" | "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
+
+interface FileAction {
+    file: string;
+    name: string;
+    created?: Date;
+    targetName?: string;
+    isImage: boolean;
+    isVideo: boolean;
+    target?: string;
+    targetDir: string;
+    targetFileName: string;
+    targetFullPath: string;
+}
+
+interface FileException {
+    code?: string;
+}
 
 interface PhotoAction {
     action: name;
@@ -33,6 +50,12 @@ interface PhotasaConfig {
     photoList: Photo[];
     lastModified: number;
 }
+
+interface PhotasaConfigResult {
+    path: string;
+    config: PhotasaConfig;
+}
+
 interface ThumbnailRequest {
     path: string;
     thumbnail: string;

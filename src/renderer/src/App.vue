@@ -70,16 +70,14 @@ const queue: ScanArgs[] = [];
 function runOverQueue(): void {
     const args = queue.shift();
     if (args?.action?.path) {
-        processScannedFileTask
-            .perform(args, thumbnailSize.value)
-            .then((photasa: { path: string; config: PhotasaConfig }) => {
-                addPhotasaConfigFile(paths.value, {
-                    path: photasa.path,
-                    thumbnail: "",
-                });
-                processingFile.value = args.action?.path as string;
-                runOverQueue();
+        processScannedFileTask.perform(args, thumbnailSize.value).then(() => {
+            addPhotasaConfigFile(paths.value, {
+                path: args?.action?.path ?? "",
+                thumbnail: "",
             });
+            processingFile.value = args.action?.path as string;
+            runOverQueue();
+        });
     } else {
         completeScanPath(scannedFolder.value);
     }

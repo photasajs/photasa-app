@@ -1,13 +1,8 @@
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig, LoadCallback, PhotasaConfigResult } from "./types";
-
+import type { PhotasaConfig, PhotoConfigResult } from "../preload/types";
 import * as R from "ramda";
-import { queryPhotasaConfigs } from "./query-config";
-import isVideo from "is-video";
-
-import { electronAPI } from "@electron-toolkit/preload";
-const { ipcRenderer } = electronAPI;
+import { toRelativeThumbnailPath } from "../common/utils";
 
 const PHOTASA_VERSION = "1.0";
 
@@ -59,8 +54,27 @@ const parseConfig = R.compose(normalizeConfig, fromJson);
  * @param photo path of photo
  * @returns path of .photasa.json
  */
-export async function addToPhotoList(photoPath: string): Promise<void> {
-    return ipcRenderer.invoke("picasa:add-config", { paths: [photoPath] });
+export async function addToPhotoList(photoPath: string): Promise<PhotoConfigResult> {
+    const meta = await readConfig(photoPath, true);
+    const photasaConfig = parseConfig(meta.data);
+    const fileName = toFileName(photoPath);
+    const photo = photasaConfig.photoList.find((p) => p.path === fileName);
+    const thumbnailName = toRelativeThumbnailPath(photoPath);
+    if (!photo) {
+        photasaConfig.photoList.push({
+            path: fileName,
+            thumbnail: thumbnailName,
+            history: [],
+        });
+        writeConfig(meta.dir, photasaConfig);
+    } else if (!photo.thumbnail) {
+        photo.thumbnail = thumbnailName;
+        writeConfig(meta.dir, photasaConfig);
+    }
+    return {
+        path: meta.dir,
+        config: photasaConfig,
+    };
 }
 
 /**
@@ -69,9 +83,7 @@ export async function addToPhotoList(photoPath: string): Promise<void> {
  * @param photo path of photo
  * @returns path of .photasa.json and config of photasa
  */
-export async function removeFromPhotoList(
-    photoPath: string,
-): Promise<{ path: string; config: PhotasaConfig }> {
+export async function removeFromPhotoList(photoPath: string): Promise<PhotoConfigResult> {
     const meta = await readConfig(photoPath, true);
     const photasaConfig = parseConfig(meta.data);
     const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === photoPath);
@@ -106,7 +118,6 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     const meta = await readConfig(folder, false);
     const config = parseConfig(meta.data);
     config.photoList.forEach((photo) => {
-        photo.isVideo = isVideo(photo.path);
         photo.path = toFileName(photo.path);
         photo.thumbnail = toThumbnailName(photo.thumbnail);
     });
@@ -114,12 +125,6 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     writeConfig(meta.dir, config);
 
     return config;
-}
-
-export async function loadPhotasaConfigs(paths: string[], callback: LoadCallback): Promise<void> {
-    queryPhotasaConfigs(paths, (action, path) => {
-        callback(action, path);
-    });
 }
 
 export function toFileName(file: string): string {

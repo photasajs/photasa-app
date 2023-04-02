@@ -40,7 +40,7 @@ function createWindow(): void {
         titleBarStyle: "hiddenInset",
     });
 
-    createMenu(mainWindow);
+    createMenu();
 
     mainWindow.on("ready-to-show", () => {
         mainWindow?.show();

@@ -1,6 +1,6 @@
 import { toFullPath, ensureDir } from "../path-helper";
 import { vol } from "memfs";
-import { FileAction } from "../file-action";
+import type { FileAction } from "../types";
 import { firstValueFrom } from "rxjs";
 
 jest.mock("fs");

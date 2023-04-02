@@ -1,6 +1,6 @@
 import klaw from "klaw";
 import path from "path";
-import type { FileAction } from "./file-action";
+import type { FileAction } from "./types";
 import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
