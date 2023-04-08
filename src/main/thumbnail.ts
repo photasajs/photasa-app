@@ -5,6 +5,7 @@ import type { Logger } from "log4js";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
+import { ThumbnailRequest, VideoSize } from "../preload/types";
 //Get the paths to the packaged versions of the binaries we want to use
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked");
 const ffprobePath = require("ffprobe-static").path.replace("app.asar", "app.asar.unpacked");
@@ -14,7 +15,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 const heicExtensionRE = new RegExp(`\\.(${["heic", "heif"].join("|")})$`, "i");
 
-async function createPreviewImage(arg, logger: Logger): Promise<string> {
+async function createPreviewImage(arg: ThumbnailRequest, logger: Logger): Promise<string> {
     const fileName = path.basename(arg.path, path.extname(arg.path));
     const previewName = path.join(path.dirname(arg.path), `.photasaoriginals/${fileName}.jpeg`);
     const inputBuffer = await readFile(arg.path);
@@ -56,13 +57,8 @@ export async function removeThumbnail(arg, logger: Logger): Promise<string> {
     return arg;
 }
 
-export type VideoSize = {
-    width: number;
-    height: number;
-};
-
 function ratioStringToParts(str): number[] {
-    return str.split(":").map((n) => parseInt(n, 10));
+    return str.split(":").map((n: string): number => parseInt(n, 10));
 }
 
 function getOptimalThumbnailResolution(videoDimension: VideoSize, arg): VideoSize {
@@ -79,14 +75,14 @@ function getOptimalThumbnailResolution(videoDimension: VideoSize, arg): VideoSiz
     }
 }
 
-function getVideoDimension(video): Promise<VideoSize> {
+function getVideoDimension(video: string): Promise<VideoSize> {
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(video, (err, metadata) => {
             if (err) return reject(err);
 
             const stream = metadata.streams.find((stream) => stream.codec_type === "video");
 
-            const darString = stream.display_aspect_ratio;
+            const darString = stream?.display_aspect_ratio;
 
             // ffprobe returns aspect ratios of "0:1" or `undefined` if they're not specified.
             // https://trac.ffmpeg.org/ticket/3798
@@ -101,8 +97,8 @@ function getVideoDimension(video): Promise<VideoSize> {
             } else {
                 // DAR not specified so assume square pixels (use sample resolution as-is).
                 resolve({
-                    width: stream.width,
-                    height: stream.height,
+                    width: stream?.width ?? 100,
+                    height: stream?.height ?? 100,
                 });
             }
         });
@@ -118,6 +114,7 @@ async function createScreenshot(arg, logger: Logger): Promise<string> {
             })
             .on("error", function (err) {
                 logger.error(err);
+                resolve(arg.thumbnail);
             })
             .on("end", function () {
                 resolve(arg.thumbnail);
@@ -131,7 +128,10 @@ async function createScreenshot(arg, logger: Logger): Promise<string> {
     });
 }
 
-export async function createThumbnail(arg, logger: Logger): Promise<string> {
+export async function createThumbnail(
+    arg: ThumbnailRequest,
+    logger: Logger,
+): Promise<ThumbnailRequest> {
     const isExist = await exists(arg.thumbnail);
     if (!arg.always && isExist) {
         return Promise.resolve(arg);

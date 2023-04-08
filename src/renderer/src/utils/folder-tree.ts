@@ -60,9 +60,7 @@ function traverseTree(
 ): DataNode {
     normalizeRoot(root);
 
-    if (pathParts.length <= 1) {
-        // Leaf node, add file to root's list
-        callback.updateFileList(root.key as string, new Set([file]));
+    if (pathParts.length == 0) {
         return root;
     }
 

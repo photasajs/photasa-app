@@ -2,7 +2,7 @@ import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
 import { ensureDir, scanFolder } from "./path-helper";
-import type { ImportCallback, ScanAction, ScanCallback } from "./types";
+import type { ImportCallback, ScanAction, ScanArgs, ScanCallback } from "./types";
 import log4js from "log4js";
 import { electronAPI } from "@electron-toolkit/preload";
 import type { FileAction } from "./types";
@@ -51,10 +51,28 @@ export function importPhotos(folders: string[], target: string, callback: Import
         });
 }
 
-export function scanPhotos(scan: ScanAction, callback: ScanCallback): void {
-    ipcRenderer.send("picasa:scan-photos", { scanAction: scan });
+const RequestQueue = {
+    promiseQueue: {},
+    sequenceId: 0,
+};
 
-    ipcRenderer.on("picasa:find-photo", (_, args: FileAction) => {
-        callback(args);
+ipcRenderer.on("picasa:find-photo", (_, args: ScanArgs) => {
+    if (args.type === "complete") {
+        const requestId = args.requestId;
+        if (RequestQueue.promiseQueue[requestId]) {
+            RequestQueue.promiseQueue[requestId](args);
+            delete RequestQueue.promiseQueue[requestId];
+        }
+    }
+});
+
+export function scanPhotos(scan: ScanAction): Promise<void> {
+    return new Promise((resolve) => {
+        const requestId = `scan-${RequestQueue.sequenceId++}`;
+        RequestQueue.promiseQueue[requestId] = resolve;
+        ipcRenderer.send("picasa:scan-photos", {
+            requestId,
+            scanAction: scan,
+        });
     });
 }

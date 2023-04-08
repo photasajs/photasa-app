@@ -1,8 +1,11 @@
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig, PhotoConfigResult } from "../preload/types";
+import type { PhotasaConfig, PhotasaConfigResult } from "../preload/types";
 import * as R from "ramda";
 import { toRelativeThumbnailPath } from "../common/utils";
+import TaskRunner from "concurrent-tasks";
+import { Logger } from "log4js";
+import { concatMap, from } from "rxjs";
 
 const PHOTASA_VERSION = "1.0";
 
@@ -47,14 +50,41 @@ function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
 }
 
 const parseConfig = R.compose(normalizeConfig, fromJson);
+export async function batchAddToPhotoList(
+    parent: string,
+    photoPaths: string[],
+): Promise<PhotasaConfigResult> {
+    const meta = await readConfig(parent, false);
+    const photasaConfig = parseConfig(meta.data);
+    photoPaths.forEach((photoPath) => {
+        const fileName = toFileName(photoPath);
+        const photo = photasaConfig.photoList.find((p) => p.path === fileName);
+        const thumbnailName = toRelativeThumbnailPath(photoPath);
+        if (!photo) {
+            photasaConfig.photoList.push({
+                path: fileName,
+                thumbnail: thumbnailName,
+                history: [],
+            });
+        } else if (!photo.thumbnail) {
+            photo.thumbnail = thumbnailName;
+        }
+    });
 
+    await writeConfig(meta.dir, photasaConfig);
+
+    return {
+        path: meta.dir,
+        config: photasaConfig,
+    };
+}
 /**
  * Add photo to .photasa.json
  *
  * @param photo path of photo
  * @returns path of .photasa.json
  */
-export async function addToPhotoList(photoPath: string): Promise<PhotoConfigResult> {
+export async function addToPhotoList(photoPath: string): Promise<PhotasaConfigResult> {
     const meta = await readConfig(photoPath, true);
     const photasaConfig = parseConfig(meta.data);
     const fileName = toFileName(photoPath);
@@ -83,7 +113,7 @@ export async function addToPhotoList(photoPath: string): Promise<PhotoConfigResu
  * @param photo path of photo
  * @returns path of .photasa.json and config of photasa
  */
-export async function removeFromPhotoList(photoPath: string): Promise<PhotoConfigResult> {
+export async function removeFromPhotoList(photoPath: string): Promise<PhotasaConfigResult> {
     const meta = await readConfig(photoPath, true);
     const photasaConfig = parseConfig(meta.data);
     const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === photoPath);
@@ -133,4 +163,88 @@ export function toFileName(file: string): string {
 
 export function toThumbnailName(file: string): string {
     return `.photasaoriginals/${path.basename(file)}`;
+}
+
+const addTaskRunner = new TaskRunner();
+addTaskRunner.setConcurrency(1);
+let addPathQueue = {};
+const DELAY_NOTIFY_DONE = 10000;
+const QUEUE_BREAK_THRESHOLD = 60;
+
+function waitedFilesCount(): number {
+    return Object.entries<string[]>(addPathQueue).reduce((acc, entry) => acc + entry[1].length, 0);
+}
+
+function addConfig(
+    request: { queueId: number; paths: string[] },
+    logger: Logger,
+    postMessage: (message: string) => void,
+    done: () => void,
+): void {
+    const queued = Object.entries<string[]>(addPathQueue);
+    addPathQueue = {};
+    logger.info(
+        `Process ${queued.reduce(
+            (acc, entry) => acc + entry[1].length,
+            0,
+        )} files to photasa config`,
+    );
+    from(queued)
+        .pipe(concatMap(([key, value]) => batchAddToPhotoList(key, value)))
+        .subscribe({
+            next: (result: PhotasaConfigResult) => {
+                postMessage(
+                    JSON.stringify({
+                        action: "next",
+                        queueId: request.queueId,
+                        from: "add",
+                        ...result,
+                    }),
+                );
+            },
+            error: (err) => {
+                postMessage(
+                    JSON.stringify({
+                        action: "error",
+                        queueId: request.queueId,
+                        from: "add",
+                        err,
+                    }),
+                );
+            },
+            complete: () => {
+                postMessage(
+                    JSON.stringify({
+                        action: "complete",
+                        queueId: request.queueId,
+                        from: "add",
+                    }),
+                );
+                // Write to disk is time consuming, so we delay the notification so we can handle more saving
+                const handlerId = setInterval(() => {
+                    const count = waitedFilesCount();
+                    logger.info(`Totally ${count} files are waiting`);
+                    if (count >= QUEUE_BREAK_THRESHOLD) {
+                        clearInterval(handlerId);
+                        done();
+                    }
+                }, DELAY_NOTIFY_DONE);
+            },
+        });
+}
+
+export function addToPhotasaConfig(
+    request: { queueId: number; paths: string[] },
+    postMessage: (message: string) => void,
+    logger: Logger,
+): void {
+    request.paths.forEach((p) => {
+        const dir = path.dirname(p);
+        addPathQueue[dir] = addPathQueue[dir] || [];
+        addPathQueue[dir].push(p);
+    });
+
+    addTaskRunner.add((done) => {
+        addConfig(request, logger, postMessage, done);
+    });
 }

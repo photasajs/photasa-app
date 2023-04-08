@@ -14,15 +14,16 @@ import {
     stopWatching,
     loadPhotasaConfigs,
     resetPhotasaConfig,
+    scanSubfolders,
 } from "@renderer/utils/api";
 import { processScannedFileTask, scanPhotosTask } from "@renderer/utils/scan-folder";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { PhotasaConfig, WatchState, ScanArgs } from "src/preload/types";
+import type { WatchState, ScanArgs, ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
-import { SettingOutlined, ImportOutlined } from "@ant-design/icons-vue";
+import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
@@ -31,10 +32,11 @@ const { addPhotasaConfigFile, addPhotasaConfigFiles } = photosStore;
 const preferenceStore = usePreferenceStore();
 const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
     storeToRefs(preferenceStore);
-const { addPath, completeScanPath } = preferenceStore;
+const { addPath, completeScanPath, addScanFolder } = preferenceStore;
 
 const showImport = ref(false);
 const showPreference = ref(false);
+const showScanList = ref(false);
 const loading = ref(false);
 const loadingConfigs = ref(false);
 
@@ -83,42 +85,32 @@ function runOverQueue(): void {
     }
 }
 
-const scanningHandler: Record<string, (args: ScanArgs | undefined) => void> = {
-    next: (args): void => {
-        if (args?.action?.path) {
-            queue.push(args);
-            if (processScannedFileTask.isIdle) {
-                runOverQueue();
-            }
-        }
-    },
-    error: (args): void => {
-        if (args?.error?.message) {
-            processingFile.value = args.error.message;
-        }
-    },
-    complete: (args): void => {
-        processingFile.value = t("status.scanned");
-        if (args?.action?.path) {
-            scannedFolder.value = args.action.path;
-            processingFile.value = t("status.scanComplete", {
-                path: args.action.path,
-            });
-        }
-        if (queue.length === 0) {
-            completeScanPath(scannedFolder.value);
-        }
-    },
-};
+function top<T>(array): T {
+    return array[array.length - 1];
+}
 
 async function startScanning(): Promise<void> {
     if (scanningFolder.value.length > 0) {
-        const scanAction = deepCopy(scanningFolder.value[0]);
+        const scanAction = deepCopy(top<ScanAction>(scanningFolder.value));
         if (scanAction.action === "rescan") {
             await resetPhotasaConfig(scanAction.path);
         }
-        scanPhotosTask.perform(scanAction, (args) => {
-            scanningHandler[args.type]?.call(null, args);
+
+        scanAction.thumbnailSize = thumbnailSize.value;
+        // Each time only scan one level of subfolders, and expand the subfolders
+        scanSubfolders(scanAction.path).then((folders) => {
+            folders.forEach((f) => addScanFolder(f, "scan"));
+            return scanPhotosTask.perform(scanAction).then((args: ScanArgs) => {
+                processingFile.value = t("status.scanned");
+                if (args?.action?.path) {
+                    addPhotasaConfigFile(paths.value, {
+                        path: args?.action?.path ?? "",
+                        thumbnail: "",
+                    });
+                    completeScanPath(args.action.path as string);
+                    startScanning();
+                }
+            });
         });
     }
 }
@@ -126,7 +118,9 @@ async function startScanning(): Promise<void> {
 watchArray(
     scanningFolder,
     () => {
-        startScanning();
+        if (scanPhotosTask.isIdle) {
+            startScanning();
+        }
     },
     { deep: true },
 );
@@ -184,10 +178,10 @@ getDirectory("desktop")
     })
     .then((configPaths) => {
         processingFile.value = t("status.loadingConfig");
-        loadPhotasaConfigs([...configPaths], (action: string, configs: string[]) => {
+        /* loadPhotasaConfigs([...configPaths], (action: string, configs: string[]) => {
             loadHandler[action]?.call(null, configs);
         });
-
+ */
         // Start to check if any leftover folder need to scan
         startScanning();
     });
@@ -201,7 +195,9 @@ function openPreference(): void {
 function openImportPhotos(): void {
     showImport.value = true;
 }
-
+function openScanList(): void {
+    showScanList.value = true;
+}
 // Update title
 const title = computed(() => {
     return `${t("app.title")} - ${currentFolder.value}`;
@@ -217,6 +213,7 @@ useTitle(title);
                 <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
             </a-space>
             <a-space class="setting-header">
+                <CoffeeOutlined @click="openScanList"></CoffeeOutlined>
                 <ImportOutlined @click="openImportPhotos"></ImportOutlined>
                 <SettingOutlined @click="openPreference" />
             </a-space>
@@ -261,6 +258,22 @@ useTitle(title);
         <Preference></Preference>
         <template #footer></template>
     </a-modal>
+    <a-modal
+        v-model:visible="showScanList"
+        :mask-closable="false"
+        :title="t('preference.settings')"
+        width="800px"
+    >
+        <a-list size="small" bordered :data-source="scanningFolder" class="scan-list">
+            <template #renderItem="{ item }">
+                <a-list-item>{{ item.path }}</a-list-item>
+            </template>
+            <template #header>
+                <a-spin></a-spin>
+            </template>
+            <template #footer></template>
+        </a-list>
+    </a-modal>
 </template>
 
 <style lang="less">
@@ -298,5 +311,10 @@ useTitle(title);
     line-height: 32px;
     padding-left: 20px;
     justify-content: center;
+}
+.scan-list {
+    height: 10rem;
+    overflow: auto;
+    overflow-y: overlay;
 }
 </style>

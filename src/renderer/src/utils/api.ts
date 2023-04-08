@@ -10,6 +10,7 @@ import type {
     PhotasaConfig,
     LoadCallback,
     ScanAction,
+    ScanArgs,
 } from "src/preload/types";
 import { useTask } from "vue-concurrency";
 
@@ -73,8 +74,8 @@ export function openInFinder(path: string): void {
     window.api.openInFinder(path);
 }
 
-export function scanPhotos(folder: ScanAction, callback: ScanCallback): void {
-    window.api.scanPhotos(folder, callback);
+export function scanPhotos(folder: ScanAction): Promise<ScanArgs> {
+    return window.api.scanPhotos(folder);
 }
 
 export async function addToPhotoList(

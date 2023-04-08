@@ -1,13 +1,13 @@
 import { parentPort } from "worker_threads";
 import log4js from "log4js";
-import { mergeMap, from, Observable, Subscriber } from "rxjs";
 import { Glob } from "glob";
 import path from "path";
-import { addToPhotoList, removeFromPhotoList } from "./config-storage";
+import { removeFromPhotoList, addToPhotasaConfig } from "./config-storage";
 import type { PhotasaConfigResult } from "../preload/types";
+import { Observable, Subscriber, from, mergeMap } from "rxjs";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
-const logger = log4js.getLogger("main");
+const logger = log4js.getLogger("config-worker");
 logger.level = DEV_MODE ? "debug" : "info";
 
 const port = parentPort;
@@ -40,10 +40,10 @@ function queryConfig(paths: string[]): void {
         .pipe(mergeMap((target: string) => globPhotasaConfigFromFolders(target)))
         .subscribe({
             next: (photasa) => {
-                logger.info("Photasaconfig is " + photasa);
                 queue.push(photasa);
 
                 if (queue.length > BUFFER_SIZE) {
+                    logger.info("Photasaconfig is " + photasa);
                     port?.postMessage(
                         JSON.stringify({
                             action: "next",
@@ -69,43 +69,6 @@ function queryConfig(paths: string[]): void {
                     }),
                 );
                 queue.splice(0, queue.length);
-            },
-        });
-}
-
-function addConfig(request: { queueId: number; paths: string[] }): void {
-    from(request.paths)
-        .pipe(mergeMap((target: string) => addToPhotoList(target)))
-        .subscribe({
-            next: (result: PhotasaConfigResult) => {
-                logger.info(`Save ${result.path} to photasa config`);
-                port?.postMessage(
-                    JSON.stringify({
-                        action: "next",
-                        queueId: request.queueId,
-                        from: "add",
-                        ...result,
-                    }),
-                );
-            },
-            error: (err) => {
-                port?.postMessage(
-                    JSON.stringify({
-                        action: "error",
-                        queueId: request.queueId,
-                        from: "add",
-                        err,
-                    }),
-                );
-            },
-            complete: () => {
-                port?.postMessage(
-                    JSON.stringify({
-                        action: "complete",
-                        queueId: request.queueId,
-                        from: "add",
-                    }),
-                );
             },
         });
 }
@@ -148,18 +111,20 @@ function removeConfig(request: { queueId: number; paths: string[] }): void {
 }
 
 port.on("message", (message) => {
-    const result = JSON.parse(message);
-    switch (result.action) {
-        case "query":
-            queryConfig(result.paths);
-            return;
-        case "add":
-            addConfig(result);
-            return;
-        case "remove":
-            removeConfig(result);
-            return;
-        default:
-            throw new Error("IllegalAction");
+    if (port) {
+        const result = JSON.parse(message);
+        switch (result.action) {
+            case "query":
+                queryConfig(result.paths);
+                return;
+            case "add":
+                addToPhotasaConfig(result, port.postMessage, logger);
+                return;
+            case "remove":
+                removeConfig(result);
+                return;
+            default:
+                throw new Error("IllegalAction");
+        }
     }
 });

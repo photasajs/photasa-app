@@ -3,7 +3,7 @@ import { ElectronAPI } from "@electron-toolkit/preload";
 type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (param: { type: string; action: FileAction }) => void;
-type ScanCallback = (action: FileAction | string | undefined) => void;
+type ScanCallback = (action: ScanArgs) => void;
 type LoadCallback = (action: string, paths: string[]) => void;
 type ConfigCallback = (action: string, paths: string[]) => void;
 
@@ -63,15 +63,23 @@ interface ThumbnailRequest {
     height: number;
     always?: boolean;
     preview: string;
+    withoutEnlargement?: boolean;
+}
+
+interface VideoSize {
+    width: number;
+    height: number;
 }
 
 interface ScanAction {
     path: string;
     action: "scan" | "rescan" | "current"; // scan: new folder, rescan: existing folder, current: only current folder
+    thumbnailSize: number = 100;
 }
 
 interface ScanArgs {
     type: "next" | "error" | "complete";
+    requestId: string;
     action?: PhotoPath;
     error?: {
         message: string;
@@ -107,7 +115,7 @@ declare global {
             startWatching: (config: WatchConfig, callback: WatchCallback) => void;
             stopWatching: () => Promise<void>;
             importPhotos: (paths: string[], target: string, callback: ImportCallback) => void;
-            scanPhotos: (folder: ScanAction, callback: ScanCallback) => void;
+            scanPhotos: (folder: ScanAction) => Promise<ScanArgs>;
             chooseDirectory: () => Promise<DirectorySelection>;
             getDirectory: (name: PathName) => Promise<string>;
             createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;

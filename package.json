@@ -35,6 +35,8 @@
         "@types/fs-extra": "11.0.1",
         "@types/ramda": "^0.28.23",
         "chokidar": "3.5.3",
+        "comlink": "^4.4.1",
+        "concurrent-tasks": "^1.0.7",
         "electron-is-dev": "^2.0.0",
         "electron-updater": "^5.3.0",
         "exifreader": "^4.11.1",

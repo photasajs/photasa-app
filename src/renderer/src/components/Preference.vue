@@ -81,16 +81,18 @@ function onChoose(): void {
             );
             return;
         }
-
+        // Save to preference
         addPath(filePaths[0]);
 
         // Add Level 1 Subfolders
-        scanSubfolders(filePaths[0]).then((folders) => {
-            folders.forEach((f) => addScanFolder(f, "scan"));
-        });
-
-        // Add Self
-        addScanFolder(filePaths[0], "current");
+        scanSubfolders(filePaths[0])
+            .then((folders) => {
+                folders.forEach((f) => addScanFolder(f, "scan"));
+            })
+            .then(() => {
+                // Add Self
+                addScanFolder(filePaths[0], "current");
+            });
     });
 }
 
