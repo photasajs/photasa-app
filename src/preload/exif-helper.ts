@@ -4,7 +4,7 @@ import moment from "moment";
 import fs from "fs-extra";
 import ExifReader, { Tags, XmpTags, IccTags, StringArrayTag } from "exifreader";
 import isImage from "is-image";
-import { FileAction } from "./file-action";
+import type { FileAction } from "./types";
 
 export function getExifInfo(path: string): Promise<Tags | XmpTags | IccTags | undefined> {
     return new Promise((resolve, reject) => {

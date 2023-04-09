@@ -4,11 +4,7 @@ import { mergePath } from "./path";
 export type Photo = {
     path: string;
     thumbnail: string;
-};
-
-export type BuildDataNodeCallback = {
-    updateFileList: (key: string, fileList: Set<Photo>) => void;
-    getFolderFiles: (key: string) => Set<Photo>;
+    isVideo: boolean;
 };
 
 function normalizeRoot(root: DataNode): void {
@@ -17,11 +13,7 @@ function normalizeRoot(root: DataNode): void {
     }
 }
 
-export function buildDataNode(
-    roots: DataNode[],
-    file: Photo,
-    callback: BuildDataNodeCallback,
-): void {
+export function buildDataNode(roots: DataNode[], file: Photo): void {
     let pathParts = file.path.split("/").filter((part) => part !== "");
     if (pathParts.length === 0) {
         return;
@@ -48,20 +40,13 @@ export function buildDataNode(
         .replace(root.key as string, "")
         .split("/")
         .filter((part) => part !== "");
-    traverseTree(root, pathParts, file, callback);
+    traverseTree(root, pathParts, file);
 }
 
-function traverseTree(
-    root: DataNode,
-    pathParts: string[],
-    file: Photo,
-    callback: BuildDataNodeCallback,
-): DataNode {
+function traverseTree(root: DataNode, pathParts: string[], file: Photo): DataNode {
     normalizeRoot(root);
 
-    if (pathParts.length <= 1) {
-        // Leaf node, add file to root's list
-        callback.updateFileList(root.key as string, new Set([file]));
+    if (pathParts.length == 0) {
         return root;
     }
 
@@ -79,10 +64,6 @@ function traverseTree(
         );
     }
 
-    traverseTree(child, pathParts.slice(1), file, callback);
-
-    // TODO: DISABLE, add child file list to parent may cause perf issue
-    // callback.updateFileList(root.key as string, callback.getFolderFiles(child.key as string));
-
+    traverseTree(child, pathParts.slice(1), file);
     return child;
 }

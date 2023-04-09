@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { Observable, from } from "rxjs";
-import type { FileAction, FileException } from "./file-action";
+import type { FileAction, FileException } from "./types";
 import { PathOption, toFullPath } from "./path-helper";
 
 export function fileExistSync(filepath: string, options?: PathOption): boolean {

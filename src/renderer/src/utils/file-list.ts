@@ -40,6 +40,7 @@ async function handleAddFile(state, photosStore, preferenceStore): Promise<void>
                 thumbnail: state.thumbnail as string,
                 width: preferenceStore.thumbnailSize,
                 height: preferenceStore.thumbnailSize,
+                preview: "",
             })
             .then(() => {
                 return addToPhotoList(state.path);
@@ -77,6 +78,7 @@ function handleDeleteFile(state, photosStore, preferenceStore): void {
             thumbnail: state.thumbnail,
             width: preferenceStore.thumbnailSize,
             height: preferenceStore.thumbnailSize,
+            preview: "",
         });
 
         removeFromPhotoList(state.path).then((result) => {
@@ -89,5 +91,7 @@ function handleDeleteFile(state, photosStore, preferenceStore): void {
             path: state.path as string,
             thumbnail: state.thumbnail,
         });
+
+        preferenceStore.removeTreeNodePath(state.path);
     }
 }

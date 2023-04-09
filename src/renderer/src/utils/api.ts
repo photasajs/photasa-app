@@ -9,6 +9,8 @@ import type {
     ScanCallback,
     PhotasaConfig,
     LoadCallback,
+    ScanAction,
+    ScanArgs,
 } from "src/preload/types";
 import { useTask } from "vue-concurrency";
 
@@ -42,12 +44,20 @@ export function getDirectory(name: PathName): Promise<string> {
     return window.api.getDirectory(name);
 }
 
+function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
+    return {
+        ...request,
+        path: request.path.replace("file://", ""),
+        thumbnail: request.thumbnail.replace("file://", ""),
+    };
+}
+
 export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const result = yield window.api.createThumbnail(request);
+    const result = yield window.api.createThumbnail(normalizeThumbnailRequest(request));
     return result;
 })
     .enqueue()
-    .maxConcurrency(3);
+    .maxConcurrency(2);
 
 export const removeThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
     const result = yield window.api.removeThumbnail(request);
@@ -64,8 +74,8 @@ export function openInFinder(path: string): void {
     window.api.openInFinder(path);
 }
 
-export function scanPhotos(folder: string, callback: ScanCallback): void {
-    window.api.scanPhotos(folder, callback);
+export function scanPhotos(folder: ScanAction): Promise<ScanArgs> {
+    return window.api.scanPhotos(folder);
 }
 
 export async function addToPhotoList(
@@ -101,4 +111,12 @@ export function scanSubfolders(folder): Promise<string[]> {
 
 export function isFileUnderFolder(file: string, folder: string): boolean {
     return window.api.isFileUnderFolder(file, folder);
+}
+
+export function resetPhotasaConfig(folder: string): Promise<PhotasaConfig> {
+    return window.api.resetPhotasaConfig(folder);
+}
+
+export function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
+    return window.api.fixPhotasaConfig(folder);
 }

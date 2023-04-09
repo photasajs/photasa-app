@@ -1,14 +1,13 @@
 import klaw from "klaw";
 import path from "path";
-import type { FileAction } from "./file-action";
+import type { FileAction } from "./types";
 import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
 import { buildThumbnailPath } from "./image-helper";
-import type { PhotoPath } from "./types";
-
+import type { PhotoPath, ScanAction } from "./types";
 export interface PathOption {
     root?: string;
 }
@@ -70,12 +69,30 @@ export function scanFolder(source: string, target: string): Observable<FileActio
     );
 }
 
-export function walkthroughFiles(source: string): Observable<PhotoPath> {
+function isScanCurrent(action: string): boolean {
+    return action == "current" || action == "rescan";
+}
+
+/**
+ * Walk through files in a folder and ignore hidden files, photasa files and sub folders.
+ */
+export function walkthroughFiles(source: ScanAction): Observable<PhotoPath> {
     return new Observable<PhotoPath>((subscriber: Subscriber<PhotoPath>) => {
         // Only scan current folder
-        klaw(source)
+        klaw(source.path, {
+            depthLimit: isScanCurrent(source.action) ? 0 : -1,
+            filter: (item) => {
+                return (
+                    !shouldIgnorePhotasaPath(item) && // Skip ignored path
+                    !isHiddenFile(item) // Skip hidden file
+                );
+            },
+        })
             .on("data", (item) => {
-                if (!item.stats.isDirectory() && item.path != source) {
+                if (
+                    !item.stats.isDirectory() && // Skip directory
+                    item.path !== source.path //  Skip self
+                ) {
                     subscriber.next({
                         path: item.path,
                         thumbnail: buildThumbnailPath(item.path),

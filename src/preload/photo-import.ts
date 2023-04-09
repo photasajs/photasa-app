@@ -1,15 +1,13 @@
 import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
-import {
-    ensureDir,
-    scanFolder,
-    walkthroughFiles,
-    shouldIgnorePhotasaPath,
-    isHiddenFile,
-} from "./path-helper";
-import type { ImportCallback, ScanCallback } from "./types";
+import { ensureDir, scanFolder } from "./path-helper";
+import type { ImportCallback, ScanAction, ScanArgs, ScanCallback } from "./types";
 import log4js from "log4js";
+import { electronAPI } from "@electron-toolkit/preload";
+import type { FileAction } from "./types";
+
+const { ipcRenderer } = electronAPI;
 
 const logger = log4js.getLogger("photo-import");
 /**
@@ -24,11 +22,7 @@ export function importPhotos(folders: string[], target: string, callback: Import
         .pipe(
             mergeMap((folder) => scanFolder(folder, target)),
             filter((action) => {
-                return (
-                    (action.isImage || action.isVideo) && // Image or video
-                    !shouldIgnorePhotasaPath(action.file) && // Not in ignore list such as .photasaoriginals or .picasaoriginals
-                    !isHiddenFile(action.file)
-                );
+                return action.isImage || action.isVideo;
             }),
             mergeMap((action) => ensureDir(action)),
             concatMap((action) => copyFile(action)), // copy file should be concatMap.
@@ -57,34 +51,28 @@ export function importPhotos(folders: string[], target: string, callback: Import
         });
 }
 
-export function scanPhotos(folder: string, callback: ScanCallback): void {
-    walkthroughFiles(folder)
-        .pipe(filter((action) => action.isImage || action.isVideo))
-        .subscribe({
-            next: (action) => {
-                logger.debug("next", action);
-                if (!shouldIgnorePhotasaPath(action.path) && !isHiddenFile(action.path)) {
-                    callback({
-                        type: "next",
-                        action,
-                    });
-                }
-            },
-            error: (error) => {
-                logger.debug("error", error);
-                callback({
-                    type: "error",
-                    error,
-                });
-            },
-            complete: () => {
-                logger.debug("complete");
-                callback({
-                    type: "complete",
-                    action: {
-                        path: folder,
-                    },
-                });
-            },
+const RequestQueue = {
+    promiseQueue: {},
+    sequenceId: 0,
+};
+
+ipcRenderer.on("picasa:find-photo", (_, args: ScanArgs) => {
+    if (args.type === "complete") {
+        const requestId = args.requestId;
+        if (RequestQueue.promiseQueue[requestId]) {
+            RequestQueue.promiseQueue[requestId](args);
+            delete RequestQueue.promiseQueue[requestId];
+        }
+    }
+});
+
+export function scanPhotos(scan: ScanAction): Promise<void> {
+    return new Promise((resolve) => {
+        const requestId = `scan-${RequestQueue.sequenceId++}`;
+        RequestQueue.promiseQueue[requestId] = resolve;
+        ipcRenderer.send("picasa:scan-photos", {
+            requestId,
+            scanAction: scan,
         });
+    });
 }

@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-comlink/client" />
 
 declare module "*.vue" {
     import type { DefineComponent } from "vue";
@@ -11,5 +12,6 @@ declare global {
     interface Window {
         electron: unknown;
         api: unknown;
+        __heic2any__worker: Worker;
     }
 }

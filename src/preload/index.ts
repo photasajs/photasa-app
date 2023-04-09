@@ -10,6 +10,10 @@ import {
     removeFromPhotoList,
     getPhotasaConfig,
     loadPhotasaConfigs,
+    toFileName,
+    toThumbnailName,
+    fixPhotasaConfig,
+    resetPhotasaConfig,
 } from "./file-config";
 import { scanSubfolders } from "./query-config";
 import { isFileUnderFolder } from "./path-helper";
@@ -32,6 +36,10 @@ const api = {
     loadPhotasaConfigs,
     scanSubfolders,
     isFileUnderFolder,
+    toFileName,
+    toThumbnailName,
+    fixPhotasaConfig,
+    resetPhotasaConfig,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
