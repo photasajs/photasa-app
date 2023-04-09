@@ -106,6 +106,7 @@ async function startScanning(): Promise<void> {
                     addPhotasaConfigFile(paths.value, {
                         path: args?.action?.path ?? "",
                         thumbnail: "",
+                        isVideo: false,
                     });
                     completeScanPath(args.action.path as string);
                     startScanning();

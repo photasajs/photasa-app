@@ -6,6 +6,7 @@ import { toRelativeThumbnailPath } from "../common/utils";
 import TaskRunner from "concurrent-tasks";
 import { Logger } from "log4js";
 import { concatMap, from } from "rxjs";
+import isVideo from "is-video";
 
 const PHOTASA_VERSION = "1.0";
 
@@ -65,6 +66,7 @@ export async function batchAddToPhotoList(
                 path: fileName,
                 thumbnail: thumbnailName,
                 history: [],
+                isVideo: isVideo(fileName),
             });
         } else if (!photo.thumbnail) {
             photo.thumbnail = thumbnailName;
@@ -95,6 +97,7 @@ export async function addToPhotoList(photoPath: string): Promise<PhotasaConfigRe
             path: fileName,
             thumbnail: thumbnailName,
             history: [],
+            isVideo: isVideo(fileName),
         });
         writeConfig(meta.dir, photasaConfig);
     } else if (!photo.thumbnail) {
@@ -170,6 +173,7 @@ addTaskRunner.setConcurrency(1);
 let addPathQueue = {};
 const DELAY_NOTIFY_DONE = 10000;
 const QUEUE_BREAK_THRESHOLD = 60;
+let lastQueuedCount = 0;
 
 function waitedFilesCount(): number {
     return Object.entries<string[]>(addPathQueue).reduce((acc, entry) => acc + entry[1].length, 0);
@@ -224,10 +228,13 @@ function addConfig(
                 const handlerId = setInterval(() => {
                     const count = waitedFilesCount();
                     logger.info(`Totally ${count} files are waiting`);
-                    if (count >= QUEUE_BREAK_THRESHOLD) {
+                    // if count isn't changed then process it
+                    if (count >= QUEUE_BREAK_THRESHOLD || count === lastQueuedCount) {
+                        lastQueuedCount = 0;
                         clearInterval(handlerId);
                         done();
                     }
+                    lastQueuedCount = count;
                 }, DELAY_NOTIFY_DONE);
             },
         });
