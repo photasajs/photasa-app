@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, reactive } from "vue";
-import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { buildDataNode } from "@renderer/utils/folder-tree";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import type { PhotasaConfig } from "src/preload/types";
