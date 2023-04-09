@@ -2,6 +2,7 @@
 import { useIntersectionObserver } from "@vueuse/core";
 import { onMounted, ref, toRefs, watch } from "vue";
 import { prefetchImageTask } from "@renderer/utils/image-prefetch";
+import { F } from "ramda";
 
 // Define props and emits
 const props = defineProps<{
@@ -54,11 +55,13 @@ function handleImageClick(): void {
     if (isVideo.value) {
         videoPlayerIsVisible.value = true;
     } else {
-        previewIsVisible.value = true;
+        previewIsVisible.value = !previewIsVisible.value;
     }
 }
-function getContainer(): HTMLElement {
-    return document.querySelector(".app-container") ?? document.body;
+function onVisibleChange(visible: boolean): void {
+    if (!visible) {
+        previewIsVisible.value = false;
+    }
 }
 </script>
 
@@ -81,7 +84,7 @@ function getContainer(): HTMLElement {
                 :preview="{
                     src: preview,
                     visible: previewIsVisible,
-                    getContainer: getContainer,
+                    onVisibleChange: onVisibleChange,
                 }"
                 :style="{ margin: 'auto' }"
                 @click="handleImageClick()"
