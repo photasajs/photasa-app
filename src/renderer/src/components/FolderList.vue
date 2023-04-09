@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed, reactive } from "vue";
-import type { DataNode } from "ant-design-vue/es/tree";
+import { ref, watch, reactive } from "vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { buildDataNode } from "@renderer/utils/folder-tree";
@@ -18,43 +17,21 @@ import { trim } from "radash";
 
 const { t } = useI18n();
 
-const photosStore = usePhotosStore();
-const { files } = storeToRefs(photosStore);
-const { updateFileList, getFolderFiles } = photosStore;
-
 const preferenceStore = usePreferenceStore();
 const { addScanFolder } = preferenceStore;
-const { paths, currentFolder, currentFolderConfig } = storeToRefs(preferenceStore);
+const { paths, currentFolder, currentFolderConfig, folderTree } = storeToRefs(preferenceStore);
 
 const expandedKeys = ref<string[]>([...paths.value]);
 const selectedKeys = ref<string[]>([currentFolder.value]);
 const showConfigModal = ref(false);
-const treeData = computed((): DataNode[] => {
-    const roots: DataNode[] = [];
-    paths.value.forEach((path) => {
-        roots.push({
-            title: path,
-            key: path,
-            children: [],
-        });
-
-        files.value.get(path)?.forEach((file) => {
-            buildDataNode(roots, file, {
-                updateFileList,
-                getFolderFiles,
-            });
-        });
-    });
-    return roots;
-});
 
 watch(
     selectedKeys,
     () => {
         // Only when Current folder changed, update current folder and reset photasa config
         if (currentFolder.value !== selectedKeys.value[0]) {
-            currentFolder.value = selectedKeys.value[0];
             currentFolderConfig.value = <PhotasaConfig>{};
+            currentFolder.value = selectedKeys.value[0];
         }
     },
     { deep: true },
@@ -107,7 +84,7 @@ async function rescan(key: string): Promise<void> {
         <a-tree
             v-model:expandedKeys="expandedKeys"
             v-model:selectedKeys="selectedKeys"
-            :tree-data="treeData"
+            :tree-data="folderTree"
         >
             <template #title="{ title, key }">
                 <a-dropdown :trigger="['contextmenu']">

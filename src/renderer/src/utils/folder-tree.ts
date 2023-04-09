@@ -7,22 +7,13 @@ export type Photo = {
     isVideo: boolean;
 };
 
-export type BuildDataNodeCallback = {
-    updateFileList: (key: string, fileList: Set<Photo>) => void;
-    getFolderFiles: (key: string) => Set<Photo>;
-};
-
 function normalizeRoot(root: DataNode): void {
     if (!root.children) {
         root.children = [];
     }
 }
 
-export function buildDataNode(
-    roots: DataNode[],
-    file: Photo,
-    callback: BuildDataNodeCallback,
-): void {
+export function buildDataNode(roots: DataNode[], file: Photo): void {
     let pathParts = file.path.split("/").filter((part) => part !== "");
     if (pathParts.length === 0) {
         return;
@@ -49,15 +40,10 @@ export function buildDataNode(
         .replace(root.key as string, "")
         .split("/")
         .filter((part) => part !== "");
-    traverseTree(root, pathParts, file, callback);
+    traverseTree(root, pathParts, file);
 }
 
-function traverseTree(
-    root: DataNode,
-    pathParts: string[],
-    file: Photo,
-    callback: BuildDataNodeCallback,
-): DataNode {
+function traverseTree(root: DataNode, pathParts: string[], file: Photo): DataNode {
     normalizeRoot(root);
 
     if (pathParts.length == 0) {
@@ -78,10 +64,6 @@ function traverseTree(
         );
     }
 
-    traverseTree(child, pathParts.slice(1), file, callback);
-
-    // TODO: DISABLE, add child file list to parent may cause perf issue
-    // callback.updateFileList(root.key as string, callback.getFolderFiles(child.key as string));
-
+    traverseTree(child, pathParts.slice(1), file);
     return child;
 }

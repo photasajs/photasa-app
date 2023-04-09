@@ -171,7 +171,7 @@ export function toThumbnailName(file: string): string {
 const addTaskRunner = new TaskRunner();
 addTaskRunner.setConcurrency(1);
 let addPathQueue = {};
-const DELAY_NOTIFY_DONE = 10000;
+const DELAY_NOTIFY_DONE = 3000;
 const QUEUE_BREAK_THRESHOLD = 60;
 let lastQueuedCount = 0;
 

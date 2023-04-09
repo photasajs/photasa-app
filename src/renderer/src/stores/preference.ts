@@ -3,6 +3,9 @@ import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import type { PhotasaConfig, ScanAction } from "src/preload/types";
+import { DataNode } from "ant-design-vue/lib/tree";
+import { buildDataNode } from "@renderer/utils/folder-tree";
+import { F } from "ramda";
 
 type PreferenceState = {
     paths: string[];
@@ -15,6 +18,7 @@ type PreferenceState = {
     currentFolder: string;
     scannedFolder: string;
     currentFolderConfig: PhotasaConfig;
+    folderTree: DataNode[];
 };
 
 export const usePreferenceStore = defineStore("preference", {
@@ -30,6 +34,7 @@ export const usePreferenceStore = defineStore("preference", {
             currentFolder: "",
             scannedFolder: "",
             currentFolderConfig: <PhotasaConfig>{},
+            folderTree: [],
         };
     },
     persist: true,
@@ -38,7 +43,13 @@ export const usePreferenceStore = defineStore("preference", {
             if (this.firstTime) {
                 this.firstTime = false;
                 this.paths = [];
+                this.folderTree = [];
                 this.paths.push(path);
+                this.folderTree.push({
+                    title: path,
+                    key: path,
+                    children: [],
+                });
                 return;
             }
 
@@ -46,6 +57,11 @@ export const usePreferenceStore = defineStore("preference", {
 
             if (!this.paths.find((p) => path.indexOf(p) >= 0)) {
                 this.paths.push(path);
+                this.folderTree.push({
+                    title: path,
+                    key: path,
+                    children: [],
+                });
                 this.paths = this.paths.sort();
             }
         },
@@ -54,7 +70,7 @@ export const usePreferenceStore = defineStore("preference", {
                 this.scanningFolder = [];
             }
             if (action === "rescan" || !this.scanningFolder.find((p) => p.path === folder)) {
-                this.scanningFolder.push({ path: folder, action });
+                this.scanningFolder.push({ path: folder, action, thumbnailSize: 0 });
             }
         },
         updateThumbnailSize(size: number) {
@@ -66,10 +82,23 @@ export const usePreferenceStore = defineStore("preference", {
                 this.scanningFolder.splice(index, 1);
             }
         },
+        updateFolderTree(folder: string) {
+            const path = normalizePath(folder);
+            buildDataNode(this.folderTree, {
+                path,
+                thumbnail: "",
+                isVideo: false,
+            });
+        },
         removePath(path: string): void {
             const index = this.paths.indexOf(path);
             if (index >= 0) {
                 this.paths.splice(index, 1);
+            }
+
+            const found = this.folderTree.findIndex((node) => node.key === path);
+            if (found >= 0) {
+                this.folderTree.splice(found, 1);
             }
 
             if (scanPhotosTask.isRunning) {

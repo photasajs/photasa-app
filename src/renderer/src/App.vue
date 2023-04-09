@@ -12,11 +12,10 @@ import {
     startWatching,
     getDirectory,
     stopWatching,
-    loadPhotasaConfigs,
     resetPhotasaConfig,
     scanSubfolders,
 } from "@renderer/utils/api";
-import { processScannedFileTask, scanPhotosTask } from "@renderer/utils/scan-folder";
+import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
@@ -28,11 +27,11 @@ import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/ico
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
-const { addPhotasaConfigFile, addPhotasaConfigFiles } = photosStore;
+const { addPhotasaConfigFile } = photosStore;
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize, scannedFolder } =
+const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize } =
     storeToRefs(preferenceStore);
-const { addPath, completeScanPath, addScanFolder } = preferenceStore;
+const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
 
 const showImport = ref(false);
 const showPreference = ref(false);
@@ -67,24 +66,6 @@ watchArray(
     { deep: true },
 );
 
-const queue: ScanArgs[] = [];
-
-function runOverQueue(): void {
-    const args = queue.shift();
-    if (args?.action?.path) {
-        processScannedFileTask.perform(args, thumbnailSize.value).then(() => {
-            addPhotasaConfigFile(paths.value, {
-                path: args?.action?.path ?? "",
-                thumbnail: "",
-            });
-            processingFile.value = args.action?.path as string;
-            runOverQueue();
-        });
-    } else {
-        completeScanPath(scannedFolder.value);
-    }
-}
-
 function top<T>(array): T {
     return array[array.length - 1];
 }
@@ -108,6 +89,7 @@ async function startScanning(): Promise<void> {
                         thumbnail: "",
                         isVideo: false,
                     });
+                    updateFolderTree(args.action.path as string);
                     completeScanPath(args.action.path as string);
                     startScanning();
                 }
@@ -144,20 +126,6 @@ function startFileWatching(dirs): void {
     );
 }
 
-const loadHandler = {
-    next: (configs: string[]): void => {
-        if (configs.length > 0) {
-            addPhotasaConfigFiles(paths.value, configs);
-        }
-    },
-    complete: (configs: string[]): void => {
-        processingFile.value = t("status.ready");
-        if (configs.length > 0) {
-            addPhotasaConfigFiles(paths.value, configs);
-        }
-    },
-};
-
 getDirectory("desktop")
     .then((dir) => {
         // Desktop directory is ready
@@ -177,12 +145,8 @@ getDirectory("desktop")
         }
         return paths.value;
     })
-    .then((configPaths) => {
+    .then(() => {
         processingFile.value = t("status.loadingConfig");
-        /* loadPhotasaConfigs([...configPaths], (action: string, configs: string[]) => {
-            loadHandler[action]?.call(null, configs);
-        });
- */
         // Start to check if any leftover folder need to scan
         startScanning();
     });
