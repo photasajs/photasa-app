@@ -108,15 +108,26 @@ export const usePreferenceStore = defineStore("preference", {
             this.completeScanPath(path);
         },
         addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
-            if (this.currentFolderConfig.photoList.find((photo) => photo.path === request.path)) {
+            const relative = toFileName(request.path);
+            if (this.currentFolderConfig.photoList.find((photo) => photo.path === relative)) {
                 return;
             }
             this.currentFolderConfig.photoList.push({
-                path: toFileName(request.path),
+                path: relative,
                 thumbnail: toThumbnailName(request.thumbnail),
                 isVideo: isVideoFile(request.path),
                 history: [],
             });
+        },
+        removeFromCurrentPhotasaConfig(request: ThumbnailRequest): void {
+            const relative = toFileName(request.path);
+            const index = this.currentFolderConfig.photoList.findIndex(
+                (photo) => photo.path === relative,
+            );
+
+            if (index >= 0) {
+                this.currentFolderConfig.photoList.splice(index, 1);
+            }
         },
     },
 });

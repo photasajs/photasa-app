@@ -8,7 +8,7 @@ import {
     isHiddenFile,
     shouldIgnorePhotasaPath,
 } from "@renderer/utils/api";
-import type { WatchState, PhotasaConfig } from "src/preload/types";
+import type { WatchState, PhotasaConfig, ThumbnailRequest } from "src/preload/types";
 
 function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;
@@ -58,34 +58,27 @@ export const handleDeleteFileTask = useTask(function* (_, state, photosStore, pr
     .enqueue()
     .maxConcurrency(1);
 
-function handleDeleteFile(state, photosStore, preferenceStore): void {
-    const { removeFromFileList } = photosStore;
+async function handleDeleteFile(state, _, preferenceStore): Promise<void> {
     // Directory skip hidden
     if (!state.isFile || state.path?.length < 0) {
         return;
     }
 
     if (isMedia(state)) {
-        removeThumbnailTask.perform({
+        const request = {
             path: state.path as string,
             thumbnail: state.thumbnail,
             width: preferenceStore.thumbnailSize,
             height: preferenceStore.thumbnailSize,
             preview: "",
-        });
+        } satisfies ThumbnailRequest;
+        await removeThumbnailTask.perform(request);
 
-        removeFromPhotoList(state.path).then((result) => {
-            if (isFileUnderFolder(result.path, preferenceStore.currentFolder)) {
-                preferenceStore.currentFolderConfig = result.config;
-            }
-        });
+        await removeFromPhotoList(state.path);
 
-        removeFromFileList({
-            path: state.path as string,
-            thumbnail: state.thumbnail,
-        });
-
-        preferenceStore.removeTreeNodePath(state.path);
+        if (isFileUnderFolder(request.path, preferenceStore.currentFolder)) {
+            preferenceStore.removeFromCurrentPhotasaConfig(request);
+        }
     }
 }
 

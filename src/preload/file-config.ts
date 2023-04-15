@@ -74,7 +74,8 @@ export async function removeFromPhotoList(
 ): Promise<{ path: string; config: PhotasaConfig }> {
     const meta = await readConfig(photoPath, true);
     const photasaConfig = parseConfig(meta.data);
-    const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === photoPath);
+    const relative = toFileName(photoPath);
+    const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === relative);
 
     if (photoIndex >= 0) {
         photasaConfig.photoList.splice(photoIndex, 1);
