@@ -126,3 +126,11 @@ export function isFileUnderFolder(file: string, folder: string): boolean {
     const dirname = path.dirname(file);
     return dirname === path.normalize(folder);
 }
+
+export function toFilename(target: string): string {
+    return path.basename(target);
+}
+
+export function toThumbnailName(target: string): string {
+    return path.join(".photasaoriginals", `${toFilename(target)}.png`);
+}

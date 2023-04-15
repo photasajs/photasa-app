@@ -2,10 +2,10 @@
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import type { PhotasaConfig, ScanAction } from "src/preload/types";
+import type { PhotasaConfig, ScanAction, ThumbnailRequest } from "src/preload/types";
 import { DataNode } from "ant-design-vue/lib/tree";
 import { buildDataNode } from "@renderer/utils/folder-tree";
-import { F } from "ramda";
+import { isVideoFile, toFileName, toThumbnailName } from "@renderer/utils/api";
 
 type PreferenceState = {
     paths: string[];
@@ -106,6 +106,17 @@ export const usePreferenceStore = defineStore("preference", {
             }
 
             this.completeScanPath(path);
+        },
+        addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
+            if (this.currentFolderConfig.photoList.find((photo) => photo.path === request.path)) {
+                return;
+            }
+            this.currentFolderConfig.photoList.push({
+                path: toFileName(request.path),
+                thumbnail: toThumbnailName(request.thumbnail),
+                isVideo: isVideoFile(request.path),
+                history: [],
+            });
         },
     },
 });

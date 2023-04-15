@@ -16,7 +16,7 @@ import {
     scanSubfolders,
 } from "@renderer/utils/api";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import { handleAddFileTask, handleDeleteFileTask } from "./utils/file-list";
+import { handleAddFileTask, handleDeleteFileTask, handleChangeFileTask } from "./utils/file-list";
 import { deepCopy } from "./utils/object";
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
@@ -27,7 +27,6 @@ import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/ico
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
-const { addPhotasaConfigFile } = photosStore;
 const preferenceStore = usePreferenceStore();
 const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize } =
     storeToRefs(preferenceStore);
@@ -84,11 +83,6 @@ async function startScanning(): Promise<void> {
             return scanPhotosTask.perform(scanAction).then((args: ScanArgs) => {
                 processingFile.value = t("status.scanned");
                 if (args?.action?.path) {
-                    addPhotasaConfigFile(paths.value, {
-                        path: args?.action?.path ?? "",
-                        thumbnail: "",
-                        isVideo: false,
-                    });
                     updateFolderTree(args.action.path as string);
                     completeScanPath(args.action.path as string);
                     startScanning();
@@ -110,6 +104,7 @@ watchArray(
 
 const actions = {
     add: handleAddFileTask,
+    change: handleChangeFileTask,
     delete: handleDeleteFileTask,
 };
 

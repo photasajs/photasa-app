@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { firstValueFrom } from "rxjs";
+import { isDataView } from "util/types";
 import { copyFile } from "../file-helper";
 
 const IMAGE_PATH = path.join(__dirname, "./photos/test.jpg");
@@ -30,7 +31,8 @@ describe("copyFile", () => {
                 created: new Date("2018-09-20T19:25:22.000Z"),
                 isImage: false,
                 targetFileName: "",
-                targetFullPath: ""
+                targetFullPath: "",
+                isVideo: false,
             }),
         );
 
@@ -45,6 +47,7 @@ describe("copyFile", () => {
                 isImage: true,
                 targetFileName: "",
                 targetFullPath: ""
+                isVideo: false,
             }),
         );
         expect(fs.existsSync(path.join(TEST_PATH, "test_1.jpg"))).toBeTruthy();

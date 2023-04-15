@@ -118,7 +118,13 @@ port.on("message", (message) => {
                 queryConfig(result.paths);
                 return;
             case "add":
-                addToPhotasaConfig(result, port.postMessage, logger);
+                addToPhotasaConfig(
+                    result,
+                    (message) => {
+                        port.postMessage(message);
+                    },
+                    logger,
+                );
                 return;
             case "remove":
                 removeConfig(result);

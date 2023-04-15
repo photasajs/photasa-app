@@ -24,10 +24,13 @@ describe("exif-helper", () => {
                 targetDir: "",
                 targetFileName: "",
                 targetFullPath: "",
+                isVideo: false,
             }),
         );
         expect(date.created?.toString()).toBe(
             "Tue Dec 31 2019 16:00:00 GMT-0800 (Pacific Standard Time)",
         );
+
+        expect(date).toMatchSnapshot();
     });
 });

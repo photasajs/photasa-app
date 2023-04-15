@@ -120,3 +120,27 @@ export function resetPhotasaConfig(folder: string): Promise<PhotasaConfig> {
 export function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return window.api.fixPhotasaConfig(folder);
 }
+
+export function isHiddenFile(fileName: string): boolean {
+    return window.api.isHiddenFile(fileName);
+}
+
+export function shouldIgnorePhotasaPath(fileName: string): boolean {
+    return window.api.shouldIgnorePhotasaPath(fileName);
+}
+
+export function isVideoFile(fileName: string): boolean {
+    return window.api.isVideoFile(fileName);
+}
+
+export function isImageFile(fileName: string): boolean {
+    return window.api.isImageFile(fileName);
+}
+
+export function toFileName(fileName: string): string {
+    return window.api.toFileName(fileName);
+}
+
+export function toThumbnailName(fileName: string): string {
+    return window.api.toThumbnailName(fileName);
+}

@@ -1,6 +1,6 @@
 import { ElectronAPI } from "@electron-toolkit/preload";
 
-type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
+type WatchAction = "add" | "change" | "delete" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (param: { type: string; action: FileAction }) => void;
 type ScanCallback = (action: ScanArgs) => void;
@@ -105,6 +105,7 @@ interface WatchState {
     isImage: boolean;
     isVideo: boolean;
     thumbnail: string;
+    isNotify?: boolean;
 }
 // contextBridge can only return few type, Promise is support, but rxjs is not.
 declare global {
@@ -134,6 +135,10 @@ declare global {
             toFileName: (file: string) => string;
             fixPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
             resetPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
+            isHiddenFile: (fileName: string) => boolean;
+            shouldIgnorePhotasaPath: (fileName: string) => boolean;
+            isVideoFile: (filePath: string) => boolean;
+            isImageFile: (filePath: string) => boolean;
         };
     }
 }

@@ -5,6 +5,8 @@ import {
     removeThumbnailTask,
     addToPhotoList,
     removeFromPhotoList,
+    isHiddenFile,
+    shouldIgnorePhotasaPath,
 } from "@renderer/utils/api";
 import type { WatchState, PhotasaConfig } from "src/preload/types";
 
@@ -18,44 +20,35 @@ export const handleAddFileTask = useTask(function* (_, state, photosStore, prefe
     .enqueue()
     .maxConcurrency(1);
 
-async function handleAddFile(state, photosStore, preferenceStore): Promise<void> {
-    const { addPhotasaConfigFile } = photosStore;
-    // Directory skip hidden or empty path
-    if (!state.isFile || state.path?.length < 0) {
-        return;
-    }
-
-    const parts = (state.path ?? "").split("/");
-
-    // Skip any thing start with dot
-    const fileName = parts[parts.length - 1];
-    if (fileName.startsWith(".") || parts.includes(".picasaoriginals")) {
+async function handleAddFile(state, _, preferenceStore): Promise<void> {
+    // Skip hidden or empty path or ignored file
+    if (
+        !state.isFile ||
+        state.path?.length < 0 ||
+        isHiddenFile(state.path) ||
+        shouldIgnorePhotasaPath(state.path)
+    ) {
         return;
     }
 
     if (isMedia(state)) {
-        await createThumbnailTask
-            .perform({
-                path: state.path as string,
-                thumbnail: state.thumbnail as string,
-                width: preferenceStore.thumbnailSize,
-                height: preferenceStore.thumbnailSize,
-                preview: "",
-            })
-            .then(() => {
-                return addToPhotoList(state.path);
-            })
-            .then((result: { path: string; config: PhotasaConfig }) => {
-                // if the file is in the current folder, update the current folder config
-                // check after replace current folder, if any string still exist
-                if (isFileUnderFolder(result.path, preferenceStore.currentFolder)) {
-                    preferenceStore.currentFolderConfig = result.config;
-                }
-                addPhotasaConfigFile(preferenceStore.paths, {
-                    path: result.path,
-                    thumbnail: state.thumbnail,
-                });
-            });
+        const request = {
+            path: state.path as string,
+            thumbnail: state.thumbnail as string,
+            width: preferenceStore.thumbnailSize,
+            height: preferenceStore.thumbnailSize,
+            preview: "",
+        };
+
+        await createThumbnailTask.perform(request);
+
+        await addToPhotoList(state.path);
+
+        // if the file is in the current folder, update the current folder config
+        // check after replace current folder, if any string still exist
+        if (isFileUnderFolder(state.path, preferenceStore.currentFolder)) {
+            preferenceStore.addToCurrentPhotasaConfig(request);
+        }
     }
 }
 
@@ -95,3 +88,11 @@ function handleDeleteFile(state, photosStore, preferenceStore): void {
         preferenceStore.removeTreeNodePath(state.path);
     }
 }
+
+export const handleChangeFileTask = useTask(function* (_, state, photosStore, preferenceStore) {
+    return yield handleDeleteFile(state, photosStore, preferenceStore);
+})
+    .enqueue()
+    .maxConcurrency(1);
+
+function handleChangeFile(state, photosStore, preferenceStore): void {}

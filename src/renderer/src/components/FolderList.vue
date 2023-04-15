@@ -27,7 +27,7 @@ watch(
     selectedKeys,
     () => {
         // Only when Current folder changed, update current folder and reset photasa config
-        if (currentFolder.value !== selectedKeys.value[0]) {
+        if (selectedKeys.value.length > 0 && selectedKeys.value[0] && currentFolder.value !== selectedKeys.value[0]) {
             currentFolderConfig.value = <PhotasaConfig>{};
             currentFolder.value = selectedKeys.value[0];
         }

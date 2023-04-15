@@ -3,7 +3,13 @@ import { electronAPI } from "@electron-toolkit/preload";
 import { startWatching, stopWatching } from "./fs-watch";
 import { importPhotos, scanPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
-import { createThumbnail, getImageType, removeThumbnail } from "./image-helper";
+import {
+    createThumbnail,
+    getImageType,
+    isImageFile,
+    isVideoFile,
+    removeThumbnail,
+} from "./image-helper";
 import { openInFinder } from "./shell-helper";
 import {
     addToPhotoList,
@@ -16,7 +22,7 @@ import {
     resetPhotasaConfig,
 } from "./file-config";
 import { scanSubfolders } from "./query-config";
-import { isFileUnderFolder } from "./path-helper";
+import { isFileUnderFolder, isHiddenFile, shouldIgnorePhotasaPath } from "./path-helper";
 
 // Custom APIs for renderer
 const api = {
@@ -40,6 +46,10 @@ const api = {
     toThumbnailName,
     fixPhotasaConfig,
     resetPhotasaConfig,
+    isHiddenFile,
+    shouldIgnorePhotasaPath,
+    isVideoFile,
+    isImageFile,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

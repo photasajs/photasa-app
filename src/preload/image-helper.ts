@@ -4,6 +4,8 @@ import { electronAPI } from "@electron-toolkit/preload";
 import type { ThumbnailRequest, ImageInfo } from "./types";
 import { getExifInfo } from "./exif-helper";
 import path from "path";
+import isVideo from "is-video";
+import isImage from "is-image";
 
 const { ipcRenderer } = electronAPI;
 
@@ -57,4 +59,12 @@ export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailReq
 export function removeThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
     // Start file watching
     return ipcRenderer.invoke("picasa:remove-thumbnail", request);
+}
+
+export function isVideoFile(filePath: string): boolean {
+    return isVideo(filePath);
+}
+
+export function isImageFile(filePath: string): boolean {
+    return isImage(filePath);
 }
