@@ -233,8 +233,9 @@ function addConfig(
                         lastQueuedCount = 0;
                         clearInterval(handlerId);
                         done();
+                    } else {
+                        lastQueuedCount = count;
                     }
-                    lastQueuedCount = count;
                 }, DELAY_NOTIFY_DONE);
             },
         });
