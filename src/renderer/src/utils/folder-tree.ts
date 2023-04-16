@@ -1,5 +1,5 @@
 import type { DataNode } from "ant-design-vue/es/tree";
-import { mergePath } from "./path";
+import { mergePath, normalizePath } from "./path";
 
 export type Photo = {
     path: string;
@@ -10,6 +10,34 @@ export type Photo = {
 function normalizeRoot(root: DataNode): void {
     if (!root.children) {
         root.children = [];
+    }
+}
+
+export function cleanDataNode(roots: DataNode[], file: Photo): void {
+    const pathParts = file.path.split("/").filter((part) => part !== "");
+    if (pathParts.length <= 1) {
+        return;
+    }
+
+    const root = roots.find((node) => file.path.indexOf(node.key as string) >= 0);
+    if (!root?.children) {
+        return;
+    }
+    cleanChild(root.children, file);
+}
+
+function cleanChild(nodes: DataNode[], file: Photo): void {
+    const index = nodes.findIndex((child) => normalizePath(child.key as string) === file.path);
+
+    if (index >= 0) {
+        nodes.splice(index, 1);
+        return;
+    }
+
+    // Find closed node to clean
+    const root = nodes.find((node) => file.path.indexOf(node.key as string) >= 0);
+    if (root?.children) {
+        cleanChild(root.children, file);
     }
 }
 

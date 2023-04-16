@@ -60,7 +60,12 @@ export const handleDeleteFileTask = useTask(function* (_, state, photosStore, pr
 
 async function handleDeleteFile(state, _, preferenceStore): Promise<void> {
     // Directory skip hidden
-    if (!state.isFile || state.path?.length < 0) {
+    if (!state.isFile) {
+        preferenceStore.cleanFolderTree(state.path);
+        return;
+    }
+
+    if (state.path?.length < 0) {
         return;
     }
 
@@ -83,9 +88,34 @@ async function handleDeleteFile(state, _, preferenceStore): Promise<void> {
 }
 
 export const handleChangeFileTask = useTask(function* (_, state, photosStore, preferenceStore) {
-    return yield handleDeleteFile(state, photosStore, preferenceStore);
+    return yield handleChangeFile(state, photosStore, preferenceStore);
 })
     .enqueue()
     .maxConcurrency(1);
 
-function handleChangeFile(state, photosStore, preferenceStore): void {}
+async function handleChangeFile(state, _, preferenceStore): Promise<void> {
+    // Skip hidden or empty path or ignored file
+    if (
+        !state.isFile ||
+        state.path?.length < 0 ||
+        isHiddenFile(state.path) ||
+        shouldIgnorePhotasaPath(state.path)
+    ) {
+        return;
+    }
+
+    if (isMedia(state)) {
+        // if file is changed, then recreate the thumbnail only
+        const request = {
+            path: state.path as string,
+            thumbnail: state.thumbnail as string,
+            width: preferenceStore.thumbnailSize,
+            height: preferenceStore.thumbnailSize,
+            preview: "",
+            always: true,
+        } satisfies ThumbnailRequest;
+
+        await createThumbnailTask.perform(request);
+    }
+    return;
+}

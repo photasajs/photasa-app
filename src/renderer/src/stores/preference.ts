@@ -3,7 +3,7 @@ import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import type { PhotasaConfig, ScanAction, ThumbnailRequest } from "src/preload/types";
 import { DataNode } from "ant-design-vue/lib/tree";
-import { buildDataNode } from "@renderer/utils/folder-tree";
+import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 
 type PreferenceState = {
@@ -84,6 +84,14 @@ export const usePreferenceStore = defineStore("preference", {
         updateFolderTree(folder: string) {
             const path = normalizePath(folder);
             buildDataNode(this.folderTree, {
+                path,
+                thumbnail: "",
+                isVideo: false,
+            });
+        },
+        cleanFolderTree(folder: string) {
+            const path = normalizePath(folder);
+            cleanDataNode(this.folderTree, {
                 path,
                 thumbnail: "",
                 isVideo: false,
