@@ -1,5 +1,4 @@
 import { buildDataNode } from "../folder-tree";
-import type { BuildDataNodeCallback } from "../folder-tree";
 import type { DataNode } from "ant-design-vue/es/tree";
 
 describe("Folder Tree", () => {
@@ -8,19 +7,12 @@ describe("Folder Tree", () => {
     it("should return a DataNode", () => {
         const roots: DataNode[] = [];
         const path = "/test/google.com/test.jpg";
-        const callback: BuildDataNodeCallback = {
-            updateFileList: jest.fn(),
-            getFolderFiles: jest.fn(),
-        };
-        buildDataNode(
-            roots,
-            {
-                path,
-                thumbnail: "/test/google.com/.picasaoriginals/test.jpg",
-            },
-            callback,
-        );
-        expect(callback.getFolderFiles).toHaveBeenCalledWith("/test/google.com");
+
+        buildDataNode(roots, {
+            path,
+            thumbnail: "/test/google.com/.picasaoriginals/test.jpg",
+            isVideo: false,
+        });
     });
 
     /*

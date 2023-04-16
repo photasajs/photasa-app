@@ -2,7 +2,7 @@ import type { WatchConfig, WatchCallback, WatchState, WatchAction } from "./type
 import { electronAPI } from "@electron-toolkit/preload";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { buildThumbnailPath } from "./image-helper";
+import { buildThumbnailPath } from "../common";
 
 const { ipcRenderer } = electronAPI;
 
@@ -92,6 +92,7 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
         options: {
             ignored: /(^|[/\\])\../,
             ignoreInitial: true,
+            awaitWriteFinish: true, // Wait file be written, then fire add/change event
         },
     });
 }

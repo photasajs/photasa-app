@@ -8,7 +8,7 @@ import {
     isHiddenFile,
     shouldIgnorePhotasaPath,
 } from "@renderer/utils/api";
-import type { WatchState, PhotasaConfig, ThumbnailRequest } from "src/preload/types";
+import type { WatchState, ThumbnailRequest } from "src/preload/types";
 
 function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;

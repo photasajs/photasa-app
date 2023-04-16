@@ -6,7 +6,7 @@ import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { buildThumbnailPath } from "./image-helper";
+import { buildThumbnailPath, shouldIgnorePhotasaPath, isHiddenFile } from "../common";
 import type { PhotoPath, ScanAction } from "./types";
 export interface PathOption {
     root?: string;
@@ -105,32 +105,4 @@ export function walkthroughFiles(source: ScanAction): Observable<PhotoPath> {
                 subscriber.complete();
             });
     });
-}
-
-export function isHiddenFile(file: string): boolean {
-    const basename = path.basename(file);
-    return basename.startsWith(".");
-}
-
-export function shouldIgnorePhotasaPath(photoPath: string): boolean {
-    return (
-        photoPath.indexOf(".photasaoriginals") >= 0 ||
-        photoPath.indexOf(".picasaoriginals") >= 0 ||
-        photoPath.indexOf(".photasaoriginal") >= 0 ||
-        photoPath.indexOf(".picasaoriginal") >= 0 ||
-        photoPath.indexOf(".AppleDouble") >= 0
-    );
-}
-
-export function isFileUnderFolder(file: string, folder: string): boolean {
-    const dirname = path.dirname(file);
-    return dirname === path.normalize(folder);
-}
-
-export function toFilename(target: string): string {
-    return path.basename(target);
-}
-
-export function toThumbnailName(target: string): string {
-    return path.join(".photasaoriginals", `${toFilename(target)}.png`);
 }

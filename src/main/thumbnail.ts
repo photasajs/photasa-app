@@ -5,7 +5,14 @@ import type { Logger } from "log4js";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { ThumbnailRequest, VideoSize } from "../preload/types";
+import { ThumbnailRequest } from "../preload/types";
+import {
+    toPreviewPath,
+    HeicExtensionRE,
+    getOptimalThumbnailResolution,
+    ratioStringToParts,
+} from "../common/utils";
+
 //Get the paths to the packaged versions of the binaries we want to use
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked");
 const ffprobePath = require("ffprobe-static").path.replace("app.asar", "app.asar.unpacked");
@@ -13,11 +20,9 @@ const ffprobePath = require("ffprobe-static").path.replace("app.asar", "app.asar
 //tell the ffmpeg package where it can find the needed binaries.
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
-const heicExtensionRE = new RegExp(`\\.(${["heic", "heif"].join("|")})$`, "i");
 
 async function createPreviewImage(arg: ThumbnailRequest, logger: Logger): Promise<string> {
-    const fileName = path.basename(arg.path, path.extname(arg.path));
-    const previewName = path.join(path.dirname(arg.path), `.photasaoriginals/${fileName}.jpeg`);
+    const previewName = toPreviewPath(arg.path);
     const inputBuffer = await readFile(arg.path);
     try {
         logger.info("Decode HEIC for : " + arg.path);
@@ -55,24 +60,6 @@ export async function removeThumbnail(arg, logger: Logger): Promise<string> {
     }
 
     return arg;
-}
-
-function ratioStringToParts(str): number[] {
-    return str.split(":").map((n: string): number => parseInt(n, 10));
-}
-
-function getOptimalThumbnailResolution(videoDimension: VideoSize, arg): VideoSize {
-    if (videoDimension.width > videoDimension.height) {
-        return {
-            width: arg.width,
-            height: Math.round((arg.width * videoDimension.height) / videoDimension.width),
-        };
-    } else {
-        return {
-            width: Math.round((arg.height * videoDimension.width) / videoDimension.height),
-            height: arg.height,
-        };
-    }
 }
 
 function getVideoDimension(video: string): Promise<VideoSize> {
@@ -141,7 +128,7 @@ export async function createThumbnail(
 
     await ensureDir(path.dirname(arg.thumbnail));
 
-    let isHeic = heicExtensionRE.test(arg.path);
+    let isHeic = HeicExtensionRE.test(arg.path);
     // If it's a HEIC file, we need to convert it to a PNG first for preview
     if (isHeic) {
         arg.preview = await createPreviewImage(arg, logger);

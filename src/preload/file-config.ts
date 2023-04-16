@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig, LoadCallback, PhotasaConfigResult } from "./types";
-
+import type { PhotasaConfig, LoadCallback } from "./types";
+import { toFileName, shortenThumbnailName } from "../common";
 import * as R from "ramda";
 import { queryPhotasaConfigs } from "./query-config";
 import isVideo from "is-video";
@@ -109,7 +109,7 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     config.photoList.forEach((photo) => {
         photo.isVideo = isVideo(photo.path);
         photo.path = toFileName(photo.path);
-        photo.thumbnail = toThumbnailName(photo.thumbnail);
+        photo.thumbnail = shortenThumbnailName(photo.thumbnail);
     });
 
     writeConfig(meta.dir, config);
@@ -121,12 +121,4 @@ export async function loadPhotasaConfigs(paths: string[], callback: LoadCallback
     queryPhotasaConfigs(paths, (action, path) => {
         callback(action, path);
     });
-}
-
-export function toFileName(file: string): string {
-    return path.basename(file);
-}
-
-export function toThumbnailName(file: string): string {
-    return `.photasaoriginals/${path.basename(file)}`;
 }

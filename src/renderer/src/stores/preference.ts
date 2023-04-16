@@ -1,16 +1,15 @@
-// stores/photos.js
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import type { PhotasaConfig, ScanAction, ThumbnailRequest } from "src/preload/types";
 import { DataNode } from "ant-design-vue/lib/tree";
 import { buildDataNode } from "@renderer/utils/folder-tree";
-import { isVideoFile, toFileName, toThumbnailName } from "@renderer/utils/api";
+import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 
 type PreferenceState = {
-    paths: string[];
-    thumbnailSize: number;
-    firstTime: boolean;
+    paths: string[]; // Paths to monitor
+    thumbnailSize: number; // Thumbnail Default Size
+    firstTime: boolean; // Is first time running
     darkMode: boolean;
     lastOpenedFolder: string;
     locale: string;
@@ -108,21 +107,21 @@ export const usePreferenceStore = defineStore("preference", {
             this.completeScanPath(path);
         },
         addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
-            const relative = toFileName(request.path);
-            if (this.currentFolderConfig.photoList.find((photo) => photo.path === relative)) {
+            const relativePath = toFileName(request.path);
+            if (this.currentFolderConfig.photoList.find((photo) => photo.path === relativePath)) {
                 return;
             }
             this.currentFolderConfig.photoList.push({
-                path: relative,
-                thumbnail: toThumbnailName(request.thumbnail),
+                path: relativePath,
+                thumbnail: shortenThumbnailName(request.thumbnail),
                 isVideo: isVideoFile(request.path),
                 history: [],
             });
         },
         removeFromCurrentPhotasaConfig(request: ThumbnailRequest): void {
-            const relative = toFileName(request.path);
+            const relativePath = toFileName(request.path);
             const index = this.currentFolderConfig.photoList.findIndex(
-                (photo) => photo.path === relative,
+                (photo) => photo.path === relativePath,
             );
 
             if (index >= 0) {

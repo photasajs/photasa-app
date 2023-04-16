@@ -9,6 +9,7 @@ import {
     isImageFile,
     isVideoFile,
     removeThumbnail,
+    fileUrlFromPath,
 } from "./image-helper";
 import { openInFinder } from "./shell-helper";
 import {
@@ -16,13 +17,18 @@ import {
     removeFromPhotoList,
     getPhotasaConfig,
     loadPhotasaConfigs,
-    toFileName,
-    toThumbnailName,
     fixPhotasaConfig,
     resetPhotasaConfig,
 } from "./file-config";
 import { scanSubfolders } from "./query-config";
-import { isFileUnderFolder, isHiddenFile, shouldIgnorePhotasaPath } from "./path-helper";
+import {
+    isFileUnderFolder,
+    isHiddenFile,
+    shouldIgnorePhotasaPath,
+    toFileName,
+    toThumbnailName,
+    shortenThumbnailName,
+} from "../common";
 
 // Custom APIs for renderer
 const api = {
@@ -44,12 +50,14 @@ const api = {
     isFileUnderFolder,
     toFileName,
     toThumbnailName,
+    shortenThumbnailName,
     fixPhotasaConfig,
     resetPhotasaConfig,
     isHiddenFile,
     shouldIgnorePhotasaPath,
     isVideoFile,
     isImageFile,
+    fileUrlFromPath,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -144,3 +144,7 @@ export function toFileName(fileName: string): string {
 export function toThumbnailName(fileName: string): string {
     return window.api.toThumbnailName(fileName);
 }
+
+export function shortenThumbnailName(fileName: string): string {
+    return window.api.shortenThumbnailName(fileName);
+}

@@ -66,11 +66,6 @@ interface ThumbnailRequest {
     withoutEnlargement?: boolean;
 }
 
-interface VideoSize {
-    width: number;
-    height: number;
-}
-
 interface ScanAction {
     path: string;
     action: "scan" | "rescan" | "current"; // scan: new folder, rescan: existing folder, current: only current folder
@@ -107,6 +102,7 @@ interface WatchState {
     thumbnail: string;
     isNotify?: boolean;
 }
+
 // contextBridge can only return few type, Promise is support, but rxjs is not.
 declare global {
     interface Window {
@@ -132,6 +128,7 @@ declare global {
             scanSubfolders: (folder: string) => Promise<string[]>;
             isFileUnderFolder: (file: string, folder: string) => boolean;
             toThumbnailName: (file: string) => string;
+            shortenThumbnailName: (file: string) => string;
             toFileName: (file: string) => string;
             fixPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
             resetPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
@@ -139,6 +136,7 @@ declare global {
             shouldIgnorePhotasaPath: (fileName: string) => boolean;
             isVideoFile: (filePath: string) => boolean;
             isImageFile: (filePath: string) => boolean;
+            fileUrlFromPath: (file: string) => string;
         };
     }
 }
