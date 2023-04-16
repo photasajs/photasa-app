@@ -2,7 +2,7 @@ import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
 import type { Logger } from "log4js";
 
-let FileWatcherHandler: FSWatcher | undefined;
+let FileWatcherHandler: FSWatcher | undefined | null;
 export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger: Logger): void {
     ipc.handle("picasa:stop-file-watch", () => {
         logger.info("Stop watching files......");
@@ -13,6 +13,7 @@ export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger:
         // If handler is opened, close it.
         if (FileWatcherHandler) {
             FileWatcherHandler?.close();
+            FileWatcherHandler = undefined;
         }
         logger.info("Start watching files: ", args.paths);
         FileWatcherHandler = chokidar.watch(args.paths, args.options);
@@ -41,6 +42,6 @@ export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger:
             })
             .on("ready", () => {
                 mainWindow?.webContents.send("picasa:file-ready", {});
-            })
+            });
     });
 }

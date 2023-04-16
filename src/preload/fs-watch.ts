@@ -20,11 +20,6 @@ function invoke(args: WatchState, callback: WatchCallback): void {
     callback(args);
 }
 
-export function stopWatching(): Promise<void> {
-    // Stop file watching
-    return ipcRenderer?.invoke("picasa:stop-file-watch");
-}
-
 const listeners: WatchCallback[] = [];
 
 function notifyAction(action: WatchAction, isFile: boolean, path: string): void {
@@ -99,4 +94,9 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
             ignoreInitial: true,
         },
     });
+}
+
+export function stopWatching(): Promise<void> {
+    // Stop file watching
+    return ipcRenderer?.invoke("picasa:stop-file-watch");
 }
