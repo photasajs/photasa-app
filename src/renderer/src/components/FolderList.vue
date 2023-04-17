@@ -11,7 +11,7 @@ import {
     resetPhotasaConfig,
 } from "@renderer/utils/api";
 import { JsonTreeView } from "json-tree-view-vue3";
-import { trim } from "radash";
+import { trim, isEmpty } from "radash";
 
 const { t } = useI18n();
 
@@ -27,8 +27,12 @@ watch(
     selectedKeys,
     () => {
         // Only when Current folder changed, update current folder and reset photasa config
-        if (selectedKeys.value.length > 0 && selectedKeys.value[0] && currentFolder.value !== selectedKeys.value[0]) {
-            currentFolderConfig.value = <PhotasaConfig>{};
+        if (!isEmpty(selectedKeys.value) && currentFolder.value !== selectedKeys.value[0]) {
+            currentFolderConfig.value = {
+                version: "",
+                photoList: [],
+                lastModified: 0,
+            } satisfies PhotasaConfig;
             currentFolder.value = selectedKeys.value[0];
         }
     },
