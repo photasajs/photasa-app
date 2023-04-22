@@ -12,6 +12,7 @@ import klawSync from "klaw-sync";
 import ThumbnailService from "./thumbnail-service";
 import ConfigService from "./config-service";
 import ScanService from "./scan-service";
+import { closeFileWatcher } from "./fs-watch";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -143,6 +144,7 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
     }
+    closeFileWatcher();
     mainWindow = null;
 });
 

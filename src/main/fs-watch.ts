@@ -3,6 +3,12 @@ import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
 import type { Logger } from "log4js";
 
 let FileWatcherHandler: FSWatcher | undefined | null;
+
+export function closeFileWatcher(): void {
+    FileWatcherHandler?.close();
+    FileWatcherHandler = undefined;
+}
+
 export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger: Logger): void {
     ipc.handle("picasa:stop-file-watch", () => {
         logger.info("Stop watching files......");
