@@ -34,21 +34,17 @@ export default class ThumbnailService {
     }
 
     private createThumbnail(arg): Promise<string> {
-        return new Promise((resolve) => {
-            this.promises[`${this.queueId}`] = resolve;
-            this.worker.postMessage(
-                JSON.stringify({ queueId: this.queueId, action: "create", arg }),
-            );
-            this.queueId++;
-        });
+        return this.queueRequest("create", arg);
     }
 
     private removeThumbnail(arg): Promise<string> {
+        return this.queueRequest("remove", arg);
+    }
+
+    private queueRequest(action: string, arg): Promise<string> {
         return new Promise((resolve) => {
             this.promises[`${this.queueId}`] = resolve;
-            this.worker?.postMessage(
-                JSON.stringify({ queueId: this.queueId, action: "remove", arg }),
-            );
+            this.worker?.postMessage(JSON.stringify({ queueId: this.queueId, action, arg }));
             this.queueId++;
         });
     }
