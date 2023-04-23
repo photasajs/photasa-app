@@ -1,5 +1,5 @@
 import { parentPort } from "worker_threads";
-import { createThumbnail, removeThumbnail } from "./thumbnail";
+import { createThumbnail, removeThumbnail } from "./thumbnail-handler";
 import log4js from "log4js";
 
 const DEV_MODE = process.env.NODE_ENV === "development";

@@ -4,7 +4,7 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import { shouldIgnorePhotasaPath, isHiddenFile } from "../common";
 import type { PhotoPath, ScanAction } from "../preload/types";
-import { createThumbnail } from "./thumbnail";
+import { createThumbnail } from "./thumbnail-handler";
 import { addToPhotasaConfig } from "./config-storage";
 import type { Logger } from "log4js";
 import { buildThumbnailPath } from "../common";
