@@ -160,8 +160,9 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return config;
 }
 
-const addTaskRunner = new TaskRunner();
-addTaskRunner.setConcurrency(1);
+const addTaskRunner = new TaskRunner({
+    concurrency: 1,
+});
 let addPathQueue = {};
 const DELAY_NOTIFY_DONE = 3000;
 const QUEUE_BREAK_THRESHOLD = 60;

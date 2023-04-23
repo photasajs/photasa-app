@@ -9,18 +9,18 @@ import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import {
-    startWatching,
     getDirectory,
     stopWatching,
     resetPhotasaConfig,
     scanSubfolders,
 } from "@renderer/utils/api";
+import { deepCopy, top } from "./utils/object";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import { handleAddFileTask, handleDeleteFileTask, handleChangeFileTask } from "./utils/file-list";
-import { deepCopy } from "./utils/object";
+import { startFileWatching } from "./utils/file-handler";
+
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { WatchState, ScanArgs, ScanAction } from "src/preload/types";
+import type { ScanArgs, ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 
@@ -59,15 +59,11 @@ watchArray(
     () => {
         // Stop current watching, then start a new one
         stopWatching().then(() => {
-            startFileWatching(paths.value);
+            startFileWatching(paths.value, preferenceStore);
         });
     },
     { deep: true },
 );
-
-function top<T>(array): T {
-    return array[array.length - 1];
-}
 
 async function startScanning(): Promise<void> {
     if (scanningFolder.value.length > 0) {
@@ -102,25 +98,6 @@ watchArray(
     { deep: true },
 );
 
-const actions = {
-    add: handleAddFileTask,
-    change: handleChangeFileTask,
-    delete: handleDeleteFileTask,
-};
-
-function startFileWatching(dirs): void {
-    // start watching folders
-    startWatching(
-        {
-            paths: deepCopy(dirs),
-        },
-        (state: WatchState) => {
-            const handler = actions[state.action ?? ""];
-            handler?.perform(state, photosStore, preferenceStore);
-        },
-    );
-}
-
 getDirectory("desktop")
     .then((dir) => {
         // Desktop directory is ready
@@ -133,7 +110,7 @@ getDirectory("desktop")
         // Set to current folder
         currentFolder.value = paths.value[0];
         if (paths.value.length > 0) {
-            startFileWatching(paths.value);
+            startFileWatching(paths.value, preferenceStore);
         } else {
             // Open preference to config
             showPreference.value = true;
@@ -173,9 +150,9 @@ useTitle(title);
                 <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
             </a-space>
             <a-space class="setting-header">
-                <CoffeeOutlined @click="openScanList"></CoffeeOutlined>
-                <ImportOutlined @click="openImportPhotos"></ImportOutlined>
-                <SettingOutlined @click="openPreference" />
+                <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
+                <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
+                <SettingOutlined class="system-icon" @click="openPreference" />
             </a-space>
         </header>
         <a-layout class="content app-container">
@@ -276,5 +253,9 @@ useTitle(title);
     height: 10rem;
     overflow: auto;
     overflow-y: overlay;
+}
+.system-icon {
+    height: 1.5ren;
+    width: 1.5rem;
 }
 </style>

@@ -7,20 +7,16 @@ import {
     removeFromPhotoList,
     isHiddenFile,
     shouldIgnorePhotasaPath,
+    startWatching,
 } from "@renderer/utils/api";
 import type { WatchState, ThumbnailRequest } from "src/preload/types";
+import { deepCopy } from "./object";
 
 function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;
 }
 
-export const handleAddFileTask = useTask(function* (_, state, photosStore, preferenceStore) {
-    return yield handleAddFile(state, photosStore, preferenceStore);
-})
-    .enqueue()
-    .maxConcurrency(1);
-
-async function handleAddFile(state, _, preferenceStore): Promise<void> {
+async function handleAddFile(state, preferenceStore): Promise<void> {
     // Skip hidden or empty path or ignored file
     if (
         !state.isFile ||
@@ -52,13 +48,7 @@ async function handleAddFile(state, _, preferenceStore): Promise<void> {
     }
 }
 
-export const handleDeleteFileTask = useTask(function* (_, state, photosStore, preferenceStore) {
-    return yield handleDeleteFile(state, photosStore, preferenceStore);
-})
-    .enqueue()
-    .maxConcurrency(1);
-
-async function handleDeleteFile(state, _, preferenceStore): Promise<void> {
+async function handleDeleteFile(state, preferenceStore): Promise<void> {
     // Directory skip hidden
     if (!state.isFile) {
         preferenceStore.cleanFolderTree(state.path);
@@ -87,13 +77,7 @@ async function handleDeleteFile(state, _, preferenceStore): Promise<void> {
     }
 }
 
-export const handleChangeFileTask = useTask(function* (_, state, photosStore, preferenceStore) {
-    return yield handleChangeFile(state, photosStore, preferenceStore);
-})
-    .enqueue()
-    .maxConcurrency(1);
-
-async function handleChangeFile(state, _, preferenceStore): Promise<void> {
+async function handleChangeFile(state, preferenceStore): Promise<void> {
     // Skip hidden or empty path or ignored file
     if (
         !state.isFile ||
@@ -118,4 +102,31 @@ async function handleChangeFile(state, _, preferenceStore): Promise<void> {
         await createThumbnailTask.perform(request);
     }
     return;
+}
+
+const actions = {
+    add: handleAddFile,
+    change: handleChangeFile,
+    delete: handleDeleteFile,
+};
+
+export const handleFileTask = useTask(function* (_, state, preferenceStore) {
+    const handler = actions[state.action];
+    if (handler) {
+        return yield handler(state, preferenceStore);
+    }
+})
+    .enqueue()
+    .maxConcurrency(1);
+
+export function startFileWatching(dirs, preferenceStore): void {
+    // start watching folders
+    startWatching(
+        {
+            paths: deepCopy(dirs),
+        },
+        (state: WatchState) => {
+            handleFileTask.perform(state, preferenceStore);
+        },
+    );
 }

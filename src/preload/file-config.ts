@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig, LoadCallback } from "./types";
+import type { PhotasaConfig } from "./types";
 import { toFileName, shortenThumbnailName } from "../common";
 import * as R from "ramda";
 import isVideo from "is-video";
@@ -10,18 +10,26 @@ const { ipcRenderer } = electronAPI;
 
 const PHOTASA_VERSION = "1.0";
 
-export async function ensureConfig(photo: string, isFile: boolean): Promise<string> {
+export async function ensureConfig(
+    photo: string,
+    isFile: boolean,
+    isDelete = false,
+): Promise<string> {
     const dir = isFile ? path.dirname(photo) : photo;
     const configPath = path.join(dir, ".photasa.json");
-    await fs.ensureFile(configPath);
+    if (!isDelete) {
+        await fs.ensureFile(configPath);
+    }
+
     return configPath;
 }
 
 export async function readConfig(
     photo: string,
     isFile: boolean,
+    isDelete = false,
 ): Promise<{ data: string; dir: string }> {
-    const dir = await ensureConfig(photo, isFile);
+    const dir = await ensureConfig(photo, isFile, isDelete);
     const data = (await fs.readFile(dir, "utf-8")) ?? "{}";
     return {
         dir,
@@ -29,7 +37,15 @@ export async function readConfig(
     };
 }
 
-export async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Promise<void> {
+export async function writeConfig(
+    configPath: string,
+    photoConfig: PhotasaConfig,
+    isDelete = false,
+): Promise<void> {
+    // When delete a file, only write config if config is existed.
+    if (isDelete && !(await fs.exists(configPath))) {
+        return;
+    }
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
     await fs.writeFile(configPath, data, { encoding: "utf8", flag: "w" });
@@ -74,14 +90,14 @@ export async function addToPhotoList(photoPath: string): Promise<void> {
 export async function removeFromPhotoList(
     photoPath: string,
 ): Promise<{ path: string; config: PhotasaConfig }> {
-    const meta = await readConfig(photoPath, true);
+    const meta = await readConfig(photoPath, true, true);
     const photasaConfig = parseConfig(meta.data);
     const relative = toFileName(photoPath);
     const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === relative);
 
     if (photoIndex >= 0) {
         photasaConfig.photoList.splice(photoIndex, 1);
-        writeConfig(meta.dir, photasaConfig);
+        writeConfig(meta.dir, photasaConfig, true);
     }
     return {
         path: meta.dir,

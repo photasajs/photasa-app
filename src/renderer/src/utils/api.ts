@@ -6,9 +6,7 @@ import type {
     PathName,
     ThumbnailRequest,
     ImageInfo,
-    ScanCallback,
     PhotasaConfig,
-    LoadCallback,
     ScanAction,
     ScanArgs,
 } from "src/preload/types";
