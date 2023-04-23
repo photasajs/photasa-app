@@ -16,7 +16,6 @@ import {
     addToPhotoList,
     removeFromPhotoList,
     getPhotasaConfig,
-    loadPhotasaConfigs,
     fixPhotasaConfig,
     resetPhotasaConfig,
 } from "./file-config";
@@ -45,7 +44,6 @@ const api = {
     addToPhotoList,
     removeFromPhotoList,
     getPhotasaConfig,
-    loadPhotasaConfigs,
     scanSubfolders,
     isFileUnderFolder,
     toFileName,

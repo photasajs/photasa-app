@@ -124,7 +124,6 @@ declare global {
             removeFromPhotoList: (
                 photo: string,
             ) => Promise<{ path: string; config: PhotasaConfig }>;
-            loadPhotasaConfigs: (paths: string[], callback: LoadCallback) => void;
             scanSubfolders: (folder: string) => Promise<string[]>;
             isFileUnderFolder: (file: string, folder: string) => boolean;
             toThumbnailName: (file: string) => string;

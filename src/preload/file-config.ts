@@ -3,7 +3,6 @@ import path from "path";
 import type { PhotasaConfig, LoadCallback } from "./types";
 import { toFileName, shortenThumbnailName } from "../common";
 import * as R from "ramda";
-import { queryPhotasaConfigs } from "./query-config";
 import isVideo from "is-video";
 
 import { electronAPI } from "@electron-toolkit/preload";
@@ -11,14 +10,17 @@ const { ipcRenderer } = electronAPI;
 
 const PHOTASA_VERSION = "1.0";
 
-async function ensureConfig(photo: string, isFile: boolean): Promise<string> {
+export async function ensureConfig(photo: string, isFile: boolean): Promise<string> {
     const dir = isFile ? path.dirname(photo) : photo;
     const configPath = path.join(dir, ".photasa.json");
     await fs.ensureFile(configPath);
     return configPath;
 }
 
-async function readConfig(photo: string, isFile: boolean): Promise<{ data: string; dir: string }> {
+export async function readConfig(
+    photo: string,
+    isFile: boolean,
+): Promise<{ data: string; dir: string }> {
     const dir = await ensureConfig(photo, isFile);
     const data = (await fs.readFile(dir, "utf-8")) ?? "{}";
     return {
@@ -27,13 +29,13 @@ async function readConfig(photo: string, isFile: boolean): Promise<{ data: strin
     };
 }
 
-async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Promise<void> {
+export async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Promise<void> {
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
     await fs.writeFile(configPath, data, { encoding: "utf8", flag: "w" });
 }
 
-function fromJson(data: string): PhotasaConfig {
+export function fromJson(data: string): PhotasaConfig {
     try {
         return <PhotasaConfig>JSON.parse(data);
     } catch {
@@ -41,7 +43,7 @@ function fromJson(data: string): PhotasaConfig {
     }
 }
 
-function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
+export function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
     if (!config.photoList) {
         config.photoList = [];
     }
@@ -51,7 +53,7 @@ function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
     return config;
 }
 
-const parseConfig = R.compose(normalizeConfig, fromJson);
+export const parseConfig = R.compose(normalizeConfig, fromJson);
 
 /**
  * Add photo to .photasa.json
@@ -115,10 +117,4 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     writeConfig(meta.dir, config);
 
     return config;
-}
-
-export async function loadPhotasaConfigs(paths: string[], callback: LoadCallback): Promise<void> {
-    queryPhotasaConfigs(paths, (action, path) => {
-        callback(action, path);
-    });
 }
