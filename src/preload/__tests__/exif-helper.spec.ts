@@ -24,6 +24,7 @@ describe("exif-helper", () => {
                 targetDir: "",
                 targetFileName: "",
                 targetFullPath: "",
+                isVideo: false,
             }),
         );
         expect(date.created?.toString()).toBe(

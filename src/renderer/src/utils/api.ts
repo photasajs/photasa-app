@@ -6,9 +6,7 @@ import type {
     PathName,
     ThumbnailRequest,
     ImageInfo,
-    ScanCallback,
     PhotasaConfig,
-    LoadCallback,
     ScanAction,
     ScanArgs,
 } from "src/preload/types";
@@ -101,10 +99,6 @@ export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
     .enqueue()
     .maxConcurrency(1);
 
-export function loadPhotasaConfigs(paths: string[], callback: LoadCallback): void {
-    window.api.loadPhotasaConfigs(paths, callback);
-}
-
 export function scanSubfolders(folder): Promise<string[]> {
     return window.api.scanSubfolders(folder);
 }
@@ -119,4 +113,32 @@ export function resetPhotasaConfig(folder: string): Promise<PhotasaConfig> {
 
 export function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return window.api.fixPhotasaConfig(folder);
+}
+
+export function isHiddenFile(fileName: string): boolean {
+    return window.api.isHiddenFile(fileName);
+}
+
+export function shouldIgnorePhotasaPath(fileName: string): boolean {
+    return window.api.shouldIgnorePhotasaPath(fileName);
+}
+
+export function isVideoFile(fileName: string): boolean {
+    return window.api.isVideoFile(fileName);
+}
+
+export function isImageFile(fileName: string): boolean {
+    return window.api.isImageFile(fileName);
+}
+
+export function toFileName(fileName: string): string {
+    return window.api.toFileName(fileName);
+}
+
+export function toThumbnailName(fileName: string): string {
+    return window.api.toThumbnailName(fileName);
+}
+
+export function shortenThumbnailName(fileName: string): string {
+    return window.api.shortenThumbnailName(fileName);
 }

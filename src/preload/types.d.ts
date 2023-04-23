@@ -1,6 +1,6 @@
 import { ElectronAPI } from "@electron-toolkit/preload";
 
-type WatchAction = "add" | "change" | "unlink" | "error" | "ready" | "raw";
+type WatchAction = "add" | "change" | "delete" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
 type ImportCallback = (param: { type: string; action: FileAction }) => void;
 type ScanCallback = (action: ScanArgs) => void;
@@ -66,11 +66,6 @@ interface ThumbnailRequest {
     withoutEnlargement?: boolean;
 }
 
-interface VideoSize {
-    width: number;
-    height: number;
-}
-
 interface ScanAction {
     path: string;
     action: "scan" | "rescan" | "current"; // scan: new folder, rescan: existing folder, current: only current folder
@@ -105,7 +100,9 @@ interface WatchState {
     isImage: boolean;
     isVideo: boolean;
     thumbnail: string;
+    isNotify?: boolean;
 }
+
 // contextBridge can only return few type, Promise is support, but rxjs is not.
 declare global {
     interface Window {
@@ -127,13 +124,18 @@ declare global {
             removeFromPhotoList: (
                 photo: string,
             ) => Promise<{ path: string; config: PhotasaConfig }>;
-            loadPhotasaConfigs: (paths: string[], callback: LoadCallback) => void;
             scanSubfolders: (folder: string) => Promise<string[]>;
             isFileUnderFolder: (file: string, folder: string) => boolean;
             toThumbnailName: (file: string) => string;
+            shortenThumbnailName: (file: string) => string;
             toFileName: (file: string) => string;
             fixPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
             resetPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
+            isHiddenFile: (fileName: string) => boolean;
+            shouldIgnorePhotasaPath: (fileName: string) => boolean;
+            isVideoFile: (filePath: string) => boolean;
+            isImageFile: (filePath: string) => boolean;
+            fileUrlFromPath: (file: string) => string;
         };
     }
 }

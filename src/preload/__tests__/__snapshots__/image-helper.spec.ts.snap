@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`photo-import getImageType should return image type 1`] = `
+{
+  "imageType": {
+    "ext": "jpg",
+    "mime": "image/jpeg",
+  },
+  "tags": {
+    "Bits Per Sample": {
+      "description": "8",
+      "value": 8,
+    },
+    "Color Components": {
+      "description": "3",
+      "value": 3,
+    },
+    "Image Height": {
+      "description": "360px",
+      "value": 360,
+    },
+    "Image Width": {
+      "description": "300px",
+      "value": 300,
+    },
+    "JFIF Thumbnail Height": {
+      "description": "0px",
+      "value": 0,
+    },
+    "JFIF Thumbnail Width": {
+      "description": "0px",
+      "value": 0,
+    },
+    "JFIF Version": {
+      "description": "1.1",
+      "value": 257,
+    },
+    "Resolution Unit": {
+      "description": "inches",
+      "value": 1,
+    },
+    "Subsampling": {
+      "description": "YCbCr4:2:0 (2 2)",
+      "value": [
+        [
+          1,
+          34,
+          0,
+        ],
+        [
+          2,
+          17,
+          1,
+        ],
+        [
+          3,
+          17,
+          1,
+        ],
+      ],
+    },
+    "XResolution": {
+      "description": "96",
+      "value": 96,
+    },
+    "YResolution": {
+      "description": "96",
+      "value": 96,
+    },
+  },
+}
+`;

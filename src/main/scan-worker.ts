@@ -17,15 +17,7 @@ function postMessage(message): void {
 
 export function execute(requestId: string, scan: ScanAction): void {
     scanPhotos(scan, logger).subscribe({
-        next: (action) => {
-            /*
-            postMessage({
-                type: "next",
-                requestId,
-                action,
-            });
-            */
-        },
+        next: () => {}, // ignore next action, only complete or error
         error: (error) => {
             logger.error(error);
             postMessage({

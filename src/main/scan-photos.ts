@@ -2,47 +2,18 @@ import klaw from "klaw";
 import { Observable, Subscriber, concatMap } from "rxjs";
 import isImage from "is-image";
 import isVideo from "is-video";
-import path from "path";
+import { shouldIgnorePhotasaPath, isHiddenFile } from "../common";
 import type { PhotoPath, ScanAction } from "../preload/types";
-import { createThumbnail } from "./thumbnail";
+import { createThumbnail } from "./thumbnail-handler";
 import { addToPhotasaConfig } from "./config-storage";
 import type { Logger } from "log4js";
-
-export const PHOTASA_ORIGINALS = ".photasaoriginals";
+import { buildThumbnailPath } from "../common";
 
 /**
  * Whether only scan current folder or scan all sub folders.
  */
 function shouldScanOneLevel(action: string): boolean {
     return action == "current" || action == "rescan" || action == "scan";
-}
-
-export function buildThumbnailPath(photoPath: string): string {
-    // Prepare thumbnail path for image
-    const dir = path.join(path.dirname(photoPath), PHOTASA_ORIGINALS);
-    return path.join(dir, `thumbnail-${path.basename(photoPath)}.png`);
-}
-
-export function isHiddenFile(file: string): boolean {
-    const basename = path.basename(file);
-    return basename.startsWith(".");
-}
-
-export function shouldIgnorePhotasaPath(photoPath: string): boolean {
-    return (
-        photoPath.indexOf(".photasaoriginals") >= 0 ||
-        photoPath.indexOf(".picasaoriginals") >= 0 ||
-        photoPath.indexOf(".photasaoriginal") >= 0 ||
-        photoPath.indexOf(".picasaoriginal") >= 0 ||
-        photoPath.indexOf(".AppleDouble") >= 0 ||
-        photoPath.indexOf(".DS_Store") >= 0 ||
-        photoPath.indexOf("983db650f7f79bc8e87d9a3ba418aefc") >= 0
-    );
-}
-
-export function isFileUnderFolder(file: string, folder: string): boolean {
-    const dirname = path.dirname(file);
-    return dirname === path.normalize(folder);
 }
 
 /**

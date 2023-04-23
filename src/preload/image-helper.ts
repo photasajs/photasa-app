@@ -3,21 +3,10 @@ import imageType, { minimumBytes } from "image-type";
 import { electronAPI } from "@electron-toolkit/preload";
 import type { ThumbnailRequest, ImageInfo } from "./types";
 import { getExifInfo } from "./exif-helper";
-import path from "path";
+import isVideo from "is-video";
+import isImage from "is-image";
 
 const { ipcRenderer } = electronAPI;
-
-export const PHOTASA_ORIGINALS = ".photasaoriginals";
-
-export function buildThumbnailPath(photoPath: string): string {
-    // Prepare thumbnail path for image
-    const dir = path.join(path.dirname(photoPath), PHOTASA_ORIGINALS);
-    return path.join(dir, `thumbnail-${path.basename(photoPath)}.png`);
-}
-
-export function toRelativeThumbnailPath(photoPath: string): string {
-    return path.join(PHOTASA_ORIGINALS, `thumbnail-${path.basename(photoPath)}.png`);
-}
 
 export async function getImageType(path: string): Promise<ImageInfo> {
     const buffer = await readChunk(path, { length: minimumBytes });
@@ -57,4 +46,12 @@ export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailReq
 export function removeThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
     // Start file watching
     return ipcRenderer.invoke("picasa:remove-thumbnail", request);
+}
+
+export function isVideoFile(filePath: string): boolean {
+    return isVideo(filePath);
+}
+
+export function isImageFile(filePath: string): boolean {
+    return isImage(filePath);
 }

@@ -2,10 +2,9 @@ import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
 import { ensureDir, scanFolder } from "./path-helper";
-import type { ImportCallback, ScanAction, ScanArgs, ScanCallback } from "./types";
+import type { ImportCallback, ScanAction, ScanArgs } from "./types";
 import log4js from "log4js";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { FileAction } from "./types";
 
 const { ipcRenderer } = electronAPI;
 

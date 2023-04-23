@@ -7,10 +7,7 @@ describe("photo-import", () => {
     describe("getImageType", () => {
         it("should return image type", async () => {
             const result = await getImageType(IMAGE_PATH);
-            expect(result).toEqual({
-                ext: "jpg",
-                mime: "image/jpeg",
-            });
+            expect(result).toMatchSnapshot();
         });
     });
 });

@@ -1,6 +1,6 @@
 import { useTask } from "vue-concurrency";
 
-function pretechImage(src: string): Promise<void> {
+function prefetchImage(src: string): Promise<void> {
     const image = document.createElement("img");
     return new Promise((resolve, reject) => {
         image.onload = (): void => resolve();
@@ -12,7 +12,7 @@ function pretechImage(src: string): Promise<void> {
 export const prefetchImageTask = useTask(function* (_, imageSrc) {
     // RegEx to remove query string
     const src = imageSrc.replace(/\?.*$/, "");
-    return yield pretechImage(src);
+    return yield prefetchImage(src);
 })
     .enqueue()
-    .maxConcurrency(1);
+    .maxConcurrency(5);

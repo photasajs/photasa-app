@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "../preload/types";
 import * as R from "ramda";
-import { toRelativeThumbnailPath } from "../common/utils";
+import { toRelativeThumbnailPath, toFileName, shortenThumbnailName } from "../common";
 import TaskRunner from "concurrent-tasks";
 import { Logger } from "log4js";
 import { concatMap, from } from "rxjs";
@@ -152,7 +152,7 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     const config = parseConfig(meta.data);
     config.photoList.forEach((photo) => {
         photo.path = toFileName(photo.path);
-        photo.thumbnail = toThumbnailName(photo.thumbnail);
+        photo.thumbnail = shortenThumbnailName(photo.thumbnail);
     });
 
     writeConfig(meta.dir, config);
@@ -160,16 +160,9 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
     return config;
 }
 
-export function toFileName(file: string): string {
-    return path.basename(file);
-}
-
-export function toThumbnailName(file: string): string {
-    return `.photasaoriginals/${path.basename(file)}`;
-}
-
-const addTaskRunner = new TaskRunner();
-addTaskRunner.setConcurrency(1);
+const addTaskRunner = new TaskRunner({
+    concurrency: 1,
+});
 let addPathQueue = {};
 const DELAY_NOTIFY_DONE = 3000;
 const QUEUE_BREAK_THRESHOLD = 60;

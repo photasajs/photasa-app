@@ -1,16 +1,15 @@
-// stores/photos.js
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import type { PhotasaConfig, ScanAction } from "src/preload/types";
+import type { PhotasaConfig, ScanAction, ThumbnailRequest } from "src/preload/types";
 import { DataNode } from "ant-design-vue/lib/tree";
-import { buildDataNode } from "@renderer/utils/folder-tree";
-import { F } from "ramda";
+import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
+import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 
 type PreferenceState = {
-    paths: string[];
-    thumbnailSize: number;
-    firstTime: boolean;
+    paths: string[]; // Paths to monitor
+    thumbnailSize: number; // Thumbnail Default Size
+    firstTime: boolean; // Is first time running
     darkMode: boolean;
     lastOpenedFolder: string;
     locale: string;
@@ -90,6 +89,14 @@ export const usePreferenceStore = defineStore("preference", {
                 isVideo: false,
             });
         },
+        cleanFolderTree(folder: string) {
+            const path = normalizePath(folder);
+            cleanDataNode(this.folderTree, {
+                path,
+                thumbnail: "",
+                isVideo: false,
+            });
+        },
         removePath(path: string): void {
             const index = this.paths.indexOf(path);
             if (index >= 0) {
@@ -106,6 +113,28 @@ export const usePreferenceStore = defineStore("preference", {
             }
 
             this.completeScanPath(path);
+        },
+        addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
+            const relativePath = toFileName(request.path);
+            if (this.currentFolderConfig.photoList.find((photo) => photo.path === relativePath)) {
+                return;
+            }
+            this.currentFolderConfig.photoList.push({
+                path: relativePath,
+                thumbnail: shortenThumbnailName(request.thumbnail),
+                isVideo: isVideoFile(request.path),
+                history: [],
+            });
+        },
+        removeFromCurrentPhotasaConfig(request: ThumbnailRequest): void {
+            const relativePath = toFileName(request.path);
+            const index = this.currentFolderConfig.photoList.findIndex(
+                (photo) => photo.path === relativePath,
+            );
+
+            if (index >= 0) {
+                this.currentFolderConfig.photoList.splice(index, 1);
+            }
         },
     },
 });

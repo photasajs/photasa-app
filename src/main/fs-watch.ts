@@ -3,6 +3,12 @@ import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
 import type { Logger } from "log4js";
 
 let FileWatcherHandler: FSWatcher | undefined;
+
+export function closeFileWatcher(): void {
+    FileWatcherHandler?.close();
+    FileWatcherHandler = undefined;
+}
+
 export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger: Logger): void {
     ipc.handle("picasa:stop-file-watch", () => {
         logger.info("Stop watching files......");
@@ -10,11 +16,10 @@ export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger:
     });
 
     ipc.on("picasa:start-file-watch", (_event: IpcMainEvent, args) => {
-        // If handler is opened, close it.
-        if (FileWatcherHandler) {
-            FileWatcherHandler?.close();
-        }
+        closeFileWatcher();
+
         logger.info("Start watching files: ", args.paths);
+
         FileWatcherHandler = chokidar.watch(args.paths, args.options);
         FileWatcherHandler.on("add", (path) => {
             logger.info(`Add file ${path}`);
@@ -41,6 +46,6 @@ export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger:
             })
             .on("ready", () => {
                 mainWindow?.webContents.send("picasa:file-ready", {});
-            })
+            });
     });
 }
