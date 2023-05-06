@@ -6,14 +6,17 @@ import config from "./config";
 export const PHOTASA_ORIGINALS = ".photasaoriginals";
 export const HeicExtensionRE = new RegExp(`\\.(${config.acceptedHeicExtensions.join("|")})$`, "i");
 
+function toThumbnailPath(photoPath: string): string {
+    return `thumbnail-${photoPath}.png`;
+}
 export function buildThumbnailPath(photoPath: string): string {
     // Prepare thumbnail path for image
     const dir = path.join(path.dirname(photoPath), PHOTASA_ORIGINALS);
-    return path.join(dir, `thumbnail-${path.basename(photoPath)}.png`);
+    return path.join(dir, toThumbnailPath(path.basename(photoPath)));
 }
 
 export function toRelativeThumbnailPath(photoPath: string): string {
-    return path.join(PHOTASA_ORIGINALS, `thumbnail-${path.basename(photoPath)}.png`);
+    return path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath)));
 }
 
 export function toPreviewPath(target: string): string {
