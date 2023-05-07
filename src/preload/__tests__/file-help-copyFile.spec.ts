@@ -1,7 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
 import { firstValueFrom } from "rxjs";
-import { isDataView } from "util/types";
 import { copyFile } from "../file-helper";
 
 const IMAGE_PATH = path.join(__dirname, "./photos/test.jpg");
@@ -46,7 +45,7 @@ describe("copyFile", () => {
                 created: new Date("2018-09-20T19:25:22.000Z"),
                 isImage: true,
                 targetFileName: "",
-                targetFullPath: ""
+                targetFullPath: "",
                 isVideo: false,
             }),
         );
