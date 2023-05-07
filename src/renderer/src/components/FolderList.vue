@@ -77,7 +77,7 @@ async function rescan(key: string): Promise<void> {
 </script>
 
 <template>
-    <a-card>
+    <a-card class="folder-list-card">
         <template #title>
             <a-breadcrumb class="folder-list-header">
                 <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
@@ -153,5 +153,10 @@ async function rescan(key: string): Promise<void> {
 .folder-list-header {
     height: 32px;
     line-height: 32px;
+}
+
+.folder-list-card {
+    height: calc(100vh - var(--photasa-footer-height));
+    overflow: auto;
 }
 </style>
