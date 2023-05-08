@@ -214,8 +214,12 @@ useTitle(title);
 </template>
 
 <style lang="less">
+:root {
+    --photasa-footer-height: 70px;
+    --photasa-hear-height: 36px;
+}
 .content .image-content {
-    height: calc(100vh - 70px);
+    height: calc(100vh - var(--photasa-footer-height));
     overflow-y: overlay;
     margin: auto;
 }
@@ -226,7 +230,7 @@ useTitle(title);
 }
 
 .app-header {
-    height: 36px;
+    height: var(--photasa-header-height);
     margin-left: 36px;
     padding-left: 50px;
     line-height: 36px;
@@ -237,6 +241,7 @@ useTitle(title);
     user-select: none;
     -webkit-app-region: drag;
 }
+
 .setting-header {
     float: right;
     margin-right: 16px;
@@ -249,11 +254,13 @@ useTitle(title);
     padding-left: 20px;
     justify-content: center;
 }
+
 .scan-list {
     height: 10rem;
     overflow: auto;
     overflow-y: overlay;
 }
+
 .system-icon {
     height: 1.5ren;
     width: 1.5rem;
