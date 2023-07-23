@@ -96,7 +96,7 @@ function onImport(): void {
 
     const dir = `${formState.name}`;
     importPhotos([dir], formState.targetDir, (args) => {
-        importHandler[args.type]?.call(null, args);
+        importHandler[args.type]?.call(null, <ImportArgs>args);
     });
 }
 

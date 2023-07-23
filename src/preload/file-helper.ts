@@ -40,6 +40,9 @@ export function copyFile(action: FileAction): Observable<FileAction> {
                 reject(err);
                 return;
             }
+            // Keep original time
+            const stat = fs.statSync(action.file);
+            fs.utimesSync(action.targetFullPath, stat.atime, stat.mtime);
             resolve(action);
         }); // copies file
     });

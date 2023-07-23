@@ -2,7 +2,7 @@ import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
 import { ensureDir, scanFolder } from "./path-helper";
-import type { ImportCallback, ScanAction, ScanArgs } from "./types";
+import type { FileAction, ImportCallback, ScanAction, ScanArgs } from "./types";
 import log4js from "log4js";
 import { electronAPI } from "@electron-toolkit/preload";
 
@@ -38,13 +38,14 @@ export function importPhotos(folders: string[], target: string, callback: Import
                 logger.debug("error", error);
                 callback({
                     type: "error",
-                    error,
+                    action: <FileAction>{},
                 });
             },
             complete: () => {
                 logger.debug("complete");
                 callback({
                     type: "complete",
+                    action: <FileAction>{},
                 });
             },
         });
