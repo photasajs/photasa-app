@@ -3,9 +3,9 @@ import { checkExifDate, resolveExifDate } from "../exif-helper";
 import path from "path";
 import fs from "fs-extra";
 
-const IMAGE_PATH = path.join(__dirname, "./photos/test.jpg");
-const EXIF_IMAGE_PATH = path.join(__dirname, "./photos/exif.jpg");
-const CTIME_IMAGE_PATH = path.join(__dirname, "./photos/birthtime.jpg");
+const IMAGE_PATH = path.join(__dirname, "./assets/no_exif_info.jpg");
+const EXIF_IMAGE_PATH = path.join(__dirname, "./assets/exif.jpg");
+const CTIME_IMAGE_PATH = path.join(__dirname, "./assets/birthtime.jpg");
 
 describe("exif-helper", () => {
     it("should return undefined if image don't have exif date", async () => {

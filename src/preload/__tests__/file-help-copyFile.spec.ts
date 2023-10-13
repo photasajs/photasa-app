@@ -3,7 +3,7 @@ import path from "path";
 import { firstValueFrom } from "rxjs";
 import { copyFile } from "../file-helper";
 
-const IMAGE_PATH = path.join(__dirname, "./photos/test.jpg");
+const IMAGE_PATH = path.join(__dirname, "./assets/exif.jpg");
 const TEST_PATH = path.join(__dirname, "./copy/");
 
 describe("copyFile", () => {
@@ -35,7 +35,7 @@ describe("copyFile", () => {
             }),
         );
 
-        expect(fs.existsSync(path.join(TEST_PATH, "test.jpg"))).toBeTruthy();
+        expect(fs.existsSync(path.join(TEST_PATH, "exif.jpg"))).toBeTruthy();
 
         await firstValueFrom(
             copyFile({
@@ -49,6 +49,6 @@ describe("copyFile", () => {
                 isVideo: false,
             }),
         );
-        expect(fs.existsSync(path.join(TEST_PATH, "test_1.jpg"))).toBeTruthy();
+        expect(fs.existsSync(path.join(TEST_PATH, "exif_1.jpg"))).toBeTruthy();
     });
 });

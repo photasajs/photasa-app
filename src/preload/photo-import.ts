@@ -31,6 +31,7 @@ export function importPhotos(folders: string[], target: string, callback: Import
                 logger.debug("next", action);
                 callback({
                     type: "next",
+                    error: null,
                     action,
                 });
             },
@@ -38,6 +39,7 @@ export function importPhotos(folders: string[], target: string, callback: Import
                 logger.debug("error", error);
                 callback({
                     type: "error",
+                    error,
                     action: <FileAction>{},
                 });
             },
@@ -45,6 +47,7 @@ export function importPhotos(folders: string[], target: string, callback: Import
                 logger.debug("complete");
                 callback({
                     type: "complete",
+                    error: null,
                     action: <FileAction>{},
                 });
             },
