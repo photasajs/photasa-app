@@ -11,7 +11,6 @@ import type { Ref } from "vue";
 // Constants
 const DEFAULT_LOCALE = "zh-CN" as const;
 const FALLBACK_LOCALE = "en-US" as const;
-const LOCALE_STORAGE_KEY = "app_locale";
 
 // Define supported locales with their display names and native names
 export const LOCALES = {
@@ -89,21 +88,10 @@ const detectBrowserLocale = (): Locale | null => {
 const isLocaleSupported = (locale: string): locale is Locale =>
     Object.keys(LOCALES).includes(locale);
 
-// Storage utilities
-const storage = {
-    get: (): Locale | null => {
-        const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-        return stored && isLocaleSupported(stored) ? stored : null;
-    },
-    set: (locale: Locale): void => {
-        localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    },
-};
-
 // Create i18n instance with proper typing
 export const i18n = createI18n<[MessageSchema], Locale>({
     legacy: false,
-    locale: storage.get() || detectBrowserLocale() || DEFAULT_LOCALE,
+    locale: DEFAULT_LOCALE,
     fallbackLocale: FALLBACK_LOCALE,
     globalInjection: true,
     messages: {
@@ -136,7 +124,6 @@ export const i18nUtils = {
         if (i18n.global.locale) {
             (i18n.global.locale as unknown as Ref<Locale>).value = locale;
             document.querySelector("html")?.setAttribute("lang", locale);
-            storage.set(locale);
         }
     },
 

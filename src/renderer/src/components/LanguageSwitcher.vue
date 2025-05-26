@@ -2,16 +2,18 @@
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { i18nUtils, type Locale } from "../i18n/config";
+import { usePreferenceStore } from "@renderer/stores/preference";
 
 const { t } = useI18n();
 const isOpen = ref(false);
+const preferenceStore = usePreferenceStore();
 
 const toggleDropdown = () => {
     isOpen.value = !isOpen.value;
 };
 
 const selectLocale = (locale: Locale) => {
-    i18nUtils.setLocale(locale);
+    preferenceStore.setLocale(locale);
     isOpen.value = false;
 };
 

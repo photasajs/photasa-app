@@ -1,4 +1,4 @@
-import { createApp, Plugin } from "vue";
+import { createApp, Plugin, watch } from "vue";
 import App from "./App.vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
@@ -29,6 +29,26 @@ app.use(pinia);
 app.use(Antd);
 
 const preferenceStore = usePreferenceStore();
+const locale = preferenceStore.locale as
+    | "en-US"
+    | "zh-CN"
+    | "ja-JP"
+    | "ko-KR"
+    | "fr-FR"
+    | "de-DE"
+    | "es-ES";
+(i18n.global.locale as unknown as import("vue").Ref<string>).value = locale;
+document.querySelector("html")?.setAttribute("lang", locale);
+
+// Watch for changes to keep i18n in sync with Pinia
+watch(
+    () => preferenceStore.locale,
+    (newLocale) => {
+        (i18n.global.locale as unknown as import("vue").Ref<string>).value = newLocale;
+        document.querySelector("html")?.setAttribute("lang", newLocale);
+    },
+);
+
 Bugsnag.addMetadata("context", {
     locale: preferenceStore.locale,
     currentFolder: preferenceStore.currentFolder,
