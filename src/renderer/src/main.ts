@@ -10,6 +10,7 @@ import BugsnagPluginVue from "@bugsnag/plugin-vue";
 import VueVideoPlayer from "@videojs-player/vue";
 import "video.js/dist/video-js.css";
 import { i18n } from "./i18n/config";
+import { usePreferenceStore } from "@renderer/stores/preference";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -26,4 +27,13 @@ app.use(VueVideoPlayer);
 app.use(<Plugin>bugsnagVue);
 app.use(pinia);
 app.use(Antd);
+
+const preferenceStore = usePreferenceStore();
+Bugsnag.addMetadata("context", {
+    locale: preferenceStore.locale,
+    currentFolder: preferenceStore.currentFolder,
+});
+
+Bugsnag.leaveBreadcrumb("App started", {}, "state");
+
 app.mount("#app");
