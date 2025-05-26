@@ -23,6 +23,7 @@
         "sharp:win": "del-cli ./node_modules/sharp && npm install --platform=win32 --arch=x64 sharp",
         "sharp:linux": "del-cli ./node_modules/sharp && npm install --platform=linux --arch=x64 sharp",
         "test": "jest --config jest.config.js",
+        "test:e2e": "playwright test",
         "coverage": "jest --config jest.config.js --coverage"
     },
     "dependencies": {

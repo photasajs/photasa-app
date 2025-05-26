@@ -1,0 +1,12 @@
+{
+    "photoList": [
+        {
+            "path": "test-image.jpg",
+            "thumbnail": ".photasaoriginals/thumbnail-test-image.jpg.png",
+            "history": [],
+            "isVideo": false
+        }
+    ],
+    "version": "1.0",
+    "lastModified": 1748231292771
+}
