@@ -70,20 +70,19 @@
         "fixConfig": "Corriger les infos de la bibliothèque"
     },
     "about": {
-        "antvDescription": "Solution de visualisation de données",
+        "antvDescription": "Solution de Visualisation de Données",
         "introduction": {
-            "title": "Introduction",
-            "content": "Bonjour ! Cette application est un outil de gestion et d'organisation de photos.",
-            "summary": "Cette application se concentre sur",
-            "highlight": "une interface conviviale",
-            "userExperience": "l'expérience utilisateur",
+            "title": "À propos de Photosa",
+            "content": "Photosa est un outil moderne et respectueux de la vie privée pour la gestion de photos, inspiré par Picasa. Organisez, parcourez et profitez de vos photos et vidéos avec des fonctionnalités locales puissantes et une belle interface—sans nuage.",
+            "summary": "Photosa vous aide à redécouvrir et à gérer vos souvenirs facilement.",
+            "highlight": "local, rapide et convivial",
+            "userExperience": "expérience de gestion de photos",
             "focus": "."
         },
         "resources": {
             "title": "Ressources",
-            "content": "Les ressources suivantes sont disponibles :",
-            "and": "et",
-            "download": "Télécharger les ressources"
+            "content": "Explorez des ressources et une documentation supplémentaires pour Photosa.",
+            "download": "Télécharger les Ressources"
         },
         "press": "Appuyez sur",
         "toExit": "pour quitter"

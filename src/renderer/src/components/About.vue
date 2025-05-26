@@ -15,120 +15,26 @@ const handleKeyPress = (event: KeyboardEvent) => {
 </script>
 
 <template>
-    <div class="about-container">
-        <a-typography
-            :style="{
-                height: '600px',
-                width: '100%',
-                overflow: 'auto',
-            }"
-            role="article"
-            aria-label="About Ant Design"
-            @keydown="handleKeyPress"
-            tabindex="0"
-        >
-            <!-- English Section -->
-            <section aria-labelledby="intro-title-en">
-                <a-typography-title id="intro-title-en">{{
-                    t("about.introduction.title")
-                }}</a-typography-title>
-                <a-typography-paragraph>
-                    {{ t("about.introduction.content") }}
-                </a-typography-paragraph>
-                <a-typography-paragraph>
-                    {{ t("about.introduction.summary") }}
-                    <a-typography-text strong>
-                        {{ t("about.introduction.highlight") }}
-                    </a-typography-text>
-                </a-typography-paragraph>
-            </section>
+    <div class="about-container" tabindex="0" @keydown="handleKeyPress">
+        <section aria-labelledby="intro-title">
+            <h1 id="intro-title">{{ t("about.introduction.title") }}</h1>
+            <p>{{ t("about.introduction.content") }}</p>
+            <p>
+                {{ t("about.introduction.summary") }}
+                <strong>{{ t("about.introduction.highlight") }}</strong>
+            </p>
+        </section>
 
-            <section aria-labelledby="resources-title-en">
-                <a-typography-title :level="2" id="resources-title-en">
-                    {{ t("about.resources.title") }}
-                </a-typography-title>
-                <a-typography-paragraph>
-                    {{ t("about.resources.content") }}
-                    <a-typography-text code>Sketch</a-typography-text>
-                    {{ t("about.resources.and") }}
-                    <a-typography-text code>Axure</a-typography-text>
-                </a-typography-paragraph>
-
-                <a-typography-paragraph>
-                    <ul>
-                        <li>
-                            <a-typography-link
-                                href="/docs/resources"
-                                aria-label="Download design resources"
-                            >
-                                {{ t("about.resources.download") }}
-                            </a-typography-link>
-                        </li>
-                    </ul>
-                </a-typography-paragraph>
-
-                <a-typography-paragraph>
-                    {{ t("about.press") }}
-                    <a-typography-text keyboard>Esc</a-typography-text>
-                    {{ t("about.toExit") }}
-                </a-typography-paragraph>
-            </section>
-
-            <a-divider />
-
-            <!-- Chinese Section -->
-            <section aria-labelledby="intro-title-cn">
-                <a-typography-title id="intro-title-cn">{{
-                    t("about.introduction.title")
-                }}</a-typography-title>
-                <a-typography-paragraph>
-                    {{ t("about.introduction.content") }}
-                </a-typography-paragraph>
-                <a-typography-paragraph>
-                    {{ t("about.introduction.summary") }}
-                    <a-typography-text mark>{{
-                        t("about.introduction.highlight")
-                    }}</a-typography-text>
-                    {{ t("about.introduction.focus") }}
-                    <a-typography-text strong>{{
-                        t("about.introduction.userExperience")
-                    }}</a-typography-text>
-                </a-typography-paragraph>
-            </section>
-
-            <section aria-labelledby="resources-title-cn">
-                <a-typography-title :level="2" id="resources-title-cn">
-                    {{ t("about.resources.title") }}
-                </a-typography-title>
-                <a-typography-paragraph>
-                    {{ t("about.resources.content") }}
-                    <a-typography-text code>Sketch</a-typography-text>
-                    {{ t("about.resources.and") }}
-                    <a-typography-text code>Axure</a-typography-text>
-                </a-typography-paragraph>
-
-                <a-typography-paragraph>
-                    <ul>
-                        <li>
-                            <a-typography-link href="/docs/resources-cn" aria-label="下载设计资源">
-                                {{ t("about.resources.download") }}
-                            </a-typography-link>
-                        </li>
-                    </ul>
-                </a-typography-paragraph>
-
-                <a-typography-paragraph>
-                    <blockquote>{{ t("about.antvDescription") }}</blockquote>
-                    <pre>{{ t("about.antvDescription") }}</pre>
-                </a-typography-paragraph>
-
-                <a-typography-paragraph>
-                    {{ t("about.press") }}
-                    <a-typography-text keyboard>Esc</a-typography-text>
-                    {{ t("about.toExit") }}
-                </a-typography-paragraph>
-            </section>
-        </a-typography>
+        <section aria-labelledby="resources-title">
+            <h2 id="resources-title">{{ t("about.resources.title") }}</h2>
+            <p>{{ t("about.resources.content") }}</p>
+            <ul>
+                <li>
+                    <a :href="'/docs/resources'">{{ t("about.resources.download") }}</a>
+                </li>
+            </ul>
+            <p>{{ t("about.press") }} <kbd>Esc</kbd> {{ t("about.toExit") }}</p>
+        </section>
     </div>
 </template>
 
@@ -137,27 +43,55 @@ const handleKeyPress = (event: KeyboardEvent) => {
     position: relative;
     width: 100%;
     height: 100%;
+    padding: 32px 24px;
+    font-family: inherit;
+    background: #fff;
+    color: #222;
+    overflow: auto;
 }
 
-.language-switcher-container {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 1;
+h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
 }
 
-section {
-    margin-bottom: 2rem;
+h2 {
+    font-size: 1.25rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
 }
 
-/* Add smooth scrolling */
-:deep(.ant-typography) {
-    scroll-behavior: smooth;
+p {
+    margin-bottom: 1rem;
+    line-height: 1.7;
 }
 
-/* Improve focus styles for accessibility */
-:deep(.ant-typography:focus) {
-    outline: 2px solid #1890ff;
-    outline-offset: 2px;
+ul {
+    margin: 0 0 1rem 1.5rem;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 0.5rem;
+}
+
+code {
+    background: #f5f5f5;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 0.95em;
+}
+
+kbd {
+    background: #eee;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 0.95em;
+    font-family: inherit;
+}
+
+strong {
+    font-weight: bold;
+    color: #1890ff;
 }
 </style>

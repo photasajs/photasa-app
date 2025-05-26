@@ -72,17 +72,16 @@
     "about": {
         "antvDescription": "Data Visualization Solution",
         "introduction": {
-            "title": "Introduction",
-            "content": "Hello! This application is a tool for managing and organizing photos.",
-            "summary": "This application focuses on",
-            "highlight": "user-friendly interface",
-            "userExperience": "user experience",
+            "title": "About Photosa",
+            "content": "Photosa is a modern, privacy-friendly photo management tool inspired by Picasa. Organize, browse, and enjoy your photos and videos with powerful local features and a beautiful interface—no cloud required.",
+            "summary": "Photosa helps you rediscover and manage your memories with ease.",
+            "highlight": "local-first, fast, and user-friendly",
+            "userExperience": "photo management experience",
             "focus": "."
         },
         "resources": {
             "title": "Resources",
-            "content": "The following resources are available:",
-            "and": "and",
+            "content": "Explore additional resources and documentation for Photosa.",
             "download": "Download Resources"
         },
         "press": "Press",

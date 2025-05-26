@@ -31,23 +31,22 @@
         }
     },
     "about": {
-        "antvDescription": "データビジュアライゼーションソリューション",
+        "antvDescription": "データ可視化ソリューション",
         "introduction": {
-            "title": "紹介",
-            "content": "こんにちは！このアプリケーションは写真を管理・整理するためのツールです。",
-            "summary": "このアプリケーションは",
-            "highlight": "使いやすいインターフェース",
-            "userExperience": "ユーザー体験",
-            "focus": "に重点を置いています。"
+            "title": "Photosaについて",
+            "content": "Photosaは、Picasaにインスパイアされた、モダンでプライバシーに配慮した写真管理ツールです。強力なローカル機能と美しいインターフェースで、写真やビデオを整理、閲覧、楽しむことができます—クラウドは不要です。",
+            "summary": "Photosaは、思い出を簡単に再発見し、管理するお手伝いをします。",
+            "highlight": "ローカルファースト、高速、使いやすい",
+            "userExperience": "写真管理体験",
+            "focus": "。"
         },
         "resources": {
             "title": "リソース",
-            "content": "以下のリソースが利用可能です：",
-            "and": "および",
+            "content": "Photosaの追加リソースとドキュメントを探索してください。",
             "download": "リソースをダウンロード"
         },
-        "press": "押す",
-        "toExit": "終了するには"
+        "press": "押して",
+        "toExit": "終了"
     },
     "preferences": {
         "title": "設定",
