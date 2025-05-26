@@ -120,7 +120,7 @@ const currentLocaleInfo = computed(() => {
 }
 
 .locale-code {
-    margin-left: auto;
+    margin-left: 16px;
     font-size: 12px;
     color: #999;
 }
