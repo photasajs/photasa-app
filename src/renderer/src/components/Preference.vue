@@ -7,12 +7,13 @@ import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
-import LanguageSwitcher from "./LanguageSwitcher.vue";
+import Language from "./settings/Language.vue";
+import General from "./settings/General.vue";
+import About from "./settings/About.vue";
+import Theme from "./settings/Theme.vue";
 
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
-
-import About from "./About.vue";
 
 const { t } = useI18n();
 
@@ -65,17 +66,10 @@ function isDuplicate(path: string): boolean {
     return paths.value.includes(path);
 }
 
-function onChoose(): void {
-    chooseDirectory().then(({ filePaths }) => {
-        if (isDuplicate(filePaths[0])) {
-            openNotificationWithIcon(
-                "warning",
-                t("notification.duplicatePath.title"),
-                t("notification.duplicatePath.message", { path: filePaths[0] }),
-            );
-            return;
-        }
-        if (filePaths.length <= 0) {
+async function onChoose(): Promise<void> {
+    try {
+        const { filePaths } = await chooseDirectory();
+        if (!filePaths || filePaths.length === 0) {
             openNotificationWithIcon(
                 "info",
                 t("notification.emptyPath.title"),
@@ -83,19 +77,27 @@ function onChoose(): void {
             );
             return;
         }
-        // Save to preference
-        addPath(filePaths[0]);
+        const path = filePaths[0];
+        if (isDuplicate(path)) {
+            openNotificationWithIcon(
+                "warning",
+                t("notification.duplicatePath.title"),
+                t("notification.duplicatePath.message", { path }),
+            );
+            return;
+        }
+        addPath(path);
 
-        // Add Level 1 Subfolders
-        scanSubfolders(filePaths[0])
-            .then((folders) => {
-                folders.forEach((f) => addScanFolder(f, "scan"));
-            })
-            .then(() => {
-                // Add Self
-                addScanFolder(filePaths[0], "current");
-            });
-    });
+        const folders = await scanSubfolders(path);
+        folders.forEach((f) => addScanFolder(f, "scan"));
+        addScanFolder(path, "current");
+    } catch (error) {
+        openNotificationWithIcon(
+            "error",
+            t("notification.error"),
+            error?.message || t("notification.unknownError"),
+        );
+    }
 }
 
 function openNotificationWithIcon(type: string, message, description): void {
@@ -113,69 +115,13 @@ function handleRemove(item): void {
 <template>
     <a-tabs v-model:activeKey="activeKey" :tab-position="mode" :style="{ minHeight: '50vh' }">
         <a-tab-pane :key="1" :tab="label.tabs.general">
-            <a-form :model="formState" v-bind="formItemLayout" :layout="formLayout">
-                <a-form-item :label="t('preference.watchFolderList')">
-                    <a-space direction="vertical">
-                        <a-list
-                            size="small"
-                            bordered
-                            :data-source="paths"
-                            class="import-message-list"
-                        >
-                            <template #header>
-                                <a-descriptions :title="label.folderList">
-                                    <a-descriptions-item :label="label.folderListUsage">{{
-                                        label.folderListDesc
-                                    }}</a-descriptions-item>
-                                </a-descriptions>
-                            </template>
-                            <template #renderItem="{ item }">
-                                <a-list-item>
-                                    <template #actions>
-                                        <a-button @click="handleRemove(item)"
-                                            ><close-outlined
-                                        /></a-button>
-                                    </template>
-                                    <a-skeleton
-                                        avatar
-                                        :title="false"
-                                        :loading="!!item.loading"
-                                        active
-                                    >
-                                        <a-list-item-meta>
-                                            <template #title>
-                                                {{ item }}
-                                            </template>
-                                            <template #avatar>
-                                                <folder-two-tone />
-                                            </template>
-                                        </a-list-item-meta>
-                                    </a-skeleton>
-                                </a-list-item>
-                            </template>
-                            <template #footer> </template>
-                        </a-list>
-                        <a-button type="primary" @click="onChoose">{{
-                            label.chooseDirectory
-                        }}</a-button>
-                    </a-space>
-                </a-form-item>
-                <a-form-item :label="`${label.thumbnailSize} : ${thumbnailSize}px`">
-                    <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
-                </a-form-item>
-                <a-form-item :label="label.language">
-                    <div class="language-settings">
-                        <LanguageSwitcher />
-                    </div>
-                </a-form-item>
-            </a-form>
+            <General />
         </a-tab-pane>
         <a-tab-pane :key="2" :tab="label.tabs.theme">
-            <a-form :model="formState" v-bind="formItemLayout" layout="horizontal">
-                <a-form-item :label="label.darkMode">
-                    <a-switch v-model:checked="darkMode" />
-                </a-form-item>
-            </a-form>
+            <Theme />
+        </a-tab-pane>
+        <a-tab-pane :key="4" :tab="label.language">
+            <Language />
         </a-tab-pane>
         <a-tab-pane :key="3" :tab="label.tabs.about">
             <About></About>
