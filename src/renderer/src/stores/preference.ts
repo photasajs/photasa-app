@@ -136,5 +136,8 @@ export const usePreferenceStore = defineStore("preference", {
                 this.currentFolderConfig.photoList.splice(index, 1);
             }
         },
+        setLocale(locale: string) {
+            this.locale = locale;
+        },
     },
 });

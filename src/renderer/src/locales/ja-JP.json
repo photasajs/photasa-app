@@ -1,5 +1,68 @@
 {
     "message": {
         "hello": "こんにちは、世界"
+    },
+    "preference": {
+        "settings": "設定",
+        "tabs": {
+            "general": "一般",
+            "about": "約",
+            "theme": "テーマ"
+        },
+        "folderList": "フォルダーリスト",
+        "folderListUsage": "使い方",
+        "folderListDesc": "リストにディレクトリを追加すると、フォトマネージャーはそのディレクトリ内の写真とビデオをリアルタイムで管理できます。",
+        "watchFolderList": "以下のディレクトリ内の写真とビデオを管理できます。",
+        "chooseDirectory": "ディレクトリを選択してリストに追加",
+        "thumbnailSize": "サムネイルサイズ",
+        "darkMode": "ダークモード",
+        "language": "言語",
+        "scanning": "スキャン中"
+    },
+    "import": {
+        "photos": "写真をインポート",
+        "allowDuplicateRename": "重複写真のリネームを許可",
+        "targetDirectory": "エクスポートディレクトリ",
+        "chooseDirectory": "インポートディレクトリを選択",
+        "buttton": {
+            "import": "インポート",
+            "cancel": "キャンセル",
+            "ok": "OK"
+        }
+    },
+    "about": {
+        "antvDescription": "データ可視化ソリューション",
+        "introduction": {
+            "title": "Photosaについて",
+            "content": "Photosaは、Picasaにインスパイアされた、モダンでプライバシーに配慮した写真管理ツールです。強力なローカル機能と美しいインターフェースで、写真やビデオを整理、閲覧、楽しむことができます—クラウドは不要です。",
+            "summary": "Photosaは、思い出を簡単に再発見し、管理するお手伝いをします。",
+            "highlight": "ローカルファースト、高速、使いやすい",
+            "userExperience": "写真管理体験",
+            "focus": "。"
+        },
+        "resources": {
+            "title": "リソース",
+            "content": "Photosaの追加リソースとドキュメントを探索してください。",
+            "download": "リソースをダウンロード"
+        },
+        "press": "押して",
+        "toExit": "終了"
+    },
+    "preferences": {
+        "title": "設定",
+        "language": {
+            "title": "言語",
+            "description": "アプリケーションインターフェースの希望言語を選択してください。"
+        },
+        "thumbnail": {
+            "title": "サムネイルサイズ",
+            "description": "ギャラリービューで写真のサムネイルサイズを調整します。"
+        },
+        "theme": {
+            "title": "テーマ",
+            "description": "ライトモードとダークモードを切り替えます。",
+            "light": "ライト",
+            "dark": "ダーク"
+        }
     }
 }

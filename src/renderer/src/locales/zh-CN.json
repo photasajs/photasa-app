@@ -17,7 +17,8 @@
         "chooseDirectory": "选择目录并添加到列表",
         "thumbnailSize": "缩略图大小",
         "darkMode": "深色模式",
-        "scanning": "扫描目录中"
+        "language": "语言",
+        "scanning": "扫描中"
     },
     "import": {
         "photos": "导入照片",
@@ -67,5 +68,41 @@
         "cancel": "取消",
         "ok": "确定",
         "fixConfig": "修复照片库信息"
+    },
+    "about": {
+        "antvDescription": "数据可视化解决方案",
+        "introduction": {
+            "title": "介绍",
+            "content": "你好！这是一个用于管理和整理照片的工具。",
+            "summary": "这个应用程序专注于",
+            "highlight": "用户友好的界面",
+            "userExperience": "用户体验",
+            "focus": "。"
+        },
+        "resources": {
+            "title": "资源",
+            "content": "以下资源可用：",
+            "and": "和",
+            "download": "下载资源"
+        },
+        "press": "按",
+        "toExit": "退出"
+    },
+    "preferences": {
+        "title": "偏好设置",
+        "language": {
+            "title": "语言",
+            "description": "选择您偏好的应用程序界面语言。"
+        },
+        "thumbnail": {
+            "title": "缩略图大小",
+            "description": "调整图库视图中照片缩略图的大小。"
+        },
+        "theme": {
+            "title": "主题",
+            "description": "在浅色和深色模式之间切换。",
+            "light": "浅色",
+            "dark": "深色"
+        }
     }
 }

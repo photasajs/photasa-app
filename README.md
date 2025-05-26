@@ -8,7 +8,7 @@ Another Picasa App powered by [Electron Vite](https://evite.netlify.app/)
 
 ## Project Setup
 
-### Mac: Install vips to support HEIC
+### DEPRECATED Mac: Install vips to support HEIC
 
 vips is required to support HEIC, brew install vips have a [bottle support](https://formulae.brew.sh/formula/vips).
 
@@ -80,6 +80,10 @@ Must turn on `script-src 'unsafe-eval'` to allow handling of json
 
 So run electron-builder for mac, will only build Mac Version per arch
 
+####
+
+HEIC support is moved to use heci-decode with worker in main process
+
 ### Build for different platform
 
 #### Install sharp per platform
@@ -100,4 +104,19 @@ Still need to run on different OS to have a prebuilt libvips properly with HEIC.
 
 ```shell
 npm rebuild --platform=darwin --arch=arm64 sharp
+```
+
+### Video Thumbnail Generation
+
+ffmpeg and ffprobe are used to check video metadata and generate the thumbnail.
+
+#### electron package support
+
+electron need to bundle the binary properly, ffmpeg-static and ffprobe-static are prebuilt binary. It's loaded at beginning to
+force ffmpeg and ffprobe to use static binary.
+
+```javascript
+//Get the paths to the packaged versions of the binaries we want to use
+const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked");
+const ffprobePath = require("ffprobe-static").path.replace("app.asar", "app.asar.unpacked");
 ```

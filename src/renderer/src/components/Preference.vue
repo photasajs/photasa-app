@@ -7,6 +7,7 @@ import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
+import LanguageSwitcher from "./LanguageSwitcher.vue";
 
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
@@ -42,6 +43,7 @@ const label = computed(() => {
         folderListDesc: t("preference.folderListDesc"),
         darkMode: t("preference.darkMode"),
         scanning: t("preference.scanning"),
+        language: t("preference.language"),
         tabs: {
             general: t("preference.tabs.general"),
             about: t("preference.tabs.about"),
@@ -161,6 +163,11 @@ function handleRemove(item): void {
                 <a-form-item :label="`${label.thumbnailSize} : ${thumbnailSize}px`">
                     <a-slider v-model:value="thumbnailSize" :min="150" :max="400"></a-slider>
                 </a-form-item>
+                <a-form-item :label="label.language">
+                    <div class="language-settings">
+                        <LanguageSwitcher />
+                    </div>
+                </a-form-item>
             </a-form>
         </a-tab-pane>
         <a-tab-pane :key="2" :tab="label.tabs.theme">
@@ -190,5 +197,9 @@ function handleRemove(item): void {
 .import-message-list {
     height: 300px;
     overflow: auto;
+}
+
+.language-settings {
+    margin-top: 8px;
 }
 </style>

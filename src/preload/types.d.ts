@@ -2,7 +2,7 @@ import { ElectronAPI } from "@electron-toolkit/preload";
 
 type WatchAction = "add" | "change" | "delete" | "error" | "ready" | "raw";
 type WatchCallback = (state: WatchState) => void;
-type ImportCallback = (param: { type: string; action: FileAction }) => void;
+type ImportCallback = (param: { type: string; error?: null; action: FileAction }) => void;
 type ScanCallback = (action: ScanArgs) => void;
 type LoadCallback = (action: string, paths: string[]) => void;
 type ConfigCallback = (action: string, paths: string[]) => void;

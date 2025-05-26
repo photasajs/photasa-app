@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`utils buildThumbnailPath should build thumbnail path from source 1`] = `"/User/some/good/.photasaoriginals/thumbnail-pic.jepg.png"`;
+
+exports[`utils toRelativeThumbnailPath should build thumbnail path from source 1`] = `".photasaoriginals/thumbnail-pic.jepg.png"`;

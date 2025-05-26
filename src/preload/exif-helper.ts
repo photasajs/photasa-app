@@ -2,7 +2,7 @@ import { of, from, Observable } from "rxjs";
 import { catchError } from "rxjs/operators";
 import moment from "moment";
 import fs from "fs-extra";
-import ExifReader, { Tags, XmpTags, IccTags, StringArrayTag } from "exifreader";
+import ExifReader, { Tags, XmpTags, IccTags, StringArrayTag, ExifTags } from "exifreader";
 import isImage from "is-image";
 import type { FileAction } from "./types";
 
@@ -36,7 +36,7 @@ export async function checkExifDate(filePath: string): Promise<StringArrayTag | 
                     reject(error);
                 } else {
                     try {
-                        const tags = ExifReader.load(data.buffer);
+                        const tags = <ExifTags>ExifReader.load(data.buffer);
                         // The MakerNote tag can be really large. Remove it to lower memory
                         // usage if you're parsing a lot of files and saving the tags.
                         delete tags["MakerNote"];

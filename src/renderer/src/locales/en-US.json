@@ -1,23 +1,107 @@
 {
+    "app": {
+        "title": "Photosa",
+        "folderList": "Folder List"
+    },
     "preference": {
         "settings": "Settings",
         "tabs": {
             "general": "General",
-            "about": "About"
+            "about": "About",
+            "theme": "Theme"
         },
-        "watchFolderList": "仓廪图司可以管理下列目录中的照片和视频",
-        "chooseDirectory": "选择目录并添加到列表",
-        "thumbnailSize": "缩略图大小"
+        "folderList": "Folder List",
+        "folderListUsage": "Usage",
+        "folderListDesc": "After adding a directory to the list, Photosa can manage photos and videos in that directory in real time.",
+        "watchFolderList": "Photosa can manage photos and videos in the following directories.",
+        "chooseDirectory": "Choose directory and add to list",
+        "thumbnailSize": "Thumbnail Size",
+        "darkMode": "Dark Mode",
+        "language": "Language",
+        "scanning": "Scanning"
     },
     "import": {
-        "photos": "导入照片",
-        "allowDuplicateRename": "允许重命名重复的照片",
-        "targetDirectory": "导出目录",
-        "chooseDirectory": "选择导入目录",
-        "buttton": {
-            "import": "导入",
-            "cancel": "取消",
+        "photos": "Import Photos",
+        "allowDuplicateRename": "Allow duplicate photo renaming",
+        "targetDirectory": "Export Directory",
+        "chooseDirectory": "Choose import directory",
+        "button": {
+            "import": "Import",
+            "cancel": "Cancel",
             "ok": "OK"
+        }
+    },
+    "menu": {
+        "getInfo": "Photo Info",
+        "open": "Open in File Manager",
+        "rebuildThumbnail": "Rebuild Thumbnail",
+        "getConfig": "Get Library Info",
+        "rescan": "Rescan Directory"
+    },
+    "notification": {
+        "info": "Info",
+        "warn": "Warning",
+        "error": "Error",
+        "scan": {
+            "title": "Scan Directory",
+            "message": "Directory scan complete, photos have been imported into Photosa."
+        },
+        "duplicatePath": {
+            "title": "Duplicate Directory",
+            "message": "Directory [{folder}] already exists in Photosa."
+        },
+        "emptyPath": {
+            "title": "Choose Directory",
+            "message": "Please select a directory and complete the add operation."
+        }
+    },
+    "status": {
+        "ready": "Ready",
+        "readingConfig": "Loading library info [{config}]",
+        "loadingConfig": "Reading library info",
+        "processing": "Processing [{file}]",
+        "scanned": "Completed",
+        "scanComplete": "Directory [{path}] has been processed."
+    },
+    "button": {
+        "import": "Import",
+        "cancel": "Cancel",
+        "ok": "OK",
+        "fixConfig": "Fix Library Info"
+    },
+    "about": {
+        "antvDescription": "Data Visualization Solution",
+        "introduction": {
+            "title": "About Photosa",
+            "content": "Photosa is a modern, privacy-friendly photo management tool inspired by Picasa. Organize, browse, and enjoy your photos and videos with powerful local features and a beautiful interface—no cloud required.",
+            "summary": "Photosa helps you rediscover and manage your memories with ease.",
+            "highlight": "local-first, fast, and user-friendly",
+            "userExperience": "photo management experience",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Resources",
+            "content": "Explore additional resources and documentation for Photosa.",
+            "download": "Download Resources"
+        },
+        "press": "Press",
+        "toExit": "to exit"
+    },
+    "preferences": {
+        "title": "Preferences",
+        "language": {
+            "title": "Language",
+            "description": "Choose your preferred language for the application interface."
+        },
+        "thumbnail": {
+            "title": "Thumbnail Size",
+            "description": "Adjust the size of photo thumbnails in the gallery view."
+        },
+        "theme": {
+            "title": "Theme",
+            "description": "Switch between light and dark mode.",
+            "light": "Light",
+            "dark": "Dark"
         }
     }
 }
