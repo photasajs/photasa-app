@@ -87,7 +87,7 @@
         "comlink": "^4.4.1",
         "del-cli": "^5.0.0",
         "electron-builder": "^24.0.0",
-        "electron-vite": "^1.0.22",
+        "electron-vite": "^3.1.0",
         "eslint": "^9.27.0",
         "eslint-plugin-vue": "9.11.1",
         "image-type": "^5.2.0",
