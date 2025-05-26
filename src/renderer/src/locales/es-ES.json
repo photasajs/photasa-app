@@ -1,0 +1,108 @@
+{
+    "app": {
+        "title": "Photosa",
+        "folderList": "Lista de carpetas"
+    },
+    "preference": {
+        "settings": "Configuración",
+        "tabs": {
+            "general": "General",
+            "about": "Acerca de",
+            "theme": "Tema"
+        },
+        "folderList": "Lista de carpetas",
+        "folderListUsage": "Uso",
+        "folderListDesc": "Después de agregar un directorio a la lista, Photosa puede gestionar fotos y videos en ese directorio en tiempo real.",
+        "watchFolderList": "Photosa puede gestionar fotos y videos en los siguientes directorios.",
+        "chooseDirectory": "Elegir directorio y agregar a la lista",
+        "thumbnailSize": "Tamaño de miniatura",
+        "darkMode": "Modo oscuro",
+        "language": "Idioma",
+        "scanning": "Escaneando"
+    },
+    "import": {
+        "photos": "Importar fotos",
+        "allowDuplicateRename": "Permitir renombrar fotos duplicadas",
+        "targetDirectory": "Directorio de exportación",
+        "chooseDirectory": "Elegir directorio de importación",
+        "button": {
+            "import": "Importar",
+            "cancel": "Cancelar",
+            "ok": "OK"
+        }
+    },
+    "menu": {
+        "getInfo": "Información de la foto",
+        "open": "Abrir en el administrador de archivos",
+        "rebuildThumbnail": "Reconstruir miniatura",
+        "getConfig": "Obtener información de la biblioteca",
+        "rescan": "Reescanear directorio"
+    },
+    "notification": {
+        "info": "Información",
+        "warn": "Advertencia",
+        "error": "Error",
+        "scan": {
+            "title": "Escanear directorio",
+            "message": "Escaneo de directorio completo, las fotos han sido importadas a Photosa."
+        },
+        "duplicatePath": {
+            "title": "Directorio duplicado",
+            "message": "El directorio [{folder}] ya existe en Photosa."
+        },
+        "emptyPath": {
+            "title": "Elegir directorio",
+            "message": "Por favor seleccione un directorio y complete la operación de agregar."
+        }
+    },
+    "status": {
+        "ready": "Listo",
+        "readingConfig": "Cargando información de la biblioteca [{config}]",
+        "loadingConfig": "Leyendo información de la biblioteca",
+        "processing": "Procesando [{file}]",
+        "scanned": "Completado",
+        "scanComplete": "El directorio [{path}] ha sido procesado."
+    },
+    "button": {
+        "import": "Importar",
+        "cancel": "Cancelar",
+        "ok": "OK",
+        "fixConfig": "Corregir información de la biblioteca"
+    },
+    "about": {
+        "antvDescription": "Solución de visualización de datos",
+        "introduction": {
+            "title": "Introducción",
+            "content": "¡Hola! Esta aplicación es una herramienta para gestionar y organizar fotos.",
+            "summary": "Esta aplicación se centra en",
+            "highlight": "interfaz fácil de usar",
+            "userExperience": "experiencia de usuario",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Recursos",
+            "content": "Los siguientes recursos están disponibles:",
+            "and": "y",
+            "download": "Descargar recursos"
+        },
+        "press": "Presione",
+        "toExit": "para salir"
+    },
+    "preferences": {
+        "title": "Preferencias",
+        "language": {
+            "title": "Idioma",
+            "description": "Elija su idioma preferido para la interfaz de la aplicación."
+        },
+        "thumbnail": {
+            "title": "Tamaño de miniatura",
+            "description": "Ajuste el tamaño de las miniaturas de las fotos en la vista de galería."
+        },
+        "theme": {
+            "title": "Tema",
+            "description": "Cambiar entre modo claro y oscuro.",
+            "light": "Claro",
+            "dark": "Oscuro"
+        }
+    }
+}

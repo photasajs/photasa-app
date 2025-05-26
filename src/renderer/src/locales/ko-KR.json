@@ -1,0 +1,108 @@
+{
+    "app": {
+        "title": "포토 매니저",
+        "folderList": "폴더 목록"
+    },
+    "preference": {
+        "settings": "설정",
+        "tabs": {
+            "general": "일반",
+            "about": "정보",
+            "theme": "테마"
+        },
+        "folderList": "폴더 목록",
+        "folderListUsage": "사용 방법",
+        "folderListDesc": "폴더를 목록에 추가하면 포토 매니저가 해당 폴더 내의 사진과 비디오를 실시간으로 관리할 수 있습니다.",
+        "watchFolderList": "다음 디렉토리의 사진과 비디오를 관리할 수 있습니다.",
+        "chooseDirectory": "디렉토리 선택 및 목록에 추가",
+        "thumbnailSize": "썸네일 크기",
+        "darkMode": "다크 모드",
+        "language": "언어",
+        "scanning": "스캔 중"
+    },
+    "import": {
+        "photos": "사진 가져오기",
+        "allowDuplicateRename": "중복 사진 이름 바꾸기 허용",
+        "targetDirectory": "내보내기 디렉토리",
+        "chooseDirectory": "가져오기 디렉토리 선택",
+        "button": {
+            "import": "가져오기",
+            "cancel": "취소",
+            "ok": "확인"
+        }
+    },
+    "menu": {
+        "getInfo": "사진 정보",
+        "open": "파일 관리자에서 열기",
+        "rebuildThumbnail": "썸네일 재생성",
+        "getConfig": "사진 라이브러리 정보 가져오기",
+        "rescan": "디렉토리 다시 스캔"
+    },
+    "notification": {
+        "info": "정보",
+        "warn": "경고",
+        "error": "오류",
+        "scan": {
+            "title": "디렉토리 스캔",
+            "message": "디렉토리 스캔이 완료되었으며, 사진이 포토 매니저에 가져와졌습니다."
+        },
+        "duplicatePath": {
+            "title": "중복된 디렉토리",
+            "message": "디렉토리[{folder}]는 이미 포토 매니저에 존재합니다."
+        },
+        "emptyPath": {
+            "title": "디렉토리 선택",
+            "message": "디렉토리를 선택한 후 추가 작업을 완료하세요."
+        }
+    },
+    "status": {
+        "ready": "준비 완료",
+        "readingConfig": "사진 라이브러리 정보 로딩 [{config}]",
+        "loadingConfig": "사진 라이브러리 정보 읽는 중",
+        "processing": "처리 중 [{file}]",
+        "scanned": "처리 완료",
+        "scanComplete": "디렉토리[{path}] 처리가 완료되었습니다."
+    },
+    "button": {
+        "import": "가져오기",
+        "cancel": "취소",
+        "ok": "확인",
+        "fixConfig": "사진 라이브러리 정보 복구"
+    },
+    "about": {
+        "antvDescription": "데이터 시각화 솔루션",
+        "introduction": {
+            "title": "소개",
+            "content": "안녕하세요! 이 애플리케이션은 사진 관리 및 정리를 위한 도구입니다.",
+            "summary": "이 애플리케이션은",
+            "highlight": "사용자 친화적인 인터페이스",
+            "userExperience": "사용자 경험",
+            "focus": "에 중점을 두고 있습니다."
+        },
+        "resources": {
+            "title": "리소스",
+            "content": "다음 리소스를 사용할 수 있습니다:",
+            "and": "및",
+            "download": "리소스 다운로드"
+        },
+        "press": "종료하려면",
+        "toExit": "를 누르세요"
+    },
+    "preferences": {
+        "title": "설정",
+        "language": {
+            "title": "언어",
+            "description": "애플리케이션 인터페이스의 선호 언어를 선택하세요."
+        },
+        "thumbnail": {
+            "title": "썸네일 크기",
+            "description": "갤러리 보기에서 사진 썸네일의 크기를 조정합니다."
+        },
+        "theme": {
+            "title": "테마",
+            "description": "라이트 모드와 다크 모드를 전환합니다.",
+            "light": "라이트",
+            "dark": "다크"
+        }
+    }
+}

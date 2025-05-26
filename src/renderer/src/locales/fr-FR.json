@@ -1,0 +1,108 @@
+{
+    "app": {
+        "title": "Photosa",
+        "folderList": "Liste des dossiers"
+    },
+    "preference": {
+        "settings": "Paramètres",
+        "tabs": {
+            "general": "Général",
+            "about": "À propos",
+            "theme": "Thème"
+        },
+        "folderList": "Liste des dossiers",
+        "folderListUsage": "Utilisation",
+        "folderListDesc": "Après avoir ajouté un dossier à la liste, Photosa peut gérer les photos et vidéos dans ce dossier en temps réel.",
+        "watchFolderList": "Photosa peut gérer les photos et vidéos dans les dossiers suivants.",
+        "chooseDirectory": "Choisir un dossier et l'ajouter à la liste",
+        "thumbnailSize": "Taille de la vignette",
+        "darkMode": "Mode sombre",
+        "language": "Langue",
+        "scanning": "Analyse en cours"
+    },
+    "import": {
+        "photos": "Importer des photos",
+        "allowDuplicateRename": "Autoriser le renommage des photos en double",
+        "targetDirectory": "Dossier d'exportation",
+        "chooseDirectory": "Choisir le dossier d'importation",
+        "button": {
+            "import": "Importer",
+            "cancel": "Annuler",
+            "ok": "OK"
+        }
+    },
+    "menu": {
+        "getInfo": "Infos photo",
+        "open": "Ouvrir dans le gestionnaire de fichiers",
+        "rebuildThumbnail": "Reconstruire la vignette",
+        "getConfig": "Obtenir les infos de la bibliothèque",
+        "rescan": "Réanalyser le dossier"
+    },
+    "notification": {
+        "info": "Info",
+        "warn": "Avertissement",
+        "error": "Erreur",
+        "scan": {
+            "title": "Analyser le dossier",
+            "message": "Analyse du dossier terminée, les photos ont été importées dans Photosa."
+        },
+        "duplicatePath": {
+            "title": "Dossier en double",
+            "message": "Le dossier [{folder}] existe déjà dans Photosa."
+        },
+        "emptyPath": {
+            "title": "Choisir un dossier",
+            "message": "Veuillez sélectionner un dossier puis terminer l'ajout."
+        }
+    },
+    "status": {
+        "ready": "Prêt",
+        "readingConfig": "Chargement des infos de la bibliothèque [{config}]",
+        "loadingConfig": "Lecture des infos de la bibliothèque",
+        "processing": "Traitement [{file}]",
+        "scanned": "Terminé",
+        "scanComplete": "Le dossier [{path}] a été traité."
+    },
+    "button": {
+        "import": "Importer",
+        "cancel": "Annuler",
+        "ok": "OK",
+        "fixConfig": "Corriger les infos de la bibliothèque"
+    },
+    "about": {
+        "antvDescription": "Solution de visualisation de données",
+        "introduction": {
+            "title": "Introduction",
+            "content": "Bonjour ! Cette application est un outil de gestion et d'organisation de photos.",
+            "summary": "Cette application se concentre sur",
+            "highlight": "une interface conviviale",
+            "userExperience": "l'expérience utilisateur",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Ressources",
+            "content": "Les ressources suivantes sont disponibles :",
+            "and": "et",
+            "download": "Télécharger les ressources"
+        },
+        "press": "Appuyez sur",
+        "toExit": "pour quitter"
+    },
+    "preferences": {
+        "title": "Préférences",
+        "language": {
+            "title": "Langue",
+            "description": "Choisissez votre langue préférée pour l'interface de l'application."
+        },
+        "thumbnail": {
+            "title": "Taille de la vignette",
+            "description": "Ajustez la taille des vignettes photo dans la vue galerie."
+        },
+        "theme": {
+            "title": "Thème",
+            "description": "Basculer entre le mode clair et le mode sombre.",
+            "light": "Clair",
+            "dark": "Sombre"
+        }
+    }
+}

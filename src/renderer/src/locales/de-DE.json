@@ -1,0 +1,108 @@
+{
+    "app": {
+        "title": "Photosa",
+        "folderList": "Ordnerliste"
+    },
+    "preference": {
+        "settings": "Einstellungen",
+        "tabs": {
+            "general": "Allgemein",
+            "about": "Über",
+            "theme": "Thema"
+        },
+        "folderList": "Ordnerliste",
+        "folderListUsage": "Verwendung",
+        "folderListDesc": "Nachdem Sie ein Verzeichnis zur Liste hinzugefügt haben, kann Photosa Fotos und Videos in diesem Verzeichnis in Echtzeit verwalten.",
+        "watchFolderList": "Photosa kann Fotos und Videos in den folgenden Verzeichnissen verwalten.",
+        "chooseDirectory": "Verzeichnis auswählen und zur Liste hinzufügen",
+        "thumbnailSize": "Miniaturbildgröße",
+        "darkMode": "Dunkler Modus",
+        "language": "Sprache",
+        "scanning": "Scannen"
+    },
+    "import": {
+        "photos": "Fotos importieren",
+        "allowDuplicateRename": "Doppelte Fotos umbenennen erlauben",
+        "targetDirectory": "Exportverzeichnis",
+        "chooseDirectory": "Importverzeichnis auswählen",
+        "button": {
+            "import": "Importieren",
+            "cancel": "Abbrechen",
+            "ok": "OK"
+        }
+    },
+    "menu": {
+        "getInfo": "Foto-Info",
+        "open": "Im Dateimanager öffnen",
+        "rebuildThumbnail": "Miniaturbild neu erstellen",
+        "getConfig": "Bibliotheksinfo abrufen",
+        "rescan": "Verzeichnis erneut scannen"
+    },
+    "notification": {
+        "info": "Info",
+        "warn": "Warnung",
+        "error": "Fehler",
+        "scan": {
+            "title": "Verzeichnis scannen",
+            "message": "Verzeichnisscan abgeschlossen, Fotos wurden in Photosa importiert."
+        },
+        "duplicatePath": {
+            "title": "Doppeltes Verzeichnis",
+            "message": "Verzeichnis [{folder}] existiert bereits in Photosa."
+        },
+        "emptyPath": {
+            "title": "Verzeichnis auswählen",
+            "message": "Bitte wählen Sie ein Verzeichnis aus und schließen Sie den Hinzufügevorgang ab."
+        }
+    },
+    "status": {
+        "ready": "Bereit",
+        "readingConfig": "Bibliotheksinfo wird geladen [{config}]",
+        "loadingConfig": "Bibliotheksinfo wird gelesen",
+        "processing": "Verarbeitung [{file}]",
+        "scanned": "Abgeschlossen",
+        "scanComplete": "Verzeichnis [{path}] wurde verarbeitet."
+    },
+    "button": {
+        "import": "Importieren",
+        "cancel": "Abbrechen",
+        "ok": "OK",
+        "fixConfig": "Bibliotheksinfo reparieren"
+    },
+    "about": {
+        "antvDescription": "Lösung für Datenvisualisierung",
+        "introduction": {
+            "title": "Einführung",
+            "content": "Hallo! Diese Anwendung ist ein Tool zur Verwaltung und Organisation von Fotos.",
+            "summary": "Diese Anwendung konzentriert sich auf",
+            "highlight": "eine benutzerfreundliche Oberfläche",
+            "userExperience": "Benutzererfahrung",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Ressourcen",
+            "content": "Die folgenden Ressourcen sind verfügbar:",
+            "and": "und",
+            "download": "Ressourcen herunterladen"
+        },
+        "press": "Drücken Sie",
+        "toExit": "zum Beenden"
+    },
+    "preferences": {
+        "title": "Einstellungen",
+        "language": {
+            "title": "Sprache",
+            "description": "Wählen Sie Ihre bevorzugte Sprache für die Anwendungsoberfläche."
+        },
+        "thumbnail": {
+            "title": "Miniaturbildgröße",
+            "description": "Passen Sie die Größe der Fotominiaturansichten in der Galerieansicht an."
+        },
+        "theme": {
+            "title": "Thema",
+            "description": "Zwischen hellem und dunklem Modus wechseln.",
+            "light": "Hell",
+            "dark": "Dunkel"
+        }
+    }
+}

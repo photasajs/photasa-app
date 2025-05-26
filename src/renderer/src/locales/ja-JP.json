@@ -1,5 +1,69 @@
 {
     "message": {
         "hello": "こんにちは、世界"
+    },
+    "preference": {
+        "settings": "設定",
+        "tabs": {
+            "general": "一般",
+            "about": "約",
+            "theme": "テーマ"
+        },
+        "folderList": "フォルダーリスト",
+        "folderListUsage": "使い方",
+        "folderListDesc": "リストにディレクトリを追加すると、フォトマネージャーはそのディレクトリ内の写真とビデオをリアルタイムで管理できます。",
+        "watchFolderList": "以下のディレクトリ内の写真とビデオを管理できます。",
+        "chooseDirectory": "ディレクトリを選択してリストに追加",
+        "thumbnailSize": "サムネイルサイズ",
+        "darkMode": "ダークモード",
+        "language": "言語",
+        "scanning": "スキャン中"
+    },
+    "import": {
+        "photos": "写真をインポート",
+        "allowDuplicateRename": "重複写真のリネームを許可",
+        "targetDirectory": "エクスポートディレクトリ",
+        "chooseDirectory": "インポートディレクトリを選択",
+        "buttton": {
+            "import": "インポート",
+            "cancel": "キャンセル",
+            "ok": "OK"
+        }
+    },
+    "about": {
+        "antvDescription": "データビジュアライゼーションソリューション",
+        "introduction": {
+            "title": "紹介",
+            "content": "こんにちは！このアプリケーションは写真を管理・整理するためのツールです。",
+            "summary": "このアプリケーションは",
+            "highlight": "使いやすいインターフェース",
+            "userExperience": "ユーザー体験",
+            "focus": "に重点を置いています。"
+        },
+        "resources": {
+            "title": "リソース",
+            "content": "以下のリソースが利用可能です：",
+            "and": "および",
+            "download": "リソースをダウンロード"
+        },
+        "press": "押す",
+        "toExit": "終了するには"
+    },
+    "preferences": {
+        "title": "設定",
+        "language": {
+            "title": "言語",
+            "description": "アプリケーションインターフェースの希望言語を選択してください。"
+        },
+        "thumbnail": {
+            "title": "サムネイルサイズ",
+            "description": "ギャラリービューで写真のサムネイルサイズを調整します。"
+        },
+        "theme": {
+            "title": "テーマ",
+            "description": "ライトモードとダークモードを切り替えます。",
+            "light": "ライト",
+            "dark": "ダーク"
+        }
     }
 }
