@@ -11,9 +11,15 @@ export interface PhotasaConfig {
     lastModified?: number;
 }
 
+export interface PhotasaConfigResult {
+    path: string;
+    config: PhotasaConfig;
+}
+
 export interface WatchConfig {
     path: string;
     recursive: boolean;
+    paths?: string[];
 }
 
 export interface WatchCallback {
@@ -37,6 +43,10 @@ export type PathName = "import" | "target";
 export interface ThumbnailRequest {
     path: string;
     thumbnail: string;
+    width?: number;
+    height?: number;
+    preview?: string;
+    always?: boolean;
 }
 
 export interface ImageInfo {
@@ -62,6 +72,15 @@ export interface Photo {
     thumbnail: string;
     isVideo: boolean;
     history: string[];
+}
+
+export interface WatchState {
+    action: "add" | "change" | "delete";
+    path: string;
+    isFile: boolean;
+    isImage: boolean;
+    isVideo: boolean;
+    thumbnail?: string;
 }
 
 export interface API {

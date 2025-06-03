@@ -11,7 +11,6 @@ import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "../preload/types";
 import * as R from "ramda";
 import { toRelativeThumbnailPath, toFileName, shortenThumbnailName } from "../common";
-import PQueue from "p-queue";
 import { Logger } from "log4js";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
@@ -228,14 +227,20 @@ let addPathQueue: Record<string, string[]> = {};
 let lastQueuedCount = 0;
 
 // Create a queue with concurrency control and backpressure
-const queue = new PQueue({
-    concurrency: QUEUE_CONCURRENCY,
-    autoStart: true,
-    intervalCap: QUEUE_INTERVAL_CAP,
-    interval: QUEUE_INTERVAL,
-    timeout: QUEUE_TIMEOUT,
-    throwOnTimeout: false, // Don't crash on timeout
-});
+let queue: any = null;
+
+async function initializeQueue() {
+    const PQueue = (await import("p-queue")).default;
+    queue = new PQueue({
+        concurrency: QUEUE_CONCURRENCY,
+        autoStart: true,
+        intervalCap: QUEUE_INTERVAL_CAP,
+        interval: QUEUE_INTERVAL,
+        timeout: QUEUE_TIMEOUT,
+        throwOnTimeout: false, // Don't crash on timeout
+    });
+    return queue;
+}
 
 // Monitor queue size and emit events
 let queueLogger: Logger | null = null;
@@ -405,6 +410,22 @@ export function addToPhotasaConfig(
         addPathQueue[dir].push(p);
     });
 
+    // Initialize queue if not already done
+    if (!queue) {
+        initializeQueue().then((q) => {
+            queue = q;
+            addTaskToQueue(request, postMessage, logger);
+        });
+    } else {
+        addTaskToQueue(request, postMessage, logger);
+    }
+}
+
+function addTaskToQueue(
+    request: QueueItem,
+    postMessage: (message: string) => void,
+    logger: Logger,
+): void {
     // Add task to queue with priority based on queue size
     const priority = queue.size > 100 ? 1 : 0; // Higher priority for larger queues
     queue.add(

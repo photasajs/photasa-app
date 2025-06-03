@@ -110,23 +110,48 @@ const actions = {
     delete: handleDeleteFile,
 };
 
-export const handleFileTask = useTask(function* (_, state, preferenceStore) {
+export const handleFileTask = useTask(function* (_, state: WatchState, preferenceStore: any) {
     const handler = actions[state.action];
     if (handler) {
-        return yield handler(state, preferenceStore);
+        yield handler(state, preferenceStore);
     }
 })
     .enqueue()
     .maxConcurrency(1);
 
-export function startFileWatching(dirs, preferenceStore): void {
+export function startFileWatching(dirs: string[], preferenceStore: any): void {
     // start watching folders
     startWatching(
         {
+            path: dirs[0], // Use the first directory as the main path
+            recursive: true,
             paths: deepCopy(dirs),
         },
-        (state: WatchState) => {
-            handleFileTask.perform(state, preferenceStore);
+        {
+            onAdd: (path: string) => {
+                handleFileTask.perform(
+                    {
+                        action: "add",
+                        path,
+                        isFile: true,
+                        isImage: true,
+                        isVideo: false,
+                    },
+                    preferenceStore,
+                );
+            },
+            onRemove: (path: string) => {
+                handleFileTask.perform(
+                    {
+                        action: "delete",
+                        path,
+                        isFile: true,
+                        isImage: true,
+                        isVideo: false,
+                    },
+                    preferenceStore,
+                );
+            },
         },
     );
 }

@@ -9,10 +9,10 @@ function prefetchImage(src: string): Promise<void> {
     });
 }
 
-export const prefetchImageTask = useTask(function* (_, imageSrc) {
+export const prefetchImageTask = useTask(function* (_, imageSrc: string) {
     // RegEx to remove query string
     const src = imageSrc.replace(/\?.*$/, "");
-    return yield prefetchImage(src);
+    yield prefetchImage(src);
 })
     .enqueue()
     .maxConcurrency(5);

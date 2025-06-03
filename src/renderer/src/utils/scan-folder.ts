@@ -5,26 +5,26 @@ import { loggers } from "@common/logger";
 
 const logger = loggers.scan;
 
-export const processScannedFileTask = useTask(function* (_, args: ScanArgs, thumbnailSize: number) {
-    if (!args.action?.path) {
+export const processScannedFileTask = useTask(function* (_, args: ScanArgs) {
+    if (!args.path) {
         logger.warn("No path in scan args:", args);
         return;
     }
 
     try {
         // Create a thumbnail
-        logger.debug("Creating thumbnail for:", args.action.path);
+        logger.debug("Creating thumbnail for:", args.path);
         yield createThumbnailTask.perform({
-            path: args.action?.path as string,
-            thumbnail: args.action?.thumbnail as string,
-            width: thumbnailSize,
-            height: thumbnailSize,
+            path: args.path,
+            thumbnail: args.path, // Use the same path for thumbnail
+            width: args.thumbnailSize,
+            height: args.thumbnailSize,
             preview: "",
         });
 
         // Save to .photasa.json
-        logger.debug("Adding to photo list:", args.action.path);
-        addToPhotoList(args.action.path);
+        logger.debug("Adding to photo list:", args.path);
+        addToPhotoList(args.path);
     } catch (error) {
         logger.error("Error processing scanned file:", error);
         throw error;
