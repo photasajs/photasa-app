@@ -29,7 +29,7 @@ module.export = {
     preload: {
         plugins: [externalizeDepsPlugin(), babel({ babelHelpers: "bundled" })],
     },
-}
+};
 ```
 
 And any package used for preload only, should be in devDependencies, as it will be bundled.
@@ -68,10 +68,10 @@ $ npm run build:linux
 Must turn on `script-src 'unsafe-eval'` to allow handling of json
 
 ```html
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self' https://sessions.bugsnag.com/ https://notify.bugsnag.com/; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self';"
-    />
+<meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self' https://sessions.bugsnag.com/ https://notify.bugsnag.com/; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self';"
+/>
 ```
 
 ### HEIC for sharp
@@ -95,7 +95,7 @@ Still need to run on different OS to have a prebuilt libvips properly with HEIC.
     "script": {
         "sharp:mac": "del-cli ./node_modules/sharp && npm install --platform=darwin --arch=arm64 sharp && npm rebuild --platform=darwin --arch=x64 sharp",
         "sharp:win": "del-cli ./node_modules/sharp && npm install --platform=win32 --arch=x64 sharp",
-        "sharp:linux": "del-cli ./node_modules/sharp && npm install --platform=linux --arch=x64 sharp",
+        "sharp:linux": "del-cli ./node_modules/sharp && npm install --platform=linux --arch=x64 sharp"
     }
 }
 ```
