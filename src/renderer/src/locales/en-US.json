@@ -53,7 +53,12 @@
         "emptyPath": {
             "title": "Choose Directory",
             "message": "Please select a directory and complete the add operation."
-        }
+        },
+        "scanError": {
+            "title": "Scan Error",
+            "message": "Could not scan subdirectories of [{path}]. Error: {error}. The main directory will still be added."
+        },
+        "unknownError": "An unknown error occurred"
     },
     "status": {
         "ready": "Ready",

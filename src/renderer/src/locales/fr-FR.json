@@ -53,6 +53,10 @@
         "emptyPath": {
             "title": "Choisir un dossier",
             "message": "Veuillez sélectionner un dossier puis terminer l'ajout."
+        },
+        "scanError": {
+            "title": "Erreur de Scan",
+            "message": "Impossible de scanner les sous-répertoires de [{path}]. Erreur: {error}. Le répertoire principal sera tout de même ajouté."
         }
     },
     "status": {

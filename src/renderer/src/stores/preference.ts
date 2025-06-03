@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
+import { cleanupScanQueue } from "@renderer/utils/api";
 import type { PhotasaConfig, ScanAction, ThumbnailRequest } from "src/preload/types";
 import { DataNode } from "ant-design-vue/lib/tree";
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
@@ -122,21 +123,51 @@ export const usePreferenceStore = defineStore("preference", {
             });
         },
         removePath(path: string): void {
+            logger.debug("Removing path:", path);
+
+            // Remove from paths array
             const index = this.paths.indexOf(path);
             if (index >= 0) {
                 this.paths.splice(index, 1);
+                logger.debug("Removed from paths array");
             }
 
+            // Remove from folder tree
             const found = this.folderTree.findIndex((node) => node.key === path);
             if (found >= 0) {
                 this.folderTree.splice(found, 1);
+                logger.debug("Removed from folder tree");
             }
 
+            // Cancel any running scan tasks
             if (scanPhotosTask.isRunning) {
+                logger.debug("Cancelling running scan tasks");
                 scanPhotosTask.cancelAll();
             }
 
+            // Clean up the scan queue
+            logger.debug("Cleaning up scan queue");
+            cleanupScanQueue(path);
+
+            // Remove from scanning queue and all its subdirectories
+            const originalLength = this.scanningFolder.length;
+            this.scanningFolder = this.scanningFolder.filter(
+                (folder) => !folder.path.startsWith(path),
+            );
+            logger.debug(
+                `Removed ${
+                    originalLength - this.scanningFolder.length
+                } folders from scanning queue`,
+            );
+
+            // Complete scan for the removed path
             this.completeScanPath(path);
+
+            // Reset current folder if it was the removed one
+            if (this.currentFolder === path) {
+                this.currentFolder = this.paths[0] || "";
+                logger.debug("Reset current folder to:", this.currentFolder);
+            }
         },
         addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
             const relativePath = toFileName(request.path);

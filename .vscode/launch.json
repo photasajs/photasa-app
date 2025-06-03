@@ -6,11 +6,40 @@
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceRoot}",
-      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
       "windows": {
-        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite.cmd"
+        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
       },
-      "runtimeArgs": ["--sourcemap"]
+      "args": ["."],
+      "outputCapture": "std",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug Renderer Process",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceRoot}",
+      "timeout": 30000
+    },
+    {
+      "name": "Debug All",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+      },
+      "args": ["--remote-debugging-port=9222", "."],
+      "outputCapture": "std",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug Main + Renderer",
+      "configurations": ["Debug Main Process", "Debug Renderer Process"]
     }
   ]
 }

@@ -53,6 +53,10 @@
         "emptyPath": {
             "title": "Verzeichnis auswählen",
             "message": "Bitte wählen Sie ein Verzeichnis aus und schließen Sie den Hinzufügevorgang ab."
+        },
+        "scanError": {
+            "title": "Scan-Fehler",
+            "message": "Unterverzeichnisse von [{path}] konnten nicht gescannt werden. Fehler: {error}. Das Hauptverzeichnis wird trotzdem hinzugefügt."
         }
     },
     "status": {

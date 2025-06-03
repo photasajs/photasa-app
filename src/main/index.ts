@@ -13,6 +13,7 @@ import ThumbnailService from "./thumbnail-service";
 import ConfigService from "./config-service";
 import ScanService from "./scan-service";
 import { closeFileWatcher } from "./fs-watch";
+import fs from "fs";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -37,8 +38,20 @@ function createWindow(): void {
             preload: path.join(__dirname, "../preload/index.js"),
             sandbox: false,
             webSecurity: !isDev, // enable to load local source
+            nodeIntegration: false,
+            contextIsolation: true,
         },
         titleBarStyle: "hiddenInset",
+    });
+
+    // Handle page refreshes
+    mainWindow.webContents.on("did-finish-load", () => {
+        // Ensure preload script is loaded
+        mainWindow?.webContents.executeJavaScript(`
+            if (!window.api) {
+                window.location.reload();
+            }
+        `);
     });
 
     createMenu();
@@ -88,14 +101,35 @@ function createWindow(): void {
         shell.showItemInFolder(args.path);
     });
 
-    ipcMain.handle("picasa:sub-folders", (_, args) => {
-        const filterFn = (item: { path: string }): boolean => {
-            const basename = path.basename(item.path as string);
-            return basename === "." || basename[0] !== ".";
-        };
-        const folders = klawSync(args.parent, { nofile: true, depthLimit: 0, filter: filterFn });
+    ipcMain.handle("picasa:sub-folders", async (_, args) => {
+        try {
+            const filterFn = (item: { path: string }): boolean => {
+                const basename = path.basename(item.path as string);
+                return basename === "." || basename[0] !== ".";
+            };
 
-        return folders.map((item) => item.path);
+            // Check if directory exists
+            if (!fs.existsSync(args.parent)) {
+                const error = new Error(`Directory does not exist: ${args.parent}`);
+                logger.warn(error.message);
+                throw error; // Propagate error to renderer
+            }
+
+            const folders = klawSync(args.parent, {
+                nofile: true,
+                depthLimit: 0,
+                filter: filterFn,
+                errorCallback: (err) => {
+                    logger.error(`Error scanning directory ${args.parent}:`, err);
+                },
+            });
+
+            return folders.map((item) => item.path);
+        } catch (error) {
+            logger.error(`Error in picasa:sub-folders handler:`, error);
+            // Rethrow the error to be handled by the renderer
+            throw error;
+        }
     });
 
     // Setup Thumbnail Service

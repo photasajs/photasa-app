@@ -19,7 +19,7 @@ import {
     fixPhotasaConfig,
     resetPhotasaConfig,
 } from "./file-config";
-import { scanSubfolders } from "./query-config";
+import { scanSubfolders, cleanupScanQueue } from "./query-config";
 import {
     isFileUnderFolder,
     isHiddenFile,
@@ -56,6 +56,7 @@ const api = {
     isVideoFile,
     isImageFile,
     fileUrlFromPath,
+    cleanupScanQueue,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

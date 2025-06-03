@@ -53,6 +53,10 @@
         "emptyPath": {
             "title": "디렉토리 선택",
             "message": "디렉토리를 선택한 후 추가 작업을 완료하세요."
+        },
+        "scanError": {
+            "title": "스캔 오류",
+            "message": "[{path}]의 하위 디렉토리를 스캔할 수 없습니다. 오류: {error}. 메인 디렉토리는 계속 추가됩니다."
         }
     },
     "status": {

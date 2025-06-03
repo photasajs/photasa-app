@@ -17,7 +17,11 @@
         "thumbnailSize": "サムネイルサイズ",
         "darkMode": "ダークモード",
         "language": "言語",
-        "scanning": "スキャン中"
+        "scanning": "スキャン中",
+        "scanError": {
+            "title": "スキャンエラー",
+            "message": "[{path}]のサブディレクトリをスキャンできませんでした。エラー: {error}。メインディレクトリは追加されます。"
+        }
     },
     "import": {
         "photos": "写真をインポート",

@@ -136,6 +136,7 @@ declare global {
             isVideoFile: (filePath: string) => boolean;
             isImageFile: (filePath: string) => boolean;
             fileUrlFromPath: (file: string) => string;
+            cleanupScanQueue: (folderPath: string) => void;
         };
     }
 }

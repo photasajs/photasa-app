@@ -45,8 +45,8 @@ export function getDirectory(name: PathName): Promise<string> {
 function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
     return {
         ...request,
-        path: request.path.replace("file://", ""),
-        thumbnail: request.thumbnail.replace("file://", ""),
+        path: request.path.replace(/^file:\/\/+/, ""),
+        thumbnail: request.thumbnail.replace(/^file:\/\/+/, ""),
     };
 }
 
@@ -98,6 +98,10 @@ export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
 })
     .enqueue()
     .maxConcurrency(1);
+
+export const cleanupScanQueue = (folderPath: string): void => {
+    window.api.cleanupScanQueue(folderPath);
+};
 
 export function scanSubfolders(folder): Promise<string[]> {
     return window.api.scanSubfolders(folder);

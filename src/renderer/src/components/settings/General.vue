@@ -52,18 +52,31 @@ async function onChoose(): Promise<void> {
         if (isDuplicate(path)) {
             notification.warning({
                 message: t("notification.duplicatePath.title"),
-                description: t("notification.duplicatePath.message", { path }),
+                description: t("notification.duplicatePath.message", { folder: path }),
             });
             return;
         }
         addPath(path);
-        const folders = await scanSubfolders(path);
-        folders.forEach((f) => addScanFolder(f, "scan"));
-        addScanFolder(path, "current");
-    } catch (error) {
+        try {
+            const folders = await scanSubfolders(path);
+            folders.forEach((f) => addScanFolder(f, "scan"));
+            addScanFolder(path, "current");
+        } catch (scanError: unknown) {
+            // If scanning fails, still add the main path but show a warning
+            const errorMessage =
+                scanError instanceof Error ? scanError.message : t("notification.unknownError");
+            notification.warning({
+                message: t("notification.scanError.title"),
+                description: t("notification.scanError.message", { path, error: errorMessage }),
+            });
+            addScanFolder(path, "current");
+        }
+    } catch (error: unknown) {
+        const errorMessage =
+            error instanceof Error ? error.message : t("notification.unknownError");
         notification.error({
             message: t("notification.error"),
-            description: error?.message || t("notification.unknownError"),
+            description: errorMessage,
         });
     }
 }

@@ -53,6 +53,10 @@
         "emptyPath": {
             "title": "Elegir directorio",
             "message": "Por favor seleccione un directorio y complete la operación de agregar."
+        },
+        "scanError": {
+            "title": "Error de Escaneo",
+            "message": "No se pudieron escanear los subdirectorios de [{path}]. Error: {error}. El directorio principal se añadirá de todos modos."
         }
     },
     "status": {
