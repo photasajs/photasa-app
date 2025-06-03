@@ -69,7 +69,7 @@ interface ThumbnailRequest {
 interface ScanAction {
     path: string;
     action: "scan" | "rescan" | "current"; // scan: new folder, rescan: existing folder, current: only current folder
-    thumbnailSize: number = 100;
+    thumbnailSize: number;
 }
 
 interface ScanArgs {
