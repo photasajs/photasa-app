@@ -16,6 +16,7 @@ export default defineConfig({
             alias: {
                 "@renderer": resolve("src/renderer/src"),
                 "@preload": resolve("src/preload/"),
+                "@common": resolve("src/common/"),
             },
         },
         plugins: [vue(), comlink()],

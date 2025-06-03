@@ -1,38 +1,453 @@
-# Photasas Design
+# Photasa Design
 
-## Main Process
+## Overview
 
-### File Watch
+Photasa is an Electron-based desktop application designed to scan selected folders, generate thumbnails for quick preview, and manage file metadata. The app uses worker processes for asynchronous tasks, Pinia for state management, and Ant Design Vue for the UI.
 
-File Watch is based on klaw package.
+## 1. Folder Selection & Preference Storage
 
-### Image/Video Thumbnail
+**Design:**
+The user selects folders to scan, and these paths are stored in preferences (using localStorage).
 
-#### Sharp for image except HEIC
+**Code:**
+- [`src/renderer/src/components/Preference.vue`](src/renderer/src/components/Preference.vue)
+  - UI for folder selection (`chooseDirectory`, `scanSubfolders`).
+  - Uses `usePreferenceStore` to manage paths.
+- [`src/renderer/src/stores/preference.ts`](src/renderer/src/stores/preference.ts)
+  - Pinia store for preferences.
+  - `paths` array holds watched folders.
+  - `persist: true` enables localStorage persistence.
+  - `addPath`, `removePath`, `addScanFolder` manage folder list.
 
-Sharp is used to create
+## 2. File Scanning & Database
 
-#### HEIC Handling in worker
+**Design:**
+The app scans selected folders for files and stores file information in a database for quick access.
 
-#### Video Thumbnail
+**Code:**
+- [`src/renderer/src/App.vue`](src/renderer/src/App.vue)
+  - Calls `scanSubfolders`, `scanPhotosTask.perform` to scan folders.
+  - Updates Pinia store and triggers file watching.
+- [`src/renderer/src/utils/scan-folder.ts`](src/renderer/src/utils/scan-folder.ts)
+  - `scanPhotosTask` and `processScannedFileTask` handle scanning and thumbnail creation.
+- [`src/renderer/src/stores/photos.ts`](src/renderer/src/stores/photos.ts)
+  - Pinia store for scanned files and their metadata.
 
+## 3. Thumbnail Generation
 
+**Design:**
+Thumbnails are generated for each file to enable fast previews in the UI.
 
-### Configuration
+**Code:**
+- [`src/renderer/src/utils/scan-folder.ts`](src/renderer/src/utils/scan-folder.ts)
+  - Uses `createThumbnailTask` to generate thumbnails.
+- [`src/renderer/src/utils/api.ts`](src/renderer/src/utils/api.ts)
+  - Exposes `createThumbnailTask` and related helpers.
+- [`src/renderer/src/components/ImageList.vue`](src/renderer/src/components/ImageList.vue)
+  - Displays thumbnails using the `LazyImage` component.
 
-Thumbnail is cached under photasaoriginals.
+## 4. Worker Processes & Async
 
-.photasa.json is used to store current tracked photos.
+**Design:**
+Scanning and thumbnail generation are offloaded to worker processes to keep the UI responsive.
 
+**Code:**
+- [`src/main/index.ts`](src/main/index.ts)
+  - Sets up Electron main process, initializes services:
+    - `ThumbnailService`, `ScanService`, `ConfigService`.
+- [`src/renderer/src/utils/scan-folder.ts`](src/renderer/src/utils/scan-folder.ts)
+  - Uses `vue-concurrency` for async tasks.
+- [`src/renderer/src/utils/file-handler.ts`](src/renderer/src/utils/file-handler.ts)
+  - Handles file watching and async updates.
 
+## 5. Quick View & Preview
 
+**Design:**
+The UI displays thumbnails for fast browsing; clicking a thumbnail shows a preview or opens the file.
 
-## Preload Process
+**Code:**
+- [`src/renderer/src/components/ImageList.vue`](src/renderer/src/components/ImageList.vue)
+  - Renders thumbnails and handles preview logic.
+- [`src/renderer/src/components/LazyImage.vue`](src/renderer/src/components/LazyImage.vue)
+  - Handles lazy loading, preview, and video/image distinction.
 
-## Render Process
+## 6. Database & Metadata
 
-### Folder List
+**Design:**
+File metadata is stored for quick access and management.
 
-Left Pane is the folder tree of watched folder.
+**Code:**
+- [`src/renderer/src/stores/photos.ts`](src/renderer/src/stores/photos.ts)
+  - Manages file metadata in Pinia store.
+- [`src/renderer/src/components/FolderList.vue`](src/renderer/src/components/FolderList.vue)
+  - UI for browsing folder tree and configs.
 
-The whole tree node are persisted
+## 7. State Management & UI
+
+**Design:**
+Uses Pinia for state management and Ant Design Vue for the UI.
+
+**Code:**
+- [`src/renderer/src/stores/preference.ts`](src/renderer/src/stores/preference.ts)
+  - Pinia for preferences.
+- [`src/renderer/src/stores/photos.ts`](src/renderer/src/stores/photos.ts)
+  - Pinia for photo metadata.
+- Ant Design Vue components used throughout UI files.
+
+## 8. Electron Architecture
+
+**Design:**
+- **Main Process:** Handles OS-level tasks, file dialogs, and services.
+- **Preload Process:** Exposes safe APIs to the renderer.
+- **Renderer Process:** Vue app, UI, and state.
+
+**Code:**
+- [`src/main/index.ts`](src/main/index.ts)
+  - Main process, sets up Electron window, IPC, and services.
+- [`src/preload/index.ts`](src/preload/index.ts)
+  - Exposes APIs to renderer via `contextBridge`.
+- [`src/renderer/src/App.vue`](src/renderer/src/App.vue)
+  - Main Vue entry, orchestrates scanning, state, and UI.
+
+## 9. Documentation
+
+- [`docs/DESIGN.md`](docs/DESIGN.md)
+  - Contains high-level design notes and code mappings.
+
+## 10. Architecture Diagram
+
+```mermaid
+graph TD;
+    A[Main Process] --> B[Preload Process]
+    B --> C[Renderer Process]
+    A --> D[File Watch]
+    A --> E[Thumbnail Generation]
+    A --> F[Configuration]
+    C --> G[Folder List]
+    C --> H[Image List]
+    C --> I[LazyImage]
+    C --> J[Preference]
+    C --> K[State Management]
+    K --> L[Pinia Store]
+    L --> M[Preference Store]
+    L --> N[Photos Store]
+    E --> O[Sharp for Images]
+    E --> P[HEIC Handling]
+    E --> Q[Video Thumbnail]
+    F --> R[.photasa.json]
+    F --> S[Thumbnail Cache]
+```
+
+## 11. Main Process Details
+
+### File Watch System
+- Based on the `klaw` package for efficient file system traversal
+- Watches multiple directories simultaneously
+- Handles file system events (create, modify, delete)
+- Maintains a persistent watch state across app restarts
+
+### Worker Processes
+1. **Thumbnail Worker**
+   - Handles image processing in a separate process
+   - Uses Sharp for image manipulation
+   - Supports various image formats (JPEG, PNG, WebP)
+   - Generates optimized thumbnails for quick loading
+
+2. **Scan Worker**
+   - Manages file system scanning
+   - Processes new and modified files
+   - Updates database with file metadata
+   - Triggers thumbnail generation
+
+3. **Config Worker**
+   - Manages application configuration
+   - Handles persistence of settings
+   - Synchronizes config across processes
+
+### Image Processing Pipeline
+1. **Image Detection**
+   - Identifies supported image formats
+   - Extracts metadata (EXIF, dimensions)
+   - Determines if thumbnail generation is needed
+
+2. **Thumbnail Generation**
+   - Resizes images while maintaining aspect ratio
+   - Optimizes for web display
+   - Caches results for quick access
+   - Handles different image formats appropriately
+
+3. **HEIC Support**
+   - Special handling for HEIC images
+   - Converts to JPEG for compatibility
+   - Preserves original quality
+   - Maintains metadata
+
+4. **Video Thumbnails**
+   - Extracts frames from video files
+   - Generates preview images
+   - Supports common video formats
+   - Optimizes for quick loading
+
+## 12. Configuration System
+
+### Storage
+- `.photasa.json` configuration file
+- Stores watched folders
+- Maintains application settings
+- Persists user preferences
+
+### Cache Management
+- Thumbnail cache under `photasaoriginals`
+- Efficient storage structure
+- Automatic cleanup of unused thumbnails
+- Version control for cache format
+
+### State Persistence
+- Pinia stores with persistence
+- Local storage for preferences
+- File system for thumbnails
+- Database for file metadata
+
+## 13. Performance Considerations
+
+### Lazy Loading
+- Images load only when visible
+- Progressive loading of thumbnails
+- Efficient memory management
+- Background processing of large files
+
+### Caching Strategy
+- Multi-level cache system
+- Memory cache for active files
+- Disk cache for thumbnails
+- Metadata cache for quick access
+
+### Worker Process Management
+- Efficient process allocation
+- Resource usage monitoring
+- Automatic cleanup of unused resources
+- Error recovery and retry mechanisms
+
+## 14. Security Considerations
+
+### File System Access
+- Controlled access to file system
+- Validation of file paths
+- Safe file operations
+- Error handling for permissions
+
+### Data Protection
+- Secure storage of preferences
+- Safe handling of file metadata
+- Protection of user data
+- Secure communication between processes
+
+## 15. Error Handling
+
+### Process Management
+- Worker process error recovery
+- Automatic restart of failed processes
+- Error logging and reporting
+- User notification system
+
+### File System Errors
+- Handling of missing files
+- Recovery from file system errors
+- Validation of file operations
+- Backup of critical data
+
+## 16. Future Considerations
+
+### Scalability
+- Support for large photo libraries
+- Efficient handling of growing datasets
+- Performance optimization for large collections
+- Resource management for extended use
+
+### Feature Extensions
+- Additional image format support
+- Enhanced video processing
+- Advanced search capabilities
+- Integration with cloud services
+
+## 17. Sequence Diagrams
+
+### File Scanning and Thumbnail Generation
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Renderer Process
+    participant Main as Main Process
+    participant ScanW as Scan Worker
+    participant ThumbW as Thumbnail Worker
+    participant DB as Database
+
+    User->>UI: Select Folder
+    UI->>Main: chooseDirectory()
+    Main-->>UI: Return Path
+    UI->>Main: scanSubfolders(path)
+    Main->>ScanW: Start Scanning
+    ScanW->>DB: Store File Metadata
+    ScanW->>ThumbW: Generate Thumbnail
+    ThumbW-->>ScanW: Thumbnail Ready
+    ScanW-->>Main: Scan Complete
+    Main-->>UI: Update File List
+    UI-->>User: Show Thumbnails
+```
+
+### Image Loading and Preview
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Renderer Process
+    participant LazyImage
+    participant Cache
+    participant Main as Main Process
+
+    User->>UI: Scroll to Image
+    UI->>LazyImage: Check Visibility
+    LazyImage->>Cache: Request Thumbnail
+    alt Thumbnail in Cache
+        Cache-->>LazyImage: Return Thumbnail
+    else Thumbnail not in Cache
+        LazyImage->>Main: Request Thumbnail
+        Main-->>LazyImage: Generate & Return
+        LazyImage->>Cache: Store Thumbnail
+    end
+    LazyImage-->>UI: Display Image
+    UI-->>User: Show Image
+
+    User->>LazyImage: Click Image
+    LazyImage->>UI: Toggle Preview
+    UI-->>User: Show Preview Modal
+```
+
+### Worker Process Communication
+
+```mermaid
+sequenceDiagram
+    participant Main as Main Process
+    participant ScanW as Scan Worker
+    participant ThumbW as Thumbnail Worker
+    participant ConfigW as Config Worker
+    participant DB as Database
+
+    Main->>ScanW: Initialize
+    Main->>ThumbW: Initialize
+    Main->>ConfigW: Initialize
+
+    loop File System Events
+        Main->>ScanW: New File Detected
+        ScanW->>DB: Store Metadata
+        ScanW->>ThumbW: Request Thumbnail
+        ThumbW-->>ScanW: Thumbnail Ready
+        ScanW->>DB: Update File Status
+        ScanW-->>Main: Processing Complete
+    end
+
+    loop Configuration Changes
+        Main->>ConfigW: Config Update
+        ConfigW->>DB: Store Config
+        ConfigW-->>Main: Config Updated
+    end
+```
+
+### Error Recovery Flow
+
+```mermaid
+sequenceDiagram
+    participant Main as Main Process
+    participant Worker
+    participant UI as Renderer Process
+    participant User
+
+    Main->>Worker: Start Task
+    alt Task Success
+        Worker-->>Main: Success
+        Main-->>UI: Update Status
+        UI-->>User: Show Success
+    else Task Failure
+        Worker-->>Main: Error
+        Main->>Worker: Retry Task
+        alt Retry Success
+            Worker-->>Main: Success
+            Main-->>UI: Update Status
+            UI-->>User: Show Success
+        else Retry Failure
+            Worker-->>Main: Error
+            Main-->>UI: Show Error
+            UI-->>User: Display Error
+            User->>UI: Acknowledge
+        end
+    end
+```
+
+## 18. Folder Addition and Scanning Process
+
+### Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Preference.vue
+    participant Store as PreferenceStore
+    participant App as App.vue
+    participant Main as Main Process
+    participant Worker as Scan Worker
+
+    User->>UI: Click Add Folder
+    UI->>Main: chooseDirectory()
+    Main-->>UI: Return Path
+    UI->>Store: addPath(path)
+    UI->>Main: scanSubfolders(path)
+    Main-->>UI: Return Subfolders
+    UI->>Store: addScanFolder(folder, "scan")
+    UI->>Store: addScanFolder(path, "current")
+
+    Note over Store,App: Watch scanningFolder Array
+    Store->>App: scanningFolder Changed
+    App->>App: startScanning()
+    App->>Main: scanPhotos(scanAction)
+    Main->>Worker: Start Scanning
+    Worker-->>Main: Scan Complete
+    Main-->>App: Update Status
+    App->>Store: completeScanPath(path)
+    App->>Store: updateFolderTree(path)
+```
+
+### Troubleshooting Guide
+
+#### Folder Scanning Not Starting
+
+If the scanning process doesn't start after adding a new folder, check the following:
+
+1. **Preference Store State**
+   - Verify `scanningFolder` array is properly updated
+   - Check if `paths` array contains the new folder
+   - Ensure `folderTree` is updated
+
+2. **Watch Triggers**
+   - Confirm `watchArray` on `scanningFolder` is working
+   - Verify `scanPhotosTask.isIdle` is true
+   - Check if `startScanning()` is being called
+
+3. **Worker Process**
+   - Ensure Scan Worker is properly initialized
+   - Check for any IPC communication errors
+   - Verify file system permissions
+
+4. **Common Issues**
+   - Duplicate paths in `scanningFolder`
+   - Incorrect action type ("scan" vs "current")
+   - Missing thumbnail size in scan action
+   - File system access permissions
+
+#### Debug Steps
+
+1. Check the console for any errors
+2. Verify the `scanningFolder` array in the store
+3. Confirm the scan action is properly formatted
+4. Ensure the worker process is running
+5. Check file system permissions

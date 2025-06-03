@@ -21,7 +21,10 @@ export default defineConfig({
                 "src/renderer/src/test/**/*",
             ],
         },
-        include: ["src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}"],
+        include: [
+            "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
+            "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
+        ],
         alias: {
             "@": fileURLToPath(new URL("./src/renderer/src", import.meta.url)),
             "@renderer": fileURLToPath(new URL("./src/renderer/src", import.meta.url)),

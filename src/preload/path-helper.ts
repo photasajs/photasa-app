@@ -8,6 +8,7 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import { buildThumbnailPath, shouldIgnorePhotasaPath, isHiddenFile } from "../common";
 import type { PhotoPath, ScanAction } from "./types";
+
 export interface PathOption {
     root?: string;
 }
@@ -17,10 +18,10 @@ export interface FileException {
 }
 
 /**
- * Return path combined with root
- * @param filepath
- * @param options
- * @returns
+ * Combines a file path with an optional root path
+ * @param filepath - The file path to process
+ * @param options - Optional configuration including root path
+ * @returns The full path combining root and filepath if root is provided
  */
 export function toFullPath(filepath: string, options: PathOption): string {
     const _options = options || {};
@@ -28,6 +29,11 @@ export function toFullPath(filepath: string, options: PathOption): string {
     return root ? path.join(root, filepath) : filepath;
 }
 
+/**
+ * Ensures a directory exists, creating it if necessary
+ * @param action - The file action containing target directory information
+ * @returns Observable that emits the completed file action
+ */
 export function ensureDir(action: FileAction): Observable<FileAction> {
     action.targetDir = path.join(action.target ?? "", action.targetName ?? "");
     const promise = new Promise<FileAction>((resolve) => {
@@ -38,6 +44,13 @@ export function ensureDir(action: FileAction): Observable<FileAction> {
     return from(promise);
 }
 
+/**
+ * Scans a folder for files and processes them
+ * Uses klaw to walk through the directory tree and process each file
+ * @param source - The source directory to scan
+ * @param target - The target directory for processed files
+ * @returns Observable that emits FileAction events for each file found
+ */
 export function scanFolder(source: string, target: string): Observable<FileAction> {
     return new Observable<FileAction>((subscriber: Subscriber<FileAction>) => {
         klaw(source)
@@ -69,12 +82,28 @@ export function scanFolder(source: string, target: string): Observable<FileActio
     );
 }
 
+/**
+ * Determines if the scan action is for the current directory only
+ * @param action - The scan action to check
+ * @returns true if action is 'current' or 'rescan', false otherwise
+ */
 function isScanCurrent(action: string): boolean {
     return action == "current" || action == "rescan";
 }
 
 /**
- * Walk through files in a folder and ignore hidden files, photasa files and sub folders.
+ * Walks through files in a folder, filtering out hidden files and photasa files
+ * Uses klaw to traverse the directory tree with configurable depth
+ *
+ * Features:
+ * - Configurable scan depth (current directory or recursive)
+ * - Filters out hidden files and photasa-specific paths
+ * - Skips directories and the source path itself
+ * - Identifies image and video files
+ * - Generates thumbnail paths
+ *
+ * @param source - The source directory and scan action configuration
+ * @returns Observable that emits PhotoPath events for each valid file found
  */
 export function walkthroughFiles(source: ScanAction): Observable<PhotoPath> {
     return new Observable<PhotoPath>((subscriber: Subscriber<PhotoPath>) => {

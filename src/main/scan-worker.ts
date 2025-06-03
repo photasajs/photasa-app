@@ -12,39 +12,66 @@ if (!port) {
     throw new Error("IllegalState");
 }
 function postMessage(message): void {
+    logger.debug("Worker posting message:", message);
     port?.postMessage(JSON.stringify(message));
 }
 
 export function execute(requestId: string, scan: ScanAction): void {
-    scanPhotos(scan, logger).subscribe({
-        next: () => {}, // ignore next action, only complete or error
-        error: (error) => {
-            logger.error(error);
-            postMessage({
-                type: "error",
-                requestId,
-                error,
-            });
-        },
-        complete: () => {
-            postMessage({
-                type: "complete",
-                requestId,
-                action: {
-                    path: scan.path,
-                },
-            });
-        },
-    });
+    logger.debug("Worker executing scan:", { requestId, scan });
+    try {
+        scanPhotos(scan, logger).subscribe({
+            next: (action) => {
+                logger.debug("Scan progress:", action);
+            },
+            error: (error) => {
+                logger.error("Scan failed:", error);
+                postMessage({
+                    type: "error",
+                    requestId,
+                    error,
+                });
+            },
+            complete: () => {
+                logger.debug("Scan completed successfully");
+                postMessage({
+                    type: "complete",
+                    requestId,
+                    action: {
+                        path: scan.path,
+                    },
+                });
+            },
+        });
+    } catch (error) {
+        logger.error("Error in execute:", error);
+        postMessage({
+            type: "error",
+            requestId,
+            error,
+        });
+    }
 }
 
 port.on("message", (message) => {
-    const result = JSON.parse(message);
-    switch (result.action) {
-        case "scan":
-            execute(result.requestId, result.scan);
-            return;
-        default:
-            throw new Error("IllegalAction");
+    let parsedResult;
+    try {
+        parsedResult = JSON.parse(message);
+        logger.debug("Worker received message:", parsedResult);
+        switch (parsedResult.action) {
+            case "scan":
+                logger.debug("Starting scan for request:", parsedResult.requestId);
+                execute(parsedResult.requestId, parsedResult.scan);
+                return;
+            default:
+                logger.error("Unknown action:", parsedResult.action);
+                throw new Error("IllegalAction");
+        }
+    } catch (error) {
+        logger.error("Error processing message:", error);
+        postMessage({
+            type: "error",
+            requestId: parsedResult?.requestId,
+            error,
+        });
     }
 });

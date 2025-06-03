@@ -99,10 +99,10 @@ export async function addToPhotoList(photoPath: string): Promise<PhotasaConfigRe
             history: [],
             isVideo: isVideo(fileName),
         });
-        writeConfig(meta.dir, photasaConfig);
+        await writeConfig(meta.dir, photasaConfig);
     } else if (!photo.thumbnail) {
         photo.thumbnail = thumbnailName;
-        writeConfig(meta.dir, photasaConfig);
+        await writeConfig(meta.dir, photasaConfig);
     }
     return {
         path: meta.dir,
@@ -111,7 +111,7 @@ export async function addToPhotoList(photoPath: string): Promise<PhotasaConfigRe
 }
 
 /**
- * Remove photo to .photasa.json
+ * Remove photo from .photasa.json
  *
  * @param photo path of photo
  * @returns path of .photasa.json and config of photasa
@@ -119,11 +119,12 @@ export async function addToPhotoList(photoPath: string): Promise<PhotasaConfigRe
 export async function removeFromPhotoList(photoPath: string): Promise<PhotasaConfigResult> {
     const meta = await readConfig(photoPath, true);
     const photasaConfig = parseConfig(meta.data);
-    const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === photoPath);
+    const fileName = toFileName(photoPath);
+    const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === fileName);
 
     if (photoIndex >= 0) {
         photasaConfig.photoList.splice(photoIndex, 1);
-        writeConfig(meta.dir, photasaConfig);
+        await writeConfig(meta.dir, photasaConfig);
     }
     return {
         path: meta.dir,
@@ -155,7 +156,7 @@ export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
         photo.thumbnail = shortenThumbnailName(photo.thumbnail);
     });
 
-    writeConfig(meta.dir, config);
+    await writeConfig(meta.dir, config);
 
     return config;
 }
@@ -164,7 +165,9 @@ const addTaskRunner = new TaskRunner({
     concurrency: 1,
 });
 let addPathQueue = {};
-const DELAY_NOTIFY_DONE = 3000;
+export const config = {
+    DELAY_NOTIFY_DONE: 3000,
+};
 const QUEUE_BREAK_THRESHOLD = 60;
 let lastQueuedCount = 0;
 
@@ -180,12 +183,10 @@ function addConfig(
 ): void {
     const queued = Object.entries<string[]>(addPathQueue);
     addPathQueue = {};
-    logger.info(
-        `Process ${queued.reduce(
-            (acc, entry) => acc + entry[1].length,
-            0,
-        )} files to photasa config`,
-    );
+    const totalFiles = queued.reduce((acc, entry) => acc + entry[1].length, 0);
+    if (totalFiles > 0) {
+        logger.info(`Process ${totalFiles} files to photasa config`);
+    }
     from(queued)
         .pipe(concatMap(([key, value]) => batchAddToPhotoList(key, value)))
         .subscribe({
@@ -200,6 +201,7 @@ function addConfig(
                 );
             },
             error: (err) => {
+                logger.error(err);
                 postMessage(
                     JSON.stringify({
                         action: "error",
@@ -208,6 +210,7 @@ function addConfig(
                         err,
                     }),
                 );
+                done();
             },
             complete: () => {
                 postMessage(
@@ -220,7 +223,9 @@ function addConfig(
                 // Write to disk is time consuming, so we delay the notification so we can handle more saving
                 const handlerId = setInterval(() => {
                     const count = waitedFilesCount();
-                    logger.info(`Totally ${count} files are waiting`);
+                    if (count > 0) {
+                        logger.info(`Totally ${count} files are waiting`);
+                    }
                     // if count isn't changed then process it
                     if (count >= QUEUE_BREAK_THRESHOLD || count === lastQueuedCount) {
                         lastQueuedCount = 0;
@@ -229,7 +234,7 @@ function addConfig(
                     } else {
                         lastQueuedCount = count;
                     }
-                }, DELAY_NOTIFY_DONE);
+                }, config.DELAY_NOTIFY_DONE);
             },
         });
 }

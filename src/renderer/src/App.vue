@@ -17,12 +17,15 @@ import {
 import { deepCopy, top } from "./utils/object";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
+import { loggers } from "@common/logger";
 
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
 import type { ScanArgs, ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
+
+const logger = loggers.app;
 
 const { t } = useI18n();
 const photosStore = usePhotosStore();
@@ -66,33 +69,52 @@ watchArray(
 );
 
 async function startScanning(): Promise<void> {
+    logger.debug("startScanning called, scanningFolder:", scanningFolder.value);
     if (scanningFolder.value.length > 0) {
         const scanAction = deepCopy(top<ScanAction>(scanningFolder.value));
+        logger.debug("Starting scan for action:", scanAction);
         if (scanAction.action === "rescan") {
+            logger.debug("Rescanning folder:", scanAction.path);
             await resetPhotasaConfig(scanAction.path);
         }
 
         scanAction.thumbnailSize = thumbnailSize.value;
         // Each time only scan one level of subfolders, and expand the subfolders
-        scanSubfolders(scanAction.path).then((folders) => {
+        logger.debug("Scanning subfolders for:", scanAction.path);
+        try {
+            const folders = await scanSubfolders(scanAction.path);
+            logger.debug("Found subfolders:", folders);
             folders.forEach((f) => addScanFolder(f, "scan"));
-            return scanPhotosTask.perform(scanAction).then((args: ScanArgs) => {
-                processingFile.value = t("status.scanned");
-                if (args?.action?.path) {
-                    updateFolderTree(args.action.path as string);
-                    completeScanPath(args.action.path as string);
-                    startScanning();
-                }
-            });
-        });
+
+            logger.debug("Starting scanPhotosTask for:", scanAction);
+            const args = await scanPhotosTask.perform(scanAction);
+            logger.debug("Scan completed with args:", args);
+
+            processingFile.value = t("status.scanned");
+            if (args?.action?.path) {
+                logger.debug("Updating folder tree for:", args.action.path);
+                updateFolderTree(args.action.path as string);
+                completeScanPath(args.action.path as string);
+                startScanning();
+            }
+        } catch (error) {
+            logger.error("Error during scanning:", error);
+            processingFile.value = t("status.error");
+        }
+    } else {
+        logger.debug("No folders to scan");
     }
 }
 
 watchArray(
     scanningFolder,
     () => {
+        logger.debug("scanningFolder changed:", scanningFolder.value);
+        logger.debug("scanPhotosTask.isIdle:", scanPhotosTask.isIdle);
         if (scanPhotosTask.isIdle) {
             startScanning();
+        } else {
+            logger.debug("scanPhotosTask is not idle, skipping startScanning");
         }
     },
     { deep: true },

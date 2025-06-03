@@ -5,6 +5,9 @@ import type { PhotasaConfig, ScanAction, ThumbnailRequest } from "src/preload/ty
 import { DataNode } from "ant-design-vue/lib/tree";
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
+import { loggers } from "@common/logger";
+
+const logger = loggers.app;
 
 type PreferenceState = {
     paths: string[]; // Paths to monitor
@@ -65,20 +68,41 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
+            logger.debug("Adding scan folder:", { folder, action });
             if (!Array.isArray(this.scanningFolder)) {
+                logger.debug("Initializing scanningFolder array");
                 this.scanningFolder = [];
             }
-            if (action === "rescan" || !this.scanningFolder.find((p) => p.path === folder)) {
-                this.scanningFolder.push({ path: folder, action, thumbnailSize: 0 });
+
+            // Normalize the folder path
+            folder = normalizePath(folder);
+
+            // Check if the folder is already in the scanning queue
+            const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
+            if (existingIndex >= 0) {
+                // If it's a rescan, update the action
+                if (action === "rescan") {
+                    logger.debug("Updating existing folder to rescan:", folder);
+                    this.scanningFolder[existingIndex].action = "rescan";
+                } else {
+                    logger.debug("Folder already in scanning queue:", folder);
+                }
+                return;
             }
+
+            // Add the new folder to scan
+            logger.debug("Adding new folder to scan:", folder);
+            this.scanningFolder.push({ path: folder, action, thumbnailSize: this.thumbnailSize });
         },
         updateThumbnailSize(size: number) {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
+            logger.debug("Completing scan for folder:", folder);
             const index = this.scanningFolder.findIndex((f) => f.path === folder);
             if (index > -1) {
                 this.scanningFolder.splice(index, 1);
+                logger.debug("Removed folder from scanning queue:", folder);
             }
         },
         updateFolderTree(folder: string) {

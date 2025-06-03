@@ -70,8 +70,10 @@ ipcRenderer.on("picasa:find-photo", (_, args: ScanArgs) => {
 });
 
 export function scanPhotos(scan: ScanAction): Promise<void> {
+    console.log("scanPhotos called with scan action:", scan);
     return new Promise((resolve) => {
         const requestId = `scan-${RequestQueue.sequenceId++}`;
+        console.log("Created request ID:", requestId);
         RequestQueue.promiseQueue[requestId] = resolve;
         ipcRenderer.send("picasa:scan-photos", {
             requestId,

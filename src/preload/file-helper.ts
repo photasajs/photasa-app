@@ -4,6 +4,13 @@ import { Observable, from } from "rxjs";
 import type { FileAction, FileException } from "./types";
 import { PathOption, toFullPath } from "./path-helper";
 
+/**
+ * Synchronously checks if a file exists at the given path
+ * @param filepath - The path to check
+ * @param options - Optional configuration including root path
+ * @returns true if file exists and is accessible, false otherwise
+ * @throws Error if there are permission issues or other file system errors
+ */
 export function fileExistSync(filepath: string, options?: PathOption): boolean {
     const _filepath = filepath || "";
     const _options = options || {};
@@ -21,6 +28,12 @@ export function fileExistSync(filepath: string, options?: PathOption): boolean {
     }
 }
 
+/**
+ * Copies a file to a target directory with duplicate handling
+ * If a file with the same name exists, it will append a number to the filename
+ * @param action - The file action containing source and target information
+ * @returns Observable that emits the completed file action
+ */
 export function copyFile(action: FileAction): Observable<FileAction> {
     // copy file to target as 年/月/日
     action.targetFileName = path.basename(action.file);
