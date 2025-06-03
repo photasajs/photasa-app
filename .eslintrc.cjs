@@ -4,35 +4,20 @@ require("@rushstack/eslint-patch/modern-module-resolution");
 module.exports = {
     root: true,
     env: {
-        browser: true,
-        commonjs: true,
-        es6: true,
         node: true,
-        "vue/setup-compiler-macros": true,
     },
     extends: [
-        "plugin:vue/vue3-recommended",
-        "eslint:recommended",
-        "@vue/eslint-config-typescript/recommended",
-        "@vue/eslint-config-prettier",
+        "plugin:vue/vue3-essential",
+        "@vue/typescript/recommended",
+        "plugin:prettier/recommended",
     ],
-    rules: {
-        "@typescript-eslint/ban-ts-comment": ["error", { "ts-ignore": "allow-with-description" }],
-        "@typescript-eslint/explicit-function-return-type": "error",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-        "@typescript-eslint/no-empty-function": ["error", { allow: ["arrowFunctions"] }],
-        "@typescript-eslint/no-explicit-any": "error",
-        "@typescript-eslint/no-non-null-assertion": "off",
-        "@typescript-eslint/no-var-requires": "off",
-        "vue/require-default-prop": "off",
-        "vue/multi-word-component-names": "off",
+    parserOptions: {
+        ecmaVersion: 2020,
     },
-    overrides: [
-        {
-            files: ["*.js"],
-            rules: {
-                "@typescript-eslint/explicit-function-return-type": "off",
-            },
-        },
-    ],
+    plugins: ["prettier"],
+    rules: {
+        "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
+        "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
+        "prettier/prettier": "error",
+    },
 };
