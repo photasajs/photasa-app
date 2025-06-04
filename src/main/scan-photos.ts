@@ -1,9 +1,9 @@
 import klaw from "klaw";
-import { Observable, Subscriber, concatMap, from } from "rxjs";
+import { Observable, Subscriber, concatMap } from "rxjs";
 import isImage from "is-image";
 import isVideo from "is-video";
 import { shouldIgnorePhotasaPath, isHiddenFile } from "../common";
-import type { PhotoPath, ScanAction } from "../preload/types";
+import type { PhotoPath, ScanAction } from "@common/types";
 import { createThumbnail } from "./thumbnail-handler";
 import { addToPhotasaConfig, getPhotasaConfig } from "./config-storage";
 import type { Logger } from "log4js";
