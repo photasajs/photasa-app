@@ -17,10 +17,12 @@ const props = defineProps<{
 const { src, raw, height, width, preview, fallback, isVideo } = toRefs(props);
 const isReady = ref(false);
 const actualSrc = ref("");
+const isLoading = ref(false);
 
 watch(src, () => {
     if (!isVideo.value) {
         isReady.value = false;
+        isLoading.value = true;
         prefetchImage(src.value);
     } else {
         isReady.value = true;
@@ -32,13 +34,18 @@ async function prefetchImage(imageSrc: string): Promise<void> {
         await prefetchImageTask.perform(imageSrc);
     } catch {
         /* empty */
+    } finally {
+        isLoading.value = false;
+        isReady.value = true;
+        actualSrc.value = imageSrc;
     }
-    isReady.value = true;
-    actualSrc.value = imageSrc;
 }
 
 onMounted(() => {
-    prefetchImage(src.value);
+    if (!isVideo.value) {
+        isLoading.value = true;
+        prefetchImage(src.value);
+    }
 });
 
 const target = ref(null);
@@ -73,7 +80,7 @@ function onVisibleChange(visible: boolean): void {
             height: height + 'px',
         }"
     >
-        <a-spin :spinning="targetIsVisible && !isReady">
+        <a-spin :spinning="targetIsVisible && isLoading">
             <a-image
                 v-if="targetIsVisible && isReady"
                 :width="width"

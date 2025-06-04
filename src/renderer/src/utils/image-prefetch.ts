@@ -15,4 +15,4 @@ export const prefetchImageTask = useTask(function* (_, imageSrc: string) {
     yield prefetchImage(src);
 })
     .enqueue()
-    .maxConcurrency(5);
+    .maxConcurrency(10);
