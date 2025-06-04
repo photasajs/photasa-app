@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } 
 import fs from "fs-extra";
 import path from "path";
 import * as configStorage from "../config-storage";
-import type { PhotasaConfig, PhotasaConfigResult } from "../../preload/types";
+import type { PhotasaConfig, PhotasaConfigResult } from "@common/types";
 
 // Mock fs-extra
 vi.mock("fs-extra", () => ({
@@ -29,10 +29,13 @@ describe("config-storage", () => {
         (fs.ensureFile as any).mockResolvedValue(undefined);
         (fs.readFile as any).mockResolvedValue("{}");
         (fs.writeFile as any).mockResolvedValue(undefined);
+        // Clear debounce timers
+        vi.useFakeTimers();
     });
 
     afterEach(() => {
         vi.resetAllMocks();
+        vi.useRealTimers();
     });
 
     describe("batchAddToPhotoList", () => {
@@ -156,7 +159,9 @@ describe("config-storage", () => {
                 lastModified: expect.any(Number),
             };
 
-            const result = await configStorage.addToPhotoList(photoPath);
+            const promise = configStorage.addToPhotoList(photoPath);
+            vi.runAllTimers();
+            const result = await promise;
 
             expect(result.path).toBe(path.join("/test/path", ".photasa.json"));
             expect(result.config).toEqual(expectedConfig);
@@ -166,7 +171,9 @@ describe("config-storage", () => {
             const photoPath = "/test/path/photo1.jpg";
             (fs.writeFile as any).mockRejectedValue(new Error("Write error"));
 
-            await expect(configStorage.addToPhotoList(photoPath)).rejects.toThrow("Write error");
+            const promise = configStorage.addToPhotoList(photoPath);
+            vi.runAllTimers();
+            await expect(promise).rejects.toThrow("Write error");
         });
     });
 

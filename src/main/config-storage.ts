@@ -8,7 +8,7 @@
 
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig, PhotasaConfigResult } from "../preload/types";
+import type { PhotasaConfig, PhotasaConfigResult } from "@common/types";
 import * as R from "ramda";
 import { toRelativeThumbnailPath, toFileName, shortenThumbnailName } from "../common";
 import { Logger } from "log4js";
@@ -229,75 +229,89 @@ let lastQueuedCount = 0;
 // Create a queue with concurrency control and backpressure
 let queue: any = null;
 
-async function initializeQueue() {
-    const PQueue = (await import("p-queue")).default;
-    queue = new PQueue({
-        concurrency: QUEUE_CONCURRENCY,
-        autoStart: true,
-        intervalCap: QUEUE_INTERVAL_CAP,
-        interval: QUEUE_INTERVAL,
-        timeout: QUEUE_TIMEOUT,
-        throwOnTimeout: false, // Don't crash on timeout
-    });
-    return queue;
+async function initializeQueue(logger: Logger) {
+    try {
+        const PQueue = (await import("p-queue")).default;
+        const newQueue = new PQueue({
+            concurrency: QUEUE_CONCURRENCY,
+            autoStart: true,
+            intervalCap: QUEUE_INTERVAL_CAP,
+            interval: QUEUE_INTERVAL,
+            timeout: QUEUE_TIMEOUT,
+            throwOnTimeout: false, // Don't crash on timeout
+        });
+        return newQueue;
+    } catch (error) {
+        logger.error("Failed to initialize queue:", error);
+        throw error;
+    }
 }
 
 // Monitor queue size and emit events
 let queueLogger: Logger | null = null;
 
-function setupQueueEvents(logger: Logger): void {
+function setupQueueEvents(logger: Logger, queue: any): void {
+    if (!queue) {
+        logger.error("Cannot setup queue events: queue is null");
+        return;
+    }
+
     queueLogger = logger;
-    queue.on("idle", () => {
-        queueLogger?.info("config-queue", {
-            action: "idle",
-            timestamp: Date.now(),
-            queueSize: queue.size,
-            pending: queue.pending,
-            isPaused: queue.isPaused,
+    try {
+        queue.on("idle", () => {
+            queueLogger?.info("config-queue", {
+                action: "idle",
+                timestamp: Date.now(),
+                queueSize: queue.size,
+                pending: queue.pending,
+                isPaused: queue.isPaused,
+            });
         });
-    });
 
-    queue.on("error", (error) => {
-        queueLogger?.error("config-queue", {
-            action: "error",
-            error: error.message,
-            timestamp: Date.now(),
-            queueSize: queue.size,
-            pending: queue.pending,
+        queue.on("error", (error) => {
+            queueLogger?.error("config-queue", {
+                action: "error",
+                error: error.message,
+                timestamp: Date.now(),
+                queueSize: queue.size,
+                pending: queue.pending,
+            });
+            // Don't crash, just log the error and continue
+            queue.start(); // Restart queue if it was paused
         });
-        // Don't crash, just log the error and continue
-        queue.start(); // Restart queue if it was paused
-    });
 
-    queue.on("add", () => {
-        queueLogger?.debug("config-queue", {
-            action: "add",
-            size: queue.size,
-            pending: queue.pending,
-            timestamp: Date.now(),
-            isPaused: queue.isPaused,
+        queue.on("add", () => {
+            queueLogger?.debug("config-queue", {
+                action: "add",
+                size: queue.size,
+                pending: queue.pending,
+                timestamp: Date.now(),
+                isPaused: queue.isPaused,
+            });
         });
-    });
 
-    queue.on("active", () => {
-        queueLogger?.debug("config-queue", {
-            action: "active",
-            size: queue.size,
-            pending: queue.pending,
-            timestamp: Date.now(),
-            isPaused: queue.isPaused,
+        queue.on("active", () => {
+            queueLogger?.debug("config-queue", {
+                action: "active",
+                size: queue.size,
+                pending: queue.pending,
+                timestamp: Date.now(),
+                isPaused: queue.isPaused,
+            });
         });
-    });
 
-    queue.on("completed", (result) => {
-        queueLogger?.debug("config-queue", {
-            action: "completed",
-            size: queue.size,
-            pending: queue.pending,
-            timestamp: Date.now(),
-            isPaused: queue.isPaused,
+        queue.on("completed", (result) => {
+            queueLogger?.debug("config-queue", {
+                action: "completed",
+                size: queue.size,
+                pending: queue.pending,
+                timestamp: Date.now(),
+                isPaused: queue.isPaused,
+            });
         });
-    });
+    } catch (error) {
+        logger.error("Failed to setup queue events:", error);
+    }
 }
 
 /**
@@ -399,11 +413,6 @@ export function addToPhotasaConfig(
     postMessage: (message: string) => void,
     logger: Logger,
 ): void {
-    // Setup queue events if not already done
-    if (!queueLogger) {
-        setupQueueEvents(logger);
-    }
-
     request.paths.forEach((p) => {
         const dir = path.dirname(p);
         addPathQueue[dir] = addPathQueue[dir] || [];
@@ -412,10 +421,22 @@ export function addToPhotasaConfig(
 
     // Initialize queue if not already done
     if (!queue) {
-        initializeQueue().then((q) => {
-            queue = q;
-            addTaskToQueue(request, postMessage, logger);
-        });
+        initializeQueue(logger)
+            .then((newQueue) => {
+                queue = newQueue;
+                setupQueueEvents(logger, queue);
+                addTaskToQueue(request, postMessage, logger);
+            })
+            .catch((error) => {
+                logger.error("Failed to initialize queue:", error);
+                postMessage(
+                    JSON.stringify({
+                        action: "error",
+                        queueId: request.queueId,
+                        error: "Failed to initialize queue",
+                    }),
+                );
+            });
     } else {
         addTaskToQueue(request, postMessage, logger);
     }

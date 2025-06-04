@@ -1,9 +1,16 @@
 import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
-import { fileURLToPath } from "url";
+import { resolve } from "path";
 
 export default defineConfig({
     plugins: [vue()],
+    resolve: {
+        alias: {
+            "@renderer": resolve("src/renderer/src"),
+            "@preload": resolve("src/preload/"),
+            "@common": resolve("src/common/"),
+        },
+    },
     test: {
         globals: true,
         environment: "happy-dom",
@@ -25,10 +32,6 @@ export default defineConfig({
             "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
-        alias: {
-            "@": fileURLToPath(new URL("./src/renderer/src", import.meta.url)),
-            "@renderer": fileURLToPath(new URL("./src/renderer/src", import.meta.url)),
-        },
         deps: {
             inline: [/@vue/, /@vueuse/, /@ant-design/],
         },
