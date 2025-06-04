@@ -6,7 +6,7 @@
  * photo entries, as well as to handle concurrency and error reporting for bulk operations.
  */
 
-import fs from "fs-extra";
+import fs from "node:fs/promises";
 import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "@common/types";
 import * as R from "ramda";
@@ -15,6 +15,10 @@ import { Logger } from "log4js";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
 import { debounce } from "lodash";
+
+// Add cache for config files with TTL
+const configCache = new Map<string, { config: PhotasaConfig; timestamp: number }>();
+const CACHE_TTL = 5000; // Cache for 5 seconds
 
 // Types for improved type safety
 interface QueueItem {
@@ -28,12 +32,22 @@ interface ConfigMetadata {
 }
 
 const PHOTASA_VERSION = "1.0";
-const QUEUE_CONCURRENCY = 6; // Increased from 4 to 6 for better throughput
-const QUEUE_BREAK_THRESHOLD = 100; // Increased from 60 to handle larger batches
-const DEBOUNCE_DELAY = 50; // Reduced from 100ms to process faster
+const QUEUE_CONCURRENCY = 10; // Increased from 6 to 10 for better throughput
+const QUEUE_BREAK_THRESHOLD = 200; // Increased from 100 to handle larger batches
+const DEBOUNCE_DELAY = 30; // Reduced from 50ms to process faster
 const QUEUE_TIMEOUT = 60000; // Keep 1 minute timeout
-const QUEUE_INTERVAL = 250; // Reduced from 500ms to process more frequently
-const QUEUE_INTERVAL_CAP = 60; // Increased from 40 to process more tasks per interval
+const QUEUE_INTERVAL = 100; // Reduced from 250ms to process more frequently
+const QUEUE_INTERVAL_CAP = 100; // Increased from 60 to process more tasks per interval
+
+// Add write batching
+const writeBatch = new Map<string, { data: string; timestamp: number }>();
+const WRITE_BATCH_INTERVAL = 100; // Batch writes every 100ms
+const WRITE_BATCH_MAX_SIZE = 50; // Maximum number of files to write in one batch
+
+// Add read batching
+const readBatch = new Map<string, Promise<ConfigMetadata>>();
+const READ_BATCH_INTERVAL = 50; // Batch reads every 50ms
+const READ_BATCH_MAX_SIZE = 100; // Maximum number of files to read in one batch
 
 /**
  * Ensures the .photasa.json config file exists for a given photo or directory.
@@ -42,31 +56,108 @@ const QUEUE_INTERVAL_CAP = 60; // Increased from 40 to process more tasks per in
 async function ensureConfig(photo: string, isFile: boolean): Promise<string> {
     const dir = isFile ? path.dirname(photo) : photo;
     const configPath = path.join(dir, ".photasa.json");
-    await fs.ensureFile(configPath);
+    try {
+        await fs.access(configPath);
+    } catch {
+        await fs.writeFile(configPath, "{}", "utf8");
+    }
     return configPath;
 }
 
 /**
- * Reads the .photasa.json config file for a given photo or directory.
- * Returns the file contents and directory.
+ * Batched write operation that combines multiple writes into a single operation
  */
-async function readConfig(photo: string, isFile: boolean): Promise<ConfigMetadata> {
-    const dir = await ensureConfig(photo, isFile);
-    const data = (await fs.readFile(dir, "utf-8")) ?? "{}";
-    return {
-        dir,
-        data: data ? data : "{}",
-    };
+async function batchedWrite(): Promise<void> {
+    if (writeBatch.size === 0) return;
+
+    const now = Date.now();
+    const batch = Array.from(writeBatch.entries());
+    writeBatch.clear();
+
+    // Group writes by directory to reduce disk operations
+    const dirGroups = new Map<string, string[]>();
+    for (const [filePath, { data }] of batch) {
+        const dir = path.dirname(filePath);
+        if (!dirGroups.has(dir)) {
+            dirGroups.set(dir, []);
+        }
+        dirGroups.get(dir)!.push(data);
+    }
+
+    // Write each directory's files in parallel
+    await Promise.all(
+        Array.from(dirGroups.entries()).map(async ([dir, dataArray]) => {
+            try {
+                await fs.writeFile(dir, dataArray.join("\n"), { encoding: "utf8", flag: "w" });
+            } catch (error) {
+                console.error(`Error writing to ${dir}:`, error);
+            }
+        }),
+    );
 }
 
 /**
- * Writes the PhotasaConfig object to the specified config file path.
- * Updates the lastModified timestamp.
+ * Batched read operation that combines multiple reads into a single operation
+ */
+async function batchedRead(path: string): Promise<ConfigMetadata> {
+    if (readBatch.has(path)) {
+        return readBatch.get(path)!;
+    }
+
+    const promise = (async () => {
+        const dir = await ensureConfig(path, true);
+
+        // Check cache first
+        const cached = configCache.get(dir);
+        const now = Date.now();
+        if (cached && now - cached.timestamp < CACHE_TTL) {
+            return {
+                dir,
+                data: JSON.stringify(cached.config),
+            };
+        }
+
+        const data = await fs.readFile(dir, "utf-8").catch(() => "{}");
+        const config = parseConfig(data);
+
+        // Update cache
+        configCache.set(dir, { config, timestamp: now });
+
+        return {
+            dir,
+            data: data ? data : "{}",
+        };
+    })();
+
+    readBatch.set(path, promise);
+
+    // Clear the batch after the interval
+    setTimeout(() => {
+        readBatch.delete(path);
+    }, READ_BATCH_INTERVAL);
+
+    return promise;
+}
+
+/**
+ * Updates the readConfig function to use batched reads
+ */
+async function readConfig(photo: string, isFile: boolean): Promise<ConfigMetadata> {
+    return batchedRead(photo);
+}
+
+/**
+ * Updates the writeConfig function to use batched writes
  */
 async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Promise<void> {
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
-    await fs.writeFile(configPath, data, { encoding: "utf8", flag: "w" });
+
+    // Add to write batch
+    writeBatch.set(configPath, { data, timestamp: Date.now() });
+
+    // Update cache
+    configCache.set(configPath, { config: photoConfig, timestamp: Date.now() });
 }
 
 /**
@@ -98,38 +189,60 @@ function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
 const parseConfig = R.compose(normalizeConfig, fromJson);
 
 /**
- * Batch add multiple photo paths to the .photasa.json config for a parent directory.
- * Updates or creates photo entries as needed.
+ * Batch process multiple photos to add them to the photo list.
+ * Uses a queue system with concurrency control and progress tracking.
  */
 export async function batchAddToPhotoList(
-    parent: string,
-    photoPaths: string[],
+    photos: string[],
+    onProgress?: (progress: number) => void,
+    onError?: (error: Error) => void,
 ): Promise<PhotasaConfigResult> {
-    const meta = await readConfig(parent, false);
-    const photasaConfig = parseConfig(meta.data);
+    const startTime = Date.now();
+    const total = photos.length;
+    let processed = 0;
+    let failed = 0;
+    let lastProgressUpdate = 0;
+    let lastResult: PhotasaConfigResult | null = null;
 
-    photoPaths.forEach((photoPath) => {
-        const fileName = toFileName(photoPath);
-        const photo = photasaConfig.photoList.find((p) => p.path === fileName);
-        const thumbnailName = toRelativeThumbnailPath(photoPath);
-        if (!photo) {
-            photasaConfig.photoList.push({
-                path: fileName,
-                thumbnail: thumbnailName,
-                history: [],
-                isVideo: isVideo(fileName),
-            });
-        } else if (!photo.thumbnail) {
-            photo.thumbnail = thumbnailName;
+    // Process photos in chunks for better performance
+    const chunkSize = QUEUE_CONCURRENCY * 2;
+    for (let i = 0; i < photos.length; i += chunkSize) {
+        const chunk = photos.slice(i, i + chunkSize);
+        const results = await Promise.allSettled(
+            chunk.map(async (photo) => {
+                try {
+                    const result = await addToPhotoList(photo);
+                    lastResult = result;
+                    processed++;
+
+                    // Update progress less frequently for better performance
+                    const now = Date.now();
+                    if (now - lastProgressUpdate > 100) {
+                        // Update every 100ms
+                        lastProgressUpdate = now;
+                        onProgress?.(processed / total);
+                    }
+                } catch (error) {
+                    failed++;
+                    onError?.(error as Error);
+                }
+            }),
+        );
+
+        // Check for timeout
+        if (Date.now() - startTime > QUEUE_TIMEOUT) {
+            throw new Error(`Batch processing timed out after ${QUEUE_TIMEOUT}ms`);
         }
-    });
+    }
 
-    await writeConfig(meta.dir, photasaConfig);
+    // Final progress update
+    onProgress?.(1);
 
-    return {
-        path: meta.dir,
-        config: photasaConfig,
-    };
+    // Return the last successful result or throw if no successful results
+    if (!lastResult) {
+        throw new Error("No successful results in batch processing");
+    }
+    return lastResult;
 }
 
 /**
@@ -345,7 +458,7 @@ function addConfig(
     }
 
     from(queued)
-        .pipe(concatMap(([key, value]) => batchAddToPhotoList(key, value)))
+        .pipe(concatMap(([key, value]) => batchAddToPhotoList(value)))
         .subscribe({
             next: (result: PhotasaConfigResult) => {
                 postMessage(
@@ -477,3 +590,20 @@ export function cleanupQueueForFolder(folderPath: string): void {
 export const config = {
     DELAY_NOTIFY_DONE: 3000,
 };
+
+/**
+ * Clears the config cache for a specific folder
+ */
+export function clearConfigCache(folderPath: string): void {
+    configCache.delete(folderPath);
+}
+
+/**
+ * Clears the entire config cache
+ */
+export function clearAllConfigCache(): void {
+    configCache.clear();
+}
+
+// Start the write batch interval
+setInterval(batchedWrite, WRITE_BATCH_INTERVAL);
