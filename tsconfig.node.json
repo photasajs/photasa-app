@@ -13,5 +13,11 @@
         ],
         "esModuleInterop": true,
         "allowJs": true,
+        "baseUrl": ".",
+        "paths": {
+            "@common/*": ["./src/common/*"],
+            "@preload/*": ["./src/preload/*"],
+            "@renderer/*": ["./src/renderer/src/*"]
+        }
     }
 }
