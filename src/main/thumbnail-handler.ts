@@ -5,7 +5,7 @@ import type { Logger } from "log4js";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { ThumbnailRequest } from "../preload/types";
+import { ThumbnailRequest } from "@common/types";
 import {
     toPreviewPath,
     HeicExtensionRE,

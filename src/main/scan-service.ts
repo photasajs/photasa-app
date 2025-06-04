@@ -1,7 +1,7 @@
 import createWorker from "./scan-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
 import log4js from "log4js";
-import type { ScanAction } from "../preload/types";
+import type { ScanAction } from "@common/types";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
 const logger = log4js.getLogger("scan-service");

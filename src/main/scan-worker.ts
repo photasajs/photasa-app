@@ -1,6 +1,6 @@
 import { parentPort } from "worker_threads";
 import log4js from "log4js";
-import type { ScanAction } from "../preload/types";
+import type { ScanAction } from "@common/types";
 import { scanPhotos } from "./scan-photos";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
