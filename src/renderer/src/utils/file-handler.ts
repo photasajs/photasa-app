@@ -9,7 +9,7 @@ import {
     shouldIgnorePhotasaPath,
     startWatching,
 } from "@renderer/utils/api";
-import type { WatchState, ThumbnailRequest } from "src/preload/types";
+import type { WatchState, WatchCallback, ThumbnailRequest } from "src/types";
 import { deepCopy } from "./object";
 
 function isMedia(state: WatchState): boolean {
@@ -120,38 +120,14 @@ export const handleFileTask = useTask(function* (_, state: WatchState, preferenc
     .maxConcurrency(1);
 
 export function startFileWatching(dirs: string[], preferenceStore: any): void {
-    // start watching folders
     startWatching(
         {
-            path: dirs[0], // Use the first directory as the main path
+            path: dirs[0],
             recursive: true,
             paths: deepCopy(dirs),
         },
-        {
-            onAdd: (path: string) => {
-                handleFileTask.perform(
-                    {
-                        action: "add",
-                        path,
-                        isFile: true,
-                        isImage: true,
-                        isVideo: false,
-                    },
-                    preferenceStore,
-                );
-            },
-            onRemove: (path: string) => {
-                handleFileTask.perform(
-                    {
-                        action: "delete",
-                        path,
-                        isFile: true,
-                        isImage: true,
-                        isVideo: false,
-                    },
-                    preferenceStore,
-                );
-            },
+        (state: WatchState) => {
+            handleFileTask.perform(state, preferenceStore);
         },
     );
 }
