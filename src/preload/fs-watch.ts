@@ -1,4 +1,4 @@
-import type { WatchConfig, WatchCallback, WatchState, WatchAction } from "./types";
+import type { WatchConfig, WatchCallback, WatchState, WatchAction } from "@common/types";
 import { electronAPI } from "@electron-toolkit/preload";
 import isImage from "is-image";
 import isVideo from "is-video";
@@ -37,29 +37,40 @@ function notifyAction(action: WatchAction, isFile: boolean, path: string): void 
         );
     });
 }
+
 function notifyError(action: WatchAction, error: Error, isNotify: boolean): void {
     listeners.forEach((callback) => {
-        callback({
-            action,
-            error,
-            isNotify,
-            isImage: false,
-            isVideo: false,
-            thumbnail: "",
-        });
+        invoke(
+            {
+                action,
+                isFile: false,
+                path: "",
+                error,
+                isImage: false,
+                isVideo: false,
+                thumbnail: "",
+            },
+            callback,
+        );
     });
 }
+
 function notifyReady(action: WatchAction, isNotify: boolean): void {
     listeners.forEach((callback) => {
-        callback({
-            action,
-            isNotify,
-            isImage: false,
-            isVideo: false,
-            thumbnail: "",
-        });
+        invoke(
+            {
+                action,
+                isFile: false,
+                path: "",
+                isImage: false,
+                isVideo: false,
+                thumbnail: "",
+            },
+            callback,
+        );
     });
 }
+
 // Response to event then save to pinia store
 ipcRenderer?.on("picasa:file-add", (_, { isFile, path }) => {
     notifyAction("add", isFile, path);

@@ -10,6 +10,13 @@ export default defineConfig({
     },
     preload: {
         plugins: [externalizeDepsPlugin(), babel({ babelHelpers: "bundled" })],
+        resolve: {
+            alias: {
+                "@renderer": resolve("src/renderer/src"),
+                "@preload": resolve("src/preload/"),
+                "@common": resolve("src/common/"),
+            },
+        },
     },
     renderer: {
         resolve: {
