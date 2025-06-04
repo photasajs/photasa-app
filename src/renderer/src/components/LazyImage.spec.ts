@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { shallowMount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import LazyImage from "./LazyImage.vue";
 import { prefetchImageTask } from "@renderer/utils/image-prefetch";
@@ -27,16 +27,6 @@ const MockVideoPlayer = {
     template: "<div class='video-player'><slot /></div>",
     props: ["src", "poster"],
 };
-
-vi.mock("ant-design-vue", () => ({
-    Image: MockAImage,
-    Spin: MockASpin,
-    Modal: MockAModal,
-}));
-
-vi.mock("@renderer/components/video-player", () => ({
-    default: MockVideoPlayer,
-}));
 
 // Mock the prefetchImageTask
 vi.mock("@renderer/utils/image-prefetch", () => ({
@@ -79,7 +69,7 @@ describe("LazyImage", () => {
     });
 
     it("renders with correct dimensions", () => {
-        const wrapper = mount(LazyImage, { props: defaultProps });
+        const wrapper = shallowMount(LazyImage, { props: defaultProps });
         const thumbnail = wrapper.find(".thumbnail-image");
         expect(thumbnail.attributes("style")).toContain("width: 300px");
         expect(thumbnail.attributes("style")).toContain("height: 200px");
@@ -89,15 +79,14 @@ describe("LazyImage", () => {
         vi.mocked(prefetchImageTask.perform).mockImplementationOnce(() => {
             return new Promise(() => {}) as any;
         });
-        const globalComponents = {
-            "a-image": MockAImage,
-            "a-spin": MockASpin,
-            "a-modal": MockAModal,
-            "video-player": MockVideoPlayer,
-        };
-        const wrapper = mount(LazyImage, {
+        const wrapper = shallowMount(LazyImage, {
             props: defaultProps,
-            global: { components: globalComponents },
+            global: {
+                stubs: {
+                    "a-spin": MockASpin,
+                    "a-image": MockAImage,
+                },
+            },
         });
         if (targetIsVisibleRef) targetIsVisibleRef.value = true;
         await nextTick();
@@ -106,7 +95,7 @@ describe("LazyImage", () => {
     });
 
     it("loads image when visible", async () => {
-        const wrapper = mount(LazyImage, { props: defaultProps });
+        const wrapper = shallowMount(LazyImage, { props: defaultProps });
 
         // Set targetIsVisible to true
         if (targetIsVisibleRef) targetIsVisibleRef.value = true;
@@ -115,23 +104,33 @@ describe("LazyImage", () => {
         expect(prefetchImageTask.perform).toHaveBeenCalledWith(defaultProps.src);
     });
 
-    it("handles video content correctly", () => {
-        const wrapper = mount(LazyImage, {
+    it("handles video content correctly", async () => {
+        const wrapper = shallowMount(LazyImage, {
             props: { ...defaultProps, isVideo: true },
+            global: {
+                stubs: {
+                    "a-spin": MockASpin,
+                    "a-image": MockAImage,
+                },
+            },
         });
-        expect(wrapper.find(".ant-spin").exists()).toBe(false);
+        if (targetIsVisibleRef) targetIsVisibleRef.value = true;
+        await nextTick();
+        await nextTick(); // ensure state is updated
+        // For videos, isReady is set to true immediately
+        expect(wrapper.findComponent(MockASpin).props("spinning")).toBe(false);
     });
 
     it("toggles preview on click for images", async () => {
-        const globalComponents = {
-            "a-image": MockAImage,
-            "a-spin": MockASpin,
-            "a-modal": MockAModal,
-            "video-player": MockVideoPlayer,
-        };
-        const wrapper = mount(LazyImage, {
+        const wrapper = shallowMount(LazyImage, {
             props: defaultProps,
-            global: { components: globalComponents },
+            global: {
+                stubs: {
+                    "a-spin": MockASpin,
+                    "a-image": MockAImage,
+                    "a-modal": MockAModal,
+                },
+            },
         });
         if (targetIsVisibleRef) targetIsVisibleRef.value = true;
         await flushPromises();
@@ -144,15 +143,15 @@ describe("LazyImage", () => {
     });
 
     it("opens video player on click for videos", async () => {
-        const globalComponents = {
-            "a-image": MockAImage,
-            "a-spin": MockASpin,
-            "a-modal": MockAModal,
-            "video-player": MockVideoPlayer,
-        };
-        const wrapper = mount(LazyImage, {
+        const wrapper = shallowMount(LazyImage, {
             props: { ...defaultProps, isVideo: true },
-            global: { components: globalComponents },
+            global: {
+                stubs: {
+                    "a-spin": MockASpin,
+                    "a-image": MockAImage,
+                    "video-player": MockVideoPlayer,
+                },
+            },
         });
         if (targetIsVisibleRef) targetIsVisibleRef.value = true;
         await flushPromises();
@@ -166,18 +165,27 @@ describe("LazyImage", () => {
 
     it("handles prefetch errors gracefully", async () => {
         vi.mocked(prefetchImageTask.perform).mockRejectedValueOnce(new Error("Failed to load"));
-        const wrapper = mount(LazyImage, { props: defaultProps });
+        const wrapper = shallowMount(LazyImage, {
+            props: defaultProps,
+            global: {
+                stubs: {
+                    "a-spin": MockASpin,
+                    "a-image": MockAImage,
+                },
+            },
+        });
 
         // Set targetIsVisible to true
         if (targetIsVisibleRef) targetIsVisibleRef.value = true;
         await nextTick();
+        await nextTick(); // ensure state is updated after error
 
-        // The spinner should not be present after error
-        expect(wrapper.find(".ant-spin").exists()).toBe(false);
+        // After error, isReady is set to true and spinner should not be spinning
+        expect(wrapper.findComponent(MockASpin).props("spinning")).toBe(false);
     });
 
     it("updates when src changes", async () => {
-        const wrapper = mount(LazyImage, { props: defaultProps });
+        const wrapper = shallowMount(LazyImage, { props: defaultProps });
         await wrapper.setProps({ src: "new-image.jpg" });
         await nextTick();
         expect(prefetchImageTask.perform).toHaveBeenCalledWith("new-image.jpg");

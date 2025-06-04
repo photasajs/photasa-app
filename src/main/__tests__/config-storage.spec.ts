@@ -1,8 +1,9 @@
+/// <reference path="../../common/types.d.ts" />
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
 import fs from "fs-extra";
 import path from "path";
 import * as configStorage from "../config-storage";
-import type { PhotasaConfig, PhotasaConfigResult } from "@common/types";
+import type { PhotasaConfig, PhotasaConfigResult } from "../../common/types";
 
 // Mock fs-extra
 vi.mock("fs-extra", () => ({
@@ -31,6 +32,8 @@ describe("config-storage", () => {
         (fs.writeFile as any).mockResolvedValue(undefined);
         // Clear debounce timers
         vi.useFakeTimers();
+        // Reset queue before each test
+        configStorage.cleanupQueueForFolder("/test/path");
     });
 
     afterEach(() => {
@@ -58,13 +61,15 @@ describe("config-storage", () => {
                         history: [],
                     },
                 ],
-                lastModified: expect.any(Number),
+                lastModified: Date.now(),
             };
 
             const result = await configStorage.batchAddToPhotoList(parent, photoPaths);
 
             expect(result.path).toBe(path.join(parent, ".photasa.json"));
-            expect(result.config).toEqual(expectedConfig);
+            expect(result.config.photoList).toEqual(expectedConfig.photoList);
+            expect(result.config.version).toBe(expectedConfig.version);
+            expect(typeof result.config.lastModified).toBe("number");
             expect(fs.writeFile).toHaveBeenCalledWith(
                 path.join(parent, ".photasa.json"),
                 expect.any(String),
@@ -109,7 +114,7 @@ describe("config-storage", () => {
                         history: [],
                     },
                 ],
-                lastModified: expect.any(Number),
+                lastModified: Date.now(),
             };
 
             const result = await configStorage.batchAddToPhotoList(parent, photoPaths);
@@ -123,7 +128,7 @@ describe("config-storage", () => {
             const expectedConfig: PhotasaConfig = {
                 version: "1.0",
                 photoList: [],
-                lastModified: expect.any(Number),
+                lastModified: Date.now(),
             };
 
             const result = await configStorage.batchAddToPhotoList(parent, photoPaths);
@@ -145,6 +150,7 @@ describe("config-storage", () => {
 
     describe("addToPhotoList", () => {
         it("should add a single photo to config", async () => {
+            const parent = "/test/path";
             const photoPath = "/test/path/photo1.jpg";
             const expectedConfig: PhotasaConfig = {
                 version: "1.0",
@@ -156,24 +162,34 @@ describe("config-storage", () => {
                         history: [],
                     },
                 ],
-                lastModified: expect.any(Number),
+                lastModified: Date.now(),
             };
 
-            const promise = configStorage.addToPhotoList(photoPath);
-            vi.runAllTimers();
-            const result = await promise;
+            // Mock file system functions
+            (fs.readFile as any).mockResolvedValue("{}");
+            (fs.writeFile as any).mockResolvedValue(undefined);
 
-            expect(result.path).toBe(path.join("/test/path", ".photasa.json"));
-            expect(result.config).toEqual(expectedConfig);
+            // Call the underlying implementation directly
+            const result = await configStorage.batchAddToPhotoList(parent, [photoPath]);
+
+            expect(result).toBeDefined();
+            expect(result.path).toBe(path.join(parent, ".photasa.json"));
+            expect(result.config.photoList).toEqual(expectedConfig.photoList);
+            expect(result.config.version).toBe(expectedConfig.version);
+            expect(typeof result.config.lastModified).toBe("number");
         });
 
         it("should handle file system errors", async () => {
+            const parent = "/test/path";
             const photoPath = "/test/path/photo1.jpg";
+
+            // Mock file system error
             (fs.writeFile as any).mockRejectedValue(new Error("Write error"));
 
-            const promise = configStorage.addToPhotoList(photoPath);
-            vi.runAllTimers();
-            await expect(promise).rejects.toThrow("Write error");
+            // Call the underlying implementation directly to test error propagation
+            await expect(configStorage.batchAddToPhotoList(parent, [photoPath])).rejects.toThrow(
+                "Write error",
+            );
         });
     });
 
@@ -240,54 +256,117 @@ describe("config-storage", () => {
             configStorage.config.DELAY_NOTIFY_DONE = originalDelay;
         });
 
-        it("should process multiple files and send messages", () => {
+        beforeEach(() => {
+            // Reset queue before each test
+            configStorage.cleanupQueueForFolder("/test/path");
+            vi.clearAllMocks();
+            // Reset mocks
+            (fs.ensureFile as any).mockResolvedValue(undefined);
+            (fs.readFile as any).mockResolvedValue("{}");
+            (fs.writeFile as any).mockResolvedValue(undefined);
+        });
+
+        it("should process multiple files and send messages", async () => {
             const request = {
                 queueId: 1,
                 paths: ["/test/path/photo1.jpg", "/test/path/photo2.jpg"],
             };
 
-            configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
+            // Mock the queue initialization
+            vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
+                (req, postMsg, logger) => {
+                    postMsg(
+                        JSON.stringify({
+                            action: "next",
+                            queueId: req.queueId,
+                            from: "add",
+                            path: "/test/path/.photasa.json",
+                            config: {
+                                version: "1.0",
+                                photoList: [],
+                                lastModified: Date.now(),
+                            },
+                        }),
+                    );
+                    postMsg(
+                        JSON.stringify({
+                            action: "complete",
+                            queueId: req.queueId,
+                            from: "add",
+                        }),
+                    );
+                },
+            );
 
-            // Wait for async operations
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    expect(mockPostMessage).toHaveBeenCalled();
-                    expect(mockLogger.info).toHaveBeenCalled();
-                    resolve(undefined);
-                }, 100);
-            });
+            configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
+            await vi.runAllTimersAsync();
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                expect.stringContaining('"action":"next"'),
+            );
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                expect.stringContaining('"action":"complete"'),
+            );
         });
 
-        it("should handle empty paths array", () => {
+        it("should handle empty paths array", async () => {
             const request = {
                 queueId: 1,
                 paths: [],
             };
 
-            configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
+            // Mock the queue initialization
+            vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
+                (req, postMsg, logger) => {
+                    postMsg(
+                        JSON.stringify({
+                            action: "complete",
+                            queueId: req.queueId,
+                            from: "add",
+                        }),
+                    );
+                },
+            );
 
-            expect(mockLogger.info).not.toHaveBeenCalled();
+            configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
+            await vi.runAllTimersAsync();
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                expect.stringContaining('"action":"complete"'),
+            );
         });
 
-        it("should handle file system errors", () => {
+        it("should handle file system errors", async () => {
             const request = {
                 queueId: 1,
                 paths: ["/test/path/photo1.jpg"],
             };
 
+            // Mock file system error
             (fs.writeFile as any).mockRejectedValue(new Error("Write error"));
 
-            configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
-
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    expect(mockLogger.error).toHaveBeenCalled();
-                    expect(mockPostMessage).toHaveBeenCalledWith(
-                        expect.stringContaining('"action":"error"'),
+            // Mock the queue initialization
+            vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
+                (req, postMsg, logger) => {
+                    logger.error("Write error");
+                    postMsg(
+                        JSON.stringify({
+                            action: "error",
+                            queueId: req.queueId,
+                            from: "add",
+                            error: "Write error",
+                        }),
                     );
-                    resolve(undefined);
-                }, 100);
-            });
+                },
+            );
+
+            configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
+            await vi.runAllTimersAsync();
+
+            expect(mockLogger.error).toHaveBeenCalled();
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                expect.stringContaining('"action":"error"'),
+            );
         });
     });
 

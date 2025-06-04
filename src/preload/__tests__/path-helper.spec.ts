@@ -1,10 +1,11 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { toFullPath, ensureDir } from "../path-helper";
 import { vol } from "memfs";
-import type { FileAction } from "../types";
+import type { FileAction } from "@common/types";
 import { firstValueFrom } from "rxjs";
 
-jest.mock("fs");
-jest.mock("fs/promises");
+vi.mock("fs");
+vi.mock("fs/promises");
 
 describe("path-helper", () => {
     beforeEach(() => {

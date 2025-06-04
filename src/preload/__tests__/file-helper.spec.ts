@@ -1,9 +1,10 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { fileExistSync } from "../file-helper";
 import { vol } from "memfs";
 import fs from "fs-extra";
 
-jest.mock("fs");
-jest.mock("fs/promises");
+vi.mock("fs");
+vi.mock("fs/promises");
 
 describe("file-helper", () => {
     beforeEach(() => {
