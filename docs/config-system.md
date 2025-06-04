@@ -1,6 +1,7 @@
 # Configuration System Documentation
 
 ## Overview
+
 The configuration system manages `.photasa.json` files for photo and video management. It consists of four main components:
 
 1. **Config Storage** (`config-storage.ts`): Core file operations and caching
@@ -9,6 +10,7 @@ The configuration system manages `.photasa.json` files for photo and video manag
 4. **Config Worker** (`config-worker.ts`): Background processing
 
 ## Architecture Diagram
+
 ```mermaid
 graph TD
     subgraph "Main Process"
@@ -35,9 +37,11 @@ graph TD
 ## Component Details
 
 ### 1. Config Storage (`config-storage.ts`)
+
 Core module for file operations and caching.
 
 #### Key Features
+
 - **Caching System**
   - TTL-based cache (5 seconds)
   - Directory-level caching
@@ -54,6 +58,7 @@ Core module for file operations and caching.
   - Timeout handling (60 seconds)
 
 #### Main Functions
+
 ```typescript
 // File Operations
 readConfig(photo: string, isFile: boolean): Promise<ConfigMetadata>
@@ -71,10 +76,31 @@ removeFromPhotoList(photoPath: string): Promise<PhotasaConfigResult>
 getPhotasaConfig(folder: string): Promise<PhotasaConfig>
 ```
 
+### 1. Config Storage Features
+
+#### Storage Key Features
+
+- **Caching System**
+  - TTL-based cache (5 seconds)
+  - Directory-level caching
+  - Automatic cache invalidation
+
+- **Batch Operations**
+  - Write batching (100ms interval, max 50 files)
+  - Read batching (50ms interval, max 100 files)
+  - Directory-level grouping
+
+- **Queue System**
+  - Concurrency control (10 concurrent tasks)
+  - Priority-based scheduling
+  - Timeout handling (60 seconds)
+
 ### 2. Config Handler (`config-handler.ts`)
+
 Handles high-level operations and event management.
 
 #### Key Features
+
 - **Glob Pattern Matching**
   - Recursive directory scanning
   - Pattern: `**/*.photasa.json`
@@ -84,6 +110,7 @@ Handles high-level operations and event management.
   - Automatic buffer flushing
 
 #### Main Functions
+
 ```typescript
 globPhotasaConfigFromFolders(folder: string): Observable<string>
 addConfig(result: any, postMessage: Function, logger: Logger): void
@@ -91,10 +118,24 @@ queryConfig(result: { paths: string[] }, postMessage: Function, logger: Logger):
 removeConfig(request: { queueId: number; paths: string[] }, postMessage: Function, logger: Logger): void
 ```
 
+### 2. Config Handler Features
+
+#### Handler Key Features
+
+- **Glob Pattern Matching**
+  - Recursive directory scanning
+  - Pattern: `**/*.photasa.json`
+
+- **Buffer Management**
+  - Buffer size: 30 items
+  - Automatic buffer flushing
+
 ### 3. Config Service (`config-service.ts`)
+
 Manages IPC communication and window interactions.
 
 #### Key Features
+
 - **Worker Management**
   - Worker creation and lifecycle
   - Message handling
@@ -106,6 +147,7 @@ Manages IPC communication and window interactions.
   - Window communication
 
 #### Main Functions
+
 ```typescript
 class ConfigService {
     queryConfigs(paths: string[]): void
@@ -113,10 +155,26 @@ class ConfigService {
 }
 ```
 
+### 3. Config Service Features
+
+#### Service Key Features
+
+- **Worker Management**
+  - Worker creation and lifecycle
+  - Message handling
+  - Promise resolution
+
+- **IPC Communication**
+  - Event handling
+  - Message routing
+  - Window communication
+
 ### 4. Config Worker (`config-worker.ts`)
+
 Handles background processing and worker thread operations.
 
 #### Key Features
+
 - **Message Handling**
   - Action routing
   - Error handling
@@ -128,6 +186,7 @@ Handles background processing and worker thread operations.
   - Response handling
 
 #### Main Functions
+
 ```typescript
 // Message Handler
 const handler = {
@@ -137,24 +196,42 @@ const handler = {
 }
 ```
 
+### 4. Config Worker Features
+
+#### Worker Key Features
+
+- **Message Handling**
+  - Action routing
+  - Error handling
+  - Logging
+
+- **Worker Communication**
+  - Parent port communication
+  - Message parsing
+  - Response handling
+
 ## Performance Optimizations
 
 ### 1. Caching
+
 - In-memory cache with 5-second TTL
 - Directory-level caching
 - Automatic cache invalidation
 
 ### 2. Batch Processing
+
 - Write batching (100ms interval)
 - Read batching (50ms interval)
 - Directory-level grouping
 
 ### 3. Queue Management
+
 - Concurrency control (10 tasks)
 - Priority-based scheduling
 - Timeout handling
 
 ### 4. Buffer Management
+
 - Configurable buffer sizes
 - Automatic buffer flushing
 - Memory usage optimization
@@ -162,16 +239,19 @@ const handler = {
 ## Error Handling
 
 ### 1. File Operations
+
 - Graceful error recovery
 - Automatic retries
 - Error logging
 
 ### 2. Queue Operations
+
 - Error propagation
 - Queue recovery
 - Timeout handling
 
 ### 3. Worker Operations
+
 - Error isolation
 - Process recovery
 - Logging
@@ -179,6 +259,7 @@ const handler = {
 ## Usage Examples
 
 ### 1. Adding Photos
+
 ```typescript
 // Add single photo
 await addToPhotoList(photoPath);
@@ -188,6 +269,7 @@ await batchAddToPhotoList(photos, onProgress, onError);
 ```
 
 ### 2. Querying Config
+
 ```typescript
 // Get config for folder
 const config = await getPhotasaConfig(folder);
@@ -197,6 +279,7 @@ queryConfig({ paths: folders }, postMessage, logger);
 ```
 
 ### 3. Removing Photos
+
 ```typescript
 // Remove single photo
 await removeFromPhotoList(photoPath);
