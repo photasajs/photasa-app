@@ -3,5 +3,8 @@
     "semi": true,
     "printWidth": 100,
     "trailingComma": "all",
-    "tabWidth": 4
+    "tabWidth": 4,
+    "editorconfig": true,
+    "endOfLine": "lf",
+    "insertFinalNewline": true
 }
