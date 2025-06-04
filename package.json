@@ -50,6 +50,7 @@
         "force": "^0.0.3",
         "fs-extra": "^11.1.1",
         "glob": "^11.0.2",
+        "graceful-fs": "^4.2.11",
         "heic-decode": "^2.0.0",
         "is-image": "^3.1.0",
         "is-video": "^1.0.1",
