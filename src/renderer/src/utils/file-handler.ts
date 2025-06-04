@@ -9,7 +9,7 @@ import {
     shouldIgnorePhotasaPath,
     startWatching,
 } from "@renderer/utils/api";
-import type { WatchState, WatchCallback, ThumbnailRequest } from "src/types";
+import type { WatchState, ThumbnailRequest } from "@common/types";
 import { deepCopy } from "./object";
 
 function isMedia(state: WatchState): boolean {
