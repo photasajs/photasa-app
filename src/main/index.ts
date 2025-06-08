@@ -33,7 +33,7 @@ function createWindow(): void {
         show: false,
         title: "Photasa",
         autoHideMenuBar: true,
-        ...(process.platform === "linux" ? { icon } : {}),
+        icon: icon, // Set icon for all platforms
         webPreferences: {
             preload: path.join(__dirname, "../preload/index.js"),
             sandbox: false,
@@ -147,6 +147,11 @@ function createWindow(): void {
 app.whenReady().then(() => {
     // Set app user model id for windows
     electronApp.setAppUserModelId("com.electron");
+
+    // Set dock icon for macOS
+    if (process.platform === "darwin" && app.dock) {
+        app.dock.setIcon(icon);
+    }
 
     // Default open or close DevTools by F12 in development
     // and ignore CommandOrControl + R in production.
