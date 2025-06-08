@@ -15,6 +15,7 @@ import { Logger } from "log4js";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
 import { debounce } from "lodash";
+import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
 
 // Add cache for config files with TTL
 const configCache = new Map<string, { config: PhotasaConfig; timestamp: number }>();
@@ -53,13 +54,23 @@ const READ_BATCH_MAX_SIZE = 100; // Maximum number of files to read in one batch
  * Ensures the .photasa.json config file exists for a given photo or directory.
  * Returns the path to the config file.
  */
-async function ensureConfig(photo: string, isFile: boolean): Promise<string> {
+async function ensureConfig(photo: string, isFile: boolean, logger: Logger): Promise<string> {
     const dir = isFile ? path.dirname(photo) : photo;
     const configPath = path.join(dir, ".photasa.json");
     try {
         await fs.access(configPath);
-    } catch {
-        await fs.writeFile(configPath, "{}", "utf8");
+    } catch (error) {
+        try {
+            await fs.writeFile(configPath, "{}", "utf8");
+        } catch (writeError) {
+            throw handleError(
+                new FileSystemError(`Failed to create config file at ${configPath}`, {
+                    error: writeError,
+                }),
+                logger,
+                "ensureConfig",
+            );
+        }
     }
     return configPath;
 }
@@ -67,7 +78,7 @@ async function ensureConfig(photo: string, isFile: boolean): Promise<string> {
 /**
  * Batched write operation that combines multiple writes into a single operation
  */
-async function batchedWrite(): Promise<void> {
+async function batchedWrite(logger: Logger): Promise<void> {
     if (writeBatch.size === 0) return;
 
     const now = Date.now();
@@ -88,9 +99,19 @@ async function batchedWrite(): Promise<void> {
     await Promise.all(
         Array.from(dirGroups.entries()).map(async ([dir, dataArray]) => {
             try {
-                await fs.writeFile(dir, dataArray.join("\n"), { encoding: "utf8", flag: "w" });
+                await retryOperation(
+                    () => fs.writeFile(dir, dataArray.join("\n"), { encoding: "utf8", flag: "w" }),
+                    3,
+                    1000,
+                    logger,
+                    "batchedWrite",
+                );
             } catch (error) {
-                console.error(`Error writing to ${dir}:`, error);
+                handleError(
+                    new FileSystemError(`Error writing to ${dir}`, { error }),
+                    logger,
+                    "batchedWrite",
+                );
             }
         }),
     );
@@ -99,13 +120,13 @@ async function batchedWrite(): Promise<void> {
 /**
  * Batched read operation that combines multiple reads into a single operation
  */
-async function batchedRead(path: string): Promise<ConfigMetadata> {
+async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata> {
     if (readBatch.has(path)) {
         return readBatch.get(path)!;
     }
 
     const promise = (async () => {
-        const dir = await ensureConfig(path, true);
+        const dir = await ensureConfig(path, true, logger);
 
         // Check cache first
         const cached = configCache.get(dir);
@@ -117,16 +138,31 @@ async function batchedRead(path: string): Promise<ConfigMetadata> {
             };
         }
 
-        const data = await fs.readFile(dir, "utf-8").catch(() => "{}");
-        const config = parseConfig(data);
+        try {
+            const data = await retryOperation(
+                () => fs.readFile(dir, "utf-8"),
+                3,
+                1000,
+                logger,
+                "batchedRead",
+            ).catch(() => "{}");
 
-        // Update cache
-        configCache.set(dir, { config, timestamp: now });
+            const config = parseConfig(data);
 
-        return {
-            dir,
-            data: data ? data : "{}",
-        };
+            // Update cache
+            configCache.set(dir, { config, timestamp: now });
+
+            return {
+                dir,
+                data: data ? data : "{}",
+            };
+        } catch (error) {
+            throw handleError(
+                new FileSystemError(`Failed to read config file at ${dir}`, { error }),
+                logger,
+                "batchedRead",
+            );
+        }
     })();
 
     readBatch.set(path, promise);
@@ -142,14 +178,18 @@ async function batchedRead(path: string): Promise<ConfigMetadata> {
 /**
  * Updates the readConfig function to use batched reads
  */
-async function readConfig(photo: string, isFile: boolean): Promise<ConfigMetadata> {
-    return batchedRead(photo);
+async function readConfig(photo: string, isFile: boolean, logger: Logger): Promise<ConfigMetadata> {
+    return batchedRead(photo, logger);
 }
 
 /**
  * Updates the writeConfig function to use batched writes
  */
-async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Promise<void> {
+async function writeConfig(
+    configPath: string,
+    photoConfig: PhotasaConfig,
+    logger: Logger,
+): Promise<void> {
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
 
@@ -167,8 +207,8 @@ async function writeConfig(configPath: string, photoConfig: PhotasaConfig): Prom
 function fromJson(data: string): PhotasaConfig {
     try {
         return <PhotasaConfig>JSON.parse(data);
-    } catch {
-        return <PhotasaConfig>{};
+    } catch (error) {
+        throw new ConfigError("Failed to parse config JSON", { error, data });
     }
 }
 
@@ -194,6 +234,7 @@ const parseConfig = R.compose(normalizeConfig, fromJson);
  */
 export async function batchAddToPhotoList(
     photos: string[],
+    logger: Logger,
     onProgress?: (progress: number) => void,
     onError?: (error: Error) => void,
 ): Promise<PhotasaConfigResult> {
@@ -211,7 +252,7 @@ export async function batchAddToPhotoList(
         const results = await Promise.allSettled(
             chunk.map(async (photo) => {
                 try {
-                    const result = await addToPhotoList(photo);
+                    const result = await addToPhotoList(photo, logger);
                     lastResult = result;
                     processed++;
 
@@ -222,16 +263,22 @@ export async function batchAddToPhotoList(
                         lastProgressUpdate = now;
                         onProgress?.(processed / total);
                     }
+                    return result;
                 } catch (error) {
                     failed++;
                     onError?.(error as Error);
+                    throw error;
                 }
             }),
         );
 
         // Check for timeout
         if (Date.now() - startTime > QUEUE_TIMEOUT) {
-            throw new Error(`Batch processing timed out after ${QUEUE_TIMEOUT}ms`);
+            throw new ConfigError(`Batch processing timed out after ${QUEUE_TIMEOUT}ms`, {
+                processed,
+                failed,
+                total,
+            });
         }
     }
 
@@ -240,7 +287,11 @@ export async function batchAddToPhotoList(
 
     // Return the last successful result or throw if no successful results
     if (!lastResult) {
-        throw new Error("No successful results in batch processing");
+        throw new ConfigError("No successful results in batch processing", {
+            processed,
+            failed,
+            total,
+        });
     }
     return lastResult;
 }
@@ -249,88 +300,134 @@ export async function batchAddToPhotoList(
  * Add a single photo to its corresponding .photasa.json config file.
  * If the photo already exists, updates its thumbnail if missing.
  */
-export const addToPhotoList = debounce(async (photoPath: string): Promise<PhotasaConfigResult> => {
-    const meta = await readConfig(photoPath, true);
-    const photasaConfig = parseConfig(meta.data);
+export const addToPhotoList = debounce(
+    async (photoPath: string, logger: Logger): Promise<PhotasaConfigResult> => {
+        try {
+            const meta = await readConfig(photoPath, true, logger);
+            const photasaConfig = parseConfig(meta.data);
 
-    const fileName = toFileName(photoPath);
-    const photo = photasaConfig.photoList.find((p) => p.path === fileName);
-    const thumbnailName = toRelativeThumbnailPath(photoPath);
-    if (!photo) {
-        photasaConfig.photoList.push({
-            path: fileName,
-            thumbnail: thumbnailName,
-            history: [],
-            isVideo: isVideo(fileName),
-        });
-        await writeConfig(meta.dir, photasaConfig);
-    } else if (!photo.thumbnail) {
-        photo.thumbnail = thumbnailName;
-        await writeConfig(meta.dir, photasaConfig);
-    }
-    return {
-        path: meta.dir,
-        config: photasaConfig,
-    };
-}, DEBOUNCE_DELAY);
+            const fileName = toFileName(photoPath);
+            const photo = photasaConfig.photoList.find((p) => p.path === fileName);
+            const thumbnailName = toRelativeThumbnailPath(photoPath);
+            if (!photo) {
+                photasaConfig.photoList.push({
+                    path: fileName,
+                    thumbnail: thumbnailName,
+                    history: [],
+                    isVideo: isVideo(fileName),
+                });
+                await writeConfig(meta.dir, photasaConfig, logger);
+            } else if (!photo.thumbnail) {
+                photo.thumbnail = thumbnailName;
+                await writeConfig(meta.dir, photasaConfig, logger);
+            }
+            return {
+                path: meta.dir,
+                config: photasaConfig,
+            };
+        } catch (error) {
+            throw handleError(
+                new ConfigError(`Failed to add photo to list: ${photoPath}`, { error }),
+                logger,
+                "addToPhotoList",
+            );
+        }
+    },
+    DEBOUNCE_DELAY,
+);
 
 /**
  * Remove a photo from its .photasa.json config file.
  * If the photo is not found, does nothing.
  */
-export async function removeFromPhotoList(photoPath: string): Promise<PhotasaConfigResult> {
-    const meta = await readConfig(photoPath, true);
-    const photasaConfig = parseConfig(meta.data);
+export async function removeFromPhotoList(
+    photoPath: string,
+    logger: Logger,
+): Promise<PhotasaConfigResult> {
+    try {
+        const meta = await readConfig(photoPath, true, logger);
+        const photasaConfig = parseConfig(meta.data);
 
-    const fileName = toFileName(photoPath);
-    const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === fileName);
+        const fileName = toFileName(photoPath);
+        const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === fileName);
 
-    if (photoIndex >= 0) {
-        photasaConfig.photoList.splice(photoIndex, 1);
-        await writeConfig(meta.dir, photasaConfig);
+        if (photoIndex >= 0) {
+            photasaConfig.photoList.splice(photoIndex, 1);
+            await writeConfig(meta.dir, photasaConfig, logger);
+        }
+        return {
+            path: meta.dir,
+            config: photasaConfig,
+        };
+    } catch (error) {
+        throw handleError(
+            new ConfigError(`Failed to remove photo from list: ${photoPath}`, { error }),
+            logger,
+            "removeFromPhotoList",
+        );
     }
-    return {
-        path: meta.dir,
-        config: photasaConfig,
-    };
 }
 
 /**
  * Loads the PhotasaConfig for a given folder.
  */
-export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    const meta = await readConfig(folder, false);
-    return parseConfig(meta.data);
+export async function getPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
+    try {
+        const meta = await readConfig(folder, false, logger);
+        return parseConfig(meta.data);
+    } catch (error) {
+        throw handleError(
+            new ConfigError(`Failed to get config for folder: ${folder}`, { error }),
+            logger,
+            "getPhotasaConfig",
+        );
+    }
 }
 
 /**
  * Resets the photo list in the .photasa.json config for a folder.
  * Leaves other config fields intact.
  */
-export async function resetPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    const meta = await readConfig(folder, false);
-    const photasaConfig = parseConfig(meta.data);
-    photasaConfig.photoList = [];
-    await writeConfig(meta.dir, photasaConfig);
-    return photasaConfig;
+export async function resetPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
+    try {
+        const meta = await readConfig(folder, false, logger);
+        const photasaConfig = parseConfig(meta.data);
+        photasaConfig.photoList = [];
+        await writeConfig(meta.dir, photasaConfig, logger);
+        return photasaConfig;
+    } catch (error) {
+        throw handleError(
+            new ConfigError(`Failed to reset config for folder: ${folder}`, { error }),
+            logger,
+            "resetPhotasaConfig",
+        );
+    }
 }
 
 /**
  * Fixes the paths and thumbnail names in the .photasa.json config for a folder.
  * Useful for migration or correcting legacy data.
  */
-export async function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    const meta = await readConfig(folder, false);
-    const config = parseConfig(meta.data);
+export async function fixPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
+    try {
+        const meta = await readConfig(folder, false, logger);
+        const config = parseConfig(meta.data);
 
-    config.photoList.forEach((photo) => {
-        photo.path = toFileName(photo.path);
-        photo.thumbnail = shortenThumbnailName(photo.thumbnail);
-    });
+        config.photoList.forEach((photo) => {
+            photo.path = toFileName(photo.path);
+            photo.thumbnail = shortenThumbnailName(photo.thumbnail);
+        });
 
-    await writeConfig(meta.dir, config);
+        await writeConfig(meta.dir, config, logger);
 
-    return config;
+        return config;
+    } catch (error) {
+        throw handleError(
+            new ConfigError(`Failed to fix config for folder: ${folder}`, { error }),
+            logger,
+            "fixPhotasaConfig",
+        );
+    }
 }
 
 // --- Bulk Add Queue and Task Management ---
@@ -355,8 +452,11 @@ async function initializeQueue(logger: Logger) {
         });
         return newQueue;
     } catch (error) {
-        logger.error("Failed to initialize queue:", error);
-        throw error;
+        throw handleError(
+            new ConfigError("Failed to initialize queue", { error }),
+            logger,
+            "initializeQueue",
+        );
     }
 }
 
@@ -382,13 +482,7 @@ function setupQueueEvents(logger: Logger, queue: any): void {
         });
 
         queue.on("error", (error) => {
-            queueLogger?.error("config-queue", {
-                action: "error",
-                error: error.message,
-                timestamp: Date.now(),
-                queueSize: queue.size,
-                pending: queue.pending,
-            });
+            handleError(new ConfigError("Queue error", { error }), queueLogger!, "queueEvents");
             // Don't crash, just log the error and continue
             queue.start(); // Restart queue if it was paused
         });
@@ -423,7 +517,11 @@ function setupQueueEvents(logger: Logger, queue: any): void {
             });
         });
     } catch (error) {
-        logger.error("Failed to setup queue events:", error);
+        handleError(
+            new ConfigError("Failed to setup queue events", { error }),
+            logger,
+            "setupQueueEvents",
+        );
     }
 }
 
@@ -458,7 +556,7 @@ function addConfig(
     }
 
     from(queued)
-        .pipe(concatMap(([key, value]) => batchAddToPhotoList(value)))
+        .pipe(concatMap(([key, value]) => batchAddToPhotoList(value, logger)))
         .subscribe({
             next: (result: PhotasaConfigResult) => {
                 postMessage(
@@ -471,11 +569,11 @@ function addConfig(
                 );
             },
             error: (err) => {
-                logger.error("config-error", {
-                    action: "error",
-                    error: err.message,
-                    timestamp: Date.now(),
-                });
+                handleError(
+                    new ConfigError("Error processing add queue", { error: err }),
+                    logger,
+                    "addConfig",
+                );
                 postMessage(
                     JSON.stringify({
                         action: "error",
@@ -541,7 +639,11 @@ export function addToPhotasaConfig(
                 addTaskToQueue(request, postMessage, logger);
             })
             .catch((error) => {
-                logger.error("Failed to initialize queue:", error);
+                handleError(
+                    new ConfigError("Failed to initialize queue", { error }),
+                    logger,
+                    "addToPhotasaConfig",
+                );
                 postMessage(
                     JSON.stringify({
                         action: "error",
@@ -606,4 +708,4 @@ export function clearAllConfigCache(): void {
 }
 
 // Start the write batch interval
-setInterval(batchedWrite, WRITE_BATCH_INTERVAL);
+setInterval(() => batchedWrite(queueLogger!), WRITE_BATCH_INTERVAL);

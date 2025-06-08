@@ -1,5 +1,6 @@
 import createWorker from "./config-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
+import type { WorkerMessage, WorkerResponse } from "@common/worker-types";
 
 type ThumbnailWorker = {
     on: (event: string, callback: (message: string) => void) => void;
@@ -9,7 +10,7 @@ type ThumbnailWorker = {
 export default class ConfigService {
     ipc: IpcMain;
     mainWindow: BrowserWindow;
-    promises = {};
+    promises: Record<string, () => void> = {};
     queueId = 0;
     worker: ThumbnailWorker;
 
@@ -17,8 +18,8 @@ export default class ConfigService {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
         this.worker = createWorker({ workerData: "worker" });
-        this.worker.on("message", (message) => {
-            const data = JSON.parse(message);
+        this.worker.on("message", (message: string) => {
+            const data = JSON.parse(message) as WorkerResponse;
             if (data.from === "query") {
                 mainWindow?.webContents.send("picasa:photasa-config", data);
             }
@@ -44,15 +45,22 @@ export default class ConfigService {
     }
 
     private queryConfigs(paths: string[]): void {
-        this.worker.postMessage(JSON.stringify({ action: "query", paths }));
+        const message: WorkerMessage = {
+            action: "query",
+            paths,
+        };
+        this.worker.postMessage(JSON.stringify(message));
     }
 
     private addConfig(paths: string[]): Promise<void> {
         return new Promise((resolve) => {
             this.promises[`${this.queueId}`] = resolve;
-            this.worker.postMessage(
-                JSON.stringify({ queueId: this.queueId, action: "add", paths }),
-            );
+            const message: WorkerMessage = {
+                queueId: this.queueId,
+                action: "add",
+                paths,
+            };
+            this.worker.postMessage(JSON.stringify(message));
             this.queueId++;
         });
     }

@@ -4,12 +4,28 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import { shouldIgnorePhotasaPath, isHiddenFile } from "../common";
 import type { PhotoPath, ScanAction } from "@common/types";
-import { createThumbnail } from "./thumbnail-handler";
 import { addToPhotasaConfig, getPhotasaConfig } from "./config-storage";
 import type { Logger } from "log4js";
 import { buildThumbnailPath } from "../common";
 import fs from "fs-extra";
 import path from "path";
+import { BatchProcessor } from "../common/batch-processor";
+import { WorkerPool } from "./worker-pool";
+
+const THUMBNAIL_WORKER_CONFIG = {
+    minWorkers: 2,
+    maxWorkers: 4,
+    workerScript: path.join(__dirname, "workers/thumbnail-worker.js"),
+};
+
+let workerPool: WorkerPool | null = null;
+
+function initializeWorkerPool(logger: Logger): WorkerPool {
+    if (!workerPool) {
+        workerPool = new WorkerPool(THUMBNAIL_WORKER_CONFIG, logger);
+    }
+    return workerPool;
+}
 
 /**
  * Whether only scan current folder or scan all sub folders.
@@ -80,6 +96,13 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoPath> {
 }
 
 export function scanPhotos(scan: ScanAction, logger: Logger): Observable<PhotoPath> {
+    const workerPool = initializeWorkerPool(logger);
+    const batchProcessor = new BatchProcessor<PhotoPath>({
+        chunkSize: 10,
+        maxConcurrent: 3,
+        rateLimit: 100,
+    });
+
     return walkthroughPhotos(scan).pipe(
         concatMap(async (action: PhotoPath) => {
             // Check if file needs processing
@@ -93,16 +116,11 @@ export function scanPhotos(scan: ScanAction, logger: Logger): Observable<PhotoPa
             const thumbnailExists = fs.existsSync(action.thumbnail);
             if (!thumbnailExists || scan.action === "rescan") {
                 logger.debug(`Creating thumbnail for ${action.path}`);
-                await createThumbnail(
-                    {
-                        path: action.path,
-                        thumbnail: action.thumbnail,
-                        width: scan.thumbnailSize,
-                        height: scan.thumbnailSize,
-                        preview: "",
-                    },
-                    logger,
-                );
+                await workerPool.addTask({
+                    file: action.path,
+                    size: scan.thumbnailSize,
+                    quality: 80,
+                });
             } else {
                 logger.debug(`Using existing thumbnail for ${action.path}`);
             }
@@ -113,11 +131,19 @@ export function scanPhotos(scan: ScanAction, logger: Logger): Observable<PhotoPa
                     queueId: 0,
                     paths: [action.path],
                 },
-                () => {},
+                (msg) => logger.debug("Config update:", msg),
                 logger,
             );
 
             return action;
         }),
     );
+}
+
+// Cleanup function to be called when the app is shutting down
+export async function cleanup(): Promise<void> {
+    if (workerPool) {
+        await workerPool.shutdown();
+        workerPool = null;
+    }
 }

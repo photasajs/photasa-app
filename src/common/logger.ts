@@ -1,3 +1,5 @@
+import log4js from "log4js";
+
 const DEV_MODE = process.env.NODE_ENV === "development";
 const isNode =
     typeof process !== "undefined" && process.versions != null && process.versions.node != null;
@@ -39,7 +41,6 @@ class BrowserLogger {
 // Node.js logger using log4js
 let NodeLogger: any;
 if (isNode) {
-    const log4js = require("log4js");
     log4js.configure({
         appenders: {
             console: {
@@ -72,10 +73,9 @@ export function getLogger(category: string) {
 
 // Export commonly used loggers
 export const loggers = {
-    app: getLogger("app"),
-    scan: getLogger("scan"),
-    worker: getLogger("worker"),
-    config: getLogger("config"),
-    thumbnail: getLogger("thumbnail"),
-    fileWatch: getLogger("file-watch"),
+    getLogger: (category: string) => {
+        const logger = log4js.getLogger(category);
+        logger.level = process.env.NODE_ENV === "development" ? "debug" : "info";
+        return logger;
+    },
 };

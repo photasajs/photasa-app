@@ -7,6 +7,11 @@ import { comlink } from "vite-plugin-comlink";
 export default defineConfig({
     main: {
         plugins: [externalizeDepsPlugin()],
+        resolve: {
+            alias: {
+                "@common": resolve("src/common/"),
+            },
+        },
     },
     preload: {
         plugins: [externalizeDepsPlugin(), babel({ babelHelpers: "bundled" })],
