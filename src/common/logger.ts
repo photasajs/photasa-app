@@ -39,7 +39,6 @@ class BrowserLogger {
 }
 
 // Node.js logger using log4js
-let NodeLogger: any;
 if (isNode) {
     log4js.configure({
         appenders: {
@@ -58,24 +57,21 @@ if (isNode) {
             },
         },
     });
-
-    NodeLogger = function (category: string) {
-        const logger = log4js.getLogger(category);
-        logger.level = DEV_MODE ? "debug" : "info";
-        return logger;
-    };
 }
 
 // Create a logger factory
 export function getLogger(category: string) {
-    return isNode ? new NodeLogger(category) : new BrowserLogger(category);
+    return isNode ? log4js.getLogger(category) : new BrowserLogger(category);
 }
 
 // Export commonly used loggers
 export const loggers = {
-    getLogger: (category: string) => {
-        const logger = log4js.getLogger(category);
-        logger.level = process.env.NODE_ENV === "development" ? "debug" : "info";
-        return logger;
-    },
+    app: getLogger("app"),
+    main: getLogger("main"),
+    preload: getLogger("preload"),
+    renderer: getLogger("renderer"),
+    config: getLogger("config"),
+    scan: getLogger("scan"),
+    thumbnail: getLogger("thumbnail"),
+    worker: getLogger("worker"),
 };

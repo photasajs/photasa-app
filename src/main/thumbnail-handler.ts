@@ -119,24 +119,31 @@ export async function createThumbnail(
     arg: ThumbnailRequest,
     logger: Logger,
 ): Promise<ThumbnailRequest> {
-    const isExist = await exists(arg.thumbnail);
-    if (!arg.always && isExist) {
-        return Promise.resolve(arg);
-    }
-
-    await removeThumbnail(arg, logger);
-
-    await ensureDir(path.dirname(arg.thumbnail));
-
-    let isHeic = HeicExtensionRE.test(arg.path);
-    // If it's a HEIC file, we need to convert it to a PNG first for preview
-    if (isHeic) {
-        arg.preview = await createPreviewImage(arg, logger);
-        // Convert may failed, then it's not HEIC
-        isHeic = arg.preview !== "";
-    }
-
     try {
+        // Check if source file exists
+        const sourceExists = await exists(arg.path);
+        if (!sourceExists) {
+            logger.error(`Source file does not exist: ${arg.path}`);
+            return arg;
+        }
+
+        // Check if thumbnail exists
+        const thumbnailExists = await exists(arg.thumbnail);
+        if (thumbnailExists) {
+            return arg;
+        }
+
+        // Thumbnail doesn't exist, create it
+        await ensureDir(path.dirname(arg.thumbnail));
+
+        let isHeic = HeicExtensionRE.test(arg.path);
+        // If it's a HEIC file, we need to convert it to a PNG first for preview
+        if (isHeic) {
+            arg.preview = await createPreviewImage(arg, logger);
+            // Convert may failed, then it's not HEIC
+            isHeic = arg.preview !== "";
+        }
+
         if (isVideo(arg.path)) {
             logger.info("Create video thumbnail for : " + arg.path);
             await createScreenshot(arg, logger);

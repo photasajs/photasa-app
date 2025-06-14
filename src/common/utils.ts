@@ -8,19 +8,20 @@ export const HeicExtensionRE = new RegExp(`\\.(${config.acceptedHeicExtensions.j
 function toThumbnailPath(photoPath: string): string {
     return `thumbnail-${photoPath}.png`;
 }
+
 export function buildThumbnailPath(photoPath: string): string {
     // Prepare thumbnail path for image
-    const dir = path.join(path.dirname(photoPath), PHOTASA_ORIGINALS);
-    return path.join(dir, toThumbnailPath(path.basename(photoPath)));
+    const dir = path.normalize(path.join(path.dirname(photoPath), PHOTASA_ORIGINALS));
+    return path.normalize(path.join(dir, toThumbnailPath(path.basename(photoPath))));
 }
 
 export function toRelativeThumbnailPath(photoPath: string): string {
-    return path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath)));
+    return path.normalize(path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath))));
 }
 
 export function toPreviewPath(target: string): string {
     const fileName = path.basename(target, path.extname(target));
-    return path.join(path.dirname(target), `${PHOTASA_ORIGINALS}`, `${fileName}.jpeg`);
+    return path.normalize(path.join(path.dirname(target), PHOTASA_ORIGINALS, `${fileName}.jpeg`));
 }
 
 export function ratioStringToParts(str: string): number[] {
@@ -80,7 +81,7 @@ export function toFileName(target: string): string {
  * @returns thumbnail file name
  */
 export function toThumbnailName(target: string): string {
-    return path.join(PHOTASA_ORIGINALS, `${toFileName(target)}.png`);
+    return path.normalize(path.join(PHOTASA_ORIGINALS, `${toFileName(target)}.png`));
 }
 
 /**
@@ -89,5 +90,5 @@ export function toThumbnailName(target: string): string {
  * @returns relative file name
  */
 export function shortenThumbnailName(file: string): string {
-    return path.join(PHOTASA_ORIGINALS, path.basename(file));
+    return path.normalize(path.join(PHOTASA_ORIGINALS, path.basename(file)));
 }
