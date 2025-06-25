@@ -2,16 +2,14 @@ import klaw from "klaw";
 import { Observable, Subscriber, concatMap } from "rxjs";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { shouldIgnorePhotasaPath, isHiddenFile } from "../common";
+import { shouldIgnorePhotasaPath, isHiddenFile, buildThumbnailPath } from "@common/index";
 import type { PhotoPath, ScanAction } from "@common/types";
 import { addToPhotasaConfig, getPhotasaConfig } from "./config/config-storage";
-import type { Logger } from "log4js";
-import { buildThumbnailPath } from "../common";
 import fs from "fs-extra";
 import path from "path";
 import { WorkerPool } from "./worker-pool";
 import createWorker from "./workers/thumbnail-worker?nodeWorker";
-import { loggers } from "@common/logger";
+import { loggers, PhotasaLogger } from "@common/logger";
 const logger = loggers.scan;
 
 const THUMBNAIL_WORKER_CONFIG = {
@@ -22,7 +20,7 @@ const THUMBNAIL_WORKER_CONFIG = {
 
 let workerPool: WorkerPool | null = null;
 
-function initializeWorkerPool(logger: Logger): WorkerPool {
+function initializeWorkerPool(logger: PhotasaLogger): WorkerPool {
     if (!workerPool) {
         workerPool = new WorkerPool(THUMBNAIL_WORKER_CONFIG, logger);
     }
@@ -97,7 +95,7 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoPath> {
     });
 }
 
-export function scanPhotos(scan: ScanAction, logger: Logger): Observable<PhotoPath> {
+export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<PhotoPath> {
     const workerPool = initializeWorkerPool(logger);
 
     return walkthroughPhotos(scan).pipe(

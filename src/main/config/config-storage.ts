@@ -399,7 +399,10 @@ export async function removeFromPhotoList(
 /**
  * Loads the PhotasaConfig for a given folder.
  */
-export async function getPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
+export async function getPhotasaConfig(
+    folder: string,
+    logger: PhotasaLogger,
+): Promise<PhotasaConfig> {
     try {
         logger.debug(`[getPhotasaConfig] 读取配置: ${folder}`);
         const meta = await readConfig(folder, false, logger);
