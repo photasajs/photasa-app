@@ -2,7 +2,6 @@ import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "el
 
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import log4js from "log4js";
 import { initFileWatcher } from "./fs-watch";
 import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
@@ -14,14 +13,13 @@ import ConfigService from "./config/config-service";
 import ScanService from "./scan-service";
 import { closeFileWatcher } from "./fs-watch";
 import fs from "fs";
+import { loggers } from "@common/logger";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
 });
 
-const DEV_MODE = process.env.NODE_ENV === "development";
-const logger = log4js.getLogger("main");
-logger.level = DEV_MODE ? "debug" : "info";
+const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;
 
 function createWindow(): void {
@@ -58,10 +56,6 @@ function createWindow(): void {
 
     mainWindow.on("ready-to-show", () => {
         mainWindow?.show();
-
-        if (!DEV_MODE) {
-            mainWindow?.webContents.openDevTools();
-        }
     });
 
     mainWindow.webContents.setWindowOpenHandler((details) => {

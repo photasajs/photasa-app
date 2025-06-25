@@ -1,6 +1,6 @@
 import { Worker } from "worker_threads";
 import { EventEmitter } from "events";
-import type { Logger } from "log4js";
+import { PhotasaLogger } from "@common/logger";
 
 interface BusyWorker extends Worker {
     isBusy: boolean;
@@ -19,7 +19,7 @@ export class WorkerPool extends EventEmitter {
     private config: WorkerPoolConfig;
     private logger: Logger;
 
-    constructor(config: WorkerPoolConfig, logger: Logger) {
+    constructor(config: WorkerPoolConfig, logger: PhotasaLogger) {
         super();
         this.config = config;
         this.logger = logger;

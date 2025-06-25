@@ -1,10 +1,8 @@
 import { parentPort } from "worker_threads";
 import { createThumbnail, removeThumbnail } from "./thumbnail-handler";
-import log4js from "log4js";
+import { loggers } from "@common/logger";
 
-const DEV_MODE = process.env.NODE_ENV === "development";
-const logger = log4js.getLogger("main");
-logger.level = DEV_MODE ? "debug" : "info";
+const logger = loggers.worker;
 
 const port = parentPort;
 if (!port) {

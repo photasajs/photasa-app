@@ -15,6 +15,7 @@ import {
 import type { VideoSize } from "../common/types.d.ts";
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
+import { PhotasaLogger } from "@common/logger";
 
 //Get the paths to the packaged versions of the binaries we want to use
 const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
@@ -24,7 +25,7 @@ const ffprobePath = ffprobeStatic.path.replace("app.asar", "app.asar.unpacked");
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
-async function createPreviewImage(arg: ThumbnailRequest, logger: Logger): Promise<string> {
+async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger): Promise<string> {
     const previewName = toPreviewPath(arg.path);
     const inputBuffer = await readFile(arg.path);
     try {
@@ -49,7 +50,7 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: Logger): Promis
     }
 }
 
-export async function removeThumbnail(arg, logger: Logger): Promise<string> {
+export async function removeThumbnail(arg, logger: PhotasaLogger): Promise<string> {
     const isExist = await exists(arg.thumbnail);
     if (!isExist) {
         return arg;
@@ -94,7 +95,7 @@ function getVideoDimension(video: string): Promise<VideoSize> {
         });
     });
 }
-async function createScreenshot(arg, logger: Logger): Promise<string> {
+async function createScreenshot(arg, logger: PhotasaLogger): Promise<string> {
     const dimension = await getVideoDimension(arg.path);
     return new Promise((resolve) => {
         const size = getOptimalThumbnailResolution(dimension, arg);
@@ -120,7 +121,7 @@ async function createScreenshot(arg, logger: Logger): Promise<string> {
 
 export async function createThumbnail(
     arg: ThumbnailRequest,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): Promise<ThumbnailRequest> {
     try {
         // Check if source file exists

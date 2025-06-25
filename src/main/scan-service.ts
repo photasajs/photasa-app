@@ -1,11 +1,9 @@
 import createWorker from "./scan-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
-import log4js from "log4js";
 import type { ScanAction } from "@common/types";
+import { loggers } from "@common/logger";
 
-const DEV_MODE = process.env.NODE_ENV === "development";
-const logger = log4js.getLogger("scan-service");
-logger.level = DEV_MODE ? "debug" : "info";
+const logger = loggers.scan;
 
 type ScanWorker = {
     on: (event: string, callback: (message: string) => void) => void;

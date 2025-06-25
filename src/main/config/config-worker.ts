@@ -1,17 +1,15 @@
 import { parentPort } from "worker_threads";
 import { queryConfig, addConfig, removeConfig } from "./config-handler";
-import log4js from "log4js";
 import { WorkerError, handleError } from "@common/error-handler";
 import type { WorkerMessage, WorkerResponse, WorkerHandlers } from "@common/worker-types";
-
-const DEV_MODE = process.env.NODE_ENV === "development";
-const logger = log4js.getLogger("config-worker");
-logger.level = DEV_MODE ? "debug" : "info";
+import { loggers } from "@common/logger";
 
 const port = parentPort;
 if (!port) {
     throw new WorkerError("Worker port is not available");
 }
+
+const logger = loggers.worker;
 
 const handler: WorkerHandlers = {
     query: queryConfig,

@@ -129,7 +129,7 @@ async function batchedWrite(logger: PhotasaLogger): Promise<void> {
 /**
  * Batched read operation that combines multiple reads into a single operation
  */
-async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata> {
+async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigMetadata> {
     if (readBatch.has(path)) {
         return readBatch.get(path) || { dir: "", data: "{}" };
     }
@@ -200,7 +200,7 @@ async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata
 async function readConfig(
     photo: string,
     _isFile: boolean,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): Promise<ConfigMetadata> {
     return batchedRead(photo, logger);
 }
@@ -211,7 +211,7 @@ async function readConfig(
 async function writeConfig(
     configPath: string,
     photoConfig: PhotasaConfig,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): Promise<void> {
     logger.info(`[writeConfig] 写入配置文件: ${configPath}`);
     photoConfig.lastModified = Date.now();
@@ -366,7 +366,7 @@ export const addToPhotoList = debounce(
  */
 export async function removeFromPhotoList(
     photoPath: string,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): Promise<PhotasaConfigResult> {
     try {
         const meta = await readConfig(photoPath, true, logger);

@@ -10,8 +10,9 @@ import { buildThumbnailPath } from "../common";
 import fs from "fs-extra";
 import path from "path";
 import { WorkerPool } from "./worker-pool";
-import log4js from "log4js";
 import createWorker from "./workers/thumbnail-worker?nodeWorker";
+import { loggers } from "@common/logger";
+const logger = loggers.scan;
 
 const THUMBNAIL_WORKER_CONFIG = {
     minWorkers: 2,
@@ -53,7 +54,6 @@ async function shouldProcessFile(filePath: string, action: string): Promise<bool
     }
 
     // Check if file is already in config
-    const logger: Logger = log4js.getLogger("scan-photos");
     const config = await getPhotasaConfig(dir, logger);
     const fileName = path.basename(filePath);
     return !config.photoList.some((photo) => photo.path === fileName);
