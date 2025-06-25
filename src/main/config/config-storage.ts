@@ -21,10 +21,14 @@ import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
 import { debounce } from "lodash";
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
+import { CACHE_TTL, configCache } from "./config-cache";
 
-// Add cache for config files with TTL
-const configCache = new Map<string, { config: PhotasaConfig; timestamp: number }>();
-const CACHE_TTL = 5000; // Cache for 5 seconds
+export {
+    getConfigCache,
+    setConfigCache,
+    clearConfigCache,
+    clearAllConfigCache,
+} from "./config-cache";
 
 // Types for improved type safety
 interface QueueItem {
@@ -730,20 +734,6 @@ export function cleanupQueueForFolder(folderPath: string): void {
 export const config = {
     DELAY_NOTIFY_DONE: 3000,
 };
-
-/**
- * Clears the config cache for a specific folder
- */
-export function clearConfigCache(folderPath: string): void {
-    configCache.delete(folderPath);
-}
-
-/**
- * Clears the entire config cache
- */
-export function clearAllConfigCache(): void {
-    configCache.clear();
-}
 
 // Start the write batch interval
 setInterval(() => {

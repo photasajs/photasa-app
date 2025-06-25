@@ -22,9 +22,9 @@ export interface BatchResult<T> {
 export class BatchProcessor<T> {
     private progressSubject = new Subject<BatchProgress>();
     private config: BatchConfig;
-    private totalItems: number = 0;
-    private completedItems: number = 0;
-    private failedItems: number = 0;
+    private totalItems = 0;
+    private completedItems = 0;
+    private failedItems = 0;
 
     constructor(config: BatchConfig) {
         this.config = {
