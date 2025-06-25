@@ -1,6 +1,5 @@
 import { parentPort } from "worker_threads";
 import sharp from "sharp";
-import path from "path";
 import { buildThumbnailPath } from "../../common";
 
 interface ThumbnailRequest {

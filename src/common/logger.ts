@@ -5,7 +5,7 @@ const isNode =
     typeof process !== "undefined" && process.versions != null && process.versions.node != null;
 
 // Simple browser logger
-class BrowserLogger {
+export class BrowserLogger {
     private category: string;
     private level: string;
 
