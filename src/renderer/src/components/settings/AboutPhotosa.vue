@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import LanguageSwitcher from "./LanguageSwitcher.vue";
+import Vue3MarkdownIt from "vue3-markdown-it";
 
 const { t } = useI18n();
 
@@ -16,25 +15,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
 
 <template>
     <div class="about-container" tabindex="0" @keydown="handleKeyPress">
-        <section aria-labelledby="intro-title">
-            <h1 id="intro-title">{{ t("about.introduction.title") }}</h1>
-            <p>{{ t("about.introduction.content") }}</p>
-            <p>
-                {{ t("about.introduction.summary") }}
-                <strong>{{ t("about.introduction.highlight") }}</strong>
-            </p>
-        </section>
-
-        <section aria-labelledby="resources-title">
-            <h2 id="resources-title">{{ t("about.resources.title") }}</h2>
-            <p>{{ t("about.resources.content") }}</p>
-            <ul>
-                <li>
-                    <a :href="'/docs/resources'">{{ t("about.resources.download") }}</a>
-                </li>
-            </ul>
-            <p>{{ t("about.press") }} <kbd>Esc</kbd> {{ t("about.toExit") }}</p>
-        </section>
+        <vue3-markdown-it :source="t('about.markdown')" />
     </div>
 </template>
 

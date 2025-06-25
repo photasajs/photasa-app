@@ -90,7 +90,8 @@
             "download": "Download Resources"
         },
         "press": "Press",
-        "toExit": "to exit"
+        "toExit": "to exit",
+        "markdown": "# About Photasa\n\nPhotasa is a modern, privacy-friendly local photo management tool inspired by the classic Picasa.\nIt enables you to efficiently browse, organize, and manage your photos and videos with a beautiful interface and powerful local features—no cloud required.\n\n## Key Features\n\n- Smart local import and management for photos and videos\n- Fast thumbnail generation and preview\n- Multi-language UI and theme switching\n- Batch operations and efficient search\n- Data privacy and security\n\n## Resources\n\n- [Project Documentation](/docs/resources)\n- [Open Source Repository](https://github.com/your-org/picasa-vue)\n- [☕️ Buy Me a Coffee](https://www.buymeacoffee.com/yourname)\n\nPress `Esc` to exit"
     },
     "preferences": {
         "title": "Preferences",

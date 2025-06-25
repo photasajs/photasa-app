@@ -50,7 +50,8 @@
             "download": "リソースをダウンロード"
         },
         "press": "押して",
-        "toExit": "終了"
+        "toExit": "終了",
+        "markdown": "# Photasaについて\n\nPhotasaは、クラシックなPicasaにインスパイアされた、モダンでプライバシーに配慮したローカル写真管理ツールです。\n美しいインターフェースと強力なローカル機能で、写真や動画を効率的に閲覧・整理・管理できます。クラウド不要。\n\n## 主な機能\n\n- ローカル写真・動画のスマートインポートと管理\n- 高速サムネイル生成とプレビュー\n- 多言語UIとテーマ切替\n- バッチ操作と効率的な検索\n- データのプライバシーとセキュリティ\n\n## リソース\n\n- [プロジェクトドキュメント](/docs/resources)\n- [オープンソースリポジトリ](https://github.com/your-org/picasa-vue)\n- [☕️ Buy Me a Coffeeでサポート](https://www.buymeacoffee.com/yourname)\n\n`Esc`キーで終了"
     },
     "preferences": {
         "title": "設定",

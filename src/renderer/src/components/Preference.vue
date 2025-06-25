@@ -9,10 +9,8 @@ import { usePhotosStore } from "@renderer/stores/photos";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
 import Language from "./settings/Language.vue";
 import General from "./settings/General.vue";
-import About from "./settings/About.vue";
+import AboutPhotosa from "./settings/AboutPhotosa.vue";
 import Theme from "./settings/Theme.vue";
-
-import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
 
 const { t } = useI18n();
@@ -124,7 +122,7 @@ function handleRemove(item): void {
             <Language />
         </a-tab-pane>
         <a-tab-pane :key="3" :tab="label.tabs.about">
-            <About></About>
+            <AboutPhotosa></AboutPhotosa>
         </a-tab-pane>
     </a-tabs>
     <a-modal

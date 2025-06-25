@@ -89,7 +89,8 @@
             "download": "Descargar Recursos"
         },
         "press": "Presiona",
-        "toExit": "para salir"
+        "toExit": "para salir",
+        "markdown": "# Acerca de Photasa\n\nPhotasa es una herramienta moderna y respetuosa con la privacidad para la gestión local de fotos, inspirada en el clásico Picasa.\nLe permite explorar, organizar y gestionar eficientemente sus fotos y videos con una interfaz hermosa y potentes funciones locales, sin necesidad de la nube.\n\n## Características principales\n\n- Importación y gestión local inteligente de fotos y videos\n- Generación rápida de miniaturas y vista previa\n- Interfaz multilingüe y cambio de tema\n- Operaciones por lotes y búsqueda eficiente\n- Privacidad y seguridad de los datos\n\n## Recursos\n\n- [Documentación del proyecto](/docs/resources)\n- [Repositorio de código abierto](https://github.com/your-org/picasa-vue)\n- [☕️ Apóyanos en Buy Me a Coffee](https://www.buymeacoffee.com/yourname)\n\nPresione `Esc` para salir"
     },
     "preferences": {
         "title": "Preferencias",
