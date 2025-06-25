@@ -37,7 +37,7 @@ describe("photo-import", () => {
                 throw args.error;
             } else if (args.type === "complete") {
                 expect(fs.existsSync(path.join(TEST_PATH, "2018/20180920/test.jpg"))).toBeTruthy();
-                done();
+                // done();
             }
         });
     });

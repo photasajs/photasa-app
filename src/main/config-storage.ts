@@ -43,12 +43,10 @@ const QUEUE_INTERVAL_CAP = 100; // Increased from 60 to process more tasks per i
 // Add write batching
 const writeBatch = new Map<string, { data: string; timestamp: number }>();
 const WRITE_BATCH_INTERVAL = 100; // Batch writes every 100ms
-const WRITE_BATCH_MAX_SIZE = 50; // Maximum number of files to write in one batch
 
 // Add read batching
 const readBatch = new Map<string, Promise<ConfigMetadata>>();
 const READ_BATCH_INTERVAL = 50; // Batch reads every 50ms
-const READ_BATCH_MAX_SIZE = 100; // Maximum number of files to read in one batch
 
 /**
  * Ensures the .photasa.json config file exists for a given photo or directory.
@@ -81,7 +79,6 @@ async function ensureConfig(photo: string, isFile: boolean, logger: Logger): Pro
 async function batchedWrite(logger: Logger): Promise<void> {
     if (writeBatch.size === 0) return;
 
-    const now = Date.now();
     const batch = Array.from(writeBatch.entries());
     writeBatch.clear();
 
@@ -130,8 +127,7 @@ async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata
 
         // Check cache first
         const cached = configCache.get(dir);
-        const now = Date.now();
-        if (cached && now - cached.timestamp < CACHE_TTL) {
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
             return {
                 dir,
                 data: JSON.stringify(cached.config),
@@ -150,7 +146,7 @@ async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata
             const config = parseConfig(data);
 
             // Update cache
-            configCache.set(dir, { config, timestamp: now });
+            configCache.set(dir, { config, timestamp: Date.now() });
 
             return {
                 dir,
@@ -178,7 +174,11 @@ async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata
 /**
  * Updates the readConfig function to use batched reads
  */
-async function readConfig(photo: string, isFile: boolean, logger: Logger): Promise<ConfigMetadata> {
+async function readConfig(
+    photo: string,
+    _isFile: boolean,
+    logger: Logger,
+): Promise<ConfigMetadata> {
     return batchedRead(photo, logger);
 }
 
@@ -190,14 +190,15 @@ async function writeConfig(
     photoConfig: PhotasaConfig,
     logger: Logger,
 ): Promise<void> {
+    logger.info(`[writeConfig] 写入配置文件: ${configPath}`);
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
-
+    logger.debug(`[writeConfig] 写入内容摘要: ${data.slice(0, 128)}...`);
     // Add to write batch
     writeBatch.set(configPath, { data, timestamp: Date.now() });
-
     // Update cache
     configCache.set(configPath, { config: photoConfig, timestamp: Date.now() });
+    logger.info(`[writeConfig] 写入完成: ${configPath}`);
 }
 
 /**
@@ -249,7 +250,7 @@ export async function batchAddToPhotoList(
     const chunkSize = QUEUE_CONCURRENCY * 2;
     for (let i = 0; i < photos.length; i += chunkSize) {
         const chunk = photos.slice(i, i + chunkSize);
-        const results = await Promise.allSettled(
+        await Promise.allSettled(
             chunk.map(async (photo) => {
                 try {
                     const result = await addToPhotoList(photo, logger);
@@ -506,16 +507,6 @@ function setupQueueEvents(logger: Logger, queue: any): void {
                 isPaused: queue.isPaused,
             });
         });
-
-        queue.on("completed", (result) => {
-            queueLogger?.debug("config-queue", {
-                action: "completed",
-                size: queue.size,
-                pending: queue.pending,
-                timestamp: Date.now(),
-                isPaused: queue.isPaused,
-            });
-        });
     } catch (error) {
         handleError(
             new ConfigError("Failed to setup queue events", { error }),
@@ -556,7 +547,7 @@ function addConfig(
     }
 
     from(queued)
-        .pipe(concatMap(([key, value]) => batchAddToPhotoList(value, logger)))
+        .pipe(concatMap(([, value]) => batchAddToPhotoList(value, logger)))
         .subscribe({
             next: (result: PhotasaConfigResult) => {
                 postMessage(

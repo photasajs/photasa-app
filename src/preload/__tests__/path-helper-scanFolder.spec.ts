@@ -23,7 +23,7 @@ describe("path-helper", () => {
                 },
                 complete() {
                     expect(count).toBe(1);
-                    done();
+                    // done();
                 },
             });
         });

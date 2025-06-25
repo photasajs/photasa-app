@@ -1,5 +1,4 @@
-import { Observable, from, Subject } from "rxjs";
-import { mergeMap, bufferCount, tap } from "rxjs/operators";
+import { Observable, Subject } from "rxjs";
 
 export interface BatchConfig {
     chunkSize: number;

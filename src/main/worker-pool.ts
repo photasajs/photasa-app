@@ -1,5 +1,4 @@
 import { Worker } from "worker_threads";
-import path from "path";
 import { EventEmitter } from "events";
 import type { Logger } from "log4js";
 

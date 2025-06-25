@@ -38,7 +38,7 @@ function notifyAction(action: WatchAction, isFile: boolean, path: string): void 
     });
 }
 
-function notifyError(action: WatchAction, error: Error, isNotify: boolean): void {
+function notifyError(action: WatchAction, error: Error, _isNotify: boolean): void {
     listeners.forEach((callback) => {
         invoke(
             {
@@ -55,7 +55,7 @@ function notifyError(action: WatchAction, error: Error, isNotify: boolean): void
     });
 }
 
-function notifyReady(action: WatchAction, isNotify: boolean): void {
+function notifyReady(action: WatchAction, _isNotify: boolean): void {
     listeners.forEach((callback) => {
         invoke(
             {

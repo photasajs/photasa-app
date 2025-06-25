@@ -9,8 +9,8 @@ import type { Logger } from "log4js";
 import { buildThumbnailPath } from "../common";
 import fs from "fs-extra";
 import path from "path";
-import { BatchProcessor } from "../common/batch-processor";
 import { WorkerPool } from "./worker-pool";
+import log4js from "log4js";
 
 const THUMBNAIL_WORKER_CONFIG = {
     minWorkers: 2,
@@ -52,7 +52,8 @@ async function shouldProcessFile(filePath: string, action: string): Promise<bool
     }
 
     // Check if file is already in config
-    const config = await getPhotasaConfig(dir);
+    const logger: Logger = log4js.getLogger("scan-photos");
+    const config = await getPhotasaConfig(dir, logger);
     const fileName = path.basename(filePath);
     return !config.photoList.some((photo) => photo.path === fileName);
 }
@@ -97,11 +98,6 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoPath> {
 
 export function scanPhotos(scan: ScanAction, logger: Logger): Observable<PhotoPath> {
     const workerPool = initializeWorkerPool(logger);
-    const batchProcessor = new BatchProcessor<PhotoPath>({
-        chunkSize: 10,
-        maxConcurrent: 3,
-        rateLimit: 100,
-    });
 
     return walkthroughPhotos(scan).pipe(
         concatMap(async (action: PhotoPath) => {

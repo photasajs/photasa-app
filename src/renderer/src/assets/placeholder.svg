@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="90" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="90" rx="8" fill="#f5f5f5"/>
+  <g>
+    <circle cx="36" cy="36" r="12" fill="#e0e0e0"/>
+    <rect x="60" y="60" width="40" height="20" rx="4" fill="#e0e0e0"/>
+    <polyline points="20,70 40,50 60,70 80,40 100,70" stroke="#bdbdbd" stroke-width="3" fill="none"/>
+  </g>
+  <text x="60" y="85" text-anchor="middle" font-size="12" fill="#bdbdbd">No Image</text>
+</svg>

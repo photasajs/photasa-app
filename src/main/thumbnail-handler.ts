@@ -12,10 +12,13 @@ import {
     getOptimalThumbnailResolution,
     ratioStringToParts,
 } from "../common/utils";
+import type { VideoSize } from "../common/types.d.ts";
+import ffmpegStatic from "ffmpeg-static";
+import ffprobeStatic from "ffprobe-static";
 
 //Get the paths to the packaged versions of the binaries we want to use
-const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked");
-const ffprobePath = require("ffprobe-static").path.replace("app.asar", "app.asar.unpacked");
+const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
+const ffprobePath = ffprobeStatic.path.replace("app.asar", "app.asar.unpacked");
 
 //tell the ffmpeg package where it can find the needed binaries.
 ffmpeg.setFfmpegPath(ffmpegPath);

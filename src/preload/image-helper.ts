@@ -1,7 +1,7 @@
 import { readChunk } from "read-chunk";
 import imageType, { minimumBytes } from "image-type";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { ThumbnailRequest, ImageInfo } from "./types";
+import type { ThumbnailRequest, ImageInfo, ImageTypeResult } from "./types";
 import { getExifInfo } from "./exif-helper";
 import isVideo from "is-video";
 import isImage from "is-image";
@@ -13,7 +13,7 @@ export async function getImageType(path: string): Promise<ImageInfo> {
     const tags = await getExifInfo(path);
     const result = await imageType(buffer);
     return {
-        imageType: result,
+        imageType: (result ?? "unknown") as ImageTypeResult,
         tags,
     };
 }

@@ -9,7 +9,7 @@ import type {
     PhotasaConfig,
     ScanAction,
     ScanArgs,
-} from "src/preload/types.d";
+} from "src/preload/types";
 import { useTask } from "vue-concurrency";
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {

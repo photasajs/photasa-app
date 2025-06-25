@@ -14,7 +14,6 @@ describe("BatchProcessor", () => {
 
     it("should process items in batches", async () => {
         const items = [1, 2, 3, 4, 5, 6];
-        const results: number[] = [];
         const processorFn = async (item: number) => {
             await new Promise((resolve) => setTimeout(resolve, 10));
             return { success: true, data: item * 2 };

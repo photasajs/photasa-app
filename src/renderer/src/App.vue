@@ -21,7 +21,7 @@ import { loggers } from "@common/logger";
 
 import Preference from "./components/Preference.vue";
 import { useI18n } from "vue-i18n";
-import type { ScanArgs, ScanAction } from "src/preload/types";
+import type { ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 
