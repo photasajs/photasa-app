@@ -4,8 +4,6 @@
         "src/renderer/src/**/*.ts",
         "src/renderer/src/**/*.d.ts",
         "src/renderer/src/**/*.vue",
-        "src/preload/**/*.ts",
-        "src/preload/**/*.d.ts",
         "src/common/**/*.ts",
         "src/common/**/*.d.ts"
     ],
@@ -18,6 +16,10 @@
             "@common/*": ["./src/common/*"],
             "@preload/*": ["./src/preload/*"]
         },
-        "types": ["vitest/globals", "node", "@vue/test-utils"]
+        "types": ["vitest/globals", "node", "@vue/test-utils"],
+        "typeRoots": [
+            "./src/renderer/src/types",
+            "./node_modules/@types"
+        ]
     }
 }

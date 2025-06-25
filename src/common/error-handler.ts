@@ -1,4 +1,4 @@
-import { Logger } from "log4js";
+import type { PhotasaLogger } from "./logger";
 
 // Custom error classes
 export class PhotasaError extends Error {
@@ -41,7 +41,7 @@ export class ValidationError extends PhotasaError {
 }
 
 // Error handling utilities
-export function handleError(error: unknown, logger: Logger, context?: string): PhotasaError {
+export function handleError(error: unknown, logger: PhotasaLogger, context?: string): PhotasaError {
     if (error instanceof PhotasaError) {
         logger.error(`${context ? `[${context}] ` : ""}${error.message}`, {
             code: error.code,
@@ -76,7 +76,7 @@ export async function retryOperation<T>(
     operation: () => Promise<T>,
     maxRetries = 3,
     delay = 1000,
-    logger: Logger,
+    logger: PhotasaLogger,
     context?: string,
 ): Promise<T> {
     let lastError: Error | undefined;

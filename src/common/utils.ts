@@ -25,7 +25,7 @@ export function buildThumbnailPath(photoPath: string): string {
     return path.normalize(path.join(dir, toThumbnailPath(path.basename(photoPath))));
 }
 
-、
+/**
  * Build the relative path for a thumbnail file
  * @param photoPath - The path to the photo file
  * @returns The relative path to the thumbnail file
@@ -33,6 +33,7 @@ export function buildThumbnailPath(photoPath: string): string {
  * ```ts
  * const thumbnailPath = toRelativeThumbnailPath("/path/to/photo.jpg");
  * ```
+ */
 export function toRelativeThumbnailPath(photoPath: string): string {
     return path.normalize(path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath))));
 }

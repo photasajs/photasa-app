@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as configHandler from "../config-handler";
+import type { PhotasaLogger } from "@common/logger";
 
 // Mocks
 const mockAddToPhotasaConfig = vi.fn();
@@ -14,7 +15,9 @@ vi.mock("../config-storage", () => ({
 
 vi.mock("glob", () => ({
     Glob: class {
-        constructor() {}
+        constructor() {
+            // empty constructor
+        }
         stream() {
             // Simulate a Node.js stream with on('data') and on('end')
             const handlers = {};
@@ -33,7 +36,7 @@ vi.mock("glob", () => ({
 }));
 
 vi.mock("rxjs", async () => {
-    const actual = await vi.importActual<any>("rxjs");
+    const actual = await vi.importActual<typeof import("rxjs")>("rxjs");
     return {
         ...actual,
         from: (arr) => actual.of(...arr),
@@ -47,20 +50,20 @@ describe("config-handler", () => {
     });
 
     it("addConfig calls addToPhotasaConfig with correct args", () => {
-        const result = { foo: "bar" };
-        configHandler.addConfig(result, mockPostMessage, mockLogger as any);
+        const result = { action: "add", paths: ["/folder1"] };
+        configHandler.addConfig(result, mockPostMessage, mockLogger as unknown as PhotasaLogger);
         expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
             result,
             mockPostMessage,
-            mockLogger as any,
+            mockLogger as unknown as PhotasaLogger,
         );
     });
 
     it("queryConfig sends next and complete actions", async () => {
         const paths = ["/folder1"];
-        const logger = mockLogger as any;
+        const logger = mockLogger as unknown as PhotasaLogger;
         const postMessage = mockPostMessage;
-        configHandler.queryConfig({ paths }, postMessage, logger);
+        configHandler.queryConfig({ action: "query", paths }, postMessage, logger);
         // Wait for the simulated stream
         await new Promise((r) => setTimeout(r, 10));
         expect(postMessage).toHaveBeenCalledWith(
@@ -75,7 +78,11 @@ describe("config-handler", () => {
         const result = { path: "/folder1/file1.photasa.json" };
         mockRemoveFromPhotoList.mockResolvedValueOnce(result);
         const request = { queueId: 1, paths: ["/folder1/file1.photasa.json"] };
-        configHandler.removeConfig(request, mockPostMessage, mockLogger as any);
+        configHandler.removeConfig(
+            request,
+            mockPostMessage,
+            mockLogger as unknown as PhotasaLogger,
+        );
         // Wait for observable to emit
         await new Promise((r) => setTimeout(r, 10));
         expect(mockPostMessage).toHaveBeenCalledWith(

@@ -10,7 +10,7 @@ import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
 import klawSync from "klaw-sync";
 import ThumbnailService from "./thumbnail-service";
-import ConfigService from "./config-service";
+import ConfigService from "./config/config-service";
 import ScanService from "./scan-service";
 import { closeFileWatcher } from "./fs-watch";
 import fs from "fs";

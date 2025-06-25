@@ -1,3 +1,5 @@
+import { PhotasaLogger } from "./logger";
+
 export type WorkerAction = "query" | "add" | "remove";
 
 export interface WorkerMessage {
@@ -13,13 +15,13 @@ export interface WorkerResponse {
     from?: "query" | "add" | "remove";
     path?: string;
     paths?: string[];
-    config?: any;
+    config?: unknown;
     error?: string;
     err?: Error;
 }
 
 export interface WorkerHandler {
-    (result: WorkerMessage, postMessage: (message: string) => void, logger: any): void;
+    (result: WorkerMessage, postMessage: (message: string) => void, logger: PhotasaLogger): void;
 }
 
 export interface WorkerHandlers {

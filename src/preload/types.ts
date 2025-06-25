@@ -115,9 +115,9 @@ export interface ScanArgs {
 }
 
 export type ImageTypeResult = "jpeg" | "png" | "gif" | "webp" | "tiff" | "unknown";
-export type Tags = Record<string, any>;
-export type IccTags = Record<string, any>;
-export type XmpTags = Record<string, any>;
+export type Tags = Record<string, unknown>;
+export type IccTags = Record<string, unknown>;
+export type XmpTags = Record<string, unknown>;
 
 export interface ImageInfo {
     imageType: ImageTypeResult;

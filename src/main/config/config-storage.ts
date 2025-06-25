@@ -10,7 +10,12 @@ import fs from "node:fs/promises";
 import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "@common/types";
 import * as R from "ramda";
-import { toRelativeThumbnailPath, toFileName, shortenThumbnailName } from "../common";
+import {
+    toRelativeThumbnailPath,
+    toFileName,
+    shortenThumbnailName,
+    PhotasaLogger,
+} from "@common/index";
 import { Logger } from "log4js";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
@@ -52,7 +57,11 @@ const READ_BATCH_INTERVAL = 50; // Batch reads every 50ms
  * Ensures the .photasa.json config file exists for a given photo or directory.
  * Returns the path to the config file.
  */
-async function ensureConfig(photo: string, isFile: boolean, logger: Logger): Promise<string> {
+async function ensureConfig(
+    photo: string,
+    isFile: boolean,
+    logger: PhotasaLogger,
+): Promise<string> {
     const dir = isFile ? path.dirname(photo) : photo;
     const configPath = path.join(dir, ".photasa.json");
     try {
@@ -79,7 +88,7 @@ async function ensureConfig(photo: string, isFile: boolean, logger: Logger): Pro
 /**
  * Batched write operation that combines multiple writes into a single operation
  */
-async function batchedWrite(logger: Logger): Promise<void> {
+async function batchedWrite(logger: PhotasaLogger): Promise<void> {
     if (writeBatch.size === 0) return;
 
     const batch = Array.from(writeBatch.entries());
@@ -249,7 +258,7 @@ const parseConfig = R.compose(normalizeConfig, fromJson);
  */
 export async function batchAddToPhotoList(
     photos: string[],
-    logger: Logger,
+    logger: PhotasaLogger,
     onProgress?: (progress: number) => void,
     onError?: (error: Error) => void,
 ): Promise<PhotasaConfigResult> {
@@ -456,7 +465,7 @@ let lastQueuedCount = 0;
 // Create a queue with concurrency control and backpressure
 let queue: any = null;
 
-async function initializeQueue(logger: Logger) {
+async function initializeQueue(logger: PhotasaLogger) {
     try {
         const PQueue = (await import("p-queue")).default;
         const newQueue = new PQueue({
@@ -478,7 +487,7 @@ async function initializeQueue(logger: Logger) {
 }
 
 // Monitor queue size and emit events
-let queueLogger: Logger | null = null;
+let queueLogger: PhotasaLogger | null = null;
 
 // 节流工具函数：每 key 每 interval 只允许一次输出
 const eventThrottleMap: Record<string, number> = {};
@@ -493,7 +502,7 @@ function throttleLog(key: string, interval: number, logFn: () => void) {
 // 记录已注册队列，防止重复注册事件
 const registeredQueues = new WeakSet<any>();
 
-function setupQueueEvents(logger: Logger, queue: any): void {
+function setupQueueEvents(logger: PhotasaLogger, queue: any): void {
     if (!queue) {
         logger.error("Cannot setup queue events: queue is null");
         return;
@@ -567,7 +576,7 @@ function waitedFilesCount(): number {
  */
 function addConfig(
     request: QueueItem,
-    logger: Logger,
+    logger: PhotasaLogger,
     postMessage: (message: string) => void,
     done: () => void,
 ): void {
@@ -651,7 +660,7 @@ function addConfig(
 export function addToPhotasaConfig(
     request: QueueItem,
     postMessage: (message: string) => void,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): void {
     request.paths.forEach((p) => {
         const dir = path.dirname(p);
@@ -689,7 +698,7 @@ export function addToPhotasaConfig(
 function addTaskToQueue(
     request: QueueItem,
     postMessage: (message: string) => void,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): void {
     // Add task to queue with priority based on queue size
     const priority = queue.size > 100 ? 1 : 0; // Higher priority for larger queues

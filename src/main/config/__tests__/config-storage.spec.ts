@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } 
 import fs from "fs-extra";
 import path from "path";
 import * as configStorage from "../config-storage";
-import type * as CommonTypes from "../../common/types";
+import type * as CommonTypes from "@common/types";
 import isVideo from "is-video";
 import log4js from "log4js";
 
@@ -54,7 +54,6 @@ const mockLogger = log4js.getLogger("test");
 
 describe("config-storage", () => {
     const mockPostMessage = vi.fn();
-    const mockDone = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();

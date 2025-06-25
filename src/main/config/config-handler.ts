@@ -3,11 +3,11 @@ import path from "path";
 import { removeFromPhotoList, addToPhotasaConfig } from "./config-storage";
 import type { PhotasaConfigResult } from "@common/types";
 import { Observable, Subscriber, from, mergeMap } from "rxjs";
-import type { Logger } from "log4js";
 import { FileSystemError, ConfigError, handleError } from "@common/error-handler";
 import type { WorkerMessage } from "@common/worker-types";
+import { PhotasaLogger } from "@common/logger";
 
-function globPhotasaConfigFromFolders(folder: string, logger: Logger): Observable<string> {
+function globPhotasaConfigFromFolders(folder: string, logger: PhotasaLogger): Observable<string> {
     const pattern = `**/*.photasa.json`;
     return new Observable<string>((subscriber: Subscriber<string>) => {
         try {
@@ -44,7 +44,7 @@ function globPhotasaConfigFromFolders(folder: string, logger: Logger): Observabl
 export function addConfig(
     result: WorkerMessage,
     postMessage: (msg: string) => void,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): void {
     try {
         if (!result.paths) {
@@ -72,7 +72,7 @@ const queue: string[] = [];
 export function queryConfig(
     result: WorkerMessage,
     postMessage: (msg: string) => void,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): void {
     if (!result.paths) {
         throw new ConfigError("No paths provided for query config");
@@ -122,7 +122,7 @@ export function queryConfig(
 export function removeConfig(
     request: WorkerMessage,
     postMessage: (msg: string) => void,
-    logger: Logger,
+    logger: PhotasaLogger,
 ): void {
     if (!request.paths) {
         throw new ConfigError("No paths provided for remove config");

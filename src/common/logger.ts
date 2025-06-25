@@ -1,4 +1,5 @@
 import log4js from "log4js";
+import type { Logger } from "log4js";
 
 const DEV_MODE = process.env.NODE_ENV === "development";
 const isNode =
@@ -14,26 +15,26 @@ export class BrowserLogger {
         this.level = DEV_MODE ? "debug" : "info";
     }
 
-    private formatMessage(level: string, ...args: any[]): string {
+    private formatMessage(level: string, ...args: unknown[]): string {
         const timestamp = new Date().toISOString();
         return `[${timestamp}] ${level.toUpperCase()} ${this.category} - ${args.join(" ")}`;
     }
 
-    debug(...args: any[]): void {
+    debug(...args: unknown[]): void {
         if (this.level === "debug") {
             console.debug(this.formatMessage("debug", ...args));
         }
     }
 
-    info(...args: any[]): void {
+    info(...args: unknown[]): void {
         console.info(this.formatMessage("info", ...args));
     }
 
-    warn(...args: any[]): void {
+    warn(...args: unknown[]): void {
         console.warn(this.formatMessage("warn", ...args));
     }
 
-    error(...args: any[]): void {
+    error(...args: unknown[]): void {
         console.error(this.formatMessage("error", ...args));
     }
 }
@@ -59,13 +60,15 @@ if (isNode) {
     });
 }
 
+export type PhotasaLogger = Logger | BrowserLogger;
+
 // Create a logger factory
-export function getLogger(category: string) {
+export function getLogger(category: string): PhotasaLogger {
     return isNode ? log4js.getLogger(category) : new BrowserLogger(category);
 }
 
 // Export commonly used loggers
-export const loggers = {
+export const loggers: Record<string, PhotasaLogger> = {
     app: getLogger("app"),
     main: getLogger("main"),
     preload: getLogger("preload"),
