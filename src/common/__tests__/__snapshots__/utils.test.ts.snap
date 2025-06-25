@@ -1,4 +1,8 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`utils > buildThumbnailPath > should build thumbnail path from source 1`] = `"/User/some/good/.photasaoriginals/thumbnail-pic.jepg.png"`;
+
+exports[`utils > toRelativeThumbnailPath > should build thumbnail path from source 1`] = `".photasaoriginals/thumbnail-pic.jepg.png"`;
 
 exports[`utils buildThumbnailPath should build thumbnail path from source 1`] = `"/User/some/good/.photasaoriginals/thumbnail-pic.jepg.png"`;
 
