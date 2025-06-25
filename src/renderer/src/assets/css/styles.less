@@ -5,3 +5,9 @@
 .light {
     @import "ant-design-vue/dist/antd.less";
 }
+
+/* 修复 Ant Design Vue <a-image> 预览弹窗与系统 header 重叠问题 */
+.ant-image-preview-mask,
+.ant-image-preview-body {
+  top: 36px !important;
+}
