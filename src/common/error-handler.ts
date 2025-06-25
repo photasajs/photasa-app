@@ -5,7 +5,7 @@ export class PhotasaError extends Error {
     constructor(
         message: string,
         public code: string,
-        public details?: any,
+        public details?: unknown,
     ) {
         super(message);
         this.name = "PhotasaError";
@@ -13,28 +13,28 @@ export class PhotasaError extends Error {
 }
 
 export class FileSystemError extends PhotasaError {
-    constructor(message: string, details?: any) {
+    constructor(message: string, details?: unknown) {
         super(message, "FILE_SYSTEM_ERROR", details);
         this.name = "FileSystemError";
     }
 }
 
 export class ConfigError extends PhotasaError {
-    constructor(message: string, details?: any) {
+    constructor(message: string, details?: unknown) {
         super(message, "CONFIG_ERROR", details);
         this.name = "ConfigError";
     }
 }
 
 export class WorkerError extends PhotasaError {
-    constructor(message: string, details?: any) {
+    constructor(message: string, details?: unknown) {
         super(message, "WORKER_ERROR", details);
         this.name = "WorkerError";
     }
 }
 
 export class ValidationError extends PhotasaError {
-    constructor(message: string, details?: any) {
+    constructor(message: string, details?: unknown) {
         super(message, "VALIDATION_ERROR", details);
         this.name = "ValidationError";
     }

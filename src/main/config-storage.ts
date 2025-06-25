@@ -58,9 +58,12 @@ async function ensureConfig(photo: string, isFile: boolean, logger: Logger): Pro
     try {
         await fs.access(configPath);
     } catch (error) {
+        logger.warn(`[ensureConfig] 配置文件不存在，自动创建: ${configPath}`);
         try {
             await fs.writeFile(configPath, "{}", "utf8");
+            logger.info(`[ensureConfig] 已自动创建空配置文件: ${configPath}`);
         } catch (writeError) {
+            logger.error(`[ensureConfig] 创建配置文件失败: ${configPath}`, writeError);
             throw handleError(
                 new FileSystemError(`Failed to create config file at ${configPath}`, {
                     error: writeError,
@@ -89,7 +92,7 @@ async function batchedWrite(logger: Logger): Promise<void> {
         if (!dirGroups.has(dir)) {
             dirGroups.set(dir, []);
         }
-        dirGroups.get(dir)!.push(data);
+        dirGroups.get(dir)?.push(data);
     }
 
     // Write each directory's files in parallel
@@ -119,7 +122,7 @@ async function batchedWrite(logger: Logger): Promise<void> {
  */
 async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata> {
     if (readBatch.has(path)) {
-        return readBatch.get(path)!;
+        return readBatch.get(path) || { dir: "", data: "{}" };
     }
 
     const promise = (async () => {
@@ -134,31 +137,42 @@ async function batchedRead(path: string, logger: Logger): Promise<ConfigMetadata
             };
         }
 
+        let data = "{}";
         try {
-            const data = await retryOperation(
+            data = await retryOperation(
                 () => fs.readFile(dir, "utf-8"),
                 3,
                 1000,
                 logger,
                 "batchedRead",
             ).catch(() => "{}");
-
-            const config = parseConfig(data);
-
-            // Update cache
-            configCache.set(dir, { config, timestamp: Date.now() });
-
-            return {
-                dir,
-                data: data ? data : "{}",
-            };
         } catch (error) {
+            logger.error(`[batchedRead] 读取配置文件失败: ${dir}`, error);
             throw handleError(
                 new FileSystemError(`Failed to read config file at ${dir}`, { error }),
                 logger,
                 "batchedRead",
             );
         }
+
+        // 尝试解析配置，如失败则自动重建
+        let config;
+        try {
+            config = parseConfig(data);
+        } catch (parseError) {
+            logger.error(`[batchedRead] 配置文件损坏，自动重建: ${dir}`, parseError);
+            // 自动重建默认配置
+            config = { photoList: [], version: PHOTASA_VERSION };
+            await fs.writeFile(dir, JSON.stringify(config, null, 4), "utf8");
+        }
+
+        // Update cache
+        configCache.set(dir, { config, timestamp: Date.now() });
+
+        return {
+            dir,
+            data: JSON.stringify(config),
+        };
     })();
 
     readBatch.set(path, promise);
@@ -374,9 +388,11 @@ export async function removeFromPhotoList(
  */
 export async function getPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
     try {
+        logger.debug(`[getPhotasaConfig] 读取配置: ${folder}`);
         const meta = await readConfig(folder, false, logger);
         return parseConfig(meta.data);
     } catch (error) {
+        logger.error(`[getPhotasaConfig] 读取配置失败: ${folder}`, error);
         throw handleError(
             new ConfigError(`Failed to get config for folder: ${folder}`, { error }),
             logger,
@@ -464,11 +480,27 @@ async function initializeQueue(logger: Logger) {
 // Monitor queue size and emit events
 let queueLogger: Logger | null = null;
 
+// 节流工具函数：每 key 每 interval 只允许一次输出
+const eventThrottleMap: Record<string, number> = {};
+function throttleLog(key: string, interval: number, logFn: () => void) {
+    const now = Date.now();
+    if (!eventThrottleMap[key] || now - eventThrottleMap[key] > interval) {
+        eventThrottleMap[key] = now;
+        logFn();
+    }
+}
+
+// 记录已注册队列，防止重复注册事件
+const registeredQueues = new WeakSet<any>();
+
 function setupQueueEvents(logger: Logger, queue: any): void {
     if (!queue) {
         logger.error("Cannot setup queue events: queue is null");
         return;
     }
+    // 防止重复注册
+    if (registeredQueues.has(queue)) return;
+    registeredQueues.add(queue);
 
     queueLogger = logger;
     try {
@@ -488,25 +520,31 @@ function setupQueueEvents(logger: Logger, queue: any): void {
             queue.start(); // Restart queue if it was paused
         });
 
+        // 高频 routine 日志节流（如每 1000ms 最多输出一次）
         queue.on("add", () => {
-            queueLogger?.debug("config-queue", {
-                action: "add",
-                size: queue.size,
-                pending: queue.pending,
-                timestamp: Date.now(),
-                isPaused: queue.isPaused,
+            throttleLog("queue-add", 1000, () => {
+                queueLogger?.debug("config-queue", {
+                    action: "add",
+                    size: queue.size,
+                    pending: queue.pending,
+                    timestamp: Date.now(),
+                    isPaused: queue.isPaused,
+                });
             });
         });
 
         queue.on("active", () => {
-            queueLogger?.debug("config-queue", {
-                action: "active",
-                size: queue.size,
-                pending: queue.pending,
-                timestamp: Date.now(),
-                isPaused: queue.isPaused,
+            throttleLog("queue-active", 1000, () => {
+                queueLogger?.debug("config-queue", {
+                    action: "active",
+                    size: queue.size,
+                    pending: queue.pending,
+                    timestamp: Date.now(),
+                    isPaused: queue.isPaused,
+                });
             });
         });
+        // 其他 routine 事件可按需添加节流或关闭
     } catch (error) {
         handleError(
             new ConfigError("Failed to setup queue events", { error }),
@@ -699,4 +737,8 @@ export function clearAllConfigCache(): void {
 }
 
 // Start the write batch interval
-setInterval(() => batchedWrite(queueLogger!), WRITE_BATCH_INTERVAL);
+setInterval(() => {
+    if (queueLogger) {
+        batchedWrite(queueLogger);
+    }
+}, WRITE_BATCH_INTERVAL);

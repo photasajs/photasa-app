@@ -9,12 +9,30 @@ function toThumbnailPath(photoPath: string): string {
     return `thumbnail-${photoPath}.png`;
 }
 
+/**
+ * Build the path for a thumbnail file
+ * @param photoPath - The path to the photo file
+ * @returns The path to the thumbnail file
+ * @example
+ * ```ts
+ * const thumbnailPath = buildThumbnailPath("/path/to/photo.jpg");
+ * console.log(thumbnailPath); // "/path/to/.photasaoriginals/thumbnail-photo.jpg.png"
+ * ```
+ */
 export function buildThumbnailPath(photoPath: string): string {
     // Prepare thumbnail path for image
     const dir = path.normalize(path.join(path.dirname(photoPath), PHOTASA_ORIGINALS));
     return path.normalize(path.join(dir, toThumbnailPath(path.basename(photoPath))));
 }
 
+、
+ * Build the relative path for a thumbnail file
+ * @param photoPath - The path to the photo file
+ * @returns The relative path to the thumbnail file
+ * @example
+ * ```ts
+ * const thumbnailPath = toRelativeThumbnailPath("/path/to/photo.jpg");
+ * ```
 export function toRelativeThumbnailPath(photoPath: string): string {
     return path.normalize(path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath))));
 }

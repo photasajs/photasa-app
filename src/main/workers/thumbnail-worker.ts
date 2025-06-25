@@ -2,21 +2,40 @@ import { parentPort } from "worker_threads";
 import sharp from "sharp";
 import { buildThumbnailPath } from "../../common";
 
-interface ThumbnailRequest {
+/**
+ * Interface for the thumbnail request object
+ * @property file - The path to the file to generate a thumbnail for
+ * @property size - The size of the thumbnail
+ * @property quality - The quality of the thumbnail
+ */
+export interface ThumbnailRequest {
     file: string;
     size: number;
     quality?: number;
 }
 
-interface ThumbnailResponse {
+/**
+ * Interface for the thumbnail response object
+ * @property success - Whether the thumbnail generation was successful
+ * @property file - The path to the thumbnail file
+ * @property error - An error message if the thumbnail generation fails
+ */
+export interface ThumbnailResponse {
     success: boolean;
     file: string;
     error?: string;
 }
 
+const DEFAULT_QUALITY = 80;
+
+/**
+ * Generate a thumbnail for a given file
+ * @param request - The request object containing the file path, size, and quality
+ * @returns The thumbnail path or an error message if the thumbnail generation fails
+ */
 async function generateThumbnail(request: ThumbnailRequest): Promise<ThumbnailResponse> {
     try {
-        const { file, size, quality = 80 } = request;
+        const { file, size, quality = DEFAULT_QUALITY } = request;
         const thumbnailPath = buildThumbnailPath(file);
 
         // Ensure thumbnail directory exists

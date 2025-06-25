@@ -1,10 +1,8 @@
-/// <reference path="../../common/types.d.ts" />
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
 import fs from "fs-extra";
 import path from "path";
 import * as configStorage from "../config-storage";
-import type { PhotasaConfig, PhotasaConfigResult } from "../../common/types";
-import type { Logger } from "log4js";
+import type * as CommonTypes from "../../common/types";
 import isVideo from "is-video";
 import log4js from "log4js";
 
@@ -162,7 +160,7 @@ describe("config-storage", () => {
     describe("addToPhotoList", () => {
         it("should add a single photo to config", async () => {
             const photoPath = "/test/path/photo1.jpg";
-            const expectedConfig: PhotasaConfig = {
+            const expectedConfig: CommonTypes.PhotasaConfig = {
                 version: "1.0",
                 photoList: [
                     {

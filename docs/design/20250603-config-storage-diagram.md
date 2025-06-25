@@ -1,3 +1,74 @@
+## Configuration Storage System Overview
+
+### Core Components
+1. **Cache System**
+   - In-memory cache with TTL (5 seconds)
+   - Cache invalidation on writes
+   - Cache clearing functions
+   - Directory-level caching
+
+2. **Config Parser**
+   - JSON parsing and validation
+   - Config normalization
+   - Default value handling
+   - Error recovery
+
+3. **Error Handler**
+   - Graceful error recovery
+   - Error logging
+   - Queue error handling
+   - Batch operation error handling
+
+### File Operations
+- `readConfig`: Reads .photasa.json files with caching
+- `writeConfig`: Writes to .photasa.json files with batching
+- `ensureConfig`: Ensures config file exists
+- `parseConfig`: Parses and normalizes config data
+
+### Batch System
+- `batchedRead`: Combines multiple reads (50ms interval)
+- `batchedWrite`: Combines multiple writes (100ms interval)
+- `writeBatch`: Manages write batching (max 50 files)
+- `readBatch`: Manages read batching (max 100 files)
+- `Batch Manager`: Coordinates batch operations
+
+### Queue System
+- `initializeQueue`: Sets up queue with concurrency
+- `setupQueueEvents`: Configures queue events
+- `addTaskToQueue`: Adds tasks with priority
+- `cleanupQueueForFolder`: Cleans up queue
+- `Queue Manager`: Manages queue operations
+
+### Public API
+- `addToPhotoList`: Adds photos to config
+- `removeFromPhotoList`: Removes photos from config
+- `getPhotasaConfig`: Gets config for folder
+- `resetPhotasaConfig`: Resets config
+- `fixPhotasaConfig`: Fixes config paths
+- `addToPhotasaConfig`: Adds to config with queue
+
+### Key Features
+1. **Performance Optimizations**
+   - Batched operations with configurable intervals
+   - In-memory caching with TTL
+   - Parallel processing for directory operations
+   - Queue management with priority
+
+2. **Error Handling**
+   - Graceful error recovery
+   - Comprehensive error logging
+   - Queue error handling
+   - Batch operation error handling
+
+3. **Concurrency Control**
+   - Queue concurrency limits (10 concurrent tasks)
+   - Batch size limits (50 writes, 100 reads)
+   - Timeout handling (60 seconds)
+   - Priority-based task scheduling
+
+
+## 序列图
+
 ```mermaid
 graph TD
     %% Main Module
@@ -110,71 +181,3 @@ graph TD
     class E1,E2,E3,E4,E5 queue
     class F1,F2,F3,F4,F5,F6 api
 ```
-
-## Configuration Storage System Overview
-
-### Core Components
-1. **Cache System**
-   - In-memory cache with TTL (5 seconds)
-   - Cache invalidation on writes
-   - Cache clearing functions
-   - Directory-level caching
-
-2. **Config Parser**
-   - JSON parsing and validation
-   - Config normalization
-   - Default value handling
-   - Error recovery
-
-3. **Error Handler**
-   - Graceful error recovery
-   - Error logging
-   - Queue error handling
-   - Batch operation error handling
-
-### File Operations
-- `readConfig`: Reads .photasa.json files with caching
-- `writeConfig`: Writes to .photasa.json files with batching
-- `ensureConfig`: Ensures config file exists
-- `parseConfig`: Parses and normalizes config data
-
-### Batch System
-- `batchedRead`: Combines multiple reads (50ms interval)
-- `batchedWrite`: Combines multiple writes (100ms interval)
-- `writeBatch`: Manages write batching (max 50 files)
-- `readBatch`: Manages read batching (max 100 files)
-- `Batch Manager`: Coordinates batch operations
-
-### Queue System
-- `initializeQueue`: Sets up queue with concurrency
-- `setupQueueEvents`: Configures queue events
-- `addTaskToQueue`: Adds tasks with priority
-- `cleanupQueueForFolder`: Cleans up queue
-- `Queue Manager`: Manages queue operations
-
-### Public API
-- `addToPhotoList`: Adds photos to config
-- `removeFromPhotoList`: Removes photos from config
-- `getPhotasaConfig`: Gets config for folder
-- `resetPhotasaConfig`: Resets config
-- `fixPhotasaConfig`: Fixes config paths
-- `addToPhotasaConfig`: Adds to config with queue
-
-### Key Features
-1. **Performance Optimizations**
-   - Batched operations with configurable intervals
-   - In-memory caching with TTL
-   - Parallel processing for directory operations
-   - Queue management with priority
-
-2. **Error Handling**
-   - Graceful error recovery
-   - Comprehensive error logging
-   - Queue error handling
-   - Batch operation error handling
-
-3. **Concurrency Control**
-   - Queue concurrency limits (10 concurrent tasks)
-   - Batch size limits (50 writes, 100 reads)
-   - Timeout handling (60 seconds)
-   - Priority-based task scheduling

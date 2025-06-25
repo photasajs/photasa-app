@@ -11,11 +11,12 @@ import fs from "fs-extra";
 import path from "path";
 import { WorkerPool } from "./worker-pool";
 import log4js from "log4js";
+import createWorker from "./workers/thumbnail-worker?nodeWorker";
 
 const THUMBNAIL_WORKER_CONFIG = {
     minWorkers: 2,
     maxWorkers: 4,
-    workerScript: path.join(__dirname, "workers/thumbnail-worker.js"),
+    createWorker: (options?: unknown) => createWorker(options as WorkerOptions),
 };
 
 let workerPool: WorkerPool | null = null;

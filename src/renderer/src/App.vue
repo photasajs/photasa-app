@@ -68,10 +68,49 @@ watchArray(
     { deep: true },
 );
 
+// 包装 addScanFolder 增加日志
+const addScanFolderWithLog = (folder: string, action: "scan" | "rescan" | "current") => {
+    logger.debug("addScanFolder called", folder, action, scanningFolder.value);
+    addScanFolder(folder, action);
+    logger.debug("addScanFolder after", scanningFolder.value);
+};
+
+watchArray(
+    scanningFolder,
+    () => {
+        logger.debug(
+            "watchArray scanningFolder triggered",
+            scanningFolder.value,
+            scanPhotosTask.isIdle,
+        );
+        if (scanPhotosTask.isIdle) {
+            logger.debug("scanPhotosTask is idle, calling startScanning");
+            startScanning();
+        } else {
+            logger.debug("scanPhotosTask is not idle, will retry in 500ms");
+            setTimeout(() => {
+                if (scanPhotosTask.isIdle) {
+                    logger.debug("scanPhotosTask became idle, retrying startScanning");
+                    startScanning();
+                } else {
+                    logger.debug("scanPhotosTask still not idle after 500ms");
+                }
+            }, 500);
+        }
+    },
+    { deep: true },
+);
+
 async function startScanning(): Promise<void> {
-    logger.debug("startScanning called, scanningFolder:", scanningFolder.value);
+    logger.debug(
+        "startScanning called, scanningFolder:",
+        scanningFolder.value,
+        "isIdle:",
+        scanPhotosTask.isIdle,
+    );
     if (scanningFolder.value.length > 0) {
         const scanAction = deepCopy(top<ScanAction>(scanningFolder.value));
+        processingFile.value = "正在扫描: " + scanAction.path;
         logger.debug("Starting scan for action:", scanAction);
         if (scanAction.action === "rescan") {
             logger.debug("Rescanning folder:", scanAction.path);
@@ -79,18 +118,16 @@ async function startScanning(): Promise<void> {
         }
 
         scanAction.thumbnailSize = thumbnailSize.value;
-        // Each time only scan one level of subfolders, and expand the subfolders
         logger.debug("Scanning subfolders for:", scanAction.path);
         try {
             const folders = await scanSubfolders(scanAction.path);
             logger.debug("Found subfolders:", folders);
-            folders.forEach((f) => addScanFolder(f, "scan"));
+            folders.forEach((f: string) => addScanFolderWithLog(f, "scan"));
 
             logger.debug("Starting scanPhotosTask for:", scanAction);
             const args = await scanPhotosTask.perform(scanAction);
             logger.debug("Scan completed with args:", args);
 
-            processingFile.value = t("status.scanned");
             if (args?.action?.path) {
                 logger.debug("Updating folder tree for:", args.action.path);
                 updateFolderTree(args.action.path as string);
@@ -99,26 +136,14 @@ async function startScanning(): Promise<void> {
             }
         } catch (error) {
             logger.error("Error during scanning:", error);
-            processingFile.value = t("status.error");
+            completeScanPath(scanAction.path);
+            processingFile.value = "扫描失败: " + scanAction.path;
+            startScanning();
         }
     } else {
         logger.debug("No folders to scan");
     }
 }
-
-watchArray(
-    scanningFolder,
-    () => {
-        logger.debug("scanningFolder changed:", scanningFolder.value);
-        logger.debug("scanPhotosTask.isIdle:", scanPhotosTask.isIdle);
-        if (scanPhotosTask.isIdle) {
-            startScanning();
-        } else {
-            logger.debug("scanPhotosTask is not idle, skipping startScanning");
-        }
-    },
-    { deep: true },
-);
 
 getDirectory("desktop")
     .then((dir) => {

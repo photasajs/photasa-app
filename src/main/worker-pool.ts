@@ -9,12 +9,13 @@ interface BusyWorker extends Worker {
 export interface WorkerPoolConfig {
     minWorkers: number;
     maxWorkers: number;
-    workerScript: string;
+    workerScript?: string;
+    createWorker?: (options?: unknown) => Worker;
 }
 
 export class WorkerPool extends EventEmitter {
     private workers: BusyWorker[] = [];
-    private queue: any[] = [];
+    private queue: unknown[] = [];
     private config: WorkerPoolConfig;
     private logger: Logger;
 
@@ -32,7 +33,14 @@ export class WorkerPool extends EventEmitter {
     }
 
     private createWorker(): BusyWorker {
-        const worker = new Worker(this.config.workerScript) as BusyWorker;
+        let worker: BusyWorker;
+        if (this.config.createWorker) {
+            worker = this.config.createWorker() as BusyWorker;
+        } else if (this.config.workerScript) {
+            worker = new Worker(this.config.workerScript) as BusyWorker;
+        } else {
+            throw new Error("WorkerPoolConfig must provide either createWorker or workerScript");
+        }
         worker.isBusy = false;
 
         worker.on("message", (result) => {
@@ -65,7 +73,7 @@ export class WorkerPool extends EventEmitter {
         }
     }
 
-    public async addTask(task: any): Promise<void> {
+    public async addTask(task: unknown): Promise<void> {
         return new Promise((resolve) => {
             this.queue.push({ task, resolve });
             this.processQueue();
