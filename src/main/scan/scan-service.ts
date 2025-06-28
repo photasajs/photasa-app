@@ -6,8 +6,8 @@ import { loggers } from "@common/logger";
 const logger = loggers.scan;
 
 type ScanWorker = {
-    on: (event: string, callback: (message: string) => void) => void;
-    postMessage: (message: string) => void;
+    on: (event: string, callback: (message: any) => void) => void;
+    postMessage: (message: any) => void;
 };
 
 export default class ScanService {
@@ -22,9 +22,11 @@ export default class ScanService {
         this.mainWindow = mainWindow;
         logger.debug("Creating scan worker");
         this.worker = createWorker({ workerData: "worker" });
+
+        // 处理 worker 消息
         this.worker.on("message", (message) => {
             try {
-                const data = JSON.parse(message);
+                const data = message;
                 logger.debug("Received message from worker:", data);
                 if (data.type === "error") {
                     logger.error("Worker reported error:", data.error);
@@ -37,6 +39,7 @@ export default class ScanService {
             }
         });
 
+        // 处理扫描请求
         ipcMain.on(
             "picasa:scan-photos",
             async (_, args: { requestId: string; scanAction: ScanAction }) => {
@@ -58,7 +61,7 @@ export default class ScanService {
     private scanPhotos(requestId: string, scan: ScanAction): void {
         logger.debug("Sending scan request to worker:", { requestId, scan });
         try {
-            this.worker.postMessage(JSON.stringify({ action: "scan", requestId, scan }));
+            this.worker.postMessage({ action: "scan", requestId, scan });
         } catch (error) {
             logger.error("Error sending scan request to worker:", error);
             this.mainWindow?.webContents.send("picasa:find-photo", {

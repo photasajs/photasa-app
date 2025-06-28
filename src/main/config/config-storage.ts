@@ -1,3 +1,4 @@
+import { catchError } from "rxjs/operators";
 /*
  * config-storage.ts
  *
@@ -21,6 +22,7 @@ import isVideo from "is-video";
 import { debounce } from "lodash";
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
 import { CACHE_TTL, configCache } from "./config-cache";
+import { L } from "vitest/dist/chunks/reporters.d.BFLkQcL6";
 
 export {
     getConfigCache,
@@ -38,8 +40,8 @@ interface QueueItem {
 
 // 类型声明：配置元数据
 interface ConfigMetadata {
-    data: string;
-    dir: string;
+    data: string; // 配置文件内容
+    configPath: string; // 配置文件路径
 }
 
 // 配置常量
@@ -61,6 +63,10 @@ const READ_BATCH_INTERVAL = 50; // 读取批处理间隔
 
 /**
  * 确保指定照片/目录下的 .photasa.json 配置文件存在，返回配置文件路径。
+ * @param photo - 照片/目录路径
+ * @param isFile - 是否是文件
+ * @param logger - 日志记录器
+ * @returns Promise<string> 配置文件路径
  */
 async function ensureConfig(
     photo: string,
@@ -94,25 +100,29 @@ async function ensureConfig(
  * 批量写入操作，将多次写入合并为一次磁盘操作。
  */
 async function batchedWrite(logger: PhotasaLogger): Promise<void> {
+    // 如果写入批处理为空，则直接返回
     if (writeBatch.size === 0) return;
 
+    // 获取写入批处理 writeBatch是Map 获取 entries 每个entries就是配置文件路径
+    // value 是 { data: string; timestamp: number }
     const batch = Array.from(writeBatch.entries());
     writeBatch.clear();
 
-    // Group writes by directory to reduce disk operations
+    // 将写入批处理按配置文件路径分组, 每个配置文件路径对应一个数组
     const dirGroups = new Map<string, string[]>();
     for (const [filePath, { data }] of batch) {
-        const dir = path.dirname(filePath);
-        if (!dirGroups.has(dir)) {
-            dirGroups.set(dir, []);
+        if (!dirGroups.has(filePath)) {
+            dirGroups.set(filePath, []);
         }
-        dirGroups.get(dir)?.push(data);
+        dirGroups.get(filePath)?.push(data);
     }
 
     // Write each directory's files in parallel
     await Promise.all(
         Array.from(dirGroups.entries()).map(async ([dir, dataArray]) => {
             try {
+                // 重试写入配置文件
+                logger.debug(`[batchedWrite] 写入配置文件: ${dir}`);
                 await retryOperation(
                     () => fs.writeFile(dir, dataArray.join("\n"), { encoding: "utf8", flag: "w" }),
                     3,
@@ -136,34 +146,38 @@ async function batchedWrite(logger: PhotasaLogger): Promise<void> {
  */
 async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigMetadata> {
     if (readBatch.has(path)) {
-        return readBatch.get(path) || { dir: "", data: "{}" };
+        return readBatch.get(path) || { configPath: "", data: "{}" };
     }
 
+    // 使用 async/await 包装，避免 Promise 嵌套
     const promise = (async () => {
-        const dir = await ensureConfig(path, true, logger);
+        // 确保配置文件存在
+        const configPath = await ensureConfig(path, true, logger);
 
-        // Check cache first
-        const cached = configCache.get(dir);
+        // 检查缓存，如果缓存存在且未过期，则直接返回
+        const cached = configCache.get(configPath);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
             return {
-                dir,
+                configPath,
                 data: JSON.stringify(cached.config),
             };
         }
 
+        // 读取配置文件
         let data = "{}";
         try {
+            // 重试读取配置文件
             data = await retryOperation(
-                () => fs.readFile(dir, "utf-8"),
+                () => fs.readFile(configPath, "utf-8"),
                 3,
                 1000,
                 logger,
                 "batchedRead",
             ).catch(() => "{}");
         } catch (error) {
-            logger.error(`[batchedRead] 读取配置文件失败: ${dir}`, error);
+            logger.error(`[batchedRead] 读取配置文件失败: ${configPath}`, error);
             throw handleError(
-                new FileSystemError(`Failed to read config file at ${dir}`, { error }),
+                new FileSystemError(`Failed to read config file at ${configPath}`, { error }),
                 logger,
                 "batchedRead",
             );
@@ -174,24 +188,26 @@ async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigM
         try {
             config = parseConfig(data);
         } catch (parseError) {
-            logger.error(`[batchedRead] 配置文件损坏，自动重建: ${dir}`, parseError);
+            logger.error(`[batchedRead] 配置文件损坏，自动重建: ${configPath}`, parseError);
             // 自动重建默认配置
             config = { photoList: [], version: PHOTASA_VERSION };
-            await fs.writeFile(dir, JSON.stringify(config, null, 4), "utf8");
+            await fs.writeFile(configPath, JSON.stringify(config, null, 4), "utf8");
         }
 
         // Update cache
-        configCache.set(dir, { config, timestamp: Date.now() });
+        configCache.set(configPath, { config, timestamp: Date.now() });
 
         return {
-            dir,
-            data: JSON.stringify(config),
+            configPath, // 配置文件路径
+            data: JSON.stringify(config), // 配置文件内容
         };
     })();
 
+    // 设置批处理 在 READ_BATCH_INTERVAL 期间，如果再次读取，则直接返回等待的 promise
+    // 以此避免重复读取配置文件
     readBatch.set(path, promise);
 
-    // Clear the batch after the interval
+    // 每间隔 READ_BATCH_INTERVAL 毫秒清除批处理，避免内存泄漏
     setTimeout(() => {
         readBatch.delete(path);
     }, READ_BATCH_INTERVAL);
@@ -207,6 +223,7 @@ async function readConfig(
     _isFile: boolean,
     logger: PhotasaLogger,
 ): Promise<ConfigMetadata> {
+    logger.info(`[readConfig] 读取配置文件: ${photo}`);
     return batchedRead(photo, logger);
 }
 
@@ -214,17 +231,18 @@ async function readConfig(
  * 写入配置文件，使用批量写入。
  */
 async function writeConfig(
-    configPath: string,
-    photoConfig: PhotasaConfig,
+    configPath: string, // 配置文件路径
+    photoConfig: PhotasaConfig, // 配置对象
     logger: PhotasaLogger,
 ): Promise<void> {
     logger.info(`[writeConfig] 写入配置文件: ${configPath}`);
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
+    // 输出日志：内容摘要 128个字符
     logger.debug(`[writeConfig] 写入内容摘要: ${data.slice(0, 128)}...`);
-    // Add to write batch
+    // 添加到写入批处理
     writeBatch.set(configPath, { data, timestamp: Date.now() });
-    // Update cache
+    // 更新缓存
     configCache.set(configPath, { config: photoConfig, timestamp: Date.now() });
     logger.info(`[writeConfig] 写入完成: ${configPath}`);
 }
@@ -265,6 +283,7 @@ export async function batchAddToPhotoList(
     onProgress?: (progress: number) => void,
     onError?: (error: Error) => void,
 ): Promise<PhotasaConfigResult> {
+    logger.info(`[batchAddToPhotoList] 批量添加照片到配置文件: ${photos.length}`);
     const startTime = Date.now();
     const total = photos.length;
     let processed = 0;
@@ -279,6 +298,7 @@ export async function batchAddToPhotoList(
         await Promise.allSettled(
             chunk.map(async (photo) => {
                 try {
+                    logger.info(`[batchAddToPhotoList] 添加照片到配置文件: ${photo}`);
                     const result = await addToPhotoList(photo, logger);
                     lastResult = result;
                     processed++;
@@ -328,6 +348,7 @@ export async function batchAddToPhotoList(
  */
 export const addToPhotoList = debounce(
     async (photoPath: string, logger: Logger): Promise<PhotasaConfigResult> => {
+        logger.info(`[addToPhotoList] 添加照片到配置文件: ${photoPath}`);
         try {
             const meta = await readConfig(photoPath, true, logger);
             const photasaConfig = parseConfig(meta.data);
@@ -342,16 +363,17 @@ export const addToPhotoList = debounce(
                     history: [],
                     isVideo: isVideo(fileName),
                 });
-                await writeConfig(meta.dir, photasaConfig, logger);
+                await writeConfig(meta.configPath, photasaConfig, logger);
             } else if (!photo.thumbnail) {
                 photo.thumbnail = thumbnailName;
-                await writeConfig(meta.dir, photasaConfig, logger);
+                await writeConfig(meta.configPath, photasaConfig, logger);
             }
             return {
-                path: meta.dir,
+                path: meta.configPath,
                 config: photasaConfig,
             };
         } catch (error) {
+            logger.error(`[addToPhotoList] 添加照片到配置文件失败: ${photoPath}`, error);
             throw handleError(
                 new ConfigError(`Failed to add photo to list: ${photoPath}`, { error }),
                 logger,
@@ -378,10 +400,10 @@ export async function removeFromPhotoList(
 
         if (photoIndex >= 0) {
             photasaConfig.photoList.splice(photoIndex, 1);
-            await writeConfig(meta.dir, photasaConfig, logger);
+            await writeConfig(meta.configPath, photasaConfig, logger);
         }
         return {
-            path: meta.dir,
+            path: meta.configPath,
             config: photasaConfig,
         };
     } catch (error) {
@@ -422,7 +444,7 @@ export async function resetPhotasaConfig(folder: string, logger: Logger): Promis
         const meta = await readConfig(folder, false, logger);
         const photasaConfig = parseConfig(meta.data);
         photasaConfig.photoList = [];
-        await writeConfig(meta.dir, photasaConfig, logger);
+        await writeConfig(meta.configPath, photasaConfig, logger);
         return photasaConfig;
     } catch (error) {
         throw handleError(
@@ -446,7 +468,7 @@ export async function fixPhotasaConfig(folder: string, logger: Logger): Promise<
             photo.thumbnail = shortenThumbnailName(photo.thumbnail);
         });
 
-        await writeConfig(meta.dir, config, logger);
+        await writeConfig(meta.configPath, config, logger);
 
         return config;
     } catch (error) {
@@ -464,31 +486,43 @@ export async function fixPhotasaConfig(folder: string, logger: Logger): Promise<
 let addPathQueue: Record<string, string[]> = {};
 let lastQueuedCount = 0;
 
+interface RequestQueue {
+    add: (task: () => void, options?: { priority?: number }) => void;
+    size: number;
+    pending: number;
+    isPaused: boolean;
+    start: () => void;
+    on: (event: string, callback: (...args: any[]) => void) => void;
+}
+
 // 并发队列实例
-let queue: any = null;
+let globalQueue: RequestQueue | null = null;
 
 /**
  * 初始化并发队列，支持最大并发与超时。
  */
 async function initializeQueue(logger: PhotasaLogger) {
-    try {
-        const PQueue = (await import("p-queue")).default;
-        const newQueue = new PQueue({
-            concurrency: QUEUE_CONCURRENCY,
-            autoStart: true,
-            intervalCap: QUEUE_INTERVAL_CAP,
-            interval: QUEUE_INTERVAL,
-            timeout: QUEUE_TIMEOUT,
-            throwOnTimeout: false, // Don't crash on timeout
-        });
-        return newQueue;
-    } catch (error) {
-        throw handleError(
-            new ConfigError("Failed to initialize queue", { error }),
-            logger,
-            "initializeQueue",
-        );
+    if (!globalQueue) {
+        try {
+            const PQueue = (await import("p-queue")).default;
+            globalQueue = new PQueue({
+                concurrency: QUEUE_CONCURRENCY,
+                autoStart: true,
+                intervalCap: QUEUE_INTERVAL_CAP,
+                interval: QUEUE_INTERVAL,
+                timeout: QUEUE_TIMEOUT,
+                throwOnTimeout: false, // Don't crash on timeout
+            }) as unknown as RequestQueue;
+            setupQueueEvents(logger, globalQueue);
+        } catch (error) {
+            throw handleError(
+                new ConfigError("Failed to initialize queue", { error }),
+                logger,
+                "initializeQueue",
+            );
+        }
     }
+    return globalQueue;
 }
 
 // 队列日志与事件节流
@@ -508,7 +542,7 @@ const registeredQueues = new WeakSet<any>();
 /**
  * 注册队列事件，输出队列状态日志。
  */
-function setupQueueEvents(logger: PhotasaLogger, queue: any): void {
+function setupQueueEvents(logger: PhotasaLogger, queue: RequestQueue): void {
     if (!queue) {
         logger.error("Cannot setup queue events: queue is null");
         return;
@@ -667,64 +701,58 @@ function addConfig(
 }
 
 /**
- * 公共 API：批量添加照片路径到队列，异步批量处理。
- */
-export function addToPhotasaConfig(
-    request: QueueItem,
-    postMessage: (message: string) => void,
-    logger: PhotasaLogger,
-): void {
-    request.paths.forEach((p) => {
-        const dir = path.dirname(p);
-        addPathQueue[dir] = addPathQueue[dir] || [];
-        addPathQueue[dir].push(p);
-    });
-
-    // Initialize queue if not already done
-    if (!queue) {
-        initializeQueue(logger)
-            .then((newQueue) => {
-                queue = newQueue;
-                setupQueueEvents(logger, queue);
-                addTaskToQueue(request, postMessage, logger);
-            })
-            .catch((error) => {
-                handleError(
-                    new ConfigError("Failed to initialize queue", { error }),
-                    logger,
-                    "addToPhotasaConfig",
-                );
-                postMessage(
-                    JSON.stringify({
-                        action: "error",
-                        queueId: request.queueId,
-                        error: "Failed to initialize queue",
-                    }),
-                );
-            });
-    } else {
-        addTaskToQueue(request, postMessage, logger);
-    }
-}
-
-/**
  * 添加任务到并发队列，支持优先级。
  */
 function addTaskToQueue(
     request: QueueItem,
     postMessage: (message: string) => void,
     logger: PhotasaLogger,
-): void {
-    // Add task to queue with priority based on queue size
-    const priority = queue.size > 100 ? 1 : 0; // Higher priority for larger queues
-    queue.add(
-        () => {
-            return new Promise<void>((resolve) => {
+): Promise<void> {
+    return new Promise((resolve) => {
+        // Add task to queue with priority based on queue size
+        const priority = globalQueue?.size && globalQueue.size > 100 ? 1 : 0; // Higher priority for larger queues
+        globalQueue?.add(
+            () => {
                 addConfig(request, logger, postMessage, resolve);
-            });
-        },
-        { priority },
-    );
+            },
+            { priority },
+        );
+    });
+}
+
+/**
+ * 公共 API：批量添加照片路径到队列，异步批量处理。
+ */
+export async function addToPhotasaConfig(
+    request: QueueItem,
+    postMessage: (message: string) => void,
+    logger: PhotasaLogger,
+): Promise<void> {
+    // 将路径添加到队列中，按目录分组
+    request.paths.forEach((p) => {
+        const dir = path.dirname(p);
+        addPathQueue[dir] = addPathQueue[dir] || [];
+        addPathQueue[dir].push(p);
+    });
+    // 获取队列
+    await initializeQueue(logger);
+    // 添加任务到队列
+    try {
+        await addTaskToQueue(request, postMessage, logger);
+    } catch (error) {
+        handleError(
+            new ConfigError("Failed to initialize queue", { error }),
+            logger,
+            "addToPhotasaConfig",
+        );
+        postMessage(
+            JSON.stringify({
+                action: "error",
+                queueId: request.queueId,
+                error: "Failed to initialize queue",
+            }),
+        );
+    }
 }
 
 /**

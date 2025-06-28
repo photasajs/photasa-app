@@ -1,6 +1,7 @@
 import path from "path";
 import config from "./config";
 import type { VideoSize } from "@common/types";
+import fs from "fs";
 
 export const PHOTASA_ORIGINALS = ".photasaoriginals";
 export const HeicExtensionRE = new RegExp(`\\.(${config.acceptedHeicExtensions.join("|")})$`, "i");
@@ -110,4 +111,32 @@ export function toThumbnailName(target: string): string {
  */
 export function shortenThumbnailName(file: string): string {
     return path.normalize(path.join(PHOTASA_ORIGINALS, path.basename(file)));
+}
+
+/**
+ * 判断路径是否为目录
+ * @param path 路径
+ * @returns 是否为目录
+ */
+export async function isDirectory(path: string): Promise<boolean> {
+    try {
+        const stat = await fs.promises.stat(path);
+        return stat.isDirectory();
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * 判断路径是否为文件
+ * @param path 路径
+ * @returns 是否为文件
+ */
+export async function isFile(path: string): Promise<boolean> {
+    try {
+        const stat = await fs.promises.stat(path);
+        return stat.isFile();
+    } catch {
+        return false;
+    }
 }

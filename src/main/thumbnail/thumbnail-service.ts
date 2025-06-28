@@ -1,51 +1,52 @@
 import createWorker from "./thumbnail-worker?nodeWorker";
 import type { IpcMain } from "electron";
+import type { ThumbnailRequest, ThumbnailResponse, WorkerResponse } from "@common/types";
+import { ThumbnailServiceAction } from "@common/types";
+import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
 
-type ThumbnailWorker = {
-    on: (event: string, callback: (message: string) => void) => void;
-    postMessage: (message: string) => void;
-};
+/**
+ * 缩略图 worker 类型
+ */
+type ThumbnailWorker = Worker<ThumbnailRequest, ThumbnailResponse>;
 
+/**
+ * 缩略图服务
+ */
 export default class ThumbnailService {
     ipc: IpcMain;
-    promises = {};
-    queueId = 0;
     worker: ThumbnailWorker;
 
     constructor(ipcMain: IpcMain) {
         this.ipc = ipcMain;
+        // 创建 worker
         this.worker = createWorker({ workerData: "worker" });
-        this.worker.on("message", (message) => {
-            const data = JSON.parse(message);
-            const requestId = `${data.queueId}`;
-            if (this.promises[requestId]) {
-                this.promises[requestId](data.result);
-                delete this.promises[requestId];
-            }
+        // 处理 worker 消息
+        this.worker.on("message", (message: WorkerResponse<ThumbnailResponse>) => {
+            onWorkerResponse<ThumbnailResponse>(message);
         });
-
-        this.ipc.handle("picasa:create-thumbnail", async (_, arg) => {
+        // 创建缩略图
+        this.ipc.handle(ThumbnailServiceAction.create, async (_, arg: ThumbnailRequest) => {
             return await this.createThumbnail(arg);
         });
-
-        this.ipc.handle("picasa:remove-thumbnail", async (_, arg) => {
+        // 删除缩略图
+        this.ipc.handle(ThumbnailServiceAction.remove, async (_, arg: ThumbnailRequest) => {
             return await this.removeThumbnail(arg);
         });
     }
 
-    private createThumbnail(arg): Promise<string> {
-        return this.queueRequest("create", arg);
+    private createThumbnail(arg: ThumbnailRequest): Promise<ThumbnailResponse> {
+        return sendWorkerTask<ThumbnailWorker, ThumbnailRequest, ThumbnailResponse>(
+            this.worker,
+            "create",
+            arg,
+        );
     }
 
-    private removeThumbnail(arg): Promise<string> {
-        return this.queueRequest("remove", arg);
-    }
-
-    private queueRequest(action: string, arg): Promise<string> {
-        return new Promise((resolve) => {
-            this.promises[`${this.queueId}`] = resolve;
-            this.worker?.postMessage(JSON.stringify({ queueId: this.queueId, action, arg }));
-            this.queueId++;
-        });
+    private removeThumbnail(arg: ThumbnailRequest): Promise<ThumbnailResponse> {
+        return sendWorkerTask<ThumbnailWorker, ThumbnailRequest, ThumbnailResponse>(
+            this.worker,
+            "remove",
+            arg,
+        );
     }
 }

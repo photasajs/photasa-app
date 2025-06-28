@@ -4,7 +4,7 @@ import decode from "heic-decode";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { ThumbnailRequest } from "@common/types";
+import type { ThumbnailRequest } from "@common/types";
 import {
     toPreviewPath,
     HeicExtensionRE,
@@ -16,22 +16,29 @@ import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 import { PhotasaLogger } from "@common/logger";
 
-//Get the paths to the packaged versions of the binaries we want to use
+// Get the paths to the packaged versions of the binaries we want to use
 const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
 const ffprobePath = ffprobeStatic.path.replace("app.asar", "app.asar.unpacked");
 
-//tell the ffmpeg package where it can find the needed binaries.
+// Tell the ffmpeg package where it can find the needed binaries.
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
+/**
+ * 创建预览图片
+ * @param arg - 参数
+ * @param logger - 日志记录器
+ * @returns 预览图片路径
+ */
 async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger): Promise<string> {
+    logger.info("[thumbnail-handler] Create Preview Image for : " + arg.path);
     const previewName = toPreviewPath(arg.path);
     const inputBuffer = await readFile(arg.path);
     try {
-        logger.info("Decode HEIC for : " + arg.path);
+        logger.info("[thumbnail-handler] Decode HEIC for : " + arg.path);
         const image = await decode({ buffer: inputBuffer });
 
-        logger.info("Create Preview for : " + arg.path);
+        logger.info("[thumbnail-handler] Create Preview for : " + arg.path);
         await sharp(image.data, {
             raw: {
                 width: image.width,
@@ -49,22 +56,38 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
     }
 }
 
-export async function removeThumbnail(arg, logger: PhotasaLogger): Promise<string> {
+/**
+ * 删除缩略图
+ * @param arg - 参数
+ * @param logger - 日志记录器
+ * @returns 缩略图路径
+ */
+export async function removeThumbnail(
+    arg: ThumbnailRequest,
+    logger: PhotasaLogger,
+): Promise<ThumbnailRequest> {
     const isExist = await exists(arg.thumbnail);
     if (!isExist) {
         return arg;
     }
 
     try {
-        logger.info("Delete thumbnail for : " + arg.path);
         await remove(arg.thumbnail);
+        logger.info("[thumbnail-handler] Delete thumbnail for : " + arg.thumbnail + " success");
     } catch (e) {
-        logger.error(e);
+        logger.error(
+            "[thumbnail-handler] Failed to delete thumbnail: " + arg.thumbnail + " due to: " + e,
+        );
     }
 
     return arg;
 }
 
+/**
+ * 获取视频维度
+ * @param video - 视频路径
+ * @returns 视频维度
+ */
 function getVideoDimension(video: string): Promise<VideoSize> {
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(video, (err, metadata) => {
@@ -94,13 +117,21 @@ function getVideoDimension(video: string): Promise<VideoSize> {
         });
     });
 }
-async function createScreenshot(arg, logger: PhotasaLogger): Promise<string> {
+
+/**
+ * 创建视频缩略图
+ * @param arg - 参数
+ * @param logger - 日志记录器
+ * @returns 缩略图路径
+ */
+async function createScreenshot(arg: ThumbnailRequest, logger: PhotasaLogger): Promise<string> {
+    logger.info("[thumbnail-handler] Create Screenshot for : " + arg.path);
     const dimension = await getVideoDimension(arg.path);
     return new Promise((resolve) => {
         const size = getOptimalThumbnailResolution(dimension, arg);
         ffmpeg(arg.path)
             .on("filenames", function (filenames) {
-                logger.info("Generate Screenshot: " + filenames.join(", "));
+                logger.info("[thumbnail-handler]Generate Screenshot: " + filenames.join(", "));
             })
             .on("error", function (err) {
                 logger.error(err);
@@ -118,56 +149,72 @@ async function createScreenshot(arg, logger: PhotasaLogger): Promise<string> {
     });
 }
 
+/**
+ * 创建缩略图
+ * @param arg - 参数
+ * @param logger - 日志记录器
+ * @returns 缩略图路径
+ */
 export async function createThumbnail(
     arg: ThumbnailRequest,
     logger: PhotasaLogger,
 ): Promise<ThumbnailRequest> {
+    logger.info("[thumbnail-handler] Create Thumbnail for : " + arg.path);
     try {
-        // Check if source file exists
+        // 检查源文件是否存在
         const sourceExists = await exists(arg.path);
         if (!sourceExists) {
-            logger.error(`Source file does not exist: ${arg.path}`);
+            logger.error(`[thumbnail-handler] Source file does not exist: ${arg.path}`);
             return arg;
         }
 
-        // Check if thumbnail exists
+        // 检查缩略图是否存在 如果存在，则不创建
         const thumbnailExists = await exists(arg.thumbnail);
-        if (thumbnailExists) {
+        if (thumbnailExists || arg.always) {
+            logger.info(`[thumbnail-handler]Thumbnail already exists: ${arg.thumbnail}`);
             return arg;
         }
 
-        // Thumbnail doesn't exist, create it
+        // 确保缩略图目录存在
         await ensureDir(path.dirname(arg.thumbnail));
 
         let isHeic = HeicExtensionRE.test(arg.path);
-        // If it's a HEIC file, we need to convert it to a PNG first for preview
+        // 如果文件是 HEIC 格式，则需要先转换为 PNG 格式
         if (isHeic) {
             arg.preview = await createPreviewImage(arg, logger);
-            // Convert may failed, then it's not HEIC
+            // 如果预览图片创建成功，则认为文件是 HEIC 格式
             isHeic = arg.preview !== "";
         }
 
         if (isVideo(arg.path)) {
-            logger.info("Create video thumbnail for : " + arg.path);
+            logger.info("[thumbnail-handler] Create video thumbnail for : " + arg.path);
+            // 创建视频缩略图
             await createScreenshot(arg, logger);
         } else {
-            logger.info("Create image thumbnail for : " + arg.path);
+            logger.info("[thumbnail-handler] Create image thumbnail for : " + arg.path);
+            // 创建图片缩略图 如果文件是 HEIC 格式，则使用预览图片
             const target = isHeic ? arg.preview : arg.path;
+            // 创建图片缩略图
             await sharp(target)
-                .rotate()
+                .rotate() // 旋转图片 根据 EXIF 信息旋转
                 .resize(arg.width, arg.height, {
                     fit: sharp.fit.inside,
                     background: "white",
                     withoutEnlargement: arg.withoutEnlargement,
                 })
-                .toFormat("png")
-                .toFile(arg.thumbnail)
+                .toFormat("png") // 将图片转换为 PNG 格式
+                .toFile(arg.thumbnail) // 将图片保存到指定路径
                 .then((i) => {
-                    logger.info(i);
+                    // 打印图片信息
+                    logger.info(
+                        `[thumbnail-handler] Create image thumbnail ${i} for : ${arg.path} success`,
+                    );
                 });
         }
     } catch (e) {
-        logger.error("Failed to create thumbnail: " + arg.path + " due to: " + e);
+        logger.error(
+            "[thumbnail-handler] Failed to create thumbnail: " + arg.path + " due to: " + e,
+        );
     }
     return arg;
 }

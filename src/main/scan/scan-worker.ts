@@ -9,9 +9,14 @@ const port = parentPort;
 if (!port) {
     throw new Error("IllegalState");
 }
+
+/**
+ * 发送消息
+ * @param message - 消息
+ */
 function postMessage(message): void {
     logger.debug("Worker posting message:", message);
-    port?.postMessage(JSON.stringify(message));
+    port?.postMessage(message);
 }
 
 export function execute(requestId: string, scan: ScanAction): void {
@@ -53,7 +58,7 @@ export function execute(requestId: string, scan: ScanAction): void {
 port.on("message", (message) => {
     let parsedResult;
     try {
-        parsedResult = JSON.parse(message);
+        parsedResult = message;
         logger.debug("Worker received message:", parsedResult);
         switch (parsedResult.action) {
             case "scan":
