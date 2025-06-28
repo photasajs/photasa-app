@@ -1,6 +1,6 @@
 import { Worker } from "worker_threads";
 import { EventEmitter } from "events";
-import { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@common/logger";
 
 interface BusyWorker extends Worker {
     isBusy: boolean;
@@ -17,7 +17,7 @@ export class WorkerPool extends EventEmitter {
     private workers: BusyWorker[] = [];
     private queue: unknown[] = [];
     private config: WorkerPoolConfig;
-    private logger: Logger;
+    private logger: PhotasaLogger;
 
     constructor(config: WorkerPoolConfig, logger: PhotasaLogger) {
         super();
@@ -83,7 +83,10 @@ export class WorkerPool extends EventEmitter {
     private processQueue(): void {
         const availableWorker = this.workers.find((w) => !w.isBusy);
         if (availableWorker && this.queue.length > 0) {
-            const { task, resolve } = this.queue.shift();
+            const { task, resolve } = this.queue.shift() as {
+                task: unknown;
+                resolve: () => void;
+            };
             availableWorker.isBusy = true;
             availableWorker.postMessage(task);
             resolve();

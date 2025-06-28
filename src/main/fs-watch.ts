@@ -1,6 +1,6 @@
+import { PhotasaLogger } from "@common/logger";
 import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
-import type { Logger } from "log4js";
 
 let FileWatcherHandler: FSWatcher | undefined;
 
@@ -9,7 +9,11 @@ export function closeFileWatcher(): void {
     FileWatcherHandler = undefined;
 }
 
-export function initFileWatcher(ipc: IpcMain, mainWindow: BrowserWindow, logger: Logger): void {
+export function initFileWatcher(
+    ipc: IpcMain,
+    mainWindow: BrowserWindow,
+    logger: PhotasaLogger,
+): void {
     ipc.handle("picasa:stop-file-watch", () => {
         logger.info("Stop watching files......");
         FileWatcherHandler?.close();

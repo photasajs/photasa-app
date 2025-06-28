@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import sharp from "sharp";
-import fs from "fs-extra";
-import path from "path";
 
 // Mock dependencies
 vi.mock("sharp", () => ({

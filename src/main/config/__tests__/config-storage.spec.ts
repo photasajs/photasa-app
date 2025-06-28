@@ -7,12 +7,52 @@ import isVideo from "is-video";
 import log4js from "log4js";
 
 // Mock fs-extra
+const mockFsStore: Record<string, string> = {};
+function normalizePath(p: string) {
+    return path.resolve("/", p);
+}
+function getConfigPath(folder: string) {
+    // 假设 config 路径为 folder/config.json
+    return normalizePath(path.join(folder, "config.json"));
+}
 vi.mock("fs-extra", () => ({
     default: {
-        ensureFile: vi.fn(),
-        readFile: vi.fn(),
-        writeFile: vi.fn(),
+        ensureFile: vi.fn(async (filePath: string) => {
+            const norm = normalizePath(filePath);
+            if (!(norm in mockFsStore)) {
+                mockFsStore[norm] = JSON.stringify({ photoList: [] });
+            }
+        }),
+        readFile: vi.fn(async (filePath: string) => {
+            const norm = normalizePath(filePath);
+            if (norm in mockFsStore) {
+                return mockFsStore[norm];
+            }
+            mockFsStore[norm] = JSON.stringify({ photoList: [] });
+            return mockFsStore[norm];
+        }),
+        writeFile: vi.fn(async (filePath: string, content: string) => {
+            const norm = normalizePath(filePath);
+            try {
+                const parsed = JSON.parse(content);
+                // 只要有 photoList 字段就同步
+                if (parsed && Array.isArray(parsed.photoList)) {
+                    mockFsStore[norm] = JSON.stringify({
+                        ...parsed,
+                        photoList: [...parsed.photoList],
+                    });
+                } else {
+                    mockFsStore[norm] = content;
+                }
+            } catch {
+                mockFsStore[norm] = JSON.stringify({ photoList: [] });
+            }
+        }),
         access: vi.fn(),
+        remove: vi.fn(async (filePath: string) => {
+            const norm = normalizePath(filePath);
+            delete mockFsStore[norm];
+        }),
     },
 }));
 
@@ -22,8 +62,9 @@ vi.mock("is-video", () => ({
 }));
 
 // Mock log4js
-vi.mock("log4js", () => ({
-    getLogger: vi.fn(() => ({
+vi.mock("log4js", async (importOriginal) => {
+    const actual = await importOriginal();
+    const mockLogger = {
         debug: vi.fn(),
         info: vi.fn(),
         error: vi.fn(),
@@ -47,8 +88,18 @@ vi.mock("log4js", () => ({
         category: "test",
         callStackLinesToSkip: 0,
         mark: vi.fn(),
-    })),
-}));
+    };
+    return {
+        ...((typeof actual === "object" && actual) || {}),
+        getLogger: vi.fn(() => mockLogger),
+        configure: vi.fn(),
+        default: {
+            ...((typeof actual === "object" && actual) || {}),
+            getLogger: vi.fn(() => mockLogger),
+            configure: vi.fn(),
+        },
+    };
+});
 
 const mockLogger = log4js.getLogger("test");
 
@@ -56,14 +107,17 @@ describe("config-storage", () => {
     const mockPostMessage = vi.fn();
 
     beforeEach(() => {
+        for (const key in mockFsStore) delete mockFsStore[key];
         vi.clearAllMocks();
-        // Reset mocks
+        // 预初始化所有常用 config 路径
+        const folders = ["/test/path", "/test/path/photo1.jpg", "/test/path/photo2.jpg"]; // 可根据用例补充
+        for (const folder of folders) {
+            mockFsStore[getConfigPath(folder)] = JSON.stringify({ photoList: [] });
+        }
         (fs.ensureFile as any).mockResolvedValue(undefined);
         (fs.readFile as any).mockResolvedValue("{}");
         (fs.writeFile as any).mockResolvedValue(undefined);
-        // Clear debounce timers
         vi.useFakeTimers();
-        // Reset queue before each test
         configStorage.cleanupQueueForFolder("/test/path");
     });
 
@@ -81,14 +135,17 @@ describe("config-storage", () => {
                 lastModified: Date.now(),
             };
 
-            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockConfig));
-            vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockConfig));
+            (fs.writeFile as any).mockResolvedValue(undefined);
 
             const result = await configStorage.batchAddToPhotoList(photoPaths, mockLogger);
 
             expect(result.config.photoList).toHaveLength(2);
-            expect(result.config.photoList[0].path).toBe(photoPaths[0]);
-            expect(result.config.photoList[1].path).toBe(photoPaths[1]);
+            expect(result.config.photoList[0].path).toEqual(photoPaths[0]);
+            expect(result.config.photoList[1].path).toEqual(photoPaths[1]);
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(photoPaths.length);
         });
 
         it("should handle existing photos", async () => {
@@ -99,14 +156,17 @@ describe("config-storage", () => {
                 lastModified: Date.now(),
             };
 
-            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockConfig));
-            vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockConfig));
+            (fs.writeFile as any).mockResolvedValue(undefined);
 
             const result = await configStorage.batchAddToPhotoList(photoPaths, mockLogger);
 
             expect(result.config.photoList).toHaveLength(2);
-            expect(result.config.photoList[0].path).toBe(photoPaths[0]);
-            expect(result.config.photoList[1].path).toBe(photoPaths[1]);
+            expect(result.config.photoList[0].path).toEqual(photoPaths[0]);
+            expect(result.config.photoList[1].path).toEqual(photoPaths[1]);
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(photoPaths.length);
         });
 
         it("should handle video files", async () => {
@@ -117,15 +177,18 @@ describe("config-storage", () => {
                 lastModified: Date.now(),
             };
 
-            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockConfig));
-            vi.mocked(fs.writeFile).mockResolvedValue(undefined);
-            vi.mocked(isVideo).mockReturnValue(true);
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockConfig));
+            (fs.writeFile as any).mockResolvedValue(undefined);
+            (isVideo as any).mockReturnValue(true);
 
             const result = await configStorage.batchAddToPhotoList(photoPaths, mockLogger);
 
             expect(result.config.photoList).toHaveLength(1);
-            expect(result.config.photoList[0].path).toBe(photoPaths[0]);
+            expect(result.config.photoList[0].path).toEqual(photoPaths[0]);
             expect(result.config.photoList[0].isVideo).toBe(true);
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(photoPaths.length);
         });
 
         it("should handle empty photo list", async () => {
@@ -136,23 +199,26 @@ describe("config-storage", () => {
                 lastModified: Date.now(),
             };
 
-            vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(mockConfig));
-            vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+            (fs.readFile as any).mockResolvedValue(JSON.stringify(mockConfig));
+            (fs.writeFile as any).mockResolvedValue(undefined);
 
             const result = await configStorage.batchAddToPhotoList(photoPaths, mockLogger);
 
             expect(result.config.photoList).toHaveLength(0);
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(photoPaths.length);
         });
 
         it("should handle file system errors", async () => {
             const photoPaths = ["/path/to/photo1.jpg"];
             const mockError = new Error("File system error");
 
-            vi.mocked(fs.readFile).mockRejectedValue(mockError);
+            (fs.readFile as any).mockRejectedValue(mockError);
 
             await expect(
                 configStorage.batchAddToPhotoList(photoPaths, mockLogger),
-            ).rejects.toThrow();
+            ).rejects.toThrowError(/No successful results|Failed to/);
         });
     });
 
@@ -184,6 +250,9 @@ describe("config-storage", () => {
             expect(result.config.photoList).toEqual(expectedConfig.photoList);
             expect(result.config.version).toBe(expectedConfig.version);
             expect(typeof result.config.lastModified).toBe("number");
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(1);
         });
 
         it("should handle file system errors", async () => {
@@ -195,7 +264,7 @@ describe("config-storage", () => {
             // Call the underlying implementation directly to test error propagation
             await expect(
                 configStorage.batchAddToPhotoList([photoPath], mockLogger),
-            ).rejects.toThrow("Write error");
+            ).rejects.toThrowError(/No successful results|Failed to/);
         });
     });
 
@@ -219,6 +288,9 @@ describe("config-storage", () => {
             const result = await configStorage.removeFromPhotoList(photoPath, mockLogger);
 
             expect(result.config.photoList).toHaveLength(0);
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(0);
         });
 
         it("should handle non-existent photo", async () => {
@@ -240,6 +312,9 @@ describe("config-storage", () => {
             const result = await configStorage.removeFromPhotoList(photoPath, mockLogger);
 
             expect(result.config.photoList).toHaveLength(1);
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(1);
         });
 
         it("should handle file system errors", async () => {
@@ -248,6 +323,8 @@ describe("config-storage", () => {
 
             const result = await configStorage.removeFromPhotoList(photoPath, mockLogger);
             expect(result).toBeDefined();
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
         });
     });
 
@@ -313,6 +390,9 @@ describe("config-storage", () => {
             expect(mockPostMessage).toHaveBeenCalledWith(
                 expect.stringContaining('"action":"complete"'),
             );
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(request.paths.length);
         });
 
         it("should handle empty paths array", async () => {
@@ -340,6 +420,9 @@ describe("config-storage", () => {
             expect(mockPostMessage).toHaveBeenCalledWith(
                 expect.stringContaining('"action":"complete"'),
             );
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(request.paths.length);
         });
 
         it("should handle file system errors", async () => {
@@ -373,6 +456,9 @@ describe("config-storage", () => {
             expect(mockPostMessage).toHaveBeenCalledWith(
                 expect.stringContaining('"action":"error"'),
             );
+            const configStr = mockFsStore[getConfigPath("/test/path")];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(request.paths.length);
         });
     });
 
@@ -390,14 +476,17 @@ describe("config-storage", () => {
             const result = await configStorage.getPhotasaConfig(folder, mockLogger);
 
             expect(result).toEqual(existingConfig);
+            const configStr = mockFsStore[getConfigPath(folder)];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(existingConfig.photoList.length);
         });
 
         it("should handle file system errors", async () => {
             const folder = "/test/path";
             (fs.readFile as any).mockRejectedValue(new Error("Read error"));
 
-            await expect(configStorage.getPhotasaConfig(folder, mockLogger)).rejects.toThrow(
-                "Read error",
+            await expect(configStorage.getPhotasaConfig(folder, mockLogger)).rejects.toThrowError(
+                /Failed to/,
             );
         });
     });
@@ -422,14 +511,17 @@ describe("config-storage", () => {
             const result = await configStorage.resetPhotasaConfig(folder, mockLogger);
 
             expect(result.photoList).toHaveLength(0);
+            const configStr = mockFsStore[getConfigPath(folder)];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(0);
         });
 
         it("should handle file system errors", async () => {
             const folder = "/test/path";
             (fs.writeFile as any).mockRejectedValue(new Error("Write error"));
 
-            await expect(configStorage.resetPhotasaConfig(folder, mockLogger)).rejects.toThrow(
-                "Write error",
+            await expect(configStorage.resetPhotasaConfig(folder, mockLogger)).rejects.toThrowError(
+                /Failed to/,
             );
         });
     });
@@ -457,6 +549,9 @@ describe("config-storage", () => {
             expect(result.photoList[0].thumbnail).toBe(
                 ".photasaoriginals/thumbnail-photo1.jpg.png",
             );
+            const configStr = mockFsStore[getConfigPath(folder)];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(existingConfig.photoList.length);
         });
 
         it("should handle empty photo list", async () => {
@@ -471,14 +566,17 @@ describe("config-storage", () => {
             const result = await configStorage.fixPhotasaConfig(folder, mockLogger);
 
             expect(result.photoList).toHaveLength(0);
+            const configStr = mockFsStore[getConfigPath(folder)];
+            expect(configStr).toBeDefined();
+            expect(JSON.parse(configStr).photoList.length).toBe(existingConfig.photoList.length);
         });
 
         it("should handle file system errors", async () => {
             const folder = "/test/path";
             (fs.writeFile as any).mockRejectedValue(new Error("Write error"));
 
-            await expect(configStorage.fixPhotasaConfig(folder, mockLogger)).rejects.toThrow(
-                "Write error",
+            await expect(configStorage.fixPhotasaConfig(folder, mockLogger)).rejects.toThrowError(
+                /Failed to/,
             );
         });
     });

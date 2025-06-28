@@ -1,26 +1,35 @@
-import { WorkerPool } from "../worker-pool";
-import path from "path";
 import { EventEmitter } from "events";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { PhotasaLogger } from "@common/logger";
+import { WorkerPool } from "../worker-pool";
 
 // Mock Worker class
 class MockWorker extends EventEmitter {
-    public isBusy: boolean = false;
-    public postMessage = jest.fn();
-    public terminate = jest.fn().mockResolvedValue(undefined);
+    public isBusy = false;
+    public postMessage = vi.fn();
+    public terminate = vi.fn().mockResolvedValue(undefined);
 }
 
 // Mock Worker constructor
-jest.mock("worker_threads", () => ({
-    Worker: jest.fn().mockImplementation(() => new MockWorker()),
-}));
+vi.mock("worker_threads", async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        ...((typeof actual === "object" && actual) || {}),
+        Worker: vi.fn().mockImplementation(() => new MockWorker()),
+        default: {
+            ...(typeof actual === "object" && actual ? actual : {}),
+            Worker: vi.fn().mockImplementation(() => new MockWorker()),
+        },
+    };
+});
 
 describe("WorkerPool", () => {
     let workerPool: WorkerPool;
     const mockLogger = {
-        error: jest.fn(),
-        warn: jest.fn(),
-        info: jest.fn(),
-        debug: jest.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
     };
 
     const config = {
@@ -30,8 +39,8 @@ describe("WorkerPool", () => {
     };
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        workerPool = new WorkerPool(config, mockLogger as any);
+        vi.clearAllMocks();
+        workerPool = new WorkerPool(config, mockLogger as unknown as PhotasaLogger);
     });
 
     it("should initialize with minimum number of workers", () => {
@@ -40,7 +49,7 @@ describe("WorkerPool", () => {
 
     it("should process tasks through workers", async () => {
         const task = { type: "test", data: "test-data" };
-        const worker = workerPool["workers"][0] as MockWorker;
+        const worker = workerPool["workers"][0] as unknown as MockWorker;
 
         // Simulate worker response
         setTimeout(() => {
@@ -59,7 +68,7 @@ describe("WorkerPool", () => {
     });
 
     it("should handle worker errors", async () => {
-        const worker = workerPool["workers"][0] as MockWorker;
+        const worker = workerPool["workers"][0] as unknown as MockWorker;
         const error = new Error("Test error");
 
         worker.emit("error", error);
@@ -69,7 +78,7 @@ describe("WorkerPool", () => {
     });
 
     it("should replace workers that exit with non-zero code", async () => {
-        const worker = workerPool["workers"][0] as MockWorker;
+        const worker = workerPool["workers"][0] as unknown as MockWorker;
         worker.emit("exit", 1);
 
         expect(mockLogger.warn).toHaveBeenCalledWith("Worker exited with code 1");
@@ -78,7 +87,7 @@ describe("WorkerPool", () => {
 
     it("should queue tasks when all workers are busy", async () => {
         const tasks = Array(5).fill({ type: "test" });
-        const workers = workerPool["workers"] as MockWorker[];
+        const workers = workerPool["workers"] as unknown as MockWorker[];
 
         // Make all workers busy
         workers.forEach((w) => (w.isBusy = true));
@@ -101,7 +110,7 @@ describe("WorkerPool", () => {
 
     it("should shutdown all workers", async () => {
         await workerPool.shutdown();
-        const workers = workerPool["workers"] as MockWorker[];
+        const workers = workerPool["workers"] as unknown as MockWorker[];
 
         expect(workers).toHaveLength(0);
         workers.forEach((w) => {
