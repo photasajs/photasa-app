@@ -8,7 +8,7 @@ import { addToPhotasaConfig, getPhotasaConfig } from "../config/config-storage";
 import fs from "fs-extra";
 import path from "path";
 import { WorkerPool } from "../workers/worker-pool";
-import createWorker from "../workers/thumbnail-worker?nodeWorker";
+import createWorker from "../thumbnail/thumbnail-worker?nodeWorker";
 import { loggers, PhotasaLogger } from "@common/logger";
 const logger = loggers.scan;
 
@@ -112,8 +112,11 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
             if (!thumbnailExists || scan.action === "rescan") {
                 logger.debug(`Creating thumbnail for ${action.path}`);
                 await workerPool.addTask({
-                    file: action.path,
-                    size: scan.thumbnailSize,
+                    path: action.path,
+                    thumbnail: action.thumbnail,
+                    width: scan.thumbnailSize,
+                    height: scan.thumbnailSize,
+                    withoutEnlargement: true,
                     quality: 80,
                 });
             } else {
