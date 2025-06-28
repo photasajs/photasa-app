@@ -42,10 +42,9 @@ async function prefetchImage(imageSrc: string): Promise<void> {
 }
 
 onMounted(() => {
-    if (!isVideo.value) {
-        isLoading.value = true;
-        prefetchImage(src.value);
-    }
+    // 预加载图片，避免图片加载时，出现闪烁
+    isLoading.value = true;
+    prefetchImage(src.value);
 });
 
 const target = ref(null);
