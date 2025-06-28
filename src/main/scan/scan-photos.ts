@@ -178,7 +178,7 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                     queueId: 0,
                     paths: [action.path],
                 },
-                (msg) => logger.debug("[scan-photos] Config update:", msg),
+                (msg) => logger.debug(`[scan-photos] Config update: ${action.path}`),
                 logger,
             );
 

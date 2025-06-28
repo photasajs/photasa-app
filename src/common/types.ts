@@ -74,3 +74,15 @@ export interface VideoSize {
     width: number;
     height: number;
 }
+
+/**
+ * 通用 notify 状态推送 payload 类型
+ */
+export interface NotifyPayload {
+    type: string; // 任务类型，如 scan/thumbnail/import
+    task: string; // 具体任务名或ID
+    status: string; // 状态，如 start/success/fail/progress/skip
+    data?: any; // 相关数据
+    error?: string; // 错误信息
+    timestamp: number; // 时间戳
+}
