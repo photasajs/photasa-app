@@ -11,6 +11,7 @@ import VueVideoPlayer from "@videojs-player/vue";
 import "video.js/dist/video-js.css";
 import { i18n } from "./i18n/config";
 import { usePreferenceStore } from "@renderer/stores/preference";
+import { useStatusBarStore } from "@renderer/stores/statusBar";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -55,5 +56,13 @@ Bugsnag.addMetadata("context", {
 });
 
 Bugsnag.leaveBreadcrumb("App started", {}, "state");
+
+const statusBarStore = useStatusBarStore();
+
+if (window.electron && window.electron.ipcRenderer) {
+    window.electron.ipcRenderer.on("notify:status", (_event, payload) => {
+        statusBarStore.update(payload);
+    });
+}
 
 app.mount("#app");

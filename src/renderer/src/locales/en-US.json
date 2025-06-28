@@ -66,7 +66,11 @@
         "loadingConfig": "Reading library info",
         "processing": "Processing [{file}]",
         "scanned": "Completed",
-        "scanComplete": "Directory [{path}] has been processed."
+        "scanComplete": "Directory [{path}] has been processed.",
+        "start": "Scan started",
+        "progress": "Scanning progress",
+        "complete": "Scan complete",
+        "error": "Scan error"
     },
     "button": {
         "import": "Import",

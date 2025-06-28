@@ -61,7 +61,11 @@
         "loadingConfig": "读取照片库信息",
         "processing": "正在处理 [{file}]",
         "scanned": "处理完毕",
-        "scanComplete": "目录[{path}]已处理完毕"
+        "scanComplete": "目录[{path}]已处理完毕",
+        "start": "开始扫描",
+        "progress": "扫描进度",
+        "complete": "扫描完成",
+        "error": "扫描错误"
     },
     "button": {
         "import": "导入",

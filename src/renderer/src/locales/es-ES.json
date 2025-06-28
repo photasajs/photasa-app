@@ -65,7 +65,11 @@
         "loadingConfig": "Leyendo información de la biblioteca",
         "processing": "Procesando [{file}]",
         "scanned": "Completado",
-        "scanComplete": "El directorio [{path}] ha sido procesado."
+        "scanComplete": "El directorio [{path}] ha sido procesado.",
+        "start": "Inicio de escaneo",
+        "progress": "Progreso de escaneo",
+        "complete": "Escaneo completado",
+        "error": "Error de escaneo"
     },
     "button": {
         "import": "Importar",

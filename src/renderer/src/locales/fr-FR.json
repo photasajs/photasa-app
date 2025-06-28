@@ -65,7 +65,11 @@
         "loadingConfig": "Lecture des infos de la bibliothèque",
         "processing": "Traitement [{file}]",
         "scanned": "Terminé",
-        "scanComplete": "Le dossier [{path}] a été traité."
+        "scanComplete": "Le dossier [{path}] a été traité.",
+        "start": "Démarrage du scan",
+        "progress": "Progression du scan",
+        "complete": "Scan terminé",
+        "error": "Erreur de scan"
     },
     "button": {
         "import": "Importer",

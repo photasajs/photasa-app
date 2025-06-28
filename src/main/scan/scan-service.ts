@@ -2,6 +2,8 @@ import createWorker from "./scan-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
 import type { ScanAction } from "@common/types";
 import { loggers } from "@common/logger";
+import { notifyStatus } from "@common/notify";
+import type { NotifyPayload } from "@common/types";
 
 const logger = loggers.scan;
 
@@ -28,10 +30,36 @@ export default class ScanService {
             try {
                 const data = message;
                 logger.debug("Received message from worker:", data);
+                // 推送 notifyStatus
+                let payload: NotifyPayload | undefined;
                 if (data.type === "error") {
                     logger.error("Worker reported error:", data.error);
+                    payload = {
+                        type: "scan",
+                        task: data.action?.path || "",
+                        status: "error",
+                        error: data.error?.message || String(data.error),
+                        timestamp: Date.now(),
+                    };
                 } else if (data.type === "complete") {
                     logger.info("Scan complete for " + data.action.path);
+                    payload = {
+                        type: "scan",
+                        task: data.action?.path || "",
+                        status: "complete",
+                        timestamp: Date.now(),
+                    };
+                } else if (data.type === "progress") {
+                    payload = {
+                        type: "scan",
+                        task: data.action?.path || "",
+                        status: "progress",
+                        data: data.progress,
+                        timestamp: Date.now(),
+                    };
+                }
+                if (payload) {
+                    notifyStatus(this.mainWindow, payload);
                 }
                 mainWindow?.webContents.send("picasa:find-photo", data);
             } catch (error) {

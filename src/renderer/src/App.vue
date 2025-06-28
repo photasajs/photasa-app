@@ -24,6 +24,7 @@ import { useI18n } from "vue-i18n";
 import type { ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
+import { useStatusBarStore } from "@renderer/stores/statusBar";
 
 const logger = loggers.app;
 
@@ -34,6 +35,7 @@ const preferenceStore = usePreferenceStore();
 const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize } =
     storeToRefs(preferenceStore);
 const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
+const statusBarStore = useStatusBarStore();
 
 const showImport = ref(false);
 const showPreference = ref(false);
@@ -225,7 +227,24 @@ useTitle(title);
         </a-layout>
         <footer class="app-footer">
             <a-space>
-                <a-typography-text type="success">{{ processingFile }}</a-typography-text>
+                <a-typography-text type="success">
+                    <!-- 优先展示主进程推送的任务状态，支持国际化 -->
+                    <template v-if="statusBarStore.status">
+                        {{ t(`status.${statusBarStore.status}`) }}
+                        <span v-if="statusBarStore.currentTask"
+                            >: {{ statusBarStore.currentTask }}</span
+                        >
+                        <span v-if="statusBarStore.progress !== undefined">
+                            ({{ statusBarStore.progress }}%)</span
+                        >
+                        <span v-if="statusBarStore.error">
+                            [{{ t("notification.error") }}: {{ statusBarStore.error }}]</span
+                        >
+                    </template>
+                    <template v-else>
+                        {{ processingFile }}
+                    </template>
+                </a-typography-text>
             </a-space>
         </footer>
     </a-layout>

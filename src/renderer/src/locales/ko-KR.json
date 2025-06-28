@@ -65,7 +65,11 @@
         "loadingConfig": "사진 라이브러리 정보 읽는 중",
         "processing": "처리 중 [{file}]",
         "scanned": "처리 완료",
-        "scanComplete": "디렉토리[{path}] 처리가 완료되었습니다."
+        "scanComplete": "디렉토리[{path}] 처리가 완료되었습니다.",
+        "start": "스캔 시작",
+        "progress": "스캔 진행",
+        "complete": "스캔 완료",
+        "error": "스캔 오류"
     },
     "button": {
         "import": "가져오기",

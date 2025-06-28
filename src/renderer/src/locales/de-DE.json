@@ -65,7 +65,11 @@
         "loadingConfig": "Bibliotheksinfo wird gelesen",
         "processing": "Verarbeitung [{file}]",
         "scanned": "Abgeschlossen",
-        "scanComplete": "Verzeichnis [{path}] wurde verarbeitet."
+        "scanComplete": "Verzeichnis [{path}] wurde verarbeitet.",
+        "start": "Scan gestartet",
+        "progress": "Scan-Fortschritt",
+        "complete": "Scan abgeschlossen",
+        "error": "Scan-Fehler"
     },
     "button": {
         "import": "Importieren",

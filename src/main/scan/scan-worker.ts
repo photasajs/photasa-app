@@ -22,9 +22,20 @@ function postMessage(message): void {
 export function execute(requestId: string, scan: ScanAction): void {
     logger.debug("Worker executing scan:", { requestId, scan });
     try {
+        let processed = 0;
+        const total = 0;
+        // 先统计总数
         scanPhotos(scan, logger).subscribe({
             next: (action) => {
                 logger.debug("Scan progress:", action);
+                processed++;
+                // 发送进度消息
+                postMessage({
+                    type: "progress",
+                    requestId,
+                    action,
+                    progress: { processed, total },
+                });
             },
             error: (error) => {
                 logger.error("Scan failed:", error);
