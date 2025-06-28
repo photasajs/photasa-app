@@ -2,14 +2,14 @@ import { PhotasaLogger } from "./logger";
 
 export type WorkerAction = "query" | "add" | "remove";
 
-export interface WorkerMessage {
+export interface ConfigRequest {
     action: WorkerAction;
     queueId?: number;
     paths?: string[];
     from?: "query" | "add" | "remove";
 }
 
-export interface WorkerResponse {
+export interface ConfigResponse {
     action: "next" | "complete" | "error";
     queueId?: number;
     from?: "query" | "add" | "remove";
@@ -20,12 +20,12 @@ export interface WorkerResponse {
     err?: Error;
 }
 
-export interface WorkerHandler {
-    (result: WorkerMessage, postMessage: (message: string) => void, logger: PhotasaLogger): void;
+export interface ConfigHandler {
+    (result: ConfigRequest, postMessage: (message: string) => void, logger: PhotasaLogger): void;
 }
 
-export interface WorkerHandlers {
-    query: WorkerHandler;
-    add: WorkerHandler;
-    remove: WorkerHandler;
+export interface ConfigHandlers {
+    query: ConfigHandler;
+    add: ConfigHandler;
+    remove: ConfigHandler;
 }

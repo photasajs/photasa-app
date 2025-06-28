@@ -4,7 +4,7 @@ import { removeFromPhotoList, addToPhotasaConfig } from "./config-storage";
 import type { PhotasaConfigResult } from "@common/types";
 import { Observable, Subscriber, from, mergeMap } from "rxjs";
 import { FileSystemError, ConfigError, handleError } from "@common/error-handler";
-import type { WorkerMessage } from "@common/worker-types";
+import type { ConfigRequest } from "@common/config-types";
 import { PhotasaLogger } from "@common/logger";
 
 function globPhotasaConfigFromFolders(folder: string, logger: PhotasaLogger): Observable<string> {
@@ -42,7 +42,7 @@ function globPhotasaConfigFromFolders(folder: string, logger: PhotasaLogger): Ob
 }
 
 export function addConfig(
-    result: WorkerMessage,
+    result: ConfigRequest,
     postMessage: (msg: string) => void,
     logger: PhotasaLogger,
 ): void {
@@ -70,7 +70,7 @@ const BUFFER_SIZE = 30;
 const queue: string[] = [];
 
 export function queryConfig(
-    result: WorkerMessage,
+    result: ConfigRequest,
     postMessage: (msg: string) => void,
     logger: PhotasaLogger,
 ): void {
@@ -120,7 +120,7 @@ export function queryConfig(
 }
 
 export function removeConfig(
-    request: WorkerMessage,
+    request: ConfigRequest,
     postMessage: (msg: string) => void,
     logger: PhotasaLogger,
 ): void {
