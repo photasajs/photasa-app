@@ -5,7 +5,6 @@ import path from "path";
 import { createThumbnail } from "../thumbnail-handler";
 import type { Logger } from "log4js";
 import isVideo from "is-video";
-import heicDecode from "heic-decode";
 import ffmpeg from "fluent-ffmpeg";
 
 // Mock dependencies

@@ -1,6 +1,6 @@
 import { parentPort } from "worker_threads";
 import sharp from "sharp";
-import { buildThumbnailPath } from "../../common";
+import { buildThumbnailPath } from "@common/utils";
 
 /**
  * Interface for the thumbnail request object

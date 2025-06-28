@@ -1,9 +1,8 @@
 /*
  * config-storage.ts
  *
- * This module manages the reading, writing, and updating of the .photasa.json configuration files
- * for photo and video management. It provides functions to add, remove, batch process, and fix
- * photo entries, as well as to handle concurrency and error reporting for bulk operations.
+ * 本模块负责 .photasa.json 配置文件的读写、批量处理、照片/视频批量增删、修复、并发与错误处理等核心逻辑。
+ * 提供批量添加、移除、修复、重置等操作，支持高并发队列与详细日志。
  */
 
 import fs from "node:fs/promises";
@@ -31,35 +30,37 @@ export {
 } from "./config-cache";
 
 // Types for improved type safety
+// 类型声明：队列项
 interface QueueItem {
     queueId: number;
     paths: string[];
 }
 
+// 类型声明：配置元数据
 interface ConfigMetadata {
     data: string;
     dir: string;
 }
 
-const PHOTASA_VERSION = "1.0";
-const QUEUE_CONCURRENCY = 10; // Increased from 6 to 10 for better throughput
-const QUEUE_BREAK_THRESHOLD = 200; // Increased from 100 to handle larger batches
-const DEBOUNCE_DELAY = 30; // Reduced from 50ms to process faster
-const QUEUE_TIMEOUT = 60000; // Keep 1 minute timeout
-const QUEUE_INTERVAL = 100; // Reduced from 250ms to process more frequently
-const QUEUE_INTERVAL_CAP = 100; // Increased from 60 to process more tasks per interval
+// 配置常量
+const PHOTASA_VERSION = "1.0"; // 配置文件版本
+const QUEUE_CONCURRENCY = 10; // 队列并发数
+const QUEUE_BREAK_THRESHOLD = 200; // 队列分批阈值
+const DEBOUNCE_DELAY = 30; // 防抖延迟
+const QUEUE_TIMEOUT = 60000; // 队列超时时间
+const QUEUE_INTERVAL = 100; // 队列处理间隔
+const QUEUE_INTERVAL_CAP = 100; // 队列每周期最大处理数
 
-// Add write batching
+// 写入批处理队列
 const writeBatch = new Map<string, { data: string; timestamp: number }>();
-const WRITE_BATCH_INTERVAL = 100; // Batch writes every 100ms
+const WRITE_BATCH_INTERVAL = 100; // 写入批处理间隔
 
-// Add read batching
+// 读取批处理队列
 const readBatch = new Map<string, Promise<ConfigMetadata>>();
-const READ_BATCH_INTERVAL = 50; // Batch reads every 50ms
+const READ_BATCH_INTERVAL = 50; // 读取批处理间隔
 
 /**
- * Ensures the .photasa.json config file exists for a given photo or directory.
- * Returns the path to the config file.
+ * 确保指定照片/目录下的 .photasa.json 配置文件存在，返回配置文件路径。
  */
 async function ensureConfig(
     photo: string,
@@ -90,7 +91,7 @@ async function ensureConfig(
 }
 
 /**
- * Batched write operation that combines multiple writes into a single operation
+ * 批量写入操作，将多次写入合并为一次磁盘操作。
  */
 async function batchedWrite(logger: PhotasaLogger): Promise<void> {
     if (writeBatch.size === 0) return;
@@ -131,7 +132,7 @@ async function batchedWrite(logger: PhotasaLogger): Promise<void> {
 }
 
 /**
- * Batched read operation that combines multiple reads into a single operation
+ * 批量读取操作，将多次读取合并为一次磁盘操作。
  */
 async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigMetadata> {
     if (readBatch.has(path)) {
@@ -199,7 +200,7 @@ async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigM
 }
 
 /**
- * Updates the readConfig function to use batched reads
+ * 读取配置文件，使用批量读取。
  */
 async function readConfig(
     photo: string,
@@ -210,7 +211,7 @@ async function readConfig(
 }
 
 /**
- * Updates the writeConfig function to use batched writes
+ * 写入配置文件，使用批量写入。
  */
 async function writeConfig(
     configPath: string,
@@ -229,8 +230,7 @@ async function writeConfig(
 }
 
 /**
- * Safely parses a JSON string into a PhotasaConfig object.
- * Returns an empty config if parsing fails.
+ * 安全解析 JSON 字符串为 PhotasaConfig 对象。
  */
 function fromJson(data: string): PhotasaConfig {
     try {
@@ -241,7 +241,7 @@ function fromJson(data: string): PhotasaConfig {
 }
 
 /**
- * Ensures the config object has required fields and sets defaults if missing.
+ * 规范化配置对象，补全缺失字段。
  */
 function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
     if (!config.photoList) {
@@ -253,12 +253,11 @@ function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
     return config;
 }
 
-// Compose parsing and normalization for config loading
+// 组合解析与规范化
 const parseConfig = R.compose(normalizeConfig, fromJson);
 
 /**
- * Batch process multiple photos to add them to the photo list.
- * Uses a queue system with concurrency control and progress tracking.
+ * 批量将多张照片添加到配置文件，支持并发与进度回调。
  */
 export async function batchAddToPhotoList(
     photos: string[],
@@ -325,8 +324,7 @@ export async function batchAddToPhotoList(
 }
 
 /**
- * Add a single photo to its corresponding .photasa.json config file.
- * If the photo already exists, updates its thumbnail if missing.
+ * 单张照片添加到配置文件，若已存在则补全缩略图。
  */
 export const addToPhotoList = debounce(
     async (photoPath: string, logger: Logger): Promise<PhotasaConfigResult> => {
@@ -365,8 +363,7 @@ export const addToPhotoList = debounce(
 );
 
 /**
- * Remove a photo from its .photasa.json config file.
- * If the photo is not found, does nothing.
+ * 从配置文件移除指定照片。
  */
 export async function removeFromPhotoList(
     photoPath: string,
@@ -397,7 +394,7 @@ export async function removeFromPhotoList(
 }
 
 /**
- * Loads the PhotasaConfig for a given folder.
+ * 读取指定目录的 PhotasaConfig。
  */
 export async function getPhotasaConfig(
     folder: string,
@@ -418,8 +415,7 @@ export async function getPhotasaConfig(
 }
 
 /**
- * Resets the photo list in the .photasa.json config for a folder.
- * Leaves other config fields intact.
+ * 重置指定目录的配置文件，仅清空 photoList。
  */
 export async function resetPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
     try {
@@ -438,8 +434,7 @@ export async function resetPhotasaConfig(folder: string, logger: Logger): Promis
 }
 
 /**
- * Fixes the paths and thumbnail names in the .photasa.json config for a folder.
- * Useful for migration or correcting legacy data.
+ * 修复指定目录的配置文件路径与缩略图名。
  */
 export async function fixPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
     try {
@@ -463,15 +458,18 @@ export async function fixPhotasaConfig(folder: string, logger: Logger): Promise<
     }
 }
 
-// --- Bulk Add Queue and Task Management ---
+// --- 批量添加队列与任务管理 ---
 
-// Queue for pending add operations, grouped by directory
+// 待添加操作的队列，按目录分组
 let addPathQueue: Record<string, string[]> = {};
 let lastQueuedCount = 0;
 
-// Create a queue with concurrency control and backpressure
+// 并发队列实例
 let queue: any = null;
 
+/**
+ * 初始化并发队列，支持最大并发与超时。
+ */
 async function initializeQueue(logger: PhotasaLogger) {
     try {
         const PQueue = (await import("p-queue")).default;
@@ -493,10 +491,8 @@ async function initializeQueue(logger: PhotasaLogger) {
     }
 }
 
-// Monitor queue size and emit events
+// 队列日志与事件节流
 let queueLogger: PhotasaLogger | null = null;
-
-// 节流工具函数：每 key 每 interval 只允许一次输出
 const eventThrottleMap: Record<string, number> = {};
 function throttleLog(key: string, interval: number, logFn: () => void) {
     const now = Date.now();
@@ -506,20 +502,28 @@ function throttleLog(key: string, interval: number, logFn: () => void) {
     }
 }
 
-// 记录已注册队列，防止重复注册事件
+// 已注册队列集合，防止重复注册
 const registeredQueues = new WeakSet<any>();
 
+/**
+ * 注册队列事件，输出队列状态日志。
+ */
 function setupQueueEvents(logger: PhotasaLogger, queue: any): void {
     if (!queue) {
         logger.error("Cannot setup queue events: queue is null");
         return;
     }
     // 防止重复注册
-    if (registeredQueues.has(queue)) return;
+    if (registeredQueues.has(queue)) {
+        return;
+    }
+
+    // 注册队列
     registeredQueues.add(queue);
 
     queueLogger = logger;
     try {
+        // 队列空闲时
         queue.on("idle", () => {
             queueLogger?.info("config-queue", {
                 action: "idle",
@@ -530,13 +534,14 @@ function setupQueueEvents(logger: PhotasaLogger, queue: any): void {
             });
         });
 
+        // 队列错误时
         queue.on("error", (error) => {
             handleError(new ConfigError("Queue error", { error }), queueLogger!, "queueEvents");
             // Don't crash, just log the error and continue
             queue.start(); // Restart queue if it was paused
         });
 
-        // 高频 routine 日志节流（如每 1000ms 最多输出一次）
+        // 队列添加时 高频 routine 日志节流（如每 1000ms 最多输出一次）
         queue.on("add", () => {
             throttleLog("queue-add", 1000, () => {
                 queueLogger?.debug("config-queue", {
@@ -549,6 +554,7 @@ function setupQueueEvents(logger: PhotasaLogger, queue: any): void {
             });
         });
 
+        // 队列活跃时 高频 routine 日志节流（如每 1000ms 最多输出一次）
         queue.on("active", () => {
             throttleLog("queue-active", 1000, () => {
                 queueLogger?.debug("config-queue", {
@@ -562,6 +568,7 @@ function setupQueueEvents(logger: PhotasaLogger, queue: any): void {
         });
         // 其他 routine 事件可按需添加节流或关闭
     } catch (error) {
+        // 注册队列失败时 输出错误日志
         handleError(
             new ConfigError("Failed to setup queue events", { error }),
             logger,
@@ -571,15 +578,14 @@ function setupQueueEvents(logger: PhotasaLogger, queue: any): void {
 }
 
 /**
- * Returns the total number of files currently waiting in the add queue.
+ * 获取当前待处理文件总数。
  */
 function waitedFilesCount(): number {
     return Object.entries<string[]>(addPathQueue).reduce((acc, entry) => acc + entry[1].length, 0);
 }
 
 /**
- * Internal: Processes the add queue, batching files by directory and updating configs.
- * Notifies via postMessage and logs progress/errors.
+ * 内部：处理添加队列，按目录批量更新配置。
  */
 function addConfig(
     request: QueueItem,
@@ -661,8 +667,7 @@ function addConfig(
 }
 
 /**
- * Public API: Adds multiple photo paths to their respective configs in a queued, batched manner.
- * Notifies via postMessage and logs progress/errors.
+ * 公共 API：批量添加照片路径到队列，异步批量处理。
  */
 export function addToPhotasaConfig(
     request: QueueItem,
@@ -702,6 +707,9 @@ export function addToPhotasaConfig(
     }
 }
 
+/**
+ * 添加任务到并发队列，支持优先级。
+ */
 function addTaskToQueue(
     request: QueueItem,
     postMessage: (message: string) => void,
@@ -720,7 +728,7 @@ function addTaskToQueue(
 }
 
 /**
- * Cleans up the queue for a removed folder and its subdirectories
+ * 清理指定目录及子目录的队列。
  */
 export function cleanupQueueForFolder(folderPath: string): void {
     // Remove all queued paths that are under the removed folder
@@ -734,11 +742,12 @@ export function cleanupQueueForFolder(folderPath: string): void {
     lastQueuedCount = 0;
 }
 
+// 队列通知延迟配置
 export const config = {
     DELAY_NOTIFY_DONE: 3000,
 };
 
-// Start the write batch interval
+// 启动写入批处理定时器
 setInterval(() => {
     if (queueLogger) {
         batchedWrite(queueLogger);

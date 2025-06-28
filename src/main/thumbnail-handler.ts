@@ -1,7 +1,6 @@
 import isVideo from "is-video";
 import { ensureDir, exists, remove, readFile } from "fs-extra";
 import decode from "heic-decode";
-import type { Logger } from "log4js";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
@@ -11,8 +10,8 @@ import {
     HeicExtensionRE,
     getOptimalThumbnailResolution,
     ratioStringToParts,
-} from "../common/utils";
-import type { VideoSize } from "../common/types.d.ts";
+} from "@common/utils";
+import type { VideoSize } from "@common/types";
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 import { PhotasaLogger } from "@common/logger";

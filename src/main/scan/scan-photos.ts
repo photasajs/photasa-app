@@ -4,11 +4,11 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import { shouldIgnorePhotasaPath, isHiddenFile, buildThumbnailPath } from "@common/index";
 import type { PhotoPath, ScanAction } from "@common/types";
-import { addToPhotasaConfig, getPhotasaConfig } from "./config/config-storage";
+import { addToPhotasaConfig, getPhotasaConfig } from "../config/config-storage";
 import fs from "fs-extra";
 import path from "path";
-import { WorkerPool } from "./workers/worker-pool";
-import createWorker from "./workers/thumbnail-worker?nodeWorker";
+import { WorkerPool } from "../workers/worker-pool";
+import createWorker from "../workers/thumbnail-worker?nodeWorker";
 import { loggers, PhotasaLogger } from "@common/logger";
 const logger = loggers.scan;
 

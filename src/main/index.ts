@@ -10,7 +10,7 @@ import isDev from "electron-is-dev";
 import klawSync from "klaw-sync";
 import ThumbnailService from "./thumbnail-service";
 import ConfigService from "./config/config-service";
-import ScanService from "./scan-service";
+import ScanService from "./scan/scan-service";
 import { closeFileWatcher } from "./fs-watch";
 import fs from "fs";
 import { loggers } from "@common/logger";
@@ -71,27 +71,33 @@ function createWindow(): void {
         mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
     }
 
+    // 选择目录
     ipcMain.on("picasa:choose-directory", () => {
         if (mainWindow) {
+            // 打开选择目录对话框
             dialog
-
                 .showOpenDialog(mainWindow, {
                     properties: ["openDirectory"],
                 })
                 .then(({ filePaths }) => {
+                    // 发送选择目录事件
                     mainWindow?.webContents.send("picasa:selected-directory", { filePaths });
                 })
                 .catch((err) => {
+                    // 错误处理
                     console.log(err);
                 });
         }
     });
 
+    // Get system directory
     ipcMain.handle("picasa:get-directory", async (_, args) => {
         return app.getPath(args.name);
     });
 
+    // Open in finder
     ipcMain.on("picasa:open-in-finder", (_, args) => {
+        logger.info("picasa:open-in-finder", { path: args.path });
         shell.showItemInFolder(args.path);
     });
 
@@ -128,34 +134,39 @@ function createWindow(): void {
 
     // Setup Thumbnail Service
     new ThumbnailService(ipcMain);
+    // Setup Config Service
     new ConfigService(ipcMain, mainWindow);
+    // Setup Scan Service
     new ScanService(ipcMain, mainWindow);
 
     // Setup File Watch Service
     initFileWatcher(ipcMain, mainWindow, logger);
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+/**
+ * 当 Electron 完成初始化并准备好创建浏览器窗口时，将调用此方法。
+ * 一些 API 只能在事件发生后使用。
+ */
 app.whenReady().then(() => {
-    // Set app user model id for windows
-    electronApp.setAppUserModelId("com.electron");
+    // 设置应用用户模型 ID
+    electronApp.setAppUserModelId("com.photasa.app");
 
-    // Set dock icon for macOS
+    // 设置 dock 图标
     if (process.platform === "darwin" && app.dock) {
         app.dock.setIcon(icon);
     }
 
-    // Default open or close DevTools by F12 in development
-    // and ignore CommandOrControl + R in production.
-    // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
+    // 默认打开或关闭 DevTools 按 F12 开发
+    // 生产环境忽略 CommandOrControl + R
+    // 参考 https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
     app.on("browser-window-created", (_, window) => {
         optimizer.watchWindowShortcuts(window);
     });
 
+    // 创建窗口
     createWindow();
 
+    // 当 dock 图标被点击且没有其他窗口打开时，重新创建一个窗口
     app.on("activate", function () {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
@@ -163,6 +174,8 @@ app.whenReady().then(() => {
             createWindow();
         }
     });
+
+    // 注册 file 协议
     // @see https://github.com/electron/electron/issues/23757#issuecomment-640146333
     protocol.registerFileProtocol("file", (request, callback) => {
         const pathname = decodeURIComponent(request.url.replace("file:///", ""));
@@ -170,9 +183,10 @@ app.whenReady().then(() => {
     });
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+/**
+ * 当所有窗口关闭时退出，除了 macOS。
+ * 在 macOS 上，应用程序和菜单栏通常会保持活动状态，直到用户显式退出。
+ */
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
@@ -181,5 +195,7 @@ app.on("window-all-closed", () => {
     mainWindow = null;
 });
 
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.
+/**
+ * 在文件中可以包含应用程序的特定主进程代码。
+ * 也可以将它们放在单独的文件中并在这里 require。
+ */
