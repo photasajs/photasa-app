@@ -273,6 +273,6 @@ export interface PhotasaConfig {
  * Photasa 配置结果
  */
 export interface PhotasaConfigResult {
-    path: string;
+    path: string | undefined;
     config: PhotasaConfig;
 }

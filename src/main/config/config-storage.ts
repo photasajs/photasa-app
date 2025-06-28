@@ -22,7 +22,6 @@ import isVideo from "is-video";
 import { debounce } from "lodash";
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
 import { CACHE_TTL, configCache } from "./config-cache";
-import { L } from "vitest/dist/chunks/reporters.d.BFLkQcL6";
 
 export {
     getConfigCache,

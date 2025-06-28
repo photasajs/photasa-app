@@ -1,7 +1,7 @@
 import { parentPort } from "worker_threads";
 import { queryConfig, addConfig, removeConfig } from "./config-handler";
 import { WorkerError, handleError } from "@common/error-handler";
-import type { WorkerMessage, WorkerResponse, WorkerHandlers } from "@common/worker-types";
+import type { ConfigRequest, ConfigResponse, ConfigHandlers } from "@common/config-types";
 import { loggers } from "@common/logger";
 
 const port = parentPort;
@@ -11,7 +11,7 @@ if (!port) {
 
 const logger = loggers.worker;
 
-const handler: WorkerHandlers = {
+const handler: ConfigHandlers = {
     query: queryConfig,
     add: addConfig,
     remove: removeConfig,
@@ -19,7 +19,7 @@ const handler: WorkerHandlers = {
 
 port.on("message", (message: string) => {
     try {
-        const result = JSON.parse(message) as WorkerMessage;
+        const result = JSON.parse(message) as ConfigRequest;
         const action = result.action;
 
         if (!handler[action]) {
@@ -40,9 +40,15 @@ port.on("message", (message: string) => {
             logger,
             "config-worker",
         );
-        const errorResponse: WorkerResponse = {
+        const errorResponse: ConfigResponse = {
             action: "error",
             error: "Failed to process worker message",
+            path: undefined,
+            config: {
+                version: "1.0.0",
+                photoList: [],
+                lastModified: 0,
+            },
         };
         port?.postMessage(JSON.stringify(errorResponse));
     }

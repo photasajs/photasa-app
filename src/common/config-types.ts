@@ -1,21 +1,20 @@
 import { PhotasaLogger } from "./logger";
+import { PhotasaConfigResult } from "./types";
 
-export type WorkerAction = "query" | "add" | "remove";
+export type ConfigAction = "query" | "add" | "remove";
 
 export interface ConfigRequest {
-    action: WorkerAction;
+    action: ConfigAction;
     queueId?: number;
     paths?: string[];
     from?: "query" | "add" | "remove";
 }
 
-export interface ConfigResponse {
+export interface ConfigResponse extends PhotasaConfigResult {
     action: "next" | "complete" | "error";
     queueId?: number;
     from?: "query" | "add" | "remove";
-    path?: string;
     paths?: string[];
-    config?: unknown;
     error?: string;
     err?: Error;
 }
@@ -29,3 +28,5 @@ export interface ConfigHandlers {
     add: ConfigHandler;
     remove: ConfigHandler;
 }
+
+export type ConfigPostMessage = (message: ConfigResponse) => void;

@@ -1,6 +1,6 @@
 import createWorker from "./config-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
-import type { WorkerMessage, WorkerResponse } from "@common/worker-types";
+import type { ConfigRequest, ConfigResponse } from "@common/config-types";
 
 /**
  * 配置 worker 类型
@@ -30,7 +30,7 @@ export default class ConfigService {
         // 处理 worker 消息
         this.worker.on("message", (message: string) => {
             // 解析消息
-            const data = JSON.parse(message) as WorkerResponse;
+            const data = JSON.parse(message) as ConfigResponse;
             // 查询配置
             if (data.from === "query") {
                 mainWindow?.webContents.send("picasa:photasa-config", data);
@@ -62,7 +62,7 @@ export default class ConfigService {
     }
 
     private queryConfigs(paths: string[]): void {
-        const message: WorkerMessage = {
+        const message: ConfigRequest = {
             action: "query",
             paths,
         };
@@ -72,7 +72,7 @@ export default class ConfigService {
     private addConfig(paths: string[]): Promise<void> {
         return new Promise((resolve) => {
             this.promises[`${this.queueId}`] = resolve;
-            const message: WorkerMessage = {
+            const message: ConfigRequest = {
                 queueId: this.queueId,
                 action: "add",
                 paths,

@@ -42,3 +42,16 @@ export function onWorkerResponse<R>(response: WorkerResponse<R>) {
     }
     pendingTasks.delete(id);
 }
+
+/**
+ * 创建响应消息
+ * @param message - 消息
+ * @param result - 结果
+ * @returns 响应消息
+ */
+export function createResponse<T, R>(message: WorkerMessage<T>, result: R): WorkerResponse<R> {
+    return {
+        id: message.id,
+        result,
+    } as WorkerResponse<R>;
+}
