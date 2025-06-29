@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, inject } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -25,6 +25,7 @@ import type { ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
+import { FindPhotoServiceKey } from "@renderer/interface/IFindPhotoService";
 
 const logger = loggers.app;
 
@@ -42,6 +43,9 @@ const showPreference = ref(false);
 const showScanList = ref(false);
 const loading = ref(false);
 const loadingConfigs = ref(false);
+
+const findPhotoService = inject(FindPhotoServiceKey);
+if (!findPhotoService) throw new Error("FindPhotoService not provided");
 
 function updateTheme(): void {
     if (darkMode.value) {
@@ -189,6 +193,21 @@ const title = computed(() => {
     return `${t("app.title")} - ${currentFolder.value}`;
 });
 useTitle(title);
+
+findPhotoService.onFindPhoto((args: any) => {
+    logger.debug("[App.vue] [DI] Received picasa:find-photo:", args);
+    if (args.type === "complete" && Array.isArray(args.paths)) {
+        logger.debug("[App.vue] [DI] 批量刷新树结构:", args.paths);
+        args.paths.forEach((p: string) => updateFolderTree(p));
+        completeScanPath(args.action.path);
+        startScanning();
+    } else if (args?.action?.path) {
+        logger.debug("[App.vue] [DI] 单个刷新树结构:", args.action.path);
+        updateFolderTree(args.action.path as string);
+        completeScanPath(args.action.path as string);
+        startScanning();
+    }
+});
 </script>
 
 <template>

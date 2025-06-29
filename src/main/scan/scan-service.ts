@@ -61,7 +61,15 @@ export default class ScanService {
                 if (payload) {
                     notifyStatus(this.mainWindow, payload);
                 }
-                mainWindow?.webContents.send("picasa:find-photo", data);
+                // 若有批量paths，优先推送paths，否则推送单个data
+                if (data.type === "complete" && Array.isArray(data.paths)) {
+                    this.mainWindow?.webContents.send("picasa:find-photo", {
+                        ...data,
+                        paths: data.paths,
+                    });
+                } else {
+                    this.mainWindow?.webContents.send("picasa:find-photo", data);
+                }
             } catch (error) {
                 logger.error("Error processing worker message:", error);
             }
@@ -76,7 +84,7 @@ export default class ScanService {
                     this.scanPhotos(args.requestId, args.scanAction);
                 } catch (error) {
                     logger.error("Error handling scan request:", error);
-                    mainWindow?.webContents.send("picasa:find-photo", {
+                    this.mainWindow?.webContents.send("picasa:find-photo", {
                         type: "error",
                         requestId: args.requestId,
                         error,

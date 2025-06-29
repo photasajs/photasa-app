@@ -24,11 +24,15 @@ export function execute(requestId: string, scan: ScanAction): void {
     try {
         let processed = 0;
         const total = 0;
+        const foundPaths: string[] = [];
         // 先统计总数
         scanPhotos(scan, logger).subscribe({
             next: (action) => {
                 logger.debug("Scan progress:", action);
                 processed++;
+                if (action && action.path && action.isDirectory) {
+                    foundPaths.push(action.path);
+                }
                 // 发送进度消息
                 postMessage({
                     type: "progress",
@@ -53,6 +57,7 @@ export function execute(requestId: string, scan: ScanAction): void {
                     action: {
                         path: scan.path,
                     },
+                    paths: foundPaths,
                 });
             },
         });

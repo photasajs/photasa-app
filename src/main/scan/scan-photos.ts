@@ -118,6 +118,17 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
                         thumbnail: buildThumbnailPath(item.path),
                         isImage: image,
                         isVideo: video,
+                        isDirectory: false,
+                    });
+                }
+                // 目录节点也推送（仅用于树结构）
+                if (item.stats.isDirectory() && item.path !== source.path) {
+                    subscriber.next({
+                        path: item.path,
+                        thumbnail: "",
+                        isImage: false,
+                        isVideo: false,
+                        isDirectory: true,
                     });
                 }
             })

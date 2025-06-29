@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { shallowMount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import LazyImage from "./LazyImage.vue";
+import LazyImage from "@renderer/components/LazyImage.vue";
 import { prefetchImageTask } from "@renderer/utils/image-prefetch";
-import * as vueUseCore from "@vueuse/core";
 
 // Mock Ant Design Vue components
 const MockAImage = {
@@ -97,10 +96,11 @@ describe("LazyImage", () => {
     });
 
     it("loads image when visible", async () => {
-        const wrapper = shallowMount(LazyImage, { props: defaultProps });
-
         // Set targetIsVisible to true
-        if (targetIsVisibleRef) targetIsVisibleRef.value = true;
+        if (targetIsVisibleRef) {
+            targetIsVisibleRef.value = true;
+        }
+
         await nextTick();
 
         expect(prefetchImageTask.perform).toHaveBeenCalledWith(defaultProps.src);

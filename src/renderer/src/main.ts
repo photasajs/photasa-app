@@ -12,6 +12,8 @@ import "video.js/dist/video-js.css";
 import { i18n } from "./i18n/config";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
+import { FindPhotoServiceIpc } from "@renderer/services/FindPhotoService";
+import { FindPhotoServiceKey } from "@renderer/interface/IFindPhotoService";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -28,6 +30,9 @@ app.use(VueVideoPlayer);
 app.use(<Plugin>bugsnagVue);
 app.use(pinia);
 app.use(Antd);
+
+// provide FindPhotoServiceIpc 实例
+app.provide(FindPhotoServiceKey, new FindPhotoServiceIpc());
 
 const preferenceStore = usePreferenceStore();
 const locale = preferenceStore.locale as

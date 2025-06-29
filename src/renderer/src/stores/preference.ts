@@ -94,6 +94,7 @@ export const usePreferenceStore = defineStore("preference", {
             // Add the new folder to scan
             logger.debug("Adding new folder to scan:", folder);
             this.scanningFolder.push({ path: folder, action, thumbnailSize: this.thumbnailSize });
+            this.updateFolderTree(folder);
         },
         updateThumbnailSize(size: number) {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;

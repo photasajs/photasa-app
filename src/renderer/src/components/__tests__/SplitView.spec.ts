@@ -1,10 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import SplitView from "./SplitView.vue";
-
-const slotA = '<div class="slot-a">A Content</div>';
-const slotB = '<div class="slot-b">B Content</div>';
+import SplitView from "@renderer/components/SplitView.vue";
 
 describe("SplitView", () => {
     const defaultSlots = {

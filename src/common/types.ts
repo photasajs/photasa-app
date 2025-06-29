@@ -36,13 +36,15 @@ export enum ThumbnailServiceAction {
 /**
  * 通用 worker 消息协议
  */
-export interface WorkerMessage<T = any> { // T can be any type depending on the action
+export interface WorkerMessage<T = any> {
+    // T can be any type depending on the action
     id: string; // 唯一任务ID
     action: string; // 动作类型
     payload: T; // 任务参数
 }
 
-export interface WorkerResponse<R = any> { // R can be any type depending on the result
+export interface WorkerResponse<R = any> {
+    // R can be any type depending on the result
     id: string; // 唯一任务ID
     result?: R; // 任务结果
     error?: string; // 错误信息
@@ -56,6 +58,7 @@ export interface PhotoFileRequest {
     thumbnail: string;
     isImage: boolean;
     isVideo: boolean;
+    isDirectory?: boolean;
 }
 
 /**
