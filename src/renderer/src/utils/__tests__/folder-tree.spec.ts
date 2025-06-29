@@ -2,8 +2,6 @@ import { buildDataNode } from "../folder-tree";
 import type { DataNode } from "ant-design-vue/es/tree";
 
 describe("Folder Tree", () => {
-    beforeEach(() => {});
-
     it("should return a DataNode", () => {
         const roots: DataNode[] = [];
         const path = "/test/google.com/test.jpg";

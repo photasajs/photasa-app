@@ -8,7 +8,7 @@ import type { WorkerMessage, WorkerResponse } from "@common/types";
 // 任务ID到Promise的映射
 const pendingTasks = new Map<
     string,
-    { resolve: (value: any) => void; reject: (reason?: any) => void }
+    { resolve: (value: any) => void; reject: (reason?: any) => void } // value and reason can be of any type
 >();
 
 // Worker 泛型类型，主进程与 worker 端类型安全通信
@@ -57,5 +57,5 @@ export function createResponse<T, R>(message: WorkerMessage<T>, result: R): Work
     return {
         id: message.id,
         result,
-    } as WorkerResponse<R>;
+    } as WorkerResponse<R>; // Type assertion to ensure compatibility
 }

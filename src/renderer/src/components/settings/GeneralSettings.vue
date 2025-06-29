@@ -9,6 +9,10 @@ import LanguageSwitcher from "../LanguageSwitcher.vue";
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
 
+defineOptions({
+    name: "GeneralSettings",
+});
+
 const { t } = useI18n();
 
 interface FormState {

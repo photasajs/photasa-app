@@ -11,11 +11,15 @@ import {
     isValidError,
     mapToPhotasaError,
 } from "../error-handler";
+import { PhotasaLogger } from "../logger";
 
 describe("Error Handler", () => {
-    const mockLogger = {
+    const mockLogger: PhotasaLogger = {
         error: vi.fn(),
         warn: vi.fn(),
+        debug: vi.fn(),
+        info: vi.fn(),
+        fatal: vi.fn(),
     };
 
     beforeEach(() => {

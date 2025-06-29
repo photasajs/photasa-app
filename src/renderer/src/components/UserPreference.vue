@@ -7,11 +7,15 @@ import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
-import Language from "./settings/Language.vue";
-import General from "./settings/General.vue";
+import LanguageSettings from "./settings/LanguageSettings.vue";
+import GeneralSettings from "./settings/GeneralSettings.vue";
 import AboutPhotosa from "./settings/AboutPhotosa.vue";
-import Theme from "./settings/Theme.vue";
+import ThemeSettings from "./settings/ThemeSettings.vue";
 import { notification } from "ant-design-vue";
+
+defineOptions({
+    name: "UserPreference",
+});
 
 const { t } = useI18n();
 
@@ -113,13 +117,13 @@ function handleRemove(item): void {
 <template>
     <a-tabs v-model:activeKey="activeKey" :tab-position="mode" :style="{ minHeight: '50vh' }">
         <a-tab-pane :key="1" :tab="label.tabs.general">
-            <General />
+            <GeneralSettings />
         </a-tab-pane>
         <a-tab-pane :key="2" :tab="label.tabs.theme">
-            <Theme />
+            <ThemeSettings />
         </a-tab-pane>
         <a-tab-pane :key="4" :tab="label.language">
-            <Language />
+            <LanguageSettings />
         </a-tab-pane>
         <a-tab-pane :key="3" :tab="label.tabs.about">
             <AboutPhotosa></AboutPhotosa>

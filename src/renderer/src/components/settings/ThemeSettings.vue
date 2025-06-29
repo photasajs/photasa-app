@@ -3,6 +3,10 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
 
+defineOptions({
+    name: "ThemeSettings",
+});
+
 const { t } = useI18n();
 const preferenceStore = usePreferenceStore();
 const { darkMode } = storeToRefs(preferenceStore);

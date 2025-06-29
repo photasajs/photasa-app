@@ -19,7 +19,7 @@ import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@common/logger";
 
-import Preference from "./components/Preference.vue";
+import UserPreference from "./components/UserPreference.vue";
 import { useI18n } from "vue-i18n";
 import type { ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
@@ -258,7 +258,7 @@ useTitle(title);
         width="800px"
         @ok="handlePreferenceOk"
     >
-        <Preference></Preference>
+        <UserPreference></UserPreference>
         <template #footer></template>
     </a-modal>
     <a-modal

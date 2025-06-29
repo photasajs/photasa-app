@@ -77,7 +77,9 @@ describe("LazyImage", () => {
 
     it("shows loading spinner when image is not ready", async () => {
         vi.mocked(prefetchImageTask.perform).mockImplementationOnce(() => {
-            return new Promise(() => {}) as any;
+            return new Promise(() => {
+                /* no-op */
+            }) as any;
         });
         const wrapper = shallowMount(LazyImage, {
             props: defaultProps,

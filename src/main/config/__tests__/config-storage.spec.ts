@@ -114,9 +114,9 @@ describe("config-storage", () => {
         for (const folder of folders) {
             mockFsStore[getConfigPath(folder)] = JSON.stringify({ photoList: [] });
         }
-        (fs.ensureFile as any).mockResolvedValue(undefined);
-        (fs.readFile as any).mockResolvedValue("{}");
-        (fs.writeFile as any).mockResolvedValue(undefined);
+        (fs.ensureFile as unknown as vi.Mock).mockResolvedValue(undefined);
+        (fs.readFile as unknown as vi.Mock).mockResolvedValue("{}");
+        (fs.writeFile as unknown as vi.Mock).mockResolvedValue(undefined);
         vi.useFakeTimers();
         configStorage.cleanupQueueForFolder("/test/path");
     });
