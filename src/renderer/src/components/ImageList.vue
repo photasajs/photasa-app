@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from "vue";
+import { ref, computed, reactive, watch, onMounted, onUnmounted } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { createThumbnailTask, getImageType, getPhotasaConfig } from "@renderer/utils/api";
@@ -12,6 +12,7 @@ import { openInFinder } from "@renderer/utils/api";
 import { Photo } from "@renderer/utils/folder-tree";
 import LazyImage from "./LazyImage.vue";
 import ImageFallback from "@renderer/assets/images/fallback.png";
+import { useVirtualizer } from "@tanstack/vue-virtual";
 
 const { t } = useI18n();
 
@@ -45,7 +46,8 @@ const showInfo = ref(false);
 const loadingInfo = ref(false);
 const loadingPhotasaConfig = ref(false);
 const fallback = ref(ImageFallback);
-const imageList = ref(null);
+const imageListRef = ref<HTMLElement | null>(null);
+const containerWidth = ref(0);
 const mouseEnterDelay = ref(1.5);
 
 function toImage(file: Photo): Image {
@@ -71,21 +73,17 @@ watch(currentFolder, async (newVal) => {
     }
 });
 
-const cards = computed(() => {
-    const cards: Card[] = [];
-
+const card = computed<Card>(() => {
     const images =
         currentFolderConfig.value.photoList?.map((config) => {
             return toImage(config);
         }) ?? [];
 
-    cards.push({
+    return {
         title: currentFolder.value,
         images,
         parts: currentFolder.value?.split("/"),
-    });
-
-    return cards;
+    };
 });
 
 const imageMeta = reactive<ImageMeta>({
@@ -127,14 +125,74 @@ function openFileInFilder(image: Image): void {
     const path = `/${trim(image.raw, "file://")}`;
     openInFinder(path);
 }
+
+function updateContainerWidth() {
+    if (imageListRef.value) {
+        containerWidth.value = imageListRef.value.clientWidth;
+    }
+}
+
+watch(imageListRef, () => updateContainerWidth());
+watch(thumbnailSize, () => updateContainerWidth());
+
+const columns = computed((): number => {
+    if (!containerWidth.value) return 1;
+    const gap = 16; // 与模板 flex gap 保持一致
+    const padding = 32; // p-4 = 16px * 2
+    const available = containerWidth.value - padding + gap; // 最后一列不需要gap
+    return Math.max(1, Math.floor(available / (thumbnailSize.value + gap)));
+});
+
+const rows = computed((): Image[][] => {
+    const imgs: Image[] = card.value?.images || [];
+    const cols = columns.value;
+    const result: Image[][] = [];
+    for (let i = 0; i < imgs.length; i += cols) {
+        result.push(imgs.slice(i, i + cols));
+    }
+    return result;
+});
+
+const rowHeight = computed(() => thumbnailSize.value + 16);
+const virtualizer = useVirtualizer<HTMLElement, Element>({
+    count: rows.value.length,
+    getScrollElement: () => imageListRef.value,
+    estimateSize: () => rowHeight.value,
+    overscan: 4,
+});
+const virtualRows = computed(() => virtualizer.value?.getVirtualItems() ?? []);
+const virtualizerHeight = computed(() => (virtualizer.value?.getTotalSize() ?? 0) + "px");
+
+onMounted(() => {
+    updateContainerWidth();
+    window.addEventListener("resize", () => {
+        updateContainerWidth();
+        if (virtualizer.value) {
+            virtualizer.value.measure();
+        }
+    });
+});
+
+watch(rows, () => {
+    if (virtualizer.value) {
+        virtualizer.value.options.count = rows.value.length;
+        virtualizer.value.measure();
+    }
+});
+
+watch(containerWidth, () => {
+    if (virtualizer.value) {
+        virtualizer.value.measure();
+    }
+});
+
+onUnmounted(() => {
+    window.removeEventListener("resize", updateContainerWidth);
+});
 </script>
 
 <template>
-    <div
-        v-for="card in cards"
-        :key="card.title"
-        class="flex flex-col h-full min-h-0 bg-white rounded-lg shadow border border-gray-200"
-    >
+    <div class="flex flex-col h-full min-h-0 bg-white rounded-lg shadow border border-gray-200">
         <!-- 标题区 -->
         <div class="px-4 py-2 border-b border-gray-100 flex items-center">
             <a-breadcrumb>
@@ -144,7 +202,7 @@ function openFileInFilder(image: Image): void {
             </a-breadcrumb>
         </div>
         <!-- 内容区 -->
-        <div class="flex-1 min-h-0 p-4 overflow-auto image-list relative">
+        <div ref="imageListRef" class="flex-1 min-h-0 overflow-auto image-list relative">
             <!-- loading骨架屏+美观遮罩+Heroicons动画 -->
             <div
                 v-if="loadingPhotasaConfig"
@@ -177,49 +235,66 @@ function openFileInFilder(image: Image): void {
                     <span class="ml-4 text-blue-500 font-semibold text-lg">加载中...</span>
                 </div>
             </div>
-            <ul v-if="card.images.length > 0 && !loadingPhotasaConfig" ref="imageList">
-                <li
-                    v-for="image in card.images"
-                    :key="image.key"
-                    :width="150"
-                    :height="150"
-                    class="image-item"
+            <!-- 虚拟滚动渲染图片行 -->
+            <div v-else style="position: relative; width: 100%; height: 100%">
+                <div
+                    :style="{
+                        height: virtualizerHeight,
+                        position: 'relative',
+                    }"
                 >
-                    <a-dropdown :trigger="['contextmenu']">
-                        <a-tooltip
-                            placement="rightBottom"
-                            :mouse-enter-delay="mouseEnterDelay"
-                            :title="image.raw"
-                        >
-                            <a-card hoverable>
-                                <LazyImage
-                                    :width="thumbnailSize"
-                                    :height="thumbnailSize"
-                                    :src="image.thumbnail"
-                                    :fallback="fallback"
-                                    :raw="image.raw"
-                                    :preview="image.preview"
-                                    :is-video="image.isVideo"
-                                />
-                            </a-card>
-                        </a-tooltip>
-                        <template #overlay>
-                            <a-menu>
-                                <a-menu-item key="1" @click="openImageMeta(image)">{{
-                                    t("menu.getInfo")
-                                }}</a-menu-item>
-                                <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
-                                    t("menu.rebuildThumbnail")
-                                }}</a-menu-item>
-                                <a-menu-item key="2" @click="openFileInFilder(image)">{{
-                                    t("menu.open")
-                                }}</a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
-                </li>
-            </ul>
-            <a-empty v-else-if="!loadingPhotasaConfig" />
+                    <div
+                        v-for="row in virtualRows"
+                        :key="row.index"
+                        :style="{
+                            position: 'absolute',
+                            top: row.start + 'px',
+                            left: 0,
+                            width: '100%',
+                            height: row.size + 'px',
+                            display: 'flex',
+                            gap: '16px',
+                        }"
+                    >
+                        <div class="px-4 w-full flex" style="gap: 16px">
+                            <template v-for="image in rows[row.index]" :key="image.key">
+                                <a-dropdown :trigger="['contextmenu']">
+                                    <a-tooltip
+                                        placement="rightBottom"
+                                        :mouse-enter-delay="mouseEnterDelay"
+                                        :title="image.raw"
+                                    >
+                                        <a-card hoverable>
+                                            <LazyImage
+                                                :width="thumbnailSize"
+                                                :height="thumbnailSize"
+                                                :src="image.thumbnail"
+                                                :fallback="fallback"
+                                                :raw="image.raw"
+                                                :preview="image.preview"
+                                                :is-video="image.isVideo"
+                                            />
+                                        </a-card>
+                                    </a-tooltip>
+                                    <template #overlay>
+                                        <a-menu>
+                                            <a-menu-item key="1" @click="openImageMeta(image)">{{
+                                                t("menu.getInfo")
+                                            }}</a-menu-item>
+                                            <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
+                                                t("menu.rebuildThumbnail")
+                                            }}</a-menu-item>
+                                            <a-menu-item key="2" @click="openFileInFilder(image)">{{
+                                                t("menu.open")
+                                            }}</a-menu-item>
+                                        </a-menu>
+                                    </template>
+                                </a-dropdown>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <a-drawer
@@ -230,7 +305,7 @@ function openFileInFilder(image: Image): void {
         placement="right"
     >
         <a-spin :spinning="loadingInfo">
-            <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
+            <a-descriptions title="Image Ider" layout="vertical" bordered :column="2">
                 <a-descriptions-item label="Image Width">{{
                     imageMeta.tags?.["Image Width"]?.value
                 }}</a-descriptions-item>
