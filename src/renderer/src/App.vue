@@ -194,15 +194,15 @@ const title = computed(() => {
 });
 useTitle(title);
 
+// 监听 find-photo 事件，用于刷新树结构
 findPhotoService.onFindPhoto((args: any) => {
-    logger.debug("[App.vue] [DI] Received picasa:find-photo:", args);
+    // 批量刷新树结构
     if (args.type === "complete" && Array.isArray(args.paths)) {
-        logger.debug("[App.vue] [DI] 批量刷新树结构:", args.paths);
         args.paths.forEach((p: string) => updateFolderTree(p));
         completeScanPath(args.action.path);
         startScanning();
-    } else if (args?.action?.path) {
-        logger.debug("[App.vue] [DI] 单个刷新树结构:", args.action.path);
+    } else if (args?.action?.path && args?.action?.isDirectory) {
+        // 单个刷新树结构
         updateFolderTree(args.action.path as string);
         completeScanPath(args.action.path as string);
         startScanning();
