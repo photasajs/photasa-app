@@ -202,6 +202,10 @@ export const usePreferenceStore = defineStore("preference", {
          * 2. 逐一 addPath 并调用 resetPhotasaConfig 重建缓存
          */
         async resetAllFolders(newDirs: string[]) {
+            // 停止所有扫描任务
+            if (scanPhotosTask.isRunning) {
+                scanPhotosTask.cancelAll();
+            }
             this.paths = [];
             this.folderTree = [];
             this.scanningFolder = [];

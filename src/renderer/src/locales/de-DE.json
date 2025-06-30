@@ -58,6 +58,10 @@
         "scanError": {
             "title": "Scan-Fehler",
             "message": "Unterverzeichnisse von [{path}] konnten nicht gescannt werden. Fehler: {error}. Das Hauptverzeichnis wird trotzdem hinzugefügt."
+        },
+        "resetFolders": {
+            "title": "Zurücksetzen abgeschlossen",
+            "message": "Alle Verzeichnis-Caches wurden neu erstellt."
         }
     },
     "status": {

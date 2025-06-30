@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref, watch, inject } from "vue";
+import { computed, ref, watch, inject, h } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -283,17 +283,30 @@ findPhotoService.onFindPhoto((args: any) => {
     <a-modal
         v-model:visible="showScanList"
         :mask-closable="false"
-        :title="t('preference.settings')"
-        width="800px"
+        :title="t('scan.queueTitle') || '扫描队列'"
+        width="600px"
+        :footer="[
+            h(
+                'a-button',
+                {
+                    type: 'primary',
+                    onClick: () => (showScanList = false),
+                },
+                t('button.ok') || 'OK',
+            ),
+        ]"
     >
         <a-list size="small" bordered :data-source="scanningFolder" class="scan-list">
             <template #renderItem="{ item }">
-                <a-list-item>{{ item.path }}</a-list-item>
+                <a-list-item>
+                    <span>{{ item.path }}</span>
+                    <span style="float: right; color: #888">{{ item.action }}</span>
+                </a-list-item>
             </template>
             <template #header>
-                <a-spin></a-spin>
+                <a-spin v-if="scanningFolder.length > 0" />
+                <span v-else>{{ t("scan.queueEmpty") || "队列为空" }}</span>
             </template>
-            <template #footer></template>
         </a-list>
     </a-modal>
 </template>

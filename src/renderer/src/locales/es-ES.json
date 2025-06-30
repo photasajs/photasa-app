@@ -58,6 +58,10 @@
         "scanError": {
             "title": "Error de Escaneo",
             "message": "No se pudieron escanear los subdirectorios de [{path}]. Error: {error}. El directorio principal se añadirá de todos modos."
+        },
+        "resetFolders": {
+            "title": "Restablecimiento completo",
+            "message": "Todas las cachés de directorios han sido reconstruidas."
         }
     },
     "status": {

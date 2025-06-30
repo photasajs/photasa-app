@@ -75,5 +75,11 @@
             "light": "ライト",
             "dark": "ダーク"
         }
+    },
+    "notification": {
+        "resetFolders": {
+            "title": "リセット完了",
+            "message": "すべてのディレクトリキャッシュが再構築されました。"
+        }
     }
 }

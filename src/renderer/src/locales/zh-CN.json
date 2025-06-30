@@ -54,6 +54,10 @@
         "emptyPath": {
             "title": "选择目录",
             "message": "请选择目录，然后完成添加操作。"
+        },
+        "resetFolders": {
+            "title": "重置完成",
+            "message": "所有目录缓存已重建。"
         }
     },
     "status": {

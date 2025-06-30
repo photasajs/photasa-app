@@ -64,7 +64,11 @@
             "title": "Scan Error",
             "message": "Could not scan subdirectories of [{path}]. Error: {error}. The main directory will still be added."
         },
-        "unknownError": "An unknown error occurred"
+        "unknownError": "An unknown error occurred",
+        "resetFolders": {
+            "title": "Reset Complete",
+            "message": "All directory caches have been rebuilt."
+        }
     },
     "status": {
         "ready": "Ready",

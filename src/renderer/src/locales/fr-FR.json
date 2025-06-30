@@ -58,6 +58,10 @@
         "scanError": {
             "title": "Erreur de Scan",
             "message": "Impossible de scanner les sous-répertoires de [{path}]. Erreur: {error}. Le répertoire principal sera tout de même ajouté."
+        },
+        "resetFolders": {
+            "title": "Réinitialisation terminée",
+            "message": "Tous les caches de dossiers ont été reconstruits."
         }
     },
     "status": {
