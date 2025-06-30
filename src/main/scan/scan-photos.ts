@@ -102,13 +102,12 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
                 const video = isVideo(item.path);
                 const image = isImage(item.path);
 
-                // 如果文件是图片或视频，则添加到请求中
+                // 只推送图片/视频文件节点，不再推送目录节点
                 if (
-                    !item.stats.isDirectory() && // Skip directory
+                    !item.stats.isDirectory() && // 只处理文件
                     item.path !== source.path && //  Skip self
-                    (video || image) // Skip non image or video
+                    (video || image) // 只处理图片或视频
                 ) {
-                    // 添加到请求中
                     subscriber.next({
                         path: item.path,
                         thumbnail: buildThumbnailPath(item.path),
@@ -117,16 +116,7 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
                         isDirectory: false,
                     });
                 }
-                // 目录节点也推送（仅用于树结构）
-                if (item.stats.isDirectory() && item.path !== source.path) {
-                    subscriber.next({
-                        path: item.path,
-                        thumbnail: "",
-                        isImage: false,
-                        isVideo: false,
-                        isDirectory: true,
-                    });
-                }
+                // 目录节点不再推送
             })
             .on("end", () => {
                 subscriber.complete();

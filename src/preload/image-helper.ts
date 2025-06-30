@@ -5,7 +5,7 @@ import type { ThumbnailRequest, ImageInfo, ImageTypeResult } from "./types";
 import { getExifInfo } from "./exif-helper";
 import isVideo from "is-video";
 import isImage from "is-image";
-import { ThumbnailServiceAction } from "@common/types";
+import type { ThumbnailServiceAction } from "@common/thumbnail-types";
 
 const { ipcRenderer } = electronAPI;
 
