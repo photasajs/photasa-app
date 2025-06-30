@@ -5,6 +5,7 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import Antd from "ant-design-vue";
 import "ant-design-vue/dist/antd.css";
 import "./assets/css/styles.less";
+import "./assets/css/tailwind.css";
 import Bugsnag from "@bugsnag/js";
 import BugsnagPluginVue from "@bugsnag/plugin-vue";
 import VueVideoPlayer from "@videojs-player/vue";

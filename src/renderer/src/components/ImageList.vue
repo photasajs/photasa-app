@@ -11,6 +11,7 @@ import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api";
 import { Photo } from "@renderer/utils/folder-tree";
 import LazyImage from "./LazyImage.vue";
+import ImageFallback from "@renderer/assets/images/fallback.png";
 
 const { t } = useI18n();
 
@@ -43,9 +44,7 @@ const { thumbnailSize, currentFolder, currentFolderConfig } = storeToRefs(prefer
 const showInfo = ref(false);
 const loadingInfo = ref(false);
 const loadingPhotasaConfig = ref(false);
-const fallback = ref(
-    "data:image/png;base64,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",
-);
+const fallback = ref(ImageFallback);
 const imageList = ref(null);
 const mouseEnterDelay = ref(1.5);
 
@@ -131,64 +130,98 @@ function openFileInFilder(image: Image): void {
 </script>
 
 <template>
-    <a-spin :spinning="loadingPhotasaConfig">
-        <a-card v-for="card in cards" :key="card.title">
-            <template #title>
-                <a-breadcrumb style="margin: 16px 0">
-                    <a-breadcrumb-item v-for="part in card.parts" :key="part">{{
-                        part
-                    }}</a-breadcrumb-item>
-                </a-breadcrumb>
-            </template>
-
-            <div class="image-list">
-                <ul v-if="card.images.length > 0" ref="imageList">
-                    <li
-                        v-for="image in card.images"
-                        :key="image.key"
-                        :width="150"
-                        :height="150"
-                        class="image-item"
+    <div
+        v-for="card in cards"
+        :key="card.title"
+        class="flex flex-col h-full min-h-0 bg-white rounded-lg shadow border border-gray-200"
+    >
+        <!-- 标题区 -->
+        <div class="px-4 py-2 border-b border-gray-100 flex items-center">
+            <a-breadcrumb>
+                <a-breadcrumb-item v-for="part in card.parts" :key="part">{{
+                    part
+                }}</a-breadcrumb-item>
+            </a-breadcrumb>
+        </div>
+        <!-- 内容区 -->
+        <div class="flex-1 min-h-0 p-4 overflow-auto image-list relative">
+            <!-- loading骨架屏+美观遮罩+Heroicons动画 -->
+            <div
+                v-if="loadingPhotasaConfig"
+                class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-gradient-to-br from-white/90 to-blue-100/80 transition-opacity duration-300 rounded-lg shadow-lg pointer-events-auto"
+                style="backdrop-filter: blur(2px)"
+            >
+                <div class="flex flex-wrap gap-6 justify-center mb-6">
+                    <div
+                        v-for="i in 8"
+                        :key="i"
+                        class="w-[150px] h-[150px] bg-gray-200 rounded-lg animate-pulse"
+                    ></div>
+                </div>
+                <div class="flex items-center mt-2">
+                    <!-- Heroicons ArrowPathIcon 官方标准 -->
+                    <svg
+                        class="!animate-spin h-10 w-10 text-blue-500 spin"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
                     >
-                        <a-dropdown :trigger="['contextmenu']">
-                            <a-tooltip
-                                placement="rightBottom"
-                                :mouse-enter-delay="mouseEnterDelay"
-                                :title="image.raw"
-                            >
-                                <a-card hoverable>
-                                    <LazyImage
-                                        :width="thumbnailSize"
-                                        :height="thumbnailSize"
-                                        :src="image.thumbnail"
-                                        :fallback="fallback"
-                                        :raw="image.raw"
-                                        :preview="image.preview"
-                                        :is-video="image.isVideo"
-                                    />
-                                </a-card>
-                            </a-tooltip>
-
-                            <template #overlay>
-                                <a-menu>
-                                    <a-menu-item key="1" @click="openImageMeta(image)">{{
-                                        t("menu.getInfo")
-                                    }}</a-menu-item>
-                                    <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
-                                        t("menu.rebuildThumbnail")
-                                    }}</a-menu-item>
-                                    <a-menu-item key="2" @click="openFileInFilder(image)">{{
-                                        t("menu.open")
-                                    }}</a-menu-item>
-                                </a-menu>
-                            </template>
-                        </a-dropdown>
-                    </li>
-                </ul>
-                <a-empty v-else />
+                        <path
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4v4m0 0l-2-2m2 2l2-2m6 6a9 9 0 11-6-8.485"
+                        />
+                    </svg>
+                    <span class="ml-4 text-blue-500 font-semibold text-lg">加载中...</span>
+                </div>
             </div>
-        </a-card>
-    </a-spin>
+            <ul v-if="card.images.length > 0 && !loadingPhotasaConfig" ref="imageList">
+                <li
+                    v-for="image in card.images"
+                    :key="image.key"
+                    :width="150"
+                    :height="150"
+                    class="image-item"
+                >
+                    <a-dropdown :trigger="['contextmenu']">
+                        <a-tooltip
+                            placement="rightBottom"
+                            :mouse-enter-delay="mouseEnterDelay"
+                            :title="image.raw"
+                        >
+                            <a-card hoverable>
+                                <LazyImage
+                                    :width="thumbnailSize"
+                                    :height="thumbnailSize"
+                                    :src="image.thumbnail"
+                                    :fallback="fallback"
+                                    :raw="image.raw"
+                                    :preview="image.preview"
+                                    :is-video="image.isVideo"
+                                />
+                            </a-card>
+                        </a-tooltip>
+                        <template #overlay>
+                            <a-menu>
+                                <a-menu-item key="1" @click="openImageMeta(image)">{{
+                                    t("menu.getInfo")
+                                }}</a-menu-item>
+                                <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
+                                    t("menu.rebuildThumbnail")
+                                }}</a-menu-item>
+                                <a-menu-item key="2" @click="openFileInFilder(image)">{{
+                                    t("menu.open")
+                                }}</a-menu-item>
+                            </a-menu>
+                        </template>
+                    </a-dropdown>
+                </li>
+            </ul>
+            <a-empty v-else-if="!loadingPhotasaConfig" />
+        </div>
+    </div>
     <a-drawer
         v-model:visible="showInfo"
         class="custom-class"
@@ -214,13 +247,7 @@ function openFileInFilder(image: Image): void {
                     imageMeta.path
                 }}</a-descriptions-item>
                 <a-descriptions-item label="Status" :span="2">
-                    <a-layout
-                        :style="{
-                            height: '100%',
-                            width: '265px',
-                            overflow: 'auto',
-                        }"
-                    >
+                    <a-layout :style="{ height: '100%', width: '265px', overflow: 'auto' }">
                         <JsonTreeView :data="imageMeta.json" :max-depth="imageMeta.maxDepth" />
                     </a-layout>
                 </a-descriptions-item>
@@ -255,6 +282,26 @@ function openFileInFilder(image: Image): void {
             overflow: hidden;
             transition: all 0.5s ease;
         }
+    }
+}
+
+.image-list {
+    background: #e0f7fa;
+    border: 2px solid blue;
+}
+.image-content {
+    background: #fffde7;
+    border: 2px solid green;
+}
+.spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
     }
 }
 </style>

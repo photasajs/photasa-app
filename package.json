@@ -37,6 +37,7 @@
         "@electron-toolkit/preload": "^3.0.2",
         "@electron-toolkit/utils": "^4.0.0",
         "@headlessui/vue": "^1.7.23",
+        "@tanstack/vue-virtual": "^3.13.12",
         "caf": "^4.0.0",
         "chokidar": "3.5.3",
         "comlink": "^4.4.1",
@@ -69,7 +70,7 @@
         "rxjs": "^7.8.1",
         "sharp": "^0.34.2",
         "super-expressive": "^1.4.2",
-        "tailwindcss": "^4.1.11",
+        "tailwindcss": "^3.4.17",
         "vue3-markdown-it": "^1.0.10"
     },
     "devDependencies": {
@@ -97,6 +98,7 @@
         "@vueuse/core": "^13.2.0",
         "@vueuse/rxjs": "^13.2.0",
         "ant-design-vue": "^3.2.20",
+        "autoprefixer": "^10.4.16",
         "comlink": "^4.4.1",
         "del-cli": "^6.0.0",
         "electron-builder": "^26.0.12",
@@ -112,6 +114,7 @@
         "mock-fs": "^5.2.0",
         "pinia": "^2.1.6",
         "pinia-plugin-persistedstate": "3.1.0",
+        "postcss": "^8.5.6",
         "prettier": "^3.2.5",
         "read-chunk": "^4.0.3",
         "sass": "^1.69.3",
