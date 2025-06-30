@@ -1,7 +1,11 @@
 import createWorker from "./thumbnail-worker?nodeWorker";
 import type { IpcMain } from "electron";
-import type { ThumbnailRequest, ThumbnailResponse, WorkerResponse } from "@common/types";
-import { ThumbnailServiceAction } from "@common/types";
+import type { WorkerResponse } from "@common/types";
+import {
+    ThumbnailServiceAction,
+    ThumbnailRequest,
+    ThumbnailResponse,
+} from "@common/thumbnail-types";
 import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
 
 /**

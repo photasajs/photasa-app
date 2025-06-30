@@ -8,7 +8,8 @@
         "tabs": {
             "general": "General",
             "about": "Acerca de",
-            "theme": "Tema"
+            "theme": "Tema",
+            "advanced": "Configuración avanzada"
         },
         "folderList": "Lista de carpetas",
         "folderListUsage": "Uso",
@@ -112,5 +113,10 @@
             "light": "Claro",
             "dark": "Oscuro"
         }
+    },
+    "resetFolders": {
+        "title": "Acción avanzada: Restablecer almacenamiento de directorios",
+        "desc": "Esta acción borrará todas las configuraciones de directorios y reconstruirá la caché inmediatamente. Esta acción es irreversible. ¡Proceda con precaución!",
+        "button": "Restablecer almacenamiento de directorios"
     }
 }

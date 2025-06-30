@@ -134,7 +134,7 @@ async function startScanning(): Promise<void> {
             const args = await scanPhotosTask.perform(scanAction);
             logger.debug("Scan completed with args:", args);
 
-            if (args?.action?.path) {
+            if (args?.action?.path && args?.action?.isDirectory) {
                 logger.debug("Updating folder tree for:", args.action.path);
                 updateFolderTree(args.action.path as string);
                 completeScanPath(args.action.path as string);

@@ -8,7 +8,8 @@
         "tabs": {
             "general": "General",
             "about": "About",
-            "theme": "Theme"
+            "theme": "Theme",
+            "advanced": "Advanced"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",
@@ -18,7 +19,12 @@
         "thumbnailSize": "Thumbnail Size",
         "darkMode": "Dark Mode",
         "language": "Language",
-        "scanning": "Scanning"
+        "scanning": "Scanning",
+        "resetFolders": {
+            "title": "Advanced Action: Reset Directory Storage",
+            "desc": "This will clear all directory settings and immediately rebuild the cache. This action is irreversible. Proceed with caution!",
+            "button": "Reset Directory Storage"
+        }
     },
     "import": {
         "photos": "Import Photos",

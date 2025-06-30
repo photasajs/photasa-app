@@ -8,7 +8,8 @@
         "tabs": {
             "general": "일반",
             "about": "정보",
-            "theme": "테마"
+            "theme": "테마",
+            "advanced": "고급 설정"
         },
         "folderList": "폴더 목록",
         "folderListUsage": "사용 방법",
@@ -112,5 +113,10 @@
             "light": "라이트",
             "dark": "다크"
         }
+    },
+    "resetFolders": {
+        "title": "고급 작업: 디렉터리 저장소 재설정",
+        "desc": "이 작업은 모든 디렉터리 설정을 지우고 즉시 캐시를 재구축합니다. 이 작업은 되돌릴 수 없습니다. 신중히 진행하세요!",
+        "button": "디렉터리 저장소 재설정"
     }
 }

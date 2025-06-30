@@ -3,12 +3,8 @@ import { Observable, Subscriber, concatMap } from "rxjs";
 import isImage from "is-image";
 import isVideo from "is-video";
 import { shouldIgnorePhotasaPath, isHiddenFile, buildThumbnailPath } from "@common/utils";
-import type {
-    PhotoFileRequest,
-    ScanAction,
-    ThumbnailRequest,
-    ThumbnailResponse,
-} from "@common/types";
+import type { ScanAction, PhotoFileRequest } from "@common/scan-types";
+import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
 import { addToPhotasaConfig, getPhotasaConfig } from "../config/config-storage";
 import fs from "fs-extra";
 import path from "path";

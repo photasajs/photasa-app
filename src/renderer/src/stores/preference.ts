@@ -195,5 +195,20 @@ export const usePreferenceStore = defineStore("preference", {
         setLocale(locale: string) {
             this.locale = locale;
         },
+        /**
+         * 重置所有目录存储
+         * @param newDirs 需要重建的目录数组
+         * 1. 清空 paths、folderTree、scanningFolder
+         * 2. 逐一 addPath 并调用 resetPhotasaConfig 重建缓存
+         */
+        async resetAllFolders(newDirs: string[]) {
+            this.paths = [];
+            this.folderTree = [];
+            this.scanningFolder = [];
+            for (const dir of newDirs) {
+                this.addPath(dir);
+                await window.api?.resetPhotasaConfig?.(dir);
+            }
+        },
     },
 });

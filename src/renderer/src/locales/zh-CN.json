@@ -8,7 +8,8 @@
         "tabs": {
             "general": "常规",
             "about": "关于",
-            "theme": "主题"
+            "theme": "主题",
+            "advanced": "高级配置"
         },
         "folderList": "目录列表",
         "folderListUsage": "使用方式",
@@ -109,5 +110,10 @@
             "light": "浅色",
             "dark": "深色"
         }
+    },
+    "resetFolders": {
+        "title": "高级操作：重置目录存储",
+        "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
+        "button": "重置目录存储"
     }
 }
