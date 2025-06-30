@@ -45,7 +45,9 @@
         "error": "Erreur",
         "scan": {
             "title": "Analyser le dossier",
-            "message": "Analyse du dossier terminée, les photos ont été importées dans Photosa."
+            "message": "Analyse du dossier terminée, les photos ont été importées dans Photosa.",
+            "queueTitle": "File d'attente de scan",
+            "queueEmpty": "La file d'attente est vide"
         },
         "duplicatePath": {
             "title": "Dossier en double",

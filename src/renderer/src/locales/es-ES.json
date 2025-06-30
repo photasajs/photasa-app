@@ -45,7 +45,9 @@
         "error": "Error",
         "scan": {
             "title": "Escanear directorio",
-            "message": "Escaneo de directorio completo, las fotos han sido importadas a Photosa."
+            "message": "Escaneo de directorio completo, las fotos han sido importadas a Photosa.",
+            "queueTitle": "Cola de escaneo",
+            "queueEmpty": "La cola está vacía"
         },
         "duplicatePath": {
             "title": "Directorio duplicado",

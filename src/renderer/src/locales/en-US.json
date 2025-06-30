@@ -123,5 +123,9 @@
             "light": "Light",
             "dark": "Dark"
         }
+    },
+    "scan": {
+        "queueTitle": "Scan Queue",
+        "queueEmpty": "Queue is empty"
     }
 }

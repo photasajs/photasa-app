@@ -283,18 +283,8 @@ findPhotoService.onFindPhoto((args: any) => {
     <a-modal
         v-model:visible="showScanList"
         :mask-closable="false"
-        :title="t('scan.queueTitle') || '扫描队列'"
+        :title="t('scan.queueTitle')"
         width="600px"
-        :footer="[
-            h(
-                'a-button',
-                {
-                    type: 'primary',
-                    onClick: () => (showScanList = false),
-                },
-                t('button.ok') || 'OK',
-            ),
-        ]"
     >
         <a-list size="small" bordered :data-source="scanningFolder" class="scan-list">
             <template #renderItem="{ item }">
@@ -308,6 +298,17 @@ findPhotoService.onFindPhoto((args: any) => {
                 <span v-else>{{ t("scan.queueEmpty") || "队列为空" }}</span>
             </template>
         </a-list>
+        <template #footer>
+            <a-button
+                type="primary"
+                size="large"
+                block
+                style="margin: 0 auto; width: 120px"
+                @click="showScanList = false"
+            >
+                {{ t("button.ok") }}
+            </a-button>
+        </template>
     </a-modal>
 </template>
 

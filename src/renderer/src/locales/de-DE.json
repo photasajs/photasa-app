@@ -122,5 +122,9 @@
         "title": "Erweiterte Aktion: Verzeichnis-Speicher zurücksetzen",
         "desc": "Diese Aktion löscht alle Verzeichniseinstellungen und baut den Cache sofort neu auf. Diese Aktion ist nicht umkehrbar. Bitte mit Vorsicht fortfahren!",
         "button": "Verzeichnis-Speicher zurücksetzen"
+    },
+    "scan": {
+        "queueTitle": "Scan-Warteschlange",
+        "queueEmpty": "Warteschlange ist leer"
     }
 }
