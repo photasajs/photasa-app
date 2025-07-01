@@ -337,39 +337,6 @@ onUnmounted(() => {
 .image-list {
     height: 100%;
     overflow: auto;
-
-    ul {
-        list-style-type: none;
-
-        li {
-            .ant-image {
-                overflow: hidden;
-            }
-
-            margin-top: 0px;
-            margin-left: 0px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            float: left;
-            box-shadow: 1px 1px 2px #777;
-            border-radius: 1px;
-            background-color: white;
-            white-space: nowrap;
-            word-break: keep-all;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            transition: all 0.5s ease;
-        }
-    }
-}
-
-.image-list {
-    background: #e0f7fa;
-    border: 2px solid blue;
-}
-.image-content {
-    background: #fffde7;
-    border: 2px solid green;
 }
 .spin {
     animation: spin 1s linear infinite;

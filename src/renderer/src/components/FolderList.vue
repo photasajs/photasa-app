@@ -81,13 +81,16 @@ async function rescan(key: string): Promise<void> {
 </script>
 
 <template>
-    <a-card class="folder-list-card">
-        <template #title>
+    <div
+        class="flex flex-col h-full min-h-0 bg-white rounded-lg shadow border border-gray-200 folder-list-card"
+    >
+        <div class="px-4 py-2 border-b border-gray-100 flex items-center">
             <a-breadcrumb class="folder-list-header">
                 <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
             </a-breadcrumb>
-        </template>
+        </div>
         <a-tree
+            class="flex-1 min-h-0 overflow-auto"
             v-model:expandedKeys="expandedKeys"
             v-model:selectedKeys="selectedKeys"
             :tree-data="folderTree"
@@ -114,7 +117,7 @@ async function rescan(key: string): Promise<void> {
                 </a-dropdown>
             </template>
         </a-tree>
-    </a-card>
+    </div>
     <a-modal v-model:visible="showConfigModal" title="">
         <a-spin :spinning="loadingInfo">
             <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
