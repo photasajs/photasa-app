@@ -275,6 +275,7 @@ onUnmounted(() => {
                             height: row.size + 'px',
                             display: 'flex',
                             gap: '16px',
+                            marginBottom: '16px', // 行间距
                         }"
                     >
                         <div class="px-4 w-full flex" style="gap: 16px; max-width: 100%">
@@ -286,14 +287,21 @@ onUnmounted(() => {
                                             :mouse-enter-delay="mouseEnterDelay"
                                             :title="image.raw"
                                         >
-                                            <a-card hoverable>
+                                            <a-card
+                                                hoverable
+                                                :style="{
+                                                    height: thumbnailSize + 'px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }"
+                                            >
                                                 <LazyImage
                                                     :width="thumbnailSize"
                                                     :height="thumbnailSize"
                                                     :src="image.thumbnail"
                                                     :fallback="fallback"
                                                     :raw="image.raw"
-                                                    :preview="image.preview"
                                                     :is-video="image.isVideo"
                                                 />
                                             </a-card>
