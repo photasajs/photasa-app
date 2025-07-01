@@ -8,13 +8,12 @@ const props = defineProps<{
     src: string;
     height: number;
     width: number;
-    preview: string;
     fallback: string;
     isVideo: boolean;
     raw: string;
 }>();
 
-const { src, raw, height, width, preview, fallback, isVideo } = toRefs(props);
+const { src, raw, height, width, fallback, isVideo } = toRefs(props);
 const isReady = ref(false);
 const actualSrc = ref("");
 const isLoading = ref(false);
@@ -54,18 +53,11 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
     targetIsVisible.value = isIntersecting;
 });
 
-const previewIsVisible = ref(false);
+// 仅视频支持点击弹窗，图片不再有 antd 预览
 const videoPlayerIsVisible = ref(false);
 function handleImageClick(): void {
     if (isVideo.value) {
         videoPlayerIsVisible.value = true;
-    } else {
-        previewIsVisible.value = !previewIsVisible.value;
-    }
-}
-function onVisibleChange(visible: boolean): void {
-    if (!visible) {
-        previewIsVisible.value = false;
     }
 }
 </script>
@@ -86,12 +78,14 @@ function onVisibleChange(visible: boolean): void {
                 :height="height"
                 :src="actualSrc"
                 :fallback="fallback"
-                :preview="{
-                    src: preview,
-                    visible: previewIsVisible,
-                    onVisibleChange: onVisibleChange,
+                :style="{
+                    margin: 'auto',
+                    objectFit: 'contain',
+                    width: width + 'px',
+                    height: height + 'px',
+                    display: 'block',
                 }"
-                :style="{ margin: 'auto' }"
+                :preview="false"
                 @click="handleImageClick()"
             />
         </a-spin>
@@ -101,7 +95,6 @@ function onVisibleChange(visible: boolean): void {
             v-if="isVideo"
             :class="['video-player', 'vjs-big-play-centered']"
             :src="raw"
-            :poster="preview"
             playsinline
             controls
             :loop="true"

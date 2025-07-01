@@ -13,6 +13,7 @@ import { Photo } from "@renderer/utils/folder-tree";
 import LazyImage from "./LazyImage.vue";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
+import PhotoPreview from "./PhotoPreview.vue";
 
 const { t } = useI18n();
 
@@ -49,6 +50,8 @@ const fallback = ref(ImageFallback);
 const imageListRef = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
 const mouseEnterDelay = ref(1.5);
+const previewVisible = ref(false);
+const previewIndex = ref(0);
 
 function toImage(file: Photo): Image {
     const preview =
@@ -166,6 +169,21 @@ const virtualizer = useVirtualizer<HTMLElement, Element>({
 const virtualRows = computed(() => virtualizer.value?.getVirtualItems() ?? []);
 const virtualizerHeight = computed(() => (virtualizer.value?.getTotalSize() ?? 0) + "px");
 
+const previewImages = computed(() =>
+    card.value.images.map((img) => ({
+        src: img.preview,
+        w: 1200, // 可根据实际图片宽度调整
+        h: 900, // 可根据实际图片高度调整
+        title: img.key,
+    })),
+);
+
+function openPreview(rowIdx, colIdx) {
+    const idx = rowIdx * columns.value + colIdx;
+    previewIndex.value = idx;
+    previewVisible.value = true;
+}
+
 onMounted(() => {
     updateContainerWidth();
     window.addEventListener("resize", () => {
@@ -260,39 +278,47 @@ onUnmounted(() => {
                         }"
                     >
                         <div class="px-4 w-full flex" style="gap: 16px; max-width: 100%">
-                            <template v-for="image in rows[row.index]" :key="image.key">
-                                <a-dropdown :trigger="['contextmenu']">
-                                    <a-tooltip
-                                        placement="rightBottom"
-                                        :mouse-enter-delay="mouseEnterDelay"
-                                        :title="image.raw"
-                                    >
-                                        <a-card hoverable>
-                                            <LazyImage
-                                                :width="thumbnailSize"
-                                                :height="thumbnailSize"
-                                                :src="image.thumbnail"
-                                                :fallback="fallback"
-                                                :raw="image.raw"
-                                                :preview="image.preview"
-                                                :is-video="image.isVideo"
-                                            />
-                                        </a-card>
-                                    </a-tooltip>
-                                    <template #overlay>
-                                        <a-menu>
-                                            <a-menu-item key="1" @click="openImageMeta(image)">{{
-                                                t("menu.getInfo")
-                                            }}</a-menu-item>
-                                            <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
-                                                t("menu.rebuildThumbnail")
-                                            }}</a-menu-item>
-                                            <a-menu-item key="2" @click="openFileInFilder(image)">{{
-                                                t("menu.open")
-                                            }}</a-menu-item>
-                                        </a-menu>
-                                    </template>
-                                </a-dropdown>
+                            <template v-for="(image, colIndex) in rows[row.index]" :key="image.key">
+                                <div @click="openPreview(row.index, colIndex)">
+                                    <a-dropdown :trigger="['contextmenu']">
+                                        <a-tooltip
+                                            placement="rightBottom"
+                                            :mouse-enter-delay="mouseEnterDelay"
+                                            :title="image.raw"
+                                        >
+                                            <a-card hoverable>
+                                                <LazyImage
+                                                    :width="thumbnailSize"
+                                                    :height="thumbnailSize"
+                                                    :src="image.thumbnail"
+                                                    :fallback="fallback"
+                                                    :raw="image.raw"
+                                                    :preview="image.preview"
+                                                    :is-video="image.isVideo"
+                                                />
+                                            </a-card>
+                                        </a-tooltip>
+                                        <template #overlay>
+                                            <a-menu>
+                                                <a-menu-item
+                                                    key="1"
+                                                    @click="openImageMeta(image)"
+                                                    >{{ t("menu.getInfo") }}</a-menu-item
+                                                >
+                                                <a-menu-item
+                                                    key="1"
+                                                    @click="rebuildThumbnail(image)"
+                                                    >{{ t("menu.rebuildThumbnail") }}</a-menu-item
+                                                >
+                                                <a-menu-item
+                                                    key="2"
+                                                    @click="openFileInFilder(image)"
+                                                    >{{ t("menu.open") }}</a-menu-item
+                                                >
+                                            </a-menu>
+                                        </template>
+                                    </a-dropdown>
+                                </div>
                             </template>
                         </div>
                     </div>
@@ -332,6 +358,13 @@ onUnmounted(() => {
             </a-descriptions>
         </a-spin>
     </a-drawer>
+    <PhotoPreview
+        :images="previewImages"
+        :index="previewIndex"
+        :visible="previewVisible"
+        @close="previewVisible = false"
+        @change="(i) => (previewIndex = i)"
+    />
 </template>
 <style lang="less">
 .image-list {
