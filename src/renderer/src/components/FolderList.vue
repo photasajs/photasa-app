@@ -50,6 +50,10 @@ const photasa = reactive<{
     maxDepth: 0,
 });
 
+/**
+ * Open photasa config modal
+ * @param folder - The folder to open the config modal for
+ */
 async function openPhotasaConfig(folder: string): Promise<void> {
     loadingInfo.value = true;
     showConfigModal.value = true;

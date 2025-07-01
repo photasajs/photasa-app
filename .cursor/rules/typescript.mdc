@@ -1,7 +1,7 @@
 ---
 description:
-globs:
-alwaysApply: true
+globs: *.vue,*.ts
+alwaysApply: false
 ---
 ---
 description: TypeScript coding standards and best practices for modern web development

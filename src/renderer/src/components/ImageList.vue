@@ -137,10 +137,13 @@ watch(thumbnailSize, () => updateContainerWidth());
 
 const columns = computed((): number => {
     if (!containerWidth.value) return 1;
-    const gap = 16; // 与模板 flex gap 保持一致
-    const padding = 32; // p-4 = 16px * 2
-    const available = containerWidth.value - padding + gap; // 最后一列不需要gap
-    return Math.max(1, Math.floor(available / (thumbnailSize.value + gap)));
+    const gap = 16;
+    const padding = 24; // px-4 左右各 16
+    const cardWidth = thumbnailSize.value + 2 * padding;
+    const available = containerWidth.value - gap;
+    const cols = Math.floor(available / (cardWidth + gap));
+
+    return Math.max(1, cols);
 });
 
 const rows = computed((): Image[][] => {
@@ -256,7 +259,7 @@ onUnmounted(() => {
                             gap: '16px',
                         }"
                     >
-                        <div class="px-4 w-full flex" style="gap: 16px">
+                        <div class="px-4 w-full flex" style="gap: 16px; max-width: 100%">
                             <template v-for="image in rows[row.index]" :key="image.key">
                                 <a-dropdown :trigger="['contextmenu']">
                                     <a-tooltip
