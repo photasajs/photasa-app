@@ -123,5 +123,11 @@
     "scan": {
         "queueTitle": "扫描队列",
         "queueEmpty": "队列为空"
+    },
+    "advancedSettings": {
+        "title": "高级配置",
+        "resetFoldersTitle": "高级操作：重置目录存储",
+        "resetFoldersDesc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
+        "resetFoldersBtn": "重置目录存储"
     }
 }

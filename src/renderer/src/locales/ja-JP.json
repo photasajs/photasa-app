@@ -85,5 +85,11 @@
     "scan": {
         "queueTitle": "スキャンキュー",
         "queueEmpty": "キューは空です"
+    },
+    "advancedSettings": {
+        "title": "高度な設定",
+        "resetFoldersTitle": "上級操作：ディレクトリストレージのリセット",
+        "resetFoldersDesc": "この操作はすべてのディレクトリ設定をクリアし、キャッシュを即座に再構築します。この操作は元に戻せません。ご注意ください！",
+        "resetFoldersBtn": "ディレクトリストレージをリセット"
     }
 }

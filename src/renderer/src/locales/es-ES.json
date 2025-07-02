@@ -124,5 +124,11 @@
         "title": "Acción avanzada: Restablecer almacenamiento de directorios",
         "desc": "Esta acción borrará todas las configuraciones de directorios y reconstruirá la caché inmediatamente. Esta acción es irreversible. ¡Proceda con precaución!",
         "button": "Restablecer almacenamiento de directorios"
+    },
+    "advancedSettings": {
+        "title": "Configuración avanzada",
+        "resetFoldersTitle": "Operación avanzada: Restablecer almacenamiento de carpetas",
+        "resetFoldersDesc": "Esta operación borrará todas las configuraciones de carpetas y reconstruirá la caché inmediatamente. ¡Esta acción es irreversible, proceda con precaución!",
+        "resetFoldersBtn": "Restablecer almacenamiento de carpetas"
     }
 }

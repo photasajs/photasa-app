@@ -126,5 +126,11 @@
     "scan": {
         "queueTitle": "Scan-Warteschlange",
         "queueEmpty": "Warteschlange ist leer"
+    },
+    "advancedSettings": {
+        "title": "Erweiterte Einstellungen",
+        "resetFoldersTitle": "Erweiterte Aktion: Ordnerspeicher zurücksetzen",
+        "resetFoldersDesc": "Diese Aktion löscht alle Ordnerkonfigurationen und baut den Cache sofort neu auf. Diese Aktion ist nicht umkehrbar, bitte seien Sie vorsichtig!",
+        "resetFoldersBtn": "Ordnerspeicher zurücksetzen"
     }
 }

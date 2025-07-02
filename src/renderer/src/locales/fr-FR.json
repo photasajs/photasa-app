@@ -124,5 +124,11 @@
         "title": "Action avancée : Réinitialiser le stockage des dossiers",
         "desc": "Cette opération effacera tous les paramètres de dossier et reconstruira immédiatement le cache. Cette action est irréversible. Procédez avec prudence !",
         "button": "Réinitialiser le stockage des dossiers"
+    },
+    "advancedSettings": {
+        "title": "Paramètres avancés",
+        "resetFoldersTitle": "Opération avancée : Réinitialiser le stockage des dossiers",
+        "resetFoldersDesc": "Cette opération effacera toutes les configurations de dossiers et reconstruira immédiatement le cache. Cette action est irréversible, veuillez faire attention !",
+        "resetFoldersBtn": "Réinitialiser le stockage des dossiers"
     }
 }
