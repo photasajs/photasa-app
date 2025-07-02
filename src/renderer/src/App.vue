@@ -25,7 +25,7 @@ import type { ScanAction } from "src/preload/types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
-import { FindPhotoServiceKey } from "@renderer/interface/IFindPhotoService";
+import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
 
 const logger = loggers.app;
 
