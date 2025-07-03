@@ -1,6 +1,7 @@
 import isVideo from "is-video";
 import { ensureDir, exists, remove, readFile } from "fs-extra";
-import decode from "heic-decode";
+// 替换 heic-decode 为 @saschazar/wasm-heif
+import createHeifModule from "@saschazar/wasm-heif";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
@@ -25,7 +26,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
 /**
- * 创建预览图片
+ * 使用 wasm-heif 解码 HEIC/HEIF 文件
  * @param arg - 参数
  * @param logger - 日志记录器
  * @returns 预览图片路径
@@ -35,24 +36,54 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
     const previewName = toPreviewPath(arg.path);
     const inputBuffer = await readFile(arg.path);
     try {
-        logger.info("[thumbnail-handler] Decode HEIC for : " + arg.path);
-        const image = await decode({ buffer: inputBuffer });
-
-        logger.info("[thumbnail-handler] Create Preview for : " + arg.path);
-        await sharp(image.data, {
-            raw: {
-                width: image.width,
-                height: image.height,
-                channels: 4,
-            },
+        logger.info("[thumbnail-handler] Decode HEIC/HEIF for : " + arg.path);
+        // 加载 wasm 文件路径（已拷贝到 resources 目录）
+        const wasmPath = path.join(__dirname, "../../resources/wasm_heif.wasm");
+        const wasmBinary = await readFile(wasmPath);
+        // 初始化 wasm-heif 模块，传递 wasmBinary
+        const heifModule = await createHeifModule({ wasmBinary } as any);
+        // 解码 HEIC/HEIF 文件
+        const decoded = heifModule.decode(inputBuffer, inputBuffer.byteLength, false) as Uint8Array;
+        // 类型断言为解码成功对象
+        const { width, height, channels } = heifModule.dimensions();
+        logger.info(`[wasm-heif] Decoded width=${width}, height=${height}, channels=${channels}`);
+        // 检查 buffer 长度
+        if (decoded.length !== width * height * channels) {
+            logger.error(
+                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${data.length}`,
+            );
+            throw new Error(
+                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${data.length}`,
+            );
+        }
+        // 若 channels 不是 4，补齐为 RGBA
+        let rgbaBuffer: Buffer;
+        if (channels === 4) {
+            rgbaBuffer = Buffer.from(decoded);
+        } else if (channels === 3) {
+            // RGB -> RGBA
+            rgbaBuffer = Buffer.alloc(width * height * 4);
+            for (let i = 0, j = 0; i < decoded.length; i += 3, j += 4) {
+                rgbaBuffer[j] = decoded[i];
+                rgbaBuffer[j + 1] = decoded[i + 1];
+                rgbaBuffer[j + 2] = decoded[i + 2];
+                rgbaBuffer[j + 3] = 255; // alpha
+            }
+            logger.info(`[wasm-heif] RGB buffer补齐为RGBA, new length=${rgbaBuffer.length}`);
+        } else {
+            logger.error(`[wasm-heif] Unsupported channels: ${channels}`);
+            throw new Error(`[wasm-heif] Unsupported channels: ${channels}`);
+        }
+        // 用 sharp 生成 JPEG 预览
+        await sharp(rgbaBuffer, {
+            raw: { width, height, channels: 4 },
         })
             .toFormat("jpeg")
             .toFile(previewName);
-
         return previewName;
     } catch (e) {
-        logger.error(e);
-        return "";
+        logger.error("[thumbnail-handler] HEIC/HEIF decode error:", e);
+        throw e;
     }
 }
 
@@ -167,12 +198,13 @@ export async function createThumbnail(
             logger.error(`[thumbnail-handler] Source file does not exist: ${arg.path}`);
             return arg;
         }
-
-        // 检查缩略图是否存在 如果存在，则不创建
-        const thumbnailExists = await exists(arg.thumbnail);
-        if (thumbnailExists || arg.always) {
-            logger.info(`[thumbnail-handler]Thumbnail already exists: ${arg.thumbnail}`);
-            return arg;
+        if (!arg.always) {
+            // 检查缩略图是否存在 如果存在，则不创建
+            const thumbnailExists = await exists(arg.thumbnail);
+            if (thumbnailExists) {
+                logger.info(`[thumbnail-handler]Thumbnail already exists: ${arg.thumbnail}`);
+                return arg;
+            }
         }
 
         // 确保缩略图目录存在

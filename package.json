@@ -37,6 +37,7 @@
         "@electron-toolkit/preload": "^3.0.2",
         "@electron-toolkit/utils": "^4.0.0",
         "@headlessui/vue": "^1.7.23",
+        "@saschazar/wasm-heif": "^2.0.0",
         "@tanstack/vue-virtual": "^3.13.12",
         "caf": "^4.0.0",
         "chokidar": "3.5.3",

@@ -37,16 +37,22 @@ export function getDirectory(name: PathName): Promise<string> {
     return window.api.getDirectory(name);
 }
 
-function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
+export function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
+    function fixPath(p: string): string {
+        let s = p.replace(/^file:\/\/+/, "");
+        if (s && s[0] !== "/") s = "/" + s;
+        return s;
+    }
     return {
         ...request,
-        path: request.path.replace(/^file:\/\/+/, ""),
-        thumbnail: request.thumbnail.replace(/^file:\/\/+/, ""),
+        path: fixPath(request.path),
+        thumbnail: fixPath(request.thumbnail),
     };
 }
 
 export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const result = yield window.api.createThumbnail(normalizeThumbnailRequest(request));
+    const normalizedRequest = normalizeThumbnailRequest(request);
+    const result = yield window.api.createThumbnail(normalizedRequest);
     return result;
 })
     .enqueue()
