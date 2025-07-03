@@ -13,16 +13,44 @@ import {
 import { JsonTreeView } from "json-tree-view-vue3";
 import { trim, isEmpty } from "radash";
 
+/**
+ * I18n
+ */
 const { t } = useI18n();
 
+/**
+ * Preference store
+ */
 const preferenceStore = usePreferenceStore();
+
+/**
+ * Add scan folder
+ */
 const { addScanFolder } = preferenceStore;
+
+/**
+ * Store to refs
+ */
 const { paths, currentFolder, currentFolderConfig, folderTree } = storeToRefs(preferenceStore);
 
+/**
+ * Expanded keys
+ */
 const expandedKeys = ref<string[]>([...paths.value]);
+
+/**
+ * Selected keys
+ */
 const selectedKeys = ref<string[]>([currentFolder.value]);
+
+/**
+ * Show config modal
+ */
 const showConfigModal = ref(false);
 
+/**
+ * Watch the selected keys
+ */
 watch(
     selectedKeys,
     () => {
@@ -39,7 +67,14 @@ watch(
     { deep: true },
 );
 
+/**
+ * Loading info
+ */
 const loadingInfo = ref(false);
+
+/**
+ * Photasa config
+ */
 const photasa = reactive<{
     config: string;
     path: string;
@@ -64,16 +99,27 @@ async function openPhotasaConfig(folder: string): Promise<void> {
     loadingInfo.value = false;
 }
 
+/**
+ * Open the file in finder
+ * @param key - The folder to open in finder
+ */
 function openFileInFinder(key: string): void {
     const path = `/${trim(key, "file://")}`;
     openInFinder(path);
 }
 
+/**
+ * Fix the photasa config
+ */
 async function fixConfig(): Promise<void> {
     const config = await fixPhotasaConfig(photasa.path);
     photasa.config = JSON.stringify(config);
 }
 
+/**
+ * Rescan the folder
+ * @param key - The folder to rescan
+ */
 async function rescan(key: string): Promise<void> {
     await resetPhotasaConfig(key);
     addScanFolder(key, "rescan");

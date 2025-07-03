@@ -1,11 +1,12 @@
 import { readChunk } from "read-chunk";
 import imageType, { minimumBytes } from "image-type";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { ThumbnailRequest, ImageInfo, ImageTypeResult } from "./types";
+import type { ImageInfo, ImageTypeResult } from "@common/types";
+import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { getExifInfo } from "./exif-helper";
 import isVideo from "is-video";
 import isImage from "is-image";
-import type { ThumbnailServiceAction } from "@common/thumbnail-types";
+import { ThumbnailServiceAction } from "@common/thumbnail-types";
 
 const { ipcRenderer } = electronAPI;
 

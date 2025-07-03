@@ -9,25 +9,43 @@ import {
     shouldIgnorePhotasaPath,
     startWatching,
 } from "@renderer/utils/api";
-import type { WatchState, ThumbnailRequest } from "@common/types";
+import type { WatchState } from "@common/watch-types";
+import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { deepCopy } from "./object";
+import type { PreferenceStore } from "@renderer/stores/preference";
 
-function isMedia(state: WatchState): boolean {
+/**
+ * 判断是否为媒体文件
+ * @param state - 状态
+ * @returns 是否为媒体文件
+ */
+export function isMedia(state: WatchState): boolean {
     return state.isImage || state.isVideo;
 }
 
-async function handleAddFile(state, preferenceStore): Promise<void> {
-    // Skip hidden or empty path or ignored file
-    if (
-        !state.isFile ||
-        state.path?.length < 0 ||
-        isHiddenFile(state.path) ||
-        shouldIgnorePhotasaPath(state.path)
-    ) {
-        return;
-    }
+/**
+ * 判断是否可以处理文件
+ * @param state - 状态
+ * @returns 是否可以处理文件
+ */
+export function canHandleFile(state: WatchState): boolean {
+    return (
+        state.isFile &&
+        state.path?.length > 0 &&
+        !isHiddenFile(state.path) &&
+        !shouldIgnorePhotasaPath(state.path) &&
+        isMedia(state)
+    );
+}
 
-    if (isMedia(state)) {
+/**
+ * 处理添加文件
+ * @param state - 状态
+ * @param preferenceStore - 偏好设置
+ */
+async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore): Promise<void> {
+    // Skip hidden or empty path or ignored file
+    if (canHandleFile(state)) {
         const request = {
             path: state.path as string,
             thumbnail: state.thumbnail as string,
@@ -48,7 +66,10 @@ async function handleAddFile(state, preferenceStore): Promise<void> {
     }
 }
 
-async function handleDeleteFile(state, preferenceStore): Promise<void> {
+async function handleDeleteFile(
+    state: WatchState,
+    preferenceStore: PreferenceStore,
+): Promise<void> {
     // Directory skip hidden
     if (!state.isFile) {
         preferenceStore.cleanFolderTree(state.path);
@@ -77,7 +98,10 @@ async function handleDeleteFile(state, preferenceStore): Promise<void> {
     }
 }
 
-async function handleChangeFile(state, preferenceStore): Promise<void> {
+async function handleChangeFile(
+    state: WatchState,
+    preferenceStore: PreferenceStore,
+): Promise<void> {
     // Skip hidden or empty path or ignored file
     if (
         !state.isFile ||
@@ -110,7 +134,11 @@ const actions = {
     delete: handleDeleteFile,
 };
 
-export const handleFileTask = useTask(function* (_, state: WatchState, preferenceStore: any) {
+export const handleFileTask = useTask(function* (
+    _,
+    state: WatchState,
+    preferenceStore: PreferenceStore,
+) {
     const handler = actions[state.action];
     if (handler) {
         yield handler(state, preferenceStore);
@@ -119,7 +147,12 @@ export const handleFileTask = useTask(function* (_, state: WatchState, preferenc
     .enqueue()
     .maxConcurrency(1);
 
-export function startFileWatching(dirs: string[], preferenceStore: any): void {
+/**
+ * 开始监听文件
+ * @param dirs - 目录
+ * @param preferenceStore - 偏好设置
+ */
+export function startFileWatching(dirs: string[], preferenceStore: PreferenceStore): void {
     startWatching(
         {
             path: dirs[0],

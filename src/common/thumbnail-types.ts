@@ -16,7 +16,7 @@ export type ThumbnailResponse = {
 
 export type ThumbnailWorkerAction = "create" | "remove";
 
-export enum ThumbnailServiceAction {
-    create = "picasa:create-thumbnail",
-    remove = "picasa:remove-thumbnail",
-}
+export const ThumbnailServiceAction = {
+    create: "picasa:create-thumbnail",
+    remove: "picasa:remove-thumbnail",
+};

@@ -17,14 +17,3 @@ declare module "*.svg?component" {
     const component: DefineComponent<object, object, any>;
     export default component;
 }
-
-import type { ElectronAPI } from "@electron-toolkit/preload";
-import type { API } from "@preload/types";
-
-declare global {
-    interface Window {
-        electron: ElectronAPI;
-        api: API;
-        __heic2any__worker: Worker;
-    }
-}

@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
-import type { PhotasaConfig } from "./types";
-import { toFileName, shortenThumbnailName } from "../common";
+import type { PhotasaConfig } from "@common/config-types";
+import { toFileName, shortenThumbnailName } from "@common/index";
 import * as R from "ramda";
 import isVideo from "is-video";
 

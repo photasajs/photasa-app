@@ -4,7 +4,7 @@ import decode from "heic-decode";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import type { ThumbnailRequest } from "@common/types";
+import type { ThumbnailRequest } from "@common/thumbnail-types";
 import {
     toPreviewPath,
     HeicExtensionRE,

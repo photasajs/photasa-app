@@ -1,16 +1,11 @@
-import type {
-    WatchConfig,
-    WatchCallback,
-    ImportCallback,
-    DirectorySelection,
-    PathName,
-    ThumbnailRequest,
-    ImageInfo,
-    PhotasaConfig,
-    ScanAction,
-    ScanArgs,
-} from "src/preload/types";
+import type { ImportCallback } from "@common/types";
+import type { DirectorySelection, PathName } from "@common/types";
 import { useTask } from "vue-concurrency";
+import type { WatchConfig, WatchCallback } from "@common/watch-types";
+import type { ThumbnailRequest } from "@common/thumbnail-types";
+import type { ImageInfo } from "@common/types";
+import type { ScanAction, ScanArgs } from "@common/scan-types";
+import type { PhotasaConfig } from "@common/config-types";
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
     window.api.startWatching(config, callback);

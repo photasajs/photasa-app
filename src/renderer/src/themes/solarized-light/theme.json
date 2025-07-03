@@ -1,0 +1,17 @@
+{
+    "id": "solarized-light",
+    "name": "Solarized Light",
+    "author": "官方",
+    "version": "1.0.0",
+    "description": "Solarized风格明亮主题，经典配色。",
+    "colors": {
+        "primary": "#268bd2",
+        "background": "#fdf6e3",
+        "accent": "#2aa198",
+        "text": "#657b83",
+        "card": "#eee8d5",
+        "button": "#268bd2",
+        "border": "#93a1a1"
+    },
+    "css": "theme.css"
+}

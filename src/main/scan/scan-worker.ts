@@ -1,5 +1,5 @@
 import { parentPort } from "worker_threads";
-import type { ScanAction } from "@common/types";
+import type { ScanAction } from "@common/scan-types";
 import { scanPhotos } from "./scan-photos";
 import { loggers } from "@common/logger";
 

@@ -1,5 +1,5 @@
 import { electronAPI } from "@electron-toolkit/preload";
-import type { DirectorySelection, PathName } from "./types";
+import type { DirectorySelection, PathName } from "@common/types";
 
 const { ipcRenderer } = electronAPI;
 

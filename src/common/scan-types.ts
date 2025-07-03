@@ -1,14 +1,16 @@
-/**
- * 照片文件请求类型
- */
-export interface PhotoFileRequest {
+export interface PhotoPath {
     path: string;
     thumbnail: string;
     isImage: boolean;
     isVideo: boolean;
-    isDirectory?: boolean;
 }
 
+/**
+ * 照片文件请求类型
+ */
+export interface PhotoFileRequest extends PhotoPath {
+    isDirectory?: boolean;
+}
 /**
  * 扫描请求类型
  */
@@ -38,3 +40,20 @@ export interface ScanResponse {
     };
     error?: string;
 }
+
+/**
+ * 扫描参数
+ */
+export interface ScanArgs {
+    type: "next" | "error" | "complete"; // 扫描类型
+    requestId: string; // 请求 ID
+    action?: PhotoFileRequest; // 照片路径
+    error?: {
+        message: string;
+    };
+}
+
+/**
+ * 扫描回调
+ */
+export type ScanCallback = (action: ScanArgs) => void;

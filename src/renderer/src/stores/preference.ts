@@ -2,7 +2,9 @@ import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { cleanupScanQueue } from "@renderer/utils/api";
-import type { PhotasaConfig, ScanAction, ThumbnailRequest } from "src/preload/types";
+import type { PhotasaConfig } from "@common/config-types";
+import type { ScanAction } from "@common/scan-types";
+import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { DataNode } from "ant-design-vue/lib/tree";
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
@@ -10,7 +12,7 @@ import { loggers } from "@common/logger";
 
 const logger = loggers.app;
 
-type PreferenceState = {
+export type PreferenceState = {
     paths: string[]; // Paths to monitor
     thumbnailSize: number; // Thumbnail Default Size
     firstTime: boolean; // Is first time running
@@ -23,6 +25,8 @@ type PreferenceState = {
     currentFolderConfig: PhotasaConfig;
     folderTree: DataNode[];
 };
+
+export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
 
 export const usePreferenceStore = defineStore("preference", {
     state: (): PreferenceState => {

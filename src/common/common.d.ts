@@ -1,14 +1,12 @@
 import type {
-    WatchConfig,
-    WatchCallback,
     ImportCallback,
     PathName,
     PhotasaConfig,
-    ScanAction,
-    ScanArgs,
     DirectorySelection,
     ImageInfo,
 } from "./types";
+import type { WatchConfig, WatchCallback } from "./watch-types";
+import type { ScanAction, ScanArgs } from "./scan-types";
 import type { ThumbnailRequest } from "./thumbnail-types";
 
 /**
@@ -47,7 +45,7 @@ declare global {
             // 获取 Photasa 配置
             getPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
             // 添加到照片列表
-            addToPhotoList: (photo: string) => Promise<{ path: string; config: PhotasaConfig }>;
+            addToPhotoList: (photo: string) => Promise<void>;
             removeFromPhotoList: (
                 photo: string,
             ) => Promise<{ path: string; config: PhotasaConfig }>;
