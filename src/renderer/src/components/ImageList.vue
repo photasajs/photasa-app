@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, reactive, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { createThumbnailTask, getImageType, getPhotasaConfig } from "@renderer/utils/api";
@@ -184,6 +184,8 @@ function openPreview(rowIdx, colIdx) {
     previewVisible.value = true;
 }
 
+let resizeObserver: ResizeObserver | null = null;
+
 onMounted(() => {
     updateContainerWidth();
     window.addEventListener("resize", () => {
@@ -192,6 +194,13 @@ onMounted(() => {
             virtualizer.value.measure();
         }
     });
+    // 使用 ResizeObserver 监听容器宽度变化
+    if (imageListRef.value) {
+        resizeObserver = new ResizeObserver(() => {
+            updateContainerWidth();
+        });
+        resizeObserver.observe(imageListRef.value);
+    }
 });
 
 watch(rows, () => {
@@ -209,6 +218,9 @@ watch(containerWidth, () => {
 
 onUnmounted(() => {
     window.removeEventListener("resize", updateContainerWidth);
+    if (resizeObserver && imageListRef.value) {
+        resizeObserver.unobserve(imageListRef.value);
+    }
 });
 </script>
 

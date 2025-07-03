@@ -7,9 +7,25 @@ declare module "*.vue" {
     export default component;
 }
 
+declare module "*.png" {
+    const value: string;
+    export default value;
+}
+declare module "*.jpg" {
+    const value: string;
+    export default value;
+}
+declare module "*.jpeg" {
+    const value: string;
+    export default value;
+}
 declare module "*.svg" {
-    const src: string;
-    export default src;
+    const value: string;
+    export default value;
+}
+declare module "*.webp" {
+    const value: string;
+    export default value;
 }
 
 declare module "*.svg?component" {
