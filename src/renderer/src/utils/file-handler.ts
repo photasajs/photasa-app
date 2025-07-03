@@ -44,6 +44,12 @@ export function canHandleFile(state: WatchState): boolean {
  * @param preferenceStore - 偏好设置
  */
 async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore): Promise<void> {
+    // 新增：如果是目录添加，自动更新 folderTree
+    if (!state.isFile && state.path?.length > 0) {
+        // 目录添加，更新目录树
+        preferenceStore.updateFolderTree(state.path);
+        return;
+    }
     // Skip hidden or empty path or ignored file
     if (canHandleFile(state)) {
         const request = {
@@ -158,6 +164,11 @@ export function startFileWatching(dirs: string[], preferenceStore: PreferenceSto
             path: dirs[0],
             recursive: true,
             paths: deepCopy(dirs),
+            options: {
+                ignored: /(^|[/\\])\../,
+                ignoreInitial: true,
+                awaitWriteFinish: true,
+            },
         },
         (state: WatchState) => {
             handleFileTask.perform(state, preferenceStore);
