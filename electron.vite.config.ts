@@ -1,6 +1,7 @@
 import { resolve } from "path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
 import vue from "@vitejs/plugin-vue";
+import vueJsx from "@vitejs/plugin-vue-jsx";
 import { babel } from "@rollup/plugin-babel";
 import { comlink } from "vite-plugin-comlink";
 import svgLoader from "vite-svg-loader";
@@ -32,7 +33,7 @@ export default defineConfig({
                 "@common": resolve("src/common/"),
             },
         },
-        plugins: [vue(), comlink(), svgLoader()],
+        plugins: [vue(), vueJsx(), comlink(), svgLoader()],
         css: {
             preprocessorOptions: {
                 less: {
