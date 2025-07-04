@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Photosa",
+        "title": "Photasa",
         "folderList": "Liste des dossiers"
     },
     "preference": {
@@ -130,5 +130,10 @@
         "resetFoldersTitle": "Opération avancée : Réinitialiser le stockage des dossiers",
         "resetFoldersDesc": "Cette opération effacera toutes les configurations de dossiers et reconstruira immédiatement le cache. Cette action est irréversible, veuillez faire attention !",
         "resetFoldersBtn": "Réinitialiser le stockage des dossiers"
+    },
+    "empty": {
+        "image": "Aucune image",
+        "openConfigDirBtn": "Ouvrir le dossier de configuration",
+        "importBtn": "Importer des images"
     }
 }
