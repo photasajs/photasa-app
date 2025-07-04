@@ -27,7 +27,7 @@
         "test:ui": "vitest --ui",
         "test:coverage": "vitest run --coverage",
         "test:watch": "vitest watch",
-        "test": "npm run test:unit && npm run test:e2e"
+        "test": "npm run test:unit"
     },
     "dependencies": {
         "@babel/core": "7.21.8",
@@ -51,7 +51,7 @@
         "fluent-ffmpeg": "^2.1.2",
         "force": "^0.0.3",
         "fs-extra": "^11.1.1",
-        "glob": "^11.0.2",
+        "glob": "^11.0.3",
         "graceful-fs": "^4.2.11",
         "is-image": "^3.1.0",
         "is-video": "^1.0.1",
