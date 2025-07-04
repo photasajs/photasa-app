@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } 
 import fs from "fs-extra";
 import path from "path";
 import * as configStorage from "../config-storage";
-import { PhotasaConfig } from "@common/config-types";
+// import { PhotasaConfig } from "@common/config-types";
 import isVideo from "is-video";
 import log4js from "log4js";
 

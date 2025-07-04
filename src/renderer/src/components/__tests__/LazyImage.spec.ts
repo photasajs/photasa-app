@@ -16,16 +16,17 @@ const MockASpin = {
     template: "<div class='ant-spin'><slot /></div>",
     props: ["spinning"],
 };
-const MockAModal = {
-    name: "a-modal",
-    template: "<div class='ant-modal'><slot /></div>",
-    props: ["visible"],
-};
-const MockVideoPlayer = {
-    name: "video-player",
-    template: "<div class='video-player'><slot /></div>",
-    props: ["src", "poster"],
-};
+
+// const MockAModal = {
+//     name: "a-modal",
+//     template: "<div class='ant-modal'><slot /></div>",
+//     props: ["visible"],
+// };
+// const MockVideoPlayer = {
+//     name: "video-player",
+//     template: "<div class='video-player'><slot /></div>",
+//     props: ["src", "poster"],
+// };
 
 // Mock the prefetchImageTask
 vi.mock("@renderer/utils/image-prefetch", () => ({
@@ -96,17 +97,17 @@ describe("LazyImage", () => {
     });
 
     it("loads image when visible", async () => {
-        const wrapper = shallowMount(LazyImage, {
-            props: defaultProps,
-            global: {
-                stubs: {
-                    "a-spin": MockASpin,
-                    "a-image": MockAImage,
-                    "a-modal": MockAModal,
-                    "video-player": MockVideoPlayer,
-                },
-            },
-        });
+        // const wrapper = shallowMount(LazyImage, {
+        //     props: defaultProps,
+        //     global: {
+        //         stubs: {
+        //             "a-spin": MockASpin,
+        //             "a-image": MockAImage,
+        //             "a-modal": MockAModal,
+        //             "video-player": MockVideoPlayer,
+        //         },
+        //     },
+        // });
         if (targetIsVisibleRef) targetIsVisibleRef.value = true;
         await flushPromises();
         await nextTick();

@@ -1,11 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import sharp from "sharp";
 import fs from "fs-extra";
-import path from "path";
 import { createThumbnail } from "../thumbnail-handler";
 import type { Logger } from "log4js";
-import isVideo from "is-video";
-import ffmpeg from "fluent-ffmpeg";
 
 // Mock dependencies
 vi.mock("fs-extra", () => {
@@ -25,7 +22,7 @@ vi.mock("fs-extra", () => {
 });
 
 // 在文件顶部暴露 mock 实例
-let lastSharpInstance: any = null;
+// let lastSharpInstance: any = null;
 vi.mock("sharp", () => {
     const mockSharp = vi.fn().mockImplementation(() => {
         const instance = {
@@ -34,7 +31,7 @@ vi.mock("sharp", () => {
             toFormat: vi.fn().mockReturnThis(),
             toFile: vi.fn().mockResolvedValue(undefined),
         };
-        lastSharpInstance = instance;
+        // lastSharpInstance = instance;
         return instance;
     });
     return {
@@ -55,10 +52,8 @@ vi.mock("heic-decode", () => ({
 }));
 
 // 修复 ffmpeg mock，确保 lastFfmpegArgs 总是数组
-let lastFfmpegArgs: any[] = [];
 vi.mock("fluent-ffmpeg", () => {
-    const mockFfmpeg = vi.fn().mockImplementation((...args) => {
-        lastFfmpegArgs = args;
+    const mockFfmpeg = vi.fn().mockImplementation(() => {
         return {
             on: vi.fn().mockReturnThis(),
             screenshots: vi.fn().mockImplementation(() => {
