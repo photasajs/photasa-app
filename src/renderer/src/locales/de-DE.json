@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Photosa",
+        "title": "Photasa",
         "folderList": "Ordnerliste"
     },
     "preference": {
@@ -85,16 +85,16 @@
     "about": {
         "antvDescription": "Datenvisualisierungslösung",
         "introduction": {
-            "title": "Über Photosa",
-            "content": "Photosa ist ein modernes, datenschutzfreundliches Fotoverwaltungstool, inspiriert von Picasa. Organisieren, durchsuchen und genießen Sie Ihre Fotos und Videos mit leistungsstarken lokalen Funktionen und einer schönen Benutzeroberfläche—ohne Cloud.",
-            "summary": "Photosa hilft Ihnen, Ihre Erinnerungen einfach wiederzuentdecken und zu verwalten.",
+            "title": "Über Photasa",
+            "content": "Photasa ist ein modernes, datenschutzfreundliches Fotoverwaltungstool, inspiriert von Picasa. Organisieren, durchsuchen und genießen Sie Ihre Fotos und Videos mit leistungsstarken lokalen Funktionen und einer schönen Benutzeroberfläche—ohne Cloud.",
+            "summary": "Photasa hilft Ihnen, Ihre Erinnerungen einfach wiederzuentdecken und zu verwalten.",
             "highlight": "lokal, schnell und benutzerfreundlich",
             "userExperience": "Fotoverwaltungserlebnis",
             "focus": "."
         },
         "resources": {
             "title": "Ressourcen",
-            "content": "Entdecken Sie zusätzliche Ressourcen und Dokumentation für Photosa.",
+            "content": "Entdecken Sie zusätzliche Ressourcen und Dokumentation für Photasa.",
             "download": "Ressourcen herunterladen"
         },
         "press": "Drücken Sie",
