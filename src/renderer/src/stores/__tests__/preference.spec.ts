@@ -1,6 +1,8 @@
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { usePreferenceStore } from "../preference";
+import type { DataNode } from "ant-design-vue/lib/tree";
+import type { ScanAction } from "@common/scan-types";
 
 describe("preferenceStore.resetAllFolders", () => {
     beforeEach(() => {
@@ -12,8 +14,13 @@ describe("preferenceStore.resetAllFolders", () => {
     it("should clear and rebuild all folders", async () => {
         const store = usePreferenceStore();
         store.paths = ["/a", "/b"];
-        store.folderTree = [{ path: "/a" } as any, { path: "/b" } as any];
-        store.scanningFolder = ["/a"] as any;
+        store.folderTree = [
+            { path: "/a" } as unknown as DataNode,
+            { path: "/b" } as unknown as DataNode,
+        ];
+        store.scanningFolder = [
+            { path: "/a", action: "scan", thumbnailSize: 200 },
+        ] as unknown as ScanAction[];
         const newDirs = ["/c", "/d"];
         await store.resetAllFolders(newDirs);
         // 修正断言，忽略末尾斜杠
