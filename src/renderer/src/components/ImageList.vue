@@ -169,14 +169,19 @@ const virtualizer = useVirtualizer<HTMLElement, Element>({
 const virtualRows = computed(() => virtualizer.value?.getVirtualItems() ?? []);
 const virtualizerHeight = computed(() => (virtualizer.value?.getTotalSize() ?? 0) + "px");
 
-const previewImages = computed(() =>
-    card.value.images.map((img) => ({
-        src: img.preview,
-        w: 1200, // 可根据实际图片宽度调整
-        h: 900, // 可根据实际图片高度调整
-        title: img.key,
-    })),
-);
+const previewImages = computed(() => {
+    return card.value.images.map((img) => {
+        return {
+            src: img.preview,
+            w: 1200, // 可根据实际图片宽度调整
+            h: 900, // 可根据实际图片高度调整
+            title: img.key,
+            isVideo: img.isVideo,
+            raw: img.raw,
+            thumbnail: img.thumbnail,
+        };
+    });
+});
 
 function openPreview(rowIdx, colIdx) {
     const idx = rowIdx * columns.value + colIdx;

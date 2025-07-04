@@ -52,14 +52,6 @@ const targetIsVisible = ref(false);
 useIntersectionObserver(target, ([{ isIntersecting }]) => {
     targetIsVisible.value = isIntersecting;
 });
-
-// 仅视频支持点击弹窗，图片不再有 antd 预览
-const videoPlayerIsVisible = ref(false);
-function handleImageClick(): void {
-    if (isVideo.value) {
-        videoPlayerIsVisible.value = true;
-    }
-}
 </script>
 
 <template>
@@ -86,22 +78,9 @@ function handleImageClick(): void {
                     display: 'block',
                 }"
                 :preview="false"
-                @click="handleImageClick()"
             />
         </a-spin>
     </div>
-    <a-modal v-model:visible="videoPlayerIsVisible" width="100%" wrap-class-name="full-modal">
-        <video-player
-            v-if="isVideo"
-            :class="['video-player', 'vjs-big-play-centered']"
-            :src="raw"
-            playsinline
-            controls
-            :loop="true"
-            :volume="0.6"
-        />
-        <template #footer></template>
-    </a-modal>
 </template>
 <style lang="less">
 .thumbnail-image .ant-image {

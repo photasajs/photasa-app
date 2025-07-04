@@ -35,9 +35,20 @@ function handleOnIndexChange(newIndex: number) {
 <template>
     <VueEasyLightbox
         :visible="show"
-        :imgs="images.map((i) => i.src)"
+        :imgs="images"
         :index="currentIndex"
         @hide="handleHide"
         @on-index-change="handleOnIndexChange"
-    />
+    >
+        <template #default="{ currentImg }">
+            <video-player
+                v-if="currentImg.isVideo"
+                :src="currentImg.src"
+                :poster="currentImg.thumbnail"
+                :width="currentImg.w"
+                :height="currentImg.h"
+            ></video-player>
+            <img v-else :src="currentImg.src" data-src="currentImg.src" />
+        </template>
+    </VueEasyLightbox>
 </template>

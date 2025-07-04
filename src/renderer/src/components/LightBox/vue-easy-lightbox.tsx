@@ -540,24 +540,31 @@ export default defineComponent({
                     style={imgWrapperStyle.value}
                     key="img-wrapper"
                 >
-                    <img
-                        alt={currentImgAlt.value}
-                        ref={imgRef}
-                        draggable="false"
-                        class={`${prefixCls}-img`}
-                        src={currentImgSrc.value}
-                        onMousedown={onMouseDown}
-                        onMouseup={onMouseUp}
-                        onMousemove={onMouseMove}
-                        onTouchstart={onTouchStart}
-                        onTouchmove={onTouchMove}
-                        onTouchend={onTouchEnd}
-                        onLoad={onImgLoad}
-                        onDblclick={onDblclick}
-                        onDragstart={(e) => {
-                            e.preventDefault();
-                        }}
-                    />
+                    {/* 优化：如果有 default slot 则只渲染 slot，否则渲染 <img> */}
+                    {slots.default ? (
+                        <div class={`${prefixCls}-default-slot`}>
+                            {slots.default({ currentImg: currentImg.value })}
+                        </div>
+                    ) : (
+                        <img
+                            alt={currentImgAlt.value}
+                            ref={imgRef}
+                            draggable="false"
+                            class={`${prefixCls}-img`}
+                            src={currentImgSrc.value}
+                            onMousedown={onMouseDown}
+                            onMouseup={onMouseUp}
+                            onMousemove={onMouseMove}
+                            onTouchstart={onTouchStart}
+                            onTouchmove={onTouchMove}
+                            onTouchend={onTouchEnd}
+                            onLoad={onImgLoad}
+                            onDblclick={onDblclick}
+                            onDragstart={(e) => {
+                                e.preventDefault();
+                            }}
+                        />
+                    )}
                 </div>
             );
         };
@@ -571,14 +578,21 @@ export default defineComponent({
             return renderImgWrapper();
         };
 
-        const renderTestImg = () => (
-            <img
-                style="display:none;"
-                src={currentImgSrc.value}
-                onError={onTestImgError}
-                onLoad={onTestImgLoad}
-            />
-        );
+        // 测试图片，用于预加载图片
+        // 如果imgRef.value存在，则预加载图片，否则不预加载
+        const renderTestImg = () => {
+            if (imgRef.value) {
+                return (
+                    <img
+                        style="display:none;"
+                        src={currentImgSrc.value}
+                        onError={onTestImgError}
+                        onLoad={onTestImgLoad}
+                    />
+                );
+            }
+            return null;
+        };
 
         const renderPrevBtn = () => {
             if (slots["prev-btn"]) {
@@ -715,12 +729,6 @@ export default defineComponent({
                         {renderCloseBtn()}
                         {renderToolbar()}
                     </div>
-                    {/* 新增：默认插槽，传递当前图片信息 */}
-                    {slots.default && (
-                        <div class={`${prefixCls}-default-slot`}>
-                            {slots.default({ currentImg: currentImg.value })}
-                        </div>
-                    )}
                 </div>
             );
         };
