@@ -1,46 +1,50 @@
 name: Build Electron App (Matrix)
 
 on:
-    push:
-        branches: [develop, main]
-    pull_request:
-        branches: [develop, main]
-    workflow_dispatch:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      build_script: build:linux
-                    - os: macos-latest
-                      build_script: build:mac
-                    - os: windows-latest
-                      build_script: build:windows
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build_script: build:linux
+          - os: macos-latest
+            build_script: build:mac
+          - os: windows-latest
+            build_script: build:windows
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-            - name: Install dependencies
-              run: npm install
+      - name: Install dependencies
+        run: npm install
 
-            - name: Build app
-              run: npm run ${{ matrix.build_script }}
+      - name: Build app
+        run: npm run ${{ matrix.build_script }}
 
-            - name: Upload dist artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: dist-${{ matrix.os }}
-                  path: |
-                      dist/
-                      out/
-                      release/
-                      build/
+      # 仅在 develop push 或 main PR merge 后上传 artifact
+      - name: Upload dist artifact
+        if: >-
+          (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+          (github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.merged == true)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: |
+            dist/
+            out/
+            release/
+            build/
