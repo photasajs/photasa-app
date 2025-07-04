@@ -1,4 +1,5 @@
-@import './variables.scss';
+// 采用Sass官方推荐的@use语法替换@import，避免未来版本兼容性问题
+@use './variables.scss' as *;
 
 .#{$prefix-cls}-on-error {
   position: absolute;
