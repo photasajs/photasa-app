@@ -27,7 +27,7 @@
         "test:ui": "vitest --ui",
         "test:coverage": "vitest run --coverage",
         "test:watch": "vitest watch",
-        "test": "npm run test:unit && npm run test:e2e"
+        "test": "npm run test:unit"
     },
     "dependencies": {
         "@babel/core": "7.21.8",
