@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Photosa",
+        "title": "Photasa",
         "folderList": "Folder List"
     },
     "preference": {
@@ -91,16 +91,16 @@
     "about": {
         "antvDescription": "Data Visualization Solution",
         "introduction": {
-            "title": "About Photosa",
-            "content": "Photosa is a modern, privacy-friendly photo management tool inspired by Picasa. Organize, browse, and enjoy your photos and videos with powerful local features and a beautiful interface—no cloud required.",
-            "summary": "Photosa helps you rediscover and manage your memories with ease.",
+            "title": "About Photasa",
+            "content": "Photasa is a modern, privacy-friendly photo management tool inspired by Picasa. Organize, browse, and enjoy your photos and videos with powerful local features and a beautiful interface—no cloud required.",
+            "summary": "Photasa helps you rediscover and manage your memories with ease.",
             "highlight": "local-first, fast, and user-friendly",
             "userExperience": "photo management experience",
             "focus": "."
         },
         "resources": {
             "title": "Resources",
-            "content": "Explore additional resources and documentation for Photosa.",
+            "content": "Explore additional resources and documentation for Photasa.",
             "download": "Download Resources"
         },
         "press": "Press",
@@ -133,5 +133,10 @@
         "resetFoldersTitle": "Advanced: Reset Folder Storage",
         "resetFoldersDesc": "This will clear all folder configs and rebuild cache immediately. This action is irreversible. Proceed with caution!",
         "resetFoldersBtn": "Reset Folder Storage"
+    },
+    "empty": {
+        "image": "No images",
+        "openConfigDirBtn": "Open Config Directory",
+        "importBtn": "Import Images"
     }
 }

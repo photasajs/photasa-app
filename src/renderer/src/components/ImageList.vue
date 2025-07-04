@@ -14,6 +14,9 @@ import LazyImage from "./LazyImage.vue";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
+import LoadingState from "./common/LoadingState.vue";
+import EmptyState from "./common/EmptyState.vue";
+import SkeletonList from "./common/SkeletonList.vue";
 
 const { t } = useI18n();
 
@@ -71,7 +74,9 @@ function toImage(file: Photo): Image {
 watch(currentFolder, async (newVal) => {
     if (newVal) {
         loadingPhotasaConfig.value = true;
-        currentFolderConfig.value = await getPhotasaConfig(currentFolder.value);
+        const minDelay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+        const [config] = await Promise.all([getPhotasaConfig(currentFolder.value), minDelay(400)]);
+        currentFolderConfig.value = config;
         loadingPhotasaConfig.value = false;
     }
 });
@@ -227,6 +232,14 @@ onUnmounted(() => {
         resizeObserver.unobserve(imageListRef.value);
     }
 });
+
+// 假设 thumbnailSize、containerWidth、gap 可用
+const gap = 16;
+const skeletonRows = computed(() => {
+    // 计算每行图片数，最少为1
+    return Math.max(1, Math.floor((containerWidth.value || 800) / (thumbnailSize.value + gap)));
+});
+const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
 </script>
 
 <template>
@@ -241,36 +254,34 @@ onUnmounted(() => {
         </div>
         <!-- 内容区 -->
         <div ref="imageListRef" class="flex-1 min-h-0 overflow-auto image-list relative">
-            <!-- loading骨架屏+美观遮罩+Heroicons动画 -->
+            <!-- 空状态：集成通用 EmptyState 组件 -->
+            <template v-if="!loadingPhotasaConfig && rows.length === 0">
+                <EmptyState
+                    :emptyText="t('empty.image')"
+                    :buttonText="t('empty.importBtn')"
+                    @buttonClick="$emit('import')"
+                />
+            </template>
+            <!-- 加载状态：集成骨架屏+LoadingState 组件 -->
             <div
-                v-if="loadingPhotasaConfig"
-                class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-gradient-to-br from-white/90 to-blue-100/80 transition-opacity duration-300 rounded-lg shadow-lg pointer-events-auto"
+                v-else-if="loadingPhotasaConfig"
+                class="absolute inset-0 z-30 bg-gradient-to-br from-white/90 to-blue-100/80 transition-opacity duration-300 rounded-lg shadow-lg pointer-events-auto"
                 style="backdrop-filter: blur(2px)"
             >
-                <div class="flex flex-wrap gap-6 justify-center mb-6">
-                    <div
-                        v-for="i in 8"
-                        :key="i"
-                        class="w-[150px] h-[150px] bg-gray-200 rounded-lg animate-pulse"
-                    ></div>
-                </div>
-                <div class="flex items-center mt-2">
-                    <!-- Heroicons ArrowPathIcon 官方标准 -->
-                    <svg
-                        class="!animate-spin h-10 w-10 text-blue-500 spin"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M12 4v4m0 0l-2-2m2 2l2-2m6 6a9 9 0 11-6-8.485"
-                        />
-                    </svg>
-                    <span class="ml-4 text-blue-500 font-semibold text-lg">加载中...</span>
+                <!-- 外层加 px-4 保证骨架屏左右对齐 -->
+                <div class="px-4">
+                    <LoadingState :loadingText="t('loading')">
+                        <template #skeleton>
+                            <SkeletonList
+                                :count="skeletonCount"
+                                :width="thumbnailSize"
+                                :height="thumbnailSize"
+                                :rows="skeletonRows"
+                                :gap="gap"
+                                :customStyle="{ minHeight: thumbnailSize * 2 + gap + 'px' }"
+                            />
+                        </template>
+                    </LoadingState>
                 </div>
             </div>
             <!-- 虚拟滚动渲染图片行 -->
@@ -279,6 +290,7 @@ onUnmounted(() => {
                     :style="{
                         height: virtualizerHeight,
                         position: 'relative',
+                        marginTop: '16px',
                     }"
                 >
                     <div
@@ -405,6 +417,11 @@ onUnmounted(() => {
 }
 .spin {
     animation: spin 1s linear infinite;
+}
+.modern-spinner {
+    display: inline-block;
+    vertical-align: middle;
+    animation: none;
 }
 @keyframes spin {
     0% {

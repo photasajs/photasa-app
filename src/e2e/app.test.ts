@@ -13,7 +13,7 @@ test.describe("Electron App E2E", () => {
     });
 
     test.afterAll(async () => {
-        await app.close();
+        await app?.close?.();
     });
 
     test("should have the correct window title", async () => {

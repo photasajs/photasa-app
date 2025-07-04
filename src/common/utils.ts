@@ -10,6 +10,10 @@ function toThumbnailPath(photoPath: string): string {
     return `thumbnail-${photoPath}.png`;
 }
 
+function toPosix(p: string): string {
+    return p.replace(/\\/g, "/");
+}
+
 /**
  * Build the path for a thumbnail file
  * @param photoPath - The path to the photo file
@@ -23,7 +27,7 @@ function toThumbnailPath(photoPath: string): string {
 export function buildThumbnailPath(photoPath: string): string {
     // Prepare thumbnail path for image
     const dir = path.normalize(path.join(path.dirname(photoPath), PHOTASA_ORIGINALS));
-    return path.normalize(path.join(dir, toThumbnailPath(path.basename(photoPath))));
+    return toPosix(path.join(dir, toThumbnailPath(path.basename(photoPath))));
 }
 
 /**
@@ -36,12 +40,12 @@ export function buildThumbnailPath(photoPath: string): string {
  * ```
  */
 export function toRelativeThumbnailPath(photoPath: string): string {
-    return path.normalize(path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath))));
+    return toPosix(path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath))));
 }
 
 export function toPreviewPath(target: string): string {
     const fileName = path.basename(target, path.extname(target));
-    return path.normalize(path.join(path.dirname(target), PHOTASA_ORIGINALS, `${fileName}.jpeg`));
+    return toPosix(path.join(path.dirname(target), PHOTASA_ORIGINALS, `${fileName}.jpeg`));
 }
 
 export function ratioStringToParts(str: string): number[] {
@@ -81,8 +85,8 @@ export function shouldIgnorePhotasaPath(photoPath: string): boolean {
 }
 
 export function isFileUnderFolder(file: string, folder: string): boolean {
-    const dirname = path.dirname(file);
-    return dirname === path.normalize(folder);
+    const dirname = toPosix(path.dirname(file));
+    return dirname === toPosix(path.normalize(folder));
 }
 
 /**
@@ -101,7 +105,7 @@ export function toFileName(target: string): string {
  * @returns thumbnail file name
  */
 export function toThumbnailName(target: string): string {
-    return path.normalize(path.join(PHOTASA_ORIGINALS, `${toFileName(target)}.png`));
+    return toPosix(path.join(PHOTASA_ORIGINALS, `${toFileName(target)}.png`));
 }
 
 /**
@@ -110,7 +114,7 @@ export function toThumbnailName(target: string): string {
  * @returns relative file name
  */
 export function shortenThumbnailName(file: string): string {
-    return path.normalize(path.join(PHOTASA_ORIGINALS, path.basename(file)));
+    return toPosix(path.join(PHOTASA_ORIGINALS, path.basename(file)));
 }
 
 /**

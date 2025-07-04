@@ -2,39 +2,34 @@
     "message": {
         "hello": "こんにちは、世界"
     },
+    "app": {
+        "title": "倉廩図司",
+        "folderList": "ディレクトリリスト"
+    },
     "preference": {
         "settings": "設定",
         "tabs": {
             "general": "一般",
-            "about": "約",
+            "about": "概要",
             "theme": "テーマ",
             "advanced": "高度な設定"
         },
-        "folderList": "フォルダーリスト",
+        "folderList": "ディレクトリリスト",
         "folderListUsage": "使い方",
-        "folderListDesc": "リストにディレクトリを追加すると、フォトマネージャーはそのディレクトリ内の写真とビデオをリアルタイムで管理できます。",
-        "watchFolderList": "以下のディレクトリ内の写真とビデオを管理できます。",
+        "folderListDesc": "ディレクトリをリストに追加すると、倉廩図司はそのディレクトリ内の写真と動画をリアルタイムで管理できます。",
+        "watchFolderList": "倉廩図司は以下のディレクトリ内の写真と動画を管理できます。",
         "chooseDirectory": "ディレクトリを選択してリストに追加",
         "thumbnailSize": "サムネイルサイズ",
         "darkMode": "ダークモード",
         "language": "言語",
-        "scanning": "スキャン中",
-        "scanError": {
-            "title": "スキャンエラー",
-            "message": "[{path}]のサブディレクトリをスキャンできませんでした。エラー: {error}。メインディレクトリは追加されます。"
-        },
-        "resetFolders": {
-            "title": "高度な操作：ディレクトリストレージのリセット",
-            "desc": "この操作はすべてのディレクトリ設定を消去し、キャッシュを即座に再構築します。元に戻せませんのでご注意ください！",
-            "button": "ディレクトリストレージをリセット"
-        }
+        "scanning": "スキャン中"
     },
     "import": {
         "photos": "写真をインポート",
         "allowDuplicateRename": "重複写真のリネームを許可",
         "targetDirectory": "エクスポートディレクトリ",
         "chooseDirectory": "インポートディレクトリを選択",
-        "buttton": {
+        "button": {
             "import": "インポート",
             "cancel": "キャンセル",
             "ok": "OK"
@@ -43,19 +38,20 @@
     "about": {
         "antvDescription": "データ可視化ソリューション",
         "introduction": {
-            "title": "Photosaについて",
-            "content": "Photosaは、Picasaにインスパイアされた、モダンでプライバシーに配慮した写真管理ツールです。強力なローカル機能と美しいインターフェースで、写真やビデオを整理、閲覧、楽しむことができます—クラウドは不要です。",
-            "summary": "Photosaは、思い出を簡単に再発見し、管理するお手伝いをします。",
-            "highlight": "ローカルファースト、高速、使いやすい",
-            "userExperience": "写真管理体験",
+            "title": "紹介",
+            "content": "こんにちは！これは写真を管理・整理するためのツールです。",
+            "summary": "このアプリケーションは",
+            "highlight": "ユーザーフレンドリーなインターフェース",
+            "userExperience": "ユーザー体験",
             "focus": "。"
         },
         "resources": {
             "title": "リソース",
-            "content": "Photosaの追加リソースとドキュメントを探索してください。",
+            "content": "以下のリソースが利用可能です：",
+            "and": "と",
             "download": "リソースをダウンロード"
         },
-        "press": "押して",
+        "press": "押す",
         "toExit": "終了",
         "markdown": "# Photasaについて\n\nPhotasaは、クラシックなPicasaにインスパイアされた、モダンでプライバシーに配慮したローカル写真管理ツールです。\n美しいインターフェースと強力なローカル機能で、写真や動画を効率的に閲覧・整理・管理できます。クラウド不要。\n\n## 主な機能\n\n- ローカル写真・動画のスマートインポートと管理\n- 高速サムネイル生成とプレビュー\n- 多言語UIとテーマ切替\n- バッチ操作と効率的な検索\n- データのプライバシーとセキュリティ\n\n## リソース\n\n- [プロジェクトドキュメント](/docs/resources)\n- [オープンソースリポジトリ](https://github.com/your-org/picasa-vue)\n- [☕️ Buy Me a Coffeeでサポート](https://www.buymeacoffee.com/yourname)\n\n`Esc`キーで終了"
     },
@@ -77,10 +73,48 @@
         }
     },
     "notification": {
+        "info": "お知らせ",
+        "warn": "注意",
+        "error": "エラー",
+        "scan": {
+            "title": "ディレクトリのスキャン",
+            "message": "ディレクトリのスキャンが完了し、写真が倉廩図司にインポートされました。"
+        },
+        "duplicatePath": {
+            "title": "重複したディレクトリ",
+            "message": "ディレクトリ[{folder}]はすでに倉廩図司に存在します。"
+        },
+        "emptyPath": {
+            "title": "ディレクトリを選択",
+            "message": "ディレクトリを選択し、追加操作を完了してください。"
+        },
         "resetFolders": {
             "title": "リセット完了",
             "message": "すべてのディレクトリキャッシュが再構築されました。"
         }
+    },
+    "status": {
+        "ready": "準備完了",
+        "readingConfig": "フォトライブラリ情報を読み込み中 [{config}]",
+        "loadingConfig": "フォトライブラリ情報を読込中",
+        "processing": "処理中 [{file}]",
+        "scanned": "処理完了",
+        "scanComplete": "ディレクトリ[{path}]の処理が完了しました",
+        "start": "スキャン開始",
+        "progress": "スキャン進行状況",
+        "complete": "スキャン完了",
+        "error": "スキャンエラー"
+    },
+    "button": {
+        "import": "インポート",
+        "cancel": "キャンセル",
+        "ok": "OK",
+        "fixConfig": "フォトライブラリ情報を修復"
+    },
+    "resetFolders": {
+        "title": "高度な操作：ディレクトリストレージのリセット",
+        "desc": "この操作はすべてのディレクトリ設定を消去し、キャッシュを即座に再構築します。元に戻せませんのでご注意ください！",
+        "button": "ディレクトリストレージをリセット"
     },
     "scan": {
         "queueTitle": "スキャンキュー",
@@ -88,8 +122,20 @@
     },
     "advancedSettings": {
         "title": "高度な設定",
-        "resetFoldersTitle": "上級操作：ディレクトリストレージのリセット",
+        "resetFoldersTitle": "高度な操作：ディレクトリストレージのリセット",
         "resetFoldersDesc": "この操作はすべてのディレクトリ設定をクリアし、キャッシュを即座に再構築します。この操作は元に戻せません。ご注意ください！",
         "resetFoldersBtn": "ディレクトリストレージをリセット"
+    },
+    "menu": {
+        "getInfo": "写真情報",
+        "open": "ファイルマネージャーで開く",
+        "rebuildThumbnail": "サムネイルを再構築",
+        "getConfig": "フォトライブラリ情報を取得",
+        "rescan": "ディレクトリを再スキャン"
+    },
+    "empty": {
+        "image": "画像がありません",
+        "openConfigDirBtn": "設定ディレクトリを開く",
+        "importBtn": "画像をインポート"
     }
 }
