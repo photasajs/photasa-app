@@ -32,7 +32,6 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            # 新增：PR 时运行单元测试
             - name: Run unit tests
               if: github.event_name == 'pull_request'
               run: npm run test
@@ -40,7 +39,6 @@ jobs:
             - name: Build app
               run: npm run ${{ matrix.build_script }}
 
-            # 仅在 develop push 或 main PR merge 后上传 artifact
             - name: Upload dist artifact
               if: >-
                   (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
