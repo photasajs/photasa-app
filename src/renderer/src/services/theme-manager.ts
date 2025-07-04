@@ -28,7 +28,7 @@ class ThemeManager {
     }
 
     // 加载本地主题包
-    async loadLocalThemes(themeDir: string): Promise<void> {
+    async loadLocalThemes(_themeDir: string): Promise<void> {
         // 伪代码：实际需用Node/Electron API读取目录和json
         // const themeFolders = await fs.readdir(themeDir);
         // for (const folder of themeFolders) {
@@ -69,18 +69,18 @@ class ThemeManager {
     }
 
     // 导入主题（伪代码，需解压zip并校验）
-    async importTheme(file: File, themeDir: string): Promise<void> {
+    async importTheme(_file: File, _themeDir: string): Promise<void> {
         // 伪代码：解压到themeDir，校验theme.json
     }
 
     // 导出主题（伪代码，需打包zip）
-    async exportTheme(themeId: string, themeDir: string): Promise<Blob> {
+    async exportTheme(_themeId: string, _themeDir: string): Promise<Blob> {
         // 伪代码：读取文件夹，打包为zip
         return new Blob();
     }
 
     // 删除主题
-    async deleteTheme(themeId: string, themeDir: string): Promise<void> {
+    async deleteTheme(_themeId: string, _themeDir: string): Promise<void> {
         // 伪代码：删除themeDir/themeId文件夹
     }
 

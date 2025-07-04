@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, reactive, watch, onMounted, onUnmounted } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { createThumbnailTask, getImageType, getPhotasaConfig } from "@renderer/utils/api";
@@ -33,7 +33,7 @@ type Image = {
 };
 
 type ImageMeta = {
-    imageType: ImageTypeResult;
+    imageType: ImageTypeResult | string | undefined;
     tags: Tags | XmpTags | IccTags;
     path: string;
     maxDepth: number;
@@ -366,12 +366,20 @@ onUnmounted(() => {
                 <a-descriptions-item label="Image Height">{{
                     imageMeta.tags?.["Image Height"]?.value
                 }}</a-descriptions-item>
-                <a-descriptions-item label="MIME Type">{{
-                    imageMeta.imageType.mime
-                }}</a-descriptions-item>
-                <a-descriptions-item label="MIME Type">{{
-                    imageMeta.imageType.ext
-                }}</a-descriptions-item>
+                <a-descriptions-item label="MIME Type">
+                    {{
+                        typeof imageMeta.imageType === "object" && imageMeta.imageType
+                            ? imageMeta.imageType.mime
+                            : ""
+                    }}
+                </a-descriptions-item>
+                <a-descriptions-item label="MIME Type">
+                    {{
+                        typeof imageMeta.imageType === "object" && imageMeta.imageType
+                            ? imageMeta.imageType.ext
+                            : ""
+                    }}
+                </a-descriptions-item>
                 <a-descriptions-item label="Location" :span="2">{{
                     imageMeta.path
                 }}</a-descriptions-item>

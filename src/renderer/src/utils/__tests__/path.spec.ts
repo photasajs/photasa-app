@@ -1,4 +1,5 @@
 import { normalizePath } from "../path";
+import { describe, it, expect } from "vitest";
 
 describe("normalizePath", () => {
     it("should append a slash to the end of the path", () => {

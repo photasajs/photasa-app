@@ -3,7 +3,7 @@ import { ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import type { PhotasaConfig } from "src/preload/types";
+import type { PhotasaConfig } from "@common/config-types";
 import {
     fixPhotasaConfig,
     getPhotasaConfig,

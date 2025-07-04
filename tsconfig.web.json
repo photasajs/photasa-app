@@ -15,10 +15,7 @@
         "jsxFactory": "h",
         "jsxFragmentFactory": "Fragment",
         "types": [
-            "vitest/globals",
             "node",
-            "@vue/test-utils",
-            "@vue/runtime-dom"
         ],
         "typeRoots": [
             "./src/renderer/src/types",

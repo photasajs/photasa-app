@@ -1,4 +1,4 @@
-import type { PhotasaConfig } from "@common/types";
+import type { PhotasaConfig } from "@common/config-types";
 
 /**
  * Cache for config files.

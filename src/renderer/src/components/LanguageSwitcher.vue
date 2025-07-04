@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { useI18n } from "vue-i18n";
 import { i18nUtils, type Locale } from "../i18n/config";
 import { usePreferenceStore } from "@renderer/stores/preference";
 
-const { t } = useI18n();
 const isOpen = ref(false);
 const preferenceStore = usePreferenceStore();
 
@@ -52,7 +50,7 @@ const currentLocaleInfo = computed(() => {
                         v-for="locale in availableLocales"
                         :key="locale"
                         @click="selectLocale(locale)"
-                        :class="{ active: locale === currentLocale.value }"
+                        :class="{ active: locale === currentLocale }"
                     >
                         <span class="locale-flag">{{ i18nUtils.getLocaleFlag(locale) }}</span>
                         <span class="locale-name">{{ i18nUtils.getLocaleNativeName(locale) }}</span>

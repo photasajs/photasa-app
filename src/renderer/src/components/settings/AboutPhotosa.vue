@@ -4,6 +4,8 @@ import Vue3MarkdownIt from "vue3-markdown-it";
 
 const { t } = useI18n();
 
+const emit = defineEmits(["exit"]);
+
 // Accessibility improvements
 const handleKeyPress = (event: KeyboardEvent) => {
     if (event.key === "Escape") {

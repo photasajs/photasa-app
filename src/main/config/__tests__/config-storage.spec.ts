@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } 
 import fs from "fs-extra";
 import path from "path";
 import * as configStorage from "../config-storage";
-import type * as CommonTypes from "@common/types";
+import { PhotasaConfig } from "@common/config-types";
 import isVideo from "is-video";
 import log4js from "log4js";
 
@@ -114,9 +114,9 @@ describe("config-storage", () => {
         for (const folder of folders) {
             mockFsStore[getConfigPath(folder)] = JSON.stringify({ photoList: [] });
         }
-        (fs.ensureFile as unknown as vi.Mock).mockResolvedValue(undefined);
-        (fs.readFile as unknown as vi.Mock).mockResolvedValue("{}");
-        (fs.writeFile as unknown as vi.Mock).mockResolvedValue(undefined);
+        (fs.ensureFile as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+        (fs.readFile as unknown as ReturnType<typeof vi.fn>).mockResolvedValue("{}");
+        (fs.writeFile as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
         vi.useFakeTimers();
         configStorage.cleanupQueueForFolder("/test/path");
     });
@@ -225,7 +225,7 @@ describe("config-storage", () => {
     describe("addToPhotoList", () => {
         it("should add a single photo to config", async () => {
             const photoPath = "/test/path/photo1.jpg";
-            const expectedConfig: CommonTypes.PhotasaConfig = {
+            const expectedConfig: PhotasaConfig = {
                 version: "1.0",
                 photoList: [
                     {
@@ -357,7 +357,7 @@ describe("config-storage", () => {
 
             // Mock the queue initialization
             vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
-                (req, postMsg, logger) => {
+                async (req, postMsg) => {
                     postMsg(
                         JSON.stringify({
                             action: "next",
@@ -403,7 +403,7 @@ describe("config-storage", () => {
 
             // Mock the queue initialization
             vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
-                (req, postMsg, logger) => {
+                async (req, postMsg) => {
                     postMsg(
                         JSON.stringify({
                             action: "complete",
@@ -436,8 +436,8 @@ describe("config-storage", () => {
 
             // Mock the queue initialization
             vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
-                (req, postMsg, logger) => {
-                    logger.error("Write error");
+                async (req, postMsg) => {
+                    mockLogger.error("Write error");
                     postMsg(
                         JSON.stringify({
                             action: "error",

@@ -14,7 +14,7 @@ import {
 import { PhotasaLogger } from "../logger";
 
 describe("Error Handler", () => {
-    const mockLogger: PhotasaLogger = {
+    const mockLogger: Partial<PhotasaLogger> = {
         error: vi.fn(),
         warn: vi.fn(),
         debug: vi.fn(),

@@ -1,7 +1,7 @@
 import { Glob } from "glob";
 import path from "path";
 import { removeFromPhotoList, addToPhotasaConfig } from "./config-storage";
-import type { PhotasaConfigResult } from "@common/types";
+import type { PhotasaConfigResult } from "@common/config-types";
 import { Observable, Subscriber, from, mergeMap } from "rxjs";
 import { FileSystemError, ConfigError, handleError } from "@common/error-handler";
 import type { ConfigRequest } from "@common/config-types";

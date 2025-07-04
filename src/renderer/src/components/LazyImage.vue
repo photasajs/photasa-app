@@ -13,7 +13,7 @@ const props = defineProps<{
     raw: string;
 }>();
 
-const { src, raw, height, width, fallback, isVideo } = toRefs(props);
+const { src, height, width, fallback, isVideo } = toRefs(props);
 const isReady = ref(false);
 const actualSrc = ref("");
 const isLoading = ref(false);

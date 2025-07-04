@@ -50,10 +50,10 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
         // 检查 buffer 长度
         if (decoded.length !== width * height * channels) {
             logger.error(
-                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${data.length}`,
+                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${decoded ? decoded.length : "unknown"}`,
             );
             throw new Error(
-                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${data.length}`,
+                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${decoded ? decoded.length : "unknown"}`,
             );
         }
         // 若 channels 不是 4，补齐为 RGBA

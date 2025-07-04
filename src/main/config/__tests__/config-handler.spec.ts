@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as configHandler from "../config-handler";
 import type { PhotasaLogger } from "@common/logger";
+import { ConfigRequest } from "@common/config-types";
 
 // Mocks
 const mockAddToPhotasaConfig = vi.fn();
@@ -50,7 +51,7 @@ describe("config-handler", () => {
     });
 
     it("addConfig calls addToPhotasaConfig with correct args", () => {
-        const result = { action: "add", paths: ["/folder1"] };
+        const result: ConfigRequest = { action: "add", paths: ["/test"] };
         configHandler.addConfig(result, mockPostMessage, mockLogger as unknown as PhotasaLogger);
         expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
             result,
@@ -60,10 +61,10 @@ describe("config-handler", () => {
     });
 
     it("queryConfig sends next and complete actions", async () => {
-        const paths = ["/folder1"];
         const logger = mockLogger as unknown as PhotasaLogger;
         const postMessage = mockPostMessage;
-        configHandler.queryConfig({ action: "query", paths }, postMessage, logger);
+        const request: ConfigRequest = { action: "query", queueId: 1, paths: ["/test"] };
+        configHandler.queryConfig(request, postMessage, logger);
         // Wait for the simulated stream
         await new Promise((r) => setTimeout(r, 10));
         expect(postMessage).toHaveBeenCalledWith(
@@ -77,7 +78,11 @@ describe("config-handler", () => {
     it("removeConfig sends next and complete actions", async () => {
         const result = { path: "/folder1/file1.photasa.json" };
         mockRemoveFromPhotoList.mockResolvedValueOnce(result);
-        const request = { queueId: 1, paths: ["/folder1/file1.photasa.json"] };
+        const request: ConfigRequest = {
+            action: "remove",
+            queueId: 1,
+            paths: ["/folder1/file1.photasa.json"],
+        };
         configHandler.removeConfig(
             request,
             mockPostMessage,

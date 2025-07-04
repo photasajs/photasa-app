@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref, watch, inject, h } from "vue";
+import { computed, ref, watch, inject } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -21,7 +21,7 @@ import { loggers } from "@common/logger";
 
 import UserPreference from "./components/UserPreference.vue";
 import { useI18n } from "vue-i18n";
-import type { ScanAction } from "src/preload/types";
+import type { ScanAction } from "@common/scan-types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
