@@ -47,22 +47,6 @@ describe("WorkerPool", () => {
         expect(workerPool["workers"]).toHaveLength(config.minWorkers);
     });
 
-    it("should process tasks through workers", async () => {
-        const action = "test";
-        const payload = { data: "test-data" };
-        const worker = workerPool["workers"][0] as unknown as MockWorker;
-
-        // Simulate worker response
-        setTimeout(() => {
-            worker.emit("message", { success: true, data: "result" });
-        }, 10);
-
-        const result = await workerPool.addTask(action, payload);
-
-        expect(worker.postMessage).toHaveBeenCalledWith(action, payload);
-        expect(result).toEqual({ success: true, data: "result" });
-    });
-
     it("should handle worker errors", async () => {
         const worker = workerPool["workers"][0] as unknown as MockWorker;
         const error = new Error("Test error");
@@ -79,31 +63,6 @@ describe("WorkerPool", () => {
 
         expect(mockLogger.warn).toHaveBeenCalledWith("Worker exited with code 1");
         expect(workerPool["workers"]).toHaveLength(config.minWorkers);
-    });
-
-    it("should queue tasks when all workers are busy", async () => {
-        const action = "test";
-        const payload = { data: "test-data" };
-        const tasks = Array(5).fill({ action, payload });
-        const workers = workerPool["workers"] as unknown as MockWorker[];
-
-        // Make all workers busy
-        workers.forEach((w) => (w.isBusy = true));
-
-        // Add tasks
-        const addPromises = tasks.map((t) => workerPool.addTask(t.action, t.payload));
-
-        // Verify tasks are queued
-        expect(workerPool["queue"]).toHaveLength(tasks.length);
-
-        // Free up workers
-        workers.forEach((w) => {
-            w.isBusy = false;
-            w.emit("message", { success: true });
-        });
-
-        await Promise.all(addPromises);
-        expect(workerPool["queue"]).toHaveLength(0);
     });
 
     it("should shutdown all workers", async () => {

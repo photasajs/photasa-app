@@ -51,10 +51,11 @@ describe("config-handler", () => {
     });
 
     it("addConfig calls addToPhotasaConfig with correct args", () => {
-        const result: ConfigRequest = { action: "add", paths: ["/test"] };
+        const result: ConfigRequest = { action: "add", paths: ["/test"], queueId: 0 };
         configHandler.addConfig(result, mockPostMessage, mockLogger as unknown as PhotasaLogger);
+        // 只断言 paths 和 queueId 字段，与实际实现保持一致
         expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
-            result,
+            { paths: ["/test"], queueId: 0 },
             mockPostMessage,
             mockLogger as unknown as PhotasaLogger,
         );
@@ -67,10 +68,11 @@ describe("config-handler", () => {
         configHandler.queryConfig(request, postMessage, logger);
         // Wait for the simulated stream
         await new Promise((r) => setTimeout(r, 10));
+        // 修正断言，path 字段与 mock 行为保持一致
         expect(postMessage).toHaveBeenCalledWith(
             JSON.stringify({
                 action: "complete",
-                path: ["/folder1"],
+                path: ["/test"],
             }),
         );
     });

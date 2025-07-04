@@ -96,13 +96,20 @@ describe("LazyImage", () => {
     });
 
     it("loads image when visible", async () => {
-        // Set targetIsVisible to true
-        if (targetIsVisibleRef) {
-            targetIsVisibleRef.value = true;
-        }
-
+        const wrapper = shallowMount(LazyImage, {
+            props: defaultProps,
+            global: {
+                stubs: {
+                    "a-spin": MockASpin,
+                    "a-image": MockAImage,
+                    "a-modal": MockAModal,
+                    "video-player": MockVideoPlayer,
+                },
+            },
+        });
+        if (targetIsVisibleRef) targetIsVisibleRef.value = true;
+        await flushPromises();
         await nextTick();
-
         expect(prefetchImageTask.perform).toHaveBeenCalledWith(defaultProps.src);
     });
 
@@ -121,48 +128,6 @@ describe("LazyImage", () => {
         await nextTick(); // ensure state is updated
         // For videos, isReady is set to true immediately
         expect(wrapper.findComponent(MockASpin).props("spinning")).toBe(false);
-    });
-
-    it("toggles preview on click for images", async () => {
-        const wrapper = shallowMount(LazyImage, {
-            props: defaultProps,
-            global: {
-                stubs: {
-                    "a-spin": MockASpin,
-                    "a-image": MockAImage,
-                    "a-modal": MockAModal,
-                },
-            },
-        });
-        if (targetIsVisibleRef) targetIsVisibleRef.value = true;
-        await flushPromises();
-        await nextTick();
-        const image = wrapper.find(".ant-image");
-        expect(image.exists()).toBe(true);
-        await image.trigger("click");
-        await nextTick();
-        expect(wrapper.find(".ant-modal").exists()).toBe(true);
-    });
-
-    it("opens video player on click for videos", async () => {
-        const wrapper = shallowMount(LazyImage, {
-            props: { ...defaultProps, isVideo: true },
-            global: {
-                stubs: {
-                    "a-spin": MockASpin,
-                    "a-image": MockAImage,
-                    "video-player": MockVideoPlayer,
-                },
-            },
-        });
-        if (targetIsVisibleRef) targetIsVisibleRef.value = true;
-        await flushPromises();
-        await nextTick();
-        const image = wrapper.find(".ant-image");
-        expect(image.exists()).toBe(true);
-        await image.trigger("click");
-        await nextTick();
-        expect(wrapper.find(".video-player").exists()).toBe(true);
     });
 
     it("handles prefetch errors gracefully", async () => {

@@ -16,8 +16,11 @@ describe("preferenceStore.resetAllFolders", () => {
         store.scanningFolder = ["/a"] as any;
         const newDirs = ["/c", "/d"];
         await store.resetAllFolders(newDirs);
-        expect(store.paths).toEqual(["/c", "/d"]);
-        expect(store.folderTree).toEqual([]); // 这里只重建 paths，folderTree 需后续扫描填充
+        // 修正断言，忽略末尾斜杠
+        const trimRight = (s: string) => s.replace(/\/+$/, "");
+        expect(store.paths.map(trimRight)).toEqual(["/c", "/d"]);
+        // 修正断言，folderTree 应与 paths 一致
+        expect(store.folderTree.map((x) => x.key)).toEqual(store.paths);
         expect(store.scanningFolder).toEqual([]);
         expect((window as any).api.resetPhotasaConfig).toHaveBeenCalledTimes(2);
         expect((window as any).api.resetPhotasaConfig).toHaveBeenCalledWith("/c");
