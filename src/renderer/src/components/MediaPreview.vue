@@ -3,7 +3,15 @@ import { ref, watch } from "vue";
 import VueEasyLightbox from "./LightBox";
 
 const props = defineProps<{
-    images: Array<{ src: string; w: number; h: number; title?: string }>;
+    images: Array<{
+        src: string;
+        w: number;
+        h: number;
+        title?: string;
+        isVideo?: boolean;
+        raw?: string;
+        thumbnail?: string;
+    }>;
     index: number;
     visible: boolean;
 }>();
@@ -29,7 +37,10 @@ function handleHide() {
     emit("close");
 }
 function handleOnIndexChange(newIndex: number) {
-    emit("change", newIndex);
+    // 只在索引实际变化时才 emit，防止递归死循环
+    if (newIndex !== currentIndex.value) {
+        emit("change", newIndex);
+    }
 }
 </script>
 <template>
@@ -43,12 +54,24 @@ function handleOnIndexChange(newIndex: number) {
         <template #default="{ currentImg }">
             <video-player
                 v-if="currentImg.isVideo"
-                :src="currentImg.src"
+                :class="['vjs-big-play-centered']"
+                :src="currentImg.raw"
                 :poster="currentImg.thumbnail"
                 :width="currentImg.w"
                 :height="currentImg.h"
-            ></video-player>
-            <img v-else :src="currentImg.src" data-src="currentImg.src" />
+                playsinline
+                controls
+                :loop="true"
+                :volume="0.6"
+            />
+            <img
+                v-else
+                :src="currentImg.raw"
+                :alt="currentImg.title"
+                :width="currentImg.w"
+                :height="currentImg.h"
+                style="max-width: 100%; max-height: 80vh"
+            />
         </template>
     </VueEasyLightbox>
 </template>

@@ -13,7 +13,7 @@ import { Photo } from "@renderer/utils/folder-tree";
 import LazyImage from "./LazyImage.vue";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
-import PhotoPreview from "./PhotoPreview.vue";
+import MediaPreview from "./MediaPreview.vue";
 
 const { t } = useI18n();
 
@@ -383,12 +383,11 @@ onUnmounted(() => {
             </a-descriptions>
         </a-spin>
     </a-drawer>
-    <PhotoPreview
+    <MediaPreview
         :images="previewImages"
         :index="previewIndex"
         :visible="previewVisible"
         @close="previewVisible = false"
-        @change="(i) => (previewIndex = i)"
     />
 </template>
 <style lang="less">

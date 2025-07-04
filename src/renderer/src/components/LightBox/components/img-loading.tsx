@@ -1,7 +1,7 @@
-import { prefixCls } from '../constant'
+import { prefixCls } from "../constant";
 
 export const ImgLoading = () => (
-  <div class={`${prefixCls}-loading`}>
-    <div class="ring"></div>
-  </div>
-)
+    <div class={`${prefixCls}-loading`}>
+        <div class="ring"></div>
+    </div>
+);

@@ -36,3 +36,45 @@
 ---
 设计变更人：AI助手
 日期：2025-07-11
+
+## 递归更新死循环修复记录
+
+### 问题现象
+- 在 ImageList/MediaPreview/VueEasyLightbox 组件联动时，出现 Maximum recursive updates exceeded 报错。
+- 具体表现为：图片预览切换时，index 的 set/emit 形成递归环，导致栈溢出。
+
+### 根因分析
+- 父组件（ImageList）通过 @change 事件直接赋值 previewIndex，子组件（MediaPreview）watch index 并 emit change，形成 set-emit-set 死循环。
+- VueEasyLightbox 内部 changeIndex 也会 emit on-index-change，进一步加剧递归。
+
+### 解决方案
+- 采用“只在索引实际变化时才 emit/set”原则，彻底打断递归链。
+- MediaPreview.vue: handleOnIndexChange 只在 newIndex !== currentIndex.value 时 emit change。
+- ImageList.vue: @change 事件处理时，只有 previewIndex !== i 时才赋值。
+- 均已补充注释，防止后续误用。
+
+### 代码变更摘要
+- MediaPreview.vue
+  ```ts
+  function handleOnIndexChange(newIndex: number) {
+      // 只在索引实际变化时才 emit，防止递归死循环
+      if (newIndex !== currentIndex.value) {
+          emit("change", newIndex);
+      }
+  }
+  ```
+- ImageList.vue
+  ```ts
+  function onPreviewIndexChange(i: number) {
+      // 只在索引实际变化时才赋值，防止递归死循环
+      if (previewIndex.value !== i) {
+          previewIndex.value = i;
+      }
+  }
+  ```
+
+### 影响评估
+- 彻底消除递归 set/emit 死循环，提升组件健壮性。
+- 兼容所有现有业务逻辑，无副作用。
+
+---
