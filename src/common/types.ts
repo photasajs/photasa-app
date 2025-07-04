@@ -121,3 +121,11 @@ export interface FileAction {
 export interface FileException {
     code?: string;
 }
+
+/**
+ * 位置
+ */
+export interface Position {
+    x: number;
+    y: number;
+}
