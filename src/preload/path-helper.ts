@@ -135,3 +135,17 @@ export function walkthroughFiles(source: ScanAction): Observable<PhotoPath> {
             });
     });
 }
+
+/**
+ * 归一化路径，自动适配平台分隔符
+ */
+export function normalizePath(p: string): string {
+    return path.normalize(p);
+}
+
+/**
+ * 路径拼接，自动适配平台分隔符
+ */
+export function mergePath(left: string, right = ""): string {
+    return path.join(left, right);
+}

@@ -28,6 +28,7 @@ import {
     toThumbnailName,
     shortenThumbnailName,
 } from "../common";
+import * as pathHelper from "./path-helper";
 
 // Custom APIs for renderer
 const api = {
@@ -57,6 +58,9 @@ const api = {
     isImageFile,
     fileUrlFromPath,
     cleanupScanQueue,
+    // 新增：路径相关API
+    normalizePath: pathHelper.normalizePath,
+    mergePath: pathHelper.mergePath,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
