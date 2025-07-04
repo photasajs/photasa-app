@@ -133,5 +133,10 @@
         "resetFoldersTitle": "Advanced: Reset Folder Storage",
         "resetFoldersDesc": "This will clear all folder configs and rebuild cache immediately. This action is irreversible. Proceed with caution!",
         "resetFoldersBtn": "Reset Folder Storage"
+    },
+    "empty": {
+        "image": "No images",
+        "openConfigDirBtn": "Open Config Directory",
+        "importBtn": "Import Images"
     }
 }

@@ -44,6 +44,9 @@ const showScanList = ref(false);
 const loading = ref(false);
 const loadingConfigs = ref(false);
 
+// 控制导入对话框显隐的响应式变量
+const showImportDialog = ref(false);
+
 const findPhotoService = inject(FindPhotoServiceKey);
 if (!findPhotoService) throw new Error("FindPhotoService not provided");
 
@@ -238,7 +241,13 @@ findPhotoService.onFindPhoto((args: any) => {
                 <template #B>
                     <a-layout class="image-content">
                         <a-layout-content class="image-list">
-                            <ImageList></ImageList>
+                            <!-- 集成图片列表，监听 import 事件，弹出导入对话框 -->
+                            <ImageList @import="showImportDialog = true" />
+                            <!-- 集成导入对话框，show 受控，关闭时自动隐藏 -->
+                            <ImportPhotos
+                                :show="showImportDialog"
+                                @update:show="showImportDialog = $event"
+                            />
                         </a-layout-content>
                     </a-layout>
                 </template>

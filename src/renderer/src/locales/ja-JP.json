@@ -132,5 +132,10 @@
         "rebuildThumbnail": "サムネイルを再構築",
         "getConfig": "フォトライブラリ情報を取得",
         "rescan": "ディレクトリを再スキャン"
+    },
+    "empty": {
+        "image": "画像がありません",
+        "openConfigDirBtn": "設定ディレクトリを開く",
+        "importBtn": "画像をインポート"
     }
 }

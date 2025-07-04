@@ -132,5 +132,10 @@
         "resetFoldersTitle": "Erweiterte Aktion: Ordnerspeicher zurücksetzen",
         "resetFoldersDesc": "Diese Aktion löscht alle Ordnerkonfigurationen und baut den Cache sofort neu auf. Diese Aktion ist nicht umkehrbar, bitte seien Sie vorsichtig!",
         "resetFoldersBtn": "Ordnerspeicher zurücksetzen"
+    },
+    "empty": {
+        "image": "Keine Bilder",
+        "openConfigDirBtn": "Konfigurationsverzeichnis öffnen",
+        "importBtn": "Bilder importieren"
     }
 }

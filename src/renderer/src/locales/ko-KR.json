@@ -130,5 +130,10 @@
         "resetFoldersTitle": "고급 작업: 디렉터리 저장소 재설정",
         "resetFoldersDesc": "이 작업은 모든 디렉터리 구성을 지우고 즉시 캐시를 재구성합니다. 이 작업은 되돌릴 수 없습니다. 신중히 진행하세요!",
         "resetFoldersBtn": "디렉터리 저장소 재설정"
+    },
+    "empty": {
+        "image": "이미지가 없습니다",
+        "openConfigDirBtn": "설정 디렉터리 열기",
+        "importBtn": "이미지 가져오기"
     }
 }

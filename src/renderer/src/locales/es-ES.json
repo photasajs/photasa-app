@@ -130,5 +130,10 @@
         "resetFoldersTitle": "Operación avanzada: Restablecer almacenamiento de carpetas",
         "resetFoldersDesc": "Esta operación borrará todas las configuraciones de carpetas y reconstruirá la caché inmediatamente. ¡Esta acción es irreversible, proceda con precaución!",
         "resetFoldersBtn": "Restablecer almacenamiento de carpetas"
+    },
+    "empty": {
+        "image": "No hay imágenes",
+        "openConfigDirBtn": "Abrir directorio de configuración",
+        "importBtn": "Importar imágenes"
     }
 }
