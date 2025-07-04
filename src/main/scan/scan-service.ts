@@ -1,6 +1,6 @@
 import createWorker from "./scan-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
-import type { ScanAction } from "@common/types";
+import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
 import { notifyStatus } from "@common/notify";
 import type { NotifyPayload } from "@common/types";

@@ -1,13 +1,13 @@
 import klaw from "klaw";
 import path from "path";
-import type { FileAction } from "./types";
+import type { FileAction } from "@common/types";
 import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { buildThumbnailPath, shouldIgnorePhotasaPath, isHiddenFile } from "../common";
-import type { PhotoPath, ScanAction } from "./types";
+import { buildThumbnailPath, shouldIgnorePhotasaPath, isHiddenFile } from "@common/index";
+import type { ScanAction, PhotoPath } from "@common/scan-types";
 
 export interface PathOption {
     root?: string;

@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "el
 
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import { initFileWatcher } from "./fs-watch";
+import WatchService from "./watch/watch-service";
 import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
@@ -11,7 +11,6 @@ import klawSync from "klaw-sync";
 import ThumbnailService from "./thumbnail/thumbnail-service";
 import ConfigService from "./config/config-service";
 import ScanService from "./scan/scan-service";
-import { closeFileWatcher } from "./fs-watch";
 import fs from "fs";
 import { loggers } from "@common/logger";
 
@@ -21,6 +20,7 @@ Bugsnag.start({
 
 const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;
+let watchService: WatchService | undefined;
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -138,9 +138,8 @@ function createWindow(): void {
     new ConfigService(ipcMain, mainWindow);
     // Setup Scan Service
     new ScanService(ipcMain, mainWindow);
-
     // Setup File Watch Service
-    initFileWatcher(ipcMain, mainWindow, logger);
+    watchService = new WatchService(ipcMain, mainWindow);
 }
 
 /**
@@ -191,7 +190,7 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
     }
-    closeFileWatcher();
+    watchService?.close();
     mainWindow = null;
 });
 

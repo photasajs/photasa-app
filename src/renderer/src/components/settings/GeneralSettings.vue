@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { ref, reactive, UnwrapRef, computed } from "vue";
+import { reactive, UnwrapRef, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { usePhotosStore } from "@renderer/stores/photos";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
-import LanguageSwitcher from "../LanguageSwitcher.vue";
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
 import { notification } from "ant-design-vue";
 

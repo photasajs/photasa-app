@@ -24,7 +24,7 @@ vi.mock("worker_threads", async (importOriginal) => {
 });
 
 describe("WorkerPool", () => {
-    let workerPool: WorkerPool;
+    let workerPool: WorkerPool<any, any>;
     const mockLogger = {
         error: vi.fn(),
         warn: vi.fn(),
@@ -48,7 +48,8 @@ describe("WorkerPool", () => {
     });
 
     it("should process tasks through workers", async () => {
-        const task = { type: "test", data: "test-data" };
+        const action = "test";
+        const payload = { data: "test-data" };
         const worker = workerPool["workers"][0] as unknown as MockWorker;
 
         // Simulate worker response
@@ -56,14 +57,9 @@ describe("WorkerPool", () => {
             worker.emit("message", { success: true, data: "result" });
         }, 10);
 
-        const resultPromise = new Promise((resolve) => {
-            workerPool.on("result", resolve);
-        });
+        const result = await workerPool.addTask(action, payload);
 
-        await workerPool.addTask(task);
-        const result = await resultPromise;
-
-        expect(worker.postMessage).toHaveBeenCalledWith(task);
+        expect(worker.postMessage).toHaveBeenCalledWith(action, payload);
         expect(result).toEqual({ success: true, data: "result" });
     });
 
@@ -86,14 +82,16 @@ describe("WorkerPool", () => {
     });
 
     it("should queue tasks when all workers are busy", async () => {
-        const tasks = Array(5).fill({ type: "test" });
+        const action = "test";
+        const payload = { data: "test-data" };
+        const tasks = Array(5).fill({ action, payload });
         const workers = workerPool["workers"] as unknown as MockWorker[];
 
         // Make all workers busy
         workers.forEach((w) => (w.isBusy = true));
 
         // Add tasks
-        const addPromises = tasks.map((task) => workerPool.addTask(task));
+        const addPromises = tasks.map((t) => workerPool.addTask(t.action, t.payload));
 
         // Verify tasks are queued
         expect(workerPool["queue"]).toHaveLength(tasks.length);

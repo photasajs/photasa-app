@@ -7,6 +7,7 @@ import {
     ThumbnailResponse,
 } from "@common/thumbnail-types";
 import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
+import { getLogger } from "@common/logger";
 
 /**
  * 缩略图 worker 类型
@@ -19,6 +20,7 @@ type ThumbnailWorker = Worker<ThumbnailRequest, ThumbnailResponse>;
 export default class ThumbnailService {
     ipc: IpcMain;
     worker: ThumbnailWorker;
+    logger = getLogger("thumbnail");
 
     constructor(ipcMain: IpcMain) {
         this.ipc = ipcMain;
@@ -30,15 +32,20 @@ export default class ThumbnailService {
         });
         // 创建缩略图
         this.ipc.handle(ThumbnailServiceAction.create, async (_, arg: ThumbnailRequest) => {
+            this.logger.info("[thumbnail-service] Create thumbnail for : " + arg.thumbnail);
             return await this.createThumbnail(arg);
         });
         // 删除缩略图
         this.ipc.handle(ThumbnailServiceAction.remove, async (_, arg: ThumbnailRequest) => {
+            this.logger.info("[thumbnail-service] Remove thumbnail for : " + arg.thumbnail);
             return await this.removeThumbnail(arg);
         });
     }
 
     private createThumbnail(arg: ThumbnailRequest): Promise<ThumbnailResponse> {
+        this.logger.info(
+            "[thumbnail-service] send worker task to create thumbnail for : " + arg.thumbnail,
+        );
         return sendWorkerTask<ThumbnailWorker, ThumbnailRequest, ThumbnailResponse>(
             this.worker,
             "create",
@@ -47,6 +54,9 @@ export default class ThumbnailService {
     }
 
     private removeThumbnail(arg: ThumbnailRequest): Promise<ThumbnailResponse> {
+        this.logger.info(
+            "[thumbnail-service] send worker task to remove thumbnail for : " + arg.thumbnail,
+        );
         return sendWorkerTask<ThumbnailWorker, ThumbnailRequest, ThumbnailResponse>(
             this.worker,
             "remove",

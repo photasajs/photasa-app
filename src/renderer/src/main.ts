@@ -13,8 +13,8 @@ import "video.js/dist/video-js.css";
 import { i18n } from "./i18n/config";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
-import { FindPhotoServiceIpc } from "@renderer/services/FindPhotoService";
-import { FindPhotoServiceKey } from "@renderer/interface/IFindPhotoService";
+import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
+import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",

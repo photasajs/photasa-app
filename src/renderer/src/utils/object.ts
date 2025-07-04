@@ -5,5 +5,5 @@ export function deepCopy<T>(object: T): T {
 }
 
 export function top<T>(array): T {
-    return Array.isArray(array) ? array[array.length - 1] : undefined;
+    return Array.isArray(array) ? array[array.length - 1] : (null as T);
 }

@@ -8,13 +8,12 @@ const props = defineProps<{
     src: string;
     height: number;
     width: number;
-    preview: string;
     fallback: string;
     isVideo: boolean;
     raw: string;
 }>();
 
-const { src, raw, height, width, preview, fallback, isVideo } = toRefs(props);
+const { src, height, width, fallback, isVideo } = toRefs(props);
 const isReady = ref(false);
 const actualSrc = ref("");
 const isLoading = ref(false);
@@ -53,21 +52,6 @@ const targetIsVisible = ref(false);
 useIntersectionObserver(target, ([{ isIntersecting }]) => {
     targetIsVisible.value = isIntersecting;
 });
-
-const previewIsVisible = ref(false);
-const videoPlayerIsVisible = ref(false);
-function handleImageClick(): void {
-    if (isVideo.value) {
-        videoPlayerIsVisible.value = true;
-    } else {
-        previewIsVisible.value = !previewIsVisible.value;
-    }
-}
-function onVisibleChange(visible: boolean): void {
-    if (!visible) {
-        previewIsVisible.value = false;
-    }
-}
 </script>
 
 <template>
@@ -86,29 +70,17 @@ function onVisibleChange(visible: boolean): void {
                 :height="height"
                 :src="actualSrc"
                 :fallback="fallback"
-                :preview="{
-                    src: preview,
-                    visible: previewIsVisible,
-                    onVisibleChange: onVisibleChange,
+                :style="{
+                    margin: 'auto',
+                    objectFit: 'contain',
+                    width: width + 'px',
+                    height: height + 'px',
+                    display: 'block',
                 }"
-                :style="{ margin: 'auto' }"
-                @click="handleImageClick()"
+                :preview="false"
             />
         </a-spin>
     </div>
-    <a-modal v-model:visible="videoPlayerIsVisible" width="100%" wrap-class-name="full-modal">
-        <video-player
-            v-if="isVideo"
-            :class="['video-player', 'vjs-big-play-centered']"
-            :src="raw"
-            :poster="preview"
-            playsinline
-            controls
-            :loop="true"
-            :volume="0.6"
-        />
-        <template #footer></template>
-    </a-modal>
 </template>
 <style lang="less">
 .thumbnail-image .ant-image {

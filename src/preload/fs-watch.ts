@@ -1,8 +1,9 @@
-import type { WatchConfig, WatchCallback, WatchState, WatchAction } from "@common/types";
+import type { WatchConfig, WatchCallback, WatchState, WatchAction } from "@common/watch-types";
 import { electronAPI } from "@electron-toolkit/preload";
 import isImage from "is-image";
 import isVideo from "is-video";
 import { buildThumbnailPath } from "@common/utils";
+import { WatchServiceEvent } from "@common/watch-types";
 
 const { ipcRenderer } = electronAPI;
 
@@ -99,7 +100,7 @@ function notifyReady(action: WatchAction, _isNotify: boolean): void {
  * @param isFile - 是否是文件
  * @param path - 路径
  */
-ipcRenderer?.on("picasa:file-add", (_, { isFile, path }) => {
+ipcRenderer?.on(WatchServiceEvent.add, (_, { isFile, path }) => {
     notifyAction("add", isFile, path);
 });
 
@@ -109,7 +110,7 @@ ipcRenderer?.on("picasa:file-add", (_, { isFile, path }) => {
  * @param isFile - 是否是文件
  * @param path - 路径
  */
-ipcRenderer?.on("picasa:file-change", (_, { isFile, path }) => {
+ipcRenderer?.on(WatchServiceEvent.change, (_, { isFile, path }) => {
     notifyAction("change", isFile, path);
 });
 
@@ -119,7 +120,7 @@ ipcRenderer?.on("picasa:file-change", (_, { isFile, path }) => {
  * @param isFile - 是否是文件
  * @param path - 路径
  */
-ipcRenderer?.on("picasa:file-unlink", (_, { isFile, path }) => {
+ipcRenderer?.on(WatchServiceEvent.unlink, (_, { isFile, path }) => {
     notifyAction("delete", isFile, path);
 });
 
@@ -129,7 +130,7 @@ ipcRenderer?.on("picasa:file-unlink", (_, { isFile, path }) => {
  * @param isFile - 是否是文件
  * @param path - 路径
  */
-ipcRenderer?.on("picasa:file-raw", (_, { isFile, path }) => {
+ipcRenderer?.on(WatchServiceEvent.raw, (_, { isFile, path }) => {
     notifyAction("raw", isFile, path);
 });
 
@@ -138,7 +139,7 @@ ipcRenderer?.on("picasa:file-raw", (_, { isFile, path }) => {
  * @param action - 操作
  * @param error - 错误
  */
-ipcRenderer?.on("picasa:file-error", (_, { error }) => {
+ipcRenderer?.on(WatchServiceEvent.error, (_, { error }) => {
     notifyError("error", error, true);
 });
 
@@ -146,7 +147,7 @@ ipcRenderer?.on("picasa:file-error", (_, { error }) => {
  * 响应文件准备就绪
  * @param action - 操作
  */
-ipcRenderer?.on("picasa:file-ready", () => {
+ipcRenderer?.on(WatchServiceEvent.ready, () => {
     notifyReady("ready", true);
 });
 
@@ -160,7 +161,7 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
         listeners.push(callback);
     }
     // Start file watching
-    ipcRenderer?.send("picasa:start-file-watch", {
+    ipcRenderer?.send(WatchServiceEvent.start, {
         paths: JSON.parse(JSON.stringify(config.paths)),
         options: {
             ignored: /(^|[/\\])\../,
@@ -175,5 +176,5 @@ export function startWatching(config: WatchConfig, callback: WatchCallback): voi
  */
 export function stopWatching(): Promise<void> {
     // Stop file watching
-    return ipcRenderer?.invoke("picasa:stop-file-watch");
+    return ipcRenderer?.invoke(WatchServiceEvent.stop);
 }

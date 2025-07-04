@@ -51,7 +51,7 @@ vi.mock("heic-decode", () => ({
 vi.mock("fluent-ffmpeg", () => {
     const mockFfmpeg = vi.fn().mockImplementation(() => ({
         on: vi.fn().mockReturnThis(),
-        screenshots: vi.fn().mockImplementation((options) => {
+        screenshots: vi.fn().mockImplementation(() => {
             setTimeout(() => {
                 const callback = mockFfmpeg.mock.calls[0][0].on.mock.calls.find(
                     (call) => call[0] === "end",

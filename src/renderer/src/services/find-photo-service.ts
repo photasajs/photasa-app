@@ -1,4 +1,4 @@
-import type { IFindPhotoService } from "@renderer/interface/IFindPhotoService";
+import type { IFindPhotoService } from "@renderer/interface/find-photo-service.interface";
 
 /**
  * 用于提供 FindPhotoService 实例，通过 IPC 监听 find-photo 事件，用于刷新树结构

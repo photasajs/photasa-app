@@ -127,5 +127,11 @@
     "scan": {
         "queueTitle": "Scan Queue",
         "queueEmpty": "Queue is empty"
+    },
+    "advancedSettings": {
+        "title": "Advanced Settings",
+        "resetFoldersTitle": "Advanced: Reset Folder Storage",
+        "resetFoldersDesc": "This will clear all folder configs and rebuild cache immediately. This action is irreversible. Proceed with caution!",
+        "resetFoldersBtn": "Reset Folder Storage"
     }
 }

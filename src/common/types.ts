@@ -38,25 +38,6 @@ export interface NotifyPayload {
 }
 
 /**
- * 监听动作
- */
-export type WatchAction = "add" | "change" | "delete" | "error" | "ready" | "raw";
-
-/**
- * 监听配置
- */
-export interface WatchConfig {
-    path: string;
-    recursive: boolean;
-    paths: string[];
-}
-
-/**
- * 监听回调
- */
-export type WatchCallback = (state: WatchState) => void;
-
-/**
  * 图片类型结果
  */
 export type ImageTypeResult = "jpeg" | "png" | "gif" | "webp" | "tiff" | "unknown";
@@ -92,49 +73,9 @@ export interface DirectorySelection {
 }
 
 /**
- * 监听状态
- */
-export interface WatchState {
-    action: WatchAction; // 监听动作
-    isFile: boolean; // 是否为文件
-    path: string; // 路径
-    error?: Error; // 错误
-    isImage: boolean; // 是否为图片
-    isVideo: boolean; // 是否为视频
-    thumbnail: string; // 缩略图路径
-    isNotify?: boolean; // 是否通知
-}
-
-/**
- * 扫描请求
- */
-export interface ScanAction {
-    path: string; // 扫描路径
-    action: "scan" | "rescan" | "current"; // scan: new folder, rescan: existing folder, current: only current folder
-    thumbnailSize: number; // 缩略图大小
-}
-
-/**
- * 扫描参数
- */
-export interface ScanArgs {
-    type: "next" | "error" | "complete"; // 扫描类型
-    requestId: string; // 请求 ID
-    action?: PhotoFileRequest; // 照片路径
-    error?: {
-        message: string;
-    };
-}
-
-/**
  * 导入回调
  */
 export type ImportCallback = (param: { type: string; error?: null; action: FileAction }) => void;
-
-/**
- * 扫描回调
- */
-export type ScanCallback = (action: ScanArgs) => void;
 
 /**
  * 加载回调
@@ -179,40 +120,4 @@ export interface FileAction {
  */
 export interface FileException {
     code?: string;
-}
-
-/**
- * 照片动作
- */
-export interface PhotoAction {
-    action: string;
-    params: Record<string, object>;
-    previous: string;
-}
-
-/**
- * 照片
- */
-export interface Photo {
-    path: string; // relative path
-    thumbnail: string;
-    isVideo: boolean;
-    history: PhotoAction[];
-}
-
-/**
- * Photasa 配置
- */
-export interface PhotasaConfig {
-    version: string;
-    photoList: Photo[];
-    lastModified: number;
-}
-
-/**
- * Photasa 配置结果
- */
-export interface PhotasaConfigResult {
-    path: string | undefined;
-    config: PhotasaConfig;
 }

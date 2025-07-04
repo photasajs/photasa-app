@@ -2,6 +2,7 @@
     "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
     "include": [
         "src/renderer/src/**/*.ts",
+        "src/renderer/src/**/*.tsx",
         "src/renderer/src/**/*.d.ts",
         "src/renderer/src/**/*.vue",
         "src/common/**/*.ts",
@@ -10,16 +11,21 @@
     "compilerOptions": {
         "composite": true,
         "baseUrl": ".",
+        "jsx": "preserve",
+        "jsxFactory": "h",
+        "jsxFragmentFactory": "Fragment",
+        "types": [
+            "node",
+        ],
+        "typeRoots": [
+            "./src/renderer/src/types",
+            "./node_modules/@types"
+        ],
         "paths": {
             "@/*": ["./src/renderer/src/*"],
             "@renderer/*": ["./src/renderer/src/*"],
             "@common/*": ["./src/common/*"],
             "@preload/*": ["./src/preload/*"]
-        },
-        "types": ["vitest/globals", "node", "@vue/test-utils"],
-        "typeRoots": [
-            "./src/renderer/src/types",
-            "./node_modules/@types"
-        ]
+        }
     }
 }

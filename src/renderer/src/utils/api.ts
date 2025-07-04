@@ -1,16 +1,11 @@
-import type {
-    WatchConfig,
-    WatchCallback,
-    ImportCallback,
-    DirectorySelection,
-    PathName,
-    ThumbnailRequest,
-    ImageInfo,
-    PhotasaConfig,
-    ScanAction,
-    ScanArgs,
-} from "src/preload/types";
+import type { ImportCallback } from "@common/types";
+import type { DirectorySelection, PathName } from "@common/types";
 import { useTask } from "vue-concurrency";
+import type { WatchConfig, WatchCallback } from "@common/watch-types";
+import type { ThumbnailRequest } from "@common/thumbnail-types";
+import type { ImageInfo } from "@common/types";
+import type { ScanAction, ScanArgs } from "@common/scan-types";
+import type { PhotasaConfig } from "@common/config-types";
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
     window.api.startWatching(config, callback);
@@ -42,16 +37,22 @@ export function getDirectory(name: PathName): Promise<string> {
     return window.api.getDirectory(name);
 }
 
-function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
+export function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
+    function fixPath(p: string): string {
+        let s = p.replace(/^file:\/\/+/, "");
+        if (s && s[0] !== "/") s = "/" + s;
+        return s;
+    }
     return {
         ...request,
-        path: request.path.replace(/^file:\/\/+/, ""),
-        thumbnail: request.thumbnail.replace(/^file:\/\/+/, ""),
+        path: fixPath(request.path),
+        thumbnail: fixPath(request.thumbnail),
     };
 }
 
 export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const result = yield window.api.createThumbnail(normalizeThumbnailRequest(request));
+    const normalizedRequest = normalizeThumbnailRequest(request);
+    const result = yield window.api.createThumbnail(normalizedRequest);
     return result;
 })
     .enqueue()

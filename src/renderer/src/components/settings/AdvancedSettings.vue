@@ -1,14 +1,16 @@
 <template>
     <div>
-        <a-card title="高级配置">
+        <a-card :title="t('advancedSettings.title')">
             <a-alert
                 type="error"
                 show-icon
-                :message="'高级操作：重置目录存储'"
-                :description="'此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！'"
+                :message="t('advancedSettings.resetFoldersTitle')"
+                :description="t('advancedSettings.resetFoldersDesc')"
                 style="margin-bottom: 16px; color: red"
             />
-            <a-button type="danger" @click="onResetFolders"> 重置目录存储 </a-button>
+            <a-button type="danger" @click="onResetFolders">{{
+                t("advancedSettings.resetFoldersBtn")
+            }}</a-button>
         </a-card>
     </div>
 </template>
@@ -20,8 +22,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 // 获取多语言方法
-type TFunc = (key: string) => string;
-const { t }: { t: TFunc } = useI18n();
+const { t } = useI18n();
 
 // 获取 Pinia store
 const preferenceStore = usePreferenceStore();

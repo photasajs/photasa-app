@@ -13,6 +13,7 @@ import { Photo } from "@renderer/utils/folder-tree";
 import LazyImage from "./LazyImage.vue";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
+import MediaPreview from "./MediaPreview.vue";
 
 const { t } = useI18n();
 
@@ -32,7 +33,7 @@ type Image = {
 };
 
 type ImageMeta = {
-    imageType: ImageTypeResult;
+    imageType: ImageTypeResult | string | undefined;
     tags: Tags | XmpTags | IccTags;
     path: string;
     maxDepth: number;
@@ -49,6 +50,8 @@ const fallback = ref(ImageFallback);
 const imageListRef = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
 const mouseEnterDelay = ref(1.5);
+const previewVisible = ref(false);
+const previewIndex = ref(0);
 
 function toImage(file: Photo): Image {
     const preview =
@@ -166,6 +169,28 @@ const virtualizer = useVirtualizer<HTMLElement, Element>({
 const virtualRows = computed(() => virtualizer.value?.getVirtualItems() ?? []);
 const virtualizerHeight = computed(() => (virtualizer.value?.getTotalSize() ?? 0) + "px");
 
+const previewImages = computed(() => {
+    return card.value.images.map((img) => {
+        return {
+            src: img.preview,
+            w: 1200, // 可根据实际图片宽度调整
+            h: 900, // 可根据实际图片高度调整
+            title: img.key,
+            isVideo: img.isVideo,
+            raw: img.raw,
+            thumbnail: img.thumbnail,
+        };
+    });
+});
+
+function openPreview(rowIdx, colIdx) {
+    const idx = rowIdx * columns.value + colIdx;
+    previewIndex.value = idx;
+    previewVisible.value = true;
+}
+
+let resizeObserver: ResizeObserver | null = null;
+
 onMounted(() => {
     updateContainerWidth();
     window.addEventListener("resize", () => {
@@ -174,6 +199,13 @@ onMounted(() => {
             virtualizer.value.measure();
         }
     });
+    // 使用 ResizeObserver 监听容器宽度变化
+    if (imageListRef.value) {
+        resizeObserver = new ResizeObserver(() => {
+            updateContainerWidth();
+        });
+        resizeObserver.observe(imageListRef.value);
+    }
 });
 
 watch(rows, () => {
@@ -191,6 +223,9 @@ watch(containerWidth, () => {
 
 onUnmounted(() => {
     window.removeEventListener("resize", updateContainerWidth);
+    if (resizeObserver && imageListRef.value) {
+        resizeObserver.unobserve(imageListRef.value);
+    }
 });
 </script>
 
@@ -257,42 +292,58 @@ onUnmounted(() => {
                             height: row.size + 'px',
                             display: 'flex',
                             gap: '16px',
+                            marginBottom: '16px', // 行间距
                         }"
                     >
                         <div class="px-4 w-full flex" style="gap: 16px; max-width: 100%">
-                            <template v-for="image in rows[row.index]" :key="image.key">
-                                <a-dropdown :trigger="['contextmenu']">
-                                    <a-tooltip
-                                        placement="rightBottom"
-                                        :mouse-enter-delay="mouseEnterDelay"
-                                        :title="image.raw"
-                                    >
-                                        <a-card hoverable>
-                                            <LazyImage
-                                                :width="thumbnailSize"
-                                                :height="thumbnailSize"
-                                                :src="image.thumbnail"
-                                                :fallback="fallback"
-                                                :raw="image.raw"
-                                                :preview="image.preview"
-                                                :is-video="image.isVideo"
-                                            />
-                                        </a-card>
-                                    </a-tooltip>
-                                    <template #overlay>
-                                        <a-menu>
-                                            <a-menu-item key="1" @click="openImageMeta(image)">{{
-                                                t("menu.getInfo")
-                                            }}</a-menu-item>
-                                            <a-menu-item key="1" @click="rebuildThumbnail(image)">{{
-                                                t("menu.rebuildThumbnail")
-                                            }}</a-menu-item>
-                                            <a-menu-item key="2" @click="openFileInFilder(image)">{{
-                                                t("menu.open")
-                                            }}</a-menu-item>
-                                        </a-menu>
-                                    </template>
-                                </a-dropdown>
+                            <template v-for="(image, colIndex) in rows[row.index]" :key="image.key">
+                                <div @click="openPreview(row.index, colIndex)">
+                                    <a-dropdown :trigger="['contextmenu']">
+                                        <a-tooltip
+                                            placement="rightBottom"
+                                            :mouse-enter-delay="mouseEnterDelay"
+                                            :title="image.raw"
+                                        >
+                                            <a-card
+                                                hoverable
+                                                :style="{
+                                                    height: thumbnailSize + 'px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }"
+                                            >
+                                                <LazyImage
+                                                    :width="thumbnailSize"
+                                                    :height="thumbnailSize"
+                                                    :src="image.thumbnail"
+                                                    :fallback="fallback"
+                                                    :raw="image.raw"
+                                                    :is-video="image.isVideo"
+                                                />
+                                            </a-card>
+                                        </a-tooltip>
+                                        <template #overlay>
+                                            <a-menu>
+                                                <a-menu-item
+                                                    key="1"
+                                                    @click="openImageMeta(image)"
+                                                    >{{ t("menu.getInfo") }}</a-menu-item
+                                                >
+                                                <a-menu-item
+                                                    key="1"
+                                                    @click="rebuildThumbnail(image)"
+                                                    >{{ t("menu.rebuildThumbnail") }}</a-menu-item
+                                                >
+                                                <a-menu-item
+                                                    key="2"
+                                                    @click="openFileInFilder(image)"
+                                                    >{{ t("menu.open") }}</a-menu-item
+                                                >
+                                            </a-menu>
+                                        </template>
+                                    </a-dropdown>
+                                </div>
                             </template>
                         </div>
                     </div>
@@ -315,12 +366,20 @@ onUnmounted(() => {
                 <a-descriptions-item label="Image Height">{{
                     imageMeta.tags?.["Image Height"]?.value
                 }}</a-descriptions-item>
-                <a-descriptions-item label="MIME Type">{{
-                    imageMeta.imageType.mime
-                }}</a-descriptions-item>
-                <a-descriptions-item label="MIME Type">{{
-                    imageMeta.imageType.ext
-                }}</a-descriptions-item>
+                <a-descriptions-item label="MIME Type">
+                    {{
+                        typeof imageMeta.imageType === "object" && imageMeta.imageType
+                            ? imageMeta.imageType.mime
+                            : ""
+                    }}
+                </a-descriptions-item>
+                <a-descriptions-item label="MIME Type">
+                    {{
+                        typeof imageMeta.imageType === "object" && imageMeta.imageType
+                            ? imageMeta.imageType.ext
+                            : ""
+                    }}
+                </a-descriptions-item>
                 <a-descriptions-item label="Location" :span="2">{{
                     imageMeta.path
                 }}</a-descriptions-item>
@@ -332,6 +391,12 @@ onUnmounted(() => {
             </a-descriptions>
         </a-spin>
     </a-drawer>
+    <MediaPreview
+        :images="previewImages"
+        :index="previewIndex"
+        :visible="previewVisible"
+        @close="previewVisible = false"
+    />
 </template>
 <style lang="less">
 .image-list {

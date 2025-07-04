@@ -7,24 +7,29 @@ declare module "*.vue" {
     export default component;
 }
 
+declare module "*.png" {
+    const value: string;
+    export default value;
+}
+declare module "*.jpg" {
+    const value: string;
+    export default value;
+}
+declare module "*.jpeg" {
+    const value: string;
+    export default value;
+}
 declare module "*.svg" {
-    const src: string;
-    export default src;
+    const value: string;
+    export default value;
+}
+declare module "*.webp" {
+    const value: string;
+    export default value;
 }
 
 declare module "*.svg?component" {
     import type { DefineComponent } from "vue";
     const component: DefineComponent<object, object, any>;
     export default component;
-}
-
-import type { ElectronAPI } from "@electron-toolkit/preload";
-import type { API } from "@preload/types";
-
-declare global {
-    interface Window {
-        electron: ElectronAPI;
-        api: API;
-        __heic2any__worker: Worker;
-    }
 }

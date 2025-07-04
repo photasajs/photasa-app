@@ -1,0 +1,17 @@
+{
+    "id": "solarized-dark",
+    "name": "Solarized Dark",
+    "author": "官方",
+    "version": "1.0.0",
+    "description": "Solarized风格暗色主题，经典配色。",
+    "colors": {
+        "primary": "#268bd2",
+        "background": "#002b36",
+        "accent": "#2aa198",
+        "text": "#839496",
+        "card": "#073642",
+        "button": "#268bd2",
+        "border": "#586e75"
+    },
+    "css": "theme.css"
+}

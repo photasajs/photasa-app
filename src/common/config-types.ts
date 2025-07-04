@@ -1,5 +1,40 @@
-import { PhotasaLogger } from "./logger";
-import { PhotasaConfigResult } from "./types";
+import { PhotasaLogger } from "@common/logger";
+
+/**
+ * 照片动作
+ */
+export interface PhotoAction {
+    action: string;
+    params: Record<string, object>;
+    previous: string;
+}
+
+/**
+ * 照片
+ */
+export interface Photo {
+    path: string; // relative path
+    thumbnail: string;
+    isVideo: boolean;
+    history: PhotoAction[];
+}
+
+/**
+ * Photasa 配置
+ */
+export interface PhotasaConfig {
+    version: string;
+    photoList: Photo[];
+    lastModified: number;
+}
+
+/**
+ * Photasa 配置结果
+ */
+export interface PhotasaConfigResult {
+    path: string | undefined;
+    config: PhotasaConfig;
+}
 
 export type ConfigAction = "query" | "add" | "remove";
 

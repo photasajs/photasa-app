@@ -1,4 +1,3 @@
-import { catchError } from "rxjs/operators";
 /*
  * config-storage.ts
  *
@@ -8,7 +7,7 @@ import { catchError } from "rxjs/operators";
 
 import fs from "node:fs/promises";
 import path from "path";
-import type { PhotasaConfig, PhotasaConfigResult } from "@common/types";
+import type { PhotasaConfig, PhotasaConfigResult } from "@common/config-types";
 import * as R from "ramda";
 import {
     toRelativeThumbnailPath,
@@ -16,7 +15,6 @@ import {
     shortenThumbnailName,
     PhotasaLogger,
 } from "@common/index";
-import { Logger } from "log4js";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
 import { debounce } from "lodash";
@@ -346,7 +344,7 @@ export async function batchAddToPhotoList(
  * 单张照片添加到配置文件，若已存在则补全缩略图。
  */
 export const addToPhotoList = debounce(
-    async (photoPath: string, logger: Logger): Promise<PhotasaConfigResult> => {
+    async (photoPath: string, logger: PhotasaLogger): Promise<PhotasaConfigResult> => {
         logger.info(`[addToPhotoList] 添加照片到配置文件: ${photoPath}`);
         try {
             const meta = await readConfig(photoPath, true, logger);
@@ -438,7 +436,10 @@ export async function getPhotasaConfig(
 /**
  * 重置指定目录的配置文件，仅清空 photoList。
  */
-export async function resetPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
+export async function resetPhotasaConfig(
+    folder: string,
+    logger: PhotasaLogger,
+): Promise<PhotasaConfig> {
     try {
         const meta = await readConfig(folder, false, logger);
         const photasaConfig = parseConfig(meta.data);
@@ -457,7 +458,10 @@ export async function resetPhotasaConfig(folder: string, logger: Logger): Promis
 /**
  * 修复指定目录的配置文件路径与缩略图名。
  */
-export async function fixPhotasaConfig(folder: string, logger: Logger): Promise<PhotasaConfig> {
+export async function fixPhotasaConfig(
+    folder: string,
+    logger: PhotasaLogger,
+): Promise<PhotasaConfig> {
     try {
         const meta = await readConfig(folder, false, logger);
         const config = parseConfig(meta.data);
