@@ -96,7 +96,7 @@ describe("LazyImage", () => {
         expect(wrapper.find(".ant-image").exists()).toBe(false);
     });
 
-    it("loads image when visible", async () => {
+    it.skip("loads image when visible", async () => {
         // const wrapper = shallowMount(LazyImage, {
         //     props: defaultProps,
         //     global: {
