@@ -6,31 +6,30 @@ on:
     pull_request:
         branches: [main, develop]
     workflow_dispatch:
-
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      build_script: build:linux
-                    - os: macos-latest
-                      build_script: build:mac
-                    - os: windows-latest
-                      build_script: build:windows
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            build_script: build:linux
+          - os: macos-latest
+            build_script: build:mac
+          - os: windows-latest
+            build_script: build:windows
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-            - name: Install dependencies
-              run: npm install
+      - name: Install dependencies
+        run: npm install
 
             # 新增：PR 时运行单元测试
             - name: Run unit tests
