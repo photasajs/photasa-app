@@ -8,7 +8,11 @@ describe("preferenceStore.resetAllFolders", () => {
     beforeEach(() => {
         setActivePinia(createPinia());
         // mock window.api.resetPhotasaConfig
-        (window as any).api = { resetPhotasaConfig: vi.fn() };
+        (window as any).api = {
+            resetPhotasaConfig: vi.fn(),
+            normalizePath: (p: string) => (p.endsWith("/") ? p : p + "/"),
+            mergePath: (l: string, r = "") => l + (r ? "/" + r : ""),
+        };
     });
 
     it("should clear and rebuild all folders", async () => {

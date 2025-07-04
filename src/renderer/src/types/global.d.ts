@@ -2,7 +2,10 @@
 declare global {
     interface Window {
         electron: typeof import("@electron-toolkit/preload").electronAPI;
-        api: typeof import("@preload/index").api;
+        api: typeof import("@preload/index").api & {
+            normalizePath: (p: string) => string;
+            mergePath: (left: string, right?: string) => string;
+        };
     }
 }
 export {};

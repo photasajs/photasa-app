@@ -1,10 +1,7 @@
-import { trim } from "radash";
-
 export function normalizePath(path: string): string {
-    // regex to append slash to the end of the path
-    return mergePath(path, "");
+    return window.api.normalizePath(path);
 }
 
 export function mergePath(left: string, right = ""): string {
-    return `/${trim(left, "/")}/${trim(right, "/")}`;
+    return window.api.mergePath(left, right);
 }
