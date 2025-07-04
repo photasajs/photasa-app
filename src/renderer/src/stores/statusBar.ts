@@ -7,7 +7,7 @@ export interface StatusBarState {
     progress?: number;
     error?: string;
     timestamp: number;
-    data?: any;
+    data?: unknown;
     history: NotifyPayload[];
 }
 

@@ -64,7 +64,7 @@ export function buildDataNode(roots: DataNode[], file: Photo): void {
     }
     // 只有父节点（根节点）存在时才允许添加子节点
     // 这里判断 是否在当前的路径中可以找到根节点，如果找不到，则放弃添加
-    let root = roots.find((node) => file.path.indexOf(node.key as string) >= 0);
+    const root = roots.find((node) => file.path.indexOf(node.key as string) >= 0);
     if (!root) {
         // 父节点不存在，放弃添加该子节点，保证数据一致性
         // 注释：父节点必须先于子节点存在，防止悬空目录
