@@ -1,7 +1,7 @@
 {
     "name": "photasa",
     "productName": "Photasa",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Another picasa like photo manager",
     "main": "./out/main/index.js",
     "author": "Albert Li <albert_lee@hotmail.com>",

@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 (2025-07-05)
+## [1.1.0](https://github.com/systembugtj/picasa-vue/compare/v1.0.0...v1.1.0) (2025-07-05)
 
 
 ### Features
@@ -33,6 +33,7 @@
 * **i18n:** update Resources section in all supported languages ([dd99f09](https://github.com/systembugtj/picasa-vue/commit/dd99f099202a86cceb3124c2f45b2dc064042f2c))
 * import photos to watching folder ([48fd2ab](https://github.com/systembugtj/picasa-vue/commit/48fd2ab75b1b8252bac177e5cba36f9e25a88042))
 * persist watch folders ([00eedcc](https://github.com/systembugtj/picasa-vue/commit/00eedcc72652e500452bf724f6ebd6dbf86ef56c))
+* refactor file config ([9026308](https://github.com/systembugtj/picasa-vue/commit/902630892828fbaf933681d5ab45ae7c4a8b3a59))
 * refactor lazy image ([7c50ee2](https://github.com/systembugtj/picasa-vue/commit/7c50ee296f9c1f26ad75b76e6a46903a076a6d8a))
 * refactor path helper ([ddd4355](https://github.com/systembugtj/picasa-vue/commit/ddd43552c5a61381142b94e115c0e0fec9ef19c6))
 * refactor path helper ([1e56050](https://github.com/systembugtj/picasa-vue/commit/1e560501a23c96207ef54d249bda31bad0e94ad2))
