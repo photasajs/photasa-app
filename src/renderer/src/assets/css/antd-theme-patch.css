@@ -74,7 +74,7 @@
 }
 
 /* 其它常用组件可按需补充... */
-
+html body .ant-tree,
 html body .ant-tree .ant-tree-node-content-wrapper,
 html body .folder-list-card .folder-node {
     background: var(--color-tree-bg) !important;
