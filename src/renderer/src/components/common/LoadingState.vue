@@ -8,7 +8,7 @@
  * 支持 skeleton 插槽（骨架屏上方），icon/文案下方居中
  */
 import { defineProps } from "vue";
-const props = defineProps({
+defineProps({
     loadingText: { type: String, default: "加载中..." },
     icon: { type: String, default: "" },
     size: { type: Number, default: 40 },

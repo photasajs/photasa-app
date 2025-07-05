@@ -20,14 +20,15 @@ import {
     resetPhotasaConfig,
 } from "./file-config";
 import { scanSubfolders, cleanupScanQueue } from "./query-config";
+import { shouldIgnorePhotasaPath } from "@common/index";
+import * as pathHelper from "./path-helper";
 import {
-    isFileUnderFolder,
-    isHiddenFile,
-    shouldIgnorePhotasaPath,
-    toFileName,
     toThumbnailName,
     shortenThumbnailName,
-} from "../common";
+    isFileUnderFolder,
+    toFileName,
+    isHiddenFile,
+} from "@shared/path-util";
 
 // Custom APIs for renderer
 const api = {
@@ -57,6 +58,9 @@ const api = {
     isImageFile,
     fileUrlFromPath,
     cleanupScanQueue,
+    // 新增：路径相关API
+    normalizePath: pathHelper.normalizePath,
+    mergePath: pathHelper.mergePath,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

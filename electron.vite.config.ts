@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 import { resolve } from "path";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
@@ -13,6 +14,7 @@ export default defineConfig({
         resolve: {
             alias: {
                 "@common": resolve("src/common/"),
+                "@shared": resolve("src/shared/"),
             },
         },
     },
@@ -23,6 +25,7 @@ export default defineConfig({
                 "@renderer": resolve("src/renderer/src"),
                 "@preload": resolve("src/preload/"),
                 "@common": resolve("src/common/"),
+                "@shared": resolve("src/shared/"),
             },
         },
     },
@@ -32,6 +35,7 @@ export default defineConfig({
                 "@renderer": resolve("src/renderer/src"),
                 "@preload": resolve("src/preload/"),
                 "@common": resolve("src/common/"),
+                "@shared": resolve("src/shared/"),
             },
         },
         plugins: [vue(), vueJsx(), comlink(), svgLoader()],

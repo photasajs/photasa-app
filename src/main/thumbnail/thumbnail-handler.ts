@@ -1,17 +1,13 @@
 import isVideo from "is-video";
 import { ensureDir, exists, remove, readFile } from "fs-extra";
 // 替换 heic-decode 为 @saschazar/wasm-heif
-import createHeifModule from "@saschazar/wasm-heif";
+import createHeifModule, { HEIFModule } from "@saschazar/wasm-heif";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
-import {
-    toPreviewPath,
-    HeicExtensionRE,
-    getOptimalThumbnailResolution,
-    ratioStringToParts,
-} from "@common/utils";
+import { toPreviewPath } from "@shared/path-util";
+import { HeicExtensionRE, getOptimalThumbnailResolution, ratioStringToParts } from "@common/utils";
 import type { VideoSize } from "@common/types";
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
@@ -41,7 +37,7 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
         const wasmPath = path.join(__dirname, "../../resources/wasm_heif.wasm");
         const wasmBinary = await readFile(wasmPath);
         // 初始化 wasm-heif 模块，传递 wasmBinary
-        const heifModule = await createHeifModule({ wasmBinary } as any);
+        const heifModule = await createHeifModule({ wasmBinary } as unknown as HEIFModule);
         // 解码 HEIC/HEIF 文件
         const decoded = heifModule.decode(inputBuffer, inputBuffer.byteLength, false) as Uint8Array;
         // 类型断言为解码成功对象

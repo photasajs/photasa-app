@@ -1,4 +1,4 @@
-import { defineComponent, PropType, Fragment } from "vue";
+import { defineComponent, PropType } from "vue";
 import { prefixCls } from "../constant";
 import { voidFn } from "../utils";
 import { MouseEventHandler } from "../types";
@@ -43,7 +43,7 @@ export const Toolbar = defineComponent({
             return (
                 <div class={`${prefixCls}-toolbar`}>
                     {!props.zoomDisabled && (
-                        <>
+                        <div>
                             <div
                                 role="button"
                                 aria-label="zoom in button"
@@ -61,7 +61,7 @@ export const Toolbar = defineComponent({
                             >
                                 <SvgIcon type="zoomout" />
                             </div>
-                        </>
+                        </div>
                     )}
 
                     <div
@@ -73,7 +73,7 @@ export const Toolbar = defineComponent({
                         <SvgIcon type="resize" />
                     </div>
                     {!props.rotateDisabled && (
-                        <>
+                        <div>
                             <div
                                 role="button"
                                 aria-label="image rotate left button"
@@ -91,7 +91,7 @@ export const Toolbar = defineComponent({
                             >
                                 <SvgIcon type="rotate-right" />
                             </div>
-                        </>
+                        </div>
                     )}
                 </div>
             );

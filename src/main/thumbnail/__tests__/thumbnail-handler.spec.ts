@@ -61,8 +61,8 @@ vi.mock("fluent-ffmpeg", () => {
             }),
         };
     });
-    (mockFfmpeg as any).setFfmpegPath = vi.fn();
-    (mockFfmpeg as any).setFfprobePath = vi.fn();
+    (mockFfmpeg as unknown as { setFfmpegPath: () => void }).setFfmpegPath = vi.fn();
+    (mockFfmpeg as unknown as { setFfprobePath: () => void }).setFfprobePath = vi.fn();
     return {
         default: mockFfmpeg,
     };

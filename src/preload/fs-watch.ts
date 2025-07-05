@@ -2,7 +2,7 @@ import type { WatchConfig, WatchCallback, WatchState, WatchAction } from "@commo
 import { electronAPI } from "@electron-toolkit/preload";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { buildThumbnailPath } from "@common/utils";
+import { buildThumbnailPath } from "@shared/path-util";
 import { WatchServiceEvent } from "@common/watch-types";
 
 const { ipcRenderer } = electronAPI;
@@ -56,7 +56,7 @@ function notifyAction(action: WatchAction, isFile: boolean, path: string): void 
  * @param error - 错误
  * @param _isNotify - 是否通知
  */
-function notifyError(action: WatchAction, error: Error, _isNotify: boolean): void {
+function notifyError(action: WatchAction, error: Error): void {
     listeners.forEach((callback) => {
         invoke(
             {
@@ -78,7 +78,7 @@ function notifyError(action: WatchAction, error: Error, _isNotify: boolean): voi
  * @param action - 操作
  * @param _isNotify - 是否通知
  */
-function notifyReady(action: WatchAction, _isNotify: boolean): void {
+function notifyReady(action: WatchAction): void {
     listeners.forEach((callback) => {
         invoke(
             {
@@ -140,7 +140,7 @@ ipcRenderer?.on(WatchServiceEvent.raw, (_, { isFile, path }) => {
  * @param error - 错误
  */
 ipcRenderer?.on(WatchServiceEvent.error, (_, { error }) => {
-    notifyError("error", error, true);
+    notifyError("error", error);
 });
 
 /**
@@ -148,7 +148,7 @@ ipcRenderer?.on(WatchServiceEvent.error, (_, { error }) => {
  * @param action - 操作
  */
 ipcRenderer?.on(WatchServiceEvent.ready, () => {
-    notifyReady("ready", true);
+    notifyReady("ready");
 });
 
 /**

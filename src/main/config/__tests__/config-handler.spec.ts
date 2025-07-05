@@ -41,7 +41,7 @@ vi.mock("rxjs", async () => {
     return {
         ...actual,
         from: (arr) => actual.of(...arr),
-        mergeMap: (_fn) => (source) => source,
+        mergeMap: () => (source: unknown) => source,
     };
 });
 

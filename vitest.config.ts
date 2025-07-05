@@ -9,6 +9,7 @@ export default defineConfig({
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
             "@common": resolve("src/common/"),
+            "@shared": resolve("src/shared/"),
         },
     },
     test: {
@@ -32,6 +33,7 @@ export default defineConfig({
             "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
+            "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
         deps: {
             inline: [/@vue/, /@vueuse/, /@ant-design/],

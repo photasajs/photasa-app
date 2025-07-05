@@ -18,8 +18,8 @@ export const processScannedFileTask = useTask(function* (_, args: ScanArgs) {
         yield createThumbnailTask.perform({
             path: photo.path,
             thumbnail: photo.path, // Use the same path for thumbnail
-            width: (args as any).thumbnailSize ?? 200,
-            height: (args as any).thumbnailSize ?? 200,
+            width: (args as unknown as { thumbnailSize: number }).thumbnailSize ?? 200,
+            height: (args as unknown as { thumbnailSize: number }).thumbnailSize ?? 200,
             preview: "",
         });
 

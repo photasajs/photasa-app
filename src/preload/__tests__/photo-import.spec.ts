@@ -1,6 +1,7 @@
 import { importPhotos } from "../photo-import";
 import path from "path";
 import fs from "fs-extra";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 const IMAGE_PATH = path.join(__dirname, "./photos/");
 const TEST_PATH = path.join(__dirname, "./tests/");
@@ -18,7 +19,7 @@ describe("photo-import", () => {
         }
     });
 
-    it("should import photos", (done) => {
+    it("should import photos", () => {
         expect.assertions(2);
         importPhotos([IMAGE_PATH], TEST_PATH, (args) => {
             if (args.type === "next") {

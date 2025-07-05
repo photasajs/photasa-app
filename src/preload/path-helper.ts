@@ -6,8 +6,38 @@ import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { buildThumbnailPath, shouldIgnorePhotasaPath, isHiddenFile } from "@common/index";
+import { shouldIgnorePhotasaPath } from "@common/utils";
+import { buildThumbnailPath } from "@shared/path-util";
 import type { ScanAction, PhotoPath } from "@common/scan-types";
+import {
+    isFileUnderFolder,
+    toFileName,
+    normalizePath,
+    mergePath,
+    toDirName,
+    toExtName,
+    relativePath,
+    resolvePath,
+    isAbsolutePath,
+    isHiddenFile,
+    isDirectory,
+    isFile,
+} from "@shared/path-util";
+
+export {
+    isFileUnderFolder,
+    toFileName,
+    normalizePath,
+    mergePath,
+    toDirName,
+    toExtName,
+    relativePath,
+    resolvePath,
+    isAbsolutePath,
+    isHiddenFile,
+    isDirectory,
+    isFile,
+};
 
 export interface PathOption {
     root?: string;

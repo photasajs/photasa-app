@@ -1,12 +1,13 @@
 import { scanFolder } from "../path-helper";
 import path from "path";
+import { describe, it, expect } from "vitest";
 
 const IMAGE_PATH = path.join(__dirname, "./photos/");
 const TEST_PATH = path.join(__dirname, "./scan/");
 
 describe("path-helper", () => {
     describe("scanFolder", () => {
-        it("should scan folder", (done) => {
+        it("should scan folder", () => {
             expect.assertions(5);
             let count = 0;
             scanFolder(IMAGE_PATH, TEST_PATH).subscribe({
