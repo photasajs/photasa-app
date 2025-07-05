@@ -61,6 +61,9 @@ const api = {
     // 新增：路径相关API
     normalizePath: pathHelper.normalizePath,
     mergePath: pathHelper.mergePath,
+    splitPath: pathHelper.splitPath, // 新增
+    joinPath: pathHelper.joinPath, // 新增
+    getSeparator: pathHelper.getSeparator, // 新增
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

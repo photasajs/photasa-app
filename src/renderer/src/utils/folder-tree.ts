@@ -1,11 +1,6 @@
 import type { DataNode } from "ant-design-vue/es/tree";
-import { mergePath, normalizePath } from "./path";
-
-export type Photo = {
-    path: string;
-    thumbnail: string;
-    isVideo: boolean;
-};
+import { splitPath, normalizePath, mergePath } from "@renderer/utils/api-path";
+import type { Photo } from "@common/config-types";
 
 function normalizeRoot(root: DataNode): void {
     if (!root.children) {
@@ -14,32 +9,33 @@ function normalizeRoot(root: DataNode): void {
 }
 
 export function cleanDataNode(roots: DataNode[], file: Photo): void {
-    const pathParts = file.path.split("/").filter((part) => part !== "");
+    const pathParts = splitPath(file.path).filter((part) => part !== "");
     if (pathParts.length <= 1) {
         return;
     }
-
+    // 如果文件路径为空，则放弃添加
     const root = roots.find((node) => file.path.indexOf(node.key as string) >= 0);
     if (!root?.children) {
         return;
     }
+    // 递归删除子节点
     cleanChild(root.children, file);
 }
 
 function cleanChild(nodes: DataNode[], file: Photo): void {
     const index = nodes.findIndex((child) => normalizePath(child.key as string) === file.path);
-
+    // 如果子节点存在，则删除子节点
     if (index >= 0) {
         nodes.splice(index, 1);
         return;
     }
-
-    // Find closed node to clean
+    // 递归删除子节点
     const root = nodes.find((node) => file.path.indexOf(node.key as string) >= 0);
     if (root?.children) {
         cleanChild(root.children, file);
     }
 }
+
 /**
  * 向目录树添加节点，仅当第一级为已存在根节点时才允许添加。
  * - 若第一级未匹配到 roots，则放弃添加，防止自动扩展根目录。
@@ -49,7 +45,7 @@ function cleanChild(nodes: DataNode[], file: Photo): void {
  */
 export function buildDataNode(roots: DataNode[], file: Photo): void {
     // 如果文件路径为空，则放弃添加
-    let pathParts = file.path.split("/").filter((part) => part !== "");
+    let pathParts = splitPath(file.path).filter((part) => part !== "");
     if (pathParts.length === 0) {
         return;
     }
@@ -70,34 +66,35 @@ export function buildDataNode(roots: DataNode[], file: Photo): void {
         // 注释：父节点必须先于子节点存在，防止悬空目录
         return;
     }
-    pathParts = file.path
-        .replace(root.key as string, "")
-        .split("/")
-        .filter((part) => part !== "");
+    // 提取子节点路径，去掉父节点路径
+    pathParts = splitPath(file.path.replace(root.key as string, "")).filter((part) => part !== "");
+    // 递归遍历子节点
     traverseTree(root, pathParts, file);
 }
 
 function traverseTree(root: DataNode, pathParts: string[], file: Photo): DataNode {
     normalizeRoot(root);
-
+    // 如果路径为空，则返回根节点
     if (pathParts.length == 0) {
         return root;
     }
-
+    // 如果路径不为空，则查找子节点
     let child = root.children?.find((node) => file.path.indexOf(node.key as string) >= 0);
+    // 如果子节点不存在，则创建子节点
     if (!child) {
         child = {
             key: mergePath(root.key as string, pathParts[0]),
             title: pathParts[0],
             children: [],
         };
-
+        // 将子节点添加到根节点
         root.children?.push(child);
+        // 排序子节点
         root.children = root.children?.sort((item1, item2) =>
             item1.key.toString().localeCompare(item2.key.toString()),
         );
     }
-
+    // 递归遍历子节点
     traverseTree(child, pathParts.slice(1), file);
     return child;
 }

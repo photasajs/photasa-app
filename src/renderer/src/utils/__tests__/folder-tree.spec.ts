@@ -1,6 +1,25 @@
-import { buildDataNode } from "../folder-tree";
+import { buildDataNode, cleanDataNode } from "../folder-tree";
 import type { DataNode } from "ant-design-vue/es/tree";
-import { describe, it } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
+
+beforeAll(() => {
+    (globalThis as any).window = Object.assign(globalThis.window || {}, {
+        api: {
+            splitPath: (path: string) => path.split("/").filter(Boolean),
+            mergePath: (left: string, right: string) => left + (right ? "/" + right : ""),
+            getSeparator: () => "/",
+            normalizePath: (path: string) => path,
+            toFileName: (path: string) => path.split("/").pop() ?? "",
+            toDirName: (path: string) => path.split("/").slice(0, -1).join("/"),
+            isFileUnderFolder: (file: string, folder: string) => file.startsWith(folder),
+            isHiddenFile: (path: string) => path.startsWith("."),
+            isAbsolutePath: (path: string) => path.startsWith("/"),
+            relativePath: (from: string, to: string) => to.replace(from, ""),
+            resolvePath: (...segments: string[]) => segments.join("/"),
+            getRoot: (path: string) => path.split("/")[0] || "",
+        },
+    });
+});
 
 describe("Folder Tree", () => {
     it("should return a DataNode", () => {
@@ -12,133 +31,68 @@ describe("Folder Tree", () => {
             thumbnail: "/test/google.com/.picasaoriginals/test.jpg",
             isVideo: false,
         });
+        expect(roots).toMatchSnapshot();
     });
 
-    /*
-    it("should build path tree node with one path", () => {
-        const roots = [];
-        buildDataNode(roots, {
-            path: "/test/Goodbye/test.jpg",
-            thumbnail: "/test/Goodbye/.picasaoriginals/test.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/test/Goodbye/test2.jpg",
-            thumbnail: "/test/Goodbye/.picasaoriginals/test2.jpg",
-        });
-        expect({
-            roots,
-            fileList1: getFolderFiles("/test"),
-            fileList2: getFolderFiles("/test/Goodbye"),
-        }).toMatchSnapshot();
+    it("should handle empty roots and empty path", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
     });
 
-    it("should build path tree node with multiple", () => {
-        const roots = [];
-        buildDataNode(roots, {
-            path: "/test/Goodbye/test.jpg",
-            thumbnail: "/test/Goodbye/.picasaoriginals/test.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/test/go/test2.jpg",
-            thumbnail: "/test/go/.picasaoriginals/test2.jpg",
-        });
-        expect({
-            roots,
-            fileList1: getFolderFiles("test"),
-            fileList2: getFolderFiles("/test/go"),
-            fileList3: getFolderFiles("/test/Goodbye"),
-        }).toMatchSnapshot();
+    it("should add multiple root nodes", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root2", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
     });
 
-    it("should build path tree node when root exist", () => {
-        const roots = [
-            {
-                key: "/test/",
-                title: "test",
-            },
-        ];
-        buildDataNode(roots, {
-            path: "/test/Goodbye/asas/test.jpg",
-            thumbnail: "/test/Goodbye/asas/.picasaoriginals/test.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/test/go/sdks/test2.jpg",
-            thumbnail: "/test/go/sdks/.picasaoriginals/test2.jpg",
-        });
-        expect({
-            roots,
-            fileList1: getFolderFiles("test"),
-            fileList2: getFolderFiles("test/Goodbye/asas"),
-            fileList3: getFolderFiles("test/notexistpath/asas"),
-        }).toMatchSnapshot();
+    it("should add deep nested nodes", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
     });
 
-    it("should build path tree node without duplication", () => {
-        const roots = [
-            {
-                key: "/Users/albert.li/Desktop/",
-                title: "/Uses/albert.li/Desktop",
-            },
-        ];
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image0-15.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image1-1.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image1-1.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image1-2.jpg",
-        });
-        expect({
-            roots,
-            fileList1: getFolderFiles("/Users/albert.li/Desktop"),
-            fileList2: getFolderFiles("/Users/albert.li/Desktop/196X"),
-        }).toMatchSnapshot();
+    it("should not add duplicate nodes", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
     });
-    it("should create path file list", () => {
-        const roots = [
-            {
-                key: "/Users/albert.li/Desktop",
-                title: "/Uses/albert.li/Desktop",
-            },
-        ];
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image0-15.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image0-15.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image1-1.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-1.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image1-1.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-2.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image1-2.jpg",
-        });
-        buildDataNode(roots, {
-            path: "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/image1-3.jpg",
-            thumbnail:
-                "/Users/albert.li/Desktop/196X/19610000_天津_老爸戎装/.picasaoriginals/image1-3.jpg",
-        });
-        expect(getFolderFiles("/Users/albert.li/Desktop")).toMatchSnapshot();
+
+    it("should not add child if root does not exist", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
     });
-    */
+
+    it("should clean node at various levels", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
+        cleanDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
+        cleanDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
+    });
+
+    it("should not change roots when cleaning non-existent node", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        cleanDataNode(roots, { path: "root1/childX", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
+    });
+
+    it("should clean deep nested children recursively", () => {
+        const roots: DataNode[] = [];
+        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
+        buildDataNode(roots, { path: "root1/child1/child2/child3", thumbnail: "", isVideo: false });
+        cleanDataNode(roots, { path: "root1/child1/child2/child3", thumbnail: "", isVideo: false });
+        expect(roots).toMatchSnapshot();
+    });
 });
