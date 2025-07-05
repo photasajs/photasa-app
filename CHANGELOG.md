@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/systembugtj/picasa-vue/compare/v1.4.0...v1.5.0) (2025-07-05)
+
+
+### Features
+
+* add release please upload best practice ([e7f7eb4](https://github.com/systembugtj/picasa-vue/commit/e7f7eb4e7dea32f4296bf7d5816dde85e646e654))
+
 ## [1.4.0](https://github.com/systembugtj/picasa-vue/compare/v1.3.0...v1.4.0) (2025-07-05)
 
 
