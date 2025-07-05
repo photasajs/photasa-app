@@ -16,7 +16,7 @@ export interface Photo {
     path: string; // relative path
     thumbnail: string;
     isVideo: boolean;
-    history: PhotoAction[];
+    history?: PhotoAction[];
 }
 
 /**
