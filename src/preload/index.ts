@@ -30,6 +30,14 @@ import {
     isHiddenFile,
 } from "@shared/path-util";
 
+/**
+ * 判断当前平台是否为 macOS
+ * @returns {boolean} true 表示 macOS，false 表示其他平台
+ */
+function isMac(): boolean {
+    return process.platform === "darwin";
+}
+
 // Custom APIs for renderer
 const api = {
     startWatching,
@@ -64,6 +72,7 @@ const api = {
     splitPath: pathHelper.splitPath, // 新增
     joinPath: pathHelper.joinPath, // 新增
     getSeparator: pathHelper.getSeparator, // 新增
+    isMac: isMac, // 平台判断，渲染进程可直接调用
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

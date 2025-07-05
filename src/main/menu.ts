@@ -1,8 +1,8 @@
 import { app, shell, Menu } from "electron";
+import { isMac } from "./platform";
 
 export function createMenu(): void {
-    const isMac = process.platform === "darwin";
-    const appMenu: Electron.MenuItemConstructorOptions[] = isMac
+    const appMenu: Electron.MenuItemConstructorOptions[] = isMac()
         ? [
               {
                   label: app.name,

@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref, watch, inject } from "vue";
+import { computed, ref, inject } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -23,7 +23,6 @@ import UserPreference from "./components/UserPreference.vue";
 import { useI18n } from "vue-i18n";
 import type { ScanAction } from "@common/scan-types";
 import { useTitle, watchArray } from "@vueuse/core";
-import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
 import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
@@ -62,7 +61,7 @@ const themes = ref<ThemeMeta[]>([]);
 const currentThemeId = ref<string>("");
 const statusBarStore = useStatusBarStore();
 
-const platform = window.electron?.platform || window.api?.getPlatform?.() || "unknown";
+const isMac = window.api.isMac();
 
 function handleOpenScanList() {
     showScanList.value = true;
@@ -239,7 +238,7 @@ findPhotoService.onFindPhoto((args: any) => {
     <a-layout v-else>
         <!-- 分平台 titlebar -->
         <TitlebarMac
-            v-if="platform === 'darwin'"
+            v-if="isMac"
             @openScanList="handleOpenScanList"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
@@ -337,13 +336,6 @@ findPhotoService.onFindPhoto((args: any) => {
     height: 100%;
 }
 
-.app-header {
-    height: var(--photasa-header-height);
-    margin-left: 36px;
-    padding-left: 50px;
-    line-height: 36px;
-    display: flex;
-}
 .title-header {
     flex-grow: 1;
     user-select: none;
