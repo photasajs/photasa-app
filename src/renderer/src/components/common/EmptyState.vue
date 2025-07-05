@@ -9,6 +9,10 @@
  * 支持插槽自定义内容
  */
 import { defineProps, defineEmits } from "vue";
+
+/**
+ * 定义组件属性
+ */
 defineProps({
     emptyText: { type: String, default: "暂无数据" },
     icon: { type: String, default: "" },
