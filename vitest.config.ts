@@ -32,6 +32,7 @@ export default defineConfig({
             "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
+            "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
         deps: {
             inline: [/@vue/, /@vueuse/, /@ant-design/],

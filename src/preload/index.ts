@@ -20,15 +20,15 @@ import {
     resetPhotasaConfig,
 } from "./file-config";
 import { scanSubfolders, cleanupScanQueue } from "./query-config";
+import { shouldIgnorePhotasaPath } from "@common/index";
+import * as pathHelper from "./path-helper";
 import {
-    isFileUnderFolder,
-    isHiddenFile,
-    shouldIgnorePhotasaPath,
-    toFileName,
     toThumbnailName,
     shortenThumbnailName,
-} from "../common";
-import * as pathHelper from "./path-helper";
+    isFileUnderFolder,
+    toFileName,
+    isHiddenFile,
+} from "@shared/path-util";
 
 // Custom APIs for renderer
 const api = {
