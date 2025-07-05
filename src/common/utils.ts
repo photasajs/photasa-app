@@ -1,51 +1,16 @@
-import path from "path";
 import config from "./config";
 import type { VideoSize } from "@common/types";
-import fs from "fs";
 
 export const PHOTASA_ORIGINALS = ".photasaoriginals";
-export const HeicExtensionRE = new RegExp(`\\.(${config.acceptedHeicExtensions.join("|")})$`, "i");
+export const HeicExtensionRE = new RegExp(`\.(${config.acceptedHeicExtensions.join("|")})$`, "i");
 
-function toThumbnailPath(photoPath: string): string {
+/**
+ * 将原始文件名转换为缩略图文件名（不含路径）
+ * @param photoPath - 原始文件名
+ * @returns 缩略图文件名
+ */
+export function toThumbnailPath(photoPath: string): string {
     return `thumbnail-${photoPath}.png`;
-}
-
-function toPosix(p: string): string {
-    return p.replace(/\\/g, "/");
-}
-
-/**
- * Build the path for a thumbnail file
- * @param photoPath - The path to the photo file
- * @returns The path to the thumbnail file
- * @example
- * ```ts
- * const thumbnailPath = buildThumbnailPath("/path/to/photo.jpg");
- * console.log(thumbnailPath); // "/path/to/.photasaoriginals/thumbnail-photo.jpg.png"
- * ```
- */
-export function buildThumbnailPath(photoPath: string): string {
-    // Prepare thumbnail path for image
-    const dir = path.normalize(path.join(path.dirname(photoPath), PHOTASA_ORIGINALS));
-    return toPosix(path.join(dir, toThumbnailPath(path.basename(photoPath))));
-}
-
-/**
- * Build the relative path for a thumbnail file
- * @param photoPath - The path to the photo file
- * @returns The relative path to the thumbnail file
- * @example
- * ```ts
- * const thumbnailPath = toRelativeThumbnailPath("/path/to/photo.jpg");
- * ```
- */
-export function toRelativeThumbnailPath(photoPath: string): string {
-    return toPosix(path.join(PHOTASA_ORIGINALS, toThumbnailPath(path.basename(photoPath))));
-}
-
-export function toPreviewPath(target: string): string {
-    const fileName = path.basename(target, path.extname(target));
-    return toPosix(path.join(path.dirname(target), PHOTASA_ORIGINALS, `${fileName}.jpeg`));
 }
 
 export function ratioStringToParts(str: string): number[] {
@@ -69,11 +34,11 @@ export function getOptimalThumbnailResolution(
     }
 }
 
-export function isHiddenFile(file: string): boolean {
-    const basename = path.basename(file);
-    return basename.startsWith(".");
-}
-
+/**
+ * 判断路径是否为 Photasa 路径
+ * @param photoPath 路径
+ * @returns 是否为 Photasa 路径
+ */
 export function shouldIgnorePhotasaPath(photoPath: string): boolean {
     return (
         photoPath.indexOf(".photasaoriginals") >= 0 ||
@@ -82,65 +47,4 @@ export function shouldIgnorePhotasaPath(photoPath: string): boolean {
         photoPath.indexOf(".picasaoriginal") >= 0 ||
         photoPath.indexOf(".AppleDouble") >= 0
     );
-}
-
-export function isFileUnderFolder(file: string, folder: string): boolean {
-    const dirname = toPosix(path.dirname(file));
-    return dirname === toPosix(path.normalize(folder));
-}
-
-/**
- * Shorten to file name (include extension)
- * @param target file full path
- * @returns file name only (include extension)
- */
-export function toFileName(target: string): string {
-    return path.basename(target);
-}
-
-/**
- * Convert a given photo file name to thumbnail file name
- *
- * @param target original photo file name
- * @returns thumbnail file name
- */
-export function toThumbnailName(target: string): string {
-    return toPosix(path.join(PHOTASA_ORIGINALS, `${toFileName(target)}.png`));
-}
-
-/**
- * Shorten thumbnail absolute file name to relative file name
- * @param file absolute thumbnail file name
- * @returns relative file name
- */
-export function shortenThumbnailName(file: string): string {
-    return toPosix(path.join(PHOTASA_ORIGINALS, path.basename(file)));
-}
-
-/**
- * 判断路径是否为目录
- * @param path 路径
- * @returns 是否为目录
- */
-export async function isDirectory(path: string): Promise<boolean> {
-    try {
-        const stat = await fs.promises.stat(path);
-        return stat.isDirectory();
-    } catch {
-        return false;
-    }
-}
-
-/**
- * 判断路径是否为文件
- * @param path 路径
- * @returns 是否为文件
- */
-export async function isFile(path: string): Promise<boolean> {
-    try {
-        const stat = await fs.promises.stat(path);
-        return stat.isFile();
-    } catch {
-        return false;
-    }
 }

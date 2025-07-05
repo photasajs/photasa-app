@@ -6,8 +6,38 @@ import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { buildThumbnailPath, shouldIgnorePhotasaPath, isHiddenFile } from "@common/index";
+import { shouldIgnorePhotasaPath } from "@common/utils";
+import { buildThumbnailPath } from "@shared/path-util";
 import type { ScanAction, PhotoPath } from "@common/scan-types";
+import {
+    isFileUnderFolder,
+    toFileName,
+    normalizePath,
+    mergePath,
+    toDirName,
+    toExtName,
+    relativePath,
+    resolvePath,
+    isAbsolutePath,
+    isHiddenFile,
+    isDirectory,
+    isFile,
+} from "@shared/path-util";
+
+export {
+    isFileUnderFolder,
+    toFileName,
+    normalizePath,
+    mergePath,
+    toDirName,
+    toExtName,
+    relativePath,
+    resolvePath,
+    isAbsolutePath,
+    isHiddenFile,
+    isDirectory,
+    isFile,
+};
 
 export interface PathOption {
     root?: string;
@@ -134,18 +164,4 @@ export function walkthroughFiles(source: ScanAction): Observable<PhotoPath> {
                 subscriber.complete();
             });
     });
-}
-
-/**
- * 归一化路径，自动适配平台分隔符
- */
-export function normalizePath(p: string): string {
-    return path.normalize(p);
-}
-
-/**
- * 路径拼接，自动适配平台分隔符
- */
-export function mergePath(left: string, right = ""): string {
-    return path.join(left, right);
 }
