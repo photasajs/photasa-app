@@ -13,6 +13,7 @@ import ConfigService from "./config/config-service";
 import ScanService from "./scan/scan-service";
 import fs from "fs";
 import { loggers } from "@common/logger";
+import { isMac } from "./platform";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -24,7 +25,7 @@ let watchService: WatchService | undefined;
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    // Create the browser window.
+    // 创建窗口
     mainWindow = new BrowserWindow({
         width,
         height,
@@ -39,7 +40,8 @@ function createWindow(): void {
             nodeIntegration: false,
             contextIsolation: true,
         },
-        titleBarStyle: "hiddenInset",
+        // 分平台配置
+        ...(isMac() ? { titleBarStyle: "hiddenInset" } : { frame: false }),
     });
 
     // Handle page refreshes
