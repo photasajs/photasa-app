@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/systembugtj/picasa-vue/compare/v1.1.0...v1.2.0) (2025-07-05)
+
+
+### Features
+
+* googleapis/release-please-action@v4 ([21f2bcb](https://github.com/systembugtj/picasa-vue/commit/21f2bcb59665c4efd3187548ede8445a56ddbadc))
+
 ## [1.1.0](https://github.com/systembugtj/picasa-vue/compare/v1.0.0...v1.1.0) (2025-07-05)
 
 
