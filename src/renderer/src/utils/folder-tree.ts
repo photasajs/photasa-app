@@ -45,7 +45,7 @@ function cleanChild(nodes: DataNode[], file: Photo): void {
  */
 export function buildDataNode(roots: DataNode[], file: Photo): void {
     // 如果文件路径为空，则放弃添加
-    let pathParts = file.path.split("/").filter((part) => part !== "");
+    let pathParts = splitPath(file.path).filter((part) => part !== "");
     if (pathParts.length === 0) {
         return;
     }
