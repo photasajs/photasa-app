@@ -29,6 +29,8 @@ import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.inte
 import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
 import { onMounted } from "vue";
 import StatusBar from "./components/common/StatusBar.vue";
+import TitlebarMac from "./components/TitlebarMac.vue";
+import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 
 /**
  * 日志记录器
@@ -59,6 +61,18 @@ if (!findPhotoService) {
 const themes = ref<ThemeMeta[]>([]);
 const currentThemeId = ref<string>("");
 const statusBarStore = useStatusBarStore();
+
+const platform = window.electron?.platform || window.api?.getPlatform?.() || "unknown";
+
+function handleOpenScanList() {
+    showScanList.value = true;
+}
+function handleOpenImportPhotos() {
+    showImportDialog.value = true;
+}
+function handleOpenPreference() {
+    showPreference.value = true;
+}
 
 onMounted(async () => {
     // APP 启动时推送初始化状态
@@ -198,15 +212,6 @@ getDirectory("desktop")
 function handlePreferenceOk(): void {
     showPreference.value = false;
 }
-function openPreference(): void {
-    showPreference.value = true;
-}
-function openImportPhotos(): void {
-    showImport.value = true;
-}
-function openScanList(): void {
-    showScanList.value = true;
-}
 // Update title
 const title = computed(() => {
     return `${t("app.title")} - ${currentFolder.value}`;
@@ -232,16 +237,20 @@ findPhotoService.onFindPhoto((args: any) => {
 <template>
     <a-spin v-if="loading" />
     <a-layout v-else>
-        <header class="app-header">
-            <a-space class="title-header">
-                <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
-            </a-space>
-            <a-space class="setting-header">
-                <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
-                <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
-                <SettingOutlined class="system-icon" @click="openPreference" />
-            </a-space>
-        </header>
+        <!-- 分平台 titlebar -->
+        <TitlebarMac
+            v-if="platform === 'darwin'"
+            @openScanList="handleOpenScanList"
+            @openImportPhotos="handleOpenImportPhotos"
+            @openPreference="handleOpenPreference"
+        />
+        <TitlebarWinLinux
+            v-else
+            @openScanList="handleOpenScanList"
+            @openImportPhotos="handleOpenImportPhotos"
+            @openPreference="handleOpenPreference"
+        />
+        <!-- 其余内容保持不变 -->
         <a-layout class="content app-container">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
@@ -253,13 +262,10 @@ findPhotoService.onFindPhoto((args: any) => {
                         </a-layout-content>
                     </a-layout>
                 </template>
-
                 <template #B>
                     <a-layout class="image-content">
                         <a-layout-content class="image-list">
-                            <!-- 集成图片列表，监听 import 事件，弹出导入对话框 -->
                             <ImageList @import="showImportDialog = true" />
-                            <!-- 集成导入对话框，show 受控，关闭时自动隐藏 -->
                             <ImportPhotos
                                 :show="showImportDialog"
                                 @update:show="showImportDialog = $event"
@@ -269,12 +275,9 @@ findPhotoService.onFindPhoto((args: any) => {
                 </template>
             </split-view>
         </a-layout>
-        <!-- 独立状态栏组件，完全变量化，支持主题 patch -->
         <StatusBar />
     </a-layout>
-
     <ImportPhotos v-model:show="showImport"></ImportPhotos>
-
     <a-modal
         v-model:visible="showPreference"
         :mask-closable="false"
