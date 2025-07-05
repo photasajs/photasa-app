@@ -8,8 +8,18 @@ import isVideo from "is-video";
 import { electronAPI } from "@electron-toolkit/preload";
 const { ipcRenderer } = electronAPI;
 
+/**
+ * 配置文件版本
+ */
 const PHOTASA_VERSION = "1.0";
 
+/**
+ * 确保配置文件存在
+ * @param photo 图片路径
+ * @param isFile 是否为文件
+ * @param isDelete 是否删除
+ * @returns 配置文件路径
+ */
 export async function ensureConfig(
     photo: string,
     isFile: boolean,
@@ -24,6 +34,13 @@ export async function ensureConfig(
     return configPath;
 }
 
+/**
+ * 读取配置文件
+ * @param photo 图片路径
+ * @param isFile 是否为文件
+ * @param isDelete 是否删除
+ * @returns 配置文件路径
+ */
 export async function readConfig(
     photo: string,
     isFile: boolean,
