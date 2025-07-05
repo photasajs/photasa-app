@@ -9,14 +9,13 @@ import { JsonTreeView } from "json-tree-view-vue3";
 import type { Tags, XmpTags, IccTags } from "exifreader";
 import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api";
-import { Photo } from "@renderer/utils/folder-tree";
+import type { Photo } from "@common/config-types";
 import LazyImage from "./LazyImage.vue";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
 import LoadingState from "./common/LoadingState.vue";
 import EmptyState from "./common/EmptyState.vue";
-import SkeletonList from "./common/SkeletonList.vue";
 
 const { t } = useI18n();
 
@@ -319,6 +318,7 @@ const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
+                                                    background: 'var(--color-image-item-bg)', // 独立图片项背景色，支持主题
                                                 }"
                                             >
                                                 <LazyImage
@@ -406,7 +406,7 @@ const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
         @close="previewVisible = false"
     />
 </template>
-<style lang="less">
+<style lang="scss">
 .image-list {
     height: 100%;
     overflow: auto;
@@ -427,9 +427,6 @@ const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
         transform: rotate(360deg);
     }
 }
-</style>
-
-<style scoped>
 .card-item {
     background: var(--color-card-bg);
     border: 1px solid var(--color-card-border);

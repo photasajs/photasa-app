@@ -94,6 +94,9 @@
         }
     },
     "status": {
+        "initializing": "初期化中",
+        "idle": "アイドル",
+        "updating": "更新中",
         "ready": "準備完了",
         "readingConfig": "フォトライブラリ情報を読み込み中 [{config}]",
         "loadingConfig": "フォトライブラリ情報を読込中",

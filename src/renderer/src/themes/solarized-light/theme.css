@@ -48,10 +48,27 @@
     --color-footer-bg: #eee8d5;
     --color-footer-text: #657b83;
     --color-footer-border: #93a1a1;
+    --color-statusbar-fg: #859900;
     --color-scrollbar-bg: #eee8d5;
     --color-scrollbar-thumb: #93a1a1;
     --color-scrollbar-thumb-hover: #268bd2;
     --color-splitter-bg: #93a1a1;
     --color-splitter-border: #eee8d5;
     --color-splitter-hover: #268bd2;
+    --color-image-item-bg: #f5f5e3;
+    --color-list-bg: #fdf6e3;
+    --color-list-header-bg: #eee8d5;
+    --color-list-footer-bg: #eee8d5;
+    --color-list-border: #93a1a1;
+    --color-list-item-bg: #fdf6e3;
+    --color-list-item-hover-bg: #b3cde3;
+    --color-list-item-active-bg: #b3cde3;
+    --color-list-item-meta-title: #657b83;
+    --color-list-item-meta-description: #93a1a1;
+    --color-list-split: #93a1a1;
+    --color-list-empty-bg: #eee8d5;
+    --color-list-skeleton-bg: #eee8d5;
+    --color-descriptions-title: #657b83;
+    --color-descriptions-header-bg: #eee8d5;
+    --color-descriptions-bordered: #93a1a1;
 }

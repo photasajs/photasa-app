@@ -29,7 +29,23 @@
         "toolbar-bg": "#073642",
         "white": "#fff",
         "black": "#000",
-        "white-alpha": "rgba(255,255,255,0.2)"
+        "white-alpha": "rgba(255,255,255,0.2)",
+        "statusbarFg": "#859900",
+        "list-bg": "#002b36",
+        "list-header-bg": "#073642",
+        "list-footer-bg": "#073642",
+        "list-border": "#586e75",
+        "list-item-bg": "#002b36",
+        "list-item-hover-bg": "#073642",
+        "list-item-active-bg": "#073642",
+        "list-item-meta-title": "#839496",
+        "list-item-meta-description": "#586e75",
+        "list-split": "#586e75",
+        "list-empty-bg": "#073642",
+        "list-skeleton-bg": "#073642",
+        "descriptions-title": "#839496",
+        "descriptions-header-bg": "#073642",
+        "descriptions-bordered": "#586e75"
     },
     "css": "theme.css"
 }

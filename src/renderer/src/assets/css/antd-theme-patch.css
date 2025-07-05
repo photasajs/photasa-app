@@ -107,6 +107,201 @@ html body .ant-spin-nested-loading {
     background: var(--color-bg, #fff) !important;
 }
 
+html body,
+html body .ant-typography,
+html body .folder-list-card,
+html body .ant-tree,
+html body .ant-tree .ant-tree-node-content-wrapper,
+html body .app-footer {
+    color: var(--color-text, #1e1e1e) !important;
+}
+html body .folder-list-card .folder-node {
+    color: var(--color-tree-text, var(--color-text, #1e1e1e)) !important;
+}
+html body .anticon,
+html body .system-icon,
+html body svg {
+    color: var(--color-text, #1e1e1e) !important;
+    fill: var(--color-text, #1e1e1e) !important;
+}
+html body .titlebar-icon svg {
+    fill: var(--color-text, #1e1e1e) !important;
+}
+html body .app-footer,
+html body .app-footer * {
+    color: var(--color-footer-text, #1e1e1e) !important;
+}
+
+/* List */
+.ant-list,
+.ant-list-item {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Input */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-input-number-input {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-number-focused {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 2px var(--color-primary-light, #3794ff) !important;
+}
+
+/* Select */
+.ant-select-selector {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-select-dropdown {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Form */
+.ant-form-item-label > label {
+    color: var(--color-text-secondary) !important;
+}
+.ant-form-item {
+    color: var(--color-text) !important;
+}
+
+/* Table */
+.ant-table,
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-table-thead > tr > th {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text-secondary) !important;
+}
+
+/* Popover/Dropdown/Menu */
+.ant-popover-inner,
+.ant-dropdown-menu,
+.ant-menu {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-menu-item-selected,
+.ant-dropdown-menu-item-selected {
+    background: var(--color-card-selected) !important;
+    color: var(--color-primary) !important;
+}
+
+/* Slider */
+.ant-slider-track {
+    background: var(--color-primary) !important;
+}
+.ant-slider-rail {
+    background: var(--color-border) !important;
+}
+.ant-slider-handle {
+    border-color: var(--color-primary) !important;
+}
+
+/* Checkbox/Radio/Switch */
+.ant-checkbox-checked .ant-checkbox-inner,
+.ant-radio-checked .ant-radio-inner,
+.ant-switch-checked {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+.ant-checkbox-inner,
+.ant-radio-inner,
+.ant-switch {
+    background: var(--color-bg-secondary) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Pagination */
+.ant-pagination-item {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-pagination-item-active {
+    background: var(--color-card-selected) !important;
+    color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+
+/* Collapse/Alert/Tag/Tooltip/Drawer/Card/Divider/Steps/Progress/Upload 等可继续补充... */
+
+/* List 细粒度主题 patch */
+.ant-list {
+    background: var(--color-list-bg) !important;
+    border-color: var(--color-list-border) !important;
+}
+.ant-list-header {
+    background: var(--color-list-header-bg) !important;
+    color: var(--color-list-item-meta-title) !important;
+    border-bottom: 1px solid var(--color-list-border) !important;
+}
+.ant-list-footer {
+    background: var(--color-list-footer-bg) !important;
+    color: var(--color-list-item-meta-title) !important;
+    border-top: 1px solid var(--color-list-border) !important;
+}
+.ant-list-bordered {
+    border: 1px solid var(--color-list-border) !important;
+}
+.ant-list-split .ant-list-item {
+    border-bottom: 1px solid var(--color-list-split) !important;
+}
+.ant-list-item {
+    background: var(--color-list-item-bg) !important;
+    color: var(--color-list-item-meta-title) !important;
+    transition: background 0.2s;
+}
+.ant-list-item:hover {
+    background: var(--color-list-item-hover-bg) !important;
+}
+.ant-list-item.active,
+.ant-list-item-selected {
+    background: var(--color-list-item-active-bg) !important;
+}
+.ant-list-item-meta-title {
+    color: var(--color-list-item-meta-title) !important;
+}
+.ant-list-item-meta-description {
+    color: var(--color-list-item-meta-description) !important;
+}
+.ant-list-empty-text {
+    background: var(--color-list-empty-bg) !important;
+    color: var(--color-list-item-meta-description) !important;
+}
+.ant-list .ant-skeleton {
+    background: var(--color-list-skeleton-bg) !important;
+}
+
+/* Descriptions 细粒度主题 patch */
+.ant-descriptions-header {
+    background: var(--color-descriptions-header-bg) !important;
+    color: var(--color-descriptions-title) !important;
+    border-bottom: 1px solid var(--color-descriptions-bordered) !important;
+}
+.ant-descriptions-title {
+    color: var(--color-descriptions-title) !important;
+}
+.ant-descriptions-bordered {
+    border: 1px solid var(--color-descriptions-bordered) !important;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     background: var(--color-scrollbar-bg);

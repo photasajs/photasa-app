@@ -28,6 +28,7 @@ import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
 import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
 import { onMounted } from "vue";
+import StatusBar from "./components/common/StatusBar.vue";
 
 /**
  * 日志记录器
@@ -38,10 +39,8 @@ const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize } =
-    storeToRefs(preferenceStore);
+const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
-const statusBarStore = useStatusBarStore();
 
 const showImport = ref(false);
 const showPreference = ref(false);
@@ -59,12 +58,27 @@ if (!findPhotoService) {
 
 const themes = ref<ThemeMeta[]>([]);
 const currentThemeId = ref<string>("");
+const statusBarStore = useStatusBarStore();
 
 onMounted(async () => {
+    // APP 启动时推送初始化状态
+    statusBarStore.update({
+        type: "app",
+        status: "initializing",
+        task: t("app.title"),
+        timestamp: Date.now(),
+    });
     await themeManager.loadBuiltInThemes();
     themes.value = themeManager.getThemes();
     const cur = themeManager.getCurrentTheme();
     currentThemeId.value = cur?.id || themes.value[0]?.id || "";
+    // 主题加载完毕，切换为 ready 状态
+    statusBarStore.update({
+        type: "app",
+        status: "ready",
+        task: t("app.title"),
+        timestamp: Date.now(),
+    });
 });
 
 // vue3 watch for array, should specify deep as true
@@ -255,28 +269,8 @@ findPhotoService.onFindPhoto((args: any) => {
                 </template>
             </split-view>
         </a-layout>
-        <footer class="app-footer">
-            <a-space>
-                <a-typography-text type="success">
-                    <!-- 优先展示主进程推送的任务状态，支持国际化 -->
-                    <template v-if="statusBarStore.status">
-                        {{ t(`status.${statusBarStore.status}`) }}
-                        <span v-if="statusBarStore.currentTask"
-                            >: {{ statusBarStore.currentTask }}</span
-                        >
-                        <span v-if="statusBarStore.progress !== undefined">
-                            ({{ statusBarStore.progress }}%)</span
-                        >
-                        <span v-if="statusBarStore.error">
-                            [{{ t("notification.error") }}: {{ statusBarStore.error }}]</span
-                        >
-                    </template>
-                    <template v-else>
-                        {{ processingFile }}
-                    </template>
-                </a-typography-text>
-            </a-space>
-        </footer>
+        <!-- 独立状态栏组件，完全变量化，支持主题 patch -->
+        <StatusBar />
     </a-layout>
 
     <ImportPhotos v-model:show="showImport"></ImportPhotos>
@@ -325,6 +319,7 @@ findPhotoService.onFindPhoto((args: any) => {
 
 <style lang="less">
 :root {
+    /* 主题变量控制 footer 高度 */
     --photasa-footer-height: 70px;
     --photasa-hear-height: 36px;
 }
@@ -363,6 +358,7 @@ findPhotoService.onFindPhoto((args: any) => {
     line-height: 32px;
     padding-left: 20px;
     justify-content: center;
+    /* 背景、边框、文字色均由主题变量控制 */
     background: var(--color-footer-bg);
     color: var(--color-footer-text);
     border-top: 1px solid var(--color-footer-border);

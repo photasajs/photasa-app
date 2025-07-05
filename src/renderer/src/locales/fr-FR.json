@@ -67,6 +67,9 @@
         }
     },
     "status": {
+        "initializing": "Initialisation en cours",
+        "idle": "Inactif",
+        "updating": "Mise à jour en cours",
         "ready": "Prêt",
         "readingConfig": "Chargement des infos de la bibliothèque [{config}]",
         "loadingConfig": "Lecture des infos de la bibliothèque",

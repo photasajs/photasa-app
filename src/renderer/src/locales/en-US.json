@@ -71,6 +71,9 @@
         }
     },
     "status": {
+        "initializing": "Initializing",
+        "idle": "Idle",
+        "updating": "Updating",
         "ready": "Ready",
         "readingConfig": "Loading library info [{config}]",
         "loadingConfig": "Reading library info",

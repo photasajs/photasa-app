@@ -67,6 +67,9 @@
         }
     },
     "status": {
+        "initializing": "Inicializando",
+        "idle": "Inactivo",
+        "updating": "Actualizando",
         "ready": "Listo",
         "readingConfig": "Cargando información de la biblioteca [{config}]",
         "loadingConfig": "Leyendo información de la biblioteca",

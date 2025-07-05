@@ -65,6 +65,9 @@
         }
     },
     "status": {
+        "initializing": "Initialisierung läuft",
+        "idle": "Leerlauf",
+        "updating": "Aktualisierung läuft",
         "ready": "Bereit",
         "readingConfig": "Bibliotheksinfo wird geladen [{config}]",
         "loadingConfig": "Bibliotheksinfo wird gelesen",

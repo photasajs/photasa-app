@@ -61,6 +61,9 @@
         }
     },
     "status": {
+        "initializing": "正在初始化",
+        "idle": "空闲",
+        "updating": "正在更新",
         "ready": "准备就绪",
         "readingConfig": "加载照片库信息 [{config}]",
         "loadingConfig": "读取照片库信息",

@@ -67,12 +67,15 @@
         }
     },
     "status": {
+        "initializing": "초기화 중",
+        "idle": "대기 중",
+        "updating": "업데이트 중",
         "ready": "준비 완료",
         "readingConfig": "사진 라이브러리 정보 로딩 [{config}]",
         "loadingConfig": "사진 라이브러리 정보 읽는 중",
         "processing": "처리 중 [{file}]",
         "scanned": "처리 완료",
-        "scanComplete": "디렉토리[{path}] 처리가 완료되었습니다.",
+        "scanComplete": "디렉터리[{path}] 처리 완료",
         "start": "스캔 시작",
         "progress": "스캔 진행",
         "complete": "스캔 완료",
