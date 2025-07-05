@@ -10,7 +10,7 @@
   transform: translate(-50%);
   opacity: 0.9;
   display: flex;
-  background-color: rgb(45, 45, 45);
+  background-color: var(--color-toolbar-bg);
   border-radius: 4px;
   padding: 0;
 
@@ -20,14 +20,14 @@
     cursor: pointer;
     padding: 6px 10px;
     font-size: 20px;
-    color: #fff;
-    background-color: #2d2d2d;
+    color: var(--color-white);
+    background-color: var(--color-btn-bg);
     -webkit-tap-highlight-color: transparent;
     outline: none;
 
     &:hover,
     &:active {
-      background-color: rgb(61, 61, 61);
+      background-color: var(--color-btn-hover);
     }
   }
 }

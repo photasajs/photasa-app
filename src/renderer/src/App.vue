@@ -26,6 +26,8 @@ import { useTitle, watchArray } from "@vueuse/core";
 import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
+import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
+import { onMounted } from "vue";
 
 /**
  * 日志记录器
@@ -55,22 +57,14 @@ if (!findPhotoService) {
     throw new Error("FindPhotoService not provided");
 }
 
-/**
- * 更新主题
- */
-function updateTheme(): void {
-    if (darkMode.value) {
-        document.body.classList.add("dark");
-        document.body.classList.remove("light");
-    } else {
-        document.body.classList.remove("dark");
-        document.body.classList.add("light");
-    }
-}
+const themes = ref<ThemeMeta[]>([]);
+const currentThemeId = ref<string>("");
 
-// Set Dark/Light theme node
-watch(darkMode, () => {
-    updateTheme();
+onMounted(async () => {
+    await themeManager.loadBuiltInThemes();
+    themes.value = themeManager.getThemes();
+    const cur = themeManager.getCurrentTheme();
+    currentThemeId.value = cur?.id || themes.value[0]?.id || "";
 });
 
 // vue3 watch for array, should specify deep as true
@@ -369,6 +363,9 @@ findPhotoService.onFindPhoto((args: any) => {
     line-height: 32px;
     padding-left: 20px;
     justify-content: center;
+    background: var(--color-footer-bg);
+    color: var(--color-footer-text);
+    border-top: 1px solid var(--color-footer-border);
 }
 
 .scan-list {

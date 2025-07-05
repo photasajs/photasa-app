@@ -1,0 +1,120 @@
+/* antd 主题 patch：全局用 CSS 变量覆盖主要色值，确保主题切换全局响应 */
+
+:root,
+[data-theme] {
+    /* 仅示例，实际变量已在 theme.css 定义 */
+}
+
+/* Tabs */
+.ant-tabs-nav,
+.ant-tabs-tab {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+}
+.ant-tabs-tab-active {
+    color: var(--color-primary) !important;
+}
+.ant-tabs-ink-bar {
+    background: var(--color-primary) !important;
+}
+
+/* Modal */
+.ant-modal-content {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-radius: 8px;
+}
+.ant-modal-header {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+    border-bottom: 1px solid var(--color-border) !important;
+}
+.ant-modal-title {
+    color: var(--color-text) !important;
+}
+
+/* Button */
+.ant-btn-primary {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-white) !important;
+}
+.ant-btn {
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+    background: var(--color-bg-secondary) !important;
+}
+.ant-btn:hover,
+.ant-btn:focus {
+    background: var(--color-primary-light) !important;
+    border-color: var(--color-primary-light) !important;
+}
+
+/* Descriptions */
+.ant-descriptions-view {
+    background: var(--color-card-bg) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-descriptions-item-label {
+    color: var(--color-text-secondary) !important;
+}
+.ant-descriptions-item-content {
+    color: var(--color-text) !important;
+}
+
+/* Breadcrumb */
+.ant-breadcrumb {
+    color: var(--color-text-secondary) !important;
+}
+.ant-breadcrumb-link {
+    color: var(--color-primary) !important;
+}
+.ant-breadcrumb-separator {
+    color: var(--color-border) !important;
+}
+
+/* 其它常用组件可按需补充... */
+
+html body .ant-tree .ant-tree-node-content-wrapper,
+html body .folder-list-card .folder-node {
+    background: var(--color-tree-bg) !important;
+    color: var(--color-tree-text) !important;
+}
+html body .app-footer {
+    background: var(--color-footer-bg) !important;
+    color: var(--color-footer-text) !important;
+    border-top: 1px solid var(--color-footer-border) !important;
+}
+
+html body .ant-layout,
+html body .ant-layout-content {
+    background: var(--color-bg, #fff) !important;
+}
+
+html body .ant-spin-dot-item {
+    background: var(--color-primary, #1890ff) !important;
+}
+html body .ant-spin-text {
+    color: var(--color-primary, #1890ff) !important;
+}
+html body .ant-spin-blur {
+    background: var(--color-bg, #fff) !important;
+}
+html body .ant-spin-container {
+    background: var(--color-bg, #fff) !important;
+}
+html body .ant-spin-nested-loading {
+    background: var(--color-bg, #fff) !important;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: var(--color-scrollbar-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover);
+}

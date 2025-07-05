@@ -3,6 +3,7 @@ import lightTheme from "@renderer/themes/light/theme.json";
 import darkTheme from "@renderer/themes/dark/theme.json";
 import solarizedLightTheme from "@renderer/themes/solarized-light/theme.json";
 import solarizedDarkTheme from "@renderer/themes/solarized-dark/theme.json";
+import { usePreferenceStore } from "@renderer/stores/preference";
 
 export interface ThemeMeta {
     id: string;
@@ -15,7 +16,9 @@ export interface ThemeMeta {
     css?: string;
 }
 
-class ThemeManager {
+const DEFAULT_THEME_ID = "solarized-dark";
+
+export class ThemeManager {
     private static _instance: ThemeManager;
     private themes = ref<ThemeMeta[]>([]);
     private currentThemeId = ref<string | null>(null);
@@ -56,6 +59,8 @@ class ThemeManager {
             document.head.appendChild(styleEl);
         }
         this.currentThemeId.value = themeId;
+        const preferenceStore = usePreferenceStore();
+        preferenceStore.setThemeId(themeId);
     }
 
     // 卸载当前主题
@@ -100,6 +105,17 @@ class ThemeManager {
     async loadBuiltInThemes(): Promise<void> {
         // 从物理文件加载内置主题
         this.themes.value = [lightTheme, darkTheme, solarizedLightTheme, solarizedDarkTheme];
+        const preferenceStore = usePreferenceStore();
+        const rememberedThemeId = preferenceStore.themeId || "";
+        const themeToApply =
+            this.themes.value.find((t) => t.id === rememberedThemeId) ||
+            this.themes.value.find((t) => t.id === DEFAULT_THEME_ID) ||
+            this.themes.value[0];
+        if (themeToApply) {
+            await this.applyTheme(themeToApply.id, "/src/renderer/src/themes");
+            this.currentThemeId.value = themeToApply.id;
+            preferenceStore.setThemeId(themeToApply.id);
+        }
     }
 
     // 初始化主题配置，首次运行时检测用户配置，无则fallback到dark

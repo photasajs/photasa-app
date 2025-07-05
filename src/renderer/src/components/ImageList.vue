@@ -243,9 +243,15 @@ const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
 </script>
 
 <template>
-    <div class="flex flex-col h-full min-h-0 bg-white rounded-lg shadow border border-gray-200">
+    <div
+        class="flex flex-col h-full min-h-0 rounded-lg shadow border"
+        style="background: var(--color-card-bg); border-color: var(--color-card-border)"
+    >
         <!-- 标题区 -->
-        <div class="px-4 py-2 border-b border-gray-100 flex items-center">
+        <div
+            class="px-4 py-2 border-b flex items-center"
+            style="border-color: var(--color-border); background: var(--color-bg-secondary)"
+        >
             <a-breadcrumb>
                 <a-breadcrumb-item v-for="part in card.parts" :key="part">{{
                     part
@@ -253,7 +259,11 @@ const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
             </a-breadcrumb>
         </div>
         <!-- 内容区 -->
-        <div ref="imageListRef" class="flex-1 min-h-0 overflow-auto image-list relative">
+        <div
+            ref="imageListRef"
+            class="flex-1 min-h-0 overflow-auto image-list relative"
+            style="background: var(--color-card-bg)"
+        >
             <!-- 空状态：集成通用 EmptyState 组件 -->
             <template v-if="!loadingPhotasaConfig && rows.length === 0">
                 <EmptyState
@@ -265,24 +275,10 @@ const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
             <!-- 加载状态：集成骨架屏+LoadingState 组件 -->
             <div
                 v-else-if="loadingPhotasaConfig"
-                class="absolute inset-0 z-30 bg-gradient-to-br from-white/90 to-blue-100/80 transition-opacity duration-300 rounded-lg shadow-lg pointer-events-auto"
-                style="backdrop-filter: blur(2px)"
+                class="absolute inset-0 z-30 transition-opacity duration-300 rounded-lg shadow-lg pointer-events-auto"
+                style="backdrop-filter: blur(2px); background: var(--color-bg-secondary)"
             >
-                <!-- 外层加 px-4 保证骨架屏左右对齐 -->
-                <div class="px-4">
-                    <LoadingState :loadingText="t('loading')">
-                        <template #skeleton>
-                            <SkeletonList
-                                :count="skeletonCount"
-                                :width="thumbnailSize"
-                                :height="thumbnailSize"
-                                :rows="skeletonRows"
-                                :gap="gap"
-                                :customStyle="{ minHeight: thumbnailSize * 2 + gap + 'px' }"
-                            />
-                        </template>
-                    </LoadingState>
-                </div>
+                <LoadingState />
             </div>
             <!-- 虚拟滚动渲染图片行 -->
             <div v-else style="position: relative; width: 100%; height: 100%">
@@ -430,5 +426,34 @@ const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
     100% {
         transform: rotate(360deg);
     }
+}
+</style>
+
+<style scoped>
+.card-item {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-card-border);
+    box-shadow: 0 2px 8px var(--color-card-shadow, rgba(0, 0, 0, 0.07));
+    transition:
+        background 0.2s,
+        border 0.2s,
+        box-shadow 0.2s;
+}
+.card-item:hover {
+    background: var(--color-card-hover, var(--color-card-selected, #f0f8ff));
+    border-color: var(--color-card-hover-border, var(--color-primary));
+    box-shadow: 0 4px 16px var(--color-card-hover-shadow, rgba(0, 0, 0, 0.12));
+}
+.card-item.active {
+    background: var(--color-card-active, var(--color-card-selected, #e3f2fd));
+    border-color: var(--color-card-active-border, var(--color-primary));
+    box-shadow: 0 0 0 2px var(--color-primary);
+}
+.card-item.disabled {
+    background: var(--color-card-disabled, #f5f5f5);
+    color: var(--color-card-disabled-text, #bbb);
+    border-color: var(--color-card-disabled-border, #eee);
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 </style>
