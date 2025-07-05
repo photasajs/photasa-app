@@ -73,6 +73,19 @@ const api = {
     joinPath: pathHelper.joinPath, // 新增
     getSeparator: pathHelper.getSeparator, // 新增
     isMac: isMac, // 平台判断，渲染进程可直接调用
+    // ========== 新增窗口控制 API ==========
+    minimizeWindow: () => electronAPI.ipcRenderer.send("window:minimize"),
+    maximizeWindow: () => electronAPI.ipcRenderer.send("window:maximize"),
+    unmaximizeWindow: () => electronAPI.ipcRenderer.send("window:unmaximize"),
+    closeWindow: () => electronAPI.ipcRenderer.send("window:close"),
+    queryMaximized: () => electronAPI.ipcRenderer.send("window:queryMaximized"),
+    onWindowMaximized: (cb) => electronAPI.ipcRenderer.on("window:maximized", cb),
+    onWindowUnmaximized: (cb) => electronAPI.ipcRenderer.on("window:unmaximized", cb),
+    onWindowMaximizedState: (cb) => electronAPI.ipcRenderer.on("window:maximizedState", cb),
+    offWindowMaximized: (cb) => electronAPI.ipcRenderer.removeListener("window:maximized", cb),
+    offWindowUnmaximized: (cb) => electronAPI.ipcRenderer.removeListener("window:unmaximized", cb),
+    offWindowMaximizedState: (cb) =>
+        electronAPI.ipcRenderer.removeListener("window:maximizedState", cb),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

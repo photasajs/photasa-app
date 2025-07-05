@@ -78,4 +78,5 @@ export const loggers: Record<string, PhotasaLogger> = {
     thumbnail: getLogger("thumbnail"),
     worker: getLogger("worker"),
     watch: getLogger("watch"),
+    window: getLogger("window"),
 };

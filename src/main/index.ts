@@ -14,6 +14,7 @@ import ScanService from "./scan/scan-service";
 import fs from "fs";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
+import WindowService from "./window/window-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -142,6 +143,8 @@ function createWindow(): void {
     new ScanService(ipcMain, mainWindow);
     // Setup File Watch Service
     watchService = new WatchService(ipcMain, mainWindow);
+    // Setup Window Service
+    new WindowService(ipcMain, mainWindow);
 }
 
 /**
