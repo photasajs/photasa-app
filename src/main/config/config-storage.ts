@@ -9,17 +9,14 @@ import fs from "node:fs/promises";
 import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "@common/config-types";
 import * as R from "ramda";
-import {
-    toRelativeThumbnailPath,
-    toFileName,
-    shortenThumbnailName,
-    PhotasaLogger,
-} from "@common/index";
+import type { PhotasaLogger } from "@common/logger";
+import { shortenThumbnailName } from "@shared/path-util";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
 import { debounce } from "lodash";
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
 import { CACHE_TTL, configCache } from "./config-cache";
+import { toRelativeThumbnailPath, toFileName } from "@shared/path-util";
 
 export {
     getConfigCache,

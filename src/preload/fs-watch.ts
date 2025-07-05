@@ -2,7 +2,7 @@ import type { WatchConfig, WatchCallback, WatchState, WatchAction } from "@commo
 import { electronAPI } from "@electron-toolkit/preload";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { buildThumbnailPath } from "@common/utils";
+import { buildThumbnailPath } from "@shared/path-util";
 import { WatchServiceEvent } from "@common/watch-types";
 
 const { ipcRenderer } = electronAPI;

@@ -6,12 +6,8 @@ import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
-import {
-    toPreviewPath,
-    HeicExtensionRE,
-    getOptimalThumbnailResolution,
-    ratioStringToParts,
-} from "@common/utils";
+import { toPreviewPath } from "@shared/path-util";
+import { HeicExtensionRE, getOptimalThumbnailResolution, ratioStringToParts } from "@common/utils";
 import type { VideoSize } from "@common/types";
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
