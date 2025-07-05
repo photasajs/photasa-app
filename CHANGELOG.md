@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/systembugtj/picasa-vue/compare/v1.2.0...v1.3.0) (2025-07-05)
+
+
+### Features
+
+* add empty state ([edb64e9](https://github.com/systembugtj/picasa-vue/commit/edb64e976d1b92c6c2f6c42a9d94610c1c2691b0))
+
 ## [1.2.0](https://github.com/systembugtj/picasa-vue/compare/v1.1.0...v1.2.0) (2025-07-05)
 
 
