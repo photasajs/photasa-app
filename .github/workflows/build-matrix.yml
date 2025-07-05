@@ -16,7 +16,7 @@ jobs:
                     - os: macos-latest
                       build_script: build:mac
                     - os: windows-latest
-                      build_script: build:windows
+                      build_script: build:win
 
         steps:
             - name: Checkout code
