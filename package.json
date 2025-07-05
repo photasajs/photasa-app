@@ -1,7 +1,7 @@
 {
     "name": "photasa",
     "productName": "Photasa",
-    "version": "1.2.0",
+    "version": "1.6.0",
     "description": "Another picasa like photo manager",
     "main": "./out/main/index.js",
     "author": "Albert Li <albert_lee@hotmail.com>",
@@ -51,6 +51,7 @@
         "ffprobe-static": "^3.1.0",
         "fluent-ffmpeg": "^2.1.2",
         "force": "^0.0.3",
+        "fp-ts": "^2.16.10",
         "fs-extra": "^11.1.1",
         "glob": "^11.0.3",
         "graceful-fs": "^4.2.11",

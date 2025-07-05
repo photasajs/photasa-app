@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.6.0](https://github.com/systembugtj/picasa-vue/compare/v1.5.0...v1.6.0) (2025-07-05)
+
+
+### Features
+
+* add release please upload best practice ([ed6e9fc](https://github.com/systembugtj/picasa-vue/commit/ed6e9fcc6851f206a53ed224081a6a750337a55c))
+
+## [1.5.0](https://github.com/systembugtj/picasa-vue/compare/v1.4.0...v1.5.0) (2025-07-05)
+
+
+### Features
+
+* add release please upload best practice ([e7f7eb4](https://github.com/systembugtj/picasa-vue/commit/e7f7eb4e7dea32f4296bf7d5816dde85e646e654))
+
+## [1.4.0](https://github.com/systembugtj/picasa-vue/compare/v1.3.0...v1.4.0) (2025-07-05)
+
+
+### Features
+
+* add photasa config modal ([d179d80](https://github.com/systembugtj/picasa-vue/commit/d179d80dbd75ca9535f3c749587ad5b12b6b97b3))
+
+## [1.3.0](https://github.com/systembugtj/picasa-vue/compare/v1.2.0...v1.3.0) (2025-07-05)
+
+
+### Features
+
+* add empty state ([edb64e9](https://github.com/systembugtj/picasa-vue/commit/edb64e976d1b92c6c2f6c42a9d94610c1c2691b0))
+
 ## [1.2.0](https://github.com/systembugtj/picasa-vue/compare/v1.1.0...v1.2.0) (2025-07-05)
 
 

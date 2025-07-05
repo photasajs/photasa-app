@@ -39,6 +39,33 @@ export {
     isFile,
 };
 
+/**
+ * 平台无关的路径分割，将路径字符串按当前平台分隔符拆分为数组
+ * @param inputPath - 需要分割的路径字符串
+ * @returns 分割后的路径片段数组
+ */
+export function splitPath(inputPath: string): string[] {
+    // 使用 path.sep 进行分割，兼容 Windows 和 POSIX
+    return inputPath.split(path.sep).filter(Boolean);
+}
+
+/**
+ * 平台无关的路径拼接，将多个路径片段合并为一个完整路径
+ * @param parts - 路径片段
+ * @returns 合并后的完整路径
+ */
+export function joinPath(...parts: string[]): string {
+    return path.join(...parts);
+}
+
+/**
+ * 获取当前平台的路径分隔符
+ * @returns 分隔符字符串（如 '/' 或 '\\'）
+ */
+export function getSeparator(): string {
+    return path.sep;
+}
+
 export interface PathOption {
     root?: string;
 }

@@ -27,6 +27,9 @@ import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/ico
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
 
+/**
+ * 日志记录器
+ */
 const logger = loggers.app;
 
 const { t } = useI18n();
@@ -48,8 +51,13 @@ const loadingConfigs = ref(false);
 const showImportDialog = ref(false);
 
 const findPhotoService = inject(FindPhotoServiceKey);
-if (!findPhotoService) throw new Error("FindPhotoService not provided");
+if (!findPhotoService) {
+    throw new Error("FindPhotoService not provided");
+}
 
+/**
+ * 更新主题
+ */
 function updateTheme(): void {
     if (darkMode.value) {
         document.body.classList.add("dark");

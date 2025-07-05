@@ -90,6 +90,7 @@ const photasa = reactive<{
  * @param folder - The folder to open the config modal for
  */
 async function openPhotasaConfig(folder: string): Promise<void> {
+    // TODO: 优化，如果配置文件不存在，则提示用户
     loadingInfo.value = true;
     showConfigModal.value = true;
     const config = await getPhotasaConfig(folder);
