@@ -1,8 +1,15 @@
+# 说明：
+# 本 workflow 采用 on: workflow_run 触发，解决 release-please 创建 Release 时 on: release 不会被激活的问题。
+# 详见：https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+# 注意：workflows 名称需与 release-please workflow 的 name 字段完全一致。
+
 name: Upload Release Assets
 
 on:
-    release:
-        types: [published]
+    workflow_run:
+        workflows: ["Release Please"]
+        types:
+            - completed
 
 jobs:
     build-and-upload:
