@@ -83,6 +83,14 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
     </div>
 </template>
 <style lang="less">
+.thumbnail-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
 .thumbnail-image .ant-image {
     display: flex;
 }

@@ -16,6 +16,9 @@ import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
 
+/**
+ * Bugsnag 初始化
+ */
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
     plugins: [new BugsnagPluginVue()],
@@ -35,6 +38,9 @@ app.use(Antd);
 // provide FindPhotoServiceIpc 实例
 app.provide(FindPhotoServiceKey, new FindPhotoServiceIpc());
 
+/**
+ * 初始化偏好设置
+ */
 const preferenceStore = usePreferenceStore();
 const locale = preferenceStore.locale as
     | "en-US"
