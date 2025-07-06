@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, nextTick } from "vue";
 import { i18nUtils, type Locale } from "../i18n/config";
 import { usePreferenceStore } from "@renderer/stores/preference";
+import { useMenusStore } from "@renderer/stores/menus";
+import { useI18n } from "vue-i18n";
 
 const isOpen = ref(false);
 const preferenceStore = usePreferenceStore();
+const menusStore = useMenusStore();
+const { t } = useI18n();
 
 const toggleDropdown = () => {
     isOpen.value = !isOpen.value;
 };
 
-const selectLocale = (locale: Locale) => {
+const selectLocale = async (locale: Locale) => {
     preferenceStore.setLocale(locale);
+    await nextTick();
+    menusStore.refreshMenus(t); // 切换语言后刷新菜单
     isOpen.value = false;
 };
 

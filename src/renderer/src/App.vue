@@ -30,6 +30,7 @@ import { onMounted } from "vue";
 import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
+import { useMenusStore } from "@renderer/stores/menus";
 
 /**
  * 日志记录器
@@ -60,6 +61,7 @@ if (!findPhotoService) {
 const themes = ref<ThemeMeta[]>([]);
 const currentThemeId = ref<string>("");
 const statusBarStore = useStatusBarStore();
+const menusStore = useMenusStore();
 
 const isMac = window.api.isMac();
 
@@ -92,6 +94,8 @@ onMounted(async () => {
         task: t("app.title"),
         timestamp: Date.now(),
     });
+    // 应用启动时全局初始化菜单栏数据（国际化）
+    menusStore.refreshMenus(t);
 });
 
 // vue3 watch for array, should specify deep as true

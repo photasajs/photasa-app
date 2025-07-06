@@ -36,8 +36,39 @@
         "getInfo": "Información de la foto",
         "open": "Abrir en el administrador de archivos",
         "rebuildThumbnail": "Reconstruir miniatura",
-        "getConfig": "Obtener información de la biblioteca",
-        "rescan": "Reescanear directorio"
+        "getConfig": "Obtener información de la fototeca",
+        "rescan": "Reescanear directorio",
+        "app": {
+            "menu": "Aplicación",
+            "about": "Acerca de Photasa",
+            "services": "Servicios",
+            "hide": "Ocultar Photasa",
+            "hideOthers": "Ocultar otros",
+            "unhide": "Mostrar todo",
+            "quit": "Salir"
+        },
+        "view": {
+            "menu": "Vista",
+            "reload": "Recargar",
+            "forceReload": "Forzar recarga",
+            "toggleDevTools": "Alternar herramientas de desarrollo",
+            "resetZoom": "Restablecer zoom",
+            "zoomIn": "Acercar",
+            "zoomOut": "Alejar",
+            "toggleFullScreen": "Alternar pantalla completa"
+        },
+        "window": {
+            "menu": "Ventana",
+            "minimize": "Minimizar",
+            "maximize": "Maximizar",
+            "close": "Cerrar"
+        },
+        "help": {
+            "menu": "Ayuda",
+            "learnMore": "Saber más",
+            "about": "Acerca de Photasa"
+        },
+        "separator": "Separador"
     },
     "notification": {
         "info": "Información",

@@ -4,10 +4,23 @@
         <AppIcon />
         <!-- 标题 -->
         <span class="title-text">{{ t("app.title") }}</span>
-        <!-- 菜单栏 -->
-        <nav class="menu-bar">
-            <div v-for="menu in menus" :key="menu.label" class="menu-item">
+        <!-- 菜单栏（横向一级菜单） -->
+        <nav class="menu-bar no-drag-region" ref="menuBarRef">
+            <div
+                v-for="menu in filteredMenus"
+                :key="menu.key"
+                class="menu-item no-drag-region"
+                :class="{ active: activeMenuKey === menu.key }"
+                @click.stop="onMenuClick(menu.key)"
+            >
                 {{ t(menu.label) }}
+                <!-- 下拉子菜单，仅当前激活菜单显示 -->
+                <MenuDropdown
+                    v-if="activeMenuKey === menu.key && menu.items"
+                    :items="menu.items"
+                    class="dropdown-root"
+                    @menu-action="activeMenuKey = null"
+                />
             </div>
         </nav>
         <!-- 设置按钮区（no-drag） -->
@@ -88,7 +101,11 @@ import CoffeeOutlined from "@ant-design/icons-vue/CoffeeOutlined";
 import ImportOutlined from "@ant-design/icons-vue/ImportOutlined";
 import SettingOutlined from "@ant-design/icons-vue/SettingOutlined";
 import { useI18n } from "vue-i18n";
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { onClickOutside } from "@vueuse/core";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
+import { storeToRefs } from "pinia";
+import { useMenusStore } from "@renderer/stores/menus";
+import MenuDropdown from "./common/MenuDropdown.vue";
 const { t } = useI18n();
 
 const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference"]);
@@ -122,13 +139,16 @@ onMounted(() => {
     window.api.onWindowMaximized(() => {
         isMaximized.value = true;
     });
+
+    // 监听主进程窗口还原事件
     window.api.onWindowUnmaximized(() => {
         isMaximized.value = false;
     });
+
+    // 监听主进程窗口最大化状态
     window.api.onWindowMaximizedState((_e, state) => {
         isMaximized.value = !!state;
     });
-
     // 初始化时主动请求主进程同步状态
     window.api.queryMaximized();
 });
@@ -144,7 +164,25 @@ onBeforeUnmount(() => {
     });
 });
 
-const menus = [{ label: "View" }, { label: "Window" }, { label: "Help" }];
+// menus store 响应式菜单栏
+const menusStore = useMenusStore();
+const { menus } = storeToRefs(menusStore);
+
+// 当前激活的一级菜单 key
+const activeMenuKey = ref<string | null>(null);
+// 一级菜单栏 ref
+const menuBarRef = ref<HTMLElement | null>(null);
+
+const filteredMenus = computed(() => menus.value.filter((menu) => !menu.isMacOnly));
+
+// 点击一级菜单按钮，切换下拉菜单显示/隐藏
+function onMenuClick(menuKey: string) {
+    activeMenuKey.value = activeMenuKey.value === menuKey ? null : menuKey;
+}
+// 点击空白处关闭所有下拉菜单
+onClickOutside(menuBarRef, () => {
+    activeMenuKey.value = null;
+});
 </script>
 
 <style scoped lang="less">
@@ -174,6 +212,7 @@ const menus = [{ label: "View" }, { label: "Window" }, { label: "Help" }];
     align-items: center;
     height: 100%;
     margin: 0 16px;
+    position: relative;
 }
 .menu-item {
     padding: 0 16px;
@@ -186,9 +225,20 @@ const menus = [{ label: "View" }, { label: "Window" }, { label: "Help" }];
     height: 100%;
     display: flex;
     align-items: center;
+    position: relative;
     &:hover {
         background: var(--color-primary);
         color: var(--color-white);
+    }
+    &.active {
+        background: var(--color-primary);
+        color: var(--color-white);
+    }
+    .dropdown-root {
+        position: absolute;
+        left: 0;
+        top: 100%;
+        z-index: 9999;
     }
 }
 .window-controls {

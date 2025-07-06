@@ -41,8 +41,39 @@
         "getInfo": "Photo Info",
         "open": "Open in File Manager",
         "rebuildThumbnail": "Rebuild Thumbnail",
-        "getConfig": "Get Library Info",
-        "rescan": "Rescan Directory"
+        "getConfig": "Get Photo Library Info",
+        "rescan": "Rescan Directory",
+        "app": {
+            "menu": "App",
+            "about": "About Photasa",
+            "services": "Services",
+            "hide": "Hide Photasa",
+            "hideOthers": "Hide Others",
+            "unhide": "Show All",
+            "quit": "Quit"
+        },
+        "view": {
+            "menu": "View",
+            "reload": "Reload",
+            "forceReload": "Force Reload",
+            "toggleDevTools": "Toggle Developer Tools",
+            "resetZoom": "Reset Zoom",
+            "zoomIn": "Zoom In",
+            "zoomOut": "Zoom Out",
+            "toggleFullScreen": "Toggle Full Screen"
+        },
+        "window": {
+            "menu": "Window",
+            "minimize": "Minimize",
+            "maximize": "Maximize",
+            "close": "Close"
+        },
+        "help": {
+            "menu": "Help",
+            "learnMore": "Learn More",
+            "about": "About Photasa"
+        },
+        "separator": "Separator"
     },
     "notification": {
         "info": "Info",
