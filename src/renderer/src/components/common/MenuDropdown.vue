@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { MenuItemData } from "@common/menu-types";
-const props = defineProps<{ items: MenuItemData[] }>();
+defineProps<{ items: MenuItemData[] }>();
 const emit = defineEmits(["menu-action"]);
 const hoverItem = ref<MenuItemData | null>(null);
 function handleClick(item: MenuItemData) {

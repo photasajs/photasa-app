@@ -7,10 +7,10 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 
 export interface ThemeMeta {
     id: string;
-    name: string;
+    name: string | Record<string, string>;
     author: string;
     version: string;
-    description: string;
+    description: string | Record<string, string>;
     preview?: string;
     colors: Record<string, string>;
     css?: string;

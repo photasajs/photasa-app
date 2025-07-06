@@ -1,6 +1,6 @@
 // stores/photos.js
 import { defineStore } from "pinia";
-import type { Photo } from "@renderer/utils/folder-tree";
+import type { Photo } from "@common/config-types";
 
 type PhotoState = {
     files: Map<string, Map<string, Photo>>; // Photasa Config file list

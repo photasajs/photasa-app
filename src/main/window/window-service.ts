@@ -1,5 +1,5 @@
 import { loggers } from "@common/logger";
-import type { IpcMain, BrowserWindow, IpcMainEvent, App } from "electron";
+import type { IpcMain, BrowserWindow, App } from "electron";
 
 export default class WindowService {
     ipc: IpcMain;

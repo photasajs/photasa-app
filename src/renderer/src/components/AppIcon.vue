@@ -1,9 +1,12 @@
 <template>
-    <img src="@renderer/assets/icon.png" class="app-icon" alt="App Icon" draggable="false" />
+    <img :src="iconSrc" class="app-icon" alt="App Icon" draggable="false" />
 </template>
 
 <script setup lang="ts">
+import iconUrl from "@renderer/assets/icon.png";
+
 // 无需主题切换，直接使用唯一图标
+const iconSrc = iconUrl;
 </script>
 
 <style scoped>

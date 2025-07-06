@@ -233,12 +233,12 @@ onUnmounted(() => {
 });
 
 // 假设 thumbnailSize、containerWidth、gap 可用
-const gap = 16;
-const skeletonRows = computed(() => {
-    // 计算每行图片数，最少为1
-    return Math.max(1, Math.floor((containerWidth.value || 800) / (thumbnailSize.value + gap)));
-});
-const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
+// const gap = 16;
+// const skeletonRows = computed(() => {
+//     // 计算每行图片数，最少为1
+//     return Math.max(1, Math.floor((containerWidth.value || 800) / (thumbnailSize.value + gap)));
+// });
+// const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
 </script>
 
 <template>

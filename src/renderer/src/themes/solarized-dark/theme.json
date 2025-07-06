@@ -28,6 +28,7 @@
         "border": "#586e75",
         "shadow": "rgba(0,0,0,0.7)",
         "primary": "#268bd2",
+        "primary-rgb": "38, 139, 210",
         "primary-light": "#b3cde3",
         "success": "#859900",
         "warning": "#b58900",
