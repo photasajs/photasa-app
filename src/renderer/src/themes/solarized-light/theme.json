@@ -38,6 +38,8 @@
         "btn-hover": "#2aa198",
         "card-bg": "#eee8d5",
         "card-border": "#93a1a1",
+        "card-hover": "#b3cde3",
+        "card-active": "#b3cde3",
         "placeholder": "#b6c2d1",
         "disabled": "#bdbdbd",
         "skeleton-from": "#eee8d5",
