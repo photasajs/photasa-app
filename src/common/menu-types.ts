@@ -15,4 +15,8 @@ export interface MenuItemData {
     url?: string; // 自定义菜单项（如 help.learnMore）
     isMacOnly?: boolean; // 平台专属标志
     items?: MenuItemData[];
+    /**
+     * 菜单项类型，分隔符时为 'separator'
+     */
+    type?: "separator";
 }

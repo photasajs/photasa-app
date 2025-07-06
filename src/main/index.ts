@@ -3,7 +3,6 @@ import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "el
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import WatchService from "./watch/watch-service";
-import { createMenu } from "./menu";
 import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
@@ -15,7 +14,7 @@ import fs from "fs";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
 import WindowService from "./window/window-service";
-import MenuService from "./menu-service";
+import MenuService from "./menu/menu-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -55,8 +54,6 @@ function createWindow(): void {
             }
         `);
     });
-
-    createMenu();
 
     mainWindow.on("ready-to-show", () => {
         mainWindow?.show();
