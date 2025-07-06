@@ -12,6 +12,7 @@
                 class="menu-item no-drag-region"
                 :class="{ active: activeMenuKey === menu.key }"
                 @click.stop="onMenuClick(menu.key)"
+                @mouseenter="onMenuHover(menu.key)"
             >
                 {{ t(menu.label) }}
                 <!-- 下拉子菜单，仅当前激活菜单显示 -->
@@ -168,7 +169,7 @@ onBeforeUnmount(() => {
 const menusStore = useMenusStore();
 const { menus } = storeToRefs(menusStore);
 
-// 当前激活的一级菜单 key
+// 当前激活的一级菜单 key，决定 dropdown 是否显示及内容
 const activeMenuKey = ref<string | null>(null);
 // 一级菜单栏 ref
 const menuBarRef = ref<HTMLElement | null>(null);
@@ -176,10 +177,17 @@ const menuBarRef = ref<HTMLElement | null>(null);
 const filteredMenus = computed(() => menus.value.filter((menu) => !menu.isMacOnly));
 
 // 点击一级菜单按钮，切换下拉菜单显示/隐藏
+// 若已激活则关闭，否则激活并显示对应 dropdown
 function onMenuClick(menuKey: string) {
     activeMenuKey.value = activeMenuKey.value === menuKey ? null : menuKey;
 }
-// 点击空白处关闭所有下拉菜单
+// 主菜单项 hover 时，仅在 dropdown 已打开时切换 activeMenuKey，实现“点击后 hover 切换内容”
+function onMenuHover(menuKey: string) {
+    if (activeMenuKey.value !== null) {
+        activeMenuKey.value = menuKey;
+    }
+}
+// 点击菜单栏外部关闭所有下拉菜单
 onClickOutside(menuBarRef, () => {
     activeMenuKey.value = null;
 });

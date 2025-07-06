@@ -41,3 +41,47 @@
 
 ---
 本设计文档为 Window 菜单渲染、事件响应和快捷键注册的权威依据，后续开发与维护请严格参照。
+
+# 主菜单栏 Dropdown 交互重构设计
+
+## 交互目标
+- 支持点击主菜单项后显示/隐藏 dropdown。
+- dropdown 打开时，hover 不同主菜单项可切换 dropdown 内容。
+- 未点击打开 dropdown 时，hover 不显示 dropdown。
+- 点击菜单栏外部关闭 dropdown。
+- 行为与主流桌面应用一致，提升用户体验。
+
+## 状态管理
+- 仅用 `activeMenuKey`（ref<string|null>）管理当前激活的主菜单项。
+- `activeMenuKey=null` 表示 dropdown 关闭。
+- `activeMenuKey=menu.key` 表示显示对应菜单的 dropdown。
+
+## 行为逻辑
+- **点击主菜单项**：
+  - 若当前未激活，则设置 `activeMenuKey=menu.key`，显示 dropdown。
+  - 若当前已激活同一项，则设置 `activeMenuKey=null`，关闭 dropdown。
+- **hover 主菜单项**：
+  - 仅在 `activeMenuKey!=null` 时生效。
+  - hover 其他主菜单项时，`activeMenuKey=hover 的 menu.key`，dropdown 内容切换。
+  - 未打开 dropdown 时 hover 不触发。
+- **点击菜单栏外部**：
+  - 统一关闭 dropdown，`activeMenuKey=null`。
+
+## 代码实现要点
+- 只保留 `activeMenuKey` 状态，无需 hoverMenuKey。
+- 主菜单项绑定 `@click` 和 `@mouseenter`，hover 事件需判断 dropdown 是否已打开。
+- dropdown 渲染内容始终由 `activeMenuKey` 决定。
+- 详细注释说明每一步逻辑，便于维护。
+
+## 关闭机制
+- 使用 `onClickOutside(menuBarRef, ...)` 监听菜单栏外部点击，自动关闭 dropdown。
+- 保证状态一致性，防止误触或状态错乱。
+
+## 测试与维护建议
+- 覆盖以下场景的单元测试：
+  - 点击主菜单项显示/隐藏 dropdown。
+  - dropdown 打开时 hover 主菜单项切换内容。
+  - 未打开时 hover 不触发切换。
+  - 点击菜单栏外部关闭 dropdown。
+- 代码注释需与实现同步更新。
+- 后续如需支持键盘导航、无障碍等，可在此基础上扩展。
