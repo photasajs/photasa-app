@@ -15,6 +15,7 @@ import fs from "fs";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
 import WindowService from "./window/window-service";
+import MenuService from "./menu-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -144,7 +145,9 @@ function createWindow(): void {
     // Setup File Watch Service
     watchService = new WatchService(ipcMain, mainWindow);
     // Setup Window Service
-    new WindowService(ipcMain, mainWindow);
+    new WindowService(ipcMain, mainWindow, app);
+    // 在主窗口创建后初始化菜单服务
+    new MenuService(ipcMain, mainWindow);
 }
 
 /**

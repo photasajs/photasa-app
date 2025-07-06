@@ -86,6 +86,20 @@ const api = {
     offWindowUnmaximized: (cb) => electronAPI.ipcRenderer.removeListener("window:unmaximized", cb),
     offWindowMaximizedState: (cb) =>
         electronAPI.ipcRenderer.removeListener("window:maximizedState", cb),
+    /**
+     * Mac 菜单同步：将 menus 数据通过 IPC 发送到主进程，由主进程设置 Electron.Menu
+     * @param menus 菜单数据（已翻译 label，结构兼容 Electron.Menu）
+     */
+    applySystemMenu: (menus) => {
+        electronAPI.ipcRenderer.send("menu:applySystemMenu", menus);
+    },
+    /**
+     * Mac 菜单点击事件桥接：监听主进程发来的菜单点击事件，转发到 renderer
+     * @param cb 回调函数，参数为菜单事件 payload
+     */
+    onMenuAction: (cb) => {
+        electronAPI.ipcRenderer.on("menu:action", (_event, payload) => cb(payload));
+    },
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -4,6 +4,7 @@
 - 统一菜单渲染、事件响应、快捷键注册，提升可维护性、国际化和平台一致性。
 - 菜单数据结构（menus）为唯一源，前端与主进程共享。
 - 所有菜单项操作通过事件转发到 App.vue 统一处理。
+- Mac 下菜单项事件通过 preload.applySystemMenu 通知主进程。
 
 ## 菜单数据结构设计
 - 结构：MenuData、MenuItemData，支持 label、shortcut、disabled、onClick、分组等。
@@ -26,7 +27,7 @@
 - 如需主进程快捷键支持，可设计 preload API（如 registerShortcut），但推荐 UI 层统一注册。
 
 ## 平台差异与兼容性
-- macOS：TitlebarMac.vue 仅负责触发系统菜单加载，菜单项操作通过 preload.loadSystemMenu 通知主进程。
+- macOS：**TitlebarMac.vue 独立负责监听 menus store 变化，并推送菜单数据到 preload 层，由 preload 设置系统菜单。App.vue 不负责菜单同步，所有 Mac 菜单同步逻辑完全封装在 TitlebarMac.vue 内部。**
 - Windows/Linux：TitlebarWinLinux.vue 完全自定义菜单栏，menus 结构驱动。
 - menus 结构为唯一源，平台差异通过 menus 生成逻辑或渲染分支实现。
 
@@ -85,3 +86,9 @@
   - 点击菜单栏外部关闭 dropdown。
 - 代码注释需与实现同步更新。
 - 后续如需支持键盘导航、无障碍等，可在此基础上扩展。
+
+## preload 层设计
+- preload 负责监听 renderer 端的 applySystemMenu(menus) 调用，并通过 IPC 转发 menus 到 main 进程。
+- preload 负责监听 main 进程发来的菜单点击事件（如 menu-action），并通过 window.api.onMenuAction(cb) 转发到 renderer。
+- preload 不做菜单结构转换和业务处理，只做数据和事件桥接。
+- 事件流：renderer.applySystemMenu → preload（转发）→ main（结构转换/设置菜单）→ main 菜单点击 → preload（转发）→ renderer.onMenuAction。
