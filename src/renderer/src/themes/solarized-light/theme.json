@@ -1,9 +1,25 @@
 {
     "id": "solarized-light",
-    "name": "Solarized Light",
+    "name": {
+        "zh-CN": "Solarized 明亮",
+        "en-US": "Solarized Light",
+        "ja-JP": "Solarized ライト",
+        "fr-FR": "Solarized clair",
+        "de-DE": "Solarized hell",
+        "es-ES": "Solarized claro",
+        "ko-KR": "Solarized 라이트"
+    },
     "author": "官方",
     "version": "1.0.0",
-    "description": "Solarized Light 风格主题",
+    "description": {
+        "zh-CN": "Solarized Light 风格主题",
+        "en-US": "Solarized Light Theme",
+        "ja-JP": "Solarized Light スタイルテーマ",
+        "fr-FR": "Thème Solarized Light",
+        "de-DE": "Solarized Light Stilthema",
+        "es-ES": "Tema Solarized Light",
+        "ko-KR": "Solarized Light 스타일 테마"
+    },
     "colors": {
         "bg": "#fdf6e3",
         "bg-secondary": "#eee8d5",

@@ -1,26 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
+import ThemePreviewBox from "./ThemePreviewBox.vue";
 
 const themes = ref<ThemeMeta[]>([]);
 const currentThemeId = ref<string>("");
+const { locale } = useI18n();
 
-// 主题预览色块
-function getPreviewStyle(theme: ThemeMeta) {
-    return {
-        background: theme.colors.background,
-        color: theme.colors.text,
-        border: `1px solid ${theme.colors.border}`,
-        padding: "8px",
-        borderRadius: "8px",
-        minWidth: "120px",
-        minHeight: "48px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: "bold",
-        fontSize: "1rem",
-    };
+function getI18nText(obj: any, fallback = "") {
+    if (typeof obj === "string") return obj;
+    if (obj && typeof obj === "object") {
+        return obj[locale.value] || obj["en-US"] || Object.values(obj)[0] || fallback;
+    }
+    return fallback;
 }
 
 async function switchTheme(themeId: string) {
@@ -47,10 +40,11 @@ onMounted(async () => {
                 :class="{ active: theme.id === currentThemeId }"
                 @click="switchTheme(theme.id)"
             >
-                <div class="theme-preview" :style="getPreviewStyle(theme)">
-                    {{ theme.name }}
-                </div>
-                <div class="theme-desc">{{ theme.description }}</div>
+                <ThemePreviewBox
+                    :colors="theme.colors"
+                    :name="getI18nText(theme.name)"
+                    :description="getI18nText(theme.description)"
+                />
             </div>
         </div>
     </div>
@@ -79,16 +73,5 @@ onMounted(async () => {
 .theme-item.active {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px var(--color-primary) inset;
-}
-.theme-preview {
-    margin-bottom: 8px;
-    text-align: center;
-    color: var(--color-text);
-    background: var(--color-card-bg);
-    border: 1px solid var(--color-border);
-}
-.theme-desc {
-    font-size: 0.9em;
-    color: var(--color-text-secondary);
 }
 </style>
