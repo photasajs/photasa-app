@@ -37,7 +37,38 @@
         "open": "在文件管理器中打开",
         "rebuildThumbnail": "重建缩略图",
         "getConfig": "获取照片库信息",
-        "rescan": "重新扫描目录"
+        "rescan": "重新扫描目录",
+        "app": {
+            "menu": "应用",
+            "about": "关于 Photasa",
+            "services": "服务",
+            "hide": "隐藏 Photasa",
+            "hideOthers": "隐藏其他",
+            "unhide": "显示全部",
+            "quit": "退出"
+        },
+        "view": {
+            "menu": "视图",
+            "reload": "重新加载",
+            "forceReload": "强制重新加载",
+            "toggleDevTools": "切换开发者工具",
+            "resetZoom": "重置缩放",
+            "zoomIn": "放大",
+            "zoomOut": "缩小",
+            "toggleFullScreen": "切换全屏"
+        },
+        "window": {
+            "menu": "窗口",
+            "minimize": "最小化",
+            "maximize": "最大化",
+            "close": "关闭"
+        },
+        "help": {
+            "menu": "帮助",
+            "learnMore": "了解更多",
+            "about": "关于 Photasa"
+        },
+        "separator": "分隔符"
     },
     "notification": {
         "info": "提示",
@@ -61,6 +92,9 @@
         }
     },
     "status": {
+        "initializing": "正在初始化",
+        "idle": "空闲",
+        "updating": "正在更新",
         "ready": "准备就绪",
         "readingConfig": "加载照片库信息 [{config}]",
         "loadingConfig": "读取照片库信息",

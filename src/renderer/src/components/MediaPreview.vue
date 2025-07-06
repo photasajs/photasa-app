@@ -66,7 +66,7 @@ function handleOnIndexChange(newIndex: number) {
             />
             <img
                 v-else
-                :src="currentImg.raw"
+                :src="currentImg.preview || currentImg.raw"
                 :alt="currentImg.title"
                 :width="currentImg.w"
                 :height="currentImg.h"

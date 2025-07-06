@@ -37,7 +37,38 @@
         "open": "파일 관리자에서 열기",
         "rebuildThumbnail": "썸네일 재생성",
         "getConfig": "사진 라이브러리 정보 가져오기",
-        "rescan": "디렉토리 다시 스캔"
+        "rescan": "디렉터리 다시 스캔",
+        "app": {
+            "menu": "앱",
+            "about": "Photasa 정보",
+            "services": "서비스",
+            "hide": "Photasa 숨기기",
+            "hideOthers": "다른 항목 숨기기",
+            "unhide": "모두 표시",
+            "quit": "종료"
+        },
+        "view": {
+            "menu": "보기",
+            "reload": "새로고침",
+            "forceReload": "강제 새로고침",
+            "toggleDevTools": "개발자 도구 전환",
+            "resetZoom": "확대/축소 재설정",
+            "zoomIn": "확대",
+            "zoomOut": "축소",
+            "toggleFullScreen": "전체 화면 전환"
+        },
+        "window": {
+            "menu": "창",
+            "minimize": "최소화",
+            "maximize": "최대화",
+            "close": "닫기"
+        },
+        "help": {
+            "menu": "도움말",
+            "learnMore": "자세히 알아보기",
+            "about": "Photasa 정보"
+        },
+        "separator": "구분자"
     },
     "notification": {
         "info": "정보",
@@ -67,12 +98,15 @@
         }
     },
     "status": {
+        "initializing": "초기화 중",
+        "idle": "대기 중",
+        "updating": "업데이트 중",
         "ready": "준비 완료",
         "readingConfig": "사진 라이브러리 정보 로딩 [{config}]",
         "loadingConfig": "사진 라이브러리 정보 읽는 중",
         "processing": "처리 중 [{file}]",
         "scanned": "처리 완료",
-        "scanComplete": "디렉토리[{path}] 처리가 완료되었습니다.",
+        "scanComplete": "디렉터리[{path}] 처리 완료",
         "start": "스캔 시작",
         "progress": "스캔 진행",
         "complete": "스캔 완료",

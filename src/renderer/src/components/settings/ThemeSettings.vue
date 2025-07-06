@@ -59,6 +59,7 @@ onMounted(async () => {
 <style scoped>
 .theme-settings {
     padding: 16px;
+    background: var(--color-bg);
 }
 .theme-list {
     display: flex;
@@ -73,18 +74,21 @@ onMounted(async () => {
     padding: 8px;
     min-width: 140px;
     max-width: 200px;
-    background: #fafafa;
+    background: var(--color-bg-secondary);
 }
 .theme-item.active {
-    border-color: var(--color-primary, #1976d2);
-    box-shadow: 0 0 0 2px var(--color-primary, #1976d2) inset;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary) inset;
 }
 .theme-preview {
     margin-bottom: 8px;
     text-align: center;
+    color: var(--color-text);
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
 }
 .theme-desc {
     font-size: 0.9em;
-    color: #888;
+    color: var(--color-text-secondary);
 }
 </style>

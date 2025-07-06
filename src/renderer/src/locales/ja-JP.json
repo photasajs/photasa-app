@@ -94,6 +94,9 @@
         }
     },
     "status": {
+        "initializing": "初期化中",
+        "idle": "アイドル",
+        "updating": "更新中",
         "ready": "準備完了",
         "readingConfig": "フォトライブラリ情報を読み込み中 [{config}]",
         "loadingConfig": "フォトライブラリ情報を読込中",
@@ -130,8 +133,39 @@
         "getInfo": "写真情報",
         "open": "ファイルマネージャーで開く",
         "rebuildThumbnail": "サムネイルを再構築",
-        "getConfig": "フォトライブラリ情報を取得",
-        "rescan": "ディレクトリを再スキャン"
+        "getConfig": "写真ライブラリ情報を取得",
+        "rescan": "ディレクトリを再スキャン",
+        "app": {
+            "menu": "アプリケーション",
+            "about": "Photasaについて",
+            "services": "サービス",
+            "hide": "Photasaを隠す",
+            "hideOthers": "他を隠す",
+            "unhide": "すべてを表示",
+            "quit": "終了"
+        },
+        "view": {
+            "menu": "表示",
+            "reload": "再読み込み",
+            "forceReload": "強制再読み込み",
+            "toggleDevTools": "開発者ツールの切替",
+            "resetZoom": "ズームをリセット",
+            "zoomIn": "ズームイン",
+            "zoomOut": "ズームアウト",
+            "toggleFullScreen": "全画面切替"
+        },
+        "window": {
+            "menu": "ウィンドウ",
+            "minimize": "最小化",
+            "maximize": "最大化",
+            "close": "閉じる"
+        },
+        "help": {
+            "menu": "ヘルプ",
+            "learnMore": "詳細を見る",
+            "about": "Photasaについて"
+        },
+        "separator": "区切り"
     },
     "empty": {
         "image": "画像がありません",

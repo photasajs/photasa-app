@@ -24,6 +24,7 @@ export type PreferenceState = {
     scannedFolder: string;
     currentFolderConfig: PhotasaConfig;
     folderTree: DataNode[];
+    themeId: string; // 当前主题 id
 };
 
 export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
@@ -42,6 +43,7 @@ export const usePreferenceStore = defineStore("preference", {
             scannedFolder: "",
             currentFolderConfig: <PhotasaConfig>{},
             folderTree: [],
+            themeId: "solarized-dark", // 默认空，首次加载时由 theme-manager 设定
         };
     },
     persist: true,
@@ -198,6 +200,9 @@ export const usePreferenceStore = defineStore("preference", {
         },
         setLocale(locale: string) {
             this.locale = locale;
+        },
+        setThemeId(themeId: string) {
+            this.themeId = themeId;
         },
         /**
          * 重置所有目录存储

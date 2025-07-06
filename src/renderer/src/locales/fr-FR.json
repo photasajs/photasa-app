@@ -36,8 +36,39 @@
         "getInfo": "Infos photo",
         "open": "Ouvrir dans le gestionnaire de fichiers",
         "rebuildThumbnail": "Reconstruire la vignette",
-        "getConfig": "Obtenir les infos de la bibliothèque",
-        "rescan": "Réanalyser le dossier"
+        "getConfig": "Obtenir les informations sur la photothèque",
+        "rescan": "Réanalyser le dossier",
+        "app": {
+            "menu": "Application",
+            "about": "À propos de Photasa",
+            "services": "Services",
+            "hide": "Masquer Photasa",
+            "hideOthers": "Masquer les autres",
+            "unhide": "Tout afficher",
+            "quit": "Quitter"
+        },
+        "view": {
+            "menu": "Affichage",
+            "reload": "Recharger",
+            "forceReload": "Forcer le rechargement",
+            "toggleDevTools": "Basculer les outils de développement",
+            "resetZoom": "Réinitialiser le zoom",
+            "zoomIn": "Agrandir",
+            "zoomOut": "Rétrécir",
+            "toggleFullScreen": "Basculer en plein écran"
+        },
+        "window": {
+            "menu": "Fenêtre",
+            "minimize": "Minimiser",
+            "maximize": "Maximiser",
+            "close": "Fermer"
+        },
+        "help": {
+            "menu": "Aide",
+            "learnMore": "En savoir plus",
+            "about": "À propos de Photasa"
+        },
+        "separator": "Séparateur"
     },
     "notification": {
         "info": "Info",
@@ -67,6 +98,9 @@
         }
     },
     "status": {
+        "initializing": "Initialisation en cours",
+        "idle": "Inactif",
+        "updating": "Mise à jour en cours",
         "ready": "Prêt",
         "readingConfig": "Chargement des infos de la bibliothèque [{config}]",
         "loadingConfig": "Lecture des infos de la bibliothèque",

@@ -36,8 +36,39 @@
         "getInfo": "Foto-Info",
         "open": "Im Dateimanager öffnen",
         "rebuildThumbnail": "Miniaturbild neu erstellen",
-        "getConfig": "Bibliotheksinfo abrufen",
-        "rescan": "Verzeichnis erneut scannen"
+        "getConfig": "Fotobibliothek-Info abrufen",
+        "rescan": "Verzeichnis erneut scannen",
+        "app": {
+            "menu": "App",
+            "about": "Über Photasa",
+            "services": "Dienste",
+            "hide": "Photasa ausblenden",
+            "hideOthers": "Andere ausblenden",
+            "unhide": "Alle einblenden",
+            "quit": "Beenden"
+        },
+        "view": {
+            "menu": "Ansicht",
+            "reload": "Neu laden",
+            "forceReload": "Erneut laden erzwingen",
+            "toggleDevTools": "Entwicklertools umschalten",
+            "resetZoom": "Zoom zurücksetzen",
+            "zoomIn": "Vergrößern",
+            "zoomOut": "Verkleinern",
+            "toggleFullScreen": "Vollbild umschalten"
+        },
+        "window": {
+            "menu": "Fenster",
+            "minimize": "Minimieren",
+            "maximize": "Maximieren",
+            "close": "Schließen"
+        },
+        "help": {
+            "menu": "Hilfe",
+            "learnMore": "Mehr erfahren",
+            "about": "Über Photasa"
+        },
+        "separator": "Trenner"
     },
     "notification": {
         "info": "Info",
@@ -65,6 +96,9 @@
         }
     },
     "status": {
+        "initializing": "Initialisierung läuft",
+        "idle": "Leerlauf",
+        "updating": "Aktualisierung läuft",
         "ready": "Bereit",
         "readingConfig": "Bibliotheksinfo wird geladen [{config}]",
         "loadingConfig": "Bibliotheksinfo wird gelesen",
