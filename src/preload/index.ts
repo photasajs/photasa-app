@@ -100,6 +100,7 @@ const api = {
     onMenuAction: (cb) => {
         electronAPI.ipcRenderer.on("menu:action", (_event, payload) => cb(payload));
     },
+    openExternal: (url: string) => electronAPI.ipcRenderer.invoke("shell:openExternal", url),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

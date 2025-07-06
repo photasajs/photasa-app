@@ -1,20 +1,20 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
-
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import WatchService from "./watch/watch-service";
-import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
 import klawSync from "klaw-sync";
-import ThumbnailService from "./thumbnail/thumbnail-service";
-import ConfigService from "./config/config-service";
-import ScanService from "./scan/scan-service";
 import fs from "fs";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
+import WatchService from "./watch/watch-service";
+import icon from "../../resources/icon.png?asset";
+import ThumbnailService from "./thumbnail/thumbnail-service";
+import ConfigService from "./config/config-service";
+import ScanService from "./scan/scan-service";
 import WindowService from "./window/window-service";
 import MenuService from "./menu/menu-service";
+import ShellService from "./shell/shell-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -96,12 +96,6 @@ function createWindow(): void {
         return app.getPath(args.name);
     });
 
-    // Open in finder
-    ipcMain.on("picasa:open-in-finder", (_, args) => {
-        logger.info("picasa:open-in-finder", { path: args.path });
-        shell.showItemInFolder(args.path);
-    });
-
     ipcMain.handle("picasa:sub-folders", async (_, args) => {
         try {
             const filterFn = (item: { path: string }): boolean => {
@@ -145,6 +139,8 @@ function createWindow(): void {
     new WindowService(ipcMain, mainWindow, app);
     // 在主窗口创建后初始化菜单服务
     new MenuService(ipcMain, mainWindow);
+
+    new ShellService(ipcMain, mainWindow);
 }
 
 /**
