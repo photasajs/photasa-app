@@ -1,13 +1,22 @@
-export const inBrowser = typeof window !== "undefined";
+/**
+ * 判断是否在浏览器中运行
+ * @returns 是否在浏览器中运行
+ */
+export const inBrowser = () => typeof window !== "undefined";
 
 export const voidFn = () => {
     return;
 };
 
-// TODO: prepare for mobile touch event
+/**
+ * 是否支持被动事件
+ */
 export let supportsPassive = false;
 
-if (inBrowser) {
+/**
+ * 是否支持被动事件
+ */
+if (inBrowser()) {
     try {
         const options = {};
         Object.defineProperty(options, "passive", {
@@ -27,7 +36,7 @@ export const on = (
     handler: EventListenerOrEventListenerObject,
     passive = false,
 ) => {
-    if (inBrowser) {
+    if (inBrowser()) {
         target.addEventListener(
             event,
             handler,
@@ -36,35 +45,18 @@ export const on = (
     }
 };
 
+/**
+ * 移除事件监听
+ * @param target 目标元素
+ * @param event 事件类型
+ * @param handler 事件处理函数
+ */
 export const off = (
     target: Element | Document | Window,
     event: string,
     handler: EventListenerOrEventListenerObject,
 ) => {
-    if (inBrowser) {
+    if (inBrowser()) {
         target.removeEventListener(event, handler);
     }
 };
-
-export const preventDefault = (e: Event) => {
-    e.preventDefault();
-};
-
-const toString = Object.prototype.toString;
-const isType = (type: string) => (arg: unknown) => toString.call(arg).slice(8, -1) === type;
-
-export function isArray(arg: unknown): arg is unknown[] {
-    return isType("Array")(arg);
-}
-
-export const isObject = (arg: unknown): arg is Record<string, unknown> => {
-    return !!arg && isType("Object")(arg);
-};
-
-export const isString = (arg: unknown): arg is string => {
-    return !!arg && isType("String")(arg);
-};
-
-export function notEmpty<T>(value: T | null | undefined): value is T {
-    return value !== null && value !== undefined;
-}

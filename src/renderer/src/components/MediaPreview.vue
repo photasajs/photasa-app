@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import VueEasyLightbox from "./LightBox";
+import LazyImage from "./LazyImage.vue";
 
 const props = defineProps<{
     images: Array<{
@@ -11,6 +12,7 @@ const props = defineProps<{
         isVideo?: boolean;
         raw?: string;
         thumbnail?: string;
+        preview?: string;
     }>;
     index: number;
     visible: boolean;
@@ -64,12 +66,15 @@ function handleOnIndexChange(newIndex: number) {
                 :loop="true"
                 :volume="0.6"
             />
-            <img
+            <LazyImage
                 v-else
                 :src="currentImg.preview || currentImg.raw"
-                :alt="currentImg.title"
                 :width="currentImg.w"
                 :height="currentImg.h"
+                :fallback="currentImg.thumbnail || ''"
+                :isVideo="false"
+                :raw="currentImg.raw"
+                :alt="currentImg.title"
                 style="max-width: 100%; max-height: 80vh"
             />
         </template>
