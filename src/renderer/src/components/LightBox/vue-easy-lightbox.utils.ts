@@ -1,6 +1,6 @@
 import { isObject } from "@renderer/common/object";
 import { isString } from "@renderer/common/string";
-import type { Img } from "./types";
+import type { IImgWrapperState, IImgState, Img } from "./types";
 
 /**
  * 判断是否为图片对象
@@ -62,4 +62,20 @@ export const mutateDragging = (
             else if (xDiff > tolerance) onPrev();
         }
     }
+};
+
+/**
+ * 缩放图片
+ * @param newScale 新的缩放比例
+ * @param imgState 图片状态
+ * @param imgWrapperState 图片包裹状态
+ */
+export const zoom = (newScale: number, imgState: IImgState, imgWrapperState: IImgWrapperState) => {
+    if (Math.abs(1 - newScale) < 0.05) {
+        newScale = 1;
+    } else if (Math.abs(imgState.maxScale - newScale) < 0.05) {
+        newScale = imgState.maxScale;
+    }
+    imgWrapperState.lastScale = imgWrapperState.scale;
+    imgWrapperState.scale = newScale;
 };

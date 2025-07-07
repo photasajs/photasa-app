@@ -25,7 +25,7 @@ import { prefixCls } from "./constant";
 import { on, off } from "./utils/index";
 import { useImage, useMouse, useTouch } from "./utils/hooks";
 import { Img, IImgWrapperState, PropsImgs } from "./types";
-import { isImg, mutateDragging } from "./vue-easy-lightbox.utils";
+import { isImg, mutateDragging, zoom } from "./vue-easy-lightbox.utils";
 import { isString } from "@renderer/common/string";
 import { notEmpty } from "@renderer/common/object";
 import { isArray } from "@renderer/common/array";
@@ -286,28 +286,17 @@ export default defineComponent({
             });
         };
 
-        // actions for changing img
-        const zoom = (newScale: number) => {
-            if (Math.abs(1 - newScale) < 0.05) {
-                newScale = 1;
-            } else if (Math.abs(imgState.maxScale - newScale) < 0.05) {
-                newScale = imgState.maxScale;
-            }
-            imgWrapperState.lastScale = imgWrapperState.scale;
-            imgWrapperState.scale = newScale;
-        };
-
         const zoomIn = () => {
             const newScale = imgWrapperState.scale + props.zoomScale;
             if (newScale < imgState.maxScale * props.maxZoom) {
-                zoom(newScale);
+                zoom(newScale, imgState, imgWrapperState);
             }
         };
 
         const zoomOut = () => {
             const newScale = imgWrapperState.scale - props.zoomScale;
             if (newScale > props.minZoom) {
-                zoom(newScale);
+                zoom(newScale, imgState, imgWrapperState);
             }
         };
 
