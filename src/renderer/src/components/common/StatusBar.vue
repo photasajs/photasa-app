@@ -8,7 +8,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
-import bmcButton from "@renderer/assets/bmc-button.png";
+import BuyMeCoffeeButton from "./BuyMeCoffeeButton.vue";
 
 const statusBarStore = useStatusBarStore();
 const { t } = useI18n();
@@ -16,10 +16,6 @@ const { t } = useI18n();
 const statusText = computed(() =>
     statusBarStore.status ? t(`status.${statusBarStore.status}`) : "",
 );
-
-function openBuyMeCoffee() {
-    window.api.openExternal("https://www.buymeacoffee.com/PpVB0uO");
-}
 </script>
 <template>
     <div class="status-bar">
@@ -40,9 +36,9 @@ function openBuyMeCoffee() {
             </template>
         </div>
         <!-- Buy Me a Coffee 按钮始终在最右侧 -->
-        <a href="#" class="bmc-btn" @click.prevent="openBuyMeCoffee">
-            <img :src="bmcButton" alt="Buy me a coffee" style="height: 28px; display: block" />
-        </a>
+        <div class="bmc-btn">
+            <BuyMeCoffeeButton />
+        </div>
     </div>
 </template>
 <style scoped>
@@ -62,9 +58,9 @@ function openBuyMeCoffee() {
     white-space: nowrap;
 }
 .bmc-btn {
-    flex-shrink: 0;
+    flex: 0 0 auto;
     margin-left: 12px;
-    display: flex;
     align-items: center;
+    justify-content: flex-end;
 }
 </style>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Vue3MarkdownIt from "vue3-markdown-it";
-import bmcButton from "@renderer/assets/bmc-button.png";
+import BuyMeCoffeeButton from "@renderer/components/common/BuyMeCoffeeButton.vue";
 
 const { t } = useI18n();
 
@@ -14,18 +14,12 @@ const handleKeyPress = (event: KeyboardEvent) => {
         emit("exit");
     }
 };
-
-function openBuyMeCoffee() {
-    window.api.openExternal("https://www.buymeacoffee.com/PpVB0uO");
-}
 </script>
 
 <template>
     <div class="about-container" tabindex="0" @keydown="handleKeyPress">
         <div class="about-bmc">
-            <a href="#" @click.prevent="openBuyMeCoffee">
-                <img :src="bmcButton" alt="Buy me a coffee" style="height: 28px; display: block" />
-            </a>
+            <BuyMeCoffeeButton />
         </div>
         <vue3-markdown-it :source="t('about.markdown')" class="about-md" />
     </div>
