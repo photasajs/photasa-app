@@ -327,7 +327,7 @@ findPhotoService.onFindPhoto((args: any) => {
 :root {
     /* 主题变量控制 footer 高度 */
     --photasa-footer-height: 70px;
-    --photasa-hear-height: 36px;
+    --photasa-header-height: 36px;
 }
 .content .image-content {
     height: calc(100vh - var(--photasa-footer-height));
