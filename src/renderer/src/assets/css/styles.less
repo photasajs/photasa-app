@@ -1,13 +1,36 @@
-.dark {
-    @import "ant-design-vue/dist/antd.dark.less";
-}
-
-.light {
-    @import "ant-design-vue/dist/antd.less";
-}
-
 /* 修复 Ant Design Vue <a-image> 预览弹窗与系统 header 重叠问题 */
 .ant-image-preview-mask,
 .ant-image-preview-body {
   top: 36px !important;
+}
+
+/* About 页面 markdown-it 主题色适配 */
+.about-md h1,
+.about-md h2,
+.about-md h3,
+.about-md h4,
+.about-md h5,
+.about-md h6,
+.about-md p,
+.about-md ul,
+.about-md ol,
+.about-md li,
+.about-md code,
+.about-md kbd,
+.about-md strong,
+.about-md em {
+  color: var(--color-text, #222) !important;
+}
+
+.about-md code {
+  background: var(--color-bg-secondary, #f5f5f5);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 0.95em;
+  color: var(--color-primary, #1890ff) !important;
+}
+
+.about-md strong {
+  font-weight: bold;
+  color: var(--color-primary, #1890ff) !important;
 }

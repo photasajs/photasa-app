@@ -37,7 +37,38 @@
         "open": "在文件管理器中打开",
         "rebuildThumbnail": "重建缩略图",
         "getConfig": "获取照片库信息",
-        "rescan": "重新扫描目录"
+        "rescan": "重新扫描目录",
+        "app": {
+            "menu": "应用",
+            "about": "关于 Photasa",
+            "services": "服务",
+            "hide": "隐藏 Photasa",
+            "hideOthers": "隐藏其他",
+            "unhide": "显示全部",
+            "quit": "退出"
+        },
+        "view": {
+            "menu": "视图",
+            "reload": "重新加载",
+            "forceReload": "强制重新加载",
+            "toggleDevTools": "切换开发者工具",
+            "resetZoom": "重置缩放",
+            "zoomIn": "放大",
+            "zoomOut": "缩小",
+            "toggleFullScreen": "切换全屏"
+        },
+        "window": {
+            "menu": "窗口",
+            "minimize": "最小化",
+            "maximize": "最大化",
+            "close": "关闭"
+        },
+        "help": {
+            "menu": "帮助",
+            "learnMore": "了解更多",
+            "about": "关于 Photasa"
+        },
+        "separator": "分隔符"
     },
     "notification": {
         "info": "提示",
@@ -61,6 +92,9 @@
         }
     },
     "status": {
+        "initializing": "正在初始化",
+        "idle": "空闲",
+        "updating": "正在更新",
         "ready": "准备就绪",
         "readingConfig": "加载照片库信息 [{config}]",
         "loadingConfig": "读取照片库信息",
@@ -96,7 +130,7 @@
         },
         "press": "按",
         "toExit": "退出",
-        "markdown": "# 关于 Photasa\n\nPhotasa 是一款现代化、隐私友好的本地照片管理工具，灵感源自经典的 Picasa。\n它支持高效地浏览、整理和管理您的照片与视频，拥有美观的界面和强大的本地功能，无需云端依赖。\n\n## 主要特性\n\n- 本地照片与视频智能导入与管理\n- 快速缩略图生成与预览\n- 多语言界面与主题切换\n- 支持批量操作与高效搜索\n- 数据隐私与安全保障\n\n## 资源\n\n- [项目文档](/docs/resources)\n- [开源仓库](https://github.com/your-org/picasa-vue)\n- [☕️ Buy Me a Coffee 支持作者](https://www.buymeacoffee.com/yourname)\n\n按 `Esc` 退出"
+        "markdown": "# 关于 Photasa\n\nPhotasa 是一款现代化、隐私友好的本地照片管理工具，灵感源自经典的 Picasa。\n它支持高效地浏览、整理和管理您的照片与视频，拥有美观的界面和强大的本地功能，无需云端依赖。\n\n## 主要特性\n\n- 本地照片与视频智能导入与管理\n- 快速缩略图生成与预览\n- 多语言界面与主题切换\n- 支持批量操作与高效搜索\n- 数据隐私与安全保障\n\n按 `Esc` 退出"
     },
     "preferences": {
         "title": "偏好设置",

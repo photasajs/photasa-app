@@ -1,6 +1,6 @@
 <!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import { computed, ref, watch, inject } from "vue";
+import { computed, ref, inject } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -23,9 +23,14 @@ import UserPreference from "./components/UserPreference.vue";
 import { useI18n } from "vue-i18n";
 import type { ScanAction } from "@common/scan-types";
 import { useTitle, watchArray } from "@vueuse/core";
-import { SettingOutlined, ImportOutlined, CoffeeOutlined } from "@ant-design/icons-vue";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
+import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
+import { onMounted } from "vue";
+import StatusBar from "./components/common/StatusBar.vue";
+import TitlebarMac from "./components/TitlebarMac.vue";
+import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
+import { useMenusStore } from "@renderer/stores/menus";
 
 /**
  * 日志记录器
@@ -36,10 +41,8 @@ const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
-const { paths, darkMode, currentFolder, scanningFolder, thumbnailSize } =
-    storeToRefs(preferenceStore);
+const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
-const statusBarStore = useStatusBarStore();
 
 const showImport = ref(false);
 const showPreference = ref(false);
@@ -55,22 +58,44 @@ if (!findPhotoService) {
     throw new Error("FindPhotoService not provided");
 }
 
-/**
- * 更新主题
- */
-function updateTheme(): void {
-    if (darkMode.value) {
-        document.body.classList.add("dark");
-        document.body.classList.remove("light");
-    } else {
-        document.body.classList.remove("dark");
-        document.body.classList.add("light");
-    }
+const themes = ref<ThemeMeta[]>([]);
+const currentThemeId = ref<string>("");
+const statusBarStore = useStatusBarStore();
+const menusStore = useMenusStore();
+
+const isMac = window.api.isMac();
+
+function handleOpenScanList() {
+    showScanList.value = true;
+}
+function handleOpenImportPhotos() {
+    showImportDialog.value = true;
+}
+function handleOpenPreference() {
+    showPreference.value = true;
 }
 
-// Set Dark/Light theme node
-watch(darkMode, () => {
-    updateTheme();
+onMounted(async () => {
+    // APP 启动时推送初始化状态
+    statusBarStore.update({
+        type: "app",
+        status: "initializing",
+        task: t("app.title"),
+        timestamp: Date.now(),
+    });
+    await themeManager.loadBuiltInThemes();
+    themes.value = themeManager.getThemes();
+    const cur = themeManager.getCurrentTheme();
+    currentThemeId.value = cur?.id || themes.value[0]?.id || "";
+    // 主题加载完毕，切换为 ready 状态
+    statusBarStore.update({
+        type: "app",
+        status: "ready",
+        task: t("app.title"),
+        timestamp: Date.now(),
+    });
+    // 应用启动时全局初始化菜单栏数据（国际化）
+    menusStore.refreshMenus(t);
 });
 
 // vue3 watch for array, should specify deep as true
@@ -190,15 +215,6 @@ getDirectory("desktop")
 function handlePreferenceOk(): void {
     showPreference.value = false;
 }
-function openPreference(): void {
-    showPreference.value = true;
-}
-function openImportPhotos(): void {
-    showImport.value = true;
-}
-function openScanList(): void {
-    showScanList.value = true;
-}
 // Update title
 const title = computed(() => {
     return `${t("app.title")} - ${currentFolder.value}`;
@@ -224,16 +240,20 @@ findPhotoService.onFindPhoto((args: any) => {
 <template>
     <a-spin v-if="loading" />
     <a-layout v-else>
-        <header class="app-header">
-            <a-space class="title-header">
-                <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
-            </a-space>
-            <a-space class="setting-header">
-                <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
-                <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
-                <SettingOutlined class="system-icon" @click="openPreference" />
-            </a-space>
-        </header>
+        <!-- 分平台 titlebar -->
+        <TitlebarMac
+            v-if="isMac"
+            @openScanList="handleOpenScanList"
+            @openImportPhotos="handleOpenImportPhotos"
+            @openPreference="handleOpenPreference"
+        />
+        <TitlebarWinLinux
+            v-else
+            @openScanList="handleOpenScanList"
+            @openImportPhotos="handleOpenImportPhotos"
+            @openPreference="handleOpenPreference"
+        />
+        <!-- 其余内容保持不变 -->
         <a-layout class="content app-container">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
@@ -245,13 +265,10 @@ findPhotoService.onFindPhoto((args: any) => {
                         </a-layout-content>
                     </a-layout>
                 </template>
-
                 <template #B>
                     <a-layout class="image-content">
                         <a-layout-content class="image-list">
-                            <!-- 集成图片列表，监听 import 事件，弹出导入对话框 -->
                             <ImageList @import="showImportDialog = true" />
-                            <!-- 集成导入对话框，show 受控，关闭时自动隐藏 -->
                             <ImportPhotos
                                 :show="showImportDialog"
                                 @update:show="showImportDialog = $event"
@@ -261,32 +278,9 @@ findPhotoService.onFindPhoto((args: any) => {
                 </template>
             </split-view>
         </a-layout>
-        <footer class="app-footer">
-            <a-space>
-                <a-typography-text type="success">
-                    <!-- 优先展示主进程推送的任务状态，支持国际化 -->
-                    <template v-if="statusBarStore.status">
-                        {{ t(`status.${statusBarStore.status}`) }}
-                        <span v-if="statusBarStore.currentTask"
-                            >: {{ statusBarStore.currentTask }}</span
-                        >
-                        <span v-if="statusBarStore.progress !== undefined">
-                            ({{ statusBarStore.progress }}%)</span
-                        >
-                        <span v-if="statusBarStore.error">
-                            [{{ t("notification.error") }}: {{ statusBarStore.error }}]</span
-                        >
-                    </template>
-                    <template v-else>
-                        {{ processingFile }}
-                    </template>
-                </a-typography-text>
-            </a-space>
-        </footer>
+        <StatusBar />
     </a-layout>
-
     <ImportPhotos v-model:show="showImport"></ImportPhotos>
-
     <a-modal
         v-model:visible="showPreference"
         :mask-closable="false"
@@ -331,6 +325,7 @@ findPhotoService.onFindPhoto((args: any) => {
 
 <style lang="less">
 :root {
+    /* 主题变量控制 footer 高度 */
     --photasa-footer-height: 70px;
     --photasa-hear-height: 36px;
 }
@@ -345,13 +340,6 @@ findPhotoService.onFindPhoto((args: any) => {
     height: 100%;
 }
 
-.app-header {
-    height: var(--photasa-header-height);
-    margin-left: 36px;
-    padding-left: 50px;
-    line-height: 36px;
-    display: flex;
-}
 .title-header {
     flex-grow: 1;
     user-select: none;
@@ -369,6 +357,10 @@ findPhotoService.onFindPhoto((args: any) => {
     line-height: 32px;
     padding-left: 20px;
     justify-content: center;
+    /* 背景、边框、文字色均由主题变量控制 */
+    background: var(--color-footer-bg);
+    color: var(--color-footer-text);
+    border-top: 1px solid var(--color-footer-border);
 }
 
 .scan-list {

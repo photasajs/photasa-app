@@ -1,18 +1,20 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
-
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import WatchService from "./watch/watch-service";
-import { createMenu } from "./menu";
-import icon from "../../resources/icon.png?asset";
 import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
 import klawSync from "klaw-sync";
+import fs from "fs";
+import { loggers } from "@common/logger";
+import { isMac } from "./platform";
+import WatchService from "./watch/watch-service";
+import icon from "../../resources/icon.png?asset";
 import ThumbnailService from "./thumbnail/thumbnail-service";
 import ConfigService from "./config/config-service";
 import ScanService from "./scan/scan-service";
-import fs from "fs";
-import { loggers } from "@common/logger";
+import WindowService from "./window/window-service";
+import MenuService from "./menu/menu-service";
+import ShellService from "./shell/shell-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -24,7 +26,7 @@ let watchService: WatchService | undefined;
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    // Create the browser window.
+    // 创建窗口
     mainWindow = new BrowserWindow({
         width,
         height,
@@ -39,7 +41,8 @@ function createWindow(): void {
             nodeIntegration: false,
             contextIsolation: true,
         },
-        titleBarStyle: "hiddenInset",
+        // 分平台配置
+        ...(isMac() ? { titleBarStyle: "hiddenInset" } : { frame: false }),
     });
 
     // Handle page refreshes
@@ -51,8 +54,6 @@ function createWindow(): void {
             }
         `);
     });
-
-    createMenu();
 
     mainWindow.on("ready-to-show", () => {
         mainWindow?.show();
@@ -95,12 +96,6 @@ function createWindow(): void {
         return app.getPath(args.name);
     });
 
-    // Open in finder
-    ipcMain.on("picasa:open-in-finder", (_, args) => {
-        logger.info("picasa:open-in-finder", { path: args.path });
-        shell.showItemInFolder(args.path);
-    });
-
     ipcMain.handle("picasa:sub-folders", async (_, args) => {
         try {
             const filterFn = (item: { path: string }): boolean => {
@@ -140,6 +135,12 @@ function createWindow(): void {
     new ScanService(ipcMain, mainWindow);
     // Setup File Watch Service
     watchService = new WatchService(ipcMain, mainWindow);
+    // Setup Window Service
+    new WindowService(ipcMain, mainWindow, app);
+    // 在主窗口创建后初始化菜单服务
+    new MenuService(ipcMain, mainWindow);
+
+    new ShellService(ipcMain, mainWindow);
 }
 
 /**

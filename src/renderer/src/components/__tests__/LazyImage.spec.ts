@@ -96,24 +96,6 @@ describe("LazyImage", () => {
         expect(wrapper.find(".ant-image").exists()).toBe(false);
     });
 
-    it.skip("loads image when visible", async () => {
-        // const wrapper = shallowMount(LazyImage, {
-        //     props: defaultProps,
-        //     global: {
-        //         stubs: {
-        //             "a-spin": MockASpin,
-        //             "a-image": MockAImage,
-        //             "a-modal": MockAModal,
-        //             "video-player": MockVideoPlayer,
-        //         },
-        //     },
-        // });
-        if (targetIsVisibleRef) targetIsVisibleRef.value = true;
-        await flushPromises();
-        await nextTick();
-        expect(prefetchImageTask.perform).toHaveBeenCalledWith(defaultProps.src);
-    });
-
     it("handles video content correctly", async () => {
         const wrapper = shallowMount(LazyImage, {
             props: { ...defaultProps, isVideo: true },

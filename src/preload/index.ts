@@ -30,6 +30,14 @@ import {
     isHiddenFile,
 } from "@shared/path-util";
 
+/**
+ * 判断当前平台是否为 macOS
+ * @returns {boolean} true 表示 macOS，false 表示其他平台
+ */
+function isMac(): boolean {
+    return process.platform === "darwin";
+}
+
 // Custom APIs for renderer
 const api = {
     startWatching,
@@ -64,6 +72,35 @@ const api = {
     splitPath: pathHelper.splitPath, // 新增
     joinPath: pathHelper.joinPath, // 新增
     getSeparator: pathHelper.getSeparator, // 新增
+    isMac: isMac, // 平台判断，渲染进程可直接调用
+    // ========== 新增窗口控制 API ==========
+    minimizeWindow: () => electronAPI.ipcRenderer.send("window:minimize"),
+    maximizeWindow: () => electronAPI.ipcRenderer.send("window:maximize"),
+    unmaximizeWindow: () => electronAPI.ipcRenderer.send("window:unmaximize"),
+    closeWindow: () => electronAPI.ipcRenderer.send("window:close"),
+    queryMaximized: () => electronAPI.ipcRenderer.send("window:queryMaximized"),
+    onWindowMaximized: (cb) => electronAPI.ipcRenderer.on("window:maximized", cb),
+    onWindowUnmaximized: (cb) => electronAPI.ipcRenderer.on("window:unmaximized", cb),
+    onWindowMaximizedState: (cb) => electronAPI.ipcRenderer.on("window:maximizedState", cb),
+    offWindowMaximized: (cb) => electronAPI.ipcRenderer.removeListener("window:maximized", cb),
+    offWindowUnmaximized: (cb) => electronAPI.ipcRenderer.removeListener("window:unmaximized", cb),
+    offWindowMaximizedState: (cb) =>
+        electronAPI.ipcRenderer.removeListener("window:maximizedState", cb),
+    /**
+     * Mac 菜单同步：将 menus 数据通过 IPC 发送到主进程，由主进程设置 Electron.Menu
+     * @param menus 菜单数据（已翻译 label，结构兼容 Electron.Menu）
+     */
+    applySystemMenu: (menus) => {
+        electronAPI.ipcRenderer.send("menu:applySystemMenu", menus);
+    },
+    /**
+     * Mac 菜单点击事件桥接：监听主进程发来的菜单点击事件，转发到 renderer
+     * @param cb 回调函数，参数为菜单事件 payload
+     */
+    onMenuAction: (cb) => {
+        electronAPI.ipcRenderer.on("menu:action", (_event, payload) => cb(payload));
+    },
+    openExternal: (url: string) => electronAPI.ipcRenderer.invoke("shell:openExternal", url),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

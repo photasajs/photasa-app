@@ -1,0 +1,444 @@
+/* antd 主题 patch：全局用 CSS 变量覆盖主要色值，确保主题切换全局响应 */
+
+:root,
+[data-theme] {
+    /* 仅示例，实际变量已在 theme.css 定义 */
+}
+
+/* Tabs */
+.ant-tabs-nav,
+.ant-tabs-tab {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+}
+.ant-tabs-tab-active {
+    color: var(--color-primary) !important;
+}
+.ant-tabs-ink-bar {
+    background: var(--color-primary) !important;
+}
+
+/* Modal */
+.ant-modal-content {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-radius: 8px;
+}
+.ant-modal-header {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+    border-bottom: 1px solid var(--color-border) !important;
+}
+.ant-modal-title {
+    color: var(--color-text) !important;
+}
+
+/* Button */
+.ant-btn-primary {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-white) !important;
+}
+.ant-btn {
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+    background: var(--color-bg-secondary) !important;
+}
+.ant-btn:hover,
+.ant-btn:focus {
+    background: var(--color-primary-light) !important;
+    border-color: var(--color-primary-light) !important;
+}
+
+/* Descriptions */
+.ant-descriptions-view {
+    background: var(--color-card-bg) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-descriptions-item-label {
+    color: var(--color-text-secondary) !important;
+}
+.ant-descriptions-item-content {
+    color: var(--color-text) !important;
+}
+
+/* Breadcrumb */
+.ant-breadcrumb {
+    color: var(--color-text-secondary) !important;
+}
+.ant-breadcrumb-link {
+    color: var(--color-primary) !important;
+}
+.ant-breadcrumb-separator {
+    color: var(--color-border) !important;
+}
+
+/* 其它常用组件可按需补充... */
+html body .ant-tree,
+html body .ant-tree .ant-tree-node-content-wrapper,
+html body .folder-list-card .folder-node {
+    background: var(--color-tree-bg) !important;
+    color: var(--color-tree-text) !important;
+}
+html body .app-footer {
+    background: var(--color-footer-bg) !important;
+    color: var(--color-footer-text) !important;
+    border-top: 1px solid var(--color-footer-border) !important;
+}
+
+html body .ant-layout,
+html body .ant-layout-content {
+    background: var(--color-bg, #fff) !important;
+}
+
+html body .ant-spin-dot-item {
+    background: var(--color-primary, #1890ff) !important;
+}
+html body .ant-spin-text {
+    color: var(--color-primary, #1890ff) !important;
+}
+html body .ant-spin-blur {
+    background: var(--color-bg, #fff) !important;
+}
+html body .ant-spin-container {
+    background: var(--color-bg, #fff) !important;
+}
+html body .ant-spin-nested-loading {
+    background: var(--color-bg, #fff) !important;
+}
+
+html body,
+html body .ant-typography,
+html body .folder-list-card,
+html body .ant-tree,
+html body .ant-tree .ant-tree-node-content-wrapper,
+html body .app-footer {
+    color: var(--color-text, #1e1e1e) !important;
+}
+html body .folder-list-card .folder-node {
+    color: var(--color-tree-text, var(--color-text, #1e1e1e)) !important;
+}
+html body .anticon,
+html body .system-icon,
+html body svg {
+    color: var(--color-text, #1e1e1e) !important;
+    fill: var(--color-text, #1e1e1e) !important;
+}
+html body .titlebar-icon svg {
+    fill: var(--color-text, #1e1e1e) !important;
+}
+html body .app-footer,
+html body .app-footer * {
+    color: var(--color-footer-text, #1e1e1e) !important;
+}
+
+/* List */
+.ant-list,
+.ant-list-item {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Input */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-input-number-input {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-number-focused {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 2px var(--color-primary-light, #3794ff) !important;
+}
+
+/* Select */
+.ant-select-selector {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-select-dropdown {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Form */
+.ant-form-item-label > label {
+    color: var(--color-text-secondary) !important;
+}
+.ant-form-item {
+    color: var(--color-text) !important;
+}
+
+/* Table */
+.ant-table,
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-table-thead > tr > th {
+    background: var(--color-bg-secondary) !important;
+    color: var(--color-text-secondary) !important;
+}
+
+/* Popover/Dropdown/Menu */
+.ant-popover-inner,
+.ant-dropdown-menu,
+.ant-menu {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Dropdown */
+.ant-dropdown {
+    background: var(--color-card-bg) !important;
+    border: 1px solid var(--color-border) !important;
+    box-shadow: 0 6px 16px 0 var(--color-shadow) !important;
+}
+
+.ant-dropdown-menu {
+    background: var(--color-card-bg) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.ant-dropdown-menu-item,
+.ant-menu-item {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border-radius: 4px !important;
+}
+
+.ant-dropdown-menu-item:hover,
+.ant-menu-item:hover,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover,
+.ant-dropdown .ant-menu .ant-menu-item:hover {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.ant-dropdown-menu-item:active,
+.ant-dropdown-menu-item.ant-dropdown-menu-item-active,
+.ant-menu-item:active,
+.ant-menu-item.ant-menu-item-active,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:active,
+.ant-dropdown .ant-menu .ant-menu-item:active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* Button */
+.ant-btn-text {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border: none !important;
+}
+
+.ant-btn-text:hover,
+.ant-btn-text:focus {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+    border: none !important;
+}
+
+.ant-btn-text:active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* 更具体的 hover 选择器，确保覆盖默认样式 */
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-menu-item:hover,
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-menu-item.active,
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* LanguageSwitcher button hover */
+.language-switcher .ant-btn-text:hover,
+.language-switcher .ant-btn-text:focus {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+/* 强制覆盖所有可能的 Ant Design hover 样式 */
+html body .ant-dropdown-menu-item:hover,
+html body .ant-menu-item:hover,
+html body .ant-dropdown .ant-dropdown-menu .ant-menu-item:hover,
+html body .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+html body .ant-dropdown-menu-item.active,
+html body .ant-menu-item.active,
+html body .ant-dropdown .ant-dropdown-menu .ant-menu-item.active,
+html body .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* 更强力的选择器，直接针对 Ant Design 的具体类名 */
+.ant-dropdown .ant-dropdown-menu .ant-menu-item:hover,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover {
+    background-color: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-menu-item.ant-menu-item-selected,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.ant-dropdown-menu-item-selected,
+.ant-dropdown .ant-dropdown-menu .ant-menu-item.active,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.active {
+    background-color: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* 最强力的通用 hover 修复 - 覆盖所有可能的 Ant Design 样式 */
+[class*="ant-dropdown"] [class*="ant-menu"]:hover,
+[class*="ant-dropdown"] [class*="ant-dropdown-menu"]:hover {
+    background-color: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+/* 针对可能的内联样式和高优先级样式的强制覆盖 */
+.language-switcher * {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease !important;
+}
+
+.language-switcher [class*="ant-dropdown"] [class*="ant-menu"]:hover {
+    background-color: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.ant-menu-item-selected,
+.ant-dropdown-menu-item-selected {
+    background: var(--color-card-selected) !important;
+    color: var(--color-primary) !important;
+}
+
+/* Slider */
+.ant-slider-track {
+    background: var(--color-primary) !important;
+}
+.ant-slider-rail {
+    background: var(--color-border) !important;
+}
+.ant-slider-handle {
+    border-color: var(--color-primary) !important;
+}
+
+/* Checkbox/Radio/Switch */
+.ant-checkbox-checked .ant-checkbox-inner,
+.ant-radio-checked .ant-radio-inner,
+.ant-switch-checked {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+.ant-checkbox-inner,
+.ant-radio-inner,
+.ant-switch {
+    background: var(--color-bg-secondary) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Pagination */
+.ant-pagination-item {
+    background: var(--color-card-bg) !important;
+    color: var(--color-text) !important;
+    border-color: var(--color-border) !important;
+}
+.ant-pagination-item-active {
+    background: var(--color-card-selected) !important;
+    color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+
+/* Collapse/Alert/Tag/Tooltip/Drawer/Card/Divider/Steps/Progress/Upload 等可继续补充... */
+
+/* List 细粒度主题 patch */
+.ant-list {
+    background: var(--color-list-bg) !important;
+    border-color: var(--color-list-border) !important;
+}
+.ant-list-header {
+    background: var(--color-list-header-bg) !important;
+    color: var(--color-list-item-meta-title) !important;
+    border-bottom: 1px solid var(--color-list-border) !important;
+}
+.ant-list-footer {
+    background: var(--color-list-footer-bg) !important;
+    color: var(--color-list-item-meta-title) !important;
+    border-top: 1px solid var(--color-list-border) !important;
+}
+.ant-list-bordered {
+    border: 1px solid var(--color-list-border) !important;
+}
+.ant-list-split .ant-list-item {
+    border-bottom: 1px solid var(--color-list-split) !important;
+}
+.ant-list-item {
+    background: var(--color-list-item-bg) !important;
+    color: var(--color-list-item-meta-title) !important;
+    transition: background 0.2s;
+}
+.ant-list-item:hover {
+    background: var(--color-list-item-hover-bg) !important;
+}
+.ant-list-item.active,
+.ant-list-item-selected {
+    background: var(--color-list-item-active-bg) !important;
+}
+.ant-list-item-meta-title {
+    color: var(--color-list-item-meta-title) !important;
+}
+.ant-list-item-meta-description {
+    color: var(--color-list-item-meta-description) !important;
+}
+.ant-list-empty-text {
+    background: var(--color-list-empty-bg) !important;
+    color: var(--color-list-item-meta-description) !important;
+}
+.ant-list .ant-skeleton {
+    background: var(--color-list-skeleton-bg) !important;
+}
+
+/* Descriptions 细粒度主题 patch */
+.ant-descriptions-header {
+    background: var(--color-descriptions-header-bg) !important;
+    color: var(--color-descriptions-title) !important;
+    border-bottom: 1px solid var(--color-descriptions-bordered) !important;
+}
+.ant-descriptions-title {
+    color: var(--color-descriptions-title) !important;
+}
+.ant-descriptions-bordered {
+    border: 1px solid var(--color-descriptions-bordered) !important;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: var(--color-scrollbar-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover);
+}

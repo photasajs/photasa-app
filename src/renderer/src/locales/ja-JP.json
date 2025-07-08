@@ -53,7 +53,7 @@
         },
         "press": "押す",
         "toExit": "終了",
-        "markdown": "# Photasaについて\n\nPhotasaは、クラシックなPicasaにインスパイアされた、モダンでプライバシーに配慮したローカル写真管理ツールです。\n美しいインターフェースと強力なローカル機能で、写真や動画を効率的に閲覧・整理・管理できます。クラウド不要。\n\n## 主な機能\n\n- ローカル写真・動画のスマートインポートと管理\n- 高速サムネイル生成とプレビュー\n- 多言語UIとテーマ切替\n- バッチ操作と効率的な検索\n- データのプライバシーとセキュリティ\n\n## リソース\n\n- [プロジェクトドキュメント](/docs/resources)\n- [オープンソースリポジトリ](https://github.com/your-org/picasa-vue)\n- [☕️ Buy Me a Coffeeでサポート](https://www.buymeacoffee.com/yourname)\n\n`Esc`キーで終了"
+        "markdown": "# Photasaについて\n\nPhotasaは、クラシックなPicasaにインスパイアされた、現代的でプライバシーに配慮したローカル写真管理ツールです。\n美しいインターフェースと強力なローカル機能で、写真や動画を効率的に閲覧・整理・管理できます。クラウド不要。\n\n## 主な機能\n\n- ローカル写真・動画のスマートなインポートと管理\n- 高速サムネイル生成とプレビュー\n- 多言語インターフェースとテーマ切替\n- バッチ操作と効率的な検索\n- データのプライバシーとセキュリティ保護\n\n`Esc`キーで終了"
     },
     "preferences": {
         "title": "設定",
@@ -94,6 +94,9 @@
         }
     },
     "status": {
+        "initializing": "初期化中",
+        "idle": "アイドル",
+        "updating": "更新中",
         "ready": "準備完了",
         "readingConfig": "フォトライブラリ情報を読み込み中 [{config}]",
         "loadingConfig": "フォトライブラリ情報を読込中",
@@ -130,8 +133,39 @@
         "getInfo": "写真情報",
         "open": "ファイルマネージャーで開く",
         "rebuildThumbnail": "サムネイルを再構築",
-        "getConfig": "フォトライブラリ情報を取得",
-        "rescan": "ディレクトリを再スキャン"
+        "getConfig": "写真ライブラリ情報を取得",
+        "rescan": "ディレクトリを再スキャン",
+        "app": {
+            "menu": "アプリケーション",
+            "about": "Photasaについて",
+            "services": "サービス",
+            "hide": "Photasaを隠す",
+            "hideOthers": "他を隠す",
+            "unhide": "すべてを表示",
+            "quit": "終了"
+        },
+        "view": {
+            "menu": "表示",
+            "reload": "再読み込み",
+            "forceReload": "強制再読み込み",
+            "toggleDevTools": "開発者ツールの切替",
+            "resetZoom": "ズームをリセット",
+            "zoomIn": "ズームイン",
+            "zoomOut": "ズームアウト",
+            "toggleFullScreen": "全画面切替"
+        },
+        "window": {
+            "menu": "ウィンドウ",
+            "minimize": "最小化",
+            "maximize": "最大化",
+            "close": "閉じる"
+        },
+        "help": {
+            "menu": "ヘルプ",
+            "learnMore": "詳細を見る",
+            "about": "Photasaについて"
+        },
+        "separator": "区切り"
     },
     "empty": {
         "image": "画像がありません",

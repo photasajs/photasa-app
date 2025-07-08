@@ -175,7 +175,8 @@ function handleTouchMove(event: TouchEvent) {
     box-sizing: border-box;
     transition: all 0.3s ease;
     z-index: 1;
-    background: padding-box #000a;
+    background: var(--color-splitter-bg);
+    border-color: var(--color-splitter-border);
     touch-action: none;
 
     &.isHorizontal {
@@ -196,7 +197,7 @@ function handleTouchMove(event: TouchEvent) {
 
     &:hover,
     &:active {
-        border-color: #0004;
+        border-color: var(--color-splitter-hover);
     }
 
     &:active {

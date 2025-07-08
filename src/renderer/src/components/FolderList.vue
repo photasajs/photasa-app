@@ -128,9 +128,7 @@ async function rescan(key: string): Promise<void> {
 </script>
 
 <template>
-    <div
-        class="flex flex-col h-full min-h-0 bg-white rounded-lg shadow border border-gray-200 folder-list-card"
-    >
+    <div class="flex flex-col h-full min-h-0 rounded-lg shadow border folder-list-card">
         <div class="px-4 py-2 border-b border-gray-100 flex items-center">
             <a-breadcrumb class="folder-list-header">
                 <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
@@ -193,24 +191,41 @@ async function rescan(key: string): Promise<void> {
 </template>
 <style lang="scss">
 .root-folder-node {
-    color: #1890ff;
+    color: var(--color-tree-selected, var(--color-primary));
 }
 
 .folder-node {
     white-space: nowrap;
+    color: var(--color-tree-text, var(--color-text));
+    background: var(--color-tree-bg, var(--color-bg));
+    transition:
+        background 0.2s,
+        color 0.2s;
 }
-
-.root-folder-node {
-    white-space: nowrap;
+.folder-node:hover {
+    background: var(--color-tree-hover, var(--color-bg-secondary));
+    color: var(--color-tree-hover-text, var(--color-primary));
 }
-
+.folder-node.active {
+    background: var(--color-tree-active, var(--color-tree-selected, var(--color-primary)));
+    color: var(--color-tree-active-text, var(--color-white));
+}
+.folder-node.disabled {
+    color: var(--color-tree-disabled-text);
+    background: var(--color-tree-disabled-bg);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
 .folder-list-header {
     height: 32px;
     line-height: 32px;
+    background: var(--color-tree-bg);
+    color: var(--color-tree-text);
+    border-bottom: 1px solid var(--color-tree-border);
 }
-
 .folder-list-card {
     height: calc(100vh - var(--photasa-footer-height));
     overflow: auto;
+    background: var(--color-tree-bg);
 }
 </style>

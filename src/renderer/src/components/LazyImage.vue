@@ -76,6 +76,7 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
                     width: width + 'px',
                     height: height + 'px',
                     display: 'block',
+                    background: 'transparent', // 保证 ant-image 背景透明
                 }"
                 :preview="false"
             />
@@ -89,11 +90,18 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
     justify-content: center;
     width: 100%;
     height: 100%;
+    background: var(--color-thumbnail-image-bg);
 }
 
 .thumbnail-image .ant-image {
     display: flex;
 }
+
+.thumbnail-image .ant-spin-nested-loading,
+.thumbnail-image .ant-spin-container {
+    background: transparent !important;
+}
+
 .video-player {
     position: relative;
     width: 100%;
