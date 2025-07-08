@@ -37,6 +37,7 @@ const label = computed(() => {
             general: t("preference.tabs.general"),
             about: t("preference.tabs.about"),
             theme: t("preference.tabs.theme"),
+            advanced: t("preference.tabs.advanced"),
         },
     };
 });
@@ -56,7 +57,7 @@ const label = computed(() => {
         <a-tab-pane :key="3" :tab="label.tabs.about">
             <AboutPhotosa></AboutPhotosa>
         </a-tab-pane>
-        <a-tab-pane :key="5" tab="高级配置">
+        <a-tab-pane :key="5" :tab="label.tabs.advanced">
             <AdvancedSettings />
         </a-tab-pane>
     </a-tabs>

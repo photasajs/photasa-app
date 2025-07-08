@@ -197,6 +197,135 @@ html body .app-footer * {
     color: var(--color-text) !important;
     border-color: var(--color-border) !important;
 }
+
+/* Dropdown */
+.ant-dropdown {
+    background: var(--color-card-bg) !important;
+    border: 1px solid var(--color-border) !important;
+    box-shadow: 0 6px 16px 0 var(--color-shadow) !important;
+}
+
+.ant-dropdown-menu {
+    background: var(--color-card-bg) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.ant-dropdown-menu-item,
+.ant-menu-item {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border-radius: 4px !important;
+}
+
+.ant-dropdown-menu-item:hover,
+.ant-menu-item:hover,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover,
+.ant-dropdown .ant-menu .ant-menu-item:hover {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.ant-dropdown-menu-item:active,
+.ant-dropdown-menu-item.ant-dropdown-menu-item-active,
+.ant-menu-item:active,
+.ant-menu-item.ant-menu-item-active,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:active,
+.ant-dropdown .ant-menu .ant-menu-item:active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* Button */
+.ant-btn-text {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border: none !important;
+}
+
+.ant-btn-text:hover,
+.ant-btn-text:focus {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+    border: none !important;
+}
+
+.ant-btn-text:active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* 更具体的 hover 选择器，确保覆盖默认样式 */
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-menu-item:hover,
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-menu-item.active,
+.language-switcher .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* LanguageSwitcher button hover */
+.language-switcher .ant-btn-text:hover,
+.language-switcher .ant-btn-text:focus {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+/* 强制覆盖所有可能的 Ant Design hover 样式 */
+html body .ant-dropdown-menu-item:hover,
+html body .ant-menu-item:hover,
+html body .ant-dropdown .ant-dropdown-menu .ant-menu-item:hover,
+html body .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover {
+    background: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+html body .ant-dropdown-menu-item.active,
+html body .ant-menu-item.active,
+html body .ant-dropdown .ant-dropdown-menu .ant-menu-item.active,
+html body .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.active {
+    background: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* 更强力的选择器，直接针对 Ant Design 的具体类名 */
+.ant-dropdown .ant-dropdown-menu .ant-menu-item:hover,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover {
+    background-color: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-menu-item.ant-menu-item-selected,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.ant-dropdown-menu-item-selected,
+.ant-dropdown .ant-dropdown-menu .ant-menu-item.active,
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.active {
+    background-color: var(--color-card-active) !important;
+    color: var(--color-text) !important;
+}
+
+/* 最强力的通用 hover 修复 - 覆盖所有可能的 Ant Design 样式 */
+[class*="ant-dropdown"] [class*="ant-menu"]:hover,
+[class*="ant-dropdown"] [class*="ant-dropdown-menu"]:hover {
+    background-color: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
+/* 针对可能的内联样式和高优先级样式的强制覆盖 */
+.language-switcher * {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease !important;
+}
+
+.language-switcher [class*="ant-dropdown"] [class*="ant-menu"]:hover {
+    background-color: var(--color-card-hover) !important;
+    color: var(--color-text) !important;
+}
+
 .ant-menu-item-selected,
 .ant-dropdown-menu-item-selected {
     background: var(--color-card-selected) !important;

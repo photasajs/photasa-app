@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { MenuItemData } from "@common/menu-types";
-const props = defineProps<{ items: MenuItemData[] }>();
+defineProps<{ items: MenuItemData[] }>();
 const emit = defineEmits(["menu-action"]);
 const hoverItem = ref<MenuItemData | null>(null);
 function handleClick(item: MenuItemData) {
@@ -50,7 +50,7 @@ function onHover(item: MenuItemData | null) {
     padding: 4px 0;
     min-width: 180px;
     background: var(--color-bg);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px var(--color-shadow);
     border-radius: 4px;
     z-index: 9999;
     position: absolute;

@@ -15,7 +15,7 @@
 import { useI18n } from "vue-i18n";
 import { onMounted, onUnmounted, watch } from "vue";
 import { useMenusStore } from "@renderer/stores/menus";
-import type { MenuItemData } from "@common/menu-types";
+// import type { MenuItemData } from "@common/menu-types";
 import CoffeeOutlined from "@ant-design/icons-vue/CoffeeOutlined";
 import ImportOutlined from "@ant-design/icons-vue/ImportOutlined";
 import SettingOutlined from "@ant-design/icons-vue/SettingOutlined";
@@ -35,7 +35,7 @@ function openPreference() {
 
 // ========== 菜单同步与事件桥接 ========== //
 const menusStore = useMenusStore();
-const menus = menusStore.menus as MenuItemData[]; // 保证类型一致
+// const menus = menusStore.menus as MenuItemData[]; // 保证类型一致
 
 // 监听 menus 变化，自动同步到 preload 层
 watch(

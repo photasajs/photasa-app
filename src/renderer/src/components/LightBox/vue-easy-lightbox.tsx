@@ -22,18 +22,14 @@ import { ImgTitle } from "./components/img-title";
 import { DefaultIcons } from "./components/default-icons";
 
 import { prefixCls } from "./constant";
-import { on, off, isObject, isString, notEmpty, isArray, preventDefault } from "./utils/index";
+import { on, off } from "./utils/index";
 import { useImage, useMouse, useTouch } from "./utils/hooks";
 import { Img, IImgWrapperState, PropsImgs } from "./types";
-
-/**
- * 判断是否为图片对象
- * @param arg 图片对象
- * @returns 是否为图片对象
- */
-function isImg(arg: Img): arg is Img {
-    return isObject(arg) && isString(arg.src);
-}
+import { isImg, mutateDragging, zoom } from "./vue-easy-lightbox.utils";
+import { isString } from "@renderer/common/string";
+import { notEmpty } from "@renderer/common/object";
+import { isArray } from "@renderer/common/array";
+import { preventDefault } from "@renderer/common/event";
 
 /**
  * 图片预览组件
@@ -290,28 +286,17 @@ export default defineComponent({
             });
         };
 
-        // actions for changing img
-        const zoom = (newScale: number) => {
-            if (Math.abs(1 - newScale) < 0.05) {
-                newScale = 1;
-            } else if (Math.abs(imgState.maxScale - newScale) < 0.05) {
-                newScale = imgState.maxScale;
-            }
-            imgWrapperState.lastScale = imgWrapperState.scale;
-            imgWrapperState.scale = newScale;
-        };
-
         const zoomIn = () => {
             const newScale = imgWrapperState.scale + props.zoomScale;
             if (newScale < imgState.maxScale * props.maxZoom) {
-                zoom(newScale);
+                zoom(newScale, imgState, imgWrapperState);
             }
         };
 
         const zoomOut = () => {
             const newScale = imgWrapperState.scale - props.zoomScale;
             if (newScale > props.minZoom) {
-                zoom(newScale);
+                zoom(newScale, imgState, imgWrapperState);
             }
         };
 
@@ -446,20 +431,13 @@ export default defineComponent({
         watch(
             () => status.dragging,
             (newStatus, oldStatus) => {
-                const dragged = !newStatus && oldStatus;
-
-                if (!canMove() && dragged) {
-                    const xDiff = imgWrapperState.lastX - imgWrapperState.initX;
-                    const yDiff = imgWrapperState.lastY - imgWrapperState.initY;
-
-                    const tolerance = props.swipeTolerance;
-                    const movedHorizontally = Math.abs(xDiff) > Math.abs(yDiff);
-
-                    if (movedHorizontally) {
-                        if (xDiff < tolerance * -1) onNext();
-                        else if (xDiff > tolerance) onPrev();
-                    }
-                }
+                mutateDragging(newStatus, oldStatus, {
+                    onNext,
+                    onPrev,
+                    canMove,
+                    imgWrapperState,
+                    swipeTolerance: props.swipeTolerance,
+                });
             },
         );
 

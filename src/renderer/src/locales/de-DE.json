@@ -133,7 +133,7 @@
         },
         "press": "Drücken Sie",
         "toExit": "zum Beenden",
-        "markdown": "# Über Photasa\n\nPhotasa ist ein modernes, datenschutzfreundliches Tool zur lokalen Fotoverwaltung, inspiriert vom klassischen Picasa.\nMit einer schönen Oberfläche und leistungsstarken lokalen Funktionen können Sie Ihre Fotos und Videos effizient durchsuchen, organisieren und verwalten – ganz ohne Cloud.\n\n## Hauptfunktionen\n\n- Intelligenter lokaler Import und Verwaltung von Fotos und Videos\n- Schnelle Thumbnail-Erstellung und Vorschau\n- Mehrsprachige Benutzeroberfläche und Theme-Wechsel\n- Stapelverarbeitung und effiziente Suche\n- Datenschutz und Sicherheit\n\n## Ressourcen\n\n- [Projektdokumentation](/docs/resources)\n- [Open-Source-Repository](https://github.com/your-org/picasa-vue)\n- [☕️ Unterstützen Sie uns auf Buy Me a Coffee](https://www.buymeacoffee.com/yourname)\n\nDrücken Sie `Esc` zum Beenden"
+        "markdown": "# Über Photasa\n\nPhotasa ist ein modernes, datenschutzfreundliches lokales Fotoverwaltungstool, inspiriert vom klassischen Picasa.\nEs unterstützt effizientes Durchsuchen, Organisieren und Verwalten Ihrer Fotos und Videos mit einer schönen Oberfläche und leistungsstarken lokalen Funktionen – ganz ohne Cloud.\n\n## Hauptfunktionen\n\n- Intelligenter lokaler Import und Verwaltung von Fotos und Videos\n- Schnelle Thumbnail-Erstellung und Vorschau\n- Mehrsprachige Benutzeroberfläche und Theme-Wechsel\n- Stapelverarbeitung und effiziente Suche\n- Datenschutz und Sicherheitsschutz\n\nDrücken Sie `Esc` zum Beenden"
     },
     "preferences": {
         "title": "Einstellungen",

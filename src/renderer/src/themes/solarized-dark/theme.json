@@ -1,9 +1,25 @@
 {
     "id": "solarized-dark",
-    "name": "Solarized Dark",
+    "name": {
+        "zh-CN": "Solarized 暗色",
+        "en-US": "Solarized Dark",
+        "ja-JP": "Solarized ダーク",
+        "fr-FR": "Solarized sombre",
+        "de-DE": "Solarized dunkel",
+        "es-ES": "Solarized oscuro",
+        "ko-KR": "Solarized 다크"
+    },
     "author": "官方",
     "version": "1.0.0",
-    "description": "Solarized Dark 风格主题",
+    "description": {
+        "zh-CN": "Solarized Dark 风格主题",
+        "en-US": "Solarized Dark Theme",
+        "ja-JP": "Solarized Dark スタイルテーマ",
+        "fr-FR": "Thème Solarized Dark",
+        "de-DE": "Solarized Dark Stilthema",
+        "es-ES": "Tema Solarized Dark",
+        "ko-KR": "Solarized Dark 스타일 테마"
+    },
     "colors": {
         "bg": "#002b36",
         "bg-secondary": "#073642",
@@ -12,6 +28,7 @@
         "border": "#586e75",
         "shadow": "rgba(0,0,0,0.7)",
         "primary": "#268bd2",
+        "primary-rgb": "38, 139, 210",
         "primary-light": "#b3cde3",
         "success": "#859900",
         "warning": "#b58900",
@@ -22,6 +39,8 @@
         "btn-hover": "#2aa198",
         "card-bg": "#073642",
         "card-border": "#586e75",
+        "card-hover": "#073642",
+        "card-active": "#073642",
         "placeholder": "#b6c2d1",
         "disabled": "#424242",
         "skeleton-from": "#073642",
