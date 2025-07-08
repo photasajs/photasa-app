@@ -2,7 +2,7 @@
 import { ref, computed, reactive, watch, onMounted, onUnmounted } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { createThumbnailTask, getImageType, getPhotasaConfig } from "@renderer/utils/api";
+import { getImageType, getPhotasaConfig } from "@renderer/utils/api";
 import { trim } from "radash";
 import type { ImageTypeResult } from "image-type";
 import { JsonTreeView } from "json-tree-view-vue3";
@@ -10,7 +10,6 @@ import {
     type Card,
     type Image,
     type ImageMeta,
-    toImage,
     removeFileProtocol,
     toImageMeta,
     groupImagesByColumns,
@@ -24,6 +23,7 @@ import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
 import LoadingState from "./common/LoadingState.vue";
 import EmptyState from "./common/EmptyState.vue";
+import { requestThumbnail, toImageList } from "./ImageListHelper";
 
 // 国际化
 const { t } = useI18n();
@@ -52,16 +52,7 @@ const previewIndex = ref(0);
 
 // 卡片
 const card = computed<Card>(() => {
-    const images =
-        currentFolderConfig.value.photoList?.map((config) => {
-            return toImage(currentFolder.value, config);
-        }) ?? [];
-
-    return {
-        title: currentFolder.value,
-        images,
-        parts: currentFolder.value?.split("/"),
-    };
+    return toImageList(currentFolder.value, currentFolderConfig.value);
 });
 
 // 图片元数据
@@ -74,18 +65,8 @@ const imageMeta = reactive<ImageMeta>({
 });
 
 // 重建缩略图
-async function rebuildThumbnail(image: Image): Promise<void> {
-    await createThumbnailTask.perform({
-        path: image.raw ?? image.preview,
-        thumbnail: image.src as string,
-        width: thumbnailSize.value,
-        height: thumbnailSize.value,
-        always: true,
-        preview: "",
-    });
-
-    // force to render the component
-    image.thumbnail = `${image.src}?${Date.now()}`;
+async function rebuildThumbnail(image: Image) {
+    await requestThumbnail(image, thumbnailSize.value);
 }
 
 // 打开图片元数据
@@ -146,8 +127,10 @@ const virtualizer = useVirtualizer<HTMLElement, Element>({
     estimateSize: () => rowHeight.value,
     overscan: 4,
 });
+
 // 虚拟滚动行
 const virtualRows = computed(() => virtualizer.value?.getVirtualItems() ?? []);
+
 // 虚拟滚动高度
 const virtualizerHeight = computed(() => (virtualizer.value?.getTotalSize() ?? 0) + "px");
 
