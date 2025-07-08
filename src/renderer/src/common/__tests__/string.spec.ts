@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isString } from "../string";
+import { isString } from "./string";
 
 describe("isString", () => {
     it("returns true for strings", () => {

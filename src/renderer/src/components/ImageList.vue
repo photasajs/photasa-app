@@ -6,10 +6,18 @@ import { createThumbnailTask, getImageType, getPhotasaConfig } from "@renderer/u
 import { trim } from "radash";
 import type { ImageTypeResult } from "image-type";
 import { JsonTreeView } from "json-tree-view-vue3";
-import type { Tags, XmpTags, IccTags } from "exifreader";
+import {
+    type Card,
+    type Image,
+    type ImageMeta,
+    toImage,
+    removeFileProtocol,
+    toImageMeta,
+    groupImagesByColumns,
+} from "@renderer/common/image";
+import * as R from "ramda";
 import { useI18n } from "vue-i18n";
-import { openInFinder } from "@renderer/utils/api";
-import type { Photo } from "@common/config-types";
+import { openInFinder } from "@renderer/utils/api-path";
 import LazyImage from "./LazyImage.vue";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
@@ -17,73 +25,36 @@ import MediaPreview from "./MediaPreview.vue";
 import LoadingState from "./common/LoadingState.vue";
 import EmptyState from "./common/EmptyState.vue";
 
+// 国际化
 const { t } = useI18n();
-
-type Card = {
-    title: string;
-    parts: string[];
-    images: Image[];
-};
-
-type Image = {
-    key: string;
-    src: string;
-    thumbnail: string;
-    preview: string;
-    raw: string; // For Heic file, it's the original file
-    isVideo: boolean;
-};
-
-type ImageMeta = {
-    imageType: ImageTypeResult | string | undefined;
-    tags: Tags | XmpTags | IccTags;
-    path: string;
-    maxDepth: number;
-    json: string;
-};
-
+// 偏好设置
 const preferenceStore = usePreferenceStore();
+// 偏好设置的引用
 const { thumbnailSize, currentFolder, currentFolderConfig } = storeToRefs(preferenceStore);
-
+// 显示图片元数据
 const showInfo = ref(false);
+// 加载图片元数据
 const loadingInfo = ref(false);
+// 加载配置
 const loadingPhotasaConfig = ref(false);
+// 图片加载失败
 const fallback = ref(ImageFallback);
+// 图片列表的引用
 const imageListRef = ref<HTMLElement | null>(null);
+// 容器宽度
 const containerWidth = ref(0);
+// 鼠标悬停延迟
 const mouseEnterDelay = ref(1.5);
+// 预览是否可见
 const previewVisible = ref(false);
+// 预览索引
 const previewIndex = ref(0);
 
-function toImage(file: Photo): Image {
-    const preview =
-        file.path.indexOf(".heic") >= 0
-            ? file.thumbnail.replace(".heic.png", ".jpeg").replace("thumbnail-", "")
-            : file.path;
-    return {
-        key: file.path,
-        src: `file://${currentFolder.value}/${file.thumbnail}`,
-        thumbnail: `file://${currentFolder.value}/${file.thumbnail}`,
-        preview: `file://${currentFolder.value}/${preview}`,
-        raw: `file://${currentFolder.value}/${file.path}`,
-        isVideo: file.isVideo,
-    };
-}
-
-watch(currentFolder, async (newVal) => {
-    if (newVal) {
-        loadingPhotasaConfig.value = true;
-        const minDelay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-        const [config] = await Promise.all([getPhotasaConfig(currentFolder.value), minDelay(400)]);
-        currentFolderConfig.value = config;
-        loadingPhotasaConfig.value = false;
-    }
-});
-
+// 卡片
 const card = computed<Card>(() => {
     const images =
         currentFolderConfig.value.photoList?.map((config) => {
-            return toImage(config);
+            return toImage(currentFolder.value, config);
         }) ?? [];
 
     return {
@@ -93,6 +64,7 @@ const card = computed<Card>(() => {
     };
 });
 
+// 图片元数据
 const imageMeta = reactive<ImageMeta>({
     imageType: {} as ImageTypeResult,
     tags: {},
@@ -101,6 +73,7 @@ const imageMeta = reactive<ImageMeta>({
     json: "",
 });
 
+// 重建缩略图
 async function rebuildThumbnail(image: Image): Promise<void> {
     await createThumbnailTask.perform({
         path: image.raw ?? image.preview,
@@ -115,35 +88,41 @@ async function rebuildThumbnail(image: Image): Promise<void> {
     image.thumbnail = `${image.src}?${Date.now()}`;
 }
 
-function openImageMeta(image: Image): void {
+// 打开图片元数据
+async function openImageMeta(image: Image): Promise<void> {
     showInfo.value = true;
+    // 等待加载图片元数据
     loadingInfo.value = true;
-    const path = `/${trim(image.raw, "file://")}`;
-    getImageType(path).then((info) => {
-        loadingInfo.value = false;
-        imageMeta.imageType = info.imageType ?? {};
-        imageMeta.json = JSON.stringify(info.tags ?? {});
-        imageMeta.tags = info.tags ?? {};
-        imageMeta.path = path;
-    });
+    const path = `${trim(image.raw, "file:/")}`;
+    const info = await getImageType(path);
+
+    imageMeta.imageType = info.imageType ?? {};
+    imageMeta.json = JSON.stringify(info.tags ?? {});
+    imageMeta.tags = info.tags ?? {};
+    imageMeta.path = path;
+
+    // 加载完成
+    loadingInfo.value = false;
 }
 
-function openFileInFilder(image: Image): void {
-    const path = `/${trim(image.raw, "file://")}`;
+// 打开文件夹
+function openFileInFolder(image: Image): void {
+    const path = removeFileProtocol(image.raw);
     openInFinder(path);
 }
 
+// 更新容器宽度
 function updateContainerWidth() {
     if (imageListRef.value) {
         containerWidth.value = imageListRef.value.clientWidth;
     }
 }
 
-watch(imageListRef, () => updateContainerWidth());
-watch(thumbnailSize, () => updateContainerWidth());
-
+// 列数
 const columns = computed((): number => {
-    if (!containerWidth.value) return 1;
+    if (!containerWidth.value) {
+        return 1;
+    }
     const gap = 16;
     const padding = 24; // px-4 左右各 16
     const cardWidth = thumbnailSize.value + 2 * padding;
@@ -153,48 +132,72 @@ const columns = computed((): number => {
     return Math.max(1, cols);
 });
 
+// 行数
 const rows = computed((): Image[][] => {
-    const imgs: Image[] = card.value?.images || [];
-    const cols = columns.value;
-    const result: Image[][] = [];
-    for (let i = 0; i < imgs.length; i += cols) {
-        result.push(imgs.slice(i, i + cols));
-    }
-    return result;
+    return groupImagesByColumns(card.value?.images || [], columns.value);
 });
 
+// 行高
 const rowHeight = computed(() => thumbnailSize.value + 16);
+// 虚拟滚动
 const virtualizer = useVirtualizer<HTMLElement, Element>({
     count: rows.value.length,
     getScrollElement: () => imageListRef.value,
     estimateSize: () => rowHeight.value,
     overscan: 4,
 });
+// 虚拟滚动行
 const virtualRows = computed(() => virtualizer.value?.getVirtualItems() ?? []);
+// 虚拟滚动高度
 const virtualizerHeight = computed(() => (virtualizer.value?.getTotalSize() ?? 0) + "px");
 
+// 预览图片
 const previewImages = computed(() => {
-    return card.value.images.map((img) => {
-        return {
-            src: img.preview,
-            w: 1200, // 可根据实际图片宽度调整
-            h: 900, // 可根据实际图片高度调整
-            title: img.key,
-            isVideo: img.isVideo,
-            raw: img.raw,
-            thumbnail: img.thumbnail,
-        };
-    });
+    return R.map(toImageMeta, card.value.images);
 });
 
+// 监听容器宽度变化
+let resizeObserver: ResizeObserver | null = null;
+
+// 打开预览
 function openPreview(rowIdx, colIdx) {
     const idx = rowIdx * columns.value + colIdx;
     previewIndex.value = idx;
     previewVisible.value = true;
 }
 
-let resizeObserver: ResizeObserver | null = null;
+// 监听容器宽度变化
+watch(imageListRef, () => updateContainerWidth());
+// 监听缩略图大小变化
+watch(thumbnailSize, () => updateContainerWidth());
 
+// 监听当前文件夹变化
+watch(currentFolder, async (newVal) => {
+    if (newVal) {
+        loadingPhotasaConfig.value = true;
+        const minDelay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+        const [config] = await Promise.all([getPhotasaConfig(currentFolder.value), minDelay(400)]);
+        currentFolderConfig.value = config;
+        loadingPhotasaConfig.value = false;
+    }
+});
+
+// 监听行数变化
+watch(rows, () => {
+    if (virtualizer.value) {
+        virtualizer.value.options.count = rows.value.length;
+        virtualizer.value.measure();
+    }
+});
+
+// 监听容器宽度变化
+watch(containerWidth, () => {
+    if (virtualizer.value) {
+        virtualizer.value.measure();
+    }
+});
+
+// 挂载
 onMounted(() => {
     updateContainerWidth();
     window.addEventListener("resize", () => {
@@ -209,19 +212,6 @@ onMounted(() => {
             updateContainerWidth();
         });
         resizeObserver.observe(imageListRef.value);
-    }
-});
-
-watch(rows, () => {
-    if (virtualizer.value) {
-        virtualizer.value.options.count = rows.value.length;
-        virtualizer.value.measure();
-    }
-});
-
-watch(containerWidth, () => {
-    if (virtualizer.value) {
-        virtualizer.value.measure();
     }
 });
 
@@ -345,7 +335,7 @@ onUnmounted(() => {
                                                 >
                                                 <a-menu-item
                                                     key="2"
-                                                    @click="openFileInFilder(image)"
+                                                    @click="openFileInFolder(image)"
                                                     >{{ t("menu.open") }}</a-menu-item
                                                 >
                                             </a-menu>

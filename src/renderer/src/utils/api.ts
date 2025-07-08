@@ -69,10 +69,6 @@ export function getImageType(path: string): Promise<ImageInfo> {
     return window.api.getImageType(path);
 }
 
-export function openInFinder(path: string): void {
-    window.api.openInFinder(path);
-}
-
 export function scanPhotos(folder: ScanAction): Promise<ScanArgs> {
     return window.api.scanPhotos(folder);
 }
