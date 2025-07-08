@@ -23,7 +23,7 @@ import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
 import LoadingState from "./common/LoadingState.vue";
 import EmptyState from "./common/EmptyState.vue";
-import { requestThumbnail, toImageList } from "./ImageListHelper";
+import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
 
 // 国际化
 const { t } = useI18n();
@@ -101,16 +101,7 @@ function updateContainerWidth() {
 
 // 列数
 const columns = computed((): number => {
-    if (!containerWidth.value) {
-        return 1;
-    }
-    const gap = 16;
-    const padding = 24; // px-4 左右各 16
-    const cardWidth = thumbnailSize.value + 2 * padding;
-    const available = containerWidth.value - gap;
-    const cols = Math.floor(available / (cardWidth + gap));
-
-    return Math.max(1, cols);
+    return computeColumns(containerWidth.value, thumbnailSize.value);
 });
 
 // 行数
