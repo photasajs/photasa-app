@@ -1,0 +1,69 @@
+import { createThumbnailTask } from "@renderer/utils/api";
+import type { PhotasaConfig } from "@common/config-types";
+import { toImage } from "@renderer/common/image";
+import { defaultTo, map, pipe } from "ramda";
+
+import type { Image } from "@renderer/common/image";
+
+/**
+ * 将配置转换为图片列表
+ * @param currentFolder 当前文件夹
+ * @param currentFolderConfig 当前文件夹配置
+ * @returns 图片列表
+ */
+export function toImageList(currentFolder: string, currentFolderConfig: PhotasaConfig) {
+    const images = pipe(
+        defaultTo([]),
+        map(toImage.bind(null, currentFolder)),
+    )(currentFolderConfig.photoList);
+
+    return {
+        title: currentFolder,
+        images,
+        parts: currentFolder?.split("/"),
+    };
+}
+
+/**
+ * 重建缩略图
+ * @param image 图片
+ * @param thumbnailSize 缩略图大小
+ * @returns
+ */
+export async function requestThumbnail(image: Image, thumbnailSize: number): Promise<void> {
+    await createThumbnailTask.perform({
+        path: image.raw ?? image.preview,
+        thumbnail: image.src as string,
+        width: thumbnailSize,
+        height: thumbnailSize,
+        always: true,
+        preview: "",
+    });
+
+    // force to render the component
+    image.thumbnail = `${image.src}?${Date.now()}`;
+}
+
+const DEFAULT_GAP = 16;
+const DEFAULT_PADDING = 24; // px-4 左右各 16
+
+/**
+ * 计算列数
+ * @param containerWidth 容器宽度
+ * @param thumbnailSize 缩略图大小
+ * @returns 列数
+ */
+export function computeColumns(
+    containerWidth: number,
+    thumbnailSize: number,
+    { gap = DEFAULT_GAP, padding = DEFAULT_PADDING }: { gap?: number; padding?: number } = {},
+) {
+    if (!containerWidth) {
+        return 1;
+    }
+    const cardWidth = thumbnailSize + 2 * padding;
+    const available = containerWidth - gap;
+    const cols = Math.floor(available / (cardWidth + gap));
+
+    return Math.max(1, cols);
+}

@@ -7,18 +7,32 @@
         "fr-FR": "Thème sombre",
         "de-DE": "Dunkles Thema",
         "es-ES": "Tema oscuro",
-        "ko-KR": "다크 테마"
+        "ko-KR": "다크 테마",
+        "it-IT": "Tema scuro",
+        "tr-TR": "Koyu Tema",
+        "vi-VN": "Chủ đề tối",
+        "ar-SA": "سمة داكنة",
+        "uk-UA": "Темна тема",
+        "en-GB": "Dark Theme",
+        "ru-RU": "Тёмная тема"
     },
     "author": "官方",
     "version": "1.0.0",
     "description": {
         "zh-CN": "VSCode Dark+ 风格主题",
-        "en-US": "VSCode Dark+ Style",
+        "en-US": "VSCode Dark+ Style Theme",
         "ja-JP": "VSCode Dark+ スタイルテーマ",
         "fr-FR": "Thème de style VSCode Dark+",
         "de-DE": "VSCode Dark+ Stilthema",
         "es-ES": "Tema de estilo VSCode Dark+",
-        "ko-KR": "VSCode Dark+ 스타일 테마"
+        "ko-KR": "VSCode Dark+ 스타일 테마",
+        "it-IT": "Tema stile VSCode Dark+",
+        "tr-TR": "VSCode Dark+ Stil Teması",
+        "vi-VN": "Chủ đề kiểu VSCode Dark+",
+        "ar-SA": "سمة VSCode Dark+ النمطية",
+        "uk-UA": "Тема стилю VSCode Dark+",
+        "en-GB": "VSCode Dark+ Style Theme",
+        "ru-RU": "Тема в стиле VSCode Dark+"
     },
     "colors": {
         "bg": "#1e1e1e",

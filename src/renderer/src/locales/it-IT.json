@@ -1,0 +1,172 @@
+{
+    "app": {
+        "title": "Photasa",
+        "folderList": "Elenco cartelle"
+    },
+    "preference": {
+        "settings": "Impostazioni",
+        "tabs": {
+            "general": "Generale",
+            "about": "Informazioni",
+            "theme": "Tema",
+            "advanced": "Avanzate"
+        },
+        "folderList": "Elenco cartelle",
+        "folderListUsage": "Modalità d'uso",
+        "folderListDesc": "Dopo aver aggiunto una cartella all'elenco, Photasa può gestire in tempo reale le foto e i video nella cartella.",
+        "watchFolderList": "Photasa può gestire foto e video nelle seguenti cartelle.",
+        "chooseDirectory": "Scegli la cartella e aggiungila all'elenco",
+        "thumbnailSize": "Dimensione miniatura",
+        "darkMode": "Modalità scura",
+        "language": "Lingua",
+        "scanning": "Scansione in corso"
+    },
+    "import": {
+        "photos": "Importa foto",
+        "allowDuplicateRename": "Consenti rinomina foto duplicate",
+        "targetDirectory": "Cartella di esportazione",
+        "chooseDirectory": "Scegli la cartella di importazione",
+        "button": {
+            "import": "Importa",
+            "cancel": "Annulla",
+            "ok": "OK"
+        }
+    },
+    "menu": {
+        "getInfo": "Informazioni foto",
+        "open": "Apri nel gestore file",
+        "rebuildThumbnail": "Ricostruisci miniatura",
+        "getConfig": "Ottieni informazioni libreria foto",
+        "rescan": "Riscansiona cartella",
+        "app": {
+            "menu": "App",
+            "about": "Informazioni su Photasa",
+            "services": "Servizi",
+            "hide": "Nascondi Photasa",
+            "hideOthers": "Nascondi altri",
+            "unhide": "Mostra tutto",
+            "quit": "Esci"
+        },
+        "view": {
+            "menu": "Visualizza",
+            "reload": "Ricarica",
+            "forceReload": "Forza ricarica",
+            "toggleDevTools": "Attiva strumenti sviluppatore",
+            "resetZoom": "Reimposta zoom",
+            "zoomIn": "Ingrandisci",
+            "zoomOut": "Riduci",
+            "toggleFullScreen": "Attiva schermo intero"
+        },
+        "window": {
+            "menu": "Finestra",
+            "minimize": "Minimizza",
+            "maximize": "Massimizza",
+            "close": "Chiudi"
+        },
+        "help": {
+            "menu": "Aiuto",
+            "learnMore": "Scopri di più",
+            "about": "Informazioni su Photasa"
+        },
+        "separator": "Separatore"
+    },
+    "notification": {
+        "info": "Informazione",
+        "warn": "Attenzione",
+        "error": "Errore",
+        "scan": {
+            "title": "Scansione cartella",
+            "message": "Scansione cartella completata, le foto sono state importate in Photasa."
+        },
+        "duplicatePath": {
+            "title": "Cartella duplicata",
+            "message": "La cartella [{folder}] esiste già in Photasa."
+        },
+        "emptyPath": {
+            "title": "Scegli cartella",
+            "message": "Seleziona una cartella e completa l'aggiunta."
+        },
+        "resetFolders": {
+            "title": "Ripristino completato",
+            "message": "Tutte le cache delle cartelle sono state ricostruite."
+        }
+    },
+    "status": {
+        "initializing": "Inizializzazione in corso",
+        "idle": "Inattivo",
+        "updating": "Aggiornamento in corso",
+        "ready": "Pronto",
+        "readingConfig": "Caricamento informazioni libreria [{config}]",
+        "loadingConfig": "Lettura informazioni libreria",
+        "processing": "Elaborazione [{file}]",
+        "scanned": "Completato",
+        "scanComplete": "La cartella [{path}] è stata elaborata.",
+        "start": "Inizio scansione",
+        "progress": "Avanzamento scansione",
+        "complete": "Scansione completata",
+        "error": "Errore scansione"
+    },
+    "button": {
+        "import": "Importa",
+        "cancel": "Annulla",
+        "ok": "OK",
+        "fixConfig": "Correggi informazioni libreria"
+    },
+    "about": {
+        "antvDescription": "Soluzione di visualizzazione dati",
+        "introduction": {
+            "title": "Introduzione",
+            "content": "Ciao! Questo è uno strumento per gestire e organizzare le foto.",
+            "summary": "Questa applicazione si concentra su",
+            "highlight": "interfaccia user-friendly",
+            "userExperience": "esperienza utente",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Risorse",
+            "content": "Le seguenti risorse sono disponibili:",
+            "and": "e",
+            "download": "Scarica risorse"
+        },
+        "press": "Premi",
+        "toExit": "per uscire",
+        "markdown": "# Informazioni su Photasa\n\nPhotasa è uno strumento moderno e rispettoso della privacy per la gestione locale delle foto, ispirato al classico Photasa.\nSupporta la navigazione, l'organizzazione e la gestione efficiente di foto e video, con un'interfaccia elegante e potenti funzionalità locali, senza dipendenza dal cloud.\n\n## Caratteristiche principali\n\n- Importazione e gestione intelligente di foto e video locali\n- Generazione rapida di miniature e anteprima\n- Interfaccia multilingue e cambio tema\n- Operazioni batch e ricerca efficiente\n- Protezione della privacy e sicurezza dei dati\n\nPremi `Esc` per uscire"
+    },
+    "preferences": {
+        "title": "Preferenze",
+        "language": {
+            "title": "Lingua",
+            "description": "Scegli la lingua preferita per l'interfaccia dell'applicazione."
+        },
+        "thumbnail": {
+            "title": "Dimensione miniatura",
+            "description": "Regola la dimensione delle miniature delle foto nella vista galleria."
+        },
+        "theme": {
+            "title": "Tema",
+            "description": "Passa tra modalità chiara e scura.",
+            "light": "Chiaro",
+            "dark": "Scuro"
+        }
+    },
+    "resetFolders": {
+        "title": "Azione avanzata: Ripristina archiviazione cartelle",
+        "desc": "Questa azione cancellerà tutte le impostazioni delle cartelle e ricostruirà immediatamente la cache. Questa azione è irreversibile. Procedi con cautela!",
+        "button": "Ripristina archiviazione cartelle"
+    },
+    "scan": {
+        "queueTitle": "Coda scansione",
+        "queueEmpty": "Coda vuota"
+    },
+    "advancedSettings": {
+        "title": "Impostazioni avanzate",
+        "resetFoldersTitle": "Azione avanzata: Ripristina archiviazione cartelle",
+        "resetFoldersDesc": "Questa azione cancellerà tutte le impostazioni delle cartelle e ricostruirà immediatamente la cache. Questa azione è irreversibile. Procedi con cautela!",
+        "resetFoldersBtn": "Ripristina archiviazione cartelle"
+    },
+    "empty": {
+        "image": "Nessuna immagine",
+        "openConfigDirBtn": "Apri cartella configurazione",
+        "importBtn": "Importa immagini"
+    }
+}

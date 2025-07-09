@@ -7,18 +7,32 @@
         "fr-FR": "Thème clair",
         "de-DE": "Helles Thema",
         "es-ES": "Tema claro",
-        "ko-KR": "라이트 테마"
+        "ko-KR": "라이트 테마",
+        "it-IT": "Tema chiaro",
+        "tr-TR": "Açık Tema",
+        "vi-VN": "Chủ đề sáng",
+        "ar-SA": "سمة فاتحة",
+        "uk-UA": "Світла тема",
+        "en-GB": "Light Theme",
+        "ru-RU": "Светлая тема"
     },
     "author": "官方",
     "version": "1.0.0",
     "description": {
         "zh-CN": "VSCode Light+ 风格主题",
-        "en-US": "VSCode Light+ Style",
+        "en-US": "VSCode Light+ Style Theme",
         "ja-JP": "VSCode Light+ スタイルテーマ",
         "fr-FR": "Thème de style VSCode Light+",
         "de-DE": "VSCode Light+ Stilthema",
         "es-ES": "Tema de estilo VSCode Light+",
-        "ko-KR": "VSCode Light+ 스타일 테마"
+        "ko-KR": "VSCode Light+ 스타일 테마",
+        "it-IT": "Tema stile VSCode Light+",
+        "tr-TR": "VSCode Light+ Stil Teması",
+        "vi-VN": "Chủ đề kiểu VSCode Light+",
+        "ar-SA": "سمة VSCode Light+ النمطية",
+        "uk-UA": "Тема стилю VSCode Light+",
+        "en-GB": "VSCode Light+ Style Theme",
+        "ru-RU": "Тема в стиле VSCode Light+"
     },
     "colors": {
         "bg": "#ffffff",
