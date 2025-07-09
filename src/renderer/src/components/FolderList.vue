@@ -5,9 +5,10 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import type { PhotasaConfig } from "@common/config-types";
 import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
-import { openInFinder, removeFileProtocol } from "@renderer/utils/api-path";
+import { openInFinder } from "@renderer/utils/api-path";
 import { JsonTreeView } from "json-tree-view-vue3";
-import { trim, isEmpty } from "radash";
+import { isEmpty } from "radash";
+import { removeFileProtocol } from "@renderer/common/image";
 
 /**
  * I18n
