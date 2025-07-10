@@ -30,6 +30,7 @@
         "test": "npm run test:unit"
     },
     "dependencies": {
+        "@atlaskit/pragmatic-drag-and-drop": "^1.7.4",
         "@babel/core": "7.21.8",
         "@bugsnag/electron": "^7.20.2",
         "@bugsnag/js": "7.20.2",
