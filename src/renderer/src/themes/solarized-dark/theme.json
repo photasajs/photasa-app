@@ -2,6 +2,7 @@
     "id": "solarized-dark",
     "name": {
         "zh-CN": "Solarized 暗色",
+        "zh-TW": "Solarized 暗色",
         "en-US": "Solarized Dark",
         "ja-JP": "Solarized ダーク",
         "fr-FR": "Solarized sombre",
@@ -19,7 +20,8 @@
     "author": "官方",
     "version": "1.0.0",
     "description": {
-        "zh-CN": "Solarized Dark 风格主题",
+        "zh-CN": "Solarized Dark 風格主題",
+        "zh-TW": "Solarized Dark 風格主題",
         "en-US": "Solarized Dark Style Theme",
         "ja-JP": "Solarized Dark スタイルテーマ",
         "fr-FR": "Thème Solarized Dark",

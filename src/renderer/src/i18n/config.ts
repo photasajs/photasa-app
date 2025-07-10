@@ -13,6 +13,7 @@ import viVN from "../locales/vi-VN.json";
 import arSA from "../locales/ar-SA.json";
 import ukUA from "../locales/uk-UA.json";
 import ruRU from "../locales/ru-RU.json";
+import zhTW from "../locales/zh-TW.json";
 import type { Ref } from "vue";
 
 // Constants
@@ -21,13 +22,17 @@ const FALLBACK_LOCALE = "en-US" as const;
 
 // Define supported locales with their display names and native names
 export const LOCALES = {
-    "en-US": {
-        name: "English (US)",
-        nativeName: "English (US)",
-    },
     "zh-CN": {
         name: "Chinese (Simplified)",
         nativeName: "中文(简体)",
+    },
+    "zh-TW": {
+        name: "Chinese (Traditional)",
+        nativeName: "中文(繁體)",
+    },
+    "en-US": {
+        name: "English (US)",
+        nativeName: "English (US)",
     },
     "ja-JP": {
         name: "Japanese",
@@ -83,6 +88,7 @@ export const LOCALES = {
 export type Locale = keyof typeof LOCALES;
 export type MessageSchema =
     | typeof zhCN
+    | typeof zhTW
     | typeof enUS
     | typeof jaJP
     | typeof koKR
@@ -132,6 +138,7 @@ export const i18n = createI18n<[MessageSchema], Locale>({
     messages: {
         "en-US": enUS,
         "zh-CN": zhCN,
+        "zh-TW": zhTW,
         "ja-JP": jaJP,
         "ko-KR": koKR,
         "fr-FR": frFR,

@@ -1,7 +1,8 @@
 {
     "id": "light",
     "name": {
-        "zh-CN": "明亮主题",
+        "zh-CN": "明亮主題",
+        "zh-TW": "明亮主題",
         "en-US": "Light Theme",
         "ja-JP": "ライトテーマ",
         "fr-FR": "Thème clair",
@@ -19,7 +20,8 @@
     "author": "官方",
     "version": "1.0.0",
     "description": {
-        "zh-CN": "VSCode Light+ 风格主题",
+        "zh-CN": "VSCode Light+ 風格主題",
+        "zh-TW": "VSCode Light+ 風格主題",
         "en-US": "VSCode Light+ Style Theme",
         "ja-JP": "VSCode Light+ スタイルテーマ",
         "fr-FR": "Thème de style VSCode Light+",

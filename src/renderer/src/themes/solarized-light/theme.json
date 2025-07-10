@@ -2,6 +2,7 @@
     "id": "solarized-light",
     "name": {
         "zh-CN": "Solarized 明亮",
+        "zh-TW": "Solarized 明亮",
         "en-US": "Solarized Light",
         "ja-JP": "Solarized ライト",
         "fr-FR": "Solarized clair",
@@ -19,7 +20,8 @@
     "author": "官方",
     "version": "1.0.0",
     "description": {
-        "zh-CN": "Solarized Light 风格主题",
+        "zh-CN": "Solarized Light 風格主題",
+        "zh-TW": "Solarized Light 風格主題",
         "en-US": "Solarized Light Style Theme",
         "ja-JP": "Solarized Light スタイルテーマ",
         "fr-FR": "Thème Solarized Light",

@@ -1,7 +1,8 @@
 {
     "id": "dark",
     "name": {
-        "zh-CN": "暗色主题",
+        "zh-CN": "暗色主題",
+        "zh-TW": "暗色主題",
         "en-US": "Dark Theme",
         "ja-JP": "ダークテーマ",
         "fr-FR": "Thème sombre",
@@ -19,7 +20,8 @@
     "author": "官方",
     "version": "1.0.0",
     "description": {
-        "zh-CN": "VSCode Dark+ 风格主题",
+        "zh-CN": "VSCode Dark+ 風格主題",
+        "zh-TW": "VSCode Dark+ 風格主題",
         "en-US": "VSCode Dark+ Style Theme",
         "ja-JP": "VSCode Dark+ スタイルテーマ",
         "fr-FR": "Thème de style VSCode Dark+",
