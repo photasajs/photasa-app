@@ -5,7 +5,6 @@ import { i18nUtils, type Locale } from "../i18n/config";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { useMenusStore } from "@renderer/stores/menus";
 import { useI18n } from "vue-i18n";
-import CountryFlag from "@renderer/components/common/CountryFlag.vue";
 
 const preferenceStore = usePreferenceStore();
 const menusStore = useMenusStore();
@@ -34,7 +33,6 @@ const currentLocaleInfo = computed(() => {
         locale,
         name: i18nUtils.getLocaleName(locale),
         nativeName: i18nUtils.getLocaleNativeName(locale),
-        flag: i18nUtils.getLocaleFlag(locale),
     };
 });
 </script>
@@ -43,7 +41,6 @@ const currentLocaleInfo = computed(() => {
     <div class="language-switcher">
         <Menu as="div" class="relative inline-block text-left">
             <MenuButton class="locale-button">
-                <CountryFlag class="locale-flag" :country-code="currentLocaleInfo.locale" />
                 <span class="locale-name">{{ currentLocaleInfo.nativeName }}</span>
                 <span class="locale-arrow">▼</span>
             </MenuButton>
@@ -68,7 +65,6 @@ const currentLocaleInfo = computed(() => {
                                 },
                             ]"
                         >
-                            <CountryFlag class="locale-flag" :country-code="locale" />
                             <span class="locale-name">{{
                                 i18nUtils.getLocaleNativeName(locale)
                             }}</span>

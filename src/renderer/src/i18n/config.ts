@@ -24,72 +24,58 @@ export const LOCALES = {
     "en-US": {
         name: "English (US)",
         nativeName: "English (US)",
-        flag: "🇺🇸",
     },
     "zh-CN": {
         name: "Chinese (Simplified)",
         nativeName: "中文(简体)",
-        flag: "🇨🇳",
     },
     "ja-JP": {
         name: "Japanese",
         nativeName: "日本語",
-        flag: "🇯🇵",
     },
     "ko-KR": {
         name: "Korean",
         nativeName: "한국어",
-        flag: "🇰🇷",
     },
     "fr-FR": {
         name: "French",
         nativeName: "Français",
-        flag: "🇫🇷",
     },
     "de-DE": {
         name: "German",
         nativeName: "Deutsch",
-        flag: "🇩🇪",
     },
     "es-ES": {
         name: "Spanish",
         nativeName: "Español",
-        flag: "🇪🇸",
     },
     "it-IT": {
         name: "Italian",
         nativeName: "Italiano",
-        flag: "🇮🇹",
     },
     "tr-TR": {
         name: "Turkish",
         nativeName: "Türkçe",
-        flag: "🇹🇷",
     },
     "vi-VN": {
         name: "Vietnamese",
         nativeName: "Tiếng Việt",
-        flag: "🇻🇳",
     },
     "ar-SA": {
         name: "Arabic",
         nativeName: "العربية",
-        flag: "🇸🇦",
     },
     "uk-UA": {
         name: "Ukrainian",
         nativeName: "Українська",
-        flag: "🇺🇦",
     },
     "en-GB": {
         name: "English (UK)",
         nativeName: "English (UK)",
-        flag: "🇬🇧",
     },
     "ru-RU": {
         name: "Russian",
         nativeName: "Русский",
-        flag: "🇷🇺",
     },
 } as const;
 
