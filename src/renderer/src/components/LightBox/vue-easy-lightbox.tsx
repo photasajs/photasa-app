@@ -610,12 +610,18 @@ export default defineComponent({
         };
 
         const renderWrapper = () => {
+            // Vue的Transition组件需要其子元素具有唯一的key属性来正确执行动画过渡
+            // 当状态改变时(loading -> error -> image)，Vue通过key来识别哪些元素需要被创建、更新或销毁
+            // 没有key时，Vue会尝试复用元素，导致getTransitionRawChildren函数访问null元素的key属性而报错
             if (status.loading) {
-                return renderLoading();
+                // 加载状态：显示加载指示器，使用loading-state作为key标识
+                return <div key="loading-state">{renderLoading()}</div>;
             } else if (status.loadError) {
-                return renderOnError();
+                // 错误状态：显示错误信息，使用error-state作为key标识
+                return <div key="error-state">{renderOnError()}</div>;
             }
-            return renderImgWrapper();
+            // 正常状态：显示图片内容，使用image-state作为key标识
+            return <div key="image-state">{renderImgWrapper()}</div>;
         };
 
         // 测试图片，用于预加载图片
