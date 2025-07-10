@@ -150,7 +150,7 @@ const currentLocaleInfo = computed(() => {
 .locale-dropdown-menu {
     position: absolute;
     left: 0;
-    z-index: 10;
+    z-index: 1000; /* 提高层级，防止被遮挡 */
     margin-top: 4px;
     min-width: 220px;
     padding: 6px;
@@ -159,6 +159,8 @@ const currentLocaleInfo = computed(() => {
     border-radius: 8px;
     box-shadow: 0 8px 24px 0 var(--color-shadow);
     backdrop-filter: blur(8px);
+    max-height: 320px; /* 限制最大高度 */
+    overflow-y: auto; /* 超出时显示滚动条 */
 }
 
 .locale-dropdown-menu:focus {
