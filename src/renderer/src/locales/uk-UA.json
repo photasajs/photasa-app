@@ -1,172 +1,172 @@
 {
     "app": {
-        "title": "仓廪图司",
-        "folderList": "目录列表"
+        "title": "Photasa",
+        "folderList": "Список папок"
     },
     "preference": {
-        "settings": "设置",
+        "settings": "Налаштування",
         "tabs": {
-            "general": "常规",
-            "about": "关于",
-            "theme": "主题",
-            "advanced": "高级配置"
+            "general": "Загальні",
+            "about": "Про програму",
+            "theme": "Тема",
+            "advanced": "Додатково"
         },
-        "folderList": "目录列表",
-        "folderListUsage": "使用方式",
-        "folderListDesc": "将目录添加到列表后，仓廪图司可以实时管理目录下的照片和视频",
-        "watchFolderList": "仓廪图司可以管理下列目录中的照片和视频",
-        "chooseDirectory": "选择目录并添加到列表",
-        "thumbnailSize": "缩略图大小",
-        "darkMode": "深色模式",
-        "language": "语言",
-        "scanning": "扫描中"
+        "folderList": "Список папок",
+        "folderListUsage": "Спосіб використання",
+        "folderListDesc": "Після додавання папки до списку Photasa може керувати фотографіями та відео у папці в реальному часі.",
+        "watchFolderList": "Photasa може керувати фотографіями та відео у наступних папках.",
+        "chooseDirectory": "Виберіть папку та додайте до списку",
+        "thumbnailSize": "Розмір мініатюри",
+        "darkMode": "Темний режим",
+        "language": "Мова",
+        "scanning": "Сканування"
     },
     "import": {
-        "photos": "导入照片",
-        "allowDuplicateRename": "允许重命名重复的照片",
-        "targetDirectory": "导出目录",
-        "chooseDirectory": "选择导入目录",
+        "photos": "Імпортувати фото",
+        "allowDuplicateRename": "Дозволити перейменування дублікатів фото",
+        "targetDirectory": "Папка експорту",
+        "chooseDirectory": "Виберіть папку для імпорту",
         "button": {
-            "import": "导入",
-            "cancel": "取消",
-            "ok": "确定"
+            "import": "Імпортувати",
+            "cancel": "Скасувати",
+            "ok": "OK"
         }
     },
     "menu": {
-        "getInfo": "照片信息",
-        "open": "在文件管理器中打开",
-        "rebuildThumbnail": "重建缩略图",
-        "getConfig": "获取照片库信息",
-        "rescan": "重新扫描目录",
+        "getInfo": "Інформація про фото",
+        "open": "Відкрити у файловому менеджері",
+        "rebuildThumbnail": "Перебудувати мініатюру",
+        "getConfig": "Отримати інформацію про фотобібліотеку",
+        "rescan": "Пересканувати папку",
         "app": {
-            "menu": "应用",
-            "about": "关于 Photasa",
-            "services": "服务",
-            "hide": "隐藏 Photasa",
-            "hideOthers": "隐藏其他",
-            "unhide": "显示全部",
-            "quit": "退出"
+            "menu": "Додаток",
+            "about": "Про Photasa",
+            "services": "Сервіси",
+            "hide": "Сховати Photasa",
+            "hideOthers": "Сховати інші",
+            "unhide": "Показати все",
+            "quit": "Вийти"
         },
         "view": {
-            "menu": "视图",
-            "reload": "重新加载",
-            "forceReload": "强制重新加载",
-            "toggleDevTools": "切换开发者工具",
-            "resetZoom": "重置缩放",
-            "zoomIn": "放大",
-            "zoomOut": "缩小",
-            "toggleFullScreen": "切换全屏"
+            "menu": "Вигляд",
+            "reload": "Перезавантажити",
+            "forceReload": "Примусове перезавантаження",
+            "toggleDevTools": "Перемкнути інструменти розробника",
+            "resetZoom": "Скинути масштаб",
+            "zoomIn": "Збільшити",
+            "zoomOut": "Зменшити",
+            "toggleFullScreen": "Перемкнути повноекранний режим"
         },
         "window": {
-            "menu": "窗口",
-            "minimize": "最小化",
-            "maximize": "最大化",
-            "close": "关闭"
+            "menu": "Вікно",
+            "minimize": "Згорнути",
+            "maximize": "Розгорнути",
+            "close": "Закрити"
         },
         "help": {
-            "menu": "帮助",
-            "learnMore": "了解更多",
-            "about": "关于 Photasa"
+            "menu": "Довідка",
+            "learnMore": "Дізнатися більше",
+            "about": "Про Photasa"
         },
-        "separator": "分隔符"
+        "separator": "Роздільник"
     },
     "notification": {
-        "info": "提示",
-        "warn": "注意",
-        "error": "错误",
+        "info": "Інформація",
+        "warn": "Увага",
+        "error": "Помилка",
         "scan": {
-            "title": "扫描目录",
-            "message": "目录已扫描完毕，照片已导入到仓廪图司。"
+            "title": "Сканування папки",
+            "message": "Сканування папки завершено, фото імпортовано у Photasa."
         },
         "duplicatePath": {
-            "title": "重复的目录",
-            "message": "目录[{folder}]已存在于仓廪图司中。"
+            "title": "Дублікат папки",
+            "message": "Папка [{folder}] вже існує у Photasa."
         },
         "emptyPath": {
-            "title": "选择目录",
-            "message": "请选择目录，然后完成添加操作。"
+            "title": "Виберіть папку",
+            "message": "Будь ласка, виберіть папку та завершіть додавання."
         },
         "resetFolders": {
-            "title": "重置完成",
-            "message": "所有目录缓存已重建。"
+            "title": "Скидання завершено",
+            "message": "Всі кеші папок були перебудовані."
         }
     },
     "status": {
-        "initializing": "正在初始化",
-        "idle": "空闲",
-        "updating": "正在更新",
-        "ready": "准备就绪",
-        "readingConfig": "加载照片库信息 [{config}]",
-        "loadingConfig": "读取照片库信息",
-        "processing": "正在处理 [{file}]",
-        "scanned": "处理完毕",
-        "scanComplete": "目录[{path}]已处理完毕",
-        "start": "开始扫描",
-        "progress": "扫描进度",
-        "complete": "扫描完成",
-        "error": "扫描错误"
+        "initializing": "Ініціалізація",
+        "idle": "Очікування",
+        "updating": "Оновлення",
+        "ready": "Готово",
+        "readingConfig": "Завантаження інформації про бібліотеку [{config}]",
+        "loadingConfig": "Читання інформації про бібліотеку",
+        "processing": "Обробка [{file}]",
+        "scanned": "Завершено",
+        "scanComplete": "Папка [{path}] оброблена.",
+        "start": "Почати сканування",
+        "progress": "Прогрес сканування",
+        "complete": "Сканування завершено",
+        "error": "Помилка сканування"
     },
     "button": {
-        "import": "导入",
-        "cancel": "取消",
-        "ok": "确定",
-        "fixConfig": "修复照片库信息"
+        "import": "Імпортувати",
+        "cancel": "Скасувати",
+        "ok": "OK",
+        "fixConfig": "Виправити інформацію про бібліотеку"
     },
     "about": {
-        "antvDescription": "数据可视化解决方案",
+        "antvDescription": "Рішення для візуалізації даних",
         "introduction": {
-            "title": "介绍",
-            "content": "你好！这是一个用于管理和整理照片的工具。",
-            "summary": "这个应用程序专注于",
-            "highlight": "用户友好的界面",
-            "userExperience": "用户体验",
-            "focus": "。"
+            "title": "Вступ",
+            "content": "Вітаємо! Це інструмент для керування та організації фотографій.",
+            "summary": "Цей додаток зосереджений на",
+            "highlight": "зручному інтерфейсі",
+            "userExperience": "користувацькому досвіді",
+            "focus": "."
         },
         "resources": {
-            "title": "资源",
-            "content": "以下资源可用：",
-            "and": "和",
-            "download": "下载资源"
+            "title": "Ресурси",
+            "content": "Доступні такі ресурси:",
+            "and": "та",
+            "download": "Завантажити ресурси"
         },
-        "press": "按",
-        "toExit": "退出",
-        "markdown": "# 关于 Photasa\n\nPhotasa 是一款现代化、隐私友好的本地照片管理工具，灵感源自经典的 Picasa。\n它支持高效地浏览、整理和管理您的照片与视频，拥有美观的界面和强大的本地功能，无需云端依赖。\n\n## 主要特性\n\n- 本地照片与视频智能导入与管理\n- 快速缩略图生成与预览\n- 多语言界面与主题切换\n- 支持批量操作与高效搜索\n- 数据隐私与安全保障\n\n按 `Esc` 退出"
+        "press": "Натисніть",
+        "toExit": "щоб вийти",
+        "markdown": "# Про Photasa\n\nPhotasa — це сучасний, орієнтований на конфіденційність інструмент для локального керування фотографіями, натхненний класичним Photasa.\nВін підтримує ефективний перегляд, організацію та керування вашими фотографіями та відео, має гарний інтерфейс і потужні локальні функції, не потребує хмари.\n\n## Основні функції\n\n- Розумний імпорт і керування локальними фото та відео\n- Швидке створення мініатюр і попередній перегляд\n- Багатомовний інтерфейс і перемикання тем\n- Пакетні операції та ефективний пошук\n- Захист даних і конфіденційності\n\nНатисніть `Esc` щоб вийти"
     },
     "preferences": {
-        "title": "偏好设置",
+        "title": "Налаштування",
         "language": {
-            "title": "语言",
-            "description": "选择您偏好的应用程序界面语言。"
+            "title": "Мова",
+            "description": "Виберіть бажану мову інтерфейсу програми."
         },
         "thumbnail": {
-            "title": "缩略图大小",
-            "description": "调整图库视图中照片缩略图的大小。"
+            "title": "Розмір мініатюри",
+            "description": "Налаштуйте розмір мініатюр фотографій у перегляді галереї."
         },
         "theme": {
-            "title": "主题",
-            "description": "在浅色和深色模式之间切换。",
-            "light": "浅色",
-            "dark": "深色"
+            "title": "Тема",
+            "description": "Перемикайте між світлим і темним режимом.",
+            "light": "Світла",
+            "dark": "Темна"
         }
     },
     "resetFolders": {
-        "title": "高级操作：重置目录存储",
-        "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
-        "button": "重置目录存储"
+        "title": "Додаткова дія: Скинути зберігання папок",
+        "desc": "Ця дія очистить усі налаштування папок і негайно перебудує кеш. Ця дія незворотна. Будь ласка, будьте обережні!",
+        "button": "Скинути зберігання папок"
     },
     "scan": {
-        "queueTitle": "扫描队列",
-        "queueEmpty": "队列为空"
+        "queueTitle": "Черга сканування",
+        "queueEmpty": "Черга порожня"
     },
     "advancedSettings": {
-        "title": "高级配置",
-        "resetFoldersTitle": "高级操作：重置目录存储",
-        "resetFoldersDesc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
-        "resetFoldersBtn": "重置目录存储"
+        "title": "Додаткові налаштування",
+        "resetFoldersTitle": "Додаткова дія: Скинути зберігання папок",
+        "resetFoldersDesc": "Ця дія очистить усі налаштування папок і негайно перебудує кеш. Ця дія незворотна, будь ласка, будьте обережні!",
+        "resetFoldersBtn": "Скинути зберігання папок"
     },
     "empty": {
-        "image": "暂无图片",
-        "openConfigDirBtn": "打开配置目录",
-        "importBtn": "导入图片"
+        "image": "Немає зображень",
+        "openConfigDirBtn": "Відкрити папку налаштувань",
+        "importBtn": "Імпортувати зображення"
     }
 }

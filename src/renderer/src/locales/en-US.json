@@ -126,7 +126,7 @@
         "antvDescription": "Data Visualization Solution",
         "introduction": {
             "title": "About Photasa",
-            "content": "Photasa is a modern, privacy-friendly photo management tool inspired by Picasa. Organize, browse, and enjoy your photos and videos with powerful local features and a beautiful interface—no cloud required.",
+            "content": "Photasa is a modern, privacy-friendly photo management tool inspired by Photasa. Organize, browse, and enjoy your photos and videos with powerful local features and a beautiful interface—no cloud required.",
             "summary": "Photasa helps you rediscover and manage your memories with ease.",
             "highlight": "local-first, fast, and user-friendly",
             "userExperience": "photo management experience",
@@ -139,7 +139,7 @@
         },
         "press": "Press",
         "toExit": "to exit",
-        "markdown": "# About Photasa\n\nPhotasa is a modern, privacy-friendly local photo management tool inspired by the classic Picasa.\nIt supports efficient browsing, organizing, and managing your photos and videos, with a beautiful interface and powerful local features—no cloud required.\n\n## Key Features\n\n- Smart local import and management of photos and videos\n- Fast thumbnail generation and preview\n- Multi-language interface and theme switching\n- Batch operations and efficient search\n- Data privacy and security protection\n\nPress `Esc` to exit"
+        "markdown": "# About Photasa\n\nPhotasa is a modern, privacy-friendly local photo management tool inspired by the classic Photasa.\nIt supports efficient browsing, organizing, and managing your photos and videos, with a beautiful interface and powerful local features—no cloud required.\n\n## Key Features\n\n- Smart local import and management of photos and videos\n- Fast thumbnail generation and preview\n- Multi-language interface and theme switching\n- Batch operations and efficient search\n- Data privacy and security protection\n\nPress `Esc` to exit"
     },
     "preferences": {
         "title": "Preferences",

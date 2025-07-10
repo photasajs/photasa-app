@@ -1,172 +1,172 @@
 {
     "app": {
-        "title": "仓廪图司",
-        "folderList": "目录列表"
+        "title": "Photasa",
+        "folderList": "Folder List"
     },
     "preference": {
-        "settings": "设置",
+        "settings": "Settings",
         "tabs": {
-            "general": "常规",
-            "about": "关于",
-            "theme": "主题",
-            "advanced": "高级配置"
+            "general": "General",
+            "about": "About",
+            "theme": "Theme",
+            "advanced": "Advanced"
         },
-        "folderList": "目录列表",
-        "folderListUsage": "使用方式",
-        "folderListDesc": "将目录添加到列表后，仓廪图司可以实时管理目录下的照片和视频",
-        "watchFolderList": "仓廪图司可以管理下列目录中的照片和视频",
-        "chooseDirectory": "选择目录并添加到列表",
-        "thumbnailSize": "缩略图大小",
-        "darkMode": "深色模式",
-        "language": "语言",
-        "scanning": "扫描中"
+        "folderList": "Folder List",
+        "folderListUsage": "Usage",
+        "folderListDesc": "After adding a folder to the list, Photasa can manage photos and videos in the folder in real time.",
+        "watchFolderList": "Photasa can manage photos and videos in the following folders.",
+        "chooseDirectory": "Select folder and add to list",
+        "thumbnailSize": "Thumbnail Size",
+        "darkMode": "Dark Mode",
+        "language": "Language",
+        "scanning": "Scanning"
     },
     "import": {
-        "photos": "导入照片",
-        "allowDuplicateRename": "允许重命名重复的照片",
-        "targetDirectory": "导出目录",
-        "chooseDirectory": "选择导入目录",
+        "photos": "Import Photos",
+        "allowDuplicateRename": "Allow renaming of duplicate photos",
+        "targetDirectory": "Export Folder",
+        "chooseDirectory": "Select import folder",
         "button": {
-            "import": "导入",
-            "cancel": "取消",
-            "ok": "确定"
+            "import": "Import",
+            "cancel": "Cancel",
+            "ok": "OK"
         }
     },
     "menu": {
-        "getInfo": "照片信息",
-        "open": "在文件管理器中打开",
-        "rebuildThumbnail": "重建缩略图",
-        "getConfig": "获取照片库信息",
-        "rescan": "重新扫描目录",
+        "getInfo": "Photo Info",
+        "open": "Open in File Manager",
+        "rebuildThumbnail": "Rebuild Thumbnail",
+        "getConfig": "Get Photo Library Info",
+        "rescan": "Rescan Folder",
         "app": {
-            "menu": "应用",
-            "about": "关于 Photasa",
-            "services": "服务",
-            "hide": "隐藏 Photasa",
-            "hideOthers": "隐藏其他",
-            "unhide": "显示全部",
-            "quit": "退出"
+            "menu": "App",
+            "about": "About Photasa",
+            "services": "Services",
+            "hide": "Hide Photasa",
+            "hideOthers": "Hide Others",
+            "unhide": "Show All",
+            "quit": "Quit"
         },
         "view": {
-            "menu": "视图",
-            "reload": "重新加载",
-            "forceReload": "强制重新加载",
-            "toggleDevTools": "切换开发者工具",
-            "resetZoom": "重置缩放",
-            "zoomIn": "放大",
-            "zoomOut": "缩小",
-            "toggleFullScreen": "切换全屏"
+            "menu": "View",
+            "reload": "Reload",
+            "forceReload": "Force Reload",
+            "toggleDevTools": "Toggle Developer Tools",
+            "resetZoom": "Reset Zoom",
+            "zoomIn": "Zoom In",
+            "zoomOut": "Zoom Out",
+            "toggleFullScreen": "Toggle Full Screen"
         },
         "window": {
-            "menu": "窗口",
-            "minimize": "最小化",
-            "maximize": "最大化",
-            "close": "关闭"
+            "menu": "Window",
+            "minimize": "Minimise",
+            "maximize": "Maximise",
+            "close": "Close"
         },
         "help": {
-            "menu": "帮助",
-            "learnMore": "了解更多",
-            "about": "关于 Photasa"
+            "menu": "Help",
+            "learnMore": "Learn More",
+            "about": "About Photasa"
         },
-        "separator": "分隔符"
+        "separator": "Separator"
     },
     "notification": {
-        "info": "提示",
-        "warn": "注意",
-        "error": "错误",
+        "info": "Info",
+        "warn": "Warning",
+        "error": "Error",
         "scan": {
-            "title": "扫描目录",
-            "message": "目录已扫描完毕，照片已导入到仓廪图司。"
+            "title": "Scan Folder",
+            "message": "Folder scan completed, photos have been imported into Photasa."
         },
         "duplicatePath": {
-            "title": "重复的目录",
-            "message": "目录[{folder}]已存在于仓廪图司中。"
+            "title": "Duplicate Folder",
+            "message": "Folder [{folder}] already exists in Photasa."
         },
         "emptyPath": {
-            "title": "选择目录",
-            "message": "请选择目录，然后完成添加操作。"
+            "title": "Select Folder",
+            "message": "Please select a folder and complete the addition."
         },
         "resetFolders": {
-            "title": "重置完成",
-            "message": "所有目录缓存已重建。"
+            "title": "Reset Complete",
+            "message": "All folder caches have been rebuilt."
         }
     },
     "status": {
-        "initializing": "正在初始化",
-        "idle": "空闲",
-        "updating": "正在更新",
-        "ready": "准备就绪",
-        "readingConfig": "加载照片库信息 [{config}]",
-        "loadingConfig": "读取照片库信息",
-        "processing": "正在处理 [{file}]",
-        "scanned": "处理完毕",
-        "scanComplete": "目录[{path}]已处理完毕",
-        "start": "开始扫描",
-        "progress": "扫描进度",
-        "complete": "扫描完成",
-        "error": "扫描错误"
+        "initializing": "Initialising",
+        "idle": "Idle",
+        "updating": "Updating",
+        "ready": "Ready",
+        "readingConfig": "Loading library info [{config}]",
+        "loadingConfig": "Reading library info",
+        "processing": "Processing [{file}]",
+        "scanned": "Completed",
+        "scanComplete": "Folder [{path}] has been processed.",
+        "start": "Start Scan",
+        "progress": "Scan Progress",
+        "complete": "Scan Complete",
+        "error": "Scan Error"
     },
     "button": {
-        "import": "导入",
-        "cancel": "取消",
-        "ok": "确定",
-        "fixConfig": "修复照片库信息"
+        "import": "Import",
+        "cancel": "Cancel",
+        "ok": "OK",
+        "fixConfig": "Fix Library Info"
     },
     "about": {
-        "antvDescription": "数据可视化解决方案",
+        "antvDescription": "Data Visualisation Solution",
         "introduction": {
-            "title": "介绍",
-            "content": "你好！这是一个用于管理和整理照片的工具。",
-            "summary": "这个应用程序专注于",
-            "highlight": "用户友好的界面",
-            "userExperience": "用户体验",
-            "focus": "。"
+            "title": "Introduction",
+            "content": "Hello! This is a tool for managing and organising photos.",
+            "summary": "This application focuses on",
+            "highlight": "user-friendly interface",
+            "userExperience": "user experience",
+            "focus": "."
         },
         "resources": {
-            "title": "资源",
-            "content": "以下资源可用：",
-            "and": "和",
-            "download": "下载资源"
+            "title": "Resources",
+            "content": "The following resources are available:",
+            "and": "and",
+            "download": "Download Resources"
         },
-        "press": "按",
-        "toExit": "退出",
-        "markdown": "# 关于 Photasa\n\nPhotasa 是一款现代化、隐私友好的本地照片管理工具，灵感源自经典的 Picasa。\n它支持高效地浏览、整理和管理您的照片与视频，拥有美观的界面和强大的本地功能，无需云端依赖。\n\n## 主要特性\n\n- 本地照片与视频智能导入与管理\n- 快速缩略图生成与预览\n- 多语言界面与主题切换\n- 支持批量操作与高效搜索\n- 数据隐私与安全保障\n\n按 `Esc` 退出"
+        "press": "Press",
+        "toExit": "to exit",
+        "markdown": "# About Photasa\n\nPhotasa is a modern, privacy-friendly local photo management tool inspired by the classic Photasa.\nIt supports efficient browsing, organising and managing your photos and videos, with a beautiful interface and powerful local features, without cloud dependency.\n\n## Main Features\n\n- Smart import and management of local photos and videos\n- Fast thumbnail generation and preview\n- Multilingual interface and theme switching\n- Batch operations and efficient search\n- Data privacy and security protection\n\nPress `Esc` to exit"
     },
     "preferences": {
-        "title": "偏好设置",
+        "title": "Preferences",
         "language": {
-            "title": "语言",
-            "description": "选择您偏好的应用程序界面语言。"
+            "title": "Language",
+            "description": "Select your preferred language for the application interface."
         },
         "thumbnail": {
-            "title": "缩略图大小",
-            "description": "调整图库视图中照片缩略图的大小。"
+            "title": "Thumbnail Size",
+            "description": "Adjust the size of photo thumbnails in the gallery view."
         },
         "theme": {
-            "title": "主题",
-            "description": "在浅色和深色模式之间切换。",
-            "light": "浅色",
-            "dark": "深色"
+            "title": "Theme",
+            "description": "Switch between light and dark mode.",
+            "light": "Light",
+            "dark": "Dark"
         }
     },
     "resetFolders": {
-        "title": "高级操作：重置目录存储",
-        "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
-        "button": "重置目录存储"
+        "title": "Advanced Action: Reset Folder Storage",
+        "desc": "This action will clear all folder settings and immediately rebuild the cache. This action is irreversible. Please proceed with caution!",
+        "button": "Reset Folder Storage"
     },
     "scan": {
-        "queueTitle": "扫描队列",
-        "queueEmpty": "队列为空"
+        "queueTitle": "Scan Queue",
+        "queueEmpty": "Queue is empty"
     },
     "advancedSettings": {
-        "title": "高级配置",
-        "resetFoldersTitle": "高级操作：重置目录存储",
-        "resetFoldersDesc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
-        "resetFoldersBtn": "重置目录存储"
+        "title": "Advanced Settings",
+        "resetFoldersTitle": "Advanced Action: Reset Folder Storage",
+        "resetFoldersDesc": "This action will clear all folder settings and immediately rebuild the cache. This action is irreversible. Please proceed with caution!",
+        "resetFoldersBtn": "Reset Folder Storage"
     },
     "empty": {
-        "image": "暂无图片",
-        "openConfigDirBtn": "打开配置目录",
-        "importBtn": "导入图片"
+        "image": "No images",
+        "openConfigDirBtn": "Open Config Folder",
+        "importBtn": "Import Images"
     }
 }

@@ -6,6 +6,13 @@ import koKR from "../locales/ko-KR.json";
 import frFR from "../locales/fr-FR.json";
 import deDE from "../locales/de-DE.json";
 import esES from "../locales/es-ES.json";
+import enGB from "../locales/en-GB.json";
+import itIT from "../locales/it-IT.json";
+import trTR from "../locales/tr-TR.json";
+import viVN from "../locales/vi-VN.json";
+import arSA from "../locales/ar-SA.json";
+import ukUA from "../locales/uk-UA.json";
+import ruRU from "../locales/ru-RU.json";
 import type { Ref } from "vue";
 
 // Constants
@@ -15,13 +22,13 @@ const FALLBACK_LOCALE = "en-US" as const;
 // Define supported locales with their display names and native names
 export const LOCALES = {
     "en-US": {
-        name: "English",
-        nativeName: "English",
+        name: "English (US)",
+        nativeName: "English (US)",
         flag: "🇺🇸",
     },
     "zh-CN": {
-        name: "Chinese",
-        nativeName: "中文",
+        name: "Chinese (Simplified)",
+        nativeName: "中文(简体)",
         flag: "🇨🇳",
     },
     "ja-JP": {
@@ -49,6 +56,41 @@ export const LOCALES = {
         nativeName: "Español",
         flag: "🇪🇸",
     },
+    "it-IT": {
+        name: "Italian",
+        nativeName: "Italiano",
+        flag: "🇮🇹",
+    },
+    "tr-TR": {
+        name: "Turkish",
+        nativeName: "Türkçe",
+        flag: "🇹🇷",
+    },
+    "vi-VN": {
+        name: "Vietnamese",
+        nativeName: "Tiếng Việt",
+        flag: "🇻🇳",
+    },
+    "ar-SA": {
+        name: "Arabic",
+        nativeName: "العربية",
+        flag: "🇸🇦",
+    },
+    "uk-UA": {
+        name: "Ukrainian",
+        nativeName: "Українська",
+        flag: "🇺🇦",
+    },
+    "en-GB": {
+        name: "English (UK)",
+        nativeName: "English (UK)",
+        flag: "🇬🇧",
+    },
+    "ru-RU": {
+        name: "Russian",
+        nativeName: "Русский",
+        flag: "🇷🇺",
+    },
 } as const;
 
 // Type definitions
@@ -60,7 +102,14 @@ export type MessageSchema =
     | typeof koKR
     | typeof frFR
     | typeof deDE
-    | typeof esES;
+    | typeof esES
+    | typeof itIT
+    | typeof trTR
+    | typeof viVN
+    | typeof arSA
+    | typeof ukUA
+    | typeof enGB
+    | typeof ruRU;
 
 // Browser language detection
 const detectBrowserLocale = (): Locale | null => {
@@ -102,6 +151,13 @@ export const i18n = createI18n<[MessageSchema], Locale>({
         "fr-FR": frFR,
         "de-DE": deDE,
         "es-ES": esES,
+        "it-IT": itIT,
+        "tr-TR": trTR,
+        "vi-VN": viVN,
+        "ar-SA": arSA,
+        "uk-UA": ukUA,
+        "en-GB": enGB,
+        "ru-RU": ruRU,
     },
 });
 

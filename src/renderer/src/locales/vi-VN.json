@@ -1,6 +1,6 @@
 {
     "app": {
-        "title": "Picasa",
+        "title": "Photasa",
         "folderList": "Danh sách thư mục"
     },
     "preference": {
@@ -13,8 +13,8 @@
         },
         "folderList": "Danh sách thư mục",
         "folderListUsage": "Cách sử dụng",
-        "folderListDesc": "Sau khi thêm thư mục vào danh sách, Picasa có thể quản lý ảnh và video trong thư mục đó theo thời gian thực.",
-        "watchFolderList": "Picasa có thể quản lý ảnh và video trong các thư mục sau.",
+        "folderListDesc": "Sau khi thêm thư mục vào danh sách, Photasa có thể quản lý ảnh và video trong thư mục đó theo thời gian thực.",
+        "watchFolderList": "Photasa có thể quản lý ảnh và video trong các thư mục sau.",
         "chooseDirectory": "Chọn thư mục và thêm vào danh sách",
         "thumbnailSize": "Kích thước hình thu nhỏ",
         "darkMode": "Chế độ tối",
@@ -40,9 +40,9 @@
         "rescan": "Quét lại thư mục",
         "app": {
             "menu": "Ứng dụng",
-            "about": "Giới thiệu về Picasa",
+            "about": "Giới thiệu về Photasa",
             "services": "Dịch vụ",
-            "hide": "Ẩn Picasa",
+            "hide": "Ẩn Photasa",
             "hideOthers": "Ẩn các ứng dụng khác",
             "unhide": "Hiện tất cả",
             "quit": "Thoát"
@@ -66,7 +66,7 @@
         "help": {
             "menu": "Trợ giúp",
             "learnMore": "Tìm hiểu thêm",
-            "about": "Giới thiệu về Picasa"
+            "about": "Giới thiệu về Photasa"
         },
         "separator": "Phân cách"
     },
@@ -76,11 +76,11 @@
         "error": "Lỗi",
         "scan": {
             "title": "Quét thư mục",
-            "message": "Quét thư mục hoàn tất, ảnh đã được nhập vào Picasa."
+            "message": "Quét thư mục hoàn tất, ảnh đã được nhập vào Photasa."
         },
         "duplicatePath": {
             "title": "Thư mục trùng lặp",
-            "message": "Thư mục [{folder}] đã tồn tại trong Picasa."
+            "message": "Thư mục [{folder}] đã tồn tại trong Photasa."
         },
         "emptyPath": {
             "title": "Chọn thư mục",
@@ -130,7 +130,7 @@
         },
         "press": "Nhấn",
         "toExit": "để thoát",
-        "markdown": "# Giới thiệu về Picasa\n\nPicasa là một công cụ quản lý ảnh hiện đại, thân thiện với quyền riêng tư, lấy cảm hứng từ Picasa cổ điển.\nNó hỗ trợ duyệt, sắp xếp và quản lý ảnh và video của bạn một cách hiệu quả, với giao diện đẹp và các tính năng mạnh mẽ tại chỗ, không cần phụ thuộc vào đám mây.\n\n## Tính năng chính\n\n- Nhập và quản lý ảnh, video cục bộ thông minh\n- Tạo hình thu nhỏ và xem trước nhanh\n- Giao diện đa ngôn ngữ và chuyển đổi chủ đề\n- Hỗ trợ thao tác hàng loạt và tìm kiếm hiệu quả\n- Bảo vệ quyền riêng tư và an toàn dữ liệu\n\nNhấn `Esc` để thoát"
+        "markdown": "# Giới thiệu về Photasa\n\nPhotasa là một công cụ quản lý ảnh hiện đại, thân thiện với quyền riêng tư, lấy cảm hứng từ Photasa cổ điển.\nNó hỗ trợ duyệt, sắp xếp và quản lý ảnh và video của bạn một cách hiệu quả, với giao diện đẹp và các tính năng mạnh mẽ tại chỗ, không cần phụ thuộc vào đám mây.\n\n## Tính năng chính\n\n- Nhập và quản lý ảnh, video cục bộ thông minh\n- Tạo hình thu nhỏ và xem trước nhanh\n- Giao diện đa ngôn ngữ và chuyển đổi chủ đề\n- Hỗ trợ thao tác hàng loạt và tìm kiếm hiệu quả\n- Bảo vệ quyền riêng tư và an toàn dữ liệu\n\nNhấn `Esc` để thoát"
     },
     "preferences": {
         "title": "Tùy chọn",

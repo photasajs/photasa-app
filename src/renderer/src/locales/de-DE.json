@@ -120,7 +120,7 @@
         "antvDescription": "Datenvisualisierungslösung",
         "introduction": {
             "title": "Über Photasa",
-            "content": "Photasa ist ein modernes, datenschutzfreundliches Fotoverwaltungstool, inspiriert von Picasa. Organisieren, durchsuchen und genießen Sie Ihre Fotos und Videos mit leistungsstarken lokalen Funktionen und einer schönen Benutzeroberfläche—ohne Cloud.",
+            "content": "Photasa ist ein modernes, datenschutzfreundliches Fotoverwaltungstool, inspiriert von Photasa. Organisieren, durchsuchen und genießen Sie Ihre Fotos und Videos mit leistungsstarken lokalen Funktionen und einer schönen Benutzeroberfläche—ohne Cloud.",
             "summary": "Photasa hilft Ihnen, Ihre Erinnerungen einfach wiederzuentdecken und zu verwalten.",
             "highlight": "lokal, schnell und benutzerfreundlich",
             "userExperience": "Fotoverwaltungserlebnis",
@@ -133,7 +133,7 @@
         },
         "press": "Drücken Sie",
         "toExit": "zum Beenden",
-        "markdown": "# Über Photasa\n\nPhotasa ist ein modernes, datenschutzfreundliches lokales Fotoverwaltungstool, inspiriert vom klassischen Picasa.\nEs unterstützt effizientes Durchsuchen, Organisieren und Verwalten Ihrer Fotos und Videos mit einer schönen Oberfläche und leistungsstarken lokalen Funktionen – ganz ohne Cloud.\n\n## Hauptfunktionen\n\n- Intelligenter lokaler Import und Verwaltung von Fotos und Videos\n- Schnelle Thumbnail-Erstellung und Vorschau\n- Mehrsprachige Benutzeroberfläche und Theme-Wechsel\n- Stapelverarbeitung und effiziente Suche\n- Datenschutz und Sicherheitsschutz\n\nDrücken Sie `Esc` zum Beenden"
+        "markdown": "# Über Photasa\n\nPhotasa ist ein modernes, datenschutzfreundliches lokales Fotoverwaltungstool, inspiriert vom klassischen Photasa.\nEs unterstützt effizientes Durchsuchen, Organisieren und Verwalten Ihrer Fotos und Videos mit einer schönen Oberfläche und leistungsstarken lokalen Funktionen – ganz ohne Cloud.\n\n## Hauptfunktionen\n\n- Intelligenter lokaler Import und Verwaltung von Fotos und Videos\n- Schnelle Thumbnail-Erstellung und Vorschau\n- Mehrsprachige Benutzeroberfläche und Theme-Wechsel\n- Stapelverarbeitung und effiziente Suche\n- Datenschutz und Sicherheitsschutz\n\nDrücken Sie `Esc` zum Beenden"
     },
     "preferences": {
         "title": "Einstellungen",
