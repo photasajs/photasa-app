@@ -1,4 +1,4 @@
-import { defineComponent, PropType } from "vue";
+import { defineComponent, PropType, Fragment } from "vue";
 import { prefixCls } from "../constant";
 import { voidFn } from "../utils";
 import { MouseEventHandler } from "../types";
@@ -43,7 +43,7 @@ export const Toolbar = defineComponent({
             return (
                 <div class={`${prefixCls}-toolbar`}>
                     {!props.zoomDisabled && (
-                        <div>
+                        <Fragment>
                             <div
                                 role="button"
                                 aria-label="zoom in button"
@@ -52,7 +52,6 @@ export const Toolbar = defineComponent({
                             >
                                 <SvgIcon type="zoomin" />
                             </div>
-
                             <div
                                 role="button"
                                 aria-label="zoom out button"
@@ -61,9 +60,8 @@ export const Toolbar = defineComponent({
                             >
                                 <SvgIcon type="zoomout" />
                             </div>
-                        </div>
+                        </Fragment>
                     )}
-
                     <div
                         role="button"
                         aria-label="resize image button"
@@ -73,7 +71,7 @@ export const Toolbar = defineComponent({
                         <SvgIcon type="resize" />
                     </div>
                     {!props.rotateDisabled && (
-                        <div>
+                        <Fragment>
                             <div
                                 role="button"
                                 aria-label="image rotate left button"
@@ -82,7 +80,6 @@ export const Toolbar = defineComponent({
                             >
                                 <SvgIcon type="rotate-left" />
                             </div>
-
                             <div
                                 role="button"
                                 aria-label="image rotate right button"
@@ -91,7 +88,7 @@ export const Toolbar = defineComponent({
                             >
                                 <SvgIcon type="rotate-right" />
                             </div>
-                        </div>
+                        </Fragment>
                     )}
                 </div>
             );
