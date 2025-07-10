@@ -122,7 +122,7 @@
         "antvDescription": "Solución de Visualización de Datos",
         "introduction": {
             "title": "Acerca de Photasa",
-            "content": "Photasa es una herramienta moderna y respetuosa con la privacidad para la gestión de fotos, inspirada en Picasa. Organiza, navega y disfruta de tus fotos y videos con potentes funciones locales y una hermosa interfaz—sin necesidad de nube.",
+            "content": "Photasa es una herramienta moderna y respetuosa con la privacidad para la gestión de fotos, inspirada en Photasa. Organiza, navega y disfruta de tus fotos y videos con potentes funciones locales y una hermosa interfaz—sin necesidad de nube.",
             "summary": "Photasa te ayuda a redescubrir y gestionar tus recuerdos con facilidad.",
             "highlight": "local, rápida y fácil de usar",
             "userExperience": "experiencia de gestión de fotos",
@@ -135,7 +135,7 @@
         },
         "press": "Presiona",
         "toExit": "para salir",
-        "markdown": "# Acerca de Photasa\n\nPhotasa es una herramienta moderna y respetuosa con la privacidad para la gestión local de fotos, inspirada en el clásico Picasa.\nAdmite la exploración, organización y gestión eficiente de sus fotos y videos, con una interfaz hermosa y potentes funciones locales, sin necesidad de la nube.\n\n## Características principales\n\n- Importación y gestión inteligente de fotos y videos locales\n- Generación rápida de miniaturas y vista previa\n- Interfaz multilingüe y cambio de tema\n- Operaciones por lotes y búsqueda eficiente\n- Protección de la privacidad y seguridad de los datos\n\nPresione `Esc` para salir"
+        "markdown": "# Acerca de Photasa\n\nPhotasa es una herramienta moderna y respetuosa con la privacidad para la gestión local de fotos, inspirada en el clásico Photasa.\nAdmite la exploración, organización y gestión eficiente de sus fotos y videos, con una interfaz hermosa y potentes funciones locales, sin necesidad de la nube.\n\n## Características principales\n\n- Importación y gestión inteligente de fotos y videos locales\n- Generación rápida de miniaturas y vista previa\n- Interfaz multilingüe y cambio de tema\n- Operaciones por lotes y búsqueda eficiente\n- Protección de la privacidad y seguridad de los datos\n\nPresione `Esc` para salir"
     },
     "preferences": {
         "title": "Preferencias",

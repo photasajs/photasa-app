@@ -1,0 +1,172 @@
+{
+    "app": {
+        "title": "Photasa",
+        "folderList": "Danh sách thư mục"
+    },
+    "preference": {
+        "settings": "Cài đặt",
+        "tabs": {
+            "general": "Chung",
+            "about": "Giới thiệu",
+            "theme": "Chủ đề",
+            "advanced": "Nâng cao"
+        },
+        "folderList": "Danh sách thư mục",
+        "folderListUsage": "Cách sử dụng",
+        "folderListDesc": "Sau khi thêm thư mục vào danh sách, Photasa có thể quản lý ảnh và video trong thư mục đó theo thời gian thực.",
+        "watchFolderList": "Photasa có thể quản lý ảnh và video trong các thư mục sau.",
+        "chooseDirectory": "Chọn thư mục và thêm vào danh sách",
+        "thumbnailSize": "Kích thước hình thu nhỏ",
+        "darkMode": "Chế độ tối",
+        "language": "Ngôn ngữ",
+        "scanning": "Đang quét"
+    },
+    "import": {
+        "photos": "Nhập ảnh",
+        "allowDuplicateRename": "Cho phép đổi tên ảnh trùng lặp",
+        "targetDirectory": "Thư mục xuất",
+        "chooseDirectory": "Chọn thư mục nhập",
+        "button": {
+            "import": "Nhập",
+            "cancel": "Hủy",
+            "ok": "OK"
+        }
+    },
+    "menu": {
+        "getInfo": "Thông tin ảnh",
+        "open": "Mở trong trình quản lý tệp",
+        "rebuildThumbnail": "Tạo lại hình thu nhỏ",
+        "getConfig": "Lấy thông tin thư viện ảnh",
+        "rescan": "Quét lại thư mục",
+        "app": {
+            "menu": "Ứng dụng",
+            "about": "Giới thiệu về Photasa",
+            "services": "Dịch vụ",
+            "hide": "Ẩn Photasa",
+            "hideOthers": "Ẩn các ứng dụng khác",
+            "unhide": "Hiện tất cả",
+            "quit": "Thoát"
+        },
+        "view": {
+            "menu": "Xem",
+            "reload": "Tải lại",
+            "forceReload": "Tải lại bắt buộc",
+            "toggleDevTools": "Bật/Tắt công cụ phát triển",
+            "resetZoom": "Đặt lại thu phóng",
+            "zoomIn": "Phóng to",
+            "zoomOut": "Thu nhỏ",
+            "toggleFullScreen": "Bật/Tắt toàn màn hình"
+        },
+        "window": {
+            "menu": "Cửa sổ",
+            "minimize": "Thu nhỏ",
+            "maximize": "Phóng to",
+            "close": "Đóng"
+        },
+        "help": {
+            "menu": "Trợ giúp",
+            "learnMore": "Tìm hiểu thêm",
+            "about": "Giới thiệu về Photasa"
+        },
+        "separator": "Phân cách"
+    },
+    "notification": {
+        "info": "Thông báo",
+        "warn": "Cảnh báo",
+        "error": "Lỗi",
+        "scan": {
+            "title": "Quét thư mục",
+            "message": "Quét thư mục hoàn tất, ảnh đã được nhập vào Photasa."
+        },
+        "duplicatePath": {
+            "title": "Thư mục trùng lặp",
+            "message": "Thư mục [{folder}] đã tồn tại trong Photasa."
+        },
+        "emptyPath": {
+            "title": "Chọn thư mục",
+            "message": "Vui lòng chọn thư mục và hoàn tất thêm."
+        },
+        "resetFolders": {
+            "title": "Đặt lại hoàn tất",
+            "message": "Tất cả bộ nhớ đệm thư mục đã được tạo lại."
+        }
+    },
+    "status": {
+        "initializing": "Đang khởi tạo",
+        "idle": "Nhàn rỗi",
+        "updating": "Đang cập nhật",
+        "ready": "Sẵn sàng",
+        "readingConfig": "Đang tải thông tin thư viện [{config}]",
+        "loadingConfig": "Đang đọc thông tin thư viện",
+        "processing": "Đang xử lý [{file}]",
+        "scanned": "Hoàn tất",
+        "scanComplete": "Thư mục [{path}] đã được xử lý.",
+        "start": "Bắt đầu quét",
+        "progress": "Tiến trình quét",
+        "complete": "Quét hoàn tất",
+        "error": "Lỗi quét"
+    },
+    "button": {
+        "import": "Nhập",
+        "cancel": "Hủy",
+        "ok": "OK",
+        "fixConfig": "Sửa thông tin thư viện"
+    },
+    "about": {
+        "antvDescription": "Giải pháp trực quan hóa dữ liệu",
+        "introduction": {
+            "title": "Giới thiệu",
+            "content": "Xin chào! Đây là một công cụ để quản lý và sắp xếp ảnh.",
+            "summary": "Ứng dụng này tập trung vào",
+            "highlight": "giao diện thân thiện với người dùng",
+            "userExperience": "trải nghiệm người dùng",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Tài nguyên",
+            "content": "Các tài nguyên sau có sẵn:",
+            "and": "và",
+            "download": "Tải tài nguyên"
+        },
+        "press": "Nhấn",
+        "toExit": "để thoát",
+        "markdown": "# Giới thiệu về Photasa\n\nPhotasa là một công cụ quản lý ảnh hiện đại, thân thiện với quyền riêng tư, lấy cảm hứng từ Photasa cổ điển.\nNó hỗ trợ duyệt, sắp xếp và quản lý ảnh và video của bạn một cách hiệu quả, với giao diện đẹp và các tính năng mạnh mẽ tại chỗ, không cần phụ thuộc vào đám mây.\n\n## Tính năng chính\n\n- Nhập và quản lý ảnh, video cục bộ thông minh\n- Tạo hình thu nhỏ và xem trước nhanh\n- Giao diện đa ngôn ngữ và chuyển đổi chủ đề\n- Hỗ trợ thao tác hàng loạt và tìm kiếm hiệu quả\n- Bảo vệ quyền riêng tư và an toàn dữ liệu\n\nNhấn `Esc` để thoát"
+    },
+    "preferences": {
+        "title": "Tùy chọn",
+        "language": {
+            "title": "Ngôn ngữ",
+            "description": "Chọn ngôn ngữ giao diện ứng dụng bạn muốn."
+        },
+        "thumbnail": {
+            "title": "Kích thước hình thu nhỏ",
+            "description": "Điều chỉnh kích thước hình thu nhỏ trong chế độ xem thư viện."
+        },
+        "theme": {
+            "title": "Chủ đề",
+            "description": "Chuyển đổi giữa chế độ sáng và tối.",
+            "light": "Sáng",
+            "dark": "Tối"
+        }
+    },
+    "resetFolders": {
+        "title": "Tác vụ nâng cao: Đặt lại lưu trữ thư mục",
+        "desc": "Tác vụ này sẽ xóa tất cả cấu hình thư mục và tạo lại bộ nhớ đệm ngay lập tức. Hành động này không thể hoàn tác. Vui lòng cẩn thận!",
+        "button": "Đặt lại lưu trữ thư mục"
+    },
+    "scan": {
+        "queueTitle": "Hàng đợi quét",
+        "queueEmpty": "Hàng đợi trống"
+    },
+    "advancedSettings": {
+        "title": "Cài đặt nâng cao",
+        "resetFoldersTitle": "Tác vụ nâng cao: Đặt lại lưu trữ thư mục",
+        "resetFoldersDesc": "Tác vụ này sẽ xóa tất cả cấu hình thư mục và tạo lại bộ nhớ đệm ngay lập tức. Hành động này không thể hoàn tác, vui lòng cẩn thận!",
+        "resetFoldersBtn": "Đặt lại lưu trữ thư mục"
+    },
+    "empty": {
+        "image": "Không có ảnh",
+        "openConfigDirBtn": "Mở thư mục cấu hình",
+        "importBtn": "Nhập ảnh"
+    }
+}

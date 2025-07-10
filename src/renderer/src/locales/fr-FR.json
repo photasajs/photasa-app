@@ -122,7 +122,7 @@
         "antvDescription": "Solution de Visualisation de Données",
         "introduction": {
             "title": "À propos de Photosa",
-            "content": "Photosa est un outil moderne et respectueux de la vie privée pour la gestion de photos, inspiré par Picasa. Organisez, parcourez et profitez de vos photos et vidéos avec des fonctionnalités locales puissantes et une belle interface—sans nuage.",
+            "content": "Photosa est un outil moderne et respectueux de la vie privée pour la gestion de photos, inspiré par Photasa. Organisez, parcourez et profitez de vos photos et vidéos avec des fonctionnalités locales puissantes et une belle interface—sans nuage.",
             "summary": "Photosa vous aide à redécouvrir et à gérer vos souvenirs facilement.",
             "highlight": "local, rapide et convivial",
             "userExperience": "expérience de gestion de photos",
@@ -135,7 +135,7 @@
         },
         "press": "Appuyez sur",
         "toExit": "pour quitter",
-        "markdown": "# À propos de Photasa\n\nPhotasa est un outil moderne et respectueux de la vie privée pour la gestion locale des photos, inspiré du classique Picasa.\nIl prend en charge la navigation, l'organisation et la gestion efficaces de vos photos et vidéos, avec une interface élégante et de puissantes fonctionnalités locales, sans dépendance au cloud.\n\n## Fonctionnalités principales\n\n- Importation et gestion intelligente des photos et vidéos locales\n- Génération et aperçu rapides des vignettes\n- Interface multilingue et changement de thème\n- Opérations par lot et recherche efficace\n- Protection de la confidentialité et de la sécurité des données\n\nAppuyez sur `Esc` pour quitter"
+        "markdown": "# À propos de Photasa\n\nPhotasa est un outil moderne et respectueux de la vie privée pour la gestion locale des photos, inspiré du classique Photasa.\nIl prend en charge la navigation, l'organisation et la gestion efficaces de vos photos et vidéos, avec une interface élégante et de puissantes fonctionnalités locales, sans dépendance au cloud.\n\n## Fonctionnalités principales\n\n- Importation et gestion intelligente des photos et vidéos locales\n- Génération et aperçu rapides des vignettes\n- Interface multilingue et changement de thème\n- Opérations par lot et recherche efficace\n- Protection de la confidentialité et de la sécurité des données\n\nAppuyez sur `Esc` pour quitter"
     },
     "preferences": {
         "title": "Préférences",

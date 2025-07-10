@@ -139,7 +139,7 @@ function createWindow(): void {
     new WindowService(ipcMain, mainWindow, app);
     // 在主窗口创建后初始化菜单服务
     new MenuService(ipcMain, mainWindow);
-
+    // 创建 shell 服务
     new ShellService(ipcMain, mainWindow);
 }
 

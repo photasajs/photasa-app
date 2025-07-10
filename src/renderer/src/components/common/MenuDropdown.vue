@@ -54,6 +54,8 @@ function onHover(item: MenuItemData | null) {
     border-radius: 4px;
     z-index: 9999;
     position: absolute;
+    max-height: 320px; /* 限制最大高度 */
+    overflow-y: auto; /* 超出时显示滚动条 */
 }
 .menu-dropdown-item {
     display: flex;
@@ -97,6 +99,8 @@ function onHover(item: MenuItemData | null) {
     position: absolute;
     min-width: 180px;
     z-index: 10000;
+    max-height: 320px; /* 限制最大高度 */
+    overflow-y: auto; /* 超出时显示滚动条 */
 }
 .submenu-arrow {
     position: absolute;
