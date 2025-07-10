@@ -49,9 +49,6 @@ vi.mock("@vueuse/core", async () => {
     };
 });
 
-// Utility to flush all pending promises
-const flushPromises = () => new Promise(setImmediate);
-
 describe("LazyImage", () => {
     const defaultProps = {
         src: "test-image.jpg",

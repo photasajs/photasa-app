@@ -1,0 +1,172 @@
+{
+    "app": {
+        "title": "Photasa",
+        "folderList": "Klasör Listesi"
+    },
+    "preference": {
+        "settings": "Ayarlar",
+        "tabs": {
+            "general": "Genel",
+            "about": "Hakkında",
+            "theme": "Tema",
+            "advanced": "Gelişmiş"
+        },
+        "folderList": "Klasör Listesi",
+        "folderListUsage": "Kullanım Şekli",
+        "folderListDesc": "Bir klasörü listeye ekledikten sonra, Photasa bu klasördeki fotoğraf ve videoları gerçek zamanlı olarak yönetebilir.",
+        "watchFolderList": "Photasa aşağıdaki klasörlerdeki fotoğraf ve videoları yönetebilir.",
+        "chooseDirectory": "Klasörü seçin ve listeye ekleyin",
+        "thumbnailSize": "Küçük Resim Boyutu",
+        "darkMode": "Koyu Mod",
+        "language": "Dil",
+        "scanning": "Taranıyor"
+    },
+    "import": {
+        "photos": "Fotoğraf İçe Aktar",
+        "allowDuplicateRename": "Yinelenen fotoğrafların yeniden adlandırılmasına izin ver",
+        "targetDirectory": "Dışa Aktarma Klasörü",
+        "chooseDirectory": "İçe aktarma klasörünü seçin",
+        "button": {
+            "import": "İçe Aktar",
+            "cancel": "İptal",
+            "ok": "Tamam"
+        }
+    },
+    "menu": {
+        "getInfo": "Fotoğraf Bilgisi",
+        "open": "Dosya Yöneticisinde Aç",
+        "rebuildThumbnail": "Küçük Resmi Yeniden Oluştur",
+        "getConfig": "Fotoğraf Kitaplığı Bilgisi Al",
+        "rescan": "Klasörü Yeniden Tara",
+        "app": {
+            "menu": "Uygulama",
+            "about": "Photasa Hakkında",
+            "services": "Hizmetler",
+            "hide": "Photasa'yı Gizle",
+            "hideOthers": "Diğerlerini Gizle",
+            "unhide": "Tümünü Göster",
+            "quit": "Çıkış"
+        },
+        "view": {
+            "menu": "Görünüm",
+            "reload": "Yenile",
+            "forceReload": "Zorla Yenile",
+            "toggleDevTools": "Geliştirici Araçlarını Aç/Kapat",
+            "resetZoom": "Yakınlaştırmayı Sıfırla",
+            "zoomIn": "Yakınlaştır",
+            "zoomOut": "Uzaklaştır",
+            "toggleFullScreen": "Tam Ekran Aç/Kapat"
+        },
+        "window": {
+            "menu": "Pencere",
+            "minimize": "Küçült",
+            "maximize": "Büyüt",
+            "close": "Kapat"
+        },
+        "help": {
+            "menu": "Yardım",
+            "learnMore": "Daha Fazla Bilgi",
+            "about": "Photasa Hakkında"
+        },
+        "separator": "Ayırıcı"
+    },
+    "notification": {
+        "info": "Bilgi",
+        "warn": "Uyarı",
+        "error": "Hata",
+        "scan": {
+            "title": "Klasörü Tara",
+            "message": "Klasör taraması tamamlandı, fotoğraflar Photasa'ya aktarıldı."
+        },
+        "duplicatePath": {
+            "title": "Yinelenen Klasör",
+            "message": "[{folder}] klasörü zaten Photasa'da mevcut."
+        },
+        "emptyPath": {
+            "title": "Klasör Seç",
+            "message": "Lütfen bir klasör seçin ve ekleme işlemini tamamlayın."
+        },
+        "resetFolders": {
+            "title": "Sıfırlama Tamamlandı",
+            "message": "Tüm klasör önbellekleri yeniden oluşturuldu."
+        }
+    },
+    "status": {
+        "initializing": "Başlatılıyor",
+        "idle": "Boşta",
+        "updating": "Güncelleniyor",
+        "ready": "Hazır",
+        "readingConfig": "Kitaplık bilgisi yükleniyor [{config}]",
+        "loadingConfig": "Kitaplık bilgisi okunuyor",
+        "processing": "İşleniyor [{file}]",
+        "scanned": "Tamamlandı",
+        "scanComplete": "[{path}] klasörü işlendi.",
+        "start": "Tarama başlatıldı",
+        "progress": "Tarama ilerlemesi",
+        "complete": "Tarama tamamlandı",
+        "error": "Tarama hatası"
+    },
+    "button": {
+        "import": "İçe Aktar",
+        "cancel": "İptal",
+        "ok": "Tamam",
+        "fixConfig": "Kitaplık Bilgisini Düzelt"
+    },
+    "about": {
+        "antvDescription": "Veri Görselleştirme Çözümü",
+        "introduction": {
+            "title": "Tanıtım",
+            "content": "Merhaba! Bu, fotoğrafları yönetmek ve düzenlemek için bir araçtır.",
+            "summary": "Bu uygulama şuna odaklanır:",
+            "highlight": "kullanıcı dostu arayüz",
+            "userExperience": "kullanıcı deneyimi",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Kaynaklar",
+            "content": "Aşağıdaki kaynaklar mevcuttur:",
+            "and": "ve",
+            "download": "Kaynakları İndir"
+        },
+        "press": "Basın",
+        "toExit": "çıkmak için",
+        "markdown": "# Photasa Hakkında\n\nPhotasa, klasik Photasa'dan ilham alan modern, gizlilik dostu bir yerel fotoğraf yönetim aracıdır.\nFotoğraflarınızı ve videolarınızı verimli bir şekilde görüntülemenizi, düzenlemenizi ve yönetmenizi sağlar; şık bir arayüze ve güçlü yerel özelliklere sahiptir, bulut gerektirmez.\n\n## Temel Özellikler\n\n- Yerel fotoğraf ve videoların akıllı içe aktarımı ve yönetimi\n- Hızlı küçük resim oluşturma ve önizleme\n- Çok dilli arayüz ve tema değiştirme\n- Toplu işlemler ve verimli arama\n- Veri gizliliği ve güvenlik koruması\n\nÇıkmak için `Esc` tuşuna basın"
+    },
+    "preferences": {
+        "title": "Tercihler",
+        "language": {
+            "title": "Dil",
+            "description": "Uygulama arayüzü için tercih ettiğiniz dili seçin."
+        },
+        "thumbnail": {
+            "title": "Küçük Resim Boyutu",
+            "description": "Galeri görünümünde fotoğraf küçük resimlerinin boyutunu ayarlayın."
+        },
+        "theme": {
+            "title": "Tema",
+            "description": "Açık ve koyu mod arasında geçiş yapın.",
+            "light": "Açık",
+            "dark": "Koyu"
+        }
+    },
+    "resetFolders": {
+        "title": "Gelişmiş İşlem: Klasör Depolamayı Sıfırla",
+        "desc": "Bu işlem tüm klasör ayarlarını temizleyecek ve önbelleği hemen yeniden oluşturacaktır. Bu işlem geri alınamaz, lütfen dikkatli olun!",
+        "button": "Klasör Depolamayı Sıfırla"
+    },
+    "scan": {
+        "queueTitle": "Tarama Kuyruğu",
+        "queueEmpty": "Kuyruk boş"
+    },
+    "advancedSettings": {
+        "title": "Gelişmiş Ayarlar",
+        "resetFoldersTitle": "Gelişmiş İşlem: Klasör Depolamayı Sıfırla",
+        "resetFoldersDesc": "Bu işlem tüm klasör yapılandırmalarını temizleyecek ve önbelleği hemen yeniden oluşturacaktır. Bu işlem geri alınamaz, lütfen dikkatli olun!",
+        "resetFoldersBtn": "Klasör Depolamayı Sıfırla"
+    },
+    "empty": {
+        "image": "Resim yok",
+        "openConfigDirBtn": "Yapılandırma Klasörünü Aç",
+        "importBtn": "Resimleri İçe Aktar"
+    }
+}

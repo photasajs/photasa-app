@@ -6,6 +6,14 @@ import koKR from "../locales/ko-KR.json";
 import frFR from "../locales/fr-FR.json";
 import deDE from "../locales/de-DE.json";
 import esES from "../locales/es-ES.json";
+import enGB from "../locales/en-GB.json";
+import itIT from "../locales/it-IT.json";
+import trTR from "../locales/tr-TR.json";
+import viVN from "../locales/vi-VN.json";
+import arSA from "../locales/ar-SA.json";
+import ukUA from "../locales/uk-UA.json";
+import ruRU from "../locales/ru-RU.json";
+import zhTW from "../locales/zh-TW.json";
 import type { Ref } from "vue";
 
 // Constants
@@ -14,40 +22,65 @@ const FALLBACK_LOCALE = "en-US" as const;
 
 // Define supported locales with their display names and native names
 export const LOCALES = {
-    "en-US": {
-        name: "English",
-        nativeName: "English",
-        flag: "🇺🇸",
-    },
     "zh-CN": {
-        name: "Chinese",
-        nativeName: "中文",
-        flag: "🇨🇳",
+        name: "Chinese (Simplified)",
+        nativeName: "中文(简体)",
+    },
+    "zh-TW": {
+        name: "Chinese (Traditional)",
+        nativeName: "中文(繁體)",
+    },
+    "en-US": {
+        name: "English (US)",
+        nativeName: "English (US)",
     },
     "ja-JP": {
         name: "Japanese",
         nativeName: "日本語",
-        flag: "🇯🇵",
     },
     "ko-KR": {
         name: "Korean",
         nativeName: "한국어",
-        flag: "🇰🇷",
     },
     "fr-FR": {
         name: "French",
         nativeName: "Français",
-        flag: "🇫🇷",
     },
     "de-DE": {
         name: "German",
         nativeName: "Deutsch",
-        flag: "🇩🇪",
     },
     "es-ES": {
         name: "Spanish",
         nativeName: "Español",
-        flag: "🇪🇸",
+    },
+    "it-IT": {
+        name: "Italian",
+        nativeName: "Italiano",
+    },
+    "tr-TR": {
+        name: "Turkish",
+        nativeName: "Türkçe",
+    },
+    "vi-VN": {
+        name: "Vietnamese",
+        nativeName: "Tiếng Việt",
+    },
+    "ar-SA": {
+        name: "Arabic",
+        nativeName: "العربية",
+    },
+    "uk-UA": {
+        name: "Ukrainian",
+        nativeName: "Українська",
+    },
+    "en-GB": {
+        name: "English (UK)",
+        nativeName: "English (UK)",
+    },
+    "ru-RU": {
+        name: "Russian",
+        nativeName: "Русский",
     },
 } as const;
 
@@ -55,12 +88,20 @@ export const LOCALES = {
 export type Locale = keyof typeof LOCALES;
 export type MessageSchema =
     | typeof zhCN
+    | typeof zhTW
     | typeof enUS
     | typeof jaJP
     | typeof koKR
     | typeof frFR
     | typeof deDE
-    | typeof esES;
+    | typeof esES
+    | typeof itIT
+    | typeof trTR
+    | typeof viVN
+    | typeof arSA
+    | typeof ukUA
+    | typeof enGB
+    | typeof ruRU;
 
 // Browser language detection
 const detectBrowserLocale = (): Locale | null => {
@@ -97,11 +138,19 @@ export const i18n = createI18n<[MessageSchema], Locale>({
     messages: {
         "en-US": enUS,
         "zh-CN": zhCN,
+        "zh-TW": zhTW,
         "ja-JP": jaJP,
         "ko-KR": koKR,
         "fr-FR": frFR,
         "de-DE": deDE,
         "es-ES": esES,
+        "it-IT": itIT,
+        "tr-TR": trTR,
+        "vi-VN": viVN,
+        "ar-SA": arSA,
+        "uk-UA": ukUA,
+        "en-GB": enGB,
+        "ru-RU": ruRU,
     },
 });
 
@@ -112,9 +161,6 @@ export const i18nUtils = {
 
     // Get native name for a locale
     getLocaleNativeName: (locale: Locale): string => LOCALES[locale].nativeName,
-
-    // Get flag for a locale
-    getLocaleFlag: (locale: Locale): string => LOCALES[locale].flag,
 
     // Get all available locales
     getAvailableLocales: (): Locale[] => Object.keys(LOCALES) as Locale[],

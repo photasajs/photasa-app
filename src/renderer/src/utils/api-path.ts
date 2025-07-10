@@ -37,3 +37,11 @@ export function resolvePath(...segments: string[]) {
 export function getRoot(path: string) {
     return window.api.getRoot(path);
 }
+
+/**
+ * 打开文件夹
+ * @param path 文件夹路径
+ */
+export function openInFinder(path: string): void {
+    window.api.openInFinder(path);
+}

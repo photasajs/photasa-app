@@ -1,0 +1,172 @@
+{
+    "app": {
+        "title": "倉廩圖司",
+        "folderList": "目錄列表"
+    },
+    "preference": {
+        "settings": "設置",
+        "tabs": {
+            "general": "常規",
+            "about": "關於",
+            "theme": "主題",
+            "advanced": "高級配置"
+        },
+        "folderList": "目錄列表",
+        "folderListUsage": "使用方式",
+        "folderListDesc": "將目錄添加到列表後，倉廩圖司可以實時管理目錄下的照片和視頻",
+        "watchFolderList": "倉廩圖司可以管理下列目錄中的照片和視頻",
+        "chooseDirectory": "選擇目錄並添加到列表",
+        "thumbnailSize": "縮略圖大小",
+        "darkMode": "深色模式",
+        "language": "語言",
+        "scanning": "掃描中"
+    },
+    "import": {
+        "photos": "導入照片",
+        "allowDuplicateRename": "允許重命名重複的照片",
+        "targetDirectory": "導出目錄",
+        "chooseDirectory": "選擇導入目錄",
+        "button": {
+            "import": "導入",
+            "cancel": "取消",
+            "ok": "確定"
+        }
+    },
+    "menu": {
+        "getInfo": "照片信息",
+        "open": "在文件管理器中打開",
+        "rebuildThumbnail": "重建縮略圖",
+        "getConfig": "獲取照片庫信息",
+        "rescan": "重新掃描目錄",
+        "app": {
+            "menu": "應用",
+            "about": "關於 Photasa",
+            "services": "服務",
+            "hide": "隱藏 Photasa",
+            "hideOthers": "隱藏其他",
+            "unhide": "顯示全部",
+            "quit": "退出"
+        },
+        "view": {
+            "menu": "視圖",
+            "reload": "重新加載",
+            "forceReload": "強制重新加載",
+            "toggleDevTools": "切換開發者工具",
+            "resetZoom": "重置縮放",
+            "zoomIn": "放大",
+            "zoomOut": "縮小",
+            "toggleFullScreen": "切換全屏"
+        },
+        "window": {
+            "menu": "窗口",
+            "minimize": "最小化",
+            "maximize": "最大化",
+            "close": "關閉"
+        },
+        "help": {
+            "menu": "幫助",
+            "learnMore": "了解更多",
+            "about": "關於 Photasa"
+        },
+        "separator": "分隔符"
+    },
+    "notification": {
+        "info": "提示",
+        "warn": "注意",
+        "error": "錯誤",
+        "scan": {
+            "title": "掃描目錄",
+            "message": "目錄已掃描完畢，照片已導入到倉廩圖司。"
+        },
+        "duplicatePath": {
+            "title": "重複的目錄",
+            "message": "目錄[{folder}]已存在於倉廩圖司中。"
+        },
+        "emptyPath": {
+            "title": "選擇目錄",
+            "message": "請選擇目錄，然後完成添加操作。"
+        },
+        "resetFolders": {
+            "title": "重置完成",
+            "message": "所有目錄緩存已重建。"
+        }
+    },
+    "status": {
+        "initializing": "正在初始化",
+        "idle": "空閒",
+        "updating": "正在更新",
+        "ready": "準備就緒",
+        "readingConfig": "加載照片庫信息 [{config}]",
+        "loadingConfig": "讀取照片庫信息",
+        "processing": "正在處理 [{file}]",
+        "scanned": "處理完畢",
+        "scanComplete": "目錄[{path}]已處理完畢",
+        "start": "開始掃描",
+        "progress": "掃描進度",
+        "complete": "掃描完成",
+        "error": "掃描錯誤"
+    },
+    "button": {
+        "import": "導入",
+        "cancel": "取消",
+        "ok": "確定",
+        "fixConfig": "修復照片庫信息"
+    },
+    "about": {
+        "antvDescription": "數據可視化解決方案",
+        "introduction": {
+            "title": "介紹",
+            "content": "你好！這是一個用於管理和整理照片的工具。",
+            "summary": "這個應用程序專注於",
+            "highlight": "用戶友好的界面",
+            "userExperience": "用戶體驗",
+            "focus": "。"
+        },
+        "resources": {
+            "title": "資源",
+            "content": "以下資源可用：",
+            "and": "和",
+            "download": "下載資源"
+        },
+        "press": "按",
+        "toExit": "退出",
+        "markdown": "# 關於 Photasa\n\nPhotasa 是一款現代化、隱私友好的本地照片管理工具，靈感源自經典的 Photasa。\n它支持高效地瀏覽、整理和管理您的照片與視頻，擁有美觀的界面和強大的本地功能，無需雲端依賴。\n\n## 主要特性\n\n- 本地照片與視頻智能導入與管理\n- 快速縮略圖生成與預覽\n- 多語言界面與主題切換\n- 支持批量操作與高效搜索\n- 數據隱私與安全保障\n\n按 `Esc` 退出"
+    },
+    "preferences": {
+        "title": "偏好設置",
+        "language": {
+            "title": "語言",
+            "description": "選擇您偏好的應用程序界面語言。"
+        },
+        "thumbnail": {
+            "title": "縮略圖大小",
+            "description": "調整圖庫視圖中照片縮略圖的大小。"
+        },
+        "theme": {
+            "title": "主題",
+            "description": "在淺色和深色模式之間切換。",
+            "light": "淺色",
+            "dark": "深色"
+        }
+    },
+    "resetFolders": {
+        "title": "高級操作：重置目錄存儲",
+        "desc": "此操作將清空所有目錄配置並立即重建緩存，操作不可逆，請謹慎！",
+        "button": "重置目錄存儲"
+    },
+    "scan": {
+        "queueTitle": "掃描隊列",
+        "queueEmpty": "隊列為空"
+    },
+    "advancedSettings": {
+        "title": "高級配置",
+        "resetFoldersTitle": "高級操作：重置目錄存儲",
+        "resetFoldersDesc": "此操作將清空所有目錄配置並立即重建緩存，操作不可逆，請謹慎！",
+        "resetFoldersBtn": "重置目錄存儲"
+    },
+    "empty": {
+        "image": "暫無圖片",
+        "openConfigDirBtn": "打開配置目錄",
+        "importBtn": "導入圖片"
+    }
+}

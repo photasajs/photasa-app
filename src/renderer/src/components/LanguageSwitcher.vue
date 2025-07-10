@@ -30,9 +30,9 @@ const currentLocaleInfo = computed(() => {
         };
     }
     return {
+        locale,
         name: i18nUtils.getLocaleName(locale),
         nativeName: i18nUtils.getLocaleNativeName(locale),
-        flag: i18nUtils.getLocaleFlag(locale),
     };
 });
 </script>
@@ -41,7 +41,6 @@ const currentLocaleInfo = computed(() => {
     <div class="language-switcher">
         <Menu as="div" class="relative inline-block text-left">
             <MenuButton class="locale-button">
-                <span class="locale-flag">{{ currentLocaleInfo.flag }}</span>
                 <span class="locale-name">{{ currentLocaleInfo.nativeName }}</span>
                 <span class="locale-arrow">▼</span>
             </MenuButton>
@@ -66,7 +65,6 @@ const currentLocaleInfo = computed(() => {
                                 },
                             ]"
                         >
-                            <span class="locale-flag">{{ i18nUtils.getLocaleFlag(locale) }}</span>
                             <span class="locale-name">{{
                                 i18nUtils.getLocaleNativeName(locale)
                             }}</span>
@@ -148,7 +146,7 @@ const currentLocaleInfo = computed(() => {
 .locale-dropdown-menu {
     position: absolute;
     left: 0;
-    z-index: 10;
+    z-index: 1000; /* 提高层级，防止被遮挡 */
     margin-top: 4px;
     min-width: 220px;
     padding: 6px;
@@ -157,6 +155,8 @@ const currentLocaleInfo = computed(() => {
     border-radius: 8px;
     box-shadow: 0 8px 24px 0 var(--color-shadow);
     backdrop-filter: blur(8px);
+    max-height: 320px; /* 限制最大高度 */
+    overflow-y: auto; /* 超出时显示滚动条 */
 }
 
 .locale-dropdown-menu:focus {

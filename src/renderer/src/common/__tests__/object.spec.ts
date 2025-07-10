@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { notEmpty, empty } from "../object";
+import { notEmpty, empty } from "./object";
 
 describe("notEmpty", () => {
     it("should return false for null/undefined", () => {

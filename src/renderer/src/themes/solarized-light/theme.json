@@ -2,23 +2,39 @@
     "id": "solarized-light",
     "name": {
         "zh-CN": "Solarized 明亮",
+        "zh-TW": "Solarized 明亮",
         "en-US": "Solarized Light",
         "ja-JP": "Solarized ライト",
         "fr-FR": "Solarized clair",
         "de-DE": "Solarized hell",
         "es-ES": "Solarized claro",
-        "ko-KR": "Solarized 라이트"
+        "ko-KR": "Solarized 라이트",
+        "it-IT": "Solarized Chiaro",
+        "tr-TR": "Solarized Açık",
+        "vi-VN": "Solarized Sáng",
+        "ar-SA": "سولاريزد فاتح",
+        "uk-UA": "Solarized світла",
+        "en-GB": "Solarized Light",
+        "ru-RU": "Solarized светлая"
     },
     "author": "官方",
     "version": "1.0.0",
     "description": {
-        "zh-CN": "Solarized Light 风格主题",
-        "en-US": "Solarized Light Theme",
+        "zh-CN": "Solarized Light 風格主題",
+        "zh-TW": "Solarized Light 風格主題",
+        "en-US": "Solarized Light Style Theme",
         "ja-JP": "Solarized Light スタイルテーマ",
         "fr-FR": "Thème Solarized Light",
         "de-DE": "Solarized Light Stilthema",
         "es-ES": "Tema Solarized Light",
-        "ko-KR": "Solarized Light 스타일 테마"
+        "ko-KR": "Solarized Light 스타일 테마",
+        "it-IT": "Tema stile Solarized Light",
+        "tr-TR": "Solarized Light Stil Teması",
+        "vi-VN": "Chủ đề kiểu Solarized Light",
+        "ar-SA": "سمة Solarized Light النمطية",
+        "uk-UA": "Тема стилю Solarized Light",
+        "en-GB": "Solarized Light Style Theme",
+        "ru-RU": "Тема в стиле Solarized Light"
     },
     "colors": {
         "bg": "#fdf6e3",
