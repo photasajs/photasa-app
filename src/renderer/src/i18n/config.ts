@@ -155,9 +155,6 @@ export const i18nUtils = {
     // Get native name for a locale
     getLocaleNativeName: (locale: Locale): string => LOCALES[locale].nativeName,
 
-    // Get flag for a locale
-    getLocaleFlag: (locale: Locale): string => LOCALES[locale].flag,
-
     // Get all available locales
     getAvailableLocales: (): Locale[] => Object.keys(LOCALES) as Locale[],
 
