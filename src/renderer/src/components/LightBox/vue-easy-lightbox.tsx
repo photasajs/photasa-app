@@ -12,6 +12,7 @@ import {
     withModifiers,
     TeleportProps,
     Teleport,
+    shallowReactive,
 } from "vue";
 
 import { SvgIcon } from "./components/svg-icon";
@@ -146,7 +147,8 @@ export default defineComponent({
         /**
          * 图片包裹状态
          */
-        const imgWrapperState = reactive<IImgWrapperState>({
+        // 用 shallowReactive 替换 reactive，提升性能
+        const imgWrapperState = shallowReactive<IImgWrapperState>({
             scale: 1,
             lastScale: 1,
             rotateDeg: 0,
@@ -209,12 +211,13 @@ export default defineComponent({
         };
 
         const imgWrapperStyle = computed(() => {
+            const s = imgWrapperState;
             return {
                 cursor: currCursor(),
-                top: `calc(50% + ${imgWrapperState.top}px)`,
-                left: `calc(50% + ${imgWrapperState.left}px)`,
+                top: `50%`,
+                left: `50%`,
                 transition: status.dragging || status.gesturing ? "none" : "",
-                transform: `translate(-50%, -50%) scale(${imgWrapperState.scale}) rotate(${imgWrapperState.rotateDeg}deg)`,
+                transform: `translate(-50%, -50%) translate(${s.left}px, ${s.top}px) scale(${s.scale}) rotate(${s.rotateDeg}deg)`,
             };
         });
 
@@ -254,9 +257,8 @@ export default defineComponent({
             // No emit event when hidden or same index
             if (!props.visible || oldIndex === newIndex) return;
 
-            if (emitsCallback) {
-                emitsCallback(oldIndex, newIndex);
-            }
+            emitsCallback?.(oldIndex, newIndex);
+
             emit("on-index-change", oldIndex, newIndex);
         };
 
@@ -330,7 +332,6 @@ export default defineComponent({
 
         // mouse
         const { onMouseDown, onMouseMove, onMouseUp } = useMouse(imgWrapperState, status, canMove);
-
         const { onTouchStart, onTouchMove, onTouchEnd } = useTouch(
             imgState,
             imgWrapperState,
@@ -469,13 +470,17 @@ export default defineComponent({
         );
 
         const disableScrolling = () => {
-            if (!document) return;
+            if (!document) {
+                return;
+            }
             lastBodyStyleOverflowY.value = document.body.style.overflowY;
             document.body.style.overflowY = "hidden";
         };
 
         const enableScrolling = () => {
-            if (!document) return;
+            if (!document) {
+                return;
+            }
             document.body.style.overflowY = lastBodyStyleOverflowY.value;
         };
 
@@ -493,7 +498,7 @@ export default defineComponent({
         });
 
         const renderLoading = () => {
-            return slots.loading ? (
+            return typeof slots.loading === "function" ? (
                 slots.loading({
                     key: "loading",
                 })
@@ -502,7 +507,7 @@ export default defineComponent({
             );
         };
         const renderOnError = () => {
-            return slots.onerror ? (
+            return typeof slots.onerror === "function" ? (
                 slots.onerror({
                     key: "onerror",
                 })
@@ -511,16 +516,75 @@ export default defineComponent({
             );
         };
 
+        // 拖拽相关状态
+        const dragging = ref(false);
+        const lastPos = ref({ x: 0, y: 0 });
+        // 鼠标按下
+        const onWrapperMouseDown = (e: MouseEvent) => {
+            if (imgWrapperState.scale <= 1 || e.button !== 0) return;
+            dragging.value = true;
+            lastPos.value = { x: e.clientX, y: e.clientY };
+            window.addEventListener("mousemove", onWrapperMouseMove);
+            window.addEventListener("mouseup", onWrapperMouseUp);
+        };
+        // 鼠标移动
+        const onWrapperMouseMove = (e: MouseEvent) => {
+            if (!dragging.value) return;
+            const dx = e.clientX - lastPos.value.x;
+            const dy = e.clientY - lastPos.value.y;
+            imgWrapperState.left += dx;
+            imgWrapperState.top += dy;
+            lastPos.value = { x: e.clientX, y: e.clientY };
+        };
+        // 鼠标松开
+        const onWrapperMouseUp = () => {
+            dragging.value = false;
+            window.removeEventListener("mousemove", onWrapperMouseMove);
+            window.removeEventListener("mouseup", onWrapperMouseUp);
+        };
+
         const renderImgWrapper = () => {
+            if (typeof slots.default === "function") {
+                let slotVNode = slots.default({ currentImg: currentImg.value });
+                if (Array.isArray(slotVNode) && slotVNode.length > 1) {
+                    slotVNode = [<div>{slotVNode}</div>];
+                }
+                if (slotVNode && slotVNode.length > 0) {
+                    const vnode = slotVNode[0];
+                    if (vnode.type === "img" || (vnode.props && vnode.props.src)) {
+                        vnode.props = {
+                            ...vnode.props,
+                            draggable: false,
+                            onDragstart: (e) => e.preventDefault(),
+                        };
+                    }
+                    return (
+                        <div
+                            class={`${prefixCls}-img-wrapper`}
+                            style={imgWrapperStyle.value}
+                            key="img-wrapper"
+                            onMousedown={onWrapperMouseDown}
+                            onDragstart={(e) => e.preventDefault()}
+                        >
+                            {vnode}
+                        </div>
+                    );
+                }
+            }
             return (
                 <div
                     class={`${prefixCls}-img-wrapper`}
                     style={imgWrapperStyle.value}
                     key="img-wrapper"
+                    onMousedown={onWrapperMouseDown}
+                    onDragstart={(e) => e.preventDefault()}
                 >
                     {/* 优化：如果有 default slot 则只渲染 slot，否则渲染 <img> */}
                     {slots.default ? (
-                        <div class={`${prefixCls}-default-slot`}>
+                        <div
+                            class={`${prefixCls}-default-slot`}
+                            onDragstart={(e) => e.preventDefault()}
+                        >
                             {slots.default({ currentImg: currentImg.value })}
                         </div>
                     ) : (
@@ -538,9 +602,7 @@ export default defineComponent({
                             onTouchend={onTouchEnd}
                             onLoad={onImgLoad}
                             onDblclick={onDblclick}
-                            onDragstart={(e) => {
-                                e.preventDefault();
-                            }}
+                            onDragstart={(e) => e.preventDefault()}
                         />
                     )}
                 </div>
@@ -573,7 +635,7 @@ export default defineComponent({
         };
 
         const renderPrevBtn = () => {
-            if (slots["prev-btn"]) {
+            if (typeof slots["prev-btn"] === "function") {
                 return slots["prev-btn"]({
                     prev: onPrev,
                 });
@@ -596,7 +658,7 @@ export default defineComponent({
         };
 
         const renderNextBtn = () => {
-            if (slots["next-btn"]) {
+            if (typeof slots["next-btn"] === "function") {
                 return slots["next-btn"]({
                     next: onNext,
                 });
@@ -619,7 +681,7 @@ export default defineComponent({
         };
 
         const renderCloseBtn = () => {
-            return slots["close-btn"] ? (
+            return typeof slots["close-btn"] === "function" ? (
                 slots["close-btn"]({
                     close: closeModal,
                 })
@@ -636,7 +698,7 @@ export default defineComponent({
         };
 
         const renderToolbar = () => {
-            return slots.toolbar ? (
+            return typeof slots.toolbar === "function" ? (
                 slots.toolbar({
                     toolbarMethods: {
                         zoomIn,
@@ -670,7 +732,7 @@ export default defineComponent({
                 return;
             }
 
-            if (slots.title) {
+            if (typeof slots.title === "function") {
                 return slots.title({
                     currentImg: currentImg.value,
                 });
