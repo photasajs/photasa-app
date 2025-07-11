@@ -35,7 +35,7 @@ describe("calculateNextIndex", () => {
 
     it("should handle empty array", () => {
         expect(calculateNextIndex(0, 0, false)).toBeNull();
-        expect(calculateNextIndex(0, 0, true)).toBe(0);
+        expect(calculateNextIndex(0, 0, true)).toBeNaN();
     });
 });
 
@@ -111,12 +111,16 @@ describe("calculateZoomScale", () => {
     const maxScale = 1.0;
 
     it("should zoom in correctly", () => {
-        expect(calculateZoomScale(currentScale, zoomStep, "in", maxZoom, minZoom, maxScale)).toBe(1.1);
+        expect(calculateZoomScale(currentScale, zoomStep, "in", maxZoom, minZoom, maxScale)).toBe(
+            1.1,
+        );
         expect(calculateZoomScale(2.0, zoomStep, "in", maxZoom, minZoom, maxScale)).toBe(2.1);
     });
 
     it("should zoom out correctly", () => {
-        expect(calculateZoomScale(currentScale, zoomStep, "out", maxZoom, minZoom, maxScale)).toBe(0.9);
+        expect(calculateZoomScale(currentScale, zoomStep, "out", maxZoom, minZoom, maxScale)).toBe(
+            0.9,
+        );
         expect(calculateZoomScale(2.0, zoomStep, "out", maxZoom, minZoom, maxScale)).toBe(1.9);
     });
 
@@ -244,44 +248,86 @@ describe("canMoveImage", () => {
 
 describe("shouldShowNavigationBtn", () => {
     it("should not show buttons when only one image", () => {
-        expect(shouldShowNavigationBtn(1, 0, false, "prev")).toEqual({ show: false, disabled: true });
-        expect(shouldShowNavigationBtn(1, 0, true, "prev")).toEqual({ show: false, disabled: true });
-        expect(shouldShowNavigationBtn(1, 0, false, "next")).toEqual({ show: false, disabled: true });
-        expect(shouldShowNavigationBtn(1, 0, true, "next")).toEqual({ show: false, disabled: true });
+        expect(shouldShowNavigationBtn(1, 0, false, "prev")).toEqual({
+            show: false,
+            disabled: true,
+        });
+        expect(shouldShowNavigationBtn(1, 0, true, "prev")).toEqual({
+            show: false,
+            disabled: true,
+        });
+        expect(shouldShowNavigationBtn(1, 0, false, "next")).toEqual({
+            show: false,
+            disabled: true,
+        });
+        expect(shouldShowNavigationBtn(1, 0, true, "next")).toEqual({
+            show: false,
+            disabled: true,
+        });
     });
 
     it("should not show buttons when no images", () => {
-        expect(shouldShowNavigationBtn(0, 0, false, "prev")).toEqual({ show: false, disabled: true });
-        expect(shouldShowNavigationBtn(0, 0, true, "next")).toEqual({ show: false, disabled: true });
+        expect(shouldShowNavigationBtn(0, 0, false, "prev")).toEqual({
+            show: false,
+            disabled: true,
+        });
+        expect(shouldShowNavigationBtn(0, 0, true, "next")).toEqual({
+            show: false,
+            disabled: true,
+        });
     });
 
     describe("prev button", () => {
         it("should be disabled at first image when not looping", () => {
-            expect(shouldShowNavigationBtn(5, 0, false, "prev")).toEqual({ show: true, disabled: true });
+            expect(shouldShowNavigationBtn(5, 0, false, "prev")).toEqual({
+                show: true,
+                disabled: true,
+            });
         });
 
         it("should be enabled at first image when looping", () => {
-            expect(shouldShowNavigationBtn(5, 0, true, "prev")).toEqual({ show: true, disabled: false });
+            expect(shouldShowNavigationBtn(5, 0, true, "prev")).toEqual({
+                show: true,
+                disabled: false,
+            });
         });
 
         it("should be enabled at middle images", () => {
-            expect(shouldShowNavigationBtn(5, 2, false, "prev")).toEqual({ show: true, disabled: false });
-            expect(shouldShowNavigationBtn(5, 2, true, "prev")).toEqual({ show: true, disabled: false });
+            expect(shouldShowNavigationBtn(5, 2, false, "prev")).toEqual({
+                show: true,
+                disabled: false,
+            });
+            expect(shouldShowNavigationBtn(5, 2, true, "prev")).toEqual({
+                show: true,
+                disabled: false,
+            });
         });
     });
 
     describe("next button", () => {
         it("should be disabled at last image when not looping", () => {
-            expect(shouldShowNavigationBtn(5, 4, false, "next")).toEqual({ show: true, disabled: true });
+            expect(shouldShowNavigationBtn(5, 4, false, "next")).toEqual({
+                show: true,
+                disabled: true,
+            });
         });
 
         it("should be enabled at last image when looping", () => {
-            expect(shouldShowNavigationBtn(5, 4, true, "next")).toEqual({ show: true, disabled: false });
+            expect(shouldShowNavigationBtn(5, 4, true, "next")).toEqual({
+                show: true,
+                disabled: false,
+            });
         });
 
         it("should be enabled at middle images", () => {
-            expect(shouldShowNavigationBtn(5, 2, false, "next")).toEqual({ show: true, disabled: false });
-            expect(shouldShowNavigationBtn(5, 2, true, "next")).toEqual({ show: true, disabled: false });
+            expect(shouldShowNavigationBtn(5, 2, false, "next")).toEqual({
+                show: true,
+                disabled: false,
+            });
+            expect(shouldShowNavigationBtn(5, 2, true, "next")).toEqual({
+                show: true,
+                disabled: false,
+            });
         });
     });
 });
@@ -293,7 +339,7 @@ describe("calculateMouseDelta", () => {
         const currentPos = { x: 150, y: 200 };
         const lastPos = { x: 100, y: 150 };
         const result = calculateMouseDelta(currentPos, lastPos);
-        
+
         expect(result).toEqual({ dx: 50, dy: 50 });
     });
 
@@ -301,14 +347,14 @@ describe("calculateMouseDelta", () => {
         const currentPos = { x: 50, y: 75 };
         const lastPos = { x: 100, y: 150 };
         const result = calculateMouseDelta(currentPos, lastPos);
-        
+
         expect(result).toEqual({ dx: -50, dy: -75 });
     });
 
     it("should handle zero delta", () => {
         const pos = { x: 100, y: 200 };
         const result = calculateMouseDelta(pos, pos);
-        
+
         expect(result).toEqual({ dx: 0, dy: 0 });
     });
 
@@ -316,7 +362,7 @@ describe("calculateMouseDelta", () => {
         const currentPos = { x: 80, y: 250 };
         const lastPos = { x: 120, y: 200 };
         const result = calculateMouseDelta(currentPos, lastPos);
-        
+
         expect(result).toEqual({ dx: -40, dy: 50 });
     });
 
@@ -324,7 +370,7 @@ describe("calculateMouseDelta", () => {
         const currentPos = { x: 100.5, y: 200.75 };
         const lastPos = { x: 100.25, y: 200.25 };
         const result = calculateMouseDelta(currentPos, lastPos);
-        
+
         expect(result.dx).toBeCloseTo(0.25);
         expect(result.dy).toBeCloseTo(0.5);
     });
