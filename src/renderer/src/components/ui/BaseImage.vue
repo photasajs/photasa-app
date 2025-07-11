@@ -2,6 +2,7 @@
 import { useIntersectionObserver } from "@vueuse/core";
 import { onMounted, ref, toRefs, watch } from "vue";
 import { prefetchImageTask } from "@renderer/utils/image-prefetch";
+import { BaseSpinner } from "@renderer/components/ui";
 
 // Define props and emits
 const props = defineProps<{
@@ -63,24 +64,26 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
             height: height + 'px',
         }"
     >
-        <a-spin :spinning="targetIsVisible && isLoading">
-            <a-image
-                v-if="targetIsVisible && isReady"
-                :width="width"
-                :height="height"
+        <div class="relative flex items-center justify-center w-full h-full">
+            <BaseSpinner v-if="targetIsVisible && isLoading" size="md" />
+            <img
+                v-else-if="targetIsVisible && isReady"
                 :src="actualSrc"
-                :fallback="fallback"
+                :alt="'Image'"
                 :style="{
                     margin: 'auto',
                     objectFit: 'contain',
                     width: width + 'px',
                     height: height + 'px',
                     display: 'block',
-                    background: 'transparent', // 保证 ant-image 背景透明
+                    background: 'transparent',
                 }"
-                :preview="false"
+                @error="(event: Event) => {
+                    const target = event.target as HTMLImageElement;
+                    if (target) target.src = fallback;
+                }"
             />
-        </a-spin>
+        </div>
     </div>
 </template>
 <style lang="less">

@@ -17,7 +17,7 @@ import {
 import * as R from "ramda";
 import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api-path";
-import LazyImage from "./LazyImage.vue";
+import { BaseImage } from "@renderer/components/ui";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
@@ -285,7 +285,7 @@ onUnmounted(() => {
                                                     background: 'var(--color-image-item-bg)', // 独立图片项背景色，支持主题
                                                 }"
                                             >
-                                                <LazyImage
+                                                <BaseImage
                                                     :width="thumbnailSize"
                                                     :height="thumbnailSize"
                                                     :src="image.thumbnail"

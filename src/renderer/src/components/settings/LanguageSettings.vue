@@ -10,13 +10,16 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <a-form layout="vertical">
-        <a-form-item :label="t('preference.language')">
+    <div class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
+                {{ t('preference.language') }}
+            </label>
             <div class="language-settings">
                 <LanguageSwitcher />
             </div>
-        </a-form-item>
-    </a-form>
+        </div>
+    </div>
 </template>
 
 <style scoped lang="less">
