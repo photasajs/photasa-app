@@ -16,7 +16,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: "happy-dom",
-        setupFiles: ["./src/renderer/src/test/setup.ts"],
+        setupFiles: ["./test/setup.ts"],
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "html"],
@@ -37,7 +37,7 @@ export default defineConfig({
             "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
         deps: {
-            inline: [/@vue/, /@vueuse/, /@ant-design/],
+            inline: [/@vue/, /@vueuse/, /@ant-design/, /radash/],
         },
         environmentOptions: {
             happyDOM: {

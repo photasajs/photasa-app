@@ -23,7 +23,21 @@ import { ImgTitle } from "./components/img-title";
 import { DefaultIcons } from "./components/default-icons";
 
 import { prefixCls } from "./constant";
-import { on, off } from "./utils/index";
+import {
+    on,
+    off,
+    calculateNextIndex,
+    calculatePrevIndex,
+    calculateCursor,
+    calculateZoomScale,
+    normalizeRotation,
+    shouldHandleWheel,
+    getKeyboardAction,
+    canMoveImage,
+    shouldShowNavigationBtn,
+    calculateMouseDelta,
+    validateIndex,
+} from "./utils/index";
 import { useImage, useMouse, useTouch } from "./utils/hooks";
 import { Img, IImgWrapperState, PropsImgs } from "./types";
 import { isImg, mutateDragging, zoom } from "./vue-easy-lightbox.utils";
@@ -201,13 +215,7 @@ export default defineComponent({
         });
 
         const currCursor = () => {
-            if (status.loadError) return "default";
-
-            if (props.moveDisabled) {
-                return status.dragging ? "grabbing" : "grab";
-            }
-
-            return "move";
+            return calculateCursor(status.loadError, props.moveDisabled, status.dragging);
         };
 
         const imgWrapperStyle = computed(() => {
@@ -266,9 +274,9 @@ export default defineComponent({
 
         const onNext = () => {
             const oldIndex = imgIndex.value;
-            const newIndex = props.loop ? (oldIndex + 1) % imgList.value.length : oldIndex + 1;
+            const newIndex = calculateNextIndex(oldIndex, imgList.value.length, props.loop);
 
-            if (!props.loop && newIndex > imgList.value.length - 1) return;
+            if (newIndex === null) return;
 
             changeIndex(newIndex, (oldIdx, newIdx) => {
                 emit("on-next", oldIdx, newIdx);
@@ -278,12 +286,10 @@ export default defineComponent({
 
         const onPrev = () => {
             const oldIndex = imgIndex.value;
-            let newIndex = oldIndex - 1;
+            const newIndex = calculatePrevIndex(oldIndex, imgList.value.length, props.loop);
 
-            if (oldIndex === 0) {
-                if (!props.loop) return;
-                newIndex = imgList.value.length - 1;
-            }
+            if (newIndex === null) return;
+
             changeIndex(newIndex, (oldIdx, newIdx) => {
                 emit("on-prev", oldIdx, newIdx);
                 emit("on-prev-click", oldIdx, newIdx);
@@ -291,22 +297,36 @@ export default defineComponent({
         };
 
         const zoomIn = () => {
-            const newScale = imgWrapperState.scale + props.zoomScale;
-            if (newScale < imgState.maxScale * props.maxZoom) {
+            const newScale = calculateZoomScale(
+                imgWrapperState.scale,
+                props.zoomScale,
+                "in",
+                props.maxZoom,
+                props.minZoom,
+                imgState.maxScale,
+            );
+            if (newScale !== null) {
                 zoom(newScale, imgState, imgWrapperState);
             }
         };
 
         const zoomOut = () => {
-            const newScale = imgWrapperState.scale - props.zoomScale;
-            if (newScale > props.minZoom) {
+            const newScale = calculateZoomScale(
+                imgWrapperState.scale,
+                props.zoomScale,
+                "out",
+                props.maxZoom,
+                props.minZoom,
+                imgState.maxScale,
+            );
+            if (newScale !== null) {
                 zoom(newScale, imgState, imgWrapperState);
             }
         };
 
         const emitRotate = () => {
-            const deg = imgWrapperState.rotateDeg % 360;
-            emit("on-rotate", Math.abs(deg < 0 ? deg + 360 : deg));
+            const normalizedDeg = normalizeRotation(imgWrapperState.rotateDeg);
+            emit("on-rotate", normalizedDeg);
         };
 
         const rotateLeft = () => {
@@ -327,9 +347,7 @@ export default defineComponent({
 
         // check img moveable
         const canMove = (button = 0) => {
-            if (props.moveDisabled) return false;
-            // mouse left btn click
-            return button === 0;
+            return canMoveImage(props.moveDisabled, button);
         };
 
         // mouse
@@ -353,15 +371,7 @@ export default defineComponent({
         };
 
         const onWheel = (e: WheelEvent) => {
-            if (
-                status.loadError ||
-                status.gesturing ||
-                status.loading ||
-                status.dragging ||
-                status.wheeling ||
-                !props.scrollDisabled ||
-                props.zoomDisabled
-            ) {
+            if (!shouldHandleWheel(status, props.scrollDisabled, props.zoomDisabled)) {
                 return;
             }
 
@@ -384,14 +394,18 @@ export default defineComponent({
 
             if (!props.visible) return;
 
-            if (!props.escDisabled && evt.key === "Escape" && props.visible) {
-                closeModal();
-            }
-            if (evt.key === "ArrowLeft") {
-                props.rtl ? onNext() : onPrev();
-            }
-            if (evt.key === "ArrowRight") {
-                props.rtl ? onPrev() : onNext();
+            const action = getKeyboardAction(evt.key, props.rtl, props.escDisabled);
+
+            switch (action) {
+                case "close":
+                    closeModal();
+                    break;
+                case "prev":
+                    onPrev();
+                    break;
+                case "next":
+                    onNext();
+                    break;
             }
         };
 
@@ -460,8 +474,7 @@ export default defineComponent({
                         nextTick(() => (status.loadError = true));
                         return;
                     }
-                    imgIndex.value =
-                        props.index >= len ? len - 1 : props.index < 0 ? 0 : props.index;
+                    imgIndex.value = validateIndex(props.index, len);
 
                     if (props.scrollDisabled) {
                         disableScrolling();
@@ -542,11 +555,11 @@ export default defineComponent({
         // 鼠标移动
         const onWrapperMouseMove = (e: MouseEvent) => {
             if (!dragging.value) return;
-            const dx = e.clientX - lastPos.value.x;
-            const dy = e.clientY - lastPos.value.y;
+            const currentPos = { x: e.clientX, y: e.clientY };
+            const { dx, dy } = calculateMouseDelta(currentPos, lastPos.value);
             imgWrapperState.left += dx;
             imgWrapperState.top += dy;
-            lastPos.value = { x: e.clientX, y: e.clientY };
+            lastPos.value = currentPos;
         };
         // 鼠标松开
         const onWrapperMouseUp = () => {
@@ -660,15 +673,20 @@ export default defineComponent({
                 });
             }
 
-            if (imgList.value.length <= 1) return;
+            const btnState = shouldShowNavigationBtn(
+                imgList.value.length,
+                imgIndex.value,
+                props.loop,
+                "prev",
+            );
 
-            const isDisabled = !props.loop && imgIndex.value <= 0;
+            if (!btnState.show) return;
 
             return (
                 <div
                     role="button"
                     aria-label="previous image button"
-                    class={`btn__prev ${isDisabled ? "disable" : ""}`}
+                    class={`btn__prev ${btnState.disabled ? "disable" : ""}`}
                     onClick={onPrev}
                 >
                     {props.rtl ? <SvgIcon type="next" /> : <SvgIcon type="prev" />}
@@ -683,15 +701,20 @@ export default defineComponent({
                 });
             }
 
-            if (imgList.value.length <= 1) return;
+            const btnState = shouldShowNavigationBtn(
+                imgList.value.length,
+                imgIndex.value,
+                props.loop,
+                "next",
+            );
 
-            const isDisabled = !props.loop && imgIndex.value >= imgList.value.length - 1;
+            if (!btnState.show) return;
 
             return (
                 <div
                     role="button"
                     aria-label="next image button"
-                    class={`btn__next ${isDisabled ? "disable" : ""}`}
+                    class={`btn__next ${btnState.disabled ? "disable" : ""}`}
                     onClick={onNext}
                 >
                     {props.rtl ? <SvgIcon type="prev" /> : <SvgIcon type="next" />}
