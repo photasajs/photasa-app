@@ -233,7 +233,9 @@ export default defineComponent({
             imgWrapperState.left = 0;
             status.loadError = false;
             status.dragging = false;
-            status.loading = true;
+            // 如果有default slot，则slot内容自己管理加载状态，不需要显示loading
+            // 只有使用内置img时才需要loading状态
+            status.loading = !slots.default;
         };
 
         // switching imgs manually
@@ -402,6 +404,9 @@ export default defineComponent({
         // handle loading process
         const onImgLoad = () => {
             setImgSize();
+            // 确保当实际图片加载完成后清除loading状态，作为test image的备用机制
+            // 这样即使隐藏的test image因为imgRef时序问题没有触发onTestImgLoad，也能正确清除loading状态
+            status.loading = false;
         };
 
         const onTestImgLoad = () => {
@@ -462,6 +467,13 @@ export default defineComponent({
                         disableScrolling();
                     }
                 } else {
+                    // 当lightbox关闭时，清理所有状态，避免下次打开时显示上次的状态
+                    status.loading = false;
+                    status.loadError = false;
+                    status.dragging = false;
+                    status.gesturing = false;
+                    status.wheeling = false;
+
                     if (props.scrollDisabled) {
                         enableScrolling();
                     }
@@ -625,9 +637,10 @@ export default defineComponent({
         };
 
         // 测试图片，用于预加载图片
-        // 如果imgRef.value存在，则预加载图片，否则不预加载
+        // 只有在没有default slot且imgRef.value存在时才需要预加载图片
+        // 如果有default slot，则slot内容自己管理加载状态，不需要test image
         const renderTestImg = () => {
-            if (imgRef.value) {
+            if (!slots.default && imgRef.value) {
                 return (
                     <img
                         style="display:none;"
