@@ -13,7 +13,7 @@ const { t } = useI18n();
     <div class="space-y-4">
         <div>
             <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
-                {{ t('preference.language') }}
+                {{ t("preference.language") }}
             </label>
             <div class="language-settings">
                 <LanguageSwitcher />

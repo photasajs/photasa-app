@@ -76,7 +76,7 @@ describe("BaseImage", () => {
             props: defaultProps,
             global: {
                 stubs: {
-                    "BaseSpinner": MockBaseSpinner,
+                    BaseSpinner: MockBaseSpinner,
                 },
             },
         });
@@ -91,7 +91,7 @@ describe("BaseImage", () => {
             props: { ...defaultProps, isVideo: true },
             global: {
                 stubs: {
-                    "BaseSpinner": MockBaseSpinner,
+                    BaseSpinner: MockBaseSpinner,
                 },
             },
         });
@@ -108,7 +108,7 @@ describe("BaseImage", () => {
             props: defaultProps,
             global: {
                 stubs: {
-                    "BaseSpinner": MockBaseSpinner,
+                    BaseSpinner: MockBaseSpinner,
                 },
             },
         });

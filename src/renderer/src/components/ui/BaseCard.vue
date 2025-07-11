@@ -1,13 +1,15 @@
 <template>
-    <div :class="[
-        'bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-lg shadow-sm',
-        'transition-all duration-150',
-        sizeClasses
-    ]">
-        <div v-if="title || $slots.title" :class="[
-            'border-b border-[var(--color-border)] px-6 py-4',
-            'bg-[var(--color-bg)]'
-        ]">
+    <div
+        :class="[
+            'bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-lg shadow-sm',
+            'transition-all duration-150',
+            sizeClasses,
+        ]"
+    >
+        <div
+            v-if="title || $slots.title"
+            :class="['border-b border-[var(--color-border)] px-6 py-4', 'bg-[var(--color-bg)]']"
+        >
             <slot name="title">
                 <h3 class="text-lg font-semibold text-[var(--color-text)] m-0">{{ title }}</h3>
             </slot>
@@ -15,7 +17,10 @@
         <div :class="['px-6 py-4', bodyClasses]">
             <slot />
         </div>
-        <div v-if="$slots.footer" class="border-t border-[var(--color-border)] px-6 py-4 bg-[var(--color-bg)]">
+        <div
+            v-if="$slots.footer"
+            class="border-t border-[var(--color-border)] px-6 py-4 bg-[var(--color-bg)]"
+        >
             <slot name="footer" />
         </div>
     </div>

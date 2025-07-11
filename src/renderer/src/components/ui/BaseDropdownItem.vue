@@ -6,7 +6,7 @@
                 active
                     ? 'bg-[var(--color-card-hover)] text-[var(--color-text)]'
                     : 'text-[var(--color-text-secondary)]',
-                disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             ]"
             :disabled="disabled"
             @click="handleClick(close)"

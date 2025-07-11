@@ -78,10 +78,12 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
                     display: 'block',
                     background: 'transparent',
                 }"
-                @error="(event: Event) => {
-                    const target = event.target as HTMLImageElement;
-                    if (target) target.src = fallback;
-                }"
+                @error="
+                    (event: Event) => {
+                        const target = event.target as HTMLImageElement;
+                        if (target) target.src = fallback;
+                    }
+                "
             />
         </div>
     </div>

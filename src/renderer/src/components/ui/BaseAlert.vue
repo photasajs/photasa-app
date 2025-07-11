@@ -14,7 +14,7 @@
                 :style="{
                     color: 'var(--color-danger)',
                     stroke: 'var(--color-danger)',
-                    '--tabler-stroke-width': '2'
+                    '--tabler-stroke-width': '2',
                 }"
             />
             <IconAlertTriangle
@@ -23,7 +23,7 @@
                 :style="{
                     color: 'var(--color-warning)',
                     stroke: 'var(--color-warning)',
-                    '--tabler-stroke-width': '2'
+                    '--tabler-stroke-width': '2',
                 }"
             />
             <IconCircleCheck
@@ -32,7 +32,7 @@
                 :style="{
                     color: 'var(--color-success)',
                     stroke: 'var(--color-success)',
-                    '--tabler-stroke-width': '2'
+                    '--tabler-stroke-width': '2',
                 }"
             />
             <IconInfoCircle
@@ -41,7 +41,7 @@
                 :style="{
                     color: 'var(--color-info)',
                     stroke: 'var(--color-info)',
-                    '--tabler-stroke-width': '2'
+                    '--tabler-stroke-width': '2',
                 }"
             />
         </div>
@@ -104,5 +104,4 @@ const typeClasses = computed(() => {
             return "bg-transparent border-[var(--color-info)] text-[var(--color-info)]";
     }
 });
-
 </script>
