@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import VueEasyLightbox from "./LightBox";
-import LazyImage from "./LazyImage.vue";
+import { BaseImage } from "@renderer/components/ui";
 
 const props = defineProps<{
     images: Array<{
@@ -66,7 +66,7 @@ function handleOnIndexChange(newIndex: number) {
                 :loop="true"
                 :volume="0.6"
             />
-            <LazyImage
+            <BaseImage
                 v-else
                 :src="currentImg.preview || currentImg.raw"
                 :width="currentImg.w"

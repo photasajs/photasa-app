@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { preventDefault } from "./event";
+import { preventDefault } from "../event";
 
 describe("preventDefault", () => {
     it("should call e.preventDefault", () => {

@@ -1,17 +1,17 @@
 <template>
     <div>
-        <a-card :title="t('advancedSettings.title')">
-            <a-alert
+        <BaseCard :title="t('advancedSettings.title')">
+            <BaseAlert
                 type="error"
-                show-icon
+                :show-icon="true"
                 :message="t('advancedSettings.resetFoldersTitle')"
                 :description="t('advancedSettings.resetFoldersDesc')"
-                style="margin-bottom: 16px; color: red"
+                class="mb-4"
             />
-            <a-button type="danger" @click="onResetFolders">{{
+            <BaseButton variant="danger" @click="onResetFolders">{{
                 t("advancedSettings.resetFoldersBtn")
-            }}</a-button>
-        </a-card>
+            }}</BaseButton>
+        </BaseCard>
     </div>
 </template>
 
@@ -20,6 +20,7 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { notification } from "ant-design-vue";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { BaseButton, BaseCard, BaseAlert } from "@renderer/components/ui";
 
 // 获取多语言方法
 const { t } = useI18n();
@@ -42,9 +43,3 @@ async function onResetFolders() {
     });
 }
 </script>
-
-<!--
-单元测试建议：
-- mock preferenceStore.resetAllFolders，断言被正确调用
-- mock notification.success，断言提示内容
--->

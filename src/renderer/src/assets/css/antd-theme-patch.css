@@ -119,8 +119,13 @@ html body .folder-list-card .folder-node {
     color: var(--color-tree-text, var(--color-text, #1e1e1e)) !important;
 }
 html body .anticon,
-html body .system-icon,
-html body svg {
+html body .system-icon {
+    color: var(--color-text, #1e1e1e) !important;
+    fill: var(--color-text, #1e1e1e) !important;
+}
+
+/* 仅对非alert图标的SVG应用全局样式 */
+html body svg:not(.alert-icon-container svg) {
     color: var(--color-text, #1e1e1e) !important;
     fill: var(--color-text, #1e1e1e) !important;
 }
