@@ -43,8 +43,13 @@ async function prefetchImage(imageSrc: string): Promise<void> {
 
 onMounted(() => {
     // 预加载图片，避免图片加载时，出现闪烁
-    isLoading.value = true;
-    prefetchImage(src.value);
+    if (!isVideo.value) {
+        isLoading.value = true;
+        prefetchImage(src.value);
+    } else {
+        isReady.value = true;
+        actualSrc.value = src.value;
+    }
 });
 
 const target = ref(null);

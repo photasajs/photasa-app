@@ -31,6 +31,7 @@ import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useMenusStore } from "@renderer/stores/menus";
+import { NotificationContainer } from "@renderer/components/ui";
 
 /**
  * 日志记录器
@@ -321,6 +322,9 @@ findPhotoService.onFindPhoto((args: any) => {
             </a-button>
         </template>
     </a-modal>
+
+    <!-- 通知容器 -->
+    <NotificationContainer />
 </template>
 
 <style lang="less">
