@@ -22,15 +22,49 @@
         "scanning": "掃描中"
     },
     "import": {
+        "title": "導入照片",
         "photos": "導入照片",
-        "allowDuplicateRename": "允許重命名重複的照片",
-        "targetDirectory": "導出目錄",
         "chooseDirectory": "選擇導入目錄",
+        "targetDirectory": "導出目錄",
+        "selectTarget": "選擇目標目錄",
+        "allowDuplicateRename": "允許重命名重複的照片",
         "button": {
             "import": "導入",
-            "cancel": "取消",
-            "ok": "確定"
-        }
+            "cancel": "取消"
+        },
+        "sourceDirectories": "來源目錄",
+        "addSource": "新增來源目錄",
+        "browse": "瀏覽",
+        "options": "導入選項",
+        "fileTypes": {
+            "label": "檔案類型",
+            "images": "圖片",
+            "videos": "影片"
+        },
+        "images": "圖片",
+        "videos": "影片",
+        "includeSubfolders": "包含子資料夾",
+        "duplicateHandling": "重複處理",
+        "duplicate": {
+            "rename": "重新命名",
+            "skip": "跳過",
+            "overwrite": "覆寫",
+            "keepBoth": "保留兩者"
+        },
+        "preview": "預覽",
+        "totalFiles": "總檔案數",
+        "totalSize": "總大小",
+        "group": "{count} 個檔案",
+        "processed": "已處理",
+        "speed": "速度",
+        "remaining": "剩餘時間",
+        "processing": "處理中",
+        "previewButton": "預覽",
+        "importButton": "導入",
+        "pauseButton": "暫停",
+        "resumeButton": "繼續",
+        "cancelButton": "取消",
+        "closeButton": "關閉"
     },
     "menu": {
         "getInfo": "照片信息",

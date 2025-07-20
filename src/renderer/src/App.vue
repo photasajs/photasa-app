@@ -31,6 +31,7 @@ import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useMenusStore } from "@renderer/stores/menus";
+import { NotificationContainer } from "@renderer/components/ui";
 
 /**
  * 日志记录器
@@ -321,9 +322,17 @@ findPhotoService.onFindPhoto((args: any) => {
             </a-button>
         </template>
     </a-modal>
+
+    <!-- 通知容器 -->
+    <NotificationContainer />
 </template>
 
 <style lang="less">
+/* 全局表单标签样式 - 主题适配 */
+.ant-form-item-label > label {
+    color: var(--color-text) !important;
+}
+
 :root {
     /* 主题变量控制 footer 高度 */
     --photasa-footer-height: 70px;

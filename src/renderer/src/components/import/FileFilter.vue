@@ -1,0 +1,595 @@
+<template>
+    <div class="file-filter">
+        <!-- 过滤器头部 -->
+        <div class="filter-header">
+            <h4>{{ t("import.filters") }}</h4>
+            <div class="filter-actions">
+                <a-button size="small" type="link" @click="resetFilters">
+                    <template #icon><ReloadOutlined /></template>
+                    {{ t("import.resetFilters") }}
+                </a-button>
+                <a-button size="small" type="link" @click="toggleAdvanced">
+                    <template #icon><SettingOutlined /></template>
+                    {{ showAdvanced ? t("import.hideAdvanced") : t("import.showAdvanced") }}
+                </a-button>
+            </div>
+        </div>
+
+        <!-- 基础过滤器 -->
+        <div class="filter-section">
+            <a-row :gutter="16">
+                <!-- 文件类型过滤 -->
+                <a-col :span="12">
+                    <div class="filter-item">
+                        <label class="filter-label">{{ t("import.fileTypes") }}</label>
+                        <a-checkbox-group
+                            v-model:value="localFilters.fileTypes"
+                            :options="fileTypeOptions"
+                            @change="onFilterChange"
+                        />
+                    </div>
+                </a-col>
+
+                <!-- 包含子文件夹 -->
+                <a-col :span="12">
+                    <div class="filter-item">
+                        <label class="filter-label">{{ t("import.includeSubfolders") }}</label>
+                        <a-switch
+                            v-model:checked="localFilters.includeSubfolders"
+                            @change="onFilterChange"
+                        />
+                    </div>
+                </a-col>
+            </a-row>
+        </div>
+
+        <!-- 高级过滤器 -->
+        <div v-if="showAdvanced" class="filter-section advanced-filters">
+            <a-divider>{{ t("import.advancedFilters") }}</a-divider>
+
+            <!-- 文件大小过滤 -->
+            <div class="filter-item">
+                <label class="filter-label">
+                    {{ t("import.fileSizeRange") }}
+                    <a-tooltip :title="t('import.fileSizeHelp')">
+                        <QuestionCircleOutlined class="help-icon" />
+                    </a-tooltip>
+                </label>
+                <div class="size-filter">
+                    <a-row :gutter="8" align="middle">
+                        <a-col :span="5">
+                            <a-input-number
+                                v-model:value="sizeFilter.minValue"
+                                :min="0"
+                                :precision="0"
+                                size="small"
+                                @change="onSizeFilterChange"
+                            />
+                        </a-col>
+                        <a-col :span="4">
+                            <a-select
+                                v-model:value="sizeFilter.minUnit"
+                                size="small"
+                                :options="sizeUnitOptions"
+                                @change="onSizeFilterChange"
+                            />
+                        </a-col>
+                        <a-col :span="2" class="range-separator">
+                            <span>-</span>
+                        </a-col>
+                        <a-col :span="5">
+                            <a-input-number
+                                v-model:value="sizeFilter.maxValue"
+                                :min="sizeFilter.minValue || 0"
+                                :precision="0"
+                                size="small"
+                                @change="onSizeFilterChange"
+                            />
+                        </a-col>
+                        <a-col :span="4">
+                            <a-select
+                                v-model:value="sizeFilter.maxUnit"
+                                size="small"
+                                :options="sizeUnitOptions"
+                                @change="onSizeFilterChange"
+                            />
+                        </a-col>
+                        <a-col :span="4">
+                            <a-button size="small" type="link" @click="resetSizeFilter">
+                                {{ t("import.reset") }}
+                            </a-button>
+                        </a-col>
+                    </a-row>
+                </div>
+            </div>
+
+            <!-- 日期范围过滤 -->
+            <div class="filter-item">
+                <label class="filter-label">
+                    {{ t("import.dateRange") }}
+                    <a-tooltip :title="t('import.dateRangeHelp')">
+                        <QuestionCircleOutlined class="help-icon" />
+                    </a-tooltip>
+                </label>
+                <div class="date-filter">
+                    <a-range-picker
+                        v-model:value="dateRange"
+                        :placeholder="[t('import.startDate'), t('import.endDate')]"
+                        size="small"
+                        @change="onDateRangeChange"
+                    />
+                    <a-button size="small" type="link" @click="resetDateFilter">
+                        {{ t("import.reset") }}
+                    </a-button>
+                </div>
+            </div>
+
+            <!-- 快速日期过滤 -->
+            <div class="filter-item">
+                <label class="filter-label">{{ t("import.quickDateFilters") }}</label>
+                <div class="quick-date-filters">
+                    <a-button-group size="small">
+                        <a-button
+                            v-for="preset in datePresets"
+                            :key="preset.key"
+                            :type="selectedDatePreset === preset.key ? 'primary' : 'default'"
+                            @click="applyDatePreset(preset)"
+                        >
+                            {{ preset.label }}
+                        </a-button>
+                    </a-button-group>
+                </div>
+            </div>
+
+            <!-- 文件名模式过滤 -->
+            <div class="filter-item">
+                <label class="filter-label">
+                    {{ t("import.fileNamePattern") }}
+                    <a-tooltip :title="t('import.fileNamePatternHelp')">
+                        <QuestionCircleOutlined class="help-icon" />
+                    </a-tooltip>
+                </label>
+                <div class="pattern-filter">
+                    <a-input
+                        v-model:value="fileNamePattern"
+                        :placeholder="t('import.fileNamePatternPlaceholder')"
+                        size="small"
+                        @change="onPatternChange"
+                    />
+                    <a-button size="small" type="link" @click="resetPatternFilter">
+                        {{ t("import.reset") }}
+                    </a-button>
+                </div>
+            </div>
+
+            <!-- 排除模式 -->
+            <div class="filter-item">
+                <label class="filter-label">
+                    {{ t("import.excludePatterns") }}
+                    <a-tooltip :title="t('import.excludePatternsHelp')">
+                        <QuestionCircleOutlined class="help-icon" />
+                    </a-tooltip>
+                </label>
+                <div class="exclude-patterns">
+                    <a-select
+                        v-model:value="excludePatterns"
+                        mode="tags"
+                        size="small"
+                        :placeholder="t('import.excludePatternsPlaceholder')"
+                        @change="onExcludePatternsChange"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- 过滤结果统计 -->
+        <div v-if="showStats" class="filter-stats">
+            <a-divider />
+            <div class="stats-content">
+                <a-row :gutter="16">
+                    <a-col :span="6">
+                        <a-statistic
+                            :title="t('import.filteredFiles')"
+                            :value="stats.filteredFiles"
+                            :value-style="{ fontSize: '14px', color: '#1890ff' }"
+                        />
+                    </a-col>
+                    <a-col :span="6">
+                        <a-statistic
+                            :title="t('import.totalSize')"
+                            :value="formatSize(stats.totalSize)"
+                            :value-style="{ fontSize: '14px', color: '#52c41a' }"
+                        />
+                    </a-col>
+                    <a-col :span="6">
+                        <a-statistic
+                            :title="t('import.images')"
+                            :value="stats.imageFiles"
+                            :value-style="{ fontSize: '14px', color: '#722ed1' }"
+                        />
+                    </a-col>
+                    <a-col :span="6">
+                        <a-statistic
+                            :title="t('import.videos')"
+                            :value="stats.videoFiles"
+                            :value-style="{ fontSize: '14px', color: '#fa8c16' }"
+                        />
+                    </a-col>
+                </a-row>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { computed, reactive, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import type { Dayjs } from "dayjs";
+import { ReloadOutlined, SettingOutlined, QuestionCircleOutlined } from "@ant-design/icons-vue";
+import type { ImportFilters, FileType } from "@common/import-types";
+
+// Props
+const props = withDefaults(
+    defineProps<{
+        filters: ImportFilters;
+        showStats?: boolean;
+        stats?: {
+            filteredFiles: number;
+            totalSize: number;
+            imageFiles: number;
+            videoFiles: number;
+        };
+    }>(),
+    {
+        showStats: false,
+        stats: () => ({
+            filteredFiles: 0,
+            totalSize: 0,
+            imageFiles: 0,
+            videoFiles: 0,
+        }),
+    },
+);
+
+// Emits
+const emit = defineEmits<{
+    (e: "update:filters", filters: ImportFilters): void;
+    (e: "filter-change", filters: ImportFilters): void;
+}>();
+
+const { t } = useI18n();
+
+// 响应式状态
+const showAdvanced = ref(false);
+const selectedDatePreset = ref<string | null>(null);
+const fileNamePattern = ref("");
+const excludePatterns = ref<string[]>([]);
+
+// 本地过滤器状态
+const localFilters = reactive<ImportFilters>({ ...props.filters });
+
+// 大小过滤器状态
+const sizeFilter = reactive({
+    minValue: 0,
+    minUnit: "KB",
+    maxValue: null as number | null,
+    maxUnit: "GB",
+});
+
+// 日期范围
+const dateRange = ref<[Dayjs, Dayjs] | null>(null);
+
+// 选项配置
+const fileTypeOptions = computed(() => [
+    { label: t("import.fileTypes.images"), value: "image" },
+    { label: t("import.fileTypes.videos"), value: "video" },
+]);
+
+const sizeUnitOptions = [
+    { label: "B", value: "B" },
+    { label: "KB", value: "KB" },
+    { label: "MB", value: "MB" },
+    { label: "GB", value: "GB" },
+];
+
+const datePresets = computed(() => [
+    {
+        key: "today",
+        label: t("import.datePresets.today"),
+        getValue: () => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return { start: today, end: tomorrow };
+        },
+    },
+    {
+        key: "yesterday",
+        label: t("import.datePresets.yesterday"),
+        getValue: () => {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            const today = new Date(yesterday);
+            today.setDate(today.getDate() + 1);
+            return { start: yesterday, end: today };
+        },
+    },
+    {
+        key: "thisWeek",
+        label: t("import.datePresets.thisWeek"),
+        getValue: () => {
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 7);
+            return { start: startOfWeek, end: endOfWeek };
+        },
+    },
+    {
+        key: "thisMonth",
+        label: t("import.datePresets.thisMonth"),
+        getValue: () => {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            return { start: startOfMonth, end: endOfMonth };
+        },
+    },
+    {
+        key: "lastMonth",
+        label: t("import.datePresets.lastMonth"),
+        getValue: () => {
+            const now = new Date();
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            return { start: startOfLastMonth, end: endOfLastMonth };
+        },
+    },
+]);
+
+// 方法
+const onFilterChange = () => {
+    selectedDatePreset.value = null;
+    emitFilterChange();
+};
+
+const onSizeFilterChange = () => {
+    // 转换大小单位为字节
+    const minBytes = convertToBytes(sizeFilter.minValue || 0, sizeFilter.minUnit);
+    const maxBytes = sizeFilter.maxValue
+        ? convertToBytes(sizeFilter.maxValue, sizeFilter.maxUnit)
+        : Number.MAX_SAFE_INTEGER;
+
+    localFilters.sizeRange = {
+        min: minBytes,
+        max: maxBytes,
+    };
+
+    selectedDatePreset.value = null;
+    emitFilterChange();
+};
+
+const onDateRangeChange = (dates: [Dayjs, Dayjs] | null) => {
+    if (dates) {
+        localFilters.dateRange = {
+            start: dates[0].toDate(),
+            end: dates[1].toDate(),
+        };
+    } else {
+        localFilters.dateRange = {
+            start: new Date(0),
+            end: new Date(),
+        };
+    }
+
+    selectedDatePreset.value = null;
+    emitFilterChange();
+};
+
+const onPatternChange = () => {
+    // 这里可以添加文件名模式过滤逻辑
+    emitFilterChange();
+};
+
+const onExcludePatternsChange = () => {
+    // 这里可以添加排除模式过滤逻辑
+    emitFilterChange();
+};
+
+const applyDatePreset = (preset: any) => {
+    const { start, end } = preset.getValue();
+    localFilters.dateRange = { start, end };
+    selectedDatePreset.value = preset.key;
+
+    // 更新日期选择器显示
+    dateRange.value = null;
+
+    emitFilterChange();
+};
+
+const resetFilters = () => {
+    localFilters.fileTypes = ["image", "video"];
+    localFilters.sizeRange = { min: 0, max: Number.MAX_SAFE_INTEGER };
+    localFilters.dateRange = { start: new Date(0), end: new Date() };
+    localFilters.includeSubfolders = true;
+
+    // 重置其他状态
+    sizeFilter.minValue = 0;
+    sizeFilter.maxValue = null;
+    dateRange.value = null;
+    selectedDatePreset.value = null;
+    fileNamePattern.value = "";
+    excludePatterns.value = [];
+
+    emitFilterChange();
+};
+
+const resetSizeFilter = () => {
+    sizeFilter.minValue = 0;
+    sizeFilter.maxValue = null;
+    sizeFilter.minUnit = "KB";
+    sizeFilter.maxUnit = "GB";
+
+    localFilters.sizeRange = { min: 0, max: Number.MAX_SAFE_INTEGER };
+    emitFilterChange();
+};
+
+const resetDateFilter = () => {
+    dateRange.value = null;
+    selectedDatePreset.value = null;
+    localFilters.dateRange = { start: new Date(0), end: new Date() };
+    emitFilterChange();
+};
+
+const resetPatternFilter = () => {
+    fileNamePattern.value = "";
+    emitFilterChange();
+};
+
+const toggleAdvanced = () => {
+    showAdvanced.value = !showAdvanced.value;
+};
+
+const emitFilterChange = () => {
+    emit("update:filters", { ...localFilters });
+    emit("filter-change", { ...localFilters });
+};
+
+// 工具函数
+const convertToBytes = (value: number, unit: string): number => {
+    const multipliers = {
+        B: 1,
+        KB: 1024,
+        MB: 1024 * 1024,
+        GB: 1024 * 1024 * 1024,
+    };
+    return value * (multipliers[unit as keyof typeof multipliers] || 1);
+};
+
+const formatSize = (size: number): string => {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+};
+
+// 监听器
+watch(
+    () => props.filters,
+    (newFilters) => {
+        Object.assign(localFilters, newFilters);
+    },
+    { deep: true },
+);
+</script>
+
+<style scoped lang="less">
+.file-filter {
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+        }
+    }
+
+    .filter-section {
+        margin-bottom: 16px;
+
+        &.advanced-filters {
+            background-color: var(--hover-color);
+            padding: 16px;
+            border-radius: 6px;
+        }
+    }
+
+    .filter-item {
+        margin-bottom: 16px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--text-color);
+
+            .help-icon {
+                margin-left: 4px;
+                color: var(--text-color);
+                opacity: 0.5;
+                cursor: help;
+            }
+        }
+    }
+
+    .size-filter {
+        .range-separator {
+            text-align: center;
+
+            span {
+                color: var(--text-color);
+                opacity: 0.5;
+            }
+        }
+    }
+
+    .date-filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .ant-picker {
+            flex: 1;
+        }
+    }
+
+    .quick-date-filters {
+        .ant-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+    }
+
+    .pattern-filter {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .ant-input {
+            flex: 1;
+        }
+    }
+
+    .exclude-patterns {
+        .ant-select {
+            width: 100%;
+        }
+    }
+
+    .filter-stats {
+        .stats-content {
+            padding: 12px 0;
+        }
+    }
+}
+</style>

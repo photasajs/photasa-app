@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
 import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
-import { notification } from "ant-design-vue";
+import { notification } from "@renderer/services/notification-manager";
 
 defineOptions({
     name: "GeneralSettings",
@@ -45,16 +45,16 @@ async function onChoose(): Promise<void> {
         const { filePaths } = await chooseDirectory();
         if (!filePaths || filePaths.length === 0) {
             notification.info({
-                message: t("notification.emptyPath.title"),
-                description: t("notification.emptyPath.message"),
+                title: t("notification.emptyPath.title"),
+                message: t("notification.emptyPath.message"),
             });
             return;
         }
         const path = filePaths[0];
         if (isDuplicate(path)) {
             notification.warning({
-                message: t("notification.duplicatePath.title"),
-                description: t("notification.duplicatePath.message", { folder: path }),
+                title: t("notification.duplicatePath.title"),
+                message: t("notification.duplicatePath.message", { folder: path }),
             });
             return;
         }
@@ -68,8 +68,8 @@ async function onChoose(): Promise<void> {
             const errorMessage =
                 scanError instanceof Error ? scanError.message : t("notification.unknownError");
             notification.warning({
-                message: t("notification.scanError.title"),
-                description: t("notification.scanError.message", { path, error: errorMessage }),
+                title: t("notification.scanError.title"),
+                message: t("notification.scanError.message", { path, error: errorMessage }),
             });
             addScanFolder(path, "current");
         }
@@ -77,8 +77,8 @@ async function onChoose(): Promise<void> {
         const errorMessage =
             error instanceof Error ? error.message : t("notification.unknownError");
         notification.error({
-            message: t("notification.error"),
-            description: errorMessage,
+            title: t("notification.error"),
+            message: errorMessage,
         });
     }
 }

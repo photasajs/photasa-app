@@ -1,3 +1,15 @@
 {
-    "recommendations": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "vue.volar",
+        "firsttris.vscode-jest-runner",
+        "oderwat.indent-rainbow",
+        "sirtori.indenticator",
+        "tombonnike.vscode-status-bar-format-toggle",
+        "6hislain.meow-extension-pack",
+        "formulahendry.auto-close-tag",
+        "formulahendry.auto-rename-tag",
+        "gydunhn.html-essentials"
+    ]
 }

@@ -22,15 +22,49 @@
         "scanning": "Đang quét"
     },
     "import": {
+        "title": "Nhập ảnh",
         "photos": "Nhập ảnh",
-        "allowDuplicateRename": "Cho phép đổi tên ảnh trùng lặp",
-        "targetDirectory": "Thư mục xuất",
         "chooseDirectory": "Chọn thư mục nhập",
+        "targetDirectory": "Thư mục xuất",
+        "selectTarget": "Chọn thư mục đích",
+        "allowDuplicateRename": "Cho phép đổi tên ảnh trùng lặp",
         "button": {
             "import": "Nhập",
-            "cancel": "Hủy",
-            "ok": "OK"
-        }
+            "cancel": "Hủy"
+        },
+        "sourceDirectories": "Thư mục nguồn",
+        "addSource": "Thêm thư mục nguồn",
+        "browse": "Duyệt",
+        "options": "Tùy chọn nhập",
+        "fileTypes": {
+            "label": "Loại tệp",
+            "images": "Hình ảnh",
+            "videos": "Video"
+        },
+        "images": "Hình ảnh",
+        "videos": "Video",
+        "includeSubfolders": "Bao gồm thư mục con",
+        "duplicateHandling": "Xử lý trùng lặp",
+        "duplicate": {
+            "rename": "Đổi tên",
+            "skip": "Bỏ qua",
+            "overwrite": "Ghi đè",
+            "keepBoth": "Giữ cả hai"
+        },
+        "preview": "Xem trước",
+        "totalFiles": "Tổng số tệp",
+        "totalSize": "Tổng kích thước",
+        "group": "{count} tệp",
+        "processed": "Đã xử lý",
+        "speed": "Tốc độ",
+        "remaining": "Thời gian còn lại",
+        "processing": "Đang xử lý",
+        "previewButton": "Xem trước",
+        "importButton": "Nhập",
+        "pauseButton": "Tạm dừng",
+        "resumeButton": "Tiếp tục",
+        "cancelButton": "Hủy",
+        "closeButton": "Đóng"
     },
     "menu": {
         "getInfo": "Thông tin ảnh",

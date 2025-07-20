@@ -22,15 +22,49 @@
         "scanning": "جارٍ المسح"
     },
     "import": {
+        "title": "استيراد الصور",
         "photos": "استيراد الصور",
-        "allowDuplicateRename": "السماح بإعادة تسمية الصور المكررة",
-        "targetDirectory": "مجلد التصدير",
         "chooseDirectory": "اختر مجلد الاستيراد",
+        "targetDirectory": "مجلد التصدير",
+        "selectTarget": "اختر مجلد التصدير",
+        "allowDuplicateRename": "السماح بإعادة تسمية الصور المكررة",
         "button": {
             "import": "استيراد",
-            "cancel": "إلغاء",
-            "ok": "موافق"
-        }
+            "cancel": "إلغاء"
+        },
+        "sourceDirectories": "مجلدات المصدر",
+        "addSource": "إضافة مجلد مصدر",
+        "browse": "تصفح",
+        "options": "خيارات الاستيراد",
+        "fileTypes": {
+            "label": "أنواع الملفات",
+            "images": "الصور",
+            "videos": "الفيديوهات"
+        },
+        "images": "الصور",
+        "videos": "الفيديوهات",
+        "includeSubfolders": "تضمين المجلدات الفرعية",
+        "duplicateHandling": "معالجة المكررات",
+        "duplicate": {
+            "rename": "إعادة تسمية",
+            "skip": "تخطي",
+            "overwrite": "استبدال",
+            "keepBoth": "الاحتفاظ بكليهما"
+        },
+        "preview": "معاينة",
+        "totalFiles": "إجمالي الملفات",
+        "totalSize": "الحجم الإجمالي",
+        "group": "{count} ملفات",
+        "processed": "تمت المعالجة",
+        "speed": "السرعة",
+        "remaining": "الوقت المتبقي",
+        "processing": "جاري المعالجة",
+        "previewButton": "معاينة",
+        "importButton": "استيراد",
+        "pauseButton": "إيقاف مؤقت",
+        "resumeButton": "استئناف",
+        "cancelButton": "إلغاء",
+        "closeButton": "إغلاق"
     },
     "menu": {
         "getInfo": "معلومات الصورة",
