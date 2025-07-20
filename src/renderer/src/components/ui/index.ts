@@ -11,3 +11,7 @@ export { default as BaseImage } from "./BaseImage.vue";
 export { default as VirtualizedGrid } from "./VirtualizedGrid.vue";
 export { default as BaseNotification } from "./BaseNotification.vue";
 export { default as NotificationContainer } from "./NotificationContainer.vue";
+export { default as BaseCheckbox } from "./BaseCheckbox.vue";
+export { default as BaseSelect } from "./BaseSelect.vue";
+export { default as BaseInput } from "./BaseInput.vue";
+export { default as BaseSwitch } from "./BaseSwitch.vue";

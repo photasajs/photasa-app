@@ -101,6 +101,80 @@ const api = {
         electronAPI.ipcRenderer.on("menu:action", (_event, payload) => cb(payload));
     },
     openExternal: (url: string) => electronAPI.ipcRenderer.invoke("shell:openExternal", url),
+
+    // ==================== 增强的导入功能 API ====================
+    /**
+     * 扫描多个源目录，获取文件组信息
+     */
+    scanDirectories: (paths: string[], filters?: any) =>
+        electronAPI.ipcRenderer.invoke("import:scan-directories", paths, filters),
+
+    /**
+     * 预览导入操作，不实际执行导入
+     */
+    previewImport: (config: any) => electronAPI.ipcRenderer.invoke("import:preview", config),
+
+    /**
+     * 执行导入操作
+     */
+    executeImport: (config: any, callback?: any) =>
+        electronAPI.ipcRenderer.invoke("import:execute", config, callback),
+
+    /**
+     * 取消正在进行的导入操作
+     */
+    cancelImport: (importId: string) => electronAPI.ipcRenderer.invoke("import:cancel", importId),
+
+    /**
+     * 暂停正在进行的导入操作
+     */
+    pauseImport: (importId: string) => electronAPI.ipcRenderer.invoke("import:pause", importId),
+
+    /**
+     * 恢复暂停的导入操作
+     */
+    resumeImport: (importId: string) => electronAPI.ipcRenderer.invoke("import:resume", importId),
+
+    /**
+     * 获取导入历史记录
+     */
+    getImportHistory: (limit?: number) =>
+        electronAPI.ipcRenderer.invoke("import:get-history", limit),
+
+    /**
+     * 获取导入详情
+     */
+    getImportDetails: (historyId: string) =>
+        electronAPI.ipcRenderer.invoke("import:get-details", historyId),
+
+    /**
+     * 预览撤销操作
+     */
+    previewUndo: (historyId: string) =>
+        electronAPI.ipcRenderer.invoke("import:preview-undo", historyId),
+
+    /**
+     * 撤销指定的导入操作
+     */
+    undoImport: (historyId: string) => electronAPI.ipcRenderer.invoke("import:undo", historyId),
+
+    /**
+     * 获取导入进度信息
+     */
+    getImportProgress: (importId: string) =>
+        electronAPI.ipcRenderer.invoke("import:get-progress", importId),
+
+    /**
+     * 选择多个目录（扩展现有的chooseDirectory功能）
+     */
+    chooseDirectories: (multiSelect = true) =>
+        electronAPI.ipcRenderer.invoke("import:choose-directories", multiSelect),
+
+    /**
+     * 提取文件元数据
+     */
+    extractMetadata: (request: any) =>
+        electronAPI.ipcRenderer.invoke("import:extract-metadata", request),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

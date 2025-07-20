@@ -22,15 +22,49 @@
         "scanning": "Taranıyor"
     },
     "import": {
+        "title": "Fotoğraf İçe Aktar",
         "photos": "Fotoğraf İçe Aktar",
-        "allowDuplicateRename": "Yinelenen fotoğrafların yeniden adlandırılmasına izin ver",
-        "targetDirectory": "Dışa Aktarma Klasörü",
         "chooseDirectory": "İçe aktarma klasörünü seçin",
+        "targetDirectory": "Dışa Aktarma Klasörü",
+        "selectTarget": "Hedef klasörü seçin",
+        "allowDuplicateRename": "Yinelenen fotoğrafların yeniden adlandırılmasına izin ver",
         "button": {
             "import": "İçe Aktar",
-            "cancel": "İptal",
-            "ok": "Tamam"
-        }
+            "cancel": "İptal"
+        },
+        "sourceDirectories": "Kaynak Klasörler",
+        "addSource": "Kaynak Klasör Ekle",
+        "browse": "Gözat",
+        "options": "İçe Aktarma Seçenekleri",
+        "fileTypes": {
+            "label": "Dosya Türleri",
+            "images": "Resimler",
+            "videos": "Videolar"
+        },
+        "images": "Resimler",
+        "videos": "Videolar",
+        "includeSubfolders": "Alt klasörleri dahil et",
+        "duplicateHandling": "Yinelenen Dosya İşleme",
+        "duplicate": {
+            "rename": "Yeniden Adlandır",
+            "skip": "Atla",
+            "overwrite": "Üzerine Yaz",
+            "keepBoth": "İkisini de Tut"
+        },
+        "preview": "Önizleme",
+        "totalFiles": "Toplam Dosya",
+        "totalSize": "Toplam Boyut",
+        "group": "{count} dosya",
+        "processed": "İşlendi",
+        "speed": "Hız",
+        "remaining": "Kalan Süre",
+        "processing": "İşleniyor",
+        "previewButton": "Önizleme",
+        "importButton": "İçe Aktar",
+        "pauseButton": "Duraklat",
+        "resumeButton": "Devam Et",
+        "cancelButton": "İptal",
+        "closeButton": "Kapat"
     },
     "menu": {
         "getInfo": "Fotoğraf Bilgisi",

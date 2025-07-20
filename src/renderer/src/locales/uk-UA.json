@@ -22,15 +22,49 @@
         "scanning": "Сканування"
     },
     "import": {
+        "title": "Імпортувати фото",
         "photos": "Імпортувати фото",
-        "allowDuplicateRename": "Дозволити перейменування дублікатів фото",
-        "targetDirectory": "Папка експорту",
         "chooseDirectory": "Виберіть папку для імпорту",
+        "targetDirectory": "Папка експорту",
+        "selectTarget": "Виберіть цільову папку",
+        "allowDuplicateRename": "Дозволити перейменування дублікатів фото",
         "button": {
             "import": "Імпортувати",
-            "cancel": "Скасувати",
-            "ok": "OK"
-        }
+            "cancel": "Скасувати"
+        },
+        "sourceDirectories": "Вихідні папки",
+        "addSource": "Додати вихідну папку",
+        "browse": "Огляд",
+        "options": "Параметри імпорту",
+        "fileTypes": {
+            "label": "Типи файлів",
+            "images": "Зображення",
+            "videos": "Відео"
+        },
+        "images": "Зображення",
+        "videos": "Відео",
+        "includeSubfolders": "Включити підпапки",
+        "duplicateHandling": "Обробка дублікатів",
+        "duplicate": {
+            "rename": "Перейменувати",
+            "skip": "Пропустити",
+            "overwrite": "Перезаписати",
+            "keepBoth": "Зберегти обидва"
+        },
+        "preview": "Попередній перегляд",
+        "totalFiles": "Всього файлів",
+        "totalSize": "Загальний розмір",
+        "group": "{count} файлів",
+        "processed": "Оброблено",
+        "speed": "Швидкість",
+        "remaining": "Залишилося часу",
+        "processing": "Обробка",
+        "previewButton": "Попередній перегляд",
+        "importButton": "Імпортувати",
+        "pauseButton": "Пауза",
+        "resumeButton": "Продовжити",
+        "cancelButton": "Скасувати",
+        "closeButton": "Закрити"
     },
     "menu": {
         "getInfo": "Інформація про фото",

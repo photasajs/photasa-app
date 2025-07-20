@@ -328,6 +328,11 @@ findPhotoService.onFindPhoto((args: any) => {
 </template>
 
 <style lang="less">
+/* 全局表单标签样式 - 主题适配 */
+.ant-form-item-label > label {
+    color: var(--color-text) !important;
+}
+
 :root {
     /* 主题变量控制 footer 高度 */
     --photasa-footer-height: 70px;

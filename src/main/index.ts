@@ -15,6 +15,7 @@ import ScanService from "./scan/scan-service";
 import WindowService from "./window/window-service";
 import MenuService from "./menu/menu-service";
 import ShellService from "./shell/shell-service";
+import ImportService from "./import/import-service";
 
 Bugsnag.start({
     apiKey: "905f9713071b76d7cd04cb3b19e4c730",
@@ -141,6 +142,8 @@ function createWindow(): void {
     new MenuService(ipcMain, mainWindow);
     // 创建 shell 服务
     new ShellService(ipcMain, mainWindow);
+    // Setup Import Service
+    new ImportService(ipcMain);
 }
 
 /**
