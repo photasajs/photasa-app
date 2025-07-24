@@ -19,7 +19,12 @@
         "thumbnailSize": "缩略图大小",
         "darkMode": "深色模式",
         "language": "语言",
-        "scanning": "扫描中"
+        "scanning": "扫描中",
+        "resetFolders": {
+            "title": "高级操作：重置目录存储",
+            "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
+            "button": "重置目录存储"
+        }
     },
     "import": {
         "title": "导入照片",
@@ -290,6 +295,11 @@
             "title": "选择目录",
             "message": "请选择目录，然后完成添加操作。"
         },
+        "scanError": {
+            "title": "扫描错误",
+            "message": "无法扫描 [{path}] 的子目录。错误：{error}。主目录仍将被添加。"
+        },
+        "unknownError": "发生未知错误",
         "resetFolders": {
             "title": "重置完成",
             "message": "所有目录缓存已重建。"

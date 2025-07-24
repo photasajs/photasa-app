@@ -1,7 +1,4 @@
 {
-    "message": {
-        "hello": "こんにちは、世界"
-    },
     "app": {
         "title": "倉廩図司",
         "folderList": "ディレクトリリスト"
@@ -22,7 +19,12 @@
         "thumbnailSize": "サムネイルサイズ",
         "darkMode": "ダークモード",
         "language": "言語",
-        "scanning": "スキャン中"
+        "scanning": "スキャン中",
+        "resetFolders": {
+            "title": "高度な操作: ディレクトリストレージのリセット",
+            "desc": "これにより、すべてのディレクトリ設定がクリアされ、キャッシュが即座に再構築されます。この操作は元に戻せません。慎重に進めてください！",
+            "button": "ディレクトリストレージをリセット"
+        }
     },
     "import": {
         "title": "写真をインポート",
@@ -43,10 +45,6 @@
         "videos": "動画",
         "includeSubfolders": "サブフォルダを含む",
         "duplicateHandling": "重複ファイルの処理",
-        "rename": "リネーム",
-        "skip": "スキップ",
-        "overwrite": "上書き",
-        "keepBoth": "両方を保持",
         "preview": "プレビュー",
         "totalFiles": "総ファイル数",
         "totalSize": "総サイズ",
@@ -285,6 +283,11 @@
             "title": "ディレクトリを選択",
             "message": "ディレクトリを選択し、追加操作を完了してください。"
         },
+        "scanError": {
+            "title": "スキャンエラー",
+            "message": "[{path}]のサブディレクトリをスキャンできませんでした。エラー: {error}。メインディレクトリは追加されます。"
+        },
+        "unknownError": "不明なエラーが発生しました",
         "resetFolders": {
             "title": "リセット完了",
             "message": "すべてのディレクトリキャッシュが再構築されました。"

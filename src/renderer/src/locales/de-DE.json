@@ -19,7 +19,12 @@
         "thumbnailSize": "Miniaturbildgröße",
         "darkMode": "Dunkler Modus",
         "language": "Sprache",
-        "scanning": "Scannen"
+        "scanning": "Scannen",
+        "resetFolders": {
+            "title": "Erweiterte Aktion: Verzeichnis-Speicher zurücksetzen",
+            "desc": "Diese Aktion löscht alle Verzeichniseinstellungen und baut den Cache sofort neu auf. Diese Aktion ist nicht umkehrbar. Bitte mit Vorsicht fortfahren!",
+            "button": "Verzeichnis-Speicher zurücksetzen"
+        }
     },
     "import": {
         "title": "Fotos importieren",
@@ -40,10 +45,12 @@
         "videos": "Videos",
         "includeSubfolders": "Unterordner einschließen",
         "duplicateHandling": "Behandlung von Duplikaten",
-        "rename": "Umbenennen",
-        "skip": "Überspringen",
-        "overwrite": "Überschreiben",
-        "keepBoth": "Beide behalten",
+        "duplicate": {
+            "rename": "Umbenennen",
+            "skip": "Überspringen",
+            "overwrite": "Überschreiben",
+            "keepBoth": "Beide behalten"
+        },
         "preview": "Vorschau",
         "totalFiles": "Gesamtdateien",
         "totalSize": "Gesamtgröße",
@@ -287,6 +294,7 @@
             "title": "Scan-Fehler",
             "message": "Unterverzeichnisse von [{path}] konnten nicht gescannt werden. Fehler: {error}. Das Hauptverzeichnis wird trotzdem hinzugefügt."
         },
+        "unknownError": "Unbekannter Fehler aufgetreten",
         "resetFolders": {
             "title": "Zurücksetzen abgeschlossen",
             "message": "Alle Verzeichnis-Caches wurden neu erstellt."
@@ -326,6 +334,7 @@
         "resources": {
             "title": "Ressourcen",
             "content": "Entdecken Sie zusätzliche Ressourcen und Dokumentation für Photasa.",
+            "and": "und",
             "download": "Ressourcen herunterladen"
         },
         "press": "Drücken Sie",

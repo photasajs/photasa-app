@@ -19,7 +19,12 @@
         "thumbnailSize": "Tamaño de miniatura",
         "darkMode": "Modo oscuro",
         "language": "Idioma",
-        "scanning": "Escaneando"
+        "scanning": "Escaneando",
+        "resetFolders": {
+            "title": "Acción Avanzada: Restablecer Almacenamiento de Directorios",
+            "desc": "Esto borrará todas las configuraciones de directorios y reconstruirá la caché inmediatamente. Esta acción es irreversible. ¡Proceda con precaución!",
+            "button": "Restablecer Almacenamiento de Directorios"
+        }
     },
     "import": {
         "title": "Importar Fotos",
@@ -273,9 +278,7 @@
         "error": "Error",
         "scan": {
             "title": "Escanear directorio",
-            "message": "Escaneo de directorio completo, las fotos han sido importadas a Photosa.",
-            "queueTitle": "Cola de escaneo",
-            "queueEmpty": "La cola está vacía"
+            "message": "Escaneo de directorio completo, las fotos han sido importadas a Photosa."
         },
         "duplicatePath": {
             "title": "Directorio duplicado",
@@ -289,6 +292,7 @@
             "title": "Error de Escaneo",
             "message": "No se pudieron escanear los subdirectorios de [{path}]. Error: {error}. El directorio principal se añadirá de todos modos."
         },
+        "unknownError": "Se produjo un error desconocido",
         "resetFolders": {
             "title": "Restablecimiento completo",
             "message": "Todas las cachés de directorios han sido reconstruidas."
@@ -361,6 +365,10 @@
         "resetFoldersTitle": "Operación avanzada: Restablecer almacenamiento de carpetas",
         "resetFoldersDesc": "Esta operación borrará todas las configuraciones de carpetas y reconstruirá la caché inmediatamente. ¡Esta acción es irreversible, proceda con precaución!",
         "resetFoldersBtn": "Restablecer almacenamiento de carpetas"
+    },
+    "scan": {
+        "queueTitle": "Cola de escaneo",
+        "queueEmpty": "La cola está vacía"
     },
     "empty": {
         "image": "No hay imágenes",
