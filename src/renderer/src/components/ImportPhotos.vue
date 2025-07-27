@@ -1,8 +1,8 @@
 <!--
   ImportPhotos Component
-  
+
   A comprehensive wizard-based interface for importing photos and videos.
-  
+
   Features:
   - Two-step wizard: Configuration → Preview
   - Source directory selection with validation
@@ -11,16 +11,16 @@
   - Duplicate handling strategies
   - Real-time preview with file selection
   - Progress modal for import execution
-  
+
   Props:
   - show: Controls wizard visibility
   - initialSourcePaths: Pre-populate source directories
   - initialTargetPath: Pre-populate target directory
-  
+
   Events:
   - update:show: Emitted when wizard visibility changes
   - import-complete: Emitted when import process completes
-  
+
   Usage:
   <ImportPhotos
     :show="showImportDialog"
@@ -35,6 +35,7 @@
 import { computed, ref, watch } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectories, previewImport } from "@renderer/utils/api";
+import { getLogger } from "@common/logger";
 import {
     createDefaultFilters,
     addSourceDirectories,
@@ -104,11 +105,17 @@ interface ImportPhotosEmits {
 
 const emit = defineEmits<ImportPhotosEmits>();
 
+// Logger instance for this component
+const logger = getLogger("import-photos");
+
+// Wizard state reference - declared early to avoid initialization order issues
+const wizardStateRef = ref<any>(null);
+
 // Debug logging for development and initialization
 watch(
     () => props.show,
     (newValue) => {
-        console.log("ImportPhotos show prop changed:", newValue);
+        logger.debug("ImportPhotos show prop changed:", newValue);
 
         // Initialize wizard data when wizard opens
         if (newValue && wizardStateRef.value?.setStepData) {
@@ -117,6 +124,7 @@ watch(
                     props.initialSourcePaths,
                     props.initialTargetPath,
                     store.paths,
+                    excludePaths.value,
                 );
                 wizardStateRef.value.setStepData("configuration", configData);
             }
@@ -127,7 +135,7 @@ watch(
 
 const { t } = useI18n();
 const store = usePreferenceStore();
-const { paths } = storeToRefs(store);
+const { paths, excludePaths } = storeToRefs(store);
 
 // Wizard data storage - this will be managed by the wizard framework
 // We'll access it through the stepData parameter in templates
@@ -135,9 +143,6 @@ const { paths } = storeToRefs(store);
 // Import progress modal state
 const showProgressModal = ref(false);
 const importConfig = ref<ImportConfig | null>(null);
-
-// Wizard state reference
-const wizardStateRef = ref<any>(null);
 
 /**
  * Handle wizard completion - transform data and show progress modal
@@ -156,7 +161,7 @@ const handleWizardComplete = (data: any) => {
         emit("update:show", false);
         showProgressModal.value = true;
     } else {
-        console.error("Invalid wizard data on completion", { configData, previewData });
+        logger.error("Invalid wizard data on completion", { configData, previewData });
     }
 };
 
@@ -172,6 +177,7 @@ const initializeWizardData = () => {
             props.initialSourcePaths,
             props.initialTargetPath,
             store.paths,
+            excludePaths.value,
         );
         const previewData = createInitialPreviewData();
 
@@ -189,7 +195,7 @@ const wizardConfig = createWizardConfig({
             description: t("import.steps.configurationDesc"),
             isValid: (stepData: any) => {
                 const isValid = validateConfigurationStep(stepData);
-                console.log("Configuration step validation:", { stepData, isValid });
+                logger.debug("Configuration step validation:", { stepData, isValid });
                 return isValid;
             },
             onEnter: (stepData: any) => {
@@ -199,6 +205,7 @@ const wizardConfig = createWizardConfig({
                         props.initialSourcePaths,
                         props.initialTargetPath,
                         store.paths,
+                        excludePaths.value,
                     );
                     // We need access to setStepData here, but it's not available in onEnter
                     // So we'll keep the template initialization as backup
@@ -260,7 +267,7 @@ const addSourceDirectory = async (
             setStepData("configuration", { ...stepData, sourcePaths: newSourcePaths });
         }
     } catch (error) {
-        console.error("Failed to choose directories:", error);
+        logger.error("Failed to choose directories:", error);
     }
 };
 
@@ -294,7 +301,7 @@ const selectTargetDirectory = async (
             setStepData("configuration", { ...stepData, targetPath: result.filePaths[0] });
         }
     } catch (error) {
-        console.error("Failed to choose target directory:", error);
+        logger.error("Failed to choose target directory:", error);
     }
 };
 
@@ -311,7 +318,7 @@ const updateFileType = (
     stepData: any,
     setStepData: (stepId: string, data: any) => void,
 ) => {
-    const currentFilters = stepData.filters || createDefaultFilters();
+    const currentFilters = stepData.filters || createDefaultFilters(excludePaths.value);
     const updatedFilters = updateFileTypeFilter(currentFilters, type as any, enabled);
     setStepData("configuration", { ...stepData, filters: updatedFilters });
 };
@@ -350,62 +357,101 @@ const handleImportCancel = () => {
     importConfig.value = null;
 };
 
+/**
+ * 处理向导步骤切换事件
+ *
+ * 关键修复说明：
+ * - 该函数现在在步骤实际切换前被调用（之前是切换后）
+ * - 这确保了每个步骤在用户进入前都有正确初始化的数据
+ * - 特别解决了预览步骤因缺少配置数据而无法加载的问题
+ *
+ * @param stepId - 即将进入的步骤ID（'configuration' 或 'preview'）
+ * @param stepIndex - 即将进入的步骤索引（0 或 1）
+ * @param wizardState - 包含stepData和setStepData的向导状态对象
+ */
 const handleStepChange = async (stepId: string, stepIndex: number, wizardState: any) => {
-    console.log(`Step changed to: ${stepId} (${stepIndex})`);
-
-    // Store wizard state reference
+    logger.debug(`=== Step Change Debug ===`);
+    logger.debug(`Preparing for step: ${stepId} (${stepIndex})`);
+    logger.debug("Current stepData:", wizardState.stepData);
+    // 保存向导状态引用，供其他函数使用
     wizardStateRef.value = wizardState;
+    // 确保配置步骤数据已初始化
+    // 这是所有步骤的基础数据，包含源目录、目标目录、文件过滤器等
 
-    // Initialize data if this is the first time we get wizard state
     if (!wizardState.stepData.configuration) {
+        logger.debug("Initializing configuration data...");
         const configData = createInitialConfigurationData(
             props.initialSourcePaths,
+            // 来自父组件的初始源路径
             props.initialTargetPath,
+            // 来自父组件的初始目标路径
             store.paths,
+            // 来自偏好设置的可用路径列表
+            excludePaths.value,
+            // 来自偏好设置的排除路径列表
         );
         wizardState.setStepData("configuration", configData);
     }
-
-    if (!wizardState.stepData.preview) {
-        const previewData = createInitialPreviewData();
-        wizardState.setStepData("preview", previewData);
-    }
-
-    // Load preview data when entering preview step
+    // 处理预览步骤的特殊初始化和数据加载
     if (stepId === "preview") {
+        logger.debug("Preparing preview step, initializing and loading data...");
+        // 初始化空的预览数据结构（如果还不存在）
+        if (!wizardState.stepData.preview) {
+            const previewData = createInitialPreviewData();
+            wizardState.setStepData("preview", previewData);
+        }
+        // 验证配置数据是否存在并有效，然后加载预览数据
+        logger.debug("Configuration data:", wizardState.stepData.configuration);
+        logger.debug("Configuration filters:", wizardState.stepData.configuration.filters);
         await loadPreviewData(wizardState);
     }
+    logger.debug(`========================`);
 };
 
 /**
- * Load preview data from the API based on configuration
- * @param wizardState - Current wizard state containing step data and setStepData function
+ * 从API加载预览数据
+ *
+ * 该函数基于用户在配置步骤中设置的参数调用后端API获取文件预览数据
+ * 包括文件列表、统计信息、分组信息等，用于在预览步骤中展示
+ *
+ * @param wizardState - 包含stepData和setStepData的当前向导状态对象
  */
 const loadPreviewData = async (wizardState: any) => {
     const configData = wizardState.stepData.configuration;
 
-    // Validate configuration data before proceeding
+    // 在调用API前验证配置数据的完整性和有效性
+    // 必须有有效的源目录、目标目录和文件过滤器设置
     if (!validateConfigurationStep(configData)) {
-        console.error("Invalid configuration data for preview");
+        logger.error("Invalid configuration data for preview");
+        // 如果配置无效，设置空的预览数据并终止加载
         wizardState.setStepData("preview", createInitialPreviewData());
         return;
     }
 
     try {
-        // Create preview config using pure function
+        // 将向导配置数据转换为API调用所需的格式
+        // 这是一个纯函数，确保数据转换的一致性和可测试性
         const config = createPreviewConfig(configData);
 
-        // Call preview API
+        // 调试：检查config对象的结构和可序列化性
+        logger.debug("Preview config before API call:", config);
+        logger.debug("Config filters:", config.filters);
+        logger.debug("Config filters dateRange:", config.filters.dateRange);
+
+        // 调用后端API获取预览数据
+        // 该API会扫描源目录，应用过滤器，返回文件列表和统计信息
         const previewResponse = await previewImport(config);
 
-        // Transform response using pure function
+        // 将API响应转换为前端组件所需的数据格式
+        // 包括文件分组、选择状态、统计信息等
         const previewData = transformPreviewResponse(previewResponse);
 
-        // Update preview step data
+        // 更新预览步骤的数据，触发UI重新渲染
         wizardState.setStepData("preview", previewData);
     } catch (error) {
-        console.error("Failed to load preview:", error);
-        // Initialize empty preview data on error using pure function
+        logger.error("Failed to load preview:", error);
+        // 发生错误时设置空的预览数据，防止UI崩溃
+        // 用户可以返回配置步骤修改设置后重试
         wizardState.setStepData("preview", createInitialPreviewData());
     }
 };
@@ -421,6 +467,7 @@ const initializeConfigurationData = (setStepData: (stepId: string, data: any) =>
         props.initialSourcePaths,
         props.initialTargetPath,
         store.paths,
+        excludePaths.value,
     );
     setStepData("configuration", configData);
     return null; // Return null so it doesn't render anything
@@ -449,11 +496,12 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
     <BaseWizard
         :open="show"
         :config="wizardConfig"
-        size="xl"
+        size="custom"
         :persistent="true"
         :show-progress-bar="true"
         :show-step-descriptions="true"
         :show-navigation="false"
+        style="--modal-width: 800px"
         @update:open="$emit('update:show', $event)"
         @complete="handleWizardComplete"
         @cancel="handleWizardCancel"
@@ -601,6 +649,9 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
                         />
                     </div>
                 </div>
+
+                <!-- 额外的底部空间，确保下拉菜单有足够空间展开 -->
+                <div class="pb-20"></div>
             </div>
         </template>
 

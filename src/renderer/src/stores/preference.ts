@@ -25,6 +25,8 @@ export type PreferenceState = {
     currentFolderConfig: PhotasaConfig;
     folderTree: DataNode[];
     themeId: string; // 当前主题 id
+    // 导入时排除的路径模式（如 .photasaoriginal, .git 等）
+    excludePaths: string[];
 };
 
 export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
@@ -44,6 +46,15 @@ export const usePreferenceStore = defineStore("preference", {
             currentFolderConfig: <PhotasaConfig>{},
             folderTree: [],
             themeId: "solarized-dark", // 默认空，首次加载时由 theme-manager 设定
+            // 默认排除的路径模式
+            excludePaths: [
+                ".photasaoriginal", // Photasa原始文件跟踪文件夹
+                ".DS_Store", // macOS系统文件
+                "Thumbs.db", // Windows缩略图文件
+                ".git", // Git版本控制文件夹
+                ".svn", // SVN版本控制文件夹
+                "node_modules", // Node.js依赖文件夹
+            ],
         };
     },
     persist: true,
@@ -203,6 +214,45 @@ export const usePreferenceStore = defineStore("preference", {
         },
         setThemeId(themeId: string) {
             this.themeId = themeId;
+        },
+        /**
+         * 更新排除路径列表
+         * @param excludePaths 新的排除路径数组
+         */
+        updateExcludePaths(excludePaths: string[]) {
+            this.excludePaths = excludePaths;
+        },
+        /**
+         * 添加单个排除路径
+         * @param path 要添加的路径模式
+         */
+        addExcludePath(path: string) {
+            if (!this.excludePaths.includes(path)) {
+                this.excludePaths.push(path);
+            }
+        },
+        /**
+         * 移除单个排除路径
+         * @param path 要移除的路径模式
+         */
+        removeExcludePath(path: string) {
+            const index = this.excludePaths.indexOf(path);
+            if (index >= 0) {
+                this.excludePaths.splice(index, 1);
+            }
+        },
+        /**
+         * 重置为默认排除路径
+         */
+        resetExcludePaths() {
+            this.excludePaths = [
+                ".photasaoriginal",
+                ".DS_Store",
+                "Thumbs.db",
+                ".git",
+                ".svn",
+                "node_modules",
+            ];
         },
         /**
          * 重置所有目录存储

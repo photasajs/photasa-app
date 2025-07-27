@@ -34,7 +34,7 @@ parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
     logger.debug(`[import-worker] 收到消息: ${JSON.stringify(message)}`);
 
     try {
-        const { action, payload } = message;
+        const { action } = message;
 
         switch (action) {
             case "extract_metadata":

@@ -626,3 +626,11 @@ AI自动选择最优方案进行执行。
 - 一组件库的理念组织设计UI，对负责组件应进行子组件责任模组分拆。
 - 基础组件一Base前缀开头，应用领域的需要一Primitive前缀开头
 - 优先使用 tsx设计 组件应以独立目录形式组织 如果需要多个文件支持
+
+
+# Debugging Rules
+
+1. Don't run the app as you can't verify it, instead give guidance how to verify
+2. Don't use console.log, use logger
+3. Don't use any to bypass lint, use proper type, as TypeScript is type first.
+4. For CSS, don't use !important which cause maintain issue.

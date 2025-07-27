@@ -1,8 +1,16 @@
 # RFC 0001: Import Wizard System
-
+- **RFC**: 0001
+- **Title**: Import Wizard System
+- **Author**: Picasa Vue Team
 - **Start Date**: 2025-07-26
 - **RFC PR**: (leave this empty)
 - **Implementation Issue**: (leave this empty)
+- **Status**: In Progress
+- **Assignee**: Development Team
+- **Reviewers**: Product Team, UX Team, Engineering Team
+- **Target Release**: v2.1.0
+- **Implementation PR**: #XXX
+- **Implementation Date**: 2024-01-XX
 
 ## Summary
 
@@ -355,10 +363,3 @@ The Import Wizard System represents a significant improvement to the photo manag
 The proposed architecture separates concerns effectively, uses pure functions for business logic, and provides comprehensive testing coverage. The phased implementation plan allows for iterative development and early feedback.
 
 ---
-
-**Status**: In Progress  
-**Assignee**: Development Team  
-**Reviewers**: Product Team, UX Team, Engineering Team  
-**Target Release**: v2.1.0  
-**Implementation PR**: #XXX  
-**Implementation Date**: 2024-01-XX

@@ -7,6 +7,9 @@
 
 import type { ImportConfig, DuplicateStrategy, ImportFilters } from "@common/import-types";
 import { createDefaultFilters } from "./import-helpers";
+import { getLogger } from "@common/logger";
+
+const logger = getLogger("import-wizard-helpers");
 
 /**
  * Validates if the configuration step has the minimum required data
@@ -58,12 +61,14 @@ export function validatePreviewStep(previewData: any): boolean {
  * @param initialSourcePaths - Initial source paths (optional)
  * @param initialTargetPath - Initial target path (optional)
  * @param defaultPaths - Default paths from store
+ * @param excludePaths - Exclude paths from preference store
  * @returns Configuration data object
  */
 export function createInitialConfigurationData(
     initialSourcePaths: string[] = [],
     initialTargetPath = "",
     defaultPaths: string[] = [],
+    excludePaths?: string[],
 ): {
     sourcePaths: string[];
     targetPath: string;
@@ -73,7 +78,7 @@ export function createInitialConfigurationData(
     return {
         sourcePaths: Array.isArray(initialSourcePaths) ? [...initialSourcePaths] : [],
         targetPath: initialTargetPath || defaultPaths[0] || "",
-        filters: createDefaultFilters(),
+        filters: createDefaultFilters(excludePaths),
         duplicateStrategy: "rename" as DuplicateStrategy,
     };
 }
@@ -138,6 +143,7 @@ export function transformPreviewResponse(previewResponse: any): {
     totalSize: number;
     statistics: any;
 } {
+    // 确保previewResponse是一个对象，并且包含预期的属性
     return {
         files: previewResponse.fileGroups || [],
         selectedFiles: new Set(previewResponse.fileGroups?.map((g: any) => g.mainFile.path) || []),
@@ -154,17 +160,75 @@ export function transformPreviewResponse(previewResponse: any): {
 
 /**
  * Creates an ImportConfig object for preview API call
+ *
+ * 关键修复：确保所有传递给API的数据都是可序列化的，特别是Date对象需要转换为字符串
+ * 这解决了"An object could not be cloned"的IPC序列化错误
+ *
  * @param configData - Configuration step data
- * @returns ImportConfig object for API call
+ * @returns ImportConfig object for API call (fully serializable)
  */
 export function createPreviewConfig(configData: any): ImportConfig {
-    return {
-        sourcePaths: configData.sourcePaths || [],
-        targetPath: configData.targetPath || "",
-        filters: configData.filters || createDefaultFilters(),
-        duplicateStrategy: configData.duplicateStrategy || "rename",
+    /**
+     * 深度序列化数据，确保没有任何不可序列化的对象（Date、Set、Function等）
+     * 这是解决IPC "An object could not be cloned" 错误的关键步骤
+     */
+
+    // 首先对整个configData进行JSON序列化/反序列化，移除所有不可序列化的对象
+    let cleanConfigData;
+    try {
+        cleanConfigData = JSON.parse(JSON.stringify(configData));
+    } catch (error) {
+        logger.warn("Config data contains non-serializable objects, using defaults:", error);
+        cleanConfigData = {};
+    }
+
+    // 获取过滤器，如果JSON序列化移除了Date对象，则重新创建
+    // 保留原有的excludePaths，这是从store配置中传递过来的
+    const originalFilters =
+        cleanConfigData.filters || createDefaultFilters(cleanConfigData.filters?.excludePaths);
+
+    // 创建完全可序列化的过滤器对象
+    const serializableFilters = {
+        fileTypes: Array.isArray(originalFilters.fileTypes)
+            ? originalFilters.fileTypes
+            : ["image", "video"],
+        sizeRange: originalFilters.sizeRange || { min: 0, max: Number.MAX_SAFE_INTEGER },
+        // 确保dateRange是字符串格式，适合IPC传输
+        dateRange: {
+            start:
+                typeof originalFilters.dateRange?.start === "string"
+                    ? originalFilters.dateRange.start
+                    : new Date(0).toISOString(),
+            end:
+                typeof originalFilters.dateRange?.end === "string"
+                    ? originalFilters.dateRange.end
+                    : new Date().toISOString(),
+        },
+        includeSubfolders: originalFilters.includeSubfolders ?? true,
+        // 使用来自配置的排除路径，由store管理
+        excludePaths: Array.isArray(originalFilters.excludePaths)
+            ? originalFilters.excludePaths
+            : [], // 如果没有配置，使用空数组
+    };
+
+    // 创建完全可序列化的配置对象
+    const config = {
+        sourcePaths: Array.isArray(cleanConfigData.sourcePaths) ? cleanConfigData.sourcePaths : [],
+        targetPath:
+            typeof cleanConfigData.targetPath === "string" ? cleanConfigData.targetPath : "",
+        filters: serializableFilters,
+        duplicateStrategy: cleanConfigData.duplicateStrategy || "rename",
         fileGroups: [],
-        selectedFiles: [],
+        selectedFiles: [], // 预览阶段不需要选中文件
         allowDuplicateRename: true,
     };
+
+    // 最终验证：再次序列化确保完全可序列化
+    try {
+        JSON.stringify(config);
+        return config;
+    } catch (error) {
+        logger.error("Preview config still contains non-serializable data:", error);
+        throw new Error("Failed to create serializable preview configuration");
+    }
 }

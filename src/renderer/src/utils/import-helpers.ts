@@ -12,13 +12,23 @@ import type {
 
 /**
  * 创建默认的导入过滤器
+ * @param excludePaths 可选的排除路径数组，如果不提供则使用默认值
  */
-export function createDefaultFilters(): ImportFilters {
+export function createDefaultFilters(excludePaths?: string[]): ImportFilters {
     return {
         fileTypes: ["image", "video"] as FileType[],
         sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
         dateRange: { start: new Date(0), end: new Date() },
         includeSubfolders: true,
+        // 使用提供的排除路径或默认值
+        excludePaths: excludePaths || [
+            ".photasaoriginal", // Photasa原始文件跟踪文件夹
+            ".DS_Store", // macOS系统文件
+            "Thumbs.db", // Windows缩略图文件
+            ".git", // Git版本控制文件夹
+            ".svn", // SVN版本控制文件夹
+            "node_modules", // Node.js依赖文件夹
+        ],
     };
 }
 

@@ -31,7 +31,7 @@ import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useMenusStore } from "@renderer/stores/menus";
-import { NotificationContainer } from "@renderer/components/ui";
+import { NotificationContainer, PortalProvider } from "@renderer/components/ui";
 
 /**
  * 日志记录器
@@ -67,9 +67,9 @@ function handleOpenScanList() {
     showScanList.value = true;
 }
 function handleOpenImportPhotos() {
-    console.log("Opening import photos dialog...");
+    logger.debug("Opening import photos dialog...");
     showImportDialog.value = true;
-    console.log("showImportDialog.value:", showImportDialog.value);
+    logger.debug("showImportDialog.value:", showImportDialog.value);
 }
 function handleOpenPreference() {
     showPreference.value = true;
@@ -323,6 +323,9 @@ findPhotoService.onFindPhoto((args: any) => {
 
     <!-- 通知容器 -->
     <NotificationContainer />
+
+    <!-- Portal提供者 - 为下拉菜单等组件提供渲染目标 -->
+    <PortalProvider />
 </template>
 
 <style lang="less">

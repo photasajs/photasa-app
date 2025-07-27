@@ -113,6 +113,8 @@ export interface ImportFilters {
     sizeRange: { min: number; max: number };
     dateRange: { start: Date; end: Date };
     includeSubfolders: boolean;
+    // 排除路径列表，用于忽略特定文件夹（如.photasaoriginal, .git等）
+    excludePaths?: string[];
 }
 
 /**

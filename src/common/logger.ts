@@ -1,4 +1,3 @@
-import { get } from "http";
 import log4js from "log4js";
 import type { Logger } from "log4js";
 
