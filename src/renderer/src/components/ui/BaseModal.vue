@@ -1,5 +1,5 @@
 <template>
-    <Dialog :open="open" @close="$emit('close')" class="relative z-50">
+    <Dialog :open="open" @close="handleClose" class="relative z-50">
         <!-- 背景遮罩 -->
         <div class="fixed inset-0 bg-black/30" aria-hidden="true" />
 
@@ -7,7 +7,7 @@
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <DialogPanel
                 :class="[
-                    'w-full max-w-md transform overflow-hidden rounded-lg shadow-xl transition-all',
+                    'w-full transform overflow-hidden rounded-lg shadow-xl transition-all',
                     'bg-[var(--color-card-bg)] border border-[var(--color-border)]',
                     sizeClasses,
                 ]"
@@ -40,10 +40,10 @@
                     v-else-if="showDefaultFooter"
                     class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3"
                 >
-                    <BaseButton variant="secondary" @click="$emit('cancel')">
+                    <BaseButton variant="secondary" @click="emit('cancel')">
                         {{ cancelText }}
                     </BaseButton>
-                    <BaseButton variant="primary" @click="$emit('confirm')">
+                    <BaseButton variant="primary" @click="emit('confirm')">
                         {{ confirmText }}
                     </BaseButton>
                 </div>
@@ -51,7 +51,7 @@
                 <!-- 关闭按钮 -->
                 <button
                     v-if="closable"
-                    @click="$emit('close')"
+                    @click="emit('close')"
                     class="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
                 >
                     <XMarkIcon class="h-5 w-5" />
@@ -75,6 +75,7 @@ interface Props {
     showDefaultFooter?: boolean;
     confirmText?: string;
     cancelText?: string;
+    persistent?: boolean; // Prevents closing on click outside
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -83,13 +84,20 @@ const props = withDefaults(defineProps<Props>(), {
     showDefaultFooter: false,
     confirmText: "Confirm",
     cancelText: "Cancel",
+    persistent: false,
 });
 
-defineEmits<{
+const emit = defineEmits<{
     close: [];
     confirm: [];
     cancel: [];
 }>();
+
+const handleClose = () => {
+    if (!props.persistent) {
+        emit("close");
+    }
+};
 
 const sizeClasses = computed(() => {
     switch (props.size) {

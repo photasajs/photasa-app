@@ -1,5 +1,6 @@
 import createWorker from "./import-worker?nodeWorker";
 import type { IpcMain } from "electron";
+import { dialog } from "electron";
 import type { WorkerResponse } from "@common/types";
 import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
 import { getLogger } from "@common/logger";
@@ -41,9 +42,13 @@ export default class ImportService {
     // 导入进度回调
     private progressCallbacks = new Map<string, EnhancedImportCallback>();
 
-    constructor(ipcMain: IpcMain) {
+    constructor(
+        ipcMain: IpcMain,
+        private mainWindow?: Electron.BrowserWindow,
+    ) {
         this.ipc = ipcMain;
-        this.logger.debug("Creating import worker");
+        this.logger.info("ImportService: Creating import service...");
+        this.logger.info(`ImportService: mainWindow provided: ${!!mainWindow}`);
 
         // 创建 worker
         this.worker = createWorker({ workerData: "worker" });
@@ -64,11 +69,14 @@ export default class ImportService {
      * 设置IPC处理器
      */
     private setupIpcHandlers(): void {
+        this.logger.info("[import-service] Setting up IPC handlers...");
         // 扫描源目录
         this.ipc.handle(
             "import:scan-directories",
             async (_, paths: string[], filters?: ImportFilters) => {
-                this.logger.info(`[import-service] Scan directories: ${paths.join(", ")}`);
+                this.logger.info(
+                    `[import-service] Scan directories: ${paths?.join(", ") || "无路径"}`,
+                );
                 return await this.scanDirectories(paths, filters);
             },
         );
@@ -76,7 +84,7 @@ export default class ImportService {
         // 预览导入
         this.ipc.handle("import:preview", async (_, config: ImportConfig) => {
             this.logger.info(
-                `[import-service] Preview import from: ${config.sourcePaths.join(", ")}`,
+                `[import-service] Preview import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
             );
             return await this.previewImport(config);
         });
@@ -86,7 +94,7 @@ export default class ImportService {
             "import:execute",
             async (_, config: ImportConfig, callback?: EnhancedImportCallback) => {
                 this.logger.info(
-                    `[import-service] Execute import from: ${config.sourcePaths.join(", ")}`,
+                    `[import-service] Execute import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
                 );
                 return await this.executeImport(config, callback);
             },
@@ -142,6 +150,7 @@ export default class ImportService {
         // 选择多个目录
         this.ipc.handle("import:choose-directories", async (_, multiSelect = true) => {
             this.logger.info(`[import-service] Choose directories (multiSelect: ${multiSelect})`);
+            this.logger.info(`[import-service] mainWindow exists: ${!!this.mainWindow}`);
             return await this.chooseDirectories(multiSelect);
         });
 
@@ -156,7 +165,7 @@ export default class ImportService {
      * 扫描多个源目录，获取文件组信息
      */
     private async scanDirectories(paths: string[], filters?: ImportFilters): Promise<FileGroup[]> {
-        this.logger.info(`[import-service] Scanning directories: ${paths.join(", ")}`);
+        this.logger.info(`[import-service] Scanning directories: ${paths?.join(", ") || "无路径"}`);
 
         try {
             const request: ScanDirectoriesRequest = { paths, filters };
@@ -184,6 +193,19 @@ export default class ImportService {
      */
     private async previewImport(config: ImportConfig): Promise<ImportPreview> {
         this.logger.info(`[import-service] Generating import preview`);
+
+        // 验证配置
+        if (!config.sourcePaths || !Array.isArray(config.sourcePaths)) {
+            this.logger.error(
+                `[import-service] Invalid sourcePaths: ${typeof config.sourcePaths}, value: ${JSON.stringify(config.sourcePaths)}`,
+            );
+            throw new Error("sourcePaths must be a non-empty array");
+        }
+
+        if (config.sourcePaths.length === 0) {
+            this.logger.warn(`[import-service] Empty sourcePaths array`);
+            throw new Error("sourcePaths cannot be empty");
+        }
 
         try {
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
@@ -423,9 +445,25 @@ export default class ImportService {
         this.logger.info(`[import-service] Choosing directories (multiSelect: ${multiSelect})`);
 
         try {
-            // 这里应该调用系统的目录选择对话框
-            // 暂时返回空结果，实际实现需要集成Electron的dialog
-            return { filePaths: [] };
+            this.logger.info("[import-service] 准备显示目录选择对话框...");
+            const result = await dialog.showOpenDialog(this.mainWindow || undefined, {
+                properties: multiSelect ? ["openDirectory", "multiSelections"] : ["openDirectory"],
+                title: multiSelect ? "Select Source Directories" : "Select Target Directory",
+            });
+
+            this.logger.info(
+                `[import-service] 对话框结果: canceled=${result.canceled}, paths=${result.filePaths?.length || 0}`,
+            );
+
+            if (result.canceled) {
+                this.logger.info("[import-service] 用户取消了对话框");
+                return { filePaths: [] };
+            }
+
+            this.logger.info(
+                `[import-service] Selected directories: ${result.filePaths?.join(", ") || "无路径"}`,
+            );
+            return { filePaths: result.filePaths };
         } catch (error) {
             this.logger.error(`[import-service] Choose directories failed: ${error}`);
             throw error;

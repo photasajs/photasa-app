@@ -40,12 +40,17 @@
         "addSource": "Quellverzeichnis hinzufügen",
         "browse": "Durchsuchen",
         "options": "Importoptionen",
-        "fileTypes": "Dateitypen",
+        "fileTypes": {
+            "label": "Dateitypen",
+            "images": "Bilder",
+            "videos": "Videos"
+        },
         "images": "Bilder",
         "videos": "Videos",
         "includeSubfolders": "Unterordner einschließen",
         "duplicateHandling": "Behandlung von Duplikaten",
         "duplicate": {
+            "label": "Duplikat",
             "rename": "Umbenennen",
             "skip": "Überspringen",
             "overwrite": "Überschreiben",
@@ -57,7 +62,6 @@
         "duplicates": "Duplikate",
         "moreFiles": "{count} weitere Dateien",
         "group": "{count} Dateien",
-        "progress": "Fortschritt",
         "processing": "Verarbeitung",
         "previewButton": "Vorschau",
         "importButton": "Importieren",
@@ -65,6 +69,12 @@
         "pauseButton": "Pausieren",
         "resumeButton": "Fortsetzen",
         "closeButton": "Schließen",
+        "nextButton": "Weiter",
+        "backButton": "Zurück",
+        "doneButton": "Fertig",
+        "importFailed": "Import fehlgeschlagen",
+        "importCompleted": "Import abgeschlossen",
+        "importCompletedDesc": "{count} Dateien erfolgreich importiert",
         "selectTarget": "Zielverzeichnis auswählen",
         "filePreview": "Dateivorschau",
         "selectAll": "Alle auswählen",
@@ -76,7 +86,6 @@
         "pagination": "{start}-{end} von {total}",
         "toggleSelection": "Auswahl umschalten",
         "viewDetails": "Details anzeigen",
-        "duplicate": "Duplikat",
         "image": "Bild",
         "video": "Video",
         "unknown": "Unbekannt",
@@ -85,7 +94,6 @@
         "fileName": "Dateiname",
         "fileSize": "Dateigröße",
         "fileType": "Dateityp",
-        "dateSource": "Datumsquelle",
         "dateTime": "Datum & Zeit",
         "modifiedTime": "Änderungszeit",
         "groupFiles": "Gruppendateien",
@@ -143,11 +151,8 @@
             "thisMonth": "Dieser Monat",
             "lastMonth": "Letzter Monat"
         },
-        "fileTypes": {
-            "images": "Bilder",
-            "videos": "Videos"
-        },
         "dateSource": {
+            "label": "Datumsquelle",
             "exif": "EXIF-Metadaten",
             "file_created": "Datei erstellt",
             "file_modified": "Datei geändert",
@@ -234,7 +239,15 @@
         "cancelAllProgress": "{completed} von {total} Verzeichnissen abgeschlossen",
         "recentFiles": "Aktuelle Dateien",
         "elapsed": "Vergangen",
-        "files": "Dateien"
+        "files": "Dateien",
+        "steps": {
+            "configuration": "Konfiguration",
+            "configurationDesc": "Quell- und Zielverzeichnisse auswählen",
+            "preview": "Vorschau",
+            "previewDesc": "Dateien zum Importieren überprüfen und auswählen",
+            "importing": "Importieren",
+            "importingDesc": "Dateien in das Zielverzeichnis importieren"
+        }
     },
     "menu": {
         "getInfo": "Foto-Info",
@@ -334,7 +347,6 @@
         "resources": {
             "title": "Ressourcen",
             "content": "Entdecken Sie zusätzliche Ressourcen und Dokumentation für Photasa.",
-            "and": "und",
             "download": "Ressourcen herunterladen"
         },
         "press": "Drücken Sie",
@@ -357,11 +369,6 @@
             "light": "Hell",
             "dark": "Dunkel"
         }
-    },
-    "resetFolders": {
-        "title": "Erweiterte Aktion: Verzeichnis-Speicher zurücksetzen",
-        "desc": "Diese Aktion löscht alle Verzeichniseinstellungen und baut den Cache sofort neu auf. Diese Aktion ist nicht umkehrbar. Bitte mit Vorsicht fortfahren!",
-        "button": "Verzeichnis-Speicher zurücksetzen"
     },
     "scan": {
         "queueTitle": "Scan-Warteschlange",

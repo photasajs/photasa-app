@@ -40,22 +40,28 @@
         "addSource": "Agregar Directorio de Origen",
         "browse": "Examinar",
         "options": "Opciones de Importación",
-        "fileTypes": "Tipos de Archivo",
+        "fileTypes": {
+            "label": "Tipos de Archivo",
+            "images": "Imágenes",
+            "videos": "Videos"
+        },
         "images": "Imágenes",
         "videos": "Videos",
         "includeSubfolders": "Incluir Subcarpetas",
         "duplicateHandling": "Manejo de Duplicados",
-        "rename": "Renombrar",
-        "skip": "Omitir",
-        "overwrite": "Sobrescribir",
-        "keepBoth": "Mantener Ambos",
+        "duplicate": {
+            "label": "Duplicado",
+            "rename": "Renombrar",
+            "skip": "Omitir",
+            "overwrite": "Sobrescribir",
+            "keepBoth": "Mantener Ambos"
+        },
         "preview": "Vista Previa",
         "totalFiles": "Total de Archivos",
         "totalSize": "Tamaño Total",
         "duplicates": "Duplicados",
         "moreFiles": "{count} archivos más",
         "group": "{count} archivos",
-        "progress": "Progreso",
         "processing": "Procesando",
         "previewButton": "Vista Previa",
         "importButton": "Importar",
@@ -63,6 +69,12 @@
         "pauseButton": "Pausar",
         "resumeButton": "Reanudar",
         "closeButton": "Cerrar",
+        "nextButton": "Siguiente",
+        "backButton": "Atrás",
+        "doneButton": "Listo",
+        "importFailed": "Importación fallida",
+        "importCompleted": "Importación completada",
+        "importCompletedDesc": "Se importaron exitosamente {count} archivos",
         "selectTarget": "Seleccionar Directorio de Destino",
         "filePreview": "Vista Previa de Archivo",
         "selectAll": "Seleccionar Todo",
@@ -74,7 +86,6 @@
         "pagination": "{start}-{end} de {total}",
         "toggleSelection": "Alternar Selección",
         "viewDetails": "Ver Detalles",
-        "duplicate": "Duplicado",
         "image": "Imagen",
         "video": "Video",
         "unknown": "Desconocido",
@@ -83,7 +94,6 @@
         "fileName": "Nombre del Archivo",
         "fileSize": "Tamaño del Archivo",
         "fileType": "Tipo de Archivo",
-        "dateSource": "Fuente de Fecha",
         "dateTime": "Fecha y Hora",
         "modifiedTime": "Hora de Modificación",
         "groupFiles": "Archivos del Grupo",
@@ -141,11 +151,8 @@
             "thisMonth": "Este Mes",
             "lastMonth": "Mes Pasado"
         },
-        "fileTypesOptions": {
-            "images": "Imágenes",
-            "videos": "Videos"
-        },
-        "dateSourceOptions": {
+        "dateSource": {
+            "label": "Fuente de Fecha",
             "exif": "Metadatos EXIF",
             "file_created": "Archivo Creado",
             "file_modified": "Archivo Modificado",
@@ -232,7 +239,15 @@
         "cancelAllProgress": "{completed} de {total} directorios completados",
         "recentFiles": "Archivos Recientes",
         "elapsed": "Transcurrido",
-        "files": "Archivos"
+        "files": "Archivos",
+        "steps": {
+            "configuration": "Configuración",
+            "configurationDesc": "Seleccionar directorios de origen y destino",
+            "preview": "Vista previa",
+            "previewDesc": "Revisar y seleccionar archivos para importar",
+            "importing": "Importando",
+            "importingDesc": "Importar archivos al directorio de destino"
+        }
     },
     "menu": {
         "getInfo": "Información de la foto",
@@ -354,11 +369,6 @@
             "light": "Claro",
             "dark": "Oscuro"
         }
-    },
-    "resetFolders": {
-        "title": "Acción avanzada: Restablecer almacenamiento de directorios",
-        "desc": "Esta acción borrará todas las configuraciones de directorios y reconstruirá la caché inmediatamente. Esta acción es irreversible. ¡Proceda con precaución!",
-        "button": "Restablecer almacenamiento de directorios"
     },
     "advancedSettings": {
         "title": "Configuración avanzada",

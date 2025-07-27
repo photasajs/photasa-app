@@ -1,3 +1,4 @@
+import { get } from "http";
 import log4js from "log4js";
 import type { Logger } from "log4js";
 
@@ -80,4 +81,5 @@ export const loggers: Record<string, PhotasaLogger> = {
     watch: getLogger("watch"),
     window: getLogger("window"),
     shell: getLogger("shell"),
+    api: getLogger("api"),
 };

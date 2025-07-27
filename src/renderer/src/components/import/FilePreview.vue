@@ -107,7 +107,7 @@
                                             color="orange"
                                             size="small"
                                         >
-                                            {{ t("import.duplicate") }}
+                                            {{ t("import.duplicate.label") }}
                                         </a-tag>
                                         <a-tag
                                             v-if="group.mainFile.type === 'image'"
@@ -175,7 +175,7 @@
                         <a-descriptions-item :label="t('import.fileType')">
                             {{ selectedGroup.mainFile.type }}
                         </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.dateSource')">
+                        <a-descriptions-item :label="t('import.dateSource.label')">
                             {{ t(`import.dateSource.${selectedGroup.mainFile.dateSource}`) }}
                         </a-descriptions-item>
                         <a-descriptions-item :label="t('import.dateTime')">

@@ -19,7 +19,12 @@
         "thumbnailSize": "Thumbnail Size",
         "darkMode": "Dark Mode",
         "language": "Language",
-        "scanning": "Scanning"
+        "scanning": "Scanning",
+        "resetFolders": {
+            "title": "Advanced Action: Reset Directory Storage",
+            "desc": "This will clear all directory settings and rebuild cache immediately. This action is irreversible. Proceed with caution!",
+            "button": "Reset Directory Storage"
+        }
     },
     "import": {
         "title": "Import Photos",
@@ -40,9 +45,12 @@
             "images": "Images",
             "videos": "Videos"
         },
+        "images": "Images",
+        "videos": "Videos",
         "includeSubfolders": "Include Subfolders",
         "duplicateHandling": "Duplicate Handling",
         "duplicate": {
+            "label": "Duplicate",
             "rename": "Rename",
             "skip": "Skip",
             "overwrite": "Overwrite",
@@ -54,7 +62,6 @@
         "duplicates": "Duplicates",
         "moreFiles": "{count} more files",
         "group": "{count} files",
-        "progress": "Progress",
         "processing": "Processing",
         "previewButton": "Preview",
         "importButton": "Import",
@@ -62,6 +69,12 @@
         "pauseButton": "Pause",
         "resumeButton": "Resume",
         "closeButton": "Close",
+        "nextButton": "Next",
+        "backButton": "Back",
+        "doneButton": "Done",
+        "importFailed": "Import Failed",
+        "importCompleted": "Import Completed",
+        "importCompletedDesc": "Successfully imported {count} files",
         "selectTarget": "Select Target Directory",
         "filePreview": "File Preview",
         "selectAll": "Select All",
@@ -81,7 +94,6 @@
         "fileName": "File Name",
         "fileSize": "File Size",
         "fileType": "File Type",
-        "dateSource": "Date Source",
         "dateTime": "Date & Time",
         "modifiedTime": "Modified Time",
         "groupFiles": "Group Files",
@@ -140,6 +152,7 @@
             "lastMonth": "Last Month"
         },
         "dateSource": {
+            "label": "Date Source",
             "exif": "EXIF Metadata",
             "file_created": "File Created",
             "file_modified": "File Modified",
@@ -226,7 +239,15 @@
         "cancelAllProgress": "{completed} of {total} directories completed",
         "recentFiles": "Recent Files",
         "elapsed": "Elapsed",
-        "files": "Files"
+        "files": "Files",
+        "steps": {
+            "configuration": "Configuration",
+            "configurationDesc": "Select source and target directories",
+            "preview": "Preview",
+            "previewDesc": "Review and select files to import",
+            "importing": "Importing",
+            "importingDesc": "Import files to target directory"
+        }
     },
     "menu": {
         "getInfo": "Photo Info",
@@ -282,6 +303,11 @@
             "title": "Select Folder",
             "message": "Please select a folder and complete the addition."
         },
+        "scanError": {
+            "title": "Scan Error",
+            "message": "Failed to scan subfolders of [{path}]. Error: {error}. Main folder will still be added."
+        },
+        "unknownError": "An unknown error occurred",
         "resetFolders": {
             "title": "Reset Complete",
             "message": "All folder caches have been rebuilt."
@@ -321,7 +347,6 @@
         "resources": {
             "title": "Resources",
             "content": "The following resources are available:",
-            "and": "and",
             "download": "Download Resources"
         },
         "press": "Press",
@@ -344,11 +369,6 @@
             "light": "Light",
             "dark": "Dark"
         }
-    },
-    "resetFolders": {
-        "title": "Advanced Action: Reset Folder Storage",
-        "desc": "This action will clear all folder settings and immediately rebuild the cache. This action is irreversible. Please proceed with caution!",
-        "button": "Reset Folder Storage"
     },
     "scan": {
         "queueTitle": "Scan Queue",

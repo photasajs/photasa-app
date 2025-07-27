@@ -42,6 +42,7 @@
         "browse": "瀏覽",
         "options": "導入選項",
         "fileTypes": {
+            "label": "檔案類型",
             "images": "圖片",
             "videos": "影片"
         },
@@ -50,6 +51,7 @@
         "includeSubfolders": "包含子資料夾",
         "duplicateHandling": "重複處理",
         "duplicate": {
+            "label": "重複",
             "rename": "重新命名",
             "skip": "跳過",
             "overwrite": "覆寫",
@@ -61,7 +63,6 @@
         "duplicates": "重複檔案",
         "moreFiles": "還有 {count} 個檔案",
         "group": "{count} 個檔案",
-        "progress": "進度",
         "processing": "處理中",
         "previewButton": "預覽",
         "importButton": "導入",
@@ -69,6 +70,12 @@
         "resumeButton": "繼續",
         "cancelButton": "取消",
         "closeButton": "關閉",
+        "nextButton": "下一步",
+        "backButton": "返回",
+        "doneButton": "完成",
+        "importFailed": "匯入失敗",
+        "importCompleted": "匯入完成",
+        "importCompletedDesc": "成功匯入 {count} 個檔案",
         "filePreview": "檔案預覽",
         "selectAll": "全選",
         "deselectAll": "取消全選",
@@ -79,7 +86,6 @@
         "pagination": "第 {start}-{end} 項，共 {total} 項",
         "toggleSelection": "切換選擇",
         "viewDetails": "查看詳情",
-        "duplicate": "重複",
         "image": "圖片",
         "video": "影片",
         "unknown": "未知",
@@ -88,7 +94,6 @@
         "fileName": "檔案名稱",
         "fileSize": "檔案大小",
         "fileType": "檔案類型",
-        "dateSource": "日期來源",
         "dateTime": "日期和時間",
         "modifiedTime": "修改時間",
         "groupFiles": "群組檔案",
@@ -147,6 +152,7 @@
             "lastMonth": "上個月"
         },
         "dateSource": {
+            "label": "日期來源",
             "exif": "EXIF 中繼資料",
             "file_created": "檔案創建時間",
             "file_modified": "檔案修改時間",
@@ -233,7 +239,15 @@
         "cancelAllProgress": "{completed} / {total} 個目錄已完成",
         "recentFiles": "最近檔案",
         "elapsed": "已用時間",
-        "files": "檔案"
+        "files": "檔案",
+        "steps": {
+            "configuration": "設定",
+            "configurationDesc": "選擇來源和目標目錄",
+            "preview": "預覽",
+            "previewDesc": "查看並選擇要匯入的檔案",
+            "importing": "匯入中",
+            "importingDesc": "將檔案匯入到目標目錄"
+        }
     },
     "menu": {
         "getInfo": "照片信息",
@@ -333,7 +347,6 @@
         "resources": {
             "title": "資源",
             "content": "以下資源可用：",
-            "and": "和",
             "download": "下載資源"
         },
         "press": "按",
@@ -356,11 +369,6 @@
             "light": "淺色",
             "dark": "深色"
         }
-    },
-    "resetFolders": {
-        "title": "高級操作：重置目錄存儲",
-        "desc": "此操作將清空所有目錄配置並立即重建緩存，操作不可逆，請謹慎！",
-        "button": "重置目錄存儲"
     },
     "scan": {
         "queueTitle": "掃描隊列",

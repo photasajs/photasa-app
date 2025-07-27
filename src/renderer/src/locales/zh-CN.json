@@ -51,6 +51,7 @@
         "includeSubfolders": "包含子文件夹",
         "duplicateHandling": "重复文件处理",
         "duplicate": {
+            "label": "重复",
             "rename": "重命名",
             "skip": "跳过",
             "overwrite": "覆盖",
@@ -62,15 +63,19 @@
         "duplicates": "重复文件",
         "moreFiles": "还有 {count} 个文件",
         "group": "{count} 个文件",
-        "progress": "进度",
         "processing": "处理中",
         "previewButton": "预览",
         "importButton": "导入",
+        "nextButton": "下一步",
+        "backButton": "返回",
         "cancelButton": "取消",
         "pauseButton": "暂停",
         "resumeButton": "继续",
         "closeButton": "关闭",
-        "selectTarget": "选择目标目录",
+        "doneButton": "完成",
+        "importFailed": "导入失败",
+        "importCompleted": "导入完成",
+        "importCompletedDesc": "成功导入 {count} 个文件",
         "filePreview": "文件预览",
         "selectAll": "全选",
         "deselectAll": "取消全选",
@@ -81,7 +86,6 @@
         "pagination": "第 {start}-{end} 项，共 {total} 项",
         "toggleSelection": "切换选择",
         "viewDetails": "查看详情",
-        "duplicate": "重复",
         "image": "图片",
         "video": "视频",
         "unknown": "未知",
@@ -90,7 +94,6 @@
         "fileName": "文件名",
         "fileSize": "文件大小",
         "fileType": "文件类型",
-        "dateSource": "日期来源",
         "dateTime": "日期和时间",
         "modifiedTime": "修改时间",
         "groupFiles": "组内文件",
@@ -148,11 +151,8 @@
             "thisMonth": "本月",
             "lastMonth": "上个月"
         },
-        "fileTypes": {
-            "images": "图片",
-            "videos": "视频"
-        },
         "dateSource": {
+            "label": "日期来源",
             "exif": "EXIF 元数据",
             "file_created": "文件创建时间",
             "file_modified": "文件修改时间",
@@ -239,7 +239,15 @@
         "cancelAllProgress": "{completed} / {total} 个目录已完成",
         "recentFiles": "最近文件",
         "elapsed": "已用时间",
-        "files": "文件"
+        "files": "文件",
+        "steps": {
+            "configuration": "配置",
+            "configurationDesc": "选择源目录和目标目录",
+            "preview": "预览",
+            "previewDesc": "查看并选择要导入的文件",
+            "importing": "导入中",
+            "importingDesc": "将文件导入到目标目录"
+        }
     },
     "menu": {
         "getInfo": "照片信息",
@@ -339,7 +347,6 @@
         "resources": {
             "title": "资源",
             "content": "以下资源可用：",
-            "and": "和",
             "download": "下载资源"
         },
         "press": "按",
@@ -362,11 +369,6 @@
             "light": "浅色",
             "dark": "深色"
         }
-    },
-    "resetFolders": {
-        "title": "高级操作：重置目录存储",
-        "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
-        "button": "重置目录存储"
     },
     "scan": {
         "queueTitle": "扫描队列",

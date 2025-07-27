@@ -1,14 +1,56 @@
+<!--
+  ImportPhotos Component
+  
+  A comprehensive wizard-based interface for importing photos and videos.
+  
+  Features:
+  - Two-step wizard: Configuration → Preview
+  - Source directory selection with validation
+  - Target directory selection
+  - File type filtering (images/videos)
+  - Duplicate handling strategies
+  - Real-time preview with file selection
+  - Progress modal for import execution
+  
+  Props:
+  - show: Controls wizard visibility
+  - initialSourcePaths: Pre-populate source directories
+  - initialTargetPath: Pre-populate target directory
+  
+  Events:
+  - update:show: Emitted when wizard visibility changes
+  - import-complete: Emitted when import process completes
+  
+  Usage:
+  <ImportPhotos
+    :show="showImportDialog"
+    :initial-source-paths="['/path/to/photos']"
+    :initial-target-path="'/path/to/library'"
+    @update:show="showImportDialog = $event"
+    @import-complete="handleImportComplete"
+  />
+-->
+
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
+import { chooseDirectories, previewImport } from "@renderer/utils/api";
 import {
-    chooseDirectories,
-    previewImport,
-    executeImport,
-    cancelImport,
-    pauseImport,
-    resumeImport,
-} from "@renderer/utils/api";
+    createDefaultFilters,
+    addSourceDirectories,
+    removeSourceDirectory,
+    updateFileTypeFilter,
+    formatFileSize,
+} from "@renderer/utils/import-helpers";
+import {
+    validateConfigurationStep,
+    validatePreviewStep,
+    createInitialConfigurationData,
+    createInitialPreviewData,
+    transformToImportConfig,
+    transformPreviewResponse,
+    createPreviewConfig,
+} from "@renderer/utils/import-wizard-helpers";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import {
@@ -17,126 +59,169 @@ import {
     FolderOpenIcon,
     EyeIcon,
     ArrowDownTrayIcon,
-    PauseIcon,
-    PlayIcon,
-    StopIcon,
     PhotoIcon,
     VideoCameraIcon,
     DocumentIcon,
 } from "@heroicons/vue/24/outline";
 import {
-    BaseModal,
     BaseButton,
     BaseInput,
     BaseSelect,
     BaseCheckbox,
     BaseSwitch,
 } from "@renderer/components/ui";
-import type {
-    ImportConfig,
-    ImportProgress,
-    FileGroup,
-    DuplicateStrategy,
-    ImportFilters,
-    FileType,
-    ImportResult,
-} from "@common/import-types";
+import { BaseWizard, createWizardStep, createWizardConfig } from "@renderer/components/wizard";
+import ImportProgressModal from "./ImportProgressModal.vue";
+import type { ImportConfig, DuplicateStrategy, ImportResult } from "@common/import-types";
 
-// Define props and emits
-const props = withDefaults(
-    defineProps<{
-        show: boolean;
-        initialSourcePaths?: string[];
-        initialTargetPath?: string;
-    }>(),
-    {
-        show: () => false,
-        initialSourcePaths: () => [],
-        initialTargetPath: () => "",
-    },
-);
+/**
+ * Component Props Definition
+ */
+interface ImportPhotosProps {
+    /** Controls the visibility of the import wizard */
+    show: boolean;
+    /** Optional array of initial source directory paths */
+    initialSourcePaths?: string[];
+    /** Optional initial target directory path */
+    initialTargetPath?: string;
+}
 
-const emit = defineEmits<{
+const props = withDefaults(defineProps<ImportPhotosProps>(), {
+    show: () => false,
+    initialSourcePaths: () => [],
+    initialTargetPath: () => "",
+});
+
+/**
+ * Component Events Definition
+ */
+interface ImportPhotosEmits {
+    /** Emitted when wizard visibility should change */
     (e: "update:show", show: boolean): void;
+    /** Emitted when import process completes successfully */
     (e: "import-complete", result: ImportResult): void;
-}>();
+}
+
+const emit = defineEmits<ImportPhotosEmits>();
+
+// Debug logging for development and initialization
+watch(
+    () => props.show,
+    (newValue) => {
+        console.log("ImportPhotos show prop changed:", newValue);
+
+        // Initialize wizard data when wizard opens
+        if (newValue && wizardStateRef.value?.setStepData) {
+            if (!wizardStateRef.value.stepData.configuration) {
+                const configData = createInitialConfigurationData(
+                    props.initialSourcePaths,
+                    props.initialTargetPath,
+                    store.paths,
+                );
+                wizardStateRef.value.setStepData("configuration", configData);
+            }
+        }
+    },
+    { immediate: true },
+);
 
 const { t } = useI18n();
 const store = usePreferenceStore();
 const { paths } = storeToRefs(store);
 
-// 响应式状态
-const sourcePaths = ref<string[]>(props.initialSourcePaths);
-const targetPath = ref<string>(props.initialTargetPath || store.paths[0] || "");
+// Wizard data storage - this will be managed by the wizard framework
+// We'll access it through the stepData parameter in templates
 
-// 导入选项
-const filters = reactive<ImportFilters>({
-    fileTypes: ["image", "video"] as FileType[],
-    sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-    dateRange: { start: new Date(0), end: new Date() },
-    includeSubfolders: true,
+// Import progress modal state
+const showProgressModal = ref(false);
+const importConfig = ref<ImportConfig | null>(null);
+
+// Wizard state reference
+const wizardStateRef = ref<any>(null);
+
+/**
+ * Handle wizard completion - transform data and show progress modal
+ * @param data - Wizard completion data containing all step data
+ */
+const handleWizardComplete = (data: any) => {
+    const configData = data.configuration;
+    const previewData = data.preview;
+
+    // Validate both configuration and preview data
+    if (validateConfigurationStep(configData) && validatePreviewStep(previewData)) {
+        // Transform wizard data to import config using pure function
+        importConfig.value = transformToImportConfig(configData, previewData);
+
+        // Close wizard and show progress modal
+        emit("update:show", false);
+        showProgressModal.value = true;
+    } else {
+        console.error("Invalid wizard data on completion", { configData, previewData });
+    }
+};
+
+const handleWizardCancel = () => {
+    // Close wizard
+    emit("update:show", false);
+};
+
+// Initialize step data immediately
+const initializeWizardData = () => {
+    if (wizardStateRef.value?.setStepData) {
+        const configData = createInitialConfigurationData(
+            props.initialSourcePaths,
+            props.initialTargetPath,
+            store.paths,
+        );
+        const previewData = createInitialPreviewData();
+
+        wizardStateRef.value.setStepData("configuration", configData);
+        wizardStateRef.value.setStepData("preview", previewData);
+    }
+};
+
+// Wizard configuration (only config and preview steps)
+const wizardConfig = createWizardConfig({
+    steps: [
+        createWizardStep({
+            id: "configuration",
+            title: t("import.steps.configuration"),
+            description: t("import.steps.configurationDesc"),
+            isValid: (stepData: any) => {
+                const isValid = validateConfigurationStep(stepData);
+                console.log("Configuration step validation:", { stepData, isValid });
+                return isValid;
+            },
+            onEnter: (stepData: any) => {
+                // Initialize step data if not already present
+                if (!stepData) {
+                    const configData = createInitialConfigurationData(
+                        props.initialSourcePaths,
+                        props.initialTargetPath,
+                        store.paths,
+                    );
+                    // We need access to setStepData here, but it's not available in onEnter
+                    // So we'll keep the template initialization as backup
+                }
+            },
+        }),
+        createWizardStep({
+            id: "preview",
+            title: t("import.steps.preview"),
+            description: t("import.steps.previewDesc"),
+            onEnter: async () => {
+                // Preview data loading will be handled in the step change handler
+            },
+            isValid: (stepData: any) => {
+                return validatePreviewStep(stepData);
+            },
+        }),
+    ],
+    onComplete: handleWizardComplete,
+    onCancel: handleWizardCancel,
 });
 
-const duplicateStrategy = ref<DuplicateStrategy>("rename");
-
-// 预览状态
-const showPreview = ref(false);
-const filePreview = reactive<{
-    files: FileGroup[];
-    selectedFiles: Set<string>;
-    totalCount: number;
-    totalSize: number;
-    statistics: any;
-}>({
-    files: [],
-    selectedFiles: new Set(),
-    totalCount: 0,
-    totalSize: 0,
-    statistics: {
-        imageFiles: 0,
-        videoFiles: 0,
-        otherFiles: 0,
-        duplicateCount: 0,
-    },
-});
-
-// 导入状态
-const isImporting = ref(false);
-const isPaused = ref(false);
-const canCancel = ref(true);
-const importId = ref("");
-const importProgress = reactive<ImportProgress>({
-    totalFiles: 0,
-    processedFiles: 0,
-    speed: 0,
-    estimatedTimeRemaining: 0,
-    errors: [],
-    warnings: [],
-    status: "preparing",
-});
-
-// 计算属性
-const showConfigModal = computed({
-    get() {
-        return props.show;
-    },
-    set(value) {
-        emit("update:show", value);
-    },
-});
-
-const canPreview = computed(() => {
-    return sourcePaths.value.length > 0 && targetPath.value !== "";
-});
-
-const canImport = computed(() => {
-    return (
-        sourcePaths.value.length > 0 &&
-        targetPath.value !== "" &&
-        (filePreview.files.length > 0 || !showPreview.value)
-    );
-});
-
+// Computed properties
 const pathOptions = computed(() => {
     return paths.value.map((path) => ({
         value: path,
@@ -151,511 +236,530 @@ const duplicateStrategyOptions = computed(() => [
     { value: "keep_both", label: t("import.duplicate.keepBoth") },
 ]);
 
-// 文件类型选项
-const imageTypeSelected = computed({
-    get: () => filters.fileTypes.includes("image"),
-    set: (value: boolean) => {
-        if (value && !filters.fileTypes.includes("image")) {
-            filters.fileTypes.push("image");
-        } else if (!value) {
-            const index = filters.fileTypes.indexOf("image");
-            if (index > -1) filters.fileTypes.splice(index, 1);
-        }
-    },
-});
+/**
+ * Wizard Step Helper Functions
+ * These functions handle user interactions within the wizard steps
+ */
 
-const videoTypeSelected = computed({
-    get: () => filters.fileTypes.includes("video"),
-    set: (value: boolean) => {
-        if (value && !filters.fileTypes.includes("video")) {
-            filters.fileTypes.push("video");
-        } else if (!value) {
-            const index = filters.fileTypes.indexOf("video");
-            if (index > -1) filters.fileTypes.splice(index, 1);
-        }
-    },
-});
-
-// 方法
-const addSourceDirectory = async () => {
+/**
+ * Add a new source directory through file dialog
+ * @param stepData - Current step data
+ * @param setStepData - Function to update step data
+ */
+const addSourceDirectory = async (
+    stepData: any,
+    setStepData: (stepId: string, data: any) => void,
+) => {
     try {
         const result = await chooseDirectories(true);
         if (result.filePaths && result.filePaths.length > 0) {
-            // 添加新的源目录，避免重复
-            for (const path of result.filePaths) {
-                if (!sourcePaths.value.includes(path)) {
-                    sourcePaths.value.push(path);
-                }
-            }
+            const newSourcePaths = addSourceDirectories(
+                stepData.sourcePaths || [],
+                result.filePaths,
+            );
+            setStepData("configuration", { ...stepData, sourcePaths: newSourcePaths });
         }
     } catch (error) {
         console.error("Failed to choose directories:", error);
     }
 };
 
-const removeSourcePath = (index: number) => {
-    sourcePaths.value.splice(index, 1);
+/**
+ * Remove a source directory by index
+ * @param index - Index of the source path to remove
+ * @param stepData - Current step data
+ * @param setStepData - Function to update step data
+ */
+const removeSourcePath = (
+    index: number,
+    stepData: any,
+    setStepData: (stepId: string, data: any) => void,
+) => {
+    const newSourcePaths = removeSourceDirectory(stepData.sourcePaths || [], index);
+    setStepData("configuration", { ...stepData, sourcePaths: newSourcePaths });
 };
 
-const selectTargetDirectory = async () => {
+/**
+ * Select target directory through file dialog
+ * @param stepData - Current step data
+ * @param setStepData - Function to update step data
+ */
+const selectTargetDirectory = async (
+    stepData: any,
+    setStepData: (stepId: string, data: any) => void,
+) => {
     try {
         const result = await chooseDirectories(false);
         if (result.filePaths && result.filePaths.length > 0) {
-            targetPath.value = result.filePaths[0];
+            setStepData("configuration", { ...stepData, targetPath: result.filePaths[0] });
         }
     } catch (error) {
         console.error("Failed to choose target directory:", error);
     }
 };
 
-const previewImportFiles = async () => {
-    try {
-        const config: ImportConfig = {
-            sourcePaths: sourcePaths.value,
-            targetPath: targetPath.value,
-            filters,
-            duplicateStrategy: duplicateStrategy.value,
-            fileGroups: [],
-            selectedFiles: [],
-            allowDuplicateRename: true,
-        };
-
-        const preview = await previewImport(config);
-
-        // 更新预览状态
-        filePreview.files = preview.fileGroups;
-        filePreview.totalCount = preview.statistics.totalFiles;
-        filePreview.totalSize = preview.statistics.totalSize;
-        filePreview.statistics = preview.statistics;
-        filePreview.selectedFiles = new Set(preview.fileGroups.map((g) => g.mainFile.path));
-
-        showPreview.value = true;
-    } catch (error) {
-        console.error("Failed to preview import:", error);
-    }
+/**
+ * Update file type filter (images/videos)
+ * @param type - File type to update ('image' or 'video')
+ * @param enabled - Whether the file type should be enabled
+ * @param stepData - Current step data
+ * @param setStepData - Function to update step data
+ */
+const updateFileType = (
+    type: string,
+    enabled: boolean,
+    stepData: any,
+    setStepData: (stepId: string, data: any) => void,
+) => {
+    const currentFilters = stepData.filters || createDefaultFilters();
+    const updatedFilters = updateFileTypeFilter(currentFilters, type as any, enabled);
+    setStepData("configuration", { ...stepData, filters: updatedFilters });
 };
 
-const startImport = async () => {
-    try {
-        isImporting.value = true;
-
-        const config: ImportConfig = {
-            sourcePaths: sourcePaths.value,
-            targetPath: targetPath.value,
-            filters,
-            duplicateStrategy: duplicateStrategy.value,
-            fileGroups: filePreview.files,
-            selectedFiles: Array.from(filePreview.selectedFiles),
-            allowDuplicateRename: true,
-        };
-
-        const result = await executeImport(config, {
-            onProgress: (progress) => {
-                // 更新进度
-                Object.assign(importProgress, progress);
-            },
-            onDuplicateFound: (duplicate) => {
-                console.log("Duplicate found:", duplicate);
-            },
-            onFileGroupDetected: (group) => {
-                console.log("File group detected:", group);
-            },
-        });
-
-        importId.value = result.importId;
-
-        // 导入完成
-        isImporting.value = false;
-        emit("import-complete", result);
-    } catch (error) {
-        console.error("Failed to start import:", error);
-        isImporting.value = false;
-    }
-};
-
-const cancelImportProcess = async () => {
-    if (!importId.value) return;
-
-    try {
-        await cancelImport(importId.value);
-        isImporting.value = false;
-    } catch (error) {
-        console.error("Failed to cancel import:", error);
-    }
-};
-
-const pauseImportProcess = async () => {
-    if (!importId.value) return;
-
-    try {
-        await pauseImport(importId.value);
-        isPaused.value = true;
-    } catch (error) {
-        console.error("Failed to pause import:", error);
-    }
-};
-
-const resumeImportProcess = async () => {
-    if (!importId.value) return;
-
-    try {
-        await resumeImport(importId.value);
-        isPaused.value = false;
-    } catch (error) {
-        console.error("Failed to resume import:", error);
-    }
-};
-
-const closeDialog = () => {
-    emit("update:show", false);
-};
-
-const isFileSelected = (path: string): boolean => {
-    return filePreview.selectedFiles.has(path);
-};
-
-const toggleFileSelection = (group: FileGroup) => {
-    const path = group.mainFile.path;
-    if (filePreview.selectedFiles.has(path)) {
-        filePreview.selectedFiles.delete(path);
+/**
+ * Toggle file selection in preview step
+ * @param filePath - Path of the file to toggle
+ * @param selected - Whether the file should be selected
+ * @param stepData - Current step data
+ * @param setStepData - Function to update step data
+ */
+const toggleFileSelection = (
+    filePath: string,
+    selected: boolean,
+    stepData: any,
+    setStepData: (stepId: string, data: any) => void,
+) => {
+    const selectedFiles = new Set(stepData.selectedFiles || []);
+    if (selected) {
+        selectedFiles.add(filePath);
     } else {
-        filePreview.selectedFiles.add(path);
+        selectedFiles.delete(filePath);
+    }
+    setStepData("preview", { ...stepData, selectedFiles });
+};
+
+// Progress modal event handlers
+const handleImportComplete = (result: ImportResult) => {
+    showProgressModal.value = false;
+    importConfig.value = null;
+    emit("import-complete", result);
+};
+
+const handleImportCancel = () => {
+    showProgressModal.value = false;
+    importConfig.value = null;
+};
+
+const handleStepChange = async (stepId: string, stepIndex: number, wizardState: any) => {
+    console.log(`Step changed to: ${stepId} (${stepIndex})`);
+
+    // Store wizard state reference
+    wizardStateRef.value = wizardState;
+
+    // Initialize data if this is the first time we get wizard state
+    if (!wizardState.stepData.configuration) {
+        const configData = createInitialConfigurationData(
+            props.initialSourcePaths,
+            props.initialTargetPath,
+            store.paths,
+        );
+        wizardState.setStepData("configuration", configData);
+    }
+
+    if (!wizardState.stepData.preview) {
+        const previewData = createInitialPreviewData();
+        wizardState.setStepData("preview", previewData);
+    }
+
+    // Load preview data when entering preview step
+    if (stepId === "preview") {
+        await loadPreviewData(wizardState);
     }
 };
 
-// 格式化函数
-const formatSize = (size: number): string => {
-    if (size < 1024) return `${size} B`;
-    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-    if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-};
+/**
+ * Load preview data from the API based on configuration
+ * @param wizardState - Current wizard state containing step data and setStepData function
+ */
+const loadPreviewData = async (wizardState: any) => {
+    const configData = wizardState.stepData.configuration;
 
-const formatSpeed = (speed: number): string => {
-    if (speed < 1) return `${(speed * 60).toFixed(1)} files/min`;
-    return `${speed.toFixed(1)} files/sec`;
-};
-
-const formatTime = (seconds: number): string => {
-    if (seconds < 60) return `${Math.ceil(seconds)}s`;
-    if (seconds < 3600) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.ceil(seconds % 60);
-        return `${mins}m ${secs}s`;
+    // Validate configuration data before proceeding
+    if (!validateConfigurationStep(configData)) {
+        console.error("Invalid configuration data for preview");
+        wizardState.setStepData("preview", createInitialPreviewData());
+        return;
     }
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${mins}m`;
+
+    try {
+        // Create preview config using pure function
+        const config = createPreviewConfig(configData);
+
+        // Call preview API
+        const previewResponse = await previewImport(config);
+
+        // Transform response using pure function
+        const previewData = transformPreviewResponse(previewResponse);
+
+        // Update preview step data
+        wizardState.setStepData("preview", previewData);
+    } catch (error) {
+        console.error("Failed to load preview:", error);
+        // Initialize empty preview data on error using pure function
+        wizardState.setStepData("preview", createInitialPreviewData());
+    }
 };
 
-// 监听器
-watch(
-    () => props.initialSourcePaths,
-    (newPaths) => {
-        if (newPaths && newPaths.length > 0) {
-            sourcePaths.value = [...newPaths];
-        }
-    },
-);
+/**
+ * Initialize configuration step data with default values
+ * @param setStepData - Function to set step data
+ * @returns null (for template usage)
+ */
+const initializeConfigurationData = (setStepData: (stepId: string, data: any) => void) => {
+    // Always initialize to ensure data is present
+    const configData = createInitialConfigurationData(
+        props.initialSourcePaths,
+        props.initialTargetPath,
+        store.paths,
+    );
+    setStepData("configuration", configData);
+    return null; // Return null so it doesn't render anything
+};
 
-watch(
-    () => props.initialTargetPath,
-    (newPath) => {
-        if (newPath) {
-            targetPath.value = newPath;
-        }
-    },
-);
+/**
+ * Initialize preview step data with empty values
+ * @param setStepData - Function to set step data
+ * @returns null (for template usage)
+ */
+const initializePreviewData = (setStepData: (stepId: string, data: any) => void) => {
+    const previewData = createInitialPreviewData();
+    setStepData("preview", previewData);
+    return null; // Return null so it doesn't render anything
+};
+
+// Initialize all step data when component mounts
+const initializeAllStepData = (setStepData: (stepId: string, data: any) => void) => {
+    initializeConfigurationData(setStepData);
+    initializePreviewData(setStepData);
+};
 </script>
 
 <template>
-    <!-- 主导入配置对话框 -->
-    <BaseModal :open="showConfigModal" :title="t('import.title')" size="xl" @close="closeDialog">
-        <div class="import-dialog space-y-6">
-            <!-- 源目录选择 -->
-            <div class="import-section">
-                <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
-                    {{ t("import.sourceDirectories") }}
-                </h3>
-                <div class="space-y-3">
-                    <div
-                        v-for="(path, index) in sourcePaths"
-                        :key="index"
-                        class="flex items-center gap-2"
-                    >
-                        <BaseInput :model-value="path" readonly class="flex-1" />
-                        <BaseButton variant="danger" size="sm" @click="removeSourcePath(index)">
-                            <TrashIcon class="w-4 h-4" />
+    <!-- Configuration Wizard -->
+    <BaseWizard
+        :open="show"
+        :config="wizardConfig"
+        size="xl"
+        :persistent="true"
+        :show-progress-bar="true"
+        :show-step-descriptions="true"
+        :show-navigation="false"
+        @update:open="$emit('update:show', $event)"
+        @complete="handleWizardComplete"
+        @cancel="handleWizardCancel"
+        @step-change="handleStepChange"
+    >
+        <!-- Configuration Step -->
+        <template #configuration="{ stepData, setStepData }">
+            <!-- Initialize step data if not present -->
+            {{ !stepData ? initializeConfigurationData(setStepData) : null }}
+            <div class="h-full overflow-y-auto space-y-6">
+                <!-- Source directories -->
+                <div>
+                    <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
+                        {{ t("import.sourceDirectories") }}
+                    </h3>
+                    <div class="space-y-3">
+                        <div
+                            v-for="(path, index) in stepData?.sourcePaths || []"
+                            :key="index"
+                            class="flex items-center gap-2"
+                        >
+                            <BaseInput :model-value="path" readonly class="flex-1" />
+                            <BaseButton
+                                variant="danger"
+                                size="sm"
+                                @click="removeSourcePath(index, stepData || {}, setStepData)"
+                            >
+                                <TrashIcon class="w-4 h-4 text-current" />
+                            </BaseButton>
+                        </div>
+                        <BaseButton
+                            variant="secondary"
+                            class="w-full"
+                            @click="addSourceDirectory(stepData || {}, setStepData)"
+                        >
+                            <PlusIcon class="w-4 h-4 mr-2 text-current" />
+                            {{ t("import.addSource") }}
                         </BaseButton>
                     </div>
-                    <BaseButton variant="secondary" class="w-full" @click="addSourceDirectory">
-                        <PlusIcon class="w-4 h-4 mr-2" />
-                        {{ t("import.addSource") }}
-                    </BaseButton>
                 </div>
-            </div>
 
-            <!-- 目标目录选择 -->
-            <div class="import-section">
-                <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
-                    {{ t("import.targetDirectory") }}
-                </h3>
-                <div class="flex gap-2">
-                    <BaseSelect
-                        v-model="targetPath"
-                        :options="pathOptions"
-                        :placeholder="t('import.selectTarget')"
-                        class="flex-1"
-                    />
-                    <BaseButton @click="selectTargetDirectory">
-                        <FolderOpenIcon class="w-4 h-4 mr-2" />
-                        {{ t("import.browse") }}
-                    </BaseButton>
+                <!-- Target directory -->
+                <div>
+                    <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
+                        {{ t("import.targetDirectory") }}
+                    </h3>
+                    <div class="flex gap-2">
+                        <BaseSelect
+                            :model-value="stepData?.targetPath || ''"
+                            @update:model-value="
+                                (value) =>
+                                    setStepData('configuration', {
+                                        ...(stepData || {}),
+                                        targetPath: value,
+                                    })
+                            "
+                            :options="pathOptions"
+                            :placeholder="t('import.selectTarget')"
+                            class="flex-1"
+                        />
+                        <BaseButton @click="selectTargetDirectory(stepData || {}, setStepData)">
+                            <FolderOpenIcon class="w-4 h-4 mr-2 text-current" />
+                            {{ t("import.browse") }}
+                        </BaseButton>
+                    </div>
                 </div>
-            </div>
 
-            <!-- 导入选项 -->
-            <div class="import-section">
-                <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
-                    {{ t("import.options") }}
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
-                            {{ t("import.fileTypes.label") }}
-                        </label>
-                        <div class="space-y-2">
-                            <BaseCheckbox
-                                v-model="imageTypeSelected"
-                                :label="t('import.fileTypes.images')"
-                            />
-                            <BaseCheckbox
-                                v-model="videoTypeSelected"
-                                :label="t('import.fileTypes.videos')"
+                <!-- Import options -->
+                <div>
+                    <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
+                        {{ t("import.options") }}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
+                                {{ t("import.fileTypes.label") }}
+                            </label>
+                            <div class="space-y-2">
+                                <BaseCheckbox
+                                    :model-value="
+                                        stepData?.filters?.fileTypes?.includes('image') || false
+                                    "
+                                    @update:model-value="
+                                        (value) =>
+                                            updateFileType(
+                                                'image',
+                                                value,
+                                                stepData || {},
+                                                setStepData,
+                                            )
+                                    "
+                                    :label="t('import.fileTypes.images')"
+                                />
+                                <BaseCheckbox
+                                    :model-value="
+                                        stepData?.filters?.fileTypes?.includes('video') || false
+                                    "
+                                    @update:model-value="
+                                        (value) =>
+                                            updateFileType(
+                                                'video',
+                                                value,
+                                                stepData || {},
+                                                setStepData,
+                                            )
+                                    "
+                                    :label="t('import.fileTypes.videos')"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
+                                {{ t("import.includeSubfolders") }}
+                            </label>
+                            <BaseSwitch
+                                :model-value="stepData?.filters?.includeSubfolders || false"
+                                @update:model-value="
+                                    (value) =>
+                                        setStepData('configuration', {
+                                            ...(stepData || {}),
+                                            filters: {
+                                                ...(stepData?.filters || {}),
+                                                includeSubfolders: value,
+                                            },
+                                        })
+                                "
+                                :label="t('import.includeSubfolders')"
                             />
                         </div>
                     </div>
-                    <div>
+                    <div class="mt-4">
                         <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
-                            {{ t("import.includeSubfolders") }}
+                            {{ t("import.duplicateHandling") }}
                         </label>
-                        <BaseSwitch
-                            v-model="filters.includeSubfolders"
-                            :label="t('import.includeSubfolders')"
+                        <BaseSelect
+                            :model-value="stepData?.duplicateStrategy || 'rename'"
+                            @update:model-value="
+                                (value) =>
+                                    setStepData('configuration', {
+                                        ...(stepData || {}),
+                                        duplicateStrategy: value,
+                                    })
+                            "
+                            :options="duplicateStrategyOptions"
                         />
                     </div>
                 </div>
-                <div class="mt-4">
-                    <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
-                        {{ t("import.duplicateHandling") }}
-                    </label>
-                    <BaseSelect v-model="duplicateStrategy" :options="duplicateStrategyOptions" />
-                </div>
-            </div>
-
-            <!-- 预览区域 -->
-            <div v-if="showPreview && filePreview.files.length > 0" class="import-section">
-                <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
-                    {{ t("import.preview") }}
-                </h3>
-                <div
-                    class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-[var(--color-bg-secondary)] rounded-lg mb-4"
-                >
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-[var(--color-text)]">
-                            {{ filePreview.totalCount }}
-                        </div>
-                        <div class="text-sm text-[var(--color-text-secondary)]">
-                            {{ t("import.totalFiles") }}
-                        </div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-[var(--color-text)]">
-                            {{ formatSize(filePreview.totalSize) }}
-                        </div>
-                        <div class="text-sm text-[var(--color-text-secondary)]">
-                            {{ t("import.totalSize") }}
-                        </div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-[var(--color-text)]">
-                            {{ filePreview.statistics.imageFiles }}
-                        </div>
-                        <div class="text-sm text-[var(--color-text-secondary)]">
-                            {{ t("import.images") }}
-                        </div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-[var(--color-text)]">
-                            {{ filePreview.statistics.videoFiles }}
-                        </div>
-                        <div class="text-sm text-[var(--color-text-secondary)]">
-                            {{ t("import.videos") }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 文件预览列表 -->
-                <div
-                    class="max-h-96 overflow-y-auto border border-[var(--color-border)] rounded-lg"
-                >
-                    <div
-                        v-for="group in filePreview.files.slice(0, 50)"
-                        :key="group.mainFile.path"
-                        class="flex items-center p-3 border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-card-hover)] transition-colors"
-                    >
-                        <BaseCheckbox
-                            :model-value="isFileSelected(group.mainFile.path)"
-                            @update:model-value="toggleFileSelection(group)"
-                            class="mr-3"
-                        />
-                        <div class="flex items-center mr-3">
-                            <PhotoIcon
-                                v-if="group.mainFile.type === 'image'"
-                                class="w-8 h-8 text-[var(--color-primary)]"
-                            />
-                            <VideoCameraIcon
-                                v-else-if="group.mainFile.type === 'video'"
-                                class="w-8 h-8 text-[var(--color-primary)]"
-                            />
-                            <DocumentIcon
-                                v-else
-                                class="w-8 h-8 text-[var(--color-text-secondary)]"
-                            />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
-                                <p class="text-sm font-medium text-[var(--color-text)] truncate">
-                                    {{ group.mainFile.name }}
-                                </p>
-                                <span
-                                    v-if="group.type === 'group'"
-                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)] text-white"
-                                >
-                                    {{ t("import.group", { count: group.files.length }) }}
-                                </span>
-                            </div>
-                            <p class="text-sm text-[var(--color-text-secondary)]">
-                                {{ formatSize(group.totalSize) }}
-                                <span v-if="group.targetPath"> → {{ group.targetPath }} </span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 进度显示 -->
-            <div v-if="isImporting" class="import-section">
-                <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
-                    {{ t("import.progress") }}
-                </h3>
-                <div class="space-y-4">
-                    <!-- 进度条 -->
-                    <div class="w-full bg-[var(--color-bg-secondary)] rounded-full h-2">
-                        <div
-                            class="bg-[var(--color-primary)] h-2 rounded-full transition-all duration-300"
-                            :style="{
-                                width: `${Math.round((importProgress.processedFiles / importProgress.totalFiles) * 100)}%`,
-                            }"
-                        ></div>
-                    </div>
-
-                    <!-- 进度信息 -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="text-center">
-                            <div class="text-lg font-semibold text-[var(--color-text)]">
-                                {{ importProgress.processedFiles }} /
-                                {{ importProgress.totalFiles }}
-                            </div>
-                            <div class="text-sm text-[var(--color-text-secondary)]">
-                                {{ t("import.processed") }}
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-lg font-semibold text-[var(--color-text)]">
-                                {{ formatSpeed(importProgress.speed) }}
-                            </div>
-                            <div class="text-sm text-[var(--color-text-secondary)]">
-                                {{ t("import.speed") }}
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-lg font-semibold text-[var(--color-text)]">
-                                {{ formatTime(importProgress.estimatedTimeRemaining) }}
-                            </div>
-                            <div class="text-sm text-[var(--color-text-secondary)]">
-                                {{ t("import.remaining") }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 当前文件 -->
-                    <div
-                        v-if="importProgress.currentFile"
-                        class="p-3 bg-[var(--color-bg-secondary)] rounded-lg"
-                    >
-                        <p class="text-sm text-[var(--color-text-secondary)]">
-                            {{ t("import.processing") }}:
-                            <span class="text-[var(--color-text)] font-medium">
-                                {{ importProgress.currentFile }}
-                            </span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 操作按钮 -->
-        <template #footer>
-            <div class="flex justify-end gap-3">
-                <BaseButton
-                    v-if="!isImporting"
-                    variant="secondary"
-                    :disabled="!canPreview"
-                    @click="previewImportFiles"
-                >
-                    <EyeIcon class="w-4 h-4 mr-2" />
-                    {{ t("import.previewButton") }}
-                </BaseButton>
-                <BaseButton
-                    v-if="!isImporting"
-                    variant="primary"
-                    :disabled="!canImport"
-                    @click="startImport"
-                >
-                    <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
-                    {{ t("import.importButton") }}
-                </BaseButton>
-                <BaseButton
-                    v-if="isImporting && !isPaused"
-                    variant="secondary"
-                    @click="pauseImportProcess"
-                >
-                    <PauseIcon class="w-4 h-4 mr-2" />
-                    {{ t("import.pauseButton") }}
-                </BaseButton>
-                <BaseButton
-                    v-if="isImporting && isPaused"
-                    variant="primary"
-                    @click="resumeImportProcess"
-                >
-                    <PlayIcon class="w-4 h-4 mr-2" />
-                    {{ t("import.resumeButton") }}
-                </BaseButton>
-                <BaseButton
-                    v-if="isImporting && canCancel"
-                    variant="danger"
-                    @click="cancelImportProcess"
-                >
-                    <StopIcon class="w-4 h-4 mr-2" />
-                    {{ t("import.cancelButton") }}
-                </BaseButton>
-                <BaseButton variant="secondary" @click="closeDialog">
-                    {{ t("import.closeButton") }}
-                </BaseButton>
             </div>
         </template>
-    </BaseModal>
+
+        <!-- Preview Step -->
+        <template #preview="{ stepData, setStepData }">
+            <!-- Initialize preview data if not present -->
+            {{ !stepData ? initializeAllStepData(setStepData) : null }}
+            <div class="h-full flex flex-col">
+                <!-- Statistics -->
+                <div class="flex-shrink-0 mb-4">
+                    <div
+                        class="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-[var(--color-bg-secondary)] rounded-lg"
+                    >
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-[var(--color-text)]">
+                                {{ stepData?.totalCount || 0 }}
+                            </div>
+                            <div class="text-sm text-[var(--color-text-secondary)]">
+                                {{ t("import.totalFiles") }}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-[var(--color-text)]">
+                                {{ formatFileSize(stepData?.totalSize || 0) }}
+                            </div>
+                            <div class="text-sm text-[var(--color-text-secondary)]">
+                                {{ t("import.totalSize") }}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-[var(--color-text)]">
+                                {{ stepData?.statistics?.imageFiles || 0 }}
+                            </div>
+                            <div class="text-sm text-[var(--color-text-secondary)]">
+                                {{ t("import.images") }}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-[var(--color-text)]">
+                                {{ stepData?.statistics?.videoFiles || 0 }}
+                            </div>
+                            <div class="text-sm text-[var(--color-text-secondary)]">
+                                {{ t("import.videos") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File list -->
+                <div class="flex-1 overflow-hidden">
+                    <div
+                        class="h-full overflow-y-auto border border-[var(--color-border)] rounded-lg"
+                    >
+                        <div
+                            v-for="group in stepData?.files || []"
+                            :key="group.mainFile.path"
+                            class="flex items-center p-3 border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-card-hover)] transition-colors"
+                        >
+                            <BaseCheckbox
+                                :model-value="
+                                    stepData?.selectedFiles?.has(group.mainFile.path) || false
+                                "
+                                @update:model-value="
+                                    (value) =>
+                                        toggleFileSelection(
+                                            group.mainFile.path,
+                                            value,
+                                            stepData || {},
+                                            setStepData,
+                                        )
+                                "
+                                class="mr-3"
+                            />
+                            <div class="flex items-center mr-3">
+                                <PhotoIcon
+                                    v-if="group.mainFile.type === 'image'"
+                                    class="w-8 h-8 text-[var(--color-primary)]"
+                                />
+                                <VideoCameraIcon
+                                    v-else-if="group.mainFile.type === 'video'"
+                                    class="w-8 h-8 text-[var(--color-primary)]"
+                                />
+                                <DocumentIcon
+                                    v-else
+                                    class="w-8 h-8 text-[var(--color-text-secondary)]"
+                                />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <p
+                                        class="text-sm font-medium text-[var(--color-text)] truncate"
+                                    >
+                                        {{ group.mainFile.name }}
+                                    </p>
+                                    <span
+                                        v-if="group.type === 'group'"
+                                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)] text-white"
+                                    >
+                                        {{ t("import.group", { count: group.files.length }) }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-[var(--color-text-secondary)]">
+                                    {{ formatFileSize(group.totalSize) }}
+                                    <span v-if="group.targetPath"> → {{ group.targetPath }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Custom Footer -->
+        <template #footer="{ wizardState, goNext, goBack, finish, cancel }">
+            <div class="flex justify-between">
+                <div>
+                    <BaseButton v-if="wizardState.canGoBack" variant="secondary" @click="goBack">
+                        {{ t("import.backButton") }}
+                    </BaseButton>
+                </div>
+                <div class="flex gap-3">
+                    <!-- Configuration step -->
+                    <BaseButton
+                        v-if="wizardState.currentStep.id === 'configuration'"
+                        variant="primary"
+                        :disabled="!wizardState.canGoNext"
+                        @click="goNext"
+                    >
+                        <EyeIcon class="w-4 h-4 mr-2 text-current" />
+                        {{ t("import.nextButton") }}
+                    </BaseButton>
+
+                    <!-- Preview step -->
+                    <BaseButton
+                        v-if="wizardState.currentStep.id === 'preview'"
+                        variant="primary"
+                        :disabled="!wizardState.canFinish"
+                        @click="finish"
+                    >
+                        <ArrowDownTrayIcon class="w-4 h-4 mr-2 text-current" />
+                        {{ t("import.importButton") }}
+                    </BaseButton>
+
+                    <!-- Close button -->
+                    <BaseButton variant="secondary" @click="cancel">
+                        {{ t("import.closeButton") }}
+                    </BaseButton>
+                </div>
+            </div>
+        </template>
+    </BaseWizard>
+
+    <!-- Import Progress Modal -->
+    <ImportProgressModal
+        :show="showProgressModal"
+        :config="importConfig"
+        @complete="handleImportComplete"
+        @cancel="handleImportCancel"
+    />
 </template>
 
 <style scoped lang="less">

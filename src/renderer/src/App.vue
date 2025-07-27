@@ -45,14 +45,11 @@ const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
 
-const showImport = ref(false);
+const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
 const loading = ref(false);
 const loadingConfigs = ref(false);
-
-// 控制导入对话框显隐的响应式变量
-const showImportDialog = ref(false);
 
 const findPhotoService = inject(FindPhotoServiceKey);
 if (!findPhotoService) {
@@ -70,7 +67,9 @@ function handleOpenScanList() {
     showScanList.value = true;
 }
 function handleOpenImportPhotos() {
+    console.log("Opening import photos dialog...");
     showImportDialog.value = true;
+    console.log("showImportDialog.value:", showImportDialog.value);
 }
 function handleOpenPreference() {
     showPreference.value = true;
@@ -281,7 +280,6 @@ findPhotoService.onFindPhoto((args: any) => {
         </a-layout>
         <StatusBar />
     </a-layout>
-    <ImportPhotos v-model:show="showImport"></ImportPhotos>
     <a-modal
         v-model:visible="showPreference"
         :mask-closable="false"

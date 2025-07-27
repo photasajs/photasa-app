@@ -51,6 +51,7 @@
         "includeSubfolders": "Includi sottocartelle",
         "duplicateHandling": "Gestione duplicati",
         "duplicate": {
+            "label": "Duplicato",
             "rename": "Rinomina",
             "skip": "Salta",
             "overwrite": "Sovrascrivi",
@@ -62,7 +63,6 @@
         "duplicates": "File duplicati",
         "moreFiles": "Ci sono altri {count} file",
         "group": "{count} file",
-        "progress": "Avanzamento",
         "processing": "Elaborazione in corso",
         "previewButton": "Anteprima",
         "importButton": "Importa",
@@ -70,6 +70,12 @@
         "pauseButton": "Pausa",
         "resumeButton": "Riprendi",
         "closeButton": "Chiudi",
+        "nextButton": "Avanti",
+        "backButton": "Indietro",
+        "doneButton": "Fatto",
+        "importFailed": "Importazione fallita",
+        "importCompleted": "Importazione completata",
+        "importCompletedDesc": "Importati con successo {count} file",
         "filePreview": "Anteprima file",
         "selectAll": "Seleziona tutto",
         "deselectAll": "Deseleziona tutto",
@@ -80,7 +86,6 @@
         "pagination": "{start}-{end} di {total} elementi",
         "toggleSelection": "Cambia selezione",
         "viewDetails": "Visualizza dettagli",
-        "duplicate": "Duplicato",
         "image": "Immagine",
         "video": "Video",
         "unknown": "Sconosciuto",
@@ -89,7 +94,6 @@
         "fileName": "Nome file",
         "fileSize": "Dimensione file",
         "fileType": "Tipo di file",
-        "dateSource": "Origine data",
         "dateTime": "Data e ora",
         "modifiedTime": "Data di modifica",
         "groupFiles": "File del gruppo",
@@ -148,6 +152,7 @@
             "lastMonth": "Mese scorso"
         },
         "dateSource": {
+            "label": "Origine data",
             "exif": "Metadati EXIF",
             "file_created": "Data creazione file",
             "file_modified": "Data modifica file",
@@ -234,7 +239,15 @@
         "cancelAllProgress": "{completed} / {total} cartelle completate",
         "recentFiles": "File recenti",
         "elapsed": "Tempo trascorso",
-        "files": "File"
+        "files": "File",
+        "steps": {
+            "configuration": "Configurazione",
+            "configurationDesc": "Seleziona cartelle di origine e destinazione",
+            "preview": "Anteprima",
+            "previewDesc": "Rivedi e seleziona i file da importare",
+            "importing": "Importazione",
+            "importingDesc": "Importa file nella cartella di destinazione"
+        }
     },
     "menu": {
         "getInfo": "Informazioni foto",
@@ -334,7 +347,6 @@
         "resources": {
             "title": "Risorse",
             "content": "Le seguenti risorse sono disponibili:",
-            "and": "e",
             "download": "Scarica risorse"
         },
         "press": "Premi",
@@ -357,11 +369,6 @@
             "light": "Chiaro",
             "dark": "Scuro"
         }
-    },
-    "resetFolders": {
-        "title": "Azione avanzata: Ripristina archiviazione cartelle",
-        "desc": "Questa azione cancellerà tutte le impostazioni delle cartelle e ricostruirà immediatamente la cache. Questa azione è irreversibile. Procedi con cautela!",
-        "button": "Ripristina archiviazione cartelle"
     },
     "scan": {
         "queueTitle": "Coda scansione",

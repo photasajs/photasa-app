@@ -10,6 +10,7 @@
         "6hislain.meow-extension-pack",
         "formulahendry.auto-close-tag",
         "formulahendry.auto-rename-tag",
-        "gydunhn.html-essentials"
+        "gydunhn.html-essentials",
+        "vitest.explorer"
     ]
 }

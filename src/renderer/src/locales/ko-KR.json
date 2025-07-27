@@ -51,6 +51,7 @@
         "includeSubfolders": "하위 폴더 포함",
         "duplicateHandling": "중복 파일 처리",
         "duplicate": {
+            "label": "중복",
             "rename": "이름 바꾸기",
             "skip": "건너뛰기",
             "overwrite": "덮어쓰기",
@@ -62,7 +63,6 @@
         "duplicates": "중복 파일",
         "moreFiles": "{count}개의 파일이 더 있습니다",
         "group": "{count}개 파일",
-        "progress": "진행률",
         "processing": "처리 중",
         "previewButton": "미리보기",
         "importButton": "가져오기",
@@ -70,6 +70,12 @@
         "pauseButton": "일시정지",
         "resumeButton": "계속",
         "closeButton": "닫기",
+        "nextButton": "다음",
+        "backButton": "뒤로",
+        "doneButton": "완료",
+        "importFailed": "가져오기 실패",
+        "importCompleted": "가져오기 완료",
+        "importCompletedDesc": "{count}개 파일을 성공적으로 가져왔습니다",
         "filePreview": "파일 미리보기",
         "selectAll": "모두 선택",
         "deselectAll": "모두 선택 해제",
@@ -80,7 +86,6 @@
         "pagination": "{total}개 중 {start}-{end}번째",
         "toggleSelection": "선택 전환",
         "viewDetails": "세부 정보 보기",
-        "duplicate": "중복",
         "image": "이미지",
         "video": "비디오",
         "unknown": "알 수 없음",
@@ -89,7 +94,6 @@
         "fileName": "파일명",
         "fileSize": "파일 크기",
         "fileType": "파일 형식",
-        "dateSource": "날짜 소스",
         "dateTime": "날짜 및 시간",
         "modifiedTime": "수정 시간",
         "groupFiles": "그룹 내 파일",
@@ -148,6 +152,7 @@
             "lastMonth": "지난 달"
         },
         "dateSource": {
+            "label": "날짜 소스",
             "exif": "EXIF 메타데이터",
             "file_created": "파일 생성 시간",
             "file_modified": "파일 수정 시간",
@@ -234,7 +239,15 @@
         "cancelAllProgress": "{completed} / {total}개 디렉터리 완료",
         "recentFiles": "최근 파일",
         "elapsed": "경과 시간",
-        "files": "파일"
+        "files": "파일",
+        "steps": {
+            "configuration": "설정",
+            "configurationDesc": "소스 및 대상 디렉토리 선택",
+            "preview": "미리보기",
+            "previewDesc": "가져올 파일 검토 및 선택",
+            "importing": "가져오기",
+            "importingDesc": "대상 디렉토리로 파일 가져오기"
+        }
     },
     "menu": {
         "getInfo": "사진 정보",
@@ -280,9 +293,7 @@
         "error": "오류",
         "scan": {
             "title": "디렉토리 스캔",
-            "message": "디렉토리 스캔이 완료되었으며, 사진이 포토 매니저에 가져와졌습니다.",
-            "queueTitle": "스캔 대기열",
-            "queueEmpty": "대기열이 비어 있습니다"
+            "message": "디렉토리 스캔이 완료되었으며, 사진이 포토 매니저에 가져와졌습니다."
         },
         "duplicatePath": {
             "title": "중복된 디렉토리",
@@ -359,10 +370,9 @@
             "dark": "다크"
         }
     },
-    "resetFolders": {
-        "title": "고급 작업: 디렉터리 저장소 재설정",
-        "desc": "이 작업은 모든 디렉터리 설정을 지우고 즉시 캐시를 재구축합니다. 이 작업은 되돌릴 수 없습니다. 신중히 진행하세요!",
-        "button": "디렉터리 저장소 재설정"
+    "scan": {
+        "queueTitle": "스캔 대기열",
+        "queueEmpty": "대기열이 비어있습니다"
     },
     "advancedSettings": {
         "title": "고급 설정",

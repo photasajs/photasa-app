@@ -143,7 +143,7 @@ function createWindow(): void {
     // 创建 shell 服务
     new ShellService(ipcMain, mainWindow);
     // Setup Import Service
-    new ImportService(ipcMain);
+    new ImportService(ipcMain, mainWindow);
 }
 
 /**

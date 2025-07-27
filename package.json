@@ -28,6 +28,12 @@
         "test:coverage": "vitest run --coverage",
         "test:watch": "vitest watch",
         "test": "npm run test:unit",
+        "rfc:create": "node scripts/rfc-manager.js create",
+        "rfc:list": "node scripts/rfc-manager.js list",
+        "rfc:status": "node scripts/rfc-manager.js status",
+        "rfc:validate": "node scripts/rfc-manager.js validate",
+        "rfc:report": "node scripts/rfc-manager.js report",
+        "check:locales": "node scripts/check-locales.js",
         "prepare": "husky"
     },
     "dependencies": {

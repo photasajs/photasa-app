@@ -51,6 +51,7 @@
         "includeSubfolders": "Bao gồm thư mục con",
         "duplicateHandling": "Xử lý trùng lặp",
         "duplicate": {
+            "label": "Trùng lặp",
             "rename": "Đổi tên",
             "skip": "Bỏ qua",
             "overwrite": "Ghi đè",
@@ -70,6 +71,12 @@
         "resumeButton": "Tiếp tục",
         "cancelButton": "Hủy",
         "closeButton": "Đóng",
+        "nextButton": "Tiếp theo",
+        "backButton": "Quay lại",
+        "doneButton": "Hoàn thành",
+        "importFailed": "Nhập thất bại",
+        "importCompleted": "Nhập hoàn thành",
+        "importCompletedDesc": "Đã nhập thành công {count} tệp",
         "duplicates": "Trùng lặp",
         "moreFiles": "còn {count} tệp nữa",
         "filePreview": "Xem trước tệp",
@@ -82,7 +89,6 @@
         "pagination": "{start}-{end} trong {total}",
         "toggleSelection": "Chuyển đổi lựa chọn",
         "viewDetails": "Xem chi tiết",
-        "duplicate": "Trùng lặp",
         "image": "Hình ảnh",
         "video": "Video",
         "unknown": "Không xác định",
@@ -91,7 +97,6 @@
         "fileName": "Tên tệp",
         "fileSize": "Kích thước tệp",
         "fileType": "Loại tệp",
-        "dateSource": "Nguồn ngày",
         "dateTime": "Ngày & Giờ",
         "modifiedTime": "Thời gian sửa đổi",
         "groupFiles": "Nhóm tệp",
@@ -147,6 +152,7 @@
             "lastMonth": "Tháng trước"
         },
         "dateSource": {
+            "label": "Nguồn ngày",
             "exif": "Siêu dữ liệu EXIF",
             "file_created": "Tệp được tạo",
             "file_modified": "Tệp được sửa đổi",
@@ -233,7 +239,15 @@
         "cancelAllProgress": "Đã hoàn thành {completed} trong {total} thư mục",
         "recentFiles": "Tệp gần đây",
         "elapsed": "Thời gian đã trôi",
-        "files": "Tệp"
+        "files": "Tệp",
+        "steps": {
+            "configuration": "Cấu hình",
+            "configurationDesc": "Chọn thư mục nguồn và đích",
+            "preview": "Xem trước",
+            "previewDesc": "Xem và chọn tệp để nhập",
+            "importing": "Đang nhập",
+            "importingDesc": "Nhập tệp vào thư mục đích"
+        }
     },
     "menu": {
         "getInfo": "Thông tin ảnh",
@@ -333,7 +347,6 @@
         "resources": {
             "title": "Tài nguyên",
             "content": "Các tài nguyên sau có sẵn:",
-            "and": "và",
             "download": "Tải tài nguyên"
         },
         "press": "Nhấn",
@@ -356,11 +369,6 @@
             "light": "Sáng",
             "dark": "Tối"
         }
-    },
-    "resetFolders": {
-        "title": "Tác vụ nâng cao: Đặt lại lưu trữ thư mục",
-        "desc": "Tác vụ này sẽ xóa tất cả cấu hình thư mục và tạo lại bộ nhớ đệm ngay lập tức. Hành động này không thể hoàn tác. Vui lòng cẩn thận!",
-        "button": "Đặt lại lưu trữ thư mục"
     },
     "scan": {
         "queueTitle": "Hàng đợi quét",

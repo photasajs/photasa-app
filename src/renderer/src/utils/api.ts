@@ -17,6 +17,9 @@ import type {
     EnhancedImportCallback,
     ImportFilters,
 } from "@common/import-types";
+import { loggers } from "@common/logger";
+
+const logger = loggers.api;
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
     window.api.startWatching(config, callback);
@@ -267,7 +270,12 @@ export function getImportProgress(importId: string): Promise<ImportProgress> {
  * @returns 目录选择结果
  */
 export function chooseDirectories(multiSelect = true): Promise<DirectorySelection> {
-    return window.api.chooseDirectories(multiSelect);
+    logger.debug(`调用 chooseDirectories，multiSelect: ${multiSelect}`);
+    const result = window.api.chooseDirectories(multiSelect);
+    result
+        .then((res) => logger.debug(`chooseDirectories 结果:`, res))
+        .catch((err) => logger.error(`chooseDirectories 错误:`, err));
+    return result;
 }
 
 // ==================== 使用 vue-concurrency 的任务包装器 ====================

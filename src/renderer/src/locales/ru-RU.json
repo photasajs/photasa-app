@@ -27,14 +27,14 @@
         }
     },
     "import": {
+        "title": "Импорт фотографий",
         "photos": "Импортировать фото",
         "allowDuplicateRename": "Разрешить переименование дубликатов фото",
         "targetDirectory": "Папка экспорта",
         "chooseDirectory": "Выберите папку для импорта",
         "button": {
             "import": "Импортировать",
-            "cancel": "Отмена",
-            "ok": "ОК"
+            "cancel": "Отмена"
         },
         "sourceDirectories": "Исходные папки",
         "addSource": "Добавить исходную папку",
@@ -50,6 +50,7 @@
         "includeSubfolders": "Включить подпапки",
         "duplicateHandling": "Обработка дубликатов",
         "duplicate": {
+            "label": "Дубликат",
             "rename": "Переименовать",
             "skip": "Пропустить",
             "overwrite": "Перезаписать",
@@ -69,6 +70,12 @@
         "resumeButton": "Продолжить",
         "cancelButton": "Отмена",
         "closeButton": "Закрыть",
+        "nextButton": "Далее",
+        "backButton": "Назад",
+        "doneButton": "Готово",
+        "importFailed": "Ошибка импорта",
+        "importCompleted": "Импорт завершён",
+        "importCompletedDesc": "Успешно импортировано {count} файлов",
         "duplicates": "Дубликаты",
         "moreFiles": "еще {count} файлов",
         "selectTarget": "Выбрать целевую папку",
@@ -82,7 +89,6 @@
         "pagination": "{start}-{end} из {total}",
         "toggleSelection": "Переключить выбор",
         "viewDetails": "Просмотр деталей",
-        "duplicate": "Дубликат",
         "image": "Изображение",
         "video": "Видео",
         "unknown": "Неизвестно",
@@ -91,7 +97,6 @@
         "fileName": "Имя файла",
         "fileSize": "Размер файла",
         "fileType": "Тип файла",
-        "dateSource": "Источник даты",
         "dateTime": "Дата и время",
         "modifiedTime": "Время изменения",
         "groupFiles": "Группировать файлы",
@@ -147,6 +152,7 @@
             "lastMonth": "Прошлый месяц"
         },
         "dateSource": {
+            "label": "Источник даты",
             "exif": "EXIF метаданные",
             "file_created": "Файл создан",
             "file_modified": "Файл изменён",
@@ -233,7 +239,15 @@
         "cancelAllProgress": "{completed} из {total} директорий завершено",
         "recentFiles": "Недавние файлы",
         "elapsed": "Прошло времени",
-        "files": "Файлы"
+        "files": "Файлы",
+        "steps": {
+            "configuration": "Конфигурация",
+            "configurationDesc": "Выберите исходную и целевую папки",
+            "preview": "Предпросмотр",
+            "previewDesc": "Просмотрите и выберите файлы для импорта",
+            "importing": "Импорт",
+            "importingDesc": "Импорт файлов в целевую папку"
+        }
     },
     "menu": {
         "getInfo": "Информация о фото",
@@ -333,7 +347,6 @@
         "resources": {
             "title": "Ресурсы",
             "content": "Доступны следующие ресурсы:",
-            "and": "и",
             "download": "Скачать ресурсы"
         },
         "press": "Нажмите",
@@ -356,11 +369,6 @@
             "light": "Светлая",
             "dark": "Темная"
         }
-    },
-    "resetFolders": {
-        "title": "Доп. действие: Сбросить хранение папок",
-        "desc": "Это действие очистит все настройки папок и немедленно пересоздаст кэш. Это действие необратимо. Пожалуйста, будьте осторожны!",
-        "button": "Сбросить хранение папок"
     },
     "scan": {
         "queueTitle": "Очередь сканирования",

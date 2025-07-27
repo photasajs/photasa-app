@@ -51,6 +51,7 @@
         "includeSubfolders": "Inclure les sous-dossiers",
         "duplicateHandling": "Gestion des doublons",
         "duplicate": {
+            "label": "Doublon",
             "rename": "Renommer",
             "skip": "Ignorer",
             "overwrite": "Écraser",
@@ -62,7 +63,6 @@
         "duplicates": "Fichiers en double",
         "moreFiles": "Il y a encore {count} fichiers",
         "group": "{count} fichiers",
-        "progress": "Progression",
         "processing": "Traitement en cours",
         "previewButton": "Aperçu",
         "importButton": "Importer",
@@ -70,6 +70,12 @@
         "pauseButton": "Pause",
         "resumeButton": "Reprendre",
         "closeButton": "Fermer",
+        "nextButton": "Suivant",
+        "backButton": "Précédent",
+        "doneButton": "Terminé",
+        "importFailed": "Échec de l'importation",
+        "importCompleted": "Importation terminée",
+        "importCompletedDesc": "{count} fichiers importés avec succès",
         "filePreview": "Aperçu des fichiers",
         "selectAll": "Tout sélectionner",
         "deselectAll": "Tout désélectionner",
@@ -80,7 +86,6 @@
         "pagination": "{start}-{end} sur {total} éléments",
         "toggleSelection": "Basculer la sélection",
         "viewDetails": "Voir les détails",
-        "duplicate": "Doublon",
         "image": "Image",
         "video": "Vidéo",
         "unknown": "Inconnu",
@@ -89,7 +94,6 @@
         "fileName": "Nom du fichier",
         "fileSize": "Taille du fichier",
         "fileType": "Type de fichier",
-        "dateSource": "Source de date",
         "dateTime": "Date et heure",
         "modifiedTime": "Date de modification",
         "groupFiles": "Fichiers du groupe",
@@ -148,6 +152,7 @@
             "lastMonth": "Le mois dernier"
         },
         "dateSource": {
+            "label": "Source de date",
             "exif": "Métadonnées EXIF",
             "file_created": "Date de création du fichier",
             "file_modified": "Date de modification du fichier",
@@ -234,7 +239,15 @@
         "cancelAllProgress": "{completed} / {total} dossiers terminés",
         "recentFiles": "Fichiers récents",
         "elapsed": "Temps écoulé",
-        "files": "Fichiers"
+        "files": "Fichiers",
+        "steps": {
+            "configuration": "Configuration",
+            "configurationDesc": "Sélectionner les dossiers source et de destination",
+            "preview": "Aperçu",
+            "previewDesc": "Examiner et sélectionner les fichiers à importer",
+            "importing": "Importation",
+            "importingDesc": "Importer les fichiers vers le dossier de destination"
+        }
     },
     "menu": {
         "getInfo": "Infos photo",
@@ -280,9 +293,7 @@
         "error": "Erreur",
         "scan": {
             "title": "Analyser le dossier",
-            "message": "Analyse du dossier terminée, les photos ont été importées dans Photosa.",
-            "queueTitle": "File d'attente de scan",
-            "queueEmpty": "La file d'attente est vide"
+            "message": "Analyse du dossier terminée, les photos ont été importées dans Photosa."
         },
         "duplicatePath": {
             "title": "Dossier en double",
@@ -359,16 +370,15 @@
             "dark": "Sombre"
         }
     },
-    "resetFolders": {
-        "title": "Action avancée : Réinitialiser le stockage des dossiers",
-        "desc": "Cette opération effacera tous les paramètres de dossier et reconstruira immédiatement le cache. Cette action est irréversible. Procédez avec prudence !",
-        "button": "Réinitialiser le stockage des dossiers"
-    },
     "advancedSettings": {
         "title": "Paramètres avancés",
         "resetFoldersTitle": "Opération avancée : Réinitialiser le stockage des dossiers",
         "resetFoldersDesc": "Cette opération effacera toutes les configurations de dossiers et reconstruira immédiatement le cache. Cette action est irréversible, veuillez faire attention !",
         "resetFoldersBtn": "Réinitialiser le stockage des dossiers"
+    },
+    "scan": {
+        "queueTitle": "File d'attente de scan",
+        "queueEmpty": "La file d'attente est vide"
     },
     "empty": {
         "image": "Aucune image",

@@ -21,7 +21,7 @@
                 <!-- 文件类型过滤 -->
                 <a-col :span="12">
                     <div class="filter-item">
-                        <label class="filter-label">{{ t("import.fileTypes") }}</label>
+                        <label class="filter-label">{{ t("import.fileTypes.label") }}</label>
                         <a-checkbox-group
                             v-model:value="localFilters.fileTypes"
                             :options="fileTypeOptions"

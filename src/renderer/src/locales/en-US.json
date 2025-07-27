@@ -51,6 +51,7 @@
         "includeSubfolders": "Include Subfolders",
         "duplicateHandling": "Duplicate Handling",
         "duplicate": {
+            "label": "Duplicate",
             "rename": "Rename",
             "skip": "Skip",
             "overwrite": "Overwrite",
@@ -66,13 +67,18 @@
         "processing": "Processing",
         "previewButton": "Preview",
         "importButton": "Import",
+        "nextButton": "Next",
+        "backButton": "Back",
         "pauseButton": "Pause",
         "resumeButton": "Resume",
         "cancelButton": "Cancel",
         "closeButton": "Close",
+        "doneButton": "Done",
+        "importFailed": "Import Failed",
+        "importCompleted": "Import Completed",
+        "importCompletedDesc": "Successfully imported {count} files",
         "duplicates": "Duplicates",
         "moreFiles": "{count} more files",
-        "selectTarget": "Select Target Directory",
         "filePreview": "File Preview",
         "selectAll": "Select All",
         "deselectAll": "Deselect All",
@@ -83,7 +89,6 @@
         "pagination": "{start}-{end} of {total}",
         "toggleSelection": "Toggle Selection",
         "viewDetails": "View Details",
-        "duplicate": "Duplicate",
         "image": "Image",
         "video": "Video",
         "unknown": "Unknown",
@@ -92,7 +97,6 @@
         "fileName": "File Name",
         "fileSize": "File Size",
         "fileType": "File Type",
-        "dateSource": "Date Source",
         "dateTime": "Date & Time",
         "modifiedTime": "Modified Time",
         "groupFiles": "Group Files",
@@ -147,11 +151,8 @@
             "thisMonth": "This Month",
             "lastMonth": "Last Month"
         },
-        "fileTypes": {
-            "images": "Images",
-            "videos": "Videos"
-        },
         "dateSource": {
+            "label": "Date Source",
             "exif": "EXIF Metadata",
             "file_created": "File Created",
             "file_modified": "File Modified",
@@ -238,7 +239,15 @@
         "cancelAllProgress": "{completed} of {total} directories completed",
         "recentFiles": "Recent Files",
         "elapsed": "Elapsed",
-        "files": "Files"
+        "files": "Files",
+        "steps": {
+            "configuration": "Configuration",
+            "configurationDesc": "Select source and target directories",
+            "preview": "Preview",
+            "previewDesc": "Review and select files to import",
+            "importing": "Importing",
+            "importingDesc": "Import files to target directory"
+        }
     },
     "menu": {
         "getInfo": "Photo Info",

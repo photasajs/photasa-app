@@ -51,6 +51,7 @@
         "includeSubfolders": "Alt klasörleri dahil et",
         "duplicateHandling": "Yinelenen Dosya İşleme",
         "duplicate": {
+            "label": "Yineleme",
             "rename": "Yeniden Adlandır",
             "skip": "Atla",
             "overwrite": "Üzerine Yaz",
@@ -70,6 +71,12 @@
         "resumeButton": "Devam Et",
         "cancelButton": "İptal",
         "closeButton": "Kapat",
+        "nextButton": "İleri",
+        "backButton": "Geri",
+        "doneButton": "Tamam",
+        "importFailed": "İçe Aktarma Başarısız",
+        "importCompleted": "İçe Aktarma Tamamlandı",
+        "importCompletedDesc": "{count} dosya başarıyla içe aktarıldı",
         "duplicates": "Yinelemeler",
         "moreFiles": "{count} dosya daha",
         "filePreview": "Dosya Önizleme",
@@ -82,7 +89,6 @@
         "pagination": "{start}-{end} / {total}",
         "toggleSelection": "Seçimi Değiştir",
         "viewDetails": "Ayrıntıları Görüntüle",
-        "duplicate": "Yineleme",
         "image": "Resim",
         "video": "Video",
         "unknown": "Bilinmeyen",
@@ -91,7 +97,6 @@
         "fileName": "Dosya Adı",
         "fileSize": "Dosya Boyutu",
         "fileType": "Dosya Türü",
-        "dateSource": "Tarih Kaynağı",
         "dateTime": "Tarih ve Saat",
         "modifiedTime": "Değiştirilme Zamanı",
         "groupFiles": "Dosyaları Grupla",
@@ -147,6 +152,7 @@
             "lastMonth": "Geçen Ay"
         },
         "dateSource": {
+            "label": "Tarih Kaynağı",
             "exif": "EXIF Meta Verileri",
             "file_created": "Dosya Oluşturuldu",
             "file_modified": "Dosya Değiştirildi",
@@ -233,7 +239,15 @@
         "cancelAllProgress": "{total} dizinin {completed} tanesi tamamlandı",
         "recentFiles": "Son Dosyalar",
         "elapsed": "Geçen Süre",
-        "files": "Dosyalar"
+        "files": "Dosyalar",
+        "steps": {
+            "configuration": "Yapılandırma",
+            "configurationDesc": "Kaynak ve hedef dizinleri seçin",
+            "preview": "Önizleme",
+            "previewDesc": "İçe aktarılacak dosyaları gözden geçirin ve seçin",
+            "importing": "İçe Aktarılıyor",
+            "importingDesc": "Dosyaları hedef dizine aktarın"
+        }
     },
     "menu": {
         "getInfo": "Fotoğraf Bilgisi",
@@ -333,7 +347,6 @@
         "resources": {
             "title": "Kaynaklar",
             "content": "Aşağıdaki kaynaklar mevcuttur:",
-            "and": "ve",
             "download": "Kaynakları İndir"
         },
         "press": "Basın",
@@ -356,11 +369,6 @@
             "light": "Açık",
             "dark": "Koyu"
         }
-    },
-    "resetFolders": {
-        "title": "Gelişmiş İşlem: Klasör Depolamayı Sıfırla",
-        "desc": "Bu işlem tüm klasör ayarlarını temizleyecek ve önbelleği hemen yeniden oluşturacaktır. Bu işlem geri alınamaz, lütfen dikkatli olun!",
-        "button": "Klasör Depolamayı Sıfırla"
     },
     "scan": {
         "queueTitle": "Tarama Kuyruğu",

@@ -42,6 +42,7 @@
         "browse": "تصفح",
         "options": "خيارات الاستيراد",
         "fileTypes": {
+            "label": "أنواع الملفات",
             "images": "الصور",
             "videos": "الفيديوهات"
         },
@@ -50,6 +51,7 @@
         "includeSubfolders": "تضمين المجلدات الفرعية",
         "duplicateHandling": "معالجة المكررات",
         "duplicate": {
+            "label": "مكرر",
             "rename": "إعادة تسمية",
             "skip": "تخطي",
             "overwrite": "استبدال",
@@ -61,7 +63,6 @@
         "duplicates": "الملفات المكررة",
         "moreFiles": "ملفات أخرى {count}",
         "group": "{count} ملفات",
-        "progress": "التقدم",
         "processing": "جاري المعالجة",
         "previewButton": "معاينة",
         "importButton": "استيراد",
@@ -69,6 +70,12 @@
         "resumeButton": "استئناف",
         "cancelButton": "إلغاء",
         "closeButton": "إغلاق",
+        "nextButton": "التالي",
+        "backButton": "السابق",
+        "doneButton": "تم",
+        "importFailed": "فشل الاستيراد",
+        "importCompleted": "اكتمل الاستيراد",
+        "importCompletedDesc": "تم استيراد {count} ملف بنجاح",
         "filePreview": "معاينة الملف",
         "selectAll": "تحديد الكل",
         "deselectAll": "إلغاء تحديد الكل",
@@ -79,7 +86,6 @@
         "pagination": "العنصر {start}-{end}، من إجمالي {total}",
         "toggleSelection": "تبديل التحديد",
         "viewDetails": "عرض التفاصيل",
-        "duplicate": "مكرر",
         "image": "صورة",
         "video": "فيديو",
         "unknown": "غير معروف",
@@ -88,7 +94,6 @@
         "fileName": "اسم الملف",
         "fileSize": "حجم الملف",
         "fileType": "نوع الملف",
-        "dateSource": "مصدر التاريخ",
         "dateTime": "التاريخ والوقت",
         "modifiedTime": "وقت التعديل",
         "groupFiles": "ملفات المجموعة",
@@ -147,6 +152,7 @@
             "lastMonth": "الشهر الماضي"
         },
         "dateSource": {
+            "label": "مصدر التاريخ",
             "exif": "بيانات EXIF الوصفية",
             "file_created": "وقت إنشاء الملف",
             "file_modified": "وقت تعديل الملف",
@@ -233,7 +239,15 @@
         "cancelAllProgress": "{completed} / {total} مجلد مكتمل",
         "recentFiles": "الملفات الحديثة",
         "elapsed": "الوقت المنقضي",
-        "files": "ملفات"
+        "files": "ملفات",
+        "steps": {
+            "configuration": "التكوين",
+            "configurationDesc": "اختر مجلدات المصدر والهدف",
+            "preview": "معاينة",
+            "previewDesc": "راجع واختر الملفات للاستيراد",
+            "importing": "جارٍ الاستيراد",
+            "importingDesc": "استيراد الملفات إلى مجلد الهدف"
+        }
     },
     "menu": {
         "getInfo": "معلومات الصورة",
@@ -333,7 +347,6 @@
         "resources": {
             "title": "الموارد",
             "content": "الموارد التالية متاحة:",
-            "and": "و",
             "download": "تنزيل الموارد"
         },
         "press": "اضغط",
@@ -356,11 +369,6 @@
             "light": "فاتح",
             "dark": "داكن"
         }
-    },
-    "resetFolders": {
-        "title": "إجراء متقدم: إعادة تعيين تخزين المجلدات",
-        "desc": "سيؤدي هذا الإجراء إلى مسح جميع إعدادات المجلدات وإعادة إنشاء ذاكرة التخزين المؤقت على الفور. هذا الإجراء لا يمكن التراجع عنه. يرجى الحذر!",
-        "button": "إعادة تعيين تخزين المجلدات"
     },
     "scan": {
         "queueTitle": "قائمة انتظار المسح",

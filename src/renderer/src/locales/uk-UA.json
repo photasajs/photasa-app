@@ -51,6 +51,7 @@
         "includeSubfolders": "Включити підпапки",
         "duplicateHandling": "Обробка дублікатів",
         "duplicate": {
+            "label": "Дублікат",
             "rename": "Перейменувати",
             "skip": "Пропустити",
             "overwrite": "Перезаписати",
@@ -70,6 +71,12 @@
         "resumeButton": "Продовжити",
         "cancelButton": "Скасувати",
         "closeButton": "Закрити",
+        "nextButton": "Далі",
+        "backButton": "Назад",
+        "doneButton": "Готово",
+        "importFailed": "Імпорт не вдався",
+        "importCompleted": "Імпорт завершено",
+        "importCompletedDesc": "Успішно імпортовано {count} файлів",
         "duplicates": "Дублікати",
         "moreFiles": "ще {count} файлів",
         "filePreview": "Попередній перегляд файлів",
@@ -82,7 +89,6 @@
         "pagination": "{start}-{end} з {total}",
         "toggleSelection": "Перемкнути вибір",
         "viewDetails": "Переглянути деталі",
-        "duplicate": "Дублікат",
         "image": "Зображення",
         "video": "Відео",
         "unknown": "Невідомо",
@@ -91,7 +97,6 @@
         "fileName": "Назва файлу",
         "fileSize": "Розмір файлу",
         "fileType": "Тип файлу",
-        "dateSource": "Джерело дати",
         "dateTime": "Дата і час",
         "modifiedTime": "Час зміни",
         "groupFiles": "Групувати файли",
@@ -147,6 +152,7 @@
             "lastMonth": "Минулого місяця"
         },
         "dateSource": {
+            "label": "Джерело дати",
             "exif": "EXIF метадані",
             "file_created": "Файл створено",
             "file_modified": "Файл змінено",
@@ -233,7 +239,15 @@
         "cancelAllProgress": "{completed} з {total} каталогів завершено",
         "recentFiles": "Нещодавні файли",
         "elapsed": "Минуло часу",
-        "files": "Файли"
+        "files": "Файли",
+        "steps": {
+            "configuration": "Конфігурація",
+            "configurationDesc": "Вибрати вихідну та цільову папки",
+            "preview": "Попередній перегляд",
+            "previewDesc": "Переглянути та вибрати файли для імпорту",
+            "importing": "Імпорт",
+            "importingDesc": "Імпорт файлів до цільової папки"
+        }
     },
     "menu": {
         "getInfo": "Інформація про фото",
@@ -333,7 +347,6 @@
         "resources": {
             "title": "Ресурси",
             "content": "Доступні такі ресурси:",
-            "and": "та",
             "download": "Завантажити ресурси"
         },
         "press": "Натисніть",
@@ -356,11 +369,6 @@
             "light": "Світла",
             "dark": "Темна"
         }
-    },
-    "resetFolders": {
-        "title": "Додаткова дія: Скинути зберігання папок",
-        "desc": "Ця дія очистить усі налаштування папок і негайно перебудує кеш. Ця дія незворотна. Будь ласка, будьте обережні!",
-        "button": "Скинути зберігання папок"
     },
     "scan": {
         "queueTitle": "Черга сканування",

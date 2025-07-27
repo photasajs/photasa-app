@@ -127,8 +127,9 @@ async function handleProcessFileGroup(message: WorkerMessage<ImportRequest>): Pr
  * 处理目录扫描请求
  */
 async function handleScanDirectories(message: WorkerMessage<ImportRequest>): Promise<void> {
-    const request = message.payload as unknown as ScanDirectoriesRequest;
-    logger.debug(`[import-worker] 扫描目录: ${request.paths.join(", ")}`);
+    const importRequest = message.payload as ImportRequest;
+    const request = importRequest.payload as ScanDirectoriesRequest;
+    logger.debug(`[import-worker] 扫描目录: ${request.paths?.join(", ") || "无路径"}`);
 
     try {
         const fileGroups = await scanDirectoriesForFiles(request.paths, request.filters);
@@ -151,8 +152,10 @@ async function handleScanDirectories(message: WorkerMessage<ImportRequest>): Pro
  * 处理导入预览请求
  */
 async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promise<void> {
-    const config = message.payload as unknown as ImportConfig;
-    logger.debug(`[import-worker] 预览导入: ${config.sourcePaths.join(", ")}`);
+    const request = message.payload as ImportRequest;
+    const config = request.payload as ImportConfig;
+
+    logger.debug(`[import-worker] 预览导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
         const preview = await generateImportPreview(config);
@@ -175,8 +178,9 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
  * 处理执行导入请求
  */
 async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promise<void> {
-    const config = message.payload as unknown as ImportConfig;
-    logger.debug(`[import-worker] 执行导入: ${config.sourcePaths.join(", ")}`);
+    const request = message.payload as ImportRequest;
+    const config = request.payload as ImportConfig;
+    logger.debug(`[import-worker] 执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
         const result = await executeImportProcess(config);
@@ -200,6 +204,14 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
  */
 async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<FileGroup[]> {
     const allFiles: FileInfo[] = [];
+
+    // 确保 paths 是一个数组
+    if (!Array.isArray(paths)) {
+        logger.error(
+            `[import-worker] paths 不是数组: ${typeof paths}, 值: ${JSON.stringify(paths)}`,
+        );
+        return [];
+    }
 
     for (const dirPath of paths) {
         logger.debug(`[import-worker] 扫描目录: ${dirPath}`);
@@ -348,6 +360,14 @@ function shouldIncludeFile(filePath: string, filters?: any): boolean {
 async function generateImportPreview(config: ImportConfig): Promise<ImportPreview> {
     logger.debug(`[import-worker] 生成导入预览`);
 
+    // 确保 sourcePaths 是一个数组
+    if (!Array.isArray(config.sourcePaths)) {
+        logger.error(
+            `[import-worker] config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
+        );
+        throw new Error("sourcePaths must be an array");
+    }
+
     // 扫描源目录
     const fileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
 
@@ -486,6 +506,14 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
     logger.debug(`[import-worker] 开始执行导入 ${importId}`);
 
     try {
+        // 确保 sourcePaths 是一个数组
+        if (!Array.isArray(config.sourcePaths)) {
+            logger.error(
+                `[import-worker] config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
+            );
+            throw new Error("sourcePaths must be an array");
+        }
+
         // 扫描文件
         const fileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
 

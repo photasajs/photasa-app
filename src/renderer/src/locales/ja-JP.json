@@ -40,18 +40,28 @@
         "addSource": "ソースディレクトリを追加",
         "browse": "参照",
         "options": "インポートオプション",
-        "fileTypes": "ファイルタイプ",
+        "fileTypes": {
+            "label": "ファイルタイプ",
+            "images": "画像",
+            "videos": "動画"
+        },
         "images": "画像",
         "videos": "動画",
         "includeSubfolders": "サブフォルダを含む",
         "duplicateHandling": "重複ファイルの処理",
+        "duplicate": {
+            "label": "重複",
+            "rename": "リネーム",
+            "skip": "スキップ",
+            "overwrite": "上書き",
+            "keepBoth": "両方を保持"
+        },
         "preview": "プレビュー",
         "totalFiles": "総ファイル数",
         "totalSize": "総サイズ",
         "duplicates": "重複ファイル",
         "moreFiles": "他に{count}個のファイル",
         "group": "{count}個のファイル",
-        "progress": "進行状況",
         "processing": "処理中",
         "previewButton": "プレビュー",
         "importButton": "インポート",
@@ -59,6 +69,12 @@
         "pauseButton": "一時停止",
         "resumeButton": "再開",
         "closeButton": "閉じる",
+        "nextButton": "次へ",
+        "backButton": "戻る",
+        "doneButton": "完了",
+        "importFailed": "インポート失敗",
+        "importCompleted": "インポート完了",
+        "importCompletedDesc": "{count}個のファイルを正常にインポートしました",
         "selectTarget": "ターゲットディレクトリを選択",
         "filePreview": "ファイルプレビュー",
         "selectAll": "すべて選択",
@@ -70,7 +86,6 @@
         "pagination": "{start}-{end} / {total}",
         "toggleSelection": "選択を切り替え",
         "viewDetails": "詳細を表示",
-        "duplicate": "重複",
         "image": "画像",
         "video": "動画",
         "unknown": "不明",
@@ -79,7 +94,6 @@
         "fileName": "ファイル名",
         "fileSize": "ファイルサイズ",
         "fileType": "ファイルタイプ",
-        "dateSource": "日付ソース",
         "dateTime": "日付と時刻",
         "modifiedTime": "変更時刻",
         "groupFiles": "グループファイル",
@@ -137,11 +151,8 @@
             "thisMonth": "今月",
             "lastMonth": "先月"
         },
-        "fileTypes": {
-            "images": "画像",
-            "videos": "動画"
-        },
         "dateSource": {
+            "label": "日付ソース",
             "exif": "EXIFメタデータ",
             "file_created": "ファイル作成日",
             "file_modified": "ファイル変更日",
@@ -228,7 +239,15 @@
         "cancelAllProgress": "{completed} / {total} ディレクトリが完了",
         "recentFiles": "最近のファイル",
         "elapsed": "経過時間",
-        "files": "ファイル"
+        "files": "ファイル",
+        "steps": {
+            "configuration": "設定",
+            "configurationDesc": "ソースディレクトリとターゲットディレクトリを選択",
+            "preview": "プレビュー",
+            "previewDesc": "インポートするファイルを確認・選択",
+            "importing": "インポート中",
+            "importingDesc": "ファイルをターゲットディレクトリにインポート"
+        }
     },
     "about": {
         "antvDescription": "データ可視化ソリューション",
@@ -243,7 +262,6 @@
         "resources": {
             "title": "リソース",
             "content": "以下のリソースが利用可能です：",
-            "and": "と",
             "download": "リソースをダウンロード"
         },
         "press": "押す",
@@ -313,11 +331,6 @@
         "cancel": "キャンセル",
         "ok": "OK",
         "fixConfig": "フォトライブラリ情報を修復"
-    },
-    "resetFolders": {
-        "title": "高度な操作：ディレクトリストレージのリセット",
-        "desc": "この操作はすべてのディレクトリ設定を消去し、キャッシュを即座に再構築します。元に戻せませんのでご注意ください！",
-        "button": "ディレクトリストレージをリセット"
     },
     "scan": {
         "queueTitle": "スキャンキュー",
