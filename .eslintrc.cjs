@@ -21,5 +21,12 @@ module.exports = {
         "prettier/prettier": "error",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-empty-function": "off", // Not very useful lint, and stupid design
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                argsIgnorePattern: "^_",
+                varsIgnorePattern: "^_",
+            },
+        ],
     },
 };

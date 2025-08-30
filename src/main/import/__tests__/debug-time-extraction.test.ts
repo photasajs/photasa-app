@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { extractMetadata } from "../import-handler";
-import { extractDateTimeFromExif } from "@common/exif-util";
-import * as fs from "fs-extra";
+import fs from "fs-extra";
 import ExifReader from "exifreader";
 import ffmpeg from "fluent-ffmpeg";
+import { extractMetadata } from "../import-handler";
 import type { PhotasaLogger } from "@common/logger";
 import type { MetadataRequest } from "@common/import-types";
 
@@ -166,7 +165,7 @@ describe("Debug Time Extraction Issues", () => {
                 ],
             };
 
-            vi.mocked(ffmpeg.ffprobe).mockImplementation((filePath, callback) => {
+            vi.mocked(ffmpeg.ffprobe).mockImplementation((_filePath, callback) => {
                 callback(null, mockFfprobeOutput as any);
                 return {} as any;
             });
@@ -208,7 +207,7 @@ describe("Debug Time Extraction Issues", () => {
                 ],
             };
 
-            vi.mocked(ffmpeg.ffprobe).mockImplementation((filePath, callback) => {
+            vi.mocked(ffmpeg.ffprobe).mockImplementation((_filePath, callback) => {
                 callback(null, mockFfprobeOutput as any);
                 return {} as any;
             });
@@ -256,7 +255,7 @@ describe("Debug Time Extraction Issues", () => {
                 ],
             };
 
-            vi.mocked(ffmpeg.ffprobe).mockImplementation((filePath, callback) => {
+            vi.mocked(ffmpeg.ffprobe).mockImplementation((_filePath, callback) => {
                 callback(null, mockFfprobeOutput as any);
                 return {} as any;
             });

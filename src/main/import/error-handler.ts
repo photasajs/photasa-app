@@ -138,16 +138,23 @@ export class ImportErrorHandler {
         recoverableCount: number;
     } {
         const byCategory: Record<ErrorCategory, number> = {
+            FILE_SYSTEM: 0,
+            METADATA: 0,
+            VALIDATION: 0,
+            NETWORK: 0,
+            PERMISSION: 0,
+            DISK_SPACE: 0,
+            UNKNOWN: 0,
             file_operation: 0,
             metadata_extraction: 0,
             duplicate_handling: 0,
-            permission: 0,
-            network: 0,
-            validation: 0,
-            other: 0,
         };
 
         const bySeverity: Record<ErrorSeverity, number> = {
+            LOW: 0,
+            MEDIUM: 0,
+            HIGH: 0,
+            CRITICAL: 0,
             error: 0,
             warning: 0,
             info: 0,
@@ -321,7 +328,7 @@ export class RetryRecoveryStrategy implements ErrorRecoveryStrategy {
  * 跳过策略
  */
 export class SkipRecoveryStrategy implements ErrorRecoveryStrategy {
-    canRecover(error: ImportError): boolean {
+    canRecover(_error: ImportError): boolean {
         // 所有错误都可以跳过
         return true;
     }

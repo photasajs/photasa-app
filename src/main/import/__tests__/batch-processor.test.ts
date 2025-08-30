@@ -267,7 +267,7 @@ describe("BatchProcessor", () => {
 
         // 创建文件组
         const fileGroup: FileGroup = {
-            mainFile: fileInfos.find((f, index) => groupFiles[index].isMain) || fileInfos[0],
+            mainFile: fileInfos.find((_f, index) => groupFiles[index].isMain) || fileInfos[0],
             files: fileInfos,
             type: "group",
             totalSize: fileInfos.reduce((sum, f) => sum + f.size, 0),

@@ -226,7 +226,7 @@ import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { Dayjs } from "dayjs";
 import { ReloadOutlined, SettingOutlined, QuestionCircleOutlined } from "@ant-design/icons-vue";
-import type { ImportFilters, FileType } from "@common/import-types";
+import type { ImportFilters } from "@common/import-types";
 
 // Props
 const props = withDefaults(

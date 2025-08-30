@@ -1,5 +1,5 @@
-import { ref, computed, reactive, watch } from "vue";
-import type { WizardConfig, WizardState, WizardStep, WizardNavigationEvent } from "../types";
+import { ref, computed, reactive } from "vue";
+import type { WizardConfig, WizardState, WizardStep } from "../types";
 
 export function useWizard(config: WizardConfig) {
     // State

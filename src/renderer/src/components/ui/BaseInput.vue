@@ -39,7 +39,7 @@ interface Props {
     errorMessage?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+const _props = withDefaults(defineProps<Props>(), {
     type: "text",
     disabled: false,
     readonly: false,

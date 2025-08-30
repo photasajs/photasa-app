@@ -14,7 +14,6 @@ import {
     formatRemainingTime,
     calculateProgressPercentage,
     createInitialFilePreviewState,
-    updateFilePreviewState,
     validateImportConfig,
 } from "../import-helpers";
 import type { ImportFilters, FileGroup, ImportConfig } from "@common/import-types";

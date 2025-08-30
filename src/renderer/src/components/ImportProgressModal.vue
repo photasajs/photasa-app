@@ -2,11 +2,7 @@
 import { ref, reactive, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { executeImport, cancelImport, pauseImport, resumeImport } from "@renderer/utils/api";
-import {
-    formatFileSize,
-    formatProcessingSpeed,
-    formatRemainingTime,
-} from "@renderer/utils/import-helpers";
+import { formatProcessingSpeed, formatRemainingTime } from "@renderer/utils/import-helpers";
 import { BaseModal, BaseButton } from "@renderer/components/ui";
 import {
     PauseIcon,

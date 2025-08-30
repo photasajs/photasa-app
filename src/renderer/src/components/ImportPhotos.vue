@@ -76,7 +76,7 @@ import {
 import { BaseWizard, createWizardStep, createWizardConfig } from "@renderer/components/wizard";
 import VirtualList from "@renderer/components/ui/VirtualList.vue";
 import ImportProgressModal from "./ImportProgressModal.vue";
-import type { ImportConfig, DuplicateStrategy, ImportResult } from "@common/import-types";
+import type { ImportConfig, ImportResult } from "@common/import-types";
 
 /**
  * Component Props Definition
@@ -190,22 +190,6 @@ const handleWizardCancel = () => {
     emit("update:show", false);
 };
 
-// Initialize step data immediately
-const initializeWizardData = () => {
-    if (wizardStateRef.value?.setStepData) {
-        const configData = createInitialConfigurationData(
-            props.initialSourcePaths,
-            props.initialTargetPath,
-            store.paths,
-            excludePaths.value,
-        );
-        const previewData = createInitialPreviewData();
-
-        wizardStateRef.value.setStepData("configuration", configData);
-        wizardStateRef.value.setStepData("preview", previewData);
-    }
-};
-
 // Wizard configuration (only config and preview steps)
 const wizardConfig = createWizardConfig({
     steps: [
@@ -221,7 +205,7 @@ const wizardConfig = createWizardConfig({
             onEnter: (stepData: any) => {
                 // Initialize step data if not already present
                 if (!stepData) {
-                    const configData = createInitialConfigurationData(
+                    createInitialConfigurationData(
                         props.initialSourcePaths,
                         props.initialTargetPath,
                         store.paths,
@@ -369,7 +353,7 @@ const addSourceDirectory = async (
     stepData: any,
     setStepData: (stepId: string, data: any) => void,
 ) => {
-    const result = await executeWithErrorHandling(
+    await executeWithErrorHandling(
         async () => {
             loadingState.directories = true;
             const result = await chooseDirectories(true);
@@ -414,7 +398,7 @@ const selectTargetDirectory = async (
     stepData: any,
     setStepData: (stepId: string, data: any) => void,
 ) => {
-    const result = await executeWithErrorHandling(
+    await executeWithErrorHandling(
         async () => {
             loadingState.directories = true;
             const result = await chooseDirectories(false);

@@ -96,7 +96,7 @@ describe("Import Date Fallback Integration", () => {
             ).not.toBe("");
 
             // 验证 targetPath 格式
-            const pathParts = processedGroup.targetPath!.split("/");
+            const pathParts = (processedGroup.targetPath as string).split("/");
             expect(
                 pathParts,
                 `${testCase.description} should have correct path format`,

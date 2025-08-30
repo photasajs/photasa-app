@@ -77,7 +77,7 @@ describe("HEIC Real File Test", () => {
 
         // 验证EXIF日期提取 - HEIC文件应该有有效的EXIF日期
         expect(metadata.dateTime).toBeInstanceOf(Date);
-        expect(isNaN(metadata.dateTime!.getTime())).toBe(false);
+        expect(isNaN((metadata.dateTime as Date).getTime())).toBe(false);
         expect(metadata.dateSource).toBe("exif");
 
         // 验证图像尺寸 - HEIC文件必须有有效的宽高
@@ -91,7 +91,7 @@ describe("HEIC Real File Test", () => {
         expect(imageMetadata.cameraInfo.model).toContain("iPhone");
 
         // 验证按照真实EXIF数据的日期（根据实际文件的EXIF内容）
-        const actualDate = metadata.dateTime!;
+        const actualDate = metadata.dateTime as Date;
         expect(actualDate.getFullYear()).toBe(2021);
         expect(actualDate.getMonth()).toBe(10); // 11月（从0开始）
         // 日期可能是3日或4日，取决于时区转换和实际EXIF内容
@@ -144,10 +144,12 @@ describe("HEIC Real File Test", () => {
 
         // 验证具体的日期路径 - 根据真实EXIF数据，应该是2021年11月的路径
         // 日期可能是03日或04日，取决于时区转换
-        expect(["2021/20211103", "2021/20211104"].includes(processedGroup.targetPath!)).toBe(true);
+        expect(
+            ["2021/20211103", "2021/20211104"].includes(processedGroup.targetPath as string),
+        ).toBe(true);
 
         // 验证路径组件
-        const pathParts = processedGroup.targetPath!.split("/");
+        const pathParts = (processedGroup.targetPath as string).split("/");
         expect(pathParts[0]).toBe("2021"); // 年份
         expect(["20211103", "20211104"].includes(pathParts[1])).toBe(true); // 年月日
     });
@@ -207,7 +209,9 @@ describe("HEIC Real File Test", () => {
         const processedGroup = await processFileGroup(fileGroup, mockLogger);
 
         // 4. 完整性验证
-        expect(["2021/20211103", "2021/20211104"].includes(processedGroup.targetPath!)).toBe(true);
+        expect(
+            ["2021/20211103", "2021/20211104"].includes(processedGroup.targetPath as string),
+        ).toBe(true);
         expect(processedGroup.targetPath).toMatch(/^\d{4}\/\d{8}$/);
         expect(processedGroup.targetPath).not.toContain("NaN");
     });

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // 模拟HEICMetadataProcessor的extractDateTime方法
 function extractDateTimeFixed(exifData: any): Date | null {
@@ -43,14 +43,12 @@ describe("HEIC EXIF DateTime Fix Validation", () => {
         const extractedDate = extractDateTimeFixed(mockExifData);
 
         expect(extractedDate).not.toBeNull();
-        expect(extractedDate!.getFullYear()).toBe(2023);
-        expect(extractedDate!.getMonth()).toBe(7); // 月份从0开始
-        expect(extractedDate!.getDate()).toBe(15);
-        expect(extractedDate!.getHours()).toBe(14);
-        expect(extractedDate!.getMinutes()).toBe(30);
-        expect(extractedDate!.getSeconds()).toBe(0);
-
-        console.log(`✓ HEIC EXIF Date parsed correctly: ${extractedDate!.toString()}`);
+        expect((extractedDate as Date).getFullYear()).toBe(2023);
+        expect((extractedDate as Date).getMonth()).toBe(7); // 月份从0开始
+        expect((extractedDate as Date).getDate()).toBe(15);
+        expect((extractedDate as Date).getHours()).toBe(14);
+        expect((extractedDate as Date).getMinutes()).toBe(30);
+        expect((extractedDate as Date).getSeconds()).toBe(0);
     });
 
     it("should prioritize DateTimeDigitized over other fields", () => {
@@ -69,10 +67,8 @@ describe("HEIC EXIF DateTime Fix Validation", () => {
         const extractedDate = extractDateTimeFixed(mockExifData);
 
         expect(extractedDate).not.toBeNull();
-        expect(extractedDate!.getHours()).toBe(10);
-        expect(extractedDate!.getMinutes()).toBe(15);
-
-        console.log(`✓ DateTimeDigitized prioritized: ${extractedDate!.toString()}`);
+        expect((extractedDate as Date).getHours()).toBe(10);
+        expect((extractedDate as Date).getMinutes()).toBe(15);
     });
 
     it("should handle invalid EXIF dates gracefully", () => {
@@ -88,10 +84,8 @@ describe("HEIC EXIF DateTime Fix Validation", () => {
         const extractedDate = extractDateTimeFixed(mockExifData);
 
         expect(extractedDate).not.toBeNull();
-        expect(extractedDate!.getFullYear()).toBe(2023);
-        expect(extractedDate!.getMonth()).toBe(7);
-
-        console.log(`✓ Invalid EXIF date skipped, valid one used: ${extractedDate!.toString()}`);
+        expect((extractedDate as Date).getFullYear()).toBe(2023);
+        expect((extractedDate as Date).getMonth()).toBe(7);
     });
 
     it("should return null when no valid dates found", () => {
@@ -137,9 +131,7 @@ describe("HEIC EXIF DateTime Fix Validation", () => {
             const extractedDate = extractDateTimeFixed(mockExifData);
 
             expect(extractedDate).not.toBeNull();
-            expect(extractedDate!.getTime()).toBe(testCase.expected.getTime());
-
-            console.log(`✓ ${testCase.exif} -> ${extractedDate!.toString()}`);
+            expect((extractedDate as Date).getTime()).toBe(testCase.expected.getTime());
         }
     });
 
@@ -157,7 +149,5 @@ describe("HEIC EXIF DateTime Fix Validation", () => {
             const extractedDate = extractDateTimeFixed(testCase);
             expect(extractedDate).toBeNull();
         }
-
-        console.log(`✓ All empty/missing EXIF data cases handled correctly`);
     });
 });

@@ -1,7 +1,4 @@
 import { describe, it, expect } from "vitest";
-import ExifReader from "exifreader";
-import fs from "fs-extra";
-import path from "path";
 
 interface ExifTag {
     value?: string[];

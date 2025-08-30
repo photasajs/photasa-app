@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { processFileGroup } from "../import-handler";
 import type { FileGroup, FileInfo } from "@common/import-types";
 import type { PhotasaLogger } from "@common/logger";

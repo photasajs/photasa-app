@@ -19,7 +19,7 @@ export class BatchProcessor extends EventEmitter {
     private fileGroups: FileGroup[] = [];
     private activeJobs = 0;
     private maxConcurrency: number;
-    private config: ImportConfig;
+    private _config: ImportConfig;
     private isCancelled = false;
     private isPaused = false;
     private progress: ImportProgress = {
@@ -28,6 +28,8 @@ export class BatchProcessor extends EventEmitter {
         currentFile: "",
         speed: 0,
         estimatedTimeRemaining: 0,
+        remainingTime: 0,
+        startTime: new Date(),
         errors: [],
         warnings: [],
         status: "preparing",
@@ -39,6 +41,7 @@ export class BatchProcessor extends EventEmitter {
         skippedFiles: 0,
         errorFiles: 0,
         totalSize: 0,
+        processedSize: 0,
         importedFiles: [],
         errors: [],
         warnings: [],
@@ -57,10 +60,10 @@ export class BatchProcessor extends EventEmitter {
      */
     constructor(config: ImportConfig, maxConcurrency = 4) {
         super();
-        this.config = config;
+        this._config = config;
         this.maxConcurrency = maxConcurrency;
-        this.result.sourcePaths = config.sourcePaths;
-        this.result.targetPath = config.targetPath;
+        this.result.sourcePaths = this._config.sourcePaths;
+        this.result.targetPath = this._config.targetPath;
     }
 
     /**
@@ -147,7 +150,7 @@ export class BatchProcessor extends EventEmitter {
 
         await Promise.all(promises);
 
-        this.result.duration = Date.now() - this.progress.startTime;
+        this.result.duration = Date.now() - this.progress.startTime.getTime();
         return this.result;
     }
 
@@ -222,10 +225,9 @@ export class BatchProcessor extends EventEmitter {
             });
         } catch (error) {
             // Mark all files in the group as failed
-            for (const file of group.files) {
-                this.progress.processedFiles++;
-                this.result.errorFiles++;
-            }
+            const total = group.files?.length || 0;
+            this.result.errorFiles += total;
+            this.progress.processedFiles += total;
 
             this.handleError(group.files[0].path, error);
             throw error;
@@ -265,8 +267,12 @@ export class BatchProcessor extends EventEmitter {
     private handleError(filePath: string, error: any): void {
         const errorInfo: ImportError = {
             file: filePath,
+            filePath: filePath,
             error: error.message || "Unknown error",
+            message: error.message || "Unknown error",
             code: error.code,
+            category: "FILE_SYSTEM" as const,
+            severity: "MEDIUM" as const,
             recoverable: false,
         };
 

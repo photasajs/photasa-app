@@ -85,7 +85,7 @@ class HEICMetadataProcessor {
                     logger.debug(`[HEIC] Got dimensions from EXIF: ${exifWidth}x${exifHeight}`);
                 } else if (this.heifModule) {
                     // 如果EXIF中没有尺寸信息且WASM可用，则解码HEIC获取
-                    const decoded = this.heifModule.decode(buffer, buffer.byteLength, false);
+                    this.heifModule.decode(buffer, buffer.byteLength, false);
                     const { width, height } = this.heifModule.dimensions();
                     imageInfo = { width, height };
                     logger.debug(`[HEIC] Got dimensions from WASM decode: ${width}x${height}`);
@@ -95,7 +95,7 @@ class HEICMetadataProcessor {
                 // 即使EXIF提取失败，也尝试获取基本图像信息
                 if (this.heifModule) {
                     try {
-                        const decoded = this.heifModule.decode(buffer, buffer.byteLength, false);
+                        this.heifModule.decode(buffer, buffer.byteLength, false);
                         const { width, height } = this.heifModule.dimensions();
                         imageInfo = { width, height };
                     } catch (decodeError) {
@@ -741,7 +741,6 @@ export class FileGroupDetector {
         relatedFiles: FileInfo[],
     ): void {
         const baseName = path.parse(mainFile.path).name;
-        const baseDir = path.dirname(mainFile.path);
         const mainExt = path.extname(mainFile.path).toLowerCase().slice(1);
 
         // GoPro命名模式: GOPR0001.MP4 -> GP010001.LRV, GP020001.MP4等

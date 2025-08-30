@@ -216,7 +216,7 @@ export class SkipDuplicateHandler implements DuplicateHandler {
     async handle(
         original: FileInfo,
         duplicate: FileInfo,
-        targetPath: string,
+        _targetPath: string,
     ): Promise<DuplicateResult> {
         logger.debug(`[duplicate-handler] Skipping duplicate file: ${duplicate.name}`);
 
@@ -273,7 +273,7 @@ export class OverwriteDuplicateHandler implements DuplicateHandler {
     async handle(
         original: FileInfo,
         duplicate: FileInfo,
-        targetPath: string,
+        _targetPath: string,
     ): Promise<DuplicateResult> {
         logger.debug(`[duplicate-handler] Overwriting duplicate file: ${duplicate.name}`);
 

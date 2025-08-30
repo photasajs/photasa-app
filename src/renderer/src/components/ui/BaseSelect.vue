@@ -404,7 +404,7 @@ const handleOptionClick = (option: Option, index: number) => {
 /**
  * 处理选项鼠标按下事件
  */
-const handleOptionMouseDown = (option: Option, index: number) => {
+const _handleOptionMouseDown = (option: Option, index: number) => {
     logger.debug("Option mousedown:", option, "index:", index);
     selectOption(option, index);
 };

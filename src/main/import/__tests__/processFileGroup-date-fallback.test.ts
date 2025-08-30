@@ -63,7 +63,7 @@ describe("processFileGroup Date Fallback Tests", () => {
         expect(processedGroup.targetPath).not.toBe("");
 
         // 验证 targetPath 格式是 YYYY/YYYYMMDD
-        const pathParts = processedGroup.targetPath!.split("/");
+        const pathParts = (processedGroup.targetPath as string).split("/");
         expect(pathParts).toHaveLength(2);
 
         const year = pathParts[0];
