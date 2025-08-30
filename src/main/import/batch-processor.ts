@@ -9,6 +9,7 @@ import {
     ImportResult,
     ImportError,
 } from "../../common/import-types";
+import { ImportErrorHandler } from "./error-handler";
 
 /**
  * BatchProcessor handles the processing of multiple files in batches during import
@@ -22,6 +23,7 @@ export class BatchProcessor extends EventEmitter {
     private _config: ImportConfig;
     private isCancelled = false;
     private isPaused = false;
+    private errorHandler: ImportErrorHandler;
     private progress: ImportProgress = {
         totalFiles: 0,
         processedFiles: 0,
@@ -62,6 +64,7 @@ export class BatchProcessor extends EventEmitter {
         super();
         this._config = config;
         this.maxConcurrency = maxConcurrency;
+        this.errorHandler = new ImportErrorHandler();
         this.result.sourcePaths = this._config.sourcePaths;
         this.result.targetPath = this._config.targetPath;
     }
@@ -265,23 +268,61 @@ export class BatchProcessor extends EventEmitter {
      * @param error Error object
      */
     private handleError(filePath: string, error: any): void {
-        const errorInfo: ImportError = {
-            file: filePath,
-            filePath: filePath,
-            error: error.message || "Unknown error",
-            message: error.message || "Unknown error",
-            code: error.code,
-            category: "FILE_SYSTEM" as const,
-            severity: "MEDIUM" as const,
-            recoverable: false,
-        };
+        // 使用专业的错误处理器来分类和记录错误
+        let category:
+            | "FILE_SYSTEM"
+            | "METADATA"
+            | "VALIDATION"
+            | "NETWORK"
+            | "PERMISSION"
+            | "DISK_SPACE"
+            | "UNKNOWN" = "UNKNOWN";
+        let severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" = "MEDIUM";
+        let recoverable = false;
+
+        // 根据错误类型和消息分类错误
+        const errorMessage = error.message || "Unknown error";
+        const errorCode = error.code || "";
+
+        if (errorCode === "ENOENT" || errorMessage.includes("no such file")) {
+            category = "FILE_SYSTEM";
+            severity = "HIGH";
+            recoverable = false;
+        } else if (errorCode === "EACCES" || errorMessage.includes("permission")) {
+            category = "PERMISSION";
+            severity = "HIGH";
+            recoverable = false;
+        } else if (errorCode === "ENOSPC" || errorMessage.includes("space")) {
+            category = "DISK_SPACE";
+            severity = "CRITICAL";
+            recoverable = false;
+        } else if (errorMessage.includes("metadata") || errorMessage.includes("EXIF")) {
+            category = "METADATA";
+            severity = "LOW";
+            recoverable = true;
+        } else if (errorMessage.includes("copy") || errorMessage.includes("file operation")) {
+            category = "FILE_SYSTEM";
+            severity = "MEDIUM";
+            recoverable = true;
+        }
+
+        const errorInfo = this.errorHandler.recordError(
+            filePath,
+            error,
+            category,
+            severity,
+            recoverable,
+        );
 
         this.progress.errors.push(errorInfo);
         this.result.errors.push(errorInfo);
 
         this.emit("error", {
             file: filePath,
-            error: error,
+            error: errorInfo,
+            category: errorInfo.category,
+            severity: errorInfo.severity,
+            recoverable: errorInfo.recoverable,
         });
 
         this.emit("progress", { ...this.progress });
@@ -331,5 +372,41 @@ export class BatchProcessor extends EventEmitter {
      */
     setMaxConcurrency(maxConcurrency: number): void {
         this.maxConcurrency = Math.max(1, maxConcurrency);
+    }
+
+    /**
+     * 获取详细的错误分析和建议
+     */
+    getErrorAnalysis(): {
+        summary: string;
+        recommendations: string[];
+        criticalIssues: ImportError[];
+        errorReport: string;
+    } {
+        const analysis = this.errorHandler.analyzeErrors();
+        const errorReport = this.errorHandler.generateErrorReport();
+        return {
+            ...analysis,
+            errorReport,
+        };
+    }
+
+    /**
+     * 获取错误统计信息
+     */
+    getErrorStats(): {
+        total: number;
+        byCategory: Record<string, number>;
+        bySeverity: Record<string, number>;
+        recoverableCount: number;
+    } {
+        return this.errorHandler.getErrorStats();
+    }
+
+    /**
+     * 生成完整的错误报告
+     */
+    generateErrorReport(): string {
+        return this.errorHandler.generateErrorReport();
     }
 }

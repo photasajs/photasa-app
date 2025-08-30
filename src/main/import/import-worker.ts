@@ -190,9 +190,21 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
         parentPort?.postMessage(response);
     } catch (error) {
         logger.error(`[import-worker] 导入执行失败: ${error}`);
+
+        // 确保错误对象可以被序列化
+        const serializableError =
+            error instanceof Error
+                ? {
+                      message: error.message,
+                      name: error.name,
+                      stack: error.stack,
+                      code: (error as any).code || undefined,
+                  }
+                : { message: String(error) };
+
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
-            error: error instanceof Error ? error.message : "Import execution failed",
+            error: serializableError.message,
         });
         parentPort?.postMessage(response);
     }
@@ -562,6 +574,7 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
             duplicateHandling: [],
             errors: [
                 {
+                    id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
                     file: "",
                     filePath: "",
                     error: error instanceof Error ? error.message : "Unknown error",
@@ -569,6 +582,7 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
                     category: "UNKNOWN" as const,
                     severity: "CRITICAL" as const,
                     recoverable: false,
+                    retryCount: 0,
                 },
             ],
             warnings: [],
@@ -658,18 +672,31 @@ async function performFileImport(
                         logger.debug(`[import-worker] 已导入: ${file.path} -> ${targetFilePath}`);
                     } catch (error) {
                         errorFiles++;
-                        errors.push({
+
+                        // 创建可序列化的错误对象
+                        const serializableError = {
+                            id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
                             file: file.path,
+                            filePath: file.path,
                             error: error instanceof Error ? error.message : "Unknown error",
+                            message: error instanceof Error ? error.message : "Unknown error",
+                            category: "FILE_SYSTEM" as const,
+                            severity: "HIGH" as const,
                             recoverable: false,
-                        });
+                            retryCount: 0,
+                        };
+
+                        errors.push(serializableError);
                         logger.error(`[import-worker] 文件导入失败 ${file.path}: ${error}`);
                     }
                 }
             }
         } catch (error) {
             errorFiles += group.files.length;
-            errors.push({
+
+            // 创建可序列化的错误对象
+            const serializableError = {
+                id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
                 file: group.mainFile.path,
                 filePath: group.mainFile.path,
                 error: error instanceof Error ? error.message : "Unknown error",
@@ -677,7 +704,10 @@ async function performFileImport(
                 category: "FILE_SYSTEM" as const,
                 severity: "HIGH" as const,
                 recoverable: false,
-            });
+                retryCount: 0,
+            };
+
+            errors.push(serializableError);
             logger.error(`[import-worker] 文件组处理失败 ${group.mainFile.path}: ${error}`);
         }
     }
@@ -734,7 +764,15 @@ async function handleDuplicateFile(
         const result = await handler.handle(targetFile, file, targetPath);
 
         logger.debug(`[import-worker] 重复文件处理结果: ${result.action} - ${result.message}`);
-        return result;
+
+        // 确保返回可序列化的对象，避免克隆错误
+        return {
+            action: result.action,
+            originalPath: result.originalPath || targetPath,
+            newPath: result.newPath || targetPath,
+            message: result.message || "Duplicate file handled",
+            timestamp: new Date().toISOString(),
+        };
     } catch (error) {
         logger.error(`[import-worker] 处理重复文件失败: ${error}`);
 
