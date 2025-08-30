@@ -442,7 +442,7 @@ export interface ImportRequest {
  */
 export interface ImportResponse {
     success: boolean;
-    data?: FileMetadata | FileGroup[] | ImportResult | ImportPreview;
+    data?: FileMetadata | FileGroup | FileGroup[] | ImportResult | ImportPreview;
     error?: string;
 }
 

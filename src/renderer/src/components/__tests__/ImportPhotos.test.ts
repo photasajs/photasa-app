@@ -7,11 +7,62 @@ import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { createPinia, setActivePinia } from "pinia";
 import ImportPhotos from "../ImportPhotos.vue";
+import { chooseDirectories, previewImport } from "@renderer/utils/api";
 
 // Mock the API functions
 vi.mock("@renderer/utils/api", () => ({
     chooseDirectories: vi.fn(),
     previewImport: vi.fn(),
+}));
+
+// Mock the UI components
+vi.mock("@renderer/components/ui", () => ({
+    BaseButton: {
+        name: "BaseButton",
+        template: '<button @click="$emit(\'click\')" :disabled="disabled"><slot /></button>',
+        props: ["disabled", "variant", "size"],
+        emits: ["click"],
+    },
+    BaseInput: {
+        name: "BaseInput",
+        template:
+            '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" :readonly="readonly" />',
+        props: ["modelValue", "readonly"],
+        emits: ["update:modelValue"],
+    },
+    BaseSelect: {
+        name: "BaseSelect",
+        template:
+            '<select :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><slot /></select>',
+        props: ["modelValue", "options", "placeholder"],
+        emits: ["update:modelValue"],
+    },
+    BaseCheckbox: {
+        name: "BaseCheckbox",
+        template:
+            '<input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
+        props: ["modelValue", "label"],
+        emits: ["update:modelValue"],
+    },
+    BaseSwitch: {
+        name: "BaseSwitch",
+        template:
+            '<input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
+        props: ["modelValue", "label"],
+        emits: ["update:modelValue"],
+    },
+    BaseAlert: {
+        name: "BaseAlert",
+        template:
+            '<div class="alert" :class="type" data-testid="error-alert"><slot name="actions" /></div>',
+        props: ["type", "title", "message", "dismissible"],
+        emits: ["dismiss"],
+    },
+    BaseSpinner: {
+        name: "BaseSpinner",
+        template: '<div class="spinner" data-testid="spinner"></div>',
+        props: ["class"],
+    },
 }));
 
 // Mock the wizard components
@@ -363,6 +414,285 @@ describe("ImportPhotos", () => {
             );
 
             consoleSpy.mockRestore();
+        });
+    });
+
+    describe("Integration Tests - Complete Wizard Flow", () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it("should complete full wizard flow from configuration to import", async () => {
+            // Mock API responses
+            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockPreviewImport = vi.mocked(previewImport);
+
+            mockChooseDirectories.mockResolvedValue({
+                filePaths: ["/source/photos"],
+                canceled: false,
+            });
+
+            mockPreviewImport.mockResolvedValue({
+                fileGroups: [
+                    {
+                        mainFile: {
+                            path: "/source/photos/img1.jpg",
+                            name: "img1.jpg",
+                            size: 1024,
+                            type: "image",
+                        },
+                        relatedFiles: [],
+                    },
+                ],
+                statistics: {
+                    totalFiles: 1,
+                    totalSize: 1024,
+                    imageFiles: 1,
+                    videoFiles: 0,
+                    otherFiles: 0,
+                    duplicateCount: 0,
+                },
+            });
+
+            const wrapper = createWrapper({
+                initialTargetPath: "/target/library",
+            });
+
+            const baseWizard = wrapper.findComponent({ name: "BaseWizard" });
+
+            // Step 1: Trigger step-change event for configuration step
+            await baseWizard.vm.$emit("step-change", "configuration", 0, {
+                stepData: {},
+                setStepData: vi.fn(),
+            });
+
+            // Step 2: Simulate configuration completion and moving to preview
+            const mockWizardState = {
+                stepData: {
+                    configuration: {
+                        sourcePaths: ["/source/photos"],
+                        targetPath: "/target/library",
+                        filters: {
+                            fileTypes: ["image", "video"],
+                            includeSubfolders: true,
+                            sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
+                            dateRange: {
+                                start: new Date("2020-01-01").toISOString(),
+                                end: new Date().toISOString(),
+                            },
+                        },
+                        duplicateStrategy: "rename",
+                    },
+                },
+                setStepData: vi.fn(),
+            };
+
+            // Step 3: Trigger step-change event for preview step
+            await baseWizard.vm.$emit("step-change", "preview", 1, mockWizardState);
+
+            // Verify preview API was called
+            expect(mockPreviewImport).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    sourcePaths: ["/source/photos"],
+                    targetPath: "/target/library",
+                    filters: expect.objectContaining({
+                        fileTypes: ["image", "video"],
+                    }),
+                    duplicateStrategy: "rename",
+                }),
+            );
+
+            // Step 4: Simulate wizard completion
+            const completionData = {
+                configuration: mockWizardState.stepData.configuration,
+                preview: {
+                    files: [
+                        {
+                            mainFile: {
+                                path: "/source/photos/img1.jpg",
+                                name: "img1.jpg",
+                                size: 1024,
+                                type: "image",
+                            },
+                        },
+                    ],
+                    selectedFiles: new Set(["/source/photos/img1.jpg"]),
+                    totalCount: 1,
+                    totalSize: 1024,
+                },
+            };
+
+            await baseWizard.vm.$emit("complete", completionData);
+
+            // Verify wizard was closed and progress modal was shown
+            expect(wrapper.emitted("update:show")).toBeTruthy();
+            expect(wrapper.emitted("update:show")[0]).toEqual([false]);
+
+            // Verify progress modal is shown
+            const progressModal = wrapper.findComponent({ name: "ImportProgressModal" });
+            expect(progressModal.props("show")).toBe(true);
+            expect(progressModal.props("config")).toMatchObject({
+                sourcePaths: ["/source/photos"],
+                targetPath: "/target/library",
+                selectedFiles: ["/source/photos/img1.jpg"],
+            });
+        });
+
+        it("should handle API errors gracefully", async () => {
+            const mockPreviewImport = vi.mocked(previewImport);
+            mockPreviewImport.mockRejectedValue(new Error("Network error"));
+
+            const wrapper = createWrapper();
+            const baseWizard = wrapper.findComponent({ name: "BaseWizard" });
+
+            const mockWizardState = {
+                stepData: {
+                    configuration: {
+                        sourcePaths: ["/source/photos"],
+                        targetPath: "/target/library",
+                        filters: { fileTypes: ["image"] },
+                        duplicateStrategy: "rename",
+                    },
+                },
+                setStepData: vi.fn(),
+            };
+
+            // Trigger preview step with invalid configuration
+            await baseWizard.vm.$emit("step-change", "preview", 1, mockWizardState);
+
+            // Should set empty preview data on error
+            expect(mockWizardState.setStepData).toHaveBeenCalledWith(
+                "preview",
+                expect.objectContaining({
+                    files: [],
+                    selectedFiles: expect.any(Set),
+                    totalCount: 0,
+                    totalSize: 0,
+                }),
+            );
+        });
+
+        it("should handle directory selection", async () => {
+            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            mockChooseDirectories.mockResolvedValue({
+                filePaths: ["/new/source"],
+                canceled: false,
+            });
+
+            const wrapper = createWrapper();
+
+            // Find and click add source button
+            const addSourceButton = wrapper.find('[data-testid="add-source-button"]');
+            if (addSourceButton.exists()) {
+                await addSourceButton.trigger("click");
+                expect(mockChooseDirectories).toHaveBeenCalledWith(true);
+            }
+        });
+
+        it("should validate step data before allowing navigation", () => {
+            const wrapper = createWrapper();
+            const baseWizard = wrapper.findComponent({ name: "BaseWizard" });
+            const config = baseWizard.props("config");
+
+            // Test configuration step validation
+            const configStep = config.steps[0];
+            expect(
+                configStep.isValid({
+                    sourcePaths: ["/valid/source"],
+                    targetPath: "/valid/target",
+                }),
+            ).toBe(true);
+
+            expect(
+                configStep.isValid({
+                    sourcePaths: [],
+                    targetPath: "/valid/target",
+                }),
+            ).toBe(false);
+
+            // Test preview step validation
+            const previewStep = config.steps[1];
+            expect(
+                previewStep.isValid({
+                    selectedFiles: new Set(["file1.jpg"]),
+                }),
+            ).toBe(true);
+
+            expect(
+                previewStep.isValid({
+                    selectedFiles: new Set(),
+                }),
+            ).toBe(false);
+        });
+
+        it("should show loading states during operations", async () => {
+            const wrapper = createWrapper();
+
+            // Mock slow directory selection
+            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            mockChooseDirectories.mockImplementation(
+                () =>
+                    new Promise((resolve) => {
+                        setTimeout(
+                            () =>
+                                resolve({
+                                    filePaths: ["/test/path"],
+                                    canceled: false,
+                                }),
+                            100,
+                        );
+                    }),
+            );
+
+            // Trigger directory selection
+            const vm = wrapper.vm as any;
+            const directorySelectionPromise = vm.addSourceDirectory({}, vi.fn());
+
+            // Should show loading state
+            expect(vm.loadingState.directories).toBe(true);
+
+            await directorySelectionPromise;
+
+            // Should hide loading state after completion
+            expect(vm.loadingState.directories).toBe(false);
+        });
+
+        it("should handle import completion", async () => {
+            const wrapper = createWrapper();
+            const progressModal = wrapper.findComponent({ name: "ImportProgressModal" });
+
+            const importResult = {
+                success: true,
+                importedFiles: 5,
+                totalFiles: 5,
+                errors: [],
+                warnings: [],
+            };
+
+            await progressModal.vm.$emit("complete", importResult);
+
+            // Should emit import-complete event
+            expect(wrapper.emitted("import-complete")).toBeTruthy();
+            expect(wrapper.emitted("import-complete")[0]).toEqual([importResult]);
+
+            // Should hide progress modal
+            expect(progressModal.props("show")).toBe(false);
+        });
+
+        it("should handle import cancellation", async () => {
+            const wrapper = createWrapper();
+            const progressModal = wrapper.findComponent({ name: "ImportProgressModal" });
+
+            // Set up progress modal as visible
+            const vm = wrapper.vm as any;
+            vm.showProgressModal = true;
+            await wrapper.vm.$nextTick();
+
+            await progressModal.vm.$emit("cancel");
+
+            // Should hide progress modal
+            expect(vm.showProgressModal).toBe(false);
+            expect(vm.importConfig).toBe(null);
         });
     });
 });

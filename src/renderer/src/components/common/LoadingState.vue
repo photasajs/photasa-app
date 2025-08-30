@@ -7,7 +7,6 @@
  * - size: 可选，圆环尺寸
  * 支持 skeleton 插槽（骨架屏上方），icon/文案下方居中
  */
-import { defineProps } from "vue";
 defineProps({
     loadingText: { type: String, default: "加载中..." },
     icon: { type: String, default: "" },

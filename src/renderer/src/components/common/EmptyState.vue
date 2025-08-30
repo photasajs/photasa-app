@@ -8,7 +8,6 @@
  * - onButtonClick: 点击按钮回调
  * 支持插槽自定义内容
  */
-import { defineProps, defineEmits } from "vue";
 
 /**
  * 定义组件属性

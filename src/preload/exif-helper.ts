@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import ExifReader, { Tags, XmpTags, IccTags, StringArrayTag, ExifTags } from "exifreader";
 import isImage from "is-image";
 import type { FileAction } from "@common/types";
+import { extractDateTimeFromExif, EXIF_DATE_FIELDS } from "@common/exif-util";
 
 /**
  * 获取图片的 EXIF 信息
@@ -37,7 +38,7 @@ export function getExifInfo(path: string): Promise<Tags | XmpTags | IccTags | un
  * @param filePath 图片路径
  * @returns 图片的 EXIF 日期
  */
-export async function checkExifDate(filePath: string): Promise<StringArrayTag | undefined> {
+export async function checkExifDate(filePath: string): Promise<Date | null> {
     const image = isImage(filePath);
     return new Promise((resolve, reject) => {
         if (image) {
@@ -50,10 +51,13 @@ export async function checkExifDate(filePath: string): Promise<StringArrayTag | 
                         // The MakerNote tag can be really large. Remove it to lower memory
                         // usage if you're parsing a lot of files and saving the tags.
                         delete tags["MakerNote"];
-                        resolve(tags["DateTimeDigitized"]);
+
+                        // Use shared EXIF utility for consistent date extraction
+                        const result = extractDateTimeFromExif(tags, EXIF_DATE_FIELDS);
+                        resolve(result);
                     } catch (error) {
                         // Most time. it's not a image file which have exif.
-                        resolve(undefined);
+                        resolve(null);
                     }
                 }
             });
@@ -75,8 +79,8 @@ export function resolveExifDate(action: FileAction): Observable<FileAction> {
      * @returns 文件操作
      */
     const promise = checkExifDate(action.file).then((date) => {
-        if (date && date.value[0]) {
-            const created = moment(date.value[0], "YYYY:MM:DD hh:mm:ss");
+        if (date) {
+            const created = moment(date);
             action.created = created.toDate();
             action.targetName = created.format("YYYY/YYYYMMDD");
         } else {

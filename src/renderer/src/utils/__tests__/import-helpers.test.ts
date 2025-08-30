@@ -16,7 +16,7 @@ import {
     createInitialFilePreviewState,
     updateFilePreviewState,
     validateImportConfig,
-} from "./import-helpers";
+} from "../import-helpers";
 import type { ImportFilters, FileGroup, ImportConfig } from "@common/import-types";
 
 describe("import-helpers", () => {

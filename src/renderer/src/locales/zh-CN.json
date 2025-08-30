@@ -124,6 +124,27 @@
             "unknown": "未知"
         },
         "now": "现在",
+        "loading": "加载中...",
+        "loading": {
+            "preview": "正在加载预览数据...",
+            "directories": "正在选择目录..."
+        },
+        "error": {
+            "title": "操作失败",
+            "network": "网络连接失败，请检查网络连接后重试",
+            "validation": "配置验证失败，请检查源目录和目标目录设置",
+            "permission": "权限不足，请确保有访问目录的权限",
+            "api": "服务器错误，请稍后重试",
+            "unknown": "发生未知错误，请重试",
+            "retry": "重试",
+            "dismiss": "忽略"
+        },
+        "steps": {
+            "configuration": "配置",
+            "configurationDesc": "选择源目录和目标目录，配置导入选项",
+            "preview": "预览",
+            "previewDesc": "预览要导入的文件并选择"
+        },
         "filters": "过滤器",
         "resetFilters": "重置过滤器",
         "showAdvanced": "显示高级选项",

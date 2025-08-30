@@ -1,5 +1,7 @@
 # 开发命名规范说明
 
+Photoasa 开发命名规范聚焦于Electron App的开发规范。
+
 ## 1. 组件命名
 - 文件名：PascalCase 或 kebab-case，如 ThemeSettings.vue 或 theme-settings.vue
 - 组件名：PascalCase，如 ThemeSettings
@@ -15,7 +17,7 @@
 
 ## 4. 典型用法示例
 
-```
+```typescript
 // src/renderer/src/services/find-photo-service.ts
 import type { IFindPhotoService } from "@renderer/interface/find-photo-service.interface";
 

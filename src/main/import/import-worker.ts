@@ -369,7 +369,14 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
     }
 
     // 扫描源目录
-    const fileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
+    const rawFileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
+
+    // 处理文件组以提取元数据和设置目标路径
+    const fileGroups: FileGroup[] = [];
+    for (const group of rawFileGroups) {
+        const processedGroup = await processFileGroup(group, logger);
+        fileGroups.push(processedGroup);
+    }
 
     // 计算统计信息
     const statistics = calculateFileStatistics(fileGroups);

@@ -23,6 +23,7 @@ ffmpeg.setFfprobePath(ffprobePath);
 
 /**
  * 使用 wasm-heif 解码 HEIC/HEIF 文件
+ * 改进版本：增强错误处理和稳定性
  * @param arg - 参数
  * @param logger - 日志记录器
  * @returns 预览图片路径
@@ -30,19 +31,64 @@ ffmpeg.setFfprobePath(ffprobePath);
 async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger): Promise<string> {
     logger.info("[thumbnail-handler] Create Preview Image for : " + arg.path);
     const previewName = toPreviewPath(arg.path);
-    const inputBuffer = await readFile(arg.path);
+    let inputBuffer: Buffer;
+    let heifModule: any = null;
+
+    try {
+        inputBuffer = await readFile(arg.path);
+    } catch (readError) {
+        logger.error(`[thumbnail-handler] Failed to read HEIC file ${arg.path}: ${readError}`);
+        throw new Error(`Failed to read HEIC file: ${readError}`);
+    }
+
     try {
         logger.info("[thumbnail-handler] Decode HEIC/HEIF for : " + arg.path);
+
         // 加载 wasm 文件路径（已拷贝到 resources 目录）
         const wasmPath = path.join(__dirname, "../../resources/wasm_heif.wasm");
+
+        // 检查WASM文件是否存在
+        if (!(await exists(wasmPath))) {
+            throw new Error(`WASM file not found at: ${wasmPath}`);
+        }
+
         const wasmBinary = await readFile(wasmPath);
+
         // 初始化 wasm-heif 模块，传递 wasmBinary
-        const heifModule = await createHeifModule({ wasmBinary } as unknown as HEIFModule);
+        heifModule = await createHeifModule({ wasmBinary } as unknown as HEIFModule);
+
+        // 验证模块是否有效
+        if (
+            !heifModule ||
+            typeof heifModule.decode !== "function" ||
+            typeof heifModule.dimensions !== "function"
+        ) {
+            throw new Error("Invalid WASM module - missing required functions");
+        }
+
         // 解码 HEIC/HEIF 文件
         const decoded = heifModule.decode(inputBuffer, inputBuffer.byteLength, false) as Uint8Array;
+
+        // 检查解码结果
+        if (!decoded || (typeof decoded === "object" && (decoded as any).error)) {
+            const errorMsg =
+                typeof decoded === "object" ? (decoded as any).error : "Unknown decode error";
+            throw new Error(`WASM decode failed: ${errorMsg}`);
+        }
+
         // 类型断言为解码成功对象
-        const { width, height, channels } = heifModule.dimensions();
+        const dimensions = heifModule.dimensions();
+        if (
+            !dimensions ||
+            typeof dimensions.width !== "number" ||
+            typeof dimensions.height !== "number"
+        ) {
+            throw new Error("Invalid dimensions returned from WASM module");
+        }
+
+        const { width, height, channels } = dimensions;
         logger.info(`[wasm-heif] Decoded width=${width}, height=${height}, channels=${channels}`);
+
         // 检查 buffer 长度
         if (decoded.length !== width * height * channels) {
             logger.error(
@@ -70,16 +116,27 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
             logger.error(`[wasm-heif] Unsupported channels: ${channels}`);
             throw new Error(`[wasm-heif] Unsupported channels: ${channels}`);
         }
+
         // 用 sharp 生成 JPEG 预览
         await sharp(rgbaBuffer, {
             raw: { width, height, channels: 4 },
         })
             .toFormat("jpeg")
             .toFile(previewName);
+
         return previewName;
     } catch (e) {
         logger.error("[thumbnail-handler] HEIC/HEIF decode error:", e);
         throw e;
+    } finally {
+        // 清理资源
+        if (heifModule && typeof heifModule.free === "function") {
+            try {
+                heifModule.free();
+            } catch (freeError) {
+                logger.warn(`[thumbnail-handler] Failed to free WASM module: ${freeError}`);
+            }
+        }
     }
 }
 

@@ -32,7 +32,7 @@
 -->
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectories, previewImport } from "@renderer/utils/api";
 import { getLogger } from "@common/logger";
@@ -70,8 +70,11 @@ import {
     BaseSelect,
     BaseCheckbox,
     BaseSwitch,
+    BaseAlert,
+    BaseSpinner,
 } from "@renderer/components/ui";
 import { BaseWizard, createWizardStep, createWizardConfig } from "@renderer/components/wizard";
+import VirtualList from "@renderer/components/ui/VirtualList.vue";
 import ImportProgressModal from "./ImportProgressModal.vue";
 import type { ImportConfig, DuplicateStrategy, ImportResult } from "@common/import-types";
 
@@ -143,6 +146,23 @@ const { paths, excludePaths } = storeToRefs(store);
 // Import progress modal state
 const showProgressModal = ref(false);
 const importConfig = ref<ImportConfig | null>(null);
+
+// Error state management
+const errorState = reactive({
+    hasError: false,
+    errorType: null as "network" | "validation" | "permission" | "api" | "unknown" | null,
+    errorMessage: "",
+    canRetry: false,
+    retryAction: null as (() => Promise<void>) | null,
+    context: null as any,
+});
+
+// Loading state for different operations
+const loadingState = reactive({
+    preview: false,
+    directories: false,
+    validation: false,
+});
 
 /**
  * Handle wizard completion - transform data and show progress modal
@@ -244,8 +264,100 @@ const duplicateStrategyOptions = computed(() => [
 ]);
 
 /**
- * Wizard Step Helper Functions
- * These functions handle user interactions within the wizard steps
+ * Error handling utility functions
+ */
+
+/**
+ * Clear current error state
+ */
+const clearError = () => {
+    errorState.hasError = false;
+    errorState.errorType = null;
+    errorState.errorMessage = "";
+    errorState.canRetry = false;
+    errorState.retryAction = null;
+    errorState.context = null;
+};
+
+/**
+ * Set error state with user-friendly message and recovery options
+ * @param error - The error object or message
+ * @param type - The type of error for appropriate handling
+ * @param retryAction - Optional function to retry the failed operation
+ * @param context - Additional context for error handling
+ */
+const setError = (
+    error: any,
+    type: "network" | "validation" | "permission" | "api" | "unknown",
+    retryAction?: () => Promise<void>,
+    context?: any,
+) => {
+    logger.error(`[${type}] Error occurred:`, error, context);
+
+    errorState.hasError = true;
+    errorState.errorType = type;
+    errorState.context = context;
+    errorState.canRetry = !!retryAction;
+    errorState.retryAction = retryAction || null;
+
+    // Generate user-friendly error messages
+    switch (type) {
+        case "network":
+            errorState.errorMessage = t("import.errors.network");
+            break;
+        case "validation":
+            errorState.errorMessage = t("import.errors.validation");
+            break;
+        case "permission":
+            errorState.errorMessage = t("import.errors.permission");
+            break;
+        case "api":
+            errorState.errorMessage = t("import.errors.api");
+            break;
+        default:
+            errorState.errorMessage = error?.message || t("import.errors.unknown");
+    }
+};
+
+/**
+ * Retry the failed operation
+ */
+const retryOperation = async () => {
+    if (errorState.retryAction) {
+        clearError();
+        try {
+            await errorState.retryAction();
+        } catch (error) {
+            // If retry fails, set error again
+            setError(error, "unknown");
+        }
+    }
+};
+
+/**
+ * Enhanced error handling for async operations
+ * @param operation - The async operation to execute
+ * @param errorType - The type of error for this operation
+ * @param retryFn - Optional function to retry on failure
+ * @param context - Additional context
+ */
+const executeWithErrorHandling = async <T,>(
+    operation: () => Promise<T>,
+    errorType: "network" | "validation" | "permission" | "api" | "unknown",
+    retryFn?: () => Promise<void>,
+    context?: any,
+): Promise<T | null> => {
+    try {
+        clearError();
+        return await operation();
+    } catch (error) {
+        setError(error, errorType, retryFn, context);
+        return null;
+    }
+};
+
+/**
+ * Enhanced wizard step helper functions with error handling
  */
 
 /**
@@ -257,18 +369,25 @@ const addSourceDirectory = async (
     stepData: any,
     setStepData: (stepId: string, data: any) => void,
 ) => {
-    try {
-        const result = await chooseDirectories(true);
-        if (result.filePaths && result.filePaths.length > 0) {
-            const newSourcePaths = addSourceDirectories(
-                stepData.sourcePaths || [],
-                result.filePaths,
-            );
-            setStepData("configuration", { ...stepData, sourcePaths: newSourcePaths });
-        }
-    } catch (error) {
-        logger.error("Failed to choose directories:", error);
-    }
+    const result = await executeWithErrorHandling(
+        async () => {
+            loadingState.directories = true;
+            const result = await chooseDirectories(true);
+            if (result.filePaths && result.filePaths.length > 0) {
+                const newSourcePaths = addSourceDirectories(
+                    stepData.sourcePaths || [],
+                    result.filePaths,
+                );
+                setStepData("configuration", { ...stepData, sourcePaths: newSourcePaths });
+            }
+            return result;
+        },
+        "permission",
+        () => addSourceDirectory(stepData, setStepData),
+        { operation: "addSourceDirectory" },
+    );
+
+    loadingState.directories = false;
 };
 
 /**
@@ -295,14 +414,21 @@ const selectTargetDirectory = async (
     stepData: any,
     setStepData: (stepId: string, data: any) => void,
 ) => {
-    try {
-        const result = await chooseDirectories(false);
-        if (result.filePaths && result.filePaths.length > 0) {
-            setStepData("configuration", { ...stepData, targetPath: result.filePaths[0] });
-        }
-    } catch (error) {
-        logger.error("Failed to choose target directory:", error);
-    }
+    const result = await executeWithErrorHandling(
+        async () => {
+            loadingState.directories = true;
+            const result = await chooseDirectories(false);
+            if (result.filePaths && result.filePaths.length > 0) {
+                setStepData("configuration", { ...stepData, targetPath: result.filePaths[0] });
+            }
+            return result;
+        },
+        "permission",
+        () => selectTargetDirectory(stepData, setStepData),
+        { operation: "selectTargetDirectory" },
+    );
+
+    loadingState.directories = false;
 };
 
 /**
@@ -409,7 +535,7 @@ const handleStepChange = async (stepId: string, stepIndex: number, wizardState: 
 };
 
 /**
- * 从API加载预览数据
+ * 从API加载预览数据 - 增强错误处理版本
  *
  * 该函数基于用户在配置步骤中设置的参数调用后端API获取文件预览数据
  * 包括文件列表、统计信息、分组信息等，用于在预览步骤中展示
@@ -420,38 +546,46 @@ const loadPreviewData = async (wizardState: any) => {
     const configData = wizardState.stepData.configuration;
 
     // 在调用API前验证配置数据的完整性和有效性
-    // 必须有有效的源目录、目标目录和文件过滤器设置
     if (!validateConfigurationStep(configData)) {
-        logger.error("Invalid configuration data for preview");
-        // 如果配置无效，设置空的预览数据并终止加载
+        setError(
+            new Error("Configuration validation failed"),
+            "validation",
+            () => loadPreviewData(wizardState),
+            { step: "preview", configData },
+        );
         wizardState.setStepData("preview", createInitialPreviewData());
         return;
     }
 
-    try {
-        // 将向导配置数据转换为API调用所需的格式
-        // 这是一个纯函数，确保数据转换的一致性和可测试性
-        const config = createPreviewConfig(configData);
+    const result = await executeWithErrorHandling(
+        async () => {
+            loadingState.preview = true;
 
-        // 调试：检查config对象的结构和可序列化性
-        logger.debug("Preview config before API call:", config);
-        logger.debug("Config filters:", config.filters);
-        logger.debug("Config filters dateRange:", config.filters.dateRange);
+            // 将向导配置数据转换为API调用所需的格式
+            const config = createPreviewConfig(configData);
 
-        // 调用后端API获取预览数据
-        // 该API会扫描源目录，应用过滤器，返回文件列表和统计信息
-        const previewResponse = await previewImport(config);
+            logger.debug("Preview config before API call:", config);
 
-        // 将API响应转换为前端组件所需的数据格式
-        // 包括文件分组、选择状态、统计信息等
-        const previewData = transformPreviewResponse(previewResponse);
+            // 调用后端API获取预览数据
+            const previewResponse = await previewImport(config);
 
-        // 更新预览步骤的数据，触发UI重新渲染
-        wizardState.setStepData("preview", previewData);
-    } catch (error) {
-        logger.error("Failed to load preview:", error);
-        // 发生错误时设置空的预览数据，防止UI崩溃
-        // 用户可以返回配置步骤修改设置后重试
+            // 将API响应转换为前端组件所需的数据格式
+            const previewData = transformPreviewResponse(previewResponse);
+
+            // 更新预览步骤的数据，触发UI重新渲染
+            wizardState.setStepData("preview", previewData);
+
+            return previewData;
+        },
+        "api",
+        () => loadPreviewData(wizardState),
+        { step: "preview", configData },
+    );
+
+    loadingState.preview = false;
+
+    // 如果失败，设置空的预览数据
+    if (!result) {
         wizardState.setStepData("preview", createInitialPreviewData());
     }
 };
@@ -489,6 +623,26 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
     initializeConfigurationData(setStepData);
     initializePreviewData(setStepData);
 };
+
+/**
+ * 生成完整的目标路径，用于在UI中显示
+ * @param relativePath - 相对路径（如 "2025/20250126"）
+ * @param basePath - 基础目标目录（如 "/Users/photos"）
+ * @returns 完整路径（如 "/Users/photos/2025/20250126"）
+ */
+const getFullTargetPath = (relativePath: string, basePath?: string): string => {
+    if (!relativePath) return "";
+    if (!basePath) return relativePath;
+
+    // 使用路径分隔符拼接，确保不重复分隔符
+    const separator = "/";
+    const normalizedBase = basePath.endsWith(separator) ? basePath.slice(0, -1) : basePath;
+    const normalizedRelative = relativePath.startsWith(separator)
+        ? relativePath.slice(1)
+        : relativePath;
+
+    return `${normalizedBase}${separator}${normalizedRelative}`;
+};
 </script>
 
 <template>
@@ -507,6 +661,31 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
         @cancel="handleWizardCancel"
         @step-change="handleStepChange"
     >
+        <!-- Error Alert - shown at the top of wizard when there's an error -->
+        <div v-if="errorState.hasError" class="mb-4">
+            <BaseAlert
+                type="error"
+                :title="t('import.error.title')"
+                :message="errorState.errorMessage"
+                :dismissible="true"
+                @dismiss="clearError"
+            >
+                <template #actions>
+                    <BaseButton
+                        v-if="errorState.canRetry"
+                        variant="secondary"
+                        size="sm"
+                        @click="retryOperation"
+                        class="mr-2"
+                    >
+                        {{ t("import.error.retry") }}
+                    </BaseButton>
+                    <BaseButton variant="secondary" size="sm" @click="clearError">
+                        {{ t("import.error.dismiss") }}
+                    </BaseButton>
+                </template>
+            </BaseAlert>
+        </div>
         <!-- Configuration Step -->
         <template #configuration="{ stepData, setStepData }">
             <!-- Initialize step data if not present -->
@@ -535,10 +714,16 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
                         <BaseButton
                             variant="secondary"
                             class="w-full"
+                            :disabled="loadingState.directories"
                             @click="addSourceDirectory(stepData || {}, setStepData)"
                         >
-                            <PlusIcon class="w-4 h-4 mr-2 text-current" />
-                            {{ t("import.addSource") }}
+                            <BaseSpinner v-if="loadingState.directories" class="w-4 h-4 mr-2" />
+                            <PlusIcon v-else class="w-4 h-4 mr-2 text-current" />
+                            {{
+                                loadingState.directories
+                                    ? t("import.loading")
+                                    : t("import.addSource")
+                            }}
                         </BaseButton>
                     </div>
                 </div>
@@ -562,9 +747,15 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
                             :placeholder="t('import.selectTarget')"
                             class="flex-1"
                         />
-                        <BaseButton @click="selectTargetDirectory(stepData || {}, setStepData)">
-                            <FolderOpenIcon class="w-4 h-4 mr-2 text-current" />
-                            {{ t("import.browse") }}
+                        <BaseButton
+                            :disabled="loadingState.directories"
+                            @click="selectTargetDirectory(stepData || {}, setStepData)"
+                        >
+                            <BaseSpinner v-if="loadingState.directories" class="w-4 h-4 mr-2" />
+                            <FolderOpenIcon v-else class="w-4 h-4 mr-2 text-current" />
+                            {{
+                                loadingState.directories ? t("import.loading") : t("import.browse")
+                            }}
                         </BaseButton>
                     </div>
                 </div>
@@ -659,7 +850,19 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
         <template #preview="{ stepData, setStepData }">
             <!-- Initialize preview data if not present -->
             {{ !stepData ? initializeAllStepData(setStepData) : null }}
-            <div class="h-full flex flex-col">
+
+            <!-- Loading State for Preview -->
+            <div v-if="loadingState.preview" class="h-full flex items-center justify-center">
+                <div class="text-center">
+                    <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
+                    <p class="text-[var(--color-text-secondary)]">
+                        {{ t("import.loading.preview") }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Preview Content -->
+            <div v-else class="h-full flex flex-col">
                 <!-- Statistics -->
                 <div class="flex-shrink-0 mb-4">
                     <div
@@ -702,7 +905,82 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
 
                 <!-- File list -->
                 <div class="flex-1 overflow-hidden">
+                    <!-- Use VirtualList for large file lists (>100 files) -->
+                    <VirtualList
+                        v-if="(stepData?.files || []).length > 100"
+                        :items="stepData?.files || []"
+                        :item-height="72"
+                        :container-height="400"
+                        :get-item-key="(group) => group.mainFile.path"
+                        class="border border-[var(--color-border)] rounded-lg"
+                    >
+                        <template #default="{ item: group, index }">
+                            <div
+                                class="flex items-center p-3 border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-card-hover)] transition-colors"
+                            >
+                                <BaseCheckbox
+                                    :model-value="
+                                        stepData?.selectedFiles?.has(group.mainFile.path) || false
+                                    "
+                                    @update:model-value="
+                                        (value) =>
+                                            toggleFileSelection(
+                                                group.mainFile.path,
+                                                value,
+                                                stepData || {},
+                                                setStepData,
+                                            )
+                                    "
+                                    class="mr-3"
+                                />
+                                <div class="flex items-center mr-3">
+                                    <PhotoIcon
+                                        v-if="group.mainFile.type === 'image'"
+                                        class="w-8 h-8 text-[var(--color-primary)]"
+                                    />
+                                    <VideoCameraIcon
+                                        v-else-if="group.mainFile.type === 'video'"
+                                        class="w-8 h-8 text-[var(--color-primary)]"
+                                    />
+                                    <DocumentIcon
+                                        v-else
+                                        class="w-8 h-8 text-[var(--color-text-secondary)]"
+                                    />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <p
+                                            class="text-sm font-medium text-[var(--color-text)] truncate"
+                                        >
+                                            {{ group.mainFile.name }}
+                                        </p>
+                                        <span
+                                            v-if="group.type === 'group'"
+                                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)] text-white"
+                                        >
+                                            {{ t("import.group", { count: group.files.length }) }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-[var(--color-text-secondary)]">
+                                        {{ formatFileSize(group.totalSize) }}
+                                        <span v-if="group.targetPath">
+                                            →
+                                            {{
+                                                getFullTargetPath(
+                                                    group.targetPath,
+                                                    stepData?.targetPath,
+                                                )
+                                            }}</span
+                                        >
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+                    </VirtualList>
+
+                    <!-- Regular list for smaller file lists (≤100 files) -->
                     <div
+                        v-else
                         class="h-full overflow-y-auto border border-[var(--color-border)] rounded-lg"
                     >
                         <div
@@ -755,7 +1033,15 @@ const initializeAllStepData = (setStepData: (stepId: string, data: any) => void)
                                 </div>
                                 <p class="text-sm text-[var(--color-text-secondary)]">
                                     {{ formatFileSize(group.totalSize) }}
-                                    <span v-if="group.targetPath"> → {{ group.targetPath }}</span>
+                                    <span v-if="group.targetPath">
+                                        →
+                                        {{
+                                            getFullTargetPath(
+                                                group.targetPath,
+                                                stepData?.targetPath,
+                                            )
+                                        }}</span
+                                    >
                                 </p>
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { BatchProcessor } from "./batch-processor";
-import { ImportConfig, FileInfo, FileGroup } from "../../common/import-types";
+import { BatchProcessor } from "../batch-processor";
+import { ImportConfig, FileInfo, FileGroup } from "../../../common/import-types";
 import fs from "fs-extra";
 import path from "path";
 import os from "os";

@@ -14,13 +14,11 @@ import type {
     DateSource,
     FileGroup,
     FileInfo,
-    FileGroupType,
 } from "@common/import-types";
 import { HeicExtensionRE } from "@common/utils";
+import { extractDateTimeFromExif } from "@common/exif-util";
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
-import isImage from "is-image";
-import isVideo from "is-video";
 
 // 配置ffmpeg路径
 const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
@@ -36,9 +34,21 @@ class HEICMetadataProcessor {
 
     static async initialize(): Promise<void> {
         if (!this.heifModule) {
-            const wasmPath = path.join(__dirname, "../../resources/wasm_heif.wasm");
-            const wasmBinary = await fs.readFile(wasmPath);
-            this.heifModule = await createHeifModule({ wasmBinary });
+            try {
+                // 使用默认配置初始化HEIF模块
+                this.heifModule = await createHeifModule();
+            } catch (error) {
+                // 如果默认初始化失败，尝试使用WASM文件
+                const wasmPath = path.join(__dirname, "../../resources/wasm_heif.wasm");
+                if (await fs.pathExists(wasmPath)) {
+                    const wasmBinary = await fs.readFile(wasmPath);
+                    this.heifModule = await createHeifModule({
+                        wasmBinary: wasmBinary as any,
+                    } as any);
+                } else {
+                    throw new Error("HEIF WASM module not found and default initialization failed");
+                }
+            }
         }
     }
 
@@ -48,9 +58,14 @@ class HEICMetadataProcessor {
         try {
             const buffer = await fs.readFile(filePath);
 
+            // 获取文件统计信息作为回退
+            const stats = await fs.stat(filePath);
+            const fileCreatedTime = stats.birthtime;
+
             // 直接从HEIC文件中提取EXIF数据，不依赖thumbnail处理
-            let exifData = null;
-            let imageInfo = null;
+            let exifData: any = null;
+            let imageInfo: { width: number; height: number } | null = null;
+            let extractedDateTime: Date | null = null;
 
             try {
                 // 使用ExifReader直接读取HEIC文件的EXIF数据
@@ -58,54 +73,84 @@ class HEICMetadataProcessor {
                 delete tags["MakerNote"]; // 移除大型标签以节省内存
                 exifData = tags;
 
-                // 如果需要图像尺寸信息，可以解码HEIC获取
-                const decoded = this.heifModule.decode(buffer, buffer.byteLength, false);
-                const { width, height } = this.heifModule.dimensions();
-                imageInfo = { width, height };
-            } catch (e) {
-                logger.warn(`[HEIC] Failed to extract EXIF from ${filePath}: ${e}`);
-                // 即使EXIF提取失败，也尝试获取基本图像信息
-                try {
+                // 尝试从EXIF中提取日期时间
+                extractedDateTime = this.extractDateTime(exifData);
+
+                // 尝试从EXIF中提取图像尺寸
+                const exifWidth = exifData.ImageWidth?.value || exifData.PixelXDimension?.value;
+                const exifHeight = exifData.ImageLength?.value || exifData.PixelYDimension?.value;
+
+                if (exifWidth && exifHeight) {
+                    imageInfo = { width: exifWidth, height: exifHeight };
+                    logger.debug(`[HEIC] Got dimensions from EXIF: ${exifWidth}x${exifHeight}`);
+                } else if (this.heifModule) {
+                    // 如果EXIF中没有尺寸信息且WASM可用，则解码HEIC获取
                     const decoded = this.heifModule.decode(buffer, buffer.byteLength, false);
                     const { width, height } = this.heifModule.dimensions();
                     imageInfo = { width, height };
-                } catch (decodeError) {
-                    logger.error(`[HEIC] Failed to decode ${filePath}: ${decodeError}`);
+                    logger.debug(`[HEIC] Got dimensions from WASM decode: ${width}x${height}`);
                 }
+            } catch (e) {
+                logger.warn(`[HEIC] Failed to extract EXIF from ${filePath}: ${e}`);
+                // 即使EXIF提取失败，也尝试获取基本图像信息
+                if (this.heifModule) {
+                    try {
+                        const decoded = this.heifModule.decode(buffer, buffer.byteLength, false);
+                        const { width, height } = this.heifModule.dimensions();
+                        imageInfo = { width, height };
+                    } catch (decodeError) {
+                        logger.error(`[HEIC] Failed to decode ${filePath}: ${decodeError}`);
+                    }
+                } else {
+                    logger.debug(
+                        `[HEIC] WASM module not available, cannot extract dimensions from ${filePath}`,
+                    );
+                }
+            }
+
+            // 确定最终使用的日期和日期源
+            let finalDateTime: Date | undefined;
+            let dateSource: DateSource;
+
+            if (extractedDateTime) {
+                finalDateTime = extractedDateTime;
+                dateSource = "exif";
+                logger.debug(`[HEIC] Using EXIF date for ${filePath}: ${extractedDateTime}`);
+            } else {
+                finalDateTime = fileCreatedTime;
+                dateSource = "file_created";
+                logger.debug(
+                    `[HEIC] EXIF date not available, using file created time for ${filePath}: ${fileCreatedTime}`,
+                );
             }
 
             return {
                 width: imageInfo?.width || 0,
                 height: imageInfo?.height || 0,
-                dateTime: this.extractDateTime(exifData),
-                gpsInfo: this.extractGPSInfo(exifData),
-                cameraInfo: this.extractCameraInfo(exifData),
+                dateTime: finalDateTime,
+                gpsInfo: this.extractGPSInfo(exifData) || undefined,
+                cameraInfo: this.extractCameraInfo(exifData) || undefined,
                 format: "HEIC",
-                dateSource: exifData ? "exif" : "file_created",
+                dateSource,
             };
         } catch (error) {
             logger.error(`[HEIC] Error processing ${filePath}: ${error}`);
-            throw error;
+            // 回退到文件统计信息
+            const stats = await fs.stat(filePath);
+            return {
+                width: 0,
+                height: 0,
+                dateTime: stats.birthtime,
+                gpsInfo: undefined,
+                cameraInfo: undefined,
+                format: "HEIC",
+                dateSource: "file_created",
+            };
         }
     }
 
     private static extractDateTime(exifData: any): Date | null {
-        if (!exifData) return null;
-
-        const dateFields = ["DateTimeDigitized", "DateTimeOriginal", "DateTime"];
-        for (const field of dateFields) {
-            const dateTag = exifData[field];
-            if (dateTag && dateTag.value && dateTag.value[0]) {
-                try {
-                    // EXIF日期格式: "YYYY:MM:DD HH:mm:ss"
-                    const dateStr = dateTag.value[0].replace(/:/g, "-", 2);
-                    return new Date(dateStr);
-                } catch (e) {
-                    continue;
-                }
-            }
-        }
-        return null;
+        return extractDateTimeFromExif(exifData);
     }
 
     private static extractGPSInfo(exifData: any): GPSInfo | null {
@@ -165,7 +210,7 @@ class HEICMetadataProcessor {
 /**
  * 视频元数据处理器
  */
-class VideoMetadataProcessor {
+export class VideoMetadataProcessor {
     static async extractMetadata(filePath: string, logger: PhotasaLogger): Promise<VideoMetadata> {
         return new Promise((resolve, reject) => {
             ffmpeg.ffprobe(filePath, (err, metadata) => {
@@ -181,13 +226,13 @@ class VideoMetadataProcessor {
 
                     resolve({
                         duration: metadata.format.duration || 0,
-                        creationTime,
+                        creationTime: creationTime || undefined,
                         resolution: {
                             width: videoStream?.width || 0,
                             height: videoStream?.height || 0,
                         },
                         codec: videoStream?.codec_name || "unknown",
-                        gpsInfo: this.extractGPSFromVideo(metadata),
+                        gpsInfo: this.extractGPSFromVideo(metadata) || undefined,
                         format: path.extname(filePath).toLowerCase().slice(1),
                         dateSource: creationTime ? "video_metadata" : "file_created",
                     });
@@ -200,19 +245,23 @@ class VideoMetadataProcessor {
     }
 
     private static parseCreationTime(metadata: any): Date | null {
-        const timeFields = [
-            "creation_time",
-            "com.apple.quicktime.creationdate",
-            "date",
-            "com.apple.quicktime.make",
-        ];
+        // Priority order based on accuracy for actual recording time:
+        // 1. com.apple.quicktime.creationdate - Most accurate for Apple devices
+        // 2. creation_time - Standard metadata field
+        // 3. date - Fallback date field
+        const timeFields = ["com.apple.quicktime.creationdate", "creation_time", "date"];
 
         // 检查format级别的tags
         for (const field of timeFields) {
             const time = metadata.format.tags?.[field];
-            if (time && time !== "0000-00-00T00:00:00.000000Z") {
+            if (time && VideoMetadataProcessor.isValidVideoDate(time)) {
                 try {
-                    return new Date(time);
+                    const date = new Date(time);
+                    // 验证 Date 对象是否有效
+                    if (isNaN(date.getTime())) {
+                        continue; // 跳过无效的日期
+                    }
+                    return date;
                 } catch (e) {
                     continue;
                 }
@@ -223,9 +272,14 @@ class VideoMetadataProcessor {
         for (const stream of metadata.streams) {
             for (const field of timeFields) {
                 const time = stream.tags?.[field];
-                if (time && time !== "0000-00-00T00:00:00.000000Z") {
+                if (time && VideoMetadataProcessor.isValidVideoDate(time)) {
                     try {
-                        return new Date(time);
+                        const date = new Date(time);
+                        // 验证 Date 对象是否有效
+                        if (isNaN(date.getTime())) {
+                            continue; // 跳过无效的日期
+                        }
+                        return date;
                     } catch (e) {
                         continue;
                     }
@@ -234,6 +288,19 @@ class VideoMetadataProcessor {
         }
 
         return null;
+    }
+
+    private static isValidVideoDate(dateString: string): boolean {
+        // 排除明显无效的日期格式
+        if (
+            !dateString ||
+            dateString === "0000-00-00T00:00:00.000000Z" ||
+            dateString.startsWith("1970-01-01T00:00:00") || // Unix epoch 时间通常表示设备时钟未设置
+            dateString === "invalid-date"
+        ) {
+            return false;
+        }
+        return true;
     }
 
     private static extractGPSFromVideo(metadata: any): GPSInfo | null {
@@ -285,13 +352,13 @@ class RAWMetadataProcessor {
             const cameraInfo = this.extractCameraInfo(tags);
 
             return {
-                dateTime,
-                gpsInfo,
-                cameraInfo,
+                dateTime: dateTime || undefined,
+                gpsInfo: gpsInfo || undefined,
+                cameraInfo: cameraInfo || undefined,
                 format: path.extname(filePath).slice(1).toUpperCase(),
                 dateSource: dateTime ? "exif" : "file_created",
-                width: tags.ImageWidth?.value || 0,
-                height: tags.ImageLength?.value || 0,
+                width: (tags.ImageWidth?.value as number) || 0,
+                height: (tags.ImageLength?.value as number) || 0,
             };
         } catch (error) {
             logger.error(`[RAW] Error processing ${filePath}: ${error}`);
@@ -308,20 +375,7 @@ class RAWMetadataProcessor {
     }
 
     private static extractDateTime(tags: any): Date | null {
-        const dateFields = ["DateTime", "DateTimeOriginal", "CreateDate"];
-
-        for (const field of dateFields) {
-            const dateValue = tags[field]?.description;
-            if (dateValue) {
-                try {
-                    return new Date(dateValue);
-                } catch (e) {
-                    continue;
-                }
-            }
-        }
-
-        return null;
+        return extractDateTimeFromExif(tags);
     }
 
     private static extractGPSInfo(tags: any): GPSInfo | null {
@@ -386,6 +440,7 @@ export async function extractMetadata(
     const { filePath } = request;
     const ext = path.extname(filePath).toLowerCase();
 
+    logger.info(`[extractMetadata] Processing file: ${filePath} with ext as ${ext}`);
     try {
         // 获取基本文件信息
         const stats = await fs.stat(filePath);
@@ -400,13 +455,34 @@ export async function extractMetadata(
         // 根据文件类型提取特定元数据
         if (HeicExtensionRE.test(filePath)) {
             const heicMetadata = await HEICMetadataProcessor.extractMetadata(filePath, logger);
-            return { ...baseMetadata, ...heicMetadata, type: "image" };
+            const result = { ...baseMetadata, ...heicMetadata, type: "image" as const };
+            // 确保null转换为undefined以符合FileMetadata接口
+            return {
+                ...result,
+                dateTime: result.dateTime || undefined,
+                gpsInfo: result.gpsInfo || undefined,
+                cameraInfo: result.cameraInfo || undefined,
+            };
         } else if ([".mp4", ".mov", ".avi", ".mkv", ".wmv"].includes(ext)) {
+            logger.info(`[extractMetadata] Processing Video File ${filePath}`);
             const videoMetadata = await VideoMetadataProcessor.extractMetadata(filePath, logger);
-            return { ...baseMetadata, ...videoMetadata, type: "video" };
+            const result = { ...baseMetadata, ...videoMetadata, type: "video" as const };
+            // 确保null转换为undefined以符合FileMetadata接口
+            return {
+                ...result,
+                dateTime: videoMetadata.creationTime || undefined,
+                gpsInfo: result.gpsInfo || undefined,
+            };
         } else if ([".cr2", ".nef", ".arw", ".dng", ".raf", ".orf", ".rw2"].includes(ext)) {
             const rawMetadata = await RAWMetadataProcessor.extractMetadata(filePath, logger);
-            return { ...baseMetadata, ...rawMetadata, type: "image" };
+            const result = { ...baseMetadata, ...rawMetadata, type: "image" as const };
+            // 确保null转换为undefined以符合FileMetadata接口
+            return {
+                ...result,
+                dateTime: result.dateTime || undefined,
+                gpsInfo: result.gpsInfo || undefined,
+                cameraInfo: result.cameraInfo || undefined,
+            };
         } else if ([".jpg", ".jpeg", ".png", ".tiff", ".bmp", ".gif"].includes(ext)) {
             // 处理常规图片格式
             const buffer = await fs.readFile(filePath);
@@ -417,7 +493,7 @@ export async function extractMetadata(
             return {
                 ...baseMetadata,
                 type: "image",
-                dateTime,
+                dateTime: dateTime || undefined,
                 dateSource: dateTime ? "exif" : "file_created",
                 format: ext.slice(1).toUpperCase(),
             };
@@ -434,27 +510,6 @@ export async function extractMetadata(
         logger.error(`[Metadata] Error extracting metadata from ${filePath}: ${error}`);
         throw error;
     }
-}
-
-/**
- * 从EXIF数据中提取日期时间
- */
-function extractDateTimeFromExif(tags: any): Date | null {
-    const dateFields = ["DateTimeDigitized", "DateTimeOriginal", "DateTime"];
-
-    for (const field of dateFields) {
-        const dateTag = tags[field];
-        if (dateTag && dateTag.value && dateTag.value[0]) {
-            try {
-                // EXIF日期格式: "YYYY:MM:DD HH:mm:ss"
-                const dateStr = dateTag.value[0].replace(/:/g, "-", 2);
-                return new Date(dateStr);
-            } catch (e) {
-                continue;
-            }
-        }
-    }
-    return null;
 }
 
 /**
@@ -874,7 +929,12 @@ export async function processFileGroup(
 
     // 确保所有文件的元数据都已提取
     for (const file of group.files) {
-        if (!file.metadata) {
+        // 只有当文件没有元数据且没有有效日期信息时才提取元数据
+        if (
+            !file.metadata &&
+            (!file.dateTime || isNaN(file.dateTime.getTime())) &&
+            !file.createdTime
+        ) {
             try {
                 const metadata = await extractMetadata({ filePath: file.path }, logger);
                 file.metadata = metadata as ImageMetadata | VideoMetadata;
@@ -890,14 +950,44 @@ export async function processFileGroup(
     }
 
     // 使用主文件的日期作为整个文件组的日期
-    const mainFileDate = group.mainFile.dateTime || group.mainFile.createdTime;
-    if (mainFileDate) {
-        // 生成目标路径：YYYY/YYYYMMDD 格式
-        const year = mainFileDate.getFullYear();
-        const month = String(mainFileDate.getMonth() + 1).padStart(2, "0");
-        const day = String(mainFileDate.getDate()).padStart(2, "0");
-        group.targetPath = `${year}/${year}${month}${day}`;
+    // 遵循正确的日期回退顺序：dateTime -> createdTime -> 今天
+    let targetDate: Date;
+    let dateReason = "";
+
+    // 第一优先级：使用EXIF或其他元数据日期
+    if (group.mainFile.dateTime && !isNaN(group.mainFile.dateTime.getTime())) {
+        targetDate = group.mainFile.dateTime;
+        dateReason = `using metadata date (${group.mainFile.dateSource || "unknown source"})`;
     }
+    // 第二优先级：使用文件创建时间
+    else if (group.mainFile.createdTime && !isNaN(group.mainFile.createdTime.getTime())) {
+        targetDate = group.mainFile.createdTime;
+        dateReason = "using file created time";
+    }
+    // 最后回退：使用今天的日期
+    else {
+        targetDate = new Date();
+        dateReason = "using today's date as last resort";
+        logger.warn(`[FileGroup] No valid date found for ${group.mainFile.name}, ${dateReason}`);
+    }
+
+    logger.debug(
+        `[FileGroup] Selected date for ${group.mainFile.name}: ${targetDate.toISOString()}, ${dateReason}`,
+    );
+
+    // 生成目标路径：YYYY/YYYYMMDD 格式
+    // 再次验证目标日期的有效性（双重保险）
+    if (isNaN(targetDate.getTime())) {
+        logger.error(
+            `[FileGroup] Target date is still invalid for ${group.mainFile.name}, using current date`,
+        );
+        targetDate = new Date();
+    }
+
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, "0");
+    const day = String(targetDate.getDate()).padStart(2, "0");
+    group.targetPath = `${year}/${year}${month}${day}`;
 
     return group;
 }
