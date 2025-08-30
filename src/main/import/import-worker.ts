@@ -557,6 +557,7 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
             skippedFiles: 0,
             errorFiles: 0,
             totalSize: 0,
+            processedSize: 0,
             importedFiles: [],
             duplicateHandling: [],
             errors: [

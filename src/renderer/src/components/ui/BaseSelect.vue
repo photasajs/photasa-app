@@ -7,7 +7,7 @@
             role="combobox"
             :disabled="disabled"
             :aria-expanded="isOpen"
-            :aria-haspopup="listbox"
+            :aria-haspopup="'listbox'"
             :aria-controls="isOpen ? listboxId : undefined"
             :aria-activedescendant="
                 isOpen && highlightedIndex >= 0

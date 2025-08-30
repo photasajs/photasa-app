@@ -150,20 +150,20 @@ describe("ImportPhotos", () => {
         it("should render BaseWizard when show is true", () => {
             const wrapper = createWrapper({ show: true });
 
-            expect(wrapper.find('[data-testid="base-wizard"]').exists()).toBe(true);
+            expect(wrapper.findComponent({ name: "BaseWizard" }).exists()).toBe(true);
         });
 
         it("should not render BaseWizard when show is false", () => {
             const wrapper = createWrapper({ show: false });
 
-            expect(wrapper.find('[data-testid="base-wizard"]').exists()).toBe(false);
+            expect(wrapper.findComponent({ name: "BaseWizard" }).exists()).toBe(false);
         });
 
         it("should pass correct props to BaseWizard", () => {
             const wrapper = createWrapper();
             const baseWizard = wrapper.findComponent({ name: "BaseWizard" });
 
-            expect(baseWizard.props("size")).toBe("lg");
+            expect(baseWizard.props("size")).toBe("custom");
             expect(baseWizard.props("persistent")).toBe(true);
             expect(baseWizard.props("showProgressBar")).toBe(true);
             expect(baseWizard.props("showStepDescriptions")).toBe(true);

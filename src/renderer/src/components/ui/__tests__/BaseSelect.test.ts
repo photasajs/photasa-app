@@ -107,14 +107,41 @@ describe("BaseSelect 基本功能测试", () => {
                 modelValue: null,
                 options: testOptions,
             },
+            global: {
+                stubs: {
+                    Teleport: false,
+                },
+            },
+            attachTo: document.body,
         });
+
+        // 确保portal存在
+        if (!document.getElementById("portal-dropdown")) {
+            const portal = document.createElement("div");
+            portal.id = "portal-dropdown";
+            document.body.appendChild(portal);
+        }
 
         // 打开下拉菜单
         await wrapper.find('[role="combobox"]').trigger("click");
         await nextTick();
 
+        // 等待DOM更新并查找选项
+        const options = document.querySelectorAll('[role="option"]');
+        expect(options.length).toBeGreaterThan(0);
+
+        // 点击第一个选项
+        if (options[0]) {
+            (options[0] as HTMLElement).click();
+        }
+        await nextTick();
+
         // 检查事件发射
         expect(wrapper.emitted()).toHaveProperty("update:modelValue");
+        expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
+        expect(wrapper.emitted("update:modelValue")![0]).toEqual(["option1"]);
+
+        wrapper.unmount();
     });
 });
 
@@ -195,7 +222,7 @@ describe("BaseSelect Modal集成测试", () => {
         expect(wrapper.find('[role="combobox"]').attributes("aria-expanded")).toBe("true");
 
         // 模拟点击文档外部
-        await wrapper.trigger("click", { target: document.body });
+        document.body.click();
         await nextTick();
 
         // 下拉菜单应该关闭

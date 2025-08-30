@@ -231,7 +231,10 @@ describe("import-wizard-helpers", () => {
 
             expect(result.sourcePaths).toEqual(["/source1"]);
             expect(result.targetPath).toBe("/target");
-            expect(result.filters).toEqual({ fileTypes: ["image"] });
+            expect(result.filters.fileTypes).toEqual(["image"]);
+            expect(result.filters.includeSubfolders).toBe(true);
+            expect(result.filters.sizeRange).toEqual({ min: 0, max: Number.MAX_SAFE_INTEGER });
+            expect(result.filters.dateRange).toBeDefined();
             expect(result.duplicateStrategy).toBe("skip");
             expect(result.fileGroups).toEqual([]);
             expect(result.selectedFiles).toEqual([]);

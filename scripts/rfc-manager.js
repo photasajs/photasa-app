@@ -12,7 +12,6 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
 
 const RFC_DIR = path.join(__dirname, "..", "docs", "rfcs");
 const RFC_TEMPLATE = `# RFC NNNN: Feature Name
@@ -72,9 +71,9 @@ Summary of the RFC and why it should be accepted.
 
 ---
 
-**Status**: Draft  
-**Assignee**: [Name]  
-**Reviewers**: [Names]  
+**Status**: Draft
+**Assignee**: [Name]
+**Reviewers**: [Names]
 **Target Release**: [Version]
 `;
 
