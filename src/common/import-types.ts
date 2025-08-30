@@ -494,16 +494,15 @@ export type ErrorCategory =
     | "NETWORK"
     | "PERMISSION"
     | "DISK_SPACE"
-    | "UNKNOWN";
+    | "UNKNOWN"
+    | "file_operation"
+    | "metadata_extraction"
+    | "duplicate_handling";
 
 /**
  * 错误严重程度
  */
-export type ErrorSeverity =
-    | "LOW"
-    | "MEDIUM"
-    | "HIGH"
-    | "CRITICAL";
+export type ErrorSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | "error" | "warning" | "info";
 
 /**
  * 恢复数据

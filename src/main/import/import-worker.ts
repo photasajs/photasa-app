@@ -562,7 +562,11 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
             errors: [
                 {
                     file: "",
+                    filePath: "",
                     error: error instanceof Error ? error.message : "Unknown error",
+                    message: error instanceof Error ? error.message : "Unknown error",
+                    category: "UNKNOWN" as const,
+                    severity: "CRITICAL" as const,
                     recoverable: false,
                 },
             ],
@@ -666,7 +670,11 @@ async function performFileImport(
             errorFiles += group.files.length;
             errors.push({
                 file: group.mainFile.path,
+                filePath: group.mainFile.path,
                 error: error instanceof Error ? error.message : "Unknown error",
+                message: error instanceof Error ? error.message : "Unknown error",
+                category: "FILE_SYSTEM" as const,
+                severity: "HIGH" as const,
                 recoverable: false,
             });
             logger.error(`[import-worker] 文件组处理失败 ${group.mainFile.path}: ${error}`);
@@ -680,6 +688,7 @@ async function performFileImport(
         skippedFiles,
         errorFiles,
         totalSize,
+        processedSize: totalSize,
         importedFiles,
         duplicateHandling,
         errors,
@@ -736,4 +745,3 @@ async function handleDuplicateFile(
         };
     }
 }
-

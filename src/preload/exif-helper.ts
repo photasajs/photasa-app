@@ -2,7 +2,7 @@ import { of, from, Observable } from "rxjs";
 import { catchError } from "rxjs/operators";
 import moment from "moment";
 import fs from "fs-extra";
-import ExifReader, { Tags, XmpTags, IccTags, StringArrayTag, ExifTags } from "exifreader";
+import ExifReader, { Tags, XmpTags, IccTags, ExifTags } from "exifreader";
 import isImage from "is-image";
 import type { FileAction } from "@common/types";
 import { extractDateTimeFromExif, EXIF_DATE_FIELDS } from "@common/exif-util";

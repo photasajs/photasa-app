@@ -18,16 +18,17 @@ export class ImportErrorHandler {
     recordError(
         filePath: string,
         error: Error | string,
-        category: ErrorCategory = "file_operation",
-        severity: ErrorSeverity = "error",
+        category: ErrorCategory = "FILE_SYSTEM",
+        severity: ErrorSeverity = "MEDIUM",
         recoverable = true,
     ): ImportError {
         const errorMessage = error instanceof Error ? error.message : error;
         const errorObj: ImportError = {
             id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            file: filePath,
             filePath,
+            error: errorMessage,
             message: errorMessage,
-            timestamp: new Date(),
             category,
             severity,
             recoverable,
@@ -38,13 +39,14 @@ export class ImportErrorHandler {
 
         // 根据严重性记录日志
         switch (severity) {
-            case "error":
+            case "CRITICAL":
+            case "HIGH":
                 logger.error(`[${category}] ${filePath}: ${errorMessage}`);
                 break;
-            case "warning":
+            case "MEDIUM":
                 logger.warn(`[${category}] ${filePath}: ${errorMessage}`);
                 break;
-            case "info":
+            case "LOW":
                 logger.info(`[${category}] ${filePath}: ${errorMessage}`);
                 break;
         }
