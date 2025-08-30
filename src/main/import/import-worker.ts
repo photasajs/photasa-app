@@ -157,7 +157,28 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
     logger.debug(`[import-worker] 预览导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
-        const preview = await generateImportPreview(config);
+        // 处理配置中的日期对象，将字符串转换回 Date 对象
+        const processedConfig: ImportConfig = {
+            ...config,
+            filters: config.filters
+                ? {
+                      ...config.filters,
+                      dateRange: config.filters.dateRange
+                          ? {
+                                start: new Date(config.filters.dateRange.start),
+                                end: new Date(config.filters.dateRange.end),
+                            }
+                          : { start: new Date(0), end: new Date() },
+                  }
+                : {
+                      fileTypes: [],
+                      sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
+                      dateRange: { start: new Date(0), end: new Date() },
+                      includeSubfolders: true,
+                  },
+        };
+
+        const preview = await generateImportPreview(processedConfig);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: true,
             data: preview,
@@ -182,10 +203,41 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     logger.debug(`[import-worker] 执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
-        const result = await executeImportProcess(config);
+        // 处理配置中的日期对象，将字符串转换回 Date 对象
+        const processedConfig: ImportConfig = {
+            ...config,
+            filters: config.filters
+                ? {
+                      ...config.filters,
+                      dateRange: config.filters.dateRange
+                          ? {
+                                start: new Date(config.filters.dateRange.start),
+                                end: new Date(config.filters.dateRange.end),
+                            }
+                          : { start: new Date(), end: new Date() }, // 默认值
+                  }
+                : {
+                      fileTypes: [],
+                      sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
+                      dateRange: { start: new Date(0), end: new Date() },
+                      includeSubfolders: true,
+                  },
+        };
+
+        const result = await executeImportProcess(processedConfig);
+
+        // 添加调试日志以检查 result 对象
+        logger.debug(`[import-worker] Result object keys: ${Object.keys(result).join(", ")}`);
+        logger.debug(
+            `[import-worker] Result success: ${result.success}, totalFiles: ${result.totalFiles}`,
+        );
+
+        // 确保 result 对象是可序列化的
+        const serializableResult = JSON.parse(JSON.stringify(result));
+
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: true,
-            data: result,
+            data: serializableResult,
         });
         parentPort?.postMessage(response);
     } catch (error) {
@@ -666,7 +718,7 @@ async function performFileImport(
                             sourcePath: file.path,
                             targetPath: targetFilePath,
                             size: file.size,
-                            importTime: new Date(),
+                            importTime: new Date().toISOString(),
                         });
 
                         logger.debug(`[import-worker] 已导入: ${file.path} -> ${targetFilePath}`);

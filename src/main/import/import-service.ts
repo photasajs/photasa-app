@@ -208,10 +208,26 @@ export default class ImportService {
         }
 
         try {
+            // 序列化配置中的日期对象
+            const serializableConfig = {
+                ...config,
+                filters: {
+                    ...config.filters,
+                    dateRange: {
+                        start: config.filters.dateRange.start instanceof Date 
+                            ? config.filters.dateRange.start.toISOString()
+                            : config.filters.dateRange.start,
+                        end: config.filters.dateRange.end instanceof Date 
+                            ? config.filters.dateRange.end.toISOString()
+                            : config.filters.dateRange.end
+                    }
+                }
+            };
+            
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
                 this.worker,
                 "preview_import",
-                { action: "preview_import", payload: config },
+                { action: "preview_import", payload: serializableConfig as any },
             );
 
             if (!response.success || !response.data) {
@@ -246,10 +262,26 @@ export default class ImportService {
                 this.progressCallbacks.set(importId, callback);
             }
 
+            // 序列化配置中的日期对象，以便通过 Worker 传递
+            const serializableConfig = {
+                ...config,
+                filters: {
+                    ...config.filters,
+                    dateRange: {
+                        start: config.filters.dateRange.start instanceof Date 
+                            ? config.filters.dateRange.start.toISOString()
+                            : config.filters.dateRange.start,
+                        end: config.filters.dateRange.end instanceof Date 
+                            ? config.filters.dateRange.end.toISOString()
+                            : config.filters.dateRange.end
+                    }
+                }
+            };
+
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
                 this.worker,
                 "execute_import",
-                { action: "execute_import", payload: config },
+                { action: "execute_import", payload: serializableConfig as any },
             );
 
             if (!response.success || !response.data) {
