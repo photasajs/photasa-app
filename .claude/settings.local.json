@@ -9,7 +9,10 @@
       "Bash(ls:*)",
       "Bash(mkdir:*)",
       "Bash(node:*)",
-      "Bash(jq:*)"
+      "Bash(jq:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

@@ -1,12 +1,12 @@
 <template>
-    <div :class="class" :style="style" v-bind="$attrs">
+    <div :class="className" :style="style" v-bind="$attrs">
         <slot />
     </div>
 </template>
 
 <script setup lang="ts">
 interface Props {
-    class?: string | string[] | Record<string, boolean>;
+    className?: string | string[] | Record<string, boolean>;
     style?: string | Record<string, any>;
 }
 

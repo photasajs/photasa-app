@@ -45,7 +45,7 @@
         <div class="directory-list">
             <a-collapse v-model:activeKey="activeDirectories" ghost>
                 <a-collapse-panel
-                    v-for="(directory, index) in directoryProgresses"
+                    v-for="directory in directoryProgresses"
                     :key="directory.path"
                     :header="getDirectoryHeader(directory)"
                 >

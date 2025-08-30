@@ -914,7 +914,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                         :get-item-key="(group) => group.mainFile.path"
                         class="border border-[var(--color-border)] rounded-lg"
                     >
-                        <template #default="{ item: group, index }">
+                        <template #default="{ item: group }">
                             <div
                                 class="flex items-center p-3 border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-card-hover)] transition-colors"
                             >

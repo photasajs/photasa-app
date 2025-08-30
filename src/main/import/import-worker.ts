@@ -6,14 +6,12 @@ import type {
     ImportRequest,
     ImportResponse,
     MetadataRequest,
-    FileMetadata,
     FileGroup,
     FileInfo,
     ScanDirectoriesRequest,
     ImportConfig,
     ImportResult,
     ImportPreview,
-    ImportProgress,
     FileStatistics,
     DuplicateFileInfo,
 } from "@common/import-types";
@@ -24,6 +22,7 @@ import path from "path";
 import isImage from "is-image";
 import isVideo from "is-video";
 import { v4 as uuidv4 } from "uuid";
+import { shouldIgnorePhotasaPath } from "@common/utils";
 
 const logger = loggers.worker;
 
@@ -248,6 +247,11 @@ async function scanSingleDirectory(dirPath: string, filters?: any): Promise<File
         for (const entry of entries) {
             const fullPath = path.join(dirPath, entry.name);
 
+            // 跳过photasa缓存路径
+            if (shouldIgnorePhotasaPath(fullPath)) {
+                continue;
+            }
+
             if (entry.isDirectory()) {
                 // 如果启用了子目录扫描
                 if (filters?.includeSubfolders !== false) {
@@ -321,10 +325,14 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
  */
 function shouldIncludeFile(filePath: string, filters?: any): boolean {
     const fileName = path.basename(filePath);
-    const ext = path.extname(filePath).toLowerCase();
 
     // 跳过隐藏文件
     if (fileName.startsWith(".")) {
+        return false;
+    }
+
+    // 跳过photasa缓存路径
+    if (shouldIgnorePhotasaPath(filePath)) {
         return false;
     }
 
@@ -528,7 +536,7 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
         const selectedGroups = filterSelectedFiles(fileGroups, config.selectedFiles);
 
         // 执行实际的文件复制操作
-        const result = await performFileImport(selectedGroups, config, importId);
+        const result = await performFileImport(selectedGroups, config);
 
         const duration = Date.now() - startTime;
 
@@ -585,7 +593,6 @@ function filterSelectedFiles(fileGroups: FileGroup[], selectedFiles: string[]): 
 async function performFileImport(
     fileGroups: FileGroup[],
     config: ImportConfig,
-    importId: string,
 ): Promise<Omit<ImportResult, "duration" | "importId" | "sourcePaths" | "targetPath">> {
     let successfulFiles = 0;
     let skippedFiles = 0;
@@ -730,18 +737,3 @@ async function handleDuplicateFile(
     }
 }
 
-/**
- * 生成唯一的文件名
- */
-async function generateUniqueFileName(filePath: string): Promise<string> {
-    const parsed = path.parse(filePath);
-    let counter = 1;
-    let newPath: string;
-
-    do {
-        newPath = path.join(parsed.dir, `${parsed.name}_${counter}${parsed.ext}`);
-        counter++;
-    } while (await fs.pathExists(newPath));
-
-    return newPath;
-}

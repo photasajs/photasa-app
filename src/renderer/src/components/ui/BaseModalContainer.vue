@@ -1,7 +1,7 @@
 <template>
     <div
         @click.stop
-        :class="class"
+        :class="className"
         :style="style"
         role="dialog"
         :aria-labelledby="ariaLabelledby"
@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 interface Props {
-    class?: string | string[] | Record<string, boolean>;
+    className?: string | string[] | Record<string, boolean>;
     style?: string | Record<string, any>;
     ariaLabelledby?: string;
 }

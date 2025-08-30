@@ -1,7 +1,7 @@
 <template>
     <button
         type="button"
-        :class="class"
+        :class="className"
         :style="style"
         v-bind="$attrs"
         @click="$emit('click')"
@@ -17,7 +17,7 @@
 import { XMarkIcon } from "@heroicons/vue/24/outline";
 
 interface Props {
-    class?: string | string[] | Record<string, boolean>;
+    className?: string | string[] | Record<string, boolean>;
     style?: string | Record<string, any>;
     ariaLabel?: string;
     showIcon?: boolean;

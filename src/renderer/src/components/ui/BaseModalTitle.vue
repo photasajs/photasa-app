@@ -1,5 +1,5 @@
 <template>
-    <h2 :id="id" :class="class" v-bind="$attrs">
+    <h2 :id="id" :class="className" v-bind="$attrs">
         <slot>{{ title }}</slot>
     </h2>
 </template>
@@ -8,7 +8,7 @@
 interface Props {
     title?: string;
     id?: string;
-    class?: string | string[] | Record<string, boolean>;
+    className?: string | string[] | Record<string, boolean>;
 }
 
 withDefaults(defineProps<Props>(), {

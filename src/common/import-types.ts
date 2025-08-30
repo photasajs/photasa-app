@@ -1,7 +1,7 @@
 // 照片导入功能相关的类型定义
 // 扩展现有的 FileAction 类型，添加文件组和元数据支持
 
-import type { FileAction, ImportCallback } from "./types";
+import type { FileAction } from "./types";
 
 /**
  * 文件类型枚举
@@ -160,10 +160,16 @@ export interface ImportConfig {
  * 导入错误信息
  */
 export interface ImportError {
+    id?: string;
     file: string;
+    filePath: string;
     error: string;
+    message: string;
     code?: string;
+    category: ErrorCategory;
+    severity: ErrorSeverity;
     recoverable: boolean;
+    retryCount?: number;
 }
 
 /**
@@ -184,6 +190,8 @@ export interface ImportProgress {
     currentFile?: string;
     speed: number; // files per second
     estimatedTimeRemaining: number; // seconds
+    remainingTime: number; // seconds (alias for estimatedTimeRemaining)
+    startTime: Date;
     errors: ImportError[];
     warnings: ImportWarning[];
     status: "preparing" | "processing" | "paused" | "completed" | "cancelled" | "error";
@@ -261,6 +269,7 @@ export interface ImportResult {
     skippedFiles: number;
     errorFiles: number;
     totalSize: number;
+    processedSize: number;
     importedFiles: FileImportInfo[];
     duplicateHandling?: DuplicateResult[];
     errors: ImportError[];
@@ -474,6 +483,27 @@ export type ErrorType =
     | "NETWORK_ERROR"
     | "METADATA_ERROR"
     | "UNKNOWN";
+
+/**
+ * 错误类别
+ */
+export type ErrorCategory =
+    | "FILE_SYSTEM"
+    | "METADATA"
+    | "VALIDATION"
+    | "NETWORK"
+    | "PERMISSION"
+    | "DISK_SPACE"
+    | "UNKNOWN";
+
+/**
+ * 错误严重程度
+ */
+export type ErrorSeverity =
+    | "LOW"
+    | "MEDIUM"
+    | "HIGH"
+    | "CRITICAL";
 
 /**
  * 恢复数据

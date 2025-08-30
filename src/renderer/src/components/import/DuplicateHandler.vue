@@ -55,7 +55,7 @@
         <!-- 重复文件列表 -->
         <div class="duplicate-list">
             <a-list :data-source="duplicates" :pagination="paginationConfig">
-                <template #renderItem="{ item: duplicate, index }">
+                <template #renderItem="{ item: duplicate }">
                     <a-list-item class="duplicate-item">
                         <template #actions>
                             <a-checkbox

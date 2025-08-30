@@ -49,6 +49,8 @@ export const usePreferenceStore = defineStore("preference", {
             // 默认排除的路径模式
             excludePaths: [
                 ".photasaoriginal", // Photasa原始文件跟踪文件夹
+                ".photasaoriginals", // Photasa缩略图缓存文件夹
+                ".photasa.json", // Photasa配置文件
                 ".DS_Store", // macOS系统文件
                 "Thumbs.db", // Windows缩略图文件
                 ".git", // Git版本控制文件夹
@@ -247,6 +249,8 @@ export const usePreferenceStore = defineStore("preference", {
         resetExcludePaths() {
             this.excludePaths = [
                 ".photasaoriginal",
+                ".photasaoriginals",
+                ".photasa.json",
                 ".DS_Store",
                 "Thumbs.db",
                 ".git",

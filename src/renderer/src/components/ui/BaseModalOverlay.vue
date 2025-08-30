@@ -1,10 +1,10 @@
 <template>
-    <div :class="class" aria-hidden="true" v-bind="$attrs" @click="$emit('click')" />
+    <div :class="className" aria-hidden="true" v-bind="$attrs" @click="$emit('click')" />
 </template>
 
 <script setup lang="ts">
 interface Props {
-    class?: string | string[] | Record<string, boolean>;
+    className?: string | string[] | Record<string, boolean>;
 }
 
 defineProps<Props>();
