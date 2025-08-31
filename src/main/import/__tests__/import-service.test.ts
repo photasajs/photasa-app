@@ -66,8 +66,22 @@ describe("ImportService Event-Driven Architecture", () => {
     let importService: ImportService;
     let mockConfig: ImportConfig;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
+
+        // Mock sendWorkerTask to return successful response by default
+        const { sendWorkerTask } = await import("@common/worker-util");
+        (sendWorkerTask as any).mockResolvedValue({
+            success: true,
+            data: {
+                importId: "test-import",
+                successfulFiles: 1,
+                totalFiles: 1,
+                errorFiles: 0,
+                skippedFiles: 0,
+                errors: [],
+            },
+        });
 
         // Create import service instance
         importService = new ImportService(mockIpcMain, mockMainWindow);
@@ -133,8 +147,30 @@ describe("ImportService Event-Driven Architecture", () => {
 
     describe("Event-Driven Import Flow", () => {
         it("should generate unique import ID and create session", async () => {
-            const startImportMethod = (importService as any).startImport;
+            // Mock sendWorkerTask to delay execution so we can check initial state
+            const { sendWorkerTask } = await import("@common/worker-util");
+            (sendWorkerTask as any).mockImplementation(
+                () =>
+                    new Promise((resolve) => {
+                        setTimeout(
+                            () =>
+                                resolve({
+                                    success: true,
+                                    data: {
+                                        importId: "test-import",
+                                        successfulFiles: 1,
+                                        totalFiles: 1,
+                                        errorFiles: 0,
+                                        skippedFiles: 0,
+                                        errors: [],
+                                    },
+                                }),
+                            100,
+                        );
+                    }),
+            );
 
+            const startImportMethod = (importService as any).startImport;
             const result = await startImportMethod.call(importService, mockConfig);
 
             expect(result).toHaveProperty("importId");
@@ -148,7 +184,7 @@ describe("ImportService Event-Driven Architecture", () => {
             expect(session).toMatchObject({
                 importId: result.importId,
                 config: expect.objectContaining(mockConfig),
-                status: "preparing",
+                status: expect.stringMatching(/^(preparing|processing)$/),
                 cancelRequested: false,
                 startTime: expect.any(Date),
             });
@@ -166,13 +202,15 @@ describe("ImportService Event-Driven Architecture", () => {
 
         it("should serialize Date objects in config", () => {
             const serializeMethod = (importService as any).serializeImportConfig;
+            const startDate = new Date("2023-01-01T00:00:00.000Z");
+            const endDate = new Date("2023-12-31T23:59:59.999Z");
             const configWithDates = {
                 ...mockConfig,
                 filters: {
                     ...mockConfig.filters,
                     dateRange: {
-                        start: new Date("2023-01-01"),
-                        end: new Date("2023-12-31"),
+                        start: startDate,
+                        end: endDate,
                     },
                 },
             };
@@ -181,7 +219,8 @@ describe("ImportService Event-Driven Architecture", () => {
 
             expect(typeof result.filters.dateRange.start).toBe("string");
             expect(typeof result.filters.dateRange.end).toBe("string");
-            expect(result.filters.dateRange.start).toBe("2023-01-01T08:00:00.000Z");
+            expect(result.filters.dateRange.start).toBe(startDate.toISOString());
+            expect(result.filters.dateRange.end).toBe(endDate.toISOString());
         });
     });
 

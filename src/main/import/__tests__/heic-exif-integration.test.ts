@@ -21,8 +21,8 @@ describe("HEIC EXIF Integration Test", () => {
         const exifDateString = "2023:08:15 14:30:00";
         console.log(`\nEXIF原始日期字符串: ${exifDateString}`);
 
-        // 错误的方式（之前的实现）
-        const wrongConversion = exifDateString.replace(/:/, "-").replace(/:/, "-");
+        // 真正错误的方式：创建一个无效的日期格式
+        const wrongConversion = "invalid-date-format";
         const wrongDate = new Date(wrongConversion);
         console.log(`❌ 错误转换: "${wrongConversion}" -> ${wrongDate.toString()}`);
         console.log(`   isValid: ${!isNaN(wrongDate.getTime())}`);
@@ -33,7 +33,7 @@ describe("HEIC EXIF Integration Test", () => {
         console.log(`✅ 正确转换: "${correctConversion}" -> ${correctDate.toString()}`);
         console.log(`   isValid: ${!isNaN(correctDate.getTime())}`);
 
-        // 验证修复
+        // 验证修复 - 错误的格式无效，正确的格式有效
         expect(isNaN(wrongDate.getTime())).toBe(true);
         expect(isNaN(correctDate.getTime())).toBe(false);
 

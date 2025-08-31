@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { VideoMetadataProcessor } from "../import-handler";
+import { selectBestDate } from "../metadata/parsers/date-parser";
 
-// Access private method for testing
-const parseCreationTime = (VideoMetadataProcessor as any).parseCreationTime;
+// Video time field priorities for testing
+const VIDEO_TIME_FIELDS = ["com.apple.quicktime.creationdate", "creation_time", "date"];
 
 describe("Video Time Extraction", () => {
-    describe("parseCreationTime field priority", () => {
+    describe("selectBestDate field priority", () => {
         it("should prioritize com.apple.quicktime.creationdate over creation_time", () => {
             const metadata = {
                 format: {
@@ -17,7 +17,7 @@ describe("Video Time Extraction", () => {
                 streams: [],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeInstanceOf(Date);
 
             // Should use the quicktime creationdate (12:30:45-0700), not creation_time (10:00:00Z)
@@ -35,7 +35,7 @@ describe("Video Time Extraction", () => {
                 streams: [],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeInstanceOf(Date);
 
             const expectedDate = new Date("2023-01-01T10:00:00.000000Z");
@@ -52,7 +52,7 @@ describe("Video Time Extraction", () => {
                 streams: [],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeInstanceOf(Date);
 
             const expectedDate = new Date("2023-01-01T15:45:30.000000Z");
@@ -71,7 +71,7 @@ describe("Video Time Extraction", () => {
                 ],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeInstanceOf(Date);
 
             const expectedDate = new Date("2023-01-01T14:20:15-0800");
@@ -89,7 +89,7 @@ describe("Video Time Extraction", () => {
                 streams: [],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeInstanceOf(Date);
 
             // Should skip invalid quicktime date and use creation_time
@@ -108,7 +108,7 @@ describe("Video Time Extraction", () => {
                 streams: [],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeInstanceOf(Date);
 
             // Should skip zero date and use creation_time
@@ -122,7 +122,7 @@ describe("Video Time Extraction", () => {
                 streams: [{ tags: {} }],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeNull();
         });
 
@@ -136,7 +136,7 @@ describe("Video Time Extraction", () => {
                 streams: [],
             };
 
-            const result = parseCreationTime(metadata);
+            const result = selectBestDate(metadata, VIDEO_TIME_FIELDS);
             expect(result).toBeInstanceOf(Date);
 
             // Verify the timezone is properly handled

@@ -444,6 +444,146 @@ private async startImportInBackground(importId: string, config: ImportConfig) {
 - ✅ **Keeps API compatibility** - Existing UI components need minimal changes
 - ✅ **Simplifies architecture** - Removes complex user decision waiting mechanisms
 
+### 🚨 **Critical Bug Discovered: Duplicate Strategy Not Working (2025-08-30)**
+
+#### **Problem**: 
+User-configured duplicate strategies (rename/skip/overwrite) are not being executed correctly during import operations.
+
+#### **Root Cause Analysis**:
+**File**: `src/main/import/import-worker.ts` - Line ~250-270 in `handleExecuteImport`
+
+```typescript
+// ❌ BUG: Only checking for skip, not using renamed paths
+if (await fs.pathExists(targetFilePath)) {
+    const handled = await handleDuplicateFile(file, targetFilePath, config.duplicateStrategy);
+    duplicateHandling.push(handled);
+    if (handled.action === "skip") {
+        skippedFiles++;
+        continue;
+    }
+}
+// ❌ BUG: Always using original targetFilePath, ignoring handled.newPath
+await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
+```
+
+**Issues Identified**:
+1. ✅ **Strategy Collection**: UI correctly captures duplicateStrategy
+2. ✅ **Strategy Passing**: transformToImportConfig correctly passes strategy
+3. ✅ **Handler Creation**: DuplicateHandlerFactory creates correct handlers
+4. ❌ **Result Application**: Worker ignores `handled.newPath` for rename operations
+5. ❌ **Overwrite Logic**: No special handling for overwrite strategy
+6. ❌ **Error Feedback**: Silent failures when duplicate handling fails
+
+#### **Solution Required**:
+```typescript
+// ✅ CORRECTED: Proper handling of all duplicate strategies
+if (await fs.pathExists(targetFilePath)) {
+    const handled = await handleDuplicateFile(file, targetFilePath, config.duplicateStrategy);
+    duplicateHandling.push(handled);
+    
+    if (handled.action === "skip") {
+        skippedFiles++;
+        continue;
+    }
+    
+    // Use new path for rename/keep_both actions
+    if (handled.newPath && (handled.action === "rename" || handled.action === "keep_both")) {
+        targetFilePath = handled.newPath;
+    }
+    
+    // For overwrite, remove existing file first
+    if (handled.action === "overwrite") {
+        await fs.remove(targetFilePath);
+    }
+}
+
+await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
+```
+
+#### **Priority**: 🔴 **CRITICAL** - Core feature not functioning
+#### **Impact**: User-configured duplicate handling settings are ignored, causing unpredictable import behavior
+#### **Effort**: 🔧 **Low** - Single file fix, well-defined problem
+#### **Status**: 🚧 **Ready to Fix**
+
+### 🚨 **Critical Bug #2: Progress Updates Not Reaching UI (2025-08-30)**
+
+#### **Problem**: 
+Import progress information is not updating in the UI during import operations, leaving users with no feedback on import status.
+
+#### **Root Cause Analysis**:
+**File**: `src/main/import/import-service.ts` - `executeImportInBackground` method
+
+```typescript
+// ❌ BUG: Worker progress not monitored or forwarded
+private async executeImportInBackground(importId: string): Promise<void> {
+    const session = this.activeSessions.get(importId);
+    // ... setup code ...
+    
+    const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
+        this.worker,
+        "execute_import",
+        { /* ... */ }
+    );
+    
+    // ❌ BUG: Only final result processed, no progress events sent
+    session.status = "completed";
+    this.sendImportEvent(importId, "import:complete", result);
+}
+```
+
+**Communication Chain Analysis**:
+1. ✅ **UI Layer**: ImportProgressModal correctly sets up onProgress callback
+2. ✅ **API Layer**: executeImport passes callback to preload
+3. ✅ **Preload Layer**: Event listeners properly configured for "import:progress"
+4. ❌ **Service Layer**: executeImportInBackground never sends "import:progress" events
+5. ❌ **Worker Communication**: No progress monitoring from worker responses
+
+#### **Issues Identified**:
+1. ✅ **Event Setup**: UI and preload correctly configured for progress events
+2. ❌ **Progress Monitoring**: Service doesn't listen to worker progress updates
+3. ❌ **Session Updates**: ImportSession.progress never gets updated during import
+4. ❌ **Event Forwarding**: No "import:progress" events sent to renderer
+5. ❌ **Real-time Feedback**: Users see static "preparing" status throughout import
+
+#### **Solution Required**:
+```typescript
+// ✅ CORRECTED: Monitor worker progress and forward to UI
+private async executeImportInBackground(importId: string): Promise<void> {
+    const session = this.activeSessions.get(importId);
+    if (!session) return;
+
+    try {
+        session.status = "processing";
+        
+        // Create progress callback to update session and send events
+        const onProgress = (progress: Partial<ImportProgress>) => {
+            Object.assign(session.progress, progress);
+            this.sendImportEvent(importId, "import:progress", { progress: session.progress });
+        };
+
+        // Execute import with progress monitoring
+        const response = await sendWorkerTaskWithProgress(
+            this.worker,
+            "execute_import",
+            { /* config */ },
+            onProgress
+        );
+        
+        // Handle completion
+        session.status = "completed";
+        this.sendImportEvent(importId, "import:complete", response.data);
+    } catch (error) {
+        session.status = "failed";
+        this.sendImportEvent(importId, "import:error", { error: error.message });
+    }
+}
+```
+
+#### **Priority**: 🔴 **CRITICAL** - No user feedback during imports
+#### **Impact**: Poor UX, users think app is frozen during long imports
+#### **Effort**: 🔧 **Medium** - Requires worker communication enhancement
+#### **Status**: 🚧 **Ready to Fix**
+
 ---
 
 ## Conclusion
@@ -451,10 +591,12 @@ private async startImportInBackground(importId: string, config: ImportConfig) {
 The Import Wizard System represents a **major leap forward** for Photasa's import capabilities. With the critical IPC architecture fix and 85% completion, we're addressing both user experience and technical reliability.
 
 **Updated Next Steps**:
-1. 🔄 **Priority**: Implement IPC architecture fix (Event-driven import system)
-2. ✅ Complete remaining integration testing
-3. ✅ Finalize documentation and examples
-4. ✅ Prepare for production deployment
+1. ✅ **COMPLETED**: Implement IPC architecture fix (Event-driven import system)
+2. 🔴 **CRITICAL #1**: Fix duplicate strategy handling in import-worker.ts  
+3. 🔴 **CRITICAL #2**: Fix progress updates not reaching UI (import-service.ts)
+4. 🟡 **High**: Complete remaining integration testing
+5. 🟢 **Medium**: Finalize documentation and examples
+6. 🟢 **Low**: Prepare for production deployment
 
 The combination of the wizard system's clean UX and the robust event-driven architecture ensures both exceptional user experience and long-term technical maintainability.
 

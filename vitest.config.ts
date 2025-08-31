@@ -36,8 +36,10 @@ export default defineConfig({
             "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
-        deps: {
-            inline: [/@vue/, /@vueuse/, /@ant-design/, /radash/],
+        server: {
+            deps: {
+                inline: [/@vue/, /@vueuse/, /@ant-design/, /radash/],
+            },
         },
         environmentOptions: {
             happyDOM: {
