@@ -379,11 +379,11 @@ export interface UndoResult {
  * 导入会话（用于恢复功能）
  */
 export interface ImportSession {
-    id: string;
+    importId: string;
     config: ImportConfig;
-    status: "preparing" | "processing" | "paused" | "completed" | "cancelled" | "error";
+    status: "preparing" | "processing" | "paused" | "completed" | "cancelled" | "error" | "failed";
     progress: ImportProgress;
-    remainingFiles: FileGroup[];
+    cancelRequested: boolean;
     startTime: Date;
     pauseTime?: Date;
     resumeCount?: number;
@@ -391,6 +391,7 @@ export interface ImportSession {
     completionTime?: Date;
     cancelTime?: Date;
     finalResult?: ImportResult;
+    remainingFiles?: FileGroup[];
 }
 
 /**

@@ -552,12 +552,14 @@ describe("ImportPhotos - Edge Cases", () => {
             const mockPreviewImport = vi.mocked(previewImport);
             mockPreviewImport.mockRejectedValueOnce(new Error("Network error"));
             mockPreviewImport.mockResolvedValueOnce({
-                fileGroups: [{ 
-                    mainFile: { path: "/test.jpg", name: "test.jpg" } as any,
-                    files: [],
-                    type: "single" as const,
-                    totalSize: 1024
-                }],
+                fileGroups: [
+                    {
+                        mainFile: { path: "/test.jpg", name: "test.jpg" } as any,
+                        files: [],
+                        type: "single" as const,
+                        totalSize: 1024,
+                    },
+                ],
                 statistics: {
                     totalFiles: 1,
                     totalSize: 1024,

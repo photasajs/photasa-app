@@ -89,16 +89,13 @@ export default class ImportService {
             return await this.previewImport(config);
         });
 
-        // 执行导入
-        this.ipc.handle(
-            "import:execute",
-            async (_, config: ImportConfig, callback?: EnhancedImportCallback) => {
-                this.logger.info(
-                    `[import-service] Execute import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
-                );
-                return await this.executeImport(config, callback);
-            },
-        );
+        // 启动导入（新的事件驱动模式）
+        this.ipc.handle("import:start", async (_, config: ImportConfig & { importId?: string }) => {
+            this.logger.info(
+                `[import-service] Start import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
+            );
+            return await this.startImport(config);
+        });
 
         // 取消导入
         this.ipc.handle("import:cancel", async (_, importId: string) => {
@@ -214,16 +211,18 @@ export default class ImportService {
                 filters: {
                     ...config.filters,
                     dateRange: {
-                        start: config.filters.dateRange.start instanceof Date 
-                            ? config.filters.dateRange.start.toISOString()
-                            : config.filters.dateRange.start,
-                        end: config.filters.dateRange.end instanceof Date 
-                            ? config.filters.dateRange.end.toISOString()
-                            : config.filters.dateRange.end
-                    }
-                }
+                        start:
+                            config.filters.dateRange.start instanceof Date
+                                ? config.filters.dateRange.start.toISOString()
+                                : config.filters.dateRange.start,
+                        end:
+                            config.filters.dateRange.end instanceof Date
+                                ? config.filters.dateRange.end.toISOString()
+                                : config.filters.dateRange.end,
+                    },
+                },
             };
-            
+
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
                 this.worker,
                 "preview_import",
@@ -246,7 +245,96 @@ export default class ImportService {
     }
 
     /**
-     * 执行导入操作
+     * 启动导入操作（新的事件驱动模式）
+     */
+    private async startImport(
+        config: ImportConfig & { importId?: string },
+    ): Promise<{ importId: string }> {
+        const importId = config.importId || this.generateImportId();
+
+        this.logger.info(`[import-service] Starting import session: ${importId}`);
+
+        // 创建导入会话
+        const session: ImportSession = {
+            importId,
+            config: config as ImportConfig,
+            status: "preparing",
+            progress: this.createInitialProgress(),
+            cancelRequested: false,
+            startTime: new Date(),
+        };
+
+        this.activeSessions.set(importId, session);
+
+        // 异步执行导入，不阻塞响应
+        this.executeImportInBackground(importId);
+
+        return { importId };
+    }
+
+    /**
+     * 后台异步执行导入
+     */
+    private async executeImportInBackground(importId: string): Promise<void> {
+        const session = this.activeSessions.get(importId);
+        if (!session) {
+            this.logger.error(`[import-service] Session not found: ${importId}`);
+            return;
+        }
+
+        try {
+            session.status = "processing";
+            this.logger.info(`[import-service] Background execution started: ${importId}`);
+
+            // 序列化配置中的日期对象
+            const serializableConfig = this.serializeImportConfig(session.config);
+
+            // 执行导入
+            const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
+                this.worker,
+                "execute_import",
+                {
+                    action: "execute_import",
+                    payload: {
+                        ...serializableConfig,
+                        importId,
+                    },
+                },
+            );
+
+            if (!response.success || !response.data) {
+                throw new Error(response.error || "Failed to execute import");
+            }
+
+            const result = response.data as ImportResult;
+
+            // 检查是否被取消
+            if (session.cancelRequested) {
+                session.status = "cancelled";
+                this.sendImportEvent(importId, "import:cancelled", {});
+                this.logger.info(`[import-service] Import cancelled: ${importId}`);
+            } else {
+                session.status = "completed";
+                this.sendImportEvent(importId, "import:complete", result);
+                this.logger.info(`[import-service] Import completed: ${importId}`);
+
+                // 记录导入历史
+                await this.recordImportHistory(result);
+            }
+        } catch (error) {
+            session.status = "failed";
+            this.sendImportEvent(importId, "import:error", {
+                error: error instanceof Error ? error.message : String(error),
+            });
+            this.logger.error(`[import-service] Import failed: ${importId}, error: ${error}`);
+        } finally {
+            // 清理会话（保留5分钟用于查询）
+            setTimeout(() => this.activeSessions.delete(importId), 300000);
+        }
+    }
+
+    /**
+     * 执行导入操作（保留原有方法用于向后兼容）
      */
     private async executeImport(
         config: ImportConfig,
@@ -268,14 +356,16 @@ export default class ImportService {
                 filters: {
                     ...config.filters,
                     dateRange: {
-                        start: config.filters.dateRange.start instanceof Date 
-                            ? config.filters.dateRange.start.toISOString()
-                            : config.filters.dateRange.start,
-                        end: config.filters.dateRange.end instanceof Date 
-                            ? config.filters.dateRange.end.toISOString()
-                            : config.filters.dateRange.end
-                    }
-                }
+                        start:
+                            config.filters.dateRange.start instanceof Date
+                                ? config.filters.dateRange.start.toISOString()
+                                : config.filters.dateRange.start,
+                        end:
+                            config.filters.dateRange.end instanceof Date
+                                ? config.filters.dateRange.end.toISOString()
+                                : config.filters.dateRange.end,
+                    },
+                },
             };
 
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
@@ -312,14 +402,21 @@ export default class ImportService {
         try {
             const session = this.activeSessions.get(importId);
             if (session) {
-                session.status = "cancelled";
+                session.cancelRequested = true;
                 session.cancelTime = new Date();
+
+                // 如果是在处理中，标记为取消中
+                if (session.status === "processing") {
+                    session.status = "cancelled";
+                    this.sendImportEvent(importId, "import:cancelled", {});
+                }
+
                 this.activeSessions.set(importId, session);
 
                 // 清理回调
                 this.progressCallbacks.delete(importId);
 
-                this.logger.info(`[import-service] Import cancelled: ${importId}`);
+                this.logger.info(`[import-service] Import cancellation requested: ${importId}`);
                 return true;
             }
 
@@ -574,6 +671,67 @@ export default class ImportService {
             this.logger.info("[import-service] Import service cleanup completed");
         } catch (error) {
             this.logger.error(`[import-service] Cleanup failed: ${error}`);
+        }
+    }
+
+    /**
+     * 生成唯一导入ID
+     */
+    private generateImportId(): string {
+        return `import_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /**
+     * 创建初始进度对象
+     */
+    private createInitialProgress(): ImportProgress {
+        return {
+            totalFiles: 0,
+            processedFiles: 0,
+            speed: 0,
+            estimatedTimeRemaining: 0,
+            remainingTime: 0,
+            startTime: new Date(),
+            errors: [],
+            warnings: [],
+            status: "preparing",
+            currentFile: "",
+        };
+    }
+
+    /**
+     * 序列化导入配置（处理Date对象）
+     */
+    private serializeImportConfig(config: ImportConfig): any {
+        return {
+            ...config,
+            filters: {
+                ...config.filters,
+                dateRange: {
+                    start:
+                        config.filters.dateRange.start instanceof Date
+                            ? config.filters.dateRange.start.toISOString()
+                            : config.filters.dateRange.start,
+                    end:
+                        config.filters.dateRange.end instanceof Date
+                            ? config.filters.dateRange.end.toISOString()
+                            : config.filters.dateRange.end,
+                },
+            },
+        };
+    }
+
+    /**
+     * 发送导入事件到 Renderer
+     */
+    private sendImportEvent(importId: string, eventName: string, data: any): void {
+        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            this.mainWindow.webContents.send(eventName, {
+                importId,
+                timestamp: new Date(),
+                ...data,
+            });
+            this.logger.debug(`[import-service] Sent event: ${eventName} for import: ${importId}`);
         }
     }
 

@@ -446,7 +446,9 @@ const retryFile = (file: string) => {
 onMounted(() => {
     if (props.startTime) {
         elapsedTimer = setInterval(() => {
-            elapsedTime.value = Math.floor((Date.now() - (props.startTime?.getTime() || Date.now())) / 1000);
+            elapsedTime.value = Math.floor(
+                (Date.now() - (props.startTime?.getTime() || Date.now())) / 1000,
+            );
         }, 1000);
     }
 });

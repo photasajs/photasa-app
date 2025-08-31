@@ -115,10 +115,75 @@ const api = {
     previewImport: (config: any) => electronAPI.ipcRenderer.invoke("import:preview", config),
 
     /**
-     * 执行导入操作
+     * 执行导入操作（事件驱动模式）
      */
-    executeImport: (config: any, callback?: any) =>
-        electronAPI.ipcRenderer.invoke("import:execute", config, callback),
+    executeImport: (config: any, callback?: any) => {
+        if (callback) {
+            const importId = `import_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+            // 注册事件监听器
+            const cleanupFunctions: (() => void)[] = [];
+
+            if (callback.onProgress) {
+                const progressHandler = (_event: any, data: any) => {
+                    if (data.importId === importId) {
+                        callback.onProgress(data.progress);
+                    }
+                };
+                electronAPI.ipcRenderer.on("import:progress", progressHandler);
+                cleanupFunctions.push(() =>
+                    electronAPI.ipcRenderer.removeListener("import:progress", progressHandler),
+                );
+            }
+
+            if (callback.onDuplicateFound) {
+                const duplicateHandler = (_event: any, data: any) => {
+                    if (data.importId === importId) {
+                        callback.onDuplicateFound(data.duplicate);
+                    }
+                };
+                electronAPI.ipcRenderer.on("import:duplicate", duplicateHandler);
+                cleanupFunctions.push(() =>
+                    electronAPI.ipcRenderer.removeListener("import:duplicate", duplicateHandler),
+                );
+            }
+
+            if (callback.onFileGroupDetected) {
+                const groupHandler = (_event: any, data: any) => {
+                    if (data.importId === importId) {
+                        callback.onFileGroupDetected(data.group);
+                    }
+                };
+                electronAPI.ipcRenderer.on("import:file-group", groupHandler);
+                cleanupFunctions.push(() =>
+                    electronAPI.ipcRenderer.removeListener("import:file-group", groupHandler),
+                );
+            }
+
+            // 注册完成和错误事件
+            const completeHandler = (_event: any, data: any) => {
+                if (data.importId === importId) {
+                    cleanupFunctions.forEach((cleanup) => cleanup());
+                }
+            };
+
+            const errorHandler = (_event: any, data: any) => {
+                if (data.importId === importId) {
+                    cleanupFunctions.forEach((cleanup) => cleanup());
+                }
+            };
+
+            electronAPI.ipcRenderer.once("import:complete", completeHandler);
+            electronAPI.ipcRenderer.once("import:cancelled", errorHandler);
+            electronAPI.ipcRenderer.once("import:error", errorHandler);
+
+            // 启动导入，传递 importId
+            return electronAPI.ipcRenderer.invoke("import:start", { ...config, importId });
+        }
+
+        // 没有回调函数时，直接调用
+        return electronAPI.ipcRenderer.invoke("import:start", config);
+    },
 
     /**
      * 取消正在进行的导入操作
