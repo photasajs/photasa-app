@@ -20,14 +20,29 @@ const mockWorker = {
 const mockIpcMain = {
     handle: vi.fn(),
     removeAllListeners: vi.fn(),
-};
+    addListener: vi.fn(),
+    handleOnce: vi.fn(),
+    off: vi.fn(),
+    on: vi.fn(),
+    once: vi.fn(),
+    prependListener: vi.fn(),
+    prependOnceListener: vi.fn(),
+    removeListener: vi.fn(),
+    setMaxListeners: vi.fn(),
+    getMaxListeners: vi.fn(),
+    listeners: vi.fn(),
+    rawListeners: vi.fn(),
+    emit: vi.fn(),
+    listenerCount: vi.fn(),
+    eventNames: vi.fn(),
+} as any;
 
 const mockMainWindow = {
     webContents: {
         send: vi.fn(),
     },
     isDestroyed: vi.fn().mockReturnValue(false),
-};
+} as any;
 
 // Mock the worker creation
 vi.mock("../import-worker?nodeWorker", () => ({
@@ -64,8 +79,8 @@ describe("ImportService Event-Driven Architecture", () => {
                 fileTypes: ["image", "video"],
                 sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
                 dateRange: {
-                    start: new Date("2023-01-01").toISOString(),
-                    end: new Date().toISOString(),
+                    start: new Date("2023-01-01"),
+                    end: new Date(),
                 },
                 includeSubfolders: true,
                 excludePaths: [],
@@ -202,7 +217,6 @@ describe("ImportService Event-Driven Architecture", () => {
                 success: true,
                 totalFiles: 10,
                 successfulFiles: 10,
-                importId,
             };
 
             const sendEventMethod = (importService as any).sendImportEvent;
