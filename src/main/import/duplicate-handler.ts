@@ -520,7 +520,14 @@ export class BatchDuplicateHandler {
             `[batch-duplicate-handler] Previewing batch processing with strategy: ${strategy}`,
         );
 
-        const previews = [];
+        const previews: Array<{
+            duplicate: DuplicateFileInfo;
+            plannedAction: DuplicateAction;
+            targetPath: string;
+            newPath?: string;
+            warning?: string;
+            comparison?: FileComparison;
+        }> = [];
 
         for (const duplicate of duplicates) {
             const targetPath = path.join(targetBasePath, duplicate.duplicateFile.name);

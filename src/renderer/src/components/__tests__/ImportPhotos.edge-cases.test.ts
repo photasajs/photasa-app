@@ -146,8 +146,10 @@ describe("ImportPhotos - Edge Cases", () => {
                     name: `file${i}.jpg`,
                     size: 1024 * (i + 1),
                     type: "image",
-                },
-                relatedFiles: [],
+                } as any,
+                files: [],
+                type: "single" as const,
+                totalSize: 1024 * (i + 1),
             }));
 
             mockPreviewImport.mockResolvedValue({
@@ -161,6 +163,9 @@ describe("ImportPhotos - Edge Cases", () => {
                     duplicateCount: 0,
                     groupCount: 1500,
                 },
+                duplicates: [],
+                estimatedDuration: 30,
+                targetStructure: new Map(),
             });
 
             const wrapper = createWrapper();
@@ -204,8 +209,10 @@ describe("ImportPhotos - Edge Cases", () => {
                     name: `large_file${i}.mp4`,
                     size: 1024 * 1024 * 100, // 100MB each
                     type: "video",
-                },
-                relatedFiles: [],
+                } as any,
+                files: [],
+                type: "single" as const,
+                totalSize: 1024 * 1024 * 100,
             }));
 
             mockPreviewImport.mockResolvedValue({
@@ -219,6 +226,9 @@ describe("ImportPhotos - Edge Cases", () => {
                     duplicateCount: 0,
                     groupCount: 100,
                 },
+                duplicates: [],
+                estimatedDuration: 60,
+                targetStructure: new Map(),
             });
 
             const wrapper = createWrapper();
@@ -542,7 +552,12 @@ describe("ImportPhotos - Edge Cases", () => {
             const mockPreviewImport = vi.mocked(previewImport);
             mockPreviewImport.mockRejectedValueOnce(new Error("Network error"));
             mockPreviewImport.mockResolvedValueOnce({
-                fileGroups: [{ mainFile: { path: "/test.jpg", name: "test.jpg" } }],
+                fileGroups: [{ 
+                    mainFile: { path: "/test.jpg", name: "test.jpg" } as any,
+                    files: [],
+                    type: "single" as const,
+                    totalSize: 1024
+                }],
                 statistics: {
                     totalFiles: 1,
                     totalSize: 1024,
@@ -552,6 +567,9 @@ describe("ImportPhotos - Edge Cases", () => {
                     duplicateCount: 0,
                     groupCount: 1,
                 },
+                duplicates: [],
+                estimatedDuration: 1,
+                targetStructure: new Map(),
             });
 
             const wrapper = createWrapper();

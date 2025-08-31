@@ -93,7 +93,12 @@ describe("import-helpers", () => {
 
     describe("canExecuteImport", () => {
         it("should return true when all conditions are met", () => {
-            const fileGroups = [{ files: [] }] as FileGroup[];
+            const fileGroups = [{ 
+                mainFile: {} as any,
+                files: [],
+                type: "single" as const,
+                totalSize: 0
+            }] as FileGroup[];
             expect(canExecuteImport(["/source"], "/target", fileGroups, true)).toBe(true);
         });
 

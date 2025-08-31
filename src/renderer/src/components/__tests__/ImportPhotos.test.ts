@@ -235,7 +235,7 @@ describe("ImportPhotos", () => {
             await baseWizard.vm.$emit("update:open", false);
 
             expect(wrapper.emitted("update:show")).toBeTruthy();
-            expect(wrapper.emitted("update:show")[0]).toEqual([false]);
+            expect(wrapper.emitted("update:show")![0]).toEqual([false]);
         });
 
         it("should emit import-complete when import finishes", async () => {
@@ -246,7 +246,7 @@ describe("ImportPhotos", () => {
             await progressModal.vm.$emit("complete", result);
 
             expect(wrapper.emitted("import-complete")).toBeTruthy();
-            expect(wrapper.emitted("import-complete")[0]).toEqual([result]);
+            expect(wrapper.emitted("import-complete")![0]).toEqual([result]);
         });
     });
 
@@ -474,8 +474,10 @@ describe("ImportPhotos", () => {
                             name: "img1.jpg",
                             size: 1024,
                             type: "image",
-                        },
-                        relatedFiles: [],
+                        } as any,
+                        files: [],
+                        type: "single" as const,
+                        totalSize: 1024,
                     },
                 ],
                 statistics: {
@@ -487,6 +489,9 @@ describe("ImportPhotos", () => {
                     duplicateCount: 0,
                     groupCount: 1,
                 },
+                duplicates: [],
+                estimatedDuration: 1,
+                targetStructure: new Map(),
             });
 
             const wrapper = createWrapper({
@@ -561,7 +566,7 @@ describe("ImportPhotos", () => {
 
             // Verify wizard was closed and progress modal was shown
             expect(wrapper.emitted("update:show")).toBeTruthy();
-            expect(wrapper.emitted("update:show")[0]).toEqual([false]);
+            expect(wrapper.emitted("update:show")![0]).toEqual([false]);
 
             // Verify progress modal is shown
             const progressModal = wrapper.findComponent({ name: "ImportProgressModal" });
@@ -706,7 +711,7 @@ describe("ImportPhotos", () => {
 
             // Should emit import-complete event
             expect(wrapper.emitted("import-complete")).toBeTruthy();
-            expect(wrapper.emitted("import-complete")[0]).toEqual([importResult]);
+            expect(wrapper.emitted("import-complete")![0]).toEqual([importResult]);
 
             // Should hide progress modal
             expect(progressModal.props("show")).toBe(false);

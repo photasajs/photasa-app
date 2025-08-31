@@ -15,6 +15,8 @@ export type {
     WizardNavigationEvent,
 } from "./types";
 
+import type { WizardStep, WizardConfig } from "./types";
+
 // Utility functions
 export function createWizardStep(
     step: Partial<WizardStep> & { id: string; title: string },

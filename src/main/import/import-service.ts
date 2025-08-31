@@ -404,6 +404,8 @@ export default class ImportService {
                 processedFiles: 0,
                 speed: 0,
                 estimatedTimeRemaining: 0,
+                remainingTime: 0,
+                startTime: new Date(),
                 errors: [],
                 warnings: [],
                 status: "completed",
@@ -478,7 +480,10 @@ export default class ImportService {
 
         try {
             this.logger.info("[import-service] 准备显示目录选择对话框...");
-            const result = await dialog.showOpenDialog(this.mainWindow || undefined, {
+            if (!this.mainWindow) {
+                throw new Error("Main window is not available");
+            }
+            const result = await dialog.showOpenDialog(this.mainWindow, {
                 properties: multiSelect ? ["openDirectory", "multiSelections"] : ["openDirectory"],
                 title: multiSelect ? "Select Source Directories" : "Select Target Directory",
             });

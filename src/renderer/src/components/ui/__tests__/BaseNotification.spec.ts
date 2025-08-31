@@ -18,6 +18,7 @@ describe("BaseNotification", () => {
         actions: [],
         className: "",
         visible: true,
+        key: "test-key",
     };
 
     beforeEach(() => {
@@ -55,7 +56,7 @@ describe("BaseNotification", () => {
     });
 
     it("should render without title when not provided", () => {
-        const notificationWithoutTitle = { ...mockNotification, title: undefined };
+        const notificationWithoutTitle = { ...mockNotification, title: "" };
         const wrapper = mount(BaseNotification, {
             props: {
                 notification: notificationWithoutTitle,

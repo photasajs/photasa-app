@@ -455,8 +455,16 @@ const toggleAdvanced = () => {
 };
 
 const emitFilterChange = () => {
-    emit("update:filters", { ...localFilters });
-    emit("filter-change", { ...localFilters });
+    // 深度克隆过滤器，确保 Date 对象被正确处理
+    const clonedFilters = {
+        ...localFilters,
+        dateRange: {
+            start: new Date(localFilters.dateRange.start.getTime()),
+            end: new Date(localFilters.dateRange.end.getTime()),
+        },
+    };
+    emit("update:filters", clonedFilters);
+    emit("filter-change", clonedFilters);
 };
 
 // 工具函数

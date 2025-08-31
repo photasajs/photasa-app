@@ -404,10 +404,11 @@ const handleOptionClick = (option: Option, index: number) => {
 /**
  * 处理选项鼠标按下事件
  */
-const _handleOptionMouseDown = (option: Option, index: number) => {
-    logger.debug("Option mousedown:", option, "index:", index);
-    selectOption(option, index);
-};
+// Commenting out unused function
+// const _handleOptionMouseDown = (option: Option, index: number) => {
+//     logger.debug("Option mousedown:", option, "index:", index);
+//     selectOption(option, index);
+// };
 
 /**
  * 鼠标进入选项处理

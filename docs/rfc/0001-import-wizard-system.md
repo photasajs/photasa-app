@@ -353,18 +353,110 @@ src/
 - [ ] Advanced metadata editing during import
 - [ ] Custom import plugins/extensions
 
+## 🆕 Critical IPC Architecture Fix (2025-08-30)
+
+### **Problem Discovered**
+During implementation, a critical "An object could not be cloned" IPC serialization error was discovered:
+
+```
+Renderer → executeImport(config, callback)
+    ↓
+Preload → electronAPI.ipcRenderer.invoke("import:execute", config, callback) // ❌ 回调函数无法序列化
+    ↓
+Main Process → executeImport(config, callback) // 永远不会执行到这里
+```
+
+**Root Cause**: JavaScript callback functions cannot be serialized across Electron IPC boundaries.
+
+### **Architecture Redesign: Event-Driven Import System**
+
+#### **New Communication Pattern**
+```
+Renderer                 Preload                    Main Process                Worker
+   ↓                        ↓                           ↓                         ↓
+executeImport(config) → startImport(config) → startImport(config) → executeImport()
+   ↑                        ↑                           ↓                         ↓
+onProgress ←───── onImportProgress ←───── import:progress ←───── sendProgress
+   ↑                        ↑                           ↓                         ↓
+onComplete ←───── onImportComplete ←───── import:complete ←───── sendComplete
+   ↑                        ↑                           ↓                         ↓
+cancelImport ────→ cancelImport ────→ cancelImport ────→ setCancelFlag
+```
+
+#### **Simplified Core Requirements**
+Based on user feedback analysis:
+1. **Duplicate handling is pre-configured** in wizard - no runtime decisions needed
+2. **Core needs**: Real-time progress reporting + cancellation support
+
+#### **Key Changes**
+
+**Preload Layer (preload/index.ts)**:
+```typescript
+// ❌ BEFORE: Passing callback functions through IPC
+executeImport: (config: any, callback?: any) =>
+    electronAPI.ipcRenderer.invoke("import:execute", config, callback),
+
+// ✅ AFTER: Event-driven with cleanup
+executeImport: (config: any, callback?: any) => {
+    if (callback) {
+        const importId = generateImportId();
+        registerEventListeners(importId, callback);
+        return electronAPI.ipcRenderer.invoke("import:start", { ...config, importId });
+    }
+    return electronAPI.ipcRenderer.invoke("import:start", config);
+}
+```
+
+**Main Process (import-service.ts)**:
+```typescript
+// ❌ BEFORE: Receiving unserialized callbacks
+this.ipc.handle("import:execute", async (_, config, callback) => {
+    return await this.executeImport(config, callback);
+});
+
+// ✅ AFTER: Session-based async execution
+this.ipc.handle("import:start", async (_, config) => {
+    const importId = this.generateImportId();
+    this.startImportInBackground(importId, config);
+    return { importId };
+});
+
+private async startImportInBackground(importId: string, config: ImportConfig) {
+    // Send progress events via webContents.send
+    this.mainWindow?.webContents.send("import:progress", { importId, progress });
+}
+```
+
+#### **Implementation Status**
+
+| Component | Status | Notes |
+|-----------|---------|-------|
+| **Architecture Design** | ✅ Complete | Event-driven pattern defined |
+| **IPC Issue Analysis** | ✅ Complete | Root cause identified and documented |
+| **Preload Refactor** | 🚧 Ready to implement | Event listeners instead of callback passing |
+| **Main Process Refactor** | 🚧 Ready to implement | Session management + webContents events |
+| **Renderer Compatibility** | 🚧 Ready to implement | Maintain existing API surface |
+
+#### **Benefits**
+- ✅ **Fixes IPC serialization** - No more "object could not be cloned" errors
+- ✅ **Maintains real-time feedback** - Progress events work seamlessly
+- ✅ **Supports cancellation** - Clean cancel mechanism with session state
+- ✅ **Keeps API compatibility** - Existing UI components need minimal changes
+- ✅ **Simplifies architecture** - Removes complex user decision waiting mechanisms
+
 ---
 
 ## Conclusion
 
-The Import Wizard System represents a **major leap forward** for Photasa's import capabilities. With 85% completion and critical HEIC issues resolved, we're on track for a successful v2.1.0 release.
+The Import Wizard System represents a **major leap forward** for Photasa's import capabilities. With the critical IPC architecture fix and 85% completion, we're addressing both user experience and technical reliability.
 
-**Next Steps**:
-1. ✅ Complete remaining integration testing
-2. ✅ Finalize documentation and examples
-3. ✅ Prepare for production deployment
+**Updated Next Steps**:
+1. 🔄 **Priority**: Implement IPC architecture fix (Event-driven import system)
+2. ✅ Complete remaining integration testing
+3. ✅ Finalize documentation and examples
+4. ✅ Prepare for production deployment
 
-The system's clean architecture, comprehensive testing, and robust error handling ensure long-term maintainability while delivering an exceptional user experience.
+The combination of the wizard system's clean UX and the robust event-driven architecture ensures both exceptional user experience and long-term technical maintainability.
 
 ---
 

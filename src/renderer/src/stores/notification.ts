@@ -41,6 +41,7 @@ export const useNotificationStore = defineStore("notification", () => {
             className: config.className || "",
             timestamp: Date.now(),
             visible: true,
+            key: config.key || id,
         };
 
         notifications.value.push(notification);

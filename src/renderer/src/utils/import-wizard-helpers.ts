@@ -159,7 +159,7 @@ export function transformPreviewResponse(previewResponse: any): {
 }
 
 /**
- * Creates an ImportConfig object for preview API call
+ * Creates a serializable ImportConfig object for IPC API calls
  *
  * 关键修复：确保所有传递给API的数据都是可序列化的，特别是Date对象需要转换为字符串
  * 这解决了"An object could not be cloned"的IPC序列化错误
@@ -167,7 +167,7 @@ export function transformPreviewResponse(previewResponse: any): {
  * @param configData - Configuration step data
  * @returns ImportConfig object for API call (fully serializable)
  */
-export function createPreviewConfig(configData: any): ImportConfig {
+export function createSerializableConfig(configData: any, isPreviewOnly = true): ImportConfig {
     /**
      * 深度序列化数据，确保没有任何不可序列化的对象（Date、Set、Function等）
      * 这是解决IPC "An object could not be cloned" 错误的关键步骤
@@ -218,9 +218,13 @@ export function createPreviewConfig(configData: any): ImportConfig {
             typeof cleanConfigData.targetPath === "string" ? cleanConfigData.targetPath : "",
         filters: serializableFilters,
         duplicateStrategy: cleanConfigData.duplicateStrategy || "rename",
-        fileGroups: [],
-        selectedFiles: [], // 预览阶段不需要选中文件
-        allowDuplicateRename: true,
+        fileGroups: isPreviewOnly ? [] : cleanConfigData.fileGroups || [],
+        selectedFiles: isPreviewOnly
+            ? []
+            : Array.isArray(cleanConfigData.selectedFiles)
+              ? cleanConfigData.selectedFiles
+              : [],
+        allowDuplicateRename: cleanConfigData.allowDuplicateRename ?? true,
     };
 
     // 最终验证：再次序列化确保完全可序列化
@@ -228,7 +232,13 @@ export function createPreviewConfig(configData: any): ImportConfig {
         JSON.stringify(config);
         return config;
     } catch (error) {
-        logger.error("Preview config still contains non-serializable data:", error);
-        throw new Error("Failed to create serializable preview configuration");
+        logger.error("Config still contains non-serializable data:", error);
+        throw new Error("Failed to create serializable configuration");
     }
 }
+
+/**
+ * Alias for backward compatibility
+ * @deprecated Use createSerializableConfig instead
+ */
+export const createPreviewConfig = createSerializableConfig;

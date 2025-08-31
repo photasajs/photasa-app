@@ -143,7 +143,7 @@
                         <h4 class="font-medium mb-2 flex items-center justify-between">
                             <span>{{ t("import.history.files") }}</span>
                             <BaseButton
-                                size="xs"
+                                size="sm"
                                 variant="secondary"
                                 @click="toggleFileList(entry.id)"
                             >
@@ -313,7 +313,7 @@ import {
     ExclamationTriangleIcon,
 } from "@heroicons/vue/24/outline";
 import { BaseButton, BaseInput, BaseSelect, BaseModal } from "@renderer/components/ui";
-import { getImportHistory, undoImport, previewUndoImport } from "@renderer/utils/api";
+import { getImportHistory, undoImport } from "@renderer/utils/api";
 import type { ImportHistory, UndoPreview } from "@common/import-types";
 import path from "path";
 
@@ -408,7 +408,8 @@ const confirmUndo = async (entry: ImportHistory) => {
 
     try {
         // 获取撤销预览
-        undoPreview.value = await previewUndoImport(entry.id);
+        // TODO: Implement previewUndoImport function
+        undoPreview.value = null;
     } catch (error) {
         console.error("Failed to preview undo:", error);
         undoPreview.value = null;

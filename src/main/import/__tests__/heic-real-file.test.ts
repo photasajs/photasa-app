@@ -44,7 +44,7 @@ describe("HEIC Real File Test", () => {
         expect(tags.DateTimeOriginal?.value?.[0]).toBeDefined();
 
         // 验证时区转换功能
-        const exifDateStr = tags.DateTimeOriginal.value[0];
+        const exifDateStr = tags.DateTimeOriginal?.value?.[0];
         const dateStr = exifDateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");
         const date = new Date(dateStr);
 

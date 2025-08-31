@@ -6,7 +6,7 @@ describe("HEIC EXIF Date Format Debug", () => {
         const exifDateString = "2023:08:15 14:30:00";
 
         // 当前的转换逻辑：只替换前两个冒号
-        const convertedDate1 = exifDateString.replace(/:/g, "-", 2);
+        const convertedDate1 = exifDateString.replace(/:/, "-").replace(/:/, "-");
         console.log(`Original: ${exifDateString}`);
         console.log(`Converted (current): ${convertedDate1}`);
 
@@ -42,7 +42,7 @@ describe("HEIC EXIF Date Format Debug", () => {
             console.log(`\n--- Testing: ${exifDate} ---`);
 
             // 当前的错误方式
-            const wrongConversion = exifDate.replace(/:/g, "-", 2);
+            const wrongConversion = exifDate.replace(/:/, "-").replace(/:/, "-");
             const wrongDate = new Date(wrongConversion);
 
             // 正确的方式

@@ -289,6 +289,7 @@ const handleStepClick = async (stepIndex: number) => {
         const success = await goToStep(stepIndex);
         return success;
     }
+    return false;
 };
 
 // 监控wizard打开状态变化，处理初始化逻辑

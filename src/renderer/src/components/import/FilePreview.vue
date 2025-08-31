@@ -224,17 +224,17 @@
                     <h4>{{ t("import.metadata") }}</h4>
                     <a-descriptions :column="2" size="small" bordered>
                         <a-descriptions-item
-                            v-if="selectedGroup.mainFile.metadata.width"
+                            v-if="'width' in selectedGroup.mainFile.metadata"
                             :label="t('import.dimensions')"
                         >
-                            {{ selectedGroup.mainFile.metadata.width }} ×
-                            {{ selectedGroup.mainFile.metadata.height }}
+                            {{ (selectedGroup.mainFile.metadata as any).width }} ×
+                            {{ (selectedGroup.mainFile.metadata as any).height }}
                         </a-descriptions-item>
                         <a-descriptions-item
-                            v-if="selectedGroup.mainFile.metadata.duration"
+                            v-if="'duration' in selectedGroup.mainFile.metadata"
                             :label="t('import.duration')"
                         >
-                            {{ formatDuration(selectedGroup.mainFile.metadata.duration) }}
+                            {{ formatDuration((selectedGroup.mainFile.metadata as any).duration) }}
                         </a-descriptions-item>
                         <a-descriptions-item
                             v-if="selectedGroup.mainFile.metadata.format"

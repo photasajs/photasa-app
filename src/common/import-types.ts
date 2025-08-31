@@ -194,7 +194,7 @@ export interface ImportProgress {
     startTime: Date;
     errors: ImportError[];
     warnings: ImportWarning[];
-    status: "preparing" | "processing" | "paused" | "completed" | "cancelled" | "error";
+    status: "preparing" | "processing" | "paused" | "completed" | "cancelled" | "error" | "failed";
 }
 
 /**

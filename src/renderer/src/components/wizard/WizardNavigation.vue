@@ -81,7 +81,7 @@ interface Emits {
     (e: "cancel"): void;
 }
 
-const _props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
     showBackButton: true,
     showCancelButton: true,
     backButtonText: "Back",

@@ -3,7 +3,7 @@
         <!-- 头部信息 -->
         <div class="duplicate-header">
             <h3>
-                <ExclamationTriangleOutlined />
+                <ExclamationCircleOutlined />
                 {{ t("import.duplicateFiles") }}
             </h3>
             <div class="duplicate-stats">
@@ -309,7 +309,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    ExclamationTriangleOutlined,
+    ExclamationCircleOutlined,
     ThunderboltOutlined,
     EyeOutlined,
     SwapOutlined,

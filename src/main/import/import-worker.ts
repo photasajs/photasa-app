@@ -157,7 +157,7 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
     logger.debug(`[import-worker] 预览导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
-        // 处理配置中的日期对象，将字符串转换回 Date 对象
+        // 处理配置中的日期对象，安全地处理可能是字符串或 Date 的情况
         const processedConfig: ImportConfig = {
             ...config,
             filters: config.filters
@@ -165,8 +165,14 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
                       ...config.filters,
                       dateRange: config.filters.dateRange
                           ? {
-                                start: new Date(config.filters.dateRange.start),
-                                end: new Date(config.filters.dateRange.end),
+                                start:
+                                    config.filters.dateRange.start instanceof Date
+                                        ? config.filters.dateRange.start
+                                        : new Date(config.filters.dateRange.start),
+                                end:
+                                    config.filters.dateRange.end instanceof Date
+                                        ? config.filters.dateRange.end
+                                        : new Date(config.filters.dateRange.end),
                             }
                           : { start: new Date(0), end: new Date() },
                   }
@@ -203,7 +209,7 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     logger.debug(`[import-worker] 执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
-        // 处理配置中的日期对象，将字符串转换回 Date 对象
+        // 处理配置中的日期对象，安全地处理可能是字符串或 Date 的情况
         const processedConfig: ImportConfig = {
             ...config,
             filters: config.filters
@@ -211,10 +217,16 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
                       ...config.filters,
                       dateRange: config.filters.dateRange
                           ? {
-                                start: new Date(config.filters.dateRange.start),
-                                end: new Date(config.filters.dateRange.end),
+                                start:
+                                    config.filters.dateRange.start instanceof Date
+                                        ? config.filters.dateRange.start
+                                        : new Date(config.filters.dateRange.start),
+                                end:
+                                    config.filters.dateRange.end instanceof Date
+                                        ? config.filters.dateRange.end
+                                        : new Date(config.filters.dateRange.end),
                             }
-                          : { start: new Date(), end: new Date() }, // 默认值
+                          : { start: new Date(0), end: new Date() }, // 默认值
                   }
                 : {
                       fileTypes: [],

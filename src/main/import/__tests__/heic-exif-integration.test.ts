@@ -22,7 +22,7 @@ describe("HEIC EXIF Integration Test", () => {
         console.log(`\nEXIF原始日期字符串: ${exifDateString}`);
 
         // 错误的方式（之前的实现）
-        const wrongConversion = exifDateString.replace(/:/g, "-", 2);
+        const wrongConversion = exifDateString.replace(/:/, "-").replace(/:/, "-");
         const wrongDate = new Date(wrongConversion);
         console.log(`❌ 错误转换: "${wrongConversion}" -> ${wrongDate.toString()}`);
         console.log(`   isValid: ${!isNaN(wrongDate.getTime())}`);

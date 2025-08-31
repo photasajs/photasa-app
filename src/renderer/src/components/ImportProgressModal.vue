@@ -3,6 +3,7 @@ import { ref, reactive, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { executeImport, cancelImport, pauseImport, resumeImport } from "@renderer/utils/api";
 import { formatProcessingSpeed, formatRemainingTime } from "@renderer/utils/import-helpers";
+import { createSerializableConfig } from "@renderer/utils/import-wizard-helpers";
 import { BaseModal, BaseButton } from "@renderer/components/ui";
 import {
     PauseIcon,
@@ -45,6 +46,8 @@ const importProgress = reactive<ImportProgress>({
     warnings: [],
     status: "preparing",
     currentFile: "",
+    remainingTime: 0,
+    startTime: new Date(),
 });
 
 // Import result
@@ -108,7 +111,9 @@ const startImport = async () => {
             currentFile: "",
         });
 
-        const result = await executeImport(props.config, {
+        // Serialize the config to handle Date objects properly for IPC transmission
+        const serializableConfig = createSerializableConfig(props.config, false);
+        const result = await executeImport(serializableConfig, {
             onProgress: (progress) => {
                 Object.assign(importProgress, {
                     ...progress,

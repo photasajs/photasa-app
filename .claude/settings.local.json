@@ -16,7 +16,9 @@
       "Bash(git push:*)",
       "Bash(npm test:*)",
       "Bash(npx eslint:*)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(electron-vite build)",
+      "Bash(npx electron-vite:*)"
     ],
     "deny": []
   }
