@@ -302,11 +302,11 @@ onUnmounted(() => {
     <BaseModal
         :open="show"
         :title="t('import.progress')"
-        size="md"
+        size="lg"
         :closable="canClose"
         @close="handleCancel"
     >
-        <div class="import-progress space-y-6">
+        <div class="import-progress space-y-6 min-w-[500px]">
             <!-- Status Header -->
             <div class="flex items-center justify-center space-x-3">
                 <component :is="statusIcon" v-if="statusIcon" :class="['w-8 h-8', statusColor]" />
@@ -330,28 +330,40 @@ onUnmounted(() => {
             </div>
 
             <!-- Progress Statistics -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="text-center p-3 bg-[var(--color-bg-secondary)] rounded-lg">
-                    <div class="text-lg font-semibold text-[var(--color-text)]">
+            <div class="grid grid-cols-3 gap-4 min-w-0">
+                <div class="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg min-w-0">
+                    <div
+                        class="text-lg font-semibold text-[var(--color-text)] whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
                         {{ importProgress.processedFiles }} / {{ importProgress.totalFiles }}
                     </div>
-                    <div class="text-sm text-[var(--color-text-secondary)]">
+                    <div
+                        class="text-sm text-[var(--color-text-secondary)] whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
                         {{ t("import.processed") }}
                     </div>
                 </div>
-                <div class="text-center p-3 bg-[var(--color-bg-secondary)] rounded-lg">
-                    <div class="text-lg font-semibold text-[var(--color-text)]">
+                <div class="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg min-w-0">
+                    <div
+                        class="text-lg font-semibold text-[var(--color-text)] whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
                         {{ formatProcessingSpeed(importProgress.speed) }}
                     </div>
-                    <div class="text-sm text-[var(--color-text-secondary)]">
+                    <div
+                        class="text-sm text-[var(--color-text-secondary)] whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
                         {{ t("import.speed") }}
                     </div>
                 </div>
-                <div class="text-center p-3 bg-[var(--color-bg-secondary)] rounded-lg">
-                    <div class="text-lg font-semibold text-[var(--color-text)]">
+                <div class="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg min-w-0">
+                    <div
+                        class="text-lg font-semibold text-[var(--color-text)] whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
                         {{ formatRemainingTime(importProgress.estimatedTimeRemaining) }}
                     </div>
-                    <div class="text-sm text-[var(--color-text-secondary)]">
+                    <div
+                        class="text-sm text-[var(--color-text-secondary)] whitespace-nowrap overflow-hidden text-ellipsis"
+                    >
                         {{ t("import.remaining") }}
                     </div>
                 </div>
