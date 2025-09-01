@@ -13,6 +13,7 @@ export default defineConfig({
         plugins: [externalizeDepsPlugin()],
         resolve: {
             alias: {
+                "@main": resolve("src/main/"),
                 "@common": resolve("src/common/"),
                 "@shared": resolve("src/shared/"),
             },

@@ -21,7 +21,6 @@ export {
     // HEIC 处理
     extractHeicMetadata,
     isHeicFile,
-    resetHeifModule,
 
     // 视频处理
     extractVideoMetadata,

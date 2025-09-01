@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import ExifReader from "exifreader";
-import createHeifModule from "@saschazar/wasm-heif";
+import { initializeHeifModule } from "@main/wasm/heif-module";
 import { extractDateTimeFromExif } from "@common/exif-util";
 import { extractGPSInfo } from "../parsers/gps-parser";
 import { extractCameraInfo } from "../parsers/camera-parser";
@@ -13,46 +13,8 @@ import type { ImageMetadata } from "@common/import-types";
 type ExtractedImageMetadata = Omit<ImageMetadata, "dateSource">;
 
 /**
- * HEIF/HEIC模块状态
- */
-interface HeifModuleState {
-    module: any;
-    initialized: boolean;
-}
-
-let heifState: HeifModuleState = {
-    module: null,
-    initialized: false,
-};
-
-/**
  * 初始化HEIF模块（纯函数版本，返回模块实例）
  */
-async function initializeHeifModule(): Promise<any> {
-    if (heifState.initialized && heifState.module) {
-        return heifState.module;
-    }
-
-    try {
-        // 使用默认配置初始化HEIF模块
-        const module = await createHeifModule();
-        heifState = { module, initialized: true };
-        return module;
-    } catch (error) {
-        // 如果默认初始化失败，尝试使用WASM文件
-        const wasmPath = path.join(__dirname, "../../../../../resources/wasm_heif.wasm");
-        if (await fs.pathExists(wasmPath)) {
-            const wasmBinary = await fs.readFile(wasmPath);
-            const module = await createHeifModule({
-                wasmBinary: wasmBinary as any,
-            } as any);
-            heifState = { module, initialized: true };
-            return module;
-        } else {
-            throw new Error("HEIF WASM module not found and default initialization failed");
-        }
-    }
-}
 
 /**
  * 从EXIF数据中提取图像尺寸
@@ -204,14 +166,4 @@ export async function extractHeicMetadata(
 export function isHeicFile(filePath: string): boolean {
     const ext = path.extname(filePath).toLowerCase();
     return [".heic", ".heif"].includes(ext);
-}
-
-/**
- * 清理HEIF模块状态（用于测试或重置）
- */
-export function resetHeifModule(): void {
-    heifState = {
-        module: null,
-        initialized: false,
-    };
 }

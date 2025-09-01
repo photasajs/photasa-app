@@ -1,13 +1,19 @@
 import isVideo from "is-video";
 import { ensureDir, exists, remove, readFile } from "fs-extra";
-// 替换 heic-decode 为 @saschazar/wasm-heif
-import createHeifModule, { HEIFModule } from "@saschazar/wasm-heif";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { toPreviewPath } from "@shared/path-util";
-import { HeicExtensionRE, getOptimalThumbnailResolution, ratioStringToParts } from "@common/utils";
+import { getOptimalThumbnailResolution, HeicExtensionRE, ratioStringToParts } from "@common/utils";
+import { initializeHeifModule } from "../wasm/heif-module";
+import {
+    calculateAdjustedDimensions,
+    createFallbackThumbnail,
+    isBufferSizeWithinTolerance,
+    processAdjustedBuffer,
+    convertRgbToRgba,
+} from "./thumbnail-utils";
 import type { VideoSize } from "@common/types";
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
@@ -44,18 +50,8 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
     try {
         logger.info("[thumbnail-handler] Decode HEIC/HEIF for : " + arg.path);
 
-        // 加载 wasm 文件路径（已拷贝到 resources 目录）
-        const wasmPath = path.join(__dirname, "../../resources/wasm_heif.wasm");
-
-        // 检查WASM文件是否存在
-        if (!(await exists(wasmPath))) {
-            throw new Error(`WASM file not found at: ${wasmPath}`);
-        }
-
-        const wasmBinary = await readFile(wasmPath);
-
-        // 初始化 wasm-heif 模块，传递 wasmBinary
-        heifModule = await createHeifModule({ wasmBinary } as unknown as HEIFModule);
+        // 复用导入侧的 HEIF 模块初始化（带缓存）
+        heifModule = await initializeHeifModule();
 
         // 验证模块是否有效
         if (
@@ -89,13 +85,38 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
         const { width, height, channels } = dimensions;
         logger.info(`[wasm-heif] Decoded width=${width}, height=${height}, channels=${channels}`);
 
-        // 检查 buffer 长度
-        if (decoded.length !== width * height * channels) {
+        // 检查 buffer 长度 - 使用纯函数处理
+        const expectedSize = width * height * channels;
+        const { isWithin, difference, tolerance } = isBufferSizeWithinTolerance(
+            decoded.length,
+            expectedSize,
+        );
+
+        if (!isWithin) {
             logger.error(
-                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${decoded ? decoded.length : "unknown"}`,
+                `[wasm-heif] Buffer size mismatch exceeds tolerance: expect ${width}*${height}*${channels}=${expectedSize}, got ${decoded.length}, difference: ${difference} bytes (tolerance: ${tolerance} bytes)`,
             );
+
+            // 尝试调整尺寸以适应实际缓冲区大小
+            const adjustedDimensions = calculateAdjustedDimensions(decoded, width, channels);
+            if (adjustedDimensions) {
+                logger.info(
+                    `[wasm-heif] Adjusting height from ${height} to ${adjustedDimensions.height} to match buffer size`,
+                );
+                return await processAdjustedBuffer(
+                    decoded,
+                    adjustedDimensions,
+                    previewName,
+                    logger,
+                );
+            }
+
             throw new Error(
-                `[wasm-heif] Buffer size mismatch: expect ${width}*${height}*${channels}=${width * height * channels}, got ${decoded ? decoded.length : "unknown"}`,
+                `[wasm-heif] Buffer size mismatch exceeds tolerance: expect ${expectedSize}, got ${decoded.length}`,
+            );
+        } else if (difference > 0) {
+            logger.warn(
+                `[wasm-heif] Buffer size mismatch within tolerance: expect ${width}*${height}*${channels}=${expectedSize}, got ${decoded.length}, difference: ${difference} bytes (within tolerance: ${tolerance} bytes)`,
             );
         }
         // 若 channels 不是 4，补齐为 RGBA
@@ -103,14 +124,7 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
         if (channels === 4) {
             rgbaBuffer = Buffer.from(decoded);
         } else if (channels === 3) {
-            // RGB -> RGBA
-            rgbaBuffer = Buffer.alloc(width * height * 4);
-            for (let i = 0, j = 0; i < decoded.length; i += 3, j += 4) {
-                rgbaBuffer[j] = decoded[i];
-                rgbaBuffer[j + 1] = decoded[i + 1];
-                rgbaBuffer[j + 2] = decoded[i + 2];
-                rgbaBuffer[j + 3] = 255; // alpha
-            }
+            rgbaBuffer = convertRgbToRgba(decoded, width, height);
             logger.info(`[wasm-heif] RGB buffer补齐为RGBA, new length=${rgbaBuffer.length}`);
         } else {
             logger.error(`[wasm-heif] Unsupported channels: ${channels}`);
@@ -127,6 +141,19 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
         return previewName;
     } catch (e) {
         logger.error("[thumbnail-handler] HEIC/HEIF decode error:", e);
+
+        // 尝试使用回退方案：使用文件修改时间作为缩略图标识
+        try {
+            logger.info("[thumbnail-handler] Attempting fallback solution for HEIC file");
+            const fallbackPath = await createFallbackThumbnail(arg, logger);
+            if (fallbackPath) {
+                logger.info("[thumbnail-handler] Fallback thumbnail created successfully");
+                return fallbackPath;
+            }
+        } catch (fallbackError) {
+            logger.warn("[thumbnail-handler] Fallback solution also failed:", fallbackError);
+        }
+
         throw e;
     } finally {
         // 清理资源

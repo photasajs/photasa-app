@@ -7,6 +7,7 @@ export default defineConfig({
     plugins: [vue(), svgLoader()],
     resolve: {
         alias: {
+            "@main": resolve("src/main/"),
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
             "@common": resolve("src/common/"),
