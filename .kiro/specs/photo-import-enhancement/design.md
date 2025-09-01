@@ -168,7 +168,7 @@ interface DirectoryProgress {
 4. **智能过滤**：提供文件类型、大小、日期等多维度过滤选项（需求5）
 5. **进度监控**：实时显示详细进度信息，包括当前文件、速度、预估时间（需求1）
 6. **批量导入控制**：按目录分组显示进度，支持单独控制（需求4）
-7. **重复文件处理**：可视化重复文件检测和处理选项（需求3）
+7. **重复文件处理**：预配置重复文件处理策略，导入时自动应用（需求3 - 简化实现）
 
 ### 2. 导入Worker架构 (Import Worker Architecture)
 
@@ -1103,84 +1103,60 @@ class ImportWorkerPool {
 }
 ```
 
-### 5. 重复文件处理策略
+### 5. 重复文件处理策略（简化实现）
 
-#### 策略模式实现
+#### 预配置策略模式
+
+**设计决策：** 基于实际实现，重复文件处理已简化为预配置策略，在导入配置步骤中选择，导入过程中自动应用。
 
 ```typescript
-interface DuplicateHandler {
-    handle(original: FileInfo, duplicate: FileInfo): Promise<DuplicateResult>;
+// 配置步骤中的重复处理策略选择
+interface ImportConfigurationData {
+    sourcePaths: string[];
+    targetPath: string;
+    filters: ImportFilters;
+    duplicateStrategy: DuplicateStrategy; // 预设策略
 }
 
-class SkipDuplicateHandler implements DuplicateHandler {
-    async handle(original: FileInfo, duplicate: FileInfo): Promise<DuplicateResult> {
-        return {
-            action: "skip",
-            originalPath: original.path,
-            message: `Skipped duplicate file: ${duplicate.name}`,
-        };
+// 支持的重复处理策略
+type DuplicateStrategy = "skip" | "rename" | "overwrite" | "keep_both";
+
+// 策略选项（在UI中显示）
+const duplicateStrategyOptions = [
+    { value: "rename", label: "重命名重复文件" },
+    { value: "skip", label: "跳过重复文件" },
+    { value: "overwrite", label: "覆盖原文件" },
+    { value: "keep_both", label: "保留两个文件" },
+];
+
+// 后端策略处理器（保持现有实现）
+class DuplicateHandlerFactory {
+    static createHandler(strategy: DuplicateStrategy): DuplicateHandler {
+        switch (strategy) {
+            case "skip":
+                return new SkipDuplicateHandler();
+            case "rename":
+                return new RenameDuplicateHandler();
+            case "overwrite":
+                return new OverwriteDuplicateHandler();
+            case "keep_both":
+                return new KeepBothDuplicateHandler();
+        }
     }
 }
+```
 
-class RenameDuplicateHandler implements DuplicateHandler {
-    async handle(original: FileInfo, duplicate: FileInfo): Promise<DuplicateResult> {
-        const newName = this.generateUniqueName(duplicate.path);
-        return {
-            action: "rename",
-            originalPath: original.path,
-            newPath: newName,
-            message: `Renamed to: ${path.basename(newName)}`,
-        };
-    }
+#### 实现特点
 
-    private generateUniqueName(filePath: string): string {
-        const parsed = path.parse(filePath);
-        let counter = 1;
-        let newPath: string;
+1. **配置时选择**：用户在配置步骤选择处理策略
+2. **预览时标识**：在预览步骤标识重复文件但不需要交互
+3. **导入时自动应用**：根据预设策略自动处理所有重复文件
+4. **结果统计**：导入完成后显示重复文件处理统计
 
-        do {
-            newPath = path.join(parsed.dir, `${parsed.name}_${counter}${parsed.ext}`);
-            counter++;
-        } while (fs.existsSync(newPath));
+#### 用户体验流程
 
-        return newPath;
-    }
-}
-
-class OverwriteDuplicateHandler implements DuplicateHandler {
-    async handle(original: FileInfo, duplicate: FileInfo): Promise<DuplicateResult> {
-        return {
-            action: "overwrite",
-            originalPath: original.path,
-            message: `Overwritten: ${duplicate.name}`,
-        };
-    }
-}
-
-class KeepBothDuplicateHandler implements DuplicateHandler {
-    async handle(original: FileInfo, duplicate: FileInfo): Promise<DuplicateResult> {
-        const comparison = await this.compareFiles(original, duplicate);
-        const newName = this.generateUniqueName(duplicate.path);
-
-        return {
-            action: "keep_both",
-            originalPath: original.path,
-            newPath: newName,
-            comparison,
-            message: `Kept both files`,
-        };
-    }
-
-    private async compareFiles(file1: FileInfo, file2: FileInfo): Promise<FileComparison> {
-        const [stat1, stat2] = await Promise.all([fs.stat(file1.path), fs.stat(file2.path)]);
-
-        return {
-            sizeDifference: stat1.size - stat2.size,
-            timeDifference: stat1.mtime.getTime() - stat2.mtime.getTime(),
-            recommendation: this.getRecommendation(stat1, stat2),
-        };
-    }
-}
+```
+配置步骤 → 选择重复处理策略 → 预览步骤 → 查看重复文件标识 → 执行导入 → 自动处理重复文件
 ```
 
 ## 数据模型
@@ -1337,7 +1313,7 @@ interface FileComparison {
 }
 
 type DuplicateAction = "skip" | "rename" | "overwrite" | "keep_both";
-type DuplicateStrategy = "ask_each" | "skip_all" | "rename_all" | "overwrite_all";
+type DuplicateStrategy = "skip" | "rename" | "overwrite" | "keep_both";
 
 // 需求5：过滤相关
 type FileType = "image" | "video" | "all";

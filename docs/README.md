@@ -2,6 +2,12 @@
 
 Photoasa 开发命名规范聚焦于Electron App的开发规范。
 
+## 文档结构
+
+- **`design/`** - 设计文档和架构说明
+- **`rfc/`** - RFC (Request for Comments) 文档
+- **`issue/`** - 问题报告和解决方案文档
+
 ## 1. 组件命名
 - 文件名：PascalCase 或 kebab-case，如 ThemeSettings.vue 或 theme-settings.vue
 - 组件名：PascalCase，如 ThemeSettings
