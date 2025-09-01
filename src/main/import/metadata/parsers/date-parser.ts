@@ -103,23 +103,26 @@ export function computeFallbackDate(
 
     if (isValidCreated && isValidModified) {
         // 两个时间都有效，选择较早的日期
-        if (createdTime!.getTime() <= modifiedTime!.getTime()) {
-            logger?.debug?.(`Using file creation time (earlier): ${createdTime!.toISOString()}`);
-            return { date: createdTime!, source: DateSources.FILE_CREATED };
+        // 由于已经验证了有效性，这里可以安全使用
+        const created = createdTime as Date;
+        const modified = modifiedTime as Date;
+        if (created.getTime() <= modified.getTime()) {
+            logger?.debug?.(`Using file creation time (earlier): ${created.toISOString()}`);
+            return { date: created, source: DateSources.FILE_CREATED };
         } else {
-            logger?.debug?.(
-                `Using file modification time (earlier): ${modifiedTime!.toISOString()}`,
-            );
-            return { date: modifiedTime!, source: DateSources.FILE_MODIFIED };
+            logger?.debug?.(`Using file modification time (earlier): ${modified.toISOString()}`);
+            return { date: modified, source: DateSources.FILE_MODIFIED };
         }
     } else if (isValidCreated) {
         // 只有创建时间有效
-        logger?.debug?.(`Using file creation time: ${createdTime!.toISOString()}`);
-        return { date: createdTime!, source: DateSources.FILE_CREATED };
+        const created = createdTime as Date;
+        logger?.debug?.(`Using file creation time: ${created.toISOString()}`);
+        return { date: created, source: DateSources.FILE_CREATED };
     } else if (isValidModified) {
         // 只有修改时间有效
-        logger?.debug?.(`Using file modification time: ${modifiedTime!.toISOString()}`);
-        return { date: modifiedTime!, source: DateSources.FILE_MODIFIED };
+        const modified = modifiedTime as Date;
+        logger?.debug?.(`Using file modification time: ${modified.toISOString()}`);
+        return { date: modified, source: DateSources.FILE_MODIFIED };
     }
 
     // 两个时间都无效，使用当前日期

@@ -135,7 +135,7 @@
         "prettier": "^3.2.5",
         "read-chunk": "^4.0.3",
         "sass": "^1.69.3",
-        "typescript": "^5.2.2",
+        "typescript": "^5.1.6",
         "video.js": "^7.21.5",
         "vite": "^6.3.5",
         "vite-plugin-comlink": "^3.0.2",

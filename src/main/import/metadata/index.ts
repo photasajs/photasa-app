@@ -292,12 +292,12 @@ function determineGroupTargetDate(group: FileGroup, logger: PhotasaLogger): Date
 
     // 第一优先级：使用EXIF或其他元数据日期
     if (isValidDate(mainFile.dateTime)) {
-        targetDate = mainFile.dateTime!;
+        targetDate = mainFile.dateTime as Date;
         dateReason = `using metadata date (${mainFile.dateSource || "unknown source"})`;
     }
     // 第二优先级：使用文件创建时间
     else if (isValidDate(mainFile.createdTime)) {
-        targetDate = mainFile.createdTime!;
+        targetDate = mainFile.createdTime as Date;
         dateReason = "using file created time";
     }
     // 最后回退：使用智能日期回退

@@ -66,8 +66,9 @@ describe("Real Video Files Tests", () => {
 
             // Resolution should be valid
             expect(result.resolution).toBeDefined();
-            expect(result.resolution!.width).toBeGreaterThan(0);
-            expect(result.resolution!.height).toBeGreaterThan(0);
+            expect(result.resolution).not.toBeNull();
+            expect(result.resolution?.width).toBeGreaterThan(0);
+            expect(result.resolution?.height).toBeGreaterThan(0);
 
             // Duration should be positive
             expect(result.duration).toBeGreaterThan(0);
@@ -107,8 +108,9 @@ describe("Real Video Files Tests", () => {
 
             // Resolution should be valid
             expect(result.resolution).toBeDefined();
-            expect(result.resolution!.width).toBeGreaterThan(0);
-            expect(result.resolution!.height).toBeGreaterThan(0);
+            expect(result.resolution).not.toBeNull();
+            expect(result.resolution?.width).toBeGreaterThan(0);
+            expect(result.resolution?.height).toBeGreaterThan(0);
 
             // Duration should be positive
             expect(result.duration).toBeGreaterThan(0);
@@ -158,8 +160,8 @@ describe("Real Video Files Tests", () => {
 
             // Video-specific metadata
             expect((result as any).duration).toBeGreaterThan(0);
-            expect((result as any).resolution.width).toBeGreaterThan(0);
-            expect((result as any).resolution.height).toBeGreaterThan(0);
+            expect((result as any).resolution?.width).toBeGreaterThan(0);
+            expect((result as any).resolution?.height).toBeGreaterThan(0);
             expect((result as any).format).toBe("mov");
         });
 
@@ -185,8 +187,8 @@ describe("Real Video Files Tests", () => {
 
             // Video-specific metadata
             expect((result as any).duration).toBeGreaterThan(0);
-            expect((result as any).resolution.width).toBeGreaterThan(0);
-            expect((result as any).resolution.height).toBeGreaterThan(0);
+            expect((result as any).resolution?.width).toBeGreaterThan(0);
+            expect((result as any).resolution?.height).toBeGreaterThan(0);
             expect((result as any).format).toBe("mp4");
         });
     });

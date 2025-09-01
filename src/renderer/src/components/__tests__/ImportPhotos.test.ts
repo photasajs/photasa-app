@@ -235,7 +235,9 @@ describe("ImportPhotos", () => {
             await baseWizard.vm.$emit("update:open", false);
 
             expect(wrapper.emitted("update:show")).toBeTruthy();
-            expect(wrapper.emitted("update:show")![0]).toEqual([false]);
+            const showEmissions = wrapper.emitted("update:show");
+            expect(showEmissions).toBeDefined();
+            expect(showEmissions?.[0]).toEqual([false]);
         });
 
         it("should emit import-complete when import finishes", async () => {
@@ -246,7 +248,9 @@ describe("ImportPhotos", () => {
             await progressModal.vm.$emit("complete", result);
 
             expect(wrapper.emitted("import-complete")).toBeTruthy();
-            expect(wrapper.emitted("import-complete")![0]).toEqual([result]);
+            const completeEmissions = wrapper.emitted("import-complete");
+            expect(completeEmissions).toBeDefined();
+            expect(completeEmissions?.[0]).toEqual([result]);
         });
     });
 
@@ -566,7 +570,9 @@ describe("ImportPhotos", () => {
 
             // Verify wizard was closed and progress modal was shown
             expect(wrapper.emitted("update:show")).toBeTruthy();
-            expect(wrapper.emitted("update:show")![0]).toEqual([false]);
+            const showEmissions = wrapper.emitted("update:show");
+            expect(showEmissions).toBeDefined();
+            expect(showEmissions?.[0]).toEqual([false]);
 
             // Verify progress modal is shown
             const progressModal = wrapper.findComponent({ name: "ImportProgressModal" });
@@ -711,7 +717,9 @@ describe("ImportPhotos", () => {
 
             // Should emit import-complete event
             expect(wrapper.emitted("import-complete")).toBeTruthy();
-            expect(wrapper.emitted("import-complete")![0]).toEqual([importResult]);
+            const completeEmissions = wrapper.emitted("import-complete");
+            expect(completeEmissions).toBeDefined();
+            expect(completeEmissions?.[0]).toEqual([importResult]);
 
             // Should hide progress modal
             expect(progressModal.props("show")).toBe(false);

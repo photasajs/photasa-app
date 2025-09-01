@@ -126,7 +126,11 @@ const api = {
      * 监听导入进度事件
      */
     onImportProgress: (callback: (progress: any) => void) => {
-        const handler = (_: any, progress: any) => callback(progress);
+        const handler = (_: any, eventData: any) => {
+            // 从事件数据中提取进度对象
+            const progress = eventData.progress || eventData;
+            callback(progress);
+        };
         electronAPI.ipcRenderer.on(ImportEvents.PROGRESS, handler);
 
         // 返回清理函数

@@ -781,6 +781,15 @@ async function performFileImport(
     const importState = createImportState();
     const startTime = Date.now();
 
+    // 计算总文件数
+    const totalFiles = fileGroups.reduce((sum, group) => sum + group.files.length, 0);
+    logger.debug(
+        `[import-worker] 开始处理 ${totalFiles} 个文件，分布在 ${fileGroups.length} 个文件组中`,
+    );
+
+    // 发送初始进度事件
+    sendProgressUpdate(importId, 0, totalFiles, "开始导入...", startTime);
+
     for (const group of fileGroups) {
         try {
             const processedGroup = await processFileGroup(group, logger);
@@ -792,10 +801,11 @@ async function performFileImport(
                     importId,
                     importState,
                     startTime,
+                    totalFiles,
                 );
             }
         } catch (error) {
-            await handleGroupError(group, error, importState);
+            await handleGroupError(group, error, importState, totalFiles);
         }
     }
 
@@ -827,8 +837,13 @@ async function processFileGroupImport(
     importId: string,
     importState: ReturnType<typeof createImportState>,
     startTime: number,
+    totalFiles: number,
 ): Promise<void> {
-    const targetDir = path.join(config.targetPath, processedGroup.targetPath!);
+    // 确保目标路径存在
+    if (!processedGroup.targetPath) {
+        throw new Error("Target path is required for file group");
+    }
+    const targetDir = path.join(config.targetPath, processedGroup.targetPath);
     await fs.ensureDir(targetDir);
 
     for (const file of processedGroup.files) {
@@ -845,7 +860,7 @@ async function processFileGroupImport(
 
                 if (handled.action === "skip") {
                     importState.skippedFiles++;
-                    updateProgress(importId, importState, file.name, startTime);
+                    updateProgress(importId, importState, file.name, startTime, totalFiles);
                     continue;
                 }
             }
@@ -861,10 +876,10 @@ async function processFileGroupImport(
                 importTime: new Date().toISOString(),
             });
 
-            updateProgress(importId, importState, file.name, startTime);
+            updateProgress(importId, importState, file.name, startTime, totalFiles);
             logger.debug(`[import-worker] 已导入: ${file.path} -> ${targetFilePath}`);
         } catch (error) {
-            await handleFileError(file, error, importState, startTime);
+            await handleFileError(file, error, importState, startTime, importId, totalFiles);
         }
     }
 }
@@ -877,11 +892,15 @@ function updateProgress(
     importState: ReturnType<typeof createImportState>,
     fileName: string,
     startTime: number,
+    totalFiles: number,
 ): void {
-    const totalFiles =
+    const processedFiles =
         importState.successfulFiles + importState.skippedFiles + importState.errorFiles;
 
-    sendProgressUpdate(importId, totalFiles, totalFiles, fileName, startTime);
+    logger.debug(
+        `[import-worker] Progress: ${processedFiles}/${totalFiles} files, current: ${fileName}`,
+    );
+    sendProgressUpdate(importId, processedFiles, totalFiles, fileName, startTime);
 }
 
 /**
@@ -892,6 +911,8 @@ async function handleFileError(
     error: unknown,
     importState: ReturnType<typeof createImportState>,
     startTime: number,
+    importId: string,
+    totalFiles: number,
 ): Promise<void> {
     importState.errorFiles++;
 
@@ -908,7 +929,7 @@ async function handleFileError(
     };
 
     importState.errors.push(serializableError);
-    updateProgress("default", importState, file.name, startTime);
+    updateProgress(importId, importState, file.name, startTime, totalFiles);
     logger.error(`[import-worker] 文件导入失败 ${file.path}: ${error}`);
 }
 
@@ -919,8 +940,13 @@ async function handleGroupError(
     group: FileGroup,
     error: unknown,
     importState: ReturnType<typeof createImportState>,
+    totalFiles: number,
 ): Promise<void> {
     importState.errorFiles += group.files.length;
+
+    logger.error(
+        `[import-worker] 文件组处理失败: ${group.mainFile.path}, 影响 ${group.files.length}/${totalFiles} 文件`,
+    );
 
     const serializableError = {
         id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
