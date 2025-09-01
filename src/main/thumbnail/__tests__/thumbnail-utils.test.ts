@@ -9,7 +9,7 @@ import {
 describe("thumbnail-utils", () => {
     it("calculateBufferTolerance returns >= 1KB or 1%", () => {
         expect(calculateBufferTolerance(1000)).toBe(1024);
-        expect(calculateBufferTolerance(100_000)).toBeCloseTo(1000, -1);
+        expect(calculateBufferTolerance(100_000)).toBe(1000);
     });
 
     it("isBufferSizeWithinTolerance detects within tolerance", () => {
