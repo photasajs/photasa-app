@@ -135,7 +135,7 @@
         "prettier": "^3.2.5",
         "read-chunk": "^4.0.3",
         "sass": "^1.69.3",
-        "typescript": "^5.1.6",
+        "typescript": "^5.9.2",
         "video.js": "^7.21.5",
         "vite": "^6.3.5",
         "vite-plugin-comlink": "^3.0.2",
@@ -145,7 +145,7 @@
         "vue": "^3.5.14",
         "vue-concurrency": "^5.0.3",
         "vue-i18n": "^9.14.4",
-        "vue-tsc": "^2.2.10",
+        "vue-tsc": "^3.0.6",
         "webpack": "^5.88.2"
     },
     "volta": {
