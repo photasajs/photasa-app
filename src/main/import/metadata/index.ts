@@ -10,6 +10,46 @@ import type { MetadataRequest, FileMetadata, FileGroup } from "@common/import-ty
 
 type MediaType = "heic" | "image" | "raw" | "video" | "other";
 /**
+ * 计算标准化的文件格式
+ * @param filePath 文件路径
+ * @returns 标准化的格式字符串
+ */
+function computeNormalizedFormat(filePath: string): string {
+    const ext = path.extname(filePath).slice(1).toLowerCase();
+
+    // 特殊处理某些文件类型
+    switch (ext) {
+        case "heic":
+            return "HEIC";
+        case "mov":
+            return "MOV";
+        case "mp4":
+            return "MP4";
+        case "avi":
+            return "AVI";
+        case "jpg":
+        case "jpeg":
+            return "JPEG";
+        case "png":
+            return "PNG";
+        case "gif":
+            return "GIF";
+        case "bmp":
+            return "BMP";
+        case "tiff":
+        case "tif":
+            return "TIFF";
+        case "raw":
+        case "cr2":
+        case "nef":
+        case "arw":
+            return "RAW";
+        default:
+            return ext.toUpperCase();
+    }
+}
+
+/**
  * 创建回退元数据（消除重复逻辑）
  */
 function createFallbackMetadata(
@@ -29,7 +69,7 @@ function createFallbackMetadata(
         type: fileType,
         dateTime: fallback.date,
         dateSource: fallback.source,
-        format: path.extname(filePath).slice(1).toLowerCase(),
+        format: computeNormalizedFormat(filePath),
     };
 
     if (fileType === "image") {
