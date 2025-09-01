@@ -111,22 +111,16 @@ describe("ImportService Event-Driven Architecture", () => {
     });
 
     describe("IPC Handler Registration", () => {
-        it("should register import:start handler instead of import:execute", () => {
-            // Check that the new IPC handler is registered
-            expect(mockIpcMain.handle).toHaveBeenCalledWith("import:start", expect.any(Function));
-
-            // Verify the old handler is not registered
-            const executeCalls = (mockIpcMain.handle as any).mock.calls.filter(
-                (call: any) => call[0] === "import:execute",
-            );
-            expect(executeCalls).toHaveLength(0);
+        it("should register import:execute handler", () => {
+            // Check that the execute IPC handler is registered
+            expect(mockIpcMain.handle).toHaveBeenCalledWith("import:execute", expect.any(Function));
         });
 
         it("should register all required IPC handlers", () => {
             const expectedHandlers = [
                 "import:scan-directories",
                 "import:preview",
-                "import:start", // New event-driven handler
+                "import:execute",
                 "import:cancel",
                 "import:pause",
                 "import:resume",

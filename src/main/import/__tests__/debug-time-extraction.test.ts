@@ -93,7 +93,7 @@ describe("Debug Time Extraction Issues", () => {
             console.log("HEIC Debug - EXIF Data:", mockExifData);
             console.log("HEIC Debug - Result:", result);
 
-            expect(result.type).toBe("image");
+            expect(result.type).toBe("heic");
             expect(result.format).toBe("HEIC");
         });
 
@@ -102,11 +102,11 @@ describe("Debug Time Extraction Issues", () => {
                 filePath: "/test/no-date.heic",
             };
 
-            // Mock file stats
+            // Mock file stats - birthtime should be earlier than mtime to get "file_created"
             vi.mocked(fs.stat).mockResolvedValue({
                 size: 1024000,
-                mtime: new Date("2024-01-01T09:00:00Z"),
-                birthtime: new Date("2024-01-01T10:00:00Z"),
+                mtime: new Date("2024-01-01T10:00:00Z"),
+                birthtime: new Date("2024-01-01T09:00:00Z"),
             } as any);
 
             // Mock HEIC file without date EXIF data
@@ -125,7 +125,7 @@ describe("Debug Time Extraction Issues", () => {
             console.log("HEIC Debug - No Date EXIF:", mockExifData);
             console.log("HEIC Debug - Result:", result);
 
-            expect(result.type).toBe("image");
+            expect(result.type).toBe("heic");
             expect(result.format).toBe("HEIC");
             expect(result.dateSource).toBe("file_created");
         });
@@ -137,11 +137,11 @@ describe("Debug Time Extraction Issues", () => {
                 filePath: "/test/sample.mov",
             };
 
-            // Mock file stats
+            // Mock file stats - birthtime should be earlier than mtime to get "file_created"
             vi.mocked(fs.stat).mockResolvedValue({
                 size: 1024000,
-                mtime: new Date("2024-01-01T09:00:00Z"),
-                birthtime: new Date("2024-01-01T10:00:00Z"),
+                mtime: new Date("2024-01-01T10:00:00Z"),
+                birthtime: new Date("2024-01-01T09:00:00Z"),
             } as any);
 
             // Mock ffprobe output with MOV metadata
@@ -184,11 +184,11 @@ describe("Debug Time Extraction Issues", () => {
                 filePath: "/test/no-metadata.mov",
             };
 
-            // Mock file stats
+            // Mock file stats - birthtime should be earlier than mtime to get "file_created"
             vi.mocked(fs.stat).mockResolvedValue({
                 size: 1024000,
-                mtime: new Date("2024-01-01T09:00:00Z"),
-                birthtime: new Date("2024-01-01T10:00:00Z"),
+                mtime: new Date("2024-01-01T10:00:00Z"),
+                birthtime: new Date("2024-01-01T09:00:00Z"),
             } as any);
 
             // Mock ffprobe output without creation time
@@ -218,7 +218,7 @@ describe("Debug Time Extraction Issues", () => {
             console.log("MOV Debug - Result:", result);
 
             expect(result.type).toBe("video");
-            expect(result.format).toBe("mov");
+            expect(result.format).toBe("MOV");
             expect(result.dateSource).toBe("file_created");
         });
 
@@ -227,11 +227,11 @@ describe("Debug Time Extraction Issues", () => {
                 filePath: "/test/invalid-date.mov",
             };
 
-            // Mock file stats
+            // Mock file stats - birthtime should be earlier than mtime to get "file_created"
             vi.mocked(fs.stat).mockResolvedValue({
                 size: 1024000,
-                mtime: new Date("2024-01-01T09:00:00Z"),
-                birthtime: new Date("2024-01-01T10:00:00Z"),
+                mtime: new Date("2024-01-01T10:00:00Z"),
+                birthtime: new Date("2024-01-01T09:00:00Z"),
             } as any);
 
             // Mock ffprobe output with invalid dates
@@ -266,7 +266,7 @@ describe("Debug Time Extraction Issues", () => {
             console.log("MOV Debug - Result:", result);
 
             expect(result.type).toBe("video");
-            expect(result.format).toBe("mov");
+            expect(result.format).toBe("MOV");
             expect(result.dateSource).toBe("file_created");
         });
     });

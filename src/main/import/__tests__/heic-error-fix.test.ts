@@ -114,7 +114,7 @@ describe("HEIC Error Fix Tests", () => {
         const result = await extractMetadata(request, mockLogger);
 
         expect(result).toBeDefined();
-        expect(result.type).toBe("image");
+        expect(result.type).toBe("heic");
         expect(result.format).toBe("HEIC");
         expect(result.dateSource).toBe("file_created");
         expect(result.width).toBe(0);

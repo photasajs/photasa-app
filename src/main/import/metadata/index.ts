@@ -29,7 +29,7 @@ function createFallbackMetadata(
         type: fileType,
         dateTime: fallback.date,
         dateSource: fallback.source,
-        format: path.extname(filePath).slice(1).toUpperCase(),
+        format: path.extname(filePath).slice(1).toLowerCase(),
     };
 
     if (fileType === "image") {
@@ -192,26 +192,39 @@ export async function processFileGroup(
 
         // 检查是否需要提取元数据
         if (!file.dateTime || !isValidDate(file.dateTime)) {
-            try {
-                logger.debug(`[FileGroup] 为文件提取元数据: ${file.name}`);
-                const metadata = await extractMetadata({ filePath: file.path }, logger);
-                file.metadata = metadata as any; // 类型转换
-                file.dateTime = metadata.dateTime || file.createdTime;
-                file.dateSource = metadata.dateSource;
-                logger.debug(
-                    `[FileGroup] 元数据提取成功: ${file.name}, dateSource: ${file.dateSource}`,
-                );
-            } catch (error) {
-                logger.warn(`[FileGroup] Failed to extract metadata for ${file.path}: ${error}`);
-                // 使用智能日期回退：选择创建时间和修改时间中较早的
-                const fallback = computeFallbackDate(file.createdTime, file.modifiedTime, logger);
-                file.dateTime = fallback.date;
-                // 映射 current_date 到 file_created 以符合 DateSource 类型
-                file.dateSource =
-                    fallback.source === "current_date" ? "file_created" : fallback.source;
-                logger.debug(
-                    `[FileGroup] 使用智能回退: ${file.name}, dateSource: ${file.dateSource}, dateTime: ${file.dateTime.toISOString()}`,
-                );
+            // 如果文件已经有有效的创建时间，优先使用它
+            if (isValidDate(file.createdTime)) {
+                logger.debug(`[FileGroup] 文件已有有效创建时间: ${file.name}, 使用创建时间`);
+                file.dateTime = file.createdTime;
+                file.dateSource = "file_created";
+            } else {
+                try {
+                    logger.debug(`[FileGroup] 为文件提取元数据: ${file.name}`);
+                    const metadata = await extractMetadata({ filePath: file.path }, logger);
+                    file.metadata = metadata as any; // 类型转换
+                    file.dateTime = metadata.dateTime || file.createdTime;
+                    file.dateSource = metadata.dateSource;
+                    logger.debug(
+                        `[FileGroup] 元数据提取成功: ${file.name}, dateSource: ${file.dateSource}`,
+                    );
+                } catch (error) {
+                    logger.warn(
+                        `[FileGroup] Failed to extract metadata for ${file.path}: ${error}`,
+                    );
+                    // 使用智能日期回退：选择创建时间和修改时间中较早的
+                    const fallback = computeFallbackDate(
+                        file.createdTime,
+                        file.modifiedTime,
+                        logger,
+                    );
+                    file.dateTime = fallback.date;
+                    // 映射 current_date 到 file_created 以符合 DateSource 类型
+                    file.dateSource =
+                        fallback.source === "current_date" ? "file_created" : fallback.source;
+                    logger.debug(
+                        `[FileGroup] 使用智能回退: ${file.name}, dateSource: ${file.dateSource}, dateTime: ${file.dateTime.toISOString()}`,
+                    );
+                }
             }
         } else {
             logger.debug(
