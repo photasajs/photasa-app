@@ -101,8 +101,6 @@ describe("HEIC EXIF DateTime Fix Validation", () => {
         const extractedDate = extractDateTimeFixed(mockExifData);
 
         expect(extractedDate).toBeNull();
-
-        console.log(`✓ No valid dates found, returned null`);
     });
 
     it("should handle various valid EXIF date formats", () => {

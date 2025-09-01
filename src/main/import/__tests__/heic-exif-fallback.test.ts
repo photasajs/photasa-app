@@ -12,9 +12,6 @@ const mockLogger: PhotasaLogger = {
 
 describe("HEIC EXIF Fallback Logic Verification", () => {
     it("should demonstrate the correct fallback sequence: EXIF -> File Created Time -> Today", async () => {
-        console.log("\n=== HEIC 日期回退策略验证 ===");
-        console.log("正确的回退顺序：EXIF DateTime -> File Created Time -> Today's Date");
-
         const testScenarios = [
             {
                 name: "有效EXIF日期的HEIC文件",
@@ -46,9 +43,6 @@ describe("HEIC EXIF Fallback Logic Verification", () => {
         ];
 
         for (const scenario of testScenarios) {
-            console.log(`\n--- 测试场景：${scenario.name} ---`);
-            console.log(`描述：${scenario.description}`);
-
             const fileInfo: FileInfo = {
                 path: "/test/" + scenario.name.toLowerCase().replace(/\s+/g, "_") + ".heic",
                 name: scenario.name.toLowerCase().replace(/\s+/g, "_") + ".heic",
@@ -77,20 +71,13 @@ describe("HEIC EXIF Fallback Logic Verification", () => {
 
             const processedGroup = await processFileGroup(fileGroup, mockLogger);
 
-            console.log(`输入 - EXIF日期: ${scenario.dateTime?.toString() || "undefined"}`);
-            console.log(`输入 - 创建时间: ${scenario.createdTime?.toString() || "undefined"}`);
-            console.log(`期望结果: ${scenario.expectedResult}`);
-            console.log(`实际结果: ${processedGroup.targetPath}`);
-
             const isMatch = processedGroup.targetPath === scenario.expectedResult;
-            console.log(`验证结果: ${isMatch ? "✅ 通过" : "❌ 失败"}`);
 
             if (!isMatch && scenario.name.includes("无EXIF且无创建时间")) {
                 // 对于这个场景，允许使用今天的日期或文件创建时间
                 const today = new Date();
                 const todayPath = `${today.getFullYear()}/${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
                 const isAcceptable = processedGroup.targetPath === todayPath;
-                console.log(`备选验证（今天日期）: ${isAcceptable ? "✅ 可接受" : "❌ 仍失败"}`);
                 expect(isAcceptable).toBe(true);
             } else {
                 expect(processedGroup.targetPath).toBe(scenario.expectedResult);
@@ -99,28 +86,10 @@ describe("HEIC EXIF Fallback Logic Verification", () => {
     });
 
     it("should verify HEIC metadata processor fallback logic", () => {
-        console.log("\n=== HEICMetadataProcessor 回退逻辑说明 ===");
-        console.log("修复后的逻辑流程：");
-        console.log("1. 尝试读取HEIC文件的EXIF数据");
-        console.log("2. 如果EXIF读取成功，提取DateTime字段");
-        console.log("3. 如果EXIF DateTime有效，使用EXIF日期，dateSource = 'exif'");
-        console.log(
-            "4. 如果EXIF DateTime无效或不存在，使用文件创建时间，dateSource = 'file_created'",
-        );
-        console.log("5. processFileGroup会进一步验证，如果所有日期都无效，最终回退到今天");
-
-        console.log("\n关键改进：");
-        console.log("✅ 在HEICMetadataProcessor中获取文件stats信息");
-        console.log("✅ 明确的日期优先级：EXIF > File Created Time");
-        console.log("✅ 正确设置dateSource字段");
-        console.log("✅ 添加调试日志说明使用的日期源");
-
         expect(true).toBe(true); // 标记测试通过
     });
 
     it("should handle edge cases in date extraction", async () => {
-        console.log("\n=== 边界情况测试 ===");
-
         const edgeCases = [
             {
                 name: "EXIF存在但DateTime字段为空",
@@ -143,25 +112,18 @@ describe("HEIC EXIF Fallback Logic Verification", () => {
         ];
 
         for (const testCase of edgeCases) {
-            console.log(`\n测试：${testCase.name}`);
-
             // 验证日期有效性
             const isExifValid = Boolean(testCase.dateTime && !isNaN(testCase.dateTime.getTime()));
             const isCreatedValid = Boolean(
                 testCase.createdTime && !isNaN(testCase.createdTime.getTime()),
             );
 
-            console.log(`EXIF日期有效: ${isExifValid}`);
-            console.log(`创建时间有效: ${isCreatedValid}`);
-
             if (testCase.shouldUseCreatedTime) {
                 expect(isExifValid).toBe(false);
                 expect(isCreatedValid).toBe(true);
-                console.log("✅ 应该使用文件创建时间");
             } else if (testCase.shouldUseTodayAsLastResort) {
                 expect(isExifValid).toBe(false);
                 expect(isCreatedValid).toBe(false);
-                console.log("✅ 应该回退到今天日期");
             }
         }
     });

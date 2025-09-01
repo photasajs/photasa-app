@@ -65,10 +65,6 @@ describe("HEIC Date Validation Fix", () => {
         const expectedPath = `${expectedYear}/${expectedYear}${expectedMonth}${expectedDay}`;
 
         expect(processedGroup.targetPath).toBe(expectedPath);
-
-        console.log(
-            `✓ Invalid HEIC date handled: ${processedGroup.targetPath} (expected today: ${expectedPath})`,
-        );
     });
 
     it("should handle valid HEIC date correctly", async () => {
@@ -104,8 +100,6 @@ describe("HEIC Date Validation Fix", () => {
 
         // 验证使用了正确的EXIF日期
         expect(processedGroup.targetPath).toBe("2023/20230815");
-
-        console.log(`✓ Valid HEIC date handled: ${processedGroup.targetPath}`);
     });
 
     it("should handle multiple invalid dates in file group", async () => {
@@ -172,8 +166,6 @@ describe("HEIC Date Validation Fix", () => {
         const today = new Date();
         const expectedYear = today.getFullYear().toString();
         expect(processedGroup.targetPath).toContain(expectedYear);
-
-        console.log(`✓ Multiple invalid dates handled: ${processedGroup.targetPath}`);
     });
 
     it("should handle edge case with null/undefined dates", async () => {
@@ -214,7 +206,5 @@ describe("HEIC Date Validation Fix", () => {
         const today = new Date();
         const expectedYear = today.getFullYear().toString();
         expect(processedGroup.targetPath).toContain(expectedYear);
-
-        console.log(`✓ Null/undefined dates handled: ${processedGroup.targetPath}`);
     });
 });
