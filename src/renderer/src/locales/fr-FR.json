@@ -224,7 +224,17 @@
         "currentDirectory": "Dossier actuel",
         "eta": "Temps estimé",
         "completed": "Terminé",
-        "error": "Erreur",
+        "error": {
+            "label": "Erreur",
+            "title": "Opération échouée",
+            "network": "Échec de connexion réseau, vérifiez votre connexion et réessayez",
+            "validation": "Échec de validation de la configuration, vérifiez les paramètres des répertoires",
+            "permission": "Permissions insuffisantes, assurez-vous d'avoir accès aux répertoires",
+            "api": "Erreur du serveur, veuillez réessayer plus tard",
+            "unknown": "Une erreur inconnue s'est produite, veuillez réessayer",
+            "retry": "Réessayer",
+            "dismiss": "Ignorer"
+        },
         "paused": "En pause",
         "pending": "En attente",
         "finishing": "Finalisation",
@@ -247,6 +257,12 @@
             "previewDesc": "Examiner et sélectionner les fichiers à importer",
             "importing": "Importation",
             "importingDesc": "Importer les fichiers vers le dossier de destination"
+        },
+        "loading": {
+            "text": "Chargement...",
+            "preview": "Chargement des données d'aperçu...",
+            "directories": "Sélection des répertoires...",
+            "label": "Chargement..."
         }
     },
     "menu": {

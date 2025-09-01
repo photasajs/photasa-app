@@ -259,15 +259,15 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    CheckOutlined,
-    CloseOutlined,
-    SwapOutlined,
-    InfoCircleOutlined,
-    FileImageOutlined,
-    VideoCameraOutlined,
-    FileOutlined,
-    ArrowRightOutlined,
-} from "@ant-design/icons-vue";
+    CheckIcon as CheckOutlined,
+    XMarkIcon as CloseOutlined,
+    ArrowPathIcon as SwapOutlined,
+    InformationCircleIcon as InfoCircleOutlined,
+    PhotoIcon as FileImageOutlined,
+    VideoCameraIcon as VideoCameraOutlined,
+    DocumentIcon as FileOutlined,
+    ArrowRightIcon as ArrowRightOutlined,
+} from "@heroicons/vue/24/outline";
 import type { FileGroup, DuplicateFileInfo, GPSInfo } from "@common/import-types";
 
 // Props

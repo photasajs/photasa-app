@@ -29,6 +29,7 @@
     "import": {
         "title": "Import Photos",
         "photos": "Import Photos",
+        "progress": "Import Progress",
         "chooseDirectory": "Choose Directory",
         "targetDirectory": "Target Directory",
         "selectTarget": "Select target directory",
@@ -124,6 +125,22 @@
             "unknown": "Unknown"
         },
         "now": "Now",
+        "loading": {
+            "label": "Loading...",
+            "preview": "Loading preview data...",
+            "directories": "Selecting directories..."
+        },
+        "error": {
+            "label": "Error",
+            "title": "Operation Failed",
+            "network": "Network connection failed, please check your connection and try again",
+            "validation": "Configuration validation failed, please check source and target directory settings",
+            "permission": "Insufficient permissions, please ensure you have access to the directories",
+            "api": "Server error, please try again later",
+            "unknown": "An unknown error occurred, please retry",
+            "retry": "Retry",
+            "dismiss": "Dismiss"
+        },
         "filters": "Filters",
         "resetFilters": "Reset Filters",
         "showAdvanced": "Show Advanced",
@@ -224,7 +241,6 @@
         "currentDirectory": "Current Directory",
         "eta": "ETA",
         "completed": "Completed",
-        "error": "Error",
         "paused": "Paused",
         "pending": "Pending",
         "finishing": "Finishing",

@@ -4,9 +4,11 @@ import ExifReader from "exifreader";
 import { extractDateTimeFromExif } from "@common/exif-util";
 import { extractGPSInfo } from "../parsers/gps-parser";
 import { extractCameraInfo } from "../parsers/camera-parser";
-import { getDateFallback } from "../parsers/date-parser";
 import type { PhotasaLogger } from "@common/logger";
 import type { ImageMetadata } from "@common/import-types";
+
+// 提取器返回的元数据接口（不包含dateSource，由主函数处理）
+type ExtractedImageMetadata = Omit<ImageMetadata, "dateSource">;
 
 /**
  * 支持的常规图片扩展名列表
@@ -41,39 +43,49 @@ function extractImageDimensions(tags: any): { width: number; height: number } {
 export async function extractImageMetadata(
     filePath: string,
     logger: PhotasaLogger,
-): Promise<ImageMetadata> {
+): Promise<ExtractedImageMetadata | null> {
     try {
         const buffer = await fs.readFile(filePath);
         const tags = ExifReader.load(buffer);
         delete tags["MakerNote"]; // 移除大型标签以节省内存
 
-        const dateTime = extractDateTimeFromExif(tags);
+        logger.debug(
+            `[Image] Processing ${path.basename(filePath)} - Extracted ${Object.keys(tags).length} EXIF tags`,
+        );
+
+        const dateTime = extractDateTimeFromExif(tags, undefined, true); // Enable debug mode
         const gpsInfo = extractGPSInfo(tags);
         const cameraInfo = extractCameraInfo(tags);
         const dimensions = extractImageDimensions(tags);
 
-        return {
+        if (!dateTime) {
+            logger.debug(
+                `[Image] ${path.basename(filePath)} - No EXIF date extracted, returning null for fallback handling`,
+            );
+            return null;
+        }
+
+        logger.debug(
+            `[Image] ${path.basename(filePath)} - EXIF dateTime: ${dateTime ? dateTime.toISOString() : "null"}`,
+        );
+
+        const result = {
             ...dimensions,
             dateTime: dateTime || undefined,
             gpsInfo: gpsInfo || undefined,
             cameraInfo: cameraInfo || undefined,
             format: path.extname(filePath).slice(1).toUpperCase(),
-            dateSource: dateTime ? "exif" : "file_created",
         };
+
+        logger.debug(
+            `[Image] ${path.basename(filePath)} - Final result: dateTime=${result.dateTime ? result.dateTime.toISOString() : "undefined"}`,
+        );
+
+        return result;
     } catch (error) {
         logger.error(`[Image] Error processing ${filePath}: ${error}`);
-
-        // 回退到基本文件信息
-        const stats = await fs.stat(filePath);
-        const fallback = getDateFallback(stats.birthtime, logger);
-
-        return {
-            dateTime: fallback.date,
-            dateSource: fallback.source === "file_created" ? "file_created" : "file_created",
-            format: path.extname(filePath).slice(1).toUpperCase(),
-            width: 0,
-            height: 0,
-        };
+        // Return null on failure - let extractMetadata handle fallback
+        return null;
     }
 }
 

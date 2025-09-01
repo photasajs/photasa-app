@@ -16,9 +16,11 @@ import { useI18n } from "vue-i18n";
 import { onMounted, onUnmounted, watch } from "vue";
 import { useMenusStore } from "@renderer/stores/menus";
 // import type { MenuItemData } from "@common/menu-types";
-import CoffeeOutlined from "@ant-design/icons-vue/CoffeeOutlined";
-import ImportOutlined from "@ant-design/icons-vue/ImportOutlined";
-import SettingOutlined from "@ant-design/icons-vue/SettingOutlined";
+import {
+    IconCoffee as CoffeeOutlined,
+    IconFolderOpen as ImportOutlined,
+    IconSettings as SettingOutlined,
+} from "@tabler/icons-vue";
 
 const { t } = useI18n();
 const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference", "menu-action"]);

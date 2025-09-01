@@ -10,8 +10,16 @@ export type FileType = "image" | "video" | "all";
 
 /**
  * 日期来源类型
+ * - exif: 从图片EXIF数据中提取的日期
+ * - video_metadata: 从视频元数据中提取的日期
+ * - file_created: 从文件系统创建时间获取的日期
  */
-export type DateSource = "exif" | "video_metadata" | "file_created";
+export type DateSource =
+    | "exif"
+    | "video_metadata"
+    | "file_created"
+    | "file_modified"
+    | "current_date";
 
 /**
  * 重复文件处理策略
@@ -55,6 +63,7 @@ export interface ImageMetadata {
     gpsInfo?: GPSInfo | null;
     cameraInfo?: CameraInfo | null;
     format: string;
+    /** 日期来源类型，标识日期时间信息的提取来源 */
     dateSource: DateSource;
 }
 
@@ -424,6 +433,13 @@ export interface FileMetadata {
     duration?: number;
     gpsInfo?: GPSInfo;
     cameraInfo?: CameraInfo;
+    // Video-specific properties
+    resolution?: {
+        width: number;
+        height: number;
+    };
+    codec?: string;
+    creationTime?: Date;
 }
 
 /**

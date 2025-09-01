@@ -287,19 +287,19 @@ const setError = (
     // Generate user-friendly error messages
     switch (type) {
         case "network":
-            errorState.errorMessage = t("import.errors.network");
+            errorState.errorMessage = t("import.error.network");
             break;
         case "validation":
-            errorState.errorMessage = t("import.errors.validation");
+            errorState.errorMessage = t("import.error.validation");
             break;
         case "permission":
-            errorState.errorMessage = t("import.errors.permission");
+            errorState.errorMessage = t("import.error.permission");
             break;
         case "api":
-            errorState.errorMessage = t("import.errors.api");
+            errorState.errorMessage = t("import.error.api");
             break;
         default:
-            errorState.errorMessage = error?.message || t("import.errors.unknown");
+            errorState.errorMessage = error?.message || t("import.error.unknown");
     }
 };
 
@@ -705,7 +705,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             <PlusIcon v-else class="w-4 h-4 mr-2 text-current" />
                             {{
                                 loadingState.directories
-                                    ? t("import.loading")
+                                    ? t("import.loading.label")
                                     : t("import.addSource")
                             }}
                         </BaseButton>
@@ -738,7 +738,9 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             <BaseSpinner v-if="loadingState.directories" class="w-4 h-4 mr-2" />
                             <FolderOpenIcon v-else class="w-4 h-4 mr-2 text-current" />
                             {{
-                                loadingState.directories ? t("import.loading") : t("import.browse")
+                                loadingState.directories
+                                    ? t("import.loading.label")
+                                    : t("import.browse")
                             }}
                         </BaseButton>
                     </div>

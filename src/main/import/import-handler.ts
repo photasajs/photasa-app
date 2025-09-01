@@ -58,7 +58,6 @@ export {
     isValidVideoDate,
     safeParseDate,
     selectBestDate,
-    getDateFallback,
     generateDatePath,
 } from "./metadata";
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { VideoMetadataProcessor, extractMetadata } from "../import-handler";
+import { extractMetadata } from "../import-handler";
 import type { MetadataRequest } from "@common/import-types";
 import type { PhotasaLogger } from "@common/logger";
 import path from "path";
@@ -48,7 +48,11 @@ describe("Real Video Files Tests", () => {
             const exists = await fs.pathExists(TEST_MOV_FILE);
             expect(exists).toBe(true);
 
-            const result = await VideoMetadataProcessor.extractMetadata(TEST_MOV_FILE, mockLogger);
+            const request: MetadataRequest = {
+                filePath: TEST_MOV_FILE,
+            };
+
+            const result = await extractMetadata(request, mockLogger);
 
             // Basic structure validation
             expect(result).toHaveProperty("duration");
@@ -61,8 +65,9 @@ describe("Real Video Files Tests", () => {
             expect(result.format).toBe("mov");
 
             // Resolution should be valid
-            expect(result.resolution.width).toBeGreaterThan(0);
-            expect(result.resolution.height).toBeGreaterThan(0);
+            expect(result.resolution).toBeDefined();
+            expect(result.resolution!.width).toBeGreaterThan(0);
+            expect(result.resolution!.height).toBeGreaterThan(0);
 
             // Duration should be positive
             expect(result.duration).toBeGreaterThan(0);
@@ -84,7 +89,11 @@ describe("Real Video Files Tests", () => {
             const exists = await fs.pathExists(TEST_MP4_FILE);
             expect(exists).toBe(true);
 
-            const result = await VideoMetadataProcessor.extractMetadata(TEST_MP4_FILE, mockLogger);
+            const request: MetadataRequest = {
+                filePath: TEST_MP4_FILE,
+            };
+
+            const result = await extractMetadata(request, mockLogger);
 
             // Basic structure validation
             expect(result).toHaveProperty("duration");
@@ -97,8 +106,9 @@ describe("Real Video Files Tests", () => {
             expect(result.format).toBe("mp4");
 
             // Resolution should be valid
-            expect(result.resolution.width).toBeGreaterThan(0);
-            expect(result.resolution.height).toBeGreaterThan(0);
+            expect(result.resolution).toBeDefined();
+            expect(result.resolution!.width).toBeGreaterThan(0);
+            expect(result.resolution!.height).toBeGreaterThan(0);
 
             // Duration should be positive
             expect(result.duration).toBeGreaterThan(0);
@@ -186,7 +196,11 @@ describe("Real Video Files Tests", () => {
             const exists = await fs.pathExists(TEST_MOV_FILE);
             expect(exists).toBe(true);
 
-            const result = await VideoMetadataProcessor.extractMetadata(TEST_MOV_FILE, mockLogger);
+            const request: MetadataRequest = {
+                filePath: TEST_MOV_FILE,
+            };
+
+            const result = await extractMetadata(request, mockLogger);
 
             // Video metadata should be extracted successfully
             expect(result.dateSource).toBe("video_metadata");
@@ -205,7 +219,11 @@ describe("Real Video Files Tests", () => {
             const exists = await fs.pathExists(TEST_MP4_FILE);
             expect(exists).toBe(true);
 
-            const result = await VideoMetadataProcessor.extractMetadata(TEST_MP4_FILE, mockLogger);
+            const request: MetadataRequest = {
+                filePath: TEST_MP4_FILE,
+            };
+
+            const result = await extractMetadata(request, mockLogger);
 
             // The filename suggests 2023-12-22 19:53:20
             const expectedDate = new Date("2023-12-22T19:53:20.000Z");
@@ -225,9 +243,12 @@ describe("Real Video Files Tests", () => {
         it("should handle non-existent file gracefully", async () => {
             const nonExistentFile = path.join(__dirname, "data", "non-existent.mov");
 
-            await expect(
-                VideoMetadataProcessor.extractMetadata(nonExistentFile, mockLogger),
-            ).rejects.toThrow();
+            const request: MetadataRequest = {
+                filePath: nonExistentFile,
+            };
+
+            // Should throw error for non-existent files since fs.stat() fails
+            await expect(extractMetadata(request, mockLogger)).rejects.toThrow();
         });
 
         it("should handle corrupted file gracefully", async () => {
@@ -236,9 +257,14 @@ describe("Real Video Files Tests", () => {
             await fs.writeFile(corruptedFile, "not a video file");
 
             try {
-                await expect(
-                    VideoMetadataProcessor.extractMetadata(corruptedFile, mockLogger),
-                ).rejects.toThrow();
+                const request: MetadataRequest = {
+                    filePath: corruptedFile,
+                };
+
+                const result = await extractMetadata(request, mockLogger);
+                // Should return fallback metadata instead of throwing
+                expect(result).toBeDefined();
+                expect(result.dateSource).toBe("file_created");
             } finally {
                 // Clean up
                 await fs.remove(corruptedFile);

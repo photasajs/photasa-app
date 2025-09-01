@@ -59,3 +59,32 @@ export function createResponse<T, R>(message: WorkerMessage<T>, result: R): Work
         result,
     } as WorkerResponse<R>; // Type assertion to ensure compatibility
 }
+
+/**
+ * 进度事件接口
+ */
+export interface ProgressEvent {
+    type: "progress";
+    taskId: string;
+    data: {
+        processedFiles: number;
+        totalFiles: number;
+        currentFile: string;
+        speed: number;
+        estimatedTimeRemaining: number;
+    };
+}
+
+/**
+ * 创建进度事件对象 (用于worker端构造进度消息)
+ */
+export function createProgressEvent(
+    taskId: string,
+    progressData: ProgressEvent["data"],
+): ProgressEvent {
+    return {
+        type: "progress",
+        taskId,
+        data: progressData,
+    };
+}

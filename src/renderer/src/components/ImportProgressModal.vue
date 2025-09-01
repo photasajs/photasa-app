@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from "vue";
+import { ref, reactive, watch, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { executeImport, cancelImport, pauseImport, resumeImport } from "@renderer/utils/api";
+import {
+    executeImport,
+    cancelImport,
+    pauseImport,
+    resumeImport,
+    onImportProgress,
+    onImportComplete,
+    onImportError,
+    removeImportListeners,
+} from "@renderer/utils/api";
 import { formatProcessingSpeed, formatRemainingTime } from "@renderer/utils/import-helpers";
 import { createSerializableConfig } from "@renderer/utils/import-wizard-helpers";
 import { BaseModal, BaseButton } from "@renderer/components/ui";
@@ -14,6 +23,7 @@ import {
     XCircleIcon,
 } from "@heroicons/vue/24/outline";
 import type { ImportConfig, ImportProgress, ImportResult } from "@common/import-types";
+import { loggers } from "@common/logger";
 
 interface Props {
     show: boolean;
@@ -29,6 +39,7 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const { t } = useI18n();
+const logger = loggers.importProgress;
 
 // Import state
 const importId = ref("");
@@ -53,6 +64,9 @@ const importProgress = reactive<ImportProgress>({
 // Import result
 const importResult = ref<ImportResult | null>(null);
 const importError = ref<Error | null>(null);
+
+// Event cleanup functions
+let cleanupFunctions: Array<() => void> = [];
 
 // Computed
 const progressPercentage = computed(() => {
@@ -99,6 +113,7 @@ const startImport = async () => {
     try {
         isImporting.value = true;
         importProgress.status = "preparing";
+        logger.debug("Starting import process", { config: props.config });
 
         // Reset progress
         Object.assign(importProgress, {
@@ -111,37 +126,50 @@ const startImport = async () => {
             currentFile: "",
         });
 
-        // Serialize the config to handle Date objects properly for IPC transmission
-        const serializableConfig = createSerializableConfig(props.config, false);
-        const result = await executeImport(serializableConfig, {
-            onProgress: (progress) => {
-                Object.assign(importProgress, {
-                    ...progress,
-                    status: progress.status || "processing",
-                });
-            },
-            onDuplicateFound: (duplicate) => {
-                console.log("Duplicate found:", duplicate);
-                // Could show duplicate resolution UI here
-            },
-            onFileGroupDetected: (group) => {
-                console.log("File group detected:", group);
-            },
+        // Set up event listeners
+        const cleanupProgress = onImportProgress((progress) => {
+            logger.debug("Progress update received:", progress);
+            // Update all progress fields
+            Object.assign(importProgress, {
+                totalFiles: progress.totalFiles || importProgress.totalFiles,
+                processedFiles: progress.processedFiles || 0,
+                speed: progress.speed || 0,
+                estimatedTimeRemaining: progress.estimatedTimeRemaining || 0,
+                remainingTime: progress.remainingTime || progress.estimatedTimeRemaining || 0,
+                currentFile: progress.currentFile || "",
+                status: progress.status || "processing",
+                errors: progress.errors || [],
+                warnings: progress.warnings || [],
+            });
         });
 
-        importId.value = result.importId;
-        importResult.value = result;
-        importProgress.status = "completed";
-        isImporting.value = false;
+        const cleanupComplete = onImportComplete((result) => {
+            logger.debug("Import completed:", result);
+            importResult.value = result;
+            importProgress.status = "completed";
+            isImporting.value = false;
+        });
 
-        // Auto-close after successful completion (optional)
-        setTimeout(() => {
-            if (importProgress.status === "completed") {
-                handleComplete();
-            }
-        }, 2000);
+        const cleanupError = onImportError((error) => {
+            logger.error("Import failed:", error);
+            importError.value = error;
+            importProgress.status = "failed";
+            isImporting.value = false;
+        });
+
+        // Store cleanup functions
+        cleanupFunctions = [cleanupProgress, cleanupComplete, cleanupError];
+
+        // Serialize the config to handle Date objects properly for IPC transmission
+        const serializableConfig = createSerializableConfig(props.config, false);
+
+        // Start the import (returns importId immediately)
+        const { importId: newImportId } = await executeImport(serializableConfig);
+        importId.value = newImportId;
+
+        logger.debug("Import started with ID:", importId.value);
     } catch (error) {
-        console.error("Import failed:", error);
+        logger.error("Import failed to start:", error);
         importError.value = error as Error;
         importProgress.status = "failed";
         isImporting.value = false;
@@ -152,11 +180,12 @@ const pauseImportProcess = async () => {
     if (!importId.value) return;
 
     try {
+        logger.debug("Pausing import:", importId.value);
         await pauseImport(importId.value);
         isPaused.value = true;
         importProgress.status = "paused";
     } catch (error) {
-        console.error("Failed to pause import:", error);
+        logger.error("Failed to pause import:", error);
     }
 };
 
@@ -164,11 +193,12 @@ const resumeImportProcess = async () => {
     if (!importId.value) return;
 
     try {
+        logger.debug("Resuming import:", importId.value);
         await resumeImport(importId.value);
         isPaused.value = false;
         importProgress.status = "processing";
     } catch (error) {
-        console.error("Failed to resume import:", error);
+        logger.error("Failed to resume import:", error);
     }
 };
 
@@ -176,11 +206,12 @@ const cancelImportProcess = async () => {
     if (!importId.value) return;
 
     try {
+        logger.debug("Cancelling import:", importId.value);
         await cancelImport(importId.value);
         importProgress.status = "cancelled";
         isImporting.value = false;
     } catch (error) {
-        console.error("Failed to cancel import:", error);
+        logger.error("Failed to cancel import:", error);
     }
 };
 
@@ -202,11 +233,27 @@ const handleCancel = () => {
 watch(
     () => props.config,
     (newConfig) => {
+        logger.debug("Config changed", { newConfig, show: props.show });
         if (newConfig && props.show) {
+            logger.debug("Starting import...");
             startImport();
         }
     },
     { immediate: true },
+);
+
+// Watch progress changes for debugging
+watch(
+    () => importProgress,
+    (newProgress) => {
+        logger.debug("Progress updated", {
+            status: newProgress.status,
+            processedFiles: newProgress.processedFiles,
+            totalFiles: newProgress.totalFiles,
+            currentFile: newProgress.currentFile,
+        });
+    },
+    { deep: true },
 );
 
 // Reset state when modal closes
@@ -214,6 +261,11 @@ watch(
     () => props.show,
     (show) => {
         if (!show) {
+            logger.debug("Modal closed, cleaning up state");
+            // Cleanup event listeners
+            cleanupFunctions.forEach((cleanup) => cleanup());
+            cleanupFunctions = [];
+
             // Reset state
             importId.value = "";
             isPaused.value = false;
@@ -233,6 +285,17 @@ watch(
         }
     },
 );
+
+// Component lifecycle
+onMounted(() => {
+    logger.debug("ImportProgressModal mounted");
+});
+
+onUnmounted(() => {
+    logger.debug("ImportProgressModal unmounting, cleaning up listeners");
+    cleanupFunctions.forEach((cleanup) => cleanup());
+    removeImportListeners();
+});
 </script>
 
 <template>

@@ -124,6 +124,23 @@
             "unknown": "Unbekannt"
         },
         "now": "Jetzt",
+        "loading": {
+            "text": "Lädt...",
+            "preview": "Vorschaudaten werden geladen...",
+            "directories": "Verzeichnisse auswählen...",
+            "label": "Laden..."
+        },
+        "error": {
+            "title": "Vorgang fehlgeschlagen",
+            "network": "Netzwerkverbindung fehlgeschlagen, bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut",
+            "validation": "Konfigurationsvalidierung fehlgeschlagen, bitte überprüfen Sie die Quell- und Zielverzeichniseinstellungen",
+            "permission": "Unzureichende Berechtigungen, bitte stellen Sie sicher, dass Sie Zugriff auf die Verzeichnisse haben",
+            "api": "Serverfehler, bitte versuchen Sie es später erneut",
+            "unknown": "Ein unbekannter Fehler ist aufgetreten, bitte versuchen Sie es erneut",
+            "retry": "Wiederholen",
+            "dismiss": "Schließen",
+            "label": "Fehler"
+        },
         "filters": "Filter",
         "resetFilters": "Filter zurücksetzen",
         "showAdvanced": "Erweitert anzeigen",
@@ -224,7 +241,6 @@
         "currentDirectory": "Aktuelles Verzeichnis",
         "eta": "Geschätzte Ankunftszeit",
         "completed": "Abgeschlossen",
-        "error": "Fehler",
         "paused": "Pausiert",
         "pending": "Ausstehend",
         "finishing": "Abschließend",

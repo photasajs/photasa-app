@@ -309,14 +309,14 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    ExclamationCircleOutlined,
-    ThunderboltOutlined,
-    EyeOutlined,
-    SwapOutlined,
-    InfoCircleOutlined,
-    BulbOutlined,
-    WarningOutlined,
-} from "@ant-design/icons-vue";
+    ExclamationTriangleIcon as ExclamationCircleOutlined,
+    SparklesIcon as ThunderboltOutlined,
+    EyeIcon as EyeOutlined,
+    ArrowPathIcon as SwapOutlined,
+    InformationCircleIcon as InfoCircleOutlined,
+    LightBulbIcon as BulbOutlined,
+    ExclamationTriangleIcon as WarningOutlined,
+} from "@heroicons/vue/24/outline";
 import type { DuplicateFileInfo, DuplicateStrategy, FileComparison } from "@common/import-types";
 
 // Props

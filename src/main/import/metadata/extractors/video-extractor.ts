@@ -4,6 +4,9 @@ import { selectBestDate } from "../parsers/date-parser";
 import { extractVideoGPS } from "../parsers/gps-parser";
 import type { PhotasaLogger } from "@common/logger";
 import type { VideoMetadata } from "@common/import-types";
+
+// 提取器返回的元数据接口（不包含dateSource，由主函数处理）
+type ExtractedVideoMetadata = Omit<VideoMetadata, "dateSource">;
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 
@@ -63,7 +66,7 @@ function ffprobeAsync(filePath: string): Promise<any> {
 export async function extractVideoMetadata(
     filePath: string,
     logger: PhotasaLogger,
-): Promise<VideoMetadata> {
+): Promise<ExtractedVideoMetadata | null> {
     try {
         logger.info(`[Video] Processing file: ${filePath}`);
 
@@ -72,9 +75,16 @@ export async function extractVideoMetadata(
         const creationTime = selectBestDate(metadata, VIDEO_TIME_FIELDS);
         const gpsInfo = extractVideoGPS(metadata);
 
+        if (!creationTime) {
+            logger.debug(
+                `[Video] ${path.basename(filePath)} - No creation time extracted, returning null for fallback handling`,
+            );
+            return null;
+        }
+
         return {
             duration: metadata.format?.duration || 0,
-            creationTime: creationTime || undefined,
+            creationTime: creationTime,
             resolution: {
                 width: streamInfo.width,
                 height: streamInfo.height,
@@ -82,11 +92,11 @@ export async function extractVideoMetadata(
             codec: streamInfo.codec,
             gpsInfo: gpsInfo || undefined,
             format: path.extname(filePath).toLowerCase().slice(1),
-            dateSource: creationTime ? "video_metadata" : "file_created",
         };
     } catch (error) {
         logger.error(`[Video] Error extracting metadata from ${filePath}: ${error}`);
-        throw error;
+        // Return null on failure - let extractMetadata handle fallback
+        return null;
     }
 }
 

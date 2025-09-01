@@ -258,18 +258,18 @@
 import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    ThunderboltOutlined,
-    ClockCircleOutlined,
-    HistoryOutlined,
-    CalendarOutlined,
-    FileOutlined,
-    ExclamationCircleOutlined,
-    WarningOutlined,
-    PauseOutlined,
-    PlayCircleOutlined,
-    StopOutlined,
-    CheckOutlined,
-} from "@ant-design/icons-vue";
+    SparklesIcon as ThunderboltOutlined,
+    ClockIcon as ClockCircleOutlined,
+    ClockIcon as HistoryOutlined,
+    CalendarIcon as CalendarOutlined,
+    DocumentIcon as FileOutlined,
+    ExclamationTriangleIcon as ExclamationCircleOutlined,
+    ExclamationTriangleIcon as WarningOutlined,
+    PauseIcon as PauseOutlined,
+    PlayIcon as PlayCircleOutlined,
+    StopIcon as StopOutlined,
+    CheckIcon as CheckOutlined,
+} from "@heroicons/vue/24/outline";
 import type { ImportProgress } from "@common/import-types";
 
 // Props

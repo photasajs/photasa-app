@@ -1,5 +1,6 @@
 import { contextBridge } from "electron";
 import { electronAPI } from "@electron-toolkit/preload";
+import { ImportEvents } from "@common/constants";
 import { startWatching, stopWatching } from "./fs-watch";
 import { importPhotos, scanPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
@@ -107,139 +108,117 @@ const api = {
      * 扫描多个源目录，获取文件组信息
      */
     scanDirectories: (paths: string[], filters?: any) =>
-        electronAPI.ipcRenderer.invoke("import:scan-directories", paths, filters),
+        electronAPI.ipcRenderer.invoke(ImportEvents.SCAN_DIRECTORIES, paths, filters),
 
     /**
      * 预览导入操作，不实际执行导入
      */
-    previewImport: (config: any) => electronAPI.ipcRenderer.invoke("import:preview", config),
+    previewImport: (config: any) => electronAPI.ipcRenderer.invoke(ImportEvents.PREVIEW, config),
 
     /**
-     * 执行导入操作（事件驱动模式）
+     * 执行导入操作（纯事件驱动模式）
      */
-    executeImport: (config: any, callback?: any) => {
-        if (callback) {
-            const importId = `import_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    executeImport: (config: any): Promise<{ importId: string }> => {
+        return electronAPI.ipcRenderer.invoke(ImportEvents.EXECUTE, config);
+    },
 
-            // 注册事件监听器
-            const cleanupFunctions: (() => void)[] = [];
+    /**
+     * 监听导入进度事件
+     */
+    onImportProgress: (callback: (progress: any) => void) => {
+        const handler = (_: any, progress: any) => callback(progress);
+        electronAPI.ipcRenderer.on(ImportEvents.PROGRESS, handler);
 
-            if (callback.onProgress) {
-                const progressHandler = (_event: any, data: any) => {
-                    if (data.importId === importId) {
-                        callback.onProgress(data.progress);
-                    }
-                };
-                electronAPI.ipcRenderer.on("import:progress", progressHandler);
-                cleanupFunctions.push(() =>
-                    electronAPI.ipcRenderer.removeListener("import:progress", progressHandler),
-                );
-            }
+        // 返回清理函数
+        return () => electronAPI.ipcRenderer.removeAllListeners(ImportEvents.PROGRESS);
+    },
 
-            if (callback.onDuplicateFound) {
-                const duplicateHandler = (_event: any, data: any) => {
-                    if (data.importId === importId) {
-                        callback.onDuplicateFound(data.duplicate);
-                    }
-                };
-                electronAPI.ipcRenderer.on("import:duplicate", duplicateHandler);
-                cleanupFunctions.push(() =>
-                    electronAPI.ipcRenderer.removeListener("import:duplicate", duplicateHandler),
-                );
-            }
+    /**
+     * 监听导入完成事件
+     */
+    onImportComplete: (callback: (result: any) => void) => {
+        const handler = (_: any, result: any) => callback(result);
+        electronAPI.ipcRenderer.on(ImportEvents.COMPLETE, handler);
 
-            if (callback.onFileGroupDetected) {
-                const groupHandler = (_event: any, data: any) => {
-                    if (data.importId === importId) {
-                        callback.onFileGroupDetected(data.group);
-                    }
-                };
-                electronAPI.ipcRenderer.on("import:file-group", groupHandler);
-                cleanupFunctions.push(() =>
-                    electronAPI.ipcRenderer.removeListener("import:file-group", groupHandler),
-                );
-            }
+        return () => electronAPI.ipcRenderer.removeAllListeners(ImportEvents.COMPLETE);
+    },
 
-            // 注册完成和错误事件
-            const completeHandler = (_event: any, data: any) => {
-                if (data.importId === importId) {
-                    cleanupFunctions.forEach((cleanup) => cleanup());
-                }
-            };
+    /**
+     * 监听导入错误事件
+     */
+    onImportError: (callback: (error: any) => void) => {
+        const handler = (_: any, error: any) => callback(error);
+        electronAPI.ipcRenderer.on(ImportEvents.ERROR, handler);
 
-            const errorHandler = (_event: any, data: any) => {
-                if (data.importId === importId) {
-                    cleanupFunctions.forEach((cleanup) => cleanup());
-                }
-            };
+        return () => electronAPI.ipcRenderer.removeAllListeners(ImportEvents.ERROR);
+    },
 
-            electronAPI.ipcRenderer.once("import:complete", completeHandler);
-            electronAPI.ipcRenderer.once("import:cancelled", errorHandler);
-            electronAPI.ipcRenderer.once("import:error", errorHandler);
-
-            // 启动导入，传递 importId
-            return electronAPI.ipcRenderer.invoke("import:start", { ...config, importId });
-        }
-
-        // 没有回调函数时，直接调用
-        return electronAPI.ipcRenderer.invoke("import:start", config);
+    /**
+     * 移除所有导入相关的事件监听器
+     */
+    removeImportListeners: () => {
+        electronAPI.ipcRenderer.removeAllListeners(ImportEvents.PROGRESS);
+        electronAPI.ipcRenderer.removeAllListeners(ImportEvents.COMPLETE);
+        electronAPI.ipcRenderer.removeAllListeners(ImportEvents.ERROR);
     },
 
     /**
      * 取消正在进行的导入操作
      */
-    cancelImport: (importId: string) => electronAPI.ipcRenderer.invoke("import:cancel", importId),
+    cancelImport: (importId: string) =>
+        electronAPI.ipcRenderer.invoke(ImportEvents.CANCEL, importId),
 
     /**
      * 暂停正在进行的导入操作
      */
-    pauseImport: (importId: string) => electronAPI.ipcRenderer.invoke("import:pause", importId),
+    pauseImport: (importId: string) => electronAPI.ipcRenderer.invoke(ImportEvents.PAUSE, importId),
 
     /**
      * 恢复暂停的导入操作
      */
-    resumeImport: (importId: string) => electronAPI.ipcRenderer.invoke("import:resume", importId),
+    resumeImport: (importId: string) =>
+        electronAPI.ipcRenderer.invoke(ImportEvents.RESUME, importId),
 
     /**
      * 获取导入历史记录
      */
     getImportHistory: (limit?: number) =>
-        electronAPI.ipcRenderer.invoke("import:get-history", limit),
+        electronAPI.ipcRenderer.invoke(ImportEvents.GET_HISTORY, limit),
 
     /**
      * 获取导入详情
      */
     getImportDetails: (historyId: string) =>
-        electronAPI.ipcRenderer.invoke("import:get-details", historyId),
+        electronAPI.ipcRenderer.invoke(ImportEvents.GET_DETAILS, historyId),
 
     /**
      * 预览撤销操作
      */
     previewUndo: (historyId: string) =>
-        electronAPI.ipcRenderer.invoke("import:preview-undo", historyId),
+        electronAPI.ipcRenderer.invoke(ImportEvents.PREVIEW_UNDO, historyId),
 
     /**
      * 撤销指定的导入操作
      */
-    undoImport: (historyId: string) => electronAPI.ipcRenderer.invoke("import:undo", historyId),
+    undoImport: (historyId: string) => electronAPI.ipcRenderer.invoke(ImportEvents.UNDO, historyId),
 
     /**
      * 获取导入进度信息
      */
     getImportProgress: (importId: string) =>
-        electronAPI.ipcRenderer.invoke("import:get-progress", importId),
+        electronAPI.ipcRenderer.invoke(ImportEvents.GET_PROGRESS, importId),
 
     /**
      * 选择多个目录（扩展现有的chooseDirectory功能）
      */
     chooseDirectories: (multiSelect = true) =>
-        electronAPI.ipcRenderer.invoke("import:choose-directories", multiSelect),
+        electronAPI.ipcRenderer.invoke(ImportEvents.CHOOSE_DIRECTORIES, multiSelect),
 
     /**
      * 提取文件元数据
      */
     extractMetadata: (request: any) =>
-        electronAPI.ipcRenderer.invoke("import:extract-metadata", request),
+        electronAPI.ipcRenderer.invoke(ImportEvents.EXTRACT_METADATA, request),
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

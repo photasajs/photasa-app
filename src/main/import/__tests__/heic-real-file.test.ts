@@ -45,16 +45,20 @@ describe("HEIC Real File Test", () => {
 
         // 验证时区转换功能
         const exifDateStr = tags.DateTimeOriginal?.value?.[0];
+        expect(exifDateStr).toBeDefined();
+
         const dateStr = exifDateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");
         const date = new Date(dateStr);
 
         expect(isNaN(date.getTime())).toBe(false);
+
+        // 验证日期是实际值（基于HEIC文件的EXIF数据）
         expect(date.getFullYear()).toBe(2021);
-        expect(date.getMonth()).toBe(10); // 11月
-        expect(date.getDate()).toBe(3); // 3日
+        expect(date.getMonth()).toBe(10); // 11月（从0开始）
+        expect(date.getDate()).toBe(3); // 3日（EXIF原始值）
     });
 
-    it.skip("should extract EXIF metadata from real HEIC file (integration test)", async () => {
+    it("should extract EXIF metadata from real HEIC file (integration test)", async () => {
         // 这是集成测试，需要WASM模块支持
         // 在CI环境中可能无法运行，所以跳过
         // 可以在本地开发环境中手动开启测试
@@ -90,15 +94,15 @@ describe("HEIC Real File Test", () => {
         expect(imageMetadata.cameraInfo.make).toBe("Apple");
         expect(imageMetadata.cameraInfo.model).toContain("iPhone");
 
-        // 验证按照真实EXIF数据的日期（根据实际文件的EXIF内容）
+        // 验证按照真实EXIF数据的日期（使用实际值，不硬编码）
         const actualDate = metadata.dateTime as Date;
+        // 验证日期是实际值（基于HEIC文件的EXIF数据）
         expect(actualDate.getFullYear()).toBe(2021);
         expect(actualDate.getMonth()).toBe(10); // 11月（从0开始）
-        // 日期可能是3日或4日，取决于时区转换和实际EXIF内容
-        expect([3, 4].includes(actualDate.getDate())).toBe(true);
+        expect(actualDate.getDate()).toBe(3); // 3日（EXIF原始值）
     });
 
-    it.skip("should process file group with real HEIC file and generate correct target path (integration test)", async () => {
+    it("should process file group with real HEIC file and generate correct target path (integration test)", async () => {
         // 这是集成测试，需要WASM模块支持
         // 获取文件统计信息
         const stats = await fs.stat(heicFilePath);
@@ -166,7 +170,7 @@ describe("HEIC Real File Test", () => {
         await expect(extractMetadata(request, mockLogger)).rejects.toThrow();
     });
 
-    it.skip("should verify complete HEIC processing pipeline (integration test)", async () => {
+    it("should verify complete HEIC processing pipeline (integration test)", async () => {
         // 这是集成测试，需要WASM模块支持
         // 1. 文件验证
         expect(await fs.pathExists(heicFilePath)).toBe(true);

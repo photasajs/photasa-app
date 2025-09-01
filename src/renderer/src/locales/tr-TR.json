@@ -224,7 +224,17 @@
         "currentDirectory": "Mevcut Dizin",
         "eta": "Tahmini Süre",
         "completed": "Tamamlandı",
-        "error": "Hata",
+        "error": {
+            "label": "Hata",
+            "title": "İşlem Başarısız",
+            "network": "Ağ bağlantısı başarısız, bağlantınızı kontrol edin ve tekrar deneyin",
+            "validation": "Yapılandırma doğrulaması başarısız, dizin ayarlarını kontrol edin",
+            "permission": "Yetersiz izinler, dizinlere erişiminiz olduğundan emin olun",
+            "api": "Sunucu hatası, daha sonra tekrar deneyin",
+            "unknown": "Bilinmeyen bir hata oluştu, tekrar deneyin",
+            "retry": "Tekrar Dene",
+            "dismiss": "Kapat"
+        },
         "paused": "Duraklatıldı",
         "pending": "Bekliyor",
         "finishing": "Tamamlanıyor",
@@ -247,6 +257,12 @@
             "previewDesc": "İçe aktarılacak dosyaları gözden geçirin ve seçin",
             "importing": "İçe Aktarılıyor",
             "importingDesc": "Dosyaları hedef dizine aktarın"
+        },
+        "loading": {
+            "text": "Yükleniyor...",
+            "preview": "Önizleme verileri yükleniyor...",
+            "directories": "Dizinler seçiliyor...",
+            "label": "Yükleniyor..."
         }
     },
     "menu": {

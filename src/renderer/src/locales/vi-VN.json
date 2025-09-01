@@ -224,7 +224,17 @@
         "currentDirectory": "Thư mục hiện tại",
         "eta": "Thời gian ước tính",
         "completed": "Hoàn thành",
-        "error": "Lỗi",
+        "error": {
+            "label": "Lỗi",
+            "title": "Thao tác thất bại",
+            "network": "Kết nối mạng thất bại, kiểm tra kết nối và thử lại",
+            "validation": "Xác thực cấu hình thất bại, kiểm tra cài đặt thư mục",
+            "permission": "Không đủ quyền, đảm bảo bạn có quyền truy cập thư mục",
+            "api": "Lỗi máy chủ, vui lòng thử lại sau",
+            "unknown": "Đã xảy ra lỗi không xác định, vui lòng thử lại",
+            "retry": "Thử lại",
+            "dismiss": "Bỏ qua"
+        },
         "paused": "Tạm dừng",
         "pending": "Đang chờ",
         "finishing": "Đang hoàn tất",
@@ -247,6 +257,12 @@
             "previewDesc": "Xem và chọn tệp để nhập",
             "importing": "Đang nhập",
             "importingDesc": "Nhập tệp vào thư mục đích"
+        },
+        "loading": {
+            "text": "Đang tải...",
+            "preview": "Đang tải dữ liệu xem trước...",
+            "directories": "Đang chọn thư mục...",
+            "label": "Đang tải..."
         }
     },
     "menu": {

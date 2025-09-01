@@ -1,6 +1,6 @@
 import { parentPort } from "worker_threads";
 import { loggers } from "@common/logger";
-import { createResponse } from "@common/worker-util";
+import { createResponse, createProgressEvent } from "@common/worker-util";
 import type { WorkerMessage } from "@common/types";
 import type {
     ImportRequest,
@@ -15,8 +15,22 @@ import type {
     FileStatistics,
     DuplicateFileInfo,
 } from "@common/import-types";
-import { extractMetadata, processFileGroup, FileGroupDetector } from "./import-handler";
+import {
+    ImportWorkerActions,
+    ImportWorkerActionType,
+    FileTypeDetectors,
+    DuplicateStrategies,
+    ErrorCategories,
+    ErrorSeverities,
+} from "@common/constants";
+import {
+    extractMetadata,
+    processFileGroup,
+    FileGroupDetector,
+    generateDatePath,
+} from "./import-handler";
 import { DuplicateDetector, DuplicateHandlerFactory } from "./duplicate-handler";
+import { computeFallbackDate } from "./metadata/parsers/date-parser";
 import fs from "fs-extra";
 import path from "path";
 import isImage from "is-image";
@@ -26,8 +40,33 @@ import { shouldIgnorePhotasaPath } from "@common/utils";
 
 const logger = loggers.worker;
 
+// ==================== 映射设计模式：动作处理器映射 ====================
+
 /**
- * 导入Worker - 处理元数据提取、文件组检测和导入预览
+ * 动作处理器映射 - 使用策略模式处理不同的导入操作
+ */
+const ACTION_HANDLERS = {
+    [ImportWorkerActions.EXTRACT_METADATA]: handleExtractMetadata,
+    [ImportWorkerActions.PROCESS_FILE_GROUP]: handleProcessFileGroup,
+    [ImportWorkerActions.SCAN_DIRECTORIES]: handleScanDirectories,
+    [ImportWorkerActions.PREVIEW_IMPORT]: handlePreviewImport,
+    [ImportWorkerActions.EXECUTE_IMPORT]: handleExecuteImport,
+} as const;
+
+// ==================== 映射设计模式：文件类型检测映射 ====================
+
+/**
+ * 文件类型检测映射 - 使用工厂模式创建文件类型检测器
+ */
+const FILE_TYPE_DETECTORS = {
+    [FileTypeDetectors.IMAGE]: isImage,
+    [FileTypeDetectors.VIDEO]: isVideo,
+} as const;
+
+// ==================== 核心消息处理逻辑 ====================
+
+/**
+ * 主消息处理器 - 使用映射模式路由到相应的处理器
  */
 parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
     logger.debug(`[import-worker] 收到消息: ${JSON.stringify(message)}`);
@@ -35,34 +74,18 @@ parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
     try {
         const { action } = message;
 
-        switch (action) {
-            case "extract_metadata":
-                await handleExtractMetadata(message);
-                break;
+        // 使用映射模式查找处理器
+        const handler = ACTION_HANDLERS[action as ImportWorkerActionType];
 
-            case "process_file_group":
-                await handleProcessFileGroup(message);
-                break;
-
-            case "scan_directories":
-                await handleScanDirectories(message);
-                break;
-
-            case "preview_import":
-                await handlePreviewImport(message);
-                break;
-
-            case "execute_import":
-                await handleExecuteImport(message);
-                break;
-
-            default:
-                logger.debug(`[import-worker] 未知操作: ${action}`);
-                const errorResponse = createResponse<ImportRequest, ImportResponse>(message, {
-                    success: false,
-                    error: "Unknown action",
-                });
-                parentPort?.postMessage(errorResponse);
+        if (handler) {
+            await handler(message);
+        } else {
+            logger.debug(`[import-worker] 未知操作: ${action}`);
+            const errorResponse = createResponse<ImportRequest, ImportResponse>(message, {
+                success: false,
+                error: "Unknown action",
+            });
+            parentPort?.postMessage(errorResponse);
         }
     } catch (error) {
         logger.error(`[import-worker] 处理消息时出错: ${error}`);
@@ -73,6 +96,8 @@ parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
         parentPort?.postMessage(response);
     }
 });
+
+// ==================== 动作处理器实现 ====================
 
 /**
  * 处理元数据提取请求
@@ -157,33 +182,7 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
     logger.debug(`[import-worker] 预览导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
-        // 处理配置中的日期对象，安全地处理可能是字符串或 Date 的情况
-        const processedConfig: ImportConfig = {
-            ...config,
-            filters: config.filters
-                ? {
-                      ...config.filters,
-                      dateRange: config.filters.dateRange
-                          ? {
-                                start:
-                                    config.filters.dateRange.start instanceof Date
-                                        ? config.filters.dateRange.start
-                                        : new Date(config.filters.dateRange.start),
-                                end:
-                                    config.filters.dateRange.end instanceof Date
-                                        ? config.filters.dateRange.end
-                                        : new Date(config.filters.dateRange.end),
-                            }
-                          : { start: new Date(0), end: new Date() },
-                  }
-                : {
-                      fileTypes: [],
-                      sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                      dateRange: { start: new Date(0), end: new Date() },
-                      includeSubfolders: true,
-                  },
-        };
-
+        const processedConfig = processImportConfig(config);
         const preview = await generateImportPreview(processedConfig);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: true,
@@ -205,48 +204,24 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
  */
 async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promise<void> {
     const request = message.payload as ImportRequest;
-    const config = request.payload as ImportConfig;
-    logger.debug(`[import-worker] 执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
+    const configWithImportId = request.payload as ImportConfig & { importId?: string };
+    const config = configWithImportId as ImportConfig;
+    const importId = configWithImportId.importId;
+
+    logger.debug(
+        `[import-worker] 执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}, importId: ${importId}`,
+    );
 
     try {
-        // 处理配置中的日期对象，安全地处理可能是字符串或 Date 的情况
-        const processedConfig: ImportConfig = {
-            ...config,
-            filters: config.filters
-                ? {
-                      ...config.filters,
-                      dateRange: config.filters.dateRange
-                          ? {
-                                start:
-                                    config.filters.dateRange.start instanceof Date
-                                        ? config.filters.dateRange.start
-                                        : new Date(config.filters.dateRange.start),
-                                end:
-                                    config.filters.dateRange.end instanceof Date
-                                        ? config.filters.dateRange.end
-                                        : new Date(config.filters.dateRange.end),
-                            }
-                          : { start: new Date(0), end: new Date() }, // 默认值
-                  }
-                : {
-                      fileTypes: [],
-                      sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                      dateRange: { start: new Date(0), end: new Date() },
-                      includeSubfolders: true,
-                  },
-        };
+        const processedConfig = processImportConfig(config);
+        const result = await executeImportProcess(processedConfig, importId);
 
-        const result = await executeImportProcess(processedConfig);
-
-        // 添加调试日志以检查 result 对象
         logger.debug(`[import-worker] Result object keys: ${Object.keys(result).join(", ")}`);
         logger.debug(
             `[import-worker] Result success: ${result.success}, totalFiles: ${result.totalFiles}`,
         );
 
-        // 确保 result 对象是可序列化的
         const serializableResult = JSON.parse(JSON.stringify(result));
-
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: true,
             data: serializableResult,
@@ -255,17 +230,7 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     } catch (error) {
         logger.error(`[import-worker] 导入执行失败: ${error}`);
 
-        // 确保错误对象可以被序列化
-        const serializableError =
-            error instanceof Error
-                ? {
-                      message: error.message,
-                      name: error.name,
-                      stack: error.stack,
-                      code: (error as any).code || undefined,
-                  }
-                : { message: String(error) };
-
+        const serializableError = createSerializableError(error);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
             error: serializableError.message,
@@ -274,13 +239,96 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     }
 }
 
+// ==================== 工具函数 ====================
+
 /**
- * 扫描多个目录获取文件信息
+ * 发送进度更新到主进程
+ */
+function sendProgressUpdate(
+    importId: string,
+    processedFiles: number,
+    totalFiles: number,
+    currentFile: string,
+    startTime: number,
+): void {
+    const currentTime = Date.now();
+    const elapsedTime = (currentTime - startTime) / 1000;
+    const speed = elapsedTime > 0 ? processedFiles / elapsedTime : 0;
+    const remainingFiles = totalFiles - processedFiles;
+    const estimatedTimeRemaining = speed > 0 ? remainingFiles / speed : 0;
+
+    const progressEvent = createProgressEvent(importId, {
+        processedFiles,
+        totalFiles,
+        currentFile,
+        speed,
+        estimatedTimeRemaining,
+    });
+
+    parentPort?.postMessage(progressEvent);
+}
+
+/**
+ * 处理导入配置 - 使用工厂模式处理日期对象
+ */
+function processImportConfig(config: ImportConfig): ImportConfig {
+    return {
+        ...config,
+        filters: config.filters
+            ? {
+                  ...config.filters,
+                  dateRange: config.filters.dateRange
+                      ? {
+                            start: normalizeDate(config.filters.dateRange.start),
+                            end: normalizeDate(config.filters.dateRange.end),
+                        }
+                      : { start: new Date(0), end: new Date() },
+              }
+            : createDefaultFilters(),
+    };
+}
+
+/**
+ * 创建默认过滤器 - 使用工厂模式
+ */
+function createDefaultFilters() {
+    return {
+        fileTypes: [],
+        sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
+        dateRange: { start: new Date(0), end: new Date() },
+        includeSubfolders: true,
+    };
+}
+
+/**
+ * 标准化日期对象 - 使用策略模式处理不同类型的日期输入
+ */
+function normalizeDate(dateInput: Date | string): Date {
+    return dateInput instanceof Date ? dateInput : new Date(dateInput);
+}
+
+/**
+ * 创建可序列化的错误对象 - 使用工厂模式
+ */
+function createSerializableError(error: unknown) {
+    return error instanceof Error
+        ? {
+              message: error.message,
+              name: error.name,
+              stack: error.stack,
+              code: (error as any).code || undefined,
+          }
+        : { message: String(error) };
+}
+
+// ==================== 文件扫描逻辑 ====================
+
+/**
+ * 扫描多个目录获取文件信息 - 使用策略模式
  */
 async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<FileGroup[]> {
     const allFiles: FileInfo[] = [];
 
-    // 确保 paths 是一个数组
     if (!Array.isArray(paths)) {
         logger.error(
             `[import-worker] paths 不是数组: ${typeof paths}, 值: ${JSON.stringify(paths)}`,
@@ -300,7 +348,6 @@ async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<
         allFiles.push(...files);
     }
 
-    // 使用文件组检测器处理文件
     const detector = new FileGroupDetector();
     const fileGroups = detector.detectFileGroupsEnhanced(allFiles, logger);
 
@@ -312,7 +359,7 @@ async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<
 }
 
 /**
- * 扫描单个目录
+ * 扫描单个目录 - 使用递归策略模式
  */
 async function scanSingleDirectory(dirPath: string, filters?: any): Promise<FileInfo[]> {
     const files: FileInfo[] = [];
@@ -323,13 +370,11 @@ async function scanSingleDirectory(dirPath: string, filters?: any): Promise<File
         for (const entry of entries) {
             const fullPath = path.join(dirPath, entry.name);
 
-            // 跳过photasa缓存路径
             if (shouldIgnorePhotasaPath(fullPath)) {
                 continue;
             }
 
             if (entry.isDirectory()) {
-                // 如果启用了子目录扫描
                 if (filters?.includeSubfolders !== false) {
                     const subFiles = await scanSingleDirectory(fullPath, filters);
                     files.push(...subFiles);
@@ -337,13 +382,10 @@ async function scanSingleDirectory(dirPath: string, filters?: any): Promise<File
                 continue;
             }
 
-            if (entry.isFile()) {
-                // 应用文件过滤器
-                if (shouldIncludeFile(fullPath, filters)) {
-                    const fileInfo = await createFileInfo(fullPath);
-                    if (fileInfo) {
-                        files.push(fileInfo);
-                    }
+            if (entry.isFile() && shouldIncludeFile(fullPath, filters)) {
+                const fileInfo = await createFileInfo(fullPath);
+                if (fileInfo) {
+                    files.push(fileInfo);
                 }
             }
         }
@@ -355,19 +397,46 @@ async function scanSingleDirectory(dirPath: string, filters?: any): Promise<File
 }
 
 /**
- * 创建文件信息对象
+ * 创建文件信息对象 - 使用工厂模式
  */
 async function createFileInfo(filePath: string): Promise<FileInfo | null> {
     try {
         const stats = await fs.stat(filePath);
         const fileName = path.basename(filePath);
+        const fileType = detectFileType(filePath);
 
-        // 确定文件类型
-        let fileType: "image" | "video" | "other" = "other";
-        if (isImage(filePath)) {
-            fileType = "image";
-        } else if (isVideo(filePath)) {
-            fileType = "video";
+        // 对于HEIC文件，立即提取元数据以获取正确的日期
+        let dateSource = "file_created";
+        let dateTime: Date = stats.birthtime;
+
+        // 对于图片和视频文件，立即提取元数据以获取正确的日期
+        let extractedMetadata: any = null;
+
+        if (fileType === FileTypeDetectors.IMAGE || fileType === FileTypeDetectors.VIDEO) {
+            try {
+                const fileTypeName = fileType === FileTypeDetectors.IMAGE ? "图片" : "视频";
+                logger.debug(`[import-worker] 为${fileTypeName}文件提取元数据: ${fileName}`);
+                extractedMetadata = await extractMetadata({ filePath }, logger);
+                if (extractedMetadata.dateTime) {
+                    dateTime = extractedMetadata.dateTime;
+                    dateSource = extractedMetadata.dateSource;
+                    logger.debug(
+                        `[import-worker] ${fileTypeName}文件元数据提取成功: ${fileName}, dateSource: ${dateSource}, dateTime: ${dateTime.toISOString()}`,
+                    );
+                }
+            } catch (error) {
+                const fileTypeName = fileType === FileTypeDetectors.IMAGE ? "图片" : "视频";
+                logger.warn(
+                    `[import-worker] ${fileTypeName}文件元数据提取失败: ${fileName}, 使用智能日期回退: ${error}`,
+                );
+                // 使用智能日期回退：选择创建时间和修改时间中较早的
+                const fallback = computeFallbackDate(stats.birthtime, stats.mtime, logger);
+                dateTime = fallback.date;
+                dateSource = fallback.source;
+                logger.debug(
+                    `[import-worker] ${fileTypeName}文件使用智能回退: ${fileName}, dateSource: ${dateSource}, dateTime: ${dateTime.toISOString()}`,
+                );
+            }
         }
 
         const fileInfo: FileInfo = {
@@ -375,14 +444,14 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
             name: fileName,
             size: stats.size,
             type: fileType,
-            dateSource: "file_created",
+            dateSource: dateSource as any, // ✅ Use extracted metadata
             modifiedTime: stats.mtime,
             createdTime: stats.birthtime,
-            dateTime: stats.birthtime,
-            // FileAction 兼容字段
+            dateTime: dateTime, // ✅ Use extracted metadata
+            metadata: extractedMetadata, // ✅ Store metadata to prevent double extraction
             file: filePath,
-            isImage: fileType === "image",
-            isVideo: fileType === "video",
+            isImage: fileType === FileTypeDetectors.IMAGE,
+            isVideo: fileType === FileTypeDetectors.VIDEO,
             target: "",
             targetDir: "",
             targetFileName: "",
@@ -397,54 +466,74 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
 }
 
 /**
- * 检查文件是否应该包含在扫描结果中
+ * 检测文件类型 - 使用策略模式
+ */
+function detectFileType(filePath: string): "image" | "video" | "other" {
+    if (FILE_TYPE_DETECTORS[FileTypeDetectors.IMAGE](filePath)) {
+        return FileTypeDetectors.IMAGE;
+    }
+    if (FILE_TYPE_DETECTORS[FileTypeDetectors.VIDEO](filePath)) {
+        return FileTypeDetectors.VIDEO;
+    }
+    return FileTypeDetectors.OTHER;
+}
+
+/**
+ * 检查文件是否应该包含在扫描结果中 - 使用策略模式
  */
 function shouldIncludeFile(filePath: string, filters?: any): boolean {
     const fileName = path.basename(filePath);
 
-    // 跳过隐藏文件
-    if (fileName.startsWith(".")) {
+    if (fileName.startsWith(".") || shouldIgnorePhotasaPath(filePath)) {
         return false;
     }
 
-    // 跳过photasa缓存路径
-    if (shouldIgnorePhotasaPath(filePath)) {
-        return false;
-    }
-
-    // 应用文件类型过滤器
-    if (filters?.fileTypes && filters.fileTypes.length > 0) {
-        const hasAll = filters.fileTypes.includes("all");
-        const hasImage = filters.fileTypes.includes("image") && isImage(filePath);
-        const hasVideo = filters.fileTypes.includes("video") && isVideo(filePath);
-
-        if (!hasAll && !hasImage && !hasVideo) {
-            return false;
-        }
-    }
-
-    // 应用文件大小过滤器
-    if (filters?.sizeRange) {
-        try {
-            const stats = fs.statSync(filePath);
-            if (stats.size < filters.sizeRange.min || stats.size > filters.sizeRange.max) {
-                return false;
-            }
-        } catch (error) {
-            return false;
-        }
-    }
-
-    return true;
+    return applyFileTypeFilter(filePath, filters) && applySizeFilter(filePath, filters);
 }
 
 /**
- * 生成导入预览
+ * 应用文件类型过滤器 - 使用策略模式
+ */
+function applyFileTypeFilter(filePath: string, filters?: any): boolean {
+    if (!filters?.fileTypes || filters.fileTypes.length === 0) {
+        return true;
+    }
+
+    const hasAll = filters.fileTypes.includes("all");
+    const hasImage =
+        filters.fileTypes.includes(FileTypeDetectors.IMAGE) &&
+        FILE_TYPE_DETECTORS[FileTypeDetectors.IMAGE](filePath);
+    const hasVideo =
+        filters.fileTypes.includes(FileTypeDetectors.VIDEO) &&
+        FILE_TYPE_DETECTORS[FileTypeDetectors.VIDEO](filePath);
+
+    return hasAll || hasImage || hasVideo;
+}
+
+/**
+ * 应用文件大小过滤器 - 使用策略模式
+ */
+function applySizeFilter(filePath: string, filters?: any): boolean {
+    if (!filters?.sizeRange) {
+        return true;
+    }
+
+    try {
+        const stats = fs.statSync(filePath);
+        return stats.size >= filters.sizeRange.min && stats.size <= filters.sizeRange.max;
+    } catch (error) {
+        return false;
+    }
+}
+
+// ==================== 导入预览逻辑 ====================
+
+/**
+ * 生成导入预览 - 使用工厂模式
  */
 async function generateImportPreview(config: ImportConfig): Promise<ImportPreview> {
     logger.debug(`[import-worker] 生成导入预览`);
 
-    // 确保 sourcePaths 是一个数组
     if (!Array.isArray(config.sourcePaths)) {
         logger.error(
             `[import-worker] config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
@@ -452,26 +541,11 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
         throw new Error("sourcePaths must be an array");
     }
 
-    // 扫描源目录
     const rawFileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
-
-    // 处理文件组以提取元数据和设置目标路径
-    const fileGroups: FileGroup[] = [];
-    for (const group of rawFileGroups) {
-        const processedGroup = await processFileGroup(group, logger);
-        fileGroups.push(processedGroup);
-    }
-
-    // 计算统计信息
+    const fileGroups = await processFileGroups(rawFileGroups);
     const statistics = calculateFileStatistics(fileGroups);
-
-    // 检测重复文件
     const duplicates = await detectDuplicateFiles(fileGroups, config.targetPath);
-
-    // 估算导入时间
     const estimatedDuration = estimateImportDuration(fileGroups);
-
-    // 生成目标结构预览
     const targetStructure = await generateTargetStructure(fileGroups, config.targetPath);
 
     return {
@@ -484,52 +558,63 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
 }
 
 /**
- * 计算文件统计信息
+ * 处理文件组 - 使用策略模式
  */
-function calculateFileStatistics(fileGroups: FileGroup[]): FileStatistics {
-    let totalFiles = 0;
-    let imageFiles = 0;
-    let videoFiles = 0;
-    let otherFiles = 0;
-    let totalSize = 0;
-    let groupCount = 0;
+async function processFileGroups(fileGroups: FileGroup[]): Promise<FileGroup[]> {
+    const processedGroups: FileGroup[] = [];
 
     for (const group of fileGroups) {
-        totalFiles += group.files.length;
-        totalSize += group.totalSize;
+        const processedGroup = await processFileGroup(group, logger);
+        processedGroups.push(processedGroup);
+    }
+
+    return processedGroups;
+}
+
+/**
+ * 计算文件统计信息 - 使用策略模式
+ */
+function calculateFileStatistics(fileGroups: FileGroup[]): FileStatistics {
+    const stats = {
+        totalFiles: 0,
+        imageFiles: 0,
+        videoFiles: 0,
+        otherFiles: 0,
+        totalSize: 0,
+        groupCount: 0,
+    };
+
+    for (const group of fileGroups) {
+        stats.totalFiles += group.files.length;
+        stats.totalSize += group.totalSize;
 
         if (group.type === "group") {
-            groupCount++;
+            stats.groupCount++;
         }
 
         for (const file of group.files) {
             switch (file.type) {
-                case "image":
-                    imageFiles++;
+                case FileTypeDetectors.IMAGE:
+                    stats.imageFiles++;
                     break;
-                case "video":
-                    videoFiles++;
+                case FileTypeDetectors.VIDEO:
+                    stats.videoFiles++;
                     break;
                 default:
-                    otherFiles++;
+                    stats.otherFiles++;
                     break;
             }
         }
     }
 
     return {
-        totalFiles,
-        imageFiles,
-        videoFiles,
-        otherFiles,
-        totalSize,
-        duplicateCount: 0, // 将在重复检测中更新
-        groupCount,
+        ...stats,
+        duplicateCount: 0,
     };
 }
 
 /**
- * 检测重复文件
+ * 检测重复文件 - 使用策略模式
  */
 async function detectDuplicateFiles(
     fileGroups: FileGroup[],
@@ -545,22 +630,20 @@ async function detectDuplicateFiles(
 }
 
 /**
- * 估算导入时间
+ * 估算导入时间 - 使用策略模式
  */
 function estimateImportDuration(fileGroups: FileGroup[]): number {
     const totalSize = fileGroups.reduce((sum, group) => sum + group.totalSize, 0);
     const totalFiles = fileGroups.reduce((sum, group) => sum + group.files.length, 0);
 
-    // 简单的时间估算：基于文件大小和数量
-    // 假设处理速度：100MB/s + 每个文件0.1秒的固定开销
     const sizeBasedTime = totalSize / (100 * 1024 * 1024); // 100MB/s
     const fileBasedTime = totalFiles * 0.1; // 每个文件0.1秒
 
-    return Math.max(sizeBasedTime + fileBasedTime, 1); // 至少1秒
+    return Math.max(sizeBasedTime + fileBasedTime, 1);
 }
 
 /**
- * 生成目标结构预览
+ * 生成目标结构预览 - 使用策略模式
  */
 async function generateTargetStructure(
     fileGroups: FileGroup[],
@@ -568,18 +651,24 @@ async function generateTargetStructure(
 ): Promise<Map<string, string[]>> {
     const structure = new Map<string, string[]>();
 
+    // ✅ 使用已经处理过的文件组，避免重复处理
     for (const group of fileGroups) {
-        // 处理文件组以获取目标路径
-        const processedGroup = await processFileGroup(group, logger);
+        // 如果文件组还没有目标路径，则生成一个
+        if (!group.targetPath) {
+            logger.debug(`[import-worker] 为文件组生成目标路径: ${group.mainFile.name}`);
+            // 使用主文件的日期生成路径，避免重复调用 processFileGroup
+            const targetDate = group.mainFile.dateTime || group.mainFile.createdTime || new Date();
+            group.targetPath = generateDatePath(targetDate);
+        }
 
-        if (processedGroup.targetPath) {
-            const fullTargetPath = path.join(targetPath, processedGroup.targetPath);
+        if (group.targetPath) {
+            const fullTargetPath = path.join(targetPath, group.targetPath);
 
             if (!structure.has(fullTargetPath)) {
                 structure.set(fullTargetPath, []);
             }
 
-            const fileNames = processedGroup.files.map((f) => f.name);
+            const fileNames = group.files.map((f) => f.name);
             structure.get(fullTargetPath)?.push(...fileNames);
         }
     }
@@ -587,17 +676,21 @@ async function generateTargetStructure(
     return structure;
 }
 
+// ==================== 导入执行逻辑 ====================
+
 /**
- * 执行导入过程
+ * 执行导入过程 - 使用策略模式
  */
-async function executeImportProcess(config: ImportConfig): Promise<ImportResult> {
-    const importId = uuidv4();
+async function executeImportProcess(
+    config: ImportConfig,
+    providedImportId?: string,
+): Promise<ImportResult> {
+    const importId = providedImportId || uuidv4();
     const startTime = Date.now();
 
-    logger.debug(`[import-worker] 开始执行导入 ${importId}`);
+    logger.debug(`[import-worker] 开始执行导入 ${importId} (provided: ${!!providedImportId})`);
 
     try {
-        // 确保 sourcePaths 是一个数组
         if (!Array.isArray(config.sourcePaths)) {
             logger.error(
                 `[import-worker] config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
@@ -605,14 +698,9 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
             throw new Error("sourcePaths must be an array");
         }
 
-        // 扫描文件
         const fileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
-
-        // 过滤选中的文件
         const selectedGroups = filterSelectedFiles(fileGroups, config.selectedFiles);
-
-        // 执行实际的文件复制操作
-        const result = await performFileImport(selectedGroups, config);
+        const result = await performFileImport(selectedGroups, config, importId);
 
         const duration = Date.now() - startTime;
 
@@ -626,44 +714,56 @@ async function executeImportProcess(config: ImportConfig): Promise<ImportResult>
     } catch (error) {
         logger.error(`[import-worker] 导入执行失败: ${error}`);
 
-        return {
-            success: false,
-            totalFiles: 0,
-            successfulFiles: 0,
-            skippedFiles: 0,
-            errorFiles: 0,
-            totalSize: 0,
-            processedSize: 0,
-            importedFiles: [],
-            duplicateHandling: [],
-            errors: [
-                {
-                    id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                    file: "",
-                    filePath: "",
-                    error: error instanceof Error ? error.message : "Unknown error",
-                    message: error instanceof Error ? error.message : "Unknown error",
-                    category: "UNKNOWN" as const,
-                    severity: "CRITICAL" as const,
-                    recoverable: false,
-                    retryCount: 0,
-                },
-            ],
-            warnings: [],
-            duration: Date.now() - startTime,
-            importId,
-            sourcePaths: config.sourcePaths,
-            targetPath: config.targetPath,
-        };
+        return createErrorResult(error, Date.now() - startTime, importId, config);
     }
 }
 
 /**
- * 过滤选中的文件
+ * 创建错误结果 - 使用工厂模式
+ */
+function createErrorResult(
+    error: unknown,
+    duration: number,
+    importId: string,
+    config: ImportConfig,
+): ImportResult {
+    return {
+        success: false,
+        totalFiles: 0,
+        successfulFiles: 0,
+        skippedFiles: 0,
+        errorFiles: 0,
+        totalSize: 0,
+        processedSize: 0,
+        importedFiles: [],
+        duplicateHandling: [],
+        errors: [
+            {
+                id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                file: "",
+                filePath: "",
+                error: error instanceof Error ? error.message : "Unknown error",
+                message: error instanceof Error ? error.message : "Unknown error",
+                category: ErrorCategories.UNKNOWN,
+                severity: ErrorSeverities.CRITICAL,
+                recoverable: false,
+                retryCount: 0,
+            },
+        ],
+        warnings: [],
+        duration,
+        importId,
+        sourcePaths: config.sourcePaths,
+        targetPath: config.targetPath,
+    };
+}
+
+/**
+ * 过滤选中的文件 - 使用策略模式
  */
 function filterSelectedFiles(fileGroups: FileGroup[], selectedFiles: string[]): FileGroup[] {
     if (selectedFiles.length === 0) {
-        return fileGroups; // 如果没有选择，返回所有文件
+        return fileGroups;
     }
 
     const selectedSet = new Set(selectedFiles);
@@ -671,128 +771,197 @@ function filterSelectedFiles(fileGroups: FileGroup[], selectedFiles: string[]): 
 }
 
 /**
- * 执行实际的文件导入
+ * 执行实际的文件导入 - 使用策略模式
  */
 async function performFileImport(
     fileGroups: FileGroup[],
     config: ImportConfig,
+    importId = "default",
 ): Promise<Omit<ImportResult, "duration" | "importId" | "sourcePaths" | "targetPath">> {
-    let successfulFiles = 0;
-    let skippedFiles = 0;
-    let errorFiles = 0;
-    const importedFiles: any[] = [];
-    const errors: any[] = [];
-    const warnings: any[] = [];
-    const duplicateHandling: any[] = [];
-
-    const totalFiles = fileGroups.reduce((sum, group) => sum + group.files.length, 0);
-    let totalSize = 0;
+    const importState = createImportState();
+    const startTime = Date.now();
 
     for (const group of fileGroups) {
         try {
-            // 处理文件组以获取目标路径
             const processedGroup = await processFileGroup(group, logger);
 
             if (processedGroup.targetPath) {
-                const targetDir = path.join(config.targetPath, processedGroup.targetPath);
-
-                // 确保目标目录存在
-                await fs.ensureDir(targetDir);
-
-                // 复制文件组中的所有文件
-                for (const file of processedGroup.files) {
-                    try {
-                        const targetFilePath = path.join(targetDir, file.name);
-
-                        // 检查重复文件
-                        if (await fs.pathExists(targetFilePath)) {
-                            // 根据重复策略处理
-                            const handled = await handleDuplicateFile(
-                                file,
-                                targetFilePath,
-                                config.duplicateStrategy,
-                            );
-                            duplicateHandling.push(handled);
-
-                            if (handled.action === "skip") {
-                                skippedFiles++;
-                                continue;
-                            }
-                        }
-
-                        // 复制文件
-                        await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
-                        successfulFiles++;
-                        totalSize += file.size;
-
-                        // 记录导入的文件信息
-                        importedFiles.push({
-                            sourcePath: file.path,
-                            targetPath: targetFilePath,
-                            size: file.size,
-                            importTime: new Date().toISOString(),
-                        });
-
-                        logger.debug(`[import-worker] 已导入: ${file.path} -> ${targetFilePath}`);
-                    } catch (error) {
-                        errorFiles++;
-
-                        // 创建可序列化的错误对象
-                        const serializableError = {
-                            id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                            file: file.path,
-                            filePath: file.path,
-                            error: error instanceof Error ? error.message : "Unknown error",
-                            message: error instanceof Error ? error.message : "Unknown error",
-                            category: "FILE_SYSTEM" as const,
-                            severity: "HIGH" as const,
-                            recoverable: false,
-                            retryCount: 0,
-                        };
-
-                        errors.push(serializableError);
-                        logger.error(`[import-worker] 文件导入失败 ${file.path}: ${error}`);
-                    }
-                }
+                await processFileGroupImport(
+                    processedGroup,
+                    config,
+                    importId,
+                    importState,
+                    startTime,
+                );
             }
         } catch (error) {
-            errorFiles += group.files.length;
-
-            // 创建可序列化的错误对象
-            const serializableError = {
-                id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                file: group.mainFile.path,
-                filePath: group.mainFile.path,
-                error: error instanceof Error ? error.message : "Unknown error",
-                message: error instanceof Error ? error.message : "Unknown error",
-                category: "FILE_SYSTEM" as const,
-                severity: "HIGH" as const,
-                recoverable: false,
-                retryCount: 0,
-            };
-
-            errors.push(serializableError);
-            logger.error(`[import-worker] 文件组处理失败 ${group.mainFile.path}: ${error}`);
+            await handleGroupError(group, error, importState);
         }
     }
 
+    return createImportResult(importState);
+}
+
+/**
+ * 创建导入状态 - 使用工厂模式
+ */
+function createImportState() {
     return {
-        success: errorFiles === 0,
-        totalFiles,
-        successfulFiles,
-        skippedFiles,
-        errorFiles,
-        totalSize,
-        processedSize: totalSize,
-        importedFiles,
-        duplicateHandling,
-        errors,
-        warnings,
+        successfulFiles: 0,
+        skippedFiles: 0,
+        errorFiles: 0,
+        totalSize: 0,
+        importedFiles: [] as any[],
+        errors: [] as any[],
+        warnings: [] as any[],
+        duplicateHandling: [] as any[],
     };
 }
 
 /**
- * 处理重复文件
+ * 处理文件组导入 - 使用策略模式
+ */
+async function processFileGroupImport(
+    processedGroup: FileGroup,
+    config: ImportConfig,
+    importId: string,
+    importState: ReturnType<typeof createImportState>,
+    startTime: number,
+): Promise<void> {
+    const targetDir = path.join(config.targetPath, processedGroup.targetPath!);
+    await fs.ensureDir(targetDir);
+
+    for (const file of processedGroup.files) {
+        try {
+            const targetFilePath = path.join(targetDir, file.name);
+
+            if (await fs.pathExists(targetFilePath)) {
+                const handled = await handleDuplicateFile(
+                    file,
+                    targetFilePath,
+                    config.duplicateStrategy,
+                );
+                importState.duplicateHandling.push(handled);
+
+                if (handled.action === "skip") {
+                    importState.skippedFiles++;
+                    updateProgress(importId, importState, file.name, startTime);
+                    continue;
+                }
+            }
+
+            await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
+            importState.successfulFiles++;
+            importState.totalSize += file.size;
+
+            importState.importedFiles.push({
+                sourcePath: file.path,
+                targetPath: targetFilePath,
+                size: file.size,
+                importTime: new Date().toISOString(),
+            });
+
+            updateProgress(importId, importState, file.name, startTime);
+            logger.debug(`[import-worker] 已导入: ${file.path} -> ${targetFilePath}`);
+        } catch (error) {
+            await handleFileError(file, error, importState, startTime);
+        }
+    }
+}
+
+/**
+ * 更新进度 - 使用策略模式
+ */
+function updateProgress(
+    importId: string,
+    importState: ReturnType<typeof createImportState>,
+    fileName: string,
+    startTime: number,
+): void {
+    const totalFiles =
+        importState.successfulFiles + importState.skippedFiles + importState.errorFiles;
+
+    sendProgressUpdate(importId, totalFiles, totalFiles, fileName, startTime);
+}
+
+/**
+ * 处理文件错误 - 使用策略模式
+ */
+async function handleFileError(
+    file: FileInfo,
+    error: unknown,
+    importState: ReturnType<typeof createImportState>,
+    startTime: number,
+): Promise<void> {
+    importState.errorFiles++;
+
+    const serializableError = {
+        id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        file: file.path,
+        filePath: file.path,
+        error: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Unknown error",
+        category: ErrorCategories.FILE_SYSTEM,
+        severity: ErrorSeverities.HIGH,
+        recoverable: false,
+        retryCount: 0,
+    };
+
+    importState.errors.push(serializableError);
+    updateProgress("default", importState, file.name, startTime);
+    logger.error(`[import-worker] 文件导入失败 ${file.path}: ${error}`);
+}
+
+/**
+ * 处理组错误 - 使用策略模式
+ */
+async function handleGroupError(
+    group: FileGroup,
+    error: unknown,
+    importState: ReturnType<typeof createImportState>,
+): Promise<void> {
+    importState.errorFiles += group.files.length;
+
+    const serializableError = {
+        id: `err_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        file: group.mainFile.path,
+        filePath: group.mainFile.path,
+        error: error instanceof Error ? error.message : "Unknown error",
+        message: error instanceof Error ? error.message : "Unknown error",
+        category: ErrorCategories.FILE_SYSTEM,
+        severity: ErrorSeverities.HIGH,
+        recoverable: false,
+        retryCount: 0,
+    };
+
+    importState.errors.push(serializableError);
+    logger.error(`[import-worker] 文件组处理失败 ${group.mainFile.path}: ${error}`);
+}
+
+/**
+ * 创建导入结果 - 使用工厂模式
+ */
+function createImportResult(importState: ReturnType<typeof createImportState>) {
+    const totalFiles =
+        importState.successfulFiles + importState.skippedFiles + importState.errorFiles;
+
+    return {
+        success: importState.errorFiles === 0,
+        totalFiles,
+        successfulFiles: importState.successfulFiles,
+        skippedFiles: importState.skippedFiles,
+        errorFiles: importState.errorFiles,
+        totalSize: importState.totalSize,
+        processedSize: importState.totalSize,
+        importedFiles: importState.importedFiles,
+        duplicateHandling: importState.duplicateHandling,
+        errors: importState.errors,
+        warnings: importState.warnings,
+    };
+}
+
+/**
+ * 处理重复文件 - 使用策略模式
  */
 async function handleDuplicateFile(
     file: FileInfo,
@@ -802,34 +971,12 @@ async function handleDuplicateFile(
     logger.debug(`[import-worker] 处理重复文件: ${file.name}, 策略: ${strategy}`);
 
     try {
-        // 创建目标文件的FileInfo对象
-        const stats = await fs.stat(targetPath);
-        const targetFile: FileInfo = {
-            path: targetPath,
-            name: path.basename(targetPath),
-            size: stats.size,
-            type: file.type,
-            dateSource: "file_created",
-            modifiedTime: stats.mtime,
-            createdTime: stats.birthtime,
-            dateTime: stats.birthtime,
-            // FileAction 兼容字段
-            file: targetPath,
-            isImage: file.isImage,
-            isVideo: file.isVideo,
-            target: "",
-            targetDir: "",
-            targetFileName: "",
-            targetFullPath: "",
-        };
-
-        // 使用DuplicateHandlerFactory创建处理器
+        const targetFile = await createTargetFileInfo(file, targetPath);
         const handler = DuplicateHandlerFactory.createHandler(strategy as any);
         const result = await handler.handle(targetFile, file, targetPath);
 
         logger.debug(`[import-worker] 重复文件处理结果: ${result.action} - ${result.message}`);
 
-        // 确保返回可序列化的对象，避免克隆错误
         return {
             action: result.action,
             originalPath: result.originalPath || targetPath,
@@ -840,11 +987,35 @@ async function handleDuplicateFile(
     } catch (error) {
         logger.error(`[import-worker] 处理重复文件失败: ${error}`);
 
-        // 回退到跳过策略
         return {
-            action: "skip",
+            action: DuplicateStrategies.SKIP,
             originalPath: targetPath,
             message: `Error handling duplicate, skipped: ${error instanceof Error ? error.message : "Unknown error"}`,
         };
     }
+}
+
+/**
+ * 创建目标文件信息 - 使用工厂模式
+ */
+async function createTargetFileInfo(file: FileInfo, targetPath: string): Promise<FileInfo> {
+    const stats = await fs.stat(targetPath);
+
+    return {
+        path: targetPath,
+        name: path.basename(targetPath),
+        size: stats.size,
+        type: file.type,
+        dateSource: "file_created",
+        modifiedTime: stats.mtime,
+        createdTime: stats.birthtime,
+        dateTime: stats.birthtime,
+        file: targetPath,
+        isImage: file.isImage,
+        isVideo: file.isVideo,
+        target: "",
+        targetDir: "",
+        targetFileName: "",
+        targetFullPath: "",
+    };
 }

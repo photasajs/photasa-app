@@ -29,6 +29,7 @@
     "import": {
         "title": "导入照片",
         "photos": "导入照片",
+        "progress": "导入进度",
         "chooseDirectory": "选择目录",
         "targetDirectory": "目标目录",
         "selectTarget": "选择目标目录",
@@ -124,8 +125,8 @@
             "unknown": "未知"
         },
         "now": "现在",
-        "loading": "加载中...",
         "loading": {
+            "label": "加载中...",
             "preview": "正在加载预览数据...",
             "directories": "正在选择目录..."
         },
@@ -137,13 +138,8 @@
             "api": "服务器错误，请稍后重试",
             "unknown": "发生未知错误，请重试",
             "retry": "重试",
-            "dismiss": "忽略"
-        },
-        "steps": {
-            "configuration": "配置",
-            "configurationDesc": "选择源目录和目标目录，配置导入选项",
-            "preview": "预览",
-            "previewDesc": "预览要导入的文件并选择"
+            "dismiss": "忽略",
+            "label": "错误"
         },
         "filters": "过滤器",
         "resetFilters": "重置过滤器",
@@ -245,7 +241,6 @@
         "currentDirectory": "当前目录",
         "eta": "预计完成时间",
         "completed": "已完成",
-        "error": "错误",
         "paused": "已暂停",
         "pending": "等待中",
         "finishing": "即将完成",

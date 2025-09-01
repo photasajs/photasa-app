@@ -224,7 +224,17 @@
         "currentDirectory": "Cartella corrente",
         "eta": "Tempo stimato",
         "completed": "Completato",
-        "error": "Errore",
+        "error": {
+            "label": "Errore",
+            "title": "Operazione fallita",
+            "network": "Connessione di rete fallita, controlla la connessione e riprova",
+            "validation": "Validazione configurazione fallita, controlla le impostazioni delle directory",
+            "permission": "Permessi insufficienti, assicurati di avere accesso alle directory",
+            "api": "Errore del server, riprova più tardi",
+            "unknown": "Si è verificato un errore sconosciuto, riprova",
+            "retry": "Riprova",
+            "dismiss": "Ignora"
+        },
         "paused": "In pausa",
         "pending": "In attesa",
         "finishing": "Completamento",
@@ -247,6 +257,12 @@
             "previewDesc": "Rivedi e seleziona i file da importare",
             "importing": "Importazione",
             "importingDesc": "Importa file nella cartella di destinazione"
+        },
+        "loading": {
+            "text": "Caricamento...",
+            "preview": "Caricamento dati anteprima...",
+            "directories": "Selezione directory...",
+            "label": "Caricamento..."
         }
     },
     "menu": {

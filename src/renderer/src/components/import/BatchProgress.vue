@@ -235,14 +235,20 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    FolderOutlined,
-    PauseOutlined,
-    PlayCircleOutlined,
-    StopOutlined,
-    CheckOutlined,
-    FileOutlined,
-} from "@ant-design/icons-vue";
+    FolderIcon as FolderOutlined,
+    PauseIcon as PauseOutlined,
+    PlayIcon as PlayCircleOutlined,
+    StopIcon as StopOutlined,
+    CheckIcon as CheckOutlined,
+    DocumentIcon as FileOutlined,
+} from "@heroicons/vue/24/outline";
 import type { BatchProgress, DirectoryProgress } from "@common/import-types";
+import {
+    ColorMap,
+    DirectoryStatus,
+    DirectoryStatusDisplayMap,
+    StatusColorMap,
+} from "@common/constants";
 
 // Props
 const props = withDefaults(
@@ -317,27 +323,22 @@ const getDirectoryProgress = (directory: DirectoryProgress): number => {
 };
 
 const getDirectoryStatus = (directory: DirectoryProgress): string => {
-    switch (directory.status) {
-        case "error":
-            return "exception";
-        case "completed":
-            return "success";
-        case "paused":
-            return "normal";
-        default:
-            return "active";
-    }
+    return DirectoryStatusDisplayMap[directory.status] || "active";
 };
-
+const DirectoryStatusLabelMap = {
+    [DirectoryStatus.error]: t("import.error.label"),
+    [DirectoryStatus.completed]: t("import.completed"),
+    [DirectoryStatus.paused]: t("import.paused"),
+    [DirectoryStatus.pending]: t("import.pending"),
+    [DirectoryStatus.finishing]: t("import.finishing"),
+};
 const getDirectoryETA = (directory: DirectoryProgress): string => {
-    if (directory.status === "completed") return t("import.completed");
-    if (directory.status === "error") return t("import.error");
-    if (directory.status === "paused") return t("import.paused");
-    if (directory.status === "pending") return t("import.pending");
-
+    if (DirectoryStatusLabelMap[directory.status]) {
+        return DirectoryStatusLabelMap[directory.status];
+    }
     // 简单的ETA计算
     const remaining = directory.totalFiles - directory.processedFiles;
-    if (remaining === 0) return t("import.finishing");
+    if (remaining === 0) return DirectoryStatusLabelMap.finishing;
 
     // 假设每个文件处理时间为1秒（实际应该基于历史速度计算）
     const eta = remaining * 1;
@@ -358,27 +359,14 @@ const getOverallProgressStatus = (): string => {
 };
 
 const getProgressColor = (progress: number): string => {
-    if (progress === 100) return "#52c41a";
-    if (progress >= 75) return "#1890ff";
-    if (progress >= 50) return "#faad14";
-    return "#ff4d4f";
+    if (progress === 100) return ColorMap.success;
+    if (progress >= 75) return ColorMap.primary;
+    if (progress >= 50) return ColorMap.warning;
+    return ColorMap.error;
 };
 
 const getStatusColor = (status: string): string => {
-    switch (status) {
-        case "completed":
-            return "#52c41a";
-        case "processing":
-            return "#1890ff";
-        case "paused":
-            return "#faad14";
-        case "error":
-            return "#ff4d4f";
-        case "cancelled":
-            return "#999";
-        default:
-            return "#666";
-    }
+    return StatusColorMap[status] ?? ColorMap.default;
 };
 
 const hasDirectoryIssues = (directory: DirectoryProgress): boolean => {

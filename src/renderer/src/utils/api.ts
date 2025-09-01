@@ -182,14 +182,44 @@ export function previewImport(config: ImportConfig): Promise<ImportPreview> {
 /**
  * 执行导入操作
  * @param config 导入配置
- * @param callback 进度回调函数
- * @returns 导入结果
+ * @returns 导入ID
  */
-export function executeImport(
-    config: ImportConfig,
-    callback?: EnhancedImportCallback,
-): Promise<ImportResult> {
-    return window.api.executeImport(config, callback);
+export function executeImport(config: ImportConfig): Promise<{ importId: string }> {
+    return window.api.executeImport(config);
+}
+
+/**
+ * 监听导入进度事件
+ * @param callback 进度回调函数
+ * @returns 清理函数
+ */
+export function onImportProgress(callback: (progress: ImportProgress) => void): () => void {
+    return window.api.onImportProgress(callback);
+}
+
+/**
+ * 监听导入完成事件
+ * @param callback 完成回调函数
+ * @returns 清理函数
+ */
+export function onImportComplete(callback: (result: ImportResult) => void): () => void {
+    return window.api.onImportComplete(callback);
+}
+
+/**
+ * 监听导入错误事件
+ * @param callback 错误回调函数
+ * @returns 清理函数
+ */
+export function onImportError(callback: (error: any) => void): () => void {
+    return window.api.onImportError(callback);
+}
+
+/**
+ * 移除所有导入相关的事件监听器
+ */
+export function removeImportListeners(): void {
+    return window.api.removeImportListeners();
 }
 
 /**
@@ -303,12 +333,8 @@ export const previewImportTask = useTask(function* (_, config: ImportConfig) {
 /**
  * 执行导入任务（支持并发控制）
  */
-export const executeImportTask = useTask(function* (
-    _,
-    config: ImportConfig,
-    callback?: EnhancedImportCallback,
-) {
-    const result = yield executeImport(config, callback);
+export const executeImportTask = useTask(function* (_, config: ImportConfig) {
+    const result = yield executeImport(config);
     return result;
 })
     .enqueue()
@@ -357,7 +383,7 @@ export function importPhotosEnhanced(
             allowDuplicateRename: true,
         };
 
-        executeImport(config, callback as EnhancedImportCallback);
+        executeImport(config);
     } else {
         // 使用原有的导入功能
         importPhotos(paths, target, callback as ImportCallback);

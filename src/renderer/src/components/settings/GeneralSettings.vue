@@ -4,7 +4,7 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
-import { FolderTwoTone, CloseOutlined } from "@ant-design/icons-vue";
+import { FolderIcon as FolderTwoTone, XMarkIcon as CloseOutlined } from "@heroicons/vue/24/outline";
 import { notification } from "@renderer/services/notification-manager";
 
 defineOptions({

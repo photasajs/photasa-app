@@ -224,7 +224,17 @@
         "currentDirectory": "當前目錄",
         "eta": "預計完成時間",
         "completed": "已完成",
-        "error": "錯誤",
+        "error": {
+            "label": "錯誤",
+            "title": "操作失敗",
+            "network": "網路連線失敗，請檢查連線後重試",
+            "validation": "設定驗證失敗，請檢查目錄設定",
+            "permission": "權限不足，請確保有存取目錄的權限",
+            "api": "伺服器錯誤，請稍後重試",
+            "unknown": "發生未知錯誤，請重試",
+            "retry": "重試",
+            "dismiss": "忽略"
+        },
         "paused": "已暫停",
         "pending": "等待中",
         "finishing": "即將完成",
@@ -247,6 +257,11 @@
             "previewDesc": "查看並選擇要匯入的檔案",
             "importing": "匯入中",
             "importingDesc": "將檔案匯入到目標目錄"
+        },
+        "loading": {
+            "label": "載入中...",
+            "preview": "正在載入預覽資料...",
+            "directories": "正在選擇目錄..."
         }
     },
     "menu": {

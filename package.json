@@ -48,7 +48,7 @@
         "@headlessui/vue": "^1.7.23",
         "@heroicons/vue": "^2.2.0",
         "@saschazar/wasm-heif": "^2.0.0",
-        "@tabler/icons-vue": "^3.34.0",
+        "@tabler/icons-vue": "^3.34.1",
         "@tanstack/vue-virtual": "^3.13.12",
         "@types/uuid": "^10.0.0",
         "caf": "^4.0.0",
@@ -88,7 +88,6 @@
         "vue3-markdown-it": "^1.0.10"
     },
     "devDependencies": {
-        "@ant-design/icons-vue": "^6.1.0",
         "@cloudgeek/vue3-video-player": "^0.3.10",
         "@electron-toolkit/tsconfig": "^1.0.1",
         "@electron/notarize": "^1.2.3",

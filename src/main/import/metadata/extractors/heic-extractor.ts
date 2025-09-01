@@ -5,9 +5,12 @@ import createHeifModule from "@saschazar/wasm-heif";
 import { extractDateTimeFromExif } from "@common/exif-util";
 import { extractGPSInfo } from "../parsers/gps-parser";
 import { extractCameraInfo } from "../parsers/camera-parser";
-import { getDateFallback } from "../parsers/date-parser";
+
 import type { PhotasaLogger } from "@common/logger";
-import type { ImageMetadata, DateSource } from "@common/import-types";
+import type { ImageMetadata } from "@common/import-types";
+
+// 提取器返回的元数据接口（不包含dateSource，由主函数处理）
+type ExtractedImageMetadata = Omit<ImageMetadata, "dateSource">;
 
 /**
  * HEIF/HEIC模块状态
@@ -93,6 +96,7 @@ async function decodeHeicDimensions(
  */
 async function extractHeicExif(
     buffer: Buffer,
+    filePath: string,
     logger: PhotasaLogger,
 ): Promise<{
     exifData: any;
@@ -102,42 +106,36 @@ async function extractHeicExif(
         const tags = ExifReader.load(buffer);
         delete tags["MakerNote"]; // 移除大型标签以节省内存
 
-        const extractedDateTime = extractDateTimeFromExif(tags);
+        logger.debug(
+            `[HEIC] Processing ${path.basename(filePath)} - Extracted ${Object.keys(tags).length} EXIF tags`,
+        );
+
+        // 记录可用的EXIF标签用于调试
+        const availableTags = Object.keys(tags).slice(0, 10).join(", ");
+        logger.debug(
+            `[HEIC] Available EXIF tags: ${availableTags}${Object.keys(tags).length > 10 ? "..." : ""}`,
+        );
+
+        const extractedDateTime = extractDateTimeFromExif(tags, undefined, true); // Enable debug mode
+
+        logger.debug(
+            `[HEIC] ${path.basename(filePath)} - EXIF dateTime: ${extractedDateTime ? extractedDateTime.toISOString() : "null"}`,
+        );
 
         return {
             exifData: tags,
             extractedDateTime,
         };
     } catch (error) {
-        logger.warn(`[HEIC] Failed to extract EXIF: ${error}`);
+        logger.error(`[HEIC] Failed to extract EXIF from ${path.basename(filePath)}: ${error}`);
+        logger.error(
+            `[HEIC] Error details: ${error instanceof Error ? error.stack : String(error)}`,
+        );
         return {
             exifData: null,
             extractedDateTime: null,
         };
     }
-}
-
-/**
- * 确定最终使用的日期和日期源
- */
-function determineFinalDate(
-    extractedDateTime: Date | null,
-    fileCreatedTime: Date,
-    logger: PhotasaLogger,
-): { finalDateTime: Date; dateSource: DateSource } {
-    if (extractedDateTime) {
-        logger.debug(`[HEIC] Using EXIF date: ${extractedDateTime}`);
-        return {
-            finalDateTime: extractedDateTime,
-            dateSource: "exif",
-        };
-    }
-
-    const fallback = getDateFallback(fileCreatedTime, logger);
-    return {
-        finalDateTime: fallback.date,
-        dateSource: fallback.source === "file_created" ? "file_created" : "file_created",
-    };
 }
 
 /**
@@ -149,17 +147,22 @@ function determineFinalDate(
 export async function extractHeicMetadata(
     filePath: string,
     logger: PhotasaLogger,
-): Promise<ImageMetadata> {
+): Promise<ExtractedImageMetadata | null> {
     try {
         const buffer = await fs.readFile(filePath);
-        const stats = await fs.stat(filePath);
-        const fileCreatedTime = stats.birthtime;
 
         // 初始化HEIF模块
-        const heifModule = await initializeHeifModule();
+        let heifModule: any = null;
+        try {
+            heifModule = await initializeHeifModule();
+            logger.debug(`[HEIC] HEIF module initialized successfully`);
+        } catch (error) {
+            logger.warn(`[HEIC] Failed to initialize HEIF module: ${error}`);
+            // Continue without HEIF module - we can still extract EXIF data
+        }
 
         // 提取EXIF数据
-        const { exifData, extractedDateTime } = await extractHeicExif(buffer, logger);
+        const { exifData, extractedDateTime } = await extractHeicExif(buffer, filePath, logger);
 
         // 尝试从EXIF中提取图像尺寸
         let imageInfo = extractImageDimensions(exifData, logger);
@@ -169,38 +172,29 @@ export async function extractHeicMetadata(
             imageInfo = await decodeHeicDimensions(buffer, heifModule, logger);
         }
 
-        // 确定最终使用的日期和日期源
-        const { finalDateTime, dateSource } = determineFinalDate(
-            extractedDateTime,
-            fileCreatedTime,
-            logger,
-        );
-
-        return {
-            width: imageInfo?.width || 0,
-            height: imageInfo?.height || 0,
-            dateTime: finalDateTime,
-            gpsInfo: extractGPSInfo(exifData) || undefined,
-            cameraInfo: extractCameraInfo(exifData) || undefined,
-            format: "HEIC",
-            dateSource,
-        };
+        // 如果成功提取到EXIF日期，使用它；否则返回null让主函数处理回退
+        if (extractedDateTime) {
+            logger.debug(
+                `[HEIC] ${path.basename(filePath)} - Successfully extracted EXIF date: ${extractedDateTime.toISOString()}`,
+            );
+            return {
+                width: imageInfo?.width || 0,
+                height: imageInfo?.height || 0,
+                dateTime: extractedDateTime,
+                gpsInfo: extractGPSInfo(exifData) || undefined,
+                cameraInfo: extractCameraInfo(exifData) || undefined,
+                format: "HEIC",
+            };
+        } else {
+            logger.debug(
+                `[HEIC] ${path.basename(filePath)} - No EXIF date extracted, returning null for fallback handling`,
+            );
+            return null;
+        }
     } catch (error) {
         logger.error(`[HEIC] Error processing ${filePath}: ${error}`);
-
-        // 回退到文件统计信息
-        const stats = await fs.stat(filePath);
-        const fallback = getDateFallback(stats.birthtime, logger);
-
-        return {
-            width: 0,
-            height: 0,
-            dateTime: fallback.date,
-            gpsInfo: undefined,
-            cameraInfo: undefined,
-            format: "HEIC",
-            dateSource: fallback.source === "file_created" ? "file_created" : "file_created",
-        };
+        // Return null on failure - let extractMetadata handle fallback
+        return null;
     }
 }
 

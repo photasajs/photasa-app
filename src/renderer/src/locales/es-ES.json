@@ -124,6 +124,12 @@
             "unknown": "Desconocido"
         },
         "now": "Ahora",
+        "loading": {
+            "text": "Cargando...",
+            "preview": "Cargando datos de vista previa...",
+            "directories": "Seleccionando directorios...",
+            "label": "Cargando..."
+        },
         "filters": "Filtros",
         "resetFilters": "Restablecer Filtros",
         "showAdvanced": "Mostrar Avanzado",
@@ -224,7 +230,17 @@
         "currentDirectory": "Directorio Actual",
         "eta": "Tiempo Estimado",
         "completed": "Completado",
-        "error": "Error",
+        "error": {
+            "label": "Error",
+            "title": "Operación fallida",
+            "network": "Fallo de conexión de red, verifique su conexión e intente nuevamente",
+            "validation": "Validación de configuración fallida, verifique la configuración de directorios",
+            "permission": "Permisos insuficientes, asegúrese de tener acceso a los directorios",
+            "api": "Error del servidor, intente nuevamente más tarde",
+            "unknown": "Ocurrió un error desconocido, intente de nuevo",
+            "retry": "Reintentar",
+            "dismiss": "Descartar"
+        },
         "paused": "Pausado",
         "pending": "Pendiente",
         "finishing": "Finalizando",

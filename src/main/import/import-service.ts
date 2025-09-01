@@ -2,8 +2,9 @@ import createWorker from "./import-worker?nodeWorker";
 import type { IpcMain } from "electron";
 import { dialog } from "electron";
 import type { WorkerResponse } from "@common/types";
-import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
+import { sendWorkerTask, onWorkerResponse, Worker, type ProgressEvent } from "@common/worker-util";
 import { getLogger } from "@common/logger";
+import { ImportEvents } from "@common/constants";
 import { importHistoryManager } from "./history-manager";
 import type {
     ImportRequest,
@@ -54,9 +55,15 @@ export default class ImportService {
         this.worker = createWorker({ workerData: "worker" });
 
         // 处理 worker 消息
-        this.worker.on("message", (message: WorkerResponse<ImportResponse>) => {
+        this.worker.on("message", (message: WorkerResponse<ImportResponse> | ProgressEvent) => {
             this.logger.debug("Received message from import worker:", message);
-            onWorkerResponse<ImportResponse>(message);
+
+            // 检查是否是进度事件
+            if ((message as ProgressEvent).type === "progress") {
+                this.handleProgressEvent(message as ProgressEvent);
+            } else {
+                onWorkerResponse<ImportResponse>(message as WorkerResponse<ImportResponse>);
+            }
         });
 
         // 注册IPC处理器
@@ -66,13 +73,41 @@ export default class ImportService {
     }
 
     /**
+     * 处理worker的进度事件
+     */
+    private handleProgressEvent(progressEvent: ProgressEvent): void {
+        const { taskId, data } = progressEvent;
+        this.logger.debug(`[import-service] Progress event for task ${taskId}:`, data);
+
+        // 查找对应的导入会话
+        const session = this.activeSessions.get(taskId);
+        if (session) {
+            // 更新会话进度
+            session.progress = {
+                ...session.progress,
+                processedFiles: data.processedFiles,
+                totalFiles: data.totalFiles,
+                currentFile: data.currentFile,
+                speed: data.speed,
+                estimatedTimeRemaining: data.estimatedTimeRemaining,
+                remainingTime: data.estimatedTimeRemaining,
+            };
+
+            // 转发进度事件到renderer
+            this.sendImportEvent(taskId, ImportEvents.PROGRESS, {
+                progress: session.progress,
+            });
+        }
+    }
+
+    /**
      * 设置IPC处理器
      */
     private setupIpcHandlers(): void {
         this.logger.info("[import-service] Setting up IPC handlers...");
         // 扫描源目录
         this.ipc.handle(
-            "import:scan-directories",
+            ImportEvents.SCAN_DIRECTORIES,
             async (_, paths: string[], filters?: ImportFilters) => {
                 this.logger.info(
                     `[import-service] Scan directories: ${paths?.join(", ") || "无路径"}`,
@@ -82,77 +117,80 @@ export default class ImportService {
         );
 
         // 预览导入
-        this.ipc.handle("import:preview", async (_, config: ImportConfig) => {
+        this.ipc.handle(ImportEvents.PREVIEW, async (_, config: ImportConfig) => {
             this.logger.info(
                 `[import-service] Preview import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
             );
             return await this.previewImport(config);
         });
 
-        // 启动导入（新的事件驱动模式）
-        this.ipc.handle("import:start", async (_, config: ImportConfig & { importId?: string }) => {
-            this.logger.info(
-                `[import-service] Start import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
-            );
-            return await this.startImport(config);
-        });
+        // 执行导入（新的事件驱动模式）
+        this.ipc.handle(
+            ImportEvents.EXECUTE,
+            async (_, config: ImportConfig & { importId?: string }) => {
+                this.logger.info(
+                    `[import-service] Execute import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
+                );
+                return await this.startImport(config);
+            },
+        );
 
         // 取消导入
-        this.ipc.handle("import:cancel", async (_, importId: string) => {
+        this.ipc.handle(ImportEvents.CANCEL, async (_, importId: string) => {
             this.logger.info(`[import-service] Cancel import: ${importId}`);
             return await this.cancelImport(importId);
         });
 
         // 暂停导入
-        this.ipc.handle("import:pause", async (_, importId: string) => {
+        this.ipc.handle(ImportEvents.PAUSE, async (_, importId: string) => {
             this.logger.info(`[import-service] Pause import: ${importId}`);
             return await this.pauseImport(importId);
         });
 
         // 恢复导入
-        this.ipc.handle("import:resume", async (_, importId: string) => {
+        this.ipc.handle(ImportEvents.RESUME, async (_, importId: string) => {
             this.logger.info(`[import-service] Resume import: ${importId}`);
             return await this.resumeImport(importId);
         });
 
         // 获取导入进度
-        this.ipc.handle("import:get-progress", async (_, importId: string) => {
+        this.ipc.handle(ImportEvents.GET_PROGRESS, async (_, importId: string) => {
             return await this.getImportProgress(importId);
         });
 
         // 获取导入历史
-        this.ipc.handle("import:get-history", async (_, limit?: number) => {
+        this.ipc.handle(ImportEvents.GET_HISTORY, async (_, limit?: number) => {
             this.logger.info(`[import-service] Get import history (limit: ${limit})`);
             return await this.getImportHistory(limit);
         });
 
         // 获取导入详情
-        this.ipc.handle("import:get-details", async (_, historyId: string) => {
+        this.ipc.handle(ImportEvents.GET_DETAILS, async (_, historyId: string) => {
             this.logger.info(`[import-service] Get import details: ${historyId}`);
             return await this.getImportDetails(historyId);
         });
 
         // 预览撤销操作
-        this.ipc.handle("import:preview-undo", async (_, historyId: string) => {
+        this.ipc.handle(ImportEvents.PREVIEW_UNDO, async (_, historyId: string) => {
             this.logger.info(`[import-service] Preview undo import: ${historyId}`);
             return await this.previewUndo(historyId);
         });
 
         // 撤销导入
-        this.ipc.handle("import:undo", async (_, historyId: string) => {
+        this.ipc.handle(ImportEvents.UNDO, async (_, historyId: string) => {
             this.logger.info(`[import-service] Undo import: ${historyId}`);
             return await this.undoImport(historyId);
         });
 
         // 选择多个目录
-        this.ipc.handle("import:choose-directories", async (_, multiSelect = true) => {
+        this.ipc.handle(ImportEvents.CHOOSE_DIRECTORIES, async (_, multiSelect = true) => {
             this.logger.info(`[import-service] Choose directories (multiSelect: ${multiSelect})`);
             this.logger.info(`[import-service] mainWindow exists: ${!!this.mainWindow}`);
             return await this.chooseDirectories(multiSelect);
         });
 
         // 提取元数据
-        this.ipc.handle("import:extract-metadata", async (_, request: MetadataRequest) => {
+        this.ipc.handle(ImportEvents.EXTRACT_METADATA, async (_, request: MetadataRequest) => {
             this.logger.info(`[import-service] Extract metadata: ${request.filePath}`);
             return await this.extractMetadata(request);
         });

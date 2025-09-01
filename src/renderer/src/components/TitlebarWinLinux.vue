@@ -98,9 +98,11 @@
 
 <script setup lang="ts">
 import AppIcon from "./AppIcon.vue";
-import CoffeeOutlined from "@ant-design/icons-vue/CoffeeOutlined";
-import ImportOutlined from "@ant-design/icons-vue/ImportOutlined";
-import SettingOutlined from "@ant-design/icons-vue/SettingOutlined";
+import {
+    IconCoffee as CoffeeOutlined,
+    IconFolderOpen as ImportOutlined,
+    IconSettings as SettingOutlined,
+} from "@tabler/icons-vue";
 import { useI18n } from "vue-i18n";
 import { onClickOutside } from "@vueuse/core";
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";

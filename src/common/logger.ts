@@ -81,4 +81,5 @@ export const loggers: Record<string, PhotasaLogger> = {
     window: getLogger("window"),
     shell: getLogger("shell"),
     api: getLogger("api"),
+    importProgress: getLogger("importProgress"),
 };

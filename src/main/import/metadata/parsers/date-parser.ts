@@ -1,3 +1,5 @@
+import { DateSources } from "@common/constants";
+
 /**
  * 验证日期是否有效
  * @param date 日期对象
@@ -54,7 +56,9 @@ export function selectBestDate(metadata: any, timeFields: string[]): Date | null
         const time = metadata.format?.tags?.[field];
         if (time) {
             const date = safeParseDate(time);
-            if (date) return date;
+            if (date) {
+                return date;
+            }
         }
     }
 
@@ -64,7 +68,9 @@ export function selectBestDate(metadata: any, timeFields: string[]): Date | null
             const time = stream.tags?.[field];
             if (time) {
                 const date = safeParseDate(time);
-                if (date) return date;
+                if (date) {
+                    return date;
+                }
             }
         }
     }
@@ -73,23 +79,53 @@ export function selectBestDate(metadata: any, timeFields: string[]): Date | null
 }
 
 /**
- * 获取日期回退值
+ * 计算日期回退值
+ * 当同时有创建时间和修改时间时，选择较早的日期
  * @param createdTime 文件创建时间
+ * @param modifiedTime 文件修改时间（可选）
  * @param logger 可选的日志记录器
  * @returns 回退日期信息
  */
-export function getDateFallback(
+export function computeFallbackDate(
     createdTime?: Date,
-    logger?: { warn: (msg: string) => void },
-): { date: Date; source: "file_created" | "current_date" } {
-    if (isValidDate(createdTime)) {
-        return { date: createdTime!, source: "file_created" };
+    modifiedTime?: Date,
+    logger?: { warn: (msg: string) => void; debug?: (msg: string) => void },
+): {
+    date: Date;
+    source:
+        | typeof DateSources.FILE_CREATED
+        | typeof DateSources.FILE_MODIFIED
+        | typeof DateSources.CURRENT_DATE;
+} {
+    // 检查创建时间和修改时间
+    const isValidCreated = isValidDate(createdTime);
+    const isValidModified = isValidDate(modifiedTime);
+
+    if (isValidCreated && isValidModified) {
+        // 两个时间都有效，选择较早的日期
+        if (createdTime!.getTime() <= modifiedTime!.getTime()) {
+            logger?.debug?.(`Using file creation time (earlier): ${createdTime!.toISOString()}`);
+            return { date: createdTime!, source: DateSources.FILE_CREATED };
+        } else {
+            logger?.debug?.(
+                `Using file modification time (earlier): ${modifiedTime!.toISOString()}`,
+            );
+            return { date: modifiedTime!, source: DateSources.FILE_MODIFIED };
+        }
+    } else if (isValidCreated) {
+        // 只有创建时间有效
+        logger?.debug?.(`Using file creation time: ${createdTime!.toISOString()}`);
+        return { date: createdTime!, source: DateSources.FILE_CREATED };
+    } else if (isValidModified) {
+        // 只有修改时间有效
+        logger?.debug?.(`Using file modification time: ${modifiedTime!.toISOString()}`);
+        return { date: modifiedTime!, source: DateSources.FILE_MODIFIED };
     }
 
+    // 两个时间都无效，使用当前日期
     const currentDate = new Date();
-    logger?.warn("No valid date found, using current date as fallback");
-
-    return { date: currentDate, source: "current_date" };
+    logger?.warn("No valid file dates found, using current date as fallback");
+    return { date: currentDate, source: DateSources.CURRENT_DATE };
 }
 
 /**
