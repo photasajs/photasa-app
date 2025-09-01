@@ -505,6 +505,86 @@ await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
 #### **Effort**: 🔧 **Low** - Single file fix, well-defined problem
 #### **Status**: 🚧 **Ready to Fix**
 
+### 📈 **Enhancement: Smart Duplicate Handling Strategy (2025-01-31)**
+
+#### **Problem**: 
+Current duplicate handling strategies are too simplistic and lack intelligent comparison capabilities.
+
+#### **Proposed Enhancements**:
+
+1. **Smart SKIP Strategy with MD5 Verification**
+   - Optional MD5 hash comparison for accurate duplicate detection
+   - File modification time comparison
+   - File size pre-check for performance
+   - Decision logic based on actual content differences
+
+2. **Strategy Constants Standardization**
+   ```typescript
+   // src/common/constants.ts
+   export const DuplicateStrategies = {
+       SKIP: "skip",           // Smart skip with optional MD5
+       RENAME: "rename",       // Simple incremental rename
+       OVERWRITE: "overwrite", // Replace existing file
+       KEEP_BOTH: "keep_both"  // Smart naming based on differences
+   } as const;
+   ```
+
+3. **Configuration Options**
+   ```typescript
+   export interface ImportConfig {
+       duplicateStrategy: DuplicateStrategy;
+       useMD5ForDuplicates?: boolean; // New: Enable MD5 verification
+   }
+   ```
+
+4. **Strategy Descriptions in UI**
+   - **SKIP**: "智能跳过：检查文件内容，只跳过真正相同的文件"
+   - **RENAME**: "重命名导入：新文件重命名为 filename_1.jpg 等"
+   - **OVERWRITE**: "覆盖原文件：用新文件替换现有文件"
+   - **KEEP_BOTH**: "智能保留：根据差异添加有意义后缀（如 _newer, _larger）"
+
+5. **Enhanced SkipDuplicateHandler**
+   ```typescript
+   export class SkipDuplicateHandler {
+       async handle(original, duplicate, targetPath, config) {
+           // Quick size check
+           if (original.size !== duplicate.size) {
+               return this.handleDifferentFiles(original, duplicate);
+           }
+           
+           // Optional MD5 verification
+           if (config?.useMD5) {
+               const originalHash = await this.calculateMD5(original.path);
+               const duplicateHash = await this.calculateMD5(duplicate.path);
+               
+               if (originalHash === duplicateHash) {
+                   return { action: "skip", message: "文件内容完全相同" };
+               }
+           }
+           
+           // Time-based decision
+           if (duplicate.modifiedTime > original.modifiedTime) {
+               return { action: "skip", message: "检测到新版本文件" };
+           }
+           
+           return { action: "skip", message: "文件已存在" };
+       }
+   }
+   ```
+
+#### **Implementation Steps**:
+1. ✅ Add to RFC documentation
+2. ⏳ Update constants.ts with standardized strategies
+3. ⏳ Add useMD5ForDuplicates configuration field
+4. ⏳ Enhance SkipDuplicateHandler with MD5 support
+5. ⏳ Add UI toggle for MD5 verification
+6. ⏳ Add multi-language strategy descriptions
+
+#### **Priority**: 🟡 **HIGH** - Improves user experience and data integrity
+#### **Impact**: Better duplicate detection accuracy with performance options
+#### **Effort**: 🔧 **Medium** - Requires handler enhancement and UI updates
+#### **Status**: 📝 **Documented in RFC**
+
 ### 🚨 **Critical Bug #2: Progress Updates Not Reaching UI (2025-08-30)**
 
 #### **Problem**: 
@@ -594,9 +674,10 @@ The Import Wizard System represents a **major leap forward** for Photasa's impor
 1. ✅ **COMPLETED**: Implement IPC architecture fix (Event-driven import system)
 2. 🔴 **CRITICAL #1**: Fix duplicate strategy handling in import-worker.ts  
 3. 🔴 **CRITICAL #2**: Fix progress updates not reaching UI (import-service.ts)
-4. 🟡 **High**: Complete remaining integration testing
-5. 🟢 **Medium**: Finalize documentation and examples
-6. 🟢 **Low**: Prepare for production deployment
+4. 🟡 **HIGH #1**: Implement smart duplicate handling enhancements
+5. 🟡 **HIGH #2**: Complete remaining integration testing
+6. 🟢 **Medium**: Finalize documentation and examples
+7. 🟢 **Low**: Prepare for production deployment
 
 The combination of the wizard system's clean UX and the robust event-driven architecture ensures both exceptional user experience and long-term technical maintainability.
 
