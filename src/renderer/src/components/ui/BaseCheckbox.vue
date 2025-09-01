@@ -21,7 +21,7 @@
                 disabled && 'cursor-not-allowed',
             ]"
         >
-            <CheckIcon v-if="modelValue" class="w-3 h-3 text-white" />
+            <PhCheck v-if="modelValue" class="w-3 h-3 text-white" />
         </div>
         <span
             v-if="label || $slots.default"
@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { CheckIcon } from "@heroicons/vue/24/solid";
+import { PhCheck } from "@phosphor-icons/vue";
 
 interface Props {
     modelValue: boolean;

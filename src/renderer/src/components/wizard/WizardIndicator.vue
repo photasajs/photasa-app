@@ -12,7 +12,7 @@
                         @click="onStepClick(index)"
                         :style="{ cursor: allowStepClick ? 'pointer' : 'default' }"
                     >
-                        <CheckIcon v-if="completedSteps.has(step.id)" class="w-4 h-4" />
+                        <PhCheck v-if="completedSteps.has(step.id)" class="w-4 h-4" />
                         <span v-else>{{ index + 1 }}</span>
                     </div>
 
@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { CheckIcon } from "@heroicons/vue/24/outline";
+import { PhCheck } from "@phosphor-icons/vue";
 import type { WizardStep } from "./types";
 
 interface Props {

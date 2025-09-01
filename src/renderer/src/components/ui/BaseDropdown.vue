@@ -10,7 +10,7 @@
             <slot name="trigger">
                 {{ triggerText }}
             </slot>
-            <ChevronDownIcon
+            <PhCaretDown
                 v-if="showArrow"
                 class="-mr-1 h-5 w-5 text-[var(--color-text-secondary)]"
                 aria-hidden="true"
@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Menu, MenuButton, MenuItems } from "@headlessui/vue";
-import { ChevronDownIcon } from "@heroicons/vue/20/solid";
+import { PhCaretDown } from "@phosphor-icons/vue";
 
 interface Props {
     triggerText?: string;

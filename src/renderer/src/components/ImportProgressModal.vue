@@ -15,13 +15,13 @@ import { formatProcessingSpeed, formatRemainingTime } from "@renderer/utils/impo
 import { createSerializableConfig } from "@renderer/utils/import-wizard-helpers";
 import { BaseModal, BaseButton } from "@renderer/components/ui";
 import {
-    PauseIcon,
-    PlayIcon,
-    StopIcon,
-    CheckCircleIcon,
-    ExclamationTriangleIcon,
-    XCircleIcon,
-} from "@heroicons/vue/24/outline";
+    PhPause as PauseIcon,
+    PhPlay as PlayIcon,
+    PhStop as StopIcon,
+    PhCheckCircle,
+    PhWarning,
+    PhXCircle,
+} from "@phosphor-icons/vue";
 import type { ImportConfig, ImportProgress, ImportResult } from "@common/import-types";
 import { loggers } from "@common/logger";
 
@@ -77,10 +77,10 @@ const progressPercentage = computed(() => {
 const statusIcon = computed(() => {
     switch (importProgress.status) {
         case "completed":
-            return CheckCircleIcon;
+            return PhCheckCircle;
         case "failed":
         case "cancelled":
-            return XCircleIcon;
+            return PhXCircle;
         case "paused":
             return PauseIcon;
         default:
@@ -390,7 +390,7 @@ onUnmounted(() => {
                 <!-- Errors -->
                 <div v-if="importProgress.errors.length > 0" class="space-y-2">
                     <div class="flex items-center space-x-2 text-red-500">
-                        <XCircleIcon class="w-5 h-5" />
+                        <PhXCircle class="w-5 h-5" />
                         <span class="font-medium"
                             >{{ t("import.errors") }} ({{ importProgress.errors.length }})</span
                         >
@@ -409,7 +409,7 @@ onUnmounted(() => {
                 <!-- Warnings -->
                 <div v-if="importProgress.warnings.length > 0" class="space-y-2">
                     <div class="flex items-center space-x-2 text-yellow-500">
-                        <ExclamationTriangleIcon class="w-5 h-5" />
+                        <PhWarning class="w-5 h-5" />
                         <span class="font-medium"
                             >{{ t("import.warnings") }} ({{ importProgress.warnings.length }})</span
                         >
@@ -429,7 +429,7 @@ onUnmounted(() => {
             <!-- Import Error -->
             <div v-if="importError" class="p-3 bg-red-50 border border-red-200 rounded">
                 <div class="flex items-center space-x-2 text-red-500 mb-2">
-                    <XCircleIcon class="w-5 h-5" />
+                    <PhXCircle class="w-5 h-5" />
                     <span class="font-medium">{{ t("import.importFailed") }}</span>
                 </div>
                 <div class="text-sm text-red-700">
@@ -443,7 +443,7 @@ onUnmounted(() => {
                 class="p-3 bg-green-50 border border-green-200 rounded"
             >
                 <div class="flex items-center space-x-2 text-green-500 mb-2">
-                    <CheckCircleIcon class="w-5 h-5" />
+                    <PhCheckCircle class="w-5 h-5" />
                     <span class="font-medium">{{ t("import.importCompleted") }}</span>
                 </div>
                 <div class="text-sm text-green-700">

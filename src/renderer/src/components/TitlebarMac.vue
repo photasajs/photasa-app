@@ -17,10 +17,10 @@ import { onMounted, onUnmounted, watch } from "vue";
 import { useMenusStore } from "@renderer/stores/menus";
 // import type { MenuItemData } from "@common/menu-types";
 import {
-    IconCoffee as CoffeeOutlined,
-    IconFolderOpen as ImportOutlined,
-    IconSettings as SettingOutlined,
-} from "@tabler/icons-vue";
+    PhClock as CoffeeOutlined,
+    PhFolder as ImportOutlined,
+    PhGear as SettingOutlined,
+} from "@phosphor-icons/vue";
 
 const { t } = useI18n();
 const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference", "menu-action"]);
@@ -97,5 +97,59 @@ onUnmounted(() => {
 .system-icon {
     height: 1.5rem;
     width: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* 多彩图标样式 */
+.system-icon:nth-child(1) {
+    /* 时钟图标 - 蓝色渐变 */
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(2) {
+    /* 文件夹图标 - 绿色渐变 */
+    background: linear-gradient(135deg, #10b981, #059669);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(3) {
+    /* 设置图标 - 橙色渐变 */
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 悬停效果 */
+.system-icon:hover {
+    transform: scale(1.15) rotate(5deg);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.system-icon:nth-child(1):hover {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(2):hover {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(3):hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 </style>

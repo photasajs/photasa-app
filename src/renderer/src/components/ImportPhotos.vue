@@ -55,15 +55,15 @@ import {
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import {
-    TrashIcon,
-    PlusIcon,
-    FolderOpenIcon,
-    EyeIcon,
-    ArrowDownTrayIcon,
-    PhotoIcon,
-    VideoCameraIcon,
-    DocumentIcon,
-} from "@heroicons/vue/24/outline";
+    PhTrash as TrashIcon,
+    PhPlus as PlusIcon,
+    PhFolderOpen as FolderOpenIcon,
+    PhEye as EyeIcon,
+    PhArrowDown as ArrowDownTrayIcon,
+    PhImage as PhotoIcon,
+    PhVideoCamera as VideoCameraIcon,
+    PhFileText as DocumentIcon,
+} from "@phosphor-icons/vue";
 import {
     BaseButton,
     BaseInput,

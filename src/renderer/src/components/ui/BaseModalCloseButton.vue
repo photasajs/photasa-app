@@ -8,13 +8,13 @@
         :aria-label="ariaLabel"
     >
         <slot>
-            <XMarkIcon v-if="showIcon" class="h-5 w-5" />
+            <PhX v-if="showIcon" class="h-5 w-5" />
         </slot>
     </button>
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon } from "@heroicons/vue/24/outline";
+import { PhX } from "@phosphor-icons/vue";
 
 interface Props {
     className?: string | string[] | Record<string, boolean>;

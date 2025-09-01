@@ -259,15 +259,15 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    CheckIcon as CheckOutlined,
-    XMarkIcon as CloseOutlined,
-    ArrowPathIcon as SwapOutlined,
-    InformationCircleIcon as InfoCircleOutlined,
-    PhotoIcon as FileImageOutlined,
-    VideoCameraIcon as VideoCameraOutlined,
-    DocumentIcon as FileOutlined,
-    ArrowRightIcon as ArrowRightOutlined,
-} from "@heroicons/vue/24/outline";
+    PhCheck as CheckOutlined,
+    PhX as CloseOutlined,
+    PhArrowsClockwise as SwapOutlined,
+    PhInfo as InfoCircleOutlined,
+    PhImage as FileImageOutlined,
+    PhVideoCamera as VideoCameraOutlined,
+    PhFileText as FileOutlined,
+    PhCaretRight as ArrowRightOutlined,
+} from "@phosphor-icons/vue";
 import type { FileGroup, DuplicateFileInfo, GPSInfo } from "@common/import-types";
 
 // Props

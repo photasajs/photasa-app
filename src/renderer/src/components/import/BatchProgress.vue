@@ -235,13 +235,13 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    FolderIcon as FolderOutlined,
-    PauseIcon as PauseOutlined,
-    PlayIcon as PlayCircleOutlined,
-    StopIcon as StopOutlined,
-    CheckIcon as CheckOutlined,
-    DocumentIcon as FileOutlined,
-} from "@heroicons/vue/24/outline";
+    PhFolder as FolderOutlined,
+    PhPause as PauseOutlined,
+    PhPlay as PlayCircleOutlined,
+    PhStop as StopOutlined,
+    PhCheck as CheckOutlined,
+    PhFileText as FileOutlined,
+} from "@phosphor-icons/vue";
 import type { BatchProgress, DirectoryProgress } from "@common/import-types";
 import {
     ColorMap,

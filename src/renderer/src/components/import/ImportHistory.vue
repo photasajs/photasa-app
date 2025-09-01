@@ -68,7 +68,7 @@
                             {{ t("import.history.undo") }}
                         </BaseButton>
 
-                        <ChevronDownIcon
+                        <PhCaretDown
                             class="w-5 h-5 transition-transform duration-200"
                             :class="{ 'rotate-180': expandedEntries.has(entry.id) }"
                         />
@@ -238,7 +238,7 @@
 
                 <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
                     <div class="flex">
-                        <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" />
+                        <PhWarning class="h-5 w-5 text-yellow-400" />
                         <div class="ml-3">
                             <p class="text-sm text-yellow-700">
                                 {{ t("import.history.undoWarning") }}
@@ -306,12 +306,12 @@
 import { ref, computed, onMounted, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    MagnifyingGlassIcon,
-    ChevronDownIcon,
-    ArrowUturnLeftIcon,
-    InboxIcon,
-    ExclamationTriangleIcon,
-} from "@heroicons/vue/24/outline";
+    PhMagnifyingGlass as MagnifyingGlassIcon,
+    PhCaretDown,
+    PhArrowUUpLeft as ArrowUturnLeftIcon,
+    PhTray as InboxIcon,
+    PhWarning,
+} from "@phosphor-icons/vue";
 import { BaseButton, BaseInput, BaseSelect, BaseModal } from "@renderer/components/ui";
 import { getImportHistory, undoImport } from "@renderer/utils/api";
 import type { ImportHistory, UndoPreview } from "@common/import-types";

@@ -12,16 +12,10 @@
         >
             <!-- 图标 -->
             <div class="notification-icon">
-                <IconCircleCheck
-                    v-if="notification.type === 'success'"
-                    class="icon icon--success"
-                />
-                <IconCircleX v-else-if="notification.type === 'error'" class="icon icon--error" />
-                <IconAlertTriangle
-                    v-else-if="notification.type === 'warning'"
-                    class="icon icon--warning"
-                />
-                <IconInfoCircle v-else class="icon icon--info" />
+                <PhCheckCircle v-if="notification.type === 'success'" class="icon icon--success" />
+                <PhXCircle v-else-if="notification.type === 'error'" class="icon icon--error" />
+                <PhWarning v-else-if="notification.type === 'warning'" class="icon icon--warning" />
+                <PhInfo v-else class="icon icon--info" />
             </div>
 
             <!-- 内容 -->
@@ -55,7 +49,7 @@
                 @click="handleClose"
                 aria-label="关闭通知"
             >
-                <IconX class="icon-close" />
+                <PhX class="icon-close" />
             </button>
 
             <!-- 进度条 -->
@@ -70,13 +64,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
-import {
-    IconCircleCheck,
-    IconCircleX,
-    IconAlertTriangle,
-    IconInfoCircle,
-    IconX,
-} from "@tabler/icons-vue";
+import { PhCheckCircle, PhXCircle, PhWarning, PhInfo, PhX } from "@phosphor-icons/vue";
 import { BaseButton } from "@renderer/components/ui";
 import type { NotificationItem, NotificationAction } from "@renderer/types/notification";
 

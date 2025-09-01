@@ -258,18 +258,18 @@
 import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    SparklesIcon as ThunderboltOutlined,
-    ClockIcon as ClockCircleOutlined,
-    ClockIcon as HistoryOutlined,
-    CalendarIcon as CalendarOutlined,
-    DocumentIcon as FileOutlined,
-    ExclamationTriangleIcon as ExclamationCircleOutlined,
-    ExclamationTriangleIcon as WarningOutlined,
-    PauseIcon as PauseOutlined,
-    PlayIcon as PlayCircleOutlined,
-    StopIcon as StopOutlined,
-    CheckIcon as CheckOutlined,
-} from "@heroicons/vue/24/outline";
+    PhLightning as ThunderboltOutlined,
+    PhClock as ClockCircleOutlined,
+    PhClock as HistoryOutlined,
+    PhCalendar as CalendarOutlined,
+    PhFileText as FileOutlined,
+    PhWarning as ExclamationCircleOutlined,
+    PhWarning as WarningOutlined,
+    PhPause as PauseOutlined,
+    PhPlay as PlayCircleOutlined,
+    PhStop as StopOutlined,
+    PhCheck as CheckOutlined,
+} from "@phosphor-icons/vue";
 import type { ImportProgress } from "@common/import-types";
 
 // Props

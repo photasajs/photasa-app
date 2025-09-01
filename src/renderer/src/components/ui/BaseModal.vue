@@ -67,7 +67,7 @@
                     @click="emit('close')"
                     class="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
                 >
-                    <XMarkIcon class="h-5 w-5" />
+                    <PhX class="h-5 w-5" />
                 </button>
             </div>
         </div>
@@ -76,7 +76,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onBeforeUnmount } from "vue";
-import { XMarkIcon } from "@heroicons/vue/24/outline";
+import { PhX } from "@phosphor-icons/vue";
 import BaseButton from "./BaseButton.vue";
 
 const modalRef = ref<HTMLElement>();

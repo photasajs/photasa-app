@@ -9,7 +9,7 @@
                     :disabled="isLoading"
                     @click="$emit('back')"
                 >
-                    <ArrowLeftIcon class="w-4 h-4 mr-2" />
+                    <PhCaretLeft class="w-4 h-4 mr-2" />
                     {{ backButtonText }}
                 </BaseButton>
             </div>
@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { BaseButton } from "@renderer/components/ui";
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "@heroicons/vue/24/outline";
+import { PhCaretLeft, PhCaretRight, PhCheck } from "@phosphor-icons/vue";
 
 interface Props {
     canGoNext: boolean;
@@ -88,8 +88,8 @@ withDefaults(defineProps<Props>(), {
     nextButtonText: "Next",
     finishButtonText: "Finish",
     cancelButtonText: "Cancel",
-    nextButtonIcon: ArrowRightIcon,
-    finishButtonIcon: CheckIcon,
+    nextButtonIcon: PhCaretRight,
+    finishButtonIcon: PhCheck,
 });
 
 defineEmits<Emits>();

@@ -28,7 +28,7 @@
                 {{ selectedOption?.label || placeholder }}
             </span>
             <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronDownIcon
+                <PhCaretDown
                     :class="[
                         'h-5 w-5 text-[var(--color-text-secondary)] transition-transform duration-200',
                         isOpen && 'rotate-180',
@@ -103,7 +103,7 @@
                                         : 'text-[var(--color-primary)]',
                                 ]"
                             >
-                                <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                                <PhCheck class="h-5 w-5" aria-hidden="true" />
                             </span>
                         </li>
                     </ul>
@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick, watch, onBeforeUnmount } from "vue";
-import { CheckIcon, ChevronDownIcon } from "@heroicons/vue/20/solid";
+import { PhCheck, PhCaretDown } from "@phosphor-icons/vue";
 import { getLogger } from "@common/logger";
 
 const logger = getLogger("base-select");

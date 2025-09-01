@@ -8,40 +8,36 @@
         role="alert"
     >
         <div v-if="showIcon" class="flex-shrink-0 mt-0.5 alert-icon-container">
-            <IconCircleX
+            <PhXCircle
                 v-if="type === 'error'"
                 class="h-5 w-5 alert-icon-danger"
                 :style="{
                     color: 'var(--color-danger)',
                     stroke: 'var(--color-danger)',
-                    '--tabler-stroke-width': '2',
                 }"
             />
-            <IconAlertTriangle
+            <PhWarning
                 v-else-if="type === 'warning'"
                 class="h-5 w-5 alert-icon-warning"
                 :style="{
                     color: 'var(--color-warning)',
                     stroke: 'var(--color-warning)',
-                    '--tabler-stroke-width': '2',
                 }"
             />
-            <IconCircleCheck
+            <PhCheckCircle
                 v-else-if="type === 'success'"
                 class="h-5 w-5 alert-icon-success"
                 :style="{
                     color: 'var(--color-success)',
                     stroke: 'var(--color-success)',
-                    '--tabler-stroke-width': '2',
                 }"
             />
-            <IconInfoCircle
+            <PhInfo
                 v-else
                 class="h-5 w-5 alert-icon-info"
                 :style="{
                     color: 'var(--color-info)',
                     stroke: 'var(--color-info)',
-                    '--tabler-stroke-width': '2',
                 }"
             />
         </div>
@@ -72,7 +68,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { IconCircleCheck, IconAlertTriangle, IconCircleX, IconInfoCircle } from "@tabler/icons-vue";
+import { PhCheckCircle, PhWarning, PhXCircle, PhInfo } from "@phosphor-icons/vue";
 
 interface Props {
     type?: "info" | "success" | "warning" | "error";

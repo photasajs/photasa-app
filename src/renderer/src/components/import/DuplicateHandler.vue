@@ -309,14 +309,14 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import {
-    ExclamationTriangleIcon as ExclamationCircleOutlined,
-    SparklesIcon as ThunderboltOutlined,
-    EyeIcon as EyeOutlined,
-    ArrowPathIcon as SwapOutlined,
-    InformationCircleIcon as InfoCircleOutlined,
-    LightBulbIcon as BulbOutlined,
-    ExclamationTriangleIcon as WarningOutlined,
-} from "@heroicons/vue/24/outline";
+    PhWarning as ExclamationCircleOutlined,
+    PhLightning as ThunderboltOutlined,
+    PhEye as EyeOutlined,
+    PhArrowsClockwise as SwapOutlined,
+    PhInfo as InfoCircleOutlined,
+    PhLightbulb as BulbOutlined,
+    PhWarning as WarningOutlined,
+} from "@phosphor-icons/vue";
 import type { DuplicateFileInfo, DuplicateStrategy, FileComparison } from "@common/import-types";
 
 // Props

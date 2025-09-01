@@ -226,10 +226,10 @@ import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { Dayjs } from "dayjs";
 import {
-    ArrowPathIcon as ReloadOutlined,
-    Cog6ToothIcon as SettingOutlined,
-    QuestionMarkCircleIcon as QuestionCircleOutlined,
-} from "@heroicons/vue/24/outline";
+    PhArrowClockwise as ReloadOutlined,
+    PhGear as SettingOutlined,
+    PhQuestion as QuestionCircleOutlined,
+} from "@phosphor-icons/vue";
 import type { ImportFilters } from "@common/import-types";
 
 // Props
