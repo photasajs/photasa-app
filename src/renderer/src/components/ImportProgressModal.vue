@@ -302,7 +302,7 @@ onUnmounted(() => {
     <BaseModal
         :open="show"
         :title="t('import.progress')"
-        size="lg"
+        size="2xl"
         :closable="canClose"
         @close="handleCancel"
     >
@@ -347,7 +347,7 @@ onUnmounted(() => {
                     <div
                         class="text-lg font-semibold text-[var(--color-text)] whitespace-nowrap overflow-hidden text-ellipsis"
                     >
-                        {{ formatProcessingSpeed(importProgress.speed) }}
+                        {{ formatProcessingSpeed(importProgress.speed, t) }}
                     </div>
                     <div
                         class="text-sm text-[var(--color-text-secondary)] whitespace-nowrap overflow-hidden text-ellipsis"

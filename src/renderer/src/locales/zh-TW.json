@@ -106,6 +106,8 @@
         "processed": "已處理",
         "percentage": "百分比",
         "speed": "速度",
+        "filesPerSec": "檔案/秒",
+        "filesPerMin": "檔案/分鐘",
         "remaining": "剩餘時間",
         "errors": "錯誤 ({count})",
         "warnings": "警告 ({count})",

@@ -106,6 +106,8 @@
         "processed": "تمت المعالجة",
         "percentage": "النسبة المئوية",
         "speed": "السرعة",
+        "filesPerSec": "ملف/ثانية",
+        "filesPerMin": "ملف/دقيقة",
         "remaining": "الوقت المتبقي",
         "errors": "أخطاء ({count})",
         "warnings": "تحذيرات ({count})",

@@ -62,6 +62,8 @@
         "group": "{count} файлов",
         "processed": "Обработано",
         "speed": "Скорость",
+        "filesPerSec": "файлов/сек",
+        "filesPerMin": "файлов/мин",
         "remaining": "Осталось",
         "processing": "Обработка",
         "previewButton": "Предпросмотр",

@@ -159,10 +159,44 @@ export function formatFileSize(size: number): string {
 
 /**
  * 格式化处理速度
+ * @param speed 处理速度（文件/秒）
+ * @param t 翻译函数，用于获取本地化的单位标签
+ * @returns 格式化后的速度字符串，包含本地化的单位
  */
-export function formatProcessingSpeed(speed: number): string {
-    if (speed < 1) return `${(speed * 60).toFixed(1)} files/min`;
-    return `${speed.toFixed(1)} files/sec`;
+export function formatProcessingSpeed(speed: number, t?: (key: string) => string): string {
+    if (speed < 1) {
+        const value = (speed * 60).toFixed(1);
+        const unit = t ? t("import.filesPerMin") : "files/min";
+        return `${value} ${unit}`;
+    }
+    const value = speed.toFixed(1);
+    const unit = t ? t("import.filesPerSec") : "files/sec";
+    return `${value} ${unit}`;
+}
+
+/**
+ * 获取处理速度的数值和单位（分离版本）
+ * @param speed 处理速度（文件/秒）
+ * @param t 翻译函数，用于获取本地化的单位标签
+ * @returns 包含数值和单位的对象
+ */
+export function getProcessingSpeedParts(
+    speed: number,
+    t?: (key: string) => string,
+): {
+    value: string;
+    unit: string;
+} {
+    if (speed < 1) {
+        return {
+            value: (speed * 60).toFixed(1),
+            unit: t ? t("import.filesPerMin") : "files/min",
+        };
+    }
+    return {
+        value: speed.toFixed(1),
+        unit: t ? t("import.filesPerSec") : "files/sec",
+    };
 }
 
 /**

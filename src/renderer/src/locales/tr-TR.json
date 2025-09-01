@@ -63,6 +63,8 @@
         "group": "{count} dosya",
         "processed": "İşlendi",
         "speed": "Hız",
+        "filesPerSec": "dosya/sn",
+        "filesPerMin": "dosya/dk",
         "remaining": "Kalan Süre",
         "processing": "İşleniyor",
         "previewButton": "Önizleme",

@@ -106,6 +106,8 @@
         "processed": "Elaborati",
         "percentage": "Percentuale",
         "speed": "Velocità",
+        "filesPerSec": "file/sec",
+        "filesPerMin": "file/min",
         "remaining": "Tempo rimanente",
         "errors": "Errori ({count})",
         "warnings": "Avvisi ({count})",

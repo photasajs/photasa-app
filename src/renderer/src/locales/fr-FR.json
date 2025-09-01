@@ -106,6 +106,8 @@
         "processed": "Traité",
         "percentage": "Pourcentage",
         "speed": "Vitesse",
+        "filesPerSec": "fichiers/sec",
+        "filesPerMin": "fichiers/min",
         "remaining": "Temps restant",
         "errors": "Erreurs ({count})",
         "warnings": "Avertissements ({count})",

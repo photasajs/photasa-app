@@ -1038,19 +1038,25 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
 
         <!-- Custom Footer -->
         <template #footer="{ wizardState, goNext, goBack, finish, cancel }">
-            <div class="flex justify-between">
-                <div>
-                    <BaseButton v-if="wizardState.canGoBack" variant="secondary" @click="goBack">
+            <div class="flex justify-center">
+                <div class="flex gap-4">
+                    <!-- Back Button -->
+                    <BaseButton
+                        v-if="wizardState.canGoBack"
+                        variant="secondary"
+                        @click="goBack"
+                        class="min-w-[80px]"
+                    >
                         {{ t("import.backButton") }}
                     </BaseButton>
-                </div>
-                <div class="flex gap-3">
+
                     <!-- Configuration step -->
                     <BaseButton
                         v-if="wizardState.currentStep.id === 'configuration'"
                         variant="primary"
                         :disabled="!wizardState.canGoNext"
                         @click="goNext"
+                        class="min-w-[80px]"
                     >
                         <EyeIcon class="w-4 h-4 mr-2 text-current" />
                         {{ t("import.nextButton") }}
@@ -1062,13 +1068,14 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                         variant="primary"
                         :disabled="!wizardState.canFinish"
                         @click="finish"
+                        class="min-w-[80px]"
                     >
                         <ArrowDownTrayIcon class="w-4 h-4 mr-2 text-current" />
                         {{ t("import.importButton") }}
                     </BaseButton>
 
-                    <!-- Close button -->
-                    <BaseButton variant="secondary" @click="cancel">
+                    <!-- Close Button -->
+                    <BaseButton variant="secondary" @click="cancel" class="min-w-[80px]">
                         {{ t("import.closeButton") }}
                     </BaseButton>
                 </div>

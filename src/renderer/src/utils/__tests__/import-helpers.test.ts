@@ -11,6 +11,7 @@ import {
     toggleFileSelection,
     formatFileSize,
     formatProcessingSpeed,
+    getProcessingSpeedParts,
     formatRemainingTime,
     calculateProgressPercentage,
     createInitialFilePreviewState,
@@ -303,6 +304,85 @@ describe("import-helpers", () => {
         it("should format speed >= 1 file/sec as files/sec", () => {
             expect(formatProcessingSpeed(1)).toBe("1.0 files/sec");
             expect(formatProcessingSpeed(2.5)).toBe("2.5 files/sec");
+        });
+
+        it("should use translation function when provided", () => {
+            const mockT = (key: string) => {
+                const translations: Record<string, string> = {
+                    "import.filesPerSec": "文件/秒",
+                    "import.filesPerMin": "文件/分钟",
+                };
+                return translations[key] || key;
+            };
+
+            expect(formatProcessingSpeed(2.5, mockT)).toBe("2.5 文件/秒");
+            expect(formatProcessingSpeed(0.5, mockT)).toBe("30.0 文件/分钟");
+        });
+
+        it("should fallback to English when translation function is not provided", () => {
+            expect(formatProcessingSpeed(2.5)).toBe("2.5 files/sec");
+            expect(formatProcessingSpeed(0.5)).toBe("30.0 files/min");
+        });
+
+        it("should handle edge cases", () => {
+            expect(formatProcessingSpeed(0)).toBe("0.0 files/min");
+            expect(formatProcessingSpeed(0.999)).toBe("59.9 files/min");
+            expect(formatProcessingSpeed(1.0)).toBe("1.0 files/sec");
+            expect(formatProcessingSpeed(100.0)).toBe("100.0 files/sec");
+        });
+    });
+
+    describe("getProcessingSpeedParts", () => {
+        it("should return correct parts for speed >= 1 file/sec", () => {
+            const result = getProcessingSpeedParts(2.5);
+            expect(result.value).toBe("2.5");
+            expect(result.unit).toBe("files/sec");
+        });
+
+        it("should return correct parts for speed < 1 file/sec", () => {
+            const result = getProcessingSpeedParts(0.5);
+            expect(result.value).toBe("30.0");
+            expect(result.unit).toBe("files/min");
+        });
+
+        it("should use translation function when provided", () => {
+            const mockT = (key: string) => {
+                const translations: Record<string, string> = {
+                    "import.filesPerSec": "файлов/сек",
+                    "import.filesPerMin": "файлов/мин",
+                };
+                return translations[key] || key;
+            };
+
+            const resultSec = getProcessingSpeedParts(2.5, mockT);
+            expect(resultSec.value).toBe("2.5");
+            expect(resultSec.unit).toBe("файлов/сек");
+
+            const resultMin = getProcessingSpeedParts(0.5, mockT);
+            expect(resultMin.value).toBe("30.0");
+            expect(resultMin.unit).toBe("файлов/мин");
+        });
+
+        it("should fallback to English when translation function is not provided", () => {
+            const resultSec = getProcessingSpeedParts(2.5);
+            expect(resultSec.unit).toBe("files/sec");
+
+            const resultMin = getProcessingSpeedParts(0.5);
+            expect(resultMin.unit).toBe("files/min");
+        });
+
+        it("should handle edge cases", () => {
+            const zeroResult = getProcessingSpeedParts(0);
+            expect(zeroResult.value).toBe("0.0");
+            expect(zeroResult.unit).toBe("files/min");
+
+            const boundaryResult = getProcessingSpeedParts(0.999);
+            expect(boundaryResult.value).toBe("59.9");
+            expect(boundaryResult.unit).toBe("files/min");
+
+            const exactOneResult = getProcessingSpeedParts(1.0);
+            expect(exactOneResult.value).toBe("1.0");
+            expect(exactOneResult.unit).toBe("files/sec");
         });
     });
 

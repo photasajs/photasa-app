@@ -63,6 +63,8 @@
         "group": "{count} файлів",
         "processed": "Оброблено",
         "speed": "Швидкість",
+        "filesPerSec": "файлів/сек",
+        "filesPerMin": "файлів/хв",
         "remaining": "Залишилося часу",
         "processing": "Обробка",
         "previewButton": "Попередній перегляд",

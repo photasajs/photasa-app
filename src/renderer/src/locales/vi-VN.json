@@ -63,6 +63,8 @@
         "group": "{count} tệp",
         "processed": "Đã xử lý",
         "speed": "Tốc độ",
+        "filesPerSec": "tệp/giây",
+        "filesPerMin": "tệp/phút",
         "remaining": "Thời gian còn lại",
         "processing": "Đang xử lý",
         "previewButton": "Xem trước",

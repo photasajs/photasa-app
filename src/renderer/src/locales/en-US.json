@@ -64,6 +64,8 @@
         "group": "{count} files",
         "processed": "Processed",
         "speed": "Speed",
+        "filesPerSec": "files/sec",
+        "filesPerMin": "files/min",
         "remaining": "Remaining",
         "processing": "Processing",
         "previewButton": "Preview",

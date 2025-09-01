@@ -106,6 +106,8 @@
         "processed": "Procesado",
         "percentage": "Porcentaje",
         "speed": "Velocidad",
+        "filesPerSec": "archivos/seg",
+        "filesPerMin": "archivos/min",
         "remaining": "Restante",
         "errors": "Errores ({count})",
         "warnings": "Advertencias ({count})",
