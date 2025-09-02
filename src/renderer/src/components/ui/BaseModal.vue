@@ -20,7 +20,7 @@
                     'max-h-[90vh] flex flex-col',
                     sizeClasses,
                 ]"
-                :style="customSizeStyle"
+                :style="[customSizeStyle, props.style]"
                 role="dialog"
                 :aria-labelledby="title ? 'modal-title' : undefined"
                 aria-modal="true"
@@ -91,6 +91,7 @@ interface Props {
     confirmText?: string;
     cancelText?: string;
     persistent?: boolean; // Prevents closing on click outside
+    style?: string | Record<string, string>; // 支持 style 属性
 }
 
 const props = withDefaults(defineProps<Props>(), {

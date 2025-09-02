@@ -244,15 +244,22 @@ graph LR
 
 ### Remaining Tasks
 
+#### **Critical Priority**
+- [ ] Fix duplicate strategy handling in import-worker.ts (Bug #1)
+- [ ] Fix progress updates not reaching UI (Bug #2)  
+- [ ] Implement real-time preview progress with file discovery (Enhancement #3)
+
 #### **High Priority**
 - [ ] Complete progress modal UI polish
 - [ ] Cross-platform integration testing
 - [ ] Performance validation with large datasets
+- [ ] Smart duplicate handling with MD5 verification
 
 #### **Medium Priority**
 - [ ] API documentation completion
 - [ ] Migration guide from old import system
 - [ ] Release notes and changelog
+- [ ] Preview cancellation support
 
 #### **Low Priority**
 - [ ] Advanced filtering features
@@ -585,6 +592,150 @@ Current duplicate handling strategies are too simplistic and lack intelligent co
 #### **Effort**: 🔧 **Medium** - Requires handler enhancement and UI updates
 #### **Status**: 📝 **Documented in RFC**
 
+### 🚨 **Critical Enhancement #3: Preview Loading UX Improvement (2025-09-02)**
+
+#### **Problem**: 
+Import preview takes significant time for large directories (10+ seconds) but only shows static loading spinner, providing no feedback on scan progress.
+
+#### **Current Implementation Analysis**:
+**File**: `src/renderer/src/components/ImportPhotos.vue` - Lines 862-869
+
+```vue
+<!-- ❌ CURRENT: Static loading with no progress feedback -->
+<div v-if="loadingState.preview" class="h-full flex items-center justify-center">
+    <div class="text-center">
+        <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
+        <p class="text-[var(--color-text-secondary)]">
+            {{ t("import.loading.preview") }}
+        </p>
+    </div>
+</div>
+```
+
+**Root Cause Analysis**:
+1. ✅ **API Structure**: `previewImport()` returns complete result only 
+2. ❌ **Progress Feedback**: No intermediate progress events during scanning
+3. ❌ **User Experience**: Users think app is frozen during large directory scans
+4. ❌ **Scan Visibility**: No indication of which directories/files are being processed
+
+#### **Proposed Solution: Event-Driven Preview Progress**
+
+**Architecture Design**:
+```
+generateImportPreview() Process:
+   ↓
+scanDirectoriesForFiles() → Send scan progress events
+   ↓                         (current directory, files found)
+processFileGroups() → Send processing progress events  
+   ↓                  (files processed, groups created)
+calculateStatistics() → Send statistics updates
+   ↓                    (file counts, size totals)
+Final Result → Complete preview with all data
+```
+
+**Implementation Strategy**:
+
+1. **New Preview Progress Interface**:
+```typescript
+interface PreviewProgress {
+    stage: 'scanning' | 'processing' | 'calculating' | 'completed';
+    currentPath?: string;
+    filesFound: number;
+    directoriesScanned: number;
+    totalDirectories?: number;
+    partialStatistics?: Partial<FileStatistics>;
+    message: string;
+}
+```
+
+2. **Worker Layer Enhancement**:
+```typescript
+// src/main/import/import-worker.ts
+async function generateImportPreview(config: ImportConfig): Promise<ImportPreview> {
+    const progressCallback = (progress: PreviewProgress) => {
+        sendPreviewProgressUpdate(config.previewId, progress);
+    };
+
+    progressCallback({ stage: 'scanning', filesFound: 0, directoriesScanned: 0, message: '开始扫描目录...' });
+    
+    const rawFileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters, progressCallback);
+    
+    progressCallback({ stage: 'processing', filesFound: rawFileGroups.length, message: '处理文件组...' });
+    // ... rest of implementation
+}
+```
+
+3. **UI Enhancement**:
+```vue
+<!-- ✅ ENHANCED: Real-time preview progress with file discovery -->
+<div v-if="loadingState.preview" class="h-full flex flex-col">
+    <div class="text-center mb-6">
+        <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
+        <h3 class="text-lg font-medium mb-2">{{ t('import.preview.scanning') }}</h3>
+        <p class="text-sm text-[var(--color-text-secondary)]">
+            {{ previewProgress.message }}
+        </p>
+    </div>
+    
+    <div class="flex-1 max-h-64 overflow-y-auto">
+        <div class="space-y-2">
+            <div v-for="file in discoveredFiles" :key="file.path" 
+                 class="flex items-center p-2 bg-[var(--color-bg-secondary)] rounded">
+                <PhotoIcon class="w-4 h-4 mr-2 text-blue-500" />
+                <span class="text-sm truncate">{{ file.name }}</span>
+                <span class="text-xs text-[var(--color-text-secondary)] ml-auto">
+                    {{ formatFileSize(file.size) }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4 text-center text-sm text-[var(--color-text-secondary)]">
+        已发现 {{ previewProgress.filesFound }} 个文件，扫描了 {{ previewProgress.directoriesScanned }} 个目录
+    </div>
+</div>
+```
+
+4. **Preview Progress State Management**:
+```typescript
+const previewProgress = reactive<PreviewProgress>({
+    stage: 'scanning',
+    filesFound: 0,
+    directoriesScanned: 0,
+    message: ''
+});
+
+const discoveredFiles = reactive<FileInfo[]>([]);
+
+// Listen for preview progress events
+const cleanupPreviewProgress = onPreviewProgress((progress, files) => {
+    Object.assign(previewProgress, progress);
+    if (files) {
+        discoveredFiles.splice(0, discoveredFiles.length, ...files.slice(-50)); // Show latest 50
+    }
+});
+```
+
+#### **Benefits**:
+- ✅ **Immediate Feedback**: Users see scanning progress in real-time
+- ✅ **File Discovery**: Users can see files being found as scan progresses  
+- ✅ **Progress Indication**: Clear stages and file/directory counts
+- ✅ **Perceived Performance**: App feels responsive even during long scans
+- ✅ **Incremental Loading**: Files appear as they're discovered
+- ✅ **Better UX**: Users understand what's happening instead of waiting blindly
+
+#### **Implementation Plan**:
+1. **Phase 1**: Add PreviewProgress interface and event system
+2. **Phase 2**: Enhance generateImportPreview with progress callbacks
+3. **Phase 3**: Update UI to display real-time progress and file list
+4. **Phase 4**: Add preview cancellation support
+5. **Phase 5**: Performance optimization for large directories
+
+#### **Priority**: 🟡 **HIGH** - Significant UX improvement for import workflow
+#### **Impact**: Better user experience during preview generation, especially for large directories
+#### **Effort**: 🔧 **Medium** - Requires event system extension and UI enhancement  
+#### **Status**: 📝 **Documented in RFC** - Ready for implementation
+
 ### 🚨 **Critical Bug #2: Progress Updates Not Reaching UI (2025-08-30)**
 
 #### **Problem**: 
@@ -672,12 +823,14 @@ The Import Wizard System represents a **major leap forward** for Photasa's impor
 
 **Updated Next Steps**:
 1. ✅ **COMPLETED**: Implement IPC architecture fix (Event-driven import system)
-2. 🔴 **CRITICAL #1**: Fix duplicate strategy handling in import-worker.ts  
-3. 🔴 **CRITICAL #2**: Fix progress updates not reaching UI (import-service.ts)
-4. 🟡 **HIGH #1**: Implement smart duplicate handling enhancements
-5. 🟡 **HIGH #2**: Complete remaining integration testing
-6. 🟢 **Medium**: Finalize documentation and examples
-7. 🟢 **Low**: Prepare for production deployment
+2. ✅ **COMPLETED**: Fix import statistics display issue (UI was not updating final stats)
+3. 🔴 **CRITICAL #1**: Fix duplicate strategy handling in import-worker.ts  
+4. 🔴 **CRITICAL #2**: Fix progress updates not reaching UI (import-service.ts)
+5. 🟡 **HIGH #1**: Implement real-time preview progress with file discovery (Enhancement #3)
+6. 🟡 **HIGH #2**: Implement smart duplicate handling enhancements
+7. 🟡 **HIGH #3**: Complete remaining integration testing
+8. 🟢 **Medium**: Finalize documentation and examples
+9. 🟢 **Low**: Prepare for production deployment
 
 The combination of the wizard system's clean UX and the robust event-driven architecture ensures both exceptional user experience and long-term technical maintainability.
 

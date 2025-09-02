@@ -5,6 +5,7 @@
         :size="size"
         :closable="closable"
         :persistent="persistent"
+        :style="style"
         @close="handleClose"
     >
         <div class="wizard-container h-full flex flex-col">
@@ -130,6 +131,7 @@ interface Props {
     cancelButtonText?: string;
     nextButtonIcon?: any;
     finishButtonIcon?: any;
+    style?: string | Record<string, string>; // 支持 style 属性
 }
 
 interface Emits {
