@@ -22,6 +22,7 @@ import { chooseDirectories, previewImport } from "@renderer/utils/api";
 vi.mock("@renderer/utils/api", () => ({
     chooseDirectories: vi.fn(),
     previewImport: vi.fn(),
+    onPreviewProgress: vi.fn(() => () => {}), // Mock cleanup function
 }));
 
 // Mock UI components
