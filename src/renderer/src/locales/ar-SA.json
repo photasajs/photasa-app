@@ -44,7 +44,10 @@
         "fileTypes": {
             "label": "أنواع الملفات",
             "images": "الصور",
-            "videos": "الفيديوهات"
+            "videos": "الفيديوهات",
+            "image": "صورة",
+            "video": "فيديو",
+            "other": "آخر"
         },
         "images": "الصور",
         "videos": "الفيديوهات",
@@ -59,7 +62,15 @@
         },
         "useMD5ForDuplicates": "استخدام التحقق من MD5 لكشف الملفات المكررة",
         "useMD5ForDuplicatesDescription": "عند التفعيل، ستتم مقارنة الملفات باستخدام تجميع MD5 للكشف الدقيق عن الملفات المكررة، بغض النظر عن تواريخ تعديل الملفات",
-        "preview": "معاينة",
+        "preview": {
+            "scanning": "مسح الملفات",
+            "filesFound": "الملفات الموجودة",
+            "directoriesScanned": "المجلدات الممسوحة",
+            "progress": "تقدم المسح",
+            "currentPath": "المسار الحالي",
+            "recentlyFound": "وُجد مؤخراً",
+            "noFilesFound": "لم يتم العثور على ملفات"
+        },
         "totalFiles": "إجمالي الملفات",
         "totalSize": "الحجم الإجمالي",
         "duplicates": "الملفات المكررة",

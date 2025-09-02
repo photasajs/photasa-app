@@ -59,7 +59,15 @@
         },
         "useMD5ForDuplicates": "Usa verifica MD5 per rilevamento duplicati",
         "useMD5ForDuplicatesDescription": "Quando abilitato, i file verranno confrontati utilizzando hash MD5 per un rilevamento accurato dei duplicati, indipendentemente dalle date di modifica",
-        "preview": "Anteprima",
+        "preview": {
+            "scanning": "Scansione File",
+            "filesFound": "File Trovati",
+            "directoriesScanned": "Directory Scansionate",
+            "progress": "Progresso Scansione",
+            "currentPath": "Percorso Corrente",
+            "recentlyFound": "Trovati di Recente",
+            "noFilesFound": "Nessun File Trovato"
+        },
         "totalFiles": "File totali",
         "totalSize": "Dimensione totale",
         "duplicates": "File duplicati",

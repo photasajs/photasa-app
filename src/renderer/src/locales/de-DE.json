@@ -43,7 +43,10 @@
         "fileTypes": {
             "label": "Dateitypen",
             "images": "Bilder",
-            "videos": "Videos"
+            "videos": "Videos",
+            "image": "Bild",
+            "video": "Video",
+            "other": "Andere"
         },
         "images": "Bilder",
         "videos": "Videos",
@@ -58,7 +61,15 @@
         },
         "useMD5ForDuplicates": "MD5-Verifikation für Duplikaterkennung verwenden",
         "useMD5ForDuplicatesDescription": "Wenn aktiviert, werden Dateien mittels MD5-Hash verglichen für präzise Duplikaterkennung, unabhängig von Datei-Änderungsdaten",
-        "preview": "Vorschau",
+        "preview": {
+            "scanning": "Dateien scannen",
+            "filesFound": "Dateien gefunden",
+            "directoriesScanned": "Verzeichnisse gescannt",
+            "progress": "Scan-Fortschritt",
+            "currentPath": "Aktueller Pfad",
+            "recentlyFound": "Kürzlich gefunden",
+            "noFilesFound": "Keine Dateien gefunden"
+        },
         "totalFiles": "Gesamtdateien",
         "totalSize": "Gesamtgröße",
         "duplicates": "Duplikate",

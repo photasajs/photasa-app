@@ -138,6 +138,21 @@ const api = {
     },
 
     /**
+     * 监听预览进度事件
+     */
+    onPreviewProgress: (callback: (progress: any, files?: any[]) => void) => {
+        const handler = (_: any, eventData: any) => {
+            // 处理从import-service发送的数据结构
+            const { progress, files } = eventData;
+            callback(progress, files);
+        };
+        electronAPI.ipcRenderer.on("preview:progress", handler);
+
+        // 返回清理函数
+        return () => electronAPI.ipcRenderer.removeAllListeners("preview:progress");
+    },
+
+    /**
      * 监听导入完成事件
      */
     onImportComplete: (callback: (result: any) => void) => {

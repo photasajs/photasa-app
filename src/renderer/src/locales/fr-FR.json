@@ -44,7 +44,10 @@
         "fileTypes": {
             "label": "Types de fichiers",
             "images": "Images",
-            "videos": "Vidéos"
+            "videos": "Vidéos",
+            "image": "Image",
+            "video": "Vidéo",
+            "other": "Autre"
         },
         "images": "Images",
         "videos": "Vidéos",
@@ -59,7 +62,15 @@
         },
         "useMD5ForDuplicates": "Utiliser la vérification MD5 pour la détection des doublons",
         "useMD5ForDuplicatesDescription": "Quand activé, les fichiers seront comparés en utilisant le hachage MD5 pour une détection précise des doublons, indépendamment des dates de modification",
-        "preview": "Aperçu",
+        "preview": {
+            "scanning": "Analyse des fichiers",
+            "filesFound": "Fichiers trouvés",
+            "directoriesScanned": "Dossiers analysés",
+            "progress": "Progression de l'analyse",
+            "currentPath": "Chemin actuel",
+            "recentlyFound": "Récemment trouvés",
+            "noFilesFound": "Aucun fichier trouvé"
+        },
         "totalFiles": "Nombre total de fichiers",
         "totalSize": "Taille totale",
         "duplicates": "Fichiers en double",

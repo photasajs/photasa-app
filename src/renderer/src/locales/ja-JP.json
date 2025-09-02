@@ -43,7 +43,10 @@
         "fileTypes": {
             "label": "ファイルタイプ",
             "images": "画像",
-            "videos": "動画"
+            "videos": "動画",
+            "image": "画像",
+            "video": "動画",
+            "other": "その他"
         },
         "images": "画像",
         "videos": "動画",
@@ -58,7 +61,15 @@
         },
         "useMD5ForDuplicates": "重複検出にMD5検証を使用",
         "useMD5ForDuplicatesDescription": "有効にすると、ファイルの変更日時に関係なく、MD5ハッシュを使用してファイルを比較し、正確な重複検出を行います",
-        "preview": "プレビュー",
+        "preview": {
+            "scanning": "ファイルスキャン中",
+            "filesFound": "見つかったファイル",
+            "directoriesScanned": "スキャンしたディレクトリ",
+            "progress": "スキャン進行状況",
+            "currentPath": "現在のパス",
+            "recentlyFound": "最近見つかったファイル",
+            "noFilesFound": "ファイルが見つかりません"
+        },
         "totalFiles": "総ファイル数",
         "totalSize": "総サイズ",
         "duplicates": "重複ファイル",

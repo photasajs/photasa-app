@@ -1,5 +1,6 @@
 import createWorker from "./thumbnail-worker?nodeWorker";
 import type { IpcMain } from "electron";
+import { app } from "electron";
 import type { WorkerResponse } from "@common/types";
 import {
     ThumbnailServiceAction,
@@ -24,8 +25,15 @@ export default class ThumbnailService {
 
     constructor(ipcMain: IpcMain) {
         this.ipc = ipcMain;
-        // 创建 worker
-        this.worker = createWorker({ workerData: "worker" });
+        // 创建 worker，传递应用路径
+
+        this.worker = createWorker({
+            workerData: "worker",
+            env: {
+                ...process.env,
+                APP_PATH: app.getAppPath(),
+            },
+        });
         // 处理 worker 消息
         this.worker.on("message", (message: WorkerResponse<ThumbnailResponse>) => {
             onWorkerResponse<ThumbnailResponse>(message);

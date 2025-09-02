@@ -9,6 +9,28 @@ import type { FileAction } from "./types";
 export type FileType = "image" | "video" | "all";
 
 /**
+ * 预览进度信息
+ */
+export interface PreviewProgress {
+    /** 当前阶段 */
+    stage: "scanning" | "processing" | "calculating" | "completed";
+    /** 当前扫描的路径 */
+    currentPath?: string;
+    /** 已发现的文件数量 */
+    filesFound: number;
+    /** 已扫描的目录数量 */
+    directoriesScanned: number;
+    /** 总目录数量（可选） */
+    totalDirectories?: number;
+    /** 部分统计信息 */
+    partialStatistics?: Partial<FileStatistics>;
+    /** 已发现的文件列表（仅显示最新的部分文件） */
+    discoveredFiles?: FileInfo[];
+    /** 进度消息 */
+    message: string;
+}
+
+/**
  * 日期来源类型
  * - exif: 从图片EXIF数据中提取的日期
  * - video_metadata: 从视频元数据中提取的日期

@@ -45,7 +45,10 @@
         "fileTypes": {
             "label": "文件类型",
             "images": "图片",
-            "videos": "视频"
+            "videos": "视频",
+            "image": "图片",
+            "video": "视频", 
+            "other": "其他"
         },
         "images": "图片",
         "videos": "视频",
@@ -60,7 +63,15 @@
         },
         "useMD5ForDuplicates": "使用MD5验证进行重复文件检测",
         "useMD5ForDuplicatesDescription": "启用后，将使用MD5散列值比较文件内容，实现精确的重复文件检测，不受文件修改时间影响",
-        "preview": "预览",
+        "preview": {
+            "scanning": "正在扫描文件",
+            "filesFound": "已发现文件",
+            "directoriesScanned": "已扫描目录",
+            "progress": "扫描进度", 
+            "currentPath": "当前路径",
+            "recentlyFound": "最近发现",
+            "noFilesFound": "未找到文件"
+        },
         "totalFiles": "总文件数",
         "totalSize": "总大小",
         "duplicates": "重复文件",

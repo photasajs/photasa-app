@@ -44,7 +44,10 @@
         "fileTypes": {
             "label": "Loại tệp",
             "images": "Hình ảnh",
-            "videos": "Video"
+            "videos": "Video",
+            "image": "Hình ảnh",
+            "video": "Video",
+            "other": "Khác"
         },
         "images": "Hình ảnh",
         "videos": "Video",
@@ -59,7 +62,15 @@
         },
         "useMD5ForDuplicates": "Sử dụng xác minh MD5 để phát hiện trùng lặp",
         "useMD5ForDuplicatesDescription": "Khi được bật, các tệp sẽ được so sánh bằng hash MD5 để phát hiện trùng lặp chính xác, bất kể ngày sửa đổi tệp",
-        "preview": "Xem trước",
+        "preview": {
+            "scanning": "Quét Tệp",
+            "filesFound": "Tệp Đã Tìm Thấy",
+            "directoriesScanned": "Thư Mục Đã Quét",
+            "progress": "Tiến Trình Quét",
+            "currentPath": "Đường Dẫn Hiện Tại",
+            "recentlyFound": "Mới Tìm Thấy",
+            "noFilesFound": "Không Tìm Thấy Tệp"
+        },
         "totalFiles": "Tổng số tệp",
         "totalSize": "Tổng kích thước",
         "group": "{count} tệp",

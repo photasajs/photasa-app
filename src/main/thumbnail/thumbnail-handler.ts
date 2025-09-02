@@ -1,12 +1,14 @@
 import isVideo from "is-video";
-import { ensureDir, exists, remove, readFile } from "fs-extra";
+import { ensureDir, exists, remove, readFile, unlink } from "fs-extra";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
+import { exec } from "child_process";
+import { promisify } from "util";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { toPreviewPath } from "@shared/path-util";
 import { getOptimalThumbnailResolution, HeicExtensionRE, ratioStringToParts } from "@common/utils";
-import { initializeHeifModule } from "../wasm/heif-module";
+import { initializeHeifModule, resetHeifModule } from "../wasm/heif-module";
 import {
     calculateAdjustedDimensions,
     createFallbackThumbnail,
@@ -62,8 +64,46 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
             throw new Error("Invalid WASM module - missing required functions");
         }
 
-        // 解码 HEIC/HEIF 文件
-        const decoded = heifModule.decode(inputBuffer, inputBuffer.byteLength, false) as Uint8Array;
+        // 安全解码 HEIC/HEIF 文件，包装在try-catch中处理WASM错误
+        let decoded: Uint8Array;
+        try {
+            // 某些HEIC文件可能导致WASM内存越界，尝试使用不同的解码参数
+            decoded = heifModule.decode(inputBuffer, inputBuffer.byteLength, false) as Uint8Array;
+        } catch (decodeError: any) {
+            // 如果是内存访问错误，尝试使用更小的缓冲区或其他策略
+            if (decodeError?.message?.includes("memory access out of bounds")) {
+                logger.warn(
+                    "[thumbnail-handler] WASM memory access error, trying alternative decode",
+                );
+
+                // 尝试重新初始化模块
+                resetHeifModule();
+                heifModule = await initializeHeifModule();
+
+                // 尝试使用较小的缓冲区
+                const maxSize = 1024 * 1024 * 10; // 10MB limit
+                if (inputBuffer.byteLength > maxSize) {
+                    logger.warn(
+                        `[thumbnail-handler] File too large (${inputBuffer.byteLength} bytes), skipping HEIC decode`,
+                    );
+                    throw new Error("HEIC file too large for WASM decoder");
+                }
+
+                // 再次尝试解码
+                try {
+                    decoded = heifModule.decode(
+                        inputBuffer,
+                        inputBuffer.byteLength,
+                        true,
+                    ) as Uint8Array;
+                } catch (retryError) {
+                    logger.error("[thumbnail-handler] HEIC decode retry failed:", retryError);
+                    throw new Error(`HEIC decode failed after retry: ${retryError}`);
+                }
+            } else {
+                throw decodeError;
+            }
+        }
 
         // 检查解码结果
         if (!decoded || (typeof decoded === "object" && (decoded as any).error)) {
@@ -85,8 +125,26 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
         const { width, height, channels } = dimensions;
         logger.info(`[wasm-heif] Decoded width=${width}, height=${height}, channels=${channels}`);
 
-        // 检查 buffer 长度 - 使用纯函数处理
-        const expectedSize = width * height * channels;
+        // 自动检测实际的通道数
+        let actualChannels = channels;
+        const decodedSize = decoded.length;
+        const pixelCount = width * height;
+
+        // 如果buffer大小不匹配声明的通道数，尝试推断实际通道数
+        if (decodedSize === pixelCount * 4 && channels === 3) {
+            logger.info(
+                `[wasm-heif] Buffer size suggests 4 channels (RGBA) despite dimensions reporting ${channels}`,
+            );
+            actualChannels = 4;
+        } else if (decodedSize === pixelCount * 3 && channels === 4) {
+            logger.info(
+                `[wasm-heif] Buffer size suggests 3 channels (RGB) despite dimensions reporting ${channels}`,
+            );
+            actualChannels = 3;
+        }
+
+        // 检查 buffer 长度 - 使用实际通道数
+        const expectedSize = width * height * actualChannels;
         const { isWithin, difference, tolerance } = isBufferSizeWithinTolerance(
             decoded.length,
             expectedSize,
@@ -94,15 +152,13 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
 
         if (!isWithin) {
             logger.error(
-                `[wasm-heif] Buffer size mismatch exceeds tolerance: expect ${width}*${height}*${channels}=${expectedSize}, got ${decoded.length}, difference: ${difference} bytes (tolerance: ${tolerance} bytes)`,
+                `[wasm-heif] Buffer size mismatch exceeds tolerance: expect ${width}*${height}*${actualChannels}=${expectedSize}, got ${decoded.length}, difference: ${difference} bytes (tolerance: ${tolerance} bytes)`,
             );
 
             // 尝试调整尺寸以适应实际缓冲区大小
-            const adjustedDimensions = calculateAdjustedDimensions(decoded, width, channels);
+            const adjustedDimensions = calculateAdjustedDimensions(decoded, width, actualChannels);
             if (adjustedDimensions) {
-                logger.info(
-                    `[wasm-heif] Adjusting height from ${height} to ${adjustedDimensions.height} to match buffer size`,
-                );
+                logger.info(`[wasm-heif] Adjusting dimensions to match buffer size`);
                 return await processAdjustedBuffer(
                     decoded,
                     adjustedDimensions,
@@ -116,19 +172,20 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
             );
         } else if (difference > 0) {
             logger.warn(
-                `[wasm-heif] Buffer size mismatch within tolerance: expect ${width}*${height}*${channels}=${expectedSize}, got ${decoded.length}, difference: ${difference} bytes (within tolerance: ${tolerance} bytes)`,
+                `[wasm-heif] Buffer size mismatch within tolerance: expect ${width}*${height}*${actualChannels}=${expectedSize}, got ${decoded.length}, difference: ${difference} bytes (within tolerance: ${tolerance} bytes)`,
             );
         }
-        // 若 channels 不是 4，补齐为 RGBA
+        // 若 actualChannels 不是 4，补齐为 RGBA
         let rgbaBuffer: Buffer;
-        if (channels === 4) {
+        if (actualChannels === 4) {
             rgbaBuffer = Buffer.from(decoded);
-        } else if (channels === 3) {
+            logger.info(`[wasm-heif] Using RGBA buffer directly, length=${rgbaBuffer.length}`);
+        } else if (actualChannels === 3) {
             rgbaBuffer = convertRgbToRgba(decoded, width, height);
             logger.info(`[wasm-heif] RGB buffer补齐为RGBA, new length=${rgbaBuffer.length}`);
         } else {
-            logger.error(`[wasm-heif] Unsupported channels: ${channels}`);
-            throw new Error(`[wasm-heif] Unsupported channels: ${channels}`);
+            logger.error(`[wasm-heif] Unsupported channels: ${actualChannels}`);
+            throw new Error(`[wasm-heif] Unsupported channels: ${actualChannels}`);
         }
 
         // 用 sharp 生成 JPEG 预览
@@ -142,16 +199,77 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
     } catch (e) {
         logger.error("[thumbnail-handler] HEIC/HEIF decode error:", e);
 
-        // 尝试使用回退方案：使用文件修改时间作为缩略图标识
+        // 尝试多个回退方案
+
+        // 回退方案1：尝试使用sharp直接处理HEIC（某些版本的sharp支持HEIC）
         try {
-            logger.info("[thumbnail-handler] Attempting fallback solution for HEIC file");
+            logger.info("[thumbnail-handler] Attempting to use sharp directly for HEIC file");
+            const sharpImage = sharp(inputBuffer);
+            const metadata = await sharpImage.metadata();
+
+            if (metadata.width && metadata.height) {
+                await sharpImage
+                    .resize(800, 600, { fit: "inside", withoutEnlargement: true })
+                    .jpeg({ quality: 85 })
+                    .toFile(previewName);
+
+                logger.info(
+                    "[thumbnail-handler] Successfully created preview using sharp directly",
+                );
+                return previewName;
+            }
+        } catch (sharpError) {
+            logger.debug("[thumbnail-handler] Sharp direct processing failed:", sharpError);
+        }
+
+        // 回退方案2：在macOS上使用sips命令
+        if (process.platform === "darwin") {
+            try {
+                logger.info("[thumbnail-handler] Attempting to use macOS sips for HEIC conversion");
+
+                const execAsync = promisify(exec);
+
+                const tempJpegPath = previewName + ".temp.jpg";
+                try {
+                    // 使用sips转换HEIC到JPEG
+                    await execAsync(
+                        `sips -s format jpeg "${arg.path}" --out "${tempJpegPath}" 2>/dev/null`,
+                    );
+
+                    // 检查临时文件是否创建成功
+                    if (await exists(tempJpegPath)) {
+                        // 使用sharp优化图片大小
+                        await sharp(tempJpegPath)
+                            .resize(800, 600, { fit: "inside", withoutEnlargement: true })
+                            .jpeg({ quality: 85 })
+                            .toFile(previewName);
+
+                        // 删除临时文件
+                        await unlink(tempJpegPath).catch(() => {});
+
+                        logger.info("[thumbnail-handler] Successfully created preview using sips");
+                        return previewName;
+                    }
+                } catch (sipsError) {
+                    logger.debug("[thumbnail-handler] sips conversion failed:", sipsError);
+                    // 清理临时文件
+                    await unlink(tempJpegPath).catch(() => {});
+                }
+            } catch (systemError) {
+                logger.debug("[thumbnail-handler] System tools processing failed:", systemError);
+            }
+        }
+
+        // 回退方案3：创建占位符缩略图
+        try {
+            logger.info("[thumbnail-handler] Creating fallback thumbnail for HEIC file");
             const fallbackPath = await createFallbackThumbnail(arg, logger);
             if (fallbackPath) {
                 logger.info("[thumbnail-handler] Fallback thumbnail created successfully");
                 return fallbackPath;
             }
         } catch (fallbackError) {
-            logger.warn("[thumbnail-handler] Fallback solution also failed:", fallbackError);
+            logger.warn("[thumbnail-handler] All fallback solutions failed:", fallbackError);
         }
 
         throw e;

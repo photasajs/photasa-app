@@ -44,7 +44,10 @@
         "fileTypes": {
             "label": "Dosya Türleri",
             "images": "Resimler",
-            "videos": "Videolar"
+            "videos": "Videolar",
+            "image": "Resim",
+            "video": "Video",
+            "other": "Diğer"
         },
         "images": "Resimler",
         "videos": "Videolar",
@@ -59,7 +62,15 @@
         },
         "useMD5ForDuplicates": "Yinelenen dosya tespiti için MD5 doğrulaması kullan",
         "useMD5ForDuplicatesDescription": "Etkinleştirildiğinde, dosya değişiklik tarihlerinden bağımsız olarak doğru yinelenen tespit için dosyalar MD5 hash kullanılarak karşılaştırılacaktır",
-        "preview": "Önizleme",
+        "preview": {
+            "scanning": "Dosyalar Taranıyor",
+            "filesFound": "Bulunan Dosyalar",
+            "directoriesScanned": "Taranan Dizinler",
+            "progress": "Tarama İlerlemesi",
+            "currentPath": "Mevcut Yol",
+            "recentlyFound": "Son Bulunanlar",
+            "noFilesFound": "Dosya Bulunamadı"
+        },
         "totalFiles": "Toplam Dosya",
         "totalSize": "Toplam Boyut",
         "group": "{count} dosya",

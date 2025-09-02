@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { chooseDirectories, previewImport } from "@renderer/utils/api";
+import { chooseDirectories, previewImport, onPreviewProgress } from "@renderer/utils/api";
 import { getLogger } from "@common/logger";
 import {
     createDefaultFilters,
@@ -77,7 +77,8 @@ import {
 import { BaseWizard, createWizardStep, createWizardConfig } from "@renderer/components/wizard";
 import VirtualList from "@renderer/components/ui/VirtualList.vue";
 import ImportProgressModal from "./ImportProgressModal.vue";
-import type { ImportConfig, ImportResult } from "@common/import-types";
+import PreviewProgressDisplay from "./import/PreviewProgressDisplay.vue";
+import type { ImportConfig, ImportResult, PreviewProgress } from "@common/import-types";
 
 /**
  * Component Props Definition
@@ -164,6 +165,19 @@ const loadingState = reactive({
     directories: false,
     validation: false,
 });
+
+// 预览进度状态
+const previewProgress = reactive<PreviewProgress>({
+    stage: "scanning",
+    currentPath: "",
+    filesFound: 0,
+    directoriesScanned: 0,
+    totalDirectories: 0,
+    message: "",
+});
+
+// 已发现的文件列表
+const discoveredFiles = reactive<any[]>([]);
 
 /**
  * Handle wizard completion - transform data and show progress modal
@@ -544,22 +558,77 @@ const loadPreviewData = async (wizardState: any) => {
     const result = await executeWithErrorHandling(
         async () => {
             loadingState.preview = true;
+            logger.debug("Preview started, loadingState.preview set to true");
 
-            // 将向导配置数据转换为API调用所需的格式
-            const config = createPreviewConfig(configData);
+            // 重置预览进度状态
+            Object.assign(previewProgress, {
+                stage: "scanning",
+                currentPath: "",
+                filesFound: 0,
+                directoriesScanned: 0,
+                totalDirectories: 0,
+                message: "开始扫描目录...",
+            });
+            logger.debug("Preview progress state reset:", previewProgress);
 
-            logger.debug("Preview config before API call:", config);
+            // 清空已发现的文件列表
+            discoveredFiles.splice(0);
 
-            // 调用后端API获取预览数据
-            const previewResponse = await previewImport(config);
+            // 设置预览进度监听
+            let cleanupProgress: (() => void) | null = null;
+            try {
+                cleanupProgress = onPreviewProgress((progress, files) => {
+                    logger.debug("Preview progress received:", {
+                        progressStage: progress.stage,
+                        filesFound: progress.filesFound,
+                        discoveredFilesInProgress: progress.discoveredFiles?.length || 0,
+                        filesParam: files?.length || 0,
+                        currentDiscoveredCount: discoveredFiles.length,
+                    });
 
-            // 将API响应转换为前端组件所需的数据格式
-            const previewData = transformPreviewResponse(previewResponse);
+                    // 更新进度状态
+                    Object.assign(previewProgress, progress);
 
-            // 更新预览步骤的数据，触发UI重新渲染
-            wizardState.setStepData("preview", previewData);
+                    // 检查progress中是否有discoveredFiles字段
+                    const foundFiles = progress.discoveredFiles || files;
+                    if (foundFiles && foundFiles.length > 0) {
+                        logger.debug(
+                            "Updating discovered files from",
+                            discoveredFiles.length,
+                            "to",
+                            foundFiles.length,
+                        );
+                        // 实时更新文件列表，保持最新的50个文件
+                        const newFiles = foundFiles.slice(-50);
+                        discoveredFiles.splice(0, discoveredFiles.length, ...newFiles);
+                        logger.debug(
+                            "Discovered files updated, new count:",
+                            discoveredFiles.length,
+                        );
+                    }
+                });
 
-            return previewData;
+                // 将向导配置数据转换为API调用所需的格式
+                const config = createPreviewConfig(configData);
+
+                logger.debug("Preview config before API call:", config);
+
+                // 调用后端API获取预览数据
+                const previewResponse = await previewImport(config);
+
+                // 将API响应转换为前端组件所需的数据格式
+                const previewData = transformPreviewResponse(previewResponse);
+
+                // 更新预览步骤的数据，触发UI重新渲染
+                wizardState.setStepData("preview", previewData);
+
+                return previewData;
+            } finally {
+                // 清理预览进度监听器
+                if (cleanupProgress) {
+                    cleanupProgress();
+                }
+            }
         },
         "api",
         () => loadPreviewData(wizardState),
@@ -859,13 +928,11 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
             {{ !stepData ? initializeAllStepData(setStepData) : null }}
 
             <!-- Loading State for Preview -->
-            <div v-if="loadingState.preview" class="h-full flex items-center justify-center">
-                <div class="text-center">
-                    <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
-                    <p class="text-[var(--color-text-secondary)]">
-                        {{ t("import.loading.preview") }}
-                    </p>
-                </div>
+            <div v-if="loadingState.preview" class="h-full">
+                <PreviewProgressDisplay
+                    :progress="previewProgress"
+                    :discovered-files="discoveredFiles"
+                />
             </div>
 
             <!-- Preview Content -->

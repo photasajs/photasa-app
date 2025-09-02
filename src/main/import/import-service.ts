@@ -2,7 +2,14 @@ import createWorker from "./import-worker?nodeWorker";
 import type { IpcMain } from "electron";
 import { dialog } from "electron";
 import type { WorkerResponse } from "@common/types";
-import { sendWorkerTask, onWorkerResponse, Worker, type ProgressEvent } from "@common/worker-util";
+import {
+    sendWorkerTask,
+    onWorkerResponse,
+    onPreviewProgressEvent,
+    Worker,
+    type ProgressEvent,
+    type PreviewProgressEvent,
+} from "@common/worker-util";
 import { getLogger } from "@common/logger";
 import { ImportEvents } from "@common/constants";
 import { importHistoryManager } from "./history-manager";
@@ -55,16 +62,21 @@ export default class ImportService {
         this.worker = createWorker({ workerData: "worker" });
 
         // 处理 worker 消息
-        this.worker.on("message", (message: WorkerResponse<ImportResponse> | ProgressEvent) => {
-            this.logger.debug("Received message from import worker:", message);
+        this.worker.on(
+            "message",
+            (message: WorkerResponse<ImportResponse> | ProgressEvent | PreviewProgressEvent) => {
+                this.logger.debug("Received message from import worker:", message);
 
-            // 检查是否是进度事件
-            if ((message as ProgressEvent).type === "progress") {
-                this.handleProgressEvent(message as ProgressEvent);
-            } else {
-                onWorkerResponse<ImportResponse>(message as WorkerResponse<ImportResponse>);
-            }
-        });
+                // 检查消息类型
+                if ((message as ProgressEvent).type === "progress") {
+                    this.handleProgressEvent(message as ProgressEvent);
+                } else if ((message as PreviewProgressEvent).type === "preview_progress") {
+                    onPreviewProgressEvent(message as PreviewProgressEvent);
+                } else {
+                    onWorkerResponse<ImportResponse>(message as WorkerResponse<ImportResponse>);
+                }
+            },
+        );
 
         // 注册IPC处理器
         this.setupIpcHandlers();
@@ -261,10 +273,21 @@ export default class ImportService {
                 },
             };
 
+            // 创建临时的预览ID用于进度跟踪
+            const previewId = `preview_${Date.now()}`;
+
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
                 this.worker,
                 "preview_import",
                 { action: "preview_import", payload: serializableConfig as any },
+                (progress) => {
+                    // 转发预览进度到渲染进程，确保包含发现的文件
+                    this.mainWindow?.webContents.send("preview:progress", {
+                        previewId,
+                        progress,
+                        files: progress.discoveredFiles, // 显式传递发现的文件
+                    });
+                },
             );
 
             if (!response.success || !response.data) {

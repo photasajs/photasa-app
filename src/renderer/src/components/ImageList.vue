@@ -25,6 +25,11 @@ import LoadingState from "./common/LoadingState.vue";
 import EmptyState from "./common/EmptyState.vue";
 import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
 
+// 定义组件事件
+const emit = defineEmits<{
+    import: [];
+}>();
+
 // 国际化
 const { t } = useI18n();
 // 偏好设置
@@ -232,7 +237,7 @@ onUnmounted(() => {
                 <EmptyState
                     :emptyText="t('empty.image')"
                     :buttonText="t('empty.importBtn')"
-                    @buttonClick="$emit('import')"
+                    @buttonClick="emit('import')"
                 />
             </template>
             <!-- 加载状态：集成骨架屏+LoadingState 组件 -->

@@ -198,6 +198,15 @@ export function onImportProgress(callback: (progress: ImportProgress) => void): 
 }
 
 /**
+ * 监听预览进度事件
+ * @param callback 预览进度回调函数
+ * @returns 清理函数
+ */
+export function onPreviewProgress(callback: (progress: any, files?: any[]) => void): () => void {
+    return window.api.onPreviewProgress(callback);
+}
+
+/**
  * 监听导入完成事件
  * @param callback 完成回调函数
  * @returns 清理函数

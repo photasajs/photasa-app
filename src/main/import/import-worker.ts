@@ -1,6 +1,10 @@
 import { parentPort } from "worker_threads";
 import { loggers } from "@common/logger";
-import { createResponse, createProgressEvent } from "@common/worker-util";
+import {
+    createResponse,
+    createPreviewProgressEvent,
+    createProgressEvent,
+} from "@common/worker-util";
 import type { WorkerMessage } from "@common/types";
 import type {
     ImportRequest,
@@ -185,7 +189,14 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
 
     try {
         const processedConfig = processImportConfig(config);
-        const preview = await generateImportPreview(processedConfig);
+
+        // 创建进度回调函数，将进度事件发送给主进程
+        const progressCallback = (progress: any) => {
+            const progressEvent = createPreviewProgressEvent(message.id, progress);
+            parentPort?.postMessage(progressEvent);
+        };
+
+        const preview = await generateImportPreview(processedConfig, progressCallback);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: true,
             data: preview,
@@ -333,9 +344,13 @@ function createSerializableError(error: unknown) {
 // ==================== 文件扫描逻辑 ====================
 
 /**
- * 扫描多个目录获取文件信息 - 使用策略模式
+ * 扫描多个目录获取文件信息 - 使用策略模式，支持进度回调
  */
-async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<FileGroup[]> {
+async function scanDirectoriesForFiles(
+    paths: string[],
+    filters?: any,
+    progressCallback?: (progress: any) => void,
+): Promise<FileGroup[]> {
     const allFiles: FileInfo[] = [];
 
     if (!Array.isArray(paths)) {
@@ -345,6 +360,8 @@ async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<
         return [];
     }
 
+    let directoriesScanned = 0;
+
     for (const dirPath of paths) {
         logger.debug(`[import-worker] 扫描目录: ${dirPath}`);
 
@@ -353,8 +370,33 @@ async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<
             continue;
         }
 
-        const files = await scanSingleDirectory(dirPath, filters);
+        // 发送扫描进度
+        progressCallback?.({
+            stage: "scanning",
+            currentPath: dirPath,
+            filesFound: allFiles.length,
+            directoriesScanned,
+            totalDirectories: paths.length,
+            discoveredFiles: allFiles.slice(-30), // 显示最新发现的30个文件
+            message: `正在扫描：${path.basename(dirPath)}`,
+        });
+
+        const files = await scanSingleDirectory(dirPath, filters, progressCallback, allFiles);
         allFiles.push(...files);
+        directoriesScanned++;
+
+        // 扫描完每个目录后发送更新
+        if (files.length > 0) {
+            progressCallback?.({
+                stage: "scanning",
+                currentPath: dirPath,
+                filesFound: allFiles.length,
+                directoriesScanned,
+                totalDirectories: paths.length,
+                discoveredFiles: allFiles.slice(-30), // 显示全局最新发现的30个文件
+                message: `已扫描目录：${path.basename(dirPath)} (${allFiles.length} 个文件)`,
+            });
+        }
     }
 
     const detector = new FileGroupDetector();
@@ -368,9 +410,14 @@ async function scanDirectoriesForFiles(paths: string[], filters?: any): Promise<
 }
 
 /**
- * 扫描单个目录 - 使用递归策略模式
+ * 扫描单个目录 - 使用递归策略模式，支持进度回调
  */
-async function scanSingleDirectory(dirPath: string, filters?: any): Promise<FileInfo[]> {
+async function scanSingleDirectory(
+    dirPath: string,
+    filters?: any,
+    progressCallback?: (progress: any) => void,
+    allFiles?: FileInfo[],
+): Promise<FileInfo[]> {
     const files: FileInfo[] = [];
 
     try {
@@ -385,7 +432,12 @@ async function scanSingleDirectory(dirPath: string, filters?: any): Promise<File
 
             if (entry.isDirectory()) {
                 if (filters?.includeSubfolders !== false) {
-                    const subFiles = await scanSingleDirectory(fullPath, filters);
+                    const subFiles = await scanSingleDirectory(
+                        fullPath,
+                        filters,
+                        progressCallback,
+                        allFiles,
+                    );
                     files.push(...subFiles);
                 }
                 continue;
@@ -395,6 +447,22 @@ async function scanSingleDirectory(dirPath: string, filters?: any): Promise<File
                 const fileInfo = await createFileInfo(fullPath);
                 if (fileInfo) {
                     files.push(fileInfo);
+
+                    // 每发现新文件就发送进度更新，但限制频率避免过于频繁
+                    if (files.length % 3 === 0 || files.length <= 15) {
+                        const totalFound = (allFiles?.length || 0) + files.length;
+
+                        // 将新发现的文件添加到全局列表的副本中以便预览
+                        const allDiscoveredFiles = [...(allFiles || []), ...files];
+
+                        progressCallback?.({
+                            stage: "scanning",
+                            currentPath: dirPath,
+                            filesFound: totalFound,
+                            discoveredFiles: allDiscoveredFiles.slice(-30), // 显示全局最新发现的30个文件
+                            message: `已发现 ${totalFound} 个文件`,
+                        });
+                    }
                 }
             }
         }
@@ -538,9 +606,12 @@ function applySizeFilter(filePath: string, filters?: any): boolean {
 // ==================== 导入预览逻辑 ====================
 
 /**
- * 生成导入预览 - 使用工厂模式
+ * 生成导入预览 - 使用工厂模式，支持进度回调
  */
-async function generateImportPreview(config: ImportConfig): Promise<ImportPreview> {
+async function generateImportPreview(
+    config: ImportConfig,
+    progressCallback?: (progress: any) => void,
+): Promise<ImportPreview> {
     logger.debug(`[import-worker] 生成导入预览`);
 
     if (!Array.isArray(config.sourcePaths)) {
@@ -550,12 +621,51 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
         throw new Error("sourcePaths must be an array");
     }
 
-    const rawFileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
+    // 阶段1: 扫描目录
+    progressCallback?.({
+        stage: "scanning",
+        filesFound: 0,
+        directoriesScanned: 0,
+        message: "开始扫描目录...",
+    });
+
+    const rawFileGroups = await scanDirectoriesForFiles(
+        config.sourcePaths,
+        config.filters,
+        progressCallback,
+    );
+
+    // 阶段2: 处理文件组
+    progressCallback?.({
+        stage: "processing",
+        filesFound: rawFileGroups.reduce((sum, group) => sum + group.files.length, 0),
+        directoriesScanned: config.sourcePaths.length,
+        message: "处理文件组和元数据...",
+    });
+
     const fileGroups = await processFileGroups(rawFileGroups);
+
+    // 阶段3: 计算统计信息
+    progressCallback?.({
+        stage: "calculating",
+        filesFound: fileGroups.reduce((sum, group) => sum + group.files.length, 0),
+        directoriesScanned: config.sourcePaths.length,
+        message: "计算统计信息...",
+    });
+
     const statistics = calculateFileStatistics(fileGroups);
     const duplicates = await detectDuplicateFiles(fileGroups, config.targetPath);
     const estimatedDuration = estimateImportDuration(fileGroups);
     const targetStructure = await generateTargetStructure(fileGroups, config.targetPath);
+
+    // 完成
+    progressCallback?.({
+        stage: "completed",
+        filesFound: statistics.totalFiles,
+        directoriesScanned: config.sourcePaths.length,
+        partialStatistics: statistics,
+        message: "预览生成完成",
+    });
 
     return {
         fileGroups,

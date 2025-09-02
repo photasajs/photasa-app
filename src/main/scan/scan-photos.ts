@@ -12,12 +12,22 @@ import path from "path";
 import { WorkerPool } from "../workers/worker-pool";
 import createWorker from "../thumbnail/thumbnail-worker?nodeWorker";
 import { loggers, PhotasaLogger } from "@common/logger";
+import type { WorkerOptions } from "worker_threads";
+import { app } from "electron";
 const logger = loggers.scan;
 
 const THUMBNAIL_WORKER_CONFIG = {
     minWorkers: 2,
     maxWorkers: 4,
-    createWorker: (options?: unknown) => createWorker(options as WorkerOptions),
+    createWorker: (options?: unknown) => {
+        return createWorker({
+            ...(options as WorkerOptions),
+            env: {
+                ...process.env,
+                APP_PATH: app.getAppPath(),
+            },
+        });
+    },
 };
 
 /**
