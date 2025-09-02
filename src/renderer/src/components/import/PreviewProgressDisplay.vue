@@ -30,7 +30,8 @@
                 <div class="text-2xl font-bold text-[var(--color-text)]">
                     {{
                         Math.round(
-                            (props.progress.directoriesScanned / (props.progress.totalDirectories || 1)) *
+                            (props.progress.directoriesScanned /
+                                (props.progress.totalDirectories || 1)) *
                                 100,
                         )
                     }}%
@@ -44,7 +45,7 @@
             <div class="p-3 bg-[var(--color-bg-secondary)] rounded-lg">
                 <div class="text-xs text-[var(--color-text-secondary)] mb-1">当前扫描路径</div>
                 <div class="font-mono text-sm text-[var(--color-text)] truncate">
-                    {{ formatPath(props.progress.currentPath || '') }}
+                    {{ formatPath(props.progress.currentPath || "") }}
                 </div>
             </div>
         </div>
