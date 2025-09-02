@@ -148,24 +148,17 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
         concatMap(async (action: PhotoFileRequest) => {
             // 检查文件是否需要处理
             const shouldProcess = await shouldProcessFile(action.path, scan.action);
-            logger.debug(
-                `[scan-photos] shouldProcessFile(${action.path}, ${scan.action}) =`,
-                shouldProcess,
-            );
 
             // 如果文件不需要处理，则跳过
             if (!shouldProcess) {
-                logger.debug(`[scan-photos] Skipping ${action.path} - already in config`);
                 return action;
             }
 
             // 检查缩略图是否存在
             const thumbnailExists = fs.existsSync(action.thumbnail);
-            logger.debug(`[scan-photos] thumbnailExists(${action.thumbnail}) =`, thumbnailExists);
 
             // 如果缩略图不存在，或者扫描动作是 rescan，则创建缩略图
             if (!thumbnailExists || scan.action === "rescan") {
-                logger.debug(`[scan-photos] Creating thumbnail for ${action.path}`);
                 await workerPool.addTask("create", {
                     path: action.path,
                     thumbnail: action.thumbnail,
@@ -176,17 +169,16 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                     always: false,
                 });
             } else {
-                logger.debug(`[scan-photos] Using existing thumbnail for ${action.path}`);
             }
 
             // 添加到配置中
-            logger.debug(`[scan-photos] addToPhotasaConfig: queueId=0, paths=[${action.path}]`);
+
             await addToPhotasaConfig(
                 {
                     queueId: 0,
                     paths: [action.path],
                 },
-                () => logger.debug(`[scan-photos] Config update: ${action.path}`),
+                () => {},
                 logger,
             );
 

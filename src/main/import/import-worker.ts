@@ -75,8 +75,6 @@ const FILE_TYPE_DETECTORS = {
  * 主消息处理器 - 使用映射模式路由到相应的处理器
  */
 parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
-    logger.debug(`[import-worker] 收到消息: ${JSON.stringify(message)}`);
-
     try {
         const { action } = message;
 
@@ -86,7 +84,6 @@ parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
         if (handler) {
             await handler(message);
         } else {
-            logger.debug(`[import-worker] 未知操作: ${action}`);
             const errorResponse = createResponse<ImportRequest, ImportResponse>(message, {
                 success: false,
                 error: "Unknown action",
@@ -110,7 +107,6 @@ parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
  */
 async function handleExtractMetadata(message: WorkerMessage<ImportRequest>): Promise<void> {
     const request = message.payload as unknown as MetadataRequest;
-    logger.debug(`[import-worker] 提取元数据: ${request.filePath}`);
 
     try {
         const metadata = await extractMetadata(request, logger);
@@ -134,7 +130,6 @@ async function handleExtractMetadata(message: WorkerMessage<ImportRequest>): Pro
  */
 async function handleProcessFileGroup(message: WorkerMessage<ImportRequest>): Promise<void> {
     const group = message.payload as unknown as FileGroup;
-    logger.debug(`[import-worker] 处理文件组: ${group.mainFile.name}`);
 
     try {
         const processedGroup = await processFileGroup(group, logger);
@@ -159,7 +154,6 @@ async function handleProcessFileGroup(message: WorkerMessage<ImportRequest>): Pr
 async function handleScanDirectories(message: WorkerMessage<ImportRequest>): Promise<void> {
     const importRequest = message.payload as ImportRequest;
     const request = importRequest.payload as ScanDirectoriesRequest;
-    logger.debug(`[import-worker] 扫描目录: ${request.paths?.join(", ") || "无路径"}`);
 
     try {
         const fileGroups = await scanDirectoriesForFiles(request.paths, request.filters);
@@ -184,8 +178,6 @@ async function handleScanDirectories(message: WorkerMessage<ImportRequest>): Pro
 async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promise<void> {
     const request = message.payload as ImportRequest;
     const config = request.payload as ImportConfig;
-
-    logger.debug(`[import-worker] 预览导入: ${config.sourcePaths?.join(", ") || "无源路径"}`);
 
     try {
         const processedConfig = processImportConfig(config);
@@ -228,11 +220,6 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     try {
         const processedConfig = processImportConfig(config);
         const result = await executeImportProcess(processedConfig, importId);
-
-        logger.debug(`[import-worker] Result object keys: ${Object.keys(result).join(", ")}`);
-        logger.debug(
-            `[import-worker] Result success: ${result.success}, totalFiles: ${result.totalFiles}`,
-        );
 
         const serializableResult = JSON.parse(JSON.stringify(result));
         const response = createResponse<ImportRequest, ImportResponse>(message, {
@@ -363,8 +350,6 @@ async function scanDirectoriesForFiles(
     let directoriesScanned = 0;
 
     for (const dirPath of paths) {
-        logger.debug(`[import-worker] 扫描目录: ${dirPath}`);
-
         if (!(await fs.pathExists(dirPath))) {
             logger.warn(`[import-worker] 目录不存在: ${dirPath}`);
             continue;
@@ -401,10 +386,6 @@ async function scanDirectoriesForFiles(
 
     const detector = new FileGroupDetector();
     const fileGroups = detector.detectFileGroupsEnhanced(allFiles, logger);
-
-    logger.debug(
-        `[import-worker] 扫描完成，发现 ${allFiles.length} 个文件，${fileGroups.length} 个文件组`,
-    );
 
     return fileGroups;
 }
@@ -491,15 +472,10 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
 
         if (fileType === FileTypeDetectors.IMAGE || fileType === FileTypeDetectors.VIDEO) {
             try {
-                const fileTypeName = fileType === FileTypeDetectors.IMAGE ? "图片" : "视频";
-                logger.debug(`[import-worker] 为${fileTypeName}文件提取元数据: ${fileName}`);
                 extractedMetadata = await extractMetadata({ filePath }, logger);
                 if (extractedMetadata.dateTime) {
                     dateTime = extractedMetadata.dateTime;
                     dateSource = extractedMetadata.dateSource;
-                    logger.debug(
-                        `[import-worker] ${fileTypeName}文件元数据提取成功: ${fileName}, dateSource: ${dateSource}, dateTime: ${dateTime.toISOString()}`,
-                    );
                 }
             } catch (error) {
                 const fileTypeName = fileType === FileTypeDetectors.IMAGE ? "图片" : "视频";
@@ -612,8 +588,6 @@ async function generateImportPreview(
     config: ImportConfig,
     progressCallback?: (progress: any) => void,
 ): Promise<ImportPreview> {
-    logger.debug(`[import-worker] 生成导入预览`);
-
     if (!Array.isArray(config.sourcePaths)) {
         logger.error(
             `[import-worker] config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
@@ -739,12 +713,9 @@ async function detectDuplicateFiles(
     fileGroups: FileGroup[],
     targetPath: string,
 ): Promise<DuplicateFileInfo[]> {
-    logger.debug(`[import-worker] 检测重复文件，目标路径: ${targetPath}`);
-
     const detector = new DuplicateDetector();
     const duplicates = await detector.detectDuplicates(fileGroups, targetPath);
 
-    logger.debug(`[import-worker] 检测到 ${duplicates.length} 个重复文件`);
     return duplicates;
 }
 
@@ -818,15 +789,10 @@ async function executeImportProcess(
         }
 
         const fileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
-        logger.debug(`[import-worker] 扫描完成，找到 ${fileGroups.length} 个文件组`);
 
         const selectedGroups = filterSelectedFiles(fileGroups, config.selectedFiles);
-        logger.debug(`[import-worker] 文件过滤完成，保留 ${selectedGroups.length} 个文件组`);
 
         const result = await performFileImport(selectedGroups, config, importId);
-        logger.debug(
-            `[import-worker] performFileImport 返回结果: successful=${result.successfulFiles}, skipped=${result.skippedFiles}, errors=${result.errorFiles}`,
-        );
 
         const duration = Date.now() - startTime;
 

@@ -78,7 +78,7 @@ async function extractHeicExif(
             `[HEIC] Available EXIF tags: ${availableTags}${Object.keys(tags).length > 10 ? "..." : ""}`,
         );
 
-        const extractedDateTime = extractDateTimeFromExif(tags, undefined, true); // Enable debug mode
+        const extractedDateTime = extractDateTimeFromExif(tags);
 
         logger.debug(
             `[HEIC] ${path.basename(filePath)} - EXIF dateTime: ${extractedDateTime ? extractedDateTime.toISOString() : "null"}`,

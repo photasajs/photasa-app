@@ -315,7 +315,10 @@ import {
 import { BaseButton, BaseInput, BaseSelect, BaseModal } from "@renderer/components/ui";
 import { getImportHistory, undoImport } from "@renderer/utils/api";
 import type { ImportHistory, UndoPreview } from "@common/import-types";
+import { getLogger } from "@common/logger";
 import path from "path";
+
+const logger = getLogger("import-history");
 
 const { t } = useI18n();
 
@@ -381,7 +384,7 @@ const loadHistory = async () => {
         isLoading.value = true;
         importHistory.value = await getImportHistory();
     } catch (error) {
-        console.error("Failed to load import history:", error);
+        logger.error("Failed to load import history:", error);
     } finally {
         isLoading.value = false;
     }
@@ -411,7 +414,7 @@ const confirmUndo = async (entry: ImportHistory) => {
         // TODO: Implement previewUndoImport function
         undoPreview.value = null;
     } catch (error) {
-        console.error("Failed to preview undo:", error);
+        logger.error("Failed to preview undo:", error);
         undoPreview.value = null;
     }
 };
@@ -429,7 +432,7 @@ const executeUndo = async () => {
         // 关闭对话框
         undoEntry.value = null;
     } catch (error) {
-        console.error("Failed to undo import:", error);
+        logger.error("Failed to undo import:", error);
     } finally {
         isUndoing.value = false;
     }

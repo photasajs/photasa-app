@@ -90,9 +90,6 @@ describe("Debug Time Extraction Issues", () => {
 
             const result = await extractMetadata(mockRequest, mockLogger);
 
-            console.log("HEIC Debug - EXIF Data:", mockExifData);
-            console.log("HEIC Debug - Result:", result);
-
             expect(result.type).toBe("heic");
             expect(result.format).toBe("HEIC");
         });
@@ -121,9 +118,6 @@ describe("Debug Time Extraction Issues", () => {
             vi.mocked(ExifReader.load).mockResolvedValue(mockExifData as any);
 
             const result = await extractMetadata(mockRequest, mockLogger);
-
-            console.log("HEIC Debug - No Date EXIF:", mockExifData);
-            console.log("HEIC Debug - Result:", result);
 
             expect(result.type).toBe("heic");
             expect(result.format).toBe("HEIC");
@@ -172,9 +166,6 @@ describe("Debug Time Extraction Issues", () => {
 
             const result = await extractMetadata(mockRequest, mockLogger);
 
-            console.log("MOV Debug - ffprobe output:", mockFfprobeOutput);
-            console.log("MOV Debug - Result:", result);
-
             expect(result.type).toBe("video");
             expect(result.format).toBe("mov");
         });
@@ -213,9 +204,6 @@ describe("Debug Time Extraction Issues", () => {
             });
 
             const result = await extractMetadata(mockRequest, mockLogger);
-
-            console.log("MOV Debug - No metadata output:", mockFfprobeOutput);
-            console.log("MOV Debug - Result:", result);
 
             expect(result.type).toBe("video");
             expect(result.format).toBe("MOV");
@@ -261,9 +249,6 @@ describe("Debug Time Extraction Issues", () => {
             });
 
             const result = await extractMetadata(mockRequest, mockLogger);
-
-            console.log("MOV Debug - Invalid dates output:", mockFfprobeOutput);
-            console.log("MOV Debug - Result:", result);
 
             expect(result.type).toBe("video");
             expect(result.format).toBe("MOV");

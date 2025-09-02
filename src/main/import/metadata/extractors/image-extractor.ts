@@ -53,7 +53,7 @@ export async function extractImageMetadata(
             `[Image] Processing ${path.basename(filePath)} - Extracted ${Object.keys(tags).length} EXIF tags`,
         );
 
-        const dateTime = extractDateTimeFromExif(tags, undefined, true); // Enable debug mode
+        const dateTime = extractDateTimeFromExif(tags);
         const gpsInfo = extractGPSInfo(tags);
         const cameraInfo = extractCameraInfo(tags);
         const dimensions = extractImageDimensions(tags);

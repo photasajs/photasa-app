@@ -76,68 +76,38 @@ export function normalizeExifDateString(dateStr: string): string {
  * @param debug - Optional debug flag for detailed logging
  * @returns A Date object or null if extraction/parsing fails
  */
-export function extractDateTimeFromExifField(tags: any, field: string, debug = false): Date | null {
+export function extractDateTimeFromExifField(
+    tags: any,
+    field: string,
+    _debug = false,
+): Date | null {
     if (!tags || !tags[field]) {
-        if (debug) {
-            console.debug(
-                `[EXIF Debug] Field '${field}' not found in tags:`,
-                Object.keys(tags || {})
-                    .slice(0, 10)
-                    .join(", "),
-            );
-        }
         return null;
     }
 
     const dateStr = extractDateStringFromTag(tags[field]);
     if (!dateStr) {
-        if (debug) {
-            console.debug(
-                `[EXIF Debug] No date string extracted from field '${field}':`,
-                tags[field],
-            );
-        }
         return null;
-    }
-
-    if (debug) {
-        console.debug(`[EXIF Debug] Extracted date string from '${field}': "${dateStr}"`);
     }
 
     try {
         // Normalize the date string format
         const normalizedDateStr = normalizeExifDateString(dateStr);
-        if (debug && normalizedDateStr !== dateStr) {
-            console.debug(`[EXIF Debug] Normalized date string: "${normalizedDateStr}"`);
-        }
 
         // Handle timezone offset if present
         let finalDateStr = normalizedDateStr;
         const offsetStr = extractTimezoneOffset(tags.OffsetTime);
         if (offsetStr) {
             finalDateStr += offsetStr;
-            if (debug) {
-                console.debug(`[EXIF Debug] Applied timezone offset: "${finalDateStr}"`);
-            }
         }
 
         const date = new Date(finalDateStr);
 
         // Validate the date
         if (!isNaN(date.getTime())) {
-            if (debug) {
-                console.debug(`[EXIF Debug] Successfully parsed date: ${date.toISOString()}`);
-            }
             return date;
-        } else {
-            if (debug) {
-                console.debug(`[EXIF Debug] Invalid date result from: "${finalDateStr}"`);
-            }
         }
     } catch (error) {
-        if (debug) {
-            console.debug(`[EXIF Debug] Error parsing date "${dateStr}": ${error}`);
-        }
         return null;
     }
 
@@ -154,38 +124,19 @@ export function extractDateTimeFromExifField(tags: any, field: string, debug = f
 export function extractDateTimeFromExif(
     tags: any,
     fields: readonly string[] = EXIF_DATE_FIELDS,
-    debug = false,
+    _debug = false,
 ): Date | null {
     if (!tags) {
-        if (debug) {
-            console.debug("[EXIF Debug] No tags provided");
-        }
         return null;
     }
 
-    if (debug) {
-        console.debug(
-            `[EXIF Debug] Available EXIF tags:`,
-            Object.keys(tags).slice(0, 20).join(", "),
-        );
-        console.debug(`[EXIF Debug] Trying date fields in order:`, fields);
-    }
-
     for (const field of fields) {
-        const result = extractDateTimeFromExifField(tags, field, debug);
+        const result = extractDateTimeFromExifField(tags, field, _debug);
         if (result) {
-            if (debug) {
-                console.debug(
-                    `[EXIF Debug] Successfully found date from field '${field}': ${result.toISOString()}`,
-                );
-            }
             return result;
         }
     }
 
-    if (debug) {
-        console.debug("[EXIF Debug] No valid date found in any field");
-    }
     return null;
 }
 

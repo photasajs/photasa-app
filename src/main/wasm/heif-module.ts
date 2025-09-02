@@ -42,7 +42,7 @@ export async function initializeHeifModule(): Promise<any> {
 
     try {
         // 首先尝试默认初始化
-        logger.debug("Attempting default HEIF module initialization");
+
         const module = await createHeifModule();
         heifState = { module, initialized: true };
         logger.info("HEIF module initialized successfully (default method)");
@@ -66,14 +66,11 @@ export async function initializeHeifModule(): Promise<any> {
             path.join(appPath, "..", "app.asar.unpacked", "resources", "wasm_heif.wasm"),
         ];
 
-        logger.debug(`App path: ${appPath}, __dirname: ${__dirname}, cwd: ${process.cwd()}`);
-
         for (const wasmPath of possiblePaths) {
-            logger.debug(`Trying WASM path: ${wasmPath}`);
             if (await fs.pathExists(wasmPath)) {
                 try {
                     const wasmBinary = await fs.readFile(wasmPath);
-                    logger.debug(`Loaded WASM binary from ${wasmPath}, size: ${wasmBinary.length}`);
+
                     const module = await createHeifModule({ wasmBinary } as any);
                     heifState = { module, initialized: true };
                     logger.info(`HEIF module initialized successfully from ${wasmPath}`);
@@ -88,8 +85,7 @@ export async function initializeHeifModule(): Promise<any> {
         const checkDirs = [appPath, path.join(appPath, ".."), process.cwd()];
         for (const dir of checkDirs) {
             try {
-                const files = await fs.readdir(dir);
-                logger.debug(`Files in ${dir}: ${files.slice(0, 10).join(", ")}`);
+                await fs.readdir(dir);
             } catch {}
         }
 
