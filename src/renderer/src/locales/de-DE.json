@@ -56,6 +56,8 @@
             "overwrite": "Überschreiben",
             "keepBoth": "Beide behalten"
         },
+        "useMD5ForDuplicates": "MD5-Verifikation für Duplikaterkennung verwenden",
+        "useMD5ForDuplicatesDescription": "Wenn aktiviert, werden Dateien mittels MD5-Hash verglichen für präzise Duplikaterkennung, unabhängig von Datei-Änderungsdaten",
         "preview": "Vorschau",
         "totalFiles": "Gesamtdateien",
         "totalSize": "Gesamtgröße",
@@ -258,6 +260,8 @@
         "recentFiles": "Aktuelle Dateien",
         "elapsed": "Vergangen",
         "files": "Dateien",
+        "successful": "Erfolgreich",
+        "skipped": "Übersprungen",
         "steps": {
             "configuration": "Konfiguration",
             "configurationDesc": "Quell- und Zielverzeichnisse auswählen",

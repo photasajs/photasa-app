@@ -89,16 +89,17 @@ export const FileTypeDetectors = {
     IMAGE: "image",
     VIDEO: "video",
     OTHER: "other",
+    ALL: "all",
 } as const;
 
 /**
  * 重复处理策略常量
  */
 export const DuplicateStrategies = {
-    SKIP: "skip",
-    RENAME: "rename",
-    REPLACE: "replace",
-    MERGE: "merge",
+    SKIP: "skip", // 智能跳过：检查文件内容，只跳过真正相同的文件
+    RENAME: "rename", // 重命名导入：新文件重命名为 filename_1.jpg 等
+    OVERWRITE: "overwrite", // 覆盖原文件：用新文件替换现有文件
+    KEEP_BOTH: "keep_both", // 智能保留：根据差异添加有意义后缀
 } as const;
 
 /**
@@ -131,4 +132,12 @@ export const DateSources = {
     FILE_CREATED: "file_created",
     FILE_MODIFIED: "file_modified",
     CURRENT_DATE: "current_date",
+} as const;
+
+/**
+ * 文件组类型常量
+ */
+export const FileGroupTypes = {
+    SINGLE: "single",
+    GROUP: "group",
 } as const;

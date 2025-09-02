@@ -27,6 +27,9 @@ export class BatchProcessor extends EventEmitter {
     private progress: ImportProgress = {
         totalFiles: 0,
         processedFiles: 0,
+        successfulFiles: 0,
+        skippedFiles: 0,
+        errorFiles: 0,
         currentFile: "",
         speed: 0,
         estimatedTimeRemaining: 0,

@@ -57,6 +57,8 @@
             "overwrite": "덮어쓰기",
             "keepBoth": "둘 다 유지"
         },
+        "useMD5ForDuplicates": "중복 검출에 MD5 검증 사용",
+        "useMD5ForDuplicatesDescription": "활성화하면 파일 수정 날짜와 관계없이 MD5 해시를 사용하여 파일을 비교하여 정확한 중복 검출을 수행합니다",
         "preview": "미리보기",
         "totalFiles": "전체 파일 수",
         "totalSize": "전체 크기",
@@ -252,6 +254,8 @@
         "recentFiles": "최근 파일",
         "elapsed": "경과 시간",
         "files": "파일",
+        "successful": "성공",
+        "skipped": "건너뜀",
         "steps": {
             "configuration": "설정",
             "configurationDesc": "소스 및 대상 디렉토리 선택",

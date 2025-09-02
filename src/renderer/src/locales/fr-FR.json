@@ -57,6 +57,8 @@
             "overwrite": "Écraser",
             "keepBoth": "Conserver les deux"
         },
+        "useMD5ForDuplicates": "Utiliser la vérification MD5 pour la détection des doublons",
+        "useMD5ForDuplicatesDescription": "Quand activé, les fichiers seront comparés en utilisant le hachage MD5 pour une détection précise des doublons, indépendamment des dates de modification",
         "preview": "Aperçu",
         "totalFiles": "Nombre total de fichiers",
         "totalSize": "Taille totale",
@@ -252,6 +254,8 @@
         "recentFiles": "Fichiers récents",
         "elapsed": "Temps écoulé",
         "files": "Fichiers",
+        "successful": "Réussi",
+        "skipped": "Ignoré",
         "steps": {
             "configuration": "Configuration",
             "configurationDesc": "Sélectionner les dossiers source et de destination",

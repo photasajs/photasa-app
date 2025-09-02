@@ -57,6 +57,8 @@
             "overwrite": "Sovrascrivi",
             "keepBoth": "Mantieni entrambi"
         },
+        "useMD5ForDuplicates": "Usa verifica MD5 per rilevamento duplicati",
+        "useMD5ForDuplicatesDescription": "Quando abilitato, i file verranno confrontati utilizzando hash MD5 per un rilevamento accurato dei duplicati, indipendentemente dalle date di modifica",
         "preview": "Anteprima",
         "totalFiles": "File totali",
         "totalSize": "Dimensione totale",
@@ -252,6 +254,8 @@
         "recentFiles": "File recenti",
         "elapsed": "Tempo trascorso",
         "files": "File",
+        "successful": "Riuscito",
+        "skipped": "Saltato",
         "steps": {
             "configuration": "Configurazione",
             "configurationDesc": "Seleziona cartelle di origine e destinazione",

@@ -18,7 +18,11 @@
       "Bash(npx eslint:*)",
       "Bash(npx prettier:*)",
       "Bash(electron-vite build)",
-      "Bash(npx electron-vite:*)"
+      "Bash(npx electron-vite:*)",
+      "Bash(for file in ar-SA.json en-GB.json tr-TR.json uk-UA.json vi-VN.json zh-TW.json)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(grep:*)",
+      "Bash(done)"
     ],
     "deny": []
   }

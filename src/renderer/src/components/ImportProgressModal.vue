@@ -51,6 +51,9 @@ const isImporting = ref(false);
 const importProgress = reactive<ImportProgress>({
     totalFiles: 0,
     processedFiles: 0,
+    successfulFiles: 0,
+    skippedFiles: 0,
+    errorFiles: 0,
     speed: 0,
     estimatedTimeRemaining: 0,
     errors: [],
@@ -119,6 +122,9 @@ const startImport = async () => {
         Object.assign(importProgress, {
             totalFiles: props.config.selectedFiles.length,
             processedFiles: 0,
+            successfulFiles: 0,
+            skippedFiles: 0,
+            errorFiles: 0,
             speed: 0,
             estimatedTimeRemaining: 0,
             errors: [],
@@ -133,6 +139,9 @@ const startImport = async () => {
             Object.assign(importProgress, {
                 totalFiles: progress.totalFiles || importProgress.totalFiles,
                 processedFiles: progress.processedFiles || 0,
+                successfulFiles: progress.successfulFiles || 0,
+                skippedFiles: progress.skippedFiles || 0,
+                errorFiles: progress.errorFiles || 0,
                 speed: progress.speed || 0,
                 estimatedTimeRemaining: progress.estimatedTimeRemaining || 0,
                 remainingTime: progress.remainingTime || progress.estimatedTimeRemaining || 0,
@@ -330,7 +339,8 @@ onUnmounted(() => {
             </div>
 
             <!-- Progress Statistics -->
-            <div class="grid grid-cols-3 gap-4 min-w-0">
+            <div class="grid grid-cols-2 gap-4 min-w-0">
+                <!-- Top Row -->
                 <div class="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg min-w-0">
                     <div
                         class="text-lg font-semibold text-[var(--color-text)] whitespace-nowrap overflow-hidden text-ellipsis"
@@ -355,15 +365,39 @@ onUnmounted(() => {
                         {{ t("import.speed") }}
                     </div>
                 </div>
-                <div class="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg min-w-0">
-                    <div
-                        class="text-lg font-semibold text-[var(--color-text)] whitespace-nowrap overflow-hidden text-ellipsis"
-                    >
+            </div>
+
+            <!-- Detailed Statistics -->
+            <div class="grid grid-cols-4 gap-3 min-w-0 text-sm">
+                <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg min-w-0">
+                    <div class="text-lg font-semibold text-green-600 dark:text-green-400">
+                        {{ importProgress.successfulFiles }}
+                    </div>
+                    <div class="text-xs text-green-600/80 dark:text-green-400/80">
+                        {{ t("import.successful") }}
+                    </div>
+                </div>
+                <div class="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg min-w-0">
+                    <div class="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
+                        {{ importProgress.skippedFiles }}
+                    </div>
+                    <div class="text-xs text-yellow-600/80 dark:text-yellow-400/80">
+                        {{ t("import.skipped") }}
+                    </div>
+                </div>
+                <div class="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg min-w-0">
+                    <div class="text-lg font-semibold text-red-600 dark:text-red-400">
+                        {{ importProgress.errorFiles }}
+                    </div>
+                    <div class="text-xs text-red-600/80 dark:text-red-400/80">
+                        {{ t("import.errors") }}
+                    </div>
+                </div>
+                <div class="text-center p-3 bg-[var(--color-bg-secondary)] rounded-lg min-w-0">
+                    <div class="text-lg font-semibold text-[var(--color-text)]">
                         {{ formatRemainingTime(importProgress.estimatedTimeRemaining) }}
                     </div>
-                    <div
-                        class="text-sm text-[var(--color-text-secondary)] whitespace-nowrap overflow-hidden text-ellipsis"
-                    >
+                    <div class="text-xs text-[var(--color-text-secondary)]">
                         {{ t("import.remaining") }}
                     </div>
                 </div>

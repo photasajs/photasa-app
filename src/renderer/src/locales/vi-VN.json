@@ -57,6 +57,8 @@
             "overwrite": "Ghi đè",
             "keepBoth": "Giữ cả hai"
         },
+        "useMD5ForDuplicates": "Sử dụng xác minh MD5 để phát hiện trùng lặp",
+        "useMD5ForDuplicatesDescription": "Khi được bật, các tệp sẽ được so sánh bằng hash MD5 để phát hiện trùng lặp chính xác, bất kể ngày sửa đổi tệp",
         "preview": "Xem trước",
         "totalFiles": "Tổng số tệp",
         "totalSize": "Tổng kích thước",
@@ -252,6 +254,8 @@
         "recentFiles": "Tệp gần đây",
         "elapsed": "Thời gian đã trôi",
         "files": "Tệp",
+        "successful": "Thành công",
+        "skipped": "Bỏ qua",
         "steps": {
             "configuration": "Cấu hình",
             "configurationDesc": "Chọn thư mục nguồn và đích",

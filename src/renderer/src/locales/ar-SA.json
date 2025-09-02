@@ -57,6 +57,8 @@
             "overwrite": "استبدال",
             "keepBoth": "الاحتفاظ بكليهما"
         },
+        "useMD5ForDuplicates": "استخدام التحقق من MD5 لكشف الملفات المكررة",
+        "useMD5ForDuplicatesDescription": "عند التفعيل، ستتم مقارنة الملفات باستخدام تجميع MD5 للكشف الدقيق عن الملفات المكررة، بغض النظر عن تواريخ تعديل الملفات",
         "preview": "معاينة",
         "totalFiles": "إجمالي الملفات",
         "totalSize": "الحجم الإجمالي",
@@ -258,6 +260,8 @@
         "recentFiles": "الملفات الحديثة",
         "elapsed": "الوقت المنقضي",
         "files": "ملفات",
+        "successful": "نجح",
+        "skipped": "تم التخطي",
         "steps": {
             "configuration": "التكوين",
             "configurationDesc": "اختر مجلدات المصدر والهدف",

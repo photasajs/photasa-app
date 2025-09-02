@@ -163,6 +163,7 @@ export interface ImportConfig {
     fileGroups: FileGroup[];
     selectedFiles: string[];
     allowDuplicateRename: boolean;
+    useMD5ForDuplicates?: boolean; // 是否使用 MD5 验证重复文件
 }
 
 /**
@@ -196,6 +197,9 @@ export interface ImportWarning {
 export interface ImportProgress {
     totalFiles: number;
     processedFiles: number;
+    successfulFiles: number;
+    skippedFiles: number;
+    errorFiles: number;
     currentFile?: string;
     speed: number; // files per second
     estimatedTimeRemaining: number; // seconds

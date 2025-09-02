@@ -69,9 +69,14 @@ export interface ProgressEvent {
     data: {
         processedFiles: number;
         totalFiles: number;
+        successfulFiles: number;
+        skippedFiles: number;
+        errorFiles: number;
         currentFile: string;
         speed: number;
         estimatedTimeRemaining: number;
+        errors?: any[];
+        warnings?: any[];
     };
 }
 

@@ -136,7 +136,7 @@ export class DuplicateDetector {
      * 比较两个文件的内容是否相同
      * 使用哈希算法比较，避免读取整个文件到内存
      */
-    private async compareFileContent(file1: string, file2: string): Promise<boolean> {
+    async compareFileContent(file1: string, file2: string): Promise<boolean> {
         try {
             const hash1 = await this.calculateFileHash(file1);
             const hash2 = await this.calculateFileHash(file2);
@@ -206,24 +206,93 @@ export class DuplicateDetector {
  * 重复文件处理策略接口
  */
 export interface DuplicateHandler {
-    handle(original: FileInfo, duplicate: FileInfo, targetPath: string): Promise<DuplicateResult>;
+    handle(
+        original: FileInfo,
+        duplicate: FileInfo,
+        targetPath: string,
+        config?: { useMD5?: boolean },
+    ): Promise<DuplicateResult>;
 }
 
 /**
- * 跳过重复文件处理器
+ * 跳过重复文件处理器 - 支持智能跳过和 MD5 验证
  */
 export class SkipDuplicateHandler implements DuplicateHandler {
+    private detector = new DuplicateDetector();
+
     async handle(
         original: FileInfo,
         duplicate: FileInfo,
         _targetPath: string,
+        config?: { useMD5?: boolean },
     ): Promise<DuplicateResult> {
-        logger.debug(`[duplicate-handler] Skipping duplicate file: ${duplicate.name}`);
+        logger.debug(
+            `[duplicate-handler] 智能跳过检查: ${duplicate.name}, 使用MD5: ${config?.useMD5}`,
+        );
 
+        // 快速检查：文件大小
+        if (original.size !== duplicate.size) {
+            logger.debug(
+                `[duplicate-handler] 文件大小不同 - 原文件: ${original.size}, 新文件: ${duplicate.size}`,
+            );
+            return {
+                action: "skip",
+                originalPath: original.path,
+                message: `文件大小不同，建议使用 rename 或 keep_both 策略`,
+            };
+        }
+
+        // 可选的 MD5 验证
+        if (config?.useMD5) {
+            logger.debug(`[duplicate-handler] 执行 MD5 验证`);
+            const isSameContent = await this.detector.compareFileContent(
+                original.path,
+                duplicate.path,
+            );
+
+            if (isSameContent) {
+                logger.debug(`[duplicate-handler] MD5 相同，文件内容完全一致`);
+                return {
+                    action: "skip",
+                    originalPath: original.path,
+                    message: `文件内容完全相同，已跳过`,
+                };
+            } else {
+                logger.debug(`[duplicate-handler] MD5 不同，文件内容有差异`);
+                return {
+                    action: "skip",
+                    originalPath: original.path,
+                    message: `文件名相同但内容不同，建议使用 rename 或 keep_both 策略`,
+                };
+            }
+        }
+
+        // 基于修改时间的决策
+        if (duplicate.modifiedTime && original.modifiedTime) {
+            const timeDiff = duplicate.modifiedTime.getTime() - original.modifiedTime.getTime();
+
+            if (timeDiff > 0) {
+                logger.debug(`[duplicate-handler] 新文件更新`);
+                return {
+                    action: "skip",
+                    originalPath: original.path,
+                    message: `检测到新版本文件（较新 ${Math.abs(timeDiff / 1000 / 60).toFixed(0)} 分钟），建议使用 overwrite 或 keep_both 策略`,
+                };
+            } else if (timeDiff < 0) {
+                logger.debug(`[duplicate-handler] 原文件更新`);
+                return {
+                    action: "skip",
+                    originalPath: original.path,
+                    message: `原文件较新，已跳过`,
+                };
+            }
+        }
+
+        // 默认跳过
         return {
             action: "skip",
             originalPath: original.path,
-            message: `Skipped duplicate file: ${duplicate.name}`,
+            message: `文件已存在，已跳过`,
         };
     }
 }
@@ -236,6 +305,7 @@ export class RenameDuplicateHandler implements DuplicateHandler {
         original: FileInfo,
         duplicate: FileInfo,
         targetPath: string,
+        _config?: { useMD5?: boolean },
     ): Promise<DuplicateResult> {
         logger.debug(`[duplicate-handler] Renaming duplicate file: ${duplicate.name}`);
 
@@ -274,6 +344,7 @@ export class OverwriteDuplicateHandler implements DuplicateHandler {
         original: FileInfo,
         duplicate: FileInfo,
         _targetPath: string,
+        _config?: { useMD5?: boolean },
     ): Promise<DuplicateResult> {
         logger.debug(`[duplicate-handler] Overwriting duplicate file: ${duplicate.name}`);
 
@@ -295,6 +366,7 @@ export class KeepBothDuplicateHandler implements DuplicateHandler {
         original: FileInfo,
         duplicate: FileInfo,
         targetPath: string,
+        _config?: { useMD5?: boolean },
     ): Promise<DuplicateResult> {
         logger.debug(`[duplicate-handler] Keeping both files: ${duplicate.name}`);
 

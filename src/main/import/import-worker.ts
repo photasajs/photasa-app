@@ -22,6 +22,8 @@ import {
     DuplicateStrategies,
     ErrorCategories,
     ErrorSeverities,
+    DateSources,
+    FileGroupTypes,
 } from "@common/constants";
 import {
     extractMetadata,
@@ -246,11 +248,13 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
  */
 function sendProgressUpdate(
     importId: string,
-    processedFiles: number,
+    importState: ReturnType<typeof createImportState>,
     totalFiles: number,
     currentFile: string,
     startTime: number,
 ): void {
+    const processedFiles =
+        importState.successfulFiles + importState.skippedFiles + importState.errorFiles;
     const currentTime = Date.now();
     const elapsedTime = (currentTime - startTime) / 1000;
     const speed = elapsedTime > 0 ? processedFiles / elapsedTime : 0;
@@ -260,9 +264,14 @@ function sendProgressUpdate(
     const progressEvent = createProgressEvent(importId, {
         processedFiles,
         totalFiles,
+        successfulFiles: importState.successfulFiles,
+        skippedFiles: importState.skippedFiles,
+        errorFiles: importState.errorFiles,
         currentFile,
         speed,
         estimatedTimeRemaining,
+        errors: importState.errors,
+        warnings: importState.warnings,
     });
 
     parentPort?.postMessage(progressEvent);
@@ -406,7 +415,7 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
         const fileType = detectFileType(filePath);
 
         // 对于HEIC文件，立即提取元数据以获取正确的日期
-        let dateSource = "file_created";
+        let dateSource: (typeof DateSources)[keyof typeof DateSources] = DateSources.FILE_CREATED;
         let dateTime: Date = stats.birthtime;
 
         // 对于图片和视频文件，立即提取元数据以获取正确的日期
@@ -499,7 +508,7 @@ function applyFileTypeFilter(filePath: string, filters?: any): boolean {
         return true;
     }
 
-    const hasAll = filters.fileTypes.includes("all");
+    const hasAll = filters.fileTypes.includes(FileTypeDetectors.ALL);
     const hasImage =
         filters.fileTypes.includes(FileTypeDetectors.IMAGE) &&
         FILE_TYPE_DETECTORS[FileTypeDetectors.IMAGE](filePath);
@@ -588,7 +597,7 @@ function calculateFileStatistics(fileGroups: FileGroup[]): FileStatistics {
         stats.totalFiles += group.files.length;
         stats.totalSize += group.totalSize;
 
-        if (group.type === "group") {
+        if (group.type === FileGroupTypes.GROUP) {
             stats.groupCount++;
         }
 
@@ -788,7 +797,7 @@ async function performFileImport(
     );
 
     // 发送初始进度事件
-    sendProgressUpdate(importId, 0, totalFiles, "开始导入...", startTime);
+    sendProgressUpdate(importId, importState, totalFiles, "开始导入...", startTime);
 
     for (const group of fileGroups) {
         try {
@@ -850,34 +859,42 @@ async function processFileGroupImport(
         try {
             const targetFilePath = path.join(targetDir, file.name);
 
+            let finalTargetPath = targetFilePath;
+
             if (await fs.pathExists(targetFilePath)) {
                 const handled = await handleDuplicateFile(
                     file,
                     targetFilePath,
                     config.duplicateStrategy,
+                    config.useMD5ForDuplicates,
                 );
                 importState.duplicateHandling.push(handled);
 
-                if (handled.action === "skip") {
+                if (handled.action === DuplicateStrategies.SKIP) {
                     importState.skippedFiles++;
                     updateProgress(importId, importState, file.name, startTime, totalFiles);
                     continue;
+                } else if (handled.action === DuplicateStrategies.RENAME && handled.newPath) {
+                    finalTargetPath = handled.newPath;
+                    logger.debug(`[import-worker] 使用重命名路径: ${finalTargetPath}`);
+                } else if (handled.action === DuplicateStrategies.OVERWRITE) {
+                    logger.debug(`[import-worker] 覆盖现有文件: ${finalTargetPath}`);
                 }
             }
 
-            await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
+            await fs.copy(file.path, finalTargetPath, { preserveTimestamps: true });
             importState.successfulFiles++;
             importState.totalSize += file.size;
 
             importState.importedFiles.push({
                 sourcePath: file.path,
-                targetPath: targetFilePath,
+                targetPath: finalTargetPath,
                 size: file.size,
                 importTime: new Date().toISOString(),
             });
 
             updateProgress(importId, importState, file.name, startTime, totalFiles);
-            logger.debug(`[import-worker] 已导入: ${file.path} -> ${targetFilePath}`);
+            logger.debug(`[import-worker] 已导入: ${file.path} -> ${finalTargetPath}`);
         } catch (error) {
             await handleFileError(file, error, importState, startTime, importId, totalFiles);
         }
@@ -898,9 +915,9 @@ function updateProgress(
         importState.successfulFiles + importState.skippedFiles + importState.errorFiles;
 
     logger.debug(
-        `[import-worker] Progress: ${processedFiles}/${totalFiles} files, current: ${fileName}`,
+        `[import-worker] Progress: ${processedFiles}/${totalFiles} files (successful: ${importState.successfulFiles}, skipped: ${importState.skippedFiles}, errors: ${importState.errorFiles}), current: ${fileName}`,
     );
-    sendProgressUpdate(importId, processedFiles, totalFiles, fileName, startTime);
+    sendProgressUpdate(importId, importState, totalFiles, fileName, startTime);
 }
 
 /**
@@ -993,13 +1010,16 @@ async function handleDuplicateFile(
     file: FileInfo,
     targetPath: string,
     strategy: string,
+    useMD5?: boolean,
 ): Promise<any> {
-    logger.debug(`[import-worker] 处理重复文件: ${file.name}, 策略: ${strategy}`);
+    logger.debug(
+        `[import-worker] 处理重复文件: ${file.name}, 策略: ${strategy}, MD5验证: ${useMD5}`,
+    );
 
     try {
         const targetFile = await createTargetFileInfo(file, targetPath);
         const handler = DuplicateHandlerFactory.createHandler(strategy as any);
-        const result = await handler.handle(targetFile, file, targetPath);
+        const result = await handler.handle(targetFile, file, targetPath, { useMD5 });
 
         logger.debug(`[import-worker] 重复文件处理结果: ${result.action} - ${result.message}`);
 
@@ -1032,7 +1052,7 @@ async function createTargetFileInfo(file: FileInfo, targetPath: string): Promise
         name: path.basename(targetPath),
         size: stats.size,
         type: file.type,
-        dateSource: "file_created",
+        dateSource: DateSources.FILE_CREATED,
         modifiedTime: stats.mtime,
         createdTime: stats.birthtime,
         dateTime: stats.birthtime,

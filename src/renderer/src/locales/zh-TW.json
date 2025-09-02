@@ -57,6 +57,8 @@
             "overwrite": "覆寫",
             "keepBoth": "保留兩者"
         },
+        "useMD5ForDuplicates": "使用MD5驗證進行重複檔案偵測",
+        "useMD5ForDuplicatesDescription": "啟用後，將使用MD5雜湊值比較檔案內容，實現精確的重複檔案偵測，不受檔案修改時間影響",
         "preview": "預覽",
         "totalFiles": "總檔案數",
         "totalSize": "總大小",
@@ -252,6 +254,8 @@
         "recentFiles": "最近檔案",
         "elapsed": "已用時間",
         "files": "檔案",
+        "successful": "成功",
+        "skipped": "已跳過",
         "steps": {
             "configuration": "設定",
             "configurationDesc": "選擇來源和目標目錄",

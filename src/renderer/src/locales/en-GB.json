@@ -56,6 +56,8 @@
             "overwrite": "Overwrite",
             "keepBoth": "Keep Both"
         },
+        "useMD5ForDuplicates": "Use MD5 verification for duplicate detection",
+        "useMD5ForDuplicatesDescription": "When enabled, files will be compared using MD5 hash for accurate duplicate detection, regardless of file modification dates",
         "preview": "Preview",
         "totalFiles": "Total Files",
         "totalSize": "Total Size",
@@ -258,6 +260,8 @@
         "recentFiles": "Recent Files",
         "elapsed": "Elapsed",
         "files": "Files",
+        "successful": "Successful",
+        "skipped": "Skipped",
         "steps": {
             "configuration": "Configuration",
             "configurationDesc": "Select source and target directories",

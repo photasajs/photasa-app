@@ -58,6 +58,8 @@
             "overwrite": "覆盖",
             "keepBoth": "保留两者"
         },
+        "useMD5ForDuplicates": "使用MD5验证进行重复文件检测",
+        "useMD5ForDuplicatesDescription": "启用后，将使用MD5散列值比较文件内容，实现精确的重复文件检测，不受文件修改时间影响",
         "preview": "预览",
         "totalFiles": "总文件数",
         "totalSize": "总大小",
@@ -258,6 +260,8 @@
         "recentFiles": "最近文件",
         "elapsed": "已用时间",
         "files": "文件",
+        "successful": "成功",
+        "skipped": "跳过",
         "steps": {
             "configuration": "配置",
             "configurationDesc": "选择源目录和目标目录",

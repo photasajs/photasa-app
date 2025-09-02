@@ -54,6 +54,7 @@ import {
 } from "@renderer/utils/import-wizard-helpers";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
+import { DuplicateStrategies, FileTypeDetectors } from "@common/constants";
 import {
     PhTrash as TrashIcon,
     PhPlus as PlusIcon,
@@ -241,10 +242,10 @@ const pathOptions = computed(() => {
 });
 
 const duplicateStrategyOptions = computed(() => [
-    { value: "rename", label: t("import.duplicate.rename") },
-    { value: "skip", label: t("import.duplicate.skip") },
-    { value: "overwrite", label: t("import.duplicate.overwrite") },
-    { value: "keep_both", label: t("import.duplicate.keepBoth") },
+    { value: DuplicateStrategies.RENAME, label: t("import.duplicate.rename") },
+    { value: DuplicateStrategies.SKIP, label: t("import.duplicate.skip") },
+    { value: DuplicateStrategies.OVERWRITE, label: t("import.duplicate.overwrite") },
+    { value: DuplicateStrategies.KEEP_BOTH, label: t("import.duplicate.keepBoth") },
 ]);
 
 /**
@@ -515,7 +516,6 @@ const handleStepChange = async (stepId: string, stepIndex: number, wizardState: 
         logger.debug("Configuration filters:", wizardState.stepData.configuration.filters);
         await loadPreviewData(wizardState);
     }
-    logger.debug(`========================`);
 };
 
 /**
@@ -825,6 +825,27 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             :options="duplicateStrategyOptions"
                         />
                     </div>
+                    <div class="mt-4">
+                        <label class="flex items-center space-x-2 text-sm text-[var(--color-text)]">
+                            <input
+                                type="checkbox"
+                                :checked="stepData?.useMD5ForDuplicates || false"
+                                @change="
+                                    (event) =>
+                                        setStepData('configuration', {
+                                            ...(stepData || {}),
+                                            useMD5ForDuplicates: (event.target as HTMLInputElement)
+                                                .checked,
+                                        })
+                                "
+                                class="rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                            />
+                            <span>{{ t("import.useMD5ForDuplicates") }}</span>
+                        </label>
+                        <p class="mt-1 text-xs text-[var(--color-text-secondary)]">
+                            {{ t("import.useMD5ForDuplicatesDescription") }}
+                        </p>
+                    </div>
                 </div>
 
                 <!-- 额外的底部空间，确保下拉菜单有足够空间展开 -->
@@ -921,11 +942,11 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                                 />
                                 <div class="flex items-center mr-3">
                                     <PhotoIcon
-                                        v-if="group.mainFile.type === 'image'"
+                                        v-if="group.mainFile.type === FileTypeDetectors.IMAGE"
                                         class="w-8 h-8 text-[var(--color-primary)]"
                                     />
                                     <VideoCameraIcon
-                                        v-else-if="group.mainFile.type === 'video'"
+                                        v-else-if="group.mainFile.type === FileTypeDetectors.VIDEO"
                                         class="w-8 h-8 text-[var(--color-primary)]"
                                     />
                                     <DocumentIcon
@@ -991,11 +1012,11 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             />
                             <div class="flex items-center mr-3">
                                 <PhotoIcon
-                                    v-if="group.mainFile.type === 'image'"
+                                    v-if="group.mainFile.type === FileTypeDetectors.IMAGE"
                                     class="w-8 h-8 text-[var(--color-primary)]"
                                 />
                                 <VideoCameraIcon
-                                    v-else-if="group.mainFile.type === 'video'"
+                                    v-else-if="group.mainFile.type === FileTypeDetectors.VIDEO"
                                     class="w-8 h-8 text-[var(--color-primary)]"
                                 />
                                 <DocumentIcon
@@ -1066,12 +1087,20 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                     <BaseButton
                         v-if="wizardState.currentStep.id === 'preview'"
                         variant="primary"
-                        :disabled="!wizardState.canFinish"
+                        :disabled="!wizardState.canFinish || loadingState.preview"
                         @click="finish"
                         class="min-w-[80px]"
                     >
-                        <ArrowDownTrayIcon class="w-4 h-4 mr-2 text-current" />
-                        {{ t("import.importButton") }}
+                        <ArrowDownTrayIcon
+                            v-if="!loadingState.preview"
+                            class="w-4 h-4 mr-2 text-current"
+                        />
+                        <BaseSpinner v-else class="w-4 h-4 mr-2" />
+                        {{
+                            loadingState.preview
+                                ? t("import.loading.preview")
+                                : t("import.importButton")
+                        }}
                     </BaseButton>
 
                     <!-- Close Button -->

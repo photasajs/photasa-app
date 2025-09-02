@@ -56,6 +56,8 @@
             "overwrite": "上書き",
             "keepBoth": "両方を保持"
         },
+        "useMD5ForDuplicates": "重複検出にMD5検証を使用",
+        "useMD5ForDuplicatesDescription": "有効にすると、ファイルの変更日時に関係なく、MD5ハッシュを使用してファイルを比較し、正確な重複検出を行います",
         "preview": "プレビュー",
         "totalFiles": "総ファイル数",
         "totalSize": "総サイズ",
@@ -252,6 +254,8 @@
         "recentFiles": "最近のファイル",
         "elapsed": "経過時間",
         "files": "ファイル",
+        "successful": "成功",
+        "skipped": "スキップ",
         "steps": {
             "configuration": "設定",
             "configurationDesc": "ソースディレクトリとターゲットディレクトリを選択",
