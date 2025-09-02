@@ -708,18 +708,31 @@ async function executeImportProcess(
         }
 
         const fileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters);
+        logger.debug(`[import-worker] 扫描完成，找到 ${fileGroups.length} 个文件组`);
+
         const selectedGroups = filterSelectedFiles(fileGroups, config.selectedFiles);
+        logger.debug(`[import-worker] 文件过滤完成，保留 ${selectedGroups.length} 个文件组`);
+
         const result = await performFileImport(selectedGroups, config, importId);
+        logger.debug(
+            `[import-worker] performFileImport 返回结果: successful=${result.successfulFiles}, skipped=${result.skippedFiles}, errors=${result.errorFiles}`,
+        );
 
         const duration = Date.now() - startTime;
 
-        return {
+        const finalResult = {
             ...result,
             duration,
             importId,
             sourcePaths: config.sourcePaths,
             targetPath: config.targetPath,
         };
+
+        logger.debug(
+            `[import-worker] executeImportProcess 最终结果: successful=${finalResult.successfulFiles}, skipped=${finalResult.skippedFiles}, errors=${finalResult.errorFiles}`,
+        );
+
+        return finalResult;
     } catch (error) {
         logger.error(`[import-worker] 导入执行失败: ${error}`);
 
@@ -771,12 +784,41 @@ function createErrorResult(
  * 过滤选中的文件 - 使用策略模式
  */
 function filterSelectedFiles(fileGroups: FileGroup[], selectedFiles: string[]): FileGroup[] {
-    if (selectedFiles.length === 0) {
+    logger.debug(
+        `[import-worker] 过滤选中文件 - 文件组数: ${fileGroups.length}, 选中文件数: ${selectedFiles.length}`,
+    );
+
+    if (!selectedFiles || selectedFiles.length === 0) {
+        logger.debug(`[import-worker] 没有指定选中文件，返回所有文件组`);
+        const totalFiles = fileGroups.reduce((sum, group) => sum + group.files.length, 0);
+        logger.debug(`[import-worker] 返回所有文件，总计 ${totalFiles} 个文件`);
         return fileGroups;
     }
 
     const selectedSet = new Set(selectedFiles);
-    return fileGroups.filter((group) => group.files.some((file) => selectedSet.has(file.path)));
+    logger.debug(`[import-worker] 选中文件路径示例: ${selectedFiles.slice(0, 3).join(", ")}`);
+
+    const filteredGroups = fileGroups.filter((group) => {
+        const hasSelectedFiles = group.files.some((file) => selectedSet.has(file.path));
+        if (hasSelectedFiles) {
+            logger.debug(`[import-worker] 文件组 ${group.targetPath} 包含选中文件`);
+        } else {
+            logger.debug(
+                `[import-worker] 文件组 ${group.targetPath} 不包含选中文件，文件示例: ${group.files
+                    .slice(0, 2)
+                    .map((f) => f.path)
+                    .join(", ")}`,
+            );
+        }
+        return hasSelectedFiles;
+    });
+
+    const filteredTotalFiles = filteredGroups.reduce((sum, group) => sum + group.files.length, 0);
+    logger.debug(
+        `[import-worker] 过滤后文件组数: ${filteredGroups.length}, 总文件数: ${filteredTotalFiles}`,
+    );
+
+    return filteredGroups;
 }
 
 /**
@@ -855,13 +897,18 @@ async function processFileGroupImport(
     const targetDir = path.join(config.targetPath, processedGroup.targetPath);
     await fs.ensureDir(targetDir);
 
+    logger.debug(`[import-worker] 开始处理文件组，包含 ${processedGroup.files.length} 个文件`);
+
     for (const file of processedGroup.files) {
         try {
             const targetFilePath = path.join(targetDir, file.name);
 
             let finalTargetPath = targetFilePath;
 
+            logger.debug(`[import-worker] 处理文件: ${file.name}, 目标路径: ${targetFilePath}`);
+
             if (await fs.pathExists(targetFilePath)) {
+                logger.debug(`[import-worker] 检测到重复文件: ${targetFilePath}`);
                 const handled = await handleDuplicateFile(
                     file,
                     targetFilePath,
@@ -872,6 +919,9 @@ async function processFileGroupImport(
 
                 if (handled.action === DuplicateStrategies.SKIP) {
                     importState.skippedFiles++;
+                    logger.debug(
+                        `[import-worker] 文件跳过，当前统计 - 成功: ${importState.successfulFiles}, 跳过: ${importState.skippedFiles}, 错误: ${importState.errorFiles}`,
+                    );
                     updateProgress(importId, importState, file.name, startTime, totalFiles);
                     continue;
                 } else if (handled.action === DuplicateStrategies.RENAME && handled.newPath) {
@@ -885,6 +935,10 @@ async function processFileGroupImport(
             await fs.copy(file.path, finalTargetPath, { preserveTimestamps: true });
             importState.successfulFiles++;
             importState.totalSize += file.size;
+
+            logger.debug(
+                `[import-worker] 文件导入成功，当前统计 - 成功: ${importState.successfulFiles}, 跳过: ${importState.skippedFiles}, 错误: ${importState.errorFiles}`,
+            );
 
             importState.importedFiles.push({
                 sourcePath: file.path,
@@ -987,6 +1041,10 @@ async function handleGroupError(
 function createImportResult(importState: ReturnType<typeof createImportState>) {
     const totalFiles =
         importState.successfulFiles + importState.skippedFiles + importState.errorFiles;
+
+    logger.debug(
+        `[import-worker] 创建最终导入结果 - 成功: ${importState.successfulFiles}, 跳过: ${importState.skippedFiles}, 错误: ${importState.errorFiles}, 总计: ${totalFiles}`,
+    );
 
     return {
         success: importState.errorFiles === 0,
