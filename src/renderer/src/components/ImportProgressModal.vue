@@ -155,8 +155,22 @@ const startImport = async () => {
         const cleanupComplete = onImportComplete((result) => {
             logger.debug("Import completed:", result);
             importResult.value = result;
-            importProgress.status = "completed";
+
+            // 更新最终统计数据
+            Object.assign(importProgress, {
+                successfulFiles: result.successfulFiles || 0,
+                skippedFiles: result.skippedFiles || 0,
+                errorFiles: result.errorFiles || 0,
+                totalFiles: result.totalFiles || 0,
+                processedFiles: result.totalFiles || 0,
+                status: "completed",
+            });
+
             isImporting.value = false;
+
+            logger.debug(
+                `Import completed with final stats - successful: ${importProgress.successfulFiles}, skipped: ${importProgress.skippedFiles}, errors: ${importProgress.errorFiles}`,
+            );
         });
 
         const cleanupError = onImportError((error) => {
