@@ -559,13 +559,9 @@ function setupQueueEvents(logger: PhotasaLogger, queue: RequestQueue): void {
     try {
         // 队列空闲时
         queue.on("idle", () => {
-            queueLogger?.info("config-queue", {
-                action: "idle",
-                timestamp: Date.now(),
-                queueSize: queue.size,
-                pending: queue.pending,
-                isPaused: queue.isPaused,
-            });
+            queueLogger?.info(
+                `[config-queue] Queue idle - size: ${queue.size}, pending: ${queue.pending}`,
+            );
         });
 
         // 队列错误时
@@ -582,26 +578,18 @@ function setupQueueEvents(logger: PhotasaLogger, queue: RequestQueue): void {
         // 队列添加时 高频 routine 日志节流（如每 1000ms 最多输出一次）
         queue.on("add", () => {
             throttleLog("queue-add", 1000, () => {
-                queueLogger?.debug("config-queue", {
-                    action: "add",
-                    size: queue.size,
-                    pending: queue.pending,
-                    timestamp: Date.now(),
-                    isPaused: queue.isPaused,
-                });
+                queueLogger?.debug(
+                    `[config-queue] Item added - size: ${queue.size}, pending: ${queue.pending}`,
+                );
             });
         });
 
         // 队列活跃时 高频 routine 日志节流（如每 1000ms 最多输出一次）
         queue.on("active", () => {
             throttleLog("queue-active", 1000, () => {
-                queueLogger?.debug("config-queue", {
-                    action: "active",
-                    size: queue.size,
-                    pending: queue.pending,
-                    timestamp: Date.now(),
-                    isPaused: queue.isPaused,
-                });
+                queueLogger?.debug(
+                    `[config-queue] Queue active - size: ${queue.size}, pending: ${queue.pending}`,
+                );
             });
         });
         // 其他 routine 事件可按需添加节流或关闭

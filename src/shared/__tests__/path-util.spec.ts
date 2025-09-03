@@ -165,10 +165,10 @@ describe("shortenThumbnailName", () => {
 
     it("should handle various file paths", () => {
         expect(shortenThumbnailName("/Users/Albert/Photos/.photasaoriginals/image.png")).toBe(
-            path.join(".photasaoriginals", "image.png")
+            path.join(".photasaoriginals", "image.png"),
         );
         expect(shortenThumbnailName("C:/Photos/.photasaoriginals/photo.png")).toBe(
-            path.join(".photasaoriginals", "photo.png")
+            path.join(".photasaoriginals", "photo.png"),
         );
     });
 });
@@ -215,7 +215,7 @@ describe("toRelativeThumbnailPath", () => {
 
     it("should handle various file paths", () => {
         expect(toRelativeThumbnailPath("image.png")).toBe(
-            path.join(".photasaoriginals", ".photasaoriginals", "image.png.png")
+            path.join(".photasaoriginals", ".photasaoriginals", "image.png.png"),
         );
     });
 });
@@ -225,7 +225,7 @@ describe("buildThumbnailPath", () => {
         const result = buildThumbnailPath("/Users/Albert/Photos/photo.jpg");
         const expected = path.join(
             path.normalize(path.join("/Users/Albert/Photos", ".photasaoriginals")),
-            path.join(".photasaoriginals", "photo.jpg.png")
+            path.join(".photasaoriginals", "photo.jpg.png"),
         );
         expect(result).toBe(expected);
     });
@@ -234,7 +234,7 @@ describe("buildThumbnailPath", () => {
         const result = buildThumbnailPath("C:/Photos/image.png");
         const expected = path.join(
             path.normalize(path.join("C:/Photos", ".photasaoriginals")),
-            path.join(".photasaoriginals", "image.png.png")
+            path.join(".photasaoriginals", "image.png.png"),
         );
         expect(result).toBe(expected);
     });
@@ -357,7 +357,7 @@ describe("normalizeFileProtocolPath", () => {
         const windowsFileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
         const result = normalizeFileProtocolPath(windowsFileUrl);
         expect(path.isAbsolute(result)).toBe(true);
-        
+
         if (process.platform === "win32") {
             // 在 Windows 上应该得到正确的路径格式
             expect(result).toBe(path.resolve("C:/Users/Albert/Pictures/photo.jpg"));
@@ -426,8 +426,8 @@ describe("normalizeFileProtocolPath", () => {
         const problematicMacPath = "Volumes/SUCAI/Backup/2021/20210101/20210102_030833820_iOS.heic";
         const result = normalizeFileProtocolPath(problematicMacPath);
         expect(path.isAbsolute(result)).toBe(true);
-        
-        // 原始问题：Windows路径带错误前导斜杠  
+
+        // 原始问题：Windows路径带错误前导斜杠
         const problematicWinPath = "/C:/Users/Albert/Pictures/photo.jpg";
         const result2 = normalizeFileProtocolPath(problematicWinPath);
         expect(path.isAbsolute(result2)).toBe(true);
@@ -439,7 +439,7 @@ describe("pathToFileProtocol", () => {
         const filePath = "/Users/Albert/Pictures/photo.jpg";
         const result = pathToFileProtocol(filePath);
         expect(result.startsWith("file://")).toBe(true);
-        
+
         // 验证可以往返转换
         const backToPath = fileURLToPath(result);
         expect(backToPath).toBe(path.resolve(filePath));
@@ -449,7 +449,7 @@ describe("pathToFileProtocol", () => {
         const windowsPath = "C:\\Users\\Albert\\Pictures\\photo.jpg";
         const result = pathToFileProtocol(windowsPath);
         expect(result.startsWith("file://")).toBe(true);
-        
+
         if (process.platform === "win32") {
             // Windows file:// URL 格式应该是 file:///C:/...
             expect(result).toMatch(/^file:\/\/\/[A-Z]:\//);
@@ -461,7 +461,7 @@ describe("pathToFileProtocol", () => {
         const relativePath = "./Pictures/photo.jpg";
         const result = pathToFileProtocol(relativePath);
         expect(result.startsWith("file://")).toBe(true);
-        
+
         const backToPath = fileURLToPath(result);
         expect(path.isAbsolute(backToPath)).toBe(true);
     });
@@ -470,7 +470,7 @@ describe("pathToFileProtocol", () => {
         const fileUrl = pathToFileURL("/Users/Albert/Pictures/photo.jpg").toString();
         const result = pathToFileProtocol(fileUrl);
         expect(result.startsWith("file://")).toBe(true);
-        
+
         // 应该仍然是有效的 file:// URL
         const backToPath = fileURLToPath(result);
         expect(path.isAbsolute(backToPath)).toBe(true);
@@ -481,7 +481,7 @@ describe("pathToFileProtocol", () => {
         const brokenMacPath = "Volumes/ExternalDrive/Photos/photo.jpg";
         const result = pathToFileProtocol(brokenMacPath);
         expect(result.startsWith("file://")).toBe(true);
-        
+
         // Windows 路径带错误前导斜杠
         const brokenWindowsPath = "/C:/Users/Albert/Pictures/photo.jpg";
         const result2 = pathToFileProtocol(brokenWindowsPath);

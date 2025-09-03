@@ -58,14 +58,17 @@ export class WorkerPool<T, R> {
 
         // 处理消息
         worker.on("message", (result: WorkerResponse<R>) => {
-            this.logger.debug(`[createWorker] 处理消息: ${JSON.stringify(result)}`);
+            this.logger.debug(
+                `[createWorker] 处理消息: id=${result.id}, hasResult=${!!result.result}, hasError=${!!result.error}`,
+            );
             // 处理消息，onWorkerResponse 会自动 resolve 或 reject 当前任务
             onWorkerResponse<R>(result);
         });
 
         // 处理错误
-        worker.on("error", (error) => {
-            this.logger.debug(`[createWorker] 处理错误: ${JSON.stringify(error)}`);
+        worker.on("error", (error: any) => {
+            const errorMsg = error?.message || error?.toString() || String(error);
+            this.logger.debug(`[createWorker] 处理错误: ${errorMsg}`);
             this.logger.error("Worker error:", error);
             // 错误时，reject 当前任务
             worker.currentTask?.reject(error);
@@ -120,13 +123,15 @@ export class WorkerPool<T, R> {
             availableWorker.isBusy = true;
             availableWorker.currentTask = currentTask;
             const { action, payload, resolve, reject } = currentTask;
-            this.logger.debug(`[processQueue] 发送任务: ${action} ${JSON.stringify(payload)}`);
+            this.logger.debug(
+                `[processQueue] 发送任务: ${action}, payload type: ${typeof payload}`,
+            );
             // 通过 sendWorkerTask 发送任务，采用统一协议
             sendWorkerTask<Worker<T, R>, T, R>(availableWorker, action, payload)
                 .then((result) => {
                     // sendWorkerTask 会自动处理结果，pending the promise
                     // 在调用 onWorkerResponse 时，会自动 resolve 或 reject 这个 promise
-                    this.logger.debug(`[processQueue] 发送任务成功: ${JSON.stringify(result)}`);
+                    this.logger.debug(`[processQueue] 发送任务成功: action=${action}`);
                     resolve(result);
                 })
                 .catch((err) => {

@@ -341,9 +341,7 @@ async function scanDirectoriesForFiles(
     const allFiles: FileInfo[] = [];
 
     if (!Array.isArray(paths)) {
-        logger.error(
-            `[import-worker] paths 不是数组: ${typeof paths}, 值: ${JSON.stringify(paths)}`,
-        );
+        logger.error(`[import-worker] paths 不是数组: ${typeof paths}, value: ${String(paths)}`);
         return [];
     }
 

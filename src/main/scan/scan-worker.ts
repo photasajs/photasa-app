@@ -15,12 +15,13 @@ if (!port) {
  * @param message - 消息
  */
 function postMessage(message): void {
-    logger.debug("Worker posting message:", message);
+    // Only log message type and requestId to avoid logging large objects
+    logger.debug(`Worker posting message: type=${message.type}, requestId=${message.requestId}`);
     port?.postMessage(message);
 }
 
 export function execute(requestId: string, scan: ScanAction): void {
-    logger.debug("Worker executing scan:", { requestId, scan });
+    logger.debug(`Worker executing scan: requestId=${requestId}, path=${scan.path}`);
     try {
         let processed = 0;
         const total = 0;
@@ -28,7 +29,6 @@ export function execute(requestId: string, scan: ScanAction): void {
         // 先统计总数
         scanPhotos(scan, logger).subscribe({
             next: (action) => {
-                logger.debug("Scan progress:", action);
                 processed++;
                 if (action && action.path && action.isDirectory) {
                     foundPaths.push(action.path);

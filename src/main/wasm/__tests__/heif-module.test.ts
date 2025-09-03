@@ -63,7 +63,7 @@ describe("heif-module", () => {
     it("falls back to default init when resources directory not available", async () => {
         // Make pathExists return false (no resources directory)
         vi.mocked(fs.pathExists).mockResolvedValue(false as any);
-        
+
         // Default init succeeds
         const create = (await import("@saschazar/wasm-heif")).default as unknown as ReturnType<
             typeof vi.fn
@@ -77,7 +77,7 @@ describe("heif-module", () => {
     it("throws error when no wasm file found in any location", async () => {
         // Make all pathExists calls return false
         vi.mocked(fs.pathExists).mockResolvedValue(false as any);
-        
+
         // Also make the default initialization fail
         const create = (await import("@saschazar/wasm-heif")).default as unknown as ReturnType<
             typeof vi.fn

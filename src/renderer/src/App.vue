@@ -145,15 +145,12 @@ watchArray(
 
 async function startScanning(): Promise<void> {
     logger.debug(
-        "startScanning called, scanningFolder:",
-        scanningFolder.value,
-        "isIdle:",
-        scanPhotosTask.isIdle,
+        `startScanning called, folders count: ${scanningFolder.value.length}, isIdle: ${scanPhotosTask.isIdle}`,
     );
     if (scanningFolder.value.length > 0) {
         const scanAction = deepCopy(top<ScanAction>(scanningFolder.value));
         processingFile.value = "正在扫描: " + scanAction.path;
-        logger.debug("Starting scan for action:", scanAction);
+        logger.debug(`Starting scan for path: ${scanAction.path}, action: ${scanAction.action}`);
         if (scanAction.action === "rescan") {
             logger.debug("Rescanning folder:", scanAction.path);
             await resetPhotasaConfig(scanAction.path);
@@ -163,12 +160,12 @@ async function startScanning(): Promise<void> {
         logger.debug("Scanning subfolders for:", scanAction.path);
         try {
             const folders = await scanSubfolders(scanAction.path);
-            logger.debug("Found subfolders:", folders);
+            logger.debug(`Found ${folders.length} subfolders for: ${scanAction.path}`);
             folders.forEach((f: string) => addScanFolderWithLog(f, "scan"));
 
-            logger.debug("Starting scanPhotosTask for:", scanAction);
+            logger.debug(`Starting scanPhotosTask for: ${scanAction.path}`);
             const args = await scanPhotosTask.perform(scanAction);
-            logger.debug("Scan completed with args:", args);
+            logger.debug(`Scan completed for: ${scanAction.path}`);
 
             if (args?.action?.path && args?.action?.isDirectory) {
                 logger.debug("Updating folder tree for:", args.action.path);
