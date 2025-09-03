@@ -18,6 +18,7 @@ import type {
     ImportFilters,
 } from "@common/import-types";
 import { loggers } from "@common/logger";
+import { normalizeFileProtocolPath } from "./path-util";
 
 const logger = loggers.api;
 
@@ -53,9 +54,9 @@ export function getDirectory(name: PathName): Promise<string> {
 
 export function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
     function fixPath(p: string): string {
-        let s = p.replace(/^file:\/\/+/, "");
-        if (s && s[0] !== "/") s = "/" + s;
-        return s;
+        if (!p) return p;
+        // 使用新的跨平台file://协议处理函数
+        return normalizeFileProtocolPath(p);
     }
     return {
         ...request,

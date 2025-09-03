@@ -1,4 +1,5 @@
 import path from "path";
+import { fileURLToPath, pathToFileURL } from "url";
 import { PHOTASA_ORIGINALS } from "@common/utils";
 import fs from "fs";
 
@@ -177,4 +178,63 @@ export async function isFile(path: string): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+/**
+ * 将 file:// URL 规范化为跨平台文件系统路径
+ * 正确处理 Windows 和 macOS 的 file:// URL 格式
+ * @param input 输入路径 - 可能是 file:// URL 或普通文件路径
+ * @returns 规范化的文件系统绝对路径
+ */
+export function normalizeFileProtocolPath(input: string | URL): string {
+    if (!input) {
+        return "";
+    }
+
+    let pathStr = typeof input === "string" ? input : input.toString();
+
+    try {
+        // 检测是否为 file:// URL
+        if (pathStr.startsWith("file://")) {
+            // 使用 Node.js 标准 API 转换 file:// URL 为文件系统路径
+            pathStr = fileURLToPath(pathStr);
+        }
+
+        // 解析为绝对路径并规范化
+        // path.resolve() 自动处理相对路径，并且是跨平台的
+        return path.resolve(pathStr);
+    } catch (error) {
+        // 如果 fileURLToPath 失败，可能是格式错误的 URL
+        // 回退到直接处理字符串路径
+        return path.resolve(pathStr);
+    }
+}
+
+/**
+ * 将文件系统路径转换为 file:// URL
+ * @param filePath 文件系统路径
+ * @returns file:// URL 字符串
+ */
+export function pathToFileProtocol(filePath: string): string {
+    const normalizedPath = normalizeFileProtocolPath(filePath);
+    return pathToFileURL(normalizedPath).toString();
+}
+
+/**
+ * 安全的路径连接函数，支持 file:// URL 和普通路径
+ * @param segments 路径片段
+ * @returns 连接后的规范化绝对路径
+ */
+export function joinFileProtocolPath(...segments: string[]): string {
+    // 规范化第一个片段（基础路径）
+    const basePath = segments.length > 0 ? normalizeFileProtocolPath(segments[0]) : "";
+
+    // 连接剩余片段
+    const remainingSegments = segments.slice(1);
+
+    if (remainingSegments.length === 0) {
+        return basePath;
+    }
+
+    return path.resolve(basePath, ...remainingSegments);
 }

@@ -1,3 +1,9 @@
+# Electron + Vite
+
+This is Electron App based on Vite as Frontend. It's  written with TypeScript. Test is built with vitest.
+
+This App is targeting Windows and Mac System as Native Desktop Application.
+
 # 多维思考 + 代理执行协议 + 软件开发规范指南
 
 - 目录

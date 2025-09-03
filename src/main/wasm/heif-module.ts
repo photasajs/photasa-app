@@ -35,62 +35,50 @@ function getAppPath(): string {
 
 /**
  * Initialize and cache the HEIF WASM module.
- * Strategy: try default init first; fallback to explicit wasmBinary under resources.
+ * Strategy: Use resources directory approach directly to avoid URL parsing issues.
  */
 export async function initializeHeifModule(): Promise<any> {
-    if (heifState.initialized && heifState.module) return heifState.module;
+    if (heifState.initialized && heifState.module) {
+        return heifState.module;
+    }
 
-    try {
-        // 首先尝试默认初始化
+    const appPath = getAppPath();
 
-        const module = await createHeifModule();
-        heifState = { module, initialized: true };
-        logger.info("HEIF module initialized successfully (default method)");
-        return module;
-    } catch (defaultError) {
-        logger.warn("Default HEIF module initialization failed, trying fallback", defaultError);
+    // 使用项目resources目录中的WASM文件（会被Electron打包）
+    const possiblePaths = [
+        // 开发环境：相对于编译后的代码位置
+        path.join(__dirname, "../../../resources/wasm_heif.wasm"),
+        // 生产环境：相对于app路径
+        path.join(appPath, "resources", "wasm_heif.wasm"),
+        // ASAR解压路径
+        path.join(appPath, "..", "app.asar.unpacked", "resources", "wasm_heif.wasm"),
+    ];
 
-        const appPath = getAppPath();
-
-        // 尝试多个可能的WASM文件位置
-        const possiblePaths = [
-            // 在生产环境中，资源通常在app.getAppPath()下
-            path.join(appPath, "resources", "wasm_heif.wasm"),
-            // 开发环境中的路径
-            path.join(__dirname, "../../../resources/wasm_heif.wasm"),
-            // 编译后可能的路径（out目录）
-            path.join(appPath, "..", "..", "resources", "wasm_heif.wasm"),
-            // 直接在项目根目录下
-            path.join(process.cwd(), "resources", "wasm_heif.wasm"),
-            // ASAR解压路径
-            path.join(appPath, "..", "app.asar.unpacked", "resources", "wasm_heif.wasm"),
-        ];
-
-        for (const wasmPath of possiblePaths) {
-            if (await fs.pathExists(wasmPath)) {
-                try {
-                    const wasmBinary = await fs.readFile(wasmPath);
-
-                    const module = await createHeifModule({ wasmBinary } as any);
-                    heifState = { module, initialized: true };
-                    logger.info(`HEIF module initialized successfully from ${wasmPath}`);
-                    return module;
-                } catch (loadError) {
-                    logger.error(`Failed to load HEIF module from ${wasmPath}:`, loadError);
-                }
+    for (const wasmPath of possiblePaths) {
+        if (await fs.pathExists(wasmPath)) {
+            try {
+                const wasmBinary = await fs.readFile(wasmPath);
+                const module = await createHeifModule({ wasmBinary } as any);
+                heifState = { module, initialized: true };
+                logger.info(`HEIF module initialized successfully from ${wasmPath}`);
+                return module;
+            } catch (loadError) {
+                logger.error(`Failed to load HEIF module from ${wasmPath}:`, loadError);
             }
         }
-
-        // 列出可能的目录内容以帮助调试
-        const checkDirs = [appPath, path.join(appPath, ".."), process.cwd()];
-        for (const dir of checkDirs) {
-            try {
-                await fs.readdir(dir);
-            } catch {}
-        }
-
-        throw new Error("HEIF WASM module not found in any expected location");
     }
+
+    // 如果resources目录方法失败，则尝试默认初始化作为最后的后备
+    try {
+        const module = await createHeifModule();
+        heifState = { module, initialized: true };
+        logger.info("HEIF module initialized successfully (default fallback method)");
+        return module;
+    } catch (defaultError) {
+        logger.warn("Default HEIF module initialization also failed", defaultError);
+    }
+
+    throw new Error("HEIF WASM module not found in any expected location");
 }
 
 /** Reset module (useful for tests) */
