@@ -238,3 +238,28 @@ export function joinFileProtocolPath(...segments: string[]): string {
 
     return path.resolve(basePath, ...remainingSegments);
 }
+
+/**
+ * 获取应用程序路径（兼容 worker 线程和非 Electron 环境）
+ * 使用新的 Electron API 替代废弃的 app.getAppPath()
+ * @param electronApp 可选的 Electron app 实例
+ * @returns 应用程序路径
+ */
+export function getAppPath(electronApp?: { getPath: (name: "exe") => string }): string {
+    // 如果传入了 Electron app 实例，使用新的 API
+    if (electronApp && typeof electronApp.getPath === "function") {
+        try {
+            return path.dirname(electronApp.getPath("exe"));
+        } catch {
+            // Electron API 调用失败时继续执行下面的逻辑
+        }
+    }
+
+    // 在 worker 线程中，使用环境变量或进程路径
+    if (process.env.APP_PATH) {
+        return process.env.APP_PATH;
+    }
+
+    // 回退到进程执行路径
+    return process.cwd();
+}

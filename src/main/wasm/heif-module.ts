@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import createHeifModule from "@saschazar/wasm-heif";
 import { getLogger } from "@common/logger";
+import { getAppPath } from "@shared/path-util";
 import { app } from "electron";
 
 const logger = getLogger("heif-module");
@@ -17,23 +18,6 @@ let heifState: HeifModuleState = {
 };
 
 /**
- * 获取应用程序路径（兼容worker线程）
- */
-function getAppPath(): string {
-    try {
-        // 尝试从electron获取（主进程）
-        return app.getAppPath();
-    } catch {
-        // 在worker线程中，使用环境变量或进程路径
-        if (process.env.APP_PATH) {
-            return process.env.APP_PATH;
-        }
-        // 回退到进程执行路径
-        return process.cwd();
-    }
-}
-
-/**
  * Initialize and cache the HEIF WASM module.
  * Strategy: Use resources directory approach directly to avoid URL parsing issues.
  */
@@ -42,7 +26,7 @@ export async function initializeHeifModule(): Promise<any> {
         return heifState.module;
     }
 
-    const appPath = getAppPath();
+    const appPath = getAppPath(app);
 
     // 使用项目resources目录中的WASM文件（会被Electron打包）
     const possiblePaths = [

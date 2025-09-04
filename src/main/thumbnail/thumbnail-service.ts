@@ -1,5 +1,6 @@
 import createWorker from "./thumbnail-worker?nodeWorker";
 import type { IpcMain } from "electron";
+import { getAppPath } from "@shared/path-util";
 import { app } from "electron";
 import type { WorkerResponse } from "@common/types";
 import {
@@ -31,7 +32,7 @@ export default class ThumbnailService {
             workerData: "worker",
             env: {
                 ...process.env,
-                APP_PATH: app.getAppPath(),
+                APP_PATH: getAppPath(app),
             },
         });
         // 处理 worker 消息

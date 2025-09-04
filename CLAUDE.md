@@ -4,6 +4,22 @@ This is Electron App based on Vite as Frontend. It's  written with TypeScript. T
 
 This App is targeting Windows and Mac System as Native Desktop Application.
 
+## Coding Rules
+
+1. Each Change should have corresponding test
+2. Use ES6 import always not require or await import.
+3. Vue 编码规范
+   - 一组件库的理念组织设计UI，对负责组件应进行子组件责任模组分拆。
+   - 基础组件一Base前缀开头，应用领域的需要一Primitive前缀开头
+   - 优先使用 tsx设计 组件应以独立目录形式组织 如果需要多个文件支持
+
+## Debugging Rules
+
+1. Don't run the app as you can't verify it, instead give guidance how to verify
+2. Don't use console.log, use logger
+3. Don't use any to bypass lint, use proper type, as TypeScript is type first.
+4. For CSS, don't use !important which cause maintain issue.
+
 # 多维思考 + 代理执行协议 + 软件开发规范指南
 
 - 目录
@@ -625,18 +641,3 @@ AI自动选择最优方案进行执行。
 ### [](https://forum.cursor.com/t/share-my-cursor-rules/93898#p-169058-h-41)创新与深入思考鼓励
 
 - 鼓励AI在满足性能要求的前提下，持续追求创新思维和深入见解，推动问题本质性解决。
-
-
-# Vue 编码规范
-
-- 一组件库的理念组织设计UI，对负责组件应进行子组件责任模组分拆。
-- 基础组件一Base前缀开头，应用领域的需要一Primitive前缀开头
-- 优先使用 tsx设计 组件应以独立目录形式组织 如果需要多个文件支持
-
-
-# Debugging Rules
-
-1. Don't run the app as you can't verify it, instead give guidance how to verify
-2. Don't use console.log, use logger
-3. Don't use any to bypass lint, use proper type, as TypeScript is type first.
-4. For CSS, don't use !important which cause maintain issue.

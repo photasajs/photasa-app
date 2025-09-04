@@ -13,6 +13,7 @@ import { WorkerPool } from "../workers/worker-pool";
 import createWorker from "../thumbnail/thumbnail-worker?nodeWorker";
 import { loggers, PhotasaLogger } from "@common/logger";
 import type { WorkerOptions } from "worker_threads";
+import { getAppPath } from "@shared/path-util";
 import { app } from "electron";
 const logger = loggers.scan;
 
@@ -24,7 +25,7 @@ const THUMBNAIL_WORKER_CONFIG = {
             ...(options as WorkerOptions),
             env: {
                 ...process.env,
-                APP_PATH: app.getAppPath(),
+                APP_PATH: getAppPath(app),
             },
         });
     },
