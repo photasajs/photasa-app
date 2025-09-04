@@ -358,7 +358,6 @@ export async function createThumbnail(
             // 创建视频缩略图
             await createScreenshot(arg, logger);
         } else {
-            logger.info("[thumbnail-handler] Create image thumbnail for : " + arg.path);
             // 创建图片缩略图 如果文件是 HEIC 格式，则使用预览图片
             const target = isHeic ? arg.preview : arg.path;
             // 创建图片缩略图
@@ -371,10 +370,10 @@ export async function createThumbnail(
                 })
                 .toFormat("png") // 将图片转换为 PNG 格式
                 .toFile(arg.thumbnail) // 将图片保存到指定路径
-                .then((i) => {
+                .then(() => {
                     // 打印图片信息
                     logger.info(
-                        `[thumbnail-handler] Create image thumbnail ${i} for : ${arg.path} success`,
+                        `[thumbnail-handler] Create image thumbnail for : ${arg.path} success`,
                     );
                 });
         }
