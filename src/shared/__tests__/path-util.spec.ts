@@ -540,9 +540,9 @@ describe("joinFileProtocolPath", () => {
 describe("getAppPath", () => {
     it("should return app path when electronApp is provided", () => {
         const mockElectronApp = {
-            getPath: vi.fn().mockReturnValue("/Applications/MyApp.app/Contents/MacOS/MyApp")
+            getPath: vi.fn().mockReturnValue("/Applications/MyApp.app/Contents/MacOS/MyApp"),
         };
-        
+
         const result = getAppPath(mockElectronApp);
         expect(result).toBe(path.dirname("/Applications/MyApp.app/Contents/MacOS/MyApp"));
         expect(mockElectronApp.getPath).toHaveBeenCalledWith("exe");
@@ -551,10 +551,10 @@ describe("getAppPath", () => {
     it("should return process.env.APP_PATH when electronApp is not provided but APP_PATH is set", () => {
         const originalAppPath = process.env.APP_PATH;
         process.env.APP_PATH = "/custom/app/path";
-        
+
         const result = getAppPath();
         expect(result).toBe("/custom/app/path");
-        
+
         // 恢复原始环境变量
         if (originalAppPath !== undefined) {
             process.env.APP_PATH = originalAppPath;
@@ -566,10 +566,10 @@ describe("getAppPath", () => {
     it("should return process.cwd() as fallback", () => {
         const originalAppPath = process.env.APP_PATH;
         delete process.env.APP_PATH;
-        
+
         const result = getAppPath();
         expect(result).toBe(process.cwd());
-        
+
         // 恢复原始环境变量
         if (originalAppPath !== undefined) {
             process.env.APP_PATH = originalAppPath;
@@ -580,16 +580,16 @@ describe("getAppPath", () => {
         const mockElectronApp = {
             getPath: vi.fn().mockImplementation(() => {
                 throw new Error("getPath failed");
-            })
+            }),
         };
-        
+
         const originalAppPath = process.env.APP_PATH;
         delete process.env.APP_PATH;
-        
+
         const result = getAppPath(mockElectronApp);
         expect(result).toBe(process.cwd());
         expect(mockElectronApp.getPath).toHaveBeenCalledWith("exe");
-        
+
         // 恢复原始环境变量
         if (originalAppPath !== undefined) {
             process.env.APP_PATH = originalAppPath;
@@ -599,10 +599,10 @@ describe("getAppPath", () => {
     it("should handle undefined electronApp gracefully", () => {
         const originalAppPath = process.env.APP_PATH;
         delete process.env.APP_PATH;
-        
+
         const result = getAppPath(undefined);
         expect(result).toBe(process.cwd());
-        
+
         // 恢复原始环境变量
         if (originalAppPath !== undefined) {
             process.env.APP_PATH = originalAppPath;
@@ -611,13 +611,13 @@ describe("getAppPath", () => {
 
     it("should handle electronApp without getPath method", () => {
         const mockElectronApp = {} as any;
-        
+
         const originalAppPath = process.env.APP_PATH;
         delete process.env.APP_PATH;
-        
+
         const result = getAppPath(mockElectronApp);
         expect(result).toBe(process.cwd());
-        
+
         // 恢复原始环境变量
         if (originalAppPath !== undefined) {
             process.env.APP_PATH = originalAppPath;
@@ -626,16 +626,16 @@ describe("getAppPath", () => {
 
     it("should prioritize electronApp over environment variables", () => {
         const mockElectronApp = {
-            getPath: vi.fn().mockReturnValue("/app/executable/path")
+            getPath: vi.fn().mockReturnValue("/app/executable/path"),
         };
-        
+
         const originalAppPath = process.env.APP_PATH;
         process.env.APP_PATH = "/env/app/path";
-        
+
         const result = getAppPath(mockElectronApp);
         expect(result).toBe(path.dirname("/app/executable/path"));
         expect(mockElectronApp.getPath).toHaveBeenCalledWith("exe");
-        
+
         // 恢复原始环境变量
         if (originalAppPath !== undefined) {
             process.env.APP_PATH = originalAppPath;
