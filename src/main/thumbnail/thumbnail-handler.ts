@@ -1,10 +1,8 @@
 import isVideo from "is-video";
-import { ensureDir, exists, remove, readFile, unlink } from "fs-extra";
+import { ensureDir, exists, remove, readFile } from "fs-extra";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { exec } from "child_process";
-import { promisify } from "util";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { toPreviewPath } from "@shared/path-util";
 import { getOptimalThumbnailResolution, HeicExtensionRE, ratioStringToParts } from "@common/utils";
@@ -199,68 +197,7 @@ async function createPreviewImage(arg: ThumbnailRequest, logger: PhotasaLogger):
     } catch (e) {
         logger.error("[thumbnail-handler] HEIC/HEIF decode error:", e);
 
-        // 尝试多个回退方案
-
-        // 回退方案1：尝试使用sharp直接处理HEIC（某些版本的sharp支持HEIC）
-        try {
-            logger.info("[thumbnail-handler] Attempting to use sharp directly for HEIC file");
-            const sharpImage = sharp(inputBuffer);
-            const metadata = await sharpImage.metadata();
-
-            if (metadata.width && metadata.height) {
-                await sharpImage
-                    .resize(800, 600, { fit: "inside", withoutEnlargement: true })
-                    .jpeg({ quality: 85 })
-                    .toFile(previewName);
-
-                logger.info(
-                    "[thumbnail-handler] Successfully created preview using sharp directly",
-                );
-                return previewName;
-            }
-        } catch (sharpError) {
-            logger.debug("[thumbnail-handler] Sharp direct processing failed:", sharpError);
-        }
-
-        // 回退方案2：在macOS上使用sips命令
-        if (process.platform === "darwin") {
-            try {
-                logger.info("[thumbnail-handler] Attempting to use macOS sips for HEIC conversion");
-
-                const execAsync = promisify(exec);
-
-                const tempJpegPath = previewName + ".temp.jpg";
-                try {
-                    // 使用sips转换HEIC到JPEG
-                    await execAsync(
-                        `sips -s format jpeg "${arg.path}" --out "${tempJpegPath}" 2>/dev/null`,
-                    );
-
-                    // 检查临时文件是否创建成功
-                    if (await exists(tempJpegPath)) {
-                        // 使用sharp优化图片大小
-                        await sharp(tempJpegPath)
-                            .resize(800, 600, { fit: "inside", withoutEnlargement: true })
-                            .jpeg({ quality: 85 })
-                            .toFile(previewName);
-
-                        // 删除临时文件
-                        await unlink(tempJpegPath).catch(() => {});
-
-                        logger.info("[thumbnail-handler] Successfully created preview using sips");
-                        return previewName;
-                    }
-                } catch (sipsError) {
-                    logger.debug("[thumbnail-handler] sips conversion failed:", sipsError);
-                    // 清理临时文件
-                    await unlink(tempJpegPath).catch(() => {});
-                }
-            } catch (systemError) {
-                logger.debug("[thumbnail-handler] System tools processing failed:", systemError);
-            }
-        }
-
-        // 回退方案3：创建占位符缩略图
+        // 最终回退方案：创建占位符缩略图
         try {
             logger.info("[thumbnail-handler] Creating fallback thumbnail for HEIC file");
             const fallbackPath = await createFallbackThumbnail(arg, logger);
