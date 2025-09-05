@@ -367,7 +367,17 @@
     },
     "scan": {
         "queueTitle": "スキャンキュー",
-        "queueEmpty": "キューは空です"
+        "queueEmpty": "キューは空です",
+        "processing": "キューを処理中",
+        "allTasksCompleted": "すべてのスキャンタスクが完了しました",
+        "pathHeader": "パス",
+        "actionHeader": "アクション",
+        "unknownFolder": "不明なフォルダ",
+        "actions": {
+            "scan": "スキャン",
+            "rescan": "再スキャン",
+            "current": "現在のスキャン"
+        }
     },
     "advancedSettings": {
         "title": "高度な設定",

@@ -3,7 +3,7 @@ import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { cleanupScanQueue } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@common/config-types";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction, FileOperationInput } from "@common/scan-types";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { DataNode } from "ant-design-vue/lib/tree";
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
@@ -61,7 +61,7 @@ export const usePreferenceStore = defineStore("preference", {
     },
     persist: true,
     actions: {
-        addPath(path) {
+        addPath(path: string) {
             if (this.firstTime) {
                 this.firstTime = false;
                 this.paths = [];
@@ -88,7 +88,7 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
-            logger.debug("Adding scan folder:", { folder, action });
+            logger.debug("Adding scan folder: ${folder}, action: ${action}");
             if (!Array.isArray(this.scanningFolder)) {
                 logger.debug("Initializing scanningFolder array");
                 this.scanningFolder = [];
@@ -112,8 +112,64 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Add the new folder to scan
             logger.debug("Adding new folder to scan:", folder);
-            this.scanningFolder.push({ path: folder, action, thumbnailSize: this.thumbnailSize });
+            this.scanningFolder.push({
+                path: folder,
+                action,
+                thumbnailSize: this.thumbnailSize,
+                operationType: "directory", // Default to directory for legacy compatibility
+            });
             this.updateFolderTree(folder);
+        },
+        addFileOperation(operation: FileOperationInput) {
+            logger.debug("Adding file operation to queue:", operation);
+
+            if (!Array.isArray(this.scanningFolder)) {
+                logger.debug("Initializing scanningFolder array");
+                this.scanningFolder = [];
+            }
+
+            // Normalize the path
+            const normalizedPath = normalizePath(operation.path);
+
+            // For file operations, we don't deduplicate as each file operation should be processed
+            // However, we can update existing pending operations of the same type on the same file
+            if (operation.operationType === "file") {
+                const existingIndex = this.scanningFolder.findIndex(
+                    (item) =>
+                        item.path === normalizedPath &&
+                        item.operationType === "file" &&
+                        item.fileOperationId === operation.fileOperationId,
+                );
+
+                if (existingIndex >= 0) {
+                    // Update existing file operation
+                    logger.debug("Updating existing file operation:", normalizedPath);
+                    this.scanningFolder[existingIndex] = {
+                        ...this.scanningFolder[existingIndex],
+                        ...operation,
+                        path: normalizedPath,
+                    };
+                    return;
+                }
+            }
+
+            // Add new operation to queue
+            logger.debug("Adding new file operation to queue:", normalizedPath);
+            this.scanningFolder.push({
+                path: normalizedPath,
+                action: operation.action,
+                thumbnailSize: operation.thumbnailSize,
+                operationType: operation.operationType,
+                priority: operation.priority,
+                retryCount: operation.retryCount || 0,
+                createdAt: operation.createdAt || Date.now(),
+                fileOperationId: operation.fileOperationId,
+            });
+
+            // Update folder tree only for directory operations or add operations
+            if (operation.operationType === "directory" || operation.action === "scan") {
+                this.updateFolderTree(normalizedPath);
+            }
         },
         updateThumbnailSize(size: number) {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;

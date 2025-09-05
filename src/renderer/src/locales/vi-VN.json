@@ -405,7 +405,17 @@
     },
     "scan": {
         "queueTitle": "Hàng đợi quét",
-        "queueEmpty": "Hàng đợi trống"
+        "queueEmpty": "Hàng đợi trống",
+        "processing": "Xử lý hàng đợi",
+        "allTasksCompleted": "Tất cả tác vụ quét đã hoàn thành",
+        "pathHeader": "Đường dẫn",
+        "actionHeader": "Hành động",
+        "unknownFolder": "Thư mục không xác định",
+        "actions": {
+            "scan": "Quét",
+            "rescan": "Quét lại",
+            "current": "Quét hiện tại"
+        }
     },
     "advancedSettings": {
         "title": "Cài đặt nâng cao",

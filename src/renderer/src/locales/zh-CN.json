@@ -357,6 +357,7 @@
         "scanned": "处理完毕",
         "scanComplete": "目录[{path}]已处理完毕",
         "start": "开始扫描",
+        "scanning": "正在扫描",
         "progress": "扫描进度",
         "complete": "扫描完成",
         "error": "扫描错误"
@@ -405,7 +406,17 @@
     },
     "scan": {
         "queueTitle": "扫描队列",
-        "queueEmpty": "队列为空"
+        "queueEmpty": "队列为空",
+        "processing": "正在处理队列",
+        "allTasksCompleted": "所有扫描任务已完成",
+        "pathHeader": "路径",
+        "actionHeader": "操作",
+        "unknownFolder": "未知文件夹",
+        "actions": {
+            "scan": "扫描",
+            "rescan": "重新扫描",
+            "current": "当前扫描"
+        }
     },
     "advancedSettings": {
         "title": "高级配置",

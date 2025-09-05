@@ -405,7 +405,17 @@
     },
     "scan": {
         "queueTitle": "Очередь сканирования",
-        "queueEmpty": "Очередь пуста"
+        "queueEmpty": "Очередь пуста",
+        "processing": "Обработка очереди",
+        "allTasksCompleted": "Все задачи сканирования завершены",
+        "pathHeader": "Путь",
+        "actionHeader": "Действие",
+        "unknownFolder": "Неизвестная папка",
+        "actions": {
+            "scan": "Сканировать",
+            "rescan": "Пересканировать",
+            "current": "Текущее сканирование"
+        }
     },
     "advancedSettings": {
         "title": "Дополнительные настройки",

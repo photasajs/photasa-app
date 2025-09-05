@@ -63,14 +63,14 @@ What parts of the design do you expect to resolve through the RFC process before
 
 | RFC                                    | Title                | Status               | Assignee         | Target Release |
 | -------------------------------------- | -------------------- | -------------------- | ---------------- | -------------- |
-| [0001](./0001-import-wizard-system.md) | Import Wizard System | Under Implementation | Development Team | v1.0.0         |
 | [0002](./0002-headless-ui-components) |  Headless UI Components for Picasa Vue | In Progress | Development Team | v1.0.0         |
+| [0003](./0003-unify-watch-to-scan-queue.md) | Unify File Watch Events to Scan Queue | Under Implementation | Claude Code Assistant | v1.0.0 |
 
 ## Implemented RFCs
 
 | RFC | Title | Implemented In | Notes |
 | --- | ----- | -------------- | ----- |
-| -   | -     | -              | -     |
+| [0001](./0001-import-wizard-system.md) | Import Wizard System | v1.0.0 | Complete import wizard with multi-step flow |
 
 ## Rejected RFCs
 

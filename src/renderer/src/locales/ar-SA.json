@@ -405,7 +405,17 @@
     },
     "scan": {
         "queueTitle": "قائمة انتظار المسح",
-        "queueEmpty": "القائمة فارغة"
+        "queueEmpty": "القائمة فارغة",
+        "processing": "معالجة القائمة",
+        "allTasksCompleted": "اكتملت جميع مهام المسح",
+        "pathHeader": "المسار",
+        "actionHeader": "الإجراء",
+        "unknownFolder": "مجلد غير معروف",
+        "actions": {
+            "scan": "مسح",
+            "rescan": "إعادة مسح",
+            "current": "المسح الحالي"
+        }
     },
     "advancedSettings": {
         "title": "إعدادات متقدمة",

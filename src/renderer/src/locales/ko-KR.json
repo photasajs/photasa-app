@@ -405,7 +405,17 @@
     },
     "scan": {
         "queueTitle": "스캔 대기열",
-        "queueEmpty": "대기열이 비어있습니다"
+        "queueEmpty": "대기열이 비어있습니다",
+        "processing": "대기열 처리 중",
+        "allTasksCompleted": "모든 스캔 작업이 완료되었습니다",
+        "pathHeader": "경로",
+        "actionHeader": "동작",
+        "unknownFolder": "알 수 없는 폴더",
+        "actions": {
+            "scan": "스캔",
+            "rescan": "다시 스캔",
+            "current": "현재 스캔"
+        }
     },
     "advancedSettings": {
         "title": "고급 설정",

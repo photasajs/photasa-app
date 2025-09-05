@@ -405,7 +405,17 @@
     },
     "scan": {
         "queueTitle": "Tarama Kuyruğu",
-        "queueEmpty": "Kuyruk boş"
+        "queueEmpty": "Kuyruk boş",
+        "processing": "Kuyruk işleniyor",
+        "allTasksCompleted": "Tüm tarama görevleri tamamlandı",
+        "pathHeader": "Yol",
+        "actionHeader": "İşlem",
+        "unknownFolder": "Bilinmeyen klasör",
+        "actions": {
+            "scan": "Tara",
+            "rescan": "Yeniden Tara",
+            "current": "Mevcut Tarama"
+        }
     },
     "advancedSettings": {
         "title": "Gelişmiş Ayarlar",

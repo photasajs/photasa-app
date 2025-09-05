@@ -411,7 +411,17 @@
     },
     "scan": {
         "queueTitle": "File d'attente de scan",
-        "queueEmpty": "La file d'attente est vide"
+        "queueEmpty": "La file d'attente est vide",
+        "processing": "Traitement de la file d'attente",
+        "allTasksCompleted": "Toutes les tâches de scan terminées",
+        "pathHeader": "Chemin",
+        "actionHeader": "Action",
+        "unknownFolder": "Dossier inconnu",
+        "actions": {
+            "scan": "Scanner",
+            "rescan": "Rescanner",
+            "current": "Scan en cours"
+        }
     },
     "empty": {
         "image": "Aucune image",

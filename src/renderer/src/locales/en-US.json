@@ -357,6 +357,7 @@
         "scanned": "Completed",
         "scanComplete": "Directory [{path}] has been processed.",
         "start": "Scan started",
+        "scanning": "Scanning",
         "progress": "Scanning progress",
         "complete": "Scan complete",
         "error": "Scan error"
@@ -405,7 +406,17 @@
     },
     "scan": {
         "queueTitle": "Scan Queue",
-        "queueEmpty": "Queue is empty"
+        "queueEmpty": "Queue is empty",
+        "processing": "Processing queue",
+        "allTasksCompleted": "All scan tasks completed",
+        "pathHeader": "Path",
+        "actionHeader": "Action",
+        "unknownFolder": "Unknown folder",
+        "actions": {
+            "scan": "Scan",
+            "rescan": "Rescan",
+            "current": "Current scan"
+        }
     },
     "advancedSettings": {
         "title": "Advanced Settings",

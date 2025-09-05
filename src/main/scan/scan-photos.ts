@@ -69,7 +69,7 @@ function shouldScanOneLevel(action: string): boolean {
  * @param action - 扫描动作
  * @returns 是否需要处理
  */
-async function shouldProcessFile(filePath: string, action: string): Promise<boolean> {
+export async function shouldProcessFile(filePath: string, action: string): Promise<boolean> {
     // 总是处理 rescan 动作
     if (action === "rescan") {
         return true;
@@ -99,7 +99,28 @@ async function shouldProcessFile(filePath: string, action: string): Promise<bool
  */
 export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileRequest> {
     return new Observable<PhotoFileRequest>((subscriber: Subscriber<PhotoFileRequest>) => {
-        // Only scan current folder
+        // Handle single file scanning (enhanced functionality for unified queue)
+        if (source.operationType === "file") {
+            const isVideoFile = isVideo(source.path);
+            const isImageFile = isImage(source.path);
+
+            // Only process media files with enhanced validation
+            if (isVideoFile || isImageFile) {
+                subscriber.next({
+                    path: source.path,
+                    thumbnail: buildThumbnailPath(source.path),
+                    isImage: isImageFile,
+                    isVideo: isVideoFile,
+                    isDirectory: false,
+                });
+            } else {
+                logger.debug(`Skipping non-media file: ${source.path}`);
+            }
+            subscriber.complete();
+            return;
+        }
+
+        // Directory scanning (existing logic with error handling)
         const option = {
             depthLimit: shouldScanOneLevel(source.action) ? 0 : -1,
             filter: (item: string): boolean => {
@@ -109,6 +130,7 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
                 );
             },
         };
+
         klaw(source.path, option)
             .on("data", (item) => {
                 const video = isVideo(item.path);
@@ -132,6 +154,10 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
             })
             .on("end", () => {
                 subscriber.complete();
+            })
+            .on("error", (error) => {
+                logger.error("Error during directory walkthrough:", error);
+                subscriber.error(error);
             });
     });
 }

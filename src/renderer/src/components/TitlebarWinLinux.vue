@@ -30,6 +30,10 @@
         <div class="window-controls no-drag-region">
             <a-space class="setting-header no-drag-region">
                 <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
+                <DashboardOutlined
+                    class="system-icon"
+                    @click="openQueueDashboard"
+                ></DashboardOutlined>
                 <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
                 <SettingOutlined class="system-icon" @click="openPreference" />
             </a-space>
@@ -102,6 +106,7 @@ import {
     PhClock as CoffeeOutlined,
     PhFolder as ImportOutlined,
     PhGear as SettingOutlined,
+    PhChartLineUp as DashboardOutlined,
 } from "@phosphor-icons/vue";
 import { useI18n } from "vue-i18n";
 import { onClickOutside } from "@vueuse/core";
@@ -111,9 +116,17 @@ import { useMenusStore } from "@renderer/stores/menus";
 import MenuDropdown from "./common/MenuDropdown.vue";
 const { t } = useI18n();
 
-const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference"]);
+const emit = defineEmits([
+    "openScanList",
+    "openQueueDashboard",
+    "openImportPhotos",
+    "openPreference",
+]);
 function openScanList() {
     emit("openScanList");
+}
+function openQueueDashboard() {
+    emit("openQueueDashboard");
 }
 function openImportPhotos() {
     emit("openImportPhotos");
@@ -324,6 +337,14 @@ onClickOutside(menuBarRef, () => {
 }
 
 .system-icon:nth-child(2) {
+    /* 仪表板图标 - 紫色渐变 */
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(3) {
     /* 文件夹图标 - 绿色渐变 */
     background: linear-gradient(135deg, #10b981, #059669);
     -webkit-background-clip: text;
@@ -331,7 +352,7 @@ onClickOutside(menuBarRef, () => {
     background-clip: text;
 }
 
-.system-icon:nth-child(3) {
+.system-icon:nth-child(4) {
     /* 设置图标 - 橙色渐变 */
     background: linear-gradient(135deg, #f59e0b, #d97706);
     -webkit-background-clip: text;
@@ -353,13 +374,20 @@ onClickOutside(menuBarRef, () => {
 }
 
 .system-icon:nth-child(2):hover {
-    background: linear-gradient(135deg, #34d399, #10b981);
+    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .system-icon:nth-child(3):hover {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(4):hover {
     background: linear-gradient(135deg, #fbbf24, #f59e0b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

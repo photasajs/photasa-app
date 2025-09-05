@@ -15,7 +15,7 @@
             <div
                 @click.stop
                 :class="[
-                    'relative transform overflow-hidden rounded-lg shadow-xl transition-all',
+                    'relative transform rounded-lg shadow-xl transition-all',
                     'bg-[var(--color-card-bg)] border border-[var(--color-border)]',
                     'max-h-[90vh] flex flex-col',
                     sizeClasses,
@@ -36,7 +36,7 @@
                 </div>
 
                 <!-- 内容区域 -->
-                <div class="px-6 py-4">
+                <div class="px-6 py-4 flex-1 overflow-y-auto">
                     <slot />
                 </div>
 

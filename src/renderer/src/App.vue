@@ -18,8 +18,10 @@ import { deepCopy, top } from "./utils/object";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@common/logger";
+import { mapFileOperationToScanAction } from "@common/file-operation-utils";
 
 import UserPreference from "./components/UserPreference.vue";
+import ScanQueueDialog from "./components/ScanQueueDialog.vue";
 import { useI18n } from "vue-i18n";
 import type { ScanAction } from "@common/scan-types";
 import { useTitle, watchArray } from "@vueuse/core";
@@ -31,7 +33,14 @@ import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useMenusStore } from "@renderer/stores/menus";
-import { NotificationContainer, PortalProvider } from "@renderer/components/ui";
+import {
+    NotificationContainer,
+    PortalProvider,
+    BaseModal,
+    BaseButton,
+} from "@renderer/components/ui";
+import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
+import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
 
 /**
  * 日志记录器
@@ -48,6 +57,7 @@ const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenc
 const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
+const showQueueDashboard = ref(false);
 const loading = ref(false);
 
 const findPhotoService = inject(FindPhotoServiceKey);
@@ -64,6 +74,12 @@ const isMac = window.api.isMac();
 
 function handleOpenScanList() {
     showScanList.value = true;
+}
+function handleOpenQueueDashboard() {
+    showQueueDashboard.value = true;
+    if (!queueMonitoringService.isMonitoring.value) {
+        queueMonitoringService.startMonitoring();
+    }
 }
 function handleOpenImportPhotos() {
     logger.debug("Opening import photos dialog...");
@@ -151,12 +167,12 @@ async function startScanning(): Promise<void> {
         processingFile.value = "正在扫描: " + scanAction.path;
         logger.debug(`Starting scan for path: ${scanAction.path}, action: ${scanAction.action}`);
         if (scanAction.action === "rescan") {
-            logger.debug("Rescanning folder:", scanAction.path);
+            logger.debug(`Rescanning folder: ${scanAction.path}`);
             await resetPhotasaConfig(scanAction.path);
         }
 
         scanAction.thumbnailSize = thumbnailSize.value;
-        logger.debug("Scanning subfolders for:", scanAction.path);
+        logger.debug(`Scanning subfolders for: ${scanAction.path}`);
         try {
             const folders = await scanSubfolders(scanAction.path);
             logger.debug(`Found ${folders.length} subfolders for: ${scanAction.path}`);
@@ -167,7 +183,7 @@ async function startScanning(): Promise<void> {
             logger.debug(`Scan completed for: ${scanAction.path}`);
 
             if (args?.action?.path && args?.action?.isDirectory) {
-                logger.debug("Updating folder tree for:", args.action.path);
+                logger.debug(`Updating folder tree for: ${args.action.path}`);
                 updateFolderTree(args.action.path as string);
                 completeScanPath(args.action.path as string);
                 startScanning();
@@ -231,6 +247,33 @@ findPhotoService.onFindPhoto((args: any) => {
         startScanning();
     }
 });
+
+// 监听统一队列事件，处理文件监视产生的批量操作
+window.api?.onScanQueueAdd((operations: any[]) => {
+    logger.debug(`Received ${operations.length} file operations from watch service`);
+
+    // Process batch of file operations
+    operations.forEach((operation) => {
+        logger.debug("Adding file operation to queue:", operation);
+
+        // Convert FileOperation to enhanced ScanAction for unified processing
+        const fileOperation = {
+            path: operation.path,
+            action: mapFileOperationToScanAction(operation.type),
+            thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize.value,
+            operationType: (operation.metadata?.isFile ? "file" : "directory") as
+                | "file"
+                | "directory",
+            priority: operation.priority,
+            retryCount: operation.retryCount,
+            createdAt: operation.timestamp,
+            fileOperationId: operation.id,
+        };
+
+        // Add to persistent queue using new enhanced method
+        preferenceStore.addFileOperation(fileOperation);
+    });
+});
 </script>
 
 <template>
@@ -240,12 +283,14 @@ findPhotoService.onFindPhoto((args: any) => {
         <TitlebarMac
             v-if="isMac"
             @openScanList="handleOpenScanList"
+            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
         <TitlebarWinLinux
             v-else
             @openScanList="handleOpenScanList"
+            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
@@ -270,46 +315,32 @@ findPhotoService.onFindPhoto((args: any) => {
         </div>
         <StatusBar />
     </div>
-    <a-modal
-        v-model:visible="showPreference"
-        :mask-closable="false"
+    <BaseModal
+        :open="showPreference"
         :title="t('preference.settings')"
-        width="800px"
-        @ok="handlePreferenceOk"
+        size="custom"
+        :style="{ '--modal-width': '800px' }"
+        @close="handlePreferenceOk"
     >
         <UserPreference></UserPreference>
-        <template #footer></template>
-    </a-modal>
-    <a-modal
-        v-model:visible="showScanList"
-        :mask-closable="false"
-        :title="t('scan.queueTitle')"
-        width="600px"
+    </BaseModal>
+    <ScanQueueDialog
+        :show="showScanList"
+        :scanning-folder="scanningFolder"
+        @close="showScanList = false"
+    />
+    <BaseModal
+        :open="showQueueDashboard"
+        title="队列健康监控"
+        size="custom"
+        :style="{ '--modal-width': '1200px' }"
+        @close="
+            showQueueDashboard = false;
+            queueMonitoringService.stopMonitoring();
+        "
     >
-        <a-list size="small" bordered :data-source="scanningFolder" class="scan-list">
-            <template #renderItem="{ item }">
-                <a-list-item>
-                    <span>{{ item.path }}</span>
-                    <span style="float: right; color: #888">{{ item.action }}</span>
-                </a-list-item>
-            </template>
-            <template #header>
-                <a-spin v-if="scanningFolder.length > 0" />
-                <span v-else>{{ t("scan.queueEmpty") || "队列为空" }}</span>
-            </template>
-        </a-list>
-        <template #footer>
-            <a-button
-                type="primary"
-                size="large"
-                block
-                style="margin: 0 auto; width: 120px"
-                @click="showScanList = false"
-            >
-                {{ t("button.ok") }}
-            </a-button>
-        </template>
-    </a-modal>
+        <QueueHealthDashboard />
+    </BaseModal>
 
     <!-- 通知容器 -->
     <NotificationContainer />
@@ -376,12 +407,6 @@ findPhotoService.onFindPhoto((args: any) => {
     background: var(--color-footer-bg);
     color: var(--color-footer-text);
     border-top: 1px solid var(--color-footer-border);
-}
-
-.scan-list {
-    height: 10rem;
-    overflow: auto;
-    overflow-y: overlay;
 }
 
 .system-icon {

@@ -17,7 +17,7 @@ export default class ShellService {
     private init(): void {
         // Open in finder
         this.ipc.on("picasa:open-in-finder", (_, args) => {
-            this.logger.info("picasa:open-in-finder", { path: args.path });
+            this.logger.info(`picasa:open-in-finder: path=${args.path}`);
             shell.showItemInFolder(args.path);
         });
 

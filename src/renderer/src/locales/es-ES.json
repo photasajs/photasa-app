@@ -411,7 +411,17 @@
     },
     "scan": {
         "queueTitle": "Cola de escaneo",
-        "queueEmpty": "La cola está vacía"
+        "queueEmpty": "La cola está vacía",
+        "processing": "Procesando cola",
+        "allTasksCompleted": "Todas las tareas de escaneo completadas",
+        "pathHeader": "Ruta",
+        "actionHeader": "Acción",
+        "unknownFolder": "Carpeta desconocida",
+        "actions": {
+            "scan": "Escanear",
+            "rescan": "Volver a escanear",
+            "current": "Escaneo actual"
+        }
     },
     "empty": {
         "image": "No hay imágenes",

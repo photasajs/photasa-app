@@ -405,7 +405,17 @@
     },
     "scan": {
         "queueTitle": "Scan-Warteschlange",
-        "queueEmpty": "Warteschlange ist leer"
+        "queueEmpty": "Warteschlange ist leer",
+        "processing": "Warteschlange wird verarbeitet",
+        "allTasksCompleted": "Alle Scan-Aufgaben abgeschlossen",
+        "pathHeader": "Pfad",
+        "actionHeader": "Aktion",
+        "unknownFolder": "Unbekannter Ordner",
+        "actions": {
+            "scan": "Scannen",
+            "rescan": "Erneut scannen",
+            "current": "Aktueller Scan"
+        }
     },
     "advancedSettings": {
         "title": "Erweiterte Einstellungen",

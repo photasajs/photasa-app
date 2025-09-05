@@ -1,5 +1,13 @@
 import { loggers } from "@common/logger";
 import { WatchServiceEvent, type WatchConfig } from "@common/watch-types";
+import type { FileOperation } from "@common/scan-types";
+import { EventLossPreventionConfig } from "@common/constants";
+import {
+    createFileOperation,
+    getDeduplicationWindow,
+    calculateDebounceTime,
+    shouldDeduplicateEvent,
+} from "@common/file-operation-utils";
 import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
 
@@ -8,6 +16,27 @@ export default class WatchService {
     mainWindow: BrowserWindow;
     FileWatcherHandler: FSWatcher | undefined;
     logger = loggers.watch;
+
+    // Event deduplication and batching
+    private pendingEvents = new Map<string, FileOperation>();
+    private debounceTimer: NodeJS.Timeout | null = null;
+    private currentThumbnailSize = 150;
+
+    // Event loss prevention mechanisms
+    private eventLossPrevention = {
+        maxPendingEvents: EventLossPreventionConfig.MaxPendingEvents,
+        forceProcessInterval: EventLossPreventionConfig.ForceProcessInterval,
+        lastForceProcess: 0,
+
+        shouldForceProcess(): boolean {
+            const now = Date.now();
+            return now - this.lastForceProcess > this.forceProcessInterval;
+        },
+
+        isNearLimit(pendingCount: number): boolean {
+            return pendingCount > this.maxPendingEvents * 0.8;
+        },
+    };
 
     constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
         this.ipc = ipcMain;
@@ -36,30 +65,12 @@ export default class WatchService {
         // Create a new watcher
         this.FileWatcherHandler = chokidar.watch(args.paths, args.options);
 
-        // Watch the files
-        this.FileWatcherHandler.on("add", (path) => {
-            this.logger.info(`Add file ${path}`);
-            this.mainWindow?.webContents.send(WatchServiceEvent.add, { isFile: true, path });
-        })
-            .on("addDir", (path) => {
-                this.logger.info(`Add folder ${path}`);
-                this.mainWindow?.webContents.send(WatchServiceEvent.add, { isFile: false, path });
-            })
-            .on("change", (path) => {
-                this.logger.info(`Change file ${path}`);
-                this.mainWindow?.webContents.send(WatchServiceEvent.change, { isFile: true, path });
-            })
-            .on("unlink", (path) => {
-                this.logger.info(`Delete file ${path}`);
-                this.mainWindow?.webContents.send(WatchServiceEvent.unlink, { isFile: true, path });
-            })
-            .on("unlinkDir", (path) => {
-                this.logger.info(`Delete folder ${path}`);
-                this.mainWindow?.webContents.send(WatchServiceEvent.unlink, {
-                    isFile: false,
-                    path,
-                });
-            })
+        // All events go through unified processing with deduplication and batching
+        this.FileWatcherHandler.on("add", (path) => this.handleFileEvent("add", path, true))
+            .on("addDir", (path) => this.handleFileEvent("addDir", path, false))
+            .on("change", (path) => this.handleFileEvent("change", path, true))
+            .on("unlink", (path) => this.handleFileEvent("delete", path, true))
+            .on("unlinkDir", (path) => this.handleFileEvent("deleteDir", path, false))
             .on("error", (error) => {
                 this.mainWindow?.webContents.send(WatchServiceEvent.error, { error });
             })
@@ -68,9 +79,95 @@ export default class WatchService {
             });
     }
 
+    private handleFileEvent(type: string, path: string, isFile = true): void {
+        const key = `${type}:${path}`;
+        const now = Date.now();
+
+        this.logger.info(`File event: ${type} ${path}`);
+
+        // Smart deduplication using pure functions
+        const existing = this.pendingEvents.get(key);
+        const dedupWindow = getDeduplicationWindow(type);
+
+        if (shouldDeduplicateEvent(existing, now, dedupWindow)) {
+            // Update existing event with latest timestamp and metadata
+            existing!.timestamp = now;
+            if (existing!.metadata) {
+                existing!.metadata.lastModified = now;
+            }
+            this.logger.debug(
+                `Updated existing event: ${key} (${now - existing!.timestamp}ms ago)`,
+            );
+            return;
+        }
+
+        // Create new operation using pure function
+        const operation = createFileOperation(type, path, isFile, this.currentThumbnailSize);
+        this.pendingEvents.set(key, operation);
+
+        // Check for force processing to prevent event loss
+        this.forceProcessIfNeeded();
+
+        // Start debounced processing
+        this.debounceProcess();
+    }
+
+    private debounceProcess(): void {
+        if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer);
+        }
+
+        // Dynamic debounce based on event load using pure function
+        const pendingCount = this.pendingEvents.size;
+        const debounceTime = calculateDebounceTime(pendingCount);
+
+        this.debounceTimer = setTimeout(() => {
+            this.processPendingEvents();
+        }, debounceTime);
+    }
+
+    private processPendingEvents(): void {
+        const operations = Array.from(this.pendingEvents.values());
+        this.pendingEvents.clear();
+
+        if (operations.length > 0) {
+            this.logger.info(`Processing ${operations.length} file operations`);
+            this.mainWindow?.webContents.send("picasa:add-to-scan-queue", operations);
+        }
+
+        // Update force process timestamp
+        this.eventLossPrevention.lastForceProcess = Date.now();
+    }
+
+    // Force process events to prevent loss
+    private forceProcessIfNeeded(): void {
+        const pendingCount = this.pendingEvents.size;
+
+        if (
+            this.eventLossPrevention.shouldForceProcess() ||
+            this.eventLossPrevention.isNearLimit(pendingCount)
+        ) {
+            this.logger.warn(`Force processing ${pendingCount} events to prevent loss`);
+            this.processPendingEvents();
+        }
+    }
+
     close(): void {
         this.ipc.removeAllListeners(WatchServiceEvent.start);
         this.ipc.removeAllListeners(WatchServiceEvent.stop);
+
+        // Clean up debounce timer
+        if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = null;
+        }
+
+        // Process any remaining events before closing
+        if (this.pendingEvents.size > 0) {
+            this.logger.info(`Processing ${this.pendingEvents.size} remaining events before close`);
+            this.processPendingEvents();
+        }
+
         this.FileWatcherHandler?.close();
         this.FileWatcherHandler = undefined;
     }

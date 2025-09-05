@@ -36,6 +36,7 @@ export default defineConfig({
             "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
+            "src/preload/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
         server: {
             deps: {

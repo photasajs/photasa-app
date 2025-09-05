@@ -196,7 +196,9 @@ const handleWizardComplete = (data: any) => {
         emit("update:show", false);
         showProgressModal.value = true;
     } else {
-        logger.error("Invalid wizard data on completion", { configData, previewData });
+        logger.error(
+            `Invalid wizard data: configData=${!!configData}, previewData=${!!previewData}`,
+        );
     }
 };
 
@@ -214,7 +216,7 @@ const wizardConfig = createWizardConfig({
             description: t("import.steps.configurationDesc"),
             isValid: (stepData: any) => {
                 const isValid = validateConfigurationStep(stepData);
-                logger.debug("Configuration step validation:", { stepData, isValid });
+                logger.debug(`Configuration validation: valid=${isValid}`);
                 return isValid;
             },
             onEnter: (stepData: any) => {
@@ -497,7 +499,7 @@ const handleImportCancel = () => {
 const handleStepChange = async (stepId: string, stepIndex: number, wizardState: any) => {
     logger.debug(`=== Step Change Debug ===`);
     logger.debug(`Preparing for step: ${stepId} (${stepIndex})`);
-    logger.debug("Current stepData:", wizardState.stepData);
+    logger.debug(`Current stepData keys: ${Object.keys(wizardState.stepData).join(", ")}`);
     // 保存向导状态引用，供其他函数使用
     wizardStateRef.value = wizardState;
     // 确保配置步骤数据已初始化
@@ -578,13 +580,9 @@ const loadPreviewData = async (wizardState: any) => {
             let cleanupProgress: (() => void) | null = null;
             try {
                 cleanupProgress = onPreviewProgress((progress, files) => {
-                    logger.debug("Preview progress received:", {
-                        progressStage: progress.stage,
-                        filesFound: progress.filesFound,
-                        discoveredFilesInProgress: progress.discoveredFiles?.length || 0,
-                        filesParam: files?.length || 0,
-                        currentDiscoveredCount: discoveredFiles.length,
-                    });
+                    logger.debug(
+                        `Preview progress: stage=${progress.stage}, filesFound=${progress.filesFound}, discoveredFiles=${progress.discoveredFiles?.length || 0}, currentCount=${discoveredFiles.length}`,
+                    );
 
                     // 更新进度状态
                     Object.assign(previewProgress, progress);

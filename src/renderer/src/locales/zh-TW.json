@@ -404,7 +404,17 @@
     },
     "scan": {
         "queueTitle": "掃描隊列",
-        "queueEmpty": "隊列為空"
+        "queueEmpty": "隊列為空",
+        "processing": "正在處理隊列",
+        "allTasksCompleted": "所有掃描任務已完成",
+        "pathHeader": "路徑",
+        "actionHeader": "操作",
+        "unknownFolder": "未知資料夾",
+        "actions": {
+            "scan": "掃描",
+            "rescan": "重新掃描",
+            "current": "當前掃描"
+        }
     },
     "advancedSettings": {
         "title": "高級配置",

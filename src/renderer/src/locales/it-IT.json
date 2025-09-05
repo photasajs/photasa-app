@@ -402,7 +402,17 @@
     },
     "scan": {
         "queueTitle": "Coda scansione",
-        "queueEmpty": "Coda vuota"
+        "queueEmpty": "Coda vuota",
+        "processing": "Elaborazione coda",
+        "allTasksCompleted": "Tutti i task di scansione completati",
+        "pathHeader": "Percorso",
+        "actionHeader": "Azione",
+        "unknownFolder": "Cartella sconosciuta",
+        "actions": {
+            "scan": "Scansiona",
+            "rescan": "Riscansiona",
+            "current": "Scansione corrente"
+        }
     },
     "advancedSettings": {
         "title": "Impostazioni avanzate",

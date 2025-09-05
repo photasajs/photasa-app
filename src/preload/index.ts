@@ -238,6 +238,16 @@ const api = {
      */
     extractMetadata: (request: any) =>
         electronAPI.ipcRenderer.invoke(ImportEvents.EXTRACT_METADATA, request),
+
+    /**
+     * 监听文件监视服务发送的批量操作事件
+     */
+    onScanQueueAdd: (callback: (operations: any[]) => void) => {
+        const handler = (_: any, operations: any[]) => callback(operations);
+        electronAPI.ipcRenderer.on("picasa:add-to-scan-queue", handler);
+
+        return () => electronAPI.ipcRenderer.removeListener("picasa:add-to-scan-queue", handler);
+    },
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

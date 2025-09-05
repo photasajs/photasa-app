@@ -141,3 +141,46 @@ export const FileGroupTypes = {
     SINGLE: "single",
     GROUP: "group",
 } as const;
+
+/**
+ * 文件操作事件优先级常量
+ */
+export const FileOperationPriorities = {
+    Delete: 1, // Highest priority
+    DeleteDir: 1, // Highest priority
+    Change: 2, // Medium priority
+    Add: 3, // Lower priority
+    AddDir: 4, // Lowest priority
+    Default: 5, // Unknown types
+} as const;
+
+/**
+ * 文件操作去重时间窗口常量 (毫秒)
+ */
+export const FileOperationDeduplicationWindows = {
+    Add: 50, // Short window for add events (new files)
+    Change: 200, // Longer window for change events (file modifications)
+    Delete: 100, // Medium window for delete events
+    AddDir: 100, // Medium window for directory creation
+    DeleteDir: 100, // Medium window for directory deletion
+    Default: 100, // Unknown types
+} as const;
+
+/**
+ * 防抖时间配置常量 (毫秒)
+ */
+export const DebounceTimeConfig = {
+    HighLoad: 50, // > 1000 events: shorter debounce
+    MediumLoad: 100, // > 100 events: normal debounce
+    LowLoad: 200, // <= 100 events: longer debounce for efficiency
+    HighLoadThreshold: 1000,
+    MediumLoadThreshold: 100,
+} as const;
+
+/**
+ * 事件丢失防护配置常量
+ */
+export const EventLossPreventionConfig = {
+    MaxPendingEvents: 8000, // Force process when reaching this limit
+    ForceProcessInterval: 5000, // Force process after this time (ms)
+} as const;

@@ -289,29 +289,44 @@ export async function batchAddToPhotoList(
     const chunkSize = QUEUE_CONCURRENCY * 2;
     for (let i = 0; i < photos.length; i += chunkSize) {
         const chunk = photos.slice(i, i + chunkSize);
-        await Promise.allSettled(
+        const results = await Promise.allSettled(
             chunk.map(async (photo) => {
                 try {
                     logger.info(`[batchAddToPhotoList] 添加照片到配置文件: ${photo}`);
                     const result = await addToPhotoList(photo, logger);
-                    lastResult = result;
-                    processed++;
-
-                    // Update progress less frequently for better performance
-                    const now = Date.now();
-                    if (now - lastProgressUpdate > 100) {
-                        // Update every 100ms
-                        lastProgressUpdate = now;
-                        onProgress?.(processed / total);
-                    }
-                    return result;
+                    return { success: true, result, photo };
                 } catch (error) {
-                    failed++;
+                    logger.error(`[batchAddToPhotoList] 处理照片失败: ${photo}`, error);
                     onError?.(error as Error);
-                    throw error;
+                    return { success: false, error, photo };
                 }
             }),
         );
+
+        // 处理 settled 结果
+        results.forEach((result, index) => {
+            if (result.status === "fulfilled") {
+                const { success, result: photoResult, error, photo } = result.value;
+                if (success && photoResult) {
+                    lastResult = photoResult;
+                    processed++;
+                } else {
+                    failed++;
+                    logger.error(`[batchAddToPhotoList] 照片处理失败: ${photo}`, error);
+                }
+            } else {
+                failed++;
+                logger.error(`[batchAddToPhotoList] 照片处理失败: ${chunk[index]}`, result.reason);
+            }
+        });
+
+        // Update progress less frequently for better performance
+        const now = Date.now();
+        if (now - lastProgressUpdate > 100) {
+            // Update every 100ms
+            lastProgressUpdate = now;
+            onProgress?.(processed / total);
+        }
 
         // Check for timeout
         if (Date.now() - startTime > QUEUE_TIMEOUT) {
@@ -326,9 +341,16 @@ export async function batchAddToPhotoList(
     // Final progress update
     onProgress?.(1);
 
+    // 记录最终统计信息
+    logger.info(
+        `[batchAddToPhotoList] 批量处理完成: 成功=${processed}, 失败=${failed}, 总计=${total}`,
+    );
+
     // Return the last successful result or throw if no successful results
     if (!lastResult) {
-        throw new ConfigError("No successful results in batch processing", {
+        const errorMsg = `No successful results in batch processing: processed=${processed}, failed=${failed}, total=${total}`;
+        logger.error(`[batchAddToPhotoList] ${errorMsg}`);
+        throw new ConfigError(errorMsg, {
             processed,
             failed,
             total,
@@ -624,12 +646,9 @@ function addConfig(
     const totalFiles = queued.reduce((acc, entry) => acc + entry[1].length, 0);
 
     if (totalFiles > 0) {
-        logger.info("config-update", {
-            action: "add",
-            photoCount: totalFiles,
-            queueSize: waitedFilesCount(),
-            timestamp: Date.now(),
-        });
+        logger.info(
+            `config-update: action=add, photoCount=${totalFiles}, queueSize=${waitedFilesCount()}, timestamp=${Date.now()}`,
+        );
     }
 
     from(queued)
@@ -673,11 +692,9 @@ function addConfig(
                 const handlerId = setInterval(() => {
                     const count = waitedFilesCount();
                     if (count > 0) {
-                        logger.info("config-queue", {
-                            action: "waiting",
-                            count,
-                            timestamp: Date.now(),
-                        });
+                        logger.info(
+                            `config-queue: action=waiting, count=${count}, timestamp=${Date.now()}`,
+                        );
                     }
                     // if count isn't changed then process it
                     if (count >= QUEUE_BREAK_THRESHOLD || count === lastQueuedCount) {

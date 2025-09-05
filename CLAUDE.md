@@ -4,6 +4,10 @@ This is Electron App based on Vite as Frontend. It's  written with TypeScript. T
 
 This App is targeting Windows and Mac System as Native Desktop Application.
 
+## Documents Rules
+
+I use RFC to track work and progress. Read docs/rfc/README.md to understand how to manage RFC.
+
 ## Coding Rules
 
 1. Each Change should have corresponding test
