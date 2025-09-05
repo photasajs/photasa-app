@@ -344,7 +344,7 @@ onUnmounted(() => {
         placement="right"
     >
         <a-spin :spinning="loadingInfo">
-            <a-descriptions title="Image Ider" layout="vertical" bordered :column="2">
+            <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
                 <a-descriptions-item label="Image Width">{{
                     imageMeta.tags?.["Image Width"]?.value
                 }}</a-descriptions-item>
