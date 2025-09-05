@@ -43,6 +43,8 @@ export { default as BaseModalCloseButton } from "./BaseModalCloseButton.vue";
 // === 下拉菜单组件 ===
 export { default as BaseDropdown } from "./BaseDropdown.vue";
 export { default as BaseDropdownItem } from "./BaseDropdownItem.vue";
+export { default as BaseContextMenu } from "./BaseContextMenu.vue";
+export { default as BaseMenuItem } from "./BaseMenuItem.vue";
 
 // === 布局和导航 ===
 export { default as BaseTabs } from "./BaseTabs.vue";

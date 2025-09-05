@@ -63,8 +63,8 @@ What parts of the design do you expect to resolve through the RFC process before
 
 | RFC                                    | Title                | Status               | Assignee         | Target Release |
 | -------------------------------------- | -------------------- | -------------------- | ---------------- | -------------- |
-| [0001](./0001-import-wizard-system.md) | Import Wizard System | Under Implementation | Development Team | v2.1.0         |
-| [0003](./0003-ant-design-removal-migration.md) | Ant Design Removal & Migration | In Progress | Development Team | v2.2.0         |
+| [0001](./0001-import-wizard-system.md) | Import Wizard System | Under Implementation | Development Team | v1.0.0         |
+| [0002](./0002-headless-ui-components) |  Headless UI Components for Picasa Vue | In Progress | Development Team | v1.0.0         |
 
 ## Implemented RFCs
 

@@ -49,7 +49,6 @@ const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
 const loading = ref(false);
-const loadingConfigs = ref(false);
 
 const findPhotoService = inject(FindPhotoServiceKey);
 if (!findPhotoService) {
@@ -236,7 +235,7 @@ findPhotoService.onFindPhoto((args: any) => {
 
 <template>
     <a-spin v-if="loading" />
-    <a-layout v-else>
+    <div v-else class="app-layout">
         <!-- 分平台 titlebar -->
         <TitlebarMac
             v-if="isMac"
@@ -251,32 +250,26 @@ findPhotoService.onFindPhoto((args: any) => {
             @openPreference="handleOpenPreference"
         />
         <!-- 其余内容保持不变 -->
-        <a-layout class="content app-container">
+        <div class="content app-container">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
-                    <a-layout class="image-content">
-                        <a-layout-content>
-                            <a-spin :spinning="loadingConfigs">
-                                <FolderList></FolderList>
-                            </a-spin>
-                        </a-layout-content>
-                    </a-layout>
+                    <div class="image-content">
+                        <FolderList></FolderList>
+                    </div>
                 </template>
                 <template #B>
-                    <a-layout class="image-content">
-                        <a-layout-content class="image-list">
-                            <ImageList @import="showImportDialog = true" />
-                            <ImportPhotos
-                                :show="showImportDialog"
-                                @update:show="showImportDialog = $event"
-                            />
-                        </a-layout-content>
-                    </a-layout>
+                    <div class="image-content image-list">
+                        <ImageList @import="showImportDialog = true" />
+                        <ImportPhotos
+                            :show="showImportDialog"
+                            @update:show="showImportDialog = $event"
+                        />
+                    </div>
                 </template>
             </split-view>
-        </a-layout>
+        </div>
         <StatusBar />
-    </a-layout>
+    </div>
     <a-modal
         v-model:visible="showPreference"
         :mask-closable="false"
@@ -336,10 +329,25 @@ findPhotoService.onFindPhoto((args: any) => {
     --photasa-footer-height: 70px;
     --photasa-header-height: 36px;
 }
-.content .image-content {
-    height: calc(100vh - var(--photasa-footer-height));
-    overflow-y: overlay;
-    margin: auto;
+
+.app-layout {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg); /* 确保整个应用使用主题背景色 */
+}
+
+.content {
+    flex: 1;
+    min-height: 0; /* 重要：允许 flex 子元素收缩 */
+    background: var(--color-bg); /* 使用主题背景色 */
+}
+
+.image-content {
+    height: 100%;
+    overflow: hidden; /* 阻止外层滚动，让内部组件控制 */
+    display: flex;
+    flex-direction: column;
 }
 
 .image-list {

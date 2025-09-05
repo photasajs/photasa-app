@@ -9,6 +9,7 @@ import { openInFinder } from "@renderer/utils/api-path";
 import { JsonTreeView } from "json-tree-view-vue3";
 import { isEmpty } from "radash";
 import { removeFileProtocol } from "@renderer/common/image";
+import { BaseContextMenu, BaseMenuItem } from "@renderer/components/ui";
 
 /**
  * I18n
@@ -125,40 +126,54 @@ async function rescan(key: string): Promise<void> {
 </script>
 
 <template>
-    <div class="flex flex-col h-full min-h-0 rounded-lg shadow border folder-list-card">
+    <div class="folder-list-card">
         <div class="px-4 py-2 border-b border-gray-100 flex items-center">
             <a-breadcrumb class="folder-list-header">
                 <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
             </a-breadcrumb>
         </div>
-        <a-tree
-            class="flex-1 min-h-0 overflow-auto"
-            v-model:expandedKeys="expandedKeys"
-            v-model:selectedKeys="selectedKeys"
-            :tree-data="folderTree"
-        >
-            <template #title="{ title, key }">
-                <a-dropdown :trigger="['contextmenu']">
-                    <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
-                    <template v-else>
-                        <span class="folder-node">{{ title }}</span>
-                    </template>
-                    <template #overlay>
-                        <a-menu>
-                            <a-menu-item key="2" @click="rescan(key)">{{
-                                t("menu.rescan")
-                            }}</a-menu-item>
-                            <a-menu-item key="1" @click="openPhotasaConfig(key)">{{
-                                t("menu.getConfig")
-                            }}</a-menu-item>
-                            <a-menu-item key="2" @click="openFileInFinder(key)">{{
-                                t("menu.open")
-                            }}</a-menu-item>
-                        </a-menu>
-                    </template>
-                </a-dropdown>
-            </template>
-        </a-tree>
+        <div class="flex-1 min-h-0 overflow-auto tree-container">
+            <a-tree
+                class="folder-tree"
+                v-model:expandedKeys="expandedKeys"
+                v-model:selectedKeys="selectedKeys"
+                :tree-data="folderTree"
+            >
+                <template #title="{ title, key }">
+                    <BaseContextMenu>
+                        <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
+                        <span v-else class="folder-node">{{ title }}</span>
+
+                        <template #menu="{ close }">
+                            <BaseMenuItem
+                                @click="
+                                    rescan(key);
+                                    close();
+                                "
+                            >
+                                {{ t("menu.rescan") }}
+                            </BaseMenuItem>
+                            <BaseMenuItem
+                                @click="
+                                    openPhotasaConfig(key);
+                                    close();
+                                "
+                            >
+                                {{ t("menu.getConfig") }}
+                            </BaseMenuItem>
+                            <BaseMenuItem
+                                @click="
+                                    openFileInFinder(key);
+                                    close();
+                                "
+                            >
+                                {{ t("menu.open") }}
+                            </BaseMenuItem>
+                        </template>
+                    </BaseContextMenu>
+                </template>
+            </a-tree>
+        </div>
     </div>
     <a-modal v-model:visible="showConfigModal" title="">
         <a-spin :spinning="loadingInfo">
@@ -221,8 +236,22 @@ async function rescan(key: string): Promise<void> {
     border-bottom: 1px solid var(--color-tree-border);
 }
 .folder-list-card {
-    height: calc(100vh - var(--photasa-footer-height));
-    overflow: auto;
+    flex: 1; /* 使用 flex 占满父容器空间 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 让内部 a-tree 控制滚动 */
     background: var(--color-tree-bg);
+}
+
+.tree-container {
+    padding: 0;
+    background: var(--color-tree-bg);
+    height: 100%; /* 强制占满剩余空间 */
+    min-height: 0; /* 允许内容滚动 */
+}
+
+.folder-tree {
+    min-height: 100%; /* 确保树组件至少占满容器高度 */
+    width: 100%;
 }
 </style>

@@ -1,13 +1,15 @@
 <template>
-    <header class="app-header">
-        <a-space class="title-header">
-            <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
-        </a-space>
-        <a-space class="setting-header">
-            <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
-            <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
-            <SettingOutlined class="system-icon" @click="openPreference" />
-        </a-space>
+    <header class="titlebar-container">
+        <div class="app-header">
+            <a-space class="title-header">
+                <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
+            </a-space>
+            <a-space class="setting-header">
+                <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
+                <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
+                <SettingOutlined class="system-icon" @click="openPreference" />
+            </a-space>
+        </div>
     </header>
 </template>
 
@@ -77,12 +79,20 @@ onUnmounted(() => {
 </script>
 
 <style lang="less" scoped>
+.titlebar-container {
+    height: var(--photasa-header-height, 36px);
+    width: 100%;
+    background: var(--color-header-bg, var(--color-bg));
+    border-bottom: 1px solid var(--color-header-border, var(--color-border));
+}
+
 .app-header {
     height: var(--photasa-header-height, 36px);
     margin-left: 36px;
     padding-left: 50px;
     line-height: 36px;
     display: flex;
+    color: var(--color-header-text, var(--color-text));
 }
 .title-header {
     flex-grow: 1;

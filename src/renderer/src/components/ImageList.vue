@@ -17,7 +17,7 @@ import {
 import * as R from "ramda";
 import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api-path";
-import { BaseImage } from "@renderer/components/ui";
+import { BaseImage, BaseContextMenu, BaseMenuItem } from "@renderer/components/ui";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
@@ -212,7 +212,7 @@ onUnmounted(() => {
 
 <template>
     <div
-        class="flex flex-col h-full min-h-0 rounded-lg shadow border"
+        class="flex flex-col h-full min-h-0"
         style="background: var(--color-card-bg); border-color: var(--color-card-border)"
     >
         <!-- 标题区 -->
@@ -273,8 +273,8 @@ onUnmounted(() => {
                     >
                         <div class="px-4 w-full flex" style="gap: 16px; max-width: 100%">
                             <template v-for="(image, colIndex) in rows[row.index]" :key="image.key">
-                                <div @click="openPreview(row.index, colIndex)">
-                                    <a-dropdown :trigger="['contextmenu']">
+                                <BaseContextMenu>
+                                    <div @click="openPreview(row.index, colIndex)">
                                         <a-tooltip
                                             placement="rightBottom"
                                             :mouse-enter-delay="mouseEnterDelay"
@@ -300,27 +300,35 @@ onUnmounted(() => {
                                                 />
                                             </a-card>
                                         </a-tooltip>
-                                        <template #overlay>
-                                            <a-menu>
-                                                <a-menu-item
-                                                    key="1"
-                                                    @click="openImageMeta(image)"
-                                                    >{{ t("menu.getInfo") }}</a-menu-item
-                                                >
-                                                <a-menu-item
-                                                    key="1"
-                                                    @click="rebuildThumbnail(image)"
-                                                    >{{ t("menu.rebuildThumbnail") }}</a-menu-item
-                                                >
-                                                <a-menu-item
-                                                    key="2"
-                                                    @click="openFileInFolder(image)"
-                                                    >{{ t("menu.open") }}</a-menu-item
-                                                >
-                                            </a-menu>
-                                        </template>
-                                    </a-dropdown>
-                                </div>
+                                    </div>
+
+                                    <template #menu="{ close }">
+                                        <BaseMenuItem
+                                            @click="
+                                                openImageMeta(image);
+                                                close();
+                                            "
+                                        >
+                                            {{ t("menu.getInfo") }}
+                                        </BaseMenuItem>
+                                        <BaseMenuItem
+                                            @click="
+                                                rebuildThumbnail(image);
+                                                close();
+                                            "
+                                        >
+                                            {{ t("menu.rebuildThumbnail") }}
+                                        </BaseMenuItem>
+                                        <BaseMenuItem
+                                            @click="
+                                                openFileInFolder(image);
+                                                close();
+                                            "
+                                        >
+                                            {{ t("menu.open") }}
+                                        </BaseMenuItem>
+                                    </template>
+                                </BaseContextMenu>
                             </template>
                         </div>
                     </div>

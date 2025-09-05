@@ -200,8 +200,9 @@ onClickOutside(menuBarRef, () => {
     height: var(--photasa-header-height, 36px);
     display: flex;
     align-items: center;
-    background: var(--color-bg);
-    color: var(--color-text);
+    background: var(--color-header-bg, var(--color-bg));
+    color: var(--color-header-text, var(--color-text));
+    border-bottom: 1px solid var(--color-header-border, var(--color-border));
     user-select: none;
     -webkit-app-region: drag;
 }
