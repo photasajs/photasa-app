@@ -69,6 +69,7 @@
             <div class="queue-items" v-if="scanningFolder.length > 0">
                 <div class="queue-header">
                     <span class="header-path">{{ t("scan.pathHeader") }}</span>
+                    <span class="header-timestamp">{{ t("scan.timestampHeader") }}</span>
                     <span class="header-action">{{ t("scan.actionHeader") }}</span>
                 </div>
                 <div class="queue-list">
@@ -108,6 +109,14 @@
                                 <div class="item-meta">{{ formatPathName(item.path) }}</div>
                             </div>
                         </div>
+                        <div class="item-timestamp" :title="formatFullTimestamp(item.createdAt)">
+                            <div class="timestamp-relative">
+                                {{ formatRelativeTime(item.createdAt) }}
+                            </div>
+                            <div class="timestamp-priority" v-if="item.priority !== undefined">
+                                {{ t("scan.priority") }}: {{ item.priority }}
+                            </div>
+                        </div>
                         <div class="item-action">
                             <span class="action-badge" :class="getActionClass(item.action)">
                                 {{ getActionText(item.action) }}
@@ -132,6 +141,9 @@ import { useI18n } from "vue-i18n";
 interface ScanAction {
     path: string;
     action: string;
+    createdAt?: number;
+    priority?: number;
+    operationType?: string;
 }
 
 interface Props {
@@ -169,6 +181,39 @@ function getActionClass(action: string): string {
         current: "action-current",
     };
     return classMap[action] || "action-default";
+}
+
+// 时间格式化函数
+function formatRelativeTime(timestamp?: number): string {
+    if (!timestamp) {
+        return t("scan.noTimestamp");
+    }
+
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) {
+        return t("scan.timeJustNow");
+    } else if (minutes < 60) {
+        return t("scan.timeMinutesAgo", { count: minutes });
+    } else if (hours < 24) {
+        return t("scan.timeHoursAgo", { count: hours });
+    } else {
+        return t("scan.timeDaysAgo", { count: days });
+    }
+}
+
+function formatFullTimestamp(timestamp?: number): string {
+    if (!timestamp) {
+        return t("scan.noTimestamp");
+    }
+
+    const date = new Date(timestamp);
+    return date.toLocaleString();
 }
 </script>
 
@@ -396,13 +441,13 @@ function getActionClass(action: string): string {
 .queue-items {
     .queue-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         padding: 0 20px 16px 20px;
         border-bottom: 1px solid var(--color-border);
         margin-bottom: 28px;
 
         .header-path,
+        .header-timestamp,
         .header-action {
             font-size: 12px;
             font-weight: 600;
@@ -411,9 +456,21 @@ function getActionClass(action: string): string {
             letter-spacing: 0.5px;
         }
 
+        .header-path {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-timestamp {
+            width: 120px;
+            text-align: center;
+            margin-left: 16px;
+        }
+
         .header-action {
             width: 80px;
             text-align: right;
+            margin-left: 16px;
         }
     }
 
@@ -445,7 +502,6 @@ function getActionClass(action: string): string {
     .queue-item {
         display: flex;
         align-items: center;
-        justify-content: space-between;
         padding: 16px 20px;
         margin-bottom: 12px;
         background: var(--color-fill-quaternary, rgba(0, 0, 0, 0.02));
@@ -556,9 +612,32 @@ function getActionClass(action: string): string {
             }
         }
 
+        .item-timestamp {
+            width: 120px;
+            margin-left: 16px;
+            flex-shrink: 0;
+            text-align: center;
+
+            .timestamp-relative {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--color-text-secondary);
+                margin-bottom: 2px;
+            }
+
+            .timestamp-priority {
+                font-size: 10px;
+                color: var(--color-text-tertiary);
+                opacity: 0.8;
+            }
+        }
+
         .item-action {
             flex-shrink: 0;
             margin-left: 16px;
+            width: 80px;
+            display: flex;
+            justify-content: flex-end;
 
             .action-badge {
                 display: inline-flex;
@@ -848,6 +927,17 @@ function getActionClass(action: string): string {
 /* Responsive design */
 @media (max-width: 768px) {
     .queue-items {
+        .queue-header {
+            .header-timestamp {
+                width: 80px;
+                font-size: 10px;
+            }
+
+            .header-action {
+                width: 60px;
+            }
+        }
+
         .queue-item {
             padding: 12px 16px;
 
@@ -860,8 +950,22 @@ function getActionClass(action: string): string {
                 }
             }
 
+            .item-timestamp {
+                width: 80px;
+                margin-left: 8px;
+
+                .timestamp-relative {
+                    font-size: 10px;
+                }
+
+                .timestamp-priority {
+                    font-size: 9px;
+                }
+            }
+
             .item-action {
                 margin-left: 8px;
+                width: 60px;
 
                 .action-badge {
                     padding: 4px 8px;

@@ -6,7 +6,7 @@ import type { FileAction } from "./types";
 /**
  * 文件类型枚举
  */
-export type FileType = "image" | "video" | "all";
+export type FileType = "image" | "video" | "ai" | "all";
 
 /**
  * 预览进度信息
@@ -448,7 +448,7 @@ export interface FileMetadata {
     path: string;
     name: string;
     size: number;
-    type: "image" | "video" | "other";
+    type: "image" | "video" | "ai" | "other";
     modifiedTime: Date;
     createdTime: Date;
     dateTime?: Date;
@@ -466,6 +466,12 @@ export interface FileMetadata {
     };
     codec?: string;
     creationTime?: Date;
+    // AI file-specific properties
+    layers?: number;
+    colorMode?: string;
+    version?: string;
+    hasTransparency?: boolean;
+    artboardCount?: number;
 }
 
 /**

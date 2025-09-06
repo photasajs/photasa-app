@@ -177,17 +177,17 @@ describe("shortenThumbnailName", () => {
 describe("toThumbnailName", () => {
     it("should convert filename to thumbnail name", () => {
         const result = toThumbnailName("photo.jpg");
-        expect(result).toBe(path.join(".photasaoriginals", "photo.jpg.png"));
+        expect(result).toBe("thumbnail-photo.jpg.png");
     });
 
     it("should handle file paths", () => {
         const result = toThumbnailName("/path/to/photo.jpg");
-        expect(result).toBe(path.join(".photasaoriginals", "photo.jpg.png"));
+        expect(result).toBe("thumbnail-photo.jpg.png");
     });
 
     it("should handle empty filename", () => {
         const result = toThumbnailName("");
-        expect(result).toBe(path.join(".photasaoriginals", ".png"));
+        expect(result).toBe("thumbnail-.png");
     });
 });
 
@@ -211,12 +211,12 @@ describe("toPreviewPath", () => {
 describe("toRelativeThumbnailPath", () => {
     it("should build relative thumbnail path", () => {
         const result = toRelativeThumbnailPath("/Users/Albert/Photos/photo.jpg");
-        expect(result).toBe(path.join(".photasaoriginals", ".photasaoriginals", "photo.jpg.png"));
+        expect(result).toBe(path.join(".photasaoriginals", "thumbnail-photo.jpg.png"));
     });
 
     it("should handle various file paths", () => {
         expect(toRelativeThumbnailPath("image.png")).toBe(
-            path.join(".photasaoriginals", ".photasaoriginals", "image.png.png"),
+            path.join(".photasaoriginals", "thumbnail-image.png.png"),
         );
     });
 });
@@ -226,7 +226,7 @@ describe("buildThumbnailPath", () => {
         const result = buildThumbnailPath("/Users/Albert/Photos/photo.jpg");
         const expected = path.join(
             path.normalize(path.join("/Users/Albert/Photos", ".photasaoriginals")),
-            path.join(".photasaoriginals", "photo.jpg.png"),
+            "thumbnail-photo.jpg.png",
         );
         expect(result).toBe(expected);
     });
@@ -235,7 +235,7 @@ describe("buildThumbnailPath", () => {
         const result = buildThumbnailPath("C:/Photos/image.png");
         const expected = path.join(
             path.normalize(path.join("C:/Photos", ".photasaoriginals")),
-            path.join(".photasaoriginals", "image.png.png"),
+            "thumbnail-image.png.png",
         );
         expect(result).toBe(expected);
     });

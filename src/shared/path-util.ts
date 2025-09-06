@@ -13,12 +13,12 @@ export function shortenThumbnailName(file: string): string {
 }
 
 /**
- * 将原始文件名转换为缩略图文件名（带路径）
+ * 将原始文件名转换为缩略图文件名（不含路径）
  * @param target - 原始文件名
- * @returns 缩略图文件名（带路径）
+ * @returns 缩略图文件名（不含路径）
  */
 export function toThumbnailName(target: string): string {
-    return path.join(PHOTASA_ORIGINALS, `${toFileName(target)}.png`);
+    return `thumbnail-${toFileName(target)}.png`;
 }
 
 /**

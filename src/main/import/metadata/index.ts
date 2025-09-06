@@ -4,11 +4,12 @@ import { extractHeicMetadata, isHeicFile } from "./extractors/heic-extractor";
 import { extractVideoMetadata, isSupportedVideoFile } from "./extractors/video-extractor";
 import { extractRawMetadata, isRawFile } from "./extractors/raw-extractor";
 import { extractImageMetadata, isImageFile } from "./extractors/image-extractor";
+import { extractPsdMetadata, isPsdFile } from "./extractors/psd-extractor";
 import { generateDatePath, isValidDate, computeFallbackDate } from "./parsers/date-parser";
 import type { PhotasaLogger } from "@common/logger";
 import type { MetadataRequest, FileMetadata, FileGroup } from "@common/import-types";
 
-type MediaType = "heic" | "image" | "raw" | "video" | "other";
+type MediaType = "heic" | "image" | "raw" | "video" | "psd" | "other";
 /**
  * 计算标准化的文件格式
  * @param filePath 文件路径
@@ -44,6 +45,14 @@ function computeNormalizedFormat(filePath: string): string {
         case "nef":
         case "arw":
             return "RAW";
+        case "psd":
+            return "PSD";
+        case "sketch":
+            return "SKETCH";
+        case "figma":
+            return "FIGMA";
+        case "xd":
+            return "XD";
         default:
             return ext.toUpperCase();
     }
@@ -94,6 +103,7 @@ const MediaType = {
     RAW: "raw",
     IMAGE: "image",
     VIDEO: "video",
+    PSD: "psd",
     OTHER: "other",
 } as const;
 
@@ -102,6 +112,7 @@ const MediaExtractorTypeMap = {
     [MediaType.IMAGE]: extractImageMetadata,
     [MediaType.VIDEO]: extractVideoMetadata,
     [MediaType.RAW]: extractRawMetadata,
+    [MediaType.PSD]: extractPsdMetadata,
 } as const;
 
 const MediaBuilderTypeMap = {
@@ -147,6 +158,15 @@ const MediaBuilderTypeMap = {
         // 设置dateSource：如果有有效日期则为exif，否则使用fallback
         dateSource: rawMetadata.dateTime ? "exif" : "file_created",
     }),
+    [MediaType.PSD]: (baseMetadata: any, psdMetadata: any) => ({
+        ...baseMetadata,
+        ...psdMetadata,
+        type: "ai" as const,
+        // PSD文件使用文件创建时间作为日期
+        dateTime: psdMetadata.createdTime || undefined,
+        // 设置dateSource为file_created，因为PSD文件通常没有EXIF数据
+        dateSource: "file_created",
+    }),
 } as const;
 
 function typeOfMedia(filePath: string): MediaType {
@@ -161,6 +181,9 @@ function typeOfMedia(filePath: string): MediaType {
     }
     if (isImageFile(filePath)) {
         return "image";
+    }
+    if (isPsdFile(filePath)) {
+        return "psd";
     }
     return "other";
 }

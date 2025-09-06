@@ -279,10 +279,10 @@ describe("BaseMetricsCard", () => {
                             value: "100",
                             unit: "items",
                             icon: "test-icon",
-                            color: "blue"
+                            color: "blue",
                         },
                         lastUpdated: new Date(),
-                        showLastUpdate: true
+                        showLastUpdate: true,
                     },
                 });
             }).toThrow();

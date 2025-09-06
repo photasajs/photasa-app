@@ -117,6 +117,7 @@ export const usePreferenceStore = defineStore("preference", {
                 action,
                 thumbnailSize: this.thumbnailSize,
                 operationType: "directory", // Default to directory for legacy compatibility
+                createdAt: Date.now(), // Add timestamp for proper sorting
             });
             this.updateFolderTree(folder);
         },
@@ -166,8 +167,8 @@ export const usePreferenceStore = defineStore("preference", {
                 fileOperationId: operation.fileOperationId,
             });
 
-            // Update folder tree only for directory operations or add operations
-            if (operation.operationType === "directory" || operation.action === "scan") {
+            // Update folder tree only for directory operations
+            if (operation.operationType === "directory") {
                 this.updateFolderTree(normalizedPath);
             }
         },

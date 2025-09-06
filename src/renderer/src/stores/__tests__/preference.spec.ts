@@ -264,7 +264,7 @@ describe("preferenceStore.addFileOperation", () => {
         });
     });
 
-    it("should call updateFolderTree for file add operations", async () => {
+    it("should not call updateFolderTree for file operations", async () => {
         const store = usePreferenceStore();
         const { buildDataNode } = vi.mocked(await import("@renderer/utils/folder-tree"));
 
@@ -277,11 +277,7 @@ describe("preferenceStore.addFileOperation", () => {
 
         store.addFileOperation(operation);
 
-        expect(buildDataNode).toHaveBeenCalledWith(store.folderTree, {
-            path: "/test/file.jpg",
-            thumbnail: "",
-            isVideo: false,
-        });
+        expect(buildDataNode).not.toHaveBeenCalled();
     });
 
     it("should not call updateFolderTree for file non-add operations", async () => {

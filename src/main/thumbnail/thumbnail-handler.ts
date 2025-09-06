@@ -1,4 +1,5 @@
 import isVideo from "is-video";
+import isImage from "is-image";
 import { ensureDir, exists, remove, readFile } from "fs-extra";
 import sharp from "sharp";
 import path from "path";
@@ -10,6 +11,7 @@ import { initializeHeifModule, resetHeifModule } from "../wasm/heif-module";
 import {
     calculateAdjustedDimensions,
     createFallbackThumbnail,
+    createGenericFallbackThumbnail,
     isBufferSizeWithinTolerance,
     processAdjustedBuffer,
     convertRgbToRgba,
@@ -357,25 +359,48 @@ export async function createThumbnail(
             logger.info("[thumbnail-handler] Create video thumbnail for : " + arg.path);
             // 创建视频缩略图
             await createScreenshot(arg, logger);
-        } else {
+        } else if (isImage(arg.path) || isHeic) {
             // 创建图片缩略图 如果文件是 HEIC 格式，则使用预览图片
             const target = isHeic ? arg.preview : arg.path;
-            // 创建图片缩略图
-            await sharp(target)
-                .rotate() // 旋转图片 根据 EXIF 信息旋转
-                .resize(arg.width, arg.height, {
-                    fit: sharp.fit.inside,
-                    background: "white",
-                    withoutEnlargement: arg.withoutEnlargement,
-                })
-                .toFormat("png") // 将图片转换为 PNG 格式
-                .toFile(arg.thumbnail) // 将图片保存到指定路径
-                .then(() => {
-                    // 打印图片信息
-                    logger.info(
-                        `[thumbnail-handler] Create image thumbnail for : ${arg.path} success`,
-                    );
-                });
+            try {
+                // 创建图片缩略图
+                await sharp(target)
+                    .rotate() // 旋转图片 根据 EXIF 信息旋转
+                    .resize(arg.width, arg.height, {
+                        fit: sharp.fit.inside,
+                        background: "white",
+                        withoutEnlargement: arg.withoutEnlargement,
+                    })
+                    .toFormat("png") // 将图片转换为 PNG 格式
+                    .toFile(arg.thumbnail) // 将图片保存到指定路径
+                    .then(() => {
+                        // 打印图片信息
+                        logger.info(
+                            `[thumbnail-handler] Create image thumbnail for : ${arg.path} success`,
+                        );
+                    });
+            } catch (error) {
+                logger.warn(
+                    `[thumbnail-handler] Failed to process image with sharp, creating fallback: ${error}`,
+                );
+                // 如果图片处理失败，创建通用占位符
+                const fallbackPath = await createGenericFallbackThumbnail(arg, logger);
+                if (!fallbackPath) {
+                    throw error; // 如果连占位符都创建失败，抛出原始错误
+                }
+            }
+        } else {
+            // 处理不支持的文件类型 - 创建通用占位符缩略图
+            logger.info(
+                `[thumbnail-handler] Creating generic placeholder thumbnail for unsupported file: ${arg.path}`,
+            );
+            const fallbackPath = await createGenericFallbackThumbnail(arg, logger);
+            if (!fallbackPath) {
+                logger.error(
+                    `[thumbnail-handler] Failed to create placeholder thumbnail for: ${arg.path}`,
+                );
+                // 不抛出错误，让函数正常返回，因为这是不支持的文件类型
+            }
         }
     } catch (e) {
         logger.error(

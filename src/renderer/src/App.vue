@@ -1,4 +1,3 @@
-<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 import { computed, ref, inject } from "vue";
 import { storeToRefs } from "pinia";
@@ -14,7 +13,7 @@ import {
     resetPhotasaConfig,
     scanSubfolders,
 } from "@renderer/utils/api";
-import { deepCopy, top } from "./utils/object";
+import { deepCopy, getNextScanItem } from "./utils/object";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@common/logger";
@@ -23,7 +22,6 @@ import { mapFileOperationToScanAction } from "@common/file-operation-utils";
 import UserPreference from "./components/UserPreference.vue";
 import ScanQueueDialog from "./components/ScanQueueDialog.vue";
 import { useI18n } from "vue-i18n";
-import type { ScanAction } from "@common/scan-types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
@@ -33,11 +31,7 @@ import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useMenusStore } from "@renderer/stores/menus";
-import {
-    NotificationContainer,
-    PortalProvider,
-    BaseModal,
-} from "@renderer/components/ui";
+import { NotificationContainer, PortalProvider, BaseModal } from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
 
@@ -162,7 +156,12 @@ async function startScanning(): Promise<void> {
         `startScanning called, folders count: ${scanningFolder.value.length}, isIdle: ${scanPhotosTask.isIdle}`,
     );
     if (scanningFolder.value.length > 0) {
-        const scanAction = deepCopy(top<ScanAction>(scanningFolder.value));
+        const nextItem = getNextScanItem(scanningFolder.value);
+        if (!nextItem) {
+            logger.warn("No scan item found despite scanningFolder having items");
+            return;
+        }
+        const scanAction = deepCopy(nextItem);
         processingFile.value = "正在扫描: " + scanAction.path;
         logger.debug(`Starting scan for path: ${scanAction.path}, action: ${scanAction.action}`);
         if (scanAction.action === "rescan") {
