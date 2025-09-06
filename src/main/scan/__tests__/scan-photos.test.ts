@@ -178,7 +178,9 @@ describe("scan-photos enhanced functionality", () => {
             // Mock the getPhotasaConfig function specifically for this test
             const { getPhotasaConfig } = await import("@main/config/config-storage");
             vi.mocked(getPhotasaConfig).mockResolvedValue({
+                version: "1.0",
                 photoList: [{ path: "other-file.jpg", thumbnail: "", isVideo: false, history: [] }],
+                lastModified: Date.now(),
             });
 
             const result = await shouldProcessFile("/test/dir/new-file.jpg", "scan");
@@ -191,9 +193,11 @@ describe("scan-photos enhanced functionality", () => {
             // Mock the getPhotasaConfig function specifically for this test
             const { getPhotasaConfig } = await import("@main/config/config-storage");
             vi.mocked(getPhotasaConfig).mockResolvedValue({
+                version: "1.0",
                 photoList: [
                     { path: "existing-file.jpg", thumbnail: "", isVideo: false, history: [] },
                 ],
+                lastModified: Date.now(),
             });
 
             const result = await shouldProcessFile("/test/dir/existing-file.jpg", "scan");

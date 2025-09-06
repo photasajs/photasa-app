@@ -93,14 +93,17 @@ describe("Scan Worker executeFileOperation", () => {
         mockWorkerInstance = {
             addTask: vi.fn(),
         };
-        mockWorkerPool.mockImplementation(() => mockWorkerInstance);
+        vi.mocked(mockWorkerPool).mockImplementation(() => mockWorkerInstance);
 
         // Setup default mock returns
-        mockShouldProcessFile.mockResolvedValue(true);
-        mockAddToPhotasaConfig.mockResolvedValue(undefined);
-        mockRemoveFromPhotoList.mockResolvedValue(undefined);
-        mockFs.existsSync.mockReturnValue(false);
-        mockFs.unlink.mockResolvedValue(undefined);
+        vi.mocked(mockShouldProcessFile).mockResolvedValue(true);
+        vi.mocked(mockAddToPhotasaConfig).mockResolvedValue(undefined);
+        vi.mocked(mockRemoveFromPhotoList).mockResolvedValue({
+            path: "/test/config.json",
+            config: { version: "1.0", photoList: [], lastModified: Date.now() },
+        });
+        vi.mocked(mockFs.existsSync).mockReturnValue(false);
+        vi.mocked(mockFs.unlink).mockResolvedValue(undefined);
     });
 
     afterEach(() => {
@@ -143,7 +146,7 @@ describe("Scan Worker executeFileOperation", () => {
 
             mockIsImage.mockReturnValue(true);
             mockIsVideo.mockReturnValue(false);
-            mockFs.existsSync.mockReturnValue(false); // No existing thumbnail
+            vi.mocked(mockFs.existsSync).mockReturnValue(false); // No existing thumbnail
 
             await execute("test-request-2", scanAction);
 
@@ -179,7 +182,7 @@ describe("Scan Worker executeFileOperation", () => {
 
             mockIsImage.mockReturnValue(false);
             mockIsVideo.mockReturnValue(true);
-            mockFs.existsSync.mockReturnValue(true); // Existing thumbnail
+            vi.mocked(mockFs.existsSync).mockReturnValue(true); // Existing thumbnail
 
             await execute("test-request-3", scanAction);
 
@@ -259,7 +262,7 @@ describe("Scan Worker executeFileOperation", () => {
 
             mockIsImage.mockReturnValue(true);
             mockIsVideo.mockReturnValue(false);
-            mockFs.existsSync.mockReturnValue(true); // Thumbnail exists
+            vi.mocked(mockFs.existsSync).mockReturnValue(true); // Thumbnail exists
 
             await execute("test-request-6", scanAction);
 
@@ -285,7 +288,7 @@ describe("Scan Worker executeFileOperation", () => {
 
             mockIsImage.mockReturnValue(true);
             mockIsVideo.mockReturnValue(false);
-            mockFs.existsSync.mockReturnValue(false); // No thumbnail
+            vi.mocked(mockFs.existsSync).mockReturnValue(false); // No thumbnail
 
             await execute("test-request-7", scanAction);
 

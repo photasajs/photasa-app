@@ -91,13 +91,15 @@ export default class WatchService {
 
         if (shouldDeduplicateEvent(existing, now, dedupWindow)) {
             // Update existing event with latest timestamp and metadata
-            existing!.timestamp = now;
-            if (existing!.metadata) {
-                existing!.metadata.lastModified = now;
+            if (existing) {
+                existing.timestamp = now;
+                if (existing.metadata) {
+                    existing.metadata.lastModified = now;
+                }
+                this.logger.debug(
+                    `Updated existing event: ${key} (${now - existing.timestamp}ms ago)`,
+                );
             }
-            this.logger.debug(
-                `Updated existing event: ${key} (${now - existing!.timestamp}ms ago)`,
-            );
             return;
         }
 

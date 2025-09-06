@@ -195,7 +195,7 @@ describe("file-operation-utils pure functions", () => {
             const operation = createFileOperation("addDir", "/test/directory", false, 150);
 
             expect(operation.type).toBe("addDir");
-            expect(operation.metadata.isFile).toBe(false);
+            expect(operation.metadata?.isFile).toBe(false);
         });
 
         it("should set timestamp to current time", () => {
@@ -205,8 +205,8 @@ describe("file-operation-utils pure functions", () => {
 
             expect(operation.timestamp).toBeGreaterThanOrEqual(beforeTime);
             expect(operation.timestamp).toBeLessThanOrEqual(afterTime);
-            expect(operation.metadata.lastModified).toBeGreaterThanOrEqual(beforeTime);
-            expect(operation.metadata.lastModified).toBeLessThanOrEqual(afterTime);
+            expect(operation.metadata?.lastModified).toBeGreaterThanOrEqual(beforeTime);
+            expect(operation.metadata?.lastModified).toBeLessThanOrEqual(afterTime);
         });
     });
 

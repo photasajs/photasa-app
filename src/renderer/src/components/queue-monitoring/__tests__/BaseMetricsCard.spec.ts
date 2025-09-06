@@ -273,7 +273,17 @@ describe("BaseMetricsCard", () => {
             // 这个测试验证组件定义正确性
             expect(() => {
                 mount(BaseMetricsCard, {
-                    props: {},
+                    props: {
+                        config: {
+                            title: "Test Metric",
+                            value: "100",
+                            unit: "items",
+                            icon: "test-icon",
+                            color: "blue"
+                        },
+                        lastUpdated: new Date(),
+                        showLastUpdate: true
+                    },
                 });
             }).toThrow();
         });

@@ -37,7 +37,6 @@ import {
     NotificationContainer,
     PortalProvider,
     BaseModal,
-    BaseButton,
 } from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
