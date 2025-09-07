@@ -57,11 +57,16 @@ interface DirectoryFileInfo {
 /**
  * 纯函数：计算目录的内容哈希值
  * 基于目录中所有媒体文件的名称、大小和修改时间生成哈希
+ * 优化：添加增量哈希计算支持
  *
  * @param folderPath - 目录路径
+ * @param excludeFiles - 要排除的文件列表（用于增量计算）
  * @returns Promise<string> - SHA256 哈希值
  */
-export async function computeFolderHash(folderPath: string): Promise<string> {
+export async function computeFolderHash(
+    folderPath: string,
+    excludeFiles: string[] = [],
+): Promise<string> {
     const files: DirectoryFileInfo[] = [];
 
     try {
@@ -70,6 +75,11 @@ export async function computeFolderHash(folderPath: string): Promise<string> {
         for (const entry of entries) {
             if (entry.isFile()) {
                 const filePath = path.join(folderPath, entry.name);
+
+                // 跳过排除的文件（增量计算优化）
+                if (excludeFiles.includes(entry.name)) {
+                    continue;
+                }
 
                 // 只考虑媒体文件（使用项目现有的isImage和isVideo库）
                 if (isImage(filePath) || isVideo(filePath)) {

@@ -15,7 +15,7 @@ import type { PhotoFileRequest } from "@common/scan-types";
  * 增量缓存接口 - 扩展基础缓存，添加进度跟踪
  */
 export interface IncrementalCache extends FolderCache {
-    // 已处理的文件列表
+    // 已处理的文件列表（只存储文件名，不存储完整路径）
     processedFiles: string[];
     // 待处理的文件列表（用于断点续扫）
     pendingFiles?: string[];
@@ -27,6 +27,8 @@ export interface IncrementalCache extends FolderCache {
     scanStartTime?: number;
     // 总文件数（用于进度计算）
     totalFiles?: number;
+    // 文件夹路径（用于重建完整路径）
+    folderPath?: string;
 }
 
 /**
@@ -37,12 +39,17 @@ export class IncrementalCacheManager {
     private cacheFilePath: string;
     private updateTimer: NodeJS.Timeout | null = null;
     private pendingUpdates = false;
-    private readonly UPDATE_INTERVAL = 1000; // 1秒批量更新一次，避免频繁IO
+    private readonly UPDATE_INTERVAL = 5000; // 5秒批量更新一次，减少磁盘IO频率
+    private readonly MIN_BATCH_SIZE = 20; // 最小批量大小
+    private readonly MAX_BATCH_SIZE = 200; // 最大批量大小
+    private processedSinceLastUpdate = 0; // 自上次更新后处理的文件数
+    private folderPath: string;
 
     constructor(
         folderPath: string,
         private logger: PhotasaLogger,
     ) {
+        this.folderPath = folderPath;
         this.cacheFilePath = path.join(folderPath, ".photasa-folder.json");
     }
 
@@ -91,39 +98,80 @@ export class IncrementalCacheManager {
             inProgress: true,
             scanStartTime: now,
             totalFiles: 0,
+            folderPath: this.folderPath,
         };
     }
 
     /**
-     * 记录文件已处理 - 实时更新进度
+     * 计算动态批量大小
+     * 基于文件夹大小和已处理文件数量动态调整
+     */
+    private calculateDynamicBatchSize(): number {
+        const cache = this.cache;
+        if (!cache) {
+            return this.MIN_BATCH_SIZE;
+        }
+
+        const processedCount = cache.processedFiles.length;
+        const totalFiles = cache.totalFiles || processedCount;
+
+        // 基于总文件数量动态调整批量大小
+        if (totalFiles < 100) {
+            return this.MIN_BATCH_SIZE; // 小文件夹使用小批量
+        } else if (totalFiles < 1000) {
+            return Math.min(50, this.MAX_BATCH_SIZE); // 中等文件夹
+        } else {
+            return this.MAX_BATCH_SIZE; // 大文件夹使用大批量
+        }
+    }
+
+    /**
+     * 记录文件已处理 - 智能批量更新进度
      */
     async recordFileProcessed(file: PhotoFileRequest): Promise<void> {
         if (!this.cache) {
             await this.initialize();
         }
 
-        // 添加到已处理列表
-        this.cache!.processedFiles.push(file.path);
-        this.cache!.fileCount = this.cache!.processedFiles.length;
-        this.cache!.lastUpdate = Date.now();
+        const cache = this.cache;
+        if (!cache) {
+            throw new Error("Failed to initialize cache");
+        }
+
+        // 只存储文件名，不存储完整路径（节省空间）
+        const fileName = path.basename(file.path);
+        cache.processedFiles.push(fileName);
+        cache.fileCount = cache.processedFiles.length;
+        cache.lastUpdate = Date.now();
+        this.processedSinceLastUpdate++;
 
         // 如果是缩略图生成成功，增加计数
         if (file.thumbnail) {
-            this.cache!.thumbnailsGenerated++;
+            cache.thumbnailsGenerated++;
         }
 
         // 标记需要更新
         this.pendingUpdates = true;
 
-        // 使用定时器批量更新，避免频繁IO
-        if (!this.updateTimer) {
+        // 动态批量大小策略
+        const dynamicBatchSize = this.calculateDynamicBatchSize();
+        const shouldForceUpdate = this.processedSinceLastUpdate >= dynamicBatchSize;
+
+        if (shouldForceUpdate) {
+            // 达到动态批量大小，立即更新
+            this.logger.debug(
+                `[IncrementalCache] 达到动态批量大小 ${dynamicBatchSize}，立即更新缓存`,
+            );
+            await this.flushUpdates();
+        } else if (!this.updateTimer) {
+            // 设置定时器，避免频繁IO
             this.updateTimer = setTimeout(() => {
                 this.flushUpdates();
             }, this.UPDATE_INTERVAL);
         }
 
         this.logger.debug(
-            `[IncrementalCache] 已处理: ${file.path}, 总进度: ${this.cache!.processedFiles.length}`,
+            `[IncrementalCache] 已处理: ${fileName}, 总进度: ${cache.processedFiles.length}, 批量计数: ${this.processedSinceLastUpdate}/${dynamicBatchSize}`,
         );
     }
 
@@ -140,6 +188,7 @@ export class IncrementalCacheManager {
                 this.logger.debug(`[IncrementalCache] 开始刷新更新到磁盘`);
                 await this.saveCache();
                 this.pendingUpdates = false;
+                this.processedSinceLastUpdate = 0; // 重置批量计数器
                 this.logger.debug(
                     `[IncrementalCache] 缓存已更新, 已处理 ${this.cache.processedFiles.length} 个文件`,
                 );
@@ -159,7 +208,8 @@ export class IncrementalCacheManager {
         if (!this.cache) {
             return false;
         }
-        return this.cache.processedFiles.includes(filePath);
+        const fileName = path.basename(filePath);
+        return this.cache.processedFiles.includes(fileName);
     }
 
     /**
@@ -176,9 +226,15 @@ export class IncrementalCacheManager {
         if (!this.cache) {
             await this.initialize();
         }
-        this.cache!.pendingFiles = files;
+
+        const cache = this.cache;
+        if (!cache) {
+            throw new Error("Failed to initialize cache");
+        }
+
+        cache.pendingFiles = files;
         // 设置总文件数用于进度计算
-        this.cache!.totalFiles = this.cache!.processedFiles.length + files.length;
+        cache.totalFiles = cache.processedFiles.length + files.length;
         await this.saveCache();
     }
 
@@ -213,7 +269,13 @@ export class IncrementalCacheManager {
         if (!this.cache) {
             await this.initialize();
         }
-        this.cache!.errors.push(error);
+
+        const cache = this.cache;
+        if (!cache) {
+            throw new Error("Failed to initialize cache");
+        }
+
+        cache.errors.push(error);
         this.pendingUpdates = true;
     }
 
@@ -228,7 +290,8 @@ export class IncrementalCacheManager {
 
         try {
             this.logger.debug(`[IncrementalCache] 准备保存缓存到: ${this.cacheFilePath}`);
-            const content = JSON.stringify(this.cache, null, 2);
+            // 使用紧凑的JSON格式，不包含缩进和换行，减少文件大小
+            const content = JSON.stringify(this.cache);
             this.logger.debug(`[IncrementalCache] 缓存内容长度: ${content.length} 字符`);
 
             // 确保目录存在
@@ -335,6 +398,11 @@ export class IncrementalCacheManager {
         errorCount: number;
         duration: number;
         progress: number;
+        performanceMetrics: {
+            updateFrequency: number; // 更新频率（次/秒）
+            avgBatchSize: number; // 平均批量大小
+            cacheFileSize: number; // 缓存文件大小（字节）
+        };
     } {
         if (!this.cache) {
             return {
@@ -343,15 +411,28 @@ export class IncrementalCacheManager {
                 errorCount: 0,
                 duration: 0,
                 progress: 0,
+                performanceMetrics: {
+                    updateFrequency: 0,
+                    avgBatchSize: 0,
+                    cacheFileSize: 0,
+                },
             };
         }
 
+        const duration = Date.now() - (this.cache.scanStartTime || Date.now());
+        const processedCount = this.cache.processedFiles.length;
+
         return {
-            processedCount: this.cache.processedFiles.length,
+            processedCount,
             pendingCount: this.cache.pendingFiles?.length || 0,
             errorCount: this.cache.errors.length,
-            duration: Date.now() - (this.cache.scanStartTime || Date.now()),
+            duration,
             progress: this.getProgress(),
+            performanceMetrics: {
+                updateFrequency: duration > 0 ? processedCount / (duration / 1000) : 0,
+                avgBatchSize: this.calculateDynamicBatchSize(),
+                cacheFileSize: JSON.stringify(this.cache).length,
+            },
         };
     }
 }
