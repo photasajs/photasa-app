@@ -423,6 +423,9 @@
             "rescan": "Erneut scannen",
             "current": "Aktueller Scan"
         }
+        ,
+        "processed": "Verarbeitet",
+        "incrementalCache": "Inkrementeller Cache: Fortschritt in Echtzeit speichern, erneutes Scannen vermeiden"
     },
     "advancedSettings": {
         "title": "Erweiterte Einstellungen",
@@ -434,5 +437,52 @@
         "image": "Keine Bilder",
         "openConfigDirBtn": "Konfigurationsverzeichnis öffnen",
         "importBtn": "Bilder importieren"
+    },
+    "fileInfo": {
+        "title": "Datei-Informationen",
+        "fileName": "Dateiname",
+        "fileType": "Dateityp",
+        "format": "Format",
+        "size": "Größe",
+        "imageWidth": "Bildbreite",
+        "imageHeight": "Bildhöhe",
+        "resolution": "Auflösung",
+        "aspectRatio": "Seitenverhältnis",
+        "duration": "Dauer",
+        "codec": "Codec",
+        "dateTaken": "Aufnahmedatum",
+        "dateSource": "Datumsquelle",
+        "modified": "Geändert",
+        "created": "Erstellt",
+        "location": "Ort",
+        "gpsLatitude": "GPS Breitengrad",
+        "gpsLongitude": "GPS Längengrad",
+        "cameraMake": "Kamerahersteller",
+        "cameraModel": "Kameramodell",
+        "rawMetadata": "Rohe Metadaten",
+        "unknown": "Unbekannt",
+        "showRawData": "Rohdaten anzeigen",
+        "hideRawData": "Rohdaten ausblenden",
+        "infoTitle": "{name} - {type} Informationen",
+        "dateSources": {
+            "exif": "EXIF Daten",
+            "video_metadata": "Video Metadaten",
+            "file_created": "Datei Erstellungszeit",
+            "file_modified": "Datei Änderungszeit",
+            "current_date": "Aktuelles Datum"
+        },
+        "basicInfo": "Grundinformationen",
+        "mediaProperties": "Medieneigenschaften",
+        "videoProperties": "Videoeigenschaften",
+        "timeInfo": "Zeitinformationen",
+        "technicalInfo": "Technische Informationen",
+        "createdAt": "Erstellt am",
+        "modifiedAt": "Geändert am",
+        "camera": "Kamera",
+        "lens": "Objektiv",
+        "iso": "ISO",
+        "aperture": "Blende",
+        "dimensions": "Abmessungen",
+        "noMetadata": "Keine Metadaten"
     }
 }

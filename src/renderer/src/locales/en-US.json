@@ -47,7 +47,7 @@
             "images": "Images",
             "videos": "Videos",
             "image": "Image",
-            "video": "Video", 
+            "video": "Video",
             "other": "Other"
         },
         "images": "Images",
@@ -67,7 +67,7 @@
             "scanning": "Scanning Files",
             "filesFound": "Files Found",
             "directoriesScanned": "Directories Scanned",
-            "progress": "Scan Progress", 
+            "progress": "Scan Progress",
             "currentPath": "Current Path",
             "recentlyFound": "Recently Found",
             "noFilesFound": "No Files Found"
@@ -424,6 +424,9 @@
             "rescan": "Rescan",
             "current": "Current scan"
         }
+        ,
+        "processed": "Processed",
+        "incrementalCache": "Incremental Cache: Real-time progress saving, avoid rescanning"
     },
     "advancedSettings": {
         "title": "Advanced Settings",
@@ -435,5 +438,52 @@
         "image": "No images",
         "openConfigDirBtn": "Open Config Directory",
         "importBtn": "Import Images"
+    },
+    "fileInfo": {
+        "title": "File Info",
+        "fileName": "File Name",
+        "fileType": "File Type",
+        "format": "Format",
+        "size": "Size",
+        "imageWidth": "Image Width",
+        "imageHeight": "Image Height",
+        "resolution": "Resolution",
+        "aspectRatio": "Aspect Ratio",
+        "duration": "Duration",
+        "codec": "Codec",
+        "dateTaken": "Date Taken",
+        "dateSource": "Date Source",
+        "modified": "Modified",
+        "created": "Created",
+        "location": "Location",
+        "gpsLatitude": "GPS Latitude",
+        "gpsLongitude": "GPS Longitude",
+        "cameraMake": "Camera Make",
+        "cameraModel": "Camera Model",
+        "rawMetadata": "Raw Metadata",
+        "unknown": "Unknown",
+        "showRawData": "Show Raw Data",
+        "hideRawData": "Hide Raw Data",
+        "infoTitle": "{name} - {type} Info",
+        "dateSources": {
+            "exif": "EXIF Data",
+            "video_metadata": "Video Metadata",
+            "file_created": "File Creation Time",
+            "file_modified": "File Modification Time",
+            "current_date": "Current Date"
+        },
+        "basicInfo": "Basic Information",
+        "mediaProperties": "Media Properties",
+        "videoProperties": "Video Properties",
+        "timeInfo": "Time Information",
+        "technicalInfo": "Technical Information",
+        "createdAt": "Created At",
+        "modifiedAt": "Modified At",
+        "camera": "Camera",
+        "lens": "Lens",
+        "iso": "ISO",
+        "aperture": "Aperture",
+        "dimensions": "Dimensions",
+        "noMetadata": "No Metadata"
     }
 }

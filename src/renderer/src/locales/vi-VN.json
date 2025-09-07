@@ -423,6 +423,9 @@
             "rescan": "Quét lại",
             "current": "Quét hiện tại"
         }
+        ,
+        "processed": "Đã xử lý",
+        "incrementalCache": "Bộ nhớ đệm tăng dần: Lưu tiến trình thời gian thực, tránh quét lại"
     },
     "advancedSettings": {
         "title": "Cài đặt nâng cao",
@@ -434,5 +437,52 @@
         "image": "Không có ảnh",
         "openConfigDirBtn": "Mở thư mục cấu hình",
         "importBtn": "Nhập ảnh"
+    },
+    "fileInfo": {
+        "title": "Thông tin tệp",
+        "fileName": "Tên tệp",
+        "fileType": "Loại tệp",
+        "format": "Định dạng",
+        "size": "Kích thước",
+        "imageWidth": "Chiều rộng ảnh",
+        "imageHeight": "Chiều cao ảnh",
+        "resolution": "Độ phân giải",
+        "aspectRatio": "Tỷ lệ khung hình",
+        "duration": "Thời lượng",
+        "codec": "Codec",
+        "dateTaken": "Ngày chụp",
+        "dateSource": "Nguồn ngày",
+        "modified": "Thời gian sửa đổi",
+        "created": "Thời gian tạo",
+        "location": "Vị trí",
+        "gpsLatitude": "Vĩ độ GPS",
+        "gpsLongitude": "Kinh độ GPS",
+        "cameraMake": "Hãng máy ảnh",
+        "cameraModel": "Model máy ảnh",
+        "rawMetadata": "Siêu dữ liệu thô",
+        "unknown": "Không xác định",
+        "showRawData": "Hiển thị dữ liệu thô",
+        "hideRawData": "Ẩn dữ liệu thô",
+        "infoTitle": "{name} - Thông tin {type}",
+        "dateSources": {
+            "exif": "Dữ liệu EXIF",
+            "video_metadata": "Siêu dữ liệu video",
+            "file_created": "Thời gian tạo tệp",
+            "file_modified": "Thời gian sửa đổi tệp",
+            "current_date": "Ngày hiện tại"
+        },
+        "basicInfo": "Thông tin cơ bản",
+        "mediaProperties": "Thuộc tính phương tiện",
+        "videoProperties": "Thuộc tính video",
+        "timeInfo": "Thông tin thời gian",
+        "technicalInfo": "Thông tin kỹ thuật",
+        "createdAt": "Tạo lúc",
+        "modifiedAt": "Sửa đổi lúc",
+        "camera": "Máy ảnh",
+        "lens": "Ống kính",
+        "iso": "ISO",
+        "aperture": "Khẩu độ",
+        "dimensions": "Kích thước",
+        "noMetadata": "Không có siêu dữ liệu"
     }
 }

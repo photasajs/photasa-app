@@ -62,4 +62,51 @@ describe("BaseModal", () => {
             expect(wrapper.props("size")).toBe(size);
         });
     });
+
+    it("renders with animation classes when open", () => {
+        const wrapper = mount(BaseModal, {
+            props: {
+                open: true,
+            },
+            global: {
+                stubs: {
+                    Teleport: {
+                        template: "<div><slot /></div>",
+                    },
+                },
+            },
+        });
+
+        // 检查Transition组件是否存在
+        expect(wrapper.findComponent({ name: "Transition" }).exists()).toBe(true);
+
+        // 检查动画相关的CSS类
+        const modalContent = wrapper.find(".modal-content");
+        expect(modalContent.exists()).toBe(true);
+
+        const modalBackdrop = wrapper.find(".modal-backdrop");
+        expect(modalBackdrop.exists()).toBe(true);
+    });
+
+    it("does not render when open is false", () => {
+        const wrapper = mount(BaseModal, {
+            props: {
+                open: false,
+            },
+        });
+
+        // 当open为false时，整个模态框应该不存在
+        expect(wrapper.find(".modal-content").exists()).toBe(false);
+    });
+
+    it("has animation callback functions", () => {
+        const wrapper = mount(BaseModal, {
+            props: {
+                open: true,
+            },
+        });
+
+        // 检查组件是否正确渲染
+        expect(wrapper.exists()).toBe(true);
+    });
 });

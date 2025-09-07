@@ -1,76 +1,81 @@
 <template>
     <Teleport to="body">
-        <div
-            v-if="open"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4"
-            @click="handleBackdropClick"
-            @keydown.esc="handleEscape"
-            tabindex="-1"
-            ref="modalRef"
-        >
-            <!-- 背景遮罩 -->
-            <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
-
-            <!-- Modal内容 -->
+        <Transition name="modal" appear @enter="onEnter" @leave="onLeave">
             <div
-                @click.stop
-                :class="[
-                    'relative transform rounded-lg shadow-xl transition-all',
-                    'bg-[var(--color-card-bg)] border border-[var(--color-border)]',
-                    'max-h-[90vh] flex flex-col',
-                    sizeClasses,
-                ]"
-                :style="[customSizeStyle, props.style]"
-                role="dialog"
-                :aria-labelledby="title ? 'modal-title' : undefined"
-                aria-modal="true"
+                v-if="open"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                @click="handleBackdropClick"
+                @keydown.esc="handleEscape"
+                tabindex="-1"
+                ref="modalRef"
             >
-                <!-- 标题区域 -->
+                <!-- 背景遮罩 -->
                 <div
-                    v-if="title || $slots.title"
-                    class="px-6 py-4 border-b border-[var(--color-border)]"
-                >
-                    <h2 id="modal-title" class="text-lg font-medium text-[var(--color-text)]">
-                        <slot name="title">{{ title }}</slot>
-                    </h2>
-                </div>
+                    class="modal-backdrop fixed inset-0 bg-black/30 backdrop-blur-sm"
+                    aria-hidden="true"
+                />
 
-                <!-- 内容区域 -->
-                <div class="px-6 py-4 flex-1 overflow-y-auto">
-                    <slot />
-                </div>
-
-                <!-- 底部操作区域 -->
+                <!-- Modal内容 -->
                 <div
-                    v-if="$slots.footer"
-                    class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3"
+                    @click.stop
+                    :class="[
+                        'modal-content relative transform rounded-lg shadow-xl',
+                        'bg-[var(--color-card-bg)] border border-[var(--color-border)]',
+                        'max-h-[90vh] flex flex-col',
+                        sizeClasses,
+                    ]"
+                    :style="[customSizeStyle, props.style]"
+                    role="dialog"
+                    :aria-labelledby="title ? 'modal-title' : undefined"
+                    aria-modal="true"
                 >
-                    <slot name="footer" />
-                </div>
+                    <!-- 标题区域 -->
+                    <div
+                        v-if="title || $slots.title"
+                        class="px-6 py-4 border-b border-[var(--color-border)]"
+                    >
+                        <h2 id="modal-title" class="text-lg font-medium text-[var(--color-text)]">
+                            <slot name="title">{{ title }}</slot>
+                        </h2>
+                    </div>
 
-                <!-- 默认底部按钮 -->
-                <div
-                    v-else-if="showDefaultFooter"
-                    class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3"
-                >
-                    <BaseButton variant="secondary" @click="emit('cancel')">
-                        {{ cancelText }}
-                    </BaseButton>
-                    <BaseButton variant="primary" @click="emit('confirm')">
-                        {{ confirmText }}
-                    </BaseButton>
-                </div>
+                    <!-- 内容区域 -->
+                    <div class="px-6 py-4 flex-1 overflow-y-auto">
+                        <slot />
+                    </div>
 
-                <!-- 关闭按钮 -->
-                <button
-                    v-if="closable"
-                    @click="emit('close')"
-                    class="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
-                >
-                    <PhX class="h-5 w-5" />
-                </button>
+                    <!-- 底部操作区域 -->
+                    <div
+                        v-if="$slots.footer"
+                        class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3"
+                    >
+                        <slot name="footer" />
+                    </div>
+
+                    <!-- 默认底部按钮 -->
+                    <div
+                        v-else-if="showDefaultFooter"
+                        class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3"
+                    >
+                        <BaseButton variant="secondary" @click="emit('cancel')">
+                            {{ cancelText }}
+                        </BaseButton>
+                        <BaseButton variant="primary" @click="emit('confirm')">
+                            {{ confirmText }}
+                        </BaseButton>
+                    </div>
+
+                    <!-- 关闭按钮 -->
+                    <button
+                        v-if="closable"
+                        @click="emit('close')"
+                        class="absolute top-4 right-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
+                    >
+                        <PhX class="h-5 w-5" />
+                    </button>
+                </div>
             </div>
-        </div>
+        </Transition>
     </Teleport>
 </template>
 
@@ -126,6 +131,17 @@ const handleEscape = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
         handleClose();
     }
+};
+
+// 动画回调函数
+const onEnter = (_el: Element) => {
+    // 动画开始时的处理
+    console.log("Modal enter animation started");
+};
+
+const onLeave = (_el: Element) => {
+    // 动画结束时的处理
+    console.log("Modal leave animation completed");
 };
 
 // 焦点管理
@@ -212,16 +228,50 @@ const customSizeStyle = computed(() => {
 </script>
 
 <style scoped>
-/* Modal动画 */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.15s ease;
+/* Modal容器动画 */
+.modal-enter-active {
+    transition: all 0.3s ease-out;
 }
 
-.modal-enter-from,
+.modal-leave-active {
+    transition: all 0.2s ease-in;
+}
+
+.modal-enter-from {
+    opacity: 0;
+}
+
 .modal-leave-to {
     opacity: 0;
-    transform: scale(0.95);
+}
+
+/* 背景遮罩动画 */
+.modal-backdrop {
+    transition: opacity 0.3s ease;
+}
+
+.modal-enter-from .modal-backdrop {
+    opacity: 0;
+}
+
+.modal-leave-to .modal-backdrop {
+    opacity: 0;
+}
+
+/* Modal内容动画 */
+.modal-content {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, opacity;
+}
+
+.modal-enter-from .modal-content {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+}
+
+.modal-leave-to .modal-content {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
 }
 
 /* 确保modal在最顶层 */
@@ -238,6 +288,15 @@ const customSizeStyle = computed(() => {
 @media (max-width: 640px) {
     .p-4 {
         padding: 1rem;
+    }
+
+    /* 移动端优化动画 */
+    .modal-content {
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-enter-from .modal-content {
+        transform: scale(0.95) translateY(-10px);
     }
 }
 </style>

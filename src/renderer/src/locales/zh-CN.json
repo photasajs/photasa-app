@@ -47,7 +47,7 @@
             "images": "图片",
             "videos": "视频",
             "image": "图片",
-            "video": "视频", 
+            "video": "视频",
             "other": "其他"
         },
         "images": "图片",
@@ -67,7 +67,7 @@
             "scanning": "正在扫描文件",
             "filesFound": "已发现文件",
             "directoriesScanned": "已扫描目录",
-            "progress": "扫描进度", 
+            "progress": "扫描进度",
             "currentPath": "当前路径",
             "recentlyFound": "最近发现",
             "noFilesFound": "未找到文件"
@@ -424,6 +424,9 @@
             "rescan": "重新扫描",
             "current": "当前扫描"
         }
+        ,
+        "processed": "已处理",
+        "incrementalCache": "增量缓存：实时保存扫描进度，避免重复扫描"
     },
     "advancedSettings": {
         "title": "高级配置",
@@ -435,5 +438,52 @@
         "image": "暂无图片",
         "openConfigDirBtn": "打开配置目录",
         "importBtn": "导入图片"
+    },
+    "fileInfo": {
+        "title": "文件信息",
+        "fileName": "文件名",
+        "fileType": "文件类型",
+        "format": "格式",
+        "size": "大小",
+        "imageWidth": "图片宽度",
+        "imageHeight": "图片高度",
+        "resolution": "分辨率",
+        "aspectRatio": "宽高比",
+        "duration": "时长",
+        "codec": "编码器",
+        "dateTaken": "拍摄日期",
+        "dateSource": "日期来源",
+        "modified": "修改时间",
+        "created": "创建时间",
+        "location": "位置",
+        "gpsLatitude": "GPS纬度",
+        "gpsLongitude": "GPS经度",
+        "cameraMake": "相机品牌",
+        "cameraModel": "相机型号",
+        "rawMetadata": "原始元数据",
+        "unknown": "未知",
+        "showRawData": "显示原始数据",
+        "hideRawData": "隐藏原始数据",
+        "infoTitle": "{name} - {type} 信息",
+        "dateSources": {
+            "exif": "EXIF 数据",
+            "video_metadata": "视频元数据",
+            "file_created": "文件创建时间",
+            "file_modified": "文件修改时间",
+            "current_date": "当前日期"
+        },
+        "basicInfo": "基本信息",
+        "mediaProperties": "媒体属性",
+        "videoProperties": "视频属性",
+        "timeInfo": "时间信息",
+        "technicalInfo": "技术信息",
+        "createdAt": "创建时间",
+        "modifiedAt": "修改时间",
+        "camera": "相机",
+        "lens": "镜头",
+        "iso": "ISO",
+        "aperture": "光圈",
+        "dimensions": "尺寸",
+        "noMetadata": "无元数据"
     }
 }

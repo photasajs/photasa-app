@@ -429,10 +429,60 @@
             "rescan": "Volver a escanear",
             "current": "Escaneo actual"
         }
+        ,
+        "processed": "Procesado",
+        "incrementalCache": "Caché Incremental: Guardado de progreso en tiempo real, evitar volver a escanear"
     },
     "empty": {
         "image": "No hay imágenes",
         "openConfigDirBtn": "Abrir directorio de configuración",
         "importBtn": "Importar imágenes"
+    },
+    "fileInfo": {
+        "title": "Información del archivo",
+        "fileName": "Nombre del archivo",
+        "fileType": "Tipo de archivo",
+        "format": "Formato",
+        "size": "Tamaño",
+        "imageWidth": "Ancho de imagen",
+        "imageHeight": "Alto de imagen",
+        "resolution": "Resolución",
+        "aspectRatio": "Relación de aspecto",
+        "duration": "Duración",
+        "codec": "Códec",
+        "dateTaken": "Fecha de captura",
+        "dateSource": "Fuente de fecha",
+        "modified": "Modificado",
+        "created": "Creado",
+        "location": "Ubicación",
+        "gpsLatitude": "Latitud GPS",
+        "gpsLongitude": "Longitud GPS",
+        "cameraMake": "Marca de cámara",
+        "cameraModel": "Modelo de cámara",
+        "rawMetadata": "Metadatos sin procesar",
+        "unknown": "Desconocido",
+        "showRawData": "Mostrar datos sin procesar",
+        "hideRawData": "Ocultar datos sin procesar",
+        "infoTitle": "{name} - Información de {type}",
+        "dateSources": {
+            "exif": "Datos EXIF",
+            "video_metadata": "Metadatos de video",
+            "file_created": "Hora de creación del archivo",
+            "file_modified": "Hora de modificación del archivo",
+            "current_date": "Fecha actual"
+        },
+        "basicInfo": "Información básica",
+        "mediaProperties": "Propiedades de medios",
+        "videoProperties": "Propiedades de video",
+        "timeInfo": "Información de tiempo",
+        "technicalInfo": "Información técnica",
+        "createdAt": "Creado en",
+        "modifiedAt": "Modificado en",
+        "camera": "Cámara",
+        "lens": "Lente",
+        "iso": "ISO",
+        "aperture": "Apertura",
+        "dimensions": "Dimensiones",
+        "noMetadata": "Sin metadatos"
     }
 }

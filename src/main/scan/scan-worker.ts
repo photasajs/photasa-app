@@ -5,8 +5,9 @@ import { loggers } from "@common/logger";
 import isImage from "is-image";
 import isVideo from "is-video";
 import fs from "fs-extra";
+import path from "path";
 import { buildThumbnailPath } from "@shared/path-util";
-import { shouldProcessFile } from "./scan-photos";
+import { shouldProcessFile } from "./scan-strategy";
 import { addToPhotasaConfig, removeFromPhotoList } from "../config/config-storage";
 import { WorkerPool } from "../workers/worker-pool";
 import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
@@ -88,15 +89,47 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
             if (action && action.path && action.isDirectory) {
                 foundPaths.push(action.path);
             }
+
+            // 尝试从缓存文件读取真实的增量缓存统计信息
+            let progressData = { processed, total: 0 };
+
+            if (scan.operationType === "directory") {
+                try {
+                    const cacheFilePath = path.join(scan.path, ".photasa-folder.json");
+                    if (fs.existsSync(cacheFilePath)) {
+                        const cacheContent = fs.readFileSync(cacheFilePath, "utf8");
+                        const cache = JSON.parse(cacheContent);
+
+                        if (cache && cache.processedFiles && Array.isArray(cache.processedFiles)) {
+                            const processedCount = cache.processedFiles.length;
+                            const pendingCount = cache.pendingFiles ? cache.pendingFiles.length : 0;
+
+                            progressData = {
+                                processed: processedCount,
+                                total: processedCount + pendingCount,
+                            };
+
+                            logger.debug(
+                                `Cache stats from file: processed=${processedCount}, total=${processedCount + pendingCount}`,
+                            );
+                        }
+                    }
+                } catch (error) {
+                    logger.debug("Could not read cache file for progress:", error);
+                    // 使用基础计数器作为后备
+                    progressData = { processed, total: 0 };
+                }
+            }
+
             postMessage({
                 type: "progress",
                 requestId,
-                action,
-                progress: { processed, total: 0 },
+                action: { path: scan.path, isDirectory: true }, // Use scan folder path for UI matching
+                progress: progressData,
             });
         },
         error: (error) => {
-            logger.error("Directory scan failed:", error);
+            logger.error(`[executeDirectoryScan] 增量缓存目录扫描失败: ${scan.path}`, error);
             postMessage({
                 type: "error",
                 requestId,
@@ -104,7 +137,9 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
             });
         },
         complete: () => {
-            logger.debug("Directory scan completed successfully");
+            logger.info(
+                `[executeDirectoryScan] 增量缓存目录扫描完成: ${scan.path}, 总共处理 ${processed} 个文件`,
+            );
             postMessage({
                 type: "complete",
                 requestId,
@@ -157,7 +192,7 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
     switch (scan.action) {
         case "scan":
             // Add operation: create thumbnail if needed and add to config
-            const shouldProcess = await shouldProcessFile(filePath, scan.action);
+            const shouldProcess = await shouldProcessFile(filePath, scan.action, logger);
             if (!shouldProcess) {
                 return;
             }

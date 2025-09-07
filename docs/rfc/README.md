@@ -64,6 +64,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | RFC                                    | Title                | Status               | Assignee         | Target Release |
 | -------------------------------------- | -------------------- | -------------------- | ---------------- | -------------- |
 | [0002](./0002-headless-ui-components) |  Headless UI Components for Picasa Vue | Phase 2 In Progress | Development Team | v1.0.0         |
+| [0006](./0006-photo-detail-drawer-decoupling.md) | Photo Detail Drawer Decoupling from Ant Design | Draft | Development Team | v1.0.0         |
 
 ## Implemented RFCs
 

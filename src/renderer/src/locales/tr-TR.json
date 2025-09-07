@@ -423,6 +423,9 @@
             "rescan": "Yeniden Tara",
             "current": "Mevcut Tarama"
         }
+        ,
+        "processed": "İşlendi",
+        "incrementalCache": "Artımlı Önbellek: Gerçek zamanlı ilerleme kaydetme, yeniden taramayı önle"
     },
     "advancedSettings": {
         "title": "Gelişmiş Ayarlar",
@@ -434,5 +437,52 @@
         "image": "Resim yok",
         "openConfigDirBtn": "Yapılandırma Klasörünü Aç",
         "importBtn": "Resimleri İçe Aktar"
+    },
+    "fileInfo": {
+        "title": "Dosya Bilgileri",
+        "fileName": "Dosya Adı",
+        "fileType": "Dosya Türü",
+        "format": "Format",
+        "size": "Boyut",
+        "imageWidth": "Resim Genişliği",
+        "imageHeight": "Resim Yüksekliği",
+        "resolution": "Çözünürlük",
+        "aspectRatio": "En Boy Oranı",
+        "duration": "Süre",
+        "codec": "Codec",
+        "dateTaken": "Çekim Tarihi",
+        "dateSource": "Tarih Kaynağı",
+        "modified": "Değiştirilme Zamanı",
+        "created": "Oluşturulma Zamanı",
+        "location": "Konum",
+        "gpsLatitude": "GPS Enlemi",
+        "gpsLongitude": "GPS Boylamı",
+        "cameraMake": "Kamera Markası",
+        "cameraModel": "Kamera Modeli",
+        "rawMetadata": "Ham Meta Veriler",
+        "unknown": "Bilinmiyor",
+        "showRawData": "Ham Verileri Göster",
+        "hideRawData": "Ham Verileri Gizle",
+        "infoTitle": "{name} - {type} Bilgileri",
+        "dateSources": {
+            "exif": "EXIF Verileri",
+            "video_metadata": "Video Meta Verileri",
+            "file_created": "Dosya Oluşturma Zamanı",
+            "file_modified": "Dosya Değiştirme Zamanı",
+            "current_date": "Mevcut Tarih"
+        },
+        "basicInfo": "Temel Bilgiler",
+        "mediaProperties": "Medya Özellikleri",
+        "videoProperties": "Video Özellikleri",
+        "timeInfo": "Zaman Bilgileri",
+        "technicalInfo": "Teknik Bilgiler",
+        "createdAt": "Oluşturulma Zamanı",
+        "modifiedAt": "Değiştirilme Zamanı",
+        "camera": "Kamera",
+        "lens": "Lens",
+        "iso": "ISO",
+        "aperture": "Diyafram",
+        "dimensions": "Boyutlar",
+        "noMetadata": "Meta Veri Yok"
     }
 }

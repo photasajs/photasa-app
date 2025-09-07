@@ -233,6 +233,25 @@ useTitle(title);
 
 // 监听 find-photo 事件，用于刷新树结构
 findPhotoService.onFindPhoto((args: any) => {
+    logger.debug("onFindPhoto received:", args.type, args.action?.path, args.progress);
+
+    // 处理进度更新 - 更新scanningFolder中对应项目的progress信息
+    if (args.progress && args.action?.path) {
+        const targetIndex = scanningFolder.value.findIndex(
+            (item) => item.path === args.action.path,
+        );
+        if (targetIndex >= 0) {
+            logger.debug(
+                `Updating progress for ${args.action.path}: ${args.progress.processed}/${args.progress.total}`,
+            );
+            scanningFolder.value[targetIndex].progress = {
+                processed: args.progress.processed || 0,
+                total: args.progress.total || 0,
+                cacheEnabled: true,
+            };
+        }
+    }
+
     // 批量刷新树结构
     if (args.type === "complete" && Array.isArray(args.paths)) {
         args.paths.forEach((p: string) => updateFolderTree(p));
@@ -382,6 +401,8 @@ window.api?.onScanQueueAdd((operations: any[]) => {
 .image-list {
     margin: 0;
     height: 100%;
+    width: 100%;
+    flex: 1;
 }
 
 .title-header {

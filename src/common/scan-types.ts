@@ -45,6 +45,12 @@ export interface ScanAction {
     retryCount?: number;
     createdAt?: number;
     fileOperationId?: string; // Link to FileOperation if applicable
+    // Progress tracking for incremental cache
+    progress?: {
+        processed: number;
+        total: number;
+        cacheEnabled?: boolean;
+    };
 }
 
 /**

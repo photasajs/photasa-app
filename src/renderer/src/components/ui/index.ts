@@ -50,11 +50,20 @@ export { default as BaseMenuItem } from "./BaseMenuItem.vue";
 export { default as BaseTabs } from "./BaseTabs.vue";
 export { default as BaseCard } from "./BaseCard.vue";
 
-// === 反馈组件 ===
+// === 反馈和加载组件 ===
 export { default as BaseAlert } from "./BaseAlert.vue";
 export { default as BaseSpinner } from "./BaseSpinner.vue";
+export { default as BaseSpinContainer } from "./BaseSpinContainer.vue";
 export { default as BaseNotification } from "./BaseNotification.vue";
 export { default as NotificationContainer } from "./NotificationContainer.vue";
+
+// === 展示和描述组件 ===
+export { default as BaseDescriptions } from "./BaseDescriptions.vue";
+export { default as BaseDescriptionItem } from "./BaseDescriptionItem.vue";
+export { default as BaseDrawer } from "./BaseDrawer.vue";
+export { default as BaseBreadcrumb } from "./BaseBreadcrumb.vue";
+export { default as BaseBreadcrumbItem } from "./BaseBreadcrumbItem.vue";
+export { default as BaseTooltip } from "./BaseTooltip.vue";
 
 // === 图片和虚拟化 ===
 export { default as BaseImage } from "./BaseImage.vue";

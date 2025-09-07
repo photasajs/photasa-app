@@ -423,6 +423,9 @@
             "rescan": "Пересканувати",
             "current": "Поточне сканування"
         }
+        ,
+        "processed": "Оброблено",
+        "incrementalCache": "Інкрементний кеш: збереження прогресу в реальному часі, уникнення повторного сканування"
     },
     "advancedSettings": {
         "title": "Додаткові налаштування",
@@ -434,5 +437,52 @@
         "image": "Немає зображень",
         "openConfigDirBtn": "Відкрити папку налаштувань",
         "importBtn": "Імпортувати зображення"
+    },
+    "fileInfo": {
+        "title": "Інформація про файл",
+        "fileName": "Назва файлу",
+        "fileType": "Тип файлу",
+        "format": "Формат",
+        "size": "Розмір",
+        "imageWidth": "Ширина зображення",
+        "imageHeight": "Висота зображення",
+        "resolution": "Роздільна здатність",
+        "aspectRatio": "Співвідношення сторін",
+        "duration": "Тривалість",
+        "codec": "Кодек",
+        "dateTaken": "Дата зйомки",
+        "dateSource": "Джерело дати",
+        "modified": "Час зміни",
+        "created": "Час створення",
+        "location": "Розташування",
+        "gpsLatitude": "GPS широта",
+        "gpsLongitude": "GPS довгота",
+        "cameraMake": "Марка камери",
+        "cameraModel": "Модель камери",
+        "rawMetadata": "Сирі метадані",
+        "unknown": "Невідомо",
+        "showRawData": "Показати сирі дані",
+        "hideRawData": "Приховати сирі дані",
+        "infoTitle": "{name} - Інформація про {type}",
+        "dateSources": {
+            "exif": "Дані EXIF",
+            "video_metadata": "Метадані відео",
+            "file_created": "Час створення файлу",
+            "file_modified": "Час зміни файлу",
+            "current_date": "Поточна дата"
+        },
+        "basicInfo": "Основна інформація",
+        "mediaProperties": "Властивості медіа",
+        "videoProperties": "Властивості відео",
+        "timeInfo": "Часова інформація",
+        "technicalInfo": "Технічна інформація",
+        "createdAt": "Створено",
+        "modifiedAt": "Змінено",
+        "camera": "Камера",
+        "lens": "Об'єктив",
+        "iso": "ISO",
+        "aperture": "Діафрагма",
+        "dimensions": "Розміри",
+        "noMetadata": "Немає метаданих"
     }
 }

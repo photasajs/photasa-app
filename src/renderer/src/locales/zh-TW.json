@@ -422,6 +422,9 @@
             "rescan": "重新掃描",
             "current": "當前掃描"
         }
+        ,
+        "processed": "已處理",
+        "incrementalCache": "增量快取：即時保存掃描進度，避免重複掃描"
     },
     "advancedSettings": {
         "title": "高級配置",
@@ -433,5 +436,52 @@
         "image": "暫無圖片",
         "openConfigDirBtn": "打開配置目錄",
         "importBtn": "導入圖片"
+    },
+    "fileInfo": {
+        "title": "檔案資訊",
+        "fileName": "檔案名稱",
+        "fileType": "檔案類型",
+        "format": "格式",
+        "size": "大小",
+        "imageWidth": "圖片寬度",
+        "imageHeight": "圖片高度",
+        "resolution": "解析度",
+        "aspectRatio": "長寬比",
+        "duration": "時長",
+        "codec": "編碼器",
+        "dateTaken": "拍攝日期",
+        "dateSource": "日期來源",
+        "modified": "修改時間",
+        "created": "建立時間",
+        "location": "位置",
+        "gpsLatitude": "GPS緯度",
+        "gpsLongitude": "GPS經度",
+        "cameraMake": "相機品牌",
+        "cameraModel": "相機型號",
+        "rawMetadata": "原始中繼資料",
+        "unknown": "未知",
+        "showRawData": "顯示原始資料",
+        "hideRawData": "隱藏原始資料",
+        "infoTitle": "{name} - {type} 資訊",
+        "dateSources": {
+            "exif": "EXIF 資料",
+            "video_metadata": "影片中繼資料",
+            "file_created": "檔案建立時間",
+            "file_modified": "檔案修改時間",
+            "current_date": "目前日期"
+        },
+        "basicInfo": "基本資訊",
+        "mediaProperties": "媒體屬性",
+        "videoProperties": "影片屬性",
+        "timeInfo": "時間資訊",
+        "technicalInfo": "技術資訊",
+        "createdAt": "建立時間",
+        "modifiedAt": "修改時間",
+        "camera": "相機",
+        "lens": "鏡頭",
+        "iso": "ISO",
+        "aperture": "光圈",
+        "dimensions": "尺寸",
+        "noMetadata": "無中繼資料"
     }
 }

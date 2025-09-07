@@ -3,6 +3,7 @@ import type { ScanAction } from "@common/scan-types";
 
 // Mock all dependencies before importing the module
 vi.mock("worker_threads", () => ({
+    default: {},
     parentPort: {
         postMessage: vi.fn(),
         on: vi.fn(),

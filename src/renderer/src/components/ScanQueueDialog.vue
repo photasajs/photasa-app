@@ -106,7 +106,22 @@
                             </div>
                             <div class="item-info">
                                 <div class="item-path" :title="item.path">{{ item.path }}</div>
-                                <div class="item-meta">{{ formatPathName(item.path) }}</div>
+                                <div class="item-meta">
+                                    <span class="path-name">{{ formatPathName(item.path) }}</span>
+                                    <span v-if="index === 0 && item.progress" class="progress-info">
+                                        • {{ t("scan.processed") }}:
+                                        {{ item.progress.processed || 0 }}
+                                        <span v-if="item.progress.total > 0">
+                                            / {{ item.progress.total }}
+                                        </span>
+                                        <span
+                                            class="cache-indicator"
+                                            :title="t('scan.incrementalCache')"
+                                        >
+                                            🔄
+                                        </span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="item-timestamp" :title="formatFullTimestamp(item.createdAt)">
@@ -144,6 +159,11 @@ interface ScanAction {
     createdAt?: number;
     priority?: number;
     operationType?: string;
+    progress?: {
+        processed: number;
+        total: number;
+        cacheEnabled?: boolean;
+    };
 }
 
 interface Props {
@@ -608,6 +628,35 @@ function formatFullTimestamp(timestamp?: number): string {
                     font-size: 12px;
                     color: var(--color-text-tertiary);
                     font-weight: 400;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+
+                .progress-info {
+                    color: var(--color-primary);
+                    font-weight: 500;
+                    opacity: 1;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-size: 11px;
+                }
+
+                .cache-indicator {
+                    font-size: 12px;
+                    animation: spin 2s linear infinite;
+                    cursor: help;
+                }
+
+                @keyframes spin {
+                    from {
+                        transform: rotate(0deg);
+                    }
+                    to {
+                        transform: rotate(360deg);
+                    }
                 }
             }
         }

@@ -7,6 +7,7 @@ import { chooseDirectory, getDirectory } from "./choose-directory";
 import {
     createThumbnail,
     getImageType,
+    getFileMetadata,
     isImageFile,
     isVideoFile,
     removeThumbnail,
@@ -49,6 +50,7 @@ const api = {
     getDirectory,
     createThumbnail,
     getImageType,
+    getFileMetadata,
     removeThumbnail,
     openInFinder,
     addToPhotoList,

@@ -38,6 +38,14 @@ const mockIsImage = vi.mocked(await import("is-image")).default;
 const mockIsVideo = vi.mocked(await import("is-video")).default;
 const mockFs = vi.mocked(fs);
 
+// Mock logger for testing
+const mockLogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+} as any;
+
 describe("scan-photos enhanced functionality", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -160,14 +168,14 @@ describe("scan-photos enhanced functionality", () => {
 
     describe("shouldProcessFile", () => {
         it("should always process files for rescan action", async () => {
-            const result = await shouldProcessFile("/test/file.jpg", "rescan");
+            const result = await shouldProcessFile("/test/file.jpg", "rescan", mockLogger);
             expect(result).toBe(true);
         });
 
         it("should process files when no .photasa.json exists", async () => {
             mockFs.existsSync.mockReturnValue(false);
 
-            const result = await shouldProcessFile("/test/dir/file.jpg", "scan");
+            const result = await shouldProcessFile("/test/dir/file.jpg", "scan", mockLogger);
             expect(result).toBe(true);
             expect(mockFs.existsSync).toHaveBeenCalledWith("/test/dir/.photasa.json");
         });
@@ -183,7 +191,7 @@ describe("scan-photos enhanced functionality", () => {
                 lastModified: Date.now(),
             });
 
-            const result = await shouldProcessFile("/test/dir/new-file.jpg", "scan");
+            const result = await shouldProcessFile("/test/dir/new-file.jpg", "scan", mockLogger);
             expect(result).toBe(true);
         });
 
@@ -200,7 +208,11 @@ describe("scan-photos enhanced functionality", () => {
                 lastModified: Date.now(),
             });
 
-            const result = await shouldProcessFile("/test/dir/existing-file.jpg", "scan");
+            const result = await shouldProcessFile(
+                "/test/dir/existing-file.jpg",
+                "scan",
+                mockLogger,
+            );
             expect(result).toBe(false);
         });
     });

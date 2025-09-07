@@ -423,6 +423,9 @@
             "rescan": "다시 스캔",
             "current": "현재 스캔"
         }
+        ,
+        "processed": "처리됨",
+        "incrementalCache": "점진적 캐시: 실시간 진행률 저장, 재스캔 방지"
     },
     "advancedSettings": {
         "title": "고급 설정",
@@ -434,5 +437,52 @@
         "image": "이미지가 없습니다",
         "openConfigDirBtn": "설정 디렉터리 열기",
         "importBtn": "이미지 가져오기"
+    },
+    "fileInfo": {
+        "title": "파일 정보",
+        "fileName": "파일명",
+        "fileType": "파일 유형",
+        "format": "형식",
+        "size": "크기",
+        "imageWidth": "이미지 너비",
+        "imageHeight": "이미지 높이",
+        "resolution": "해상도",
+        "aspectRatio": "화면비",
+        "duration": "재생 시간",
+        "codec": "코덱",
+        "dateTaken": "촬영 날짜",
+        "dateSource": "날짜 소스",
+        "modified": "수정 시간",
+        "created": "생성 시간",
+        "location": "위치",
+        "gpsLatitude": "GPS 위도",
+        "gpsLongitude": "GPS 경도",
+        "cameraMake": "카메라 제조사",
+        "cameraModel": "카메라 모델",
+        "rawMetadata": "원시 메타데이터",
+        "unknown": "알 수 없음",
+        "showRawData": "원시 데이터 표시",
+        "hideRawData": "원시 데이터 숨기기",
+        "infoTitle": "{name} - {type} 정보",
+        "dateSources": {
+            "exif": "EXIF 데이터",
+            "video_metadata": "비디오 메타데이터",
+            "file_created": "파일 생성 시간",
+            "file_modified": "파일 수정 시간",
+            "current_date": "현재 날짜"
+        },
+        "basicInfo": "기본 정보",
+        "mediaProperties": "미디어 속성",
+        "videoProperties": "비디오 속성",
+        "timeInfo": "시간 정보",
+        "technicalInfo": "기술 정보",
+        "createdAt": "생성 시간",
+        "modifiedAt": "수정 시간",
+        "camera": "카메라",
+        "lens": "렌즈",
+        "iso": "ISO",
+        "aperture": "조리개",
+        "dimensions": "크기",
+        "noMetadata": "메타데이터 없음"
     }
 }

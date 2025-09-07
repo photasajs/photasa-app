@@ -16,6 +16,7 @@ import type {
     FileGroup,
     EnhancedImportCallback,
     ImportFilters,
+    FileMetadata,
 } from "@common/import-types";
 import { loggers } from "@common/logger";
 import { normalizeFileProtocolPath } from "./path-util";
@@ -82,6 +83,10 @@ export const removeThumbnailTask = useTask(function* (_, request: ThumbnailReque
 
 export function getImageType(path: string): Promise<ImageInfo> {
     return window.api.getImageType(path);
+}
+
+export function getFileMetadata(pathOrUrl: string): Promise<FileMetadata> {
+    return window.api.getFileMetadata(pathOrUrl);
 }
 
 export function scanPhotos(folder: ScanAction): Promise<ScanArgs> {

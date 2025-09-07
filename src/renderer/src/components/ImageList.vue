@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getImageType, getPhotasaConfig } from "@renderer/utils/api";
-import { trim } from "radash";
-import type { ImageTypeResult } from "image-type";
-import { JsonTreeView } from "json-tree-view-vue3";
+import { getFileMetadata, getPhotasaConfig } from "@renderer/utils/api";
+import type { FileMetadata } from "@common/import-types";
 import {
     type Card,
     type Image,
-    type ImageMeta,
     removeFileProtocol,
     toImageMeta,
     groupImagesByColumns,
@@ -17,12 +14,22 @@ import {
 import * as R from "ramda";
 import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api-path";
-import { BaseImage, BaseContextMenu, BaseMenuItem } from "@renderer/components/ui";
+import {
+    BaseImage,
+    BaseContextMenu,
+    BaseMenuItem,
+    BaseBreadcrumb,
+    BaseBreadcrumbItem,
+    BaseTooltip,
+    BaseCard,
+} from "@renderer/components/ui";
+import { loggers } from "@common/logger";
 import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
 import LoadingState from "./common/LoadingState.vue";
 import EmptyState from "./common/EmptyState.vue";
+import FileInfoDrawer from "./FileInfoDrawer.vue";
 import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
 
 // 定义组件事件
@@ -32,6 +39,7 @@ const emit = defineEmits<{
 
 // 国际化
 const { t } = useI18n();
+const logger = loggers.renderer;
 // 偏好设置
 const preferenceStore = usePreferenceStore();
 // 偏好设置的引用
@@ -60,35 +68,29 @@ const card = computed<Card>(() => {
     return toImageList(currentFolder.value, currentFolderConfig.value);
 });
 
-// 图片元数据
-const imageMeta = reactive<ImageMeta>({
-    imageType: {} as ImageTypeResult,
-    tags: {},
-    path: "",
-    maxDepth: 3,
-    json: "",
-});
+// 文件元数据（支持图片/视频/文件信息）
+const fileMeta = ref<FileMetadata | null>(null);
 
 // 重建缩略图
 async function rebuildThumbnail(image: Image) {
     await requestThumbnail(image, thumbnailSize.value);
 }
 
-// 打开图片元数据
+// 打开文件元数据（支持图片/视频/文件）
 async function openImageMeta(image: Image): Promise<void> {
     showInfo.value = true;
-    // 等待加载图片元数据
     loadingInfo.value = true;
-    const path = `${trim(image.raw, "file:/")}`;
-    const info = await getImageType(path);
 
-    imageMeta.imageType = info.imageType ?? {};
-    imageMeta.json = JSON.stringify(info.tags ?? {});
-    imageMeta.tags = info.tags ?? {};
-    imageMeta.path = path;
-
-    // 加载完成
-    loadingInfo.value = false;
+    try {
+        // 直接使用 file:// URL，path 处理在 preload 层完成
+        const metadata = await getFileMetadata(image.raw);
+        fileMeta.value = metadata;
+    } catch (error) {
+        logger.error("Failed to load file metadata:", error);
+        fileMeta.value = null;
+    } finally {
+        loadingInfo.value = false;
+    }
 }
 
 // 打开文件夹
@@ -220,11 +222,15 @@ onUnmounted(() => {
             class="px-4 py-2 border-b flex items-center"
             style="border-color: var(--color-border); background: var(--color-bg-secondary)"
         >
-            <a-breadcrumb>
-                <a-breadcrumb-item v-for="part in card.parts" :key="part">{{
-                    part
-                }}</a-breadcrumb-item>
-            </a-breadcrumb>
+            <BaseBreadcrumb>
+                <BaseBreadcrumbItem
+                    v-for="(part, index) in card.parts"
+                    :key="part"
+                    :is-last="index === card.parts.length - 1"
+                >
+                    {{ part }}
+                </BaseBreadcrumbItem>
+            </BaseBreadcrumb>
         </div>
         <!-- 内容区 -->
         <div
@@ -275,19 +281,22 @@ onUnmounted(() => {
                             <template v-for="(image, colIndex) in rows[row.index]" :key="image.key">
                                 <BaseContextMenu>
                                     <div @click="openPreview(row.index, colIndex)">
-                                        <a-tooltip
-                                            placement="rightBottom"
+                                        <BaseTooltip
+                                            placement="right"
                                             :mouse-enter-delay="mouseEnterDelay"
                                             :title="image.raw"
                                         >
-                                            <a-card
+                                            <BaseCard
                                                 hoverable
+                                                :body-padding="false"
                                                 :style="{
                                                     height: thumbnailSize + 'px',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     background: 'var(--color-image-item-bg)', // 独立图片项背景色，支持主题
+                                                    padding: 0,
+                                                    minWidth: thumbnailSize + 'px',
                                                 }"
                                             >
                                                 <BaseImage
@@ -298,8 +307,8 @@ onUnmounted(() => {
                                                     :raw="image.raw"
                                                     :is-video="image.isVideo"
                                                 />
-                                            </a-card>
-                                        </a-tooltip>
+                                            </BaseCard>
+                                        </BaseTooltip>
                                     </div>
 
                                     <template #menu="{ close }">
@@ -336,46 +345,7 @@ onUnmounted(() => {
             </div>
         </div>
     </div>
-    <a-drawer
-        v-model:visible="showInfo"
-        class="custom-class"
-        style="color: red"
-        title="Basic Drawer"
-        placement="right"
-    >
-        <a-spin :spinning="loadingInfo">
-            <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
-                <a-descriptions-item label="Image Width">{{
-                    imageMeta.tags?.["Image Width"]?.value
-                }}</a-descriptions-item>
-                <a-descriptions-item label="Image Height">{{
-                    imageMeta.tags?.["Image Height"]?.value
-                }}</a-descriptions-item>
-                <a-descriptions-item label="MIME Type">
-                    {{
-                        typeof imageMeta.imageType === "object" && imageMeta.imageType
-                            ? imageMeta.imageType.mime
-                            : ""
-                    }}
-                </a-descriptions-item>
-                <a-descriptions-item label="MIME Type">
-                    {{
-                        typeof imageMeta.imageType === "object" && imageMeta.imageType
-                            ? imageMeta.imageType.ext
-                            : ""
-                    }}
-                </a-descriptions-item>
-                <a-descriptions-item label="Location" :span="2">{{
-                    imageMeta.path
-                }}</a-descriptions-item>
-                <a-descriptions-item label="Status" :span="2">
-                    <a-layout :style="{ height: '100%', width: '265px', overflow: 'auto' }">
-                        <JsonTreeView :data="imageMeta.json" :max-depth="imageMeta.maxDepth" />
-                    </a-layout>
-                </a-descriptions-item>
-            </a-descriptions>
-        </a-spin>
-    </a-drawer>
+    <FileInfoDrawer v-model="showInfo" :file-meta="fileMeta" :loading="loadingInfo" />
     <MediaPreview
         :images="previewImages"
         :index="previewIndex"

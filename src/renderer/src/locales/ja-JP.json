@@ -385,6 +385,9 @@
             "rescan": "再スキャン",
             "current": "現在のスキャン"
         }
+        ,
+        "processed": "処理済み",
+        "incrementalCache": "増分キャッシュ：リアルタイム進捗保存、再スキャン回避"
     },
     "advancedSettings": {
         "title": "高度な設定",
@@ -434,5 +437,52 @@
         "image": "画像がありません",
         "openConfigDirBtn": "設定ディレクトリを開く",
         "importBtn": "画像をインポート"
+    },
+    "fileInfo": {
+        "title": "ファイル情報",
+        "fileName": "ファイル名",
+        "fileType": "ファイルタイプ",
+        "format": "フォーマット",
+        "size": "サイズ",
+        "imageWidth": "画像の幅",
+        "imageHeight": "画像の高さ",
+        "resolution": "解像度",
+        "aspectRatio": "アスペクト比",
+        "duration": "再生時間",
+        "codec": "コーデック",
+        "dateTaken": "撮影日時",
+        "dateSource": "日付のソース",
+        "modified": "更新日時",
+        "created": "作成日時",
+        "location": "場所",
+        "gpsLatitude": "GPS緯度",
+        "gpsLongitude": "GPS経度",
+        "cameraMake": "カメラメーカー",
+        "cameraModel": "カメラモデル",
+        "rawMetadata": "生のメタデータ",
+        "unknown": "不明",
+        "showRawData": "生データを表示",
+        "hideRawData": "生データを非表示",
+        "infoTitle": "{name} - {type} 情報",
+        "dateSources": {
+            "exif": "EXIFデータ",
+            "video_metadata": "動画メタデータ",
+            "file_created": "ファイル作成日時",
+            "file_modified": "ファイル更新日時",
+            "current_date": "現在の日付"
+        },
+        "basicInfo": "基本情報",
+        "mediaProperties": "メディアプロパティ",
+        "videoProperties": "動画プロパティ",
+        "timeInfo": "時間情報",
+        "technicalInfo": "技術情報",
+        "createdAt": "作成日時",
+        "modifiedAt": "更新日時",
+        "camera": "カメラ",
+        "lens": "レンズ",
+        "iso": "ISO",
+        "aperture": "絞り",
+        "dimensions": "寸法",
+        "noMetadata": "メタデータなし"
     }
 }

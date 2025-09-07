@@ -423,6 +423,9 @@
             "rescan": "إعادة مسح",
             "current": "المسح الحالي"
         }
+        ,
+        "processed": "معالج",
+        "incrementalCache": "التخزين المؤقت التدريجي: حفظ التقدم في الوقت الفعلي، تجنب إعادة المسح"
     },
     "advancedSettings": {
         "title": "إعدادات متقدمة",
@@ -434,5 +437,52 @@
         "image": "لا توجد صور",
         "openConfigDirBtn": "افتح مجلد الإعدادات",
         "importBtn": "استيراد الصور"
+    },
+    "fileInfo": {
+        "title": "معلومات الملف",
+        "fileName": "اسم الملف",
+        "fileType": "نوع الملف",
+        "format": "التنسيق",
+        "size": "الحجم",
+        "imageWidth": "عرض الصورة",
+        "imageHeight": "ارتفاع الصورة",
+        "resolution": "الدقة",
+        "aspectRatio": "نسبة العرض إلى الارتفاع",
+        "duration": "المدة",
+        "codec": "برنامج الترميز",
+        "dateTaken": "تاريخ التقاط",
+        "dateSource": "مصدر التاريخ",
+        "modified": "تم التعديل",
+        "created": "تم الإنشاء",
+        "location": "الموقع",
+        "gpsLatitude": "خط العرض GPS",
+        "gpsLongitude": "خط الطول GPS",
+        "cameraMake": "صانع الكاميرا",
+        "cameraModel": "طراز الكاميرا",
+        "rawMetadata": "البيانات الوصفية الخام",
+        "unknown": "غير معروف",
+        "showRawData": "إظهار البيانات الخام",
+        "hideRawData": "إخفاء البيانات الخام",
+        "infoTitle": "{name} - معلومات {type}",
+        "dateSources": {
+            "exif": "بيانات EXIF",
+            "video_metadata": "بيانات وصفية للفيديو",
+            "file_created": "وقت إنشاء الملف",
+            "file_modified": "وقت تعديل الملف",
+            "current_date": "التاريخ الحالي"
+        },
+        "basicInfo": "المعلومات الأساسية",
+        "mediaProperties": "خصائص الوسائط",
+        "videoProperties": "خصائص الفيديو",
+        "timeInfo": "معلومات الوقت",
+        "technicalInfo": "المعلومات التقنية",
+        "createdAt": "تم الإنشاء في",
+        "modifiedAt": "تم التعديل في",
+        "camera": "الكاميرا",
+        "lens": "العدسة",
+        "iso": "ISO",
+        "aperture": "فتحة العدسة",
+        "dimensions": "الأبعاد",
+        "noMetadata": "لا توجد بيانات وصفية"
     }
 }

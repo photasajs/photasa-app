@@ -420,6 +420,9 @@
             "rescan": "Riscansiona",
             "current": "Scansione corrente"
         }
+        ,
+        "processed": "Elaborato",
+        "incrementalCache": "Cache incrementale: salvataggio progressi in tempo reale, evitare la riscansione"
     },
     "advancedSettings": {
         "title": "Impostazioni avanzate",
@@ -431,5 +434,52 @@
         "image": "Nessuna immagine",
         "openConfigDirBtn": "Apri cartella configurazione",
         "importBtn": "Importa immagini"
+    },
+    "fileInfo": {
+        "title": "Informazioni file",
+        "fileName": "Nome file",
+        "fileType": "Tipo file",
+        "format": "Formato",
+        "size": "Dimensione",
+        "imageWidth": "Larghezza immagine",
+        "imageHeight": "Altezza immagine",
+        "resolution": "Risoluzione",
+        "aspectRatio": "Rapporto aspetto",
+        "duration": "Durata",
+        "codec": "Codec",
+        "dateTaken": "Data scatto",
+        "dateSource": "Origine data",
+        "modified": "Modificato",
+        "created": "Creato",
+        "location": "Posizione",
+        "gpsLatitude": "Latitudine GPS",
+        "gpsLongitude": "Longitudine GPS",
+        "cameraMake": "Marca fotocamera",
+        "cameraModel": "Modello fotocamera",
+        "rawMetadata": "Metadati grezzi",
+        "unknown": "Sconosciuto",
+        "showRawData": "Mostra dati grezzi",
+        "hideRawData": "Nascondi dati grezzi",
+        "infoTitle": "{name} - Informazioni {type}",
+        "dateSources": {
+            "exif": "Dati EXIF",
+            "video_metadata": "Metadati video",
+            "file_created": "Ora creazione file",
+            "file_modified": "Ora modifica file",
+            "current_date": "Data corrente"
+        },
+        "basicInfo": "Informazioni di base",
+        "mediaProperties": "Proprietà media",
+        "videoProperties": "Proprietà video",
+        "timeInfo": "Informazioni temporali",
+        "technicalInfo": "Informazioni tecniche",
+        "createdAt": "Creato il",
+        "modifiedAt": "Modificato il",
+        "camera": "Fotocamera",
+        "lens": "Obiettivo",
+        "iso": "ISO",
+        "aperture": "Diaframma",
+        "dimensions": "Dimensioni",
+        "noMetadata": "Nessun metadato"
     }
 }
