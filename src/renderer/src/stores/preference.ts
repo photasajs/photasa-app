@@ -176,12 +176,26 @@ export const usePreferenceStore = defineStore("preference", {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
-            logger.debug("Completing scan for folder:", folder);
+            logger.debug(`[completeScanPath] Attempting to complete scan for folder: ${folder}`);
+            logger.debug(
+                `[completeScanPath] Current scanningFolder before:`,
+                this.scanningFolder.map((f) => f.path),
+            );
+
             const index = this.scanningFolder.findIndex((f) => f.path === folder);
             if (index > -1) {
                 this.scanningFolder.splice(index, 1);
-                logger.debug("Removed folder from scanning queue:", folder);
+                logger.debug(
+                    `[completeScanPath] Successfully removed folder from scanning queue at index ${index}: ${folder}`,
+                );
+            } else {
+                logger.debug(`[completeScanPath] Folder not found in scanning queue: ${folder}`);
             }
+
+            logger.debug(
+                `[completeScanPath] Current scanningFolder after:`,
+                this.scanningFolder.map((f) => f.path),
+            );
         },
         updateFolderTree(folder: string) {
             const path = normalizePath(folder);

@@ -26,10 +26,9 @@ describe("RFC 0007 Integration Tests", () => {
                 thumbnailSize: 200,
             };
 
-            let _completedSuccessfully = false;
             let _processedFiles = 0;
 
-            const _subscription = scanPhotos(scanAction, mockLogger).subscribe({
+            scanPhotos(scanAction, mockLogger).subscribe({
                 next: (file) => {
                     _processedFiles++;
                     expect(file).toHaveProperty("path");
@@ -42,7 +41,7 @@ describe("RFC 0007 Integration Tests", () => {
                     console.warn("Expected error in test environment:", error);
                 },
                 complete: () => {
-                    _completedSuccessfully = true;
+                    // 扫描完成
                 },
             });
 
@@ -68,11 +67,8 @@ describe("RFC 0007 Integration Tests", () => {
                 thumbnailSize: 150,
             };
 
-            let _fileProcessed = false;
-
-            const _subscription = scanPhotos(scanAction, mockLogger).subscribe({
+            scanPhotos(scanAction, mockLogger).subscribe({
                 next: (file) => {
-                    _fileProcessed = true;
                     expect(file.path).toBe("/test/photo.jpg");
                 },
                 error: (error) => {
@@ -181,7 +177,7 @@ describe("RFC 0007 Integration Tests", () => {
 
             let errorOccurred = false;
 
-            const _subscription = scanPhotos(invalidScanAction, mockLogger).subscribe({
+            scanPhotos(invalidScanAction, mockLogger).subscribe({
                 next: () => {
                     // 不应该有文件被处理
                 },

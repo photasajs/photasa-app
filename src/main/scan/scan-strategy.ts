@@ -29,7 +29,9 @@ import {
  * @returns boolean - 是否只扫描一级
  */
 export function shouldScanOneLevel(action: string): boolean {
-    return action === "current" || action === "rescan" || action === "scan";
+    // 只有 "current" 动作才只扫描当前层级
+    // "scan" 和 "rescan" 应该递归扫描所有子文件夹
+    return action === "current";
 }
 
 /**

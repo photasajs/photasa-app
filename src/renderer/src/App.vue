@@ -120,9 +120,27 @@ watchArray(
 
 // 包装 addScanFolder 增加日志
 const addScanFolderWithLog = (folder: string, action: "scan" | "rescan" | "current") => {
-    logger.debug("addScanFolder called", folder, action, scanningFolder.value);
+    logger.debug(`[addScanFolderWithLog] Attempting to add folder: ${folder}, action: ${action}`);
+    logger.debug(
+        `[addScanFolderWithLog] Current scanningFolder before:`,
+        scanningFolder.value.map((f) => f.path),
+    );
+
+    // 检查是否已存在
+    const existingIndex = scanningFolder.value.findIndex((f) => f.path === folder);
+    if (existingIndex >= 0) {
+        logger.debug(
+            `[addScanFolderWithLog] Folder already exists at index ${existingIndex}, skipping: ${folder}`,
+        );
+        return;
+    }
+
     addScanFolder(folder, action);
-    logger.debug("addScanFolder after", scanningFolder.value);
+    logger.debug(`[addScanFolderWithLog] Successfully added folder: ${folder}`);
+    logger.debug(
+        `[addScanFolderWithLog] Current scanningFolder after:`,
+        scanningFolder.value.map((f) => f.path),
+    );
 };
 
 watchArray(
@@ -173,19 +191,50 @@ async function startScanning(): Promise<void> {
         logger.debug(`Scanning subfolders for: ${scanAction.path}`);
         try {
             const folders = await scanSubfolders(scanAction.path);
-            logger.debug(`Found ${folders.length} subfolders for: ${scanAction.path}`);
+            logger.debug(`Found ${folders.length} subfolders for: ${scanAction.path}`, folders);
+
+            // 记录添加子文件夹前的队列状态
+            logger.debug(
+                `Before adding subfolders, scanningFolder length: ${scanningFolder.value.length}`,
+                scanningFolder.value.map((f) => f.path),
+            );
+
             folders.forEach((f: string) => addScanFolderWithLog(f, "scan"));
+
+            // 记录添加子文件夹后的队列状态
+            logger.debug(
+                `After adding subfolders, scanningFolder length: ${scanningFolder.value.length}`,
+                scanningFolder.value.map((f) => f.path),
+            );
 
             logger.debug(`Starting scanPhotosTask for: ${scanAction.path}`);
             const args = await scanPhotosTask.perform(scanAction);
             logger.debug(`Scan completed for: ${scanAction.path}`);
 
+            // 记录清理前的队列状态
+            logger.debug(
+                `Before cleanup, scanningFolder length: ${scanningFolder.value.length}`,
+                scanningFolder.value.map((f) => f.path),
+            );
+
+            // 无论扫描结果如何，都要清理scanningFolder中的项目，避免死循环
+            logger.debug(`Cleaning up scan path: ${scanAction.path}`);
+            completeScanPath(scanAction.path);
+
+            // 记录清理后的队列状态
+            logger.debug(
+                `After cleanup, scanningFolder length: ${scanningFolder.value.length}`,
+                scanningFolder.value.map((f) => f.path),
+            );
+
+            // 如果扫描成功且有结果，更新文件夹树
             if (args?.action?.path && args?.action?.isDirectory) {
                 logger.debug(`Updating folder tree for: ${args.action.path}`);
                 updateFolderTree(args.action.path as string);
-                completeScanPath(args.action.path as string);
-                startScanning();
             }
+
+            // 继续处理下一个扫描项目
+            startScanning();
         } catch (error) {
             logger.error("Error during scanning:", error);
             completeScanPath(scanAction.path);

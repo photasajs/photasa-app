@@ -158,7 +158,7 @@ describe("Incremental Cache Integration Tests", () => {
 
         it("应该能够标记扫描完成", async () => {
             const cacheManager = new IncrementalCacheManager(testFolderPath, mockLogger);
-            const _cache = await cacheManager.initialize();
+            await cacheManager.initialize();
 
             // 等待一小段时间以确保时间差
             await new Promise((resolve) => setTimeout(resolve, 10));

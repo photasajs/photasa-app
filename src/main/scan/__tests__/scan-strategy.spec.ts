@@ -49,12 +49,12 @@ describe("scan-strategy", () => {
             expect(shouldScanOneLevel("current")).toBe(true);
         });
 
-        it("应该为rescan动作返回true", () => {
-            expect(shouldScanOneLevel("rescan")).toBe(true);
+        it("应该为rescan动作返回false（递归扫描）", () => {
+            expect(shouldScanOneLevel("rescan")).toBe(false);
         });
 
-        it("应该为scan动作返回true", () => {
-            expect(shouldScanOneLevel("scan")).toBe(true);
+        it("应该为scan动作返回false（递归扫描）", () => {
+            expect(shouldScanOneLevel("scan")).toBe(false);
         });
 
         it("应该为其他动作返回false", () => {
