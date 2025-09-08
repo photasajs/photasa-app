@@ -63,15 +63,18 @@ What parts of the design do you expect to resolve through the RFC process before
 
 | RFC                                    | Title                | Status               | Assignee         | Target Release |
 | -------------------------------------- | -------------------- | -------------------- | ---------------- | -------------- |
-| [0002](./0002-headless-ui-components) |  Headless UI Components for Picasa Vue | Phase 2 In Progress | Development Team | v1.0.0         |
+| [0002](./0002-headless-ui-components.md) | Headless UI Components for Picasa Vue | Phase 2 In Progress | Development Team | v1.0.0         |
+| [0004](./0004-ai-file-preview-service.md) | AI文件在线预览服务 | Draft | Development Team | Future |
+| [0005](./0005-local-ai-file-preview.md) | 本地AI文件预览功能 | Draft | Development Team | Future |
 | [0006](./0006-photo-detail-drawer-decoupling.md) | Photo Detail Drawer Decoupling from Ant Design | Draft | Development Team | v1.0.0         |
 
 ## Implemented RFCs
 
 | RFC | Title | Implemented In | Notes |
 | --- | ----- | -------------- | ----- |
-| [0001](./0001-import-wizard-system.md) | Import Wizard System | v1.0.0 | Complete import wizard with multi-step flow |
+| [0001](./0001-import-wizard-system.md) | Import Wizard System | v2.1.0 | Complete import wizard with multi-step flow |
 | [0003](./0003-unify-watch-to-scan-queue.md) | Unify File Watch Events to Scan Queue | v1.0.0 | Persistent file operation queue with event deduplication |
+| [0007](./0007-folder-scan-cache-optimization.md) | Folder Scan Cache Optimization | v1.0.0 | Intelligent incremental scanning and cleanup mechanisms |
 
 ## Rejected RFCs
 
