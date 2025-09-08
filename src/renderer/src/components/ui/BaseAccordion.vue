@@ -13,6 +13,8 @@
 </template>
 
 <script setup lang="ts">
+import { provide } from "vue";
+
 interface BaseAccordionProps {
     /** 手风琴模式：同时只能展开一个面板 */
     accordion?: boolean;

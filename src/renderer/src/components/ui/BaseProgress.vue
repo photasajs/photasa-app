@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+// No imports needed for this component
 
 interface BaseProgressProps {
     /** 进度百分比 (0-100) */

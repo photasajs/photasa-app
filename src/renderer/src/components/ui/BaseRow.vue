@@ -2,7 +2,11 @@
     <div
         v-bind="$attrs"
         class="base-row"
-        :class="[`base-row--${align}`, `base-row--${justify}`, { 'base-row--gutter': gutter > 0 }]"
+        :class="[
+            `base-row--${align}`,
+            `base-row--${justify}`,
+            { 'base-row--gutter': (Array.isArray(gutter) ? gutter[0] : gutter) > 0 },
+        ]"
         :style="rowStyle"
     >
         <slot />
@@ -34,7 +38,7 @@ const props = withDefaults(defineProps<BaseRowProps>(), {
 const rowStyle = computed(() => {
     const style: Record<string, string> = {};
 
-    if (props.gutter > 0) {
+    if ((Array.isArray(props.gutter) ? props.gutter[0] : props.gutter) > 0) {
         const gutterValue = Array.isArray(props.gutter) ? props.gutter[0] : props.gutter;
         style.marginLeft = `-${gutterValue / 2}px`;
         style.marginRight = `-${gutterValue / 2}px`;

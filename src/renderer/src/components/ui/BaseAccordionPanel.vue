@@ -3,7 +3,6 @@
         v-bind="$attrs"
         class="base-accordion-panel"
         :class="[
-            `base-accordion-panel--${size}`,
             { 'base-accordion-panel--active': isActive },
             { 'base-accordion-panel--disabled': disabled },
         ]"
@@ -90,9 +89,9 @@ const isActive = computed(() => {
     const currentKey = activeKey || defaultActiveKey;
 
     if (accordion) {
-        return currentKey === props.key;
+        return currentKey === props.panelKey;
     } else {
-        return Array.isArray(currentKey) ? currentKey.includes(props.key) : false;
+        return Array.isArray(currentKey) ? currentKey.includes(props.panelKey) : false;
     }
 });
 
@@ -104,16 +103,16 @@ const handleToggle = () => {
 
     if (accordion) {
         // 手风琴模式：切换当前面板
-        onChange(isActive.value ? "" : props.key);
+        onChange(isActive.value ? "" : props.panelKey);
     } else {
         // 非手风琴模式：切换面板状态
         const keyArray = Array.isArray(currentKey) ? [...currentKey] : [];
-        const index = keyArray.indexOf(props.key);
+        const index = keyArray.indexOf(props.panelKey);
 
         if (index > -1) {
             keyArray.splice(index, 1);
         } else {
-            keyArray.push(props.key);
+            keyArray.push(props.panelKey);
         }
 
         onChange(keyArray);

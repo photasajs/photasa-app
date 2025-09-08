@@ -64,13 +64,13 @@ const colClasses = computed(() => {
     }
 
     // 响应式
-    const breakpoints = ["xs", "sm", "md", "lg", "xl", "xxl"];
+    const breakpoints = ["xs", "sm", "md", "lg", "xl", "xxl"] as const;
     breakpoints.forEach((breakpoint) => {
-        const value = props[breakpoint as keyof BaseColProps];
+        const value = props[breakpoint];
         if (value !== undefined) {
             if (typeof value === "number") {
                 classes.push(`base-col--${breakpoint}-${value}`);
-            } else {
+            } else if (typeof value === "object" && value !== null) {
                 if (value.span) classes.push(`base-col--${breakpoint}-${value.span}`);
                 if (value.offset) classes.push(`base-col--${breakpoint}-offset-${value.offset}`);
                 if (value.push) classes.push(`base-col--${breakpoint}-push-${value.push}`);

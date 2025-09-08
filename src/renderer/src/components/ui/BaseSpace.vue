@@ -45,18 +45,7 @@ const props = withDefaults(defineProps<BaseSpaceProps>(), {
 
 const slots = useSlots();
 
-// 获取间距值
-const getSizeValue = (size: string | number): number => {
-    if (typeof size === "number") return size;
-
-    const sizeMap = {
-        small: 8,
-        middle: 16,
-        large: 24,
-    };
-
-    return sizeMap[size as keyof typeof sizeMap] || 16;
-};
+// 间距值通过CSS类控制，不需要JavaScript计算
 
 // 计算样式
 const spaceStyle = computed(() => {

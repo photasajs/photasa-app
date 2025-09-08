@@ -50,6 +50,7 @@
                 <BaseAccordionPanel
                     v-for="directory in directoryProgresses"
                     :key="directory.path"
+                    :panel-key="directory.path"
                     :header="getDirectoryHeader(directory)"
                 >
                     <template #extra>
@@ -64,24 +65,24 @@
                             <div class="directory-actions">
                                 <BaseButton
                                     v-if="directory.status === 'processing'"
-                                    type="text"
-                                    size="small"
+                                    variant="ghost"
+                                    size="sm"
                                     @click="pauseDirectory(directory.path)"
                                 >
                                     <template #icon><PauseOutlined /></template>
                                 </BaseButton>
                                 <BaseButton
                                     v-if="directory.status === 'paused'"
-                                    type="text"
-                                    size="small"
+                                    variant="ghost"
+                                    size="sm"
                                     @click="resumeDirectory(directory.path)"
                                 >
                                     <template #icon><PlayCircleOutlined /></template>
                                 </BaseButton>
                                 <BaseButton
                                     v-if="directory.status === 'completed'"
-                                    type="text"
-                                    size="small"
+                                    variant="ghost"
+                                    size="sm"
                                     @click="openDirectory(directory.path)"
                                 >
                                     <template #icon><FolderOpenOutlined /></template>
