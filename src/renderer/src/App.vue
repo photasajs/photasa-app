@@ -304,13 +304,11 @@ findPhotoService.onFindPhoto((args: any) => {
     // 批量刷新树结构
     if (args.type === "complete" && Array.isArray(args.paths)) {
         args.paths.forEach((p: string) => updateFolderTree(p));
-        completeScanPath(args.action.path);
-        startScanning();
+        // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
     } else if (args?.action?.path && args?.action?.isDirectory) {
         // 单个刷新树结构
         updateFolderTree(args.action.path as string);
-        completeScanPath(args.action.path as string);
-        startScanning();
+        // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
     }
 });
 
