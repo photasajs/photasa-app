@@ -261,7 +261,7 @@ describe("Scan Worker Logic", () => {
 
             await executeWorkerLogic("test-request-2", scanAction);
 
-            expect(mockShouldProcessFile).toHaveBeenCalledWith("/test/image.jpg", "scan");
+            expect(mockShouldProcessFile).toHaveBeenCalledWith("/test/image.jpg", "scan", mockLogger);
             expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
                 { queueId: 0, paths: ["/test/image.jpg"] },
                 expect.any(Function),
