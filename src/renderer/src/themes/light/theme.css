@@ -61,6 +61,11 @@
     --color-scrollbar-thumb-hover: #0066b8;
     --color-splitter-bg: #cccccc;
     --color-splitter-border: #e7e7e7;
+
+    /* 空状态图标专用颜色 */
+    --color-empty-icon-bg: #f0f0f0;
+    --color-empty-icon-accent: #999999;
+    --color-empty-icon-border: #cccccc;
     --color-splitter-hover: #0066b8;
     --color-image-item-bg: #fff;
     --color-thumbnail-image-bg: #fff;
