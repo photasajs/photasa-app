@@ -13,8 +13,15 @@ vi.mock("image-type");
 vi.mock("fs-extra");
 vi.mock("is-image");
 vi.mock("is-video");
-vi.mock("./exif-helper");
+vi.mock("../exif-helper");
 vi.mock("@common/exif-util");
+vi.mock("@electron-toolkit/preload", () => ({
+    electronAPI: {
+        ipcRenderer: {
+            invoke: vi.fn(),
+        },
+    },
+}));
 
 // Import the function we're testing
 import { getFileMetadata } from "../image-helper";

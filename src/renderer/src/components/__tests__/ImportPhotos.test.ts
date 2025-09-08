@@ -2,7 +2,7 @@
  * Unit tests for ImportPhotos component
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { createPinia, setActivePinia } from "pinia";
@@ -176,6 +176,12 @@ describe("ImportPhotos", () => {
     beforeEach(() => {
         setActivePinia(createPinia());
         vi.clearAllMocks();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     describe("Component Rendering", () => {
@@ -676,18 +682,15 @@ describe("ImportPhotos", () => {
 
             // Mock slow directory selection
             const mockChooseDirectories = vi.mocked(chooseDirectories);
-            mockChooseDirectories.mockImplementation(
-                () =>
-                    new Promise((resolve) => {
-                        setTimeout(
-                            () =>
-                                resolve({
-                                    filePaths: ["/test/path"],
-                                }),
-                            100,
-                        );
-                    }),
-            );
+            mockChooseDirectories.mockImplementation(() => {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            filePaths: ["/test/path"],
+                        });
+                    }, 100);
+                });
+            });
 
             // Trigger directory selection
             const vm = wrapper.vm as any;
@@ -695,6 +698,9 @@ describe("ImportPhotos", () => {
 
             // Should show loading state
             expect(vm.loadingState.directories).toBe(true);
+
+            // Advance timers to resolve the promise
+            await vi.runAllTimersAsync();
 
             await directorySelectionPromise;
 

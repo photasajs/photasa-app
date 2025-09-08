@@ -20,6 +20,7 @@ describe("Incremental Cache Integration Tests", () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
         // 清理测试环境
         try {
             await fs.remove(testFolderPath);
@@ -30,6 +31,8 @@ describe("Incremental Cache Integration Tests", () => {
     });
 
     afterEach(async () => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
         try {
             await fs.remove(testFolderPath);
         } catch {
@@ -161,7 +164,7 @@ describe("Incremental Cache Integration Tests", () => {
             await cacheManager.initialize();
 
             // 等待一小段时间以确保时间差
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            await vi.runAllTimersAsync();
 
             // 记录一些文件处理
             await cacheManager.recordFileProcessed({
@@ -173,7 +176,7 @@ describe("Incremental Cache Integration Tests", () => {
             });
 
             // 再等待一小段时间
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            await vi.runAllTimersAsync();
 
             // 标记扫描完成
             await cacheManager.markScanComplete();
@@ -250,7 +253,7 @@ describe("Incremental Cache Integration Tests", () => {
             await Promise.all(promises);
 
             // 等待批量更新完成
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            await vi.runAllTimersAsync();
 
             // 验证写入次数 - 应该是批量写入，而不是每个文件一次
             expect(spy.mock.calls.length).toBeLessThan(10);
@@ -292,7 +295,7 @@ describe("Incremental Cache Integration Tests", () => {
                 });
 
                 // 等待异步操作
-                await new Promise((resolve) => setTimeout(resolve, 100));
+                await vi.runAllTimersAsync();
 
                 // 验证增量缓存初始化被调用
                 expect(mockLogger.debug).toHaveBeenCalledWith(

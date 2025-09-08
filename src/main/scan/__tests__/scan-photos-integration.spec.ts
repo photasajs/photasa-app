@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { scanPhotos, extendedCleanup } from "../scan-photos";
 // import { ScanStrategy } from "../folder-cache-manager";
 import type { ScanAction } from "@common/scan-types";
@@ -15,6 +15,12 @@ describe("RFC 0007 Integration Tests", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     describe("scanPhotos with intelligent caching", () => {
@@ -46,7 +52,7 @@ describe("RFC 0007 Integration Tests", () => {
             });
 
             // 等待一段时间让异步操作完成
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            await vi.runAllTimersAsync();
 
             // 验证扫描流程启动 - 可能是传统扫描或新增量扫描
             const debugCalls = (mockLogger.debug as any).mock.calls;
@@ -79,7 +85,7 @@ describe("RFC 0007 Integration Tests", () => {
                 },
             });
 
-            await new Promise((resolve) => setTimeout(resolve, 50));
+            await vi.runAllTimersAsync();
 
             // 验证参数验证被调用
             expect(mockLogger.debug || mockLogger.info).toHaveBeenCalled();
@@ -190,7 +196,7 @@ describe("RFC 0007 Integration Tests", () => {
                 },
             });
 
-            await new Promise((resolve) => setTimeout(resolve, 50));
+            await vi.runAllTimersAsync();
             expect(errorOccurred).toBe(true);
         });
 

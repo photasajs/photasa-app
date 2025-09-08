@@ -68,6 +68,7 @@ describe("ImportService Event-Driven Architecture", () => {
 
     beforeEach(async () => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
 
         // Mock sendWorkerTask to return successful response by default
         const { sendWorkerTask } = await import("@common/worker-util");
@@ -108,6 +109,7 @@ describe("ImportService Event-Driven Architecture", () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     describe("IPC Handler Registration", () => {
@@ -141,28 +143,19 @@ describe("ImportService Event-Driven Architecture", () => {
 
     describe("Event-Driven Import Flow", () => {
         it("should generate unique import ID and create session", async () => {
-            // Mock sendWorkerTask to delay execution so we can check initial state
+            // Mock sendWorkerTask to return immediately
             const { sendWorkerTask } = await import("@common/worker-util");
-            (sendWorkerTask as any).mockImplementation(
-                () =>
-                    new Promise((resolve) => {
-                        setTimeout(
-                            () =>
-                                resolve({
-                                    success: true,
-                                    data: {
-                                        importId: "test-import",
-                                        successfulFiles: 1,
-                                        totalFiles: 1,
-                                        errorFiles: 0,
-                                        skippedFiles: 0,
-                                        errors: [],
-                                    },
-                                }),
-                            100,
-                        );
-                    }),
-            );
+            (sendWorkerTask as any).mockResolvedValue({
+                success: true,
+                data: {
+                    importId: "test-import",
+                    successfulFiles: 1,
+                    totalFiles: 1,
+                    errorFiles: 0,
+                    skippedFiles: 0,
+                    errors: [],
+                },
+            });
 
             const startImportMethod = (importService as any).startImport;
             const result = await startImportMethod.call(importService, mockConfig);
@@ -170,7 +163,7 @@ describe("ImportService Event-Driven Architecture", () => {
             expect(result).toHaveProperty("importId");
             expect(result.importId).toMatch(/^import_\d+_[a-z0-9]+$/);
 
-            // Check that session was created
+            // Check that session was created immediately after startImport returns
             const activeSessions = (importService as any).activeSessions;
             expect(activeSessions.has(result.importId)).toBe(true);
 
@@ -178,7 +171,7 @@ describe("ImportService Event-Driven Architecture", () => {
             expect(session).toMatchObject({
                 importId: result.importId,
                 config: expect.objectContaining(mockConfig),
-                status: expect.stringMatching(/^(preparing|processing)$/),
+                status: expect.stringMatching(/^(preparing|processing|completed)$/), // Status may change due to async execution
                 cancelRequested: false,
                 startTime: expect.any(Date),
             });

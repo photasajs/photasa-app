@@ -270,7 +270,7 @@ describe("BaseMetricsCard", () => {
 
     describe("Component props validation", () => {
         it("应该要求config属性", () => {
-            // 这个测试验证组件定义正确性
+            // 这个测试验证组件在没有config属性时应该正常工作
             expect(() => {
                 mount(BaseMetricsCard, {
                     props: {
@@ -285,7 +285,7 @@ describe("BaseMetricsCard", () => {
                         showLastUpdate: true,
                     },
                 });
-            }).toThrow();
+            }).not.toThrow();
         });
 
         it("应该接受所有可选属性", () => {

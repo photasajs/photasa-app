@@ -14,6 +14,21 @@ const i18n = createI18n({
         "zh-CN": {
             scan: {
                 queueTitle: "扫描队列",
+                queueEmpty: "队列为空",
+                processing: "正在处理队列",
+                allTasksCompleted: "所有扫描任务已完成",
+                pathHeader: "路径",
+                timestampHeader: "创建时间",
+                actionHeader: "操作",
+                noTimestamp: "无时间戳",
+                actions: {
+                    scan: "扫描",
+                    rescan: "重新扫描",
+                    current: "当前扫描",
+                },
+            },
+            import: {
+                moreFiles: " 个任务待处理",
             },
             button: {
                 ok: "确定",

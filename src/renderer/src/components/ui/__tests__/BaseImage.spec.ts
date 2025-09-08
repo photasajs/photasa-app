@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { shallowMount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import BaseImage from "@renderer/components/ui/BaseImage.vue";
@@ -56,7 +56,13 @@ describe("BaseImage", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
         targetIsVisibleRef = undefined;
+    });
+
+    afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     it("renders with correct dimensions", () => {
@@ -68,8 +74,8 @@ describe("BaseImage", () => {
 
     it("shows loading spinner when image is not ready", async () => {
         vi.mocked(prefetchImageTask.perform).mockImplementationOnce(() => {
-            return new Promise(() => {
-                /* no-op */
+            return new Promise((resolve) => {
+                setTimeout(() => resolve({} as any), 5000); // Long delay to keep loading state
             }) as any;
         });
         const wrapper = shallowMount(BaseImage, {

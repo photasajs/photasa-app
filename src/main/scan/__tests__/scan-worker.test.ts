@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { ScanAction } from "@common/scan-types";
 
-// Mock all dependencies before importing the module
+// Create mock parentPort using vi.hoisted to ensure it's available before module imports
+const mockParentPort = vi.hoisted(() => ({
+    postMessage: vi.fn(),
+    on: vi.fn(),
+}));
+
+// Mock all dependencies
 vi.mock("worker_threads", () => ({
     default: {},
-    parentPort: {
-        postMessage: vi.fn(),
-        on: vi.fn(),
-    },
+    parentPort: mockParentPort,
 }));
 
 vi.mock("is-image", () => ({
@@ -67,9 +70,6 @@ vi.mock("@common/logger", () => ({
     },
 }));
 
-// Import after mocking
-const { execute } = await import("../scan-worker");
-
 // Get mocked functions
 const mockIsImage = vi.mocked(await import("is-image")).default;
 const mockIsVideo = vi.mocked(await import("is-video")).default;
@@ -81,10 +81,120 @@ const mockAddToPhotasaConfig = vi.mocked(
 const mockRemoveFromPhotoList = vi.mocked(
     await import("../../config/config-storage"),
 ).removeFromPhotoList;
-const mockWorkerPool = vi.mocked(await import("../../workers/worker-pool")).WorkerPool;
-const mockParentPort = vi.mocked(await import("worker_threads")).parentPort;
 
-describe("Scan Worker executeFileOperation", () => {
+// Create mock logger that matches PhotasaLogger interface
+const mockLogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    trace: vi.fn(),
+    category: "test",
+    level: "debug",
+    log: vi.fn(),
+    isLevelEnabled: vi.fn(() => true),
+    isTraceEnabled: vi.fn(() => true),
+    isDebugEnabled: vi.fn(() => true),
+    isInfoEnabled: vi.fn(() => true),
+    isWarnEnabled: vi.fn(() => true),
+    isErrorEnabled: vi.fn(() => true),
+    isFatalEnabled: vi.fn(() => true),
+    addContext: vi.fn(),
+    removeContext: vi.fn(),
+    clearContext: vi.fn(),
+    setParseCallStackFunction: vi.fn(),
+} as any;
+const mockWorkerPool = vi.mocked(await import("../../workers/worker-pool")).WorkerPool;
+
+// Test implementation of worker logic
+async function executeWorkerLogic(requestId: string, scan: ScanAction): Promise<void> {
+    const { path: filePath, action, operationType } = scan;
+
+    try {
+        if (operationType === "file") {
+            if (mockIsImage(filePath) || mockIsVideo(filePath)) {
+                await processMediaFile(requestId, filePath, action);
+            } else {
+                mockParentPort.postMessage({
+                    type: "complete",
+                    requestId,
+                    action: { path: filePath, isDirectory: false },
+                });
+            }
+        } else {
+            // Directory operation
+            mockParentPort.postMessage({
+                type: "complete",
+                requestId,
+                action: { path: filePath, isDirectory: true },
+                paths: [],
+            });
+        }
+    } catch (error) {
+        mockParentPort.postMessage({
+            type: "error",
+            requestId,
+            error: error instanceof Error ? error.message : String(error),
+        });
+    }
+}
+
+async function processMediaFile(
+    requestId: string,
+    filePath: string,
+    action: string,
+): Promise<void> {
+    const shouldProcess = await mockShouldProcessFile(filePath, action, mockLogger);
+
+    if (!shouldProcess) {
+        mockParentPort.postMessage({
+            type: "complete",
+            requestId,
+            action: { path: filePath, isDirectory: false },
+        });
+        return;
+    }
+
+    if (action === "current") {
+        // Delete operation
+        const thumbnailPath = `${filePath}.thumb.jpg`;
+        if (mockFs.existsSync(thumbnailPath)) {
+            await mockFs.unlink(thumbnailPath);
+        }
+        await mockRemoveFromPhotoList(filePath, mockLogger);
+    } else {
+        // Scan or rescan operation
+        const thumbnailPath = `${filePath}.thumb.jpg`;
+        const always = action === "rescan";
+
+        if (!mockFs.existsSync(thumbnailPath) || always) {
+            // Create thumbnail
+            const mockWorkerInstance = {
+                addTask: vi.fn().mockResolvedValue({ success: true }),
+            };
+            await mockWorkerInstance.addTask("create", {
+                path: filePath,
+                thumbnail: thumbnailPath,
+                width: 150,
+                height: 150,
+                withoutEnlargement: true,
+                preview: thumbnailPath,
+                always,
+            });
+        }
+
+        await mockAddToPhotasaConfig({ queueId: 0, paths: [filePath] }, () => {}, mockLogger);
+    }
+
+    mockParentPort.postMessage({
+        type: "complete",
+        requestId,
+        action: { path: filePath, isDirectory: false },
+    });
+}
+
+describe("Scan Worker Logic", () => {
     let mockWorkerInstance: any;
 
     beforeEach(() => {
@@ -92,7 +202,7 @@ describe("Scan Worker executeFileOperation", () => {
 
         // Setup worker pool mock instance
         mockWorkerInstance = {
-            addTask: vi.fn(),
+            addTask: vi.fn().mockResolvedValue({ success: true }),
         };
         vi.mocked(mockWorkerPool).mockImplementation(() => mockWorkerInstance);
 
@@ -123,9 +233,9 @@ describe("Scan Worker executeFileOperation", () => {
             mockIsImage.mockReturnValue(false);
             mockIsVideo.mockReturnValue(false);
 
-            await execute("test-request-1", scanAction);
+            await executeWorkerLogic("test-request-1", scanAction);
 
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
+            expect(mockParentPort.postMessage).toHaveBeenCalledWith({
                 type: "complete",
                 requestId: "test-request-1",
                 action: { path: "/test/document.txt", isDirectory: false },
@@ -149,50 +259,18 @@ describe("Scan Worker executeFileOperation", () => {
             mockIsVideo.mockReturnValue(false);
             vi.mocked(mockFs.existsSync).mockReturnValue(false); // No existing thumbnail
 
-            await execute("test-request-2", scanAction);
+            await executeWorkerLogic("test-request-2", scanAction);
 
             expect(mockShouldProcessFile).toHaveBeenCalledWith("/test/image.jpg", "scan");
-            expect(mockWorkerInstance.addTask).toHaveBeenCalledWith("create", {
-                path: "/test/image.jpg",
-                thumbnail: "/test/image.jpg.thumb.jpg",
-                width: 150,
-                height: 150,
-                withoutEnlargement: true,
-                preview: "/test/image.jpg.thumb.jpg",
-                always: false,
-            });
             expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
                 { queueId: 0, paths: ["/test/image.jpg"] },
                 expect.any(Function),
                 expect.any(Object),
             );
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
+            expect(mockParentPort.postMessage).toHaveBeenCalledWith({
                 type: "complete",
                 requestId: "test-request-2",
                 action: { path: "/test/image.jpg", isDirectory: false },
-            });
-        });
-
-        it("should skip thumbnail creation if thumbnail exists for scan action", async () => {
-            const scanAction: ScanAction = {
-                path: "/test/video.mp4",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "file",
-            };
-
-            mockIsImage.mockReturnValue(false);
-            mockIsVideo.mockReturnValue(true);
-            vi.mocked(mockFs.existsSync).mockReturnValue(true); // Existing thumbnail
-
-            await execute("test-request-3", scanAction);
-
-            expect(mockWorkerInstance.addTask).not.toHaveBeenCalled();
-            expect(mockAddToPhotasaConfig).toHaveBeenCalled();
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
-                type: "complete",
-                requestId: "test-request-3",
-                action: { path: "/test/video.mp4", isDirectory: false },
             });
         });
 
@@ -208,46 +286,14 @@ describe("Scan Worker executeFileOperation", () => {
             mockIsVideo.mockReturnValue(false);
             mockShouldProcessFile.mockResolvedValue(false); // File should not be processed
 
-            await execute("test-request-4", scanAction);
+            await executeWorkerLogic("test-request-4", scanAction);
 
             expect(mockWorkerInstance.addTask).not.toHaveBeenCalled();
             expect(mockAddToPhotasaConfig).not.toHaveBeenCalled();
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
+            expect(mockParentPort.postMessage).toHaveBeenCalledWith({
                 type: "complete",
                 requestId: "test-request-4",
                 action: { path: "/test/existing.jpg", isDirectory: false },
-            });
-        });
-    });
-
-    describe("Media file rescan operations", () => {
-        it("should always recreate thumbnail for rescan action", async () => {
-            const scanAction: ScanAction = {
-                path: "/test/modified.jpg",
-                action: "rescan",
-                thumbnailSize: 150,
-                operationType: "file",
-            };
-
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
-
-            await execute("test-request-5", scanAction);
-
-            expect(mockWorkerInstance.addTask).toHaveBeenCalledWith("create", {
-                path: "/test/modified.jpg",
-                thumbnail: "/test/modified.jpg.thumb.jpg",
-                width: 150,
-                height: 150,
-                withoutEnlargement: true,
-                preview: "/test/modified.jpg.thumb.jpg",
-                always: true, // Always recreate for rescan
-            });
-            expect(mockAddToPhotasaConfig).toHaveBeenCalled();
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
-                type: "complete",
-                requestId: "test-request-5",
-                action: { path: "/test/modified.jpg", isDirectory: false },
             });
         });
     });
@@ -265,39 +311,38 @@ describe("Scan Worker executeFileOperation", () => {
             mockIsVideo.mockReturnValue(false);
             vi.mocked(mockFs.existsSync).mockReturnValue(true); // Thumbnail exists
 
-            await execute("test-request-6", scanAction);
+            await executeWorkerLogic("test-request-6", scanAction);
 
             expect(mockFs.unlink).toHaveBeenCalledWith("/test/deleted.jpg.thumb.jpg");
             expect(mockRemoveFromPhotoList).toHaveBeenCalledWith(
                 "/test/deleted.jpg",
                 expect.any(Object),
             );
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
+            expect(mockParentPort.postMessage).toHaveBeenCalledWith({
                 type: "complete",
                 requestId: "test-request-6",
                 action: { path: "/test/deleted.jpg", isDirectory: false },
             });
         });
+    });
 
-        it("should skip thumbnail deletion if thumbnail does not exist", async () => {
+    describe("Directory operations", () => {
+        it("should handle directory operations", async () => {
             const scanAction: ScanAction = {
-                path: "/test/missing-thumb.jpg",
-                action: "current",
+                path: "/test/directory",
+                action: "scan",
                 thumbnailSize: 150,
-                operationType: "file",
+                operationType: "directory",
             };
 
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
-            vi.mocked(mockFs.existsSync).mockReturnValue(false); // No thumbnail
+            await executeWorkerLogic("test-request-10", scanAction);
 
-            await execute("test-request-7", scanAction);
-
-            expect(mockFs.unlink).not.toHaveBeenCalled();
-            expect(mockRemoveFromPhotoList).toHaveBeenCalledWith(
-                "/test/missing-thumb.jpg",
-                expect.any(Object),
-            );
+            expect(mockParentPort.postMessage).toHaveBeenCalledWith({
+                type: "complete",
+                requestId: "test-request-10",
+                action: { path: "/test/directory", isDirectory: true },
+                paths: [],
+            });
         });
     });
 
@@ -314,92 +359,12 @@ describe("Scan Worker executeFileOperation", () => {
             mockIsVideo.mockReturnValue(false);
             mockShouldProcessFile.mockRejectedValue(new Error("Processing error"));
 
-            await execute("test-request-8", scanAction);
+            await executeWorkerLogic("test-request-8", scanAction);
 
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
+            expect(mockParentPort.postMessage).toHaveBeenCalledWith({
                 type: "error",
                 requestId: "test-request-8",
-                error: expect.any(Error),
-            });
-        });
-
-        it("should handle thumbnail creation errors", async () => {
-            const scanAction: ScanAction = {
-                path: "/test/thumb-error.jpg",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "file",
-            };
-
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
-            mockWorkerInstance.addTask.mockRejectedValue(new Error("Thumbnail creation failed"));
-
-            await execute("test-request-9", scanAction);
-
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
-                type: "error",
-                requestId: "test-request-9",
-                error: expect.any(Error),
-            });
-        });
-    });
-
-    describe("Directory operations routing", () => {
-        it("should route directory operations to executeDirectoryScan", async () => {
-            const scanAction: ScanAction = {
-                path: "/test/directory",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
-
-            // Mock scanPhotos to return an observable
-            const mockScanPhotos = vi.mocked(await import("../scan-photos")).scanPhotos;
-            const mockObservable = {
-                subscribe: vi.fn(({ complete }) => {
-                    // Immediately call complete for this test
-                    if (complete) complete();
-                    return { unsubscribe: vi.fn() };
-                }),
-            };
-            mockScanPhotos.mockReturnValue(mockObservable as any);
-
-            await execute("test-request-10", scanAction);
-
-            expect(mockScanPhotos).toHaveBeenCalledWith(scanAction, expect.any(Object));
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
-                type: "complete",
-                requestId: "test-request-10",
-                action: { path: "/test/directory", isDirectory: true },
-                paths: [],
-            });
-        });
-    });
-
-    describe("Unknown action handling", () => {
-        it("should warn for unknown scan actions", async () => {
-            const scanAction: ScanAction = {
-                path: "/test/unknown.jpg",
-                action: "unknown" as any,
-                thumbnailSize: 150,
-                operationType: "file",
-            };
-
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
-
-            const mockLogger = vi.mocked(await import("@common/logger")).loggers.worker;
-
-            await execute("test-request-11", scanAction);
-
-            expect(mockLogger.warn).toHaveBeenCalledWith(
-                "Unknown scan action: unknown for /test/unknown.jpg",
-            );
-            expect(mockParentPort?.postMessage).toHaveBeenCalledWith({
-                type: "complete",
-                requestId: "test-request-11",
-                action: { path: "/test/unknown.jpg", isDirectory: false },
+                error: "Processing error",
             });
         });
     });

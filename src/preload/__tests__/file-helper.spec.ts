@@ -6,7 +6,7 @@ import { vol } from "memfs";
 vi.mock("fs-extra", async () => {
     const memfs = await vi.importActual("memfs");
     const fs = (memfs as any).fs;
-    
+
     // Return both default and named exports to cover all use cases
     return {
         default: fs,
@@ -34,18 +34,17 @@ describe("file-helper", () => {
             expect(result).toBe(false);
         });
 
-        it("should return true if file exists", () => {
-            const fileName = "/test.txt";
+        it("should return true if file exists", async () => {
+            const fileName = "test.txt";
 
             // Create file in memfs
             vol.fromJSON({ [fileName]: "test content" });
 
-            const result = fileExistSync(fileName, { root: "/" });
+            const result = fileExistSync(fileName, { root: "." });
             expect(result).toBe(true);
         });
-
-        it("should return true if file exists when option is empty", () => {
-            const fileName = "/test.txt";
+        it("should return true if file exists when option is empty", async () => {
+            const fileName = "/tmp/test.txt";
 
             // Create file in memfs
             vol.fromJSON({ [fileName]: "test content" });

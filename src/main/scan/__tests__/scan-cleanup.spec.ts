@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs-extra";
 import {
     validateCleanupOptions,
@@ -32,6 +32,12 @@ const mockWorkerPool = {
 describe("scan-cleanup", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     describe("validateCleanupOptions", () => {
@@ -113,15 +119,18 @@ describe("scan-cleanup", () => {
         });
 
         it("应该处理超时情况", async () => {
-            // 模拟一个永不解决的Promise来触发超时
+            // 模拟一个延时很长的Promise来触发超时
             mockWorkerPool.shutdown.mockImplementation(
                 () =>
-                    new Promise((_resolve) => {
-                        // 永不解决，会触发超时
+                    new Promise((resolve) => {
+                        setTimeout(() => resolve(undefined), 5000); // 5秒后才解决，但超时是100ms
                     }),
             );
 
-            const result = await cleanupWorkerPool(mockWorkerPool as any, 100, mockLogger);
+            // 启动cleanup并立即推进所有计时器
+            const cleanupPromise = cleanupWorkerPool(mockWorkerPool as any, 100, mockLogger);
+            await vi.runAllTimersAsync();
+            const result = await cleanupPromise;
 
             expect(result).toBe(false);
             expect(mockLogger.error).toHaveBeenCalledWith(

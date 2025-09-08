@@ -1,5 +1,16 @@
-import { getImageType } from "../image-helper";
+import { describe, it, expect, vi } from "vitest";
 import path from "path";
+
+// Mock Electron API before importing image-helper
+vi.mock("@electron-toolkit/preload", () => ({
+    electronAPI: {
+        ipcRenderer: {
+            invoke: vi.fn(),
+        },
+    },
+}));
+
+import { getImageType } from "../image-helper";
 
 const IMAGE_PATH = path.join(__dirname, "./photos/test.jpg");
 

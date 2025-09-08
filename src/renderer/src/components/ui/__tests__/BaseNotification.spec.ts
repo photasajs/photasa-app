@@ -1,10 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import BaseNotification from "../BaseNotification.vue";
 import type { NotificationItem } from "@renderer/types/notification";
-
-// Mock the timer functions
-vi.useFakeTimers();
 
 describe("BaseNotification", () => {
     const mockNotification: NotificationItem = {
@@ -22,7 +19,12 @@ describe("BaseNotification", () => {
     };
 
     beforeEach(() => {
+        vi.useFakeTimers();
         vi.clearAllTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it("should render notification with correct content", () => {

@@ -57,6 +57,8 @@ describe("WatchService Integration Tests", () => {
     let mockWebContents: any;
 
     beforeEach(() => {
+        vi.useFakeTimers();
+
         // Setup mock IpcMain
         mockIpcMain = new EventEmitter() as any;
         mockIpcMain.handle = vi.fn();
@@ -78,6 +80,7 @@ describe("WatchService Integration Tests", () => {
     afterEach(() => {
         watchService.close();
         vi.clearAllTimers();
+        vi.useRealTimers();
         vi.clearAllMocks();
     });
 
@@ -133,7 +136,7 @@ describe("WatchService Integration Tests", () => {
             expect(initialSize).toBeGreaterThanOrEqual(1);
 
             // Wait for debounce to complete
-            await new Promise((resolve) => setTimeout(resolve, 250));
+            await vi.runAllTimersAsync();
 
             // Should have sent events to renderer
             expect(mockWebContents.send).toHaveBeenCalled();

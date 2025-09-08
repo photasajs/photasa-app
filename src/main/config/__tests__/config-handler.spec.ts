@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as configHandler from "../config-handler";
 import type { PhotasaLogger } from "@common/logger";
 import { ConfigRequest } from "@common/config-types";
@@ -48,6 +48,12 @@ vi.mock("rxjs", async () => {
 describe("config-handler", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     it("addConfig calls addToPhotasaConfig with correct args", () => {
@@ -67,7 +73,7 @@ describe("config-handler", () => {
         const request: ConfigRequest = { action: "query", queueId: 1, paths: ["/test"] };
         configHandler.queryConfig(request, postMessage, logger);
         // Wait for the simulated stream
-        await new Promise((r) => setTimeout(r, 10));
+        await vi.runAllTimersAsync();
         // 修正断言，path 字段与 mock 行为保持一致
         expect(postMessage).toHaveBeenCalledWith(
             JSON.stringify({
@@ -91,7 +97,7 @@ describe("config-handler", () => {
             mockLogger as unknown as PhotasaLogger,
         );
         // Wait for observable to emit
-        await new Promise((r) => setTimeout(r, 10));
+        await vi.runAllTimersAsync();
         expect(mockPostMessage).toHaveBeenCalledWith(
             JSON.stringify({
                 queueId: 1,

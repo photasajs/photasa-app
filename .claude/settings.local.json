@@ -22,7 +22,9 @@
       "Bash(for file in ar-SA.json en-GB.json tr-TR.json uk-UA.json vi-VN.json zh-TW.json)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(grep:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(npx vitest run:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }
