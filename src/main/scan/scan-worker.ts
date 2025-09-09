@@ -126,6 +126,7 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
                 requestId,
                 action: { path: scan.path, isDirectory: true }, // Use scan folder path for UI matching
                 progress: progressData,
+                currentFile: action?.path ? path.basename(action.path) : undefined, // 添加当前处理的文件名
             });
         },
         error: (error) => {

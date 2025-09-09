@@ -100,12 +100,12 @@ export const usePreferenceStore = defineStore("preference", {
             // Check if the folder is already in the scanning queue
             const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
             if (existingIndex >= 0) {
-                // If it's a rescan, update the action
-                if (action === "rescan") {
+                // 只有在明确要求 rescan 且当前不是 rescan 时才更新
+                if (action === "rescan" && this.scanningFolder[existingIndex].action !== "rescan") {
                     logger.debug("Updating existing folder to rescan:", folder);
                     this.scanningFolder[existingIndex].action = "rescan";
                 } else {
-                    logger.debug("Folder already in scanning queue:", folder);
+                    logger.debug("Folder already in scanning queue with action:", this.scanningFolder[existingIndex].action);
                 }
                 return;
             }

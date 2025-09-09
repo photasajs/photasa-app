@@ -299,15 +299,28 @@ findPhotoService.onFindPhoto((args: any) => {
                 cacheEnabled: true,
             };
         }
+        
+        // 更新当前处理的文件信息到状态栏
+        if (args.currentFile) {
+            processingFile.value = `正在扫描: ${args.action.path} - ${args.currentFile}`;
+        } else {
+            processingFile.value = `正在扫描: ${args.action.path}`;
+        }
     }
 
     // 批量刷新树结构
     if (args.type === "complete" && Array.isArray(args.paths)) {
         args.paths.forEach((p: string) => updateFolderTree(p));
+        // 清理处理文件状态
+        processingFile.value = "";
         // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
     } else if (args?.action?.path && args?.action?.isDirectory) {
         // 单个刷新树结构
         updateFolderTree(args.action.path as string);
+        // 如果是单个完成事件，也清理处理文件状态
+        if (args.type === "complete") {
+            processingFile.value = "";
+        }
         // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
     }
 });
