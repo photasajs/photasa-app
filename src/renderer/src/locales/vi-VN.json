@@ -422,8 +422,7 @@
             "scan": "Quét",
             "rescan": "Quét lại",
             "current": "Quét hiện tại"
-        }
-        ,
+        },
         "processed": "Đã xử lý",
         "incrementalCache": "Bộ nhớ đệm tăng dần: Lưu tiến trình thời gian thực, tránh quét lại"
     },
@@ -484,5 +483,39 @@
         "aperture": "Khẩu độ",
         "dimensions": "Kích thước",
         "noMetadata": "Không có siêu dữ liệu"
+    },
+    "imageInfo": {
+        "title": "Thông tin hình ảnh",
+        "lastUpdated": "Cập nhật lần cuối",
+        "openInFinder": "Mở trong Finder",
+        "repairLibrary": "Sửa chữa thư viện ảnh",
+        "fileCount": "Số lượng tệp",
+        "folderSize": "Kích thước thư mục",
+        "basicInfo": "Thông tin cơ bản",
+        "location": "Vị trí",
+        "scanDate": "Ngày quét",
+        "configVersion": "Phiên bản cấu hình",
+        "configuration": "Cấu hình",
+        "showRaw": "Hiển thị cấu hình thô",
+        "hideRaw": "Ẩn cấu hình thô",
+        "totalImages": "Tổng số hình ảnh",
+        "totalVideos": "Tổng số video",
+        "scannedFolders": "Thư mục đã quét",
+        "rawConfiguration": "Cấu hình thô",
+        "copyPath": "Sao chép đường dẫn",
+        "copyConfig": "Sao chép cấu hình",
+        "operationHistory": "Lịch sử hoạt động",
+        "lastScan": "Lần quét cuối",
+        "configCreated": "Cấu hình đã tạo",
+        "never": "Không bao giờ",
+        "statusTypes": {
+            "completed": "Hoàn thành",
+            "success": "Thành công",
+            "warning": "Cảnh báo",
+            "partial": "Một phần",
+            "error": "Lỗi",
+            "failed": "Thất bại",
+            "unknown": "Không xác định"
+        }
     }
 }

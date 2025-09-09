@@ -6,10 +6,10 @@ import { useI18n } from "vue-i18n";
 import type { PhotasaConfig } from "@common/config-types";
 import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
 import { openInFinder } from "@renderer/utils/api-path";
-import { JsonTreeView } from "json-tree-view-vue3";
 import { isEmpty } from "radash";
 import { removeFileProtocol } from "@renderer/common/image";
-import { BaseContextMenu, BaseMenuItem, BaseButton } from "@renderer/components/ui";
+import { BaseContextMenu, BaseMenuItem } from "@renderer/components/ui";
+import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
 
 /**
  * I18n
@@ -74,13 +74,17 @@ const loadingInfo = ref(false);
  * Photasa config
  */
 const photasa = reactive<{
-    config: string;
+    config: any;
     path: string;
     maxDepth: number;
+    status: string;
+    lastModified: Date;
 }>({
-    config: "{}",
+    config: {},
     path: "",
     maxDepth: 0,
+    status: "unknown",
+    lastModified: new Date(),
 });
 
 /**
@@ -93,8 +97,10 @@ async function openPhotasaConfig(folder: string): Promise<void> {
     showConfigModal.value = true;
     const config = await getPhotasaConfig(folder);
 
-    photasa.config = JSON.stringify(config);
+    photasa.config = config;
     photasa.path = folder;
+    photasa.status = config?.photoList?.length > 0 ? "completed" : "empty";
+    photasa.lastModified = new Date(config?.lastModified || Date.now());
     loadingInfo.value = false;
 }
 
@@ -112,7 +118,9 @@ function openFileInFinder(key: string): void {
  */
 async function fixConfig(): Promise<void> {
     const config = await fixPhotasaConfig(photasa.path);
-    photasa.config = JSON.stringify(config);
+    photasa.config = config;
+    photasa.status = config?.photoList?.length > 0 ? "completed" : "empty";
+    photasa.lastModified = new Date(config?.lastModified || Date.now());
 }
 
 /**
@@ -175,31 +183,12 @@ async function rescan(key: string): Promise<void> {
             </a-tree>
         </div>
     </div>
-    <a-modal v-model:visible="showConfigModal" title="">
-        <a-spin :spinning="loadingInfo">
-            <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
-                <a-descriptions-item label="Location" :span="2">{{
-                    photasa.path
-                }}</a-descriptions-item>
-                <a-descriptions-item label="Status" :span="2">
-                    <a-layout
-                        :style="{
-                            height: '100%',
-                            width: '265px',
-                            overflow: 'auto',
-                        }"
-                    >
-                        <JsonTreeView :data="photasa.config" :max-depth="photasa.maxDepth" />
-                    </a-layout>
-                </a-descriptions-item>
-            </a-descriptions>
-        </a-spin>
-        <template #footer>
-            <BaseButton @click="fixConfig()">
-                {{ t("button.fixConfig") }}
-            </BaseButton>
-        </template>
-    </a-modal>
+    <EnhancedImageInfoModal
+        v-model="showConfigModal"
+        :photasa="photasa"
+        :loading="loadingInfo"
+        @fix-config="fixConfig"
+    />
 </template>
 <style lang="scss">
 .root-folder-node {

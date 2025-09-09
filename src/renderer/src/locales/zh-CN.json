@@ -423,8 +423,7 @@
             "scan": "扫描",
             "rescan": "重新扫描",
             "current": "当前扫描"
-        }
-        ,
+        },
         "processed": "已处理",
         "incrementalCache": "增量缓存：实时保存扫描进度，避免重复扫描"
     },
@@ -485,5 +484,40 @@
         "aperture": "光圈",
         "dimensions": "尺寸",
         "noMetadata": "无元数据"
+    },
+    "imageInfo": {
+        "title": "图片信息",
+        "lastUpdated": "最后更新",
+        "openInFinder": "在访达中打开",
+        "repairLibrary": "修复照片库信息",
+        "fileCount": "文件数量",
+        "folderSize": "文件夹大小",
+        "basicInfo": "基本信息",
+        "location": "位置",
+        "status": "状态",
+        "scanDate": "扫描日期",
+        "configVersion": "配置版本",
+        "configuration": "配置信息",
+        "showRaw": "显示原始配置",
+        "hideRaw": "隐藏原始配置",
+        "totalImages": "图片总数",
+        "totalVideos": "视频总数",
+        "scannedFolders": "已扫描文件夹",
+        "rawConfiguration": "原始配置",
+        "copyPath": "复制路径",
+        "copyConfig": "复制配置",
+        "operationHistory": "操作历史",
+        "lastScan": "最后扫描",
+        "configCreated": "配置创建",
+        "never": "从未",
+        "statusTypes": {
+            "completed": "已完成",
+            "success": "成功",
+            "warning": "警告",
+            "partial": "部分完成",
+            "error": "错误",
+            "failed": "失败",
+            "unknown": "未知"
+        }
     }
 }

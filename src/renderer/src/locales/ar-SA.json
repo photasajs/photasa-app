@@ -422,8 +422,7 @@
             "scan": "مسح",
             "rescan": "إعادة مسح",
             "current": "المسح الحالي"
-        }
-        ,
+        },
         "processed": "معالج",
         "incrementalCache": "التخزين المؤقت التدريجي: حفظ التقدم في الوقت الفعلي، تجنب إعادة المسح"
     },
@@ -484,5 +483,39 @@
         "aperture": "فتحة العدسة",
         "dimensions": "الأبعاد",
         "noMetadata": "لا توجد بيانات وصفية"
+    },
+    "imageInfo": {
+        "title": "معلومات الصورة",
+        "lastUpdated": "آخر تحديث",
+        "openInFinder": "فتح في المستكشف",
+        "repairLibrary": "إصلاح مكتبة الصور",
+        "fileCount": "عدد الملفات",
+        "folderSize": "حجم المجلد",
+        "basicInfo": "المعلومات الأساسية",
+        "location": "الموقع",
+        "scanDate": "تاريخ المسح",
+        "configVersion": "إصدار التكوين",
+        "configuration": "التكوين",
+        "showRaw": "إظهار التكوين الخام",
+        "hideRaw": "إخفاء التكوين الخام",
+        "totalImages": "إجمالي الصور",
+        "totalVideos": "إجمالي الفيديوهات",
+        "scannedFolders": "المجلدات الممسوحة",
+        "rawConfiguration": "التكوين الخام",
+        "copyPath": "نسخ المسار",
+        "copyConfig": "نسخ التكوين",
+        "operationHistory": "تاريخ العمليات",
+        "lastScan": "آخر مسح",
+        "configCreated": "تم إنشاء التكوين",
+        "never": "أبداً",
+        "statusTypes": {
+            "completed": "مكتمل",
+            "success": "نجح",
+            "warning": "تحذير",
+            "partial": "جزئي",
+            "error": "خطأ",
+            "failed": "فشل",
+            "unknown": "غير معروف"
+        }
     }
 }

@@ -419,8 +419,7 @@
             "scan": "Scansiona",
             "rescan": "Riscansiona",
             "current": "Scansione corrente"
-        }
-        ,
+        },
         "processed": "Elaborato",
         "incrementalCache": "Cache incrementale: salvataggio progressi in tempo reale, evitare la riscansione"
     },
@@ -481,5 +480,39 @@
         "aperture": "Diaframma",
         "dimensions": "Dimensioni",
         "noMetadata": "Nessun metadato"
+    },
+    "imageInfo": {
+        "title": "Informazioni immagine",
+        "lastUpdated": "Ultimo aggiornamento",
+        "openInFinder": "Apri nel Finder",
+        "repairLibrary": "Ripara libreria foto",
+        "fileCount": "Numero di file",
+        "folderSize": "Dimensione cartella",
+        "basicInfo": "Informazioni di base",
+        "location": "Posizione",
+        "scanDate": "Data scansione",
+        "configVersion": "Versione configurazione",
+        "configuration": "Configurazione",
+        "showRaw": "Mostra configurazione grezza",
+        "hideRaw": "Nascondi configurazione grezza",
+        "totalImages": "Totale immagini",
+        "totalVideos": "Totale video",
+        "scannedFolders": "Cartelle scansionate",
+        "rawConfiguration": "Configurazione grezza",
+        "copyPath": "Copia percorso",
+        "copyConfig": "Copia configurazione",
+        "operationHistory": "Cronologia operazioni",
+        "lastScan": "Ultima scansione",
+        "configCreated": "Configurazione creata",
+        "never": "Mai",
+        "statusTypes": {
+            "completed": "Completato",
+            "success": "Successo",
+            "warning": "Avviso",
+            "partial": "Parziale",
+            "error": "Errore",
+            "failed": "Fallito",
+            "unknown": "Sconosciuto"
+        }
     }
 }

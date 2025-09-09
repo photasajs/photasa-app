@@ -421,8 +421,7 @@
             "scan": "掃描",
             "rescan": "重新掃描",
             "current": "當前掃描"
-        }
-        ,
+        },
         "processed": "已處理",
         "incrementalCache": "增量快取：即時保存掃描進度，避免重複掃描"
     },
@@ -483,5 +482,39 @@
         "aperture": "光圈",
         "dimensions": "尺寸",
         "noMetadata": "無中繼資料"
+    },
+    "imageInfo": {
+        "title": "圖片資訊",
+        "lastUpdated": "最後更新",
+        "openInFinder": "在訪達中開啟",
+        "repairLibrary": "修復照片庫資訊",
+        "fileCount": "檔案數量",
+        "folderSize": "資料夾大小",
+        "basicInfo": "基本資訊",
+        "location": "位置",
+        "scanDate": "掃描日期",
+        "configVersion": "設定版本",
+        "configuration": "設定資訊",
+        "showRaw": "顯示原始設定",
+        "hideRaw": "隱藏原始設定",
+        "totalImages": "圖片總數",
+        "totalVideos": "影片總數",
+        "scannedFolders": "已掃描資料夾",
+        "rawConfiguration": "原始設定",
+        "copyPath": "複製路徑",
+        "copyConfig": "複製設定",
+        "operationHistory": "操作歷史",
+        "lastScan": "最後掃描",
+        "configCreated": "設定建立",
+        "never": "從未",
+        "statusTypes": {
+            "completed": "已完成",
+            "success": "成功",
+            "warning": "警告",
+            "partial": "部分完成",
+            "error": "錯誤",
+            "failed": "失敗",
+            "unknown": "未知"
+        }
     }
 }

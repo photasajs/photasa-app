@@ -384,8 +384,7 @@
             "scan": "スキャン",
             "rescan": "再スキャン",
             "current": "現在のスキャン"
-        }
-        ,
+        },
         "processed": "処理済み",
         "incrementalCache": "増分キャッシュ：リアルタイム進捗保存、再スキャン回避"
     },
@@ -484,5 +483,39 @@
         "aperture": "絞り",
         "dimensions": "寸法",
         "noMetadata": "メタデータなし"
+    },
+    "imageInfo": {
+        "title": "画像情報",
+        "lastUpdated": "最終更新",
+        "openInFinder": "Finderで開く",
+        "repairLibrary": "写真ライブラリを修復",
+        "fileCount": "ファイル数",
+        "folderSize": "フォルダサイズ",
+        "basicInfo": "基本情報",
+        "location": "場所",
+        "scanDate": "スキャン日",
+        "configVersion": "設定バージョン",
+        "configuration": "設定",
+        "showRaw": "生設定を表示",
+        "hideRaw": "生設定を非表示",
+        "totalImages": "画像総数",
+        "totalVideos": "動画総数",
+        "scannedFolders": "スキャン済みフォルダ",
+        "rawConfiguration": "生設定",
+        "copyPath": "パスをコピー",
+        "copyConfig": "設定をコピー",
+        "operationHistory": "操作履歴",
+        "lastScan": "最終スキャン",
+        "configCreated": "設定作成",
+        "never": "なし",
+        "statusTypes": {
+            "completed": "完了",
+            "success": "成功",
+            "warning": "警告",
+            "partial": "部分的",
+            "error": "エラー",
+            "failed": "失敗",
+            "unknown": "不明"
+        }
     }
 }

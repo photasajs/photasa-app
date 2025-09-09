@@ -422,8 +422,7 @@
             "scan": "Scan",
             "rescan": "Rescan",
             "current": "Current scan"
-        }
-        ,
+        },
         "processed": "Processed",
         "incrementalCache": "Incremental Cache: Real-time progress saving, avoid rescanning"
     },

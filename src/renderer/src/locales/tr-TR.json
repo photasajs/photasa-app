@@ -422,8 +422,7 @@
             "scan": "Tara",
             "rescan": "Yeniden Tara",
             "current": "Mevcut Tarama"
-        }
-        ,
+        },
         "processed": "İşlendi",
         "incrementalCache": "Artımlı Önbellek: Gerçek zamanlı ilerleme kaydetme, yeniden taramayı önle"
     },
@@ -484,5 +483,39 @@
         "aperture": "Diyafram",
         "dimensions": "Boyutlar",
         "noMetadata": "Meta Veri Yok"
+    },
+    "imageInfo": {
+        "title": "Resim bilgisi",
+        "lastUpdated": "Son güncelleme",
+        "openInFinder": "Finder'da aç",
+        "repairLibrary": "Fotoğraf kütüphanesini onar",
+        "fileCount": "Dosya sayısı",
+        "folderSize": "Klasör boyutu",
+        "basicInfo": "Temel bilgiler",
+        "location": "Konum",
+        "scanDate": "Tarama tarihi",
+        "configVersion": "Yapılandırma sürümü",
+        "configuration": "Yapılandırma",
+        "showRaw": "Ham yapılandırmayı göster",
+        "hideRaw": "Ham yapılandırmayı gizle",
+        "totalImages": "Toplam resim",
+        "totalVideos": "Toplam video",
+        "scannedFolders": "Taranan klasörler",
+        "rawConfiguration": "Ham yapılandırma",
+        "copyPath": "Yolu kopyala",
+        "copyConfig": "Yapılandırmayı kopyala",
+        "operationHistory": "İşlem geçmişi",
+        "lastScan": "Son tarama",
+        "configCreated": "Yapılandırma oluşturuldu",
+        "never": "Asla",
+        "statusTypes": {
+            "completed": "Tamamlandı",
+            "success": "Başarılı",
+            "warning": "Uyarı",
+            "partial": "Kısmi",
+            "error": "Hata",
+            "failed": "Başarısız",
+            "unknown": "Bilinmiyor"
+        }
     }
 }
