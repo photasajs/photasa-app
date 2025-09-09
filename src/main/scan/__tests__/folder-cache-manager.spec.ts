@@ -278,11 +278,11 @@ describe("folder-cache-manager", () => {
             expect(result.reason).toBe("首次扫描或缓存无效");
         });
 
-        it("应该返回FULL策略当哈希不匹配", () => {
+        it("应该返回INCREMENTAL策略当哈希不匹配", () => {
             const result = compareHashesAndDecide("cached-hash", "different-hash", mockCache);
 
-            expect(result.strategy).toBe(ScanStrategy.FULL);
-            expect(result.reason).toBe("检测到文件变化，执行完整重新扫描");
+            expect(result.strategy).toBe(ScanStrategy.INCREMENTAL);
+            expect(result.reason).toBe("检测到文件变化，执行增量扫描");
         });
 
         it("应该返回FULL策略当扫描未完成", () => {

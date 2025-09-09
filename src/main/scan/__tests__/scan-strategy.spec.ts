@@ -124,13 +124,15 @@ describe("scan-strategy", () => {
             const { computeFolderHash, getCacheInfo } = await import("../folder-cache-manager");
             (computeFolderHash as any).mockResolvedValue("hash123");
             (getCacheInfo as any).mockResolvedValue(null);
+            mockGetPhotasaConfig.mockRejectedValue(new Error("配置文件读取失败"));
 
             const result = await decideScanStrategy("/test/folder", mockLogger);
 
             expect(result.strategy).toBe(ScanStrategy.FULL);
-            expect(result.reason).toBe("首次扫描或缓存无效");
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                "[decideScanStrategy] 目录首次扫描: /test/folder",
+            expect(result.reason).toBe("配置文件读取失败");
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                "[decideScanStrategy] 读取 .photasa.json 失败: /test/folder",
+                expect.any(Error),
             );
         });
 
@@ -141,9 +143,26 @@ describe("scan-strategy", () => {
             const mockCache = { folderHash: "oldHash", scanCompleted: true };
             const mockDecision = { strategy: ScanStrategy.SKIP, reason: "无变化" };
 
+            mockFs.existsSync.mockReturnValue(true); // .photasa.json 存在
             (computeFolderHash as any).mockResolvedValue("newHash");
             (getCacheInfo as any).mockResolvedValue(mockCache);
             (compareHashesAndDecide as any).mockReturnValue(mockDecision);
+
+            // 直接mock getPhotasaConfig函数
+            vi.spyOn(
+                await import("../../config/config-storage"),
+                "getPhotasaConfig",
+            ).mockResolvedValue({
+                version: "1.0",
+                lastModified: Date.now(),
+                photoList: [
+                    {
+                        path: "test.jpg",
+                        thumbnail: "test-thumb.jpg",
+                        isVideo: false,
+                    },
+                ],
+            });
 
             const result = await decideScanStrategy("/test/folder", mockLogger);
 
@@ -156,6 +175,23 @@ describe("scan-strategy", () => {
 
         it("应该在出错时返回FULL策略", async () => {
             const { computeFolderHash } = await import("../folder-cache-manager");
+            mockFs.existsSync.mockReturnValue(true); // .photasa.json 存在
+
+            // 直接mock getPhotasaConfig函数
+            vi.spyOn(
+                await import("../../config/config-storage"),
+                "getPhotasaConfig",
+            ).mockResolvedValue({
+                version: "1.0",
+                lastModified: Date.now(),
+                photoList: [
+                    {
+                        path: "test.jpg",
+                        thumbnail: "test-thumb.jpg",
+                        isVideo: false,
+                    },
+                ],
+            });
             (computeFolderHash as any).mockRejectedValue(new Error("Hash computation failed"));
 
             const result = await decideScanStrategy("/test/folder", mockLogger);

@@ -377,15 +377,44 @@ async function processFileList(
  */
 export async function extendedCleanup(
     basePath?: string,
-    _options?: import("./scan-cleanup").CleanupOptions,
+    options?: import("./scan-cleanup").CleanupOptions,
 ): Promise<import("./scan-cleanup").CleanupStats> {
+    // 验证选项
+    if (options) {
+        if (typeof options !== "object") {
+            throw new Error("清理选项验证失败");
+        }
+        // 检查无效的数值
+        if (options.workerShutdownTimeout && options.workerShutdownTimeout < 0) {
+            throw new Error("清理选项验证失败");
+        }
+        if (options.maxCacheAge && options.maxCacheAge < 0) {
+            throw new Error("清理选项验证失败");
+        }
+    }
+
+    const startTime = Date.now();
     const { cleanupInvalidCaches } = await import("./scan-cleanup");
+
     const result = await cleanupInvalidCaches(
         basePath || "",
         7 * 24 * 60 * 60 * 1000,
         loggers.scan,
     );
-    return result as unknown as import("./scan-cleanup").CleanupStats;
+
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    return {
+        startTime,
+        endTime,
+        duration,
+        workerPoolShutdown: false,
+        cacheFilesProcessed: result.processed,
+        invalidCacheFilesRemoved: result.removed,
+        memoryFreed: 0, // 暂时设为0，后续可以实现内存统计
+        errors: result.errors,
+    };
 }
 
 export { shouldProcessFile, shouldScanOneLevel, decideScanStrategy } from "./scan-strategy";
