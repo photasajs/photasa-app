@@ -4,7 +4,7 @@
 - **Title**: Headless UI Components for Picasa Vue
 - **Author**: Picasa Vue Team
 - **Status**: Phase 2 In Progress 🚧
-- **Type**: Feature  
+- **Type**: Feature
 - **Created**: 2025-01-27
 - **Updated**: 2025-09-04
 - **Implementation Status**: ✅ Phase 1 Complete | ✅ Phase 2 Core Components Complete | 🚧 Phase 3 Migration Active
@@ -275,7 +275,7 @@ BaseFormGroup: {
   <BaseFormField name="email" required>
     <BaseInput type="email" placeholder="Enter email" />
   </BaseFormField>
-  
+
   <BaseFormField name="preferences">
     <BaseFormGroup legend="Notification Settings">
       <BaseCheckbox name="emailNotifications">Email notifications</BaseCheckbox>
@@ -290,8 +290,8 @@ BaseFormGroup: {
 ```typescript
 // Advanced Data Table with Virtual Scrolling
 BaseTable: {
-  props: { 
-    data: T[], columns: TableColumn<T>[], 
+  props: {
+    data: T[], columns: TableColumn<T>[],
     virtualScroll?: boolean, sortable?: boolean,
     selectable?: 'single' | 'multiple' | false
   }
@@ -299,15 +299,15 @@ BaseTable: {
 }
 
 BaseTree: {
-  props: { 
+  props: {
     data: TreeNode[], expandable?: boolean,
-    selectable?: boolean, searchable?: boolean 
+    selectable?: boolean, searchable?: boolean
   }
   features: ['lazy-loading', 'drag-drop', 'keyboard-navigation']
 }
 
 BasePagination: {
-  props: { 
+  props: {
     total: number, pageSize: number, current: number,
     showSizeChanger?: boolean, showQuickJumper?: boolean
   }
@@ -320,7 +320,7 @@ BasePagination: {
 ```typescript
 // Sophisticated Date/Time Components
 BaseDatePicker: {
-  props: { 
+  props: {
     value?: Date, format?: string, range?: boolean,
     disabledDates?: (date: Date) => boolean
   }
@@ -328,7 +328,7 @@ BaseDatePicker: {
 }
 
 BaseAutocomplete: {
-  props: { 
+  props: {
     options: Option[], async?: boolean,
     filterFunction?: (query: string, options: Option[]) => Option[]
   }
@@ -336,15 +336,15 @@ BaseAutocomplete: {
 }
 
 BaseCombobox: {
-  props: { 
+  props: {
     options: Option[], multiple?: boolean, creatable?: boolean
   }
   features: ['multi-select', 'tag-input', 'option-creation', 'custom-option-rendering']
 }
 
 BaseSlider: {
-  props: { 
-    min: number, max: number, step?: number, 
+  props: {
+    min: number, max: number, step?: number,
     range?: boolean, marks?: SliderMark[]
   }
   features: ['range-selection', 'custom-marks', 'tooltip-display', 'keyboard-control']
@@ -356,7 +356,7 @@ BaseSlider: {
 ```typescript
 // Advanced Layout Components
 BaseAccordion: {
-  props: { 
+  props: {
     items: AccordionItem[], multiple?: boolean,
     defaultOpen?: string | string[]
   }
@@ -364,7 +364,7 @@ BaseAccordion: {
 }
 
 BaseBreadcrumb: {
-  props: { 
+  props: {
     items: BreadcrumbItem[], separator?: string | VNode,
     maxItems?: number
   }
@@ -372,7 +372,7 @@ BaseBreadcrumb: {
 }
 
 BaseTooltip: {
-  props: { 
+  props: {
     content: string | VNode, placement?: TooltipPlacement,
     trigger?: 'hover' | 'click' | 'focus'
   }
@@ -380,7 +380,7 @@ BaseTooltip: {
 }
 
 BasePopover: {
-  props: { 
+  props: {
     content: VNode, placement?: PopoverPlacement,
     trigger?: 'hover' | 'click' | 'manual'
   }
@@ -417,7 +417,7 @@ import "ant-design-vue/dist/antd.css";      // 🎨 ~400KB CSS
 
 // Theme & Type Imports
 - src/renderer/src/stores/preference.ts     // DataNode type
-- src/renderer/src/utils/folder-tree.ts     // Tree DataNode interface  
+- src/renderer/src/utils/folder-tree.ts     // Tree DataNode interface
 - src/renderer/src/stores/__tests__/preference.spec.ts
 - src/renderer/src/utils/__tests__/folder-tree.spec.ts
 ```
@@ -428,11 +428,11 @@ import "ant-design-vue/dist/antd.css";      // 🎨 ~400KB CSS
 
 ```typescript
 // BatchProgress.vue - 47 components
-a-button(14), a-col(8), a-tag(4), a-statistic(4), a-progress(3), 
+a-button(14), a-col(8), a-tag(4), a-statistic(4), a-progress(3),
 a-tooltip(2), a-space(2), a-row(2), a-modal(2), a-collapse(4), a-alert(2)
 
-// App.vue - 41 components  
-a-layout(8), a-layout-content(4), a-spin(4), a-modal(4), 
+// App.vue - 41 components
+a-layout(8), a-layout-content(4), a-spin(4), a-modal(4),
 a-list(2), a-list-item(2), a-button(2)
 
 // DuplicateHandler.vue - ~30 components
@@ -447,7 +447,7 @@ a-table, a-tag, a-button, a-tooltip, a-progress, a-modal
 
 **📊 Medium Usage Files:**
 - `ProgressMonitor.vue` - Progress, Spin, Alert components
-- `GeneralSettings.vue` - Form, Switch, Select components  
+- `GeneralSettings.vue` - Form, Switch, Select components
 - `ImageList.vue` - List, Card, Button components
 - `FolderList.vue` - Tree, Button, Tooltip components
 - `TitlebarWinLinux.vue` - Button, Dropdown components
@@ -460,7 +460,7 @@ a-table, a-tag, a-button, a-tooltip, a-progress, a-modal
 
 | Category | Count | Components |
 |----------|-------|------------|
-| **Core Layout** | 3 | Layout, LayoutContent, Header |  
+| **Core Layout** | 3 | Layout, LayoutContent, Header |
 | **Form & Input** | 12 | Form, FormItem, Input, Select, Checkbox, Switch, Slider, DatePicker, Upload, AutoComplete |
 | **Data Display** | 8 | Table, Tree, List, ListItem, Tag, Statistic, Card, Tooltip |
 | **Feedback** | 6 | Modal, Progress, Spin, Alert, Notification, Message |
@@ -486,17 +486,17 @@ a-table, a-tag, a-button, a-tooltip, a-progress, a-modal
 **详细统计报告**: [Ant Design使用情况统计](./issue/20250109-antd-usage-statistics.md)
 
 ```typescript
-// Priority 1: Core Infrastructure (Week 1-2) 
+// Priority 1: Core Infrastructure (Week 1-2)
 BaseLayout, BaseLayoutContent → Replace a-layout system in App.vue
 BaseForm, BaseFormField → Enable FileFilter.vue migration
 BaseButton → Most frequently used component (40+ instances)
 
 // Priority 2: Data Components (Week 3-4)
-BaseTable → Enable FilePreview.vue, DuplicateHandler.vue  
+BaseTable → Enable FilePreview.vue, DuplicateHandler.vue
 BaseTree → Enable FolderList.vue folder navigation
 BaseTag, BaseProgress → Enable BatchProgress.vue
 
-// Priority 3: Advanced Input (Week 5-6)  
+// Priority 3: Advanced Input (Week 5-6)
 BaseDatePicker, BaseSlider → Complete FileFilter.vue
 BaseAutocomplete → Advanced search capabilities
 
@@ -505,7 +505,7 @@ BaseRow, BaseCol, BaseSpace → Grid system for BatchProgress.vue
 BaseTooltip, BasePopover → Information display
 
 // Priority 5: Migration Execution (Week 9-10)
-- File-by-file component replacement  
+- File-by-file component replacement
 - Remove ant-design-vue dependency
 - Bundle size verification
 ```
@@ -528,12 +528,12 @@ BaseTooltip, BasePopover → Information display
 ```typescript
 // Before Migration
 ant-design-vue: ~2.1MB (bundled)
-antd.css: ~400KB  
+antd.css: ~400KB
 Total Ant Design: ~2.5MB
 
 // After Migration (Estimated)
 Custom headless components: ~200KB
-TailwindCSS utilities only: ~50KB  
+TailwindCSS utilities only: ~50KB
 Total Custom UI: ~250KB
 
 // Bundle Reduction: ~90% (~2.25MB saved) 🔥
@@ -557,7 +557,7 @@ Total Custom UI: ~250KB
    - Auto-completion for TailwindCSS classes
 
 2. **Component Composition Patterns**
-   - Render props for maximum flexibility  
+   - Render props for maximum flexibility
    - Slot-based composition for complex UIs
    - Composable-based logic sharing
 

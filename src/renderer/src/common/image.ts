@@ -44,6 +44,7 @@ export type ImageMetaViewModel = {
     isVideo: boolean;
     raw: string;
     thumbnail: string;
+    preview?: string;
 };
 
 /**
@@ -53,10 +54,14 @@ export type ImageMetaViewModel = {
  */
 export function toPreviewableImage(file: Photo): string {
     // 浏览器不支持 heic 格式，所以在进库时 已将其转换为 jpeg 格式
-    // 如果文件路径包含 .heic，则返回缩略图路径，否则返回文件路径
-    return file.path.indexOf(".heic") >= 0
-        ? file.thumbnail.replace(".heic.png", ".jpeg").replace("thumbnail-", "")
-        : file.path;
+    // 如果文件路径包含 .heic，则从缩略图路径推导预览图路径
+    if (file.path.indexOf(".heic") >= 0) {
+        // 缩略图格式: .photasaoriginals/thumbnail-{filename}.heic.png
+        // 预览图格式: .photasaoriginals/{filename}.jpeg
+        // 先移除 "thumbnail-" 前缀，再替换 ".heic.png" 为 ".jpeg"
+        return file.thumbnail.replace("thumbnail-", "").replace(".heic.png", ".jpeg");
+    }
+    return file.path;
 }
 
 /**
@@ -121,6 +126,7 @@ export function toImageMeta(
         isVideo: image.isVideo,
         raw: image.raw,
         thumbnail: image.thumbnail,
+        preview: image.preview,
     };
 }
 
