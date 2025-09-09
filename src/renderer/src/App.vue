@@ -299,7 +299,7 @@ findPhotoService.onFindPhoto((args: any) => {
                 cacheEnabled: true,
             };
         }
-        
+
         // 更新当前处理的文件信息到状态栏
         if (args.currentFile) {
             processingFile.value = `正在扫描: ${args.action.path} - ${args.currentFile}`;

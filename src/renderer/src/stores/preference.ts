@@ -105,7 +105,10 @@ export const usePreferenceStore = defineStore("preference", {
                     logger.debug("Updating existing folder to rescan:", folder);
                     this.scanningFolder[existingIndex].action = "rescan";
                 } else {
-                    logger.debug("Folder already in scanning queue with action:", this.scanningFolder[existingIndex].action);
+                    logger.debug(
+                        "Folder already in scanning queue with action:",
+                        this.scanningFolder[existingIndex].action,
+                    );
                 }
                 return;
             }
