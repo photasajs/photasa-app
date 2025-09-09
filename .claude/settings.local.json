@@ -24,7 +24,8 @@
       "Bash(grep:*)",
       "Bash(done)",
       "Bash(npx vitest run:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

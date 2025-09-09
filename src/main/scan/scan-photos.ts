@@ -12,9 +12,10 @@ import {
     createSubscriptionHandlers,
     validateScanParams,
     isDirectoryScan,
+    restoreCachedFiles,
 } from "./scan-helpers";
 import { IncrementalCacheManager } from "./incremental-cache";
-import { shouldScanOneLevel, shouldProcessFile } from "./scan-strategy";
+import { shouldScanOneLevel, shouldProcessFile, decideScanStrategy } from "./scan-strategy";
 import { WorkerPool } from "../workers/worker-pool";
 import createWorker from "../thumbnail/thumbnail-worker?nodeWorker";
 import { loggers, PhotasaLogger } from "@common/logger";
@@ -100,27 +101,21 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
                 const video = isVideo(item.path);
                 const image = isImage(item.path);
 
-                // 只推送图片/视频文件节点，不再推送目录节点
-                if (
-                    !item.stats.isDirectory() && // 只处理文件
-                    item.path !== source.path && //  Skip self
-                    (video || image) // 只处理图片或视频
-                ) {
+                if (video || image) {
                     subscriber.next({
                         path: item.path,
                         thumbnail: buildThumbnailPath(item.path),
                         isImage: image,
                         isVideo: video,
-                        isDirectory: false,
+                        isDirectory: item.stats.isDirectory(),
                     });
                 }
-                // 目录节点不再推送
             })
             .on("end", () => {
                 subscriber.complete();
             })
             .on("error", (error) => {
-                logger.error("Error during directory walkthrough:", error);
+                logger.error(`[walkthroughPhotos] 扫描文件夹失败: ${source.path}`, error);
                 subscriber.error(error);
             });
     });
@@ -144,135 +139,181 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 
         const workerPool = getWorkerPool(logger);
 
-        // 对于目录扫描，使用增量缓存机制
+        // 对于目录扫描，先进行策略决策
         if (isDirectoryScan(scan)) {
             logger.info(
-                `[scanPhotos] 开始增量缓存扫描: ${scan.path}, operationType: ${scan.operationType}`,
+                `[scanPhotos] 开始目录扫描: ${scan.path}, operationType: ${scan.operationType}`,
             );
 
-            // 创建增量缓存管理器
-            const cacheManager = new IncrementalCacheManager(scan.path, logger);
-
-            // 初始化缓存并开始扫描
-            cacheManager
-                .initialize()
-                .then(async (cache) => {
-                    // 检查是否为断点续扫
-                    if (cache.inProgress && cache.processedFiles.length > 0) {
-                        logger.info(
-                            `[scanPhotosWithIncrementalCache] 检测到未完成扫描，已处理 ${cache.processedFiles.length} 个文件，准备断点续扫`,
-                        );
-
-                        // 获取所有文件列表
-                        const allFiles: PhotoFileRequest[] = [];
-
-                        // 收集所有文件
-                        walkthroughPhotos(scan).subscribe({
-                            next: (file) => allFiles.push(file),
-                            complete: () => {
-                                // 过滤出未处理的文件
-                                const unprocessedFiles = allFiles.filter(
-                                    (file) => !cacheManager.isFileProcessed(file.path),
-                                );
-
-                                logger.info(
-                                    `[scanPhotosWithIncrementalCache] 断点续扫：总文件 ${allFiles.length}，已处理 ${cache.processedFiles.length}，待处理 ${unprocessedFiles.length}`,
-                                );
-
-                                // 更新待处理文件列表
-                                cacheManager.setPendingFiles(unprocessedFiles.map((f) => f.path));
-
-                                // 处理未完成的文件
-                                processFileList(
-                                    unprocessedFiles,
-                                    scan,
-                                    cacheManager,
-                                    workerPool,
-                                    logger,
-                                    subscriber,
-                                );
-                            },
-                            error: (error) => {
-                                logger.error(
-                                    "[scanPhotosWithIncrementalCache] 获取文件列表失败",
-                                    error,
-                                );
-                                subscriber.error(error);
-                            },
-                        });
-                    } else {
-                        // 全新扫描
-                        logger.info(`[scanPhotosWithIncrementalCache] 开始全新扫描: ${scan.path}`);
-
-                        walkthroughPhotos(scan)
-                            .pipe(
-                                concatMap(async (action: PhotoFileRequest) => {
-                                    const shouldProcess = await shouldProcessFile(
-                                        action.path,
-                                        scan.action,
-                                        logger,
-                                    );
-
-                                    if (shouldProcess) {
-                                        // 实时记录文件处理进度
-                                        await cacheManager.recordFileProcessed(action);
-                                    }
-
-                                    return processPhotoFile(
-                                        action,
-                                        scan,
-                                        shouldProcess,
-                                        workerPool,
-                                        logger,
-                                    );
-                                }),
-                            )
-                            .subscribe({
-                                ...createSubscriptionHandlers(subscriber, logger, scan.path),
-                                complete: async () => {
-                                    try {
-                                        // 标记扫描完成
-                                        await cacheManager.markScanComplete();
-                                        logger.info(
-                                            `[scanPhotosWithIncrementalCache] 全新扫描完成: ${scan.path}`,
-                                        );
-                                    } catch (error) {
-                                        logger.warn(
-                                            `[scanPhotosWithIncrementalCache] 完成标记失败`,
-                                            error,
-                                        );
-                                    }
-                                    subscriber.complete();
-                                },
-                            });
-                    }
-                })
-                .catch((error) => {
-                    logger.error(
-                        `[scanPhotosWithIncrementalCache] 初始化增量缓存失败: ${scan.path}`,
-                        error,
+            // 进行扫描策略决策（异步处理）
+            decideScanStrategy(scan.path, logger, scan.action)
+                .then(async (scanDecision) => {
+                    logger.info(
+                        `[scanPhotos] 扫描策略决策: ${scanDecision.strategy}, 原因: ${scanDecision.reason}`,
                     );
 
-                    // 降级到传统扫描（不使用增量缓存）
-                    logger.warn(`[scanPhotos] 降级到传统扫描模式`);
-                    walkthroughPhotos(scan)
-                        .pipe(
-                            concatMap(async (action: PhotoFileRequest) => {
-                                const shouldProcess = await shouldProcessFile(
-                                    action.path,
-                                    scan.action,
-                                    logger,
+                    // 根据策略决策选择处理路径
+                    if (scanDecision.strategy === "skip") {
+                        // 跳过扫描，直接从 .photasa.json 恢复文件列表
+                        logger.info(`[scanPhotos] 跳过扫描，从缓存恢复文件列表: ${scan.path}`);
+
+                        // 确保 .photasa-folder.json 缓存文件存在且同步
+                        const cacheManager = new IncrementalCacheManager(scan.path, logger);
+                        await cacheManager.initialize();
+                        await cacheManager.markScanComplete();
+
+                        await restoreCachedFiles(scan.path, subscriber, logger);
+                        return;
+                    }
+
+                    // 需要扫描，使用增量缓存机制
+                    logger.info(
+                        `[scanPhotos] 开始增量缓存扫描: ${scan.path}, operationType: ${scan.operationType}`,
+                    );
+
+                    // 创建增量缓存管理器
+                    const cacheManager = new IncrementalCacheManager(scan.path, logger);
+
+                    // 初始化缓存并开始扫描
+                    cacheManager
+                        .initialize()
+                        .then(async (cache) => {
+                            // 检查是否为断点续扫
+                            if (cache.inProgress && cache.processedFiles.length > 0) {
+                                logger.info(
+                                    `[scanPhotosWithIncrementalCache] 检测到未完成扫描，已处理 ${cache.processedFiles.length} 个文件，准备断点续扫`,
                                 );
-                                return processPhotoFile(
-                                    action,
-                                    scan,
-                                    shouldProcess,
-                                    workerPool,
-                                    logger,
+
+                                // 获取所有文件列表
+                                const allFiles: PhotoFileRequest[] = [];
+
+                                // 收集所有文件
+                                walkthroughPhotos(scan).subscribe({
+                                    next: (file) => allFiles.push(file),
+                                    complete: () => {
+                                        // 过滤出未处理的文件
+                                        const unprocessedFiles = allFiles.filter(
+                                            (file) => !cacheManager.isFileProcessed(file.path),
+                                        );
+
+                                        logger.info(
+                                            `[scanPhotosWithIncrementalCache] 断点续扫：总文件 ${allFiles.length}，已处理 ${cache.processedFiles.length}，待处理 ${unprocessedFiles.length}`,
+                                        );
+
+                                        // 更新待处理文件列表
+                                        cacheManager.setPendingFiles(
+                                            unprocessedFiles.map((f) => f.path),
+                                        );
+
+                                        // 处理未完成的文件
+                                        processFileList(
+                                            unprocessedFiles,
+                                            scan,
+                                            cacheManager,
+                                            workerPool,
+                                            logger,
+                                            subscriber,
+                                        );
+                                    },
+                                    error: (error) => {
+                                        logger.error(
+                                            "[scanPhotosWithIncrementalCache] 获取文件列表失败",
+                                            error,
+                                        );
+                                        subscriber.error(error);
+                                    },
+                                });
+                            } else {
+                                // 全新扫描
+                                logger.info(
+                                    `[scanPhotosWithIncrementalCache] 开始全新扫描: ${scan.path}`,
                                 );
-                            }),
-                        )
-                        .subscribe(createSubscriptionHandlers(subscriber, logger, scan.path));
+
+                                walkthroughPhotos(scan)
+                                    .pipe(
+                                        concatMap(async (action: PhotoFileRequest) => {
+                                            const shouldProcess = await shouldProcessFile(
+                                                action.path,
+                                                scan.action,
+                                                logger,
+                                            );
+
+                                            if (shouldProcess) {
+                                                // 实时记录文件处理进度
+                                                await cacheManager.recordFileProcessed(action);
+                                            }
+
+                                            return processPhotoFile(
+                                                action,
+                                                scan,
+                                                shouldProcess,
+                                                workerPool,
+                                                logger,
+                                            );
+                                        }),
+                                    )
+                                    .subscribe({
+                                        ...createSubscriptionHandlers(
+                                            subscriber,
+                                            logger,
+                                            scan.path,
+                                        ),
+                                        complete: async () => {
+                                            try {
+                                                // 标记扫描完成并等待所有写入操作完成
+                                                await cacheManager.markScanComplete();
+                                                logger.info(
+                                                    `[scanPhotosWithIncrementalCache] 全新扫描完成: ${scan.path}`,
+                                                );
+
+                                                // 确保所有配置文件都已写入后再发送完成信号
+                                                await new Promise((resolve) =>
+                                                    setTimeout(resolve, 50),
+                                                );
+                                            } catch (error) {
+                                                logger.warn(
+                                                    `[scanPhotosWithIncrementalCache] 完成标记失败`,
+                                                    error,
+                                                );
+                                            }
+                                            subscriber.complete();
+                                        },
+                                    });
+                            }
+                        })
+                        .catch((error) => {
+                            logger.error(
+                                `[scanPhotosWithIncrementalCache] 初始化增量缓存失败: ${scan.path}`,
+                                error,
+                            );
+
+                            // 降级到传统扫描（不使用增量缓存）
+                            logger.warn(`[scanPhotos] 降级到传统扫描模式`);
+                            walkthroughPhotos(scan)
+                                .pipe(
+                                    concatMap(async (action: PhotoFileRequest) => {
+                                        const shouldProcess = await shouldProcessFile(
+                                            action.path,
+                                            scan.action,
+                                            logger,
+                                        );
+                                        return processPhotoFile(
+                                            action,
+                                            scan,
+                                            shouldProcess,
+                                            workerPool,
+                                            logger,
+                                        );
+                                    }),
+                                )
+                                .subscribe(
+                                    createSubscriptionHandlers(subscriber, logger, scan.path),
+                                );
+                        });
+                })
+                .catch((error) => {
+                    logger.error(`[scanPhotos] 扫描策略决策失败: ${scan.path}`, error);
+                    subscriber.error(error);
                 });
         } else {
             // 单文件扫描，使用传统方式（不需要增量缓存）
@@ -303,79 +344,48 @@ async function processFileList(
     logger: PhotasaLogger,
     subscriber: any,
 ) {
-    try {
-        for (const file of files) {
+    for (const file of files) {
+        try {
             const shouldProcess = await shouldProcessFile(file.path, scan.action, logger);
 
             if (shouldProcess) {
-                // 实时记录文件处理进度
+                await processPhotoFile(file, scan, shouldProcess, workerPool, logger);
                 await cacheManager.recordFileProcessed(file);
             }
 
-            const processedFile = await processPhotoFile(
-                file,
-                scan,
-                shouldProcess,
-                workerPool,
-                logger,
-            );
-            subscriber.next(processedFile);
+            subscriber.next(file);
+        } catch (error) {
+            logger.error(`[processFileList] 处理文件失败: ${file.path}`, error);
         }
+    }
 
-        // 标记扫描完成
+    try {
         await cacheManager.markScanComplete();
-        logger.info(`[processFileList] 断点续扫完成`);
-        subscriber.complete();
+        logger.info(`[processFileList] 断点续扫完成: ${scan.path}`);
+
+        // 确保所有配置文件都已写入后再发送完成信号
+        await new Promise((resolve) => setTimeout(resolve, 50));
     } catch (error) {
-        logger.error(`[processFileList] 处理文件列表失败`, error);
-        subscriber.error(error);
+        logger.warn(`[processFileList] 完成标记失败`, error);
     }
+
+    subscriber.complete();
 }
 
 /**
- * 基础清理函数，向后兼容
- * 当应用关闭时调用
- */
-export async function cleanup(): Promise<void> {
-    if (workerPoolInstance) {
-        await workerPoolInstance.shutdown();
-        workerPoolInstance = null;
-    }
-}
-
-/**
- * RFC 0007 扩展清理函数
- * 提供更全面的资源清理和缓存维护
- * @param basePath - 扫描基础路径，用于缓存清理
- * @param options - 清理选项配置
- * @returns 清理统计结果
+ * 扩展清理功能 - 清理扫描过程中的临时文件和缓存
  */
 export async function extendedCleanup(
     basePath?: string,
-    options?: import("./scan-cleanup").CleanupOptions,
+    _options?: import("./scan-cleanup").CleanupOptions,
 ): Promise<import("./scan-cleanup").CleanupStats> {
-    const { performExtendedCleanup, DEFAULT_CLEANUP_OPTIONS } = await import("./scan-cleanup");
-
-    const cleanupOptions = options || DEFAULT_CLEANUP_OPTIONS;
-    const scanBasePath = basePath || process.cwd();
-
-    const stats = await performExtendedCleanup(
-        workerPoolInstance,
-        scanBasePath,
-        cleanupOptions,
-        logger,
+    const { cleanupInvalidCaches } = await import("./scan-cleanup");
+    const result = await cleanupInvalidCaches(
+        basePath || "",
+        7 * 24 * 60 * 60 * 1000,
+        loggers.scan,
     );
-
-    // 清理完成后重置Worker Pool实例
-    if (workerPoolInstance && stats.workerPoolShutdown) {
-        workerPoolInstance = null;
-    }
-
-    return stats;
+    return result as unknown as import("./scan-cleanup").CleanupStats;
 }
 
-// 重新导出scan-strategy中的函数，供其他模块使用
 export { shouldProcessFile, shouldScanOneLevel, decideScanStrategy } from "./scan-strategy";
-
-// 导出增量缓存相关功能
-export { IncrementalCacheManager, withIncrementalCache } from "./incremental-cache";

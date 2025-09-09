@@ -96,26 +96,82 @@ export async function shouldProcessFile(
 export async function decideScanStrategy(
     folderPath: string,
     logger: PhotasaLogger,
+    scanAction?: string,
 ): Promise<ScanDecision> {
     logger.debug(`[decideScanStrategy] 开始决策扫描策略: ${folderPath}`);
     try {
-        // 计算当前目录哈希
-        const currentHash = await computeFolderHash(folderPath);
-        logger.debug(`[decideScanStrategy] 计算目录哈希完成: ${currentHash}`);
-
-        // 获取缓存信息
-        const cachedInfo = await getCacheInfo(folderPath, logger);
-
-        if (!cachedInfo) {
-            // 首次扫描
-            logger.info(`[decideScanStrategy] 目录首次扫描: ${folderPath}`);
+        // 0. 如果是强制重新扫描，总是执行完整扫描
+        if (scanAction === "rescan") {
+            logger.info(`[decideScanStrategy] 强制重新扫描: ${folderPath}`);
             return {
                 strategy: ScanStrategy.FULL,
-                reason: "首次扫描或缓存无效",
+                reason: "强制重新扫描",
             };
         }
 
-        // 比较哈希决定策略
+        // 1. 首先检查 .photasa.json 是否存在
+        const photasaJsonPath = path.join(folderPath, ".photasa.json");
+        const photasaJsonExists = fs.existsSync(photasaJsonPath);
+
+        if (!photasaJsonExists) {
+            logger.info(`[decideScanStrategy] .photasa.json 不存在: ${folderPath}`);
+            return {
+                strategy: ScanStrategy.FULL,
+                reason: "配置文件不存在",
+            };
+        }
+
+        // 2. 检查 .photasa.json 是否有效
+        try {
+            const config = await getPhotasaConfig(folderPath, logger);
+            if (!config.photoList || config.photoList.length === 0) {
+                // 配置文件为空，但需要检查文件夹中是否有照片文件
+                // 如果有照片文件，说明配置文件可能损坏，需要重新扫描
+                const currentHash = await computeFolderHash(folderPath);
+                if (currentHash) {
+                    logger.info(
+                        `[decideScanStrategy] .photasa.json 为空但文件夹有照片，需要重新扫描: ${folderPath}`,
+                    );
+                    return {
+                        strategy: ScanStrategy.FULL,
+                        reason: "配置文件为空但文件夹有照片",
+                    };
+                } else {
+                    logger.info(
+                        `[decideScanStrategy] .photasa.json 为空且文件夹无照片: ${folderPath}`,
+                    );
+                    return {
+                        strategy: ScanStrategy.SKIP,
+                        reason: "配置文件为空且文件夹无照片",
+                    };
+                }
+            }
+        } catch (error) {
+            logger.warn(`[decideScanStrategy] 读取 .photasa.json 失败: ${folderPath}`, error);
+            return {
+                strategy: ScanStrategy.FULL,
+                reason: "配置文件读取失败",
+            };
+        }
+
+        // 3. 计算当前目录哈希
+        const currentHash = await computeFolderHash(folderPath);
+        logger.debug(`[decideScanStrategy] 计算目录哈希完成: ${currentHash}`);
+
+        // 4. 获取缓存信息（.photasa-folder.json）
+        const cachedInfo = await getCacheInfo(folderPath, logger);
+
+        if (!cachedInfo) {
+            // .photasa.json 存在但 .photasa-folder.json 不存在
+            // 说明是外部创建的配置文件，可以跳过扫描
+            logger.info(`[decideScanStrategy] 配置文件存在但无缓存，跳过扫描: ${folderPath}`);
+            return {
+                strategy: ScanStrategy.SKIP,
+                reason: "配置文件存在且有效，无需重新扫描",
+            };
+        }
+
+        // 5. 比较哈希决定策略
         const decision = compareHashesAndDecide(cachedInfo.folderHash, currentHash, cachedInfo);
 
         logger.info(

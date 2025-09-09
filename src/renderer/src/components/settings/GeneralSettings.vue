@@ -6,6 +6,7 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
 import { PhFolder as FolderTwoTone, PhX as CloseOutlined } from "@phosphor-icons/vue";
 import { notification } from "@renderer/services/notification-manager";
+import { BaseButton } from "@renderer/components/ui";
 
 defineOptions({
     name: "GeneralSettings",
@@ -92,7 +93,7 @@ function handleRemove(item): void {
     <a-form :model="formState" layout="vertical">
         <a-form-item :label="t('preference.watchFolderList')">
             <a-space direction="vertical">
-                <a-list size="small" bordered :data-source="paths" class="import-message-list">
+                <a-list size="sm" bordered :data-source="paths" class="import-message-list">
                     <template #header>
                         <a-descriptions :title="label.folderList">
                             <a-descriptions-item :label="label.folderListUsage">{{
@@ -103,7 +104,9 @@ function handleRemove(item): void {
                     <template #renderItem="{ item }">
                         <a-list-item>
                             <template #actions>
-                                <a-button @click="handleRemove(item)"><close-outlined /></a-button>
+                                <BaseButton @click="handleRemove(item)"
+                                    ><close-outlined
+                                /></BaseButton>
                             </template>
                             <a-skeleton avatar :title="false" :loading="!!item.loading" active>
                                 <a-list-item-meta>
@@ -118,7 +121,9 @@ function handleRemove(item): void {
                         </a-list-item>
                     </template>
                 </a-list>
-                <a-button type="primary" @click="onChoose">{{ label.chooseDirectory }}</a-button>
+                <BaseButton type="primary" @click="onChoose">{{
+                    label.chooseDirectory
+                }}</BaseButton>
             </a-space>
         </a-form-item>
         <a-form-item :label="`${label.thumbnailSize} : ${thumbnailSize}px`">

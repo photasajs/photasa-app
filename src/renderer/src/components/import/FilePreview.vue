@@ -5,18 +5,18 @@
             <h3>{{ t("import.filePreview") }}</h3>
             <div class="preview-actions">
                 <a-space>
-                    <a-button size="small" @click="selectAll">
+                    <BaseButton size="sm" @click="selectAll">
                         <template #icon><CheckOutlined /></template>
                         {{ t("import.selectAll") }}
-                    </a-button>
-                    <a-button size="small" @click="deselectAll">
+                    </BaseButton>
+                    <BaseButton size="sm" @click="deselectAll">
                         <template #icon><CloseOutlined /></template>
                         {{ t("import.deselectAll") }}
-                    </a-button>
-                    <a-button size="small" @click="invertSelection">
+                    </BaseButton>
+                    <BaseButton size="sm" @click="invertSelection">
                         <template #icon><SwapOutlined /></template>
                         {{ t("import.invertSelection") }}
-                    </a-button>
+                    </BaseButton>
                 </a-space>
             </div>
         </div>
@@ -60,7 +60,7 @@
             <a-list
                 :data-source="visibleGroups"
                 :pagination="hasMoreFiles ? paginationConfig : false"
-                size="small"
+                size="sm"
             >
                 <template #renderItem="{ item: group }">
                     <a-list-item class="file-item">
@@ -72,9 +72,9 @@
                                 />
                             </a-tooltip>
                             <a-tooltip :title="t('import.viewDetails')">
-                                <a-button type="text" size="small" @click="showDetails(group)">
+                                <BaseButton type="text" size="sm" @click="showDetails(group)">
                                     <template #icon><InfoCircleOutlined /></template>
-                                </a-button>
+                                </BaseButton>
                             </a-tooltip>
                         </template>
 
@@ -95,31 +95,23 @@
                                 <div class="file-title">
                                     <span class="file-name">{{ group.mainFile.name }}</span>
                                     <div class="file-tags">
-                                        <a-tag
-                                            v-if="group.type === 'group'"
-                                            color="blue"
-                                            size="small"
-                                        >
+                                        <a-tag v-if="group.type === 'group'" color="blue" size="sm">
                                             {{ t("import.group", { count: group.files.length }) }}
                                         </a-tag>
-                                        <a-tag
-                                            v-if="isDuplicate(group)"
-                                            color="orange"
-                                            size="small"
-                                        >
+                                        <a-tag v-if="isDuplicate(group)" color="orange" size="sm">
                                             {{ t("import.duplicate.label") }}
                                         </a-tag>
                                         <a-tag
                                             v-if="group.mainFile.type === 'image'"
                                             color="green"
-                                            size="small"
+                                            size="sm"
                                         >
                                             {{ t("import.image") }}
                                         </a-tag>
                                         <a-tag
                                             v-if="group.mainFile.type === 'video'"
                                             color="purple"
-                                            size="small"
+                                            size="sm"
                                         >
                                             {{ t("import.video") }}
                                         </a-tag>
@@ -165,7 +157,7 @@
                 <!-- 基本信息 -->
                 <div class="detail-section">
                     <h4>{{ t("import.basicInfo") }}</h4>
-                    <a-descriptions :column="2" size="small" bordered>
+                    <a-descriptions :column="2" size="sm" bordered>
                         <a-descriptions-item :label="t('import.fileName')">
                             {{ selectedGroup.mainFile.name }}
                         </a-descriptions-item>
@@ -190,12 +182,12 @@
                 <!-- 文件组信息 -->
                 <div v-if="selectedGroup.type === 'group'" class="detail-section">
                     <h4>{{ t("import.groupFiles") }}</h4>
-                    <a-list :data-source="selectedGroup.files" size="small">
+                    <a-list :data-source="selectedGroup.files" size="sm">
                         <template #renderItem="{ item: file }">
                             <a-list-item>
                                 <a-list-item-meta>
                                     <template #avatar>
-                                        <a-avatar size="small" shape="square">
+                                        <a-avatar size="sm" shape="square">
                                             <template #icon>
                                                 <FileImageOutlined v-if="file.type === 'image'" />
                                                 <VideoCameraOutlined
@@ -222,7 +214,7 @@
                 <!-- 元数据信息 -->
                 <div v-if="selectedGroup.mainFile.metadata" class="detail-section">
                     <h4>{{ t("import.metadata") }}</h4>
-                    <a-descriptions :column="2" size="small" bordered>
+                    <a-descriptions :column="2" size="sm" bordered>
                         <a-descriptions-item
                             v-if="'width' in selectedGroup.mainFile.metadata"
                             :label="t('import.dimensions')"
@@ -269,6 +261,7 @@ import {
     PhCaretRight as ArrowRightOutlined,
 } from "@phosphor-icons/vue";
 import type { FileGroup, DuplicateFileInfo, GPSInfo } from "@common/import-types";
+import { BaseButton } from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(

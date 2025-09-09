@@ -59,34 +59,34 @@
                                 :show-info="false"
                             />
                             <div class="directory-actions">
-                                <a-button
+                                <BaseButton
                                     v-if="directory.status === 'processing'"
                                     type="text"
-                                    size="small"
+                                    size="sm"
                                     @click="pauseDirectory(directory.path)"
                                 >
                                     <template #icon><PauseOutlined /></template>
-                                </a-button>
-                                <a-button
+                                </BaseButton>
+                                <BaseButton
                                     v-if="directory.status === 'paused'"
                                     type="text"
-                                    size="small"
+                                    size="sm"
                                     @click="resumeDirectory(directory.path)"
                                 >
                                     <template #icon><PlayCircleOutlined /></template>
-                                </a-button>
-                                <a-button
+                                </BaseButton>
+                                <BaseButton
                                     v-if="
                                         directory.canCancel &&
                                         ['processing', 'paused'].includes(directory.status)
                                     "
                                     type="text"
-                                    size="small"
+                                    size="sm"
                                     danger
                                     @click="cancelDirectory(directory.path)"
                                 >
                                     <template #icon><StopOutlined /></template>
-                                </a-button>
+                                </BaseButton>
                             </div>
                         </div>
                     </template>
@@ -191,22 +191,22 @@
         <!-- 批量控制按钮 -->
         <div class="batch-controls">
             <a-space>
-                <a-button v-if="canPauseAll" @click="pauseAllDirectories">
+                <BaseButton v-if="canPauseAll" @click="pauseAllDirectories">
                     <template #icon><PauseOutlined /></template>
                     {{ t("import.pauseAll") }}
-                </a-button>
-                <a-button v-if="canResumeAll" type="primary" @click="resumeAllDirectories">
+                </BaseButton>
+                <BaseButton v-if="canResumeAll" type="primary" @click="resumeAllDirectories">
                     <template #icon><PlayCircleOutlined /></template>
                     {{ t("import.resumeAll") }}
-                </a-button>
-                <a-button v-if="canCancelAll" danger @click="confirmCancelAll">
+                </BaseButton>
+                <BaseButton v-if="canCancelAll" danger @click="confirmCancelAll">
                     <template #icon><StopOutlined /></template>
                     {{ t("import.cancelAll") }}
-                </a-button>
-                <a-button v-if="isCompleted" type="primary" @click="$emit('close')">
+                </BaseButton>
+                <BaseButton v-if="isCompleted" type="primary" @click="$emit('close')">
                     <template #icon><CheckOutlined /></template>
                     {{ t("import.close") }}
-                </a-button>
+                </BaseButton>
             </a-space>
         </div>
 
@@ -249,6 +249,7 @@ import {
     DirectoryStatusDisplayMap,
     StatusColorMap,
 } from "@common/constants";
+import { BaseButton } from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(

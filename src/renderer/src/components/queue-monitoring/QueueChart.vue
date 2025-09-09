@@ -6,7 +6,7 @@
             <div class="chart-controls">
                 <a-select
                     v-model:value="timeRange"
-                    size="small"
+                    size="sm"
                     style="width: 120px"
                     @change="handleTimeRangeChange"
                 >

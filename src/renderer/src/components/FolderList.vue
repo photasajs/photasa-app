@@ -9,7 +9,7 @@ import { openInFinder } from "@renderer/utils/api-path";
 import { JsonTreeView } from "json-tree-view-vue3";
 import { isEmpty } from "radash";
 import { removeFileProtocol } from "@renderer/common/image";
-import { BaseContextMenu, BaseMenuItem } from "@renderer/components/ui";
+import { BaseContextMenu, BaseMenuItem, BaseButton } from "@renderer/components/ui";
 
 /**
  * I18n
@@ -195,9 +195,9 @@ async function rescan(key: string): Promise<void> {
             </a-descriptions>
         </a-spin>
         <template #footer>
-            <a-button @click="fixConfig()">
+            <BaseButton @click="fixConfig()">
                 {{ t("button.fixConfig") }}
-            </a-button>
+            </BaseButton>
         </template>
     </a-modal>
 </template>

@@ -113,13 +113,13 @@
                                     <div class="issue-file">{{ getFileName(error.file) }}</div>
                                     <div class="issue-message">{{ error.error }}</div>
                                     <div v-if="error.recoverable" class="issue-actions">
-                                        <a-button
-                                            size="small"
+                                        <BaseButton
+                                            size="sm"
                                             type="link"
                                             @click="retryFile(error.file)"
                                         >
                                             {{ t("import.retry") }}
-                                        </a-button>
+                                        </BaseButton>
                                     </div>
                                 </div>
                             </div>
@@ -127,9 +127,9 @@
                                 v-if="progress.errors.length > maxVisibleIssues"
                                 class="more-issues"
                             >
-                                <a-button
+                                <BaseButton
                                     type="link"
-                                    size="small"
+                                    size="sm"
                                     @click="showAllErrors = !showAllErrors"
                                 >
                                     {{
@@ -139,7 +139,7 @@
                                                   count: progress.errors.length - maxVisibleIssues,
                                               })
                                     }}
-                                </a-button>
+                                </BaseButton>
                             </div>
                         </div>
                     </a-collapse-panel>
@@ -174,9 +174,9 @@
                                 v-if="progress.warnings.length > maxVisibleIssues"
                                 class="more-issues"
                             >
-                                <a-button
+                                <BaseButton
                                     type="link"
-                                    size="small"
+                                    size="sm"
                                     @click="showAllWarnings = !showAllWarnings"
                                 >
                                     {{
@@ -187,7 +187,7 @@
                                                       progress.warnings.length - maxVisibleIssues,
                                               })
                                     }}
-                                </a-button>
+                                </BaseButton>
                             </div>
                         </div>
                     </a-collapse-panel>
@@ -198,38 +198,38 @@
         <!-- 控制按钮 -->
         <div class="progress-controls">
             <a-space>
-                <a-button
+                <BaseButton
                     v-if="progress.status === 'processing'"
                     type="default"
                     @click="$emit('pause')"
                 >
                     <template #icon><PauseOutlined /></template>
                     {{ t("import.pauseButton") }}
-                </a-button>
-                <a-button
+                </BaseButton>
+                <BaseButton
                     v-if="progress.status === 'paused'"
                     type="primary"
                     @click="$emit('resume')"
                 >
                     <template #icon><PlayCircleOutlined /></template>
                     {{ t("import.resumeButton") }}
-                </a-button>
-                <a-button
+                </BaseButton>
+                <BaseButton
                     v-if="canCancel && ['processing', 'paused'].includes(progress.status)"
                     danger
                     @click="confirmCancel"
                 >
                     <template #icon><StopOutlined /></template>
                     {{ t("import.cancelButton") }}
-                </a-button>
-                <a-button
+                </BaseButton>
+                <BaseButton
                     v-if="progress.status === 'completed'"
                     type="primary"
                     @click="$emit('close')"
                 >
                     <template #icon><CheckOutlined /></template>
                     {{ t("import.closeButton") }}
-                </a-button>
+                </BaseButton>
             </a-space>
         </div>
 
@@ -271,6 +271,7 @@ import {
     PhCheck as CheckOutlined,
 } from "@phosphor-icons/vue";
 import type { ImportProgress } from "@common/import-types";
+import { BaseButton } from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(

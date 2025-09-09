@@ -21,8 +21,14 @@ export { default as BaseInput } from "./BaseInput.vue";
 export { default as BaseCheckbox } from "./BaseCheckbox.vue";
 export { default as BaseSwitch } from "./BaseSwitch.vue";
 
+// === 表单组件 ===
+export { default as BaseForm } from "./BaseForm.vue";
+export { default as BaseFormField } from "./BaseFormField.vue";
+
 // === 选择器组件 ===
 export { default as BaseSelect } from "./BaseSelect.vue";
+export { default as BaseRadio } from "./BaseRadio.vue";
+export { default as BaseRadioGroup } from "./BaseRadioGroup.vue";
 
 // === Modal组件系统 (Headless + TailwindCSS) ===
 // 根容器 - 处理Portal、焦点管理、键盘事件
@@ -78,6 +84,9 @@ export { default as BaseSpace } from "./BaseSpace.vue";
 export { default as BaseProgress } from "./BaseProgress.vue";
 export { default as BaseStatistic } from "./BaseStatistic.vue";
 export { default as BaseTag } from "./BaseTag.vue";
+export { default as BaseBadge } from "./BaseBadge.vue";
+export { default as BaseList } from "./BaseList.vue";
+export { default as BaseListItem } from "./BaseListItem.vue";
 export { default as BaseAccordion } from "./BaseAccordion.vue";
 export { default as BaseAccordionPanel } from "./BaseAccordionPanel.vue";
 

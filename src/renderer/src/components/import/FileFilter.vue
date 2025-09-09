@@ -4,14 +4,14 @@
         <div class="filter-header">
             <h4>{{ t("import.filters") }}</h4>
             <div class="filter-actions">
-                <a-button size="small" type="link" @click="resetFilters">
+                <BaseButton size="sm" type="link" @click="resetFilters">
                     <template #icon><ReloadOutlined /></template>
                     {{ t("import.resetFilters") }}
-                </a-button>
-                <a-button size="small" type="link" @click="toggleAdvanced">
+                </BaseButton>
+                <BaseButton size="sm" type="link" @click="toggleAdvanced">
                     <template #icon><SettingOutlined /></template>
                     {{ showAdvanced ? t("import.hideAdvanced") : t("import.showAdvanced") }}
-                </a-button>
+                </BaseButton>
             </div>
         </div>
 
@@ -62,14 +62,14 @@
                                 v-model:value="sizeFilter.minValue"
                                 :min="0"
                                 :precision="0"
-                                size="small"
+                                size="sm"
                                 @change="onSizeFilterChange"
                             />
                         </a-col>
                         <a-col :span="4">
                             <a-select
                                 v-model:value="sizeFilter.minUnit"
-                                size="small"
+                                size="sm"
                                 :options="sizeUnitOptions"
                                 @change="onSizeFilterChange"
                             />
@@ -82,22 +82,22 @@
                                 v-model:value="sizeFilter.maxValue"
                                 :min="sizeFilter.minValue || 0"
                                 :precision="0"
-                                size="small"
+                                size="sm"
                                 @change="onSizeFilterChange"
                             />
                         </a-col>
                         <a-col :span="4">
                             <a-select
                                 v-model:value="sizeFilter.maxUnit"
-                                size="small"
+                                size="sm"
                                 :options="sizeUnitOptions"
                                 @change="onSizeFilterChange"
                             />
                         </a-col>
                         <a-col :span="4">
-                            <a-button size="small" type="link" @click="resetSizeFilter">
+                            <BaseButton size="sm" type="link" @click="resetSizeFilter">
                                 {{ t("import.reset") }}
-                            </a-button>
+                            </BaseButton>
                         </a-col>
                     </a-row>
                 </div>
@@ -115,12 +115,12 @@
                     <a-range-picker
                         v-model:value="dateRange"
                         :placeholder="[t('import.startDate'), t('import.endDate')]"
-                        size="small"
+                        size="sm"
                         @change="onDateRangeChange"
                     />
-                    <a-button size="small" type="link" @click="resetDateFilter">
+                    <BaseButton size="sm" type="link" @click="resetDateFilter">
                         {{ t("import.reset") }}
-                    </a-button>
+                    </BaseButton>
                 </div>
             </div>
 
@@ -128,16 +128,18 @@
             <div class="filter-item">
                 <label class="filter-label">{{ t("import.quickDateFilters") }}</label>
                 <div class="quick-date-filters">
-                    <a-button-group size="small">
-                        <a-button
+                    <div class="flex">
+                        <BaseButton
                             v-for="preset in datePresets"
                             :key="preset.key"
+                            size="sm"
                             :type="selectedDatePreset === preset.key ? 'primary' : 'default'"
                             @click="applyDatePreset(preset)"
+                            class="first:rounded-r-none last:rounded-l-none middle:rounded-none border-r-0 last:border-r"
                         >
                             {{ preset.label }}
-                        </a-button>
-                    </a-button-group>
+                        </BaseButton>
+                    </div>
                 </div>
             </div>
 
@@ -153,12 +155,12 @@
                     <a-input
                         v-model:value="fileNamePattern"
                         :placeholder="t('import.fileNamePatternPlaceholder')"
-                        size="small"
+                        size="sm"
                         @change="onPatternChange"
                     />
-                    <a-button size="small" type="link" @click="resetPatternFilter">
+                    <BaseButton size="sm" type="link" @click="resetPatternFilter">
                         {{ t("import.reset") }}
-                    </a-button>
+                    </BaseButton>
                 </div>
             </div>
 
@@ -174,7 +176,7 @@
                     <a-select
                         v-model:value="excludePatterns"
                         mode="tags"
-                        size="small"
+                        size="sm"
                         :placeholder="t('import.excludePatternsPlaceholder')"
                         @change="onExcludePatternsChange"
                     />
@@ -231,6 +233,7 @@ import {
     PhQuestion as QuestionCircleOutlined,
 } from "@phosphor-icons/vue";
 import type { ImportFilters } from "@common/import-types";
+import { BaseButton } from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(

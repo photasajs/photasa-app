@@ -201,10 +201,10 @@ export function compareHashesAndDecide(
 
     // 哈希不匹配，说明有文件变化
     if (cachedHash !== currentHash) {
-        // 简单策略：先实现完整扫描，后续可优化为增量扫描
+        // 使用增量扫描策略，基于 .photasa-folder.json 进行增量更新
         return {
-            strategy: ScanStrategy.FULL,
-            reason: "检测到文件变化，执行完整重新扫描",
+            strategy: ScanStrategy.INCREMENTAL,
+            reason: "检测到文件变化，执行增量扫描",
         };
     }
 

@@ -28,24 +28,24 @@
                             :options="strategyOptions"
                             @change="onBatchStrategyChange"
                         />
-                        <a-button type="primary" size="small" @click="applyBatchStrategy">
+                        <BaseButton type="primary" size="sm" @click="applyBatchStrategy">
                             {{ t("import.applyToAll") }}
-                        </a-button>
+                        </BaseButton>
                     </div>
                 </a-col>
                 <a-col :span="12">
                     <div class="batch-selection">
                         <a-space>
-                            <a-button size="small" @click="selectAllDuplicates">
+                            <BaseButton size="sm" @click="selectAllDuplicates">
                                 {{ t("import.selectAll") }}
-                            </a-button>
-                            <a-button size="small" @click="deselectAllDuplicates">
+                            </BaseButton>
+                            <BaseButton size="sm" @click="deselectAllDuplicates">
                                 {{ t("import.deselectAll") }}
-                            </a-button>
-                            <a-button size="small" @click="autoResolve">
+                            </BaseButton>
+                            <BaseButton size="sm" @click="autoResolve">
                                 <template #icon><ThunderboltOutlined /></template>
                                 {{ t("import.autoResolve") }}
-                            </a-button>
+                            </BaseButton>
                         </a-space>
                     </div>
                 </a-col>
@@ -62,10 +62,10 @@
                                 :checked="selectedDuplicates.has(duplicate.duplicateFile.path)"
                                 @change="toggleDuplicateSelection(duplicate)"
                             />
-                            <a-button type="text" size="small" @click="showComparison(duplicate)">
+                            <BaseButton type="text" size="sm" @click="showComparison(duplicate)">
                                 <template #icon><EyeOutlined /></template>
                                 {{ t("import.compare") }}
-                            </a-button>
+                            </BaseButton>
                         </template>
 
                         <div class="duplicate-content">
@@ -204,7 +204,7 @@
                     <a-col :span="12">
                         <div class="comparison-panel">
                             <h4>{{ t("import.originalFile") }}</h4>
-                            <a-descriptions :column="1" size="small" bordered>
+                            <a-descriptions :column="1" size="sm" bordered>
                                 <a-descriptions-item :label="t('import.fileName')">
                                     {{ comparisonData.originalFile.name }}
                                 </a-descriptions-item>
@@ -227,7 +227,7 @@
                     <a-col :span="12">
                         <div class="comparison-panel">
                             <h4>{{ t("import.duplicateFile") }}</h4>
-                            <a-descriptions :column="1" size="small" bordered>
+                            <a-descriptions :column="1" size="sm" bordered>
                                 <a-descriptions-item :label="t('import.fileName')">
                                     {{ comparisonData.duplicateFile.name }}
                                 </a-descriptions-item>
@@ -250,7 +250,7 @@
                 <!-- 对比分析 -->
                 <div v-if="comparisonAnalysis" class="comparison-analysis">
                     <a-divider>{{ t("import.comparisonAnalysis") }}</a-divider>
-                    <a-descriptions :column="2" size="small" bordered>
+                    <a-descriptions :column="2" size="sm" bordered>
                         <a-descriptions-item :label="t('import.sizeDifference')">
                             <span
                                 :class="getSizeDifferenceClass(comparisonAnalysis.sizeDifference)"
@@ -318,6 +318,7 @@ import {
     PhWarning as WarningOutlined,
 } from "@phosphor-icons/vue";
 import type { DuplicateFileInfo, DuplicateStrategy, FileComparison } from "@common/import-types";
+import { BaseButton } from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(
