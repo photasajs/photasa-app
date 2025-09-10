@@ -41,17 +41,15 @@ describe("scan-integration-fix", () => {
             const scannedConfig = {
                 version: "1.0",
                 lastModified: Date.now(),
-                photoList: [
-                    { path: "/test/scanned/photo1.jpg", name: "photo1.jpg" },
-                ],
+                photoList: [{ path: "/test/scanned/photo1.jpg", name: "photo1.jpg" }],
             };
 
             // Mock 外部依赖
             const mockGetPhotasaConfig = vi.fn();
             vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig
+                getPhotasaConfig: mockGetPhotasaConfig,
             }));
-            
+
             mockGetPhotasaConfig.mockImplementation((folderPath) => {
                 if (folderPath === scannedFolder) {
                     return Promise.resolve(scannedConfig);
@@ -79,9 +77,9 @@ describe("scan-integration-fix", () => {
 
             const mockGetPhotasaConfig = vi.fn();
             vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig
+                getPhotasaConfig: mockGetPhotasaConfig,
             }));
-            
+
             mockGetPhotasaConfig.mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.hasConfig) {
@@ -112,9 +110,9 @@ describe("scan-integration-fix", () => {
 
             const mockGetPhotasaConfig = vi.fn();
             vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig
+                getPhotasaConfig: mockGetPhotasaConfig,
             }));
-            
+
             mockGetPhotasaConfig.mockRejectedValue(new Error("JSON 解析失败"));
 
             mockFs.existsSync.mockReturnValue(true);
@@ -133,9 +131,9 @@ describe("scan-integration-fix", () => {
 
             const mockGetPhotasaConfig = vi.fn();
             vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig
+                getPhotasaConfig: mockGetPhotasaConfig,
             }));
-            
+
             mockGetPhotasaConfig.mockResolvedValue({
                 version: "1.0",
                 lastModified: Date.now(),
@@ -170,9 +168,9 @@ describe("scan-integration-fix", () => {
 
             const mockGetPhotasaConfig = vi.fn();
             vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig
+                getPhotasaConfig: mockGetPhotasaConfig,
             }));
-            
+
             mockGetPhotasaConfig.mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.shouldFail) {
