@@ -12,29 +12,17 @@ import { ThumbnailServiceAction } from "@common/thumbnail-types";
 import fs from "fs-extra";
 import path from "path";
 import { loggers } from "@common/logger";
+import { normalizePath } from "@shared/path-util";
 
 const { ipcRenderer } = electronAPI;
 const logger = loggers.preload;
 
 /**
- * 将 file:// URL 转换为文件系统路径
- * @param fileUrl - file:// URL 或普通路径
- * @returns 文件系统路径
+ * 规范化文件路径，处理所有格式的路径输入
+ * 使用shared层的统一API确保正确处理Windows和Mac路径
+ * @param input - 输入路径，可能是file:// URL或普通文件路径
+ * @returns 规范化的文件系统路径
  */
-function fileUrlToPath(fileUrl: string): string {
-    if (fileUrl.startsWith("file://")) {
-        // 移除 file:// 前缀并处理编码
-        let path = decodeURIComponent(fileUrl.replace(/^file:\/\//, ""));
-
-        // Windows 路径处理 - 移除前导斜杠
-        if (process.platform === "win32" && path.startsWith("/") && path[2] === ":") {
-            path = path.substring(1);
-        }
-
-        return path;
-    }
-    return fileUrl;
-}
 
 /**
  * 获取图片类型（保持向后兼容）
@@ -42,7 +30,7 @@ function fileUrlToPath(fileUrl: string): string {
  * @returns 图片类型信息
  */
 export async function getImageType(pathOrUrl: string): Promise<ImageInfo> {
-    const filePath = fileUrlToPath(pathOrUrl);
+    const filePath = normalizePath(pathOrUrl);
     const buffer = await readChunk(filePath, { length: minimumBytes });
     const tags = await getExifInfo(filePath);
     const result = await imageType(buffer);
@@ -58,7 +46,7 @@ export async function getImageType(pathOrUrl: string): Promise<ImageInfo> {
  * @returns 文件元数据，包含图片/视频信息或文件基础信息
  */
 export async function getFileMetadata(pathOrUrl: string): Promise<FileMetadata> {
-    const filePath = fileUrlToPath(pathOrUrl);
+    const filePath = normalizePath(pathOrUrl);
     const fileName = path.basename(filePath);
 
     try {
@@ -181,8 +169,16 @@ export function fileUrlFromPath(path: string): string {
  * @returns 请求
  */
 export function createThumbnail(request: ThumbnailRequest): Promise<ThumbnailRequest> {
+    // 规范化路径，确保Windows和Mac都能正确处理
+    const normalizedRequest: ThumbnailRequest = {
+        ...request,
+        path: normalizePath(request.path),
+        thumbnail: normalizePath(request.thumbnail),
+        preview: request.preview ? normalizePath(request.preview) : request.preview,
+    };
+
     // 调用 thumbnail-service 创建缩略图
-    return ipcRenderer.invoke(ThumbnailServiceAction.create, request);
+    return ipcRenderer.invoke(ThumbnailServiceAction.create, normalizedRequest);
 }
 
 /**

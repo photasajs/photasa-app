@@ -5,7 +5,6 @@ import { fileURLToPath, pathToFileURL } from "url";
 import {
     isFileUnderFolder,
     toFileName,
-    normalizePath,
     mergePath,
     toDirName,
     toExtName,
@@ -20,7 +19,7 @@ import {
     isHiddenFile,
     isDirectory,
     isFile,
-    normalizeFileProtocolPath,
+    normalizePath,
     pathToFileProtocol,
     joinFileProtocolPath,
     getAppPath,
@@ -73,19 +72,15 @@ describe("toFileName", () => {
 
 describe("normalizePath", () => {
     it("should normalize paths (platform native)", () => {
-        expect(normalizePath("/foo/bar/../baz")).toBe(path.normalize("/foo/bar/../baz"));
-        expect(normalizePath("/foo//bar//baz")).toBe(path.normalize("/foo//bar//baz"));
-        expect(normalizePath("C:\\foo\\bar\\..\\baz")).toBe(
-            path.normalize("C:\\foo\\bar\\..\\baz"),
-        );
-        expect(normalizePath("C:\\foo\\\\bar\\\\baz")).toBe(
-            path.normalize("C:\\foo\\\\bar\\\\baz"),
-        );
+        expect(normalizePath("/foo/bar/../baz")).toBe(path.resolve("/foo/bar/../baz"));
+        expect(normalizePath("/foo//bar//baz")).toBe(path.resolve("/foo//bar//baz"));
+        expect(normalizePath("C:\\foo\\bar\\..\\baz")).toBe(path.resolve("C:\\foo\\bar\\..\\baz"));
+        expect(normalizePath("C:\\foo\\\\bar\\\\baz")).toBe(path.resolve("C:\\foo\\\\bar\\\\baz"));
     });
     it("should handle edge cases", () => {
-        expect(normalizePath("")).toBe(path.normalize(""));
-        expect(normalizePath(".")).toBe(path.normalize("."));
-        expect(normalizePath("/../")).toBe(path.normalize("/../"));
+        expect(normalizePath("")).toBe("");
+        expect(normalizePath(".")).toBe(path.resolve("."));
+        expect(normalizePath("/../")).toBe(path.resolve("/../"));
     });
 });
 
@@ -194,9 +189,7 @@ describe("toThumbnailName", () => {
 describe("toPreviewPath", () => {
     it("should build preview image path", () => {
         const result = toPreviewPath("/Users/Albert/Photos/photo.jpg");
-        expect(result).toBe(
-            path.posix.join("/Users/Albert/Photos", ".photasaoriginals", "photo.jpeg"),
-        );
+        expect(result).toBe(path.join("/Users/Albert/Photos", ".photasaoriginals", "photo.jpeg"));
     });
 
     it("should handle Windows paths", () => {
@@ -346,11 +339,11 @@ describe("isFile", () => {
     });
 });
 
-describe("normalizeFileProtocolPath", () => {
+describe("normalizePath", () => {
     it("should handle file:// URLs correctly", () => {
         // 测试 file:// URL 转换
         const fileUrl = pathToFileURL("/Users/Albert/Pictures/photo.jpg").toString();
-        const result = normalizeFileProtocolPath(fileUrl);
+        const result = normalizePath(fileUrl);
         expect(path.isAbsolute(result)).toBe(true);
         expect(result).toBe(path.resolve("/Users/Albert/Pictures/photo.jpg"));
     });
@@ -358,7 +351,7 @@ describe("normalizeFileProtocolPath", () => {
     it("should handle Windows file:// URLs", () => {
         // Windows file:// URL 格式测试
         const windowsFileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
-        const result = normalizeFileProtocolPath(windowsFileUrl);
+        const result = normalizePath(windowsFileUrl);
         expect(path.isAbsolute(result)).toBe(true);
 
         if (process.platform === "win32") {
@@ -373,45 +366,45 @@ describe("normalizeFileProtocolPath", () => {
     it("should handle normal file system paths", () => {
         // Unix 路径
         const unixPath = "/Users/Albert/Pictures/photo.jpg";
-        expect(normalizeFileProtocolPath(unixPath)).toBe(path.resolve(unixPath));
+        expect(normalizePath(unixPath)).toBe(path.resolve(unixPath));
 
         // Windows 路径格式
         const windowsPath = "C:\\Users\\Albert\\Pictures\\photo.jpg";
-        expect(normalizeFileProtocolPath(windowsPath)).toBe(path.resolve(windowsPath));
+        expect(normalizePath(windowsPath)).toBe(path.resolve(windowsPath));
 
         // Windows 正斜杠格式
         const windowsSlashPath = "C:/Users/Albert/Pictures/photo.jpg";
-        expect(normalizeFileProtocolPath(windowsSlashPath)).toBe(path.resolve(windowsSlashPath));
+        expect(normalizePath(windowsSlashPath)).toBe(path.resolve(windowsSlashPath));
     });
 
     it("should handle relative paths", () => {
         const relativePath1 = "./Pictures/photo.jpg";
-        expect(path.isAbsolute(normalizeFileProtocolPath(relativePath1))).toBe(true);
-        expect(normalizeFileProtocolPath(relativePath1)).toBe(path.resolve(relativePath1));
+        expect(path.isAbsolute(normalizePath(relativePath1))).toBe(true);
+        expect(normalizePath(relativePath1)).toBe(path.resolve(relativePath1));
 
         const relativePath2 = "../Documents/photo.jpg";
-        expect(path.isAbsolute(normalizeFileProtocolPath(relativePath2))).toBe(true);
-        expect(normalizeFileProtocolPath(relativePath2)).toBe(path.resolve(relativePath2));
+        expect(path.isAbsolute(normalizePath(relativePath2))).toBe(true);
+        expect(normalizePath(relativePath2)).toBe(path.resolve(relativePath2));
     });
 
     it("should fix Mac external volume paths missing leading slash", () => {
         // Mac 外部卷路径缺少前导斜杠的情况
         const brokenMacPath = "Volumes/ExternalDrive/Photos/photo.jpg";
-        const result = normalizeFileProtocolPath(brokenMacPath);
+        const result = normalizePath(brokenMacPath);
         expect(path.isAbsolute(result)).toBe(true);
         // 应该被解析为绝对路径
         expect(result).toBe(path.resolve(brokenMacPath));
     });
 
     it("should handle empty input", () => {
-        expect(normalizeFileProtocolPath("")).toBe("");
-        expect(normalizeFileProtocolPath(null as any)).toBe("");
-        expect(normalizeFileProtocolPath(undefined as any)).toBe("");
+        expect(normalizePath("")).toBe("");
+        expect(normalizePath(null as any)).toBe("");
+        expect(normalizePath(undefined as any)).toBe("");
     });
 
     it("should handle URL objects", () => {
         const urlObj = new URL("file:///Users/Albert/Pictures/photo.jpg");
-        const result = normalizeFileProtocolPath(urlObj);
+        const result = normalizePath(urlObj);
         expect(path.isAbsolute(result)).toBe(true);
         expect(result).toBe(path.resolve("/Users/Albert/Pictures/photo.jpg"));
     });
@@ -419,7 +412,7 @@ describe("normalizeFileProtocolPath", () => {
     it("should handle malformed file:// URLs gracefully", () => {
         // 格式错误的 file:// URL 应该回退到路径处理
         const malformedUrl = "file://invalid/path";
-        const result = normalizeFileProtocolPath(malformedUrl);
+        const result = normalizePath(malformedUrl);
         // 应该仍然返回一个路径，即使可能不是预期的
         expect(result).toBeTruthy();
     });
@@ -427,12 +420,12 @@ describe("normalizeFileProtocolPath", () => {
     it("should handle the problematic paths from original issue", () => {
         // 原始问题：Mac外部卷路径缺少前导斜杠
         const problematicMacPath = "Volumes/SUCAI/Backup/2021/20210101/20210102_030833820_iOS.heic";
-        const result = normalizeFileProtocolPath(problematicMacPath);
+        const result = normalizePath(problematicMacPath);
         expect(path.isAbsolute(result)).toBe(true);
 
         // 原始问题：Windows路径带错误前导斜杠
         const problematicWinPath = "/C:/Users/Albert/Pictures/photo.jpg";
-        const result2 = normalizeFileProtocolPath(problematicWinPath);
+        const result2 = normalizePath(problematicWinPath);
         expect(path.isAbsolute(result2)).toBe(true);
     });
 });

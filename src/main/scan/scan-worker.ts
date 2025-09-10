@@ -6,7 +6,7 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import fs from "fs-extra";
 import path from "path";
-import { buildThumbnailPath } from "@shared/path-util";
+import { buildThumbnailPath, normalizePath } from "@shared/path-util";
 import { shouldProcessFile } from "./scan-strategy";
 import { addToPhotasaConfig, removeFromPhotoList } from "../config/config-storage";
 import { WorkerPool } from "../workers/worker-pool";
@@ -187,13 +187,15 @@ async function executeFileOperation(requestId: string, scan: ScanAction): Promis
 }
 
 async function processMediaFile(filePath: string, scan: ScanAction): Promise<void> {
-    const thumbnailPath = buildThumbnailPath(filePath);
+    // 使用统一的路径处理API规范化路径
+    const normalizedFilePath = normalizePath(filePath);
+    const thumbnailPath = buildThumbnailPath(normalizedFilePath);
     const workerPool = getWorkerPool();
 
     switch (scan.action) {
         case "scan":
             // Add operation: create thumbnail if needed and add to config
-            const shouldProcess = await shouldProcessFile(filePath, scan.action, logger);
+            const shouldProcess = await shouldProcessFile(normalizedFilePath, scan.action, logger);
             if (!shouldProcess) {
                 return;
             }
@@ -201,7 +203,7 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
             const thumbnailExists = fs.existsSync(thumbnailPath);
             if (!thumbnailExists) {
                 await workerPool.addTask("create", {
-                    path: filePath,
+                    path: normalizedFilePath,
                     thumbnail: thumbnailPath,
                     width: scan.thumbnailSize,
                     height: scan.thumbnailSize,
@@ -214,7 +216,7 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
             await addToPhotasaConfig(
                 {
                     queueId: 0,
-                    paths: [filePath],
+                    paths: [normalizedFilePath],
                 },
                 () => {},
                 logger,
@@ -224,7 +226,7 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
         case "rescan":
             // Change operation: recreate thumbnail and update config
             await workerPool.addTask("create", {
-                path: filePath,
+                path: normalizedFilePath,
                 thumbnail: thumbnailPath,
                 width: scan.thumbnailSize,
                 height: scan.thumbnailSize,
@@ -236,7 +238,7 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
             await addToPhotasaConfig(
                 {
                     queueId: 0,
-                    paths: [filePath],
+                    paths: [normalizedFilePath],
                 },
                 () => {},
                 logger,

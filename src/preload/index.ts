@@ -13,6 +13,7 @@ import {
     removeThumbnail,
     fileUrlFromPath,
 } from "./image-helper";
+import { normalizePath } from "@shared/path-util";
 import { openInFinder } from "./shell-helper";
 import {
     addToPhotoList,
@@ -71,11 +72,12 @@ const api = {
     fileUrlFromPath,
     cleanupScanQueue,
     // 新增：路径相关API
-    normalizePath: pathHelper.normalizePath,
     mergePath: pathHelper.mergePath,
     splitPath: pathHelper.splitPath, // 新增
     joinPath: pathHelper.joinPath, // 新增
     getSeparator: pathHelper.getSeparator, // 新增
+    // 统一的路径规范化API（从shared层导入）
+    normalizePath,
     isMac: isMac, // 平台判断，渲染进程可直接调用
     // ========== 新增窗口控制 API ==========
     minimizeWindow: () => electronAPI.ipcRenderer.send("window:minimize"),

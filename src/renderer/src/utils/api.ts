@@ -19,7 +19,6 @@ import type {
     FileMetadata,
 } from "@common/import-types";
 import { loggers } from "@common/logger";
-import { normalizeFileProtocolPath } from "./path-util";
 
 const logger = loggers.api;
 
@@ -53,22 +52,9 @@ export function getDirectory(name: PathName): Promise<string> {
     return window.api.getDirectory(name);
 }
 
-export function normalizeThumbnailRequest(request: ThumbnailRequest): ThumbnailRequest {
-    function fixPath(p: string): string {
-        if (!p) return p;
-        // 使用新的跨平台file://协议处理函数
-        return normalizeFileProtocolPath(p);
-    }
-    return {
-        ...request,
-        path: fixPath(request.path),
-        thumbnail: fixPath(request.thumbnail),
-    };
-}
-
 export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const normalizedRequest = normalizeThumbnailRequest(request);
-    const result = yield window.api.createThumbnail(normalizedRequest);
+    // 路径规范化现在在preload层处理，直接传递请求
+    const result = yield window.api.createThumbnail(request);
     return result;
 })
     .enqueue()

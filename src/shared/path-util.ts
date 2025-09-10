@@ -124,15 +124,6 @@ export function isAbsolutePath(target: string): boolean {
 }
 
 /**
- * 归一化路径，完全依赖 Node.js path 包
- * @param p 路径字符串
- * @returns 归一化后的路径
- */
-export function normalizePath(p: string): string {
-    return path.normalize(p);
-}
-
-/**
  * 路径拼接，完全依赖 Node.js path 包
  * @param left 左侧路径
  * @param right 右侧路径（可选）
@@ -181,12 +172,13 @@ export async function isFile(path: string): Promise<boolean> {
 }
 
 /**
- * 将 file:// URL 规范化为跨平台文件系统路径
- * 正确处理 Windows 和 macOS 的 file:// URL 格式
- * @param input 输入路径 - 可能是 file:// URL 或普通文件路径
+ * 规范化文件路径，处理所有格式的路径输入
+ * 这是项目中路径处理的统一入口点，确保所有路径都使用相同的规范化逻辑
+ * 支持 file:// URL、普通文件路径、相对路径等所有格式
+ * @param input 输入路径 - 可能是 file:// URL、普通文件路径或相对路径
  * @returns 规范化的文件系统绝对路径
  */
-export function normalizeFileProtocolPath(input: string | URL): string {
+export function normalizePath(input: string | URL): string {
     if (!input) {
         return "";
     }
@@ -197,15 +189,36 @@ export function normalizeFileProtocolPath(input: string | URL): string {
         // 检测是否为 file:// URL
         if (pathStr.startsWith("file://")) {
             // 使用 Node.js 标准 API 转换 file:// URL 为文件系统路径
+            // 这是最可靠的方法，自动处理所有平台差异和URL编码
             pathStr = fileURLToPath(pathStr);
         }
 
-        // 解析为绝对路径并规范化
-        // path.resolve() 自动处理相对路径，并且是跨平台的
+        // 使用 path.resolve 来解析路径，确保绝对路径被正确解析
         return path.resolve(pathStr);
     } catch (error) {
-        // 如果 fileURLToPath 失败，可能是格式错误的 URL
-        // 回退到直接处理字符串路径
+        // 如果 fileURLToPath 失败，可能是格式错误的 URL 或跨平台路径问题
+        // 回退到手动处理 file:// URL
+        if (pathStr.startsWith("file://")) {
+            // 手动处理 file:// URL
+            let urlPath = pathStr.substring(7); // 移除 "file://"
+
+            // 处理 Windows 路径（file:///C:/path -> C:/path）
+            if (urlPath.startsWith("/") && urlPath.length > 1 && urlPath[2] === ":") {
+                urlPath = urlPath.substring(1); // 移除开头的 "/"
+            }
+
+            // 解码 URL 编码
+            try {
+                urlPath = decodeURIComponent(urlPath);
+            } catch (decodeError) {
+                // 如果解码失败，保持原样
+                console.warn("Failed to decode URL:", decodeError);
+            }
+
+            pathStr = urlPath;
+        }
+
+        // 使用 path.resolve 来解析路径，确保绝对路径被正确解析
         return path.resolve(pathStr);
     }
 }
@@ -216,7 +229,7 @@ export function normalizeFileProtocolPath(input: string | URL): string {
  * @returns file:// URL 字符串
  */
 export function pathToFileProtocol(filePath: string): string {
-    const normalizedPath = normalizeFileProtocolPath(filePath);
+    const normalizedPath = normalizePath(filePath);
     return pathToFileURL(normalizedPath).toString();
 }
 
@@ -227,7 +240,7 @@ export function pathToFileProtocol(filePath: string): string {
  */
 export function joinFileProtocolPath(...segments: string[]): string {
     // 规范化第一个片段（基础路径）
-    const basePath = segments.length > 0 ? normalizeFileProtocolPath(segments[0]) : "";
+    const basePath = segments.length > 0 ? normalizePath(segments[0]) : "";
 
     // 连接剩余片段
     const remainingSegments = segments.slice(1);

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-    normalizeThumbnailRequest,
     scanDirectories,
     previewImport,
     executeImport,
@@ -24,74 +23,6 @@ import {
     executeImportTask,
     getImportHistoryTask,
 } from "../api";
-
-describe("normalizeThumbnailRequest", () => {
-    it("should normalize Unix file:// URLs correctly", () => {
-        const input = {
-            path: "file:///Users/test/image.jpg",
-            thumbnail: "file:///Users/test/.picasaoriginals/image.jpg",
-            width: 200,
-            height: 200,
-            preview: "",
-        };
-        const result = normalizeThumbnailRequest(input);
-        expect(result.path).toBe("/Users/test/image.jpg");
-        expect(result.thumbnail).toBe("/Users/test/.picasaoriginals/image.jpg");
-    });
-
-    it("should handle Windows file:// URLs correctly", () => {
-        const input = {
-            path: "file:///C:/Users/test/image.jpg",
-            thumbnail: "file:///C:/Users/test/.picasaoriginals/image.jpg",
-            width: 200,
-            height: 200,
-            preview: "",
-        };
-        const result = normalizeThumbnailRequest(input);
-        expect(result.path).toBe("C:/Users/test/image.jpg");
-        expect(result.thumbnail).toBe("C:/Users/test/.picasaoriginals/image.jpg");
-    });
-
-    it("should not change regular paths", () => {
-        const input = {
-            path: "/Users/test/image.jpg",
-            thumbnail: "/Users/test/.picasaoriginals/image.jpg",
-            width: 200,
-            height: 200,
-            preview: "",
-        };
-        const result = normalizeThumbnailRequest(input);
-        expect(result.path).toBe("/Users/test/image.jpg");
-        expect(result.thumbnail).toBe("/Users/test/.picasaoriginals/image.jpg");
-    });
-
-    it("should handle empty path and thumbnail", () => {
-        const input = {
-            path: "",
-            thumbnail: "",
-            width: 200,
-            height: 200,
-            preview: "",
-        };
-        const result = normalizeThumbnailRequest(input);
-        expect(result.path).toBe("");
-        expect(result.thumbnail).toBe("");
-    });
-
-    it("should fix Mac external volume file:// URLs", () => {
-        const input = {
-            path: "file://Volumes/SUCAI/Backup/image.heic",
-            thumbnail: "file://Volumes/SUCAI/Backup/.photasaoriginals/image.heic.png",
-            width: 200,
-            height: 200,
-            preview: "",
-        };
-        const result = normalizeThumbnailRequest(input);
-        // 应该修复缺少前导斜杠的Mac外部卷路径
-        expect(result.path).toBe("/Volumes/SUCAI/Backup/image.heic");
-        expect(result.thumbnail).toBe("/Volumes/SUCAI/Backup/.photasaoriginals/image.heic.png");
-    });
-});
 
 // Mock window.api
 const mockWindowApi = {
