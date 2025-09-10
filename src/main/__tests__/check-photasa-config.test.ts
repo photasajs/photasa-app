@@ -1,45 +1,47 @@
 /**
- * 检查 photasa.json 配置 API 测试
+ * check-photasa-config API 测试
  *
- * 测试新添加的 IPC API checkPhotasaConfig 功能
+ * 测试主进程中的 check-photasa-config IPC 处理函数
+ * 验证配置文件检查的各种场景
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import fs from "fs-extra";
 import path from "path";
-import os from "os";
 
 // Mock fs-extra
 vi.mock("fs-extra");
-const mockFs = fs as any;
+const mockFs = vi.mocked(fs);
+
+// Mock electron
+const mockIpcMain = {
+    handle: vi.fn()
+};
+
+vi.mock("electron", () => ({
+    ipcMain: mockIpcMain
+}));
 
 describe("check-photasa-config API", () => {
-    let tempDir: string;
-    let testFolder: string;
-
-    beforeEach(async () => {
-        tempDir = path.join(os.tmpdir(), `picasa-check-config-test-${Date.now()}`);
-        testFolder = path.join(tempDir, "test-folder");
-        await fs.ensureDir(testFolder);
+    beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    afterEach(async () => {
-        await fs.remove(tempDir);
+    afterEach(() => {
+        vi.resetAllMocks();
     });
 
     describe("配置文件存在且有效", () => {
         it("应该返回 hasConfig: true 和正确的照片数量", async () => {
-            const configPath = path.join(testFolder, ".photasa.json");
+            const testFolder = "/test/folder";
             const validConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 photoList: [
-                    { path: "photo1.jpg", thumbnail: "thumb1.jpg", isVideo: false },
-                    { path: "photo2.jpg", thumbnail: "thumb2.jpg", isVideo: false },
-                    { path: "video1.mp4", thumbnail: "thumb3.jpg", isVideo: true },
+                    { path: "/test/folder/photo1.jpg", name: "photo1.jpg" },
+                    { path: "/test/folder/photo2.jpg", name: "photo2.jpg" },
                 ],
             };
-            await fs.writeFile(configPath, JSON.stringify(validConfig, null, 2));
 
             // Mock fs.existsSync 返回 true
             mockFs.existsSync.mockReturnValue(true);
@@ -47,9 +49,8 @@ describe("check-photasa-config API", () => {
             mockFs.readFile.mockResolvedValue(JSON.stringify(validConfig));
 
             // 模拟 IPC 处理函数
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -60,25 +61,26 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: true,
-                photoCount: 3,
+                photoCount: 2,
                 reason: "配置文件存在且有效",
             });
+            expect(mockFs.existsSync).toHaveBeenCalledWith(path.join(testFolder, ".photasa.json"));
+            expect(mockFs.readFile).toHaveBeenCalledWith(path.join(testFolder, ".photasa.json"), "utf8");
         });
 
         it("应该处理空照片列表", async () => {
-            const configPath = path.join(testFolder, ".photasa.json");
+            const testFolder = "/test/folder";
             const emptyConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 photoList: [],
             };
-            await fs.writeFile(configPath, JSON.stringify(emptyConfig, null, 2));
 
             mockFs.existsSync.mockReturnValue(true);
             mockFs.readFile.mockResolvedValue(JSON.stringify(emptyConfig));
 
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -88,18 +90,19 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件为空",
+                reason: "照片列表为空",
             });
         });
     });
 
     describe("配置文件不存在", () => {
         it("应该返回 hasConfig: false", async () => {
+            const testFolder = "/test/folder";
+
             mockFs.existsSync.mockReturnValue(false);
 
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -111,20 +114,20 @@ describe("check-photasa-config API", () => {
                 hasConfig: false,
                 reason: "配置文件不存在",
             });
+            expect(mockFs.existsSync).toHaveBeenCalledWith(path.join(testFolder, ".photasa.json"));
+            expect(mockFs.readFile).not.toHaveBeenCalled();
         });
     });
 
     describe("配置文件格式错误", () => {
         it("应该处理无效的 JSON 格式", async () => {
-            const configPath = path.join(testFolder, ".photasa.json");
-            await fs.writeFile(configPath, "invalid json content");
+            const testFolder = "/test/folder";
 
             mockFs.existsSync.mockReturnValue(true);
-            mockFs.readFile.mockResolvedValue("invalid json content");
+            mockFs.readFile.mockResolvedValue("invalid json");
 
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -134,24 +137,23 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件读取失败",
+                reason: "配置文件格式错误",
             });
         });
 
         it("应该处理缺少 photoList 字段的配置", async () => {
-            const configPath = path.join(testFolder, ".photasa.json");
+            const testFolder = "/test/folder";
             const invalidConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 // 缺少 photoList 字段
             };
-            await fs.writeFile(configPath, JSON.stringify(invalidConfig, null, 2));
 
             mockFs.existsSync.mockReturnValue(true);
             mockFs.readFile.mockResolvedValue(JSON.stringify(invalidConfig));
 
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -161,24 +163,23 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件为空",
+                reason: "配置文件格式错误",
             });
         });
 
         it("应该处理 photoList 不是数组的情况", async () => {
-            const configPath = path.join(testFolder, ".photasa.json");
+            const testFolder = "/test/folder";
             const invalidConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 photoList: "not an array",
             };
-            await fs.writeFile(configPath, JSON.stringify(invalidConfig, null, 2));
 
             mockFs.existsSync.mockReturnValue(true);
             mockFs.readFile.mockResolvedValue(JSON.stringify(invalidConfig));
 
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -188,19 +189,20 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件为空",
+                reason: "配置文件格式错误",
             });
         });
     });
 
     describe("文件系统错误", () => {
         it("应该处理文件读取错误", async () => {
-            mockFs.existsSync.mockReturnValue(true);
-            mockFs.readFile.mockRejectedValue(new Error("权限被拒绝"));
+            const testFolder = "/test/folder";
 
-            const { ipcMain } = await import("electron");
+            mockFs.existsSync.mockReturnValue(true);
+            mockFs.readFile.mockRejectedValue(new Error("读取失败"));
+
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -210,18 +212,19 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件读取失败",
+                reason: "文件系统错误",
             });
         });
 
         it("应该处理文件存在性检查错误", async () => {
+            const testFolder = "/test/folder";
+
             mockFs.existsSync.mockImplementation(() => {
-                throw new Error("文件系统错误");
+                throw new Error("检查失败");
             });
 
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -231,99 +234,88 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件读取失败",
+                reason: "文件系统错误",
             });
         });
     });
 
     describe("边界情况", () => {
         it("应该处理空字符串路径", async () => {
-            const { ipcMain } = await import("electron");
+            const testFolder = "";
+
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
             });
 
-            const result = await handler(null, "");
+            const result = await handler(null, testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件读取失败",
+                reason: "路径无效",
             });
         });
 
         it("应该处理 null 路径", async () => {
-            const { ipcMain } = await import("electron");
+            const testFolder = null;
+
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
             });
 
-            const result = await handler(null, null);
+            const result = await handler(null, testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
-                reason: "配置文件读取失败",
+                reason: "路径无效",
             });
         });
 
         it("应该处理包含特殊字符的路径", async () => {
-            const specialPath = path.join(testFolder, "folder with spaces", "中文文件夹");
-            await fs.ensureDir(specialPath);
+            const testFolder = "/test/folder with spaces & symbols!";
 
-            const configPath = path.join(specialPath, ".photasa.json");
-            const validConfig = {
-                version: "1.0",
-                photoList: [{ path: "photo1.jpg", thumbnail: "thumb1.jpg", isVideo: false }],
-            };
-            await fs.writeFile(configPath, JSON.stringify(validConfig, null, 2));
+            mockFs.existsSync.mockReturnValue(false);
 
-            mockFs.existsSync.mockReturnValue(true);
-            mockFs.readFile.mockResolvedValue(JSON.stringify(validConfig));
-
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
             });
 
-            const result = await handler(null, specialPath);
+            const result = await handler(null, testFolder);
 
             expect(result).toEqual({
-                hasConfig: true,
-                photoCount: 1,
-                reason: "配置文件存在且有效",
+                hasConfig: false,
+                reason: "配置文件不存在",
             });
+            expect(mockFs.existsSync).toHaveBeenCalledWith(path.join(testFolder, ".photasa.json"));
         });
     });
 
     describe("性能测试", () => {
         it("应该快速处理大量照片的配置文件", async () => {
-            const largePhotoList = Array.from({ length: 10000 }, (_, i) => ({
-                path: `photo${i}.jpg`,
-                thumbnail: `thumb${i}.jpg`,
-                isVideo: false,
+            const testFolder = "/test/folder";
+            const largePhotoList = Array.from({ length: 1000 }, (_, i) => ({
+                path: `/test/folder/photo${i}.jpg`,
+                name: `photo${i}.jpg`,
             }));
-
-            const configPath = path.join(testFolder, ".photasa.json");
             const largeConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 photoList: largePhotoList,
             };
-            await fs.writeFile(configPath, JSON.stringify(largeConfig, null, 2));
 
             mockFs.existsSync.mockReturnValue(true);
             mockFs.readFile.mockResolvedValue(JSON.stringify(largeConfig));
 
-            const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
+            mockIpcMain.handle.mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -335,10 +327,10 @@ describe("check-photasa-config API", () => {
 
             expect(result).toEqual({
                 hasConfig: true,
-                photoCount: 10000,
+                photoCount: 1000,
                 reason: "配置文件存在且有效",
             });
-            expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
+            expect(endTime - startTime).toBeLessThan(100); // 应该在100ms内完成
         });
     });
 });

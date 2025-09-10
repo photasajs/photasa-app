@@ -16,9 +16,12 @@ vi.mock("@renderer/utils/api", () => ({
 }));
 
 // Mock window.api
-Object.defineProperty(window, 'api', {
+Object.defineProperty(window, "api", {
     value: {
         normalizePath: vi.fn((path: string) => path.replace(/\\/g, "/")),
+        splitPath: vi.fn((path: string) => path.split("/")),
+        joinPath: vi.fn((...parts: string[]) => parts.join("/")),
+        mergePath: vi.fn((base: string, relative: string) => base + "/" + relative),
     },
     writable: true,
 });
