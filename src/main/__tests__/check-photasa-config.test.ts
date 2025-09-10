@@ -15,11 +15,11 @@ const mockFs = vi.mocked(fs);
 
 // Mock electron
 const mockIpcMain = {
-    handle: vi.fn()
+    handle: vi.fn(),
 };
 
 vi.mock("electron", () => ({
-    ipcMain: mockIpcMain
+    ipcMain: mockIpcMain,
 }));
 
 describe("check-photasa-config API", () => {
@@ -57,7 +57,7 @@ describe("check-photasa-config API", () => {
             });
 
             // 调用处理函数
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: true,
@@ -65,7 +65,10 @@ describe("check-photasa-config API", () => {
                 reason: "配置文件存在且有效",
             });
             expect(mockFs.existsSync).toHaveBeenCalledWith(path.join(testFolder, ".photasa.json"));
-            expect(mockFs.readFile).toHaveBeenCalledWith(path.join(testFolder, ".photasa.json"), "utf8");
+            expect(mockFs.readFile).toHaveBeenCalledWith(
+                path.join(testFolder, ".photasa.json"),
+                "utf8",
+            );
         });
 
         it("应该处理空照片列表", async () => {
@@ -86,7 +89,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -108,7 +111,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -133,7 +136,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -159,7 +162,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -185,7 +188,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -208,7 +211,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -230,7 +233,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -250,7 +253,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -268,7 +271,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -288,7 +291,7 @@ describe("check-photasa-config API", () => {
                 }
             });
 
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
 
             expect(result).toEqual({
                 hasConfig: false,
@@ -322,7 +325,7 @@ describe("check-photasa-config API", () => {
             });
 
             const startTime = Date.now();
-            const result = await handler(null, testFolder);
+            const result = await handler(testFolder);
             const endTime = Date.now();
 
             expect(result).toEqual({

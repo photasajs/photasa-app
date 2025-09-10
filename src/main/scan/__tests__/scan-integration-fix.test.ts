@@ -9,19 +9,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
-// import { scanPhotos } from "../scan-photos";
 import { decideScanStrategy } from "../scan-strategy";
-import { restoreCachedFiles } from "../scan-helpers";
 import { ScanStrategy } from "../folder-cache-manager";
 import type { PhotasaLogger } from "@common/logger";
-// import { Subscriber } from "rxjs";
 
 // Mock external dependencies
 vi.mock("fs-extra");
 vi.mock("@main/config/config-storage");
-vi.mock("../scan-photos");
-vi.mock("../scan-helpers");
-vi.mock("../folder-cache-manager");
 
 const mockFs = vi.mocked(fs);
 const mockLogger: PhotasaLogger = {
@@ -129,7 +123,7 @@ describe("scan-integration-fix", () => {
             const result = await decideScanStrategy(corruptedFolder, mockLogger);
 
             expect(result.strategy).toBe(ScanStrategy.FULL);
-            expect(result.reason).toContain("错误");
+            expect(result.reason).toContain("配置文件读取失败");
         });
     });
 
