@@ -13,13 +13,18 @@ import {
     BaseMenuItem,
     BaseBreadcrumb,
     BaseBreadcrumbItem,
+    BaseTree,
 } from "@renderer/components/ui";
+import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
+import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
+import { loggers } from "@common/logger";
 
 /**
  * I18n
  */
 const { t } = useI18n();
+const logger = loggers.renderer;
 
 /**
  * Preference store
@@ -56,15 +61,38 @@ const showConfigModal = ref(false);
  */
 watch(
     selectedKeys,
-    () => {
-        // Only when Current folder changed, update current folder and reset photasa config
+    async () => {
+        // Only when Current folder changed, update current folder and load photasa config
         if (!isEmpty(selectedKeys.value) && currentFolder.value !== selectedKeys.value[0]) {
-            currentFolderConfig.value = {
-                version: "",
-                photoList: [],
-                lastModified: 0,
-            } satisfies PhotasaConfig;
-            currentFolder.value = selectedKeys.value[0];
+            const newFolderPath = selectedKeys.value[0];
+            currentFolder.value = newFolderPath;
+
+            try {
+                // 自动加载新文件夹的配置
+                logger.debug("FolderList: Loading config for folder:", newFolderPath);
+                const config = await getPhotasaConfig(newFolderPath);
+                logger.debug("FolderList: Config loaded:", {
+                    hasConfig: !!config,
+                    photoCount: config?.photoList?.length || 0,
+                    version: config?.version,
+                });
+
+                currentFolderConfig.value =
+                    config ||
+                    ({
+                        version: "",
+                        photoList: [],
+                        lastModified: 0,
+                    } satisfies PhotasaConfig);
+            } catch (error) {
+                logger.warn("无法加载文件夹配置:", error);
+                // 如果加载失败，使用空配置
+                currentFolderConfig.value = {
+                    version: "",
+                    photoList: [],
+                    lastModified: 0,
+                } satisfies PhotasaConfig;
+            }
         }
     },
     { deep: true },
@@ -148,21 +176,37 @@ async function rescan(key: string): Promise<void> {
             </BaseBreadcrumb>
         </div>
         <div class="flex-1 min-h-0 overflow-auto tree-container">
-            <a-tree
+            <BaseTree
                 class="folder-tree"
                 v-model:expandedKeys="expandedKeys"
                 v-model:selectedKeys="selectedKeys"
-                :tree-data="folderTree"
+                :tree-data="folderTree as TreeNode[]"
+                :virtual="true"
+                height="100%"
+                :item-height="28"
+                :show-icon="true"
+                :show-line="false"
+                :selectable="true"
+                :checkable="false"
             >
-                <template #title="{ title, key }">
+                <!-- 文件夹图标 -->
+                <template #icon>
+                    <PhFolder :size="14" />
+                </template>
+
+                <template #title="slotProps">
                     <BaseContextMenu>
-                        <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
-                        <span v-else class="folder-node">{{ title }}</span>
+                        <span
+                            v-if="paths.includes((slotProps as any).key)"
+                            class="root-folder-node"
+                            >{{ (slotProps as any).title }}</span
+                        >
+                        <span v-else class="folder-node">{{ (slotProps as any).title }}</span>
 
                         <template #menu="{ close }">
                             <BaseMenuItem
                                 @click="
-                                    rescan(key);
+                                    rescan((slotProps as any).key);
                                     close();
                                 "
                             >
@@ -170,7 +214,7 @@ async function rescan(key: string): Promise<void> {
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
-                                    openPhotasaConfig(key);
+                                    openPhotasaConfig((slotProps as any).key);
                                     close();
                                 "
                             >
@@ -178,7 +222,7 @@ async function rescan(key: string): Promise<void> {
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
-                                    openFileInFinder(key);
+                                    openFileInFinder((slotProps as any).key);
                                     close();
                                 "
                             >
@@ -187,7 +231,7 @@ async function rescan(key: string): Promise<void> {
                         </template>
                     </BaseContextMenu>
                 </template>
-            </a-tree>
+            </BaseTree>
         </div>
     </div>
     <EnhancedImageInfoModal
@@ -237,7 +281,7 @@ async function rescan(key: string): Promise<void> {
     flex: 1; /* 使用 flex 占满父容器空间 */
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 让内部 a-tree 控制滚动 */
+    overflow: hidden; /* 让内部 BaseTree 控制滚动 */
     background: var(--color-tree-bg);
 }
 

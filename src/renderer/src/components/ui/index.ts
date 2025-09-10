@@ -74,6 +74,11 @@ export { default as BaseTooltip } from "./BaseTooltip.vue";
 // === 图片和虚拟化 ===
 export { default as BaseImage } from "./BaseImage.vue";
 export { default as VirtualizedGrid } from "./VirtualizedGrid.vue";
+export { default as VirtualList } from "./VirtualList.vue";
+
+// === 树形组件 ===
+export { default as BaseTree } from "./BaseTree.vue";
+export { default as BaseTreeNode } from "./BaseTreeNode.vue";
 
 // === 布局组件 ===
 export { default as BaseRow } from "./BaseRow.vue";

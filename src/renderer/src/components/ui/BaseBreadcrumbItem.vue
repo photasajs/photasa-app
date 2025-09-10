@@ -9,6 +9,7 @@
 <script setup lang="ts">
 interface Props {
     text?: string;
+    isLast?: boolean;
 }
 
 defineProps<Props>();
