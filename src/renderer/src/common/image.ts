@@ -71,7 +71,9 @@ export function toPreviewableImage(file: Photo): string {
  * @returns 文件协议
  */
 export function toFileProtocol(currentFolder: string, file: string): string {
-    return `file://${currentFolder}/${file}`;
+    // Ensure currentFolder doesn't start with / to avoid double slashes
+    const cleanFolder = currentFolder.startsWith('/') ? currentFolder : `/${currentFolder}`;
+    return `file://${cleanFolder}/${file}`;
 }
 
 /**
