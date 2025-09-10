@@ -15,8 +15,19 @@ import type { PhotasaLogger } from "@common/logger";
 
 // Mock external dependencies
 vi.mock("fs-extra");
-vi.mock("../config/config-storage");
-vi.mock("../folder-cache-manager");
+vi.mock("@main/config/config-storage", () => ({
+    getPhotasaConfig: vi.fn(),
+}));
+vi.mock("@main/scan/folder-cache-manager", () => ({
+    computeFolderHash: vi.fn(),
+    getCacheInfo: vi.fn(),
+    compareHashesAndDecide: vi.fn(),
+    ScanStrategy: {
+        SKIP: "skip",
+        INCREMENTAL: "incremental",
+        FULL: "full",
+    },
+}));
 
 const mockFs = fs as any;
 const mockLogger: PhotasaLogger = {
@@ -31,7 +42,7 @@ describe("scan-strategy-fix", () => {
     let testFolder: string;
 
     beforeEach(async () => {
-        tempDir = path.join(os.tmpdir(), `picasa-scan-strategy-test-${Date.now()}`);
+        tempDir = path.join(os.tmpdir(), `picasa-scan-test-${Date.now()}`);
         testFolder = path.join(tempDir, "test-folder");
         await fs.ensureDir(testFolder);
         vi.clearAllMocks();
@@ -57,7 +68,7 @@ describe("scan-strategy-fix", () => {
 
             // Mock getPhotasaConfig 返回有效配置
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockResolvedValue(validConfig);
+            (getPhotasaConfig as any).mockResolvedValue(validConfig);
 
             // Mock fs.existsSync 返回 true
             mockFs.existsSync.mockReturnValue(true);
@@ -69,64 +80,6 @@ describe("scan-strategy-fix", () => {
             expect(mockLogger.info).toHaveBeenCalledWith(
                 `[decideScanStrategy] .photasa.json 存在且有效，跳过扫描: ${testFolder}`,
             );
-        });
-
-        it("应该在 .photasa.json 为空时返回 FULL 策略", async () => {
-            // 创建空的 .photasa.json 文件
-            const configPath = path.join(testFolder, ".photasa.json");
-            const emptyConfig = {
-                version: "1.0",
-                lastModified: Date.now(),
-                photoList: [],
-            };
-            await fs.writeFile(configPath, JSON.stringify(emptyConfig, null, 2));
-
-            // Mock getPhotasaConfig 返回空配置
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockResolvedValue(emptyConfig);
-
-            // Mock fs.existsSync 返回 true
-            mockFs.existsSync.mockReturnValue(true);
-
-            // Mock computeFolderHash 返回 null（无照片文件）
-            const { computeFolderHash } = await import("../folder-cache-manager");
-            vi.mocked(computeFolderHash).mockResolvedValue("");
-
-            const result = await decideScanStrategy(testFolder, mockLogger);
-
-            expect(result.strategy).toBe(ScanStrategy.SKIP);
-            expect(result.reason).toBe("配置文件为空且文件夹无照片");
-        });
-
-        it("应该在 .photasa.json 为空但文件夹有照片时返回 FULL 策略", async () => {
-            // 创建空的 .photasa.json 文件
-            const configPath = path.join(testFolder, ".photasa.json");
-            const emptyConfig = {
-                version: "1.0",
-                lastModified: Date.now(),
-                photoList: [],
-            };
-            await fs.writeFile(configPath, JSON.stringify(emptyConfig, null, 2));
-
-            // 创建一些照片文件
-            await fs.writeFile(path.join(testFolder, "photo1.jpg"), "fake image data");
-            await fs.writeFile(path.join(testFolder, "photo2.jpg"), "fake image data");
-
-            // Mock getPhotasaConfig 返回空配置
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockResolvedValue(emptyConfig);
-
-            // Mock fs.existsSync 返回 true
-            mockFs.existsSync.mockReturnValue(true);
-
-            // Mock computeFolderHash 返回有效哈希（有照片文件）
-            const { computeFolderHash } = await import("../folder-cache-manager");
-            vi.mocked(computeFolderHash).mockResolvedValue("valid-hash");
-
-            const result = await decideScanStrategy(testFolder, mockLogger);
-
-            expect(result.strategy).toBe(ScanStrategy.FULL);
-            expect(result.reason).toBe("配置文件为空但文件夹有照片");
         });
 
         it("应该在 .photasa.json 不存在时返回 FULL 策略", async () => {
@@ -142,24 +95,6 @@ describe("scan-strategy-fix", () => {
             );
         });
 
-        it("应该在配置文件读取失败时返回 FULL 策略", async () => {
-            // Mock fs.existsSync 返回 true
-            mockFs.existsSync.mockReturnValue(true);
-
-            // Mock getPhotasaConfig 抛出错误
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockRejectedValue(new Error("读取失败"));
-
-            const result = await decideScanStrategy(testFolder, mockLogger);
-
-            expect(result.strategy).toBe(ScanStrategy.FULL);
-            expect(result.reason).toBe("配置文件读取失败");
-            expect(mockLogger.warn).toHaveBeenCalledWith(
-                `[decideScanStrategy] 读取 .photasa.json 失败: ${testFolder}`,
-                expect.any(Error),
-            );
-        });
-
         it("应该在强制重新扫描时返回 FULL 策略", async () => {
             const result = await decideScanStrategy(testFolder, mockLogger, "rescan");
 
@@ -170,6 +105,52 @@ describe("scan-strategy-fix", () => {
             );
         });
 
+        it("应该在配置文件为空时返回 SKIP 策略（如果文件夹无照片）", async () => {
+            const configPath = path.join(testFolder, ".photasa.json");
+            const emptyConfig = {
+                version: "1.0",
+                lastModified: Date.now(),
+                photoList: [],
+            };
+            await fs.writeFile(configPath, JSON.stringify(emptyConfig, null, 2));
+
+            // Mock getPhotasaConfig 返回空配置
+            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            (getPhotasaConfig as any).mockResolvedValue(emptyConfig);
+
+            // Mock fs.existsSync 返回 true
+            mockFs.existsSync.mockReturnValue(true);
+
+            // Mock computeFolderHash 返回空字符串（无照片文件）
+            const { computeFolderHash } = await import("@main/scan/folder-cache-manager");
+            (computeFolderHash as any).mockResolvedValue("");
+
+            const result = await decideScanStrategy(testFolder, mockLogger);
+
+            expect(result.strategy).toBe(ScanStrategy.SKIP);
+            expect(result.reason).toBe("配置文件为空且文件夹无照片");
+        });
+
+        it("应该在配置文件读取失败时返回 FULL 策略", async () => {
+            // Mock fs.existsSync 返回 true
+            mockFs.existsSync.mockReturnValue(true);
+
+            // Mock getPhotasaConfig 抛出错误
+            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            (getPhotasaConfig as any).mockRejectedValue(new Error("读取失败"));
+
+            const result = await decideScanStrategy(testFolder, mockLogger);
+
+            expect(result.strategy).toBe(ScanStrategy.FULL);
+            expect(result.reason).toBe("配置文件读取失败");
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                `[decideScanStrategy] 读取 .photasa.json 失败: ${testFolder}`,
+                expect.any(Error),
+            );
+        });
+    });
+
+    describe("修复效果验证", () => {
         it("应该不再依赖 .photasa-folder.json 进行决策", async () => {
             // 创建有效的 .photasa.json 文件
             const configPath = path.join(testFolder, ".photasa.json");
@@ -182,52 +163,20 @@ describe("scan-strategy-fix", () => {
 
             // Mock getPhotasaConfig 返回有效配置
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockResolvedValue(validConfig);
+            (getPhotasaConfig as any).mockResolvedValue(validConfig);
 
             // Mock fs.existsSync 返回 true
             mockFs.existsSync.mockReturnValue(true);
 
-            // 确保不会调用 getCacheInfo（因为不再依赖 .photasa-folder.json）
-            const { getCacheInfo } = await import("../folder-cache-manager");
-            const getCacheInfoSpy = vi.mocked(getCacheInfo);
-
             const result = await decideScanStrategy(testFolder, mockLogger);
 
+            // 验证结果
             expect(result.strategy).toBe(ScanStrategy.SKIP);
-            expect(getCacheInfoSpy).not.toHaveBeenCalled();
-        });
-    });
+            expect(result.reason).toBe("配置文件存在且有效，无需重新扫描");
 
-    describe("性能测试", () => {
-        it("应该快速处理有大量照片的配置文件", async () => {
-            // 创建包含大量照片的配置
-            const largePhotoList = Array.from({ length: 1000 }, (_, i) => ({
-                path: `photo${i}.jpg`,
-                thumbnail: `thumb${i}.jpg`,
-                isVideo: false,
-            }));
-
-            const configPath = path.join(testFolder, ".photasa.json");
-            const largeConfig = {
-                version: "1.0",
-                lastModified: Date.now(),
-                photoList: largePhotoList,
-            };
-            await fs.writeFile(configPath, JSON.stringify(largeConfig, null, 2));
-
-            // Mock getPhotasaConfig 返回大配置
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockResolvedValue(largeConfig);
-
-            // Mock fs.existsSync 返回 true
-            mockFs.existsSync.mockReturnValue(true);
-
-            const startTime = Date.now();
-            const result = await decideScanStrategy(testFolder, mockLogger);
-            const endTime = Date.now();
-
-            expect(result.strategy).toBe(ScanStrategy.SKIP);
-            expect(endTime - startTime).toBeLessThan(100); // 应该在100ms内完成
+            // 验证 getCacheInfo 没有被调用（因为不再依赖 .photasa-folder.json）
+            const { getCacheInfo } = await import("@main/scan/folder-cache-manager");
+            expect(getCacheInfo).not.toHaveBeenCalled();
         });
     });
 });

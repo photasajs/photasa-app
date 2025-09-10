@@ -76,7 +76,7 @@ describe("scan-strategy", () => {
             const result = await shouldProcessFile("/test/file.jpg", "scan", mockLogger);
 
             expect(result).toBe(true);
-            expect(mockFs.existsSync).toHaveBeenCalledWith("/test/.photasa.json");
+            expect(mockFs.existsSync).toHaveBeenCalledWith(path.join("/test", ".photasa.json"));
         });
 
         it("应该在文件不在配置中时返回true", async () => {
@@ -99,7 +99,7 @@ describe("scan-strategy", () => {
             const result = await shouldProcessFile("/test/file.jpg", "scan", mockLogger);
 
             // 验证fs.existsSync被正确调用
-            expect(mockFs.existsSync).toHaveBeenCalledWith("/test/.photasa.json");
+            expect(mockFs.existsSync).toHaveBeenCalledWith(path.join("/test", ".photasa.json"));
             // 验证mock被正确调用
             expect(mockGetPhotasaConfig).toHaveBeenCalledWith("/test", mockLogger);
             expect(result).toBe(false);
@@ -113,7 +113,7 @@ describe("scan-strategy", () => {
 
             expect(result).toBe(true);
             expect(mockLogger.warn).toHaveBeenCalledWith(
-                "[shouldProcessFile] 读取配置文件失败: /test/.photasa.json",
+                "[shouldProcessFile] 读取配置文件失败: " + path.join("/test", ".photasa.json"),
                 expect.any(Error),
             );
         });

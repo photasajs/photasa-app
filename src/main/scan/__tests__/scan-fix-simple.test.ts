@@ -57,6 +57,7 @@ describe("scan-fix-simple", () => {
             const configPath = path.join(testFolder, ".photasa.json");
             const validConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 photoList: [
                     { path: "photo1.jpg", thumbnail: "thumb1.jpg", isVideo: false },
                     { path: "photo2.jpg", thumbnail: "thumb2.jpg", isVideo: false },
@@ -95,6 +96,7 @@ describe("scan-fix-simple", () => {
             const configPath = path.join(testFolder, ".photasa.json");
             const emptyConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 photoList: [],
             };
             await fs.writeFile(configPath, JSON.stringify(emptyConfig, null, 2));
@@ -104,7 +106,7 @@ describe("scan-fix-simple", () => {
             const { computeFolderHash } = await import("@main/scan/folder-cache-manager");
 
             (getPhotasaConfig as any).mockResolvedValue(emptyConfig);
-            (computeFolderHash as any).mockResolvedValue(null); // 无照片文件
+            (computeFolderHash as any).mockResolvedValue(""); // 无照片文件
             mockFs.existsSync.mockReturnValue(true);
 
             const result = await decideScanStrategy(testFolder, mockLogger);
@@ -120,6 +122,7 @@ describe("scan-fix-simple", () => {
             const configPath = path.join(testFolder, ".photasa.json");
             const validConfig = {
                 version: "1.0",
+                lastModified: Date.now(),
                 photoList: [{ path: "photo1.jpg", thumbnail: "thumb1.jpg", isVideo: false }],
             };
             await fs.writeFile(configPath, JSON.stringify(validConfig, null, 2));

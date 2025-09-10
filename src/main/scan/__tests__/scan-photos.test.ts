@@ -177,7 +177,7 @@ describe("scan-photos enhanced functionality", () => {
 
             const result = await shouldProcessFile("/test/dir/file.jpg", "scan", mockLogger);
             expect(result).toBe(true);
-            expect(mockFs.existsSync).toHaveBeenCalledWith("/test/dir/.photasa.json");
+            expect(mockFs.existsSync).toHaveBeenCalledWith(path.join("/test/dir", ".photasa.json"));
         });
 
         it("should process files not in photasa config", async () => {

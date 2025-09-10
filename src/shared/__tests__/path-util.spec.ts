@@ -194,7 +194,9 @@ describe("toThumbnailName", () => {
 describe("toPreviewPath", () => {
     it("should build preview image path", () => {
         const result = toPreviewPath("/Users/Albert/Photos/photo.jpg");
-        expect(result).toBe("/Users/Albert/Photos/.photasaoriginals/photo.jpeg");
+        expect(result).toBe(
+            path.posix.join("/Users/Albert/Photos", ".photasaoriginals", "photo.jpeg"),
+        );
     });
 
     it("should handle Windows paths", () => {

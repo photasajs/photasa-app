@@ -16,7 +16,7 @@ describe("path-helper", () => {
 
     describe("toFullPath", () => {
         it("should return full path", () => {
-            expect(toFullPath("test", { root: "root" })).toBe("root/test");
+            expect(toFullPath("test", { root: "root" })).toBe(path.posix.join("root", "test"));
         });
     });
 
@@ -37,7 +37,7 @@ describe("path-helper", () => {
             const result = await firstValueFrom<FileAction>(ensureDir(action));
 
             // The function should set targetDir based on target and targetName
-            expect(result.targetDir).toBe("/test/target/test.md");
+            expect(result.targetDir).toBe(path.posix.join("/test/target", "test.md"));
         });
     });
 });
