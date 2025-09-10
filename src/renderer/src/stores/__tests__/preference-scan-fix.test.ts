@@ -11,9 +11,8 @@ import { usePreferenceStore } from "../preference";
 // import type { PhotasaLogger } from "@common/logger";
 
 // Mock the API module
-const mockCheckPhotasaConfig = vi.fn();
 vi.mock("@renderer/utils/api", () => ({
-    checkPhotasaConfig: mockCheckPhotasaConfig,
+    checkPhotasaConfig: vi.fn(),
 }));
 
 // Mock window.api
@@ -50,7 +49,8 @@ describe("preference-scan-fix", () => {
 
     describe("addScanFolder 智能检查", () => {
         it("应该跳过已扫描的文件夹", async () => {
-            mockCheckPhotasaConfig.mockResolvedValue({
+            const { checkPhotasaConfig } = await import("@renderer/utils/api");
+            vi.mocked(checkPhotasaConfig).mockResolvedValue({
                 hasConfig: true,
                 photoCount: 5,
                 reason: "配置文件存在且有效",
@@ -61,7 +61,7 @@ describe("preference-scan-fix", () => {
             await store.addScanFolder(folderPath, "scan");
 
             // 验证检查函数被调用
-            expect(mockCheckPhotasaConfig).toHaveBeenCalledWith(folderPath);
+            expect(checkPhotasaConfig).toHaveBeenCalledWith(folderPath);
 
             // 验证文件夹没有添加到扫描队列
             expect(store.scanningFolder).toHaveLength(0);
@@ -76,7 +76,8 @@ describe("preference-scan-fix", () => {
         });
 
         it("应该扫描没有配置文件的文件夹", async () => {
-            mockCheckPhotasaConfig.mockResolvedValue({
+            const { checkPhotasaConfig } = await import("@renderer/utils/api");
+            vi.mocked(checkPhotasaConfig).mockResolvedValue({
                 hasConfig: false,
                 reason: "配置文件不存在",
             });
@@ -86,7 +87,7 @@ describe("preference-scan-fix", () => {
             await store.addScanFolder(folderPath, "scan");
 
             // 验证检查函数被调用
-            expect(mockCheckPhotasaConfig).toHaveBeenCalledWith(folderPath);
+            expect(checkPhotasaConfig).toHaveBeenCalledWith(folderPath);
 
             // 验证文件夹被添加到扫描队列
             expect(store.scanningFolder).toHaveLength(1);
@@ -100,7 +101,8 @@ describe("preference-scan-fix", () => {
         });
 
         it("应该扫描空配置文件的文件夹", async () => {
-            mockCheckPhotasaConfig.mockResolvedValue({
+            const { checkPhotasaConfig } = await import("@renderer/utils/api");
+            vi.mocked(checkPhotasaConfig).mockResolvedValue({
                 hasConfig: false,
                 reason: "配置文件为空",
             });
@@ -115,7 +117,8 @@ describe("preference-scan-fix", () => {
         });
 
         it("应该强制重新扫描已扫描的文件夹", async () => {
-            mockCheckPhotasaConfig.mockResolvedValue({
+            const { checkPhotasaConfig } = await import("@renderer/utils/api");
+            vi.mocked(checkPhotasaConfig).mockResolvedValue({
                 hasConfig: true,
                 photoCount: 10,
                 reason: "配置文件存在且有效",
@@ -219,7 +222,8 @@ describe("preference-scan-fix", () => {
         });
 
         it("应该处理包含特殊字符的路径", async () => {
-            mockCheckPhotasaConfig.mockResolvedValue({
+            const { checkPhotasaConfig } = await import("@renderer/utils/api");
+            vi.mocked(checkPhotasaConfig).mockResolvedValue({
                 hasConfig: false,
                 reason: "配置文件不存在",
             });
@@ -234,7 +238,8 @@ describe("preference-scan-fix", () => {
 
     describe("性能测试", () => {
         it("应该快速处理大量文件夹检查", async () => {
-            mockCheckPhotasaConfig.mockResolvedValue({
+            const { checkPhotasaConfig } = await import("@renderer/utils/api");
+            vi.mocked(checkPhotasaConfig).mockResolvedValue({
                 hasConfig: false,
                 reason: "配置文件不存在",
             });
@@ -253,7 +258,8 @@ describe("preference-scan-fix", () => {
         });
 
         it("应该快速跳过大量已扫描的文件夹", async () => {
-            mockCheckPhotasaConfig.mockResolvedValue({
+            const { checkPhotasaConfig } = await import("@renderer/utils/api");
+            vi.mocked(checkPhotasaConfig).mockResolvedValue({
                 hasConfig: true,
                 photoCount: 5,
                 reason: "配置文件存在且有效",

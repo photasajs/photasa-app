@@ -14,12 +14,10 @@ vi.mock("fs-extra");
 const mockFs = vi.mocked(fs);
 
 // Mock electron
-const mockIpcMain = {
-    handle: vi.fn(),
-};
-
 vi.mock("electron", () => ({
-    ipcMain: mockIpcMain,
+    ipcMain: {
+        handle: vi.fn(),
+    },
 }));
 
 // 导入实际的 handler 函数

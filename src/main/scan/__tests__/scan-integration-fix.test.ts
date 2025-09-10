@@ -20,9 +20,8 @@ vi.mock("@main/config/config-storage");
 const mockFs = vi.mocked(fs);
 
 // Mock getPhotasaConfig
-const mockGetPhotasaConfig = vi.fn();
 vi.doMock("@main/config/config-storage", () => ({
-    getPhotasaConfig: mockGetPhotasaConfig,
+    getPhotasaConfig: vi.fn(),
 }));
 const mockLogger: PhotasaLogger = {
     debug: vi.fn(),
@@ -51,7 +50,8 @@ describe("scan-integration-fix", () => {
             };
 
             // 设置 mock 行为
-            mockGetPhotasaConfig.mockImplementation((folderPath) => {
+            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
                 if (folderPath === scannedFolder) {
                     return Promise.resolve(scannedConfig);
                 }
@@ -77,7 +77,8 @@ describe("scan-integration-fix", () => {
             ];
 
             // 设置 mock 行为
-            mockGetPhotasaConfig.mockImplementation((folderPath) => {
+            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.hasConfig) {
                     return Promise.resolve({
@@ -164,7 +165,8 @@ describe("scan-integration-fix", () => {
             ];
 
             // 设置 mock 行为
-            mockGetPhotasaConfig.mockImplementation((folderPath) => {
+            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.shouldFail) {
                     return Promise.reject(new Error("配置读取失败"));
