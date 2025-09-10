@@ -752,12 +752,6 @@ const getRecommendationColor = (recommendation: string): string => {
                     color: var(--text-color);
                 }
 
-                .ant-radio-group {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 16px;
-                }
-
                 .danger-option {
                     color: var(--error-color);
                 }

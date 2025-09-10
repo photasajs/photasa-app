@@ -1,4 +1,4 @@
-import type { DataNode } from "ant-design-vue/es/tree";
+import type { DataNode } from "@renderer/stores/preference";
 import { splitPath, normalizePath, mergePath } from "@renderer/utils/api-path";
 import type { Photo } from "@common/config-types";
 

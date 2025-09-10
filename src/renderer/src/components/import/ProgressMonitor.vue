@@ -477,10 +477,6 @@ onUnmounted(() => {
     .main-progress {
         margin-bottom: 24px;
 
-        .ant-progress {
-            margin-bottom: 8px;
-        }
-
         .progress-text {
             display: flex;
             justify-content: space-between;

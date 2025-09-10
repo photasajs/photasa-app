@@ -103,15 +103,6 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
     background: var(--color-thumbnail-image-bg);
 }
 
-.thumbnail-image .ant-image {
-    display: flex;
-}
-
-.thumbnail-image .ant-spin-nested-loading,
-.thumbnail-image .ant-spin-container {
-    background: transparent !important;
-}
-
 .video-player {
     position: relative;
     width: 100%;

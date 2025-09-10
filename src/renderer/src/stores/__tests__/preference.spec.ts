@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { usePreferenceStore } from "../preference";
-import type { DataNode } from "ant-design-vue/lib/tree";
+import type { DataNode } from "@renderer/stores/preference";
 import type { ScanAction } from "@common/scan-types";
 
 // Mock dependencies

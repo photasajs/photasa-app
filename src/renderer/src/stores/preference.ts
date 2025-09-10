@@ -5,7 +5,17 @@ import { cleanupScanQueue } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@common/config-types";
 import type { ScanAction, FileOperationInput } from "@common/scan-types";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
-import { DataNode } from "ant-design-vue/lib/tree";
+// 自定义 DataNode 类型定义
+export interface DataNode {
+    key: string | number;
+    title: string;
+    children?: DataNode[];
+    isLeaf?: boolean;
+    disabled?: boolean;
+    selectable?: boolean;
+    checkable?: boolean;
+    [key: string]: any;
+}
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 import { loggers } from "@common/logger";

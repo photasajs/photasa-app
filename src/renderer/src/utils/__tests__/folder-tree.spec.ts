@@ -1,5 +1,5 @@
 import { buildDataNode, cleanDataNode } from "../folder-tree";
-import type { DataNode } from "ant-design-vue/es/tree";
+import type { DataNode } from "@renderer/stores/preference";
 import { describe, it, expect, beforeAll } from "vitest";
 
 beforeAll(() => {

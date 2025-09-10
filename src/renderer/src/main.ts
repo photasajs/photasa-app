@@ -2,11 +2,8 @@ import { createApp, Plugin, watch } from "vue";
 import App from "./App.vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
-import Antd from "ant-design-vue";
-import "ant-design-vue/dist/antd.css";
 import "./assets/css/styles.less";
 import "./assets/css/tailwind.css";
-import "./assets/css/antd-theme-patch.css";
 import Bugsnag from "@bugsnag/js";
 import BugsnagPluginVue from "@bugsnag/plugin-vue";
 import VueVideoPlayer from "@videojs-player/vue";
@@ -34,7 +31,6 @@ app.use(i18n);
 app.use(VueVideoPlayer);
 app.use(<Plugin>bugsnagVue);
 app.use(pinia);
-app.use(Antd);
 
 // provide FindPhotoServiceIpc 实例
 app.provide(FindPhotoServiceKey, new FindPhotoServiceIpc());

@@ -33,12 +33,6 @@ vi.mock("@renderer/utils/api-path", () => ({
     openInFinder: vi.fn(),
 }));
 
-vi.mock("ant-design-vue", () => ({
-    default: {
-        install: vi.fn(),
-    },
-}));
-
 describe("ImageList Drawer Functionality", () => {
     it("should have proper test structure", () => {
         // Basic test to ensure the test file structure is correct

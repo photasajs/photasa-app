@@ -589,34 +589,18 @@ watch(
         display: flex;
         align-items: center;
         gap: 8px;
-
-        .ant-picker {
-            flex: 1;
-        }
     }
 
     .quick-date-filters {
-        .ant-btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
     }
 
     .pattern-filter {
         display: flex;
         align-items: center;
         gap: 8px;
-
-        .ant-input {
-            flex: 1;
-        }
     }
 
     .exclude-patterns {
-        .ant-select {
-            width: 100%;
-        }
     }
 
     .filter-stats {

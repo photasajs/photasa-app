@@ -141,7 +141,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { DataNode } from "ant-design-vue/es/tree";
+import type { DataNode } from "@renderer/stores/preference";
 
 export type Key = string | number;
 
