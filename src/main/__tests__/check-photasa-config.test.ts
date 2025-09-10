@@ -37,6 +37,35 @@ vi.mock("electron", () => ({
     },
 }));
 
+// Mock @electron-toolkit/utils
+vi.mock("@electron-toolkit/utils", () => ({
+    electronApp: {
+        on: vi.fn(),
+        whenReady: vi.fn(),
+    },
+    optimizer: {
+        watch: vi.fn(),
+    },
+    is: {
+        dev: true,
+        mac: true,
+        windows: false,
+        linux: false,
+    },
+}));
+
+// Mock @bugsnag/electron
+vi.mock("@bugsnag/electron", () => ({
+    default: {
+        create: vi.fn(),
+    },
+}));
+
+// Mock electron-is-dev
+vi.mock("electron-is-dev", () => ({
+    default: true,
+}));
+
 // 导入实际的 handler 函数
 import { checkPhotasaConfig } from "../index";
 
