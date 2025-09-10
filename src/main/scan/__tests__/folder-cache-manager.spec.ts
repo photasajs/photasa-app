@@ -48,12 +48,17 @@ describe("folder-cache-manager", () => {
     describe("computeFolderHash", () => {
         it("应该为空目录返回空哈希", async () => {
             // 模拟空目录
+            const mockDirStats = { isDirectory: () => true };
+            mockFs.stat.mockResolvedValue(mockDirStats);
             mockFs.readdir.mockResolvedValue([]);
 
             const result = await computeFolderHash(testFolderPath);
 
-            expect(result).toBe(crypto.createHash("sha256").update("").digest("hex"));
-            expect(mockFs.readdir).toHaveBeenCalledWith(testFolderPath, { withFileTypes: true });
+            expect(result).toBe(crypto.createHash("sha256").update(Buffer.from("", "utf8")).digest("hex"));
+            expect(mockFs.readdir).toHaveBeenCalledWith(path.resolve(testFolderPath), { 
+                withFileTypes: true, 
+                encoding: "utf8" 
+            });
         });
 
         it("应该为包含媒体文件的目录计算正确哈希", async () => {
@@ -76,13 +81,21 @@ describe("folder-cache-manager", () => {
                 },
             ];
 
-            const mockStats = {
+            const mockDirStats = { isDirectory: () => true };
+            const mockFileStats = {
                 size: 1024,
                 mtimeMs: 1640995200000,
             };
 
+            // 第一次调用返回目录统计，后续调用返回文件统计
+            mockFs.stat.mockImplementation((filePath: string) => {
+                if (filePath === testFolderPath || filePath === path.resolve(testFolderPath)) {
+                    return Promise.resolve(mockDirStats);
+                }
+                return Promise.resolve(mockFileStats);
+            });
+            
             mockFs.readdir.mockResolvedValue(mockFiles);
-            mockFs.stat.mockResolvedValue(mockStats);
 
             // Mock isImage and isVideo
             const { default: isImage } = await import("is-image");
@@ -92,8 +105,8 @@ describe("folder-cache-manager", () => {
 
             const result = await computeFolderHash(testFolderPath);
 
-            // 验证只处理媒体文件
-            expect(mockFs.stat).toHaveBeenCalledTimes(2); // 只调用两次：image1.jpg 和 video1.mp4
+            // 验证调用次数：1次目录检查 + 2次媒体文件
+            expect(mockFs.stat).toHaveBeenCalledTimes(3); 
             expect(result).toBeTruthy();
             expect(result).toHaveLength(64); // SHA256 哈希长度
         });
