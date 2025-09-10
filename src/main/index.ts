@@ -5,6 +5,7 @@ import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
 import klawSync from "klaw-sync";
 import fs from "fs";
+import { readFile } from "fs/promises";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
 import WatchService from "./watch/watch-service";
@@ -105,7 +106,7 @@ function createWindow(): void {
                 return { hasConfig: false, reason: "配置文件不存在" };
             }
 
-            const configContent = await fs.readFile(configPath, "utf8");
+            const configContent = await readFile(configPath, "utf8");
             const config = JSON.parse(configContent);
 
             if (

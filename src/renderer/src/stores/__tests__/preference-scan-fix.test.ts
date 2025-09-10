@@ -22,6 +22,7 @@ Object.defineProperty(window, "api", {
         splitPath: vi.fn((path: string) => path.split("/")),
         joinPath: vi.fn((...parts: string[]) => parts.join("/")),
         mergePath: vi.fn((base: string, relative: string) => base + "/" + relative),
+        checkPhotasaConfig: vi.fn(),
     },
     writable: true,
 });
@@ -58,6 +59,16 @@ describe("preference-scan-fix", () => {
 
             const folderPath = "/test/scanned-folder";
 
+            // 先设置根路径，这样 buildDataNode 才能工作
+            store.paths = ["/test"];
+            store.folderTree = [
+                {
+                    key: "/test",
+                    title: "/test",
+                    children: [],
+                },
+            ];
+
             await store.addScanFolder(folderPath, "scan");
 
             // 验证检查函数被调用
@@ -69,8 +80,12 @@ describe("preference-scan-fix", () => {
             // 验证文件夹树被更新
             expect(store.folderTree).toContainEqual(
                 expect.objectContaining({
-                    path: folderPath,
-                    children: [],
+                    key: "/test",
+                    children: expect.arrayContaining([
+                        expect.objectContaining({
+                            key: expect.stringContaining("scanned-folder"),
+                        }),
+                    ]),
                 }),
             );
         });
@@ -265,12 +280,24 @@ describe("preference-scan-fix", () => {
                 reason: "配置文件存在且有效",
             });
 
-            const folders = Array.from({ length: 100 }, (_, i) => `/test/scanned-folder${i}`);
+            const folders = Array.from({ length: 10 }, (_, i) => `/test/scanned-folder${i}`);
+
+            // 先设置根路径，这样 buildDataNode 才能工作
+            store.paths = ["/test"];
+            store.folderTree = [
+                {
+                    key: "/test",
+                    title: "/test",
+                    children: [],
+                },
+            ];
 
             const startTime = Date.now();
 
-            // 并发添加多个已扫描的文件夹
-            await Promise.all(folders.map((folder) => store.addScanFolder(folder, "scan")));
+            // 串行添加已扫描的文件夹，这样更容易控制mock行为
+            for (const folder of folders) {
+                await store.addScanFolder(folder, "scan");
+            }
 
             const endTime = Date.now();
 

@@ -8,27 +8,32 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs-extra";
 import path from "path";
-import os from "os";
 import { decideScanStrategy } from "../scan-strategy";
 import { ScanStrategy } from "../folder-cache-manager";
 import type { PhotasaLogger } from "@common/logger";
+import { getPhotasaConfig } from "@main/config/config-storage";
 
 // Mock external dependencies
 vi.mock("fs-extra");
-vi.mock("@main/config/config-storage");
-
-const mockFs = vi.mocked(fs);
-
-// Mock getPhotasaConfig
-vi.doMock("@main/config/config-storage", () => ({
+vi.mock("@main/config/config-storage", () => ({
     getPhotasaConfig: vi.fn(),
 }));
-const mockLogger: PhotasaLogger = {
+vi.mock("../folder-cache-manager", () => ({
+    computeFolderHash: vi.fn(),
+    ScanStrategy: {
+        SKIP: "skip",
+        INCREMENTAL: "incremental",
+        FULL: "full",
+    },
+}));
+
+const mockFs = vi.mocked(fs);
+const mockLogger = {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-};
+} as unknown as PhotasaLogger;
 
 describe("scan-integration-fix", () => {
     beforeEach(() => {
@@ -46,19 +51,54 @@ describe("scan-integration-fix", () => {
             const scannedConfig = {
                 version: "1.0",
                 lastModified: Date.now(),
-                photoList: [{ path: "/test/scanned/photo1.jpg", name: "photo1.jpg" }],
+                photoList: [
+                    {
+                        path: "/test/scanned/photo1.jpg",
+                        name: "photo1.jpg",
+                        thumbnail: "",
+                        isVideo: false,
+                    },
+                ],
             };
 
             // 设置 mock 行为
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
+            vi.mocked(getPhotasaConfig).mockImplementation((folderPath, _logger) => {
                 if (folderPath === scannedFolder) {
                     return Promise.resolve(scannedConfig);
                 }
-                return Promise.resolve(null);
+                if (folderPath === newFolder) {
+                    return Promise.resolve({
+                        version: "1.0",
+                        lastModified: Date.now(),
+                        photoList: [],
+                    });
+                }
+                return Promise.resolve({
+                    version: "1.0",
+                    lastModified: 0,
+                    photoList: [],
+                });
             });
 
-            mockFs.existsSync.mockReturnValue(true);
+            mockFs.existsSync.mockImplementation((filePath) => {
+                return (
+                    filePath === path.join(scannedFolder, ".photasa.json") ||
+                    filePath === path.join(newFolder, ".photasa.json")
+                );
+            });
+
+            // Mock computeFolderHash
+            const { computeFolderHash } = await import("../folder-cache-manager");
+            vi.mocked(computeFolderHash).mockImplementation((folderPath) => {
+                if (folderPath === scannedFolder) {
+                    return Promise.resolve("hash1");
+                }
+                if (folderPath === newFolder) {
+                    return Promise.resolve("hash2"); // 有照片文件，应该返回 FULL
+                }
+                return Promise.resolve("");
+            });
 
             // 测试扫描策略决策
             const result1 = await decideScanStrategy(scannedFolder, mockLogger);
@@ -78,19 +118,36 @@ describe("scan-integration-fix", () => {
 
             // 设置 mock 行为
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
+            vi.mocked(getPhotasaConfig).mockImplementation((folderPath, _logger) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.hasConfig) {
                     return Promise.resolve({
                         version: "1.0",
                         lastModified: Date.now(),
-                        photoList: [],
+                        photoList: [
+                            {
+                                path: "test.jpg",
+                                name: "test.jpg",
+                                thumbnail: "",
+                                isVideo: false,
+                            },
+                        ],
                     });
                 }
-                return Promise.resolve(null);
+                return Promise.resolve({
+                    version: "1.0",
+                    lastModified: 0,
+                    photoList: [],
+                });
             });
 
-            mockFs.existsSync.mockReturnValue(true);
+            mockFs.existsSync.mockImplementation((filePath) => {
+                if (!String(filePath).endsWith(".photasa.json")) {
+                    return false;
+                }
+                const folder = folders.find((f) => filePath === path.join(f.path, ".photasa.json"));
+                return folder?.hasConfig || false;
+            });
 
             // 测试所有文件夹的扫描策略
             for (const folder of folders) {
@@ -127,18 +184,29 @@ describe("scan-integration-fix", () => {
         it("应该快速处理大量已扫描的文件夹", async () => {
             const folders = Array.from({ length: 100 }, (_, i) => `/test/folder${i}`);
 
-            const mockGetPhotasaConfig = vi.fn();
-            vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig,
-            }));
-
-            mockGetPhotasaConfig.mockResolvedValue({
-                version: "1.0",
-                lastModified: Date.now(),
-                photoList: [],
+            // 设置 mock 行为
+            vi.mocked(getPhotasaConfig).mockImplementation((_folderPath, _logger) => {
+                return Promise.resolve({
+                    version: "1.0",
+                    lastModified: Date.now(),
+                    photoList: [
+                        {
+                            path: "test.jpg",
+                            name: "test.jpg",
+                            thumbnail: "",
+                            isVideo: false,
+                        },
+                    ],
+                });
             });
 
-            mockFs.existsSync.mockReturnValue(true);
+            mockFs.existsSync.mockImplementation((filePath) => {
+                return String(filePath).endsWith(".photasa.json");
+            });
+
+            // Mock computeFolderHash - 不需要调用，因为photoList非空会直接跳过
+            const { computeFolderHash } = await import("../folder-cache-manager");
+            vi.mocked(computeFolderHash).mockResolvedValue("");
 
             const startTime = Date.now();
 
@@ -165,8 +233,7 @@ describe("scan-integration-fix", () => {
             ];
 
             // 设置 mock 行为
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
+            vi.mocked(getPhotasaConfig).mockImplementation((folderPath, _logger) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.shouldFail) {
                     return Promise.reject(new Error("配置读取失败"));
@@ -174,11 +241,24 @@ describe("scan-integration-fix", () => {
                 return Promise.resolve({
                     version: "1.0",
                     lastModified: Date.now(),
-                    photoList: [],
+                    photoList: [
+                        {
+                            path: "test.jpg",
+                            name: "test.jpg",
+                            thumbnail: "",
+                            isVideo: false,
+                        },
+                    ],
                 });
             });
 
-            mockFs.existsSync.mockReturnValue(true);
+            mockFs.existsSync.mockImplementation((filePath) => {
+                return String(filePath).endsWith(".photasa.json");
+            });
+
+            // Mock computeFolderHash - 不需要调用，因为photoList非空会直接跳过
+            const { computeFolderHash } = await import("../folder-cache-manager");
+            vi.mocked(computeFolderHash).mockResolvedValue("");
 
             // 测试所有文件夹，确保部分失败不影响其他文件夹
             for (const folder of folders) {
