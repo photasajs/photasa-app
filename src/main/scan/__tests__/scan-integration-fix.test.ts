@@ -74,7 +74,7 @@ describe("scan-integration-fix", () => {
 
             // Mock 外部依赖
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
+            (getPhotasaConfig as any).mockImplementation((folderPath) => {
                 if (folderPath === scannedFolder) {
                     return Promise.resolve(scannedConfig);
                 }
@@ -153,7 +153,7 @@ describe("scan-integration-fix", () => {
 
             // Mock 外部依赖
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
+            (getPhotasaConfig as any).mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.hasConfig) {
                     return Promise.resolve({
@@ -192,7 +192,7 @@ describe("scan-integration-fix", () => {
 
             // Mock 外部依赖
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockRejectedValue(new Error("JSON 解析失败"));
+            (getPhotasaConfig as any).mockRejectedValue(new Error("JSON 解析失败"));
 
             mockFs.existsSync.mockReturnValue(true);
 
@@ -240,7 +240,7 @@ describe("scan-integration-fix", () => {
 
             // Mock 外部依赖
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockResolvedValue({
+            (getPhotasaConfig as any).mockResolvedValue({
                 version: "1.0",
                 lastModified: Date.now(),
                 photoList: Array.from({ length: 10 }, (_, j) => ({
@@ -329,7 +329,7 @@ describe("scan-integration-fix", () => {
 
             // Mock 外部依赖
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            vi.mocked(getPhotasaConfig).mockImplementation((folderPath) => {
+            (getPhotasaConfig as any).mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.shouldFail) {
                     return Promise.reject(new Error("模拟错误"));

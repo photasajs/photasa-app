@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { walkthroughPhotos, shouldProcessFile } from "../scan-photos";
 import type { ScanAction } from "@common/scan-types";
 import fs from "fs-extra";
+import path from "path";
 
 // Mock dependencies
 vi.mock("fs-extra");

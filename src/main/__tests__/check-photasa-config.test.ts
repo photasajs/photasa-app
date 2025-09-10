@@ -49,7 +49,7 @@ describe("check-photasa-config API", () => {
             // 模拟 IPC 处理函数
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -78,7 +78,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -99,7 +99,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -124,7 +124,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -151,7 +151,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -178,7 +178,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -200,7 +200,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -221,7 +221,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -240,7 +240,7 @@ describe("check-photasa-config API", () => {
         it("应该处理空字符串路径", async () => {
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -257,7 +257,7 @@ describe("check-photasa-config API", () => {
         it("应该处理 null 路径", async () => {
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -287,7 +287,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }
@@ -323,7 +323,7 @@ describe("check-photasa-config API", () => {
 
             const { ipcMain } = await import("electron");
             const handler = vi.fn();
-            ipcMain.handle = vi.fn().mockImplementation((channel, callback) => {
+            (ipcMain as any).handle = vi.fn().mockImplementation((channel, callback) => {
                 if (channel === "picasa:check-photasa-config") {
                     handler.mockImplementation(callback);
                 }

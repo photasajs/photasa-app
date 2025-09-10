@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { vol } from "memfs";
 import fs from "fs-extra";
-// import path from "path"; // Unused import removed
+import path from "path";
 import type { PhotasaConfig } from "@common/config-types";
 
 // Mock fs-extra

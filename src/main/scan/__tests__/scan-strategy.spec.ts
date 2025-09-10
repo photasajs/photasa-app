@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import fs from "fs-extra";
+import path from "path";
 import {
     shouldScanOneLevel,
     shouldProcessFile,

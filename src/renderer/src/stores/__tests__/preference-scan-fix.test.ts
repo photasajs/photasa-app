@@ -15,6 +15,14 @@ vi.mock("@renderer/utils/api", () => ({
     checkPhotasaConfig: vi.fn(),
 }));
 
+// Mock window.api
+Object.defineProperty(window, 'api', {
+    value: {
+        normalizePath: vi.fn((path: string) => path.replace(/\\/g, "/")),
+    },
+    writable: true,
+});
+
 // Mock the logger
 // const mockLogger = {
 //     debug: vi.fn(),

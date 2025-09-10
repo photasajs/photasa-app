@@ -105,7 +105,7 @@ function createWindow(): void {
                 return { hasConfig: false, reason: "配置文件不存在" };
             }
 
-            const configContent = await fs.readFile(configPath, { encoding: "utf8" });
+            const configContent = await fs.readFile(configPath, "utf8");
             const config = JSON.parse(configContent);
 
             if (
