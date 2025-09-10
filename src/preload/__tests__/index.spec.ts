@@ -84,6 +84,7 @@ vi.mock("@shared/path-util", () => ({
     isFileUnderFolder: vi.fn(),
     toFileName: vi.fn(),
     isHiddenFile: vi.fn(),
+    normalizePath: vi.fn((input) => input), // Mock normalizePath function
 }));
 
 // Mock process.contextIsolated

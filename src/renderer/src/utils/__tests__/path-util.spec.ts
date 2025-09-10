@@ -1,5 +1,27 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { normalizePath } from "../path-util";
+
+// Mock window.api
+const mockNormalizePath = vi.fn((input) => {
+    // 模拟shared层的normalizePath行为
+    if (input.startsWith("file://")) {
+        return input.replace("file://", "").replace(/^\/+/, "/");
+    }
+    return input;
+});
+
+beforeEach(() => {
+    // 重置mock
+    vi.clearAllMocks();
+
+    // 设置window.api mock
+    Object.defineProperty(window, "api", {
+        value: {
+            normalizePath: mockNormalizePath,
+        },
+        writable: true,
+    });
+});
 
 describe("normalizePath", () => {
     it("should handle Unix file:// URLs correctly", () => {

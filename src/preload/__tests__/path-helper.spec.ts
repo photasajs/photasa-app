@@ -16,7 +16,7 @@ describe("path-helper", () => {
 
     describe("toFullPath", () => {
         it("should return full path", () => {
-            expect(toFullPath("test", { root: "root" })).toBe(path.posix.join("root", "test"));
+            expect(toFullPath("test", { root: "root" })).toBe(path.join("root", "test"));
         });
     });
 
@@ -37,7 +37,7 @@ describe("path-helper", () => {
             const result = await firstValueFrom<FileAction>(ensureDir(action));
 
             // The function should set targetDir based on target and targetName
-            expect(result.targetDir).toBe(path.posix.join("/test/target", "test.md"));
+            expect(result.targetDir).toBe(path.join("/test/target", "test.md"));
         });
     });
 });
@@ -50,7 +50,7 @@ describe("normalizePath/mergePath platform coverage", () => {
     });
     it("should normalize POSIX path", () => {
         const posixPath = "/foo/bar/abc";
-        expect(pathHelper.normalizePath(posixPath)).toBe(path.posix.normalize(posixPath));
+        expect(pathHelper.normalizePath(posixPath)).toBe(path.normalize(posixPath));
     });
     it("should merge Windows path", () => {
         const left = "C:\\foo\\bar";
@@ -61,6 +61,6 @@ describe("normalizePath/mergePath platform coverage", () => {
     it("should merge POSIX path", () => {
         const left = "/foo/bar";
         const right = "baz";
-        expect(pathHelper.mergePath(left, right)).toBe(path.posix.join(left, right));
+        expect(pathHelper.mergePath(left, right)).toBe(path.join(left, right));
     });
 });

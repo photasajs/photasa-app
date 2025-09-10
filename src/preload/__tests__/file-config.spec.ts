@@ -70,7 +70,7 @@ describe("file-config", () => {
 
             const result = await ensureConfig(photoPath, true);
 
-            expect(result).toBe(path.posix.join("/test", ".photasa.json"));
+            expect(result).toBe(path.join("/test", ".photasa.json"));
             expect(mockFs.ensureFile).toHaveBeenCalledWith("/test/.photasa.json");
         });
 
@@ -89,7 +89,7 @@ describe("file-config", () => {
 
             const result = await ensureConfig(photoPath, true, true);
 
-            expect(result).toBe(path.posix.join("/test", ".photasa.json"));
+            expect(result).toBe(path.join("/test", ".photasa.json"));
             expect(mockFs.ensureFile).not.toHaveBeenCalled();
         });
     });
@@ -104,7 +104,7 @@ describe("file-config", () => {
 
             const result = await readConfig(photoPath, true);
 
-            expect(result.dir).toBe(path.posix.join("/test", ".photasa.json"));
+            expect(result.dir).toBe(path.join("/test", ".photasa.json"));
             expect(result.data).toBe(configData);
         });
 
@@ -116,7 +116,7 @@ describe("file-config", () => {
 
             const result = await readConfig(photoPath, true);
 
-            expect(result.dir).toBe(path.posix.join("/test", ".photasa.json"));
+            expect(result.dir).toBe(path.join("/test", ".photasa.json"));
             expect(result.data).toBe("{}");
         });
     });
@@ -246,7 +246,7 @@ describe("file-config", () => {
 
             const result = await removeFromPhotoList(photoPath);
 
-            expect(result.path).toBe(path.posix.join("/test", ".photasa.json"));
+            expect(result.path).toBe(path.join("/test", ".photasa.json"));
             expect(result.config.photoList).toEqual([]);
             expect(mockFs.writeFile).toHaveBeenCalled();
         });
