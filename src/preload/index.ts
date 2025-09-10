@@ -21,7 +21,7 @@ import {
     fixPhotasaConfig,
     resetPhotasaConfig,
 } from "./file-config";
-import { scanSubfolders, cleanupScanQueue } from "./query-config";
+import { scanSubfolders, cleanupScanQueue, checkPhotasaConfig } from "./query-config";
 import { shouldIgnorePhotasaPath } from "@common/index";
 import * as pathHelper from "./path-helper";
 import {
@@ -57,6 +57,7 @@ const api = {
     removeFromPhotoList,
     getPhotasaConfig,
     scanSubfolders,
+    checkPhotasaConfig,
     isFileUnderFolder,
     toFileName,
     toThumbnailName,

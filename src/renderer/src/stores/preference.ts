@@ -87,8 +87,8 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths = this.paths.sort();
             }
         },
-        addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
-            logger.debug("Adding scan folder: ${folder}, action: ${action}");
+        async addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
+            logger.debug(`Adding scan folder: ${folder}, action: ${action}`);
             if (!Array.isArray(this.scanningFolder)) {
                 logger.debug("Initializing scanningFolder array");
                 this.scanningFolder = [];
@@ -111,6 +111,26 @@ export const usePreferenceStore = defineStore("preference", {
                     );
                 }
                 return;
+            }
+
+            // 智能检查：如果文件夹已扫描且不是强制重新扫描，则跳过
+            if (action === "scan") {
+                try {
+                    const { checkPhotasaConfig } = await import("@renderer/utils/api");
+                    const configCheck = await checkPhotasaConfig(folder);
+
+                    if (configCheck.hasConfig) {
+                        logger.info(
+                            `Folder already scanned, skipping: ${folder} (${configCheck.photoCount} photos)`,
+                        );
+                        // 仍然更新文件夹树，但不添加到扫描队列
+                        this.updateFolderTree(folder);
+                        return;
+                    }
+                } catch (error) {
+                    logger.warn(`Failed to check photasa config for ${folder}:`, error);
+                    // 如果检查失败，继续正常流程
+                }
             }
 
             // Add the new folder to scan

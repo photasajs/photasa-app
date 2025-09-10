@@ -124,6 +124,12 @@ export function scanSubfolders(folder): Promise<string[]> {
     return window.api.scanSubfolders(folder);
 }
 
+export function checkPhotasaConfig(
+    folderPath: string,
+): Promise<{ hasConfig: boolean; photoCount?: number; reason: string }> {
+    return window.api.checkPhotasaConfig(folderPath);
+}
+
 export function isFileUnderFolder(file: string, folder: string): boolean {
     return window.api.isFileUnderFolder(file, folder);
 }

@@ -97,6 +97,36 @@ function createWindow(): void {
         return app.getPath(args.name);
     });
 
+    // Check if folder has valid photasa.json
+    ipcMain.handle("picasa:check-photasa-config", async (_, folderPath) => {
+        try {
+            const configPath = path.join(folderPath, ".photasa.json");
+            if (!fs.existsSync(configPath)) {
+                return { hasConfig: false, reason: "配置文件不存在" };
+            }
+
+            const configContent = await fs.readFile(configPath, { encoding: "utf8" });
+            const config = JSON.parse(configContent);
+
+            if (
+                !config.photoList ||
+                !Array.isArray(config.photoList) ||
+                config.photoList.length === 0
+            ) {
+                return { hasConfig: false, reason: "配置文件为空" };
+            }
+
+            return {
+                hasConfig: true,
+                photoCount: config.photoList.length,
+                reason: "配置文件存在且有效",
+            };
+        } catch (error) {
+            logger.error(`Error checking photasa config for ${folderPath}:`, error);
+            return { hasConfig: false, reason: "配置文件读取失败" };
+        }
+    });
+
     ipcMain.handle("picasa:sub-folders", async (_, args) => {
         try {
             const filterFn = (item: { path: string }): boolean => {

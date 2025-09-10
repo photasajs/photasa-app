@@ -17,8 +17,8 @@ import { PhotasaLogger } from "@common/logger";
 import { getPhotasaConfig } from "../config/config-storage";
 import {
     computeFolderHash,
-    getCacheInfo,
-    compareHashesAndDecide,
+    // getCacheInfo,
+    // compareHashesAndDecide,
     ScanStrategy,
     type ScanDecision,
 } from "./folder-cache-manager";
@@ -146,6 +146,13 @@ export async function decideScanStrategy(
                     };
                 }
             }
+
+            // .photasa.json 存在且包含照片列表，直接跳过扫描
+            logger.info(`[decideScanStrategy] .photasa.json 存在且有效，跳过扫描: ${folderPath}`);
+            return {
+                strategy: ScanStrategy.SKIP,
+                reason: "配置文件存在且有效，无需重新扫描",
+            };
         } catch (error) {
             logger.warn(`[decideScanStrategy] 读取 .photasa.json 失败: ${folderPath}`, error);
             return {
@@ -153,32 +160,6 @@ export async function decideScanStrategy(
                 reason: "配置文件读取失败",
             };
         }
-
-        // 3. 计算当前目录哈希
-        const currentHash = await computeFolderHash(folderPath);
-        logger.debug(`[decideScanStrategy] 计算目录哈希完成: ${currentHash}`);
-
-        // 4. 获取缓存信息（.photasa-folder.json）
-        const cachedInfo = await getCacheInfo(folderPath, logger);
-
-        if (!cachedInfo) {
-            // .photasa.json 存在但 .photasa-folder.json 不存在
-            // 说明是外部创建的配置文件，可以跳过扫描
-            logger.info(`[decideScanStrategy] 配置文件存在但无缓存，跳过扫描: ${folderPath}`);
-            return {
-                strategy: ScanStrategy.SKIP,
-                reason: "配置文件存在且有效，无需重新扫描",
-            };
-        }
-
-        // 5. 比较哈希决定策略
-        const decision = compareHashesAndDecide(cachedInfo.folderHash, currentHash, cachedInfo);
-
-        logger.info(
-            `[decideScanStrategy] 目录 ${folderPath} 扫描策略: ${decision.strategy}, 原因: ${decision.reason}`,
-        );
-
-        return decision;
     } catch (error) {
         logger.error(`[decideScanStrategy] 扫描决策失败: ${folderPath}`, error);
         // 出错时使用完整扫描作为安全选择

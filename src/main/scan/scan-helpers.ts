@@ -231,9 +231,11 @@ export async function restoreCachedFiles(
         // 将已扫描的文件重新推送给订阅者
         for (const photo of config.photoList) {
             if (photo && photo.path) {
+                // photo.path 存储的是文件名，需要构建完整路径
+                const fullPath = path.join(folderPath, photo.path);
                 const photoRequest: PhotoFileRequest = {
-                    path: photo.path,
-                    thumbnail: photo.thumbnail || buildThumbnailPath(photo.path),
+                    path: fullPath,
+                    thumbnail: photo.thumbnail || buildThumbnailPath(fullPath),
                     isImage: photo.isImage || false,
                     isVideo: photo.isVideo || false,
                     isDirectory: false,
