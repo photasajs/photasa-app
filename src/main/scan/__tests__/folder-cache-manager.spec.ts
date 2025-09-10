@@ -54,10 +54,12 @@ describe("folder-cache-manager", () => {
 
             const result = await computeFolderHash(testFolderPath);
 
-            expect(result).toBe(crypto.createHash("sha256").update(Buffer.from("", "utf8")).digest("hex"));
-            expect(mockFs.readdir).toHaveBeenCalledWith(path.resolve(testFolderPath), { 
-                withFileTypes: true, 
-                encoding: "utf8" 
+            expect(result).toBe(
+                crypto.createHash("sha256").update(Buffer.from("", "utf8")).digest("hex"),
+            );
+            expect(mockFs.readdir).toHaveBeenCalledWith(path.resolve(testFolderPath), {
+                withFileTypes: true,
+                encoding: "utf8",
             });
         });
 
@@ -94,7 +96,7 @@ describe("folder-cache-manager", () => {
                 }
                 return Promise.resolve(mockFileStats);
             });
-            
+
             mockFs.readdir.mockResolvedValue(mockFiles);
 
             // Mock isImage and isVideo
@@ -106,7 +108,7 @@ describe("folder-cache-manager", () => {
             const result = await computeFolderHash(testFolderPath);
 
             // 验证调用次数：1次目录检查 + 2次媒体文件
-            expect(mockFs.stat).toHaveBeenCalledTimes(3); 
+            expect(mockFs.stat).toHaveBeenCalledTimes(3);
             expect(result).toBeTruthy();
             expect(result).toHaveLength(64); // SHA256 哈希长度
         });
