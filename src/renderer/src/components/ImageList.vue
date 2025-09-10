@@ -74,11 +74,11 @@ const card = computed<Card>(() => {
 
 // 文件数量计算
 const imageCount = computed(() => {
-    return card.value?.images?.filter(img => !img.isVideo).length || 0;
+    return card.value?.images?.filter((img) => !img.isVideo).length || 0;
 });
 
 const videoCount = computed(() => {
-    return card.value?.images?.filter(img => img.isVideo).length || 0;
+    return card.value?.images?.filter((img) => img.isVideo).length || 0;
 });
 
 // 文件计数加载状态
@@ -356,9 +356,9 @@ onUnmounted(() => {
                     {{ part }}
                 </BaseBreadcrumbItem>
             </BaseBreadcrumb>
-            
+
             <!-- 文件数量显示 -->
-            <FileCountBadge 
+            <FileCountBadge
                 :imageCount="imageCount"
                 :videoCount="videoCount"
                 :isLoading="isCountingFiles"
