@@ -485,6 +485,24 @@
         "dimensions": "Boyutlar",
         "noMetadata": "Meta Veri Yok"
     },
+    "common": {
+        "files": "dosyalar",
+        "file": "dosya",
+        "images": "resimler",
+        "image": "resim",
+        "videos": "videolar",
+        "video": "video",
+        "counting": "Sayılıyor..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} dosya",
+            "images": "{count} resim",
+            "videos": "{count} video",
+            "mixed": "{images} resim, {videos} video",
+            "empty": "Dosya yok"
+        }
+    },
     "imageInfo": {
         "title": "Resim bilgisi",
         "lastUpdated": "Son güncelleme",

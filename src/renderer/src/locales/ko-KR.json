@@ -485,6 +485,24 @@
         "dimensions": "크기",
         "noMetadata": "메타데이터 없음"
     },
+    "common": {
+        "files": "파일",
+        "file": "파일",
+        "images": "이미지",
+        "image": "이미지",
+        "videos": "동영상",
+        "video": "동영상",
+        "counting": "계산 중..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count}개 파일",
+            "images": "{count}개 이미지",
+            "videos": "{count}개 동영상",
+            "mixed": "이미지 {images}개, 동영상 {videos}개",
+            "empty": "파일 없음"
+        }
+    },
     "imageInfo": {
         "title": "이미지 정보",
         "lastUpdated": "마지막 업데이트",

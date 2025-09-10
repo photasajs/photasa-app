@@ -22,6 +22,7 @@ import {
     BaseBreadcrumbItem,
     BaseTooltip,
     BaseCard,
+    FileCountBadge,
 } from "@renderer/components/ui";
 import { loggers } from "@common/logger";
 import ImageFallback from "@renderer/assets/images/fallback.png";
@@ -69,6 +70,20 @@ const card = computed<Card>(() => {
     const result = toImageList(currentFolder.value, currentFolderConfig.value);
 
     return result;
+});
+
+// 文件数量计算
+const imageCount = computed(() => {
+    return card.value?.images?.filter(img => !img.isVideo).length || 0;
+});
+
+const videoCount = computed(() => {
+    return card.value?.images?.filter(img => img.isVideo).length || 0;
+});
+
+// 文件计数加载状态
+const isCountingFiles = computed(() => {
+    return loadingPhotasaConfig.value || !currentFolderConfig.value;
 });
 
 // 文件元数据（支持图片/视频/文件信息）
@@ -329,7 +344,7 @@ onUnmounted(() => {
     >
         <!-- 标题区 -->
         <div
-            class="px-4 py-2 border-b flex items-center"
+            class="px-4 py-2 border-b flex items-center justify-between"
             style="border-color: var(--color-border); background: var(--color-bg-secondary)"
         >
             <BaseBreadcrumb>
@@ -341,6 +356,13 @@ onUnmounted(() => {
                     {{ part }}
                 </BaseBreadcrumbItem>
             </BaseBreadcrumb>
+            
+            <!-- 文件数量显示 -->
+            <FileCountBadge 
+                :imageCount="imageCount"
+                :videoCount="videoCount"
+                :isLoading="isCountingFiles"
+            />
         </div>
         <!-- 内容区 -->
         <div

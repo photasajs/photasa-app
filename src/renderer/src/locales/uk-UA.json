@@ -485,6 +485,24 @@
         "dimensions": "Розміри",
         "noMetadata": "Немає метаданих"
     },
+    "common": {
+        "files": "файлів",
+        "file": "файл",
+        "images": "зображень",
+        "image": "зображення",
+        "videos": "відео",
+        "video": "відео",
+        "counting": "Підрахунок..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} файлів",
+            "images": "{count} зображень",
+            "videos": "{count} відео",
+            "mixed": "{images} зображень, {videos} відео",
+            "empty": "Немає файлів"
+        }
+    },
     "imageInfo": {
         "title": "Інформація про зображення",
         "lastUpdated": "Останнє оновлення",

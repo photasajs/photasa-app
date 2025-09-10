@@ -485,6 +485,24 @@
         "dimensions": "Dimensions",
         "noMetadata": "No Metadata"
     },
+    "common": {
+        "files": "files",
+        "file": "file",
+        "images": "images",
+        "image": "image",
+        "videos": "videos",
+        "video": "video",
+        "counting": "Counting..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} files",
+            "images": "{count} images",
+            "videos": "{count} videos",
+            "mixed": "{images} images, {videos} videos",
+            "empty": "No files"
+        }
+    },
     "queue": {
         "timeRange": {
             "1h": "Last 1 hour",

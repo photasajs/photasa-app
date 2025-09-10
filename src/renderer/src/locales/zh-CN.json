@@ -493,6 +493,24 @@
         "dimensions": "尺寸",
         "noMetadata": "无元数据"
     },
+    "common": {
+        "files": "文件",
+        "file": "文件",
+        "images": "图片",
+        "image": "图片",
+        "videos": "视频",
+        "video": "视频",
+        "counting": "统计中..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} 个文件",
+            "images": "{count} 张图片",
+            "videos": "{count} 个视频",
+            "mixed": "{images} 张图片，{videos} 个视频",
+            "empty": "无文件"
+        }
+    },
     "imageInfo": {
         "title": "图片信息",
         "lastUpdated": "最后更新",

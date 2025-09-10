@@ -485,6 +485,24 @@
         "dimensions": "Dimensiones",
         "noMetadata": "Sin metadatos"
     },
+    "common": {
+        "files": "archivos",
+        "file": "archivo",
+        "images": "imágenes",
+        "image": "imagen",
+        "videos": "videos",
+        "video": "video",
+        "counting": "Contando..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} archivos",
+            "images": "{count} imágenes",
+            "videos": "{count} videos",
+            "mixed": "{images} imágenes, {videos} videos",
+            "empty": "Sin archivos"
+        }
+    },
     "imageInfo": {
         "title": "Información de Imagen",
         "lastUpdated": "Última actualización",

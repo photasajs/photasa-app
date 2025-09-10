@@ -484,6 +484,24 @@
         "dimensions": "尺寸",
         "noMetadata": "無中繼資料"
     },
+    "common": {
+        "files": "檔案",
+        "file": "檔案",
+        "images": "圖片",
+        "image": "圖片",
+        "videos": "影片",
+        "video": "影片",
+        "counting": "統計中..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} 個檔案",
+            "images": "{count} 張圖片",
+            "videos": "{count} 個影片",
+            "mixed": "{images} 張圖片，{videos} 個影片",
+            "empty": "無檔案"
+        }
+    },
     "imageInfo": {
         "title": "圖片資訊",
         "lastUpdated": "最後更新",

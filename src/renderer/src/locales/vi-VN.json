@@ -485,6 +485,24 @@
         "dimensions": "Kích thước",
         "noMetadata": "Không có siêu dữ liệu"
     },
+    "common": {
+        "files": "tệp",
+        "file": "tệp",
+        "images": "hình ảnh",
+        "image": "hình ảnh",
+        "videos": "video",
+        "video": "video",
+        "counting": "Đang đếm..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} tệp",
+            "images": "{count} hình ảnh",
+            "videos": "{count} video",
+            "mixed": "{images} hình ảnh, {videos} video",
+            "empty": "Không có tệp"
+        }
+    },
     "imageInfo": {
         "title": "Thông tin hình ảnh",
         "lastUpdated": "Cập nhật lần cuối",

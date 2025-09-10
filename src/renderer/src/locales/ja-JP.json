@@ -485,6 +485,24 @@
         "dimensions": "寸法",
         "noMetadata": "メタデータなし"
     },
+    "common": {
+        "files": "ファイル",
+        "file": "ファイル",
+        "images": "画像",
+        "image": "画像",
+        "videos": "動画",
+        "video": "動画",
+        "counting": "カウント中..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count}件のファイル",
+            "images": "{count}枚の画像",
+            "videos": "{count}件の動画",
+            "mixed": "画像{images}枚、動画{videos}件",
+            "empty": "ファイルなし"
+        }
+    },
     "imageInfo": {
         "title": "画像情報",
         "lastUpdated": "最終更新",

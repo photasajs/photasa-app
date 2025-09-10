@@ -485,6 +485,24 @@
         "dimensions": "Размеры",
         "noMetadata": "Нет метаданных"
     },
+    "common": {
+        "files": "файлов",
+        "file": "файл",
+        "images": "изображений",
+        "image": "изображение",
+        "videos": "видео",
+        "video": "видео",
+        "counting": "Подсчет..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} файлов",
+            "images": "{count} изображений",
+            "videos": "{count} видео",
+            "mixed": "{images} изображений, {videos} видео",
+            "empty": "Нет файлов"
+        }
+    },
     "imageInfo": {
         "title": "Информация об изображении",
         "lastUpdated": "Последнее обновление",

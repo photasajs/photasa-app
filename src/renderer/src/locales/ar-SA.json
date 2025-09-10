@@ -485,6 +485,24 @@
         "dimensions": "الأبعاد",
         "noMetadata": "لا توجد بيانات وصفية"
     },
+    "common": {
+        "files": "ملفات",
+        "file": "ملف",
+        "images": "صور",
+        "image": "صورة",
+        "videos": "فيديوهات",
+        "video": "فيديو",
+        "counting": "جارى العد..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} ملفات",
+            "images": "{count} صور",
+            "videos": "{count} فيديوهات",
+            "mixed": "{images} صور، {videos} فيديوهات",
+            "empty": "لا توجد ملفات"
+        }
+    },
     "imageInfo": {
         "title": "معلومات الصورة",
         "lastUpdated": "آخر تحديث",
