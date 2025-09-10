@@ -150,7 +150,8 @@
         "loading": {
             "label": "Loading...",
             "preview": "Loading preview data...",
-            "directories": "Selecting directories..."
+            "directories": "Selecting directories...",
+            "switchingFolder": "Switching folder..."
         },
         "error": {
             "label": "Error",

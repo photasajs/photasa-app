@@ -278,7 +278,8 @@
         "loading": {
             "label": "載入中...",
             "preview": "正在載入預覽資料...",
-            "directories": "正在選擇目錄..."
+            "directories": "正在選擇目錄...",
+            "switchingFolder": "切換資料夾中..."
         }
     },
     "menu": {

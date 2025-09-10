@@ -279,7 +279,8 @@
             "text": "Chargement...",
             "preview": "Chargement des données d'aperçu...",
             "directories": "Sélection des répertoires...",
-            "label": "Chargement..."
+            "label": "Chargement...",
+            "switchingFolder": "Changement de dossier..."
         }
     },
     "menu": {

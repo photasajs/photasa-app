@@ -150,7 +150,8 @@
         "loading": {
             "label": "加载中...",
             "preview": "正在加载预览数据...",
-            "directories": "正在选择目录..."
+            "directories": "正在选择目录...",
+            "switchingFolder": "切换文件夹中..."
         },
         "error": {
             "title": "操作失败",

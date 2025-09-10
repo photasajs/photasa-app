@@ -28,6 +28,7 @@ import ImageFallback from "@renderer/assets/images/fallback.png";
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
 import EmptyState from "./common/EmptyState.vue";
+import LoadingState from "./common/LoadingState.vue";
 import FileInfoDrawer from "./FileInfoDrawer.vue";
 import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
 import { safePositiveNumber } from "@renderer/common/number";
@@ -48,8 +49,8 @@ const { thumbnailSize, currentFolder, currentFolderConfig } = storeToRefs(prefer
 const showInfo = ref(false);
 // 加载图片元数据
 const loadingInfo = ref(false);
-// 加载配置
-// loadingPhotasaConfig 已删除，加载状态由 FolderList.vue 管理
+// 加载文件夹配置
+const loadingPhotasaConfig = ref(true); // 初始为true，等待配置加载
 // 图片加载失败
 const fallback = ref(ImageFallback);
 // 图片列表的引用
@@ -66,19 +67,6 @@ const previewIndex = ref(0);
 // 卡片
 const card = computed<Card>(() => {
     const result = toImageList(currentFolder.value, currentFolderConfig.value);
-
-    // 调试：记录 card 数据
-    if (process.env.NODE_ENV === "development") {
-        logger.debug("ImageList card data:", {
-            currentFolder: currentFolder.value,
-            currentFolderConfig: currentFolderConfig.value,
-            configPhotoListLength: currentFolderConfig.value?.photoList?.length || 0,
-            configPhotoListSample: currentFolderConfig.value?.photoList?.slice(0, 2) || [],
-            resultImagesLength: result.images?.length || 0,
-            resultImagesSample: result.images?.slice(0, 2) || [],
-            cardTitle: result.title,
-        });
-    }
 
     return result;
 });
@@ -121,22 +109,30 @@ function updateContainerWidth() {
     }
 }
 
+// 防抖更新函数
+let updateTimeout: ReturnType<typeof setTimeout> | null = null;
+const debouncedUpdate = () => {
+    if (updateTimeout) {
+        clearTimeout(updateTimeout);
+    }
+    updateTimeout = setTimeout(() => {
+        updateContainerWidth();
+        nextTick(() => {
+            initializeVirtualizer();
+        });
+    }, 16); // 约60fps
+};
+
 // 安全的缩略图尺寸（确保为数字类型）
 const safeThumbnailSize = computed(() => safePositiveNumber(thumbnailSize.value, 150));
 
-// 列数
+// 列数 - 添加缓存避免不必要的重计算
 const columns = computed((): number => {
-    const cols = computeColumns(containerWidth.value, safeThumbnailSize.value);
-    // 调试：记录列数计算
-    if (process.env.NODE_ENV === "development") {
-        logger.debug("ImageList columns calculation:", {
-            containerWidth: containerWidth.value,
-            thumbnailSizeRaw: thumbnailSize.value,
-            thumbnailSizeType: typeof thumbnailSize.value,
-            safeThumbnailSize: safeThumbnailSize.value,
-            columns: cols,
-        });
+    // 如果容器宽度为0，返回默认值
+    if (!containerWidth.value) {
+        return 1;
     }
+    const cols = computeColumns(containerWidth.value, safeThumbnailSize.value);
     return cols;
 });
 
@@ -145,24 +141,14 @@ const rows = computed((): Image[][] => {
     const images = card.value?.images || [];
     const groupedRows = groupImagesByColumns(images, columns.value);
 
-    // 调试：记录行数和数据
-    if (process.env.NODE_ENV === "development") {
-        logger.debug("ImageList rows calculation:", {
-            totalImages: images.length,
-            columns: columns.value,
-            rows: groupedRows.length,
-            firstRowLength: groupedRows[0]?.length || 0,
-        });
-    }
-
     return groupedRows;
 });
 
 // 行高
 const rowHeight = computed(() => safeThumbnailSize.value + 16);
-// 虚拟滚动
+// 虚拟滚动 - 使用稳定的初始值避免重新创建
 const virtualizer = useVirtualizer<HTMLElement, Element>({
-    count: rows.value.length,
+    count: 0, // 初始为0，通过watch更新
     getScrollElement: () => imageListRef.value,
     estimateSize: () => rowHeight.value,
     overscan: 4,
@@ -189,55 +175,139 @@ function openPreview(rowIdx: number, colIdx: number) {
     previewVisible.value = true;
 }
 
-// 监听容器宽度变化
-watch(imageListRef, () => updateContainerWidth());
-// 监听缩略图大小变化
-watch(safeThumbnailSize, () => updateContainerWidth());
-// 监听卡片数据变化，确保重新计算布局
-watch(card, () => {
+// 强制刷新图片列表
+function refreshImageList() {
+    clearDataState();
     nextTick(() => {
         updateContainerWidth();
+        initializeVirtualizer();
     });
-});
+}
 
-// 配置加载现在由 FolderList.vue 负责，ImageList 只需要响应数据变化
-// 删除重复的配置加载逻辑以避免竞态条件
-
-// 监听行数变化
-watch(rows, () => {
-    if (virtualizer.value) {
-        virtualizer.value.options.count = rows.value.length;
-        virtualizer.value.measure();
-    }
+// 暴露刷新方法给父组件
+defineExpose({
+    refreshImageList,
 });
 
 // 监听容器宽度变化
-watch(containerWidth, () => {
-    if (virtualizer.value) {
-        virtualizer.value.measure();
+watch(imageListRef, () => updateContainerWidth(), { flush: "post" });
+// 监听缩略图大小变化
+watch(safeThumbnailSize, () => updateContainerWidth(), { flush: "post" });
+// 监听当前文件夹变化，确保数据清理
+watch(currentFolder, (newFolder, oldFolder) => {
+    if (oldFolder && newFolder !== oldFolder) {
+        // 清理当前数据
+        clearDataState();
+        // 显示加载状态
+        loadingPhotasaConfig.value = true;
     }
 });
+
+// 监听配置变化，管理加载状态
+watch(
+    currentFolderConfig,
+    () => {
+        // 配置已加载，隐藏加载状态
+        loadingPhotasaConfig.value = false;
+    },
+    { immediate: true },
+);
+
+// 清理数据状态
+const clearDataState = () => {
+    previewVisible.value = false;
+    previewIndex.value = 0;
+    fileMeta.value = null;
+    showInfo.value = false;
+    loadingInfo.value = false;
+};
+
+// 初始化虚拟滚动器
+const initializeVirtualizer = () => {
+    if (virtualizer.value) {
+        // 强制重置虚拟滚动器状态
+        virtualizer.value.options.count = rows.value.length;
+        // 重置滚动位置到顶部
+        if (virtualizer.value.scrollElement) {
+            virtualizer.value.scrollElement.scrollTop = 0;
+        }
+        virtualizer.value.measure();
+    }
+};
+
+// 监听卡片数据变化，统一处理数据更新和虚拟滚动器重置
+watch(
+    card,
+    (newCard, oldCard) => {
+        // 如果数据完全改变（比如切换文件夹），重置所有状态
+        if (oldCard && newCard.title !== oldCard.title) {
+            clearDataState();
+        }
+
+        nextTick(() => {
+            updateContainerWidth();
+            initializeVirtualizer();
+        });
+    },
+    { flush: "post" },
+);
+
+// 监听行数变化 - 合并到统一的更新函数中
+watch(
+    rows,
+    () => {
+        nextTick(() => {
+            initializeVirtualizer();
+        });
+    },
+    { flush: "post" },
+);
+
+// 监听容器宽度变化 - 合并到统一的更新函数中
+watch(
+    containerWidth,
+    () => {
+        nextTick(() => {
+            initializeVirtualizer();
+        });
+    },
+    { flush: "post" },
+);
 
 // 挂载
 onMounted(() => {
+    // 确保初始状态是干净的
+    clearDataState();
+
+    // 检查是否已经有有效数据，如果有则立即隐藏加载状态
+    if (
+        currentFolder.value &&
+        currentFolderConfig.value &&
+        Object.keys(currentFolderConfig.value).length > 0
+    ) {
+        loadingPhotasaConfig.value = false;
+    }
+
     updateContainerWidth();
-    window.addEventListener("resize", () => {
-        updateContainerWidth();
-        if (virtualizer.value) {
-            virtualizer.value.measure();
-        }
+    // 初始化虚拟滚动器
+    nextTick(() => {
+        initializeVirtualizer();
     });
+
+    window.addEventListener("resize", debouncedUpdate);
+
     // 使用 ResizeObserver 监听容器宽度变化
     if (imageListRef.value) {
-        resizeObserver = new ResizeObserver(() => {
-            updateContainerWidth();
-        });
+        resizeObserver = new ResizeObserver(debouncedUpdate);
         resizeObserver.observe(imageListRef.value);
     }
 });
 
 onUnmounted(() => {
-    window.removeEventListener("resize", updateContainerWidth);
+    window.removeEventListener("resize", debouncedUpdate);
+    if (updateTimeout) {
+        clearTimeout(updateTimeout);
+    }
     if (resizeObserver && imageListRef.value) {
         resizeObserver.unobserve(imageListRef.value);
     }
@@ -278,8 +348,16 @@ onUnmounted(() => {
             class="flex-1 min-h-0 overflow-auto image-list relative"
             style="background: var(--color-card-bg)"
         >
+            <!-- 加载状态遮罩 -->
+            <div
+                v-if="loadingPhotasaConfig"
+                class="absolute inset-0 bg-opacity-50 flex items-center justify-center z-10"
+                style="background: var(--color-card-bg); opacity: 0.9"
+            >
+                <LoadingState :loadingText="t('import.loading.switchingFolder')" :size="50" />
+            </div>
             <!-- 空状态：集成通用 EmptyState 组件 -->
-            <template v-if="rows.length === 0">
+            <template v-else-if="rows.length === 0">
                 <EmptyState
                     :emptyText="t('empty.image')"
                     :buttonText="t('empty.importBtn')"
@@ -289,6 +367,7 @@ onUnmounted(() => {
             <!-- 虚拟滚动渲染图片行 -->
             <div v-else style="position: relative; width: 100%; height: 100%">
                 <div
+                    :key="`virtualizer-${card.title}-${card.images.length}`"
                     :style="{
                         height: virtualizerHeight,
                         position: 'relative',

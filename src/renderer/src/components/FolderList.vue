@@ -69,13 +69,7 @@ watch(
 
             try {
                 // 自动加载新文件夹的配置
-                logger.debug("FolderList: Loading config for folder:", newFolderPath);
                 const config = await getPhotasaConfig(newFolderPath);
-                logger.debug("FolderList: Config loaded:", {
-                    hasConfig: !!config,
-                    photoCount: config?.photoList?.length || 0,
-                    version: config?.version,
-                });
 
                 currentFolderConfig.value =
                     config ||
@@ -95,7 +89,7 @@ watch(
             }
         }
     },
-    { deep: true },
+    { deep: true, flush: "post" },
 );
 
 /**

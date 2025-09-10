@@ -143,7 +143,8 @@
             "text": "Cargando...",
             "preview": "Cargando datos de vista previa...",
             "directories": "Seleccionando directorios...",
-            "label": "Cargando..."
+            "label": "Cargando...",
+            "switchingFolder": "Cambiando carpeta..."
         },
         "filters": "Filtros",
         "resetFilters": "Restablecer Filtros",

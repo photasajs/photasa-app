@@ -276,7 +276,8 @@
             "text": "Caricamento...",
             "preview": "Caricamento dati anteprima...",
             "directories": "Selezione directory...",
-            "label": "Caricamento..."
+            "label": "Caricamento...",
+            "switchingFolder": "Cambio cartella..."
         }
     },
     "menu": {

@@ -138,6 +138,11 @@ describe("groupImagesByColumns", () => {
     it("should return empty array if input is empty", () => {
         expect(groupImagesByColumns([], 3)).toEqual([]);
     });
+    it("should return empty array if input is empty regardless of cols", () => {
+        expect(groupImagesByColumns([], 1)).toEqual([]);
+        expect(groupImagesByColumns([], 0)).toEqual([]);
+        expect(groupImagesByColumns([], -1)).toEqual([]);
+    });
     it("should throw or return [] if cols <= 0", () => {
         // Ramda splitEvery(0, arr) 返回 []
         expect(groupImagesByColumns(imgs, 0)).toEqual([

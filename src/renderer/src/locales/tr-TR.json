@@ -279,7 +279,8 @@
             "text": "Yükleniyor...",
             "preview": "Önizleme verileri yükleniyor...",
             "directories": "Dizinler seçiliyor...",
-            "label": "Yükleniyor..."
+            "label": "Yükleniyor...",
+            "switchingFolder": "Klasör değiştiriliyor..."
         }
     },
     "menu": {

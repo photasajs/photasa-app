@@ -279,7 +279,8 @@
             "text": "로딩 중...",
             "preview": "미리보기 데이터 로딩 중...",
             "directories": "디렉토리 선택 중...",
-            "label": "로딩 중..."
+            "label": "로딩 중...",
+            "switchingFolder": "폴더 전환 중..."
         }
     },
     "menu": {

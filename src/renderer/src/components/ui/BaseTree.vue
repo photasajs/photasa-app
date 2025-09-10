@@ -358,21 +358,6 @@ const visibleFlatNodes = computed(() => {
     // 扁平化算法已经只返回可见节点，无需额外过滤
     const flatNodes = flattenTreeData(props.treeData);
 
-    // 调试：检查是否有重复的 key
-    if (process.env.NODE_ENV === "development") {
-        const keyCount = new Map<Key, number>();
-        flatNodes.forEach((node) => {
-            keyCount.set(node.key, (keyCount.get(node.key) || 0) + 1);
-        });
-
-        const duplicates = Array.from(keyCount.entries()).filter(([_, count]) => count > 1);
-        if (duplicates.length > 0) {
-            console.warn("BaseTree: 检测到重复的节点 keys:", duplicates);
-            console.warn("BaseTree: 扁平化节点数据:", flatNodes);
-            console.warn("BaseTree: 原始树数据:", props.treeData);
-        }
-    }
-
     return flatNodes;
 });
 
@@ -386,8 +371,6 @@ const uniqueVisibleNodes = computed(() => {
         if (!seen.has(node.key)) {
             seen.add(node.key);
             uniqueNodes.push(node);
-        } else if (process.env.NODE_ENV === "development") {
-            console.warn(`BaseTree: 跳过重复节点 key="${node.key}" title="${node.title}"`);
         }
     }
 
@@ -606,7 +589,7 @@ watch(
             emit("update:expandedKeys", allKeys);
         }
     },
-    { deep: true },
+    { deep: true, flush: "post" },
 );
 </script>
 

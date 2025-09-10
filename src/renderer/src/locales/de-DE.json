@@ -143,7 +143,8 @@
             "text": "Lädt...",
             "preview": "Vorschaudaten werden geladen...",
             "directories": "Verzeichnisse auswählen...",
-            "label": "Laden..."
+            "label": "Laden...",
+            "switchingFolder": "Ordner wechseln..."
         },
         "error": {
             "title": "Vorgang fehlgeschlagen",

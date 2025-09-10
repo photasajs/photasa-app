@@ -137,6 +137,10 @@ export function toImageMeta(
  * @returns 二维图片数组
  */
 export function groupImagesByColumns(images: Image[], cols: number): Image[][] {
+    // 如果图片数组为空，直接返回空数组
+    if (images.length === 0) {
+        return [];
+    }
     // 使用 Ramda 的 splitEvery 实现分组
     return splitEvery(safePositiveNumber(cols), images);
 }

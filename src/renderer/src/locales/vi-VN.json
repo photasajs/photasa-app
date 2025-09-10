@@ -279,7 +279,8 @@
             "text": "Đang tải...",
             "preview": "Đang tải dữ liệu xem trước...",
             "directories": "Đang chọn thư mục...",
-            "label": "Đang tải..."
+            "label": "Đang tải...",
+            "switchingFolder": "Đang chuyển thư mục..."
         }
     },
     "menu": {
