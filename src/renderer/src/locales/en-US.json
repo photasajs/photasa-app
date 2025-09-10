@@ -3,6 +3,13 @@
         "title": "Photasa",
         "folderList": "Folder List"
     },
+    "queue": {
+        "timeRange": {
+            "1h": "Last 1 hour",
+            "6h": "Last 6 hours",
+            "24h": "Last 24 hours"
+        }
+    },
     "preference": {
         "settings": "Settings",
         "tabs": {

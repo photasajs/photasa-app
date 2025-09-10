@@ -514,5 +514,12 @@
             "failed": "Fallito",
             "unknown": "Sconosciuto"
         }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "Ultima ora",
+            "6h": "Ultime 6 ore",
+            "24h": "Ultime 24 ore"
+        }
     }
 }

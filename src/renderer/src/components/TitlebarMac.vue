@@ -1,10 +1,10 @@
 <template>
     <header class="titlebar-container">
         <div class="app-header">
-            <a-space class="title-header">
-                <a-typography-text type="primary">{{ t("app.title") }}</a-typography-text>
-            </a-space>
-            <a-space class="setting-header">
+            <BaseSpace class="title-header">
+                <span class="app-title">{{ t("app.title") }}</span>
+            </BaseSpace>
+            <BaseSpace class="setting-header">
                 <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
                 <DashboardOutlined
                     class="system-icon"
@@ -12,7 +12,7 @@
                 ></DashboardOutlined>
                 <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
                 <SettingOutlined class="system-icon" @click="openPreference" />
-            </a-space>
+            </BaseSpace>
         </div>
     </header>
 </template>
@@ -21,6 +21,7 @@
 import { useI18n } from "vue-i18n";
 import { onMounted, onUnmounted, watch } from "vue";
 import { useMenusStore } from "@renderer/stores/menus";
+import { BaseSpace } from "@renderer/components/ui";
 // import type { MenuItemData } from "@common/menu-types";
 import {
     PhClock as CoffeeOutlined,
@@ -112,6 +113,11 @@ onUnmounted(() => {
     flex-grow: 1;
     user-select: none;
     -webkit-app-region: drag;
+}
+
+.app-title {
+    color: var(--color-primary);
+    font-weight: 500;
 }
 .setting-header {
     float: right;

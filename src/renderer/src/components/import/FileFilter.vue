@@ -17,89 +17,89 @@
 
         <!-- 基础过滤器 -->
         <div class="filter-section">
-            <a-row :gutter="16">
+            <BaseRow :gutter="16">
                 <!-- 文件类型过滤 -->
-                <a-col :span="12">
+                <BaseCol :span="12">
                     <div class="filter-item">
                         <label class="filter-label">{{ t("import.fileTypes.label") }}</label>
-                        <a-checkbox-group
-                            v-model:value="localFilters.fileTypes"
+                        <BaseCheckboxGroup
+                            v-model:modelValue="localFilters.fileTypes"
                             :options="fileTypeOptions"
-                            @change="onFilterChange"
+                            @update:modelValue="onFilterChange"
                         />
                     </div>
-                </a-col>
+                </BaseCol>
 
                 <!-- 包含子文件夹 -->
-                <a-col :span="12">
+                <BaseCol :span="12">
                     <div class="filter-item">
                         <label class="filter-label">{{ t("import.includeSubfolders") }}</label>
-                        <a-switch
-                            v-model:checked="localFilters.includeSubfolders"
-                            @change="onFilterChange"
+                        <BaseSwitch
+                            v-model:modelValue="localFilters.includeSubfolders"
+                            @update:modelValue="onFilterChange"
                         />
                     </div>
-                </a-col>
-            </a-row>
+                </BaseCol>
+            </BaseRow>
         </div>
 
         <!-- 高级过滤器 -->
         <div v-if="showAdvanced" class="filter-section advanced-filters">
-            <a-divider>{{ t("import.advancedFilters") }}</a-divider>
+            <div class="divider">{{ t("import.advancedFilters") }}</div>
 
             <!-- 文件大小过滤 -->
             <div class="filter-item">
                 <label class="filter-label">
                     {{ t("import.fileSizeRange") }}
-                    <a-tooltip :title="t('import.fileSizeHelp')">
+                    <BaseTooltip :title="t('import.fileSizeHelp')">
                         <QuestionCircleOutlined class="help-icon" />
-                    </a-tooltip>
+                    </BaseTooltip>
                 </label>
                 <div class="size-filter">
-                    <a-row :gutter="8" align="middle">
-                        <a-col :span="5">
-                            <a-input-number
-                                v-model:value="sizeFilter.minValue"
+                    <BaseRow :gutter="8" align="middle">
+                        <BaseCol :span="5">
+                            <input
+                                v-model.number="sizeFilter.minValue"
+                                type="number"
                                 :min="0"
-                                :precision="0"
-                                size="sm"
+                                class="file-size-input"
                                 @change="onSizeFilterChange"
                             />
-                        </a-col>
-                        <a-col :span="4">
-                            <a-select
-                                v-model:value="sizeFilter.minUnit"
+                        </BaseCol>
+                        <BaseCol :span="4">
+                            <BaseSelect
+                                v-model:modelValue="sizeFilter.minUnit"
                                 size="sm"
                                 :options="sizeUnitOptions"
-                                @change="onSizeFilterChange"
+                                @update:modelValue="onSizeFilterChange"
                             />
-                        </a-col>
-                        <a-col :span="2" class="range-separator">
+                        </BaseCol>
+                        <BaseCol :span="2" class="range-separator">
                             <span>-</span>
-                        </a-col>
-                        <a-col :span="5">
-                            <a-input-number
-                                v-model:value="sizeFilter.maxValue"
+                        </BaseCol>
+                        <BaseCol :span="5">
+                            <input
+                                v-model.number="sizeFilter.maxValue"
+                                type="number"
                                 :min="sizeFilter.minValue || 0"
-                                :precision="0"
-                                size="sm"
+                                class="file-size-input"
                                 @change="onSizeFilterChange"
                             />
-                        </a-col>
-                        <a-col :span="4">
-                            <a-select
-                                v-model:value="sizeFilter.maxUnit"
+                        </BaseCol>
+                        <BaseCol :span="4">
+                            <BaseSelect
+                                v-model:modelValue="sizeFilter.maxUnit"
                                 size="sm"
                                 :options="sizeUnitOptions"
-                                @change="onSizeFilterChange"
+                                @update:modelValue="onSizeFilterChange"
                             />
-                        </a-col>
-                        <a-col :span="4">
+                        </BaseCol>
+                        <BaseCol :span="4">
                             <BaseButton size="sm" type="link" @click="resetSizeFilter">
                                 {{ t("import.reset") }}
                             </BaseButton>
-                        </a-col>
-                    </a-row>
+                        </BaseCol>
+                    </BaseRow>
                 </div>
             </div>
 
@@ -107,16 +107,22 @@
             <div class="filter-item">
                 <label class="filter-label">
                     {{ t("import.dateRange") }}
-                    <a-tooltip :title="t('import.dateRangeHelp')">
+                    <BaseTooltip :title="t('import.dateRangeHelp')">
                         <QuestionCircleOutlined class="help-icon" />
-                    </a-tooltip>
+                    </BaseTooltip>
                 </label>
                 <div class="date-filter">
-                    <a-range-picker
-                        v-model:value="dateRange"
-                        :placeholder="[t('import.startDate'), t('import.endDate')]"
-                        size="sm"
-                        @change="onDateRangeChange"
+                    <input
+                        v-model="dateRange"
+                        type="date"
+                        class="date-input"
+                        @change="
+                            (e) =>
+                                onDateRangeChange([
+                                    dayjs((e.target as HTMLInputElement).value),
+                                    dayjs((e.target as HTMLInputElement).value),
+                                ])
+                        "
                     />
                     <BaseButton size="sm" type="link" @click="resetDateFilter">
                         {{ t("import.reset") }}
@@ -147,15 +153,15 @@
             <div class="filter-item">
                 <label class="filter-label">
                     {{ t("import.fileNamePattern") }}
-                    <a-tooltip :title="t('import.fileNamePatternHelp')">
+                    <BaseTooltip :title="t('import.fileNamePatternHelp')">
                         <QuestionCircleOutlined class="help-icon" />
-                    </a-tooltip>
+                    </BaseTooltip>
                 </label>
                 <div class="pattern-filter">
-                    <a-input
-                        v-model:value="fileNamePattern"
+                    <input
+                        v-model="fileNamePattern"
                         :placeholder="t('import.fileNamePatternPlaceholder')"
-                        size="sm"
+                        class="pattern-input"
                         @change="onPatternChange"
                     />
                     <BaseButton size="sm" type="link" @click="resetPatternFilter">
@@ -168,17 +174,18 @@
             <div class="filter-item">
                 <label class="filter-label">
                     {{ t("import.excludePatterns") }}
-                    <a-tooltip :title="t('import.excludePatternsHelp')">
+                    <BaseTooltip :title="t('import.excludePatternsHelp')">
                         <QuestionCircleOutlined class="help-icon" />
-                    </a-tooltip>
+                    </BaseTooltip>
                 </label>
                 <div class="exclude-patterns">
-                    <a-select
-                        v-model:value="excludePatterns"
+                    <BaseSelect
+                        v-model:modelValue="excludePatterns"
                         mode="tags"
                         size="sm"
+                        :options="[]"
                         :placeholder="t('import.excludePatternsPlaceholder')"
-                        @change="onExcludePatternsChange"
+                        @update:modelValue="onExcludePatternsChange"
                     />
                 </div>
             </div>
@@ -186,38 +193,42 @@
 
         <!-- 过滤结果统计 -->
         <div v-if="showStats" class="filter-stats">
-            <a-divider />
+            <div class="divider" />
             <div class="stats-content">
-                <a-row :gutter="16">
-                    <a-col :span="6">
-                        <a-statistic
-                            :title="t('import.filteredFiles')"
-                            :value="stats.filteredFiles"
-                            :value-style="{ fontSize: '14px', color: '#1890ff' }"
-                        />
-                    </a-col>
-                    <a-col :span="6">
-                        <a-statistic
-                            :title="t('import.totalSize')"
-                            :value="formatSize(stats.totalSize)"
-                            :value-style="{ fontSize: '14px', color: '#52c41a' }"
-                        />
-                    </a-col>
-                    <a-col :span="6">
-                        <a-statistic
-                            :title="t('import.images')"
-                            :value="stats.imageFiles"
-                            :value-style="{ fontSize: '14px', color: '#722ed1' }"
-                        />
-                    </a-col>
-                    <a-col :span="6">
-                        <a-statistic
-                            :title="t('import.videos')"
-                            :value="stats.videoFiles"
-                            :value-style="{ fontSize: '14px', color: '#fa8c16' }"
-                        />
-                    </a-col>
-                </a-row>
+                <BaseRow :gutter="16">
+                    <BaseCol :span="6">
+                        <div class="statistic-item">
+                            <div class="statistic-title">{{ t("import.filteredFiles") }}</div>
+                            <div class="statistic-value" style="font-size: 14px; color: #1890ff">
+                                {{ stats.filteredFiles }}
+                            </div>
+                        </div>
+                    </BaseCol>
+                    <BaseCol :span="6">
+                        <div class="statistic-item">
+                            <div class="statistic-title">{{ t("import.totalSize") }}</div>
+                            <div class="statistic-value" style="font-size: 14px; color: #52c41a">
+                                {{ formatSize(stats.totalSize) }}
+                            </div>
+                        </div>
+                    </BaseCol>
+                    <BaseCol :span="6">
+                        <div class="statistic-item">
+                            <div class="statistic-title">{{ t("import.images") }}</div>
+                            <div class="statistic-value" style="font-size: 14px; color: #722ed1">
+                                {{ stats.imageFiles }}
+                            </div>
+                        </div>
+                    </BaseCol>
+                    <BaseCol :span="6">
+                        <div class="statistic-item">
+                            <div class="statistic-title">{{ t("import.videos") }}</div>
+                            <div class="statistic-value" style="font-size: 14px; color: #fa8c16">
+                                {{ stats.videoFiles }}
+                            </div>
+                        </div>
+                    </BaseCol>
+                </BaseRow>
             </div>
         </div>
     </div>
@@ -226,14 +237,21 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { Dayjs } from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 import {
     PhArrowClockwise as ReloadOutlined,
     PhGear as SettingOutlined,
     PhQuestion as QuestionCircleOutlined,
 } from "@phosphor-icons/vue";
 import type { ImportFilters } from "@common/import-types";
-import { BaseButton } from "@renderer/components/ui";
+import {
+    BaseButton,
+    BaseRow,
+    BaseCol,
+    BaseSwitch,
+    BaseTooltip,
+    BaseSelect,
+} from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(
@@ -270,7 +288,7 @@ const { t } = useI18n();
 const showAdvanced = ref(false);
 const selectedDatePreset = ref<string | null>(null);
 const fileNamePattern = ref("");
-const excludePatterns = ref<string[]>([]);
+const excludePatterns = ref<string>("");
 
 // 本地过滤器状态
 const localFilters = reactive<ImportFilters>({ ...props.filters });
@@ -430,7 +448,7 @@ const resetFilters = () => {
     dateRange.value = null;
     selectedDatePreset.value = null;
     fileNamePattern.value = "";
-    excludePatterns.value = [];
+    excludePatterns.value = "";
 
     emitFilterChange();
 };

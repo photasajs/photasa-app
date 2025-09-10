@@ -517,5 +517,12 @@
             "failed": "Thất bại",
             "unknown": "Không xác định"
         }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "1 giờ qua",
+            "6h": "6 giờ qua",
+            "24h": "24 giờ qua"
+        }
     }
 }

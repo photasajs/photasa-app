@@ -24,6 +24,15 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 3. Don't use any to bypass lint, use proper type, as TypeScript is type first.
 4. For CSS, don't use !important which cause maintain issue.
 
+## Recent Improvements
+
+### Video Thumbnail Orientation Support (2025-09-09)
+- Enhanced video thumbnail generation to correctly handle video rotation metadata
+- Support for detecting rotation from stream tags, side_data, and format tags
+- Automatically adjusts thumbnail dimensions based on video orientation (portrait/landscape)
+- Compatible with both older and newer versions of ffmpeg/ffprobe
+- Added comprehensive test coverage for rotation detection logic
+
 # 多维思考 + 代理执行协议 + 软件开发规范指南
 
 - 目录

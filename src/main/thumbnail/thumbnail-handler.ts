@@ -252,18 +252,59 @@ export async function removeThumbnail(
 }
 
 /**
- * 获取视频维度
- * @param video - 视频路径
- * @returns 视频维度
+ * 获取视频旋转角度
+ * @param metadata - ffprobe元数据
+ * @returns 旋转角度（0, 90, 180, 270）
  */
-function getVideoDimension(video: string): Promise<VideoSize> {
+function getVideoRotation(metadata: any): number {
+    const stream = metadata.streams?.find((s: any) => s.codec_type === "video");
+
+    // 方法1: 从stream tags中获取rotate标签（旧版本ffmpeg）
+    const rotateTag = stream?.tags?.rotate;
+    if (rotateTag) {
+        return parseInt(rotateTag, 10) || 0;
+    }
+
+    // 方法2: 从side_data中获取rotation（新版本ffmpeg）
+    const sideData = stream?.side_data_list;
+    if (sideData && Array.isArray(sideData)) {
+        const displayMatrix = sideData.find(
+            (data: any) => data.side_data_type === "Display Matrix",
+        );
+        if (displayMatrix && displayMatrix.rotation) {
+            // rotation可能是负数，需要转换为0-360度
+            let rotation = parseFloat(displayMatrix.rotation);
+            rotation = ((rotation % 360) + 360) % 360;
+            return rotation;
+        }
+    }
+
+    // 方法3: 从format tags中获取rotate标签（某些容器格式）
+    const formatRotate = metadata.format?.tags?.rotate;
+    if (formatRotate) {
+        return parseInt(formatRotate, 10) || 0;
+    }
+
+    return 0;
+}
+
+/**
+ * 获取视频维度（考虑旋转）
+ * @param video - 视频路径
+ * @returns 视频维度和旋转角度
+ */
+function getVideoDimension(video: string): Promise<{ dimension: VideoSize; rotation: number }> {
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(video, (err, metadata) => {
             if (err) return reject(err);
 
             const stream = metadata.streams.find((stream) => stream.codec_type === "video");
+            const rotation = getVideoRotation(metadata);
 
             const darString = stream?.display_aspect_ratio;
+
+            let width = stream?.width ?? 100;
+            let height = stream?.height ?? 100;
 
             // ffprobe returns aspect ratios of "0:1" or `undefined` if they're not specified.
             // https://trac.ffmpeg.org/ticket/3798
@@ -271,17 +312,18 @@ function getVideoDimension(video: string): Promise<VideoSize> {
                 // The DAR is specified so use it directly
                 const [widthRatioPart, heightRatioPart] = ratioStringToParts(darString);
                 const inverseDar = heightRatioPart / widthRatioPart;
-                resolve({
-                    width: stream.width,
-                    height: stream.width * inverseDar,
-                });
-            } else {
-                // DAR not specified so assume square pixels (use sample resolution as-is).
-                resolve({
-                    width: stream?.width ?? 100,
-                    height: stream?.height ?? 100,
-                });
+                height = width * inverseDar;
             }
+
+            // 如果视频旋转了90度或270度，需要交换宽高
+            if (rotation === 90 || rotation === 270) {
+                [width, height] = [height, width];
+            }
+
+            resolve({
+                dimension: { width, height },
+                rotation,
+            });
         });
     });
 }
@@ -294,10 +336,22 @@ function getVideoDimension(video: string): Promise<VideoSize> {
  */
 async function createScreenshot(arg: ThumbnailRequest, logger: PhotasaLogger): Promise<string> {
     logger.info("[thumbnail-handler] Create Screenshot for : " + arg.path);
-    const dimension = await getVideoDimension(arg.path);
+    const { dimension, rotation } = await getVideoDimension(arg.path);
+
+    logger.info(
+        `[thumbnail-handler] Video dimension: ${dimension.width}x${dimension.height}, rotation: ${rotation}°`,
+    );
+
     return new Promise((resolve) => {
         const size = getOptimalThumbnailResolution(dimension, arg);
-        ffmpeg(arg.path)
+
+        // 创建ffmpeg命令
+        const ffmpegCommand = ffmpeg(arg.path);
+
+        // 如果视频有旋转元数据，ffmpeg默认会自动应用旋转
+        // 我们已经在获取维度时考虑了旋转，所以ffmpeg可以自动处理旋转
+
+        ffmpegCommand
             .on("filenames", function (filenames) {
                 logger.info("[thumbnail-handler]Generate Screenshot: " + filenames.join(", "));
             })
@@ -306,6 +360,9 @@ async function createScreenshot(arg: ThumbnailRequest, logger: PhotasaLogger): P
                 resolve(arg.thumbnail);
             })
             .on("end", function () {
+                logger.info(
+                    `[thumbnail-handler] Screenshot created successfully: ${arg.thumbnail}`,
+                );
                 resolve(arg.thumbnail);
             })
             .screenshots({

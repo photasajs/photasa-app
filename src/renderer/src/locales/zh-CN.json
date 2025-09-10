@@ -3,6 +3,13 @@
         "title": "仓廪图司",
         "folderList": "目录列表"
     },
+    "queue": {
+        "timeRange": {
+            "1h": "最近1小时",
+            "6h": "最近6小时",
+            "24h": "最近24小时"
+        }
+    },
     "preference": {
         "settings": "设置",
         "tabs": {

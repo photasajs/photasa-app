@@ -169,24 +169,57 @@ const updateDropdownPosition = () => {
     }
 
     const buttonRect = buttonRef.value.getBoundingClientRect();
-    const dropdownHeight = 240; // max-h-60 的预估高度
+
+    // 计算实际的下拉菜单高度
+    const estimatedItemHeight = 40; // 每个选项的估算高度
+    const actualDropdownHeight = Math.min(props.options.length * estimatedItemHeight + 16, 240); // 实际高度，最大240px
+
     const viewportHeight = window.innerHeight;
     const spaceBelow = viewportHeight - buttonRect.bottom;
     const spaceAbove = buttonRect.top;
 
-    // 智能选择展开方向：优先向下，空间不足时向上
-    const shouldDropUp = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+    // 确保下拉菜单在视口内
+    const left = Math.max(8, Math.min(buttonRect.left, window.innerWidth - buttonRect.width - 8));
+
+    // 优先向下展开，空间不足时向上
+    let top: number;
+    if (spaceBelow >= actualDropdownHeight + 8) {
+        // 向下展开：按钮底部 + 4px
+        top = buttonRect.bottom + 4;
+    } else if (spaceAbove >= actualDropdownHeight + 8) {
+        // 向上展开：按钮顶部 - 下拉菜单高度 - 4px
+        top = buttonRect.top - actualDropdownHeight - 4;
+    } else {
+        // 空间都不足，选择空间更大的方向
+        if (spaceBelow > spaceAbove) {
+            top = buttonRect.bottom + 4;
+        } else {
+            top = buttonRect.top - actualDropdownHeight - 4;
+        }
+    }
 
     dropdownStyles.value = {
-        left: `${buttonRect.left}px`,
-        top: shouldDropUp
-            ? `${buttonRect.top - dropdownHeight - 4}px`
-            : `${buttonRect.bottom + 4}px`,
+        left: `${left}px`,
+        top: `${top}px`,
         width: `${buttonRect.width}px`,
         zIndex: "10000",
     };
 
-    logger.debug("Updated dropdown position:", dropdownStyles.value);
+    logger.debug("Updated dropdown position:", {
+        buttonRect: {
+            top: buttonRect.top,
+            bottom: buttonRect.bottom,
+            left: buttonRect.left,
+            width: buttonRect.width,
+        },
+        actualDropdownHeight,
+        viewportHeight,
+        spaceBelow,
+        spaceAbove,
+        calculatedTop: top,
+        calculatedLeft: left,
+        finalStyles: dropdownStyles.value,
+    });
 };
 
 /**

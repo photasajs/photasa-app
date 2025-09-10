@@ -7,35 +7,35 @@
                 {{ t("import.duplicateFiles") }}
             </h3>
             <div class="duplicate-stats">
-                <a-tag color="orange"
-                    >{{ duplicates.length }} {{ t("import.duplicatesFound") }}</a-tag
+                <BaseTag color="orange"
+                    >{{ duplicates.length }} {{ t("import.duplicatesFound") }}</BaseTag
                 >
-                <a-tag v-if="duplicateStats.totalWastedSpace > 0" color="red">
+                <BaseTag v-if="duplicateStats.totalWastedSpace > 0" color="red">
                     {{ formatSize(duplicateStats.totalWastedSpace) }} {{ t("import.wastedSpace") }}
-                </a-tag>
+                </BaseTag>
             </div>
         </div>
 
         <!-- 批量操作 -->
         <div class="batch-actions">
-            <a-row :gutter="16" align="middle">
-                <a-col :span="12">
+            <BaseRow :gutter="16" align="middle">
+                <BaseCol :span="12">
                     <div class="batch-strategy">
                         <label>{{ t("import.batchStrategy") }}:</label>
-                        <a-select
-                            v-model:value="batchStrategy"
+                        <BaseSelect
+                            v-model:modelValue="batchStrategy"
                             style="width: 200px"
                             :options="strategyOptions"
-                            @change="onBatchStrategyChange"
+                            @update:modelValue="onBatchStrategyChange"
                         />
                         <BaseButton type="primary" size="sm" @click="applyBatchStrategy">
                             {{ t("import.applyToAll") }}
                         </BaseButton>
                     </div>
-                </a-col>
-                <a-col :span="12">
+                </BaseCol>
+                <BaseCol :span="12">
                     <div class="batch-selection">
-                        <a-space>
+                        <BaseSpace>
                             <BaseButton size="sm" @click="selectAllDuplicates">
                                 {{ t("import.selectAll") }}
                             </BaseButton>
@@ -46,21 +46,21 @@
                                 <template #icon><ThunderboltOutlined /></template>
                                 {{ t("import.autoResolve") }}
                             </BaseButton>
-                        </a-space>
+                        </BaseSpace>
                     </div>
-                </a-col>
-            </a-row>
+                </BaseCol>
+            </BaseRow>
         </div>
 
         <!-- 重复文件列表 -->
         <div class="duplicate-list">
-            <a-list :data-source="duplicates" :pagination="paginationConfig">
+            <BaseList :data-source="duplicates" :pagination="paginationConfig">
                 <template #renderItem="{ item: duplicate }">
-                    <a-list-item class="duplicate-item">
+                    <BaseListItem class="duplicate-item">
                         <template #actions>
-                            <a-checkbox
-                                :checked="selectedDuplicates.has(duplicate.duplicateFile.path)"
-                                @change="toggleDuplicateSelection(duplicate)"
+                            <BaseCheckbox
+                                :modelValue="selectedDuplicates.has(duplicate.duplicateFile.path)"
+                                @update:modelValue="toggleDuplicateSelection(duplicate)"
                             />
                             <BaseButton type="text" size="sm" @click="showComparison(duplicate)">
                                 <template #icon><EyeOutlined /></template>
@@ -75,7 +75,7 @@
                                 <div class="file-info original-file">
                                     <div class="file-header">
                                         <h4>{{ t("import.originalFile") }}</h4>
-                                        <a-tag color="blue">{{ t("import.existing") }}</a-tag>
+                                        <BaseTag color="blue">{{ t("import.existing") }}</BaseTag>
                                     </div>
                                     <div class="file-details">
                                         <div class="file-name">
@@ -106,7 +106,9 @@
                                 <div class="file-info duplicate-file">
                                     <div class="file-header">
                                         <h4>{{ t("import.duplicateFile") }}</h4>
-                                        <a-tag color="orange">{{ t("import.importing") }}</a-tag>
+                                        <BaseTag color="orange">{{
+                                            t("import.importing")
+                                        }}</BaseTag>
                                     </div>
                                     <div class="file-details">
                                         <div class="file-name">
@@ -138,37 +140,39 @@
                             <!-- 处理策略选择 -->
                             <div class="strategy-selection">
                                 <label>{{ t("import.action") }}:</label>
-                                <a-radio-group
+                                <BaseRadioGroup
                                     :value="getSelectedStrategy(duplicate)"
                                     @change="(e) => setDuplicateStrategy(duplicate, e.target.value)"
                                 >
-                                    <a-radio value="skip">
-                                        <a-tooltip :title="t('import.strategy.skip.description')">
+                                    <BaseRadio value="skip">
+                                        <BaseTooltip :title="t('import.strategy.skip.description')">
                                             {{ t("import.strategy.skip.label") }}
-                                        </a-tooltip>
-                                    </a-radio>
-                                    <a-radio value="rename">
-                                        <a-tooltip :title="t('import.strategy.rename.description')">
+                                        </BaseTooltip>
+                                    </BaseRadio>
+                                    <BaseRadio value="rename">
+                                        <BaseTooltip
+                                            :title="t('import.strategy.rename.description')"
+                                        >
                                             {{ t("import.strategy.rename.label") }}
-                                        </a-tooltip>
-                                    </a-radio>
-                                    <a-radio value="overwrite">
-                                        <a-tooltip
+                                        </BaseTooltip>
+                                    </BaseRadio>
+                                    <BaseRadio value="overwrite">
+                                        <BaseTooltip
                                             :title="t('import.strategy.overwrite.description')"
                                         >
                                             <span class="danger-option">{{
                                                 t("import.strategy.overwrite.label")
                                             }}</span>
-                                        </a-tooltip>
-                                    </a-radio>
-                                    <a-radio value="keep_both">
-                                        <a-tooltip
+                                        </BaseTooltip>
+                                    </BaseRadio>
+                                    <BaseRadio value="keep_both">
+                                        <BaseTooltip
                                             :title="t('import.strategy.keepBoth.description')"
                                         >
                                             {{ t("import.strategy.keepBoth.label") }}
-                                        </a-tooltip>
-                                    </a-radio>
-                                </a-radio-group>
+                                        </BaseTooltip>
+                                    </BaseRadio>
+                                </BaseRadioGroup>
                             </div>
 
                             <!-- 推荐建议 -->
@@ -186,102 +190,108 @@
                                 <span>{{ getWarning(duplicate) }}</span>
                             </div>
                         </div>
-                    </a-list-item>
+                    </BaseListItem>
                 </template>
-            </a-list>
+            </BaseList>
         </div>
 
         <!-- 文件对比对话框 -->
-        <a-modal
-            v-model:visible="showComparisonDialog"
+        <BaseModal
+            v-model:open="showComparisonDialog"
             :title="t('import.fileComparison')"
             width="900px"
             :footer="null"
         >
             <div v-if="comparisonData" class="file-comparison-dialog">
-                <a-row :gutter="24">
+                <BaseRow :gutter="24">
                     <!-- 原文件详情 -->
-                    <a-col :span="12">
+                    <BaseCol :span="12">
                         <div class="comparison-panel">
                             <h4>{{ t("import.originalFile") }}</h4>
-                            <a-descriptions :column="1" size="sm" bordered>
-                                <a-descriptions-item :label="t('import.fileName')">
+                            <BaseDescriptions :column="1" size="small" bordered>
+                                <BaseDescriptionItem :label="t('import.fileName')">
                                     {{ comparisonData.originalFile.name }}
-                                </a-descriptions-item>
-                                <a-descriptions-item :label="t('import.fileSize')">
+                                </BaseDescriptionItem>
+                                <BaseDescriptionItem :label="t('import.fileSize')">
                                     {{ formatSize(comparisonData.originalFile.size) }}
-                                </a-descriptions-item>
-                                <a-descriptions-item :label="t('import.modifiedTime')">
+                                </BaseDescriptionItem>
+                                <BaseDescriptionItem :label="t('import.modifiedTime')">
                                     {{ formatDate(comparisonData.originalFile.modifiedTime) }}
-                                </a-descriptions-item>
-                                <a-descriptions-item :label="t('import.filePath')">
-                                    <a-typography-text copyable>
+                                </BaseDescriptionItem>
+                                <BaseDescriptionItem :label="t('import.filePath')">
+                                    <span
+                                        class="copyable-text"
+                                        @click="copyToClipboard(comparisonData.originalFile.path)"
+                                    >
                                         {{ comparisonData.originalFile.path }}
-                                    </a-typography-text>
-                                </a-descriptions-item>
-                            </a-descriptions>
+                                    </span>
+                                </BaseDescriptionItem>
+                            </BaseDescriptions>
                         </div>
-                    </a-col>
+                    </BaseCol>
 
                     <!-- 重复文件详情 -->
-                    <a-col :span="12">
+                    <BaseCol :span="12">
                         <div class="comparison-panel">
                             <h4>{{ t("import.duplicateFile") }}</h4>
-                            <a-descriptions :column="1" size="sm" bordered>
-                                <a-descriptions-item :label="t('import.fileName')">
+                            <BaseDescriptions :column="1" size="small" bordered>
+                                <BaseDescriptionItem :label="t('import.fileName')">
                                     {{ comparisonData.duplicateFile.name }}
-                                </a-descriptions-item>
-                                <a-descriptions-item :label="t('import.fileSize')">
+                                </BaseDescriptionItem>
+                                <BaseDescriptionItem :label="t('import.fileSize')">
                                     {{ formatSize(comparisonData.duplicateFile.size) }}
-                                </a-descriptions-item>
-                                <a-descriptions-item :label="t('import.modifiedTime')">
+                                </BaseDescriptionItem>
+                                <BaseDescriptionItem :label="t('import.modifiedTime')">
                                     {{ formatDate(comparisonData.duplicateFile.modifiedTime) }}
-                                </a-descriptions-item>
-                                <a-descriptions-item :label="t('import.filePath')">
-                                    <a-typography-text copyable>
+                                </BaseDescriptionItem>
+                                <BaseDescriptionItem :label="t('import.filePath')">
+                                    <span
+                                        class="copyable-text"
+                                        @click="copyToClipboard(comparisonData.duplicateFile.path)"
+                                    >
                                         {{ comparisonData.duplicateFile.path }}
-                                    </a-typography-text>
-                                </a-descriptions-item>
-                            </a-descriptions>
+                                    </span>
+                                </BaseDescriptionItem>
+                            </BaseDescriptions>
                         </div>
-                    </a-col>
-                </a-row>
+                    </BaseCol>
+                </BaseRow>
 
                 <!-- 对比分析 -->
                 <div v-if="comparisonAnalysis" class="comparison-analysis">
-                    <a-divider>{{ t("import.comparisonAnalysis") }}</a-divider>
-                    <a-descriptions :column="2" size="sm" bordered>
-                        <a-descriptions-item :label="t('import.sizeDifference')">
+                    <div class="divider">{{ t("import.comparisonAnalysis") }}</div>
+                    <BaseDescriptions :column="2" size="small" bordered>
+                        <BaseDescriptionItem :label="t('import.sizeDifference')">
                             <span
                                 :class="getSizeDifferenceClass(comparisonAnalysis.sizeDifference)"
                             >
                                 {{ formatSizeDifference(comparisonAnalysis.sizeDifference) }}
                             </span>
-                        </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.timeDifference')">
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem :label="t('import.timeDifference')">
                             <span
                                 :class="getTimeDifferenceClass(comparisonAnalysis.timeDifference)"
                             >
                                 {{ formatTimeDifference(comparisonAnalysis.timeDifference) }}
                             </span>
-                        </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.recommendation')" :span="2">
-                            <a-tag
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem :label="t('import.recommendation')" :span="2">
+                            <BaseTag
                                 :color="getRecommendationColor(comparisonAnalysis.recommendation)"
                             >
                                 {{
                                     t(`import.recommendation.${comparisonAnalysis.recommendation}`)
                                 }}
-                            </a-tag>
-                        </a-descriptions-item>
-                    </a-descriptions>
+                            </BaseTag>
+                        </BaseDescriptionItem>
+                    </BaseDescriptions>
                 </div>
             </div>
-        </a-modal>
+        </BaseModal>
 
         <!-- 批量确认对话框 -->
-        <a-modal
-            v-model:visible="showBatchConfirm"
+        <BaseModal
+            v-model:open="showBatchConfirm"
             :title="t('import.confirmBatchAction')"
             :ok-text="t('import.apply')"
             :cancel-text="t('import.cancel')"
@@ -301,7 +311,7 @@
                     <span>{{ t("import.overwriteWarning") }}</span>
                 </div>
             </div>
-        </a-modal>
+        </BaseModal>
     </div>
 </template>
 
@@ -318,7 +328,23 @@ import {
     PhWarning as WarningOutlined,
 } from "@phosphor-icons/vue";
 import type { DuplicateFileInfo, DuplicateStrategy, FileComparison } from "@common/import-types";
-import { BaseButton } from "@renderer/components/ui";
+import {
+    BaseButton,
+    BaseTag,
+    BaseRow,
+    BaseCol,
+    BaseSpace,
+    BaseSelect,
+    BaseList,
+    BaseListItem,
+    BaseCheckbox,
+    BaseRadio,
+    BaseRadioGroup,
+    BaseTooltip,
+    BaseDescriptions,
+    BaseDescriptionItem,
+    BaseModal,
+} from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(
@@ -415,6 +441,15 @@ const deselectAllDuplicates = () => {
 
 const onBatchStrategyChange = () => {
     // 策略改变时的处理
+};
+
+const copyToClipboard = async (text: string) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        // 可以添加成功提示
+    } catch (err) {
+        console.error("Failed to copy text: ", err);
+    }
 };
 
 const applyBatchStrategy = () => {

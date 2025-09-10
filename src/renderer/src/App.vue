@@ -31,7 +31,12 @@ import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useMenusStore } from "@renderer/stores/menus";
-import { NotificationContainer, PortalProvider, BaseModal } from "@renderer/components/ui";
+import {
+    NotificationContainer,
+    PortalProvider,
+    BaseModal,
+    BaseSpinner,
+} from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
 
@@ -354,7 +359,7 @@ window.api?.onScanQueueAdd((operations: any[]) => {
 </script>
 
 <template>
-    <a-spin v-if="loading" />
+    <BaseSpinner v-if="loading" />
     <div v-else class="app-layout">
         <!-- 分平台 titlebar -->
         <TitlebarMac

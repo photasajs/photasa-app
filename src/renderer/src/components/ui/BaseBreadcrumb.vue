@@ -1,27 +1,32 @@
 <template>
-    <nav class="breadcrumb" role="navigation" aria-label="breadcrumb">
+    <nav class="base-breadcrumb" :aria-label="ariaLabel">
         <ol class="breadcrumb-list">
-            <slot></slot>
+            <slot />
         </ol>
     </nav>
 </template>
 
 <script setup lang="ts">
-// Base breadcrumb component that provides slots for items
-</script>
-
-<style scoped>
-.breadcrumb {
-    color: var(--color-text-secondary);
-    font-size: 14px;
+interface Props {
+    ariaLabel?: string;
 }
 
-.breadcrumb-list {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+withDefaults(defineProps<Props>(), {
+    ariaLabel: "Breadcrumb navigation",
+});
+</script>
+
+<style scoped lang="less">
+.base-breadcrumb {
+    .breadcrumb-list {
+        display: flex;
+        align-items: center;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-size: 14px;
+        line-height: 1.5715;
+        color: var(--color-tree-text, var(--color-text, #000));
+    }
 }
 </style>

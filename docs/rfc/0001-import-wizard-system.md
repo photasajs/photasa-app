@@ -88,6 +88,9 @@ This RFC proposes a comprehensive **multi-step import wizard system** for Photas
 ### System Overview
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '24px', 'primaryTextColor': '#000', 'primaryColor': '#2563eb', 'lineColor': '#374151', 'actorBkg': '#f3f4f6', 'actorTextColor': '#000', 'actorLineColor': '#000', 'messageTextColor': '#000', 'messageLineColor': '#000', 'labelTextColor': '#000', 'labelBackground': '#f9fafb', 'labelBorder': '#d1d5db', 'sectionBkgColor': '#f8fafc', 'altSectionBkgColor': '#f1f5f9', 'gridColor': '#e5e7eb', 'secondaryColor': '#f59e0b', 'tertiaryColor': '#10b981'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
 graph TB
     subgraph "Import Wizard System"
         A[ImportPhotos.vue] --> B[BaseWizard]
@@ -210,6 +213,9 @@ const dateStr = exifDateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");
 **Solution**: Three-tier fallback strategy
 
 ```mermaid
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '24px', 'primaryTextColor': '#000', 'primaryColor': '#2563eb', 'lineColor': '#374151', 'actorBkg': '#f3f4f6', 'actorTextColor': '#000', 'actorLineColor': '#000', 'messageTextColor': '#000', 'messageLineColor': '#000', 'labelTextColor': '#000', 'labelBackground': '#f9fafb', 'labelBorder': '#d1d5db', 'sectionBkgColor': '#f8fafc', 'altSectionBkgColor': '#f1f5f9', 'gridColor': '#e5e7eb', 'secondaryColor': '#f59e0b', 'tertiaryColor': '#10b981'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
+%%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
 graph LR
     A[HEIC File] --> B{EXIF DateTime}
     B -->|Valid| C[Use EXIF Date]
@@ -275,7 +281,7 @@ graph LR
 
 #### **Critical Priority**
 - [ ] Fix duplicate strategy handling in import-worker.ts (Bug #1)
-- [ ] Fix progress updates not reaching UI (Bug #2)  
+- [ ] Fix progress updates not reaching UI (Bug #2)
 - [ ] Implement real-time preview progress with file discovery (Enhancement #3)
 
 #### **High Priority**
@@ -482,7 +488,7 @@ private async startImportInBackground(importId: string, config: ImportConfig) {
 
 ### 🚨 **Critical Bug Discovered: Duplicate Strategy Not Working (2025-08-30)**
 
-#### **Problem**: 
+#### **Problem**:
 User-configured duplicate strategies (rename/skip/overwrite) are not being executed correctly during import operations.
 
 #### **Root Cause Analysis**:
@@ -516,17 +522,17 @@ await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
 if (await fs.pathExists(targetFilePath)) {
     const handled = await handleDuplicateFile(file, targetFilePath, config.duplicateStrategy);
     duplicateHandling.push(handled);
-    
+
     if (handled.action === "skip") {
         skippedFiles++;
         continue;
     }
-    
+
     // Use new path for rename/keep_both actions
     if (handled.newPath && (handled.action === "rename" || handled.action === "keep_both")) {
         targetFilePath = handled.newPath;
     }
-    
+
     // For overwrite, remove existing file first
     if (handled.action === "overwrite") {
         await fs.remove(targetFilePath);
@@ -543,7 +549,7 @@ await fs.copy(file.path, targetFilePath, { preserveTimestamps: true });
 
 ### 📈 **Enhancement: Smart Duplicate Handling Strategy (2025-01-31)**
 
-#### **Problem**: 
+#### **Problem**:
 Current duplicate handling strategies are too simplistic and lack intelligent comparison capabilities.
 
 #### **Proposed Enhancements**:
@@ -587,22 +593,22 @@ Current duplicate handling strategies are too simplistic and lack intelligent co
            if (original.size !== duplicate.size) {
                return this.handleDifferentFiles(original, duplicate);
            }
-           
+
            // Optional MD5 verification
            if (config?.useMD5) {
                const originalHash = await this.calculateMD5(original.path);
                const duplicateHash = await this.calculateMD5(duplicate.path);
-               
+
                if (originalHash === duplicateHash) {
                    return { action: "skip", message: "文件内容完全相同" };
                }
            }
-           
+
            // Time-based decision
            if (duplicate.modifiedTime > original.modifiedTime) {
                return { action: "skip", message: "检测到新版本文件" };
            }
-           
+
            return { action: "skip", message: "文件已存在" };
        }
    }
@@ -623,7 +629,7 @@ Current duplicate handling strategies are too simplistic and lack intelligent co
 
 ### 🚨 **Critical Enhancement #3: Preview Loading UX Improvement (2025-09-02)**
 
-#### **Problem**: 
+#### **Problem**:
 Import preview takes significant time for large directories (10+ seconds) but only shows static loading spinner, providing no feedback on scan progress.
 
 #### **Current Implementation Analysis**:
@@ -642,7 +648,7 @@ Import preview takes significant time for large directories (10+ seconds) but on
 ```
 
 **Root Cause Analysis**:
-1. ✅ **API Structure**: `previewImport()` returns complete result only 
+1. ✅ **API Structure**: `previewImport()` returns complete result only
 2. ❌ **Progress Feedback**: No intermediate progress events during scanning
 3. ❌ **User Experience**: Users think app is frozen during large directory scans
 4. ❌ **Scan Visibility**: No indication of which directories/files are being processed
@@ -655,7 +661,7 @@ generateImportPreview() Process:
    ↓
 scanDirectoriesForFiles() → Send scan progress events
    ↓                         (current directory, files found)
-processFileGroups() → Send processing progress events  
+processFileGroups() → Send processing progress events
    ↓                  (files processed, groups created)
 calculateStatistics() → Send statistics updates
    ↓                    (file counts, size totals)
@@ -686,9 +692,9 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
     };
 
     progressCallback({ stage: 'scanning', filesFound: 0, directoriesScanned: 0, message: '开始扫描目录...' });
-    
+
     const rawFileGroups = await scanDirectoriesForFiles(config.sourcePaths, config.filters, progressCallback);
-    
+
     progressCallback({ stage: 'processing', filesFound: rawFileGroups.length, message: '处理文件组...' });
     // ... rest of implementation
 }
@@ -705,10 +711,10 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
             {{ previewProgress.message }}
         </p>
     </div>
-    
+
     <div class="flex-1 max-h-64 overflow-y-auto">
         <div class="space-y-2">
-            <div v-for="file in discoveredFiles" :key="file.path" 
+            <div v-for="file in discoveredFiles" :key="file.path"
                  class="flex items-center p-2 bg-[var(--color-bg-secondary)] rounded">
                 <PhotoIcon class="w-4 h-4 mr-2 text-blue-500" />
                 <span class="text-sm truncate">{{ file.name }}</span>
@@ -718,7 +724,7 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
             </div>
         </div>
     </div>
-    
+
     <div class="mt-4 text-center text-sm text-[var(--color-text-secondary)]">
         已发现 {{ previewProgress.filesFound }} 个文件，扫描了 {{ previewProgress.directoriesScanned }} 个目录
     </div>
@@ -747,7 +753,7 @@ const cleanupPreviewProgress = onPreviewProgress((progress, files) => {
 
 #### **Benefits**:
 - ✅ **Immediate Feedback**: Users see scanning progress in real-time
-- ✅ **File Discovery**: Users can see files being found as scan progresses  
+- ✅ **File Discovery**: Users can see files being found as scan progresses
 - ✅ **Progress Indication**: Clear stages and file/directory counts
 - ✅ **Perceived Performance**: App feels responsive even during long scans
 - ✅ **Incremental Loading**: Files appear as they're discovered
@@ -762,12 +768,12 @@ const cleanupPreviewProgress = onPreviewProgress((progress, files) => {
 
 #### **Priority**: 🟡 **HIGH** - Significant UX improvement for import workflow
 #### **Impact**: Better user experience during preview generation, especially for large directories
-#### **Effort**: 🔧 **Medium** - Requires event system extension and UI enhancement  
+#### **Effort**: 🔧 **Medium** - Requires event system extension and UI enhancement
 #### **Status**: 📝 **Documented in RFC** - Ready for implementation
 
 ### 🚨 **Critical Bug #2: Progress Updates Not Reaching UI (2025-08-30)**
 
-#### **Problem**: 
+#### **Problem**:
 Import progress information is not updating in the UI during import operations, leaving users with no feedback on import status.
 
 #### **Root Cause Analysis**:
@@ -778,13 +784,13 @@ Import progress information is not updating in the UI during import operations, 
 private async executeImportInBackground(importId: string): Promise<void> {
     const session = this.activeSessions.get(importId);
     // ... setup code ...
-    
+
     const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
         this.worker,
         "execute_import",
         { /* ... */ }
     );
-    
+
     // ❌ BUG: Only final result processed, no progress events sent
     session.status = "completed";
     this.sendImportEvent(importId, "import:complete", result);
@@ -814,7 +820,7 @@ private async executeImportInBackground(importId: string): Promise<void> {
 
     try {
         session.status = "processing";
-        
+
         // Create progress callback to update session and send events
         const onProgress = (progress: Partial<ImportProgress>) => {
             Object.assign(session.progress, progress);
@@ -828,7 +834,7 @@ private async executeImportInBackground(importId: string): Promise<void> {
             { /* config */ },
             onProgress
         );
-        
+
         // Handle completion
         session.status = "completed";
         this.sendImportEvent(importId, "import:complete", response.data);
@@ -853,7 +859,7 @@ The Import Wizard System represents a **major leap forward** for Photasa's impor
 **Updated Next Steps**:
 1. ✅ **COMPLETED**: Implement IPC architecture fix (Event-driven import system)
 2. ✅ **COMPLETED**: Fix import statistics display issue (UI was not updating final stats)
-3. 🔴 **CRITICAL #1**: Fix duplicate strategy handling in import-worker.ts  
+3. 🔴 **CRITICAL #1**: Fix duplicate strategy handling in import-worker.ts
 4. 🔴 **CRITICAL #2**: Fix progress updates not reaching UI (import-service.ts)
 5. 🟡 **HIGH #1**: Implement real-time preview progress with file discovery (Enhancement #3)
 6. 🟡 **HIGH #2**: Implement smart duplicate handling enhancements

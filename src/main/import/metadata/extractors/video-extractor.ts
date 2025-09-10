@@ -26,19 +26,68 @@ const VIDEO_TIME_FIELDS = [
 ];
 
 /**
+ * 获取视频旋转角度
+ * @param metadata - ffprobe元数据
+ * @returns 旋转角度（0, 90, 180, 270）
+ */
+function getVideoRotation(metadata: any): number {
+    const stream = metadata.streams?.find((s: any) => s.codec_type === "video");
+
+    // 方法1: 从stream tags中获取rotate标签（旧版本ffmpeg）
+    const rotateTag = stream?.tags?.rotate;
+    if (rotateTag) {
+        return parseInt(rotateTag, 10) || 0;
+    }
+
+    // 方法2: 从side_data中获取rotation（新版本ffmpeg）
+    const sideData = stream?.side_data_list;
+    if (sideData && Array.isArray(sideData)) {
+        const displayMatrix = sideData.find(
+            (data: any) => data.side_data_type === "Display Matrix",
+        );
+        if (displayMatrix && displayMatrix.rotation) {
+            // rotation可能是负数，需要转换为0-360度
+            let rotation = parseFloat(displayMatrix.rotation);
+            rotation = ((rotation % 360) + 360) % 360;
+            return rotation;
+        }
+    }
+
+    // 方法3: 从format tags中获取rotate标签（某些容器格式）
+    const formatRotate = metadata.format?.tags?.rotate;
+    if (formatRotate) {
+        return parseInt(formatRotate, 10) || 0;
+    }
+
+    return 0;
+}
+
+/**
  * 提取视频流信息
  */
 function extractVideoStreamInfo(metadata: any): {
     width: number;
     height: number;
     codec: string;
+    rotation: number;
 } {
     const videoStream = metadata.streams?.find((s: any) => s.codec_type === "video");
+    const rotation = getVideoRotation(metadata);
+
+    let width = videoStream?.width || 0;
+    let height = videoStream?.height || 0;
+
+    // 如果视频旋转了90度或270度，需要交换宽高
+    // 这样在展示时可以获得正确的显示尺寸
+    if (rotation === 90 || rotation === 270) {
+        [width, height] = [height, width];
+    }
 
     return {
-        width: videoStream?.width || 0,
-        height: videoStream?.height || 0,
+        width,
+        height,
         codec: videoStream?.codec_name || "unknown",
+        rotation,
     };
 }
 
@@ -90,6 +139,7 @@ export async function extractVideoMetadata(
                 height: streamInfo.height,
             },
             codec: streamInfo.codec,
+            rotation: streamInfo.rotation,
             gpsInfo: gpsInfo || undefined,
             format: path.extname(filePath).toLowerCase().slice(1),
         };

@@ -8,7 +8,12 @@ import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@rendere
 import { openInFinder } from "@renderer/utils/api-path";
 import { isEmpty } from "radash";
 import { removeFileProtocol } from "@renderer/common/image";
-import { BaseContextMenu, BaseMenuItem } from "@renderer/components/ui";
+import {
+    BaseContextMenu,
+    BaseMenuItem,
+    BaseBreadcrumb,
+    BaseBreadcrumbItem,
+} from "@renderer/components/ui";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
 
 /**
@@ -136,9 +141,11 @@ async function rescan(key: string): Promise<void> {
 <template>
     <div class="folder-list-card">
         <div class="px-4 py-2 border-b border-gray-100 flex items-center">
-            <a-breadcrumb class="folder-list-header">
-                <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
-            </a-breadcrumb>
+            <BaseBreadcrumb class="folder-list-header">
+                <BaseBreadcrumbItem>
+                    {{ t("app.folderList") }}
+                </BaseBreadcrumbItem>
+            </BaseBreadcrumb>
         </div>
         <div class="flex-1 min-h-0 overflow-auto tree-container">
             <a-tree
@@ -223,6 +230,8 @@ async function rescan(key: string): Promise<void> {
     background: var(--color-tree-bg);
     color: var(--color-tree-text);
     border-bottom: 1px solid var(--color-tree-border);
+    display: flex;
+    align-items: center;
 }
 .folder-list-card {
     flex: 1; /* 使用 flex 占满父容器空间 */

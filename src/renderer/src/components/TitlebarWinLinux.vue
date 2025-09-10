@@ -28,7 +28,7 @@
 
         <!-- 窗口控制按钮区（no-drag） -->
         <div class="window-controls no-drag-region">
-            <a-space class="setting-header no-drag-region">
+            <BaseSpace class="setting-header no-drag-region">
                 <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
                 <DashboardOutlined
                     class="system-icon"
@@ -36,7 +36,7 @@
                 ></DashboardOutlined>
                 <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
                 <SettingOutlined class="system-icon" @click="openPreference" />
-            </a-space>
+            </BaseSpace>
             <!-- 最小化 -->
             <button
                 class="window-btn win-btn minimize"
@@ -113,6 +113,7 @@ import { onClickOutside } from "@vueuse/core";
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useMenusStore } from "@renderer/stores/menus";
+import { BaseSpace } from "@renderer/components/ui";
 import MenuDropdown from "./common/MenuDropdown.vue";
 const { t } = useI18n();
 

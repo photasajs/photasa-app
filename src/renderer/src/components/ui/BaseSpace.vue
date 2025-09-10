@@ -5,23 +5,12 @@
         :class="[`base-space--${direction}`, `base-space--${align}`, `base-space--${size}`]"
         :style="spaceStyle"
     >
-        <template v-for="(item, index) in items" :key="index">
-            <div
-                v-if="index > 0"
-                class="base-space-item-separator"
-                :class="`base-space-item-separator--${direction}`"
-            />
-            <div class="base-space-item">
-                <slot :item="item" :index="index">
-                    {{ item }}
-                </slot>
-            </div>
-        </template>
+        <slot />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from "vue";
+import { computed } from "vue";
 
 interface BaseSpaceProps {
     /** 间距方向 */
@@ -32,8 +21,6 @@ interface BaseSpaceProps {
     size?: "small" | "middle" | "large" | number;
     /** 是否换行 */
     wrap?: boolean;
-    /** 分割符 */
-    split?: string | boolean;
 }
 
 const props = withDefaults(defineProps<BaseSpaceProps>(), {
@@ -43,38 +30,39 @@ const props = withDefaults(defineProps<BaseSpaceProps>(), {
     wrap: false,
 });
 
-const slots = useSlots();
-
-// 间距值通过CSS类控制，不需要JavaScript计算
-
 // 计算样式
 const spaceStyle = computed(() => {
     const style: Record<string, string> = {};
-
-    if (props.direction === "vertical") {
-        style.flexDirection = "column";
-    }
 
     if (props.wrap) {
         style.flexWrap = "wrap";
     }
 
-    return style;
-});
-
-// 获取子元素
-const items = computed(() => {
-    if (slots.default) {
-        // 如果有插槽内容，返回插槽内容
-        return slots.default();
+    // 设置gap
+    if (typeof props.size === "number") {
+        style.gap = `${props.size}px`;
+    } else {
+        // 对于字符串size，也设置对应的gap值
+        switch (props.size) {
+            case "small":
+                style.gap = "8px";
+                break;
+            case "middle":
+                style.gap = "24px";
+                break;
+            case "large":
+                style.gap = "24px";
+                break;
+        }
     }
-    return [];
+
+    return style;
 });
 </script>
 
 <style scoped>
 .base-space {
-    display: inline-flex;
+    display: flex;
     align-items: center;
 }
 
@@ -104,45 +92,16 @@ const items = computed(() => {
     align-items: baseline;
 }
 
-/* 间距大小 */
-.base-space--small .base-space-item-separator--horizontal {
-    width: 8px;
+/* 间距大小 - 使用gap属性 */
+.base-space--small {
+    gap: 8px;
 }
 
-.base-space--small .base-space-item-separator--vertical {
-    height: 8px;
+.base-space--middle {
+    gap: 24px;
 }
 
-.base-space--middle .base-space-item-separator--horizontal {
-    width: 16px;
-}
-
-.base-space--middle .base-space-item-separator--vertical {
-    height: 16px;
-}
-
-.base-space--large .base-space-item-separator--horizontal {
-    width: 24px;
-}
-
-.base-space--large .base-space-item-separator--vertical {
-    height: 24px;
-}
-
-/* 分隔符 */
-.base-space-item-separator {
-    flex-shrink: 0;
-}
-
-.base-space-item-separator--horizontal {
-    display: inline-block;
-}
-
-.base-space-item-separator--vertical {
-    display: block;
-}
-
-.base-space-item {
-    display: inline-block;
+.base-space--large {
+    gap: 24px;
 }
 </style>

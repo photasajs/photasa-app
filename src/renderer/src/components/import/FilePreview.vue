@@ -4,7 +4,7 @@
         <div class="preview-header">
             <h3>{{ t("import.filePreview") }}</h3>
             <div class="preview-actions">
-                <a-space>
+                <BaseSpace>
                     <BaseButton size="sm" @click="selectAll">
                         <template #icon><CheckOutlined /></template>
                         {{ t("import.selectAll") }}
@@ -17,109 +17,110 @@
                         <template #icon><SwapOutlined /></template>
                         {{ t("import.invertSelection") }}
                     </BaseButton>
-                </a-space>
+                </BaseSpace>
             </div>
         </div>
 
         <!-- 预览统计 -->
         <div class="preview-stats">
-            <a-row :gutter="16">
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.selected')"
-                        :value="`${selectedCount} / ${totalCount}`"
-                        :value-style="{ color: '#1890ff' }"
-                    />
-                </a-col>
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.selectedSize')"
-                        :value="formatSize(selectedSize)"
-                        :value-style="{ color: '#52c41a' }"
-                    />
-                </a-col>
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.fileGroups')"
-                        :value="groupCount"
-                        :value-style="{ color: '#722ed1' }"
-                    />
-                </a-col>
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.duplicates')"
-                        :value="duplicateCount"
-                        :value-style="{ color: '#fa8c16' }"
-                    />
-                </a-col>
-            </a-row>
+            <BaseRow :gutter="16">
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.selected") }}</div>
+                        <div class="statistic-value" style="color: #1890ff">
+                            {{ selectedCount }} / {{ totalCount }}
+                        </div>
+                    </div>
+                </BaseCol>
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.selectedSize") }}</div>
+                        <div class="statistic-value" style="color: #52c41a">
+                            {{ formatSize(selectedSize) }}
+                        </div>
+                    </div>
+                </BaseCol>
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.fileGroups") }}</div>
+                        <div class="statistic-value" style="color: #722ed1">{{ groupCount }}</div>
+                    </div>
+                </BaseCol>
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.duplicates") }}</div>
+                        <div class="statistic-value" style="color: #fa8c16">
+                            {{ duplicateCount }}
+                        </div>
+                    </div>
+                </BaseCol>
+            </BaseRow>
         </div>
 
         <!-- 文件列表 -->
         <div class="file-list">
-            <a-list
+            <BaseList
                 :data-source="visibleGroups"
                 :pagination="hasMoreFiles ? paginationConfig : false"
                 size="sm"
             >
                 <template #renderItem="{ item: group }">
-                    <a-list-item class="file-item">
+                    <BaseListItem class="file-item">
                         <template #actions>
-                            <a-tooltip :title="t('import.toggleSelection')">
-                                <a-checkbox
-                                    :checked="isSelected(group.mainFile.path)"
-                                    @change="toggleSelection(group)"
+                            <BaseTooltip :title="t('import.toggleSelection')">
+                                <BaseCheckbox
+                                    :modelValue="isSelected(group.mainFile.path)"
+                                    @update:modelValue="toggleSelection(group)"
                                 />
-                            </a-tooltip>
-                            <a-tooltip :title="t('import.viewDetails')">
+                            </BaseTooltip>
+                            <BaseTooltip :title="t('import.viewDetails')">
                                 <BaseButton type="text" size="sm" @click="showDetails(group)">
                                     <template #icon><InfoCircleOutlined /></template>
                                 </BaseButton>
-                            </a-tooltip>
+                            </BaseTooltip>
                         </template>
 
-                        <a-list-item-meta>
-                            <template #avatar>
-                                <a-avatar shape="square" size="large" class="file-avatar">
-                                    <template #icon>
-                                        <FileImageOutlined v-if="group.mainFile.type === 'image'" />
-                                        <VideoCameraOutlined
-                                            v-else-if="group.mainFile.type === 'video'"
-                                        />
-                                        <FileOutlined v-else />
-                                    </template>
-                                </a-avatar>
-                            </template>
+                        <div class="file-item-content">
+                            <div class="file-avatar">
+                                <div class="avatar-icon">
+                                    <FileImageOutlined v-if="group.mainFile.type === 'image'" />
+                                    <VideoCameraOutlined
+                                        v-else-if="group.mainFile.type === 'video'"
+                                    />
+                                    <FileOutlined v-else />
+                                </div>
+                            </div>
 
-                            <template #title>
+                            <div class="file-info">
                                 <div class="file-title">
                                     <span class="file-name">{{ group.mainFile.name }}</span>
                                     <div class="file-tags">
-                                        <a-tag v-if="group.type === 'group'" color="blue" size="sm">
+                                        <BaseTag
+                                            v-if="group.type === 'group'"
+                                            color="blue"
+                                            size="small"
+                                        >
                                             {{ t("import.group", { count: group.files.length }) }}
-                                        </a-tag>
-                                        <a-tag v-if="isDuplicate(group)" color="orange" size="sm">
+                                        </BaseTag>
+                                        <BaseTag v-if="isDuplicate(group)" color="orange" size="small">
                                             {{ t("import.duplicate.label") }}
-                                        </a-tag>
-                                        <a-tag
+                                        </BaseTag>
+                                        <BaseTag
                                             v-if="group.mainFile.type === 'image'"
                                             color="green"
-                                            size="sm"
+                                            size="small"
                                         >
                                             {{ t("import.image") }}
-                                        </a-tag>
-                                        <a-tag
+                                        </BaseTag>
+                                        <BaseTag
                                             v-if="group.mainFile.type === 'video'"
                                             color="purple"
-                                            size="sm"
+                                            size="small"
                                         >
                                             {{ t("import.video") }}
-                                        </a-tag>
+                                        </BaseTag>
                                     </div>
                                 </div>
-                            </template>
-
-                            <template #description>
                                 <div class="file-description">
                                     <div class="file-info">
                                         <span class="file-size">{{
@@ -139,16 +140,16 @@
                                         {{ getTargetPath(group) }}
                                     </div>
                                 </div>
-                            </template>
-                        </a-list-item-meta>
-                    </a-list-item>
+                            </div>
+                        </div>
+                    </BaseListItem>
                 </template>
-            </a-list>
+            </BaseList>
         </div>
 
         <!-- 文件详情对话框 -->
-        <a-modal
-            v-model:visible="showDetailsDialog"
+        <BaseModal
+            v-model:open="showDetailsDialog"
             :title="t('import.fileDetails')"
             width="800px"
             :footer="null"
@@ -157,93 +158,99 @@
                 <!-- 基本信息 -->
                 <div class="detail-section">
                     <h4>{{ t("import.basicInfo") }}</h4>
-                    <a-descriptions :column="2" size="sm" bordered>
-                        <a-descriptions-item :label="t('import.fileName')">
+                    <BaseDescriptions :column="2" size="small" bordered>
+                        <BaseDescriptionItem :label="t('import.fileName')">
                             {{ selectedGroup.mainFile.name }}
-                        </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.fileSize')">
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem :label="t('import.fileSize')">
                             {{ formatSize(selectedGroup.totalSize) }}
-                        </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.fileType')">
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem :label="t('import.fileType')">
                             {{ selectedGroup.mainFile.type }}
-                        </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.dateSource.label')">
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem :label="t('import.dateSource.label')">
                             {{ t(`import.dateSource.${selectedGroup.mainFile.dateSource}`) }}
-                        </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.dateTime')">
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem :label="t('import.dateTime')">
                             {{ formatDate(selectedGroup.mainFile.dateTime) }}
-                        </a-descriptions-item>
-                        <a-descriptions-item :label="t('import.modifiedTime')">
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem :label="t('import.modifiedTime')">
                             {{ formatDate(selectedGroup.mainFile.modifiedTime) }}
-                        </a-descriptions-item>
-                    </a-descriptions>
+                        </BaseDescriptionItem>
+                    </BaseDescriptions>
                 </div>
 
                 <!-- 文件组信息 -->
                 <div v-if="selectedGroup.type === 'group'" class="detail-section">
                     <h4>{{ t("import.groupFiles") }}</h4>
-                    <a-list :data-source="selectedGroup.files" size="sm">
+                    <BaseList :data-source="selectedGroup.files" size="sm">
                         <template #renderItem="{ item: file }">
-                            <a-list-item>
-                                <a-list-item-meta>
-                                    <template #avatar>
-                                        <a-avatar size="sm" shape="square">
-                                            <template #icon>
-                                                <FileImageOutlined v-if="file.type === 'image'" />
-                                                <VideoCameraOutlined
-                                                    v-else-if="file.type === 'video'"
-                                                />
-                                                <FileOutlined v-else />
-                                            </template>
-                                        </a-avatar>
-                                    </template>
-                                    <template #title>{{ file.name }}</template>
-                                    <template #description>{{ formatSize(file.size) }}</template>
-                                </a-list-item-meta>
-                            </a-list-item>
+                            <BaseListItem>
+                                <div class="file-item-content">
+                                    <div class="file-avatar">
+                                        <div class="avatar-icon">
+                                            <FileImageOutlined v-if="file.type === 'image'" />
+                                            <VideoCameraOutlined
+                                                v-else-if="file.type === 'video'"
+                                            />
+                                            <FileOutlined v-else />
+                                        </div>
+                                    </div>
+                                    <div class="file-info">
+                                        <div class="file-title">{{ file.name }}</div>
+                                        <div class="file-description">
+                                            {{ formatSize(file.size) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </BaseListItem>
                         </template>
-                    </a-list>
+                    </BaseList>
                 </div>
 
                 <!-- 目标路径预览 -->
                 <div class="detail-section">
                     <h4>{{ t("import.targetPath") }}</h4>
-                    <a-input :value="getTargetPath(selectedGroup)" readonly />
+                    <input
+                        :value="getTargetPath(selectedGroup)"
+                        readonly
+                        class="target-path-input"
+                    />
                 </div>
 
                 <!-- 元数据信息 -->
                 <div v-if="selectedGroup.mainFile.metadata" class="detail-section">
                     <h4>{{ t("import.metadata") }}</h4>
-                    <a-descriptions :column="2" size="sm" bordered>
-                        <a-descriptions-item
+                    <BaseDescriptions :column="2" size="small" bordered>
+                        <BaseDescriptionItem
                             v-if="'width' in selectedGroup.mainFile.metadata"
                             :label="t('import.dimensions')"
                         >
                             {{ (selectedGroup.mainFile.metadata as any).width }} ×
                             {{ (selectedGroup.mainFile.metadata as any).height }}
-                        </a-descriptions-item>
-                        <a-descriptions-item
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem
                             v-if="'duration' in selectedGroup.mainFile.metadata"
                             :label="t('import.duration')"
                         >
                             {{ formatDuration((selectedGroup.mainFile.metadata as any).duration) }}
-                        </a-descriptions-item>
-                        <a-descriptions-item
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem
                             v-if="selectedGroup.mainFile.metadata.format"
                             :label="t('import.format')"
                         >
                             {{ selectedGroup.mainFile.metadata.format }}
-                        </a-descriptions-item>
-                        <a-descriptions-item
+                        </BaseDescriptionItem>
+                        <BaseDescriptionItem
                             v-if="selectedGroup.mainFile.metadata.gpsInfo"
                             :label="t('import.location')"
                         >
                             {{ formatGPS(selectedGroup.mainFile.metadata.gpsInfo) }}
-                        </a-descriptions-item>
-                    </a-descriptions>
+                        </BaseDescriptionItem>
+                    </BaseDescriptions>
                 </div>
             </div>
-        </a-modal>
+        </BaseModal>
     </div>
 </template>
 
@@ -261,7 +268,20 @@ import {
     PhCaretRight as ArrowRightOutlined,
 } from "@phosphor-icons/vue";
 import type { FileGroup, DuplicateFileInfo, GPSInfo } from "@common/import-types";
-import { BaseButton } from "@renderer/components/ui";
+import {
+    BaseButton,
+    BaseSpace,
+    BaseRow,
+    BaseCol,
+    BaseList,
+    BaseListItem,
+    BaseTooltip,
+    BaseCheckbox,
+    BaseTag,
+    BaseModal,
+    BaseDescriptions,
+    BaseDescriptionItem,
+} from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(

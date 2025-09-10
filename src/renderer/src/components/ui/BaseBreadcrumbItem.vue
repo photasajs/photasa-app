@@ -1,75 +1,36 @@
 <template>
-    <li class="breadcrumb-item" :class="{ 'breadcrumb-item-active': !href }">
-        <component
-            :is="href ? 'a' : 'span'"
-            :href="href"
-            class="breadcrumb-link"
-            @click="handleClick"
-        >
-            <slot></slot>
-        </component>
-        <span v-if="!isLast" class="breadcrumb-separator" aria-hidden="true">
-            {{ separator }}
+    <li class="breadcrumb-item">
+        <span class="breadcrumb-text">
+            <slot>{{ text || "NO_TEXT" }}</slot>
         </span>
     </li>
 </template>
 
 <script setup lang="ts">
-interface BaseBreadcrumbItemProps {
-    href?: string;
-    separator?: string;
-    isLast?: boolean;
+interface Props {
+    text?: string;
 }
 
-const props = withDefaults(defineProps<BaseBreadcrumbItemProps>(), {
-    separator: "/",
-    isLast: false,
-});
-
-const emit = defineEmits<{
-    click: [event: MouseEvent];
-}>();
-
-const handleClick = (event: MouseEvent) => {
-    if (!props.href) {
-        event.preventDefault();
-    }
-    emit("click", event);
-};
+defineProps<Props>();
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .breadcrumb-item {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+
+    &:not(:last-child)::after {
+        content: "/";
+        margin: 0 8px;
+        color: var(--color-tree-text, var(--color-text-tertiary, #999));
+        font-size: 12px;
+        opacity: 0.6;
+    }
 }
 
-.breadcrumb-item:not(:last-child) {
-    margin-right: 8px;
-}
-
-.breadcrumb-link {
-    color: var(--color-text-secondary);
-    text-decoration: none;
-    transition: color 0.3s;
-    cursor: pointer;
-}
-
-.breadcrumb-link:hover {
-    color: var(--color-text);
-}
-
-.breadcrumb-item-active .breadcrumb-link {
-    color: var(--color-text);
-    cursor: default;
-}
-
-.breadcrumb-item-active .breadcrumb-link:hover {
-    color: var(--color-text);
-}
-
-.breadcrumb-separator {
-    margin-left: 8px;
-    color: var(--color-text-secondary);
+.breadcrumb-text {
+    color: var(--color-tree-text, var(--color-text, #000));
+    font-size: 14px;
+    font-weight: 500;
 }
 </style>

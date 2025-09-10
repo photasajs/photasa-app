@@ -517,5 +517,12 @@
             "failed": "Başarısız",
             "unknown": "Bilinmiyor"
         }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "Son 1 saat",
+            "6h": "Son 6 saat",
+            "24h": "Son 24 saat"
+        }
     }
 }

@@ -100,6 +100,7 @@ export interface VideoMetadata {
         height: number;
     };
     codec: string;
+    rotation?: number;
     gpsInfo?: GPSInfo | null;
     format: string;
     dateSource: DateSource;

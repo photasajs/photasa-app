@@ -4,13 +4,13 @@
         <div class="progress-header">
             <h3>{{ t("import.progress") }}</h3>
             <div class="progress-status">
-                <a-badge :status="statusBadgeType" :text="statusText" />
+                <BaseBadge :variant="statusBadgeType" :text="statusText" />
             </div>
         </div>
 
         <!-- 主进度条 -->
         <div class="main-progress">
-            <a-progress
+            <BaseProgress
                 :percent="progressPercentage"
                 :status="progressStatus"
                 :stroke-color="progressColor"
@@ -27,52 +27,44 @@
 
         <!-- 详细统计 -->
         <div class="progress-stats">
-            <a-row :gutter="16">
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.speed')"
-                        :value="formatSpeed(progress.speed)"
-                        :value-style="{ fontSize: '16px' }"
-                    >
-                        <template #prefix>
-                            <ThunderboltOutlined />
-                        </template>
-                    </a-statistic>
-                </a-col>
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.remaining')"
-                        :value="formatTime(progress.estimatedTimeRemaining)"
-                        :value-style="{ fontSize: '16px' }"
-                    >
-                        <template #prefix>
-                            <ClockCircleOutlined />
-                        </template>
-                    </a-statistic>
-                </a-col>
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.elapsed')"
-                        :value="formatTime(elapsedTime)"
-                        :value-style="{ fontSize: '16px' }"
-                    >
-                        <template #prefix>
-                            <HistoryOutlined />
-                        </template>
-                    </a-statistic>
-                </a-col>
-                <a-col :span="6">
-                    <a-statistic
-                        :title="t('import.eta')"
-                        :value="formatETA(progress.estimatedTimeRemaining)"
-                        :value-style="{ fontSize: '16px' }"
-                    >
-                        <template #prefix>
-                            <CalendarOutlined />
-                        </template>
-                    </a-statistic>
-                </a-col>
-            </a-row>
+            <BaseRow :gutter="16">
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.speed") }}</div>
+                        <div class="statistic-value" style="font-size: 16px">
+                            <ThunderboltOutlined class="statistic-icon" />
+                            {{ formatSpeed(progress.speed) }}
+                        </div>
+                    </div>
+                </BaseCol>
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.remaining") }}</div>
+                        <div class="statistic-value" style="font-size: 16px">
+                            <ClockCircleOutlined class="statistic-icon" />
+                            {{ formatTime(progress.estimatedTimeRemaining) }}
+                        </div>
+                    </div>
+                </BaseCol>
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.elapsed") }}</div>
+                        <div class="statistic-value" style="font-size: 16px">
+                            <HistoryOutlined class="statistic-icon" />
+                            {{ formatTime(elapsedTime) }}
+                        </div>
+                    </div>
+                </BaseCol>
+                <BaseCol :span="6">
+                    <div class="statistic-item">
+                        <div class="statistic-title">{{ t("import.eta") }}</div>
+                        <div class="statistic-value" style="font-size: 16px">
+                            <CalendarOutlined class="statistic-icon" />
+                            {{ formatETA(progress.estimatedTimeRemaining) }}
+                        </div>
+                    </div>
+                </BaseCol>
+            </BaseRow>
         </div>
 
         <!-- 当前处理文件 -->
@@ -82,9 +74,9 @@
                 {{ t("import.processing") }}:
             </div>
             <div class="current-file-path">
-                <a-tooltip :title="progress.currentFile">
+                <BaseTooltip :title="progress.currentFile">
                     <span>{{ getFileName(progress.currentFile) }}</span>
-                </a-tooltip>
+                </BaseTooltip>
             </div>
         </div>
 
@@ -92,14 +84,12 @@
         <div v-if="hasIssues" class="issues-section">
             <!-- 错误列表 -->
             <div v-if="progress.errors.length > 0" class="error-section">
-                <a-collapse>
-                    <a-collapse-panel key="errors" :header="errorHeader">
-                        <template #extra>
-                            <a-badge
-                                :count="progress.errors.length"
-                                :number-style="{ backgroundColor: '#ff4d4f' }"
-                            />
-                        </template>
+                <div class="collapse-section">
+                    <div class="collapse-header">
+                        <span class="collapse-title">{{ errorHeader }}</span>
+                        <BaseBadge :count="progress.errors.length" variant="danger" />
+                    </div>
+                    <div class="collapse-content">
                         <div class="issue-list">
                             <div
                                 v-for="(error, index) in visibleErrors"
@@ -142,20 +132,18 @@
                                 </BaseButton>
                             </div>
                         </div>
-                    </a-collapse-panel>
-                </a-collapse>
+                    </div>
+                </div>
             </div>
 
             <!-- 警告列表 -->
             <div v-if="progress.warnings.length > 0" class="warning-section">
-                <a-collapse>
-                    <a-collapse-panel key="warnings" :header="warningHeader">
-                        <template #extra>
-                            <a-badge
-                                :count="progress.warnings.length"
-                                :number-style="{ backgroundColor: '#faad14' }"
-                            />
-                        </template>
+                <div class="collapse-section">
+                    <div class="collapse-header">
+                        <span class="collapse-title">{{ warningHeader }}</span>
+                        <BaseBadge :count="progress.warnings.length" variant="warning" />
+                    </div>
+                    <div class="collapse-content">
                         <div class="issue-list">
                             <div
                                 v-for="(warning, index) in visibleWarnings"
@@ -190,14 +178,14 @@
                                 </BaseButton>
                             </div>
                         </div>
-                    </a-collapse-panel>
-                </a-collapse>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- 控制按钮 -->
         <div class="progress-controls">
-            <a-space>
+            <BaseSpace>
                 <BaseButton
                     v-if="progress.status === 'processing'"
                     type="default"
@@ -230,12 +218,12 @@
                     <template #icon><CheckOutlined /></template>
                     {{ t("import.closeButton") }}
                 </BaseButton>
-            </a-space>
+            </BaseSpace>
         </div>
 
         <!-- 取消确认对话框 -->
-        <a-modal
-            v-model:visible="showCancelConfirm"
+        <BaseModal
+            v-model:open="showCancelConfirm"
             :title="t('import.confirmCancel')"
             :ok-text="t('import.yes')"
             :cancel-text="t('import.no')"
@@ -250,7 +238,7 @@
                     })
                 }}
             </p>
-        </a-modal>
+        </BaseModal>
     </div>
 </template>
 
@@ -271,7 +259,16 @@ import {
     PhCheck as CheckOutlined,
 } from "@phosphor-icons/vue";
 import type { ImportProgress } from "@common/import-types";
-import { BaseButton } from "@renderer/components/ui";
+import {
+    BaseButton,
+    BaseBadge,
+    BaseProgress,
+    BaseRow,
+    BaseCol,
+    BaseTooltip,
+    BaseSpace,
+    BaseModal,
+} from "@renderer/components/ui";
 
 // Props
 const props = withDefaults(
@@ -360,15 +357,15 @@ const statusText = computed(() => {
 const statusBadgeType = computed(() => {
     switch (props.progress.status) {
         case "processing":
-            return "processing";
+            return "primary";
         case "completed":
             return "success";
         case "error":
-            return "error";
+            return "danger";
         case "paused":
             return "warning";
         default:
-            return "default";
+            return "secondary";
     }
 });
 
@@ -615,6 +612,53 @@ onUnmounted(() => {
         text-align: right;
         padding-top: 16px;
         border-top: 1px solid var(--border-color);
+    }
+
+    .statistic-item {
+        text-align: center;
+    }
+
+    .statistic-title {
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        margin-bottom: 4px;
+    }
+
+    .statistic-value {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .statistic-icon {
+        font-size: 14px;
+    }
+
+    .collapse-section {
+        border: 1px solid var(--color-border);
+        border-radius: 6px;
+        margin-bottom: 16px;
+    }
+
+    .collapse-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: var(--color-bg-secondary);
+        border-bottom: 1px solid var(--color-border);
+        cursor: pointer;
+    }
+
+    .collapse-title {
+        font-weight: 500;
+    }
+
+    .collapse-content {
+        padding: 16px;
     }
 }
 </style>

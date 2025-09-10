@@ -4,16 +4,12 @@
         <div class="chart-header">
             <h3 class="chart-title">队列状态趋势</h3>
             <div class="chart-controls">
-                <a-select
-                    v-model:value="timeRange"
-                    size="sm"
+                <BaseSelect
+                    v-model:modelValue="timeRange"
+                    :options="timeRangeOptions"
                     style="width: 120px"
-                    @change="handleTimeRangeChange"
-                >
-                    <a-select-option value="1h">最近1小时</a-select-option>
-                    <a-select-option value="6h">最近6小时</a-select-option>
-                    <a-select-option value="24h">最近24小时</a-select-option>
-                </a-select>
+                    @update:modelValue="handleTimeRangeChange"
+                />
             </div>
         </div>
 
@@ -25,7 +21,7 @@
             />
 
             <div v-if="isLoading" class="chart-loading-overlay">
-                <a-spin />
+                <BaseSpinner />
                 <span>加载图表数据...</span>
             </div>
 
@@ -55,7 +51,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, type PropType } from "vue";
+import { useI18n } from "vue-i18n";
 import type { ChartDataPoint } from "@common/queue-monitoring-types";
+import { BaseSpinner, BaseSelect } from "@renderer/components/ui";
 
 interface ChartDimensions {
     width: number;
@@ -67,6 +65,8 @@ interface ChartDimensions {
         left: number;
     };
 }
+
+const { t } = useI18n();
 
 const props = defineProps({
     chartData: {
@@ -82,6 +82,13 @@ const props = defineProps({
 const timeRange = ref<"1h" | "6h" | "24h">("1h");
 const chartContainer = ref<HTMLElement>();
 const chartCanvas = ref<HTMLCanvasElement>();
+
+// 时间范围选项
+const timeRangeOptions = computed(() => [
+    { value: "1h", label: t("queue.timeRange.1h") },
+    { value: "6h", label: t("queue.timeRange.6h") },
+    { value: "24h", label: t("queue.timeRange.24h") },
+]);
 
 const chartDimensions = ref<ChartDimensions>({
     width: 600,
