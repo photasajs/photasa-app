@@ -102,7 +102,11 @@
                                         >
                                             {{ t("import.group", { count: group.files.length }) }}
                                         </BaseTag>
-                                        <BaseTag v-if="isDuplicate(group)" color="orange" size="small">
+                                        <BaseTag
+                                            v-if="isDuplicate(group)"
+                                            color="orange"
+                                            size="small"
+                                        >
                                             {{ t("import.duplicate.label") }}
                                         </BaseTag>
                                         <BaseTag
