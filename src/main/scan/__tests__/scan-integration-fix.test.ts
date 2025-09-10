@@ -18,6 +18,12 @@ vi.mock("fs-extra");
 vi.mock("@main/config/config-storage");
 
 const mockFs = vi.mocked(fs);
+
+// Mock getPhotasaConfig
+const mockGetPhotasaConfig = vi.fn();
+vi.doMock("@main/config/config-storage", () => ({
+    getPhotasaConfig: mockGetPhotasaConfig,
+}));
 const mockLogger: PhotasaLogger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -44,12 +50,7 @@ describe("scan-integration-fix", () => {
                 photoList: [{ path: "/test/scanned/photo1.jpg", name: "photo1.jpg" }],
             };
 
-            // Mock 外部依赖
-            const mockGetPhotasaConfig = vi.fn();
-            vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig,
-            }));
-
+            // 设置 mock 行为
             mockGetPhotasaConfig.mockImplementation((folderPath) => {
                 if (folderPath === scannedFolder) {
                     return Promise.resolve(scannedConfig);
@@ -75,11 +76,7 @@ describe("scan-integration-fix", () => {
                 { path: "/test/new2", hasConfig: false },
             ];
 
-            const mockGetPhotasaConfig = vi.fn();
-            vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig,
-            }));
-
+            // 设置 mock 行为
             mockGetPhotasaConfig.mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.hasConfig) {
@@ -166,11 +163,7 @@ describe("scan-integration-fix", () => {
                 { path: "/test/success2", shouldFail: false },
             ];
 
-            const mockGetPhotasaConfig = vi.fn();
-            vi.doMock("@main/config/config-storage", () => ({
-                getPhotasaConfig: mockGetPhotasaConfig,
-            }));
-
+            // 设置 mock 行为
             mockGetPhotasaConfig.mockImplementation((folderPath) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.shouldFail) {

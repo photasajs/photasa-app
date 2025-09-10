@@ -22,6 +22,9 @@ vi.mock("electron", () => ({
     ipcMain: mockIpcMain,
 }));
 
+// 导入实际的 handler 函数
+import { checkPhotasaConfig } from "../index";
+
 describe("check-photasa-config API", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -57,7 +60,7 @@ describe("check-photasa-config API", () => {
             });
 
             // 调用处理函数
-            const result = await handler(testFolder);
+            const result = await checkPhotasaConfig(testFolder);
 
             expect(result).toEqual({
                 hasConfig: true,
