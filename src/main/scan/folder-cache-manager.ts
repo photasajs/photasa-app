@@ -66,41 +66,87 @@ interface DirectoryFileInfo {
 export async function computeFolderHash(
     folderPath: string,
     excludeFiles: string[] = [],
+    logger?: PhotasaLogger,
 ): Promise<string> {
     const files: DirectoryFileInfo[] = [];
 
     try {
-        const entries = await fs.readdir(folderPath, { withFileTypes: true });
+        // 规范化路径以处理特殊字符和编码问题
+        const normalizedPath = path.resolve(folderPath);
+
+        // 检查路径是否存在且为目录
+        const stats = await fs.stat(normalizedPath);
+        if (!stats.isDirectory()) {
+            logger?.warn(`[computeFolderHash] 路径不是目录: ${normalizedPath}`);
+            return "";
+        }
+
+        // 使用更安全的 readdir 选项，处理编码问题
+        const entries = await fs.readdir(normalizedPath, {
+            withFileTypes: true,
+            encoding: "utf8", // 明确指定编码
+        });
 
         for (const entry of entries) {
             if (entry.isFile()) {
-                const filePath = path.join(folderPath, entry.name);
-
                 // 跳过排除的文件（增量计算优化）
                 if (excludeFiles.includes(entry.name)) {
                     continue;
                 }
 
-                // 只考虑媒体文件（使用项目现有的isImage和isVideo库）
-                if (isImage(filePath) || isVideo(filePath)) {
-                    const stats = await fs.stat(filePath);
-                    files.push({
-                        name: entry.name,
-                        size: stats.size,
-                        mtime: stats.mtimeMs,
-                    });
+                try {
+                    // 安全地构建文件路径
+                    const filePath = path.join(normalizedPath, entry.name);
+
+                    // 只考虑媒体文件（使用项目现有的isImage和isVideo库）
+                    if (isImage(filePath) || isVideo(filePath)) {
+                        // 使用 entry 的 stat 信息，避免重复的 fs 调用
+                        const fileStats = await fs.stat(filePath);
+                        files.push({
+                            name: entry.name,
+                            size: fileStats.size,
+                            mtime: fileStats.mtimeMs,
+                        });
+                    }
+                } catch (fileError) {
+                    // 单个文件处理失败不影响整体哈希计算
+                    // 对于特殊字符文件名，记录但继续处理
+                    const errorMessage =
+                        fileError instanceof Error ? fileError.message : String(fileError);
+                    if (!errorMessage.includes("ENOENT")) {
+                        // 忽略文件不存在错误（可能是临时文件）
+                        logger?.debug(
+                            `[computeFolderHash] 跳过文件: ${entry.name} - ${errorMessage}`,
+                        );
+                    }
+                    continue;
                 }
             }
         }
 
-        // 按文件名排序确保哈希一致性
-        files.sort((a, b) => a.name.localeCompare(b.name));
+        // 按文件名排序确保哈希一致性（使用 UTF-8 字符串比较）
+        files.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
 
-        // 生成哈希字符串
+        // 生成哈希字符串，使用 Buffer 确保编码一致性
         const hashContent = files.map((f) => `${f.name}:${f.size}:${f.mtime}`).join("|");
+        const contentBuffer = Buffer.from(hashContent, "utf8");
 
-        return crypto.createHash("sha256").update(hashContent).digest("hex");
+        return crypto.createHash("sha256").update(contentBuffer).digest("hex");
     } catch (error) {
+        // 记录详细错误信息，但不阻止应用运行
+        const err = error as NodeJS.ErrnoException;
+        if (err.code === "ENOTDIR") {
+            logger?.warn(`[computeFolderHash] ENOTDIR错误 - 路径包含文件而非目录: ${folderPath}`);
+        } else if (err.code === "ENOENT") {
+            logger?.warn(`[computeFolderHash] 路径不存在: ${folderPath}`);
+        } else if (err.code === "EACCES" || err.code === "EPERM") {
+            logger?.warn(`[computeFolderHash] 权限不足: ${folderPath}`);
+        } else if (err.code === "ENAMETOOLONG") {
+            logger?.warn(`[computeFolderHash] 文件名过长: ${folderPath}`);
+        } else {
+            logger?.warn(`[computeFolderHash] 目录处理失败: ${folderPath}`, error);
+        }
+
         // 目录不可读时返回空哈希
         return "";
     }

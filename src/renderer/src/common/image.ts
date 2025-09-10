@@ -71,9 +71,35 @@ export function toPreviewableImage(file: Photo): string {
  * @returns 文件协议
  */
 export function toFileProtocol(currentFolder: string, file: string): string {
-    // Ensure currentFolder doesn't start with / to avoid double slashes
-    const cleanFolder = currentFolder.startsWith('/') ? currentFolder : `/${currentFolder}`;
-    return `file://${cleanFolder}/${file}`;
+    // 规范化路径分隔符
+    const normalizedFolder = currentFolder.replace(/\\/g, "/");
+    const normalizedFile = file.replace(/\\/g, "/");
+
+    // 确保文件夹路径以 / 开头
+    const cleanFolder = normalizedFolder.startsWith("/")
+        ? normalizedFolder
+        : `/${normalizedFolder}`;
+
+    // 移除文件夹路径末尾的 /，避免双斜杠
+    const trimmedFolder = cleanFolder.endsWith("/") ? cleanFolder.slice(0, -1) : cleanFolder;
+
+    // 确保文件路径不以 / 开头，避免双斜杠
+    const cleanFile = normalizedFile.startsWith("/") ? normalizedFile.slice(1) : normalizedFile;
+
+    // 分别编码文件夹和文件路径的每个组件，但保留 / 分隔符
+    // 这样可以避免特殊字符（如中文）导致的 URL 截断问题
+    const encodedFolder = trimmedFolder
+        .split("/")
+        .map((segment) => (segment === "" ? "" : encodeURIComponent(segment)))
+        .join("/");
+
+    const encodedFile = cleanFile
+        .split("/")
+        .map((segment) => encodeURIComponent(segment))
+        .join("/");
+
+    // 构建 file:// URL
+    return `file://${encodedFolder}/${encodedFile}`;
 }
 
 /**

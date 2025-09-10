@@ -127,7 +127,7 @@ export async function decideScanStrategy(
             if (!config.photoList || config.photoList.length === 0) {
                 // 配置文件为空，但需要检查文件夹中是否有照片文件
                 // 如果有照片文件，说明配置文件可能损坏，需要重新扫描
-                const currentHash = await computeFolderHash(folderPath);
+                const currentHash = await computeFolderHash(folderPath, [], logger);
                 if (currentHash) {
                     logger.info(
                         `[decideScanStrategy] .photasa.json 为空但文件夹有照片，需要重新扫描: ${folderPath}`,
