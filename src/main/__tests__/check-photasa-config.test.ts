@@ -18,6 +18,23 @@ vi.mock("electron", () => ({
     ipcMain: {
         handle: vi.fn(),
     },
+    app: {
+        on: vi.fn(),
+        whenReady: vi.fn(),
+    },
+    BrowserWindow: vi.fn(),
+    shell: {
+        openExternal: vi.fn(),
+    },
+    dialog: {
+        showOpenDialog: vi.fn(),
+    },
+    screen: {
+        getPrimaryDisplay: vi.fn(),
+    },
+    protocol: {
+        registerFileProtocol: vi.fn(),
+    },
 }));
 
 // 导入实际的 handler 函数
