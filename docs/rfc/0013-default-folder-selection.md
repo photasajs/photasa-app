@@ -384,7 +384,7 @@ watch(currentFolder, (newFolder) => {
 });
 
 watch(selectedKeys, async () => {
-    currentFolder.value = newFolderPath;  // 修改 currentFolder  
+    currentFolder.value = newFolderPath;  // 修改 currentFolder
 });
 ```
 
@@ -457,18 +457,18 @@ export const useFolderStore = defineStore('folder', {
     error: null,
     history: []
   }),
-  
+
   actions: {
     async selectFolder(path: string) {
       // 验证 → 更新状态 → 加载配置
       // 完整的错误处理和状态管理
     },
-    
+
     async initializeDefault() {
       // 智能初始化：持久化恢复 or 默认路径
     }
   },
-  
+
   persist: {
     paths: ['currentPath', 'history']
   }
@@ -480,19 +480,19 @@ export const useFolderStore = defineStore('folder', {
 // composables/useFolderSelection.ts
 export function useFolderSelection() {
   const folderStore = useFolderStore()
-  
+
   // 完全由Store驱动的计算属性
   const selectedKeys = computed(() => {
     return folderStore.currentPath ? [folderStore.currentPath] : []
   })
-  
+
   // 纯事件处理函数
   const handleFolderSelect = async (keys: string[]) => {
     if (keys.length > 0) {
       await folderStore.selectFolder(keys[0])
     }
   }
-  
+
   return {
     selectedKeys: readonly(selectedKeys),
     handleFolderSelect,
@@ -535,7 +535,7 @@ onMounted(initialize)
 
 #### 渐进式重构策略
 1. **Phase 1**: 创建新的FolderStore和Service层
-2. **Phase 2**: 实现useFolderSelection composable  
+2. **Phase 2**: 实现useFolderSelection composable
 3. **Phase 3**: 重构FolderList.vue使用新架构
 4. **Phase 4**: 移除旧的双watch逻辑，完成迁移
 

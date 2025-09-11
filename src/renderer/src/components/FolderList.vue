@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, reactive } from "vue";
+import { ref, watch, reactive, defineExpose } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
@@ -49,13 +49,34 @@ const expandedKeys = ref<string[]>([...paths.value]);
 /**
  * Selected keys
  */
-const selectedKeys = ref<string[]>([currentFolder.value]);
+const selectedKeys = ref<string[]>([]);
 
 /**
  * Show config modal
  */
 const showConfigModal = ref(false);
 
+/**
+ * Select folder method - called by parent component
+ */
+const selectFolder = (folderPath: string) => {
+    if (folderPath && folderPath !== selectedKeys.value[0]) {
+        logger.debug("[FolderList] selectFolder called with:", folderPath);
+        selectedKeys.value = [folderPath];
+    }
+};
+
+// Watch currentFolder changes and notify FolderList to select it
+watch(
+    currentFolder,
+    (newFolder) => {
+        if (newFolder) {
+            logger.debug("[App] currentFolder changed, notifying FolderList to select:", newFolder);
+            selectFolder(newFolder);
+        }
+    },
+    { immediate: true },
+);
 /**
  * Watch the selected keys
  */
@@ -158,6 +179,11 @@ async function rescan(key: string): Promise<void> {
     await resetPhotasaConfig(key);
     addScanFolder(key, "rescan");
 }
+
+// Expose methods to parent component
+defineExpose({
+    selectFolder,
+});
 </script>
 
 <template>

@@ -88,6 +88,42 @@ function handleOpenPreference() {
     showPreference.value = true;
 }
 
+/**
+ * Initialize the application
+ */
+async function initializeApp(): Promise<void> {
+    try {
+        const dir = await getDirectory("desktop");
+
+        // Desktop directory is ready
+        if (paths.value.length === 0) {
+            addPath(dir);
+        }
+
+        loading.value = false;
+
+        if (!currentFolder.value && paths.value.length > 0) {
+            currentFolder.value = paths.value[0];
+        }
+
+        if (paths.value.length > 0) {
+            startFileWatching(paths.value, preferenceStore);
+        } else {
+            // Open preference to config
+            showPreference.value = true;
+        }
+
+        processingFile.value = t("status.loadingConfig");
+        // Start to check if any leftover folder need to scan
+        startScanning();
+    } catch (error) {
+        logger.error("Failed to initialize app:", error);
+        loading.value = false;
+        // Open preference to config on error
+        showPreference.value = true;
+    }
+}
+
 onMounted(async () => {
     // APP 启动时推送初始化状态
     statusBarStore.update({
@@ -109,6 +145,9 @@ onMounted(async () => {
     });
     // 应用启动时全局初始化菜单栏数据（国际化）
     menusStore.refreshMenus(t);
+
+    // Initialize the application
+    await initializeApp();
 });
 
 // vue3 watch for array, should specify deep as true
@@ -250,31 +289,6 @@ async function startScanning(): Promise<void> {
         logger.debug("No folders to scan");
     }
 }
-
-getDirectory("desktop")
-    .then((dir) => {
-        // Desktop directory is ready
-        if (paths.value.length === 0) {
-            addPath(dir);
-        }
-
-        loading.value = false;
-
-        // Set to current folder
-        currentFolder.value = paths.value[0];
-        if (paths.value.length > 0) {
-            startFileWatching(paths.value, preferenceStore);
-        } else {
-            // Open preference to config
-            showPreference.value = true;
-        }
-        return paths.value;
-    })
-    .then(() => {
-        processingFile.value = t("status.loadingConfig");
-        // Start to check if any leftover folder need to scan
-        startScanning();
-    });
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
