@@ -14,7 +14,8 @@
             <div class="header-info">
                 <div class="last-update">最后更新: {{ formatTime(metrics.lastUpdated) }}</div>
                 <button class="export-button" @click="exportMetrics" title="导出监控数据">
-                    📊 导出数据
+                    <PhChartBar :size="16" />
+                    导出数据
                 </button>
             </div>
         </div>
@@ -112,7 +113,8 @@
         <!-- Quick Settings -->
         <div class="quick-settings">
             <button class="settings-toggle" @click="showConfig = !showConfig">
-                ⚙️ {{ showConfig ? "隐藏配置" : "显示配置" }}
+                <PhGear :size="16" />
+                {{ showConfig ? "隐藏配置" : "显示配置" }}
             </button>
         </div>
     </div>
@@ -126,6 +128,7 @@ import type { MetricCardConfig } from "@common/queue-monitoring-types";
 import BaseMetricsCard from "./BaseMetricsCard.vue";
 import QueueChart from "./QueueChart.vue";
 import { loggers } from "@common/logger";
+import { PhChartBar, PhGear } from "@phosphor-icons/vue";
 
 const logger = loggers.app;
 
@@ -333,7 +336,7 @@ onUnmounted(() => {
     min-height: 500px;
 
     &.dashboard-error {
-        border-left: 4px solid #ff4d4f;
+        border-left: 4px solid var(--color-danger);
         background: var(--color-error-bg, rgba(255, 77, 79, 0.02));
     }
 }
@@ -380,34 +383,34 @@ onUnmounted(() => {
         color: var(--color-text-secondary);
 
         .status-dot {
-            background: #d9d9d9;
+            background: var(--color-disabled);
         }
     }
 
     &.status-active {
-        background: rgba(82, 196, 26, 0.1);
-        color: #52c41a;
+        background: var(--color-success-bg, rgba(82, 196, 26, 0.1));
+        color: var(--color-success);
 
         .status-dot {
-            background: #52c41a;
+            background: var(--color-success);
         }
     }
 
     &.status-paused {
-        background: rgba(250, 173, 20, 0.1);
-        color: #faad14;
+        background: var(--color-warning-bg, rgba(250, 173, 20, 0.1));
+        color: var(--color-warning);
 
         .status-dot {
-            background: #faad14;
+            background: var(--color-warning);
         }
     }
 
     &.status-error {
-        background: rgba(255, 77, 79, 0.1);
-        color: #ff4d4f;
+        background: var(--color-danger-bg, rgba(255, 77, 79, 0.1));
+        color: var(--color-danger);
 
         .status-dot {
-            background: #ff4d4f;
+            background: var(--color-danger);
         }
     }
 }
@@ -539,6 +542,9 @@ onUnmounted(() => {
 }
 
 .settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     padding: 8px 16px;
     border: 1px solid var(--color-border);
     border-radius: 6px;

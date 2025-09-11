@@ -35,9 +35,13 @@
         <div class="debug-section">
             <h4>Key 重复检查:</h4>
             <div v-for="[key, count] in duplicateKeys" :key="key" class="duplicate-key">
-                <span style="color: red">重复 Key: "{{ key }}" - 出现 {{ count }} 次</span>
+                <span style="color: var(--color-danger)"
+                    >重复 Key: "{{ key }}" - 出现 {{ count }} 次</span
+                >
             </div>
-            <div v-if="duplicateKeys.size === 0" style="color: green">✅ 没有发现重复的 Key</div>
+            <div v-if="duplicateKeys.size === 0" style="color: var(--color-success)">
+                ✅ 没有发现重复的 Key
+            </div>
         </div>
 
         <!-- 实际渲染的 BaseTree -->
@@ -165,19 +169,19 @@ const duplicateKeys = computed(() => {
     font-size: 12px;
     max-height: 80vh;
     overflow-y: auto;
-    border: 1px solid #ccc;
+    border: 1px solid var(--color-border);
     padding: 16px;
 }
 
 .debug-section {
     margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 16px;
 }
 
 .debug-section h4 {
     margin: 0 0 8px 0;
-    color: #333;
+    color: var(--color-text);
 }
 
 .flat-node,
@@ -185,7 +189,7 @@ const duplicateKeys = computed(() => {
     font-size: 11px;
     margin: 2px 0;
     padding: 2px 4px;
-    background: #f5f5f5;
+    background: var(--color-bg-secondary);
 }
 
 .duplicate-key {
@@ -196,8 +200,8 @@ const duplicateKeys = computed(() => {
 pre {
     max-height: 200px;
     overflow: auto;
-    background: #f8f8f8;
+    background: var(--color-bg-secondary);
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
 }
 </style>

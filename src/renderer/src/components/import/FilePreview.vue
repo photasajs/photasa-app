@@ -27,7 +27,7 @@
                 <BaseCol :span="6">
                     <div class="statistic-item">
                         <div class="statistic-title">{{ t("import.selected") }}</div>
-                        <div class="statistic-value" style="color: #1890ff">
+                        <div class="statistic-value" style="color: var(--color-info)">
                             {{ selectedCount }} / {{ totalCount }}
                         </div>
                     </div>
@@ -35,7 +35,7 @@
                 <BaseCol :span="6">
                     <div class="statistic-item">
                         <div class="statistic-title">{{ t("import.selectedSize") }}</div>
-                        <div class="statistic-value" style="color: #52c41a">
+                        <div class="statistic-value" style="color: var(--color-success)">
                             {{ formatSize(selectedSize) }}
                         </div>
                     </div>
@@ -43,13 +43,15 @@
                 <BaseCol :span="6">
                     <div class="statistic-item">
                         <div class="statistic-title">{{ t("import.fileGroups") }}</div>
-                        <div class="statistic-value" style="color: #722ed1">{{ groupCount }}</div>
+                        <div class="statistic-value" style="color: var(--color-primary)">
+                            {{ groupCount }}
+                        </div>
                     </div>
                 </BaseCol>
                 <BaseCol :span="6">
                     <div class="statistic-item">
                         <div class="statistic-title">{{ t("import.duplicates") }}</div>
-                        <div class="statistic-value" style="color: #fa8c16">
+                        <div class="statistic-value" style="color: var(--color-warning)">
                             {{ duplicateCount }}
                         </div>
                     </div>

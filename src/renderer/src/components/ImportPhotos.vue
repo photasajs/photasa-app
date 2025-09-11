@@ -1028,7 +1028,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                                         </p>
                                         <span
                                             v-if="group.type === 'group'"
-                                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)] text-white"
+                                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)] text-[var(--color-white)]"
                                         >
                                             {{ t("import.group", { count: group.files.length }) }}
                                         </span>
@@ -1098,7 +1098,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                                     </p>
                                     <span
                                         v-if="group.type === 'group'"
-                                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)] text-white"
+                                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)] text-[var(--color-white)]"
                                     >
                                         {{ t("import.group", { count: group.files.length }) }}
                                     </span>

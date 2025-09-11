@@ -78,12 +78,12 @@
                             @mouseleave="handleMouseLeave"
                             :class="[
                                 highlightedIndex === index
-                                    ? 'bg-[var(--color-primary)] text-white'
+                                    ? 'bg-[var(--color-primary)] text-[var(--color-white)]'
                                     : option.value === modelValue
                                       ? 'bg-[var(--color-card-hover)] text-[var(--color-text)]'
                                       : 'text-[var(--color-text)]',
                                 'relative cursor-pointer select-none py-2 pl-10 pr-4 transition-colors duration-150',
-                                'hover:bg-[var(--color-primary)] hover:text-white',
+                                'hover:bg-[var(--color-primary)] hover:text-[var(--color-white)]',
                             ]"
                         >
                             <span
@@ -99,7 +99,7 @@
                                 class="absolute inset-y-0 left-0 flex items-center pl-3"
                                 :class="[
                                     highlightedIndex === index
-                                        ? 'text-white'
+                                        ? 'text-[var(--color-white)]'
                                         : 'text-[var(--color-primary)]',
                                 ]"
                             >
@@ -582,13 +582,13 @@ watch(
 /* 高亮项的样式 (键盘导航或hover) */
 .base-select-dropdown li[data-highlighted="true"] {
     background: var(--color-primary) !important;
-    color: white !important;
+    color: var(--color-white) !important;
     transform: translateX(2px);
 }
 
 /* 确保图标颜色正确 */
 .base-select-dropdown li[data-highlighted="true"] .check-icon {
-    color: white;
+    color: var(--color-white);
 }
 
 /* 选项hover状态 */

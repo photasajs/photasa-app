@@ -85,19 +85,19 @@ const sizeClasses = computed(() => {
 const variantClasses = computed(() => {
     switch (props.variant) {
         case "primary":
-            return "bg-[var(--color-primary)] text-white";
+            return "bg-[var(--color-primary)] text-[var(--color-white)]";
         case "secondary":
-            return "bg-[var(--color-secondary)] text-white";
+            return "bg-[var(--color-secondary)] text-[var(--color-white)]";
         case "success":
-            return "bg-green-500 text-white";
+            return "bg-green-500 text-[var(--color-white)]";
         case "warning":
-            return "bg-yellow-500 text-white";
+            return "bg-yellow-500 text-[var(--color-white)]";
         case "danger":
-            return "bg-red-500 text-white";
+            return "bg-red-500 text-[var(--color-white)]";
         case "info":
-            return "bg-blue-500 text-white";
+            return "bg-blue-500 text-[var(--color-white)]";
         default:
-            return "bg-[var(--color-primary)] text-white";
+            return "bg-[var(--color-primary)] text-[var(--color-white)]";
     }
 });
 </script>

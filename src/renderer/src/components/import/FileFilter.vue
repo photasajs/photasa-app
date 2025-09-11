@@ -199,7 +199,10 @@
                     <BaseCol :span="6">
                         <div class="statistic-item">
                             <div class="statistic-title">{{ t("import.filteredFiles") }}</div>
-                            <div class="statistic-value" style="font-size: 14px; color: #1890ff">
+                            <div
+                                class="statistic-value"
+                                style="font-size: 14px; color: var(--color-info)"
+                            >
                                 {{ stats.filteredFiles }}
                             </div>
                         </div>
@@ -207,7 +210,10 @@
                     <BaseCol :span="6">
                         <div class="statistic-item">
                             <div class="statistic-title">{{ t("import.totalSize") }}</div>
-                            <div class="statistic-value" style="font-size: 14px; color: #52c41a">
+                            <div
+                                class="statistic-value"
+                                style="font-size: 14px; color: var(--color-success)"
+                            >
                                 {{ formatSize(stats.totalSize) }}
                             </div>
                         </div>
@@ -215,7 +221,10 @@
                     <BaseCol :span="6">
                         <div class="statistic-item">
                             <div class="statistic-title">{{ t("import.images") }}</div>
-                            <div class="statistic-value" style="font-size: 14px; color: #722ed1">
+                            <div
+                                class="statistic-value"
+                                style="font-size: 14px; color: var(--color-primary)"
+                            >
                                 {{ stats.imageFiles }}
                             </div>
                         </div>
@@ -223,7 +232,10 @@
                     <BaseCol :span="6">
                         <div class="statistic-item">
                             <div class="statistic-title">{{ t("import.videos") }}</div>
-                            <div class="statistic-value" style="font-size: 14px; color: #fa8c16">
+                            <div
+                                class="statistic-value"
+                                style="font-size: 14px; color: var(--color-warning)"
+                            >
                                 {{ stats.videoFiles }}
                             </div>
                         </div>

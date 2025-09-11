@@ -297,13 +297,13 @@ onClickOutside(menuBarRef, () => {
     &:hover {
         background: var(--color-primary);
         .win-svg {
-            stroke: #fff;
+            stroke: var(--color-white);
         }
     }
     &.close:hover {
-        background: #e81123;
+        background: var(--color-danger);
         .win-svg {
-            stroke: #fff;
+            stroke: var(--color-white);
         }
     }
 }
@@ -331,7 +331,7 @@ onClickOutside(menuBarRef, () => {
 
 .system-icon:nth-child(1) {
     /* 时钟图标 - 蓝色渐变 */
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--color-info), var(--color-primary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -339,7 +339,7 @@ onClickOutside(menuBarRef, () => {
 
 .system-icon:nth-child(2) {
     /* 仪表板图标 - 紫色渐变 */
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -347,7 +347,7 @@ onClickOutside(menuBarRef, () => {
 
 .system-icon:nth-child(3) {
     /* 文件夹图标 - 绿色渐变 */
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, var(--color-success), var(--color-success));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -355,7 +355,7 @@ onClickOutside(menuBarRef, () => {
 
 .system-icon:nth-child(4) {
     /* 设置图标 - 橙色渐变 */
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

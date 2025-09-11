@@ -130,9 +130,6 @@ export const usePreferenceStore = defineStore("preference", {
                     const configCheck = await checkPhotasaConfig(folder);
 
                     if (configCheck.hasConfig) {
-                        logger.info(
-                            `Folder already scanned, skipping: ${folder} (${configCheck.photoCount} photos)`,
-                        );
                         // 仍然更新文件夹树，但不添加到扫描队列
                         this.updateFolderTree(folder);
                         return;

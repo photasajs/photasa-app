@@ -345,7 +345,7 @@ const handleContextmenu = (e: Event) => {
     height: 16px;
     border: 1px solid var(--color-border, #d9d9d9);
     border-radius: 2px;
-    background-color: #fff;
+    background-color: var(--color-white);
     transition: all 0.2s;
 }
 
@@ -357,7 +357,7 @@ const handleContextmenu = (e: Event) => {
     transform: translate(-50%, -50%) rotate(45deg) scale(0);
     width: 5px;
     height: 8px;
-    border: 2px solid #fff;
+    border: 2px solid var(--color-white);
     border-top: 0;
     border-left: 0;
     transition: all 0.2s;
@@ -382,7 +382,7 @@ const handleContextmenu = (e: Event) => {
     transform: translate(-50%, -50%) scale(1);
     width: 8px;
     height: 0;
-    border: 1px solid #fff;
+    border: 1px solid var(--color-white);
     border-radius: 1px;
 }
 

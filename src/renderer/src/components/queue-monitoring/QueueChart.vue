@@ -26,7 +26,9 @@
             </div>
 
             <div v-if="!chartData.length && !isLoading" class="chart-empty">
-                <div class="empty-icon">📊</div>
+                <div class="empty-icon">
+                    <PhChartBar :size="48" />
+                </div>
                 <div class="empty-text">暂无图表数据</div>
                 <div class="empty-subtitle">队列监控开始后将显示趋势图表</div>
             </div>
@@ -54,6 +56,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick, type PropType }
 import { useI18n } from "vue-i18n";
 import type { ChartDataPoint } from "@common/queue-monitoring-types";
 import { BaseSpinner, BaseSelect } from "@renderer/components/ui";
+import { PhChartBar } from "@phosphor-icons/vue";
 
 interface ChartDimensions {
     width: number;
@@ -245,19 +248,18 @@ function drawLines(
     scaleX: (timestamp: number) => number,
     scaleY: (value: number) => number,
 ): void {
-    // 根据主题调整颜色方案
-    const isDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const colors = isDark
-        ? {
-              primary: "#40a9ff", // 更亮的蓝色
-              success: "#73d13d", // 更亮的绿色
-              warning: "#ffec3d", // 更亮的黄色
-          }
-        : {
-              primary: "#1890ff", // 默认蓝色
-              success: "#52c41a", // 默认绿色
-              warning: "#faad14", // 默认黄色
-          };
+    // 使用CSS变量获取主题颜色
+    const getCSSVariable = (variable: string, fallback: string): string => {
+        return (
+            getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || fallback
+        );
+    };
+
+    const colors = {
+        primary: getCSSVariable("--color-info", "#1890ff"),
+        success: getCSSVariable("--color-success", "#52c41a"),
+        warning: getCSSVariable("--color-warning", "#faad14"),
+    };
 
     const lines = [
         {
@@ -461,10 +463,10 @@ watch(
     min-height: 300px;
 
     .empty-icon {
-        font-size: 48px;
         opacity: 0.4;
         filter: grayscale(30%);
         margin-bottom: 8px;
+        color: var(--color-text-secondary);
     }
 
     .empty-text {
@@ -517,15 +519,15 @@ watch(
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 
     &.queue-size-color {
-        background: #1890ff;
+        background: var(--color-info);
     }
 
     &.processing-rate-color {
-        background: #52c41a;
+        background: var(--color-success);
     }
 
     &.error-rate-color {
-        background: #faad14;
+        background: var(--color-warning);
     }
 }
 
@@ -567,15 +569,15 @@ watch(
             box-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
 
             &.queue-size-color {
-                background: #40a9ff;
+                background: var(--color-info);
             }
 
             &.processing-rate-color {
-                background: #73d13d;
+                background: var(--color-success);
             }
 
             &.error-rate-color {
-                background: #ffec3d;
+                background: var(--color-warning);
             }
         }
     }

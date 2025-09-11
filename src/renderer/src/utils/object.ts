@@ -1,7 +1,27 @@
 import { clone } from "radash";
 
 export function deepCopy<T>(object: T): T {
-    return clone(object);
+    try {
+        // 首先尝试使用 radash clone
+        return clone(object);
+    } catch (error) {
+        // 如果 radash clone 失败，使用 JSON 序列化作为回退
+        try {
+            return JSON.parse(JSON.stringify(object));
+        } catch (jsonError) {
+            // 如果 JSON 序列化也失败，使用 structuredClone（如果可用）
+            if (typeof structuredClone !== "undefined") {
+                try {
+                    return structuredClone(object);
+                } catch (structuredError) {
+                    return object;
+                }
+            } else {
+                console.warn("克隆失败，返回原始对象:", error, jsonError);
+                return object;
+            }
+        }
+    }
 }
 
 export function top<T>(array: T[]): T {

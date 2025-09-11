@@ -125,28 +125,28 @@ const formatTime = (date: Date): string => {
     }
 
     &.severity-success {
-        border-left: 4px solid #52c41a;
+        border-left: 4px solid var(--color-success);
 
         .metric-value .value {
-            color: #52c41a;
+            color: var(--color-success);
         }
     }
 
     &.severity-warning {
-        border-left: 4px solid #faad14;
+        border-left: 4px solid var(--color-warning);
         background: var(--color-warning-bg, rgba(250, 173, 20, 0.04));
 
         .metric-value .value {
-            color: #faad14;
+            color: var(--color-warning);
         }
     }
 
     &.severity-error {
-        border-left: 4px solid #ff4d4f;
+        border-left: 4px solid var(--color-danger);
         background: var(--color-error-bg, rgba(255, 77, 79, 0.04));
 
         .metric-value .value {
-            color: #ff4d4f;
+            color: var(--color-danger);
         }
     }
 }
@@ -175,11 +175,11 @@ const formatTime = (date: Date): string => {
     }
 
     &.trend-up {
-        color: #52c41a;
+        color: var(--color-success);
     }
 
     &.trend-down {
-        color: #ff4d4f;
+        color: var(--color-danger);
     }
 
     &.trend-stable {

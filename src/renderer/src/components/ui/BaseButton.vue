@@ -79,7 +79,7 @@ const iconSizeClasses = computed(() => {
 const variantClasses = computed(() => {
     // 支持danger属性优先级
     if (props.danger) {
-        return "bg-[var(--color-danger)] text-white hover:opacity-90 focus:ring-[var(--color-danger)]";
+        return "bg-[var(--color-danger)] text-[var(--color-white)] hover:opacity-90 focus:ring-[var(--color-danger)]";
     }
 
     // 支持ghost属性优先级
@@ -92,7 +92,7 @@ const variantClasses = computed(() => {
 
     switch (buttonType) {
         case "primary":
-            return "bg-[var(--color-primary)] text-white hover:bg-[var(--color-btn-hover)] focus:ring-[var(--color-primary)]";
+            return "bg-[var(--color-primary)] text-[var(--color-white)] hover:bg-[var(--color-btn-hover)] focus:ring-[var(--color-primary)]";
         case "secondary":
         case "default":
             return "bg-[var(--color-bg-secondary)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-card-hover)] focus:ring-[var(--color-primary)]";
@@ -101,7 +101,7 @@ const variantClasses = computed(() => {
         case "text":
             return "text-[var(--color-text)] hover:bg-[var(--color-card-hover)] focus:ring-[var(--color-primary)] bg-transparent border-none";
         case "danger":
-            return "bg-[var(--color-danger)] text-white hover:opacity-90 focus:ring-[var(--color-danger)]";
+            return "bg-[var(--color-danger)] text-[var(--color-white)] hover:opacity-90 focus:ring-[var(--color-danger)]";
         case "ghost":
             return "text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-card-hover)] focus:ring-[var(--color-primary)] bg-transparent";
         default:

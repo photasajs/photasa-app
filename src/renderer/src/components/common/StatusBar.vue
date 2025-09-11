@@ -121,6 +121,7 @@ const scanningPath = computed(() => {
     width: 100%;
     min-height: 32px;
     background: var(--color-bg-secondary, #f3f3f3);
+    color: var(--color-statusbar-fg, var(--color-text));
     padding: 0 12px;
 }
 
@@ -130,6 +131,7 @@ const scanningPath = computed(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--color-statusbar-fg, var(--color-text));
 }
 
 .bmc-btn {

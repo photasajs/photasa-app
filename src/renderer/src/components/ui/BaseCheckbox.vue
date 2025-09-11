@@ -21,7 +21,7 @@
                 disabled && 'cursor-not-allowed',
             ]"
         >
-            <PhCheck v-if="modelValue" class="w-3 h-3 text-white" />
+            <PhCheck v-if="modelValue" class="w-3 h-3 text-[var(--color-white)]" />
         </div>
         <span
             v-if="label || $slots.default"

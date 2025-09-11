@@ -9,6 +9,6 @@
 
   .icon {
     font-size: 80px;
-    color: #aaa;
+    color: var(--color-text-tertiary, #aaa);
   }
 }

@@ -174,15 +174,15 @@ const onLeave = () => {
 
 /* Color variations */
 .tooltip-blue {
-    background-color: #1890ff;
+    background-color: var(--color-info);
 }
 
 .tooltip-green {
-    background-color: #52c41a;
+    background-color: var(--color-success);
 }
 
 .tooltip-red {
-    background-color: #ff4d4f;
+    background-color: var(--color-danger);
 }
 
 /* Transitions */

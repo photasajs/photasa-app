@@ -125,7 +125,7 @@ export function toImage(currentFolder: string, file: Photo): Image {
         thumbnail: toFileProtocol(currentFolder, file.thumbnail),
         preview: toFileProtocol(currentFolder, preview),
         raw: toFileProtocol(currentFolder, file.path),
-        isVideo: file.isVideo,
+        isVideo: file.isVideo ?? false, // 确保 isVideo 始终是 boolean 类型
     };
 }
 

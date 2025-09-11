@@ -93,13 +93,13 @@
                                 >
                                     <path
                                         d="M3 7V5C3 3.89543 3.89543 3 5 3H9.58579C9.851 3 10.1054 3.10536 10.2929 3.29289L12 5H19C20.1046 5 21 5.89543 21 7V7"
-                                        stroke="currentColor"
+                                        :stroke="getItemColors(index).iconColor"
                                         stroke-width="2"
                                         stroke-linecap="round"
                                     />
                                     <path
                                         d="M3 7H21V18C21 19.1046 20.1046 20 19 20H5C3.89543 20 3 19.1046 3 18V7Z"
-                                        stroke="currentColor"
+                                        :stroke="getItemColors(index).iconColor"
                                         stroke-width="2"
                                     />
                                 </svg>
@@ -107,7 +107,12 @@
                             <div class="item-info">
                                 <div class="item-path" :title="item.path">{{ item.path }}</div>
                                 <div class="item-meta">
-                                    <span class="path-name">{{ formatPathName(item.path) }}</span>
+                                    <span
+                                        class="path-name"
+                                        :style="{ color: getItemColors(index).metaColor }"
+                                    >
+                                        {{ formatPathName(item.path) }}
+                                    </span>
                                     <span v-if="index === 0 && item.progress" class="progress-info">
                                         • {{ t("scan.processed") }}:
                                         {{ item.progress.processed || 0 }}
@@ -178,6 +183,30 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+// 计算属性：获取项目颜色
+const getItemColors = (index: number) => {
+    const getCSSValue = (variable: string, fallback: string): string => {
+        return (
+            getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || fallback
+        );
+    };
+
+    return {
+        iconColor:
+            index === 0
+                ? getCSSValue("--color-primary", "#1890ff")
+                : getCSSValue("--color-text-tertiary", "#999999"),
+        textColor:
+            index === 0
+                ? getCSSValue("--color-primary", "#1890ff")
+                : getCSSValue("--color-text", "#ffffff"),
+        metaColor:
+            index === 0
+                ? getCSSValue("--color-primary", "#1890ff")
+                : getCSSValue("--color-text-tertiary", "#999999"),
+    };
+};
 
 // UI helper functions
 function formatPathName(path: string): string {
@@ -563,7 +592,6 @@ function formatFullTimestamp(timestamp?: number): string {
             animation: activeProcessing 2s ease-in-out infinite;
 
             .item-icon {
-                color: var(--color-primary);
                 animation: iconPulse 1.5s ease-in-out infinite;
             }
 
@@ -612,9 +640,8 @@ function formatFullTimestamp(timestamp?: number): string {
             .item-icon {
                 width: 20px;
                 height: 20px;
-                color: var(--color-text-tertiary);
                 flex-shrink: 0;
-                transition: color 0.2s ease;
+                transition: all 0.2s ease;
 
                 svg {
                     width: 100%;

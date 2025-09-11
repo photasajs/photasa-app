@@ -86,9 +86,9 @@ const getStepClasses = (step: WizardStep, index: number) => {
     const isCurrent = index === props.currentStepIndex;
 
     if (isCompleted) {
-        return "bg-[var(--color-primary)] text-white";
+        return "bg-[var(--color-primary)] text-[var(--color-white)]";
     } else if (isCurrent) {
-        return "bg-[var(--color-primary)] text-white";
+        return "bg-[var(--color-primary)] text-[var(--color-white)]";
     } else {
         return "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]";
     }

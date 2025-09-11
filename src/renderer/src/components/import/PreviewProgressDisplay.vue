@@ -72,10 +72,10 @@
                     <div class="mr-3 flex-shrink-0">
                         <div
                             v-if="item?.type === 'image'"
-                            class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center"
+                            class="w-8 h-8 bg-[var(--color-info-bg)] rounded flex items-center justify-center"
                         >
                             <svg
-                                class="w-5 h-5 text-blue-600"
+                                class="w-5 h-5 text-[var(--color-info)]"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -108,10 +108,10 @@
                         </div>
                         <div
                             v-else
-                            class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center"
+                            class="w-8 h-8 bg-[var(--color-bg-secondary)] rounded flex items-center justify-center"
                         >
                             <svg
-                                class="w-5 h-5 text-gray-600"
+                                class="w-5 h-5 text-[var(--color-text-secondary)]"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -243,11 +243,11 @@ const getTypeLabel = (type: string) => {
 const getTypeBadgeClass = (type: string) => {
     switch (type) {
         case "image":
-            return "bg-blue-100 text-blue-700";
+            return "bg-[var(--color-info-bg)] text-[var(--color-info)]";
         case "video":
-            return "bg-purple-100 text-purple-700";
+            return "bg-[var(--color-primary-bg)] text-[var(--color-primary)]";
         default:
-            return "bg-gray-100 text-gray-700";
+            return "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]";
     }
 };
 </script>
