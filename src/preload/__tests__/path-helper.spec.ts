@@ -1,13 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { toFullPath, ensureDir } from "../path-helper";
 import { vol } from "memfs";
-import type { FileAction } from "@common/scan-types";
+import type { FileAction } from "@common/types";
 import { firstValueFrom } from "rxjs";
 import path from "path";
 import * as pathHelper from "../path-helper";
 
-vi.mock("fs");
-vi.mock("fs/promises");
+vi.mock("fs-extra", () => ({
+    default: {
+        ensureDir: vi.fn((dir, callback) => {
+            // Immediately call the callback to avoid timeout
+            if (callback) callback();
+        }),
+    },
+    ensureDir: vi.fn((dir, callback) => {
+        // Immediately call the callback to avoid timeout
+        if (callback) callback();
+    }),
+}));
 
 describe("path-helper", () => {
     beforeEach(() => {
@@ -49,7 +59,7 @@ describe("normalizePath/mergePath platform coverage", () => {
             console.log("Skipping Windows path test on non-Windows platform");
             return;
         }
-        
+
         const winPath = "C:\\foo\\bar/abc";
         // On Windows, path.normalize should handle Windows paths correctly
         const result = pathHelper.normalizePath(winPath);
@@ -66,7 +76,7 @@ describe("normalizePath/mergePath platform coverage", () => {
             console.log("Skipping Windows path merge test on non-Windows platform");
             return;
         }
-        
+
         const left = "C:\\foo\\bar";
         const right = "baz";
         // On Windows, path.join should handle Windows paths correctly

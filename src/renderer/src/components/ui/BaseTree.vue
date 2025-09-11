@@ -282,7 +282,7 @@ const currentExpandedKeys = computed(() =>
 );
 
 const currentSelectedKeys = computed(() =>
-    props.selectedKeys.length > 0 ? props.selectedKeys : internalSelectedKeys.value,
+    props.selectedKeys?.length > 0 ? props.selectedKeys : internalSelectedKeys.value,
 );
 
 const currentCheckedKeys = computed(() => {
