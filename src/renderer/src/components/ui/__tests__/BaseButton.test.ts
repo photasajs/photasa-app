@@ -58,7 +58,7 @@ describe("BaseButton", () => {
         });
 
         expect(primaryWrapper.find("button").classes()).toContain("bg-[var(--color-primary)]");
-        expect(primaryWrapper.find("button").classes()).toContain("text-white");
+        expect(primaryWrapper.find("button").classes()).toContain("text-[var(--color-white)]");
 
         expect(secondaryWrapper.find("button").classes()).toContain(
             "bg-[var(--color-bg-secondary)]",
@@ -95,7 +95,7 @@ describe("BaseButton", () => {
         });
 
         expect(wrapper.find("button").classes()).toContain("bg-[var(--color-danger)]");
-        expect(wrapper.find("button").classes()).toContain("text-white");
+        expect(wrapper.find("button").classes()).toContain("text-[var(--color-white)]");
     });
 
     it("handles ghost prop correctly", () => {

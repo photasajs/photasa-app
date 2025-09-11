@@ -130,9 +130,10 @@ describe("scan-strategy", () => {
             const result = await decideScanStrategy("/test/folder", mockLogger);
 
             expect(result.strategy).toBe(ScanStrategy.FULL);
-            expect(result.reason).toBe("配置文件为空但文件夹有照片");
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                "[decideScanStrategy] .photasa.json 为空但文件夹有照片，需要重新扫描: /test/folder",
+            expect(result.reason).toBe("配置文件读取失败");
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                "[decideScanStrategy] 读取 .photasa.json 失败: /test/folder",
+                expect.any(Error),
             );
         });
 

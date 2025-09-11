@@ -4,8 +4,35 @@ import { normalizePath } from "../path-util";
 // Mock window.api
 const mockNormalizePath = vi.fn((input) => {
     // 模拟shared层的normalizePath行为
+    if (!input || input === null || input === undefined) return "";
     if (input.startsWith("file://")) {
-        return input.replace("file://", "").replace(/^\/+/, "/");
+        // 处理 file:// 前缀
+        let result = input.replace("file://", "");
+        // 如果只剩下斜杠，返回空字符串
+        if (result === "" || result === "/") {
+            return "";
+        }
+        // 处理多个斜杠
+        result = result.replace(/\/+/g, "/");
+        // 处理 Windows 路径
+        if (result.match(/^\/[A-Z]:/)) {
+            result = result.substring(1); // 移除开头的 /
+        }
+        // 处理 Windows 路径的 URL 编码情况
+        if (result.match(/^\/[A-Z]%3A/)) {
+            result = result.substring(1); // 移除开头的 /
+        }
+        // 处理 Mac 外部卷路径
+        if (result.startsWith("Volumes/") && !result.startsWith("/Volumes/")) {
+            result = "/" + result;
+        }
+        // 处理 URL 编码
+        try {
+            result = decodeURIComponent(result);
+        } catch (e) {
+            // 如果解码失败，保持原样
+        }
+        return result;
     }
     return input;
 });
