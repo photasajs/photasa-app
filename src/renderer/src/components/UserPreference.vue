@@ -93,6 +93,36 @@ const tabsData = computed(() => [
 .import-message-list {
     height: 300px;
     overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb, #cccccc) var(--color-scrollbar-track, #f5f5f5);
+}
+
+.import-message-list::-webkit-scrollbar {
+    width: var(--color-scrollbar-width, 8px);
+    height: var(--color-scrollbar-width, 8px);
+}
+
+.import-message-list::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track, #f5f5f5);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+}
+
+.import-message-list::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover, #e8e8e8);
+}
+
+.import-message-list::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb, #cccccc);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+    transition: all 0.2s ease;
+}
+
+.import-message-list::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover, #0066b8);
+}
+
+.import-message-list::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active, #004d99);
 }
 
 .language-settings {

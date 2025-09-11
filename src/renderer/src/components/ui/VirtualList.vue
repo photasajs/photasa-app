@@ -244,22 +244,37 @@ defineExpose({
     transform: translateZ(0); /* 启用硬件加速 */
 }
 
-/* 滚动条样式 */
+/* 滚动条样式 - 使用主题变量 */
+.virtual-list-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
 .virtual-list-container::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: var(--color-scrollbar-width);
+    height: var(--color-scrollbar-width);
 }
 
 .virtual-list-container::-webkit-scrollbar-track {
-    background: var(--color-bg-secondary, #f1f1f1);
+    background: var(--color-scrollbar-track);
+    border-radius: var(--color-scrollbar-border-radius);
+}
+
+.virtual-list-container::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover);
 }
 
 .virtual-list-container::-webkit-scrollbar-thumb {
-    background: var(--color-border, #c1c1c1);
-    border-radius: 4px;
+    background: var(--color-scrollbar-thumb);
+    border-radius: var(--color-scrollbar-border-radius);
+    transition: all 0.2s ease;
 }
 
 .virtual-list-container::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-secondary, #a1a1a1);
+    background: var(--color-scrollbar-thumb-hover);
+}
+
+.virtual-list-container::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active);
 }
 </style>

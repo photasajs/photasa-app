@@ -497,4 +497,72 @@ window.api?.onScanQueueAdd((operations: any[]) => {
     height: 1.5ren;
     width: 1.5rem;
 }
+
+/* 全局滚动条样式 - 使用主题变量 */
+.scrollbar-theme {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb, #cccccc) var(--color-scrollbar-track, #f5f5f5);
+}
+
+.scrollbar-theme::-webkit-scrollbar {
+    width: var(--color-scrollbar-width, 8px);
+    height: var(--color-scrollbar-width, 8px);
+}
+
+.scrollbar-theme::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track, #f5f5f5);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+}
+
+.scrollbar-theme::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover, #e8e8e8);
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb, #cccccc);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+    transition: all 0.2s ease;
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover, #0066b8);
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active, #004d99);
+}
+
+/* 细滚动条变体 */
+.scrollbar-theme-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb, #cccccc) var(--color-scrollbar-track, #f5f5f5);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar {
+    width: var(--color-scrollbar-width-thin, 4px);
+    height: var(--color-scrollbar-width-thin, 4px);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track, #f5f5f5);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover, #e8e8e8);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb, #cccccc);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+    transition: all 0.2s ease;
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover, #0066b8);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active, #004d99);
+}
 </style>

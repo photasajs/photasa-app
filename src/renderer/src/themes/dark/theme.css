@@ -59,6 +59,12 @@
     --color-scrollbar-bg: #232323;
     --color-scrollbar-thumb: #333333;
     --color-scrollbar-thumb-hover: #3794ff;
+    --color-scrollbar-thumb-active: #096dd9;
+    --color-scrollbar-track: #232323;
+    --color-scrollbar-track-hover: #2a2a2a;
+    --color-scrollbar-width: 8px;
+    --color-scrollbar-width-thin: 4px;
+    --color-scrollbar-border-radius: 4px;
     --color-splitter-bg: #333333;
     --color-splitter-border: #232323;
 

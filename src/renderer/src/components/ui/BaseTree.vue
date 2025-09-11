@@ -1,7 +1,7 @@
 <template>
     <div
         ref="containerRef"
-        class="base-tree"
+        class="base-tree scrollbar-theme"
         :class="{
             'base-tree--virtual': virtual,
             'base-tree--show-line': showLine,

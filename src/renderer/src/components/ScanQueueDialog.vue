@@ -500,21 +500,34 @@ function formatFullTimestamp(timestamp?: number): string {
         overflow-x: hidden;
         padding: 8px 4px;
 
-        /* Custom scrollbar */
+        /* Custom scrollbar - 使用主题变量 */
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+
         &::-webkit-scrollbar {
-            width: 6px;
+            width: var(--color-scrollbar-width-thin);
         }
 
         &::-webkit-scrollbar-track {
-            background: transparent;
+            background: var(--color-scrollbar-track);
+            border-radius: var(--color-scrollbar-border-radius);
+        }
+
+        &::-webkit-scrollbar-track:hover {
+            background: var(--color-scrollbar-track-hover);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--color-border);
-            border-radius: 3px;
+            background: var(--color-scrollbar-thumb);
+            border-radius: var(--color-scrollbar-border-radius);
+            transition: all 0.2s ease;
 
             &:hover {
-                background: var(--color-text-tertiary);
+                background: var(--color-scrollbar-thumb-hover);
+            }
+
+            &:active {
+                background: var(--color-scrollbar-thumb-active);
             }
         }
     }

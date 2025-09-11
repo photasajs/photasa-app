@@ -445,31 +445,35 @@ const onLeave = () => {
     scroll-behavior: smooth;
 }
 
+.drawer-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
 .drawer-body::-webkit-scrollbar {
-    width: 8px;
+    width: var(--color-scrollbar-width);
 }
 
 .drawer-body::-webkit-scrollbar-track {
-    background: var(--color-bg-secondary, #f5f5f5);
-    border-radius: 4px;
+    background: var(--color-scrollbar-track);
+    border-radius: var(--color-scrollbar-border-radius);
+}
+
+.drawer-body::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover);
 }
 
 .drawer-body::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-        180deg,
-        var(--color-primary, #1890ff) 0%,
-        var(--color-primary-dark, #096dd9) 100%
-    );
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    background: var(--color-scrollbar-thumb);
+    border-radius: var(--color-scrollbar-border-radius);
+    transition: all 0.2s ease;
 }
 
 .drawer-body::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-        180deg,
-        var(--color-primary-dark, #096dd9) 0%,
-        var(--color-primary, #1890ff) 100%
-    );
-    transform: scale(1.1);
+    background: var(--color-scrollbar-thumb-hover);
+}
+
+.drawer-body::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active);
 }
 </style>

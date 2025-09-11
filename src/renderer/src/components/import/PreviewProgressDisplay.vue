@@ -264,21 +264,36 @@ const getTypeBadgeClass = (type: string) => {
     animation: spin 1s linear infinite;
 }
 
-/* 自定义滚动条 */
-::-webkit-scrollbar {
-    width: 6px;
+/* 自定义滚动条 - 使用主题变量 */
+.scrollbar-theme {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 }
 
-::-webkit-scrollbar-track {
-    background: transparent;
+.scrollbar-theme::-webkit-scrollbar {
+    width: var(--color-scrollbar-width-thin);
 }
 
-::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
+.scrollbar-theme::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track);
+    border-radius: var(--color-scrollbar-border-radius);
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+.scrollbar-theme::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover);
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+    border-radius: var(--color-scrollbar-border-radius);
+    transition: all 0.2s ease;
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover);
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active);
 }
 </style>

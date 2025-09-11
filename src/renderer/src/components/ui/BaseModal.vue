@@ -3,7 +3,7 @@
         <Transition name="modal" appear @enter="onEnter" @leave="onLeave">
             <div
                 v-if="open"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden"
                 @click="handleBackdropClick"
                 @keydown.esc="handleEscape"
                 tabindex="-1"
@@ -32,22 +32,25 @@
                     <!-- 标题区域 -->
                     <div
                         v-if="title || $slots.title"
-                        class="px-6 py-4 border-b border-[var(--color-border)]"
+                        class="px-6 py-4 border-b border-[var(--color-border)] overflow-hidden flex-shrink-0"
                     >
-                        <h2 id="modal-title" class="text-lg font-medium text-[var(--color-text)]">
+                        <h2
+                            id="modal-title"
+                            class="text-lg font-medium text-[var(--color-text)] break-words"
+                        >
                             <slot name="title">{{ title }}</slot>
                         </h2>
                     </div>
 
                     <!-- 内容区域 -->
-                    <div class="px-6 py-4 flex-1 overflow-y-auto">
+                    <div class="px-6 py-4 flex-1 overflow-y-auto overflow-x-hidden scrollbar-theme">
                         <slot />
                     </div>
 
                     <!-- 底部操作区域 -->
                     <div
                         v-if="$slots.footer"
-                        class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3"
+                        class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3 overflow-hidden flex-shrink-0"
                     >
                         <slot name="footer" />
                     </div>
@@ -55,7 +58,7 @@
                     <!-- 默认底部按钮 -->
                     <div
                         v-else-if="showDefaultFooter"
-                        class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3"
+                        class="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3 overflow-hidden flex-shrink-0"
                     >
                         <BaseButton variant="secondary" @click="emit('cancel')">
                             {{ cancelText }}
@@ -262,6 +265,14 @@ const customSizeStyle = computed(() => {
 .modal-content {
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     will-change: transform, opacity;
+    /* 防止水平滚动 */
+    overflow-x: hidden;
+    word-wrap: break-word;
+    word-break: break-word;
+    /* 确保模态框不会超出视口宽度 */
+    max-width: calc(100vw - 2rem);
+    width: 100%;
+    min-width: 0;
 }
 
 .modal-enter-from .modal-content {
@@ -282,6 +293,52 @@ const customSizeStyle = computed(() => {
 /* 焦点管理 */
 .fixed.z-50:focus {
     outline: none;
+}
+
+/* 确保标题和底部区域没有滚动条 */
+.modal-content > div:first-child,
+.modal-content > div:last-child {
+    overflow: hidden !important;
+    flex-shrink: 0;
+}
+
+/* 防止模态框内容区域内的所有元素产生水平滚动 */
+.modal-content * {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* 特别处理可能产生水平滚动的元素 */
+.modal-content input,
+.modal-content textarea,
+.modal-content select,
+.modal-content button,
+.modal-content div,
+.modal-content span,
+.modal-content p,
+.modal-content h1,
+.modal-content h2,
+.modal-content h3,
+.modal-content h4,
+.modal-content h5,
+.modal-content h6 {
+    max-width: 100%;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* 确保表格不会产生水平滚动 */
+.modal-content table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.modal-content td,
+.modal-content th {
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 /* 响应式大小调整 */

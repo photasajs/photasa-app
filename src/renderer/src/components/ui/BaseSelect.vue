@@ -616,33 +616,36 @@ watch(
     }
 }
 
-/* 滚动条样式优化 - 仅在内容溢出时显示 */
+/* 滚动条样式优化 - 使用主题变量 */
 .base-select-dropdown ul {
-    /* 在Firefox中隐藏滚动条，除非必要 */
     scrollbar-width: thin;
-    scrollbar-color: var(--color-border) transparent;
+    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 }
 
 .base-select-dropdown ul::-webkit-scrollbar {
-    width: 4px;
+    width: var(--color-scrollbar-width-thin);
 }
 
 .base-select-dropdown ul::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--color-scrollbar-track);
+    border-radius: var(--color-scrollbar-border-radius);
+}
+
+.base-select-dropdown ul::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover);
 }
 
 .base-select-dropdown ul::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 2px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.base-select-dropdown ul:hover::-webkit-scrollbar-thumb {
-    opacity: 1;
+    background: var(--color-scrollbar-thumb);
+    border-radius: var(--color-scrollbar-border-radius);
+    transition: all 0.2s ease;
 }
 
 .base-select-dropdown ul::-webkit-scrollbar-thumb:hover {
-    background: var(--color-text-secondary);
+    background: var(--color-scrollbar-thumb-hover);
+}
+
+.base-select-dropdown ul::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active);
 }
 </style>
