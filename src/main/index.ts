@@ -7,6 +7,7 @@ import fs from "fs";
 import { readFile } from "fs/promises";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
+import * as Sentry from "@sentry/electron/main";
 import WatchService from "./watch/watch-service";
 import icon from "../../resources/icon.png?asset";
 import ThumbnailService from "./thumbnail/thumbnail-service";
@@ -20,6 +21,24 @@ import ImportService from "./import/import-service";
 const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;
 let watchService: WatchService | undefined;
+
+// 初始化Sentry错误监控
+if (!isDev) {
+    Sentry.init({
+        dsn: "https://6cde14d12de5882405e5837a80978152@o4510009078841344.ingest.us.sentry.io/4510009079889920",
+        environment: process.env.NODE_ENV || "production",
+        beforeSend(event) {
+            // 过滤掉一些不重要的错误
+            if (event.exception) {
+                const error = event.exception.values?.[0];
+                if (error?.type === "ChunkLoadError" || error?.type === "Loading chunk") {
+                    return null; // 忽略chunk加载错误
+                }
+            }
+            return event;
+        },
+    });
+}
 
 function createWindow(): void {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -119,6 +138,28 @@ function createWindow(): void {
             };
         } catch (error) {
             logger.error(`Error checking photasa config for ${folderPath}:`, error);
+            // 如果是JSON解析错误，尝试修复配置文件
+            if (error instanceof SyntaxError && error.message.includes("JSON")) {
+                logger.warn(`JSON parse error for ${folderPath}, attempting to fix...`);
+                try {
+                    // 尝试读取文件内容并修复
+                    const configPath = path.join(folderPath, ".photasa.json");
+                    if (fs.existsSync(configPath)) {
+                        const content = await readFile(configPath, "utf8");
+                        logger.debug(`Corrupted config content: ${content.substring(0, 100)}...`);
+                        // 创建默认配置
+                        const defaultConfig = { photoList: [], version: "1.0.0" };
+                        await fs.promises.writeFile(
+                            configPath,
+                            JSON.stringify(defaultConfig, null, 2),
+                            "utf8",
+                        );
+                        logger.info(`Fixed corrupted config file: ${configPath}`);
+                    }
+                } catch (fixError) {
+                    logger.error(`Failed to fix config file: ${folderPath}`, fixError);
+                }
+            }
             return { hasConfig: false, reason: "配置文件读取失败" };
         }
     });
@@ -176,6 +217,21 @@ function createWindow(): void {
  * 当 Electron 完成初始化并准备好创建浏览器窗口时，将调用此方法。
  * 一些 API 只能在事件发生后使用。
  */
+// 添加全局错误处理
+process.on("uncaughtException", (error) => {
+    logger.error("Uncaught Exception:", error);
+    if (!isDev) {
+        Sentry.captureException(error);
+    }
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+    logger.error("Unhandled Rejection at:", promise, "reason:", reason);
+    if (!isDev) {
+        Sentry.captureException(new Error(`Unhandled Rejection: ${reason}`));
+    }
+});
+
 app.whenReady().then(() => {
     // 设置应用用户模型 ID
     electronApp.setAppUserModelId("com.photasa.app");

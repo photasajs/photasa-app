@@ -47,6 +47,7 @@
         "@headlessui/vue": "^1.7.23",
         "@phosphor-icons/vue": "^2.2.1",
         "@saschazar/wasm-heif": "^2.0.0",
+        "@sentry/electron": "^7.0.0",
         "@tanstack/vue-virtual": "^3.13.12",
         "@types/uuid": "^10.0.0",
         "ag-psd": "^28.2.2",

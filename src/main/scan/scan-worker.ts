@@ -81,6 +81,21 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
     let processed = 0;
     const foundPaths: string[] = [];
 
+    logger.info(
+        `[executeDirectoryScan] 开始扫描目录: ${scan.path}, operationType: ${scan.operationType}`,
+    );
+
+    // 添加目录存在性检查
+    if (!fs.existsSync(scan.path)) {
+        logger.error(`[executeDirectoryScan] 目录不存在: ${scan.path}`);
+        postMessage({
+            type: "error",
+            requestId,
+            error: `Directory does not exist: ${scan.path}`,
+        });
+        return;
+    }
+
     scanPhotos(scan, logger).subscribe({
         next: (action) => {
             processed++;
