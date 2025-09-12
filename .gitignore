@@ -30,4 +30,6 @@ out
 *.log*
 .history
 coverage/
-._*
+
+# TypeScript build info files (should be ignored in CI/CD)
+*.tsbuildinfo

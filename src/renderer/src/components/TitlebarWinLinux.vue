@@ -28,11 +28,15 @@
 
         <!-- 窗口控制按钮区（no-drag） -->
         <div class="window-controls no-drag-region">
-            <a-space class="setting-header no-drag-region">
+            <BaseSpace class="setting-header no-drag-region">
                 <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
+                <DashboardOutlined
+                    class="system-icon"
+                    @click="openQueueDashboard"
+                ></DashboardOutlined>
                 <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
                 <SettingOutlined class="system-icon" @click="openPreference" />
-            </a-space>
+            </BaseSpace>
             <!-- 最小化 -->
             <button
                 class="window-btn win-btn minimize"
@@ -98,20 +102,32 @@
 
 <script setup lang="ts">
 import AppIcon from "./AppIcon.vue";
-import CoffeeOutlined from "@ant-design/icons-vue/CoffeeOutlined";
-import ImportOutlined from "@ant-design/icons-vue/ImportOutlined";
-import SettingOutlined from "@ant-design/icons-vue/SettingOutlined";
+import {
+    PhClock as CoffeeOutlined,
+    PhFolder as ImportOutlined,
+    PhGear as SettingOutlined,
+    PhChartLineUp as DashboardOutlined,
+} from "@phosphor-icons/vue";
 import { useI18n } from "vue-i18n";
 import { onClickOutside } from "@vueuse/core";
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useMenusStore } from "@renderer/stores/menus";
+import { BaseSpace } from "@renderer/components/ui";
 import MenuDropdown from "./common/MenuDropdown.vue";
 const { t } = useI18n();
 
-const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference"]);
+const emit = defineEmits([
+    "openScanList",
+    "openQueueDashboard",
+    "openImportPhotos",
+    "openPreference",
+]);
 function openScanList() {
     emit("openScanList");
+}
+function openQueueDashboard() {
+    emit("openQueueDashboard");
 }
 function openImportPhotos() {
     emit("openImportPhotos");
@@ -198,8 +214,9 @@ onClickOutside(menuBarRef, () => {
     height: var(--photasa-header-height, 36px);
     display: flex;
     align-items: center;
-    background: var(--color-bg);
-    color: var(--color-text);
+    background: var(--color-header-bg, var(--color-bg));
+    color: var(--color-header-text, var(--color-text));
+    border-bottom: 1px solid var(--color-header-border, var(--color-border));
     user-select: none;
     -webkit-app-region: drag;
 }
@@ -280,13 +297,13 @@ onClickOutside(menuBarRef, () => {
     &:hover {
         background: var(--color-primary);
         .win-svg {
-            stroke: #fff;
+            stroke: var(--color-white);
         }
     }
     &.close:hover {
-        background: #e81123;
+        background: var(--color-danger);
         .win-svg {
-            stroke: #fff;
+            stroke: var(--color-white);
         }
     }
 }
@@ -298,5 +315,83 @@ onClickOutside(menuBarRef, () => {
 .system-icon {
     height: 1.5rem;
     width: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}
+
+/* 多彩图标样式 */
+.system-icon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.system-icon:nth-child(1) {
+    /* 时钟图标 - 蓝色渐变 */
+    background: linear-gradient(135deg, var(--color-info), var(--color-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(2) {
+    /* 仪表板图标 - 紫色渐变 */
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(3) {
+    /* 文件夹图标 - 绿色渐变 */
+    background: linear-gradient(135deg, var(--color-success), var(--color-success));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(4) {
+    /* 设置图标 - 橙色渐变 */
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 悬停效果 */
+.system-icon:hover {
+    transform: scale(1.15) rotate(5deg);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.system-icon:nth-child(1):hover {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(2):hover {
+    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(3):hover {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.system-icon:nth-child(4):hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 </style>

@@ -115,18 +115,3 @@ exports[`Folder Tree > should not change roots when cleaning non-existent node 1
 `;
 
 exports[`Folder Tree > should return a DataNode 1`] = `[]`;
-
-exports[`Folder Tree > should support windows path separator 1`] = `
-[
-  {
-    "children": [],
-    "key": "C:\\root1",
-    "title": "C:\\root1",
-  },
-  {
-    "children": [],
-    "key": "C:\\root1\\child1",
-    "title": "C:\\root1\\child1",
-  },
-]
-`;

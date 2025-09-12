@@ -67,12 +67,9 @@ const RequestQueue = {
  * 基于 on 实现异步通信 和 promise 实现异步通信
  */
 ipcRenderer.on("picasa:find-photo", (_, args: ScanArgs) => {
-    logger.info("picasa:find-photo called with args:", args);
     if (args.type === "complete") {
-        logger.info("picasa:find-photo complete with args:", args);
         const requestId = args.requestId;
         if (RequestQueue.promiseQueue[requestId]) {
-            logger.info("picasa:find-photo complete with requestId:", requestId);
             RequestQueue.promiseQueue[requestId](args);
             delete RequestQueue.promiseQueue[requestId];
         }
@@ -86,10 +83,8 @@ ipcRenderer.on("picasa:find-photo", (_, args: ScanArgs) => {
  * 使用 promise 实现异步通信
  */
 export function scanPhotos(scan: ScanAction): Promise<ScanArgs> {
-    logger.info("scanPhotos called with scan action:", scan);
     return new Promise((resolve) => {
         const requestId = `scan-${RequestQueue.sequenceId++}`;
-        logger.info("Created request ID:", requestId);
         // 将 resolve 函数存储到 promiseQueue 中
         RequestQueue.promiseQueue[requestId] = resolve;
         // 调用 main 进程的 scanPhotos 方法

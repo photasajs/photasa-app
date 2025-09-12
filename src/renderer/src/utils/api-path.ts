@@ -39,9 +39,10 @@ export function getRoot(path: string) {
 }
 
 /**
- * 打开文件夹
- * @param path 文件夹路径
+ * 打开文件夹 - 直接调用 preload 层函数，让 preload 层处理 file:// URL 转换
+ * @param path 文件夹路径（可能是 file:// URL 或普通路径）
  */
 export function openInFinder(path: string): void {
+    // 直接调用 preload 层的 openInFinder，让它处理 file:// URL 转换
     window.api.openInFinder(path);
 }

@@ -61,8 +61,9 @@ export function computeColumns(
     if (!containerWidth) {
         return 1;
     }
-    const cardWidth = thumbnailSize + 2 * padding;
-    const available = containerWidth - gap;
+    // 实际卡片宽度就是缩略图大小，不需要额外的 padding
+    const cardWidth = thumbnailSize;
+    const available = containerWidth - 2 * padding; // 减去左右 padding
     const cols = Math.floor(available / (cardWidth + gap));
 
     return Math.max(1, cols);

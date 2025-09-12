@@ -7,6 +7,7 @@ export default defineConfig({
     plugins: [vue(), svgLoader()],
     resolve: {
         alias: {
+            "@main": resolve("src/main/"),
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
             "@common": resolve("src/common/"),
@@ -16,7 +17,10 @@ export default defineConfig({
     test: {
         globals: true,
         environment: "happy-dom",
-        setupFiles: ["./src/renderer/src/test/setup.ts"],
+        setupFiles: ["./test/setup.ts"],
+        testTimeout: 10000, // 10 seconds max per test
+        hookTimeout: 5000, // 5 seconds for hooks
+        teardownTimeout: 5000, // 5 seconds for teardown
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "html"],
@@ -35,9 +39,12 @@ export default defineConfig({
             "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
+            "src/preload/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
-        deps: {
-            inline: [/@vue/, /@vueuse/, /@ant-design/],
+        server: {
+            deps: {
+                inline: [/@vue/, /@vueuse/, /@ant-design/, /radash/],
+            },
         },
         environmentOptions: {
             happyDOM: {

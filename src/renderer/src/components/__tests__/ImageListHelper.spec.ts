@@ -56,18 +56,18 @@ describe("computeColumns", () => {
         expect(computeColumns(50, 100)).toBe(1);
     });
     it("should calculate correct columns for normal case", () => {
-        // thumbnailSize=100, padding=24*2=48, cardWidth=148, gap=16, available=484
-        // (500-16)/(148+16)=484/164≈2.95, floor=2
-        expect(computeColumns(500, 100)).toBe(2);
+        // thumbnailSize=100, padding=24*2=48, cardWidth=100, gap=16, available=452
+        // 452/(100+16)=452/116≈3.896, floor=3
+        expect(computeColumns(500, 100)).toBe(3);
     });
     it("should always return at least 1", () => {
         expect(computeColumns(10, 10)).toBe(1);
         expect(computeColumns(-100, 100)).toBe(1);
     });
     it("should respect custom gap and padding", () => {
-        // thumbnailSize=100, padding=10*2=20, cardWidth=120, gap=8, available=492
-        // (500-8)/(120+8)=492/128≈3.84, floor=3
-        expect(computeColumns(500, 100, { gap: 8, padding: 10 })).toBe(3);
+        // thumbnailSize=100, padding=10*2=20, cardWidth=100, gap=8, available=480
+        // 480/(100+8)=480/108≈4.44, floor=4
+        expect(computeColumns(500, 100, { gap: 8, padding: 10 })).toBe(4);
         // thumbnailSize=50, padding=0, gap=0, cardWidth=50, available=500
         // 500/50=10
         expect(computeColumns(500, 50, { gap: 0, padding: 0 })).toBe(10);

@@ -28,7 +28,7 @@ export default class MenuService {
         if (process.platform !== "darwin") return;
         // 监听菜单同步请求
         this.ipc.on("menu:applySystemMenu", (_event, menus: MenuItemData[]) => {
-            this.logger.info("menu:applySystemMenu", menus);
+            this.logger.info("menu:applySystemMenu", `菜单项数量: ${menus.length}`);
             try {
                 this.applySystemMenu(menus);
             } catch (err) {

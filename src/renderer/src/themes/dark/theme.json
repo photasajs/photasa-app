@@ -80,7 +80,16 @@
         "list-skeleton-bg": "#333333",
         "descriptions-title": "#d4d4d4",
         "descriptions-header-bg": "#232323",
-        "descriptions-bordered": "#333333"
+        "descriptions-bordered": "#333333",
+        "scrollbar-bg": "#232323",
+        "scrollbar-thumb": "#333333",
+        "scrollbar-thumb-hover": "#3794ff",
+        "scrollbar-thumb-active": "#096dd9",
+        "scrollbar-track": "#232323",
+        "scrollbar-track-hover": "#2a2a2a",
+        "scrollbar-width": "8px",
+        "scrollbar-width-thin": "4px",
+        "scrollbar-border-radius": "4px"
     },
     "css": "theme.css"
 }

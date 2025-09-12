@@ -1,0 +1,151 @@
+/* Mermaid图表样式配置 - 增大字体提高可读性 */
+
+/* 全局Mermaid样式 */
+.mermaid {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+        "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    font-size: 16px !important;
+    line-height: 1.5;
+}
+
+/* 节点文本样式 */
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+    font-size: 16px !important;
+    font-weight: 500;
+}
+
+/* 节点标签文本 */
+.mermaid .nodeLabel {
+    font-size: 16px !important;
+    font-weight: 500;
+    color: #333;
+}
+
+/* 边标签文本 */
+.mermaid .edgeLabel {
+    font-size: 14px !important;
+    font-weight: 400;
+    color: #666;
+}
+
+/* 标题文本 */
+.mermaid .titleText {
+    font-size: 18px !important;
+    font-weight: 600;
+    color: #000;
+}
+
+/* 子图标题 */
+.mermaid .subgraphTitle {
+    font-size: 16px !important;
+    font-weight: 600;
+    color: #333;
+}
+
+/* 序列图中的参与者 */
+.mermaid .actor {
+    font-size: 16px !important;
+    font-weight: 500;
+}
+
+/* 序列图中的消息 */
+.mermaid .messageText {
+    font-size: 14px !important;
+    font-weight: 400;
+}
+
+/* 流程图中的文本 */
+.mermaid .flowchart-label {
+    font-size: 16px !important;
+    font-weight: 500;
+}
+
+/* 甘特图中的文本 */
+.mermaid .gantt-label {
+    font-size: 14px !important;
+    font-weight: 400;
+}
+
+/* 饼图中的文本 */
+.mermaid .pie-label {
+    font-size: 14px !important;
+    font-weight: 500;
+}
+
+/* 确保所有文本元素都有合适的字体大小 */
+.mermaid text {
+    font-size: 16px !important;
+    font-weight: 500;
+}
+
+/* 针对小尺寸图表的响应式调整 */
+@media (max-width: 768px) {
+    .mermaid {
+        font-size: 14px !important;
+    }
+
+    .mermaid .nodeLabel,
+    .mermaid .edgeLabel,
+    .mermaid text {
+        font-size: 14px !important;
+    }
+}
+
+/* 针对大屏幕的更大字体 */
+@media (min-width: 1200px) {
+    .mermaid {
+        font-size: 18px !important;
+    }
+
+    .mermaid .nodeLabel,
+    .mermaid .edgeLabel,
+    .mermaid text {
+        font-size: 18px !important;
+    }
+
+    .mermaid .titleText {
+        font-size: 20px !important;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    .mermaid .nodeLabel {
+        color: #e0e0e0;
+    }
+
+    .mermaid .edgeLabel {
+        color: #b0b0b0;
+    }
+
+    .mermaid .titleText {
+        color: #fff;
+    }
+
+    .mermaid .subgraphTitle {
+        color: #e0e0e0;
+    }
+}
+
+/* 确保图表容器有足够的空间 */
+.mermaid-container {
+    width: 100%;
+    min-height: 400px;
+    overflow: auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 深色主题的容器样式 */
+@media (prefers-color-scheme: dark) {
+    .mermaid-container {
+        background: #1a1a1a;
+        color: #e0e0e0;
+    }
+}

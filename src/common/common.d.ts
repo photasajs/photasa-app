@@ -5,6 +5,7 @@ import type {
     DirectorySelection,
     ImageInfo,
 } from "./types";
+import type { FileMetadata } from "./import-types";
 import type { WatchConfig, WatchCallback } from "./watch-types";
 import type { ScanAction, ScanArgs } from "./scan-types";
 import type { ThumbnailRequest } from "./thumbnail-types";
@@ -40,6 +41,7 @@ declare global {
             removeThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailRequest>;
             // 获取图片类型
             getImageType: (path: string) => Promise<ImageInfo>;
+            getFileMetadata: (pathOrUrl: string) => Promise<FileMetadata>;
             // 打开文件夹
             openInFinder: (path: string) => void;
             // 获取 Photasa 配置

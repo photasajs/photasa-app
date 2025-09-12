@@ -1,4 +1,3 @@
-<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
 import { computed, ref, inject } from "vue";
 import { storeToRefs } from "pinia";
@@ -14,14 +13,16 @@ import {
     resetPhotasaConfig,
     scanSubfolders,
 } from "@renderer/utils/api";
-import { deepCopy, top } from "./utils/object";
+// deepCopy removed as no longer needed
+import { orchestrateScan, type ScanCallbacks } from "./AppHelper";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@common/logger";
+import { mapFileOperationToScanAction } from "@common/file-operation-utils";
 
 import UserPreference from "./components/UserPreference.vue";
+import ScanQueueDialog from "./components/ScanQueueDialog.vue";
 import { useI18n } from "vue-i18n";
-import type { ScanAction } from "@common/scan-types";
 import { useTitle, watchArray } from "@vueuse/core";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
@@ -31,6 +32,14 @@ import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useMenusStore } from "@renderer/stores/menus";
+import {
+    NotificationContainer,
+    PortalProvider,
+    BaseModal,
+    BaseSpinner,
+} from "@renderer/components/ui";
+import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
+import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
 
 /**
  * 日志记录器
@@ -44,14 +53,11 @@ const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
 
-const showImport = ref(false);
+const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
+const showQueueDashboard = ref(false);
 const loading = ref(false);
-const loadingConfigs = ref(false);
-
-// 控制导入对话框显隐的响应式变量
-const showImportDialog = ref(false);
 
 const findPhotoService = inject(FindPhotoServiceKey);
 if (!findPhotoService) {
@@ -68,11 +74,55 @@ const isMac = window.api.isMac();
 function handleOpenScanList() {
     showScanList.value = true;
 }
+function handleOpenQueueDashboard() {
+    showQueueDashboard.value = true;
+    if (!queueMonitoringService.isMonitoring.value) {
+        queueMonitoringService.startMonitoring();
+    }
+}
 function handleOpenImportPhotos() {
+    logger.debug("Opening import photos dialog...");
     showImportDialog.value = true;
+    logger.debug("showImportDialog.value:", showImportDialog.value);
 }
 function handleOpenPreference() {
     showPreference.value = true;
+}
+
+/**
+ * Initialize the application
+ */
+async function initializeApp(): Promise<void> {
+    try {
+        const dir = await getDirectory("desktop");
+
+        // Desktop directory is ready
+        if (paths.value.length === 0) {
+            addPath(dir);
+        }
+
+        loading.value = false;
+
+        if (!currentFolder.value && paths.value.length > 0) {
+            currentFolder.value = paths.value[0];
+        }
+
+        if (paths.value.length > 0) {
+            startFileWatching(paths.value, preferenceStore);
+        } else {
+            // Open preference to config
+            showPreference.value = true;
+        }
+
+        processingFile.value = t("status.loadingConfig");
+        // Start to check if any leftover folder need to scan
+        startScanning();
+    } catch (error) {
+        logger.error("Failed to initialize app:", error);
+        loading.value = false;
+        // Open preference to config on error
+        showPreference.value = true;
+    }
 }
 
 onMounted(async () => {
@@ -96,6 +146,9 @@ onMounted(async () => {
     });
     // 应用启动时全局初始化菜单栏数据（国际化）
     menusStore.refreshMenus(t);
+
+    // Initialize the application
+    await initializeApp();
 });
 
 // vue3 watch for array, should specify deep as true
@@ -112,9 +165,27 @@ watchArray(
 
 // 包装 addScanFolder 增加日志
 const addScanFolderWithLog = (folder: string, action: "scan" | "rescan" | "current") => {
-    logger.debug("addScanFolder called", folder, action, scanningFolder.value);
+    logger.debug(`[addScanFolderWithLog] Attempting to add folder: ${folder}, action: ${action}`);
+    logger.debug(
+        `[addScanFolderWithLog] Current scanningFolder before:`,
+        scanningFolder.value.map((f) => f.path),
+    );
+
+    // 检查是否已存在
+    const existingIndex = scanningFolder.value.findIndex((f) => f.path === folder);
+    if (existingIndex >= 0) {
+        logger.debug(
+            `[addScanFolderWithLog] Folder already exists at index ${existingIndex}, skipping: ${folder}`,
+        );
+        return;
+    }
+
     addScanFolder(folder, action);
-    logger.debug("addScanFolder after", scanningFolder.value);
+    logger.debug(`[addScanFolderWithLog] Successfully added folder: ${folder}`);
+    logger.debug(
+        `[addScanFolderWithLog] Current scanningFolder after:`,
+        scanningFolder.value.map((f) => f.path),
+    );
 };
 
 watchArray(
@@ -143,74 +214,77 @@ watchArray(
     { deep: true },
 );
 
-async function startScanning(): Promise<void> {
-    logger.debug(
-        "startScanning called, scanningFolder:",
-        scanningFolder.value,
-        "isIdle:",
-        scanPhotosTask.isIdle,
-    );
-    if (scanningFolder.value.length > 0) {
-        const scanAction = deepCopy(top<ScanAction>(scanningFolder.value));
-        processingFile.value = "正在扫描: " + scanAction.path;
-        logger.debug("Starting scan for action:", scanAction);
-        if (scanAction.action === "rescan") {
-            logger.debug("Rescanning folder:", scanAction.path);
-            await resetPhotasaConfig(scanAction.path);
-        }
+// 创建回调对象，连接纯函数与副作用
+const callbacks: ScanCallbacks = {
+    logInfo: logger.info.bind(logger),
+    logDebug: logger.debug.bind(logger),
+    logError: logger.error.bind(logger),
 
-        scanAction.thumbnailSize = thumbnailSize.value;
-        logger.debug("Scanning subfolders for:", scanAction.path);
+    updateProcessingStatus: (status: string) => {
+        processingFile.value = status;
+        // 同时更新状态栏
+        statusBarStore.update({
+            type: "scan",
+            status: "scanning",
+            task: status,
+            timestamp: Date.now(),
+        });
+    },
+
+    clearProcessingStatus: () => {
+        processingFile.value = "";
+        // 清理状态栏扫描状态
+        statusBarStore.update({
+            type: "scan",
+            status: "ready",
+            task: t("app.title"),
+            timestamp: Date.now(),
+        });
+    },
+
+    updateFolderTree: updateFolderTree,
+    completeScanPath: completeScanPath,
+
+    scanSubfolders: scanSubfolders,
+    addScanFolderToQueue: (path: string, action: string) => {
+        addScanFolderWithLog(path, action as "scan" | "rescan" | "current");
+    },
+
+    performScanTask: async (action) => {
+        action.thumbnailSize = thumbnailSize.value;
+        return await scanPhotosTask.perform(action);
+    },
+
+    resetPhotasaConfig: async (path: string) => {
+        await resetPhotasaConfig(path);
+    },
+
+    extractParentDir: (path: string) => {
         try {
-            const folders = await scanSubfolders(scanAction.path);
-            logger.debug("Found subfolders:", folders);
-            folders.forEach((f: string) => addScanFolderWithLog(f, "scan"));
-
-            logger.debug("Starting scanPhotosTask for:", scanAction);
-            const args = await scanPhotosTask.perform(scanAction);
-            logger.debug("Scan completed with args:", args);
-
-            if (args?.action?.path && args?.action?.isDirectory) {
-                logger.debug("Updating folder tree for:", args.action.path);
-                updateFolderTree(args.action.path as string);
-                completeScanPath(args.action.path as string);
-                startScanning();
-            }
-        } catch (error) {
-            logger.error("Error during scanning:", error);
-            completeScanPath(scanAction.path);
-            processingFile.value = "扫描失败: " + scanAction.path;
-            startScanning();
+            return window.api.toDirName(path);
+        } catch {
+            return null;
         }
-    } else {
-        logger.debug("No folders to scan");
+    },
+
+    scheduleNextScan: () => {
+        setTimeout(() => startScanning(), 0);
+    },
+};
+
+async function startScanning(): Promise<void> {
+    // 调用纯函数处理扫描逻辑
+    const result = await orchestrateScan(scanningFolder.value, callbacks);
+
+    // 根据结果决定是否继续
+    if (result.shouldScheduleNext) {
+        callbacks.scheduleNextScan();
+    }
+
+    if (result.error) {
+        logger.error("Scan orchestration error:", result.error);
     }
 }
-
-getDirectory("desktop")
-    .then((dir) => {
-        // Desktop directory is ready
-        if (paths.value.length === 0) {
-            addPath(dir);
-        }
-
-        loading.value = false;
-
-        // Set to current folder
-        currentFolder.value = paths.value[0];
-        if (paths.value.length > 0) {
-            startFileWatching(paths.value, preferenceStore);
-        } else {
-            // Open preference to config
-            showPreference.value = true;
-        }
-        return paths.value;
-    })
-    .then(() => {
-        processingFile.value = t("status.loadingConfig");
-        // Start to check if any leftover folder need to scan
-        startScanning();
-    });
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
@@ -223,121 +297,187 @@ useTitle(title);
 
 // 监听 find-photo 事件，用于刷新树结构
 findPhotoService.onFindPhoto((args: any) => {
+    logger.debug("onFindPhoto received:", args.type, args.action?.path, args.progress);
+
+    // 处理进度更新 - 更新scanningFolder中对应项目的progress信息
+    if (args.progress && args.action?.path) {
+        const targetIndex = scanningFolder.value.findIndex(
+            (item) => item.path === args.action.path,
+        );
+        if (targetIndex >= 0) {
+            logger.debug(
+                `Updating progress for ${args.action.path}: ${args.progress.processed}/${args.progress.total}`,
+            );
+            scanningFolder.value[targetIndex].progress = {
+                processed: args.progress.processed || 0,
+                total: args.progress.total || 0,
+                cacheEnabled: true,
+            };
+        }
+
+        // 更新当前处理的文件信息到状态栏
+        if (args.currentFile) {
+            processingFile.value = `${t("status.scanning")} ${args.action.path} - ${args.currentFile}`;
+        } else {
+            processingFile.value = `${t("status.scanning")} ${args.action.path}`;
+        }
+    }
+
     // 批量刷新树结构
     if (args.type === "complete" && Array.isArray(args.paths)) {
         args.paths.forEach((p: string) => updateFolderTree(p));
-        completeScanPath(args.action.path);
-        startScanning();
+        // 清理处理文件状态
+        processingFile.value = "";
+        // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
     } else if (args?.action?.path && args?.action?.isDirectory) {
         // 单个刷新树结构
         updateFolderTree(args.action.path as string);
-        completeScanPath(args.action.path as string);
-        startScanning();
+        // 如果是单个完成事件，也清理处理文件状态
+        if (args.type === "complete") {
+            processingFile.value = "";
+        }
+        // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
     }
+});
+
+// 监听统一队列事件，处理文件监视产生的批量操作
+window.api?.onScanQueueAdd((operations: any[]) => {
+    logger.debug(`Received ${operations.length} file operations from watch service`);
+
+    // Process batch of file operations
+    operations.forEach((operation) => {
+        logger.debug("Adding file operation to queue:", operation);
+
+        // Convert FileOperation to enhanced ScanAction for unified processing
+        const fileOperation = {
+            path: operation.path,
+            action: mapFileOperationToScanAction(operation.type),
+            thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize.value,
+            operationType: (operation.metadata?.isFile ? "file" : "directory") as
+                | "file"
+                | "directory",
+            priority: operation.priority,
+            retryCount: operation.retryCount,
+            createdAt: operation.timestamp,
+            fileOperationId: operation.id,
+        };
+
+        // Add to persistent queue using new enhanced method
+        preferenceStore.addFileOperation(fileOperation);
+    });
 });
 </script>
 
 <template>
-    <a-spin v-if="loading" />
-    <a-layout v-else>
+    <BaseSpinner v-if="loading" />
+    <div v-else class="app-layout">
         <!-- 分平台 titlebar -->
         <TitlebarMac
             v-if="isMac"
             @openScanList="handleOpenScanList"
+            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
         <TitlebarWinLinux
             v-else
             @openScanList="handleOpenScanList"
+            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
         <!-- 其余内容保持不变 -->
-        <a-layout class="content app-container">
+        <div class="content app-container">
             <split-view direction="horizontal" a-init="350px" a-min="200px" a-max="600px">
                 <template #A>
-                    <a-layout class="image-content">
-                        <a-layout-content>
-                            <a-spin :spinning="loadingConfigs">
-                                <FolderList></FolderList>
-                            </a-spin>
-                        </a-layout-content>
-                    </a-layout>
+                    <div class="image-content">
+                        <FolderList></FolderList>
+                    </div>
                 </template>
                 <template #B>
-                    <a-layout class="image-content">
-                        <a-layout-content class="image-list">
-                            <ImageList @import="showImportDialog = true" />
-                            <ImportPhotos
-                                :show="showImportDialog"
-                                @update:show="showImportDialog = $event"
-                            />
-                        </a-layout-content>
-                    </a-layout>
+                    <div class="image-content image-list">
+                        <ImageList @import="showImportDialog = true" />
+                        <ImportPhotos
+                            :show="showImportDialog"
+                            @update:show="showImportDialog = $event"
+                        />
+                    </div>
                 </template>
             </split-view>
-        </a-layout>
+        </div>
         <StatusBar />
-    </a-layout>
-    <ImportPhotos v-model:show="showImport"></ImportPhotos>
-    <a-modal
-        v-model:visible="showPreference"
-        :mask-closable="false"
+    </div>
+    <BaseModal
+        :open="showPreference"
         :title="t('preference.settings')"
-        width="800px"
-        @ok="handlePreferenceOk"
+        size="custom"
+        :style="{ '--modal-width': '800px' }"
+        @close="handlePreferenceOk"
     >
         <UserPreference></UserPreference>
-        <template #footer></template>
-    </a-modal>
-    <a-modal
-        v-model:visible="showScanList"
-        :mask-closable="false"
-        :title="t('scan.queueTitle')"
-        width="600px"
+    </BaseModal>
+    <ScanQueueDialog
+        :show="showScanList"
+        :scanning-folder="scanningFolder"
+        @close="showScanList = false"
+    />
+    <BaseModal
+        :open="showQueueDashboard"
+        title="队列健康监控"
+        size="custom"
+        :style="{ '--modal-width': '1200px' }"
+        @close="
+            showQueueDashboard = false;
+            queueMonitoringService.stopMonitoring();
+        "
     >
-        <a-list size="small" bordered :data-source="scanningFolder" class="scan-list">
-            <template #renderItem="{ item }">
-                <a-list-item>
-                    <span>{{ item.path }}</span>
-                    <span style="float: right; color: #888">{{ item.action }}</span>
-                </a-list-item>
-            </template>
-            <template #header>
-                <a-spin v-if="scanningFolder.length > 0" />
-                <span v-else>{{ t("scan.queueEmpty") || "队列为空" }}</span>
-            </template>
-        </a-list>
-        <template #footer>
-            <a-button
-                type="primary"
-                size="large"
-                block
-                style="margin: 0 auto; width: 120px"
-                @click="showScanList = false"
-            >
-                {{ t("button.ok") }}
-            </a-button>
-        </template>
-    </a-modal>
+        <QueueHealthDashboard />
+    </BaseModal>
+
+    <!-- 通知容器 -->
+    <NotificationContainer />
+
+    <!-- Portal提供者 - 为下拉菜单等组件提供渲染目标 -->
+    <PortalProvider />
 </template>
 
 <style lang="less">
+/* 全局表单标签样式 - 主题适配 */
+.ant-form-item-label > label {
+    color: var(--color-text) !important;
+}
+
 :root {
     /* 主题变量控制 footer 高度 */
     --photasa-footer-height: 70px;
     --photasa-header-height: 36px;
 }
-.content .image-content {
-    height: calc(100vh - var(--photasa-footer-height));
-    overflow-y: overlay;
-    margin: auto;
+
+.app-layout {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg); /* 确保整个应用使用主题背景色 */
+}
+
+.content {
+    flex: 1;
+    min-height: 0; /* 重要：允许 flex 子元素收缩 */
+    background: var(--color-bg); /* 使用主题背景色 */
+}
+
+.image-content {
+    height: 100%;
+    overflow: hidden; /* 阻止外层滚动，让内部组件控制 */
+    display: flex;
+    flex-direction: column;
 }
 
 .image-list {
     margin: 0;
     height: 100%;
+    width: 100%;
+    flex: 1;
 }
 
 .title-header {
@@ -363,14 +503,76 @@ findPhotoService.onFindPhoto((args: any) => {
     border-top: 1px solid var(--color-footer-border);
 }
 
-.scan-list {
-    height: 10rem;
-    overflow: auto;
-    overflow-y: overlay;
-}
-
 .system-icon {
     height: 1.5ren;
     width: 1.5rem;
+}
+
+/* 全局滚动条样式 - 使用主题变量 */
+.scrollbar-theme {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb, #cccccc) var(--color-scrollbar-track, #f5f5f5);
+}
+
+.scrollbar-theme::-webkit-scrollbar {
+    width: var(--color-scrollbar-width, 8px);
+    height: var(--color-scrollbar-width, 8px);
+}
+
+.scrollbar-theme::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track, #f5f5f5);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+}
+
+.scrollbar-theme::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover, #e8e8e8);
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb, #cccccc);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+    transition: all 0.2s ease;
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover, #0066b8);
+}
+
+.scrollbar-theme::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active, #004d99);
+}
+
+/* 细滚动条变体 */
+.scrollbar-theme-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb, #cccccc) var(--color-scrollbar-track, #f5f5f5);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar {
+    width: var(--color-scrollbar-width-thin, 4px);
+    height: var(--color-scrollbar-width-thin, 4px);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track, #f5f5f5);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-track:hover {
+    background: var(--color-scrollbar-track-hover, #e8e8e8);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb, #cccccc);
+    border-radius: var(--color-scrollbar-border-radius, 4px);
+    transition: all 0.2s ease;
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover, #0066b8);
+}
+
+.scrollbar-theme-thin::-webkit-scrollbar-thumb:active {
+    background: var(--color-scrollbar-thumb-active, #004d99);
 }
 </style>

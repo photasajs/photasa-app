@@ -19,17 +19,268 @@
         "thumbnailSize": "Thumbnail Size",
         "darkMode": "Dark Mode",
         "language": "Language",
-        "scanning": "Scanning"
+        "scanning": "Scanning",
+        "resetFolders": {
+            "title": "Advanced Action: Reset Directory Storage",
+            "desc": "This will clear all directory settings and rebuild cache immediately. This action is irreversible. Proceed with caution!",
+            "button": "Reset Directory Storage"
+        }
     },
     "import": {
+        "title": "Import Photos",
         "photos": "Import Photos",
-        "allowDuplicateRename": "Allow renaming of duplicate photos",
-        "targetDirectory": "Export Folder",
-        "chooseDirectory": "Select import folder",
+        "chooseDirectory": "Choose Directory",
+        "targetDirectory": "Target Directory",
+        "allowDuplicateRename": "Allow Duplicate Rename",
         "button": {
             "import": "Import",
-            "cancel": "Cancel",
-            "ok": "OK"
+            "cancel": "Cancel"
+        },
+        "sourceDirectories": "Source Directories",
+        "addSource": "Add Source Directory",
+        "browse": "Browse",
+        "options": "Import Options",
+        "fileTypes": {
+            "label": "File Types",
+            "images": "Images",
+            "videos": "Videos",
+            "image": "Image",
+            "video": "Video",
+            "other": "Other"
+        },
+        "images": "Images",
+        "videos": "Videos",
+        "includeSubfolders": "Include Subfolders",
+        "duplicateHandling": "Duplicate Handling",
+        "duplicate": {
+            "label": "Duplicate",
+            "rename": "Rename",
+            "skip": "Skip",
+            "overwrite": "Overwrite",
+            "keepBoth": "Keep Both"
+        },
+        "useMD5ForDuplicates": "Use MD5 verification for duplicate detection",
+        "useMD5ForDuplicatesDescription": "When enabled, files will be compared using MD5 hash for accurate duplicate detection, regardless of file modification dates",
+        "preview": {
+            "scanning": "Scanning Files",
+            "filesFound": "Files Found",
+            "directoriesScanned": "Directories Scanned",
+            "progress": "Scan Progress",
+            "currentPath": "Current Path",
+            "recentlyFound": "Recently Found",
+            "noFilesFound": "No Files Found"
+        },
+        "totalFiles": "Total Files",
+        "totalSize": "Total Size",
+        "duplicates": "Duplicates",
+        "moreFiles": "{count} more files",
+        "group": "{count} files",
+        "processing": "Processing",
+        "previewButton": "Preview",
+        "importButton": "Import",
+        "cancelButton": "Cancel",
+        "pauseButton": "Pause",
+        "resumeButton": "Resume",
+        "closeButton": "Close",
+        "nextButton": "Next",
+        "backButton": "Back",
+        "doneButton": "Done",
+        "importFailed": "Import Failed",
+        "importCompleted": "Import Completed",
+        "importCompletedDesc": "Successfully imported {count} files",
+        "selectTarget": "Select Target Directory",
+        "filePreview": "File Preview",
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
+        "invertSelection": "Invert Selection",
+        "selected": "Selected",
+        "selectedSize": "Selected Size",
+        "fileGroups": "File Groups",
+        "pagination": "{start}-{end} of {total}",
+        "toggleSelection": "Toggle Selection",
+        "viewDetails": "View Details",
+        "image": "Image",
+        "video": "Video",
+        "unknown": "Unknown",
+        "fileDetails": "File Details",
+        "basicInfo": "Basic Information",
+        "fileName": "File Name",
+        "fileSize": "File Size",
+        "fileType": "File Type",
+        "dateTime": "Date & Time",
+        "modifiedTime": "Modified Time",
+        "groupFiles": "Group Files",
+        "targetPath": "Target Path",
+        "metadata": "Metadata",
+        "dimensions": "Dimensions",
+        "duration": "Duration",
+        "format": "Format",
+        "location": "Location",
+        "processed": "Processed",
+        "percentage": "Percentage",
+        "speed": "Speed",
+        "filesPerSec": "files/sec",
+        "filesPerMin": "files/min",
+        "remaining": "Remaining",
+        "errors": "Errors ({count})",
+        "warnings": "Warnings ({count})",
+        "moreErrors": "{count} more errors",
+        "moreWarnings": "{count} more warnings",
+        "retry": "Retry",
+        "showLess": "Show Less",
+        "showMore": "Show {count} More",
+        "status": {
+            "preparing": "Preparing",
+            "processing": "Processing",
+            "paused": "Paused",
+            "completed": "Completed",
+            "cancelled": "Cancelled",
+            "error": "Error",
+            "unknown": "Unknown"
+        },
+        "now": "Now",
+        "loading": {
+            "text": "Loading...",
+            "preview": "Loading preview data...",
+            "directories": "Selecting directories...",
+            "label": "Loading...",
+            "switchingFolder": "Switching folder..."
+        },
+        "error": {
+            "title": "Operation Failed",
+            "network": "Network connection failed, please check your connection and try again",
+            "validation": "Configuration validation failed, please check source and target directory settings",
+            "permission": "Insufficient permissions, please ensure you have access to the directories",
+            "api": "Server error, please try again later",
+            "unknown": "An unknown error occurred, please retry",
+            "retry": "Retry",
+            "dismiss": "Dismiss",
+            "label": "Error"
+        },
+        "filters": "Filters",
+        "resetFilters": "Reset Filters",
+        "showAdvanced": "Show Advanced",
+        "hideAdvanced": "Hide Advanced",
+        "advancedFilters": "Advanced Filters",
+        "fileSizeRange": "File Size Range",
+        "fileSizeHelp": "Filter files by size range",
+        "dateRange": "Date Range",
+        "dateRangeHelp": "Filter files by creation date",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "quickDateFilters": "Quick Date Filters",
+        "fileNamePattern": "File Name Pattern",
+        "fileNamePatternHelp": "Filter files by name pattern, supports wildcards (* and ?)",
+        "fileNamePatternPlaceholder": "e.g. IMG_*.jpg",
+        "excludePatterns": "Exclude Patterns",
+        "excludePatternsHelp": "Patterns to exclude files, one per line",
+        "excludePatternsPlaceholder": "e.g. .DS_Store, Thumbs.db",
+        "reset": "Reset",
+        "filteredFiles": "Filtered Files",
+        "datePresets": {
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "thisWeek": "This Week",
+            "thisMonth": "This Month",
+            "lastMonth": "Last Month"
+        },
+        "dateSource": {
+            "label": "Date Source",
+            "exif": "EXIF Metadata",
+            "file_created": "File Created",
+            "file_modified": "File Modified",
+            "custom": "Custom"
+        },
+        "duplicateFiles": "Duplicate Files",
+        "duplicatesFound": "Duplicates Found",
+        "wastedSpace": "Wasted Space",
+        "batchStrategy": "Batch Strategy",
+        "applyToAll": "Apply to All",
+        "autoResolve": "Auto Resolve",
+        "originalFile": "Original File",
+        "existing": "Existing",
+        "duplicateFile": "Duplicate File",
+        "importing": "Importing",
+        "action": "Action",
+        "strategy": {
+            "skip": {
+                "label": "Skip",
+                "description": "Skip importing this file"
+            },
+            "rename": {
+                "label": "Rename",
+                "description": "Rename the file before importing"
+            },
+            "overwrite": {
+                "label": "Overwrite",
+                "description": "Overwrite the existing file"
+            },
+            "keepBoth": {
+                "label": "Keep Both",
+                "description": "Keep both files with different names"
+            }
+        },
+        "recommendation": "Recommendation",
+        "recommendations": {
+            "keep_original": "Keep Original",
+            "keep_duplicate": "Keep Duplicate",
+            "keep_both": "Keep Both",
+            "skipIdentical": "Skip (identical files)",
+            "keepLarger": "Keep the larger file"
+        },
+        "warning": {
+            "overwriteLarger": "Warning: You are about to overwrite a larger file",
+            "overwriteNewer": "Warning: You are about to overwrite a newer file"
+        },
+        "compare": "Compare",
+        "fileComparison": "File Comparison",
+        "comparisonAnalysis": "Comparison Analysis",
+        "sizeDifference": "Size Difference",
+        "timeDifference": "Time Difference",
+        "sameSize": "Same Size",
+        "sameTime": "Same Time",
+        "daysNewer": "{days} days newer",
+        "daysOlder": "{days} days older",
+        "hoursNewer": "{hours} hours newer",
+        "hoursOlder": "{hours} hours older",
+        "newer": "Newer",
+        "older": "Older",
+        "confirmBatchAction": "Confirm Batch Action",
+        "apply": "Apply",
+        "cancel": "Cancel",
+        "batchConfirmMessage": "Apply {strategy} to {count} selected files?",
+        "overwriteWarning": "Warning: Overwriting files cannot be undone",
+        "batchProgress": "Batch Progress",
+        "directories": "Directories",
+        "complete": "Complete",
+        "overallProgress": "Overall Progress",
+        "currentDirectory": "Current Directory",
+        "eta": "ETA",
+        "completed": "Completed",
+        "paused": "Paused",
+        "pending": "Pending",
+        "finishing": "Finishing",
+        "pauseAll": "Pause All",
+        "resumeAll": "Resume All",
+        "cancelAll": "Cancel All",
+        "close": "Close",
+        "confirmCancelAll": "Confirm Cancel All",
+        "yes": "Yes",
+        "no": "No",
+        "cancelAllWarning": "Are you sure you want to cancel all remaining imports?",
+        "cancelAllProgress": "{completed} of {total} directories completed",
+        "recentFiles": "Recent Files",
+        "elapsed": "Elapsed",
+        "files": "Files",
+        "successful": "Successful",
+        "skipped": "Skipped",
+        "steps": {
+            "configuration": "Configuration",
+            "configurationDesc": "Select source and target directories",
+            "preview": "Preview",
+            "previewDesc": "Review and select files to import",
+            "importing": "Importing",
+            "importingDesc": "Import files to target directory"
         }
     },
     "menu": {
@@ -86,6 +337,11 @@
             "title": "Select Folder",
             "message": "Please select a folder and complete the addition."
         },
+        "scanError": {
+            "title": "Scan Error",
+            "message": "Failed to scan subfolders of [{path}]. Error: {error}. Main folder will still be added."
+        },
+        "unknownError": "An unknown error occurred",
         "resetFolders": {
             "title": "Reset Complete",
             "message": "All folder caches have been rebuilt."
@@ -125,7 +381,6 @@
         "resources": {
             "title": "Resources",
             "content": "The following resources are available:",
-            "and": "and",
             "download": "Download Resources"
         },
         "press": "Press",
@@ -149,14 +404,28 @@
             "dark": "Dark"
         }
     },
-    "resetFolders": {
-        "title": "Advanced Action: Reset Folder Storage",
-        "desc": "This action will clear all folder settings and immediately rebuild the cache. This action is irreversible. Please proceed with caution!",
-        "button": "Reset Folder Storage"
-    },
     "scan": {
         "queueTitle": "Scan Queue",
-        "queueEmpty": "Queue is empty"
+        "queueEmpty": "Queue is empty",
+        "processing": "Processing queue",
+        "allTasksCompleted": "All scan tasks completed",
+        "pathHeader": "Path",
+        "timestampHeader": "Created",
+        "actionHeader": "Action",
+        "unknownFolder": "Unknown folder",
+        "noTimestamp": "No timestamp",
+        "timeJustNow": "Just now",
+        "timeMinutesAgo": "{count}m ago",
+        "timeHoursAgo": "{count}h ago",
+        "timeDaysAgo": "{count}d ago",
+        "priority": "Priority",
+        "actions": {
+            "scan": "Scan",
+            "rescan": "Rescan",
+            "current": "Current scan"
+        },
+        "processed": "Processed",
+        "incrementalCache": "Incremental Cache: Real-time progress saving, avoid rescanning"
     },
     "advancedSettings": {
         "title": "Advanced Settings",
@@ -168,5 +437,77 @@
         "image": "No images",
         "openConfigDirBtn": "Open Config Folder",
         "importBtn": "Import Images"
+    },
+    "fileInfo": {
+        "title": "File Information",
+        "fileName": "File Name",
+        "fileType": "File Type",
+        "format": "Format",
+        "size": "Size",
+        "imageWidth": "Image Width",
+        "imageHeight": "Image Height",
+        "resolution": "Resolution",
+        "aspectRatio": "Aspect Ratio",
+        "duration": "Duration",
+        "codec": "Codec",
+        "dateTaken": "Date Taken",
+        "dateSource": "Date Source",
+        "modified": "Modified Time",
+        "created": "Created Time",
+        "location": "Location",
+        "gpsLatitude": "GPS Latitude",
+        "gpsLongitude": "GPS Longitude",
+        "cameraMake": "Camera Make",
+        "cameraModel": "Camera Model",
+        "rawMetadata": "Raw Metadata",
+        "unknown": "Unknown",
+        "showRawData": "Show Raw Data",
+        "hideRawData": "Hide Raw Data",
+        "infoTitle": "{name} - {type} Information",
+        "dateSources": {
+            "exif": "EXIF Data",
+            "video_metadata": "Video Metadata",
+            "file_created": "File Creation Time",
+            "file_modified": "File Modification Time",
+            "current_date": "Current Date"
+        },
+        "basicInfo": "Basic Information",
+        "mediaProperties": "Media Properties",
+        "videoProperties": "Video Properties",
+        "timeInfo": "Time Information",
+        "technicalInfo": "Technical Information",
+        "createdAt": "Created At",
+        "modifiedAt": "Modified At",
+        "camera": "Camera",
+        "lens": "Lens",
+        "iso": "ISO",
+        "aperture": "Aperture",
+        "dimensions": "Dimensions",
+        "noMetadata": "No Metadata"
+    },
+    "common": {
+        "files": "files",
+        "file": "file",
+        "images": "images",
+        "image": "image",
+        "videos": "videos",
+        "video": "video",
+        "counting": "Counting..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} files",
+            "images": "{count} images",
+            "videos": "{count} videos",
+            "mixed": "{images} images, {videos} videos",
+            "empty": "No files"
+        }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "Last 1 hour",
+            "6h": "Last 6 hours",
+            "24h": "Last 24 hours"
+        }
     }
 }

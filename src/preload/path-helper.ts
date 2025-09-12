@@ -22,6 +22,7 @@ import {
     isHiddenFile,
     isDirectory,
     isFile,
+    removeFileProtocol,
 } from "@shared/path-util";
 
 export {
@@ -37,6 +38,7 @@ export {
     isHiddenFile,
     isDirectory,
     isFile,
+    removeFileProtocol,
 };
 
 /**
@@ -110,7 +112,14 @@ export function ensureDir(action: FileAction): Observable<FileAction> {
  */
 export function scanFolder(source: string, target: string): Observable<FileAction> {
     return new Observable<FileAction>((subscriber: Subscriber<FileAction>) => {
-        klaw(source)
+        klaw(source, {
+            filter: (item) => {
+                return (
+                    !shouldIgnorePhotasaPath(item) && // 跳过photasa缓存路径
+                    !isHiddenFile(item) // 跳过隐藏文件
+                );
+            },
+        })
             .on("data", (item) => {
                 if (!item.stats.isDirectory()) {
                     subscriber.next({

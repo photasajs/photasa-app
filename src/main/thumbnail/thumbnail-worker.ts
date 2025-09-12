@@ -8,10 +8,10 @@ import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-type
 const logger = loggers.worker;
 
 parentPort?.on("message", async (message: WorkerMessage<ThumbnailRequest>) => {
-    logger.debug(`[thumbnail-worker] 收到消息: ${JSON.stringify(message)}`);
+    logger.debug(`[thumbnail-worker] 收到消息: id=${message.id}, action=${message.action}`);
     try {
         if (message.action === "create") {
-            logger.debug(`[thumbnail-worker] 创建缩略图: ${JSON.stringify(message)}`);
+            logger.debug(`[thumbnail-worker] 创建缩略图: ${message.payload.path}`);
             const result = await createThumbnail(message.payload, logger);
             const response = createResponse<ThumbnailRequest, ThumbnailResponse>(message, {
                 success: true,
@@ -19,7 +19,7 @@ parentPort?.on("message", async (message: WorkerMessage<ThumbnailRequest>) => {
             });
             parentPort?.postMessage(response);
         } else if (message.action === "remove") {
-            logger.debug(`[thumbnail-worker] 删除缩略图: ${JSON.stringify(message)}`);
+            logger.debug(`[thumbnail-worker] 删除缩略图: ${message.payload.path}`);
             const result = await removeThumbnail(message.payload, logger);
             const response = createResponse<ThumbnailRequest, ThumbnailResponse>(message, {
                 success: true,
@@ -27,7 +27,7 @@ parentPort?.on("message", async (message: WorkerMessage<ThumbnailRequest>) => {
             });
             parentPort?.postMessage(response);
         } else {
-            logger.debug(`[thumbnail-worker] 未知操作: ${JSON.stringify(message)}`);
+            logger.debug(`[thumbnail-worker] 未知操作: ${message.action}`);
             const response = createResponse<ThumbnailRequest, ThumbnailResponse>(message, {
                 success: false,
                 error: "Unknown action",

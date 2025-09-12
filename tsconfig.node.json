@@ -16,6 +16,7 @@
         "allowJs": true,
         "baseUrl": ".",
         "paths": {
+            "@main/*": ["./src/main/*"],
             "@common/*": ["./src/common/*"],
             "@preload/*": ["./src/preload/*"],
             "@shared/*": ["./src/shared/*"]

@@ -1,10 +1,28 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { fileExistSync } from "../file-helper";
 import { vol } from "memfs";
-import fs from "fs-extra";
 
-vi.mock("fs");
-vi.mock("fs/promises");
+// Mock fs-extra to use memfs
+vi.mock("fs-extra", async () => {
+    const memfs = await vi.importActual("memfs");
+    const fs = (memfs as any).fs;
+
+    // Return both default and named exports to cover all use cases
+    return {
+        default: fs,
+        ...fs,
+    };
+});
+
+vi.mock("fs", async () => {
+    const memfs = await vi.importActual("memfs");
+    return (memfs as any).fs;
+});
+
+vi.mock("fs/promises", async () => {
+    const memfs = await vi.importActual("memfs");
+    return (memfs as any).fs.promises;
+});
 
 describe("file-helper", () => {
     beforeEach(() => {
@@ -17,18 +35,19 @@ describe("file-helper", () => {
         });
 
         it("should return true if file exists", async () => {
-            const fileName = "/test.txt";
+            const fileName = "test.txt";
 
-            await fs.writeFile(fileName, "test");
+            // Create file in memfs
+            vol.fromJSON({ [fileName]: "test content" });
 
-            const result = fileExistSync(fileName, { root: "/" });
+            const result = fileExistSync(fileName, { root: "." });
             expect(result).toBe(true);
         });
         it("should return true if file exists when option is empty", async () => {
-            const fileName = "/test.txt";
+            const fileName = "/tmp/test.txt";
 
-            await fs.createFile(fileName);
-            await fs.writeFile(fileName, "test");
+            // Create file in memfs
+            vol.fromJSON({ [fileName]: "test content" });
 
             const result = fileExistSync(fileName);
             expect(result).toBe(true);

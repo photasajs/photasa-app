@@ -3,11 +3,22 @@ import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { cleanupScanQueue } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@common/config-types";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction, FileOperationInput } from "@common/scan-types";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
-import { DataNode } from "ant-design-vue/lib/tree";
+// 自定义 DataNode 类型定义
+export interface DataNode {
+    key: string | number;
+    title: string;
+    children?: DataNode[];
+    isLeaf?: boolean;
+    disabled?: boolean;
+    selectable?: boolean;
+    checkable?: boolean;
+    [key: string]: any;
+}
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
+import { toDirName } from "@renderer/utils/api-path";
 import { loggers } from "@common/logger";
 
 const logger = loggers.app;
@@ -25,6 +36,8 @@ export type PreferenceState = {
     currentFolderConfig: PhotasaConfig;
     folderTree: DataNode[];
     themeId: string; // 当前主题 id
+    // 导入时排除的路径模式（如 .photasaoriginal, .git 等）
+    excludePaths: string[];
 };
 
 export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
@@ -44,11 +57,22 @@ export const usePreferenceStore = defineStore("preference", {
             currentFolderConfig: <PhotasaConfig>{},
             folderTree: [],
             themeId: "solarized-dark", // 默认空，首次加载时由 theme-manager 设定
+            // 默认排除的路径模式
+            excludePaths: [
+                ".photasaoriginal", // Photasa原始文件跟踪文件夹
+                ".photasaoriginals", // Photasa缩略图缓存文件夹
+                ".photasa.json", // Photasa配置文件
+                ".DS_Store", // macOS系统文件
+                "Thumbs.db", // Windows缩略图文件
+                ".git", // Git版本控制文件夹
+                ".svn", // SVN版本控制文件夹
+                "node_modules", // Node.js依赖文件夹
+            ],
         };
     },
     persist: true,
     actions: {
-        addPath(path) {
+        addPath(path: string) {
             if (this.firstTime) {
                 this.firstTime = false;
                 this.paths = [];
@@ -74,8 +98,8 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths = this.paths.sort();
             }
         },
-        addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
-            logger.debug("Adding scan folder:", { folder, action });
+        async addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
+            logger.debug(`Adding scan folder: ${folder}, action: ${action}`);
             if (!Array.isArray(this.scanningFolder)) {
                 logger.debug("Initializing scanningFolder array");
                 this.scanningFolder = [];
@@ -87,31 +111,136 @@ export const usePreferenceStore = defineStore("preference", {
             // Check if the folder is already in the scanning queue
             const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
             if (existingIndex >= 0) {
-                // If it's a rescan, update the action
-                if (action === "rescan") {
+                // 只有在明确要求 rescan 且当前不是 rescan 时才更新
+                if (action === "rescan" && this.scanningFolder[existingIndex].action !== "rescan") {
                     logger.debug("Updating existing folder to rescan:", folder);
                     this.scanningFolder[existingIndex].action = "rescan";
                 } else {
-                    logger.debug("Folder already in scanning queue:", folder);
+                    logger.debug(
+                        "Folder already in scanning queue with action:",
+                        this.scanningFolder[existingIndex].action,
+                    );
                 }
                 return;
             }
 
+            // 智能检查：如果文件夹已扫描且不是强制重新扫描，则跳过
+            if (action === "scan") {
+                try {
+                    const { checkPhotasaConfig } = await import("@renderer/utils/api");
+                    const configCheck = await checkPhotasaConfig(folder);
+
+                    if (configCheck.hasConfig) {
+                        // 仍然更新文件夹树，但不添加到扫描队列
+                        this.updateFolderTree(folder);
+                        return;
+                    }
+                } catch (error) {
+                    logger.warn(`Failed to check photasa config for ${folder}:`, error);
+                    // 如果检查失败，继续正常流程
+                }
+            }
+
             // Add the new folder to scan
             logger.debug("Adding new folder to scan:", folder);
-            this.scanningFolder.push({ path: folder, action, thumbnailSize: this.thumbnailSize });
+            this.scanningFolder.push({
+                path: folder,
+                action,
+                thumbnailSize: this.thumbnailSize,
+                operationType: "directory", // Default to directory for legacy compatibility
+                createdAt: Date.now(), // Add timestamp for proper sorting
+            });
             this.updateFolderTree(folder);
+        },
+        addFileOperation(operation: FileOperationInput) {
+            logger.debug("Adding file operation to queue:", operation);
+
+            if (!Array.isArray(this.scanningFolder)) {
+                logger.debug("Initializing scanningFolder array");
+                this.scanningFolder = [];
+            }
+
+            // Normalize the path
+            const normalizedPath = normalizePath(operation.path);
+
+            // For file operations, we don't deduplicate as each file operation should be processed
+            // However, we can update existing pending operations of the same type on the same file
+            if (operation.operationType === "file") {
+                const existingIndex = this.scanningFolder.findIndex(
+                    (item) =>
+                        item.path === normalizedPath &&
+                        item.operationType === "file" &&
+                        item.fileOperationId === operation.fileOperationId,
+                );
+
+                if (existingIndex >= 0) {
+                    // Update existing file operation
+                    logger.debug("Updating existing file operation:", normalizedPath);
+                    this.scanningFolder[existingIndex] = {
+                        ...this.scanningFolder[existingIndex],
+                        ...operation,
+                        path: normalizedPath,
+                    };
+                    return;
+                }
+            }
+
+            // Add new operation to queue
+            logger.debug("Adding new file operation to queue:", normalizedPath);
+            this.scanningFolder.push({
+                path: normalizedPath,
+                action: operation.action,
+                thumbnailSize: operation.thumbnailSize,
+                operationType: operation.operationType,
+                priority: operation.priority,
+                retryCount: operation.retryCount || 0,
+                createdAt: operation.createdAt || Date.now(),
+                fileOperationId: operation.fileOperationId,
+            });
+
+            // Update folder tree for both file and directory operations
+            if (operation.operationType === "directory") {
+                this.updateFolderTree(normalizedPath);
+            } else if (operation.operationType === "file") {
+                // For file operations, update tree with parent directory
+                try {
+                    const parentDir = toDirName(normalizedPath);
+                    if (parentDir && parentDir !== normalizedPath && parentDir !== "/") {
+                        logger.debug(
+                            `Updating folder tree with parent directory: ${parentDir} for file: ${normalizedPath}`,
+                        );
+                        this.updateFolderTree(parentDir);
+                    }
+                } catch (error) {
+                    logger.warn(`Failed to update folder tree for file ${normalizedPath}:`, error);
+                    // Continue execution, don't interrupt file operation
+                }
+            }
         },
         updateThumbnailSize(size: number) {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
-            logger.debug("Completing scan for folder:", folder);
+            logger.debug(`[completeScanPath] Attempting to complete scan for folder: ${folder}`);
+            logger.debug(
+                `[completeScanPath] Current scanningFolder before:`,
+                this.scanningFolder.map((f) => f.path),
+            );
+
             const index = this.scanningFolder.findIndex((f) => f.path === folder);
             if (index > -1) {
                 this.scanningFolder.splice(index, 1);
-                logger.debug("Removed folder from scanning queue:", folder);
+                logger.debug(
+                    `[completeScanPath] Successfully removed folder from scanning queue at index ${index}: ${folder}`,
+                );
+            } else {
+                logger.debug(`[completeScanPath] Folder not found in scanning queue: ${folder}`);
             }
+
+            logger.debug(
+                `[completeScanPath] Current scanningFolder after:`,
+                this.scanningFolder.map((f) => f.path),
+            );
         },
         updateFolderTree(folder: string) {
             const path = normalizePath(folder);
@@ -203,6 +332,47 @@ export const usePreferenceStore = defineStore("preference", {
         },
         setThemeId(themeId: string) {
             this.themeId = themeId;
+        },
+        /**
+         * 更新排除路径列表
+         * @param excludePaths 新的排除路径数组
+         */
+        updateExcludePaths(excludePaths: string[]) {
+            this.excludePaths = excludePaths;
+        },
+        /**
+         * 添加单个排除路径
+         * @param path 要添加的路径模式
+         */
+        addExcludePath(path: string) {
+            if (!this.excludePaths.includes(path)) {
+                this.excludePaths.push(path);
+            }
+        },
+        /**
+         * 移除单个排除路径
+         * @param path 要移除的路径模式
+         */
+        removeExcludePath(path: string) {
+            const index = this.excludePaths.indexOf(path);
+            if (index >= 0) {
+                this.excludePaths.splice(index, 1);
+            }
+        },
+        /**
+         * 重置为默认排除路径
+         */
+        resetExcludePaths() {
+            this.excludePaths = [
+                ".photasaoriginal",
+                ".photasaoriginals",
+                ".photasa.json",
+                ".DS_Store",
+                "Thumbs.db",
+                ".git",
+                ".svn",
+                "node_modules",
+            ];
         },
         /**
          * 重置所有目录存储

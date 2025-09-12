@@ -28,6 +28,12 @@
     --color-white: #fff;
     --color-black: #000;
     --color-white-alpha: rgba(255, 255, 255, 0.7);
+
+    /* Border radius variables */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
     --color-tree-bg: #eee8d5;
     --color-tree-selected: #268bd2;
     --color-tree-text: #657b83;
@@ -38,6 +44,7 @@
     --color-tree-active-text: #fff;
     --color-tree-disabled-bg: #eee8d5;
     --color-tree-disabled-text: #bbb;
+    --color-tree-switcher-hover: #93a1a1;
     --color-card-hover: #b3cde3;
     --color-card-hover-border: #268bd2;
     --color-card-hover-shadow: rgba(0, 0, 0, 0.12);
@@ -53,8 +60,19 @@
     --color-scrollbar-bg: #eee8d5;
     --color-scrollbar-thumb: #93a1a1;
     --color-scrollbar-thumb-hover: #268bd2;
+    --color-scrollbar-thumb-active: #2aa198;
+    --color-scrollbar-track: #eee8d5;
+    --color-scrollbar-track-hover: #f5f5e3;
+    --color-scrollbar-width: 8px;
+    --color-scrollbar-width-thin: 4px;
+    --color-scrollbar-border-radius: 4px;
     --color-splitter-bg: #93a1a1;
     --color-splitter-border: #eee8d5;
+
+    /* 空状态图标专用颜色 */
+    --color-empty-icon-bg: #f5f5e3;
+    --color-empty-icon-accent: #b6c2d1;
+    --color-empty-icon-border: #93a1a1;
     --color-splitter-hover: #268bd2;
     --color-image-item-bg: #f5f5e3;
     --color-list-bg: #fdf6e3;
@@ -72,4 +90,27 @@
     --color-descriptions-title: #657b83;
     --color-descriptions-header-bg: #eee8d5;
     --color-descriptions-bordered: #93a1a1;
+
+    /* 现代化设计扩展变量 */
+    --color-bg-tertiary: #f8f7f0;
+    --color-text-primary: #657b83;
+    --color-primary-dark: #2aa198;
+    --color-primary-light: #6c71c4;
+
+    /* 现代化阴影系统 */
+    --shadow-modern-sm: 0 1px 2px rgba(101, 123, 131, 0.1), 0 1px 6px rgba(101, 123, 131, 0.05);
+    --shadow-modern-md:
+        0 4px 16px rgba(101, 123, 131, 0.12), 0 2px 8px rgba(101, 123, 131, 0.08),
+        0 1px 4px rgba(101, 123, 131, 0.06);
+    --shadow-modern-lg:
+        0 16px 40px rgba(101, 123, 131, 0.15), 0 8px 24px rgba(101, 123, 131, 0.1),
+        0 4px 12px rgba(101, 123, 131, 0.08);
+    --shadow-modern-xl:
+        0 25px 50px rgba(101, 123, 131, 0.18), 0 12px 24px rgba(101, 123, 131, 0.12),
+        0 6px 12px rgba(101, 123, 131, 0.1);
+
+    /* 现代化动画变量 */
+    --transition-modern: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-modern-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-modern-slow: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }

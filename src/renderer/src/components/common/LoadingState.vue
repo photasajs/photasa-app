@@ -7,7 +7,6 @@
  * - size: 可选，圆环尺寸
  * 支持 skeleton 插槽（骨架屏上方），icon/文案下方居中
  */
-import { defineProps } from "vue";
 defineProps({
     loadingText: { type: String, default: "加载中..." },
     icon: { type: String, default: "" },
@@ -24,8 +23,8 @@ defineProps({
                 <svg :width="size" :height="size" fill="none" viewBox="0 0 40 40">
                     <defs>
                         <linearGradient id="spinner-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#4f8cff" />
-                            <stop offset="100%" stop-color="#00e0ff" />
+                            <stop offset="0%" :stop-color="'var(--color-primary)'" />
+                            <stop offset="100%" :stop-color="'var(--color-primary-light)'" />
                         </linearGradient>
                     </defs>
                     <circle
@@ -50,7 +49,9 @@ defineProps({
                 </svg>
             </slot>
             <slot>
-                <div class="mt-4 text-blue-500 font-semibold text-lg">{{ loadingText }}</div>
+                <div class="mt-4 font-semibold text-lg" style="color: var(--color-primary)">
+                    {{ loadingText }}
+                </div>
             </slot>
         </div>
     </div>

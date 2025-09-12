@@ -71,7 +71,7 @@ function onHover(item: MenuItemData | null) {
     position: relative;
     &:hover:not(.disabled) {
         background: var(--color-primary);
-        color: #fff;
+        color: var(--color-white);
     }
     &.disabled {
         color: var(--color-disabled, #aaa);

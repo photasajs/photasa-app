@@ -29,7 +29,9 @@ export default class ScanService {
         this.worker.on("message", (message) => {
             try {
                 const data = message;
-                logger.debug("Received message from worker:", data);
+                logger.debug(
+                    `Received message from worker: type=${data.type}, requestId=${data.requestId}, path=${data.action?.path || "N/A"}, progress=${data.progress ? `${data.progress.processed}/${data.progress.total}` : "N/A"}`,
+                );
                 // 推送 notifyStatus
                 let payload: NotifyPayload | undefined;
                 if (data.type === "error") {
@@ -79,7 +81,9 @@ export default class ScanService {
         ipcMain.on(
             "picasa:scan-photos",
             async (_, args: { requestId: string; scanAction: ScanAction }) => {
-                logger.debug("Received scan request:", args);
+                logger.debug(
+                    `Received scan request: requestId=${args.requestId}, action=${args.scanAction.action}, path=${args.scanAction.path}`,
+                );
                 try {
                     this.scanPhotos(args.requestId, args.scanAction);
                 } catch (error) {
@@ -95,7 +99,9 @@ export default class ScanService {
     }
 
     private scanPhotos(requestId: string, scan: ScanAction): void {
-        logger.debug("Sending scan request to worker:", { requestId, scan });
+        logger.debug(
+            `Sending scan request: requestId=${requestId}, path=${scan.path}, action=${scan.action}`,
+        );
         try {
             this.worker.postMessage({ action: "scan", requestId, scan });
         } catch (error) {

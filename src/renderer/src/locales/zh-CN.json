@@ -3,6 +3,13 @@
         "title": "仓廪图司",
         "folderList": "目录列表"
     },
+    "queue": {
+        "timeRange": {
+            "1h": "最近1小时",
+            "6h": "最近6小时",
+            "24h": "最近24小时"
+        }
+    },
     "preference": {
         "settings": "设置",
         "tabs": {
@@ -19,17 +26,268 @@
         "thumbnailSize": "缩略图大小",
         "darkMode": "深色模式",
         "language": "语言",
-        "scanning": "扫描中"
+        "scanning": "扫描中",
+        "resetFolders": {
+            "title": "高级操作：重置目录存储",
+            "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
+            "button": "重置目录存储"
+        }
     },
     "import": {
+        "title": "导入照片",
         "photos": "导入照片",
-        "allowDuplicateRename": "允许重命名重复的照片",
-        "targetDirectory": "导出目录",
-        "chooseDirectory": "选择导入目录",
+        "progress": "导入进度",
+        "chooseDirectory": "选择目录",
+        "targetDirectory": "目标目录",
+        "selectTarget": "选择目标目录",
+        "allowDuplicateRename": "允许重命名重复文件",
         "button": {
             "import": "导入",
-            "cancel": "取消",
-            "ok": "确定"
+            "cancel": "取消"
+        },
+        "sourceDirectories": "源目录",
+        "addSource": "添加源目录",
+        "browse": "浏览",
+        "options": "导入选项",
+        "fileTypes": {
+            "label": "文件类型",
+            "images": "图片",
+            "videos": "视频",
+            "image": "图片",
+            "video": "视频",
+            "other": "其他"
+        },
+        "images": "图片",
+        "videos": "视频",
+        "includeSubfolders": "包含子文件夹",
+        "duplicateHandling": "重复文件处理",
+        "duplicate": {
+            "label": "重复",
+            "rename": "重命名",
+            "skip": "跳过",
+            "overwrite": "覆盖",
+            "keepBoth": "保留两者"
+        },
+        "useMD5ForDuplicates": "使用MD5验证进行重复文件检测",
+        "useMD5ForDuplicatesDescription": "启用后，将使用MD5散列值比较文件内容，实现精确的重复文件检测，不受文件修改时间影响",
+        "preview": {
+            "scanning": "正在扫描文件",
+            "filesFound": "已发现文件",
+            "directoriesScanned": "已扫描目录",
+            "progress": "扫描进度",
+            "currentPath": "当前路径",
+            "recentlyFound": "最近发现",
+            "noFilesFound": "未找到文件"
+        },
+        "totalFiles": "总文件数",
+        "totalSize": "总大小",
+        "duplicates": "重复文件",
+        "moreFiles": "还有 {count} 个文件",
+        "group": "{count} 个文件",
+        "processing": "处理中",
+        "previewButton": "预览",
+        "importButton": "导入",
+        "nextButton": "下一步",
+        "backButton": "返回",
+        "cancelButton": "取消",
+        "pauseButton": "暂停",
+        "resumeButton": "继续",
+        "closeButton": "关闭",
+        "doneButton": "完成",
+        "importFailed": "导入失败",
+        "importCompleted": "导入完成",
+        "importCompletedDesc": "成功导入 {count} 个文件",
+        "filePreview": "文件预览",
+        "selectAll": "全选",
+        "deselectAll": "取消全选",
+        "invertSelection": "反选",
+        "selected": "已选择",
+        "selectedSize": "已选择大小",
+        "fileGroups": "文件组",
+        "pagination": "第 {start}-{end} 项，共 {total} 项",
+        "toggleSelection": "切换选择",
+        "viewDetails": "查看详情",
+        "image": "图片",
+        "video": "视频",
+        "unknown": "未知",
+        "fileDetails": "文件详情",
+        "basicInfo": "基本信息",
+        "fileName": "文件名",
+        "fileSize": "文件大小",
+        "fileType": "文件类型",
+        "dateTime": "日期和时间",
+        "modifiedTime": "修改时间",
+        "groupFiles": "组内文件",
+        "targetPath": "目标路径",
+        "metadata": "元数据",
+        "dimensions": "尺寸",
+        "duration": "时长",
+        "format": "格式",
+        "location": "位置",
+        "processed": "已处理",
+        "percentage": "百分比",
+        "speed": "速度",
+        "filesPerSec": "文件/秒",
+        "filesPerMin": "文件/分钟",
+        "remaining": "剩余时间",
+        "errors": "错误 ({count})",
+        "warnings": "警告 ({count})",
+        "moreErrors": "还有 {count} 个错误",
+        "moreWarnings": "还有 {count} 个警告",
+        "retry": "重试",
+        "showLess": "显示更少",
+        "showMore": "显示更多 {count} 项",
+        "status": {
+            "preparing": "准备中",
+            "processing": "处理中",
+            "paused": "已暂停",
+            "completed": "已完成",
+            "cancelled": "已取消",
+            "error": "错误",
+            "unknown": "未知"
+        },
+        "now": "现在",
+        "loading": {
+            "label": "加载中...",
+            "preview": "正在加载预览数据...",
+            "directories": "正在选择目录...",
+            "switchingFolder": "切换文件夹中..."
+        },
+        "error": {
+            "title": "操作失败",
+            "network": "网络连接失败，请检查网络连接后重试",
+            "validation": "配置验证失败，请检查源目录和目标目录设置",
+            "permission": "权限不足，请确保有访问目录的权限",
+            "api": "服务器错误，请稍后重试",
+            "unknown": "发生未知错误，请重试",
+            "retry": "重试",
+            "dismiss": "忽略",
+            "label": "错误"
+        },
+        "filters": "过滤器",
+        "resetFilters": "重置过滤器",
+        "showAdvanced": "显示高级选项",
+        "hideAdvanced": "隐藏高级选项",
+        "advancedFilters": "高级过滤器",
+        "fileSizeRange": "文件大小范围",
+        "fileSizeHelp": "按文件大小范围过滤",
+        "dateRange": "日期范围",
+        "dateRangeHelp": "按创建日期过滤文件",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "quickDateFilters": "快速日期过滤",
+        "fileNamePattern": "文件名模式",
+        "fileNamePatternHelp": "按文件名模式过滤，支持通配符（* 和 ?）",
+        "fileNamePatternPlaceholder": "例如：IMG_*.jpg",
+        "excludePatterns": "排除模式",
+        "excludePatternsHelp": "排除文件的模式，每行一个",
+        "excludePatternsPlaceholder": "例如：.DS_Store, Thumbs.db",
+        "reset": "重置",
+        "filteredFiles": "已过滤文件",
+        "datePresets": {
+            "today": "今天",
+            "yesterday": "昨天",
+            "thisWeek": "本周",
+            "thisMonth": "本月",
+            "lastMonth": "上个月"
+        },
+        "dateSource": {
+            "label": "日期来源",
+            "exif": "EXIF 元数据",
+            "file_created": "文件创建时间",
+            "file_modified": "文件修改时间",
+            "custom": "自定义"
+        },
+        "duplicateFiles": "重复文件",
+        "duplicatesFound": "发现重复",
+        "wastedSpace": "浪费空间",
+        "batchStrategy": "批量策略",
+        "applyToAll": "应用到全部",
+        "autoResolve": "自动解决",
+        "originalFile": "原始文件",
+        "existing": "已存在",
+        "duplicateFile": "重复文件",
+        "importing": "导入中",
+        "action": "操作",
+        "strategy": {
+            "skip": {
+                "label": "跳过",
+                "description": "跳过导入此文件"
+            },
+            "rename": {
+                "label": "重命名",
+                "description": "导入前重命名文件"
+            },
+            "overwrite": {
+                "label": "覆盖",
+                "description": "覆盖已存在的文件"
+            },
+            "keepBoth": {
+                "label": "保留两者",
+                "description": "使用不同的名称保留两个文件"
+            }
+        },
+        "recommendation": "建议",
+        "recommendations": {
+            "keep_original": "保留原始文件",
+            "keep_duplicate": "保留重复文件",
+            "keep_both": "保留两者",
+            "skipIdentical": "跳过（完全相同的文件）",
+            "keepLarger": "保留较大的文件"
+        },
+        "warning": {
+            "overwriteLarger": "警告：你将要覆盖一个更大的文件",
+            "overwriteNewer": "警告：你将要覆盖一个更新的文件"
+        },
+        "compare": "比较",
+        "fileComparison": "文件比较",
+        "comparisonAnalysis": "比较分析",
+        "sizeDifference": "大小差异",
+        "timeDifference": "时间差异",
+        "sameSize": "相同大小",
+        "sameTime": "相同时间",
+        "daysNewer": "新 {days} 天",
+        "daysOlder": "旧 {days} 天",
+        "hoursNewer": "新 {hours} 小时",
+        "hoursOlder": "旧 {hours} 小时",
+        "newer": "较新",
+        "older": "较旧",
+        "confirmBatchAction": "确认批量操作",
+        "apply": "应用",
+        "cancel": "取消",
+        "batchConfirmMessage": "将 {strategy} 应用到 {count} 个选定的文件？",
+        "overwriteWarning": "警告：覆盖文件操作无法撤销",
+        "batchProgress": "批量进度",
+        "directories": "目录",
+        "complete": "完成",
+        "overallProgress": "总体进度",
+        "currentDirectory": "当前目录",
+        "eta": "预计完成时间",
+        "completed": "已完成",
+        "paused": "已暂停",
+        "pending": "等待中",
+        "finishing": "即将完成",
+        "pauseAll": "全部暂停",
+        "resumeAll": "全部继续",
+        "cancelAll": "全部取消",
+        "close": "关闭",
+        "confirmCancelAll": "确认取消全部",
+        "yes": "是",
+        "no": "否",
+        "cancelAllWarning": "确定要取消所有剩余的导入任务吗？",
+        "cancelAllProgress": "{completed} / {total} 个目录已完成",
+        "recentFiles": "最近文件",
+        "elapsed": "已用时间",
+        "files": "文件",
+        "successful": "成功",
+        "skipped": "跳过",
+        "steps": {
+            "configuration": "配置",
+            "configurationDesc": "选择源目录和目标目录",
+            "preview": "预览",
+            "previewDesc": "查看并选择要导入的文件",
+            "importing": "导入中",
+            "importingDesc": "将文件导入到目标目录"
         }
     },
     "menu": {
@@ -86,6 +344,11 @@
             "title": "选择目录",
             "message": "请选择目录，然后完成添加操作。"
         },
+        "scanError": {
+            "title": "扫描错误",
+            "message": "无法扫描 [{path}] 的子目录。错误：{error}。主目录仍将被添加。"
+        },
+        "unknownError": "发生未知错误",
         "resetFolders": {
             "title": "重置完成",
             "message": "所有目录缓存已重建。"
@@ -102,6 +365,7 @@
         "scanned": "处理完毕",
         "scanComplete": "目录[{path}]已处理完毕",
         "start": "开始扫描",
+        "scanning": "正在扫描",
         "progress": "扫描进度",
         "complete": "扫描完成",
         "error": "扫描错误"
@@ -125,7 +389,6 @@
         "resources": {
             "title": "资源",
             "content": "以下资源可用：",
-            "and": "和",
             "download": "下载资源"
         },
         "press": "按",
@@ -149,14 +412,28 @@
             "dark": "深色"
         }
     },
-    "resetFolders": {
-        "title": "高级操作：重置目录存储",
-        "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
-        "button": "重置目录存储"
-    },
     "scan": {
         "queueTitle": "扫描队列",
-        "queueEmpty": "队列为空"
+        "queueEmpty": "队列为空",
+        "processing": "正在处理队列",
+        "allTasksCompleted": "所有扫描任务已完成",
+        "pathHeader": "路径",
+        "timestampHeader": "创建时间",
+        "actionHeader": "操作",
+        "unknownFolder": "未知文件夹",
+        "noTimestamp": "无时间信息",
+        "timeJustNow": "刚刚",
+        "timeMinutesAgo": "{count} 分钟前",
+        "timeHoursAgo": "{count} 小时前",
+        "timeDaysAgo": "{count} 天前",
+        "priority": "优先级",
+        "actions": {
+            "scan": "扫描",
+            "rescan": "重新扫描",
+            "current": "当前扫描"
+        },
+        "processed": "已处理",
+        "incrementalCache": "增量缓存：实时保存扫描进度，避免重复扫描"
     },
     "advancedSettings": {
         "title": "高级配置",
@@ -168,5 +445,105 @@
         "image": "暂无图片",
         "openConfigDirBtn": "打开配置目录",
         "importBtn": "导入图片"
+    },
+    "fileInfo": {
+        "title": "文件信息",
+        "fileName": "文件名",
+        "fileType": "文件类型",
+        "format": "格式",
+        "size": "大小",
+        "imageWidth": "图片宽度",
+        "imageHeight": "图片高度",
+        "resolution": "分辨率",
+        "aspectRatio": "宽高比",
+        "duration": "时长",
+        "codec": "编码器",
+        "dateTaken": "拍摄日期",
+        "dateSource": "日期来源",
+        "modified": "修改时间",
+        "created": "创建时间",
+        "location": "位置",
+        "gpsLatitude": "GPS纬度",
+        "gpsLongitude": "GPS经度",
+        "cameraMake": "相机品牌",
+        "cameraModel": "相机型号",
+        "rawMetadata": "原始元数据",
+        "unknown": "未知",
+        "showRawData": "显示原始数据",
+        "hideRawData": "隐藏原始数据",
+        "infoTitle": "{name} - {type} 信息",
+        "dateSources": {
+            "exif": "EXIF 数据",
+            "video_metadata": "视频元数据",
+            "file_created": "文件创建时间",
+            "file_modified": "文件修改时间",
+            "current_date": "当前日期"
+        },
+        "basicInfo": "基本信息",
+        "mediaProperties": "媒体属性",
+        "videoProperties": "视频属性",
+        "timeInfo": "时间信息",
+        "technicalInfo": "技术信息",
+        "createdAt": "创建时间",
+        "modifiedAt": "修改时间",
+        "camera": "相机",
+        "lens": "镜头",
+        "iso": "ISO",
+        "aperture": "光圈",
+        "dimensions": "尺寸",
+        "noMetadata": "无元数据"
+    },
+    "common": {
+        "files": "文件",
+        "file": "文件",
+        "images": "图片",
+        "image": "图片",
+        "videos": "视频",
+        "video": "视频",
+        "counting": "统计中..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} 个文件",
+            "images": "{count} 张图片",
+            "videos": "{count} 个视频",
+            "mixed": "{images} 张图片，{videos} 个视频",
+            "empty": "无文件"
+        }
+    },
+    "imageInfo": {
+        "title": "图片信息",
+        "lastUpdated": "最后更新",
+        "openInFinder": "在访达中打开",
+        "repairLibrary": "修复照片库信息",
+        "fileCount": "文件数量",
+        "folderSize": "文件夹大小",
+        "basicInfo": "基本信息",
+        "location": "位置",
+        "status": "状态",
+        "scanDate": "扫描日期",
+        "configVersion": "配置版本",
+        "configuration": "配置信息",
+        "showRaw": "显示原始配置",
+        "hideRaw": "隐藏原始配置",
+        "totalImages": "图片总数",
+        "totalVideos": "视频总数",
+        "scannedFolders": "已扫描文件夹",
+        "rawConfiguration": "原始配置",
+        "copyPath": "复制路径",
+        "copyConfig": "复制配置",
+        "operationHistory": "操作历史",
+        "lastScan": "最后扫描",
+        "configCreated": "配置创建",
+        "never": "从未",
+        "statusTypes": {
+            "completed": "已完成",
+            "success": "成功",
+            "warning": "警告",
+            "partial": "部分完成",
+            "error": "错误",
+            "failed": "失败",
+            "unknown": "未知"
+        }
     }
 }

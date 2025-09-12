@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "systembugtj"
+    assignees:
+      - "systembugtj"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Allow updates to development dependencies
+    allow:
+      - dependency-type: "development"
+      - dependency-type: "production"
+    # Ignore specific packages that might cause issues
+    ignore:
+      - dependency-name: "electron"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "sharp"
+        update-types: ["version-update:semver-major"]
+    # Group updates for related packages
+    groups:
+      vue-ecosystem:
+        patterns:
+          - "vue*"
+          - "@vue/*"
+          - "vue-*"
+      testing:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+          - "playwright*"
+          - "@playwright/*"
+      build-tools:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "electron-*"
+          - "typescript"
+          - "@types/*"

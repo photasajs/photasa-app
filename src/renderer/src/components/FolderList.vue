@@ -1,19 +1,30 @@
 <script setup lang="ts">
-import { ref, watch, reactive } from "vue";
+import { ref, watch, reactive, defineExpose } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import type { PhotasaConfig } from "@common/config-types";
 import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
 import { openInFinder } from "@renderer/utils/api-path";
-import { JsonTreeView } from "json-tree-view-vue3";
 import { isEmpty } from "radash";
-import { removeFileProtocol } from "@renderer/common/image";
+// removeFileProtocol 通过 preload API 使用
+import {
+    BaseContextMenu,
+    BaseMenuItem,
+    BaseBreadcrumb,
+    BaseBreadcrumbItem,
+    BaseTree,
+} from "@renderer/components/ui";
+import { PhFolder } from "@phosphor-icons/vue";
+import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
+import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
+import { loggers } from "@common/logger";
 
 /**
  * I18n
  */
 const { t } = useI18n();
+const logger = loggers.renderer;
 
 /**
  * Preference store
@@ -38,7 +49,7 @@ const expandedKeys = ref<string[]>([...paths.value]);
 /**
  * Selected keys
  */
-const selectedKeys = ref<string[]>([currentFolder.value]);
+const selectedKeys = ref<string[]>([]);
 
 /**
  * Show config modal
@@ -46,22 +57,60 @@ const selectedKeys = ref<string[]>([currentFolder.value]);
 const showConfigModal = ref(false);
 
 /**
+ * Select folder method - called by parent component
+ */
+const selectFolder = (folderPath: string) => {
+    if (folderPath && folderPath !== selectedKeys.value[0]) {
+        logger.debug("[FolderList] selectFolder called with:", folderPath);
+        selectedKeys.value = [folderPath];
+    }
+};
+
+// Watch currentFolder changes and notify FolderList to select it
+watch(
+    currentFolder,
+    (newFolder) => {
+        if (newFolder) {
+            logger.debug("[App] currentFolder changed, notifying FolderList to select:", newFolder);
+            selectFolder(newFolder);
+        }
+    },
+    { immediate: true },
+);
+/**
  * Watch the selected keys
  */
 watch(
     selectedKeys,
-    () => {
-        // Only when Current folder changed, update current folder and reset photasa config
+    async () => {
+        // Only when Current folder changed, update current folder and load photasa config
         if (!isEmpty(selectedKeys.value) && currentFolder.value !== selectedKeys.value[0]) {
-            currentFolderConfig.value = {
-                version: "",
-                photoList: [],
-                lastModified: 0,
-            } satisfies PhotasaConfig;
-            currentFolder.value = selectedKeys.value[0];
+            const newFolderPath = selectedKeys.value[0];
+            currentFolder.value = newFolderPath;
+
+            try {
+                // 自动加载新文件夹的配置
+                const config = await getPhotasaConfig(newFolderPath);
+
+                currentFolderConfig.value =
+                    config ||
+                    ({
+                        version: "",
+                        photoList: [],
+                        lastModified: 0,
+                    } satisfies PhotasaConfig);
+            } catch (error) {
+                logger.warn("无法加载文件夹配置:", error);
+                // 如果加载失败，使用空配置
+                currentFolderConfig.value = {
+                    version: "",
+                    photoList: [],
+                    lastModified: 0,
+                } satisfies PhotasaConfig;
+            }
         }
     },
-    { deep: true },
+    { deep: true, flush: "post" },
 );
 
 /**
@@ -73,13 +122,17 @@ const loadingInfo = ref(false);
  * Photasa config
  */
 const photasa = reactive<{
-    config: string;
+    config: any;
     path: string;
     maxDepth: number;
+    status: string;
+    lastModified: Date;
 }>({
-    config: "{}",
+    config: {},
     path: "",
     maxDepth: 0,
+    status: "unknown",
+    lastModified: new Date(),
 });
 
 /**
@@ -92,18 +145,19 @@ async function openPhotasaConfig(folder: string): Promise<void> {
     showConfigModal.value = true;
     const config = await getPhotasaConfig(folder);
 
-    photasa.config = JSON.stringify(config);
+    photasa.config = config;
     photasa.path = folder;
+    photasa.status = config?.photoList?.length > 0 ? "completed" : "empty";
+    photasa.lastModified = new Date(config?.lastModified || Date.now());
     loadingInfo.value = false;
 }
 
 /**
- * Open the file in finder
+ * Open the file in finder - 直接传递 file:// URL，让 preload 层处理转换
  * @param key - The folder to open in finder
  */
 function openFileInFinder(key: string): void {
-    const path = removeFileProtocol(key);
-    openInFinder(path);
+    openInFinder(key);
 }
 
 /**
@@ -111,7 +165,9 @@ function openFileInFinder(key: string): void {
  */
 async function fixConfig(): Promise<void> {
     const config = await fixPhotasaConfig(photasa.path);
-    photasa.config = JSON.stringify(config);
+    photasa.config = config;
+    photasa.status = config?.photoList?.length > 0 ? "completed" : "empty";
+    photasa.lastModified = new Date(config?.lastModified || Date.now());
 }
 
 /**
@@ -122,69 +178,87 @@ async function rescan(key: string): Promise<void> {
     await resetPhotasaConfig(key);
     addScanFolder(key, "rescan");
 }
+
+// Expose methods to parent component
+defineExpose({
+    selectFolder,
+});
 </script>
 
 <template>
-    <div class="flex flex-col h-full min-h-0 rounded-lg shadow border folder-list-card">
+    <div class="folder-list-card">
         <div class="px-4 py-2 border-b border-gray-100 flex items-center">
-            <a-breadcrumb class="folder-list-header">
-                <a-breadcrumb-item>{{ t("app.folderList") }}</a-breadcrumb-item>
-            </a-breadcrumb>
+            <BaseBreadcrumb class="folder-list-header">
+                <BaseBreadcrumbItem>
+                    {{ t("app.folderList") }}
+                </BaseBreadcrumbItem>
+            </BaseBreadcrumb>
         </div>
-        <a-tree
-            class="flex-1 min-h-0 overflow-auto"
-            v-model:expandedKeys="expandedKeys"
-            v-model:selectedKeys="selectedKeys"
-            :tree-data="folderTree"
-        >
-            <template #title="{ title, key }">
-                <a-dropdown :trigger="['contextmenu']">
-                    <span v-if="paths.includes(key)" class="root-folder-node">{{ title }}</span>
-                    <template v-else>
-                        <span class="folder-node">{{ title }}</span>
-                    </template>
-                    <template #overlay>
-                        <a-menu>
-                            <a-menu-item key="2" @click="rescan(key)">{{
-                                t("menu.rescan")
-                            }}</a-menu-item>
-                            <a-menu-item key="1" @click="openPhotasaConfig(key)">{{
-                                t("menu.getConfig")
-                            }}</a-menu-item>
-                            <a-menu-item key="2" @click="openFileInFinder(key)">{{
-                                t("menu.open")
-                            }}</a-menu-item>
-                        </a-menu>
-                    </template>
-                </a-dropdown>
-            </template>
-        </a-tree>
+        <div class="flex-1 min-h-0 overflow-auto tree-container">
+            <BaseTree
+                class="folder-tree"
+                v-model:expandedKeys="expandedKeys"
+                v-model:selectedKeys="selectedKeys"
+                :tree-data="folderTree as TreeNode[]"
+                :virtual="true"
+                height="100%"
+                :item-height="28"
+                :show-icon="true"
+                :show-line="false"
+                :selectable="true"
+                :checkable="false"
+            >
+                <!-- 文件夹图标 -->
+                <template #icon>
+                    <PhFolder :size="14" />
+                </template>
+
+                <template #title="slotProps">
+                    <BaseContextMenu>
+                        <span
+                            v-if="paths.includes((slotProps as any).key)"
+                            class="root-folder-node"
+                            >{{ (slotProps as any).title }}</span
+                        >
+                        <span v-else class="folder-node">{{ (slotProps as any).title }}</span>
+
+                        <template #menu="{ close }">
+                            <BaseMenuItem
+                                @click="
+                                    rescan((slotProps as any).key);
+                                    close();
+                                "
+                            >
+                                {{ t("menu.rescan") }}
+                            </BaseMenuItem>
+                            <BaseMenuItem
+                                @click="
+                                    openPhotasaConfig((slotProps as any).key);
+                                    close();
+                                "
+                            >
+                                {{ t("menu.getConfig") }}
+                            </BaseMenuItem>
+                            <BaseMenuItem
+                                @click="
+                                    openFileInFinder((slotProps as any).key);
+                                    close();
+                                "
+                            >
+                                {{ t("menu.open") }}
+                            </BaseMenuItem>
+                        </template>
+                    </BaseContextMenu>
+                </template>
+            </BaseTree>
+        </div>
     </div>
-    <a-modal v-model:visible="showConfigModal" title="">
-        <a-spin :spinning="loadingInfo">
-            <a-descriptions title="Image Info" layout="vertical" bordered :column="2">
-                <a-descriptions-item label="Location" :span="2">{{
-                    photasa.path
-                }}</a-descriptions-item>
-                <a-descriptions-item label="Status" :span="2">
-                    <a-layout
-                        :style="{
-                            height: '100%',
-                            width: '265px',
-                            overflow: 'auto',
-                        }"
-                    >
-                        <JsonTreeView :data="photasa.config" :max-depth="photasa.maxDepth" />
-                    </a-layout>
-                </a-descriptions-item>
-            </a-descriptions>
-        </a-spin>
-        <template #footer>
-            <a-button @click="fixConfig()">
-                {{ t("button.fixConfig") }}
-            </a-button>
-        </template>
-    </a-modal>
+    <EnhancedImageInfoModal
+        v-model="showConfigModal"
+        :photasa="photasa"
+        :loading="loadingInfo"
+        @fix-config="fixConfig"
+    />
 </template>
 <style lang="scss">
 .root-folder-node {
@@ -219,10 +293,26 @@ async function rescan(key: string): Promise<void> {
     background: var(--color-tree-bg);
     color: var(--color-tree-text);
     border-bottom: 1px solid var(--color-tree-border);
+    display: flex;
+    align-items: center;
 }
 .folder-list-card {
-    height: calc(100vh - var(--photasa-footer-height));
-    overflow: auto;
+    flex: 1; /* 使用 flex 占满父容器空间 */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 让内部 BaseTree 控制滚动 */
     background: var(--color-tree-bg);
+}
+
+.tree-container {
+    padding: 0;
+    background: var(--color-tree-bg);
+    height: 100%; /* 强制占满剩余空间 */
+    min-height: 0; /* 允许内容滚动 */
+}
+
+.folder-tree {
+    min-height: 100%; /* 确保树组件至少占满容器高度 */
+    width: 100%;
 }
 </style>

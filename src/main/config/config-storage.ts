@@ -13,7 +13,7 @@ import type { PhotasaLogger } from "@common/logger";
 import { shortenThumbnailName } from "@shared/path-util";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
-import { debounce } from "lodash";
+// import { debounce } from "lodash"; // Temporarily removed for debugging
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
 import { CACHE_TTL, configCache } from "./config-cache";
 import { toRelativeThumbnailPath, toFileName } from "@shared/path-util";
@@ -42,7 +42,7 @@ interface ConfigMetadata {
 const PHOTASA_VERSION = "1.0"; // 配置文件版本
 const QUEUE_CONCURRENCY = 10; // 队列并发数
 const QUEUE_BREAK_THRESHOLD = 200; // 队列分批阈值
-const DEBOUNCE_DELAY = 30; // 防抖延迟
+// const DEBOUNCE_DELAY = 30; // 防抖延迟 - 暂时未使用
 const QUEUE_TIMEOUT = 60000; // 队列超时时间
 const QUEUE_INTERVAL = 100; // 队列处理间隔
 const QUEUE_INTERVAL_CAP = 100; // 队列每周期最大处理数
@@ -233,7 +233,7 @@ async function writeConfig(
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
     // 输出日志：内容摘要 128个字符
-    logger.debug(`[writeConfig] 写入内容摘要: ${data.slice(0, 128)}...`);
+    logger.debug(`[writeConfig] 写入内容摘要: ${data.length} 字符`);
     // 添加到写入批处理
     writeBatch.set(configPath, { data, timestamp: Date.now() });
     // 更新缓存
@@ -289,29 +289,49 @@ export async function batchAddToPhotoList(
     const chunkSize = QUEUE_CONCURRENCY * 2;
     for (let i = 0; i < photos.length; i += chunkSize) {
         const chunk = photos.slice(i, i + chunkSize);
-        await Promise.allSettled(
+        const results = await Promise.allSettled(
             chunk.map(async (photo) => {
                 try {
                     logger.info(`[batchAddToPhotoList] 添加照片到配置文件: ${photo}`);
                     const result = await addToPhotoList(photo, logger);
-                    lastResult = result;
-                    processed++;
-
-                    // Update progress less frequently for better performance
-                    const now = Date.now();
-                    if (now - lastProgressUpdate > 100) {
-                        // Update every 100ms
-                        lastProgressUpdate = now;
-                        onProgress?.(processed / total);
-                    }
-                    return result;
+                    return { success: true, result, photo };
                 } catch (error) {
-                    failed++;
+                    logger.error(`[batchAddToPhotoList] 处理照片失败: ${photo}`, error);
                     onError?.(error as Error);
-                    throw error;
+                    return { success: false, error, photo };
                 }
             }),
         );
+
+        // 处理 settled 结果
+        results.forEach((result, index) => {
+            if (result.status === "fulfilled") {
+                const { success, result: photoResult, error, photo } = result.value;
+                if (success && photoResult) {
+                    lastResult = photoResult;
+                    processed++;
+                } else {
+                    failed++;
+                    const errorMsg =
+                        error instanceof Error ? error.message : error || "Unknown error";
+                    logger.error(
+                        `[batchAddToPhotoList] 照片处理失败: ${photo} - ${errorMsg}`,
+                        error instanceof Error ? error : { error: errorMsg },
+                    );
+                }
+            } else {
+                failed++;
+                logger.error(`[batchAddToPhotoList] 照片处理失败: ${chunk[index]}`, result.reason);
+            }
+        });
+
+        // Update progress less frequently for better performance
+        const now = Date.now();
+        if (now - lastProgressUpdate > 100) {
+            // Update every 100ms
+            lastProgressUpdate = now;
+            onProgress?.(processed / total);
+        }
 
         // Check for timeout
         if (Date.now() - startTime > QUEUE_TIMEOUT) {
@@ -326,9 +346,16 @@ export async function batchAddToPhotoList(
     // Final progress update
     onProgress?.(1);
 
+    // 记录最终统计信息
+    logger.info(
+        `[batchAddToPhotoList] 批量处理完成: 成功=${processed}, 失败=${failed}, 总计=${total}`,
+    );
+
     // Return the last successful result or throw if no successful results
     if (!lastResult) {
-        throw new ConfigError("No successful results in batch processing", {
+        const errorMsg = `No successful results in batch processing: processed=${processed}, failed=${failed}, total=${total}`;
+        logger.error(`[batchAddToPhotoList] ${errorMsg}`);
+        throw new ConfigError(errorMsg, {
             processed,
             failed,
             total,
@@ -340,43 +367,67 @@ export async function batchAddToPhotoList(
 /**
  * 单张照片添加到配置文件，若已存在则补全缩略图。
  */
-export const addToPhotoList = debounce(
-    async (photoPath: string, logger: PhotasaLogger): Promise<PhotasaConfigResult> => {
-        logger.info(`[addToPhotoList] 添加照片到配置文件: ${photoPath}`);
-        try {
-            const meta = await readConfig(photoPath, true, logger);
-            const photasaConfig = parseConfig(meta.data);
-
-            const fileName = toFileName(photoPath);
-            const photo = photasaConfig.photoList.find((p) => p.path === fileName);
-            const thumbnailName = toRelativeThumbnailPath(photoPath);
-            if (!photo) {
-                photasaConfig.photoList.push({
-                    path: fileName,
-                    thumbnail: thumbnailName,
-                    history: [],
-                    isVideo: isVideo(fileName),
-                });
-                await writeConfig(meta.configPath, photasaConfig, logger);
-            } else if (!photo.thumbnail) {
-                photo.thumbnail = thumbnailName;
-                await writeConfig(meta.configPath, photasaConfig, logger);
-            }
-            return {
-                path: meta.configPath,
-                config: photasaConfig,
-            };
-        } catch (error) {
-            logger.error(`[addToPhotoList] 添加照片到配置文件失败: ${photoPath}`, error);
-            throw handleError(
-                new ConfigError(`Failed to add photo to list: ${photoPath}`, { error }),
-                logger,
-                "addToPhotoList",
-            );
+export const addToPhotoList = async (
+    photoPath: string,
+    logger: PhotasaLogger,
+): Promise<PhotasaConfigResult> => {
+    logger.info(`[addToPhotoList] 添加照片到配置文件: ${photoPath}`);
+    try {
+        // 检查文件路径中的特殊字符
+        if (photoPath.includes("#")) {
+            logger.debug(`[addToPhotoList] 检测到特殊字符文件名: ${photoPath}`);
         }
-    },
-    DEBOUNCE_DELAY,
-);
+
+        logger.debug(`[addToPhotoList] 步骤1: 读取配置文件`);
+        const meta = await readConfig(photoPath, true, logger);
+
+        logger.debug(`[addToPhotoList] 步骤2: 解析配置数据`);
+        const photasaConfig = parseConfig(meta.data);
+
+        logger.debug(`[addToPhotoList] 步骤3: 提取文件名`);
+        const fileName = toFileName(photoPath);
+        logger.debug(`[addToPhotoList] 文件名: ${fileName}`);
+
+        const photo = photasaConfig.photoList.find((p) => p.path === fileName);
+
+        logger.debug(`[addToPhotoList] 步骤4: 生成缩略图路径`);
+        const thumbnailName = toRelativeThumbnailPath(photoPath);
+        logger.debug(`[addToPhotoList] 缩略图路径: ${thumbnailName}`);
+
+        if (!photo) {
+            logger.debug(`[addToPhotoList] 步骤5: 添加新照片记录`);
+            photasaConfig.photoList.push({
+                path: fileName,
+                thumbnail: thumbnailName,
+                history: [],
+                isVideo: isVideo(fileName),
+            });
+            logger.debug(`[addToPhotoList] 步骤6: 写入配置文件`);
+            await writeConfig(meta.configPath, photasaConfig, logger);
+        } else if (!photo.thumbnail) {
+            logger.debug(`[addToPhotoList] 步骤5: 更新现有照片的缩略图`);
+            photo.thumbnail = thumbnailName;
+            logger.debug(`[addToPhotoList] 步骤6: 写入配置文件`);
+            await writeConfig(meta.configPath, photasaConfig, logger);
+        } else {
+            logger.debug(`[addToPhotoList] 照片已存在且有缩略图，跳过`);
+        }
+
+        logger.debug(`[addToPhotoList] 步骤7: 返回结果`);
+        return {
+            path: meta.configPath,
+            config: photasaConfig,
+        };
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        logger.error(`[addToPhotoList] 添加照片到配置文件失败: ${photoPath} - ${errorMsg}`, error);
+        throw handleError(
+            new ConfigError(`Failed to add photo to list: ${photoPath}`, { error }),
+            logger,
+            "addToPhotoList",
+        );
+    }
+};
 
 /**
  * 从配置文件移除指定照片。
@@ -559,13 +610,9 @@ function setupQueueEvents(logger: PhotasaLogger, queue: RequestQueue): void {
     try {
         // 队列空闲时
         queue.on("idle", () => {
-            queueLogger?.info("config-queue", {
-                action: "idle",
-                timestamp: Date.now(),
-                queueSize: queue.size,
-                pending: queue.pending,
-                isPaused: queue.isPaused,
-            });
+            queueLogger?.info(
+                `[config-queue] Queue idle - size: ${queue.size}, pending: ${queue.pending}`,
+            );
         });
 
         // 队列错误时
@@ -582,26 +629,18 @@ function setupQueueEvents(logger: PhotasaLogger, queue: RequestQueue): void {
         // 队列添加时 高频 routine 日志节流（如每 1000ms 最多输出一次）
         queue.on("add", () => {
             throttleLog("queue-add", 1000, () => {
-                queueLogger?.debug("config-queue", {
-                    action: "add",
-                    size: queue.size,
-                    pending: queue.pending,
-                    timestamp: Date.now(),
-                    isPaused: queue.isPaused,
-                });
+                queueLogger?.debug(
+                    `[config-queue] Item added - size: ${queue.size}, pending: ${queue.pending}`,
+                );
             });
         });
 
         // 队列活跃时 高频 routine 日志节流（如每 1000ms 最多输出一次）
         queue.on("active", () => {
             throttleLog("queue-active", 1000, () => {
-                queueLogger?.debug("config-queue", {
-                    action: "active",
-                    size: queue.size,
-                    pending: queue.pending,
-                    timestamp: Date.now(),
-                    isPaused: queue.isPaused,
-                });
+                queueLogger?.debug(
+                    `[config-queue] Queue active - size: ${queue.size}, pending: ${queue.pending}`,
+                );
             });
         });
         // 其他 routine 事件可按需添加节流或关闭
@@ -636,12 +675,9 @@ function addConfig(
     const totalFiles = queued.reduce((acc, entry) => acc + entry[1].length, 0);
 
     if (totalFiles > 0) {
-        logger.info("config-update", {
-            action: "add",
-            photoCount: totalFiles,
-            queueSize: waitedFilesCount(),
-            timestamp: Date.now(),
-        });
+        logger.info(
+            `config-update: action=add, photoCount=${totalFiles}, queueSize=${waitedFilesCount()}, timestamp=${Date.now()}`,
+        );
     }
 
     from(queued)
@@ -685,11 +721,9 @@ function addConfig(
                 const handlerId = setInterval(() => {
                     const count = waitedFilesCount();
                     if (count > 0) {
-                        logger.info("config-queue", {
-                            action: "waiting",
-                            count,
-                            timestamp: Date.now(),
-                        });
+                        logger.info(
+                            `config-queue: action=waiting, count=${count}, timestamp=${Date.now()}`,
+                        );
                     }
                     // if count isn't changed then process it
                     if (count >= QUEUE_BREAK_THRESHOLD || count === lastQueuedCount) {
