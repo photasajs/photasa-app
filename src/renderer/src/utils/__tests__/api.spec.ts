@@ -66,7 +66,10 @@ describe("Enhanced Import API Functions", () => {
             const filters = {
                 fileTypes: ["image" as const],
                 sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                dateRange: { start: new Date(0), end: new Date() },
+                dateRange: {
+                    start: new Date(0),
+                    end: expect.any(Date), // 不检查具体时间，只检查是Date类型
+                },
                 includeSubfolders: true,
             };
             const result = await scanDirectories(paths, filters);
@@ -98,7 +101,10 @@ describe("Enhanced Import API Functions", () => {
                 filters: {
                     fileTypes: ["all" as const],
                     sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                    dateRange: { start: new Date(0), end: new Date() },
+                    dateRange: {
+                        start: new Date(0),
+                        end: expect.any(Date), // 不检查具体时间，只检查是Date类型
+                    },
                     includeSubfolders: true,
                 },
                 duplicateStrategy: "rename" as const,
@@ -125,7 +131,10 @@ describe("Enhanced Import API Functions", () => {
                 filters: {
                     fileTypes: ["all" as const],
                     sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                    dateRange: { start: new Date(0), end: new Date() },
+                    dateRange: {
+                        start: new Date(0),
+                        end: expect.any(Date), // 不检查具体时间，只检查是Date类型
+                    },
                     includeSubfolders: true,
                 },
                 duplicateStrategy: "rename" as const,
@@ -325,7 +334,10 @@ describe("Enhanced Import API Functions", () => {
                 filters: {
                     fileTypes: ["all" as const],
                     sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                    dateRange: { start: new Date(0), end: new Date() },
+                    dateRange: {
+                        start: new Date(0),
+                        end: expect.any(Date), // 不检查具体时间，只检查是Date类型
+                    },
                     includeSubfolders: true,
                 },
                 duplicateStrategy: "rename",
@@ -385,7 +397,10 @@ describe("Enhanced Import API Functions", () => {
             const filters = {
                 fileTypes: ["image" as const],
                 sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                dateRange: { start: new Date(0), end: new Date() },
+                dateRange: {
+                    start: new Date(0),
+                    end: expect.any(Date), // 不检查具体时间，只检查是Date类型
+                },
                 includeSubfolders: true,
             };
 
@@ -405,7 +420,10 @@ describe("Enhanced Import API Functions", () => {
                 filters: {
                     fileTypes: ["all" as const],
                     sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                    dateRange: { start: new Date(0), end: new Date() },
+                    dateRange: {
+                        start: new Date(0),
+                        end: expect.any(Date), // 不检查具体时间，只检查是Date类型
+                    },
                     includeSubfolders: true,
                 },
                 duplicateStrategy: "rename" as const,
@@ -430,7 +448,10 @@ describe("Enhanced Import API Functions", () => {
                 filters: {
                     fileTypes: ["all" as const],
                     sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                    dateRange: { start: new Date(0), end: new Date() },
+                    dateRange: {
+                        start: new Date(0),
+                        end: expect.any(Date), // 不检查具体时间，只检查是Date类型
+                    },
                     includeSubfolders: true,
                 },
                 duplicateStrategy: "rename" as const,

@@ -182,24 +182,18 @@ describe("Incremental Cache Integration Tests", () => {
             await cacheManager.markScanComplete();
 
             // 验证缓存文件内容
-            try {
-                const savedCache = await fs.readJSON(cacheFilePath);
-                expect(savedCache.inProgress).toBe(false);
-                expect(savedCache.scanCompleted).toBe(true);
-                expect(savedCache.processedFiles).toHaveLength(1);
-                expect(savedCache.pendingFiles).toHaveLength(0);
-                expect(savedCache.scanDuration).toBeGreaterThanOrEqual(0); // 改为 >= 0，因为测试环境时间可能很短
-            } catch (error) {
-                // 如果 JSON 文件为空或格式错误，检查文件是否存在
-                const fileExists = await fs.pathExists(cacheFilePath);
-                if (fileExists) {
-                    const fileContent = await fs.readFile(cacheFilePath, "utf8");
-                    console.log("Cache file content:", fileContent);
-                    throw new Error(`Cache file exists but contains invalid JSON: ${fileContent}`);
-                } else {
-                    throw new Error("Cache file does not exist after markScanComplete");
-                }
-            }
+            const fileExists = await fs.pathExists(cacheFilePath);
+            expect(fileExists).toBe(true);
+
+            const fileContent = await fs.readFile(cacheFilePath, "utf8");
+            expect(fileContent).toBeTruthy();
+
+            const savedCache = JSON.parse(fileContent);
+            expect(savedCache.inProgress).toBe(false);
+            expect(savedCache.scanCompleted).toBe(true);
+            expect(savedCache.processedFiles).toHaveLength(1);
+            expect(savedCache.pendingFiles).toHaveLength(0);
+            expect(savedCache.scanDuration).toBeGreaterThanOrEqual(0); // 改为 >= 0，因为测试环境时间可能很短
         });
     });
 
