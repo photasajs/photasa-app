@@ -85,6 +85,7 @@ vi.mock("@shared/path-util", () => ({
     toFileName: vi.fn(),
     isHiddenFile: vi.fn(),
     normalizePath: vi.fn((input) => input), // Mock normalizePath function
+    removeFileProtocol: vi.fn((input) => input.replace(/^file:\/\//, "")), // Mock removeFileProtocol function
 }));
 
 // Mock process.contextIsolated

@@ -25,6 +25,15 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 4. Don't use any to bypass lint, use proper type, as TypeScript is type first.
 5. For CSS, don't use !important which cause maintain issue.
 
+## CSS & Styling Rules
+
+1. **Always rely on Tailwind CSS standard classes** - avoid excessive customization
+2. Use Tailwind's predefined size system (sm, md, lg, xl, 2xl, 3xl, 4xl, etc.)
+3. Don't create custom CSS that overrides Tailwind classes
+4. Don't use arbitrary values unless absolutely necessary
+5. Find and fix CSS conflicts at the root cause, don't use !important as workaround
+6. Prefer Tailwind utilities over custom CSS for consistency and maintainability
+
 ## Recent Improvements
 
 ### Video Thumbnail Orientation Support (2025-09-09)

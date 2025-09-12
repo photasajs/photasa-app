@@ -203,7 +203,7 @@ describe("ImportPhotos", () => {
             const wrapper = createWrapper();
             const baseWizard = wrapper.findComponent({ name: "BaseWizard" });
 
-            expect(baseWizard.props("size")).toBe("custom");
+            expect(baseWizard.props("size")).toBe("4xl");
             expect(baseWizard.props("persistent")).toBe(true);
             expect(baseWizard.props("showProgressBar")).toBe(true);
             expect(baseWizard.props("showStepDescriptions")).toBe(true);
