@@ -27,7 +27,11 @@ describe("Incremental Cache Integration Tests", () => {
         } catch {
             // 忽略清理错误
         }
+        // 确保测试目录存在且有正确权限
         await fs.ensureDir(testFolderPath);
+        await fs.ensureDir(path.join(testFolderPath, "thumbnails"));
+        // 设置目录权限
+        await fs.chmod(testFolderPath, 0o755);
     });
 
     afterEach(async () => {
