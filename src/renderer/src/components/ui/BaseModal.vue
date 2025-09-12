@@ -24,7 +24,7 @@
                         'max-h-[90vh] flex flex-col',
                         sizeClasses,
                     ]"
-                    :style="[customSizeStyle, props.style]"
+                    :style="[props.size === 'custom' ? customSizeStyle : {}, props.style]"
                     role="dialog"
                     :aria-labelledby="title ? 'modal-title' : undefined"
                     aria-modal="true"
@@ -191,6 +191,8 @@ onBeforeUnmount(() => {
     }
 });
 
+// Safelist for Tailwind to ensure these classes are included
+// max-w-sm max-w-md max-w-lg max-w-xl max-w-2xl max-w-3xl max-w-4xl max-w-5xl max-w-6xl max-w-full
 const sizeClasses = computed(() => {
     switch (props.size) {
         case "sm":
@@ -269,9 +271,6 @@ const customSizeStyle = computed(() => {
     overflow-x: hidden;
     word-wrap: break-word;
     word-break: break-word;
-    /* 确保模态框不会超出视口宽度 */
-    max-width: calc(100vw - 2rem);
-    width: 100%;
     min-width: 0;
 }
 

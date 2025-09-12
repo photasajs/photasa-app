@@ -234,6 +234,54 @@ export function pathToFileProtocol(filePath: string): string {
 }
 
 /**
+ * 移除文件协议，将 file:// URL 转换为文件系统路径
+ * @param file 文件路径或 file:// URL
+ * @returns 移除文件协议后的文件路径
+ */
+export function removeFileProtocol(file: string): string {
+    if (!file) {
+        return "";
+    }
+
+    // 处理 file:// URL
+    if (file.startsWith("file://")) {
+        try {
+            // 使用 Node.js 标准 API 转换 file:// URL 为文件系统路径
+            // 这是最可靠的方法，自动处理所有平台差异和URL编码
+            return fileURLToPath(file);
+        } catch (error) {
+            // 如果 fileURLToPath 失败，回退到手动处理
+            let path = file.substring(7); // 移除 "file://"
+
+            // 处理 Windows 路径 (file:///C:/path -> C:/path)
+            if (path.startsWith("/") && path.length > 1 && path[2] === ":") {
+                path = path.substring(1); // 移除开头的 "/"
+            }
+
+            // 处理 Mac 外部卷 (file:///Volumes/... -> /Volumes/...)
+            if (path.startsWith("/Volumes/")) {
+                // 已经是正确的格式
+            } else if (path.startsWith("Volumes/")) {
+                path = "/" + path;
+            }
+
+            // 解码 URL 编码
+            try {
+                path = decodeURIComponent(path);
+            } catch (decodeError) {
+                // 如果解码失败，保持原样
+                console.warn("Failed to decode URL:", decodeError);
+            }
+
+            return path;
+        }
+    }
+
+    // 如果不是 file:// URL，直接返回
+    return file;
+}
+
+/**
  * 安全的路径连接函数，支持 file:// URL 和普通路径
  * @param segments 路径片段
  * @returns 连接后的规范化绝对路径

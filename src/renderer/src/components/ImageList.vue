@@ -4,13 +4,8 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { getFileMetadata } from "@renderer/utils/api";
 import type { FileMetadata } from "@common/import-types";
-import {
-    type Card,
-    type Image,
-    removeFileProtocol,
-    toImageMeta,
-    groupImagesByColumns,
-} from "@renderer/common/image";
+import { type Card, type Image, toImageMeta, groupImagesByColumns } from "@renderer/common/image";
+// removeFileProtocol 通过 preload API 使用
 import * as R from "ramda";
 import { useI18n } from "vue-i18n";
 import { openInFinder } from "@renderer/utils/api-path";
@@ -96,10 +91,9 @@ async function openImageMeta(image: Image): Promise<void> {
     }
 }
 
-// 打开文件夹
+// 打开文件夹 - 直接传递 file:// URL，让 preload 层处理转换
 function openFileInFolder(image: Image): void {
-    const path = removeFileProtocol(image.raw);
-    openInFinder(path);
+    openInFinder(image.raw);
 }
 
 // 更新容器宽度

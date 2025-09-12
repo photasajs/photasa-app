@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-    toPreviewableImage,
-    toFileProtocol,
-    removeFileProtocol,
-    toImage,
-    groupImagesByColumns,
-} from "../image";
+import { toPreviewableImage, toFileProtocol, toImage, groupImagesByColumns } from "../image";
+// removeFileProtocol 现在通过 preload API 使用，测试移到 shared 层
 import type { Photo } from "@common/config-types";
 
 const mockPhotoHeic: Photo = {
@@ -86,20 +81,7 @@ describe("toFileProtocol", () => {
     });
 });
 
-describe("removeFileProtocol", () => {
-    it("should remove file protocol", () => {
-        const result = removeFileProtocol("file:///root/abc.jpg");
-        expect(result).toBe("/root/abc.jpg");
-    });
-    it("should remove file protocol", () => {
-        const result = removeFileProtocol("file://c:/root/abc.jpg");
-        expect(result).toBe("c:/root/abc.jpg");
-    });
-    it("should return unchanged if no protocol", () => {
-        const result = removeFileProtocol("/root/abc.jpg");
-        expect(result).toBe("/root/abc.jpg");
-    });
-});
+// removeFileProtocol 现在通过 preload API 使用，测试移到 shared 层
 
 describe("toImage", () => {
     const folder = "/root";

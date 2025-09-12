@@ -22,6 +22,7 @@ import {
     isHiddenFile,
     isDirectory,
     isFile,
+    removeFileProtocol,
 } from "@shared/path-util";
 
 export {
@@ -37,6 +38,7 @@ export {
     isHiddenFile,
     isDirectory,
     isFile,
+    removeFileProtocol,
 };
 
 /**

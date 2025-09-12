@@ -7,7 +7,7 @@ import type { PhotasaConfig } from "@common/config-types";
 import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
 import { openInFinder } from "@renderer/utils/api-path";
 import { isEmpty } from "radash";
-import { removeFileProtocol } from "@renderer/common/image";
+// removeFileProtocol 通过 preload API 使用
 import {
     BaseContextMenu,
     BaseMenuItem,
@@ -153,12 +153,11 @@ async function openPhotasaConfig(folder: string): Promise<void> {
 }
 
 /**
- * Open the file in finder
+ * Open the file in finder - 直接传递 file:// URL，让 preload 层处理转换
  * @param key - The folder to open in finder
  */
 function openFileInFinder(key: string): void {
-    const path = removeFileProtocol(key);
-    openInFinder(path);
+    openInFinder(key);
 }
 
 /**

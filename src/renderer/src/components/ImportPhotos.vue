@@ -701,12 +701,11 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
     <BaseWizard
         :open="show"
         :config="wizardConfig"
-        size="custom"
+        size="4xl"
         :persistent="true"
         :show-progress-bar="true"
         :show-step-descriptions="true"
         :show-navigation="false"
-        style="--modal-width: 800px"
         @update:open="$emit('update:show', $event)"
         @complete="handleWizardComplete"
         @cancel="handleWizardCancel"

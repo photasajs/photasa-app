@@ -23,6 +23,7 @@ import {
     pathToFileProtocol,
     joinFileProtocolPath,
     getAppPath,
+    removeFileProtocol,
 } from "../path-util";
 
 describe("isFileUnderFolder", () => {
@@ -637,5 +638,76 @@ describe("getAppPath", () => {
         } else {
             delete process.env.APP_PATH;
         }
+    });
+});
+
+describe("removeFileProtocol", () => {
+    it("should remove file protocol for POSIX path", () => {
+        const fileUrl = "file:///Users/Albert/Pictures/photo.jpg";
+        const result = removeFileProtocol(fileUrl);
+        expect(result).toBe("/Users/Albert/Pictures/photo.jpg");
+    });
+
+    it("should remove file protocol for Windows path", () => {
+        const fileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
+        const result = removeFileProtocol(fileUrl);
+        // 在非 Windows 系统上，fileURLToPath 会保留前导斜杠
+        if (process.platform === "win32") {
+            expect(result).toBe("C:/Users/Albert/Pictures/photo.jpg");
+        } else {
+            expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
+        }
+    });
+
+    it("should handle Mac external volume", () => {
+        const fileUrl = "file:///Volumes/ExternalDrive/Photos/photo.jpg";
+        const result = removeFileProtocol(fileUrl);
+        expect(result).toBe("/Volumes/ExternalDrive/Photos/photo.jpg");
+    });
+
+    it("should handle URL encoded paths", () => {
+        const fileUrl = "file:///Users/Albert/Pictures/photo%20with%20spaces.jpg";
+        const result = removeFileProtocol(fileUrl);
+        expect(result).toBe("/Users/Albert/Pictures/photo with spaces.jpg");
+    });
+
+    it("should return unchanged if no protocol", () => {
+        const normalPath = "/Users/Albert/Pictures/photo.jpg";
+        const result = removeFileProtocol(normalPath);
+        expect(result).toBe(normalPath);
+    });
+
+    it("should handle empty string", () => {
+        const result = removeFileProtocol("");
+        expect(result).toBe("");
+    });
+
+    it("should handle null/undefined", () => {
+        expect(removeFileProtocol(null as any)).toBe("");
+        expect(removeFileProtocol(undefined as any)).toBe("");
+    });
+
+    it("should handle malformed file URLs gracefully", () => {
+        const malformedUrl = "file://invalid/path";
+        const result = removeFileProtocol(malformedUrl);
+        // 应该回退到手动处理
+        expect(result).toBe("invalid/path");
+    });
+
+    it("should handle Windows paths with backslashes", () => {
+        const fileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
+        const result = removeFileProtocol(fileUrl);
+        // 在非 Windows 系统上，fileURLToPath 会保留前导斜杠
+        if (process.platform === "win32") {
+            expect(result).toBe("C:/Users/Albert/Pictures/photo.jpg");
+        } else {
+            expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
+        }
+    });
+
+    it("should handle complex URL encoding", () => {
+        const fileUrl = "file:///Users/Albert/Pictures/photo%2Bwith%2Bplus.jpg";
+        const result = removeFileProtocol(fileUrl);
+        expect(result).toBe("/Users/Albert/Pictures/photo+with+plus.jpg");
     });
 });

@@ -31,6 +31,7 @@ import {
     isFileUnderFolder,
     toFileName,
     isHiddenFile,
+    removeFileProtocol,
 } from "@shared/path-util";
 
 /**
@@ -67,6 +68,7 @@ const api = {
     resetPhotasaConfig,
     isHiddenFile,
     shouldIgnorePhotasaPath,
+    removeFileProtocol,
     isVideoFile,
     isImageFile,
     fileUrlFromPath,

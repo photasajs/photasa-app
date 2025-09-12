@@ -103,15 +103,6 @@ export function toFileProtocol(currentFolder: string, file: string): string {
 }
 
 /**
- * 移除文件协议
- * @param file 文件路径
- * @returns 移除文件协议后的文件路径
- */
-export function removeFileProtocol(file: string): string {
-    return file.replace("file://", "");
-}
-
-/**
  * 将 Photo 转换为 Image
  * @param currentFolder 当前文件夹
  * @param file 照片

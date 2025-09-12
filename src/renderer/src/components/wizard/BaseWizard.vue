@@ -115,7 +115,7 @@ import type { WizardConfig } from "./types";
 interface Props {
     open: boolean;
     config: WizardConfig;
-    size?: "sm" | "md" | "lg" | "xl" | "full" | "custom";
+    size?: "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl" | "full" | "custom";
     closable?: boolean;
     persistent?: boolean;
     showIndicator?: boolean;

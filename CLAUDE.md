@@ -20,9 +20,10 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 ## Debugging Rules
 
 1. Don't run the app as you can't verify it, instead give guidance how to verify
-2. Don't use console.log, use logger
-3. Don't use any to bypass lint, use proper type, as TypeScript is type first.
-4. For CSS, don't use !important which cause maintain issue.
+2. **NEVER start dev server automatically** - user will run it when needed
+3. Don't use console.log, use logger
+4. Don't use any to bypass lint, use proper type, as TypeScript is type first.
+5. For CSS, don't use !important which cause maintain issue.
 
 ## Recent Improvements
 

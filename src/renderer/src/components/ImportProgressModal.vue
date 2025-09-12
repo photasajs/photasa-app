@@ -325,11 +325,11 @@ onUnmounted(() => {
     <BaseModal
         :open="show"
         :title="t('import.progress')"
-        size="2xl"
+        size="4xl"
         :closable="canClose"
         @close="handleCancel"
     >
-        <div class="import-progress space-y-6 min-w-[500px]">
+        <div class="import-progress space-y-6">
             <!-- Status Header -->
             <div class="flex items-center justify-center space-x-3">
                 <component :is="statusIcon" v-if="statusIcon" :class="['w-8 h-8', statusColor]" />
