@@ -1,6 +1,7 @@
 import createWorker from "./import-worker?nodeWorker";
 import type { IpcMain } from "electron";
-import { dialog } from "electron";
+import { dialog, app } from "electron";
+import { getAppPath } from "@shared/path-util";
 import type { WorkerResponse } from "@common/types";
 import {
     sendWorkerTask,
@@ -58,8 +59,14 @@ export default class ImportService {
         this.logger.info("ImportService: Creating import service...");
         this.logger.info(`ImportService: mainWindow provided: ${!!mainWindow}`);
 
-        // 创建 worker
-        this.worker = createWorker({ workerData: "worker" });
+        // 创建 worker，传递应用路径
+        this.worker = createWorker({
+            workerData: "worker",
+            env: {
+                ...process.env,
+                APP_PATH: getAppPath(app),
+            },
+        });
 
         // 处理 worker 消息
         this.worker.on(

@@ -19,10 +19,15 @@ nsis:
     uninstallDisplayName: ${productName}
     createDesktopShortcut: always
 mac:
+    category: public.app-category.photography
     entitlementsInherit: build/entitlements.mac.plist
+    entitlements: build/entitlements.mac.plist
+    hardenedRuntime: true
+    gatekeeperAssess: false
     extendInfo:
         - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
         - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    identity: null
 dmg:
     artifactName: ${name}-${version}.${ext}
 linux:

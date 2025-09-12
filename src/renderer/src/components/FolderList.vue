@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, reactive, defineExpose } from "vue";
+import { ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";

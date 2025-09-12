@@ -12,8 +12,6 @@ import { addToPhotasaConfig, removeFromPhotoList } from "../config/config-storag
 import { WorkerPool } from "../workers/worker-pool";
 import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
 import createWorker from "../thumbnail/thumbnail-worker?nodeWorker";
-import { getAppPath } from "@shared/path-util";
-import { app } from "electron";
 import type { WorkerOptions } from "worker_threads";
 
 const logger = loggers.worker;
@@ -32,7 +30,7 @@ const THUMBNAIL_WORKER_CONFIG = {
             ...(options as WorkerOptions),
             env: {
                 ...process.env,
-                APP_PATH: getAppPath(app),
+                APP_PATH: process.env.APP_PATH || process.cwd(),
             },
         });
     },

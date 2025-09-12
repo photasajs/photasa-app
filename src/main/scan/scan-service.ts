@@ -4,6 +4,7 @@ import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
 import { notifyStatus } from "./notify";
 import type { NotifyPayload } from "@common/types";
+import { getAppPath } from "@shared/path-util";
 
 const logger = loggers.scan;
 
@@ -19,11 +20,17 @@ export default class ScanService {
     queueId = 0;
     worker: ScanWorker;
 
-    constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
+    constructor(ipcMain: IpcMain, mainWindow: BrowserWindow, app: Electron.App) {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
         logger.debug("Creating scan worker");
-        this.worker = createWorker({ workerData: "worker" });
+        this.worker = createWorker({
+            workerData: "worker",
+            env: {
+                ...process.env,
+                APP_PATH: getAppPath(app),
+            },
+        });
 
         // 处理 worker 消息
         this.worker.on("message", (message) => {

@@ -164,7 +164,7 @@ function createWindow(): void {
     // Setup Config Service
     new ConfigService(ipcMain, mainWindow);
     // Setup Scan Service
-    new ScanService(ipcMain, mainWindow);
+    new ScanService(ipcMain, mainWindow, app);
     // Setup File Watch Service
     watchService = new WatchService(ipcMain, mainWindow);
     // Setup Window Service
