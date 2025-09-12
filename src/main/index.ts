@@ -1,7 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
-import Bugsnag from "@bugsnag/electron";
 import isDev from "electron-is-dev";
 import klawSync from "klaw-sync";
 import fs from "fs";
@@ -17,10 +16,6 @@ import WindowService from "./window/window-service";
 import MenuService from "./menu/menu-service";
 import ShellService from "./shell/shell-service";
 import ImportService from "./import/import-service";
-
-Bugsnag.start({
-    apiKey: "905f9713071b76d7cd04cb3b19e4c730",
-});
 
 const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;

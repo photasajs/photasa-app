@@ -41,10 +41,6 @@
     "dependencies": {
         "@atlaskit/pragmatic-drag-and-drop": "^1.7.4",
         "@babel/core": "7.21.8",
-        "@bugsnag/electron": "^8.5.0",
-        "@bugsnag/js": "^8.4.0",
-        "@bugsnag/plugin-electron-app": "^8.4.0",
-        "@bugsnag/plugin-vue": "^8.4.0",
         "@electron-toolkit/preload": "^3.0.2",
         "@electron-toolkit/utils": "^4.0.0",
         "@electron/rebuild": "^4.0.1",
