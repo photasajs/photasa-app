@@ -1,45 +1,72 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Debug Main Process",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceRoot}",
-      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
-      "windows": {
-        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
-      },
-      "args": ["."],
-      "outputCapture": "std",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Debug Renderer Process",
-      "type": "chrome",
-      "request": "attach",
-      "port": 9222,
-      "webRoot": "${workspaceRoot}",
-      "timeout": 30000
-    },
-    {
-      "name": "Debug All",
-      "type": "node",
-      "request": "launch",
-      "cwd": "${workspaceRoot}",
-      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
-      "windows": {
-        "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
-      },
-      "args": ["--remote-debugging-port=9222", "."],
-      "outputCapture": "std",
-      "console": "integratedTerminal"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Debug Main + Renderer",
-      "configurations": ["Debug Main Process", "Debug Renderer Process"]
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Main Process (Vite)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite",
+            "windows": {
+                "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite.cmd"
+            },
+            "args": ["dev", "--inspect=9229", "--remoteDebuggingPort=9222"],
+            "outputCapture": "std",
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Debug Main Process (Built)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+            "windows": {
+                "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+            },
+            "args": ["--inspect=9229", "./out/main/index.js"],
+            "outputCapture": "std",
+            "console": "integratedTerminal",
+            "skipFiles": ["<node_internals>/**"]
+        },
+        {
+            "name": "Debug Renderer Process",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9222,
+            "webRoot": "${workspaceRoot}/src/renderer",
+            "timeout": 30000,
+            "url": "http://localhost:5173"
+        },
+        {
+            "name": "Debug All (Vite)",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite",
+            "windows": {
+                "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron-vite.cmd"
+            },
+            "args": ["dev", "--inspect=9229", "--remoteDebuggingPort=9222"],
+            "outputCapture": "std",
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "skipFiles": ["<node_internals>/**"]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug Main + Renderer (Vite)",
+            "configurations": ["Debug Main Process (Vite)", "Debug Renderer Process"]
+        },
+        {
+            "name": "Debug Main + Renderer (Built)",
+            "configurations": ["Debug Main Process (Built)", "Debug Renderer Process"]
+        }
+    ]
 }

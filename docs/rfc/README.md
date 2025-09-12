@@ -67,6 +67,8 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0004](./0004-ai-file-preview-service.md)   | AI文件在线预览服务                    | Draft               | Development Team | Future         |
 | [0005](./0005-local-ai-file-preview.md)     | 本地AI文件预览功能                    | Draft               | Development Team | Future         |
 | [0010](./0010-folder-statistics-display.md) | 文件夹树节点统计信息显示              | Draft               | Development Team | v1.7.0         |
+| [0014](./0014-file-scan-folder-tree-update.md) | 文件扫描时文件夹树更新优化            | Draft               | Development Team | v1.7.0         |
+| [0015](./0015-intelligent-scan-optimization.md) | 智能扫描优化策略修复                  | Draft               | Development Team | v1.7.0         |
 
 ## Implemented RFCs
 

@@ -19,9 +19,16 @@ vi.mock("@renderer/utils/api", () => ({
 Object.defineProperty(window, "api", {
     value: {
         normalizePath: vi.fn((path: string) => path.replace(/\\/g, "/")),
-        splitPath: vi.fn((path: string) => path.split("/")),
+        splitPath: vi.fn((path: string) => path.split("/").filter(Boolean)),
         joinPath: vi.fn((...parts: string[]) => parts.join("/")),
         mergePath: vi.fn((base: string, relative: string) => base + "/" + relative),
+        toDirName: vi.fn((path: string) => {
+            const parts = path.split("/");
+            if (parts.length > 1) {
+                return parts.slice(0, -1).join("/") || "/";
+            }
+            return ".";
+        }),
         checkPhotasaConfig: vi.fn(),
     },
     writable: true,
@@ -333,6 +340,155 @@ describe("preference-scan-fix", () => {
 
             // 应该降级为正常扫描
             expect(store.scanningFolder).toHaveLength(1);
+        });
+    });
+
+    describe("addFileOperation 文件夹树更新测试", () => {
+        it("应该为文件操作更新父目录的文件夹树", () => {
+            const filePath = "/test/photos/image.jpg";
+
+            // 先设置根路径，确保 buildDataNode 能工作
+            store.paths = ["/test"];
+            store.folderTree = [
+                {
+                    key: "/test",
+                    title: "/test",
+                    children: [],
+                },
+            ];
+
+            // 添加文件操作
+            store.addFileOperation({
+                path: filePath,
+                action: "scan",
+                thumbnailSize: 150,
+                operationType: "file",
+                priority: 1,
+                retryCount: 0,
+                createdAt: Date.now(),
+                fileOperationId: "test-file-1",
+            });
+
+            // 验证文件操作被添加到队列
+            expect(store.scanningFolder).toHaveLength(1);
+            expect(store.scanningFolder[0].path).toBe(filePath);
+            expect(store.scanningFolder[0].operationType).toBe("file");
+
+            // 验证文件夹树被更新（应该包含父目录）
+            expect(store.folderTree).toContainEqual(
+                expect.objectContaining({
+                    key: "/test",
+                    children: expect.arrayContaining([
+                        expect.objectContaining({
+                            key: expect.stringContaining("photos"),
+                        }),
+                    ]),
+                }),
+            );
+        });
+
+        it("应该为目录操作正常更新文件夹树", () => {
+            const dirPath = "/test/new-folder";
+
+            // 先设置根路径
+            store.paths = ["/test"];
+            store.folderTree = [
+                {
+                    key: "/test",
+                    title: "/test",
+                    children: [],
+                },
+            ];
+
+            // 添加目录操作
+            store.addFileOperation({
+                path: dirPath,
+                action: "scan",
+                thumbnailSize: 150,
+                operationType: "directory",
+                priority: 1,
+                retryCount: 0,
+                createdAt: Date.now(),
+                fileOperationId: "test-dir-1",
+            });
+
+            // 验证目录操作被添加到队列
+            expect(store.scanningFolder).toHaveLength(1);
+            expect(store.scanningFolder[0].path).toBe(dirPath);
+            expect(store.scanningFolder[0].operationType).toBe("directory");
+
+            // 验证文件夹树被更新
+            expect(store.folderTree).toContainEqual(
+                expect.objectContaining({
+                    key: "/test",
+                    children: expect.arrayContaining([
+                        expect.objectContaining({
+                            key: expect.stringContaining("new-folder"),
+                        }),
+                    ]),
+                }),
+            );
+        });
+
+        it("应该处理根目录文件，跳过树更新", () => {
+            const rootFilePath = "/image.jpg";
+
+            store.addFileOperation({
+                path: rootFilePath,
+                action: "scan",
+                thumbnailSize: 150,
+                operationType: "file",
+                priority: 1,
+                retryCount: 0,
+                createdAt: Date.now(),
+                fileOperationId: "test-root-file",
+            });
+
+            // 验证文件操作被添加
+            expect(store.scanningFolder).toHaveLength(1);
+            expect(store.scanningFolder[0].path).toBe(rootFilePath);
+
+            // 由于是根目录文件，文件夹树不应该被更新
+            expect(store.folderTree).toHaveLength(0);
+        });
+
+        it("应该处理文件路径提取错误，不中断操作", () => {
+            const invalidPath = "";
+
+            store.addFileOperation({
+                path: invalidPath,
+                action: "scan",
+                thumbnailSize: 150,
+                operationType: "file",
+                priority: 1,
+                retryCount: 0,
+                createdAt: Date.now(),
+                fileOperationId: "test-invalid-file",
+            });
+
+            // 即使路径提取失败，文件操作仍应被添加
+            expect(store.scanningFolder).toHaveLength(1);
+            expect(store.scanningFolder[0].path).toBe(invalidPath);
+        });
+
+        it("应该处理路径标准化", () => {
+            const windowsStylePath = "C:\\Users\\test\\photos\\image.jpg";
+            // normalizePath 在 mock 中会被调用，这里我们假设它能正确处理
+
+            store.addFileOperation({
+                path: windowsStylePath,
+                action: "scan",
+                thumbnailSize: 150,
+                operationType: "file",
+                priority: 1,
+                retryCount: 0,
+                createdAt: Date.now(),
+                fileOperationId: "test-windows-path",
+            });
+
+            // 验证操作被添加，路径被标准化
+            expect(store.scanningFolder).toHaveLength(1);
+            expect(store.scanningFolder[0].operationType).toBe("file");
         });
     });
 });

@@ -18,6 +18,7 @@ export interface DataNode {
 }
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
+import { toDirName } from "@renderer/utils/api-path";
 import { loggers } from "@common/logger";
 
 const logger = loggers.app;
@@ -197,9 +198,23 @@ export const usePreferenceStore = defineStore("preference", {
                 fileOperationId: operation.fileOperationId,
             });
 
-            // Update folder tree only for directory operations
+            // Update folder tree for both file and directory operations
             if (operation.operationType === "directory") {
                 this.updateFolderTree(normalizedPath);
+            } else if (operation.operationType === "file") {
+                // For file operations, update tree with parent directory
+                try {
+                    const parentDir = toDirName(normalizedPath);
+                    if (parentDir && parentDir !== normalizedPath && parentDir !== "/") {
+                        logger.debug(
+                            `Updating folder tree with parent directory: ${parentDir} for file: ${normalizedPath}`,
+                        );
+                        this.updateFolderTree(parentDir);
+                    }
+                } catch (error) {
+                    logger.warn(`Failed to update folder tree for file ${normalizedPath}:`, error);
+                    // Continue execution, don't interrupt file operation
+                }
             }
         },
         updateThumbnailSize(size: number) {

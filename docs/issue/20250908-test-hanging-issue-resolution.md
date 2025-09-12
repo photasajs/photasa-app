@@ -130,7 +130,7 @@ await vi.runAllTimersAsync();
 - **Execution Time**: Reduced from indefinite hang to ~1 minute
 
 ## Prevention Guidelines
-See `DEV_GUIDE.md` for comprehensive test writing best practices to avoid these issues in the future.
+See [DEV_GUIDE.md](../DEV_GUIDE.md) for comprehensive test writing best practices to avoid these issues in the future.
 
 ## Monitoring
 - Test suite now completes within configured timeout limits

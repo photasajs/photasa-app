@@ -13,7 +13,8 @@ import {
     resetPhotasaConfig,
     scanSubfolders,
 } from "@renderer/utils/api";
-import { deepCopy, getNextScanItem } from "./utils/object";
+// deepCopy removed as no longer needed
+import { orchestrateScan, type ScanCallbacks } from "./AppHelper";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@common/logger";
@@ -213,80 +214,75 @@ watchArray(
     { deep: true },
 );
 
-async function startScanning(): Promise<void> {
-    logger.debug(
-        `startScanning called, folders count: ${scanningFolder.value.length}, isIdle: ${scanPhotosTask.isIdle}`,
-    );
-    if (scanningFolder.value.length > 0) {
-        const nextItem = getNextScanItem(scanningFolder.value);
-        if (!nextItem) {
-            logger.warn("No scan item found despite scanningFolder having items");
-            return;
-        }
-        const scanAction = deepCopy(nextItem);
-        processingFile.value = "正在扫描: " + scanAction.path;
-        logger.debug(`Starting scan for path: ${scanAction.path}, action: ${scanAction.action}`);
-        if (scanAction.action === "rescan") {
-            logger.debug(`Rescanning folder: ${scanAction.path}`);
-            await resetPhotasaConfig(scanAction.path);
-        }
+// 创建回调对象，连接纯函数与副作用
+const callbacks: ScanCallbacks = {
+    logInfo: logger.info.bind(logger),
+    logDebug: logger.debug.bind(logger),
+    logError: logger.error.bind(logger),
 
-        scanAction.thumbnailSize = thumbnailSize.value;
-        logger.debug(`Scanning subfolders for: ${scanAction.path}`);
+    updateProcessingStatus: (status: string) => {
+        processingFile.value = status;
+        // 同时更新状态栏
+        statusBarStore.update({
+            type: "scan",
+            status: "scanning",
+            task: status,
+            timestamp: Date.now(),
+        });
+    },
+
+    clearProcessingStatus: () => {
+        processingFile.value = "";
+        // 清理状态栏扫描状态
+        statusBarStore.update({
+            type: "scan",
+            status: "ready",
+            task: t("app.title"),
+            timestamp: Date.now(),
+        });
+    },
+
+    updateFolderTree: updateFolderTree,
+    completeScanPath: completeScanPath,
+
+    scanSubfolders: scanSubfolders,
+    addScanFolderToQueue: (path: string, action: string) => {
+        addScanFolderWithLog(path, action as "scan" | "rescan" | "current");
+    },
+
+    performScanTask: async (action) => {
+        action.thumbnailSize = thumbnailSize.value;
+        return await scanPhotosTask.perform(action);
+    },
+
+    resetPhotasaConfig: async (path: string) => {
+        await resetPhotasaConfig(path);
+    },
+
+    extractParentDir: (path: string) => {
         try {
-            const folders = await scanSubfolders(scanAction.path);
-            logger.debug(`Found ${folders.length} subfolders for: ${scanAction.path}`, folders);
-
-            // 记录添加子文件夹前的队列状态
-            logger.debug(
-                `Before adding subfolders, scanningFolder length: ${scanningFolder.value.length}`,
-                scanningFolder.value.map((f) => f.path),
-            );
-
-            folders.forEach((f: string) => addScanFolderWithLog(f, "scan"));
-
-            // 记录添加子文件夹后的队列状态
-            logger.debug(
-                `After adding subfolders, scanningFolder length: ${scanningFolder.value.length}`,
-                scanningFolder.value.map((f) => f.path),
-            );
-
-            logger.debug(`Starting scanPhotosTask for: ${scanAction.path}`);
-            const args = await scanPhotosTask.perform(scanAction);
-            logger.debug(`Scan completed for: ${scanAction.path}`);
-
-            // 记录清理前的队列状态
-            logger.debug(
-                `Before cleanup, scanningFolder length: ${scanningFolder.value.length}`,
-                scanningFolder.value.map((f) => f.path),
-            );
-
-            // 无论扫描结果如何，都要清理scanningFolder中的项目，避免死循环
-            logger.debug(`Cleaning up scan path: ${scanAction.path}`);
-            completeScanPath(scanAction.path);
-
-            // 记录清理后的队列状态
-            logger.debug(
-                `After cleanup, scanningFolder length: ${scanningFolder.value.length}`,
-                scanningFolder.value.map((f) => f.path),
-            );
-
-            // 如果扫描成功且有结果，更新文件夹树
-            if (args?.action?.path && args?.action?.isDirectory) {
-                logger.debug(`Updating folder tree for: ${args.action.path}`);
-                updateFolderTree(args.action.path as string);
-            }
-
-            // 继续处理下一个扫描项目
-            startScanning();
-        } catch (error) {
-            logger.error("Error during scanning:", error);
-            completeScanPath(scanAction.path);
-            processingFile.value = "扫描失败: " + scanAction.path;
-            startScanning();
+            return window.api.toDirName(path);
+        } catch {
+            return null;
         }
-    } else {
-        logger.debug("No folders to scan");
+    },
+
+    scheduleNextScan: () => {
+        setTimeout(() => startScanning(), 0);
+    },
+};
+
+async function startScanning(): Promise<void> {
+    // 调用纯函数处理扫描逻辑
+    const result = await orchestrateScan(scanningFolder.value, callbacks);
+
+    // 根据结果决定是否继续
+    if (result.shouldScheduleNext) {
+        callbacks.scheduleNextScan();
+    }
+
+    if (result.error) {
+        logger.error("Scan orchestration error:", result.error);
     }
 }
 
@@ -321,9 +317,9 @@ findPhotoService.onFindPhoto((args: any) => {
 
         // 更新当前处理的文件信息到状态栏
         if (args.currentFile) {
-            processingFile.value = `正在扫描: ${args.action.path} - ${args.currentFile}`;
+            processingFile.value = `${t("status.scanning")} ${args.action.path} - ${args.currentFile}`;
         } else {
-            processingFile.value = `正在扫描: ${args.action.path}`;
+            processingFile.value = `${t("status.scanning")} ${args.action.path}`;
         }
     }
 

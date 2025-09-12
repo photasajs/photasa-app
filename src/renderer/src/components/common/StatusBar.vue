@@ -25,7 +25,7 @@ const statusText = computed(() =>
 // 检测是否正在扫描
 const isScanning = computed(() => {
     const scanningText = t("status.scanning");
-    const progressText = t("status.progress");
+    const progressText = t("status.@d#/gi");
 
     return (
         processingFile.value?.includes(scanningText) ||
@@ -98,8 +98,8 @@ const scanningPath = computed(() => {
             </template>
 
             <!-- processingFile 显示（非扫描状态） -->
-            <template v-else-if="processingFile && !isScanning">
-                {{ processingFile }}
+            <template v-else-if="scanningPath && !isScanning">
+                {{ scanningPath }}
             </template>
 
             <!-- 默认插槽 -->

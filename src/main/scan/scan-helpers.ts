@@ -218,7 +218,21 @@ export async function restoreCachedFiles(
         }
 
         const configContent = await fs.readFile(configPath, "utf8");
-        const config = JSON.parse(configContent);
+
+        // RFC 0015 修复：增强JSON解析错误处理
+        let config: any;
+        try {
+            config = JSON.parse(configContent);
+        } catch (parseError) {
+            logger.error(`[restoreCachedFiles] JSON解析失败: ${configPath}`, parseError);
+            logger.info(`[restoreCachedFiles] 文件内容长度: ${configContent.length} 字节`);
+            logger.debug(`[restoreCachedFiles] 文件内容预览: ${configContent.substring(0, 200)}`);
+
+            // JSON解析失败时，标记文件需要重新扫描
+            logger.warn(`[restoreCachedFiles] 配置文件损坏，将触发完整重新扫描: ${configPath}`);
+            subscriber.complete();
+            return;
+        }
 
         if (!config.photoList || !Array.isArray(config.photoList)) {
             logger.warn(`[restoreCachedFiles] 配置文件格式无效: ${configPath}`);

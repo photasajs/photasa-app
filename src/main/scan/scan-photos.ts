@@ -148,12 +148,20 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
             // 进行扫描策略决策（异步处理）
             decideScanStrategy(scan.path, logger, scan.action)
                 .then(async (scanDecision) => {
+                    // RFC 0015 验证日志：扫描策略决策
+                    logger.info(`[RFC0015验证] 扫描策略决策: ${scanDecision.strategy}`);
+                    logger.info(`[RFC0015验证] 决策原因: ${scanDecision.reason}`);
+
                     logger.info(
                         `[scanPhotos] 扫描策略决策: ${scanDecision.strategy}, 原因: ${scanDecision.reason}`,
                     );
 
                     // 根据策略决策选择处理路径
                     if (scanDecision.strategy === "skip") {
+                        // RFC 0015 验证日志：skip策略执行
+                        logger.info(`[RFC0015验证] 执行SKIP策略: ${scan.path}`);
+                        logger.info(`[RFC0015验证] 准备从缓存恢复文件列表`);
+
                         // 跳过扫描，直接从 .photasa.json 恢复文件列表
                         logger.info(`[scanPhotos] 跳过扫描，从缓存恢复文件列表: ${scan.path}`);
 
@@ -162,7 +170,10 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                         await cacheManager.initialize();
                         await cacheManager.markScanComplete();
 
+                        // RFC 0015 验证日志：缓存恢复
+                        logger.info(`[RFC0015验证] 开始恢复缓存文件`);
                         await restoreCachedFiles(scan.path, subscriber, logger);
+                        logger.info(`[RFC0015验证] 缓存文件恢复完成`);
                         return;
                     }
 

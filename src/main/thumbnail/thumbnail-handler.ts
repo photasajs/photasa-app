@@ -420,10 +420,25 @@ export async function createThumbnail(
             // 创建图片缩略图 如果文件是 HEIC 格式，则使用预览图片
             const target = isHeic ? arg.preview : arg.path;
             try {
+                // 确保width和height是数字类型
+                const width = Number(arg.width);
+                const height = Number(arg.height);
+
+                // 验证类型转换
+                if (isNaN(width) || isNaN(height)) {
+                    throw new Error(
+                        `Invalid dimensions: width=${arg.width} (${typeof arg.width}), height=${arg.height} (${typeof arg.height})`,
+                    );
+                }
+
+                logger.debug(
+                    `[thumbnail-handler] Processing image with dimensions: ${width}x${height} (${typeof width}x${typeof height})`,
+                );
+
                 // 创建图片缩略图
                 await sharp(target)
                     .rotate() // 旋转图片 根据 EXIF 信息旋转
-                    .resize(arg.width, arg.height, {
+                    .resize(width, height, {
                         fit: sharp.fit.inside,
                         background: "white",
                         withoutEnlargement: arg.withoutEnlargement,

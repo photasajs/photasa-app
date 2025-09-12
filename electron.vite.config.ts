@@ -7,8 +7,21 @@ import vueJsx from "@vitejs/plugin-vue-jsx";
 import { babel } from "@rollup/plugin-babel";
 import { comlink } from "vite-plugin-comlink";
 import svgLoader from "vite-svg-loader";
+/**
+ * Check if the mode is development or debug
+ * @param mode - The mode to check
+ * @returns
+ */
+const isDev = (mode) => mode === "development" || process.env.DEBUG === "true";
 
-export default defineConfig({
+/**
+ * Check if the mode is production
+ * @param mode - The mode to check
+ * @returns
+ */
+const isProd = (mode) => mode === "production";
+
+export default defineConfig(({ mode }) => ({
     main: {
         plugins: [externalizeDepsPlugin()],
         resolve: {
@@ -17,6 +30,10 @@ export default defineConfig({
                 "@common": resolve("src/common/"),
                 "@shared": resolve("src/shared/"),
             },
+        },
+        build: {
+            sourcemap: isDev(mode),
+            minify: isProd(mode),
         },
     },
     preload: {
@@ -29,6 +46,10 @@ export default defineConfig({
                 "@shared": resolve("src/shared/"),
             },
         },
+        build: {
+            sourcemap: isDev(mode),
+            minify: isProd(mode),
+        },
     },
     renderer: {
         resolve: {
@@ -36,7 +57,7 @@ export default defineConfig({
                 "@renderer": resolve("src/renderer/src"),
                 "@preload": resolve("src/preload/"),
                 "@common": resolve("src/common/"),
-                "@shared": resolve("src/shared/"),
+                // 注意：@shared 不应该在渲染进程中使用，因为包含 Node.js 依赖
             },
         },
         plugins: [vue(), vueJsx(), comlink(), svgLoader()],
@@ -47,5 +68,9 @@ export default defineConfig({
                 },
             },
         },
+        build: {
+            sourcemap: isDev(mode),
+            minify: isProd(mode),
+        },
     },
-});
+}));

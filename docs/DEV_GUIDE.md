@@ -122,14 +122,14 @@ await vi.runAllTimersAsync();
 // ✅ CORRECT - For testing timeout behavior
 it('should timeout after 5 seconds', async () => {
     vi.useFakeTimers();
-    
+
     const promise = functionThatMightTimeout();
-    
+
     // Advance time to test timeout
     vi.advanceTimersByTime(5000);
-    
+
     await expect(promise).rejects.toThrow('Timeout');
-    
+
     vi.useRealTimers();
 });
 ```
@@ -204,15 +204,15 @@ it('should handle async operations', async () => {
 // ✅ CORRECT - Testing with fake timers
 it('should handle delayed operations', async () => {
     vi.useFakeTimers();
-    
+
     const promise = delayedOperation();
-    
+
     // Advance all timers
     await vi.runAllTimersAsync();
-    
+
     const result = await promise;
     expect(result).toBe('expected');
-    
+
     vi.useRealTimers();
 });
 
@@ -342,6 +342,9 @@ If tests hang indefinitely:
 
 ## Resources
 
+- [Debug Guide](DEBUG.md) - 调试设置和故障排除
+- [RFC Index](rfc/README.md) - 设计决策和RFC文档
+- [Design Documents](design/) - 架构和设计文档
 - [Electron Documentation](https://www.electronjs.org/docs)
 - [Vue 3 Documentation](https://vuejs.org/)
 - [Vite Documentation](https://vitejs.dev/)

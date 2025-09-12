@@ -1,12 +1,29 @@
-# 开发命名规范说明
+# Photasa Documentation
+
+Welcome to the Photasa documentation hub. This directory contains all project documentation organized by category.
+
+## 📚 Documentation Structure
+
+- **`DEV_GUIDE.md`** - Complete development setup and workflow guide
+- **`DEBUG.md`** - Debugging setup and troubleshooting guide
+- **`design/`** - Architecture and design documentation
+- **`rfc/`** - Request for Comments and design decisions
+- **`issue/`** - Known issues and resolutions
+- **`assets/`** - Documentation assets and resources
+
+## 🚀 Quick Links
+
+- [Development Guide](DEV_GUIDE.md) - Get started with development
+- [Debug Guide](DEBUG.md) - Debugging and troubleshooting
+- [RFC Index](rfc/README.md) - All RFCs and design decisions
+- [Design Documents](design/) - Architecture and design docs
+- [Issues](issue/) - Known issues and solutions
+
+---
+
+## 开发命名规范说明
 
 Photoasa 开发命名规范聚焦于Electron App的开发规范。
-
-## 文档结构
-
-- **`design/`** - 设计文档和架构说明
-- **`rfc/`** - RFC (Request for Comments) 文档
-- **`issue/`** - 问题报告和解决方案文档
 
 ## 1. 组件命名
 - 文件名：PascalCase 或 kebab-case，如 ThemeSettings.vue 或 theme-settings.vue

@@ -32,6 +32,7 @@ import {
     toFileName,
     isHiddenFile,
     removeFileProtocol,
+    toDirName,
 } from "@shared/path-util";
 
 /**
@@ -69,6 +70,7 @@ const api = {
     isHiddenFile,
     shouldIgnorePhotasaPath,
     removeFileProtocol,
+    toDirName,
     isVideoFile,
     isImageFile,
     fileUrlFromPath,

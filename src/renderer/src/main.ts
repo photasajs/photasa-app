@@ -68,6 +68,7 @@ Bugsnag.leaveBreadcrumb("App started", {}, "state");
 
 const statusBarStore = useStatusBarStore();
 
+// TODO: move to preload api instead
 if (window.electron && window.electron.ipcRenderer) {
     window.electron.ipcRenderer.on("notify:status", (_event, payload) => {
         statusBarStore.update(payload);
