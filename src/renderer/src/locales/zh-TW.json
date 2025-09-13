@@ -3,6 +3,20 @@
         "title": "倉廩圖司",
         "folderList": "目錄列表"
     },
+    "logViewer": {
+        "title": "系統日誌控制台",
+        "searchPlaceholder": "搜尋日誌...",
+        "allLevels": "所有級別",
+        "debug": "除錯",
+        "info": "資訊",
+        "warn": "警告",
+        "error": "錯誤",
+        "clear": "清空",
+        "export": "匯出",
+        "noLogs": "暫無日誌",
+        "showing": "顯示 {filtered} / {total} 條日誌",
+        "autoScroll": "自動捲動"
+    },
     "preference": {
         "settings": "設置",
         "tabs": {

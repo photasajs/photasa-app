@@ -21,6 +21,30 @@ if (!port) {
     throw new Error("IllegalState");
 }
 
+// 日志查看器状态
+let logViewerActive = false;
+
+// 包装日志函数以支持日志查看器
+function workerLog(level: "debug" | "info" | "warn" | "error", category: string, message: string) {
+    // 正常输出到控制台
+    logger[level](message);
+
+    // 仅在日志查看器激活时上报
+    if (logViewerActive && port) {
+        port.postMessage({
+            type: "worker:log",
+            entry: {
+                timestamp: new Date().toISOString(),
+                level,
+                category,
+                message,
+                source: "worker",
+                threadId: "scan-worker",
+            },
+        });
+    }
+}
+
 // Thumbnail worker configuration
 const THUMBNAIL_WORKER_CONFIG = {
     minWorkers: 2,
@@ -272,7 +296,18 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
     }
 }
 
-port.on("message", async (message) => {
+port.on("message", async (message: any) => {
+    // 处理日志查看器状态消息
+    if (message.type === "log:viewer-status") {
+        logViewerActive = message.active;
+        workerLog(
+            "debug",
+            "scan-worker",
+            `Log viewer ${logViewerActive ? "activated" : "deactivated"}`,
+        );
+        return;
+    }
+
     let parsedResult;
     try {
         parsedResult = message;
@@ -281,7 +316,11 @@ port.on("message", async (message) => {
         );
         switch (parsedResult.action) {
             case "scan":
-                logger.debug(`Starting scan for request: ${parsedResult.requestId}`);
+                workerLog(
+                    "debug",
+                    "scan-worker",
+                    `Starting scan for request: ${parsedResult.requestId}`,
+                );
                 await execute(parsedResult.requestId, parsedResult.scan);
                 return;
             default:

@@ -17,6 +17,7 @@ import WindowService from "./window/window-service";
 import MenuService from "./menu/menu-service";
 import ShellService from "./shell/shell-service";
 import ImportService from "./import/import-service";
+import LogViewerService from "./log-viewer/log-viewer-service";
 
 const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;
@@ -199,8 +200,10 @@ function createWindow(): void {
     new ThumbnailService(ipcMain);
     // Setup Config Service
     new ConfigService(ipcMain, mainWindow);
+    // Setup Log Viewer Service (create early so other services can register workers)
+    const logViewerService = new LogViewerService(ipcMain, mainWindow);
     // Setup Scan Service
-    new ScanService(ipcMain, mainWindow, app);
+    new ScanService(ipcMain, mainWindow, app, logViewerService);
     // Setup File Watch Service
     watchService = new WatchService(ipcMain, mainWindow);
     // Setup Window Service

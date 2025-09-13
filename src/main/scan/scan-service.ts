@@ -8,6 +8,9 @@ import { getAppPath } from "@shared/path-util";
 
 const logger = loggers.scan;
 
+// Import LogViewerService to register worker
+let logViewerService: any = null;
+
 type ScanWorker = {
     on: (event: string, callback: (message: any) => void) => void;
     postMessage: (message: any) => void;
@@ -20,9 +23,16 @@ export default class ScanService {
     queueId = 0;
     worker: ScanWorker;
 
-    constructor(ipcMain: IpcMain, mainWindow: BrowserWindow, app: Electron.App) {
+    constructor(
+        ipcMain: IpcMain,
+        mainWindow: BrowserWindow,
+        app: Electron.App,
+        logViewerSvc?: any,
+    ) {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
+        logViewerService = logViewerSvc;
+
         logger.debug("Creating scan worker");
         this.worker = createWorker({
             workerData: "worker",
@@ -31,6 +41,11 @@ export default class ScanService {
                 APP_PATH: getAppPath(app),
             },
         });
+
+        // 注册worker到LogViewerService
+        if (logViewerService) {
+            logViewerService.registerWorker(this.worker);
+        }
 
         // 处理 worker 消息
         this.worker.on("message", (message) => {

@@ -3,6 +3,20 @@
         "title": "Photasa",
         "folderList": "Folder List"
     },
+    "logViewer": {
+        "title": "System Log Console",
+        "searchPlaceholder": "Search logs...",
+        "allLevels": "All Levels",
+        "debug": "Debug",
+        "info": "Info",
+        "warn": "Warn",
+        "error": "Error",
+        "clear": "Clear",
+        "export": "Export",
+        "noLogs": "No logs available",
+        "showing": "Showing {filtered} / {total} logs",
+        "autoScroll": "Auto Scroll"
+    },
     "preference": {
         "settings": "Settings",
         "tabs": {

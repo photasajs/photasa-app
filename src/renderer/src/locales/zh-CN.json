@@ -10,6 +10,20 @@
             "24h": "最近24小时"
         }
     },
+    "logViewer": {
+        "title": "系统日志控制台",
+        "searchPlaceholder": "搜索日志...",
+        "allLevels": "所有级别",
+        "debug": "调试",
+        "info": "信息",
+        "warn": "警告",
+        "error": "错误",
+        "clear": "清空",
+        "export": "导出",
+        "noLogs": "暂无日志",
+        "showing": "显示 {filtered} / {total} 条日志",
+        "autoScroll": "自动滚动"
+    },
     "preference": {
         "settings": "设置",
         "tabs": {

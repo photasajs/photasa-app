@@ -40,6 +40,7 @@ import {
 } from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
+import LogConsole from "./components/LogConsole.vue";
 
 /**
  * 日志记录器
@@ -439,6 +440,8 @@ window.api?.onScanQueueAdd((operations: any[]) => {
 
     <!-- Portal提供者 - 为下拉菜单等组件提供渲染目标 -->
     <PortalProvider />
+    <!-- 日志控制台 -->
+    <LogConsole />
 </template>
 
 <style lang="less">

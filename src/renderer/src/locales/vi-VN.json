@@ -543,5 +543,28 @@
             "6h": "6 giờ qua",
             "24h": "24 giờ qua"
         }
+    },
+    "logViewer": {
+        "title": "Trình xem Log",
+        "levels": {
+            "all": "Tất cả cấp độ",
+            "error": "Lỗi",
+            "warn": "Cảnh báo",
+            "info": "Thông tin",
+            "debug": "Gỡ lỗi"
+        },
+        "buttons": {
+            "clear": "Xóa",
+            "export": "Xuất",
+            "close": "Đóng"
+        },
+        "search": "Tìm kiếm log...",
+        "messages": {
+            "noLogs": "Không có log nào",
+            "logsCleared": "Đã xóa log",
+            "logsExported": "Đã xuất log vào {fileName}",
+            "exportFailed": "Xuất log thất bại: {error}"
+        },
+        "dragInfo": "Kéo để di chuyển cửa sổ"
     }
 }
