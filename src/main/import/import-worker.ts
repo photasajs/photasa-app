@@ -44,7 +44,7 @@ import isVideo from "is-video";
 import { v4 as uuidv4 } from "uuid";
 import { shouldIgnorePhotasaPath } from "@common/utils";
 
-const logger = loggers.worker;
+const logger = loggers.import;
 
 // ==================== 映射设计模式：动作处理器映射 ====================
 

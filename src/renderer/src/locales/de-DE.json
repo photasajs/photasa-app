@@ -13,6 +13,7 @@
         "error": "Fehler",
         "clear": "Löschen",
         "export": "Exportieren",
+        "opacity": "Transparenz",
         "noLogs": "Keine Logs verfügbar",
         "showing": "Zeige {filtered} / {total} Logs",
         "autoScroll": "Auto-Scroll"

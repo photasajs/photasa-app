@@ -9,7 +9,7 @@ if (!port) {
     throw new WorkerError("Worker port is not available");
 }
 
-const logger = loggers.worker;
+const logger = loggers.config;
 
 const handler: ConfigHandlers = {
     query: queryConfig,

@@ -15,15 +15,54 @@ export interface LogEntry {
     threadId?: string;
 }
 
-// 日志拦截器类
+// 正确的 log4js interceptor appender 实现
+const createInterceptorAppender = (interceptorInstance: LogInterceptor) => {
+    return {
+        configure: (_config: any, _layouts: any) => {
+            // 创建 appender 函数
+            const appender = (logEvent: any) => {
+                // 只有在激活时才进行拦截处理
+                if (interceptorInstance.isActive) {
+                    const entry: LogEntry = {
+                        timestamp: new Date(logEvent.startTime).toISOString(),
+                        level: logEvent.level.levelStr.toLowerCase() as any,
+                        category: logEvent.categoryName,
+                        message: logEvent.data.join(" "),
+                        source: "main",
+                    };
+                    interceptorInstance.notify(entry);
+                }
+            };
+
+            // 添加 shutdown 支持
+            appender.shutdown = (done: () => void) => {
+                done();
+            };
+
+            return appender;
+        },
+    };
+};
+
+// 改进的日志拦截器类
 export class LogInterceptor {
     private listeners = new Set<(entry: LogEntry) => void>();
-    private isActive = false;
+    private _isActive = false;
     private originalConsole: any = {};
+    private appenderModule: any;
+
+    constructor() {
+        // 创建这个实例专用的 appender 模块
+        this.appenderModule = createInterceptorAppender(this);
+    }
+
+    get isActive(): boolean {
+        return this._isActive;
+    }
 
     activate() {
-        if (this.isActive) return;
-        this.isActive = true;
+        if (this._isActive) return;
+        this._isActive = true;
 
         if (isNode) {
             this.attachNodeInterceptor();
@@ -33,8 +72,8 @@ export class LogInterceptor {
     }
 
     deactivate() {
-        if (!this.isActive) return;
-        this.isActive = false;
+        if (!this._isActive) return;
+        this._isActive = false;
 
         if (isNode) {
             this.detachNodeInterceptor();
@@ -51,12 +90,12 @@ export class LogInterceptor {
     }
 
     notify(entry: LogEntry) {
-        if (!this.isActive) return;
+        if (!this._isActive) return;
         this.listeners.forEach((listener) => listener(entry));
     }
 
     private attachNodeInterceptor() {
-        // 为log4js添加自定义appender
+        // 正确的 log4js 配置，使用预创建的 appender 模块
         log4js.configure({
             appenders: {
                 console: {
@@ -67,28 +106,12 @@ export class LogInterceptor {
                     },
                 },
                 interceptor: {
-                    type: {
-                        configure: (() => {
-                            return (loggingEvent: any) => {
-                                if (!this.isActive) return;
-
-                                const entry: LogEntry = {
-                                    timestamp: new Date(loggingEvent.startTime).toISOString(),
-                                    level: loggingEvent.level.levelStr.toLowerCase() as any,
-                                    category: loggingEvent.categoryName,
-                                    message: loggingEvent.data.join(" "),
-                                    source: "main",
-                                };
-
-                                this.notify(entry);
-                            };
-                        }).bind(this),
-                    },
+                    type: this.appenderModule, // 正确的模块引用方式
                 },
             },
             categories: {
                 default: {
-                    appenders: ["console", "interceptor"],
+                    appenders: ["console", "interceptor"], // console 保证正常输出，interceptor 提供拦截
                     level: DEV_MODE ? "debug" : "info",
                 },
             },
@@ -96,7 +119,7 @@ export class LogInterceptor {
     }
 
     private detachNodeInterceptor() {
-        // 恢复原始配置（移除interceptor）
+        // 恢复到只有 console appender 的原始配置
         log4js.configure({
             appenders: {
                 console: {
@@ -124,6 +147,31 @@ export class LogInterceptor {
             warn: console.warn,
             error: console.error,
         };
+
+        // 非侵入式拦截：保持原有功能，添加拦截逻辑
+        ["debug", "info", "warn", "error"].forEach((level) => {
+            const originalMethod = console[level as keyof Console] as any;
+            (console as any)[level] = function (...args: any[]) {
+                // 始终调用原始方法保持正常输出
+                originalMethod.apply(console, args);
+
+                // 只有在激活时才进行拦截
+                if (this._isActive) {
+                    const entry: LogEntry = {
+                        timestamp: new Date().toISOString(),
+                        level: level as any,
+                        category: "renderer",
+                        message: args
+                            .map((arg) =>
+                                typeof arg === "object" ? safeStringify(arg) : String(arg),
+                            )
+                            .join(" "),
+                        source: "renderer",
+                    };
+                    this.notify(entry);
+                }
+            };
+        });
     }
 
     private detachBrowserInterceptor() {
@@ -318,5 +366,6 @@ export const loggers: Record<string, PhotasaLogger> = {
     window: getLogger("window"),
     shell: getLogger("shell"),
     api: getLogger("api"),
+    import: getLogger("import"),
     importProgress: getLogger("importProgress"),
 };

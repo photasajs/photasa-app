@@ -50,6 +50,13 @@ const mockLogger = {
 describe("scan-photos enhanced functionality", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // 默认设置fs.existsSync为true，模拟文件存在
+        (fs.existsSync as any).mockReturnValue(true);
+        // 设置fs.statSync的默认返回值
+        (fs.statSync as any).mockReturnValue({
+            isFile: () => true,
+            isDirectory: () => false,
+        });
     });
 
     describe("walkthroughPhotos - single file operations", () => {

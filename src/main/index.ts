@@ -196,12 +196,12 @@ function createWindow(): void {
         }
     });
 
-    // Setup Thumbnail Service
-    new ThumbnailService(ipcMain);
-    // Setup Config Service
-    new ConfigService(ipcMain, mainWindow);
     // Setup Log Viewer Service (create early so other services can register workers)
     const logViewerService = new LogViewerService(ipcMain, mainWindow);
+    // Setup Thumbnail Service
+    new ThumbnailService(ipcMain, mainWindow, app, logViewerService);
+    // Setup Config Service
+    new ConfigService(ipcMain, mainWindow);
     // Setup Scan Service
     new ScanService(ipcMain, mainWindow, app, logViewerService);
     // Setup File Watch Service

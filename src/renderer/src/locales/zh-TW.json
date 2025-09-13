@@ -13,6 +13,7 @@
         "error": "錯誤",
         "clear": "清空",
         "export": "匯出",
+        "opacity": "透明度",
         "noLogs": "暫無日誌",
         "showing": "顯示 {filtered} / {total} 條日誌",
         "autoScroll": "自動捲動"

@@ -556,6 +556,7 @@
         "buttons": {
             "clear": "Temizle",
             "export": "Dışa aktar",
+            "opacity": "Opaklık",
             "close": "Kapat"
         },
         "search": "Günlüklerde ara...",

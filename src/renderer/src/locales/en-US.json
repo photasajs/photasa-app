@@ -20,6 +20,7 @@
         "error": "Error",
         "clear": "Clear",
         "export": "Export",
+        "opacity": "Opacity",
         "noLogs": "No logs available",
         "showing": "Showing {filtered} / {total} logs",
         "autoScroll": "Auto Scroll"

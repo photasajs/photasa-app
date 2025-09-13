@@ -553,6 +553,7 @@
         "buttons": {
             "clear": "Cancella",
             "export": "Esporta",
+            "opacity": "Opacità",
             "close": "Chiudi"
         },
         "search": "Cerca nei log...",

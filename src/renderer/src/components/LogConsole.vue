@@ -25,6 +25,20 @@
                         <button @click="exportLogs" class="log-btn">
                             {{ t("logViewer.export") }}
                         </button>
+                        <div class="opacity-control">
+                            <label class="opacity-label">{{ t("logViewer.opacity") }}</label>
+                            <input
+                                type="range"
+                                min="0.3"
+                                max="1"
+                                step="0.1"
+                                v-model="opacity"
+                                class="opacity-slider"
+                                @click.stop
+                                @mousedown.stop
+                            />
+                            <span class="opacity-value">{{ Math.round(opacity * 100) }}%</span>
+                        </div>
                         <button @click="close" class="log-btn log-btn-close">✕</button>
                     </div>
                 </div>
@@ -75,11 +89,20 @@ const logs = ref<LogEntry[]>([]);
 const searchTerm = ref("");
 const levelFilter = ref("");
 const autoScroll = ref(true);
+const opacity = ref(0.95);
 const logContainer = ref<HTMLElement>();
 
 // 拖拽相关
 const isDragging = ref(false);
 const dragOffset = ref({ x: 0, y: 0 });
+
+// 监听透明度变化
+watch(opacity, (newOpacity) => {
+    const consoleEl = document.querySelector(".log-console") as HTMLElement;
+    if (consoleEl && !isDragging.value) {
+        consoleEl.style.opacity = newOpacity.toString();
+    }
+});
 
 const filteredLogs = computed(() => {
     return logs.value.filter((log) => {
@@ -122,6 +145,12 @@ const toggle = async () => {
         const result = await window.api.log.viewerOpen();
         if (result.success) {
             logs.value = []; // 清空旧日志
+            // 设置初始透明度
+            await nextTick();
+            const consoleEl = document.querySelector(".log-console") as HTMLElement;
+            if (consoleEl) {
+                consoleEl.style.opacity = opacity.value.toString();
+            }
         } else {
             visible.value = false;
         }
@@ -136,6 +165,7 @@ const toggle = async () => {
             consoleEl.style.transform = "translateX(-50%)";
             consoleEl.style.left = "50%";
             consoleEl.style.top = "50px";
+            consoleEl.style.opacity = "1";
         }
     }
 };
@@ -200,8 +230,7 @@ const startDrag = (e: MouseEvent) => {
         consoleEl.style.left = `${rect.left}px`;
         consoleEl.style.top = `${rect.top}px`;
 
-        // 添加拖拽样式
-        consoleEl.style.opacity = "0.8";
+        // 添加拖拽样式（保持当前透明度）
         consoleEl.style.cursor = "grabbing";
 
         // 计算拖拽偏移
@@ -238,7 +267,7 @@ const stopDrag = () => {
     // 恢复样式
     const consoleEl = document.querySelector(".log-console") as HTMLElement;
     if (consoleEl) {
-        consoleEl.style.opacity = "1";
+        consoleEl.style.opacity = opacity.value.toString();
         consoleEl.style.cursor = "move";
     }
 
@@ -379,6 +408,61 @@ onUnmounted(() => {
                     &:hover {
                         background: #cb2431;
                     }
+                }
+            }
+
+            .opacity-control {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                cursor: default;
+
+                .opacity-label {
+                    color: #ccc;
+                    font-size: 12px;
+                    white-space: nowrap;
+                }
+
+                .opacity-slider {
+                    width: 80px;
+                    height: 4px;
+                    background: #555;
+                    border-radius: 2px;
+                    outline: none;
+                    cursor: pointer;
+
+                    &::-webkit-slider-thumb {
+                        appearance: none;
+                        width: 12px;
+                        height: 12px;
+                        background: #0084ff;
+                        border-radius: 50%;
+                        cursor: pointer;
+
+                        &:hover {
+                            background: #1a94ff;
+                        }
+                    }
+
+                    &::-moz-range-thumb {
+                        width: 12px;
+                        height: 12px;
+                        background: #0084ff;
+                        border-radius: 50%;
+                        border: none;
+                        cursor: pointer;
+
+                        &:hover {
+                            background: #1a94ff;
+                        }
+                    }
+                }
+
+                .opacity-value {
+                    color: #888;
+                    font-size: 11px;
+                    min-width: 30px;
+                    text-align: right;
                 }
             }
         }

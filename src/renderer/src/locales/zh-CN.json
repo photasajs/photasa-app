@@ -20,6 +20,7 @@
         "error": "错误",
         "clear": "清空",
         "export": "导出",
+        "opacity": "透明度",
         "noLogs": "暂无日志",
         "showing": "显示 {filtered} / {total} 条日志",
         "autoScroll": "自动滚动"

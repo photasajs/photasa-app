@@ -33,7 +33,7 @@ export default class ScanService {
         this.mainWindow = mainWindow;
         logViewerService = logViewerSvc;
 
-        logger.debug("Creating scan worker");
+        logger.debug("[ScanService] Creating scan worker");
         this.worker = createWorker({
             workerData: "worker",
             env: {
@@ -51,13 +51,29 @@ export default class ScanService {
         this.worker.on("message", (message) => {
             try {
                 const data = message;
+
+                // 为不同类型的消息提供更清晰的日志
+                if (data.type === "worker:log") {
+                    // 处理 worker 日志消息，转发给 LogViewerService
+                    if (logViewerService) {
+                        this.mainWindow?.webContents.send("log:entry", data.entry);
+                    }
+                    // 为 worker:log 提供简洁的调试日志
+                    logger.debug(
+                        `[ScanService] Worker log [${data.entry?.level?.toUpperCase()}]: ${data.entry?.message || "N/A"}`,
+                    );
+                    return; // worker:log 消息不需要进一步处理
+                }
+
+                // 为其他类型消息提供详细的调试日志
                 logger.debug(
-                    `Received message from worker: type=${data.type}, requestId=${data.requestId}, path=${data.action?.path || "N/A"}, progress=${data.progress ? `${data.progress.processed}/${data.progress.total}` : "N/A"}`,
+                    `[ScanService] Received ${data.type} from worker: requestId=${data.requestId || "N/A"}, path=${data.action?.path || "N/A"}, progress=${data.progress ? `${data.progress.processed}/${data.progress.total}` : "N/A"}`,
                 );
+
                 // 推送 notifyStatus
                 let payload: NotifyPayload | undefined;
                 if (data.type === "error") {
-                    logger.error("Worker reported error:", data.error);
+                    logger.error("[ScanService] Worker reported error:", data.error);
                     payload = {
                         type: "scan",
                         task: data.action?.path || "",
@@ -66,7 +82,7 @@ export default class ScanService {
                         timestamp: Date.now(),
                     };
                 } else if (data.type === "complete") {
-                    logger.info("Scan complete for " + data.action.path);
+                    logger.info("[ScanService] Scan complete for " + data.action.path);
                     payload = {
                         type: "scan",
                         task: data.action?.path || "",
@@ -95,7 +111,7 @@ export default class ScanService {
                     this.mainWindow?.webContents.send("picasa:find-photo", data);
                 }
             } catch (error) {
-                logger.error("Error processing worker message:", error);
+                logger.error("[ScanService] Error processing worker message:", error);
             }
         });
 
@@ -104,12 +120,12 @@ export default class ScanService {
             "picasa:scan-photos",
             async (_, args: { requestId: string; scanAction: ScanAction }) => {
                 logger.debug(
-                    `Received scan request: requestId=${args.requestId}, action=${args.scanAction.action}, path=${args.scanAction.path}`,
+                    `[ScanService] Received scan request: requestId=${args.requestId}, action=${args.scanAction.action}, path=${args.scanAction.path}`,
                 );
                 try {
                     this.scanPhotos(args.requestId, args.scanAction);
                 } catch (error) {
-                    logger.error("Error handling scan request:", error);
+                    logger.error("[ScanService] Error handling scan request:", error);
                     this.mainWindow?.webContents.send("picasa:find-photo", {
                         type: "error",
                         requestId: args.requestId,
@@ -122,12 +138,12 @@ export default class ScanService {
 
     private scanPhotos(requestId: string, scan: ScanAction): void {
         logger.debug(
-            `Sending scan request: requestId=${requestId}, path=${scan.path}, action=${scan.action}`,
+            `[ScanService] Sending scan request: requestId=${requestId}, path=${scan.path}, action=${scan.action}`,
         );
         try {
             this.worker.postMessage({ action: "scan", requestId, scan });
         } catch (error) {
-            logger.error("Error sending scan request to worker:", error);
+            logger.error("[ScanService] Error sending scan request to worker:", error);
             this.mainWindow?.webContents.send("picasa:find-photo", {
                 type: "error",
                 requestId,
