@@ -5,6 +5,141 @@ const DEV_MODE = process.env.NODE_ENV === "development";
 const isNode =
     typeof process !== "undefined" && process.versions != null && process.versions.node != null;
 
+// 日志条目接口
+export interface LogEntry {
+    timestamp: string;
+    level: "debug" | "info" | "warn" | "error";
+    category: string;
+    message: string;
+    source: "main" | "renderer" | "worker";
+    threadId?: string;
+}
+
+// 日志拦截器类
+export class LogInterceptor {
+    private listeners = new Set<(entry: LogEntry) => void>();
+    private isActive = false;
+    private originalConsole: any = {};
+
+    activate() {
+        if (this.isActive) return;
+        this.isActive = true;
+
+        if (isNode) {
+            this.attachNodeInterceptor();
+        } else {
+            this.attachBrowserInterceptor();
+        }
+    }
+
+    deactivate() {
+        if (!this.isActive) return;
+        this.isActive = false;
+
+        if (isNode) {
+            this.detachNodeInterceptor();
+        } else {
+            this.detachBrowserInterceptor();
+        }
+
+        this.listeners.clear();
+    }
+
+    subscribe(listener: (entry: LogEntry) => void) {
+        this.listeners.add(listener);
+        return () => this.listeners.delete(listener);
+    }
+
+    notify(entry: LogEntry) {
+        if (!this.isActive) return;
+        this.listeners.forEach((listener) => listener(entry));
+    }
+
+    private attachNodeInterceptor() {
+        // 为log4js添加自定义appender
+        log4js.configure({
+            appenders: {
+                console: {
+                    type: "console",
+                    layout: {
+                        type: "pattern",
+                        pattern: "%[%d{yyyy-MM-dd hh:mm:ss.SSS} %-5p %c -%] %m",
+                    },
+                },
+                interceptor: {
+                    type: {
+                        configure: (() => {
+                            return (loggingEvent: any) => {
+                                if (!this.isActive) return;
+
+                                const entry: LogEntry = {
+                                    timestamp: new Date(loggingEvent.startTime).toISOString(),
+                                    level: loggingEvent.level.levelStr.toLowerCase() as any,
+                                    category: loggingEvent.categoryName,
+                                    message: loggingEvent.data.join(" "),
+                                    source: "main",
+                                };
+
+                                this.notify(entry);
+                            };
+                        }).bind(this),
+                    },
+                },
+            },
+            categories: {
+                default: {
+                    appenders: ["console", "interceptor"],
+                    level: DEV_MODE ? "debug" : "info",
+                },
+            },
+        });
+    }
+
+    private detachNodeInterceptor() {
+        // 恢复原始配置（移除interceptor）
+        log4js.configure({
+            appenders: {
+                console: {
+                    type: "console",
+                    layout: {
+                        type: "pattern",
+                        pattern: "%[%d{yyyy-MM-dd hh:mm:ss.SSS} %-5p %c -%] %m",
+                    },
+                },
+            },
+            categories: {
+                default: {
+                    appenders: ["console"],
+                    level: DEV_MODE ? "debug" : "info",
+                },
+            },
+        });
+    }
+
+    private attachBrowserInterceptor() {
+        // 保存原始console方法
+        this.originalConsole = {
+            debug: console.debug,
+            info: console.info,
+            warn: console.warn,
+            error: console.error,
+        };
+    }
+
+    private detachBrowserInterceptor() {
+        // 恢复原始console方法
+        if (this.originalConsole.debug) {
+            console.debug = this.originalConsole.debug;
+            console.info = this.originalConsole.info;
+            console.warn = this.originalConsole.warn;
+            console.error = this.originalConsole.error;
+        }
+    }
+}
+
+// 全局拦截器实例
+export const globalLogInterceptor = new LogInterceptor();
+
 // 安全序列化函数，处理循环引用和不可序列化对象
 function safeStringify(obj: unknown, maxDepth = 3): string {
     const seen = new WeakSet();
@@ -95,22 +230,49 @@ export class BrowserLogger {
         return `[${timestamp}] ${level.toUpperCase()} ${this.category} - ${processedArgs.join(" ")}`;
     }
 
+    private notifyInterceptor(level: string, ...args: unknown[]) {
+        if (globalLogInterceptor && globalLogInterceptor["isActive"]) {
+            const message = args
+                .map((arg) => {
+                    if (typeof arg === "object" && arg !== null) {
+                        return safeStringify(arg);
+                    }
+                    return String(arg);
+                })
+                .join(" ");
+
+            const entry: LogEntry = {
+                timestamp: new Date().toISOString(),
+                level: level as any,
+                category: this.category,
+                message,
+                source: "renderer",
+            };
+
+            globalLogInterceptor.notify(entry);
+        }
+    }
+
     debug(...args: unknown[]): void {
         if (this.level === "debug") {
             console.debug(this.formatMessage("debug", ...args));
+            this.notifyInterceptor("debug", ...args);
         }
     }
 
     info(...args: unknown[]): void {
         console.info(this.formatMessage("info", ...args));
+        this.notifyInterceptor("info", ...args);
     }
 
     warn(...args: unknown[]): void {
         console.warn(this.formatMessage("warn", ...args));
+        this.notifyInterceptor("warn", ...args);
     }
 
     error(...args: unknown[]): void {
         console.error(this.formatMessage("error", ...args));
+        this.notifyInterceptor("error", ...args);
     }
 }
 

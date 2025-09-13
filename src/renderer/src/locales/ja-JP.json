@@ -3,6 +3,20 @@
         "title": "倉廩図司",
         "folderList": "ディレクトリリスト"
     },
+    "logViewer": {
+        "title": "システムログコンソール",
+        "searchPlaceholder": "ログを検索...",
+        "allLevels": "すべてのレベル",
+        "debug": "デバッグ",
+        "info": "情報",
+        "warn": "警告",
+        "error": "エラー",
+        "clear": "クリア",
+        "export": "エクスポート",
+        "noLogs": "ログがありません",
+        "showing": "{filtered} / {total} 件のログを表示",
+        "autoScroll": "自動スクロール"
+    },
     "preference": {
         "settings": "設定",
         "tabs": {

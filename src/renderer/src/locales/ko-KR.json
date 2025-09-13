@@ -543,5 +543,28 @@
             "6h": "최근 6시간",
             "24h": "최근 24시간"
         }
+    },
+    "logViewer": {
+        "title": "로그 뷰어",
+        "levels": {
+            "all": "모든 레벨",
+            "error": "오류",
+            "warn": "경고",
+            "info": "정보",
+            "debug": "디버그"
+        },
+        "buttons": {
+            "clear": "지우기",
+            "export": "내보내기",
+            "close": "닫기"
+        },
+        "search": "로그 검색...",
+        "messages": {
+            "noLogs": "사용 가능한 로그가 없습니다",
+            "logsCleared": "로그가 지워졌습니다",
+            "logsExported": "로그가 {fileName}에 내보내졌습니다",
+            "exportFailed": "로그 내보내기 실패: {error}"
+        },
+        "dragInfo": "창을 이동하려면 드래그하세요"
     }
 }

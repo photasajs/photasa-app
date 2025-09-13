@@ -543,5 +543,28 @@
             "6h": "Son 6 saat",
             "24h": "Son 24 saat"
         }
+    },
+    "logViewer": {
+        "title": "Günlük Görüntüleyici",
+        "levels": {
+            "all": "Tüm seviyeler",
+            "error": "Hata",
+            "warn": "Uyarı",
+            "info": "Bilgi",
+            "debug": "Hata ayıklama"
+        },
+        "buttons": {
+            "clear": "Temizle",
+            "export": "Dışa aktar",
+            "close": "Kapat"
+        },
+        "search": "Günlüklerde ara...",
+        "messages": {
+            "noLogs": "Mevcut günlük yok",
+            "logsCleared": "Günlükler temizlendi",
+            "logsExported": "Günlükler {fileName} dosyasına aktarıldı",
+            "exportFailed": "Günlük dışa aktarma başarısız: {error}"
+        },
+        "dragInfo": "Pencereyi taşımak için sürükleyin"
     }
 }

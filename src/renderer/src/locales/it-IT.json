@@ -540,5 +540,28 @@
             "6h": "Ultime 6 ore",
             "24h": "Ultime 24 ore"
         }
+    },
+    "logViewer": {
+        "title": "Visualizzatore Log",
+        "levels": {
+            "all": "Tutti i livelli",
+            "error": "Errore",
+            "warn": "Avviso",
+            "info": "Informazioni",
+            "debug": "Debug"
+        },
+        "buttons": {
+            "clear": "Cancella",
+            "export": "Esporta",
+            "close": "Chiudi"
+        },
+        "search": "Cerca nei log...",
+        "messages": {
+            "noLogs": "Nessun log disponibile",
+            "logsCleared": "Log cancellati",
+            "logsExported": "Log esportati in {fileName}",
+            "exportFailed": "Esportazione log fallita: {error}"
+        },
+        "dragInfo": "Trascina per spostare la finestra"
     }
 }
