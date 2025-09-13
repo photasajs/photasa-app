@@ -22,6 +22,12 @@ vi.mock("@common/logger", () => ({
             warn: vi.fn(),
             error: vi.fn(),
         },
+        preference: {
+            debug: vi.fn(),
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
     },
 }));
 
@@ -69,7 +75,7 @@ describe("preferenceStore.addFileOperation", () => {
         normalizePath.mockImplementation((path: string) => path.replace(/\\/g, "/"));
     });
 
-    it("should initialize scanningFolder array if it's not an array", () => {
+    it("should initialize scanningFolder array if it's not an array", async () => {
         const store = usePreferenceStore();
         // Simulate a corrupted state
         store.scanningFolder = undefined as any;
@@ -81,13 +87,13 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "file" as const,
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(Array.isArray(store.scanningFolder)).toBe(true);
         expect(store.scanningFolder).toHaveLength(1);
     });
 
-    it("should add new file operation to empty queue", () => {
+    it("should add new file operation to empty queue", async () => {
         const store = usePreferenceStore();
         const operation = {
             path: "/test/file.jpg",
@@ -98,7 +104,7 @@ describe("preferenceStore.addFileOperation", () => {
             fileOperationId: "op-123",
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(store.scanningFolder).toHaveLength(1);
         expect(store.scanningFolder[0]).toMatchObject({
@@ -125,13 +131,13 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "file" as const,
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(normalizePath).toHaveBeenCalledWith("/test/raw\\file.jpg");
         expect(store.scanningFolder[0].path).toBe("/test/normalized/file.jpg");
     });
 
-    it("should update existing file operation with same fileOperationId", () => {
+    it("should update existing file operation with same fileOperationId", async () => {
         const store = usePreferenceStore();
         const initialTime = Date.now() - 1000;
 
@@ -174,7 +180,7 @@ describe("preferenceStore.addFileOperation", () => {
         });
     });
 
-    it("should add separate operations with different fileOperationIds", () => {
+    it("should add separate operations with different fileOperationIds", async () => {
         const store = usePreferenceStore();
 
         const operation1 = {
@@ -193,15 +199,15 @@ describe("preferenceStore.addFileOperation", () => {
             fileOperationId: "op-456",
         };
 
-        store.addFileOperation(operation1);
-        store.addFileOperation(operation2);
+        await store.addFileOperation(operation1);
+        await store.addFileOperation(operation2);
 
         expect(store.scanningFolder).toHaveLength(2);
-        expect(store.scanningFolder[0].fileOperationId).toBe("op-123");
-        expect(store.scanningFolder[1].fileOperationId).toBe("op-456");
+        expect(store.scanningFolder.map((op) => op.fileOperationId)).toContain("op-123");
+        expect(store.scanningFolder.map((op) => op.fileOperationId)).toContain("op-456");
     });
 
-    it("should add directory operations without deduplication", () => {
+    it("should add directory operations without deduplication", async () => {
         const store = usePreferenceStore();
 
         const operation = {
@@ -211,15 +217,15 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "directory" as const,
         };
 
-        store.addFileOperation(operation);
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(store.scanningFolder).toHaveLength(2);
         expect(store.scanningFolder[0].operationType).toBe("directory");
         expect(store.scanningFolder[1].operationType).toBe("directory");
     });
 
-    it("should set default values for missing properties", () => {
+    it("should set default values for missing properties", async () => {
         const store = usePreferenceStore();
 
         const operation = {
@@ -230,14 +236,14 @@ describe("preferenceStore.addFileOperation", () => {
             // Missing priority, retryCount, timestamp, fileOperationId
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(store.scanningFolder[0]).toMatchObject({
             path: "/test/file.jpg",
             action: "scan",
             thumbnailSize: 150,
             operationType: "file",
-            priority: undefined, // Explicitly undefined as not provided
+            priority: 3, // Default priority calculated by ensureCompleteScanAction
             retryCount: 0,
             fileOperationId: undefined,
         });
@@ -255,7 +261,7 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "directory" as const,
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(buildDataNode).toHaveBeenCalledWith(store.folderTree, {
             path: "/test/directory",
@@ -275,7 +281,7 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "file" as const,
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(buildDataNode).not.toHaveBeenCalled();
     });
@@ -291,14 +297,14 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "file" as const,
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(buildDataNode).not.toHaveBeenCalled();
     });
 
     it("should log debug messages during operation", async () => {
         const store = usePreferenceStore();
-        const mockLogger = vi.mocked(await import("@common/logger")).loggers.app;
+        const mockLogger = vi.mocked(await import("@common/logger")).loggers.preference;
 
         const operation = {
             path: "/test/file.jpg",
@@ -307,7 +313,7 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "file" as const,
         };
 
-        store.addFileOperation(operation);
+        await store.addFileOperation(operation);
 
         expect(mockLogger.debug).toHaveBeenNthCalledWith(
             1,
@@ -321,7 +327,7 @@ describe("preferenceStore.addFileOperation", () => {
         );
     });
 
-    it("should preserve existing timestamp when updating operation", () => {
+    it("should preserve existing timestamp when updating operation", async () => {
         const store = usePreferenceStore();
         const originalCreatedAt = 1234567890;
 

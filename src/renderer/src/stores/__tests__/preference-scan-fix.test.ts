@@ -15,6 +15,18 @@ vi.mock("@renderer/utils/api", () => ({
     checkPhotasaConfig: vi.fn(),
 }));
 
+// Mock logger
+vi.mock("@common/logger", () => ({
+    loggers: {
+        preference: {
+            debug: vi.fn(),
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
+    },
+}));
+
 // Mock window.api
 Object.defineProperty(window, "api", {
     value: {
@@ -344,7 +356,7 @@ describe("preference-scan-fix", () => {
     });
 
     describe("addFileOperation 文件夹树更新测试", () => {
-        it("应该为文件操作更新父目录的文件夹树", () => {
+        it("应该为文件操作更新父目录的文件夹树", async () => {
             const filePath = "/test/photos/image.jpg";
 
             // 先设置根路径，确保 buildDataNode 能工作
@@ -358,7 +370,7 @@ describe("preference-scan-fix", () => {
             ];
 
             // 添加文件操作
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: filePath,
                 action: "scan",
                 thumbnailSize: 150,
@@ -387,7 +399,7 @@ describe("preference-scan-fix", () => {
             );
         });
 
-        it("应该为目录操作正常更新文件夹树", () => {
+        it("应该为目录操作正常更新文件夹树", async () => {
             const dirPath = "/test/new-folder";
 
             // 先设置根路径
@@ -401,7 +413,7 @@ describe("preference-scan-fix", () => {
             ];
 
             // 添加目录操作
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: dirPath,
                 action: "scan",
                 thumbnailSize: 150,
@@ -430,10 +442,10 @@ describe("preference-scan-fix", () => {
             );
         });
 
-        it("应该处理根目录文件，跳过树更新", () => {
+        it("应该处理根目录文件，跳过树更新", async () => {
             const rootFilePath = "/image.jpg";
 
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: rootFilePath,
                 action: "scan",
                 thumbnailSize: 150,
@@ -452,10 +464,10 @@ describe("preference-scan-fix", () => {
             expect(store.folderTree).toHaveLength(0);
         });
 
-        it("应该处理文件路径提取错误，不中断操作", () => {
+        it("应该处理文件路径提取错误，不中断操作", async () => {
             const invalidPath = "";
 
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: invalidPath,
                 action: "scan",
                 thumbnailSize: 150,
@@ -471,11 +483,11 @@ describe("preference-scan-fix", () => {
             expect(store.scanningFolder[0].path).toBe(invalidPath);
         });
 
-        it("应该处理路径标准化", () => {
+        it("应该处理路径标准化", async () => {
             const windowsStylePath = "C:\\Users\\test\\photos\\image.jpg";
             // normalizePath 在 mock 中会被调用，这里我们假设它能正确处理
 
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: windowsStylePath,
                 action: "scan",
                 thumbnailSize: 150,
