@@ -14,7 +14,7 @@ import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-type
 import createWorker from "../thumbnail/thumbnail-worker?nodeWorker";
 import type { WorkerOptions } from "worker_threads";
 
-const logger = loggers.worker;
+const logger = loggers.scan;
 
 const port = parentPort;
 if (!port) {
@@ -75,13 +75,19 @@ function getWorkerPool(): WorkerPool<ThumbnailRequest, ThumbnailResponse> {
  */
 function postMessage(message): void {
     // Only log message type and requestId to avoid logging large objects
-    logger.debug(`Worker posting message: type=${message.type}, requestId=${message.requestId}`);
+    workerLog(
+        "debug",
+        "scan-worker",
+        `Posting message: type=${message.type}, requestId=${message.requestId}`,
+    );
     port?.postMessage(message);
 }
 
 export async function execute(requestId: string, scan: ScanAction): Promise<void> {
-    logger.debug(
-        `Worker executing: requestId=${requestId}, path=${scan.path}, operationType=${scan.operationType}`,
+    workerLog(
+        "debug",
+        "scan-worker",
+        `Executing: requestId=${requestId}, path=${scan.path}, operationType=${scan.operationType}`,
     );
 
     try {
@@ -92,7 +98,7 @@ export async function execute(requestId: string, scan: ScanAction): Promise<void
             executeDirectoryScan(requestId, scan);
         }
     } catch (error) {
-        logger.error("Error in execute:", error);
+        workerLog("error", "scan-worker", `Error in execute: ${error}`);
         postMessage({
             type: "error",
             requestId,
@@ -105,13 +111,15 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
     let processed = 0;
     const foundPaths: string[] = [];
 
-    logger.info(
-        `[executeDirectoryScan] 开始扫描目录: ${scan.path}, operationType: ${scan.operationType}`,
+    workerLog(
+        "info",
+        "scan-worker",
+        `executeDirectoryScan: 开始扫描目录: ${scan.path}, operationType: ${scan.operationType}`,
     );
 
     // 添加目录存在性检查
     if (!fs.existsSync(scan.path)) {
-        logger.error(`[executeDirectoryScan] 目录不存在: ${scan.path}`);
+        workerLog("error", "scan-worker", `executeDirectoryScan: 目录不存在: ${scan.path}`);
         postMessage({
             type: "error",
             requestId,
@@ -146,13 +154,19 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
                                 total: processedCount + pendingCount,
                             };
 
-                            logger.debug(
+                            workerLog(
+                                "debug",
+                                "scan-worker",
                                 `Cache stats from file: processed=${processedCount}, total=${processedCount + pendingCount}`,
                             );
                         }
                     }
                 } catch (error) {
-                    logger.debug("Could not read cache file for progress:", error);
+                    workerLog(
+                        "debug",
+                        "scan-worker",
+                        `Could not read cache file for progress: ${error}`,
+                    );
                     // 使用基础计数器作为后备
                     progressData = { processed, total: 0 };
                 }
@@ -167,7 +181,11 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
             });
         },
         error: (error) => {
-            logger.error(`[executeDirectoryScan] 增量缓存目录扫描失败: ${scan.path}`, error);
+            workerLog(
+                "error",
+                "scan-worker",
+                `executeDirectoryScan: 增量缓存目录扫描失败: ${scan.path}, error: ${error}`,
+            );
             postMessage({
                 type: "error",
                 requestId,
@@ -175,8 +193,10 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
             });
         },
         complete: () => {
-            logger.info(
-                `[executeDirectoryScan] 增量缓存目录扫描完成: ${scan.path}, 总共处理 ${processed} 个文件`,
+            workerLog(
+                "info",
+                "scan-worker",
+                `executeDirectoryScan: 增量缓存目录扫描完成: ${scan.path}, 总共处理 ${processed} 个文件`,
             );
             postMessage({
                 type: "complete",
@@ -190,7 +210,7 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
 
 async function executeFileOperation(requestId: string, scan: ScanAction): Promise<void> {
     const filePath = scan.path;
-    logger.debug(`Executing file operation: ${scan.action} for ${filePath}`);
+    workerLog("debug", "scan-worker", `Executing file operation: ${scan.action} for ${filePath}`);
 
     try {
         const isMediaFile = isImage(filePath) || isVideo(filePath);
@@ -214,7 +234,7 @@ async function executeFileOperation(requestId: string, scan: ScanAction): Promis
             action: { path: filePath, isDirectory: false },
         });
     } catch (error) {
-        logger.error("Error processing media file:", error);
+        workerLog("error", "scan-worker", `Error processing media file: ${error}`);
         postMessage({
             type: "error",
             requestId,
@@ -292,7 +312,7 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
             break;
 
         default:
-            logger.warn(`Unknown scan action: ${scan.action} for ${filePath}`);
+            workerLog("warn", "scan-worker", `Unknown scan action: ${scan.action} for ${filePath}`);
     }
 }
 
@@ -311,8 +331,10 @@ port.on("message", async (message: any) => {
     let parsedResult;
     try {
         parsedResult = message;
-        logger.debug(
-            `Worker received message: action=${parsedResult.action}, requestId=${parsedResult.requestId || "N/A"}`,
+        workerLog(
+            "debug",
+            "scan-worker",
+            `Received message: action=${parsedResult.action}, requestId=${parsedResult.requestId || "N/A"}`,
         );
         switch (parsedResult.action) {
             case "scan":
@@ -324,11 +346,11 @@ port.on("message", async (message: any) => {
                 await execute(parsedResult.requestId, parsedResult.scan);
                 return;
             default:
-                logger.error("Unknown action:", parsedResult.action);
+                workerLog("error", "scan-worker", `Unknown action: ${parsedResult.action}`);
                 throw new Error("IllegalAction");
         }
     } catch (error) {
-        logger.error("Error processing message:", error);
+        workerLog("error", "scan-worker", `Error processing message: ${error}`);
         postMessage({
             type: "error",
             requestId: parsedResult?.requestId,

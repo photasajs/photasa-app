@@ -2,10 +2,10 @@ import { loggers } from "@common/logger";
 import type { BrowserWindow, IpcMain } from "electron";
 import { shell } from "electron";
 
+const logger = loggers.shell;
 export default class ShellService {
     ipc: IpcMain;
     mainWindow: BrowserWindow;
-    logger = loggers.shell;
 
     constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
         this.ipc = ipcMain;
@@ -17,7 +17,7 @@ export default class ShellService {
     private init(): void {
         // Open in finder
         this.ipc.on("picasa:open-in-finder", (_, args) => {
-            this.logger.info(`picasa:open-in-finder: path=${args.path}`);
+            logger.info(`picasa:open-in-finder: path=${args.path}`);
             shell.showItemInFolder(args.path);
         });
 

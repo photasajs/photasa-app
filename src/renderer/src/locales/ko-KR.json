@@ -556,6 +556,7 @@
         "buttons": {
             "clear": "지우기",
             "export": "내보내기",
+            "opacity": "투명도",
             "close": "닫기"
         },
         "search": "로그 검색...",

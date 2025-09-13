@@ -13,9 +13,7 @@
         "error": "Error",
         "clear": "Limpiar",
         "export": "Exportar",
-        "noLogs": "No hay logs disponibles",
-        "showing": "Mostrando {filtered} / {total} logs",
-        "autoScroll": "Desplazamiento automático"
+        "showing": "Mostrando {filtered} / {total} logs"
     },
     "preference": {
         "settings": "Configuración",

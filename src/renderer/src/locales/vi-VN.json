@@ -556,6 +556,7 @@
         "buttons": {
             "clear": "Xóa",
             "export": "Xuất",
+            "opacity": "Độ mờ",
             "close": "Đóng"
         },
         "search": "Tìm kiếm log...",
