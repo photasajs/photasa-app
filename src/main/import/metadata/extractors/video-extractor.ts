@@ -155,7 +155,7 @@ export async function extractVideoMetadata(
  */
 export function isVideoFile(filePath: string): boolean {
     const ext = path.extname(filePath).toLowerCase();
-    return [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".m4v", ".flv", ".webm"].includes(ext);
+    return [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".m4v", ".flv", ".webm", ".3gp"].includes(ext);
 }
 
 /**
@@ -163,7 +163,7 @@ export function isVideoFile(filePath: string): boolean {
  */
 export function isSupportedVideoFile(filePath: string): boolean {
     const ext = path.extname(filePath).toLowerCase();
-    return [".mp4", ".mov", ".avi", ".mkv", ".wmv"].includes(ext);
+    return [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".3gp"].includes(ext);
 }
 
 /**

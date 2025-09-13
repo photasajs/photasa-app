@@ -53,6 +53,13 @@ describe("File Groups Detector", () => {
             expect(areFilesRelated("IMG_001.cr2", "IMG_001.jpg")).toBe(true);
             expect(areFilesRelated("DSC_0001.arw", "DSC_0001.xmp")).toBe(true);
             expect(areFilesRelated("video.mp4", "video.srt")).toBe(true);
+            expect(areFilesRelated("mobile.3gp", "mobile.srt")).toBe(true);
+        });
+
+        it("should recognize 3gp video files as high priority", () => {
+            // 3gp files should have the same priority as other video formats
+            expect(areFilesRelated("mobile-video.3gp", "mobile-video.thm")).toBe(true);
+            expect(areFilesRelated("phone-recording.3GP", "phone-recording.txt")).toBe(true);
         });
     });
 

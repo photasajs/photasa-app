@@ -9,6 +9,7 @@ const BASIC_RELATED_EXTENSIONS: Record<string, string[]> = {
     mp4: [".thm", ".lrv", ".srt"],
     mov: [".thm", ".lrv"],
     avi: [".thm", ".idx"],
+    "3gp": [".thm", ".srt"],
     mts: [".modd"],
     m2ts: [".modd"],
 };
@@ -21,6 +22,7 @@ const ENHANCED_RELATED_EXTENSIONS: Record<string, string[]> = {
     mp4: [".thm", ".lrv", ".srt", ".sub", ".ass", ".vtt"], // GoPro, DJI等
     mov: [".thm", ".lrv", ".xml", ".fcpxml"], // 苹果设备, Final Cut Pro
     avi: [".thm", ".idx", ".sub"], // 传统摄像机
+    "3gp": [".thm", ".srt", ".sub", ".txt"], // 移动设备视频
     mts: [".modd", ".moff"], // Sony AVCHD
     m2ts: [".modd", ".moff", ".cpi", ".bup"], // Panasonic AVCHD
     mkv: [".srt", ".sub", ".ass", ".vtt"], // Matroska容器
@@ -58,6 +60,7 @@ const FILE_PRIORITY: Record<string, number> = {
     ".avi": 1,
     ".mkv": 1,
     ".wmv": 1,
+    ".3gp": 1,
     ".mts": 1,
     ".m2ts": 1,
     ".cr2": 2,
