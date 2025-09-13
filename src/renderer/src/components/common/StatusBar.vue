@@ -25,13 +25,14 @@ const statusText = computed(() =>
 // 检测是否正在扫描
 const isScanning = computed(() => {
     const scanningText = t("status.scanning");
-    const progressText = t("status.@d#/gi");
+    // 使用正则表达式匹配进度文本格式（如 "5/100"）
+    const progressPattern = /\d+\/\d+/;
 
     return (
         processingFile.value?.includes(scanningText) ||
-        processingFile.value?.includes(progressText) ||
+        (processingFile.value && progressPattern.test(processingFile.value)) ||
         statusBarStore.currentTask?.includes(scanningText) ||
-        statusBarStore.currentTask?.includes(progressText) ||
+        (statusBarStore.currentTask && progressPattern.test(statusBarStore.currentTask)) ||
         statusBarStore.status === "scanning"
     );
 });
