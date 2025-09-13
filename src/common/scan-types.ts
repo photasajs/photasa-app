@@ -32,19 +32,24 @@ export interface FileOperation {
 }
 
 /**
- * Enhanced ScanAction interface with support for file operations
- * @description Unified interface for both directory scans and file operations
+ * Enhanced ScanAction interface with support for file operations and priority sorting
+ * @description Unified interface for both directory scans and file operations with priority-based sorting
  */
 export interface ScanAction {
     path: string; // 扫描路径
     action: "scan" | "rescan" | "current"; // 扫描动作
     thumbnailSize: number; // 缩略图大小
-    // New fields for unified processing
+
+    // Priority sorting fields (RFC 0018)
+    priority?: number; // 优先级（数值越小优先级越高）
+    timestamp?: number; // 时间戳（用于相同优先级的排序）
+    source?: "user" | "auto"; // 来源：用户手动添加或自动发现
+
+    // Unified processing fields
     operationType?: "directory" | "file";
-    priority?: number;
     retryCount?: number;
-    createdAt?: number;
     fileOperationId?: string; // Link to FileOperation if applicable
+
     // Progress tracking for incremental cache
     progress?: {
         processed: number;
@@ -66,12 +71,17 @@ export interface FileOperationInput {
     thumbnailSize: number;
     /** Type of operation - directory or file */
     operationType: "directory" | "file";
-    /** Optional priority for processing order (lower = higher priority) */
+
+    // Priority sorting fields (RFC 0018) - optional for backward compatibility
+    /** Priority for processing order (lower = higher priority) */
     priority?: number;
+    /** Timestamp for sorting within same priority */
+    timestamp?: number;
+    /** Source of the operation */
+    source?: "user" | "auto";
+
     /** Optional retry count for failed operations */
     retryCount?: number;
-    /** Optional creation timestamp */
-    createdAt?: number;
     /** Optional link to original FileOperation ID */
     fileOperationId?: string;
 }

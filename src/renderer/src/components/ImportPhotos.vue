@@ -740,7 +740,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
         <template #configuration="{ stepData, setStepData }">
             <!-- Initialize step data if not present -->
             {{ !stepData ? initializeConfigurationData(setStepData) : null }}
-            <div class="h-full overflow-y-auto space-y-6">
+            <div class="h-full overflow-y-auto scrollbar-theme space-y-6">
                 <!-- Source directories -->
                 <div>
                     <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
@@ -1052,7 +1052,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                     <!-- Regular list for smaller file lists (≤100 files) -->
                     <div
                         v-else
-                        class="h-full overflow-y-auto border border-[var(--color-border)] rounded-lg"
+                        class="h-full overflow-y-auto scrollbar-theme-thin border border-[var(--color-border)] rounded-lg"
                     >
                         <div
                             v-for="group in stepData?.files || []"

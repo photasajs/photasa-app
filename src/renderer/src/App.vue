@@ -358,8 +358,9 @@ window.api?.onScanQueueAdd((operations: any[]) => {
                 | "file"
                 | "directory",
             priority: operation.priority,
+            timestamp: operation.timestamp,
+            source: "auto" as const, // File operations are typically auto-generated
             retryCount: operation.retryCount,
-            createdAt: operation.timestamp,
             fileOperationId: operation.id,
         };
 

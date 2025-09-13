@@ -365,7 +365,7 @@ describe("preference-scan-fix", () => {
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-file-1",
             });
 
@@ -408,7 +408,7 @@ describe("preference-scan-fix", () => {
                 operationType: "directory",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-dir-1",
             });
 
@@ -440,7 +440,7 @@ describe("preference-scan-fix", () => {
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-root-file",
             });
 
@@ -462,7 +462,7 @@ describe("preference-scan-fix", () => {
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-invalid-file",
             });
 
@@ -482,7 +482,7 @@ describe("preference-scan-fix", () => {
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-windows-path",
             });
 

@@ -361,6 +361,7 @@ export const loggers: Record<string, PhotasaLogger> = {
     config: getLogger("config"),
     scan: getLogger("scan"),
     thumbnail: getLogger("thumbnail"),
+    preference: getLogger("preference"),
     worker: getLogger("worker"),
     watch: getLogger("watch"),
     window: getLogger("window"),

@@ -21,7 +21,7 @@ import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/a
 import { toDirName } from "@renderer/utils/api-path";
 import { loggers } from "@common/logger";
 
-const logger = loggers.app;
+const logger = loggers.preference;
 
 export type PreferenceState = {
     paths: string[]; // Paths to monitor
@@ -98,8 +98,24 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths = this.paths.sort();
             }
         },
-        async addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
-            logger.debug(`Adding scan folder: ${folder}, action: ${action}`);
+        async addScanFolder(
+            folder: string,
+            action: "scan" | "rescan" | "current",
+            source: "user" | "auto" = "user",
+        ) {
+            logger.debug(
+                `[addScanFolder] Adding scan folder: ${folder}, action: ${action}, source: ${source}`,
+            );
+
+            // 导入优先级排序工具
+            const {
+                createScanAction,
+                sortScanningFolders,
+                updateScanActionPriority,
+                shouldUpdateScanAction,
+                debugPrintScanningFolders,
+            } = await import("@renderer/utils/scan-priority");
+
             if (!Array.isArray(this.scanningFolder)) {
                 logger.debug("Initializing scanningFolder array");
                 this.scanningFolder = [];
@@ -110,15 +126,27 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Check if the folder is already in the scanning queue
             const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
+
             if (existingIndex >= 0) {
-                // 只有在明确要求 rescan 且当前不是 rescan 时才更新
-                if (action === "rescan" && this.scanningFolder[existingIndex].action !== "rescan") {
-                    logger.debug("Updating existing folder to rescan:", folder);
-                    this.scanningFolder[existingIndex].action = "rescan";
+                const existing = this.scanningFolder[existingIndex];
+
+                // 检查是否应该更新现有项（基于优先级）
+                if (shouldUpdateScanAction(existing, action, source)) {
+                    logger.debug(`Updating existing folder with higher priority: ${folder}`);
+                    logger.debug(
+                        `Previous: ${existing.action}(${existing.source}) -> New: ${action}(${source})`,
+                    );
+
+                    this.scanningFolder[existingIndex] = updateScanActionPriority(
+                        existing,
+                        action,
+                        source,
+                    );
+                    this.scanningFolder = sortScanningFolders(this.scanningFolder);
                 } else {
                     logger.debug(
-                        "Folder already in scanning queue with action:",
-                        this.scanningFolder[existingIndex].action,
+                        `Folder already in scanning queue with equal or higher priority:`,
+                        `${existing.action}(${existing.source}) >= ${action}(${source})`,
                     );
                 }
                 return;
@@ -133,6 +161,7 @@ export const usePreferenceStore = defineStore("preference", {
                     if (configCheck.hasConfig) {
                         // 仍然更新文件夹树，但不添加到扫描队列
                         this.updateFolderTree(folder);
+                        logger.debug(`Folder already scanned, skipping: ${folder}`);
                         return;
                     }
                 } catch (error) {
@@ -141,18 +170,59 @@ export const usePreferenceStore = defineStore("preference", {
                 }
             }
 
+            // 创建新的扫描动作（带优先级信息）
+            const newScanAction = createScanAction(
+                {
+                    path: folder,
+                    action,
+                    thumbnailSize: this.thumbnailSize,
+                    operationType: "directory", // Default to directory for legacy compatibility
+                },
+                source,
+            );
+
             // Add the new folder to scan
             logger.debug("Adding new folder to scan:", folder);
-            this.scanningFolder.push({
-                path: folder,
-                action,
-                thumbnailSize: this.thumbnailSize,
-                operationType: "directory", // Default to directory for legacy compatibility
-                createdAt: Date.now(), // Add timestamp for proper sorting
-            });
+            this.scanningFolder.push(newScanAction);
+
+            // 排序所有扫描文件夹
+            this.scanningFolder = sortScanningFolders(this.scanningFolder);
+
+            // 更新文件夹树
             this.updateFolderTree(folder);
+
+            // Debug: show current queue state
+            debugPrintScanningFolders(this.scanningFolder, "updated_scanning_queue");
         },
-        addFileOperation(operation: FileOperationInput) {
+
+        /**
+         * 批量添加扫描文件夹
+         * RFC 0018: 支持优先级排序的批量添加
+         */
+        async addFoldersForScan(
+            folders: string[],
+            action: "scan" | "rescan" | "current" = "scan",
+            source: "user" | "auto" = "user",
+        ) {
+            logger.debug(
+                `[addFoldersForScan] Batch adding ${folders.length} folders with action: ${action}, source: ${source}`,
+            );
+
+            // 导入优先级排序工具
+            const { debugPrintScanningFolders } = await import("@renderer/utils/scan-priority");
+
+            // 批量添加所有文件夹
+            for (const folder of folders) {
+                await this.addScanFolder(folder, action, source);
+            }
+
+            // Final debug log: show complete queue state
+            debugPrintScanningFolders(
+                this.scanningFolder,
+                `batch_add_completed_${folders.length}_folders`,
+            );
+        },
+        async addFileOperation(operation: FileOperationInput) {
             logger.debug("Adding file operation to queue:", operation);
 
             if (!Array.isArray(this.scanningFolder)) {
@@ -187,16 +257,28 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Add new operation to queue
             logger.debug("Adding new file operation to queue:", normalizedPath);
-            this.scanningFolder.push({
+
+            // 导入优先级排序工具以确保完整的字段
+            const { ensureCompleteScanAction } = await import("@renderer/utils/scan-priority");
+
+            // 创建扫描动作并确保所有字段完整
+            const scanAction = ensureCompleteScanAction({
                 path: normalizedPath,
                 action: operation.action,
                 thumbnailSize: operation.thumbnailSize,
                 operationType: operation.operationType,
                 priority: operation.priority,
+                timestamp: operation.timestamp,
+                source: operation.source,
                 retryCount: operation.retryCount || 0,
-                createdAt: operation.createdAt || Date.now(),
                 fileOperationId: operation.fileOperationId,
             });
+
+            this.scanningFolder.push(scanAction);
+
+            // 排序扫描队列
+            const { sortScanningFolders } = await import("@renderer/utils/scan-priority");
+            this.scanningFolder = sortScanningFolders(this.scanningFolder);
 
             // Update folder tree for both file and directory operations
             if (operation.operationType === "directory") {

@@ -110,7 +110,7 @@ describe("preferenceStore.addFileOperation", () => {
             retryCount: 0,
             fileOperationId: "op-123",
         });
-        expect(store.scanningFolder[0].createdAt).toBeGreaterThan(0);
+        expect(store.scanningFolder[0].timestamp).toBeGreaterThan(0);
     });
 
     it("should normalize file paths", async () => {
@@ -144,7 +144,7 @@ describe("preferenceStore.addFileOperation", () => {
             operationType: "file",
             priority: 3,
             retryCount: 0,
-            createdAt: initialTime,
+            timestamp: initialTime,
             fileOperationId: "op-123",
         });
 
@@ -170,7 +170,7 @@ describe("preferenceStore.addFileOperation", () => {
             priority: 1,
             retryCount: 2,
             fileOperationId: "op-123",
-            createdAt: initialTime, // Should preserve original createdAt
+            timestamp: initialTime, // Should preserve original timestamp
         });
     });
 
@@ -227,7 +227,7 @@ describe("preferenceStore.addFileOperation", () => {
             action: "scan" as const,
             thumbnailSize: 150,
             operationType: "file" as const,
-            // Missing priority, retryCount, createdAt, fileOperationId
+            // Missing priority, retryCount, timestamp, fileOperationId
         };
 
         store.addFileOperation(operation);
@@ -241,7 +241,7 @@ describe("preferenceStore.addFileOperation", () => {
             retryCount: 0,
             fileOperationId: undefined,
         });
-        expect(store.scanningFolder[0].createdAt).toBeGreaterThan(0);
+        expect(store.scanningFolder[0].timestamp).toBeGreaterThan(0);
     });
 
     it("should call updateFolderTree for directory operations", async () => {
@@ -321,7 +321,7 @@ describe("preferenceStore.addFileOperation", () => {
         );
     });
 
-    it("should preserve existing createdAt when updating operation", () => {
+    it("should preserve existing timestamp when updating operation", () => {
         const store = usePreferenceStore();
         const originalCreatedAt = 1234567890;
 
@@ -331,7 +331,7 @@ describe("preferenceStore.addFileOperation", () => {
             thumbnailSize: 150,
             operationType: "file",
             retryCount: 0,
-            createdAt: originalCreatedAt,
+            timestamp: originalCreatedAt,
             fileOperationId: "op-123",
         });
 
@@ -340,12 +340,12 @@ describe("preferenceStore.addFileOperation", () => {
             action: "rescan" as const,
             thumbnailSize: 200,
             operationType: "file" as const,
-            // Don't include createdAt - it should preserve existing value
+            // Don't include timestamp - it should preserve existing value
             fileOperationId: "op-123",
         };
 
         store.addFileOperation(updateOperation);
 
-        expect(store.scanningFolder[0].createdAt).toBe(originalCreatedAt);
+        expect(store.scanningFolder[0].timestamp).toBe(originalCreatedAt);
     });
 });
