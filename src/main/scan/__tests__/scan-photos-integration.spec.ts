@@ -3,6 +3,10 @@ import { scanPhotos, extendedCleanup } from "../scan-photos";
 // import { ScanStrategy } from "../folder-cache-manager";
 import type { ScanAction } from "@common/scan-types";
 import type { PhotasaLogger } from "@common/logger";
+import fs from "fs-extra";
+
+// Mock fs-extra for integration tests
+vi.mock("fs-extra");
 
 // Integration test for RFC 0007 complete implementation
 describe("RFC 0007 Integration Tests", () => {
@@ -16,6 +20,13 @@ describe("RFC 0007 Integration Tests", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
+        // Mock fs.existsSync to return true (files exist)
+        (fs.existsSync as any).mockReturnValue(true);
+        // Mock fs.statSync to return directory stats
+        (fs.statSync as any).mockReturnValue({
+            isFile: () => false,
+            isDirectory: () => true,
+        });
     });
 
     afterEach(() => {
@@ -66,6 +77,12 @@ describe("RFC 0007 Integration Tests", () => {
         });
 
         it("应该处理文件扫描", async () => {
+            // 为这个测试特别设置文件模拟
+            (fs.statSync as any).mockReturnValue({
+                isFile: () => true,
+                isDirectory: () => false,
+            });
+
             const scanAction: ScanAction = {
                 path: "/test/photo.jpg",
                 action: "scan",

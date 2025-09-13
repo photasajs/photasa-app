@@ -162,16 +162,20 @@ export function validateScanParams(scan: ScanAction): { isValid: boolean; error?
     }
 
     // 如果operationType明确指定，验证路径类型是否匹配
-    if (scan.operationType === "file") {
-        const stats = fs.statSync(scan.path);
-        if (!stats.isFile()) {
-            return { isValid: false, error: `期望文件但得到目录: ${scan.path}` };
+    try {
+        if (scan.operationType === "file") {
+            const stats = fs.statSync(scan.path);
+            if (!stats.isFile()) {
+                return { isValid: false, error: `期望文件但得到目录: ${scan.path}` };
+            }
+        } else if (scan.operationType === "directory") {
+            const stats = fs.statSync(scan.path);
+            if (!stats.isDirectory()) {
+                return { isValid: false, error: `期望目录但得到文件: ${scan.path}` };
+            }
         }
-    } else if (scan.operationType === "directory") {
-        const stats = fs.statSync(scan.path);
-        if (!stats.isDirectory()) {
-            return { isValid: false, error: `期望目录但得到文件: ${scan.path}` };
-        }
+    } catch (error) {
+        return { isValid: false, error: `路径不存在或无法访问: ${scan.path}` };
     }
 
     return { isValid: true };
