@@ -2,6 +2,7 @@ import klaw from "klaw";
 import { Observable, Subscriber, concatMap } from "rxjs";
 import isImage from "is-image";
 import isVideo from "is-video";
+import fs from "fs-extra";
 import { shouldIgnorePhotasaPath } from "@common/utils";
 import { buildThumbnailPath, isHiddenFile } from "@shared/path-util";
 import type { ScanAction, PhotoFileRequest } from "@common/scan-types";
@@ -62,8 +63,19 @@ function getWorkerPool(logger: PhotasaLogger): WorkerPool<ThumbnailRequest, Thum
  */
 export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileRequest> {
     return new Observable<PhotoFileRequest>((subscriber: Subscriber<PhotoFileRequest>) => {
+        // 首先检查路径是否存在
+        if (!fs.existsSync(source.path)) {
+            subscriber.error(new Error(`Path does not exist: ${source.path}`));
+            return;
+        }
+
+        // 检查路径类型：文件还是目录
+        const stats = fs.statSync(source.path);
+        const isDirectory = stats.isDirectory();
+        const isFile = stats.isFile();
+
         // Handle single file scanning (enhanced functionality for unified queue)
-        if (source.operationType === "file") {
+        if (source.operationType === "file" || (isFile && source.operationType !== "directory")) {
             const isVideoFile = isVideo(source.path);
             const isImageFile = isImage(source.path);
 
@@ -83,7 +95,12 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
             return;
         }
 
-        // Directory scanning (existing logic with error handling)
+        // Directory scanning - 确保路径是目录
+        if (!isDirectory) {
+            subscriber.error(new Error(`Expected directory but got file: ${source.path}`));
+            return;
+        }
+
         const option = {
             depthLimit: shouldScanOneLevel(source.action) ? 0 : -1,
             filter: (item: string): boolean => {

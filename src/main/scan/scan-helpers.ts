@@ -156,6 +156,24 @@ export function validateScanParams(scan: ScanAction): { isValid: boolean; error?
         return { isValid: false, error: "缩略图尺寸必须大于0" };
     }
 
+    // 检查路径是否存在
+    if (!fs.existsSync(scan.path)) {
+        return { isValid: false, error: `路径不存在: ${scan.path}` };
+    }
+
+    // 如果operationType明确指定，验证路径类型是否匹配
+    if (scan.operationType === "file") {
+        const stats = fs.statSync(scan.path);
+        if (!stats.isFile()) {
+            return { isValid: false, error: `期望文件但得到目录: ${scan.path}` };
+        }
+    } else if (scan.operationType === "directory") {
+        const stats = fs.statSync(scan.path);
+        if (!stats.isDirectory()) {
+            return { isValid: false, error: `期望目录但得到文件: ${scan.path}` };
+        }
+    }
+
     return { isValid: true };
 }
 
@@ -165,7 +183,17 @@ export function validateScanParams(scan: ScanAction): { isValid: boolean; error?
  * @returns boolean - 是否为目录扫描
  */
 export function isDirectoryScan(scan: ScanAction): boolean {
-    return scan.operationType !== "file";
+    // 如果明确指定了operationType，使用该值
+    if (scan.operationType === "file") {
+        return false;
+    }
+    if (scan.operationType === "directory") {
+        return true;
+    }
+
+    // 如果operationType未设置，需要检查实际路径类型
+    // 这里返回true作为默认值，实际检查在walkthroughPhotos中进行
+    return true;
 }
 
 /**
