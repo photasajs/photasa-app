@@ -183,17 +183,7 @@ export function validateScanParams(scan: ScanAction): { isValid: boolean; error?
  * @returns boolean - 是否为目录扫描
  */
 export function isDirectoryScan(scan: ScanAction): boolean {
-    // 如果明确指定了operationType，使用该值
-    if (scan.operationType === "file") {
-        return false;
-    }
-    if (scan.operationType === "directory") {
-        return true;
-    }
-
-    // 如果operationType未设置，需要检查实际路径类型
-    // 这里返回true作为默认值，实际检查在walkthroughPhotos中进行
-    return true;
+    return scan.operationType !== "file";
 }
 
 /**
