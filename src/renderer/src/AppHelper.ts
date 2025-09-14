@@ -242,12 +242,13 @@ export async function orchestrateScan(
     const scanAction = { ...nextItem, thumbnailSize: 150 }; // 可配置
     callbacks.updateProcessingStatus(`正在扫描: ${scanAction.path}`);
 
-    callbacks.logInfo(`[扫描编排] 开始扫描: ${scanAction.path}`);
-    callbacks.logInfo(`[扫描编排] 扫描动作: ${scanAction.action}`);
-    callbacks.logInfo(`[扫描编排] 操作类型: ${scanAction.operationType || "directory"}`);
+    callbacks.logInfo(
+        `[扫描编排] 开始扫描: ${scanAction.path} ${scanAction.action} ${scanAction.operationType || "directory"}`,
+    );
 
     // 4. 处理重扫描
-    if (scanAction.action === "rescan") {
+    if (scanAction.action === "rescan" && scanAction.operationType === "directory") {
+        // 仅对目录进行重置配置
         callbacks.logDebug(`[扫描编排] 重置配置: ${scanAction.path}`);
         await callbacks.resetPhotasaConfig(scanAction.path);
     }

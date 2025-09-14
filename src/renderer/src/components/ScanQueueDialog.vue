@@ -1034,6 +1034,8 @@ function formatFullTimestamp(timestamp?: number): string {
 
                 .timestamp-priority {
                     font-size: 9px;
+                    color: var(--color-text-tertiary);
+                    opacity: 0.8;
                 }
             }
 

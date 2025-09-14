@@ -25,7 +25,8 @@
             "about": "About",
             "theme": "Theme",
             "advanced": "Advanced",
-            "autoUpdate": "Auto Update"
+            "autoUpdate": "Auto Update",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",

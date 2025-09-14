@@ -51,8 +51,11 @@ export function ensureCompleteScanAction(scanAction: ScanAction): CompleteScanAc
     const timestamp = scanAction.timestamp || Date.now();
     const priority = scanAction.priority ?? calculatePriority(scanAction.action, source);
 
+    // 操作类型：默认为 directory，walkthroughPhotos 函数会正确处理单文件扫描
+    const operationType = scanAction.operationType || "directory";
+
     return {
-        operationType: "directory",
+        operationType,
         retryCount: 0,
         ...scanAction,
         priority,
@@ -71,12 +74,15 @@ export function createScanAction(
     const timestamp = Date.now();
     const priority = calculatePriority(baseScanAction.action, source);
 
+    // 操作类型：默认为 directory，walkthroughPhotos 函数会正确处理单文件扫描
+    const operationType = baseScanAction.operationType || "directory";
+
     return {
         ...baseScanAction,
         priority,
         timestamp,
         source,
-        operationType: baseScanAction.operationType || "directory",
+        operationType,
         retryCount: baseScanAction.retryCount || 0,
     } as CompleteScanAction;
 }

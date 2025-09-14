@@ -18,6 +18,7 @@ import MenuService from "./menu/menu-service";
 import ShellService from "./shell/shell-service";
 import ImportService from "./import/import-service";
 import LogViewerService from "./log-viewer/log-viewer-service";
+import UpdateService from "./update/update-service";
 
 const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;
@@ -214,6 +215,8 @@ function createWindow(): void {
     new ShellService(ipcMain, mainWindow);
     // Setup Import Service
     new ImportService(ipcMain, mainWindow);
+    // Setup Update Service
+    new UpdateService(ipcMain, mainWindow);
 }
 
 /**

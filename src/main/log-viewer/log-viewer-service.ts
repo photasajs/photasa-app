@@ -34,21 +34,21 @@ export default class LogViewerService {
         // 注册全局快捷键
         this.registerGlobalShortcut();
 
-        logger.info("LogViewerService initialized");
+        logger.info("[LogViewerService] initialized");
     }
 
     private activateLogViewer() {
         if (this.isActive) {
-            return { success: true, message: "Log viewer already active" };
+            return { success: true, message: "[LogViewerService] Log viewer already active" };
         }
 
         try {
             this.isActive = true;
 
-            // 激活日志拦截
+            // 激活 main 进程的日志拦截器
             globalLogInterceptor.activate();
 
-            // 订阅日志流
+            // 订阅 main 进程的日志流
             this.unsubscribe = globalLogInterceptor.subscribe((entry) => {
                 if (this.mainWindow && !this.mainWindow.isDestroyed()) {
                     this.mainWindow.webContents.send("log:entry", entry);
@@ -58,26 +58,29 @@ export default class LogViewerService {
             // 通知所有worker开始收集日志
             this.notifyWorkers(true);
 
-            logger.info("Log viewer activated");
-            return { success: true, message: "Log viewer activated" };
+            logger.info("[LogViewerService] Log viewer activated");
+            return { success: true, message: "[LogViewerService] Log viewer activated" };
         } catch (error) {
-            logger.error("Failed to activate log viewer:", error);
-            return { success: false, message: "Failed to activate log viewer" };
+            logger.error("[LogViewerService] Failed to activate log viewer:", error);
+            return { success: false, message: "[LogViewerService] Failed to activate log viewer" };
         }
     }
 
     private deactivateLogViewer() {
         if (!this.isActive) {
-            return { success: true, message: "Log viewer already inactive" };
+            return { success: true, message: "[LogViewerService] Log viewer already inactive" };
         }
 
         try {
             this.cleanup();
-            logger.info("Log viewer deactivated");
-            return { success: true, message: "Log viewer deactivated" };
+            logger.info("[LogViewerService] Log viewer deactivated");
+            return { success: true, message: "[LogViewerService] Log viewer deactivated" };
         } catch (error) {
-            logger.error("Failed to deactivate log viewer:", error);
-            return { success: false, message: "Failed to deactivate log viewer" };
+            logger.error("[LogViewerService] Failed to deactivate log viewer:", error);
+            return {
+                success: false,
+                message: "[LogViewerService] Failed to deactivate log viewer",
+            };
         }
     }
 
@@ -140,7 +143,7 @@ export default class LogViewerService {
             const shortcut = process.platform === "darwin" ? "Cmd+Shift+Alt+L" : "Ctrl+Shift+Alt+L";
 
             const registered = globalShortcut.register(shortcut, () => {
-                logger.debug("Global shortcut triggered for log viewer");
+                logger.debug("[LogViewerService] Global shortcut triggered for log viewer");
                 // 发送消息到渲染进程触发日志查看器
                 if (this.mainWindow && !this.mainWindow.isDestroyed()) {
                     this.mainWindow.webContents.send("log:toggle-viewer");
@@ -148,12 +151,14 @@ export default class LogViewerService {
             });
 
             if (registered) {
-                logger.info(`Log viewer global shortcut registered: ${shortcut}`);
+                logger.info(
+                    `[LogViewerService] Log viewer global shortcut registered: ${shortcut}`,
+                );
             } else {
-                logger.warn(`Failed to register global shortcut: ${shortcut}`);
+                logger.warn(`[LogViewerService] Failed to register global shortcut: ${shortcut}`);
             }
         } catch (error) {
-            logger.error("Failed to register global shortcut:", error);
+            logger.error("[LogViewerService] Failed to register global shortcut:", error);
         }
     }
 

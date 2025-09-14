@@ -32,7 +32,8 @@
             "about": "About",
             "theme": "Theme",
             "advanced": "Advanced",
-            "autoUpdate": "Auto Update"
+            "autoUpdate": "Auto Update",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",
@@ -47,6 +48,29 @@
             "title": "Advanced Action: Reset Directory Storage",
             "desc": "This will clear all directory settings and immediately rebuild the cache. This action is irreversible. Proceed with caution!",
             "button": "Reset Directory Storage"
+        },
+        "scanMonitoring": {
+            "title": "Scan Monitoring",
+            "description": "Monitor scan queue status to ensure scan tasks are always running normally",
+            "enableAutoRecovery": "Enable Auto Recovery",
+            "enableAutoRecoveryHelp": "Automatically attempt to restart scanning when scan anomalies are detected",
+            "healthCheckInterval": "Health Check Interval",
+            "healthCheckIntervalHelp": "How often to check scan queue status",
+            "idleTimeout": "Idle Timeout",
+            "idleTimeoutHelp": "How long after queue is non-empty but scanning is idle before triggering recovery",
+            "staleTimeout": "Stale Timeout",
+            "staleTimeoutHelp": "How long after scanning is running but has no progress before forcing restart",
+            "maxRetries": "Max Retries",
+            "maxRetriesHelp": "How many consecutive recovery failures before stopping auto recovery",
+            "currentStatus": "Current Status",
+            "isMonitoring": "Monitoring Status",
+            "healthStatus": "Health Status",
+            "queueLength": "Queue Length",
+            "scanStatus": "Scan Status",
+            "consecutiveFailures": "Consecutive Failures",
+            "statusMessage": "Status Message",
+            "checkNow": "Check Now",
+            "reset": "Reset Status"
         },
         "autoUpdate": {
             "title": "Auto Update",
@@ -546,7 +570,17 @@
         "image": "image",
         "videos": "videos",
         "video": "video",
-        "counting": "Counting..."
+        "counting": "Counting...",
+        "yes": "Yes",
+        "no": "No",
+        "healthy": "Healthy",
+        "unhealthy": "Unhealthy",
+        "idle": "Idle",
+        "running": "Running",
+        "minute": "minute",
+        "minutes": "minutes",
+        "hour": "hour",
+        "hours": "hours"
     },
     "imageList": {
         "fileCount": {

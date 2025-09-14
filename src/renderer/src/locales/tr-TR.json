@@ -10,7 +10,8 @@
             "about": "Hakkında",
             "theme": "Tema",
             "advanced": "Gelişmiş",
-            "autoUpdate": "Otomatik Güncelleme"
+            "autoUpdate": "Otomatik Güncelleme",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Klasör Listesi",
         "folderListUsage": "Kullanım Şekli",

@@ -25,7 +25,8 @@
             "about": "À propos",
             "theme": "Thème",
             "advanced": "Paramètres avancés",
-            "autoUpdate": "Mise à Jour Auto"
+            "autoUpdate": "Mise à Jour Auto",
+            "scanMonitoring": "Surveillance du Scan"
         },
         "folderList": "Liste des dossiers",
         "folderListUsage": "Utilisation",

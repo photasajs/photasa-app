@@ -9,7 +9,7 @@ import {
     PhXCircle as ErrorIcon,
     PhInfo as InfoIcon,
 } from "@phosphor-icons/vue";
-import { BaseButton, BaseSwitch } from "@renderer/components/ui";
+import { BaseButton, BaseSwitch, BaseSelect, BaseInlineFormField } from "@renderer/components/ui";
 import { notification } from "@renderer/services/notification-manager";
 
 defineOptions({
@@ -242,7 +242,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="update-settings">
+    <div class="update-settings settings-container">
         <!-- 标题区域 -->
         <div class="settings-header">
             <div class="header-title">{{ label.autoUpdate }}</div>
@@ -251,16 +251,15 @@ onMounted(async () => {
 
         <!-- 主开关 -->
         <div class="settings-section">
-            <div class="setting-item">
-                <div class="setting-label">
-                    <span>{{ label.enabled }}</span>
-                    <span class="setting-desc">开启后应用将自动检查并安装更新</span>
-                </div>
+            <BaseInlineFormField
+                :label="label.enabled"
+                description="开启后应用将自动检查并安装更新"
+            >
                 <BaseSwitch
                     :modelValue="autoUpdate.enabled"
                     @update:modelValue="(value) => updateConfig('enabled', value)"
                 />
-            </div>
+            </BaseInlineFormField>
         </div>
 
         <!-- 配置设置 -->
@@ -268,52 +267,30 @@ onMounted(async () => {
             <div v-if="autoUpdate.enabled" class="settings-section">
                 <h4 class="section-title">更新配置</h4>
 
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <span>{{ label.checkInterval }}</span>
-                    </div>
-                    <select
-                        class="setting-select"
-                        :value="autoUpdate.checkInterval"
-                        @change="
-                            (e) =>
-                                updateConfig(
-                                    'checkInterval',
-                                    Number((e.target as HTMLSelectElement).value),
-                                )
-                        "
-                    >
-                        <option
-                            v-for="option in intervalOptions"
-                            :key="option.value"
-                            :value="option.value"
-                        >
-                            {{ option.label }}
-                        </option>
-                    </select>
-                </div>
+                <BaseInlineFormField :label="label.checkInterval">
+                    <BaseSelect
+                        :modelValue="autoUpdate.checkInterval"
+                        :options="intervalOptions"
+                        @update:modelValue="(value) => updateConfig('checkInterval', Number(value))"
+                    />
+                </BaseInlineFormField>
 
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <span>{{ label.prerelease }}</span>
-                        <span class="setting-desc">{{ label.prereleaseDesc }}</span>
-                    </div>
+                <BaseInlineFormField :label="label.prerelease" :description="label.prereleaseDesc">
                     <BaseSwitch
                         :modelValue="autoUpdate.allowPrerelease"
                         @update:modelValue="(value) => updateConfig('allowPrerelease', value)"
                     />
-                </div>
+                </BaseInlineFormField>
 
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <span>{{ label.autoInstall }}</span>
-                        <span class="setting-desc">{{ label.autoInstallDesc }}</span>
-                    </div>
+                <BaseInlineFormField
+                    :label="label.autoInstall"
+                    :description="label.autoInstallDesc"
+                >
                     <BaseSwitch
                         :modelValue="autoUpdate.autoInstall"
                         @update:modelValue="(value) => updateConfig('autoInstall', value)"
                     />
-                </div>
+                </BaseInlineFormField>
             </div>
         </transition>
 
@@ -441,64 +418,6 @@ onMounted(async () => {
     margin: 0 0 12px 0;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.08));
-}
-
-// 设置项
-.setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0;
-
-    &:not(:last-child) {
-        border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.05));
-    }
-}
-
-.setting-label {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-
-    span {
-        font-size: 14px;
-        color: var(--color-text, #fff);
-    }
-}
-
-.setting-desc {
-    font-size: 12px;
-    color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
-    line-height: 1.4;
-}
-
-.setting-select {
-    min-width: 120px;
-    padding: 6px 12px;
-    background: var(--color-bg, rgba(0, 0, 0, 0.2));
-    border: 1px solid var(--color-border, rgba(255, 255, 255, 0.15));
-    border-radius: 6px;
-    color: var(--color-text, #fff);
-    font-size: 13px;
-    outline: none;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-        border-color: var(--color-primary, #1890ff);
-        background: var(--color-bg, rgba(0, 0, 0, 0.3));
-    }
-
-    &:focus {
-        border-color: var(--color-primary, #1890ff);
-        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-    }
-
-    option {
-        background: var(--color-bg, #1a1a1a);
-        color: var(--color-text, #fff);
-    }
 }
 
 // 版本信息

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, inject } from "vue";
+import { computed, ref, inject, onUnmounted } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -40,6 +40,7 @@ import {
 } from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
+import { scanMonitoringService } from "@renderer/services/scan-monitoring-service";
 import LogConsole from "./components/LogConsole.vue";
 
 /**
@@ -134,6 +135,8 @@ onMounted(async () => {
         task: t("app.title"),
         timestamp: Date.now(),
     });
+
+    // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
     themes.value = themeManager.getThemes();
     const cur = themeManager.getCurrentTheme();
@@ -148,8 +151,21 @@ onMounted(async () => {
     // 应用启动时全局初始化菜单栏数据（国际化）
     menusStore.refreshMenus(t);
 
+    // 初始化扫描监控服务
+    scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
+    scanMonitoringService.startMonitoring(() => {
+        logger.info("[扫描监控] 自动恢复触发，重启扫描");
+        startScanning();
+    });
+
     // Initialize the application
     await initializeApp();
+});
+
+// 组件卸载时清理监控服务
+onUnmounted(() => {
+    scanMonitoringService.stopMonitoring();
+    logger.info("[App] 扫描监控服务已停止");
 });
 
 // vue3 watch for array, should specify deep as true
@@ -274,16 +290,31 @@ const callbacks: ScanCallbacks = {
 };
 
 async function startScanning(): Promise<void> {
-    // 调用纯函数处理扫描逻辑
-    const result = await orchestrateScan(scanningFolder.value, callbacks);
+    logger.debug("[扫描启动] 开始扫描流程");
 
-    // 根据结果决定是否继续
-    if (result.shouldScheduleNext) {
-        callbacks.scheduleNextScan();
-    }
+    try {
+        // 记录扫描活动
+        scanMonitoringService.recordActivity();
 
-    if (result.error) {
-        logger.error("Scan orchestration error:", result.error);
+        // 调用纯函数处理扫描逻辑
+        const result = await orchestrateScan(scanningFolder.value, callbacks);
+
+        // 根据结果决定是否继续
+        if (result.shouldScheduleNext) {
+            callbacks.scheduleNextScan();
+        }
+
+        if (result.error) {
+            logger.error("Scan orchestration error:", result.error);
+            scanMonitoringService.recordFailure();
+        } else {
+            // 记录成功的扫描活动
+            scanMonitoringService.recordActivity();
+        }
+    } catch (error) {
+        logger.error("[扫描启动] 扫描过程中发生异常", error);
+        scanMonitoringService.recordFailure();
+        throw error;
     }
 }
 
@@ -299,6 +330,11 @@ useTitle(title);
 // 监听 find-photo 事件，用于刷新树结构
 findPhotoService.onFindPhoto((args: any) => {
     logger.debug("onFindPhoto received:", args.type, args.action?.path, args.progress);
+
+    // 记录扫描活动（表示有进展）
+    if (args.progress || args.type === "complete") {
+        scanMonitoringService.recordActivity();
+    }
 
     // 处理进度更新 - 更新scanningFolder中对应项目的progress信息
     if (args.progress && args.action?.path) {

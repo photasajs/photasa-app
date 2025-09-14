@@ -24,6 +24,7 @@ export { default as BaseSwitch } from "./BaseSwitch.vue";
 // === 表单组件 ===
 export { default as BaseForm } from "./BaseForm.vue";
 export { default as BaseFormField } from "./BaseFormField.vue";
+export { default as BaseInlineFormField } from "./BaseInlineFormField.vue";
 
 // === 选择器组件 ===
 export { default as BaseSelect } from "./BaseSelect.vue";

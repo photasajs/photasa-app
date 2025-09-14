@@ -22,7 +22,8 @@
             "about": "Acerca de",
             "theme": "Tema",
             "advanced": "Configuración avanzada",
-            "autoUpdate": "Auto Actualización"
+            "autoUpdate": "Auto Actualización",
+            "scanMonitoring": "Monitoreo de Escaneo"
         },
         "folderList": "Lista de carpetas",
         "folderListUsage": "Uso",

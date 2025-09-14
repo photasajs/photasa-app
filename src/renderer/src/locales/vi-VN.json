@@ -10,7 +10,8 @@
             "about": "Giới thiệu",
             "theme": "Chủ đề",
             "advanced": "Nâng cao",
-            "autoUpdate": "Tự động cập nhật"
+            "autoUpdate": "Tự động cập nhật",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Danh sách thư mục",
         "folderListUsage": "Cách sử dụng",

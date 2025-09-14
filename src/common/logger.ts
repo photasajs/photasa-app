@@ -168,6 +168,7 @@ export class LogInterceptor {
                             .join(" "),
                         source: "renderer",
                     };
+                    // 在 renderer 进程中，直接通知本地监听器（log viewer UI）
                     this.notify(entry);
                 }
             };
@@ -369,4 +370,5 @@ export const loggers: Record<string, PhotasaLogger> = {
     api: getLogger("api"),
     import: getLogger("import"),
     importProgress: getLogger("importProgress"),
+    update: getLogger("update"),
 };

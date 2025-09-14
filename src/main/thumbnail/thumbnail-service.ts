@@ -59,9 +59,10 @@ export default class ThumbnailService {
 
                 // 为不同类型的消息提供更清晰的日志
                 if (data.type === "worker:log") {
-                    // 处理 worker 日志消息，转发给 LogViewerService
+                    // 处理 worker 日志消息，通过 IPC 发送给 LogViewerService
                     if (logViewerService) {
-                        this.mainWindow?.webContents.send("log:entry", data.entry);
+                        // 使用 IPC 发送，让 LogViewerService 统一处理
+                        this.ipc.emit("worker:log", null, data.entry);
                     }
                     // 为 worker:log 提供简洁的调试日志
                     logger.debug(

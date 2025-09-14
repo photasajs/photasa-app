@@ -25,7 +25,8 @@
             "about": "關於",
             "theme": "主題",
             "advanced": "高級配置",
-            "autoUpdate": "自動更新"
+            "autoUpdate": "自動更新",
+            "scanMonitoring": "掃描監控"
         },
         "folderList": "目錄列表",
         "folderListUsage": "使用方式",

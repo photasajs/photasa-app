@@ -81,6 +81,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import type { LogEntry } from "@common/logger";
+import { globalLogInterceptor } from "@common/logger";
 
 const { t } = useI18n();
 
@@ -91,6 +92,9 @@ const levelFilter = ref("");
 const autoScroll = ref(true);
 const opacity = ref(0.95);
 const logContainer = ref<HTMLElement>();
+
+// 用于存储日志拦截器的取消订阅函数
+let unsubscribeRendererLogs: (() => void) | undefined;
 
 // 拖拽相关
 const isDragging = ref(false);
@@ -145,6 +149,16 @@ const toggle = async () => {
         const result = await window.api.log.viewerOpen();
         if (result.success) {
             logs.value = []; // 清空旧日志
+
+            // 订阅 renderer 进程的日志
+            unsubscribeRendererLogs = globalLogInterceptor.subscribe((entry: LogEntry) => {
+                logs.value.push(entry);
+                // 限制最大条数
+                if (logs.value.length > 5000) {
+                    logs.value.shift();
+                }
+            });
+
             // 设置初始透明度
             await nextTick();
             const consoleEl = document.querySelector(".log-console") as HTMLElement;
@@ -157,6 +171,13 @@ const toggle = async () => {
     } else {
         // 通知主进程停止收集日志
         await window.api.log.viewerClose();
+
+        // 取消订阅 renderer 进程的日志
+        if (unsubscribeRendererLogs) {
+            unsubscribeRendererLogs();
+            unsubscribeRendererLogs = undefined;
+        }
+
         logs.value = []; // 清空日志
 
         // 重置位置，下次打开时重新居中
@@ -173,6 +194,13 @@ const toggle = async () => {
 const close = () => {
     visible.value = false;
     window.api.log.viewerClose();
+
+    // 取消订阅 renderer 进程的日志
+    if (unsubscribeRendererLogs) {
+        unsubscribeRendererLogs();
+        unsubscribeRendererLogs = undefined;
+    }
+
     logs.value = [];
 
     // 重置位置，下次打开时重新居中
@@ -279,7 +307,10 @@ const stopDrag = () => {
 watch(filteredLogs, async () => {
     if (autoScroll.value && logContainer.value) {
         await nextTick();
-        logContainer.value.scrollTop = logContainer.value.scrollHeight;
+        // 再次检查确保元素仍然存在
+        if (logContainer.value) {
+            logContainer.value.scrollTop = logContainer.value.scrollHeight;
+        }
     }
 });
 
@@ -305,6 +336,12 @@ onUnmounted(() => {
     document.removeEventListener("keydown", handleKeyDown);
     if (visible.value) {
         window.api.log.viewerClose();
+    }
+
+    // 清理 renderer 进程的日志订阅
+    if (unsubscribeRendererLogs) {
+        unsubscribeRendererLogs();
+        unsubscribeRendererLogs = undefined;
     }
 });
 </script>

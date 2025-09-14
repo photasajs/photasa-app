@@ -10,7 +10,8 @@
             "about": "Informazioni",
             "theme": "Tema",
             "advanced": "Avanzate",
-            "autoUpdate": "Aggiornamento Automatico"
+            "autoUpdate": "Aggiornamento Automatico",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Elenco cartelle",
         "folderListUsage": "Modalità d'uso",

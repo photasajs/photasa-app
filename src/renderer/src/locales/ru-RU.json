@@ -10,7 +10,8 @@
             "about": "О программе",
             "theme": "Тема",
             "advanced": "Дополнительно",
-            "autoUpdate": "Автообновление"
+            "autoUpdate": "Автообновление",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Список папок",
         "folderListUsage": "Способ использования",

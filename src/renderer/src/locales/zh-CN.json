@@ -32,7 +32,8 @@
             "about": "关于",
             "theme": "主题",
             "advanced": "高级配置",
-            "autoUpdate": "自动更新"
+            "autoUpdate": "自动更新",
+            "scanMonitoring": "扫描监控"
         },
         "folderList": "目录列表",
         "folderListUsage": "使用方式",
@@ -47,6 +48,29 @@
             "title": "高级操作：重置目录存储",
             "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
             "button": "重置目录存储"
+        },
+        "scanMonitoring": {
+            "title": "扫描监控",
+            "description": "监控扫描队列状态，确保扫描任务始终正常运行",
+            "enableAutoRecovery": "启用自动恢复",
+            "enableAutoRecoveryHelp": "当检测到扫描异常时自动尝试重启扫描",
+            "healthCheckInterval": "健康检查间隔",
+            "healthCheckIntervalHelp": "多久检查一次扫描队列状态",
+            "idleTimeout": "空闲超时时间",
+            "idleTimeoutHelp": "队列非空但扫描空闲多久后触发恢复",
+            "staleTimeout": "停滞超时时间",
+            "staleTimeoutHelp": "扫描运行但无进度多久后强制重启",
+            "maxRetries": "最大重试次数",
+            "maxRetriesHelp": "连续恢复失败多少次后停止自动恢复",
+            "currentStatus": "当前状态",
+            "isMonitoring": "监控状态",
+            "healthStatus": "健康状态",
+            "queueLength": "队列长度",
+            "scanStatus": "扫描状态",
+            "consecutiveFailures": "连续失败次数",
+            "statusMessage": "状态消息",
+            "checkNow": "立即检查",
+            "reset": "重置状态"
         },
         "autoUpdate": {
             "title": "自动更新",
@@ -586,7 +610,17 @@
         "image": "图片",
         "videos": "视频",
         "video": "视频",
-        "counting": "统计中..."
+        "counting": "统计中...",
+        "yes": "是",
+        "no": "否",
+        "healthy": "健康",
+        "unhealthy": "不健康",
+        "idle": "空闲",
+        "running": "运行中",
+        "minute": "分钟",
+        "minutes": "分钟",
+        "hour": "小时",
+        "hours": "小时"
     },
     "imageList": {
         "fileCount": {

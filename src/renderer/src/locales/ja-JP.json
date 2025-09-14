@@ -25,7 +25,8 @@
             "about": "概要",
             "theme": "テーマ",
             "advanced": "高度な設定",
-            "autoUpdate": "自動更新"
+            "autoUpdate": "自動更新",
+            "scanMonitoring": "スキャンモニタリング"
         },
         "folderList": "ディレクトリリスト",
         "folderListUsage": "使い方",

@@ -10,7 +10,8 @@
             "about": "حول",
             "theme": "السمة",
             "advanced": "متقدم",
-            "autoUpdate": "التحديث التلقائي"
+            "autoUpdate": "التحديث التلقائي",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "قائمة المجلدات",
         "folderListUsage": "طريقة الاستخدام",

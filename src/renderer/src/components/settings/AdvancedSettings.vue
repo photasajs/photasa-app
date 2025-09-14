@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="settings-container">
         <BaseCard :title="t('advancedSettings.title')">
             <BaseAlert
                 type="error"

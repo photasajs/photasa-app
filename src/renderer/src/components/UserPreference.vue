@@ -10,6 +10,7 @@ import AboutPhotasa from "./settings/AboutPhotasa.vue";
 import ThemeSettings from "./settings/ThemeSettings.vue";
 import AdvancedSettings from "./settings/AdvancedSettings.vue";
 import UpdateSettings from "./settings/UpdateSettings.vue";
+import ScanMonitoringSettings from "./settings/ScanMonitoringSettings.vue";
 
 defineOptions({
     name: "UserPreference",
@@ -39,6 +40,7 @@ const label = computed(() => {
             theme: t("preference.tabs.theme"),
             advanced: t("preference.tabs.advanced"),
             autoUpdate: t("preference.tabs.autoUpdate"),
+            scanMonitoring: t("preference.tabs.scanMonitoring"),
         },
     };
 });
@@ -48,6 +50,7 @@ const tabsData = computed(() => [
     { key: "theme", label: label.value.tabs.theme },
     { key: "language", label: label.value.language },
     { key: "autoUpdate", label: label.value.tabs.autoUpdate },
+    { key: "scanMonitoring", label: label.value.tabs.scanMonitoring },
     { key: "about", label: label.value.tabs.about },
     { key: "advanced", label: label.value.tabs.advanced },
 ]);
@@ -59,7 +62,7 @@ const tabsData = computed(() => [
         :selectedIndex="activeKey"
         @change="activeKey = $event"
         orientation="vertical"
-        class="min-h-[50vh]"
+        class="h-[75vh] max-h-[600px] min-h-[450px]"
     >
         <template #general>
             <GeneralSettings />
@@ -72,6 +75,9 @@ const tabsData = computed(() => [
         </template>
         <template #autoUpdate>
             <UpdateSettings />
+        </template>
+        <template #scanMonitoring>
+            <ScanMonitoringSettings />
         </template>
         <template #about>
             <AboutPhotasa />
@@ -96,42 +102,75 @@ const tabsData = computed(() => [
     </BaseModal>
 </template>
 <style scoped lang="less">
-.import-message-list {
+/* 为所有设置页面提供统一的容器样式 */
+:deep(.settings-container) {
+    height: 100%;
+    overflow-y: auto;
+    padding: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
+}
+
+:deep(.settings-container::-webkit-scrollbar) {
+    width: 6px;
+}
+
+:deep(.settings-container::-webkit-scrollbar-track) {
+    background: var(--color-scrollbar-track);
+    border-radius: 3px;
+}
+
+:deep(.settings-container::-webkit-scrollbar-thumb) {
+    background: var(--color-scrollbar-thumb);
+    border-radius: 3px;
+
+    &:hover {
+        background: var(--color-scrollbar-thumb-hover);
+    }
+}
+
+/* 统一设置页面间距 */
+:deep(.setting-section) {
+    margin-bottom: 16px;
+}
+
+/* 保留原有的特定组件样式 */
+:deep(.import-message-list) {
     height: 300px;
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: var(--color-scrollbar-thumb, #cccccc) var(--color-scrollbar-track, #f5f5f5);
+    scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 }
 
-.import-message-list::-webkit-scrollbar {
+:deep(.import-message-list::-webkit-scrollbar) {
     width: var(--color-scrollbar-width, 8px);
     height: var(--color-scrollbar-width, 8px);
 }
 
-.import-message-list::-webkit-scrollbar-track {
-    background: var(--color-scrollbar-track, #f5f5f5);
+:deep(.import-message-list::-webkit-scrollbar-track) {
+    background: var(--color-scrollbar-track);
     border-radius: var(--color-scrollbar-border-radius, 4px);
 }
 
-.import-message-list::-webkit-scrollbar-track:hover {
-    background: var(--color-scrollbar-track-hover, #e8e8e8);
+:deep(.import-message-list::-webkit-scrollbar-track:hover) {
+    background: var(--color-scrollbar-track-hover);
 }
 
-.import-message-list::-webkit-scrollbar-thumb {
-    background: var(--color-scrollbar-thumb, #cccccc);
+:deep(.import-message-list::-webkit-scrollbar-thumb) {
+    background: var(--color-scrollbar-thumb);
     border-radius: var(--color-scrollbar-border-radius, 4px);
     transition: all 0.2s ease;
 }
 
-.import-message-list::-webkit-scrollbar-thumb:hover {
-    background: var(--color-scrollbar-thumb-hover, #0066b8);
+:deep(.import-message-list::-webkit-scrollbar-thumb:hover) {
+    background: var(--color-scrollbar-thumb-hover);
 }
 
-.import-message-list::-webkit-scrollbar-thumb:active {
-    background: var(--color-scrollbar-thumb-active, #004d99);
+:deep(.import-message-list::-webkit-scrollbar-thumb:active) {
+    background: var(--color-scrollbar-thumb-active);
 }
 
-.language-settings {
+:deep(.language-settings) {
     margin-top: 8px;
 }
 </style>

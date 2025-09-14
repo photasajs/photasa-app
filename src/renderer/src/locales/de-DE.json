@@ -25,7 +25,8 @@
             "about": "Über",
             "theme": "Thema",
             "advanced": "Erweiterte Einstellungen",
-            "autoUpdate": "Auto-Update"
+            "autoUpdate": "Auto-Update",
+            "scanMonitoring": "Scan-Überwachung"
         },
         "folderList": "Ordnerliste",
         "folderListUsage": "Verwendung",

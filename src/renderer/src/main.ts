@@ -11,6 +11,7 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
+import { globalLogInterceptor } from "@common/logger";
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
@@ -48,6 +49,9 @@ watch(
 );
 
 const statusBarStore = useStatusBarStore();
+
+// 初始化 renderer 日志拦截器 - 直接发送到 log viewer
+globalLogInterceptor.activate();
 
 // TODO: move to preload api instead
 if (window.electron && window.electron.ipcRenderer) {

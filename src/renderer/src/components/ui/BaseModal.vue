@@ -10,10 +10,7 @@
                 ref="modalRef"
             >
                 <!-- 背景遮罩 -->
-                <div
-                    class="modal-backdrop fixed inset-0 bg-black/30 backdrop-blur-sm"
-                    aria-hidden="true"
-                />
+                <div class="modal-backdrop fixed inset-0 bg-black/30" aria-hidden="true" />
 
                 <!-- Modal内容 -->
                 <div

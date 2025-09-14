@@ -17,7 +17,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
 </script>
 
 <template>
-    <div class="about-container" tabindex="0" @keydown="handleKeyPress">
+    <div class="about-container settings-container" tabindex="0" @keydown="handleKeyPress">
         <div class="about-bmc">
             <BuyMeCoffeeButton />
         </div>

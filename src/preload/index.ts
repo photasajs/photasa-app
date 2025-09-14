@@ -16,6 +16,7 @@ import {
 import { normalizePath } from "@shared/path-util";
 import { openInFinder } from "./shell-helper";
 import type { LogEntry } from "@common/logger";
+import { updateApi } from "./update-helper";
 import {
     addToPhotoList,
     removeFromPhotoList,
@@ -117,6 +118,9 @@ const api = {
         electronAPI.ipcRenderer.on("menu:action", (_event, payload) => cb(payload));
     },
     openExternal: (url: string) => electronAPI.ipcRenderer.invoke("shell:openExternal", url),
+
+    // ==================== 自动更新功能 API ====================
+    ...updateApi,
 
     // ==================== 增强的导入功能 API ====================
     /**
