@@ -89,7 +89,7 @@
                             <span
                                 :class="[
                                     option.value === modelValue ? 'font-semibold' : 'font-normal',
-                                    'block truncate',
+                                    'block',
                                 ]"
                             >
                                 {{ option.label }}
@@ -178,8 +178,25 @@ const updateDropdownPosition = () => {
     const spaceBelow = viewportHeight - buttonRect.bottom;
     const spaceAbove = buttonRect.top;
 
-    // 确保下拉菜单在视口内
-    const left = Math.max(8, Math.min(buttonRect.left, window.innerWidth - buttonRect.width - 8));
+    // 计算下拉框的最小宽度，基于内容和按钮宽度
+    const calculateDropdownWidth = () => {
+        // 获取最长选项的估算宽度
+        const longestLabel = props.options.reduce((longest, option) => 
+            option.label.length > longest.length ? option.label : longest, 
+            ''
+        );
+        
+        // 估算文本宽度（每个字符约8-12px，加上padding和图标空间）
+        const estimatedTextWidth = longestLabel.length * 10 + 60; // 60px用于padding和图标
+        
+        // 下拉框宽度至少与按钮相同，但可以更宽以适应内容
+        return Math.max(buttonRect.width, Math.min(estimatedTextWidth, 320)); // 最大320px
+    };
+
+    const dropdownWidth = calculateDropdownWidth();
+
+    // 确保下拉菜单在视口内，考虑新的宽度
+    const left = Math.max(8, Math.min(buttonRect.left, window.innerWidth - dropdownWidth - 8));
 
     // 优先向下展开，空间不足时向上
     let top: number;
@@ -201,7 +218,7 @@ const updateDropdownPosition = () => {
     dropdownStyles.value = {
         left: `${left}px`,
         top: `${top}px`,
-        width: `${buttonRect.width}px`,
+        width: `${dropdownWidth}px`,
         zIndex: "10000",
     };
 

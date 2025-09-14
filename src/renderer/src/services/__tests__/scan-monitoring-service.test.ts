@@ -33,7 +33,7 @@ describe("ScanMonitoringService", () => {
     describe("配置管理", () => {
         it("应该使用默认配置初始化", () => {
             const status = scanMonitoringService.getMonitoringStatus();
-            
+
             expect(status.config.healthCheckInterval).toBe(5 * 60 * 1000);
             expect(status.config.staleTimeout).toBe(30 * 60 * 1000);
             expect(status.config.idleTimeout).toBe(5 * 60 * 1000);
@@ -72,7 +72,7 @@ describe("ScanMonitoringService", () => {
     describe("健康状态", () => {
         it("应该提供健康状态信息", () => {
             const healthStatus = scanMonitoringService.healthStatus.value;
-            
+
             expect(typeof healthStatus.isHealthy).toBe("boolean");
             expect(typeof healthStatus.isIdle).toBe("boolean");
             expect(typeof healthStatus.isStale).toBe("boolean");
