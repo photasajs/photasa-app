@@ -334,7 +334,7 @@ describe("BaseSelect 下拉菜单独占性测试", () => {
         // 验证注册方法被调用
         expect(mockDropdownManager.register).toHaveBeenCalledTimes(1);
         expect(mockDropdownManager.register).toHaveBeenCalledWith(
-            expect.stringMatching(/^dropdown-[a-z0-9]+$/)
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
         );
     });
 
@@ -355,7 +355,7 @@ describe("BaseSelect 下拉菜单独占性测试", () => {
         // 验证注销方法被调用
         expect(mockDropdownManager.unregister).toHaveBeenCalledTimes(1);
         expect(mockDropdownManager.unregister).toHaveBeenCalledWith(
-            expect.stringMatching(/^dropdown-[a-z0-9]+$/)
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
         );
     });
 
@@ -377,7 +377,7 @@ describe("BaseSelect 下拉菜单独占性测试", () => {
         // 验证管理器的 open 方法被调用
         expect(mockDropdownManager.open).toHaveBeenCalledTimes(1);
         expect(mockDropdownManager.open).toHaveBeenCalledWith(
-            expect.stringMatching(/^dropdown-[a-z0-9]+$/)
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
         );
     });
 
@@ -403,7 +403,7 @@ describe("BaseSelect 下拉菜单独占性测试", () => {
         // 验证管理器的 close 方法被调用
         expect(mockDropdownManager.close).toHaveBeenCalledTimes(1);
         expect(mockDropdownManager.close).toHaveBeenCalledWith(
-            expect.stringMatching(/^dropdown-[a-z0-9]+$/)
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
         );
     });
 
@@ -426,7 +426,7 @@ describe("BaseSelect 下拉菜单独占性测试", () => {
         // 模拟其他下拉菜单触发的关闭事件
         const dropdownId = mockDropdownManager.register.mock.calls[0][0];
         const closeEvent = new CustomEvent("dropdown-close", {
-            detail: { id: dropdownId }
+            detail: { id: dropdownId },
         });
 
         document.dispatchEvent(closeEvent);
@@ -454,7 +454,7 @@ describe("BaseSelect 下拉菜单独占性测试", () => {
 
         // 模拟其他下拉菜单的关闭事件（不同的ID）
         const closeEvent = new CustomEvent("dropdown-close", {
-            detail: { id: "different-dropdown-id" }
+            detail: { id: "different-dropdown-id" },
         });
 
         document.dispatchEvent(closeEvent);
