@@ -269,7 +269,9 @@ onMounted(async () => {
                 <h4 class="section-title">更新配置</h4>
 
                 <div class="setting-item">
-                    <span class="setting-label">{{ label.checkInterval }}</span>
+                    <div class="setting-label">
+                        <span>{{ label.checkInterval }}</span>
+                    </div>
                     <select
                         class="setting-select"
                         :value="autoUpdate.checkInterval"
@@ -459,7 +461,7 @@ onMounted(async () => {
     flex-direction: column;
     gap: 2px;
 
-    > span:first-child {
+    span {
         font-size: 14px;
         color: var(--color-text, #fff);
     }
