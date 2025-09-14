@@ -24,12 +24,13 @@
             "general": "Général",
             "about": "À propos",
             "theme": "Thème",
-            "advanced": "Paramètres avancés"
+            "advanced": "Paramètres avancés",
+            "autoUpdate": "Mise à Jour Auto"
         },
         "folderList": "Liste des dossiers",
         "folderListUsage": "Utilisation",
-        "folderListDesc": "Après avoir ajouté un dossier à la liste, Photosa peut gérer les photos et vidéos dans ce dossier en temps réel.",
-        "watchFolderList": "Photosa peut gérer les photos et vidéos dans les dossiers suivants.",
+        "folderListDesc": "Après avoir ajouté un dossier à la liste, Photasa peut gérer les photos et vidéos dans ce dossier en temps réel.",
+        "watchFolderList": "Photasa peut gérer les photos et vidéos dans les dossiers suivants.",
         "chooseDirectory": "Choisir un dossier et l'ajouter à la liste",
         "thumbnailSize": "Taille de la vignette",
         "darkMode": "Mode sombre",
@@ -39,6 +40,36 @@
             "title": "Action Avancée : Réinitialiser le Stockage de Répertoires",
             "desc": "Cela effacera tous les paramètres de répertoires et reconstruira immédiatement le cache. Cette action est irréversible. Procédez avec prudence !",
             "button": "Réinitialiser le Stockage de Répertoires"
+        },
+        "autoUpdate": {
+            "title": "Mise à Jour Automatique",
+            "description": "Configurez les mises à jour automatiques de l'application pour vous assurer d'avoir toujours la dernière version de Photasa",
+            "enabled": "Activer la mise à jour automatique",
+            "checkInterval": "Intervalle de vérification",
+            "prerelease": "Inclure les versions pré-release",
+            "prereleaseDescription": "Activer pour recevoir les mises à jour Beta et RC, qui peuvent contenir des fonctionnalités non testées",
+            "autoInstall": "Installer automatiquement les mises à jour",
+            "autoInstallDescription": "Lorsqu'activé, les mises à jour seront installées automatiquement en arrière-plan et prendront effet au prochain redémarrage",
+            "checkNow": "Vérifier maintenant",
+            "downloadUpdate": "Télécharger la mise à jour",
+            "installUpdate": "Installer et redémarrer",
+            "currentVersion": "Version actuelle",
+            "latestVersion": "Dernière version",
+            "lastCheck": "Dernière vérification",
+            "intervals": {
+                "hourly": "Toutes les heures",
+                "sixHours": "Toutes les 6 heures",
+                "daily": "Quotidiennement",
+                "weekly": "Hebdomadairement"
+            },
+            "status": {
+                "idle": "Inactif",
+                "checking": "Vérification des mises à jour...",
+                "downloading": "Téléchargement ({progress}%)",
+                "downloaded": "Mise à jour téléchargée",
+                "upToDate": "Déjà à jour",
+                "error": "Erreur lors de la vérification des mises à jour"
+            }
         }
     },
     "import": {
@@ -342,11 +373,11 @@
         "error": "Erreur",
         "scan": {
             "title": "Analyser le dossier",
-            "message": "Analyse du dossier terminée, les photos ont été importées dans Photosa."
+            "message": "Analyse du dossier terminée, les photos ont été importées dans Photasa."
         },
         "duplicatePath": {
             "title": "Dossier en double",
-            "message": "Le dossier [{folder}] existe déjà dans Photosa."
+            "message": "Le dossier [{folder}] existe déjà dans Photasa."
         },
         "emptyPath": {
             "title": "Choisir un dossier",
@@ -386,16 +417,16 @@
     "about": {
         "antvDescription": "Solution de Visualisation de Données",
         "introduction": {
-            "title": "À propos de Photosa",
-            "content": "Photosa est un outil moderne et respectueux de la vie privée pour la gestion de photos, inspiré par Photasa. Organisez, parcourez et profitez de vos photos et vidéos avec des fonctionnalités locales puissantes et une belle interface—sans nuage.",
-            "summary": "Photosa vous aide à redécouvrir et à gérer vos souvenirs facilement.",
+            "title": "À propos de Photasa",
+            "content": "Photasa est un outil moderne et respectueux de la vie privée pour la gestion de photos. Organisez, parcourez et profitez de vos photos et vidéos avec des fonctionnalités locales puissantes et une belle interface—sans nuage.",
+            "summary": "Photasa vous aide à redécouvrir et à gérer vos souvenirs facilement.",
             "highlight": "local, rapide et convivial",
             "userExperience": "expérience de gestion de photos",
             "focus": "."
         },
         "resources": {
             "title": "Ressources",
-            "content": "Explorez des ressources et une documentation supplémentaires pour Photosa.",
+            "content": "Explorez des ressources et une documentation supplémentaires pour Photasa.",
             "download": "Télécharger les Ressources"
         },
         "press": "Appuyez sur",

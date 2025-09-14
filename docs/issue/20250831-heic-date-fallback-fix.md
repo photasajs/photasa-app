@@ -76,6 +76,7 @@ if (fileType === FileTypeDetectors.IMAGE || fileType === FileTypeDetectors.VIDEO
 ```
 
 **Rationale**:
+
 - Ensures **all media files** get proper metadata dates from the beginning
 - **Prevents double metadata extraction** by storing metadata object
 - **Comprehensive coverage** for HEIC, JPEG, RAW, and video files
@@ -83,11 +84,13 @@ if (fileType === FileTypeDetectors.IMAGE || fileType === FileTypeDetectors.VIDEO
 ### 2. **Fixed Date Source Logic**
 
 **Before**:
+
 ```typescript
 dateSource: fallback.source === "file_created" ? "file_created" : "file_created",
 ```
 
 **After**:
+
 ```typescript
 dateSource: fallback.source === "current_date" ? "file_created" : fallback.source,
 ```
@@ -116,6 +119,7 @@ if (fileType === FileTypeDetectors.IMAGE || fileType === FileTypeDetectors.VIDEO
 ```
 
 **Benefits**:
+
 - **HEIC files**: Get EXIF dates and camera info
 - **JPEG files**: Get EXIF dates and GPS data
 - **RAW files**: Get camera metadata and shooting info
@@ -126,6 +130,7 @@ if (fileType === FileTypeDetectors.IMAGE || fileType === FileTypeDetectors.VIDEO
 ### 4. **Eliminated Triple Metadata Extraction (FIXED)**
 
 **Before**: **Triple metadata extraction** was happening in the preview flow:
+
 1. **Import Worker**: `createFileInfo()` → extracts metadata
 2. **processFileGroup**: Extracts metadata again for files without metadata
 3. **generateTargetStructure**: Calls `processFileGroup` again → third extraction
@@ -147,6 +152,7 @@ if (file.metadata) {
 ```
 
 **Benefits**:
+
 - **Eliminated waste**: No more triple metadata extraction
 - **Performance improvement**: Significantly faster preview generation
 - **Resource efficiency**: Each file processed exactly once
@@ -155,11 +161,13 @@ if (file.metadata) {
 ### 5. **Improved WASM Module Error Handling**
 
 **Before**:
+
 ```typescript
 const heifModule = await initializeHeifModule();
 ```
 
 **After**:
+
 ```typescript
 let heifModule: any = null;
 try {
@@ -176,38 +184,49 @@ try {
 ### 6. **Enhanced Logging and Debugging**
 
 **Added**:
+
 - Detailed EXIF tag availability logging
 - EXIF extraction success/failure logging
 - Fallback reason logging
 - Error stack trace logging
 
 **Example**:
+
 ```typescript
 // 记录可用的EXIF标签用于调试
 const availableTags = Object.keys(tags).slice(0, 10).join(", ");
-logger.debug(`[HEIC] Available EXIF tags: ${availableTags}${Object.keys(tags).length > 10 ? "..." : ""}`);
+logger.debug(
+    `[HEIC] Available EXIF tags: ${availableTags}${Object.keys(tags).length > 10 ? "..." : ""}`,
+);
 
 // 详细记录EXIF提取结果
 if (extractedDateTime) {
-    logger.info(`[HEIC] ${path.basename(filePath)} - Successfully extracted EXIF date: ${extractedDateTime.toISOString()}`);
+    logger.info(
+        `[HEIC] ${path.basename(filePath)} - Successfully extracted EXIF date: ${extractedDateTime.toISOString()}`,
+    );
 } else {
-    logger.warn(`[HEIC] ${path.basename(filePath)} - No EXIF date extracted, falling back to file creation time: ${fileCreatedTime.toISOString()}`);
+    logger.warn(
+        `[HEIC] ${path.basename(filePath)} - No EXIF date extracted, falling back to file creation time: ${fileCreatedTime.toISOString()}`,
+    );
 }
 ```
 
 ## 修复后的预期行为
 
 ### **Successful EXIF Extraction**
+
 - **Date Source**: `"exif"`
 - **Date**: Actual photo capture date from EXIF
 - **Log**: `"Successfully extracted EXIF date: [ISO_DATE]"`
 
 ### **EXIF Extraction Failure (with WASM)**
+
 - **Date Source**: `"file_created"`
 - **Date**: File creation time
 - **Log**: `"Failed to initialize HEIF module: [ERROR]"` + `"No EXIF date extracted, falling back to file creation time"`
 
 ### **EXIF Extraction Failure (without WASM)**
+
 - **Date Source**: `"file_created"`
 - **Date**: File creation time
 - **Log**: `"Failed to extract EXIF: [ERROR]"` + `"Error details: [STACK_TRACE]"`
@@ -215,12 +234,14 @@ if (extractedDateTime) {
 ## 测试
 
 ### **Test Results**
+
 - ✅ All existing tests pass
 - ✅ EXIF extraction works correctly in test environment
 - ✅ Fallback logic handles edge cases properly
 - ✅ Type safety maintained
 
 ### **Debug Output Example**
+
 ```
 [EXIF Debug] Available EXIF tags: Make, Model, Orientation, XResolution, YResolution, ResolutionUnit, Software, DateTime, HostComputer, YCbCrPositioning, Exif IFD Pointer, GPS Info IFD Pointer, ExposureTime, FNumber, ExposureProgram, ISOSpeedRatings, ExifVersion, DateTimeOriginal, DateTimeDigitized, OffsetTime
 [EXIF Debug] Trying date fields in order: [ 'DateTimeDigitized', 'DateTimeOriginal', 'DateTime' ]
@@ -232,19 +253,25 @@ if (extractedDateTime) {
 ## 应用程序环境调试的后续步骤
 
 ### 1. **Enable Debug Logging**
+
 Set log level to `debug` in the app environment to see detailed EXIF extraction logs.
 
 ### 2. **Check WASM Module Path**
+
 Verify that `resources/wasm_heif.wasm` is accessible in the app environment.
 
 ### 3. **Monitor Fallback Behavior**
+
 Look for these log messages to identify the specific failure point:
+
 - `"Failed to initialize HEIF module"`
 - `"Failed to extract EXIF"`
 - `"No EXIF date extracted, falling back to file creation time"`
 
 ### 4. **Environment Differences**
+
 Compare test vs. app environment:
+
 - File system permissions
 - WASM module availability
 - Node.js version differences
@@ -253,63 +280,66 @@ Compare test vs. app environment:
 ## 修改的文件
 
 1. **`src/main/import/import-worker.ts`**
-   - **Completely rewrote** `createFileInfo` function to extract metadata for **ALL image and video files**
-   - **Fixed critical bug** where extracted metadata was completely ignored
-   - **Added comprehensive metadata extraction** for HEIC, JPEG, RAW, and video files
-   - **Prevented double extraction** by storing metadata object
-   - **Enhanced logging** for all media file metadata extraction processes
-   - **Implemented smart date fallback** when metadata extraction fails
+    - **Completely rewrote** `createFileInfo` function to extract metadata for **ALL image and video files**
+    - **Fixed critical bug** where extracted metadata was completely ignored
+    - **Added comprehensive metadata extraction** for HEIC, JPEG, RAW, and video files
+    - **Prevented double extraction** by storing metadata object
+    - **Enhanced logging** for all media file metadata extraction processes
+    - **Implemented smart date fallback** when metadata extraction fails
 
 2. **`src/main/import/metadata/extractors/heic-extractor.ts`**
-   - Fixed `determineFinalDate` function
-   - Improved WASM module error handling
-   - Enhanced logging and debugging
+    - Fixed `determineFinalDate` function
+    - Improved WASM module error handling
+    - Enhanced logging and debugging
 
 3. **`src/main/import/metadata/index.ts`**
-   - **Eliminated triple metadata extraction** by respecting existing metadata
-   - **Implemented smart date fallback** in `processFileGroup` function
-   - **Enhanced logging** for metadata reuse and fallback decisions
+    - **Eliminated triple metadata extraction** by respecting existing metadata
+    - **Implemented smart date fallback** in `processFileGroup` function
+    - **Enhanced logging** for metadata reuse and fallback decisions
 
 4. **`src/main/import/metadata/parsers/date-parser.ts`**
-   - **Implemented `computeFallbackDate()`** for intelligent date selection
-   - **Enhanced fallback logic** to choose earlier date between creation and modification times
-   - **Improved source tracking** with new `"file_modified"` source type
-   - **Removed deprecated `getDateFallback()` function** - no more backward compatibility needed
+    - **Implemented `computeFallbackDate()`** for intelligent date selection
+    - **Enhanced fallback logic** to choose earlier date between creation and modification times
+    - **Improved source tracking** with new `"file_modified"` source type
+    - **Removed deprecated `getDateFallback()` function** - no more backward compatibility needed
 
 5. **`src/common/import-types.ts`**
-   - **Extended `DateSource` type** to include `"file_modified"` for better source tracking
+    - **Extended `DateSource` type** to include `"file_modified"` for better source tracking
 
 6. **`src/common/constants.ts`**
-   - **Added `DateSources` constants** to eliminate string literal usage
-   - **Centralized date source values** for consistency and type safety
+    - **Added `DateSources` constants** to eliminate string literal usage
+    - **Centralized date source values** for consistency and type safety
 
 7. **`src/main/import/metadata/index.ts`**
-   - **Updated main `extractMetadata` function** to handle all fallbacks consistently
-   - **All extractors now return `null` on failure** instead of handling their own fallbacks
-   - **Unified fallback logic** using `computeFallbackDate` for all file types
-   - **Eliminated duplicate fallback logic** with `createFallbackMetadata()` helper function
+    - **Updated main `extractMetadata` function** to handle all fallbacks consistently
+    - **All extractors now return `null` on failure** instead of handling their own fallbacks
+    - **Unified fallback logic** using `computeFallbackDate` for all file types
+    - **Eliminated duplicate fallback logic** with `createFallbackMetadata()` helper function
 
 8. **`src/main/import/metadata/extractors/*.ts`**
-   - **Updated all extractors** to return `null` on failure instead of handling fallbacks
-   - **Consistent error handling pattern** across HEIC, RAW, Image, and Video extractors
-   - **Clear separation of concerns**: Extractors focus on extraction, main function handles fallbacks
-   - **Removed all `computeFallbackDate` references** from extractors - now fully consistent
+    - **Updated all extractors** to return `null` on failure instead of handling fallbacks
+    - **Consistent error handling pattern** across HEIC, RAW, Image, and Video extractors
+    - **Clear separation of concerns**: Extractors focus on extraction, main function handles fallbacks
+    - **Removed all `computeFallbackDate` references** from extractors - now fully consistent
 
 ### **Eliminated Duplicate Fallback Logic (COMPLETED)**
 
 **Problem**: **Duplicate fallback logic** in main `extractMetadata` function:
+
 - **Each file type** had identical fallback handling code
 - **Violated DRY principle** - same logic repeated 4 times
 - **Harder to maintain** - changes needed in multiple places
 - **Inconsistent formatting** and logging across file types
 
 **Solution**: **Unified fallback helper function**:
+
 - **Created `createFallbackMetadata()`** helper to eliminate duplication
 - **Single source of truth** for all fallback logic
 - **Consistent formatting** and logging across all file types
 - **Easier maintenance** - modify fallback logic in one place
 
 **Implementation**:
+
 ```typescript
 // Before: Duplicate logic for each file type
 if (isHeicFile(filePath)) {
@@ -363,6 +393,7 @@ function createFallbackMetadata(baseMetadata, filePath, stats, fileType, logger)
 ```
 
 **Benefits**:
+
 - **Eliminated duplication**: No more repeated fallback logic
 - **Easier maintenance**: Single place to modify fallback behavior
 - **Consistent behavior**: All file types use identical fallback logic
@@ -373,18 +404,21 @@ function createFallbackMetadata(baseMetadata, filePath, stats, fileType, logger)
 ### **Code Quality Improvements (COMPLETED)**
 
 **Problem**: **Unnecessary `else` statements** made code less readable:
+
 - **Redundant nesting** when using early returns
 - **Harder to follow** the code flow
 - **More complex indentation** levels
 - **Violated early return pattern** best practices
 
 **Solution**: **Eliminated unnecessary `else` statements** using early return pattern:
+
 - **Early return on success** - exit immediately when metadata is found
 - **Fallback logic follows naturally** - no need for `else` blocks
 - **Cleaner code flow** - easier to read and understand
 - **Better indentation** - fewer nesting levels
 
 **Implementation**:
+
 ```typescript
 // Before: Unnecessary else statements
 if (isHeicFile(filePath)) {
@@ -411,6 +445,7 @@ if (isHeicFile(filePath)) {
 ```
 
 **Benefits**:
+
 - **Better readability**: Code flow is more natural and easier to follow
 - **Reduced nesting**: Fewer indentation levels
 - **Early return pattern**: Follows modern JavaScript/TypeScript best practices
@@ -435,7 +470,13 @@ export function computeFallbackDate(
     createdTime?: Date,
     modifiedTime?: Date,
     logger?: PhotasaLogger,
-): { date: Date; source: typeof DateSources.FILE_CREATED | typeof DateSources.FILE_MODIFIED | typeof DateSources.CURRENT_DATE } {
+): {
+    date: Date;
+    source:
+        | typeof DateSources.FILE_CREATED
+        | typeof DateSources.FILE_MODIFIED
+        | typeof DateSources.CURRENT_DATE;
+} {
     if (isValidCreated && isValidModified) {
         // 两个时间都有效，选择较早的日期
         if (createdTime!.getTime() <= modifiedTime!.getTime()) {
@@ -449,6 +490,7 @@ export function computeFallbackDate(
 ```
 
 **Benefits**:
+
 - **More Accurate Dating**: Chooses the earlier date, which is more likely to represent when the file was actually created/captured
 - **Handles File Operations**: Accounts for files that may have been copied, moved, or modified after creation
 - **Comprehensive Coverage**: Works with both creation and modification times
@@ -457,6 +499,7 @@ export function computeFallbackDate(
 - **Type Safety**: Uses named constants instead of error-prone string literals
 
 **Implementation Locations**:
+
 - **Import Worker**: Uses `computeFallbackDate` when metadata extraction fails
 - **File Group Processing**: Uses `computeFallbackDate` for files without metadata
 - **Target Date Determination**: Uses `computeFallbackDate` for group target dates
@@ -466,6 +509,7 @@ export function computeFallbackDate(
 ### **Named Constants Implementation (COMPLETED)**
 
 **Problem**: Using string literals directly in code is **buggy and error-prone**:
+
 - **Typos**: `"file_created"` vs `"file_creatd"` (silent failure)
 - **Inconsistency**: Different parts of code might use slightly different strings
 - **Refactoring Risk**: Changing a string requires finding all occurrences
@@ -485,6 +529,7 @@ export const DateSources = {
 ```
 
 **Benefits**:
+
 - **Type Safety**: TypeScript ensures only valid constants are used
 - **IntelliSense**: Full autocomplete and validation in IDEs
 - **Refactoring Safety**: Rename constants safely across the entire codebase
@@ -498,12 +543,14 @@ export const DateSources = {
 **Action**: **Removed deprecated `getDateFallback()` function** completely
 
 **Reason**:
+
 - **No longer needed**: `computeFallbackDate()` provides all functionality
 - **Cleaner codebase**: Eliminates deprecated code paths
 - **Simplified maintenance**: Single function to maintain instead of two
 - **Better type safety**: Direct use of `computeFallbackDate()` with proper types
 
 **Files Updated**:
+
 - ✅ **`src/main/import/metadata/parsers/date-parser.ts`** - Removed deprecated function
 - ✅ **`src/main/import/metadata/extractors/heic-extractor.ts`** - Updated to use `computeFallbackDate`
 - ✅ **`src/main/import/metadata/extractors/image-extractor.ts`** - Updated to use `computeFallbackDate`
@@ -514,6 +561,7 @@ export const DateSources = {
 ### **Consistent Extraction Logic (COMPLETED)**
 
 **Problem**: **Inconsistent extraction behavior** across different file types:
+
 - **Some extractors** handled their own fallbacks when failing
 - **Others** threw errors and let the main function handle it
 - **No clear separation** between extraction logic and fallback logic
@@ -522,6 +570,7 @@ export const DateSources = {
 - **Type mismatches** between extractor return types and main function expectations
 
 **Solution**: **Unified extraction pattern**:
+
 - **All extractors return `null` on failure** instead of handling fallbacks
 - **Main `extractMetadata` function** handles all fallback logic consistently
 - **Clear separation of concerns**: Extractors focus on extraction, main function handles fallbacks and dateSource
@@ -530,6 +579,7 @@ export const DateSources = {
 - **Unified type system** with `ExtractedImageMetadata` and `ExtractedVideoMetadata` interfaces
 
 **Implementation**:
+
 ```typescript
 // Before: Inconsistent - extractors handling their own fallbacks and dateSource
 export async function extractHeicMetadata(): Promise<ImageMetadata> {
@@ -542,7 +592,9 @@ export async function extractHeicMetadata(): Promise<ImageMetadata> {
     } catch (error) {
         // ❌ Inconsistent: Extractors handling their own fallbacks
         const fallback = computeFallbackDate(stats.birthtime, undefined, logger);
-        return { /* fallback metadata */ };
+        return {
+            /* fallback metadata */
+        };
     }
 }
 
@@ -593,20 +645,22 @@ const MediaBuilderTypeMap = {
 ```
 
 **Type System Updates**:
+
 ```typescript
 // New interfaces for extractor return types (without dateSource)
-type ExtractedImageMetadata = Omit<ImageMetadata, 'dateSource'>;
-type ExtractedVideoMetadata = Omit<VideoMetadata, 'dateSource'>;
+type ExtractedImageMetadata = Omit<ImageMetadata, "dateSource">;
+type ExtractedVideoMetadata = Omit<VideoMetadata, "dateSource">;
 
 // Extended FileMetadata to include video-specific properties
 export interface FileMetadata {
     // ... existing properties
     // Video-specific properties
-    resolution?: { width: number; height: number; };
+    resolution?: { width: number; height: number };
     codec?: string;
     creationTime?: Date;
 }
 ```
+
 ```
 
 **Benefits**:
@@ -657,3 +711,4 @@ export interface FileMetadata {
 - **依赖注入**：便于测试和模拟
 
 这次重构不仅解决了原有的功能问题，还将代码质量提升到了专业级标准，为未来的功能扩展和维护奠定了坚实的基础。
+```

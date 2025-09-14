@@ -40,45 +40,47 @@
 
 ### 支持的文件格式
 
-| 格式 | 扩展名 | 解析库 | 优先级 |
-|------|--------|--------|--------|
-| Adobe Illustrator | .ai | 自定义解析器 | 高 |
-| Photoshop | .psd | ag-psd | 高 |
-| Sketch | .sketch | sketch-file-parser | 中 |
-| Figma | .figma | 待调研 | 低 |
-| Adobe XD | .xd | 待调研 | 低 |
+| 格式              | 扩展名  | 解析库             | 优先级 |
+| ----------------- | ------- | ------------------ | ------ |
+| Adobe Illustrator | .ai     | 自定义解析器       | 高     |
+| Photoshop         | .psd    | ag-psd             | 高     |
+| Sketch            | .sketch | sketch-file-parser | 中     |
+| Figma             | .figma  | 待调研             | 低     |
+| Adobe XD          | .xd     | 待调研             | 低     |
 
 ### API设计
 
 #### 预览请求
+
 ```typescript
 interface PreviewRequest {
-  fileId: string;
-  fileType: 'ai' | 'psd' | 'sketch' | 'figma' | 'xd';
-  fileSize: number;
-  previewOptions: {
-    width?: number;
-    height?: number;
-    quality?: 'low' | 'medium' | 'high';
-    format?: 'png' | 'jpg' | 'webp';
-  };
+    fileId: string;
+    fileType: "ai" | "psd" | "sketch" | "figma" | "xd";
+    fileSize: number;
+    previewOptions: {
+        width?: number;
+        height?: number;
+        quality?: "low" | "medium" | "high";
+        format?: "png" | "jpg" | "webp";
+    };
 }
 ```
 
 #### 预览响应
+
 ```typescript
 interface PreviewResponse {
-  success: boolean;
-  previewUrl?: string;
-  thumbnailUrl?: string;
-  metadata?: {
-    width: number;
-    height: number;
-    layers: number;
-    colorMode: string;
-    version: string;
-  };
-  error?: string;
+    success: boolean;
+    previewUrl?: string;
+    thumbnailUrl?: string;
+    metadata?: {
+        width: number;
+        height: number;
+        layers: number;
+        colorMode: string;
+        version: string;
+    };
+    error?: string;
 }
 ```
 
@@ -93,35 +95,38 @@ interface PreviewResponse {
 ### 性能优化
 
 1. **缓存策略**：
-   - 预览结果缓存（24小时）
-   - 缩略图缓存（7天）
-   - CDN分发
+    - 预览结果缓存（24小时）
+    - 缩略图缓存（7天）
+    - CDN分发
 
 2. **并发控制**：
-   - 限制同时处理的文件数量
-   - 队列管理机制
-   - 超时处理
+    - 限制同时处理的文件数量
+    - 队列管理机制
+    - 超时处理
 
 3. **资源管理**：
-   - 自动清理过期文件
-   - 内存使用监控
-   - 磁盘空间管理
+    - 自动清理过期文件
+    - 内存使用监控
+    - 磁盘空间管理
 
 ## 实施计划
 
 ### 阶段1：基础服务（3个月）
+
 - [ ] 搭建预览服务基础设施
 - [ ] 实现PSD文件预览支持
 - [ ] 基础API和认证系统
 - [ ] 安全机制实现
 
 ### 阶段2：格式扩展（2个月）
+
 - [ ] 添加AI文件预览支持
 - [ ] 实现Sketch文件预览
 - [ ] 性能优化和缓存系统
 - [ ] 监控和日志系统
 
 ### 阶段3：高级功能（2个月）
+
 - [ ] 支持更多设计文件格式
 - [ ] 高级预览选项（图层、元数据等）
 - [ ] 批量预览功能
@@ -130,11 +135,13 @@ interface PreviewResponse {
 ## 成本估算
 
 ### 基础设施成本
+
 - 服务器资源：$200-500/月
 - 存储成本：$50-150/月
 - CDN费用：$100-300/月
 
 ### 开发成本
+
 - 后端开发：2-3人月
 - 前端集成：1人月
 - 测试和优化：1人月
@@ -142,16 +149,19 @@ interface PreviewResponse {
 ## 风险评估
 
 ### 技术风险
+
 - **文件格式复杂性**：某些格式可能难以完全支持
 - **性能瓶颈**：大文件处理可能影响响应时间
 - **兼容性问题**：不同版本的文件格式差异
 
 ### 业务风险
+
 - **成本控制**：服务成本可能超出预期
 - **用户接受度**：用户可能对在线预览有隐私担忧
 - **竞争压力**：需要与现有解决方案竞争
 
 ### 缓解措施
+
 - 分阶段实施，逐步验证技术可行性
 - 建立成本监控和预警机制
 - 提供透明的隐私政策和安全措施
@@ -159,14 +169,14 @@ interface PreviewResponse {
 ## 成功指标
 
 1. **技术指标**：
-   - 预览成功率 > 95%
-   - 平均响应时间 < 5秒
-   - 系统可用性 > 99.5%
+    - 预览成功率 > 95%
+    - 平均响应时间 < 5秒
+    - 系统可用性 > 99.5%
 
 2. **业务指标**：
-   - 订阅用户使用率 > 30%
-   - 用户满意度 > 4.0/5.0
-   - 服务成本控制在预算内
+    - 订阅用户使用率 > 30%
+    - 用户满意度 > 4.0/5.0
+    - 服务成本控制在预算内
 
 ## 结论
 

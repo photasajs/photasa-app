@@ -1,7 +1,7 @@
 # RFC 0006: Photo Detail Drawer Decoupling from Ant Design
 
 - **Status**: 已实现
-- **Start Date**: 2025-01-06  
+- **Start Date**: 2025-01-06
 - **Implementation Date**: 2025-01-09
 - **RFC PR**: (leave this empty)
 - **Implementation Issue**: (leave this empty)
@@ -25,6 +25,7 @@ The current photo detail drawer implementation is tightly coupled with Ant Desig
 ### Current State Analysis
 
 The photo detail drawer currently uses:
+
 - Ant Design Drawer component for the sliding panel
 - Potentially other Ant Design components for internal UI elements
 
@@ -36,26 +37,28 @@ Create a new `BaseDrawer.vue` component with:
 
 ```typescript
 interface BaseDrawerProps {
-  modelValue: boolean // v-model support
-  position?: 'left' | 'right' | 'top' | 'bottom'
-  size?: string | number // width for left/right, height for top/bottom
-  mask?: boolean // show backdrop
-  maskClosable?: boolean
-  closeOnEsc?: boolean
-  zIndex?: number
-  teleport?: string | boolean // teleport target
+    modelValue: boolean; // v-model support
+    position?: "left" | "right" | "top" | "bottom";
+    size?: string | number; // width for left/right, height for top/bottom
+    mask?: boolean; // show backdrop
+    maskClosable?: boolean;
+    closeOnEsc?: boolean;
+    zIndex?: number;
+    teleport?: string | boolean; // teleport target
 }
 ```
 
 #### 2. Implementation Strategy
 
 **Phase 1: Path Handling Refactor**
+
 - Move file path processing from UI layer to main process
 - Update `getImageType` API to handle file:// protocol internally
 - Align with existing image extractors in main process (`src/main/import/metadata/extractors/image-extractor.ts`)
 - Ensure consistent path handling across all image operations
 
 **Phase 2: Create Base Components**
+
 - Implement `BaseDrawer.vue` with core functionality
 - Use Vue 3 Composition API and Teleport for portal rendering
 - Implement focus trap and keyboard navigation
@@ -64,6 +67,7 @@ interface BaseDrawerProps {
 - Create custom description list component (`BaseDescriptions.vue`) to replace `a-descriptions`
 
 **Phase 3: Redesign Photo Detail UI**
+
 - Create `PhotoDetailDrawer.vue` using `BaseDrawer`
 - Design custom metadata display components without Ant Design dependencies
 - Implement structured data layout with proper semantic HTML
@@ -71,6 +75,7 @@ interface BaseDrawerProps {
 - Ensure responsive design and accessibility compliance
 
 **Phase 4: Integration and Cleanup**
+
 - Replace Ant Design drawer in ImageList.vue
 - Update all related components and tests
 - Remove ant-design-vue dependency from package.json
@@ -82,6 +87,7 @@ interface BaseDrawerProps {
 #### Path Handling Refactor
 
 Current implementation processes paths in the UI layer:
+
 ```typescript
 // Current: ImageList.vue
 const path = `${trim(image.raw, "file:/")}`;
@@ -89,14 +95,13 @@ const info = await getImageType(path);
 ```
 
 Proposed improvement - handle in preload/main:
+
 ```typescript
 // Updated: preload/image-helper.ts
 export async function getImageType(fileUrl: string): Promise<ImageInfo> {
     // Handle file:// protocol internally
-    const path = fileUrl.startsWith('file://') 
-        ? fileUrl.replace(/^file:\/\//, '') 
-        : fileUrl;
-    
+    const path = fileUrl.startsWith("file://") ? fileUrl.replace(/^file:\/\//, "") : fileUrl;
+
     const buffer = await readChunk(path, { length: minimumBytes });
     const tags = await getExifInfo(path);
     const result = await imageType(buffer);
@@ -113,6 +118,7 @@ const info = await getImageType(image.raw); // Direct file:// URL
 #### Main Process Alignment
 
 Align with existing image extractor pattern (`src/main/import/metadata/extractors/image-extractor.ts`):
+
 - Consistent error handling
 - Standardized metadata structure
 - Unified file type detection
@@ -121,44 +127,48 @@ Align with existing image extractor pattern (`src/main/import/metadata/extractor
 #### Component Architecture
 
 **BaseDrawer.vue** - Core drawer functionality
+
 ```typescript
 interface BaseDrawerProps {
-  modelValue: boolean
-  position?: 'left' | 'right' | 'top' | 'bottom'
-  size?: string | number
-  mask?: boolean
-  maskClosable?: boolean
-  closeOnEsc?: boolean
-  zIndex?: number
-  teleport?: string | boolean
+    modelValue: boolean;
+    position?: "left" | "right" | "top" | "bottom";
+    size?: string | number;
+    mask?: boolean;
+    maskClosable?: boolean;
+    closeOnEsc?: boolean;
+    zIndex?: number;
+    teleport?: string | boolean;
 }
 ```
 
 **BaseSpinner.vue** - Loading indicator
+
 ```typescript
 interface BaseSpinnerProps {
-  spinning: boolean
-  size?: 'small' | 'default' | 'large'
-  tip?: string
+    spinning: boolean;
+    size?: "small" | "default" | "large";
+    tip?: string;
 }
 ```
 
 **BaseDescriptions.vue** - Metadata display
+
 ```typescript
 interface BaseDescriptionsProps {
-  title?: string
-  layout?: 'horizontal' | 'vertical'
-  bordered?: boolean
-  column?: number
+    title?: string;
+    layout?: "horizontal" | "vertical";
+    bordered?: boolean;
+    column?: number;
 }
 
 interface BaseDescriptionItemProps {
-  label: string
-  span?: number
+    label: string;
+    span?: number;
 }
 ```
 
 **PhotoDetailDrawer.vue** - Composed photo detail view
+
 - Uses BaseDrawer for container
 - Uses BaseSpinner for loading states
 - Uses BaseDescriptions for structured metadata
@@ -166,68 +176,77 @@ interface BaseDescriptionItemProps {
 - Custom responsive layout without Ant Design grid
 
 #### Animation System
+
 ```css
 /* Slide animations */
 .drawer-slide-right-enter-active,
 .drawer-slide-right-leave-active {
-  transition: transform 0.3s cubic-bezier(0.7, 0.3, 0.1, 1);
+    transition: transform 0.3s cubic-bezier(0.7, 0.3, 0.1, 1);
 }
 
 .drawer-slide-right-enter-from {
-  transform: translateX(100%);
+    transform: translateX(100%);
 }
 
 .drawer-slide-right-leave-to {
-  transform: translateX(100%);
+    transform: translateX(100%);
 }
 ```
 
 #### Accessibility Features
+
 - ARIA attributes: `role="dialog"`, `aria-modal="true"`
 - Focus management: trap focus within drawer
 - Keyboard support: ESC to close, Tab cycling
 - Screen reader announcements
 
 #### State Management
+
 ```typescript
 const useDrawer = () => {
-  const isOpen = ref(false)
-  const contentRef = ref<HTMLElement>()
-  
-  const open = () => { isOpen.value = true }
-  const close = () => { isOpen.value = false }
-  const toggle = () => { isOpen.value = !isOpen.value }
-  
-  // Focus trap logic
-  useFocusTrap(contentRef, isOpen)
-  
-  // Keyboard handling
-  useKeyboard({
-    Escape: () => isOpen.value && close()
-  })
-  
-  return { isOpen, open, close, toggle, contentRef }
-}
+    const isOpen = ref(false);
+    const contentRef = ref<HTMLElement>();
+
+    const open = () => {
+        isOpen.value = true;
+    };
+    const close = () => {
+        isOpen.value = false;
+    };
+    const toggle = () => {
+        isOpen.value = !isOpen.value;
+    };
+
+    // Focus trap logic
+    useFocusTrap(contentRef, isOpen);
+
+    // Keyboard handling
+    useKeyboard({
+        Escape: () => isOpen.value && close(),
+    });
+
+    return { isOpen, open, close, toggle, contentRef };
+};
 ```
 
 ### Testing Strategy
 
 1. **Unit Tests**
-   - Component rendering
-   - Props validation
-   - Event emissions
-   - Slot content rendering
+    - Component rendering
+    - Props validation
+    - Event emissions
+    - Slot content rendering
 
 2. **Integration Tests**
-   - Animation transitions
-   - Focus management
-   - Keyboard interactions
-   - Scroll locking
+    - Animation transitions
+    - Focus management
+    - Keyboard interactions
+    - Scroll locking
 
 3. **Visual Regression Tests**
-   - Different positions
-   - Various content sizes
-   - Responsive behavior
+    - Different positions
+    - Various content sizes
+    - Responsive behavior
 
 ## Drawbacks
 
@@ -239,23 +258,30 @@ const useDrawer = () => {
 ## Alternatives
 
 ### Alternative 1: Headless UI Libraries
+
 Use headless libraries like Headless UI or Radix Vue:
+
 - **Pros**: Battle-tested, accessible, minimal styling
 - **Cons**: Still external dependencies, may not fit all needs
 
 ### Alternative 2: Gradual Migration
+
 Keep Ant Design for now, migrate component by component:
+
 - **Pros**: Lower risk, can be done incrementally
 - **Cons**: Prolongs dependency, inconsistent codebase
 
 ### Alternative 3: Different UI Library
+
 Switch to a lighter library like Naive UI or Element Plus:
+
 - **Pros**: Potentially smaller bundle, modern architecture
 - **Cons**: Still vendor lock-in, migration effort similar
 
 ## Implementation Plan
 
 ### Phase 1: Path Handling Refactor (Week 1)
+
 - [x] Update `preload/image-helper.ts` to handle file:// protocol internally
 - [x] Examine and align with `src/main/import/metadata/extractors/image-extractor.ts`
 - [x] Simplify path processing in `ImageList.vue`
@@ -263,6 +289,7 @@ Switch to a lighter library like Naive UI or Element Plus:
 - [x] Validate cross-platform file path compatibility
 
 ### Phase 2: Base Components Creation (Week 2)
+
 - [x] Implement `BaseDrawer.vue` with Vue 3 Composition API
 - [x] Create `BaseSpinner.vue` loading component
 - [x] Implement `BaseDescriptions.vue` metadata display
@@ -271,6 +298,7 @@ Switch to a lighter library like Naive UI or Element Plus:
 - [x] Add comprehensive unit tests for all base components
 
 ### Phase 3: Photo Detail UI Redesign (Week 3)
+
 - [x] Create `FileInfoDrawer.vue` using base components (renamed from PhotoDetailDrawer)
 - [x] Design responsive metadata layout without Ant Design
 - [x] Integrate existing JsonTreeView component
@@ -278,6 +306,7 @@ Switch to a lighter library like Naive UI or Element Plus:
 - [x] Add visual regression tests
 
 ### Phase 4: Integration and Cleanup (Week 4)
+
 - [x] Replace Ant Design drawer in `ImageList.vue`
 - [x] Update component imports and dependencies
 - [ ] Remove ant-design-vue from package.json (partially done - still used by other components)
@@ -312,28 +341,28 @@ Switch to a lighter library like Naive UI or Element Plus:
 ### What Was Actually Implemented (2025-01-09)
 
 1. **BaseDrawer Component** (`src/renderer/src/components/ui/BaseDrawer.vue`)
-   - ✅ Full Vue 3 Composition API implementation
-   - ✅ Teleport to body with proper z-index management
-   - ✅ Multiple placement support (left, right, top, bottom)
-   - ✅ Focus trap and keyboard navigation (ESC to close)
-   - ✅ ARIA attributes for accessibility
-   - ✅ Smooth CSS transitions
+    - ✅ Full Vue 3 Composition API implementation
+    - ✅ Teleport to body with proper z-index management
+    - ✅ Multiple placement support (left, right, top, bottom)
+    - ✅ Focus trap and keyboard navigation (ESC to close)
+    - ✅ ARIA attributes for accessibility
+    - ✅ Smooth CSS transitions
 
 2. **Supporting Base Components**
-   - ✅ `BaseSpinner.vue` - Custom loading component
-   - ✅ `BaseDescriptions.vue` and `BaseDescriptionItem.vue` - Metadata display
-   - ✅ Complete unit test coverage
+    - ✅ `BaseSpinner.vue` - Custom loading component
+    - ✅ `BaseDescriptions.vue` and `BaseDescriptionItem.vue` - Metadata display
+    - ✅ Complete unit test coverage
 
 3. **FileInfoDrawer Implementation**
-   - ✅ `FileInfoDrawer.vue` - Photo detail drawer using BaseDrawer
-   - ✅ Rich metadata display with toggle for raw data
-   - ✅ Responsive design without Ant Design dependencies
-   - ✅ Integration with existing JsonTreeView component
+    - ✅ `FileInfoDrawer.vue` - Photo detail drawer using BaseDrawer
+    - ✅ Rich metadata display with toggle for raw data
+    - ✅ Responsive design without Ant Design dependencies
+    - ✅ Integration with existing JsonTreeView component
 
 4. **Integration Success**
-   - ✅ Successfully replaced Ant Design drawer in `ImageList.vue`
-   - ✅ All existing functionality preserved
-   - ✅ Improved performance and customizability
+    - ✅ Successfully replaced Ant Design drawer in `ImageList.vue`
+    - ✅ All existing functionality preserved
+    - ✅ Improved performance and customizability
 
 ### Partial Implementation
 

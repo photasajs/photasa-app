@@ -45,19 +45,19 @@ Core module for file operations and caching.
 #### Key Features
 
 - **Caching System**
-  - TTL-based cache (5 seconds)
-  - Directory-level caching
-  - Automatic cache invalidation
+    - TTL-based cache (5 seconds)
+    - Directory-level caching
+    - Automatic cache invalidation
 
 - **Batch Operations**
-  - Write batching (100ms interval, max 50 files)
-  - Read batching (50ms interval, max 100 files)
-  - Directory-level grouping
+    - Write batching (100ms interval, max 50 files)
+    - Read batching (50ms interval, max 100 files)
+    - Directory-level grouping
 
 - **Queue System**
-  - Concurrency control (10 concurrent tasks)
-  - Priority-based scheduling
-  - Timeout handling (60 seconds)
+    - Concurrency control (10 concurrent tasks)
+    - Priority-based scheduling
+    - Timeout handling (60 seconds)
 
 #### Main Functions
 
@@ -83,19 +83,19 @@ getPhotasaConfig(folder: string): Promise<PhotasaConfig>
 #### Storage Key Features
 
 - **Caching System**
-  - TTL-based cache (5 seconds)
-  - Directory-level caching
-  - Automatic cache invalidation
+    - TTL-based cache (5 seconds)
+    - Directory-level caching
+    - Automatic cache invalidation
 
 - **Batch Operations**
-  - Write batching (100ms interval, max 50 files)
-  - Read batching (50ms interval, max 100 files)
-  - Directory-level grouping
+    - Write batching (100ms interval, max 50 files)
+    - Read batching (50ms interval, max 100 files)
+    - Directory-level grouping
 
 - **Queue System**
-  - Concurrency control (10 concurrent tasks)
-  - Priority-based scheduling
-  - Timeout handling (60 seconds)
+    - Concurrency control (10 concurrent tasks)
+    - Priority-based scheduling
+    - Timeout handling (60 seconds)
 
 ### 2. Config Handler (`config-handler.ts`)
 
@@ -104,12 +104,12 @@ Handles high-level operations and event management.
 #### Key Features
 
 - **Glob Pattern Matching**
-  - Recursive directory scanning
-  - Pattern: `**/*.photasa.json`
+    - Recursive directory scanning
+    - Pattern: `**/*.photasa.json`
 
 - **Buffer Management**
-  - Buffer size: 30 items
-  - Automatic buffer flushing
+    - Buffer size: 30 items
+    - Automatic buffer flushing
 
 #### Main Functions
 
@@ -125,12 +125,12 @@ removeConfig(request: { queueId: number; paths: string[] }, postMessage: Functio
 #### Handler Key Features
 
 - **Glob Pattern Matching**
-  - Recursive directory scanning
-  - Pattern: `**/*.photasa.json`
+    - Recursive directory scanning
+    - Pattern: `**/*.photasa.json`
 
 - **Buffer Management**
-  - Buffer size: 30 items
-  - Automatic buffer flushing
+    - Buffer size: 30 items
+    - Automatic buffer flushing
 
 ### 3. Config Service (`config-service.ts`)
 
@@ -139,21 +139,21 @@ Manages IPC communication and window interactions.
 #### Key Features
 
 - **Worker Management**
-  - Worker creation and lifecycle
-  - Message handling
-  - Promise resolution
+    - Worker creation and lifecycle
+    - Message handling
+    - Promise resolution
 
 - **IPC Communication**
-  - Event handling
-  - Message routing
-  - Window communication
+    - Event handling
+    - Message routing
+    - Window communication
 
 #### Main Functions
 
 ```typescript
 class ConfigService {
-    queryConfigs(paths: string[]): void
-    addConfig(paths: string[]): Promise<void>
+    queryConfigs(paths: string[]): void;
+    addConfig(paths: string[]): Promise<void>;
 }
 ```
 
@@ -162,14 +162,14 @@ class ConfigService {
 #### Service Key Features
 
 - **Worker Management**
-  - Worker creation and lifecycle
-  - Message handling
-  - Promise resolution
+    - Worker creation and lifecycle
+    - Message handling
+    - Promise resolution
 
 - **IPC Communication**
-  - Event handling
-  - Message routing
-  - Window communication
+    - Event handling
+    - Message routing
+    - Window communication
 
 ### 4. Config Worker (`config-worker.ts`)
 
@@ -178,14 +178,14 @@ Handles background processing and worker thread operations.
 #### Key Features
 
 - **Message Handling**
-  - Action routing
-  - Error handling
-  - Logging
+    - Action routing
+    - Error handling
+    - Logging
 
 - **Worker Communication**
-  - Parent port communication
-  - Message parsing
-  - Response handling
+    - Parent port communication
+    - Message parsing
+    - Response handling
 
 #### Main Functions
 
@@ -194,8 +194,8 @@ Handles background processing and worker thread operations.
 const handler = {
     query: queryConfig,
     add: addConfig,
-    remove: removeConfig
-}
+    remove: removeConfig,
+};
 ```
 
 ### 4. Config Worker Features
@@ -203,14 +203,14 @@ const handler = {
 #### Worker Key Features
 
 - **Message Handling**
-  - Action routing
-  - Error handling
-  - Logging
+    - Action routing
+    - Error handling
+    - Logging
 
 - **Worker Communication**
-  - Parent port communication
-  - Message parsing
-  - Response handling
+    - Parent port communication
+    - Message parsing
+    - Response handling
 
 ## Performance Optimizations
 
@@ -293,15 +293,15 @@ removeConfig({ queueId: 1, paths: photos }, postMessage, logger);
 ## Configuration Constants
 
 ```typescript
-const CACHE_TTL = 5000;              // 5 seconds
-const QUEUE_CONCURRENCY = 10;        // Concurrent tasks
-const QUEUE_BREAK_THRESHOLD = 200;   // Queue size threshold
-const DEBOUNCE_DELAY = 30;           // 30ms debounce
-const QUEUE_TIMEOUT = 60000;         // 1 minute timeout
-const QUEUE_INTERVAL = 100;          // 100ms interval
-const QUEUE_INTERVAL_CAP = 100;      // Max tasks per interval
-const WRITE_BATCH_INTERVAL = 100;    // 100ms write batch
-const WRITE_BATCH_MAX_SIZE = 50;     // Max files per write batch
-const READ_BATCH_INTERVAL = 50;      // 50ms read batch
-const READ_BATCH_MAX_SIZE = 100;     // Max files per read batch
+const CACHE_TTL = 5000; // 5 seconds
+const QUEUE_CONCURRENCY = 10; // Concurrent tasks
+const QUEUE_BREAK_THRESHOLD = 200; // Queue size threshold
+const DEBOUNCE_DELAY = 30; // 30ms debounce
+const QUEUE_TIMEOUT = 60000; // 1 minute timeout
+const QUEUE_INTERVAL = 100; // 100ms interval
+const QUEUE_INTERVAL_CAP = 100; // Max tasks per interval
+const WRITE_BATCH_INTERVAL = 100; // 100ms write batch
+const WRITE_BATCH_MAX_SIZE = 50; // Max files per write batch
+const READ_BATCH_INTERVAL = 50; // 50ms read batch
+const READ_BATCH_MAX_SIZE = 100; // Max files per read batch
 ```

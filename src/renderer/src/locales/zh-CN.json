@@ -31,7 +31,8 @@
             "general": "常规",
             "about": "关于",
             "theme": "主题",
-            "advanced": "高级配置"
+            "advanced": "高级配置",
+            "autoUpdate": "自动更新"
         },
         "folderList": "目录列表",
         "folderListUsage": "使用方式",
@@ -46,6 +47,36 @@
             "title": "高级操作：重置目录存储",
             "desc": "此操作将清空所有目录配置并立即重建缓存，操作不可逆，请谨慎！",
             "button": "重置目录存储"
+        },
+        "autoUpdate": {
+            "title": "自动更新",
+            "description": "配置应用程序自动更新设置，确保您始终使用最新版本的仓廪图司",
+            "enabled": "启用自动更新",
+            "checkInterval": "检查间隔",
+            "prerelease": "包含预发布版本",
+            "prereleaseDescription": "启用后将接收 Beta 和 RC 版本更新，可能包含未完全测试的新功能",
+            "autoInstall": "自动安装更新",
+            "autoInstallDescription": "启用后更新将在后台自动安装，下次启动时生效",
+            "checkNow": "立即检查更新",
+            "downloadUpdate": "下载更新",
+            "installUpdate": "安装并重启",
+            "currentVersion": "当前版本",
+            "latestVersion": "最新版本",
+            "lastCheck": "上次检查",
+            "intervals": {
+                "hourly": "每小时",
+                "sixHours": "每6小时",
+                "daily": "每天",
+                "weekly": "每周"
+            },
+            "status": {
+                "idle": "等待中",
+                "checking": "检查更新中...",
+                "downloading": "下载中 ({progress}%)",
+                "downloaded": "更新已下载完成",
+                "upToDate": "当前已是最新版本",
+                "error": "检查更新时发生错误"
+            }
         }
     },
     "import": {
@@ -313,9 +344,9 @@
         "rescan": "重新扫描目录",
         "app": {
             "menu": "应用",
-            "about": "关于 Photasa",
+            "about": "关于仓廪图司",
             "services": "服务",
-            "hide": "隐藏 Photasa",
+            "hide": "隐藏仓廪图司",
             "hideOthers": "隐藏其他",
             "unhide": "显示全部",
             "quit": "退出"
@@ -339,7 +370,7 @@
         "help": {
             "menu": "帮助",
             "learnMore": "了解更多",
-            "about": "关于 Photasa"
+            "about": "关于仓廪图司"
         },
         "separator": "分隔符"
     },
@@ -367,6 +398,46 @@
         "resetFolders": {
             "title": "重置完成",
             "message": "所有目录缓存已重建。"
+        },
+        "configUpdated": {
+            "title": "设置已保存",
+            "message": "自动更新配置已更新。"
+        },
+        "configUpdateError": {
+            "title": "设置保存失败",
+            "message": "更新配置时发生错误，请重试。"
+        },
+        "updateAvailable": {
+            "title": "发现新版本",
+            "message": "仓廪图司 {version} 已发布，点击下载更新。"
+        },
+        "upToDate": {
+            "title": "已是最新版本",
+            "message": "您正在使用最新版本的仓廪图司。"
+        },
+        "updateCheckError": {
+            "title": "检查更新失败",
+            "message": "网络连接异常或服务器暂时不可用，请稍后重试。"
+        },
+        "downloadError": {
+            "title": "下载失败",
+            "message": "更新包下载失败，请检查网络连接后重试。"
+        },
+        "downloadComplete": {
+            "title": "下载完成",
+            "message": "更新包已下载完成，点击安装并重启应用。"
+        },
+        "installing": {
+            "title": "正在安装更新",
+            "message": "应用将重启以完成更新安装。"
+        },
+        "installError": {
+            "title": "安装失败",
+            "message": "更新安装失败，请尝试手动下载安装最新版本。"
+        },
+        "updateError": {
+            "title": "更新错误",
+            "message": "自动更新过程中发生错误，请稍后重试。"
         }
     },
     "status": {
@@ -408,7 +479,7 @@
         },
         "press": "按",
         "toExit": "退出",
-        "markdown": "# 关于 Photasa\n\nPhotasa 是一款现代化、隐私友好的本地照片管理工具，灵感源自经典的 Photasa。\n它支持高效地浏览、整理和管理您的照片与视频，拥有美观的界面和强大的本地功能，无需云端依赖。\n\n## 主要特性\n\n- 本地照片与视频智能导入与管理\n- 快速缩略图生成与预览\n- 多语言界面与主题切换\n- 支持批量操作与高效搜索\n- 数据隐私与安全保障\n\n按 `Esc` 退出"
+        "markdown": "# 关于仓廪图司\n\n仓廪图司是一款现代化、隐私友好的本地照片管理工具。\n它支持高效地浏览、整理和管理您的照片与视频，拥有美观的界面和强大的本地功能，无需云端依赖。\n\n## 主要特性\n\n- 本地照片与视频智能导入与管理\n- 快速缩略图生成与预览\n- 多语言界面与主题切换\n- 支持批量操作与高效搜索\n- 数据隐私与安全保障\n\n按 `Esc` 退出"
     },
     "preferences": {
         "title": "偏好设置",

@@ -9,7 +9,8 @@
             "general": "Generale",
             "about": "Informazioni",
             "theme": "Tema",
-            "advanced": "Avanzate"
+            "advanced": "Avanzate",
+            "autoUpdate": "Aggiornamento Automatico"
         },
         "folderList": "Elenco cartelle",
         "folderListUsage": "Modalità d'uso",

@@ -24,7 +24,8 @@
             "general": "General",
             "about": "About",
             "theme": "Theme",
-            "advanced": "Advanced"
+            "advanced": "Advanced",
+            "autoUpdate": "Auto Update"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",

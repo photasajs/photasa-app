@@ -1,6 +1,7 @@
 # Development Guide
 
 ## Table of Contents
+
 - [Project Structure](#project-structure)
 - [Development Setup](#development-setup)
 - [Coding Standards](#coding-standards)
@@ -27,21 +28,25 @@ picasa-vue/
 ## Development Setup
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or yarn
 - Git
 
 ### Installation
+
 ```bash
 npm install
 ```
 
 ### Running Development
+
 ```bash
 npm run dev
 ```
 
 ### Running Tests
+
 ```bash
 npm test
 ```
@@ -49,23 +54,26 @@ npm test
 ## Coding Standards
 
 ### TypeScript Guidelines
+
 1. **Use ES6 imports always** - Never use `require()` or dynamic imports unless absolutely necessary
 2. **Proper typing** - Avoid using `any` type. Use proper TypeScript types
 3. **Type-first approach** - Define interfaces and types before implementation
 
 ### Vue Component Guidelines
+
 1. **Component organization**:
-   - Use component library philosophy for UI design
-   - Split complex components into sub-components with clear responsibilities
-   - Base components should start with `Base` prefix
-   - Domain-specific components should use `Primitive` prefix
+    - Use component library philosophy for UI design
+    - Split complex components into sub-components with clear responsibilities
+    - Base components should start with `Base` prefix
+    - Domain-specific components should use `Primitive` prefix
 
 2. **Component structure**:
-   - Prefer TSX for component design
-   - Organize components in independent directories
-   - Use multiple support files when necessary
+    - Prefer TSX for component design
+    - Organize components in independent directories
+    - Use multiple support files when necessary
 
 ### General Rules
+
 1. **Each change should have corresponding tests**
 2. **Never use `console.log`** - Use the logger instead
 3. **No `!important` in CSS** - Causes maintenance issues
@@ -83,7 +91,7 @@ Test hanging is a critical problem that can block CI/CD pipelines. Follow these 
 
 ```typescript
 // ✅ CORRECT - Proper timer management
-describe('Component with timers', () => {
+describe("Component with timers", () => {
     beforeEach(() => {
         vi.useFakeTimers();
     });
@@ -93,7 +101,7 @@ describe('Component with timers', () => {
         vi.clearAllMocks();
     });
 
-    it('should handle timers correctly', async () => {
+    it("should handle timers correctly", async () => {
         // Your test code
         await vi.runAllTimersAsync();
     });
@@ -110,7 +118,9 @@ vi.useFakeTimers(); // Never do this globally without cleanup!
 ```typescript
 // ❌ WRONG - This will hang forever
 const neverResolves = new Promise(() => {});
-const neverResolves2 = new Promise((_resolve) => { /* never resolves */ });
+const neverResolves2 = new Promise((_resolve) => {
+    /* never resolves */
+});
 
 // ✅ CORRECT - Use timeout-based Promises with fake timers
 const timeoutPromise = new Promise((resolve) => {
@@ -120,7 +130,7 @@ const timeoutPromise = new Promise((resolve) => {
 await vi.runAllTimersAsync();
 
 // ✅ CORRECT - For testing timeout behavior
-it('should timeout after 5 seconds', async () => {
+it("should timeout after 5 seconds", async () => {
     vi.useFakeTimers();
 
     const promise = functionThatMightTimeout();
@@ -128,7 +138,7 @@ it('should timeout after 5 seconds', async () => {
     // Advance time to test timeout
     vi.advanceTimersByTime(5000);
 
-    await expect(promise).rejects.toThrow('Timeout');
+    await expect(promise).rejects.toThrow("Timeout");
 
     vi.useRealTimers();
 });
@@ -140,34 +150,34 @@ it('should timeout after 5 seconds', async () => {
 
 ```typescript
 // ✅ CORRECT - Mock file system operations
-vi.mock('fs-extra', () => ({
-    readFile: vi.fn().mockResolvedValue('mock content'),
+vi.mock("fs-extra", () => ({
+    readFile: vi.fn().mockResolvedValue("mock content"),
     writeFile: vi.fn().mockResolvedValue(undefined),
-    existsSync: vi.fn().mockReturnValue(true)
+    existsSync: vi.fn().mockReturnValue(true),
 }));
 
 // ✅ CORRECT - Mock file scanning libraries
-vi.mock('klaw', () => ({
+vi.mock("klaw", () => ({
     default: vi.fn(() => {
         const mockStream = {
             on: vi.fn((event, callback) => {
-                if (event === 'data') {
+                if (event === "data") {
                     setTimeout(() => {
-                        callback({ path: '/mock/file.jpg', stats: { isDirectory: () => false } });
+                        callback({ path: "/mock/file.jpg", stats: { isDirectory: () => false } });
                     }, 10);
-                } else if (event === 'end') {
+                } else if (event === "end") {
                     setTimeout(() => callback(), 20);
                 }
                 return mockStream;
-            })
+            }),
         };
         return mockStream;
-    })
+    }),
 }));
 
 // ❌ WRONG - Real file system operations in tests
-import klaw from 'klaw';
-const stream = klaw('/actual/directory'); // This will scan real filesystem!
+import klaw from "klaw";
+const stream = klaw("/actual/directory"); // This will scan real filesystem!
 ```
 
 #### 4. Observable Handling
@@ -176,16 +186,16 @@ const stream = klaw('/actual/directory'); // This will scan real filesystem!
 
 ```typescript
 // ✅ CORRECT - Observable that completes
-import { Observable } from 'rxjs';
+import { Observable } from "rxjs";
 
-const mockObservable = new Observable(subscriber => {
-    subscriber.next('data');
+const mockObservable = new Observable((subscriber) => {
+    subscriber.next("data");
     subscriber.complete(); // Important!
 });
 
 // ❌ WRONG - Observable that never completes
-const neverCompletes = new Observable(subscriber => {
-    subscriber.next('data');
+const neverCompletes = new Observable((subscriber) => {
+    subscriber.next("data");
     // Missing subscriber.complete()
 });
 ```
@@ -196,13 +206,13 @@ const neverCompletes = new Observable(subscriber => {
 
 ```typescript
 // ✅ CORRECT - Proper async test
-it('should handle async operations', async () => {
+it("should handle async operations", async () => {
     const result = await asyncFunction();
-    expect(result).toBe('expected');
+    expect(result).toBe("expected");
 });
 
 // ✅ CORRECT - Testing with fake timers
-it('should handle delayed operations', async () => {
+it("should handle delayed operations", async () => {
     vi.useFakeTimers();
 
     const promise = delayedOperation();
@@ -211,15 +221,15 @@ it('should handle delayed operations', async () => {
     await vi.runAllTimersAsync();
 
     const result = await promise;
-    expect(result).toBe('expected');
+    expect(result).toBe("expected");
 
     vi.useRealTimers();
 });
 
 // ❌ WRONG - Mixing real and fake timers
-it('should not mix timer types', async () => {
+it("should not mix timer types", async () => {
     vi.useFakeTimers();
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Real timeout with fake timers!
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Real timeout with fake timers!
 });
 ```
 
@@ -231,11 +241,11 @@ it('should not mix timer types', async () => {
 // vitest.config.ts
 export default defineConfig({
     test: {
-        testTimeout: 10000,     // 10 seconds max per test
-        hookTimeout: 5000,      // 5 seconds for hooks
-        teardownTimeout: 5000,  // 5 seconds for teardown
+        testTimeout: 10000, // 10 seconds max per test
+        hookTimeout: 5000, // 5 seconds for hooks
+        teardownTimeout: 5000, // 5 seconds for teardown
         // ... other config
-    }
+    },
 });
 ```
 
@@ -274,15 +284,19 @@ export const withFakeTimers = (testFn: () => Promise<void>) => {
 };
 
 // Usage
-it('should handle timers', withFakeTimers(async () => {
-    // Your test with fake timers
-    await vi.runAllTimersAsync();
-}));
+it(
+    "should handle timers",
+    withFakeTimers(async () => {
+        // Your test with fake timers
+        await vi.runAllTimersAsync();
+    }),
+);
 ```
 
 ## Debugging
 
 ### Rules for Debugging
+
 1. **Don't run the app directly** - Can't verify it properly, give guidance instead
 2. **Use logger instead of console.log**
 3. **Provide clear reproduction steps**
@@ -290,17 +304,18 @@ it('should handle timers', withFakeTimers(async () => {
 ### Logging
 
 ```typescript
-import { loggers } from '@common/logger';
+import { loggers } from "@common/logger";
 
 // Use appropriate logger
-loggers.import.info('Import started');
-loggers.scan.debug('Scanning directory', { path: '/some/path' });
-loggers.watch.error('Watch error', error);
+loggers.import.info("Import started");
+loggers.scan.debug("Scanning directory", { path: "/some/path" });
+loggers.watch.error("Watch error", error);
 ```
 
 ## Build and Deployment
 
 ### Building for Production
+
 ```bash
 # Build for current platform
 npm run build
@@ -311,7 +326,9 @@ npm run build:mac
 ```
 
 ### Pre-commit Hooks
+
 The project uses pre-commit hooks to ensure code quality:
+
 - Linting
 - Type checking
 - Unit tests
@@ -321,13 +338,16 @@ If tests hang, refer to the [Testing Guidelines](#testing-guidelines) section ab
 ## Troubleshooting
 
 ### Tests Hanging
+
 If tests hang indefinitely:
+
 1. Check for improper timer management
 2. Look for never-resolving Promises
 3. Verify external dependencies are mocked
 4. Review `docs/issues/test-hanging-issue-resolution.md` for detailed solutions
 
 ### Build Issues
+
 1. Clear node_modules and reinstall: `rm -rf node_modules && npm install`
 2. Clear Electron cache: `npm run clear-cache`
 3. Check Node.js version compatibility

@@ -67,9 +67,9 @@ graph TD
 
 ```typescript
 enum ScanStrategy {
-    SKIP = "skip",           // 跳过扫描，从缓存恢复
+    SKIP = "skip", // 跳过扫描，从缓存恢复
     INCREMENTAL = "incremental", // 增量扫描
-    FULL = "full"            // 完整扫描
+    FULL = "full", // 完整扫描
 }
 
 interface ScanDecision {
@@ -96,17 +96,16 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 
         // 对于目录扫描，先进行策略决策
         if (isDirectoryScan(scan)) {
-            decideScanStrategy(scan.path, logger, scan.action)
-                .then(async (scanDecision) => {
-                    if (scanDecision.strategy === "skip") {
-                        // 跳过扫描，从缓存恢复
-                        await restoreCachedFiles(scan.path, subscriber, logger);
-                        return;
-                    }
+            decideScanStrategy(scan.path, logger, scan.action).then(async (scanDecision) => {
+                if (scanDecision.strategy === "skip") {
+                    // 跳过扫描，从缓存恢复
+                    await restoreCachedFiles(scan.path, subscriber, logger);
+                    return;
+                }
 
-                    // 执行扫描
-                    // ... 现有扫描逻辑
-                });
+                // 执行扫描
+                // ... 现有扫描逻辑
+            });
         }
     });
 }
@@ -189,15 +188,18 @@ if (scanDecision.strategy === "skip") {
 ## 实现计划
 
 ### 阶段 1：核心功能实现
+
 - [x] 修改 `scanPhotos` 函数，添加策略决策调用
 - [x] 优化 `decideScanStrategy` 函数，支持强制扫描
 - [x] 实现基于策略的不同处理路径
 
 ### 阶段 2：缓存同步优化
+
 - [x] 确保扫描完成后正确更新缓存文件
 - [x] 实现跳过扫描时的缓存同步
 
 ### 阶段 3：测试和验证
+
 - [x] 添加单元测试验证核心功能
 - [x] 验证修复后的扫描性能
 
@@ -208,12 +210,12 @@ if (scanDecision.strategy === "skip") {
 创建了 `scan-strategy-simple.spec.ts` 测试文件，验证：
 
 1. **强制重新扫描测试**
-   - rescan 动作总是返回 FULL 策略
-   - 忽略 `.photasa.json` 存在性
+    - rescan 动作总是返回 FULL 策略
+    - 忽略 `.photasa.json` 存在性
 
 2. **正常扫描测试**
-   - scan 动作会检查配置文件
-   - 根据配置文件状态返回相应策略
+    - scan 动作会检查配置文件
+    - 根据配置文件状态返回相应策略
 
 ### 集成测试
 
@@ -226,16 +228,19 @@ if (scanDecision.strategy === "skip") {
 ## 向后兼容性
 
 ### API 兼容性
+
 - 保持现有的 `scanPhotos` 函数签名不变
 - 保持现有的 `ScanAction` 接口不变
 - 保持现有的 Observable 返回类型
 
 ### 文件格式兼容性
+
 - 保持现有的 `.photasa.json` 文件格式
 - 保持现有的 `.photasa-folder.json` 文件格式
 - 支持外部创建的配置文件
 
 ### 行为兼容性
+
 - 保持现有的扫描行为（当需要扫描时）
 - 保持现有的错误处理机制
 - 保持现有的日志记录格式
@@ -243,26 +248,31 @@ if (scanDecision.strategy === "skip") {
 ## 性能影响
 
 ### 性能提升
+
 - **扫描时间**：从几分钟减少到几秒钟（当配置文件存在时）
 - **CPU 使用率**：减少重复文件处理
 - **磁盘 I/O**：减少重复缩略图生成
 
 ### 内存使用
+
 - 无显著增加
 - 保持现有的内存管理策略
 
 ### 存储空间
+
 - 无额外存储需求
 - 保持现有的缓存文件大小
 
 ## 风险评估
 
 ### 低风险
+
 - 代码修改集中在扫描模块内部
 - 保持现有 API 接口不变
 - 有完整的单元测试覆盖
 
 ### 缓解措施
+
 - 保持向后兼容性
 - 提供降级机制（当策略决策失败时）
 - 详细的错误日志记录
@@ -270,14 +280,17 @@ if (scanDecision.strategy === "skip") {
 ## 替代方案
 
 ### 方案 A：仅优化现有逻辑
+
 - **优点**：修改最小
 - **缺点**：无法解决根本问题，性能提升有限
 
 ### 方案 B：完全重写扫描系统
+
 - **优点**：可以彻底解决问题
 - **缺点**：风险高，开发周期长，可能引入新问题
 
 ### 方案 C：当前方案（推荐）
+
 - **优点**：平衡了性能和风险，保持兼容性
 - **缺点**：需要理解现有代码结构
 

@@ -31,12 +31,13 @@
             "general": "General",
             "about": "About",
             "theme": "Theme",
-            "advanced": "Advanced"
+            "advanced": "Advanced",
+            "autoUpdate": "Auto Update"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",
-        "folderListDesc": "After adding a directory to the list, Photosa can manage photos and videos in that directory in real time.",
-        "watchFolderList": "Photosa can manage photos and videos in the following directories.",
+        "folderListDesc": "After adding a directory to the list, Photasa can manage photos and videos in that directory in real time.",
+        "watchFolderList": "Photasa can manage photos and videos in the following directories.",
         "chooseDirectory": "Choose directory and add to list",
         "thumbnailSize": "Thumbnail Size",
         "darkMode": "Dark Mode",
@@ -46,6 +47,36 @@
             "title": "Advanced Action: Reset Directory Storage",
             "desc": "This will clear all directory settings and immediately rebuild the cache. This action is irreversible. Proceed with caution!",
             "button": "Reset Directory Storage"
+        },
+        "autoUpdate": {
+            "title": "Auto Update",
+            "description": "Configure automatic application updates to ensure you always have the latest version of Photasa",
+            "enabled": "Enable auto update",
+            "checkInterval": "Check interval",
+            "prerelease": "Include pre-release versions",
+            "prereleaseDescription": "Enable to receive Beta and RC version updates, which may contain untested features",
+            "autoInstall": "Auto install updates",
+            "autoInstallDescription": "When enabled, updates will be installed automatically in the background and take effect on next restart",
+            "checkNow": "Check now",
+            "downloadUpdate": "Download update",
+            "installUpdate": "Install and restart",
+            "currentVersion": "Current version",
+            "latestVersion": "Latest version",
+            "lastCheck": "Last check",
+            "intervals": {
+                "hourly": "Hourly",
+                "sixHours": "Every 6 hours",
+                "daily": "Daily",
+                "weekly": "Weekly"
+            },
+            "status": {
+                "idle": "Idle",
+                "checking": "Checking for updates...",
+                "downloading": "Downloading ({progress}%)",
+                "downloaded": "Update downloaded",
+                "upToDate": "Already up to date",
+                "error": "Error checking for updates"
+            }
         }
     },
     "import": {
@@ -349,11 +380,11 @@
         "error": "Error",
         "scan": {
             "title": "Scan Directory",
-            "message": "Directory scan complete, photos have been imported into Photosa."
+            "message": "Directory scan complete, photos have been imported into Photasa."
         },
         "duplicatePath": {
             "title": "Duplicate Directory",
-            "message": "Directory [{folder}] already exists in Photosa."
+            "message": "Directory [{folder}] already exists in Photasa."
         },
         "emptyPath": {
             "title": "Choose Directory",

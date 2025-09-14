@@ -9,7 +9,8 @@
             "general": "Общие",
             "about": "О программе",
             "theme": "Тема",
-            "advanced": "Дополнительно"
+            "advanced": "Дополнительно",
+            "autoUpdate": "Автообновление"
         },
         "folderList": "Список папок",
         "folderListUsage": "Способ использования",

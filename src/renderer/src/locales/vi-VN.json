@@ -9,7 +9,8 @@
             "general": "Chung",
             "about": "Giới thiệu",
             "theme": "Chủ đề",
-            "advanced": "Nâng cao"
+            "advanced": "Nâng cao",
+            "autoUpdate": "Tự động cập nhật"
         },
         "folderList": "Danh sách thư mục",
         "folderListUsage": "Cách sử dụng",

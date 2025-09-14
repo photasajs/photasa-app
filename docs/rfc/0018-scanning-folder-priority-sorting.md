@@ -3,7 +3,7 @@
 **状态**: 草案  
 **作者**: AI Assistant  
 **创建日期**: 2025-09-13  
-**更新日期**: 2025-09-13  
+**更新日期**: 2025-09-13
 
 ## 背景
 
@@ -52,16 +52,19 @@ const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
 ## 问题分析
 
 ### 1. 缺乏优先级机制
+
 - `rescan` 动作应优先于 `scan`
 - `current` 动作（用户当前选择）应有最高优先级
 - 用户主动添加的文件夹应优先于自动发现的文件夹
 
 ### 2. 排序不稳定
+
 - 同一路径可能因不同动作而重复添加
 - 更新现有项时不考虑优先级变化
 - 无法保证重要任务优先执行
 
 ### 3. 性能问题
+
 - 每次查找使用线性搜索 `findIndex`
 - 没有索引或映射来快速定位
 
@@ -75,8 +78,8 @@ interface ScanAction {
     action: "scan" | "rescan" | "current";
     thumbnailSize: number;
     operationType?: "file" | "directory";
-    priority: number;        // 新增：优先级
-    timestamp: number;       // 新增：时间戳
+    priority: number; // 新增：优先级
+    timestamp: number; // 新增：时间戳
     source: "user" | "auto"; // 新增：来源
 }
 ```
@@ -87,16 +90,16 @@ interface ScanAction {
 const PRIORITY_RULES = {
     // 基础优先级（数值越小优先级越高）
     action: {
-        current: 1,  // 用户当前选择
-        rescan: 2,   // 重新扫描
-        scan: 3      // 普通扫描
+        current: 1, // 用户当前选择
+        rescan: 2, // 重新扫描
+        scan: 3, // 普通扫描
     },
-    
+
     // 来源加成
     source: {
-        user: 0,     // 用户主动添加
-        auto: 10     // 自动发现
-    }
+        user: 0, // 用户主动添加
+        auto: 10, // 自动发现
+    },
 };
 ```
 
@@ -109,7 +112,7 @@ const PRIORITY_RULES = {
 function calculatePriority(scanAction: ScanAction): number {
     const actionPriority = PRIORITY_RULES.action[scanAction.action];
     const sourceBonus = PRIORITY_RULES.source[scanAction.source];
-    
+
     // 优先级 = 动作优先级 + 来源加成
     // 相同优先级时按时间戳排序（越新优先级越高）
     return actionPriority + sourceBonus;
@@ -123,11 +126,11 @@ function sortScanningFolders(folders: ScanAction[]): ScanAction[] {
         // 1. 按优先级排序（数值越小优先级越高）
         const priorityDiff = a.priority - b.priority;
         if (priorityDiff !== 0) return priorityDiff;
-        
+
         // 2. 相同优先级按路径字母序排序
         const pathCompare = a.path.localeCompare(b.path);
         if (pathCompare !== 0) return pathCompare;
-        
+
         // 3. 相同路径按时间戳排序（越新优先级越高）
         return b.timestamp - a.timestamp;
     });
@@ -138,15 +141,15 @@ function sortScanningFolders(folders: ScanAction[]): ScanAction[] {
 
 ```typescript
 async addScanFolder(
-    folder: string, 
+    folder: string,
     action: "scan" | "rescan" | "current",
     source: "user" | "auto" = "user"
 ) {
     folder = normalizePath(folder);
-    
+
     const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
     const timestamp = Date.now();
-    
+
     const newScanAction: ScanAction = {
         path: folder,
         action,
@@ -155,11 +158,11 @@ async addScanFolder(
         timestamp,
         source
     };
-    
+
     if (existingIndex >= 0) {
         // 更新现有项
         const existing = this.scanningFolder[existingIndex];
-        
+
         // 只在优先级更高时更新
         if (newScanAction.priority < existing.priority) {
             this.scanningFolder[existingIndex] = newScanAction;
@@ -176,26 +179,31 @@ async addScanFolder(
 ## 实现计划
 
 ### 阶段 1: 数据结构升级
+
 - [ ] 扩展 `ScanAction` 接口添加 `priority`、`timestamp`、`source` 字段
 - [ ] 更新所有使用 `ScanAction` 的代码
 - [ ] 添加向后兼容性处理
 
 ### 阶段 2: 排序逻辑实现
+
 - [ ] 实现 `calculatePriority` 函数
 - [ ] 实现 `sortScanningFolders` 函数
 - [ ] 添加单元测试覆盖新逻辑
 
 ### 阶段 3: Store 方法重构
+
 - [ ] 重构 `addScanFolder` 方法
 - [ ] 重构 `addFoldersForScan` 方法
 - [ ] 确保排序在所有修改操作后执行
 
 ### 阶段 4: 性能优化
+
 - [ ] 考虑使用 Map 或 Set 优化查找性能
 - [ ] 实现批量操作以减少排序次数
 - [ ] 添加性能测试
 
 ### 阶段 5: 测试与验证
+
 - [ ] 编写全面的单元测试
 - [ ] 添加集成测试验证排序行为
 - [ ] 进行用户体验测试
@@ -203,43 +211,43 @@ async addScanFolder(
 ## 测试用例
 
 ```typescript
-describe('ScanningFolder Priority Sorting', () => {
-    test('should prioritize current over rescan over scan', () => {
+describe("ScanningFolder Priority Sorting", () => {
+    test("should prioritize current over rescan over scan", () => {
         const folders = [
-            { path: '/path1', action: 'scan', source: 'user' },
-            { path: '/path2', action: 'rescan', source: 'user' },
-            { path: '/path3', action: 'current', source: 'user' }
+            { path: "/path1", action: "scan", source: "user" },
+            { path: "/path2", action: "rescan", source: "user" },
+            { path: "/path3", action: "current", source: "user" },
         ];
-        
+
         const sorted = sortScanningFolders(folders);
-        
-        expect(sorted[0].action).toBe('current');
-        expect(sorted[1].action).toBe('rescan');
-        expect(sorted[2].action).toBe('scan');
+
+        expect(sorted[0].action).toBe("current");
+        expect(sorted[1].action).toBe("rescan");
+        expect(sorted[2].action).toBe("scan");
     });
-    
-    test('should prioritize user over auto source', () => {
+
+    test("should prioritize user over auto source", () => {
         const folders = [
-            { path: '/path1', action: 'scan', source: 'auto' },
-            { path: '/path2', action: 'scan', source: 'user' }
+            { path: "/path1", action: "scan", source: "auto" },
+            { path: "/path2", action: "scan", source: "user" },
         ];
-        
+
         const sorted = sortScanningFolders(folders);
-        
-        expect(sorted[0].source).toBe('user');
-        expect(sorted[1].source).toBe('auto');
+
+        expect(sorted[0].source).toBe("user");
+        expect(sorted[1].source).toBe("auto");
     });
-    
-    test('should sort by path when priority is same', () => {
+
+    test("should sort by path when priority is same", () => {
         const folders = [
-            { path: '/z-path', action: 'scan', source: 'user' },
-            { path: '/a-path', action: 'scan', source: 'user' }
+            { path: "/z-path", action: "scan", source: "user" },
+            { path: "/a-path", action: "scan", source: "user" },
         ];
-        
+
         const sorted = sortScanningFolders(folders);
-        
-        expect(sorted[0].path).toBe('/a-path');
-        expect(sorted[1].path).toBe('/z-path');
+
+        expect(sorted[0].path).toBe("/a-path");
+        expect(sorted[1].path).toBe("/z-path");
     });
 });
 ```
@@ -247,14 +255,17 @@ describe('ScanningFolder Priority Sorting', () => {
 ## 风险评估
 
 ### 低风险
+
 - 向后兼容性：新字段设置默认值
 - 性能影响：排序操作复杂度可控
 
 ### 中等风险
+
 - 现有代码依赖：需要全面测试所有调用点
 - 状态迁移：需要处理现有 store 数据
 
 ### 缓解措施
+
 - 渐进式升级：分阶段实施
 - 广泛测试：单元测试 + 集成测试
 - 回滚计划：保留原有逻辑作为后备
@@ -262,18 +273,18 @@ describe('ScanningFolder Priority Sorting', () => {
 ## 验收标准
 
 1. **功能正确性**
-   - 优先级排序按预期工作
-   - 相同优先级按路径排序
-   - 所有现有功能保持兼容
+    - 优先级排序按预期工作
+    - 相同优先级按路径排序
+    - 所有现有功能保持兼容
 
 2. **性能要求**
-   - 添加操作不超过 10ms
-   - 排序操作在 100 个文件夹内不超过 5ms
+    - 添加操作不超过 10ms
+    - 排序操作在 100 个文件夹内不超过 5ms
 
 3. **代码质量**
-   - 单元测试覆盖率 > 95%
-   - 所有 TypeScript 类型检查通过
-   - 通过代码审查
+    - 单元测试覆盖率 > 95%
+    - 所有 TypeScript 类型检查通过
+    - 通过代码审查
 
 ## 参考资料
 

@@ -19,43 +19,43 @@ Design and implement a custom Headless UI component library specifically for Vue
 ### Problems with Current Architecture
 
 1. **HeadlessUI Dialog + Vue Teleport Conflicts**
-   - HeadlessUI has its own Portal system that conflicts with Vue's Teleport
-   - Mouse events in Portal/Teleport content are intercepted and blocked
-   - BaseSelect component fails to respond to mouse clicks when inside HeadlessUI modals
+    - HeadlessUI has its own Portal system that conflicts with Vue's Teleport
+    - Mouse events in Portal/Teleport content are intercepted and blocked
+    - BaseSelect component fails to respond to mouse clicks when inside HeadlessUI modals
 
 2. **Library Compatibility Issues**
-   - HeadlessUI is primarily designed for React, Vue version has adaptation issues
-   - Ant Design brings unnecessary mobile-first overhead for desktop apps
-   - Event handling conflicts between different Portal implementations
+    - HeadlessUI is primarily designed for React, Vue version has adaptation issues
+    - Ant Design brings unnecessary mobile-first overhead for desktop apps
+    - Event handling conflicts between different Portal implementations
 
 3. **Bundle Size and Dependencies**
-   - Multiple UI libraries increase bundle size
-   - Unnecessary features for desktop-only applications
-   - Dependency conflicts and maintenance overhead
+    - Multiple UI libraries increase bundle size
+    - Unnecessary features for desktop-only applications
+    - Dependency conflicts and maintenance overhead
 
 ## Detailed Design
 
 ### Core Principles
 
 1. **Headless Architecture**
-   - Components provide only logic, behavior, and accessibility
-   - Zero built-in styles, completely styled via TailwindCSS
-   - Users have full control over appearance
+    - Components provide only logic, behavior, and accessibility
+    - Zero built-in styles, completely styled via TailwindCSS
+    - Users have full control over appearance
 
 2. **Vue-Native Design**
-   - Built specifically for Vue 3 Composition API
-   - Leverages Vue's reactivity system optimally
-   - No adaptation layers or compatibility shims
+    - Built specifically for Vue 3 Composition API
+    - Leverages Vue's reactivity system optimally
+    - No adaptation layers or compatibility shims
 
 3. **Portal-Friendly**
-   - Native support for Vue Teleport
-   - No event interception or conflicts
-   - Seamless integration with existing Portal architecture
+    - Native support for Vue Teleport
+    - No event interception or conflicts
+    - Seamless integration with existing Portal architecture
 
 4. **Component Composition**
-   - Small, single-responsibility components
-   - Composable architecture for flexibility
-   - Consistent API patterns across components
+    - Small, single-responsibility components
+    - Composable architecture for flexibility
+    - Consistent API patterns across components
 
 ### Component Architecture
 
@@ -123,6 +123,7 @@ BaseModalCloseButton: { ariaLabel?, showIcon?, class?, ...attrs }
 #### Props and Attributes Pattern
 
 All components follow this pattern:
+
 - Accept `class` and `style` props for styling
 - Support attribute pass-through via `v-bind="$attrs"`
 - Disable automatic attribute inheritance with `inheritAttrs: false`
@@ -133,16 +134,16 @@ All components follow this pattern:
 ```typescript
 // BaseModal handles focus management
 const manageFocus = () => {
-  if (props.open) {
-    // Save current focus
-    previousActiveElement.value = document.activeElement as HTMLElement
-    // Move focus to modal
-    nextTick(() => modalRef.value?.focus())
-  } else {
-    // Restore previous focus
-    previousActiveElement.value?.focus()
-  }
-}
+    if (props.open) {
+        // Save current focus
+        previousActiveElement.value = document.activeElement as HTMLElement;
+        // Move focus to modal
+        nextTick(() => modalRef.value?.focus());
+    } else {
+        // Restore previous focus
+        previousActiveElement.value?.focus();
+    }
+};
 ```
 
 #### Event Handling
@@ -150,26 +151,28 @@ const manageFocus = () => {
 ```typescript
 // Clean event delegation without conflicts
 const handleBackdropClick = (event: MouseEvent) => {
-  if (event.target === modalRef.value) {
-    handleClose()
-  }
-}
+    if (event.target === modalRef.value) {
+        handleClose();
+    }
+};
 
 const handleEscape = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    handleClose()
-  }
-}
+    if (event.key === "Escape") {
+        handleClose();
+    }
+};
 ```
 
 ## Migration Strategy
 
 ### Phase 1: Core Modal System ✅
+
 - Replace HeadlessUI Dialog with custom BaseModal components
 - Ensure BaseSelect works properly in modals
 - Maintain API compatibility where possible
 
 ### Phase 2: Core Components ✅ COMPLETED
+
 - ✅ BaseProgress - 支持线性、圆形、仪表盘三种类型
 - ✅ BaseAccordion/BaseAccordionPanel - 折叠面板系统
 - ✅ BaseStatistic - 统计数字展示
@@ -178,18 +181,21 @@ const handleEscape = (event: KeyboardEvent) => {
 - ✅ BaseTag - 标签展示
 
 ### Phase 3: High-Priority Components 🚧 IN PROGRESS
+
 - 🔄 BaseList - 列表组件
 - 🔄 BaseForm/BaseFormField - 表单组件
 - 🔄 BaseTable - 表格组件
 - 🔄 BaseBadge - 徽章组件
 
 ### Phase 4: File Migration 🚧 IN PROGRESS
+
 - 🔄 FileFilter.vue (41个组件) - 高优先级
 - 🔄 DuplicateHandler.vue (49个组件) - 高优先级
 - 🔄 FilePreview.vue (43个组件) - 高优先级
 - 🔄 ProgressMonitor.vue (27个组件) - 高优先级
 
 ### Phase 5: Complete Removal
+
 - Remove Ant Design dependencies
 - Clean up antd-theme-patch.css
 - Performance optimization
@@ -197,12 +203,14 @@ const handleEscape = (event: KeyboardEvent) => {
 ## Benefits
 
 ### Immediate Benefits
+
 1. **Fixed Portal Conflicts**: BaseSelect now works in modals
 2. **Reduced Bundle Size**: No HeadlessUI dependency
 3. **Better Performance**: Vue-native implementation
 4. **Full Style Control**: Complete TailwindCSS customization
 
 ### Long-term Benefits
+
 1. **Maintainability**: No third-party compatibility issues
 2. **Flexibility**: Components adapt exactly to our needs
 3. **Performance**: Desktop-optimized, no mobile overhead
@@ -235,12 +243,14 @@ const handleEscape = (event: KeyboardEvent) => {
 ### Current Status & Goals
 
 **Phase 1 Achievements** ✅
+
 - 25 core components implemented (Modal, Button, Input, Select, etc.)
 - Portal compatibility resolved
 - Basic headless architecture established
 - TailwindCSS styling patterns defined
 
 **Phase 2 Objectives** 🎯
+
 - **Complete Ant Design removal** - Zero dependencies on ant-design
 - **Sophisticated component suite** - Advanced form, data, and interaction components
 - **Enterprise-grade features** - Validation, accessibility, performance optimization
@@ -270,6 +280,7 @@ BaseFormGroup: {
 ```
 
 **Usage Example:**
+
 ```vue
 <BaseForm @submit="handleSubmit" :schema="userSchema">
   <BaseFormField name="email" required>
@@ -390,36 +401,40 @@ BasePopover: {
 
 ### Implementation Timeline
 
-| Phase | Component Group | Duration | Deliverables |
-|-------|----------------|----------|-------------|
-| **2.1** | Form System | 2 weeks | BaseForm, BaseFormField, BaseFormGroup + Validation |
-| **2.2** | Data Display | 2 weeks | BaseTable, BaseTree, BasePagination + Virtual Scrolling |
-| **2.3** | Advanced Input | 2 weeks | DatePicker, Autocomplete, Combobox, Slider |
-| **2.4** | Layout & Navigation | 2 weeks | Accordion, Breadcrumb, Tooltip, Popover |
-| **2.5** | Ant Design Removal | 1 week | Complete dependency cleanup + migration |
-| **2.6** | Testing & Polish | 1 week | Comprehensive testing + documentation |
+| Phase   | Component Group     | Duration | Deliverables                                            |
+| ------- | ------------------- | -------- | ------------------------------------------------------- |
+| **2.1** | Form System         | 2 weeks  | BaseForm, BaseFormField, BaseFormGroup + Validation     |
+| **2.2** | Data Display        | 2 weeks  | BaseTable, BaseTree, BasePagination + Virtual Scrolling |
+| **2.3** | Advanced Input      | 2 weeks  | DatePicker, Autocomplete, Combobox, Slider              |
+| **2.4** | Layout & Navigation | 2 weeks  | Accordion, Breadcrumb, Tooltip, Popover                 |
+| **2.5** | Ant Design Removal  | 1 week   | Complete dependency cleanup + migration                 |
+| **2.6** | Testing & Polish    | 1 week   | Comprehensive testing + documentation                   |
 
 **Total Duration: 10 weeks**
 
 ### 📊 **Current Ant Design Usage Baseline Analysis**
 
 #### Package Dependencies:
+
 ```json
 // package.json
 "ant-design-vue": "^3.2.20"  // 📦 ~2.1MB bundled
 ```
 
 #### Direct Imports & Global Usage:
+
 ```typescript
 // src/renderer/src/main.ts
-import Antd from "ant-design-vue";           // 🔥 Global registration
-import "ant-design-vue/dist/antd.css";      // 🎨 ~400KB CSS
+import Antd from "ant-design-vue"; // 🔥 Global registration
+import "ant-design-vue/dist/antd.css"; // 🎨 ~400KB CSS
 
 // Theme & Type Imports
-- src/renderer/src/stores/preference.ts     // DataNode type
-- src/renderer/src/utils/folder-tree.ts     // Tree DataNode interface
-- src/renderer/src/stores/__tests__/preference.spec.ts
-- src/renderer/src/utils/__tests__/folder-tree.spec.ts
+-src / renderer / src / stores / preference.ts - // DataNode type
+    src / renderer / src / utils / folder -
+    tree.ts - // Tree DataNode interface
+    src / renderer / src / stores / __tests__ / preference.spec.ts -
+    src / renderer / src / utils / __tests__ / folder -
+    tree.spec.ts;
 ```
 
 #### Component Usage Analysis (20 Vue files affected):
@@ -428,24 +443,39 @@ import "ant-design-vue/dist/antd.css";      // 🎨 ~400KB CSS
 
 ```typescript
 // BatchProgress.vue - 47 components
-a-button(14), a-col(8), a-tag(4), a-statistic(4), a-progress(3),
-a-tooltip(2), a-space(2), a-row(2), a-modal(2), a-collapse(4), a-alert(2)
+(a - button(14),
+    a - col(8),
+    a - tag(4),
+    a - statistic(4),
+    a - progress(3),
+    a - tooltip(2),
+    a - space(2),
+    a - row(2),
+    a - modal(2),
+    a - collapse(4),
+    a - alert(2));
 
 // App.vue - 41 components
-a-layout(8), a-layout-content(4), a-spin(4), a-modal(4),
-a-list(2), a-list-item(2), a-button(2)
+(a - layout(8),
+    a - layout - content(4),
+    a - spin(4),
+    a - modal(4),
+    a - list(2),
+    a - list - item(2),
+    a - button(2));
 
 // DuplicateHandler.vue - ~30 components
-a-modal, a-table, a-button, a-select, a-checkbox, a-space, a-divider
+(a - modal, a - table, a - button, a - select, a - checkbox, a - space, a - divider);
 
 // FileFilter.vue - ~25 components
-a-form, a-form-item, a-input, a-select, a-checkbox, a-slider, a-date-picker
+(a - form, a - form - item, a - input, a - select, a - checkbox, a - slider, a - date - picker);
 
 // FilePreview.vue - ~20 components
-a-table, a-tag, a-button, a-tooltip, a-progress, a-modal
+(a - table, a - tag, a - button, a - tooltip, a - progress, a - modal);
 ```
 
 **📊 Medium Usage Files:**
+
 - `ProgressMonitor.vue` - Progress, Spin, Alert components
 - `GeneralSettings.vue` - Form, Switch, Select components
 - `ImageList.vue` - List, Card, Button components
@@ -453,19 +483,20 @@ a-table, a-tag, a-button, a-tooltip, a-progress, a-modal
 - `TitlebarWinLinux.vue` - Button, Dropdown components
 
 **🔧 Low Usage Files (UI Components):**
+
 - BaseSelect.vue, BaseModal.vue, BaseDropdown.vue - Styling conflicts
 - VirtualList.vue, PortalProvider.vue - Portal integration issues
 
 #### **Total Migration Scope:**
 
-| Category | Count | Components |
-|----------|-------|------------|
-| **Core Layout** | 3 | Layout, LayoutContent, Header |
-| **Form & Input** | 12 | Form, FormItem, Input, Select, Checkbox, Switch, Slider, DatePicker, Upload, AutoComplete |
-| **Data Display** | 8 | Table, Tree, List, ListItem, Tag, Statistic, Card, Tooltip |
-| **Feedback** | 6 | Modal, Progress, Spin, Alert, Notification, Message |
-| **Navigation** | 4 | Button, Dropdown, Breadcrumb, Menu |
-| **Layout Utilities** | 5 | Row, Col, Space, Divider, Affix |
+| Category             | Count | Components                                                                                |
+| -------------------- | ----- | ----------------------------------------------------------------------------------------- |
+| **Core Layout**      | 3     | Layout, LayoutContent, Header                                                             |
+| **Form & Input**     | 12    | Form, FormItem, Input, Select, Checkbox, Switch, Slider, DatePicker, Upload, AutoComplete |
+| **Data Display**     | 8     | Table, Tree, List, ListItem, Tag, Statistic, Card, Tooltip                                |
+| **Feedback**         | 6     | Modal, Progress, Spin, Alert, Notification, Message                                       |
+| **Navigation**       | 4     | Button, Dropdown, Breadcrumb, Menu                                                        |
+| **Layout Utilities** | 5     | Row, Col, Space, Divider, Affix                                                           |
 
 **📊 Total: 188 Ant Design component instances across 11 files** ✅ **减少34个实例**
 
@@ -473,26 +504,26 @@ a-table, a-tag, a-button, a-tooltip, a-progress, a-modal
 
 #### 🏆 高频使用组件 (≥8次)
 
-| 组件类型 | 使用次数 | 替代状态 | 变化 | 优先级 |
-|----------|----------|----------|------|--------|
-| `a-button` | **32** | ✅ BaseButton已实现 | -1 | 🔄 迁移中 |
-| `a-col` | **28** | ✅ BaseCol已实现 | -6 | 🔄 迁移中 |
-| `a-descriptions-item` | **24** | ✅ BaseDescriptionItem已实现 | 新增 | 🔄 迁移中 |
-| `a-statistic` | **16** | ✅ BaseStatistic已实现 | 不变 | 🔄 迁移中 |
-| `a-tooltip` | **12** | ✅ BaseTooltip已实现 | +4 | 🔄 迁移中 |
-| `a-tag` | **11** | ✅ BaseTag已实现 | 不变 | 🔄 迁移中 |
-| `a-row` | **8** | ✅ BaseRow已实现 | 不变 | 🔄 迁移中 |
-| `a-space` | **8** | ✅ BaseSpace已实现 | +2 | 🔄 迁移中 |
+| 组件类型              | 使用次数 | 替代状态                     | 变化 | 优先级    |
+| --------------------- | -------- | ---------------------------- | ---- | --------- |
+| `a-button`            | **32**   | ✅ BaseButton已实现          | -1   | 🔄 迁移中 |
+| `a-col`               | **28**   | ✅ BaseCol已实现             | -6   | 🔄 迁移中 |
+| `a-descriptions-item` | **24**   | ✅ BaseDescriptionItem已实现 | 新增 | 🔄 迁移中 |
+| `a-statistic`         | **16**   | ✅ BaseStatistic已实现       | 不变 | 🔄 迁移中 |
+| `a-tooltip`           | **12**   | ✅ BaseTooltip已实现         | +4   | 🔄 迁移中 |
+| `a-tag`               | **11**   | ✅ BaseTag已实现             | 不变 | 🔄 迁移中 |
+| `a-row`               | **8**    | ✅ BaseRow已实现             | 不变 | 🔄 迁移中 |
+| `a-space`             | **8**    | ✅ BaseSpace已实现           | +2   | 🔄 迁移中 |
 
 #### 🎯 中频使用组件 (4-7次) - 需要立即实现
 
-| 组件类型 | 使用次数 | 替代状态 | 优先级 |
-|----------|----------|----------|--------|
-| `a-descriptions` | 7 | ✅ BaseDescriptions已实现 | 🔄 中 |
-| `a-select` | 5 | ✅ BaseSelect已实现 | 🔄 中 |
-| `a-radio` | 4 | 🔄 **需要BaseRadio** | 🔥 高 |
-| `a-list-item` | 4 | 🔄 **需要BaseListItem** | 🔥 高 |
-| `a-progress` | 4 | ✅ BaseProgress已实现 | 🔄 中 |
+| 组件类型         | 使用次数 | 替代状态                  | 优先级 |
+| ---------------- | -------- | ------------------------- | ------ |
+| `a-descriptions` | 7        | ✅ BaseDescriptions已实现 | 🔄 中  |
+| `a-select`       | 5        | ✅ BaseSelect已实现       | 🔄 中  |
+| `a-radio`        | 4        | 🔄 **需要BaseRadio**      | 🔥 高  |
+| `a-list-item`    | 4        | 🔄 **需要BaseListItem**   | 🔥 高  |
+| `a-progress`     | 4        | ✅ BaseProgress已实现     | 🔄 中  |
 
 #### 🚀 BaseUI组件库状态: **36个组件已实现**
 
@@ -500,7 +531,7 @@ a-table, a-tag, a-button, a-tooltip, a-progress, a-modal
 
 **表单系统** (5个): BaseButton, BaseInput, BaseCheckbox, BaseSelect, BaseSwitch
 
-**数据展示** (9个): BaseStatistic, BaseTag, BaseProgress, BaseDescriptions, BaseDescriptionItem, BaseTooltip, BaseCard, BaseAccordion, BaseAccordionPanel  
+**数据展示** (9个): BaseStatistic, BaseTag, BaseProgress, BaseDescriptions, BaseDescriptionItem, BaseTooltip, BaseCard, BaseAccordion, BaseAccordionPanel
 
 **布局系统** (6个): BaseRow, BaseCol, BaseSpace, BaseBreadcrumb, BaseBreadcrumbItem, BaseDrawer
 
@@ -517,7 +548,7 @@ BaseRadio, BaseRadioGroup → 4个实例，表单选择组件
 BaseBadge → ProgressMonitor.vue状态指示器
 BaseForm, BaseFormField → FileFilter.vue表单系统
 
-// Priority 2: 高频文件迁移 (Week 2-3)  
+// Priority 2: 高频文件迁移 (Week 2-3)
 DuplicateHandler.vue (49个Ant组件) → 重复文件处理核心功能
 FilePreview.vue (43个Ant组件) → 文件预览核心功能
 FileFilter.vue (41个Ant组件) → 导入过滤功能
@@ -536,19 +567,20 @@ ProgressMonitor.vue (27个Ant组件) → 进度监控
 
 ### Detailed Migration Execution Plan:
 
-| Week | Phase | Files | Ant Components | Custom Components |
-|------|-------|-------|----------------|-------------------|
-| **9.1** | Core Layout | App.vue | a-layout(8), a-spin(4) | BaseLayout, BaseSpinner |
-| **9.2** | Import Forms | FileFilter.vue | a-form, a-form-item, a-input, a-select | BaseForm, BaseFormField, BaseInput, BaseSelect |
-| **9.3** | Data Tables | FilePreview.vue, DuplicateHandler.vue | a-table, a-modal, a-button | BaseTable, BaseModal, BaseButton |
-| **9.4** | Progress UI | BatchProgress.vue | a-progress, a-collapse, a-statistic | BaseProgress, BaseAccordion, BaseStatistic |
-| **9.5** | Settings | GeneralSettings.vue | a-switch, a-checkbox | BaseSwitch, BaseCheckbox |
-| **10.1** | Remove Dependencies | package.json, main.ts | Global Antd import | Clean removal |
-| **10.2** | CSS Cleanup | antd-theme-patch.css | Ant Design overrides | Custom theme variables |
-| **10.3** | Type Cleanup | preference.ts, folder-tree.ts | DataNode types | Custom TreeNode types |
-| **10.4** | Final Testing | All files | Bundle analysis | Performance validation |
+| Week     | Phase               | Files                                 | Ant Components                         | Custom Components                              |
+| -------- | ------------------- | ------------------------------------- | -------------------------------------- | ---------------------------------------------- |
+| **9.1**  | Core Layout         | App.vue                               | a-layout(8), a-spin(4)                 | BaseLayout, BaseSpinner                        |
+| **9.2**  | Import Forms        | FileFilter.vue                        | a-form, a-form-item, a-input, a-select | BaseForm, BaseFormField, BaseInput, BaseSelect |
+| **9.3**  | Data Tables         | FilePreview.vue, DuplicateHandler.vue | a-table, a-modal, a-button             | BaseTable, BaseModal, BaseButton               |
+| **9.4**  | Progress UI         | BatchProgress.vue                     | a-progress, a-collapse, a-statistic    | BaseProgress, BaseAccordion, BaseStatistic     |
+| **9.5**  | Settings            | GeneralSettings.vue                   | a-switch, a-checkbox                   | BaseSwitch, BaseCheckbox                       |
+| **10.1** | Remove Dependencies | package.json, main.ts                 | Global Antd import                     | Clean removal                                  |
+| **10.2** | CSS Cleanup         | antd-theme-patch.css                  | Ant Design overrides                   | Custom theme variables                         |
+| **10.3** | Type Cleanup        | preference.ts, folder-tree.ts         | DataNode types                         | Custom TreeNode types                          |
+| **10.4** | Final Testing       | All files                             | Bundle analysis                        | Performance validation                         |
 
 #### **Expected Bundle Size Impact:**
+
 ```typescript
 // Before Migration
 ant-design-vue: ~2.1MB (bundled)
@@ -565,30 +597,30 @@ Total Custom UI: ~250KB
 
 ### Success Metrics
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| **Bundle Size Reduction** | -90% (~2.25MB) | ~2.5MB | 🎯 |
-| **Component Count** | 45+ components | 25 | 🚧 60% |
-| **Ant Design Dependencies** | 0 files | 20+ files, 38 components | 🚧 |
-| **Test Coverage** | >90% | TBD | 🎯 |
-| **TypeScript Support** | 100% | 95% | 🚧 |
+| Metric                      | Target         | Current                  | Status |
+| --------------------------- | -------------- | ------------------------ | ------ |
+| **Bundle Size Reduction**   | -90% (~2.25MB) | ~2.5MB                   | 🎯     |
+| **Component Count**         | 45+ components | 25                       | 🚧 60% |
+| **Ant Design Dependencies** | 0 files        | 20+ files, 38 components | 🚧     |
+| **Test Coverage**           | >90%           | TBD                      | 🎯     |
+| **TypeScript Support**      | 100%           | 95%                      | 🚧     |
 
 ### Developer Experience Improvements
 
 1. **Rich TypeScript Support**
-   - Generic component props with full type inference
-   - Strict typing for slots and events
-   - Auto-completion for TailwindCSS classes
+    - Generic component props with full type inference
+    - Strict typing for slots and events
+    - Auto-completion for TailwindCSS classes
 
 2. **Component Composition Patterns**
-   - Render props for maximum flexibility
-   - Slot-based composition for complex UIs
-   - Composable-based logic sharing
+    - Render props for maximum flexibility
+    - Slot-based composition for complex UIs
+    - Composable-based logic sharing
 
 3. **Documentation & Examples**
-   - Interactive component playground
-   - Real-world usage patterns
-   - Migration guides from popular libraries
+    - Interactive component playground
+    - Real-world usage patterns
+    - Migration guides from popular libraries
 
 ## Conclusion
 

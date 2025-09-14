@@ -1,33 +1,33 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(npm install:*)",
-      "Bash(npx husky:*)",
-      "Bash(npm run:*)",
-      "Bash(rm:*)",
-      "Bash(mv:*)",
-      "Bash(ls:*)",
-      "Bash(mkdir:*)",
-      "Bash(node:*)",
-      "Bash(jq:*)",
-      "Bash(git fetch:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(npm test:*)",
-      "Bash(npx eslint:*)",
-      "Bash(npx prettier:*)",
-      "Bash(electron-vite build)",
-      "Bash(npx electron-vite:*)",
-      "Bash(for file in ar-SA.json en-GB.json tr-TR.json uk-UA.json vi-VN.json zh-TW.json)",
-      "Bash(do echo \"=== $file ===\")",
-      "Bash(grep:*)",
-      "Bash(done)",
-      "Bash(npx vitest run:*)",
-      "Bash(chmod:*)",
-      "Bash(find:*)",
-      "WebSearch"
-    ],
-    "deny": []
-  }
+    "permissions": {
+        "allow": [
+            "Bash(npm install:*)",
+            "Bash(npx husky:*)",
+            "Bash(npm run:*)",
+            "Bash(rm:*)",
+            "Bash(mv:*)",
+            "Bash(ls:*)",
+            "Bash(mkdir:*)",
+            "Bash(node:*)",
+            "Bash(jq:*)",
+            "Bash(git fetch:*)",
+            "Bash(git add:*)",
+            "Bash(git commit:*)",
+            "Bash(git push:*)",
+            "Bash(npm test:*)",
+            "Bash(npx eslint:*)",
+            "Bash(npx prettier:*)",
+            "Bash(electron-vite build)",
+            "Bash(npx electron-vite:*)",
+            "Bash(for file in ar-SA.json en-GB.json tr-TR.json uk-UA.json vi-VN.json zh-TW.json)",
+            "Bash(do echo \"=== $file ===\")",
+            "Bash(grep:*)",
+            "Bash(done)",
+            "Bash(npx vitest run:*)",
+            "Bash(chmod:*)",
+            "Bash(find:*)",
+            "WebSearch"
+        ],
+        "deny": []
+    }
 }

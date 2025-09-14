@@ -6,9 +6,10 @@ import { usePhotosStore } from "@renderer/stores/photos";
 import { BaseModal, BaseTabs, BaseSpinner } from "@renderer/components/ui";
 import LanguageSettings from "./settings/LanguageSettings.vue";
 import GeneralSettings from "./settings/GeneralSettings.vue";
-import AboutPhotosa from "./settings/AboutPhotosa.vue";
+import AboutPhotasa from "./settings/AboutPhotasa.vue";
 import ThemeSettings from "./settings/ThemeSettings.vue";
 import AdvancedSettings from "./settings/AdvancedSettings.vue";
+import UpdateSettings from "./settings/UpdateSettings.vue";
 
 defineOptions({
     name: "UserPreference",
@@ -37,6 +38,7 @@ const label = computed(() => {
             about: t("preference.tabs.about"),
             theme: t("preference.tabs.theme"),
             advanced: t("preference.tabs.advanced"),
+            autoUpdate: t("preference.tabs.autoUpdate"),
         },
     };
 });
@@ -45,6 +47,7 @@ const tabsData = computed(() => [
     { key: "general", label: label.value.tabs.general },
     { key: "theme", label: label.value.tabs.theme },
     { key: "language", label: label.value.language },
+    { key: "autoUpdate", label: label.value.tabs.autoUpdate },
     { key: "about", label: label.value.tabs.about },
     { key: "advanced", label: label.value.tabs.advanced },
 ]);
@@ -67,8 +70,11 @@ const tabsData = computed(() => [
         <template #language>
             <LanguageSettings />
         </template>
+        <template #autoUpdate>
+            <UpdateSettings />
+        </template>
         <template #about>
-            <AboutPhotosa />
+            <AboutPhotasa />
         </template>
         <template #advanced>
             <AdvancedSettings />

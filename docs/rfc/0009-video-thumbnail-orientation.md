@@ -1,6 +1,7 @@
 # RFC 0009: 视频缩略图方向支持
 
 ## 状态
+
 - 状态: 已实现
 - 作者: Claude
 - 创建日期: 2025-01-09
@@ -23,6 +24,7 @@
 ### 技术背景
 
 现代移动设备拍摄的视频通常包含旋转元数据，而不是实际旋转视频帧。这种方式的优点是：
+
 - 保持原始视频数据不变
 - 减少处理开销
 - 播放器根据元数据自动旋转显示
@@ -44,12 +46,10 @@
 function getVideoRotation(metadata: any): number {
     // 方法1: 从stream tags中获取（旧版ffmpeg）
     const rotateTag = stream?.tags?.rotate;
-    
+
     // 方法2: 从side_data中获取（新版ffmpeg）
-    const displayMatrix = sideData.find(
-        data => data.side_data_type === "Display Matrix"
-    );
-    
+    const displayMatrix = sideData.find((data) => data.side_data_type === "Display Matrix");
+
     // 方法3: 从format tags中获取（某些容器格式）
     const formatRotate = metadata.format?.tags?.rotate;
 }
@@ -58,6 +58,7 @@ function getVideoRotation(metadata: any): number {
 ### 2. 旋转角度处理
 
 支持的旋转角度：
+
 - 0°：正常横屏
 - 90°：顺时针旋转90度（竖屏）
 - 180°：倒置
@@ -78,19 +79,19 @@ if (rotation === 90 || rotation === 270) {
 ```typescript
 function getOptimalThumbnailResolution(
     videoDimension: VideoSize,
-    targetSize: { width: number; height: number }
+    targetSize: { width: number; height: number },
 ): VideoSize {
     if (videoDimension.width > videoDimension.height) {
         // 横屏视频
         return {
             width: targetSize.width,
-            height: Math.round((targetSize.width * videoDimension.height) / videoDimension.width)
+            height: Math.round((targetSize.width * videoDimension.height) / videoDimension.width),
         };
     } else {
         // 竖屏视频
         return {
             width: Math.round((targetSize.height * videoDimension.width) / videoDimension.height),
-            height: targetSize.height
+            height: targetSize.height,
         };
     }
 }
@@ -101,20 +102,21 @@ function getOptimalThumbnailResolution(
 ### 修改的文件
 
 1. **src/main/thumbnail/thumbnail-handler.ts**
-   - 添加 `getVideoRotation` 函数
-   - 修改 `getVideoDimension` 函数以返回旋转信息
-   - 更新 `createScreenshot` 函数以使用旋转信息
+    - 添加 `getVideoRotation` 函数
+    - 修改 `getVideoDimension` 函数以返回旋转信息
+    - 更新 `createScreenshot` 函数以使用旋转信息
 
 2. **src/main/import/metadata/extractors/video-extractor.ts**
-   - 添加旋转信息提取逻辑
-   - 在视频元数据中包含旋转角度
+    - 添加旋转信息提取逻辑
+    - 在视频元数据中包含旋转角度
 
 3. **src/common/import-types.ts**
-   - 在 `VideoMetadata` 接口中添加 `rotation` 字段
+    - 在 `VideoMetadata` 接口中添加 `rotation` 字段
 
 ### 测试覆盖
 
 创建了全面的单元测试（`video-rotation.test.ts`），包括：
+
 - 从不同来源提取旋转信息
 - 负数旋转角度处理
 - 宽高交换逻辑
@@ -131,6 +133,7 @@ function getOptimalThumbnailResolution(
 ### 视频格式支持
 
 支持所有主流视频格式：
+
 - MP4（最常见的移动设备格式）
 - MOV（iOS设备）
 - AVI, MKV, WMV, M4V, FLV, WebM
@@ -143,15 +146,15 @@ function getOptimalThumbnailResolution(
 ## 未来改进
 
 1. **用户界面增强**
-   - 在UI中显示视频旋转角度
-   - 允许用户手动调整视频方向
+    - 在UI中显示视频旋转角度
+    - 允许用户手动调整视频方向
 
 2. **批量处理优化**
-   - 缓存旋转信息以避免重复提取
+    - 缓存旋转信息以避免重复提取
 
 3. **高级旋转支持**
-   - 支持任意角度旋转（不仅限于90度的倍数）
-   - 支持视频翻转（水平/垂直镜像）
+    - 支持任意角度旋转（不仅限于90度的倍数）
+    - 支持视频翻转（水平/垂直镜像）
 
 ## 参考资料
 
@@ -162,6 +165,7 @@ function getOptimalThumbnailResolution(
 ## 变更日志
 
 ### 2025-01-09
+
 - 初始实现
 - 添加旋转信息提取
 - 实现自适应缩略图生成

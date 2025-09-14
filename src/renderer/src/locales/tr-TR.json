@@ -9,7 +9,8 @@
             "general": "Genel",
             "about": "Hakkında",
             "theme": "Tema",
-            "advanced": "Gelişmiş"
+            "advanced": "Gelişmiş",
+            "autoUpdate": "Otomatik Güncelleme"
         },
         "folderList": "Klasör Listesi",
         "folderListUsage": "Kullanım Şekli",

@@ -23,6 +23,15 @@ import { loggers } from "@common/logger";
 
 const logger = loggers.preference;
 
+// 自动更新配置接口
+export interface AutoUpdateConfig {
+    enabled: boolean; // 是否启用自动更新
+    checkInterval: number; // 检查间隔（小时）
+    allowPrerelease: boolean; // 是否允许预发布版本
+    autoInstall: boolean; // 是否自动安装更新
+    lastCheck?: string; // 上次检查时间
+}
+
 export type PreferenceState = {
     paths: string[]; // Paths to monitor
     thumbnailSize: number; // Thumbnail Default Size
@@ -38,6 +47,8 @@ export type PreferenceState = {
     themeId: string; // 当前主题 id
     // 导入时排除的路径模式（如 .photasaoriginal, .git 等）
     excludePaths: string[];
+    // 自动更新配置
+    autoUpdate: AutoUpdateConfig;
 };
 
 export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
@@ -68,6 +79,13 @@ export const usePreferenceStore = defineStore("preference", {
                 ".svn", // SVN版本控制文件夹
                 "node_modules", // Node.js依赖文件夹
             ],
+            // 默认自动更新配置
+            autoUpdate: {
+                enabled: true,
+                checkInterval: 24, // 每天检查一次
+                allowPrerelease: false,
+                autoInstall: false, // 默认不自动安装，让用户确认
+            },
         };
     },
     persist: true,
@@ -117,7 +135,7 @@ export const usePreferenceStore = defineStore("preference", {
             } = await import("@renderer/utils/scan-priority");
 
             if (!Array.isArray(this.scanningFolder)) {
-                logger.debug("Initializing scanningFolder array");
+                logger.debug("[PreferenceStore] Initializing scanningFolder array");
                 this.scanningFolder = [];
             }
 
@@ -145,7 +163,7 @@ export const usePreferenceStore = defineStore("preference", {
                     this.scanningFolder = sortScanningFolders(this.scanningFolder);
                 } else {
                     logger.debug(
-                        `Folder already in scanning queue with equal or higher priority:`,
+                        `[PreferenceStore] Folder already in scanning queue with equal or higher priority:`,
                         `${existing.action}(${existing.source}) >= ${action}(${source})`,
                     );
                 }
@@ -161,11 +179,16 @@ export const usePreferenceStore = defineStore("preference", {
                     if (configCheck.hasConfig) {
                         // 仍然更新文件夹树，但不添加到扫描队列
                         this.updateFolderTree(folder);
-                        logger.debug(`Folder already scanned, skipping: ${folder}`);
+                        logger.debug(
+                            `[PreferenceStore] Folder already scanned, skipping: ${folder}`,
+                        );
                         return;
                     }
                 } catch (error) {
-                    logger.warn(`Failed to check photasa config for ${folder}:`, error);
+                    logger.warn(
+                        `[PreferenceStore] Failed to check photasa config for ${folder}:`,
+                        error,
+                    );
                     // 如果检查失败，继续正常流程
                 }
             }
@@ -182,7 +205,7 @@ export const usePreferenceStore = defineStore("preference", {
             );
 
             // Add the new folder to scan
-            logger.debug("Adding new folder to scan:", folder);
+            logger.debug("[PreferenceStore] Adding new folder to scan:", folder);
             this.scanningFolder.push(newScanAction);
 
             // 排序所有扫描文件夹
@@ -226,7 +249,7 @@ export const usePreferenceStore = defineStore("preference", {
             logger.debug("Adding file operation to queue:", operation);
 
             if (!Array.isArray(this.scanningFolder)) {
-                logger.debug("Initializing scanningFolder array");
+                logger.debug("[PreferenceStore] Initializing scanningFolder array");
                 this.scanningFolder = [];
             }
 
@@ -245,7 +268,10 @@ export const usePreferenceStore = defineStore("preference", {
 
                 if (existingIndex >= 0) {
                     // Update existing file operation
-                    logger.debug("Updating existing file operation:", normalizedPath);
+                    logger.debug(
+                        "[PreferenceStore] Updating existing file operation:",
+                        normalizedPath,
+                    );
                     this.scanningFolder[existingIndex] = {
                         ...this.scanningFolder[existingIndex],
                         ...operation,
@@ -256,7 +282,7 @@ export const usePreferenceStore = defineStore("preference", {
             }
 
             // Add new operation to queue
-            logger.debug("Adding new file operation to queue:", normalizedPath);
+            logger.debug("[PreferenceStore] Adding new file operation to queue:", normalizedPath);
 
             // 导入优先级排序工具以确保完整的字段
             const { ensureCompleteScanAction } = await import("@renderer/utils/scan-priority");
@@ -289,12 +315,15 @@ export const usePreferenceStore = defineStore("preference", {
                     const parentDir = toDirName(normalizedPath);
                     if (parentDir && parentDir !== normalizedPath && parentDir !== "/") {
                         logger.debug(
-                            `Updating folder tree with parent directory: ${parentDir} for file: ${normalizedPath}`,
+                            `[PreferenceStore] Updating folder tree with parent directory: ${parentDir} for file: ${normalizedPath}`,
                         );
                         this.updateFolderTree(parentDir);
                     }
                 } catch (error) {
-                    logger.warn(`Failed to update folder tree for file ${normalizedPath}:`, error);
+                    logger.warn(
+                        `[PreferenceStore] Failed to update folder tree for file ${normalizedPath}:`,
+                        error,
+                    );
                     // Continue execution, don't interrupt file operation
                 }
             }
@@ -303,9 +332,11 @@ export const usePreferenceStore = defineStore("preference", {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
-            logger.debug(`[completeScanPath] Attempting to complete scan for folder: ${folder}`);
             logger.debug(
-                `[completeScanPath] Current scanningFolder before:`,
+                `[PreferenceStore] [completeScanPath] Attempting to complete scan for folder: ${folder}`,
+            );
+            logger.debug(
+                `[PreferenceStore] [completeScanPath] Current scanningFolder before:`,
                 this.scanningFolder.map((f) => f.path),
             );
 
@@ -313,7 +344,7 @@ export const usePreferenceStore = defineStore("preference", {
             if (index > -1) {
                 this.scanningFolder.splice(index, 1);
                 logger.debug(
-                    `[completeScanPath] Successfully removed folder from scanning queue at index ${index}: ${folder}`,
+                    `[PreferenceStore] [completeScanPath] Successfully removed folder from scanning queue at index ${index}: ${folder}`,
                 );
             } else {
                 logger.debug(`[completeScanPath] Folder not found in scanning queue: ${folder}`);
@@ -341,30 +372,30 @@ export const usePreferenceStore = defineStore("preference", {
             });
         },
         removePath(path: string): void {
-            logger.debug("Removing path:", path);
+            logger.debug("[PreferenceStore] Removing path:", path);
 
             // Remove from paths array
             const index = this.paths.indexOf(path);
             if (index >= 0) {
                 this.paths.splice(index, 1);
-                logger.debug("Removed from paths array");
+                logger.debug("[PreferenceStore] Removed from paths array");
             }
 
             // Remove from folder tree
             const found = this.folderTree.findIndex((node) => node.key === path);
             if (found >= 0) {
                 this.folderTree.splice(found, 1);
-                logger.debug("Removed from folder tree");
+                logger.debug("[PreferenceStore] Removed from folder tree");
             }
 
             // Cancel any running scan tasks
             if (scanPhotosTask.isRunning) {
-                logger.debug("Cancelling running scan tasks");
+                logger.debug("[PreferenceStore] Cancelling running scan tasks");
                 scanPhotosTask.cancelAll();
             }
 
             // Clean up the scan queue
-            logger.debug("Cleaning up scan queue");
+            logger.debug("[PreferenceStore] Cleaning up scan queue");
             cleanupScanQueue(path);
 
             // Remove from scanning queue and all its subdirectories
@@ -384,7 +415,7 @@ export const usePreferenceStore = defineStore("preference", {
             // Reset current folder if it was the removed one
             if (this.currentFolder === path) {
                 this.currentFolder = this.paths[0] || "";
-                logger.debug("Reset current folder to:", this.currentFolder);
+                logger.debug("[PreferenceStore] Reset current folder to:", this.currentFolder);
             }
         },
         addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
@@ -474,6 +505,36 @@ export const usePreferenceStore = defineStore("preference", {
                 this.addPath(dir);
                 await window.api?.resetPhotasaConfig?.(dir);
             }
+        },
+        /**
+         * 更新自动更新配置
+         * @param config 要更新的配置对象（部分更新）
+         */
+        updateAutoUpdateConfig(config: Partial<AutoUpdateConfig>) {
+            this.autoUpdate = { ...this.autoUpdate, ...config };
+            logger.debug("[PreferenceStore] Updated auto-update config:", this.autoUpdate);
+        },
+        /**
+         * 设置最后检查时间
+         * @param timestamp 检查时间戳或ISO字符串
+         */
+        setAutoUpdateLastCheck(timestamp: string | number) {
+            const dateStr =
+                typeof timestamp === "string" ? timestamp : new Date(timestamp).toISOString();
+            this.autoUpdate.lastCheck = dateStr;
+            logger.debug("[PreferenceStore] Updated auto-update last check time:", dateStr);
+        },
+        /**
+         * 重置自动更新配置为默认值
+         */
+        resetAutoUpdateConfig() {
+            this.autoUpdate = {
+                enabled: true,
+                checkInterval: 24,
+                allowPrerelease: false,
+                autoInstall: false,
+            };
+            logger.debug("[PreferenceStore] Reset auto-update config to defaults");
         },
     },
 });

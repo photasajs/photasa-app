@@ -1,6 +1,6 @@
 # RFC 0011: ImageList File Count Display
 
-- **Start Date**: 2025-01-09  
+- **Start Date**: 2025-01-09
 - **RFC PR**: (leave this empty)
 - **Implementation Issue**: (leave this empty)
 - **Status**: Draft
@@ -55,10 +55,10 @@ The ImageList component displays images and videos in the main content area but 
   <BaseBreadcrumb>
     <BaseBreadcrumbItem ... />
   </BaseBreadcrumb>
-  
+
   <!-- New: File count display -->
   <div class="file-count-display">
-    <FileCountBadge 
+    <FileCountBadge
       :imageCount="imageCount"
       :videoCount="videoCount"
       :isLoading="isDataLoading"
@@ -72,58 +72,58 @@ The ImageList component displays images and videos in the main content area but 
 ```vue
 <!-- src/renderer/src/components/ui/FileCountBadge.vue -->
 <template>
-  <div class="file-count-badge" :class="{ loading: isLoading }">
-    <div v-if="isLoading" class="loading-state">
-      <BaseSpinner size="small" />
-      <span class="loading-text">{{ $t('common.counting') }}</span>
-    </div>
-    
-    <div v-else class="count-display">
-      <!-- Total count (always visible) -->
-      <div class="total-count">
-        <PhFiles class="count-icon" />
-        <span class="count-number">{{ totalCount }}</span>
-        <span class="count-label">{{ $t('common.files') }}</span>
-      </div>
-      
-      <!-- Detailed breakdown (when both types present) -->
-      <div v-if="imageCount > 0 && videoCount > 0" class="count-breakdown">
-        <div class="count-item image">
-          <PhImage class="count-icon" />
-          <span class="count-number">{{ imageCount }}</span>
+    <div class="file-count-badge" :class="{ loading: isLoading }">
+        <div v-if="isLoading" class="loading-state">
+            <BaseSpinner size="small" />
+            <span class="loading-text">{{ $t("common.counting") }}</span>
         </div>
-        <div class="count-separator">·</div>
-        <div class="count-item video">
-          <PhVideoCamera class="count-icon" />
-          <span class="count-number">{{ videoCount }}</span>
+
+        <div v-else class="count-display">
+            <!-- Total count (always visible) -->
+            <div class="total-count">
+                <PhFiles class="count-icon" />
+                <span class="count-number">{{ totalCount }}</span>
+                <span class="count-label">{{ $t("common.files") }}</span>
+            </div>
+
+            <!-- Detailed breakdown (when both types present) -->
+            <div v-if="imageCount > 0 && videoCount > 0" class="count-breakdown">
+                <div class="count-item image">
+                    <PhImage class="count-icon" />
+                    <span class="count-number">{{ imageCount }}</span>
+                </div>
+                <div class="count-separator">·</div>
+                <div class="count-item video">
+                    <PhVideoCamera class="count-icon" />
+                    <span class="count-number">{{ videoCount }}</span>
+                </div>
+            </div>
+
+            <!-- Single type display -->
+            <div v-else-if="imageCount > 0" class="count-single image">
+                <PhImage class="count-icon" />
+                <span class="count-number">{{ imageCount }}</span>
+                <span class="count-label">{{ $t("common.images") }}</span>
+            </div>
+
+            <div v-else-if="videoCount > 0" class="count-single video">
+                <PhVideoCamera class="count-icon" />
+                <span class="count-number">{{ videoCount }}</span>
+                <span class="count-label">{{ $t("common.videos") }}</span>
+            </div>
         </div>
-      </div>
-      
-      <!-- Single type display -->
-      <div v-else-if="imageCount > 0" class="count-single image">
-        <PhImage class="count-icon" />
-        <span class="count-number">{{ imageCount }}</span>
-        <span class="count-label">{{ $t('common.images') }}</span>
-      </div>
-      
-      <div v-else-if="videoCount > 0" class="count-single video">
-        <PhVideoCamera class="count-icon" />
-        <span class="count-number">{{ videoCount }}</span>
-        <span class="count-label">{{ $t('common.videos') }}</span>
-      </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
 interface Props {
-  imageCount: number;
-  videoCount: number;
-  isLoading?: boolean;
+    imageCount: number;
+    videoCount: number;
+    isLoading?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
+    isLoading: false,
 });
 
 const totalCount = computed(() => props.imageCount + props.videoCount);
@@ -134,73 +134,73 @@ const totalCount = computed(() => props.imageCount + props.videoCount);
 
 ```scss
 .file-count-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  
-  &.loading {
-    opacity: 0.7;
-  }
-  
-  .loading-state {
     display: flex;
     align-items: center;
-    gap: 4px;
-    
-    .loading-text {
-      font-size: 11px;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    font-size: 12px;
+    color: var(--color-text-secondary);
+
+    &.loading {
+        opacity: 0.7;
     }
-  }
-  
-  .count-display {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  
-  .total-count {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-  }
-  
-  .count-breakdown {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-  }
-  
-  .count-item {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    
-    &.image {
-      color: var(--color-success);
+
+    .loading-state {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .loading-text {
+            font-size: 11px;
+        }
     }
-    
-    &.video {
-      color: var(--color-info);
+
+    .count-display {
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
-  }
-  
-  .count-separator {
-    color: var(--color-text-tertiary);
-  }
-  
-  .count-icon {
-    width: 12px;
-    height: 12px;
-  }
+
+    .total-count {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+    }
+
+    .count-breakdown {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+    }
+
+    .count-item {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+
+        &.image {
+            color: var(--color-success);
+        }
+
+        &.video {
+            color: var(--color-info);
+        }
+    }
+
+    .count-separator {
+        color: var(--color-text-tertiary);
+    }
+
+    .count-icon {
+        width: 12px;
+        height: 12px;
+    }
 }
 ```
 
@@ -211,18 +211,18 @@ const totalCount = computed(() => props.imageCount + props.videoCount);
 ```typescript
 // Enhanced computed properties
 const imageCount = computed(() => {
-  return card.value?.images?.filter(img => !img.isVideo).length || 0;
+    return card.value?.images?.filter((img) => !img.isVideo).length || 0;
 });
 
 const videoCount = computed(() => {
-  return card.value?.images?.filter(img => img.isVideo).length || 0;
+    return card.value?.images?.filter((img) => img.isVideo).length || 0;
 });
 
 const totalFileCount = computed(() => imageCount.value + videoCount.value);
 
 // Loading state for counting
 const isCountingFiles = computed(() => {
-  return loadingPhotasaConfig.value || !currentFolderConfig.value;
+    return loadingPhotasaConfig.value || !currentFolderConfig.value;
 });
 ```
 
@@ -230,26 +230,26 @@ const isCountingFiles = computed(() => {
 
 ```vue
 <template>
-  <div class="flex flex-col h-full min-h-0">
-    <!-- Enhanced header with file count -->
-    <div class="px-4 py-2 border-b flex items-center justify-between">
-      <BaseBreadcrumb>
-        <BaseBreadcrumbItem ... />
-      </BaseBreadcrumb>
-      
-      <!-- File count display -->
-      <FileCountBadge 
-        :imageCount="imageCount"
-        :videoCount="videoCount"
-        :isLoading="isCountingFiles"
-      />
+    <div class="flex flex-col h-full min-h-0">
+        <!-- Enhanced header with file count -->
+        <div class="px-4 py-2 border-b flex items-center justify-between">
+            <BaseBreadcrumb>
+                <BaseBreadcrumbItem ... />
+            </BaseBreadcrumb>
+
+            <!-- File count display -->
+            <FileCountBadge
+                :imageCount="imageCount"
+                :videoCount="videoCount"
+                :isLoading="isCountingFiles"
+            />
+        </div>
+
+        <!-- Content area remains unchanged -->
+        <div ref="imageListRef" class="flex-1 min-h-0 overflow-auto">
+            <!-- Existing content -->
+        </div>
     </div>
-    
-    <!-- Content area remains unchanged -->
-    <div ref="imageListRef" class="flex-1 min-h-0 overflow-auto">
-      <!-- Existing content -->
-    </div>
-  </div>
 </template>
 ```
 
@@ -259,30 +259,30 @@ const isCountingFiles = computed(() => {
 
 ```scss
 @media (max-width: 768px) {
-  .file-count-badge {
-    font-size: 11px;
-    padding: 2px 6px;
-    
-    .count-breakdown {
-      display: none; // Hide detailed breakdown on mobile
+    .file-count-badge {
+        font-size: 11px;
+        padding: 2px 6px;
+
+        .count-breakdown {
+            display: none; // Hide detailed breakdown on mobile
+        }
+
+        .total-count .count-label {
+            display: none; // Show only numbers on mobile
+        }
     }
-    
-    .total-count .count-label {
-      display: none; // Show only numbers on mobile
-    }
-  }
 }
 
 @media (max-width: 480px) {
-  .px-4.py-2.border-b {
-    flex-direction: column;
-    gap: 8px;
-    align-items: stretch;
-    
-    .file-count-badge {
-      align-self: flex-end;
+    .px-4.py-2.border-b {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+
+        .file-count-badge {
+            align-self: flex-end;
+        }
     }
-  }
 }
 ```
 
@@ -293,21 +293,21 @@ const isCountingFiles = computed(() => {
 ```json
 // src/renderer/src/locales/en-US.json
 {
-  "common": {
-    "files": "files",
-    "images": "images", 
-    "videos": "videos",
-    "counting": "Counting..."
-  },
-  "imageList": {
-    "fileCount": {
-      "total": "{count} files",
-      "images": "{count} images",
-      "videos": "{count} videos", 
-      "mixed": "{images} images, {videos} videos",
-      "empty": "No files"
+    "common": {
+        "files": "files",
+        "images": "images",
+        "videos": "videos",
+        "counting": "Counting..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} files",
+            "images": "{count} images",
+            "videos": "{count} videos",
+            "mixed": "{images} images, {videos} videos",
+            "empty": "No files"
+        }
     }
-  }
 }
 ```
 
@@ -316,19 +316,19 @@ const isCountingFiles = computed(() => {
 ```typescript
 // FileCountBadge.vue - Computed labels
 const totalLabel = computed(() => {
-  if (totalCount.value === 0) return t('imageList.fileCount.empty');
-  if (totalCount.value === 1) return t('common.file');
-  return t('common.files');
+    if (totalCount.value === 0) return t("imageList.fileCount.empty");
+    if (totalCount.value === 1) return t("common.file");
+    return t("common.files");
 });
 
 const tooltipText = computed(() => {
-  if (props.imageCount > 0 && props.videoCount > 0) {
-    return t('imageList.fileCount.mixed', {
-      images: props.imageCount,
-      videos: props.videoCount
-    });
-  }
-  return t('imageList.fileCount.total', { count: totalCount.value });
+    if (props.imageCount > 0 && props.videoCount > 0) {
+        return t("imageList.fileCount.mixed", {
+            images: props.imageCount,
+            videos: props.videoCount,
+        });
+    }
+    return t("imageList.fileCount.total", { count: totalCount.value });
 });
 ```
 
@@ -339,21 +339,21 @@ const tooltipText = computed(() => {
 ```typescript
 // Optimize counting to avoid unnecessary recalculations
 const fileCountMemo = computed(() => {
-  const images = card.value?.images || [];
-  
-  // Single pass through the array
-  let imageCount = 0;
-  let videoCount = 0;
-  
-  for (const img of images) {
-    if (img.isVideo) {
-      videoCount++;
-    } else {
-      imageCount++;
+    const images = card.value?.images || [];
+
+    // Single pass through the array
+    let imageCount = 0;
+    let videoCount = 0;
+
+    for (const img of images) {
+        if (img.isVideo) {
+            videoCount++;
+        } else {
+            imageCount++;
+        }
     }
-  }
-  
-  return { imageCount, videoCount, totalCount: imageCount + videoCount };
+
+    return { imageCount, videoCount, totalCount: imageCount + videoCount };
 });
 
 const imageCount = computed(() => fileCountMemo.value.imageCount);
@@ -366,32 +366,36 @@ const totalFileCount = computed(() => fileCountMemo.value.totalCount);
 ```typescript
 // Debounced loading state to prevent flickering
 const debouncedLoadingState = computed(() => {
-  // Show loading only if it takes longer than 100ms
-  return loadingPhotasaConfig.value && Date.now() - loadStartTime.value > 100;
+    // Show loading only if it takes longer than 100ms
+    return loadingPhotasaConfig.value && Date.now() - loadStartTime.value > 100;
 });
 ```
 
 ## Implementation Plan
 
 ### Phase 1: Core Component Development (Week 1)
+
 - [ ] Create FileCountBadge component
 - [ ] Implement basic counting logic in ImageList.vue
 - [ ] Add CSS styling for file count display
 - [ ] Implement loading state handling
 
-### Phase 2: UI Integration (Week 1-2)  
+### Phase 2: UI Integration (Week 1-2)
+
 - [ ] Integrate FileCountBadge into ImageList header
 - [ ] Ensure responsive layout works correctly
 - [ ] Test with various file count scenarios
 - [ ] Implement hover states and interactions
 
 ### Phase 3: Internationalization (Week 2)
+
 - [ ] Add translation keys for all supported languages
 - [ ] Implement pluralization rules
 - [ ] Test RTL language support
 - [ ] Validate text overflow handling
 
 ### Phase 4: Performance & Polish (Week 2-3)
+
 - [ ] Optimize counting calculations
 - [ ] Add transition animations
 - [ ] Implement accessibility features
@@ -400,23 +404,27 @@ const debouncedLoadingState = computed(() => {
 ## Success Criteria
 
 ### Functional Requirements
+
 - ✅ Display accurate file counts (images and videos separately)
 - ✅ Show loading state during folder transitions
 - ✅ Update counts in real-time when files change
 - ✅ Support all UI languages with proper pluralization
 
-### Performance Requirements  
+### Performance Requirements
+
 - 📊 Count calculation time < 50ms for folders with 1000+ files
 - 📊 No visible layout shift during loading states
 - 📊 Smooth transitions between different count states
 
 ### UX Requirements
+
 - 🎯 Intuitive visual design that doesn't clutter the header
 - 🎯 Clear distinction between image and video counts
 - 🎯 Responsive layout works on mobile devices
 - 🎯 Accessible to screen readers
 
 ### Integration Requirements
+
 - 🔧 No conflicts with existing ImageList functionality
 - 🔧 Consistent with overall application design language
 - 🔧 Compatible with future BaseTree statistics (RFC 0010)
@@ -426,45 +434,54 @@ const debouncedLoadingState = computed(() => {
 ### Potential Issues
 
 1. **Header Cluttering**: Additional elements in the header might feel crowded
-   - **Mitigation**: Use minimal, clean design with proper spacing
+    - **Mitigation**: Use minimal, clean design with proper spacing
 
 2. **Performance Impact**: Calculating counts for large folders might slow down rendering
-   - **Mitigation**: Implement efficient counting with memoization
+    - **Mitigation**: Implement efficient counting with memoization
 
 3. **Mobile Space**: Limited space on mobile devices for additional UI elements
-   - **Mitigation**: Implement responsive design that adapts to screen size
+    - **Mitigation**: Implement responsive design that adapts to screen size
 
 4. **Translation Complexity**: Pluralization rules vary across languages
-   - **Mitigation**: Use vue-i18n's built-in pluralization support
+    - **Mitigation**: Use vue-i18n's built-in pluralization support
 
 ## Alternatives
 
 ### Alternative 1: Status Bar Display
+
 Show file counts in a bottom status bar instead of header
+
 - **Pros**: Doesn't clutter main header, more space for information
 - **Cons**: Less visible, requires additional UI component
 
-### Alternative 2: Tooltip-Only Display  
+### Alternative 2: Tooltip-Only Display
+
 Show counts only in breadcrumb tooltip
+
 - **Pros**: No UI clutter, minimal implementation
 - **Cons**: Hidden information, poor discoverability
 
 ### Alternative 3: Sidebar Integration
+
 Display counts in the folder tree sidebar
+
 - **Pros**: Centralized location for all folder information
 - **Cons**: Duplicates RFC 0010 functionality, not immediately visible
 
 ### Decision
+
 Proceed with header integration as it provides the best balance of visibility and functionality.
 
 ## Relationship to Other RFCs
 
 ### RFC 0010: Folder Statistics Display
+
 - **Complementary**: RFC 0010 focuses on tree node statistics, this RFC focuses on current folder display
 - **Data Sharing**: Both RFCs can potentially share counting logic and caching mechanisms
 - **Consistency**: Visual design should be consistent between tree statistics and header display
 
 ### Future Integration Opportunities
+
 - Shared statistics service for counting logic
 - Consistent loading states across both features
 - Unified theming and visual language
@@ -472,49 +489,52 @@ Proceed with header integration as it provides the best balance of visibility an
 ## Unresolved Questions
 
 1. **Filtering Integration**: How should counts update when filters are applied?
-   - Option A: Show filtered counts vs total counts
-   - Option B: Only show total counts regardless of filters
-   - **Recommended**: Option A with clear visual distinction
+    - Option A: Show filtered counts vs total counts
+    - Option B: Only show total counts regardless of filters
+    - **Recommended**: Option A with clear visual distinction
 
 2. **Performance Threshold**: At what folder size should we show loading indicators?
-   - **Recommended**: Show loading for operations taking >100ms
+    - **Recommended**: Show loading for operations taking >100ms
 
 3. **Accessibility**: What ARIA labels and roles should be used?
-   - **Recommended**: Use `role="status"` for live count updates
+    - **Recommended**: Use `role="status"` for live count updates
 
 4. **Animation**: Should count changes be animated?
-   - **Recommended**: Subtle number transitions for better UX
+    - **Recommended**: Subtle number transitions for better UX
 
 ## Future Enhancements
 
 1. **Advanced Statistics**
-   - File size information
-   - Date range of files
-   - File type distribution
+    - File size information
+    - Date range of files
+    - File type distribution
 
 2. **Interactive Features**
-   - Click to show detailed breakdown modal
-   - Filter shortcuts from count display
+    - Click to show detailed breakdown modal
+    - Filter shortcuts from count display
 
 3. **Export Integration**
-   - One-click selection of all files of a specific type
-   - Batch operation shortcuts
+    - One-click selection of all files of a specific type
+    - Batch operation shortcuts
 
 ## Implementation Notes
 
 ### Testing Strategy
+
 - Unit tests for counting logic
 - Component tests for FileCountBadge
 - Integration tests with various folder sizes
 - Visual regression tests for different languages
 
-### Accessibility Considerations  
+### Accessibility Considerations
+
 - Screen reader support for count updates
 - High contrast mode compatibility
 - Keyboard navigation support
 - Reduced motion preferences
 
 ### Browser Compatibility
+
 - Modern browser support (Chrome 90+, Firefox 88+, Safari 14+)
 - CSS Grid fallbacks for older browsers
 - Responsive design testing across devices
@@ -522,6 +542,7 @@ Proceed with header integration as it provides the best balance of visibility an
 ## Changelog
 
 ### 2025-01-09
+
 - Initial RFC creation
 - Defined component structure and integration approach
 - Established success criteria and implementation plan

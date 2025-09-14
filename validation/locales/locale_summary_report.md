@@ -6,22 +6,22 @@ Using **zh-CN.json** as the baseline (283 total keys), here's the translation st
 
 ### Translation Completeness by Language
 
-| Language | File | Missing Keys | Completeness | Status |
-|----------|------|-------------|--------------|---------|
-| Japanese | ja-JP.json | 0 | 100.0% | ✅ Complete |
-| German | de-DE.json | 1 | 99.6% | ✅ Nearly Complete |
-| English (GB) | en-GB.json | 3 | 98.9% | ✅ Nearly Complete |
-| English (US) | en-US.json | 4 | 98.6% | ✅ Nearly Complete |
-| Spanish | es-ES.json | 9 | 96.8% | ✅ Nearly Complete |
-| Arabic | ar-SA.json | 144 | 49.1% | ⚠️ Major Update Needed |
-| Turkish | tr-TR.json | 144 | 49.1% | ⚠️ Major Update Needed |
-| Ukrainian | uk-UA.json | 144 | 49.1% | ⚠️ Major Update Needed |
-| Vietnamese | vi-VN.json | 144 | 49.1% | ⚠️ Major Update Needed |
-| Traditional Chinese | zh-TW.json | 144 | 49.1% | ⚠️ Major Update Needed |
-| Italian | it-IT.json | 170 | 39.9% | 🚨 Critical Update Needed |
-| Russian | ru-RU.json | 170 | 39.9% | 🚨 Critical Update Needed |
-| French | fr-FR.json | 173 | 38.9% | 🚨 Critical Update Needed |
-| Korean | ko-KR.json | 173 | 38.9% | 🚨 Critical Update Needed |
+| Language            | File       | Missing Keys | Completeness | Status                    |
+| ------------------- | ---------- | ------------ | ------------ | ------------------------- |
+| Japanese            | ja-JP.json | 0            | 100.0%       | ✅ Complete               |
+| German              | de-DE.json | 1            | 99.6%        | ✅ Nearly Complete        |
+| English (GB)        | en-GB.json | 3            | 98.9%        | ✅ Nearly Complete        |
+| English (US)        | en-US.json | 4            | 98.6%        | ✅ Nearly Complete        |
+| Spanish             | es-ES.json | 9            | 96.8%        | ✅ Nearly Complete        |
+| Arabic              | ar-SA.json | 144          | 49.1%        | ⚠️ Major Update Needed    |
+| Turkish             | tr-TR.json | 144          | 49.1%        | ⚠️ Major Update Needed    |
+| Ukrainian           | uk-UA.json | 144          | 49.1%        | ⚠️ Major Update Needed    |
+| Vietnamese          | vi-VN.json | 144          | 49.1%        | ⚠️ Major Update Needed    |
+| Traditional Chinese | zh-TW.json | 144          | 49.1%        | ⚠️ Major Update Needed    |
+| Italian             | it-IT.json | 170          | 39.9%        | 🚨 Critical Update Needed |
+| Russian             | ru-RU.json | 170          | 39.9%        | 🚨 Critical Update Needed |
+| French              | fr-FR.json | 173          | 38.9%        | 🚨 Critical Update Needed |
+| Korean              | ko-KR.json | 173          | 38.9%        | 🚨 Critical Update Needed |
 
 ## Key Findings
 
@@ -34,6 +34,7 @@ Using **zh-CN.json** as the baseline (283 total keys), here's the translation st
 ## Most Commonly Missing Keys
 
 The vast majority of missing translations are in the **import** section, specifically:
+
 - File import/export functionality
 - Duplicate handling
 - File filtering and advanced options
@@ -54,6 +55,7 @@ The vast majority of missing translations are in the **import** section, specifi
 ## Next Steps
 
 To update the missing translations:
+
 1. Use the detailed missing keys list from the full report
 2. Copy the missing key values from zh-CN.json (or en-US.json for non-Chinese languages)
 3. Translate the values to the target language

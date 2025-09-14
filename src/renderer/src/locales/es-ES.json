@@ -21,12 +21,13 @@
             "general": "General",
             "about": "Acerca de",
             "theme": "Tema",
-            "advanced": "Configuración avanzada"
+            "advanced": "Configuración avanzada",
+            "autoUpdate": "Auto Actualización"
         },
         "folderList": "Lista de carpetas",
         "folderListUsage": "Uso",
-        "folderListDesc": "Después de agregar un directorio a la lista, Photosa puede gestionar fotos y videos en ese directorio en tiempo real.",
-        "watchFolderList": "Photosa puede gestionar fotos y videos en los siguientes directorios.",
+        "folderListDesc": "Después de agregar un directorio a la lista, Photasa puede gestionar fotos y videos en ese directorio en tiempo real.",
+        "watchFolderList": "Photasa puede gestionar fotos y videos en los siguientes directorios.",
         "chooseDirectory": "Elegir directorio y agregar a la lista",
         "thumbnailSize": "Tamaño de miniatura",
         "darkMode": "Modo oscuro",
@@ -36,6 +37,36 @@
             "title": "Acción Avanzada: Restablecer Almacenamiento de Directorios",
             "desc": "Esto borrará todas las configuraciones de directorios y reconstruirá la caché inmediatamente. Esta acción es irreversible. ¡Proceda con precaución!",
             "button": "Restablecer Almacenamiento de Directorios"
+        },
+        "autoUpdate": {
+            "title": "Actualización Automática",
+            "description": "Configure las actualizaciones automáticas de la aplicación para asegurarse de tener siempre la última versión de Photasa",
+            "enabled": "Habilitar actualización automática",
+            "checkInterval": "Intervalo de verificación",
+            "prerelease": "Incluir versiones preliminares",
+            "prereleaseDescription": "Habilitar para recibir actualizaciones Beta y RC, que pueden contener funciones no probadas",
+            "autoInstall": "Instalar actualizaciones automáticamente",
+            "autoInstallDescription": "Cuando esté habilitado, las actualizaciones se instalarán automáticamente en segundo plano y tomarán efecto en el próximo reinicio",
+            "checkNow": "Verificar ahora",
+            "downloadUpdate": "Descargar actualización",
+            "installUpdate": "Instalar y reiniciar",
+            "currentVersion": "Versión actual",
+            "latestVersion": "Última versión",
+            "lastCheck": "Última verificación",
+            "intervals": {
+                "hourly": "Cada hora",
+                "sixHours": "Cada 6 horas",
+                "daily": "Diariamente",
+                "weekly": "Semanalmente"
+            },
+            "status": {
+                "idle": "Inactivo",
+                "checking": "Verificando actualizaciones...",
+                "downloading": "Descargando ({progress}%)",
+                "downloaded": "Actualización descargada",
+                "upToDate": "Ya está actualizado",
+                "error": "Error al verificar actualizaciones"
+            }
         }
     },
     "import": {
@@ -339,11 +370,11 @@
         "error": "Error",
         "scan": {
             "title": "Escanear directorio",
-            "message": "Escaneo de directorio completo, las fotos han sido importadas a Photosa."
+            "message": "Escaneo de directorio completo, las fotos han sido importadas a Photasa."
         },
         "duplicatePath": {
             "title": "Directorio duplicado",
-            "message": "El directorio [{folder}] ya existe en Photosa."
+            "message": "El directorio [{folder}] ya existe en Photasa."
         },
         "emptyPath": {
             "title": "Elegir directorio",

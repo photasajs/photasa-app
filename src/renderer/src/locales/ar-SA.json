@@ -9,7 +9,8 @@
             "general": "عام",
             "about": "حول",
             "theme": "السمة",
-            "advanced": "متقدم"
+            "advanced": "متقدم",
+            "autoUpdate": "التحديث التلقائي"
         },
         "folderList": "قائمة المجلدات",
         "folderListUsage": "طريقة الاستخدام",

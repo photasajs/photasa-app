@@ -8,6 +8,7 @@
 ## Summary
 
 Unify file watch events into the existing persistent scan queue system to prevent data loss during bulk import operations when the application is restarted. This RFC addresses critical data consistency issues and provides a robust, unified processing pipeline for all file system operations.
+
 ## Motivation
 
 Currently, when users import many files, file watch events are handled immediately by `handleFileTask` using vue-concurrency's in-memory queue. This causes **data loss** when the application is restarted during bulk operations, as the in-memory queue is not persisted.
@@ -42,6 +43,7 @@ Currently, when users import many files, file watch events are handled immediate
 ### Current Architecture Analysis
 
 #### File Watch System (In-Memory, Non-Persistent) - Current Implementation
+
 ```
 Main Process:
 chokidar events → WatchService (main/watch/watch-service.ts)
@@ -65,6 +67,7 @@ file-handler.ts: startWatching(config, callback) where callback =
 ```
 
 #### Directory Scan System (Persistent Queue) - Current Implementation
+
 ```
 User action → preferenceStore.addScanFolder(folder, action) → scanningFolder[] (pinia with persist: true)
 └── watchArray(scanningFolder) triggers → startScanning() if scanPhotosTask.isIdle
@@ -76,6 +79,7 @@ User action → preferenceStore.addScanFolder(folder, action) → scanningFolder
 ```
 
 **Persistence Details**:
+
 - `scanningFolder: ScanAction[]` in `PreferenceStore` (`/src/renderer/src/stores/preference.ts`)
 - Store configured with `persist: true` (line 62) - auto-saves to local storage
 - Current ScanAction: `{path: string, action: "scan"|"rescan"|"current", thumbnailSize: number}`
@@ -84,6 +88,7 @@ User action → preferenceStore.addScanFolder(folder, action) → scanningFolder
 - Queue automatically restored on app restart
 
 #### Architecture Problems
+
 1. **Data Loss Risk**: File watch uses vue-concurrency queue (in-memory), lost on restart
 2. **Inconsistent UX**: Directory operations visible in scan queue, file operations invisible
 3. **Duplicate Logic**: Two different processing paths for similar media file operations
@@ -112,6 +117,7 @@ IPC receive("picasa:add-to-scan-queue") → preferenceStore.addFileOperation(fil
 ```
 
 #### Key Changes
+
 1. **Complete Persistence**: ALL file operations (add, change, delete) go through persistent queue
 2. **Event Deduplication**: Prevent duplicate operations on same file within time window
 3. **Event Batching**: Batch multiple events to reduce IPC overhead
@@ -125,6 +131,7 @@ IPC receive("picasa:add-to-scan-queue") → preferenceStore.addFileOperation(fil
 #### 1. Enhanced File Operation Interface
 
 **New File Operation Interface**:
+
 ```typescript
 export interface FileOperation {
     id: string;
@@ -179,20 +186,22 @@ export interface FileOperationInput {
 #### 2. Enhanced WatchService with Event Deduplication
 
 **Current Implementation** (`main/watch/watch-service.ts`):
+
 ```typescript
 // Lines 40-54: Direct IPC events to renderer
 this.FileWatcherHandler.on("add", (path) => {
     this.mainWindow?.webContents.send(WatchServiceEvent.add, { isFile: true, path });
 })
-.on("change", (path) => {
-    this.mainWindow?.webContents.send(WatchServiceEvent.change, { isFile: true, path });
-})
-.on("unlink", (path) => {
-    this.mainWindow?.webContents.send(WatchServiceEvent.unlink, { isFile: true, path });
-});
+    .on("change", (path) => {
+        this.mainWindow?.webContents.send(WatchServiceEvent.change, { isFile: true, path });
+    })
+    .on("unlink", (path) => {
+        this.mainWindow?.webContents.send(WatchServiceEvent.unlink, { isFile: true, path });
+    });
 ```
 
 **Enhanced Implementation with Event Deduplication**:
+
 ```typescript
 export default class WatchService {
     private pendingEvents = new Map<string, FileOperation>();
@@ -211,7 +220,9 @@ export default class WatchService {
             // Update existing event with latest timestamp and metadata
             existing!.timestamp = now;
             existing!.metadata.lastModified = now;
-            this.logger.debug(`Updated existing event: ${key} (${now - existing!.timestamp}ms ago)`);
+            this.logger.debug(
+                `Updated existing event: ${key} (${now - existing!.timestamp}ms ago)`,
+            );
             return;
         }
 
@@ -253,9 +264,10 @@ export default class WatchService {
     private forceProcessIfNeeded() {
         const pendingCount = this.pendingEvents.size;
 
-        if (this.eventLossPrevention.shouldForceProcess() ||
-            this.eventLossPrevention.isNearLimit(pendingCount)) {
-
+        if (
+            this.eventLossPrevention.shouldForceProcess() ||
+            this.eventLossPrevention.isNearLimit(pendingCount)
+        ) {
             this.logger.warn(`Force processing ${pendingCount} events to prevent loss`);
             this.processPendingEvents();
         }
@@ -265,18 +277,18 @@ export default class WatchService {
 
     // Event loss prevention mechanisms
     private eventLossPrevention = {
-        maxPendingEvents: 10000,  // Maximum pending events before forced processing
+        maxPendingEvents: 10000, // Maximum pending events before forced processing
         forceProcessInterval: 5000, // Force process every 5 seconds
         lastForceProcess: 0,
 
         shouldForceProcess(): boolean {
             const now = Date.now();
-            return (now - this.lastForceProcess) > this.forceProcessInterval;
+            return now - this.lastForceProcess > this.forceProcessInterval;
         },
 
         isNearLimit(pendingCount: number): boolean {
             return pendingCount > this.maxPendingEvents * 0.8;
-        }
+        },
     };
 
     private startWatching(args: WatchConfig): void {
@@ -285,8 +297,7 @@ export default class WatchService {
         this.FileWatcherHandler = chokidar.watch(args.paths, args.options);
 
         // All events go through unified processing
-        this.FileWatcherHandler
-            .on("add", (path) => this.handleFileEvent("add", path, true))
+        this.FileWatcherHandler.on("add", (path) => this.handleFileEvent("add", path, true))
             .on("addDir", (path) => this.handleFileEvent("addDir", path, false))
             .on("change", (path) => this.handleFileEvent("change", path, true))
             .on("unlink", (path) => this.handleFileEvent("delete", path, true))
@@ -302,17 +313,19 @@ export default class WatchService {
 ```
 
 **Renderer Integration** (App.vue):
+
 ```typescript
 // Add IPC handler in onMounted or setup
 electronAPI.ipcRenderer.on("picasa:add-to-scan-queue", (_, operations: FileOperation[]) => {
     // Process batch of file operations
-    operations.forEach(operation => {
+    operations.forEach((operation) => {
         preferenceStore.addFileOperation(operation);
     });
 });
 ```
 
 **Enhanced Preference Store** (preference.ts):
+
 ```typescript
 // Import type from common directory
 import type { FileOperationInput } from "@common/scan-types";
@@ -357,21 +370,31 @@ private getScanActionFromFileOperation(operation: FileOperation): ScanAction['ac
 #### 3. Enhanced Scan Worker with File Operation Support
 
 **Current Implementation** (`main/scan/scan-worker.ts`):
+
 ```typescript
 // Lines 23-72: execute() only handles directory scans via scanPhotos().subscribe()
 export function execute(requestId: string, scan: ScanAction): void {
     scanPhotos(scan, logger).subscribe({
-        next: (action) => { /* process directory items */ },
-        error: (error) => { /* handle scan errors */ },
-        complete: () => { /* send completion */ }
+        next: (action) => {
+            /* process directory items */
+        },
+        error: (error) => {
+            /* handle scan errors */
+        },
+        complete: () => {
+            /* send completion */
+        },
     });
 }
 ```
 
 **Enhanced Implementation with File Operation Support**:
+
 ```typescript
 export function execute(requestId: string, scan: ScanAction): void {
-    logger.debug(`Worker executing: requestId=${requestId}, path=${scan.path}, operationType=${scan.operationType}`);
+    logger.debug(
+        `Worker executing: requestId=${requestId}, path=${scan.path}, operationType=${scan.operationType}`,
+    );
 
     try {
         // Route based on operation type
@@ -399,7 +422,7 @@ function executeFileOperation(requestId: string, scan: ScanAction): void {
         postMessage({
             type: "complete",
             requestId,
-            action: { path: filePath, isDirectory: false }
+            action: { path: filePath, isDirectory: false },
         });
         return;
     }
@@ -410,15 +433,15 @@ function executeFileOperation(requestId: string, scan: ScanAction): void {
             postMessage({
                 type: "complete",
                 requestId,
-                action: { path: filePath, isDirectory: false }
+                action: { path: filePath, isDirectory: false },
             });
         })
-        .catch(error => {
+        .catch((error) => {
             logger.error("Error processing media file:", error);
             postMessage({
                 type: "error",
                 requestId,
-                error
+                error,
             });
         });
 }
@@ -435,25 +458,33 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
 
     // Handle different file operations
     switch (scan.action) {
-        case 'scan':
+        case "scan":
             if (!thumbnailExists) {
                 await createThumbnail(filePath, thumbnailPath, scan.thumbnailSize);
             }
-            await addToPhotasaConfig({
-                queueId: 0,
-                paths: [filePath],
-            }, () => {}, logger);
+            await addToPhotasaConfig(
+                {
+                    queueId: 0,
+                    paths: [filePath],
+                },
+                () => {},
+                logger,
+            );
             break;
 
-        case 'rescan':
+        case "rescan":
             await createThumbnail(filePath, thumbnailPath, scan.thumbnailSize);
-            await addToPhotasaConfig({
-                queueId: 0,
-                paths: [filePath],
-            }, () => {}, logger);
+            await addToPhotasaConfig(
+                {
+                    queueId: 0,
+                    paths: [filePath],
+                },
+                () => {},
+                logger,
+            );
             break;
 
-        case 'current':
+        case "current":
             // Handle delete operations
             if (fs.existsSync(thumbnailPath)) {
                 await fs.unlink(thumbnailPath);
@@ -471,11 +502,11 @@ async function processMediaFile(filePath: string, scan: ScanAction): Promise<voi
  */
 function getEventPriority(type: string): number {
     const priorities = {
-        'delete': 1,    // Highest priority
-        'change': 2,    // Medium priority
-        'add': 3,       // Lower priority
-        'addDir': 4,    // Lowest priority
-        'deleteDir': 1
+        delete: 1, // Highest priority
+        change: 2, // Medium priority
+        add: 3, // Lower priority
+        addDir: 4, // Lowest priority
+        deleteDir: 1,
     };
     return priorities[type] || 5;
 }
@@ -486,11 +517,11 @@ function getEventPriority(type: string): number {
  */
 function getDeduplicationWindow(type: string): number {
     const windows = {
-        'add': 50,      // Short window for add events (new files)
-        'change': 200,  // Longer window for change events (file modifications)
-        'delete': 100,  // Medium window for delete events
-        'addDir': 100,  // Medium window for directory creation
-        'deleteDir': 100
+        add: 50, // Short window for add events (new files)
+        change: 200, // Longer window for change events (file modifications)
+        delete: 100, // Medium window for delete events
+        addDir: 100, // Medium window for directory creation
+        deleteDir: 100,
     };
     return windows[type] || 100;
 }
@@ -508,8 +539,8 @@ function generateOperationId(): string {
  * Pure function - same input always produces same output
  */
 function calculateDebounceTime(pendingCount: number): number {
-    if (pendingCount > 1000) return 50;  // High load: shorter debounce
-    if (pendingCount > 100) return 100;  // Medium load: normal debounce
+    if (pendingCount > 1000) return 50; // High load: shorter debounce
+    if (pendingCount > 100) return 100; // Medium load: normal debounce
     return 200; // Low load: longer debounce for efficiency
 }
 
@@ -521,11 +552,11 @@ function createFileOperation(
     type: string,
     path: string,
     isFile: boolean,
-    thumbnailSize: number
+    thumbnailSize: number,
 ): FileOperation {
     return {
         id: generateOperationId(),
-        type: type as FileOperation['type'],
+        type: type as FileOperation["type"],
         path,
         timestamp: Date.now(),
         priority: getEventPriority(type),
@@ -533,8 +564,8 @@ function createFileOperation(
         metadata: {
             thumbnailSize,
             isFile,
-            lastModified: Date.now()
-        }
+            lastModified: Date.now(),
+        },
     };
 }
 
@@ -545,7 +576,7 @@ function createFileOperation(
 function shouldDeduplicateEvent(
     existing: FileOperation | undefined,
     currentTime: number,
-    dedupWindow: number
+    dedupWindow: number,
 ): boolean {
     if (!existing) return false;
     const timeDiff = currentTime - existing.timestamp;
@@ -553,7 +584,11 @@ function shouldDeduplicateEvent(
 }
 
 // Helper functions for worker implementation
-async function createThumbnail(filePath: string, thumbnailPath: string, size: number): Promise<void> {
+async function createThumbnail(
+    filePath: string,
+    thumbnailPath: string,
+    size: number,
+): Promise<void> {
     const workerPool = getWorkerPool(logger);
     return workerPool.addTask("create", {
         path: filePath,
@@ -571,7 +606,7 @@ async function removeFromPhotasaConfig(filePath: string, logger: PhotasaLogger):
     const fileName = path.basename(filePath);
     const config = await getPhotasaConfig(dir, logger);
 
-    config.photoList = config.photoList.filter(photo => photo.path !== fileName);
+    config.photoList = config.photoList.filter((photo) => photo.path !== fileName);
     await savePhotasaConfig(dir, config, logger);
 }
 
@@ -614,6 +649,7 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
 ```
 
 **Enhanced walkthroughPhotos()** to support single files (`main/scan/scan-photos.ts`):
+
 ```typescript
 export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileRequest> {
     return new Observable<PhotoFileRequest>((subscriber: Subscriber<PhotoFileRequest>) => {
@@ -641,7 +677,7 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
         // Directory scanning (existing logic with error handling)
         const option = {
             depthLimit: shouldScanOneLevel(source.action) ? 0 : -1,
-            filter: (item: string) => !shouldIgnorePhotasaPath(item) && !isHiddenFile(item)
+            filter: (item: string) => !shouldIgnorePhotasaPath(item) && !isHiddenFile(item),
         };
 
         klaw(source.path, option)
@@ -649,9 +685,7 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
                 const video = isVideo(item.path);
                 const image = isImage(item.path);
 
-                if (!item.stats.isDirectory() &&
-                    item.path !== source.path &&
-                    (video || image)) {
+                if (!item.stats.isDirectory() && item.path !== source.path && (video || image)) {
                     subscriber.next({
                         path: item.path,
                         thumbnail: buildThumbnailPath(item.path),
@@ -667,6 +701,7 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
 ```
 
 **No changes needed to scanPhotos()** - existing logic works for both files and directories:
+
 ```typescript
 export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<PhotoFileRequest> {
     const workerPool = getWorkerPool(logger);
@@ -691,13 +726,17 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                 });
             }
 
-            await addToPhotasaConfig({
-                queueId: 0,
-                paths: [action.path],
-            }, () => {}, logger);
+            await addToPhotasaConfig(
+                {
+                    queueId: 0,
+                    paths: [action.path],
+                },
+                () => {},
+                logger,
+            );
 
             return action;
-        })
+        }),
     );
 }
 ```
@@ -705,11 +744,13 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 #### 4. Integration Points
 
 **Backend (Main Process)**
+
 - **WatchService**: Generates file events → adds to queue via IPC
 - **ScanService**: Receives queue requests → processes through worker
 - **Worker**: Handles both directory scans and file operations
 
 **Frontend (Renderer Process)**
+
 - **scanningFolder**: Unified persistent queue for all operations
 - **startScanning()**: Processes queue items (both directories and files)
 - **scanPhotosTask**: Bridge to backend services
@@ -717,26 +758,31 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 ### Implementation Phases
 
 #### Phase 1: Foundation - Type System & Interfaces
+
 - [ ] Extend `ScanAction` interface with file operation types
 - [ ] Update `preferenceStore.addScanFolder()` to accept file operations
 - [ ] Add file operation support to scan queue UI display
 
 #### Phase 2: Worker Implementation
+
 - [ ] Implement `executeFileTask()` in scan-worker.ts
 - [ ] Map file operations to existing thumbnail/photo list logic
 - [ ] Test worker processes both directory and file operations correctly
 
 #### Phase 3: Integration Layer
+
 - [ ] Add renderer IPC handler for `picasa:add-to-scan-queue`
 - [ ] Modify WatchService to send queue events instead of direct processing
 - [ ] Ensure `startScanning()` handles both directory and file operations
 
 #### Phase 4: Legacy Cleanup & Migration
+
 - [ ] Deprecate direct `handleFileTask` invocation from watch events
 - [ ] Remove redundant IPC events (WatchServiceEvent.add, change, unlink)
 - [ ] Update UI to show unified queue with file and directory operations
 
 #### Phase 5: Testing & Validation
+
 - [ ] Unit tests: file operations through persistent queue
 - [ ] Integration tests: bulk import scenarios with app restart
 - [ ] Performance tests: high-frequency file watch events
@@ -745,18 +791,21 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 ## Drawbacks
 
 ### Performance Impact
+
 - Queueing file events may add latency compared to immediate processing
 - Additional IPC overhead for queue management
 - **Memory Usage**: Persistent queue stores more data than in-memory queue
 - **Disk I/O**: More frequent persistent writes for queue updates
 
 ### Complexity Increase
+
 - Mixing directory and file operations in same queue increases system complexity
 - More complex error handling and retry logic
 - **Event Ordering**: Need to ensure proper ordering of file operations (delete before add)
 - **Queue Management**: Need to handle queue cleanup and maintenance
 
 ### Breaking Changes
+
 - Existing file watch behavior changes internally
 - Potential UI behavior changes during file operations
 - **Data Consistency**: Complete persistence changes file operation timing
@@ -768,6 +817,7 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 **Decision**: Use complete persistence for all file operations instead of mixed processing.
 
 **Rationale**:
+
 - Mixed processing (ADD queued, CHANGE/DELETE immediate) creates data consistency issues
 - User deletes file → immediate processing removes from UI
 - App restarts → ADD event still in queue → file reappears in UI
@@ -778,12 +828,14 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 **Decision**: Implement smart time-based deduplication with adaptive windows.
 
 **Rationale**:
+
 - File systems often generate multiple events for same operation
 - Prevents duplicate processing and UI flicker
 - Different event types need different deduplication strategies
 - Adaptive windows balance responsiveness vs deduplication effectiveness
 
 **Implementation Details**:
+
 - **Add events**: 50ms window (short, new files are important)
 - **Change events**: 200ms window (longer, file modifications can be frequent)
 - **Delete events**: 100ms window (medium, deletions are critical)
@@ -795,6 +847,7 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 **Decision**: Implement priority-based processing with delete operations having highest priority.
 
 **Rationale**:
+
 - Delete operations should complete before add operations to prevent conflicts
 - Ensures data consistency during bulk operations
 - Prevents orphaned thumbnails and config entries
@@ -804,36 +857,41 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 **Decision**: Implement exponential backoff retry with maximum retry limit.
 
 **Rationale**:
+
 - File operations can fail due to temporary issues (file locks, permissions)
 - Exponential backoff prevents overwhelming the system
 - Maximum retry limit prevents infinite retry loops
 
 **Implementation Details**:
+
 - **Retry Strategy**: Exponential backoff with jitter (1s, 2s, 4s, 8s, 16s, 32s)
 - **Max Retries**: 5 attempts for file operations, 3 for directory scans
 - **Error Classification**: Distinguish between retryable and permanent errors
 - **Dead Letter Queue**: Move permanently failed operations to separate queue for manual review
 - **Recovery Actions**:
-  - File lock errors: Wait and retry
-  - Permission errors: Skip and log
-  - Disk full errors: Pause queue and alert user
-  - Network errors: Retry with longer intervals
+    - File lock errors: Wait and retry
+    - Permission errors: Skip and log
+    - Disk full errors: Pause queue and alert user
+    - Network errors: Retry with longer intervals
 
 ## Alternatives
 
 ### Alternative 1: Separate Persistent File Queue
+
 Create a second persistent queue only for file operations.
 
 **Pros**: Clear separation of concerns
 **Cons**: Increases system complexity, UI inconsistency, duplicate queue management code
 
 ### Alternative 2: Make vue-concurrency Queue Persistent
+
 Add persistence layer to existing `handleFileTask` queue.
 
 **Pros**: Minimal changes to existing code
 **Cons**: More complex than leveraging existing persistent queue, requires vue-concurrency modifications
 
 ### Alternative 3: Immediate Processing with Event Log
+
 Keep immediate processing but log events for replay on restart.
 
 **Pros**: Preserves current performance characteristics
@@ -842,9 +900,11 @@ Keep immediate processing but log events for replay on restart.
 ## Critical Implementation Decisions
 
 ### 1. Queue Priority & Ordering
+
 **Decision Needed**: Should file operations have different priority than directory scans?
 
 **Options**:
+
 - A) FIFO: Process all operations in order (simpler implementation)
 - B) Priority-based: Directory scans first, then file operations
 - C) Hybrid: Batch file operations, interleave with directory scans
@@ -852,9 +912,11 @@ Keep immediate processing but log events for replay on restart.
 **Recommendation**: Start with Option A (FIFO) for simplicity, can optimize later
 
 ### 2. UI Display Strategy
+
 **Decision Needed**: How to distinguish file vs directory operations in the queue UI?
 
 **Options**:
+
 - A) Same display with icons (📁 for directories, 📄 for files)
 - B) Separate sections in queue UI
 - C) Aggregate file operations under parent directory
@@ -862,25 +924,31 @@ Keep immediate processing but log events for replay on restart.
 **Recommendation**: Option A with clear visual indicators
 
 ### 3. Error Handling & Retry Logic
+
 **Decision Needed**: Should file operation failures retry differently than directory scans?
 
 **Considerations**:
+
 - File operations are more atomic (less likely to need retries)
 - Directory scans might benefit from retry on partial failures
 - Error handling should be consistent with existing patterns
 
 ### 4. Performance & Batching
+
 **Decision Needed**: How to handle high-frequency file watch events efficiently?
 
 **Strategies**:
+
 - Debouncing: Combine multiple file events within time window
 - Deduplication: Remove duplicate operations on same file
 - Batch processing: Group similar operations
 
 ### 5. Migration & Backward Compatibility
+
 **Decision Needed**: Migration strategy for existing file watch behavior
 
 **Approach**:
+
 - Phase out `handleFileTask` gradually
 - Maintain existing API surfaces during transition
 - Feature flag for new vs old behavior during testing
@@ -889,23 +957,25 @@ Keep immediate processing but log events for replay on restart.
 
 ### High-Impact Risks
 
-| Risk | Impact | Probability | Mitigation Strategy |
-|------|---------|-------------|-------------------|
-| **Memory Exhaustion** | High | Medium | Implement force processing at 8k events, adaptive debounce |
-| **Event Loss During High Load** | High | Low | Multiple prevention mechanisms (force processing, batching) |
-| **Performance Regression** | Medium | Medium | Comprehensive benchmarking, gradual rollout with metrics |
-| **Data Corruption** | High | Low | Atomic operations, validation, extensive testing |
-| **UI Responsiveness** | Medium | Medium | Debounced processing, background queue management |
+| Risk                            | Impact | Probability | Mitigation Strategy                                         |
+| ------------------------------- | ------ | ----------- | ----------------------------------------------------------- |
+| **Memory Exhaustion**           | High   | Medium      | Implement force processing at 8k events, adaptive debounce  |
+| **Event Loss During High Load** | High   | Low         | Multiple prevention mechanisms (force processing, batching) |
+| **Performance Regression**      | Medium | Medium      | Comprehensive benchmarking, gradual rollout with metrics    |
+| **Data Corruption**             | High   | Low         | Atomic operations, validation, extensive testing            |
+| **UI Responsiveness**           | Medium | Medium      | Debounced processing, background queue management           |
 
 ### Risk Mitigation Strategies
 
 **Technical Safeguards:**
+
 - Feature flag for instant rollback capability
 - Comprehensive monitoring and alerting
 - Automated performance regression detection
 - Circuit breaker pattern for queue overflow
 
 **Process Safeguards:**
+
 - Staged rollout (10% → 50% → 100% users)
 - Real-time monitoring during deployment
 - Automated rollback triggers for critical metrics
@@ -926,17 +996,20 @@ Keep immediate processing but log events for replay on restart.
 ## Implementation Notes
 
 ### Persistence Mechanism
+
 - `scanningFolder` is part of `PreferenceStore` (`/src/renderer/src/stores/preference.ts`)
 - Uses pinia with `persist: true` (line 62) - automatically saves to and restores from local storage
 - Current structure: `ScanAction[]` with `path`, `action` ("scan"|"rescan"|"current"), `thumbnailSize`
 - File operations will be mapped to existing action types: `"scan"` (for add), `"rescan"` (for change), `"current"` (for delete)
 
 ### Integration Points
+
 - `addScanFolder()` method (line 90) currently accepts folder paths - needs extension for files
 - `completeScanPath()` method (line 121) removes items from queue after processing
 - Existing `watchArray()` in `App.vue` monitors `scanningFolder` changes and triggers `startScanning()`
 
 ### Development Guidelines
+
 - Maintain backward compatibility with existing scan functionality
 - Use TypeScript for type safety across all components
 - Follow existing logging patterns (`loggers.app` in preference store)
@@ -944,14 +1017,17 @@ Keep immediate processing but log events for replay on restart.
 - Preserve existing error handling in scan operations
 
 ### Pure Function Principles
+
 **Use pure functions directly instead of wrapping them in class methods. Keep it simple, avoid over-engineering.**
 
 #### Design Philosophy:
+
 1. **Direct Usage**: Call pure functions directly, no unnecessary wrappers
 2. **Simple Design**: Avoid over-engineering with unnecessary abstractions
 3. **Clear Intent**: Code should be self-explanatory and straightforward
 
 #### Pure Function Requirements:
+
 1. **Deterministic**: Same input always produces same output
 2. **No Side Effects**: No mutations of external state
 3. **No Dependencies**: No reliance on external variables or state
@@ -959,6 +1035,7 @@ Keep immediate processing but log events for replay on restart.
 5. **Reusable**: Can be used in different contexts
 
 #### Examples of Direct Pure Function Usage:
+
 ```typescript
 // ✅ Use pure functions directly - simple and clear
 const dedupWindow = getDeduplicationWindow(type);
@@ -974,25 +1051,31 @@ class WatchService {
 
 // ✅ Pure function - deterministic, no side effects
 function getEventPriority(type: string): number {
-    const priorities = { 'delete': 1, 'change': 2, 'add': 3 };
+    const priorities = { delete: 1, change: 2, add: 3 };
     return priorities[type] || 5;
 }
 
 // ✅ Pure function - creates new object, no mutations
-function createFileOperation(type: string, path: string, isFile: boolean, thumbnailSize: number): FileOperation {
+function createFileOperation(
+    type: string,
+    path: string,
+    isFile: boolean,
+    thumbnailSize: number,
+): FileOperation {
     return {
         id: generateOperationId(),
-        type: type as FileOperation['type'],
+        type: type as FileOperation["type"],
         path,
         timestamp: Date.now(),
         priority: getEventPriority(type),
         retryCount: 0,
-        metadata: { thumbnailSize, isFile, lastModified: Date.now() }
+        metadata: { thumbnailSize, isFile, lastModified: Date.now() },
     };
 }
 ```
 
 #### Benefits of Direct Pure Function Usage:
+
 - **Simpler Code**: No unnecessary wrapper methods
 - **Better Performance**: Direct function calls, no method overhead
 - **Easier Testing**: Pure functions can be tested independently
@@ -1000,6 +1083,7 @@ function createFileOperation(type: string, path: string, isFile: boolean, thumbn
 - **More Reusable**: Functions can be used anywhere without class context
 
 ### Security Considerations
+
 - **File Path Validation**: Sanitize all file paths to prevent directory traversal attacks
 - **Permission Checks**: Verify file access permissions before processing
 - **Queue Data Protection**: Ensure queue data is not accessible to unauthorized processes
@@ -1009,6 +1093,7 @@ function createFileOperation(type: string, path: string, isFile: boolean, thumbn
 ### Performance Monitoring
 
 **Key Metrics to Track:**
+
 ```typescript
 interface QueueMetrics {
     // Event processing metrics
@@ -1034,6 +1119,7 @@ interface QueueMetrics {
 ```
 
 **Monitoring Implementation:**
+
 - Real-time dashboard for queue health
 - Alerting when metrics exceed thresholds
 - Performance regression detection
@@ -1042,6 +1128,7 @@ interface QueueMetrics {
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure (Week 1-2) ✅ COMPLETED
+
 - [x] Implement `FileOperation` interface in `src/common/scan-types.ts`
 - [x] Enhance `ScanAction` interface with new fields (`operationType`, `fileOperationId`)
 - [x] Add event deduplication to `WatchService` with time-based windows
@@ -1049,6 +1136,7 @@ interface QueueMetrics {
 - [x] Add priority system for operations (delete=1, change=2, add=3, addDir=4)
 
 ### Phase 2: Worker Enhancement (Week 2-3) ✅ MOSTLY COMPLETED
+
 - [x] Add file operation routing to scan worker via `operationType` field
 - [⚠️] Implement `executeFileOperation()` function (partial - limited by Worker mocking complexity)
 - [x] Add error handling and retry logic with exponential backoff
@@ -1056,6 +1144,7 @@ interface QueueMetrics {
 - [x] Add comprehensive logging with structured debug output
 
 ### Phase 3: Integration and Testing (Week 3-4) ✅ COMPLETED
+
 - [x] Update renderer IPC handlers for batch operations in `App.vue`
 - [x] Enhance preference store with `addFileOperation()` method
 - [x] Add comprehensive unit tests (202 test cases covering all components)
@@ -1063,6 +1152,7 @@ interface QueueMetrics {
 - [x] Add performance monitoring (basic metrics and logging)
 
 ### Phase 4: Performance Optimization (Week 4-5) ✅ CORE COMPLETED
+
 - [x] Implement intelligent batching strategies (adaptive debouncing, 8K event limits)
 - [x] Add queue cleanup and maintenance (deduplication, memory management)
 - [x] Optimize memory usage (Map-based storage, batch processing)
@@ -1074,6 +1164,7 @@ interface QueueMetrics {
 ## Testing Strategy
 
 ### Unit Tests ✅ COMPLETED
+
 - [x] `FileOperation` interface validation (61 tests in `file-operation-utils.spec.ts`)
 - [x] Event deduplication logic with various scenarios (`shouldDeduplicateEvent` tests)
 - [x] Priority system functionality (`sortOperationsByPriority`, `getEventPriority` tests)
@@ -1081,6 +1172,7 @@ interface QueueMetrics {
 - [x] Batch processing logic (App.vue IPC handler tests)
 
 ### Integration Tests ✅ MOSTLY COMPLETED
+
 - [x] Bulk file import scenarios (App.vue tests simulate multiple file operations)
 - [ ] Application restart during operations (future enhancement)
 - [x] Error recovery scenarios (scan-photos error handling tests)
@@ -1088,6 +1180,7 @@ interface QueueMetrics {
 - [x] Queue persistence across restarts (preference store persistence)
 
 ### End-to-End Tests ✅ CORE COMPLETED
+
 - [x] Complete bulk import workflow (IPC handler tests simulate full workflow)
 - [x] File operation consistency (type conversion tests: add→scan, change→rescan, delete→current)
 - [x] UI state synchronization (preference store update tests)
@@ -1095,6 +1188,7 @@ interface QueueMetrics {
 - [x] Error handling and user feedback (comprehensive logging and error propagation)
 
 ### Performance Tests ✅ BASIC COMPLETED
+
 - [x] Memory usage under load (8K event limit prevents memory overflow)
 - [x] Queue processing speed (priority-based sorting and batch processing)
 - [x] Event deduplication effectiveness (time-window deduplication tests)
@@ -1106,18 +1200,21 @@ interface QueueMetrics {
 ## Migration Strategy
 
 ### Backward Compatibility
+
 - Keep existing `ScanAction` interface
 - Add new fields as optional
 - Maintain existing directory scan functionality
 - Feature flag for gradual rollout
 
 ### Gradual Rollout
+
 1. **Phase 1**: Add new interfaces alongside existing code
 2. **Phase 2**: Implement new processing logic with feature flag
 3. **Phase 3**: Switch file watch events to new system (A/B testing)
 4. **Phase 4**: Remove old processing code
 
 ### Rollback Plan
+
 - Keep old processing code as fallback
 - Feature flag to switch between old/new systems
 - Monitor performance and error rates
@@ -1126,7 +1223,9 @@ interface QueueMetrics {
 ## Event Loss Prevention
 
 ### High-Frequency Event Handling
+
 File monitoring can generate massive amounts of change events, especially during:
+
 - Bulk file operations (copying thousands of files)
 - Image editing software saving files
 - Network sync operations
@@ -1135,26 +1234,31 @@ File monitoring can generate massive amounts of change events, especially during
 ### Protection Mechanisms
 
 #### 1. Smart Deduplication
+
 - **Event-specific windows**: Different deduplication strategies for different event types
 - **Update vs Drop**: Update existing events instead of dropping them
 - **Adaptive timing**: Shorter windows during high load, longer during low load
 
 #### 2. Force Processing
+
 - **Time-based**: Force process every 5 seconds regardless of debounce
 - **Load-based**: Force process when approaching memory limits
 - **Priority-based**: Process critical events (deletes) immediately
 
 #### 3. Memory Management
+
 - **Pending event limits**: Maximum 10,000 pending events
 - **Adaptive debounce**: Shorter debounce during high load
 - **Queue monitoring**: Track pending events and processing rate
 
 #### 4. Event Validation
+
 - **File existence checks**: Verify files exist before processing
 - **Timestamp validation**: Ensure events are recent and valid
 - **Path sanitization**: Prevent processing of invalid paths
 
 ### Implementation Strategy
+
 ```typescript
 // Event loss prevention configuration
 interface EventLossPrevention {
@@ -1193,6 +1297,7 @@ class HighFrequencyEventHandler {
 ## Queue Management & Cleanup
 
 ### Queue Management (User-Controlled)
+
 - **No Automatic Limits**: Queue size is unlimited by default
 - **User-Configurable**: Users can set their own limits if desired
 - **Manual Cleanup**: Users control when to clean up completed operations
@@ -1200,9 +1305,11 @@ class HighFrequencyEventHandler {
 - **Transparency**: Always show queue status and let users decide
 
 ### User-Controlled Data Management
+
 **All queue management decisions are made by the user, not automatically.**
 
 #### User Control Options:
+
 1. **Queue Size**: Users can set their own limits or leave unlimited
 2. **Cleanup Schedule**: Users choose when to clean up completed operations
 3. **Processing Speed**: Users can adjust processing concurrency
@@ -1210,6 +1317,7 @@ class HighFrequencyEventHandler {
 5. **Notifications**: Users choose what notifications to receive
 
 #### No Automatic Actions:
+
 - No automatic queue size limits
 - No automatic cleanup without user permission
 - No automatic processing speed changes
@@ -1217,6 +1325,7 @@ class HighFrequencyEventHandler {
 - All actions require explicit user consent
 
 ### Queue Maintenance (User-Controlled)
+
 - **Manual Cleanup**: Users choose when to clean up completed operations
 - **Error Recovery**: Users decide how to handle failed operations
 - **Queue Health Monitoring**: Show queue status, let users decide actions
@@ -1224,6 +1333,7 @@ class HighFrequencyEventHandler {
 - **No Automatic Actions**: All maintenance requires user permission
 
 ### Implementation Details
+
 ```typescript
 // User-controlled queue management configuration
 interface QueueConfig {
@@ -1265,8 +1375,8 @@ class UserControlledQueueManager {
     async cleanupCompletedOperations(): Promise<void> {
         // Only clean up if user has given permission
         if (this.userSettings.allowCleanup) {
-            const completed = this.queue.filter(op => op.status === 'completed');
-            this.queue = this.queue.filter(op => op.status !== 'completed');
+            const completed = this.queue.filter((op) => op.status === "completed");
+            this.queue = this.queue.filter((op) => op.status !== "completed");
             this.logger.info(`Cleaned up ${completed.length} completed operations`);
         }
     }
@@ -1282,9 +1392,9 @@ class UserControlledQueueManager {
     private notifyUserOfQueueStatus(): void {
         const status = {
             currentSize: this.queue.length,
-            maxSize: this.config.maxSize || 'unlimited',
+            maxSize: this.config.maxSize || "unlimited",
             processingRate: this.calculateProcessingRate(),
-            memoryUsage: this.getCurrentMemoryUsage()
+            memoryUsage: this.getCurrentMemoryUsage(),
         };
 
         this.showQueueStatusToUser(status);
@@ -1301,29 +1411,34 @@ class UserControlledQueueManager {
 ## User-Controlled Data Management
 
 ### Core Principle: User Control
+
 **All data management decisions are made by the user, not automatically by the system.**
 
 ### User Control Strategies
 
 #### 1. No Automatic Limits
+
 - **Unlimited Queue**: Queue size is unlimited by default
 - **User Choice**: Users can set their own limits if desired
 - **Transparency**: Always show queue status to user
 - **User Decision**: Users decide when to take action
 
 #### 2. User-Controlled Cleanup
+
 - **Manual Cleanup**: Users choose when to clean up
 - **User Permission**: All cleanup requires user consent
 - **User Settings**: Users control cleanup preferences
 - **User Notification**: Users are informed of queue status
 
 #### 3. User-Controlled Processing
+
 - **User Settings**: Users control processing speed
 - **User Choice**: Users decide processing priorities
 - **User Control**: Users can pause/resume processing
 - **User Feedback**: Users see processing status
 
 #### 4. User-Controlled Memory Management
+
 - **User Monitoring**: Users can monitor memory usage
 - **User Choice**: Users decide how to handle memory
 - **User Settings**: Users control memory preferences
@@ -1341,7 +1456,7 @@ interface UserControlledDataManagement {
     cleanupWithUserPermission(): Promise<boolean>;
 
     // User notification system
-    notifyUser(message: string, severity: 'info' | 'warning' | 'error'): void;
+    notifyUser(message: string, severity: "info" | "warning" | "error"): void;
 
     // Show queue status to user
     showQueueStatus(): void;
@@ -1364,7 +1479,7 @@ class UserControlledEventProcessor {
 
     // Request user permission for cleanup
     async requestCleanupPermission(): Promise<boolean> {
-        return await this.requestUserPermission('cleanup completed operations');
+        return await this.requestUserPermission("cleanup completed operations");
     }
 
     // Show queue status to user
@@ -1372,7 +1487,7 @@ class UserControlledEventProcessor {
         const status = {
             size: this.queue.length,
             processing: this.getProcessingStatus(),
-            memory: this.getMemoryUsage()
+            memory: this.getMemoryUsage(),
         };
         this.displayQueueStatus(status);
     }
@@ -1386,6 +1501,7 @@ class UserControlledEventProcessor {
 ```
 
 ### User Experience
+
 - **Transparent Operation**: User always sees queue status and progress
 - **Clear Communication**: Explain what's happening and why
 - **User Control**: User controls all operations and decisions
@@ -1397,6 +1513,7 @@ class UserControlledEventProcessor {
 ### ✅ COMPLETED (100% of RFC Requirements)
 
 **Core Infrastructure:**
+
 - ✅ `FileOperation` interface implemented with complete type safety
 - ✅ Enhanced `ScanAction` interface with `operationType` and `fileOperationId`
 - ✅ Time-based event deduplication (50ms-200ms windows)
@@ -1404,12 +1521,14 @@ class UserControlledEventProcessor {
 - ✅ Priority-based processing system
 
 **Architecture Compliance:**
+
 - ✅ Electron security architecture (preload layer)
 - ✅ Pure function design (11 pure functions in file-operation-utils.ts)
 - ✅ Consistent PascalCase naming conventions
 - ✅ IPC communication through `onScanQueueAdd` API
 
 **Test Coverage:**
+
 - ✅ **202 test cases** covering all core functionality
 - ✅ Unit tests (61 tests for pure functions)
 - ✅ Integration tests (App.vue IPC handlers)
@@ -1417,22 +1536,26 @@ class UserControlledEventProcessor {
 - ✅ End-to-end workflow simulation
 
 **Performance Features:**
+
 - ✅ Memory management with Map-based deduplication
 - ✅ Adaptive debouncing (50ms high load, 200ms low load)
 - ✅ Event loss prevention (force processing at 8K events)
 - ✅ Priority queue processing (delete operations first)
 
 **Monitoring & Dashboard:**
+
 - ✅ Queue health monitoring dashboard (2025-01)
 - ✅ Real-time performance metrics visualization
 - ✅ User-configurable queue settings UI
 
 **Advanced Testing:**
+
 - [ ] Long-running operation memory leak detection
 - [ ] Application restart during operations testing
 - [ ] Extended performance benchmarking
 
 **Worker Enhancement:**
+
 - ⚠️ Complete scan-worker.ts `executeFileOperation()` testing (blocked by Worker mocking complexity)
 
 ### 📊 Key Metrics Achieved
@@ -1446,6 +1569,7 @@ class UserControlledEventProcessor {
 ### 🎯 Business Impact
 
 The implementation successfully addresses the original problems:
+
 1. ✅ **Data Loss Prevention**: Robust queue persistence and deduplication
 2. ✅ **Performance**: Intelligent batching handles bulk operations efficiently
 3. ✅ **Reliability**: Comprehensive error handling and retry mechanisms
@@ -1459,7 +1583,7 @@ The implementation successfully addresses the original problems:
 - **Error Recovery**: ✅ Completed - retry logic with exponential backoff
 - **UI Enhancements**: [ ] Future - queue management interface
 - **Advanced Features**:
-  - [ ] File operation history and audit trail
-  - [ ] User-configurable retry policies UI
-  - [ ] User-controlled queue prioritization interface
-  - [ ] Real-time performance metrics dashboard
+    - [ ] File operation history and audit trail
+    - [ ] User-configurable retry policies UI
+    - [ ] User-controlled queue prioritization interface
+    - [ ] Real-time performance metrics dashboard
