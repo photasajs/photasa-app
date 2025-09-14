@@ -322,7 +322,7 @@ describe("preferenceStore.addFileOperation", () => {
         );
         expect(mockLogger.debug).toHaveBeenNthCalledWith(
             2,
-            "Adding new file operation to queue:",
+            "[PreferenceStore] Adding new file operation to queue:",
             "/test/file.jpg",
         );
     });
