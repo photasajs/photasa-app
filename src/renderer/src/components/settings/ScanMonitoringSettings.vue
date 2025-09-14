@@ -5,82 +5,60 @@
             <p class="setting-description">{{ t("preference.scanMonitoring.description") }}</p>
 
             <!-- 启用自动恢复 -->
-            <div class="setting-item">
-                <div class="setting-row">
-                    <label class="setting-label">
-                        <BaseCheckbox
-                            v-model="localConfig.enableAutoRecovery"
-                            @change="updateConfig"
-                        />
-                        {{ t("preference.scanMonitoring.enableAutoRecovery") }}
-                    </label>
-                </div>
-                <p class="setting-help">
-                    {{ t("preference.scanMonitoring.enableAutoRecoveryHelp") }}
-                </p>
-            </div>
+            <BaseInlineFormField
+                :label="t('preference.scanMonitoring.enableAutoRecovery')"
+                :description="t('preference.scanMonitoring.enableAutoRecoveryHelp')"
+            >
+                <BaseCheckbox v-model="localConfig.enableAutoRecovery" @change="updateConfig" />
+            </BaseInlineFormField>
 
             <!-- 健康检查间隔 -->
-            <div class="setting-item">
-                <div class="setting-row">
-                    <label class="setting-label">{{
-                        t("preference.scanMonitoring.healthCheckInterval")
-                    }}</label>
-                    <BaseSelect
-                        v-model="localConfig.healthCheckInterval"
-                        :options="healthCheckIntervalOptions"
-                        @update:modelValue="updateConfig"
-                    />
-                </div>
-                <p class="setting-help">
-                    {{ t("preference.scanMonitoring.healthCheckIntervalHelp") }}
-                </p>
-            </div>
+            <BaseInlineFormField
+                :label="t('preference.scanMonitoring.healthCheckInterval')"
+                :description="t('preference.scanMonitoring.healthCheckIntervalHelp')"
+            >
+                <BaseSelect
+                    v-model="localConfig.healthCheckInterval"
+                    :options="healthCheckIntervalOptions"
+                    @update:modelValue="updateConfig"
+                />
+            </BaseInlineFormField>
 
             <!-- 空闲超时时间 -->
-            <div class="setting-item">
-                <div class="setting-row">
-                    <label class="setting-label">{{
-                        t("preference.scanMonitoring.idleTimeout")
-                    }}</label>
-                    <BaseSelect
-                        v-model="localConfig.idleTimeout"
-                        :options="idleTimeoutOptions"
-                        @update:modelValue="updateConfig"
-                    />
-                </div>
-                <p class="setting-help">{{ t("preference.scanMonitoring.idleTimeoutHelp") }}</p>
-            </div>
+            <BaseInlineFormField
+                :label="t('preference.scanMonitoring.idleTimeout')"
+                :description="t('preference.scanMonitoring.idleTimeoutHelp')"
+            >
+                <BaseSelect
+                    v-model="localConfig.idleTimeout"
+                    :options="idleTimeoutOptions"
+                    @update:modelValue="updateConfig"
+                />
+            </BaseInlineFormField>
 
             <!-- 停滞超时时间 -->
-            <div class="setting-item">
-                <div class="setting-row">
-                    <label class="setting-label">{{
-                        t("preference.scanMonitoring.staleTimeout")
-                    }}</label>
-                    <BaseSelect
-                        v-model="localConfig.staleTimeout"
-                        :options="staleTimeoutOptions"
-                        @update:modelValue="updateConfig"
-                    />
-                </div>
-                <p class="setting-help">{{ t("preference.scanMonitoring.staleTimeoutHelp") }}</p>
-            </div>
+            <BaseInlineFormField
+                :label="t('preference.scanMonitoring.staleTimeout')"
+                :description="t('preference.scanMonitoring.staleTimeoutHelp')"
+            >
+                <BaseSelect
+                    v-model="localConfig.staleTimeout"
+                    :options="staleTimeoutOptions"
+                    @update:modelValue="updateConfig"
+                />
+            </BaseInlineFormField>
 
             <!-- 最大重试次数 -->
-            <div class="setting-item">
-                <div class="setting-row">
-                    <label class="setting-label">{{
-                        t("preference.scanMonitoring.maxRetries")
-                    }}</label>
-                    <BaseSelect
-                        v-model="localConfig.maxRetries"
-                        :options="maxRetriesOptions"
-                        @update:modelValue="updateConfig"
-                    />
-                </div>
-                <p class="setting-help">{{ t("preference.scanMonitoring.maxRetriesHelp") }}</p>
-            </div>
+            <BaseInlineFormField
+                :label="t('preference.scanMonitoring.maxRetries')"
+                :description="t('preference.scanMonitoring.maxRetriesHelp')"
+            >
+                <BaseSelect
+                    v-model="localConfig.maxRetries"
+                    :options="maxRetriesOptions"
+                    @update:modelValue="updateConfig"
+                />
+            </BaseInlineFormField>
         </div>
 
         <!-- 监控状态显示 -->
@@ -156,7 +134,7 @@ import {
     scanMonitoringService,
     type ScanMonitorConfig,
 } from "@renderer/services/scan-monitoring-service";
-import { BaseSelect, BaseCheckbox } from "@renderer/components/ui";
+import { BaseSelect, BaseCheckbox, BaseInlineFormField } from "@renderer/components/ui";
 import { notification } from "@renderer/services/notification-manager";
 
 const { t } = useI18n();
@@ -270,34 +248,6 @@ initConfig();
             color: var(--color-text-secondary);
             font-size: 13px;
             line-height: 1.4;
-        }
-    }
-
-    .setting-item {
-        margin-bottom: 12px;
-
-        .setting-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 4px;
-        }
-
-        .setting-label {
-            flex: 0 0 auto;
-            min-width: 180px;
-            color: var(--color-text);
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
-
-        .setting-help {
-            margin: 3px 0 0 0;
-            color: var(--color-text-secondary);
-            font-size: 11px;
-            line-height: 1.3;
         }
     }
 
