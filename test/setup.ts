@@ -35,7 +35,13 @@ vi.mock("fs-extra", () => ({
             isFile: () => true,
             isDirectory: () => false,
             mtime: new Date(),
+            size: 1024,
         })),
+        pathExists: vi.fn(() => Promise.resolve(true)),
+        remove: vi.fn(() => Promise.resolve()),
+        removeSync: vi.fn(),
+        mkdtemp: vi.fn(() => Promise.resolve("/tmp/test-dir")),
+        chmod: vi.fn(() => Promise.resolve()),
     },
     existsSync: vi.fn(() => true),
     ensureFile: vi.fn(),
@@ -47,7 +53,13 @@ vi.mock("fs-extra", () => ({
         isFile: () => true,
         isDirectory: () => false,
         mtime: new Date(),
+        size: 1024,
     })),
+    pathExists: vi.fn(() => Promise.resolve(true)),
+    remove: vi.fn(() => Promise.resolve()),
+    removeSync: vi.fn(),
+    mkdtemp: vi.fn(() => Promise.resolve("/tmp/test-dir")),
+    chmod: vi.fn(() => Promise.resolve()),
 }));
 
 // Clean up after each test

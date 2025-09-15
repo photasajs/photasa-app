@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { decideScanStrategy } from "../scan-strategy";
 import { PhotasaLogger } from "@common/logger";
+import fs from "fs-extra";
 
 describe("扫描策略核心功能测试", () => {
     let mockLogger: PhotasaLogger;
@@ -48,6 +49,9 @@ describe("扫描策略核心功能测试", () => {
 
     describe("扫描动作测试", () => {
         it("应该为 scan 动作检查配置文件", async () => {
+            // 模拟配置文件不存在
+            vi.spyOn(fs, "existsSync").mockReturnValue(false);
+            
             // 执行测试
             const result = await decideScanStrategy(testDir, mockLogger, "scan");
 

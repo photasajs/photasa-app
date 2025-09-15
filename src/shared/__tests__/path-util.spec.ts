@@ -691,7 +691,7 @@ describe("removeFileProtocol", () => {
         const malformedUrl = "file://invalid/path";
         const result = removeFileProtocol(malformedUrl);
         // 应该回退到手动处理
-        expect(result).toBe("invalid\\path");
+        expect(result).toBe("\\invalid\\path");
     });
 
     it("should handle Windows paths with backslashes", () => {

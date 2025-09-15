@@ -81,7 +81,9 @@ describe("file-config", () => {
             const result = await ensureConfig(dirPath, false);
 
             expect(result).toBe(path.join("/test/photos", ".photasa.json"));
-            expect(mockFs.ensureFile).toHaveBeenCalledWith(path.join("/test/photos", ".photasa.json"));
+            expect(mockFs.ensureFile).toHaveBeenCalledWith(
+                path.join("/test/photos", ".photasa.json"),
+            );
         });
 
         it("should not create config file when deleting", async () => {
