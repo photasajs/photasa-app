@@ -17,17 +17,11 @@ import {
     convertRgbToRgba,
 } from "./thumbnail-utils";
 import type { VideoSize } from "@common/types";
-import ffmpegStatic from "ffmpeg-static";
-import ffprobeStatic from "ffprobe-static";
 import { PhotasaLogger } from "@common/logger";
+import { configureFFmpeg } from "../utils/ffmpeg-config";
 
-// Get the paths to the packaged versions of the binaries we want to use
-const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
-const ffprobePath = ffprobeStatic.path.replace("app.asar", "app.asar.unpacked");
-
-// Tell the ffmpeg package where it can find the needed binaries.
-ffmpeg.setFfmpegPath(ffmpegPath);
-ffmpeg.setFfprobePath(ffprobePath);
+// 配置 FFmpeg（使用共享库）
+configureFFmpeg();
 
 /**
  * 使用 wasm-heif 解码 HEIC/HEIF 文件

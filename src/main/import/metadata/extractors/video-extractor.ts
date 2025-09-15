@@ -7,14 +7,10 @@ import type { VideoMetadata } from "@common/import-types";
 
 // 提取器返回的元数据接口（不包含dateSource，由主函数处理）
 type ExtractedVideoMetadata = Omit<VideoMetadata, "dateSource">;
-import ffmpegStatic from "ffmpeg-static";
-import ffprobeStatic from "ffprobe-static";
+import { configureFFmpeg } from "../../../utils/ffmpeg-config";
 
-// 配置ffmpeg路径
-const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
-const ffprobePath = ffprobeStatic.path.replace("app.asar", "app.asar.unpacked");
-ffmpeg.setFfmpegPath(ffmpegPath);
-ffmpeg.setFfprobePath(ffprobePath);
+// 配置 FFmpeg（使用共享库）
+configureFFmpeg();
 
 /**
  * 视频时间字段优先级（基于录制时间准确性）

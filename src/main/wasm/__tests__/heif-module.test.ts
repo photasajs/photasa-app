@@ -121,6 +121,64 @@ describe("heif-module", () => {
         // using the simplified resources directory approach on both Windows and Mac
     });
 
+    it("handles universal ASAR path correctly", async () => {
+        const create = (await import("@saschazar/wasm-heif")).default as unknown as ReturnType<
+            typeof vi.fn
+        >;
+        (create as any)
+            .mockRejectedValueOnce(new Error("default init failed"))
+            .mockResolvedValueOnce({ decode: vi.fn(), dimensions: vi.fn() });
+
+        // Mock pathExists to return true for universal ASAR path
+        vi.mocked(fs.pathExists).mockImplementation(async (path: string) => {
+            const pathStr = String(path);
+            // Universal ASAR path: appPath/resources/app.asar.unpacked/resources/wasm_heif.wasm
+            if (
+                pathStr.includes("resources") &&
+                pathStr.includes("app.asar.unpacked") &&
+                pathStr.includes("wasm_heif.wasm")
+            ) {
+                return true as any;
+            }
+            return false as any;
+        });
+
+        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]) as any);
+
+        const mod = await initializeHeifModule();
+        expect(mod).toBeTruthy();
+    });
+
+    it("handles Mac-style ASAR path as fallback", async () => {
+        const create = (await import("@saschazar/wasm-heif")).default as unknown as ReturnType<
+            typeof vi.fn
+        >;
+        (create as any)
+            .mockRejectedValueOnce(new Error("default init failed"))
+            .mockRejectedValueOnce(new Error("Windows path failed"))
+            .mockResolvedValueOnce({ decode: vi.fn(), dimensions: vi.fn() });
+
+        // Mock pathExists to return true for Mac-style ASAR path
+        vi.mocked(fs.pathExists).mockImplementation(async (path: string) => {
+            const pathStr = String(path);
+            // Mac-style ASAR path: appPath/../app.asar.unpacked/resources/wasm_heif.wasm
+            if (
+                pathStr.includes("app.asar.unpacked") &&
+                pathStr.includes("resources") &&
+                pathStr.includes("wasm_heif.wasm") &&
+                pathStr.includes("..") // Mac path uses ..
+            ) {
+                return true as any;
+            }
+            return false as any;
+        });
+
+        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([5, 4, 3, 2, 1]) as any);
+
+        const mod = await initializeHeifModule();
+        expect(mod).toBeTruthy();
+    });
+
     it("handles Windows path format in resources directory", async () => {
         // Make default init fail once, then succeed for wasmBinary
         const create = (await import("@saschazar/wasm-heif")).default as unknown as ReturnType<

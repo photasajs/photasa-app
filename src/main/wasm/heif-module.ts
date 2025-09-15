@@ -39,6 +39,8 @@ export async function initializeHeifModule(): Promise<any> {
         path.join(appPath, "resources", "wasm_heif.wasm"),
         // ASAR解压路径
         path.join(appPath, "..", "app.asar.unpacked", "resources", "wasm_heif.wasm"),
+        // ASAR解压路径（通用解决方案）
+        path.join(appPath, "resources", "app.asar.unpacked", "resources", "wasm_heif.wasm"),
         // 备用：相对于当前工作目录
         path.resolve("resources", "wasm_heif.wasm"),
     ];
