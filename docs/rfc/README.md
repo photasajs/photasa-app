@@ -71,6 +71,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0015](./0015-intelligent-scan-optimization.md) | 智能扫描优化策略修复                       | Draft               | Development Team | v1.6.0         |
 | [0019](./0019-auto-update-system.md)            | Auto-Update System - Client Implementation | Draft               | Development Team | v1.6.0         |
 | [0020](./0020-auto-update-server.md)            | Auto-Update System - Server Implementation | Draft               | Development Team | v1.6.0         |
+| [0021](./0021-playwright-e2e-testing-architecture-enhancement.md) | Playwright E2E Testing Architecture Enhancement | Draft               | Development Team | v1.7.0         |
 
 ## Implemented RFCs
 
