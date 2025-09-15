@@ -18,7 +18,10 @@ const mockAddEventListener = vi.fn((event: string, listener: EventListener) => {
     if (!mockEventListeners.has(event)) {
         mockEventListeners.set(event, []);
     }
-    mockEventListeners.get(event)!.push(listener);
+    const listeners = mockEventListeners.get(event);
+    if (listeners) {
+        listeners.push(listener);
+    }
 });
 
 const mockRemoveEventListener = vi.fn();
