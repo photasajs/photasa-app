@@ -1,7 +1,7 @@
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 import ffmpeg from "fluent-ffmpeg";
-import fs from "fs-extra";
+import * as fs from "fs-extra";
 import { getLogger } from "@common/logger";
 
 const logger = getLogger("ffmpeg-config");
