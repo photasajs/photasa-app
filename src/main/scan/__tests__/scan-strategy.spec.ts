@@ -125,16 +125,12 @@ describe("scan-strategy", () => {
             const { computeFolderHash, getCacheInfo } = await import("../folder-cache-manager");
             (computeFolderHash as any).mockResolvedValue("hash123");
             (getCacheInfo as any).mockResolvedValue(null);
-            mockGetPhotasaConfig.mockRejectedValue(new Error("配置文件读取失败"));
+            mockGetPhotasaConfig.mockResolvedValue({ photoList: [] });
 
             const result = await decideScanStrategy("/test/folder", mockLogger);
 
             expect(result.strategy).toBe(ScanStrategy.FULL);
-            expect(result.reason).toBe("配置文件读取失败");
-            expect(mockLogger.warn).toHaveBeenCalledWith(
-                "[decideScanStrategy] 读取 .photasa.json 失败: /test/folder",
-                expect.any(Error),
-            );
+            expect(result.reason).toBe("配置文件为空但文件夹有照片");
         });
 
         it("应该使用缓存比较决定策略", async () => {

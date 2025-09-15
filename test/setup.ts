@@ -23,10 +23,8 @@ const pinia = createPinia();
 config.global.plugins = [i18n, pinia];
 
 // Mock fs-extra for tests
-vi.mock("fs-extra", async (importOriginal) => {
-    const actual = await importOriginal<typeof import("fs-extra")>();
-    return {
-        ...actual,
+vi.mock("fs-extra", () => ({
+    default: {
         existsSync: vi.fn(() => true),
         ensureFile: vi.fn(),
         ensureDir: vi.fn(),
@@ -38,8 +36,19 @@ vi.mock("fs-extra", async (importOriginal) => {
             isDirectory: () => false,
             mtime: new Date(),
         })),
-    };
-});
+    },
+    existsSync: vi.fn(() => true),
+    ensureFile: vi.fn(),
+    ensureDir: vi.fn(),
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    stat: vi.fn(),
+    statSync: vi.fn(() => ({
+        isFile: () => true,
+        isDirectory: () => false,
+        mtime: new Date(),
+    })),
+}));
 
 // Clean up after each test
 afterEach(() => {

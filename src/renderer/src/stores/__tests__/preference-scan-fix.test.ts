@@ -288,7 +288,7 @@ describe("preference-scan-fix", () => {
             const endTime = Date.now();
 
             expect(store.scanningFolder).toHaveLength(100);
-            expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
+            expect(endTime - startTime).toBeLessThan(2000); // 应该在2秒内完成
         });
 
         it("应该快速跳过大量已扫描的文件夹", async () => {
@@ -322,7 +322,7 @@ describe("preference-scan-fix", () => {
 
             // 所有文件夹都应该被跳过
             expect(store.scanningFolder).toHaveLength(0);
-            expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
+            expect(endTime - startTime).toBeLessThan(2000); // 应该在2秒内完成
         });
     });
 

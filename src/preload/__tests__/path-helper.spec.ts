@@ -68,7 +68,12 @@ describe("normalizePath/mergePath platform coverage", () => {
     });
     it("should normalize POSIX path", () => {
         const posixPath = "/foo/bar/abc";
-        expect(pathHelper.normalizePath(posixPath)).toBe(path.normalize(posixPath));
+        // On Windows, path.normalize will return Windows format, so we need to check differently
+        if (process.platform === "win32") {
+            expect(pathHelper.normalizePath(posixPath)).toBe("C:\\foo\\bar\\abc");
+        } else {
+            expect(pathHelper.normalizePath(posixPath)).toBe(path.normalize(posixPath));
+        }
     });
     it("should merge Windows path", () => {
         // Only run this test on Windows platform

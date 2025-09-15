@@ -653,7 +653,7 @@ describe("removeFileProtocol", () => {
         const result = removeFileProtocol(fileUrl);
         // 在非 Windows 系统上，fileURLToPath 会保留前导斜杠
         if (process.platform === "win32") {
-            expect(result).toBe("C:/Users/Albert/Pictures/photo.jpg");
+            expect(result).toBe("C:\\Users\\Albert\\Pictures\\photo.jpg");
         } else {
             expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
         }
@@ -691,7 +691,7 @@ describe("removeFileProtocol", () => {
         const malformedUrl = "file://invalid/path";
         const result = removeFileProtocol(malformedUrl);
         // 应该回退到手动处理
-        expect(result).toBe("invalid/path");
+        expect(result).toBe("invalid\\path");
     });
 
     it("should handle Windows paths with backslashes", () => {
@@ -699,7 +699,7 @@ describe("removeFileProtocol", () => {
         const result = removeFileProtocol(fileUrl);
         // 在非 Windows 系统上，fileURLToPath 会保留前导斜杠
         if (process.platform === "win32") {
-            expect(result).toBe("C:/Users/Albert/Pictures/photo.jpg");
+            expect(result).toBe("C:\\Users\\Albert\\Pictures\\photo.jpg");
         } else {
             expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
         }
