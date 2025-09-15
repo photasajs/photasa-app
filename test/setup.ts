@@ -1,7 +1,7 @@
 import { config } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { createPinia } from "pinia";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/vue";
 
 // Create i18n instance
@@ -21,6 +21,25 @@ const pinia = createPinia();
 
 // Configure Vue Test Utils
 config.global.plugins = [i18n, pinia];
+
+// Mock fs-extra for tests
+vi.mock("fs-extra", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("fs-extra")>();
+    return {
+        ...actual,
+        existsSync: vi.fn(() => true),
+        ensureFile: vi.fn(),
+        ensureDir: vi.fn(),
+        readFile: vi.fn(),
+        writeFile: vi.fn(),
+        stat: vi.fn(),
+        statSync: vi.fn(() => ({
+            isFile: () => true,
+            isDirectory: () => false,
+            mtime: new Date(),
+        })),
+    };
+});
 
 // Clean up after each test
 afterEach(() => {
