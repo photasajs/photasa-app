@@ -8,7 +8,7 @@ test.describe("基础启动测试", () => {
 
         // 这个测试不需要启动 Electron，只检查环境
         const packageJsonPath = `${process.cwd()}/package.json`;
-        const fs = require("fs");
+        const fs = await import("fs");
         const packageJsonExists = fs.existsSync(packageJsonPath);
         expect(packageJsonExists).toBe(true);
 
@@ -17,7 +17,7 @@ test.describe("基础启动测试", () => {
 
     test.skip("应用构建验证", async () => {
         // 这个测试被跳过，用于手动验证构建
-        const fs = require("fs");
+        const fs = await import("fs");
         const mainPath = `${process.cwd()}/out/main/index.js`;
         const rendererPath = `${process.cwd()}/out/renderer`;
 

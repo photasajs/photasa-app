@@ -2,7 +2,7 @@ import { FullConfig } from "@playwright/test";
 import fs from "fs-extra";
 import path from "path";
 
-async function globalSetup(config: FullConfig) {
+async function globalSetup(_config: FullConfig) {
     // 确保测试结果目录存在
     await fs.ensureDir("test-results");
 
