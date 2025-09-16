@@ -91,6 +91,9 @@ Object.defineProperty(Date, "now", {
     writable: true,
 });
 
+// Ensure Date.now is always available
+global.Date.now = mockDateNow;
+
 // Clean up after each test
 afterEach(() => {
     cleanup();

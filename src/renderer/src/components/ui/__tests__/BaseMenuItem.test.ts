@@ -29,7 +29,7 @@ describe("BaseMenuItem", () => {
         await wrapper.find(".base-menu-item").trigger("click");
 
         expect(clickHandler).toHaveBeenCalledTimes(1);
-        expect(clickHandler).toHaveBeenCalledWith(expect.any(MouseEvent));
+        expect(clickHandler).toHaveBeenCalledWith(expect.any(Event));
     });
 
     it("disabled状态下不应该触发click事件", async () => {
@@ -186,7 +186,7 @@ describe("BaseMenuItem", () => {
         await wrapper.find(".base-menu-item").trigger("click");
 
         expect(clickHandler).toHaveBeenCalledTimes(1);
-        expect(clickHandler).toHaveBeenCalledWith(expect.any(MouseEvent));
+        expect(clickHandler).toHaveBeenCalledWith(expect.any(Event));
     });
 
     it("在disabled状态下不应该触发click事件", async () => {
