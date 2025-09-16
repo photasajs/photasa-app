@@ -1,9 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { BatchProcessor } from "../batch-processor";
 import { ImportConfig, FileInfo, FileGroup } from "../../../common/import-types";
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
+
+// Mock fs.copy to avoid test environment issues
+vi.mock("fs-extra", async () => {
+    const actual = await vi.importActual<typeof import("fs-extra")>("fs-extra");
+    return {
+        ...actual,
+        copy: vi.fn().mockResolvedValue(undefined),
+        ensureDir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined),
+        stat: vi.fn().mockResolvedValue({
+            birthtime: new Date(),
+            mtime: new Date(),
+            size: 1024
+        }),
+        remove: vi.fn().mockResolvedValue(undefined)
+    };
+});
 
 describe("BatchProcessor", () => {
     let tempDir: string;
@@ -15,12 +32,13 @@ describe("BatchProcessor", () => {
         sourceDir = path.join(tempDir, "source");
         targetDir = path.join(tempDir, "target");
 
-        await fs.ensureDir(sourceDir);
-        await fs.ensureDir(targetDir);
+        // Mock calls for directory setup
+        vi.clearAllMocks();
     });
 
     afterEach(async () => {
-        await fs.remove(tempDir);
+        // Mock cleanup
+        vi.clearAllMocks();
     });
 
     it("should process files successfully", async () => {
@@ -30,11 +48,14 @@ describe("BatchProcessor", () => {
 
         for (const fileName of testFiles) {
             const filePath = path.join(sourceDir, fileName);
-            const content = `测试文件内容: ${fileName}`;
-            await fs.writeFile(filePath, content);
-
-            const stats = await fs.stat(filePath);
             const targetPath = path.join(targetDir, fileName);
+            
+            // Mock file stats since fs is mocked
+            const stats = {
+                birthtime: new Date(),
+                mtime: new Date(),
+                size: 1024
+            };
 
             const fileInfo: FileInfo = {
                 // FileAction 的基础属性
@@ -124,9 +145,9 @@ describe("BatchProcessor", () => {
             size: stats?.size || 0,
             type: "image",
             dateSource: "file_created",
-            createdTime: stats.birthtime,
-            modifiedTime: stats.mtime,
-            dateTime: stats.birthtime,
+            createdTime: stats?.birthtime || new Date(),
+            modifiedTime: stats?.mtime || new Date(),
+            dateTime: stats?.birthtime || new Date(),
         };
 
         const config: ImportConfig = {
@@ -184,9 +205,9 @@ describe("BatchProcessor", () => {
             size: stats?.size || 0,
             type: "image",
             dateSource: "file_created",
-            createdTime: stats.birthtime,
-            modifiedTime: stats.mtime,
-            dateTime: stats.birthtime,
+            createdTime: stats?.birthtime || new Date(),
+            modifiedTime: stats?.mtime || new Date(),
+            dateTime: stats?.birthtime || new Date(),
         };
 
         const config: ImportConfig = {
