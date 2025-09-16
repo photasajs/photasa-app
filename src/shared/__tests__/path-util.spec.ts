@@ -690,8 +690,13 @@ describe("removeFileProtocol", () => {
     it("should handle malformed file URLs gracefully", () => {
         const malformedUrl = "file://invalid/path";
         const result = removeFileProtocol(malformedUrl);
-        // 应该回退到手动处理
-        expect(result).toBe("\\invalid\\path");
+        // 应该回退到手动处理，根据平台使用正确的路径分隔符
+        if (process.platform === "win32") {
+            expect(result).toBe("\\invalid\\path");
+        } else {
+            // 在非Windows系统上，手动处理会移除file://前缀，但不会添加前导斜杠
+            expect(result).toBe("invalid/path");
+        }
     });
 
     it("should handle Windows paths with backslashes", () => {

@@ -21,6 +21,16 @@ export default defineConfig({
         testTimeout: 30000, // 30 seconds max per test
         hookTimeout: 15000, // 15 seconds for hooks
         teardownTimeout: 5000, // 5 seconds for teardown
+        pool: "forks", // 使用fork模式减少内存压力
+        poolOptions: {
+            forks: {
+                singleFork: true, // 使用单个fork减少内存使用
+                maxForks: 1, // 限制为单个fork
+            },
+        },
+        maxConcurrency: 1, // 限制并发测试数量
+        isolate: false, // 禁用测试隔离以减少内存使用
+        passWithNoTests: true, // 允许没有测试的文件通过
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "html"],

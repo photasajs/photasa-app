@@ -24,7 +24,7 @@
         "sharp:mac": "del-cli ./node_modules/sharp && npm install --platform=darwin --arch=arm64 sharp && npm rebuild --platform=darwin --arch=x64 sharp",
         "sharp:win": "del-cli ./node_modules/sharp && npm install --platform=win32 --arch=x64 sharp",
         "sharp:linux": "del-cli ./node_modules/sharp && npm install --platform=linux --arch=x64 sharp",
-        "test:unit": "vitest run",
+        "test:unit": "node --max-old-space-size=12288 --max-semi-space-size=1024 ./node_modules/.bin/vitest run",
         "test:e2e": "npm run build && playwright test",
         "test:e2e:no-build": "playwright test",
         "test:e2e:headed": "npm run build && playwright test --headed",

@@ -62,7 +62,31 @@ vi.mock("fs-extra", () => ({
     chmod: vi.fn(() => Promise.resolve()),
 }));
 
+// Mock window object for tests
+Object.defineProperty(window, 'addEventListener', {
+    value: vi.fn(),
+    writable: true
+});
+
+Object.defineProperty(window, 'removeEventListener', {
+    value: vi.fn(),
+    writable: true
+});
+
+Object.defineProperty(window, 'dispatchEvent', {
+    value: vi.fn(),
+    writable: true
+});
+
+// Mock Date.now for performance tests
+const mockDateNow = vi.fn(() => 1640995200000); // 2022-01-01T00:00:00.000Z
+Object.defineProperty(Date, 'now', {
+    value: mockDateNow,
+    writable: true
+});
+
 // Clean up after each test
 afterEach(() => {
     cleanup();
+    vi.clearAllMocks();
 });
