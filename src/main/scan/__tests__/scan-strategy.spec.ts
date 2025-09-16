@@ -14,9 +14,17 @@ import type { PhotasaLogger } from "@common/logger";
 
 // Mock external dependencies
 vi.mock("fs-extra");
+
+// Create mock function
 const mockGetPhotasaConfig = vi.fn();
+
+// Mock both possible import paths
 vi.mock("../config/config-storage", () => ({
-    getPhotasaConfig: mockGetPhotasaConfig,
+    getPhotasaConfig: () => mockGetPhotasaConfig(),
+}));
+
+vi.mock("../../config/config-storage", () => ({
+    getPhotasaConfig: () => mockGetPhotasaConfig(),
 }));
 vi.mock("../folder-cache-manager", () => ({
     computeFolderHash: vi.fn(),
@@ -131,6 +139,10 @@ describe("scan-strategy", () => {
             // 确保mock被正确设置
             expect(mockGetPhotasaConfig).toBeDefined();
             expect(computeFolderHash).toBeDefined();
+            
+            // 确保 mockGetPhotasaConfig 不会抛出错误
+            mockGetPhotasaConfig.mockClear();
+            mockGetPhotasaConfig.mockResolvedValue({ photoList: [] });
 
             const result = await decideScanStrategy("/test/folder", mockLogger);
 
