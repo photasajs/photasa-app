@@ -3,12 +3,17 @@ import { mount } from "@vue/test-utils";
 import BaseButton from "../BaseButton.vue";
 
 // Mock Event constructor to avoid SupportedEventInterface errors
-global.Event = global.Event || class Event {
-    constructor(public type: string, options?: any) {
-        this.type = type;
-        Object.assign(this, options);
-    }
-};
+global.Event =
+    global.Event ||
+    class Event {
+        constructor(
+            public type: string,
+            options?: any,
+        ) {
+            this.type = type;
+            Object.assign(this, options);
+        }
+    };
 
 describe("BaseButton", () => {
     it("renders correctly with default props", () => {

@@ -4,12 +4,17 @@ import BaseNotification from "../BaseNotification.vue";
 import type { NotificationItem } from "@renderer/types/notification";
 
 // Mock Event constructor to avoid SupportedEventInterface errors
-global.Event = global.Event || class Event {
-    constructor(public type: string, options?: any) {
-        this.type = type;
-        Object.assign(this, options);
-    }
-};
+global.Event =
+    global.Event ||
+    class Event {
+        constructor(
+            public type: string,
+            options?: any,
+        ) {
+            this.type = type;
+            Object.assign(this, options);
+        }
+    };
 
 describe("BaseNotification", () => {
     const mockNotification: NotificationItem = {

@@ -108,9 +108,9 @@ describe("BatchProcessor", () => {
 
         // 创建批处理器
         const processor = new BatchProcessor(config, 2);
-        
+
         // 添加错误监听器以避免未处理的错误
-        processor.on('error', (_error) => {
+        processor.on("error", (_error) => {
             // 静默处理错误，让测试继续
         });
 
@@ -127,8 +127,8 @@ describe("BatchProcessor", () => {
         expect(result.totalFiles).toBe(result.successfulFiles + result.errorFiles);
 
         // 验证基本流程完成
-        expect(typeof result.successfulFiles).toBe('number');
-        expect(typeof result.errorFiles).toBe('number');
+        expect(typeof result.successfulFiles).toBe("number");
+        expect(typeof result.errorFiles).toBe("number");
     });
 
     it("should handle progress events", async () => {
@@ -176,9 +176,9 @@ describe("BatchProcessor", () => {
         };
 
         const processor = new BatchProcessor(config, 1);
-        
+
         // 添加错误监听器以避免未处理的错误
-        processor.on('error', (_error) => {
+        processor.on("error", (_error) => {
             // 静默处理错误，让测试继续
         });
 
@@ -246,9 +246,9 @@ describe("BatchProcessor", () => {
         };
 
         const processor = new BatchProcessor(config, 1);
-        
+
         // 添加错误监听器以避免未处理的错误
-        processor.on('error', (_error) => {
+        processor.on("error", (_error) => {
             // 静默处理错误，让测试继续
         });
 
@@ -339,9 +339,9 @@ describe("BatchProcessor", () => {
         };
 
         const processor = new BatchProcessor(config, 1);
-        
+
         // 添加错误监听器以避免未处理的错误
-        processor.on('error', (_error) => {
+        processor.on("error", (_error) => {
             // 静默处理错误，让测试继续
         });
 
@@ -353,7 +353,7 @@ describe("BatchProcessor", () => {
         processor.addFileGroups([fileGroup]);
         try {
             const result = await processor.start();
-            
+
             // 验证结果 - 调整期望以适应可能的错误
             expect(result.totalFiles).toBe(3);
             expect(result.successfulFiles).toBeGreaterThanOrEqual(0);
@@ -362,11 +362,11 @@ describe("BatchProcessor", () => {
             expect(groupProcessedEvents).toBeGreaterThanOrEqual(0);
 
             // 验证基本流程完成
-            expect(typeof result.successfulFiles).toBe('number');
-            expect(typeof result.errorFiles).toBe('number');
+            expect(typeof result.successfulFiles).toBe("number");
+            expect(typeof result.errorFiles).toBe("number");
         } catch (error) {
             // 如果出现错误，验证这是预期的文件系统错误
-            expect((error as Error).message).toContain('ENOENT');
+            expect((error as Error).message).toContain("ENOENT");
             expect(groupProcessedEvents).toBeGreaterThanOrEqual(0);
         }
     });

@@ -3,12 +3,17 @@ import { mount } from "@vue/test-utils";
 import BaseMenuItem from "../BaseMenuItem.vue";
 
 // Mock Event constructor to avoid SupportedEventInterface errors
-global.Event = global.Event || class Event {
-    constructor(public type: string, options?: any) {
-        this.type = type;
-        Object.assign(this, options);
-    }
-};
+global.Event =
+    global.Event ||
+    class Event {
+        constructor(
+            public type: string,
+            options?: any,
+        ) {
+            this.type = type;
+            Object.assign(this, options);
+        }
+    };
 
 describe("BaseMenuItem", () => {
     it("应该正确渲染基本内容", () => {
