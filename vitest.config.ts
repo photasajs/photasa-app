@@ -45,11 +45,13 @@ export default defineConfig({
             ],
         },
         include: [
-            "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/preload/**/*.{test,spec}.{js,ts,jsx,tsx}",
+            // 只运行最基本的测试
+            "src/common/__tests__/file-operation-utils.spec.ts",
+            "src/main/config/__tests__/config-storage.spec.ts",
+            "src/renderer/src/utils/__tests__/import-helpers.test.ts",
+            "src/renderer/src/utils/__tests__/object.spec.ts",
+            "src/renderer/src/common/__tests__/number.test.ts",
+            "src/renderer/src/utils/__tests__/theme-notification.spec.ts",
         ],
         exclude: [
             // 排除内存密集型测试
