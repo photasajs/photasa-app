@@ -12,6 +12,13 @@ asarUnpack:
     - resources/*
 afterSign: build/notarize.js
 win:
+    target:
+        - target: nsis
+          arch:
+              - x64
+        - target: zip
+          arch:
+              - x64
     executableName: Photasa
 nsis:
     artifactName: ${productName}-${version}-Setup.${ext}
@@ -39,6 +46,8 @@ mac:
     identity: null
 dmg:
     artifactName: ${productName}-${version}.${ext}
+zip:
+    artifactName: ${productName}-${version}-${os}.${ext}
 linux:
     target:
         - AppImage
