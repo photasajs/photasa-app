@@ -51,7 +51,7 @@ describe("扫描策略核心功能测试", () => {
         it("应该为 scan 动作检查配置文件", async () => {
             // 模拟配置文件不存在
             vi.spyOn(fs, "existsSync").mockReturnValue(false);
-            
+
             // 执行测试
             const result = await decideScanStrategy(testDir, mockLogger, "scan");
 
