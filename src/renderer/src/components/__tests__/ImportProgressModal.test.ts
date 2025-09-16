@@ -6,6 +6,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import ImportProgressModal from "../ImportProgressModal.vue";
 
+// Ensure global Date is properly available
+global.Date = Date;
+global.Date.now = Date.now || (() => new Date().getTime());
+
 // Mock all external dependencies
 vi.mock("@renderer/utils/api");
 vi.mock("@renderer/utils/import-helpers");

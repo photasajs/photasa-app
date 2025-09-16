@@ -13,8 +13,12 @@ describe("BaseContextMenu", () => {
 
     beforeEach(() => {
         // Mock document.addEventListener and removeEventListener
-        vi.spyOn(document, "addEventListener");
-        vi.spyOn(document, "removeEventListener");
+        if (!vi.isMockFunction(document.addEventListener)) {
+            vi.spyOn(document, "addEventListener");
+        }
+        if (!vi.isMockFunction(document.removeEventListener)) {
+            vi.spyOn(document, "removeEventListener");
+        }
     });
 
     afterEach(() => {

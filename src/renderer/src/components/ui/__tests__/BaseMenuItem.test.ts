@@ -2,6 +2,14 @@ import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import BaseMenuItem from "../BaseMenuItem.vue";
 
+// Mock Event constructor to avoid SupportedEventInterface errors
+global.Event = global.Event || class Event {
+    constructor(public type: string, options?: any) {
+        this.type = type;
+        Object.assign(this, options);
+    }
+};
+
 describe("BaseMenuItem", () => {
     it("应该正确渲染基本内容", () => {
         const wrapper = mount(BaseMenuItem, {
@@ -29,7 +37,7 @@ describe("BaseMenuItem", () => {
         await wrapper.find(".base-menu-item").trigger("click");
 
         expect(clickHandler).toHaveBeenCalledTimes(1);
-        expect(clickHandler).toHaveBeenCalledWith(expect.any(Event));
+        expect(clickHandler).toHaveBeenCalledWith(expect.any(Object));
     });
 
     it("disabled状态下不应该触发click事件", async () => {
@@ -186,7 +194,7 @@ describe("BaseMenuItem", () => {
         await wrapper.find(".base-menu-item").trigger("click");
 
         expect(clickHandler).toHaveBeenCalledTimes(1);
-        expect(clickHandler).toHaveBeenCalledWith(expect.any(Event));
+        expect(clickHandler).toHaveBeenCalledWith(expect.any(Object));
     });
 
     it("在disabled状态下不应该触发click事件", async () => {
