@@ -16,6 +16,18 @@ global.Event =
         }
     };
 
+// Mock MouseEvent constructor
+global.MouseEvent =
+    global.MouseEvent ||
+    class MouseEvent extends Event {
+        constructor(
+            type: string,
+            options?: any,
+        ) {
+            super(type, options);
+        }
+    };
+
 describe("BaseNotification", () => {
     const mockNotification: NotificationItem = {
         id: "test-id",

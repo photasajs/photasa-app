@@ -10,6 +10,13 @@ import ImportProgressModal from "../ImportProgressModal.vue";
 global.Date = Date;
 global.Date.now = Date.now || (() => new Date().getTime());
 
+// Mock Date.now for consistent testing
+const mockDateNow = vi.fn(() => 1640995200000); // 2022-01-01T00:00:00.000Z
+Object.defineProperty(Date, "now", {
+    value: mockDateNow,
+    writable: true,
+});
+
 // Mock all external dependencies
 vi.mock("@renderer/utils/api");
 vi.mock("@renderer/utils/import-helpers");

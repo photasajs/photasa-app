@@ -15,6 +15,18 @@ global.Event =
         }
     };
 
+// Mock MouseEvent constructor
+global.MouseEvent =
+    global.MouseEvent ||
+    class MouseEvent extends Event {
+        constructor(
+            type: string,
+            options?: any,
+        ) {
+            super(type, options);
+        }
+    };
+
 describe("BaseMenuItem", () => {
     it("应该正确渲染基本内容", () => {
         const wrapper = mount(BaseMenuItem, {

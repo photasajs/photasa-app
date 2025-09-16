@@ -15,6 +15,18 @@ global.Event =
         }
     };
 
+// Mock MouseEvent constructor
+global.MouseEvent =
+    global.MouseEvent ||
+    class MouseEvent extends Event {
+        constructor(
+            type: string,
+            options?: any,
+        ) {
+            super(type, options);
+        }
+    };
+
 describe("BaseButton", () => {
     it("renders correctly with default props", () => {
         const wrapper = mount(BaseButton, {
