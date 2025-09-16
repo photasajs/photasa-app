@@ -16,9 +16,9 @@ vi.mock("fs-extra", async () => {
         stat: vi.fn().mockResolvedValue({
             birthtime: new Date(),
             mtime: new Date(),
-            size: 1024
+            size: 1024,
         }),
-        remove: vi.fn().mockResolvedValue(undefined)
+        remove: vi.fn().mockResolvedValue(undefined),
     };
 });
 
@@ -49,12 +49,12 @@ describe("BatchProcessor", () => {
         for (const fileName of testFiles) {
             const filePath = path.join(sourceDir, fileName);
             const targetPath = path.join(targetDir, fileName);
-            
+
             // Mock file stats since fs is mocked
             const stats = {
                 birthtime: new Date(),
                 mtime: new Date(),
-                size: 1024
+                size: 1024,
             };
 
             const fileInfo: FileInfo = {

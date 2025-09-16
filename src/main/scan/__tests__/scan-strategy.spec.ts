@@ -139,7 +139,7 @@ describe("scan-strategy", () => {
             // 确保mock被正确设置
             expect(mockGetPhotasaConfig).toBeDefined();
             expect(computeFolderHash).toBeDefined();
-            
+
             // 确保 mockGetPhotasaConfig 不会抛出错误
             mockGetPhotasaConfig.mockClear();
             mockGetPhotasaConfig.mockResolvedValue({ photoList: [] });
