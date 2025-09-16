@@ -20,10 +20,24 @@ global.Event =
 global.MouseEvent =
     global.MouseEvent ||
     class MouseEvent extends Event {
-        constructor(
-            type: string,
-            options?: any,
-        ) {
+        constructor(type: string, options?: any) {
+            super(type, options);
+        }
+    };
+
+// Mock all event constructors that Vue Test Utils might need
+global.KeyboardEvent =
+    global.KeyboardEvent ||
+    class KeyboardEvent extends Event {
+        constructor(type: string, options?: any) {
+            super(type, options);
+        }
+    };
+
+global.FocusEvent =
+    global.FocusEvent ||
+    class FocusEvent extends Event {
+        constructor(type: string, options?: any) {
             super(type, options);
         }
     };
