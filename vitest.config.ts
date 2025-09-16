@@ -29,7 +29,7 @@ export default defineConfig({
             },
         },
         maxConcurrency: 1, // 限制并发测试数量
-        isolate: false, // 禁用测试隔离以减少内存使用
+        isolate: true, // 启用测试隔离
         passWithNoTests: true, // 允许没有测试的文件通过
         coverage: {
             provider: "v8",

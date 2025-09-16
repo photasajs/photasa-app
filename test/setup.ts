@@ -1,26 +1,32 @@
 import { config } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { createPinia } from "pinia";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/vue";
 
-// Create i18n instance
-const i18n = createI18n({
-    legacy: false,
-    locale: "en",
-    fallbackLocale: "en",
-    messages: {
-        en: {
-            // Add your English translations here
+// Factory functions to create fresh instances for each test
+function createTestI18n() {
+    return createI18n({
+        legacy: false,
+        locale: "en",
+        fallbackLocale: "en",
+        messages: {
+            en: {
+                // Add your English translations here
+            },
         },
-    },
+    });
+}
+
+function createTestPinia() {
+    return createPinia();
+}
+
+// Configure Vue Test Utils with factory functions
+beforeEach(() => {
+    // Create fresh instances for each test to avoid conflicts
+    config.global.plugins = [createTestI18n(), createTestPinia()];
 });
-
-// Create Pinia instance
-const pinia = createPinia();
-
-// Configure Vue Test Utils
-config.global.plugins = [i18n, pinia];
 
 // Mock fs-extra for tests
 vi.mock("fs-extra", () => ({

@@ -48,12 +48,12 @@ describe("BatchProcessor", () => {
 
                 // FileInfo 的扩展属性
                 path: filePath,
-                size: stats.size,
+                size: stats?.size || 0,
                 type: fileName.endsWith(".mp4") ? "video" : "image",
                 dateSource: "file_created",
-                createdTime: stats.birthtime,
-                modifiedTime: stats.mtime,
-                dateTime: stats.birthtime,
+                createdTime: stats?.birthtime || new Date(),
+                modifiedTime: stats?.mtime || new Date(),
+                dateTime: stats?.birthtime || new Date(),
             };
 
             testFileInfos.push(fileInfo);
@@ -121,7 +121,7 @@ describe("BatchProcessor", () => {
             isImage: true,
             isVideo: false,
             path: filePath,
-            size: stats.size,
+            size: stats?.size || 0,
             type: "image",
             dateSource: "file_created",
             createdTime: stats.birthtime,
@@ -181,7 +181,7 @@ describe("BatchProcessor", () => {
             isImage: true,
             isVideo: false,
             path: filePath,
-            size: stats.size,
+            size: stats?.size || 0,
             type: "image",
             dateSource: "file_created",
             createdTime: stats.birthtime,
@@ -254,12 +254,12 @@ describe("BatchProcessor", () => {
 
                 // FileInfo 的扩展属性
                 path: filePath,
-                size: stats.size,
+                size: stats?.size || 0,
                 type: file.name.endsWith(".MP4") ? "video" : "other",
                 dateSource: "file_created",
-                createdTime: stats.birthtime,
-                modifiedTime: stats.mtime,
-                dateTime: stats.birthtime,
+                createdTime: stats?.birthtime || new Date(),
+                modifiedTime: stats?.mtime || new Date(),
+                dateTime: stats?.birthtime || new Date(),
             };
 
             fileInfos.push(fileInfo);

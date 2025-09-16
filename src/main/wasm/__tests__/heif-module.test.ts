@@ -25,7 +25,10 @@ describe("heif-module", () => {
     it("caches module after first init", async () => {
         // Mock pathExists to return true for resources directory
         vi.mocked(fs.pathExists).mockResolvedValue(true as any);
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([1, 2, 3]) as any);
+        const mockWasmData = new Uint8Array([1, 2, 3, 4, 5]);
+        // Ensure the mock has a length property
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const m1 = await initializeHeifModule();
         const m2 = await initializeHeifModule();
@@ -34,7 +37,9 @@ describe("heif-module", () => {
 
     it("uses resources directory as primary method", async () => {
         vi.mocked(fs.pathExists).mockResolvedValue(true as any);
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([0, 1, 2]) as any);
+        const mockWasmData = new Uint8Array([0, 1, 2, 3, 4]);
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
@@ -51,7 +56,9 @@ describe("heif-module", () => {
         (create as any).mockRejectedValueOnce(new Error("default init failed"));
 
         vi.mocked(fs.pathExists).mockResolvedValue(true as any);
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([0, 1, 2]) as any);
+        const mockWasmData = new Uint8Array([0, 1, 2, 3, 4]);
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
@@ -112,7 +119,9 @@ describe("heif-module", () => {
             return false as any;
         });
 
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([0, 1, 2, 3, 4]) as any);
+        const mockWasmData = new Uint8Array([0, 1, 2, 3, 4]);
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
@@ -143,7 +152,9 @@ describe("heif-module", () => {
             return false as any;
         });
 
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]) as any);
+        const mockWasmData = new Uint8Array([1, 2, 3, 4, 5]);
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
@@ -173,7 +184,9 @@ describe("heif-module", () => {
             return false as any;
         });
 
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([5, 4, 3, 2, 1]) as any);
+        const mockWasmData = new Uint8Array([5, 4, 3, 2, 1]);
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
@@ -198,7 +211,9 @@ describe("heif-module", () => {
             return false as any;
         });
 
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([1, 2, 3, 4, 5]) as any);
+        const mockWasmData = new Uint8Array([1, 2, 3, 4, 5]);
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
@@ -229,7 +244,9 @@ describe("heif-module", () => {
             return false as any;
         });
 
-        vi.mocked(fs.readFile).mockResolvedValue(new Uint8Array([5, 4, 3, 2, 1]) as any);
+        const mockWasmData = new Uint8Array([5, 4, 3, 2, 1]);
+        Object.defineProperty(mockWasmData, 'length', { value: 5, writable: false });
+        vi.mocked(fs.readFile).mockResolvedValue(mockWasmData as any);
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();

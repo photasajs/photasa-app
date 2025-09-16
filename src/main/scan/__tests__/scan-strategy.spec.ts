@@ -126,6 +126,11 @@ describe("scan-strategy", () => {
             (computeFolderHash as any).mockResolvedValue("hash123");
             (getCacheInfo as any).mockResolvedValue(null);
             mockGetPhotasaConfig.mockResolvedValue({ photoList: [] });
+            mockFs.existsSync.mockReturnValue(true); // .photasa.json 存在
+
+            // 确保mock被正确设置
+            expect(mockGetPhotasaConfig).toBeDefined();
+            expect(computeFolderHash).toBeDefined();
 
             const result = await decideScanStrategy("/test/folder", mockLogger);
 

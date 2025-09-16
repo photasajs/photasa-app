@@ -53,7 +53,11 @@ export async function initializeHeifModule(): Promise<any> {
             logger.info(`Found WASM file at: ${wasmPath}`);
             try {
                 const wasmBinary = await fs.readFile(wasmPath);
-                logger.debug(`WASM file size: ${wasmBinary.length} bytes`);
+                logger.debug(`WASM file size: ${wasmBinary?.length || 0} bytes`);
+                if (!wasmBinary || wasmBinary.length === 0) {
+                    logger.warn(`WASM file at ${wasmPath} is empty or invalid`);
+                    continue;
+                }
                 const module = await createHeifModule({ wasmBinary } as any);
                 heifState = { module, initialized: true };
                 logger.info(`HEIF module initialized successfully from ${wasmPath}`);
