@@ -24,6 +24,18 @@ import {
     getImportHistoryTask,
 } from "../api";
 
+// Mock logger
+vi.mock("@common/logger", () => ({
+    loggers: {
+        api: {
+            debug: vi.fn(),
+            error: vi.fn(),
+            info: vi.fn(),
+            warn: vi.fn(),
+        },
+    },
+}));
+
 // Mock window.api
 const mockWindowApi = {
     scanDirectories: vi.fn(),

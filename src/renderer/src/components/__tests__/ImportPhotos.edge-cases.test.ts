@@ -484,10 +484,11 @@ describe("ImportPhotos - Edge Cases", () => {
             const vm = wrapper.vm as any;
 
             // Trigger multiple simultaneous operations
+            const mockSetStepData = vi.fn();
             const promises = [
-                vm.addSourceDirectory({}, vi.fn()),
-                vm.addSourceDirectory({}, vi.fn()),
-                vm.addSourceDirectory({}, vi.fn()),
+                vm.addSourceDirectory({}, mockSetStepData),
+                vm.addSourceDirectory({}, mockSetStepData),
+                vm.addSourceDirectory({}, mockSetStepData),
             ];
 
             await Promise.all(promises);

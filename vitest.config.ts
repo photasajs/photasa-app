@@ -18,9 +18,9 @@ export default defineConfig({
         globals: true,
         environment: "happy-dom",
         setupFiles: ["./test/setup.ts"],
-        testTimeout: 30000, // 30 seconds max per test
-        hookTimeout: 15000, // 15 seconds for hooks
-        teardownTimeout: 5000, // 5 seconds for teardown
+        testTimeout: 10000, // 减少测试超时时间到10秒
+        hookTimeout: 5000, // 减少钩子超时时间到5秒
+        teardownTimeout: 2000, // 减少清理超时时间到2秒
         pool: "forks", // 使用fork模式减少内存压力
         poolOptions: {
             forks: {
@@ -31,9 +31,6 @@ export default defineConfig({
         maxConcurrency: 1, // 限制并发测试数量
         isolate: false, // 禁用测试隔离以减少内存使用
         passWithNoTests: true, // 允许没有测试的文件通过
-        testTimeout: 10000, // 减少测试超时时间到10秒
-        hookTimeout: 5000, // 减少钩子超时时间到5秒
-        teardownTimeout: 2000, // 减少清理超时时间到2秒
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "html"],
