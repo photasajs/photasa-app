@@ -111,10 +111,7 @@ export default class UpdateService {
                 const hasUpdate = updateInfo.version !== currentVersion.version;
 
                 if (hasUpdate) {
-                    logger.info("[UpdateService] 发现新版本", {
-                        current: currentVersion.version,
-                        latest: updateInfo.version,
-                    });
+                    logger.info(`[UpdateService] 发现新版本: ${currentVersion.version} -> ${updateInfo.version}`);
 
                     this.setStatus("idle");
                     this.notifyRenderer("available", {
@@ -231,17 +228,25 @@ export default class UpdateService {
         });
 
         autoUpdater.on("update-available", (info: UpdateInfo) => {
-            logger.info("[UpdateService] 发现可用更新", info);
+            logger.info(`[UpdateService] 发现可用更新: ${info.version}`, {
+                version: info.version,
+                releaseDate: info.releaseDate,
+                files: info.files?.map(f => f.url)
+            });
         });
 
         autoUpdater.on("update-not-available", (info: UpdateInfo) => {
-            logger.info("[UpdateService] 没有可用更新", info);
+            logger.info(`[UpdateService] 没有可用更新: 当前版本 ${info.version} 已是最新`);
         });
 
         autoUpdater.on("error", (error) => {
             const errorMessage = this.handleError(error);
             this.setStatus("error", errorMessage);
-            logger.error("[UpdateService] 更新错误", { error });
+            logger.error(`[UpdateService] 更新错误: ${errorMessage}`, {
+                message: error?.message,
+                code: (error as any)?.code,
+                stack: error?.stack
+            });
         });
 
         autoUpdater.on("download-progress", (progressObj) => {
@@ -253,7 +258,10 @@ export default class UpdateService {
         autoUpdater.on("update-downloaded", (info: UpdateInfo) => {
             this.setStatus("downloaded");
             this.notifyRenderer("downloaded", info);
-            logger.info("[UpdateService] 更新下载完成", info);
+            logger.info(`[UpdateService] 更新下载完成: ${info.version}`, {
+                version: info.version,
+                path: info.path
+            });
         });
     }
 
