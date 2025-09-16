@@ -2,6 +2,9 @@ import { autoUpdater, UpdateInfo } from "electron-updater";
 import type { IpcMain, BrowserWindow } from "electron";
 import { loggers } from "@common/logger";
 import type { AutoUpdateConfig, UpdateStatus, UpdateProgressInfo } from "@common/update-types";
+import * as os from "os";
+import * as path from "path";
+import * as fs from "fs";
 
 const logger = loggers.update;
 /**
@@ -161,6 +164,9 @@ export default class UpdateService {
             this.setStatus("downloading");
             logger.info("[UpdateService] 开始下载更新");
 
+            // 确保缓存目录存在
+            this.ensureCacheDirectory();
+
             await autoUpdater.downloadUpdate();
         } catch (error) {
             const errorMessage = this.handleError(error);
@@ -215,6 +221,9 @@ export default class UpdateService {
         // 禁用自动下载，我们手动控制
         autoUpdater.autoDownload = false;
         autoUpdater.autoInstallOnAppQuit = false;
+
+        // 确保缓存目录存在
+        this.ensureCacheDirectory();
 
         // 事件监听
         autoUpdater.on("checking-for-update", () => {
@@ -321,6 +330,32 @@ export default class UpdateService {
     }
 
     /**
+     * 确保缓存目录存在
+     */
+    private ensureCacheDirectory(): void {
+        try {
+            // 获取缓存目录路径
+            const cacheDir = path.join(os.tmpdir(), "photasa-updater");
+            const pendingDir = path.join(cacheDir, "pending");
+
+            // 确保目录存在
+            if (!fs.existsSync(cacheDir)) {
+                fs.mkdirSync(cacheDir, { recursive: true });
+                logger.info(`[UpdateService] 创建缓存目录: ${cacheDir}`);
+            }
+
+            if (!fs.existsSync(pendingDir)) {
+                fs.mkdirSync(pendingDir, { recursive: true });
+                logger.info(`[UpdateService] 创建待处理目录: ${pendingDir}`);
+            }
+
+            logger.info(`[UpdateService] 缓存目录已准备: ${cacheDir}`);
+        } catch (error) {
+            logger.error("[UpdateService] 创建缓存目录失败", { error });
+        }
+    }
+
+    /**
      * 处理错误并分类
      */
     private handleError(error: any): string {
@@ -374,6 +409,15 @@ export default class UpdateService {
             errorString.includes("ERR_UPDATER_CANNOT_FIND_CHANNEL_FILE")
         ) {
             return "更新文件不存在或已被删除";
+        }
+
+        // 处理临时文件相关错误
+        if (
+            errorString.includes("ENOENT") ||
+            errorString.includes("no such file or directory") ||
+            errorString.includes("temp-")
+        ) {
+            return "临时文件访问错误，请重试更新";
         }
 
         return `更新失败: ${errorString}`;

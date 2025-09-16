@@ -5,7 +5,7 @@
     "description": "Another picasa like photo manager",
     "main": "./out/main/index.js",
     "author": "Albert Li <albert_lee@hotmail.com>",
-    "homepage": "https://www.thepicasa.com",
+    "homepage": "https://www.photasa.me",
     "scripts": {
         "format": "prettier --write .",
         "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",

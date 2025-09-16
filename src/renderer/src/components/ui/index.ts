@@ -12,7 +12,7 @@
  *
  * @see RFC文档: /docs/rfcs/headless-ui-components.md
  * @version 1.0.0
- * @author Picasa Vue Team
+ * @author Photasa Vue Team
  */
 
 // === 核心基础组件 ===

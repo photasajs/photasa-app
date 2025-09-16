@@ -15,7 +15,7 @@ module.exports = async (context) => {
         return;
     }
 
-    const appId = "com.thepicasa.photasa";
+    const appId = "me.photasa.app";
 
     const { appOutDir } = context;
 

@@ -34,7 +34,7 @@
 
 ```yaml
 # 增强的 electron-builder.yml 配置
-appId: com.thepicasa.photasa
+appId: me.photasa.app
 productName: Photasa
 
 # macOS 签名配置（增强现有配置）
@@ -405,7 +405,7 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
     - 登录 Apple Developer Portal
     - 导航到 Certificates, Identifiers & Profiles
     - 点击 Identifiers -> App IDs -> 注册新的 App ID
-    - Bundle ID: `com.thepicasa.photasa`
+    - Bundle ID: `me.photasa.app`
     - 描述: "Photasa Photo Management Application"
     - 启用必要的 Capabilities（如果需要）
 
@@ -679,7 +679,7 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
     #
     # 输入用户信息:
     # Real name: Photasa Development Team
-    # Email address: dev@thepicasa.com
+    # Email address: dev@photasa.me
     # Comment: Photasa Package Signing Key
     #
     # 设置强密码短语（记录此密码）
@@ -697,7 +697,7 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
     Subkey-Length: 4096
     Name-Real: Photasa Development Team
     Name-Comment: Photasa Package Signing Key
-    Name-Email: dev@thepicasa.com
+    Name-Email: dev@photasa.me
     Expire-Date: 0
     Passphrase: YOUR_STRONG_PASSPHRASE
     %commit
@@ -723,7 +723,7 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
     # 输出示例:
     # sec   rsa4096/1234567890ABCDEF 2024-01-01 [SC]
     #       ABCDEF1234567890ABCDEF1234567890ABCDEF12
-    # uid                 [ultimate] Photasa Development Team (Photasa Package Signing Key) <dev@thepicasa.com>
+    # uid                 [ultimate] Photasa Development Team (Photasa Package Signing Key) <dev@photasa.me>
     # ssb   rsa4096/FEDCBA0987654321 2024-01-01 [E]
     ```
 
@@ -738,8 +738,8 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
 
     ```bash
     # 使用邮箱地址导出
-    gpg --export-secret-keys --armor dev@thepicasa.com > private.key
-    gpg --export --armor dev@thepicasa.com > public.key
+    gpg --export-secret-keys --armor dev@photasa.me > private.key
+    gpg --export --armor dev@photasa.me > public.key
 
     # 或使用密钥 ID 导出
     gpg --export-secret-keys --armor 1234567890ABCDEF > private.key
@@ -841,7 +841,7 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
     ```bash
     # 警告: This key is not certified with a trusted signature
     # 解决: 在本地信任自己的密钥
-    gpg --edit-key dev@thepicasa.com
+    gpg --edit-key dev@photasa.me
     # 在 GPG 提示符下输入: trust
     # 选择: 5 = I trust ultimately
     # 输入: y (确认)
@@ -852,7 +852,7 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
 
     ```bash
     # 延长密钥有效期
-    gpg --edit-key dev@thepicasa.com
+    gpg --edit-key dev@photasa.me
     # 在 GPG 提示符下输入: expire
     # 选择新的过期时间
     # 输入: save
@@ -867,7 +867,7 @@ signtool sign /f mycert.pfx /p password /t http://timestamp.digicert.com Photasa
 
     ```bash
     # 创建密钥备份
-    gpg --export-secret-keys --armor dev@thepicasa.com > photasa-private-key-backup.asc
+    gpg --export-secret-keys --armor dev@photasa.me > photasa-private-key-backup.asc
     gpg --export-ownertrust > photasa-trust-backup.txt
 
     # 安全存储备份文件（离线存储）
@@ -939,7 +939,7 @@ module.exports = async (context) => {
     try {
         // 增强的公证流程
         await notarize({
-            appBundleId: "com.thepicasa.photasa",
+            appBundleId: "me.photasa.app",
             appPath: appPath,
             appleId: process.env.APPLE_ID,
             appleIdPassword: process.env.APPLE_ID_PASS,
