@@ -46,8 +46,6 @@ mac:
     identity: null
 dmg:
     artifactName: ${productName}-${version}.${ext}
-zip:
-    artifactName: ${productName}-${version}-${os}.${ext}
 linux:
     target:
         - AppImage
