@@ -9,7 +9,7 @@ vi.mock("sharp", () => {
         jpeg: vi.fn().mockReturnThis(),
         metadata: vi.fn().mockResolvedValue({ width: 100, height: 100 }),
     }));
-    
+
     return {
         default: mockSharp,
     };
