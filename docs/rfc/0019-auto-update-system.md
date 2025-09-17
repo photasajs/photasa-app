@@ -6,7 +6,9 @@
 
 ## Summary
 
-专注于Photasa桌面应用的客户端自动更新系统实现。基于electron-updater实现UpdateService，遵循现有Service架构模式，提供安全的preload集成、完整的UI组件，以及与现有系统的无缝集成。服务器端实现将在RFC 0020中详细说明。
+专注于Photasa桌面应用的客户端自动更新系统实现。采用标准的electron-updater方案，通过服务端URL重写代理解决UploadThing CDN兼容性问题。遵循现有Service架构模式，提供安全的preload集成、完整的UI组件，以及与现有系统的无缝集成。服务器端实现将在RFC 0020中详细说明。
+
+**技术架构**：客户端使用标准electron-updater配置文件驱动，服务端负责URL重写和文件代理，确保文件名安全性和下载兼容性。这种架构保持了客户端的简洁性，同时在服务端统一解决技术问题。
 
 ## Motivation
 
@@ -17,6 +19,35 @@
 3. **功能迭代速度**：快速推送新功能和改进，提升产品竞争力
 4. **维护成本降低**：减少因版本碎片化导致的技术支持成本
 5. **行业标准实践**：现代桌面应用的标准功能，用户期望具备
+
+### Why Server-Side URL Rewrite Approach?
+
+#### 技术问题根源
+
+**问题描述**：UploadThing CDN生成的文件URL包含冒号字符（`https://utfs.io/f/xxx`），导致electron-updater下载时创建包含冒号的临时文件路径，在Windows和macOS系统中被禁止。
+
+**具体错误**：
+```
+ENOENT: no such file or directory, open '/Users/user/Library/Caches/photasa-updater/pending/temp-https:/utfs.io/f/4CQT2JNmMDi7rIPLymJ7eFcKahD59BWAr2PpX3f4NuI6jUYH'
+```
+
+#### 服务端代理方案的优势
+
+**为什么选择服务端解决**：
+1. **客户端零修改**：electron-updater使用标准流程，无需自定义下载逻辑
+2. **架构简洁**：问题在服务端统一解决，客户端保持简单
+3. **向后兼容**：未来可以轻松切换到其他CDN服务
+4. **统计友好**：所有下载都经过服务端，便于统计分析
+5. **缓存控制**：可以添加CDN缓存策略和访问控制
+
+#### electron-updater 标准用法保持
+
+**保留所有electron-updater优势**：
+1. **成熟的版本比较逻辑**：支持语义化版本比较（semver）、预发布版本处理
+2. **完整的更新检查机制**：自动平台检测、latest.yml格式解析、内置重试机制
+3. **标准的UpdateInfo结构**：行业标准数据格式、SHA512校验、灰度发布支持
+4. **完整的事件系统**：生命周期事件、与现有代码高度集成
+
 
 ### Use cases it supports:
 
@@ -40,14 +71,15 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        PHOTASA CURRENT ARCHITECTURE                 │
+│                PHOTASA STANDARD ELECTRON-UPDATER ARCHITECTURE       │
 ├─────────────────────────────────────────────────────────────────────┤
 │  Main Process (Node.js)                                             │
 │  ┌─────────────────┐    ┌──────────────────┐                       │
-│  │ UpdateManager   │    │ IPC Handlers     │                       │
-│  │ - electron-     │    │ - update:check   │                       │
-│  │   updater       │◄───┤ - update:download│                       │
-│  │ - event handling│    │ - update:install │                       │
+│  │ UpdateService   │    │ IPC Handlers     │                       │
+│  │ - electron-     │    │ - picasa:check-  │                       │
+│  │   updater 标准  │◄───┤   for-updates    │                       │
+│  │ - 标准检查       │    │ - picasa:download│                       │
+│  │ - 标准下载安装   │    │ - picasa:install │                       │
 │  └─────────────────┘    └──────────────────┘                       │
 │                                   ↕                                 │
 ├─────────────────────────────────────────────────────────────────────┤
@@ -79,8 +111,8 @@
 │  External Update Server (photasa.me)                                │
 │  ┌─────────────────┐    ┌──────────────────┐                       │
 │  │ Next.js API     │    │ Update Assets    │                       │
-│  │ - latest.yml    │    │ - .exe, .dmg     │                       │
-│  │ - API endpoints │    │ - checksums      │                       │
+│  │ - latest.yml    │    │ - .zip files     │                       │
+│  │ - URL rewrite   │    │ - checksums      │                       │
 │  │ - Supabase logs │    │ - file storage   │                       │
 │  └─────────────────┘    └──────────────────┘                       │
 └─────────────────────────────────────────────────────────────────────┘
@@ -92,6 +124,67 @@
 - ✅ 统一的 `window.api.*` 调用方式
 - ✅ 返回清理函数的事件监听模式
 - ✅ `removeXxxListeners()` 批量清理方法
+
+### UpdateInfo 数据结构说明
+
+在标准electron-updater方案中，UpdateInfo是核心的数据结构，包含了版本检查和下载所需的所有信息。服务端通过URL重写确保客户端接收到安全的文件路径。
+
+#### UpdateInfo 结构解析
+
+```typescript
+interface UpdateInfo {
+    version: string;           // 新版本号，如 "1.6.0-alpha"
+    files: Array<{            // 文件信息数组，通常包含不同平台的文件
+        url: string;          // 下载URL（原始，可能包含冒号问题）
+        sha512: string;       // SHA512校验值
+        size: number;         // 文件大小（字节）
+        ext?: string;         // 文件扩展名
+    }>;
+    releaseDate: string;      // 发布时间
+    stagingPercentage?: number; // 灰度发布百分比
+    releaseName?: string;     // 发布名称
+    releaseNotes?: string;    // 发布说明
+}
+```
+
+#### 关键字段说明
+
+1. **version**: 新版本的版本号
+   - 格式：遵循语义化版本（semver），如 "1.6.0", "1.6.0-alpha", "1.6.0-beta.1"
+   - 用途：版本比较判断是否需要更新
+
+2. **files**: 下载文件信息数组
+   - 通常第一个文件是主要的安装包
+   - **服务端处理**：`url` 字段由服务端生成，使用安全的文件名如 `"Photasa-1.6.0-win.zip"`
+   - **路径安全**：避免冒号等特殊字符，确保跨平台兼容性
+
+3. **sha512**: 文件完整性校验
+   - 格式：SHA512哈希值的十六进制字符串
+   - 用途：确保下载文件未被篡改
+
+4. **size**: 文件大小
+   - 单位：字节
+   - 用途：显示下载进度、检查磁盘空间
+
+#### 技术实现策略
+
+**URL重写流程**：
+```
+1. 服务端生成latest.yml，使用安全文件名：
+   url: "Photasa-1.6.0-win.zip"  // 而非 UploadThing URL
+
+2. electron-updater请求：
+   GET /api/updates/releases/Photasa-1.6.0-win.zip
+
+3. 服务端代理重定向到实际 UploadThing URL
+   ↓
+4. electron-updater 标准流程：下载、校验、安装
+```
+
+**关键优势**：
+- 客户端看到的始终是安全的文件名
+- 服务端负责URL映射和代理
+- 保持electron-updater的标准行为
 
 ### Update Server Integration
 
@@ -115,12 +208,13 @@
 
 **配置示例**：
 
-```typescript
-// UpdateService中的服务器配置
-this.updater.setFeedURL({
-    provider: "generic",
-    url: "https://photasa.me/api/updates/releases",
-});
+```yaml
+# electron-updater 配置 (dev-app-update.yml 开发环境)
+provider: generic
+url: https://photasa.me/api/updates/releases
+updaterCacheDirName: photasa-updater
+
+# 生产环境配置由 electron-builder.yml 中的 publish 配置自动生成
 ```
 
 > **注意**：服务器端的详细实现架构、API设计、数据库结构等将在RFC 0020中完整定义。
@@ -131,138 +225,134 @@ this.updater.setFeedURL({
 
 ```typescript
 // src/main/update/update-service.ts
-import { autoUpdater, AppUpdater, UpdateInfo } from "electron-updater";
-import type { IpcMain, BrowserWindow } from "electron";
+import { BrowserWindow, app, shell, type IpcMain } from "electron";
+import { autoUpdater, type UpdateInfo } from "electron-updater";
+import { createHash } from "crypto";
+import { createWriteStream } from "fs";
+import { mkdir, unlink, access, readFile } from "fs/promises";
+import { join } from "path";
 import { loggers } from "@common/logger";
+import type { AutoUpdateConfig } from "@common/update-types";
 
-const logger = loggers.main;
-
-/**
- * 更新错误类型枚举
- */
-enum UpdateErrorType {
-    NETWORK_ERROR = "NETWORK_ERROR", // 网络连接错误
-    CERTIFICATE_ERROR = "CERTIFICATE_ERROR", // 证书验证错误
-    DISK_SPACE_ERROR = "DISK_SPACE_ERROR", // 磁盘空间不足
-    PERMISSION_ERROR = "PERMISSION_ERROR", // 权限不足
-    FILE_NOT_FOUND = "FILE_NOT_FOUND", // 文件不存在
-    CHECKSUM_MISMATCH = "CHECKSUM_MISMATCH", // 文件校验失败
-    INVALID_RESPONSE = "INVALID_RESPONSE", // 服务器响应格式错误
-    TIMEOUT_ERROR = "TIMEOUT_ERROR", // 超时错误
-    UNKNOWN_ERROR = "UNKNOWN_ERROR", // 未知错误
-}
+const logger = loggers.update;
 
 /**
- * 更新错误信息接口
- */
-interface UpdateError {
-    type: UpdateErrorType;
-    message: string;
-    originalError: any;
-    operation: "check" | "download" | "install";
-    timestamp: Date;
-    recoverable: boolean;
-    retryable: boolean;
-}
-
-/**
- * 自动更新配置接口
- */
-interface UpdateConfig {
-    autoCheck: boolean; // 是否自动检查更新
-    checkInterval: number; // 检查间隔（小时）
-    channel: "stable" | "beta"; // 更新通道
-    autoDownload: boolean; // 是否自动下载
-    installOnQuit: boolean; // 退出时自动安装
-    skippedVersions: string[]; // 跳过的版本列表
-    lastCheckTime?: string; // 上次检查时间
-}
-
-/**
- * 更新服务，负责处理应用自动更新功能
+ * 标准更新服务
+ * 使用electron-updater标准流程，配合服务端URL重写代理
+ * 解决UploadThing CDN兼容性问题
  */
 export default class UpdateService {
-    updater: AppUpdater;
-    ipc: IpcMain;
-    mainWindow: BrowserWindow;
-    logger = loggers.update;
-    private checkInterval?: NodeJS.Timer;
+    private config: AutoUpdateConfig | null = null;
 
-    constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
-        this.ipc = ipcMain;
-        this.mainWindow = mainWindow;
-        this.updater = autoUpdater;
-
-        this.init();
-    }
-
-    private init(): void {
-        // 配置更新服务器
-        this.updater.setFeedURL({
-            provider: "generic",
-            url: "https://photasa.me/api/updates/releases",
-        });
-
-        // 配置更新行为
-        this.updater.autoDownload = false; // 手动控制下载
-        this.updater.autoInstallOnAppQuit = true; // 退出时自动安装
-
-        // 监听更新事件
-        this.setupEventHandlers();
-
-        // 注册IPC处理器
+    constructor(
+        private ipcMain: IpcMain,
+        private mainWindow: BrowserWindow,
+    ) {
+        this.initElectronUpdater();
         this.registerIpcHandlers();
+        logger.info("[UpdateService] 标准更新服务已初始化");
     }
 
-    private setupEventHandlers(): void {
-        this.updater.on("checking-for-update", () => {
-            this.logger.info("正在检查更新...");
-            this.sendToRenderer("photasa:update-checking");
+    private initElectronUpdater() {
+        // 配置electron-updater - 使用配置文件驱动，不调用setFeedURL
+        // 开发环境：自动读取 dev-app-update.yml
+        // 生产环境：自动读取内嵌的 app-update.yml (由 electron-builder.yml 生成)
+
+        // 配置行为选项
+        autoUpdater.autoDownload = false;  // 可选：禁用自动下载
+        autoUpdater.autoInstallOnAppQuit = false;  // 可选：禁用退出时自动安装
+
+        // 监听electron-updater事件
+        this.setupElectronUpdaterEvents();
+    }
+
+    private setupElectronUpdaterEvents() {
+        autoUpdater.on("checking-for-update", () => {
+            logger.info("正在检查更新...");
+            this.sendToRenderer("picasa:update-checking");
         });
 
-        this.updater.on("update-available", (info: UpdateInfo) => {
-            this.logger.info("发现新版本:", info.version);
-            this.sendToRenderer("photasa:update-available", info);
+        autoUpdater.on("update-available", (info: UpdateInfo) => {
+            logger.info("发现新版本:", info.version);
+            this.sendToRenderer("picasa:update-available", {
+                version: info.version,
+                info: info,
+            });
         });
 
-        this.updater.on("update-not-available", () => {
-            this.logger.info("当前已是最新版本");
-            this.sendToRenderer("photasa:update-not-available");
+        autoUpdater.on("update-not-available", () => {
+            logger.info("当前已是最新版本");
+            this.sendToRenderer("picasa:update-not-available");
         });
 
-        this.updater.on("download-progress", (progress) => {
-            this.logger.info(`下载进度: ${Math.round(progress.percent)}%`);
-            this.sendToRenderer("photasa:update-download-progress", progress);
-        });
-
-        this.updater.on("update-downloaded", () => {
-            this.logger.info("更新下载完成");
-            this.sendToRenderer("photasa:update-downloaded");
-        });
-
-        this.updater.on("error", (error) => {
-            this.logger.error("更新错误:", error);
-            this.sendToRenderer("photasa:update-error", error.message);
+        autoUpdater.on("error", (error) => {
+            logger.error("更新检查错误:", String(error));
+            this.sendToRenderer("picasa:update-error", `检查更新失败: ${String(error)}`);
         });
     }
 
-    /**
-     * 注册 IPC 处理器，使用photasa命名空间保持一致性
-     */
-    private registerIpcHandlers(): void {
-        // 检查更新
-        this.ipc.handle("photasa:check-for-updates", async () => {
-            return await this.checkForUpdates();
-        });
+    private registerIpcHandlers() {
+        this.ipcMain.handle("picasa:check-for-updates", () => this.checkForUpdates());
+        this.ipcMain.handle("picasa:download-update", () => this.downloadUpdate());
+        this.ipcMain.handle("picasa:install-update", () => this.installUpdate());
+        this.ipcMain.handle("picasa:get-app-version", () => app.getVersion());
+        this.ipcMain.handle("picasa:update-auto-update-config", (_, config) =>
+            this.updateAutoUpdateConfig(config),
+        );
+    }
 
-        // 下载更新
-        this.ipc.handle("photasa:download-update", async () => {
-            return await this.downloadUpdate();
-        });
+    async checkForUpdates(): Promise<{
+        hasUpdate: boolean;
+        version?: string;
+        info?: UpdateInfo;
+    }> {
+        try {
+            logger.info("开始检查更新...");
+            const result = await autoUpdater.checkForUpdates();
 
-        // 安装更新并重启
-        this.ipc.handle("photasa:install-update", async () => {
-            return await this.installUpdate();
+            if (result && result.updateInfo) {
+                return {
+                    hasUpdate: true,
+                    version: result.updateInfo.version,
+                    info: result.updateInfo,
+                };
+            } else {
+                return { hasUpdate: false };
+            }
+        } catch (error) {
+            logger.error("检查更新失败:", String(error));
+            throw error;
+        }
+    }
+
+    async downloadUpdate(): Promise<void> {
+        try {
+            logger.info("开始下载更新...");
+            await autoUpdater.downloadUpdate();
+            logger.info("更新下载完成");
+        } catch (error) {
+            logger.error("下载更新失败:", String(error));
+            this.sendToRenderer("picasa:update-error", `下载失败: ${String(error)}`);
+            throw error;
+        }
+    }
+
+    async installUpdate(): Promise<void> {
+        try {
+            logger.info("开始安装更新并重启应用");
+            autoUpdater.quitAndInstall();
+        } catch (error) {
+            logger.error("安装更新失败:", String(error));
+            this.sendToRenderer("picasa:update-error", `安装失败: ${String(error)}`);
+            throw error;
+        }
+    }
+
+    private sendToRenderer(channel: string, data?: any) {
+        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            this.mainWindow.webContents.send(channel, data);
+        }
+    }
         });
 
         // 获取更新配置

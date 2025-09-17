@@ -2,9 +2,6 @@ import { autoUpdater, UpdateInfo } from "electron-updater";
 import type { IpcMain, BrowserWindow } from "electron";
 import { loggers } from "@common/logger";
 import type { AutoUpdateConfig, UpdateStatus, UpdateProgressInfo } from "@common/update-types";
-import * as os from "os";
-import * as path from "path";
-import * as fs from "fs";
 
 const logger = loggers.update;
 /**
@@ -52,7 +49,9 @@ export default class UpdateService {
             }, 5000);
         }
 
-        logger.info("[UpdateService] 服务已初始化", { config });
+        logger.info(
+            `[UpdateService] 服务已初始化: enabled=${config.enabled}, checkInterval=${config.checkInterval}h`,
+        );
     }
 
     /**
@@ -84,7 +83,7 @@ export default class UpdateService {
             this.restartPeriodicCheck();
         }
 
-        logger.info("[UpdateService] 配置已更新", { newConfig });
+        logger.info(`[UpdateService] 配置已更新: ${JSON.stringify(newConfig)}`);
     }
 
     /**
@@ -111,7 +110,9 @@ export default class UpdateService {
                 const hasUpdate = updateInfo.version !== currentVersion.version;
 
                 if (hasUpdate) {
-                    logger.info(`[UpdateService] 发现新版本: ${currentVersion.version} -> ${updateInfo.version}`);
+                    logger.info(
+                        `[UpdateService] 发现新版本: ${currentVersion.version} -> ${updateInfo.version}`,
+                    );
 
                     this.setStatus("idle");
                     this.notifyRenderer("available", {
@@ -139,7 +140,7 @@ export default class UpdateService {
         } catch (error) {
             const errorMessage = this.handleError(error);
             this.setStatus("error", errorMessage);
-            logger.error("[UpdateService] 检查更新失败", { error });
+            logger.error(`[UpdateService] 检查更新失败: ${errorMessage}`);
             throw new Error(errorMessage);
         }
     }
@@ -161,14 +162,11 @@ export default class UpdateService {
             this.setStatus("downloading");
             logger.info("[UpdateService] 开始下载更新");
 
-            // 确保缓存目录存在
-            this.ensureCacheDirectory();
-
             await autoUpdater.downloadUpdate();
         } catch (error) {
             const errorMessage = this.handleError(error);
             this.setStatus("error", errorMessage);
-            logger.error("[UpdateService] 下载更新失败", { error });
+            logger.error(`[UpdateService] 下载更新失败: ${errorMessage}`);
             throw new Error(errorMessage);
         }
     }
@@ -209,18 +207,13 @@ export default class UpdateService {
      * 配置autoUpdater
      */
     private setupAutoUpdater(): void {
-        // 配置更新服务器
-        autoUpdater.setFeedURL({
-            provider: "generic",
-            url: "https://photasa.me/api/updates/releases",
-        });
+        // 使用配置文件驱动，不调用setFeedURL
+        // 开发环境：自动读取 dev-app-update.yml
+        // 生产环境：自动读取内嵌的 app-update.yml (由 electron-builder.yml 生成)
 
         // 禁用自动下载，我们手动控制
         autoUpdater.autoDownload = false;
         autoUpdater.autoInstallOnAppQuit = false;
-
-        // 确保缓存目录存在
-        this.ensureCacheDirectory();
 
         // 事件监听
         autoUpdater.on("checking-for-update", () => {
@@ -228,11 +221,9 @@ export default class UpdateService {
         });
 
         autoUpdater.on("update-available", (info: UpdateInfo) => {
-            logger.info(`[UpdateService] 发现可用更新: ${info.version}`, {
-                version: info.version,
-                releaseDate: info.releaseDate,
-                files: info.files?.map(f => f.url)
-            });
+            logger.info(
+                `[UpdateService] 发现可用更新: ${info.version}, releaseDate: ${info.releaseDate}`,
+            );
         });
 
         autoUpdater.on("update-not-available", (info: UpdateInfo) => {
@@ -242,26 +233,19 @@ export default class UpdateService {
         autoUpdater.on("error", (error) => {
             const errorMessage = this.handleError(error);
             this.setStatus("error", errorMessage);
-            logger.error(`[UpdateService] 更新错误: ${errorMessage}`, {
-                message: error?.message,
-                code: (error as any)?.code,
-                stack: error?.stack
-            });
+            logger.error(`[UpdateService] 更新错误: ${errorMessage}`);
         });
 
         autoUpdater.on("download-progress", (progressObj) => {
             this.downloadProgress = Math.round(progressObj.percent);
             this.notifyRenderer("progress", this.downloadProgress);
-            logger.info("[UpdateService] 下载进度", { percent: this.downloadProgress });
+            logger.info(`[UpdateService] 下载进度: ${this.downloadProgress}%`);
         });
 
         autoUpdater.on("update-downloaded", (info: UpdateInfo) => {
             this.setStatus("downloaded");
             this.notifyRenderer("downloaded", info);
-            logger.info(`[UpdateService] 更新下载完成: ${info.version}`, {
-                version: info.version,
-                path: info.path
-            });
+            logger.info(`[UpdateService] 更新下载完成: ${info.version}`);
         });
     }
 
@@ -274,9 +258,7 @@ export default class UpdateService {
         // 设置是否允许预发布版本
         autoUpdater.allowPrerelease = this.config.allowPrerelease;
 
-        logger.info("[UpdateService] 配置已应用", {
-            allowPrerelease: this.config.allowPrerelease,
-        });
+        logger.info(`[UpdateService] 配置已应用: allowPrerelease=${this.config.allowPrerelease}`);
     }
 
     /**
@@ -290,11 +272,12 @@ export default class UpdateService {
         const intervalMs = this.config.checkInterval * 60 * 60 * 1000; // 转换为毫秒
         this.checkTimer = setInterval(() => {
             this.checkForUpdates().catch((error) => {
-                logger.error("[UpdateService] 定时检查更新失败", { error });
+                const errorMessage = this.handleError(error);
+                logger.error(`[UpdateService] 定时检查更新失败: ${errorMessage}`);
             });
         }, intervalMs);
 
-        logger.info("[UpdateService] 定时检查已启动", { intervalHours: this.config.checkInterval });
+        logger.info(`[UpdateService] 定时检查已启动: 间隔${this.config.checkInterval}小时`);
     }
 
     /**
@@ -338,36 +321,22 @@ export default class UpdateService {
     }
 
     /**
-     * 确保缓存目录存在
-     */
-    private ensureCacheDirectory(): void {
-        try {
-            // 获取缓存目录路径
-            const cacheDir = path.join(os.tmpdir(), "photasa-updater");
-            const pendingDir = path.join(cacheDir, "pending");
-
-            // 确保目录存在
-            if (!fs.existsSync(cacheDir)) {
-                fs.mkdirSync(cacheDir, { recursive: true });
-                logger.info(`[UpdateService] 创建缓存目录: ${cacheDir}`);
-            }
-
-            if (!fs.existsSync(pendingDir)) {
-                fs.mkdirSync(pendingDir, { recursive: true });
-                logger.info(`[UpdateService] 创建待处理目录: ${pendingDir}`);
-            }
-
-            logger.info(`[UpdateService] 缓存目录已准备: ${cacheDir}`);
-        } catch (error) {
-            logger.error("[UpdateService] 创建缓存目录失败", { error });
-        }
-    }
-
-    /**
      * 处理错误并分类
      */
     private handleError(error: any): string {
-        const errorString = error?.message || error?.toString() || "未知错误";
+        let errorString: string;
+
+        if (error?.message && typeof error.message === "string") {
+            errorString = error.message;
+        } else if (typeof error === "string") {
+            errorString = error;
+        } else if (error?.code) {
+            errorString = `Error code: ${error.code}`;
+        } else if (error?.name) {
+            errorString = `Error: ${error.name}`;
+        } else {
+            errorString = "未知错误";
+        }
 
         // 错误分类（遵循RFC 0019设计模式）
         if (

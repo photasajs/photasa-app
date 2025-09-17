@@ -168,8 +168,8 @@ describe("BaseSelect Modal集成测试", () => {
           <BaseModalOverlay class="fixed inset-0 bg-black/50" />
           <BaseModalContainer class="max-w-md bg-white rounded-lg">
             <BaseModalBody class="p-6">
-              <BaseSelect 
-                v-model="selectedValue" 
+              <BaseSelect
+                v-model="selectedValue"
                 :options="options"
                 placeholder="Select in modal"
               />

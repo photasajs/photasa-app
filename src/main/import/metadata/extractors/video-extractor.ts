@@ -9,9 +9,6 @@ import type { VideoMetadata } from "@common/import-types";
 type ExtractedVideoMetadata = Omit<VideoMetadata, "dateSource">;
 import { configureFFmpeg } from "../../../utils/ffmpeg-config";
 
-// 配置 FFmpeg（使用共享库）
-configureFFmpeg();
-
 /**
  * 视频时间字段优先级（基于录制时间准确性）
  */
@@ -91,6 +88,9 @@ function extractVideoStreamInfo(metadata: any): {
  * 使用Promise包装的ffprobe
  */
 function ffprobeAsync(filePath: string): Promise<any> {
+    // 懒加载FFmpeg配置
+    configureFFmpeg();
+
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(filePath, (err, metadata) => {
             if (err) {

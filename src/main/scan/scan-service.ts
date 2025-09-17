@@ -74,7 +74,13 @@ export default class ScanService {
                 // 推送 notifyStatus
                 let payload: NotifyPayload | undefined;
                 if (data.type === "error") {
-                    logger.error("[ScanService] Worker reported error:", data.error);
+                    logger.error(
+                        `[ScanService] Worker reported error: ${data.error?.message || String(data.error)}`,
+                        {
+                            error: data.error,
+                            path: data.action?.path,
+                        },
+                    );
                     payload = {
                         type: "scan",
                         task: data.action?.path || "",
@@ -112,7 +118,12 @@ export default class ScanService {
                     this.mainWindow?.webContents.send("picasa:find-photo", data);
                 }
             } catch (error) {
-                logger.error("[ScanService] Error processing worker message:", error);
+                logger.error(
+                    `[ScanService] Error processing worker message: ${(error as Error)?.message || String(error)}`,
+                    {
+                        error: (error as Error)?.stack,
+                    },
+                );
             }
         });
 
@@ -126,7 +137,14 @@ export default class ScanService {
                 try {
                     this.scanPhotos(args.requestId, args.scanAction);
                 } catch (error) {
-                    logger.error("[ScanService] Error handling scan request:", error);
+                    logger.error(
+                        `[ScanService] Error handling scan request: ${(error as Error)?.message || String(error)}`,
+                        {
+                            error: (error as Error)?.stack,
+                            requestId: args.requestId,
+                            action: args.scanAction,
+                        },
+                    );
                     this.mainWindow?.webContents.send("picasa:find-photo", {
                         type: "error",
                         requestId: args.requestId,
@@ -144,7 +162,14 @@ export default class ScanService {
         try {
             this.worker.postMessage({ action: "scan", requestId, scan });
         } catch (error) {
-            logger.error("[ScanService] Error sending scan request to worker:", error);
+            logger.error(
+                `[ScanService] Error sending scan request to worker: ${(error as Error)?.message || String(error)}`,
+                {
+                    error: (error as Error)?.stack,
+                    requestId,
+                    scan,
+                },
+            );
             this.mainWindow?.webContents.send("picasa:find-photo", {
                 type: "error",
                 requestId,

@@ -4,7 +4,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
-import { createI18n } from "vue-i18n";
 import { createPinia, setActivePinia } from "pinia";
 import { nextTick } from "vue";
 import ImportPhotos from "../ImportPhotos.vue";
@@ -135,39 +134,13 @@ vi.mock("pinia", async (importOriginal) => {
 });
 
 const createWrapper = (props = {}) => {
-    const i18n = createI18n({
-        legacy: false,
-        locale: "en-US",
-        messages: {
-            "en-US": {
-                import: {
-                    steps: {
-                        configuration: "Configuration",
-                        configurationDesc: "Configure import settings",
-                        preview: "Preview",
-                        previewDesc: "Preview files to import",
-                    },
-                    duplicate: {
-                        rename: "Rename",
-                        skip: "Skip",
-                        overwrite: "Overwrite",
-                        keepBoth: "Keep Both",
-                    },
-                    fileTypes: {
-                        label: "File Types",
-                    },
-                },
-            },
-        },
-    });
-
     return mount(ImportPhotos, {
         props: {
             show: true,
             ...props,
         },
         global: {
-            plugins: [i18n, createPinia()],
+            plugins: [createPinia()], // Remove i18n here, use global one from test setup
         },
     });
 };

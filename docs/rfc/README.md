@@ -72,6 +72,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0019](./0019-auto-update-system.md)            | Auto-Update System - Client Implementation | Draft               | Development Team | v1.6.0         |
 | [0020](./0020-auto-update-server.md)            | Auto-Update System - Server Implementation | Draft               | Development Team | v1.6.0         |
 | [0021](./0021-playwright-e2e-testing-architecture-enhancement.md) | Playwright E2E Testing Architecture Enhancement | Draft               | Development Team | v1.7.0         |
+| [0022](./0022-test-stabilization-issues-and-solutions.md)        | Test Stabilization Issues and Solutions         | Implemented         | Development Team | v1.7.0         |
 
 ## Implemented RFCs
 

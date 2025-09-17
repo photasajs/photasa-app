@@ -178,7 +178,8 @@ describe("logger.ts", () => {
             expect(logMessage).toContain("boolean: true");
             expect(logMessage).toContain("nullValue: null");
             expect(logMessage).toContain("undefinedValue: undefined");
-            expect(logMessage).toContain("2023-01-01T00:00:00.000Z");
+            // Test setup mocks Date to 2022-01-01, so expect the mocked date
+            expect(logMessage).toContain("2022-01-01T00:00:00.000Z");
             expect(logMessage).toContain("Symbol:");
             expect(logMessage).toContain("123n");
         });

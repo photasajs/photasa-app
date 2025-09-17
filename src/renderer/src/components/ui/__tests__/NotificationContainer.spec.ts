@@ -1,8 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { setActivePinia, createPinia } from "pinia";
 import NotificationContainer from "../NotificationContainer.vue";
 import { useNotificationStore } from "@renderer/stores/notification";
+
+// 全局 Pinia 实例，避免重复创建
+let globalPinia: ReturnType<typeof createPinia>;
 
 // Mock BaseNotification component
 vi.mock("../BaseNotification.vue", () => ({
@@ -11,8 +14,8 @@ vi.mock("../BaseNotification.vue", () => ({
         props: ["notification"],
         emits: ["close"],
         template: `
-      <div 
-        class="mock-notification" 
+      <div
+        class="mock-notification"
         :data-id="notification.id"
         :data-type="notification.type"
         @click="$emit('close', notification.id)"
@@ -25,22 +28,55 @@ vi.mock("../BaseNotification.vue", () => ({
 
 describe("NotificationContainer", () => {
     let store: ReturnType<typeof useNotificationStore>;
-    let pinia: ReturnType<typeof createPinia>;
+
+    beforeAll(() => {
+        // 创建全局 Pinia 实例
+        globalPinia = createPinia();
+        setActivePinia(globalPinia);
+
+        // 抑制 Pinia 重复提供的警告
+        const originalWarn = console.warn;
+        console.warn = (message: string) => {
+            if (message.includes('App already provides property with key "Symbol(pinia)"')) {
+                return;
+            }
+            originalWarn(message);
+        };
+    });
 
     beforeEach(() => {
         // Clean up any existing DOM elements
         document.body.innerHTML = "";
 
-        // Create fresh Pinia instance for each test
-        pinia = createPinia();
-        setActivePinia(pinia);
+        // 使用全局 Pinia 实例
+        setActivePinia(globalPinia);
         store = useNotificationStore();
+
+        // 清理 store 状态
+        store.clear();
+    });
+
+    afterEach(() => {
+        // 清理 DOM 和 store 状态
+        document.body.innerHTML = "";
+        if (store) {
+            store.clear();
+        }
+    });
+
+    afterAll(() => {
+        // 清理全局 Pinia 实例
+        if (globalPinia) {
+            // 使用类型断言访问内部方法，因为这是测试清理
+            (globalPinia as any)._s?.clear();
+        }
+        document.body.innerHTML = "";
     });
 
     it("should render empty container when no notifications", () => {
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -59,7 +95,7 @@ describe("NotificationContainer", () => {
 
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -81,7 +117,7 @@ describe("NotificationContainer", () => {
 
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -105,7 +141,7 @@ describe("NotificationContainer", () => {
     it("should position notifications correctly", () => {
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -127,7 +163,7 @@ describe("NotificationContainer", () => {
 
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -151,7 +187,7 @@ describe("NotificationContainer", () => {
 
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -171,7 +207,7 @@ describe("NotificationContainer", () => {
     it("should reactively update when store changes", async () => {
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -200,7 +236,7 @@ describe("NotificationContainer", () => {
 
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -217,7 +253,7 @@ describe("NotificationContainer", () => {
     it("should handle rapid notification additions and removals", async () => {
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });
@@ -245,7 +281,7 @@ describe("NotificationContainer", () => {
     it("should apply theme-aware styling", () => {
         const wrapper = mount(NotificationContainer, {
             global: {
-                plugins: [pinia],
+                plugins: [globalPinia],
             },
             attachTo: document.body,
         });

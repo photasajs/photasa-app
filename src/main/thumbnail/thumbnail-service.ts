@@ -74,7 +74,12 @@ export default class ThumbnailService {
                 // 处理标准的 thumbnail 响应消息
                 onWorkerResponse<ThumbnailResponse>(data);
             } catch (error) {
-                logger.error("[ThumbnailService] Error processing worker message:", error);
+                logger.error(
+                    `[ThumbnailService] Error processing worker message: ${(error as Error)?.message || String(error)}`,
+                    {
+                        error: (error as Error)?.stack,
+                    },
+                );
             }
         });
         // 创建缩略图

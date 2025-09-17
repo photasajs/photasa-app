@@ -1,90 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import BaseButton from "../BaseButton.vue";
 
-// Mock Event constructor to avoid SupportedEventInterface errors
-global.Event =
-    global.Event ||
-    class Event {
-        constructor(
-            public type: string,
-            options?: any,
-        ) {
-            this.type = type;
-            Object.assign(this, options);
-        }
-        
-        // Add required Event interface methods
-        preventDefault() {}
-        stopPropagation() {}
-        stopImmediatePropagation() {}
-        get bubbles() { return false; }
-        get cancelable() { return false; }
-        get composed() { return false; }
-        get currentTarget() { return null; }
-        get defaultPrevented() { return false; }
-        get eventPhase() { return 0; }
-        get isTrusted() { return false; }
-        get target() { return null; }
-        get timeStamp() { return Date.now(); }
-    };
-
-// Mock MouseEvent constructor
-global.MouseEvent =
-    global.MouseEvent ||
-    class MouseEvent extends Event {
-        constructor(type: string, options?: any) {
-            super(type, options);
-        }
-        
-        // Add MouseEvent specific properties
-        get button() { return 0; }
-        get buttons() { return 0; }
-        get clientX() { return 0; }
-        get clientY() { return 0; }
-        get movementX() { return 0; }
-        get movementY() { return 0; }
-        get offsetX() { return 0; }
-        get offsetY() { return 0; }
-        get pageX() { return 0; }
-        get pageY() { return 0; }
-        get relatedTarget() { return null; }
-        get screenX() { return 0; }
-        get screenY() { return 0; }
-    };
-
-// Mock all event constructors that Vue Test Utils might need
-global.KeyboardEvent =
-    global.KeyboardEvent ||
-    class KeyboardEvent extends Event {
-        constructor(type: string, options?: any) {
-            super(type, options);
-        }
-        
-        get key() { return ''; }
-        get code() { return ''; }
-        get keyCode() { return 0; }
-        get which() { return 0; }
-        get charCode() { return 0; }
-        get shiftKey() { return false; }
-        get ctrlKey() { return false; }
-        get altKey() { return false; }
-        get metaKey() { return false; }
-        get repeat() { return false; }
-        get isComposing() { return false; }
-    };
-
-global.FocusEvent =
-    global.FocusEvent ||
-    class FocusEvent extends Event {
-        constructor(type: string, options?: any) {
-            super(type, options);
-        }
-        
-        get relatedTarget() { return null; }
-    };
+// 移除全局 Event mock，避免环境污染
 
 describe("BaseButton", () => {
+    // 清理函数，确保测试之间不会相互影响
+    afterEach(() => {
+        // 清理所有 mock 和定时器
+    });
     it("renders correctly with default props", () => {
         const wrapper = mount(BaseButton, {
             slots: {

@@ -25,17 +25,15 @@ describe("PSD Extractor Integration Test", () => {
 
         try {
             testPsdBuffer = await readFile(testPsdPath);
-            console.log(`📁 找到测试PSD文件: ${testPsdPath}`);
-            console.log(`📊 文件大小: ${testPsdBuffer.length} bytes`);
+            // PSD test file found and loaded successfully
         } catch (error) {
-            console.warn(`⚠️  无法读取测试PSD文件: ${error}`);
             testPsdPath = "";
         }
     });
 
     it("should detect PSD file correctly", () => {
         if (!testPsdPath) {
-            console.log("⏭️  跳过测试 - 没有测试PSD文件");
+            expect.assertions(0); // Skip test if no PSD file found
             return;
         }
 
@@ -46,24 +44,14 @@ describe("PSD Extractor Integration Test", () => {
 
     it("should extract metadata from real PSD file", async () => {
         if (!testPsdPath) {
-            console.log("⏭️  跳过测试 - 没有测试PSD文件");
+            expect.assertions(0); // Skip test if no PSD file found
             return;
         }
 
         try {
             const metadata = await extractPsdMetadata(testPsdPath, mockLogger);
 
-            console.log("📋 提取的元数据:");
-            console.log(`   - 路径: ${metadata.path}`);
-            console.log(`   - 名称: ${metadata.name}`);
-            console.log(`   - 类型: ${metadata.type}`);
-            console.log(`   - 格式: ${metadata.format}`);
-            console.log(`   - 尺寸: ${metadata.width}x${metadata.height}`);
-            console.log(`   - 图层数: ${metadata.layers}`);
-            console.log(`   - 颜色模式: ${metadata.colorMode}`);
-            console.log(`   - 版本: ${metadata.version}`);
-            console.log(`   - 有透明度: ${metadata.hasTransparency ? "是" : "否"}`);
-            console.log(`   - 画板数: ${metadata.artboardCount}`);
+            // Verify extracted metadata properties are valid
 
             // 验证基本属性
             expect(metadata).toBeDefined();
@@ -84,14 +72,13 @@ describe("PSD Extractor Integration Test", () => {
                 `[psd-extractor] Successfully extracted PSD metadata for ${testPsdPath}`,
             );
         } catch (error) {
-            console.error("❌ PSD元数据提取失败:", error);
             throw error;
         }
     });
 
     it("should handle PSD file with ag-psd directly", async () => {
         if (!testPsdPath) {
-            console.log("⏭️  跳过测试 - 没有测试PSD文件");
+            expect.assertions(0); // Skip test if no PSD file found
             return;
         }
 
@@ -100,13 +87,7 @@ describe("PSD Extractor Integration Test", () => {
             const { readPsd } = await import("ag-psd");
             const psd = readPsd(testPsdBuffer as any);
 
-            console.log("🔧 ag-psd直接解析结果:");
-            console.log(`   - 宽度: ${psd.width}px`);
-            console.log(`   - 高度: ${psd.height}px`);
-            console.log(`   - 颜色模式: ${psd.colorMode}`);
-            console.log(`   - 版本: ${psd.version}`);
-            console.log(`   - 图层数量: ${psd.children?.length || 0}`);
-            console.log(`   - 是否有画布: ${psd.canvas ? "是" : "否"}`);
+            // Verify ag-psd parsing results
 
             // 验证ag-psd解析结果
             expect(psd).toBeDefined();
@@ -119,15 +100,12 @@ describe("PSD Extractor Integration Test", () => {
             }
 
             if (psd.children && psd.children.length > 0) {
-                console.log("🎨 图层信息:");
-                psd.children.forEach((layer, index) => {
-                    console.log(
-                        `   ${index + 1}. ${layer.name || "未命名图层"} (${(layer as any).width || "N/A"}x${(layer as any).height || "N/A"})`,
-                    );
+                // Verify layer information is accessible
+                psd.children.forEach((layer) => {
+                    expect(layer).toBeDefined();
                 });
             }
         } catch (error) {
-            console.error("❌ ag-psd直接解析失败:", error);
             throw error;
         }
     });

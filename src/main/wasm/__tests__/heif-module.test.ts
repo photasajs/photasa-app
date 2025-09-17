@@ -32,7 +32,12 @@ describe("heif-module", () => {
 
         const m1 = await initializeHeifModule();
         const m2 = await initializeHeifModule();
+
+        // 验证模块被正确缓存
         expect(m1).toBe(m2);
+        expect(m1).toBeTruthy();
+        expect(m1).toHaveProperty("decode");
+        expect(m1).toHaveProperty("dimensions");
     });
 
     it("uses resources directory as primary method", async () => {
@@ -43,6 +48,9 @@ describe("heif-module", () => {
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
+        expect(mod).toHaveProperty("decode");
+        expect(mod).toHaveProperty("dimensions");
+
         // second call uses cache
         const mod2 = await initializeHeifModule();
         expect(mod2).toBe(mod);
@@ -91,6 +99,7 @@ describe("heif-module", () => {
         >;
         (create as any).mockRejectedValue(new Error("default init failed"));
 
+        // 验证抛出正确的错误
         await expect(initializeHeifModule()).rejects.toThrow(
             "HEIF WASM module not found in any expected location",
         );
@@ -217,8 +226,8 @@ describe("heif-module", () => {
 
         const mod = await initializeHeifModule();
         expect(mod).toBeTruthy();
-
-        // This test validates Windows path handling in resources directory
+        expect(mod).toHaveProperty("decode");
+        expect(mod).toHaveProperty("dimensions");
     });
 
     it("handles Mac path format in resources directory", async () => {

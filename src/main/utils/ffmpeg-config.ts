@@ -85,11 +85,25 @@ function validatePaths(config: FFmpegConfig): boolean {
     return isValid;
 }
 
+// 懒加载状态管理
+let ffmpegConfigured = false;
+let ffmpegConfig: FFmpegConfig | null = null;
+
 /**
- * 配置 FFmpeg 和 FFprobe 路径
- * 这个函数应该在应用启动时调用一次
+ * 确保 FFmpeg 已配置（懒加载）
  */
-export function configureFFmpeg(): FFmpegConfig {
+function ensureFFmpegConfigured(): FFmpegConfig {
+    if (!ffmpegConfigured || !ffmpegConfig) {
+        ffmpegConfig = configureFFmpegInternal();
+        ffmpegConfigured = true;
+    }
+    return ffmpegConfig;
+}
+
+/**
+ * 配置 FFmpeg 和 FFprobe 路径（内部实现）
+ */
+function configureFFmpegInternal(): FFmpegConfig {
     const ffmpegPath = getFfmpegPath();
     const ffprobePath = getFfprobePath();
 
@@ -115,20 +129,24 @@ export function configureFFmpeg(): FFmpegConfig {
 }
 
 /**
- * 获取当前 FFmpeg 配置（不重新配置）
+ * 配置 FFmpeg 和 FFprobe 路径（公开接口，懒加载）
  */
-export function getFFmpegConfig(): FFmpegConfig {
-    return {
-        ffmpegPath: getFfmpegPath(),
-        ffprobePath: getFfprobePath(),
-    };
+export function configureFFmpeg(): FFmpegConfig {
+    return ensureFFmpegConfigured();
 }
 
 /**
- * 检查 FFmpeg 是否可用
+ * 获取当前 FFmpeg 配置（懒加载）
+ */
+export function getFFmpegConfig(): FFmpegConfig {
+    return ensureFFmpegConfigured();
+}
+
+/**
+ * 检查 FFmpeg 是否可用（懒加载）
  */
 export function isFFmpegAvailable(): boolean {
-    const config = getFFmpegConfig();
+    const config = ensureFFmpegConfigured();
     return fs.existsSync(config.ffmpegPath) && fs.existsSync(config.ffprobePath);
 }
 

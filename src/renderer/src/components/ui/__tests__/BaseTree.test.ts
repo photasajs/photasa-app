@@ -262,7 +262,11 @@ describe("BaseTree", () => {
 
             // 模拟节点选择
             const treeNode = wrapper.findComponent({ name: "BaseTreeNode" });
-            await treeNode.vm.$emit("select", treeData[0], true, new Event("click"));
+            await treeNode.vm.$emit("select", treeData[0], true, {
+                type: "click",
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
+            });
 
             expect(wrapper.emitted("select")).toBeTruthy();
             expect(wrapper.emitted("update:selectedKeys")).toBeTruthy();

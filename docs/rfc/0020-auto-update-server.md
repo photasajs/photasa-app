@@ -106,38 +106,373 @@ photasa.me/
     └── analytics.ts       # 统计分析服务
 ```
 
-### API Implementation
+### 🔄 URL 重写代理方案
 
-#### 1. Version Check API
+#### 核心问题解决
+
+**问题描述**：UploadThing CDN生成的文件URL包含冒号字符（`https://utfs.io/f/xxx`），导致electron-updater下载时创建包含冒号的临时文件路径，在Windows和macOS系统中被禁止。
+
+**解决策略**：通过服务端URL重写代理，让客户端看到安全的文件路径，服务端负责重定向到实际的UploadThing URL。
+
+#### 📦 自动更新文件格式说明
+
+**重要：自动更新使用ZIP格式，不是EXE/DMG**
+
+- **所有平台**: 统一使用 ZIP 格式进行自动更新
+  - **Windows**: `Photasa-1.6.0-win.zip`
+  - **macOS**: `Photasa-1.6.0-mac.zip`
+  - **Linux**: `Photasa-1.6.0-linux.zip`
+- **原因**: ZIP格式是electron-updater的标准自动更新格式
+  - 跨平台一致性
+  - 更好的压缩率和下载速度
+  - electron-updater原生支持
+
+#### ⚠️ 客户端配置要求
+
+**关键：必须移除 setFeedURL 调用**
 
 ```typescript
-// pages/api/updates/releases/latest.yml.ts
+// ❌ 错误：不要在代码中调用 setFeedURL
+autoUpdater.setFeedURL({
+    provider: "generic",
+    url: "https://photasa.me/api/updates/releases",
+});
+
+// ✅ 正确：使用配置文件驱动
+// electron-updater 会自动从以下文件读取配置：
+// 开发环境：dev-app-update.yml
+// 生产环境：app-update.yml (由 electron-builder.yml 生成)
+```
+
+**必需的配置文件**：
+
+```yaml
+# dev-app-update.yml (项目根目录)
+provider: generic
+url: https://photasa.me/api/updates/releases
+updaterCacheDirName: photasa-updater
+```
+
+```yaml
+# electron-builder.yml (publish 配置)
+publish:
+    provider: generic
+    url: https://photasa.me/api/updates/releases
+```
+
+#### 代理架构设计
+
+```
+Client (electron-updater)
+    ↓ GET /api/updates/releases/latest.yml
+Server Response: { "files": [{ "url": "Photasa-1.6.0-win.zip" }] }
+    ↓ GET /api/updates/releases/Photasa-1.6.0-win.zip
+Server Proxy: 302 Redirect → https://utfs.io/f/4CQT2JNmMDi7rIPL
+    ↓
+UploadThing CDN
+```
+
+#### 文件映射数据库设计
+
+```sql
+-- 文件下载映射表
+CREATE TABLE download_mappings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    version VARCHAR(50) NOT NULL,
+    platform VARCHAR(20) NOT NULL, -- 'win', 'mac', 'linux'
+    safe_filename VARCHAR(255) NOT NULL, -- 'Photasa-1.6.0-win.zip'
+    actual_url TEXT NOT NULL, -- 'https://utfs.io/f/xxx'
+    file_size BIGINT NOT NULL,
+    sha512_hash VARCHAR(128) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    -- 约束和索引
+    UNIQUE(version, platform),
+    UNIQUE(safe_filename), -- 确保安全文件名唯一性
+    INDEX idx_version_platform (version, platform),
+    INDEX idx_safe_filename (safe_filename), -- 支持通过文件名快速查找
+    INDEX idx_created_at (created_at DESC) -- 支持按时间排序查询最新版本
+);
+
+-- 下载统计表
+CREATE TABLE download_stats (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    mapping_id UUID REFERENCES download_mappings(id),
+    user_agent TEXT,
+    ip_address INET,
+    country_code CHAR(2),
+    downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    INDEX idx_mapping_downloaded (mapping_id, downloaded_at),
+    INDEX idx_downloaded_at (downloaded_at)
+);
+```
+
+#### 安全文件名生成规则
+
+```typescript
+interface SafeFilenameConfig {
+    appName: string;      // "Photasa"
+    version: string;      // "1.6.0"
+    platform: string;    // "win" | "mac" | "linux"
+    extension: string;    // "exe" | "zip" | "dmg"
+}
+
+function generateSafeFilename(config: SafeFilenameConfig): string {
+    const { appName, version, platform, extension } = config;
+    
+    // 基于实际的 electron-builder.yml 配置
+    // 注意：自动更新使用 ZIP 格式，不是 EXE/DMG
+    switch (platform) {
+        case 'win':
+            // 自动更新使用 zip 格式，不是 nsis setup.exe
+            // zip 目标使用默认格式（无自定义 artifactName）
+            return `${appName}-${version}-win.${extension}`;
+        
+        case 'mac':
+            // 自动更新使用 zip 格式，不是 dmg
+            // zip 目标使用默认格式（无自定义 artifactName）
+            return `${appName}-${version}-mac.${extension}`;
+        
+        case 'linux':
+            // 自动更新使用 zip 格式，统一跨平台
+            return `${appName}-${version}-linux.${extension}`;
+        
+        default:
+            throw new Error(`Unsupported platform: ${platform}`);
+    }
+    
+    // 示例（自动更新文件，统一使用 ZIP）：
+    // Windows: "Photasa-1.6.0-win.zip"
+    // macOS:   "Photasa-1.6.0-mac.zip"
+    // Linux:   "Photasa-1.6.0-linux.zip"
+}
+```
+
+#### 数据库操作函数
+
+```typescript
+// lib/download-mappings.ts
+import { supabase } from './supabase';
+
+interface DownloadMapping {
+    id: string;
+    version: string;
+    platform: string;
+    safe_filename: string;  // 关键：安全文件名用于URL路由
+    actual_url: string;
+    file_size: number;
+    sha512_hash: string;
+    created_at: string;
+}
+
+/**
+ * 通过安全文件名获取映射（核心函数）
+ * 用于 /api/updates/releases/[filename] 路由
+ */
+export async function getMappingByFilename(filename: string): Promise<DownloadMapping | null> {
+    const { data, error } = await supabase
+        .from('download_mappings')
+        .select('*')
+        .eq('safe_filename', filename)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching mapping by filename:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+/**
+ * 获取特定平台的最新版本映射
+ * 用于生成 latest.yml
+ */
+export async function getLatestMapping(platform: string): Promise<DownloadMapping | null> {
+    const { data, error } = await supabase
+        .from('download_mappings')
+        .select('*')
+        .eq('platform', platform)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching latest mapping:', error);
+        return null;
+    }
+    
+    return data;
+}
+
+/**
+ * 创建新的文件映射
+ * 用于发布新版本时
+ */
+export async function createMapping(mapping: Omit<DownloadMapping, 'id' | 'created_at'>): Promise<string | null> {
+    const { data, error } = await supabase
+        .from('download_mappings')
+        .insert([mapping])
+        .select('id')
+        .single();
+    
+    if (error) {
+        console.error('Error creating mapping:', error);
+        return null;
+    }
+    
+    return data.id;
+}
+
+/**
+ * 记录下载统计
+ */
+export async function recordDownload(stats: {
+    mappingId: string;
+    userAgent: string;
+    ipAddress: string;
+    filename: string;
+}): Promise<void> {
+    const { error } = await supabase
+        .from('download_stats')
+        .insert([{
+            mapping_id: stats.mappingId,
+            user_agent: stats.userAgent,
+            ip_address: stats.ipAddress,
+            filename: stats.filename
+        }]);
+    
+    if (error) {
+        console.error('Error recording download:', error);
+    }
+}
+```
+
+### API Implementation
+
+#### 1. Latest.yml 生成 API（使用安全文件名）
+
+```typescript
+// pages/api/updates/releases/latest.yml.ts (Windows)
 import { NextApiRequest, NextApiResponse } from "next";
-import { getLatestVersion } from "@/lib/supabase";
+import { getLatestMapping } from "@/lib/download-mappings";
+import { generateSafeFilename } from "@/lib/utils";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
-        const latestVersion = await getLatestVersion("win");
+        const platform = 'win';
+        const mapping = await getLatestMapping(platform);
 
-        if (!latestVersion) {
+        if (!mapping) {
             return res.status(404).json({ error: "No version found" });
         }
 
-        const yamlContent = `version: ${latestVersion.version}
+        // 使用安全的文件名（不包含冒号）
+        const safeFilename = generateSafeFilename({
+            appName: "Photasa",
+            version: mapping.version,
+            platform: platform,
+            extension: "zip"
+        });
+
+        const yamlContent = `version: ${mapping.version}
 files:
-  - url: Photasa-${latestVersion.version}-Setup.exe
-    sha512: ${latestVersion.sha512}
-    size: ${latestVersion.size}
-path: Photasa-${latestVersion.version}-Setup.exe
-sha512: ${latestVersion.sha512}
-releaseDate: '${latestVersion.releaseDate}'`;
+  - url: ${safeFilename}
+    sha512: ${mapping.sha512_hash}
+    size: ${mapping.file_size}
+path: ${safeFilename}
+sha512: ${mapping.sha512_hash}
+releaseDate: '${mapping.created_at}'`;
 
         res.setHeader("Content-Type", "text/yaml");
+        res.setHeader("Cache-Control", "public, max-age=300"); // 5分钟缓存
         res.status(200).send(yamlContent);
     } catch (error) {
-        console.error("Error fetching version:", error);
+        console.error("Error generating latest.yml:", error);
         res.status(500).json({ error: "Internal server error" });
     }
+}
+```
+
+#### 2. 文件下载代理 API（URL重写核心）
+
+```typescript
+// pages/api/updates/releases/[filename]/route.ts (App Router格式)
+import { NextRequest, NextResponse } from "next/server";
+import { getMappingByFilename, recordDownload } from "@/lib/download-mappings";
+import { getClientIP, getUserAgent } from "@/lib/request-utils";
+
+export async function GET(
+    request: NextRequest,
+    { params }: { params: { filename: string } }
+) {
+    const { filename } = params;
+    
+    try {
+        // 1. 解析文件名获取版本和平台信息
+        const fileInfo = parseFilename(filename);
+        if (!fileInfo) {
+            return NextResponse.json(
+                { error: "Invalid filename format" },
+                { status: 400 }
+            );
+        }
+
+        // 2. 从数据库获取文件映射（通过安全文件名直接查找）
+        const mapping = await getMappingByFilename(filename);
+        if (!mapping) {
+            return NextResponse.json(
+                { error: "File not found" },
+                { status: 404 }
+            );
+        }
+
+        // 3. 记录下载统计（异步，不阻塞重定向）
+        recordDownload({
+            mappingId: mapping.id,
+            userAgent: getUserAgent(request),
+            ipAddress: getClientIP(request),
+            filename: filename
+        }).catch(err => console.error("Failed to record download:", err));
+
+        // 4. 重定向到实际的 UploadThing URL
+        return NextResponse.redirect(mapping.actual_url, 302);
+
+    } catch (error) {
+        console.error("Download proxy error:", error);
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500 }
+        );
+    }
+}
+
+// 解析安全文件名，提取版本和平台信息
+function parseFilename(filename: string): { version: string; platform: string } | null {
+    // 支持自动更新文件格式（统一使用 ZIP）：
+    // Photasa-1.6.0-win.zip → { version: "1.6.0", platform: "win" }
+    // Photasa-1.6.0-mac.zip → { version: "1.6.0", platform: "mac" }
+    // Photasa-1.6.0-linux.zip → { version: "1.6.0", platform: "linux" }
+    
+    const patterns = [
+        /^Photasa-(.+)-win\.zip$/,       // Windows ZIP
+        /^Photasa-(.+)-mac\.zip$/,       // macOS ZIP
+        /^Photasa-(.+)-linux\.zip$/,     // Linux ZIP
+    ];
+    
+    for (const [index, pattern] of patterns.entries()) {
+        const match = filename.match(pattern);
+        if (match) {
+            const platforms = ['win', 'mac', 'linux'];
+            return {
+                version: match[1],
+                platform: platforms[index]
+            };
+        }
+    }
+    
+    return null;
 }
 ```
 
@@ -467,9 +802,9 @@ import { put, del, list } from "@vercel/blob";
 export async function uploadReleaseFile(
     file: File,
     version: string,
-    platform: "win" | "mac",
+    platform: "win" | "mac" | "linux",
 ): Promise<string> {
-    const fileName = `${platform === "win" ? "Photasa-" + version + "-Setup.exe" : "Photasa-" + version + ".dmg"}`;
+    const fileName = `Photasa-${version}-${platform}.zip`;  // 统一ZIP格式
     const filePath = `releases/${platform}/${fileName}`;
 
     const blob = await put(filePath, file, {

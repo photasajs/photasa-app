@@ -20,9 +20,6 @@ import type { VideoSize } from "@common/types";
 import { PhotasaLogger } from "@common/logger";
 import { configureFFmpeg } from "../utils/ffmpeg-config";
 
-// 配置 FFmpeg（使用共享库）
-configureFFmpeg();
-
 /**
  * 使用 wasm-heif 解码 HEIC/HEIF 文件
  * 改进版本：增强错误处理和稳定性
@@ -288,6 +285,9 @@ function getVideoRotation(metadata: any): number {
  * @returns 视频维度和旋转角度
  */
 function getVideoDimension(video: string): Promise<{ dimension: VideoSize; rotation: number }> {
+    // 懒加载FFmpeg配置
+    configureFFmpeg();
+
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(video, (err, metadata) => {
             if (err) return reject(err);

@@ -108,9 +108,7 @@ describe("Import Date Fallback Integration", () => {
                 /^\d{8}$/,
             );
 
-            console.log(
-                `✓ ${testCase.description}: ${testCase.name} → ${processedGroup.targetPath}`,
-            );
+            // Verified: targetPath is valid for this test case
         }
     });
 
@@ -154,6 +152,6 @@ describe("Import Date Fallback Integration", () => {
         const expectedYear = today.getFullYear().toString();
         expect(processedGroup.targetPath).toContain(expectedYear);
 
-        console.log(`✓ Edge case (no date info): ${processedGroup.targetPath}`);
+        // Verified: edge case handled properly
     });
 });

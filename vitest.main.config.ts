@@ -1,10 +1,7 @@
 import { defineConfig } from "vitest/config";
-import vue from "@vitejs/plugin-vue";
 import { resolve } from "path";
-import svgLoader from "vite-svg-loader";
 
 export default defineConfig({
-    plugins: [vue(), svgLoader()],
     resolve: {
         alias: {
             "@main": resolve("src/main/"),
@@ -16,8 +13,8 @@ export default defineConfig({
     },
     test: {
         globals: true,
-        environment: "jsdom",
-        setupFiles: ["./test/setup.renderer.ts"],
+        environment: "node", // 使用node环境而不是jsdom
+        setupFiles: ["./test/setup.main.ts"],
         testTimeout: 15000,
         hookTimeout: 8000,
         teardownTimeout: 5000,
@@ -45,20 +42,10 @@ export default defineConfig({
                 "src/renderer/src/test/**/*",
             ],
         },
-        include: [
-            "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
-        ],
+        include: ["src/main/**/*.{test,spec}.{js,ts,jsx,tsx}"],
         server: {
             deps: {
                 inline: [/@vue/, /@vueuse/, /@ant-design/, /radash/],
-            },
-        },
-        environmentOptions: {
-            jsdom: {
-                url: "http://localhost:3000",
-                pretendToBeVisual: true,
-                resources: "usable",
             },
         },
     },

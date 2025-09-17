@@ -6,24 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import ImportProgressModal from "../ImportProgressModal.vue";
 
-// Ensure global Date is properly available
-global.Date = Date;
-global.Date.now = Date.now || (() => new Date().getTime());
-
-// Mock Date constructor and Date.now for consistent testing
-const mockDate = new Date(1640995200000); // 2022-01-01T00:00:00.000Z
-const mockDateNow = vi.fn(() => 1640995200000);
-
-// Mock Date constructor
-global.Date = vi.fn(() => mockDate) as any;
-global.Date.now = mockDateNow;
-
-// Preserve static methods
-Object.setPrototypeOf(global.Date, Date);
-Object.defineProperty(global.Date, "now", {
-    value: mockDateNow,
-    writable: true,
-});
+// Date is already mocked in the global test setup, no need to mock it again here
 
 // Mock all external dependencies
 vi.mock("@renderer/utils/api");
