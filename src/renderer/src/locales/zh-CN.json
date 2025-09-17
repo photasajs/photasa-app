@@ -634,7 +634,7 @@
     "imageInfo": {
         "title": "图片信息",
         "lastUpdated": "最后更新",
-        "openInFinder": "在访达中打开",
+        "openInFinder": "在文件管理器中打开",
         "repairLibrary": "修复照片库信息",
         "fileCount": "文件数量",
         "folderSize": "文件夹大小",

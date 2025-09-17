@@ -10,19 +10,21 @@ import { isMac } from "./platform";
 import * as Sentry from "@sentry/electron/main";
 import WatchService from "./watch/watch-service";
 import icon from "../../resources/icon.png?asset";
-import ThumbnailService from "./thumbnail/thumbnail-service";
-import ConfigService from "./config/config-service";
-import ScanService from "./scan/scan-service";
-import WindowService from "./window/window-service";
-import MenuService from "./menu/menu-service";
-import ShellService from "./shell/shell-service";
-import ImportService from "./import/import-service";
-import LogViewerService from "./log-viewer/log-viewer-service";
-import UpdateService from "./update/update-service";
+// Services are now imported in startup-optimizer.ts
+import { SplashWindow } from "./splash/splash-window";
+import { StartupOptimizer } from "./startup-optimizer";
+import { SingleInstanceManager } from "./single-instance-manager";
 
 const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;
-let watchService: WatchService | undefined;
+let splashWindow: SplashWindow | undefined;
+let startupOptimizer: StartupOptimizer | undefined;
+const singleInstanceManager = new SingleInstanceManager({
+    appName: "Photasa",
+    focusOnSecondInstance: true,
+    restoreMinimizedWindow: true,
+    createWindowOnMacOS: true,
+});
 
 // 初始化Sentry错误监控
 if (!isDev) {
@@ -42,30 +44,117 @@ if (!isDev) {
     });
 }
 
-function createWindow(): void {
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    // 创建窗口
-    mainWindow = new BrowserWindow({
-        width,
-        height,
-        show: false,
-        title: "Photasa",
-        autoHideMenuBar: true,
-        icon: icon, // Set icon for all platforms
-        webPreferences: {
-            preload: path.join(__dirname, "../preload/index.js"),
-            sandbox: false,
-            webSecurity: !isDev, // enable to load local source
-            nodeIntegration: false,
-            contextIsolation: true,
-        },
-        // 分平台配置
-        ...(isMac() ? { titleBarStyle: "hiddenInset" } : { frame: false }),
-    });
+async function createWindow(): Promise<void> {
+    const startTime = Date.now();
+    logger.info("Starting optimized application startup");
+
+    try {
+        // 1. 立即显示闪屏
+        try {
+            splashWindow = new SplashWindow();
+            splashWindow.show();
+            splashWindow?.updateStatus("启动应用程序...");
+        } catch (splashError) {
+            logger.error("Failed to create splash window:", splashError);
+            // 如果闪屏创建失败，继续启动但不显示闪屏
+            splashWindow = undefined;
+        }
+
+        // 2. 设置 IPC 处理器（轻量级，无阻塞）
+        setupIpcHandlers();
+
+        // 3. 创建主窗口（但不显示）
+        const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+        splashWindow?.updateStatus("创建主窗口...");
+
+        mainWindow = new BrowserWindow({
+            width,
+            height,
+            show: false,
+            title: "Photasa",
+            autoHideMenuBar: true,
+            icon: icon,
+            webPreferences: {
+                preload: path.join(__dirname, "../preload/index.js"),
+                sandbox: false,
+                webSecurity: !isDev,
+                nodeIntegration: false,
+                contextIsolation: true,
+            },
+            ...(isMac() ? { titleBarStyle: "hiddenInset" } : { frame: false }),
+        });
+
+        // 4. 设置窗口事件处理器
+        setupWindowHandlers();
+
+        // 5. 初始化启动优化器
+        splashWindow?.updateStatus("初始化核心服务...");
+        startupOptimizer = new StartupOptimizer(mainWindow, app, ipcMain);
+
+        // 6. 只初始化关键服务（阻塞）
+        await startupOptimizer.initializeServices();
+
+        // 7. 开始加载渲染进程
+        splashWindow?.updateStatus("加载用户界面...");
+        await loadRenderer();
+
+        splashWindow?.updateStatus("即将完成...");
+
+        // 8. 渲染器加载完成后，直接关闭启动画面并显示主窗口
+        const totalTime = Date.now() - startTime;
+        logger.info(`Optimized startup completed in ${totalTime}ms`);
+
+        // 给一个短暂的延迟让用户看到"即将完成"状态
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // 强制关闭启动画面并显示主窗口
+        logger.info("Force closing splash screen and showing main window");
+
+        if (splashWindow) {
+            logger.info("Calling splashWindow.hide()");
+            splashWindow.hide();
+            splashWindow = undefined;
+            logger.info("splashWindow set to undefined");
+        } else {
+            logger.warn("splashWindow is null/undefined when trying to hide");
+        }
+
+        if (mainWindow) {
+            logger.info("Showing main window");
+            mainWindow.show();
+            mainWindow.focus(); // 确保主窗口获得焦点
+            logger.info("Application startup finished, main window visible and focused");
+        } else {
+            logger.error("mainWindow is null when trying to show");
+        }
+    } catch (error) {
+        logger.error("Optimized startup failed:", error);
+        splashWindow?.updateStatus("启动失败");
+
+        // 即使启动失败，也要尝试显示主窗口（可能渲染器已经加载成功）
+        setTimeout(() => {
+            if (splashWindow) {
+                splashWindow.hide();
+                splashWindow = undefined;
+            }
+
+            // 尝试显示主窗口，即使启动过程中有错误
+            if (mainWindow && !mainWindow.isVisible()) {
+                logger.info("Force showing main window after startup error");
+                mainWindow.show();
+            }
+        }, 2000);
+
+        // 不要抛出错误，让应用继续运行
+        // throw error;
+    }
+}
+
+function setupWindowHandlers(): void {
+    if (!mainWindow) return;
 
     // Handle page refreshes
     mainWindow.webContents.on("did-finish-load", () => {
-        // Ensure preload script is loaded
         mainWindow?.webContents.executeJavaScript(`
             if (!window.api) {
                 window.location.reload();
@@ -73,38 +162,85 @@ function createWindow(): void {
         `);
     });
 
-    mainWindow.on("ready-to-show", () => {
-        mainWindow?.show();
-    });
-
     mainWindow.webContents.setWindowOpenHandler((details) => {
         shell.openExternal(details.url);
         return { action: "deny" };
     });
+}
 
-    // HMR for renderer base on electron-vite cli.
-    // Load the remote URL for development or the local html file for production.
-    if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-        mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
-    } else {
-        mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
-    }
+async function loadRenderer(): Promise<void> {
+    if (!mainWindow) return;
 
+    return new Promise((resolve, reject) => {
+        // 增加超时时间到30秒，特别是首次启动时需要更多时间
+        const timeout = setTimeout(() => {
+            logger.error("Renderer load timeout after 30 seconds");
+            reject(new Error("Renderer load timeout"));
+        }, 30000);
+
+        // 监听加载完成事件
+        if (mainWindow) {
+            mainWindow.webContents.once("did-finish-load", () => {
+                clearTimeout(timeout);
+                logger.info("Renderer loaded successfully");
+                resolve();
+            });
+
+            // 监听加载失败事件
+            mainWindow.webContents.once(
+                "did-fail-load",
+                (_, errorCode, errorDescription, validatedURL) => {
+                    clearTimeout(timeout);
+                    logger.error(
+                        `Renderer failed to load: ${errorDescription} (${errorCode}) - URL: ${validatedURL}`,
+                    );
+                    reject(new Error(`Renderer load failed: ${errorDescription}`));
+                },
+            );
+        }
+
+        // Load renderer
+        if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+            logger.debug(
+                `Loading renderer from development server: ${process.env["ELECTRON_RENDERER_URL"]}`,
+            );
+
+            // 在开发环境下，如果渲染器URL不可用，fallback到文件加载
+            if (mainWindow) {
+                mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]).catch((urlError) => {
+                    logger.warn(
+                        `Failed to load from dev server, falling back to file: ${urlError.message}`,
+                    );
+                    const rendererPath = path.join(__dirname, "../renderer/index.html");
+                    logger.debug(`Loading renderer from fallback file: ${rendererPath}`);
+                    if (mainWindow) {
+                        mainWindow.loadFile(rendererPath);
+                    }
+                });
+            }
+        } else {
+            const rendererPath = path.join(__dirname, "../renderer/index.html");
+            logger.debug(`Loading renderer from file: ${rendererPath}`);
+            if (mainWindow) {
+                mainWindow.loadFile(rendererPath);
+            }
+        }
+    });
+}
+
+function setupIpcHandlers(): void {
     // 选择目录
     ipcMain.on("picasa:choose-directory", () => {
         if (mainWindow) {
-            // 打开选择目录对话框
             dialog
                 .showOpenDialog(mainWindow, {
                     properties: ["openDirectory"],
                 })
                 .then(({ filePaths }) => {
-                    // 发送选择目录事件
                     mainWindow?.webContents.send("picasa:selected-directory", { filePaths });
                 })
                 .catch((err) => {
-                    // 错误处理
-                    console.log(err);
+                    logger.error("Directory selection failed:", err);
                 });
         }
     });
@@ -140,16 +276,13 @@ function createWindow(): void {
             };
         } catch (error) {
             logger.error(`Error checking photasa config for ${folderPath}:`, error);
-            // 如果是JSON解析错误，尝试修复配置文件
             if (error instanceof SyntaxError && error.message.includes("JSON")) {
                 logger.warn(`JSON parse error for ${folderPath}, attempting to fix...`);
                 try {
-                    // 尝试读取文件内容并修复
                     const configPath = path.join(folderPath, ".photasa.json");
                     if (fs.existsSync(configPath)) {
                         const content = await readFile(configPath, "utf8");
                         logger.debug(`Corrupted config content: ${content.substring(0, 100)}...`);
-                        // 创建默认配置
                         const defaultConfig = { photoList: [], version: "1.0.0" };
                         await fs.promises.writeFile(
                             configPath,
@@ -173,11 +306,10 @@ function createWindow(): void {
                 return basename === "." || basename[0] !== ".";
             };
 
-            // Check if directory exists
             if (!fs.existsSync(args.parent)) {
                 const error = new Error(`Directory does not exist: ${args.parent}`);
                 logger.warn(error.message);
-                throw error; // Propagate error to renderer
+                throw error;
             }
 
             const folders = klawSync(args.parent, {
@@ -192,31 +324,9 @@ function createWindow(): void {
             return folders.map((item) => item.path);
         } catch (error) {
             logger.error(`Error in picasa:sub-folders handler:`, error);
-            // Rethrow the error to be handled by the renderer
             throw error;
         }
     });
-
-    // Setup Log Viewer Service (create early so other services can register workers)
-    const logViewerService = new LogViewerService(ipcMain, mainWindow);
-    // Setup Thumbnail Service
-    new ThumbnailService(ipcMain, mainWindow, app, logViewerService);
-    // Setup Config Service
-    new ConfigService(ipcMain, mainWindow);
-    // Setup Scan Service
-    new ScanService(ipcMain, mainWindow, app, logViewerService);
-    // Setup File Watch Service
-    watchService = new WatchService(ipcMain, mainWindow);
-    // Setup Window Service
-    new WindowService(ipcMain, mainWindow, app);
-    // 在主窗口创建后初始化菜单服务
-    new MenuService(ipcMain, mainWindow);
-    // 创建 shell 服务
-    new ShellService(ipcMain, mainWindow);
-    // Setup Import Service
-    new ImportService(ipcMain, mainWindow);
-    // Setup Update Service
-    new UpdateService(ipcMain, mainWindow);
 }
 
 /**
@@ -238,7 +348,48 @@ process.on("unhandledRejection", (reason, promise) => {
     }
 });
 
-app.whenReady().then(() => {
+// 检查单实例锁
+if (!singleInstanceManager.initialize()) {
+    // 如果没有获得锁，应用会自动退出
+    process.exit(0);
+}
+
+// 设置单实例事件处理器
+(app as any).on("single-instance-window-recreate-needed", () => {
+    logger.info("Recreating window on second instance request");
+    if (!mainWindow) {
+        createWindow().catch((error) => {
+            logger.error("Failed to recreate window:", error);
+        });
+    }
+});
+
+(app as any).on("second-instance-files", (data: { files: string[]; workingDirectory: string }) => {
+    logger.info("Second instance launched with files:", data.files);
+
+    // 处理文件打开请求
+    if (mainWindow && data.files.length > 0) {
+        mainWindow.webContents.send("app:open-files", {
+            files: data.files,
+            workingDirectory: data.workingDirectory,
+        });
+    }
+});
+
+(app as any).on("second-instance-debug-mode", () => {
+    logger.info("Second instance launched in debug mode");
+
+    // 在调试模式下打开开发者工具
+    if (mainWindow && isDev) {
+        mainWindow.webContents.openDevTools();
+    }
+});
+
+app.whenReady().then(async () => {
+    // 如果没有获得锁，不应该到达这里，但为了安全起见
+    if (!singleInstanceManager.hasInstanceLock()) {
+        return;
+    }
     // 设置应用用户模型 ID
     electronApp.setAppUserModelId("com.photasa.app");
 
@@ -254,8 +405,8 @@ app.whenReady().then(() => {
         optimizer.watchWindowShortcuts(window);
     });
 
-    // 创建窗口
-    createWindow();
+    // 使用优化的创建窗口流程
+    await createWindow();
 
     // 当 dock 图标被点击且没有其他窗口打开时，重新创建一个窗口
     app.on("activate", function () {
@@ -282,8 +433,16 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
     }
+
+    // 清理服务
+    const watchService = startupOptimizer?.getService<WatchService>("watch");
     watchService?.close();
+
+    // 清理全局变量
     mainWindow = null;
+    startupOptimizer = undefined;
+
+    logger.info("Application windows closed, services cleaned up");
 });
 
 /**

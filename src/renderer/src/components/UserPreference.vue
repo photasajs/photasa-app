@@ -79,11 +79,11 @@ const tabsData = computed(() => [
         <template #scanMonitoring>
             <ScanMonitoringSettings />
         </template>
-        <template #about>
-            <AboutPhotasa />
-        </template>
         <template #advanced>
             <AdvancedSettings />
+        </template>
+        <template #about>
+            <AboutPhotasa />
         </template>
     </BaseTabs>
     <BaseModal

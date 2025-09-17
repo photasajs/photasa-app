@@ -182,11 +182,7 @@ watchArray(
 
 // 包装 addScanFolder 增加日志
 const addScanFolderWithLog = (folder: string, action: "scan" | "rescan" | "current") => {
-    logger.debug(`[addScanFolderWithLog] Attempting to add folder: ${folder}, action: ${action}`);
-    logger.debug(
-        `[addScanFolderWithLog] Current scanningFolder before:`,
-        scanningFolder.value.map((f) => f.path),
-    );
+    logger.info(`[addScanFolderWithLog] Attempting to add folder: ${folder}, action: ${action}`);
 
     // 检查是否已存在
     const existingIndex = scanningFolder.value.findIndex((f) => f.path === folder);
@@ -198,32 +194,23 @@ const addScanFolderWithLog = (folder: string, action: "scan" | "rescan" | "curre
     }
 
     addScanFolder(folder, action);
-    logger.debug(`[addScanFolderWithLog] Successfully added folder: ${folder}`);
-    logger.debug(
-        `[addScanFolderWithLog] Current scanningFolder after:`,
-        scanningFolder.value.map((f) => f.path),
-    );
+    logger.info(`[addScanFolderWithLog] Successfully added folder: ${folder}`);
 };
 
 watchArray(
     scanningFolder,
     () => {
-        logger.debug(
-            "watchArray scanningFolder triggered",
-            scanningFolder.value,
-            scanPhotosTask.isIdle,
-        );
         if (scanPhotosTask.isIdle) {
-            logger.debug("scanPhotosTask is idle, calling startScanning");
+            logger.info("scanPhotosTask is idle, calling startScanning");
             startScanning();
         } else {
-            logger.debug("scanPhotosTask is not idle, will retry in 500ms");
+            logger.info("scanPhotosTask is not idle, will retry in 500ms");
             setTimeout(() => {
                 if (scanPhotosTask.isIdle) {
                     logger.debug("scanPhotosTask became idle, retrying startScanning");
                     startScanning();
                 } else {
-                    logger.debug("scanPhotosTask still not idle after 500ms");
+                    logger.warn("scanPhotosTask still not idle after 500ms");
                 }
             }, 500);
         }

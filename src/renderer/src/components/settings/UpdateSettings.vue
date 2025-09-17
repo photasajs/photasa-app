@@ -248,52 +248,6 @@ onMounted(async () => {
             <div class="header-title">{{ label.autoUpdate }}</div>
             <div class="header-desc">{{ label.autoUpdateDesc }}</div>
         </div>
-
-        <!-- 主开关 -->
-        <div class="settings-section">
-            <BaseInlineFormField
-                :label="label.enabled"
-                description="开启后应用将自动检查并安装更新"
-            >
-                <BaseSwitch
-                    :modelValue="autoUpdate.enabled"
-                    @update:modelValue="(value) => updateConfig('enabled', value)"
-                />
-            </BaseInlineFormField>
-        </div>
-
-        <!-- 配置设置 -->
-        <transition name="fade">
-            <div v-if="autoUpdate.enabled" class="settings-section">
-                <h4 class="section-title">更新配置</h4>
-
-                <BaseInlineFormField :label="label.checkInterval">
-                    <BaseSelect
-                        :modelValue="autoUpdate.checkInterval"
-                        :options="intervalOptions"
-                        @update:modelValue="(value) => updateConfig('checkInterval', Number(value))"
-                    />
-                </BaseInlineFormField>
-
-                <BaseInlineFormField :label="label.prerelease" :description="label.prereleaseDesc">
-                    <BaseSwitch
-                        :modelValue="autoUpdate.allowPrerelease"
-                        @update:modelValue="(value) => updateConfig('allowPrerelease', value)"
-                    />
-                </BaseInlineFormField>
-
-                <BaseInlineFormField
-                    :label="label.autoInstall"
-                    :description="label.autoInstallDesc"
-                >
-                    <BaseSwitch
-                        :modelValue="autoUpdate.autoInstall"
-                        @update:modelValue="(value) => updateConfig('autoInstall', value)"
-                    />
-                </BaseInlineFormField>
-            </div>
-        </transition>
-
         <!-- 版本信息 -->
         <div class="settings-section">
             <h4 class="section-title">版本信息</h4>
@@ -369,6 +323,51 @@ onMounted(async () => {
                 {{ label.installUpdate }}
             </BaseButton>
         </div>
+
+        <!-- 主开关 -->
+        <div class="settings-section">
+            <BaseInlineFormField
+                :label="label.enabled"
+                description="开启后应用将自动检查并安装更新"
+            >
+                <BaseSwitch
+                    :modelValue="autoUpdate.enabled"
+                    @update:modelValue="(value) => updateConfig('enabled', value)"
+                />
+            </BaseInlineFormField>
+        </div>
+
+        <!-- 配置设置 -->
+        <transition name="fade">
+            <div v-if="autoUpdate.enabled" class="settings-section">
+                <h4 class="section-title">更新配置</h4>
+
+                <BaseInlineFormField :label="label.checkInterval">
+                    <BaseSelect
+                        :modelValue="autoUpdate.checkInterval"
+                        :options="intervalOptions"
+                        @update:modelValue="(value) => updateConfig('checkInterval', Number(value))"
+                    />
+                </BaseInlineFormField>
+
+                <BaseInlineFormField :label="label.prerelease" :description="label.prereleaseDesc">
+                    <BaseSwitch
+                        :modelValue="autoUpdate.allowPrerelease"
+                        @update:modelValue="(value) => updateConfig('allowPrerelease', value)"
+                    />
+                </BaseInlineFormField>
+
+                <BaseInlineFormField
+                    :label="label.autoInstall"
+                    :description="label.autoInstallDesc"
+                >
+                    <BaseSwitch
+                        :modelValue="autoUpdate.autoInstall"
+                        @update:modelValue="(value) => updateConfig('autoInstall', value)"
+                    />
+                </BaseInlineFormField>
+            </div>
+        </transition>
     </div>
 </template>
 
@@ -386,7 +385,7 @@ onMounted(async () => {
 .settings-header {
     text-align: left;
     padding-bottom: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 4px;
     border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
 }
 
