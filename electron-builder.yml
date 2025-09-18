@@ -16,22 +16,15 @@ win:
         - target: nsis
           arch:
               - x64
-        - target: zip
-          arch:
-              - x64
     executableName: Photasa
 nsis:
-    artifactName: ${productName}-${version}-Setup.${ext}
+    artifactName: ${productName}-${version}.${ext}
     shortcutName: ${productName}
     uninstallDisplayName: ${productName}
     createDesktopShortcut: always
 mac:
     target:
         - target: dmg
-          arch:
-              - x64
-              - arm64
-        - target: zip
           arch:
               - x64
               - arm64
