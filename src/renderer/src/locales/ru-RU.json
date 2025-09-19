@@ -569,5 +569,25 @@
             "exportFailed": "Ошибка экспорта логов: {error}"
         },
         "dragInfo": "Перетащите для перемещения окна"
+    },
+    "update": {
+        "notification": {
+            "title": "Доступна новая версия",
+            "message": "Версия {version} доступна",
+            "cancel": "Отмена",
+            "install": "Установить",
+            "cancelDownload": "Отменить загрузку",
+            "installNow": "Установить сейчас",
+            "viewDetails": "Показать детали"
+        },
+        "popup": {
+            "title": "Доступна новая версия",
+            "message": "Версия {version} доступна",
+            "cancel": "Отмена",
+            "install": "Установить",
+            "cancelDownload": "Отменить загрузку",
+            "installNow": "Установить сейчас",
+            "close": "Закрыть"
+        }
     }
 }

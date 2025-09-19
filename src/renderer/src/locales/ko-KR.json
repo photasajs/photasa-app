@@ -569,5 +569,25 @@
             "exportFailed": "로그 내보내기 실패: {error}"
         },
         "dragInfo": "창을 이동하려면 드래그하세요"
+    },
+    "update": {
+        "notification": {
+            "title": "새 버전 사용 가능",
+            "message": "버전 {version}이 사용 가능합니다",
+            "cancel": "취소",
+            "install": "설치",
+            "cancelDownload": "다운로드 취소",
+            "installNow": "지금 설치",
+            "viewDetails": "세부 정보 보기"
+        },
+        "popup": {
+            "title": "새 버전 사용 가능",
+            "message": "버전 {version}이 사용 가능합니다",
+            "cancel": "취소",
+            "install": "설치",
+            "cancelDownload": "다운로드 취소",
+            "installNow": "지금 설치",
+            "close": "닫기"
+        }
     }
 }

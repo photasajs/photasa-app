@@ -559,5 +559,25 @@
             "6h": "最近6小時",
             "24h": "最近24小時"
         }
+    },
+    "update": {
+        "notification": {
+            "title": "發現新版本",
+            "message": "版本 {version} 可用",
+            "cancel": "取消",
+            "install": "安裝",
+            "cancelDownload": "取消下載",
+            "installNow": "立即安裝",
+            "viewDetails": "查看詳情"
+        },
+        "popup": {
+            "title": "發現新版本",
+            "message": "版本 {version} 可用",
+            "cancel": "取消",
+            "install": "安裝",
+            "cancelDownload": "取消下載",
+            "installNow": "立即安裝",
+            "close": "關閉"
+        }
     }
 }

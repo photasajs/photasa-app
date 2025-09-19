@@ -590,5 +590,25 @@
             "6h": "過去6時間",
             "24h": "過去24時間"
         }
+    },
+    "update": {
+        "notification": {
+            "title": "新しいバージョンが利用可能",
+            "message": "バージョン {version} が利用可能です",
+            "cancel": "キャンセル",
+            "install": "インストール",
+            "cancelDownload": "ダウンロードをキャンセル",
+            "installNow": "今すぐインストール",
+            "viewDetails": "詳細を表示"
+        },
+        "popup": {
+            "title": "新しいバージョンが利用可能",
+            "message": "バージョン {version} が利用可能です",
+            "cancel": "キャンセル",
+            "install": "インストール",
+            "cancelDownload": "ダウンロードをキャンセル",
+            "installNow": "今すぐインストール",
+            "close": "閉じる"
+        }
     }
 }

@@ -569,5 +569,25 @@
             "exportFailed": "Помилка експорту логів: {error}"
         },
         "dragInfo": "Перетягніть для переміщення вікна"
+    },
+    "update": {
+        "notification": {
+            "title": "Доступна нова версія",
+            "message": "Версія {version} доступна",
+            "cancel": "Скасувати",
+            "install": "Встановити",
+            "cancelDownload": "Скасувати завантаження",
+            "installNow": "Встановити зараз",
+            "viewDetails": "Показати деталі"
+        },
+        "popup": {
+            "title": "Доступна нова версія",
+            "message": "Версія {version} доступна",
+            "cancel": "Скасувати",
+            "install": "Встановити",
+            "cancelDownload": "Скасувати завантаження",
+            "installNow": "Встановити зараз",
+            "close": "Закрити"
+        }
     }
 }

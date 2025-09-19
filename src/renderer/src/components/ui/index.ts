@@ -63,6 +63,7 @@ export { default as BaseSpinner } from "./BaseSpinner.vue";
 export { default as BaseSpinContainer } from "./BaseSpinContainer.vue";
 export { default as BaseNotification } from "./BaseNotification.vue";
 export { default as NotificationContainer } from "./NotificationContainer.vue";
+export { default as UpdateNotification } from "./UpdateNotification.vue";
 
 // === 展示和描述组件 ===
 export { default as BaseDescriptions } from "./BaseDescriptions.vue";

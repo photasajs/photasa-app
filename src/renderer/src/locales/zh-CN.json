@@ -665,5 +665,25 @@
             "failed": "失败",
             "unknown": "未知"
         }
+    },
+    "update": {
+        "notification": {
+            "title": "发现新版本",
+            "message": "版本 {version} 可用",
+            "cancel": "取消",
+            "install": "安装",
+            "cancelDownload": "取消下载",
+            "installNow": "立即安装",
+            "viewDetails": "查看详情"
+        },
+        "popup": {
+            "title": "发现新版本",
+            "message": "版本 {version} 可用",
+            "cancel": "取消",
+            "install": "安装",
+            "cancelDownload": "取消下载",
+            "installNow": "立即安装",
+            "close": "关闭"
+        }
     }
 }

@@ -566,5 +566,25 @@
             "exportFailed": "Esportazione log fallita: {error}"
         },
         "dragInfo": "Trascina per spostare la finestra"
+    },
+    "update": {
+        "notification": {
+            "title": "Nuova versione disponibile",
+            "message": "La versione {version} è disponibile",
+            "cancel": "Annulla",
+            "install": "Installa",
+            "cancelDownload": "Annulla download",
+            "installNow": "Installa ora",
+            "viewDetails": "Visualizza dettagli"
+        },
+        "popup": {
+            "title": "Nuova versione disponibile",
+            "message": "La versione {version} è disponibile",
+            "cancel": "Annulla",
+            "install": "Installa",
+            "cancelDownload": "Annulla download",
+            "installNow": "Installa ora",
+            "close": "Chiudi"
+        }
     }
 }

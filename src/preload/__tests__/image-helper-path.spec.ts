@@ -151,7 +151,7 @@ describe("Path Handling in getFileMetadata", () => {
         });
 
         it("should fallback to file timestamps when EXIF extraction fails", async () => {
-            vi.mocked(getExifInfo).mockResolvedValueOnce(null);
+            vi.mocked(getExifInfo).mockResolvedValueOnce(undefined);
             vi.mocked(extractDateTimeFromExif).mockReturnValueOnce(null);
 
             const result = await getFileMetadata("file:///Users/test/image.jpg");

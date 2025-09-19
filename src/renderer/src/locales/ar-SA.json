@@ -569,5 +569,25 @@
             "exportFailed": "فشل في تصدير السجلات: {error}"
         },
         "dragInfo": "اسحب لتحريك النافذة"
+    },
+    "update": {
+        "notification": {
+            "title": "إصدار جديد متاح",
+            "message": "الإصدار {version} متاح",
+            "cancel": "إلغاء",
+            "install": "تثبيت",
+            "cancelDownload": "إلغاء التحميل",
+            "installNow": "تثبيت الآن",
+            "viewDetails": "عرض التفاصيل"
+        },
+        "popup": {
+            "title": "إصدار جديد متاح",
+            "message": "الإصدار {version} متاح",
+            "cancel": "إلغاء",
+            "install": "تثبيت",
+            "cancelDownload": "إلغاء التحميل",
+            "installNow": "تثبيت الآن",
+            "close": "إغلاق"
+        }
     }
 }

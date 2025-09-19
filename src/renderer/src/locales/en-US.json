@@ -624,5 +624,25 @@
             "failed": "Failed",
             "unknown": "Unknown"
         }
+    },
+    "update": {
+        "notification": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "viewDetails": "View Details"
+        },
+        "popup": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "close": "Close"
+        }
     }
 }

@@ -590,5 +590,25 @@
             "6h": "Dernières 6 heures",
             "24h": "Dernières 24 heures"
         }
+    },
+    "update": {
+        "notification": {
+            "title": "Nouvelle version disponible",
+            "message": "La version {version} est disponible",
+            "cancel": "Annuler",
+            "install": "Installer",
+            "cancelDownload": "Annuler le téléchargement",
+            "installNow": "Installer maintenant",
+            "viewDetails": "Voir les détails"
+        },
+        "popup": {
+            "title": "Nouvelle version disponible",
+            "message": "La version {version} est disponible",
+            "cancel": "Annuler",
+            "install": "Installer",
+            "cancelDownload": "Annuler le téléchargement",
+            "installNow": "Installer maintenant",
+            "close": "Fermer"
+        }
     }
 }

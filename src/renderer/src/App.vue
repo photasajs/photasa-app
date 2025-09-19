@@ -37,11 +37,13 @@ import {
     PortalProvider,
     BaseModal,
     BaseSpinner,
+    UpdateNotification,
 } from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
 import { scanMonitoringService } from "@renderer/services/scan-monitoring-service";
 import LogConsole from "./components/LogConsole.vue";
+import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 
 /**
  * 日志记录器
@@ -54,6 +56,9 @@ const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
+
+// 初始化更新监听器
+const { updateStore } = useUpdateListener();
 
 const showImportDialog = ref(false);
 const showPreference = ref(false);
@@ -308,6 +313,18 @@ async function startScanning(): Promise<void> {
 function handlePreferenceOk(): void {
     showPreference.value = false;
 }
+
+// 更新处理函数
+function handleUpdateInstall(): void {
+    updateStore.startDownload();
+    // 调用主进程开始下载
+    window.api?.downloadUpdate?.();
+}
+
+function handleUpdateInstallNow(): void {
+    // 调用主进程安装更新
+    window.api?.installUpdate?.();
+}
 // Update title
 const title = computed(() => {
     return `${t("app.title")} - ${currentFolder.value}`;
@@ -461,6 +478,21 @@ window.api?.onScanQueueAdd((operations: any[]) => {
 
     <!-- 通知容器 -->
     <NotificationContainer />
+
+    <!-- 更新通知组件 -->
+    <UpdateNotification
+        v-if="updateStore.hasUpdate"
+        :id="`update-${Date.now()}`"
+        :update-info="updateStore.updateInfo"
+        :download-progress="updateStore.downloadProgress"
+        :is-downloading="updateStore.isDownloading"
+        :is-ready-to-install="updateStore.isReadyToInstall"
+        @close="updateStore.hideUpdateNotification"
+        @cancel="updateStore.hideUpdateNotification"
+        @install="handleUpdateInstall"
+        @cancel-download="updateStore.cancelDownload"
+        @install-now="handleUpdateInstallNow"
+    />
 
     <!-- Portal提供者 - 为下拉菜单等组件提供渲染目标 -->
     <PortalProvider />

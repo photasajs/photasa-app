@@ -569,5 +569,25 @@
             "exportFailed": "Xuất log thất bại: {error}"
         },
         "dragInfo": "Kéo để di chuyển cửa sổ"
+    },
+    "update": {
+        "notification": {
+            "title": "Phiên bản mới có sẵn",
+            "message": "Phiên bản {version} có sẵn",
+            "cancel": "Hủy",
+            "install": "Cài đặt",
+            "cancelDownload": "Hủy tải xuống",
+            "installNow": "Cài đặt ngay",
+            "viewDetails": "Xem chi tiết"
+        },
+        "popup": {
+            "title": "Phiên bản mới có sẵn",
+            "message": "Phiên bản {version} có sẵn",
+            "cancel": "Hủy",
+            "install": "Cài đặt",
+            "cancelDownload": "Hủy tải xuống",
+            "installNow": "Cài đặt ngay",
+            "close": "Đóng"
+        }
     }
 }

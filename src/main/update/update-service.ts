@@ -43,11 +43,12 @@ export default class UpdateService {
         // 启动定时检查
         if (config.enabled) {
             this.startPeriodicCheck();
-            // 立即执行一次检查（延迟5秒以避免启动时的性能问题）
-            setTimeout(() => {
-                this.checkForUpdates();
-            }, 5000);
         }
+
+        // 总是执行一次检查（延迟5秒以避免启动时的性能问题）
+        setTimeout(() => {
+            this.checkForUpdates();
+        }, 5000);
 
         logger.info(
             `[UpdateService] 服务已初始化: enabled=${config.enabled}, checkInterval=${config.checkInterval}h`,

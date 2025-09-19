@@ -569,5 +569,25 @@
             "exportFailed": "Günlük dışa aktarma başarısız: {error}"
         },
         "dragInfo": "Pencereyi taşımak için sürükleyin"
+    },
+    "update": {
+        "notification": {
+            "title": "Yeni sürüm mevcut",
+            "message": "Sürüm {version} mevcut",
+            "cancel": "İptal",
+            "install": "Yükle",
+            "cancelDownload": "İndirmeyi iptal et",
+            "installNow": "Şimdi yükle",
+            "viewDetails": "Detayları görüntüle"
+        },
+        "popup": {
+            "title": "Yeni sürüm mevcut",
+            "message": "Sürüm {version} mevcut",
+            "cancel": "İptal",
+            "install": "Yükle",
+            "cancelDownload": "İndirmeyi iptal et",
+            "installNow": "Şimdi yükle",
+            "close": "Kapat"
+        }
     }
 }
