@@ -61,6 +61,7 @@ describe("Path Handling in getFileMetadata", () => {
         // Mock process.platform for different tests
         Object.defineProperty(process, "platform", {
             writable: true,
+            configurable: true,
             value: "darwin", // Default to macOS
         });
     });
@@ -68,6 +69,7 @@ describe("Path Handling in getFileMetadata", () => {
     afterEach(() => {
         Object.defineProperty(process, "platform", {
             writable: true,
+            configurable: true,
             value: originalPlatform,
         });
     });
