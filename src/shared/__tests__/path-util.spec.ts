@@ -362,7 +362,7 @@ describe("normalizePath", () => {
         expect(path.isAbsolute(result)).toBe(true);
         // 在非Windows系统上，fileURLToPath会保留前导斜杠
         if (process.platform === "win32") {
-            expect(result).toBe(path.resolve("C:/Users/Albert/Pictures/photo.jpg"));
+            expect(result).toBe("C:\\Users\\Albert\\Pictures\\photo.jpg");
         } else {
             expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
         }
