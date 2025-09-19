@@ -96,9 +96,11 @@ Object.defineProperty(process, "contextIsolated", {
 });
 
 // Mock process.platform for isMac function
+const originalPlatform = process.platform;
 Object.defineProperty(process, "platform", {
     value: "darwin",
     writable: true,
+    configurable: true,
 });
 
 describe("Preload onScanQueueAdd API", () => {
@@ -402,5 +404,14 @@ describe("Preload onScanQueueAdd API", () => {
             expect(exposedApi).toBeDefined();
             expect(exposedApi.isMac()).toBe(false);
         });
+    });
+});
+
+// Restore original platform after all tests
+afterAll(() => {
+    Object.defineProperty(process, "platform", {
+        value: originalPlatform,
+        writable: true,
+        configurable: true,
     });
 });
