@@ -350,12 +350,6 @@ describe("normalizePath", () => {
     });
 
     it("should handle Windows file:// URLs", () => {
-        // Skip Windows-specific tests on non-Windows platform
-        if (process.platform !== "win32") {
-            expect.assertions(0);
-            return;
-        }
-
         // Windows file:// URL 格式测试
         const windowsFileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
         const result = normalizePath(windowsFileUrl);
