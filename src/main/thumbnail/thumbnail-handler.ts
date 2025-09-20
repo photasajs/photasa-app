@@ -1,6 +1,7 @@
 import isVideo from "is-video";
 import isImage from "is-image";
-import { ensureDir, exists, remove, readFile } from "fs-extra";
+import { ensureDir, exists, remove, readFile, access } from "fs-extra";
+import * as fs from "fs";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
@@ -397,6 +398,27 @@ export async function createThumbnail(
 
         // 确保缩略图目录存在
         await ensureDir(path.dirname(arg.thumbnail));
+
+        // 确保目标文件可写：如果文件存在且不可写，先删除它
+        try {
+            if (await exists(arg.thumbnail)) {
+                // 检查文件是否可写
+                try {
+                    await access(arg.thumbnail, fs.constants.W_OK);
+                    logger.debug(
+                        `[thumbnail-handler] Target thumbnail exists and is writable: ${arg.thumbnail}`,
+                    );
+                } catch (writeError) {
+                    logger.warn(
+                        `[thumbnail-handler] Target thumbnail exists but is not writable, removing: ${arg.thumbnail}`,
+                    );
+                    await remove(arg.thumbnail);
+                }
+            }
+        } catch (cleanupError) {
+            logger.warn(`[thumbnail-handler] Failed to cleanup target thumbnail: ${cleanupError}`);
+            // 继续尝试写入，让后续的错误处理来处理
+        }
 
         let isHeic = HeicExtensionRE.test(arg.path);
         // 如果文件是 HEIC 格式，则需要先转换为 PNG 格式
