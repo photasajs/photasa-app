@@ -69,25 +69,13 @@ const card = computed<Card>(() => {
 
 // 文件统计
 const imageCount = computed(() => {
-    if (!card.value?.config?.photoList) return 0;
-    return card.value.config.photoList.filter(
-        (item: any) =>
-            item.type === "image" ||
-            ["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif"].includes(
-                item.path?.toLowerCase().split(".").pop() || "",
-            ),
-    ).length;
+    if (!card.value?.images) return 0;
+    return card.value.images.filter((item) => !item.isVideo).length;
 });
 
 const videoCount = computed(() => {
-    if (!card.value?.config?.photoList) return 0;
-    return card.value.config.photoList.filter(
-        (item: any) =>
-            item.type === "video" ||
-            ["mp4", "avi", "mov", "wmv", "flv", "webm", "mkv"].includes(
-                item.path?.toLowerCase().split(".").pop() || "",
-            ),
-    ).length;
+    if (!card.value?.images) return 0;
+    return card.value.images.filter((item) => item.isVideo).length;
 });
 
 // 文件元数据（支持图片/视频/文件信息）
