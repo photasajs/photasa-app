@@ -6,30 +6,46 @@
 
 ## 摘要
 
-为图片列表中的缩略图添加智能文件类型指示器，不仅显示播放按钮，还要显示具体的文件格式（如JPEG、PNG、MP4、MOV等），帮助用户快速识别文件类型和格式。
+为图片列表添加两个增强功能：
+
+1. **头部统计显示**: 在面包屑右侧显示图片和视频数量统计，提供快速的文件概览
+2. **文件类型指示器**: 在缩略图上显示文件类型标识，不仅显示播放按钮，还要显示具体的文件格式（如JPEG、PNG、MP4、MOV等），帮助用户快速识别文件类型和格式
 
 ## 动机
 
-当前的图片列表只能通过播放按钮区分视频和图片，但无法提供更详细的文件类型信息：
+当前的图片列表存在以下问题：
 
+### 文件统计信息缺失
+- **数量不明**: 用户无法快速了解当前文件夹中有多少图片和视频
+- **概览困难**: 需要滚动才能看到所有文件，无法快速获得整体印象
+- **导航不便**: 在大型文件夹中难以快速定位目标文件类型
+
+### 文件类型识别不足
 - **信息不足**: 用户无法知道具体的文件格式（JPEG vs PNG vs WebP等）
 - **RAW文件识别**: 无法区分RAW文件（CR2、RAF、ARW等）和普通图片
 - **AI文件支持**: 缺少对设计文件（PSD、AI、Sketch等）的视觉指示
 - **用户体验**: 需要更直观的文件类型识别方式
 
-此功能将提供更丰富和准确的文件类型信息，提升用户的工作效率。
+这些功能将提供更丰富和准确的文件信息，显著提升用户的工作效率。
 
 ## 详细设计
 
 ### 1. 功能特性
 
-#### 1.1 智能文件类型检测
+#### 1.1 图片列表头部统计（新增）
+- 在面包屑右侧显示文件数量统计
+- 支持图片和视频分别计数
+- 显示总文件数和详细分类
+- 支持加载状态显示
+- 响应式设计，移动端优化
+
+#### 1.2 智能文件类型检测
 - 利用现有的文件扩展名检测逻辑（基于 `EnhancedImageInfoModal.vue`）
 - 分类文件类型（图片、视频、RAW、AI文件、其他）
 - 格式化显示名称（mp4 -> MP4, jpg -> JPEG）
 - 支持特殊格式（HEIC、RAW等）
 
-#### 1.2 视觉指示器
+#### 1.3 视觉指示器
 - 使用现有的 Phosphor Icons 库
 - 格式标签显示（JPEG、PNG、MP4等）
 - 颜色编码区分不同文件类型
@@ -43,13 +59,37 @@
 
 ### 2. 技术实现
 
-#### 2.1 利用现有资源
+#### 2.1 图片列表统计实现
+```typescript
+// 在 ImageList.vue 中添加统计逻辑
+const imageCount = computed(() => {
+  if (!card?.config?.photoList) return 0;
+  return card.config.photoList.filter((item: any) =>
+    item.type === "image" ||
+    ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic', 'heif'].includes(
+      item.path?.toLowerCase().split('.').pop() || ''
+    )
+  ).length;
+});
+
+const videoCount = computed(() => {
+  if (!card?.config?.photoList) return 0;
+  return card.config.photoList.filter((item: any) =>
+    item.type === "video" ||
+    ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv'].includes(
+      item.path?.toLowerCase().split('.').pop() || ''
+    )
+  ).length;
+});
+```
+
+#### 2.2 利用现有资源
 - **图标库**: 使用已有的 `@phosphor-icons/vue`
 - **文件类型检测**: 基于 `EnhancedImageInfoModal.vue` 中的现有逻辑
 - **文件扩展名常量**: 利用 `config.ts` 中已定义的扩展名
 - **现有组件**: 扩展现有的 `BaseImage.vue` 组件
 
-#### 2.2 组件架构
+#### 2.3 组件架构
 ```typescript
 interface FileTypeBadgeProps {
   filePath: string;
@@ -59,7 +99,7 @@ interface FileTypeBadgeProps {
 }
 ```
 
-#### 2.3 文件类型检测（直接使用现有逻辑）
+#### 2.4 文件类型检测（直接使用现有逻辑）
 ```typescript
 // 直接在FileTypeBadge组件中复制现有逻辑
 const isImage = computed(() => {
@@ -78,7 +118,7 @@ const isRaw = computed(() => {
 });
 ```
 
-#### 2.4 支持的格式（基于现有配置）
+#### 2.5 支持的格式（基于现有配置）
 - **图片格式**: 基于 `config.acceptedNonRawExtensions` 和 `config.acceptedHeicExtensions`
 - **视频格式**: 基于 `EnhancedImageInfoModal.vue` 中的视频扩展名列表
 - **RAW格式**: 基于 `config.acceptedRawExtensions`
@@ -165,7 +205,31 @@ const fileType = computed(() => {
 }
 ```
 
-#### 3.3 集成到BaseImage（最小改动）
+#### 3.3 图片列表头部统计（新增功能）
+```vue
+<!-- ImageList.vue 头部区域 -->
+<div class="px-4 py-2 border-b flex items-center justify-between">
+  <BaseBreadcrumb>
+    <BaseBreadcrumbItem
+      v-for="(part, index) in card.parts"
+      :key="part"
+      :isLast="index === card.parts.length - 1"
+    >
+      {{ part }}
+    </BaseBreadcrumbItem>
+  </BaseBreadcrumb>
+
+  <!-- 文件统计 -->
+  <FileCountBadge
+    :image-count="imageCount"
+    :video-count="videoCount"
+    :is-loading="loadingPhotasaConfig"
+    :show-breakdown="true"
+  />
+</div>
+```
+
+#### 3.4 集成到BaseImage（最小改动）
 ```vue
 <template>
   <div class="thumbnail-image">
@@ -242,19 +306,25 @@ const fileType = computed(() => {
 
 ## 实施计划
 
-### 阶段1: 创建FileTypeBadge组件
+### 阶段1: 在图片列表头部添加文件统计
+- [ ] 在 `ImageList.vue` 头部区域集成 `FileCountBadge` 组件
+- [ ] 添加图片和视频数量统计逻辑
+- [ ] 确保与现有面包屑布局协调
+- [ ] 测试响应式显示效果
+
+### 阶段2: 创建FileTypeBadge组件
 - [ ] 创建 `src/renderer/src/components/ui/FileTypeBadge.vue`
 - [ ] 使用现有的 Phosphor Icons
 - [ ] 实现基础样式和布局
 - [ ] 添加响应式显示逻辑
 
-### 阶段2: 集成到BaseImage
+### 阶段3: 集成到BaseImage
 - [ ] 修改 `src/renderer/src/components/ui/BaseImage.vue`
 - [ ] 添加FileTypeBadge组件
 - [ ] 实现条件显示逻辑
 - [ ] 确保不干扰现有功能
 
-### 阶段3: 测试和优化
+### 阶段4: 测试和优化
 - [ ] 测试各种文件格式
 - [ ] 性能测试和优化
 - [ ] 响应式设计测试

@@ -97,6 +97,7 @@ export { default as BaseListItem } from "./BaseListItem.vue";
 export { default as BaseAccordion } from "./BaseAccordion.vue";
 export { default as BaseAccordionPanel } from "./BaseAccordionPanel.vue";
 export { default as FileCountBadge } from "./FileCountBadge.vue";
+export { default as FileTypeBadge } from "./FileTypeBadge.vue";
 
 // === Portal系统 ===
 // 为Teleport提供渲染目标，与Vue原生兼容

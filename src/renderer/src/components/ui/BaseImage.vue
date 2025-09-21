@@ -2,7 +2,7 @@
 import { useIntersectionObserver } from "@vueuse/core";
 import { onMounted, ref, toRefs, watch } from "vue";
 import { prefetchImageTask } from "@renderer/utils/image-prefetch";
-import { BaseSpinner } from "@renderer/components/ui";
+import { BaseSpinner, FileTypeBadge } from "@renderer/components/ui";
 
 // Define props and emits
 const props = defineProps<{
@@ -89,6 +89,14 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
                         if (target) target.src = fallback;
                     }
                 "
+            />
+
+            <!-- 文件类型标识 -->
+            <FileTypeBadge
+                :file-path="raw"
+                :is-video="isVideo"
+                :show-format="width > 100"
+                :size="width > 150 ? 'large' : width > 100 ? 'medium' : 'small'"
             />
         </div>
     </div>

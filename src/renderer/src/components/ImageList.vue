@@ -17,6 +17,7 @@ import {
     BaseBreadcrumbItem,
     BaseTooltip,
     BaseCard,
+    FileCountBadge,
 } from "@renderer/components/ui";
 import { loggers } from "@common/logger";
 import ImageFallback from "@renderer/assets/images/fallback.png";
@@ -64,6 +65,29 @@ const card = computed<Card>(() => {
     const result = toImageList(currentFolder.value, currentFolderConfig.value);
 
     return result;
+});
+
+// 文件统计
+const imageCount = computed(() => {
+    if (!card.value?.config?.photoList) return 0;
+    return card.value.config.photoList.filter(
+        (item: any) =>
+            item.type === "image" ||
+            ["jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "heif"].includes(
+                item.path?.toLowerCase().split(".").pop() || "",
+            ),
+    ).length;
+});
+
+const videoCount = computed(() => {
+    if (!card.value?.config?.photoList) return 0;
+    return card.value.config.photoList.filter(
+        (item: any) =>
+            item.type === "video" ||
+            ["mp4", "avi", "mov", "wmv", "flv", "webm", "mkv"].includes(
+                item.path?.toLowerCase().split(".").pop() || "",
+            ),
+    ).length;
 });
 
 // 文件元数据（支持图片/视频/文件信息）
@@ -323,7 +347,7 @@ onUnmounted(() => {
     >
         <!-- 标题区 -->
         <div
-            class="px-4 py-2 border-b flex items-center"
+            class="px-4 py-2 border-b flex items-center justify-between"
             style="border-color: var(--color-border); background: var(--color-bg-secondary)"
         >
             <BaseBreadcrumb>
@@ -335,6 +359,14 @@ onUnmounted(() => {
                     {{ part }}
                 </BaseBreadcrumbItem>
             </BaseBreadcrumb>
+
+            <!-- 文件统计 -->
+            <FileCountBadge
+                :image-count="imageCount"
+                :video-count="videoCount"
+                :is-loading="loadingPhotasaConfig"
+                :show-breakdown="true"
+            />
         </div>
         <!-- 内容区 -->
         <div

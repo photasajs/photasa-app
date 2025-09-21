@@ -62,6 +62,7 @@ describe("WatchService Integration Tests", () => {
         // Setup mock IpcMain
         mockIpcMain = new EventEmitter() as any;
         mockIpcMain.handle = vi.fn();
+        mockIpcMain.removeHandler = vi.fn();
         mockIpcMain.on = vi.fn();
         mockIpcMain.removeAllListeners = vi.fn();
 
