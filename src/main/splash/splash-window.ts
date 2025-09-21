@@ -186,6 +186,26 @@ export class SplashWindow implements SplashScreenController {
         });
     }
 
+    // 淡出动画关闭窗口
+    fadeOut(callback: () => void): void {
+        if (!this.window) {
+            callback();
+            return;
+        }
+
+        let opacity = 1.0;
+        const fadeInterval = setInterval(() => {
+            opacity -= 0.1;
+            if (opacity <= 0) {
+                clearInterval(fadeInterval);
+                this.hide();
+                callback();
+            } else {
+                this.window?.setOpacity(opacity);
+            }
+        }, 30); // 300ms 淡出动画
+    }
+
     // 销毁窗口
     destroy(): void {
         if (this.window) {

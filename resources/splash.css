@@ -3,6 +3,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    background-color: #111827;
     --bg-color: #111827;
     --text-primary: #f9fafb;
     --text-secondary: #d1d5db;
@@ -198,7 +199,6 @@ body {
     animation: subtitleEntrance 0.8s ease-out 0.4s both;
 }
 
-
 /* Name change animations */
 .app-name.changing {
     animation: nameChangeOut 0.3s ease-in forwards;
@@ -215,7 +215,6 @@ body {
 .app-subtitle.changing-in {
     animation: subtitleChangeIn 0.3s ease-out 0.3s forwards;
 }
-
 
 /* Entrance animations */
 @keyframes nameEntrance {
@@ -239,7 +238,6 @@ body {
         transform: translateY(0);
     }
 }
-
 
 /* Change animations */
 @keyframes nameChangeOut {
@@ -285,7 +283,6 @@ body {
         transform: translateY(0);
     }
 }
-
 
 /* Language-specific fonts */
 .app-name[data-lang="zh-CN"],

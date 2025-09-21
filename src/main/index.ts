@@ -8,17 +8,18 @@ import { readFile } from "fs/promises";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
 import * as Sentry from "@sentry/electron/main";
-import WatchService from "./watch/watch-service";
 import icon from "../../resources/icon.png?asset";
 // Services are now imported in startup-optimizer.ts
 import { SplashWindow } from "./splash/splash-window";
-import { StartupOptimizer } from "./startup-optimizer";
+import { StartupOptimizerV2 } from "./services/startup-optimizer-v2";
 import { SingleInstanceManager } from "./single-instance-manager";
+import { startupMonitor } from "./performance/startup-performance-monitor";
+import { validateConfig } from "./services/config/service-config-validator";
 
 const logger = loggers.main;
 let mainWindow: BrowserWindow | undefined | null;
 let splashWindow: SplashWindow | undefined;
-let startupOptimizer: StartupOptimizer | undefined;
+let startupOptimizer: StartupOptimizerV2 | undefined;
 const singleInstanceManager = new SingleInstanceManager({
     appName: "Photasa",
     focusOnSecondInstance: true,
@@ -26,33 +27,48 @@ const singleInstanceManager = new SingleInstanceManager({
     createWindowOnMacOS: true,
 });
 
-// 初始化Sentry错误监控
-if (!isDev) {
-    Sentry.init({
-        dsn: "https://6cde14d12de5882405e5837a80978152@o4510009078841344.ingest.us.sentry.io/4510009079889920",
-        environment: process.env.NODE_ENV || "production",
-        beforeSend(event) {
-            // 过滤掉一些不重要的错误
-            if (event.exception) {
-                const error = event.exception.values?.[0];
-                if (error?.type === "ChunkLoadError" || error?.type === "Loading chunk") {
-                    return null; // 忽略chunk加载错误
+/**
+ * 初始化 Sentry 错误监控
+ */
+function initSentry(): void {
+    if (!isDev) {
+        Sentry.init({
+            dsn: "https://6cde14d12de5882405e5837a80978152@o4510009078841344.ingest.us.sentry.io/4510009079889920",
+            environment: process.env.NODE_ENV || "production",
+            beforeSend(event) {
+                // 过滤掉一些不重要的错误
+                if (event.exception) {
+                    const error = event.exception.values?.[0];
+                    if (error?.type === "ChunkLoadError" || error?.type === "Loading chunk") {
+                        return null; // 忽略chunk加载错误
+                    }
                 }
-            }
-            return event;
-        },
-    });
+                return event;
+            },
+        });
+        logger.info("Sentry initialized in background");
+    }
 }
-
+/**
+ * 创建主窗口
+ */
 async function createWindow(): Promise<void> {
     const startTime = Date.now();
     logger.info("Starting optimized application startup");
+    startupMonitor.mark("windowCreated");
+
+    // 验证服务配置
+    if (!validateConfig()) {
+        logger.error("Service configuration is invalid, startup may fail");
+        // 继续启动，但记录警告
+    }
 
     try {
         // 1. 立即显示闪屏
         try {
             splashWindow = new SplashWindow();
             splashWindow.show();
+            startupMonitor.mark("splashShown");
             splashWindow?.updateStatus("启动应用程序...");
         } catch (splashError) {
             logger.error("Failed to create splash window:", splashError);
@@ -60,8 +76,9 @@ async function createWindow(): Promise<void> {
             splashWindow = undefined;
         }
 
-        // 2. 设置 IPC 处理器（轻量级，无阻塞）
-        setupIpcHandlers();
+        // 2. 设置关键 IPC 处理器（仅启动必需的）
+        setupCriticalIpcHandlers();
+        startupMonitor.mark("ipcHandlersRegistered");
 
         // 3. 创建主窗口（但不显示）
         const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -89,43 +106,63 @@ async function createWindow(): Promise<void> {
 
         // 5. 初始化启动优化器
         splashWindow?.updateStatus("初始化核心服务...");
-        startupOptimizer = new StartupOptimizer(mainWindow, app, ipcMain);
+        startupOptimizer = new StartupOptimizerV2(mainWindow, app, ipcMain);
 
         // 6. 只初始化关键服务（阻塞）
         await startupOptimizer.initializeServices();
+        startupMonitor.mark("servicesInitialized");
 
         // 7. 开始加载渲染进程
         splashWindow?.updateStatus("加载用户界面...");
         await loadRenderer();
+        startupMonitor.mark("rendererLoaded");
 
         splashWindow?.updateStatus("即将完成...");
 
-        // 8. 渲染器加载完成后，直接关闭启动画面并显示主窗口
+        // 8. 渲染器加载完成后，使用淡出动画平滑过渡
         const totalTime = Date.now() - startTime;
         logger.info(`Optimized startup completed in ${totalTime}ms`);
 
-        // 给一个短暂的延迟让用户看到"即将完成"状态
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // 延迟注册非关键 IPC 处理器（窗口显示后 2 秒）
+        setTimeout(() => {
+            setupDeferredIpcHandlers();
+        }, 2000);
 
-        // 强制关闭启动画面并显示主窗口
-        logger.info("Force closing splash screen and showing main window");
+        // 使用淡出动画平滑关闭启动画面并显示主窗口
+        logger.info("Starting splash fadeOut transition");
 
         if (splashWindow) {
-            logger.info("Calling splashWindow.hide()");
-            splashWindow.hide();
-            splashWindow = undefined;
-            logger.info("splashWindow set to undefined");
-        } else {
-            logger.warn("splashWindow is null/undefined when trying to hide");
-        }
+            splashWindow.fadeOut(() => {
+                logger.info("Splash fadeOut completed");
+                splashWindow = undefined;
+                startupMonitor.mark("splashHidden");
 
-        if (mainWindow) {
-            logger.info("Showing main window");
-            mainWindow.show();
-            mainWindow.focus(); // 确保主窗口获得焦点
-            logger.info("Application startup finished, main window visible and focused");
+                if (mainWindow) {
+                    logger.info("Showing main window");
+                    mainWindow.show();
+                    mainWindow.focus(); // 确保主窗口获得焦点
+                    logger.info("Application startup finished, main window visible and focused");
+
+                    // 报告性能指标
+                    startupMonitor.report();
+                } else {
+                    logger.error("mainWindow is null when trying to show");
+                }
+            });
         } else {
-            logger.error("mainWindow is null when trying to show");
+            // 如果没有启动画面，直接显示主窗口
+            logger.warn("splashWindow is null/undefined, showing main window directly");
+            if (mainWindow) {
+                mainWindow.show();
+                mainWindow.focus();
+                logger.info("Application startup finished, main window visible and focused");
+                startupMonitor.mark("splashHidden");
+
+                // 报告性能指标
+                startupMonitor.report();
+            } else {
+                logger.error("mainWindow is null when trying to show");
+            }
         }
     } catch (error) {
         logger.error("Optimized startup failed:", error);
@@ -171,12 +208,12 @@ function setupWindowHandlers(): void {
 async function loadRenderer(): Promise<void> {
     if (!mainWindow) return;
 
-    return new Promise((resolve, reject) => {
-        // 增加超时时间到30秒，特别是首次启动时需要更多时间
+    return new Promise((resolve) => {
+        // 调整超时时间为 15 秒，更合理的超时时间
         const timeout = setTimeout(() => {
-            logger.error("Renderer load timeout after 30 seconds");
-            reject(new Error("Renderer load timeout"));
-        }, 30000);
+            logger.warn("Renderer load timeout after 15 seconds, continuing anyway");
+            resolve(); // 继续流程而不是中断
+        }, 15000);
 
         // 监听加载完成事件
         if (mainWindow) {
@@ -191,10 +228,10 @@ async function loadRenderer(): Promise<void> {
                 "did-fail-load",
                 (_, errorCode, errorDescription, validatedURL) => {
                     clearTimeout(timeout);
-                    logger.error(
-                        `Renderer failed to load: ${errorDescription} (${errorCode}) - URL: ${validatedURL}`,
+                    logger.warn(
+                        `Renderer failed to load: ${errorDescription} (${errorCode}) - URL: ${validatedURL}, continuing anyway`,
                     );
-                    reject(new Error(`Renderer load failed: ${errorDescription}`));
+                    resolve(); // 继续流程而不是中断
                 },
             );
         }
@@ -228,7 +265,16 @@ async function loadRenderer(): Promise<void> {
     });
 }
 
-function setupIpcHandlers(): void {
+// 关键 IPC 处理器 - 启动时必需
+function setupCriticalIpcHandlers(): void {
+    // Get system directory - 应用启动时需要
+    ipcMain.handle("picasa:get-directory", async (_, args) => {
+        return app.getPath(args.name);
+    });
+}
+
+// 延迟加载的 IPC 处理器 - 文件系统操作相关
+function setupDeferredIpcHandlers(): void {
     // 选择目录
     ipcMain.on("picasa:choose-directory", () => {
         if (mainWindow) {
@@ -243,11 +289,6 @@ function setupIpcHandlers(): void {
                     logger.error("Directory selection failed:", err);
                 });
         }
-    });
-
-    // Get system directory
-    ipcMain.handle("picasa:get-directory", async (_, args) => {
-        return app.getPath(args.name);
     });
 
     // Check if folder has valid photasa.json
@@ -299,6 +340,7 @@ function setupIpcHandlers(): void {
         }
     });
 
+    // 子文件夹扫描
     ipcMain.handle("picasa:sub-folders", async (_, args) => {
         try {
             const filterFn = (item: { path: string }): boolean => {
@@ -327,6 +369,8 @@ function setupIpcHandlers(): void {
             throw error;
         }
     });
+
+    logger.info("Deferred IPC handlers registered");
 }
 
 /**
@@ -386,6 +430,8 @@ if (!singleInstanceManager.initialize()) {
 });
 
 app.whenReady().then(async () => {
+    startupMonitor.mark("appReady");
+
     // 如果没有获得锁，不应该到达这里，但为了安全起见
     if (!singleInstanceManager.hasInstanceLock()) {
         return;
@@ -408,6 +454,11 @@ app.whenReady().then(async () => {
     // 使用优化的创建窗口流程
     await createWindow();
 
+    // 延迟初始化 Sentry（窗口创建后 1 秒）
+    setTimeout(() => {
+        initSentry();
+    }, 1000);
+
     // 当 dock 图标被点击且没有其他窗口打开时，重新创建一个窗口
     app.on("activate", function () {
         // On macOS it's common to re-create a window in the app when the
@@ -429,14 +480,19 @@ app.whenReady().then(async () => {
  * 当所有窗口关闭时退出，除了 macOS。
  * 在 macOS 上，应用程序和菜单栏通常会保持活动状态，直到用户显式退出。
  */
-app.on("window-all-closed", () => {
+app.on("window-all-closed", async () => {
     if (process.platform !== "darwin") {
         app.quit();
     }
 
     // 清理服务
-    const watchService = startupOptimizer?.getService<WatchService>("watch");
-    watchService?.close();
+    if (startupOptimizer) {
+        try {
+            await startupOptimizer.shutdownAllServices();
+        } catch (error) {
+            logger.error("Failed to shutdown services:", error);
+        }
+    }
 
     // 清理全局变量
     mainWindow = null;
