@@ -763,6 +763,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             class="w-full"
                             :disabled="loadingState.directories"
                             @click="addSourceDirectory(stepData || {}, setStepData)"
+                            data-testid="add-source-button"
                         >
                             <BaseSpinner v-if="loadingState.directories" class="w-4 h-4 mr-2" />
                             <PlusIcon v-else class="w-4 h-4 mr-2 text-current" />
