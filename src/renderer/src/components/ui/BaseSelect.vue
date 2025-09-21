@@ -233,21 +233,7 @@ const updateDropdownPosition = () => {
         zIndex: "10000",
     };
 
-    logger.debug("Updated dropdown position:", {
-        buttonRect: {
-            top: buttonRect.top,
-            bottom: buttonRect.bottom,
-            left: buttonRect.left,
-            width: buttonRect.width,
-        },
-        actualDropdownHeight,
-        viewportHeight,
-        spaceBelow,
-        spaceAbove,
-        calculatedTop: top,
-        calculatedLeft: left,
-        finalStyles: dropdownStyles.value,
-    });
+    // 位置更新完成
 };
 
 /**
@@ -260,7 +246,6 @@ const openDropdown = () => {
     dropdownManager.open(dropdownId);
 
     isOpen.value = true;
-    logger.debug("Dropdown opened:", isOpen.value);
 
     nextTick(() => {
         updateDropdownPosition();
@@ -287,10 +272,7 @@ const toggleDropdown = () => {
  * 选择选项
  */
 const selectOption = (option: Option, index?: number) => {
-    logger.debug("selectOption called:", option, "index:", index);
-
     if (props.disabled) {
-        logger.debug("Select disabled, ignoring");
         return;
     }
 
@@ -491,7 +473,6 @@ const handleClickOutside = (event: MouseEvent) => {
  * 处理选项点击事件
  */
 const handleOptionClick = (option: Option, index: number) => {
-    logger.debug("Option clicked:", option, "index:", index);
     selectOption(option, index);
 };
 
@@ -532,7 +513,6 @@ const onDropdownAfterEnter = () => {
     // 确保ComboBox保持焦点，符合ARIA标准
     if (buttonRef.value) {
         buttonRef.value.focus();
-        logger.debug("ComboBox focus maintained for ARIA compliance");
     }
 
     // 滚动到高亮项
@@ -556,7 +536,6 @@ const handleDropdownCloseEvent = (event: CustomEvent) => {
         // 被其他下拉菜单强制关闭，直接关闭本地状态（不需要通知管理器）
         isOpen.value = false;
         highlightedIndex.value = -1;
-        logger.debug("Dropdown force closed by manager");
     }
 };
 
@@ -569,8 +548,6 @@ onMounted(() => {
 
     // 注册到下拉管理器
     dropdownManager.register(dropdownId);
-
-    logger.debug("BaseSelect mounted with id:", dropdownId);
 });
 
 onBeforeUnmount(() => {
@@ -581,8 +558,6 @@ onBeforeUnmount(() => {
 
     // 从下拉管理器注销
     dropdownManager.unregister(dropdownId);
-
-    logger.debug("BaseSelect unmounted");
 });
 
 // 监听位置更新

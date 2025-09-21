@@ -2,6 +2,8 @@ import { Menu } from "electron";
 import type { IpcMain, BrowserWindow as TBrowserWindow } from "electron";
 import { loggers } from "@common/logger";
 import type { MenuItemData } from "@common/menu-types";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
 /**
  * MenuService 负责主进程菜单的同步、构建与事件转发
@@ -9,7 +11,16 @@ import type { MenuItemData } from "@common/menu-types";
  * - 动态构建 Electron.Menu
  * - 菜单项点击事件通过 IPC 转发到渲染进程
  */
-export default class MenuService {
+@Service({
+    name: "menu",
+    displayName: "菜单服务",
+    priority: ServicePriority.Important,
+    dependencies: ["window"],
+    lazyLoad: false,
+    description: "管理应用程序菜单",
+})
+export default class MenuService implements IService {
+    readonly name = "menu";
     ipc: IpcMain;
     mainWindow: TBrowserWindow;
     logger = loggers.window;
@@ -17,7 +28,23 @@ export default class MenuService {
     constructor(ipcMain: IpcMain, mainWindow: TBrowserWindow) {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
+    }
+
+    /**
+     * 初始化菜单服务
+     */
+    async initialize(): Promise<void> {
         this.init();
+        this.logger.info("[MenuService] initialized");
+    }
+
+    /**
+     * 关闭菜单服务
+     */
+    async shutdown(): Promise<void> {
+        // 清理 IPC 监听器
+        this.ipc.removeAllListeners("menu:applySystemMenu");
+        this.logger.info("[MenuService] shut down");
     }
 
     /**

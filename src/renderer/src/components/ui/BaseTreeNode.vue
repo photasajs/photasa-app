@@ -7,6 +7,7 @@
             blockNode && 'base-tree-node--block',
         ]"
         :style="{ paddingLeft: level * 20 + 'px' }"
+        :data-node-key="node.key"
         @click="handleClick"
         @dblclick="handleDblclick"
         @contextmenu="handleContextmenu"

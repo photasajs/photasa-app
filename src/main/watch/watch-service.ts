@@ -10,8 +10,19 @@ import {
 } from "@common/file-operation-utils";
 import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
-export default class WatchService {
+@Service({
+    name: "watch",
+    displayName: "文件监视服务",
+    priority: ServicePriority.Background,
+    startupDelay: 1500,
+    lazyLoad: true, // 按需加载
+    description: "监视文件系统变化",
+})
+export default class WatchService implements IService {
+    readonly name = "watch";
     ipc: IpcMain;
     mainWindow: BrowserWindow;
     FileWatcherHandler: FSWatcher | undefined;
@@ -41,11 +52,12 @@ export default class WatchService {
     constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
-
-        this.init();
     }
 
-    private init(): void {
+    /**
+     * 初始化文件监视服务
+     */
+    async initialize(): Promise<void> {
         // Stop watching files
         this.ipc.handle("picasa:stop-file-watch", () => {
             this.logger.info("Stop watching files......");
@@ -56,6 +68,8 @@ export default class WatchService {
         this.ipc.on(WatchServiceEvent.start, (_event: IpcMainEvent, args: WatchConfig) => {
             this.startWatching(args);
         });
+
+        this.logger.info("[WatchService] 文件监视服务已初始化");
     }
 
     private startWatching(args: WatchConfig): void {
@@ -154,9 +168,12 @@ export default class WatchService {
         }
     }
 
-    close(): void {
+    /**
+     * 关闭文件监视服务
+     */
+    async shutdown(): Promise<void> {
         this.ipc.removeAllListeners(WatchServiceEvent.start);
-        this.ipc.removeAllListeners(WatchServiceEvent.stop);
+        this.ipc.removeHandler("picasa:stop-file-watch");
 
         // Clean up debounce timer
         if (this.debounceTimer) {
@@ -172,5 +189,7 @@ export default class WatchService {
 
         this.FileWatcherHandler?.close();
         this.FileWatcherHandler = undefined;
+
+        this.logger.info("[WatchService] 文件监视服务已关闭");
     }
 }

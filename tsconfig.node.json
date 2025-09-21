@@ -20,6 +20,8 @@
             "@common/*": ["./src/common/*"],
             "@preload/*": ["./src/preload/*"],
             "@shared/*": ["./src/shared/*"]
-        }
+        },
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
     }
 }

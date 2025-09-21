@@ -2,13 +2,26 @@ import { autoUpdater, UpdateInfo } from "electron-updater";
 import type { IpcMain, BrowserWindow } from "electron";
 import { loggers } from "@common/logger";
 import type { AutoUpdateConfig, UpdateStatus, UpdateProgressInfo } from "@common/update-types";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService, ServiceStatus } from "../services/core/service-types";
 
 const logger = loggers.update;
 /**
  * 自动更新服务
  * 集成electron-updater，提供完整的自动更新功能
  */
-export default class UpdateService {
+@Service({
+    name: "update",
+    displayName: "更新服务",
+    priority: ServicePriority.Background,
+    startupDelay: 0,
+    retryOnFailure: true,
+    maxRetries: 3,
+    lazyLoad: false,
+    description: "管理应用程序更新检查和安装",
+})
+export default class UpdateService implements IService {
+    readonly name = "update";
     private ipc: IpcMain;
     private mainWindow: BrowserWindow;
     private config: AutoUpdateConfig | null = null;
@@ -27,14 +40,37 @@ export default class UpdateService {
 
         // 注册IPC处理器
         this.registerIpcHandlers();
+    }
 
+    /**
+     * 初始化更新服务
+     */
+    async initialize(): Promise<void> {
         logger.info("[UpdateService] 自动更新服务已初始化");
+    }
+
+    /**
+     * 关闭更新服务
+     */
+    async shutdown(): Promise<void> {
+        // 停止定时检查
+        this.stopPeriodicCheck();
+
+        // 清理 IPC 监听器
+        this.ipc.removeHandler("picasa:check-for-updates");
+        this.ipc.removeHandler("picasa:download-update");
+        this.ipc.removeHandler("picasa:install-update");
+        this.ipc.removeHandler("picasa:get-update-status");
+        this.ipc.removeHandler("picasa:get-app-version");
+        this.ipc.removeHandler("picasa:update-auto-update-config");
+
+        logger.info("[UpdateService] 更新服务已关闭");
     }
 
     /**
      * 初始化配置和启动定时检查
      */
-    async initialize(config: AutoUpdateConfig): Promise<void> {
+    async initializeWithConfig(config: AutoUpdateConfig): Promise<void> {
         this.config = config;
 
         // 应用配置到autoUpdater
@@ -185,9 +221,20 @@ export default class UpdateService {
     }
 
     /**
-     * 获取当前状态
+     * 获取服务状态 (IService 接口)
      */
-    getStatus(): UpdateProgressInfo {
+    getStatus(): ServiceStatus {
+        return {
+            running: this.currentStatus !== "idle",
+            healthy: this.currentStatus !== "error",
+            error: this.lastError || undefined,
+        };
+    }
+
+    /**
+     * 获取更新进度状态
+     */
+    getUpdateStatus(): UpdateProgressInfo {
         return {
             status: this.currentStatus,
             progress: this.downloadProgress,
@@ -311,7 +358,7 @@ export default class UpdateService {
             this.downloadProgress = 0;
         }
 
-        this.notifyRenderer("status-changed", this.getStatus());
+        this.notifyRenderer("status-changed", this.getUpdateStatus());
     }
 
     /**
@@ -422,7 +469,7 @@ export default class UpdateService {
 
         // 获取更新状态
         this.ipc.handle("picasa:get-update-status", async () => {
-            return this.getStatus();
+            return this.getUpdateStatus();
         });
 
         // 获取应用版本

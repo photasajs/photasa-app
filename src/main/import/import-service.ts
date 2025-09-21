@@ -31,6 +31,8 @@ import type {
     ImportSession,
     EnhancedImportCallback,
 } from "@common/import-types";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
 /**
  * 导入 worker 类型
@@ -41,7 +43,16 @@ const logger = loggers.import;
 /**
  * 导入服务 - 管理照片导入的主要服务
  */
-export default class ImportService {
+@Service({
+    name: "import",
+    displayName: "导入服务",
+    priority: ServicePriority.Background,
+    startupDelay: 2000,
+    lazyLoad: true, // 按需加载
+    description: "处理照片导入操作",
+})
+export default class ImportService implements IService {
+    readonly name = "import";
     private ipc: IpcMain;
     private worker: ImportWorker;
 
@@ -85,10 +96,17 @@ export default class ImportService {
             },
         );
 
+        logger.info("Import service worker and listeners initialized");
+    }
+
+    /**
+     * 初始化导入服务
+     */
+    async initialize(): Promise<void> {
         // 注册IPC处理器
         this.setupIpcHandlers();
 
-        logger.info("Import service initialized");
+        logger.info("[ImportService] 导入服务已初始化");
     }
 
     /**
@@ -715,12 +733,27 @@ export default class ImportService {
     }
 
     /**
-     * 清理资源
+     * 关闭导入服务
      */
-    public async cleanup(): Promise<void> {
+    async shutdown(): Promise<void> {
         logger.info("[import-service] Cleaning up import service");
 
         try {
+            // 清理 IPC 处理器
+            this.ipc.removeHandler(ImportEvents.SCAN_DIRECTORIES);
+            this.ipc.removeHandler(ImportEvents.PREVIEW);
+            this.ipc.removeHandler(ImportEvents.EXECUTE);
+            this.ipc.removeHandler(ImportEvents.CANCEL);
+            this.ipc.removeHandler(ImportEvents.PAUSE);
+            this.ipc.removeHandler(ImportEvents.RESUME);
+            this.ipc.removeHandler(ImportEvents.GET_PROGRESS);
+            this.ipc.removeHandler(ImportEvents.GET_HISTORY);
+            this.ipc.removeHandler(ImportEvents.GET_DETAILS);
+            this.ipc.removeHandler(ImportEvents.PREVIEW_UNDO);
+            this.ipc.removeHandler(ImportEvents.UNDO);
+            this.ipc.removeHandler(ImportEvents.CHOOSE_DIRECTORIES);
+            this.ipc.removeHandler(ImportEvents.EXTRACT_METADATA);
+
             // 取消所有活跃的导入会话
             for (const [importId, session] of this.activeSessions) {
                 if (session.status === "processing") {
@@ -737,7 +770,7 @@ export default class ImportService {
                 this.worker.terminate();
             }
 
-            logger.info("[import-service] Import service cleanup completed");
+            logger.info("[ImportService] 导入服务已关闭");
         } catch (error) {
             logger.error(`[import-service] Cleanup failed: ${error}`);
         }

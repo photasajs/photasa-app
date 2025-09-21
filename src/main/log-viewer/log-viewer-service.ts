@@ -2,32 +2,50 @@ import type { IpcMain, BrowserWindow } from "electron";
 import { globalShortcut } from "electron";
 import { globalLogInterceptor, type LogEntry } from "@common/logger";
 import { loggers } from "@common/logger";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
 const logger = loggers.main;
 
-export default class LogViewerService {
+@Service({
+    name: "logViewer",
+    displayName: "日志查看器服务",
+    priority: ServicePriority.Important,
+    lazyLoad: false,
+    description: "提供日志查看和管理功能",
+})
+export default class LogViewerService implements IService {
+    readonly name = "logViewer";
     private isActive = false;
     private unsubscribe?: () => void;
     private mainWindow: BrowserWindow;
     private workers = new Set<any>();
 
-    constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
-        this.mainWindow = mainWindow;
+    private ipcMain: IpcMain;
 
+    constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
+        this.ipcMain = ipcMain;
+        this.mainWindow = mainWindow;
+    }
+
+    /**
+     * 初始化日志查看器服务
+     */
+    async initialize(): Promise<void> {
         // IPC处理器
-        ipcMain.handle("log:viewer-open", () => {
+        this.ipcMain.handle("log:viewer-open", () => {
             return this.activateLogViewer();
         });
 
-        ipcMain.handle("log:viewer-close", () => {
+        this.ipcMain.handle("log:viewer-close", () => {
             return this.deactivateLogViewer();
         });
 
         // 处理Worker日志
-        ipcMain.on("worker:log", (_, entry: LogEntry) => {
+        this.ipcMain.on("worker:log", (_, entry: LogEntry) => {
             if (this.isActive) {
                 // 转发给前端
-                mainWindow.webContents.send("log:entry", entry);
+                this.mainWindow.webContents.send("log:entry", entry);
             }
         });
 
@@ -35,6 +53,23 @@ export default class LogViewerService {
         this.registerGlobalShortcut();
 
         logger.info("[LogViewerService] initialized");
+    }
+
+    /**
+     * 关闭日志查看器服务
+     */
+    async shutdown(): Promise<void> {
+        this.deactivateLogViewer();
+
+        // 清理 IPC 处理器
+        this.ipcMain.removeHandler("log:viewer-open");
+        this.ipcMain.removeHandler("log:viewer-close");
+        this.ipcMain.removeAllListeners("worker:log");
+
+        // 注销全局快捷键
+        globalShortcut.unregister("CommandOrControl+Shift+L");
+
+        logger.info("[LogViewerService] shut down");
     }
 
     private activateLogViewer() {

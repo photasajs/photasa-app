@@ -371,4 +371,5 @@ export const loggers: Record<string, PhotasaLogger> = {
     import: getLogger("import"),
     importProgress: getLogger("importProgress"),
     update: getLogger("update"),
+    discovery: getLogger("discovery"),
 };

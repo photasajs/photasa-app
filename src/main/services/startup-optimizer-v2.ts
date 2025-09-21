@@ -30,6 +30,10 @@ export class StartupOptimizerV2 {
     private registerAllServices(): void {
         logger.debug("Registering all services to ServiceRegistry");
 
+        // 1. 首先注册装饰器服务（自动发现）
+        this.serviceRegistry.discoverAndRegisterDecoratedServices();
+
+        // 2. 然后注册传统配置的服务
         for (const config of serviceConfig) {
             const factory = serviceFactories[config.name];
             if (!factory) {
@@ -42,7 +46,7 @@ export class StartupOptimizerV2 {
             logger.debug(`Registered service: ${config.name} (${config.priority})`);
         }
 
-        logger.info(`Registered ${serviceConfig.length} services`);
+        logger.info(`Registered ${serviceConfig.length} traditional services`);
     }
 
     /**

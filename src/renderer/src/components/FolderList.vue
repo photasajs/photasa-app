@@ -207,6 +207,7 @@ defineExpose({
                 :show-line="false"
                 :selectable="true"
                 :checkable="false"
+                :auto-focus-on-expand="true"
             >
                 <!-- 文件夹图标 -->
                 <template #icon>

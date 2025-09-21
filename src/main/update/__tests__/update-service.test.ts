@@ -113,14 +113,14 @@ describe("UpdateService", () => {
 
     describe("配置管理", () => {
         it("应该正确初始化配置", async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
 
             expect(autoUpdater.allowPrerelease).toBe(false);
             expect(updateService!["config"]).toEqual(mockConfig);
         });
 
         it("应该正确更新配置", async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
 
             const newConfig = { enabled: false, allowPrerelease: true };
             updateService!.updateConfig(newConfig);
@@ -133,7 +133,7 @@ describe("UpdateService", () => {
         });
 
         it("应该在启用状态变化时重启定时检查", async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
             const startSpy = vi.spyOn(updateService as any, "startPeriodicCheck");
             const stopSpy = vi.spyOn(updateService as any, "stopPeriodicCheck");
 
@@ -151,7 +151,7 @@ describe("UpdateService", () => {
         });
 
         it("应该在检查间隔变化时重启定时检查", async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
             const restartSpy = vi.spyOn(updateService as any, "restartPeriodicCheck");
 
             // 改变检查间隔应该重启定时检查
@@ -165,7 +165,7 @@ describe("UpdateService", () => {
 
     describe("更新检查", () => {
         beforeEach(async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
         });
 
         it("应该成功检查更新并发现新版本", async () => {
@@ -203,7 +203,7 @@ describe("UpdateService", () => {
             const result = await updateService!.checkForUpdates();
 
             expect(result.hasUpdate).toBe(false);
-            expect(updateService!.getStatus().status).toBe("upToDate");
+            expect(updateService!.getUpdateStatus().status).toBe("upToDate");
         });
 
         it("应该处理检查更新时的网络错误", async () => {
@@ -213,8 +213,8 @@ describe("UpdateService", () => {
             await expect(updateService!.checkForUpdates()).rejects.toThrow(
                 "网络连接错误，请检查网络连接",
             );
-            expect(updateService!.getStatus().status).toBe("error");
-            expect(updateService!.getStatus().error).toBe("网络连接错误，请检查网络连接");
+            expect(updateService!.getUpdateStatus().status).toBe("error");
+            expect(updateService!.getUpdateStatus().error).toBe("网络连接错误，请检查网络连接");
         });
 
         it("应该防止重复检查", async () => {
@@ -230,7 +230,7 @@ describe("UpdateService", () => {
 
     describe("更新下载", () => {
         beforeEach(async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
             updateService!["latestUpdateInfo"] = {
                 version: "1.7.0",
                 files: [],
@@ -244,7 +244,7 @@ describe("UpdateService", () => {
             await updateService!.downloadUpdate();
 
             expect(autoUpdater.downloadUpdate).toHaveBeenCalled();
-            expect(updateService!.getStatus().status).toBe("downloading");
+            expect(updateService!.getUpdateStatus().status).toBe("downloading");
         });
 
         it("应该在没有更新信息时抛出错误", async () => {
@@ -268,7 +268,7 @@ describe("UpdateService", () => {
             await expect(updateService!.downloadUpdate()).rejects.toThrow(
                 "磁盘空间不足，请清理磁盘空间",
             );
-            expect(updateService!.getStatus().status).toBe("error");
+            expect(updateService!.getUpdateStatus().status).toBe("error");
         });
     });
 
@@ -292,7 +292,7 @@ describe("UpdateService", () => {
         it("应该启动定时检查", async () => {
             const spy = vi.spyOn(global, "setInterval");
 
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
 
             expect(spy).toHaveBeenCalledWith(expect.any(Function), 24 * 60 * 60 * 1000);
 
@@ -304,7 +304,7 @@ describe("UpdateService", () => {
             const spy = vi.spyOn(global, "setInterval");
             mockConfig.enabled = false;
 
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
 
             expect(spy).not.toHaveBeenCalled();
 
@@ -313,7 +313,7 @@ describe("UpdateService", () => {
         });
 
         it("应该在停止时清理定时器", async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
             const spy = vi.spyOn(global, "clearInterval");
 
             updateService!["stopPeriodicCheck"]();
@@ -368,7 +368,7 @@ describe("UpdateService", () => {
             updateService!["downloadProgress"] = 50;
             updateService!["lastError"] = "测试错误";
 
-            const status = updateService!.getStatus();
+            const status = updateService!.getUpdateStatus();
 
             expect(status.status).toBe("downloading");
             expect(status.progress).toBe(50);
@@ -389,7 +389,7 @@ describe("UpdateService", () => {
 
     describe("electron-updater 事件处理", () => {
         beforeEach(async () => {
-            await updateService!.initialize(mockConfig);
+            await updateService!.initializeWithConfig(mockConfig);
         });
 
         afterEach(() => {
@@ -427,7 +427,7 @@ describe("UpdateService", () => {
 
             autoUpdater.emit("update-downloaded", updateInfo);
 
-            expect(updateService!.getStatus().status).toBe("downloaded");
+            expect(updateService!.getUpdateStatus().status).toBe("downloaded");
             expect(mockMainWindow.webContents.send).toHaveBeenCalledWith(
                 "picasa:update-downloaded",
                 updateInfo,
@@ -439,8 +439,8 @@ describe("UpdateService", () => {
 
             autoUpdater.emit("error", error);
 
-            expect(updateService!.getStatus().status).toBe("error");
-            expect(updateService!.getStatus().error).toBe("更新失败: Test error");
+            expect(updateService!.getUpdateStatus().status).toBe("error");
+            expect(updateService!.getUpdateStatus().error).toBe("更新失败: Test error");
         });
     });
 

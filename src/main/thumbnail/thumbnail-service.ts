@@ -8,6 +8,8 @@ import {
 } from "@common/thumbnail-types";
 import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
 import { loggers } from "@common/logger";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
 /**
  * 缩略图 worker 类型
@@ -21,29 +23,50 @@ let logViewerService: any = null;
 /**
  * 缩略图服务
  */
-export default class ThumbnailService {
+@Service({
+    name: "thumbnail",
+    displayName: "缩略图服务",
+    priority: ServicePriority.Background,
+    startupDelay: 500,
+    dependencies: ["logViewer"],
+    lazyLoad: false,
+    description: "生成和管理图片缩略图",
+})
+export default class ThumbnailService implements IService {
+    readonly name = "thumbnail";
     ipc: IpcMain;
     mainWindow: BrowserWindow;
-    worker: ThumbnailWorker;
+    app: Electron.App;
+    worker!: ThumbnailWorker;
 
     constructor(
         ipcMain: IpcMain,
         mainWindow: BrowserWindow,
         app: Electron.App,
-        logViewerSvc?: any,
+        dependencies?: Map<string, any>,
     ) {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
-        logViewerService = logViewerSvc;
+        this.app = app;
 
+        // 从依赖映射中获取 logViewerService
+        if (dependencies) {
+            logViewerService = dependencies.get("logViewer");
+        }
+    }
+
+    /**
+     * 初始化缩略图服务
+     */
+    async initialize(): Promise<void> {
         logger.debug("[ThumbnailService] Creating thumbnail worker");
-        // 创建 worker，传递应用路径
 
+        // 创建 worker，传递应用路径
         this.worker = createWorker({
             workerData: "worker",
             env: {
                 ...process.env,
-                APP_PATH: getAppPath(app),
+                APP_PATH: getAppPath(this.app),
             },
         });
 
@@ -82,16 +105,36 @@ export default class ThumbnailService {
                 );
             }
         });
+
         // 创建缩略图
         this.ipc.handle(ThumbnailServiceAction.create, async (_, arg: ThumbnailRequest) => {
             logger.info("[ThumbnailService] Create thumbnail for : " + arg.thumbnail);
             return await this.createThumbnail(arg);
         });
+
         // 删除缩略图
         this.ipc.handle(ThumbnailServiceAction.remove, async (_, arg: ThumbnailRequest) => {
             logger.info("[ThumbnailService] Remove thumbnail for : " + arg.thumbnail);
             return await this.removeThumbnail(arg);
         });
+
+        logger.info("[ThumbnailService] 缩略图服务已初始化");
+    }
+
+    /**
+     * 关闭缩略图服务
+     */
+    async shutdown(): Promise<void> {
+        // 清理 IPC 处理器
+        this.ipc.removeHandler(ThumbnailServiceAction.create);
+        this.ipc.removeHandler(ThumbnailServiceAction.remove);
+
+        // 关闭 worker
+        if (this.worker) {
+            this.worker.terminate();
+        }
+
+        logger.info("[ThumbnailService] 缩略图服务已关闭");
     }
 
     private createThumbnail(arg: ThumbnailRequest): Promise<ThumbnailResponse> {

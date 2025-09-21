@@ -15,8 +15,9 @@ import {
     ServiceStatus,
     ServicePriority,
 } from "./service-types";
+import { getDecoratedServiceRegistry } from "../decorators/service-decorators";
 
-const logger = loggers.main;
+const logger = loggers.discovery;
 
 export class ServiceRegistry extends EventEmitter {
     private static instance: ServiceRegistry;
@@ -55,6 +56,68 @@ export class ServiceRegistry extends EventEmitter {
             running: false,
             restartCount: 0,
         });
+    }
+
+    /**
+     * 自动发现并注册装饰器服务
+     */
+    discoverAndRegisterDecoratedServices(): void {
+        const decoratedRegistry = getDecoratedServiceRegistry();
+        const decoratedServices = decoratedRegistry.getAllServices();
+
+        logger.debug(`Discovered ${decoratedServices.length} decorated services`);
+
+        for (const decoratedService of decoratedServices) {
+            // 创建服务工厂函数
+            const factory: ServiceFactory = (
+                ipcMain: IpcMain,
+                mainWindow: BrowserWindow,
+                app: App,
+                dependencies?: Map<string, IService>,
+            ): IService => {
+                // 准备构造函数参数
+                const args: any[] = [ipcMain, mainWindow];
+
+                // 如果服务需要 App 实例，添加到参数中
+                if (decoratedService.constructor.length > 2) {
+                    args.push(app);
+                }
+
+                // 如果有依赖，注入到构造函数中
+                if (dependencies && dependencies.size > 0) {
+                    args.push(dependencies);
+                }
+
+                // 创建服务实例
+                const instance = new decoratedService.constructor(...args);
+
+                // 设置初始化和关闭方法（如果指定了的话）
+                const options = decoratedService.decoratorOptions;
+                if (
+                    options.initMethod &&
+                    typeof (instance as any)[options.initMethod] === "function"
+                ) {
+                    (instance as any).initialize = (instance as any)[options.initMethod].bind(
+                        instance,
+                    );
+                }
+                if (
+                    options.shutdownMethod &&
+                    typeof (instance as any)[options.shutdownMethod] === "function"
+                ) {
+                    (instance as any).shutdown = (instance as any)[options.shutdownMethod].bind(
+                        instance,
+                    );
+                }
+
+                return instance;
+            };
+
+            // 注册到常规服务注册表
+            this.register(decoratedService, factory);
+
+            logger.debug(`Registered decorated service: ${decoratedService.name}`);
+        }
     }
 
     /**

@@ -134,7 +134,6 @@ const startImport = async () => {
 
         // Set up event listeners
         const cleanupProgress = onImportProgress((progress) => {
-            logger.debug("Progress update received:", progress);
             // Update all progress fields
             Object.assign(importProgress, {
                 totalFiles: progress.totalFiles || importProgress.totalFiles,
@@ -268,13 +267,8 @@ watch(
 // Watch progress changes for debugging
 watch(
     () => importProgress,
-    (newProgress) => {
-        logger.debug("Progress updated", {
-            status: newProgress.status,
-            processedFiles: newProgress.processedFiles,
-            totalFiles: newProgress.totalFiles,
-            currentFile: newProgress.currentFile,
-        });
+    (_newProgress) => {
+        // Progress updated
     },
     { deep: true },
 );

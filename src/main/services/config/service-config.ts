@@ -1,4 +1,5 @@
-import { ServiceMetadata, ServicePriority } from "../core/service-types";
+import { ServiceMetadata } from "../core/service-types";
+import { getDecoratedServiceRegistry } from "../decorators/service-decorators";
 
 /**
  * 服务配置定义
@@ -7,103 +8,14 @@ import { ServiceMetadata, ServicePriority } from "../core/service-types";
 export const serviceConfig: ServiceMetadata[] = [
     // ==================== 关键服务 ====================
     // 这些服务在启动时必须立即初始化
-
-    {
-        name: "config",
-        displayName: "配置服务",
-        priority: ServicePriority.Critical,
-        lazyLoad: false,
-        description: "管理应用程序配置和设置",
-    },
-
-    {
-        name: "window",
-        displayName: "窗口服务",
-        priority: ServicePriority.Critical,
-        dependencies: ["config"],
-        lazyLoad: false,
-        description: "管理应用窗口的创建和控制",
-    },
-
+    // 注意：config 和 window 服务现在使用 @Service 装饰器，已从此配置中移除
     // ==================== 重要服务 ====================
     // 窗口显示后立即初始化的服务
-
-    {
-        name: "logViewer",
-        displayName: "日志查看器服务",
-        priority: ServicePriority.Important,
-        lazyLoad: false,
-        description: "提供日志查看和管理功能",
-    },
-
-    {
-        name: "menu",
-        displayName: "菜单服务",
-        priority: ServicePriority.Important,
-        dependencies: ["window"],
-        lazyLoad: false,
-        description: "管理应用程序菜单",
-    },
-
-    {
-        name: "shell",
-        displayName: "Shell 服务",
-        priority: ServicePriority.Important,
-        lazyLoad: false,
-        description: "提供系统 Shell 交互功能",
-    },
-
+    // 注意：logViewer、menu 和 shell 服务现在使用 @Service 装饰器，已从此配置中移除
     // ==================== 后台服务 ====================
     // 延迟初始化的服务，按优先级顺序加载
-
-    {
-        name: "update",
-        displayName: "更新服务",
-        priority: ServicePriority.Background,
-        startupDelay: 0,
-        retryOnFailure: true,
-        maxRetries: 3,
-        lazyLoad: false,
-        description: "管理应用程序更新检查和安装",
-    },
-
-    {
-        name: "thumbnail",
-        displayName: "缩略图服务",
-        priority: ServicePriority.Background,
-        startupDelay: 500,
-        dependencies: ["logViewer"],
-        lazyLoad: false,
-        description: "生成和管理图片缩略图",
-    },
-
-    {
-        name: "scan",
-        displayName: "扫描服务",
-        priority: ServicePriority.Background,
-        startupDelay: 1000,
-        dependencies: ["logViewer", "config"],
-        lazyLoad: false,
-        description: "扫描和索引照片文件",
-    },
-
-    {
-        name: "watch",
-        displayName: "文件监视服务",
-        priority: ServicePriority.Background,
-        startupDelay: 1500,
-        lazyLoad: true, // 按需加载
-        description: "监视文件系统变化",
-    },
-
-    {
-        name: "import",
-        displayName: "导入服务",
-        priority: ServicePriority.Background,
-        startupDelay: 2000,
-        lazyLoad: true, // 按需加载
-        description: "处理照片导入操作",
-    },
+    // 注意：update、thumbnail、scan、watch 和 import 服务现在使用 @Service 装饰器，已从此配置中移除
+    // 所有服务现在都使用 @Service 装饰器模式！
 ];
 
 /**
@@ -175,6 +87,15 @@ export function validateServiceConfig(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
     const names = new Set<string>();
 
+    // 获取装饰器服务列表
+    const decoratedRegistry = getDecoratedServiceRegistry();
+    const decoratedServices = decoratedRegistry.getAllServices();
+
+    // 创建所有服务名称的集合（传统 + 装饰器）
+    const allServiceNames = new Set<string>();
+    serviceConfig.forEach((config) => allServiceNames.add(config.name));
+    decoratedServices.forEach((service) => allServiceNames.add(service.name));
+
     for (const config of serviceConfig) {
         // 检查重复的服务名称
         if (names.has(config.name)) {
@@ -182,10 +103,10 @@ export function validateServiceConfig(): { valid: boolean; errors: string[] } {
         }
         names.add(config.name);
 
-        // 检查依赖是否存在
+        // 检查依赖是否存在（包括装饰器服务）
         if (config.dependencies) {
             for (const dep of config.dependencies) {
-                if (!serviceConfig.find((s) => s.name === dep)) {
+                if (!allServiceNames.has(dep)) {
                     errors.push(`Service ${config.name} depends on non-existent service: ${dep}`);
                 }
             }
@@ -203,6 +124,15 @@ export function validateServiceConfig(): { valid: boolean; errors: string[] } {
                         .join(", ")}`,
                 );
             }
+        }
+    }
+
+    // 检查装饰器服务与传统服务之间的重复名称
+    for (const decoratedService of decoratedServices) {
+        if (names.has(decoratedService.name)) {
+            errors.push(
+                `Duplicate service name between traditional and decorated services: ${decoratedService.name}`,
+            );
         }
     }
 

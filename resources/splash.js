@@ -263,7 +263,7 @@ class SplashController {
      */
     updateVersion() {
         if (!this.versionElement) return;
-        const version = "1.7.0";
+        const version = "1.6.0";
         this.versionElement.textContent = `Version ${version}`;
     }
 

@@ -12,13 +12,12 @@
                             @click.stop
                             @mousedown.stop
                         />
-                        <select v-model="levelFilter" class="log-filter">
-                            <option value="">{{ t("logViewer.allLevels") }}</option>
-                            <option value="debug">{{ t("logViewer.debug") }}</option>
-                            <option value="info">{{ t("logViewer.info") }}</option>
-                            <option value="warn">{{ t("logViewer.warn") }}</option>
-                            <option value="error">{{ t("logViewer.error") }}</option>
-                        </select>
+                        <BaseSelect
+                            v-model="levelFilter"
+                            :options="levelOptions"
+                            :placeholder="t('logViewer.allLevels')"
+                            class="log-filter"
+                        />
                         <button @click="clearLogs" class="log-btn">
                             {{ t("logViewer.clear") }}
                         </button>
@@ -72,6 +71,11 @@
                         {{ t("logViewer.autoScroll") }}
                     </label>
                 </div>
+
+                <!-- 调整大小手柄 -->
+                <div class="resize-handle resize-right" @mousedown="startResize('right')"></div>
+                <div class="resize-handle resize-bottom" @mousedown="startResize('bottom')"></div>
+                <div class="resize-handle resize-corner" @mousedown="startResize('corner')"></div>
             </div>
         </div>
     </Teleport>
@@ -82,6 +86,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import type { LogEntry } from "@common/logger";
 import { globalLogInterceptor } from "@common/logger";
+import BaseSelect from "./ui/BaseSelect.vue";
 
 const { t } = useI18n();
 
@@ -93,12 +98,27 @@ const autoScroll = ref(true);
 const opacity = ref(0.95);
 const logContainer = ref<HTMLElement>();
 
+// 日志级别选项
+const levelOptions = [
+    { value: "", label: "所有级别" },
+    { value: "debug", label: "DEBUG" },
+    { value: "info", label: "INFO" },
+    { value: "warn", label: "WARN" },
+    { value: "error", label: "ERROR" },
+];
+
 // 用于存储日志拦截器的取消订阅函数
 let unsubscribeRendererLogs: (() => void) | undefined;
 
 // 拖拽相关
 const isDragging = ref(false);
 const dragOffset = ref({ x: 0, y: 0 });
+
+// 调整大小相关
+const isResizing = ref(false);
+const resizeType = ref<"right" | "bottom" | "corner" | null>(null);
+const initialSize = ref({ width: 0, height: 0 });
+const initialMouse = ref({ x: 0, y: 0 });
 
 // 监听透明度变化
 watch(opacity, (newOpacity) => {
@@ -235,7 +255,7 @@ const exportLogs = () => {
 
 // 拖拽功能
 const startDrag = (e: MouseEvent) => {
-    // 忽略控件区域的拖拽
+    // 忽略控件区域的拖拽和调整大小手柄
     const target = e.target as HTMLElement;
     if (
         target.tagName === "INPUT" ||
@@ -243,7 +263,8 @@ const startDrag = (e: MouseEvent) => {
         target.tagName === "OPTION" ||
         target.tagName === "BUTTON" ||
         target.closest(".log-controls") ||
-        target.closest(".log-body")
+        target.closest(".log-body") ||
+        target.closest(".resize-handle")
     ) {
         return;
     }
@@ -301,6 +322,105 @@ const stopDrag = () => {
 
     document.removeEventListener("mousemove", handleDrag);
     document.removeEventListener("mouseup", stopDrag);
+};
+
+// 调整大小功能
+const startResize = (type: "right" | "bottom" | "corner") => {
+    isResizing.value = true;
+    resizeType.value = type;
+
+    const consoleEl = document.querySelector(".log-console") as HTMLElement;
+    if (consoleEl) {
+        const rect = consoleEl.getBoundingClientRect();
+        initialSize.value = {
+            width: rect.width,
+            height: rect.height,
+        };
+
+        // 设置初始鼠标位置
+        initialMouse.value = {
+            x: 0, // 将在 mousemove 中设置
+            y: 0,
+        };
+
+        // 设置调整大小的光标样式
+        consoleEl.style.cursor = getResizeCursor(type);
+    }
+
+    document.addEventListener("mousemove", handleResize);
+    document.addEventListener("mouseup", stopResize);
+};
+
+const handleResize = (e: MouseEvent) => {
+    if (!isResizing.value || !resizeType.value) return;
+
+    const consoleEl = document.querySelector(".log-console") as HTMLElement;
+    if (!consoleEl) return;
+
+    // 设置初始鼠标位置（仅在第一次移动时）
+    if (initialMouse.value.x === 0 && initialMouse.value.y === 0) {
+        initialMouse.value = { x: e.clientX, y: e.clientY };
+        return;
+    }
+
+    const deltaX = e.clientX - initialMouse.value.x;
+    const deltaY = e.clientY - initialMouse.value.y;
+
+    let newWidth = initialSize.value.width;
+    let newHeight = initialSize.value.height;
+
+    // 根据调整类型计算新尺寸
+    switch (resizeType.value) {
+        case "right":
+            newWidth = initialSize.value.width + deltaX;
+            break;
+        case "bottom":
+            newHeight = initialSize.value.height + deltaY;
+            break;
+        case "corner":
+            newWidth = initialSize.value.width + deltaX;
+            newHeight = initialSize.value.height + deltaY;
+            break;
+    }
+
+    // 应用尺寸限制
+    const minWidth = 400;
+    const maxWidth = window.innerWidth * 0.95;
+    const minHeight = 300;
+    const maxHeight = window.innerHeight * 0.9;
+
+    newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+    newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+
+    // 应用新尺寸
+    consoleEl.style.width = `${newWidth}px`;
+    consoleEl.style.height = `${newHeight}px`;
+};
+
+const stopResize = () => {
+    isResizing.value = false;
+    resizeType.value = null;
+
+    const consoleEl = document.querySelector(".log-console") as HTMLElement;
+    if (consoleEl) {
+        consoleEl.style.cursor = "move";
+    }
+
+    document.removeEventListener("mousemove", handleResize);
+    document.removeEventListener("mouseup", stopResize);
+};
+
+const getResizeCursor = (type: "right" | "bottom" | "corner"): string => {
+    switch (type) {
+        case "right":
+            return "ew-resize";
+        case "bottom":
+            return "ns-resize";
+        case "corner":
+            return "nw-resize";
+        default:
+            return "move";
+    }
 };
 
 // 自动滚动
@@ -374,6 +494,7 @@ onUnmounted(() => {
     pointer-events: auto;
     cursor: move;
     user-select: none;
+    position: relative;
 
     .log-header {
         padding: 12px 16px;
@@ -393,17 +514,20 @@ onUnmounted(() => {
 
         .log-controls {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             cursor: default;
+            align-items: center;
+            flex-wrap: wrap;
 
             .log-search {
-                padding: 4px 8px;
+                padding: 6px 10px;
                 background: #1e1e1e;
                 border: 1px solid #555;
-                border-radius: 4px;
+                border-radius: 6px;
                 color: #fff;
-                width: 200px;
+                width: 180px;
                 cursor: text;
+                font-size: 13px;
 
                 &:focus {
                     outline: none;
@@ -412,27 +536,23 @@ onUnmounted(() => {
             }
 
             .log-filter {
-                padding: 4px 8px;
-                background: #1e1e1e;
-                border: 1px solid #555;
-                border-radius: 4px;
-                color: #fff;
-                cursor: pointer;
-
-                &:focus {
-                    outline: none;
-                    border-color: #0084ff;
-                }
+                min-width: 120px;
+                height: 32px;
             }
 
             .log-btn {
-                padding: 4px 12px;
+                padding: 6px 12px;
                 background: #3a3a3a;
                 border: 1px solid #555;
-                border-radius: 4px;
+                border-radius: 6px;
                 color: #fff;
                 cursor: pointer;
                 transition: background 0.2s;
+                font-size: 13px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                white-space: nowrap;
 
                 &:hover {
                     background: #4a4a4a;
@@ -441,6 +561,7 @@ onUnmounted(() => {
                 &.log-btn-close {
                     background: #d73a49;
                     border-color: #d73a49;
+                    padding: 6px 10px;
 
                     &:hover {
                         background: #cb2431;
@@ -453,6 +574,7 @@ onUnmounted(() => {
                 align-items: center;
                 gap: 6px;
                 cursor: default;
+                height: 32px;
 
                 .opacity-label {
                     color: #ccc;
@@ -461,7 +583,7 @@ onUnmounted(() => {
                 }
 
                 .opacity-slider {
-                    width: 80px;
+                    width: 70px;
                     height: 4px;
                     background: #555;
                     border-radius: 2px;
@@ -498,7 +620,7 @@ onUnmounted(() => {
                 .opacity-value {
                     color: #888;
                     font-size: 11px;
-                    min-width: 30px;
+                    min-width: 28px;
                     text-align: right;
                 }
             }
@@ -605,6 +727,41 @@ onUnmounted(() => {
             input[type="checkbox"] {
                 cursor: pointer;
             }
+        }
+    }
+
+    // 调整大小手柄样式
+    .resize-handle {
+        position: absolute;
+        background: transparent;
+        z-index: 10;
+
+        &.resize-right {
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 100%;
+            cursor: ew-resize;
+        }
+
+        &.resize-bottom {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            cursor: ns-resize;
+        }
+
+        &.resize-corner {
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            cursor: nw-resize;
+        }
+
+        &:hover {
+            background: rgba(0, 132, 255, 0.3);
         }
     }
 }

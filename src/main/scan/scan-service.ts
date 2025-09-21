@@ -5,6 +5,8 @@ import { loggers } from "@common/logger";
 import { notifyStatus } from "./notify";
 import type { NotifyPayload } from "@common/types";
 import { getAppPath } from "@shared/path-util";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
 const logger = loggers.scan;
 
@@ -16,29 +18,50 @@ type ScanWorker = {
     postMessage: (message: any) => void;
 };
 
-export default class ScanService {
+@Service({
+    name: "scan",
+    displayName: "扫描服务",
+    priority: ServicePriority.Background,
+    startupDelay: 1000,
+    dependencies: ["logViewer", "config"],
+    lazyLoad: false,
+    description: "扫描和索引照片文件",
+})
+export default class ScanService implements IService {
+    readonly name = "scan";
     ipc: IpcMain;
     mainWindow: BrowserWindow;
+    app: Electron.App;
     promises = {};
     queueId = 0;
-    worker: ScanWorker;
+    worker!: ScanWorker;
 
     constructor(
         ipcMain: IpcMain,
         mainWindow: BrowserWindow,
         app: Electron.App,
-        logViewerSvc?: any,
+        dependencies?: Map<string, any>,
     ) {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
-        logViewerService = logViewerSvc;
+        this.app = app;
 
+        // 从依赖映射中获取 logViewerService
+        if (dependencies) {
+            logViewerService = dependencies.get("logViewer");
+        }
+    }
+
+    /**
+     * 初始化扫描服务
+     */
+    async initialize(): Promise<void> {
         logger.debug("[ScanService] Creating scan worker");
         this.worker = createWorker({
             workerData: "worker",
             env: {
                 ...process.env,
-                APP_PATH: getAppPath(app),
+                APP_PATH: getAppPath(this.app),
             },
         });
 
@@ -128,7 +151,7 @@ export default class ScanService {
         });
 
         // 处理扫描请求
-        ipcMain.on(
+        this.ipc.on(
             "picasa:scan-photos",
             async (_, args: { requestId: string; scanAction: ScanAction }) => {
                 logger.debug(
@@ -153,6 +176,23 @@ export default class ScanService {
                 }
             },
         );
+
+        logger.info("[ScanService] 扫描服务已初始化");
+    }
+
+    /**
+     * 关闭扫描服务
+     */
+    async shutdown(): Promise<void> {
+        // 清理 IPC 监听器
+        this.ipc.removeAllListeners("picasa:scan-photos");
+
+        // 关闭 worker
+        if (this.worker) {
+            (this.worker as any).terminate();
+        }
+
+        logger.info("[ScanService] 扫描服务已关闭");
     }
 
     private scanPhotos(requestId: string, scan: ScanAction): void {

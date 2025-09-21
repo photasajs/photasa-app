@@ -1,15 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, screen, protocol } from "electron";
+import { app, shell, BrowserWindow, ipcMain, screen, protocol } from "electron";
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import isDev from "electron-is-dev";
-import klawSync from "klaw-sync";
-import fs from "fs";
-import { readFile } from "fs/promises";
 import { loggers } from "@common/logger";
 import { isMac } from "./platform";
 import * as Sentry from "@sentry/electron/main";
 import icon from "../../resources/icon.png?asset";
-// Services are now imported in startup-optimizer.ts
+// Import services module to ensure decorator services are registered
+import "./services";
 import { SplashWindow } from "./splash/splash-window";
 import { StartupOptimizerV2 } from "./services/startup-optimizer-v2";
 import { SingleInstanceManager } from "./single-instance-manager";
@@ -76,8 +74,7 @@ async function createWindow(): Promise<void> {
             splashWindow = undefined;
         }
 
-        // 2. 设置关键 IPC 处理器（仅启动必需的）
-        setupCriticalIpcHandlers();
+        // 2. IPC 处理器现在由服务系统自动管理
         startupMonitor.mark("ipcHandlersRegistered");
 
         // 3. 创建主窗口（但不显示）
@@ -123,10 +120,7 @@ async function createWindow(): Promise<void> {
         const totalTime = Date.now() - startTime;
         logger.info(`Optimized startup completed in ${totalTime}ms`);
 
-        // 延迟注册非关键 IPC 处理器（窗口显示后 2 秒）
-        setTimeout(() => {
-            setupDeferredIpcHandlers();
-        }, 2000);
+        // IPC 处理器现在由服务系统自动管理，无需手动延迟注册
 
         // 使用淡出动画平滑关闭启动画面并显示主窗口
         logger.info("Starting splash fadeOut transition");
@@ -265,114 +259,6 @@ async function loadRenderer(): Promise<void> {
     });
 }
 
-// 关键 IPC 处理器 - 启动时必需
-function setupCriticalIpcHandlers(): void {
-    // Get system directory - 应用启动时需要
-    ipcMain.handle("picasa:get-directory", async (_, args) => {
-        return app.getPath(args.name);
-    });
-}
-
-// 延迟加载的 IPC 处理器 - 文件系统操作相关
-function setupDeferredIpcHandlers(): void {
-    // 选择目录
-    ipcMain.on("picasa:choose-directory", () => {
-        if (mainWindow) {
-            dialog
-                .showOpenDialog(mainWindow, {
-                    properties: ["openDirectory"],
-                })
-                .then(({ filePaths }) => {
-                    mainWindow?.webContents.send("picasa:selected-directory", { filePaths });
-                })
-                .catch((err) => {
-                    logger.error("Directory selection failed:", err);
-                });
-        }
-    });
-
-    // Check if folder has valid photasa.json
-    ipcMain.handle("picasa:check-photasa-config", async (_, folderPath) => {
-        try {
-            const configPath = path.join(folderPath, ".photasa.json");
-            if (!fs.existsSync(configPath)) {
-                return { hasConfig: false, reason: "配置文件不存在" };
-            }
-
-            const configContent = await readFile(configPath, "utf8");
-            const config = JSON.parse(configContent);
-
-            if (
-                !config.photoList ||
-                !Array.isArray(config.photoList) ||
-                config.photoList.length === 0
-            ) {
-                return { hasConfig: false, reason: "配置文件为空" };
-            }
-
-            return {
-                hasConfig: true,
-                photoCount: config.photoList.length,
-                reason: "配置文件存在且有效",
-            };
-        } catch (error) {
-            logger.error(`Error checking photasa config for ${folderPath}:`, error);
-            if (error instanceof SyntaxError && error.message.includes("JSON")) {
-                logger.warn(`JSON parse error for ${folderPath}, attempting to fix...`);
-                try {
-                    const configPath = path.join(folderPath, ".photasa.json");
-                    if (fs.existsSync(configPath)) {
-                        const content = await readFile(configPath, "utf8");
-                        logger.debug(`Corrupted config content: ${content.substring(0, 100)}...`);
-                        const defaultConfig = { photoList: [], version: "1.0.0" };
-                        await fs.promises.writeFile(
-                            configPath,
-                            JSON.stringify(defaultConfig, null, 2),
-                            "utf8",
-                        );
-                        logger.info(`Fixed corrupted config file: ${configPath}`);
-                    }
-                } catch (fixError) {
-                    logger.error(`Failed to fix config file: ${folderPath}`, fixError);
-                }
-            }
-            return { hasConfig: false, reason: "配置文件读取失败" };
-        }
-    });
-
-    // 子文件夹扫描
-    ipcMain.handle("picasa:sub-folders", async (_, args) => {
-        try {
-            const filterFn = (item: { path: string }): boolean => {
-                const basename = path.basename(item.path as string);
-                return basename === "." || basename[0] !== ".";
-            };
-
-            if (!fs.existsSync(args.parent)) {
-                const error = new Error(`Directory does not exist: ${args.parent}`);
-                logger.warn(error.message);
-                throw error;
-            }
-
-            const folders = klawSync(args.parent, {
-                nofile: true,
-                depthLimit: 0,
-                filter: filterFn,
-                errorCallback: (err) => {
-                    logger.error(`Error scanning directory ${args.parent}:`, err);
-                },
-            });
-
-            return folders.map((item) => item.path);
-        } catch (error) {
-            logger.error(`Error in picasa:sub-folders handler:`, error);
-            throw error;
-        }
-    });
-
-    logger.info("Deferred IPC handlers registered");
-}
-
 /**
  * 当 Electron 完成初始化并准备好创建浏览器窗口时，将调用此方法。
  * 一些 API 只能在事件发生后使用。
@@ -437,7 +323,7 @@ app.whenReady().then(async () => {
         return;
     }
     // 设置应用用户模型 ID
-    electronApp.setAppUserModelId("com.photasa.app");
+    electronApp.setAppUserModelId("me.photasa.app");
 
     // 设置 dock 图标
     if (process.platform === "darwin" && app.dock) {

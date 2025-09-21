@@ -11,6 +11,7 @@
         <!-- 虚拟化渲染 -->
         <template v-if="virtual">
             <VirtualList
+                ref="virtualListRef"
                 :items="uniqueVisibleNodes"
                 :item-height="itemHeight"
                 :container-height="actualHeight"
@@ -197,6 +198,9 @@ interface Props {
     checkStrictly?: boolean;
     loadData?: (node: TreeNode) => Promise<void>;
     loadedKeys?: Key[];
+
+    // 自动聚焦功能
+    autoFocusOnExpand?: boolean;
     replaceFields?: Record<string, string>;
     fieldNames?: Record<string, string>;
 }
@@ -225,6 +229,7 @@ const props = withDefaults(defineProps<Props>(), {
     itemHeight: 28,
     checkStrictly: false,
     loadedKeys: () => [],
+    autoFocusOnExpand: false,
 });
 
 // Emits 定义
@@ -274,6 +279,7 @@ const internalHalfCheckedKeys: Ref<Key[]> = ref([]);
 
 // 容器引用和高度计算
 const containerRef = ref<HTMLElement>();
+const virtualListRef = ref<any>();
 const computedHeight = ref<number>(200);
 
 // 计算当前有效的keys
@@ -431,6 +437,35 @@ const findNode = (key: Key, nodes: TreeNode[] = props.treeData): TreeNode | null
     return null;
 };
 
+// 滚动到指定节点
+const scrollToNode = (
+    nodeKey: Key,
+    options?: { align?: "start" | "center" | "end" | "auto"; behavior?: "auto" | "smooth" },
+) => {
+    if (!containerRef.value) return;
+
+    if (props.virtual) {
+        // 虚拟化模式：找到节点在扁平化列表中的索引
+        const flatNodes = flattenTreeData(props.treeData);
+        const nodeIndex = flatNodes.findIndex((item) => item.key === nodeKey);
+
+        if (nodeIndex >= 0 && virtualListRef.value) {
+            // 使用VirtualList的滚动方法
+            virtualListRef.value.scrollToIndex(nodeIndex, options);
+        }
+    } else {
+        // 非虚拟化模式：直接滚动到DOM元素
+        const nodeElement = containerRef.value.querySelector(`[data-node-key="${nodeKey}"]`);
+        if (nodeElement) {
+            nodeElement.scrollIntoView({
+                behavior: options?.behavior || "smooth",
+                block: (options?.align as ScrollLogicalPosition) || "center",
+                inline: "nearest",
+            });
+        }
+    }
+};
+
 // 事件处理器
 const handleNodeExpand = (node: TreeNode, expanded?: boolean) => {
     const newExpanded = expanded !== undefined ? expanded : !expandedKeysSet.value.has(node.key);
@@ -452,6 +487,13 @@ const handleNodeExpand = (node: TreeNode, expanded?: boolean) => {
     };
 
     emit("expand", newExpandedKeys, expandInfo);
+
+    // 自动聚焦到展开的节点
+    if (props.autoFocusOnExpand && newExpanded) {
+        nextTick(() => {
+            scrollToNode(node.key, { align: "center", behavior: "smooth" });
+        });
+    }
 };
 
 const handleNodeSelect = (node: TreeNode, selected?: boolean, event?: Event) => {
