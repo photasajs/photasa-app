@@ -322,6 +322,10 @@ app.whenReady().then(async () => {
     if (!singleInstanceManager.hasInstanceLock()) {
         return;
     }
+
+    // 立即初始化 Sentry（在创建窗口之前）
+    initSentry();
+
     // 设置应用用户模型 ID
     electronApp.setAppUserModelId("me.photasa.app");
 
@@ -339,11 +343,6 @@ app.whenReady().then(async () => {
 
     // 使用优化的创建窗口流程
     await createWindow();
-
-    // 延迟初始化 Sentry（窗口创建后 1 秒）
-    setTimeout(() => {
-        initSentry();
-    }, 1000);
 
     // 当 dock 图标被点击且没有其他窗口打开时，重新创建一个窗口
     app.on("activate", function () {

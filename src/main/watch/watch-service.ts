@@ -13,12 +13,28 @@ import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
 import { Service } from "../services/decorators/service-decorators";
 import { ServicePriority, IService } from "../services/core/service-types";
 
+/**
+ * WatchService is a CRITICAL core service that must start immediately with the app.
+ *
+ * Why this service is Critical:
+ * 1. File watching is the primary feature - users expect real-time updates when files change
+ * 2. Must be active from app start to catch all file system events
+ * 3. Other features depend on file change notifications (thumbnails, UI updates, etc.)
+ * 4. Any delay or lazy loading would cause missed file events and poor user experience
+ *
+ * Configuration rationale:
+ * - Priority.Critical: Ensures first initialization with other core services
+ * - startupDelay: 0: No delays - must start immediately
+ * - lazyLoad: false: Always auto-initialize, never wait for explicit request
+ *
+ * IMPORTANT: Do NOT change these settings without understanding the impact on core functionality
+ */
 @Service({
     name: "watch",
     displayName: "文件监视服务",
-    priority: ServicePriority.Background,
-    startupDelay: 1500,
-    lazyLoad: true, // 按需加载
+    priority: ServicePriority.Critical,
+    startupDelay: 0,
+    lazyLoad: false, // 自动加载
     description: "监视文件系统变化",
 })
 export default class WatchService implements IService {
