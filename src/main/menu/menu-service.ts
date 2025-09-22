@@ -14,7 +14,7 @@ import { ServicePriority, IService } from "../services/core/service-types";
 @Service({
     name: "menu",
     displayName: "菜单服务",
-    priority: ServicePriority.Important,
+    priority: ServicePriority.Critical,
     dependencies: ["window"],
     lazyLoad: false,
     description: "管理应用程序菜单",

@@ -7,10 +7,21 @@ import { ServicePriority, IService } from "../services/core/service-types";
 
 const logger = loggers.main;
 
+/**
+ * LogViewerService is a CRITICAL dependency for ScanService and other core services.
+ *
+ * Why this service is Critical:
+ * 1. ScanService depends on LogViewerService to register and manage worker logs
+ * 2. Critical services cannot depend on non-Critical services in the startup sequence
+ * 3. Worker log management is essential for debugging and monitoring core functionality
+ * 4. Must be available immediately when other Critical services start
+ *
+ * IMPORTANT: This service must maintain Critical priority to support ScanService dependency
+ */
 @Service({
     name: "logViewer",
     displayName: "日志查看器服务",
-    priority: ServicePriority.Important,
+    priority: ServicePriority.Critical,
     lazyLoad: false,
     description: "提供日志查看和管理功能",
 })

@@ -46,9 +46,9 @@ const logger = loggers.import;
 @Service({
     name: "import",
     displayName: "导入服务",
-    priority: ServicePriority.Background,
-    startupDelay: 2000,
-    lazyLoad: true, // 按需加载
+    priority: ServicePriority.Critical,
+    startupDelay: 0,
+    lazyLoad: false,
     description: "处理照片导入操作",
 })
 export default class ImportService implements IService {

@@ -9,7 +9,7 @@ const logger = loggers.shell;
 @Service({
     name: "shell",
     displayName: "Shell 服务",
-    priority: ServicePriority.Important,
+    priority: ServicePriority.Critical,
     lazyLoad: false,
     description: "提供系统 Shell 交互功能",
 })

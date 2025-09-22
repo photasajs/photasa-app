@@ -26,8 +26,8 @@ let logViewerService: any = null;
 @Service({
     name: "thumbnail",
     displayName: "缩略图服务",
-    priority: ServicePriority.Background,
-    startupDelay: 500,
+    priority: ServicePriority.Critical,
+    startupDelay: 0,
     dependencies: ["logViewer"],
     lazyLoad: false,
     description: "生成和管理图片缩略图",

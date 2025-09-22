@@ -13,7 +13,7 @@ const logger = loggers.update;
 @Service({
     name: "update",
     displayName: "更新服务",
-    priority: ServicePriority.Background,
+    priority: ServicePriority.Critical,
     startupDelay: 0,
     retryOnFailure: true,
     maxRetries: 3,
