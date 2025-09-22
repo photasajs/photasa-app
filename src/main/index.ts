@@ -15,6 +15,27 @@ import { startupMonitor } from "./performance/startup-performance-monitor";
 import { validateConfig } from "./services/config/service-config-validator";
 
 const logger = loggers.main;
+
+// 立即初始化 Sentry（在模块加载时）
+if (!isDev) {
+    Sentry.init({
+        dsn: "https://6cde14d12de5882405e5837a80978152@o4510009078841344.ingest.us.sentry.io/4510009079889920",
+        environment: process.env.NODE_ENV || "production",
+        beforeSend(event) {
+            // 过滤掉一些不重要的错误
+            if (event.exception) {
+                const error = event.exception.values?.[0];
+                if (error?.type === "ChunkLoadError" || error?.type === "Loading chunk") {
+                    return null; // 忽略chunk加载错误
+                }
+            }
+            return event;
+        },
+    });
+    logger.info("Sentry initialized at module load");
+}
+
+// 定义全局变量
 let mainWindow: BrowserWindow | undefined | null;
 let splashWindow: SplashWindow | undefined;
 let startupOptimizer: StartupOptimizerV2 | undefined;
@@ -25,28 +46,6 @@ const singleInstanceManager = new SingleInstanceManager({
     createWindowOnMacOS: true,
 });
 
-/**
- * 初始化 Sentry 错误监控
- */
-function initSentry(): void {
-    if (!isDev) {
-        Sentry.init({
-            dsn: "https://6cde14d12de5882405e5837a80978152@o4510009078841344.ingest.us.sentry.io/4510009079889920",
-            environment: process.env.NODE_ENV || "production",
-            beforeSend(event) {
-                // 过滤掉一些不重要的错误
-                if (event.exception) {
-                    const error = event.exception.values?.[0];
-                    if (error?.type === "ChunkLoadError" || error?.type === "Loading chunk") {
-                        return null; // 忽略chunk加载错误
-                    }
-                }
-                return event;
-            },
-        });
-        logger.info("Sentry initialized in background");
-    }
-}
 /**
  * 创建主窗口
  */
@@ -322,9 +321,6 @@ app.whenReady().then(async () => {
     if (!singleInstanceManager.hasInstanceLock()) {
         return;
     }
-
-    // 立即初始化 Sentry（在创建窗口之前）
-    initSentry();
 
     // 设置应用用户模型 ID
     electronApp.setAppUserModelId("me.photasa.app");
