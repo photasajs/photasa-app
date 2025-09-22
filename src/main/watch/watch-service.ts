@@ -12,6 +12,7 @@ import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
 import { Service } from "../services/decorators/service-decorators";
 import { ServicePriority, IService } from "../services/core/service-types";
+import isDev from "electron-is-dev";
 
 /**
  * WatchService is a CRITICAL core service that must start immediately with the app.
@@ -22,9 +23,13 @@ import { ServicePriority, IService } from "../services/core/service-types";
  * 3. Other features depend on file change notifications (thumbnails, UI updates, etc.)
  * 4. Any delay or lazy loading would cause missed file events and poor user experience
  *
+ * Environment-based configuration:
+ * - Production: Critical priority, no delay - must start immediately for core functionality
+ * - Development: Slight delay to improve startup performance during development
+ *
  * Configuration rationale:
  * - Priority.Critical: Ensures first initialization with other core services
- * - startupDelay: 0: No delays - must start immediately
+ * - startupDelay: Environment-based - 0 for production, small delay for dev
  * - lazyLoad: false: Always auto-initialize, never wait for explicit request
  *
  * IMPORTANT: Do NOT change these settings without understanding the impact on core functionality
@@ -33,7 +38,7 @@ import { ServicePriority, IService } from "../services/core/service-types";
     name: "watch",
     displayName: "文件监视服务",
     priority: ServicePriority.Critical,
-    startupDelay: 0,
+    startupDelay: isDev ? 1000 : 0, // 开发环境延迟1秒，生产环境立即启动
     lazyLoad: false, // 自动加载
     description: "监视文件系统变化",
 })

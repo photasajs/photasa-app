@@ -7,6 +7,7 @@ import type { NotifyPayload } from "@common/types";
 import { getAppPath } from "@shared/path-util";
 import { Service } from "../services/decorators/service-decorators";
 import { ServicePriority, IService } from "../services/core/service-types";
+import isDev from "electron-is-dev";
 
 const logger = loggers.scan;
 
@@ -18,11 +19,32 @@ type ScanWorker = {
     postMessage: (message: any) => void;
 };
 
+/**
+ * ScanService is a CRITICAL core service that must start immediately with the app.
+ *
+ * Why this service is Critical:
+ * 1. Photo scanning is the core functionality - users expect immediate photo indexing
+ * 2. Must be active from app start to process file change events from WatchService
+ * 3. UI components depend on scan results for photo display and management
+ * 4. Any delay or background priority would cause poor user experience and missed events
+ * 5. The scan queue processes file operations from the watch service in real-time
+ *
+ * Environment-based configuration:
+ * - Production: Critical priority, no delay - must start immediately for core functionality
+ * - Development: Slight delay to improve startup performance during development
+ *
+ * Configuration rationale:
+ * - Priority.Critical: Ensures immediate initialization with other core services
+ * - startupDelay: Environment-based - 0 for production, small delay for dev
+ * - lazyLoad: false: Always auto-initialize, never wait for explicit request
+ *
+ * IMPORTANT: Do NOT change these settings without understanding the impact on core functionality
+ */
 @Service({
     name: "scan",
     displayName: "扫描服务",
-    priority: ServicePriority.Background,
-    startupDelay: 1000,
+    priority: ServicePriority.Critical,
+    startupDelay: isDev ? 1500 : 0, // 开发环境延迟1.5秒，生产环境立即启动
     dependencies: ["logViewer", "config"],
     lazyLoad: false,
     description: "扫描和索引照片文件",
