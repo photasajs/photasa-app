@@ -4,6 +4,10 @@ import type { BrowserWindow, IpcMain } from "electron";
 import EventEmitter from "events";
 
 // Mock dependencies
+vi.mock("electron-is-dev", () => ({
+    default: false,
+}));
+
 vi.mock("chokidar", () => ({
     default: {
         watch: vi.fn(() => ({
