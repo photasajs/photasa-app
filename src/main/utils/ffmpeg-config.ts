@@ -1,3 +1,19 @@
+/**
+ * ⚠️ 重要警告：此模块仅应在主进程中使用
+ *
+ * 在 Worker 进程中使用会导致以下错误：
+ * - Error: Cannot find module 'electron'
+ * - Worker 进程无法访问 electron 模块
+ *
+ * 正确的使用方式：
+ * 1. 主进程：使用此模块查找和配置 FFmpeg 路径
+ * 2. Worker 进程：接收主进程传递的路径，直接使用
+ *
+ * @fileoverview FFmpeg 和 FFprobe 二进制文件路径配置模块
+ * @author Photasa Team
+ * @version 1.0.0
+ */
+
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 import ffmpeg from "fluent-ffmpeg";

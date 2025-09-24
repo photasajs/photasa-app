@@ -10,6 +10,16 @@ files:
     - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
     - resources/*
+    - node_modules/ffmpeg-static/**/*
+    - node_modules/ffprobe-static/**/*
+    - node_modules/@ffmpeg-installer/**/*
+    - node_modules/@ffprobe-installer/**/*
+    # 确保包含实际的二进制文件
+    - "**/*.exe" # Windows
+    - "**/ffmpeg" # macOS/Linux
+    - "**/ffprobe" # macOS/Linux
+    - "**/*.so" # Linux shared libraries
+    - "**/*.so.*" # Linux versioned libraries
 afterSign: build/notarize.js
 win:
     target:

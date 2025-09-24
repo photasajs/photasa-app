@@ -7,7 +7,7 @@ import type { VideoMetadata } from "@common/import-types";
 
 // 提取器返回的元数据接口（不包含dateSource，由主函数处理）
 type ExtractedVideoMetadata = Omit<VideoMetadata, "dateSource">;
-import { configureFFmpeg } from "../../../utils/ffmpeg-config";
+// 移除 ffmpeg-config 导入，路径将通过参数传递
 
 /**
  * 视频时间字段优先级（基于录制时间准确性）
@@ -87,9 +87,12 @@ function extractVideoStreamInfo(metadata: any): {
 /**
  * 使用Promise包装的ffprobe
  */
-function ffprobeAsync(filePath: string): Promise<any> {
-    // 懒加载FFmpeg配置
-    configureFFmpeg();
+function ffprobeAsync(filePath: string, ffmpegPath?: string, ffprobePath?: string): Promise<any> {
+    // 如果提供了路径，则配置 FFmpeg
+    if (ffmpegPath && ffprobePath) {
+        ffmpeg.setFfmpegPath(ffmpegPath);
+        ffmpeg.setFfprobePath(ffprobePath);
+    }
 
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(filePath, (err, metadata) => {
@@ -115,7 +118,10 @@ export async function extractVideoMetadata(
     try {
         logger.info(`[Video] Processing file: ${filePath}`);
 
-        const metadata = await ffprobeAsync(filePath);
+        // 从环境变量获取 FFmpeg 路径
+        const ffmpegPath = process.env.FFMPEG_PATH;
+        const ffprobePath = process.env.FFPROBE_PATH;
+        const metadata = await ffprobeAsync(filePath, ffmpegPath, ffprobePath);
         const streamInfo = extractVideoStreamInfo(metadata);
         const creationTime = selectBestDate(metadata, VIDEO_TIME_FIELDS);
         const gpsInfo = extractVideoGPS(metadata);

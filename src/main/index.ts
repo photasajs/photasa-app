@@ -13,6 +13,7 @@ import { StartupOptimizerV2 } from "./services/startup-optimizer-v2";
 import { SingleInstanceManager } from "./single-instance-manager";
 import { startupMonitor } from "./performance/startup-performance-monitor";
 import { validateConfig } from "./services/config/service-config-validator";
+import { configureFFmpeg } from "./utils/ffmpeg-config";
 
 const logger = loggers.main;
 
@@ -53,6 +54,17 @@ async function createWindow(): Promise<void> {
     const startTime = Date.now();
     logger.info("Starting optimized application startup");
     startupMonitor.mark("windowCreated");
+
+    // 配置 FFmpeg 并设置环境变量
+    try {
+        const ffmpegConfig = configureFFmpeg();
+        process.env.FFMPEG_PATH = ffmpegConfig.ffmpegPath;
+        process.env.FFPROBE_PATH = ffmpegConfig.ffprobePath;
+        logger.info("FFmpeg configuration set as environment variables");
+    } catch (error) {
+        logger.error("Failed to configure FFmpeg:", error);
+        // 继续启动，但记录错误
+    }
 
     // 验证服务配置
     if (!validateConfig()) {

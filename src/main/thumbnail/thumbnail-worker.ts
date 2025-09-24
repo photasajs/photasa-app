@@ -7,6 +7,10 @@ import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-type
 
 const logger = loggers.thumbnail;
 
+// FFmpeg 路径配置 - 从环境变量读取
+const ffmpegPath = process.env.FFMPEG_PATH;
+const ffprobePath = process.env.FFPROBE_PATH;
+
 const port = parentPort;
 if (!port) {
     // 在测试环境中可能没有parentPort，只在生产环境中抛出错误
@@ -48,6 +52,8 @@ const wrappedLogger = {
 } as any; // 临时类型转换，因为我们只需要这四个方法
 
 parentPort?.on("message", async (message: WorkerMessage<ThumbnailRequest> | any) => {
+    // FFmpeg 配置已通过环境变量设置，无需处理配置消息
+
     // 处理日志查看器状态消息
     if (message.type === "log:viewer-status") {
         logViewerActive = message.active;
@@ -72,7 +78,12 @@ parentPort?.on("message", async (message: WorkerMessage<ThumbnailRequest> | any)
                 "thumbnail-worker",
                 `Creating thumbnail for: ${message.payload.path}`,
             );
-            const result = await createThumbnail(message.payload, wrappedLogger);
+            const result = await createThumbnail(
+                message.payload,
+                wrappedLogger,
+                ffmpegPath,
+                ffprobePath,
+            );
             const response = createResponse<ThumbnailRequest, ThumbnailResponse>(message, {
                 success: true,
                 file: result.thumbnail,

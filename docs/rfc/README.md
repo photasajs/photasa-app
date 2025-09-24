@@ -61,19 +61,21 @@ What parts of the design do you expect to resolve through the RFC process before
 
 ## Active RFCs
 
-| RFC                                             | Title                                      | Status              | Assignee         | Target Release |
-| ----------------------------------------------- | ------------------------------------------ | ------------------- | ---------------- | -------------- |
-| [0002](./0002-headless-ui-components.md)        | Headless UI Components for Picasa Vue      | Phase 2 In Progress | Development Team | v1.0.0         |
-| [0004](./0004-ai-file-preview-service.md)       | AI文件在线预览服务                         | Draft               | Development Team | Future         |
-| [0005](./0005-local-ai-file-preview.md)         | 本地AI文件预览功能                         | Draft               | Development Team | Future         |
-| [0010](./0010-folder-statistics-display.md)     | 文件夹树节点统计信息显示                   | Draft               | Development Team | v1.6.0         |
-| [0014](./0014-file-scan-folder-tree-update.md)  | 文件扫描时文件夹树更新优化                 | Draft               | Development Team | v1.6.0         |
-| [0015](./0015-intelligent-scan-optimization.md) | 智能扫描优化策略修复                       | Draft               | Development Team | v1.6.0         |
-| [0019](./0019-auto-update-system.md)            | Auto-Update System - Client Implementation | Draft               | Development Team | v1.6.0         |
-| [0020](./0020-auto-update-server.md)            | Auto-Update System - Server Implementation | Draft               | Development Team | v1.6.0         |
+| RFC                                                               | Title                                           | Status              | Assignee         | Target Release |
+| ----------------------------------------------------------------- | ----------------------------------------------- | ------------------- | ---------------- | -------------- |
+| [0002](./0002-headless-ui-components.md)                          | Headless UI Components for Picasa Vue           | Phase 2 In Progress | Development Team | v1.0.0         |
+| [0004](./0004-ai-file-preview-service.md)                         | AI文件在线预览服务                              | Draft               | Development Team | Future         |
+| [0005](./0005-local-ai-file-preview.md)                           | 本地AI文件预览功能                              | Draft               | Development Team | Future         |
+| [0010](./0010-folder-statistics-display.md)                       | 文件夹树节点统计信息显示                        | Draft               | Development Team | v1.6.0         |
+| [0014](./0014-file-scan-folder-tree-update.md)                    | 文件扫描时文件夹树更新优化                      | Draft               | Development Team | v1.6.0         |
+| [0015](./0015-intelligent-scan-optimization.md)                   | 智能扫描优化策略修复                            | Draft               | Development Team | v1.6.0         |
+| [0019](./0019-auto-update-system.md)                              | Auto-Update System - Client Implementation      | Draft               | Development Team | v1.6.0         |
+| [0020](./0020-auto-update-server.md)                              | Auto-Update System - Server Implementation      | Draft               | Development Team | v1.6.0         |
 | [0021](./0021-playwright-e2e-testing-architecture-enhancement.md) | Playwright E2E Testing Architecture Enhancement | Draft               | Development Team | v1.7.0         |
-| [0022](./0022-test-stabilization-issues-and-solutions.md)        | Test Stabilization Issues and Solutions         | Implemented         | Development Team | v1.7.0         |
-| [0023](./0023-startup-performance-optimization.md)               | Startup Performance Optimization                | Draft               | Development Team | v1.8.0         |
+| [0022](./0022-test-stabilization-issues-and-solutions.md)         | Test Stabilization Issues and Solutions         | Implemented         | Development Team | v1.7.0         |
+| [0023](./0023-startup-performance-optimization.md)                | Startup Performance Optimization                | Draft               | Development Team | v1.8.0         |
+| [0027](./0027-wasm-memory-management-optimization.md)             | WASM内存管理优化与HEIF解码错误处理              | Draft               | Development Team | v1.7.0         |
+| [0028](./0028-ffmpeg-binary-packaging-fix.md)                     | FFmpeg Binary Packaging Fix                     | Draft               | Development Team | v1.6.1         |
 
 ## Implemented RFCs
 
