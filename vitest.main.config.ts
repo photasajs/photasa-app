@@ -15,18 +15,18 @@ export default defineConfig({
         globals: true,
         environment: "node", // 使用node环境而不是jsdom
         setupFiles: ["./test/setup.main.ts"],
-        testTimeout: 15000,
-        hookTimeout: 8000,
-        teardownTimeout: 5000,
+        testTimeout: 30000,
+        hookTimeout: 15000,
+        teardownTimeout: 10000,
         pool: "forks",
         poolOptions: {
             forks: {
-                singleFork: true,
-                maxForks: 1,
+                singleFork: false,
+                maxForks: 4,
                 isolate: true,
             },
         },
-        maxConcurrency: 1,
+        maxConcurrency: 4,
         isolate: true,
         passWithNoTests: true,
         coverage: {

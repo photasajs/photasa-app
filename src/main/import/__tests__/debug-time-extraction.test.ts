@@ -167,7 +167,7 @@ describe("Debug Time Extraction Issues", () => {
             const result = await extractMetadata(mockRequest, mockLogger);
 
             expect(result.type).toBe("video");
-            expect(result.format).toBe("MOV"); // video-extractor returns uppercase format when successful
+            expect(result.format).toBe("mov"); // video-extractor returns lowercase format
         });
 
         it("should debug missing MOV metadata", async () => {
