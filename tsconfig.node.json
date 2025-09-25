@@ -10,7 +10,8 @@
     "compilerOptions": {
         "composite": true,
         "types": [
-            "electron-vite/node"
+            "electron-vite/node",
+            "jest"
         ],
         "esModuleInterop": true,
         "allowJs": true,

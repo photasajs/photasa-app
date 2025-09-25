@@ -5,7 +5,7 @@
  * 基于实际pool-manager.ts实现的简化测试
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
+// Jest globals are available without import when Jest types are configured
 import {
     getWorkerPool,
     shutdownWorkerPool,
