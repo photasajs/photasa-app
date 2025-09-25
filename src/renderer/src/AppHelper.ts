@@ -21,9 +21,13 @@ export interface ScanCallbacks {
 
     // 状态更新回调
     updateProcessingStatus: (message: string) => void;
+    updateFileProgress: (fileName: string, current?: number, total?: number) => void;
     clearProcessingStatus: () => void;
     updateFolderTree: (path: string) => void;
     completeScanPath: (path: string) => void;
+
+    // 国际化
+    t: (key: string, params?: Record<string, any>) => string;
 
     // 扫描操作回调
     scanSubfolders: (path: string) => Promise<string[]>;
@@ -112,13 +116,21 @@ export async function executeDirectoryStrategy(
         const folders = await callbacks.scanSubfolders(scanAction.path);
 
         callbacks.logInfo(`[扫描编排] 发现子文件夹数量: ${folders.length}`);
-        callbacks.logDebug(`[扫描编排] 子文件夹列表`, folders);
+        if (folders.length > 0) {
+            callbacks.logDebug(`[扫描编排] 子文件夹列表:`, folders);
 
-        // 添加子文件夹到队列
-        folders.forEach((folderPath: string) => {
-            callbacks.logDebug(`[扫描编排] 添加子文件夹到队列: ${folderPath}`);
-            callbacks.addScanFolderToQueue(folderPath, "scan");
-        });
+            // 添加子文件夹到队列 - 使用"auto"来源以区分用户手动添加
+            folders.forEach((folderPath: string) => {
+                callbacks.logDebug(`[扫描编排] 添加子文件夹到队列: ${folderPath}`);
+                // 注意：这里应该调用 addScanFolderWithLog 而不是 addScanFolderToQueue
+                // 以确保传递正确的source参数
+                callbacks.addScanFolderToQueue(folderPath, "scan");
+            });
+
+            callbacks.logInfo(`[扫描编排] 成功添加 ${folders.length} 个子文件夹到扫描队列`);
+        } else {
+            callbacks.logInfo(`[扫描编排] 目录 ${scanAction.path} 中没有发现子文件夹`);
+        }
 
         return {
             shouldProcessSubfolders: true,
@@ -175,6 +187,9 @@ export async function executeScanTask(
 ): Promise<ScanExecutionResult> {
     callbacks.logInfo(`[扫描编排] 开始执行文件扫描任务: ${scanAction.path}`);
 
+    // 更新文件级别进度 - 显示正在处理的文件/目录的完整路径
+    callbacks.updateFileProgress(scanAction.path);
+
     try {
         const result = await callbacks.performScanTask(scanAction);
 
@@ -196,7 +211,9 @@ export async function executeScanTask(
     } catch (error) {
         callbacks.logError(`[扫描编排] 扫描任务执行失败: ${scanAction.path}`, error as Error);
         callbacks.completeScanPath(scanAction.path);
-        callbacks.updateProcessingStatus(`扫描失败: ${scanAction.path}`);
+        callbacks.updateProcessingStatus(
+            callbacks.t("status.scanFailed", { path: scanAction.path }),
+        );
 
         return {
             success: false,
@@ -226,8 +243,13 @@ export async function orchestrateScan(
     const nextItem = getNextScanItem(scanQueue);
 
     if (!nextItem) {
-        callbacks.logDebug("[扫描编排] 队列为空，无需处理");
-        callbacks.clearProcessingStatus(); // 清理扫描状态
+        callbacks.logDebug("[扫描编排] 队列为空，扫描完成");
+        // 先发送扫描完成状态，然后延迟清理
+        callbacks.updateProcessingStatus(callbacks.t("status.complete"));
+        // 3秒后清理状态
+        setTimeout(() => {
+            callbacks.clearProcessingStatus();
+        }, 3000);
         return { processed: false, shouldScheduleNext: false };
     }
 
@@ -240,7 +262,7 @@ export async function orchestrateScan(
 
     // 3. 创建扫描副本并更新状态
     const scanAction = { ...nextItem, thumbnailSize: 150 }; // 可配置
-    callbacks.updateProcessingStatus(`正在扫描: ${scanAction.path}`);
+    callbacks.updateProcessingStatus(callbacks.t("status.scanningPath", { path: scanAction.path }));
 
     callbacks.logInfo(
         `[扫描编排] 开始扫描: ${scanAction.path} ${scanAction.action} ${scanAction.operationType || "directory"}`,

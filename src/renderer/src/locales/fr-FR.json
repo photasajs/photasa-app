@@ -406,8 +406,11 @@
         "scanComplete": "Le dossier [{path}] a été traité.",
         "start": "Démarrage du scan",
         "progress": "Progression du scan",
+        "processingFile": "Traitement: {fileName}",
+        "scanningPath": "Scan: {path}",
         "complete": "Scan terminé",
-        "error": "Erreur de scan"
+        "error": "Erreur de scan",
+        "scanFailed": "Échec du scan: {path}"
     },
     "button": {
         "import": "Importer",

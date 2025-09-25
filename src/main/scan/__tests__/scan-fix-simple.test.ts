@@ -8,8 +8,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
-import { decideScanStrategy } from "../scan-strategy";
-import { ScanStrategy } from "../folder-cache-manager";
+import { decideScanStrategy } from "../strategy/scan-strategy";
+import { ScanStrategy } from "../cache/folder-cache-manager";
 import type { PhotasaLogger } from "@common/logger";
 
 // Mock external dependencies
@@ -103,7 +103,7 @@ describe("scan-fix-simple", () => {
 
             // Mock 外部依赖
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            const { computeFolderHash } = await import("@main/scan/folder-cache-manager");
+            const { computeFolderHash } = await import("@main/scan/cache/folder-cache-manager");
 
             (getPhotasaConfig as any).mockResolvedValue(emptyConfig);
             (computeFolderHash as any).mockResolvedValue(""); // 无照片文件
@@ -129,7 +129,7 @@ describe("scan-fix-simple", () => {
 
             // Mock 外部依赖
             const { getPhotasaConfig } = await import("@main/config/config-storage");
-            const { getCacheInfo } = await import("@main/scan/folder-cache-manager");
+            const { getCacheInfo } = await import("@main/scan/cache/folder-cache-manager");
 
             (getPhotasaConfig as any).mockResolvedValue(validConfig);
             mockFs.existsSync.mockReturnValue(true);

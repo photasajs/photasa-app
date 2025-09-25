@@ -9,8 +9,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs-extra";
 import path from "path";
 import os from "os";
-import { decideScanStrategy } from "../scan-strategy";
-import { ScanStrategy } from "../folder-cache-manager";
+import { decideScanStrategy } from "../strategy/scan-strategy";
+import { ScanStrategy } from "../cache/folder-cache-manager";
 import type { PhotasaLogger } from "@common/logger";
 
 // Mock external dependencies
@@ -122,7 +122,7 @@ describe("scan-strategy-fix", () => {
             mockFs.existsSync.mockReturnValue(true);
 
             // Mock computeFolderHash 返回空字符串（无照片文件）
-            const { computeFolderHash } = await import("@main/scan/folder-cache-manager");
+            const { computeFolderHash } = await import("@main/scan/cache/folder-cache-manager");
             (computeFolderHash as any).mockResolvedValue("");
 
             const result = await decideScanStrategy(testFolder, mockLogger);
@@ -175,7 +175,7 @@ describe("scan-strategy-fix", () => {
             expect(result.reason).toBe("配置文件存在且有效，无需重新扫描");
 
             // 验证 getCacheInfo 没有被调用（因为不再依赖 .photasa-folder.json）
-            const { getCacheInfo } = await import("@main/scan/folder-cache-manager");
+            const { getCacheInfo } = await import("@main/scan/cache/folder-cache-manager");
             expect(getCacheInfo).not.toHaveBeenCalled();
         });
     });

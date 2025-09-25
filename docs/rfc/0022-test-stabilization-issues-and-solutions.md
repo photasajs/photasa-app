@@ -25,21 +25,25 @@ These issues needed to be systematically analyzed and resolved to ensure a stabl
 ### Problem Analysis
 
 #### 1. Test Environment Configuration Issues
+
 - **Main process tests** were running in jsdom environment, causing `@electron-toolkit/utils` errors
 - **Renderer process tests** had environment selection issues with event API compatibility
 - Unified Vitest configuration was causing conflicts between different test types
 
 #### 2. Event System Compatibility Problems
+
 - `@vue/test-utils` could not properly create DOM events in happy-dom environment
 - Event constructors like `SupportedEventInterface` were not available
 - Incorrect manual event constructor implementations in test setup
 
 #### 3. Date Mock Issues
+
 - Date mock implementations caused circular reference errors
 - i18n internal Date.now access failures
 - Inconsistent date handling across test environments
 
 #### 4. i18n Configuration Problems
+
 - i18n instance duplication in tests
 - Date.now unavailability in i18n context
 - Component registration warnings
@@ -47,6 +51,7 @@ These issues needed to be systematically analyzed and resolved to ensure a stabl
 ### Solution Architecture
 
 #### 1. Test Environment Separation
+
 ```typescript
 // vitest.main.config.ts - Main process tests
 export default defineConfig({
@@ -68,11 +73,13 @@ export default defineConfig({
 ```
 
 #### 2. Event System Fix
+
 - Use jsdom instead of happy-dom for renderer tests
 - Rely on Vue Test Utils' `trigger()` method instead of manual event creation
 - Remove incorrect manual event constructor implementations
 
 #### 3. Date Mock Optimization
+
 ```typescript
 // test/setup.renderer.ts
 const mockDateNow = vi.fn(() => 1640995200000);
@@ -106,6 +113,7 @@ global.Date = class extends OriginalDate {
 ```
 
 #### 4. i18n Configuration Management
+
 ```typescript
 // test/setup.renderer.ts
 let globalI18n: ReturnType<typeof createI18n> | null = null;
@@ -141,6 +149,7 @@ function getOrCreateI18n() {
 **Problem**: We incorrectly implemented manual event constructors in test setup.
 
 **Wrong Approach**:
+
 ```typescript
 // ❌ Incorrect: Manual event constructor implementation
 if (!window.MouseEvent) {
@@ -154,16 +163,18 @@ if (!window.MouseEvent) {
 ```
 
 **Correct Approach**:
+
 ```typescript
 // ✅ Correct: Use Vue Test Utils trigger method
-test('button click', async () => {
-    const wrapper = mount(Component)
-    await wrapper.find('button').trigger('click') // Vue Test Utils handles event creation
-    expect(wrapper.emitted()).toHaveProperty('click')
-})
+test("button click", async () => {
+    const wrapper = mount(Component);
+    await wrapper.find("button").trigger("click"); // Vue Test Utils handles event creation
+    expect(wrapper.emitted()).toHaveProperty("click");
+});
 ```
 
 **Key Insights**:
+
 1. Vue Test Utils' `trigger()` method internally creates appropriate event objects
 2. No need to manually add event constructors - this causes compatibility issues
 3. jsdom environment provides complete event API - rely on environment, not custom implementation
@@ -178,14 +189,17 @@ test('button click', async () => {
 ## Alternatives
 
 ### Alternative 1: Single Test Environment
+
 - **Approach**: Use single jsdom environment for all tests
 - **Drawback**: Main process tests would have Electron API conflicts
 
 ### Alternative 2: Manual Event Mocking
+
 - **Approach**: Continue with manual event constructor implementations
 - **Drawback**: Causes compatibility issues and maintenance overhead
 
 ### Alternative 3: Different Testing Framework
+
 - **Approach**: Switch to different testing framework
 - **Drawback**: Major migration effort with uncertain benefits
 

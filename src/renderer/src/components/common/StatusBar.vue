@@ -5,6 +5,12 @@
  * - 支持国际化、进度、错误等
  * - 样式全部用 CSS 变量
  * - 增强扫描动画效果
+ *
+ * 🔧 状态栏路径显示修复 (Status Bar Path Display Fix)
+ * 问题：状态栏只显示文件名 (如 "bamm") 而不是完整路径 (如 "/path/to/directory/bamm")
+ * 原因：scan-worker.ts 发送的 currentFile 是通过 path.basename() 提取的文件名
+ * 解决：重新设计显示优先级，优先使用包含完整路径的数据源 (见 scanningPath computed)
+ * 相关修改：App.vue 的 processScannedFileTask 回调也做了路径构造增强
  */
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
@@ -37,15 +43,62 @@ const isScanning = computed(() => {
     );
 });
 
-// 提取扫描路径用于显示
+/**
+ * 提取扫描路径用于显示（确保显示完整路径而不是仅文件名）
+ *
+ * 问题背景：
+ * - scan-worker.ts 发送的 currentFile 是通过 path.basename() 提取的文件名（如 "bamm"）
+ * - 用户期望在状态栏中看到完整路径（如 "/path/to/directory/bamm"）
+ *
+ * 数据来源优先级：
+ * 1. processingFile.value - 来自 processScannedFileTask 回调，已构造完整路径
+ * 2. statusBarStore.data.currentFile - 来自 updateFileProgress，可能是完整路径或文件名
+ * 3. statusBarStore.currentTask - 通用任务描述，作为最终后备
+ *
+ * 显示策略：
+ * - 优先使用已确认包含完整路径信息的数据源
+ * - 对于可能只是文件名的数据，进行路径检测后决定是否使用
+ * - 确保用户始终能看到有意义的路径信息
+ */
 const scanningPath = computed(() => {
-    const scanningText = t("status.scanning");
-    const colonSeparator = ": ";
-
-    if (processingFile.value?.includes(scanningText + colonSeparator)) {
-        return processingFile.value.replace(scanningText + colonSeparator, "");
+    // 第一优先级：processingFile.value
+    // 来源：App.vue 中的 processScannedFileTask 回调
+    // 特点：已通过 ${args.action.path}/${args.currentFile} 构造完整路径
+    // 可靠性：高 - 明确包含完整路径信息
+    if (processingFile.value) {
+        return processingFile.value;
     }
-    return statusBarStore.currentTask || processingFile.value;
+
+    // 第二优先级：statusBarStore.data.currentFile（带路径验证）
+    // 来源：App.vue 中的 updateFileProgress 回调 -> statusBarStore.update()
+    // 特点：可能是完整路径（来自 AppHelper.ts 的 scanAction.path），
+    //       也可能是文件名（来自其他调用源）
+    if (
+        statusBarStore.data &&
+        typeof statusBarStore.data === "object" &&
+        statusBarStore.data !== null &&
+        "currentFile" in statusBarStore.data
+    ) {
+        const currentFile = (statusBarStore.data as any).currentFile;
+
+        // 路径检测：如果包含路径分隔符，认为是完整路径
+        // 支持 Unix-style (/) 和 Windows-style (\) 路径
+        // 注意：这个检测不是100%准确，但对于大多数实际情况有效
+        if (currentFile && (currentFile.includes("/") || currentFile.includes("\\"))) {
+            return currentFile;
+        }
+
+        // 如果currentFile看起来只是文件名，不使用它，避免显示不完整信息
+        // 例如："bamm" 这样的纯文件名对用户来说不够有用
+        // 转而使用更通用的任务描述
+        return statusBarStore.currentTask || "";
+    }
+
+    // 第三优先级：statusBarStore.currentTask（最终后备）
+    // 来源：各种状态更新调用中的 task 字段
+    // 特点：通用任务描述，可能包含国际化文本
+    // 使用场景：当没有具体文件路径信息时的后备显示
+    return statusBarStore.currentTask || "";
 });
 </script>
 <template>
@@ -67,8 +120,8 @@ const scanningPath = computed(() => {
 
                     <!-- 扫描文本 -->
                     <div class="scanning-text">
-                        <span class="scanning-label">{{ t("status.scanning") }}</span>
-                        <span v-if="scanningPath" class="scanning-path">: {{ scanningPath }}</span>
+                        <span v-if="scanningPath" class="scanning-path">{{ scanningPath }}</span>
+                        <span v-else class="scanning-label">{{ t("status.scanning") }}</span>
                         <span
                             v-if="statusBarStore.progress !== undefined"
                             class="scanning-progress"
@@ -148,6 +201,8 @@ const scanningPath = computed(() => {
     align-items: center;
     gap: 8px;
     width: 100%;
+    flex-wrap: nowrap;
+    min-height: 32px;
 }
 
 .scanning-icon {
@@ -211,6 +266,8 @@ const scanningPath = computed(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
 
     .scanning-label {
         font-weight: 500;
@@ -221,7 +278,10 @@ const scanningPath = computed(() => {
     .scanning-path {
         color: var(--color-text);
         font-family: monospace;
-        font-size: 0.9em;
+        font-size: 0.85em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .scanning-progress {
@@ -229,6 +289,7 @@ const scanningPath = computed(() => {
         font-weight: 600;
         margin-left: 4px;
         animation: progressUpdate 0.3s ease;
+        flex-shrink: 0;
     }
 }
 

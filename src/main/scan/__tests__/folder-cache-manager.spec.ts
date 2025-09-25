@@ -12,7 +12,7 @@ import {
     createDefaultCache,
     ScanStrategy,
     type FolderCache,
-} from "../folder-cache-manager";
+} from "../cache/folder-cache-manager";
 import { loggers } from "@common/logger";
 
 // Mock external dependencies

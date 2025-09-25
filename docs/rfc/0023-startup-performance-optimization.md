@@ -19,6 +19,7 @@
 4. **感知性能差**：即使实际启动时间可接受，但用户看不到进度反馈，感觉很慢
 
 期望通过优化达到：
+
 - 首屏显示时间减少 30-40%
 - 启动画面提供准确的进度反馈
 - 核心功能快速可用，其他功能渐进式激活
@@ -31,6 +32,7 @@
 #### 1.1 延迟 Sentry 初始化
 
 **当前问题**：
+
 ```typescript
 // main/index.ts line 30-45
 if (!isDev) {
@@ -39,6 +41,7 @@ if (!isDev) {
 ```
 
 **优化方案**：
+
 ```typescript
 // 在 app.whenReady() 后延迟初始化
 app.whenReady().then(async () => {
@@ -58,7 +61,7 @@ function initSentry() {
         environment: process.env.NODE_ENV || "production",
         beforeSend(event) {
             // 过滤逻辑
-        }
+        },
     });
     logger.info("Sentry initialized in background");
 }
@@ -70,6 +73,7 @@ function initSentry() {
 所有 IPC 处理器在 `setupIpcHandlers()` 中同步注册，包含多个文件系统操作。
 
 **优化方案**：
+
 ```typescript
 // 分为关键和非关键处理器
 function setupCriticalIpcHandlers(): void {
@@ -166,7 +170,7 @@ private scheduleBackgroundServices(backgroundServices: Array<() => Promise<any> 
 // services/service-registry.ts
 export interface ServiceMetadata {
     name: string;
-    priority: 'critical' | 'important' | 'background';
+    priority: "critical" | "important" | "background";
     dependencies?: string[];
     lazyLoad?: boolean;
     startupDelay?: number;
@@ -204,30 +208,26 @@ export class ServiceRegistry {
         setTimeout(() => {
             this.initializeGroup(grouped.background, {
                 blocking: false,
-                staggered: true
+                staggered: true,
             });
         }, 3000);
     }
 
     private async initializeGroup(
         services: ServiceMetadata[],
-        options: { blocking?: boolean; staggered?: boolean }
+        options: { blocking?: boolean; staggered?: boolean },
     ): Promise<void> {
         if (options.staggered) {
             // 错开初始化时间，避免资源竞争
             for (const service of services) {
                 await this.initializeService(service);
-                await new Promise(resolve =>
-                    setTimeout(resolve, service.startupDelay || 500)
-                );
+                await new Promise((resolve) => setTimeout(resolve, service.startupDelay || 500));
             }
         } else if (options.blocking) {
-            await Promise.all(
-                services.map(s => this.initializeService(s))
-            );
+            await Promise.all(services.map((s) => this.initializeService(s)));
         } else {
             // 非阻塞异步初始化
-            services.forEach(s => this.initializeService(s));
+            services.forEach((s) => this.initializeService(s));
         }
     }
 }
@@ -241,52 +241,52 @@ export class ServiceRegistry {
 // services/service-config.ts
 export const serviceConfig: ServiceMetadata[] = [
     {
-        name: 'config',
-        priority: 'critical',
+        name: "config",
+        priority: "critical",
         lazyLoad: false,
     },
     {
-        name: 'window',
-        priority: 'critical',
-        dependencies: ['config'],
+        name: "window",
+        priority: "critical",
+        dependencies: ["config"],
     },
     {
-        name: 'logViewer',
-        priority: 'important',
+        name: "logViewer",
+        priority: "important",
     },
     {
-        name: 'menu',
-        priority: 'important',
-        dependencies: ['window'],
+        name: "menu",
+        priority: "important",
+        dependencies: ["window"],
     },
     {
-        name: 'update',
-        priority: 'background',
+        name: "update",
+        priority: "background",
         startupDelay: 0,
         retryOnFailure: true,
         maxRetries: 3,
     },
     {
-        name: 'thumbnail',
-        priority: 'background',
+        name: "thumbnail",
+        priority: "background",
         startupDelay: 500,
-        dependencies: ['logViewer'],
+        dependencies: ["logViewer"],
     },
     {
-        name: 'scan',
-        priority: 'background',
+        name: "scan",
+        priority: "background",
         startupDelay: 1000,
-        dependencies: ['logViewer', 'config'],
+        dependencies: ["logViewer", "config"],
     },
     {
-        name: 'watch',
-        priority: 'background',
+        name: "watch",
+        priority: "background",
         startupDelay: 1500,
         lazyLoad: true, // 按需加载
     },
     {
-        name: 'import',
-        priority: 'background',
+        name: "import",
+        priority: "background",
         startupDelay: 2000,
         lazyLoad: true,
     },
@@ -309,17 +309,17 @@ export function Service(metadata: ServiceMetadata) {
 
 // 使用示例
 @Service({
-    name: 'thumbnail',
-    priority: 'background',
+    name: "thumbnail",
+    priority: "background",
     startupDelay: 500,
-    dependencies: ['logViewer'],
+    dependencies: ["logViewer"],
 })
 export class ThumbnailService implements Service {
     constructor(
         private ipcMain: IpcMain,
         private mainWindow: BrowserWindow,
         private app: App,
-        private logViewerService: LogViewerService
+        private logViewerService: LogViewerService,
     ) {}
 
     async initialize(): Promise<void> {
@@ -427,7 +427,7 @@ export class ServiceHealthMonitor {
                 return;
             } catch (error) {
                 logger.error(`Failed to restart ${name}, attempt ${i + 1}:`, error);
-                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+                await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
             }
         }
 
@@ -462,10 +462,11 @@ export class StartupOptimizer {
 
     private autoRegisterServices(): void {
         // 从配置文件加载服务定义
-        serviceConfig.forEach(config => {
+        serviceConfig.forEach((config) => {
             const ServiceClass = this.loadServiceClass(config.name);
-            this.serviceRegistry.register(config, () =>
-                new ServiceClass(this.ipcMain, this.mainWindow, this.app)
+            this.serviceRegistry.register(
+                config,
+                () => new ServiceClass(this.ipcMain, this.mainWindow, this.app),
             );
         });
     }
@@ -499,15 +500,17 @@ export class StartupOptimizer {
 #### 4.1 移除固定延迟
 
 **当前问题**：
+
 ```typescript
 // main/index.ts line 108
 await new Promise((resolve) => setTimeout(resolve, 500));
 ```
 
 **优化方案**：
+
 ```typescript
 // 使用 ready-to-show 事件
-mainWindow.once('ready-to-show', () => {
+mainWindow.once("ready-to-show", () => {
     logger.info("Main window ready to show");
 
     // 平滑过渡
@@ -590,7 +593,7 @@ if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
         if (await checkDevServer()) {
             break;
         }
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         retries++;
     }
 }
@@ -620,7 +623,7 @@ class StartupPerformanceMonitor {
     report(): void {
         logger.info("Startup Performance Metrics:", {
             ...this.metrics,
-            totalTime: Date.now() - this.startTime
+            totalTime: Date.now() - this.startTime,
         });
 
         // 可选：发送到分析服务
@@ -633,7 +636,7 @@ class StartupPerformanceMonitor {
         // 发送到 Sentry 或其他分析服务
         Sentry.captureMessage("Startup Performance", {
             level: "info",
-            extra: metrics
+            extra: metrics,
         });
     }
 }
@@ -645,16 +648,16 @@ class StartupPerformanceMonitor {
 const perfMonitor = new StartupPerformanceMonitor();
 
 app.whenReady().then(async () => {
-    perfMonitor.mark('appReady');
+    perfMonitor.mark("appReady");
 
     // ... 创建窗口
-    perfMonitor.mark('windowCreated');
+    perfMonitor.mark("windowCreated");
 
     // ... 初始化服务
-    perfMonitor.mark('servicesInitialized');
+    perfMonitor.mark("servicesInitialized");
 
     // ... 加载渲染器
-    perfMonitor.mark('rendererLoaded');
+    perfMonitor.mark("rendererLoaded");
 
     perfMonitor.report();
 });
@@ -665,16 +668,19 @@ app.whenReady().then(async () => {
 分阶段实施以降低风险：
 
 **第一阶段**（1-2 天）：
+
 - 延迟 Sentry 初始化
 - 调整服务优先级
 - 添加性能监控
 
 **第二阶段**（2-3 天）：
+
 - 优化 IPC 处理器注册
 - 实现启动画面淡出动画
 - 优化渲染器加载超时
 
 **第三阶段**（1-2 天）：
+
 - 实现渲染器预热机制
 - 优化后台服务初始化时机
 - 性能测试和调优
@@ -684,51 +690,51 @@ app.whenReady().then(async () => {
 引入服务管理架构后，相比硬编码方式带来以下优势：
 
 1. **可维护性提升**
-   - 服务定义集中管理，易于查看和修改
-   - 通过配置文件调整服务优先级，无需修改代码
-   - 服务依赖关系清晰明确
+    - 服务定义集中管理，易于查看和修改
+    - 通过配置文件调整服务优先级，无需修改代码
+    - 服务依赖关系清晰明确
 
 2. **灵活性增强**
-   - 支持动态加载/卸载服务
-   - 可根据环境或用户配置调整服务启动策略
-   - 易于添加新服务或移除旧服务
+    - 支持动态加载/卸载服务
+    - 可根据环境或用户配置调整服务启动策略
+    - 易于添加新服务或移除旧服务
 
 3. **可靠性改进**
-   - 自动健康检查和服务恢复
-   - 服务失败隔离，不影响其他服务
-   - 支持服务重试和降级策略
+    - 自动健康检查和服务恢复
+    - 服务失败隔离，不影响其他服务
+    - 支持服务重试和降级策略
 
 4. **性能优化**
-   - 按需加载（lazy loading）减少内存占用
-   - 智能依赖解析，避免重复初始化
-   - 支持并行和串行初始化策略
+    - 按需加载（lazy loading）减少内存占用
+    - 智能依赖解析，避免重复初始化
+    - 支持并行和串行初始化策略
 
 5. **开发体验**
-   - 装饰器模式简化服务定义
-   - 统一的服务接口规范
-   - 更好的类型安全和 IDE 支持
+    - 装饰器模式简化服务定义
+    - 统一的服务接口规范
+    - 更好的类型安全和 IDE 支持
 
 ## Drawbacks
 
 1. **复杂性增加**：
-   - 启动流程变得更复杂，需要更仔细的错误处理
-   - 服务管理系统本身增加了代码复杂度
+    - 启动流程变得更复杂，需要更仔细的错误处理
+    - 服务管理系统本身增加了代码复杂度
 
 2. **调试困难**：
-   - 异步和延迟初始化可能使问题定位更困难
-   - 服务依赖关系可能导致级联故障
+    - 异步和延迟初始化可能使问题定位更困难
+    - 服务依赖关系可能导致级联故障
 
 3. **功能延迟**：
-   - 某些功能在启动后不会立即可用
-   - 需要处理服务未就绪的边界情况
+    - 某些功能在启动后不会立即可用
+    - 需要处理服务未就绪的边界情况
 
 4. **测试挑战**：
-   - 需要更多的集成测试来确保启动流程正确
-   - 服务管理系统本身需要充分测试
+    - 需要更多的集成测试来确保启动流程正确
+    - 服务管理系统本身需要充分测试
 
 5. **学习成本**：
-   - 开发者需要理解新的服务管理架构
-   - 需要文档和培训支持
+    - 开发者需要理解新的服务管理架构
+    - 需要文档和培训支持
 
 ## Alternatives
 
@@ -737,10 +743,12 @@ app.whenReady().then(async () => {
 将重型初始化任务移到 Worker 线程中执行：
 
 **优点**：
+
 - 不阻塞主线程
 - 真正的并行处理
 
 **缺点**：
+
 - 需要大量重构
 - Worker 线程不能直接访问 Electron API
 - 增加了进程间通信的复杂性
@@ -750,10 +758,12 @@ app.whenReady().then(async () => {
 在构建时预处理和缓存初始化数据：
 
 **优点**：
+
 - 大幅减少运行时初始化
 - 启动速度最快
 
 **缺点**：
+
 - 增加构建复杂性
 - 缓存失效问题
 - 首次启动仍然慢
@@ -763,10 +773,12 @@ app.whenReady().then(async () => {
 采用 PWA 的渐进式增强策略：
 
 **优点**：
+
 - 用户体验流畅
 - 功能按需加载
 
 **缺点**：
+
 - 需要重新设计应用架构
 - 可能不适合桌面应用场景
 
@@ -781,70 +793,75 @@ app.whenReady().then(async () => {
 ## Success Criteria
 
 1. **性能指标**：
-   - 首屏显示时间减少 30% 以上
-   - 冷启动时间 < 3 秒（普通硬件）
-   - 热启动时间 < 1.5 秒
+    - 首屏显示时间减少 30% 以上
+    - 冷启动时间 < 3 秒（普通硬件）
+    - 热启动时间 < 1.5 秒
 
 2. **用户体验**：
-   - 启动画面平滑过渡
-   - 核心功能立即可用
-   - 无明显的功能延迟感
+    - 启动画面平滑过渡
+    - 核心功能立即可用
+    - 无明显的功能延迟感
 
 3. **稳定性**：
-   - 启动失败率 < 0.1%
-   - 无新增崩溃或挂起
-   - 所有现有功能正常工作
+    - 启动失败率 < 0.1%
+    - 无新增崩溃或挂起
+    - 所有现有功能正常工作
 
 4. **可维护性**：
-   - 代码复杂度可控
-   - 有完整的性能监控
-   - 易于调试和故障排查
+    - 代码复杂度可控
+    - 有完整的性能监控
+    - 易于调试和故障排查
 
 ## Implementation Checklist
 
 ### 阶段 1：服务管理架构（2-3天）
+
 - [ ] 创建服务管理基础架构
-  - [ ] 实现 ServiceRegistry 类
-  - [ ] 实现 ServiceMetadata 接口
-  - [ ] 创建服务配置文件
+    - [ ] 实现 ServiceRegistry 类
+    - [ ] 实现 ServiceMetadata 接口
+    - [ ] 创建服务配置文件
 - [ ] 实现动态服务加载器
-  - [ ] DynamicServiceLoader 类
-  - [ ] 依赖解析机制
-  - [ ] 懒加载支持
+    - [ ] DynamicServiceLoader 类
+    - [ ] 依赖解析机制
+    - [ ] 懒加载支持
 - [ ] 添加服务健康监控
-  - [ ] ServiceHealthMonitor 类
-  - [ ] 健康检查接口
-  - [ ] 自动恢复机制
+    - [ ] ServiceHealthMonitor 类
+    - [ ] 健康检查接口
+    - [ ] 自动恢复机制
 
 ### 阶段 2：核心优化（1-2天）
+
 - [ ] 创建性能监控基础设施
 - [ ] 实施 Sentry 延迟初始化
 - [ ] 重构 IPC 处理器注册
-  - [ ] 拆分关键和非关键处理器
-  - [ ] 实现延迟注册机制
+    - [ ] 拆分关键和非关键处理器
+    - [ ] 实现延迟注册机制
 
 ### 阶段 3：服务迁移（2-3天）
+
 - [ ] 迁移现有服务到新架构
-  - [ ] ConfigService
-  - [ ] WindowService
-  - [ ] LogViewerService
-  - [ ] MenuService
-  - [ ] UpdateService
-  - [ ] ThumbnailService
-  - [ ] ScanService
-  - [ ] WatchService
-  - [ ] ImportService
+    - [ ] ConfigService
+    - [ ] WindowService
+    - [ ] LogViewerService
+    - [ ] MenuService
+    - [ ] UpdateService
+    - [ ] ThumbnailService
+    - [ ] ScanService
+    - [ ] WatchService
+    - [ ] ImportService
 - [ ] 调整服务启动优先级
 - [ ] 实现服务装饰器模式
 
 ### 阶段 4：UI 和加载优化（1-2天）
+
 - [ ] 优化启动画面过渡
-  - [ ] 实现淡出动画
-  - [ ] 移除固定延迟
+    - [ ] 实现淡出动画
+    - [ ] 移除固定延迟
 - [ ] 实现渲染器预热机制
 - [ ] 调整渲染器超时时间
 
 ### 阶段 5：测试和调优（1-2天）
+
 - [ ] 添加性能测试用例
 - [ ] 更新相关文档
 - [ ] 进行跨平台测试

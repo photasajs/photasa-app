@@ -55,89 +55,88 @@ src/e2e/
 ### Core Components
 
 #### 1. Electron App Fixture (`fixtures/electron-app.ts`)
+
 ```typescript
 export class ElectronAppFixture {
-  private app: ElectronApplication | null = null;
-  private page: Page | null = null;
+    private app: ElectronApplication | null = null;
+    private page: Page | null = null;
 
-  async launch(options?: LaunchOptions): Promise<Page> {
-    // 启动 Electron 应用
-    // 管理多窗口场景
-    // 提供应用状态检查方法
-  }
+    async launch(options?: LaunchOptions): Promise<Page> {
+        // 启动 Electron 应用
+        // 管理多窗口场景
+        // 提供应用状态检查方法
+    }
 
-  async cleanup(): Promise<void> {
-    // 清理应用状态
-    // 关闭所有窗口
-    // 重置数据库状态
-  }
+    async cleanup(): Promise<void> {
+        // 清理应用状态
+        // 关闭所有窗口
+        // 重置数据库状态
+    }
 }
 ```
 
 #### 2. Base Page Object (`pages/base-page.ts`)
+
 ```typescript
 export abstract class BasePage {
-  protected page: Page;
-  protected app: ElectronApplication;
+    protected page: Page;
+    protected app: ElectronApplication;
 
-  // 通用页面交互方法
-  // 等待和断言工具
-  // 截图和调试工具
+    // 通用页面交互方法
+    // 等待和断言工具
+    // 截图和调试工具
 }
 ```
 
 #### 3. Test Configuration Enhancement
+
 ```typescript
 // playwright.config.ts
 export default defineConfig({
-  projects: [
-    {
-      name: 'electron-dev',
-      use: { 
-        ...electronConfig,
-        // 开发环境配置
-      }
-    },
-    {
-      name: 'electron-prod',
-      use: { 
-        ...electronConfig,
-        // 生产构建配置
-      }
-    }
-  ],
-  reporter: [
-    ['html'],
-    ['json'],
-    ['junit', { outputFile: 'test-results/junit.xml' }]
-  ]
+    projects: [
+        {
+            name: "electron-dev",
+            use: {
+                ...electronConfig,
+                // 开发环境配置
+            },
+        },
+        {
+            name: "electron-prod",
+            use: {
+                ...electronConfig,
+                // 生产构建配置
+            },
+        },
+    ],
+    reporter: [["html"], ["json"], ["junit", { outputFile: "test-results/junit.xml" }]],
 });
 ```
 
 ### Key Testing Scenarios
 
 1. **Application Lifecycle**
-   - 应用启动和初始化
-   - 窗口管理（最小化、最大化、关闭）
-   - 应用退出和数据持久化
+    - 应用启动和初始化
+    - 窗口管理（最小化、最大化、关闭）
+    - 应用退出和数据持久化
 
 2. **Photo Import Workflow**
-   - 文件夹选择和扫描
-   - 批量照片导入
-   - 导入进度和错误处理
-   - EXIF 数据提取验证
+    - 文件夹选择和扫描
+    - 批量照片导入
+    - 导入进度和错误处理
+    - EXIF 数据提取验证
 
 3. **Photo Management**
-   - 照片浏览和导航
-   - 照片搜索和过滤
-   - 照片组织和标签
-   - 照片删除和恢复
+    - 照片浏览和导航
+    - 照片搜索和过滤
+    - 照片组织和标签
+    - 照片删除和恢复
 
 4. **Settings Management**
-   - 设置更改和持久化
-   - 主题切换
-   - 语言切换
-   - 存储路径配置
+    - 设置更改和持久化
+    - 主题切换
+    - 语言切换
+    - 存储路径配置
 
 ## Drawbacks
 
@@ -150,22 +149,27 @@ export default defineConfig({
 ## Alternatives
 
 ### 1. WebdriverIO + wdio-electron-service
+
 - **优点**: 成熟的测试生态系统
 - **缺点**: 社区维护的 Electron 支持，文档较少
 
-### 2. Cypress + cypress-electron-plugin  
+### 2. Cypress + cypress-electron-plugin
+
 - **优点**: 优秀的开发体验和调试工具
 - **缺点**: Electron 支持有限，主要关注渲染进程
 
 ### 3. 保持现状（最小化 Playwright 设置）
+
 - **影响**: 无法提供足够的测试覆盖，增加发布风险
 
 ### 4. 仅依赖单元测试
+
 - **影响**: 无法测试用户完整工作流程，集成问题难以发现
 
 ## Implementation Plan
 
 ### Phase 1: 核心架构建立 (2 weeks)
+
 - [ ] 增强 `playwright.config.ts` 配置
 - [ ] 创建 `ElectronAppFixture` 基础设施
 - [ ] 实现 `BasePage` 和核心页面对象
@@ -173,6 +177,7 @@ export default defineConfig({
 - [ ] 重构现有测试用例
 
 ### Phase 2: 核心功能测试 (3 weeks)
+
 - [ ] 实现应用生命周期测试
 - [ ] 创建照片导入工作流测试
 - [ ] 开发照片管理功能测试
@@ -180,6 +185,7 @@ export default defineConfig({
 - [ ] 集成错误处理和边缘案例测试
 
 ### Phase 3: CI/CD 集成和优化 (1 week)
+
 - [ ] 配置 GitHub Actions 跨平台测试
 - [ ] 添加测试报告和结果上传
 - [ ] 实现测试失败时的截图和视频保存

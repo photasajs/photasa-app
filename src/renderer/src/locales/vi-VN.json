@@ -361,8 +361,11 @@
         "scanComplete": "Thư mục [{path}] đã được xử lý.",
         "start": "Bắt đầu quét",
         "progress": "Tiến trình quét",
+        "processingFile": "Đang xử lý: {fileName}",
+        "scanningPath": "Đang quét: {path}",
         "complete": "Quét hoàn tất",
-        "error": "Lỗi quét"
+        "error": "Lỗi quét",
+        "scanFailed": "Quét thất bại: {path}"
     },
     "button": {
         "import": "Nhập",

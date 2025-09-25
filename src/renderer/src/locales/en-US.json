@@ -432,13 +432,16 @@
         "readingConfig": "Loading library info [{config}]",
         "loadingConfig": "Reading library info",
         "processing": "Processing [{file}]",
+        "processingFile": "Processing: {fileName}",
         "scanned": "Completed",
         "scanComplete": "Directory [{path}] has been processed.",
         "start": "Scan started",
         "scanning": "Scanning",
+        "scanningPath": "Scanning: {path}",
         "progress": "Scanning progress",
         "complete": "Scan complete",
-        "error": "Scan error"
+        "error": "Scan error",
+        "scanFailed": "Scan failed: {path}"
     },
     "button": {
         "import": "Import",

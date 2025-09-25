@@ -27,6 +27,7 @@
 **问题描述**：UploadThing CDN生成的文件URL包含冒号字符（`https://utfs.io/f/xxx`），导致electron-updater下载时创建包含冒号的临时文件路径，在Windows和macOS系统中被禁止。
 
 **具体错误**：
+
 ```
 ENOENT: no such file or directory, open '/Users/user/Library/Caches/photasa-updater/pending/temp-https:/utfs.io/f/4CQT2JNmMDi7rIPLymJ7eFcKahD59BWAr2PpX3f4NuI6jUYH'
 ```
@@ -34,6 +35,7 @@ ENOENT: no such file or directory, open '/Users/user/Library/Caches/photasa-upda
 #### 服务端代理方案的优势
 
 **为什么选择服务端解决**：
+
 1. **客户端零修改**：electron-updater使用标准流程，无需自定义下载逻辑
 2. **架构简洁**：问题在服务端统一解决，客户端保持简单
 3. **向后兼容**：未来可以轻松切换到其他CDN服务
@@ -43,11 +45,11 @@ ENOENT: no such file or directory, open '/Users/user/Library/Caches/photasa-upda
 #### electron-updater 标准用法保持
 
 **保留所有electron-updater优势**：
+
 1. **成熟的版本比较逻辑**：支持语义化版本比较（semver）、预发布版本处理
 2. **完整的更新检查机制**：自动平台检测、latest.yml格式解析、内置重试机制
 3. **标准的UpdateInfo结构**：行业标准数据格式、SHA512校验、灰度发布支持
 4. **完整的事件系统**：生命周期事件、与现有代码高度集成
-
 
 ### Use cases it supports:
 
@@ -133,42 +135,44 @@ ENOENT: no such file or directory, open '/Users/user/Library/Caches/photasa-upda
 
 ```typescript
 interface UpdateInfo {
-    version: string;           // 新版本号，如 "1.6.0-alpha"
-    files: Array<{            // 文件信息数组，通常包含不同平台的文件
-        url: string;          // 下载URL（原始，可能包含冒号问题）
-        sha512: string;       // SHA512校验值
-        size: number;         // 文件大小（字节）
-        ext?: string;         // 文件扩展名
+    version: string; // 新版本号，如 "1.6.0-alpha"
+    files: Array<{
+        // 文件信息数组，通常包含不同平台的文件
+        url: string; // 下载URL（原始，可能包含冒号问题）
+        sha512: string; // SHA512校验值
+        size: number; // 文件大小（字节）
+        ext?: string; // 文件扩展名
     }>;
-    releaseDate: string;      // 发布时间
+    releaseDate: string; // 发布时间
     stagingPercentage?: number; // 灰度发布百分比
-    releaseName?: string;     // 发布名称
-    releaseNotes?: string;    // 发布说明
+    releaseName?: string; // 发布名称
+    releaseNotes?: string; // 发布说明
 }
 ```
 
 #### 关键字段说明
 
 1. **version**: 新版本的版本号
-   - 格式：遵循语义化版本（semver），如 "1.6.0", "1.6.0-alpha", "1.6.0-beta.1"
-   - 用途：版本比较判断是否需要更新
+    - 格式：遵循语义化版本（semver），如 "1.6.0", "1.6.0-alpha", "1.6.0-beta.1"
+    - 用途：版本比较判断是否需要更新
 
 2. **files**: 下载文件信息数组
-   - 通常第一个文件是主要的安装包
-   - **服务端处理**：`url` 字段由服务端生成，使用安全的文件名如 `"Photasa-1.6.0-win.zip"`
-   - **路径安全**：避免冒号等特殊字符，确保跨平台兼容性
+    - 通常第一个文件是主要的安装包
+    - **服务端处理**：`url` 字段由服务端生成，使用安全的文件名如 `"Photasa-1.6.0-win.zip"`
+    - **路径安全**：避免冒号等特殊字符，确保跨平台兼容性
 
 3. **sha512**: 文件完整性校验
-   - 格式：SHA512哈希值的十六进制字符串
-   - 用途：确保下载文件未被篡改
+    - 格式：SHA512哈希值的十六进制字符串
+    - 用途：确保下载文件未被篡改
 
 4. **size**: 文件大小
-   - 单位：字节
-   - 用途：显示下载进度、检查磁盘空间
+    - 单位：字节
+    - 用途：显示下载进度、检查磁盘空间
 
 #### 技术实现策略
 
 **URL重写流程**：
+
 ```
 1. 服务端生成latest.yml，使用安全文件名：
    url: "Photasa-1.6.0-win.zip"  // 而非 UploadThing URL
@@ -182,6 +186,7 @@ interface UpdateInfo {
 ```
 
 **关键优势**：
+
 - 客户端看到的始终是安全的文件名
 - 服务端负责URL映射和代理
 - 保持electron-updater的标准行为
@@ -213,7 +218,6 @@ interface UpdateInfo {
 provider: generic
 url: https://photasa.me/api/updates/releases
 updaterCacheDirName: photasa-updater
-
 # 生产环境配置由 electron-builder.yml 中的 publish 配置自动生成
 ```
 

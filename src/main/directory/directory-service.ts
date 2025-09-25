@@ -3,7 +3,7 @@ import { dialog } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import { readFile } from "fs/promises";
-import klawSync from "klaw-sync";
+import _klawSync from "klaw-sync";
 import { Service } from "../services/decorators/service-decorators";
 import { ServicePriority, IService, ServiceStatus } from "../services/core/service-types";
 import { loggers } from "@common/logger";
@@ -125,10 +125,7 @@ export default class DirectoryService implements IService {
         // 扫描子文件夹
         this.ipcMain.handle("picasa:sub-folders", async (_, args) => {
             try {
-                const filterFn = (item: { path: string }): boolean => {
-                    const basename = path.basename(item.path);
-                    return basename === "." || basename[0] !== ".";
-                };
+                logger.debug(`[DirectoryService] 开始扫描子目录: ${args.parent}`);
 
                 if (!fs.existsSync(args.parent)) {
                     const error = new Error(`目录不存在: ${args.parent}`);
@@ -136,16 +133,28 @@ export default class DirectoryService implements IService {
                     throw error;
                 }
 
-                const folders = klawSync(args.parent, {
-                    nofile: true,
-                    depthLimit: 0,
-                    filter: filterFn,
-                    errorCallback: (err: Error) => {
-                        logger.error(`扫描目录错误 ${args.parent}:`, err);
-                    },
-                });
+                // 直接读取目录内容，过滤出子目录
+                const entries = fs.readdirSync(args.parent, { withFileTypes: true });
+                const subDirectories = entries
+                    .filter((dirent) => {
+                        // 只包含目录
+                        if (!dirent.isDirectory()) return false;
 
-                return folders.map((item) => item.path);
+                        // 排除隐藏目录（以.开头）
+                        if (dirent.name.startsWith(".")) return false;
+
+                        // 排除系统目录
+                        const systemDirs = ["node_modules", "Thumbs.db", ".DS_Store"];
+                        if (systemDirs.includes(dirent.name)) return false;
+
+                        return true;
+                    })
+                    .map((dirent) => path.join(args.parent, dirent.name));
+
+                logger.debug(`[DirectoryService] 发现子目录数量: ${subDirectories.length}`);
+                logger.debug(`[DirectoryService] 子目录列表:`, subDirectories);
+
+                return subDirectories;
             } catch (error) {
                 logger.error(`picasa:sub-folders 处理器错误:`, error);
                 throw error;

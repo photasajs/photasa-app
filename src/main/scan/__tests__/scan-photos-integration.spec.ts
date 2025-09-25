@@ -158,8 +158,10 @@ describe("RFC 0007 Integration Tests", () => {
     describe("RFC 0007 Component Integration", () => {
         it("应该验证所有模块都能正确导入", async () => {
             // 验证所有RFC 0007核心模块都能正确导入
-            const { computeFolderHash, ScanStrategy } = await import("../folder-cache-manager");
-            const { decideScanStrategy } = await import("../scan-strategy");
+            const { computeFolderHash, ScanStrategy } = await import(
+                "../cache/folder-cache-manager"
+            );
+            const { decideScanStrategy } = await import("../strategy/scan-strategy");
             const { processPhotoFile } = await import("../scan-helpers");
             const { performExtendedCleanup } = await import("../scan-cleanup");
 

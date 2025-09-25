@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { decideScanStrategy } from "../scan-strategy";
+import { decideScanStrategy } from "../strategy/scan-strategy";
 import { PhotasaLogger } from "@common/logger";
 import fs from "fs-extra";
 

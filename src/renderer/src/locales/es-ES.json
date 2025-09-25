@@ -403,8 +403,11 @@
         "scanComplete": "El directorio [{path}] ha sido procesado.",
         "start": "Inicio de escaneo",
         "progress": "Progreso de escaneo",
+        "processingFile": "Procesando: {fileName}",
+        "scanningPath": "Escaneando: {path}",
         "complete": "Escaneo completado",
-        "error": "Error de escaneo"
+        "error": "Error de escaneo",
+        "scanFailed": "Escaneo fallido: {path}"
     },
     "button": {
         "import": "Importar",

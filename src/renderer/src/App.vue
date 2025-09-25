@@ -185,22 +185,22 @@ watchArray(
     { deep: true },
 );
 
-// 包装 addScanFolder 增加日志
-const addScanFolderWithLog = (folder: string, action: "scan" | "rescan" | "current") => {
-    logger.info(`[addScanFolderWithLog] Attempting to add folder: ${folder}, action: ${action}`);
+// 包装 addScanFolder 增加日志和source参数
+function addScanFolderWithLog(
+    folder: string,
+    action: "scan" | "rescan" | "current",
+    source: "user" | "auto" = "user",
+) {
+    logger.info(
+        `[addScanFolderWithLog] Adding folder to queue: ${folder}, action: ${action}, source: ${source}`,
+    );
 
-    // 检查是否已存在
-    const existingIndex = scanningFolder.value.findIndex((f) => f.path === folder);
-    if (existingIndex >= 0) {
-        logger.debug(
-            `[addScanFolderWithLog] Folder already exists at index ${existingIndex}, skipping: ${folder}`,
-        );
-        return;
-    }
+    // 直接添加到队列，让 preference store 处理优先级和去重
+    // preference store 会根据优先级决定是否更新或跳过
+    addScanFolder(folder, action, source);
 
-    addScanFolder(folder, action);
-    logger.info(`[addScanFolderWithLog] Successfully added folder: ${folder}`);
-};
+    logger.info(`[addScanFolderWithLog] Folder added to queue: ${folder} with source: ${source}`);
+}
 
 watchArray(
     scanningFolder,
@@ -229,6 +229,9 @@ const callbacks: ScanCallbacks = {
     logDebug: logger.debug.bind(logger),
     logError: logger.error.bind(logger),
 
+    // 国际化
+    t: (key: string, params?: Record<string, any>) => t(key, params || {}),
+
     updateProcessingStatus: (status: string) => {
         processingFile.value = status;
         // 同时更新状态栏
@@ -236,6 +239,20 @@ const callbacks: ScanCallbacks = {
             type: "scan",
             status: "scanning",
             task: status,
+            timestamp: Date.now(),
+        });
+    },
+
+    updateFileProgress: (fileName: string, current?: number, total?: number) => {
+        // 更新文件级别的处理状态 - 直接显示完整文件路径
+        const progressText = current && total ? ` (${current}/${total})` : "";
+        processingFile.value = `${fileName}${progressText}`;
+        // 同时更新状态栏，传递完整路径到data.currentFile
+        statusBarStore.update({
+            type: "scan",
+            status: "scanning",
+            task: `${fileName}${progressText}`,
+            data: { currentFile: fileName },
             timestamp: Date.now(),
         });
     },
@@ -256,7 +273,8 @@ const callbacks: ScanCallbacks = {
 
     scanSubfolders: scanSubfolders,
     addScanFolderToQueue: (path: string, action: string) => {
-        addScanFolderWithLog(path, action as "scan" | "rescan" | "current");
+        // 子目录发现使用 "auto" 源，以区分用户手动添加
+        addScanFolderWithLog(path, action as "scan" | "rescan" | "current", "auto");
     },
 
     performScanTask: async (action) => {
@@ -332,6 +350,8 @@ const title = computed(() => {
 useTitle(title);
 
 // 监听 find-photo 事件，用于刷新树结构
+// 🔧 状态栏路径显示修复：processScannedFileTask 回调中增强了路径构造逻辑
+// 相关修改：将 args.currentFile (文件名) 与 args.action.path (目录路径) 结合，构造完整文件路径
 findPhotoService.onFindPhoto((args: any) => {
     logger.debug("onFindPhoto received:", args.type, args.action?.path, args.progress);
 
@@ -357,9 +377,27 @@ findPhotoService.onFindPhoto((args: any) => {
         }
 
         // 更新当前处理的文件信息到状态栏
+        // 关键修复：确保状态栏显示完整文件路径而不是仅文件名
         if (args.currentFile) {
-            processingFile.value = `${t("status.scanning")} ${args.action.path} - ${args.currentFile}`;
+            /**
+             * 路径构造逻辑：
+             * - args.action.path: 扫描的目录路径（完整路径）
+             * - args.currentFile: 当前处理的文件名（仅文件名，来自 scan-worker.ts 的 path.basename()）
+             * - 目标：构造完整的文件路径供状态栏显示
+             *
+             * 示例：
+             * - args.action.path = "/Users/john/Photos"
+             * - args.currentFile = "bamm.jpg"
+             * - fullFilePath = "/Users/john/Photos/bamm.jpg"
+             *
+             * 安全处理：
+             * - replace(/\/+/g, "/") 确保路径中不会出现双斜杠问题
+             * - 支持 Unix/Linux/macOS 路径格式
+             */
+            const fullFilePath = `${args.action.path}/${args.currentFile}`.replace(/\/+/g, "/");
+            processingFile.value = `${t("status.scanning")} ${fullFilePath}`;
         } else {
+            // 当没有具体文件信息时，显示目录路径
             processingFile.value = `${t("status.scanning")} ${args.action.path}`;
         }
     }

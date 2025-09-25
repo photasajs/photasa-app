@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { scanPhotos } from "../scan-photos";
-import { IncrementalCacheManager } from "../incremental-cache";
+import { IncrementalCacheManager } from "../cache/incremental-cache";
 import type { ScanAction } from "@common/scan-types";
 import type { PhotasaLogger } from "@common/logger";
 import fs from "fs-extra";
