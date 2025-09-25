@@ -375,8 +375,11 @@
         "scanComplete": "目錄[{path}]已處理完畢",
         "start": "開始掃描",
         "progress": "掃描進度",
+        "processingFile": "正在處理: {fileName}",
+        "scanningPath": "正在掃描: {path}",
         "complete": "掃描完成",
-        "error": "掃描錯誤"
+        "error": "掃描錯誤",
+        "scanFailed": "掃描失敗: {path}"
     },
     "button": {
         "import": "導入",
@@ -522,8 +525,8 @@
     "imageInfo": {
         "title": "圖片資訊",
         "lastUpdated": "最後更新",
-        "openInFinder": "在檔案總管中開啟",
-        "repairLibrary": "修復照片庫資訊",
+        "openInFinder": "開啟資料夾",
+        "repairLibrary": "修復庫資訊",
         "fileCount": "檔案數量",
         "folderSize": "資料夾大小",
         "basicInfo": "基本資訊",

@@ -24,6 +24,7 @@
 ### 1. 用户界面变更
 
 #### 1.1 调整大小手柄
+
 为日志控制台面板添加三个调整大小手柄：
 
 - **右边缘手柄**: 8px宽，全高度，启用水平调整
@@ -31,6 +32,7 @@
 - **角落手柄**: 12x12px位于右下角，启用对角线调整
 
 #### 1.2 视觉设计
+
 - 手柄默认透明
 - 悬停状态显示蓝色半透明背景（`rgba(0, 132, 255, 0.3)`）
 - 适当的光标样式：`ew-resize`、`ns-resize`、`nw-resize`
@@ -39,6 +41,7 @@
 ### 2. 技术实现
 
 #### 2.1 Vue 3 组合式API
+
 ```typescript
 // 状态管理
 const isResizing = ref(false);
@@ -48,17 +51,20 @@ const initialMouse = ref({ x: 0, y: 0 });
 ```
 
 #### 2.2 事件处理
+
 - `startResize(type)`: 启动调整大小操作
 - `handleResize(e)`: 处理调整大小过程中的鼠标移动
 - `stopResize()`: 完成调整大小操作并清理事件监听器
 
 #### 2.3 尺寸约束
+
 - **最小宽度**: 400px
 - **最大宽度**: 窗口宽度的95%
 - **最小高度**: 300px
 - **最大高度**: 窗口高度的90%
 
 #### 2.4 兼容性
+
 - 保持现有拖拽功能
 - 防止拖拽和调整大小操作之间的冲突
 - 保留所有现有日志查看器功能
@@ -66,6 +72,7 @@ const initialMouse = ref({ x: 0, y: 0 });
 ### 3. 实现细节
 
 #### 3.1 模板结构
+
 ```vue
 <div class="log-console">
   <!-- 现有内容 -->
@@ -81,123 +88,128 @@ const initialMouse = ref({ x: 0, y: 0 });
 ```
 
 #### 3.2 CSS样式
+
 ```less
 .log-console {
-  position: relative; // 启用手柄的绝对定位
+    position: relative; // 启用手柄的绝对定位
 
-  .resize-handle {
-    position: absolute;
-    background: transparent;
-    z-index: 10;
+    .resize-handle {
+        position: absolute;
+        background: transparent;
+        z-index: 10;
 
-    &.resize-right {
-      top: 0;
-      right: 0;
-      width: 8px;
-      height: 100%;
-      cursor: ew-resize;
+        &.resize-right {
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 100%;
+            cursor: ew-resize;
+        }
+
+        &.resize-bottom {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            cursor: ns-resize;
+        }
+
+        &.resize-corner {
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            cursor: nw-resize;
+        }
+
+        &:hover {
+            background: rgba(0, 132, 255, 0.3);
+        }
     }
-
-    &.resize-bottom {
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 8px;
-      cursor: ns-resize;
-    }
-
-    &.resize-corner {
-      bottom: 0;
-      right: 0;
-      width: 12px;
-      height: 12px;
-      cursor: nw-resize;
-    }
-
-    &:hover {
-      background: rgba(0, 132, 255, 0.3);
-    }
-  }
 }
 ```
 
 #### 3.3 JavaScript逻辑
+
 ```typescript
 const startResize = (type: "right" | "bottom" | "corner") => {
-  isResizing.value = true;
-  resizeType.value = type;
+    isResizing.value = true;
+    resizeType.value = type;
 
-  const consoleEl = document.querySelector(".log-console") as HTMLElement;
-  if (consoleEl) {
-    const rect = consoleEl.getBoundingClientRect();
-    initialSize.value = { width: rect.width, height: rect.height };
-    initialMouse.value = { x: 0, y: 0 };
-    consoleEl.style.cursor = getResizeCursor(type);
-  }
+    const consoleEl = document.querySelector(".log-console") as HTMLElement;
+    if (consoleEl) {
+        const rect = consoleEl.getBoundingClientRect();
+        initialSize.value = { width: rect.width, height: rect.height };
+        initialMouse.value = { x: 0, y: 0 };
+        consoleEl.style.cursor = getResizeCursor(type);
+    }
 
-  document.addEventListener("mousemove", handleResize);
-  document.addEventListener("mouseup", stopResize);
+    document.addEventListener("mousemove", handleResize);
+    document.addEventListener("mouseup", stopResize);
 };
 
 const handleResize = (e: MouseEvent) => {
-  if (!isResizing.value || !resizeType.value) return;
+    if (!isResizing.value || !resizeType.value) return;
 
-  // Set initial mouse position on first move
-  if (initialMouse.value.x === 0 && initialMouse.value.y === 0) {
-    initialMouse.value = { x: e.clientX, y: e.clientY };
-    return;
-  }
+    // Set initial mouse position on first move
+    if (initialMouse.value.x === 0 && initialMouse.value.y === 0) {
+        initialMouse.value = { x: e.clientX, y: e.clientY };
+        return;
+    }
 
-  const deltaX = e.clientX - initialMouse.value.x;
-  const deltaY = e.clientY - initialMouse.value.y;
+    const deltaX = e.clientX - initialMouse.value.x;
+    const deltaY = e.clientY - initialMouse.value.y;
 
-  let newWidth = initialSize.value.width;
-  let newHeight = initialSize.value.height;
+    let newWidth = initialSize.value.width;
+    let newHeight = initialSize.value.height;
 
-  // Calculate new dimensions based on resize type
-  switch (resizeType.value) {
-    case "right":
-      newWidth = initialSize.value.width + deltaX;
-      break;
-    case "bottom":
-      newHeight = initialSize.value.height + deltaY;
-      break;
-    case "corner":
-      newWidth = initialSize.value.width + deltaX;
-      newHeight = initialSize.value.height + deltaY;
-      break;
-  }
+    // Calculate new dimensions based on resize type
+    switch (resizeType.value) {
+        case "right":
+            newWidth = initialSize.value.width + deltaX;
+            break;
+        case "bottom":
+            newHeight = initialSize.value.height + deltaY;
+            break;
+        case "corner":
+            newWidth = initialSize.value.width + deltaX;
+            newHeight = initialSize.value.height + deltaY;
+            break;
+    }
 
-  // Apply size constraints
-  const minWidth = 400;
-  const maxWidth = window.innerWidth * 0.95;
-  const minHeight = 300;
-  const maxHeight = window.innerHeight * 0.9;
+    // Apply size constraints
+    const minWidth = 400;
+    const maxWidth = window.innerWidth * 0.95;
+    const minHeight = 300;
+    const maxHeight = window.innerHeight * 0.9;
 
-  newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-  newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+    newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+    newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
 
-  // Apply new dimensions
-  consoleEl.style.width = `${newWidth}px`;
-  consoleEl.style.height = `${newHeight}px`;
+    // Apply new dimensions
+    consoleEl.style.width = `${newWidth}px`;
+    consoleEl.style.height = `${newHeight}px`;
 };
 ```
 
 ### 4. 用户体验
 
 #### 4.1 交互流程
+
 1. 用户悬停在调整大小手柄上 → 光标变为调整大小指示器
 2. 用户点击并拖拽手柄 → 面板实时调整大小
 3. 用户释放鼠标 → 调整大小操作完成
 4. 面板保持新尺寸直到下次调整或面板关闭
 
 #### 4.2 视觉反馈
+
 - 悬停时立即的光标反馈
 - 拖拽过程中的实时尺寸调整
 - 无闪烁的平滑调整大小操作
 - 调整大小过程中保持面板位置
 
 #### 4.3 可访问性
+
 - 不需要键盘导航（仅鼠标操作）
 - 调整大小区域的清晰视觉指示器
 - 保持现有的面板切换键盘快捷键
@@ -212,39 +224,44 @@ const handleResize = (e: MouseEvent) => {
 ## 替代方案
 
 ### 替代方案1: 固定尺寸预设
+
 - 提供预定义尺寸选项（小、中、大）
 - 实现更简单但灵活性较差
 - **已拒绝**: 用户控制和灵活性较少
 
 ### 替代方案2: 全窗口模式
+
 - 在覆盖层和全窗口模式之间切换
 - **已拒绝**: 改变了日志查看器的基本性质
 
 ### 替代方案3: 分割面板布局
+
 - 将屏幕分为可调整大小的部分
 - **已拒绝**: 对当前使用场景来说过于复杂
 
 ### 替代方案4: 无变更
+
 - 保持当前固定尺寸实现
 - **已拒绝**: 不解决用户灵活性需求
 
 ## 未解决问题
 
 1. **尺寸持久化**: 面板是否应该记住会话间的最后尺寸？
-   - **决定**: 初始版本中未实现，如需要可在后续添加
+    - **决定**: 初始版本中未实现，如需要可在后续添加
 
 2. **最小尺寸验证**: 提议的最小尺寸（400x300）是否合适？
-   - **决定**: 基于典型日志内容的测试，这些尺寸提供了良好的可用性
+    - **决定**: 基于典型日志内容的测试，这些尺寸提供了良好的可用性
 
 3. **移动端支持**: 调整大小功能是否应该在触摸设备上工作？
-   - **决定**: 当前桌面应用不需要
+    - **决定**: 当前桌面应用不需要
 
 4. **动画**: 调整大小操作是否应该包含平滑动画？
-   - **决定**: 实时调整大小比动画提供更好的用户反馈
+    - **决定**: 实时调整大小比动画提供更好的用户反馈
 
 ## 实施计划
 
 ### 阶段1: 核心功能
+
 - [x] 向模板添加调整大小手柄
 - [x] 实现调整大小状态管理
 - [x] 添加调整大小事件处理器
@@ -252,18 +269,21 @@ const handleResize = (e: MouseEvent) => {
 - [x] 确保与现有拖拽功能的兼容性
 
 ### 阶段2: 测试和优化
+
 - [x] 在不同屏幕尺寸下测试调整大小功能
 - [x] 验证与现有功能无冲突
 - [x] 大日志量性能测试
 - [x] 用户验收测试
 
 ### 阶段3: 文档和优化
+
 - [x] 更新用户文档
 - [x] 添加内联代码注释
 - [x] 创建使用示例
 - [x] 最终代码审查
 
 ### 阶段4: 额外优化（已完成）
+
 - [x] 集成BaseSelect组件替换原生select
 - [x] 优化工具栏布局，提升紧凑性和一致性
 - [x] 统一控件高度和样式

@@ -101,7 +101,7 @@ if (scanDecision.strategy === "skip") {
 - `decideScanStrategy` 智能决策机制
 - `IncrementalCacheManager` 增量缓存管理
 - `restoreCachedFiles` 快速恢复文件列表
-- `walkthroughPhotos` 完整的目录遍历
+- `walkthroughPhotosInFolder` 完整的目录遍历
 
 我们应该**复用这些组件**，只需要调整执行流程。
 

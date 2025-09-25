@@ -1,7 +1,7 @@
 <template>
     <button
         :class="[
-            'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+            'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 min-w-0 flex-nowrap',
             sizeClasses,
             variantClasses,
             loading && 'cursor-not-allowed',
@@ -22,10 +22,12 @@
                 <path d="M21 12a9 9 0 11-6.219-8.56" />
             </svg>
         </div>
-        <div v-else-if="$slots.icon" :class="['mr-2', iconSizeClasses]">
+        <div v-else-if="$slots.icon" :class="['mr-2 flex-shrink-0', iconSizeClasses]">
             <slot name="icon" />
         </div>
-        <slot />
+        <span class="truncate max-w-full whitespace-nowrap">
+            <slot />
+        </span>
     </button>
 </template>
 

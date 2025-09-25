@@ -361,8 +361,11 @@
         "scanComplete": "Папка [{path}] оброблена.",
         "start": "Почати сканування",
         "progress": "Прогрес сканування",
+        "processingFile": "Обробка: {fileName}",
+        "scanningPath": "Сканування: {path}",
         "complete": "Сканування завершено",
-        "error": "Помилка сканування"
+        "error": "Помилка сканування",
+        "scanFailed": "Сканування не вдалося: {path}"
     },
     "button": {
         "import": "Імпортувати",

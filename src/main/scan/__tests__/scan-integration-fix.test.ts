@@ -8,8 +8,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs-extra";
 import path from "path";
-import { decideScanStrategy } from "../scan-strategy";
-import { ScanStrategy } from "../folder-cache-manager";
+import { decideScanStrategy } from "../strategy/scan-strategy";
+import { ScanStrategy } from "../cache/folder-cache-manager";
 import type { PhotasaLogger } from "@common/logger";
 import { getPhotasaConfig } from "@main/config/config-storage";
 
@@ -18,7 +18,7 @@ vi.mock("fs-extra");
 vi.mock("@main/config/config-storage", () => ({
     getPhotasaConfig: vi.fn(),
 }));
-vi.mock("../folder-cache-manager", () => ({
+vi.mock("../cache/folder-cache-manager", () => ({
     computeFolderHash: vi.fn(),
     ScanStrategy: {
         SKIP: "skip",
@@ -89,7 +89,7 @@ describe("scan-integration-fix", () => {
             });
 
             // Mock computeFolderHash
-            const { computeFolderHash } = await import("../folder-cache-manager");
+            const { computeFolderHash } = await import("../cache/folder-cache-manager");
             vi.mocked(computeFolderHash).mockImplementation((folderPath) => {
                 if (folderPath === scannedFolder) {
                     return Promise.resolve("hash1");
@@ -205,7 +205,7 @@ describe("scan-integration-fix", () => {
             });
 
             // Mock computeFolderHash - 不需要调用，因为photoList非空会直接跳过
-            const { computeFolderHash } = await import("../folder-cache-manager");
+            const { computeFolderHash } = await import("../cache/folder-cache-manager");
             vi.mocked(computeFolderHash).mockResolvedValue("");
 
             const startTime = Date.now();
@@ -257,7 +257,7 @@ describe("scan-integration-fix", () => {
             });
 
             // Mock computeFolderHash - 不需要调用，因为photoList非空会直接跳过
-            const { computeFolderHash } = await import("../folder-cache-manager");
+            const { computeFolderHash } = await import("../cache/folder-cache-manager");
             vi.mocked(computeFolderHash).mockResolvedValue("");
 
             // 测试所有文件夹，确保部分失败不影响其他文件夹

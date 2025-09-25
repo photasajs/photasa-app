@@ -51,7 +51,7 @@ export function ensureCompleteScanAction(scanAction: ScanAction): CompleteScanAc
     const timestamp = scanAction.timestamp || Date.now();
     const priority = scanAction.priority ?? calculatePriority(scanAction.action, source);
 
-    // 操作类型：默认为 directory，walkthroughPhotos 函数会正确处理单文件扫描
+    // 操作类型：默认为 directory，walkthroughPhotosInFolder 函数会正确处理单文件扫描
     const operationType = scanAction.operationType || "directory";
 
     return {
@@ -74,7 +74,7 @@ export function createScanAction(
     const timestamp = Date.now();
     const priority = calculatePriority(baseScanAction.action, source);
 
-    // 操作类型：默认为 directory，walkthroughPhotos 函数会正确处理单文件扫描
+    // 操作类型：默认为 directory，walkthroughPhotosInFolder 函数会正确处理单文件扫描
     const operationType = baseScanAction.operationType || "directory";
 
     return {

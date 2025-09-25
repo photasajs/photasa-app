@@ -14,17 +14,17 @@
 import fs from "fs-extra";
 import path from "path";
 import { PhotasaLogger } from "@common/logger";
-import { getPhotasaConfig } from "../config/config-storage";
+import { getPhotasaConfig } from "../../config/config-storage";
 import {
     computeFolderHash,
     // getCacheInfo,
     // compareHashesAndDecide,
     ScanStrategy,
     type ScanDecision,
-} from "./folder-cache-manager";
+} from "../cache/folder-cache-manager";
 
 /**
- * 纯函数：判断是否只扫描当前层级
+ * 纯函数：判断是否只扫描当前层级 action === "current" 时返回 true，其他返回 false
  * @param action - 扫描动作
  * @returns boolean - 是否只扫描一级
  */

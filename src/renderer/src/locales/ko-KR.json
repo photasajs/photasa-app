@@ -361,8 +361,11 @@
         "scanComplete": "디렉터리[{path}] 처리 완료",
         "start": "스캔 시작",
         "progress": "스캔 진행",
+        "processingFile": "처리 중: {fileName}",
+        "scanningPath": "스캔 중: {path}",
         "complete": "스캔 완료",
-        "error": "스캔 오류"
+        "error": "스캔 오류",
+        "scanFailed": "스캔 실패: {path}"
     },
     "button": {
         "import": "가져오기",
@@ -508,8 +511,8 @@
     "imageInfo": {
         "title": "이미지 정보",
         "lastUpdated": "마지막 업데이트",
-        "openInFinder": "Finder에서 열기",
-        "repairLibrary": "사진 라이브러리 복구",
+        "openInFinder": "폴더 열기",
+        "repairLibrary": "라이브러리 복구",
         "fileCount": "파일 수",
         "folderSize": "폴더 크기",
         "basicInfo": "기본 정보",

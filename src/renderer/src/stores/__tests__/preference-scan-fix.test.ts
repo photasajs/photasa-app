@@ -88,7 +88,7 @@ describe("preference-scan-fix", () => {
                 },
             ];
 
-            await store.addScanFolder(folderPath, "scan");
+            await store.addScanFolder(folderPath, "scan", "auto");
 
             // 验证检查函数被调用
             expect(checkPhotasaConfig).toHaveBeenCalledWith(folderPath);
@@ -118,7 +118,7 @@ describe("preference-scan-fix", () => {
 
             const folderPath = "/test/new-folder";
 
-            await store.addScanFolder(folderPath, "scan");
+            await store.addScanFolder(folderPath, "scan", "auto");
 
             // 验证检查函数被调用
             expect(checkPhotasaConfig).toHaveBeenCalledWith(folderPath);
@@ -263,7 +263,7 @@ describe("preference-scan-fix", () => {
             });
 
             const specialPath = "/test/folder with spaces/中文文件夹";
-            await store.addScanFolder(specialPath, "scan");
+            await store.addScanFolder(specialPath, "scan", "auto");
 
             expect(checkPhotasaConfig).toHaveBeenCalledWith(specialPath);
             expect(store.scanningFolder[0].path).toBe(specialPath);
@@ -315,7 +315,7 @@ describe("preference-scan-fix", () => {
 
             // 串行添加已扫描的文件夹，这样更容易控制mock行为
             for (const folder of folders) {
-                await store.addScanFolder(folder, "scan");
+                await store.addScanFolder(folder, "scan", "auto");
             }
 
             const endTime = Date.now();

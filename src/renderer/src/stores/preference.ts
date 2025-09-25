@@ -171,18 +171,19 @@ export const usePreferenceStore = defineStore("preference", {
             }
 
             // 智能检查：如果文件夹已扫描且不是强制重新扫描，则跳过
-            if (action === "scan") {
+            // 注意：对于用户手动添加的文件夹，需要确保子目录能被发现并添加到队列
+            if (action === "scan" && source === "auto") {
                 try {
                     const { checkPhotasaConfig } = await import("@renderer/utils/api");
                     const configCheck = await checkPhotasaConfig(folder);
 
                     if (configCheck.hasConfig) {
-                        // 仍然更新文件夹树，但不添加到扫描队列
+                        // 文件夹已扫描过，跳过扫描
                         this.updateFolderTree(folder);
                         logger.debug(
-                            `[PreferenceStore] Folder already scanned, skipping: ${folder}`,
+                            `[PreferenceStore] Folder already scanned (auto source), skipping: ${folder}`,
                         );
-                        return;
+                        return; // 跳过添加到队列
                     }
                 } catch (error) {
                     logger.warn(
@@ -191,6 +192,11 @@ export const usePreferenceStore = defineStore("preference", {
                     );
                     // 如果检查失败，继续正常流程
                 }
+            } else if (action === "scan" && source === "user") {
+                // 对于用户手动添加的文件夹，始终添加到扫描队列以确保子目录被发现
+                logger.debug(
+                    `[PreferenceStore] User-initiated scan, adding to queue regardless of existing config: ${folder}`,
+                );
             }
 
             // 创建新的扫描动作（带优先级信息）

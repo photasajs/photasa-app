@@ -2,7 +2,7 @@ import createWorker from "./scan-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
 import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
-import { notifyStatus } from "./notify";
+import { notifyStatus } from "./status/notify";
 import type { NotifyPayload } from "@common/types";
 import { getAppPath } from "@shared/path-util";
 import { Service } from "../services/decorators/service-decorators";
@@ -58,6 +58,7 @@ export default class ScanService implements IService {
     queueId = 0;
     worker!: ScanWorker;
 
+    // Main process constructor
     constructor(
         ipcMain: IpcMain,
         mainWindow: BrowserWindow,
@@ -142,11 +143,17 @@ export default class ScanService implements IService {
                         timestamp: Date.now(),
                     };
                 } else if (data.type === "progress") {
+                    // 如果有当前处理的文件，传递文件名让前端处理国际化；否则显示路径
+                    const taskDisplay = data.currentFile || data.action?.path || "";
+
                     payload = {
                         type: "scan",
-                        task: data.action?.path || "",
+                        task: taskDisplay,
                         status: "progress",
-                        data: data.progress,
+                        data: {
+                            ...data.progress,
+                            currentFile: data.currentFile, // 传递文件名给前端
+                        },
                         timestamp: Date.now(),
                     };
                 }

@@ -376,8 +376,11 @@
         "scanComplete": "Folder [{path}] has been processed.",
         "start": "Start Scan",
         "progress": "Scan Progress",
+        "processingFile": "Processing: {fileName}",
+        "scanningPath": "Scanning: {path}",
         "complete": "Scan Complete",
-        "error": "Scan Error"
+        "error": "Scan Error",
+        "scanFailed": "Scan failed: {path}"
     },
     "button": {
         "import": "Import",

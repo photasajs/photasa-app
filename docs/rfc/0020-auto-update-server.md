@@ -119,13 +119,13 @@ photasa.me/
 **重要：自动更新使用ZIP格式，不是EXE/DMG**
 
 - **所有平台**: 统一使用 ZIP 格式进行自动更新
-  - **Windows**: `Photasa-1.6.0-win.zip`
-  - **macOS**: `Photasa-1.6.0-mac.zip`
-  - **Linux**: `Photasa-1.6.0-linux.zip`
+    - **Windows**: `Photasa-1.6.0-win.zip`
+    - **macOS**: `Photasa-1.6.0-mac.zip`
+    - **Linux**: `Photasa-1.6.0-linux.zip`
 - **原因**: ZIP格式是electron-updater的标准自动更新格式
-  - 跨平台一致性
-  - 更好的压缩率和下载速度
-  - electron-updater原生支持
+    - 跨平台一致性
+    - 更好的压缩率和下载速度
+    - electron-updater原生支持
 
 #### ⚠️ 客户端配置要求
 
@@ -185,7 +185,7 @@ CREATE TABLE download_mappings (
     file_size BIGINT NOT NULL,
     sha512_hash VARCHAR(128) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- 约束和索引
     UNIQUE(version, platform),
     UNIQUE(safe_filename), -- 确保安全文件名唯一性
@@ -202,7 +202,7 @@ CREATE TABLE download_stats (
     ip_address INET,
     country_code CHAR(2),
     downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     INDEX idx_mapping_downloaded (mapping_id, downloaded_at),
     INDEX idx_downloaded_at (downloaded_at)
 );
@@ -212,36 +212,36 @@ CREATE TABLE download_stats (
 
 ```typescript
 interface SafeFilenameConfig {
-    appName: string;      // "Photasa"
-    version: string;      // "1.6.0"
-    platform: string;    // "win" | "mac" | "linux"
-    extension: string;    // "exe" | "zip" | "dmg"
+    appName: string; // "Photasa"
+    version: string; // "1.6.0"
+    platform: string; // "win" | "mac" | "linux"
+    extension: string; // "exe" | "zip" | "dmg"
 }
 
 function generateSafeFilename(config: SafeFilenameConfig): string {
     const { appName, version, platform, extension } = config;
-    
+
     // 基于实际的 electron-builder.yml 配置
     // 注意：自动更新使用 ZIP 格式，不是 EXE/DMG
     switch (platform) {
-        case 'win':
+        case "win":
             // 自动更新使用 zip 格式，不是 nsis setup.exe
             // zip 目标使用默认格式（无自定义 artifactName）
             return `${appName}-${version}-win.${extension}`;
-        
-        case 'mac':
+
+        case "mac":
             // 自动更新使用 zip 格式，不是 dmg
             // zip 目标使用默认格式（无自定义 artifactName）
             return `${appName}-${version}-mac.${extension}`;
-        
-        case 'linux':
+
+        case "linux":
             // 自动更新使用 zip 格式，统一跨平台
             return `${appName}-${version}-linux.${extension}`;
-        
+
         default:
             throw new Error(`Unsupported platform: ${platform}`);
     }
-    
+
     // 示例（自动更新文件，统一使用 ZIP）：
     // Windows: "Photasa-1.6.0-win.zip"
     // macOS:   "Photasa-1.6.0-mac.zip"
@@ -253,13 +253,13 @@ function generateSafeFilename(config: SafeFilenameConfig): string {
 
 ```typescript
 // lib/download-mappings.ts
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 interface DownloadMapping {
     id: string;
     version: string;
     platform: string;
-    safe_filename: string;  // 关键：安全文件名用于URL路由
+    safe_filename: string; // 关键：安全文件名用于URL路由
     actual_url: string;
     file_size: number;
     sha512_hash: string;
@@ -272,16 +272,16 @@ interface DownloadMapping {
  */
 export async function getMappingByFilename(filename: string): Promise<DownloadMapping | null> {
     const { data, error } = await supabase
-        .from('download_mappings')
-        .select('*')
-        .eq('safe_filename', filename)
+        .from("download_mappings")
+        .select("*")
+        .eq("safe_filename", filename)
         .single();
-    
+
     if (error) {
-        console.error('Error fetching mapping by filename:', error);
+        console.error("Error fetching mapping by filename:", error);
         return null;
     }
-    
+
     return data;
 }
 
@@ -291,18 +291,18 @@ export async function getMappingByFilename(filename: string): Promise<DownloadMa
  */
 export async function getLatestMapping(platform: string): Promise<DownloadMapping | null> {
     const { data, error } = await supabase
-        .from('download_mappings')
-        .select('*')
-        .eq('platform', platform)
-        .order('created_at', { ascending: false })
+        .from("download_mappings")
+        .select("*")
+        .eq("platform", platform)
+        .order("created_at", { ascending: false })
         .limit(1)
         .single();
-    
+
     if (error) {
-        console.error('Error fetching latest mapping:', error);
+        console.error("Error fetching latest mapping:", error);
         return null;
     }
-    
+
     return data;
 }
 
@@ -310,18 +310,20 @@ export async function getLatestMapping(platform: string): Promise<DownloadMappin
  * 创建新的文件映射
  * 用于发布新版本时
  */
-export async function createMapping(mapping: Omit<DownloadMapping, 'id' | 'created_at'>): Promise<string | null> {
+export async function createMapping(
+    mapping: Omit<DownloadMapping, "id" | "created_at">,
+): Promise<string | null> {
     const { data, error } = await supabase
-        .from('download_mappings')
+        .from("download_mappings")
         .insert([mapping])
-        .select('id')
+        .select("id")
         .single();
-    
+
     if (error) {
-        console.error('Error creating mapping:', error);
+        console.error("Error creating mapping:", error);
         return null;
     }
-    
+
     return data.id;
 }
 
@@ -334,17 +336,17 @@ export async function recordDownload(stats: {
     ipAddress: string;
     filename: string;
 }): Promise<void> {
-    const { error } = await supabase
-        .from('download_stats')
-        .insert([{
+    const { error } = await supabase.from("download_stats").insert([
+        {
             mapping_id: stats.mappingId,
             user_agent: stats.userAgent,
             ip_address: stats.ipAddress,
-            filename: stats.filename
-        }]);
-    
+            filename: stats.filename,
+        },
+    ]);
+
     if (error) {
-        console.error('Error recording download:', error);
+        console.error("Error recording download:", error);
     }
 }
 ```
@@ -361,7 +363,7 @@ import { generateSafeFilename } from "@/lib/utils";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
-        const platform = 'win';
+        const platform = "win";
         const mapping = await getLatestMapping(platform);
 
         if (!mapping) {
@@ -373,7 +375,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             appName: "Photasa",
             version: mapping.version,
             platform: platform,
-            extension: "zip"
+            extension: "zip",
         });
 
         const yamlContent = `version: ${mapping.version}
@@ -403,29 +405,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMappingByFilename, recordDownload } from "@/lib/download-mappings";
 import { getClientIP, getUserAgent } from "@/lib/request-utils";
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { filename: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { filename: string } }) {
     const { filename } = params;
-    
+
     try {
         // 1. 解析文件名获取版本和平台信息
         const fileInfo = parseFilename(filename);
         if (!fileInfo) {
-            return NextResponse.json(
-                { error: "Invalid filename format" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Invalid filename format" }, { status: 400 });
         }
 
         // 2. 从数据库获取文件映射（通过安全文件名直接查找）
         const mapping = await getMappingByFilename(filename);
         if (!mapping) {
-            return NextResponse.json(
-                { error: "File not found" },
-                { status: 404 }
-            );
+            return NextResponse.json({ error: "File not found" }, { status: 404 });
         }
 
         // 3. 记录下载统计（异步，不阻塞重定向）
@@ -433,18 +426,14 @@ export async function GET(
             mappingId: mapping.id,
             userAgent: getUserAgent(request),
             ipAddress: getClientIP(request),
-            filename: filename
-        }).catch(err => console.error("Failed to record download:", err));
+            filename: filename,
+        }).catch((err) => console.error("Failed to record download:", err));
 
         // 4. 重定向到实际的 UploadThing URL
         return NextResponse.redirect(mapping.actual_url, 302);
-
     } catch (error) {
         console.error("Download proxy error:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
@@ -454,24 +443,24 @@ function parseFilename(filename: string): { version: string; platform: string } 
     // Photasa-1.6.0-win.zip → { version: "1.6.0", platform: "win" }
     // Photasa-1.6.0-mac.zip → { version: "1.6.0", platform: "mac" }
     // Photasa-1.6.0-linux.zip → { version: "1.6.0", platform: "linux" }
-    
+
     const patterns = [
-        /^Photasa-(.+)-win\.zip$/,       // Windows ZIP
-        /^Photasa-(.+)-mac\.zip$/,       // macOS ZIP
-        /^Photasa-(.+)-linux\.zip$/,     // Linux ZIP
+        /^Photasa-(.+)-win\.zip$/, // Windows ZIP
+        /^Photasa-(.+)-mac\.zip$/, // macOS ZIP
+        /^Photasa-(.+)-linux\.zip$/, // Linux ZIP
     ];
-    
+
     for (const [index, pattern] of patterns.entries()) {
         const match = filename.match(pattern);
         if (match) {
-            const platforms = ['win', 'mac', 'linux'];
+            const platforms = ["win", "mac", "linux"];
             return {
                 version: match[1],
-                platform: platforms[index]
+                platform: platforms[index],
             };
         }
     }
-    
+
     return null;
 }
 ```
@@ -804,7 +793,7 @@ export async function uploadReleaseFile(
     version: string,
     platform: "win" | "mac" | "linux",
 ): Promise<string> {
-    const fileName = `Photasa-${version}-${platform}.zip`;  // 统一ZIP格式
+    const fileName = `Photasa-${version}-${platform}.zip`; // 统一ZIP格式
     const filePath = `releases/${platform}/${fileName}`;
 
     const blob = await put(filePath, file, {

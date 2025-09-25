@@ -100,9 +100,7 @@ describe("scan-cleanup", () => {
 
             expect(result).toBe(true);
             expect(mockWorkerPool.shutdown).toHaveBeenCalled();
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                "[cleanupWorkerPool] Worker Pool已成功关闭",
-            );
+            expect(mockLogger.info).toHaveBeenCalledWith("[cleanupWorkerPool] Worker池已成功关闭");
         });
 
         it("应该处理Worker Pool关闭失败", async () => {
@@ -113,7 +111,7 @@ describe("scan-cleanup", () => {
 
             expect(result).toBe(false);
             expect(mockLogger.error).toHaveBeenCalledWith(
-                "[cleanupWorkerPool] Worker Pool关闭失败",
+                "[cleanupWorkerPool] Worker池关闭失败",
                 error,
             );
         });
@@ -134,7 +132,7 @@ describe("scan-cleanup", () => {
 
             expect(result).toBe(false);
             expect(mockLogger.error).toHaveBeenCalledWith(
-                "[cleanupWorkerPool] Worker Pool关闭失败",
+                "[cleanupWorkerPool] Worker池关闭失败",
                 expect.any(Error),
             );
         });

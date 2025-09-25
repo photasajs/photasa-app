@@ -1,18 +1,11 @@
 import { parentPort } from "worker_threads";
 import type { ScanAction } from "@common/scan-types";
-import { scanPhotos } from "./scan-photos";
+import { scanPhotos, processMediaFile } from "./scan-photos";
 import { loggers } from "@common/logger";
 import isImage from "is-image";
 import isVideo from "is-video";
 import fs from "fs-extra";
 import path from "path";
-import { buildThumbnailPath, normalizePath } from "@shared/path-util";
-import { shouldProcessFile } from "./scan-strategy";
-import { addToPhotasaConfig, removeFromPhotoList } from "../config/config-storage";
-import { WorkerPool } from "../workers/worker-pool";
-import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
-import createWorker from "../thumbnail/thumbnail-worker?nodeWorker";
-import type { WorkerOptions } from "worker_threads";
 
 const logger = loggers.scan;
 
@@ -24,7 +17,12 @@ if (!port) {
 // 日志查看器状态
 let logViewerActive = false;
 
-// 包装日志函数以支持日志查看器
+/**
+ * 包装日志函数以支持日志查看器
+ * @param level - 日志级别
+ * @param category - 日志分类
+ * @param message - 日志消息
+ */
 function workerLog(level: "debug" | "info" | "warn" | "error", category: string, message: string) {
     // 正常输出到控制台
     logger[level](message);
@@ -45,35 +43,16 @@ function workerLog(level: "debug" | "info" | "warn" | "error", category: string,
     }
 }
 
-// Thumbnail worker configuration
-const THUMBNAIL_WORKER_CONFIG = {
-    minWorkers: 2,
-    maxWorkers: 4,
-    createWorker: (options?: unknown) => {
-        return createWorker({
-            ...(options as WorkerOptions),
-            env: {
-                ...process.env,
-                APP_PATH: process.env.APP_PATH || process.cwd(),
-            },
-        });
-    },
-};
-
-let workerPoolInstance: WorkerPool<ThumbnailRequest, ThumbnailResponse> | null = null;
-
-function getWorkerPool(): WorkerPool<ThumbnailRequest, ThumbnailResponse> {
-    if (!workerPoolInstance) {
-        workerPoolInstance = new WorkerPool(THUMBNAIL_WORKER_CONFIG, logger);
-    }
-    return workerPoolInstance;
-}
+/**
+ * 注意：Worker 池现在由 scan-photos.ts 统一管理
+ * 这里不再需要独立的 Worker 池配置，避免资源重复
+ */
 
 /**
  * 发送消息
  * @param message - 消息
  */
-function postMessage(message): void {
+function postMessage(message: any): void {
     // Only log message type and requestId to avoid logging large objects
     workerLog(
         "debug",
@@ -83,30 +62,11 @@ function postMessage(message): void {
     port?.postMessage(message);
 }
 
-export async function execute(requestId: string, scan: ScanAction): Promise<void> {
-    workerLog(
-        "debug",
-        "scan-worker",
-        `Executing: requestId=${requestId}, path=${scan.path}, operationType=${scan.operationType}`,
-    );
-
-    try {
-        // Route based on operation type
-        if (scan.operationType === "file") {
-            await executeFileOperation(requestId, scan);
-        } else {
-            executeDirectoryScan(requestId, scan);
-        }
-    } catch (error) {
-        workerLog("error", "scan-worker", `Error in execute: ${error}`);
-        postMessage({
-            type: "error",
-            requestId,
-            error,
-        });
-    }
-}
-
+/**
+ * 执行目录扫描
+ * @param requestId - 请求ID
+ * @param scan - 扫描动作
+ */
 function executeDirectoryScan(requestId: string, scan: ScanAction): void {
     let processed = 0;
     const foundPaths: string[] = [];
@@ -128,6 +88,7 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
         return;
     }
 
+    // 执行目录扫描
     scanPhotos(scan, logger).subscribe({
         next: (action) => {
             processed++;
@@ -145,7 +106,7 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
                         const cacheContent = fs.readFileSync(cacheFilePath, "utf8");
                         const cache = JSON.parse(cacheContent);
 
-                        if (cache && cache.processedFiles && Array.isArray(cache.processedFiles)) {
+                        if (Array.isArray(cache?.processedFiles)) {
                             const processedCount = cache.processedFiles.length;
                             const pendingCount = cache.pendingFiles ? cache.pendingFiles.length : 0;
 
@@ -208,6 +169,11 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
     });
 }
 
+/**
+ * 执行文件操作
+ * @param requestId - 请求ID
+ * @param scan - 扫描动作
+ */
 async function executeFileOperation(requestId: string, scan: ScanAction): Promise<void> {
     const filePath = scan.path;
     workerLog("debug", "scan-worker", `Executing file operation: ${scan.action} for ${filePath}`);
@@ -225,8 +191,8 @@ async function executeFileOperation(requestId: string, scan: ScanAction): Promis
             return;
         }
 
-        // Process media file based on action type
-        await processMediaFile(filePath, scan);
+        // Process media file using unified function from scan-photos.ts
+        await processMediaFile(filePath, scan, logger);
 
         postMessage({
             type: "complete",
@@ -243,79 +209,44 @@ async function executeFileOperation(requestId: string, scan: ScanAction): Promis
     }
 }
 
-async function processMediaFile(filePath: string, scan: ScanAction): Promise<void> {
-    // 使用统一的路径处理API规范化路径
-    const normalizedFilePath = normalizePath(filePath);
-    const thumbnailPath = buildThumbnailPath(normalizedFilePath);
-    const workerPool = getWorkerPool();
+/**
+ * 注意：processMediaFile 函数已移动到 scan-photos.ts 中统一管理
+ * 现在使用统一的处理逻辑，避免代码重复
+ */
 
-    switch (scan.action) {
-        case "scan":
-            // Add operation: create thumbnail if needed and add to config
-            const shouldProcess = await shouldProcessFile(normalizedFilePath, scan.action, logger);
-            if (!shouldProcess) {
-                return;
-            }
+/**
+ * 执行扫描
+ * @param requestId - 请求ID
+ * @param scan - 扫描动作
+ */
+export async function execute(requestId: string, scan: ScanAction): Promise<void> {
+    workerLog(
+        "debug",
+        "scan-worker",
+        `Executing: requestId=${requestId}, path=${scan.path}, operationType=${scan.operationType}`,
+    );
 
-            const thumbnailExists = fs.existsSync(thumbnailPath);
-            if (!thumbnailExists) {
-                await workerPool.addTask("create", {
-                    path: normalizedFilePath,
-                    thumbnail: thumbnailPath,
-                    width: scan.thumbnailSize,
-                    height: scan.thumbnailSize,
-                    withoutEnlargement: true,
-                    preview: thumbnailPath,
-                    always: false,
-                });
-            }
-
-            await addToPhotasaConfig(
-                {
-                    queueId: 0,
-                    paths: [normalizedFilePath],
-                },
-                () => {},
-                logger,
-            );
-            break;
-
-        case "rescan":
-            // Change operation: recreate thumbnail and update config
-            await workerPool.addTask("create", {
-                path: normalizedFilePath,
-                thumbnail: thumbnailPath,
-                width: scan.thumbnailSize,
-                height: scan.thumbnailSize,
-                withoutEnlargement: true,
-                preview: thumbnailPath,
-                always: true, // Always recreate for change operations
-            });
-
-            await addToPhotasaConfig(
-                {
-                    queueId: 0,
-                    paths: [normalizedFilePath],
-                },
-                () => {},
-                logger,
-            );
-            break;
-
-        case "current":
-            // Delete operation: remove thumbnail and remove from config
-            if (fs.existsSync(thumbnailPath)) {
-                await fs.unlink(thumbnailPath);
-            }
-
-            await removeFromPhotoList(filePath, logger);
-            break;
-
-        default:
-            workerLog("warn", "scan-worker", `Unknown scan action: ${scan.action} for ${filePath}`);
+    try {
+        // Route based on operation type
+        if (scan.operationType === "file") {
+            await executeFileOperation(requestId, scan);
+        } else {
+            executeDirectoryScan(requestId, scan);
+        }
+    } catch (error) {
+        workerLog("error", "scan-worker", `Error in execute: ${error}`);
+        postMessage({
+            type: "error",
+            requestId,
+            error,
+        });
     }
 }
 
+/**
+ * 处理来自主进程的消息
+ * @param message - 消息
+ */
 port.on("message", async (message: any) => {
     // 处理日志查看器状态消息
     if (message.type === "log:viewer-status") {

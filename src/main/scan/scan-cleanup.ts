@@ -14,8 +14,12 @@
 import fs from "fs-extra";
 import path from "path";
 import { PhotasaLogger } from "@common/logger";
-import { WorkerPool } from "../workers/worker-pool";
+import type { WorkerPool } from "../workers/worker-pool";
 import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
+import { cleanupWorkerPool } from "./worker/pool-manager";
+
+// Re-export for backward compatibility
+export { cleanupWorkerPool };
 
 /**
  * 清理统计接口
@@ -107,41 +111,6 @@ export function createInitialCleanupStats(): CleanupStats {
         memoryFreed: 0,
         errors: [],
     };
-}
-
-/**
- * Worker Pool 清理
- * @param workerPool - Worker Pool实例
- * @param timeout - 关闭超时时间
- * @param logger - 日志记录器
- * @returns 清理是否成功
- */
-export async function cleanupWorkerPool(
-    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse> | null,
-    timeout: number,
-    logger: PhotasaLogger,
-): Promise<boolean> {
-    if (!workerPool) {
-        return true;
-    }
-
-    try {
-        logger.debug("[cleanupWorkerPool] 开始关闭Worker Pool");
-
-        // 使用超时机制确保关闭不会无限等待
-        const shutdownPromise = workerPool.shutdown();
-        const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("Worker Pool关闭超时")), timeout),
-        );
-
-        await Promise.race([shutdownPromise, timeoutPromise]);
-
-        logger.info("[cleanupWorkerPool] Worker Pool已成功关闭");
-        return true;
-    } catch (error) {
-        logger.error("[cleanupWorkerPool] Worker Pool关闭失败", error);
-        return false;
-    }
 }
 
 /**

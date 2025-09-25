@@ -7,7 +7,7 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { Subscriber } from "rxjs";
+import { Subscriber as _Subscriber } from "rxjs";
 import type { ScanAction, PhotoFileRequest } from "@common/scan-types";
 import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
 import { WorkerPool } from "../workers/worker-pool";
@@ -83,7 +83,11 @@ export async function processPhotoFile(
     // 创建缩略图（如果需要）
     if (shouldCreateThumbnail(action.thumbnail, scan.action)) {
         const thumbnailRequest = buildThumbnailRequest(action, scan);
-        await workerPool.addTask("create", thumbnailRequest);
+        if (workerPool) {
+            await workerPool.addTask("create", thumbnailRequest);
+        } else {
+            logger.debug("[processPhotoFile] 跳过缩略图创建（无 Worker 池）");
+        }
     }
 
     // 更新配置
@@ -214,16 +218,25 @@ export function createSubscriptionHandlers<T>(
     };
 }
 
+export type ScanSubscriber<PhotoFileRequest> = {
+    next: (value: PhotoFileRequest) => void;
+    error: (error: unknown) => void;
+};
+
 /**
  * RFC 0007: 从缓存中恢复已扫描的文件列表
  * 当扫描策略为SKIP时，从.photasa.json配置文件中恢复已扫描的文件
+ *
+ * 注意：此函数不会调用 subscriber.complete()，订阅器的生命周期
+ * 应由调用方（scanPhotos）统一管理，以确保子目录扫描能正常进行。
+ *
  * @param folderPath - 目录路径
  * @param subscriber - Observable订阅器
  * @param logger - 日志记录器
  */
 export async function restoreCachedFiles(
     folderPath: string,
-    subscriber: Subscriber<PhotoFileRequest>,
+    subscriber: ScanSubscriber<PhotoFileRequest>,
     logger: PhotasaLogger,
 ): Promise<void> {
     try {
@@ -235,7 +248,7 @@ export async function restoreCachedFiles(
 
         if (!configExists) {
             logger.warn(`[restoreCachedFiles] 配置文件不存在: ${configPath}`);
-            subscriber.complete();
+            // 不调用 subscriber.complete()，让调用方控制订阅器生命周期
             return;
         }
 
@@ -252,13 +265,13 @@ export async function restoreCachedFiles(
 
             // JSON解析失败时，标记文件需要重新扫描
             logger.warn(`[restoreCachedFiles] 配置文件损坏，将触发完整重新扫描: ${configPath}`);
-            subscriber.complete();
+            // 不调用 subscriber.complete()，让调用方控制订阅器生命周期
             return;
         }
 
         if (!config.photoList || !Array.isArray(config.photoList)) {
             logger.warn(`[restoreCachedFiles] 配置文件格式无效: ${configPath}`);
-            subscriber.complete();
+            // 不调用 subscriber.complete()，让调用方控制订阅器生命周期
             return;
         }
 
@@ -281,7 +294,7 @@ export async function restoreCachedFiles(
         }
 
         logger.info(`[restoreCachedFiles] 缓存恢复完成: ${config.photoList.length} 个文件`);
-        subscriber.complete();
+        // 不调用 subscriber.complete()，让调用方控制订阅器生命周期
     } catch (error) {
         logger.error(`[restoreCachedFiles] 恢复缓存失败: ${folderPath}`, error);
         subscriber.error(error);

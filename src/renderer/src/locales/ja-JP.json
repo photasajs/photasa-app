@@ -404,8 +404,11 @@
         "scanComplete": "ディレクトリ[{path}]の処理が完了しました",
         "start": "スキャン開始",
         "progress": "スキャン進行状況",
+        "processingFile": "処理中: {fileName}",
+        "scanningPath": "スキャン中: {path}",
         "complete": "スキャン完了",
-        "error": "スキャンエラー"
+        "error": "スキャンエラー",
+        "scanFailed": "スキャン失敗: {path}"
     },
     "button": {
         "import": "インポート",
@@ -553,8 +556,8 @@
     "imageInfo": {
         "title": "画像情報",
         "lastUpdated": "最終更新",
-        "openInFinder": "Finderで開く",
-        "repairLibrary": "写真ライブラリを修復",
+        "openInFinder": "フォルダを開く",
+        "repairLibrary": "ライブラリ修復",
         "fileCount": "ファイル数",
         "folderSize": "フォルダサイズ",
         "basicInfo": "基本情報",

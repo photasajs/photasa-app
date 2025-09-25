@@ -406,8 +406,11 @@
         "scanComplete": "Verzeichnis [{path}] wurde verarbeitet.",
         "start": "Scan gestartet",
         "progress": "Scan-Fortschritt",
+        "processingFile": "Verarbeitung: {fileName}",
+        "scanningPath": "Scannen: {path}",
         "complete": "Scan abgeschlossen",
-        "error": "Scan-Fehler"
+        "error": "Scan-Fehler",
+        "scanFailed": "Scan fehlgeschlagen: {path}"
     },
     "button": {
         "import": "Importieren",

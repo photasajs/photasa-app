@@ -358,8 +358,11 @@
         "scanComplete": "La cartella [{path}] è stata elaborata.",
         "start": "Inizio scansione",
         "progress": "Avanzamento scansione",
+        "processingFile": "Elaborazione: {fileName}",
+        "scanningPath": "Scansione: {path}",
         "complete": "Scansione completata",
-        "error": "Errore scansione"
+        "error": "Errore scansione",
+        "scanFailed": "Scansione fallita: {path}"
     },
     "button": {
         "import": "Importa",

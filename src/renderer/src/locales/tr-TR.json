@@ -361,8 +361,11 @@
         "scanComplete": "[{path}] klasörü işlendi.",
         "start": "Tarama başlatıldı",
         "progress": "Tarama ilerlemesi",
+        "processingFile": "İşleniyor: {fileName}",
+        "scanningPath": "Taranyor: {path}",
         "complete": "Tarama tamamlandı",
-        "error": "Tarama hatası"
+        "error": "Tarama hatası",
+        "scanFailed": "Tarama başarısız: {path}"
     },
     "button": {
         "import": "İçe Aktar",

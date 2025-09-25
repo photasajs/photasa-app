@@ -472,13 +472,16 @@
         "readingConfig": "加载照片库信息 [{config}]",
         "loadingConfig": "读取照片库信息",
         "processing": "正在处理 [{file}]",
+        "processingFile": "正在处理: {fileName}",
         "scanned": "处理完毕",
         "scanComplete": "目录[{path}]已处理完毕",
         "start": "开始扫描",
         "scanning": "正在扫描",
+        "scanningPath": "正在扫描: {path}",
         "progress": "扫描进度",
         "complete": "扫描完成",
-        "error": "扫描错误"
+        "error": "扫描错误",
+        "scanFailed": "扫描失败: {path}"
     },
     "button": {
         "import": "导入",
@@ -634,8 +637,8 @@
     "imageInfo": {
         "title": "图片信息",
         "lastUpdated": "最后更新",
-        "openInFinder": "在文件管理器中打开",
-        "repairLibrary": "修复照片库信息",
+        "openInFinder": "打开文件夹",
+        "repairLibrary": "修复库信息",
         "fileCount": "文件数量",
         "folderSize": "文件夹大小",
         "basicInfo": "基本信息",

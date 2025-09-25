@@ -113,7 +113,7 @@ IPC receive("picasa:add-to-scan-queue") → preferenceStore.addFileOperation(fil
             │   ├── file-change: validate media → recreate thumbnail → update config
             │   └── file-delete: remove thumbnail → remove from config
             └── if operationType === "directory": executeDirectoryScan() (existing)
-                └── walkthroughPhotos() → klaw directory scan → existing processing pipeline
+                └── walkthroughPhotosInFolder() → klaw directory scan → existing processing pipeline
 ```
 
 #### Key Changes
@@ -648,10 +648,10 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
 }
 ```
 
-**Enhanced walkthroughPhotos()** to support single files (`main/scan/scan-photos.ts`):
+**Enhanced walkthroughPhotosInFolder()** to support single files (`main/scan/scan-photos.ts`):
 
 ```typescript
-export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileRequest> {
+export function walkthroughPhotosInFolder(source: ScanAction): Observable<PhotoFileRequest> {
     return new Observable<PhotoFileRequest>((subscriber: Subscriber<PhotoFileRequest>) => {
         // Handle single file scanning (enhanced functionality)
         if (source.operationType === "file") {
@@ -706,7 +706,7 @@ export function walkthroughPhotos(source: ScanAction): Observable<PhotoFileReque
 export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<PhotoFileRequest> {
     const workerPool = getWorkerPool(logger);
 
-    return walkthroughPhotos(scan).pipe(
+    return walkthroughPhotosInFolder(scan).pipe(
         concatMap(async (action: PhotoFileRequest) => {
             // Existing logic works for both single files and directory contents
             const shouldProcess = await shouldProcessFile(action.path, scan.action);
@@ -1140,7 +1140,7 @@ interface QueueMetrics {
 - [x] Add file operation routing to scan worker via `operationType` field
 - [⚠️] Implement `executeFileOperation()` function (partial - limited by Worker mocking complexity)
 - [x] Add error handling and retry logic with exponential backoff
-- [x] Enhance `walkthroughPhotos()` for single files in `src/main/scan/scan-photos.ts`
+- [x] Enhance `walkthroughPhotosInFolder()` for single files in `src/main/scan/scan-photos.ts`
 - [x] Add comprehensive logging with structured debug output
 
 ### Phase 3: Integration and Testing (Week 3-4) ✅ COMPLETED

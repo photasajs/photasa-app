@@ -361,8 +361,11 @@
         "scanComplete": "تمت معالجة المجلد [{path}].",
         "start": "بدء المسح",
         "progress": "تقدم المسح",
+        "processingFile": "جارِ معالجة: {fileName}",
+        "scanningPath": "جارِ مسح: {path}",
         "complete": "اكتمل المسح",
-        "error": "خطأ في المسح"
+        "error": "خطأ في المسح",
+        "scanFailed": "فشل المسح: {path}"
     },
     "button": {
         "import": "استيراد",
