@@ -20,7 +20,12 @@ import {
     FileCountBadge,
 } from "@renderer/components/ui";
 import { loggers } from "@common/logger";
-import ImageFallback from "@renderer/assets/images/fallback.png";
+// 在测试环境中使用data URL，避免网络请求
+import fallbackImage from "@renderer/assets/images/fallback.png";
+const ImageFallback =
+    process.env.NODE_ENV === "test"
+        ? "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
+        : fallbackImage;
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
 import EmptyState from "./common/EmptyState.vue";
