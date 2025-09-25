@@ -348,11 +348,17 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                                                 await cacheManager.recordFileProcessed(action);
                                             }
 
+                                            if (!workerPool) {
+                                                logger.warn(
+                                                    "[processFileList] Worker池不可用，跳过缩略图创建",
+                                                );
+                                                return action;
+                                            }
                                             return processPhotoFile(
                                                 action,
                                                 scan,
                                                 shouldProcess,
-                                                workerPool!,
+                                                workerPool,
                                                 logger,
                                             );
                                         }),
@@ -402,11 +408,17 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                                             scan.action,
                                             logger,
                                         );
+                                        if (!workerPool) {
+                                            logger.warn(
+                                                "[processFileList] Worker池不可用，跳过缩略图创建",
+                                            );
+                                            return action;
+                                        }
                                         return processPhotoFile(
                                             action,
                                             scan,
                                             shouldProcess,
-                                            workerPool!,
+                                            workerPool,
                                             logger,
                                         );
                                     }),
@@ -430,7 +442,11 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                             scan.action,
                             logger,
                         );
-                        return processPhotoFile(action, scan, shouldProcess, workerPool!, logger);
+                        if (!workerPool) {
+                            logger.warn("[processFileList] Worker池不可用，跳过缩略图创建");
+                            return action;
+                        }
+                        return processPhotoFile(action, scan, shouldProcess, workerPool, logger);
                     }),
                 )
                 .subscribe(createSubscriptionHandlers(subscriber, logger, scan.path));
@@ -473,7 +489,11 @@ async function processFileList(
             const shouldProcess = await shouldProcessFile(file.path, scan.action, logger);
 
             if (shouldProcess) {
-                await processPhotoFile(file, scan, shouldProcess, workerPool!, logger);
+                if (!workerPool) {
+                    logger.warn("[processFileList] Worker池不可用，跳过缩略图创建");
+                    return;
+                }
+                await processPhotoFile(file, scan, shouldProcess, workerPool, logger);
                 await cacheManager.recordFileProcessed(file);
             }
 

@@ -166,7 +166,7 @@ describe("AppHelper - Pure Functions", () => {
                 addScanFolderToQueue: vi.fn(),
                 performScanTask: vi.fn(),
                 resetPhotasaConfig: vi.fn(),
-                extractParentDir: vi.fn().mockReturnValue("/test"),
+                extractParentDir: vi.fn().mockReturnValue(null),
                 scheduleNextScan: vi.fn(),
             };
 
@@ -291,7 +291,7 @@ describe("AppHelper - Pure Functions", () => {
 
             // 验证回调被正确调用
             expect(mockCallbacks.updateProcessingStatus).toHaveBeenCalledWith(
-                "正在扫描: /test/folder",
+                "status.scanningPath",
             );
             expect(mockCallbacks.scanSubfolders).toHaveBeenCalledWith("/test/folder");
             expect(mockCallbacks.performScanTask).toHaveBeenCalled();
@@ -302,6 +302,8 @@ describe("AppHelper - Pure Functions", () => {
             const mockCallbacks = {} as ScanCallbacks;
             mockCallbacks.logDebug = vi.fn();
             mockCallbacks.clearProcessingStatus = vi.fn();
+            mockCallbacks.t = vi.fn((key: string) => key);
+            mockCallbacks.updateProcessingStatus = vi.fn();
 
             const emptyQueue: ScanAction[] = [];
 
@@ -309,7 +311,7 @@ describe("AppHelper - Pure Functions", () => {
 
             expect(result.processed).toBe(false);
             expect(result.shouldScheduleNext).toBe(false);
-            expect(mockCallbacks.logDebug).toHaveBeenCalledWith("[扫描编排] 队列为空，无需处理");
+            expect(mockCallbacks.logDebug).toHaveBeenCalledWith("[扫描编排] 队列为空，扫描完成");
         });
 
         it("应该处理重扫描动作", async () => {

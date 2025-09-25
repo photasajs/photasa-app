@@ -178,13 +178,12 @@ export const usePreferenceStore = defineStore("preference", {
                     const configCheck = await checkPhotasaConfig(folder);
 
                     if (configCheck.hasConfig) {
-                        // 文件夹已扫描过，但仍需发现子文件夹以支持递归扫描
-                        // 更新文件夹树并继续添加到队列（用于子文件夹发现）
+                        // 文件夹已扫描过，跳过扫描
                         this.updateFolderTree(folder);
                         logger.debug(
-                            `[PreferenceStore] Folder already scanned (auto source), adding for subfolder discovery: ${folder}`,
+                            `[PreferenceStore] Folder already scanned (auto source), skipping: ${folder}`,
                         );
-                        // 不要return，继续添加到队列用于子文件夹发现
+                        return; // 跳过添加到队列
                     }
                 } catch (error) {
                     logger.warn(

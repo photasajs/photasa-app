@@ -13,12 +13,25 @@
  */
 
 import { WorkerPool } from "../../workers/worker-pool";
-import createWorker from "../../thumbnail/thumbnail-worker?nodeWorker";
 import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
 import type { WorkerOptions } from "worker_threads";
 import type { Worker as NodeWorker } from "worker_threads";
 import { PhotasaLogger } from "@common/logger";
 import { cpus } from "os";
+
+// 动态导入 createWorker 以避免在测试环境中立即执行
+let createWorker: ((options?: unknown) => NodeWorker) | null = null;
+
+try {
+    if (process.env.NODE_ENV !== "test" && process.env.VITEST !== "true") {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const workerModule = require("../../thumbnail/thumbnail-worker?nodeWorker");
+        createWorker = workerModule.default;
+    }
+} catch (error) {
+    // 在测试环境中忽略导入错误
+    createWorker = null;
+}
 
 /**
  * 缩略图Worker池配置
@@ -78,7 +91,12 @@ export interface PoolStats {
 export const DEFAULT_THUMBNAIL_WORKER_CONFIG: ThumbnailWorkerConfig = {
     minWorkers: 1,
     maxWorkers: Math.min(4, Math.max(2, Math.floor((cpus()?.length || 4) / 2))),
-    createWorker: (options?: unknown) => createWorker(options as WorkerOptions),
+    createWorker: (options?: unknown) => {
+        if (!createWorker) {
+            throw new Error("Worker池创建失败：createWorker 不可用");
+        }
+        return createWorker(options as WorkerOptions);
+    },
     workerOptions: {
         resourceLimits: {
             maxOldGenerationSizeMb: 100,
@@ -192,6 +210,7 @@ class WorkerPoolManager {
     private isTestEnvironment(): boolean {
         return (
             process.env.NODE_ENV === "test" ||
+            createWorker === null ||
             typeof createWorker !== "function" ||
             process.env.VITEST === "true"
         );
