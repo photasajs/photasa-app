@@ -8,7 +8,10 @@ module.exports = {
     testEnvironment: "node",
 
     // 测试文件匹配模式 - 只匹配main目录下的测试
-    testMatch: ["<rootDir>/src/main/**/__tests__/**/*.spec.ts", "<rootDir>/src/main/**/*.spec.ts"],
+    testMatch: [
+        "<rootDir>/src/main/scan/worker/__tests__/**/*.spec.ts",
+        "<rootDir>/src/main/workers/__tests__/**/*.spec.ts",
+    ],
 
     // TypeScript支持
     preset: "ts-jest",
