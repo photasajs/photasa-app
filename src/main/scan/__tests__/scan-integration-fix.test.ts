@@ -18,7 +18,7 @@ vi.mock("fs-extra");
 vi.mock("@main/config/config-storage", () => ({
     getPhotasaConfig: vi.fn(),
 }));
-vi.mock("../folder-cache-manager", () => ({
+vi.mock("../cache/folder-cache-manager", () => ({
     computeFolderHash: vi.fn(),
     ScanStrategy: {
         SKIP: "skip",

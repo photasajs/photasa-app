@@ -167,7 +167,7 @@ describe("Debug Time Extraction Issues", () => {
             const result = await extractMetadata(mockRequest, mockLogger);
 
             expect(result.type).toBe("video");
-            expect(result.format).toBe("MOV");
+            expect(result.format).toBe("MOV"); // video-extractor returns uppercase format when successful
         });
 
         it("should debug missing MOV metadata", async () => {
@@ -206,7 +206,7 @@ describe("Debug Time Extraction Issues", () => {
             const result = await extractMetadata(mockRequest, mockLogger);
 
             expect(result.type).toBe("video");
-            expect(result.format).toBe("MOV");
+            expect(result.format).toBe("MOV"); // fallback logic returns uppercase format when video-extractor fails
             expect(result.dateSource).toBe("file_created");
         });
 
@@ -251,7 +251,7 @@ describe("Debug Time Extraction Issues", () => {
             const result = await extractMetadata(mockRequest, mockLogger);
 
             expect(result.type).toBe("video");
-            expect(result.format).toBe("MOV");
+            expect(result.format).toBe("MOV"); // fallback logic returns uppercase format when video-extractor fails
             expect(result.dateSource).toBe("file_created");
         });
     });

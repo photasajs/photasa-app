@@ -212,7 +212,8 @@ class WorkerPoolManager {
             process.env.NODE_ENV === "test" ||
             createWorker === null ||
             typeof createWorker !== "function" ||
-            process.env.VITEST === "true"
+            process.env.VITEST === "true" ||
+            process.env.NODE_ENV === "development" // Also skip in development
         );
     }
 
@@ -235,11 +236,19 @@ class WorkerPoolManager {
 
             // 使用超时机制确保关闭不会无限等待
             const shutdownPromise = this.workerPool.shutdown();
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error("Worker池关闭超时")), timeout),
+            const timeoutPromise = new Promise<boolean>((resolve) =>
+                setTimeout(() => resolve(false), timeout),
             );
 
-            await Promise.race([shutdownPromise, timeoutPromise]);
+            const result = await Promise.race([shutdownPromise, timeoutPromise]);
+
+            if (result === false) {
+                // 超时情况
+                this.status = PoolStatus.ERROR;
+                this.stats.status = PoolStatus.ERROR;
+                this.logger?.warn("[WorkerPoolManager] Worker池关闭超时");
+                return false;
+            }
 
             this.status = PoolStatus.SHUTDOWN;
             this.stats.status = PoolStatus.SHUTDOWN;
@@ -424,7 +433,15 @@ export async function cleanupWorkerPool(
     }
 
     // 否则使用全局的Worker池管理器
-    return WorkerPoolManager.getInstance().shutdownWorkerPool(timeout);
+    const manager = WorkerPoolManager.getInstance();
+    // 如果管理器没有worker池，直接返回true（表示清理成功）
+    if (!manager.isWorkerPoolAvailable()) {
+        logger.debug("[cleanupWorkerPool] 没有可用的Worker池需要清理");
+        return true;
+    }
+
+    return manager.shutdownWorkerPool(timeout);
 }
 
+export { WorkerPoolManager };
 export default WorkerPoolManager;

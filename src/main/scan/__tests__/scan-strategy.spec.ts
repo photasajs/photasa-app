@@ -26,7 +26,7 @@ vi.mock("../config/config-storage", () => ({
 vi.mock("../../config/config-storage", () => ({
     getPhotasaConfig: () => mockGetPhotasaConfig(),
 }));
-vi.mock("../folder-cache-manager", () => ({
+vi.mock("../cache/folder-cache-manager", () => ({
     computeFolderHash: vi.fn(),
     getCacheInfo: vi.fn(),
     compareHashesAndDecide: vi.fn(),
