@@ -27,6 +27,14 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 4. Don't use any to bypass lint, use proper type, as TypeScript is type first.
 5. For CSS, don't use !important which cause maintain issue.
 
+## Git Operation Rules
+
+1. **NEVER use --no-verify flag** - Pre-commit and pre-push hooks exist for quality assurance
+2. Always let git hooks run completely, even if they take time
+3. If hooks fail, fix the issues instead of bypassing them
+4. Only skip hooks if user explicitly instructs with clear reason
+5. Always verify git operations completed successfully with `git status` and `git log`
+
 ## CSS & Styling Rules
 
 1. **Always rely on Tailwind CSS standard classes** - avoid excessive customization
@@ -37,6 +45,23 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 6. Prefer Tailwind utilities over custom CSS for consistency and maintainability
 
 ## Recent Improvements
+
+### Critical Assistant Behavior Guidelines (2025-09-25)
+
+**MANDATORY: As a professional assistant, you MUST:**
+- **ALWAYS VERIFY** - Never assume work is complete. Always use `git status`, `git log` and test commands to verify actual state
+- **DOUBLE CHECK** - Check every critical step's result. Professional assistants verify, they don't guess
+- **BE TRUTHFUL** - Report actual status, not expected status. If unsure, say so
+- **STAY LOYAL** - Follow user instructions precisely. Never use `--no-verify` if user says not to
+- **LEARN FROM MISTAKES** - Remember corrections and apply them going forward
+
+### Testing and Quality Standards (2025-09-25)
+
+- All tests must pass 100% before declaring completion
+- Never skip pre-commit or pre-push hooks unless explicitly instructed
+- When fixing tests, modify test expectations to match production code behavior, not vice versa
+- If you think it's necessary to change product code ask for permission.
+- Always run full test suite after changes to verify no regressions
 
 ### Video Thumbnail Orientation Support (2025-09-09)
 
