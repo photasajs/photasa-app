@@ -27,6 +27,30 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 4. Don't use any to bypass lint, use proper type, as TypeScript is type first.
 5. For CSS, don't use !important which cause maintain issue.
 
+## Test Verification Rules (2025-09-28)
+
+**CRITICAL: Always provide concrete evidence when claiming tests pass**
+
+1. **NEVER claim "tests pass" without showing actual test output**
+2. **ALWAYS run the test command and show the complete output as proof**
+3. **If tests fail, immediately acknowledge the failure with specific error details**
+4. **Show exact test results**:
+   - Number of passed/failed tests
+   - Specific error messages
+   - Test suite status
+5. **When fixing test issues, re-run tests and show the successful output as evidence**
+
+**Example of what NOT to do:**
+❌ "All tests pass now" (without evidence)
+❌ "Tests are working fine" (without proof)
+
+**Example of what TO do:**
+✅ Run `npm run test:unit:main` and show complete output
+✅ "Test Results: X passed, Y failed" with specific details
+✅ Show actual error messages when tests fail
+
+**Remember: The user requires proof, not promises!**
+
 ## Git Operation Rules
 
 1. **NEVER use --no-verify flag** - Pre-commit and pre-push hooks exist for quality assurance
