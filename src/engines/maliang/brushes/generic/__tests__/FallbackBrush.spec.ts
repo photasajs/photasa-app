@@ -38,7 +38,9 @@ describe("FallbackBrush", () => {
             resize: jest.fn().mockReturnThis(),
             toFormat: jest.fn().mockReturnThis(),
             toFile: jest.fn().mockImplementation(() => Promise.resolve()),
-            toBuffer: jest.fn().mockImplementation(() => Promise.resolve(Buffer.from("fallback-thumbnail"))),
+            toBuffer: jest
+                .fn()
+                .mockImplementation(() => Promise.resolve(Buffer.from("fallback-thumbnail"))),
         } as any;
 
         beforeEach(() => {
@@ -92,7 +94,7 @@ describe("FallbackBrush", () => {
 
             // Mock sharp抛出错误
             mockSharpInstance.toFile.mockImplementation(() =>
-                Promise.reject(new Error("Sharp processing failed"))
+                Promise.reject(new Error("Sharp processing failed")),
             );
 
             await expect(
