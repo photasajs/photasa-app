@@ -108,6 +108,17 @@ export class BrushRegistry {
             const candidates = this.findCandidateBrushes(detection.format, operation);
 
             if (candidates.length === 0) {
+                // 尝试查找FallbackBrush作为最后的选择
+                const fallbackCandidates = this.findCandidateBrushes("*", operation);
+                if (fallbackCandidates.length > 0) {
+                    this.logger?.info(
+                        `No specific brush found for format: ${detection.format}, using fallback brush`,
+                    );
+                    const selection = this.selectBestBrush(fallbackCandidates, detection, filePath);
+                    this.selectionCache.set(cacheKey, selection);
+                    return selection;
+                }
+
                 this.logger?.warn(
                     `No brush found for format: ${detection.format}, operation: ${operation || "any"}`,
                 );

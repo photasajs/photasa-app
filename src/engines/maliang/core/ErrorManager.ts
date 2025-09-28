@@ -278,6 +278,62 @@ export class ResourceErrorRecoveryStrategy implements ErrorRecoveryStrategy {
 }
 
 /**
+ * 回退错误恢复策略
+ * 简化的错误恢复策略，主要提供重试和质量降级能力
+ * FallbackBrush的选择由BrushRegistry自动处理
+ */
+export class FallbackErrorRecoveryStrategy implements ErrorRecoveryStrategy {
+    constructor(private logger?: PhotasaLogger) {}
+
+    public canRecover(error: MaLiangError): boolean {
+        // 对于非关键性错误，支持简单的重试或质量降级
+        return error.severity !== ErrorSeverity.CRITICAL && error.retryable;
+    }
+
+    public async recover(error: MaLiangError, context: PaintRequest): Promise<RecoveryResult> {
+        this.logger?.info(`尝试错误恢复: ${error.message}`);
+
+        // 简单的质量降级策略
+        if (
+            context.thumbnailOptions &&
+            context.thumbnailOptions.quality &&
+            context.thumbnailOptions.quality > 50
+        ) {
+            const newRequest: PaintRequest = {
+                ...context,
+                thumbnailOptions: {
+                    ...context.thumbnailOptions,
+                    quality: Math.max(context.thumbnailOptions.quality - 30, 30),
+                    width: Math.min(context.thumbnailOptions.width || 150, 150),
+                    height: Math.min(context.thumbnailOptions.height || 150, 150),
+                },
+            };
+
+            this.logger?.info(`降低质量重试: quality=${newRequest.thumbnailOptions?.quality}`);
+
+            return {
+                success: true,
+                newRequest,
+            };
+        }
+
+        // 如果无法降级，返回失败
+        return {
+            success: false,
+            error: new ProcessingError(`无法恢复的错误: ${error.message}`, context, error),
+        };
+    }
+
+    public shouldRetry(error: MaLiangError, attempt: number): boolean {
+        return error.retryable && attempt < 2; // 最多重试2次
+    }
+
+    public getRetryDelay(attempt: number): number {
+        return 1000 * attempt; // 1s, 2s
+    }
+}
+
+/**
  * 错误统计信息
  */
 export interface ErrorStatistics {
@@ -306,6 +362,7 @@ export class ErrorManager {
         // 注册默认恢复策略
         this.registerStrategy("FORMAT_ERROR", new FormatErrorRecoveryStrategy(logger));
         this.registerStrategy("RESOURCE_ERROR", new ResourceErrorRecoveryStrategy(logger));
+        this.registerStrategy("FALLBACK", new FallbackErrorRecoveryStrategy(logger));
     }
 
     /**

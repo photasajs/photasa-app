@@ -44,6 +44,12 @@ export interface ThumbnailOptions {
     fit?: "inside" | "outside" | "cover" | "contain" | "fill";
     outputPath?: string; // 可选的输出路径
     background?: string | { r: number; g: number; b: number; alpha?: number }; // 背景色
+
+    // HEIC特有选项 - 统一处理预览图和缩略图
+    previewPath?: string; // 浏览器预览图路径
+    generatePreview?: boolean; // 是否同时生成预览图
+    previewFormat?: "png" | "jpeg" | "jpg" | "webp"; // 预览图格式
+    previewQuality?: number; // 预览图质量
 }
 
 // 作画请求
@@ -69,6 +75,7 @@ export interface PaintResult {
     success: boolean;
     outputs: {
         thumbnail?: string | Buffer;
+        preview?: string; // 预览图路径
         metadata?: Metadata;
         converted?: string | boolean;
         edited?: string | boolean;

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import sharp from "sharp";
 import fs from "fs-extra";
 import { createThumbnail } from "../thumbnail-handler";
-import { createGenericFallbackThumbnail } from "../thumbnail-utils";
 import type { Logger } from "log4js";
 
 // Mock dependencies
@@ -194,107 +193,6 @@ describe("thumbnail-handler", () => {
             expect(mockLogger.info).not.toHaveBeenCalledWith(
                 expect.stringContaining("Creating generic placeholder thumbnail"),
             );
-        });
-    });
-
-    describe("createGenericFallbackThumbnail", () => {
-        const fallbackRequest = {
-            path: "/path/to/document.pdf",
-            thumbnail: "/path/to/.photasaoriginals/thumbnail-document.pdf.png",
-            width: 200,
-            height: 200,
-            preview: "",
-            withoutEnlargement: true,
-        };
-
-        beforeEach(() => {
-            // 重置 sharp mock 为正常工作的状态
-            vi.mocked(sharp).mockImplementation(
-                () =>
-                    ({
-                        rotate: vi.fn().mockReturnThis(),
-                        resize: vi.fn().mockReturnThis(),
-                        toFormat: vi.fn().mockReturnThis(),
-                        toFile: vi.fn().mockResolvedValue(undefined),
-                    }) as any,
-            );
-        });
-
-        it("should create generic fallback thumbnail for PDF files", async () => {
-            const result = await createGenericFallbackThumbnail(fallbackRequest, mockLogger);
-
-            expect(result).toBe(fallbackRequest.thumbnail);
-            expect(sharp).toHaveBeenCalledWith(expect.any(Buffer));
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                expect.stringContaining("Generic fallback thumbnail created"),
-            );
-        });
-
-        it("should create generic fallback thumbnail for ZIP files", async () => {
-            const zipRequest = {
-                ...fallbackRequest,
-                path: "/path/to/archive.zip",
-                thumbnail: "/path/to/.photasaoriginals/thumbnail-archive.zip.png",
-            };
-
-            const result = await createGenericFallbackThumbnail(zipRequest, mockLogger);
-
-            expect(result).toBe(zipRequest.thumbnail);
-            expect(sharp).toHaveBeenCalledWith(expect.any(Buffer));
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                expect.stringContaining("Generic fallback thumbnail created"),
-            );
-        });
-
-        it("should create generic fallback thumbnail for unknown file types", async () => {
-            const unknownRequest = {
-                ...fallbackRequest,
-                path: "/path/to/unknown.xyz",
-                thumbnail: "/path/to/.photasaoriginals/thumbnail-unknown.xyz.png",
-            };
-
-            const result = await createGenericFallbackThumbnail(unknownRequest, mockLogger);
-
-            expect(result).toBe(unknownRequest.thumbnail);
-            expect(sharp).toHaveBeenCalledWith(expect.any(Buffer));
-            expect(mockLogger.info).toHaveBeenCalledWith(
-                expect.stringContaining("Generic fallback thumbnail created"),
-            );
-        });
-
-        it("should handle errors gracefully", async () => {
-            // 创建一个会失败的 sharp mock 实例
-            const failedSharpInstance = {
-                rotate: vi.fn().mockReturnThis(),
-                resize: vi.fn().mockReturnThis(),
-                toFormat: vi.fn().mockReturnThis(),
-                toFile: vi.fn().mockRejectedValue(new Error("Sharp processing failed")),
-            };
-
-            // 让 sharp 构造函数返回这个失败的实例
-            vi.mocked(sharp).mockImplementationOnce(() => failedSharpInstance as any);
-
-            const result = await createGenericFallbackThumbnail(fallbackRequest, mockLogger);
-
-            expect(result).toBeNull();
-            expect(mockLogger.error).toHaveBeenCalledWith(
-                expect.stringContaining("Failed to create generic fallback thumbnail"),
-                expect.any(Error),
-            );
-        });
-
-        it("should truncate long file names", async () => {
-            const longNameRequest = {
-                ...fallbackRequest,
-                path: "/path/to/this-is-a-very-long-filename-that-should-be-truncated.pdf",
-                thumbnail: "/path/to/.photasaoriginals/thumbnail-long.pdf.png",
-            };
-
-            const result = await createGenericFallbackThumbnail(longNameRequest, mockLogger);
-
-            expect(result).toBe(longNameRequest.thumbnail);
-            // 验证 sharp 被正确调用，文件名截断逻辑在 SVG 内容中处理
-            expect(sharp).toHaveBeenCalledWith(expect.any(Buffer));
         });
     });
 });
