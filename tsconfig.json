@@ -25,7 +25,9 @@
             "@common/*": ["./src/common/*"],
             "@preload/*": ["./src/preload/*"],
             "@shared/*": ["./src/shared/*"],
-            "@renderer/*": ["./src/renderer/src/*"]
+            "@renderer/*": ["./src/renderer/src/*"],
+            "@maliang/*": ["./src/engines/maliang/*"],
+            "@shunfenger/*": ["./src/engines/shunfenger/*"]
         }
     }
 }

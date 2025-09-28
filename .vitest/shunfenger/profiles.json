@@ -1,0 +1,13 @@
+[
+  {
+    "id": "profile-1",
+    "rootPath": "/photos",
+    "recursive": true,
+    "ignoreGlobs": [],
+    "thumbnailSize": 150,
+    "autoStart": true,
+    "priority": "background",
+    "createdAt": 1640995200000,
+    "updatedAt": 1640995200000
+  }
+]

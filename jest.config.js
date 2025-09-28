@@ -7,10 +7,12 @@ module.exports = {
     // 测试环境
     testEnvironment: "node",
 
-    // 测试文件匹配模式 - 只匹配main目录下的测试
+    // 测试文件匹配模式 - 匹配main和engines目录下的测试
     testMatch: [
         "<rootDir>/src/main/scan/worker/__tests__/**/*.spec.ts",
         "<rootDir>/src/main/workers/__tests__/**/*.spec.ts",
+        "<rootDir>/src/main/thumbnail/__tests__/**/*.spec.ts",
+        "<rootDir>/src/engines/**/__tests__/**/*.spec.ts",
     ],
 
     // TypeScript支持
@@ -35,6 +37,8 @@ module.exports = {
                     noImplicitThis: false,
                     noUnusedLocals: false,
                     noUnusedParameters: false,
+                    types: ["node", "jest"],
+                    typeRoots: ["node_modules/@types"],
                 },
             },
         ],
@@ -46,6 +50,8 @@ module.exports = {
         "^@main/(.*)$": "<rootDir>/src/main/$1",
         "^@renderer/(.*)$": "<rootDir>/src/renderer/$1",
         "^@shared/(.*)$": "<rootDir>/src/shared/$1",
+        "^@maliang/(.*)$": "<rootDir>/src/engines/maliang/$1",
+        "^@shunfenger/(.*)$": "<rootDir>/src/engines/shunfenger/$1",
     },
 
     // 测试超时设置
@@ -54,13 +60,19 @@ module.exports = {
     // 覆盖率设置
     collectCoverageFrom: [
         "src/main/**/*.ts",
+        "src/engines/**/*.ts",
         "!src/main/**/*.d.ts",
+        "!src/engines/**/*.d.ts",
         "!src/main/**/__tests__/**",
+        "!src/engines/**/__tests__/**",
         "!src/main/**/node_modules/**",
+        "!src/engines/**/node_modules/**",
     ],
 
     // 设置文件
     setupFilesAfterEnv: ["<rootDir>/test/setup.main.jest.ts"],
+
+    // Global setup - ts-jest配置已移至transform部分
 
     // 清理模拟
     clearMocks: true,
@@ -76,5 +88,5 @@ module.exports = {
     moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
 
     // 转换忽略
-    transformIgnorePatterns: ["node_modules/(?!(.*\\.mjs$))"],
+    transformIgnorePatterns: ["node_modules/(?!(.*\\.mjs$))", "src/main/wasm/heif-module\\.ts$"],
 };

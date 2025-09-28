@@ -1,7 +1,7 @@
 import isVideo from "is-video";
 import isImage from "is-image";
-import { ensureDir, exists, remove, readFile, access } from "fs-extra";
-import * as fs from "fs";
+import { ensureDir, exists, remove, readFile } from "fs-extra";
+import { ensureAccess } from "./utils";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
@@ -19,7 +19,60 @@ import {
 } from "./thumbnail-utils";
 import type { VideoSize } from "@common/types";
 import { PhotasaLogger } from "@common/logger";
+import { MaLiang } from "@maliang/core/MaLiang";
+import { BmpBrush } from "@maliang/brushes/image/BmpBrush";
+import type { PaintRequest } from "@maliang/types/BrushTypes";
 // 移除 ffmpeg-config 导入，路径将通过参数传递
+
+/**
+ * MaLiang  引擎实例 - 延迟初始化
+ */
+let maLiangInstance: MaLiang | null = null;
+
+/**
+ * 获取 MaLiang  引擎实例
+ * @param logger - 日志记录器
+ * @returns MaLiang  引擎实例
+ */
+function getMaLiangInstance(logger: PhotasaLogger): MaLiang {
+    if (!maLiangInstance) {
+        logger.info("[thumbnail-handler] Initializing MaLiang  engine...");
+
+        maLiangInstance = new MaLiang(
+            {
+                debug: false,
+                cache: {
+                    enabled: false,
+                    maxSize: 0,
+                    ttl: 0,
+                    strategy: "lru",
+                }, // Worker环境不使用缓存
+                performance: {
+                    enableMonitoring: true,
+                    logSlowOperations: false,
+                    slowOperationThreshold: 30000,
+                },
+            },
+            logger,
+        );
+
+        // 注册神笔
+        maLiangInstance.registerBrush(new BmpBrush());
+        logger.info("[thumbnail-handler] MaLiang  engine initialized with BmpBrush");
+    }
+    return maLiangInstance;
+}
+
+/**
+ * 判断是否使用 MaLiang  处理
+ * @param filePath - 文件路径
+ * @returns 是否使用 MaLiang
+ */
+function shouldUseMaLiang(filePath: string): boolean {
+    // 渐进式启用：先针对当前系统不支持的格式
+    const ext = path.extname(filePath).toLowerCase();
+    return ext === ".bmp"; // 目前只启用 BMP 格式
+}
 
 /**
  * 使用 wasm-heif 解码 HEIC/HEIF 文件
@@ -413,33 +466,52 @@ export async function createThumbnail(
         // 确保缩略图目录存在
         await ensureDir(path.dirname(arg.thumbnail));
 
-        // 确保目标文件可写：如果文件存在且不可写，先删除它
-        try {
-            if (await exists(arg.thumbnail)) {
-                // 检查文件是否可写
-                try {
-                    await access(arg.thumbnail, fs.constants.W_OK);
-                    logger.debug(
-                        `[thumbnail-handler] Target thumbnail exists and is writable: ${arg.thumbnail}`,
-                    );
-                } catch (writeError) {
-                    logger.warn(
-                        `[thumbnail-handler] Target thumbnail exists but is not writable, removing: ${arg.thumbnail}`,
-                    );
-                    await remove(arg.thumbnail);
-                }
-            }
-        } catch (cleanupError) {
-            logger.warn(`[thumbnail-handler] Failed to cleanup target thumbnail: ${cleanupError}`);
-            // 继续尝试写入，让后续的错误处理来处理
-        }
+        // 确保缩略图可写
+        await ensureAccess(arg.thumbnail, logger);
 
         let isHeic = HeicExtensionRE.test(arg.path);
+
         // 如果文件是 HEIC 格式，则需要先转换为 PNG 格式
         if (isHeic) {
             arg.preview = await createPreviewImage(arg, logger);
             // 如果预览图片创建成功，则认为文件是 HEIC 格式
             isHeic = arg.preview !== "";
+        }
+
+        // 判断是否使用 MaLiang Engine 处理
+        if (shouldUseMaLiang(arg.path)) {
+            try {
+                logger.info("[thumbnail-handler] Processing with MaLiang : " + arg.path);
+                const maLiang = getMaLiangInstance(logger);
+
+                const paintRequest: PaintRequest = {
+                    filePath: arg.path,
+                    operations: ["generateThumbnail"],
+                    thumbnailOptions: {
+                        width: Number(arg.width),
+                        height: Number(arg.height),
+                        format: "png", // BMP 输出为 PNG 格式
+                        withoutEnlargement: arg.withoutEnlargement,
+                    },
+                    outputPath: arg.thumbnail,
+                };
+
+                const result = await maLiang.paint(paintRequest);
+
+                if (result.success) {
+                    logger.info(`[thumbnail-handler] MaLiang  processed successfully: ${arg.path}`);
+                    return arg;
+                } else {
+                    throw new Error(
+                        `MaLiang processing failed: ${result.error?.message || "Unknown error"}`,
+                    );
+                }
+            } catch (maLiangError) {
+                logger.warn(
+                    `[thumbnail-handler] MaLiang  failed, falling back to legacy processing: ${maLiangError}`,
+                );
+                // 继续到legacy处理逻辑
+            }
         }
 
         if (isVideo(arg.path)) {

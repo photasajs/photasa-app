@@ -9,6 +9,8 @@ export default defineConfig({
             "@preload": resolve("src/preload/"),
             "@common": resolve("src/common/"),
             "@shared": resolve("src/shared/"),
+            "@maliang": resolve("src/engines/maliang/"),
+            "@shunfenger": resolve("src/engines/shunfenger/"),
         },
     },
     test: {
@@ -42,7 +44,7 @@ export default defineConfig({
                 "src/renderer/src/test/**/*",
             ],
         },
-        include: ["src/main/**/*.test.{js,ts,jsx,tsx}"],
+        include: ["src/main/**/*.test.{js,ts,jsx,tsx}", "src/engines/**/*.test.{js,ts,jsx,tsx}"],
         server: {
             deps: {
                 inline: [/@vue/, /@vueuse/, /@ant-design/, /radash/],

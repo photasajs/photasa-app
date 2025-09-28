@@ -27,7 +27,7 @@
             "Bash(chmod:*)",
             "Bash(find:*)",
             "WebSearch",
-            "Bash(for:*)"
+            "Bash(npx tsc:*)"
         ],
         "deny": []
     }

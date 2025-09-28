@@ -6,6 +6,7 @@
         "src/main/**/*",
         "src/preload/*",
         "src/shared/*",
+        "src/engines/**/*",
     ],
     "compilerOptions": {
         "composite": true,
@@ -19,7 +20,9 @@
             "@main/*": ["./src/main/*"],
             "@common/*": ["./src/common/*"],
             "@preload/*": ["./src/preload/*"],
-            "@shared/*": ["./src/shared/*"]
+            "@shared/*": ["./src/shared/*"],
+            "@maliang/*": ["./src/engines/maliang/*"],
+            "@shunfenger/*": ["./src/engines/shunfenger/*"],
         },
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true

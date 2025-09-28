@@ -3,21 +3,8 @@
  * 为main进程测试提供Jest环境设置
  */
 
-// Mock sharp module to avoid platform-specific errors
-jest.mock("sharp", () => ({
-    default: jest.fn().mockImplementation(() => ({
-        metadata: jest.fn().mockResolvedValue({
-            width: 100,
-            height: 100,
-            format: "jpeg",
-        }),
-        resize: jest.fn().mockReturnThis(),
-        jpeg: jest.fn().mockReturnThis(),
-        png: jest.fn().mockReturnThis(),
-        webp: jest.fn().mockReturnThis(),
-        toBuffer: jest.fn().mockResolvedValue(Buffer.from("mock-image-data")),
-    })),
-}));
+// 不再mock Sharp - 让真实的图像处理库正常工作
+// Sharp是标准的Node.js图像处理库，在测试环境中应该正常工作
 
 // Mock electron module
 jest.mock("electron", () => ({
@@ -73,23 +60,14 @@ jest.mock("electron", () => ({
     },
 }));
 
-// Mock fs-extra
-jest.mock("fs-extra", () => ({
-    ensureDir: jest.fn().mockResolvedValue(undefined),
-    pathExists: jest.fn().mockResolvedValue(true),
-    readFile: jest.fn().mockResolvedValue("mock file content"),
-    writeFile: jest.fn().mockResolvedValue(undefined),
-    copyFile: jest.fn().mockResolvedValue(undefined),
-    move: jest.fn().mockResolvedValue(undefined),
-    remove: jest.fn().mockResolvedValue(undefined),
-    stat: jest.fn().mockResolvedValue({
-        isFile: () => true,
-        isDirectory: () => false,
-        size: 1024,
-        mtime: new Date(),
-    }),
-    readdir: jest.fn().mockResolvedValue(["file1.jpg", "file2.png"]),
-}));
+// 不再mock fs - 让文件系统操作正常工作
+// fs mock已移除，测试将使用真实的文件系统
+
+// 不再mock fs-extra - 让扩展文件操作正常工作
+// fs-extra mock已移除，测试将使用真实的文件系统操作
+
+// 不再mock Jimp - 让真实的图像处理库正常工作
+// Jimp是我们BmpBrush的核心功能，应该测试真实的行为
 
 // Mock worker_threads
 jest.mock("worker_threads", () => ({
@@ -102,6 +80,21 @@ jest.mock("worker_threads", () => ({
     })),
     isMainThread: true,
     parentPort: null,
+}));
+
+// Mock process.resourcesPath for Electron
+Object.defineProperty(process, "resourcesPath", {
+    value: "/mock/resources/path",
+    writable: true,
+    configurable: true,
+});
+
+// Don't mock Ma-Liang - we want to test the real integration!
+
+// Mock heif-module to avoid resourcesPath issues
+jest.mock("../src/main/wasm/heif-module", () => ({
+    initializeHeifModule: jest.fn().mockResolvedValue(undefined),
+    resetHeifModule: jest.fn().mockResolvedValue(undefined),
 }));
 
 // 设置测试超时

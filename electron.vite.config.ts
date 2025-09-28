@@ -29,6 +29,8 @@ export default defineConfig(({ mode }) => ({
                 "@main": resolve("src/main/"),
                 "@common": resolve("src/common/"),
                 "@shared": resolve("src/shared/"),
+                "@maliang": resolve("src/engines/maliang/"),
+                "@shunfenger": resolve("src/engines/shunfenger/"),
             },
         },
         build: {
