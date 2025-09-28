@@ -17,7 +17,7 @@
  * - 支持缩略图生成、格式转换、图像编辑
  *
  * @fileoverview BMP格式专业处理神笔
- * @author Ma-Liang Engine Team
+ * @author MaLiang Engine Team
  * @version 1.0.0
  * @since 1.0.0
  */
@@ -204,7 +204,7 @@ export class BmpBrush implements MagicBrush {
             description: "BMP格式专业神笔 - 专门处理Windows位图格式",
             capabilities: ["extractEssence", "createMiniature", "transform", "edit"],
             version: "1.0.0",
-            author: "Ma-Liang Engine",
+            author: "MaLiang Engine",
         };
     }
 

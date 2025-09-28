@@ -7,10 +7,6 @@ import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-type
 
 const logger = loggers.thumbnail;
 
-// FFmpeg 路径配置 - 从环境变量读取
-const ffmpegPath = process.env.FFMPEG_PATH;
-const ffprobePath = process.env.FFPROBE_PATH;
-
 const port = parentPort;
 if (!port) {
     // 在测试环境中可能没有parentPort，只在生产环境中抛出错误
@@ -78,12 +74,7 @@ parentPort?.on("message", async (message: WorkerMessage<ThumbnailRequest> | any)
                 "thumbnail-worker",
                 `Creating thumbnail for: ${message.payload.path}`,
             );
-            const result = await createThumbnail(
-                message.payload,
-                wrappedLogger,
-                ffmpegPath,
-                ffprobePath,
-            );
+            const result = await createThumbnail(message.payload, wrappedLogger);
             const response = createResponse<ThumbnailRequest, ThumbnailResponse>(message, {
                 success: true,
                 file: result.thumbnail,

@@ -5,7 +5,7 @@
  * Sharp是一个高性能的Node.js图像处理库，支持多种格式的读取、处理和输出
  * 特别适合处理JPEG、PNG、WebP、TIFF、AVIF等现代图像格式
  *
- * @author Ma-Liang Engine Team
+ * @author MaLiang Engine Team
  * @since 1.0.0
  */
 

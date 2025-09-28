@@ -89,7 +89,7 @@ Object.defineProperty(process, "resourcesPath", {
     configurable: true,
 });
 
-// Don't mock Ma-Liang - we want to test the real integration!
+// Don't mock MaLiang - we want to test the real integration!
 
 // Mock heif-module to avoid resourcesPath issues
 jest.mock("../src/main/wasm/heif-module", () => ({

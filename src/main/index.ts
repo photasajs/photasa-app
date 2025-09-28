@@ -13,7 +13,7 @@ import { StartupOptimizerV2 } from "./services/startup-optimizer-v2";
 import { SingleInstanceManager } from "./single-instance-manager";
 import { startupMonitor } from "./performance/startup-performance-monitor";
 import { validateConfig } from "./services/config/service-config-validator";
-import { configureFFmpeg } from "./utils/ffmpeg-config";
+import { configureFFmpeg } from "../engines/maliang/brushes/video/ffmpeg-config";
 
 const logger = loggers.main;
 

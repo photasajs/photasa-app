@@ -11,7 +11,7 @@
  * - 视频格式转换和编码
  * - 基础的视频编辑能力
  *
- * @author Ma-Liang Engine Team
+ * @author MaLiang Engine Team
  * @since 1.0.0
  * @version 1.0.0
  */

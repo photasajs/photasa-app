@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.7.0](https://github.com/systembugtj/picasa-vue/compare/v1.6.0...v1.7.0) (2025-09-27)
+
+### Features
+
+- **MaLiang Image Processing Engine**: Implement unified image processing engine with Magic Brush Workshop Pattern
+  - Add BmpBrush for BMP format support with Jimp preprocessing
+  - Add SharpBrush for universal image processing (JPEG, PNG, WebP, TIFF, GIF, AVIF)
+  - Add FfmpegBrush for universal video processing (MP4, AVI, MOV, MKV, WebM, etc.)
+  - Implement intelligent format routing based on technical boundaries
+- **Architecture Simplification**: Streamline processing architecture from format-specific to technology-boundary-driven design
+- **Configuration Management**: Integrate FFmpeg configuration management into engine architecture
+- **Code Cleanup**: Remove redundant image processing logic and optimize thumbnail generation workflow
+
+### Bug Fixes
+
+- Fix TypeScript type definitions for ThumbnailOptions interface
+- Resolve FFmpeg path configuration issues across development and production environments
+- Fix BMP format processing with proper Jimp-to-Sharp preprocessing pipeline
+
+### Performance
+
+- Optimize thumbnail generation by unifying processing through MaLiang engine
+- Reduce code duplication and improve maintainability
+- Implement lazy loading for FFmpeg configuration
+
+### BREAKING CHANGES
+
+- Thumbnail processing now routes through MaLiang engine for all supported formats
+- FFmpeg configuration moved from main/utils to engines/maliang/brushes/video directory
+- Legacy direct Sharp processing replaced with MaLiang SharpBrush for consistency
+
 ## [1.6.0](https://github.com/systembugtj/picasa-vue/compare/v1.5.0...v1.6.0) (2025-07-05)
 
 ### Features

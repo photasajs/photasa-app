@@ -1,16 +1,18 @@
 /**
- * MpegBrush - MPEG格式专业神笔
+ * FfmpegBrush - FFmpeg通用视频神笔
  *
- * 继承自FFmpegBrushBase，专门处理MPEG（运动图像专家组）格式视频
- * MPEG是一系列国际标准化的音频和视频压缩格式，包括MPEG-1、MPEG-2、MPEG-4等
+ * 继承自FFmpegBrushBase，处理FFmpeg原生支持的所有视频格式
+ * 这是MaLiang引擎中最重要的视频处理神笔，利用FFmpeg的强大能力
+ * 处理绝大多数视频格式，包括MP4、AVI、MOV、MKV、WEBM等
  *
  * 特色功能:
- * - 高效的视频压缩和解压缩
- * - 支持多种MPEG标准（MPEG-1, MPEG-2, MPEG-4）
- * - 优化的流媒体传输支持
+ * - 支持所有FFmpeg原生格式
+ * - 高效的视频转码和压缩
+ * - 智能视频旋转检测
  * - 专业级的视频编辑能力
+ * - 缩略图生成优化
  *
- * @author Ma-Liang Engine
+ * @author MaLiang Engine
  * @version 1.0.0
  */
 
@@ -21,39 +23,40 @@ import {
     type VideoMetadata,
     type FFmpegProcessingOptions,
 } from "../base/FFmpegBrushBase";
+import { getFFmpegConfig, type FFmpegConfig } from "./ffmpeg-config";
 
 /**
- * MPEG特定的错误类型
- * 提供更精确的MPEG处理错误信息
+ * FFmpeg处理错误类型
+ * 提供更精确的FFmpeg处理错误信息
  */
-export class MpegProcessingError extends Error {
+export class FfmpegProcessingError extends Error {
     constructor(
         message: string,
         public readonly operation: string,
-        public readonly mpegSpecificCode?: string,
-        public readonly mpegVersion?: string,
+        public readonly ffmpegCode?: string,
+        public readonly format?: string,
     ) {
         super(message);
-        this.name = "MpegProcessingError";
+        this.name = "FfmpegProcessingError";
     }
 }
 
 /**
- * MPEG格式配置选项
- * 定义MPEG处理的专业参数
+ * FFmpeg通用视频处理选项
+ * 定义FFmpeg处理的通用参数
  */
-export interface MpegOptions extends FFmpegProcessingOptions {
-    /** MPEG版本 */
-    mpegVersion?: "mpeg1" | "mpeg2" | "mpeg4";
+export interface FfmpegVideoOptions extends FFmpegProcessingOptions {
+    /** 视频编解码器 */
+    videoCodec?: "h264" | "h265" | "vp8" | "vp9" | "av1";
 
     /** 视频配置文件 */
-    profile?: "simple" | "main" | "high";
+    profile?: "baseline" | "main" | "high";
 
-    /** GOP（图像组）大小 */
-    gopSize?: number;
+    /** 视频比特率 */
+    videoBitrate?: string;
 
-    /** B帧数量 */
-    bFrames?: number;
+    /** 音频编解码器 */
+    audioCodec?: "aac" | "mp3" | "opus";
 
     /** 是否启用去隔行 */
     deinterlace?: boolean;
@@ -66,30 +69,44 @@ export interface MpegOptions extends FFmpegProcessingOptions {
 }
 
 /**
- * MpegBrush类 - MPEG格式的专业神笔
+ * FfmpegBrush类 - FFmpeg通用视频神笔
  *
- * 这支神笔专精于MPEG格式的处理，能够：
- * 1. 精确提取MPEG文件的元数据信息
- * 2. 创建高质量的视频缩略图
+ * 这支神笔利用FFmpeg的强大能力处理所有视频格式，能够：
+ * 1. 精确提取各种视频文件的元数据信息
+ * 2. 创建高质量的视频缩略图（支持旋转检测）
  * 3. 执行专业的视频编辑操作
- * 4. 在不同MPEG标准间进行转换
+ * 4. 在不同视频格式间进行转换
  *
- * MPEG格式特点：
- * - 高压缩比，适合网络传输
- * - 广泛的设备兼容性
- * - 支持多种质量级别
- * - 流媒体友好
+ * 支持格式包括但不限于：
+ * - MP4, AVI, MOV, MKV, WEBM
+ * - MPEG, MPG, FLV, WMV
+ * - 所有FFmpeg原生支持的视频格式
  */
-export class MpegBrush extends FFmpegBrushBase {
+export class FfmpegBrush extends FFmpegBrushBase {
     /**
      * 神笔的名称标识
      */
-    public readonly name = "MpegBrush";
+    public readonly name = "FfmpegBrush";
 
     /**
-     * 支持的文件格式
+     * 支持的文件格式 - 所有FFmpeg支持的视频格式
      */
-    public readonly supportedFormats = ["mpeg", "mpg", "m2v"];
+    public readonly supportedFormats = [
+        "mp4",
+        "avi",
+        "mov",
+        "mkv",
+        "webm",
+        "flv",
+        "wmv",
+        "mpeg",
+        "mpg",
+        "m4v",
+        "3gp",
+        "ogv",
+        "asf",
+        "rmvb",
+    ];
 
     /**
      * 神笔支持的操作能力
@@ -102,21 +119,24 @@ export class MpegBrush extends FFmpegBrushBase {
     ] as any;
 
     /**
-     * 优先级设置 - MPEG专业神笔具有高优先级
+     * 优先级设置 - FFmpeg通用视频神笔具有高优先级
      */
-    public readonly priority = 80;
+    public readonly priority = 85;
 
     /**
-     * MPEG处理的默认配置
+     * 视频处理配置选项
      */
-    private readonly defaultMpegOptions: MpegOptions = {
-        mpegVersion: "mpeg2",
+    private videoOptions: FfmpegVideoOptions;
+
+    /**
+     * FFmpeg视频处理的默认配置
+     */
+    private readonly defaultFfmpegVideoOptions: FfmpegVideoOptions = {
         profile: "main",
-        videoCodec: "mpeg2video",
-        audioCodec: "mp2",
-        quality: 25, // 针对MPEG优化的CRF值
-        gopSize: 12,
-        bFrames: 2,
+        videoCodec: "h264",
+        audioCodec: "aac",
+        quality: 23, // 通用的CRF值
+        videoBitrate: "1M",
         deinterlace: false,
         audioSampleRate: 44100,
         audioChannels: 2,
@@ -124,14 +144,28 @@ export class MpegBrush extends FFmpegBrushBase {
     };
 
     /**
-     * 构造函数 - 初始化MPEG神笔
-     * @param options MPEG特定的配置选项
+     * 构造函数 - 初始化FFmpeg通用神笔
+     * @param options FFmpeg视频处理的配置选项
      */
-    constructor(options: MpegOptions = {}) {
-        const mergedOptions = { ...{}, ...options };
-        super(mergedOptions);
+    constructor(options: FfmpegVideoOptions = {}) {
+        // 获取FFmpeg配置路径
+        const ffmpegConfig: FFmpegConfig = getFFmpegConfig();
+
+        // 构建完整的FFmpeg处理选项，包含正确的路径
+        const ffmpegProcessingOptions: FFmpegProcessingOptions = {
+            ffmpegPath: ffmpegConfig.ffmpegPath,
+            ffprobePath: ffmpegConfig.ffprobePath,
+            // 合并视频相关的配置
+            videoCodec: options.videoCodec || "libx264",
+            audioCodec: options.audioCodec || "aac",
+            quality: options.quality,
+            videoBitrate: options.videoBitrate,
+            preserveMetadata: true,
+        };
+
+        super(ffmpegProcessingOptions);
         // 合并默认配置和用户配置
-        Object.assign(this.options, this.defaultMpegOptions, options);
+        this.videoOptions = { ...this.defaultFfmpegVideoOptions, ...options };
     }
 
     /**
@@ -148,7 +182,7 @@ export class MpegBrush extends FFmpegBrushBase {
             description: "MPEG格式专业神笔 - 专门处理运动图像专家组视频格式",
             capabilities: ["extractEssence", "createMiniature", "transform", "edit"],
             version: "1.0.0",
-            author: "Ma-Liang Engine",
+            author: "MaLiang Engine",
         };
     }
 
@@ -170,13 +204,13 @@ export class MpegBrush extends FFmpegBrushBase {
         logger: PhotasaLogger,
     ): Promise<VideoMetadata | null> {
         try {
-            logger.debug(`MpegBrush开始提取文件精华: ${filePath}`);
+            logger.debug(`FfmpegBrush开始提取文件精华: ${filePath}`);
 
             // 调用基类的元数据提取方法
             const baseMetadata = await super.extractEssence(filePath, logger);
 
             if (!baseMetadata) {
-                logger.warn("MpegBrush: 基类元数据提取失败");
+                logger.warn("FfmpegBrush: 基类元数据提取失败");
                 return null;
             }
 
@@ -198,17 +232,17 @@ export class MpegBrush extends FFmpegBrushBase {
             };
 
             logger.info(
-                `MpegBrush成功提取元数据: ${mpegMetadata.width}x${mpegMetadata.height}, 时长: ${mpegMetadata.duration}秒, 版本: ${mpegMetadata.extended?.mpegVersion}`,
+                `FfmpegBrush成功提取元数据: ${mpegMetadata.width}x${mpegMetadata.height}, 时长: ${mpegMetadata.duration}秒, 版本: ${mpegMetadata.extended?.mpegVersion}`,
             );
             return mpegMetadata;
         } catch (error) {
-            const mpegError = new MpegProcessingError(
+            const mpegError = new FfmpegProcessingError(
                 `MPEG元数据提取失败: ${error instanceof Error ? error.message : "未知错误"}`,
                 "extractEssence",
                 "METADATA_EXTRACTION_FAILED",
             );
 
-            logger.error("MpegBrush元数据提取异常:", mpegError);
+            logger.error("FfmpegBrush元数据提取异常:", mpegError);
             throw mpegError;
         }
     }
@@ -234,13 +268,13 @@ export class MpegBrush extends FFmpegBrushBase {
     ): Promise<Buffer> {
         try {
             logger.debug(
-                `MpegBrush开始创建视频缩略图: ${filePath}, 尺寸: ${options.width}x${options.height}`,
+                `FfmpegBrush开始创建视频缩略图: ${filePath}, 尺寸: ${options.width}x${options.height}`,
             );
 
             // 获取视频元数据以进行MPEG特定的优化
             const metadata = await this.extractEssence(filePath, logger);
             if (!metadata) {
-                throw new MpegProcessingError(
+                throw new FfmpegProcessingError(
                     "无法获取视频元数据",
                     "createMiniature",
                     "METADATA_REQUIRED",
@@ -278,16 +312,16 @@ export class MpegBrush extends FFmpegBrushBase {
             // 使用基类的缩略图生成方法
             const thumbnailBuffer = await super.createMiniature(filePath, options, logger);
 
-            logger.info(`MpegBrush缩略图创建成功: ${thumbnailBuffer.length} 字节`);
+            logger.info(`FfmpegBrush缩略图创建成功: ${thumbnailBuffer.length} 字节`);
             return thumbnailBuffer;
         } catch (error) {
-            const mpegError = new MpegProcessingError(
+            const mpegError = new FfmpegProcessingError(
                 `MPEG缩略图创建失败: ${error instanceof Error ? error.message : "未知错误"}`,
                 "createMiniature",
                 "THUMBNAIL_CREATION_FAILED",
             );
 
-            logger.error("MpegBrush缩略图创建异常:", mpegError);
+            logger.error("FfmpegBrush缩略图创建异常:", mpegError);
             throw mpegError;
         }
     }
@@ -305,7 +339,7 @@ export class MpegBrush extends FFmpegBrushBase {
      * @param outputPath 输出文件路径
      * @param logger 日志记录器
      * @returns Promise<string> 转换后的输出文件路径
-     * @throws MpegProcessingError 转换失败时抛出异常
+     * @throws FfmpegProcessingError 转换失败时抛出异常
      */
     public async transform(
         inputPath: string,
@@ -314,7 +348,7 @@ export class MpegBrush extends FFmpegBrushBase {
         logger: PhotasaLogger,
     ): Promise<string> {
         try {
-            logger.info(`MpegBrush开始格式转换: ${inputPath} -> ${outputPath} (${outputFormat})`);
+            logger.info(`FfmpegBrush开始格式转换: ${inputPath} -> ${outputPath} (${outputFormat})`);
 
             // 获取源文件信息进行优化（用于MPEG特定优化）
             // 注意：这里提取元数据是为了未来的MPEG特定优化，当前版本暂时未使用
@@ -328,16 +362,16 @@ export class MpegBrush extends FFmpegBrushBase {
                 logger,
             );
 
-            logger.info(`MpegBrush格式转换成功: ${outputFilePath}`);
+            logger.info(`FfmpegBrush格式转换成功: ${outputFilePath}`);
             return outputFilePath;
         } catch (error) {
-            const mpegError = new MpegProcessingError(
+            const mpegError = new FfmpegProcessingError(
                 `MPEG格式转换失败: ${error instanceof Error ? error.message : "未知错误"}`,
                 "transform",
                 "TRANSFORM_FAILED",
             );
 
-            logger.error("MpegBrush格式转换异常:", mpegError);
+            logger.error("FfmpegBrush格式转换异常:", mpegError);
             throw mpegError;
         }
     }
@@ -356,7 +390,7 @@ export class MpegBrush extends FFmpegBrushBase {
      * @param outputPath 输出文件路径
      * @param logger 日志记录器
      * @returns Promise<string> 编辑后的输出文件路径
-     * @throws MpegProcessingError 编辑失败时抛出异常
+     * @throws FfmpegProcessingError 编辑失败时抛出异常
      */
     public async edit(
         filePath: string,
@@ -366,7 +400,7 @@ export class MpegBrush extends FFmpegBrushBase {
     ): Promise<string> {
         try {
             logger.info(
-                `MpegBrush开始视频编辑: ${filePath} -> ${outputPath}, 操作数量: ${operations.length}`,
+                `FfmpegBrush开始视频编辑: ${filePath} -> ${outputPath}, 操作数量: ${operations.length}`,
             );
 
             // 获取视频元数据进行MPEG特定的优化
@@ -387,16 +421,16 @@ export class MpegBrush extends FFmpegBrushBase {
                 logger,
             );
 
-            logger.info(`MpegBrush视频编辑成功: ${outputFilePath}`);
+            logger.info(`FfmpegBrush视频编辑成功: ${outputFilePath}`);
             return outputFilePath;
         } catch (error) {
-            const mpegError = new MpegProcessingError(
+            const mpegError = new FfmpegProcessingError(
                 `MPEG视频编辑失败: ${error instanceof Error ? error.message : "未知错误"}`,
                 "edit",
                 "EDIT_FAILED",
             );
 
-            logger.error("MpegBrush视频编辑异常:", mpegError);
+            logger.error("FfmpegBrush视频编辑异常:", mpegError);
             throw mpegError;
         }
     }
@@ -645,11 +679,11 @@ export class MpegBrush extends FFmpegBrushBase {
      * @returns 神笔的详细描述
      */
     public toString(): string {
-        return `MpegBrush - MPEG格式专业神笔
+        return `FfmpegBrush - MPEG格式专业神笔
                 支持格式: ${this.supportedFormats.join(", ")}
                 优先级: ${this.priority}
                 特色: 高效压缩、流媒体友好、广播级质量
                 版本支持: MPEG-1, MPEG-2, MPEG-4
-                配置: ${JSON.stringify(this.options)}`;
+                配置: ${JSON.stringify(this.videoOptions)}`;
     }
 }

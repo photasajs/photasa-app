@@ -1,6 +1,6 @@
 /**
- * BMP + Ma-Liang 集成测试 (Jest)
- * 验证修复后的 BMP 文件通过 Ma-Liang 引擎处理缩略图
+ * BMP + MaLiang 集成测试 (Jest)
+ * 验证修复后的 BMP 文件通过 MaLiang 引擎处理缩略图
  */
 
 import { promises as fs } from "fs";
@@ -15,7 +15,7 @@ import { describe, it, beforeEach, afterEach, expect } from "@jest/globals";
 // 使用真实的 lena.bmp 文件
 const REAL_BMP_PATH = join(__dirname, "data", "lena.bmp");
 
-describe("BMP + Ma-Liang Integration (修复后)", () => {
+describe("BMP + MaLiang Integration (修复后)", () => {
     let tempDir: string;
     let logger: Logger;
 

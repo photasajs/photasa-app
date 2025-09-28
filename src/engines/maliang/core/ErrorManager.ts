@@ -1,5 +1,5 @@
 /**
- * Ma-Liang 错误管理系统
+ * MaLiang 错误管理系统
  * 统一的错误处理、恢复和监控机制
  *
  * 设计原则：
@@ -34,8 +34,8 @@ export interface ErrorOptions {
 }
 
 /**
- * Ma-Liang基础错误类
- * 所有Ma-Liang错误的基类，提供统一的错误结构
+ * MaLiang基础错误类
+ * 所有MaLiang错误的基类，提供统一的错误结构
  */
 export class MaLiangError extends Error {
     public readonly code: string;

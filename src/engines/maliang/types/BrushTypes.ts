@@ -1,5 +1,5 @@
 /**
- * Ma-Liang 神笔类型定义
+ * MaLiang 神笔类型定义
  * 马良神笔的核心类型系统
  */
 
@@ -40,8 +40,10 @@ export interface ThumbnailOptions {
     height: number;
     withoutEnlargement?: boolean;
     quality?: number;
-    format?: "png" | "jpeg" | "webp" | "bmp";
+    format?: "png" | "jpeg" | "jpg" | "webp" | "bmp" | "avif" | "tiff";
     fit?: "inside" | "outside" | "cover" | "contain" | "fill";
+    outputPath?: string; // 可选的输出路径
+    background?: string | { r: number; g: number; b: number; alpha?: number }; // 背景色
 }
 
 // 作画请求
@@ -120,7 +122,7 @@ export interface CacheConfig {
     strategy: "lru" | "fifo" | "ttl";
 }
 
-// Ma-Liang引擎配置
+// MaLiang引擎配置
 export interface MaLiangConfig {
     brushFactory?: BrushFactoryConfig;
     cache?: CacheConfig;

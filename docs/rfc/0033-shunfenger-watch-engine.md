@@ -6,7 +6,7 @@
 
 ## Summary
 
-Define the Shunfenger Watch Engine as the unified gateway for filesystem change detection. The engine itself remains environment agnostic: it translates raw watcher events into structured scan commands, manages watch lifecycle, and coordinates with the Qianliyan Scan Engine (RFC 0032) while leaving IPC and UI wiring to services.
+Define the Shunfenger Watch Engine as the unified gateway for filesystem change detection. The engine fully掌管监听生命周期、事件节流、错误恢复与命令生成，保持环境无关；外层 `WatchService` 仅作为薄壳负责 IPC 兼容与依赖注入。Shunfenger 必须覆盖现有 WatchService 的全部行为，使服务层无感迁移。
 
 ## Motivation
 
@@ -19,20 +19,20 @@ Define the Shunfenger Watch Engine as the unified gateway for filesystem change 
 
 ### Engine Responsibilities (Environment Agnostic)
 
-1. **Watch Configuration Management**
-   - Provide `configure(config: WatchConfig)` to start/update watchers.
-   - Maintain a registry of active roots, exclusion rules, and per-root metadata (e.g., library id, thumbnail size).
+1. **Watch Lifecycle Ownership**
+   - 内部管理 chokidar watcher 的创建、暂停、恢复与销毁，暴露 `configure/profile`, `pause`, `resume`, `stop`, `flush` API；出现错误时自动进入 `paused` 状态并通知消费方。
+   - 统一承载现有选项：`ignoreInitial`, `awaitWriteFinish`, 忽略规则、递归策略等，并支持 profile 级覆盖。
 2. **Event Normalization**
-   - Convert chokidar events into `FileObservation` records capturing file type, path, event kind, previous state, and timestamps.
-   - Apply debouncing, deduplication, and coalescing rules currently found in `WatchService` but extended with configurable policies.
+   - Convert chokidar `add/change/delete/addDir/deleteDir/raw` 事件为 `FileObservation`；检测 rename（成对 add+delete）并合并；对非媒体文件打上标记供下游处理。
+   - 复制现有 WatchService 的节流策略：`shouldDeduplicateEvent` + `calculateDebounceTime` 动态延迟，并在 backlog 接近阈值时强制 flush。
 3. **Command Emission**
-   - Map normalized observations to `ScanCommand` payloads (as defined in RFC 0032) and call `Qianliyan.planScan` directly.
-   - Attach context: `source: "watch"`, `priority` based on user interaction (foreground watch vs. background library sync), and hints such as desired thumbnail size.
+   - 将观察事件映射为 `ScanAction`/`FileOperation`：复用 `createFileOperation`/优先级规则，目录事件注入完整的 `priority/timestamp/source` 字段，删除事件触发相应清理命令。
+   - 通过注入的 dispatcher 向千里眼 `planScan` 或 `enqueueOperations` 发送命令，同时允许 Service 监听这些命令以兼容旧 IPC。
 4. **Health & Diagnostics**
-   - Track chokidar readiness, error states, and backlog size. Emit status updates on a new channel `shufenge:status` for renderer dashboards and logs.
-   - Provide manual controls (`pause`, `resume`, `flush`) for debugging and maintenance.
+   - 监听 chokidar `ready/error/raw`，在 `status-bus` 中输出 `ready/paused/error/flushing/raw` 事件、backlog 指标与错误详情，保证监控与 LogViewer 能按原逻辑工作。
+   - 定义错误恢复策略：如 ENOSPC 自动退回 paused，重试策略由引擎配置决定。
 5. **Persistent Watch Profiles**
-   - Store user-selected watch directories and options in a stable manifest (`watch-profiles.json`). Reload on startup、支持验证与迁移，输出纯数据供服务层获取。
+   - Profile manifest 存储于应用数据目录（默认 `~/.photasa/watch/profiles.json`），支持外部注入路径；加载失败时退回空配置并记录错误。
 
 ### Module Layout
 
@@ -40,32 +40,34 @@ Define the Shunfenger Watch Engine as the unified gateway for filesystem change 
 src/engines/shunfenger/
   index.ts            // Public facade exposing configure/pause/resume APIs
   watcher-factory.ts  // chokidar setup and lifecycle management
-  event-buffer.ts     // Debounce, dedupe, force-flush logic
+  event-buffer.ts     // Debounce, dedupe, dynamic throttling, rename coalescing
   observation.ts      // FileObservation model + media detection helpers
   command-adapter.ts  // Map observations -> ScanCommand
   status-bus.ts       // Environment-agnostic engine health events
   profile-store.ts    // Persist and restore watch configurations
+  error-strategy.ts   // 定义 watcher 异常恢复与重试策略
 ```
 
 Existing `watch-service.ts` becomes a thin wrapper around the engine for compatibility with service decorators.
 
 ### Interaction with Qianliyan
 
-- On `FileObservation` flush, call `planScan` with:
-  - `action`: existing `ScanAction` derived from event type (add/change/delete) and path.
-  - `source: "watch"`, `priority: "background"` unless event is a direct user import (flag available via observation metadata).
-  - `hints.thumbnailSize` set from watch profile or last known renderer preference.
-- Expose status events via the engine `status-bus` so that `WatchService`（或其他消费者）可以根据千里眼反馈调整节流策略，例如在某个目录 `completed` 后重新激活忽略规则或刷新子目录缓存。
+- 所有 `FileObservation` 经 `command-adapter` 转成命令后直接调用注入的 dispatcher（默认连接千里眼 `planScan/enqueueOperations`）。
+- 删除命令在千里眼侧触发队列清理，目录命令则触发增量扫描；engine 监听千里眼的完成/错误事件以调整节流与重试计划。
+- Service 可订阅 `status-bus` 和 command 流，在迁移期双写旧 IPC (`picasa:add-to-scan-queue`, `WatchServiceEvent.*`)。
 
 ### Service Integration
 
-- `WatchService` 保持现有 ServiceRegistry 生命周期：它创建 Shunfenger 引擎实例、传入 chokidar 所需的配置，并将引擎事件转发到目前的 IPC (`picasa:add-to-scan-queue` 等) 或新的服务端事件。
-- 渲染层继续通过 preload API 操作监听（start/stop、profile 设置等）；引擎对 IPC 实现保持透明，仅消费服务注入的配置和回调。
-- 在迁移期内可以并行保留旧的 renderer 队列通道；当 UI 完全改用服务端排队后，`WatchService` 才会下线旧 IPC，engine 本身无需变化。
+- `WatchService` 只在初始化/关闭时生存周期管理 Shunfenger，并把 IPC (`WatchServiceEvent.start/stop`, `picasa:stop-file-watch`) 映射到 `configure/pause/resume/flush`；事件全部来源于 `status-bus` / command 流。
+- 兼容策略：
+  1. **Phase 1**：Service 收到命令后继续 mirror 到 `picasa:add-to-scan-queue`，Renderer 保持旧逻辑；
+  2. **Phase 2**：Renderer UI 改为订阅 `qianliyan` 状态和新的 watch 事件；
+  3. **Phase 3**：移除旧 IPC，Service 仅保留薄封装。
+- 引擎负责错误时的自动恢复与通知，Service 仅将错误状态传达给 UI。
 
 ### Data Contracts
 
-`FileObservation` structure:
+`FileObservation` structure（包含 rename/raw 支持）:
 
 ```ts
 interface FileObservation {
@@ -80,6 +82,8 @@ interface FileObservation {
         size?: number;
         mtimeMs?: number;
         thumbnailSize?: number;
+        pairedWith?: string;    // rename pair id
+        rawArgs?: any[];        // chokidar raw payload
     };
 }
 ```
@@ -104,6 +108,7 @@ interface WatchProfile {
 3. File changes generate `FileObservation`s buffered and deduped.
 4. Buffered observations flush to `ScanCommand`s and sent to Qianliyan.
 5. Qianliyan executes scans, emits status; Shunfenger listens for completion to manage follow-up (e.g., re-enable watchers after bulk import).
+6. 错误时 Shunfenger 自动 `pause` watcher，记录日志并在状态总线上抛出 error；`WatchService` 可提供重试按钮或自动恢复策略。
 
 ### Success Metrics
 
@@ -125,6 +130,7 @@ interface WatchProfile {
 
 ## Unresolved Questions
 
-- Should Shunfenger throttle events when Qianliyan reports heavy load, and if so, what feedback loop is appropriate?
-- How do we surface watch profile conflicts (e.g., overlapping directories) to users without overwhelming them with warnings?
-- Is there a need for user-level scripting/hooks when new files are detected before scans begin?
+- 千里眼负载反馈：需要定义何种指标触发 Shunfenger 降频（例如队列长度、执行耗时）。
+- Profile 冲突检出：如果不同 profile 监听了嵌套目录，是否需要提示用户或自动合并策略？
+- 用户扩展：是否提供 hook 让用户在引擎触发命令前做额外校验或过滤？
+- 权限与路径：Profile manifest 存储在用户目录时的权限处理，是否支持多用户或便携模式。

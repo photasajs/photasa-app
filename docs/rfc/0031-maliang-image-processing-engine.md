@@ -703,76 +703,75 @@ export class SafeMaLiangService {
 4. **内存管理**：定期清理缓存和历史记录
 5. **监控指标**：定期收集和分析性能统计
 
-#### 5. 神笔家族设计
+#### 5. 神笔家族设计（按技术边界设计）
 
-**FFmpeg神笔家族** - 专攻视频和部分图像格式
-- `MpegBrush` - 新增.mpg/.mpeg格式支持
-- `AviBrush` - 增强AVI格式支持
-- `Mp4Brush` - MP4格式优化处理
-- `MovBrush` - QuickTime格式处理
+**核心设计原则**：
+- **按技术能力而非格式分离** - 相同技术栈的格式共享神笔
+- **Sharp自动检测优先** - 充分利用Sharp的格式检测和处理能力
+- **最小化神笔数量** - 只为真正需要特殊处理的格式创建专用神笔
 
-**Sharp神笔家族** - 专攻主流图像格式
-- `BmpBrush` - 新增BMP格式支持
-- `JpegBrush` - JPEG优化处理
-- `PngBrush` - PNG格式处理
-- `WebpBrush` - WebP格式处理
-- `TiffBrush` - TIFF格式处理
+**最精简的神笔架构**：
 
-**WASM-HEIF神笔** - 专攻HEIC/HEIF
-- `HeifBrush` - HEIC/HEIF处理（重构现有实现）
+**SharpBrush** - Sharp原生支持的所有格式
+- 支持格式：JPEG, PNG, WebP, TIFF, GIF, AVIF
+- 特点：Sharp自动检测格式，无需预处理，一个神笔处理所有主流图像格式
+- 能力：完整的四大神笔功能（extractEssence, createMiniature, transform, edit）
 
-**Photon编辑神笔** - 专攻图像编辑和特效
-- `PhotonBrush` - 图像滤镜、调色、特效处理
-- `FilterBrush` - 专门的滤镜处理器
-- `AdjustBrush` - 亮度、对比度、饱和度调整
+**BmpBrush** - BMP格式专用（技术限制）
+- 支持格式：BMP
+- 技术原因：Sharp不支持BMP → 需要Jimp预处理
 
-#### 4. 文件结构
+**HeicBrush** - HEIC/HEIF格式专用（技术限制）
+- 支持格式：HEIC, HEIF
+- 技术原因：需要专门的WASM-HEIF解码模块
+
+**FFmpegBrush** - 视频格式专用（技术限制）
+- 支持格式：MP4, AVI, MOV, MPEG, MPG, WMV等
+- 技术原因：需要FFmpeg解码器提取视频帧
+
+**未来扩展神笔**：
+- `PdfBrush` - PDF文档转图像（PDF.js/Poppler）
+- `SvgBrush` - SVG矢量图形（专门的SVG渲染）
+- `RawBrush` - RAW相机格式（LibRaw/dcraw）
+- `PhotonBrush` - 高级图像编辑（Photon WASM）
+
+**被移除的不必要神笔**：
+- ~~JpegBrush~~ - Sharp原生支持，无需单独神笔
+- ~~PngBrush~~ - Sharp原生支持，无需单独神笔
+- ~~WebpBrush~~ - Sharp原生支持，无需单独神笔
+- ~~TiffBrush~~ - Sharp原生支持，无需单独神笔
+- ~~Mp4Brush~~ - 统一到FFmpegBrush
+- ~~AviBrush~~ - 统一到FFmpegBrush
+- ~~MovBrush~~ - 统一到FFmpegBrush
+
+#### 4. 精简的文件结构
 
 ```
-src/main/ma-liang/
+src/engines/maliang/
 ├── core/
 │   ├── MaLiang.ts              # 主引擎实现
 │   ├── MagicBrush.ts           # 神笔接口定义
 │   ├── BrushRegistry.ts        # 神笔注册器
-│   └── FormatDetector.ts       # 格式检测器
+│   ├── FormatDetector.ts       # 格式检测器
+│   └── ErrorManager.ts         # 错误管理器
 ├── brushes/
-│   ├── base/
-│   │   ├── SharpBrushBase.ts   # Sharp神笔基类
-│   │   ├── FfmpegBrushBase.ts  # FFmpeg神笔基类
-│   │   ├── HeifBrushBase.ts    # HEIF神笔基类
-│   │   └── PhotonBrushBase.ts  # Photon编辑神笔基类
-│   ├── image/
-│   │   ├── BmpBrush.ts         # 新增BMP支持
-│   │   ├── JpegBrush.ts        # JPEG处理
-│   │   ├── PngBrush.ts         # PNG处理
-│   │   ├── WebpBrush.ts        # WebP处理
-│   │   └── TiffBrush.ts        # TIFF处理
-│   ├── video/
-│   │   ├── MpegBrush.ts        # 新增MPEG支持
-│   │   ├── AviBrush.ts         # AVI处理
-│   │   ├── Mp4Brush.ts         # MP4处理
-│   │   └── MovBrush.ts         # QuickTime处理
-│   ├── heif/
-│   │   └── HeifBrush.ts        # HEIC/HEIF处理
-│   └── editing/
-│       ├── PhotonBrush.ts      # Photon编辑引擎
-│       ├── FilterBrush.ts      # 滤镜处理
-│       └── AdjustBrush.ts      # 色彩调整
+│   ├── SharpBrush.ts           # Sharp通用神笔（JPEG/PNG/WebP/TIFF/GIF/AVIF）
+│   ├── BmpBrush.ts             # BMP专用神笔（Jimp预处理）
+│   ├── HeicBrush.ts            # HEIC/HEIF专用神笔（WASM处理）
+│   └── FFmpegBrush.ts          # 视频格式通用神笔（所有视频格式）
 ├── types/
-│   ├── PaintRequest.ts         # 请求类型
-│   ├── PaintResult.ts          # 结果类型
-│   ├── BrushTypes.ts           # 神笔类型
-│   ├── Metadata.ts             # 元数据类型
+│   ├── BrushTypes.ts           # 神笔类型和接口
 │   └── EditTypes.ts            # 编辑操作类型
-├── utils/
-│   ├── BrushFactory.ts         # 神笔工厂
-│   ├── PerformanceMonitor.ts   # 性能监控
-│   └── CacheManager.ts         # 缓存管理
 └── __tests__/
     ├── core/                   # 核心功能测试
     ├── brushes/                # 神笔功能测试
     └── integration/            # 集成测试
 ```
+
+**架构精简说明**：
+- **减少冗余**：Sharp原生支持的格式统一使用SharpBrushBase
+- **按需创建**：只为技术边界不同的格式创建专用神笔
+- **清晰职责**：每个神笔有明确的技术原因存在
 
 #### 5. 关键实现细节
 
@@ -950,10 +949,17 @@ src/main/ma-liang/
 详细的后续实施计划：
 
 - **Week 1-2**: 核心框架开发 ✅ **已完成**
-- **Week 2-3**: Sharp神笔家族实现
-- **Week 3-4**: FFmpeg神笔家族实现
-- **Week 4-5**: HEIF神笔重构
-- **Week 5-6**: Photon编辑神笔实现
+- **Week 2-3**: Sharp神笔家族实现 ✅ **已完成（精简架构）**
+- **Week 3-4**: FFmpeg神笔家族实现 ✅ **已完成（统一架构）**
+- **Week 4-5**: HEIF神笔重构 ⏳ **待实施**
+- **Week 5-6**: Photon编辑神笔实现 ⏳ **待实施**
+
+**架构设计优化 (2025-09-27)**：
+经过实际实施验证，发现原设计过于复杂。重新设计为精简的技术边界驱动架构：
+- ✅ 移除不必要的格式特定神笔（JpegBrush、PngBrush等）
+- ✅ Sharp原生支持的格式统一使用SharpBrushBase
+- ✅ 只为技术边界不同的格式保留专用神笔（BMP、HEIC、视频）
+- ✅ 显著减少代码复杂度和维护成本
 - **Week 6-7**: 集成测试和优化
 - **Week 7-8**: 文档和代码审查
 

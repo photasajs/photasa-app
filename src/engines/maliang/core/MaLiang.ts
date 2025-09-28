@@ -17,7 +17,7 @@ import { FormatDetector } from "./FormatDetector";
 import { ErrorManager, ValidationError } from "./ErrorManager";
 
 /**
- * Ma-Liang 主引擎类
+ * MaLiang 主引擎类
  * 神笔工坊的管理者，负责调度所有神笔完成图像处理任务
  */
 export class MaLiang {
@@ -49,7 +49,7 @@ export class MaLiang {
         this.registry = new BrushRegistry(this.logger);
         this.errorManager = new ErrorManager(this.logger);
 
-        this.logger?.info("Ma-Liang engine initialized", this.config);
+        this.logger?.info("MaLiang engine initialized", this.config);
     }
 
     /**
@@ -326,7 +326,7 @@ export class MaLiang {
      */
     public async initialize(config?: Record<string, any>): Promise<void> {
         await this.registry.initializeAll(config);
-        this.logger?.info("Ma-Liang engine fully initialized");
+        this.logger?.info("MaLiang engine fully initialized");
     }
 
     /**
@@ -335,7 +335,7 @@ export class MaLiang {
     public async cleanup(): Promise<void> {
         await this.registry.cleanupAll();
         this.performanceCache.clear();
-        this.logger?.info("Ma-Liang engine cleaned up");
+        this.logger?.info("MaLiang engine cleaned up");
     }
 
     /**

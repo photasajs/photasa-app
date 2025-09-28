@@ -4,10 +4,9 @@ import { ensureDir, exists, remove, readFile } from "fs-extra";
 import { ensureAccess } from "./utils";
 import sharp from "sharp";
 import path from "path";
-import ffmpeg from "fluent-ffmpeg";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { toPreviewPath } from "@shared/path-util";
-import { getOptimalThumbnailResolution, HeicExtensionRE, ratioStringToParts } from "@common/utils";
+import { HeicExtensionRE } from "@common/utils";
 import { initializeHeifModule, resetHeifModule } from "../wasm/heif-module";
 import {
     calculateAdjustedDimensions,
@@ -17,10 +16,11 @@ import {
     processAdjustedBuffer,
     convertRgbToRgba,
 } from "./thumbnail-utils";
-import type { VideoSize } from "@common/types";
 import { PhotasaLogger } from "@common/logger";
 import { MaLiang } from "@maliang/core/MaLiang";
 import { BmpBrush } from "@maliang/brushes/image/BmpBrush";
+import { SharpBrush } from "@maliang/brushes/image/SharpBrush";
+import { FfmpegBrush } from "@maliang/brushes/video/FfmpegBrush";
 import type { PaintRequest } from "@maliang/types/BrushTypes";
 // 移除 ffmpeg-config 导入，路径将通过参数传递
 
@@ -58,7 +58,11 @@ function getMaLiangInstance(logger: PhotasaLogger): MaLiang {
 
         // 注册神笔
         maLiangInstance.registerBrush(new BmpBrush());
-        logger.info("[thumbnail-handler] MaLiang  engine initialized with BmpBrush");
+        maLiangInstance.registerBrush(new SharpBrush());
+        maLiangInstance.registerBrush(new FfmpegBrush());
+        logger.info(
+            "[thumbnail-handler] MaLiang engine initialized with BmpBrush, SharpBrush, and FfmpegBrush",
+        );
     }
     return maLiangInstance;
 }
@@ -69,9 +73,18 @@ function getMaLiangInstance(logger: PhotasaLogger): MaLiang {
  * @returns 是否使用 MaLiang
  */
 function shouldUseMaLiang(filePath: string): boolean {
-    // 渐进式启用：先针对当前系统不支持的格式
-    const ext = path.extname(filePath).toLowerCase();
-    return ext === ".bmp"; // 目前只启用 BMP 格式
+    // MaLiang引擎处理所有图像和视频格式（除了HEIC需要WASM特殊处理）
+
+    // HEIC格式需要WASM预处理，暂不通过MaLiang
+    if (HeicExtensionRE.test(filePath)) return false;
+
+    // 图像格式通过MaLiang处理
+    if (isImage(filePath)) return true;
+
+    // 视频格式通过MaLiang处理
+    if (isVideo(filePath)) return true;
+
+    return false;
 }
 
 /**
@@ -301,138 +314,12 @@ export async function removeThumbnail(
  * @param metadata - ffprobe元数据
  * @returns 旋转角度（0, 90, 180, 270）
  */
-function getVideoRotation(metadata: any): number {
-    const stream = metadata.streams?.find((s: any) => s.codec_type === "video");
-
-    // 方法1: 从stream tags中获取rotate标签（旧版本ffmpeg）
-    const rotateTag = stream?.tags?.rotate;
-    if (rotateTag) {
-        return parseInt(rotateTag, 10) || 0;
-    }
-
-    // 方法2: 从side_data中获取rotation（新版本ffmpeg）
-    const sideData = stream?.side_data_list;
-    if (sideData && Array.isArray(sideData)) {
-        const displayMatrix = sideData.find(
-            (data: any) => data.side_data_type === "Display Matrix",
-        );
-        if (displayMatrix && displayMatrix.rotation) {
-            // rotation可能是负数，需要转换为0-360度
-            let rotation = parseFloat(displayMatrix.rotation);
-            rotation = ((rotation % 360) + 360) % 360;
-            return rotation;
-        }
-    }
-
-    // 方法3: 从format tags中获取rotate标签（某些容器格式）
-    const formatRotate = metadata.format?.tags?.rotate;
-    if (formatRotate) {
-        return parseInt(formatRotate, 10) || 0;
-    }
-
-    return 0;
-}
 
 /**
  * 获取视频维度（考虑旋转）
  * @param video - 视频路径
  * @returns 视频维度和旋转角度
  */
-function getVideoDimension(
-    video: string,
-    ffmpegPath?: string,
-    ffprobePath?: string,
-): Promise<{ dimension: VideoSize; rotation: number }> {
-    // 如果提供了路径，则配置 FFmpeg
-    if (ffmpegPath && ffprobePath) {
-        ffmpeg.setFfmpegPath(ffmpegPath);
-        ffmpeg.setFfprobePath(ffprobePath);
-    }
-
-    return new Promise((resolve, reject) => {
-        ffmpeg.ffprobe(video, (err, metadata) => {
-            if (err) return reject(err);
-
-            const stream = metadata.streams.find((stream) => stream.codec_type === "video");
-            const rotation = getVideoRotation(metadata);
-
-            const darString = stream?.display_aspect_ratio;
-
-            let width = stream?.width ?? 100;
-            let height = stream?.height ?? 100;
-
-            // ffprobe returns aspect ratios of "0:1" or `undefined` if they're not specified.
-            // https://trac.ffmpeg.org/ticket/3798
-            if (darString && darString !== "0:1" && darString !== "N/A") {
-                // The DAR is specified so use it directly
-                const [widthRatioPart, heightRatioPart] = ratioStringToParts(darString);
-                const inverseDar = heightRatioPart / widthRatioPart;
-                height = width * inverseDar;
-            }
-
-            // 如果视频旋转了90度或270度，需要交换宽高
-            if (rotation === 90 || rotation === 270) {
-                [width, height] = [height, width];
-            }
-
-            resolve({
-                dimension: { width, height },
-                rotation,
-            });
-        });
-    });
-}
-
-/**
- * 创建视频缩略图
- * @param arg - 参数
- * @param logger - 日志记录器
- * @returns 缩略图路径
- */
-async function createScreenshot(
-    arg: ThumbnailRequest,
-    logger: PhotasaLogger,
-    ffmpegPath?: string,
-    ffprobePath?: string,
-): Promise<string> {
-    logger.info("[thumbnail-handler] Create Screenshot for : " + arg.path);
-    const { dimension, rotation } = await getVideoDimension(arg.path, ffmpegPath, ffprobePath);
-
-    logger.info(
-        `[thumbnail-handler] Video dimension: ${dimension.width}x${dimension.height}, rotation: ${rotation}°`,
-    );
-
-    return new Promise((resolve) => {
-        const size = getOptimalThumbnailResolution(dimension, arg);
-
-        // 创建ffmpeg命令
-        const ffmpegCommand = ffmpeg(arg.path);
-
-        // 如果视频有旋转元数据，ffmpeg默认会自动应用旋转
-        // 我们已经在获取维度时考虑了旋转，所以ffmpeg可以自动处理旋转
-
-        ffmpegCommand
-            .on("filenames", function (filenames) {
-                logger.info("[thumbnail-handler]Generate Screenshot: " + filenames.join(", "));
-            })
-            .on("error", function (err) {
-                logger.error(err);
-                resolve(arg.thumbnail);
-            })
-            .on("end", function () {
-                logger.info(
-                    `[thumbnail-handler] Screenshot created successfully: ${arg.thumbnail}`,
-                );
-                resolve(arg.thumbnail);
-            })
-            .screenshots({
-                timestamps: ["1%"],
-                filename: path.basename(arg.thumbnail),
-                folder: path.dirname(arg.thumbnail),
-                size: `${size.width}x${size.height}`,
-            });
-    });
-}
 
 /**
  * 创建缩略图
@@ -443,8 +330,6 @@ async function createScreenshot(
 export async function createThumbnail(
     arg: ThumbnailRequest,
     logger: PhotasaLogger,
-    ffmpegPath?: string,
-    ffprobePath?: string,
 ): Promise<ThumbnailRequest> {
     logger.info("[thumbnail-handler] Create Thumbnail for : " + arg.path);
     try {
@@ -478,8 +363,8 @@ export async function createThumbnail(
             isHeic = arg.preview !== "";
         }
 
-        // 判断是否使用 MaLiang Engine 处理
-        if (shouldUseMaLiang(arg.path)) {
+        // 判断是否使用 MaLiang Engine 处理 排除 HEIC 格式
+        if (shouldUseMaLiang(arg.path) && !isHeic) {
             try {
                 logger.info("[thumbnail-handler] Processing with MaLiang : " + arg.path);
                 const maLiang = getMaLiangInstance(logger);
@@ -514,13 +399,9 @@ export async function createThumbnail(
             }
         }
 
-        if (isVideo(arg.path)) {
-            logger.info("[thumbnail-handler] Create video thumbnail for : " + arg.path);
-            // 创建视频缩略图
-            await createScreenshot(arg, logger, ffmpegPath, ffprobePath);
-        } else if (isImage(arg.path) || isHeic) {
-            // 创建图片缩略图 如果文件是 HEIC 格式，则使用预览图片
-            const target = isHeic ? arg.preview : arg.path;
+        if (isHeic) {
+            // HEIC格式：使用legacy Sharp处理预览图片
+            const target = arg.preview;
             try {
                 // 确保width和height是数字类型
                 const width = Number(arg.width);
@@ -534,10 +415,10 @@ export async function createThumbnail(
                 }
 
                 logger.debug(
-                    `[thumbnail-handler] Processing image with dimensions: ${width}x${height} (${typeof width}x${typeof height})`,
+                    `[thumbnail-handler] Processing HEIC preview with dimensions: ${width}x${height}`,
                 );
 
-                // 创建图片缩略图
+                // 创建HEIC预览图缩略图
                 await sharp(target)
                     .rotate() // 旋转图片 根据 EXIF 信息旋转
                     .resize(width, height, {
@@ -550,12 +431,12 @@ export async function createThumbnail(
                     .then(() => {
                         // 打印图片信息
                         logger.info(
-                            `[thumbnail-handler] Create image thumbnail for : ${arg.path} success`,
+                            `[thumbnail-handler] Create HEIC thumbnail for : ${arg.path} success`,
                         );
                     });
             } catch (error) {
                 logger.warn(
-                    `[thumbnail-handler] Failed to process image with sharp, creating fallback: ${error}`,
+                    `[thumbnail-handler] Failed to process HEIC with sharp, creating fallback: ${error}`,
                 );
                 // 如果图片处理失败，创建通用占位符
                 const fallbackPath = await createGenericFallbackThumbnail(arg, logger);
