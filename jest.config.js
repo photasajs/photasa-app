@@ -9,9 +9,7 @@ module.exports = {
 
     // 测试文件匹配模式 - 匹配main和engines目录下的测试
     testMatch: [
-        "<rootDir>/src/main/scan/worker/__tests__/**/*.spec.ts",
-        "<rootDir>/src/main/workers/__tests__/**/*.spec.ts",
-        "<rootDir>/src/main/thumbnail/__tests__/**/*.spec.ts",
+        "<rootDir>/src/main/**/__tests__/**/*.spec.ts",
         "<rootDir>/src/engines/**/__tests__/**/*.spec.ts",
     ],
 
@@ -65,8 +63,6 @@ module.exports = {
         "!src/engines/**/*.d.ts",
         "!src/main/**/__tests__/**",
         "!src/engines/**/__tests__/**",
-        "!src/main/**/node_modules/**",
-        "!src/engines/**/node_modules/**",
     ],
 
     // 设置文件

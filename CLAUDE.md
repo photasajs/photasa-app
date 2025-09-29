@@ -740,11 +740,11 @@ AI自动选择最优方案进行执行。
 - 对于大规模代码生成、分析或重构等复杂任务，AI应分步输出或提供中间进度反馈，避免长时间无响应。
 - 鼓励AI在处理复杂任务时，动态调整输出策略，提升用户体验。
 
-### [](https://forum.cursor.com/t/share-my-cursor-rules/93898#p-169058-h-40)异常/超时应对机制
+### [异常/超时应对机制](https://forum.cursor.com/t/share-my-cursor-rules/93898#p-169058-h-40)
 
 - 如遇性能瓶颈或超时，AI应主动降级、拆分任务或请求用户确认后继续。
 - 对于不可恢复的性能异常，AI应输出详细诊断信息并建议用户采取后续措施。
 
-### [](https://forum.cursor.com/t/share-my-cursor-rules/93898#p-169058-h-41)创新与深入思考鼓励
+### [创新与深入思考鼓励](https://forum.cursor.com/t/share-my-cursor-rules/93898#p-169058-h-41)
 
 - 鼓励AI在满足性能要求的前提下，持续追求创新思维和深入见解，推动问题本质性解决。

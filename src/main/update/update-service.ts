@@ -2,8 +2,8 @@ import { autoUpdater, UpdateInfo } from "electron-updater";
 import type { IpcMain, BrowserWindow } from "electron";
 import { loggers } from "@common/logger";
 import type { AutoUpdateConfig, UpdateStatus, UpdateProgressInfo } from "@common/update-types";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService, ServiceStatus } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService, ServiceStatus } from "@main/tianting/core/service-types";
 
 const logger = loggers.update;
 /**

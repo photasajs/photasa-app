@@ -27,7 +27,11 @@
             "@shared/*": ["./src/shared/*"],
             "@renderer/*": ["./src/renderer/src/*"],
             "@maliang/*": ["./src/engines/maliang/*"],
-            "@shunfenger/*": ["./src/engines/shunfenger/*"]
+            "@shunfenger/*": ["./src/engines/shunfenger/*"],
+            "@tianshu/*": ["./src/engines/tianshu/*"],
+            "@sibu": ["./src/engines/sibu/index"],
+            "@sibu/*": ["./src/engines/sibu/*"],
+            "@engines/common/*": ["./src/engines/common/*"],
         }
     }
 }

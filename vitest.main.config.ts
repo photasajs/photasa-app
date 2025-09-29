@@ -11,6 +11,9 @@ export default defineConfig({
             "@shared": resolve("src/shared/"),
             "@maliang": resolve("src/engines/maliang/"),
             "@shunfenger": resolve("src/engines/shunfenger/"),
+            "@tianshu": resolve("src/engines/tianshu/"),
+            "@sibu": resolve("src/engines/sibu/"),
+            "@engines/common/*": resolve("src/engines/common/*"),
         },
     },
     test: {

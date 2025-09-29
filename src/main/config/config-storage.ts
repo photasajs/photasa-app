@@ -8,7 +8,6 @@
 import fs from "node:fs/promises";
 import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "@common/config-types";
-import * as R from "ramda";
 import type { PhotasaLogger } from "@common/logger";
 import { shortenThumbnailName } from "@shared/path-util";
 import { concatMap, from } from "rxjs";
@@ -17,6 +16,10 @@ import isVideo from "is-video";
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
 import { CACHE_TTL, configCache } from "./config-cache";
 import { toRelativeThumbnailPath, toFileName } from "@shared/path-util";
+import { SibuEngine } from "@sibu";
+import type { SibuManifestResult } from "@sibu";
+
+const sibuEngine = new SibuEngine();
 
 export {
     getConfigCache,
@@ -34,7 +37,7 @@ interface QueueItem {
 
 // 类型声明：配置元数据
 interface ConfigMetadata {
-    data: string; // 配置文件内容
+    config: PhotasaConfig; // 解析后的配置
     configPath: string; // 配置文件路径
 }
 
@@ -55,6 +58,20 @@ const WRITE_BATCH_INTERVAL = 100; // 写入批处理间隔
 const readBatch = new Map<string, Promise<ConfigMetadata>>();
 const READ_BATCH_INTERVAL = 50; // 读取批处理间隔
 
+function createEmptyConfig(): PhotasaConfig {
+    return {
+        version: PHOTASA_VERSION,
+        photoList: [],
+        lastModified: 0,
+    };
+}
+
+function resolveManifestPath(targetPath: string, isFile: boolean): string {
+    return isFile
+        ? path.join(path.dirname(targetPath), ".photasa.json")
+        : path.join(targetPath, ".photasa.json");
+}
+
 /**
  * 确保指定照片/目录下的 .photasa.json 配置文件存在，返回配置文件路径。
  * @param photo - 照片/目录路径
@@ -62,34 +79,6 @@ const READ_BATCH_INTERVAL = 50; // 读取批处理间隔
  * @param logger - 日志记录器
  * @returns Promise<string> 配置文件路径
  */
-async function ensureConfig(
-    photo: string,
-    isFile: boolean,
-    logger: PhotasaLogger,
-): Promise<string> {
-    const dir = isFile ? path.dirname(photo) : photo;
-    const configPath = path.join(dir, ".photasa.json");
-    try {
-        await fs.access(configPath);
-    } catch (error) {
-        logger.warn(`[ensureConfig] 配置文件不存在，自动创建: ${configPath}`);
-        try {
-            await fs.writeFile(configPath, "{}", "utf8");
-            logger.info(`[ensureConfig] 已自动创建空配置文件: ${configPath}`);
-        } catch (writeError) {
-            logger.error(`[ensureConfig] 创建配置文件失败: ${configPath}`, writeError);
-            throw handleError(
-                new FileSystemError(`Failed to create config file at ${configPath}`, {
-                    error: writeError,
-                }),
-                logger,
-                "ensureConfig",
-            );
-        }
-    }
-    return configPath;
-}
-
 /**
  * 批量写入操作，将多次写入合并为一次磁盘操作。
  */
@@ -138,36 +127,41 @@ async function batchedWrite(logger: PhotasaLogger): Promise<void> {
 /**
  * 批量读取操作，将多次读取合并为一次磁盘操作。
  */
-async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigMetadata> {
-    if (readBatch.has(path)) {
-        return readBatch.get(path) || { configPath: "", data: "{}" };
+async function batchedRead(
+    targetPath: string,
+    isFile: boolean,
+    logger: PhotasaLogger,
+): Promise<ConfigMetadata> {
+    const configPath = resolveManifestPath(targetPath, isFile);
+
+    if (readBatch.has(configPath)) {
+        return readBatch.get(configPath) || { configPath, config: createEmptyConfig() };
     }
 
-    // 使用 async/await 包装，避免 Promise 嵌套
     const promise = (async () => {
-        // 确保配置文件存在
-        const configPath = await ensureConfig(path, true, logger);
-
-        // 检查缓存，如果缓存存在且未过期，则直接返回
         const cached = configCache.get(configPath);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
             return {
                 configPath,
-                data: JSON.stringify(cached.config),
+                config: cached.config,
             };
         }
 
-        // 读取配置文件
-        let data = "{}";
         try {
-            // 重试读取配置文件
-            data = await retryOperation(
-                () => fs.readFile(configPath, "utf-8"),
+            const { manifest, configPath: resolvedPath } = await retryOperation<SibuManifestResult>(
+                () => sibuEngine.loadManifestForTarget(targetPath, isFile, logger),
                 3,
                 1000,
                 logger,
                 "batchedRead",
-            ).catch(() => "{}");
+            );
+
+            configCache.set(resolvedPath, { config: manifest, timestamp: Date.now() });
+
+            return {
+                configPath: resolvedPath,
+                config: manifest,
+            };
         } catch (error) {
             logger.error(`[batchedRead] 读取配置文件失败: ${configPath}`, error);
             throw handleError(
@@ -176,34 +170,11 @@ async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigM
                 "batchedRead",
             );
         }
-
-        // 尝试解析配置，如失败则自动重建
-        let config;
-        try {
-            config = parseConfig(data);
-        } catch (parseError) {
-            logger.error(`[batchedRead] 配置文件损坏，自动重建: ${configPath}`, parseError);
-            // 自动重建默认配置
-            config = { photoList: [], version: PHOTASA_VERSION };
-            await fs.writeFile(configPath, JSON.stringify(config, null, 4), "utf8");
-        }
-
-        // Update cache
-        configCache.set(configPath, { config, timestamp: Date.now() });
-
-        return {
-            configPath, // 配置文件路径
-            data: JSON.stringify(config), // 配置文件内容
-        };
     })();
 
-    // 设置批处理 在 READ_BATCH_INTERVAL 期间，如果再次读取，则直接返回等待的 promise
-    // 以此避免重复读取配置文件
-    readBatch.set(path, promise);
-
-    // 每间隔 READ_BATCH_INTERVAL 毫秒清除批处理，避免内存泄漏
+    readBatch.set(configPath, promise);
     setTimeout(() => {
-        readBatch.delete(path);
+        readBatch.delete(configPath);
     }, READ_BATCH_INTERVAL);
 
     return promise;
@@ -214,11 +185,11 @@ async function batchedRead(path: string, logger: PhotasaLogger): Promise<ConfigM
  */
 async function readConfig(
     photo: string,
-    _isFile: boolean,
+    isFile: boolean,
     logger: PhotasaLogger,
 ): Promise<ConfigMetadata> {
     logger.info(`[readConfig] 读取配置文件: ${photo}`);
-    return batchedRead(photo, logger);
+    return batchedRead(photo, isFile, logger);
 }
 
 /**
@@ -230,6 +201,9 @@ async function writeConfig(
     logger: PhotasaLogger,
 ): Promise<void> {
     logger.info(`[writeConfig] 写入配置文件: ${configPath}`);
+    if (!photoConfig.version) {
+        photoConfig.version = PHOTASA_VERSION;
+    }
     photoConfig.lastModified = Date.now();
     const data = JSON.stringify(photoConfig, null, 4);
     // 输出日志：内容摘要 128个字符
@@ -238,35 +212,9 @@ async function writeConfig(
     writeBatch.set(configPath, { data, timestamp: Date.now() });
     // 更新缓存
     configCache.set(configPath, { config: photoConfig, timestamp: Date.now() });
+    sibuEngine.primeCache(configPath, photoConfig);
     logger.info(`[writeConfig] 写入完成: ${configPath}`);
 }
-
-/**
- * 安全解析 JSON 字符串为 PhotasaConfig 对象。
- */
-function fromJson(data: string): PhotasaConfig {
-    try {
-        return <PhotasaConfig>JSON.parse(data);
-    } catch (error) {
-        throw new ConfigError("Failed to parse config JSON", { error, data });
-    }
-}
-
-/**
- * 规范化配置对象，补全缺失字段。
- */
-function normalizeConfig(config: PhotasaConfig): PhotasaConfig {
-    if (!config.photoList) {
-        config.photoList = [];
-    }
-    if (!config.version) {
-        config.version = PHOTASA_VERSION;
-    }
-    return config;
-}
-
-// 组合解析与规范化
-const parseConfig = R.compose(normalizeConfig, fromJson);
 
 /**
  * 批量将多张照片添加到配置文件，支持并发与进度回调。
@@ -382,7 +330,7 @@ export const addToPhotoList = async (
         const meta = await readConfig(photoPath, true, logger);
 
         logger.debug(`[addToPhotoList] 步骤2: 解析配置数据`);
-        const photasaConfig = parseConfig(meta.data);
+        const photasaConfig = meta.config;
 
         logger.debug(`[addToPhotoList] 步骤3: 提取文件名`);
         const fileName = toFileName(photoPath);
@@ -438,7 +386,7 @@ export async function removeFromPhotoList(
 ): Promise<PhotasaConfigResult> {
     try {
         const meta = await readConfig(photoPath, true, logger);
-        const photasaConfig = parseConfig(meta.data);
+        const photasaConfig = meta.config;
 
         const fileName = toFileName(photoPath);
         const photoIndex = photasaConfig.photoList.findIndex((p) => p.path === fileName);
@@ -470,7 +418,7 @@ export async function getPhotasaConfig(
     try {
         logger.debug(`[getPhotasaConfig] 读取配置: ${folder}`);
         const meta = await readConfig(folder, false, logger);
-        return parseConfig(meta.data);
+        return meta.config;
     } catch (error) {
         logger.error(`[getPhotasaConfig] 读取配置失败: ${folder}`, error);
         throw handleError(
@@ -490,7 +438,7 @@ export async function resetPhotasaConfig(
 ): Promise<PhotasaConfig> {
     try {
         const meta = await readConfig(folder, false, logger);
-        const photasaConfig = parseConfig(meta.data);
+        const photasaConfig = meta.config;
         photasaConfig.photoList = [];
         await writeConfig(meta.configPath, photasaConfig, logger);
         return photasaConfig;
@@ -512,7 +460,7 @@ export async function fixPhotasaConfig(
 ): Promise<PhotasaConfig> {
     try {
         const meta = await readConfig(folder, false, logger);
-        const config = parseConfig(meta.data);
+        const config = meta.config;
 
         config.photoList.forEach((photo) => {
             photo.path = toFileName(photo.path);

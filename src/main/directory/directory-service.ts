@@ -4,8 +4,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { readFile } from "fs/promises";
 import _klawSync from "klaw-sync";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService, ServiceStatus } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService, ServiceStatus } from "../tianting/core/service-types";
 import { loggers } from "@common/logger";
 
 const logger = loggers.main;

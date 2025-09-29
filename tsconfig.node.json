@@ -23,6 +23,11 @@
             "@shared/*": ["./src/shared/*"],
             "@maliang/*": ["./src/engines/maliang/*"],
             "@shunfenger/*": ["./src/engines/shunfenger/*"],
+            "@sibu": ["./src/engines/sibu/index"],
+            "@sibu/*": ["./src/engines/sibu/*"],
+            "@tianshu": ["./src/engines/tianshu/index"],
+            "@tianshu/*": ["./src/engines/tianshu/*"],
+            "@engines/common/*": ["./src/engines/common/*"],
         },
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true

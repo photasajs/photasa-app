@@ -8,8 +8,8 @@ import {
 } from "@common/thumbnail-types";
 import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
 import { loggers } from "@common/logger";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService } from "@main/tianting/core/service-types";
 
 /**
  * 缩略图 worker 类型

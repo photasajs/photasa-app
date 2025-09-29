@@ -1,8 +1,8 @@
 import { loggers } from "@common/logger";
 import type { BrowserWindow, IpcMain } from "electron";
 import { shell } from "electron";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService } from "@main/tianting/core/service-types";
 
 const logger = loggers.shell;
 

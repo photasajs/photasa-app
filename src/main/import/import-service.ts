@@ -31,8 +31,8 @@ import type {
     ImportSession,
     EnhancedImportCallback,
 } from "@common/import-types";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService } from "@main/tianting/core/service-types";
 
 /**
  * 导入 worker 类型

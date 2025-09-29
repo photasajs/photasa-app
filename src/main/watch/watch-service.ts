@@ -10,8 +10,8 @@ import {
 } from "@common/file-operation-utils";
 import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService } from "@main/tianting/core/service-types";
 import isDev from "electron-is-dev";
 
 /**

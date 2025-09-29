@@ -11,7 +11,6 @@ export default defineConfig({
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
             "@common": resolve("src/common/"),
-            "@shared": resolve("src/shared/"),
         },
     },
     test: {
@@ -46,8 +45,8 @@ export default defineConfig({
             ],
         },
         include: [
-            "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
+            "src/renderer/src/**/*.test.{js,ts,jsx,tsx}",
+            "src/common/**/*.test.{js,ts,jsx,tsx}",
         ],
         server: {
             deps: {

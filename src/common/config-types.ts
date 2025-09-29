@@ -46,12 +46,14 @@ export interface ConfigRequest {
 }
 
 export interface ConfigResponse extends PhotasaConfigResult {
-    action: "next" | "complete" | "error";
+    action: "next" | "complete" | "error" | "heartbeat" | "engine-status";
     queueId?: number;
     from?: "query" | "add" | "remove";
     paths?: string[];
     error?: string;
     err?: Error;
+    timestamp?: number;
+    status?: string;
 }
 
 export interface ConfigHandler {

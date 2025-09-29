@@ -7,12 +7,12 @@ import { isMac } from "./platform";
 import * as Sentry from "@sentry/electron/main";
 import icon from "../../resources/icon.png?asset";
 // Import services module to ensure decorator services are registered
-import "./services";
+import "./tianting";
 import { SplashWindow } from "./splash/splash-window";
-import { StartupOptimizerV2 } from "./services/startup-optimizer-v2";
+import { StartupOptimizerV2 } from "./tianting/startup-optimizer-v2";
 import { SingleInstanceManager } from "./single-instance-manager";
 import { startupMonitor } from "./performance/startup-performance-monitor";
-import { validateConfig } from "./services/config/service-config-validator";
+import { validateConfig } from "./tianting/config/service-config-validator";
 import { configureFFmpeg } from "../engines/maliang/brushes/video/ffmpeg-config";
 
 const logger = loggers.main;

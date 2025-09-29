@@ -2,8 +2,8 @@ import { Menu } from "electron";
 import type { IpcMain, BrowserWindow as TBrowserWindow } from "electron";
 import { loggers } from "@common/logger";
 import type { MenuItemData } from "@common/menu-types";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService } from "@main/tianting/core/service-types";
 
 /**
  * MenuService 负责主进程菜单的同步、构建与事件转发

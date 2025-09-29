@@ -15,6 +15,7 @@ import "../thumbnail/thumbnail-service";
 import "../scan/scan-service";
 import "../watch/watch-service";
 import "../import/import-service";
+import "../deity/tianshu-service";
 
 // 导出装饰器相关功能
 export { Service } from "./decorators/service-decorators";

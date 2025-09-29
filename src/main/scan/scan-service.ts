@@ -5,8 +5,8 @@ import { loggers } from "@common/logger";
 import { notifyStatus } from "./status/notify";
 import type { NotifyPayload } from "@common/types";
 import { getAppPath } from "@shared/path-util";
-import { Service } from "../services/decorators/service-decorators";
-import { ServicePriority, IService } from "../services/core/service-types";
+import { Service } from "@main/tianting/decorators/service-decorators";
+import { ServicePriority, IService } from "@main/tianting/core/service-types";
 import isDev from "electron-is-dev";
 
 const logger = loggers.scan;
