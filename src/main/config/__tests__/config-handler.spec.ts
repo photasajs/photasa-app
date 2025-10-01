@@ -3,45 +3,83 @@ import * as configHandler from "../config-handler";
 import type { PhotasaLogger } from "@common/logger";
 import { ConfigRequest } from "@common/config-types";
 
-// Mocks
-const mockAddToPhotasaConfig = jest.fn();
-const mockRemoveFromPhotoList = jest.fn();
-const mockLogger = { info: jest.fn(), error: jest.fn() };
+// 创建mock函数
+const mockAddToPhotasaConfig = jest.fn() as jest.MockedFunction<
+    typeof import("../config-storage").addToPhotasaConfig
+>;
+const mockRemoveFromPhotoList = jest.fn() as jest.MockedFunction<
+    typeof import("../config-storage").removeFromPhotoList
+>;
+const mockLogger = {
+    info: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+} as unknown as PhotasaLogger;
 const mockPostMessage = jest.fn();
 
+// Mock config-storage模块
 jest.mock("../config-storage", () => ({
-    addToPhotasaConfig: (...args) => mockAddToPhotasaConfig(...args),
-    removeFromPhotoList: (...args) => mockRemoveFromPhotoList(...args),
+    addToPhotasaConfig: (...args: any[]) => mockAddToPhotasaConfig(...(args as Parameters<typeof mockAddToPhotasaConfig>)),
+    removeFromPhotoList: (...args: any[]) => mockRemoveFromPhotoList(...(args as Parameters<typeof mockRemoveFromPhotoList>)),
 }));
 
+// Mock glob模块
 jest.mock("glob", () => ({
-    Glob: class {
-        constructor() {
-            // empty constructor
-        }
-        stream() {
-            // Simulate a Node.js stream with on('data') and on('end')
-            const handlers = {};
-            setTimeout(() => {
-                if (handlers["data"]) handlers["data"]("file1.photasa.json");
-                if (handlers["end"]) handlers["end"]();
-            }, 0);
-            return {
-                on(event, cb) {
-                    handlers[event] = cb;
-                    return this;
-                },
-            };
-        }
-    },
+    Glob: jest.fn().mockImplementation(() => ({
+        stream: jest
+            .fn()
+            .mockReturnValue({
+                on: jest
+                    .fn()
+                    .mockImplementation((event: string, callback: (...args: any[]) => void) => {
+                        if (event === "data") {
+                            setTimeout(() => callback("file1.photasa.json"), 10);
+                        } else if (event === "end") {
+                            setTimeout(() => callback(), 20);
+                        }
+                        return {
+                            on: jest.fn().mockReturnThis(),
+                        };
+                    }),
+            }),
+    })),
 }));
 
-jest.mock("rxjs", async () => {
-    const actual = await jest.importActual<typeof import("rxjs")>("rxjs");
+// Mock rxjs模块 - 使用更简单的方法
+jest.mock("rxjs", () => {
+    const actual = jest.requireActual("rxjs") as any;
     return {
         ...actual,
-        from: (arr) => actual.of(...arr),
-        mergeMap: () => (source: unknown) => source,
+        from: jest.fn().mockImplementation((arr: any[]) => {
+            return {
+                pipe: jest.fn().mockReturnValue({
+                    subscribe: jest.fn().mockImplementation((observer: any) => {
+                        // 同步执行，不使用setTimeout
+                        if (observer.next) {
+                            arr.forEach((item) => observer.next(item));
+                        }
+                        if (observer.complete) {
+                            observer.complete();
+                        }
+                    }),
+                }),
+            };
+        }),
+        mergeMap: jest.fn().mockImplementation((fn: (...args: any[]) => any) => {
+            return (source: any) => {
+                return {
+                    subscribe: jest.fn().mockImplementation((observer: any) => {
+                        if (observer.next) {
+                            observer.next(fn(source));
+                        }
+                        if (observer.complete) {
+                            observer.complete();
+                        }
+                    }),
+                };
+            };
+        }),
     };
 });
 
@@ -56,56 +94,236 @@ describe("config-handler", () => {
         jest.useRealTimers();
     });
 
-    it("addConfig calls addToPhotasaConfig with correct args", () => {
-        const result: ConfigRequest = { action: "add", paths: ["/test"], queueId: 0 };
-        configHandler.addConfig(result, mockPostMessage, mockLogger as unknown as PhotasaLogger);
-        // 只断言 paths 和 queueId 字段，与实际实现保持一致
-        expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
-            { paths: ["/test"], queueId: 0 },
-            mockPostMessage,
-            mockLogger as unknown as PhotasaLogger,
-        );
+    describe("addConfig", () => {
+        it("应该正确调用addToPhotasaConfig", () => {
+            const request: ConfigRequest = {
+                action: "add",
+                paths: ["/test/path1", "/test/path2"],
+                queueId: 123,
+            };
+
+            configHandler.addConfig(request, mockPostMessage, mockLogger);
+
+            expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
+                { queueId: 123, paths: ["/test/path1", "/test/path2"] },
+                mockPostMessage,
+                mockLogger,
+            );
+        });
+
+        it("应该处理缺少paths的情况", () => {
+            const request: ConfigRequest = {
+                action: "add",
+                queueId: 123,
+            } as any;
+
+            configHandler.addConfig(request, mockPostMessage, mockLogger);
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                JSON.stringify({
+                    action: "error",
+                    error: "Failed to add config",
+                }),
+            );
+        });
+
+        it("应该使用默认queueId为0", () => {
+            const request: ConfigRequest = {
+                action: "add",
+                paths: ["/test/path"],
+            };
+
+            configHandler.addConfig(request, mockPostMessage, mockLogger);
+
+            expect(mockAddToPhotasaConfig).toHaveBeenCalledWith(
+                { queueId: 0, paths: ["/test/path"] },
+                mockPostMessage,
+                mockLogger,
+            );
+        });
     });
 
-    it("queryConfig sends next and complete actions", async () => {
-        const logger = mockLogger as unknown as PhotasaLogger;
-        const postMessage = mockPostMessage;
-        const request: ConfigRequest = { action: "query", queueId: 1, paths: ["/test"] };
-        configHandler.queryConfig(request, postMessage, logger);
-        // Wait for the simulated stream
-        await jest.runAllTimersAsync();
-        // 修正断言，path 字段与 mock 行为保持一致
-        expect(postMessage).toHaveBeenCalledWith(
-            JSON.stringify({
-                action: "complete",
-                path: ["/test"],
-            }),
-        );
-    });
-
-    it("removeConfig sends next and complete actions", async () => {
-        const result = { path: "/folder1/file1.photasa.json" };
-        (mockRemoveFromPhotoList as jest.MockedFunction<() => Promise<any>>).mockResolvedValueOnce(
-            result,
-        );
-        const request: ConfigRequest = {
-            action: "remove",
-            queueId: 1,
-            paths: ["/folder1/file1.photasa.json"],
-        };
-        configHandler.removeConfig(
-            request,
-            mockPostMessage,
-            mockLogger as unknown as PhotasaLogger,
-        );
-        // Wait for observable to emit
-        await jest.runAllTimersAsync();
-        expect(mockPostMessage).toHaveBeenCalledWith(
-            JSON.stringify({
+    describe("queryConfig", () => {
+        it("应该处理查询配置的完整流程", async () => {
+            const request: ConfigRequest = {
+                action: "query",
                 queueId: 1,
-                action: "complete",
-                from: "remove",
-            }),
-        );
+                paths: ["/test/folder"],
+            };
+
+            configHandler.queryConfig(request, mockPostMessage, mockLogger);
+
+            await jest.runAllTimersAsync();
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                JSON.stringify({
+                    action: "complete",
+                    path: ["/test/folder"],
+                }),
+            );
+        });
+
+        it("应该处理缺少paths的情况", () => {
+            const request: ConfigRequest = {
+                action: "query",
+                queueId: 1,
+            } as any;
+
+            expect(() => {
+                configHandler.queryConfig(request, mockPostMessage, mockLogger);
+            }).toThrow("No paths provided for query config");
+        });
+
+        it("应该处理多个路径的查询", async () => {
+            const request: ConfigRequest = {
+                action: "query",
+                queueId: 1,
+                paths: ["/test/folder1", "/test/folder2"],
+            };
+
+            configHandler.queryConfig(request, mockPostMessage, mockLogger);
+
+            await jest.runAllTimersAsync();
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                JSON.stringify({
+                    action: "complete",
+                    path: ["/test/folder1", "/test/folder2"],
+                }),
+            );
+        });
+    });
+
+    describe("removeConfig", () => {
+        it("应该处理删除配置的完整流程", async () => {
+            const mockResult = {
+                path: "/folder1/file1.photasa.json",
+                config: { photoList: [] } as any,
+            };
+            mockRemoveFromPhotoList.mockResolvedValue(mockResult);
+
+            const request: ConfigRequest = {
+                action: "remove",
+                queueId: 1,
+                paths: ["/folder1/file1.photasa.json"],
+            };
+
+            configHandler.removeConfig(request, mockPostMessage, mockLogger);
+
+            // 等待异步操作完成
+            await jest.runAllTimersAsync();
+
+            expect(mockRemoveFromPhotoList).toHaveBeenCalledWith(
+                "/folder1/file1.photasa.json",
+                mockLogger,
+            );
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                JSON.stringify({
+                    action: "next",
+                    queueId: 1,
+                    from: "remove",
+                    ...mockResult,
+                }),
+            );
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                JSON.stringify({
+                    queueId: 1,
+                    action: "complete",
+                    from: "remove",
+                }),
+            );
+        });
+
+        it("应该处理缺少paths的情况", () => {
+            const request: ConfigRequest = {
+                action: "remove",
+                queueId: 1,
+            } as any;
+
+            expect(() => {
+                configHandler.removeConfig(request, mockPostMessage, mockLogger);
+            }).toThrow("No paths provided for remove config");
+        });
+
+        it("应该处理缺少queueId的情况", () => {
+            const request: ConfigRequest = {
+                action: "remove",
+                paths: ["/test/path"],
+            } as any;
+
+            expect(() => {
+                configHandler.removeConfig(request, mockPostMessage, mockLogger);
+            }).toThrow("No queueId provided for remove config");
+        });
+
+        it("应该处理多个路径的删除", async () => {
+            const mockResult1 = {
+                path: "/folder1/file1.photasa.json",
+                config: { photoList: [] } as any,
+            };
+            const mockResult2 = {
+                path: "/folder2/file2.photasa.json",
+                config: { photoList: [] } as any,
+            };
+            mockRemoveFromPhotoList
+                .mockResolvedValueOnce(mockResult1)
+                .mockResolvedValueOnce(mockResult2);
+
+            const request: ConfigRequest = {
+                action: "remove",
+                queueId: 1,
+                paths: ["/folder1/file1.photasa.json", "/folder2/file2.photasa.json"],
+            };
+
+            configHandler.removeConfig(request, mockPostMessage, mockLogger);
+
+            await jest.runAllTimersAsync();
+
+            expect(mockRemoveFromPhotoList).toHaveBeenCalledTimes(2);
+            expect(mockRemoveFromPhotoList).toHaveBeenNthCalledWith(
+                1,
+                "/folder1/file1.photasa.json",
+                mockLogger,
+            );
+            expect(mockRemoveFromPhotoList).toHaveBeenNthCalledWith(
+                2,
+                "/folder2/file2.photasa.json",
+                mockLogger,
+            );
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                JSON.stringify({
+                    queueId: 1,
+                    action: "complete",
+                    from: "remove",
+                }),
+            );
+        });
+
+        it("应该处理删除过程中的错误", async () => {
+            const error = new Error("Delete failed");
+            mockRemoveFromPhotoList.mockRejectedValue(error);
+
+            const request: ConfigRequest = {
+                action: "remove",
+                queueId: 1,
+                paths: ["/folder1/file1.photasa.json"],
+            };
+
+            configHandler.removeConfig(request, mockPostMessage, mockLogger);
+
+            await jest.runAllTimersAsync();
+
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                JSON.stringify({
+                    action: "error",
+                    queueId: 1,
+                    from: "remove",
+                    err: error,
+                }),
+            );
+        });
     });
 });
