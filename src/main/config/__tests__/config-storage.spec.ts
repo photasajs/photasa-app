@@ -1,4 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
+import {
+    describe,
+    it,
+    expect,
+    jest,
+    beforeEach,
+    afterEach,
+    beforeAll,
+    afterAll,
+} from "@jest/globals";
 import fs from "fs-extra";
 import path from "path";
 import * as configStorage from "../config-storage";
@@ -15,15 +24,15 @@ function getConfigPath(folder: string) {
     // 假设 config 路径为 folder/config.json
     return normalizePath(path.join(folder, "config.json"));
 }
-vi.mock("fs-extra", () => ({
+jest.mock("fs-extra", () => ({
     default: {
-        ensureFile: vi.fn(async (filePath: string) => {
+        ensureFile: jest.fn(async (filePath: string) => {
             const norm = normalizePath(filePath);
             if (!(norm in mockFsStore)) {
                 mockFsStore[norm] = JSON.stringify({ photoList: [] });
             }
         }),
-        readFile: vi.fn(async (filePath: string) => {
+        readFile: jest.fn(async (filePath: string) => {
             const norm = normalizePath(filePath);
             if (norm in mockFsStore) {
                 return mockFsStore[norm];
@@ -31,7 +40,7 @@ vi.mock("fs-extra", () => ({
             mockFsStore[norm] = JSON.stringify({ photoList: [] });
             return mockFsStore[norm];
         }),
-        writeFile: vi.fn(async (filePath: string, content: string) => {
+        writeFile: jest.fn(async (filePath: string, content: string) => {
             const norm = normalizePath(filePath);
             try {
                 const parsed = JSON.parse(content);
@@ -48,8 +57,8 @@ vi.mock("fs-extra", () => ({
                 mockFsStore[norm] = JSON.stringify({ photoList: [] });
             }
         }),
-        access: vi.fn(),
-        remove: vi.fn(async (filePath: string) => {
+        access: jest.fn(),
+        remove: jest.fn(async (filePath: string) => {
             const norm = normalizePath(filePath);
             delete mockFsStore[norm];
         }),
@@ -57,46 +66,46 @@ vi.mock("fs-extra", () => ({
 }));
 
 // Mock is-video
-vi.mock("is-video", () => ({
-    default: vi.fn(),
+jest.mock("is-video", () => ({
+    default: jest.fn(),
 }));
 
 // Mock log4js
-vi.mock("log4js", async (importOriginal) => {
-    const actual = await importOriginal();
+jest.mock("log4js", async () => {
+    const actual = await (jest as any).importActual("log4js");
     const mockLogger = {
-        debug: vi.fn(),
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn(),
-        fatal: vi.fn(),
-        trace: vi.fn(),
-        log: vi.fn(),
-        isLevelEnabled: vi.fn(),
-        isDebugEnabled: vi.fn(),
-        isInfoEnabled: vi.fn(),
-        isWarnEnabled: vi.fn(),
-        isErrorEnabled: vi.fn(),
-        isFatalEnabled: vi.fn(),
-        isTraceEnabled: vi.fn(),
-        _log: vi.fn(),
-        addContext: vi.fn(),
-        removeContext: vi.fn(),
-        clearContext: vi.fn(),
-        setParseCallStackFunction: vi.fn(),
+        debug: jest.fn(),
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        fatal: jest.fn(),
+        trace: jest.fn(),
+        log: jest.fn(),
+        isLevelEnabled: jest.fn(),
+        isDebugEnabled: jest.fn(),
+        isInfoEnabled: jest.fn(),
+        isWarnEnabled: jest.fn(),
+        isErrorEnabled: jest.fn(),
+        isFatalEnabled: jest.fn(),
+        isTraceEnabled: jest.fn(),
+        _log: jest.fn(),
+        addContext: jest.fn(),
+        removeContext: jest.fn(),
+        clearContext: jest.fn(),
+        setParseCallStackFunction: jest.fn(),
         level: "debug",
         category: "test",
         callStackLinesToSkip: 0,
-        mark: vi.fn(),
+        mark: jest.fn(),
     };
     return {
         ...((typeof actual === "object" && actual) || {}),
-        getLogger: vi.fn(() => mockLogger),
-        configure: vi.fn(),
+        getLogger: jest.fn(() => mockLogger),
+        configure: jest.fn(),
         default: {
             ...((typeof actual === "object" && actual) || {}),
-            getLogger: vi.fn(() => mockLogger),
-            configure: vi.fn(),
+            getLogger: jest.fn(() => mockLogger),
+            configure: jest.fn(),
         },
     };
 });
@@ -104,12 +113,12 @@ vi.mock("log4js", async (importOriginal) => {
 const mockLogger = log4js.getLogger("test");
 
 describe("config-storage", () => {
-    const mockPostMessage = vi.fn();
+    const mockPostMessage = jest.fn();
 
     // 在每个 it 前重置 mockFsStore，确保数据隔离
     beforeEach(() => {
         for (const key in mockFsStore) delete mockFsStore[key];
-        vi.clearAllMocks();
+        jest.clearAllMocks();
         // 预初始化所有常用 config 路径
         const folders = ["/test/path"];
         for (const folder of folders) {
@@ -119,21 +128,21 @@ describe("config-storage", () => {
                 lastModified: Date.now(),
             });
         }
-        (fs.ensureFile as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
-        (fs.readFile as unknown as ReturnType<typeof vi.fn>).mockImplementation((path) => {
+        (fs.ensureFile as unknown as ReturnType<typeof jest.fn>).mockResolvedValue(undefined);
+        (fs.readFile as unknown as ReturnType<typeof jest.fn>).mockImplementation((path) => {
             return Promise.resolve(mockFsStore[path] ?? JSON.stringify({ photoList: [] }));
         });
-        (fs.writeFile as unknown as ReturnType<typeof vi.fn>).mockImplementation((path, data) => {
+        (fs.writeFile as unknown as ReturnType<typeof jest.fn>).mockImplementation((path, data) => {
             mockFsStore[path] = data;
             return Promise.resolve();
         });
-        vi.useFakeTimers();
+        jest.useFakeTimers();
         configStorage.cleanupQueueForFolder("/test/path");
     });
 
     afterEach(() => {
-        vi.resetAllMocks();
-        vi.useRealTimers();
+        jest.resetAllMocks();
+        jest.useRealTimers();
     });
 
     describe("batchAddToPhotoList", () => {
@@ -339,7 +348,7 @@ describe("config-storage", () => {
         beforeEach(() => {
             // Reset queue before each test
             configStorage.cleanupQueueForFolder("/test/path");
-            vi.clearAllMocks();
+            jest.clearAllMocks();
             // Reset mocks
             (fs.ensureFile as any).mockResolvedValue(undefined);
             (fs.readFile as any).mockResolvedValue("{}");
@@ -351,7 +360,7 @@ describe("config-storage", () => {
                 queueId: 1,
                 paths: ["/test/path/photo1.jpg", "/test/path/photo2.jpg"],
             };
-            vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
+            jest.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
                 async (req, postMsg) => {
                     // 写入 mockFsStore，确保 configStr 断言成立
                     mockFsStore[getConfigPath("/test/path")] = JSON.stringify({
@@ -387,7 +396,7 @@ describe("config-storage", () => {
                 },
             );
             configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
             expect(mockPostMessage).toHaveBeenCalledWith(
                 expect.stringContaining('"action":"next"'),
             );
@@ -406,7 +415,7 @@ describe("config-storage", () => {
             };
 
             // Mock the queue initialization
-            vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
+            jest.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
                 async (req, postMsg) => {
                     postMsg(
                         JSON.stringify({
@@ -419,7 +428,7 @@ describe("config-storage", () => {
             );
 
             configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
 
             expect(mockPostMessage).toHaveBeenCalledWith(
                 expect.stringContaining('"action":"complete"'),
@@ -439,7 +448,7 @@ describe("config-storage", () => {
             (fs.writeFile as any).mockRejectedValue(new Error("Write error"));
 
             // Mock the queue initialization
-            vi.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
+            jest.spyOn(configStorage, "addToPhotasaConfig").mockImplementation(
                 async (req, postMsg) => {
                     mockLogger.error("Write error");
                     postMsg(
@@ -454,7 +463,7 @@ describe("config-storage", () => {
             );
 
             configStorage.addToPhotasaConfig(request, mockPostMessage, mockLogger as any);
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
 
             expect(mockLogger.error).toHaveBeenCalled();
             expect(mockPostMessage).toHaveBeenCalledWith(

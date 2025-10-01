@@ -12,7 +12,8 @@ import os from "os";
 import { restoreCachedFiles } from "../scan-helpers";
 import type { PhotasaLogger } from "@common/logger";
 import { Subscriber } from "rxjs";
-
+// Mock buildThumbnailPath
+import { buildThumbnailPath } from "@shared/path-util";
 // Mock external dependencies
 vi.mock("fs-extra");
 vi.mock("@shared/path-util");
@@ -72,8 +73,6 @@ describe("scan-helpers-fix", () => {
             };
             await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
-            // Mock buildThumbnailPath
-            const { buildThumbnailPath } = await import("@shared/path-util");
             vi.mocked(buildThumbnailPath).mockImplementation((filePath) =>
                 filePath.replace(/\.[^/.]+$/, ".png"),
             );

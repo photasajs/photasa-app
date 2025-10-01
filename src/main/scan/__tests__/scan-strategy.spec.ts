@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import fs from "fs-extra";
 import path from "path";
 import {
@@ -13,23 +13,23 @@ import { ScanStrategy } from "../cache/folder-cache-manager";
 import type { PhotasaLogger } from "@common/logger";
 
 // Mock external dependencies
-vi.mock("fs-extra");
+jest.mock("fs-extra");
 
 // Create mock function
-const mockGetPhotasaConfig = vi.fn();
+const mockGetPhotasaConfig = jest.fn() as jest.MockedFunction<() => Promise<any>>;
 
 // Mock both possible import paths
-vi.mock("../config/config-storage", () => ({
+jest.mock("../config/config-storage", () => ({
     getPhotasaConfig: () => mockGetPhotasaConfig(),
 }));
 
-vi.mock("../../config/config-storage", () => ({
+jest.mock("../../config/config-storage", () => ({
     getPhotasaConfig: () => mockGetPhotasaConfig(),
 }));
-vi.mock("../cache/folder-cache-manager", () => ({
-    computeFolderHash: vi.fn(),
-    getCacheInfo: vi.fn(),
-    compareHashesAndDecide: vi.fn(),
+jest.mock("../cache/folder-cache-manager", () => ({
+    computeFolderHash: jest.fn(),
+    getCacheInfo: jest.fn(),
+    compareHashesAndDecide: jest.fn(),
     ScanStrategy: {
         SKIP: "skip",
         INCREMENTAL: "incremental",
@@ -39,15 +39,15 @@ vi.mock("../cache/folder-cache-manager", () => ({
 
 const mockFs = fs as any;
 const mockLogger: PhotasaLogger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
 } as any;
 
 describe("scan-strategy", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
         // 重新设置mock
         mockGetPhotasaConfig.mockClear();
         mockFs.existsSync.mockClear();
@@ -168,7 +168,7 @@ describe("scan-strategy", () => {
             (compareHashesAndDecide as any).mockReturnValue(mockDecision);
 
             // 直接mock getPhotasaConfig函数
-            vi.spyOn(
+            jest.spyOn(
                 await import("../../config/config-storage"),
                 "getPhotasaConfig",
             ).mockResolvedValue({
@@ -197,7 +197,7 @@ describe("scan-strategy", () => {
             mockFs.existsSync.mockReturnValue(true); // .photasa.json 存在
 
             // 直接mock getPhotasaConfig函数抛出错误
-            vi.spyOn(
+            jest.spyOn(
                 await import("../../config/config-storage"),
                 "getPhotasaConfig",
             ).mockRejectedValue(new Error("Config read failed"));

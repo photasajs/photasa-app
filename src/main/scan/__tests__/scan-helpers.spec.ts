@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import fs from "fs-extra";
 import {
     shouldCreateThumbnail,
@@ -16,16 +16,18 @@ import type { ScanAction, PhotoFileRequest } from "@common/scan-types";
 import type { PhotasaLogger } from "@common/logger";
 
 // Mock external dependencies
-vi.mock("fs-extra");
-vi.mock("../../config/config-storage", () => ({
-    addToPhotasaConfig: vi.fn().mockResolvedValue(undefined),
+jest.mock("fs-extra");
+jest.mock("../../config/config-storage", () => ({
+    addToPhotasaConfig: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<
+        () => Promise<void>
+    >,
 }));
 
 const mockFs = fs as any;
 
 describe("scan-helpers", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
 
     describe("shouldCreateThumbnail", () => {
@@ -128,13 +130,15 @@ describe("scan-helpers", () => {
 
         beforeEach(() => {
             mockWorkerPool = {
-                addTask: vi.fn().mockResolvedValue(undefined),
+                addTask: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<
+                    () => Promise<void>
+                >,
             };
             mockLogger = {
-                debug: vi.fn(),
-                info: vi.fn(),
-                warn: vi.fn(),
-                error: vi.fn(),
+                debug: jest.fn(),
+                info: jest.fn(),
+                warn: jest.fn(),
+                error: jest.fn(),
             };
         });
 
@@ -405,16 +409,16 @@ describe("scan-helpers", () => {
     describe("createSubscriptionHandlers", () => {
         it("应该创建正确的订阅处理器", () => {
             const mockSubscriber = {
-                next: vi.fn(),
-                error: vi.fn(),
-                complete: vi.fn(),
+                next: jest.fn(),
+                error: jest.fn(),
+                complete: jest.fn(),
             };
 
             const mockLogger: PhotasaLogger = {
-                debug: vi.fn(),
-                info: vi.fn(),
-                warn: vi.fn(),
-                error: vi.fn(),
+                debug: jest.fn(),
+                info: jest.fn(),
+                warn: jest.fn(),
+                error: jest.fn(),
             } as any;
 
             const folderPath = "/test/folder";

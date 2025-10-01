@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, jest, afterEach } from "@jest/globals";
 import { scanPhotos } from "../scan-photos";
 import { IncrementalCacheManager } from "../cache/incremental-cache";
 import type { ScanAction } from "@common/scan-types";
@@ -9,18 +9,18 @@ import path from "path";
 // 增量缓存集成测试
 describe("Incremental Cache Integration Tests", () => {
     const mockLogger: PhotasaLogger = {
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
+        debug: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
     } as any;
 
     const testFolderPath = "/tmp/test-incremental-cache";
     const cacheFilePath = path.join(testFolderPath, ".photasa-folder.json");
 
     beforeEach(async () => {
-        vi.clearAllMocks();
-        vi.useFakeTimers();
+        jest.clearAllMocks();
+        jest.useFakeTimers();
         // 清理测试环境
         try {
             await fs.remove(testFolderPath);
@@ -35,8 +35,8 @@ describe("Incremental Cache Integration Tests", () => {
     });
 
     afterEach(async () => {
-        vi.clearAllTimers();
-        vi.useRealTimers();
+        jest.clearAllTimers();
+        jest.useRealTimers();
         try {
             await fs.remove(testFolderPath);
         } catch {
@@ -168,7 +168,7 @@ describe("Incremental Cache Integration Tests", () => {
             await cacheManager.initialize();
 
             // 等待一小段时间以确保时间差
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
 
             // 记录一些文件处理
             await cacheManager.recordFileProcessed({
@@ -180,7 +180,7 @@ describe("Incremental Cache Integration Tests", () => {
             });
 
             // 再等待一小段时间
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
 
             // 标记扫描完成
             await cacheManager.markScanComplete();
@@ -244,7 +244,7 @@ describe("Incremental Cache Integration Tests", () => {
             const cacheManager = new IncrementalCacheManager(testFolderPath, mockLogger);
             await cacheManager.initialize();
 
-            const spy = vi.spyOn(fs, "writeFile");
+            const spy = jest.spyOn(fs, "writeFile");
 
             // 快速记录多个文件
             const promises: Promise<void>[] = [];
@@ -263,7 +263,7 @@ describe("Incremental Cache Integration Tests", () => {
             await Promise.all(promises);
 
             // 等待批量更新完成
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
 
             // 验证写入次数 - 应该是批量写入，而不是每个文件一次
             expect(spy.mock.calls.length).toBeLessThan(10);
@@ -305,7 +305,7 @@ describe("Incremental Cache Integration Tests", () => {
                 });
 
                 // 等待异步操作
-                await vi.runAllTimersAsync();
+                await jest.runAllTimersAsync();
 
                 // 验证增量缓存初始化被调用
                 expect(mockLogger.debug).toHaveBeenCalledWith(

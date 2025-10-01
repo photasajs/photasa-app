@@ -1,20 +1,20 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
 import * as configHandler from "../config-handler";
 import type { PhotasaLogger } from "@common/logger";
 import { ConfigRequest } from "@common/config-types";
 
 // Mocks
-const mockAddToPhotasaConfig = vi.fn();
-const mockRemoveFromPhotoList = vi.fn();
-const mockLogger = { info: vi.fn(), error: vi.fn() };
-const mockPostMessage = vi.fn();
+const mockAddToPhotasaConfig = jest.fn();
+const mockRemoveFromPhotoList = jest.fn();
+const mockLogger = { info: jest.fn(), error: jest.fn() };
+const mockPostMessage = jest.fn();
 
-vi.mock("../config-storage", () => ({
+jest.mock("../config-storage", () => ({
     addToPhotasaConfig: (...args) => mockAddToPhotasaConfig(...args),
     removeFromPhotoList: (...args) => mockRemoveFromPhotoList(...args),
 }));
 
-vi.mock("glob", () => ({
+jest.mock("glob", () => ({
     Glob: class {
         constructor() {
             // empty constructor
@@ -36,8 +36,8 @@ vi.mock("glob", () => ({
     },
 }));
 
-vi.mock("rxjs", async () => {
-    const actual = await vi.importActual<typeof import("rxjs")>("rxjs");
+jest.mock("rxjs", async () => {
+    const actual = await jest.importActual<typeof import("rxjs")>("rxjs");
     return {
         ...actual,
         from: (arr) => actual.of(...arr),
@@ -47,13 +47,13 @@ vi.mock("rxjs", async () => {
 
 describe("config-handler", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
-        vi.useFakeTimers();
+        jest.clearAllMocks();
+        jest.useFakeTimers();
     });
 
     afterEach(() => {
-        vi.clearAllTimers();
-        vi.useRealTimers();
+        jest.clearAllTimers();
+        jest.useRealTimers();
     });
 
     it("addConfig calls addToPhotasaConfig with correct args", () => {
@@ -73,7 +73,7 @@ describe("config-handler", () => {
         const request: ConfigRequest = { action: "query", queueId: 1, paths: ["/test"] };
         configHandler.queryConfig(request, postMessage, logger);
         // Wait for the simulated stream
-        await vi.runAllTimersAsync();
+        await jest.runAllTimersAsync();
         // 修正断言，path 字段与 mock 行为保持一致
         expect(postMessage).toHaveBeenCalledWith(
             JSON.stringify({
@@ -85,7 +85,9 @@ describe("config-handler", () => {
 
     it("removeConfig sends next and complete actions", async () => {
         const result = { path: "/folder1/file1.photasa.json" };
-        mockRemoveFromPhotoList.mockResolvedValueOnce(result);
+        (mockRemoveFromPhotoList as jest.MockedFunction<() => Promise<any>>).mockResolvedValueOnce(
+            result,
+        );
         const request: ConfigRequest = {
             action: "remove",
             queueId: 1,
@@ -97,7 +99,7 @@ describe("config-handler", () => {
             mockLogger as unknown as PhotasaLogger,
         );
         // Wait for observable to emit
-        await vi.runAllTimersAsync();
+        await jest.runAllTimersAsync();
         expect(mockPostMessage).toHaveBeenCalledWith(
             JSON.stringify({
                 queueId: 1,

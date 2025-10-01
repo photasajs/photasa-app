@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import fs from "fs-extra";
 import path from "path";
 import crypto from "crypto";
@@ -16,16 +16,16 @@ import {
 import { loggers } from "@common/logger";
 
 // Mock external dependencies
-vi.mock("fs-extra");
-vi.mock("is-image");
-vi.mock("is-video");
-vi.mock("@common/logger", () => ({
+jest.mock("fs-extra");
+jest.mock("is-image");
+jest.mock("is-video");
+jest.mock("@common/logger", () => ({
     loggers: {
         scan: {
-            debug: vi.fn(),
-            info: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
+            debug: jest.fn(),
+            info: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
         },
     },
 }));
@@ -38,11 +38,11 @@ describe("folder-cache-manager", () => {
     const cacheFilePath = path.join(testFolderPath, ".photasa-folder.json");
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        jest.clearAllMocks();
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     describe("computeFolderHash", () => {
@@ -230,9 +230,11 @@ describe("folder-cache-manager", () => {
             mockFs.writeFile.mockResolvedValue(undefined);
 
             // Mock hideConfigFile to avoid platform-specific logic
-            const hideConfigFileSpy = vi.fn().mockResolvedValue(undefined);
-            vi.doMock("../folder-cache-manager", async () => {
-                const actual = await vi.importActual("../folder-cache-manager");
+            const hideConfigFileSpy = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<
+                () => Promise<void>
+            >;
+            jest.doMock("../folder-cache-manager", async () => {
+                const actual = await (jest as any).importActual("../folder-cache-manager");
                 return {
                     ...actual,
                     hideConfigFile: hideConfigFileSpy,
@@ -317,12 +319,16 @@ describe("folder-cache-manager", () => {
             Object.defineProperty(process, "platform", { value: "win32" });
 
             // Mock child_process and util
-            const mockExecAsync = vi.fn().mockResolvedValue({ stdout: "", stderr: "" });
-            vi.doMock("child_process", () => ({
-                exec: vi.fn(),
+            const mockExecAsync = jest
+                .fn()
+                .mockResolvedValue({ stdout: "", stderr: "" }) as jest.MockedFunction<
+                () => Promise<{ stdout: string; stderr: string }>
+            >;
+            jest.doMock("child_process", () => ({
+                exec: jest.fn(),
             }));
-            vi.doMock("util", () => ({
-                promisify: vi.fn().mockReturnValue(mockExecAsync),
+            jest.doMock("util", () => ({
+                promisify: jest.fn().mockReturnValue(mockExecAsync),
             }));
 
             await hideConfigFile(testFilePath, mockLogger);
@@ -347,9 +353,13 @@ describe("folder-cache-manager", () => {
         it("应该处理Windows attrib命令失败", async () => {
             Object.defineProperty(process, "platform", { value: "win32" });
 
-            const mockExecAsync = vi.fn().mockRejectedValue(new Error("Command failed"));
-            vi.doMock("child_process", () => ({ exec: vi.fn() }));
-            vi.doMock("util", () => ({ promisify: vi.fn().mockReturnValue(mockExecAsync) }));
+            const mockExecAsync = jest
+                .fn()
+                .mockRejectedValue(new Error("Command failed")) as jest.MockedFunction<
+                () => Promise<{ stdout: string; stderr: string }>
+            >;
+            jest.doMock("child_process", () => ({ exec: jest.fn() }));
+            jest.doMock("util", () => ({ promisify: jest.fn().mockReturnValue(mockExecAsync) }));
 
             // 应该不抛出错误，只记录警告
             await expect(hideConfigFile(testFilePath, mockLogger)).resolves.toBeUndefined();
@@ -375,12 +385,12 @@ describe("folder-cache-manager", () => {
         it("应该在Windows上检查attrib输出", async () => {
             Object.defineProperty(process, "platform", { value: "win32" });
 
-            const mockExecAsync = vi.fn().mockResolvedValue({
+            const mockExecAsync = jest.fn().mockResolvedValue({
                 stdout: "A  H     C:\\test\\path\\.photasa-folder.json",
                 stderr: "",
-            });
-            vi.doMock("child_process", () => ({ exec: vi.fn() }));
-            vi.doMock("util", () => ({ promisify: vi.fn().mockReturnValue(mockExecAsync) }));
+            }) as jest.MockedFunction<() => Promise<{ stdout: string; stderr: string }>>;
+            jest.doMock("child_process", () => ({ exec: jest.fn() }));
+            jest.doMock("util", () => ({ promisify: jest.fn().mockReturnValue(mockExecAsync) }));
 
             const result = await validateHiddenStatus(testFilePath, mockLogger);
 
@@ -394,9 +404,13 @@ describe("folder-cache-manager", () => {
         it("应该处理Windows attrib命令失败", async () => {
             Object.defineProperty(process, "platform", { value: "win32" });
 
-            const mockExecAsync = vi.fn().mockRejectedValue(new Error("Command failed"));
-            vi.doMock("child_process", () => ({ exec: vi.fn() }));
-            vi.doMock("util", () => ({ promisify: vi.fn().mockReturnValue(mockExecAsync) }));
+            const mockExecAsync = jest
+                .fn()
+                .mockRejectedValue(new Error("Command failed")) as jest.MockedFunction<
+                () => Promise<{ stdout: string; stderr: string }>
+            >;
+            jest.doMock("child_process", () => ({ exec: jest.fn() }));
+            jest.doMock("util", () => ({ promisify: jest.fn().mockReturnValue(mockExecAsync) }));
 
             const result = await validateHiddenStatus(testFilePath, mockLogger);
 

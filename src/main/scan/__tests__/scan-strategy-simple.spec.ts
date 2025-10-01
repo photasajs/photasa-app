@@ -4,7 +4,7 @@
  * 扫描策略简单测试 - 验证核心修复功能
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { decideScanStrategy } from "../strategy/scan-strategy";
 import { PhotasaLogger } from "@common/logger";
 import fs from "fs-extra";
@@ -15,10 +15,10 @@ describe("扫描策略核心功能测试", () => {
 
     beforeEach(() => {
         mockLogger = {
-            debug: vi.fn(),
-            info: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
+            debug: jest.fn(),
+            info: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
         } as any;
 
         testDir = "/test/folder";
@@ -50,7 +50,7 @@ describe("扫描策略核心功能测试", () => {
     describe("扫描动作测试", () => {
         it("应该为 scan 动作检查配置文件", async () => {
             // 模拟配置文件不存在
-            vi.spyOn(fs, "existsSync").mockReturnValue(false);
+            jest.spyOn(fs, "existsSync").mockReturnValue(false);
 
             // 执行测试
             const result = await decideScanStrategy(testDir, mockLogger, "scan");

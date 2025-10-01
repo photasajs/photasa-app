@@ -18,7 +18,7 @@ vi.mock("@renderer/utils/api", () => ({
 // Mock logger
 vi.mock("@common/logger", () => ({
     loggers: {
-        preference: {
+        fangxuanling: {
             debug: vi.fn(),
             info: vi.fn(),
             warn: vi.fn(),

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { scanPhotos, extendedCleanup } from "../scan-photos";
 // import { ScanStrategy } from "../folder-cache-manager";
 import type { ScanAction } from "@common/scan-types";
@@ -6,20 +6,20 @@ import type { PhotasaLogger } from "@common/logger";
 import fs from "fs-extra";
 
 // Mock fs-extra for integration tests
-vi.mock("fs-extra");
+jest.mock("fs-extra");
 
 // Integration test for RFC 0007 complete implementation
 describe("RFC 0007 Integration Tests", () => {
     const mockLogger: PhotasaLogger = {
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
+        debug: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
     } as any;
 
     beforeEach(() => {
-        vi.clearAllMocks();
-        vi.useFakeTimers();
+        jest.clearAllMocks();
+        jest.useFakeTimers();
         // Mock fs.existsSync to return true (files exist)
         (fs.existsSync as any).mockReturnValue(true);
         // Mock fs.statSync to return directory stats
@@ -30,8 +30,8 @@ describe("RFC 0007 Integration Tests", () => {
     });
 
     afterEach(() => {
-        vi.clearAllTimers();
-        vi.useRealTimers();
+        jest.clearAllTimers();
+        jest.useRealTimers();
     });
 
     describe("scanPhotos with intelligent caching", () => {
@@ -63,7 +63,7 @@ describe("RFC 0007 Integration Tests", () => {
             });
 
             // 等待一段时间让异步操作完成
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
 
             // 验证扫描流程启动 - 可能是传统扫描或新增量扫描
             const debugCalls = (mockLogger.debug as any).mock.calls;
@@ -102,7 +102,7 @@ describe("RFC 0007 Integration Tests", () => {
                 },
             });
 
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
 
             // 验证参数验证被调用
             expect(mockLogger.debug || mockLogger.info).toHaveBeenCalled();
@@ -215,7 +215,7 @@ describe("RFC 0007 Integration Tests", () => {
                 },
             });
 
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
             expect(errorOccurred).toBe(true);
         });
 

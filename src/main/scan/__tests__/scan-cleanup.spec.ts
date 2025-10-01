@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import fs from "fs-extra";
 import {
     validateCleanupOptions,
@@ -14,30 +14,30 @@ import {
 import type { PhotasaLogger } from "@common/logger";
 
 // Mock external dependencies
-vi.mock("fs-extra");
+jest.mock("fs-extra");
 
 const mockFs = fs as any;
 const mockLogger: PhotasaLogger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
 } as any;
 
 // Mock WorkerPool
 const mockWorkerPool = {
-    shutdown: vi.fn(),
+    shutdown: jest.fn(),
 };
 
 describe("scan-cleanup", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
-        vi.useFakeTimers();
+        jest.clearAllMocks();
+        jest.useFakeTimers();
     });
 
     afterEach(() => {
-        vi.clearAllTimers();
-        vi.useRealTimers();
+        jest.clearAllTimers();
+        jest.useRealTimers();
     });
 
     describe("validateCleanupOptions", () => {
@@ -94,7 +94,9 @@ describe("scan-cleanup", () => {
         });
 
         it("应该成功关闭Worker Pool", async () => {
-            mockWorkerPool.shutdown.mockResolvedValue(undefined);
+            (mockWorkerPool.shutdown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(
+                undefined,
+            );
 
             const result = await cleanupWorkerPool(mockWorkerPool as any, 5000, mockLogger);
 
@@ -105,7 +107,9 @@ describe("scan-cleanup", () => {
 
         it("应该处理Worker Pool关闭失败", async () => {
             const error = new Error("Shutdown failed");
-            mockWorkerPool.shutdown.mockRejectedValue(error);
+            (mockWorkerPool.shutdown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(
+                error,
+            );
 
             const result = await cleanupWorkerPool(mockWorkerPool as any, 5000, mockLogger);
 
@@ -127,7 +131,7 @@ describe("scan-cleanup", () => {
 
             // 启动cleanup并立即推进所有计时器
             const cleanupPromise = cleanupWorkerPool(mockWorkerPool as any, 100, mockLogger);
-            await vi.runAllTimersAsync();
+            await jest.runAllTimersAsync();
             const result = await cleanupPromise;
 
             expect(result).toBe(false);
@@ -197,7 +201,7 @@ describe("scan-cleanup", () => {
     describe("optimizeMemory", () => {
         it("应该执行内存优化", () => {
             // 模拟global.gc存在
-            (global as any).gc = vi.fn();
+            (global as any).gc = jest.fn();
 
             const result = optimizeMemory(mockLogger);
 
@@ -287,7 +291,9 @@ describe("scan-cleanup", () => {
         });
 
         it("应该执行完整的清理流程", async () => {
-            mockWorkerPool.shutdown.mockResolvedValue(undefined);
+            (mockWorkerPool.shutdown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(
+                undefined,
+            );
             mockFs.readdir.mockResolvedValue([]);
 
             const result = await performExtendedCleanup(

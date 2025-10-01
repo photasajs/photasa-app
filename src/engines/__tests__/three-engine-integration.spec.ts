@@ -13,7 +13,6 @@
 import { TianshuEngine } from "../tianshu/core/TianshuEngine";
 import { TaiyiEngine } from "../taiyi/core/TaiyiEngine";
 import { WenchangAdapter } from "../adapters/WenchangAdapter";
-// import { UICommand } from "../tianshu/types/commands";
 import { join } from "path";
 
 describe("三引擎集成测试 - RFC 0032 Phase 2", () => {
@@ -41,6 +40,14 @@ describe("三引擎集成测试 - RFC 0032 Phase 2", () => {
             maxConcurrentWorkflows: 5,
             defaultTimeout: 30000,
             enableHotReload: false,
+            stepExecutor: {
+                initialize: jest.fn(),
+                executeAction: jest.fn().mockResolvedValue({ success: true, result: {} }),
+                on: jest.fn(),
+                off: jest.fn(),
+                once: jest.fn(),
+                removeAllListeners: jest.fn(),
+            },
         });
 
         await tianshuEngine.initialize();

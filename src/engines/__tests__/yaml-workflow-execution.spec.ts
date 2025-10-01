@@ -36,6 +36,14 @@ describe("YAML工作流执行集成测试 - RFC 0032 Phase 2", () => {
             maxConcurrentWorkflows: 3,
             defaultTimeout: 15000,
             enableHotReload: false,
+            stepExecutor: {
+                initialize: jest.fn(),
+                executeAction: jest.fn().mockResolvedValue({ success: true, result: {} }),
+                on: jest.fn(),
+                off: jest.fn(),
+                once: jest.fn(),
+                removeAllListeners: jest.fn(),
+            },
         });
         await tianshuEngine.initialize();
     });
