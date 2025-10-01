@@ -425,7 +425,7 @@ export class TianshuEngine extends EventEmitter {
      * 清理资源
      */
     async cleanup(): Promise<void> {
-        console.log("Cleaning up Tianshu engine...");
+        logger.info("🌌 清理天枢引擎");
 
         // 取消所有活跃执行
         for (const [commandId] of Array.from(this.activeExecutions.entries())) {
@@ -439,7 +439,7 @@ export class TianshuEngine extends EventEmitter {
 
         this.isInitialized = false;
         this.emit("cleaned");
-        console.log("Tianshu engine cleaned up");
+        logger.info("🌌 天枢引擎清理完成");
     }
 
     /**
@@ -536,7 +536,7 @@ export class TianshuEngine extends EventEmitter {
 
             await this.orchestrator.executeWorkflow(workflow, command, options);
         } catch (error) {
-            console.error("Failed to execute command", error);
+            logger.error("执行命令失败:", error);
             this.emit("commandFailed", { command, error });
         }
     }

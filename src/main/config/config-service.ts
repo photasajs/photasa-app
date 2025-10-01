@@ -3,6 +3,9 @@ import type { IpcMain, BrowserWindow } from "electron";
 import type { ConfigRequest, ConfigResponse } from "@common/config-types";
 import { Service } from "../tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "../tianting/core/service-types";
+import { loggers } from "@common/logger";
+
+const logger = loggers.sibu;
 
 /**
  * 配置 worker 类型
@@ -80,17 +83,16 @@ export default class ConfigService implements IService {
                     if (this.workerStatus === "initializing") {
                         this.workerStatus = "ready";
                         this.workerRestartAttempts = 0; // 重置重启计数
-                        console.log("[ConfigService] Worker is ready");
                         this.reportStatus(); // 报告状态变化
                     }
                 } catch (error) {
-                    console.error("[ConfigService] Failed to parse worker message:", error);
+                    logger.error("处理worker消息失败:", error);
                 }
             });
 
             // Worker错误处理
             this.worker.on("error", (error) => {
-                console.error("[ConfigService] Worker error:", error);
+                logger.error("Worker错误:", error);
                 this.workerStatus = "error";
                 this.reportStatus(); // 报告错误状态
                 this.attemptWorkerRestart();
@@ -98,7 +100,7 @@ export default class ConfigService implements IService {
 
             // Worker退出处理
             this.worker.on("exit", (code: number) => {
-                console.error(`[ConfigService] Worker exited with code ${code}`);
+                logger.error(`Worker退出: ${code}`);
                 this.workerStatus = "error";
                 this.reportStatus(); // 报告退出状态
                 if (code !== 0) {
@@ -106,7 +108,7 @@ export default class ConfigService implements IService {
                 }
             });
         } catch (error) {
-            console.error("[ConfigService] Failed to initialize worker:", error);
+            logger.error("初始化worker失败:", error);
             this.workerStatus = "error";
             throw error;
         }
@@ -117,7 +119,7 @@ export default class ConfigService implements IService {
      */
     private async attemptWorkerRestart(): Promise<void> {
         if (this.workerRestartAttempts >= this.maxRestartAttempts) {
-            console.error("[ConfigService] Max worker restart attempts reached");
+            logger.error("达到最大worker重启次数");
             return;
         }
 
@@ -125,7 +127,7 @@ export default class ConfigService implements IService {
         this.workerStatus = "restarting";
         this.reportStatus(); // 报告重启状态
 
-        console.log(
+        logger.info(
             `[ConfigService] Attempting worker restart ${this.workerRestartAttempts}/${this.maxRestartAttempts}`,
         );
 
@@ -134,7 +136,7 @@ export default class ConfigService implements IService {
             try {
                 await this.initializeWorker();
             } catch (error) {
-                console.error("[ConfigService] Worker restart failed:", error);
+                logger.error("Worker重启失败:", error);
             }
         }, 1000 * this.workerRestartAttempts); // 递增延迟
     }
@@ -163,7 +165,7 @@ export default class ConfigService implements IService {
             });
             this.worker.postMessage(heartbeat);
         } catch (error) {
-            console.error("[ConfigService] Failed to send heartbeat:", error);
+            logger.error("发送心跳包失败:", error);
             this.workerStatus = "error";
             this.reportStatus(); // 报告心跳失败状态
             this.attemptWorkerRestart();
@@ -249,7 +251,7 @@ export default class ConfigService implements IService {
         }
 
         // 未知消息类型
-        console.warn("[ConfigService] Unknown worker message type:", data);
+        logger.warn("未知worker消息类型:", data);
     }
 
     /**
@@ -257,7 +259,7 @@ export default class ConfigService implements IService {
      */
     private handleEngineStatus(data: ConfigResponse): void {
         // 将来可以转发给Tianshu进行统一状态管理
-        console.debug("[ConfigService] Engine status:", data);
+        logger.debug("引擎状态:", data);
 
         // 向前端报告引擎状态
         this.mainWindow?.webContents.send("picasa:engine-status", {
@@ -288,7 +290,7 @@ export default class ConfigService implements IService {
         };
 
         // 将来可以发送给Tianshu引擎进行统一状态管理
-        console.debug("[ConfigService] Status report:", statusReport);
+        logger.debug("状态报告:", statusReport);
 
         // 向前端报告服务状态
         this.mainWindow?.webContents.send("picasa:service-status", statusReport);
@@ -301,7 +303,7 @@ export default class ConfigService implements IService {
         try {
             this.worker.postMessage(JSON.stringify(message));
         } catch (error) {
-            console.error("[ConfigService] Failed to send message to worker:", error);
+            logger.error("发送消息到worker失败:", error);
             // 可以在这里添加重试逻辑或错误恢复
         }
     }

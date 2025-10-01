@@ -8,6 +8,15 @@ import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 import { toDirName } from "@renderer/utils/api-path";
+// 导入优先级排序工具
+import {
+    createScanAction,
+    sortScanningFolders,
+    updateScanActionPriority,
+    shouldUpdateScanAction,
+    debugPrintScanningFolders,
+} from "@renderer/utils/scan-priority";
+
 import { loggers } from "@common/logger";
 // 获取logger实例
 const logger = loggers.fangxuanling;
@@ -123,15 +132,6 @@ export const usePreferenceStore = defineStore("preference", {
             source: "user" | "auto" = "user",
         ) {
             logger.debug(`✍️ 添加扫描文件夹: ${folder}, 动作: ${action}, 来源: ${source}`);
-
-            // 导入优先级排序工具
-            const {
-                createScanAction,
-                sortScanningFolders,
-                updateScanActionPriority,
-                shouldUpdateScanAction,
-                debugPrintScanningFolders,
-            } = await import("@renderer/utils/scan-priority");
 
             if (!Array.isArray(this.scanningFolder)) {
                 logger.debug("✍️ 初始化扫描文件夹数组");

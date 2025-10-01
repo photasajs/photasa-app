@@ -12,6 +12,9 @@
 
 import { EventEmitter } from "events";
 import { join } from "path";
+import { loggers } from "@common/logger";
+
+const logger = loggers.qianliyan;
 
 /**
  * 扫描命令
@@ -184,7 +187,7 @@ export class QianliyanEngine extends EventEmitter {
         }
 
         try {
-            console.log("[QianliyanEngine] Initializing scan engine...");
+            logger.info("🌌 初始化千里眼扫描引擎");
 
             // 初始化缓存目录
             if (this.config.enableCache) {
@@ -195,10 +198,10 @@ export class QianliyanEngine extends EventEmitter {
             await this.loadScanRegistry();
 
             this.isInitialized = true;
-            console.log("[QianliyanEngine] Scan engine initialized successfully");
+            logger.info("🌌 千里眼扫描引擎初始化完成");
             this.emit("initialized");
         } catch (error) {
-            console.error("[QianliyanEngine] Failed to initialize scan engine:", error);
+            logger.error("🌌 初始化千里眼扫描引擎失败:", error);
             throw error;
         }
     }
@@ -212,7 +215,7 @@ export class QianliyanEngine extends EventEmitter {
         }
 
         try {
-            console.log("[QianliyanEngine] Shutting down scan engine...");
+            logger.info("🌌 关闭千里眼扫描引擎");
 
             // 取消所有活跃任务
             for (const [requestId] of this.activeTasks) {
@@ -225,10 +228,10 @@ export class QianliyanEngine extends EventEmitter {
             }
 
             this.isInitialized = false;
-            console.log("[QianliyanEngine] Scan engine shutdown complete");
+            logger.info("🌌 千里眼扫描引擎关闭完成");
             this.emit("shutdown");
         } catch (error) {
-            console.error("[QianliyanEngine] Error during shutdown:", error);
+            logger.error("🌌 关闭千里眼扫描引擎失败:", error);
             throw error;
         }
     }
@@ -252,7 +255,7 @@ export class QianliyanEngine extends EventEmitter {
             filters: { ...this.config.defaultFilters, ...command.filters },
         };
 
-        console.log(`[QianliyanEngine] Planning scan for paths: ${command.paths.join(", ")}`);
+        logger.info(`🌌 规划扫描: ${command.paths.join(", ")}`);
 
         // 归一化和去重路径
         const normalizedPaths = await this.normalizePaths(enrichedCommand.paths);
@@ -262,7 +265,7 @@ export class QianliyanEngine extends EventEmitter {
         const scanDecision = await this.decideScanStrategy(enrichedCommand);
 
         if (scanDecision.skip) {
-            console.log(`[QianliyanEngine] Skipping scan ${requestId}: ${scanDecision.reason}`);
+            logger.info(`🌌 跳过扫描: ${requestId}: ${scanDecision.reason}`);
             this.emit("scanSkipped", { requestId, reason: scanDecision.reason });
             return requestId;
         }
@@ -396,10 +399,7 @@ export class QianliyanEngine extends EventEmitter {
                 this.activeTasks.set(task.requestId, task);
             }
             this.executeScan(task).catch((error) => {
-                console.error(
-                    `[QianliyanEngine] Scan execution failed for ${task.requestId}:`,
-                    error,
-                );
+                logger.error(`🌌 扫描执行失败: ${task.requestId}:`, error);
             });
         }
     }
@@ -415,9 +415,7 @@ export class QianliyanEngine extends EventEmitter {
         const startTime = Date.now();
 
         try {
-            console.log(
-                `[QianliyanEngine] Starting scan ${requestId} for paths: ${command.paths.join(", ")}`,
-            );
+            logger.info(`🌌 开始扫描: ${requestId} for paths: ${command.paths.join(", ")}`);
 
             this.emit("scanStarted", { requestId, command });
 
@@ -433,7 +431,7 @@ export class QianliyanEngine extends EventEmitter {
             }
 
             this.emit("scanCompleted", { requestId, result });
-            console.log(`[QianliyanEngine] Scan ${requestId} completed successfully`);
+            logger.info(`🌌 扫描完成: ${requestId}`);
         } catch (error) {
             const result: ScanResult = {
                 requestId,
@@ -447,7 +445,7 @@ export class QianliyanEngine extends EventEmitter {
             };
 
             this.emit("scanFailed", { requestId, result, error });
-            console.error(`[QianliyanEngine] Scan ${requestId} failed:`, error);
+            logger.error(`🌌 扫描失败: ${requestId}`, error);
         } finally {
             this.activeTasks.delete(requestId);
 
@@ -515,7 +513,7 @@ export class QianliyanEngine extends EventEmitter {
      */
     private async initializeCache(): Promise<void> {
         // TODO: 实现缓存目录创建和初始化
-        console.log(`[QianliyanEngine] Cache initialized at: ${this.config.cacheDir}`);
+        logger.info(`🌌 缓存初始化完成: ${this.config.cacheDir}`);
     }
 
     /**
@@ -523,7 +521,7 @@ export class QianliyanEngine extends EventEmitter {
      */
     private async loadScanRegistry(): Promise<void> {
         // TODO: 从持久化存储加载扫描注册表
-        console.log("[QianliyanEngine] Scan registry loaded");
+        logger.info("🌌 扫描注册表加载完成");
     }
 
     /**
@@ -531,6 +529,6 @@ export class QianliyanEngine extends EventEmitter {
      */
     private async saveScanRegistry(): Promise<void> {
         // TODO: 将扫描注册表保存到持久化存储
-        console.log("[QianliyanEngine] Scan registry saved");
+        logger.info("🌌 扫描注册表保存完成");
     }
 }

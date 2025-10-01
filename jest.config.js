@@ -61,6 +61,7 @@ module.exports = {
     // 模块解析 - 使用正确的Jest属性名
     moduleNameMapper: {
         "^@common/(.*)$": "<rootDir>/src/common/$1",
+        "^@common$": "<rootDir>/src/common/index",
         "^@main/(.*)$": "<rootDir>/src/main/$1",
         "^@renderer/(.*)$": "<rootDir>/src/renderer/$1",
         "^@shared/(.*)$": "<rootDir>/src/shared/$1",

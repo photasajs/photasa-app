@@ -20,6 +20,10 @@ import type {
     PreferenceChangeEvent,
 } from "../types";
 
+import { loggers } from "@common/logger";
+
+const logger = loggers.wenchang;
+
 @Service({
     name: "wenchang",
     displayName: "文昌偏好管理服务",
@@ -245,7 +249,7 @@ export class WenchangService extends EventEmitter implements IService {
         try {
             await fs.writeFile(historyFile, JSON.stringify(this.history, null, 2), "utf-8");
         } catch (error) {
-            console.error("[WenchangService] Failed to save history:", error);
+            logger.error("[WenchangService] Failed to save history:", error);
         }
     }
 
@@ -323,7 +327,7 @@ export class WenchangService extends EventEmitter implements IService {
 
         // 异步保存历史
         this.saveHistory().catch((error) => {
-            console.error("[WenchangService] Failed to save history:", error);
+            logger.error("保存历史记录失败:", error);
         });
     }
 }

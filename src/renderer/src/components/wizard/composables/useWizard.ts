@@ -1,5 +1,8 @@
 import { ref, computed, reactive } from "vue";
 import type { WizardConfig, WizardState, WizardStep } from "../types";
+import { loggers } from "@common/logger";
+
+const logger = loggers.renderer;
 
 export function useWizard(config: WizardConfig) {
     // State
@@ -125,7 +128,7 @@ export function useWizard(config: WizardConfig) {
 
             return true;
         } catch (error) {
-            console.error("Error navigating to step:", error);
+            logger.error("Error navigating to step:", error);
             return false;
         } finally {
             isLoading.value = false;
@@ -169,7 +172,7 @@ export function useWizard(config: WizardConfig) {
 
             return true;
         } catch (error) {
-            console.error("Error finishing wizard:", error);
+            logger.error("Error finishing wizard:", error);
             return false;
         } finally {
             isLoading.value = false;

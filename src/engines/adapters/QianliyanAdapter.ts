@@ -11,6 +11,9 @@ import {
     ScanProgress,
     ScanStatus,
 } from "../qianliyan/core/QianliyanEngine";
+import { loggers } from "@common/logger";
+
+const logger = loggers.qianliyan;
 
 @Adapter({
     name: "qianliyan",
@@ -28,7 +31,7 @@ export class QianliyanAdapter implements IAdapter {
      * 初始化适配器
      */
     async initialize(): Promise<void> {
-        console.log("[QianliyanAdapter] Initializing scan adapter...");
+        logger.info("🌌 初始化千里眼扫描引擎适配器");
 
         this.engine = new QianliyanEngine({
             maxConcurrentScans: 3,
@@ -41,20 +44,20 @@ export class QianliyanAdapter implements IAdapter {
         this.setupEventForwarding();
 
         await this.engine.initialize();
-        console.log("[QianliyanAdapter] Scan adapter initialized");
+        logger.info("🌌 千里眼扫描引擎适配器初始化完成");
     }
 
     /**
      * 关闭适配器
      */
     async shutdown(): Promise<void> {
-        console.log("[QianliyanAdapter] Shutting down scan adapter...");
+        logger.info("🌌 关闭千里眼扫描引擎适配器");
 
         if (this.engine) {
             await this.engine.shutdown();
         }
 
-        console.log("[QianliyanAdapter] Scan adapter shutdown");
+        logger.info("🌌 千里眼扫描引擎适配器关闭完成");
     }
 
     /**
@@ -62,6 +65,14 @@ export class QianliyanAdapter implements IAdapter {
      */
     async planScan(command: ScanCommand): Promise<string> {
         return this.engine.planScan(command);
+    }
+
+    /**
+     * 扫描接口 - 兼容测试
+     */
+    async scan(command: ScanCommand): Promise<any> {
+        const result = await this.engine.scan(command);
+        return result;
     }
 
     /**
@@ -196,7 +207,7 @@ export class QianliyanAdapter implements IAdapter {
      */
     async clearCache(): Promise<boolean> {
         // TODO: 实现缓存清理逻辑
-        console.log("[QianliyanAdapter] Cache cleared");
+        logger.info("🌌 清理千里眼扫描引擎缓存");
         return true;
     }
 
@@ -225,7 +236,7 @@ export class QianliyanAdapter implements IAdapter {
      */
     async pauseEngine(): Promise<void> {
         // TODO: 实现引擎暂停逻辑
-        console.log("[QianliyanAdapter] Scan engine paused");
+        logger.info("🌌 暂停千里眼扫描引擎");
     }
 
     /**
@@ -233,7 +244,7 @@ export class QianliyanAdapter implements IAdapter {
      */
     async resumeEngine(): Promise<void> {
         // TODO: 实现引擎恢复逻辑
-        console.log("[QianliyanAdapter] Scan engine resumed");
+        logger.info("🌌 恢复千里眼扫描引擎");
     }
 
     /**
@@ -244,7 +255,7 @@ export class QianliyanAdapter implements IAdapter {
         priority: "urgent" | "normal" | "background",
     ): Promise<boolean> {
         // TODO: 实现动态优先级调整
-        console.log(`[QianliyanAdapter] Scan ${requestId} priority set to ${priority}`);
+        logger.info(`🌌 设置千里眼扫描引擎优先级: ${requestId} - ${priority}`);
         return true;
     }
 
@@ -268,34 +279,34 @@ export class QianliyanAdapter implements IAdapter {
     private setupEventForwarding(): void {
         // 转发扫描开始事件
         this.engine.on("scanStarted", (data) => {
-            console.log(`[QianliyanAdapter] Scan started: ${data.requestId}`);
+            logger.info(`🌌 千里眼扫描引擎开始: ${data.requestId}`);
         });
 
         // 转发扫描进度事件
         this.engine.on("scanProgress", (progress: ScanProgress) => {
-            console.log(
+            logger.info(
                 `[QianliyanAdapter] Scan progress: ${progress.requestId} - ${progress.percentage}%`,
             );
         });
 
         // 转发扫描完成事件
         this.engine.on("scanCompleted", (data) => {
-            console.log(`[QianliyanAdapter] Scan completed: ${data.requestId}`);
+            logger.info(`🌌 千里眼扫描引擎完成: ${data.requestId}`);
         });
 
         // 转发扫描失败事件
         this.engine.on("scanFailed", (data) => {
-            console.error(`[QianliyanAdapter] Scan failed: ${data.requestId} - ${data.error}`);
+            logger.error(`🌌 千里眼扫描引擎失败: ${data.requestId} - ${data.error}`);
         });
 
         // 转发扫描取消事件
         this.engine.on("scanCancelled", (data) => {
-            console.log(`[QianliyanAdapter] Scan cancelled: ${data.requestId} - ${data.reason}`);
+            logger.info(`🌌 千里眼扫描引擎取消: ${data.requestId} - ${data.reason}`);
         });
 
         // 转发扫描跳过事件
         this.engine.on("scanSkipped", (data) => {
-            console.log(`[QianliyanAdapter] Scan skipped: ${data.requestId} - ${data.reason}`);
+            logger.info(`🌌 千里眼扫描引擎跳过: ${data.requestId} - ${data.reason}`);
         });
     }
 }

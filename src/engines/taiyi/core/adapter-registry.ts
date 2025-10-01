@@ -4,6 +4,9 @@
  */
 
 import { AdapterConfig, AdapterFactory, IAdapter } from "./adapter-decorators";
+import { loggers } from "@common/logger";
+
+const logger = loggers.taiyi;
 
 /**
  * 适配器注册信息
@@ -37,7 +40,7 @@ export class AdapterRegistry {
             status: "registered",
         });
 
-        console.log(`[AdapterRegistry] Registered adapter: ${config.name} (${config.engineType})`);
+        logger.info(`🌌 注册适配器: ${config.name} (${config.engineType})`);
     }
 
     /**
@@ -75,12 +78,12 @@ export class AdapterRegistry {
             registration.instance = instance;
             registration.status = "ready";
 
-            console.log(`[AdapterRegistry] Initialized adapter: ${name}`);
+            logger.info(`🌌 初始化适配器: ${name}`);
             return instance;
         } catch (error) {
             registration.status = "error";
             registration.lastError = error as Error;
-            console.error(`[AdapterRegistry] Failed to initialize adapter ${name}:`, error);
+            logger.error(`🌌 初始化适配器失败: ${name}`, error);
             throw error;
         }
     }
@@ -109,7 +112,7 @@ export class AdapterRegistry {
             await this.initializeWithDependencies(name, initialized, args);
         }
 
-        console.log(`[AdapterRegistry] Initialized ${initialized.size} adapters`);
+        logger.info(`🌌 初始化 ${initialized.size} 个适配器`);
     }
 
     /**
@@ -154,13 +157,10 @@ export class AdapterRegistry {
                 if (registration.instance) {
                     await registration.instance.shutdown();
                     registration.status = "shutdown";
-                    console.log(`[AdapterRegistry] Shutdown adapter: ${registration.config.name}`);
+                    logger.info(`🌌 关闭适配器: ${registration.config.name}`);
                 }
             } catch (error) {
-                console.error(
-                    `[AdapterRegistry] Error shutting down adapter ${registration.config.name}:`,
-                    error,
-                );
+                logger.error(`🌌 关闭适配器失败: ${registration.config.name}`, error);
             }
         }
     }

@@ -1,6 +1,11 @@
 import { contextBridge } from "electron";
 import { api } from "./legacy";
 import { Tianshu } from "./tianshu";
+
+import { loggers } from "@common/logger";
+
+const logger = loggers.yuantiangang;
+
 // TODO: remove this after migration to tianshu
 import { electronAPI } from "@electron-toolkit/preload";
 
@@ -14,7 +19,7 @@ if (process.contextIsolated) {
         contextBridge.exposeInMainWorld("tianshu", Tianshu);
         contextBridge.exposeInMainWorld("api", api);
     } catch (error) {
-        console.error(error);
+        logger.error(error);
     }
 } else {
     // TODO: remove this after migration to tianshu

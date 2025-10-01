@@ -136,12 +136,10 @@ const handleEscape = (event: KeyboardEvent) => {
 // 动画回调函数
 const onEnter = (_el: Element) => {
     // 动画开始时的处理
-    console.log("Modal enter animation started");
 };
 
 const onLeave = (_el: Element) => {
     // 动画结束时的处理
-    console.log("Modal leave animation completed");
 };
 
 // 焦点管理
