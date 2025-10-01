@@ -5,6 +5,13 @@ import { cleanupScanQueue } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@common/config-types";
 import type { ScanAction, FileOperationInput } from "@common/scan-types";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
+import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
+import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
+import { toDirName } from "@renderer/utils/api-path";
+import { loggers } from "@common/logger";
+// 获取logger实例
+const logger = loggers.fangxuanling;
+
 // 自定义 DataNode 类型定义
 export interface DataNode {
     key: string | number;
@@ -16,12 +23,6 @@ export interface DataNode {
     checkable?: boolean;
     [key: string]: any;
 }
-import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
-import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
-import { toDirName } from "@renderer/utils/api-path";
-import { loggers } from "@common/logger";
-
-const logger = loggers.fangxuanling;
 
 // 自动更新配置接口
 export interface AutoUpdateConfig {
