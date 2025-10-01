@@ -18,11 +18,7 @@ jest.mock("fs-extra");
 // Create mock function
 const mockGetPhotasaConfig = jest.fn() as jest.MockedFunction<() => Promise<any>>;
 
-// Mock both possible import paths
-jest.mock("../config/config-storage", () => ({
-    getPhotasaConfig: () => mockGetPhotasaConfig(),
-}));
-
+// Mock the config-storage module
 jest.mock("../../config/config-storage", () => ({
     getPhotasaConfig: () => mockGetPhotasaConfig(),
 }));
@@ -167,11 +163,8 @@ describe("scan-strategy", () => {
             (getCacheInfo as any).mockResolvedValue(mockCache);
             (compareHashesAndDecide as any).mockReturnValue(mockDecision);
 
-            // 直接mock getPhotasaConfig函数
-            jest.spyOn(
-                await import("../../config/config-storage"),
-                "getPhotasaConfig",
-            ).mockResolvedValue({
+            // 设置mock函数的返回值
+            mockGetPhotasaConfig.mockResolvedValue({
                 version: "1.0",
                 lastModified: Date.now(),
                 photoList: [
@@ -196,11 +189,8 @@ describe("scan-strategy", () => {
         it("应该在出错时返回FULL策略", async () => {
             mockFs.existsSync.mockReturnValue(true); // .photasa.json 存在
 
-            // 直接mock getPhotasaConfig函数抛出错误
-            jest.spyOn(
-                await import("../../config/config-storage"),
-                "getPhotasaConfig",
-            ).mockRejectedValue(new Error("Config read failed"));
+            // 设置mock函数抛出错误
+            mockGetPhotasaConfig.mockRejectedValue(new Error("Config read failed"));
 
             const result = await decideScanStrategy("/test/folder", mockLogger);
 

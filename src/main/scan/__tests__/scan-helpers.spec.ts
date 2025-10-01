@@ -18,9 +18,7 @@ import type { PhotasaLogger } from "@common/logger";
 // Mock external dependencies
 jest.mock("fs-extra");
 jest.mock("../../config/config-storage", () => ({
-    addToPhotasaConfig: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<
-        () => Promise<void>
-    >,
+    addToPhotasaConfig: jest.fn(),
 }));
 
 const mockFs = fs as any;
@@ -130,9 +128,7 @@ describe("scan-helpers", () => {
 
         beforeEach(() => {
             mockWorkerPool = {
-                addTask: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<
-                    () => Promise<void>
-                >,
+                addTask: jest.fn(),
             };
             mockLogger = {
                 debug: jest.fn(),

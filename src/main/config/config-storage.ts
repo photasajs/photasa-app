@@ -5,7 +5,7 @@
  * 提供批量添加、移除、修复、重置等操作，支持高并发队列与详细日志。
  */
 
-import fs from "node:fs/promises";
+import fs from "fs/promises";
 import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "@common/config-types";
 import type { PhotasaLogger } from "@common/logger";
