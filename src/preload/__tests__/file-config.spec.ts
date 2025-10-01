@@ -16,7 +16,7 @@ vi.mock("fs-extra", () => ({
 
 // Mock electron API
 vi.mock("@electron-toolkit/preload", () => ({
-    electronAPI: {
+    electron: {
         ipcRenderer: {
             invoke: vi.fn(),
         },

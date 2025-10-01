@@ -3,7 +3,7 @@ import path from "path";
 
 // Mock Electron API before importing image-helper
 vi.mock("@electron-toolkit/preload", () => ({
-    electronAPI: {
+    electron: {
         ipcRenderer: {
             invoke: vi.fn(),
         },

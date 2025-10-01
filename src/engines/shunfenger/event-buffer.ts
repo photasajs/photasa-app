@@ -2,7 +2,7 @@ import { loggers } from "@common/logger";
 import { getDeduplicationWindow } from "@common/file-operation-utils";
 import type { FileObservation, ObservationListener, WatchEventKind } from "./types";
 
-const logger = loggers.watch;
+const logger = loggers.shunfenger;
 
 export interface EventBufferOptions {
     debounceMs: number;

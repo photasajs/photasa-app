@@ -6,14 +6,15 @@
  * 工作流步骤类型
  */
 export type StepType =
-    | "action"
-    | "condition"
-    | "loop"
-    | "parallel"
-    | "sequence"
-    | "delay"
-    | "retry"
-    | "error_handler";
+    | "action" // 引擎调用步骤
+    | "condition" // 条件判断步骤
+    | "loop" // 循环执行步骤
+    | "builtin" // 内置操作步骤
+    | "parallel" // 并行执行步骤
+    | "sequence" // 序列执行步骤
+    | "delay" // 延迟步骤
+    | "retry" // 重试步骤
+    | "error_handler"; // 错误处理步骤
 
 /**
  * 步骤执行模式

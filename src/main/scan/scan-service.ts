@@ -70,7 +70,7 @@ export default class ScanService implements IService {
         this.app = app;
 
         // 从依赖映射中获取 logViewerService
-        if (dependencies) {
+        if (dependencies?.has("logViewer")) {
             logViewerService = dependencies.get("logViewer");
         }
     }

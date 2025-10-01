@@ -31,6 +31,7 @@
             "@tianshu/*": ["./src/engines/tianshu/*"],
             "@sibu": ["./src/engines/sibu/index"],
             "@sibu/*": ["./src/engines/sibu/*"],
+            "@engines/*": ["./src/engines/*"],
             "@engines/common/*": ["./src/engines/common/*"],
         }
     }

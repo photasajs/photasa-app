@@ -7,7 +7,7 @@ import { promises as fs } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { EventEmitter } from "events";
-import { BrowserWindow, IpcMain } from "electron";
+import type { BrowserWindow, IpcMain } from "electron";
 import { Service } from "../../../main/tianting/decorators/service-decorators";
 import { ServicePriority } from "../../../main/tianting/core/service-types";
 import type { IService } from "../../../main/tianting/core/service-types";
@@ -42,6 +42,10 @@ export class WenchangService extends EventEmitter implements IService {
         config: WenchangConfig = { enableHistory: true, maxHistorySize: 100 },
     ) {
         super();
+        // 这些参数在构造函数中声明但可能未使用，保留用于未来扩展
+        // 使用 void 操作符来避免未使用变量警告
+        void this._ipcMain;
+        void this._mainWindow;
         this.config = config;
         // RFC 0032: 文昌存储在 ~/.photasa/preferences/
         this.storagePath = join(homedir(), ".photasa", "preferences");
@@ -249,14 +253,14 @@ export class WenchangService extends EventEmitter implements IService {
         return {
             revision: 1,
             ui: {
-                theme: "auto",
+                theme: "dark", // 与preference store保持一致
                 layout: "grid",
                 language: "zh-CN",
                 sidebarWidth: 280,
                 zoomLevel: 1.0,
             },
             display: {
-                thumbnailSize: 200,
+                thumbnailSize: 150, // 与preference store保持一致
                 sortOrder: "date",
                 groupBy: "date",
                 showHidden: false,

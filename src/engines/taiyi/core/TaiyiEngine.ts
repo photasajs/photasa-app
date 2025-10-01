@@ -5,7 +5,9 @@
 
 import { EventEmitter } from "events";
 import { AdapterRegistry } from "./adapter-registry";
-// import { IAdapter } from "./adapter-decorators";
+import { loggers } from "@common/logger";
+
+const logger = loggers.taiyi;
 
 /**
  * 太乙引擎配置
@@ -57,8 +59,7 @@ export class TaiyiEngine extends EventEmitter {
         }
 
         try {
-            console.log("[TaiyiEngine] Initializing engine registry...");
-
+            logger.info("🌌 初始化太乙引擎");
             // 初始化所有注册的适配器
             await AdapterRegistry.initializeAll(...(this.config.adapterArgs || []));
 
@@ -68,10 +69,10 @@ export class TaiyiEngine extends EventEmitter {
             }
 
             this.isInitialized = true;
-            console.log("[TaiyiEngine] Engine registry initialized successfully");
+            logger.info("🌌 太乙引擎初始化完成");
             this.emit("initialized");
         } catch (error) {
-            console.error("[TaiyiEngine] Failed to initialize engine registry:", error);
+            logger.error("🌌 初始化太乙引擎失败", error);
             throw error;
         }
     }
@@ -85,7 +86,7 @@ export class TaiyiEngine extends EventEmitter {
         }
 
         try {
-            console.log("[TaiyiEngine] Shutting down engine registry...");
+            logger.info("🌌 关闭太乙引擎");
 
             // 停止健康检查
             if (this.healthCheckTimer) {
@@ -97,10 +98,10 @@ export class TaiyiEngine extends EventEmitter {
             await AdapterRegistry.shutdownAll();
 
             this.isInitialized = false;
-            console.log("[TaiyiEngine] Engine registry shutdown complete");
+            logger.info("🌌 太乙引擎关闭完成");
             this.emit("shutdown");
         } catch (error) {
-            console.error("[TaiyiEngine] Error during shutdown:", error);
+            logger.error("🌌 关闭太乙引擎失败", error);
             throw error;
         }
     }
@@ -136,7 +137,7 @@ export class TaiyiEngine extends EventEmitter {
                 engineName,
             };
         } catch (error) {
-            console.error(`[TaiyiEngine] Engine call failed: ${engineName}.${methodName}`, error);
+            logger.error(`🌌 调用引擎失败: ${engineName}.${methodName}`, error);
 
             return {
                 success: false,

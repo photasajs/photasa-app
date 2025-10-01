@@ -1,3 +1,17 @@
+/**
+ * 玄奘一国际化配置
+ * 唐朝翻译家，负责翻译各种语言
+ * 在Photasa天庭中，玄奘化身翻译家，负责翻译各种语言
+ * 通过民间Vue技术，为天庭界面提供翻译功能
+ * 与阎立本画师协作，确保界面语言与用户偏好保持一致
+ *
+ * 核心功能：
+ * - 翻译各种语言
+ * - 确保界面语言与用户偏好保持一致
+ * - 提供翻译功能
+ * - 与阎立本画师协作，确保界面语言与用户偏好保持一致
+ * - 提供翻译功能
+ */
 import { createI18n } from "vue-i18n";
 import enUS from "../locales/en-US.json";
 import zhCN from "../locales/zh-CN.json";
@@ -16,11 +30,15 @@ import ruRU from "../locales/ru-RU.json";
 import zhTW from "../locales/zh-TW.json";
 import type { Ref } from "vue";
 
-// Constants
+/**
+ * 常量
+ */
 const DEFAULT_LOCALE = "zh-CN" as const;
 const FALLBACK_LOCALE = "en-US" as const;
 
-// Define supported locales with their display names and native names
+/**
+ * 定义支持的 locales 及其显示名称和本地名称
+ */
 export const LOCALES = {
     "zh-CN": {
         name: "Chinese (Simplified)",
@@ -84,7 +102,9 @@ export const LOCALES = {
     },
 } as const;
 
-// Type definitions
+/**
+ * 类型定义
+ */
 export type Locale = keyof typeof LOCALES;
 export type MessageSchema =
     | typeof zhCN
@@ -154,7 +174,9 @@ export const i18n = createI18n<[MessageSchema], Locale>({
     },
 });
 
-// Utility functions
+/**
+ * 国际化工具函数
+ */
 export const i18nUtils = {
     // Get display name for a locale
     getLocaleName: (locale: Locale): string => LOCALES[locale].name,

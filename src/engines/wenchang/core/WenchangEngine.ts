@@ -6,6 +6,9 @@
 import { EventEmitter } from "events";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { loggers } from "@common/logger";
+
+const logger = loggers.wenchang;
 
 /**
  * 用户偏好接口
@@ -16,16 +19,21 @@ export interface UserPreferences {
         theme: string;
         layout: string;
         language: string;
+        sidebarWidth: number;
+        zoomLevel: number;
     };
     display: {
         thumbnailSize: number;
         sortOrder: string;
         groupBy: string;
+        showHidden: boolean;
+        showMetadata: boolean;
     };
     scanning: {
         autoScan: boolean;
         excludePatterns: string[];
         concurrency: number;
+        watchEnabled: boolean;
     };
     lastModified: number;
 }
@@ -80,16 +88,21 @@ const DEFAULT_PREFERENCES: UserPreferences = {
         theme: "system",
         layout: "grid",
         language: "zh-CN",
+        sidebarWidth: 280,
+        zoomLevel: 1,
     },
     display: {
         thumbnailSize: 200,
         sortOrder: "dateDesc",
         groupBy: "date",
+        showHidden: false,
+        showMetadata: true,
     },
     scanning: {
         autoScan: true,
         excludePatterns: ["node_modules", ".git", "*.tmp"],
         concurrency: 4,
+        watchEnabled: true,
     },
     lastModified: Date.now(),
 };
@@ -103,11 +116,12 @@ export class WenchangEngine extends EventEmitter {
     private isInitialized = false;
     private preferencesFile: string;
     private autoSaveTimer?: NodeJS.Timeout;
+    private isDirty = false; // 脏标记，标识是否需要保存
 
     constructor(config: WenchangEngineConfig) {
         super();
         this.config = {
-            autoSaveInterval: 5000,
+            autoSaveInterval: 0, // 禁用自动保存，所有修改都会立即保存
             enableHistory: true,
             historyLimit: 10,
             ...config,
@@ -126,7 +140,7 @@ export class WenchangEngine extends EventEmitter {
         }
 
         try {
-            console.log("[WenchangEngine] Initializing preference engine...");
+            logger.info("🌌 初始化偏好管理引擎");
 
             // 确保偏好目录存在
             await fs.mkdir(this.config.preferencesDir, { recursive: true });
@@ -140,10 +154,10 @@ export class WenchangEngine extends EventEmitter {
             }
 
             this.isInitialized = true;
-            console.log("[WenchangEngine] Preference engine initialized successfully");
+            logger.info("🌌 偏好管理引擎初始化完成");
             this.emit("initialized");
         } catch (error) {
-            console.error("[WenchangEngine] Failed to initialize preference engine:", error);
+            logger.error("🌌 初始化偏好管理引擎失败", error);
             throw error;
         }
     }
@@ -157,7 +171,7 @@ export class WenchangEngine extends EventEmitter {
         }
 
         try {
-            console.log("[WenchangEngine] Shutting down preference engine...");
+            logger.info("🌌 关闭偏好管理引擎");
 
             // 停止自动保存
             if (this.autoSaveTimer) {
@@ -169,10 +183,10 @@ export class WenchangEngine extends EventEmitter {
             await this.savePreferences();
 
             this.isInitialized = false;
-            console.log("[WenchangEngine] Preference engine shutdown complete");
+            logger.info("🌌 偏好管理引擎关闭完成");
             this.emit("shutdown");
         } catch (error) {
-            console.error("[WenchangEngine] Error during preference engine shutdown:", error);
+            logger.error("🌌 关闭偏好管理引擎失败", error);
             throw error;
         }
     }
@@ -193,12 +207,13 @@ export class WenchangEngine extends EventEmitter {
      */
     async applyDelta(delta: PreferenceDelta, source = "unknown"): Promise<number> {
         if (!this.isInitialized) {
+            logger.error("🌌 偏好管理引擎未初始化");
             throw new Error("WenchangEngine not initialized");
         }
 
         try {
             // 应用变更
-            const _oldPreferences = { ...this.preferences };
+            // const _oldPreferences = { ...this.preferences };
 
             if (delta.ui) {
                 this.preferences.ui = { ...this.preferences.ui, ...delta.ui };
@@ -227,12 +242,10 @@ export class WenchangEngine extends EventEmitter {
 
             this.emit("preferenceChanged", changeEvent);
 
-            console.log(
-                `[WenchangEngine] Applied preference delta, new revision: ${this.preferences.revision}`,
-            );
+            logger.info(`🌌 应用偏好变更, 新版本: ${this.preferences.revision}`);
             return this.preferences.revision;
         } catch (error) {
-            console.error("[WenchangEngine] Failed to apply preference delta:", error);
+            logger.error("🌌 应用偏好变更失败", error);
             throw error;
         }
     }
@@ -260,7 +273,7 @@ export class WenchangEngine extends EventEmitter {
             source: "reset",
         });
 
-        console.log("[WenchangEngine] Reset preferences to defaults");
+        logger.info("🌌 重置偏好到默认值");
         return snapshot;
     }
 
@@ -272,22 +285,32 @@ export class WenchangEngine extends EventEmitter {
             const data = await fs.readFile(this.preferencesFile, "utf-8");
             const loaded = JSON.parse(data) as UserPreferences;
 
-            // 验证并合并偏好
+            // 深度合并偏好，确保所有默认字段都存在
             this.preferences = {
                 ...DEFAULT_PREFERENCES,
-                ...loaded,
                 revision: loaded.revision || 1,
+                ui: {
+                    ...DEFAULT_PREFERENCES.ui,
+                    ...(loaded.ui || {}),
+                },
+                display: {
+                    ...DEFAULT_PREFERENCES.display,
+                    ...(loaded.display || {}),
+                },
+                scanning: {
+                    ...DEFAULT_PREFERENCES.scanning,
+                    ...(loaded.scanning || {}),
+                },
+                lastModified: loaded.lastModified || Date.now(),
             };
 
-            console.log(
-                `[WenchangEngine] Loaded preferences, revision: ${this.preferences.revision}`,
-            );
+            logger.info(`🌌 加载偏好, 版本: ${this.preferences.revision}`);
         } catch (error) {
             if ((error as any).code === "ENOENT") {
-                console.log("[WenchangEngine] No existing preferences file, using defaults");
+                logger.info("🌌 没有现有偏好文件, 使用默认值");
                 await this.savePreferences();
             } else {
-                console.error("[WenchangEngine] Error loading preferences:", error);
+                logger.error("🌌 加载偏好失败", error);
                 throw error;
             }
         }
@@ -300,11 +323,9 @@ export class WenchangEngine extends EventEmitter {
         try {
             const data = JSON.stringify(this.preferences, null, 2);
             await fs.writeFile(this.preferencesFile, data, "utf-8");
-            console.log(
-                `[WenchangEngine] Saved preferences, revision: ${this.preferences.revision}`,
-            );
+            logger.info(`🌌 保存偏好, 版本: ${this.preferences.revision}`);
         } catch (error) {
-            console.error("[WenchangEngine] Error saving preferences:", error);
+            logger.error("🌌 保存偏好失败", error);
             throw error;
         }
     }
@@ -314,10 +335,14 @@ export class WenchangEngine extends EventEmitter {
      */
     private startAutoSave(): void {
         this.autoSaveTimer = setInterval(async () => {
-            try {
-                await this.savePreferences();
-            } catch (error) {
-                console.error("[WenchangEngine] Auto-save failed:", error);
+            // 只有在数据发生变化时才保存
+            if (this.isDirty) {
+                try {
+                    await this.savePreferences();
+                    this.isDirty = false; // 保存后重置脏标记
+                } catch (error) {
+                    logger.error("🌌 自动保存失败", error);
+                }
             }
         }, this.config.autoSaveInterval);
     }

@@ -8,6 +8,11 @@
         "src/shared/*",
         "src/engines/**/*",
     ],
+    "exclude": [
+        "src/**/*.spec.ts",
+        "src/**/*.test.ts",
+        "src/**/__tests__/**/*",
+    ],
     "compilerOptions": {
         "composite": true,
         "types": [
@@ -28,6 +33,8 @@
             "@tianshu": ["./src/engines/tianshu/index"],
             "@tianshu/*": ["./src/engines/tianshu/*"],
             "@engines/common/*": ["./src/engines/common/*"],
+            "@qianliyan/*": ["./src/engines/qianliyan/*"],
+            "@engines/*": ["./src/engines/*"],
         },
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true

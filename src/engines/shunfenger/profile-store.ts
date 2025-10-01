@@ -3,7 +3,7 @@ import path from "path";
 import { loggers } from "@common/logger";
 import type { WatchProfile } from "./types";
 
-const logger = loggers.watch;
+const logger = loggers.shunfenger;
 
 export class ProfileStore {
     private readonly storagePath: string;
@@ -26,7 +26,7 @@ export class ProfileStore {
                 });
             }
         } catch (error) {
-            logger.error("[ProfileStore] Failed to initialize", error);
+            logger.error("配置存储初始化失败", error);
         }
     }
 
@@ -52,7 +52,7 @@ export class ProfileStore {
         try {
             await fs.writeJSON(this.storagePath, this.list(), { spaces: 2 });
         } catch (error) {
-            logger.error("[ProfileStore] Failed to persist profiles", error);
+            logger.error("配置存储持久化失败", error);
         }
     }
 }

@@ -1,0 +1,162 @@
+# 更新用户偏好设置工作流
+# 通过文昌引擎更新偏好设置并广播变更
+
+id: "update_preferences"
+name: "更新用户偏好设置"
+description: "更新用户偏好设置"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "update_preferences"
+  - intent: "preference_update"
+
+# 输入参数
+inputs:
+  delta:
+    type: "object"
+    required: true
+    description: "要更新的偏好设置增量对象"
+  source:
+    type: "string"
+    required: false
+    default: "user_action"
+    description: "更新来源标识"
+
+# 工作流步骤
+steps:
+  - id: "validate_delta"
+    name: "验证偏好更新数据"
+    type: "action"
+    description: "验证偏好更新数据"
+    service: "wenchang"
+    action: "validate"
+    input:
+      delta: "${input.delta}"
+      rules:
+        - type: "object"
+        - notEmpty: true
+        - allowedKeys: ["ui", "display", "scan", "performance", "advanced"]
+
+  - id: "sanitize_values"
+    name: "清理和验证偏好值"
+    type: "action"
+    description: "清理和验证偏好值"
+    service: "wenchang"
+    action: "sanitize"
+    input:
+      source: "${input.delta}"
+      rules:
+        ui.theme:
+          type: "enum"
+          values: ["light", "dark", "auto"]
+          default: "light"
+        ui.language:
+          type: "string"
+          pattern: "^[a-z]{2}-[A-Z]{2}$"
+          default: "zh-CN"
+        display.thumbnailSize:
+          type: "number"
+          min: 50
+          max: 500
+          default: 150
+        display.viewMode:
+          type: "enum"
+          values: ["grid", "list", "timeline"]
+          default: "grid"
+    output:
+      sanitized: "sanitize.result"
+    dependsOn: ["validate_delta"]
+
+  - id: "update_engine"
+    name: "调用文昌引擎更新偏好"
+    type: "action"
+    description: "调用文昌引擎更新偏好"
+    service: "wenchang"
+    action: "updatePreferences"
+    input:
+      delta: "${steps.sanitize_values.sanitized}"
+      source: "${input.source}"
+    output:
+      result: "update.result"
+    dependsOn: ["sanitize_values"]
+
+  - id: "get_updated_snapshot"
+    name: "获取更新后的偏好快照"
+    type: "action"
+    description: "获取更新后的偏好快照"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output:
+      snapshot: "snapshot.result"
+    dependsOn: ["update_engine"]
+
+  - id: "emit_change_event"
+    name: "发送偏好变更事件"
+    type: "action"
+    description: "发送偏好变更事件"
+    service: "wenchang"
+    action: "emitEvent"
+    input:
+      event: "preferences_changed"
+      data:
+        delta: "${steps.sanitize_values.sanitized}"
+        snapshot: "${steps.get_updated_snapshot.snapshot}"
+        source: "${input.source}"
+        timestamp: "${now()}"
+    output:
+      eventId: "event.id"
+    dependsOn: ["get_updated_snapshot"]
+
+  - id: "format_response"
+    name: "格式化返回结果"
+    type: "action"
+    description: "格式化返回结果"
+    service: "wenchang"
+    action: "formatResponse"
+    input:
+      success: true
+      data:
+        updated: "${steps.sanitize_values.sanitized}"
+        snapshot: "${steps.get_updated_snapshot.snapshot}"
+      timestamp: "${now()}"
+      source: "wenchang_engine"
+    output:
+      response: "format.result"
+    dependsOn: ["emit_change_event"]
+
+# 输出定义
+outputs:
+  success:
+    description: "更新是否成功"
+    type: "boolean"
+  updated:
+    description: "实际更新的偏好项"
+    type: "object"
+  snapshot:
+    description: "更新后的完整偏好快照"
+    type: "object"
+
+# 错误处理
+error_handling:
+  validation_error:
+    type: "return_error"
+    response:
+      success: false
+      error: "偏好设置数据验证失败"
+      details: "{{ error.details }}"
+
+  engine_error:
+    type: "return_error"
+    response:
+      success: false
+      error: "文昌引擎更新失败"
+      reason: "{{ error.message }}"
+
+# 超时设置
+timeout: 10000
+priority: "user"

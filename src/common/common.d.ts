@@ -13,7 +13,6 @@ import type { ThumbnailRequest } from "./thumbnail-types";
 /**
  * Electron API
  */
-import type { ElectronAPI } from "@electron-toolkit/preload";
 
 /**
  * 全局声明
@@ -21,7 +20,13 @@ import type { ElectronAPI } from "@electron-toolkit/preload";
 declare global {
     interface Window {
         electron: ElectronAPI;
-        __heic2any__worker: Worker;
+
+        tianshu: {
+            processCommand: (command: any) => Promise<any>;
+            getStatus: () => Promise<any>;
+            onProgress: (callback: (progress: any) => void) => () => void;
+            onStatus: (callback: (status: any) => void) => () => void;
+        };
         api: {
             // 开始监听
             startWatching: (config: WatchConfig, callback: WatchCallback) => void;

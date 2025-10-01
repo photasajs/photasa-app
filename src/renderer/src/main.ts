@@ -1,58 +1,57 @@
-import { createApp, watch } from "vue";
+import "./assets/css/styles.less";
+import "./assets/css/tailwind.css";
+import "video.js/dist/video-js.css";
+
+import { createApp } from "vue";
 import App from "./App.vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
-import "./assets/css/styles.less";
-import "./assets/css/tailwind.css";
+
 import VueVideoPlayer from "@videojs-player/vue";
-import "video.js/dist/video-js.css";
 import { i18n } from "./i18n/config";
-import { usePreferenceStore } from "@renderer/stores/preference";
+
 import { useStatusBarStore } from "@renderer/stores/statusBar";
+
 import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
-import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
+import { FindPhotoServiceKey } from "@renderer/interfaces/find-photo-service.interface";
 import { globalLogInterceptor } from "@common/logger";
 
-const pinia = createPinia();
-pinia.use(piniaPluginPersistedstate);
+import { LisshimingService, LISSHIMING_TOKEN } from "./services";
+import { loggers } from "@common/logger";
 
+const logger = loggers.lishiming;
+
+logger.info("📦 开天辟地");
 const app = createApp(App);
+/**
+ * 创建 Pinia 实例
+ */
+logger.info("📦 创建 Pinia 实例");
+const pinia = createPinia();
+logger.info("📦 启动 Pinia 持久化插件");
+pinia.use(piniaPluginPersistedstate);
+logger.info("📦 挂载 i18n");
 app.use(i18n);
+logger.info("📦 挂载 VueVideoPlayer");
 app.use(VueVideoPlayer);
+logger.info("📦 挂载 pinia");
 app.use(pinia);
 
 // provide FindPhotoServiceIpc 实例
-app.provide(FindPhotoServiceKey, new FindPhotoServiceIpc());
+const findPhotoServiceIpc = new FindPhotoServiceIpc();
+app.provide(FindPhotoServiceKey, findPhotoServiceIpc);
 
-/**
- * 初始化偏好设置
- */
-const preferenceStore = usePreferenceStore();
-const locale = preferenceStore.locale as
-    | "en-US"
-    | "zh-CN"
-    | "ja-JP"
-    | "ko-KR"
-    | "fr-FR"
-    | "de-DE"
-    | "es-ES";
-(i18n.global.locale as unknown as import("vue").Ref<string>).value = locale;
-document.querySelector("html")?.setAttribute("lang", locale);
-
-// Watch for changes to keep i18n in sync with Pinia
-watch(
-    () => preferenceStore.locale,
-    (newLocale) => {
-        (i18n.global.locale as unknown as import("vue").Ref<string>).value = newLocale;
-        document.querySelector("html")?.setAttribute("lang", newLocale);
-    },
-);
-
-const statusBarStore = useStatusBarStore();
+// provide LisshimingService 实例
+const lisshimingService = new LisshimingService(app);
+app.provide(LISSHIMING_TOKEN, lisshimingService);
 
 // 初始化 renderer 日志拦截器 - 直接发送到 log viewer
 globalLogInterceptor.activate();
 
+// 启动大唐贞观之治
+await lisshimingService.startZhengguan();
+
+const statusBarStore = useStatusBarStore();
 // TODO: move to preload api instead
 if (window.electron && window.electron.ipcRenderer) {
     window.electron.ipcRenderer.on("notify:status", (_event, payload) => {
@@ -60,4 +59,5 @@ if (window.electron && window.electron.ipcRenderer) {
     });
 }
 
+logger.info("📦 挂载 App.vue 应用");
 app.mount("#app");

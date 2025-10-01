@@ -30,7 +30,8 @@
       "Bash(npx tsc:*)",
       "Read(//Volumes/SUCAI/Test/**)",
       "Bash(npx jest:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Read(//Users/albert.li/.photasa/**)"
     ],
     "deny": []
   }

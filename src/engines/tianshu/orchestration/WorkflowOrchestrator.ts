@@ -12,8 +12,11 @@ import {
     StepResult,
     WorkflowExecutionOptions,
 } from "../types/workflows";
-import { StepExecutor } from "./StepExecutor";
 import { VariableResolver } from "./VariableResolver";
+import { IStepExecutor } from "@engines/common/interfaces";
+import { loggers } from "@common/logger";
+
+const logger = loggers.tianshu;
 
 /**
  * 编排器配置
@@ -31,14 +34,17 @@ export interface OrchestratorConfig {
         delay: number;
         backoff: "linear" | "exponential";
     };
+    /** 步骤执行器 */
+    stepExecutor: IStepExecutor;
+    variableResolver?: VariableResolver;
 }
 
 /**
  * 工作流编排器
  */
 export class WorkflowOrchestrator extends EventEmitter {
-    private config: OrchestratorConfig;
-    private stepExecutor: StepExecutor;
+    // private config: OrchestratorConfig;
+    private stepExecutor: IStepExecutor;
     private variableResolver: VariableResolver;
     private activeExecutions = new Map<string, ExecutionContext>();
     private executionQueue: Array<{
@@ -50,28 +56,29 @@ export class WorkflowOrchestrator extends EventEmitter {
 
     constructor(config: OrchestratorConfig) {
         super();
-        this.config = {
-            stepTimeout: 10000,
-            retryConfig: {
-                maxAttempts: 3,
-                delay: 1000,
-                backoff: "exponential",
-            },
-            ...config,
-        };
+        // 使用传入的配置，如果没有传入，则使用默认的配置
+        // this.config = {
+        //     stepTimeout: 10000,
+        //     retryConfig: {
+        //         maxAttempts: 3,
+        //         delay: 1000,
+        //         backoff: "exponential",
+        //     },
+        //     ...config,
+        // };
 
-        this.stepExecutor = new StepExecutor({
-            timeout: this.config.stepTimeout || 10000,
-            retryConfig: this.config.retryConfig || {
-                maxAttempts: 3,
-                delay: 1000,
-                backoff: "exponential",
-            },
-        });
+        // 使用传入的步骤执行器，必须提供外部步骤执行器
+        if (!config.stepExecutor) {
+            throw new Error("stepExecutor is required in WorkflowOrchestrator config");
+        }
+        this.stepExecutor = config.stepExecutor;
 
-        this.variableResolver = new VariableResolver({
-            globalVariables: {},
-        });
+        // 使用传入的变量解析器，如果没有传入，则使用默认的变量解析器
+        this.variableResolver =
+            config.variableResolver ||
+            new VariableResolver({
+                globalVariables: {},
+            });
 
         this.setupEventHandlers();
     }
@@ -80,8 +87,12 @@ export class WorkflowOrchestrator extends EventEmitter {
      * 初始化编排器
      */
     async initialize(): Promise<void> {
-        await this.stepExecutor.initialize();
+        logger.info("🌌 初始化编排器");
+        if (this.stepExecutor.initialize) {
+            await this.stepExecutor.initialize();
+        }
         await this.variableResolver.initialize();
+        logger.info("🌌 编排器初始化完成");
     }
 
     /**
@@ -118,7 +129,7 @@ export class WorkflowOrchestrator extends EventEmitter {
 
         // 添加到队列
         this.executionQueue.push({ workflow, command, options });
-        this.activeExecutions.set(executionId, context);
+        this.activeExecutions.set(command.id, context);
 
         // 开始处理队列
         this.processQueue();
@@ -166,7 +177,7 @@ export class WorkflowOrchestrator extends EventEmitter {
         }
 
         // 清理组件
-        await this.stepExecutor.cleanup();
+        // 注意：IStepExecutor接口没有cleanup方法，不需要调用
         await this.variableResolver.cleanup();
 
         this.executionQueue = [];
@@ -175,6 +186,13 @@ export class WorkflowOrchestrator extends EventEmitter {
 
     /**
      * 设置事件处理器
+     * 如果步骤执行器有事件处理器，则将事件处理器绑定到编排器
+     * 否则，则不绑定事件处理器
+     * 绑定的事件处理器包括：
+     * - stepStarted
+     * - stepCompleted
+     * - stepFailed
+     * - stepProgress
      */
     private setupEventHandlers(): void {
         this.stepExecutor.on("stepStarted", (data) => {
@@ -219,11 +237,13 @@ export class WorkflowOrchestrator extends EventEmitter {
      */
     private async executeWorkflowInternal(
         workflow: WorkflowDefinition,
-        _command: UICommand,
+        command: UICommand,
         _options: WorkflowExecutionOptions,
     ): Promise<void> {
-        const context = this.activeExecutions.get(workflow.id);
+        const context = this.activeExecutions.get(command.id);
+        logger.info("🌌 内部工作流执行", { workflowId: workflow.id });
         if (!context) {
+            logger.error("🌌 内部工作流执行失败", { workflowId: workflow.id });
             return;
         }
 
@@ -246,7 +266,7 @@ export class WorkflowOrchestrator extends EventEmitter {
             context.metrics.totalDuration = Date.now() - context.startTime;
             this.emit("workflowFailed", context);
         } finally {
-            this.activeExecutions.delete(workflow.id);
+            this.activeExecutions.delete(command.id);
         }
     }
 
@@ -330,34 +350,14 @@ export class WorkflowOrchestrator extends EventEmitter {
             result.status = "running";
             this.emit("stepStarted", { step, context });
 
-            // 根据步骤类型执行
-            switch (step.type) {
-                case "action":
-                    result.output = await this.stepExecutor.executeAction(step, context);
-                    break;
-                case "condition":
-                    result.output = await this.stepExecutor.executeCondition(step, context);
-                    break;
-                case "loop":
-                    result.output = await this.stepExecutor.executeLoop(step, context);
-                    break;
-                case "parallel":
-                    result.output = await this.stepExecutor.executeParallel(step, context);
-                    break;
-                case "sequence":
-                    result.output = await this.stepExecutor.executeSequence(step, context);
-                    break;
-                case "delay":
-                    result.output = await this.stepExecutor.executeDelay(step, context);
-                    break;
-                case "retry":
-                    result.output = await this.stepExecutor.executeRetry(step, context);
-                    break;
-                case "error_handler":
-                    result.output = await this.stepExecutor.executeErrorHandler(step, context);
-                    break;
-                default:
-                    throw new Error(`Unknown step type: ${step.type}`);
+            // 根据步骤类型选择处理器
+            if (step.type === "condition") {
+                result.output = await this.executeConditionStep(step, context);
+            } else if (step.type === "loop") {
+                result.output = await this.executeLoopStep(step, context);
+            } else {
+                // action, builtin等步骤交给外部stepExecutor处理
+                result.output = await this.stepExecutor.executeAction(step, context);
             }
 
             result.status = "completed";
@@ -376,6 +376,214 @@ export class WorkflowOrchestrator extends EventEmitter {
         }
 
         return result;
+    }
+
+    /**
+     * 执行条件步骤
+     */
+    private async executeConditionStep(
+        step: WorkflowStep,
+        context: ExecutionContext,
+    ): Promise<any> {
+        if (!step.condition) {
+            throw new Error(`Condition step ${step.id} missing condition expression`);
+        }
+
+        const conditionResult = this.evaluateCondition(step.condition, context);
+
+        logger.info(`🌌 条件评估: ${step.id} = ${conditionResult}`, {
+            stepId: step.id,
+            condition: step.condition,
+            result: conditionResult,
+        });
+
+        return {
+            success: true,
+            result: conditionResult,
+            stepType: "condition",
+            stepId: step.id,
+        };
+    }
+
+    /**
+     * 执行循环步骤
+     */
+    private async executeLoopStep(step: WorkflowStep, context: ExecutionContext): Promise<any> {
+        if (!step.loop) {
+            throw new Error(`Loop step ${step.id} missing loop configuration`);
+        }
+
+        const loopConfig = step.loop;
+        const iterationResults: any[] = [];
+
+        // 解析循环次数或数组
+        let iterations: any[] = [];
+        if (typeof loopConfig.count === "number") {
+            iterations = Array.from({ length: loopConfig.count }, (_, i) => i);
+        } else if (Array.isArray(loopConfig.count)) {
+            iterations = loopConfig.count;
+        } else {
+            // 动态解析循环计数
+            const resolvedCount = this.variableResolver.resolveObject(loopConfig.count, context);
+            if (typeof resolvedCount === "number") {
+                iterations = Array.from({ length: resolvedCount }, (_, i) => i);
+            } else if (Array.isArray(resolvedCount)) {
+                iterations = resolvedCount;
+            } else {
+                throw new Error(
+                    `Invalid loop count in step ${step.id}: ${JSON.stringify(resolvedCount)}`,
+                );
+            }
+        }
+
+        // 执行循环
+        for (let i = 0; i < iterations.length; i++) {
+            const iterationValue = iterations[i];
+
+            // 创建循环变量上下文
+            const loopContext = {
+                ...context,
+                variables: {
+                    ...context.variables,
+                    [loopConfig.variable]: iterationValue,
+                    [`${loopConfig.variable}_index`]: i,
+                },
+            };
+
+            // 执行循环步骤
+            if (loopConfig.steps && loopConfig.steps.length > 0) {
+                await this.executeSteps(loopConfig.steps, loopContext);
+
+                // 收集循环结果
+                const iterationResult = {
+                    iteration: i,
+                    value: iterationValue,
+                    stepResults: Array.from(loopContext.stepResults.entries()),
+                };
+                iterationResults.push(iterationResult);
+            }
+        }
+
+        logger.info(`🌌 循环执行完成: ${step.id}, 迭代次数: ${iterations.length}`, {
+            stepId: step.id,
+            iterationCount: iterations.length,
+        });
+
+        return {
+            success: true,
+            result: iterationResults,
+            stepType: "loop",
+            stepId: step.id,
+            iterationCount: iterations.length,
+        };
+    }
+
+    /**
+     * 评估条件表达式
+     */
+    private evaluateCondition(condition: any, context: ExecutionContext): boolean {
+        if (!condition || typeof condition !== "object") {
+            return Boolean(condition);
+        }
+
+        const { field, operator, value, customFunction } = condition;
+
+        // 自定义函数条件
+        if (customFunction) {
+            // 这里可以扩展自定义函数支持
+            logger.warn(`🌌 自定义条件函数暂不支持: ${customFunction}`);
+            return false;
+        }
+
+        // 获取字段值
+        const fieldValue = this.getFieldValue(field, context);
+
+        // 根据操作符评估
+        switch (operator) {
+            case "eq":
+            case "equals":
+                return fieldValue === value;
+            case "ne":
+            case "notEquals":
+                return fieldValue !== value;
+            case "gt":
+                return fieldValue > value;
+            case "gte":
+                return fieldValue >= value;
+            case "lt":
+                return fieldValue < value;
+            case "lte":
+                return fieldValue <= value;
+            case "in":
+                return Array.isArray(value) && value.includes(fieldValue);
+            case "notIn":
+                return Array.isArray(value) && !value.includes(fieldValue);
+            case "exists":
+                return fieldValue !== undefined && fieldValue !== null;
+            case "notExists":
+                return fieldValue === undefined || fieldValue === null;
+            case "startsWith":
+                return typeof fieldValue === "string" && fieldValue.startsWith(String(value));
+            case "endsWith":
+                return typeof fieldValue === "string" && fieldValue.endsWith(String(value));
+            case "contains":
+                return typeof fieldValue === "string" && fieldValue.includes(String(value));
+            case "isEmpty":
+                return (
+                    !fieldValue ||
+                    (typeof fieldValue === "string" && fieldValue.trim() === "") ||
+                    (Array.isArray(fieldValue) && fieldValue.length === 0) ||
+                    (typeof fieldValue === "object" && Object.keys(fieldValue).length === 0)
+                );
+            case "isNotEmpty":
+                return (
+                    fieldValue &&
+                    !(typeof fieldValue === "string" && fieldValue.trim() === "") &&
+                    !(Array.isArray(fieldValue) && fieldValue.length === 0) &&
+                    !(typeof fieldValue === "object" && Object.keys(fieldValue).length === 0)
+                );
+            default:
+                logger.warn(`🌌 未知条件操作符: ${operator}`);
+                return false;
+        }
+    }
+
+    /**
+     * 获取字段值，支持嵌套路径
+     */
+    private getFieldValue(fieldPath: string, context: ExecutionContext): any {
+        if (!fieldPath) return undefined;
+
+        // 支持step.stepId.output.field格式
+        if (fieldPath.startsWith("step.")) {
+            const pathParts = fieldPath.split(".");
+            if (pathParts.length >= 3) {
+                const stepId = pathParts[1];
+                const stepResult = context.stepResults.get(stepId);
+                if (!stepResult) return undefined;
+
+                let current = stepResult;
+                for (let i = 2; i < pathParts.length; i++) {
+                    current = current?.[pathParts[i]];
+                }
+                return current;
+            }
+        }
+
+        // 支持input.field格式
+        if (fieldPath.startsWith("input.")) {
+            const inputPath = fieldPath.substring(6); // 移除"input."
+            return this.getNestedValue(context.input, inputPath);
+        }
+
+        // 支持variables.field格式
+        if (fieldPath.startsWith("variables.")) {
+            const varPath = fieldPath.substring(10); // 移除"variables."
+            return this.getNestedValue(context.variables, varPath);
+        }
+
+        // 直接字段访问
+        return context.variables[fieldPath] || context.input?.[fieldPath];
     }
 
     /**

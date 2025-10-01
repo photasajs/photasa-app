@@ -1,7 +1,7 @@
 # RFC 0035: 天枢·顺风耳·千里眼·司簿·马良五引擎编排架构
 
 - **开始日期**: 2024-06-07
-- **更新日期**: 2024-12-20
+- **更新日期**: 2025-09-29
 - **RFC PR**:
 - **实现议题**:
 
@@ -72,8 +72,7 @@ src/main/
       TianshuEngine.ts   // 主引擎类
       WorkflowLoader.ts  // 工作流加载器
     orchestration/
-      WorkflowOrchestrator.ts  // 工作流编排器
-      StepExecutor.ts          // 步骤执行器
+      WorkflowOrchestrator.ts  // 工作流编排器（依赖IStepExecutor接口）
       VariableResolver.ts      // 变量解析器
     scheduling/
       TaskScheduler.ts   // 任务调度器
@@ -1371,8 +1370,72 @@ window.electron.ipcRenderer.invoke('preferences:migrate', payload);
 | 0.2 | 司簿引擎基础实现（流式读取、缓存、规范化） | TBD | 2024-12-20 | 🟢 已完成 | `src/engines/sibu/core/SibuEngine.ts` |
 | 0.3 | 天枢状态报告机制设计 | TBD | 2024-12-20 | 🟢 已完成 | RFC 0035 状态报告章节 |
 | 0.4 | @Service装饰器架构设计 | TBD | 2024-12-20 | 🟢 已完成 | RFC 0035 太乙服务层设计 |
+| 0.5 | 天枢-太乙Service-Engine架构 | TBD | 2024-12-29 | 🟢 已完成 | Service薄包装+Engine纯业务架构 |
 
-#### Phase 0.5 自动迁移机制设计
+#### Phase 0.5 天枢-太乙Service-Engine架构实现完成
+
+**架构设计原则**：
+- ✅ **Service作为薄包装层**：处理IPC通信、依赖注入、接口适配
+- ✅ **Engine作为纯业务层**：专注核心业务逻辑，不处理任何接口实现
+- ✅ **清晰职责分离**：Service负责适配转发，Engine负责业务执行
+
+**实现内容**：
+- ✅ **IStepExecutor接口定义**：`src/engines/common/interfaces/step-executor.interface.ts`
+- ✅ **太乙服务适配器模式**：`src/main/deity/taiyi-service.ts` 实现IStepExecutor，转发调用给TaiyiEngine
+- ✅ **天枢服务集成太乙**：`src/main/deity/tianshu-service.ts` 通过依赖注入获取太乙服务
+- ✅ **天枢引擎配置更新**：支持stepExecutor配置项，接收太乙服务作为步骤执行器
+- ✅ **变量解析器共享**：天枢引擎和工作流编排器共享同一个VariableResolver实例
+- ✅ **架构验证**：天枢引擎成功初始化，太乙服务正确作为步骤执行器工作
+
+**Service-Engine分层架构流程**：
+```
+正向流程：UI命令 → TianshuService(IPC) → TianshuEngine(编排) → IStepExecutor(TaiyiService适配) → TaiyiEngine(业务) → 具体引擎
+回报链：  具体引擎结果 → TaiyiEngine → TaiyiService.emit(事件) → TianshuEngine → TianshuService(IPC) → 渲染进程UI
+```
+
+**关键架构原则**：
+- **TaiyiService**: 实现IStepExecutor接口，但只做路由转发，不包含业务逻辑
+- **TaiyiEngine**: 纯业务实现，不实现任何外部接口
+- **Interface Adapter Pattern**: Service层作为Engine的适配器
+
+**回报链详细设计**：
+- **执行结果传递**：工作流步骤执行结果通过Promise链返回到UI
+- **事件广播**：天枢引擎监听太乙引擎事件，通过IPC推送给渲染进程
+- **进度更新**：WorkflowOrchestrator发出progress事件，天枢服务转发给UI
+- **错误处理**：各层错误统一包装后向上传递，最终到达UI层
+
+**变量解析器架构**：
+```typescript
+// 天枢引擎初始化时创建共享的变量解析器
+class TianshuEngine {
+    constructor(config: TianshuEngineConfig) {
+        // 1. 创建变量解析器实例
+        this.variableResolver = new VariableResolver({
+            globalVariables: this.config.globalVariables || {},
+        });
+
+        // 2. 将变量解析器传递给编排器
+        this.orchestrator = new WorkflowOrchestrator({
+            variableResolver: this.variableResolver,  // 共享实例
+            stepExecutor: this.config.stepExecutor,
+            // ...其他配置
+        });
+    }
+}
+
+// 工作流编排器使用共享的变量解析器
+class WorkflowOrchestrator {
+    constructor(config: OrchestratorConfig) {
+        // 使用传入的变量解析器或创建默认实例
+        this.variableResolver = config.variableResolver ||
+            new VariableResolver({ globalVariables: {} });
+    }
+}
+```
+
+**当前状态**：基础架构已完成，工作流YAML格式已修正，变量解析器架构优化完成。
+
+#### Phase 0.6 自动迁移机制设计
 
 **目标**：应用启动时自动检测并转换旧格式配置，无需用户干预
 
@@ -1687,6 +1750,319 @@ export class StatusReportingService implements IService {
    - 优点：隔离性好，可独立扩展
    - 缺点：桌面应用过重，IPC复杂度高
 
+### 天枢-太乙双向通信架构详细设计
+
+基于Service薄包装+Engine纯业务的分层架构，需要建立清晰的双向通信机制：
+
+#### 双向通信架构概览
+
+```
+                                双向通信
+UI ⟷ TianshuService(IPC) ⟷ TianshuEngine(编排) ⟷ IStepExecutor(TaiyiService适配) ⟷ TaiyiEngine(业务) ⟷ 具体引擎
+    │                       │                    │                                  │
+    │     IPC通信           │    事件转发         │    EventEmitter.on()监听        │
+    └─────────────────────── 状态推送 ←──────────── 事件发送 ←─────────────────────────┘
+```
+
+#### 通信方向1：天枢 → 太乙 (命令下发) - 统一executeAction
+
+```
+用户操作 → TianshuService.IPC
+  ↓
+TianshuEngine.executeWorkflow()
+  ↓
+WorkflowOrchestrator.executeStep()
+  ↓
+【关键简化】：无论step.type是什么，都调用同一个方法
+this.stepExecutor.executeAction(step, context)  // 第349行
+  ↓ (太乙服务适配层)
+TaiyiService.executeAction()
+  ↓ 内部根据step.type分发
+switch(step.type) {
+  case "action": handleAction()
+  case "condition": handleCondition()
+  case "loop": handleLoop()
+  // 在太乙内部处理，外部接口统一
+}
+  ↓
+TaiyiEngine.callEngine() → 具体引擎执行
+```
+
+#### 通信方向2：太乙 → 天枢 (状态回报) - .on()事件监听
+
+```
+具体引擎执行过程
+  ↓
+【事件源头】：TaiyiEngine业务层产生状态变化
+TaiyiEngine.emit('stepStarted')      // 引擎层事件发送
+TaiyiEngine.emit('stepProgress')     // 引擎层进度更新
+TaiyiEngine.emit('stepCompleted')    // 引擎层完成通知
+TaiyiEngine.emit('stepFailed')       // 引擎层失败通知
+  ↓ 【适配层委托】：TaiyiService.on()直接委托给TaiyiEngine.on()
+TaiyiService.on() → TaiyiEngine.on() (直接hookup，无需转发)
+  ↓ 【关键接收】：WorkflowOrchestrator.setupEventHandlers()
+this.stepExecutor.on('stepStarted', (data) => {...})   // 第196行
+this.stepExecutor.on('stepProgress', (data) => {...})  // 第208行
+this.stepExecutor.on('stepCompleted', (data) => {...}) // 第200行
+this.stepExecutor.on('stepFailed', (data) => {...})    // 第204行
+  ↓ 事件转发到天枢引擎
+this.emit('stepStarted', data)
+  ↓
+TianshuService监听 → IPC推送 → 渲染进程UI实时更新
+```
+
+#### 双向通信详细设计
+
+**1. 命令下发机制 (天枢 → 太乙) - 简化统一接口**
+- **接口**: `IStepExecutor.executeAction(step, context): Promise<StepExecutionResult>`
+- **核心简化**: 无论step.type是什么，都使用同一个executeAction方法
+- **设计优势**:
+  - WorkflowOrchestrator不需要关心步骤类型细节
+  - step参数包含所有必要信息（type, action, input, condition, loop等）
+  - 太乙服务内部根据step.type自行分发处理
+- **数据流**: WorkflowStep(包含type) + ExecutionContext → 太乙内部分发 → 标准化结果
+
+**2. 状态回报机制 (太乙 → 天枢) - .on()方法监听**
+- **核心机制**: IStepExecutor接口声明EventEmitter方法，支持.on()监听
+- **关键代码**: WorkflowOrchestrator.setupEventHandlers() (第195-211行)
+```typescript
+this.stepExecutor.on("stepStarted", (data) => this.emit("stepStarted", data));
+this.stepExecutor.on("stepCompleted", (data) => this.emit("stepCompleted", data));
+this.stepExecutor.on("stepFailed", (data) => this.emit("stepFailed", data));
+this.stepExecutor.on("stepProgress", (data) => this.emit("stepProgress", data));
+```
+- **事件类型**:
+  - `stepStarted`: 步骤开始执行 - 立即通知UI开始状态
+  - `stepProgress`: 执行进度更新 (0-100%) - 实时进度条更新
+  - `stepCompleted`: 步骤执行完成 - 成功状态通知
+  - `stepFailed`: 步骤执行失败 - 错误状态和消息
+- **数据流**: TaiyiEngine.emit() → TaiyiService.on()委托 → WorkflowOrchestrator直接监听引擎 → TianshuEngine → IPC → UI
+
+**3. 双向通信的关键设计**
+- **接口纯粹性**: IStepExecutor只声明方法，不继承实现
+- **Service作为代理**: TaiyiService实现IStepExecutor，将EventEmitter方法委托给TaiyiEngine
+- **Engine是事件源头**: TaiyiEngine负责业务执行和状态变化，发出原始事件
+- **直接事件链**: TaiyiEngine.emit() → TaiyiService.on()委托 → WorkflowOrchestrator直接监听 → IPC
+- **分层职责**: Engine负责业务，Service负责适配，Orchestrator负责编排
+
+#### 接口设计核心需求
+
+**关键发现**: WorkflowOrchestrator需要监听IStepExecutor的事件
+**代码证据**:
+```typescript
+// src/engines/tianshu/orchestration/WorkflowOrchestrator.ts:193-209
+private setupEventHandlers(): void {
+    this.stepExecutor.on("stepStarted", (data) => {
+        this.emit("stepStarted", data);
+    });
+    this.stepExecutor.on("stepCompleted", (data) => {
+        this.emit("stepCompleted", data);
+    });
+    this.stepExecutor.on("stepFailed", (data) => {
+        this.emit("stepFailed", data);
+    });
+    this.stepExecutor.on("stepProgress", (data) => {
+        this.emit("stepProgress", data);
+    });
+}
+```
+
+**设计结论**: IStepExecutor必须声明EventEmitter方法以支持.on()方法
+
+**接口设计最佳实践**:
+- ❌ **错误**: `interface IStepExecutor extends EventEmitter` (继承具体实现)
+- ✅ **正确**: 在接口中声明需要的方法 (声明契约，不依赖实现)
+
+#### 双向通信接口设计
+
+```typescript
+// IStepExecutor接口设计 - 简化双向通信
+export interface IStepExecutor {
+    /**
+     * 统一命令执行接口 (天枢 → 太乙)
+     *
+     * 设计原则：
+     * - 无论step.type是什么（action/condition/loop/parallel等），都使用这一个方法
+     * - step参数包含所有执行信息：type, action, input, condition, loop等
+     * - 太乙服务内部根据step.type进行分发处理
+     * - WorkflowOrchestrator不需要了解执行细节
+     */
+    executeAction(step: WorkflowStep, context: ExecutionContext): Promise<StepExecutionResult>;
+
+    /**
+     * 双向通信事件接口 (太乙 → 天枢)
+     *
+     * 接口声明而非继承实现，支持WorkflowOrchestrator.setupEventHandlers():
+     * this.stepExecutor.on('stepStarted', (data) => this.emit('stepStarted', data))
+     * this.stepExecutor.on('stepProgress', (data) => this.emit('stepProgress', data))
+     * this.stepExecutor.on('stepCompleted', (data) => this.emit('stepCompleted', data))
+     * this.stepExecutor.on('stepFailed', (data) => this.emit('stepFailed', data))
+     *
+     * 事件流：TaiyiService.emit() → WorkflowOrchestrator.on() → TianshuEngine → UI
+     */
+    on(event: string, callback: (data: any) => void): void;
+    off(event: string, callback: (data: any) => void): void;
+    once(event: string, callback: (data: any) => void): this;
+    emit(event: string, data: any): void;
+    removeAllListeners(event?: string): void;
+}
+
+// WorkflowOrchestrator利用事件进行状态传递
+// setupEventHandlers()将太乙的事件转发给天枢引擎
+// 天枢引擎再通过IPC将状态发送给UI
+```
+
+// 标准化执行结果
+export interface StepExecutionResult {
+    success: boolean;
+    data?: any;
+    error?: string;
+    metadata?: {
+        duration: number;
+        engineName?: string;
+        [key: string]: any;
+    };
+}
+
+// 进度回报结构
+export interface StepProgressReport {
+    stepId: string;
+    progress: number; // 0-100
+    message?: string;
+    currentPhase?: string;
+}
+```
+
+#### 完整双向通信时序图
+
+```
+用户操作 → TianshuService → TianshuEngine → WorkflowOrchestrator
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. 命令下发阶段 (天枢 → 太乙):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WorkflowOrchestrator.executeStep()
+   ↓
+stepExecutor.executeAction(step, context) ← IStepExecutor接口
+   ↓
+TaiyiService.executeAction() [适配层: 实现IStepExecutor接口]
+   ↓
+TaiyiEngine.callEngine() [业务层: 纯业务逻辑]
+   ↓
+具体引擎执行
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. 状态回报阶段 (太乙 → 天枢):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TaiyiService.emit('stepStarted')
+   ↓ [WorkflowOrchestrator.setupEventHandlers()]
+stepExecutor.on('stepStarted') → this.emit('stepStarted')
+   ↓
+TianshuEngine监听并转发
+   ↓
+TianshuService.IPC → UI实时更新
+
+// 同样的事件流适用于:
+// stepProgress, stepCompleted, stepFailed, engineStatus
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. 结果返回阶段 (同步):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Promise<StepExecutionResult> 同步返回
+   ↓
+WorkflowOrchestrator处理结果
+   ↓
+最终响应返回给UI
+```
+
+**关键设计要点**:
+- **EventEmitter继承是必需的**: WorkflowOrchestrator.setupEventHandlers()依赖.on()方法
+- **事件转发链**: TaiyiService.emit() → WorkflowOrchestrator.on() → TianshuEngine.emit() → UI
+- **双通道通信**: Promise提供同步结果，EventEmitter提供异步状态更新
+
+#### 回报机制类型
+
+**1. 同步结果回报**（Promise链）：
+```typescript
+// UI发起命令请求
+const response = await ipcRenderer.invoke('tianshu.command', {
+    intent: 'preference_update',
+    payload: { theme: 'dark' }
+});
+
+// 结果同步返回到UI
+console.log(response); // { success: true, result: {...}, commandId: '...' }
+```
+
+**2. 异步事件回报**（EventEmitter + IPC）：
+```typescript
+// 天枢引擎发出进度事件
+this.emit('progress', {
+    commandId: 'cmd-123',
+    workflowId: 'preference_update',
+    stepId: 'validate_input',
+    progress: 25,
+    message: '正在验证输入参数...'
+});
+
+// 天枢服务转发给渲染进程
+this.mainWindow.webContents.send('tianshu.progress', progressData);
+
+// UI接收进度更新
+ipcRenderer.on('tianshu.progress', (progressData) => {
+    updateProgressBar(progressData.progress);
+});
+```
+
+**3. 状态变更回报**：
+```typescript
+// 引擎状态变化推送
+this.emit('status', {
+    engineName: 'wenchang',
+    status: 'processing',
+    timestamp: Date.now(),
+    metadata: { activeWorkflows: 2 }
+});
+```
+
+#### 错误处理回报链
+```typescript
+// 底层引擎错误
+throw new WenChangError('偏好验证失败', { field: 'theme' });
+
+// 太乙服务包装错误
+catch (error) {
+    throw new TaiyiExecutionError('步骤执行失败', {
+        originalError: error,
+        stepId: step.id,
+        serviceName: step.service
+    });
+}
+
+// 天枢引擎统一错误处理
+catch (error) {
+    this.emit('error', {
+        commandId: command.id,
+        workflowId: workflow.id,
+        error: this.wrapError(error),
+        timestamp: Date.now()
+    });
+}
+
+// 渲染进程接收错误
+ipcRenderer.on('tianshu.error', (errorData) => {
+    showErrorNotification(errorData.error.message);
+});
+```
+
+#### 回报链性能优化
+- **批量回报**：将多个进度更新合并，避免频繁IPC调用
+- **差异回报**：只推送状态变化，避免重复数据传输
+- **分级回报**：重要事件立即推送，一般状态可延迟合并
+
 ## 未决问题
 
 ### 天枢编排层
@@ -1709,3 +2085,89 @@ export class StatusReportingService implements IService {
 - 马良的 GPU/CPU 资源如何与千里眼队列协同限流，避免重负载时阻塞扫描主循环？
 - 五引擎事件总线是否迁移到单一 Observable 框架（如 RxJS），或保持当前轻量实现？
 - 渲染层离线（应用休眠）期间若 PreferenceStore 有本地修改，如何进行冲突解决与用户提示？
+
+## 最近修复记录 (2025-09-29)
+
+### 天枢-太乙双向通信架构完善
+
+#### 1. 简化IStepExecutor接口设计
+- **问题**：WorkflowOrchestrator过度设计，包含多个执行方法（executeCondition、executeLoop等）
+- **解决**：统一为单一`executeAction`方法，通过step.type区分处理逻辑
+- **影响**：简化了天枢-太乙通信接口，提高代码可维护性
+
+#### 2. Service-Engine架构模式确立
+- **设计原则**：Service作为薄包装层，Engine承载业务逻辑
+- **TaiyiService**：实现EventEmitter方法委托给TaiyiEngine，不直接继承
+- **事件流**：TaiyiEngine.emit() → TaiyiService委托 → WorkflowOrchestrator监听
+
+#### 3. 两界连接实现（Renderer ↔ Main）
+
+##### Preload层重构
+- 天枢通信API独立为`src/preload/tianshu.ts`
+- 直接暴露`window.tianshu`，提供完整双向通信能力
+- 保持向后兼容的legacy API分离
+
+##### 袁天罡-天枢通信链路
+- **符箓转换**：房玄龄诏令 → 袁天罡符箓 → 天枢UICommand
+- **意图映射**：使用ZOUZHE_MATTERS常量确保正确映射
+- **参数构造**：针对偏好变更命令自动添加action和delta参数
+
+#### 4. 关键Bug修复
+
+##### WorkflowOrchestrator执行上下文键不匹配
+- **问题**：存储使用`executionId`，检索使用`workflow.id`
+- **修复**：统一使用`command.id`作为键，确保上下文正确检索
+- **影响**：解决工作流执行失败的根本原因
+
+##### 太乙服务YAML参数解析错误
+- **问题**：YAML中`action: "callEngine"`，但代码将其作为方法名传递
+- **修复**：正确解析`input.methodName`作为实际调用方法
+- **示例**：
+  ```yaml
+  action: "callEngine"
+  input:
+    engineName: "wenchang"
+    methodName: "getCurrentSnapshot"  # 实际调用方法
+  ```
+
+#### 5. 架构验证
+- **通信链路**：房玄龄 → 袁天罡 → 天枢 → 太乙 → 引擎 → 结果回传
+- **事件回流**：引擎状态 → 太乙事件 → 天枢广播 → 渲染进程UI更新
+- **错误处理**：完整的错误传播和状态管理机制
+
+#### 6. TaiyiService路由逻辑修复
+- **问题**：TaiyiService的executeAction方法路由逻辑错误，无法正确解析YAML工作流格式
+- **根本原因**：
+  - 错误地将`step.service`直接作为引擎名传递给`callEngine()`
+  - 对于`service: "taiyi"`的路由模式，应该从`input.engineName`解析真实目标引擎
+  - 三种路由模式（builtin、taiyi路由、直接引擎调用）混淆
+- **解决方案**：实现正确的条件分支路由逻辑
+  ```typescript
+  // 修复前（错误）
+  const engineName = step.service || "system";  // 直接使用step.service
+
+  // 修复后（正确）
+  if (step.service === "builtin") {
+      // 内置操作路由
+  } else if (step.service === "taiyi" && step.action === "callEngine") {
+      // 太乙路由模式：从input解析真实目标
+      const engineName = step.input?.engineName;
+      const methodName = step.input?.methodName;
+  } else {
+      // 直接引擎调用模式
+  }
+  ```
+- **YAML格式支持**：
+  - **Builtin模式**：`service: "builtin", action: "return"`
+  - **太乙路由模式**：`service: "taiyi", action: "callEngine", input: {engineName: "wenchang", methodName: "getCurrentSnapshot"}`
+  - **直接引擎调用**：`service: "qianliyan", action: "validatePaths"`
+- **技术改进**：
+  - 添加路由决策日志便于调试（`routeInfo`字段）
+  - 增强错误处理包含路由上下文信息
+  - 元数据包含路由信息支持问题排查
+- **影响**：修复了工作流执行失败的根本原因，确保天枢能正确调度各专业引擎
+
+### 技术债务清理
+- 移除不必要的`needsTianshuCommunication`判断逻辑
+- 修复TypeScript类型错误和ESLint规范问题
+- 统一使用常量避免硬编码字符串

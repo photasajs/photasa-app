@@ -25,8 +25,8 @@ import ScanQueueDialog from "./components/ScanQueueDialog.vue";
 import { useI18n } from "vue-i18n";
 import { useTitle, watchArray } from "@vueuse/core";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
-import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
-import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
+import { FindPhotoServiceKey } from "@renderer/interfaces/find-photo-service.interface";
+import { getThemeManager, ThemeMeta } from "@renderer/components/settings/ThemeSettingsHelper";
 import { onMounted } from "vue";
 import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
@@ -48,8 +48,8 @@ import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 /**
  * 日志记录器
  */
-const logger = loggers.app;
-
+const logger = loggers.lishiming;
+const themeManager = getThemeManager();
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
@@ -125,7 +125,7 @@ async function initializeApp(): Promise<void> {
         // Start to check if any leftover folder need to scan
         startScanning();
     } catch (error) {
-        logger.error("Failed to initialize app:", error);
+        logger.error("👑 李世民登基失败:", error);
         loading.value = false;
         // Open preference to config on error
         showPreference.value = true;
@@ -159,7 +159,7 @@ onMounted(async () => {
     // 初始化扫描监控服务
     scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
     scanMonitoringService.startMonitoring(() => {
-        logger.info("[扫描监控] 自动恢复触发，重启扫描");
+        logger.info("👑 [扫描监控] 自动恢复触发，重启扫描");
         startScanning();
     });
 
@@ -170,7 +170,7 @@ onMounted(async () => {
 // 组件卸载时清理监控服务
 onUnmounted(() => {
     scanMonitoringService.stopMonitoring();
-    logger.info("[App] 扫描监控服务已停止");
+    logger.info("👑 [App] 扫描监控服务已停止");
 });
 
 // vue3 watch for array, should specify deep as true
@@ -192,7 +192,7 @@ function addScanFolderWithLog(
     source: "user" | "auto" = "user",
 ) {
     logger.info(
-        `[addScanFolderWithLog] Adding folder to queue: ${folder}, action: ${action}, source: ${source}`,
+        `👑 [addScanFolderWithLog] Adding folder to queue: ${folder}, action: ${action}, source: ${source}`,
     );
 
     // 直接添加到队列，让 preference store 处理优先级和去重
@@ -206,16 +206,16 @@ watchArray(
     scanningFolder,
     () => {
         if (scanPhotosTask.isIdle) {
-            logger.info("scanPhotosTask is idle, calling startScanning");
+            logger.info("👑 scanPhotosTask is idle, calling startScanning");
             startScanning();
         } else {
-            logger.info("scanPhotosTask is not idle, will retry in 500ms");
+            logger.info("👑 scanPhotosTask is not idle, will retry in 500ms");
             setTimeout(() => {
                 if (scanPhotosTask.isIdle) {
-                    logger.debug("scanPhotosTask became idle, retrying startScanning");
+                    logger.debug("👑 scanPhotosTask became idle, retrying startScanning");
                     startScanning();
                 } else {
-                    logger.warn("scanPhotosTask still not idle after 500ms");
+                    logger.warn("👑 scanPhotosTask still not idle after 500ms");
                 }
             }, 500);
         }
@@ -300,7 +300,7 @@ const callbacks: ScanCallbacks = {
 };
 
 async function startScanning(): Promise<void> {
-    logger.debug("[扫描启动] 开始扫描流程");
+    logger.debug("👑 [扫描启动] 开始扫描流程");
 
     try {
         // 记录扫描活动
@@ -315,14 +315,14 @@ async function startScanning(): Promise<void> {
         }
 
         if (result.error) {
-            logger.error("Scan orchestration error:", result.error);
+            logger.error("👑 Scan orchestration error:", result.error);
             scanMonitoringService.recordFailure();
         } else {
             // 记录成功的扫描活动
             scanMonitoringService.recordActivity();
         }
     } catch (error) {
-        logger.error("[扫描启动] 扫描过程中发生异常", error);
+        logger.error("👑 [扫描启动] 扫描过程中发生异常", error);
         scanMonitoringService.recordFailure();
         throw error;
     }
@@ -353,7 +353,7 @@ useTitle(title);
 // 🔧 状态栏路径显示修复：processScannedFileTask 回调中增强了路径构造逻辑
 // 相关修改：将 args.currentFile (文件名) 与 args.action.path (目录路径) 结合，构造完整文件路径
 findPhotoService.onFindPhoto((args: any) => {
-    logger.debug("onFindPhoto received:", args.type, args.action?.path, args.progress);
+    logger.debug("👑 onFindPhoto received:", args.type, args.action?.path, args.progress);
 
     // 记录扫描活动（表示有进展）
     if (args.progress || args.type === "complete") {
@@ -367,6 +367,7 @@ findPhotoService.onFindPhoto((args: any) => {
         );
         if (targetIndex >= 0) {
             logger.debug(
+                `👑 Updating progress for ${args.action.path}: ${args.progress.processed}/${args.progress.total}`,
                 `Updating progress for ${args.action.path}: ${args.progress.processed}/${args.progress.total}`,
             );
             scanningFolder.value[targetIndex].progress = {
@@ -421,11 +422,11 @@ findPhotoService.onFindPhoto((args: any) => {
 
 // 监听统一队列事件，处理文件监视产生的批量操作
 window.api?.onScanQueueAdd((operations: any[]) => {
-    logger.debug(`Received ${operations.length} file operations from watch service`);
+    logger.debug(`👑 Received ${operations.length} file operations from watch service`);
 
     // Process batch of file operations
     operations.forEach((operation) => {
-        logger.debug("Adding file operation to queue:", operation);
+        logger.debug("👑 Adding file operation to queue:", operation);
 
         // Convert FileOperation to enhanced ScanAction for unified processing
         const fileOperation = {
@@ -496,6 +497,7 @@ window.api?.onScanQueueAdd((operations: any[]) => {
     >
         <UserPreference></UserPreference>
     </BaseModal>
+
     <ScanQueueDialog
         :show="showScanList"
         :scanning-folder="scanningFolder"

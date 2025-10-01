@@ -7,6 +7,9 @@ import * as fs from "fs-extra";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { WorkflowDefinition } from "../types/workflows";
+import { loggers } from "@common/logger";
+
+const logger = loggers.tianshu;
 
 /**
  * 工作流加载器配置
@@ -74,9 +77,9 @@ export class WorkflowLoader {
             }
 
             this.isInitialized = true;
-            console.log(`[WorkflowLoader] Initialized with ${this.cache.size} workflows`);
+            logger.info(`[WorkflowLoader] Initialized with ${this.cache.size} workflows`);
         } catch (error) {
-            console.error("[WorkflowLoader] Failed to initialize:", error);
+            logger.error("[WorkflowLoader] Failed to initialize:", error);
             throw error;
         }
     }
@@ -85,6 +88,8 @@ export class WorkflowLoader {
      * 加载工作流
      */
     async loadWorkflow(workflowId: string): Promise<WorkflowDefinition | null> {
+        logger.info("🌌 加载工作流", { workflowId });
+
         if (!this.isInitialized) {
             throw new Error("WorkflowLoader not initialized");
         }
@@ -92,15 +97,17 @@ export class WorkflowLoader {
         // 检查缓存
         const cached = this.cache.get(workflowId);
         if (cached && this.isCacheValid(cached)) {
+            logger.info("🌌 从缓存加载工作流", { workflowId });
             return cached.workflow;
         }
 
         // 从文件系统加载
         const workflow = await this.loadWorkflowFromFile(workflowId);
         if (workflow) {
+            logger.info("🌌 缓存工作流", { workflowId });
             this.cacheWorkflow(workflowId, workflow);
         }
-
+        logger.info("🌌 加载工作流完成", { workflowId });
         return workflow;
     }
 
@@ -151,7 +158,7 @@ export class WorkflowLoader {
         this.cache.clear();
 
         this.isInitialized = false;
-        console.log("[WorkflowLoader] Cleaned up");
+        logger.info("[WorkflowLoader] Cleaned up");
     }
 
     /**
@@ -170,7 +177,7 @@ export class WorkflowLoader {
                             this.cacheWorkflow(workflowId, workflow);
                         }
                     } catch (error) {
-                        console.warn(
+                        logger.warn(
                             `[WorkflowLoader] Failed to load workflow ${workflowId}:`,
                             error,
                         );
@@ -178,7 +185,7 @@ export class WorkflowLoader {
                 }
             }
         } catch (error) {
-            console.error("[WorkflowLoader] Failed to scan workflows:", error);
+            logger.error("[WorkflowLoader] Failed to scan workflows:", error);
             throw error;
         }
     }
@@ -232,7 +239,7 @@ export class WorkflowLoader {
 
             return workflow;
         } catch (error) {
-            console.error(`[WorkflowLoader] Failed to load workflow ${workflowId}:`, error);
+            logger.error(`[WorkflowLoader] Failed to load workflow ${workflowId}:`, error);
             return null;
         }
     }
@@ -288,7 +295,7 @@ export class WorkflowLoader {
 
             return workflow;
         } catch (error) {
-            console.error("[WorkflowLoader] Invalid workflow definition:", error);
+            logger.error("[WorkflowLoader] Invalid workflow definition:", error);
             return null;
         }
     }
@@ -345,7 +352,7 @@ export class WorkflowLoader {
                 if (workflowId) {
                     const watcher = fs.watch(filePath, async (eventType) => {
                         if (eventType === "change") {
-                            console.log(`[WorkflowLoader] Workflow file changed: ${workflowId}`);
+                            logger.info(`[WorkflowLoader] Workflow file changed: ${workflowId}`);
                             await this.reloadWorkflow(workflowId);
                         }
                     });
@@ -354,7 +361,7 @@ export class WorkflowLoader {
                 }
             }
         } catch (error) {
-            console.error("[WorkflowLoader] Failed to setup file watchers:", error);
+            logger.error("[WorkflowLoader] Failed to setup file watchers:", error);
         }
     }
 }

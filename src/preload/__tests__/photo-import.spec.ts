@@ -4,7 +4,7 @@ import fs from "fs-extra";
 
 // Mock Electron API before importing photo-import
 vi.mock("@electron-toolkit/preload", () => ({
-    electronAPI: {
+    electron: {
         ipcRenderer: {
             invoke: vi.fn(),
             on: vi.fn(),

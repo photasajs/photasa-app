@@ -392,7 +392,7 @@ interface ScanJobState {
 | 阶段 | 范围 | 当前状态 | 备注 |
 | ---- | ---- | -------- | ---- |
 | Phase 0 | 契约冻结、样例数据、测试基架 | 🔄 进行中 | 建立 `src/engines/common/` 契约基础 |
-| Phase 1 | 骨架搭建 - tianshu-service + 基础引擎 | 🔄 进行中 | 验证现有服务 + 引擎集成 + 太乙重构 |
+| Phase 1 | 骨架搭建 - tianshu-service + 基础引擎 | 🔄 进行中 | 太乙重构完成，正在集成太乙服务到天枢 |
 | Phase 2 | 功能验证 - 核心功能验证 | ⬜ 未启动 | 扫描、偏好管理等功能测试 |
 | Phase 3 | 服务迁移 - 旧服务迁移到太乙架构 | ⬜ 未启动 | 移除 renderer 队列桥接 |
 | Phase 4 | 架构统一 - 清理旧代码完成统一 | ⬜ 未启动 | 限流、失败恢复、指标上报 |
@@ -417,6 +417,45 @@ src/engines/common/
     └── test-harness.test.ts
 ```
 
+### Phase 1 完成进度报告
+
+**重大完成项 (2025-09-28)**：
+
+1. **太乙引擎重命名与重构** ✅
+   - 完成从"承宣引擎"到"太乙引擎"的全面重命名
+   - 更新神话背景：太乙真人 - 道教十二金仙之首，统筹协调之神
+   - 重构目录：`src/engines/chengxuan/` → `src/engines/taiyi/`
+   - 更新所有文档和RFC引用
+
+2. **@Adapter装饰器系统** ✅
+   - 实现完整的`@Adapter`装饰器替代`@Service`
+   - 建立`AdapterRegistry`注册中心，支持依赖解析和优先级
+   - 实现生命周期管理：注册→初始化→健康检查→关闭
+   - 支持错误恢复和重试机制
+
+3. **TaiyiEngine核心引擎** ✅
+   - 统一的引擎调用接口：`callEngine(engineName, method, ...args)`
+   - 引擎状态管理和监控
+   - 事件驱动架构支持
+   - 完整的TypeScript类型定义
+
+4. **文昌适配器实现** ✅
+   - `WenchangEngine`：偏好管理、版本控制、持久化
+   - `WenchangAdapter`：@Adapter模式包装
+   - 完整的测试覆盖（10/10测试通过）
+   - 支持增量更新、事件通知、历史追踪
+
+5. **太乙神位服务** ✅
+   - 创建`src/main/deity/taiyi-service.ts`
+   - 使用@Service装饰器注册为天庭服务
+   - 提供IPC接口供渲染进程调用
+   - 事件广播和状态同步
+
+**测试验证结果**：
+- 太乙引擎测试：11/11 通过 ✅
+- 文昌适配器测试：10/10 通过 ✅
+- 无遗留承宣引用：0个 ✅
+
 ### Phase 1 详细任务清单
 
 **步骤1: 验证现有天庭服务**
@@ -432,16 +471,22 @@ src/engines/common/
 - [ ] 添加基本的错误处理和日志记录
 
 **步骤3: 太乙架构重构**
-- [ ] 分析现有太乙代码(从旧服务复制而来)
-- [ ] 重构太乙为独立的引擎注册中心
-- [ ] 实现@Adapter装饰器替代@Service
-- [ ] 建立引擎生命周期管理机制
+- [x] 分析现有太乙代码(从旧服务复制而来) - 完成承宣→太乙重命名
+- [x] 重构太乙为独立的引擎注册中心 - TaiyiEngine + AdapterRegistry实现
+- [x] 实现@Adapter装饰器替代@Service - 完整的@Adapter系统
+- [x] 建立引擎生命周期管理机制 - 依赖解析、健康检查、错误恢复
 
 **步骤4: 文昌适配器实现**
-- [ ] 创建`src/engines/wenchang/`目录结构
-- [ ] 实现WenchangEngine基础功能
-- [ ] 创建第一个@Adapter包装器
-- [ ] 验证adapter/worker模式的可行性
+- [x] 创建`src/engines/wenchang/`目录结构 - 完整目录结构
+- [x] 实现WenchangEngine基础功能 - 偏好管理、版本控制、持久化
+- [x] 创建第一个@Adapter包装器 - WenchangAdapter实现
+- [x] 验证adapter/worker模式的可行性 - 测试覆盖100%
+
+**步骤5: 太乙神位服务集成**
+- [x] 创建`src/main/deity/taiyi-service.ts` - 太乙神位服务
+- [ ] 将太乙服务注入到天枢服务依赖中
+- [ ] 更新神位入口导入太乙服务
+- [ ] 测试太乙服务与天枢服务的协同工作
 
 **集成测试**：
 - [ ] 测试天枢服务与太乙的协同工作

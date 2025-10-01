@@ -362,7 +362,6 @@ export const loggers: Record<string, PhotasaLogger> = {
     config: getLogger("config"),
     scan: getLogger("scan"),
     thumbnail: getLogger("thumbnail"),
-    preference: getLogger("preference"),
     worker: getLogger("worker"),
     watch: getLogger("watch"),
     window: getLogger("window"),
@@ -372,4 +371,22 @@ export const loggers: Record<string, PhotasaLogger> = {
     importProgress: getLogger("importProgress"),
     update: getLogger("update"),
     discovery: getLogger("discovery"),
+    // 天界
+    tianshu: getLogger("天枢"),
+    taiyi: getLogger("太乙"),
+    qianliyan: getLogger("千里眼"),
+    sibu: getLogger("司簿"),
+    wenchang: getLogger("文昌"),
+    maliang: getLogger("马良"),
+    shunfenger: getLogger("顺风耳"),
+    // 人界
+    lishiming: getLogger("李世民"), // 皇帝 主宰 App
+    fangxuanling: getLogger("房玄龄"), // 宰相 负责 Pinia Store
+    yuantiangang: getLogger("袁天罡"), // 钦天监 负责天界通信
+    duruhui: getLogger("杜如晦"), // 尚书 Router
+    yanliben: getLogger("阎立本"), // 工部 主题设置
+    chusuiliang: getLogger("褚遂良"), // 中书令 负责Preference
+    zhangsunwuji: getLogger("长孙无忌 "), // 吏部尚书 负责Photos
+    weizheng: getLogger("魏征"), // 秘书监 负责Notification
+    xuanzang: getLogger("玄奘"), // 法师 负责Localization
 };

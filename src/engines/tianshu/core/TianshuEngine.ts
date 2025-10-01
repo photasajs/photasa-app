@@ -16,6 +16,10 @@ import { SystemStatusReport, EngineStatus } from "../types/responses";
 import { WorkflowLoader } from "./WorkflowLoader";
 import { WorkflowOrchestrator } from "../orchestration/WorkflowOrchestrator";
 import { VariableResolver } from "../orchestration/VariableResolver";
+import { IStepExecutor } from "../../common/interfaces";
+import { loggers } from "@common/logger";
+
+const logger = loggers.tianshu;
 
 /**
  * Tianshu引擎配置
@@ -33,6 +37,8 @@ export interface TianshuEngineConfig {
     logLevel?: "debug" | "info" | "warn" | "error";
     /** 自定义变量 */
     globalVariables?: Record<string, any>;
+    /** 步骤执行器 */
+    stepExecutor: IStepExecutor;
 }
 
 /**
@@ -63,13 +69,15 @@ export class TianshuEngine extends EventEmitter {
             enableHotReload: this.config.enableHotReload || false,
         });
 
-        this.orchestrator = new WorkflowOrchestrator({
-            maxConcurrency: this.config.maxConcurrentWorkflows || 10,
-            defaultTimeout: this.config.defaultTimeout || 30000,
-        });
-
         this.variableResolver = new VariableResolver({
             globalVariables: this.config.globalVariables || {},
+        });
+
+        this.orchestrator = new WorkflowOrchestrator({
+            variableResolver: this.variableResolver,
+            maxConcurrency: this.config.maxConcurrentWorkflows || 10,
+            defaultTimeout: this.config.defaultTimeout || 30000,
+            stepExecutor: this.config.stepExecutor,
         });
 
         this.setupEventHandlers();
@@ -84,7 +92,7 @@ export class TianshuEngine extends EventEmitter {
         }
 
         try {
-            this.log("info", "Initializing Tianshu engine...");
+            logger.info("🌌 初始化天枢引擎");
 
             // 初始化工作流加载器
             await this.workflowLoader.initialize();
@@ -96,11 +104,11 @@ export class TianshuEngine extends EventEmitter {
             await this.variableResolver.initialize();
 
             this.isInitialized = true;
-            this.log("info", "Tianshu engine initialized successfully");
+            logger.info("🌌 天枢引擎初始化成功");
 
             this.emit("initialized");
         } catch (error) {
-            this.log("error", "Failed to initialize Tianshu engine", error);
+            logger.error("🌌 初始化天枢引擎失败", error);
             throw new Error(`Tianshu engine initialization failed: ${(error as Error).message}`);
         }
     }
@@ -113,7 +121,7 @@ export class TianshuEngine extends EventEmitter {
             throw new Error("Tianshu engine not initialized");
         }
 
-        this.log("info", `Processing command: ${command.intent}`, { commandId: command.id });
+        logger.info("🌌 处理命令", { commandId: command.id, intent: command.intent });
 
         try {
             // 创建响应对象
@@ -125,6 +133,7 @@ export class TianshuEngine extends EventEmitter {
             };
 
             // 根据意图选择工作流
+            logger.info("🌌 根据意图选择工作流", command.intent);
             const workflow = await this.selectWorkflow(command);
             if (!workflow) {
                 response.status = "failed";
@@ -132,10 +141,15 @@ export class TianshuEngine extends EventEmitter {
                     "WORKFLOW_NOT_FOUND",
                     `No workflow found for intent: ${command.intent}`,
                 );
+                logger.error("🌌 没有找到工作流", {
+                    commandId: command.id,
+                    intent: command.intent,
+                });
                 return response;
             }
 
             // 添加到队列
+            logger.info("🌌 添加到队列", command.intent);
             this.commandQueue.push(command);
             response.status = "queued";
 
@@ -144,7 +158,11 @@ export class TianshuEngine extends EventEmitter {
 
             return response;
         } catch (error) {
-            this.log("error", "Failed to process command", error);
+            logger.error("🌌 处理命令失败", {
+                commandId: command.id,
+                intent: command.intent,
+                error,
+            });
             return {
                 commandId: command.id,
                 intent: command.intent,
@@ -167,6 +185,8 @@ export class TianshuEngine extends EventEmitter {
                 responseTime: 0,
             },
         ];
+
+        logger.info("🌌 获取系统状态", { engines });
 
         const workflows = Array.from(this.activeExecutions.values()).map((execution) => ({
             workflowId: execution.workflowId,
@@ -206,11 +226,12 @@ export class TianshuEngine extends EventEmitter {
             return false;
         }
 
+        logger.info("🌌 取消命令执行", { commandId });
+
         execution.status = "cancelled";
         this.activeExecutions.delete(commandId);
 
         this.emit("commandCancelled", { commandId });
-        this.log("info", `Command cancelled: ${commandId}`);
 
         return true;
     }
@@ -222,6 +243,8 @@ export class TianshuEngine extends EventEmitter {
      * 处理偏好获取请求 (Service Adapter)
      */
     async handlePreferenceGet(): Promise<any> {
+        logger.info("🌌 处理偏好获取请求");
+
         const command: UICommand = {
             id: `pref-get-${Date.now()}`,
             intent: "get_status", // 使用现有意图类型
@@ -249,6 +272,8 @@ export class TianshuEngine extends EventEmitter {
      * 处理偏好更新请求 (Service Adapter)
      */
     async handlePreferenceUpdate(delta: any): Promise<number> {
+        logger.info("🌌 处理偏好更新请求", { delta });
+
         const command: UICommand = {
             id: `pref-update-${Date.now()}`,
             intent: "update_config",
@@ -277,6 +302,8 @@ export class TianshuEngine extends EventEmitter {
      * 处理偏好重置请求 (Service Adapter)
      */
     async handlePreferenceReset(): Promise<any> {
+        logger.info("🌌 处理偏好重置请求");
+
         const command: UICommand = {
             id: `pref-reset-${Date.now()}`,
             intent: "update_config",
@@ -398,7 +425,7 @@ export class TianshuEngine extends EventEmitter {
      * 清理资源
      */
     async cleanup(): Promise<void> {
-        this.log("info", "Cleaning up Tianshu engine...");
+        console.log("Cleaning up Tianshu engine...");
 
         // 取消所有活跃执行
         for (const [commandId] of Array.from(this.activeExecutions.entries())) {
@@ -412,7 +439,7 @@ export class TianshuEngine extends EventEmitter {
 
         this.isInitialized = false;
         this.emit("cleaned");
-        this.log("info", "Tianshu engine cleaned up");
+        console.log("Tianshu engine cleaned up");
     }
 
     /**
@@ -454,11 +481,11 @@ export class TianshuEngine extends EventEmitter {
         const intentToWorkflowMap: Record<UserIntent, string> = {
             scan_folder: "scan/folder_scan",
             scan_file: "scan/file_scan",
-            update_config: "config/update_config",
+            update_config: "preference/preference_management",
             generate_thumbnail: "media/generate_thumbnail",
             process_media: "media/process_media",
             stop_operation: "system/stop_operation",
-            get_status: "system/get_status",
+            get_status: "engine/engine_status_check",
             custom: "custom/custom_workflow",
         };
 
@@ -491,6 +518,10 @@ export class TianshuEngine extends EventEmitter {
         try {
             const workflow = await this.selectWorkflow(command);
             if (!workflow) {
+                logger.error("🌌 没有找到工作流", {
+                    commandId: command.id,
+                    intent: command.intent,
+                });
                 throw new Error(`No workflow found for intent: ${command.intent}`);
             }
 
@@ -505,7 +536,7 @@ export class TianshuEngine extends EventEmitter {
 
             await this.orchestrator.executeWorkflow(workflow, command, options);
         } catch (error) {
-            this.log("error", "Failed to execute command", error);
+            console.error("Failed to execute command", error);
             this.emit("commandFailed", { command, error });
         }
     }
@@ -535,19 +566,5 @@ export class TianshuEngine extends EventEmitter {
             retryable: false,
             suggestion: "Please check the command parameters and try again",
         };
-    }
-
-    /**
-     * 记录日志
-     */
-    private log(level: string, message: string, data?: any): void {
-        const logLevels = { debug: 0, info: 1, warn: 2, error: 3 };
-        const currentLevel = logLevels[this.config.logLevel as keyof typeof logLevels] || 1;
-        const messageLevel = logLevels[level as keyof typeof logLevels] || 1;
-
-        if (messageLevel >= currentLevel) {
-            const logMethod = console[level as keyof Console] as (...args: any[]) => void;
-            logMethod(`[Tianshu] ${message}`, data || "");
-        }
     }
 }

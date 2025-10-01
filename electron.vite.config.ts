@@ -33,6 +33,8 @@ export default defineConfig(({ mode }) => ({
                 "@shunfenger": resolve("src/engines/shunfenger/"),
                 "@sibu": resolve("src/engines/sibu/"),
                 "@tianshu": resolve("src/engines/tianshu/"),
+                "@qianliyan": resolve("src/engines/qianliyan/"),
+                "@engines": resolve("src/engines/"),
             },
         },
         build: {

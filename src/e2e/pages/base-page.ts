@@ -118,9 +118,7 @@ export abstract class BasePage {
         try {
             await this.page.waitForFunction(
                 () => {
-                    return (
-                        document.readyState === "complete" && window.hasOwnProperty("electronAPI")
-                    );
+                    return document.readyState === "complete" && window.hasOwnProperty("electron");
                 },
                 { timeout: 5000 },
             );

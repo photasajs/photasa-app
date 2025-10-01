@@ -3,13 +3,13 @@
  * 实现太乙@Adapter模式，包装WenchangEngine为标准适配器接口
  */
 
-import { Adapter, AdapterPriority, IAdapter } from "../../taiyi";
+import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
 import {
     WenchangEngine,
     WenchangEngineConfig,
     PreferenceSnapshot,
     PreferenceDelta,
-} from "../core/WenchangEngine";
+} from "../wenchang/core/WenchangEngine";
 import * as path from "path";
 import * as os from "os";
 
@@ -42,18 +42,15 @@ export interface WenchangAdapterConfig {
 export class WenchangAdapter implements IAdapter {
     readonly name = "wenchang";
     private engine: WenchangEngine;
-    private _config: WenchangAdapterConfig;
 
     constructor(config: WenchangAdapterConfig = {}) {
-        this._config = config;
-
         // 默认偏好目录：~/.photasa/preferences/
         const defaultPreferencesDir = path.join(os.homedir(), ".photasa", "preferences");
         const preferencesDir = config.customPreferencesDir || defaultPreferencesDir;
 
         const engineConfig: WenchangEngineConfig = {
             preferencesDir,
-            autoSaveInterval: config.autoSaveInterval || 5000,
+            autoSaveInterval: config.autoSaveInterval || 0, // 禁用自动保存，所有修改都会立即保存
             enableHistory: config.enableHistory !== false,
             historyLimit: 10,
         };

@@ -304,7 +304,7 @@ describe("preferenceStore.addFileOperation", () => {
 
     it("should log debug messages during operation", async () => {
         const store = usePreferenceStore();
-        const mockLogger = vi.mocked(await import("@common/logger")).loggers.preference;
+        const mockLogger = vi.mocked(await import("@common/logger")).loggers.chusuiliang;
 
         const operation = {
             path: "/test/file.jpg",

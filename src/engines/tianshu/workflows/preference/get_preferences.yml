@@ -1,0 +1,89 @@
+# 获取用户偏好设置工作流
+# 通过文昌引擎获取当前的偏好快照
+
+id: "get_preferences"
+name: "获取用户偏好设置"
+description: "获取当前用户偏好设置"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "get_preferences"
+  - intent: "preference_get"
+
+# 输入参数
+inputs:
+  key:
+    type: "string"
+    required: false
+    description: "可选的偏好键路径，如'ui.theme'，为空则返回全部"
+
+# 工作流步骤
+steps:
+  - name: "validate_input"
+    type: "validation"
+    description: "验证输入参数"
+    action:
+      validate:
+        - input: "key"
+          rules:
+            - type: "optional_string"
+            - maxLength: 100
+
+  - name: "get_snapshot"
+    type: "engine_call"
+    description: "从文昌引擎获取偏好快照"
+    action:
+      engine: "wenchang"
+      method: "getCurrentSnapshot"
+      params: {}
+    onError:
+      type: "return_error"
+      message: "获取偏好设置失败"
+
+  - name: "extract_value"
+    type: "data_processing"
+    description: "根据key提取特定值"
+    condition:
+      exists: "inputs.key"
+    action:
+      extract:
+        source: "steps.get_snapshot.result"
+        path: "{{ inputs.key }}"
+    onError:
+      type: "return_null"
+
+  - name: "format_response"
+    type: "response_formatting"
+    description: "格式化返回结果"
+    action:
+      format:
+        success: true
+        data: "{{ steps.extract_value.result || steps.get_snapshot.result }}"
+        timestamp: "{{ now() }}"
+        source: "wenchang_engine"
+
+# 输出定义
+outputs:
+  preferences:
+    description: "偏好设置数据"
+    type: "object"
+  success:
+    description: "操作是否成功"
+    type: "boolean"
+
+# 错误处理
+error_handling:
+  default:
+    type: "graceful_failure"
+    response:
+      success: false
+      error: "获取偏好设置时发生错误"
+      data: null
+
+# 超时设置
+timeout: 5000
+priority: "user"

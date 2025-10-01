@@ -34,5 +34,4 @@ export type {
 } from "./core/WenchangEngine";
 
 // 适配器
-export { WenchangAdapter } from "./adapters/WenchangAdapter";
-export type { WenchangAdapterConfig } from "./adapters/WenchangAdapter";
+export type { WenchangAdapterConfig } from "../adapters/WenchangAdapter";

@@ -16,7 +16,7 @@ vi.mock("is-video");
 vi.mock("../exif-helper");
 vi.mock("@common/exif-util");
 vi.mock("@electron-toolkit/preload", () => ({
-    electronAPI: {
+    electron: {
         ipcRenderer: {
             invoke: vi.fn(),
         },

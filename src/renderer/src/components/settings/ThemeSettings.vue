@@ -1,14 +1,61 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+/**
+ * 主题设置组件 - 阎立本画师
+ * 为人界界面提供主题切换功能，实现依赖注入模式
+ *
+ * 神话背景：
+ * 阎立本，唐朝著名画家，以善于绘制人物、风景著称
+ * 在Photasa系统中，阎立本化身人界界面画师，负责主题风格设计
+ * 通过民间Vue技术，为人界界面提供美观的主题切换功能
+ * 与房玄龄宰相协作，确保界面风格与用户偏好保持一致
+ *
+ * 核心功能：
+ * - 主题展示：展示各种可用的界面主题风格
+ * - 主题切换：响应用户选择，切换界面主题
+ * - 实时预览：提供主题预览功能，让用户提前感受效果
+ * - 状态同步：与房玄龄宰相协作，保持主题状态一致
+ */
+import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { themeManager, ThemeMeta } from "@renderer/services/theme-manager";
+import { getThemeManager, ThemeMeta } from "./ThemeSettingsHelper";
+import { useFangXuanLing } from "@renderer/stores";
 import ThemePreviewBox from "./ThemePreviewBox.vue";
+import { loggers } from "@common/logger";
 
+/**
+ * 日志记录器
+ */
+const logger = loggers.yanliben;
+
+/**
+ * 主题管理器实例
+ */
+const themeManager = getThemeManager();
+
+/**
+ * 主题列表
+ */
 const themes = ref<ThemeMeta[]>([]);
-const currentThemeId = ref<string>("");
+
+/**
+ * 国际化实例
+ */
 const { locale } = useI18n();
 
-function getI18nText(obj: any, fallback = "") {
+/**
+ * 房玄龄服务实例
+ */
+const fangXuanLingService = useFangXuanLing();
+
+/**
+ * 阎立本响应Store中的主题变化
+ */
+const currentThemeId = computed(() => fangXuanLingService.preference.currentTheme);
+
+/**
+ * 获取国际化文本
+ */
+function toLocalizedText(obj: any, fallback = "") {
     if (typeof obj === "string") return obj;
     if (obj && typeof obj === "object") {
         return obj[locale.value] || obj["en-US"] || Object.values(obj)[0] || fallback;
@@ -18,11 +65,20 @@ function getI18nText(obj: any, fallback = "") {
 
 async function switchTheme(themeId: string) {
     try {
+        // 阎立本接收用户指令
+        logger.info(`🎨 接收主题变更指令 ${themeId}`);
+
+        // 这将触发完整通信链路：阎立本 -> 房玄龄(奏折) -> 袁天罡(诏令) -> 天枢(符箓)
+        await fangXuanLingService.preference.updateTheme(themeId);
+
+        // 同时更新themeManager以保持UI同步
         await themeManager.applyTheme(themeId, "/src/renderer/src/themes");
-        currentThemeId.value = themeId;
-        console.log(`主题切换成功: ${themeId}`);
+
+        // 阎立本确认Store更新
+        logger.info(`🎨 确认主题已更新为 ${currentThemeId.value}`);
+        logger.info(`🎨 天人合一通信链路执行完毕`);
     } catch (error) {
-        console.error(`主题切换失败: ${themeId}`, error);
+        logger.error(`🎨 主题变更失败 ${themeId}`, error);
     }
 }
 
@@ -30,15 +86,11 @@ onMounted(async () => {
     try {
         await themeManager.loadBuiltInThemes();
         themes.value = themeManager.getThemes();
-        const cur = themeManager.getCurrentTheme();
-        currentThemeId.value = cur?.id || themes.value[0]?.id || "";
-        console.log(`当前主题: ${currentThemeId.value}`);
-        console.log(
-            `可用主题:`,
-            themes.value.map((t) => t.id),
-        );
+
+        // 阎立本初始化完成，响应Store状态
+        logger.info(`🎨 就职完成，当前主题: ${currentThemeId.value}`);
     } catch (error) {
-        console.error("主题加载失败:", error);
+        logger.error("🎨 主题加载失败:", error);
     }
 });
 </script>
@@ -56,8 +108,8 @@ onMounted(async () => {
             >
                 <ThemePreviewBox
                     :colors="theme.colors"
-                    :name="getI18nText(theme.name)"
-                    :description="getI18nText(theme.description)"
+                    :name="toLocalizedText(theme.name)"
+                    :description="toLocalizedText(theme.description)"
                 />
             </div>
         </div>

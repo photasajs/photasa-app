@@ -21,7 +21,7 @@ interface AdapterRegistration {
  */
 export class AdapterRegistry {
     private static adapters = new Map<string, AdapterRegistration>();
-    private static _initializationOrder: string[] = [];
+    // private static _initializationOrder: string[] = [];
 
     /**
      * 注册适配器
@@ -170,6 +170,6 @@ export class AdapterRegistry {
      */
     static clear(): void {
         this.adapters.clear();
-        this._initializationOrder = [];
+        // this._initializationOrder = [];
     }
 }

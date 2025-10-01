@@ -10,7 +10,7 @@ const mockIpcRenderer = {
 };
 
 vi.mock("@electron-toolkit/preload", () => ({
-    electronAPI: {
+    electron: {
         ipcRenderer: mockIpcRenderer,
     },
 }));
