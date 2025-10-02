@@ -1,10 +1,10 @@
-# @systembug/workflow-cli
+# @systembug/zouwu-cli
 
-🌌 天枢工作流命令行工具 - 基于核心包的完整CLI工具链
+🌌 驺吾工作流命令行工具 - 基于核心包的完整CLI工具链
 
 ## 📜 项目概述
 
-`@systembug/workflow-cli` 是专门的命令行工具包，依赖 `@systembug/workflow-schema` 核心包，提供代码生成、验证和项目管理功能。采用古代中国仙侠主题的用户界面风格。
+`@systembug/zouwu-cli` 是专门的命令行工具包，依赖 `@systembug/zouwu-workflow` 核心包，提供代码生成、验证和项目管理功能。采用古代中国仙侠主题的用户界面风格。
 
 ## 🌟 核心特性
 
