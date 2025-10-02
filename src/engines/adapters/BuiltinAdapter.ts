@@ -70,7 +70,7 @@ export class BuiltinAdapter implements IAdapter {
      * 直接返回数据，避免不必要的包装
      */
     async return(params: ReturnParams = {}): Promise<any> {
-        logger.debug(`🔧 收到仙家回禀:`, params);
+        logger.debug(`🔧 收到仙家回禀:`, params.message);
 
         // 如果有错误，抛出异常而不是返回包装结构
         if (params.error) {
