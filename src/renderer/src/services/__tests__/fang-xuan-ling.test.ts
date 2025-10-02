@@ -67,7 +67,6 @@ describe("FangXuanLingService", () => {
         // Mock 袁天罡服务
         mockYuanTianGang = {
             executeZhaoling: vi.fn(),
-            onProgress: vi.fn(),
         };
 
         fangXuanLingService = new FangXuanLingService(mockYuanTianGang);
@@ -118,8 +117,8 @@ describe("FangXuanLingService", () => {
             // 验证结果
             expect(response.approved).toBe(true);
             expect(response.matter).toBe(ZOUZHE_MATTERS.GET_PREFERENCES);
-            expect(response.needsEscalation).toBe(true);
-            expect(response.instruction).toBe("需向天界获取偏好设置");
+            expect(response.metadata?.escalated).toBe(true);
+            expect(response.instruction).toBe("需向天界获取偏好设置 - 天界恩准");
 
             // 验证袁天罡被调用
             expect(mockYuanTianGang.executeZhaoling).toHaveBeenCalledWith({
@@ -154,9 +153,9 @@ describe("FangXuanLingService", () => {
 
             const response = await fangXuanLingService.processZouzhe(zouzhe);
 
-            // 验证奏折处理仍然成功（房玄龄层面）
-            expect(response.approved).toBe(true);
-            expect(response.needsEscalation).toBe(true);
+            // 验证奏折处理失败（房玄龄层面也失败，因为天界拒绝）
+            expect(response.approved).toBe(false);
+            expect(response.metadata?.escalated).toBe(true);
             expect(mockYuanTianGang.executeZhaoling).toHaveBeenCalled();
         });
 
@@ -204,8 +203,8 @@ describe("FangXuanLingService", () => {
             const response = await fangXuanLingService.processZouzhe(zouzhe);
 
             expect(response.approved).toBe(true);
-            expect(response.needsEscalation).toBe(true);
-            expect(response.instruction).toBe("重大偏好变更，需上报天界记录");
+            expect(response.metadata?.escalated).toBe(true);
+            expect(response.instruction).toBe("重大偏好变更，需上报天界记录 - 天界恩准");
         });
     });
 

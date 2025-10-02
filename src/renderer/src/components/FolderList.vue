@@ -39,7 +39,7 @@ const { addScanFolder } = preferenceStore;
 /**
  * Store to refs
  */
-const { paths, currentFolder, currentFolderConfig, folderTree } = storeToRefs(preferenceStore);
+    const { paths, currentFolder, folderTree } = storeToRefs(preferenceStore);
 
 /**
  * Expanded keys
@@ -86,13 +86,13 @@ watch(
         // Only when Current folder changed, update current folder and load photasa config
         if (!isEmpty(selectedKeys.value) && currentFolder.value !== selectedKeys.value[0]) {
             const newFolderPath = selectedKeys.value[0];
-            currentFolder.value = newFolderPath;
+            preferenceStore.appState.currentFolder = newFolderPath;
 
             try {
                 // 自动加载新文件夹的配置
                 const config = await getPhotasaConfig(newFolderPath);
 
-                currentFolderConfig.value =
+                preferenceStore.appState.currentFolderConfig =
                     config ||
                     ({
                         version: "",
@@ -102,7 +102,7 @@ watch(
             } catch (error) {
                 logger.warn("无法加载文件夹配置:", error);
                 // 如果加载失败，使用空配置
-                currentFolderConfig.value = {
+                preferenceStore.appState.currentFolderConfig = {
                     version: "",
                     photoList: [],
                     lastModified: 0,

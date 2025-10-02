@@ -77,7 +77,15 @@ describe("YuanTianGangService", () => {
             // 验证响应
             expect(response.acknowledged).toBe(true);
             expect(response.command).toBe(ZOUZHE_MATTERS.GET_PREFERENCES);
-            expect(response.result?.message).toBe("袁天罡已执行诏令");
+            expect(response.data).toEqual({
+                ui: {
+                    theme: "dark",
+                    language: "en-US",
+                },
+                display: {
+                    thumbnailSize: 150,
+                },
+            });
 
             // 验证天枢引擎被正确调用
             expect(mockTianshu.processCommand).toHaveBeenCalledWith({
@@ -119,9 +127,8 @@ describe("YuanTianGangService", () => {
             const response = await yuanTianGangService.executeZhaoling(zhaoling);
 
             // 验证失败响应
-            expect(response.acknowledged).toBe(true);
-            expect(response.tianshuResponse?.status).toBe("天界暂缓");
-            expect(response.tianshuResponse?.blessing).toBe("天枢暂时忙碌，需再次祈请");
+            expect(response.acknowledged).toBe(false);
+            expect(response.blessing).toBe("天枢暂时忙碌，需再次祈请");
         });
 
         it("应该在天枢引擎异常时返回错误响应", async () => {
@@ -138,11 +145,10 @@ describe("YuanTianGangService", () => {
 
             const response = await yuanTianGangService.executeZhaoling(zhaoling);
 
-            // 验证错误响应 - sendFuluToTianshu内部捕获异常，executeZhaoling仍返回acknowledged=true
-            expect(response.acknowledged).toBe(true);
-            expect(response.tianshuResponse?.status).toBe("天界暂缓");
-            // 异常时FuluResponse没有blessing字段，所以这里是undefined
-            expect(response.tianshuResponse?.blessing).toBeUndefined();
+            // 验证错误响应 - sendFuluToTianshu内部捕获异常，executeZhaoling仍返回acknowledged=false
+            expect(response.acknowledged).toBe(false);
+            // 异常时generateBlessing会生成blessing字段
+            expect(response.blessing).toBe("天枢暂时忙碌，需再次祈请");
         });
     });
 

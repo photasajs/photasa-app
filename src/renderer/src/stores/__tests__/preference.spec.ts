@@ -44,12 +44,12 @@ describe("preferenceStore.resetAllFolders", () => {
 
     it("should clear and rebuild all folders", async () => {
         const store = usePreferenceStore();
-        store.paths = ["/a", "/b"];
-        store.folderTree = [
+        store.appState.paths = ["/a", "/b"];
+        store.appState.folderTree = [
             { path: "/a" } as unknown as DataNode,
             { path: "/b" } as unknown as DataNode,
         ];
-        store.scanningFolder = [
+        store.appState.scanningFolder = [
             { path: "/a", action: "scan", thumbnailSize: 200 },
         ] as unknown as ScanAction[];
         const newDirs = ["/c", "/d"];
@@ -78,7 +78,7 @@ describe("preferenceStore.addFileOperation", () => {
     it("should initialize scanningFolder array if it's not an array", async () => {
         const store = usePreferenceStore();
         // Simulate a corrupted state
-        store.scanningFolder = undefined as any;
+        store.appState.scanningFolder = undefined as any;
 
         const operation = {
             path: "/test/file.jpg",
