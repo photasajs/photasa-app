@@ -52,21 +52,21 @@ class MockStepExecutor implements IStepExecutor {
 
         // 根据不同的action返回符合工作流期望的数据结构
         let output = baseResult;
-        if (step.action === 'sanitize') {
+        if (step.action === "sanitize") {
             // 匹配工作流中 {{steps.sanitize_values.output.result.result}} 的路径
             output = {
                 result: {
-                    result: baseResult // 双层嵌套以匹配实际路径
+                    result: baseResult, // 双层嵌套以匹配实际路径
                 },
-                success: true
+                success: true,
             };
-        } else if (step.action === 'getCurrentSnapshot') {
+        } else if (step.action === "getCurrentSnapshot") {
             // 匹配工作流中 {{steps.get_updated_snapshot.output.result.data}} 的路径
             output = {
                 result: {
-                    data: baseResult // 嵌套为data以匹配实际路径
+                    data: baseResult, // 嵌套为data以匹配实际路径
                 },
-                success: true
+                success: true,
             };
         }
 
