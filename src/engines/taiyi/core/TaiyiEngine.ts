@@ -59,7 +59,7 @@ export class TaiyiEngine extends EventEmitter {
         }
 
         try {
-            logger.info("🌌 初始化太乙引擎");
+            logger.info("🌌 太乙真人开坛，万仙归位");
             // 初始化所有注册的适配器
             await AdapterRegistry.initializeAll(...(this.config.adapterArgs || []));
 
@@ -69,10 +69,10 @@ export class TaiyiEngine extends EventEmitter {
             }
 
             this.isInitialized = true;
-            logger.info("🌌 太乙引擎初始化完成");
+            logger.info("🌌 诸仙就绪，太乙坛成");
             this.emit("initialized");
         } catch (error) {
-            logger.error("🌌 初始化太乙引擎失败", error);
+            logger.error("🌌 太乙开坛失败，仙法有误", error);
             throw error;
         }
     }
@@ -86,7 +86,7 @@ export class TaiyiEngine extends EventEmitter {
         }
 
         try {
-            logger.info("🌌 关闭太乙引擎");
+            logger.info("🌌 太乙收坛，诸仙散去");
 
             // 停止健康检查
             if (this.healthCheckTimer) {
@@ -98,10 +98,10 @@ export class TaiyiEngine extends EventEmitter {
             await AdapterRegistry.shutdownAll();
 
             this.isInitialized = false;
-            logger.info("🌌 太乙引擎关闭完成");
+            logger.info("🌌 太乙归隐，天庭肃清");
             this.emit("shutdown");
         } catch (error) {
-            logger.error("🌌 关闭太乙引擎失败", error);
+            logger.error("🌌 太乙收坛失败，仙法紊乱", error);
             throw error;
         }
     }
@@ -117,7 +117,9 @@ export class TaiyiEngine extends EventEmitter {
         const timestamp = Date.now();
 
         try {
+            logger.info(`🌌 召唤仙家: ${engineName}仙君施展${methodName}之术`);
             const adapter = AdapterRegistry.getAdapterInstance(engineName);
+            logger.debug(`🌌 ${adapter ? "仙君应召而至" : "仙君不在天庭"}`);
             if (!adapter) {
                 throw new Error(`Engine '${engineName}' not found or not initialized`);
             }
@@ -137,7 +139,7 @@ export class TaiyiEngine extends EventEmitter {
                 engineName,
             };
         } catch (error) {
-            logger.error(`🌌 调用引擎失败: ${engineName}.${methodName}`, error);
+            logger.error(`🌌 仙术失败: ${engineName}仙君的${methodName}之术未能成功`, error);
 
             return {
                 success: false,

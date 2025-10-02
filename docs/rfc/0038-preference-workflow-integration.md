@@ -96,11 +96,10 @@ id: "get_preferences"
 name: "获取用户偏好设置"
 steps:
   - name: "get_snapshot"
-    type: "engine_call"
-    action:
-      engine: "wenchang"
-      method: "getCurrentSnapshot"
-      params: {}
+    type: "action"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
 ```
 
 **更新偏好设置工作流** (`src/engines/tianshu/workflows/preference/update_preferences.yml`)：

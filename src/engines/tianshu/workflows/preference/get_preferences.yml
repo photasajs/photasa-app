@@ -23,48 +23,50 @@ inputs:
 
 # 工作流步骤
 steps:
-  - name: "validate_input"
-    type: "validation"
+  - id: "validate_input"
+    name: "验证输入参数"
+    type: "condition"
     description: "验证输入参数"
-    action:
-      validate:
-        - input: "key"
-          rules:
-            - type: "optional_string"
-            - maxLength: 100
+    condition:
+      field: "inputs.key"
+      operator: "optional_string_maxlen"
+      value: 100
 
-  - name: "get_snapshot"
-    type: "engine_call"
+  - id: "get_snapshot"
+    name: "获取偏好快照"
+    type: "action"
     description: "从文昌引擎获取偏好快照"
-    action:
-      engine: "wenchang"
-      method: "getCurrentSnapshot"
-      params: {}
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
     onError:
       type: "return_error"
       message: "获取偏好设置失败"
 
-  - name: "extract_value"
-    type: "data_processing"
-    description: "根据key提取特定值"
+  - id: "process_extraction"
+    name: "处理提取操作"
+    type: "builtin"
+    description: "提取特定键值"
+    action: "setVariable"
+    input:
+      variable: "extracted_value"
+      source: "steps.get_snapshot.result"
+      path: "{{ inputs.key }}"
     condition:
-      exists: "inputs.key"
-    action:
-      extract:
-        source: "steps.get_snapshot.result"
-        path: "{{ inputs.key }}"
-    onError:
-      type: "return_null"
+      field: "inputs.key"
+      operator: "exists"
+    dependsOn: ["get_snapshot"]
 
-  - name: "format_response"
-    type: "response_formatting"
+  - id: "format_response"
+    name: "格式化响应结果"
+    type: "builtin"
     description: "格式化返回结果"
-    action:
-      format:
-        success: true
-        data: "{{ steps.extract_value.result || steps.get_snapshot.result }}"
-        timestamp: "{{ now() }}"
-        source: "wenchang_engine"
+    action: "return"
+    input:
+      success: true
+      data: "{{ steps.get_snapshot.result }}"
+      timestamp: "{{ $timestamp }}"
+      source: "wenchang_engine"
 
 # 输出定义
 outputs:

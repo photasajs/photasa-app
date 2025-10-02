@@ -65,7 +65,7 @@ steps:
     service: "qianliyan"
     action: "validatePaths"
     input:
-      paths: "${input.paths}"
+      paths: {{input.paths}}
     output:
       validPaths: "validation.validPaths"
       error: "validation.error"
@@ -77,10 +77,10 @@ steps:
     service: "qianliyan"
     action: "scanPaths"
     input:
-      paths: "${input.paths}"
-      recursive: "${input.recursive}"
-      priority: "${input.priority}"
-      filters: "${input.filters}"
+      paths: {{input.paths}}
+      recursive: {{input.recursive}}
+      priority: {{input.priority}}
+      filters: {{input.filters}}
     output:
       requestId: "scanResult.requestId"
       status: "scanResult.status"

@@ -80,21 +80,21 @@ export interface WenchangEngineConfig {
 }
 
 /**
- * 默认偏好设置
+ * 默认偏好设置 - 与人界Store保持一致
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
     revision: 1,
     ui: {
-        theme: "system",
+        theme: "solarized-dark", // 与Store默认主题一致
         layout: "grid",
         language: "zh-CN",
-        sidebarWidth: 280,
-        zoomLevel: 1,
+        sidebarWidth: 240, // 与Store默认值一致
+        zoomLevel: 1.0,
     },
     display: {
-        thumbnailSize: 200,
-        sortOrder: "dateDesc",
-        groupBy: "date",
+        thumbnailSize: 150, // 与Store默认值一致
+        sortOrder: "name", // 与Store默认值一致
+        groupBy: "none", // 与Store默认值一致
         showHidden: false,
         showMetadata: true,
     },
@@ -359,5 +359,148 @@ export class WenchangEngine extends EventEmitter {
      */
     isReady(): boolean {
         return this.isInitialized;
+    }
+
+    /**
+     * 验证输入数据
+     * 工作流支持方法
+     */
+    async validate(data: any): Promise<{ valid: boolean; errors?: string[] }> {
+        try {
+            const errors: string[] = [];
+
+            // 基本数据验证 - 检查主要数据字段
+            const targetData = data.delta || data.data || data;
+
+            if (targetData === null || targetData === undefined) {
+                errors.push("验证数据不能为空");
+                return { valid: false, errors };
+            }
+
+            // 解析YAML格式的验证规则
+            if (data.rules && Array.isArray(data.rules)) {
+                for (const rule of data.rules) {
+                    // 处理不同格式的规则
+                    if (typeof rule === "object") {
+                        // 类型验证
+                        if (rule.type && rule.type === "object" && typeof targetData !== "object") {
+                            errors.push("数据类型不正确，期望 object");
+                        }
+
+                        // 非空验证
+                        if (
+                            rule.notEmpty &&
+                            (!targetData || Object.keys(targetData).length === 0)
+                        ) {
+                            errors.push("数据不能为空");
+                        }
+
+                        // 允许的键验证
+                        if (rule.allowedKeys && Array.isArray(rule.allowedKeys)) {
+                            const dataKeys = Object.keys(targetData);
+                            const invalidKeys = dataKeys.filter(
+                                (key) => !rule.allowedKeys.includes(key),
+                            );
+                            if (invalidKeys.length > 0) {
+                                errors.push(`不允许的字段: ${invalidKeys.join(", ")}`);
+                            }
+                        }
+                    }
+
+                    // 传统字段验证（向后兼容）
+                    if (rule.field) {
+                        if (
+                            rule.required &&
+                            (targetData[rule.field] === null ||
+                                targetData[rule.field] === undefined)
+                        ) {
+                            errors.push(`字段 ${rule.field} 是必需的`);
+                        }
+                        if (rule.type && typeof targetData[rule.field] !== rule.type) {
+                            errors.push(`字段 ${rule.field} 类型不正确，期望 ${rule.type}`);
+                        }
+                        if (rule.min !== undefined && targetData[rule.field] < rule.min) {
+                            errors.push(`字段 ${rule.field} 值过小，最小值为 ${rule.min}`);
+                        }
+                        if (rule.max !== undefined && targetData[rule.field] > rule.max) {
+                            errors.push(`字段 ${rule.field} 值过大，最大值为 ${rule.max}`);
+                        }
+                    }
+                }
+            }
+
+            const isValid = errors.length === 0;
+            logger.info(`🌌 偏好验证${isValid ? "通过" : "失败"}`, {
+                errors: isValid ? [] : errors,
+            });
+
+            return {
+                valid: isValid,
+                errors: isValid ? undefined : errors,
+            };
+        } catch (error) {
+            logger.error("🌌 验证过程失败", error);
+            return {
+                valid: false,
+                errors: ["验证过程出现异常"],
+            };
+        }
+    }
+
+    /**
+     * 清理和验证数据
+     * 工作流支持方法
+     */
+    async sanitize(data: any): Promise<{ result: any }> {
+        logger.info("🌌 文昌引擎施展净化之术");
+
+        const sourceData = data.source || data;
+
+        // 简单实现：直接返回源数据
+        // 在实际应用中，这里应该根据rules进行数据清理和转换
+        return { result: sourceData };
+    }
+
+    /**
+     * 更新偏好设置
+     * 工作流支持方法
+     */
+    async updatePreferences(data: any): Promise<{ result: any }> {
+        logger.info("🌌 文昌引擎更新偏好典籍");
+
+        const delta = data.delta || data;
+        const source = data.source || "workflow";
+
+        const revision = await this.applyDelta(delta, source);
+        return { result: { revision, success: true } };
+    }
+
+    /**
+     * 发送事件
+     * 工作流支持方法
+     */
+    async emitEvent(data: any): Promise<{ id: string }> {
+        logger.info("🌌 文昌引擎广播消息");
+
+        // 生成事件ID并发送事件
+        const eventId = `event-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+        // 发送偏好变更事件
+        this.emit("preferenceEvent", {
+            id: eventId,
+            data,
+            timestamp: Date.now(),
+        });
+
+        return { id: eventId };
+    }
+
+    /**
+     * 格式化响应
+     * 工作流支持方法
+     */
+    async formatResponse(data: any): Promise<{ result: any }> {
+        logger.info("🌌 文昌引擎整理响应格式");
+        return { result: data };
     }
 }

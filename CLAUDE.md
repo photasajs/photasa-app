@@ -19,6 +19,106 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
     - 基础组件一Base前缀开头，应用领域的需要一Primitive前缀开头
     - 优先使用 tsx设计 组件应以独立目录形式组织 如果需要多个文件支持
 
+4. **双界日志风格规范 - 注释、日志、错误信息 (2025-10-01)**
+
+**强制要求：根据进程类型使用不同的古代中国主题风格**
+
+### 🌌 天界风格（Main进程 - 古风仙侠）
+
+**适用范围**：src/main/、src/engines/ 下的所有文件
+
+**图标指引**：
+- **🌌** - 引擎相关日志（太乙/TaiyiEngine, 文昌/WenchangAdapter, 千里眼/QianliyanAdapter）
+- **🔧** - 工作流操作日志（内置操作/BuiltinAdapter, 工作流步骤）
+- **⚡** - 事件响应日志（EventEmitter相关操作）
+- **📜** - 配置和初始化日志
+- **🎯** - 性能和监控日志
+- **⚠️** - 警告和异常日志
+- **❌** - 错误和失败日志
+
+**引擎生命周期日志：**
+- 初始化：「X仙君归位，掌管Y功能」
+- 关闭：「X仙君归隐，Y封存」
+- 示例：`logger.info("🌌 文昌星君归位，掌管偏好典籍")`
+
+**引擎操作日志：**
+- 调用：「召唤仙家：X仙君施展Y之术」
+- 成功：「仙术成功」/「大功告成」
+- 失败：「仙术失败」/「功败垂成」
+- 示例：`logger.debug("🌌 召唤仙家: builtin仙君施展return之术")`
+
+**工作流操作日志：**
+- 接收数据：「收到仙家回禀」
+- 处理：「批复仙令」
+- 设置变量：「铭刻仙符」
+- 日志级别：debug「【密语】」, info「【奏报】」, warn「【警示】」, error「【急报】」
+
+**特殊操作：**
+- 延迟：「静待天时，须臾X毫秒」→「天时已至，恰逢Y毫秒」
+- 条件分支：「分道扬镳，择阳/阴而行」
+- 数据转换：「施展转化之术」
+- 错误：「天劫降临」
+- 空操作：「无为而治，不动如山」
+
+**变量解析：**
+- 模式：所有变量解析日志使用「【符咒解析】」前缀
+- 未知：「未知符根，保持原符」
+- 路径错误：「符路不通，可行路径」
+- 成功：「符咒解析完成，得真值」
+
+### 🏛️ 人界风格（Renderer进程 - 唐代官府文人）
+
+**适用范围**：src/renderer/ 下的所有文件
+
+**图标指引**：
+- **🏛️** - 主要功能日志（朝廷、官府相关）
+- **📝** - 用户操作日志（文房四宝、诗词歌赋）
+- **🎨** - UI渲染日志（丹青、绘画相关）
+- **📚** - 数据处理日志（典籍、书卷相关）
+- **🔔** - 通知提醒日志（钟鼓、传令相关）
+- **⚠️** - 警告日志（告示、谏言相关）
+- **❌** - 错误日志（奏疏、弹劾相关）
+
+**组件生命周期日志：**
+- 挂载：「朝廷开衙，百官就位」
+- 卸载：「散衙归府，翌日再会」
+- 示例：`logger.info("🏛️ 朝廷开衙，图库百官就位")`
+
+**用户操作日志：**
+- 输入：「文房四宝已备，待君挥毫」
+- 提交：「奏章已成，呈递朝廷」
+- 成功：「奏章得准」/「文成武就」
+- 失败：「奏疏有误」/「文不达意」
+
+**UI渲染日志：**
+- 绘制：「丹青妙手，图画已成」
+- 更新：「重新着色，焕然一新」
+- 动画：「飞檐走壁，行云流水」
+
+**数据处理日志：**
+- 查询：「典籍翻阅，寻得所需」
+- 存储：「入册归档，妥善保管」
+- 删除：「销毁文档，不留痕迹」
+
+**示例代码风格：**
+```typescript
+// ✅ 天界风格 (Main进程)
+logger.info("🌌 太乙真人开坛，万仙归位");
+logger.debug("🔧 收到仙家回禀:", params);
+logger.error("🌌 仙术失败: builtin仙君的return之术未能成功", error);
+
+// ✅ 人界风格 (Renderer进程)
+logger.info("🏛️ 朝廷开衙，图库百官就位");
+logger.debug("📝 文房四宝已备，待君挥毫:", userInput);
+logger.error("❌ 奏疏有误，请重新草拟", error);
+
+// ❌ 错误 - 现代英文风格
+logger.info("🌌 Initializing Engine");
+logger.debug("📝 User input received:", params);
+```
+
+**记住：让编程充满古典韵味，同时保持技术准确性！**
+
 ## Debugging Rules
 
 1. Don't run the app as you can't verify it, instead give guidance how to verify
@@ -26,6 +126,65 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 3. Don't use console.log, use logger
 4. Don't use any to bypass lint, use proper type, as TypeScript is type first.
 5. For CSS, don't use !important which cause maintain issue.
+
+## Logging Rules - Ancient Chinese Style (2025-10-01)
+
+**MANDATORY: All logger messages MUST follow the ancient Chinese immortal/deity theme**
+
+### Icon and Theme Guidelines:
+- **🌌** - For engine-related logs (太乙/TaiyiEngine, 文昌/WenchangAdapter, 千里眼/QianliyanAdapter)
+- **🔧** - For workflow operation logs (内置操作/BuiltinAdapter, workflow steps)
+
+### Ancient Chinese Logging Patterns:
+
+1. **Engine Lifecycle Logs:**
+   - Initialization: "X仙君归位，掌管Y功能" (X Immortal takes position, governing Y function)
+   - Shutdown: "X仙君归隐，Y封存" (X Immortal retreats, Y sealed)
+   - Example: `logger.info("🌌 文昌星君归位，掌管偏好典籍")`
+
+2. **Engine Operation Logs:**
+   - Calling: "召唤仙家: X仙君施展Y之术" (Summoning immortals: X performs Y technique)
+   - Success: "仙术成功" / "大功告成" (Technique succeeded / Great success)
+   - Failure: "仙术失败" / "功败垂成" (Technique failed / Failed at the last moment)
+   - Example: `logger.debug("🌌 召唤仙家: builtin仙君施展return之术")`
+
+3. **Workflow Operation Logs:**
+   - Receiving data: "收到仙家回禀" (Received immortal report)
+   - Processing: "批复仙令" (Approving immortal decree)
+   - Setting variables: "铭刻仙符" (Engraving immortal talisman)
+   - Logging levels:
+     - debug: "【密语】" (Secret words)
+     - info: "【奏报】" (Report)
+     - warn: "【警示】" (Warning)
+     - error: "【急报】" (Urgent report)
+
+4. **Special Operations:**
+   - Delay: "静待天时，须臾X毫秒" → "天时已至，恰逢Y毫秒"
+   - Conditional: "分道扬镳，择阳/阴而行" (Parting ways, choosing yang/yin path)
+   - Transform: "施展转化之术" (Performing transformation technique)
+   - Error: "天劫降临" (Heavenly tribulation descends)
+   - No-op: "无为而治，不动如山" (Rule by inaction, unmovable as mountain)
+
+5. **Variable Resolution:**
+   - Pattern: "【符咒解析】" prefix for all variable resolution logs
+   - Unknown: "未知符根，保持原符" (Unknown talisman root, keep original)
+   - Path error: "符路不通，可行路径" (Talisman path blocked, available paths)
+   - Success: "符咒解析完成，得真值" (Talisman resolution complete, obtained true value)
+
+**Examples:**
+```typescript
+// ✅ Good - Ancient Chinese style
+logger.info("🌌 太乙真人开坛，万仙归位");
+logger.debug("🔧 收到仙家回禀:", params);
+logger.error("🌌 仙术失败: builtin仙君的return之术未能成功", error);
+
+// ❌ Bad - Modern style
+logger.info("🌌 Initializing Taiyi Engine");
+logger.debug("🔧 Received parameters:", params);
+logger.error("🌌 Engine call failed: builtin.return", error);
+```
+
+**Remember: Make logging fun while maintaining technical accuracy!**
 
 ## Test Verification Rules (2025-09-28)
 
@@ -69,6 +228,33 @@ I use RFC to track work and progress. Read docs/rfc/README.md to understand how 
 6. Prefer Tailwind utilities over custom CSS for consistency and maintainability
 
 ## Recent Improvements
+
+### AI严格执行双界日志风格规范 (2025-10-01)
+
+**强制要求：AI在编写或修改日志代码时必须严格遵循以下规范**
+
+**禁止混用风格**：
+- **绝对禁止**在Main进程（src/main/、src/engines/）中使用人界风格词汇
+- **绝对禁止**在Renderer进程（src/renderer/）中使用天界风格词汇
+- **特别注意**："奏折"、"朝廷"、"官府"等词汇属于人界风格，不得在天界风格中使用
+- **特别注意**："仙家"、"仙君"、"仙令"等词汇属于天界风格，不得在人界风格中使用
+
+**AI行为规范**：
+1. **代码编写前必须确认文件路径**，判断应使用天界还是人界风格
+2. **严格按照对应风格的词汇表编写日志**，不得随意创造或混用词汇
+3. **发现现有代码中的风格错误时**，必须主动识别并修正
+4. **用户指出风格错误时**，必须立即承认错误并快速修正
+
+**错误示例及修正**：
+```typescript
+// ❌ 错误 - 在天界风格中使用人界词汇
+logger.debug("🔧 收到回禀奏折:", params); // "奏折"是人界词汇
+
+// ✅ 正确 - 天界风格应使用
+logger.debug("🔧 收到仙家回禀:", params); // "仙家回禀"是天界词汇
+```
+
+**AI必须牢记**：不同进程使用不同的古代中国主题，绝不可混淆！
 
 ### Critical Assistant Behavior Guidelines (2025-09-25)
 

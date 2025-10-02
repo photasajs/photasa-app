@@ -61,46 +61,34 @@ export class FangXuanLingService implements IFangXuanLingService {
         logger.info("📜 开始初始化朝廷政务，准备从天界获取历史记录");
 
         try {
-            // 向袁天罡发送诏令，请求获取偏好设置
-            const zhaoling: Zhaoling = {
-                command: "获取朝廷偏好记录",
-                context: {
+            // 通过统一的奏折处理流程请求获取偏好设置
+            const zouzhe: Zouzhe = {
+                department: GUANYUAN_NAMES.CHU_SUILIANG,
+                matter: ZOUZHE_MATTERS.GET_PREFERENCES,
+                content: {
                     action: "get_preferences",
                     department: "褚遂良文书部",
                     purpose: "初始化朝廷政务",
                 },
                 timestamp: Date.now(),
-                source: GUANYUAN_NAMES.CHU_SUILIANG,
-                priority: ZHAOLING_PRIORITIES.URGENT,
+                priority: ZOUZHE_PRIORITIES.URGENT,
             };
 
-            const response = await this._yuanTianGang.executeZhaoling(zhaoling);
+            const zouzheResponse = await this.processZouzhe(zouzhe);
 
-            if (response.result?.tianShuResponse?.success) {
-                const preferences = response.result.tianShuResponse.data;
+            if (zouzheResponse.approved && zouzheResponse.data) {
+                const preferences = zouzheResponse.data;
 
-                // 通知褚遂良更新偏好设置
+                // 房玄龄职责：直接使用天界的统一偏好格式更新Store
                 const preferenceStore = usePreferenceStore();
-
-                if (preferences?.ui) {
-                    if (preferences.ui.theme) {
-                        preferenceStore.setThemeId(preferences.ui.theme);
-                        logger.info("📜 已更新主题设置:", preferences.ui.theme);
-                    }
-                    if (preferences.ui.language) {
-                        preferenceStore.setLocale(preferences.ui.language);
-                        logger.info("📜 已更新语言设置:", preferences.ui.language);
-                    }
-                }
-
-                if (preferences?.display?.thumbnailSize) {
-                    preferenceStore.updateThumbnailSize(preferences.display.thumbnailSize);
-                    logger.info("📜 已更新缩略图大小:", preferences.display.thumbnailSize);
-                }
+                this.updateUnifiedPreferences(preferenceStore, preferences);
 
                 logger.info("📜 朝廷政务初始化完成，已从天界同步偏好设置");
             } else {
-                logger.warn("📜 未能从天界获取偏好设置，使用本地默认值");
+                logger.error("📜 未能从天界获取偏好设置，使用本地默认值", {
+                    approved: zouzheResponse.approved,
+                    instruction: zouzheResponse.instruction,
+                });
             }
         } catch (error) {
             logger.error("📜 初始化朝廷政务失败:", error);
@@ -131,10 +119,9 @@ export class FangXuanLingService implements IFangXuanLingService {
             // 根据事务类型决定是否需要上报天界
             switch (zouzhe.matter) {
                 case ZOUZHE_MATTERS.GET_PREFERENCES:
-                    // 获取偏好设置，直接调用初始化政务方法
-                    await this.initializeGovernance();
-                    needsEscalation = false;
-                    instruction = "已从天界获取偏好设置并同步到本地";
+                    // 获取偏好设置，需要上报天界获取
+                    needsEscalation = true;
+                    instruction = "需向天界获取偏好设置";
                     break;
                 case ZOUZHE_MATTERS.THEME_CHANGE:
                 case ZOUZHE_MATTERS.LANGUAGE_CHANGE:
@@ -166,21 +153,40 @@ export class FangXuanLingService implements IFangXuanLingService {
                 };
 
                 if (this._yuanTianGang) {
-                    logger.info(`📜 发布诏令: ${zhaoling.command}`);
+                    const startTime = Date.now();
+                    logger.info(`📜 发布诏令: ${zhaoling.command}, 来源: ${zhaoling.source}`);
+
                     const zhaolingResponse = await this._yuanTianGang.executeZhaoling(zhaoling);
-                    logger.info(`📜 诏令发布结果:`, zhaolingResponse);
+                    const processTime = Date.now() - startTime;
+
+                    // 房玄龄职责：拆箱袁天罡响应，装箱为宰相格式
+                    const businessData = this.unboxZhaolingResponse(zhaolingResponse);
+                    const reboxedResponse = this.reboxAsZouzheResponse(
+                        zouzhe,
+                        businessData,
+                        zhaolingResponse,
+                        processTime,
+                        instruction,
+                    );
+
+                    logger.info(`📜 诏令执行完成: ${zhaoling.command}, 耗时: ${processTime}ms`);
+                    return reboxedResponse;
                 } else {
                     logger.warn("📜 袁天罡服务未注入，无法上报天界");
                 }
             }
 
+            // 不需要上报天界的情况，直接返回宰相处理结果
             const response: ZouzheResponse = {
                 approved: true,
                 matter: zouzhe.matter,
-                content: zouzhe.content,
-                timestamp: Date.now(),
+                data: zouzhe.content, // 直接业务数据
                 instruction,
-                needsEscalation,
+                timestamp: Date.now(),
+                metadata: {
+                    processTime: 0,
+                    escalated: false,
+                },
             };
 
             logger.info(`房玄龄批复奏折: ${zouzhe.matter}`, response);
@@ -191,10 +197,16 @@ export class FangXuanLingService implements IFangXuanLingService {
             return {
                 approved: false,
                 matter: zouzhe.matter,
-                content: zouzhe.content,
-                timestamp: Date.now(),
+                data: {
+                    error: error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+                    originalRequest: zouzhe.content,
+                },
                 instruction: `${ERROR_MESSAGES.PROCESSING_FAILED}: ${error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR}`,
-                needsEscalation: false,
+                timestamp: Date.now(),
+                metadata: {
+                    processTime: 0,
+                    escalated: false,
+                },
             };
         }
     }
@@ -269,7 +281,7 @@ export class FangXuanLingService implements IFangXuanLingService {
         return {
             // 主题管理
             get currentTheme() {
-                return store.themeId;
+                return store.preferences.ui.theme;
             },
 
             async updateTheme(themeId: string) {
@@ -278,7 +290,7 @@ export class FangXuanLingService implements IFangXuanLingService {
 
             // 语言管理
             get currentLanguage() {
-                return store.locale;
+                return store.preferences.ui.language;
             },
 
             async updateLanguage(locale: string) {
@@ -287,23 +299,17 @@ export class FangXuanLingService implements IFangXuanLingService {
 
             // 暗色模式
             get isDarkMode() {
-                return store.darkMode;
-            },
-
-            toggleDarkMode() {
-                const newMode = !store.darkMode;
-                logger.info(`📜 协调切换暗色模式: ${newMode}`);
-                store.darkMode = newMode;
+                return store.preferences.ui.theme === "dark";
             },
 
             // 缩略图大小
             get thumbnailSize() {
-                return store.thumbnailSize;
+                return store.preferences.display.thumbnailSize;
             },
 
             setThumbnailSize(size: number) {
                 logger.info(`📜 协调设置缩略图大小: ${size}`);
-                store.thumbnailSize = size;
+                store.preferences.display.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
             },
 
             // 完整状态访问（只读）
@@ -366,5 +372,92 @@ export class FangXuanLingService implements IFangXuanLingService {
                 return Array.from(store.files.values()).flat();
             },
         };
+    }
+
+    /**
+     * 拆箱袁天罡响应 - 严格按ZhaolingResponse契约提取业务数据
+     * 房玄龄职责：理解袁天罡的数据结构，提取纯业务数据
+     */
+    private unboxZhaolingResponse(zhaolingResponse: any): any {
+        logger.info(`📜 开始拆箱袁天罡响应: ${zhaolingResponse.command}`);
+
+        // 检查袁天罡响应基本状态
+        if (!zhaolingResponse.acknowledged) {
+            logger.error(`📜 袁天罡拒绝执行诏令: ${zhaolingResponse.error || "未知原因"}`);
+            return null;
+        }
+
+        // 按照新的ZhaolingResponse契约，直接提取data字段
+        const businessData = zhaolingResponse.data;
+
+        logger.info(
+            `📜 拆箱完成: ${businessData ? "有数据" : "无数据"}, 引擎: ${zhaolingResponse.metadata?.engineName || "unknown"}`,
+        );
+        return businessData;
+    }
+
+    /**
+     * 装箱为宰相格式 - 严格按ZouzheResponse契约
+     * 房玄龄职责：将业务数据包装为自己的响应格式
+     */
+    private reboxAsZouzheResponse(
+        originalZouzhe: Zouzhe,
+        businessData: any,
+        zhaolingResponse: any,
+        processTime: number,
+        instruction: string,
+    ): ZouzheResponse {
+        logger.info(`📜 开始装箱为宰相格式: ${originalZouzhe.matter}`);
+
+        const officials = ["房玄龄"];
+        if (zhaolingResponse.metadata?.engineName) {
+            officials.push(`袁天罡-${zhaolingResponse.metadata.engineName}`);
+        }
+
+        const response: ZouzheResponse = {
+            approved: zhaolingResponse.acknowledged,
+            matter: originalZouzhe.matter,
+            data: businessData, // 直接的业务数据，无嵌套
+            instruction: zhaolingResponse.acknowledged
+                ? `${instruction} - ${zhaolingResponse.blessing || "天界恩准"}`
+                : `${instruction} - 执行失败`,
+            timestamp: Date.now(),
+            officials,
+            metadata: {
+                processTime: processTime + (zhaolingResponse.metadata?.processTime || 0),
+                escalated: true,
+                blessing: zhaolingResponse.blessing,
+            },
+        };
+
+        logger.info(
+            `📜 装箱完成: 批准=${response.approved}, 数据=${businessData ? "有" : "无"}, 总耗时=${response.metadata?.processTime}ms`,
+        );
+        return response;
+    }
+
+    /**
+     * 更新统一偏好设置 - 直接整体同步天界数据
+     * 房玄龄职责：将天界的统一偏好格式同步到Store
+     */
+    private updateUnifiedPreferences(preferenceStore: any, preferences: any): void {
+        logger.info("📜 开始同步天界偏好设置到Store");
+
+        if (!preferences) {
+            logger.warn("📜 天界偏好数据为空，跳过更新");
+            return;
+        }
+
+        // 直接整体同步 - 天界和Store使用完全相同的数据结构
+        preferenceStore.$state.preferences = {
+            ...preferenceStore.$state.preferences,
+            ...preferences.result.result.data,
+        };
+
+        logger.info("📜 偏好设置同步完成", {
+            ui: preferences.ui ? "已更新" : "无变更",
+            display: preferences.display ? "已更新" : "无变更",
+            performance: preferences.performance ? "已更新" : "无变更",
+        });
     }
 }

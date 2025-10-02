@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, inject, onUnmounted } from "vue";
+import { computed, ref, inject, onUnmounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -111,7 +111,7 @@ async function initializeApp(): Promise<void> {
         loading.value = false;
 
         if (!currentFolder.value && paths.value.length > 0) {
-            currentFolder.value = paths.value[0];
+            preferenceStore.appState.currentFolder = paths.value[0];
         }
 
         if (paths.value.length > 0) {
@@ -144,8 +144,21 @@ onMounted(async () => {
     // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
     themes.value = themeManager.getThemes();
-    const cur = themeManager.getCurrentTheme();
-    currentThemeId.value = cur?.id || themes.value[0]?.id || "";
+
+    // 获取Store中的主题设置
+    const storeThemeId = preferenceStore.preferences.ui.theme;
+    currentThemeId.value = storeThemeId || themes.value[0]?.id || "";
+
+    // 应用主题到DOM
+    if (currentThemeId.value) {
+        try {
+            await themeManager.applyTheme(currentThemeId.value, "/src/renderer/src/themes");
+            logger.info("👑 应用主题成功:", currentThemeId.value);
+        } catch (error) {
+            logger.error("👑 应用主题失败:", error);
+        }
+    }
+
     // 主题加载完毕，切换为 ready 状态
     statusBarStore.update({
         type: "app",
@@ -155,6 +168,23 @@ onMounted(async () => {
     });
     // 应用启动时全局初始化菜单栏数据（国际化）
     menusStore.refreshMenus(t);
+
+    // 监听Store中主题变化，自动应用主题
+    watch(
+        () => preferenceStore.preferences.ui.theme,
+        async (newThemeId) => {
+            if (newThemeId && newThemeId !== currentThemeId.value) {
+                try {
+                    await themeManager.applyTheme(newThemeId, "/src/renderer/src/themes");
+                    currentThemeId.value = newThemeId;
+                    logger.info("👑 主题切换成功:", newThemeId);
+                } catch (error) {
+                    logger.error("👑 主题切换失败:", error);
+                }
+            }
+        },
+        { immediate: false }, // 不立即执行，因为初始化时已经应用过
+    );
 
     // 初始化扫描监控服务
     scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);

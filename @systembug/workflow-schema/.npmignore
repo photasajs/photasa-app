@@ -1,0 +1,25 @@
+# Source files
+src/
+tools/
+tests/
+
+# Development files
+.gitignore
+tsconfig.json
+jest.config.js
+.eslintrc.js
+.prettierrc
+
+# Development dependencies
+node_modules/
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Only include built dist/ and schemas/

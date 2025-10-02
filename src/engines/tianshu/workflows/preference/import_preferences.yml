@@ -35,7 +35,7 @@ steps:
     service: "wenchang"
     action: "validate"
     input:
-      data: "${input.data}"
+      data: {{input.data}}
       rules:
         - type: "string"
         - notEmpty: true
@@ -50,6 +50,12 @@ steps:
     input: {}
     output:
       backup: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      backup: object
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["validate_data"]
 
   - id: "import_to_engine"
@@ -59,7 +65,7 @@ steps:
     service: "wenchang"
     action: "importPreferences"
     input:
-      data: "${input.data}"
+      data: {{input.data}}
     output:
       result: "import.result"
     dependsOn: ["backup_current"]
@@ -73,6 +79,12 @@ steps:
     input: {}
     output:
       snapshot: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      snapshot: object
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["import_to_engine"]
 
   - id: "emit_import_event"
@@ -84,9 +96,9 @@ steps:
     input:
       event: "preferences_imported"
       data:
-        backup: "${steps.backup_current.backup}"
-        snapshot: "${steps.get_imported_snapshot.snapshot}"
-        timestamp: "${now()}"
+        backup: {{steps.backup_current.output.backup}}
+        snapshot: {{steps.get_imported_snapshot.output.snapshot}}
+        timestamp: {{now()}}
     output:
       eventId: "event.id"
     dependsOn: ["get_imported_snapshot"]
@@ -100,9 +112,9 @@ steps:
     input:
       success: true
       data:
-        snapshot: "${steps.get_imported_snapshot.snapshot}"
-        backup: "${steps.backup_current.backup}"
-      timestamp: "${now()}"
+        snapshot: {{steps.get_imported_snapshot.output.snapshot}}
+        backup: {{steps.backup_current.output.backup}}
+      timestamp: {{now()}}
       source: "wenchang_engine"
     output:
       response: "format.result"

@@ -36,8 +36,8 @@ steps:
     service: "wenchang"
     action: "validate"
     input:
-      limit: "${input.limit}"
-      offset: "${input.offset}"
+      limit: {{input.limit}}
+      offset: {{input.offset}}
       rules:
         limit:
           - type: "number"
@@ -54,11 +54,18 @@ steps:
     service: "wenchang"
     action: "getHistory"
     input:
-      limit: "${input.limit}"
-      offset: "${input.offset}"
+      limit: {{input.limit}}
+      offset: {{input.offset}}
     output:
       data: "history.result"
       count: "history.count"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      data: array
+      count: number
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["validate_params"]
 
   - id: "format_response"
@@ -69,9 +76,9 @@ steps:
     action: "formatResponse"
     input:
       success: true
-      data: "${steps.get_history_from_engine.data}"
-      count: "${steps.get_history_from_engine.count}"
-      timestamp: "${now()}"
+      data: {{steps.get_history_from_engine.output.data}}
+      count: {{steps.get_history_from_engine.output.count}}
+      timestamp: {{now()}}
       source: "wenchang_engine"
     output:
       response: "format.result"

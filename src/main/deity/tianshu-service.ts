@@ -39,6 +39,16 @@ export default class TianshuService implements IService {
     private tianshuEngine!: TianshuEngine;
     private taiyiService!: TaiyiService;
 
+    // Promise跟踪器 - 基于commandId管理Promise
+    private pendingCommands = new Map<
+        string,
+        {
+            resolve: (result: any) => void;
+            reject: (error: Error) => void;
+            timeout: NodeJS.Timeout;
+        }
+    >();
+
     constructor(
         private ipcMain: IpcMain,
         private mainWindow: BrowserWindow,
@@ -68,6 +78,9 @@ export default class TianshuService implements IService {
 
         await this.tianshuEngine.initialize();
 
+        // 设置工作流事件监听器
+        this.setupWorkflowEventListeners();
+
         // 注册IPC处理器
         this.setupIpcHandlers();
         logger.info("天枢服务已初始化");
@@ -78,9 +91,76 @@ export default class TianshuService implements IService {
      * 让天枢星君进入休眠状态，保存当前状态
      */
     async shutdown(): Promise<void> {
+        // 清理所有pending的Promise
+        for (const [_commandId, pending] of this.pendingCommands) {
+            clearTimeout(pending.timeout);
+            pending.reject(new Error("Service shutting down"));
+        }
+        this.pendingCommands.clear();
+
         if (this.tianshuEngine) {
             await this.tianshuEngine.shutdown();
         }
+    }
+
+    /**
+     * 设置工作流事件监听器
+     * 基于commandId跟踪Promise并resolve/reject
+     */
+    private setupWorkflowEventListeners(): void {
+        // 监听工作流完成事件
+        this.tianshuEngine.on("workflowCompleted", (execution: any) => {
+            const pending = this.pendingCommands.get(execution.commandId);
+            if (pending) {
+                clearTimeout(pending.timeout);
+                this.pendingCommands.delete(execution.commandId);
+
+                // 提取工作流结果
+                const result = this.extractWorkflowResult(execution);
+                pending.resolve({
+                    commandId: execution.commandId,
+                    status: "completed",
+                    result: result,
+                    timestamp: Date.now(),
+                });
+            }
+        });
+
+        // 监听工作流失败事件
+        this.tianshuEngine.on("workflowFailed", (execution: any) => {
+            const pending = this.pendingCommands.get(execution.commandId);
+            if (pending) {
+                clearTimeout(pending.timeout);
+                this.pendingCommands.delete(execution.commandId);
+                pending.reject(new Error(execution.error || "Workflow execution failed"));
+            }
+        });
+
+        logger.info("🌌 工作流事件监听器已设置");
+    }
+
+    /**
+     * 从执行上下文中提取工作流结果
+     */
+    private extractWorkflowResult(execution: any): any {
+        if (!execution.stepResults) {
+            return null;
+        }
+
+        // 查找有"return"动作的步骤（如format_response步骤）
+        for (const [_stepName, stepResult] of execution.stepResults) {
+            if (stepResult.output && stepResult.output.data !== undefined) {
+                // 返回builtin return步骤的完整输出
+                return stepResult.output;
+            }
+        }
+
+        // 如果没有找到return步骤，返回最后一个成功步骤的结果
+        const stepResults = Array.from(execution.stepResults.values());
+        const lastSuccessStep = stepResults
+            .reverse()
+            .find((step: any) => step.status === "completed");
+        return (lastSuccessStep as any)?.output || null;
     }
 
     /**
@@ -88,9 +168,33 @@ export default class TianshuService implements IService {
      * 建立与渲染进程的通信桥梁，处理各种天庭事务
      */
     private setupIpcHandlers(): void {
-        // 天枢星君命令处理 - 接收天庭指令
+        // 天枢星君命令处理 - 使用requestId模式跟踪Promise
         this.ipcMain.handle("tianshu.command", async (_, command) => {
-            return this.tianshuEngine.processCommand(command);
+            return new Promise((resolve, reject) => {
+                // 设置超时
+                const timeout = setTimeout(() => {
+                    this.pendingCommands.delete(command.id);
+                    reject(new Error(`Command ${command.id} timed out after 30 seconds`));
+                }, 30000);
+
+                // 将Promise存储到跟踪器中
+                this.pendingCommands.set(command.id, {
+                    resolve,
+                    reject,
+                    timeout,
+                });
+
+                // Fire-and-forget: 提交命令到天枢引擎
+                this.tianshuEngine.processCommand(command).catch((error) => {
+                    // 如果processCommand立即失败，清理并reject
+                    const pending = this.pendingCommands.get(command.id);
+                    if (pending) {
+                        clearTimeout(pending.timeout);
+                        this.pendingCommands.delete(command.id);
+                        reject(error);
+                    }
+                });
+            });
         });
 
         // 天枢星君状态查询 - 汇报天庭运转状况

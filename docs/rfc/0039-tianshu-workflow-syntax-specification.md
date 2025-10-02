@@ -100,7 +100,7 @@ tags: ["preferences", "user"]               # 可选：标签分类
 
 #### 2.1 条件步骤 (condition)
 
-**用途**：内置条件判断，由TianshuEngine直接处理，不路由到外部引擎。
+**用途**：内置条件判断，由TianshuEngine直接处理，不路由到外部引擎。特别适用于处理前置步骤的执行结果，如验证结果、业务逻辑判断等。
 
 ```yaml
 - id: "validate_action"                     # 必需：步骤唯一标识
@@ -110,9 +110,9 @@ tags: ["preferences", "user"]               # 可选：标签分类
 
   # 条件表达式
   condition:
+    field: "{{inputs.action}}"              # 要检查的字段路径
     operator: "in"                          # 比较操作符
-    value: "{{inputs.action}}"              # 左操作数
-    test: ["get", "update", "reset"]        # 右操作数
+    value: ["get", "update", "reset"]       # 预期值
 
   # 条件为真时执行的步骤
   onTrue:
@@ -131,6 +131,46 @@ tags: ["preferences", "user"]               # 可选：标签分类
       input:
         message: "无效的操作类型: {{inputs.action}}"
         code: "INVALID_ACTION"
+```
+
+**验证结果处理模式**：
+```yaml
+# 示例：处理验证步骤的结果
+- id: "data_validation"
+  name: "验证输入数据"
+  type: "action"
+  service: "wenchang"
+  action: "validate"
+  input:
+    data: "{{inputs.delta}}"
+    rules:
+      - type: "object"
+      - notEmpty: true
+
+- id: "check_validation_result"
+  name: "检查验证结果"
+  type: "condition"
+  description: "根据验证结果决定是否继续执行"
+  dependsOn: ["data_validation"]
+  condition:
+    field: "{{steps.data_validation.valid}}"   # 引用前置步骤的返回字段
+    operator: "eq"
+    value: true
+  onTrue:
+    - id: "continue_processing"
+      type: "action"
+      service: "wenchang"
+      action: "processData"
+      input:
+        data: "{{inputs.delta}}"
+  onFalse:
+    - id: "return_validation_error"
+      type: "builtin"
+      action: "return"
+      input:
+        success: false
+        error: "数据验证失败"
+        details: "{{steps.data_validation.errors}}"
 ```
 
 **支持的操作符**：
@@ -152,17 +192,17 @@ tags: ["preferences", "user"]               # 可选：标签分类
 condition:
   operator: "and"
   conditions:
-    - operator: "exists"
-      value: "{{inputs.delta}}"
-    - operator: "ne"
-      value: "{{inputs.delta}}"
-      test: null
+    - field: "{{inputs.delta}}"
+      operator: "exists"
+    - field: "{{inputs.delta}}"
+      operator: "ne"
+      value: null
     - operator: "or"
       conditions:
-        - operator: "exists"
-          value: "{{inputs.delta.ui}}"
-        - operator: "exists"
-          value: "{{inputs.delta.display}}"
+        - field: "{{inputs.delta.ui}}"
+          operator: "exists"
+        - field: "{{inputs.delta.display}}"
+          operator: "exists"
 ```
 
 #### 2.2 动作步骤 (action)
@@ -194,9 +234,9 @@ condition:
   # 执行控制
   dependsOn: ["validate_action"]            # 依赖的步骤
   condition:                               # 可选：执行条件
+    field: "{{inputs.action}}"
     operator: "eq"
-    value: "{{inputs.action}}"
-    test: "update"
+    value: "update"
 
   # 错误处理
   onError:
@@ -251,9 +291,9 @@ input: {}
     message: "偏好设置更新成功"
     timestamp: "{{Date.now()}}"
   condition:
+    field: "{{steps.update_preferences.output.success}}"
     operator: "eq"
-    value: "{{steps.update_preferences.output.success}}"
-    test: true
+    value: true
 ```
 
 **内置操作类型**：
@@ -336,9 +376,9 @@ input:
     - id: "validate_file"
       type: "condition"
       condition:
+        field: "{{currentFile.name}}"
         operator: "matches"
-        value: "{{currentFile.name}}"
-        test: "\\.(jpg|png|gif|bmp|webp)$"
+        value: "\\.(jpg|png|gif|bmp|webp)$"
       onFalse:
         - id: "skip_file"
           type: "builtin"
@@ -521,9 +561,9 @@ steps:
   type: "action"
   dependsOn: ["validation"]
   condition:
+    field: "{{steps.validation.output.success}}"
     operator: "eq"
-    value: "{{steps.validation.output.success}}"
-    test: true
+    value: true
   # 只有在validation成功时才执行
 ```
 

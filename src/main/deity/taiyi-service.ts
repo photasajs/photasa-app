@@ -95,6 +95,7 @@ export default class TaiyiService implements IService, IStepExecutor {
             if (step.type === "builtin" || step.service === "builtin") {
                 // 内置操作：路由到builtin适配器
                 routeInfo = `builtin.${step.action}`;
+
                 engineResult = await this.engine.callEngine(
                     "builtin",
                     step.action || "unknown",
@@ -130,7 +131,7 @@ export default class TaiyiService implements IService, IStepExecutor {
 
             // 构造标准化结果
             const result: StepExecutionResult = {
-                success: true,
+                success: true, // 执行成功（不是业务逻辑成功）
                 data: engineResult,
                 metadata: {
                     duration: Date.now() - startTime,

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
-import { WenchangAdapter } from "../../adapters/WenchangAdapter";
+import { WenchangAdapter } from "../WenchangAdapter";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
@@ -61,8 +61,8 @@ describe("WenchangAdapter", () => {
             expect(snapshot).toHaveProperty("data");
             expect(snapshot).toHaveProperty("timestamp");
             expect(snapshot).toHaveProperty("revision");
-            expect(snapshot.data.ui.theme).toBe("system");
-            expect(snapshot.data.display.thumbnailSize).toBe(200);
+            expect(snapshot.data.ui.theme).toBe("solarized-dark");
+            expect(snapshot.data.display.thumbnailSize).toBe(150);
         });
 
         it("should apply preference delta and return new revision", async () => {
@@ -92,8 +92,8 @@ describe("WenchangAdapter", () => {
             // 重置到默认值
             const snapshot = await adapter.resetToDefaults();
 
-            expect(snapshot.data.ui.theme).toBe("system");
-            expect(snapshot.data.display.thumbnailSize).toBe(200);
+            expect(snapshot.data.ui.theme).toBe("solarized-dark");
+            expect(snapshot.data.display.thumbnailSize).toBe(150);
         });
 
         it("should persist preferences to file", async () => {

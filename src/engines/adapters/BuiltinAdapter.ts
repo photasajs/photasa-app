@@ -54,32 +54,43 @@ export class BuiltinAdapter implements IAdapter {
      * 初始化适配器
      */
     async initialize(): Promise<void> {
-        logger.info("🔧 内置操作适配器初始化完成");
+        logger.info("🔧 内置仙术已备，诸般法器就绪");
     }
 
     /**
      * 关闭适配器
      */
     async shutdown(): Promise<void> {
-        logger.info("🔧 内置操作适配器已关闭");
+        logger.info("🔧 内置仙术收功，法器归位");
     }
 
     /**
      * 返回工作流结果
      * 用于工作流步骤返回最终结果
+     * 直接返回数据，避免不必要的包装
      */
-    async return(params: ReturnParams = {}): Promise<ReturnParams> {
-        const result: ReturnParams = {
-            success: params.success ?? true,
-            data: params.data,
-            message: params.message || "操作完成",
-            error: params.error,
-        };
+    async return(params: ReturnParams = {}): Promise<any> {
+        logger.debug(`🔧 收到仙家回禀:`, params);
 
-        logger.info(`🔧 工作流返回结果: ${result.success ? "成功" : "失败"}`, {
-            message: result.message,
-            hasData: !!result.data,
-            error: result.error,
+        // 如果有错误，抛出异常而不是返回包装结构
+        if (params.error) {
+            logger.error(`🔧 仙令有误: ${params.error}`);
+            throw new Error(params.error);
+        }
+
+        // 如果明确失败，抛出异常
+        if (params.success === false) {
+            const errorMsg = params.message || "操作失败";
+            logger.error(`🔧 功败垂成: ${errorMsg}`);
+            throw new Error(errorMsg);
+        }
+
+        // 直接返回数据，不包装
+        const result = params.data;
+
+        logger.info(`🔧 仙令已成: 大功告成`, {
+            message: params.message || "操作完成",
+            hasData: !!result,
         });
 
         return result;
@@ -91,11 +102,11 @@ export class BuiltinAdapter implements IAdapter {
      */
     async setVariable(params: SetVariableParams): Promise<{ success: boolean; message: string }> {
         // 这里只是记录操作，实际的变量设置由WorkflowOrchestrator处理
-        logger.info(`🔧 设置工作流变量: ${params.name} = ${JSON.stringify(params.value)}`);
+        logger.info(`🔧 铭刻仙符: 「${params.name}」赋灵为 ${JSON.stringify(params.value)}`);
 
         return {
             success: true,
-            message: `变量 ${params.name} 已设置`,
+            message: `仙符「${params.name}」已铭刻`,
         };
     }
 
@@ -107,19 +118,19 @@ export class BuiltinAdapter implements IAdapter {
 
         switch (params.level) {
             case "debug":
-                logger.debug(`🔧 [工作流] ${params.message}`, params.metadata);
+                logger.debug(`🔧 【密语】${params.message}`, params.metadata);
                 break;
             case "info":
-                logger.info(`🔧 [工作流] ${params.message}`, params.metadata);
+                logger.info(`🔧 【奏报】${params.message}`, params.metadata);
                 break;
             case "warn":
-                logger.warn(`🔧 [工作流] ${params.message}`, params.metadata);
+                logger.warn(`🔧 【警示】${params.message}`, params.metadata);
                 break;
             case "error":
-                logger.error(`🔧 [工作流] ${params.message}`, params.metadata);
+                logger.error(`🔧 【急报】${params.message}`, params.metadata);
                 break;
             default:
-                logger.info(`🔧 [工作流] ${params.message}`, params.metadata);
+                logger.info(`🔧 【奏报】${params.message}`, params.metadata);
         }
 
         return {
@@ -134,13 +145,13 @@ export class BuiltinAdapter implements IAdapter {
     async delay(params: DelayParams): Promise<{ success: boolean; actualDelay: number }> {
         const startTime = Date.now();
 
-        logger.info(`🔧 延迟执行 ${params.milliseconds}ms`);
+        logger.info(`🔧 静待天时，须臾${params.milliseconds}毫秒`);
 
         await new Promise((resolve) => setTimeout(resolve, params.milliseconds));
 
         const actualDelay = Date.now() - startTime;
 
-        logger.info(`🔧 延迟执行完成，实际延迟: ${actualDelay}ms`);
+        logger.info(`🔧 天时已至，恰逢${actualDelay}毫秒`);
 
         return {
             success: true,
@@ -153,11 +164,11 @@ export class BuiltinAdapter implements IAdapter {
      * 用于流程控制，不执行任何实际操作
      */
     async noop(): Promise<{ success: boolean; message: string }> {
-        logger.debug("🔧 执行空操作 (noop)");
+        logger.debug("🔧 无为而治，不动如山");
 
         return {
             success: true,
-            message: "空操作执行完成",
+            message: "无为之术已施",
         };
     }
 
@@ -166,7 +177,7 @@ export class BuiltinAdapter implements IAdapter {
      * 用于测试错误处理或主动失败某个步骤
      */
     async throwError(params: { message: string; code?: string }): Promise<never> {
-        logger.error(`🔧 主动抛出错误: ${params.message}`, { code: params.code });
+        logger.error(`🔧 天劫降临: ${params.message}`, { code: params.code });
 
         const error = new Error(params.message);
         if (params.code) {
@@ -188,7 +199,7 @@ export class BuiltinAdapter implements IAdapter {
         const branch = params.condition ? "true" : "false";
         const result = params.condition ? params.onTrue : params.onFalse;
 
-        logger.info(`🔧 条件分支执行: ${branch}`, { result });
+        logger.info(`🔧 分道扬镳，择${branch === "true" ? "阳" : "阴"}而行`, { result });
 
         return {
             success: true,
@@ -230,7 +241,10 @@ export class BuiltinAdapter implements IAdapter {
                     throw new Error(`不支持的转换操作: ${params.operation}`);
             }
 
-            logger.debug(`🔧 数据转换: ${params.operation}`, { input: params.input, result });
+            logger.debug(`🔧 施展转化之术: ${params.operation}`, {
+                input: params.input,
+                result,
+            });
 
             return {
                 success: true,
@@ -238,7 +252,7 @@ export class BuiltinAdapter implements IAdapter {
                 operation: params.operation,
             };
         } catch (error) {
-            logger.error(`🔧 数据转换失败: ${params.operation}`, error);
+            logger.error(`🔧 转化之术失败，法力耗尽: ${params.operation}`, error);
             throw error;
         }
     }

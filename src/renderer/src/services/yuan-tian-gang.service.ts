@@ -65,7 +65,9 @@ export class YuanTianGangService implements IYuanTianGangService {
     }
 
     async executeZhaoling(zhaoling: Zhaoling): Promise<ZhaolingResponse> {
-        logger.info("🔮 接收房玄龄诏令", zhaoling);
+        logger.info(
+            `🔮 接收房玄龄诏令: ${zhaoling.command}, 来源: ${zhaoling.source}, 优先级: ${zhaoling.priority}`,
+        );
 
         try {
             // 房玄龄既然发诏令给袁天罡，必定需要天界通信
@@ -83,26 +85,28 @@ export class YuanTianGangService implements IYuanTianGangService {
                           : "normal",
             };
 
+            const startTime = Date.now();
             const fuluResponse = await this.sendFuluToTianshu(fulu);
-            const tianshuResponse = {
-                status: fuluResponse.success ? "天界已批准" : "天界暂缓",
-                blessing: fuluResponse.blessing,
-                tianShuResponse: fuluResponse.response,
-            };
+            const processTime = Date.now() - startTime;
 
-            logger.info("🔮 天枢回馈符箓响应", fuluResponse);
+            // 袁天罡职责：拆箱天枢结果，装箱为钦天监格式
+            const unboxedData = this.unboxTianshuResponse(fuluResponse);
+            const reboxedResponse = this.reboxAsZhaolingResponse(
+                zhaoling,
+                unboxedData,
+                fuluResponse,
+                processTime,
+            );
 
-            const response: ZhaolingResponse = {
-                acknowledged: true,
-                command: zhaoling.command,
-                context: zhaoling.context,
-                timestamp: Date.now(),
-                result: {
-                    message: "袁天罡已执行诏令",
-                    details: `已处理来自${zhaoling.source}的${zhaoling.command}请求`,
-                },
-                tianshuResponse,
-            };
+            logger.info(
+                `🔮 天枢响应: ${fuluResponse.success ? "成功" : "失败"}, 意图: ${fuluResponse.intent}`,
+            );
+            logger.info(`🔮 拆箱结果: ${unboxedData ? "有数据" : "无数据"}`);
+            logger.info(
+                `🔮 装箱完成: 确认=${reboxedResponse.acknowledged}, 加持=${reboxedResponse.blessing}`,
+            );
+
+            const response: ZhaolingResponse = reboxedResponse;
 
             logger.info(`🔮 完成诏令执行: ${zhaoling.command}`, response);
             return response;
@@ -112,7 +116,8 @@ export class YuanTianGangService implements IYuanTianGangService {
             return {
                 acknowledged: false,
                 command: zhaoling.command,
-                context: zhaoling.context,
+                data: null,
+                blessing: "天界暂时无法响应",
                 timestamp: Date.now(),
                 error: error instanceof Error ? error.message : "诏令处理异常",
             };
@@ -124,16 +129,18 @@ export class YuanTianGangService implements IYuanTianGangService {
      * 实现符箓到UICommand的转换并调用天枢引擎
      */
     private async sendFuluToTianshu(fulu: Fulu): Promise<FuluResponse> {
-        logger.info("🔮 向天枢发送符箓", fulu);
+        logger.info(`🔮 向天枢发送符箓: ${fulu.intent}, 紧急程度: ${fulu.urgency}`);
 
         try {
             // 符箓到UICommand的转换
             const uiCommand = this.convertFuluToUICommand(fulu);
-            logger.info("🔮 符箓转换为天枢命令", uiCommand);
+            logger.info(`🔮 符箓转换为天枢命令: ${uiCommand.intent}, ID: ${uiCommand.id}`);
 
             // 通过IPC调用天枢引擎
             const tianshuResponse = await (window as any).tianshu.processCommand(uiCommand);
-            logger.info("🔮 天枢响应", tianshuResponse);
+            logger.info(
+                `🔮 天枢响应: ${tianshuResponse.status}, 引擎: ${tianshuResponse.result?.engineName || "unknown"}`,
+            );
 
             // 转换天枢响应为符箓响应
             const fuluResponse: FuluResponse = {
@@ -175,12 +182,13 @@ export class YuanTianGangService implements IYuanTianGangService {
     private convertFuluToUICommand(fulu: Fulu): any {
         // 符箓意图到天枢UserIntent的映射（使用ZOUZHE_MATTERS常量值）
         const intentMapping: Record<string, string> = {
-            [ZOUZHE_MATTERS.THEME_CHANGE]: "update_config",
-            [ZOUZHE_MATTERS.LANGUAGE_CHANGE]: "update_config",
+            [ZOUZHE_MATTERS.THEME_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
+            [ZOUZHE_MATTERS.LANGUAGE_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
             [ZOUZHE_MATTERS.NOTIFICATION_SHOW]: "get_status",
             [ZOUZHE_MATTERS.PHOTO_SWITCH]: "scan_folder",
+            [ZOUZHE_MATTERS.GET_PREFERENCES]: "get_preferences", // 使用天枢实际工作流
             scan_folder: "scan_folder",
-            update_config: "update_config",
+            update_preferences: "update_preferences", // 添加直接映射
             get_status: "get_status",
         };
 
@@ -197,17 +205,39 @@ export class YuanTianGangService implements IYuanTianGangService {
         // 根据不同的诏令命令，构造相应的参数
         let params = fulu.context ? { ...fulu.context } : {};
 
-        // 针对偏好变更类命令，需要添加action参数
+        // 针对偏好变更类命令，需要添加action参数和格式转换
         if (
             fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE ||
             fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE
         ) {
+            // 转换人界格式到天界统一偏好格式
+            let convertedDelta = {};
+
+            if (fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE && fulu.context.themeId) {
+                convertedDelta = {
+                    ui: {
+                        theme: fulu.context.themeId,
+                    },
+                };
+            } else if (fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE && fulu.context.locale) {
+                convertedDelta = {
+                    ui: {
+                        language: fulu.context.locale,
+                    },
+                };
+            } else {
+                // 如果已经是统一格式，直接使用
+                convertedDelta = fulu.context;
+            }
+
             params = {
                 action: "update",
-                delta: fulu.context,
+                delta: convertedDelta,
                 source: fulu.source,
                 ...params,
             };
+
+            logger.debug("🔮 [调试] 转换后的params:", JSON.stringify(params, null, 2));
         }
 
         return {
@@ -225,6 +255,115 @@ export class YuanTianGangService implements IYuanTianGangService {
             },
             createdAt: Date.now(),
         };
+    }
+
+    /**
+     * 拆箱天枢响应 - 严格按契约提取业务数据
+     * 袁天罡职责：理解天枢的数据结构，提取纯业务数据
+     */
+    private unboxTianshuResponse(fuluResponse: FuluResponse): any {
+        logger.info("🔮 开始拆箱天枢响应");
+
+        // 检查符箓响应基本状态
+        if (!fuluResponse.success) {
+            logger.error("🔮 天枢处理失败", fuluResponse.error);
+            return null;
+        }
+
+        if (!fuluResponse.response) {
+            logger.error("🔮 天枢无响应数据");
+            return null;
+        }
+
+        const response = fuluResponse.response;
+
+        // 严格按照天枢的数据契约提取业务数据
+        // 天枢标准格式：{ success, result: { data: actualBusinessData } }
+        try {
+            let businessData = null;
+
+            // 第一层：检查response.result
+            if (response.result) {
+                // 第二层：检查result.result (某些引擎的双层结构)
+                if (response.result.result && response.result.result.data) {
+                    businessData = response.result.result.data;
+                    logger.info("🔮 提取路径: response.result.result.data");
+                }
+                // 第二层：检查result.data
+                else if (response.result.data) {
+                    businessData = response.result.data;
+                    logger.info("🔮 提取路径: response.result.data");
+                }
+                // 直接使用result
+                else {
+                    businessData = response.result;
+                    logger.info("🔮 提取路径: response.result");
+                }
+            }
+            // 直接使用response
+            else {
+                businessData = response;
+                logger.info("🔮 提取路径: response");
+            }
+
+            logger.info("🔮 拆箱完成", { hasData: !!businessData });
+            return businessData;
+        } catch (error) {
+            logger.error("🔮 拆箱过程出错", error);
+            return null;
+        }
+    }
+
+    /**
+     * 装箱为钦天监格式 - 严格按ZhaolingResponse契约
+     * 袁天罡职责：将业务数据包装为自己的响应格式
+     */
+    private reboxAsZhaolingResponse(
+        originalZhaoling: Zhaoling,
+        businessData: any,
+        fuluResponse: FuluResponse,
+        processTime: number,
+    ): ZhaolingResponse {
+        logger.info(`🔮 开始装箱为钦天监格式: ${originalZhaoling.command}`);
+
+        const hasData = businessData !== null && businessData !== undefined;
+        const engineName =
+            fuluResponse.response?.engineName ||
+            fuluResponse.response?.result?.engineName ||
+            "unknown";
+
+        const response: ZhaolingResponse = {
+            acknowledged: fuluResponse.success,
+            command: originalZhaoling.command,
+            data: businessData, // 直接的业务数据，无嵌套
+            blessing:
+                fuluResponse.blessing ||
+                this.generateBlessing(
+                    originalZhaoling.priority === "imperial"
+                        ? "critical"
+                        : originalZhaoling.priority === "urgent"
+                          ? "high"
+                          : "normal",
+                    fuluResponse.success ? "completed" : "failed",
+                ),
+            timestamp: Date.now(),
+            metadata: {
+                engineName,
+                processTime,
+                urgency:
+                    originalZhaoling.priority === "imperial"
+                        ? "critical"
+                        : originalZhaoling.priority === "urgent"
+                          ? "high"
+                          : "normal",
+            },
+        };
+
+        logger.info(
+            `🔮 装箱完成: 确认=${response.acknowledged}, 数据=${hasData ? "有" : "无"}, 引擎=${engineName}, 耗时=${processTime}ms`,
+        );
+
+        return response;
     }
 
     /**

@@ -10,8 +10,11 @@ import {
     PreferenceSnapshot,
     PreferenceDelta,
 } from "../wenchang/core/WenchangEngine";
+import { loggers } from "@common/logger";
 import * as path from "path";
 import * as os from "os";
+
+const logger = loggers.wenchang;
 
 /**
  * 文昌适配器配置
@@ -63,7 +66,7 @@ export class WenchangAdapter implements IAdapter {
      */
     async initialize(): Promise<void> {
         await this.engine.initialize();
-        console.log("[WenchangAdapter] Preference adapter initialized");
+        logger.info("🌌 文昌星君归位，掌管偏好典籍");
     }
 
     /**
@@ -71,7 +74,7 @@ export class WenchangAdapter implements IAdapter {
      */
     async shutdown(): Promise<void> {
         await this.engine.shutdown();
-        console.log("[WenchangAdapter] Preference adapter shutdown");
+        logger.info("🌌 文昌星君归隐，典籍封存");
     }
 
     /**
@@ -128,5 +131,50 @@ export class WenchangAdapter implements IAdapter {
      */
     async savePreferences(): Promise<void> {
         await this.engine.savePreferences();
+    }
+
+    /**
+     * 验证输入数据
+     * 委托给引擎处理
+     */
+    async validate(data: any): Promise<{ valid: boolean; errors?: string[] }> {
+        logger.debug("🌌 文昌适配器转发验证请求");
+        return this.engine.validate(data);
+    }
+
+    /**
+     * 清理和验证数据
+     * 委托给引擎处理
+     */
+    async sanitize(data: any): Promise<{ result: any }> {
+        logger.debug("🌌 文昌适配器转发净化请求");
+        return this.engine.sanitize(data);
+    }
+
+    /**
+     * 更新偏好设置
+     * 委托给引擎处理
+     */
+    async updatePreferences(data: any): Promise<{ result: any }> {
+        logger.debug("🌌 文昌适配器转发偏好更新请求");
+        return this.engine.updatePreferences(data);
+    }
+
+    /**
+     * 发送事件
+     * 委托给引擎处理
+     */
+    async emitEvent(data: any): Promise<{ id: string }> {
+        logger.debug("🌌 文昌适配器转发事件发送请求");
+        return this.engine.emitEvent(data);
+    }
+
+    /**
+     * 格式化响应
+     * 委托给引擎处理
+     */
+    async formatResponse(data: any): Promise<{ result: any }> {
+        logger.debug("🌌 文昌适配器转发响应格式化请求");
+        return this.engine.formatResponse(data);
     }
 }

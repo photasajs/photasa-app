@@ -80,6 +80,11 @@ export class WorkflowOrchestrator extends EventEmitter {
                 globalVariables: {},
             });
 
+        // 确保variableResolver存在
+        if (!this.variableResolver) {
+            throw new Error("WorkflowOrchestrator requires a valid VariableResolver");
+        }
+
         this.setupEventHandlers();
     }
 
@@ -91,7 +96,6 @@ export class WorkflowOrchestrator extends EventEmitter {
         if (this.stepExecutor.initialize) {
             await this.stepExecutor.initialize();
         }
-        await this.variableResolver.initialize();
         logger.info("🌌 编排器初始化完成");
     }
 
@@ -104,6 +108,14 @@ export class WorkflowOrchestrator extends EventEmitter {
         options: WorkflowExecutionOptions = {},
     ): Promise<string> {
         const executionId = this.generateExecutionId();
+
+        // 更新变量解析器配置，传入工作流步骤定义用于output_schema验证
+        this.variableResolver = new VariableResolver({
+            globalVariables: this.variableResolver.config.globalVariables,
+            strictMode: this.variableResolver.config.strictMode,
+            variablePrefix: this.variableResolver.config.variablePrefix,
+            workflowSteps: workflow.steps,
+        });
 
         // 创建执行上下文
         const context: ExecutionContext = {
@@ -291,9 +303,10 @@ export class WorkflowOrchestrator extends EventEmitter {
                 // 执行步骤
                 const result = await this.executeStep(resolvedStep, context);
 
-                // 更新上下文
-                context.stepResults.set(step.id, result);
-                context.currentStepId = step.id;
+                // 更新上下文 - 使用step.id作为主键，因为依赖关系使用的是id
+                const stepKey = step.id || step.name || `step_${context.stepResults.size}`;
+                context.stepResults.set(stepKey, result);
+                context.currentStepId = stepKey;
 
                 // 更新指标
                 if (result.status === "completed") {
@@ -313,7 +326,7 @@ export class WorkflowOrchestrator extends EventEmitter {
                 this.emitProgressUpdate(context);
             } catch (error) {
                 const result: StepResult = {
-                    stepId: step.id,
+                    stepId: step.id || step.name || "unknown",
                     status: "failed",
                     startTime: Date.now(),
                     endTime: Date.now(),
@@ -323,7 +336,8 @@ export class WorkflowOrchestrator extends EventEmitter {
                     skipped: false,
                 };
 
-                context.stepResults.set(step.id, result);
+                const stepKey = step.id || step.name || `step_${context.stepResults.size}`;
+                context.stepResults.set(stepKey, result);
                 context.metrics.failedStepCount++;
 
                 // 如果步骤不允许忽略错误，停止执行
@@ -339,7 +353,7 @@ export class WorkflowOrchestrator extends EventEmitter {
      */
     private async executeStep(step: WorkflowStep, context: ExecutionContext): Promise<StepResult> {
         const result: StepResult = {
-            stepId: step.id,
+            stepId: step.id || step.name || "unknown",
             status: "pending",
             startTime: Date.now(),
             retryCount: 0,
@@ -357,7 +371,14 @@ export class WorkflowOrchestrator extends EventEmitter {
                 result.output = await this.executeLoopStep(step, context);
             } else {
                 // action, builtin等步骤交给外部stepExecutor处理
-                result.output = await this.stepExecutor.executeAction(step, context);
+                const stepExecutionResult = await this.stepExecutor.executeAction(step, context);
+
+                // 检查执行结果
+                if (stepExecutionResult.success) {
+                    result.output = stepExecutionResult.data;
+                } else {
+                    throw new Error(stepExecutionResult.error || "Step execution failed");
+                }
             }
 
             result.status = "completed";
@@ -386,22 +407,69 @@ export class WorkflowOrchestrator extends EventEmitter {
         context: ExecutionContext,
     ): Promise<any> {
         if (!step.condition) {
-            throw new Error(`Condition step ${step.id} missing condition expression`);
+            throw new Error(`Condition step ${step.id || step.name} missing condition expression`);
         }
 
         const conditionResult = this.evaluateCondition(step.condition, context);
 
-        logger.info(`🌌 条件评估: ${step.id} = ${conditionResult}`, {
-            stepId: step.id,
+        logger.info(`🌌 条件评估: ${step.id || step.name} = ${conditionResult}`, {
+            stepId: step.id || step.name,
             condition: step.condition,
             result: conditionResult,
         });
 
+        // 执行条件分支中的步骤
+        const branchResults: any[] = [];
+        logger.info(
+            `🌌 条件分支检查: conditionResult=${conditionResult}, hasOnTrue=${!!step.onTrue}, hasOnFalse=${!!step.onFalse}`,
+        );
+
+        if (conditionResult && step.onTrue) {
+            logger.info(
+                `🌌 执行条件真分支: ${step.id || step.name}, 包含 ${step.onTrue.length} 个步骤`,
+            );
+            // 执行 onTrue 分支中的所有步骤
+            for (const subStep of step.onTrue) {
+                if (!this.variableResolver) {
+                    throw new Error(
+                        "WorkflowOrchestrator variableResolver is undefined in onTrue branch",
+                    );
+                }
+                const resolvedStep = await this.variableResolver.resolveStep(subStep, context);
+                const result = await this.executeStep(resolvedStep, context);
+                branchResults.push(result);
+                // 将子步骤结果存储到context中 - 使用id作为主键
+                const subStepKey = subStep.id || subStep.name;
+                if (subStepKey) {
+                    context.stepResults.set(subStepKey, result);
+                }
+            }
+        } else if (!conditionResult && step.onFalse) {
+            logger.info(`🌌 执行条件假分支: ${step.id || step.name}`);
+            // 执行 onFalse 分支中的所有步骤
+            for (const subStep of step.onFalse) {
+                if (!this.variableResolver) {
+                    throw new Error(
+                        "WorkflowOrchestrator variableResolver is undefined in onFalse branch",
+                    );
+                }
+                const resolvedStep = await this.variableResolver.resolveStep(subStep, context);
+                const result = await this.executeStep(resolvedStep, context);
+                branchResults.push(result);
+                // 将子步骤结果存储到context中 - 使用id作为主键
+                const subStepKey = subStep.id || subStep.name;
+                if (subStepKey) {
+                    context.stepResults.set(subStepKey, result);
+                }
+            }
+        }
+
         return {
             success: true,
             result: conditionResult,
+            branchResults: branchResults,
             stepType: "condition",
-            stepId: step.id,
+            stepId: step.id || step.name,
         };
     }
 
@@ -410,7 +478,7 @@ export class WorkflowOrchestrator extends EventEmitter {
      */
     private async executeLoopStep(step: WorkflowStep, context: ExecutionContext): Promise<any> {
         if (!step.loop) {
-            throw new Error(`Loop step ${step.id} missing loop configuration`);
+            throw new Error(`Loop step ${step.id || step.name} missing loop configuration`);
         }
 
         const loopConfig = step.loop;
@@ -431,7 +499,7 @@ export class WorkflowOrchestrator extends EventEmitter {
                 iterations = resolvedCount;
             } else {
                 throw new Error(
-                    `Invalid loop count in step ${step.id}: ${JSON.stringify(resolvedCount)}`,
+                    `Invalid loop count in step ${step.id || step.name}: ${JSON.stringify(resolvedCount)}`,
                 );
             }
         }
@@ -464,8 +532,8 @@ export class WorkflowOrchestrator extends EventEmitter {
             }
         }
 
-        logger.info(`🌌 循环执行完成: ${step.id}, 迭代次数: ${iterations.length}`, {
-            stepId: step.id,
+        logger.info(`🌌 循环执行完成: ${step.id || step.name}, 迭代次数: ${iterations.length}`, {
+            stepId: step.id || step.name,
             iterationCount: iterations.length,
         });
 
@@ -473,7 +541,7 @@ export class WorkflowOrchestrator extends EventEmitter {
             success: true,
             result: iterationResults,
             stepType: "loop",
-            stepId: step.id,
+            stepId: step.id || step.name,
             iterationCount: iterations.length,
         };
     }
@@ -488,6 +556,8 @@ export class WorkflowOrchestrator extends EventEmitter {
 
         const { field, operator, value, customFunction } = condition;
 
+        logger.debug(`🌌 【条件评估】field=${field}, operator=${operator}, value=${value}`);
+
         // 自定义函数条件
         if (customFunction) {
             // 这里可以扩展自定义函数支持
@@ -495,14 +565,30 @@ export class WorkflowOrchestrator extends EventEmitter {
             return false;
         }
 
+        // 如果field本身是模板字符串，需要先解析
+        let resolvedField = field;
+        if (typeof field === "string" && field.includes("{{")) {
+            resolvedField = this.variableResolver.resolveString(field, context);
+            logger.debug(`🌌 【条件评估】解析field模板: ${field} -> ${resolvedField}`);
+        }
+
         // 获取字段值
-        const fieldValue = this.getFieldValue(field, context);
+        const fieldValue =
+            typeof resolvedField === "string"
+                ? this.getFieldValue(resolvedField, context)
+                : resolvedField;
+
+        logger.debug(
+            `🌌 【条件评估】最终比较: fieldValue=${fieldValue} (type=${typeof fieldValue}) vs value=${value} (type=${typeof value})`,
+        );
 
         // 根据操作符评估
         switch (operator) {
             case "eq":
             case "equals":
-                return fieldValue === value;
+                const result = fieldValue === value;
+                logger.debug(`🌌 【条件评估】结果: ${result}`);
+                return result;
             case "ne":
             case "notEquals":
                 return fieldValue !== value;
@@ -570,9 +656,15 @@ export class WorkflowOrchestrator extends EventEmitter {
             }
         }
 
-        // 支持input.field格式
+        // 支持input.field格式（用于访问执行上下文输入）
         if (fieldPath.startsWith("input.")) {
             const inputPath = fieldPath.substring(6); // 移除"input."
+            return this.getNestedValue(context.input, inputPath);
+        }
+
+        // 支持inputs.field格式（用于访问工作流定义的输入参数）
+        if (fieldPath.startsWith("inputs.")) {
+            const inputPath = fieldPath.substring(7); // 移除"inputs."
             return this.getNestedValue(context.input, inputPath);
         }
 

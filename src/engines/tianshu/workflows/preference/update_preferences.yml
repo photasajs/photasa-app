@@ -35,11 +35,51 @@ steps:
     service: "wenchang"
     action: "validate"
     input:
-      delta: "${input.delta}"
+      delta: "{{inputs.delta}}"
       rules:
         - type: "object"
         - notEmpty: true
         - allowedKeys: ["ui", "display", "scan", "performance", "advanced"]
+    output:
+      result: "result"
+      success: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        valid: boolean
+        errors: string[]
+      success: boolean
+      timestamp: number
+      engineName: string
+
+  - id: "simple_test"
+    name: "简单测试步骤"
+    type: "builtin"
+    action: "log"
+    input:
+      level: "info"
+      message: "🎯 简单测试步骤执行了！"
+    dependsOn: ["validate_delta"]
+
+  - id: "check_validation"
+    name: "check_validation"
+    type: "condition"
+    description: "根据验证结果决定是否继续执行"
+    dependsOn: ["simple_test"]
+    condition:
+      field: "steps.validate_delta.output.result.valid"
+      operator: "eq"
+      value: true
+    onTrue: []  # 验证通过，继续执行后续步骤
+    onFalse:
+      - id: "return_validation_error"
+        name: "return_validation_error"
+        type: "builtin"
+        action: "return"
+        input:
+          success: false
+          error: "偏好设置数据验证失败"
+          details: "{{steps.validate_delta.output.result.errors}}"
 
   - id: "sanitize_values"
     name: "清理和验证偏好值"
@@ -48,12 +88,12 @@ steps:
     service: "wenchang"
     action: "sanitize"
     input:
-      source: "${input.delta}"
+      source: "{{inputs.delta}}"
       rules:
         ui.theme:
-          type: "enum"
-          values: ["light", "dark", "auto"]
-          default: "light"
+          type: "string"
+          minLength: 1
+          default: "solarized-dark"
         ui.language:
           type: "string"
           pattern: "^[a-z]{2}-[A-Z]{2}$"
@@ -68,8 +108,16 @@ steps:
           values: ["grid", "list", "timeline"]
           default: "grid"
     output:
-      sanitized: "sanitize.result"
-    dependsOn: ["validate_delta"]
+      result: "result"
+      success: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        sanitized: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["check_validation"]
 
   - id: "update_engine"
     name: "调用文昌引擎更新偏好"
@@ -78,10 +126,10 @@ steps:
     service: "wenchang"
     action: "updatePreferences"
     input:
-      delta: "${steps.sanitize_values.sanitized}"
-      source: "${input.source}"
+      delta: "{{steps.sanitize_values.output.result.result}}"
+      source: "{{inputs.source}}"
     output:
-      result: "update.result"
+      result: "result"
     dependsOn: ["sanitize_values"]
 
   - id: "get_updated_snapshot"
@@ -92,7 +140,14 @@ steps:
     action: "getCurrentSnapshot"
     input: {}
     output:
-      snapshot: "snapshot.result"
+      result: "result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        snapshot: object
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["update_engine"]
 
   - id: "emit_change_event"
@@ -104,12 +159,12 @@ steps:
     input:
       event: "preferences_changed"
       data:
-        delta: "${steps.sanitize_values.sanitized}"
-        snapshot: "${steps.get_updated_snapshot.snapshot}"
-        source: "${input.source}"
-        timestamp: "${now()}"
+        delta: "{{steps.sanitize_values.output.result.result}}"
+        snapshot: "{{steps.get_updated_snapshot.output.result.data}}"
+        source: "{{inputs.source}}"
+        timestamp: "{{now()}}"
     output:
-      eventId: "event.id"
+      eventId: "result.eventId"
     dependsOn: ["get_updated_snapshot"]
 
   - id: "format_response"
@@ -121,12 +176,12 @@ steps:
     input:
       success: true
       data:
-        updated: "${steps.sanitize_values.sanitized}"
-        snapshot: "${steps.get_updated_snapshot.snapshot}"
-      timestamp: "${now()}"
+        updated: "{{steps.sanitize_values.output.result.result}}"
+        snapshot: "{{steps.get_updated_snapshot.output.result.data}}"
+      timestamp: "{{now()}}"
       source: "wenchang_engine"
     output:
-      response: "format.result"
+      response: "result"
     dependsOn: ["emit_change_event"]
 
 # 输出定义

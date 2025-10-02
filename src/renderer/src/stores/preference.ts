@@ -42,23 +42,49 @@ export interface AutoUpdateConfig {
     lastCheck?: string; // 上次检查时间
 }
 
+/**
+ * 统一偏好设置接口 - 与天界保持一致
+ */
+interface UnifiedPreferences {
+    ui: {
+        theme: string; // 主题ID: "light", "dark", "solarized-light", "solarized-dark" 等
+        language: string; // zh-CN, en-US
+        layout: "grid" | "list" | "masonry";
+        sidebarWidth: number;
+        zoomLevel: number;
+    };
+    display: {
+        thumbnailSize: number; // 150-400
+        sortOrder: "name" | "date" | "size" | "type";
+        groupBy: "none" | "date" | "folder" | "type";
+        showHidden: boolean;
+        showMetadata: boolean;
+    };
+    performance: {
+        maxCacheSize: number;
+        preloadCount: number;
+        enableGpuAcceleration: boolean;
+    };
+}
+
 export type PreferenceState = {
-    paths: string[]; // Paths to monitor
-    thumbnailSize: number; // Thumbnail Default Size
-    firstTime: boolean; // Is first time running
-    darkMode: boolean;
-    lastOpenedFolder: string;
-    locale: string;
-    scanningFolder: ScanAction[];
-    currentFolder: string;
-    scannedFolder: string;
-    currentFolderConfig: PhotasaConfig;
-    folderTree: DataNode[];
-    themeId: string; // 当前主题 id
-    // 导入时排除的路径模式（如 .photasaoriginal, .git 等）
-    excludePaths: string[];
-    // 自动更新配置
-    autoUpdate: AutoUpdateConfig;
+    // 统一偏好设置 - 与天界一致
+    preferences: UnifiedPreferences;
+
+    // 应用状态 - Store特有
+    appState: {
+        firstTime: boolean;
+        lastOpenedFolder: string;
+        currentFolder: string;
+        scannedFolder: string;
+        currentFolderConfig: PhotasaConfig;
+        folderTree: DataNode[];
+        // 扫描相关保留，等司命处理
+        scanningFolder: ScanAction[];
+        paths: string[]; // Paths to monitor
+        excludePaths: string[]; // 导入时排除的路径模式
+        autoUpdate: AutoUpdateConfig; // 自动更新配置
+    };
 };
 
 export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
@@ -66,47 +92,94 @@ export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
 export const usePreferenceStore = defineStore("preference", {
     state: (): PreferenceState => {
         return {
-            paths: [],
-            thumbnailSize: 150,
-            firstTime: true,
-            darkMode: false,
-            lastOpenedFolder: "",
-            locale: "zh-CN",
-            scanningFolder: [],
-            currentFolder: "",
-            scannedFolder: "",
-            currentFolderConfig: <PhotasaConfig>{},
-            folderTree: [],
-            themeId: "solarized-dark", // 默认空，首次加载时由 theme-manager 设定
-            // 默认排除的路径模式
-            excludePaths: [
-                ".photasaoriginal", // Photasa原始文件跟踪文件夹
-                ".photasaoriginals", // Photasa缩略图缓存文件夹
-                ".photasa.json", // Photasa配置文件
-                ".DS_Store", // macOS系统文件
-                "Thumbs.db", // Windows缩略图文件
-                ".git", // Git版本控制文件夹
-                ".svn", // SVN版本控制文件夹
-                "node_modules", // Node.js依赖文件夹
-            ],
-            // 默认自动更新配置
-            autoUpdate: {
-                enabled: true,
-                checkInterval: 24, // 每天检查一次
-                allowPrerelease: false,
-                autoInstall: false, // 默认不自动安装，让用户确认
+            // 统一偏好设置 - 与天界一致
+            preferences: {
+                ui: {
+                    theme: "solarized-dark", // 默认使用solarized-dark主题
+                    language: "zh-CN",
+                    layout: "grid",
+                    sidebarWidth: 240,
+                    zoomLevel: 1.0,
+                },
+                display: {
+                    thumbnailSize: 150,
+                    sortOrder: "name",
+                    groupBy: "none",
+                    showHidden: false,
+                    showMetadata: true,
+                },
+                performance: {
+                    maxCacheSize: 1024, // MB
+                    preloadCount: 20,
+                    enableGpuAcceleration: true,
+                },
+            },
+
+            // 应用状态 - Store特有
+            appState: {
+                firstTime: true,
+                lastOpenedFolder: "",
+                currentFolder: "",
+                scannedFolder: "",
+                currentFolderConfig: <PhotasaConfig>{},
+                folderTree: [],
+                // 扫描相关保留，等司命处理
+                scanningFolder: [],
+                paths: [], // Paths to monitor
+                // 默认排除的路径模式
+                excludePaths: [
+                    ".photasaoriginal", // Photasa原始文件跟踪文件夹
+                    ".photasaoriginals", // Photasa缩略图缓存文件夹
+                    ".photasa.json", // Photasa配置文件
+                    ".DS_Store", // macOS系统文件
+                    "Thumbs.db", // Windows缩略图文件
+                    ".git", // Git版本控制文件夹
+                    ".svn", // SVN版本控制文件夹
+                    "node_modules", // Node.js依赖文件夹
+                ],
+                // 默认自动更新配置
+                autoUpdate: {
+                    enabled: true,
+                    checkInterval: 24, // 每天检查一次
+                    allowPrerelease: false,
+                    autoInstall: false, // 默认不自动安装，让用户确认
+                },
             },
         };
     },
     persist: true,
+
+    getters: {
+        // 统一偏好访问 - 与天界一致的格式
+        themeId: (state) => state.preferences.ui.theme,
+        locale: (state) => state.preferences.ui.language,
+        thumbnailSize: (state) => state.preferences.display.thumbnailSize,
+        darkMode: (state) => state.preferences.ui.theme === "dark",
+
+        // 应用状态访问
+        paths: (state) => state.appState.paths,
+        firstTime: (state) => state.appState.firstTime,
+        lastOpenedFolder: (state) => state.appState.lastOpenedFolder,
+        currentFolder: (state) => state.appState.currentFolder,
+        scannedFolder: (state) => state.appState.scannedFolder,
+        currentFolderConfig: (state) => state.appState.currentFolderConfig,
+        folderTree: (state) => state.appState.folderTree,
+        scanningFolder: (state) => state.appState.scanningFolder,
+        excludePaths: (state) => state.appState.excludePaths,
+        autoUpdate: (state) => state.appState.autoUpdate,
+
+        // 兼容性getter - 保持API一致
+        $state: (state) => state,
+    },
+
     actions: {
         addPath(path: string) {
-            if (this.firstTime) {
-                this.firstTime = false;
-                this.paths = [];
-                this.folderTree = [];
-                this.paths.push(path);
-                this.folderTree.push({
+            if (this.appState.firstTime) {
+                this.appState.firstTime = false;
+                this.appState.paths = [];
+                this.appState.folderTree = [];
+                this.appState.paths.push(path);
+                this.appState.folderTree.push({
                     title: path,
                     key: path,
                     children: [],
@@ -116,14 +189,14 @@ export const usePreferenceStore = defineStore("preference", {
 
             path = normalizePath(path);
 
-            if (!this.paths.find((p) => path.indexOf(p) >= 0)) {
-                this.paths.push(path);
-                this.folderTree.push({
+            if (!this.appState.paths.find((p) => path.indexOf(p) >= 0)) {
+                this.appState.paths.push(path);
+                this.appState.folderTree.push({
                     title: path,
                     key: path,
                     children: [],
                 });
-                this.paths = this.paths.sort();
+                this.appState.paths = this.appState.paths.sort();
             }
         },
         async addScanFolder(
@@ -133,19 +206,19 @@ export const usePreferenceStore = defineStore("preference", {
         ) {
             logger.debug(`✍️ 添加扫描文件夹: ${folder}, 动作: ${action}, 来源: ${source}`);
 
-            if (!Array.isArray(this.scanningFolder)) {
+            if (!Array.isArray(this.appState.scanningFolder)) {
                 logger.debug("✍️ 初始化扫描文件夹数组");
-                this.scanningFolder = [];
+                this.appState.scanningFolder = [];
             }
 
             // Normalize the folder path
             folder = normalizePath(folder);
 
             // Check if the folder is already in the scanning queue
-            const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
+            const existingIndex = this.appState.scanningFolder.findIndex((p) => p.path === folder);
 
             if (existingIndex >= 0) {
-                const existing = this.scanningFolder[existingIndex];
+                const existing = this.appState.scanningFolder[existingIndex];
 
                 // 检查是否应该更新现有项（基于优先级）
                 if (shouldUpdateScanAction(existing, action, source)) {
@@ -154,12 +227,14 @@ export const usePreferenceStore = defineStore("preference", {
                         `✍️ Previous: ${existing.action}(${existing.source}) -> New: ${action}(${source})`,
                     );
 
-                    this.scanningFolder[existingIndex] = updateScanActionPriority(
+                    this.appState.scanningFolder[existingIndex] = updateScanActionPriority(
                         existing,
                         action,
                         source,
                     );
-                    this.scanningFolder = sortScanningFolders(this.scanningFolder);
+                    this.appState.scanningFolder = sortScanningFolders(
+                        this.appState.scanningFolder,
+                    );
                 } else {
                     logger.debug(
                         `✍️ 文件夹已经在扫描队列中:`,
@@ -196,7 +271,7 @@ export const usePreferenceStore = defineStore("preference", {
                 {
                     path: folder,
                     action,
-                    thumbnailSize: this.thumbnailSize,
+                    thumbnailSize: this.preferences.display.thumbnailSize,
                     operationType: "directory", // Default to directory for legacy compatibility
                 },
                 source,
@@ -204,16 +279,16 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Add the new folder to scan
             logger.debug("✍️ 添加新文件夹到扫描:", folder);
-            this.scanningFolder.push(newScanAction);
+            this.appState.scanningFolder.push(newScanAction);
 
             // 排序所有扫描文件夹
-            this.scanningFolder = sortScanningFolders(this.scanningFolder);
+            this.appState.scanningFolder = sortScanningFolders(this.appState.scanningFolder);
 
             // 更新文件夹树
             this.updateFolderTree(folder);
 
             // Debug: show current queue state
-            debugPrintScanningFolders(this.scanningFolder, "updated_scanning_queue");
+            debugPrintScanningFolders(this.appState.scanningFolder, "updated_scanning_queue");
         },
 
         /**
@@ -239,16 +314,16 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Final debug log: show complete queue state
             debugPrintScanningFolders(
-                this.scanningFolder,
+                this.appState.scanningFolder,
                 `batch_add_completed_${folders.length}_folders`,
             );
         },
         async addFileOperation(operation: FileOperationInput) {
             logger.debug("✍️ Adding file operation to queue:", operation);
 
-            if (!Array.isArray(this.scanningFolder)) {
+            if (!Array.isArray(this.appState.scanningFolder)) {
                 logger.debug("✍️ 初始化扫描文件夹数组");
-                this.scanningFolder = [];
+                this.appState.scanningFolder = [];
             }
 
             // Normalize the path
@@ -257,7 +332,7 @@ export const usePreferenceStore = defineStore("preference", {
             // For file operations, we don't deduplicate as each file operation should be processed
             // However, we can update existing pending operations of the same type on the same file
             if (operation.operationType === "file") {
-                const existingIndex = this.scanningFolder.findIndex(
+                const existingIndex = this.appState.scanningFolder.findIndex(
                     (item) =>
                         item.path === normalizedPath &&
                         item.operationType === "file" &&
@@ -267,8 +342,8 @@ export const usePreferenceStore = defineStore("preference", {
                 if (existingIndex >= 0) {
                     // Update existing file operation
                     logger.debug("✍️ 更新现有文件操作:", normalizedPath);
-                    this.scanningFolder[existingIndex] = {
-                        ...this.scanningFolder[existingIndex],
+                    this.appState.scanningFolder[existingIndex] = {
+                        ...this.appState.scanningFolder[existingIndex],
                         ...operation,
                         path: normalizedPath,
                     };
@@ -295,11 +370,11 @@ export const usePreferenceStore = defineStore("preference", {
                 fileOperationId: operation.fileOperationId,
             });
 
-            this.scanningFolder.push(scanAction);
+            this.appState.scanningFolder.push(scanAction);
 
             // 排序扫描队列
             const { sortScanningFolders } = await import("@renderer/utils/scan-priority");
-            this.scanningFolder = sortScanningFolders(this.scanningFolder);
+            this.appState.scanningFolder = sortScanningFolders(this.appState.scanningFolder);
 
             // Update folder tree for both file and directory operations
             if (operation.operationType === "directory") {
@@ -319,7 +394,7 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         updateThumbnailSize(size: number) {
-            this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
+            this.preferences.display.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
             logger.debug(`✍️ 尝试完成扫描: ${folder}`);
@@ -381,17 +456,35 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Remove from scanning queue and all its subdirectories
             const originalLength = this.scanningFolder.length;
-            this.scanningFolder = this.scanningFolder.filter(
-                (folder) => !folder.path.startsWith(path),
-            );
-            logger.info(`✍️ 从扫描队列中移除 ${originalLength - this.scanningFolder.length}`);
+            // Ensure the path to be removed is consistently normalized
+            const pathToRemove = normalizePath(path);
+
+            this.appState.scanningFolder = this.appState.scanningFolder.filter((item) => {
+                // Ensure the path in the scanning queue item is also consistently normalized
+                const itemPath = normalizePath(item.path);
+
+                // If the path to remove is the root, remove all items
+                if (pathToRemove === "/") {
+                    return false; // Remove this item
+                }
+
+                // Keep the item if its path is NOT the pathToRemove itself,
+                // and NOT a subdirectory of pathToRemove.
+                // A subdirectory check needs to ensure it's not just a prefix match
+                // to avoid incorrectly removing paths like '/foobar' when '/foo' is removed.
+                const isExactMatch = itemPath === pathToRemove;
+                const isSubdirectory = itemPath.startsWith(pathToRemove + "/");
+
+                return !(isExactMatch || isSubdirectory);
+            });
+            logger.info(`✍️ 从扫描队列中移除 ${originalLength - this.scanningFolder.length} 项`);
 
             // Complete scan for the removed path
             this.completeScanPath(path);
 
             // Reset current folder if it was the removed one
             if (this.currentFolder === path) {
-                this.currentFolder = this.paths[0] || "";
+                this.appState.currentFolder = this.appState.paths[0] || "";
                 logger.info("✍️ 重置当前文件夹为:", this.currentFolder);
             }
         },
@@ -418,17 +511,17 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         setLocale(locale: string) {
-            this.locale = locale;
+            this.preferences.ui.language = locale;
         },
         setThemeId(themeId: string) {
-            this.themeId = themeId;
+            this.preferences.ui.theme = themeId;
         },
         /**
          * 更新排除路径列表
          * @param excludePaths 新的排除路径数组
          */
         updateExcludePaths(excludePaths: string[]) {
-            this.excludePaths = excludePaths;
+            this.appState.excludePaths = excludePaths;
         },
         /**
          * 添加单个排除路径
@@ -453,7 +546,7 @@ export const usePreferenceStore = defineStore("preference", {
          * 重置为默认排除路径
          */
         resetExcludePaths() {
-            this.excludePaths = [
+            this.appState.excludePaths = [
                 ".photasaoriginal",
                 ".photasaoriginals",
                 ".photasa.json",
@@ -475,9 +568,9 @@ export const usePreferenceStore = defineStore("preference", {
             if (scanPhotosTask.isRunning) {
                 scanPhotosTask.cancelAll();
             }
-            this.paths = [];
-            this.folderTree = [];
-            this.scanningFolder = [];
+            this.appState.paths = [];
+            this.appState.folderTree = [];
+            this.appState.scanningFolder = [];
             for (const dir of newDirs) {
                 this.addPath(dir);
                 await window.api?.resetPhotasaConfig?.(dir);
@@ -488,7 +581,7 @@ export const usePreferenceStore = defineStore("preference", {
          * @param config 要更新的配置对象（部分更新）
          */
         updateAutoUpdateConfig(config: Partial<AutoUpdateConfig>) {
-            this.autoUpdate = { ...this.autoUpdate, ...config };
+            this.appState.autoUpdate = { ...this.appState.autoUpdate, ...config };
             logger.debug("✍️ 更新自动更新配置:", this.autoUpdate);
         },
         /**
@@ -505,7 +598,7 @@ export const usePreferenceStore = defineStore("preference", {
          * 重置自动更新配置为默认值
          */
         resetAutoUpdateConfig() {
-            this.autoUpdate = {
+            this.appState.autoUpdate = {
                 enabled: true,
                 checkInterval: 24,
                 allowPrerelease: false,

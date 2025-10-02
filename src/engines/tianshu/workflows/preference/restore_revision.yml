@@ -35,7 +35,7 @@ steps:
     service: "wenchang"
     action: "validate"
     input:
-      revision: "${input.revision}"
+      revision: {{input.revision}}
       rules:
         - type: "number"
         - min: 1
@@ -49,6 +49,12 @@ steps:
     input: {}
     output:
       backup: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      backup: object
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["validate_revision"]
 
   - id: "restore_revision"
@@ -58,7 +64,7 @@ steps:
     service: "wenchang"
     action: "restoreRevision"
     input:
-      revision: "${input.revision}"
+      revision: {{input.revision}}
     output:
       result: "restore.result"
     dependsOn: ["backup_current"]
@@ -72,6 +78,12 @@ steps:
     input: {}
     output:
       snapshot: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      snapshot: object
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["restore_revision"]
 
   - id: "emit_restore_event"
@@ -83,10 +95,10 @@ steps:
     input:
       event: "preferences_restored"
       data:
-        revision: "${input.revision}"
-        backup: "${steps.backup_current.backup}"
-        snapshot: "${steps.get_restored_snapshot.snapshot}"
-        timestamp: "${now()}"
+        revision: {{input.revision}}
+        backup: {{steps.backup_current.output.backup}}
+        snapshot: {{steps.get_restored_snapshot.output.snapshot}}
+        timestamp: {{now()}}
     output:
       eventId: "event.id"
     dependsOn: ["get_restored_snapshot"]
@@ -100,10 +112,10 @@ steps:
     input:
       success: true
       data:
-        revision: "${input.revision}"
-        snapshot: "${steps.get_restored_snapshot.snapshot}"
-        backup: "${steps.backup_current.backup}"
-      timestamp: "${now()}"
+        revision: {{input.revision}}
+        snapshot: {{steps.get_restored_snapshot.output.snapshot}}
+        backup: {{steps.backup_current.output.backup}}
+      timestamp: {{now()}}
       source: "wenchang_engine"
     output:
       response: "format.result"

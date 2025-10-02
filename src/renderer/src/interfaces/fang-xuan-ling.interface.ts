@@ -17,7 +17,6 @@ export interface IPreference {
 
     // 暗色模式
     readonly isDarkMode: boolean;
-    toggleDarkMode(): void;
 
     // 缩略图大小
     readonly thumbnailSize: number;
@@ -97,10 +96,15 @@ export interface Zouzhe {
 export interface ZouzheResponse {
     approved: boolean; // 是否批准
     matter: string; // 原始事务
-    content?: any; // 原始内容
+    data: any; // 最终业务数据，房玄龄已拆箱处理
+    instruction: string; // 宰相明确指示
     timestamp: number; // 批复时间
-    instruction?: string; // 宰相指示
-    needsEscalation?: boolean; // 是否需要上报天界
+    officials?: string[]; // 处理官员链
+    metadata?: {
+        processTime: number; // 总处理耗时
+        escalated: boolean; // 是否上报了天界
+        blessing?: string; // 来自天界的加持
+    };
 }
 
 /**
@@ -119,11 +123,15 @@ export interface Zhaoling {
 export interface ZhaolingResponse {
     acknowledged: boolean; // 袁天罡是否接受诏令
     command: string; // 原始指令
-    context?: any; // 原始上下文
+    data: any; // 直接的业务数据，袁天罡已拆箱处理
+    blessing: string; // 钦天监加持
     timestamp: number; // 回馈时间
-    result?: any; // 执行结果
     error?: string; // 错误信息
-    tianshuResponse?: any; // 天界回馈（如果涉及天界）
+    metadata?: {
+        engineName: string; // 处理引擎
+        processTime: number; // 处理耗时
+        urgency: string; // 紧急程度
+    };
 }
 
 /**

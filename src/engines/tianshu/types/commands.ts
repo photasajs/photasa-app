@@ -9,6 +9,8 @@ export type UserIntent =
     | "scan_folder"
     | "scan_file"
     | "update_config"
+    | "get_preferences"
+    | "update_preferences"
     | "generate_thumbnail"
     | "process_media"
     | "stop_operation"

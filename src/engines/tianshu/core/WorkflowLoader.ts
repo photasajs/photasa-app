@@ -246,17 +246,47 @@ export class WorkflowLoader {
 
     /**
      * 获取工作流文件路径
+     * 支持子目录查找
      */
     private getWorkflowFilePath(workflowId: string): string {
-        return path.join(this.workflowDir, `${workflowId}.yml`);
+        // 首先在根目录查找
+        const rootPath = path.join(this.workflowDir, `${workflowId}.yml`);
+        if (fs.existsSync(rootPath)) {
+            return rootPath;
+        }
+
+        // 然后在所有子目录中查找
+        const findInSubdirs = (dir: string): string | null => {
+            try {
+                const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+                for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name);
+
+                    if (entry.isDirectory()) {
+                        const found = findInSubdirs(fullPath);
+                        if (found) return found;
+                    } else if (entry.isFile() && entry.name === `${workflowId}.yml`) {
+                        return fullPath;
+                    }
+                }
+            } catch (error) {
+                // 忽略读取错误，继续查找
+            }
+            return null;
+        };
+
+        const found = findInSubdirs(this.workflowDir);
+        return found || path.join(this.workflowDir, `${workflowId}.yml`); // 回退到原始路径
     }
 
     /**
      * 从文件路径获取工作流ID
+     * 使用文件名（不含路径）作为ID
      */
     private getWorkflowIdFromPath(filePath: string): string | null {
-        const relativePath = path.relative(this.workflowDir, filePath);
-        const workflowId = relativePath.replace(/\.(yml|yaml)$/, "");
+        const fileName = path.basename(filePath);
+        const workflowId = fileName.replace(/\.(yml|yaml)$/, "");
         return workflowId || null;
     }
 
@@ -274,7 +304,7 @@ export class WorkflowLoader {
                 return null;
             }
 
-            // 构建工作流定义
+            // 构建工作流定义，使用独立的id和name字段
             const workflow: WorkflowDefinition = {
                 id: data.id,
                 name: data.name,

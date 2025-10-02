@@ -52,6 +52,14 @@ steps:
     output:
       allStatus: "result"
       statusSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        type: object
+        description: "所有引擎状态映射"
+      success: boolean
+      timestamp: number
+      engineName: string
 
   - id: "get_available_engines"
     name: "获取可用引擎列表"
@@ -62,6 +70,14 @@ steps:
     output:
       availableList: "result"
       availableSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        type: array
+        description: "可用引擎列表"
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["get_all_engine_status"]
 
   - id: "check_specific_engine"
@@ -71,10 +87,18 @@ steps:
     service: "taiyi"
     action: "getEngineStatus"
     input:
-      engineName: "${input.engineName}"
+      engineName: {{input.engineName}}
     output:
       specificStatus: "result"
       specificSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        type: object
+        description: "特定引擎状态"
+      success: boolean
+      timestamp: number
+      engineName: string
     condition:
       field: "input.engineName"
       operator: "exists"
@@ -92,6 +116,14 @@ steps:
     output:
       wenchangResult: "result"
       wenchangSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        type: object
+        description: "文昌引擎测试结果"
+      success: boolean
+      timestamp: number
+      engineName: string
     condition:
       field: "input.includeDetails"
       operator: "eq"
@@ -106,11 +138,19 @@ steps:
     service: "builtin"
     action: "calculate"
     input:
-      totalEngines: "${Object.keys(step.get_all_engine_status.output.allStatus).length}"
-      readyEngines: "${step.get_available_engines.output.availableList.length}"
-      timestamp: "${Date.now()}"
+      allStatus: {{steps.get_all_engine_status.output.result}}
+      availableList: {{steps.get_available_engines.output.result}}
     output:
       stats: "result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        totalEngines: number
+        readyEngines: number
+        timestamp: number
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["get_available_engines"]
 
   - id: "compile_detailed_report"
@@ -120,14 +160,22 @@ steps:
     service: "builtin"
     action: "compile"
     input:
-      engines: "${step.get_all_engine_status.output.allStatus}"
-      availableEngines: "${step.get_available_engines.output.availableList}"
-      specificEngine: "${input.engineName}"
-      specificStatus: "${step.check_specific_engine.output.specificStatus}"
-      wenchangTest: "${step.test_wenchang_engine.output.wenchangResult}"
-      statistics: "${step.calculate_statistics.output.stats}"
+      engines: {{steps.get_all_engine_status.output.result}}
+      availableEngines: {{steps.get_available_engines.output.result}}
+      specificEngine: {{input.engineName}}
+      specificStatus: {{steps.check_specific_engine.output.result}}
+      wenchangTest: {{steps.test_wenchang_engine.output.result}}
+      statistics: {{steps.calculate_statistics.output.result}}
     output:
       detailedReport: "result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        type: object
+        description: "详细状态报告"
+      success: boolean
+      timestamp: number
+      engineName: string
     condition:
       field: "input.includeDetails"
       operator: "eq"
@@ -141,11 +189,19 @@ steps:
     service: "builtin"
     action: "compile"
     input:
-      engines: "${step.get_all_engine_status.output.allStatus}"
-      availableEngines: "${step.get_available_engines.output.availableList}"
-      statistics: "${step.calculate_statistics.output.stats}"
+      engines: {{steps.get_all_engine_status.output.result}}
+      availableEngines: {{steps.get_available_engines.output.result}}
+      statistics: {{steps.calculate_statistics.output.result}}
     output:
       simpleReport: "result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        type: object
+        description: "简化状态报告"
+      success: boolean
+      timestamp: number
+      engineName: string
     condition:
       field: "input.includeDetails"
       operator: "ne"
@@ -160,12 +216,13 @@ steps:
     action: "return"
     input:
       success: true
-      engines: "${step.get_all_engine_status.output.allStatus}"
-      availableEngines: "${step.get_available_engines.output.availableList}"
-      totalEngines: "${step.calculate_statistics.output.stats.totalEngines}"
-      readyEngines: "${step.calculate_statistics.output.stats.readyEngines}"
-      timestamp: "${step.calculate_statistics.output.stats.timestamp}"
-      details: "${step.compile_detailed_report.output.detailedReport || step.compile_simple_report.output.simpleReport}"
+      engines: {{steps.get_all_engine_status.output.result}}
+      availableEngines: {{steps.get_available_engines.output.result}}
+      totalEngines: {{steps.calculate_statistics.output.result.totalEngines}}
+      readyEngines: {{steps.calculate_statistics.output.result.readyEngines}}
+      timestamp: {{steps.calculate_statistics.output.result.timestamp}}
+      detailedReport: {{steps.compile_detailed_report.output.result}}
+      simpleReport: {{steps.compile_simple_report.output.result}}
     dependsOn: ["compile_detailed_report", "compile_simple_report"]
 
 # 错误处理
@@ -177,12 +234,12 @@ onError:
     action: "return"
     input:
       success: false
-      error: "${error.message}"
+      error: {{error.message}}
       engines: {}
       availableEngines: []
       totalEngines: 0
       readyEngines: 0
-      timestamp: "${Date.now()}"
+      timestamp: 0
 
 # 工作流配置
 enabled: true

@@ -60,6 +60,9 @@ export class LisshimingService implements ILisshimingService {
         this.employ();
         // 初始化偏好, 语言设置
         try {
+            logger.info("👑 房玄龄宰相服务初始化偏好设置");
+            await this.fangXuanLingService.initializeGovernance();
+
             logger.info("👑 褚遂良中书令服务初始化偏好设置");
             await this.chuSuiLiangService.initializePreferences();
 

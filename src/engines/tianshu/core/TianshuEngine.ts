@@ -21,6 +21,19 @@ import { loggers } from "@common/logger";
 
 const logger = loggers.tianshu;
 
+const intentToWorkflowMap: Record<UserIntent, string> = {
+    scan_folder: "scan/folder_scan",
+    scan_file: "scan/file_scan",
+    update_config: "preference/preference_management",
+    generate_thumbnail: "media/generate_thumbnail",
+    process_media: "media/process_media",
+    stop_operation: "system/stop_operation",
+    get_status: "engine/engine_status_check",
+    custom: "custom/custom_workflow",
+    get_preferences: "get_preferences", // 修正：直接映射到工作流ID
+    update_preferences: "update_preferences", // 修正：直接映射到工作流ID
+};
+
 /**
  * Tianshu引擎配置
  */
@@ -97,11 +110,8 @@ export class TianshuEngine extends EventEmitter {
             // 初始化工作流加载器
             await this.workflowLoader.initialize();
 
-            // 初始化编排器
+            // 初始化编排器（包含变量解析器初始化）
             await this.orchestrator.initialize();
-
-            // 初始化变量解析器
-            await this.variableResolver.initialize();
 
             this.isInitialized = true;
             logger.info("🌌 天枢引擎初始化成功");
@@ -478,17 +488,6 @@ export class TianshuEngine extends EventEmitter {
      * 根据意图获取工作流ID
      */
     private getWorkflowIdForIntent(intent: UserIntent): string {
-        const intentToWorkflowMap: Record<UserIntent, string> = {
-            scan_folder: "scan/folder_scan",
-            scan_file: "scan/file_scan",
-            update_config: "preference/preference_management",
-            generate_thumbnail: "media/generate_thumbnail",
-            process_media: "media/process_media",
-            stop_operation: "system/stop_operation",
-            get_status: "engine/engine_status_check",
-            custom: "custom/custom_workflow",
-        };
-
         return intentToWorkflowMap[intent] || "system/default";
     }
 

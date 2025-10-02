@@ -34,7 +34,7 @@ export type ConditionOperator =
     | "in" // 包含
     | "nin" // 不包含
     | "exists" // 存在
-    | "nexists" // 不存在
+    | "not_exists" // 不存在
     | "regex" // 正则匹配
     | "custom"; // 自定义
 
@@ -74,8 +74,14 @@ export interface WorkflowStep {
     input?: Record<string, any>;
     /** 输出映射 */
     output?: Record<string, string>;
+    /** 输出结构声明（用于自解释和验证） */
+    output_schema?: Record<string, any>;
     /** 条件表达式（用于condition类型） */
     condition?: ConditionExpression;
+    /** 条件为真时执行的步骤 */
+    onTrue?: WorkflowStep[];
+    /** 条件为假时执行的步骤 */
+    onFalse?: WorkflowStep[];
     /** 循环配置（用于loop类型） */
     loop?: {
         /** 循环变量 */

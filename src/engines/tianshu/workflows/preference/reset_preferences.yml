@@ -35,7 +35,7 @@ steps:
     service: "wenchang"
     action: "validate"
     input:
-      scope: "${input.scope}"
+      scope: {{input.scope}}
       rules:
         - type: "enum"
         - values: ["all", "ui", "display", "scan", "performance", "advanced"]
@@ -49,6 +49,12 @@ steps:
     input: {}
     output:
       backup: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      backup: object
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["validate_scope"]
 
   - id: "reset_engine"
@@ -58,7 +64,7 @@ steps:
     service: "wenchang"
     action: "resetToDefaults"
     input:
-      scope: "${input.scope}"
+      scope: {{input.scope}}
     output:
       result: "reset.result"
     dependsOn: ["backup_current"]
@@ -72,6 +78,12 @@ steps:
     input: {}
     output:
       snapshot: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      snapshot: object
+      success: boolean
+      timestamp: number
+      engineName: string
     dependsOn: ["reset_engine"]
 
   - id: "emit_reset_event"
@@ -83,10 +95,10 @@ steps:
     input:
       event: "preferences_reset"
       data:
-        scope: "${input.scope}"
-        backup: "${steps.backup_current.backup}"
-        snapshot: "${steps.get_reset_snapshot.snapshot}"
-        timestamp: "${now()}"
+        scope: {{input.scope}}
+        backup: {{steps.backup_current.output.backup}}
+        snapshot: {{steps.get_reset_snapshot.output.snapshot}}
+        timestamp: {{now()}}
     output:
       eventId: "event.id"
     dependsOn: ["get_reset_snapshot"]
@@ -100,10 +112,10 @@ steps:
     input:
       success: true
       data:
-        scope: "${input.scope}"
-        snapshot: "${steps.get_reset_snapshot.snapshot}"
-        backup: "${steps.backup_current.backup}"
-      timestamp: "${now()}"
+        scope: {{input.scope}}
+        snapshot: {{steps.get_reset_snapshot.output.snapshot}}
+        backup: {{steps.backup_current.output.backup}}
+      timestamp: {{now()}}
       source: "wenchang_engine"
     output:
       response: "format.result"

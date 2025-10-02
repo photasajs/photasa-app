@@ -1,0 +1,730 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://schemas.systembug.io/workflow/v1.0.0/workflow.schema.json",
+    "title": "天枢工作流语法规范",
+    "description": "基于RFC 0039的天枢引擎YAML工作流完整语法定义",
+    "type": "object",
+    "required": ["id", "name", "version", "steps"],
+
+    "properties": {
+        "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+$",
+            "description": "工作流唯一标识符"
+        },
+
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "人类可读的工作流名称"
+        },
+
+        "description": {
+            "type": "string",
+            "description": "工作流功能详细描述"
+        },
+
+        "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "description": "语义版本号"
+        },
+
+        "author": {
+            "type": "string",
+            "description": "工作流创建者"
+        },
+
+        "createdAt": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "创建时间戳（毫秒）"
+        },
+
+        "updatedAt": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "最后更新时间戳（毫秒）"
+        },
+
+        "triggers": {
+            "type": "array",
+            "description": "工作流触发条件",
+            "items": {
+                "type": "object",
+                "oneOf": [
+                    {
+                        "properties": {
+                            "intent": {
+                                "type": "string",
+                                "description": "意图标识符"
+                            }
+                        },
+                        "required": ["intent"],
+                        "additionalProperties": false
+                    },
+                    {
+                        "properties": {
+                            "event": {
+                                "type": "string",
+                                "description": "事件触发器"
+                            }
+                        },
+                        "required": ["event"],
+                        "additionalProperties": false
+                    },
+                    {
+                        "properties": {
+                            "schedule": {
+                                "type": "string",
+                                "description": "定时触发（cron格式）"
+                            }
+                        },
+                        "required": ["schedule"],
+                        "additionalProperties": false
+                    }
+                ]
+            }
+        },
+
+        "inputs": {
+            "type": "array",
+            "description": "输入参数定义",
+            "items": {
+                "$ref": "#/definitions/ParameterDefinition"
+            }
+        },
+
+        "outputs": {
+            "type": "array",
+            "description": "输出结果定义",
+            "items": {
+                "$ref": "#/definitions/ParameterDefinition"
+            }
+        },
+
+        "variables": {
+            "type": "object",
+            "description": "工作流级变量",
+            "patternProperties": {
+                "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                    "description": "变量值，支持模板语法"
+                }
+            }
+        },
+
+        "steps": {
+            "type": "array",
+            "description": "工作流步骤定义",
+            "minItems": 1,
+            "items": {
+                "$ref": "#/definitions/WorkflowStep"
+            }
+        },
+
+        "error_handling": {
+            "type": "object",
+            "description": "全局错误处理配置",
+            "patternProperties": {
+                ".*": {
+                    "$ref": "#/definitions/ErrorHandler"
+                }
+            }
+        },
+
+        "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "是否启用工作流"
+        },
+
+        "timeout": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "工作流超时时间（毫秒）"
+        },
+
+        "priority": {
+            "type": "string",
+            "enum": ["system", "user", "background"],
+            "default": "user",
+            "description": "执行优先级"
+        },
+
+        "retryOnFailure": {
+            "type": "boolean",
+            "default": false,
+            "description": "失败时是否重试"
+        },
+
+        "maxRetries": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "最大重试次数"
+        },
+
+        "tags": {
+            "type": "array",
+            "description": "工作流标签",
+            "items": {
+                "type": "string"
+            }
+        },
+
+        "maxConcurrentSteps": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "最大并发步骤数"
+        },
+
+        "resources": {
+            "$ref": "#/definitions/ResourceConfiguration"
+        },
+
+        "metadata": {
+            "type": "object",
+            "description": "开发工具元数据",
+            "properties": {
+                "editor": {
+                    "type": "object",
+                    "properties": {
+                        "autoComplete": { "type": "boolean" },
+                        "syntax": { "type": "string" }
+                    }
+                },
+                "linter": {
+                    "type": "object",
+                    "properties": {
+                        "rules": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                        }
+                    }
+                },
+                "debugger": {
+                    "type": "object",
+                    "properties": {
+                        "breakpoints": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                        }
+                    }
+                }
+            }
+        },
+
+        "testing": {
+            "type": "object",
+            "description": "测试配置",
+            "properties": {
+                "mocks": {
+                    "type": "object",
+                    "description": "模拟服务配置"
+                },
+                "scenarios": {
+                    "type": "array",
+                    "description": "测试场景",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string" },
+                            "inputs": { "type": "object" },
+                            "expected": { "type": "object" },
+                            "expectedError": { "type": "string" }
+                        },
+                        "required": ["name"]
+                    }
+                }
+            }
+        },
+
+        "debug": {
+            "type": "object",
+            "description": "调试配置",
+            "properties": {
+                "enabled": { "type": "boolean" },
+                "logLevel": {
+                    "type": "string",
+                    "enum": ["debug", "info", "warn", "error"]
+                },
+                "traceSteps": { "type": "boolean" },
+                "breakpoints": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                },
+                "variables": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                }
+            }
+        }
+    },
+
+    "definitions": {
+        "ParameterDefinition": {
+            "type": "object",
+            "required": ["name", "type"],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+                    "description": "参数名称"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": ["string", "number", "boolean", "object", "array"],
+                    "description": "参数类型"
+                },
+                "required": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "是否必需"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "参数描述"
+                },
+                "default": {
+                    "description": "默认值"
+                },
+                "validation": {
+                    "type": "object",
+                    "description": "验证规则",
+                    "properties": {
+                        "schema": {
+                            "type": "object",
+                            "description": "JSON Schema验证规则"
+                        }
+                    }
+                }
+            }
+        },
+
+        "WorkflowStep": {
+            "type": "object",
+            "required": ["id", "type"],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+                    "description": "步骤唯一标识符"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "步骤显示名称"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": ["condition", "action", "builtin", "loop", "parallel", "workflow"],
+                    "description": "步骤类型"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "步骤功能说明"
+                },
+                "dependsOn": {
+                    "oneOf": [
+                        { "type": "string" },
+                        {
+                            "type": "array",
+                            "items": { "type": "string" }
+                        }
+                    ],
+                    "description": "依赖的步骤ID"
+                },
+                "condition": {
+                    "$ref": "#/definitions/Condition",
+                    "description": "执行条件"
+                },
+                "timeout": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "步骤超时时间（毫秒）"
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": ["low", "normal", "high"],
+                    "default": "normal",
+                    "description": "执行优先级"
+                },
+                "async": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "是否异步执行"
+                },
+                "onError": {
+                    "$ref": "#/definitions/ErrorHandler",
+                    "description": "错误处理策略"
+                },
+                "resources": {
+                    "$ref": "#/definitions/ResourceConfiguration",
+                    "description": "资源配置"
+                },
+                "output_schema": {
+                    "type": "object",
+                    "description": "输出结果schema，用于变量路径验证"
+                }
+            },
+            "allOf": [
+                {
+                    "if": { "properties": { "type": { "const": "condition" } } },
+                    "then": { "$ref": "#/definitions/ConditionStep" }
+                },
+                {
+                    "if": { "properties": { "type": { "const": "action" } } },
+                    "then": { "$ref": "#/definitions/ActionStep" }
+                },
+                {
+                    "if": { "properties": { "type": { "const": "builtin" } } },
+                    "then": { "$ref": "#/definitions/BuiltinStep" }
+                },
+                {
+                    "if": { "properties": { "type": { "const": "loop" } } },
+                    "then": { "$ref": "#/definitions/LoopStep" }
+                },
+                {
+                    "if": { "properties": { "type": { "const": "parallel" } } },
+                    "then": { "$ref": "#/definitions/ParallelStep" }
+                },
+                {
+                    "if": { "properties": { "type": { "const": "workflow" } } },
+                    "then": { "$ref": "#/definitions/WorkflowCallStep" }
+                }
+            ]
+        },
+
+        "Condition": {
+            "type": "object",
+            "required": ["operator"],
+            "properties": {
+                "operator": {
+                    "type": "string",
+                    "enum": [
+                        "eq",
+                        "ne",
+                        "gt",
+                        "gte",
+                        "lt",
+                        "lte",
+                        "in",
+                        "nin",
+                        "exists",
+                        "not_exists",
+                        "matches",
+                        "and",
+                        "or"
+                    ],
+                    "description": "比较操作符"
+                },
+                "value": {
+                    "description": "左操作数，支持模板语法"
+                },
+                "test": {
+                    "description": "右操作数或测试值"
+                },
+                "conditions": {
+                    "type": "array",
+                    "description": "子条件列表（用于and/or操作符）",
+                    "items": { "$ref": "#/definitions/Condition" }
+                }
+            }
+        },
+
+        "ConditionStep": {
+            "type": "object",
+            "required": ["condition"],
+            "properties": {
+                "condition": {
+                    "$ref": "#/definitions/Condition",
+                    "description": "条件表达式"
+                },
+                "onTrue": {
+                    "type": "array",
+                    "description": "条件为真时执行的步骤",
+                    "items": { "$ref": "#/definitions/WorkflowStep" }
+                },
+                "onFalse": {
+                    "type": "array",
+                    "description": "条件为假时执行的步骤",
+                    "items": { "$ref": "#/definitions/WorkflowStep" }
+                }
+            }
+        },
+
+        "ActionStep": {
+            "type": "object",
+            "required": ["service", "action"],
+            "properties": {
+                "service": {
+                    "type": "string",
+                    "description": "目标服务/引擎名称"
+                },
+                "action": {
+                    "type": "string",
+                    "description": "调用的方法名"
+                },
+                "input": {
+                    "type": "object",
+                    "description": "输入数据，支持模板语法"
+                },
+                "output": {
+                    "type": "object",
+                    "description": "输出映射配置",
+                    "patternProperties": {
+                        "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                            "type": "string",
+                            "description": "输出字段映射路径"
+                        }
+                    }
+                }
+            }
+        },
+
+        "BuiltinStep": {
+            "type": "object",
+            "required": ["action"],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": ["return", "setVariable", "log", "delay", "transform", "error"],
+                    "description": "内置操作类型"
+                },
+                "input": {
+                    "type": "object",
+                    "description": "操作参数"
+                }
+            }
+        },
+
+        "LoopStep": {
+            "type": "object",
+            "required": ["iterator", "steps"],
+            "properties": {
+                "iterator": {
+                    "type": "object",
+                    "required": ["source", "variable"],
+                    "properties": {
+                        "source": {
+                            "type": "string",
+                            "description": "数据源，支持模板语法"
+                        },
+                        "variable": {
+                            "type": "string",
+                            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+                            "description": "循环变量名"
+                        },
+                        "index": {
+                            "type": "string",
+                            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+                            "description": "索引变量名"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "最大迭代次数"
+                        }
+                    }
+                },
+                "steps": {
+                    "type": "array",
+                    "description": "循环体步骤",
+                    "items": { "$ref": "#/definitions/WorkflowStep" }
+                },
+                "breakCondition": {
+                    "$ref": "#/definitions/Condition",
+                    "description": "退出条件"
+                },
+                "continueCondition": {
+                    "$ref": "#/definitions/Condition",
+                    "description": "继续条件"
+                },
+                "parallel": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "是否并行执行"
+                },
+                "concurrency": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "并发数量"
+                },
+                "onError": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": ["continue", "break", "fail"],
+                            "description": "错误处理策略"
+                        },
+                        "maxErrors": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "最大错误数"
+                        }
+                    }
+                }
+            }
+        },
+
+        "ParallelStep": {
+            "type": "object",
+            "required": ["branches"],
+            "properties": {
+                "branches": {
+                    "type": "array",
+                    "description": "并行分支",
+                    "minItems": 2,
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "steps"],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "分支名称"
+                            },
+                            "steps": {
+                                "type": "array",
+                                "description": "分支步骤",
+                                "items": { "$ref": "#/definitions/WorkflowStep" }
+                            }
+                        }
+                    }
+                },
+                "maxConcurrency": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "最大并发分支数"
+                },
+                "waitFor": {
+                    "type": "string",
+                    "enum": ["all", "any", "majority"],
+                    "default": "all",
+                    "description": "完成策略"
+                },
+                "failOn": {
+                    "type": "string",
+                    "enum": ["any", "all", "majority"],
+                    "default": "any",
+                    "description": "失败策略"
+                },
+                "mergeStrategy": {
+                    "type": "string",
+                    "enum": ["object", "array", "first"],
+                    "default": "object",
+                    "description": "结果合并策略"
+                },
+                "output": {
+                    "type": "object",
+                    "description": "输出映射",
+                    "patternProperties": {
+                        "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                            "type": "string",
+                            "description": "输出字段映射路径"
+                        }
+                    }
+                }
+            }
+        },
+
+        "WorkflowCallStep": {
+            "type": "object",
+            "required": ["workflowId"],
+            "properties": {
+                "workflowId": {
+                    "type": "string",
+                    "description": "子工作流ID"
+                },
+                "input": {
+                    "type": "object",
+                    "description": "传递给子工作流的输入"
+                }
+            }
+        },
+
+        "ErrorHandler": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "retry",
+                        "graceful_failure",
+                        "return_error",
+                        "escalate",
+                        "continue",
+                        "break",
+                        "fail"
+                    ],
+                    "description": "错误处理类型"
+                },
+                "maxRetries": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "最大重试次数"
+                },
+                "backoff": {
+                    "type": "string",
+                    "enum": ["linear", "exponential", "fixed"],
+                    "description": "退避策略"
+                },
+                "delay": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "初始延迟（毫秒）"
+                },
+                "multiplier": {
+                    "type": "number",
+                    "minimum": 1,
+                    "description": "退避倍数"
+                },
+                "response": {
+                    "type": "object",
+                    "description": "错误响应内容"
+                },
+                "notify": {
+                    "type": "array",
+                    "description": "通知列表",
+                    "items": { "type": "string" }
+                },
+                "fallback": {
+                    "type": "array",
+                    "description": "降级处理步骤",
+                    "items": { "$ref": "#/definitions/WorkflowStep" }
+                }
+            }
+        },
+
+        "ResourceConfiguration": {
+            "type": "object",
+            "description": "资源配置",
+            "properties": {
+                "memory": {
+                    "type": "string",
+                    "pattern": "^\\d+(?:KB|MB|GB)$",
+                    "description": "内存限制"
+                },
+                "cpu": {
+                    "type": "string",
+                    "description": "CPU限制"
+                },
+                "storage": {
+                    "type": "string",
+                    "pattern": "^\\d+(?:KB|MB|GB|TB)$",
+                    "description": "存储限制"
+                },
+                "network": {
+                    "type": "string",
+                    "enum": ["unlimited", "limited", "offline"],
+                    "description": "网络访问限制"
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": ["low", "normal", "high"],
+                    "description": "资源优先级"
+                }
+            }
+        }
+    }
+}
