@@ -39,7 +39,7 @@ const { addScanFolder } = preferenceStore;
 /**
  * Store to refs
  */
-    const { paths, currentFolder, folderTree } = storeToRefs(preferenceStore);
+const { paths, currentFolder, folderTree } = storeToRefs(preferenceStore);
 
 /**
  * Expanded keys
