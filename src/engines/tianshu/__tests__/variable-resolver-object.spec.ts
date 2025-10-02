@@ -3,7 +3,7 @@
  * 验证对象类型的变量不会被错误地转换为字符串
  */
 
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "@jest/globals";
 import { VariableResolver } from "../orchestration/VariableResolver";
 import { ExecutionContext } from "../types/workflows";
 

@@ -219,7 +219,7 @@ function validateConditionSyntax(workflow: any, content: string): string[] {
     }
 
     if (workflow.steps && Array.isArray(workflow.steps)) {
-        workflow.steps.forEach((step: any, index: number) => {
+        workflow.steps.forEach((step: any, _index: number) => {
             const stepLineNumber =
                 lines.findIndex(
                     (line) => line.includes(`id: "${step.id}"`) || line.includes(`id: ${step.id}`),
@@ -357,7 +357,7 @@ async function validateWorkflows(options: ValidateOptions) {
         verbose: verboseMode,
         format,
         strict,
-        filterLevel,
+        _filterLevel,
     } = options;
 
     // 显示工具标题

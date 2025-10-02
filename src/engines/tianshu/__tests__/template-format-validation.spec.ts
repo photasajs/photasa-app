@@ -6,7 +6,7 @@
 import { describe, it, expect } from "@jest/globals";
 
 // 由于validateTemplateVariables不是导出函数，我们需要直接复制实现
-function validateTemplateVariables(content: string, filePath: string): string[] {
+function validateTemplateVariables(content: string, _filePath: string): string[] {
     const errors: string[] = [];
     const lines = content.split("\n");
 

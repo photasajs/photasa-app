@@ -55,7 +55,7 @@ interface WorkflowDefinition {
 /**
  * 验证步骤类型是否符合RFC 0037规范
  */
-function validateStepType(step: WorkflowStep, filePath: string): string[] {
+function validateStepType(step: WorkflowStep, _filePath: string): string[] {
     const errors: string[] = [];
 
     // 检查步骤类型是否有效
@@ -72,7 +72,7 @@ function validateStepType(step: WorkflowStep, filePath: string): string[] {
 /**
  * 验证action类型步骤的字段组合
  */
-function validateActionStep(step: WorkflowStep, filePath: string): string[] {
+function validateActionStep(step: WorkflowStep, _filePath: string): string[] {
     const errors: string[] = [];
 
     if (step.type !== "action") return errors;
@@ -106,7 +106,7 @@ function validateActionStep(step: WorkflowStep, filePath: string): string[] {
 /**
  * 验证builtin类型步骤
  */
-function validateBuiltinStep(step: WorkflowStep, filePath: string): string[] {
+function validateBuiltinStep(step: WorkflowStep, _filePath: string): string[] {
     const errors: string[] = [];
 
     if (step.type !== "builtin") return errors;
@@ -133,7 +133,7 @@ function validateBuiltinStep(step: WorkflowStep, filePath: string): string[] {
 /**
  * 验证condition类型步骤
  */
-function validateConditionStep(step: WorkflowStep, filePath: string): string[] {
+function validateConditionStep(step: WorkflowStep, _filePath: string): string[] {
     const errors: string[] = [];
 
     if (step.type !== "condition") return errors;
@@ -151,7 +151,7 @@ function validateConditionStep(step: WorkflowStep, filePath: string): string[] {
 /**
  * 验证loop类型步骤
  */
-function validateLoopStep(step: WorkflowStep, filePath: string): string[] {
+function validateLoopStep(step: WorkflowStep, _filePath: string): string[] {
     const errors: string[] = [];
 
     if (step.type !== "loop") return errors;
@@ -176,7 +176,7 @@ function validateLoopStep(step: WorkflowStep, filePath: string): string[] {
  * 验证模板变量格式是否符合RFC 0037规范
  * RFC 0037要求使用{{}}格式，禁用${}等其他格式
  */
-function validateTemplateVariables(content: string, filePath: string): string[] {
+function validateTemplateVariables(content: string, _filePath: string): string[] {
     const errors: string[] = [];
     const lines = content.split("\n");
 
@@ -259,7 +259,7 @@ function validateTemplateVariables(content: string, filePath: string): string[] 
 /**
  * 验证工作流必需字段
  */
-function validateWorkflowRequired(workflow: WorkflowDefinition, filePath: string): string[] {
+function validateWorkflowRequired(workflow: WorkflowDefinition, _filePath: string): string[] {
     const errors: string[] = [];
 
     // 必需字段检查
@@ -393,7 +393,7 @@ describe("RFC 0037 工作流语法规范合规性", () => {
  * 验证步骤间的变量路径语义
  * 检查 steps.xxx.output.yyy 路径是否与 output_schema 匹配
  */
-function validateStepOutputReferences(steps: any[], content: string, filePath: string): string[] {
+function validateStepOutputReferences(steps: any[], content: string, _filePath: string): string[] {
     const errors: string[] = [];
 
     // 构建步骤ID到output_schema的映射

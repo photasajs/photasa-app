@@ -15,7 +15,7 @@ console.log("🌌 启动天枢Schema包构建仙术...");
 
 const rootDir = path.join(__dirname, "..");
 const buildDir = path.join(rootDir, "dist");
-const srcDir = path.join(rootDir, "src");
+const _srcDir = path.join(rootDir, "src");
 
 // 🔧 清理构建目录
 function cleanBuildDir() {

@@ -174,7 +174,7 @@ function createValidator(): ValidateFunction {
 const validator = createValidator();`;
     }
 
-    private generateValidationFunctions(schema: any): string {
+    private generateValidationFunctions(_schema: any): string {
         const prefix = this.options.namePrefix || "workflow";
         const chineseErrors = this.options.chineseErrors;
 

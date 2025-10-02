@@ -163,7 +163,7 @@ program
             }
 
             // 使用指定的或默认的Schema（从核心包获取）
-            const schemaPath =
+            const _schemaPath =
                 options.schema ||
                 require.resolve("@systembug/workflow-schema/schemas/workflow.schema.json");
 
