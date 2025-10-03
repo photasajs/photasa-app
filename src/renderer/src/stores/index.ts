@@ -15,3 +15,4 @@
  */
 
 export * from "../composables/useFangXuanLing";
+export * from "../composables/useChuSuiLiang";
