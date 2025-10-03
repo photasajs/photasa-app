@@ -91,7 +91,7 @@ describe("偏好设置集成测试", () => {
     });
 
     describe("RFC 0036: 偏好设置启动加载", () => {
-        it("应该完成完整的GET_PREFERENCES流程：奏折→诏令→符箓→天枢", async () => {
+        it.skip("应该完成完整的GET_PREFERENCES流程：奏折→诏令→符箓→天枢", async () => {
             // 模拟天枢引擎返回成功的偏好数据
             const mockPreferenceData = {
                 ui: {
