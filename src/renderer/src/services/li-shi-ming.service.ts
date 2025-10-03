@@ -6,7 +6,7 @@ import { YuanTianGangService } from "./yuan-tian-gang.service";
 import { FANG_XUAN_LING_TOKEN } from "../interfaces/fang-xuan-ling.interface";
 import { FangXuanLingService } from "./fangxuanling";
 import { CHU_SUI_LIANG_TOKEN } from "../interfaces/chu-sui-liang.interface";
-import { ChusuiliangService } from "./chu-sui-liang.service";
+import { ChusuiliangService } from "./chusuiliang";
 import { XUANZANG_TOKEN } from "../interfaces/xuan-zang.interface";
 import { XuanzangService } from "./xuan-zang.service";
 

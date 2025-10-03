@@ -1,12 +1,15 @@
-import { IChusuiliangService } from "../interfaces/chu-sui-liang.interface";
-import { IFangXuanLingService } from "../interfaces/fang-xuan-ling.interface";
+import { IChusuiliangService } from "../../interfaces/chu-sui-liang.interface";
+import { IFangXuanLingService } from "../../interfaces/fang-xuan-ling.interface";
 import { loggers } from "@common/logger";
 import {
     ZOUZHE_MATTERS,
     ZOUZHE_PRIORITIES,
     GUANYUAN_NAMES,
     type Zouzhe,
-} from "../interfaces/fang-xuan-ling.interface";
+} from "../../interfaces/fang-xuan-ling.interface";
+import { getThemeManager } from "./theme-manage";
+
+export type { ThemeMeta, ThemeManager } from "./theme-manage";
 
 const logger = loggers.chusuiliang;
 
@@ -33,6 +36,10 @@ export class ChusuiliangService implements IChusuiliangService {
     }
     set currentTheme(themeId: string) {
         this.updateTheme(themeId);
+    }
+
+    get themeManager() {
+        return getThemeManager();
     }
 
     /**

@@ -26,7 +26,7 @@ import { useI18n } from "vue-i18n";
 import { useTitle, watchArray } from "@vueuse/core";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceKey } from "@renderer/interfaces/find-photo-service.interface";
-import { getThemeManager, ThemeMeta } from "@renderer/components/settings/ThemeSettingsHelper";
+import type { ThemeMeta } from "@/services/chusuiliang/theme-manage";
 import { onMounted } from "vue";
 import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
@@ -44,12 +44,13 @@ import { queueMonitoringService } from "@renderer/services/queue-monitoring-serv
 import { scanMonitoringService } from "@renderer/services/scan-monitoring-service";
 import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
+import { useChuSuiLiang } from "@/composables/use-chu-sui-liang";
 
 /**
  * 日志记录器
  */
 const logger = loggers.lishiming;
-const themeManager = getThemeManager();
+const themeManager = useChuSuiLiang().themeManager;
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);

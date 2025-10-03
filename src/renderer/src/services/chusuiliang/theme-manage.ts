@@ -13,20 +13,10 @@ import lightTheme from "@renderer/themes/light/theme.json";
 import darkTheme from "@renderer/themes/dark/theme.json";
 import solarizedLightTheme from "@renderer/themes/solarized-light/theme.json";
 import solarizedDarkTheme from "@renderer/themes/solarized-dark/theme.json";
+import type { IThemeManager, ThemeMeta } from "@renderer/interfaces/chu-sui-liang.interface";
 
-/**
- * 主题元数据
- */
-export interface ThemeMeta {
-    id: string;
-    name: string | Record<string, string>;
-    author: string;
-    version: string;
-    description: string | Record<string, string>;
-    preview?: string;
-    colors: Record<string, string>;
-    css?: string;
-}
+// 导出ThemeMeta类型供其他模块使用
+export type { ThemeMeta };
 
 /**
  * 默认主题id
@@ -41,7 +31,7 @@ const ThemeId = {
 /**
  * 主题管理器 - 阎立本画师画匣子
  */
-export class ThemeManager {
+export class ThemeManager implements IThemeManager {
     /**
      * 实例
      */
@@ -134,7 +124,7 @@ export class ThemeManager {
         return this.themes.value;
     }
 
-    getCurrentTheme() {
+    getCurrentTheme(): ThemeMeta | null {
         return this.themes.value.find((t) => t.id === this.currentThemeId.value) || null;
     }
 

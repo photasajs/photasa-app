@@ -17,20 +17,26 @@
  */
 import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { getThemeManager, ThemeMeta } from "./ThemeSettingsHelper";
-import { useChuSuiLiang } from "@renderer/services/use-chu-sui-liang";
+import {
+    useChuSuiLiang,
+    type ThemeMeta,
+} from "@/composables/use-chu-sui-liang";
 import ThemePreviewBox from "./ThemePreviewBox.vue";
 import { loggers } from "@common/logger";
 
 /**
  * 日志记录器
  */
-const logger = loggers.yanliben;
+const logger = loggers.chusuiliang;
+/**
+ * 褚遂良服务实例 - 偏好设置管理
+ */
+const chuSuiLiang = useChuSuiLiang();
 
 /**
  * 主题管理器实例
  */
-const themeManager = getThemeManager();
+const themeManager = chuSuiLiang.themeManager;
 
 /**
  * 主题列表
@@ -41,11 +47,6 @@ const themes = ref<ThemeMeta[]>([]);
  * 国际化实例
  */
 const { locale } = useI18n();
-
-/**
- * 褚遂良服务实例 - 偏好设置管理
- */
-const chuSuiLiang = useChuSuiLiang();
 
 /**
  * 阎立本响应Store中的主题变化

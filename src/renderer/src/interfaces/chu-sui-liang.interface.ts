@@ -7,6 +7,36 @@
  * - 褚遂良通过奏折与房玄龄通信，不直接操作Store
  * - UI组件只需要调用褚遂良的方法，不需要了解奏折细节
  */
+
+/**
+ * 主题元数据
+ */
+export interface ThemeMeta {
+    id: string;
+    name: string | Record<string, string>;
+    author: string;
+    version: string;
+    description: string | Record<string, string>;
+    preview?: string;
+    colors: Record<string, string>;
+    css?: string;
+}
+
+/**
+ * 主题管理器
+ */
+export interface IThemeManager {
+    getThemes(): ThemeMeta[];
+    getCurrentTheme(): ThemeMeta | null;
+    loadBuiltInThemes(): Promise<void>;
+    initTheme(userConfigThemeId?: string): Promise<void>;
+    getDefaultThemeId(): string;
+    applyTheme(themeId: string, themeDir: string): Promise<void>;
+    unloadTheme(): void;
+    importTheme(file: File, themeDir: string): Promise<void>;
+    exportTheme(themeId: string, themeDir: string): Promise<Blob>;
+    deleteTheme(themeId: string, themeDir: string): Promise<void>;
+}
 export interface IChusuiliangService {
     /**
      * 初始化偏好设置
@@ -44,6 +74,11 @@ export interface IChusuiliangService {
      * 设置缩略图大小
      */
     set thumbnailSize(size: number);
+
+    /**
+     * 获取主题管理器
+     */
+    get themeManager(): IThemeManager;
 }
 
 /**
