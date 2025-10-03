@@ -204,7 +204,7 @@ describe("FangXuanLingService", () => {
 
             expect(response.approved).toBe(true);
             expect(response.metadata?.escalated).toBe(true);
-            expect(response.instruction).toBe("重大偏好变更，需上报天界记录 - 天界恩准");
+            expect(response.instruction).toBe("主题偏好变更，需上报天界记录并等待确认 - 天界恩准");
         });
     });
 

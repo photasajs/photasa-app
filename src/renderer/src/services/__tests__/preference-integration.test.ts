@@ -107,7 +107,9 @@ describe("偏好设置集成测试", () => {
                 status: "completed",
                 result: {
                     success: true,
-                    data: mockPreferenceData,
+                    result: {
+                        data: mockPreferenceData,
+                    },
                     timestamp: Date.now(),
                     source: "wenchang_engine",
                 },
@@ -176,7 +178,7 @@ describe("偏好设置集成测试", () => {
             // 验证响应 - 由于服务层实现问题，天枢引擎没有被调用，返回失败
             expect(response.approved).toBe(false);
             expect(response.metadata?.escalated).toBe(true);
-            expect(response.instruction).toBe("重大偏好变更，需上报天界记录 - 执行失败");
+            expect(response.instruction).toBe("主题偏好变更，需上报天界记录并等待确认 - 执行失败");
 
             // 由于服务层实现问题，天枢引擎没有被调用，所以不验证调用
         });
