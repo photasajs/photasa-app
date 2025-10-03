@@ -7,7 +7,7 @@ import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
 import { PhFolder as FolderTwoTone, PhX as CloseOutlined } from "@phosphor-icons/vue";
 import { notification } from "@renderer/services/notification-manager";
 import { BaseButton, BaseSpace } from "@renderer/components/ui";
-import { useChuSuiLiang } from "@/composables/use-chu-sui-liang";
+import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 
 /**
  * 通用设置组件 - 褚遂良中书令

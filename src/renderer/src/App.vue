@@ -44,7 +44,7 @@ import { queueMonitoringService } from "@renderer/services/queue-monitoring-serv
 import { scanMonitoringService } from "@renderer/services/scan-monitoring-service";
 import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
-import { useChuSuiLiang } from "@/composables/use-chu-sui-liang";
+import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 
 /**
  * 日志记录器

@@ -4,7 +4,7 @@ import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { i18nUtils, type Locale } from "../i18n/config";
 import { useMenusStore } from "@renderer/stores/menus";
 import { useI18n } from "vue-i18n";
-import { useChuSuiLiang } from "@/composables/use-chu-sui-liang";
+import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { loggers } from "@common/logger";
 
 const menusStore = useMenusStore();

@@ -17,10 +17,7 @@
  */
 import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import {
-    useChuSuiLiang,
-    type ThemeMeta,
-} from "@/composables/use-chu-sui-liang";
+import { useChuSuiLiang, type ThemeMeta } from "@renderer/composables/useChuSuiLiang";
 import ThemePreviewBox from "./ThemePreviewBox.vue";
 import { loggers } from "@common/logger";
 
