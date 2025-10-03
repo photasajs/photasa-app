@@ -2,19 +2,39 @@
 import { computed, nextTick } from "vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { i18nUtils, type Locale } from "../i18n/config";
-import { usePreferenceStore } from "@renderer/stores/preference";
 import { useMenusStore } from "@renderer/stores/menus";
 import { useI18n } from "vue-i18n";
+import { useChuSuiLiang } from "@renderer/services/use-chu-sui-liang";
+import { loggers } from "@common/logger";
 
-const preferenceStore = usePreferenceStore();
 const menusStore = useMenusStore();
 const { t } = useI18n();
 
-const selectLocale = async (locale: Locale) => {
-    preferenceStore.setLocale(locale);
+/**
+ * 褚遂良服务实例 - 偏好设置管理
+ */
+const chuSuiLiang = useChuSuiLiang();
+
+const logger = loggers.chusuiliang; // 褚遂良中书令负责语言切换
+
+async function selectLocale(locale: Locale) {
+    try {
+        logger.info(`📚 接收语言变更指令: ${locale}`);
+
+        // 1. 通过褚遂良中书令发送奏折，保存到天界
+        // 玄奘 -> 褚遂良(奏折) -> 房玄龄(转发) -> 袁天罡(诏令) -> 天枢(符箓) -> 文昌(存储)
+        await chuSuiLiang.updateLanguage(locale);
+
+        logger.info(`📚 语言切换完成: ${locale}`);
+    } catch (error) {
+        logger.error(`📚 语言切换失败: ${locale}`, error);
+    }
+
+    // 2. 立即更新i18n显示，提供即时反馈
+    i18nUtils.setLocale(locale);
     await nextTick();
     menusStore.refreshMenus(t); // 切换语言后刷新菜单
-};
+}
 
 const currentLocale = computed(() => i18nUtils.getCurrentLocale());
 const availableLocales = i18nUtils.getAvailableLocales();

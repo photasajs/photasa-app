@@ -7,20 +7,17 @@
  * 偏好管理接口
  */
 export interface IPreference {
-    // 主题管理
+    // 主题管理 - 只读访问
     readonly currentTheme: string;
-    updateTheme(themeId: string): Promise<void>;
 
-    // 语言管理
+    // 语言管理 - 只读访问
     readonly currentLanguage: string;
-    updateLanguage(locale: string): Promise<void>;
 
-    // 暗色模式
+    // 暗色模式 - 只读访问
     readonly isDarkMode: boolean;
 
-    // 缩略图大小
+    // 缩略图大小 - 只读访问
     readonly thumbnailSize: number;
-    setThumbnailSize(size: number): void;
 
     // 状态访问（只读）
     readonly state: any;
@@ -54,13 +51,6 @@ export interface IFangXuanLingService {
     readonly preference: IPreference;
     readonly notification: INotification;
     readonly photos: IPhotos;
-
-    // 朝廷政务初始化
-    /**
-     * 初始化朝廷政务 - 从天界加载偏好设置
-     * 房玄龄上任后，需要从天界获取之前的政务记录
-     */
-    initializeGovernance(): Promise<void>;
 
     // 全局状态管理
     getGlobalState(): {
@@ -140,6 +130,7 @@ export interface ZhaolingResponse {
 export const ZOUZHE_MATTERS = {
     THEME_CHANGE: "theme_change", // 主题变更
     LANGUAGE_CHANGE: "language_change", // 语言变更
+    THUMBNAIL_SIZE_CHANGE: "thumbnail_size_change", // 缩略图大小变更
     NOTIFICATION_SHOW: "notification_show",
     PHOTO_SWITCH: "photo_switch", // 切换照片
     GET_PREFERENCES: "get_preferences", // 获取偏好设置

@@ -184,6 +184,7 @@ export class YuanTianGangService implements IYuanTianGangService {
         const intentMapping: Record<string, string> = {
             [ZOUZHE_MATTERS.THEME_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
             [ZOUZHE_MATTERS.LANGUAGE_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
+            [ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE]: "update_preferences", // 缩略图大小变更
             [ZOUZHE_MATTERS.NOTIFICATION_SHOW]: "get_status",
             [ZOUZHE_MATTERS.PHOTO_SWITCH]: "scan_folder",
             [ZOUZHE_MATTERS.GET_PREFERENCES]: "get_preferences", // 使用天枢实际工作流
@@ -208,7 +209,8 @@ export class YuanTianGangService implements IYuanTianGangService {
         // 针对偏好变更类命令，需要添加action参数和格式转换
         if (
             fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE ||
-            fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE
+            fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE ||
+            fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE
         ) {
             // 转换人界格式到天界统一偏好格式
             let convertedDelta = {};
@@ -223,6 +225,12 @@ export class YuanTianGangService implements IYuanTianGangService {
                 convertedDelta = {
                     ui: {
                         language: fulu.context.locale,
+                    },
+                };
+            } else if (fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE && fulu.context.size) {
+                convertedDelta = {
+                    display: {
+                        thumbnailSize: fulu.context.size,
                     },
                 };
             } else {

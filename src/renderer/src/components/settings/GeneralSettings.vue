@@ -7,20 +7,41 @@ import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
 import { PhFolder as FolderTwoTone, PhX as CloseOutlined } from "@phosphor-icons/vue";
 import { notification } from "@renderer/services/notification-manager";
 import { BaseButton, BaseSpace } from "@renderer/components/ui";
+import { useChuSuiLiang } from "@renderer/services/use-chu-sui-liang";
 
+/**
+ * 通用设置组件 - 褚遂良中书令
+ * 为人界界面提供通用设置功能，实现依赖注入模式
+ *
+ * 神话背景：
+ * 褚遂良，唐朝著名书法家、政治家
+ * 在Photasa系统中，褚遂良化身人界界面通用设置管理员
+ * 通过民间Vue技术，为人界界面提供通用设置功能
+ * 与房玄龄宰相协作，确保界面设置与用户偏好保持一致
+ */
+const chuSuiLiang = useChuSuiLiang();
+
+/**
+ * 通用设置组件
+ */
 defineOptions({
     name: "GeneralSettings",
 });
 
 const { t } = useI18n();
 
-// Removed unused FormState interface
-
+// 旧有偏好设置Store实例 - 应移除
 const preferenceStore = usePreferenceStore();
 const { addPath, removePath, addScanFolder } = preferenceStore;
-const { paths, thumbnailSize } = storeToRefs(preferenceStore);
+const { paths } = storeToRefs(preferenceStore);
 
-// Removed unused formState since we don't need form validation
+// 使用computed创建双向绑定的getter/setter
+const thumbnailSize = computed({
+    get: () => chuSuiLiang.thumbnailSize,
+    set: (value: number) => {
+        chuSuiLiang.thumbnailSize = value;
+    },
+});
 
 const label = computed(() => {
     return {

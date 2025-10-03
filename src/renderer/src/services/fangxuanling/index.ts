@@ -11,19 +11,19 @@ import type {
     Zouzhe,
     ZouzheResponse,
     Zhaoling,
-} from "../interfaces/fang-xuan-ling.interface";
-import type { IYuanTianGangService } from "../interfaces/yuan-tian-gang.interface";
+} from "../../interfaces/fang-xuan-ling.interface";
+import type { IYuanTianGangService } from "../../interfaces/yuan-tian-gang.interface";
 import {
     ZOUZHE_MATTERS,
     ZOUZHE_PRIORITIES,
     ZHAOLING_PRIORITIES,
     ERROR_MESSAGES,
-    GUANYUAN_NAMES,
-} from "../interfaces/fang-xuan-ling.interface";
-import { usePreferenceStore } from "../stores/preference";
-import { useNotificationStore } from "../stores/notification";
-import { usePhotosStore } from "../stores/photos";
+} from "../../interfaces/fang-xuan-ling.interface";
+import { usePreferenceStore } from "../../stores/preference";
+import { useNotificationStore } from "../../stores/notification";
+import { usePhotosStore } from "../../stores/photos";
 import { loggers } from "@common/logger";
+import { mergePreferencesFromTianjie, applyPreferencesToStore } from "./utils";
 
 const logger = loggers.fangxuanling;
 
@@ -51,49 +51,6 @@ export class FangXuanLingService implements IFangXuanLingService {
         this._photos = this.createPhotos();
 
         logger.info("📜 已完成各部门管理器初始化");
-    }
-
-    /**
-     * 初始化朝廷政务 - 从天界加载偏好设置
-     * 房玄龄上任后，需要从天界获取之前的政务记录
-     */
-    async initializeGovernance(): Promise<void> {
-        logger.info("📜 开始初始化朝廷政务，准备从天界获取历史记录");
-
-        try {
-            // 通过统一的奏折处理流程请求获取偏好设置
-            const zouzhe: Zouzhe = {
-                department: GUANYUAN_NAMES.CHU_SUILIANG,
-                matter: ZOUZHE_MATTERS.GET_PREFERENCES,
-                content: {
-                    action: "get_preferences",
-                    department: "褚遂良文书部",
-                    purpose: "初始化朝廷政务",
-                },
-                timestamp: Date.now(),
-                priority: ZOUZHE_PRIORITIES.URGENT,
-            };
-
-            const zouzheResponse = await this.processZouzhe(zouzhe);
-
-            if (zouzheResponse.approved && zouzheResponse.data) {
-                const preferences = zouzheResponse.data;
-
-                // 房玄龄职责：直接使用天界的统一偏好格式更新Store
-                const preferenceStore = usePreferenceStore();
-                this.updateUnifiedPreferences(preferenceStore, preferences);
-
-                logger.info("📜 朝廷政务初始化完成，已从天界同步偏好设置");
-            } else {
-                logger.error("📜 未能从天界获取偏好设置，使用本地默认值", {
-                    approved: zouzheResponse.approved,
-                    instruction: zouzheResponse.instruction,
-                });
-            }
-        } catch (error) {
-            logger.error("📜 初始化朝廷政务失败:", error);
-            // 失败时使用本地默认值，不影响应用启动
-        }
     }
 
     get preference(): IPreference {
@@ -124,9 +81,22 @@ export class FangXuanLingService implements IFangXuanLingService {
                     instruction = "需向天界获取偏好设置";
                     break;
                 case ZOUZHE_MATTERS.THEME_CHANGE:
-                case ZOUZHE_MATTERS.LANGUAGE_CHANGE:
+                    // 褚遂良的主题变更奏折 - 直接上报天界，等待天界确认后再更新Store
                     needsEscalation = true;
-                    instruction = "重大偏好变更，需上报天界记录";
+                    instruction = "主题偏好变更，需上报天界记录并等待确认";
+                    logger.info(`📜 房玄龄转发褚遂良主题变更奏折: ${zouzhe.content?.themeId}`);
+                    break;
+                case ZOUZHE_MATTERS.LANGUAGE_CHANGE:
+                    // 褚遂良的语言变更奏折 - 直接上报天界，等待天界确认后再更新Store
+                    needsEscalation = true;
+                    instruction = "语言偏好变更，需上报天界记录并等待确认";
+                    logger.info(`📜 房玄龄转发褚遂良语言变更奏折: ${zouzhe.content?.locale}`);
+                    break;
+                case ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE:
+                    // 褚遂良的缩略图大小变更奏折 - 直接上报天界，等待天界确认后再更新Store
+                    needsEscalation = true;
+                    instruction = "缩略图大小偏好变更，需上报天界记录并等待确认";
+                    logger.info(`📜 房玄龄转发褚遂良缩略图大小变更奏折: ${zouzhe.content?.size}`);
                     break;
                 case ZOUZHE_MATTERS.NOTIFICATION_SHOW:
                 case ZOUZHE_MATTERS.PHOTO_SWITCH:
@@ -240,43 +210,9 @@ export class FangXuanLingService implements IFangXuanLingService {
     private createPreference(): IPreference {
         const store = usePreferenceStore();
 
-        const updateTheme = (themeId: string) => {
-            logger.info(`📜 保存用户偏好主题: ${themeId}`);
-            store.setThemeId(themeId);
-
-            // 事后向房玄龄汇报（异步）
-            const zouzhe: Zouzhe = {
-                department: GUANYUAN_NAMES.THEME_SETTINGS,
-                matter: ZOUZHE_MATTERS.THEME_CHANGE,
-                content: { themeId },
-                timestamp: Date.now(),
-                priority: ZOUZHE_PRIORITIES.NORMAL,
-            };
-
-            // 向房玄龄汇报主题变更
-            this.processZouzhe(zouzhe).catch((error: Error) => {
-                logger.warn("📜 奏折汇报失败", error);
-            });
-        };
-
-        const updateLanguage = (locale: string) => {
-            logger.info(`📜 更换语言: ${locale}`);
-            store.setLocale(locale);
-
-            // 事后向房玄龄汇报（异步）
-            const zouzhe: Zouzhe = {
-                department: GUANYUAN_NAMES.LANGUAGE_SETTINGS,
-                matter: ZOUZHE_MATTERS.LANGUAGE_CHANGE,
-                content: { locale },
-                timestamp: Date.now(),
-                priority: ZOUZHE_PRIORITIES.NORMAL,
-            };
-
-            // 向房玄龄汇报语言变更
-            this.processZouzhe(zouzhe).catch((error: Error) => {
-                logger.warn("📜 汇报语言变更失败", error);
-            });
-        };
+        // 注意：主题和语言更新现在应该通过褚遂良的奏折链路处理
+        // 房玄龄只负责处理奏折并与天界通信，不直接操作Store
+        // Store的更新应该在天界响应后由相应的处理机制完成
 
         return {
             // 主题管理
@@ -284,17 +220,9 @@ export class FangXuanLingService implements IFangXuanLingService {
                 return store.preferences.ui.theme;
             },
 
-            async updateTheme(themeId: string) {
-                return updateTheme(themeId);
-            },
-
             // 语言管理
             get currentLanguage() {
                 return store.preferences.ui.language;
-            },
-
-            async updateLanguage(locale: string) {
-                return updateLanguage(locale);
             },
 
             // 暗色模式
@@ -302,14 +230,9 @@ export class FangXuanLingService implements IFangXuanLingService {
                 return store.preferences.ui.theme === "dark";
             },
 
-            // 缩略图大小
+            // 缩略图大小 - 只读访问
             get thumbnailSize() {
                 return store.preferences.display.thumbnailSize;
-            },
-
-            setThumbnailSize(size: number) {
-                logger.info(`📜 协调设置缩略图大小: ${size}`);
-                store.preferences.display.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
             },
 
             // 完整状态访问（只读）
@@ -409,6 +332,51 @@ export class FangXuanLingService implements IFangXuanLingService {
     ): ZouzheResponse {
         logger.info(`📜 开始装箱为宰相格式: ${originalZouzhe.matter}`);
 
+        // 如果天界确认成功，根据奏折类型更新本地Store
+        if (zhaolingResponse.acknowledged) {
+            const store = usePreferenceStore();
+
+            switch (originalZouzhe.matter) {
+                case ZOUZHE_MATTERS.GET_PREFERENCES:
+                    // 获取偏好设置：使用纯函数实现智能合并逻辑
+                    if (businessData && typeof businessData === "object") {
+                        const mergedPreferences = mergePreferencesFromTianjie(
+                            store.preferences,
+                            businessData,
+                        );
+                        applyPreferencesToStore(store, mergedPreferences);
+                        logger.info(`📜 天界偏好数据已加载并智能合并到本地Store`);
+                    } else {
+                        logger.warn(`📜 天界偏好数据为空，保持本地默认设置`);
+                    }
+                    break;
+                case ZOUZHE_MATTERS.THEME_CHANGE:
+                    if (originalZouzhe.content?.themeId) {
+                        store.setThemeId(originalZouzhe.content.themeId);
+                        logger.info(
+                            `📜 天界确认成功，更新本地主题: ${originalZouzhe.content.themeId}`,
+                        );
+                    }
+                    break;
+                case ZOUZHE_MATTERS.LANGUAGE_CHANGE:
+                    if (originalZouzhe.content?.locale) {
+                        store.setLocale(originalZouzhe.content.locale);
+                        logger.info(
+                            `📜 天界确认成功，更新本地语言: ${originalZouzhe.content.locale}`,
+                        );
+                    }
+                    break;
+                case ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE:
+                    if (originalZouzhe.content?.size) {
+                        store.updateThumbnailSize(originalZouzhe.content.size);
+                        logger.info(
+                            `📜 天界确认成功，更新本地缩略图大小: ${originalZouzhe.content.size}`,
+                        );
+                    }
+                    break;
+            }
+        }
+
         const officials = ["房玄龄"];
         if (zhaolingResponse.metadata?.engineName) {
             officials.push(`袁天罡-${zhaolingResponse.metadata.engineName}`);
@@ -434,30 +402,5 @@ export class FangXuanLingService implements IFangXuanLingService {
             `📜 装箱完成: 批准=${response.approved}, 数据=${businessData ? "有" : "无"}, 总耗时=${response.metadata?.processTime}ms`,
         );
         return response;
-    }
-
-    /**
-     * 更新统一偏好设置 - 直接整体同步天界数据
-     * 房玄龄职责：将天界的统一偏好格式同步到Store
-     */
-    private updateUnifiedPreferences(preferenceStore: any, preferences: any): void {
-        logger.info("📜 开始同步天界偏好设置到Store");
-
-        if (!preferences) {
-            logger.warn("📜 天界偏好数据为空，跳过更新");
-            return;
-        }
-
-        // 直接整体同步 - 天界和Store使用完全相同的数据结构
-        preferenceStore.$state.preferences = {
-            ...preferenceStore.$state.preferences,
-            ...preferences.result.result.data,
-        };
-
-        logger.info("📜 偏好设置同步完成", {
-            ui: preferences.ui ? "已更新" : "无变更",
-            display: preferences.display ? "已更新" : "无变更",
-            performance: preferences.performance ? "已更新" : "无变更",
-        });
     }
 }

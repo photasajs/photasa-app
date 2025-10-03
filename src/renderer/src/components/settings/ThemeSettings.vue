@@ -18,7 +18,7 @@
 import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { getThemeManager, ThemeMeta } from "./ThemeSettingsHelper";
-import { useFangXuanLing } from "@renderer/stores";
+import { useChuSuiLiang } from "@renderer/services/use-chu-sui-liang";
 import ThemePreviewBox from "./ThemePreviewBox.vue";
 import { loggers } from "@common/logger";
 
@@ -43,14 +43,21 @@ const themes = ref<ThemeMeta[]>([]);
 const { locale } = useI18n();
 
 /**
- * 房玄龄服务实例
+ * 褚遂良服务实例 - 偏好设置管理
  */
-const fangXuanLingService = useFangXuanLing();
+const chuSuiLiang = useChuSuiLiang();
 
 /**
  * 阎立本响应Store中的主题变化
  */
-const currentThemeId = computed(() => fangXuanLingService.preference.currentTheme);
+const currentThemeId = computed({
+    get() {
+        return chuSuiLiang.currentTheme;
+    },
+    set(value: string) {
+        chuSuiLiang.currentTheme = value;
+    },
+});
 
 /**
  * 获取国际化文本
@@ -68,17 +75,21 @@ async function switchTheme(themeId: string) {
         // 阎立本接收用户指令
         logger.info(`🎨 接收主题变更指令 ${themeId}`);
 
-        // 这将触发完整通信链路：阎立本 -> 房玄龄(奏折) -> 袁天罡(诏令) -> 天枢(符箓)
-        await fangXuanLingService.preference.updateTheme(themeId);
-
-        // 同时更新themeManager以保持UI同步
+        // 1. 先立即更新UI显示，提供即时反馈
         await themeManager.applyTheme(themeId, "/src/renderer/src/themes");
 
-        // 阎立本确认Store更新
+        // 2. 通过褚遂良中书令发送奏折，触发完整通信链路：
+        // 阎立本 -> 褚遂良(奏折) -> 房玄龄(转发) -> 袁天罡(诏令) -> 天枢(符箓) -> 文昌(存储)
+        await chuSuiLiang.updateTheme(themeId);
+
+        // 阎立本确认主题更新完成
         logger.info(`🎨 确认主题已更新为 ${currentThemeId.value}`);
-        logger.info(`🎨 天人合一通信链路执行完毕`);
     } catch (error) {
         logger.error(`🎨 主题变更失败 ${themeId}`, error);
+
+        // 如果保存失败，可能需要回滚UI状态
+        // 这里可以考虑恢复到之前的主题
+        logger.warn(`🎨 主题保存失败，UI已更新但可能未同步到天界`);
     }
 }
 

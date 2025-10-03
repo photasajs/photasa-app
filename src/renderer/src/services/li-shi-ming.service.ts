@@ -4,7 +4,7 @@ import { App } from "vue";
 import { YUAN_TIAN_GANG_TOKEN } from "../interfaces/yuan-tian-gang.interface";
 import { YuanTianGangService } from "./yuan-tian-gang.service";
 import { FANG_XUAN_LING_TOKEN } from "../interfaces/fang-xuan-ling.interface";
-import { FangXuanLingService } from "./fang-xuan-ling.service";
+import { FangXuanLingService } from "./fangxuanling";
 import { CHU_SUI_LIANG_TOKEN } from "../interfaces/chu-sui-liang.interface";
 import { ChusuiliangService } from "./chu-sui-liang.service";
 import { XUANZANG_TOKEN } from "../interfaces/xuan-zang.interface";
@@ -58,15 +58,12 @@ export class LisshimingService implements ILisshimingService {
     async startZhengguan() {
         logger.info("👑 开始启动大唐贞观之治");
         this.employ();
-        // 初始化偏好, 语言设置
+        // 各部门通过奏折系统初始化
         try {
-            logger.info("👑 房玄龄宰相服务初始化偏好设置");
-            await this.fangXuanLingService.initializeGovernance();
-
             logger.info("👑 褚遂良中书令服务初始化偏好设置");
             await this.chuSuiLiangService.initializePreferences();
 
-            logger.info("👑 玄奘法师服务初始化偏好设置");
+            logger.info("👑 玄奘法师服务初始化语言设置");
             await this.xuanzangService.initializeLocalization();
         } catch (error) {
             logger.error("👑偏好设置初始化失败，继续启动应用:", error);
