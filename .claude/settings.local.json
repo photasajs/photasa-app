@@ -13,7 +13,8 @@
       "Bash(npm run test:unit:main:engines:*)",
       "Bash(npm run test:unit:main:vitest:*)",
       "Read(//Users/albert.li/.photasa/preferences/**)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
