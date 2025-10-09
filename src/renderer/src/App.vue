@@ -61,6 +61,7 @@ const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenc
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
 
+// 使用对话框管理器统一管理对话框状态
 const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
@@ -80,9 +81,11 @@ const menusStore = useMenusStore();
 const isMac = window.api.isMac();
 
 function handleOpenScanList() {
+    logger.debug("Opening scan list dialog...");
     showScanList.value = true;
 }
 function handleOpenQueueDashboard() {
+    logger.debug("Opening queue dashboard dialog...");
     showQueueDashboard.value = true;
     if (!queueMonitoringService.isMonitoring.value) {
         queueMonitoringService.startMonitoring();
@@ -94,6 +97,7 @@ function handleOpenImportPhotos() {
     logger.debug("showImportDialog.value:", showImportDialog.value);
 }
 function handleOpenPreference() {
+    logger.debug("Opening preference dialog...");
     showPreference.value = true;
 }
 
@@ -141,6 +145,13 @@ onMounted(async () => {
         task: t("app.title"),
         timestamp: Date.now(),
     });
+
+    // 验证事件处理器绑定
+    logger.debug("验证事件处理器绑定状态...");
+    logger.debug("handleOpenScanList:", typeof handleOpenScanList);
+    logger.debug("handleOpenQueueDashboard:", typeof handleOpenQueueDashboard);
+    logger.debug("handleOpenImportPhotos:", typeof handleOpenImportPhotos);
+    logger.debug("handleOpenPreference:", typeof handleOpenPreference);
 
     // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
@@ -360,6 +371,7 @@ async function startScanning(): Promise<void> {
 }
 
 function handlePreferenceOk(): void {
+    logger.debug("Closing preference dialog...");
     showPreference.value = false;
 }
 
@@ -508,10 +520,20 @@ window.api?.onScanQueueAdd((operations: any[]) => {
                 </template>
                 <template #B>
                     <div class="image-content image-list">
-                        <ImageList @import="showImportDialog = true" />
+                        <ImageList
+                            @import="
+                                () => {
+                                    showImportDialog = true;
+                                }
+                            "
+                        />
                         <ImportPhotos
                             :show="showImportDialog"
-                            @update:show="showImportDialog = $event"
+                            @update:show="
+                                (value) => {
+                                    showImportDialog = value;
+                                }
+                            "
                         />
                     </div>
                 </template>
@@ -532,7 +554,11 @@ window.api?.onScanQueueAdd((operations: any[]) => {
     <ScanQueueDialog
         :show="showScanList"
         :scanning-folder="scanningFolder"
-        @close="showScanList = false"
+        @close="
+            () => {
+                showScanList = false;
+            }
+        "
     />
     <BaseModal
         :open="showQueueDashboard"
@@ -540,8 +566,10 @@ window.api?.onScanQueueAdd((operations: any[]) => {
         size="custom"
         :style="{ '--modal-width': '1200px' }"
         @close="
-            showQueueDashboard = false;
-            queueMonitoringService.stopMonitoring();
+            () => {
+                showQueueDashboard = false;
+                queueMonitoringService.stopMonitoring();
+            }
         "
     >
         <QueueHealthDashboard />
