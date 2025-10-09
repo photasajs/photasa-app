@@ -89,6 +89,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0009](./0009-video-thumbnail-orientation.md)        | Video Thumbnail Orientation Support            | v1.6.0         | Enhanced video thumbnail generation with rotation metadata support                         |
 | [0012](./0012-unified-path-handling-architecture.md) | 统一路径处理架构重构                           | v1.6.0         | 统一路径处理逻辑，解决跨平台兼容性问题                                                     |
 | [0018](./0018-scanning-folder-priority-sorting.md)   | 扫描文件夹优先级排序优化                       | v1.7.0         | 实现基于优先级的扫描队列排序，支持用户操作优先于自动发现                                   |
+| [0036](./0036-wenchang-preference-integration.md)    | 偏好设置启动加载和保存机制                     | v1.9.0         | 完整的偏好设置双向通信机制，启动加载、智能合并、实时保存，391测试通过                      |
 
 ## Rejected RFCs
 
