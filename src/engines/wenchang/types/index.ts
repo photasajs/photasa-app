@@ -1,12 +1,12 @@
 /**
- * 文昌引擎类型定义
- * 独立的偏好管理服务类型
+ * 文昌星君仙法类型定义
+ * 万世偏好典籍仙法类型
  */
 
 export interface UserPreferences {
     revision: number;
     ui: {
-        theme: "light" | "dark" | "auto";
+        theme: "light" | "dark" | "auto" | "solarized-dark" | "solarized-light" | string;
         layout: "grid" | "list" | "masonry";
         language: string;
         sidebarWidth: number;
@@ -24,6 +24,13 @@ export interface UserPreferences {
         excludePatterns: string[];
         concurrency: number;
         watchEnabled: boolean;
+        paths: string[];
+        scanFolders: Array<{
+            path: string;
+            action: "scan" | "rescan" | "current";
+            source: "user" | "auto";
+            timestamp: number;
+        }>;
     };
     performance: {
         maxCacheSize: number;
@@ -40,9 +47,16 @@ export interface PreferenceSnapshot {
 }
 
 export interface PreferenceDelta {
-    path: string; // e.g., 'ui.theme', 'display.thumbnailSize'
-    value: any;
-    revision: number; // 基于哪个版本的修改
+    ui?: Partial<UserPreferences["ui"]>;
+    display?: Partial<UserPreferences["display"]>;
+    scanning?: Partial<UserPreferences["scanning"]>;
+    performance?: Partial<UserPreferences["performance"]>;
+    // 特殊操作，用于处理复杂的路径管理逻辑
+    pathOperations?: Array<{
+        type: "addPath" | "removePath" | "addScanFolder";
+        data: any;
+        timestamp: number;
+    }>;
 }
 
 export interface PreferenceHistory {
@@ -61,4 +75,42 @@ export interface PreferenceChangeEvent {
     type: "updated" | "imported" | "reset";
     snapshot: PreferenceSnapshot;
     delta?: PreferenceDelta;
+}
+
+/**
+ * 路径同步事件
+ */
+export interface PathSyncEvent {
+    type: "pathSync";
+    operation: "addPath" | "removePath";
+    path: string;
+    timestamp: number;
+    source: string;
+}
+
+/**
+ * 扫描文件夹同步事件
+ */
+export interface ScanFolderSyncEvent {
+    type: "scanFolderSync";
+    operation: "addScanFolder" | "removeScanFolder" | "updateScanFolder";
+    scanFolder: {
+        path: string;
+        action: "scan" | "rescan" | "current";
+        source: "user" | "auto";
+        timestamp: number;
+    };
+    timestamp: number;
+    source: string;
+}
+
+/**
+ * 路径操作结果
+ */
+export interface PathOperationResult {
+    success: boolean;
+    operation: string;
+    path: string;
+    message?: string;
+    timestamp: number;
 }

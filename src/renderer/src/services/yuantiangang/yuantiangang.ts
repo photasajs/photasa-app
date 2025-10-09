@@ -7,9 +7,9 @@ import type {
     IYuanTianGangService,
     Fulu,
     FuluResponse,
-} from "../interfaces/yuan-tian-gang.interface";
-import type { Zhaoling, ZhaolingResponse } from "../interfaces/fang-xuan-ling.interface";
-import { ZOUZHE_MATTERS } from "../interfaces/fang-xuan-ling.interface";
+} from "../../interfaces/yuan-tian-gang.interface";
+import type { Zhaoling, ZhaolingResponse } from "../../interfaces/fang-xuan-ling.interface";
+import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 import { loggers } from "@common/logger";
 
 const logger = loggers.yuantiangang || loggers.main;
@@ -185,6 +185,9 @@ export class YuanTianGangService implements IYuanTianGangService {
             [ZOUZHE_MATTERS.THEME_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
             [ZOUZHE_MATTERS.LANGUAGE_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
             [ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE]: "update_preferences", // 缩略图大小变更
+            [ZOUZHE_MATTERS.ADD_PATH]: "update_preferences", // 添加路径操作
+            [ZOUZHE_MATTERS.REMOVE_PATH]: "update_preferences", // 移除路径操作
+            [ZOUZHE_MATTERS.ADD_SCAN_FOLDER]: "update_preferences", // 添加扫描文件夹操作
             [ZOUZHE_MATTERS.NOTIFICATION_SHOW]: "get_status",
             [ZOUZHE_MATTERS.PHOTO_SWITCH]: "scan_folder",
             [ZOUZHE_MATTERS.GET_PREFERENCES]: "get_preferences", // 使用天枢实际工作流
@@ -210,7 +213,10 @@ export class YuanTianGangService implements IYuanTianGangService {
         if (
             fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE ||
             fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE ||
-            fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE
+            fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE ||
+            fulu.intent === ZOUZHE_MATTERS.ADD_PATH ||
+            fulu.intent === ZOUZHE_MATTERS.REMOVE_PATH ||
+            fulu.intent === ZOUZHE_MATTERS.ADD_SCAN_FOLDER
         ) {
             // 转换人界格式到天界统一偏好格式
             let convertedDelta = {};
@@ -233,6 +239,14 @@ export class YuanTianGangService implements IYuanTianGangService {
                         thumbnailSize: fulu.context.size,
                     },
                 };
+            } else if (
+                fulu.intent === ZOUZHE_MATTERS.ADD_PATH ||
+                fulu.intent === ZOUZHE_MATTERS.REMOVE_PATH ||
+                fulu.intent === ZOUZHE_MATTERS.ADD_SCAN_FOLDER
+            ) {
+                // ✅ 路径操作：context已经是完整的delta格式 { scanning: { paths: [...] } }
+                // 由FangXuanLing.computePreferenceDelta计算好的
+                convertedDelta = fulu.context;
             } else {
                 // 如果已经是统一格式，直接使用
                 convertedDelta = fulu.context;

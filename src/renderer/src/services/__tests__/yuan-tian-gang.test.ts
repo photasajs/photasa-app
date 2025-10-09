@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { YuanTianGangService } from "../yuan-tian-gang.service";
+import { YuanTianGangService } from "../yuantiangang";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 import type { Zhaoling } from "../../interfaces/fang-xuan-ling.interface";
 

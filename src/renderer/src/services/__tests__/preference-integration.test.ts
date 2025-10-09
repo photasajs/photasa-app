@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FangXuanLingService } from "../fangxuanling";
-import { YuanTianGangService } from "../yuan-tian-gang.service";
+import { YuanTianGangService } from "../yuantiangang";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 
 // Mock logger

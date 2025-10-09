@@ -7,7 +7,13 @@
       "Bash(find:*)",
       "Bash(npm test:*)",
       "Bash(npm run lint)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run test:unit:renderer:*)",
+      "Bash(npm run test:unit:main:engines:*)",
+      "Bash(npm run test:unit:main:vitest:*)",
+      "Read(//Users/albert.li/.photasa/preferences/**)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

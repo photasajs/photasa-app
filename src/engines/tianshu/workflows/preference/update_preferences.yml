@@ -39,7 +39,7 @@ steps:
       rules:
         - type: "object"
         - notEmpty: true
-        - allowedKeys: ["ui", "display", "scan", "performance", "advanced"]
+        - allowedKeys: ["ui", "display", "scanning", "performance", "pathOperations"]
     output:
       result: "result"
       success: "success"
@@ -107,6 +107,22 @@ steps:
           type: "enum"
           values: ["grid", "list", "timeline"]
           default: "grid"
+        pathOperations:
+          type: "array"
+          required: false
+          items:
+            type: "object"
+            properties:
+              type:
+                type: "enum"
+                values: ["addPath", "removePath", "addScanFolder"]
+                required: true
+              data:
+                type: "any"
+                required: true
+              timestamp:
+                type: "number"
+                required: false
     output:
       result: "result"
       success: "success"
@@ -132,6 +148,45 @@ steps:
       result: "result"
     dependsOn: ["sanitize_values"]
 
+  - id: "handle_path_operations"
+    name: "处理路径操作"
+    type: "condition"
+    description: "检查是否需要处理路径操作"
+    dependsOn: ["update_engine"]
+    condition:
+      field: "steps.sanitize_values.output.result.result.pathOperations"
+      operator: "exists"
+    onTrue:
+      - id: "validate_paths"
+        name: "验证路径有效性"
+        type: "action"
+        description: "验证所有路径操作中的路径有效性"
+        service: "wenchang"
+        action: "validate"
+        input:
+          delta: "{{steps.sanitize_values.output.result.result}}"
+          rules:
+            - type: "object"
+            - notEmpty: true
+            - allowedKeys: ["pathOperations"]
+        output:
+          result: "result"
+        dependsOn: ["handle_path_operations"]
+
+      - id: "process_path_operations"
+        name: "执行路径操作"
+        type: "action"
+        description: "执行所有路径操作"
+        service: "wenchang"
+        action: "updatePreferences"
+        input:
+          delta: "{{steps.sanitize_values.output.result.result}}"
+          source: "{{inputs.source}}"
+        output:
+          result: "result"
+        dependsOn: ["validate_paths"]
+    onFalse: []
+
   - id: "get_updated_snapshot"
     name: "获取更新后的偏好快照"
     type: "action"
@@ -148,7 +203,7 @@ steps:
       success: boolean
       timestamp: number
       engineName: string
-    dependsOn: ["update_engine"]
+    dependsOn: ["handle_path_operations"]
 
   - id: "emit_change_event"
     name: "发送偏好变更事件"

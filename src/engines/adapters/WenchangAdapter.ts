@@ -4,12 +4,8 @@
  */
 
 import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
-import {
-    WenchangEngine,
-    WenchangEngineConfig,
-    PreferenceSnapshot,
-    PreferenceDelta,
-} from "../wenchang/core/WenchangEngine";
+import { WenchangEngine, WenchangEngineConfig } from "../wenchang/core/WenchangEngine";
+import type { PreferenceSnapshot, PreferenceDelta } from "../wenchang/types/index";
 import { loggers } from "@common/logger";
 import * as path from "path";
 import * as os from "os";
@@ -176,5 +172,109 @@ export class WenchangAdapter implements IAdapter {
     async formatResponse(data: any): Promise<{ result: any }> {
         logger.debug("🌌 文昌适配器转发响应格式化请求");
         return this.engine.formatResponse(data);
+    }
+
+    /**
+     * 添加监控路径
+     */
+    async addPath(path: string): Promise<{ success: boolean; message?: string }> {
+        try {
+            const delta = {
+                pathOperations: [
+                    {
+                        type: "addPath" as const,
+                        data: path,
+                        timestamp: Date.now(),
+                    },
+                ],
+            };
+
+            await this.engine.applyDelta(delta, "adapter");
+            logger.info(`🌌 文昌适配器添加路径: ${path}`);
+            return { success: true };
+        } catch (error) {
+            logger.error(`🌌 文昌适配器添加路径失败: ${path}`, error);
+            return { success: false, message: (error as Error).message };
+        }
+    }
+
+    /**
+     * 移除监控路径
+     */
+    async removePath(path: string): Promise<{ success: boolean; message?: string }> {
+        try {
+            const delta = {
+                pathOperations: [
+                    {
+                        type: "removePath" as const,
+                        data: path,
+                        timestamp: Date.now(),
+                    },
+                ],
+            };
+
+            await this.engine.applyDelta(delta, "adapter");
+            logger.info(`🌌 文昌适配器移除路径: ${path}`);
+            return { success: true };
+        } catch (error) {
+            logger.error(`🌌 文昌适配器移除路径失败: ${path}`, error);
+            return { success: false, message: (error as Error).message };
+        }
+    }
+
+    /**
+     * 添加扫描文件夹
+     */
+    async addScanFolder(
+        path: string,
+        action: "scan" | "rescan" | "current" = "scan",
+        source: "user" | "auto" = "user",
+    ): Promise<{ success: boolean; message?: string }> {
+        try {
+            const delta = {
+                pathOperations: [
+                    {
+                        type: "addScanFolder" as const,
+                        data: { path, action, source },
+                        timestamp: Date.now(),
+                    },
+                ],
+            };
+
+            await this.engine.applyDelta(delta, "adapter");
+            logger.info(`🌌 文昌适配器添加扫描文件夹: ${path} (${action})`);
+            return { success: true };
+        } catch (error) {
+            logger.error(`🌌 文昌适配器添加扫描文件夹失败: ${path}`, error);
+            return { success: false, message: (error as Error).message };
+        }
+    }
+
+    /**
+     * 监听路径同步事件
+     */
+    onPathSync(callback: (event: any) => void): void {
+        this.engine.on("pathSync", callback);
+    }
+
+    /**
+     * 移除路径同步事件监听器
+     */
+    offPathSync(callback: (event: any) => void): void {
+        this.engine.off("pathSync", callback);
+    }
+
+    /**
+     * 监听扫描文件夹同步事件
+     */
+    onScanFolderSync(callback: (event: any) => void): void {
+        this.engine.on("scanFolderSync", callback);
+    }
+
+    /**
+     * 移除扫描文件夹同步事件监听器
+     */
+    offScanFolderSync(callback: (event: any) => void): void {
+        this.engine.off("scanFolderSync", callback);
     }
 }

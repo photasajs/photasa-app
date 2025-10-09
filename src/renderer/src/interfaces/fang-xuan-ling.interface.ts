@@ -19,6 +19,9 @@ export interface IPreference {
     // 缩略图大小 - 只读访问
     readonly thumbnailSize: number;
 
+    // 路径管理 - 只读访问
+    readonly paths: string[];
+
     // 状态访问（只读）
     readonly state: any;
 }
@@ -94,6 +97,7 @@ export interface ZouzheResponse {
         processTime: number; // 总处理耗时
         escalated: boolean; // 是否上报了天界
         blessing?: string; // 来自天界的加持
+        strategy?: string; // 使用的策略名称
     };
 }
 
@@ -134,6 +138,9 @@ export const ZOUZHE_MATTERS = {
     NOTIFICATION_SHOW: "notification_show",
     PHOTO_SWITCH: "photo_switch", // 切换照片
     GET_PREFERENCES: "get_preferences", // 获取偏好设置
+    ADD_PATH: "add_path", // 添加监控路径
+    REMOVE_PATH: "remove_path", // 移除监控路径
+    ADD_SCAN_FOLDER: "add_scan_folder", // 添加扫描文件夹
 } as const;
 
 /**

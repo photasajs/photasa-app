@@ -2,7 +2,7 @@ import { ILisshimingService } from "@/interfaces/li-shi-ming.interface";
 import { App } from "vue";
 
 import { YUAN_TIAN_GANG_TOKEN } from "../interfaces/yuan-tian-gang.interface";
-import { YuanTianGangService } from "./yuan-tian-gang.service";
+import { YuanTianGangService } from "./yuantiangang";
 import { FANG_XUAN_LING_TOKEN } from "../interfaces/fang-xuan-ling.interface";
 import { FangXuanLingService } from "./fangxuanling";
 import { CHU_SUI_LIANG_TOKEN } from "../interfaces/chu-sui-liang.interface";

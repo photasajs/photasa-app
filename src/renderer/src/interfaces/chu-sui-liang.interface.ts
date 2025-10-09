@@ -79,6 +79,35 @@ export interface IChusuiliangService {
      * 获取主题管理器
      */
     get themeManager(): IThemeManager;
+
+    /**
+     * 添加监控路径
+     * @param path 文件夹路径
+     */
+    addPath(path: string): Promise<void>;
+
+    /**
+     * 移除监控路径
+     * @param path 文件夹路径
+     */
+    removePath(path: string): Promise<void>;
+
+    /**
+     * 添加扫描文件夹
+     * @param folder 文件夹路径
+     * @param action 扫描动作
+     * @param source 来源
+     */
+    addScanFolder(
+        folder: string,
+        action: "scan" | "rescan" | "current",
+        source?: "user" | "auto",
+    ): Promise<void>;
+
+    /**
+     * 获取监控路径列表
+     */
+    get paths(): string[];
 }
 
 /**

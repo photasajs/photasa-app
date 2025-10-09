@@ -1,5 +1,5 @@
 /**
- * 文昌引擎 - Wenchang Engine
+ * 文昌星君仙法殿堂 - Wenchang Celestial Palace
  *
  * 神话背景：
  * 文昌帝君，道教中掌管文运和智慧的神祇，位列北斗七星之文昌星。
@@ -8,7 +8,7 @@
  * 文昌星照耀之处，必有文运昌盛、智慧汇聚之象，
  * 凡虔诚供奉文昌帝君者，皆能得其庇佑，学业有成，文采飞扬。
  *
- * 在本架构中，文昌引擎承担着偏好管理和配置存储的神圣使命，
+ * 在本仙界架构中，文昌星君殿堂承担着万世偏好典籍的神圣使命，
  * 就如同文昌帝君庇佑学子的智慧选择一样，
  * 它负责记录用户的各种偏好设置，智能管理配置变更，
  * 确保用户的个性化需求得到完美保存和快速响应，
@@ -23,15 +23,19 @@
  * - 高效的缓存机制和性能优化
  */
 
-// 核心引擎
+// 文昌星君仙法殿堂
 export { WenchangEngine } from "./core/WenchangEngine";
+export type { WenchangEngineConfig } from "./core/WenchangEngine";
+
+// 类型定义
 export type {
-    WenchangEngineConfig,
     UserPreferences,
     PreferenceSnapshot,
     PreferenceDelta,
     PreferenceChangeEvent,
-} from "./core/WenchangEngine";
+    PreferenceHistory,
+    WenchangConfig,
+} from "./types/index";
 
 // 适配器
 export type { WenchangAdapterConfig } from "../adapters/WenchangAdapter";

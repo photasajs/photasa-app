@@ -78,22 +78,13 @@ describe("FangXuanLingService", () => {
             const mockTianshuResponse = {
                 acknowledged: true,
                 command: "get_preferences",
-                context: { action: "get_preferences" },
+                data: { action: "get_preferences" },
+                blessing: "袁天罡已执行诏令",
                 timestamp: Date.now(),
-                result: {
-                    message: "袁天罡已执行诏令",
-                    tianShuResponse: {
-                        success: true,
-                        data: {
-                            ui: {
-                                theme: "dark",
-                                language: "en-US",
-                            },
-                            display: {
-                                thumbnailSize: 150,
-                            },
-                        },
-                    },
+                metadata: {
+                    engineName: "wenchang",
+                    processTime: 100,
+                    urgency: "normal",
                 },
             };
 
@@ -118,7 +109,7 @@ describe("FangXuanLingService", () => {
             expect(response.approved).toBe(true);
             expect(response.matter).toBe(ZOUZHE_MATTERS.GET_PREFERENCES);
             expect(response.metadata?.escalated).toBe(true);
-            expect(response.instruction).toBe("需向天界获取偏好设置 - 天界恩准");
+            expect(response.instruction).toBe("偏好设置已通过策略模式处理并上报天界");
 
             // 验证袁天罡被调用
             expect(mockYuanTianGang.executeZhaoling).toHaveBeenCalledWith({
@@ -136,9 +127,15 @@ describe("FangXuanLingService", () => {
             const mockTianshuResponse = {
                 acknowledged: false,
                 command: "get_preferences",
-                context: { action: "get_preferences" },
+                data: { action: "get_preferences" },
+                blessing: "天界暂时不可用",
                 timestamp: Date.now(),
                 error: "天界暂时不可用",
+                metadata: {
+                    engineName: "wenchang",
+                    processTime: 100,
+                    urgency: "urgent",
+                },
             };
 
             mockYuanTianGang.executeZhaoling = vi.fn().mockResolvedValue(mockTianshuResponse);
@@ -186,8 +183,14 @@ describe("FangXuanLingService", () => {
             const mockResponse = {
                 acknowledged: true,
                 command: "theme_change",
+                data: { themeId: "dark" },
+                blessing: "主题变更已保存",
                 timestamp: Date.now(),
-                result: { message: "主题变更已保存" },
+                metadata: {
+                    engineName: "wenchang",
+                    processTime: 50,
+                    urgency: "normal",
+                },
             };
 
             mockYuanTianGang.executeZhaoling = vi.fn().mockResolvedValue(mockResponse);
@@ -204,7 +207,7 @@ describe("FangXuanLingService", () => {
 
             expect(response.approved).toBe(true);
             expect(response.metadata?.escalated).toBe(true);
-            expect(response.instruction).toBe("主题偏好变更，需上报天界记录并等待确认 - 天界恩准");
+            expect(response.instruction).toBe("偏好设置已通过策略模式处理并上报天界");
         });
     });
 

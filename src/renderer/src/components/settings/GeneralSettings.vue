@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
 import { PhFolder as FolderTwoTone, PhX as CloseOutlined } from "@phosphor-icons/vue";
 import { notification } from "@renderer/services/notification-manager";
 import { BaseButton, BaseSpace } from "@renderer/components/ui";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
+import {
+    validateAndNormalizePath,
+    checkPathDuplication,
+    isPathSafe,
+    detectPathType,
+} from "@renderer/services/chusuiliang/path-utils";
 
 /**
  * 通用设置组件 - 褚遂良中书令
@@ -30,10 +34,8 @@ defineOptions({
 
 const { t } = useI18n();
 
-// 旧有偏好设置Store实例 - 应移除
-const preferenceStore = usePreferenceStore();
-const { addPath, removePath, addScanFolder } = preferenceStore;
-const { paths } = storeToRefs(preferenceStore);
+// 使用统一的褚遂良服务管理路径
+const paths = computed(() => chuSuiLiang.paths);
 
 // 使用computed创建双向绑定的getter/setter
 const thumbnailSize = computed({
@@ -55,7 +57,9 @@ const label = computed(() => {
 });
 
 function isDuplicate(path: string): boolean {
-    return paths.value.includes(path);
+    // 使用统一路径处理检查重复
+    const duplicationResult = checkPathDuplication(path, paths.value);
+    return duplicationResult.isDuplicate;
 }
 
 async function onChoose(): Promise<void> {
@@ -69,27 +73,71 @@ async function onChoose(): Promise<void> {
             return;
         }
         const path = filePaths[0];
-        if (isDuplicate(path)) {
-            notification.warning({
-                title: t("notification.duplicatePath.title"),
-                message: t("notification.duplicatePath.message", { folder: path }),
+
+        // 使用统一路径验证和规范化
+        const validationResult = validateAndNormalizePath(path);
+        if (!validationResult.isValid) {
+            notification.error({
+                title: t("notification.invalidPath.title"),
+                message: t("notification.invalidPath.message", {
+                    folder: path,
+                    error: validationResult.error,
+                }),
             });
             return;
         }
-        addPath(path);
+
+        // 检查路径安全性
+        if (!isPathSafe(validationResult.normalizedPath)) {
+            notification.error({
+                title: t("notification.unsafePath.title"),
+                message: t("notification.unsafePath.message", { folder: path }),
+            });
+            return;
+        }
+
+        // 检查路径重复（使用规范化路径）
+        if (isDuplicate(path)) {
+            notification.warning({
+                title: t("notification.duplicatePath.title"),
+                message: t("notification.duplicatePath.message", {
+                    folder: validationResult.normalizedPath,
+                }),
+            });
+            return;
+        }
+
+        // 显示路径类型信息
+        const pathType = detectPathType(path);
+        console.debug("📝 选择的路径类型信息", {
+            original: path,
+            normalized: validationResult.normalizedPath,
+            type: pathType.type,
+            platform: pathType.platform,
+            hasUrlEncoding: pathType.hasUrlEncoding,
+        });
+
+        // 使用ChuSuiLiang服务添加路径（内部会再次验证和规范化）
+        await chuSuiLiang.addPath(path);
+
         try {
-            const folders = await scanSubfolders(path);
-            folders.forEach((f) => addScanFolder(f, "scan"));
-            addScanFolder(path, "current");
+            const folders = await scanSubfolders(validationResult.normalizedPath);
+            for (const f of folders) {
+                await chuSuiLiang.addScanFolder(f, "scan");
+            }
+            await chuSuiLiang.addScanFolder(validationResult.normalizedPath, "current");
         } catch (scanError: unknown) {
             // If scanning fails, still add the main path but show a warning
             const errorMessage =
                 scanError instanceof Error ? scanError.message : t("notification.unknownError");
             notification.warning({
                 title: t("notification.scanError.title"),
-                message: t("notification.scanError.message", { path, error: errorMessage }),
+                message: t("notification.scanError.message", {
+                    path: validationResult.normalizedPath,
+                    error: errorMessage,
+                }),
             });
-            addScanFolder(path, "current");
+            await chuSuiLiang.addScanFolder(validationResult.normalizedPath, "current");
         }
     } catch (error: unknown) {
         const errorMessage =
@@ -101,8 +149,8 @@ async function onChoose(): Promise<void> {
     }
 }
 
-function handleRemove(item): void {
-    removePath(item);
+async function handleRemove(item: string): Promise<void> {
+    await chuSuiLiang.removePath(item);
 }
 </script>
 

@@ -1,6 +1,6 @@
 /**
- * 文昌偏好管理引擎
- * 负责用户偏好的持久化、镜像和同步
+ * 文昌星君仙法殿堂
+ * 掌管万世偏好典籍，主察仙界人间之心意传承
  */
 
 import { EventEmitter } from "events";
@@ -10,63 +10,18 @@ import { loggers } from "@common/logger";
 
 const logger = loggers.wenchang;
 
-/**
- * 用户偏好接口
- */
-export interface UserPreferences {
-    revision: number;
-    ui: {
-        theme: string;
-        layout: string;
-        language: string;
-        sidebarWidth: number;
-        zoomLevel: number;
-    };
-    display: {
-        thumbnailSize: number;
-        sortOrder: string;
-        groupBy: string;
-        showHidden: boolean;
-        showMetadata: boolean;
-    };
-    scanning: {
-        autoScan: boolean;
-        excludePatterns: string[];
-        concurrency: number;
-        watchEnabled: boolean;
-    };
-    lastModified: number;
-}
+// 使用统一的类型定义
+import type {
+    UserPreferences,
+    PreferenceDelta,
+    PreferenceSnapshot,
+    PreferenceChangeEvent,
+} from "../types/index";
+
+// 接口定义已移至 types/index.ts
 
 /**
- * 偏好快照接口
- */
-export interface PreferenceSnapshot {
-    data: UserPreferences;
-    timestamp: number;
-    revision: number;
-}
-
-/**
- * 偏好变更增量接口
- */
-export interface PreferenceDelta {
-    ui?: Partial<UserPreferences["ui"]>;
-    display?: Partial<UserPreferences["display"]>;
-    scanning?: Partial<UserPreferences["scanning"]>;
-}
-
-/**
- * 偏好变更事件接口
- */
-export interface PreferenceChangeEvent {
-    snapshot: PreferenceSnapshot;
-    changes: PreferenceDelta;
-    source: string;
-}
-
-/**
- * 文昌引擎配置
+ * 文昌星君仙法配置
  */
 export interface WenchangEngineConfig {
     /** 偏好存储目录 */
@@ -103,12 +58,19 @@ const DEFAULT_PREFERENCES: UserPreferences = {
         excludePatterns: ["node_modules", ".git", "*.tmp"],
         concurrency: 4,
         watchEnabled: true,
+        paths: [], // 初始为空数组
+        scanFolders: [], // 初始为空数组
+    },
+    performance: {
+        maxCacheSize: 1000,
+        preloadCount: 50,
+        enableGpuAcceleration: true,
     },
     lastModified: Date.now(),
 };
 
 /**
- * 文昌偏好管理引擎
+ * 文昌星君仙法殿堂
  */
 export class WenchangEngine extends EventEmitter {
     private config: WenchangEngineConfig;
@@ -132,7 +94,7 @@ export class WenchangEngine extends EventEmitter {
     }
 
     /**
-     * 初始化文昌引擎
+     * 文昌星君仙法觉醒
      */
     async initialize(): Promise<void> {
         if (this.isInitialized) {
@@ -140,7 +102,7 @@ export class WenchangEngine extends EventEmitter {
         }
 
         try {
-            logger.info("🌌 初始化偏好管理引擎");
+            logger.info("🌌 文昌星君归位，掌管偏好典籍");
 
             // 确保偏好目录存在
             await fs.mkdir(this.config.preferencesDir, { recursive: true });
@@ -154,16 +116,16 @@ export class WenchangEngine extends EventEmitter {
             }
 
             this.isInitialized = true;
-            logger.info("🌌 偏好管理引擎初始化完成");
+            logger.info("🌌 文昌星君就位完成，典籍库已开启");
             this.emit("initialized");
         } catch (error) {
-            logger.error("🌌 初始化偏好管理引擎失败", error);
+            logger.error("🌌 文昌星君归位受阻，典籍库未能开启", error);
             throw error;
         }
     }
 
     /**
-     * 关闭文昌引擎
+     * 文昌星君仙法清静
      */
     async shutdown(): Promise<void> {
         if (!this.isInitialized) {
@@ -171,7 +133,7 @@ export class WenchangEngine extends EventEmitter {
         }
 
         try {
-            logger.info("🌌 关闭偏好管理引擎");
+            logger.info("🌌 文昌星君归隐，典籍库封存");
 
             // 停止自动保存
             if (this.autoSaveTimer) {
@@ -183,10 +145,10 @@ export class WenchangEngine extends EventEmitter {
             await this.savePreferences();
 
             this.isInitialized = false;
-            logger.info("🌌 偏好管理引擎关闭完成");
+            logger.info("🌌 文昌星君归隐完成，典籍库已封存");
             this.emit("shutdown");
         } catch (error) {
-            logger.error("🌌 关闭偏好管理引擎失败", error);
+            logger.error("🌌 文昌星君归隐受阻，典籍库未能封存", error);
             throw error;
         }
     }
@@ -204,17 +166,20 @@ export class WenchangEngine extends EventEmitter {
 
     /**
      * 应用偏好变更增量
+     *
+     * 【简化后的纯存储逻辑】
+     * 文昌星君只负责典籍持久化，不管理业务逻辑。
+     * 所有业务计算（如路径数组的添加/移除）应由房玄龄在人界完成，
+     * 文昌星君只需简单赋值并保存。
      */
-    async applyDelta(delta: PreferenceDelta, source = "unknown"): Promise<number> {
+    async applyDelta(delta: PreferenceDelta, _source = "unknown"): Promise<number> {
         if (!this.isInitialized) {
-            logger.error("🌌 偏好管理引擎未初始化");
+            logger.error("🌌 文昌星君尚未归位，典籍库未开启");
             throw new Error("WenchangEngine not initialized");
         }
 
         try {
-            // 应用变更
-            // const _oldPreferences = { ...this.preferences };
-
+            // ✅ 纯存储操作：直接应用增量，无业务逻辑
             if (delta.ui) {
                 this.preferences.ui = { ...this.preferences.ui, ...delta.ui };
             }
@@ -223,6 +188,12 @@ export class WenchangEngine extends EventEmitter {
             }
             if (delta.scanning) {
                 this.preferences.scanning = { ...this.preferences.scanning, ...delta.scanning };
+            }
+            if (delta.performance) {
+                this.preferences.performance = {
+                    ...this.preferences.performance,
+                    ...delta.performance,
+                };
             }
 
             // 更新版本和时间戳
@@ -235,17 +206,17 @@ export class WenchangEngine extends EventEmitter {
             // 创建快照并广播变更事件
             const snapshot = this.getCurrentSnapshot();
             const changeEvent: PreferenceChangeEvent = {
+                type: "updated",
                 snapshot,
-                changes: delta,
-                source,
+                delta,
             };
 
             this.emit("preferenceChanged", changeEvent);
 
-            logger.info(`🌌 应用偏好变更, 新版本: ${this.preferences.revision}`);
+            logger.info(`🌌 仙术成功，典籍更新至第${this.preferences.revision}版`);
             return this.preferences.revision;
         } catch (error) {
-            logger.error("🌌 应用偏好变更失败", error);
+            logger.error("🌌 仙术失败，典籍更新未能成功", error);
             throw error;
         }
     }
@@ -273,7 +244,7 @@ export class WenchangEngine extends EventEmitter {
             source: "reset",
         });
 
-        logger.info("🌌 重置偏好到默认值");
+        logger.info("🌌 文昌星君逆转时空，典籍重归太初");
         return snapshot;
     }
 
@@ -304,13 +275,13 @@ export class WenchangEngine extends EventEmitter {
                 lastModified: loaded.lastModified || Date.now(),
             };
 
-            logger.info(`🌌 加载偏好, 版本: ${this.preferences.revision}`);
+            logger.info(`🌌 文昌星君召唤典籍，第${this.preferences.revision}版已入仙库`);
         } catch (error) {
             if ((error as any).code === "ENOENT") {
-                logger.info("🌌 没有现有偏好文件, 使用默认值");
+                logger.info("🌌 先古典籍尚未存世，文昌星君创世之初");
                 await this.savePreferences();
             } else {
-                logger.error("🌌 加载偏好失败", error);
+                logger.error("🌌 典籍召唤受阻，仙缘未到", error);
                 throw error;
             }
         }
@@ -323,9 +294,9 @@ export class WenchangEngine extends EventEmitter {
         try {
             const data = JSON.stringify(this.preferences, null, 2);
             await fs.writeFile(this.preferencesFile, data, "utf-8");
-            logger.info(`🌌 保存偏好, 版本: ${this.preferences.revision}`);
+            logger.info(`🌌 文昌星君封印典籍，第${this.preferences.revision}版永世传承`);
         } catch (error) {
-            logger.error("🌌 保存偏好失败", error);
+            logger.error("🌌 典籍封印受阻，仙法受干扬", error);
             throw error;
         }
     }
@@ -341,7 +312,7 @@ export class WenchangEngine extends EventEmitter {
                     await this.savePreferences();
                     this.isDirty = false; // 保存后重置脏标记
                 } catch (error) {
-                    logger.error("🌌 自动保存失败", error);
+                    logger.error("🌌 自动仙法受阻，典籍未能自动封印", error);
                 }
             }
         }, this.config.autoSaveInterval);
@@ -355,7 +326,7 @@ export class WenchangEngine extends EventEmitter {
     }
 
     /**
-     * 检查引擎是否已初始化
+     * 检查文昌星君是否已觉醒
      */
     isReady(): boolean {
         return this.isInitialized;
@@ -377,32 +348,81 @@ export class WenchangEngine extends EventEmitter {
                 return { valid: false, errors };
             }
 
+            // 添加调试信息，显示实际验证的数据类型和内容
+            const actualType = Array.isArray(targetData) ? "array" : typeof targetData;
+            logger.debug(`🌌 文昌星君查验数据：类型=${actualType}`, {
+                dataKeys: Array.isArray(targetData)
+                    ? `数组长度=${targetData.length}`
+                    : typeof targetData === "object"
+                      ? Object.keys(targetData)
+                      : "非对象类型",
+                dataType: actualType,
+            });
+
             // 解析YAML格式的验证规则
             if (data.rules && Array.isArray(data.rules)) {
                 for (const rule of data.rules) {
                     // 处理不同格式的规则
                     if (typeof rule === "object") {
-                        // 类型验证
-                        if (rule.type && rule.type === "object" && typeof targetData !== "object") {
-                            errors.push("数据类型不正确，期望 object");
+                        // 增强类型验证 - 明确区分数组和对象
+                        if (rule.type) {
+                            const expectedType = rule.type;
+                            let actualDataType: string = typeof targetData;
+
+                            // 特殊处理数组类型
+                            if (Array.isArray(targetData)) {
+                                actualDataType = "array";
+                            }
+
+                            if (expectedType === "object" && actualDataType !== "object") {
+                                errors.push(
+                                    `数据类型不正确，期望 ${expectedType}，实际为 ${actualDataType}`,
+                                );
+                            } else if (expectedType === "array" && !Array.isArray(targetData)) {
+                                errors.push(`数据类型不正确，期望 array，实际为 ${actualDataType}`);
+                            } else if (
+                                expectedType !== "object" &&
+                                expectedType !== "array" &&
+                                actualDataType !== expectedType
+                            ) {
+                                errors.push(
+                                    `数据类型不正确，期望 ${expectedType}，实际为 ${actualDataType}`,
+                                );
+                            }
                         }
 
                         // 非空验证
                         if (
                             rule.notEmpty &&
-                            (!targetData || Object.keys(targetData).length === 0)
+                            (!targetData ||
+                                (Array.isArray(targetData) && targetData.length === 0) ||
+                                (typeof targetData === "object" &&
+                                    !Array.isArray(targetData) &&
+                                    Object.keys(targetData).length === 0))
                         ) {
                             errors.push("数据不能为空");
                         }
 
-                        // 允许的键验证
+                        // 允许的键验证 - 仅对非数组对象进行此验证
                         if (rule.allowedKeys && Array.isArray(rule.allowedKeys)) {
-                            const dataKeys = Object.keys(targetData);
-                            const invalidKeys = dataKeys.filter(
-                                (key) => !rule.allowedKeys.includes(key),
-                            );
-                            if (invalidKeys.length > 0) {
-                                errors.push(`不允许的字段: ${invalidKeys.join(", ")}`);
+                            if (Array.isArray(targetData)) {
+                                errors.push(
+                                    `数据类型错误：期望对象格式以进行字段验证，但收到数组类型（长度=${targetData.length}）`,
+                                );
+                            } else if (typeof targetData === "object") {
+                                const dataKeys = Object.keys(targetData);
+                                const invalidKeys = dataKeys.filter(
+                                    (key) => !rule.allowedKeys.includes(key),
+                                );
+                                if (invalidKeys.length > 0) {
+                                    errors.push(
+                                        `不允许的字段: ${invalidKeys.join(", ")}，允许的字段: ${rule.allowedKeys.join(", ")}`,
+                                    );
+                                }
+                            } else {
+                                errors.push(
+                                    `数据类型错误：期望对象格式以进行字段验证，但收到 ${typeof targetData} 类型`,
+                                );
                             }
                         }
                     }
@@ -430,7 +450,7 @@ export class WenchangEngine extends EventEmitter {
             }
 
             const isValid = errors.length === 0;
-            logger.info(`🌌 偏好验证${isValid ? "通过" : "失败"}`, {
+            logger.info(`🌌 文昌星君推演天机${isValid ? "，天道认可" : "，天道不容"}`, {
                 errors: isValid ? [] : errors,
             });
 
@@ -439,7 +459,7 @@ export class WenchangEngine extends EventEmitter {
                 errors: isValid ? undefined : errors,
             };
         } catch (error) {
-            logger.error("🌌 验证过程失败", error);
+            logger.error("🌌 推演天机遭反噶，仙法被阻", error);
             return {
                 valid: false,
                 errors: ["验证过程出现异常"],
@@ -452,7 +472,7 @@ export class WenchangEngine extends EventEmitter {
      * 工作流支持方法
      */
     async sanitize(data: any): Promise<{ result: any }> {
-        logger.info("🌌 文昌引擎施展净化之术");
+        logger.info("🌌 文昌星君施展净化之术");
 
         const sourceData = data.source || data;
 
@@ -466,7 +486,7 @@ export class WenchangEngine extends EventEmitter {
      * 工作流支持方法
      */
     async updatePreferences(data: any): Promise<{ result: any }> {
-        logger.info("🌌 文昌引擎更新偏好典籍");
+        logger.info("🌌 文昌星君更新偏好典籍");
 
         const delta = data.delta || data;
         const source = data.source || "workflow";
@@ -480,7 +500,7 @@ export class WenchangEngine extends EventEmitter {
      * 工作流支持方法
      */
     async emitEvent(data: any): Promise<{ id: string }> {
-        logger.info("🌌 文昌引擎广播消息");
+        logger.info("🌌 文昌星君广播天音");
 
         // 生成事件ID并发送事件
         const eventId = `event-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -500,7 +520,7 @@ export class WenchangEngine extends EventEmitter {
      * 工作流支持方法
      */
     async formatResponse(data: any): Promise<{ result: any }> {
-        logger.info("🌌 文昌引擎整理响应格式");
+        logger.info("🌌 文昌星君整理仙谕格式");
         return { result: data };
     }
 }

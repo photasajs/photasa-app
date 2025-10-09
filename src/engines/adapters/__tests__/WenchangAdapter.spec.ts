@@ -99,7 +99,7 @@ describe("WenchangAdapter", () => {
         it("should persist preferences to file", async () => {
             const delta = {
                 ui: { theme: "dark" },
-                display: { sortOrder: "nameAsc" },
+                display: { sortOrder: "name" as const },
             };
 
             await adapter.applyDelta(delta);
@@ -117,7 +117,7 @@ describe("WenchangAdapter", () => {
             const content = await fs.readFile(preferencesFile, "utf-8");
             const preferences = JSON.parse(content);
             expect(preferences.ui.theme).toBe("dark");
-            expect(preferences.display.sortOrder).toBe("nameAsc");
+            expect(preferences.display.sortOrder).toBe("name");
         });
 
         it("should load preferences from existing file", async () => {
@@ -164,8 +164,8 @@ describe("WenchangAdapter", () => {
 
             expect(changeHandler).toHaveBeenCalled();
             const event = changeHandler.mock.calls[0][0] as any;
-            expect(event.changes).toEqual(delta);
-            expect(event.source).toBe("test");
+            expect(event.type).toBe("updated");
+            expect(event.delta).toEqual(delta);
         });
 
         it("should remove event listeners", async () => {
@@ -176,6 +176,76 @@ describe("WenchangAdapter", () => {
             await adapter.applyDelta({ ui: { theme: "dark" } });
 
             expect(changeHandler).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("path operations (新架构 - 通过applyDelta)", () => {
+        beforeEach(async () => {
+            await adapter.initialize();
+        });
+
+        it("should apply paths delta successfully", async () => {
+            const testPath = path.join(tempDir, "test-path");
+
+            // ✅ 新架构：业务逻辑在FangXuanLing，WenchangEngine只接收完整状态
+            const result = await adapter.updatePreferences({
+                delta: {
+                    scanning: {
+                        paths: [testPath], // 完整的新paths数组
+                    },
+                },
+            });
+
+            expect(result.result.success).toBe(true);
+            expect(result.result.revision).toBeGreaterThan(0);
+
+            const snapshot = adapter.getCurrentSnapshot();
+            expect(snapshot.data.scanning.paths).toContain(testPath);
+        });
+
+        it("should remove path via delta successfully", async () => {
+            const testPath1 = path.join(tempDir, "test-path-1");
+            const testPath2 = path.join(tempDir, "test-path-2");
+
+            // 先添加两个路径
+            await adapter.updatePreferences({
+                delta: {
+                    scanning: {
+                        paths: [testPath1, testPath2],
+                    },
+                },
+            });
+
+            // 移除一个路径（通过发送新的完整数组）
+            const result = await adapter.updatePreferences({
+                delta: {
+                    scanning: {
+                        paths: [testPath1], // 只保留testPath1
+                    },
+                },
+            });
+
+            expect(result.result.success).toBe(true);
+
+            const snapshot = adapter.getCurrentSnapshot();
+            expect(snapshot.data.scanning.paths).toContain(testPath1);
+            expect(snapshot.data.scanning.paths).not.toContain(testPath2);
+        });
+
+        it("should handle empty paths array", async () => {
+            // 测试空数组
+            const result = await adapter.updatePreferences({
+                delta: {
+                    scanning: {
+                        paths: [],
+                    },
+                },
+            });
+
+            expect(result.result.success).toBe(true);
+
+            const snapshot = adapter.getCurrentSnapshot();
+            expect(snapshot.data.scanning.paths).toEqual([]);
         });
     });
 
