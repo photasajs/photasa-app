@@ -12,8 +12,8 @@ import {
     PathProcessingStats,
 } from "../path-utils";
 
-// Mock API dependencies
-vi.mock("@renderer/utils/api", () => ({
+// Mock path utilities
+vi.mock("@renderer/utils/path", () => ({
     normalizePath: vi.fn((path: string) => {
         // 模拟RFC 0012的路径规范化逻辑
         if (path.startsWith("file://")) {
