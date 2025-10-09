@@ -63,7 +63,6 @@ What parts of the design do you expect to resolve through the RFC process before
 
 | RFC                                                               | Title                                           | Status              | Assignee         | Target Release |
 | ----------------------------------------------------------------- | ----------------------------------------------- | ------------------- | ---------------- | -------------- |
-| [0002](./0002-headless-ui-components.md)                          | Headless UI Components for Picasa Vue           | Phase 2 In Progress | Development Team | v1.0.0         |
 | [0004](./0004-ai-file-preview-service.md)                         | AI文件在线预览服务                              | Draft               | Development Team | Future         |
 | [0005](./0005-local-ai-file-preview.md)                           | 本地AI文件预览功能                              | Draft               | Development Team | Future         |
 | [0010](./0010-folder-statistics-display.md)                       | 文件夹树节点统计信息显示                        | Draft               | Development Team | v1.6.0         |
@@ -79,16 +78,17 @@ What parts of the design do you expect to resolve through the RFC process before
 
 ## Implemented RFCs
 
-| RFC                                                  | Title                                          | Implemented In | Notes                                                                    |
-| ---------------------------------------------------- | ---------------------------------------------- | -------------- | ------------------------------------------------------------------------ |
-| [0001](./0001-import-wizard-system.md)               | Import Wizard System                           | v2.1.0         | Complete import wizard with multi-step flow                              |
-| [0003](./0003-unify-watch-to-scan-queue.md)          | Unify File Watch Events to Scan Queue          | v1.0.0         | Persistent file operation queue with event deduplication                 |
-| [0007](./0007-folder-scan-cache-optimization.md)     | Folder Scan Cache Optimization                 | v1.0.0         | Intelligent incremental scanning and cleanup mechanisms                  |
-| [0006](./0006-photo-detail-drawer-decoupling.md)     | Photo Detail Drawer Decoupling from Ant Design | v1.6.0         | Successfully replaced Ant Design drawer with custom BaseDrawer component |
-| [0008](./0008-scan-strategy-optimization.md)         | Scan Strategy Optimization                     | v1.6.0         | Smart scanning strategy with cache-based decision making                 |
-| [0009](./0009-video-thumbnail-orientation.md)        | Video Thumbnail Orientation Support            | v1.6.0         | Enhanced video thumbnail generation with rotation metadata support       |
-| [0012](./0012-unified-path-handling-architecture.md) | 统一路径处理架构重构                           | v1.6.0         | 统一路径处理逻辑，解决跨平台兼容性问题                                   |
-| [0018](./0018-scanning-folder-priority-sorting.md)   | 扫描文件夹优先级排序优化                       | v1.7.0         | 实现基于优先级的扫描队列排序，支持用户操作优先于自动发现                 |
+| RFC                                                  | Title                                          | Implemented In | Notes                                                                                      |
+| ---------------------------------------------------- | ---------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------ |
+| [0001](./0001-import-wizard-system.md)               | Import Wizard System                           | v2.1.0         | Complete import wizard with multi-step flow                                                |
+| [0002](./0002-headless-ui-components.md)             | Headless UI Components for Picasa Vue          | v1.8.0         | 48 BaseUI components implemented, Ant Design fully removed, ~2.25MB bundle size reduction  |
+| [0003](./0003-unify-watch-to-scan-queue.md)          | Unify File Watch Events to Scan Queue          | v1.0.0         | Persistent file operation queue with event deduplication                                   |
+| [0006](./0006-photo-detail-drawer-decoupling.md)     | Photo Detail Drawer Decoupling from Ant Design | v1.6.0         | Successfully replaced Ant Design drawer with custom BaseDrawer component                   |
+| [0007](./0007-folder-scan-cache-optimization.md)     | Folder Scan Cache Optimization                 | v1.0.0         | Intelligent incremental scanning and cleanup mechanisms                                    |
+| [0008](./0008-scan-strategy-optimization.md)         | Scan Strategy Optimization                     | v1.6.0         | Smart scanning strategy with cache-based decision making                                   |
+| [0009](./0009-video-thumbnail-orientation.md)        | Video Thumbnail Orientation Support            | v1.6.0         | Enhanced video thumbnail generation with rotation metadata support                         |
+| [0012](./0012-unified-path-handling-architecture.md) | 统一路径处理架构重构                           | v1.6.0         | 统一路径处理逻辑，解决跨平台兼容性问题                                                     |
+| [0018](./0018-scanning-folder-priority-sorting.md)   | 扫描文件夹优先级排序优化                       | v1.7.0         | 实现基于优先级的扫描队列排序，支持用户操作优先于自动发现                                   |
 
 ## Rejected RFCs
 
