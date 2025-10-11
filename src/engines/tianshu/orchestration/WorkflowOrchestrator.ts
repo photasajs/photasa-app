@@ -670,11 +670,18 @@ export class WorkflowOrchestrator extends EventEmitter {
 
     /**
      * 获取字段值，支持嵌套路径
+     *
+     * 支持的路径格式：
+     * - steps.stepId.field - 访问步骤结果（推荐，复数表示步骤集合）
+     * - step.stepId.field - 向后兼容的单数形式
+     * - inputs.field - 访问工作流输入参数
+     * - variables.field - 访问执行上下文变量
      */
     private getFieldValue(fieldPath: string, context: ExecutionContext): any {
         if (!fieldPath) return undefined;
 
-        // 支持 steps.stepId.field 和 step.stepId.field 格式（兼容两种写法）
+        // 支持 steps.stepId.field（推荐）和 step.stepId.field（兼容）
+        // steps 复数形式语义：steps.validate_delta = "步骤集合中ID为validate_delta的步骤"
         if (fieldPath.startsWith("steps.") || fieldPath.startsWith("step.")) {
             const pathParts = fieldPath.split(".");
             if (pathParts.length >= 3) {
