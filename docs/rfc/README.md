@@ -78,18 +78,21 @@ What parts of the design do you expect to resolve through the RFC process before
 
 ## Implemented RFCs
 
-| RFC                                                  | Title                                          | Implemented In | Notes                                                                                      |
-| ---------------------------------------------------- | ---------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------ |
-| [0001](./0001-import-wizard-system.md)               | Import Wizard System                           | v2.1.0         | Complete import wizard with multi-step flow                                                |
-| [0002](./0002-headless-ui-components.md)             | Headless UI Components for Picasa Vue          | v1.8.0         | 48 BaseUI components implemented, Ant Design fully removed, ~2.25MB bundle size reduction  |
-| [0003](./0003-unify-watch-to-scan-queue.md)          | Unify File Watch Events to Scan Queue          | v1.0.0         | Persistent file operation queue with event deduplication                                   |
-| [0006](./0006-photo-detail-drawer-decoupling.md)     | Photo Detail Drawer Decoupling from Ant Design | v1.6.0         | Successfully replaced Ant Design drawer with custom BaseDrawer component                   |
-| [0007](./0007-folder-scan-cache-optimization.md)     | Folder Scan Cache Optimization                 | v1.0.0         | Intelligent incremental scanning and cleanup mechanisms                                    |
-| [0008](./0008-scan-strategy-optimization.md)         | Scan Strategy Optimization                     | v1.6.0         | Smart scanning strategy with cache-based decision making                                   |
-| [0009](./0009-video-thumbnail-orientation.md)        | Video Thumbnail Orientation Support            | v1.6.0         | Enhanced video thumbnail generation with rotation metadata support                         |
-| [0012](./0012-unified-path-handling-architecture.md) | 统一路径处理架构重构                           | v1.6.0         | 统一路径处理逻辑，解决跨平台兼容性问题                                                     |
-| [0018](./0018-scanning-folder-priority-sorting.md)   | 扫描文件夹优先级排序优化                       | v1.7.0         | 实现基于优先级的扫描队列排序，支持用户操作优先于自动发现                                   |
-| [0036](./0036-wenchang-preference-integration.md)    | 偏好设置启动加载和保存机制                     | v1.9.0         | 完整的偏好设置双向通信机制，启动加载、智能合并、实时保存，391测试通过                      |
+| RFC                                                                                      | Title                                          | Implemented In | Notes                                                                                      |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------ |
+| [0001](./0001-import-wizard-system.md)                                                   | Import Wizard System                           | v2.1.0         | Complete import wizard with multi-step flow                                                |
+| [0002](./0002-headless-ui-components.md)                                                 | Headless UI Components for Picasa Vue          | v1.8.0         | 48 BaseUI components implemented, Ant Design fully removed, ~2.25MB bundle size reduction  |
+| [0003](./0003-unify-watch-to-scan-queue.md)                                              | Unify File Watch Events to Scan Queue          | v1.0.0         | Persistent file operation queue with event deduplication                                   |
+| [0006](./0006-photo-detail-drawer-decoupling.md)                                         | Photo Detail Drawer Decoupling from Ant Design | v1.6.0         | Successfully replaced Ant Design drawer with custom BaseDrawer component                   |
+| [0007](./0007-folder-scan-cache-optimization.md)                                         | Folder Scan Cache Optimization                 | v1.0.0         | Intelligent incremental scanning and cleanup mechanisms                                    |
+| [0008](./0008-scan-strategy-optimization.md)                                             | Scan Strategy Optimization                     | v1.6.0         | Smart scanning strategy with cache-based decision making                                   |
+| [0009](./0009-video-thumbnail-orientation.md)                                            | Video Thumbnail Orientation Support            | v1.6.0         | Enhanced video thumbnail generation with rotation metadata support                         |
+| [0012](./0012-unified-path-handling-architecture.md)                                     | 统一路径处理架构重构                           | v1.6.0         | 统一路径处理逻辑，解决跨平台兼容性问题                                                     |
+| [0018](./0018-scanning-folder-priority-sorting.md)                                       | 扫描文件夹优先级排序优化                       | v1.7.0         | 实现基于优先级的扫描队列排序，支持用户操作优先于自动发现                                   |
+| [0036](./0036-wenchang-preference-integration.md)                                        | 偏好设置启动加载和保存机制                     | v1.9.0         | 完整的偏好设置双向通信机制，启动加载、智能合并、实时保存，391测试通过                      |
+| [0038](./0038-preference-workflow-integration.md)                                        | 偏好设置工作流集成                             | v1.9.0         | 工作流驱动的偏好设置管理，完整的集成测试，褚遂良→房玄龄→袁天罡→天枢→文昌调用链验证通过    |
+| [0040](./0040-removepath-functionality-fix.md)                                           | RemovePath功能修复                             | v1.9.0         | 天界人界数据同步完整实现，修复UI更新问题，后续被RFC 0041进一步优化                         |
+| [0041](./0041-preference-architecture-refactor-business-logic-separation.md)             | 偏好架构重构 - 业务逻辑与存储层分离            | v1.9.0         | 应用Linus"好品味"原则，业务逻辑从WenchangEngine分离到FangXuanLing，架构更清晰易维护        |
 
 ## Rejected RFCs
 
