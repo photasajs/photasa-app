@@ -104,7 +104,7 @@
         "@cloudgeek/vue3-video-player": "^0.3.10",
         "@electron-toolkit/tsconfig": "^1.0.1",
         "@electron/notarize": "^1.2.3",
-        "@playwright/test": "^1.52.0",
+        "@playwright/test": "^1.56.0",
         "@rollup/plugin-babel": "^6.0.3",
         "@rushstack/eslint-patch": "^1.2.0",
         "@testing-library/vue": "^8.1.0",
