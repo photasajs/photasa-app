@@ -674,8 +674,8 @@ export class WorkflowOrchestrator extends EventEmitter {
     private getFieldValue(fieldPath: string, context: ExecutionContext): any {
         if (!fieldPath) return undefined;
 
-        // 支持step.stepId.output.field格式
-        if (fieldPath.startsWith("step.")) {
+        // 支持 steps.stepId.field 和 step.stepId.field 格式（兼容两种写法）
+        if (fieldPath.startsWith("steps.") || fieldPath.startsWith("step.")) {
             const pathParts = fieldPath.split(".");
             if (pathParts.length >= 3) {
                 const stepId = pathParts[1];
