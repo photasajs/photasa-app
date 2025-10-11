@@ -86,7 +86,7 @@
         "moment": "^2.29.4",
         "motion": "^10.15.5",
         "node-abi": "^4.14.0",
-        "p-queue": "^8.1.0",
+        "p-queue": "^9.0.0",
         "photoswipe": "^5.4.4",
         "pino": "^8.16.0",
         "prebuild-install": "^7.1.1",
