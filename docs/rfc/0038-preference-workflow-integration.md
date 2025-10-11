@@ -3,10 +3,10 @@
 ## 元信息
 - **RFC编号**: 0038
 - **标题**: 偏好设置工作流集成
-- **状态**: ✅ **已完成** (Implemented)
+- **状态**: 🔄 **进行中** (In Progress)
 - **创建日期**: 2025-09-28
-- **完成日期**: 2025-10-10
-- **关闭日期**: 2025-10-10
+- **完成日期**: 待定
+- **关闭日期**: 待定
 - **目标版本**: v2.0.0
 - **相关RFC**:
   - RFC 0036: 文昌偏好集成（已完成）✅
@@ -18,7 +18,7 @@
 
 本RFC描述将偏好设置管理完全集成到Tianshu工作流系统中的架构设计，实现统一的、工作流驱动的偏好设置管理，消除前后端分离的概念，建立"一个系统"的偏好设置架构。
 
-**实际实现说明**：本RFC提出的激进架构（直接从Store调用window.tianshu）在实践中被RFC 0036/0040/0041采用的更实用架构取代。当前实现保留了服务层（褚遂良→房玄龄→袁天罡），更符合职责分离和可维护性原则。
+**实际实现说明**：本RFC的核心目标（工作流驱动的偏好设置管理）已通过RFC 0036/0040/0041实现。当前架构采用服务层模式（褚遂良→房玄龄→袁天罡→天枢→文昌），完全符合职责分离和可维护性原则。
 
 ## 背景
 
@@ -40,15 +40,17 @@
 
 ### 架构原则
 
-#### 1. 强制性调用链
+#### 1. 服务层调用链
 ```
-前端 → window.tianshu.processCommand() → TianshuService.processCommand() → TianshuEngine → 工作流执行 → Taiyi → WenchangEngine
+UI组件 → 褚遂良服务 → 房玄龄服务 → 袁天罡服务 → 天枢引擎 → 文昌引擎
 ```
 
-**绝对禁止**：
-- TaiyiService暴露内部engine
-- TianshuService提供除processCommand外的任何方法
-- 任何绕过工作流的直接调用
+**架构原则**：
+- 褚遂良：UI层服务，验证输入，构建奏折
+- 房玄龄：业务逻辑层，计算delta，管理Store状态
+- 袁天罡：协议转换层，映射命令到工作流
+- 天枢：工作流执行引擎
+- 文昌：纯存储引擎，只负责持久化
 
 #### 2. 统一命名规范
 - 使用`preference`（单数）而非`preferences`（复数）
@@ -241,8 +243,7 @@ async function initializePreferences() {
 - [x] WenchangAdapter测试全部通过（13/13）
 - [x] UI更新和存储保存功能正常
 
-### 阶段2：功能验证和测试完善 ✅ 已完成
-
+#### 阶段2：功能验证和测试完善 ✅ 已完成
 - [x] **偏好设置启动加载测试** - GET_PREFERENCES完整流程测试通过
 - [x] **工作流执行端到端测试** - THEME_CHANGE工作流测试通过
 - [x] **错误处理和降级测试** - 天枢引擎错误处理测试通过
@@ -251,25 +252,33 @@ async function initializePreferences() {
 **测试文件**: `src/renderer/src/services/__tests__/preference-integration.test.ts`
 **测试结果**: 4/4 passed ✅
 
-#### 阶段3：文档和清理（可选，不影响完成状态）
+### 待完成的工作 🔄
+
+#### 阶段3：Store边界统一任务（RFC 0038核心任务）
+- [ ] **阶段1**: 删除无用的scanFolders设计
+- [ ] **阶段2**: 统一preferences字段结构
+- [ ] **阶段3**: 实现useQinQiong()访问模式
+- [ ] **阶段4**: 规划scanningFolder迁移
+
+#### 阶段4：文档和清理（可选）
 - [ ] 清理遗留的pathOperations代码（如果存在）
 - [ ] 更新开发文档和架构图
 - [ ] 性能分析和优化（如有必要）
 
-### ❌ 不需要做的工作（过度工程）
+### 架构优势
 
-RFC 0038最初提出的"直接从Store调用window.tianshu"方案**不应实施**，原因：
+当前服务层架构的优势：
 
-1. **违反职责分离**：Store不应包含业务逻辑
-2. **降低可维护性**：去掉服务层会使职责模糊
-3. **不符合"好品味"**：当前架构更清晰、更优雅
+1. **职责分离清晰**：每层只负责自己的职责
+2. **可维护性强**：业务逻辑集中在房玄龄，易于理解和修改
+3. **符合"好品味"**：代码简洁，边界清晰，便于测试
 
 ### 下一步行动
 
 **优先级1（必须）**：
-1. 编写偏好设置启动加载的集成测试
-2. 验证工作流执行的端到端流程
-3. 测试错误处理和降级场景
+1. 执行Store边界统一任务（四阶段计划）
+2. 实现useQinQiong()访问模式
+3. 规划scanningFolder迁移到尉迟恭/千里眼
 
 **优先级2（可选）**：
 - 文档更新和代码清理
@@ -312,25 +321,27 @@ await window.tianshu.processCommand({
 });
 ```
 
-#### 实际实现的架构（RFC 0036/0040/0041）
+#### 当前架构（RFC 0041实现）
 ```typescript
-// Store → 褚遂良 → 房玄龄 → 袁天罡 → 天枢 → 文昌
+// UI组件 → 褚遂良 → 房玄龄 → 袁天罡 → 天枢 → 文昌
 褚遂良.updateTheme(themeId)
   → 房玄龄.processZouzhe({ matter: THEME_CHANGE, content: { themeId } })
-    → 袁天罡.executeZhaoling({ command: THEME_CHANGE, context: delta })
+    → 房玄龄.computePreferenceDelta()  // 业务逻辑计算
+    → 袁天罡.executeZhaoling({ command: UPDATE_PREFERENCES, context: delta })
       → 天枢.executeWorkflow("update_preferences")
-        → 文昌.applyDelta(delta)
+        → 文昌.applyDelta(delta)  // 纯存储操作
 ```
 
-### 为什么采用了不同的架构？
+### 架构优势（与RFC 0041一致）
 
-1. **职责分离更清晰**
-   - 褚遂良：验证输入，构建奏折
-   - 房玄龄：业务逻辑，计算delta
-   - 袁天罡：协议转换，参数包装
-   - 服务层的存在使每一步职责明确
+1. **职责分离清晰**
+   - 褚遂良：UI层服务，验证输入，构建奏折
+   - 房玄龄：业务逻辑层，计算delta，管理Store状态
+   - 袁天罡：协议转换层，映射命令到工作流
+   - 天枢：工作流执行引擎
+   - 文昌：纯存储引擎，只负责持久化
 
-2. **更好的可维护性**
+2. **可维护性强**
    - 业务逻辑集中在房玄龄，不散落在Store中
    - 类型安全和错误处理更完善
    - 测试更容易编写和维护
@@ -340,30 +351,103 @@ await window.tianshu.processCommand({
    - 使用统一的delta格式
    - 代码更简洁，边界更清晰
 
-### 已完成的工作 ✅
+### 已完成的工作 ✅（与RFC 0041一致）
 
-1. **工作流已创建**
-   - `get_preferences.yml` - 获取偏好设置
-   - `update_preferences.yml` - 更新偏好设置
-   - 其他管理工作流
+1. **服务层架构实现**
+   - 褚遂良服务：UI层服务，验证输入，构建奏折
+   - 房玄龄服务：业务逻辑层，计算delta，管理Store状态
+   - 袁天罡服务：协议转换层，映射命令到工作流
+   - 文昌引擎：纯存储引擎，只负责持久化
 
-2. **完整的调用链**
-   - 褚遂良 → 房玄龄 → 袁天罡 → 天枢 → 文昌
-   - 严格的架构边界，无直接调用
-
-3. **业务逻辑分离**
+2. **业务逻辑分离**
    - 房玄龄负责业务逻辑计算（computePreferenceDelta）
    - 文昌引擎只负责纯存储（applyDelta）
    - 清晰的职责划分
+
+3. **工作流集成**
+   - `get_preferences.yml` - 获取偏好设置
+   - `update_preferences.yml` - 更新偏好设置
+   - 完整的调用链：褚遂良 → 房玄龄 → 袁天罡 → 天枢 → 文昌
 
 4. **测试验证**
    - 单元测试通过 ✅
    - 用户验证通过 ✅
    - UI更新和存储保存完全正常 ✅
 
+## Store边界统一任务
+
+### 当前问题分析
+
+经过代码审查发现，当前Store混合了三种不同类型的数据，违反了架构边界原则：
+
+1. **preferences** (用户偏好设置) - 应该全部在 `preferences` 对象中
+2. **appState** (运行时状态) - 应该通过 `useQinQiong()` 访问
+3. **scanningFolder** (扫描队列) - 将来迁移到尉迟恭服务(人界) / 千里眼引擎(天界)
+
+### 具体问题
+
+```typescript
+// 当前Store结构问题
+export type PreferenceState = {
+    preferences: {
+        ui: { theme, language, layout, ... },
+        display: { thumbnailSize, sortOrder, ... },
+        performance: { maxCacheSize, ... },
+        // ❌ 缺少: scanning 和 system 字段
+    },
+    appState: {
+        // ✅ 正确的运行时状态
+        firstTime: boolean,
+        lastOpenedFolder: string,
+        currentFolder: string,
+
+        // ❌ 错误位置: 应该在 preferences 中
+        paths: string[],
+        excludePaths: string[],
+        autoUpdate: AutoUpdateConfig,
+
+        // ⏳ 临时: 将来迁移到千里眼
+        scanningFolder: ScanAction[],
+    }
+}
+```
+
+### 四阶段统一计划
+
+#### 阶段1：删除无用的scanFolders设计
+- 从 Wenchang types 删除 `scanFolders` 字段
+- 从默认配置中移除 `scanFolders: []`
+- 清理相关代码和注释
+
+#### 阶段2：统一preferences字段结构
+- 添加 `preferences.scanning` 字段，包含：
+  - `paths: string[]` (从 `appState.paths` 迁移)
+  - `excludePatterns: string[]` (从 `appState.excludePaths` 迁移)
+- 添加 `preferences.system` 字段，包含：
+  - `autoUpdate: AutoUpdateConfig` (从 `appState.autoUpdate` 迁移)
+
+#### 阶段3：实现useQinQiong()访问模式
+- 创建 `useQinQiong()` composable 用于访问 `appState` 字段
+- 更新所有UI组件使用 `useQinQiong()` 而非直接访问 `appState`
+- 确保 `appState` 只包含真正的运行时状态
+
+#### 阶段4：规划scanningFolder迁移
+- **人界**: 创建尉迟恭服务 (YuchiGongService) 管理扫描队列UI
+- **天界**: 千里眼引擎 (QianliyanEngine) 管理实际扫描执行
+- 迁移 `scanningFolder` 从Store到尉迟恭服务
+
+### 验证标准
+
+- [ ] 所有preference字段都在 `preferences` 对象中
+- [ ] 所有appState字段通过 `useQinQiong()` 访问
+- [ ] 无用的 `scanFolders` 设计已删除
+- [ ] `scanningFolder` 迁移路径已规划
+
 ### 结论
 
 RFC 0038的核心目标（工作流驱动的偏好设置管理）已经实现，但采用了更实用的架构设计。这种架构调整是在实践中基于Linus Torvalds的"好品味"原则做出的优化，最终实现了更清晰、更易维护的代码。
+
+**下一步**: 执行Store边界统一任务，确保架构边界清晰，为未来的千里眼引擎集成做好准备。
 
 ## 参考文档
 
