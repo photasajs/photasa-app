@@ -16,6 +16,9 @@ interface ReturnParams {
     data?: any;
     message?: string;
     error?: string;
+    // 支持额外的结构化信息，保持向后兼容
+    details?: any;
+    [key: string]: any; // 允许扩展字段
 }
 
 interface SetVariableParams {
@@ -74,14 +77,16 @@ export class BuiltinAdapter implements IAdapter {
 
         // 如果有错误，抛出异常而不是返回包装结构
         if (params.error) {
-            logger.error(`🔧 仙令有误: ${params.error}`);
+            const errorDetails = params.details ? ` 详情: ${JSON.stringify(params.details)}` : "";
+            logger.error(`🔧 仙令有误: ${params.error}${errorDetails}`);
             throw new Error(params.error);
         }
 
         // 如果明确失败，抛出异常
         if (params.success === false) {
             const errorMsg = params.message || "操作失败";
-            logger.error(`🔧 功败垂成: ${errorMsg}`);
+            const errorDetails = params.details ? ` 详情: ${JSON.stringify(params.details)}` : "";
+            logger.error(`🔧 功败垂成: ${errorMsg}${errorDetails}`);
             throw new Error(errorMsg);
         }
 
@@ -91,6 +96,7 @@ export class BuiltinAdapter implements IAdapter {
         logger.info(`🔧 仙令已成: 大功告成`, {
             message: params.message || "操作完成",
             hasData: !!result,
+            details: params.details,
         });
 
         return result;

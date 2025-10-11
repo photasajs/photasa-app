@@ -36,6 +36,15 @@ export type ConditionOperator =
     | "exists" // 存在
     | "not_exists" // 不存在
     | "regex" // 正则匹配
+    | "startsWith" // 以...开始
+    | "endsWith" // 以...结束
+    | "contains" // 包含
+    | "isEmpty" // 为空
+    | "isNotEmpty" // 不为空
+    | "string_maxlen" // 字符串最大长度
+    | "string_minlen" // 字符串最小长度
+    | "optional_string_maxlen" // 可选字符串最大长度
+    | "optional_string_minlen" // 可选字符串最小长度
     | "custom"; // 自定义
 
 /**

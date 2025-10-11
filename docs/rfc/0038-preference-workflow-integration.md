@@ -1,24 +1,32 @@
-# RFC 0038: 偏好设置工作流集成
+# RFC 0038: 偏好设置工作流集成与Store边界统一
 
 ## 元信息
 - **RFC编号**: 0038
-- **标题**: 偏好设置工作流集成
-- **状态**: 🔄 **进行中** (In Progress)
+- **标题**: 偏好设置工作流集成与Store边界统一
+- **状态**: 🟢 **核心完成** (Core Completed) - 架构纯化和Store边界已完成
 - **创建日期**: 2025-09-28
-- **完成日期**: 待定
-- **关闭日期**: 待定
+- **最后更新**: 2025-10-11
 - **目标版本**: v2.0.0
+- **完成进度**:
+  - ✅ 阶段1-2: Store边界统一（scanFolders删除、preferences结构统一）
+  - ✅ 阶段5: 架构纯化（删除业务逻辑、事件统一）
+  - ⏳ 阶段3: useQinQiong()访问模式（待实施）
+  - 📋 阶段4: scanningFolder迁移（待规划）
 - **相关RFC**:
   - RFC 0036: 文昌偏好集成（已完成）✅
   - RFC 0040: RemovePath功能修复（已完成）✅
   - RFC 0041: 偏好架构重构（已完成）✅
   - RFC 0039: 天枢工作流语法规范
+  - RFC 0032: 千里眼扫描引擎
 
 ## 摘要
 
-本RFC描述将偏好设置管理完全集成到Tianshu工作流系统中的架构设计，实现统一的、工作流驱动的偏好设置管理，消除前后端分离的概念，建立"一个系统"的偏好设置架构。
+本RFC描述偏好设置管理的完整实现，并定义PreferenceStore的边界统一任务。核心目标：
+1. **统一preference字段**：所有用户偏好必须在`preferences`对象中，与Wenchang保持一致
+2. **明确appState边界**：应用运行时状态通过`useQinQiong()`访问
+3. **规划scanningFolder迁移**：扫描队列将来由尉迟恭服务(人界)和千里眼引擎(天界)管理
 
-**实际实现说明**：本RFC的核心目标（工作流驱动的偏好设置管理）已通过RFC 0036/0040/0041实现。当前架构采用服务层模式（褚遂良→房玄龄→袁天罡→天枢→文昌），完全符合职责分离和可维护性原则。
+**实际实现说明**：当前实现采用服务层模式（褚遂良→房玄龄→袁天罡→天枢→文昌），更符合职责分离和可维护性原则。
 
 ## 背景
 
@@ -254,14 +262,27 @@ async function initializePreferences() {
 
 ### 待完成的工作 🔄
 
-#### 阶段3：Store边界统一任务（RFC 0038核心任务）
-- [ ] **阶段1**: 删除无用的scanFolders设计
-- [ ] **阶段2**: 统一preferences字段结构
-- [ ] **阶段3**: 实现useQinQiong()访问模式
-- [ ] **阶段4**: 规划scanningFolder迁移
+#### 阶段3：Store边界统一任务（RFC 0038核心任务） ✅ 已完成
+- [x] **阶段1**: 删除无用的scanFolders设计
+- [x] **阶段2**: 统一preferences字段结构
+- [ ] **阶段3**: 实现useQinQiong()访问模式（待实施）
+- [ ] **阶段4**: 规划scanningFolder迁移（待规划）
 
-#### 阶段4：文档和清理（可选）
-- [ ] 清理遗留的pathOperations代码（如果存在）
+#### 阶段4：架构清理和纯化 ✅ 已完成（2025-10-11）
+- [x] 删除addPath/removePath/addScanFolder业务逻辑方法
+- [x] 删除pathOperations从PreferenceDelta接口
+- [x] 删除PathSyncEvent、ScanFolderSyncEvent、PathOperationResult类型定义
+- [x] 统一使用preferenceChanged事件通知所有偏好变更
+- [x] 确认Wenchang仅提供纯存储操作（getCurrentSnapshot, applyDelta）
+- [x] 所有测试通过（343个测试全部passed）
+
+**架构修正理由**：
+- Wenchang是纯存储引擎，不应包含业务逻辑
+- addPath/removePath由房玄龄负责（计算delta并调用applyDelta）
+- 路径变更统一通过preferenceChanged事件通知，无需特殊事件
+- scanningFolder将来由尉迟恭(人界)和千里眼(天界)管理
+
+#### 阶段5：文档和清理（可选）
 - [ ] 更新开发文档和架构图
 - [ ] 性能分析和优化（如有必要）
 
@@ -414,27 +435,42 @@ export type PreferenceState = {
 
 ### 四阶段统一计划
 
-#### 阶段1：删除无用的scanFolders设计
-- 从 Wenchang types 删除 `scanFolders` 字段
-- 从默认配置中移除 `scanFolders: []`
-- 清理相关代码和注释
+#### 阶段1：删除无用的scanFolders设计 ✅ 已完成
+- [x] 从 Wenchang types 删除 `scanFolders` 字段
+- [x] 从默认配置中移除 `scanFolders: []`
+- [x] 清理相关代码和注释
 
-#### 阶段2：统一preferences字段结构
-- 添加 `preferences.scanning` 字段，包含：
+#### 阶段2：统一preferences字段结构 ✅ 已完成
+- [x] 添加 `preferences.scanning` 字段，包含：
   - `paths: string[]` (从 `appState.paths` 迁移)
   - `excludePatterns: string[]` (从 `appState.excludePaths` 迁移)
-- 添加 `preferences.system` 字段，包含：
+- [x] 添加 `preferences.system` 字段，包含：
   - `autoUpdate: AutoUpdateConfig` (从 `appState.autoUpdate` 迁移)
+- [x] 更新房玄龄服务访问新的路径
+- [x] 所有相关测试通过
 
-#### 阶段3：实现useQinQiong()访问模式
-- 创建 `useQinQiong()` composable 用于访问 `appState` 字段
-- 更新所有UI组件使用 `useQinQiong()` 而非直接访问 `appState`
-- 确保 `appState` 只包含真正的运行时状态
+#### 阶段3：实现useQinQiong()访问模式 ⏳ 待实施
+- [ ] 创建 `useQinQiong()` composable 用于访问 `appState` 字段
+- [ ] 更新所有UI组件使用 `useQinQiong()` 而非直接访问 `appState`
+- [ ] 确保 `appState` 只包含真正的运行时状态
 
-#### 阶段4：规划scanningFolder迁移
-- **人界**: 创建尉迟恭服务 (YuchiGongService) 管理扫描队列UI
-- **天界**: 千里眼引擎 (QianliyanEngine) 管理实际扫描执行
-- 迁移 `scanningFolder` 从Store到尉迟恭服务
+#### 阶段4：规划scanningFolder迁移 📋 待规划
+- [ ] **人界**: 创建尉迟恭服务 (YuchiGongService) 管理扫描队列UI
+- [ ] **天界**: 千里眼引擎 (QianliyanEngine) 管理实际扫描执行
+- [ ] 迁移 `scanningFolder` 从Store到尉迟恭服务
+
+#### 阶段5：架构纯化 ✅ 已完成（2025-10-11）
+- [x] 删除WenchangAdapter中的业务逻辑方法（addPath/removePath/addScanFolder）
+- [x] 删除PreferenceDelta中的pathOperations字段
+- [x] 删除PathSyncEvent、ScanFolderSyncEvent、PathOperationResult类型定义
+- [x] 删除WenchangAdapter中的事件监听器（onPathSync等）
+- [x] 统一使用preferenceChanged事件
+- [x] 验证所有测试通过（343/343）
+
+**架构原则确认**：
+- ✅ Wenchang = 纯存储（getCurrentSnapshot, applyDelta）
+- ✅ 房玄龄 = 业务逻辑（计算delta, 管理Store）
+- ✅ 事件统一 = 只需preferenceChanged，覆盖所有偏好变更
 
 ## 详细修复计划
 

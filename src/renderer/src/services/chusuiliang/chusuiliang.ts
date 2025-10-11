@@ -73,25 +73,39 @@ export class ChusuiliangService implements IChusuiliangService {
 
     /**
      * 更新主题设置
-     * 通过奏折向房玄龄上报主题变更
+     *
+     * 作为褚遂良（偏好管理UI门面），负责处理用户界面层的主题变更请求
+     *
+     * 完整流程：
+     * 1. 褚遂良接收UI层主题变更请求
+     * 2. 创建主题变更奏折，包含新的主题ID
+     * 3. 向房玄龄（业务逻辑层）发送奏折
+     * 4. 房玄龄通过袁天罡（天界通信层）上报天界
+     * 5. 天界（文昌引擎）确认后，房玄龄更新本地Store
+     * 6. 褚遂良等待整个流程完成，确保数据一致性
+     *
+     * @param themeId 新的主题ID，如 "light", "dark", "solarized-light", "solarized-dark"
+     * @throws Error 当主题变更流程失败时抛出错误
      */
     async updateTheme(themeId: string): Promise<void> {
         try {
-            logger.info(`📦 准备更新主题设置: ${themeId}`);
+            logger.info(`📦 褚遂良接收主题变更请求: ${themeId}`);
 
+            // 创建主题变更奏折，包含业务上下文
             const zouzhe: Zouzhe = {
-                department: GUANYUAN_NAMES.CHU_SUILIANG,
-                matter: ZOUZHE_MATTERS.THEME_CHANGE,
-                content: { themeId },
-                timestamp: Date.now(),
-                priority: ZOUZHE_PRIORITIES.NORMAL,
+                department: GUANYUAN_NAMES.CHU_SUILIANG, // 奏折来源：褚遂良部门
+                matter: ZOUZHE_MATTERS.THEME_CHANGE, // 奏折事项：主题变更
+                content: { themeId }, // 奏折内容：新的主题ID
+                timestamp: Date.now(), // 奏折时间戳
+                priority: ZOUZHE_PRIORITIES.NORMAL, // 优先级：普通
             };
 
-            logger.info("📦 向房玄龄宰相发送主题变更奏折");
+            logger.info("📦 褚遂良向房玄龄宰相发送主题变更奏折");
+            // 等待房玄龄处理奏折，包括天界确认和本地Store更新
             await this.fangXuanLingService.processZouzhe(zouzhe);
-            logger.info(`📦 主题设置更新完成: ${themeId}`);
+            logger.info(`📦 褚遂良确认主题设置更新完成: ${themeId}`);
         } catch (error) {
-            logger.error(`📦 主题设置更新失败: ${themeId}`, error);
+            logger.error(`📦 褚遂良处理主题设置更新失败: ${themeId}`, error);
             throw error;
         }
     }

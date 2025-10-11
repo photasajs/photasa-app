@@ -129,10 +129,27 @@ export default class TaiyiService implements IService, IStepExecutor {
 
             logger.info(`🌌 太乙路由成功: ${routeInfo} -> ${step.id}`);
 
+            // 根据步骤的output定义处理返回数据
+            let processedData = engineResult;
+            if (step.output && typeof step.output === "object") {
+                processedData = {};
+                for (const [outputKey, outputPath] of Object.entries(step.output)) {
+                    try {
+                        processedData[outputKey] = this.extractValueByPath(
+                            engineResult,
+                            outputPath,
+                        );
+                    } catch (error) {
+                        logger.warn(`提取步骤输出 ${outputKey} 失败:`, error);
+                        processedData[outputKey] = undefined;
+                    }
+                }
+            }
+
             // 构造标准化结果
             const result: StepExecutionResult = {
                 success: true, // 执行成功（不是业务逻辑成功）
-                data: engineResult,
+                data: processedData,
                 metadata: {
                     duration: Date.now() - startTime,
                     stepId: step.id,
@@ -163,6 +180,29 @@ export default class TaiyiService implements IService, IStepExecutor {
 
             return errorResult; // 返回错误结果而不是抛出异常
         }
+    }
+
+    /**
+     * 根据路径提取值
+     */
+    private extractValueByPath(data: any, path: string): any {
+        if (!path || !data) {
+            return data;
+        }
+
+        // 简单的路径解析，支持点号分隔的路径
+        const parts = path.split(".");
+        let current = data;
+
+        for (const part of parts) {
+            if (current && typeof current === "object" && part in current) {
+                current = current[part];
+            } else {
+                return undefined;
+            }
+        }
+
+        return current;
     }
 
     /**

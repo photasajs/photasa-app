@@ -357,7 +357,7 @@ export class YuanTianGangService implements IYuanTianGangService {
         const response: ZhaolingResponse = {
             acknowledged: fuluResponse.success,
             command: originalZhaoling.command,
-            data: businessData, // 直接的业务数据，无嵌套
+            data: businessData.result.result.data, //
             blessing:
                 fuluResponse.blessing ||
                 this.generateBlessing(

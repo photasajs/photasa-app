@@ -37,11 +37,11 @@ app.use(VueVideoPlayer);
 logger.info("📦 挂载 pinia");
 app.use(pinia);
 
-// provide FindPhotoServiceIpc 实例
+logger.info("📦 提供 Legacy FindPhotoServiceIpc 实例");
 const findPhotoServiceIpc = new FindPhotoServiceIpc();
 app.provide(FindPhotoServiceKey, findPhotoServiceIpc);
 
-// provide LisshimingService 实例
+// 大唐李世民登基
 const lisshimingService = new LisshimingService(app);
 app.provide(LISSHIMING_TOKEN, lisshimingService);
 
@@ -51,6 +51,7 @@ globalLogInterceptor.activate();
 // 启动大唐贞观之治
 await lisshimingService.startZhengguan();
 
+// 初始化状态栏
 const statusBarStore = useStatusBarStore();
 // TODO: move to preload api instead
 if (window.electron && window.electron.ipcRenderer) {

@@ -174,107 +174,22 @@ export class WenchangAdapter implements IAdapter {
         return this.engine.formatResponse(data);
     }
 
-    /**
-     * 添加监控路径
-     */
-    async addPath(path: string): Promise<{ success: boolean; message?: string }> {
-        try {
-            const delta = {
-                pathOperations: [
-                    {
-                        type: "addPath" as const,
-                        data: path,
-                        timestamp: Date.now(),
-                    },
-                ],
-            };
+    // ✅ RFC 0038架构修正: addPath/removePath/addScanFolder已删除
+    //
+    // 架构原则：Wenchang是纯存储引擎，不应包含业务逻辑
+    // - addPath/removePath: 业务操作，由房玄龄负责（直接通过applyDelta修改preferences.scanning.paths）
+    // - addScanFolder: 扫描队列管理，将来由尉迟恭(人界)和千里眼(天界)负责
+    //
+    // Wenchang只应提供纯存储操作：
+    // - getCurrentSnapshot(): 读取完整偏好设置
+    // - applyDelta(): 应用增量更新
+    // - importPreferences(): 导入偏好设置
+    // - exportPreferences(): 导出偏好设置
+    // - resetToDefaults(): 重置为默认值
 
-            await this.engine.applyDelta(delta, "adapter");
-            logger.info(`🌌 文昌适配器添加路径: ${path}`);
-            return { success: true };
-        } catch (error) {
-            logger.error(`🌌 文昌适配器添加路径失败: ${path}`, error);
-            return { success: false, message: (error as Error).message };
-        }
-    }
-
-    /**
-     * 移除监控路径
-     */
-    async removePath(path: string): Promise<{ success: boolean; message?: string }> {
-        try {
-            const delta = {
-                pathOperations: [
-                    {
-                        type: "removePath" as const,
-                        data: path,
-                        timestamp: Date.now(),
-                    },
-                ],
-            };
-
-            await this.engine.applyDelta(delta, "adapter");
-            logger.info(`🌌 文昌适配器移除路径: ${path}`);
-            return { success: true };
-        } catch (error) {
-            logger.error(`🌌 文昌适配器移除路径失败: ${path}`, error);
-            return { success: false, message: (error as Error).message };
-        }
-    }
-
-    /**
-     * 添加扫描文件夹
-     */
-    async addScanFolder(
-        path: string,
-        action: "scan" | "rescan" | "current" = "scan",
-        source: "user" | "auto" = "user",
-    ): Promise<{ success: boolean; message?: string }> {
-        try {
-            const delta = {
-                pathOperations: [
-                    {
-                        type: "addScanFolder" as const,
-                        data: { path, action, source },
-                        timestamp: Date.now(),
-                    },
-                ],
-            };
-
-            await this.engine.applyDelta(delta, "adapter");
-            logger.info(`🌌 文昌适配器添加扫描文件夹: ${path} (${action})`);
-            return { success: true };
-        } catch (error) {
-            logger.error(`🌌 文昌适配器添加扫描文件夹失败: ${path}`, error);
-            return { success: false, message: (error as Error).message };
-        }
-    }
-
-    /**
-     * 监听路径同步事件
-     */
-    onPathSync(callback: (event: any) => void): void {
-        this.engine.on("pathSync", callback);
-    }
-
-    /**
-     * 移除路径同步事件监听器
-     */
-    offPathSync(callback: (event: any) => void): void {
-        this.engine.off("pathSync", callback);
-    }
-
-    /**
-     * 监听扫描文件夹同步事件
-     */
-    onScanFolderSync(callback: (event: any) => void): void {
-        this.engine.on("scanFolderSync", callback);
-    }
-
-    /**
-     * 移除扫描文件夹同步事件监听器
-     */
-    offScanFolderSync(callback: (event: any) => void): void {
-        this.engine.off("scanFolderSync", callback);
-    }
+    // ✅ RFC 0038: 所有业务逻辑方法和事件监听器已删除
+    // - onPathSync/offPathSync: 路径变更由房玄龄通过applyDelta处理，使用preferenceChanged事件即可
+    // - onScanFolderSync/offScanFolderSync: 扫描文件夹管理将来由尉迟恭(人界)和千里眼(天界)负责
+    //
+    // 所有偏好变更统一通过preferenceChanged事件通知，无需特殊的pathSync或scanFolderSync事件
 }

@@ -377,6 +377,8 @@ export class VariableResolver {
                 status: result.status,
                 duration: result.duration,
                 stepId: result.stepId,
+                // 添加data字段以支持TaiyiService的返回结构
+                data: result.output,
             };
         }
 

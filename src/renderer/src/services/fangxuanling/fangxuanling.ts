@@ -11,6 +11,7 @@ import type {
     Zouzhe,
     ZouzheResponse,
     Zhaoling,
+    ZhaolingResponse,
 } from "../../interfaces/fang-xuan-ling.interface";
 import type { IYuanTianGangService } from "../../interfaces/yuan-tian-gang.interface";
 import {
@@ -156,7 +157,7 @@ export class FangXuanLingService implements IFangXuanLingService {
 
                 // 天界确认成功后，更新本地Store
                 if (tianjieDelta.acknowledged) {
-                    this.updateStoreAfterTianjieConfirmation(zouzhe);
+                    await this.updateStoreAfterTianjieConfirmation(zouzhe);
                 }
 
                 // 返回文书处理成功的批复
@@ -303,9 +304,12 @@ export class FangXuanLingService implements IFangXuanLingService {
                 return store.preferences.display.thumbnailSize;
             },
 
-            // 路径管理 - 只读访问
+            /**
+             * 路径管理 - 只读访问
+             * ✅ RFC 0038: 从preferences.scanning.paths访问，而非appState.paths
+             */
             get paths() {
-                return store.appState.paths || [];
+                return store.preferences.scanning.paths || [];
             },
 
             // 完整状态访问（只读）
@@ -372,7 +376,8 @@ export class FangXuanLingService implements IFangXuanLingService {
 
     /**
      * 计算偏好增量（业务逻辑）
-     * ✅ 在人界读取Store当前状态，计算新的完整状态
+     * ✅ RFC 0038: 在人界读取Store当前状态，计算新的完整状态
+     * ✅ 从preferences.scanning.paths读取，而非appState.paths
      */
     private async computePreferenceDelta(zouzhe: Zouzhe): Promise<any> {
         const store = usePreferenceStore();
@@ -382,8 +387,8 @@ export class FangXuanLingService implements IFangXuanLingService {
                 const path = zouzhe.content?.path;
                 if (!path) throw new Error("路径参数缺失");
 
-                // 读取当前paths，计算新数组
-                const currentPaths = store.appState.paths || [];
+                // ✅ RFC 0038: 从preferences.scanning.paths读取当前路径
+                const currentPaths = store.preferences.scanning.paths || [];
                 const newPaths = currentPaths.includes(path)
                     ? currentPaths // 已存在，不重复添加
                     : [...currentPaths, path]; // 添加新路径
@@ -402,8 +407,8 @@ export class FangXuanLingService implements IFangXuanLingService {
                 const path = zouzhe.content?.path;
                 if (!path) throw new Error("路径参数缺失");
 
-                // 读取当前paths，过滤掉要移除的路径
-                const currentPaths = store.appState.paths || [];
+                // ✅ RFC 0038: 从preferences.scanning.paths读取当前路径
+                const currentPaths = store.preferences.scanning.paths || [];
                 const newPaths = currentPaths.filter((p) => p !== path);
 
                 // 同时过滤相关的scanningFolder（Store中的字段名）
@@ -450,15 +455,17 @@ export class FangXuanLingService implements IFangXuanLingService {
 
     /**
      * 将增量应用到Store（天界确认后）
-     * ✅ 简单赋值，无业务逻辑
+     * ✅ RFC 0038: 简单赋值到preferences.scanning.paths，无业务逻辑
      */
     private applyDeltaToStore(delta: any): void {
         const store = usePreferenceStore();
 
         if (delta.scanning?.paths !== undefined) {
-            // 直接替换paths数组
-            store.appState.paths = delta.scanning.paths;
-            logger.info(`📜 Store已更新: paths = [${delta.scanning.paths.join(", ")}]`);
+            // ✅ RFC 0038: 直接更新preferences.scanning.paths
+            store.preferences.scanning.paths = delta.scanning.paths;
+            logger.info(
+                `📜 Store已更新: preferences.scanning.paths = [${delta.scanning.paths.join(", ")}]`,
+            );
         }
 
         // ADD_SCAN_FOLDER特殊处理：调用Store方法
@@ -473,7 +480,7 @@ export class FangXuanLingService implements IFangXuanLingService {
      * 天界确认后更新本地Store
      * 确保人界和天界数据保持一致
      */
-    private updateStoreAfterTianjieConfirmation(zouzhe: Zouzhe): void {
+    private async updateStoreAfterTianjieConfirmation(zouzhe: Zouzhe): Promise<void> {
         const store = usePreferenceStore();
 
         switch (zouzhe.matter) {
@@ -501,10 +508,17 @@ export class FangXuanLingService implements IFangXuanLingService {
                 }
                 break;
             case ZOUZHE_MATTERS.THEME_CHANGE:
-                if (zouzhe.content?.themeId) {
-                    store.setThemeId(zouzhe.content.themeId);
-                    logger.info(`📜 天界确认成功，更新本地主题: ${zouzhe.content.themeId}`);
-                }
+                // 房玄龄处理主题变更奏折：先上报天界，等待确认后再更新本地Store
+                // 这是RFC 0038架构的核心：人界Store作为天界（文昌引擎）的工作副本镜像
+                logger.info(`📜 房玄龄处理主题变更奏折: ${zouzhe.content?.themeId}`);
+
+                // 通过袁天罡向天界（文昌引擎）上报主题变更
+                // 天界将验证主题ID的有效性，并持久化到preferences.json
+                await this.escalateToTianjie(zouzhe);
+                logger.info(`📜 房玄龄已将主题变更上报天界，等待文昌引擎确认`);
+
+                // 重要：本地Store更新将在天界确认后的createZouzheResponse中处理
+                // 这确保了人界和天界的数据一致性，符合RFC 0038的双层存储架构
                 break;
             case ZOUZHE_MATTERS.LANGUAGE_CHANGE:
                 if (zouzhe.content?.locale) {
@@ -575,11 +589,15 @@ export class FangXuanLingService implements IFangXuanLingService {
                     }
                     break;
                 case ZOUZHE_MATTERS.THEME_CHANGE:
+                    // 天界（文昌引擎）确认主题变更成功，更新本地Store
+                    // 这是RFC 0038架构的关键：天界作为权威源，人界Store作为工作副本
                     if (originalZouzhe.content?.themeId) {
+                        // 更新本地Store中的主题设置
                         store.setThemeId(originalZouzhe.content.themeId);
                         logger.info(
-                            `📜 天界确认成功，更新本地主题: ${originalZouzhe.content.themeId}`,
+                            `📜 天界确认成功，房玄龄更新本地Store主题: ${originalZouzhe.content.themeId}`,
                         );
+                        logger.info(`📜 人界和天界主题数据已同步，符合RFC 0038双层存储架构`);
                     }
                     break;
                 case ZOUZHE_MATTERS.LANGUAGE_CHANGE:
@@ -814,8 +832,82 @@ export class FangXuanLingService implements IFangXuanLingService {
             requiresTianshuApproval: true,
         };
 
-        if (this._yuanTianGang) {
-            await this._yuanTianGang.executeZhaoling(zhaoling);
+        // 执行诏令并处理返回结果
+        const response = await this._yuanTianGang?.executeZhaoling(zhaoling);
+
+        // 处理天界返回的结果
+        if (response) {
+            if (response.acknowledged && response.data) {
+                // 根据奏折类型处理不同的返回数据
+                await this.handleTianjieResponse(zouzhe, response);
+            } else {
+                logger.warn(`📋 天界未确认奏折: ${zouzhe.matter}`, response);
+            }
+        } else {
+            logger.error(`📋 袁天罡未返回响应: ${zouzhe.matter}`);
+        }
+    }
+
+    /**
+     * 处理天界返回的响应数据
+     * 根据奏折类型将天界数据合并到本地Store
+     */
+    private async handleTianjieResponse(zouzhe: Zouzhe, response: ZhaolingResponse): Promise<void> {
+        try {
+            switch (zouzhe.matter) {
+                case ZOUZHE_MATTERS.GET_PREFERENCES:
+                    // 处理偏好设置获取响应
+                    // 天枢引擎返回的数据结构为：{ success, data: { result: { result: { data: actualBusinessData } } } }
+                    if (typeof response.data === "object") {
+                        logger.info("📋 收到天界偏好设置，开始合并到本地Store");
+                        const preferenceStore = usePreferenceStore();
+                        const mergedPreferences = mergePreferencesFromTianjie(
+                            preferenceStore.preferences,
+                            response.data,
+                        );
+                        applyPreferencesToStore(preferenceStore, mergedPreferences);
+                        logger.info("📋 偏好设置合并完成");
+                    }
+                    break;
+
+                case ZOUZHE_MATTERS.THEME_CHANGE:
+                case ZOUZHE_MATTERS.LANGUAGE_CHANGE:
+                case ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE:
+                    // 处理偏好设置更新响应
+                    if (response.data && typeof response.data === "object") {
+                        logger.info(`📋 收到天界偏好更新确认: ${zouzhe.matter}`);
+                        const preferenceStore = usePreferenceStore();
+                        const mergedPreferences = mergePreferencesFromTianjie(
+                            preferenceStore.preferences,
+                            response.data,
+                        );
+                        applyPreferencesToStore(preferenceStore, mergedPreferences);
+                        logger.info(`📋 偏好更新合并完成: ${zouzhe.matter}`);
+                    }
+                    break;
+
+                case ZOUZHE_MATTERS.ADD_PATH:
+                case ZOUZHE_MATTERS.REMOVE_PATH:
+                case ZOUZHE_MATTERS.ADD_SCAN_FOLDER:
+                    // 处理路径操作响应
+                    if (response.data && typeof response.data === "object") {
+                        logger.info(`📋 收到天界路径操作确认: ${zouzhe.matter}`);
+                        const preferenceStore = usePreferenceStore();
+                        const mergedPreferences = mergePreferencesFromTianjie(
+                            preferenceStore.preferences,
+                            response.data,
+                        );
+                        applyPreferencesToStore(preferenceStore, mergedPreferences);
+                        logger.info(`📋 路径操作合并完成: ${zouzhe.matter}`);
+                    }
+                    break;
+
+                default:
+                    logger.debug(`📋 未处理的奏折类型响应: ${zouzhe.matter}`);
+                    break;
+            }
+        } catch (error) {
+            logger.error(`📋 处理天界响应失败: ${zouzhe.matter}`, error);
         }
     }
 

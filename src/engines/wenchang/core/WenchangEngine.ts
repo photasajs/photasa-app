@@ -35,37 +35,50 @@ export interface WenchangEngineConfig {
 }
 
 /**
- * 默认偏好设置 - 与人界Store保持一致
+ * 默认偏好设置
+ * 作为天界(Main进程)偏好设置的初始值和重置基准
+ * 这些默认值应与人界(Renderer进程)PreferenceStore的默认值保持一致
  */
 const DEFAULT_PREFERENCES: UserPreferences = {
+    /** 初始修订版本号 */
     revision: 1,
+
+    /** UI默认设置 */
     ui: {
-        theme: "solarized-dark", // 与Store默认主题一致
-        layout: "grid",
-        language: "zh-CN",
-        sidebarWidth: 240, // 与Store默认值一致
-        zoomLevel: 1.0,
+        theme: "solarized-dark", // 默认使用solarized-dark主题，与Store一致
+        layout: "grid", // 默认网格布局
+        language: "zh-CN", // 默认简体中文
+        sidebarWidth: 240, // 默认侧边栏宽度240px，与Store一致
+        zoomLevel: 1.0, // 默认缩放级别100%
     },
+
+    /** 显示默认设置 */
     display: {
-        thumbnailSize: 150, // 与Store默认值一致
-        sortOrder: "name", // 与Store默认值一致
-        groupBy: "none", // 与Store默认值一致
-        showHidden: false,
-        showMetadata: true,
+        thumbnailSize: 150, // 默认缩略图尺寸150px，与Store一致
+        sortOrder: "name", // 默认按名称排序，与Store一致
+        groupBy: "none", // 默认不分组，与Store一致
+        showHidden: false, // 默认不显示隐藏文件
+        showMetadata: true, // 默认显示元数据
     },
+
+    /** 扫描默认设置 */
     scanning: {
-        autoScan: true,
-        excludePatterns: ["node_modules", ".git", "*.tmp"],
-        concurrency: 4,
-        watchEnabled: true,
-        paths: [], // 初始为空数组
-        scanFolders: [], // 初始为空数组
+        autoScan: true, // 默认启用自动扫描
+        excludePatterns: ["node_modules", ".git", "*.tmp"], // 默认排除常见的开发文件
+        concurrency: 4, // 默认并发数为4
+        watchEnabled: true, // 默认启用文件监控
+        paths: [], // 初始监控路径为空，由用户添加
+        // ✅ RFC 0038: scanFolders已删除
     },
+
+    /** 性能默认设置 */
     performance: {
-        maxCacheSize: 1000,
-        preloadCount: 50,
-        enableGpuAcceleration: true,
+        maxCacheSize: 1000, // 默认最大缓存1000MB
+        preloadCount: 50, // 默认预加载50个缩略图
+        enableGpuAcceleration: true, // 默认启用GPU加速
     },
+
+    /** 创建时间戳 */
     lastModified: Date.now(),
 };
 
@@ -157,6 +170,15 @@ export class WenchangEngine extends EventEmitter {
      * 获取当前偏好快照
      */
     getCurrentSnapshot(): PreferenceSnapshot {
+        if (!this.isInitialized) {
+            logger.warn("🌌 文昌星君尚未归位，返回默认偏好快照");
+            return {
+                data: { ...this.preferences },
+                timestamp: Date.now(),
+                revision: this.preferences.revision,
+            };
+        }
+
         return {
             data: { ...this.preferences },
             timestamp: Date.now(),

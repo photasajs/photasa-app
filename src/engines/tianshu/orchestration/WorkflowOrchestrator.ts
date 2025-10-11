@@ -270,6 +270,10 @@ export class WorkflowOrchestrator extends EventEmitter {
             if (context.status === "running") {
                 context.status = "completed";
                 context.metrics.totalDuration = Date.now() - context.startTime;
+
+                // 收集工作流输出结果
+                context.output = this.collectWorkflowOutput(workflow, context);
+
                 this.emit("workflowCompleted", context);
             }
         } catch (error) {
@@ -628,6 +632,36 @@ export class WorkflowOrchestrator extends EventEmitter {
                     !(Array.isArray(fieldValue) && fieldValue.length === 0) &&
                     !(typeof fieldValue === "object" && Object.keys(fieldValue).length === 0)
                 );
+            case "string_maxlen":
+                // 字符串最大长度验证：检查字段值是否为字符串且长度不超过指定值
+                // 用途：验证输入字符串长度限制，防止过长输入
+                // 示例：{ field: "inputs.name", operator: "string_maxlen", value: 50 }
+                return typeof fieldValue === "string" && fieldValue.length <= value;
+            case "string_minlen":
+                // 字符串最小长度验证：检查字段值是否为字符串且长度不少于指定值
+                // 用途：验证必填字段的最小长度要求
+                // 示例：{ field: "inputs.password", operator: "string_minlen", value: 8 }
+                return typeof fieldValue === "string" && fieldValue.length >= value;
+            case "optional_string_maxlen":
+                // 可选字符串最大长度验证：字段不存在时返回true，存在时检查长度限制
+                // 用途：验证可选输入字段的长度限制，允许字段不存在
+                // 示例：{ field: "inputs.description", operator: "optional_string_maxlen", value: 200 }
+                // 逻辑：字段不存在/null/undefined -> true（可选通过）
+                //      字段存在且为字符串 -> 检查长度 <= value
+                if (fieldValue === undefined || fieldValue === null) {
+                    return true;
+                }
+                return typeof fieldValue === "string" && fieldValue.length <= value;
+            case "optional_string_minlen":
+                // 可选字符串最小长度验证：字段不存在时返回true，存在时检查最小长度
+                // 用途：验证可选输入字段的最小长度要求，允许字段不存在
+                // 示例：{ field: "inputs.title", operator: "optional_string_minlen", value: 3 }
+                // 逻辑：字段不存在/null/undefined -> true（可选通过）
+                //      字段存在且为字符串 -> 检查长度 >= value
+                if (fieldValue === undefined || fieldValue === null) {
+                    return true;
+                }
+                return typeof fieldValue === "string" && fieldValue.length >= value;
             default:
                 logger.warn(`🌌 未知条件操作符: ${operator}`);
                 return false;
@@ -752,5 +786,127 @@ export class WorkflowOrchestrator extends EventEmitter {
      */
     private generateExecutionId(): string {
         return `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /**
+     * 收集工作流输出结果
+     */
+    private collectWorkflowOutput(
+        workflow: WorkflowDefinition,
+        context: ExecutionContext,
+    ): Record<string, any> {
+        const output: Record<string, any> = {};
+
+        // 如果没有定义outputSchema，尝试从最后一步获取输出
+        if (!workflow.outputSchema || Object.keys(workflow.outputSchema).length === 0) {
+            const lastStep = workflow.steps[workflow.steps.length - 1];
+            if (lastStep) {
+                const lastStepResult = context.stepResults.get(lastStep.id || lastStep.name || "");
+                if (lastStepResult && lastStepResult.output) {
+                    // 如果最后一步有output定义，使用它
+                    if (lastStep.output) {
+                        return this.extractOutputFromStep(lastStep, lastStepResult);
+                    }
+                    // 否则直接返回步骤输出
+                    return lastStepResult.output;
+                }
+            }
+            return output;
+        }
+
+        // 根据工作流定义的outputSchema收集数据
+        for (const [outputKey, _outputDef] of Object.entries(workflow.outputSchema)) {
+            try {
+                // 尝试从最后一步获取对应的输出
+                const lastStep = workflow.steps[workflow.steps.length - 1];
+                if (lastStep) {
+                    const lastStepResult = context.stepResults.get(
+                        lastStep.id || lastStep.name || "",
+                    );
+                    if (lastStepResult && lastStepResult.output) {
+                        // 根据输出键名从步骤输出中提取数据
+                        output[outputKey] = this.extractOutputValue(
+                            lastStepResult.output,
+                            outputKey,
+                        );
+                    }
+                }
+            } catch (error) {
+                logger.warn(`收集输出字段 ${outputKey} 失败:`, error);
+                output[outputKey] = undefined;
+            }
+        }
+
+        return output;
+    }
+
+    /**
+     * 从步骤结果中提取输出值
+     */
+    private extractOutputValue(stepOutput: any, outputKey: string): any {
+        // 如果步骤输出是对象，尝试直接获取对应字段
+        if (typeof stepOutput === "object" && stepOutput !== null) {
+            // 优先从data字段获取
+            if (stepOutput.data && typeof stepOutput.data === "object") {
+                return stepOutput.data[outputKey];
+            }
+            // 然后从根级别获取
+            if (outputKey in stepOutput) {
+                return stepOutput[outputKey];
+            }
+            // 最后尝试从result字段获取
+            if (stepOutput.result && typeof stepOutput.result === "object") {
+                return stepOutput.result[outputKey];
+            }
+        }
+
+        // 如果无法提取特定字段，返回整个输出
+        return stepOutput;
+    }
+
+    /**
+     * 从步骤定义中提取输出
+     */
+    private extractOutputFromStep(step: WorkflowStep, stepResult: StepResult): Record<string, any> {
+        if (!step.output || !stepResult.output) {
+            return stepResult.output || {};
+        }
+
+        const output: Record<string, any> = {};
+
+        // 根据步骤的output定义提取数据
+        for (const [outputKey, outputPath] of Object.entries(step.output)) {
+            try {
+                output[outputKey] = this.resolveOutputPath(stepResult.output, outputPath);
+            } catch (error) {
+                logger.warn(`提取步骤输出 ${outputKey} 失败:`, error);
+                output[outputKey] = undefined;
+            }
+        }
+
+        return output;
+    }
+
+    /**
+     * 解析输出路径
+     */
+    private resolveOutputPath(data: any, path: string): any {
+        if (!path || !data) {
+            return data;
+        }
+
+        // 简单的路径解析，支持点号分隔的路径
+        const parts = path.split(".");
+        let current = data;
+
+        for (const part of parts) {
+            if (current && typeof current === "object" && part in current) {
+                current = current[part];
+            } else {
+                return undefined;
+            }
+        }
+
+        return current;
     }
 }

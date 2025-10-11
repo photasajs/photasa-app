@@ -33,57 +33,133 @@ export interface DataNode {
     [key: string]: any;
 }
 
-// 自动更新配置接口
+/**
+ * 自动更新配置接口
+ * 控制应用的自动更新行为
+ */
 export interface AutoUpdateConfig {
-    enabled: boolean; // 是否启用自动更新
-    checkInterval: number; // 检查间隔（小时）
-    allowPrerelease: boolean; // 是否允许预发布版本
-    autoInstall: boolean; // 是否自动安装更新
-    lastCheck?: string; // 上次检查时间
+    /** 是否启用自动更新 */
+    enabled: boolean;
+    /** 检查更新间隔（小时） */
+    checkInterval: number;
+    /** 是否允许预发布版本 */
+    allowPrerelease: boolean;
+    /** 是否自动安装更新 */
+    autoInstall: boolean;
+    /** 上次检查时间戳（可选） */
+    lastCheck?: string;
 }
 
 /**
- * 统一偏好设置接口 - 与天界保持一致
+ * 统一偏好设置接口 - 与天界(Wenchang)保持一致
+ * ✅ RFC 0038: Store边界统一，添加scanning和system字段
+ *
+ * 此接口与src/engines/wenchang/types/index.ts中的UserPreferences保持完全一致
+ * 形成天界-人界镜像关系，确保数据结构统一
  */
 interface UnifiedPreferences {
+    /** 用户界面相关偏好设置 */
     ui: {
-        theme: string; // 主题ID: "light", "dark", "solarized-light", "solarized-dark" 等
-        language: string; // zh-CN, en-US
+        /** 主题标识：支持light、dark、solarized-light、solarized-dark等 */
+        theme: string;
+        /** 语言代码：zh-CN、en-US等 */
+        language: string;
+        /** 布局模式：网格、列表、瀑布流 */
         layout: "grid" | "list" | "masonry";
+        /** 侧边栏宽度(像素) */
         sidebarWidth: number;
+        /** 缩放级别：1.0为100% */
         zoomLevel: number;
     };
+
+    /** 显示相关偏好设置 */
     display: {
-        thumbnailSize: number; // 150-400
+        /** 缩略图尺寸(像素)：范围150-400 */
+        thumbnailSize: number;
+        /** 排序方式：按名称、日期、大小、类型 */
         sortOrder: "name" | "date" | "size" | "type";
+        /** 分组方式：不分组、按日期、按文件夹、按类型 */
         groupBy: "none" | "date" | "folder" | "type";
+        /** 是否显示隐藏文件 */
         showHidden: boolean;
+        /** 是否显示元数据信息 */
         showMetadata: boolean;
     };
+
+    /**
+     * 扫描相关偏好设置
+     * ✅ RFC 0038新增：从appState迁移paths和excludePatterns到此处
+     */
+    scanning: {
+        /** 监控的路径列表：用户添加的顶层文件夹路径 */
+        paths: string[];
+        /** 排除的路径模式列表：如.git、node_modules等 */
+        excludePatterns: string[];
+        /** 是否启用自动扫描 */
+        autoScan: boolean;
+        /** 扫描并发数：控制同时扫描的文件夹数量 */
+        concurrency: number;
+        /** 是否启用文件监控 */
+        watchEnabled: boolean;
+    };
+
+    /** 性能相关偏好设置 */
     performance: {
+        /** 最大缓存大小(MB) */
         maxCacheSize: number;
+        /** 预加载数量：提前加载的缩略图数量 */
         preloadCount: number;
+        /** 是否启用GPU加速 */
         enableGpuAcceleration: boolean;
+    };
+
+    /**
+     * 系统级偏好设置
+     * ✅ RFC 0038新增：从appState迁移autoUpdate到此处
+     */
+    system: {
+        /** 自动更新配置 */
+        autoUpdate: AutoUpdateConfig;
     };
 }
 
+/**
+ * 偏好设置Store状态类型
+ * ✅ RFC 0038: 明确划分preferences和appState边界
+ *
+ * preferences: 用户偏好设置，与天界Wenchang保持同步
+ * appState: 应用运行时状态，仅存在于人界Store
+ */
 export type PreferenceState = {
-    // 统一偏好设置 - 与天界一致
+    /**
+     * 统一偏好设置 - 与天界一致
+     * 此对象结构应与Wenchang的UserPreferences完全一致
+     */
     preferences: UnifiedPreferences;
 
-    // 应用状态 - Store特有
+    /**
+     * 应用运行时状态 - Store特有
+     * ✅ RFC 0038: paths、excludePaths、autoUpdate已迁移到preferences
+     */
     appState: {
+        /** 是否首次运行 */
         firstTime: boolean;
+        /** 最后打开的文件夹路径 */
         lastOpenedFolder: string;
+        /** 当前打开的文件夹路径 */
         currentFolder: string;
+        /** 已扫描的文件夹路径 */
         scannedFolder: string;
+        /** 当前文件夹的Photasa配置 */
         currentFolderConfig: PhotasaConfig;
+        /** 文件夹树结构 */
         folderTree: DataNode[];
-        // 扫描相关保留，等司命处理
+        /**
+         * 扫描队列
+         * ⏳ 临时保留，将来通过尉迟恭服务(人界)迁移到千里眼引擎(天界)
+         * 参考RFC 0032和RFC 0038
+         */
         scanningFolder: ScanAction[];
-        paths: string[]; // Paths to monitor
-        excludePaths: string[]; // 导入时排除的路径模式
-        autoUpdate: AutoUpdateConfig; // 自动更新配置
     };
 };
 
@@ -92,93 +168,158 @@ export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
 export const usePreferenceStore = defineStore("preference", {
     state: (): PreferenceState => {
         return {
-            // 统一偏好设置 - 与天界一致
+            /**
+             * 统一偏好设置 - 与天界一致
+             * ✅ RFC 0038: 添加scanning和system字段，与Wenchang保持同步
+             */
             preferences: {
+                /** UI默认设置 */
                 ui: {
-                    theme: "solarized-dark", // 默认使用solarized-dark主题
-                    language: "zh-CN",
-                    layout: "grid",
-                    sidebarWidth: 240,
-                    zoomLevel: 1.0,
+                    theme: "solarized-dark", // 默认使用solarized-dark主题，与Wenchang一致
+                    language: "zh-CN", // 默认简体中文
+                    layout: "grid", // 默认网格布局
+                    sidebarWidth: 240, // 默认侧边栏宽度240px
+                    zoomLevel: 1.0, // 默认缩放级别100%
                 },
+
+                /** 显示默认设置 */
                 display: {
-                    thumbnailSize: 150,
-                    sortOrder: "name",
-                    groupBy: "none",
-                    showHidden: false,
-                    showMetadata: true,
+                    thumbnailSize: 150, // 默认缩略图尺寸150px，与Wenchang一致
+                    sortOrder: "name", // 默认按名称排序，与Wenchang一致
+                    groupBy: "none", // 默认不分组，与Wenchang一致
+                    showHidden: false, // 默认不显示隐藏文件
+                    showMetadata: true, // 默认显示元数据
                 },
+
+                /**
+                 * 扫描默认设置
+                 * ✅ RFC 0038: 从appState迁移到preferences.scanning
+                 */
+                scanning: {
+                    paths: [], // 初始监控路径为空，由用户添加
+                    excludePatterns: [
+                        ".photasaoriginal", // Photasa原始文件跟踪文件夹
+                        ".photasaoriginals", // Photasa缩略图缓存文件夹
+                        ".photasa.json", // Photasa配置文件
+                        ".DS_Store", // macOS系统文件
+                        "Thumbs.db", // Windows缩略图文件
+                        ".git", // Git版本控制文件夹
+                        ".svn", // SVN版本控制文件夹
+                        "node_modules", // Node.js依赖文件夹
+                    ],
+                    autoScan: true, // 默认启用自动扫描
+                    concurrency: 4, // 默认并发数为4
+                    watchEnabled: true, // 默认启用文件监控
+                },
+
+                /** 性能默认设置 */
                 performance: {
-                    maxCacheSize: 1024, // MB
-                    preloadCount: 20,
-                    enableGpuAcceleration: true,
+                    maxCacheSize: 1024, // 默认最大缓存1024MB
+                    preloadCount: 20, // 默认预加载20个缩略图
+                    enableGpuAcceleration: true, // 默认启用GPU加速
+                },
+
+                /**
+                 * 系统默认设置
+                 * ✅ RFC 0038: 从appState迁移到preferences.system
+                 */
+                system: {
+                    autoUpdate: {
+                        enabled: true, // 默认启用自动更新
+                        checkInterval: 24, // 每天检查一次
+                        allowPrerelease: false, // 默认不允许预发布版本
+                        autoInstall: false, // 默认不自动安装，让用户确认
+                    },
                 },
             },
 
-            // 应用状态 - Store特有
+            /**
+             * 应用运行时状态 - Store特有
+             * ✅ RFC 0038: 移除paths、excludePaths、autoUpdate，已迁移到preferences
+             */
             appState: {
-                firstTime: true,
-                lastOpenedFolder: "",
-                currentFolder: "",
-                scannedFolder: "",
-                currentFolderConfig: <PhotasaConfig>{},
-                folderTree: [],
-                // 扫描相关保留，等司命处理
+                firstTime: true, // 首次运行标识
+                lastOpenedFolder: "", // 最后打开的文件夹
+                currentFolder: "", // 当前打开的文件夹
+                scannedFolder: "", // 已扫描的文件夹
+                currentFolderConfig: <PhotasaConfig>{}, // 当前文件夹配置
+                folderTree: [], // 文件夹树结构
+                /**
+                 * 扫描队列
+                 * ⏳ 临时保留，将来通过尉迟恭服务(人界)迁移到千里眼引擎(天界)
+                 */
                 scanningFolder: [],
-                paths: [], // Paths to monitor
-                // 默认排除的路径模式
-                excludePaths: [
-                    ".photasaoriginal", // Photasa原始文件跟踪文件夹
-                    ".photasaoriginals", // Photasa缩略图缓存文件夹
-                    ".photasa.json", // Photasa配置文件
-                    ".DS_Store", // macOS系统文件
-                    "Thumbs.db", // Windows缩略图文件
-                    ".git", // Git版本控制文件夹
-                    ".svn", // SVN版本控制文件夹
-                    "node_modules", // Node.js依赖文件夹
-                ],
-                // 默认自动更新配置
-                autoUpdate: {
-                    enabled: true,
-                    checkInterval: 24, // 每天检查一次
-                    allowPrerelease: false,
-                    autoInstall: false, // 默认不自动安装，让用户确认
-                },
             },
         };
     },
     persist: true,
 
     getters: {
-        // 统一偏好访问 - 与天界一致的格式
+        /**
+         * 偏好设置getter - 与天界一致的格式
+         * 这些getter提供对preferences对象的快捷访问
+         */
+        /** 主题标识 */
         themeId: (state) => state.preferences.ui.theme,
+        /** 语言代码 */
         locale: (state) => state.preferences.ui.language,
+        /** 缩略图尺寸 */
         thumbnailSize: (state) => state.preferences.display.thumbnailSize,
+        /** 是否深色模式 */
         darkMode: (state) => state.preferences.ui.theme === "dark",
 
-        // 应用状态访问
-        paths: (state) => state.appState.paths,
-        firstTime: (state) => state.appState.firstTime,
-        lastOpenedFolder: (state) => state.appState.lastOpenedFolder,
-        currentFolder: (state) => state.appState.currentFolder,
-        scannedFolder: (state) => state.appState.scannedFolder,
-        currentFolderConfig: (state) => state.appState.currentFolderConfig,
-        folderTree: (state) => state.appState.folderTree,
-        scanningFolder: (state) => state.appState.scanningFolder,
-        excludePaths: (state) => state.appState.excludePaths,
-        autoUpdate: (state) => state.appState.autoUpdate,
+        /**
+         * 偏好设置getter - 扫描相关
+         * ✅ RFC 0038: 从preferences.scanning访问，而非appState
+         */
+        /** 监控路径列表 */
+        paths: (state) => state.preferences.scanning.paths,
+        /** 排除路径模式列表 */
+        excludePaths: (state) => state.preferences.scanning.excludePatterns,
 
-        // 兼容性getter - 保持API一致
+        /**
+         * 偏好设置getter - 系统相关
+         * ✅ RFC 0038: 从preferences.system访问，而非appState
+         */
+        /** 自动更新配置 */
+        autoUpdate: (state) => state.preferences.system.autoUpdate,
+
+        /**
+         * 应用状态getter - 运行时状态
+         * 这些getter提供对appState对象的访问
+         */
+        /** 是否首次运行 */
+        firstTime: (state) => state.appState.firstTime,
+        /** 最后打开的文件夹 */
+        lastOpenedFolder: (state) => state.appState.lastOpenedFolder,
+        /** 当前打开的文件夹 */
+        currentFolder: (state) => state.appState.currentFolder,
+        /** 已扫描的文件夹 */
+        scannedFolder: (state) => state.appState.scannedFolder,
+        /** 当前文件夹配置 */
+        currentFolderConfig: (state) => state.appState.currentFolderConfig,
+        /** 文件夹树结构 */
+        folderTree: (state) => state.appState.folderTree,
+        /** 扫描队列 */
+        scanningFolder: (state) => state.appState.scanningFolder,
+
+        /** 兼容性getter - 保持API一致 */
         $state: (state) => state,
     },
 
     actions: {
+        /**
+         * 添加监控路径
+         * ✅ RFC 0038: 更新为访问preferences.scanning.paths而非appState.paths
+         *
+         * @param path 要添加的路径
+         */
         addPath(path: string) {
             if (this.appState.firstTime) {
                 this.appState.firstTime = false;
-                this.appState.paths = [];
+                this.preferences.scanning.paths = [];
                 this.appState.folderTree = [];
-                this.appState.paths.push(path);
+                this.preferences.scanning.paths.push(path);
                 this.appState.folderTree.push({
                     title: path,
                     key: path,
@@ -189,14 +330,14 @@ export const usePreferenceStore = defineStore("preference", {
 
             path = normalizePath(path);
 
-            if (!this.appState.paths.find((p) => path.indexOf(p) >= 0)) {
-                this.appState.paths.push(path);
+            if (!this.preferences.scanning.paths.find((p) => path.indexOf(p) >= 0)) {
+                this.preferences.scanning.paths.push(path);
                 this.appState.folderTree.push({
                     title: path,
                     key: path,
                     children: [],
                 });
-                this.appState.paths = this.appState.paths.sort();
+                this.preferences.scanning.paths = this.preferences.scanning.paths.sort();
             }
         },
         async addScanFolder(
@@ -484,7 +625,8 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Reset current folder if it was the removed one
             if (this.currentFolder === path) {
-                this.appState.currentFolder = this.appState.paths[0] || "";
+                // ✅ RFC 0038: 从preferences.scanning.paths读取
+                this.appState.currentFolder = this.preferences.scanning.paths[0] || "";
                 logger.info("✍️ 重置当前文件夹为:", this.currentFolder);
             }
         },
@@ -518,35 +660,45 @@ export const usePreferenceStore = defineStore("preference", {
         },
         /**
          * 更新排除路径列表
+         * ✅ RFC 0038: 更新为访问preferences.scanning.excludePatterns
+         *
          * @param excludePaths 新的排除路径数组
          */
         updateExcludePaths(excludePaths: string[]) {
-            this.appState.excludePaths = excludePaths;
+            this.preferences.scanning.excludePatterns = excludePaths;
         },
+
         /**
          * 添加单个排除路径
+         * ✅ RFC 0038: 更新为访问preferences.scanning.excludePatterns
+         *
          * @param path 要添加的路径模式
          */
         addExcludePath(path: string) {
             if (!this.excludePaths.includes(path)) {
-                this.excludePaths.push(path);
+                this.preferences.scanning.excludePatterns.push(path);
             }
         },
+
         /**
          * 移除单个排除路径
+         * ✅ RFC 0038: 更新为访问preferences.scanning.excludePatterns
+         *
          * @param path 要移除的路径模式
          */
         removeExcludePath(path: string) {
             const index = this.excludePaths.indexOf(path);
             if (index >= 0) {
-                this.excludePaths.splice(index, 1);
+                this.preferences.scanning.excludePatterns.splice(index, 1);
             }
         },
+
         /**
          * 重置为默认排除路径
+         * ✅ RFC 0038: 更新为访问preferences.scanning.excludePatterns
          */
         resetExcludePaths() {
-            this.appState.excludePaths = [
+            this.preferences.scanning.excludePatterns = [
                 ".photasaoriginal",
                 ".photasaoriginals",
                 ".photasa.json",
@@ -559,6 +711,8 @@ export const usePreferenceStore = defineStore("preference", {
         },
         /**
          * 重置所有目录存储
+         * ✅ RFC 0038: 更新为访问preferences.scanning.paths
+         *
          * @param newDirs 需要重建的目录数组
          * 1. 清空 paths、folderTree、scanningFolder
          * 2. 逐一 addPath 并调用 resetPhotasaConfig 重建缓存
@@ -568,7 +722,7 @@ export const usePreferenceStore = defineStore("preference", {
             if (scanPhotosTask.isRunning) {
                 scanPhotosTask.cancelAll();
             }
-            this.appState.paths = [];
+            this.preferences.scanning.paths = [];
             this.appState.folderTree = [];
             this.appState.scanningFolder = [];
             for (const dir of newDirs) {
@@ -578,27 +732,37 @@ export const usePreferenceStore = defineStore("preference", {
         },
         /**
          * 更新自动更新配置
+         * ✅ RFC 0038: 更新为访问preferences.system.autoUpdate
+         *
          * @param config 要更新的配置对象（部分更新）
          */
         updateAutoUpdateConfig(config: Partial<AutoUpdateConfig>) {
-            this.appState.autoUpdate = { ...this.appState.autoUpdate, ...config };
+            this.preferences.system.autoUpdate = {
+                ...this.preferences.system.autoUpdate,
+                ...config,
+            };
             logger.debug("✍️ 更新自动更新配置:", this.autoUpdate);
         },
+
         /**
          * 设置最后检查时间
+         * ✅ RFC 0038: 更新为访问preferences.system.autoUpdate
+         *
          * @param timestamp 检查时间戳或ISO字符串
          */
         setAutoUpdateLastCheck(timestamp: string | number) {
             const dateStr =
                 typeof timestamp === "string" ? timestamp : new Date(timestamp).toISOString();
-            this.autoUpdate.lastCheck = dateStr;
+            this.preferences.system.autoUpdate.lastCheck = dateStr;
             logger.debug("✍️ 更新自动更新最后检查时间:", dateStr);
         },
+
         /**
          * 重置自动更新配置为默认值
+         * ✅ RFC 0038: 更新为访问preferences.system.autoUpdate
          */
         resetAutoUpdateConfig() {
-            this.appState.autoUpdate = {
+            this.preferences.system.autoUpdate = {
                 enabled: true,
                 checkInterval: 24,
                 allowPrerelease: false,
