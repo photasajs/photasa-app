@@ -436,6 +436,237 @@ export type PreferenceState = {
 - **天界**: 千里眼引擎 (QianliyanEngine) 管理实际扫描执行
 - 迁移 `scanningFolder` 从Store到尉迟恭服务
 
+## 详细修复计划
+
+### 问题分析
+
+经过代码审查发现以下严重问题：
+
+1. **scanningFolder在错误位置** ❌
+   - 当前：`store.appState.scanningFolder`
+   - 应该：尉迟恭服务(人界) / 千里眼引擎(天界)
+
+2. **paths在错误位置** ❌
+   - 当前：`store.appState.paths`
+   - 应该：`store.preferences.scanning.paths`
+
+3. **直接访问appState** ❌
+   - 多个组件直接访问 `store.appState.paths`
+   - 应该通过 `useQinQiong()` 访问
+
+4. **代码注释缺失** ❌
+   - 大量代码缺少详尽注释
+   - 违反Linus"好品味"原则
+
+### 修复计划
+
+#### Phase 1: Store结构修复
+1. **修改PreferenceState类型**
+   ```typescript
+   export type PreferenceState = {
+       preferences: {
+           ui: { theme, language, layout, ... },
+           display: { thumbnailSize, sortOrder, ... },
+           performance: { maxCacheSize, ... },
+           // ✅ 新增：scanning字段
+           scanning: {
+               paths: string[],
+               excludePatterns: string[],
+           },
+           // ✅ 新增：system字段
+           system: {
+               autoUpdate: AutoUpdateConfig,
+           },
+       },
+       appState: {
+           // ✅ 只保留真正的运行时状态
+           firstTime: boolean,
+           lastOpenedFolder: string,
+           currentFolder: string,
+           currentFolderConfig: PhotasaConfig,
+           folderTree: DataNode[],
+           // ❌ 移除：paths, excludePaths, autoUpdate
+           // ⏳ 临时保留：scanningFolder (将来迁移到尉迟恭)
+           scanningFolder: ScanAction[],
+       }
+   }
+   ```
+
+2. **添加详尽注释**
+   - 为所有类型定义添加JSDoc注释
+   - 为所有方法添加详细说明
+   - 为所有复杂逻辑添加行内注释
+
+#### Phase 2: 服务层修复
+1. **创建useQinQiong() composable**
+   ```typescript
+   /**
+    * 秦琼服务 - 应用状态管理UI门面
+    * 提供对appState字段的安全访问
+    */
+   export function useQinQiong() {
+       const store = usePreferenceStore();
+
+       return {
+           // 运行时状态访问
+           firstTime: computed(() => store.appState.firstTime),
+           lastOpenedFolder: computed(() => store.appState.lastOpenedFolder),
+           currentFolder: computed(() => store.appState.currentFolder),
+           currentFolderConfig: computed(() => store.appState.currentFolderConfig),
+           folderTree: computed(() => store.appState.folderTree),
+           // 临时：scanningFolder (将来迁移到尉迟恭)
+           scanningFolder: computed(() => store.appState.scanningFolder),
+       };
+   }
+   ```
+
+2. **更新褚遂良服务**
+   - 修改paths getter访问 `preferences.scanning.paths`
+   - 添加详尽注释说明数据流
+
+3. **更新房玄龄服务**
+   - 修改delta计算逻辑
+   - 更新Store访问路径
+   - 添加详尽注释
+
+#### Phase 3: UI组件修复
+1. **App.vue修复**
+   ```typescript
+   // ❌ 错误：直接访问
+   const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
+
+   // ✅ 正确：通过服务访问
+   const chuSuiLiang = useChuSuiLiang();
+   const qinQiong = useQinQiong();
+   const paths = computed(() => chuSuiLiang.paths);
+   const currentFolder = computed(() => qinQiong.currentFolder);
+   const scanningFolder = computed(() => qinQiong.scanningFolder);
+   ```
+
+2. **FolderList.vue修复**
+   ```typescript
+   // ❌ 错误：直接访问
+   const expandedKeys = ref<string[]>([...paths.value]);
+
+   // ✅ 正确：通过褚遂良访问
+   const chuSuiLiang = useChuSuiLiang();
+   const paths = computed(() => chuSuiLiang.paths);
+   const expandedKeys = ref<string[]>([...paths.value]);
+   ```
+
+3. **ImportPhotos.vue修复**
+   ```typescript
+   // ❌ 错误：直接访问
+   store.paths
+
+   // ✅ 正确：通过褚遂良访问
+   const chuSuiLiang = useChuSuiLiang();
+   chuSuiLiang.paths
+   ```
+
+4. **AdvancedSettings.vue修复**
+   ```typescript
+   // ❌ 错误：直接访问
+   const paths = computed(() => preferenceStore.paths);
+
+   // ✅ 正确：通过褚遂良访问
+   const chuSuiLiang = useChuSuiLiang();
+   const paths = computed(() => chuSuiLiang.paths);
+   ```
+
+#### Phase 4: 数据迁移
+1. **Store数据迁移**
+   - 将 `appState.paths` → `preferences.scanning.paths`
+   - 将 `appState.excludePaths` → `preferences.scanning.excludePatterns`
+   - 将 `appState.autoUpdate` → `preferences.system.autoUpdate`
+
+2. **向后兼容**
+   - 保持现有API不变
+   - 内部使用新结构
+   - 渐进式迁移
+
+#### Phase 5: 测试验证
+1. **单元测试更新**
+   - 更新所有测试使用新的访问方式
+   - 验证数据迁移正确性
+
+2. **集成测试**
+   - 验证UI组件正常工作
+   - 验证数据同步正确
+
+### 实施检查清单
+
+#### 阶段1：Store结构修复
+- [ ] 修改PreferenceState类型定义
+- [ ] 添加preferences.scanning字段
+- [ ] 添加preferences.system字段
+- [ ] 移除appState中的错误字段
+- [ ] 添加详尽JSDoc注释
+
+#### 阶段2：服务层修复
+- [ ] 创建useQinQiong() composable
+- [ ] 更新褚遂良服务paths getter
+- [ ] 更新房玄龄服务delta计算
+- [ ] 添加详尽注释
+
+#### 阶段3：UI组件修复
+- [ ] 修复App.vue使用服务访问
+- [ ] 修复FolderList.vue使用褚遂良
+- [ ] 修复ImportPhotos.vue使用褚遂良
+- [ ] 修复AdvancedSettings.vue使用褚遂良
+- [ ] 添加详尽注释
+
+#### 阶段4：数据迁移
+- [ ] 实现Store数据迁移逻辑
+- [ ] 保持向后兼容
+- [ ] 验证数据正确性
+
+#### 阶段5：测试验证
+- [ ] 更新单元测试
+- [ ] 更新集成测试
+- [ ] 验证所有功能正常
+
+### 注释标准
+
+所有代码必须包含详尽注释：
+
+1. **类型定义注释**
+   ```typescript
+   /**
+    * 偏好设置状态类型
+    * 定义了Store中存储的所有偏好设置和运行时状态
+    */
+   export type PreferenceState = {
+       // ... 详细字段说明
+   }
+   ```
+
+2. **方法注释**
+   ```typescript
+   /**
+    * 添加监控路径
+    * @param path 要添加的路径
+    * @param source 操作来源，用于日志记录
+    * @throws {Error} 当路径无效或重复时抛出错误
+    */
+   async addPath(path: string, source: string = "unknown"): Promise<void> {
+       // ... 实现
+   }
+   ```
+
+3. **复杂逻辑注释**
+   ```typescript
+   // 检查路径重复：避免添加已存在的路径
+   const duplicationResult = checkPathDuplication(path, currentPaths);
+   if (duplicationResult.isDuplicate) {
+       // 路径已存在，记录日志但不抛出错误
+       logger.warn(`路径已存在: ${path}`);
+       return;
+   }
+   ```
+
+**作为Linus Torvalds，我要说：这个修复计划体现了"好品味"！每个步骤都有明确的目标和验证标准！**
+
 ### 验证标准
 
 - [ ] 所有preference字段都在 `preferences` 对象中
