@@ -9,7 +9,9 @@
             "general": "일반",
             "about": "정보",
             "theme": "테마",
-            "advanced": "고급 설정"
+            "advanced": "고급 설정",
+            "autoUpdate": "자동 업데이트",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "폴더 목록",
         "folderListUsage": "사용 방법",
@@ -359,8 +361,11 @@
         "scanComplete": "디렉터리[{path}] 처리 완료",
         "start": "스캔 시작",
         "progress": "스캔 진행",
+        "processingFile": "처리 중: {fileName}",
+        "scanningPath": "스캔 중: {path}",
         "complete": "스캔 완료",
-        "error": "스캔 오류"
+        "error": "스캔 오류",
+        "scanFailed": "스캔 실패: {path}"
     },
     "button": {
         "import": "가져오기",
@@ -371,16 +376,16 @@
     "about": {
         "antvDescription": "데이터 시각화 솔루션",
         "introduction": {
-            "title": "Photosa 소개",
-            "content": "Photosa는 Photasa에서 영감을 받은 현대적이고 개인정보를 존중하는 사진 관리 도구입니다. 강력한 로컬 기능과 아름다운 인터페이스로 사진과 비디오를 정리하고, 탐색하고, 즐길 수 있습니다—클라우드가 필요 없습니다.",
-            "summary": "Photosa는 기억을 쉽게 재발견하고 관리하는 데 도움을 줍니다.",
+            "title": "Photasa 소개",
+            "content": "Photasa는 현대적이고 개인정보를 존중하는 사진 관리 도구입니다. 강력한 로컬 기능과 아름다운 인터페이스로 사진과 비디오를 정리하고, 탐색하고, 즐길 수 있습니다—클라우드가 필요 없습니다.",
+            "summary": "Photasa는 기억을 쉽게 재발견하고 관리하는 데 도움을 줍니다.",
             "highlight": "로컬 우선, 빠르고 사용자 친화적",
             "userExperience": "사진 관리 경험",
             "focus": "."
         },
         "resources": {
             "title": "리소스",
-            "content": "Photosa의 추가 리소스와 문서를 탐색하세요.",
+            "content": "Photasa의 추가 리소스와 문서를 탐색하세요.",
             "download": "리소스 다운로드"
         },
         "press": "누르세요",
@@ -506,8 +511,8 @@
     "imageInfo": {
         "title": "이미지 정보",
         "lastUpdated": "마지막 업데이트",
-        "openInFinder": "Finder에서 열기",
-        "repairLibrary": "사진 라이브러리 복구",
+        "openInFinder": "폴더 열기",
+        "repairLibrary": "라이브러리 복구",
         "fileCount": "파일 수",
         "folderSize": "폴더 크기",
         "basicInfo": "기본 정보",
@@ -542,6 +547,50 @@
             "1h": "최근 1시간",
             "6h": "최근 6시간",
             "24h": "최근 24시간"
+        }
+    },
+    "logViewer": {
+        "title": "로그 뷰어",
+        "levels": {
+            "all": "모든 레벨",
+            "error": "오류",
+            "warn": "경고",
+            "info": "정보",
+            "debug": "디버그"
+        },
+        "buttons": {
+            "clear": "지우기",
+            "export": "내보내기",
+            "opacity": "투명도",
+            "close": "닫기"
+        },
+        "search": "로그 검색...",
+        "messages": {
+            "noLogs": "사용 가능한 로그가 없습니다",
+            "logsCleared": "로그가 지워졌습니다",
+            "logsExported": "로그가 {fileName}에 내보내졌습니다",
+            "exportFailed": "로그 내보내기 실패: {error}"
+        },
+        "dragInfo": "창을 이동하려면 드래그하세요"
+    },
+    "update": {
+        "notification": {
+            "title": "새 버전 사용 가능",
+            "message": "버전 {version}이 사용 가능합니다",
+            "cancel": "취소",
+            "install": "설치",
+            "cancelDownload": "다운로드 취소",
+            "installNow": "지금 설치",
+            "viewDetails": "세부 정보 보기"
+        },
+        "popup": {
+            "title": "새 버전 사용 가능",
+            "message": "버전 {version}이 사용 가능합니다",
+            "cancel": "취소",
+            "install": "설치",
+            "cancelDownload": "다운로드 취소",
+            "installNow": "지금 설치",
+            "close": "닫기"
         }
     }
 }

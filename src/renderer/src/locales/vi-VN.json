@@ -9,7 +9,9 @@
             "general": "Chung",
             "about": "Giới thiệu",
             "theme": "Chủ đề",
-            "advanced": "Nâng cao"
+            "advanced": "Nâng cao",
+            "autoUpdate": "Tự động cập nhật",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Danh sách thư mục",
         "folderListUsage": "Cách sử dụng",
@@ -359,8 +361,11 @@
         "scanComplete": "Thư mục [{path}] đã được xử lý.",
         "start": "Bắt đầu quét",
         "progress": "Tiến trình quét",
+        "processingFile": "Đang xử lý: {fileName}",
+        "scanningPath": "Đang quét: {path}",
         "complete": "Quét hoàn tất",
-        "error": "Lỗi quét"
+        "error": "Lỗi quét",
+        "scanFailed": "Quét thất bại: {path}"
     },
     "button": {
         "import": "Nhập",
@@ -542,6 +547,50 @@
             "1h": "1 giờ qua",
             "6h": "6 giờ qua",
             "24h": "24 giờ qua"
+        }
+    },
+    "logViewer": {
+        "title": "Trình xem Log",
+        "levels": {
+            "all": "Tất cả cấp độ",
+            "error": "Lỗi",
+            "warn": "Cảnh báo",
+            "info": "Thông tin",
+            "debug": "Gỡ lỗi"
+        },
+        "buttons": {
+            "clear": "Xóa",
+            "export": "Xuất",
+            "opacity": "Độ mờ",
+            "close": "Đóng"
+        },
+        "search": "Tìm kiếm log...",
+        "messages": {
+            "noLogs": "Không có log nào",
+            "logsCleared": "Đã xóa log",
+            "logsExported": "Đã xuất log vào {fileName}",
+            "exportFailed": "Xuất log thất bại: {error}"
+        },
+        "dragInfo": "Kéo để di chuyển cửa sổ"
+    },
+    "update": {
+        "notification": {
+            "title": "Phiên bản mới có sẵn",
+            "message": "Phiên bản {version} có sẵn",
+            "cancel": "Hủy",
+            "install": "Cài đặt",
+            "cancelDownload": "Hủy tải xuống",
+            "installNow": "Cài đặt ngay",
+            "viewDetails": "Xem chi tiết"
+        },
+        "popup": {
+            "title": "Phiên bản mới có sẵn",
+            "message": "Phiên bản {version} có sẵn",
+            "cancel": "Hủy",
+            "install": "Cài đặt",
+            "cancelDownload": "Hủy tải xuống",
+            "installNow": "Cài đặt ngay",
+            "close": "Đóng"
         }
     }
 }

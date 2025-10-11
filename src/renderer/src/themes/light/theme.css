@@ -3,7 +3,9 @@
     --color-bg: #ffffff;
     --color-bg-secondary: #f3f3f3;
     --color-text: #1e1e1e;
+    --color-text-primary: var(--color-text);
     --color-text-secondary: #616161;
+    --color-text-tertiary: #999999;
     --color-border: #e7e7e7;
     --color-shadow: rgba(0, 0, 0, 0.07);
     --color-primary: #0066b8;

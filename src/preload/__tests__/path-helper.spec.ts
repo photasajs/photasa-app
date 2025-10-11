@@ -56,24 +56,27 @@ describe("normalizePath/mergePath platform coverage", () => {
     it("should normalize Windows path", () => {
         // Only run this test on Windows platform
         if (process.platform !== "win32") {
-            console.log("Skipping Windows path test on non-Windows platform");
+            expect.assertions(0); // Skip test on non-Windows platform
             return;
         }
 
         const winPath = "C:\\foo\\bar/abc";
-        // On Windows, path.normalize should handle Windows paths correctly
+        // On Windows, path.resolve should handle Windows paths correctly
         const result = pathHelper.normalizePath(winPath);
-        const expected = path.normalize(winPath);
+        const expected = path.resolve(winPath);
         expect(result).toBe(expected);
     });
     it("should normalize POSIX path", () => {
         const posixPath = "/foo/bar/abc";
-        expect(pathHelper.normalizePath(posixPath)).toBe(path.normalize(posixPath));
+        // normalizePath uses path.resolve, which returns absolute path based on current platform
+        const result = pathHelper.normalizePath(posixPath);
+        const expected = path.resolve(posixPath);
+        expect(result).toBe(expected);
     });
     it("should merge Windows path", () => {
         // Only run this test on Windows platform
         if (process.platform !== "win32") {
-            console.log("Skipping Windows path merge test on non-Windows platform");
+            expect.assertions(0); // Skip test on non-Windows platform
             return;
         }
 

@@ -72,7 +72,7 @@
                     <span class="header-timestamp">{{ t("scan.timestampHeader") }}</span>
                     <span class="header-action">{{ t("scan.actionHeader") }}</span>
                 </div>
-                <div class="queue-list">
+                <div class="queue-list scrollbar-theme-thin">
                     <div
                         v-for="(item, index) in scanningFolder"
                         :key="item.path"
@@ -269,11 +269,15 @@ function formatFullTimestamp(timestamp?: number): string {
 <style scoped lang="less">
 /* Modern Scan Queue Dialog Styles */
 .scan-queue-container {
+    display: flex;
+    flex-direction: column;
     min-height: 300px;
     max-height: 500px;
+    overflow: hidden; /* Prevent container from scrolling */
 }
 
 .queue-status-header {
+    flex-shrink: 0; /* Don't shrink this section */
     padding: 24px 0;
     text-align: center;
     border-bottom: 1px solid var(--color-border);
@@ -488,7 +492,13 @@ function formatFullTimestamp(timestamp?: number): string {
 }
 
 .queue-items {
+    flex: 1; /* Take up remaining space */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Allow shrinking below content size */
+
     .queue-header {
+        flex-shrink: 0; /* Header should not shrink */
         display: flex;
         align-items: center;
         padding: 0 20px 16px 20px;
@@ -524,40 +534,15 @@ function formatFullTimestamp(timestamp?: number): string {
     }
 
     .queue-list {
-        max-height: 280px;
+        flex: 1; /* Take up remaining space in queue-items */
         overflow-y: auto;
         overflow-x: hidden;
         padding: 8px 4px;
+        min-height: 0; /* Allow shrinking below content size */
 
-        /* Custom scrollbar - 使用主题变量 */
-        scrollbar-width: thin;
-        scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
-
-        &::-webkit-scrollbar {
-            width: var(--color-scrollbar-width-thin);
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--color-scrollbar-track);
-            border-radius: var(--color-scrollbar-border-radius);
-        }
-
-        &::-webkit-scrollbar-track:hover {
-            background: var(--color-scrollbar-track-hover);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--color-scrollbar-thumb);
-            border-radius: var(--color-scrollbar-border-radius);
-            transition: all 0.2s ease;
-
-            &:hover {
-                background: var(--color-scrollbar-thumb-hover);
-            }
-
-            &:active {
-                background: var(--color-scrollbar-thumb-active);
-            }
+        /* Apply theme scrollbar styling */
+        &.scrollbar-theme-thin {
+            /* Will be added via JavaScript or use global theme class */
         }
     }
 
@@ -1049,6 +1034,8 @@ function formatFullTimestamp(timestamp?: number): string {
 
                 .timestamp-priority {
                     font-size: 9px;
+                    color: var(--color-text-tertiary);
+                    opacity: 0.8;
                 }
             }
 

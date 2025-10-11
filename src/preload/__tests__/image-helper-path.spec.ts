@@ -61,6 +61,7 @@ describe("Path Handling in getFileMetadata", () => {
         // Mock process.platform for different tests
         Object.defineProperty(process, "platform", {
             writable: true,
+            configurable: true,
             value: "darwin", // Default to macOS
         });
     });
@@ -68,6 +69,7 @@ describe("Path Handling in getFileMetadata", () => {
     afterEach(() => {
         Object.defineProperty(process, "platform", {
             writable: true,
+            configurable: true,
             value: originalPlatform,
         });
     });
@@ -79,6 +81,7 @@ describe("Path Handling in getFileMetadata", () => {
             const fileUrl = "file:///Users/test/Pictures/image.jpg";
             const result = await getFileMetadata(fileUrl);
 
+            // 在macOS上，路径应该使用正斜杠
             expect(result.path).toContain("Users/test/Pictures/image.jpg");
             expect(result.name).toBe("image.jpg");
         });
@@ -89,7 +92,8 @@ describe("Path Handling in getFileMetadata", () => {
             const fileUrl = "file:///C:/Users/test/Pictures/image.jpg";
             const result = await getFileMetadata(fileUrl);
 
-            expect(result.path).toContain("Users/test/Pictures/image.jpg");
+            // 在非Windows系统上，fileURLToPath会保留前导斜杠
+            expect(result.path).toContain("/C:/Users/test/Pictures/image.jpg");
             expect(result.name).toBe("image.jpg");
         });
 
@@ -97,7 +101,12 @@ describe("Path Handling in getFileMetadata", () => {
             const fileUrl = "file:///Users/test/My%20Pictures/test%20image.jpg";
             const result = await getFileMetadata(fileUrl);
 
-            expect(result.path).toContain("Users/test/My Pictures/test image.jpg");
+            // 根据平台使用正确的路径分隔符
+            if (process.platform === "win32") {
+                expect(result.path).toContain("Users\\test\\My Pictures\\test image.jpg");
+            } else {
+                expect(result.path).toContain("Users/test/My Pictures/test image.jpg");
+            }
             expect(result.name).toBe("test image.jpg");
         });
 
@@ -105,7 +114,12 @@ describe("Path Handling in getFileMetadata", () => {
             const filePath = "/Users/test/Pictures/image.jpg";
             const result = await getFileMetadata(filePath);
 
-            expect(result.path).toContain("Users/test/Pictures/image.jpg");
+            // 根据平台使用正确的路径分隔符
+            if (process.platform === "win32") {
+                expect(result.path).toContain("Users\\test\\Pictures\\image.jpg");
+            } else {
+                expect(result.path).toContain("Users/test/Pictures/image.jpg");
+            }
             expect(result.name).toBe("image.jpg");
         });
     });
@@ -139,7 +153,7 @@ describe("Path Handling in getFileMetadata", () => {
         });
 
         it("should fallback to file timestamps when EXIF extraction fails", async () => {
-            vi.mocked(getExifInfo).mockResolvedValueOnce(null);
+            vi.mocked(getExifInfo).mockResolvedValueOnce(undefined);
             vi.mocked(extractDateTimeFromExif).mockReturnValueOnce(null);
 
             const result = await getFileMetadata("file:///Users/test/image.jpg");
@@ -181,14 +195,16 @@ describe("Path Handling in getFileMetadata", () => {
             const fileUrl = "file:///D:/Photos/vacation.jpg";
             const result = await getFileMetadata(fileUrl);
 
-            expect(result.path).toContain("Photos/vacation.jpg");
+            // 在非Windows系统上，fileURLToPath会保留前导斜杠
+            expect(result.path).toContain("/D:/Photos/vacation.jpg");
         });
 
         it("should handle UNC paths", async () => {
             const fileUrl = "file://server/share/Photos/image.jpg";
             const result = await getFileMetadata(fileUrl);
 
-            expect(result.path).toContain("server/share/Photos/image.jpg");
+            // 在非Windows系统上，fileURLToPath会保留前导斜杠
+            expect(result.path).toContain("/server/share/Photos/image.jpg");
         });
     });
 });

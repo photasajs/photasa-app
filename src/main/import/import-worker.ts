@@ -44,7 +44,52 @@ import isVideo from "is-video";
 import { v4 as uuidv4 } from "uuid";
 import { shouldIgnorePhotasaPath } from "@common/utils";
 
-const logger = loggers.worker;
+const logger = loggers.import;
+
+const port = parentPort;
+if (!port) {
+    // 在测试环境中可能没有parentPort，只在生产环境中抛出错误
+    if (process.env.NODE_ENV !== "test") {
+        throw new Error("IllegalState");
+    }
+}
+
+// 日志查看器状态
+let logViewerActive = false;
+
+/**
+ * 包装日志函数以支持日志查看器
+ * @param level - 日志级别
+ * @param category - 日志分类
+ * @param message - 日志消息
+ */
+function workerLog(level: "debug" | "info" | "warn" | "error", category: string, message: string) {
+    // 正常输出到控制台
+    logger[level](message);
+
+    // 仅在日志查看器激活时上报
+    if (logViewerActive && port) {
+        port.postMessage({
+            type: "worker:log",
+            entry: {
+                timestamp: new Date().toISOString(),
+                level,
+                category,
+                message,
+                source: "worker",
+                threadId: "import-worker",
+            },
+        });
+    }
+}
+
+// 创建包装的 logger，将所有调用转发到 workerLog
+const wrappedLogger = {
+    debug: (message: string) => workerLog("debug", "import-worker", message),
+    info: (message: string) => workerLog("info", "import-worker", message),
+    warn: (message: string) => workerLog("warn", "import-worker", message),
+    error: (message: string) => workerLog("error", "import-worker", message),
+} as any;
 
 // ==================== 映射设计模式：动作处理器映射 ====================
 
@@ -74,9 +119,26 @@ const FILE_TYPE_DETECTORS = {
 /**
  * 主消息处理器 - 使用映射模式路由到相应的处理器
  */
-parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
+parentPort?.on("message", async (message: WorkerMessage<ImportRequest> | any) => {
+    // 处理日志查看器状态消息
+    if (message.type === "log:viewer-status") {
+        logViewerActive = message.active;
+        workerLog(
+            "debug",
+            "import-worker",
+            `Log viewer ${logViewerActive ? "activated" : "deactivated"}`,
+        );
+        return;
+    }
+
     try {
         const { action } = message;
+
+        workerLog(
+            "debug",
+            "import-worker",
+            `Starting import task: action=${action}, id=${message.id}`,
+        );
 
         // 使用映射模式查找处理器
         const handler = ACTION_HANDLERS[action as ImportWorkerActionType];
@@ -84,6 +146,7 @@ parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
         if (handler) {
             await handler(message);
         } else {
+            workerLog("warn", "import-worker", `Unknown action: ${action}`);
             const errorResponse = createResponse<ImportRequest, ImportResponse>(message, {
                 success: false,
                 error: "Unknown action",
@@ -91,7 +154,7 @@ parentPort?.on("message", async (message: WorkerMessage<ImportRequest>) => {
             parentPort?.postMessage(errorResponse);
         }
     } catch (error) {
-        logger.error(`[import-worker] 处理消息时出错: ${error}`);
+        workerLog("error", "import-worker", `处理消息时出错: ${error}`);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error",
@@ -109,14 +172,14 @@ async function handleExtractMetadata(message: WorkerMessage<ImportRequest>): Pro
     const request = message.payload as unknown as MetadataRequest;
 
     try {
-        const metadata = await extractMetadata(request, logger);
+        const metadata = await extractMetadata(request, wrappedLogger);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: true,
             data: metadata,
         });
         parentPort?.postMessage(response);
     } catch (error) {
-        logger.error(`[import-worker] 元数据提取失败: ${error}`);
+        workerLog("error", "import-worker", `元数据提取失败: ${error}`);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
             error: error instanceof Error ? error.message : "Metadata extraction failed",
@@ -132,14 +195,14 @@ async function handleProcessFileGroup(message: WorkerMessage<ImportRequest>): Pr
     const group = message.payload as unknown as FileGroup;
 
     try {
-        const processedGroup = await processFileGroup(group, logger);
+        const processedGroup = await processFileGroup(group, wrappedLogger);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: true,
             data: processedGroup,
         });
         parentPort?.postMessage(response);
     } catch (error) {
-        logger.error(`[import-worker] 文件组处理失败: ${error}`);
+        workerLog("error", "import-worker", `文件组处理失败: ${error}`);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
             error: error instanceof Error ? error.message : "File group processing failed",
@@ -163,7 +226,7 @@ async function handleScanDirectories(message: WorkerMessage<ImportRequest>): Pro
         });
         parentPort?.postMessage(response);
     } catch (error) {
-        logger.error(`[import-worker] 目录扫描失败: ${error}`);
+        workerLog("error", "import-worker", `目录扫描失败: ${error}`);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
             error: error instanceof Error ? error.message : "Directory scanning failed",
@@ -195,7 +258,7 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
         });
         parentPort?.postMessage(response);
     } catch (error) {
-        logger.error(`[import-worker] 导入预览失败: ${error}`);
+        workerLog("error", "import-worker", `导入预览失败: ${error}`);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
             error: error instanceof Error ? error.message : "Import preview failed",
@@ -213,8 +276,10 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     const config = configWithImportId as ImportConfig;
     const importId = configWithImportId.importId;
 
-    logger.debug(
-        `[import-worker] 执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}, importId: ${importId}`,
+    workerLog(
+        "debug",
+        "import-worker",
+        `执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}, importId: ${importId}`,
     );
 
     try {
@@ -228,7 +293,7 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
         });
         parentPort?.postMessage(response);
     } catch (error) {
-        logger.error(`[import-worker] 导入执行失败: ${error}`);
+        workerLog("error", "import-worker", `导入执行失败: ${error}`);
 
         const serializableError = createSerializableError(error);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
@@ -341,7 +406,11 @@ async function scanDirectoriesForFiles(
     const allFiles: FileInfo[] = [];
 
     if (!Array.isArray(paths)) {
-        logger.error(`[import-worker] paths 不是数组: ${typeof paths}, value: ${String(paths)}`);
+        workerLog(
+            "error",
+            "import-worker",
+            `paths 不是数组: ${typeof paths}, value: ${String(paths)}`,
+        );
         return [];
     }
 
@@ -349,7 +418,7 @@ async function scanDirectoriesForFiles(
 
     for (const dirPath of paths) {
         if (!(await fs.pathExists(dirPath))) {
-            logger.warn(`[import-worker] 目录不存在: ${dirPath}`);
+            workerLog("warn", "import-worker", `目录不存在: ${dirPath}`);
             continue;
         }
 
@@ -383,7 +452,7 @@ async function scanDirectoriesForFiles(
     }
 
     const detector = new FileGroupDetector();
-    const fileGroups = detector.detectFileGroupsEnhanced(allFiles, logger);
+    const fileGroups = detector.detectFileGroupsEnhanced(allFiles, wrappedLogger);
 
     return fileGroups;
 }
@@ -446,7 +515,7 @@ async function scanSingleDirectory(
             }
         }
     } catch (error) {
-        logger.error(`[import-worker] 扫描目录失败 ${dirPath}: ${error}`);
+        workerLog("error", "import-worker", `扫描目录失败 ${dirPath}: ${error}`);
     }
 
     return files;
@@ -470,22 +539,26 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
 
         if (fileType === FileTypeDetectors.IMAGE || fileType === FileTypeDetectors.VIDEO) {
             try {
-                extractedMetadata = await extractMetadata({ filePath }, logger);
+                extractedMetadata = await extractMetadata({ filePath }, wrappedLogger);
                 if (extractedMetadata.dateTime) {
                     dateTime = extractedMetadata.dateTime;
                     dateSource = extractedMetadata.dateSource;
                 }
             } catch (error) {
                 const fileTypeName = fileType === FileTypeDetectors.IMAGE ? "图片" : "视频";
-                logger.warn(
-                    `[import-worker] ${fileTypeName}文件元数据提取失败: ${fileName}, 使用智能日期回退: ${error}`,
+                workerLog(
+                    "warn",
+                    "import-worker",
+                    `${fileTypeName}文件元数据提取失败: ${fileName}, 使用智能日期回退: ${error}`,
                 );
                 // 使用智能日期回退：选择创建时间和修改时间中较早的
-                const fallback = computeFallbackDate(stats.birthtime, stats.mtime, logger);
+                const fallback = computeFallbackDate(stats.birthtime, stats.mtime, wrappedLogger);
                 dateTime = fallback.date;
                 dateSource = fallback.source;
-                logger.debug(
-                    `[import-worker] ${fileTypeName}文件使用智能回退: ${fileName}, dateSource: ${dateSource}, dateTime: ${dateTime.toISOString()}`,
+                workerLog(
+                    "debug",
+                    "import-worker",
+                    `${fileTypeName}文件使用智能回退: ${fileName}, dateSource: ${dateSource}, dateTime: ${dateTime.toISOString()}`,
                 );
             }
         }
@@ -511,7 +584,7 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
 
         return fileInfo;
     } catch (error) {
-        logger.error(`[import-worker] 创建文件信息失败 ${filePath}: ${error}`);
+        workerLog("error", "import-worker", `创建文件信息失败 ${filePath}: ${error}`);
         return null;
     }
 }
@@ -587,8 +660,10 @@ async function generateImportPreview(
     progressCallback?: (progress: any) => void,
 ): Promise<ImportPreview> {
     if (!Array.isArray(config.sourcePaths)) {
-        logger.error(
-            `[import-worker] config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
+        workerLog(
+            "error",
+            "import-worker",
+            `config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
         );
         throw new Error("sourcePaths must be an array");
     }
@@ -655,7 +730,7 @@ async function processFileGroups(fileGroups: FileGroup[]): Promise<FileGroup[]> 
     const processedGroups: FileGroup[] = [];
 
     for (const group of fileGroups) {
-        const processedGroup = await processFileGroup(group, logger);
+        const processedGroup = await processFileGroup(group, wrappedLogger);
         processedGroups.push(processedGroup);
     }
 
@@ -780,8 +855,10 @@ async function executeImportProcess(
 
     try {
         if (!Array.isArray(config.sourcePaths)) {
-            logger.error(
-                `[import-worker] config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
+            workerLog(
+                "error",
+                "import-worker",
+                `config.sourcePaths 不是数组: ${typeof config.sourcePaths}, 值: ${JSON.stringify(config.sourcePaths)}`,
             );
             throw new Error("sourcePaths must be an array");
         }
@@ -808,7 +885,7 @@ async function executeImportProcess(
 
         return finalResult;
     } catch (error) {
-        logger.error(`[import-worker] 导入执行失败: ${error}`);
+        workerLog("error", "import-worker", `导入执行失败: ${error}`);
 
         return createErrorResult(error, Date.now() - startTime, importId, config);
     }
@@ -917,7 +994,7 @@ async function performFileImport(
 
     for (const group of fileGroups) {
         try {
-            const processedGroup = await processFileGroup(group, logger);
+            const processedGroup = await processFileGroup(group, wrappedLogger);
 
             if (processedGroup.targetPath) {
                 await processFileGroupImport(
@@ -1075,7 +1152,7 @@ async function handleFileError(
 
     importState.errors.push(serializableError);
     updateProgress(importId, importState, file.name, startTime, totalFiles);
-    logger.error(`[import-worker] 文件导入失败 ${file.path}: ${error}`);
+    workerLog("error", "import-worker", `文件导入失败 ${file.path}: ${error}`);
 }
 
 /**
@@ -1089,8 +1166,10 @@ async function handleGroupError(
 ): Promise<void> {
     importState.errorFiles += group.files.length;
 
-    logger.error(
-        `[import-worker] 文件组处理失败: ${group.mainFile.path}, 影响 ${group.files.length}/${totalFiles} 文件`,
+    workerLog(
+        "error",
+        "import-worker",
+        `文件组处理失败: ${group.mainFile.path}, 影响 ${group.files.length}/${totalFiles} 文件`,
     );
 
     const serializableError = {
@@ -1106,7 +1185,7 @@ async function handleGroupError(
     };
 
     importState.errors.push(serializableError);
-    logger.error(`[import-worker] 文件组处理失败 ${group.mainFile.path}: ${error}`);
+    workerLog("error", "import-worker", `文件组处理失败 ${group.mainFile.path}: ${error}`);
 }
 
 /**
@@ -1163,7 +1242,7 @@ async function handleDuplicateFile(
             timestamp: new Date().toISOString(),
         };
     } catch (error) {
-        logger.error(`[import-worker] 处理重复文件失败: ${error}`);
+        workerLog("error", "import-worker", `处理重复文件失败: ${error}`);
 
         return {
             action: DuplicateStrategies.SKIP,

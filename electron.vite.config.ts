@@ -49,6 +49,12 @@ export default defineConfig(({ mode }) => ({
         build: {
             sourcemap: isDev(mode),
             minify: isProd(mode),
+            rollupOptions: {
+                input: {
+                    index: resolve("src/preload/index.ts"),
+                    "splash-preload": resolve("src/preload/splash-preload.ts"),
+                },
+            },
         },
     },
     renderer: {

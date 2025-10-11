@@ -9,7 +9,9 @@
             "general": "عام",
             "about": "حول",
             "theme": "السمة",
-            "advanced": "متقدم"
+            "advanced": "متقدم",
+            "autoUpdate": "التحديث التلقائي",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "قائمة المجلدات",
         "folderListUsage": "طريقة الاستخدام",
@@ -359,8 +361,11 @@
         "scanComplete": "تمت معالجة المجلد [{path}].",
         "start": "بدء المسح",
         "progress": "تقدم المسح",
+        "processingFile": "جارِ معالجة: {fileName}",
+        "scanningPath": "جارِ مسح: {path}",
         "complete": "اكتمل المسح",
-        "error": "خطأ في المسح"
+        "error": "خطأ في المسح",
+        "scanFailed": "فشل المسح: {path}"
     },
     "button": {
         "import": "استيراد",
@@ -542,6 +547,50 @@
             "1h": "آخر ساعة",
             "6h": "آخر 6 ساعات",
             "24h": "آخر 24 ساعة"
+        }
+    },
+    "logViewer": {
+        "title": "عارض السجلات",
+        "levels": {
+            "all": "جميع المستويات",
+            "error": "خطأ",
+            "warn": "تحذير",
+            "info": "معلومات",
+            "debug": "تصحيح"
+        },
+        "buttons": {
+            "clear": "مسح",
+            "export": "تصدير",
+            "opacity": "الشفافية",
+            "close": "إغلاق"
+        },
+        "search": "بحث في السجلات...",
+        "messages": {
+            "noLogs": "لا توجد سجلات متاحة",
+            "logsCleared": "تم مسح السجلات",
+            "logsExported": "تم تصدير السجلات إلى {fileName}",
+            "exportFailed": "فشل في تصدير السجلات: {error}"
+        },
+        "dragInfo": "اسحب لتحريك النافذة"
+    },
+    "update": {
+        "notification": {
+            "title": "إصدار جديد متاح",
+            "message": "الإصدار {version} متاح",
+            "cancel": "إلغاء",
+            "install": "تثبيت",
+            "cancelDownload": "إلغاء التحميل",
+            "installNow": "تثبيت الآن",
+            "viewDetails": "عرض التفاصيل"
+        },
+        "popup": {
+            "title": "إصدار جديد متاح",
+            "message": "الإصدار {version} متاح",
+            "cancel": "إلغاء",
+            "install": "تثبيت",
+            "cancelDownload": "إلغاء التحميل",
+            "installNow": "تثبيت الآن",
+            "close": "إغلاق"
         }
     }
 }

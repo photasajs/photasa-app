@@ -354,13 +354,11 @@ describe("normalizePath", () => {
         const windowsFileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
         const result = normalizePath(windowsFileUrl);
         expect(path.isAbsolute(result)).toBe(true);
-
+        // 在非Windows系统上，fileURLToPath会保留前导斜杠
         if (process.platform === "win32") {
-            // 在 Windows 上应该得到正确的路径格式
-            expect(result).toBe(path.resolve("C:/Users/Albert/Pictures/photo.jpg"));
+            expect(result).toBe("C:\\Users\\Albert\\Pictures\\photo.jpg");
         } else {
-            // 在非Windows系统上，Node.js会将其解析为Unix路径
-            expect(result.includes("C:")).toBe(true);
+            expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
         }
     });
 
@@ -443,13 +441,21 @@ describe("pathToFileProtocol", () => {
     });
 
     it("should handle Windows paths", () => {
+        // Skip Windows-specific tests on non-Windows platform
+        if (process.platform !== "win32") {
+            expect.assertions(0);
+            return;
+        }
+
         const windowsPath = "C:\\Users\\Albert\\Pictures\\photo.jpg";
         const result = pathToFileProtocol(windowsPath);
         expect(result.startsWith("file://")).toBe(true);
-
+        // Windows file:// URL 格式应该是 file:///C:/...
         if (process.platform === "win32") {
-            // Windows file:// URL 格式应该是 file:///C:/...
             expect(result).toMatch(/^file:\/\/\/[A-Z]:\//);
+        } else {
+            // 在非Windows系统上，路径会被转换为当前工作目录的相对路径
+            expect(result).toContain("photo.jpg");
         }
     });
 
@@ -651,10 +657,10 @@ describe("removeFileProtocol", () => {
     it("should remove file protocol for Windows path", () => {
         const fileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
         const result = removeFileProtocol(fileUrl);
-        // 在非 Windows 系统上，fileURLToPath 会保留前导斜杠
         if (process.platform === "win32") {
-            expect(result).toBe("C:/Users/Albert/Pictures/photo.jpg");
+            expect(result).toBe("C:\\Users\\Albert\\Pictures\\photo.jpg");
         } else {
+            // 在非Windows系统上，fileURLToPath会保留前导斜杠
             expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
         }
     });
@@ -690,17 +696,17 @@ describe("removeFileProtocol", () => {
     it("should handle malformed file URLs gracefully", () => {
         const malformedUrl = "file://invalid/path";
         const result = removeFileProtocol(malformedUrl);
-        // 应该回退到手动处理
+        // Malformed URLs should be handled consistently across platforms
         expect(result).toBe("invalid/path");
     });
 
     it("should handle Windows paths with backslashes", () => {
         const fileUrl = "file:///C:/Users/Albert/Pictures/photo.jpg";
         const result = removeFileProtocol(fileUrl);
-        // 在非 Windows 系统上，fileURLToPath 会保留前导斜杠
         if (process.platform === "win32") {
-            expect(result).toBe("C:/Users/Albert/Pictures/photo.jpg");
+            expect(result).toBe("C:\\Users\\Albert\\Pictures\\photo.jpg");
         } else {
+            // 在非Windows系统上，fileURLToPath会保留前导斜杠
             expect(result).toBe("/C:/Users/Albert/Pictures/photo.jpg");
         }
     });

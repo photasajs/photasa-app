@@ -1,5 +1,7 @@
 import path from "path";
 import sharp from "sharp";
+import * as fs from "fs";
+import { access, exists, remove } from "fs-extra";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { toPreviewPath } from "@shared/path-util";
 import { getOptimalThumbnailResolution } from "@common/utils";
@@ -136,6 +138,27 @@ export async function createGenericFallbackThumbnail(
             { width: 200, height: 200 },
         );
 
+        // 确保目标文件可写：如果文件存在且不可写，先删除它
+        try {
+            if (await exists(thumbnailPath)) {
+                // 检查文件是否可写
+                try {
+                    await access(thumbnailPath, fs.constants.W_OK);
+                    logger.debug(
+                        `[thumbnail-handler] Target file exists and is writable: ${thumbnailPath}`,
+                    );
+                } catch (writeError) {
+                    logger.warn(
+                        `[thumbnail-handler] Target file exists but is not writable, removing: ${thumbnailPath}`,
+                    );
+                    await remove(thumbnailPath);
+                }
+            }
+        } catch (cleanupError) {
+            logger.warn(`[thumbnail-handler] Failed to cleanup target file: ${cleanupError}`);
+            // 继续尝试写入，让后续的错误处理来处理
+        }
+
         const fileConfig = getFileTypeConfig(arg.path);
         const fileName = path.basename(arg.path);
         const maxFileNameLength = 12; // 文件名最大显示长度
@@ -200,6 +223,27 @@ export async function createFallbackThumbnail(
             { width: 1, height: 1 },
             { width: 200, height: 200 },
         );
+
+        // 确保目标文件可写：如果文件存在且不可写，先删除它
+        try {
+            if (await exists(previewName)) {
+                // 检查文件是否可写
+                try {
+                    await access(previewName, fs.constants.W_OK);
+                    logger.debug(
+                        `[thumbnail-handler] Target file exists and is writable: ${previewName}`,
+                    );
+                } catch (writeError) {
+                    logger.warn(
+                        `[thumbnail-handler] Target file exists but is not writable, removing: ${previewName}`,
+                    );
+                    await remove(previewName);
+                }
+            }
+        } catch (cleanupError) {
+            logger.warn(`[thumbnail-handler] Failed to cleanup target file: ${cleanupError}`);
+            // 继续尝试写入，让后续的错误处理来处理
+        }
 
         const svgContent = `
             <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">

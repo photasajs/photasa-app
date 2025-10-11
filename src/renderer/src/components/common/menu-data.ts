@@ -91,7 +91,7 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
             {
                 key: "help-learn-more",
                 label: "menu.help.learnMore",
-                url: "https://wwww.thepicasa.com",
+                url: "https://photasa.me",
             },
             { key: "help-about", label: "menu.help.about", shortcut: "F1" },
         ],

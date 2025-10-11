@@ -3,6 +3,8 @@ import { mount } from "@vue/test-utils";
 import BaseNotification from "../BaseNotification.vue";
 import type { NotificationItem } from "@renderer/types/notification";
 
+// 移除全局 Event mock，避免环境污染
+
 describe("BaseNotification", () => {
     const mockNotification: NotificationItem = {
         id: "test-id",
@@ -166,17 +168,24 @@ describe("BaseNotification", () => {
             },
         });
 
-        // Trigger mouse enter to pause
-        await wrapper.trigger("mouseenter");
+        // Wait for component to initialize
+        await wrapper.vm.$nextTick();
 
-        // Fast-forward time
+        // Find the notification item element to trigger events on
+        const notificationItem = wrapper.find(".notification-item");
+
+        // Trigger mouse enter to pause
+        await notificationItem.trigger("mouseenter");
+
+        // Fast-forward time while paused
         vi.advanceTimersByTime(500);
 
         // Trigger mouse leave to resume
-        await wrapper.trigger("mouseleave");
+        await notificationItem.trigger("mouseleave");
 
-        // Fast-forward remaining time
+        // Fast-forward remaining time plus close animation delay
         vi.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(300); // close animation delay
 
         await wrapper.vm.$nextTick();
 

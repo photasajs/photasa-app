@@ -10,7 +10,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <div class="space-y-4">
+    <div class="space-y-4 settings-container">
         <div>
             <label class="block text-sm font-medium text-[var(--color-text)] mb-2">
                 {{ t("preference.language") }}

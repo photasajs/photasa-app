@@ -5,6 +5,190 @@ const DEV_MODE = process.env.NODE_ENV === "development";
 const isNode =
     typeof process !== "undefined" && process.versions != null && process.versions.node != null;
 
+// 日志条目接口
+export interface LogEntry {
+    timestamp: string;
+    level: "debug" | "info" | "warn" | "error";
+    category: string;
+    message: string;
+    source: "main" | "renderer" | "worker";
+    threadId?: string;
+}
+
+// 正确的 log4js interceptor appender 实现
+const createInterceptorAppender = (interceptorInstance: LogInterceptor) => {
+    return {
+        configure: (_config: any, _layouts: any) => {
+            // 创建 appender 函数
+            const appender = (logEvent: any) => {
+                // 只有在激活时才进行拦截处理
+                if (interceptorInstance.isActive) {
+                    const entry: LogEntry = {
+                        timestamp: new Date(logEvent.startTime).toISOString(),
+                        level: logEvent.level.levelStr.toLowerCase() as any,
+                        category: logEvent.categoryName,
+                        message: logEvent.data.join(" "),
+                        source: "main",
+                    };
+                    interceptorInstance.notify(entry);
+                }
+            };
+
+            // 添加 shutdown 支持
+            appender.shutdown = (done: () => void) => {
+                done();
+            };
+
+            return appender;
+        },
+    };
+};
+
+// 改进的日志拦截器类
+export class LogInterceptor {
+    private listeners = new Set<(entry: LogEntry) => void>();
+    private _isActive = false;
+    private originalConsole: any = {};
+    private appenderModule: any;
+
+    constructor() {
+        // 创建这个实例专用的 appender 模块
+        this.appenderModule = createInterceptorAppender(this);
+    }
+
+    get isActive(): boolean {
+        return this._isActive;
+    }
+
+    activate() {
+        if (this._isActive) return;
+        this._isActive = true;
+
+        if (isNode) {
+            this.attachNodeInterceptor();
+        } else {
+            this.attachBrowserInterceptor();
+        }
+    }
+
+    deactivate() {
+        if (!this._isActive) return;
+        this._isActive = false;
+
+        if (isNode) {
+            this.detachNodeInterceptor();
+        } else {
+            this.detachBrowserInterceptor();
+        }
+
+        this.listeners.clear();
+    }
+
+    subscribe(listener: (entry: LogEntry) => void) {
+        this.listeners.add(listener);
+        return () => this.listeners.delete(listener);
+    }
+
+    notify(entry: LogEntry) {
+        if (!this._isActive) return;
+        this.listeners.forEach((listener) => listener(entry));
+    }
+
+    private attachNodeInterceptor() {
+        // 正确的 log4js 配置，使用预创建的 appender 模块
+        log4js.configure({
+            appenders: {
+                console: {
+                    type: "console",
+                    layout: {
+                        type: "pattern",
+                        pattern: "%[%d{yyyy-MM-dd hh:mm:ss.SSS} %-5p %c -%] %m",
+                    },
+                },
+                interceptor: {
+                    type: this.appenderModule, // 正确的模块引用方式
+                },
+            },
+            categories: {
+                default: {
+                    appenders: ["console", "interceptor"], // console 保证正常输出，interceptor 提供拦截
+                    level: DEV_MODE ? "debug" : "info",
+                },
+            },
+        });
+    }
+
+    private detachNodeInterceptor() {
+        // 恢复到只有 console appender 的原始配置
+        log4js.configure({
+            appenders: {
+                console: {
+                    type: "console",
+                    layout: {
+                        type: "pattern",
+                        pattern: "%[%d{yyyy-MM-dd hh:mm:ss.SSS} %-5p %c -%] %m",
+                    },
+                },
+            },
+            categories: {
+                default: {
+                    appenders: ["console"],
+                    level: DEV_MODE ? "debug" : "info",
+                },
+            },
+        });
+    }
+
+    private attachBrowserInterceptor() {
+        // 保存原始console方法
+        this.originalConsole = {
+            debug: console.debug,
+            info: console.info,
+            warn: console.warn,
+            error: console.error,
+        };
+
+        // 非侵入式拦截：保持原有功能，添加拦截逻辑
+        ["debug", "info", "warn", "error"].forEach((level) => {
+            const originalMethod = console[level as keyof Console] as any;
+            (console as any)[level] = function (...args: any[]) {
+                // 始终调用原始方法保持正常输出
+                originalMethod.apply(console, args);
+
+                // 只有在激活时才进行拦截
+                if (this._isActive) {
+                    const entry: LogEntry = {
+                        timestamp: new Date().toISOString(),
+                        level: level as any,
+                        category: "renderer",
+                        message: args
+                            .map((arg) =>
+                                typeof arg === "object" ? safeStringify(arg) : String(arg),
+                            )
+                            .join(" "),
+                        source: "renderer",
+                    };
+                    // 在 renderer 进程中，直接通知本地监听器（log viewer UI）
+                    this.notify(entry);
+                }
+            };
+        });
+    }
+
+    private detachBrowserInterceptor() {
+        // 恢复原始console方法
+        if (this.originalConsole.debug) {
+            console.debug = this.originalConsole.debug;
+            console.info = this.originalConsole.info;
+            console.warn = this.originalConsole.warn;
+            console.error = this.originalConsole.error;
+        }
+    }
+}
+
+// 全局拦截器实例
+export const globalLogInterceptor = new LogInterceptor();
+
 // 安全序列化函数，处理循环引用和不可序列化对象
 function safeStringify(obj: unknown, maxDepth = 3): string {
     const seen = new WeakSet();
@@ -95,22 +279,49 @@ export class BrowserLogger {
         return `[${timestamp}] ${level.toUpperCase()} ${this.category} - ${processedArgs.join(" ")}`;
     }
 
+    private notifyInterceptor(level: string, ...args: unknown[]) {
+        if (globalLogInterceptor && globalLogInterceptor["isActive"]) {
+            const message = args
+                .map((arg) => {
+                    if (typeof arg === "object" && arg !== null) {
+                        return safeStringify(arg);
+                    }
+                    return String(arg);
+                })
+                .join(" ");
+
+            const entry: LogEntry = {
+                timestamp: new Date().toISOString(),
+                level: level as any,
+                category: this.category,
+                message,
+                source: "renderer",
+            };
+
+            globalLogInterceptor.notify(entry);
+        }
+    }
+
     debug(...args: unknown[]): void {
         if (this.level === "debug") {
             console.debug(this.formatMessage("debug", ...args));
+            this.notifyInterceptor("debug", ...args);
         }
     }
 
     info(...args: unknown[]): void {
         console.info(this.formatMessage("info", ...args));
+        this.notifyInterceptor("info", ...args);
     }
 
     warn(...args: unknown[]): void {
         console.warn(this.formatMessage("warn", ...args));
+        this.notifyInterceptor("warn", ...args);
     }
 
     error(...args: unknown[]): void {
         console.error(this.formatMessage("error", ...args));
+        this.notifyInterceptor("error", ...args);
     }
 }
 
@@ -151,10 +362,14 @@ export const loggers: Record<string, PhotasaLogger> = {
     config: getLogger("config"),
     scan: getLogger("scan"),
     thumbnail: getLogger("thumbnail"),
+    preference: getLogger("preference"),
     worker: getLogger("worker"),
     watch: getLogger("watch"),
     window: getLogger("window"),
     shell: getLogger("shell"),
     api: getLogger("api"),
+    import: getLogger("import"),
     importProgress: getLogger("importProgress"),
+    update: getLogger("update"),
+    discovery: getLogger("discovery"),
 };

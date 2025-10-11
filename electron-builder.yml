@@ -1,4 +1,4 @@
-appId: com.thepicasa.photasa
+appId: me.photasa.app
 productName: Photasa
 directories:
     buildResources: build
@@ -10,31 +10,55 @@ files:
     - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 asarUnpack:
     - resources/*
+    - node_modules/ffmpeg-static/**/*
+    - node_modules/ffprobe-static/**/*
+    - node_modules/@ffmpeg-installer/**/*
+    - node_modules/@ffprobe-installer/**/*
+    # 确保包含实际的二进制文件
+    - "**/*.exe" # Windows
+    - "**/ffmpeg" # macOS/Linux
+    - "**/ffprobe" # macOS/Linux
+    - "**/*.so" # Linux shared libraries
+    - "**/*.so.*" # Linux versioned libraries
 afterSign: build/notarize.js
 win:
+    target:
+        - target: nsis
+          arch:
+              - x64
     executableName: Photasa
 nsis:
-    artifactName: ${name}-${version}-setup.${ext}
+    artifactName: ${productName}-${version}.${ext}
     shortcutName: ${productName}
     uninstallDisplayName: ${productName}
     createDesktopShortcut: always
 mac:
+    target:
+        - target: dmg
+          arch:
+              - x64
+              - arm64
+    category: public.app-category.photography
     entitlementsInherit: build/entitlements.mac.plist
+    entitlements: build/entitlements.mac.plist
+    hardenedRuntime: true
+    gatekeeperAssess: false
     extendInfo:
         - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
         - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    identity: null
 dmg:
-    artifactName: ${name}-${version}.${ext}
+    artifactName: ${productName}-${version}.${ext}
 linux:
     target:
         - AppImage
         - snap
         - deb
-    maintainer: www.thepicasa.com
+    maintainer: www.photasa.me
     category: Utility
 appImage:
-    artifactName: ${name}-${version}.${ext}
+    artifactName: ${productName}-${version}-linux.${ext}
 npmRebuild: false
 publish:
     provider: generic
-    url: https://wwww.thepicasa.com/auto-updates
+    url: https://photasa.me/api/updates/releases

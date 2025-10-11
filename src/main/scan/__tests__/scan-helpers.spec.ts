@@ -286,6 +286,12 @@ describe("scan-helpers", () => {
 
     describe("validateScanParams", () => {
         it("应该验证有效的扫描参数", () => {
+            // 模拟fs.statSync返回目录统计信息
+            mockFs.statSync.mockReturnValue({
+                isDirectory: () => true,
+                isFile: () => false,
+            });
+
             const validScan: ScanAction = {
                 path: "/test/path",
                 action: "scan",

@@ -1,8 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
+import { markRaw } from "vue";
 import BaseMenuItem from "../BaseMenuItem.vue";
 
 describe("BaseMenuItem", () => {
+    // 清理函数，确保测试之间不会相互影响
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
     it("应该正确渲染基本内容", () => {
         const wrapper = mount(BaseMenuItem, {
             slots: {
@@ -16,39 +21,38 @@ describe("BaseMenuItem", () => {
     });
 
     it("点击时应该触发click事件", async () => {
-        const clickHandler = vi.fn();
         const wrapper = mount(BaseMenuItem, {
-            props: {
-                onClick: clickHandler,
-            },
             slots: {
                 default: "点击我",
             },
         });
 
+        // 使用 Vue Test Utils 的标准方法触发事件
         await wrapper.find(".base-menu-item").trigger("click");
 
-        expect(clickHandler).toHaveBeenCalledTimes(1);
-        expect(clickHandler).toHaveBeenCalledWith(expect.any(MouseEvent));
+        // 验证事件被正确触发
+        expect(wrapper.emitted("click")).toBeTruthy();
+        expect(wrapper.emitted("click")).toHaveLength(1);
     });
 
     it("disabled状态下不应该触发click事件", async () => {
-        const clickHandler = vi.fn();
         const wrapper = mount(BaseMenuItem, {
             props: {
                 disabled: true,
-                onClick: clickHandler,
             },
             slots: {
                 default: "禁用的菜单项",
             },
         });
 
+        // 验证 disabled 状态
         expect(wrapper.classes()).toContain("base-menu-item--disabled");
 
+        // 尝试触发点击事件
         await wrapper.find(".base-menu-item").trigger("click");
 
-        expect(clickHandler).not.toHaveBeenCalled();
+        // 验证事件没有被触发
+        expect(wrapper.emitted("click")).toBeFalsy();
     });
 
     it("应该正确应用disabled样式类", () => {
@@ -93,11 +97,11 @@ describe("BaseMenuItem", () => {
     });
 
     it("应该正确渲染图标", () => {
-        // 创建一个简单的图标组件mock
-        const IconComponent = {
+        // 创建一个简单的图标组件mock，使用markRaw避免Vue将其转换为响应式对象
+        const IconComponent = markRaw({
             name: "TestIcon",
             template: '<div class="test-icon">图标</div>',
-        };
+        });
 
         const wrapper = mount(BaseMenuItem, {
             props: {
@@ -131,9 +135,10 @@ describe("BaseMenuItem", () => {
             },
         });
 
-        expect(wrapper.vm.disabled).toBe(false);
-        expect(wrapper.vm.danger).toBe(false);
-        expect(wrapper.vm.icon).toBeUndefined();
+        // 通过组件行为验证默认属性值，而不是直接访问内部状态
+        expect(wrapper.classes()).not.toContain("base-menu-item--disabled");
+        expect(wrapper.classes()).not.toContain("base-menu-item--danger");
+        expect(wrapper.find(".base-menu-item__icon").exists()).toBe(false);
     });
 
     it("应该正确响应属性变化", async () => {
@@ -171,38 +176,36 @@ describe("BaseMenuItem", () => {
         expect(contentElement.find("b").text()).toBe("内容");
     });
 
-    it("事件处理应该传递正确的event对象", async () => {
-        const clickHandler = vi.fn();
+    it("应该正确处理事件回调", async () => {
         const wrapper = mount(BaseMenuItem, {
-            props: {
-                onClick: clickHandler,
-            },
             slots: {
                 default: "测试事件",
             },
         });
 
-        // 通过DOM事件触发
+        // 触发点击事件
         await wrapper.find(".base-menu-item").trigger("click");
 
-        expect(clickHandler).toHaveBeenCalledTimes(1);
-        expect(clickHandler).toHaveBeenCalledWith(expect.any(MouseEvent));
+        // 验证事件被触发且包含事件对象
+        expect(wrapper.emitted("click")).toBeTruthy();
+        expect(wrapper.emitted("click")).toHaveLength(1);
+        expect(wrapper.emitted("click")?.[0]).toHaveLength(1);
     });
 
-    it("在disabled状态下不应该触发click事件", async () => {
-        const clickHandler = vi.fn();
+    it("应该正确处理多次点击", async () => {
         const wrapper = mount(BaseMenuItem, {
-            props: {
-                disabled: true,
-                onClick: clickHandler,
-            },
             slots: {
-                default: "禁用测试",
+                default: "多次点击测试",
             },
         });
 
+        // 多次触发点击事件
+        await wrapper.find(".base-menu-item").trigger("click");
+        await wrapper.find(".base-menu-item").trigger("click");
         await wrapper.find(".base-menu-item").trigger("click");
 
-        expect(clickHandler).not.toHaveBeenCalled();
+        // 验证所有点击都被正确处理
+        expect(wrapper.emitted("click")).toBeTruthy();
+        expect(wrapper.emitted("click")).toHaveLength(3);
     });
 });

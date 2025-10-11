@@ -1,6 +1,7 @@
 import createWorker from "./import-worker?nodeWorker";
 import type { IpcMain } from "electron";
-import { dialog } from "electron";
+import { dialog, app } from "electron";
+import { getAppPath } from "@shared/path-util";
 import type { WorkerResponse } from "@common/types";
 import {
     sendWorkerTask,
@@ -10,7 +11,7 @@ import {
     type ProgressEvent,
     type PreviewProgressEvent,
 } from "@common/worker-util";
-import { getLogger } from "@common/logger";
+import { loggers } from "@common/logger";
 import { ImportEvents } from "@common/constants";
 import { importHistoryManager } from "./history-manager";
 import type {
@@ -30,19 +31,30 @@ import type {
     ImportSession,
     EnhancedImportCallback,
 } from "@common/import-types";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
 /**
  * 导入 worker 类型
  */
 type ImportWorker = Worker<ImportRequest, ImportResponse>;
 
+const logger = loggers.import;
 /**
  * 导入服务 - 管理照片导入的主要服务
  */
-export default class ImportService {
+@Service({
+    name: "import",
+    displayName: "导入服务",
+    priority: ServicePriority.Critical,
+    startupDelay: 0,
+    lazyLoad: false,
+    description: "处理照片导入操作",
+})
+export default class ImportService implements IService {
+    readonly name = "import";
     private ipc: IpcMain;
     private worker: ImportWorker;
-    private logger = getLogger("import");
 
     // 活跃的导入会话
     private activeSessions = new Map<string, ImportSession>();
@@ -55,17 +67,23 @@ export default class ImportService {
         private mainWindow?: Electron.BrowserWindow,
     ) {
         this.ipc = ipcMain;
-        this.logger.info("ImportService: Creating import service...");
-        this.logger.info(`ImportService: mainWindow provided: ${!!mainWindow}`);
+        logger.info("ImportService: Creating import service...");
+        logger.info(`ImportService: mainWindow provided: ${!!mainWindow}`);
 
-        // 创建 worker
-        this.worker = createWorker({ workerData: "worker" });
+        // 创建 worker，传递应用路径
+        this.worker = createWorker({
+            workerData: "worker",
+            env: {
+                ...process.env,
+                APP_PATH: getAppPath(app),
+            },
+        });
 
         // 处理 worker 消息
         this.worker.on(
             "message",
             (message: WorkerResponse<ImportResponse> | ProgressEvent | PreviewProgressEvent) => {
-                this.logger.debug("Received message from import worker:", message);
+                logger.debug("Received message from import worker:", message);
 
                 // 检查消息类型
                 if ((message as ProgressEvent).type === "progress") {
@@ -78,10 +96,17 @@ export default class ImportService {
             },
         );
 
+        logger.info("Import service worker and listeners initialized");
+    }
+
+    /**
+     * 初始化导入服务
+     */
+    async initialize(): Promise<void> {
         // 注册IPC处理器
         this.setupIpcHandlers();
 
-        this.logger.info("Import service initialized");
+        logger.info("[ImportService] 导入服务已初始化");
     }
 
     /**
@@ -89,7 +114,7 @@ export default class ImportService {
      */
     private handleProgressEvent(progressEvent: ProgressEvent): void {
         const { taskId, data } = progressEvent;
-        this.logger.debug(`[import-service] Progress event for task ${taskId}:`, data);
+        logger.debug(`[import-service] Progress event for task ${taskId}:`, data);
 
         // 查找对应的导入会话
         const session = this.activeSessions.get(taskId);
@@ -116,21 +141,19 @@ export default class ImportService {
      * 设置IPC处理器
      */
     private setupIpcHandlers(): void {
-        this.logger.info("[import-service] Setting up IPC handlers...");
+        logger.info("[import-service] Setting up IPC handlers...");
         // 扫描源目录
         this.ipc.handle(
             ImportEvents.SCAN_DIRECTORIES,
             async (_, paths: string[], filters?: ImportFilters) => {
-                this.logger.info(
-                    `[import-service] Scan directories: ${paths?.join(", ") || "无路径"}`,
-                );
+                logger.info(`[import-service] Scan directories: ${paths?.join(", ") || "无路径"}`);
                 return await this.scanDirectories(paths, filters);
             },
         );
 
         // 预览导入
         this.ipc.handle(ImportEvents.PREVIEW, async (_, config: ImportConfig) => {
-            this.logger.info(
+            logger.info(
                 `[import-service] Preview import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
             );
             return await this.previewImport(config);
@@ -140,7 +163,7 @@ export default class ImportService {
         this.ipc.handle(
             ImportEvents.EXECUTE,
             async (_, config: ImportConfig & { importId?: string }) => {
-                this.logger.info(
+                logger.info(
                     `[import-service] Execute import from: ${config.sourcePaths?.join(", ") || "无源路径"}`,
                 );
                 return await this.startImport(config);
@@ -149,19 +172,19 @@ export default class ImportService {
 
         // 取消导入
         this.ipc.handle(ImportEvents.CANCEL, async (_, importId: string) => {
-            this.logger.info(`[import-service] Cancel import: ${importId}`);
+            logger.info(`[import-service] Cancel import: ${importId}`);
             return await this.cancelImport(importId);
         });
 
         // 暂停导入
         this.ipc.handle(ImportEvents.PAUSE, async (_, importId: string) => {
-            this.logger.info(`[import-service] Pause import: ${importId}`);
+            logger.info(`[import-service] Pause import: ${importId}`);
             return await this.pauseImport(importId);
         });
 
         // 恢复导入
         this.ipc.handle(ImportEvents.RESUME, async (_, importId: string) => {
-            this.logger.info(`[import-service] Resume import: ${importId}`);
+            logger.info(`[import-service] Resume import: ${importId}`);
             return await this.resumeImport(importId);
         });
 
@@ -172,38 +195,38 @@ export default class ImportService {
 
         // 获取导入历史
         this.ipc.handle(ImportEvents.GET_HISTORY, async (_, limit?: number) => {
-            this.logger.info(`[import-service] Get import history (limit: ${limit})`);
+            logger.info(`[import-service] Get import history (limit: ${limit})`);
             return await this.getImportHistory(limit);
         });
 
         // 获取导入详情
         this.ipc.handle(ImportEvents.GET_DETAILS, async (_, historyId: string) => {
-            this.logger.info(`[import-service] Get import details: ${historyId}`);
+            logger.info(`[import-service] Get import details: ${historyId}`);
             return await this.getImportDetails(historyId);
         });
 
         // 预览撤销操作
         this.ipc.handle(ImportEvents.PREVIEW_UNDO, async (_, historyId: string) => {
-            this.logger.info(`[import-service] Preview undo import: ${historyId}`);
+            logger.info(`[import-service] Preview undo import: ${historyId}`);
             return await this.previewUndo(historyId);
         });
 
         // 撤销导入
         this.ipc.handle(ImportEvents.UNDO, async (_, historyId: string) => {
-            this.logger.info(`[import-service] Undo import: ${historyId}`);
+            logger.info(`[import-service] Undo import: ${historyId}`);
             return await this.undoImport(historyId);
         });
 
         // 选择多个目录
         this.ipc.handle(ImportEvents.CHOOSE_DIRECTORIES, async (_, multiSelect = true) => {
-            this.logger.info(`[import-service] Choose directories (multiSelect: ${multiSelect})`);
-            this.logger.info(`[import-service] mainWindow exists: ${!!this.mainWindow}`);
+            logger.info(`[import-service] Choose directories (multiSelect: ${multiSelect})`);
+            logger.info(`[import-service] mainWindow exists: ${!!this.mainWindow}`);
             return await this.chooseDirectories(multiSelect);
         });
 
         // 提取元数据
         this.ipc.handle(ImportEvents.EXTRACT_METADATA, async (_, request: MetadataRequest) => {
-            this.logger.info(`[import-service] Extract metadata: ${request.filePath}`);
+            logger.info(`[import-service] Extract metadata: ${request.filePath}`);
             return await this.extractMetadata(request);
         });
     }
@@ -212,7 +235,7 @@ export default class ImportService {
      * 扫描多个源目录，获取文件组信息
      */
     private async scanDirectories(paths: string[], filters?: ImportFilters): Promise<FileGroup[]> {
-        this.logger.info(`[import-service] Scanning directories: ${paths?.join(", ") || "无路径"}`);
+        logger.info(`[import-service] Scanning directories: ${paths?.join(", ") || "无路径"}`);
 
         try {
             const request: ScanDirectoriesRequest = { paths, filters };
@@ -227,10 +250,10 @@ export default class ImportService {
             }
 
             const result = response.data as FileGroup[];
-            this.logger.info(`[import-service] Scan completed: found ${result.length} file groups`);
+            logger.info(`[import-service] Scan completed: found ${result.length} file groups`);
             return result;
         } catch (error) {
-            this.logger.error(`[import-service] Scan directories failed: ${error}`);
+            logger.error(`[import-service] Scan directories failed: ${error}`);
             throw error;
         }
     }
@@ -239,18 +262,18 @@ export default class ImportService {
      * 预览导入操作，不实际执行导入
      */
     private async previewImport(config: ImportConfig): Promise<ImportPreview> {
-        this.logger.info(`[import-service] Generating import preview`);
+        logger.info(`[import-service] Generating import preview`);
 
         // 验证配置
         if (!config.sourcePaths || !Array.isArray(config.sourcePaths)) {
-            this.logger.error(
+            logger.error(
                 `[import-service] Invalid sourcePaths: ${typeof config.sourcePaths}, value: ${JSON.stringify(config.sourcePaths)}`,
             );
             throw new Error("sourcePaths must be a non-empty array");
         }
 
         if (config.sourcePaths.length === 0) {
-            this.logger.warn(`[import-service] Empty sourcePaths array`);
+            logger.warn(`[import-service] Empty sourcePaths array`);
             throw new Error("sourcePaths cannot be empty");
         }
 
@@ -295,12 +318,12 @@ export default class ImportService {
             }
 
             const result = response.data as ImportPreview;
-            this.logger.info(
+            logger.info(
                 `[import-service] Preview generated: ${result.statistics.totalFiles} files`,
             );
             return result;
         } catch (error) {
-            this.logger.error(`[import-service] Preview import failed: ${error}`);
+            logger.error(`[import-service] Preview import failed: ${error}`);
             throw error;
         }
     }
@@ -313,7 +336,7 @@ export default class ImportService {
     ): Promise<{ importId: string }> {
         const importId = config.importId || this.generateImportId();
 
-        this.logger.info(`[import-service] Starting import session: ${importId}`);
+        logger.info(`[import-service] Starting import session: ${importId}`);
 
         // 创建导入会话
         const session: ImportSession = {
@@ -339,13 +362,13 @@ export default class ImportService {
     private async executeImportInBackground(importId: string): Promise<void> {
         const session = this.activeSessions.get(importId);
         if (!session) {
-            this.logger.error(`[import-service] Session not found: ${importId}`);
+            logger.error(`[import-service] Session not found: ${importId}`);
             return;
         }
 
         try {
             session.status = "processing";
-            this.logger.info(`[import-service] Background execution started: ${importId}`);
+            logger.info(`[import-service] Background execution started: ${importId}`);
 
             // 序列化配置中的日期对象
             const serializableConfig = this.serializeImportConfig(session.config);
@@ -373,11 +396,11 @@ export default class ImportService {
             if (session.cancelRequested) {
                 session.status = "cancelled";
                 this.sendImportEvent(importId, "import:cancelled", {});
-                this.logger.info(`[import-service] Import cancelled: ${importId}`);
+                logger.info(`[import-service] Import cancelled: ${importId}`);
             } else {
                 session.status = "completed";
                 this.sendImportEvent(importId, "import:complete", result);
-                this.logger.info(`[import-service] Import completed: ${importId}`);
+                logger.info(`[import-service] Import completed: ${importId}`);
 
                 // 记录导入历史
                 await this.recordImportHistory(result);
@@ -387,7 +410,7 @@ export default class ImportService {
             this.sendImportEvent(importId, "import:error", {
                 error: error instanceof Error ? error.message : String(error),
             });
-            this.logger.error(`[import-service] Import failed: ${importId}, error: ${error}`);
+            logger.error(`[import-service] Import failed: ${importId}, error: ${error}`);
         } finally {
             // 清理会话（保留5分钟用于查询）
             setTimeout(() => this.activeSessions.delete(importId), 300000);
@@ -401,7 +424,7 @@ export default class ImportService {
         config: ImportConfig,
         callback?: EnhancedImportCallback,
     ): Promise<ImportResult> {
-        this.logger.info(`[import-service] Starting import execution`);
+        logger.info(`[import-service] Starting import execution`);
 
         try {
             // 如果提供了回调，存储它
@@ -440,7 +463,7 @@ export default class ImportService {
             }
 
             const result = response.data as ImportResult;
-            this.logger.info(
+            logger.info(
                 `[import-service] Import completed: ${result.successfulFiles}/${result.totalFiles} files imported`,
             );
 
@@ -449,7 +472,7 @@ export default class ImportService {
 
             return result;
         } catch (error) {
-            this.logger.error(`[import-service] Execute import failed: ${error}`);
+            logger.error(`[import-service] Execute import failed: ${error}`);
             throw error;
         }
     }
@@ -458,7 +481,7 @@ export default class ImportService {
      * 取消正在进行的导入操作
      */
     private async cancelImport(importId: string): Promise<boolean> {
-        this.logger.info(`[import-service] Cancelling import: ${importId}`);
+        logger.info(`[import-service] Cancelling import: ${importId}`);
 
         try {
             const session = this.activeSessions.get(importId);
@@ -477,14 +500,14 @@ export default class ImportService {
                 // 清理回调
                 this.progressCallbacks.delete(importId);
 
-                this.logger.info(`[import-service] Import cancellation requested: ${importId}`);
+                logger.info(`[import-service] Import cancellation requested: ${importId}`);
                 return true;
             }
 
-            this.logger.warn(`[import-service] Import session not found: ${importId}`);
+            logger.warn(`[import-service] Import session not found: ${importId}`);
             return false;
         } catch (error) {
-            this.logger.error(`[import-service] Cancel import failed: ${error}`);
+            logger.error(`[import-service] Cancel import failed: ${error}`);
             return false;
         }
     }
@@ -493,7 +516,7 @@ export default class ImportService {
      * 暂停正在进行的导入操作
      */
     private async pauseImport(importId: string): Promise<boolean> {
-        this.logger.info(`[import-service] Pausing import: ${importId}`);
+        logger.info(`[import-service] Pausing import: ${importId}`);
 
         try {
             const session = this.activeSessions.get(importId);
@@ -502,16 +525,16 @@ export default class ImportService {
                 session.pauseTime = new Date();
                 this.activeSessions.set(importId, session);
 
-                this.logger.info(`[import-service] Import paused: ${importId}`);
+                logger.info(`[import-service] Import paused: ${importId}`);
                 return true;
             }
 
-            this.logger.warn(
+            logger.warn(
                 `[import-service] Cannot pause import: ${importId} (not found or not processing)`,
             );
             return false;
         } catch (error) {
-            this.logger.error(`[import-service] Pause import failed: ${error}`);
+            logger.error(`[import-service] Pause import failed: ${error}`);
             return false;
         }
     }
@@ -520,7 +543,7 @@ export default class ImportService {
      * 恢复暂停的导入操作
      */
     private async resumeImport(importId: string): Promise<ImportResult> {
-        this.logger.info(`[import-service] Resuming import: ${importId}`);
+        logger.info(`[import-service] Resuming import: ${importId}`);
 
         try {
             const session = this.activeSessions.get(importId);
@@ -533,13 +556,13 @@ export default class ImportService {
                 // 继续执行导入
                 const result = await this.executeImport(session.config);
 
-                this.logger.info(`[import-service] Import resumed and completed: ${importId}`);
+                logger.info(`[import-service] Import resumed and completed: ${importId}`);
                 return result;
             }
 
             throw new Error(`Cannot resume import: ${importId} (not found or not paused)`);
         } catch (error) {
-            this.logger.error(`[import-service] Resume import failed: ${error}`);
+            logger.error(`[import-service] Resume import failed: ${error}`);
             throw error;
         }
     }
@@ -548,7 +571,7 @@ export default class ImportService {
      * 获取导入进度信息
      */
     private async getImportProgress(importId: string): Promise<ImportProgress> {
-        this.logger.debug(`[import-service] Getting import progress: ${importId}`);
+        logger.debug(`[import-service] Getting import progress: ${importId}`);
 
         try {
             const session = this.activeSessions.get(importId);
@@ -572,7 +595,7 @@ export default class ImportService {
                 status: "completed",
             };
         } catch (error) {
-            this.logger.error(`[import-service] Get import progress failed: ${error}`);
+            logger.error(`[import-service] Get import progress failed: ${error}`);
             throw error;
         }
     }
@@ -581,12 +604,12 @@ export default class ImportService {
      * 获取导入历史记录
      */
     private async getImportHistory(limit?: number): Promise<ImportHistory[]> {
-        this.logger.info(`[import-service] Getting import history (limit: ${limit})`);
+        logger.info(`[import-service] Getting import history (limit: ${limit})`);
 
         try {
             return await importHistoryManager.getHistory(limit);
         } catch (error) {
-            this.logger.error(`[import-service] Get import history failed: ${error}`);
+            logger.error(`[import-service] Get import history failed: ${error}`);
             throw error;
         }
     }
@@ -595,12 +618,12 @@ export default class ImportService {
      * 获取导入详情
      */
     private async getImportDetails(historyId: string): Promise<ImportHistory | null> {
-        this.logger.info(`[import-service] Getting import details: ${historyId}`);
+        logger.info(`[import-service] Getting import details: ${historyId}`);
 
         try {
             return await importHistoryManager.getImportDetails(historyId);
         } catch (error) {
-            this.logger.error(`[import-service] Get import details failed: ${error}`);
+            logger.error(`[import-service] Get import details failed: ${error}`);
             throw error;
         }
     }
@@ -609,12 +632,12 @@ export default class ImportService {
      * 预览撤销操作
      */
     private async previewUndo(historyId: string): Promise<any> {
-        this.logger.info(`[import-service] Previewing undo for import: ${historyId}`);
+        logger.info(`[import-service] Previewing undo for import: ${historyId}`);
 
         try {
             return await importHistoryManager.previewUndo(historyId);
         } catch (error) {
-            this.logger.error(`[import-service] Preview undo failed: ${error}`);
+            logger.error(`[import-service] Preview undo failed: ${error}`);
             throw error;
         }
     }
@@ -623,12 +646,12 @@ export default class ImportService {
      * 撤销指定的导入操作
      */
     private async undoImport(historyId: string): Promise<UndoResult> {
-        this.logger.info(`[import-service] Undoing import: ${historyId}`);
+        logger.info(`[import-service] Undoing import: ${historyId}`);
 
         try {
             return await importHistoryManager.undoImport(historyId);
         } catch (error) {
-            this.logger.error(`[import-service] Undo import failed: ${error}`);
+            logger.error(`[import-service] Undo import failed: ${error}`);
             throw error;
         }
     }
@@ -637,10 +660,10 @@ export default class ImportService {
      * 选择多个目录
      */
     private async chooseDirectories(multiSelect = true): Promise<{ filePaths: string[] }> {
-        this.logger.info(`[import-service] Choosing directories (multiSelect: ${multiSelect})`);
+        logger.info(`[import-service] Choosing directories (multiSelect: ${multiSelect})`);
 
         try {
-            this.logger.info("[import-service] 准备显示目录选择对话框...");
+            logger.info("[import-service] 准备显示目录选择对话框...");
             if (!this.mainWindow) {
                 throw new Error("Main window is not available");
             }
@@ -649,21 +672,21 @@ export default class ImportService {
                 title: multiSelect ? "Select Source Directories" : "Select Target Directory",
             });
 
-            this.logger.info(
+            logger.info(
                 `[import-service] 对话框结果: canceled=${result.canceled}, paths=${result.filePaths?.length || 0}`,
             );
 
             if (result.canceled) {
-                this.logger.info("[import-service] 用户取消了对话框");
+                logger.info("[import-service] 用户取消了对话框");
                 return { filePaths: [] };
             }
 
-            this.logger.info(
+            logger.info(
                 `[import-service] Selected directories: ${result.filePaths?.join(", ") || "无路径"}`,
             );
             return { filePaths: result.filePaths };
         } catch (error) {
-            this.logger.error(`[import-service] Choose directories failed: ${error}`);
+            logger.error(`[import-service] Choose directories failed: ${error}`);
             throw error;
         }
     }
@@ -672,7 +695,7 @@ export default class ImportService {
      * 提取文件元数据
      */
     private async extractMetadata(request: MetadataRequest): Promise<FileMetadata> {
-        this.logger.debug(`[import-service] Extracting metadata: ${request.filePath}`);
+        logger.debug(`[import-service] Extracting metadata: ${request.filePath}`);
 
         try {
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
@@ -686,10 +709,10 @@ export default class ImportService {
             }
 
             const result = response.data as FileMetadata;
-            this.logger.debug(`[import-service] Metadata extracted: ${result.dateSource}`);
+            logger.debug(`[import-service] Metadata extracted: ${result.dateSource}`);
             return result;
         } catch (error) {
-            this.logger.error(`[import-service] Extract metadata failed: ${error}`);
+            logger.error(`[import-service] Extract metadata failed: ${error}`);
             throw error;
         }
     }
@@ -698,24 +721,39 @@ export default class ImportService {
      * 记录导入历史
      */
     private async recordImportHistory(result: ImportResult): Promise<void> {
-        this.logger.debug(`[import-service] Recording import history: ${result.importId}`);
+        logger.debug(`[import-service] Recording import history: ${result.importId}`);
 
         try {
             await importHistoryManager.recordImport(result);
-            this.logger.info(`[import-service] Import history recorded: ${result.importId}`);
+            logger.info(`[import-service] Import history recorded: ${result.importId}`);
         } catch (error) {
-            this.logger.error(`[import-service] Record import history failed: ${error}`);
+            logger.error(`[import-service] Record import history failed: ${error}`);
             // 不抛出错误，因为这不应该影响导入结果
         }
     }
 
     /**
-     * 清理资源
+     * 关闭导入服务
      */
-    public async cleanup(): Promise<void> {
-        this.logger.info("[import-service] Cleaning up import service");
+    async shutdown(): Promise<void> {
+        logger.info("[import-service] Cleaning up import service");
 
         try {
+            // 清理 IPC 处理器
+            this.ipc.removeHandler(ImportEvents.SCAN_DIRECTORIES);
+            this.ipc.removeHandler(ImportEvents.PREVIEW);
+            this.ipc.removeHandler(ImportEvents.EXECUTE);
+            this.ipc.removeHandler(ImportEvents.CANCEL);
+            this.ipc.removeHandler(ImportEvents.PAUSE);
+            this.ipc.removeHandler(ImportEvents.RESUME);
+            this.ipc.removeHandler(ImportEvents.GET_PROGRESS);
+            this.ipc.removeHandler(ImportEvents.GET_HISTORY);
+            this.ipc.removeHandler(ImportEvents.GET_DETAILS);
+            this.ipc.removeHandler(ImportEvents.PREVIEW_UNDO);
+            this.ipc.removeHandler(ImportEvents.UNDO);
+            this.ipc.removeHandler(ImportEvents.CHOOSE_DIRECTORIES);
+            this.ipc.removeHandler(ImportEvents.EXTRACT_METADATA);
+
             // 取消所有活跃的导入会话
             for (const [importId, session] of this.activeSessions) {
                 if (session.status === "processing") {
@@ -732,9 +770,9 @@ export default class ImportService {
                 this.worker.terminate();
             }
 
-            this.logger.info("[import-service] Import service cleanup completed");
+            logger.info("[ImportService] 导入服务已关闭");
         } catch (error) {
-            this.logger.error(`[import-service] Cleanup failed: ${error}`);
+            logger.error(`[import-service] Cleanup failed: ${error}`);
         }
     }
 
@@ -798,7 +836,7 @@ export default class ImportService {
                 timestamp: new Date(),
                 ...data,
             });
-            this.logger.debug(`[import-service] Sent event: ${eventName} for import: ${importId}`);
+            logger.debug(`[import-service] Sent event: ${eventName} for import: ${importId}`);
         }
     }
 

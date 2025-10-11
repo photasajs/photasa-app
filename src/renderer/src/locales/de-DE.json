@@ -3,18 +3,35 @@
         "title": "Photasa",
         "folderList": "Ordnerliste"
     },
+    "logViewer": {
+        "title": "System-Log-Konsole",
+        "searchPlaceholder": "Logs durchsuchen...",
+        "allLevels": "Alle Level",
+        "debug": "Debug",
+        "info": "Info",
+        "warn": "Warnung",
+        "error": "Fehler",
+        "clear": "Löschen",
+        "export": "Exportieren",
+        "opacity": "Transparenz",
+        "noLogs": "Keine Logs verfügbar",
+        "showing": "Zeige {filtered} / {total} Logs",
+        "autoScroll": "Auto-Scroll"
+    },
     "preference": {
         "settings": "Einstellungen",
         "tabs": {
             "general": "Allgemein",
             "about": "Über",
             "theme": "Thema",
-            "advanced": "Erweiterte Einstellungen"
+            "advanced": "Erweiterte Einstellungen",
+            "autoUpdate": "Auto-Update",
+            "scanMonitoring": "Scan-Überwachung"
         },
         "folderList": "Ordnerliste",
         "folderListUsage": "Verwendung",
-        "folderListDesc": "Nachdem Sie ein Verzeichnis zur Liste hinzugefügt haben, kann Photosa Fotos und Videos in diesem Verzeichnis in Echtzeit verwalten.",
-        "watchFolderList": "Photosa kann Fotos und Videos in den folgenden Verzeichnissen verwalten.",
+        "folderListDesc": "Nachdem Sie ein Verzeichnis zur Liste hinzugefügt haben, kann Photasa Fotos und Videos in diesem Verzeichnis in Echtzeit verwalten.",
+        "watchFolderList": "Photasa kann Fotos und Videos in den folgenden Verzeichnissen verwalten.",
         "chooseDirectory": "Verzeichnis auswählen und zur Liste hinzufügen",
         "thumbnailSize": "Miniaturbildgröße",
         "darkMode": "Dunkler Modus",
@@ -24,6 +41,36 @@
             "title": "Erweiterte Aktion: Verzeichnis-Speicher zurücksetzen",
             "desc": "Diese Aktion löscht alle Verzeichniseinstellungen und baut den Cache sofort neu auf. Diese Aktion ist nicht umkehrbar. Bitte mit Vorsicht fortfahren!",
             "button": "Verzeichnis-Speicher zurücksetzen"
+        },
+        "autoUpdate": {
+            "title": "Automatisches Update",
+            "description": "Konfigurieren Sie automatische Anwendungsupdates, um sicherzustellen, dass Sie immer die neueste Version von Photasa haben",
+            "enabled": "Auto-Update aktivieren",
+            "checkInterval": "Prüfintervall",
+            "prerelease": "Vorabversionen einschließen",
+            "prereleaseDescription": "Aktivieren, um Beta- und RC-Versionen zu erhalten, die ungetestete Funktionen enthalten können",
+            "autoInstall": "Updates automatisch installieren",
+            "autoInstallDescription": "Wenn aktiviert, werden Updates automatisch im Hintergrund installiert und beim nächsten Neustart wirksam",
+            "checkNow": "Jetzt prüfen",
+            "downloadUpdate": "Update herunterladen",
+            "installUpdate": "Installieren und neu starten",
+            "currentVersion": "Aktuelle Version",
+            "latestVersion": "Neueste Version",
+            "lastCheck": "Letzte Prüfung",
+            "intervals": {
+                "hourly": "Stündlich",
+                "sixHours": "Alle 6 Stunden",
+                "daily": "Täglich",
+                "weekly": "Wöchentlich"
+            },
+            "status": {
+                "idle": "Bereit",
+                "checking": "Suche nach Updates...",
+                "downloading": "Herunterladen ({progress}%)",
+                "downloaded": "Update heruntergeladen",
+                "upToDate": "Bereits aktuell",
+                "error": "Fehler beim Suchen nach Updates"
+            }
         }
     },
     "import": {
@@ -327,11 +374,11 @@
         "error": "Fehler",
         "scan": {
             "title": "Verzeichnis scannen",
-            "message": "Verzeichnisscan abgeschlossen, Fotos wurden in Photosa importiert."
+            "message": "Verzeichnisscan abgeschlossen, Fotos wurden in Photasa importiert."
         },
         "duplicatePath": {
             "title": "Doppeltes Verzeichnis",
-            "message": "Verzeichnis [{folder}] existiert bereits in Photosa."
+            "message": "Verzeichnis [{folder}] existiert bereits in Photasa."
         },
         "emptyPath": {
             "title": "Verzeichnis auswählen",
@@ -359,8 +406,11 @@
         "scanComplete": "Verzeichnis [{path}] wurde verarbeitet.",
         "start": "Scan gestartet",
         "progress": "Scan-Fortschritt",
+        "processingFile": "Verarbeitung: {fileName}",
+        "scanningPath": "Scannen: {path}",
         "complete": "Scan abgeschlossen",
-        "error": "Scan-Fehler"
+        "error": "Scan-Fehler",
+        "scanFailed": "Scan fehlgeschlagen: {path}"
     },
     "button": {
         "import": "Importieren",
@@ -542,6 +592,26 @@
             "1h": "Letzte Stunde",
             "6h": "Letzte 6 Stunden",
             "24h": "Letzte 24 Stunden"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "Neue Version verfügbar",
+            "message": "Version {version} ist verfügbar",
+            "cancel": "Abbrechen",
+            "install": "Installieren",
+            "cancelDownload": "Download abbrechen",
+            "installNow": "Jetzt installieren",
+            "viewDetails": "Details anzeigen"
+        },
+        "popup": {
+            "title": "Neue Version verfügbar",
+            "message": "Version {version} ist verfügbar",
+            "cancel": "Abbrechen",
+            "install": "Installieren",
+            "cancelDownload": "Download abbrechen",
+            "installNow": "Jetzt installieren",
+            "close": "Schließen"
         }
     }
 }

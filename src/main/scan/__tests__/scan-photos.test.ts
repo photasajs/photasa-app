@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { walkthroughPhotos, shouldProcessFile } from "../scan-photos";
+import { walkthroughPhotosInFolder, shouldProcessFile } from "../scan-photos";
 import type { ScanAction } from "@common/scan-types";
 import fs from "fs-extra";
 import path from "path";
@@ -50,9 +50,16 @@ const mockLogger = {
 describe("scan-photos enhanced functionality", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // 默认设置fs.existsSync为true，模拟文件存在
+        (fs.existsSync as any).mockReturnValue(true);
+        // 设置fs.statSync的默认返回值
+        (fs.statSync as any).mockReturnValue({
+            isFile: () => true,
+            isDirectory: () => false,
+        });
     });
 
-    describe("walkthroughPhotos - single file operations", () => {
+    describe("walkthroughPhotosInFolder - single file operations", () => {
         it("should handle single image file operations", () => {
             const scanAction: ScanAction = {
                 path: "/test/image.jpg",
@@ -67,7 +74,7 @@ describe("scan-photos enhanced functionality", () => {
             return new Promise<void>((resolve) => {
                 const results: any[] = [];
 
-                walkthroughPhotos(scanAction).subscribe({
+                walkthroughPhotosInFolder(scanAction).subscribe({
                     next: (result) => {
                         results.push(result);
                     },
@@ -100,7 +107,7 @@ describe("scan-photos enhanced functionality", () => {
             return new Promise<void>((resolve) => {
                 const results: any[] = [];
 
-                walkthroughPhotos(scanAction).subscribe({
+                walkthroughPhotosInFolder(scanAction).subscribe({
                     next: (result) => {
                         results.push(result);
                     },
@@ -132,7 +139,7 @@ describe("scan-photos enhanced functionality", () => {
             return new Promise<void>((resolve) => {
                 const results: any[] = [];
 
-                walkthroughPhotos(scanAction).subscribe({
+                walkthroughPhotosInFolder(scanAction).subscribe({
                     next: (result) => {
                         results.push(result);
                     },
@@ -155,7 +162,7 @@ describe("scan-photos enhanced functionality", () => {
             // For directory operations, the function should use klaw (existing logic)
             // This test ensures that the new file logic doesn't break directory scanning
             return new Promise<void>((resolve) => {
-                walkthroughPhotos(scanAction).subscribe({
+                walkthroughPhotosInFolder(scanAction).subscribe({
                     error: (error) => {
                         // We expect klaw to fail in test environment, but that's ok
                         // The important thing is that we didn't go through the file path

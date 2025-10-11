@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, reactive, defineExpose } from "vue";
+import { ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
@@ -175,8 +175,15 @@ async function fixConfig(): Promise<void> {
  * @param key - The folder to rescan
  */
 async function rescan(key: string): Promise<void> {
-    await resetPhotasaConfig(key);
-    addScanFolder(key, "rescan");
+    logger.info(`[FolderList] Starting rescan for folder: ${key}`);
+    try {
+        await resetPhotasaConfig(key);
+        logger.info(`[FolderList] Reset config completed for: ${key}`);
+        addScanFolder(key, "rescan");
+        logger.info(`[FolderList] Added scan folder to queue: ${key}`);
+    } catch (error) {
+        logger.error(`[FolderList] Error during rescan of ${key}:`, error);
+    }
 }
 
 // Expose methods to parent component
@@ -207,6 +214,7 @@ defineExpose({
                 :show-line="false"
                 :selectable="true"
                 :checkable="false"
+                :auto-focus-on-expand="true"
             >
                 <!-- 文件夹图标 -->
                 <template #icon>

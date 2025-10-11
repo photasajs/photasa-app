@@ -105,8 +105,8 @@ describe("scan-helpers-fix", () => {
             expect(secondCall.isVideo).toBe(false);
             expect(secondCall.isDirectory).toBe(false);
 
-            // 验证 complete 被调用
-            expect(mockSubscriber.complete).toHaveBeenCalled();
+            // 验证 complete 没有被调用（由调用方控制订阅器生命周期）
+            expect(mockSubscriber.complete).not.toHaveBeenCalled();
 
             // 验证日志记录
             expect(mockLogger.info).toHaveBeenCalledWith(
@@ -152,7 +152,7 @@ describe("scan-helpers-fix", () => {
             await restoreCachedFiles(testFolder, mockSubscriber, mockLogger);
 
             expect(mockSubscriber.next).not.toHaveBeenCalled();
-            expect(mockSubscriber.complete).toHaveBeenCalled();
+            expect(mockSubscriber.complete).not.toHaveBeenCalled();
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 `[restoreCachedFiles] 配置文件不存在: ${path.join(testFolder, ".photasa.json")}`,
             );
@@ -172,7 +172,7 @@ describe("scan-helpers-fix", () => {
             await restoreCachedFiles(testFolder, mockSubscriber, mockLogger);
 
             expect(mockSubscriber.next).not.toHaveBeenCalled();
-            expect(mockSubscriber.complete).toHaveBeenCalled();
+            expect(mockSubscriber.complete).not.toHaveBeenCalled();
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 `[restoreCachedFiles] 配置文件格式无效: ${configPath}`,
             );
@@ -192,7 +192,7 @@ describe("scan-helpers-fix", () => {
             await restoreCachedFiles(testFolder, mockSubscriber, mockLogger);
 
             expect(mockSubscriber.next).not.toHaveBeenCalled();
-            expect(mockSubscriber.complete).toHaveBeenCalled();
+            expect(mockSubscriber.complete).not.toHaveBeenCalled();
             expect(mockLogger.info).toHaveBeenCalledWith(
                 `[restoreCachedFiles] 从缓存恢复 0 个文件`,
             );
@@ -246,7 +246,7 @@ describe("scan-helpers-fix", () => {
 
             // 只应该处理有效的记录
             expect(mockSubscriber.next).toHaveBeenCalledTimes(2);
-            expect(mockSubscriber.complete).toHaveBeenCalled();
+            expect(mockSubscriber.complete).not.toHaveBeenCalled();
         });
 
         it("应该处理混合媒体类型", async () => {

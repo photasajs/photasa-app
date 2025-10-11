@@ -21,7 +21,16 @@ import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/a
 import { toDirName } from "@renderer/utils/api-path";
 import { loggers } from "@common/logger";
 
-const logger = loggers.app;
+const logger = loggers.preference;
+
+// 自动更新配置接口
+export interface AutoUpdateConfig {
+    enabled: boolean; // 是否启用自动更新
+    checkInterval: number; // 检查间隔（小时）
+    allowPrerelease: boolean; // 是否允许预发布版本
+    autoInstall: boolean; // 是否自动安装更新
+    lastCheck?: string; // 上次检查时间
+}
 
 export type PreferenceState = {
     paths: string[]; // Paths to monitor
@@ -38,6 +47,8 @@ export type PreferenceState = {
     themeId: string; // 当前主题 id
     // 导入时排除的路径模式（如 .photasaoriginal, .git 等）
     excludePaths: string[];
+    // 自动更新配置
+    autoUpdate: AutoUpdateConfig;
 };
 
 export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
@@ -68,6 +79,13 @@ export const usePreferenceStore = defineStore("preference", {
                 ".svn", // SVN版本控制文件夹
                 "node_modules", // Node.js依赖文件夹
             ],
+            // 默认自动更新配置
+            autoUpdate: {
+                enabled: true,
+                checkInterval: 24, // 每天检查一次
+                allowPrerelease: false,
+                autoInstall: false, // 默认不自动安装，让用户确认
+            },
         };
     },
     persist: true,
@@ -98,10 +116,26 @@ export const usePreferenceStore = defineStore("preference", {
                 this.paths = this.paths.sort();
             }
         },
-        async addScanFolder(folder: string, action: "scan" | "rescan" | "current") {
-            logger.debug(`Adding scan folder: ${folder}, action: ${action}`);
+        async addScanFolder(
+            folder: string,
+            action: "scan" | "rescan" | "current",
+            source: "user" | "auto" = "user",
+        ) {
+            logger.debug(
+                `[addScanFolder] Adding scan folder: ${folder}, action: ${action}, source: ${source}`,
+            );
+
+            // 导入优先级排序工具
+            const {
+                createScanAction,
+                sortScanningFolders,
+                updateScanActionPriority,
+                shouldUpdateScanAction,
+                debugPrintScanningFolders,
+            } = await import("@renderer/utils/scan-priority");
+
             if (!Array.isArray(this.scanningFolder)) {
-                logger.debug("Initializing scanningFolder array");
+                logger.debug("[PreferenceStore] Initializing scanningFolder array");
                 this.scanningFolder = [];
             }
 
@@ -110,53 +144,118 @@ export const usePreferenceStore = defineStore("preference", {
 
             // Check if the folder is already in the scanning queue
             const existingIndex = this.scanningFolder.findIndex((p) => p.path === folder);
+
             if (existingIndex >= 0) {
-                // 只有在明确要求 rescan 且当前不是 rescan 时才更新
-                if (action === "rescan" && this.scanningFolder[existingIndex].action !== "rescan") {
-                    logger.debug("Updating existing folder to rescan:", folder);
-                    this.scanningFolder[existingIndex].action = "rescan";
+                const existing = this.scanningFolder[existingIndex];
+
+                // 检查是否应该更新现有项（基于优先级）
+                if (shouldUpdateScanAction(existing, action, source)) {
+                    logger.debug(`Updating existing folder with higher priority: ${folder}`);
+                    logger.debug(
+                        `Previous: ${existing.action}(${existing.source}) -> New: ${action}(${source})`,
+                    );
+
+                    this.scanningFolder[existingIndex] = updateScanActionPriority(
+                        existing,
+                        action,
+                        source,
+                    );
+                    this.scanningFolder = sortScanningFolders(this.scanningFolder);
                 } else {
                     logger.debug(
-                        "Folder already in scanning queue with action:",
-                        this.scanningFolder[existingIndex].action,
+                        `[PreferenceStore] Folder already in scanning queue with equal or higher priority:`,
+                        `${existing.action}(${existing.source}) >= ${action}(${source})`,
                     );
                 }
                 return;
             }
 
             // 智能检查：如果文件夹已扫描且不是强制重新扫描，则跳过
-            if (action === "scan") {
+            // 注意：对于用户手动添加的文件夹，需要确保子目录能被发现并添加到队列
+            if (action === "scan" && source === "auto") {
                 try {
                     const { checkPhotasaConfig } = await import("@renderer/utils/api");
                     const configCheck = await checkPhotasaConfig(folder);
 
                     if (configCheck.hasConfig) {
-                        // 仍然更新文件夹树，但不添加到扫描队列
+                        // 文件夹已扫描过，跳过扫描
                         this.updateFolderTree(folder);
-                        return;
+                        logger.debug(
+                            `[PreferenceStore] Folder already scanned (auto source), skipping: ${folder}`,
+                        );
+                        return; // 跳过添加到队列
                     }
                 } catch (error) {
-                    logger.warn(`Failed to check photasa config for ${folder}:`, error);
+                    logger.warn(
+                        `[PreferenceStore] Failed to check photasa config for ${folder}:`,
+                        error,
+                    );
                     // 如果检查失败，继续正常流程
                 }
+            } else if (action === "scan" && source === "user") {
+                // 对于用户手动添加的文件夹，始终添加到扫描队列以确保子目录被发现
+                logger.debug(
+                    `[PreferenceStore] User-initiated scan, adding to queue regardless of existing config: ${folder}`,
+                );
             }
 
+            // 创建新的扫描动作（带优先级信息）
+            const newScanAction = createScanAction(
+                {
+                    path: folder,
+                    action,
+                    thumbnailSize: this.thumbnailSize,
+                    operationType: "directory", // Default to directory for legacy compatibility
+                },
+                source,
+            );
+
             // Add the new folder to scan
-            logger.debug("Adding new folder to scan:", folder);
-            this.scanningFolder.push({
-                path: folder,
-                action,
-                thumbnailSize: this.thumbnailSize,
-                operationType: "directory", // Default to directory for legacy compatibility
-                createdAt: Date.now(), // Add timestamp for proper sorting
-            });
+            logger.debug("[PreferenceStore] Adding new folder to scan:", folder);
+            this.scanningFolder.push(newScanAction);
+
+            // 排序所有扫描文件夹
+            this.scanningFolder = sortScanningFolders(this.scanningFolder);
+
+            // 更新文件夹树
             this.updateFolderTree(folder);
+
+            // Debug: show current queue state
+            debugPrintScanningFolders(this.scanningFolder, "updated_scanning_queue");
         },
-        addFileOperation(operation: FileOperationInput) {
+
+        /**
+         * 批量添加扫描文件夹
+         * RFC 0018: 支持优先级排序的批量添加
+         */
+        async addFoldersForScan(
+            folders: string[],
+            action: "scan" | "rescan" | "current" = "scan",
+            source: "user" | "auto" = "user",
+        ) {
+            logger.debug(
+                `[addFoldersForScan] Batch adding ${folders.length} folders with action: ${action}, source: ${source}`,
+            );
+
+            // 导入优先级排序工具
+            const { debugPrintScanningFolders } = await import("@renderer/utils/scan-priority");
+
+            // 批量添加所有文件夹
+            for (const folder of folders) {
+                await this.addScanFolder(folder, action, source);
+            }
+
+            // Final debug log: show complete queue state
+            debugPrintScanningFolders(
+                this.scanningFolder,
+                `batch_add_completed_${folders.length}_folders`,
+            );
+        },
+        async addFileOperation(operation: FileOperationInput) {
             logger.debug("Adding file operation to queue:", operation);
 
             if (!Array.isArray(this.scanningFolder)) {
-                logger.debug("Initializing scanningFolder array");
+                logger.debug("[PreferenceStore] Initializing scanningFolder array");
                 this.scanningFolder = [];
             }
 
@@ -175,7 +274,10 @@ export const usePreferenceStore = defineStore("preference", {
 
                 if (existingIndex >= 0) {
                     // Update existing file operation
-                    logger.debug("Updating existing file operation:", normalizedPath);
+                    logger.debug(
+                        "[PreferenceStore] Updating existing file operation:",
+                        normalizedPath,
+                    );
                     this.scanningFolder[existingIndex] = {
                         ...this.scanningFolder[existingIndex],
                         ...operation,
@@ -186,17 +288,29 @@ export const usePreferenceStore = defineStore("preference", {
             }
 
             // Add new operation to queue
-            logger.debug("Adding new file operation to queue:", normalizedPath);
-            this.scanningFolder.push({
+            logger.debug("[PreferenceStore] Adding new file operation to queue:", normalizedPath);
+
+            // 导入优先级排序工具以确保完整的字段
+            const { ensureCompleteScanAction } = await import("@renderer/utils/scan-priority");
+
+            // 创建扫描动作并确保所有字段完整
+            const scanAction = ensureCompleteScanAction({
                 path: normalizedPath,
                 action: operation.action,
                 thumbnailSize: operation.thumbnailSize,
                 operationType: operation.operationType,
                 priority: operation.priority,
+                timestamp: operation.timestamp,
+                source: operation.source,
                 retryCount: operation.retryCount || 0,
-                createdAt: operation.createdAt || Date.now(),
                 fileOperationId: operation.fileOperationId,
             });
+
+            this.scanningFolder.push(scanAction);
+
+            // 排序扫描队列
+            const { sortScanningFolders } = await import("@renderer/utils/scan-priority");
+            this.scanningFolder = sortScanningFolders(this.scanningFolder);
 
             // Update folder tree for both file and directory operations
             if (operation.operationType === "directory") {
@@ -207,12 +321,15 @@ export const usePreferenceStore = defineStore("preference", {
                     const parentDir = toDirName(normalizedPath);
                     if (parentDir && parentDir !== normalizedPath && parentDir !== "/") {
                         logger.debug(
-                            `Updating folder tree with parent directory: ${parentDir} for file: ${normalizedPath}`,
+                            `[PreferenceStore] Updating folder tree with parent directory: ${parentDir} for file: ${normalizedPath}`,
                         );
                         this.updateFolderTree(parentDir);
                     }
                 } catch (error) {
-                    logger.warn(`Failed to update folder tree for file ${normalizedPath}:`, error);
+                    logger.warn(
+                        `[PreferenceStore] Failed to update folder tree for file ${normalizedPath}:`,
+                        error,
+                    );
                     // Continue execution, don't interrupt file operation
                 }
             }
@@ -221,9 +338,11 @@ export const usePreferenceStore = defineStore("preference", {
             this.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
-            logger.debug(`[completeScanPath] Attempting to complete scan for folder: ${folder}`);
             logger.debug(
-                `[completeScanPath] Current scanningFolder before:`,
+                `[PreferenceStore] [completeScanPath] Attempting to complete scan for folder: ${folder}`,
+            );
+            logger.debug(
+                `[PreferenceStore] [completeScanPath] Current scanningFolder before:`,
                 this.scanningFolder.map((f) => f.path),
             );
 
@@ -231,7 +350,7 @@ export const usePreferenceStore = defineStore("preference", {
             if (index > -1) {
                 this.scanningFolder.splice(index, 1);
                 logger.debug(
-                    `[completeScanPath] Successfully removed folder from scanning queue at index ${index}: ${folder}`,
+                    `[PreferenceStore] [completeScanPath] Successfully removed folder from scanning queue at index ${index}: ${folder}`,
                 );
             } else {
                 logger.debug(`[completeScanPath] Folder not found in scanning queue: ${folder}`);
@@ -259,30 +378,30 @@ export const usePreferenceStore = defineStore("preference", {
             });
         },
         removePath(path: string): void {
-            logger.debug("Removing path:", path);
+            logger.debug("[PreferenceStore] Removing path:", path);
 
             // Remove from paths array
             const index = this.paths.indexOf(path);
             if (index >= 0) {
                 this.paths.splice(index, 1);
-                logger.debug("Removed from paths array");
+                logger.debug("[PreferenceStore] Removed from paths array");
             }
 
             // Remove from folder tree
             const found = this.folderTree.findIndex((node) => node.key === path);
             if (found >= 0) {
                 this.folderTree.splice(found, 1);
-                logger.debug("Removed from folder tree");
+                logger.debug("[PreferenceStore] Removed from folder tree");
             }
 
             // Cancel any running scan tasks
             if (scanPhotosTask.isRunning) {
-                logger.debug("Cancelling running scan tasks");
+                logger.debug("[PreferenceStore] Cancelling running scan tasks");
                 scanPhotosTask.cancelAll();
             }
 
             // Clean up the scan queue
-            logger.debug("Cleaning up scan queue");
+            logger.debug("[PreferenceStore] Cleaning up scan queue");
             cleanupScanQueue(path);
 
             // Remove from scanning queue and all its subdirectories
@@ -302,7 +421,7 @@ export const usePreferenceStore = defineStore("preference", {
             // Reset current folder if it was the removed one
             if (this.currentFolder === path) {
                 this.currentFolder = this.paths[0] || "";
-                logger.debug("Reset current folder to:", this.currentFolder);
+                logger.debug("[PreferenceStore] Reset current folder to:", this.currentFolder);
             }
         },
         addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
@@ -392,6 +511,36 @@ export const usePreferenceStore = defineStore("preference", {
                 this.addPath(dir);
                 await window.api?.resetPhotasaConfig?.(dir);
             }
+        },
+        /**
+         * 更新自动更新配置
+         * @param config 要更新的配置对象（部分更新）
+         */
+        updateAutoUpdateConfig(config: Partial<AutoUpdateConfig>) {
+            this.autoUpdate = { ...this.autoUpdate, ...config };
+            logger.debug("[PreferenceStore] Updated auto-update config:", this.autoUpdate);
+        },
+        /**
+         * 设置最后检查时间
+         * @param timestamp 检查时间戳或ISO字符串
+         */
+        setAutoUpdateLastCheck(timestamp: string | number) {
+            const dateStr =
+                typeof timestamp === "string" ? timestamp : new Date(timestamp).toISOString();
+            this.autoUpdate.lastCheck = dateStr;
+            logger.debug("[PreferenceStore] Updated auto-update last check time:", dateStr);
+        },
+        /**
+         * 重置自动更新配置为默认值
+         */
+        resetAutoUpdateConfig() {
+            this.autoUpdate = {
+                enabled: true,
+                checkInterval: 24,
+                allowPrerelease: false,
+                autoInstall: false,
+            };
+            logger.debug("[PreferenceStore] Reset auto-update config to defaults");
         },
     },
 });

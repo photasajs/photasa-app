@@ -10,18 +10,35 @@
             "24h": "Last 24 hours"
         }
     },
+    "logViewer": {
+        "title": "System Log Console",
+        "searchPlaceholder": "Search logs...",
+        "allLevels": "All Levels",
+        "debug": "Debug",
+        "info": "Info",
+        "warn": "Warn",
+        "error": "Error",
+        "clear": "Clear",
+        "export": "Export",
+        "opacity": "Opacity",
+        "noLogs": "No logs available",
+        "showing": "Showing {filtered} / {total} logs",
+        "autoScroll": "Auto Scroll"
+    },
     "preference": {
         "settings": "Settings",
         "tabs": {
             "general": "General",
             "about": "About",
             "theme": "Theme",
-            "advanced": "Advanced"
+            "advanced": "Advanced",
+            "autoUpdate": "Auto Update",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",
-        "folderListDesc": "After adding a directory to the list, Photosa can manage photos and videos in that directory in real time.",
-        "watchFolderList": "Photosa can manage photos and videos in the following directories.",
+        "folderListDesc": "After adding a directory to the list, Photasa can manage photos and videos in that directory in real time.",
+        "watchFolderList": "Photasa can manage photos and videos in the following directories.",
         "chooseDirectory": "Choose directory and add to list",
         "thumbnailSize": "Thumbnail Size",
         "darkMode": "Dark Mode",
@@ -31,6 +48,59 @@
             "title": "Advanced Action: Reset Directory Storage",
             "desc": "This will clear all directory settings and immediately rebuild the cache. This action is irreversible. Proceed with caution!",
             "button": "Reset Directory Storage"
+        },
+        "scanMonitoring": {
+            "title": "Scan Monitoring",
+            "description": "Monitor scan queue status to ensure scan tasks are always running normally",
+            "enableAutoRecovery": "Enable Auto Recovery",
+            "enableAutoRecoveryHelp": "Automatically attempt to restart scanning when scan anomalies are detected",
+            "healthCheckInterval": "Health Check Interval",
+            "healthCheckIntervalHelp": "How often to check scan queue status",
+            "idleTimeout": "Idle Timeout",
+            "idleTimeoutHelp": "How long after queue is non-empty but scanning is idle before triggering recovery",
+            "staleTimeout": "Stale Timeout",
+            "staleTimeoutHelp": "How long after scanning is running but has no progress before forcing restart",
+            "maxRetries": "Max Retries",
+            "maxRetriesHelp": "How many consecutive recovery failures before stopping auto recovery",
+            "currentStatus": "Current Status",
+            "isMonitoring": "Monitoring Status",
+            "healthStatus": "Health Status",
+            "queueLength": "Queue Length",
+            "scanStatus": "Scan Status",
+            "consecutiveFailures": "Consecutive Failures",
+            "statusMessage": "Status Message",
+            "checkNow": "Check Now",
+            "reset": "Reset Status"
+        },
+        "autoUpdate": {
+            "title": "Auto Update",
+            "description": "Configure automatic application updates to ensure you always have the latest version of Photasa",
+            "enabled": "Enable auto update",
+            "checkInterval": "Check interval",
+            "prerelease": "Include pre-release versions",
+            "prereleaseDescription": "Enable to receive Beta and RC version updates, which may contain untested features",
+            "autoInstall": "Auto install updates",
+            "autoInstallDescription": "When enabled, updates will be installed automatically in the background and take effect on next restart",
+            "checkNow": "Check now",
+            "downloadUpdate": "Download update",
+            "installUpdate": "Install and restart",
+            "currentVersion": "Current version",
+            "latestVersion": "Latest version",
+            "lastCheck": "Last check",
+            "intervals": {
+                "hourly": "Hourly",
+                "sixHours": "Every 6 hours",
+                "daily": "Daily",
+                "weekly": "Weekly"
+            },
+            "status": {
+                "idle": "Idle",
+                "checking": "Checking for updates...",
+                "downloading": "Downloading ({progress}%)",
+                "downloaded": "Update downloaded",
+                "upToDate": "Already up to date",
+                "error": "Error checking for updates"
+            }
         }
     },
     "import": {
@@ -334,11 +404,11 @@
         "error": "Error",
         "scan": {
             "title": "Scan Directory",
-            "message": "Directory scan complete, photos have been imported into Photosa."
+            "message": "Directory scan complete, photos have been imported into Photasa."
         },
         "duplicatePath": {
             "title": "Duplicate Directory",
-            "message": "Directory [{folder}] already exists in Photosa."
+            "message": "Directory [{folder}] already exists in Photasa."
         },
         "emptyPath": {
             "title": "Choose Directory",
@@ -362,13 +432,16 @@
         "readingConfig": "Loading library info [{config}]",
         "loadingConfig": "Reading library info",
         "processing": "Processing [{file}]",
+        "processingFile": "Processing: {fileName}",
         "scanned": "Completed",
         "scanComplete": "Directory [{path}] has been processed.",
         "start": "Scan started",
         "scanning": "Scanning",
+        "scanningPath": "Scanning: {path}",
         "progress": "Scanning progress",
         "complete": "Scan complete",
-        "error": "Scan error"
+        "error": "Scan error",
+        "scanFailed": "Scan failed: {path}"
     },
     "button": {
         "import": "Import",
@@ -500,7 +573,17 @@
         "image": "image",
         "videos": "videos",
         "video": "video",
-        "counting": "Counting..."
+        "counting": "Counting...",
+        "yes": "Yes",
+        "no": "No",
+        "healthy": "Healthy",
+        "unhealthy": "Unhealthy",
+        "idle": "Idle",
+        "running": "Running",
+        "minute": "minute",
+        "minutes": "minutes",
+        "hour": "hour",
+        "hours": "hours"
     },
     "imageList": {
         "fileCount": {
@@ -543,6 +626,26 @@
             "error": "Error",
             "failed": "Failed",
             "unknown": "Unknown"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "viewDetails": "View Details"
+        },
+        "popup": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "close": "Close"
         }
     }
 }

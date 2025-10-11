@@ -1,8 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import BaseButton from "../BaseButton.vue";
 
+// 移除全局 Event mock，避免环境污染
+
 describe("BaseButton", () => {
+    // 清理函数，确保测试之间不会相互影响
+    afterEach(() => {
+        // 清理所有 mock 和定时器
+    });
     it("renders correctly with default props", () => {
         const wrapper = mount(BaseButton, {
             slots: {

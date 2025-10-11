@@ -17,9 +17,15 @@ import {
     BaseBreadcrumbItem,
     BaseTooltip,
     BaseCard,
+    FileCountBadge,
 } from "@renderer/components/ui";
 import { loggers } from "@common/logger";
-import ImageFallback from "@renderer/assets/images/fallback.png";
+// 在测试环境中使用data URL，避免网络请求
+import fallbackImage from "@renderer/assets/images/fallback.png";
+const ImageFallback =
+    process.env.NODE_ENV === "test"
+        ? "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
+        : fallbackImage;
 import { useVirtualizer } from "@tanstack/vue-virtual";
 import MediaPreview from "./MediaPreview.vue";
 import EmptyState from "./common/EmptyState.vue";
@@ -64,6 +70,17 @@ const card = computed<Card>(() => {
     const result = toImageList(currentFolder.value, currentFolderConfig.value);
 
     return result;
+});
+
+// 文件统计
+const imageCount = computed(() => {
+    if (!card.value?.images) return 0;
+    return card.value.images.filter((item) => !item.isVideo).length;
+});
+
+const videoCount = computed(() => {
+    if (!card.value?.images) return 0;
+    return card.value.images.filter((item) => item.isVideo).length;
 });
 
 // 文件元数据（支持图片/视频/文件信息）
@@ -323,7 +340,7 @@ onUnmounted(() => {
     >
         <!-- 标题区 -->
         <div
-            class="px-4 py-2 border-b flex items-center"
+            class="px-4 py-2 border-b flex items-center justify-between"
             style="border-color: var(--color-border); background: var(--color-bg-secondary)"
         >
             <BaseBreadcrumb>
@@ -335,6 +352,14 @@ onUnmounted(() => {
                     {{ part }}
                 </BaseBreadcrumbItem>
             </BaseBreadcrumb>
+
+            <!-- 文件统计 -->
+            <FileCountBadge
+                :image-count="imageCount"
+                :video-count="videoCount"
+                :is-loading="loadingPhotasaConfig"
+                :show-breakdown="true"
+            />
         </div>
         <!-- 内容区 -->
         <div

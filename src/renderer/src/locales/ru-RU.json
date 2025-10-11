@@ -9,7 +9,9 @@
             "general": "Общие",
             "about": "О программе",
             "theme": "Тема",
-            "advanced": "Дополнительно"
+            "advanced": "Дополнительно",
+            "autoUpdate": "Автообновление",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Список папок",
         "folderListUsage": "Способ использования",
@@ -359,8 +361,11 @@
         "scanComplete": "Папка [{path}] обработана.",
         "start": "Начать сканирование",
         "progress": "Прогресс сканирования",
+        "processingFile": "Обработка: {fileName}",
+        "scanningPath": "Сканирование: {path}",
         "complete": "Сканирование завершено",
-        "error": "Ошибка сканирования"
+        "error": "Ошибка сканирования",
+        "scanFailed": "Сканирование не удалось: {path}"
     },
     "button": {
         "import": "Импортировать",
@@ -542,6 +547,50 @@
             "1h": "Последний час",
             "6h": "Последние 6 часов",
             "24h": "Последние 24 часа"
+        }
+    },
+    "logViewer": {
+        "title": "Просмотрщик логов",
+        "levels": {
+            "all": "Все уровни",
+            "error": "Ошибка",
+            "warn": "Предупреждение",
+            "info": "Информация",
+            "debug": "Отладка"
+        },
+        "buttons": {
+            "clear": "Очистить",
+            "export": "Экспорт",
+            "opacity": "Прозрачность",
+            "close": "Закрыть"
+        },
+        "search": "Поиск в логах...",
+        "messages": {
+            "noLogs": "Логи недоступны",
+            "logsCleared": "Логи очищены",
+            "logsExported": "Логи экспортированы в {fileName}",
+            "exportFailed": "Ошибка экспорта логов: {error}"
+        },
+        "dragInfo": "Перетащите для перемещения окна"
+    },
+    "update": {
+        "notification": {
+            "title": "Доступна новая версия",
+            "message": "Версия {version} доступна",
+            "cancel": "Отмена",
+            "install": "Установить",
+            "cancelDownload": "Отменить загрузку",
+            "installNow": "Установить сейчас",
+            "viewDetails": "Показать детали"
+        },
+        "popup": {
+            "title": "Доступна новая версия",
+            "message": "Версия {version} доступна",
+            "cancel": "Отмена",
+            "install": "Установить",
+            "cancelDownload": "Отменить загрузку",
+            "installNow": "Установить сейчас",
+            "close": "Закрыть"
         }
     }
 }

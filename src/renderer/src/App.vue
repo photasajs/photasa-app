@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, inject } from "vue";
+import { computed, ref, inject, onUnmounted } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -37,9 +37,13 @@ import {
     PortalProvider,
     BaseModal,
     BaseSpinner,
+    UpdateNotification,
 } from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
+import { scanMonitoringService } from "@renderer/services/scan-monitoring-service";
+import LogConsole from "./components/LogConsole.vue";
+import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 
 /**
  * 日志记录器
@@ -52,6 +56,9 @@ const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
+
+// 初始化更新监听器
+const { updateStore } = useUpdateListener();
 
 const showImportDialog = ref(false);
 const showPreference = ref(false);
@@ -133,6 +140,8 @@ onMounted(async () => {
         task: t("app.title"),
         timestamp: Date.now(),
     });
+
+    // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
     themes.value = themeManager.getThemes();
     const cur = themeManager.getCurrentTheme();
@@ -147,8 +156,21 @@ onMounted(async () => {
     // 应用启动时全局初始化菜单栏数据（国际化）
     menusStore.refreshMenus(t);
 
+    // 初始化扫描监控服务
+    scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
+    scanMonitoringService.startMonitoring(() => {
+        logger.info("[扫描监控] 自动恢复触发，重启扫描");
+        startScanning();
+    });
+
     // Initialize the application
     await initializeApp();
+});
+
+// 组件卸载时清理监控服务
+onUnmounted(() => {
+    scanMonitoringService.stopMonitoring();
+    logger.info("[App] 扫描监控服务已停止");
 });
 
 // vue3 watch for array, should specify deep as true
@@ -163,50 +185,37 @@ watchArray(
     { deep: true },
 );
 
-// 包装 addScanFolder 增加日志
-const addScanFolderWithLog = (folder: string, action: "scan" | "rescan" | "current") => {
-    logger.debug(`[addScanFolderWithLog] Attempting to add folder: ${folder}, action: ${action}`);
-    logger.debug(
-        `[addScanFolderWithLog] Current scanningFolder before:`,
-        scanningFolder.value.map((f) => f.path),
+// 包装 addScanFolder 增加日志和source参数
+function addScanFolderWithLog(
+    folder: string,
+    action: "scan" | "rescan" | "current",
+    source: "user" | "auto" = "user",
+) {
+    logger.info(
+        `[addScanFolderWithLog] Adding folder to queue: ${folder}, action: ${action}, source: ${source}`,
     );
 
-    // 检查是否已存在
-    const existingIndex = scanningFolder.value.findIndex((f) => f.path === folder);
-    if (existingIndex >= 0) {
-        logger.debug(
-            `[addScanFolderWithLog] Folder already exists at index ${existingIndex}, skipping: ${folder}`,
-        );
-        return;
-    }
+    // 直接添加到队列，让 preference store 处理优先级和去重
+    // preference store 会根据优先级决定是否更新或跳过
+    addScanFolder(folder, action, source);
 
-    addScanFolder(folder, action);
-    logger.debug(`[addScanFolderWithLog] Successfully added folder: ${folder}`);
-    logger.debug(
-        `[addScanFolderWithLog] Current scanningFolder after:`,
-        scanningFolder.value.map((f) => f.path),
-    );
-};
+    logger.info(`[addScanFolderWithLog] Folder added to queue: ${folder} with source: ${source}`);
+}
 
 watchArray(
     scanningFolder,
     () => {
-        logger.debug(
-            "watchArray scanningFolder triggered",
-            scanningFolder.value,
-            scanPhotosTask.isIdle,
-        );
         if (scanPhotosTask.isIdle) {
-            logger.debug("scanPhotosTask is idle, calling startScanning");
+            logger.info("scanPhotosTask is idle, calling startScanning");
             startScanning();
         } else {
-            logger.debug("scanPhotosTask is not idle, will retry in 500ms");
+            logger.info("scanPhotosTask is not idle, will retry in 500ms");
             setTimeout(() => {
                 if (scanPhotosTask.isIdle) {
                     logger.debug("scanPhotosTask became idle, retrying startScanning");
                     startScanning();
                 } else {
-                    logger.debug("scanPhotosTask still not idle after 500ms");
+                    logger.warn("scanPhotosTask still not idle after 500ms");
                 }
             }, 500);
         }
@@ -220,6 +229,9 @@ const callbacks: ScanCallbacks = {
     logDebug: logger.debug.bind(logger),
     logError: logger.error.bind(logger),
 
+    // 国际化
+    t: (key: string, params?: Record<string, any>) => t(key, params || {}),
+
     updateProcessingStatus: (status: string) => {
         processingFile.value = status;
         // 同时更新状态栏
@@ -227,6 +239,20 @@ const callbacks: ScanCallbacks = {
             type: "scan",
             status: "scanning",
             task: status,
+            timestamp: Date.now(),
+        });
+    },
+
+    updateFileProgress: (fileName: string, current?: number, total?: number) => {
+        // 更新文件级别的处理状态 - 直接显示完整文件路径
+        const progressText = current && total ? ` (${current}/${total})` : "";
+        processingFile.value = `${fileName}${progressText}`;
+        // 同时更新状态栏，传递完整路径到data.currentFile
+        statusBarStore.update({
+            type: "scan",
+            status: "scanning",
+            task: `${fileName}${progressText}`,
+            data: { currentFile: fileName },
             timestamp: Date.now(),
         });
     },
@@ -247,7 +273,8 @@ const callbacks: ScanCallbacks = {
 
     scanSubfolders: scanSubfolders,
     addScanFolderToQueue: (path: string, action: string) => {
-        addScanFolderWithLog(path, action as "scan" | "rescan" | "current");
+        // 子目录发现使用 "auto" 源，以区分用户手动添加
+        addScanFolderWithLog(path, action as "scan" | "rescan" | "current", "auto");
     },
 
     performScanTask: async (action) => {
@@ -273,21 +300,48 @@ const callbacks: ScanCallbacks = {
 };
 
 async function startScanning(): Promise<void> {
-    // 调用纯函数处理扫描逻辑
-    const result = await orchestrateScan(scanningFolder.value, callbacks);
+    logger.debug("[扫描启动] 开始扫描流程");
 
-    // 根据结果决定是否继续
-    if (result.shouldScheduleNext) {
-        callbacks.scheduleNextScan();
-    }
+    try {
+        // 记录扫描活动
+        scanMonitoringService.recordActivity();
 
-    if (result.error) {
-        logger.error("Scan orchestration error:", result.error);
+        // 调用纯函数处理扫描逻辑
+        const result = await orchestrateScan(scanningFolder.value, callbacks);
+
+        // 根据结果决定是否继续
+        if (result.shouldScheduleNext) {
+            callbacks.scheduleNextScan();
+        }
+
+        if (result.error) {
+            logger.error("Scan orchestration error:", result.error);
+            scanMonitoringService.recordFailure();
+        } else {
+            // 记录成功的扫描活动
+            scanMonitoringService.recordActivity();
+        }
+    } catch (error) {
+        logger.error("[扫描启动] 扫描过程中发生异常", error);
+        scanMonitoringService.recordFailure();
+        throw error;
     }
 }
 
 function handlePreferenceOk(): void {
     showPreference.value = false;
+}
+
+// 更新处理函数
+function handleUpdateInstall(): void {
+    updateStore.startDownload();
+    // 调用主进程开始下载
+    window.api?.downloadUpdate?.();
+}
+
+function handleUpdateInstallNow(): void {
+    // 调用主进程安装更新
+    window.api?.installUpdate?.();
 }
 // Update title
 const title = computed(() => {
@@ -296,8 +350,15 @@ const title = computed(() => {
 useTitle(title);
 
 // 监听 find-photo 事件，用于刷新树结构
+// 🔧 状态栏路径显示修复：processScannedFileTask 回调中增强了路径构造逻辑
+// 相关修改：将 args.currentFile (文件名) 与 args.action.path (目录路径) 结合，构造完整文件路径
 findPhotoService.onFindPhoto((args: any) => {
     logger.debug("onFindPhoto received:", args.type, args.action?.path, args.progress);
+
+    // 记录扫描活动（表示有进展）
+    if (args.progress || args.type === "complete") {
+        scanMonitoringService.recordActivity();
+    }
 
     // 处理进度更新 - 更新scanningFolder中对应项目的progress信息
     if (args.progress && args.action?.path) {
@@ -316,9 +377,27 @@ findPhotoService.onFindPhoto((args: any) => {
         }
 
         // 更新当前处理的文件信息到状态栏
+        // 关键修复：确保状态栏显示完整文件路径而不是仅文件名
         if (args.currentFile) {
-            processingFile.value = `${t("status.scanning")} ${args.action.path} - ${args.currentFile}`;
+            /**
+             * 路径构造逻辑：
+             * - args.action.path: 扫描的目录路径（完整路径）
+             * - args.currentFile: 当前处理的文件名（仅文件名，来自 scan-worker.ts 的 path.basename()）
+             * - 目标：构造完整的文件路径供状态栏显示
+             *
+             * 示例：
+             * - args.action.path = "/Users/john/Photos"
+             * - args.currentFile = "bamm.jpg"
+             * - fullFilePath = "/Users/john/Photos/bamm.jpg"
+             *
+             * 安全处理：
+             * - replace(/\/+/g, "/") 确保路径中不会出现双斜杠问题
+             * - 支持 Unix/Linux/macOS 路径格式
+             */
+            const fullFilePath = `${args.action.path}/${args.currentFile}`.replace(/\/+/g, "/");
+            processingFile.value = `${t("status.scanning")} ${fullFilePath}`;
         } else {
+            // 当没有具体文件信息时，显示目录路径
             processingFile.value = `${t("status.scanning")} ${args.action.path}`;
         }
     }
@@ -357,8 +436,9 @@ window.api?.onScanQueueAdd((operations: any[]) => {
                 | "file"
                 | "directory",
             priority: operation.priority,
+            timestamp: operation.timestamp,
+            source: "auto" as const, // File operations are typically auto-generated
             retryCount: operation.retryCount,
-            createdAt: operation.timestamp,
             fileOperationId: operation.id,
         };
 
@@ -437,8 +517,25 @@ window.api?.onScanQueueAdd((operations: any[]) => {
     <!-- 通知容器 -->
     <NotificationContainer />
 
+    <!-- 更新通知组件 -->
+    <UpdateNotification
+        v-if="updateStore.hasUpdate"
+        :id="`update-${Date.now()}`"
+        :update-info="updateStore.updateInfo"
+        :download-progress="updateStore.downloadProgress"
+        :is-downloading="updateStore.isDownloading"
+        :is-ready-to-install="updateStore.isReadyToInstall"
+        @close="updateStore.hideUpdateNotification"
+        @cancel="updateStore.hideUpdateNotification"
+        @install="handleUpdateInstall"
+        @cancel-download="updateStore.cancelDownload"
+        @install-now="handleUpdateInstallNow"
+    />
+
     <!-- Portal提供者 - 为下拉菜单等组件提供渲染目标 -->
     <PortalProvider />
+    <!-- 日志控制台 -->
+    <LogConsole />
 </template>
 
 <style lang="less">

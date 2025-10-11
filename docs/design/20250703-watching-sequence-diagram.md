@@ -26,6 +26,7 @@ sequenceDiagram
 ```
 
 ## 说明
+
 - Renderer 通过 Preload 层发起监听请求，主进程用 chokidar 监听目录。
 - 文件变化事件通过 IPC 逐层传递，最终驱动前端 UI 自动刷新。
 - 支持随时关闭监听，资源及时释放。

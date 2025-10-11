@@ -6,6 +6,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import ImportProgressModal from "../ImportProgressModal.vue";
 
+// Date is already mocked in the global test setup, no need to mock it again here
+
 // Mock all external dependencies
 vi.mock("@renderer/utils/api");
 vi.mock("@renderer/utils/import-helpers");

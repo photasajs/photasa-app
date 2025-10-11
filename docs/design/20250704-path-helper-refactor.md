@@ -14,12 +14,12 @@
 ## API 设计
 
 - preload/index.ts 合并并暴露如下 API：
-  - `normalizePath(p: string): string`
-  - `mergePath(left: string, right?: string): string`
-  - `toFileName(file: string): string`
-  - `toThumbnailName(file: string): string`
-  - `shortenThumbnailName(file: string): string`
-  - `isFileUnderFolder(file: string, folder: string): boolean`
+    - `normalizePath(p: string): string`
+    - `mergePath(left: string, right?: string): string`
+    - `toFileName(file: string): string`
+    - `toThumbnailName(file: string): string`
+    - `shortenThumbnailName(file: string): string`
+    - `isFileUnderFolder(file: string, folder: string): boolean`
 - global.d.ts/common.d.ts 类型声明同步，所有 API 均有类型约束，保证开发体验和类型安全。
 
 ## 测试覆盖
@@ -43,22 +43,22 @@
 
 ## API 迁移与分层适配清单
 
-| 名称                      | 目标归属         | 现有 preload 暴露 | renderer 是否需调用 | 是否需要 preload api 支持 | 备注/说明                         |
-|---------------------------|------------------|-------------------|--------------------|--------------------------|------------------------------------|
-| buildThumbnailPath        | shared/path-util | 否                | 可能需要           | 是                       | renderer 需生成缩略图路径          |
-| toRelativeThumbnailPath   | shared/path-util | 否                | 可能需要           | 是                       | renderer 需生成相对缩略图路径      |
-| toPreviewPath             | shared/path-util | 否                | 可能需要           | 是                       | renderer 需生成预览图路径          |
-| isFileUnderFolder         | shared/path-util | 是                | 是                 | 是                       | 已在 preload api，renderer 需用    |
-| toFileName                | shared/path-util | 是                | 是                 | 是                       | 已在 preload api，renderer 需用    |
-| toThumbnailName           | shared/path-util | 是                | 是                 | 是                       | 已在 preload api，renderer 需用    |
-| shortenThumbnailName      | shared/path-util | 是                | 是                 | 是                       | 已在 preload api，renderer 需用    |
-| PHOTASA_ORIGINALS         | common           | 否                | 否                 | 否                       | 常量，renderer 不直接用            |
-| HeicExtensionRE           | common           | 否                | 否                 | 否                       | 常量，renderer 不直接用            |
-| toPosix                   | common           | 否                | 否                 | 否                       | 纯算法，renderer 不直接用          |
-| isHiddenFile              | common           | 是                | 是                 | 是                       | 已在 preload api，renderer 需用    |
-| shouldIgnorePhotasaPath   | common           | 是                | 是                 | 是                       | 已在 preload api，renderer 需用    |
-| isDirectory               | shared/preload   | 否                | 可能需要           | 视业务需求                | 依赖 fs，renderer 若需则暴露       |
-| isFile                    | shared/preload   | 否                | 可能需要           | 视业务需求                | 依赖 fs，renderer 若需则暴露       |
+| 名称                    | 目标归属         | 现有 preload 暴露 | renderer 是否需调用 | 是否需要 preload api 支持 | 备注/说明                       |
+| ----------------------- | ---------------- | ----------------- | ------------------- | ------------------------- | ------------------------------- |
+| buildThumbnailPath      | shared/path-util | 否                | 可能需要            | 是                        | renderer 需生成缩略图路径       |
+| toRelativeThumbnailPath | shared/path-util | 否                | 可能需要            | 是                        | renderer 需生成相对缩略图路径   |
+| toPreviewPath           | shared/path-util | 否                | 可能需要            | 是                        | renderer 需生成预览图路径       |
+| isFileUnderFolder       | shared/path-util | 是                | 是                  | 是                        | 已在 preload api，renderer 需用 |
+| toFileName              | shared/path-util | 是                | 是                  | 是                        | 已在 preload api，renderer 需用 |
+| toThumbnailName         | shared/path-util | 是                | 是                  | 是                        | 已在 preload api，renderer 需用 |
+| shortenThumbnailName    | shared/path-util | 是                | 是                  | 是                        | 已在 preload api，renderer 需用 |
+| PHOTASA_ORIGINALS       | common           | 否                | 否                  | 否                        | 常量，renderer 不直接用         |
+| HeicExtensionRE         | common           | 否                | 否                  | 否                        | 常量，renderer 不直接用         |
+| toPosix                 | common           | 否                | 否                  | 否                        | 纯算法，renderer 不直接用       |
+| isHiddenFile            | common           | 是                | 是                  | 是                        | 已在 preload api，renderer 需用 |
+| shouldIgnorePhotasaPath | common           | 是                | 是                  | 是                        | 已在 preload api，renderer 需用 |
+| isDirectory             | shared/preload   | 否                | 可能需要            | 视业务需求                | 依赖 fs，renderer 若需则暴露    |
+| isFile                  | shared/preload   | 否                | 可能需要            | 视业务需求                | 依赖 fs，renderer 若需则暴露    |
 
 > 迁移原则：每次迁移一个函数，严格对照本表，迁移后同步更新文档与类型声明，确保 renderer 仅通过 preload api 调用，common 层只保留常量和纯算法，shared 层实现所有平台相关逻辑。
 

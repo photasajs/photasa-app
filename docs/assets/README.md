@@ -9,7 +9,7 @@
 在文档中引用Mermaid样式文件：
 
 ```html
-<link rel="stylesheet" href="assets/css/mermaid.css">
+<link rel="stylesheet" href="assets/css/mermaid.css" />
 ```
 
 ### 特性
@@ -22,11 +22,11 @@
 ### 字体大小配置
 
 | 元素类型 | 默认大小 | 大屏幕 | 小屏幕 |
-|----------|----------|--------|--------|
-| 节点标签 | 16px | 18px | 14px |
-| 边标签 | 14px | 16px | 12px |
-| 标题 | 18px | 20px | 16px |
-| 子图标题 | 16px | 18px | 14px |
+| -------- | -------- | ------ | ------ |
+| 节点标签 | 16px     | 18px   | 14px   |
+| 边标签   | 14px     | 16px   | 12px   |
+| 标题     | 18px     | 20px   | 16px   |
+| 子图标题 | 16px     | 18px   | 14px   |
 
 ### 自定义配置
 
@@ -34,7 +34,7 @@
 
 ### 示例
 
-```markdown
+````markdown
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': { 'fontSize': '24px', 'primaryTextColor': '#000', 'primaryColor': '#2563eb', 'lineColor': '#374151', 'actorBkg': '#f3f4f6', 'actorTextColor': '#000', 'actorLineColor': '#000', 'messageTextColor': '#000', 'messageLineColor': '#000', 'labelTextColor': '#000', 'labelBackground': '#f9fafb', 'labelBorder': '#d1d5db', 'sectionBkgColor': '#f8fafc', 'altSectionBkgColor': '#f1f5f9', 'gridColor': '#e5e7eb', 'secondaryColor': '#f59e0b', 'tertiaryColor': '#10b981'}}}%%
 %%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
@@ -44,6 +44,9 @@ graph TD
     B -->|否| D[结束]
     C --> D
 ```
+````
+
 ```
 
 这个样式配置会让Mermaid图表在文档中显示得更大更清晰，提高可读性。
+```

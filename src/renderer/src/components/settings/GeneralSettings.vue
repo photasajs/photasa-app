@@ -86,7 +86,7 @@ function handleRemove(item): void {
 </script>
 
 <template>
-    <div class="settings-content">
+    <div class="settings-content settings-container">
         <div class="setting-section">
             <label class="setting-label">{{ t("preference.watchFolderList") }}</label>
             <BaseSpace direction="vertical">

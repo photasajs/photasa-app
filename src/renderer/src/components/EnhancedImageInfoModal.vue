@@ -25,11 +25,15 @@
                         @click="handleOpenInFinder"
                         :disabled="!photasa?.path"
                     >
-                        <PhFolderOpen class="w-4 h-4" />
+                        <template #icon>
+                            <PhFolderOpen class="w-4 h-4" />
+                        </template>
                         {{ t("imageInfo.openInFinder") }}
                     </BaseButton>
                     <BaseButton variant="primary" @click="handleFixConfig" :loading="fixing">
-                        <PhWrench class="w-4 h-4" />
+                        <template #icon>
+                            <PhWrench class="w-4 h-4" />
+                        </template>
                         {{ t("imageInfo.repairLibrary") }}
                     </BaseButton>
                 </div>

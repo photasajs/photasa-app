@@ -12,7 +12,7 @@
  *
  * @see RFC文档: /docs/rfcs/headless-ui-components.md
  * @version 1.0.0
- * @author Picasa Vue Team
+ * @author Photasa Vue Team
  */
 
 // === 核心基础组件 ===
@@ -24,6 +24,7 @@ export { default as BaseSwitch } from "./BaseSwitch.vue";
 // === 表单组件 ===
 export { default as BaseForm } from "./BaseForm.vue";
 export { default as BaseFormField } from "./BaseFormField.vue";
+export { default as BaseInlineFormField } from "./BaseInlineFormField.vue";
 
 // === 选择器组件 ===
 export { default as BaseSelect } from "./BaseSelect.vue";
@@ -62,6 +63,7 @@ export { default as BaseSpinner } from "./BaseSpinner.vue";
 export { default as BaseSpinContainer } from "./BaseSpinContainer.vue";
 export { default as BaseNotification } from "./BaseNotification.vue";
 export { default as NotificationContainer } from "./NotificationContainer.vue";
+export { default as UpdateNotification } from "./UpdateNotification.vue";
 
 // === 展示和描述组件 ===
 export { default as BaseDescriptions } from "./BaseDescriptions.vue";
@@ -95,6 +97,7 @@ export { default as BaseListItem } from "./BaseListItem.vue";
 export { default as BaseAccordion } from "./BaseAccordion.vue";
 export { default as BaseAccordionPanel } from "./BaseAccordionPanel.vue";
 export { default as FileCountBadge } from "./FileCountBadge.vue";
+export { default as FileTypeBadge } from "./FileTypeBadge.vue";
 
 // === Portal系统 ===
 // 为Teleport提供渲染目标，与Vue原生兼容

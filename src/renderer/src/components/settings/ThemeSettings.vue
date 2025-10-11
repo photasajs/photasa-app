@@ -44,7 +44,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="theme-settings">
+    <div class="theme-settings settings-container">
         <h2 class="settings-title">主题切换</h2>
         <div class="theme-grid">
             <div

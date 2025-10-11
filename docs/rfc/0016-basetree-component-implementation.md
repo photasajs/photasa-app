@@ -4,7 +4,7 @@
 - **Title**: BaseTree Component Implementation
 - **Author**: Claude
 - **Status**: Completed ✅
-- **Type**: Feature  
+- **Type**: Feature
 - **Created**: 2025-09-10
 - **Updated**: 2025-09-12
 - **Completed**: 2025-09-12
@@ -25,12 +25,13 @@ Implement a BaseTree component to replace ant-design-vue's a-tree component, ena
 ### Use Case Analysis
 
 **FolderList.vue current usage:**
+
 ```vue
 <a-tree
-  class="folder-tree"
-  v-model:expandedKeys="expandedKeys"
-  v-model:selectedKeys="selectedKeys"
-  :tree-data="folderTree"
+    class="folder-tree"
+    v-model:expandedKeys="expandedKeys"
+    v-model:selectedKeys="selectedKeys"
+    :tree-data="folderTree"
 >
   <template #title="{ title, key }">
     <BaseContextMenu>
@@ -54,7 +55,7 @@ BaseTree (主组件)
 ├── State management
 └── Event handling
 
-BaseTreeNode (渲染节点)  
+BaseTreeNode (渲染节点)
 ├── Node rendering
 ├── Indentation handling
 ├── Interaction handling
@@ -67,64 +68,65 @@ BaseTreeNode (渲染节点)
 
 ```typescript
 interface BaseTreeProps {
-  // Core Data
-  treeData?: DataNode[]
-  
-  // State Control (v-model support)
-  expandedKeys?: Key[]
-  selectedKeys?: Key[]
-  checkedKeys?: Key[] | CheckedKeys
-  
-  // Behavior
-  multiple?: boolean
-  checkable?: boolean
-  selectable?: boolean
-  showIcon?: boolean
-  showLine?: boolean | { showLeafIcon: boolean }
-  disabled?: boolean
-  
-  // Defaults
-  defaultExpandAll?: boolean
-  defaultExpandParent?: boolean
-  autoExpandParent?: boolean
-  defaultExpandedKeys?: Key[]
-  defaultSelectedKeys?: Key[]
-  defaultCheckedKeys?: Key[]
-  
-  // Virtual Scrolling (Enhanced)
-  virtual?: boolean
-  height?: number
-  itemHeight?: number
-  
-  // Advanced
-  checkStrictly?: boolean
-  draggable?: boolean
-  blockNode?: boolean
-  focusable?: boolean
-  
-  // Field Mapping
-  fieldNames?: FieldNames
-  replaceFields?: FieldNames
+    // Core Data
+    treeData?: DataNode[];
+
+    // State Control (v-model support)
+    expandedKeys?: Key[];
+    selectedKeys?: Key[];
+    checkedKeys?: Key[] | CheckedKeys;
+
+    // Behavior
+    multiple?: boolean;
+    checkable?: boolean;
+    selectable?: boolean;
+    showIcon?: boolean;
+    showLine?: boolean | { showLeafIcon: boolean };
+    disabled?: boolean;
+
+    // Defaults
+    defaultExpandAll?: boolean;
+    defaultExpandParent?: boolean;
+    autoExpandParent?: boolean;
+    defaultExpandedKeys?: Key[];
+    defaultSelectedKeys?: Key[];
+    defaultCheckedKeys?: Key[];
+
+    // Virtual Scrolling (Enhanced)
+    virtual?: boolean;
+    height?: number;
+    itemHeight?: number;
+
+    // Advanced
+    checkStrictly?: boolean;
+    draggable?: boolean;
+    blockNode?: boolean;
+    focusable?: boolean;
+
+    // Field Mapping
+    fieldNames?: FieldNames;
+    replaceFields?: FieldNames;
 }
 ```
 
 **Event Compatibility:**
+
 ```typescript
 interface BaseTreeEmits {
-  // v-model updates
-  'update:expandedKeys': [keys: Key[]]
-  'update:selectedKeys': [keys: Key[]]
-  'update:checkedKeys': [keys: Key[]]
-  
-  // User interactions  
-  expand: [keys: Key[], info: ExpandInfo]
-  select: [keys: Key[], info: SelectInfo]
-  check: [keys: Key[], info: CheckInfo]
-  
-  // Additional events
-  click: [info: NodeMouseEventParams]
-  rightClick: [info: RightClickInfo]
-  doubleclick: [info: NodeMouseEventParams]
+    // v-model updates
+    "update:expandedKeys": [keys: Key[]];
+    "update:selectedKeys": [keys: Key[]];
+    "update:checkedKeys": [keys: Key[]];
+
+    // User interactions
+    expand: [keys: Key[], info: ExpandInfo];
+    select: [keys: Key[], info: SelectInfo];
+    check: [keys: Key[], info: CheckInfo];
+
+    // Additional events
+    click: [info: NodeMouseEventParams];
+    rightClick: [info: RightClickInfo];
+    doubleclick: [info: NodeMouseEventParams];
 }
 ```
 
@@ -134,17 +136,18 @@ interface BaseTreeEmits {
 
 ```typescript
 interface VirtualTreeNode {
-  key: Key
-  title: string
-  level: number          // Indentation level
-  isVisible: boolean     // Should render (parent expanded)
-  hasChildren: boolean   // Show expand/collapse icon
-  isExpanded: boolean    // Current expand state
-  originalNode: DataNode // Reference to original
+    key: Key;
+    title: string;
+    level: number; // Indentation level
+    isVisible: boolean; // Should render (parent expanded)
+    hasChildren: boolean; // Show expand/collapse icon
+    isExpanded: boolean; // Current expand state
+    originalNode: DataNode; // Reference to original
 }
 ```
 
 **Rendering Strategy:**
+
 1. **Flatten Phase**: Convert tree to flat array with visibility flags
 2. **Filter Phase**: Only include visible nodes (parent expanded)
 3. **Virtual Phase**: Use VirtualList on filtered flat nodes
@@ -165,6 +168,7 @@ interface VirtualTreeNode {
 ### Slot System
 
 **Compatible slot forwarding:**
+
 ```vue
 <!-- BaseTree.vue -->
 <BaseTreeNode>
@@ -178,6 +182,7 @@ interface VirtualTreeNode {
 ```
 
 **Enable existing usage:**
+
 ```vue
 <BaseTree>
   <template #title="{ title, key, node }">
@@ -197,6 +202,7 @@ interface VirtualTreeNode {
 4. **DOM Recycling**: VirtualList reuses DOM elements
 
 **Performance Targets:**
+
 - ✅ Handle 50,000+ nodes smoothly
 - ✅ Expand/collapse < 16ms (60fps)
 - ✅ Memory usage scales with viewport, not data size
@@ -204,6 +210,7 @@ interface VirtualTreeNode {
 ### Migration Strategy
 
 **Phase 1: Drop-in Replacement**
+
 ```diff
 - <a-tree
 + <BaseTree
@@ -215,6 +222,7 @@ interface VirtualTreeNode {
 ```
 
 **Phase 2: Enable Virtual Scrolling**
+
 ```vue
 <BaseTree
   :virtual="true"
@@ -225,6 +233,7 @@ interface VirtualTreeNode {
 ```
 
 **Phase 3: Remove ant-design-vue Dependency**
+
 - Update package.json
 - Remove unused imports
 - Verify all functionality
@@ -232,10 +241,11 @@ interface VirtualTreeNode {
 ## Implementation Plan
 
 ### File Structure
+
 ```
 src/renderer/src/components/ui/
 ├── BaseTree.vue          # Main component
-├── BaseTreeNode.vue      # Node renderer  
+├── BaseTreeNode.vue      # Node renderer
 └── __tests__/
     ├── BaseTree.test.ts  # Unit tests
     └── tree-performance.test.ts # Performance tests
@@ -244,24 +254,28 @@ src/renderer/src/components/ui/
 ### Development Phases
 
 **Phase 1: Core Implementation** ✅ (2-3 days)
+
 - [x] BaseTree component with basic rendering
-- [x] BaseTreeNode component  
+- [x] BaseTreeNode component
 - [x] Tree flattening and virtual rendering
 - [x] Basic expand/collapse/select
 
 **Phase 2: Full API Compatibility** ✅ (1-2 days)
+
 - [x] All a-tree props support
 - [x] All event handlers
 - [x] Slot system compatibility
 - [x] Edge case handling
 
 **Phase 3: Performance & Polish** ✅ (1 day)
+
 - [x] Virtual scrolling optimization
 - [x] Comprehensive testing
 - [x] Performance benchmarks
 - [x] Documentation
 
 **Phase 4: Migration** ✅ (0.5 day)
+
 - [x] Update FolderList.vue
 - [x] Remove a-tree imports
 - [x] Verify functionality
@@ -269,17 +283,20 @@ src/renderer/src/components/ui/
 ## Testing Strategy
 
 ### Unit Tests
+
 - Tree flattening algorithms
 - Event handling
 - State management
 - API compatibility
 
-### Integration Tests  
+### Integration Tests
+
 - FolderList.vue integration
 - Right-click menu preservation
 - Folder navigation functionality
 
 ### Performance Tests
+
 - Large dataset rendering (10k+ nodes)
 - Memory usage measurement
 - Scrolling performance
@@ -288,15 +305,19 @@ src/renderer/src/components/ui/
 ## Risks and Mitigation
 
 ### Risk 1: Performance Regression
+
 **Mitigation**: Comprehensive benchmarking against a-tree before migration
 
 ### Risk 2: Feature Gaps
+
 **Mitigation**: Complete API compatibility matrix and systematic testing
 
 ### Risk 3: Visual Differences
+
 **Mitigation**: CSS variables and theming to match existing appearance
 
 ### Risk 4: Complex Integration
+
 **Mitigation**: Gradual migration with fallback to a-tree if issues arise
 
 ## Success Criteria
@@ -330,6 +351,7 @@ src/renderer/src/components/ui/
 6. **✅ 测试覆盖**: 实现完整的单元测试和性能测试
 
 **关键技术成果:**
+
 - Flatten-Render-Virtual模式实现高效树形虚拟化
 - 完整的事件系统和v-model双向绑定支持
 - 插槽系统完全向后兼容

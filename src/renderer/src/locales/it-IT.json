@@ -9,7 +9,9 @@
             "general": "Generale",
             "about": "Informazioni",
             "theme": "Tema",
-            "advanced": "Avanzate"
+            "advanced": "Avanzate",
+            "autoUpdate": "Aggiornamento Automatico",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Elenco cartelle",
         "folderListUsage": "Modalità d'uso",
@@ -356,8 +358,11 @@
         "scanComplete": "La cartella [{path}] è stata elaborata.",
         "start": "Inizio scansione",
         "progress": "Avanzamento scansione",
+        "processingFile": "Elaborazione: {fileName}",
+        "scanningPath": "Scansione: {path}",
         "complete": "Scansione completata",
-        "error": "Errore scansione"
+        "error": "Errore scansione",
+        "scanFailed": "Scansione fallita: {path}"
     },
     "button": {
         "import": "Importa",
@@ -539,6 +544,50 @@
             "1h": "Ultima ora",
             "6h": "Ultime 6 ore",
             "24h": "Ultime 24 ore"
+        }
+    },
+    "logViewer": {
+        "title": "Visualizzatore Log",
+        "levels": {
+            "all": "Tutti i livelli",
+            "error": "Errore",
+            "warn": "Avviso",
+            "info": "Informazioni",
+            "debug": "Debug"
+        },
+        "buttons": {
+            "clear": "Cancella",
+            "export": "Esporta",
+            "opacity": "Opacità",
+            "close": "Chiudi"
+        },
+        "search": "Cerca nei log...",
+        "messages": {
+            "noLogs": "Nessun log disponibile",
+            "logsCleared": "Log cancellati",
+            "logsExported": "Log esportati in {fileName}",
+            "exportFailed": "Esportazione log fallita: {error}"
+        },
+        "dragInfo": "Trascina per spostare la finestra"
+    },
+    "update": {
+        "notification": {
+            "title": "Nuova versione disponibile",
+            "message": "La versione {version} è disponibile",
+            "cancel": "Annulla",
+            "install": "Installa",
+            "cancelDownload": "Annulla download",
+            "installNow": "Installa ora",
+            "viewDetails": "Visualizza dettagli"
+        },
+        "popup": {
+            "title": "Nuova versione disponibile",
+            "message": "La versione {version} è disponibile",
+            "cancel": "Annulla",
+            "install": "Installa",
+            "cancelDownload": "Annulla download",
+            "installNow": "Installa ora",
+            "close": "Chiudi"
         }
     }
 }

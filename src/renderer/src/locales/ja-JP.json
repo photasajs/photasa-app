@@ -3,13 +3,30 @@
         "title": "倉廩図司",
         "folderList": "ディレクトリリスト"
     },
+    "logViewer": {
+        "title": "システムログコンソール",
+        "searchPlaceholder": "ログを検索...",
+        "allLevels": "すべてのレベル",
+        "debug": "デバッグ",
+        "info": "情報",
+        "warn": "警告",
+        "error": "エラー",
+        "clear": "クリア",
+        "export": "エクスポート",
+        "opacity": "透明度",
+        "noLogs": "ログがありません",
+        "showing": "{filtered} / {total} 件のログを表示",
+        "autoScroll": "自動スクロール"
+    },
     "preference": {
         "settings": "設定",
         "tabs": {
             "general": "一般",
             "about": "概要",
             "theme": "テーマ",
-            "advanced": "高度な設定"
+            "advanced": "高度な設定",
+            "autoUpdate": "自動更新",
+            "scanMonitoring": "スキャンモニタリング"
         },
         "folderList": "ディレクトリリスト",
         "folderListUsage": "使い方",
@@ -24,6 +41,36 @@
             "title": "高度な操作: ディレクトリストレージのリセット",
             "desc": "これにより、すべてのディレクトリ設定がクリアされ、キャッシュが即座に再構築されます。この操作は元に戻せません。慎重に進めてください！",
             "button": "ディレクトリストレージをリセット"
+        },
+        "autoUpdate": {
+            "title": "自動更新",
+            "description": "アプリケーションの自動更新を設定して、常にPhotasaの最新バージョンを利用できるようにします",
+            "enabled": "自動更新を有効にする",
+            "checkInterval": "チェック間隔",
+            "prerelease": "プレリリース版を含める",
+            "prereleaseDescription": "有効にすると、テストされていない機能を含む可能性があるBetaおRRCバージョンの更新を受け取ります",
+            "autoInstall": "自動で更新をインストール",
+            "autoInstallDescription": "有効にすると、更新がバックグラウンドで自動的にインストールされ、次回の再起動時に有効になります",
+            "checkNow": "今すぐチェック",
+            "downloadUpdate": "更新をダウンロード",
+            "installUpdate": "インストールして再起動",
+            "currentVersion": "現在のバージョン",
+            "latestVersion": "最新バージョン",
+            "lastCheck": "最後のチェック",
+            "intervals": {
+                "hourly": "毎時間",
+                "sixHours": "6時間ごと",
+                "daily": "毎日",
+                "weekly": "毎週"
+            },
+            "status": {
+                "idle": "待機中",
+                "checking": "更新をチェック中...",
+                "downloading": "ダウンロード中 ({progress}%)",
+                "downloaded": "更新をダウンロード完了",
+                "upToDate": "既に最新バージョンです",
+                "error": "更新のチェックでエラーが発生しました"
+            }
         }
     },
     "import": {
@@ -300,7 +347,7 @@
         },
         "press": "押す",
         "toExit": "終了",
-        "markdown": "# Photasaについて\n\nPhotasaは、クラシックなPhotasaにインスパイアされた、現代的でプライバシーに配慮したローカル写真管理ツールです。\n美しいインターフェースと強力なローカル機能で、写真や動画を効率的に閲覧・整理・管理できます。クラウド不要。\n\n## 主な機能\n\n- ローカル写真・動画のスマートなインポートと管理\n- 高速サムネイル生成とプレビュー\n- 多言語インターフェースとテーマ切替\n- バッチ操作と効率的な検索\n- データのプライバシーとセキュリティ保護\n\n`Esc`キーで終了"
+        "markdown": "# 倉廩図司について\n\n倉廩図司は、現代的でプライバシーに配慮したローカル写真管理ツールです。\n美しいインターフェースと強力なローカル機能で、写真や動画を効率的に閲覧・整理・管理できます。クラウド不要。\n\n## 主な機能\n\n- ローカル写真・動画のスマートなインポートと管理\n- 高速サムネイル生成とプレビュー\n- 多言語インターフェースとテーマ切替\n- バッチ操作と効率的な検索\n- データのプライバシーとセキュリティ保護\n\n`Esc`キーで終了"
     },
     "preferences": {
         "title": "設定",
@@ -357,8 +404,11 @@
         "scanComplete": "ディレクトリ[{path}]の処理が完了しました",
         "start": "スキャン開始",
         "progress": "スキャン進行状況",
+        "processingFile": "処理中: {fileName}",
+        "scanningPath": "スキャン中: {path}",
         "complete": "スキャン完了",
-        "error": "スキャンエラー"
+        "error": "スキャンエラー",
+        "scanFailed": "スキャン失敗: {path}"
     },
     "button": {
         "import": "インポート",
@@ -403,9 +453,9 @@
         "rescan": "ディレクトリを再スキャン",
         "app": {
             "menu": "アプリケーション",
-            "about": "Photasaについて",
+            "about": "倉廩図司について",
             "services": "サービス",
-            "hide": "Photasaを隠す",
+            "hide": "倉廩図司を隠す",
             "hideOthers": "他を隠す",
             "unhide": "すべてを表示",
             "quit": "終了"
@@ -429,7 +479,7 @@
         "help": {
             "menu": "ヘルプ",
             "learnMore": "詳細を見る",
-            "about": "Photasaについて"
+            "about": "倉廩図司について"
         },
         "separator": "区切り"
     },
@@ -506,8 +556,8 @@
     "imageInfo": {
         "title": "画像情報",
         "lastUpdated": "最終更新",
-        "openInFinder": "Finderで開く",
-        "repairLibrary": "写真ライブラリを修復",
+        "openInFinder": "フォルダを開く",
+        "repairLibrary": "ライブラリ修復",
         "fileCount": "ファイル数",
         "folderSize": "フォルダサイズ",
         "basicInfo": "基本情報",
@@ -542,6 +592,26 @@
             "1h": "過去1時間",
             "6h": "過去6時間",
             "24h": "過去24時間"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "新しいバージョンが利用可能",
+            "message": "バージョン {version} が利用可能です",
+            "cancel": "キャンセル",
+            "install": "インストール",
+            "cancelDownload": "ダウンロードをキャンセル",
+            "installNow": "今すぐインストール",
+            "viewDetails": "詳細を表示"
+        },
+        "popup": {
+            "title": "新しいバージョンが利用可能",
+            "message": "バージョン {version} が利用可能です",
+            "cancel": "キャンセル",
+            "install": "インストール",
+            "cancelDownload": "ダウンロードをキャンセル",
+            "installNow": "今すぐインストール",
+            "close": "閉じる"
         }
     }
 }

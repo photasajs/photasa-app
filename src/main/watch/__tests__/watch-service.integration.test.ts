@@ -4,6 +4,10 @@ import type { BrowserWindow, IpcMain } from "electron";
 import EventEmitter from "events";
 
 // Mock dependencies
+vi.mock("electron-is-dev", () => ({
+    default: false,
+}));
+
 vi.mock("chokidar", () => ({
     default: {
         watch: vi.fn(() => ({
@@ -62,6 +66,7 @@ describe("WatchService Integration Tests", () => {
         // Setup mock IpcMain
         mockIpcMain = new EventEmitter() as any;
         mockIpcMain.handle = vi.fn();
+        mockIpcMain.removeHandler = vi.fn();
         mockIpcMain.on = vi.fn();
         mockIpcMain.removeAllListeners = vi.fn();
 
@@ -77,8 +82,8 @@ describe("WatchService Integration Tests", () => {
         watchService = new WatchService(mockIpcMain, mockMainWindow);
     });
 
-    afterEach(() => {
-        watchService.close();
+    afterEach(async () => {
+        await watchService.shutdown();
         vi.clearAllTimers();
         vi.useRealTimers();
         vi.clearAllMocks();
@@ -205,24 +210,24 @@ describe("WatchService Integration Tests", () => {
     });
 
     describe("Cleanup", () => {
-        it("should process remaining events on close", () => {
+        it("should process remaining events on close", async () => {
             const processPendingEvents = vi.spyOn(watchService as any, "processPendingEvents");
 
             // Add some pending events
             (watchService as any).pendingEvents.set("add:/test/file.jpg", {});
 
-            watchService.close();
+            await watchService.shutdown();
 
             expect(processPendingEvents).toHaveBeenCalled();
         });
 
-        it("should clear debounce timer on close", () => {
+        it("should clear debounce timer on close", async () => {
             const clearTimeout = vi.spyOn(global, "clearTimeout");
 
             // Start debouncing
             (watchService as any).debounceTimer = setTimeout(() => {}, 1000);
 
-            watchService.close();
+            await watchService.shutdown();
 
             expect(clearTimeout).toHaveBeenCalled();
         });

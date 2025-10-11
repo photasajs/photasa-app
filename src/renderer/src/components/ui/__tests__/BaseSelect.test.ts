@@ -27,6 +27,20 @@ vi.mock("@common/logger", () => ({
     }),
 }));
 
+// Mock dropdown manager
+const mockDropdownManager = {
+    register: vi.fn(),
+    unregister: vi.fn(),
+    open: vi.fn(),
+    close: vi.fn(),
+    isOpen: vi.fn().mockReturnValue(false),
+    closeAll: vi.fn(),
+};
+
+vi.mock("@renderer/composables/useDropdownManager", () => ({
+    useDropdownManager: () => mockDropdownManager,
+}));
+
 // Test data
 const testOptions = [
     { value: "option1", label: "Option 1" },
@@ -154,8 +168,8 @@ describe("BaseSelect Modal集成测试", () => {
           <BaseModalOverlay class="fixed inset-0 bg-black/50" />
           <BaseModalContainer class="max-w-md bg-white rounded-lg">
             <BaseModalBody class="p-6">
-              <BaseSelect 
-                v-model="selectedValue" 
+              <BaseSelect
+                v-model="selectedValue"
                 :options="options"
                 placeholder="Select in modal"
               />
@@ -300,6 +314,154 @@ describe("BaseSelect 无障碍访问测试", () => {
         await combobox.trigger("keydown", { key: "Escape" });
         await nextTick();
         expect(combobox.attributes("aria-expanded")).toBe("false");
+    });
+});
+
+describe("BaseSelect 下拉菜单独占性测试", () => {
+    beforeEach(() => {
+        // Reset all mocks before each test
+        vi.clearAllMocks();
+    });
+
+    it("应该在组件挂载时注册到下拉管理器", () => {
+        mount(BaseSelect, {
+            props: {
+                modelValue: null,
+                options: testOptions,
+            },
+        });
+
+        // 验证注册方法被调用
+        expect(mockDropdownManager.register).toHaveBeenCalledTimes(1);
+        expect(mockDropdownManager.register).toHaveBeenCalledWith(
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
+        );
+    });
+
+    it("应该在组件卸载时从下拉管理器注销", () => {
+        const wrapper = mount(BaseSelect, {
+            props: {
+                modelValue: null,
+                options: testOptions,
+            },
+        });
+
+        // 清除注册调用的记录
+        vi.clearAllMocks();
+
+        // 卸载组件
+        wrapper.unmount();
+
+        // 验证注销方法被调用
+        expect(mockDropdownManager.unregister).toHaveBeenCalledTimes(1);
+        expect(mockDropdownManager.unregister).toHaveBeenCalledWith(
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
+        );
+    });
+
+    it("应该在打开下拉菜单时通知管理器", async () => {
+        const wrapper = mount(BaseSelect, {
+            props: {
+                modelValue: null,
+                options: testOptions,
+            },
+        });
+
+        // 清除注册调用的记录
+        vi.clearAllMocks();
+
+        // 打开下拉菜单
+        await wrapper.find('[role="combobox"]').trigger("click");
+        await nextTick();
+
+        // 验证管理器的 open 方法被调用
+        expect(mockDropdownManager.open).toHaveBeenCalledTimes(1);
+        expect(mockDropdownManager.open).toHaveBeenCalledWith(
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
+        );
+    });
+
+    it("应该在关闭下拉菜单时通知管理器", async () => {
+        const wrapper = mount(BaseSelect, {
+            props: {
+                modelValue: null,
+                options: testOptions,
+            },
+        });
+
+        // 先打开下拉菜单
+        await wrapper.find('[role="combobox"]').trigger("click");
+        await nextTick();
+
+        // 清除之前的调用记录
+        vi.clearAllMocks();
+
+        // 按 Escape 关闭下拉菜单
+        await wrapper.find('[role="combobox"]').trigger("keydown", { key: "Escape" });
+        await nextTick();
+
+        // 验证管理器的 close 方法被调用
+        expect(mockDropdownManager.close).toHaveBeenCalledTimes(1);
+        expect(mockDropdownManager.close).toHaveBeenCalledWith(
+            expect.stringMatching(/^dropdown-[a-z0-9]+$/),
+        );
+    });
+
+    it("应该响应来自管理器的关闭事件", async () => {
+        const wrapper = mount(BaseSelect, {
+            props: {
+                modelValue: null,
+                options: testOptions,
+            },
+            attachTo: document.body,
+        });
+
+        // 打开下拉菜单
+        await wrapper.find('[role="combobox"]').trigger("click");
+        await nextTick();
+
+        // 验证下拉菜单已打开
+        expect(wrapper.find('[role="combobox"]').attributes("aria-expanded")).toBe("true");
+
+        // 模拟其他下拉菜单触发的关闭事件
+        const dropdownId = mockDropdownManager.register.mock.calls[0][0];
+        const closeEvent = new CustomEvent("dropdown-close", {
+            detail: { id: dropdownId },
+        });
+
+        document.dispatchEvent(closeEvent);
+        await nextTick();
+
+        // 验证下拉菜单已关闭
+        expect(wrapper.find('[role="combobox"]').attributes("aria-expanded")).toBe("false");
+    });
+
+    it("应该忽略不相关的关闭事件", async () => {
+        const wrapper = mount(BaseSelect, {
+            props: {
+                modelValue: null,
+                options: testOptions,
+            },
+            attachTo: document.body,
+        });
+
+        // 打开下拉菜单
+        await wrapper.find('[role="combobox"]').trigger("click");
+        await nextTick();
+
+        // 验证下拉菜单已打开
+        expect(wrapper.find('[role="combobox"]').attributes("aria-expanded")).toBe("true");
+
+        // 模拟其他下拉菜单的关闭事件（不同的ID）
+        const closeEvent = new CustomEvent("dropdown-close", {
+            detail: { id: "different-dropdown-id" },
+        });
+
+        document.dispatchEvent(closeEvent);
+        await nextTick();
+
+        // 验证下拉菜单仍然打开
+        expect(wrapper.find('[role="combobox"]').attributes("aria-expanded")).toBe("true");
     });
 });
 

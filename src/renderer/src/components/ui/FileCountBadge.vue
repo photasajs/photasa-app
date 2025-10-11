@@ -70,7 +70,7 @@ const { t } = useI18n();
 const totalCount = computed(() => props.imageCount + props.videoCount);
 
 const showBreakdown = computed(() => {
-    return props.showBreakdown && props.imageCount > 0 && props.videoCount > 0;
+    return props.showBreakdown && totalCount.value > 0;
 });
 
 // Format large numbers with K/M suffixes

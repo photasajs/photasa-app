@@ -7,14 +7,7 @@ import type { VideoMetadata } from "@common/import-types";
 
 // 提取器返回的元数据接口（不包含dateSource，由主函数处理）
 type ExtractedVideoMetadata = Omit<VideoMetadata, "dateSource">;
-import ffmpegStatic from "ffmpeg-static";
-import ffprobeStatic from "ffprobe-static";
-
-// 配置ffmpeg路径
-const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
-const ffprobePath = ffprobeStatic.path.replace("app.asar", "app.asar.unpacked");
-ffmpeg.setFfmpegPath(ffmpegPath);
-ffmpeg.setFfprobePath(ffprobePath);
+// 移除 ffmpeg-config 导入，路径将通过参数传递
 
 /**
  * 视频时间字段优先级（基于录制时间准确性）
@@ -94,7 +87,13 @@ function extractVideoStreamInfo(metadata: any): {
 /**
  * 使用Promise包装的ffprobe
  */
-function ffprobeAsync(filePath: string): Promise<any> {
+function ffprobeAsync(filePath: string, ffmpegPath?: string, ffprobePath?: string): Promise<any> {
+    // 如果提供了路径，则配置 FFmpeg
+    if (ffmpegPath && ffprobePath) {
+        ffmpeg.setFfmpegPath(ffmpegPath);
+        ffmpeg.setFfprobePath(ffprobePath);
+    }
+
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(filePath, (err, metadata) => {
             if (err) {
@@ -119,7 +118,10 @@ export async function extractVideoMetadata(
     try {
         logger.info(`[Video] Processing file: ${filePath}`);
 
-        const metadata = await ffprobeAsync(filePath);
+        // 从环境变量获取 FFmpeg 路径
+        const ffmpegPath = process.env.FFMPEG_PATH;
+        const ffprobePath = process.env.FFPROBE_PATH;
+        const metadata = await ffprobeAsync(filePath, ffmpegPath, ffprobePath);
         const streamInfo = extractVideoStreamInfo(metadata);
         const creationTime = selectBestDate(metadata, VIDEO_TIME_FIELDS);
         const gpsInfo = extractVideoGPS(metadata);
@@ -155,7 +157,7 @@ export async function extractVideoMetadata(
  */
 export function isVideoFile(filePath: string): boolean {
     const ext = path.extname(filePath).toLowerCase();
-    return [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".m4v", ".flv", ".webm"].includes(ext);
+    return [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".m4v", ".flv", ".webm", ".3gp"].includes(ext);
 }
 
 /**
@@ -163,7 +165,7 @@ export function isVideoFile(filePath: string): boolean {
  */
 export function isSupportedVideoFile(filePath: string): boolean {
     const ext = path.extname(filePath).toLowerCase();
-    return [".mp4", ".mov", ".avi", ".mkv", ".wmv"].includes(ext);
+    return [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".3gp"].includes(ext);
 }
 
 /**

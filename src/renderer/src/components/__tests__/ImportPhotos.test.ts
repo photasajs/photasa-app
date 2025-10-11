@@ -4,7 +4,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mount } from "@vue/test-utils";
-import { createI18n } from "vue-i18n";
 import { createPinia, setActivePinia } from "pinia";
 import { nextTick } from "vue";
 import ImportPhotos from "../ImportPhotos.vue";
@@ -115,6 +114,121 @@ vi.mock("../ImportProgressModal.vue", () => ({
     },
 }));
 
+// Mock the PreviewProgressDisplay component
+vi.mock("../import/PreviewProgressDisplay.vue", () => ({
+    default: {
+        name: "PreviewProgressDisplay",
+        template: '<div data-testid="preview-progress-display"></div>',
+        props: ["progress", "discoveredFiles"],
+    },
+}));
+
+// Mock the VirtualList component
+vi.mock("@renderer/components/ui/VirtualList.vue", () => ({
+    default: {
+        name: "VirtualList",
+        template:
+            '<div data-testid="virtual-list"><slot v-for="item in items" :key="getItemKey(item, $index)" :item="item" :index="$index" /></div>',
+        props: ["items", "itemHeight", "containerHeight", "getItemKey"],
+    },
+}));
+
+// Mock phosphor icons
+vi.mock("@phosphor-icons/vue", () => ({
+    PhTrash: {
+        name: "PhTrash",
+        template: '<svg data-testid="ph-trash"></svg>',
+        props: ["class"],
+    },
+    PhPlus: {
+        name: "PhPlus",
+        template: '<svg data-testid="ph-plus"></svg>',
+        props: ["class"],
+    },
+    PhFolderOpen: {
+        name: "PhFolderOpen",
+        template: '<svg data-testid="ph-folder-open"></svg>',
+        props: ["class"],
+    },
+    PhEye: {
+        name: "PhEye",
+        template: '<svg data-testid="ph-eye"></svg>',
+        props: ["class"],
+    },
+    PhArrowDown: {
+        name: "PhArrowDown",
+        template: '<svg data-testid="ph-arrow-down"></svg>',
+        props: ["class"],
+    },
+    PhImage: {
+        name: "PhImage",
+        template: '<svg data-testid="ph-image"></svg>',
+        props: ["class"],
+    },
+    PhVideoCamera: {
+        name: "PhVideoCamera",
+        template: '<svg data-testid="ph-video-camera"></svg>',
+        props: ["class"],
+    },
+    PhFileText: {
+        name: "PhFileText",
+        template: '<svg data-testid="ph-file-text"></svg>',
+        props: ["class"],
+    },
+}));
+
+// Mock vue-i18n
+vi.mock("vue-i18n", () => ({
+    useI18n: () => ({
+        t: (key: string, params?: any) => {
+            // Simple mock translation function
+            const translations: Record<string, string> = {
+                "import.steps.configuration": "Configuration",
+                "import.steps.configurationDesc": "Configure import settings",
+                "import.steps.preview": "Preview",
+                "import.steps.previewDesc": "Preview files to import",
+                "import.sourceDirectories": "Source Directories",
+                "import.targetDirectory": "Target Directory",
+                "import.options": "Options",
+                "import.fileTypes.label": "File Types",
+                "import.fileTypes.images": "Images",
+                "import.fileTypes.videos": "Videos",
+                "import.includeSubfolders": "Include Subfolders",
+                "import.duplicateHandling": "Duplicate Handling",
+                "import.duplicate.rename": "Rename",
+                "import.duplicate.skip": "Skip",
+                "import.duplicate.overwrite": "Overwrite",
+                "import.duplicate.keepBoth": "Keep Both",
+                "import.addSource": "Add Source",
+                "import.selectTarget": "Select Target",
+                "import.browse": "Browse",
+                "import.loading.label": "Loading...",
+                "import.loading.preview": "Loading Preview...",
+                "import.backButton": "Back",
+                "import.nextButton": "Next",
+                "import.importButton": "Import",
+                "import.closeButton": "Close",
+                "import.totalFiles": "Total Files",
+                "import.totalSize": "Total Size",
+                "import.images": "Images",
+                "import.videos": "Videos",
+                "import.group": `Group (${params?.count || 0})`,
+                "import.error.title": "Error",
+                "import.error.retry": "Retry",
+                "import.error.dismiss": "Dismiss",
+                "import.error.network": "Network error occurred",
+                "import.error.validation": "Validation error",
+                "import.error.permission": "Permission error",
+                "import.error.api": "API error",
+                "import.error.unknown": "Unknown error",
+                "import.useMD5ForDuplicates": "Use MD5 for duplicates",
+                "import.useMD5ForDuplicatesDescription": "Use MD5 hash for duplicate detection",
+            };
+            return translations[key] || key;
+        },
+    }),
+}));
+
 // Mock the preference store and storeToRefs
 vi.mock("@renderer/stores/preference", () => ({
     usePreferenceStore: () => ({
@@ -135,39 +249,13 @@ vi.mock("pinia", async (importOriginal) => {
 });
 
 const createWrapper = (props = {}) => {
-    const i18n = createI18n({
-        legacy: false,
-        locale: "en-US",
-        messages: {
-            "en-US": {
-                import: {
-                    steps: {
-                        configuration: "Configuration",
-                        configurationDesc: "Configure import settings",
-                        preview: "Preview",
-                        previewDesc: "Preview files to import",
-                    },
-                    duplicate: {
-                        rename: "Rename",
-                        skip: "Skip",
-                        overwrite: "Overwrite",
-                        keepBoth: "Keep Both",
-                    },
-                    fileTypes: {
-                        label: "File Types",
-                    },
-                },
-            },
-        },
-    });
-
     return mount(ImportPhotos, {
         props: {
             show: true,
             ...props,
         },
         global: {
-            plugins: [i18n, createPinia()],
+            plugins: [createPinia()], // Remove i18n here, use global one from test setup
         },
     });
 };

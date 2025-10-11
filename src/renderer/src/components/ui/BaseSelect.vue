@@ -17,6 +17,7 @@
             :aria-labelledby="labelId"
             @click="toggleDropdown"
             @keydown="handleComboboxKeydown"
+            @blur="handleBlur"
             :class="[
                 'relative w-full cursor-default rounded-md border py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none sm:text-sm',
                 'bg-[var(--color-input-bg)] border-[var(--color-border)] text-[var(--color-text)]',
@@ -89,7 +90,7 @@
                             <span
                                 :class="[
                                     option.value === modelValue ? 'font-semibold' : 'font-normal',
-                                    'block truncate',
+                                    'block whitespace-nowrap',
                                 ]"
                             >
                                 {{ option.label }}
@@ -117,8 +118,12 @@
 import { computed, ref, onMounted, nextTick, watch, onBeforeUnmount } from "vue";
 import { PhCheck, PhCaretDown } from "@phosphor-icons/vue";
 import { getLogger } from "@common/logger";
+import { useDropdownManager } from "@renderer/composables/useDropdownManager";
 
 const logger = getLogger("base-select");
+
+// 下拉管理器
+const dropdownManager = useDropdownManager();
 
 interface Option {
     value: string | number;
@@ -151,6 +156,9 @@ const isOpen = ref(false);
 const highlightedIndex = ref(-1);
 const dropdownStyles = ref<Record<string, string>>({});
 
+// 为每个组件实例生成唯一ID
+const dropdownId = `dropdown-${Math.random().toString(36).substring(2, 11)}`;
+
 // Computed
 const selectedOption = computed(() => {
     return props.options.find((option) => option.value === props.modelValue);
@@ -178,8 +186,28 @@ const updateDropdownPosition = () => {
     const spaceBelow = viewportHeight - buttonRect.bottom;
     const spaceAbove = buttonRect.top;
 
-    // 确保下拉菜单在视口内
-    const left = Math.max(8, Math.min(buttonRect.left, window.innerWidth - buttonRect.width - 8));
+    // 计算下拉框的最小宽度，基于内容和按钮宽度
+    const calculateDropdownWidth = () => {
+        // 获取最长选项的估算宽度
+        const longestLabel = props.options.reduce(
+            (longest, option) => (option.label.length > longest.length ? option.label : longest),
+            "",
+        );
+
+        // 估算文本宽度（中文字符约14px，英文字符约8px，加上padding和图标空间）
+        const isChinese = /[\u4e00-\u9fa5]/.test(longestLabel);
+        const avgCharWidth = isChinese ? 14 : 9; // 中文字符更宽
+        const estimatedTextWidth = longestLabel.length * avgCharWidth + 70; // 70px用于padding和图标空间
+
+        // 下拉框宽度至少与按钮相同，但可以更宽以适应内容
+        // 增加最小宽度确保有足够空间
+        return Math.max(buttonRect.width + 20, Math.min(estimatedTextWidth, 400)); // 最大400px，最小比按钮宽20px
+    };
+
+    const dropdownWidth = calculateDropdownWidth();
+
+    // 确保下拉菜单在视口内，考虑新的宽度
+    const left = Math.max(8, Math.min(buttonRect.left, window.innerWidth - dropdownWidth - 8));
 
     // 优先向下展开，空间不足时向上
     let top: number;
@@ -201,25 +229,11 @@ const updateDropdownPosition = () => {
     dropdownStyles.value = {
         left: `${left}px`,
         top: `${top}px`,
-        width: `${buttonRect.width}px`,
+        width: `${dropdownWidth}px`,
         zIndex: "10000",
     };
 
-    logger.debug("Updated dropdown position:", {
-        buttonRect: {
-            top: buttonRect.top,
-            bottom: buttonRect.bottom,
-            left: buttonRect.left,
-            width: buttonRect.width,
-        },
-        actualDropdownHeight,
-        viewportHeight,
-        spaceBelow,
-        spaceAbove,
-        calculatedTop: top,
-        calculatedLeft: left,
-        finalStyles: dropdownStyles.value,
-    });
+    // 位置更新完成
 };
 
 /**
@@ -228,8 +242,10 @@ const updateDropdownPosition = () => {
 const openDropdown = () => {
     if (props.disabled || isOpen.value) return;
 
+    // 通知下拉管理器此下拉菜单即将打开（会自动关闭其他下拉菜单）
+    dropdownManager.open(dropdownId);
+
     isOpen.value = true;
-    logger.debug("Dropdown opened:", isOpen.value);
 
     nextTick(() => {
         updateDropdownPosition();
@@ -256,10 +272,7 @@ const toggleDropdown = () => {
  * 选择选项
  */
 const selectOption = (option: Option, index?: number) => {
-    logger.debug("selectOption called:", option, "index:", index);
-
     if (props.disabled) {
-        logger.debug("Select disabled, ignoring");
         return;
     }
 
@@ -278,8 +291,13 @@ const selectOption = (option: Option, index?: number) => {
  * 关闭下拉菜单
  */
 const closeDropdown = () => {
+    if (!isOpen.value) return;
+
     isOpen.value = false;
     highlightedIndex.value = -1;
+
+    // 通知下拉管理器此下拉菜单已关闭
+    dropdownManager.close(dropdownId);
 
     // 焦点返回按钮
     if (buttonRef.value) {
@@ -405,6 +423,31 @@ const handleListboxKeydown = (event: KeyboardEvent) => {
 };
 
 /**
+ * 处理失去焦点事件
+ */
+const handleBlur = (_event: FocusEvent) => {
+    // 使用setTimeout来延迟检查，确保新的焦点元素已经设置
+    setTimeout(() => {
+        if (!isOpen.value) return;
+
+        const activeElement = document.activeElement;
+
+        // 如果焦点转移到了下拉菜单内部的元素，不关闭下拉菜单
+        if (dropdownRef.value && dropdownRef.value.contains(activeElement)) {
+            return;
+        }
+
+        // 如果焦点转移到了按钮容器内的其他元素，不关闭下拉菜单
+        if (containerRef.value && containerRef.value.contains(activeElement)) {
+            return;
+        }
+
+        // 否则关闭下拉菜单
+        closeDropdown();
+    }, 0);
+};
+
+/**
  * 处理点击外部区域
  */
 const handleClickOutside = (event: MouseEvent) => {
@@ -430,7 +473,6 @@ const handleClickOutside = (event: MouseEvent) => {
  * 处理选项点击事件
  */
 const handleOptionClick = (option: Option, index: number) => {
-    logger.debug("Option clicked:", option, "index:", index);
     selectOption(option, index);
 };
 
@@ -471,7 +513,6 @@ const onDropdownAfterEnter = () => {
     // 确保ComboBox保持焦点，符合ARIA标准
     if (buttonRef.value) {
         buttonRef.value.focus();
-        logger.debug("ComboBox focus maintained for ARIA compliance");
     }
 
     // 滚动到高亮项
@@ -486,21 +527,37 @@ const onDropdownLeave = () => {
     highlightedIndex.value = -1;
 };
 
+/**
+ * 处理来自下拉管理器的关闭事件
+ */
+const handleDropdownCloseEvent = (event: CustomEvent) => {
+    const { id } = event.detail;
+    if (id === dropdownId && isOpen.value) {
+        // 被其他下拉菜单强制关闭，直接关闭本地状态（不需要通知管理器）
+        isOpen.value = false;
+        highlightedIndex.value = -1;
+    }
+};
+
 // 生命周期
 onMounted(() => {
     document.addEventListener("click", handleClickOutside);
+    document.addEventListener("dropdown-close", handleDropdownCloseEvent as EventListener);
     window.addEventListener("resize", updateDropdownPosition);
     window.addEventListener("scroll", updateDropdownPosition, true);
 
-    logger.debug("BaseSelect mounted");
+    // 注册到下拉管理器
+    dropdownManager.register(dropdownId);
 });
 
 onBeforeUnmount(() => {
     document.removeEventListener("click", handleClickOutside);
+    document.removeEventListener("dropdown-close", handleDropdownCloseEvent as EventListener);
     window.removeEventListener("resize", updateDropdownPosition);
     window.removeEventListener("scroll", updateDropdownPosition, true);
 
-    logger.debug("BaseSelect unmounted");
+    // 从下拉管理器注销
+    dropdownManager.unregister(dropdownId);
 });
 
 // 监听位置更新

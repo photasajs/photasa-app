@@ -1,7 +1,18 @@
 import { loggers } from "@common/logger";
 import type { IpcMain, BrowserWindow, App } from "electron";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
 
-export default class WindowService {
+@Service({
+    name: "window",
+    displayName: "窗口服务",
+    priority: ServicePriority.Critical,
+    dependencies: ["config"],
+    lazyLoad: false,
+    description: "管理应用窗口的创建和控制",
+})
+export default class WindowService implements IService {
+    readonly name = "window";
     ipc: IpcMain;
     mainWindow: BrowserWindow;
     logger = loggers.window;
@@ -11,7 +22,26 @@ export default class WindowService {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
         this.app = app;
+    }
+
+    /**
+     * 初始化窗口服务
+     */
+    async initialize(): Promise<void> {
         this.init();
+    }
+
+    /**
+     * 关闭窗口服务
+     */
+    async shutdown(): Promise<void> {
+        // 清理 IPC 监听器
+        this.ipc.removeAllListeners("window:minimize");
+        this.ipc.removeAllListeners("window:maximize");
+        this.ipc.removeAllListeners("window:unmaximize");
+        this.ipc.removeAllListeners("window:close");
+        this.ipc.removeAllListeners("window:queryMaximized");
+        this.ipc.removeAllListeners("window:reload");
     }
 
     private init(): void {

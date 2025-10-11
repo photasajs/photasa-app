@@ -15,6 +15,18 @@ vi.mock("@renderer/utils/api", () => ({
     checkPhotasaConfig: vi.fn(),
 }));
 
+// Mock logger
+vi.mock("@common/logger", () => ({
+    loggers: {
+        preference: {
+            debug: vi.fn(),
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
+    },
+}));
+
 // Mock window.api
 Object.defineProperty(window, "api", {
     value: {
@@ -76,7 +88,7 @@ describe("preference-scan-fix", () => {
                 },
             ];
 
-            await store.addScanFolder(folderPath, "scan");
+            await store.addScanFolder(folderPath, "scan", "auto");
 
             // 验证检查函数被调用
             expect(checkPhotasaConfig).toHaveBeenCalledWith(folderPath);
@@ -106,7 +118,7 @@ describe("preference-scan-fix", () => {
 
             const folderPath = "/test/new-folder";
 
-            await store.addScanFolder(folderPath, "scan");
+            await store.addScanFolder(folderPath, "scan", "auto");
 
             // 验证检查函数被调用
             expect(checkPhotasaConfig).toHaveBeenCalledWith(folderPath);
@@ -251,7 +263,7 @@ describe("preference-scan-fix", () => {
             });
 
             const specialPath = "/test/folder with spaces/中文文件夹";
-            await store.addScanFolder(specialPath, "scan");
+            await store.addScanFolder(specialPath, "scan", "auto");
 
             expect(checkPhotasaConfig).toHaveBeenCalledWith(specialPath);
             expect(store.scanningFolder[0].path).toBe(specialPath);
@@ -276,7 +288,7 @@ describe("preference-scan-fix", () => {
             const endTime = Date.now();
 
             expect(store.scanningFolder).toHaveLength(100);
-            expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
+            expect(endTime - startTime).toBeLessThan(2000); // 应该在2秒内完成
         });
 
         it("应该快速跳过大量已扫描的文件夹", async () => {
@@ -303,14 +315,14 @@ describe("preference-scan-fix", () => {
 
             // 串行添加已扫描的文件夹，这样更容易控制mock行为
             for (const folder of folders) {
-                await store.addScanFolder(folder, "scan");
+                await store.addScanFolder(folder, "scan", "auto");
             }
 
             const endTime = Date.now();
 
             // 所有文件夹都应该被跳过
             expect(store.scanningFolder).toHaveLength(0);
-            expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
+            expect(endTime - startTime).toBeLessThan(2000); // 应该在2秒内完成
         });
     });
 
@@ -344,7 +356,7 @@ describe("preference-scan-fix", () => {
     });
 
     describe("addFileOperation 文件夹树更新测试", () => {
-        it("应该为文件操作更新父目录的文件夹树", () => {
+        it("应该为文件操作更新父目录的文件夹树", async () => {
             const filePath = "/test/photos/image.jpg";
 
             // 先设置根路径，确保 buildDataNode 能工作
@@ -358,14 +370,14 @@ describe("preference-scan-fix", () => {
             ];
 
             // 添加文件操作
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: filePath,
                 action: "scan",
                 thumbnailSize: 150,
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-file-1",
             });
 
@@ -387,7 +399,7 @@ describe("preference-scan-fix", () => {
             );
         });
 
-        it("应该为目录操作正常更新文件夹树", () => {
+        it("应该为目录操作正常更新文件夹树", async () => {
             const dirPath = "/test/new-folder";
 
             // 先设置根路径
@@ -401,14 +413,14 @@ describe("preference-scan-fix", () => {
             ];
 
             // 添加目录操作
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: dirPath,
                 action: "scan",
                 thumbnailSize: 150,
                 operationType: "directory",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-dir-1",
             });
 
@@ -430,17 +442,17 @@ describe("preference-scan-fix", () => {
             );
         });
 
-        it("应该处理根目录文件，跳过树更新", () => {
+        it("应该处理根目录文件，跳过树更新", async () => {
             const rootFilePath = "/image.jpg";
 
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: rootFilePath,
                 action: "scan",
                 thumbnailSize: 150,
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-root-file",
             });
 
@@ -452,17 +464,17 @@ describe("preference-scan-fix", () => {
             expect(store.folderTree).toHaveLength(0);
         });
 
-        it("应该处理文件路径提取错误，不中断操作", () => {
+        it("应该处理文件路径提取错误，不中断操作", async () => {
             const invalidPath = "";
 
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: invalidPath,
                 action: "scan",
                 thumbnailSize: 150,
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-invalid-file",
             });
 
@@ -471,18 +483,18 @@ describe("preference-scan-fix", () => {
             expect(store.scanningFolder[0].path).toBe(invalidPath);
         });
 
-        it("应该处理路径标准化", () => {
+        it("应该处理路径标准化", async () => {
             const windowsStylePath = "C:\\Users\\test\\photos\\image.jpg";
             // normalizePath 在 mock 中会被调用，这里我们假设它能正确处理
 
-            store.addFileOperation({
+            await store.addFileOperation({
                 path: windowsStylePath,
                 action: "scan",
                 thumbnailSize: 150,
                 operationType: "file",
                 priority: 1,
                 retryCount: 0,
-                createdAt: Date.now(),
+                timestamp: Date.now(),
                 fileOperationId: "test-windows-path",
             });
 

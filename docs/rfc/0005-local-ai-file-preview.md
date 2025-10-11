@@ -20,13 +20,13 @@
 
 ### 支持的文件格式
 
-| 格式 | 扩展名 | 解析库 | 优先级 | 状态 |
-|------|--------|--------|--------|------|
-| Photoshop | .psd | ag-psd | 高 | 实现中 |
-| Adobe Illustrator | .ai | 待调研 | 中 | 计划中 |
-| Sketch | .sketch | 待调研 | 中 | 计划中 |
-| Figma | .figma | 待调研 | 低 | 计划中 |
-| Adobe XD | .xd | 待调研 | 低 | 计划中 |
+| 格式              | 扩展名  | 解析库 | 优先级 | 状态   |
+| ----------------- | ------- | ------ | ------ | ------ |
+| Photoshop         | .psd    | ag-psd | 高     | 实现中 |
+| Adobe Illustrator | .ai     | 待调研 | 中     | 计划中 |
+| Sketch            | .sketch | 待调研 | 中     | 计划中 |
+| Figma             | .figma  | 待调研 | 低     | 计划中 |
+| Adobe XD          | .xd     | 待调研 | 低     | 计划中 |
 
 ### 架构设计
 
@@ -60,23 +60,27 @@
 ### 核心组件
 
 #### 1. 文件类型检测器
+
 - 扩展 `src/main/import/metadata/index.ts` 支持AI文件类型
 - 添加AI文件格式识别逻辑
 - 集成到现有的文件扫描流程
 
 #### 2. AI文件元数据提取器
+
 - 创建 `src/main/import/metadata/extractors/ai-extractor.ts`
 - 实现PSD文件元数据提取（使用ag-psd库）
 - 提供基础AI文件信息提取
 - 支持错误处理和回退机制
 
 #### 3. 缩略图生成系统
+
 - 扩展 `src/main/thumbnail/thumbnail-handler.ts`
 - 添加AI文件缩略图生成逻辑
 - 实现PSD文件预览图生成
 - 集成到现有的缩略图系统
 
 #### 4. 前端预览组件
+
 - 创建 `src/renderer/src/components/AiFilePreview.vue`
 - 扩展 `src/renderer/src/components/MediaPreview.vue`
 - 更新 `src/renderer/src/components/import/FilePreview.vue`
@@ -85,25 +89,27 @@
 ### 技术实现细节
 
 #### 依赖库
+
 ```json
 {
-  "ag-psd": "^1.0.0",           // PSD文件解析
-  "file-type": "^18.0.0",       // 文件类型检测
-  "@types/file-type": "^18.0.0" // TypeScript类型定义
+    "ag-psd": "^1.0.0", // PSD文件解析
+    "file-type": "^18.0.0", // 文件类型检测
+    "@types/file-type": "^18.0.0" // TypeScript类型定义
 }
 ```
 
 #### 类型定义扩展
+
 ```typescript
 // 扩展FileMetadata接口
 export interface FileMetadata {
-  // ... 现有属性
-  // AI文件特有属性
-  layers?: number;
-  colorMode?: string;
-  version?: string;
-  hasTransparency?: boolean;
-  artboardCount?: number;
+    // ... 现有属性
+    // AI文件特有属性
+    layers?: number;
+    colorMode?: string;
+    version?: string;
+    hasTransparency?: boolean;
+    artboardCount?: number;
 }
 
 // 添加AI文件类型
@@ -111,6 +117,7 @@ export type FileType = "image" | "video" | "ai" | "all";
 ```
 
 #### 元数据提取流程
+
 1. 文件类型检测（基于扩展名）
 2. 选择合适的提取器（PSD使用ag-psd，其他使用基础提取器）
 3. 提取文件元数据和预览信息
@@ -118,6 +125,7 @@ export type FileType = "image" | "video" | "ai" | "all";
 5. 缓存结果并返回
 
 #### 错误处理策略
+
 - 对于不支持的格式，提供基础文件信息
 - 解析失败时，使用文件系统信息作为回退
 - 提供清晰的错误信息和用户反馈
@@ -126,30 +134,35 @@ export type FileType = "image" | "video" | "ai" | "all";
 ## 实施计划
 
 ### 阶段1：基础架构（已完成）
+
 - [x] 安装必要的依赖库
 - [x] 扩展文件类型检测系统
 - [x] 创建AI文件元数据提取器
 - [x] 更新类型定义
 
 ### 阶段2：缩略图生成（进行中）
+
 - [ ] 扩展缩略图处理器支持AI文件
 - [ ] 实现PSD文件预览图生成
 - [ ] 添加AI文件缩略图生成逻辑
 - [ ] 集成到现有的缩略图系统
 
 ### 阶段3：前端预览组件（待开始）
+
 - [ ] 创建AI文件预览组件
 - [ ] 扩展MediaPreview组件
 - [ ] 更新FilePreview组件
 - [ ] 添加AI文件特有的UI元素
 
 ### 阶段4：测试和优化（待开始）
+
 - [ ] 创建单元测试
 - [ ] 添加集成测试
 - [ ] 性能测试和优化
 - [ ] 错误处理测试
 
 ### 阶段5：格式扩展（未来）
+
 - [ ] 添加Adobe Illustrator支持
 - [ ] 添加Sketch文件支持
 - [ ] 添加其他设计文件格式支持
@@ -157,22 +170,28 @@ export type FileType = "image" | "video" | "ai" | "all";
 ## 技术挑战和解决方案
 
 ### 挑战1：文件格式复杂性
+
 **问题**：AI文件格式复杂，不同格式有不同的内部结构
 **解决方案**：
+
 - 优先支持PSD格式（有成熟的JavaScript库）
 - 为不支持的格式提供基础信息
 - 逐步添加对其他格式的支持
 
 ### 挑战2：性能考虑
+
 **问题**：AI文件通常较大，解析和预览生成可能影响性能
 **解决方案**：
+
 - 实现异步处理和进度反馈
 - 添加缓存机制避免重复处理
 - 优化内存使用和垃圾回收
 
 ### 挑战3：错误处理
+
 **问题**：AI文件可能损坏或格式不标准
 **解决方案**：
+
 - 实现多层错误处理机制
 - 提供用户友好的错误信息
 - 记录详细日志用于调试
@@ -180,28 +199,30 @@ export type FileType = "image" | "video" | "ai" | "all";
 ## 成功指标
 
 1. **功能指标**：
-   - 支持PSD文件预览（目标：95%成功率）
-   - 支持基础AI文件信息显示
-   - 与现有预览系统无缝集成
+    - 支持PSD文件预览（目标：95%成功率）
+    - 支持基础AI文件信息显示
+    - 与现有预览系统无缝集成
 
 2. **性能指标**：
-   - 缩略图生成时间 < 3秒
-   - 内存使用合理（< 100MB per file）
-   - 不影响现有功能性能
+    - 缩略图生成时间 < 3秒
+    - 内存使用合理（< 100MB per file）
+    - 不影响现有功能性能
 
 3. **用户体验指标**：
-   - 预览加载时间 < 2秒
-   - 错误处理友好
-   - UI交互流畅
+    - 预览加载时间 < 2秒
+    - 错误处理友好
+    - UI交互流畅
 
 ## 风险评估
 
 ### 技术风险
+
 - **文件格式支持限制**：某些格式可能无法完全支持
 - **性能问题**：大文件处理可能影响应用性能
 - **内存泄漏**：文件解析可能导致内存问题
 
 ### 缓解措施
+
 - 分阶段实施，优先支持成熟格式
 - 实现资源管理和内存监控
 - 添加超时和错误恢复机制

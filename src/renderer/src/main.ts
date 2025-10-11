@@ -1,11 +1,9 @@
-import { createApp, Plugin, watch } from "vue";
+import { createApp, watch } from "vue";
 import App from "./App.vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import "./assets/css/styles.less";
 import "./assets/css/tailwind.css";
-import Bugsnag from "@bugsnag/js";
-import BugsnagPluginVue from "@bugsnag/plugin-vue";
 import VueVideoPlayer from "@videojs-player/vue";
 import "video.js/dist/video-js.css";
 import { i18n } from "./i18n/config";
@@ -13,23 +11,14 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
 import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
+import { globalLogInterceptor } from "@common/logger";
 
-/**
- * Bugsnag 初始化
- */
-Bugsnag.start({
-    apiKey: "905f9713071b76d7cd04cb3b19e4c730",
-    plugins: [new BugsnagPluginVue()],
-});
-
-const bugsnagVue = Bugsnag.getPlugin("vue");
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 
 const app = createApp(App);
 app.use(i18n);
 app.use(VueVideoPlayer);
-app.use(<Plugin>bugsnagVue);
 app.use(pinia);
 
 // provide FindPhotoServiceIpc 实例
@@ -59,14 +48,10 @@ watch(
     },
 );
 
-Bugsnag.addMetadata("context", {
-    locale: preferenceStore.locale,
-    currentFolder: preferenceStore.currentFolder,
-});
-
-Bugsnag.leaveBreadcrumb("App started", {}, "state");
-
 const statusBarStore = useStatusBarStore();
+
+// 初始化 renderer 日志拦截器 - 直接发送到 log viewer
+globalLogInterceptor.activate();
 
 // TODO: move to preload api instead
 if (window.electron && window.electron.ipcRenderer) {

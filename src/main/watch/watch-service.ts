@@ -10,8 +10,40 @@ import {
 } from "@common/file-operation-utils";
 import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
+import { Service } from "../services/decorators/service-decorators";
+import { ServicePriority, IService } from "../services/core/service-types";
+import isDev from "electron-is-dev";
 
-export default class WatchService {
+/**
+ * WatchService is a CRITICAL core service that must start immediately with the app.
+ *
+ * Why this service is Critical:
+ * 1. File watching is the primary feature - users expect real-time updates when files change
+ * 2. Must be active from app start to catch all file system events
+ * 3. Other features depend on file change notifications (thumbnails, UI updates, etc.)
+ * 4. Any delay or lazy loading would cause missed file events and poor user experience
+ *
+ * Environment-based configuration:
+ * - Production: Critical priority, no delay - must start immediately for core functionality
+ * - Development: Slight delay to improve startup performance during development
+ *
+ * Configuration rationale:
+ * - Priority.Critical: Ensures first initialization with other core services
+ * - startupDelay: Environment-based - 0 for production, small delay for dev
+ * - lazyLoad: false: Always auto-initialize, never wait for explicit request
+ *
+ * IMPORTANT: Do NOT change these settings without understanding the impact on core functionality
+ */
+@Service({
+    name: "watch",
+    displayName: "文件监视服务",
+    priority: ServicePriority.Critical,
+    startupDelay: isDev ? 1000 : 0, // 开发环境延迟1秒，生产环境立即启动
+    lazyLoad: false, // 自动加载
+    description: "监视文件系统变化",
+})
+export default class WatchService implements IService {
+    readonly name = "watch";
     ipc: IpcMain;
     mainWindow: BrowserWindow;
     FileWatcherHandler: FSWatcher | undefined;
@@ -41,11 +73,12 @@ export default class WatchService {
     constructor(ipcMain: IpcMain, mainWindow: BrowserWindow) {
         this.ipc = ipcMain;
         this.mainWindow = mainWindow;
-
-        this.init();
     }
 
-    private init(): void {
+    /**
+     * 初始化文件监视服务
+     */
+    async initialize(): Promise<void> {
         // Stop watching files
         this.ipc.handle("picasa:stop-file-watch", () => {
             this.logger.info("Stop watching files......");
@@ -56,6 +89,8 @@ export default class WatchService {
         this.ipc.on(WatchServiceEvent.start, (_event: IpcMainEvent, args: WatchConfig) => {
             this.startWatching(args);
         });
+
+        this.logger.info("[WatchService] 文件监视服务已初始化");
     }
 
     private startWatching(args: WatchConfig): void {
@@ -154,9 +189,12 @@ export default class WatchService {
         }
     }
 
-    close(): void {
+    /**
+     * 关闭文件监视服务
+     */
+    async shutdown(): Promise<void> {
         this.ipc.removeAllListeners(WatchServiceEvent.start);
-        this.ipc.removeAllListeners(WatchServiceEvent.stop);
+        this.ipc.removeHandler("picasa:stop-file-watch");
 
         // Clean up debounce timer
         if (this.debounceTimer) {
@@ -172,5 +210,7 @@ export default class WatchService {
 
         this.FileWatcherHandler?.close();
         this.FileWatcherHandler = undefined;
+
+        this.logger.info("[WatchService] 文件监视服务已关闭");
     }
 }

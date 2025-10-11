@@ -28,6 +28,7 @@
 ### 预期结果
 
 当处理单个文件时，文件夹树应该显示该文件所在的父目录，使用户能够：
+
 - 在文件夹树中看到相关目录结构
 - 通过树导航到文件所在位置
 - 保持界面的一致性和可预测性
@@ -70,7 +71,7 @@ addFileOperation(operation: FileOperationInput) {
 ```typescript
 updateTreeForPath(path: string, operationType: "file" | "directory") {
     let treeUpdatePath: string;
-    
+
     if (operationType === "file") {
         // 对于文件，使用父目录路径
         treeUpdatePath = toDirName(path);
@@ -78,7 +79,7 @@ updateTreeForPath(path: string, operationType: "file" | "directory") {
         // 对于目录，使用目录路径本身
         treeUpdatePath = path;
     }
-    
+
     if (treeUpdatePath && treeUpdatePath !== path) {
         this.updateFolderTree(treeUpdatePath);
     }
@@ -88,6 +89,7 @@ updateTreeForPath(path: string, operationType: "file" | "directory") {
 #### 推荐方案：方案一
 
 **理由**：
+
 - 最小化代码更改
 - 保持现有API不变
 - 直接在问题点修复
@@ -98,6 +100,7 @@ updateTreeForPath(path: string, operationType: "file" | "directory") {
 #### 1. 路径处理
 
 使用现有的 `toDirName` 函数从 `@shared/path-util`：
+
 - 输入：`/Users/test/photos/image.jpg`
 - 输出：`/Users/test/photos`
 
@@ -135,25 +138,25 @@ try {
 #### 单元测试
 
 1. **文件路径提取测试**
-   - 测试各种文件路径格式
-   - 验证父目录正确提取
-   - 测试边界情况（根目录、相对路径等）
+    - 测试各种文件路径格式
+    - 验证父目录正确提取
+    - 测试边界情况（根目录、相对路径等）
 
 2. **树更新测试**
-   - 验证文件操作触发树更新
-   - 确认使用父目录路径更新
-   - 测试重复更新的幂等性
+    - 验证文件操作触发树更新
+    - 确认使用父目录路径更新
+    - 测试重复更新的幂等性
 
 #### 集成测试
 
 1. **用户操作流程测试**
-   - 模拟文件拖拽操作
-   - 验证树结构正确更新
-   - 确认用户界面正确显示
+    - 模拟文件拖拽操作
+    - 验证树结构正确更新
+    - 确认用户界面正确显示
 
 2. **性能测试**
-   - 大量文件操作的性能影响
-   - 内存使用情况监控
+    - 大量文件操作的性能影响
+    - 内存使用情况监控
 
 ### API变更
 
@@ -180,10 +183,12 @@ try {
 在用户首次访问文件夹树时才进行更新，而不是在文件操作时立即更新。
 
 **优点**：
+
 - 减少不必要的树更新操作
 - 提高文件操作的响应速度
 
 **缺点**：
+
 - 用户体验不一致
 - 增加了状态管理复杂度
 - 需要更多的缓存逻辑
@@ -193,10 +198,12 @@ try {
 提供用户配置选项来控制是否为文件操作更新树。
 
 **优点**：
+
 - 用户可以根据需要选择
 - 保持最大的向后兼容性
 
 **缺点**：
+
 - 增加了配置复杂度
 - 用户需要理解这个技术细节
 - 默认行为仍需要决策
@@ -204,6 +211,7 @@ try {
 ### 不实施的影响
 
 如果不实施此改进：
+
 - 用户在处理单个文件时缺乏上下文导航
 - 应用行为不一致（文件夹vs文件处理差异）
 - 用户体验受损，特别是在文件拖拽场景
@@ -217,16 +225,19 @@ try {
 ## Implementation Plan
 
 ### Phase 1: 核心功能实现
+
 - [ ] 修改 `addFileOperation` 方法添加父目录树更新逻辑
 - [ ] 添加错误处理和日志记录
 - [ ] 编写单元测试验证功能正确性
 
 ### Phase 2: 集成测试和优化
+
 - [ ] 创建集成测试验证端到端功能
 - [ ] 性能测试和优化
 - [ ] 用户界面测试
 
 ### Phase 3: 文档和发布
+
 - [ ] 更新相关技术文档
 - [ ] 创建发布说明
 - [ ] 监控生产环境表现

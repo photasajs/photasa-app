@@ -9,7 +9,9 @@
             "general": "Genel",
             "about": "Hakkında",
             "theme": "Tema",
-            "advanced": "Gelişmiş"
+            "advanced": "Gelişmiş",
+            "autoUpdate": "Otomatik Güncelleme",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Klasör Listesi",
         "folderListUsage": "Kullanım Şekli",
@@ -359,8 +361,11 @@
         "scanComplete": "[{path}] klasörü işlendi.",
         "start": "Tarama başlatıldı",
         "progress": "Tarama ilerlemesi",
+        "processingFile": "İşleniyor: {fileName}",
+        "scanningPath": "Taranyor: {path}",
         "complete": "Tarama tamamlandı",
-        "error": "Tarama hatası"
+        "error": "Tarama hatası",
+        "scanFailed": "Tarama başarısız: {path}"
     },
     "button": {
         "import": "İçe Aktar",
@@ -542,6 +547,50 @@
             "1h": "Son 1 saat",
             "6h": "Son 6 saat",
             "24h": "Son 24 saat"
+        }
+    },
+    "logViewer": {
+        "title": "Günlük Görüntüleyici",
+        "levels": {
+            "all": "Tüm seviyeler",
+            "error": "Hata",
+            "warn": "Uyarı",
+            "info": "Bilgi",
+            "debug": "Hata ayıklama"
+        },
+        "buttons": {
+            "clear": "Temizle",
+            "export": "Dışa aktar",
+            "opacity": "Opaklık",
+            "close": "Kapat"
+        },
+        "search": "Günlüklerde ara...",
+        "messages": {
+            "noLogs": "Mevcut günlük yok",
+            "logsCleared": "Günlükler temizlendi",
+            "logsExported": "Günlükler {fileName} dosyasına aktarıldı",
+            "exportFailed": "Günlük dışa aktarma başarısız: {error}"
+        },
+        "dragInfo": "Pencereyi taşımak için sürükleyin"
+    },
+    "update": {
+        "notification": {
+            "title": "Yeni sürüm mevcut",
+            "message": "Sürüm {version} mevcut",
+            "cancel": "İptal",
+            "install": "Yükle",
+            "cancelDownload": "İndirmeyi iptal et",
+            "installNow": "Şimdi yükle",
+            "viewDetails": "Detayları görüntüle"
+        },
+        "popup": {
+            "title": "Yeni sürüm mevcut",
+            "message": "Sürüm {version} mevcut",
+            "cancel": "İptal",
+            "install": "Yükle",
+            "cancelDownload": "İndirmeyi iptal et",
+            "installNow": "Şimdi yükle",
+            "close": "Kapat"
         }
     }
 }

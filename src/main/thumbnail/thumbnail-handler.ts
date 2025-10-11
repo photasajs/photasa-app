@@ -1,6 +1,7 @@
 import isVideo from "is-video";
 import isImage from "is-image";
-import { ensureDir, exists, remove, readFile } from "fs-extra";
+import { ensureDir, exists, remove, readFile, access } from "fs-extra";
+import * as fs from "fs";
 import sharp from "sharp";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
@@ -17,17 +18,8 @@ import {
     convertRgbToRgba,
 } from "./thumbnail-utils";
 import type { VideoSize } from "@common/types";
-import ffmpegStatic from "ffmpeg-static";
-import ffprobeStatic from "ffprobe-static";
 import { PhotasaLogger } from "@common/logger";
-
-// Get the paths to the packaged versions of the binaries we want to use
-const ffmpegPath = (ffmpegStatic as string).replace("app.asar", "app.asar.unpacked");
-const ffprobePath = ffprobeStatic.path.replace("app.asar", "app.asar.unpacked");
-
-// Tell the ffmpeg package where it can find the needed binaries.
-ffmpeg.setFfmpegPath(ffmpegPath);
-ffmpeg.setFfprobePath(ffprobePath);
+// 移除 ffmpeg-config 导入，路径将通过参数传递
 
 /**
  * 使用 wasm-heif 解码 HEIC/HEIF 文件
@@ -293,7 +285,17 @@ function getVideoRotation(metadata: any): number {
  * @param video - 视频路径
  * @returns 视频维度和旋转角度
  */
-function getVideoDimension(video: string): Promise<{ dimension: VideoSize; rotation: number }> {
+function getVideoDimension(
+    video: string,
+    ffmpegPath?: string,
+    ffprobePath?: string,
+): Promise<{ dimension: VideoSize; rotation: number }> {
+    // 如果提供了路径，则配置 FFmpeg
+    if (ffmpegPath && ffprobePath) {
+        ffmpeg.setFfmpegPath(ffmpegPath);
+        ffmpeg.setFfprobePath(ffprobePath);
+    }
+
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(video, (err, metadata) => {
             if (err) return reject(err);
@@ -334,9 +336,14 @@ function getVideoDimension(video: string): Promise<{ dimension: VideoSize; rotat
  * @param logger - 日志记录器
  * @returns 缩略图路径
  */
-async function createScreenshot(arg: ThumbnailRequest, logger: PhotasaLogger): Promise<string> {
+async function createScreenshot(
+    arg: ThumbnailRequest,
+    logger: PhotasaLogger,
+    ffmpegPath?: string,
+    ffprobePath?: string,
+): Promise<string> {
     logger.info("[thumbnail-handler] Create Screenshot for : " + arg.path);
-    const { dimension, rotation } = await getVideoDimension(arg.path);
+    const { dimension, rotation } = await getVideoDimension(arg.path, ffmpegPath, ffprobePath);
 
     logger.info(
         `[thumbnail-handler] Video dimension: ${dimension.width}x${dimension.height}, rotation: ${rotation}°`,
@@ -383,6 +390,8 @@ async function createScreenshot(arg: ThumbnailRequest, logger: PhotasaLogger): P
 export async function createThumbnail(
     arg: ThumbnailRequest,
     logger: PhotasaLogger,
+    ffmpegPath?: string,
+    ffprobePath?: string,
 ): Promise<ThumbnailRequest> {
     logger.info("[thumbnail-handler] Create Thumbnail for : " + arg.path);
     try {
@@ -404,6 +413,27 @@ export async function createThumbnail(
         // 确保缩略图目录存在
         await ensureDir(path.dirname(arg.thumbnail));
 
+        // 确保目标文件可写：如果文件存在且不可写，先删除它
+        try {
+            if (await exists(arg.thumbnail)) {
+                // 检查文件是否可写
+                try {
+                    await access(arg.thumbnail, fs.constants.W_OK);
+                    logger.debug(
+                        `[thumbnail-handler] Target thumbnail exists and is writable: ${arg.thumbnail}`,
+                    );
+                } catch (writeError) {
+                    logger.warn(
+                        `[thumbnail-handler] Target thumbnail exists but is not writable, removing: ${arg.thumbnail}`,
+                    );
+                    await remove(arg.thumbnail);
+                }
+            }
+        } catch (cleanupError) {
+            logger.warn(`[thumbnail-handler] Failed to cleanup target thumbnail: ${cleanupError}`);
+            // 继续尝试写入，让后续的错误处理来处理
+        }
+
         let isHeic = HeicExtensionRE.test(arg.path);
         // 如果文件是 HEIC 格式，则需要先转换为 PNG 格式
         if (isHeic) {
@@ -415,7 +445,7 @@ export async function createThumbnail(
         if (isVideo(arg.path)) {
             logger.info("[thumbnail-handler] Create video thumbnail for : " + arg.path);
             // 创建视频缩略图
-            await createScreenshot(arg, logger);
+            await createScreenshot(arg, logger, ffmpegPath, ffprobePath);
         } else if (isImage(arg.path) || isHeic) {
             // 创建图片缩略图 如果文件是 HEIC 格式，则使用预览图片
             const target = isHeic ? arg.preview : arg.path;

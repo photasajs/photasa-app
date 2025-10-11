@@ -3,13 +3,30 @@
         "title": "Photasa",
         "folderList": "Folder List"
     },
+    "logViewer": {
+        "title": "System Log Console",
+        "searchPlaceholder": "Search logs...",
+        "allLevels": "All Levels",
+        "debug": "Debug",
+        "info": "Info",
+        "warn": "Warn",
+        "error": "Error",
+        "clear": "Clear",
+        "export": "Export",
+        "opacity": "Opacity",
+        "noLogs": "No logs available",
+        "showing": "Showing {filtered} / {total} logs",
+        "autoScroll": "Auto Scroll"
+    },
     "preference": {
         "settings": "Settings",
         "tabs": {
             "general": "General",
             "about": "About",
             "theme": "Theme",
-            "advanced": "Advanced"
+            "advanced": "Advanced",
+            "autoUpdate": "Auto Update",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",
@@ -359,8 +376,11 @@
         "scanComplete": "Folder [{path}] has been processed.",
         "start": "Start Scan",
         "progress": "Scan Progress",
+        "processingFile": "Processing: {fileName}",
+        "scanningPath": "Scanning: {path}",
         "complete": "Scan Complete",
-        "error": "Scan Error"
+        "error": "Scan Error",
+        "scanFailed": "Scan failed: {path}"
     },
     "button": {
         "import": "Import",
@@ -508,6 +528,26 @@
             "1h": "Last 1 hour",
             "6h": "Last 6 hours",
             "24h": "Last 24 hours"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "viewDetails": "View Details"
+        },
+        "popup": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "close": "Close"
         }
     }
 }

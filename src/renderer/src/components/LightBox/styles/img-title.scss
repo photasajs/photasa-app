@@ -1,24 +1,24 @@
 // 采用Sass官方推荐的@use语法替换@import，避免未来版本兼容性问题
-@use './variables.scss' as *;
+@use "./variables.scss" as *;
 
 .#{$prefix-cls}-img-title {
-  overflow: hidden;
-  position: absolute;
-  left: 50%;
-  bottom: 60px;
-  transform: translate(-50%);
-  max-width: 80%;
-  font-size: 12px;
-  line-height: 1;
-  text-align: center;
-  text-overflow: ellipsis;
-  color: var(--color-text-secondary);
-  opacity: 0.8;
-  white-space: nowrap;
-  cursor: default;
-  transition: opacity 0.15s;
+    overflow: hidden;
+    position: absolute;
+    left: 50%;
+    bottom: 60px;
+    transform: translate(-50%);
+    max-width: 80%;
+    font-size: 12px;
+    line-height: 1;
+    text-align: center;
+    text-overflow: ellipsis;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+    white-space: nowrap;
+    cursor: default;
+    transition: opacity 0.15s;
 
-  &:hover {
-    opacity: 1;
-  }
+    &:hover {
+        opacity: 1;
+    }
 }

@@ -9,7 +9,9 @@
             "general": "Загальні",
             "about": "Про програму",
             "theme": "Тема",
-            "advanced": "Додатково"
+            "advanced": "Додатково",
+            "autoUpdate": "Автооновлення",
+            "scanMonitoring": "Scan Monitoring"
         },
         "folderList": "Список папок",
         "folderListUsage": "Спосіб використання",
@@ -359,8 +361,11 @@
         "scanComplete": "Папка [{path}] оброблена.",
         "start": "Почати сканування",
         "progress": "Прогрес сканування",
+        "processingFile": "Обробка: {fileName}",
+        "scanningPath": "Сканування: {path}",
         "complete": "Сканування завершено",
-        "error": "Помилка сканування"
+        "error": "Помилка сканування",
+        "scanFailed": "Сканування не вдалося: {path}"
     },
     "button": {
         "import": "Імпортувати",
@@ -542,6 +547,50 @@
             "1h": "Остання година",
             "6h": "Останні 6 годин",
             "24h": "Останні 24 години"
+        }
+    },
+    "logViewer": {
+        "title": "Переглядач логів",
+        "levels": {
+            "all": "Всі рівні",
+            "error": "Помилка",
+            "warn": "Попередження",
+            "info": "Інформація",
+            "debug": "Налагодження"
+        },
+        "buttons": {
+            "clear": "Очистити",
+            "export": "Експорт",
+            "opacity": "Прозорість",
+            "close": "Закрити"
+        },
+        "search": "Пошук в логах...",
+        "messages": {
+            "noLogs": "Логи недоступні",
+            "logsCleared": "Логи очищено",
+            "logsExported": "Логи експортовано в {fileName}",
+            "exportFailed": "Помилка експорту логів: {error}"
+        },
+        "dragInfo": "Перетягніть для переміщення вікна"
+    },
+    "update": {
+        "notification": {
+            "title": "Доступна нова версія",
+            "message": "Версія {version} доступна",
+            "cancel": "Скасувати",
+            "install": "Встановити",
+            "cancelDownload": "Скасувати завантаження",
+            "installNow": "Встановити зараз",
+            "viewDetails": "Показати деталі"
+        },
+        "popup": {
+            "title": "Доступна нова версія",
+            "message": "Версія {version} доступна",
+            "cancel": "Скасувати",
+            "install": "Встановити",
+            "cancelDownload": "Скасувати завантаження",
+            "installNow": "Встановити зараз",
+            "close": "Закрити"
         }
     }
 }

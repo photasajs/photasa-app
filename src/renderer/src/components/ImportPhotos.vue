@@ -496,10 +496,8 @@ const handleImportCancel = () => {
  * @param stepIndex - 即将进入的步骤索引（0 或 1）
  * @param wizardState - 包含stepData和setStepData的向导状态对象
  */
-const handleStepChange = async (stepId: string, stepIndex: number, wizardState: any) => {
-    logger.debug(`=== Step Change Debug ===`);
-    logger.debug(`Preparing for step: ${stepId} (${stepIndex})`);
-    logger.debug(`Current stepData keys: ${Object.keys(wizardState.stepData).join(", ")}`);
+const handleStepChange = async (stepId: string, _stepIndex: number, wizardState: any) => {
+    // Step change processing
     // 保存向导状态引用，供其他函数使用
     wizardStateRef.value = wizardState;
     // 确保配置步骤数据已初始化
@@ -528,8 +526,7 @@ const handleStepChange = async (stepId: string, stepIndex: number, wizardState: 
             wizardState.setStepData("preview", previewData);
         }
         // 验证配置数据是否存在并有效，然后加载预览数据
-        logger.debug("Configuration data:", wizardState.stepData.configuration);
-        logger.debug("Configuration filters:", wizardState.stepData.configuration.filters);
+        // Configuration data loaded
         await loadPreviewData(wizardState);
     }
 };
@@ -740,7 +737,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
         <template #configuration="{ stepData, setStepData }">
             <!-- Initialize step data if not present -->
             {{ !stepData ? initializeConfigurationData(setStepData) : null }}
-            <div class="h-full overflow-y-auto space-y-6">
+            <div class="h-full overflow-y-auto scrollbar-theme space-y-6">
                 <!-- Source directories -->
                 <div>
                     <h3 class="text-lg font-semibold text-[var(--color-text)] mb-4">
@@ -766,6 +763,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             class="w-full"
                             :disabled="loadingState.directories"
                             @click="addSourceDirectory(stepData || {}, setStepData)"
+                            data-testid="add-source-button"
                         >
                             <BaseSpinner v-if="loadingState.directories" class="w-4 h-4 mr-2" />
                             <PlusIcon v-else class="w-4 h-4 mr-2 text-current" />
@@ -1052,7 +1050,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                     <!-- Regular list for smaller file lists (≤100 files) -->
                     <div
                         v-else
-                        class="h-full overflow-y-auto border border-[var(--color-border)] rounded-lg"
+                        class="h-full overflow-y-auto scrollbar-theme-thin border border-[var(--color-border)] rounded-lg"
                     >
                         <div
                             v-for="group in stepData?.files || []"

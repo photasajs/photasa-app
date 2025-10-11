@@ -1,0 +1,5 @@
+{
+    "dataPath": "./temp-db",
+    "logLevel": "error",
+    "enableDevTools": false
+}

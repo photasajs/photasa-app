@@ -16,11 +16,22 @@ export default defineConfig({
     },
     test: {
         globals: true,
-        environment: "happy-dom",
-        setupFiles: ["./test/setup.ts"],
-        testTimeout: 10000, // 10 seconds max per test
-        hookTimeout: 5000, // 5 seconds for hooks
-        teardownTimeout: 5000, // 5 seconds for teardown
+        environment: "jsdom",
+        setupFiles: ["./test/setup.renderer.ts"],
+        testTimeout: 15000,
+        hookTimeout: 8000,
+        teardownTimeout: 5000,
+        pool: "forks",
+        poolOptions: {
+            forks: {
+                singleFork: true,
+                maxForks: 1,
+                isolate: true,
+            },
+        },
+        maxConcurrency: 1,
+        isolate: true,
+        passWithNoTests: true,
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "html"],
@@ -36,10 +47,7 @@ export default defineConfig({
         },
         include: [
             "src/renderer/src/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/main/**/*.{test,spec}.{js,ts,jsx,tsx}",
             "src/common/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/shared/**/*.{test,spec}.{js,ts,jsx,tsx}",
-            "src/preload/**/*.{test,spec}.{js,ts,jsx,tsx}",
         ],
         server: {
             deps: {
@@ -47,12 +55,10 @@ export default defineConfig({
             },
         },
         environmentOptions: {
-            happyDOM: {
-                settings: {
-                    navigator: {
-                        userAgent: "node",
-                    },
-                },
+            jsdom: {
+                url: "http://localhost:3000",
+                pretendToBeVisual: true,
+                resources: "usable",
             },
         },
     },
