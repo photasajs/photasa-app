@@ -95,7 +95,7 @@
         "ramda": "^0.29.0",
         "rxjs": "^7.8.1",
         "sharp": "^0.34.4",
-        "super-expressive": "^1.4.2",
+        "super-expressive": "^2.0.0",
         "tailwindcss": "^3.4.17",
         "uuid": "^11.1.0",
         "vue3-markdown-it": "^1.0.10"
