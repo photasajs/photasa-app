@@ -1,5 +1,71 @@
 # Changelog
 
+## [1.8.0](https://github.com/systembugtj/picasa-vue/compare/v1.7.0...v1.8.0) (2025-10-11)
+
+
+### Features
+
+* enhance ScanMonitoringSettings and create reusable BaseInlineFormField component ([dd4c901](https://github.com/systembugtj/picasa-vue/commit/dd4c901651cbf5a0a00acbd69eb8e3867991a50b))
+* implement DirectoryService for IPC handler migration ([fc37331](https://github.com/systembugtj/picasa-vue/commit/fc373315ec48650914db75f8092b9fed912f93e5))
+* implement global dropdown exclusivity for BaseSelect components ([b7977ad](https://github.com/systembugtj/picasa-vue/commit/b7977ad3518fce8ffbe5372559ff1bdb557605b2))
+* implement RFC 0018 scanning folder priority sorting and fix modal scrollbar issues ([5f2141e](https://github.com/systembugtj/picasa-vue/commit/5f2141ea67abdfabbcdb356b1bb54aa3471664a9))
+* implement RFC 0023 startup performance optimization ([7fea2bb](https://github.com/systembugtj/picasa-vue/commit/7fea2bb38c858826e6c29232d1eef5def49ad401))
+* implement RFC 0028 FFmpeg binary packaging fix ([090a5d6](https://github.com/systembugtj/picasa-vue/commit/090a5d655a688079baf9ee758a41dd459b38b918))
+* implement worker pool unification and fix build issues ([a7f5089](https://github.com/systembugtj/picasa-vue/commit/a7f5089742d6944c3189bbf758b192275f70574d))
+* optimize Sentry initialization to module load time for maximum coverage ([1de0b29](https://github.com/systembugtj/picasa-vue/commit/1de0b2973446e412e7e4b9fd713c49874deffe32))
+* optimize service startup for dev/prod environments ([9e50289](https://github.com/systembugtj/picasa-vue/commit/9e50289aa77e560541f699585f38220625f4bc0d))
+* standardize all services to Critical priority ([2db92de](https://github.com/systembugtj/picasa-vue/commit/2db92de1df71c39ac507d1c42228e813705678ef))
+* update app name to '仓廪图司' in Chinese (zh-CN, zh-TW) and '倉廩図司' in Japanese (ja-JP) locales ([7d1d770](https://github.com/systembugtj/picasa-vue/commit/7d1d770059cee81658dac9f9a626b88ede193bb2))
+* update UpdateSettings component with proper Chinese localization ([f2fd66e](https://github.com/systembugtj/picasa-vue/commit/f2fd66e331a304a0bc9b525c9a89d5862a986093))
+* 实现自动更新系统和通用异步工具库 ([e7e0b5c](https://github.com/systembugtj/picasa-vue/commit/e7e0b5c24f31a5de13bca1edfc459862024dc0e6))
+* 添加Playwright E2E测试架构增强 ([2675f85](https://github.com/systembugtj/picasa-vue/commit/2675f853afb2fda45968ac77e5e7a60ebfe74fd1))
+* 添加Windows ZIP构建目标 ([9635c27](https://github.com/systembugtj/picasa-vue/commit/9635c27424cd8530821b6954bd3ea5aee3c32877))
+* 添加图片列表文件统计和文件类型指示器功能 ([743810a](https://github.com/systembugtj/picasa-vue/commit/743810a0173f0b91919e33230c124e13a1002f8a))
+
+
+### Bug Fixes
+
+* add missing trailing commas in test files ([11cad26](https://github.com/systembugtj/picasa-vue/commit/11cad2646751e50dd8b2a910d3786f826a283974))
+* critical startup optimizations for production stability ([e356fe9](https://github.com/systembugtj/picasa-vue/commit/e356fe97dd49f0bf4f559143727c9f6497c5df30))
+* downgrade jsdom from 27.0.0 to 23.2.0 to resolve test compatibility issues ([de247bd](https://github.com/systembugtj/picasa-vue/commit/de247bd5775dcd6037d9155095440af18aba3f5e))
+* file access ([68eda11](https://github.com/systembugtj/picasa-vue/commit/68eda11eb9be95dde85dbcd8fcf11cc74a59ffa1))
+* improve BaseSelect dropdown width to fit content and prevent text truncation ([77e6804](https://github.com/systembugtj/picasa-vue/commit/77e6804a1f282920469fbb0f86ea8522c5e36ae6))
+* lock ([d2bb8ce](https://github.com/systembugtj/picasa-vue/commit/d2bb8ceea88e5f958f0dd7340dfed3a7a1976355))
+* mock electron-is-dev in watch service tests ([4a3b846](https://github.com/systembugtj/picasa-vue/commit/4a3b846b4eb41762dfb381bf876762cdbc8ff752))
+* remove extra blank line in scan-strategy-simple test ([3763003](https://github.com/systembugtj/picasa-vue/commit/3763003b86c25b1d4ef178c68901c3ca6e06ceba))
+* remove invalid zip configuration from electron-builder.yml ([b003c0f](https://github.com/systembugtj/picasa-vue/commit/b003c0f8847b74ad69ee43c2fa95fbda0f4af708))
+* remove zip ([a44b874](https://github.com/systembugtj/picasa-vue/commit/a44b8747b1927f324acf07646c58ed53a3dc6ce6))
+* resolve all test failures after DirectoryService migration ([d69b993](https://github.com/systembugtj/picasa-vue/commit/d69b99324e814a4edf697b40f09681e8243a613d))
+* resolve pool-manager test environment detection and import issues ([f9179eb](https://github.com/systembugtj/picasa-vue/commit/f9179ebc5e4f9c9ed1175a43c6f1ef477d88fd54))
+* resolve process.platform test isolation issues ([9a5a3a8](https://github.com/systembugtj/picasa-vue/commit/9a5a3a849f481eca4172472a296b064985250ba9))
+* test ([798e15a](https://github.com/systembugtj/picasa-vue/commit/798e15a182689cb84a3bd1012ca473b78b55b337))
+* update test expectation to match actual log message format ([a745c95](https://github.com/systembugtj/picasa-vue/commit/a745c9555a9d9194a9229c4143c57a5ee819b23e))
+* update URLs and fix update download issues ([ba00dd7](https://github.com/systembugtj/picasa-vue/commit/ba00dd76eeba6ec9d4a58c4062334e6b3c72090c))
+* version issue ([f49ba34](https://github.com/systembugtj/picasa-vue/commit/f49ba34ed445bf2a175cca6fbe0369b674274423))
+* version issuegir ([7613d8a](https://github.com/systembugtj/picasa-vue/commit/7613d8a10eab1fda20f3c06957d6331dba3a3369))
+* 修复electron-builder配置和测试内存问题 ([385fb49](https://github.com/systembugtj/picasa-vue/commit/385fb4966e73c41c8396ad7d55aa4310f0269f19))
+* 修复electron-builder配置错误 ([1777947](https://github.com/systembugtj/picasa-vue/commit/1777947b968dce4d96cd67737f0b6941b1ba8f6a))
+* 修复ESLint错误并更新忽略配置 ([14fc940](https://github.com/systembugtj/picasa-vue/commit/14fc940ad791498beeb4991c52304b25cf68c783))
+* 修复FFmpeg配置和跨平台兼容性问题 ([1d6e96f](https://github.com/systembugtj/picasa-vue/commit/1d6e96f2051af30d99428467fa8f75231e557c91))
+* 修复FFmpeg配置模块的fs-extra导入问题 ([18e2aa9](https://github.com/systembugtj/picasa-vue/commit/18e2aa9e0feae23c5dc0cd94bf1265d915f1a080))
+* 修复pool-manager测试，迁移到Jest并实现100%通过率 ([7edab14](https://github.com/systembugtj/picasa-vue/commit/7edab147e806e1d5c3c50bb5b13fef71d0899a34))
+* 修复Windows路径处理测试的平台兼容性问题 ([6060fac](https://github.com/systembugtj/picasa-vue/commit/6060fac513eb532c27e7b0c50d208b9411629e82))
+* 修复Windows路径测试的期望值 ([9432af7](https://github.com/systembugtj/picasa-vue/commit/9432af761c72852975467b10b73de85b377e3902))
+* 修复Windows路径测试的跨平台兼容性 ([c56a554](https://github.com/systembugtj/picasa-vue/commit/c56a554bbc368b181aa42b924eae741dd7a0a5b1))
+* 修复剩余测试失败问题 ([1506c7a](https://github.com/systembugtj/picasa-vue/commit/1506c7a1c5f312eac73b37b0f3b56037caace851))
+* 修复单元测试失败问题 ([4452c49](https://github.com/systembugtj/picasa-vue/commit/4452c4908f28e47f8b614f45e6359665c337f58e))
+* 修复多个测试失败问题 ([2468b5d](https://github.com/systembugtj/picasa-vue/commit/2468b5d76a37e7cc7b261cf32bc6a2e683d56e34))
+* 修复所有测试失败问题 ([95cbf85](https://github.com/systembugtj/picasa-vue/commit/95cbf85639cb1a568ffb1ad43c9e4d400ec0fd4a))
+* 修复测试中fs-extra模拟问题 ([25ea75a](https://github.com/systembugtj/picasa-vue/commit/25ea75a751b5cab7e9f31d217e178526a5dc61ce))
+* 修复测试中process.platform mock的配置问题 ([d89149a](https://github.com/systembugtj/picasa-vue/commit/d89149ab8f204ba75e48f3d0a91483762d63f824))
+* 修复测试中的网络图片加载错误 ([a4e03d9](https://github.com/systembugtj/picasa-vue/commit/a4e03d9d0e85bdca66a1bc45388e59b0cfcc0920))
+* 修复测试失败问题并提升测试可靠性 ([041896b](https://github.com/systembugtj/picasa-vue/commit/041896bcf950e949c06cb8f6b8b35c7760090d31))
+* 修复测试平台兼容性和内存问题 ([2fca5ca](https://github.com/systembugtj/picasa-vue/commit/2fca5ca93c670872c0398090688a4ce3113549bf))
+* 完善fs-extra模拟配置和修复剩余测试问题 ([5c552a3](https://github.com/systembugtj/picasa-vue/commit/5c552a3d4d2597096b830fefadb7dac032eba834))
+* 完善测试配置和注释准确性 ([5b8fa3a](https://github.com/systembugtj/picasa-vue/commit/5b8fa3a710c8f17c42670a6598790dcf0be2f6db))
+* 进一步优化测试配置和跳过问题测试 ([80b9ac1](https://github.com/systembugtj/picasa-vue/commit/80b9ac11414f0f06de49939b790626c9b410c680))
+* 限制Jest测试范围，只运行已迁移的测试 ([7dc0626](https://github.com/systembugtj/picasa-vue/commit/7dc06263be768bac874730df7b1ee57034a14c5a))
+
 ## [1.7.0](https://github.com/systembugtj/picasa-vue/compare/v1.6.0...v1.7.0) (2025-09-13)
 
 
