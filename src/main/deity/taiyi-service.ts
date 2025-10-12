@@ -129,33 +129,37 @@ export default class TaiyiService implements IService, IStepExecutor {
 
             logger.info(`🌌 太乙路由成功: ${routeInfo} -> ${step.id}`);
 
+            // 🎯 干净数据流：直接暴露引擎原始数据，避免复杂嵌套
+            const rawData = this.engine.getEngineResult(engineResult);
+            
             // 根据步骤的output定义处理返回数据
-            let processedData = engineResult;
+            let processedData: unknown = rawData;
             if (step.output && typeof step.output === "object") {
                 processedData = {};
                 for (const [outputKey, outputPath] of Object.entries(step.output)) {
                     try {
-                        processedData[outputKey] = this.extractValueByPath(
-                            engineResult,
-                            outputPath,
-                        );
+                        (processedData as Record<string, unknown>)[outputKey] =
+                            this.extractValueByPath(rawData, outputPath);
                     } catch (error) {
                         logger.warn(`提取步骤输出 ${outputKey} 失败:`, error);
-                        processedData[outputKey] = undefined;
+                        (processedData as Record<string, unknown>)[outputKey] = undefined;
                     }
                 }
             }
 
-            // 构造标准化结果
+            // 🎯 关键：直接暴露引擎原始数据到工作流上下文
+            // 这样YAML中可以直接引用 steps.stepId.field，而不是 steps.stepId.result.field
             const result: StepExecutionResult = {
-                success: true, // 执行成功（不是业务逻辑成功）
+                success: engineResult.success,
                 data: processedData,
+                error: engineResult.error?.message,
                 metadata: {
                     duration: Date.now() - startTime,
                     stepId: step.id,
-                    executedAt: Date.now(),
+                    executedAt: engineResult.timestamp,
                     route: routeInfo,
                     stepType: step.type,
+                    engineName: engineResult.engineName,
                 },
             };
 

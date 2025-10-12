@@ -50,30 +50,19 @@ class MockStepExecutor implements IStepExecutor {
         // 返回模拟结果，考虑实际的数据结构嵌套
         const baseResult = this.mockResults[key] || { success: true };
 
-        // 根据不同的action返回符合工作流期望的数据结构
-        let output = baseResult;
-        if (step.action === "sanitize") {
-            // 匹配工作流中 {{steps.sanitize_values.output.result.result}} 的路径
-            output = {
-                result: {
-                    result: baseResult, // 双层嵌套以匹配实际路径
-                },
-                success: true,
-            };
-        } else if (step.action === "getCurrentSnapshot") {
-            // 匹配工作流中 {{steps.get_updated_snapshot.output.result.data}} 的路径
-            output = {
-                result: {
-                    data: baseResult, // 嵌套为data以匹配实际路径
-                },
-                success: true,
-            };
-        }
+        // 🎯 简化结构：直接返回引擎的原始返回值
+        // 模拟 TaiyiEngine 的包装结构
+        const engineResult = {
+            success: true,
+            result: baseResult,
+            timestamp: Date.now(),
+            engineName: step.service || "mock",
+        };
 
         return {
             success: true,
-            data: baseResult,
-            output: output,
+            data: engineResult, // TaiyiService 会将 engineResult 放入 data 字段
+            output: engineResult, // VariableResolver 会直接暴露 result 字段
             metadata: {
                 stepName: stepName,
                 executedAt: Date.now(),

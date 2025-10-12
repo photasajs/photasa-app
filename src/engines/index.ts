@@ -33,4 +33,4 @@ export * from "./shunfenger";
 export * from "./sibu";
 
 // 引擎通用类型和接口
-export type { EngineCallResult } from "./taiyi";
+export type { EngineCallResult } from "./workflow";

@@ -6,6 +6,7 @@
 import { EventEmitter } from "events";
 import { AdapterRegistry } from "./adapter-registry";
 import { loggers } from "@common/logger";
+import { EngineCallResult } from "../../workflow";
 
 const logger = loggers.taiyi;
 
@@ -19,17 +20,6 @@ export interface TaiyiEngineConfig {
     enableHealthCheck?: boolean;
     /** 健康检查间隔（毫秒） */
     healthCheckInterval?: number;
-}
-
-/**
- * 引擎调用结果
- */
-export interface EngineCallResult<T = any> {
-    success: boolean;
-    result?: T;
-    error?: Error;
-    timestamp: number;
-    engineName: string;
 }
 
 /**
@@ -148,6 +138,17 @@ export class TaiyiEngine extends EventEmitter {
                 engineName,
             };
         }
+    }
+
+    /**
+     * 获取引擎调用结果（不包含工作流概念）
+     * 引擎层保持纯净，不关心工作流
+     */
+    getEngineResult<T>(engineResult: EngineCallResult<T>): T | null {
+        if (engineResult.success) {
+            return engineResult.result as T;
+        }
+        return null;
     }
 
     /**

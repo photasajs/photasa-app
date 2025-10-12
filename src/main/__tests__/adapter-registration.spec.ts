@@ -85,9 +85,8 @@ describe("主进程适配器注册集成测试", () => {
 
         expect(result.success).toBe(true);
         expect(result.data).toBeDefined();
-        expect(result.data.result).toBeDefined();
         // 现在builtin.return直接返回数据，不再包装
-        expect(result.data.result).toEqual({ message: "测试数据" });
+        expect(result.data).toEqual({ message: "测试数据" });
     });
 
     it("应该能够调用builtin适配器的log方法", async () => {
@@ -126,9 +125,8 @@ describe("主进程适配器注册集成测试", () => {
 
         expect(result.success).toBe(true);
         expect(result.data).toBeDefined();
-        expect(result.data.result).toBeDefined();
-        expect(result.data.result.success).toBe(true);
-        expect(result.data.result.timestamp).toBeDefined();
+        expect(result.data.success).toBe(true);
+        expect(result.data.timestamp).toBeDefined();
     });
 
     it("应该能够调用builtin适配器的delay方法", async () => {
@@ -165,9 +163,8 @@ describe("主进程适配器注册集成测试", () => {
 
         expect(result.success).toBe(true);
         expect(result.data).toBeDefined();
-        expect(result.data.result).toBeDefined();
-        expect(result.data.result.success).toBe(true);
-        expect(result.data.result.actualDelay).toBeGreaterThanOrEqual(10);
+        expect(result.data.success).toBe(true);
+        expect(result.data.actualDelay).toBeGreaterThanOrEqual(10);
     });
 
     it("应该正确处理模板变量解析后的数据", async () => {
@@ -213,7 +210,7 @@ describe("主进程适配器注册集成测试", () => {
         expect(result.success).toBe(true);
         expect(result.data).toBeDefined();
 
-        const builtinResult = result.data.result;
+        const builtinResult = result.data;
         // 现在builtin.return直接返回数据对象，不再包装
         expect(builtinResult).toBeDefined();
         expect(builtinResult.revision).toBe(57);

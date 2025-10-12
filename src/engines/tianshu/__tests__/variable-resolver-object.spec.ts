@@ -67,7 +67,7 @@ describe("VariableResolver 对象处理", () => {
     });
 
     it("应该保持对象类型不变，不转换为字符串", () => {
-        const template = "{{ steps.step1.result }}";
+        const template = "{{ steps.step1 }}";
         const result = resolver.resolveString(template, context);
 
         // 验证结果是对象，不是字符串
@@ -80,7 +80,7 @@ describe("VariableResolver 对象处理", () => {
     });
 
     it("应该在混合文本中将对象序列化为JSON", () => {
-        const template = "The result is: {{ steps.step1.result }} and more text";
+        const template = "The result is: {{ steps.step1 }} and more text";
         const result = resolver.resolveString(template, context);
 
         // 在混合文本中，对象应该被JSON序列化
@@ -91,7 +91,7 @@ describe("VariableResolver 对象处理", () => {
     });
 
     it("应该正确处理嵌套对象路径", () => {
-        const template = "{{ steps.step1.result.ui }}";
+        const template = "{{ steps.step1.ui }}";
         const result = resolver.resolveString(template, context);
 
         // 验证结果是UI对象
@@ -103,7 +103,7 @@ describe("VariableResolver 对象处理", () => {
     it("应该在resolveObject中正确处理包含模板的对象", () => {
         const obj = {
             success: true,
-            data: "{{ steps.step1.result }}",
+            data: "{{ steps.step1 }}",
             message: "操作完成",
         };
 
@@ -116,7 +116,7 @@ describe("VariableResolver 对象处理", () => {
     });
 
     it("应该处理数组中的对象模板", () => {
-        const arr = ["{{ steps.step1.result }}", "{{ variables.testVar }}"];
+        const arr = ["{{ steps.step1 }}", "{{ variables.testVar }}"];
         const result = resolver.resolveObject(arr, context);
 
         // 数组元素应该是对象
@@ -131,8 +131,8 @@ describe("VariableResolver 对象处理", () => {
         const complex = {
             outer: {
                 inner: {
-                    value: "{{ steps.step1.result }}",
-                    text: "Some text with {{ steps.step1.result.revision }} revision",
+                    value: "{{ steps.step1 }}",
+                    text: "Some text with {{ steps.step1.revision }} revision",
                 },
             },
         };

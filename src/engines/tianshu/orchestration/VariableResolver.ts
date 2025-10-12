@@ -5,8 +5,32 @@
 
 import { WorkflowStep, ExecutionContext } from "../types/workflows";
 import { loggers } from "@common/logger";
+import { isObject } from "radash";
 
 const logger = loggers.tianshu;
+
+/**
+ * TaiyiEngine 包装结构类型
+ */
+interface TaiyiEngineResult {
+    success: boolean;
+    result: unknown;
+    timestamp: number;
+    engineName: string;
+}
+
+/**
+ * 类型守卫：检查是否为 TaiyiEngine 包装结构
+ */
+function isTaiyiEngineResult(obj: unknown): obj is TaiyiEngineResult {
+    return (
+        isObject(obj) &&
+        "success" in obj &&
+        "result" in obj &&
+        "timestamp" in obj &&
+        "engineName" in obj
+    );
+}
 
 /**
  * 变量解析器配置
@@ -87,7 +111,7 @@ export class VariableResolver {
             return obj.map((item) => this.resolveObject(item, context));
         }
 
-        if (typeof obj === "object") {
+        if (isObject(obj)) {
             const resolved: any = {};
             for (const [key, value] of Object.entries(obj)) {
                 resolved[key] = this.resolveObject(value, context);
@@ -193,7 +217,7 @@ export class VariableResolver {
                 return new Date().toISOString();
             default:
                 if (this.config.strictMode) {
-                    throw new Error(`Unknown function: ${functionName}`);
+                    throw new Error(`🌌 【符咒解析】未知仙法「${functionName}」`);
                 }
                 return variableName;
         }
@@ -220,7 +244,7 @@ export class VariableResolver {
                 return this.generateUUID();
             default:
                 if (this.config.strictMode) {
-                    throw new Error(`Unknown special variable: ${variableName}`);
+                    throw new Error(`🌌 【符咒解析】未知天机「${variableName}」`);
                 }
                 return variableName;
         }
@@ -254,18 +278,18 @@ export class VariableResolver {
                 break;
             default:
                 if (this.config.strictMode) {
-                    throw new Error(`Unknown variable root: ${root}`);
+                    throw new Error(`🌌 【符咒解析】未知仙域「${root}」`);
                 }
                 return variableName;
         }
 
         // 遍历路径
         for (let i = 1; i < parts.length; i++) {
-            if (value && typeof value === "object" && parts[i] in value) {
+            if (value && isObject(value) && parts[i] in value) {
                 value = value[parts[i]];
             } else {
                 if (this.config.strictMode) {
-                    throw new Error(`Variable path not found: ${variableName}`);
+                    throw new Error(`🌌 【符咒解析】仙径未寻「${variableName}」`);
                 }
                 return variableName;
             }
@@ -294,7 +318,7 @@ export class VariableResolver {
         }
 
         if (this.config.strictMode) {
-            throw new Error(`Variable not found: ${variableName}`);
+            throw new Error(`🌌 【符咒解析】仙符未现「${variableName}」`);
         }
 
         return variableName;
@@ -370,16 +394,21 @@ export class VariableResolver {
         const outputs: Record<string, any> = {};
 
         for (const [stepId, result] of Array.from(context.stepResults.entries())) {
-            // 提供完整的step result，包括output, status, result等
-            outputs[stepId] = {
-                output: result.output,
-                result: result.output, // 为了兼容，result也指向output
-                status: result.status,
-                duration: result.duration,
-                stepId: result.stepId,
-                // 添加data字段以支持TaiyiService的返回结构
-                data: result.output,
-            };
+            // 🎯 简化包装：直接暴露引擎的原始返回值
+            // 如果 TaiyiService 处理了 output 定义，直接使用处理后的数据
+            if (isObject(result.output)) {
+                // 检查是否是 TaiyiEngine 的包装结构
+                if (isTaiyiEngineResult(result.output)) {
+                    // 这是 TaiyiEngine 的包装，直接暴露 result 字段
+                    outputs[stepId] = result.output.result;
+                } else {
+                    // 这是已经处理过的数据，直接使用
+                    outputs[stepId] = result.output;
+                }
+            } else {
+                // 兜底：使用原始输出
+                outputs[stepId] = result.output;
+            }
         }
 
         return outputs;
@@ -420,13 +449,11 @@ export class VariableResolver {
 
         for (let i = 0; i < fullPath.length; i++) {
             const key = fullPath[i];
-            if (currentSchema && typeof currentSchema === "object" && key in currentSchema) {
+            if (currentSchema && isObject(currentSchema) && key in currentSchema) {
                 currentSchema = currentSchema[key];
             } else {
                 const validPaths =
-                    currentSchema && typeof currentSchema === "object"
-                        ? Object.keys(currentSchema)
-                        : [];
+                    currentSchema && isObject(currentSchema) ? Object.keys(currentSchema) : [];
 
                 logger.warn(`🌌 【符咒解析】路径验证失败「${pathParts.join(".")}」在「${key}」处`);
                 logger.debug(
@@ -437,8 +464,8 @@ export class VariableResolver {
                 // 在严格模式下，路径验证失败应该抛出错误
                 if (this.config.strictMode) {
                     throw new Error(
-                        `Invalid output path: ${pathParts.join(".")}. ` +
-                            `Available fields in ${outputKey}: ${validPaths.join(", ")}`,
+                        `🌌 【符咒解析】路径有误「${pathParts.join(".")}」。` +
+                            `步骤「${outputKey}」可用字段：${validPaths.join("、")}`,
                     );
                 }
                 return;

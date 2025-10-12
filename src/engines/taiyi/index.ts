@@ -26,6 +26,6 @@
 
 // 核心引擎
 export { TaiyiEngine } from "./core/TaiyiEngine";
-export type { TaiyiEngineConfig, EngineCallResult } from "./core/TaiyiEngine";
+export type { TaiyiEngineConfig } from "./core/TaiyiEngine";
 export { Adapter, AdapterPriority } from "./core/adapter-decorators";
 export type { IAdapter } from "./core/adapter-decorators";
