@@ -79,7 +79,7 @@ describe("FangXuanLingService", () => {
                 acknowledged: true,
                 command: "get_preferences",
                 data: { action: "get_preferences" },
-                blessing: "袁天罡已执行诏令",
+                blessing: "偏好设置已通过策略模式处理并上报天界",
                 timestamp: Date.now(),
                 metadata: {
                     engineName: "wenchang",
@@ -184,7 +184,7 @@ describe("FangXuanLingService", () => {
                 acknowledged: true,
                 command: "theme_change",
                 data: { themeId: "dark" },
-                blessing: "主题变更已保存",
+                blessing: "偏好设置已通过策略模式处理并上报天界",
                 timestamp: Date.now(),
                 metadata: {
                     engineName: "wenchang",

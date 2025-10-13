@@ -109,12 +109,8 @@ describe("偏好设置集成测试", () => {
             mockTianshu.processCommand.mockResolvedValue({
                 status: "completed",
                 result: {
-                    success: true,
-                    result: {
-                        data: mockPreferenceData,
-                    },
-                    timestamp: Date.now(),
-                    source: "wenchang_engine",
+                    data: mockPreferenceData,
+                    engineName: "wenchang",
                 },
             });
 
@@ -153,6 +149,7 @@ describe("偏好设置集成测试", () => {
                     success: true,
                     newRevision: 2,
                     updatedAt: Date.now(),
+                    engineName: "wenchang",
                 },
             });
 
@@ -169,7 +166,7 @@ describe("偏好设置集成测试", () => {
             // ✅ RFC 0041重构后：THEME_CHANGE通过策略处理分支成功处理
             expect(response.approved).toBe(true);
             expect(response.metadata?.escalated).toBe(true);
-            expect(response.instruction).toBe("偏好设置已通过策略模式处理并上报天界");
+            expect(response.instruction).toBe("天枢常规庇佑，平安吉祥"); // normal priority -> 常规庇佑
 
             // 验证天枢引擎被调用
             expect(mockTianshu.processCommand).toHaveBeenCalled();
