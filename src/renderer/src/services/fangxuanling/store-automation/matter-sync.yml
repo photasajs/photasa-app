@@ -27,7 +27,7 @@ strategies:
 matters:
     # 主题变更
     theme_change:
-        snapshotPath: "data"
+        snapshotPath: "ui.theme"
         syncStrategy: "merge"
         storePath: "preferences"
         autoSync: true
@@ -35,7 +35,7 @@ matters:
 
     # 语言变更
     language_change:
-        snapshotPath: "data"
+        snapshotPath: "."
         syncStrategy: "merge"
         storePath: "preferences"
         autoSync: true
@@ -43,7 +43,7 @@ matters:
 
     # 缩略图大小变更
     thumbnail_size_change:
-        snapshotPath: "data"
+        snapshotPath: "."
         syncStrategy: "merge"
         storePath: "preferences"
         autoSync: true
@@ -51,7 +51,7 @@ matters:
 
     # 添加监控路径
     add_path:
-        snapshotPath: "data"
+        snapshotPath: "."
         syncStrategy: "merge"
         storePath: "preferences"
         autoSync: true
@@ -59,7 +59,7 @@ matters:
 
     # 移除监控路径
     remove_path:
-        snapshotPath: "data"
+        snapshotPath: "."
         syncStrategy: "merge"
         storePath: "preferences"
         autoSync: true
@@ -67,7 +67,7 @@ matters:
 
     # 添加扫描文件夹
     add_scan_folder:
-        snapshotPath: "data"
+        snapshotPath: "."
         syncStrategy: "merge"
         storePath: "preferences"
         autoSync: true

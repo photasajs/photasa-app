@@ -187,12 +187,52 @@ export class WenchangEngine extends EventEmitter {
     }
 
     /**
+     * 深度合并对象（纯函数）
+     * 递归合并source到target，不修改原始对象
+     *
+     * @param target 目标对象
+     * @param source 源对象
+     * @returns 合并后的新对象
+     */
+    private deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
+        if (!source || typeof source !== "object") {
+            return target;
+        }
+
+        if (!target || typeof target !== "object") {
+            return source as T;
+        }
+
+        // 创建target的浅拷贝
+        const result: Record<string, unknown> = { ...target };
+
+        // 递归合并对象属性
+        for (const [key, value] of Object.entries(source)) {
+            if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+                // 嵌套对象递归合并
+                if (!result[key] || typeof result[key] !== "object") {
+                    result[key] = {};
+                }
+                result[key] = this.deepMerge(
+                    result[key] as Record<string, unknown>,
+                    value as Record<string, unknown>,
+                );
+            } else {
+                // 基础类型和数组直接覆盖
+                result[key] = value;
+            }
+        }
+
+        return result as T;
+    }
+
+    /**
      * 应用偏好变更增量
      *
-     * 【简化后的纯存储逻辑】
+     * 【基于路径的深度合并存储逻辑】
      * 文昌星君只负责典籍持久化，不管理业务逻辑。
      * 所有业务计算（如路径数组的添加/移除）应由房玄龄在人界完成，
-     * 文昌星君只需简单赋值并保存。
+     * 文昌星君使用深度合并确保不丢失未修改的嵌套字段。
      */
     async applyDelta(delta: PreferenceDelta, _source = "unknown"): Promise<number> {
         if (!this.isInitialized) {
@@ -201,21 +241,24 @@ export class WenchangEngine extends EventEmitter {
         }
 
         try {
-            // ✅ 纯存储操作：直接应用增量，无业务逻辑
+            // ✅ 基于路径的深度merge：保留未修改的嵌套字段
             if (delta.ui) {
-                this.preferences.ui = { ...this.preferences.ui, ...delta.ui };
+                this.preferences.ui = this.deepMerge(this.preferences.ui, delta.ui);
             }
             if (delta.display) {
-                this.preferences.display = { ...this.preferences.display, ...delta.display };
+                this.preferences.display = this.deepMerge(this.preferences.display, delta.display);
             }
             if (delta.scanning) {
-                this.preferences.scanning = { ...this.preferences.scanning, ...delta.scanning };
+                this.preferences.scanning = this.deepMerge(
+                    this.preferences.scanning,
+                    delta.scanning,
+                );
             }
             if (delta.performance) {
-                this.preferences.performance = {
-                    ...this.preferences.performance,
-                    ...delta.performance,
-                };
+                this.preferences.performance = this.deepMerge(
+                    this.preferences.performance,
+                    delta.performance,
+                );
             }
 
             // 更新版本和时间戳
@@ -493,14 +536,14 @@ export class WenchangEngine extends EventEmitter {
      * 清理和验证数据
      * 工作流支持方法
      */
-    async sanitize(data: any): Promise<{ result: any }> {
+    async sanitize(data: any): Promise<any> {
         logger.info("🌌 文昌星君施展净化之术");
 
         const sourceData = data.source || data;
 
         // 简单实现：直接返回源数据
         // 在实际应用中，这里应该根据rules进行数据清理和转换
-        return { result: sourceData };
+        return sourceData;
     }
 
     /**

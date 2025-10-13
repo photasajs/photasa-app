@@ -5,7 +5,7 @@
 - **标题**: 偏好设置工作流集成与Store边界统一
 - **状态**: 🟢 **核心完成** (Core Completed) - 架构纯化和Store边界已完成
 - **创建日期**: 2025-09-28
-- **最后更新**: 2025-10-12
+- **最后更新**: 2025-10-12 (阶段5：工作流数据流简化)
 - **目标版本**: v2.0.0
 - **完成进度**:
   - ✅ 阶段1-2: Store边界统一（scanFolders删除、preferences结构统一）
@@ -178,6 +178,84 @@ async function initializePreferences() {
 → 返回更新结果 → 更新统一store → 触发响应式更新
 ```
 
+#### 3. 工作流数据流设计原则（2025-10-12）
+
+**完整数据流链路**：
+```
+Engine.method() 返回 rawData
+  ↓
+TaiyiEngine.callEngine() 包装
+  → { result: rawData, success, timestamp, engineName }
+  ↓
+TaiyiService.getEngineResult() 提取
+  → rawData (提取result字段)
+  ↓
+TaiyiService.extractValueByPath() 根据step.output定义提取
+  → processedData (工作流可访问的数据)
+  ↓
+WorkflowOrchestrator 存储
+  → steps.stepId.* = processedData
+```
+
+**output_schema定义规范**：
+
+**核心规则**：`output_schema`必须声明**rawData**的实际结构（即Engine方法的返回值）
+
+**正确示例**：
+
+```yaml
+# 例1: validate() 返回 { valid: boolean, errors?: string[] }
+- id: "validate_delta"
+  action: "validate"
+  output_schema:
+    valid: boolean        # 直接声明rawData的字段
+    errors: string[]
+# 访问: steps.validate_delta.valid
+
+# 例2: getCurrentSnapshot() 返回 { data: object, revision: number, timestamp: number }
+- id: "get_snapshot"
+  action: "getCurrentSnapshot"
+  output_schema:
+    data: object          # 直接声明rawData的字段
+    revision: number
+    timestamp: number
+# 访问: steps.get_snapshot.data
+```
+
+**❌ 错误示例**：
+
+```yaml
+# 错误1: output_schema与rawData不匹配
+# Engine返回: { valid, errors }
+output_schema:
+  result:               # ❌ 错误！rawData里没有result字段
+    valid: boolean
+    errors: string[]
+
+# 错误2: 使用output创建不必要的包装
+# Engine返回: { valid, errors }
+output:
+  result: ""            # ❌ 错误！创建了额外的包装层
+output_schema:
+  result: object
+```
+
+**何时使用output字段**：
+```yaml
+# 只在需要重命名字段时使用
+# Engine返回: { id: string }
+output:
+  eventId: "id"         # 将rawData.id重命名为eventId
+output_schema:
+  eventId: string       # 声明重命名后的结构
+# 访问: steps.emit_event.eventId
+```
+
+**本次修复**：
+- WenchangEngine.sanitize() 从返回`{ result: data }`改为直接返回`data`
+- update_preferences.yml 删除所有不必要的output定义
+- output_schema现在正确匹配Engine的实际返回值
+
 ### 工作流优势
 
 #### 1. 运行时逻辑描述
@@ -270,7 +348,9 @@ async function initializePreferences() {
 - [ ] **阶段3**: 实现useQinQiong()访问模式（待实施）
 - [ ] **阶段4**: 规划scanningFolder迁移（待规划）
 
-#### 阶段4：架构清理和纯化 ✅ 已完成（2025-10-11）
+#### 阶段4：架构清理和纯化 ✅ 已完成（2025-10-11 & 2025-10-12）
+
+**阶段4.1 - 业务逻辑分离（2025-10-11）**：
 - [x] 删除addPath/removePath/addScanFolder业务逻辑方法
 - [x] 删除pathOperations从PreferenceDelta接口
 - [x] 删除PathSyncEvent、ScanFolderSyncEvent、PathOperationResult类型定义
@@ -278,8 +358,25 @@ async function initializePreferences() {
 - [x] 确认Wenchang仅提供纯存储操作（getCurrentSnapshot, applyDelta）
 - [x] 所有测试通过（343个测试全部passed）
 
+**阶段4.2 - 数据流简化（2025-10-12）**：
+- [x] 移除WenchangEngine.sanitize()的不必要包装层
+- [x] 统一Engine方法返回结构（与validate()保持一致）
+- [x] 删除update_preferences.yml中所有不必要的output定义
+- [x] 修正工作流访问路径以匹配设计原则
+- [ ] 待用户测试验证theme/language/paths设置保存功能
+
+**阶段4.3 - 深度合并修正（2025-10-12）**：
+- [x] 修复deepMergePreferences递归调用bug（缺少storePath参数）
+- [x] 修复mergePreferencesFromTianjie类型检查bug（snapshot应为object非string）
+- [x] 重构WenchangEngine.applyDelta()使用深度merge替代浅merge
+- [x] 添加deepMerge私有方法实现基于路径的深度合并
+- [ ] 待用户测试验证深度merge是否正确保留未修改字段
+
 **架构修正理由**：
 - Wenchang是纯存储引擎，不应包含业务逻辑
+- Engine方法应直接返回数据，不创建不必要的包装层（遵循简洁性原则）
+- 工作流output定义应遵循"不定义output，直接暴露rawData"的最佳实践
+- **merge必须是深度合并，避免丢失嵌套字段**（如只更新ui.theme时，不能丢失ui.language）
 - addPath/removePath由房玄龄负责（计算delta并调用applyDelta）
 - 路径变更统一通过preferenceChanged事件通知，无需特殊事件
 - scanningFolder将来由尉迟恭(人界)和千里眼(天界)管理

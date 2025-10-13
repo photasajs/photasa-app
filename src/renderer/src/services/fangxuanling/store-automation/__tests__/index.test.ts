@@ -44,7 +44,7 @@ describe("store-automation/index", () => {
             expect(result).toHaveProperty("get_preferences");
 
             // 验证具体配置内容（基于真实YAML文件）
-            expect(result.theme_change.snapshotPath).toBe("data");
+            expect(result.theme_change.snapshotPath).toBe("ui.theme");
             expect(result.theme_change.syncStrategy).toBe("merge");
             expect(result.theme_change.storePath).toBe("preferences");
             expect(result.theme_change.autoSync).toBe(true);

@@ -35,7 +35,6 @@ vi.mock("../../utils", () => ({
         ...storePrefs,
         ...(snapshot as Record<string, unknown>),
     })),
-    applyPreferencesToStore: vi.fn(),
 }));
 
 describe("store-sync-utils", () => {
@@ -131,7 +130,7 @@ describe("store-sync-utils", () => {
                 ui: { theme: "dark" },
             };
 
-            const result = applyMergeStrategy(storePreferences, snapshot);
+            const result = applyMergeStrategy(storePreferences, "preferences.ui", snapshot);
 
             // 验证mergePreferencesFromTianjie被调用
             expect(result).toBeDefined();
@@ -143,7 +142,7 @@ describe("store-sync-utils", () => {
                 ui: { theme: "light" },
             };
 
-            const result = applyMergeStrategy(storePreferences, null);
+            const result = applyMergeStrategy(storePreferences, "", null);
             expect(result).toBe(storePreferences);
         });
 
@@ -152,7 +151,7 @@ describe("store-sync-utils", () => {
                 ui: { theme: "light" },
             };
 
-            const result = applyMergeStrategy(storePreferences, "invalid");
+            const result = applyMergeStrategy(storePreferences, "", "invalid");
             expect(result).toBe(storePreferences);
         });
     });

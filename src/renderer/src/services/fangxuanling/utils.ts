@@ -1,3 +1,4 @@
+import { isEmpty, set } from "radash";
 /**
  * 房玄龄宰相工具函数 - 纯函数实现
  * 负责偏好设置合并逻辑，遵循纯函数设计原则
@@ -10,6 +11,7 @@
  */
 
 import { loggers } from "@common/logger";
+import { isString } from "radash";
 
 const logger = loggers.fangxuanling;
 
@@ -21,8 +23,9 @@ const logger = loggers.fangxuanling;
  * @param source 源偏好对象（天界数据）
  * @returns 合并后的新偏好对象
  */
-export function deepMergePreferences(target: any, source: any): any {
-    if (!source || typeof source !== "object") {
+export function deepMergePreferences(target: any, storePath: string, source: any): any {
+    // Source can be primitive or complex
+    if (isEmpty(source)) {
         return target;
     }
 
@@ -33,19 +36,7 @@ export function deepMergePreferences(target: any, source: any): any {
     // 创建目标对象的深拷贝，避免修改原始数据
     const result = JSON.parse(JSON.stringify(target));
 
-    // 递归合并对象属性
-    for (const [key, value] of Object.entries(source)) {
-        if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-            // 嵌套对象递归合并
-            if (!result[key] || typeof result[key] !== "object") {
-                result[key] = {};
-            }
-            result[key] = deepMergePreferences(result[key], value);
-        } else {
-            // 基础类型和数组直接覆盖
-            result[key] = value;
-        }
-    }
+    set(result, storePath, source);
 
     return result;
 }
@@ -58,59 +49,26 @@ export function deepMergePreferences(target: any, source: any): any {
  * @param tianjieData 天界偏好数据
  * @returns 合并后的偏好设置，如果合并失败返回原始本地设置
  */
-export function mergePreferencesFromTianjie(localPreferences: any, tianjieData: any): any {
+export function mergePreferencesFromTianjie(
+    localPreferences: any,
+    storePath: string,
+    snapshot: any,
+): any {
     try {
         // 数据验证
-        if (!tianjieData || typeof tianjieData !== "object") {
-            logger.warn("📜 天界偏好数据为空，保持本地默认设置");
+        if (!isString(storePath)) {
+            logger.warn("📜 storePath或snapshot无效，返回本地设置");
             return localPreferences;
         }
 
-        if (!localPreferences || typeof localPreferences !== "object") {
-            logger.warn("📜 本地偏好数据无效，使用天界数据");
-            return tianjieData;
-        }
-
         // 执行深度合并
-        const mergedPreferences = deepMergePreferences(localPreferences, tianjieData);
+        const mergedPreferences = deepMergePreferences(localPreferences, storePath, snapshot);
 
-        // 记录合并详情
-        if (tianjieData.ui?.theme) {
-            logger.info(`📜 合并主题设置: ${tianjieData.ui.theme}`);
-        }
-        if (tianjieData.ui?.language) {
-            logger.info(`📜 合并语言设置: ${tianjieData.ui.language}`);
-        }
-        if (tianjieData.display?.thumbnailSize) {
-            logger.info(`📜 合并缩略图大小: ${tianjieData.display.thumbnailSize}`);
-        }
-
-        logger.info("📜 天界偏好数据智能合并完成");
+        logger.info(`📜 合并设置: ${storePath}`, snapshot);
         return mergedPreferences;
     } catch (error) {
         logger.error("📜 智能合并天界偏好数据失败", error);
         // 合并失败时返回本地设置
         return localPreferences;
-    }
-}
-
-/**
- * 应用偏好设置到Pinia Store
- * 使用$patch方法确保响应式更新
- *
- * @param store Pinia store实例
- * @param mergedPreferences 合并后的偏好设置
- */
-export function applyPreferencesToStore(store: any, mergedPreferences: any): void {
-    try {
-        // 使用$patch进行响应式更新
-        store.$patch((state: any) => {
-            state.preferences = mergedPreferences;
-        });
-
-        logger.info("📜 偏好设置已应用到Store");
-    } catch (error) {
-        logger.error("📜 应用偏好设置到Store失败", error);
-        throw error;
     }
 }

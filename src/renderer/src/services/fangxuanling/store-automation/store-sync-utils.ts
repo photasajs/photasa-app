@@ -13,7 +13,7 @@ import type { MatterSyncMetadata } from "./index";
 import type { ZhaolingResponse } from "@renderer/interfaces/yuan-tian-gang.interface";
 import { loggers } from "@common/logger";
 import { mergePreferencesFromTianjie } from "../utils";
-import { get, isEmpty } from "radash";
+import { get, isEmpty, isObject } from "radash";
 
 const logger = loggers.fangxuanling;
 
@@ -89,8 +89,9 @@ export function extractSnapshotFromResponse(
 ): unknown | null {
     try {
         const snapshot: unknown = zhaolingResponse.data;
+
         // 如果snapshot为空或不是对象，则返回null
-        if (!snapshot || typeof snapshot !== "object") {
+        if (!isObject(snapshot)) {
             logger.warn(`📜 提取的snapshot数据无效`);
             return null;
         }
@@ -116,14 +117,15 @@ export function extractSnapshotFromResponse(
  */
 export function applyMergeStrategy(
     storeData: Record<string, unknown>,
+    storePath: string,
     snapshot: unknown,
 ): Record<string, unknown> {
-    if (!snapshot || typeof snapshot !== "object") {
+    if (!storePath) {
         logger.warn("📜 snapshot数据无效，返回原Store数据");
         return storeData;
     }
 
-    const mergedData = mergePreferencesFromTianjie(storeData, snapshot);
+    const mergedData = mergePreferencesFromTianjie(storeData, storePath, snapshot);
     return mergedData;
 }
 
@@ -177,7 +179,7 @@ export function applyPatchStrategy(
     storeData: Record<string, unknown>,
     snapshot: unknown,
 ): Record<string, unknown> {
-    if (!snapshot || typeof snapshot !== "object") {
+    if (!isObject(snapshot)) {
         logger.warn("📜 snapshot数据无效，返回原Store数据");
         return storeData;
     }
@@ -221,13 +223,17 @@ export function syncStoreWithSnapshot(
 
         switch (syncMetadata.syncStrategy) {
             case "merge":
-                updatedData = applyMergeStrategy(currentStoreData, snapshot);
+                updatedData = applyMergeStrategy(
+                    currentStoreData,
+                    syncMetadata.snapshotPath,
+                    snapshot,
+                );
                 logger.info(`📜 Store深度合并完成: ${matter}`);
                 break;
 
             case "replace":
                 // replace策略：完全替换
-                if (typeof snapshot !== "object" || snapshot === null) {
+                if (!isObject(snapshot)) {
                     logger.error(`📜 replace策略要求snapshot为对象`);
                     return false;
                 }

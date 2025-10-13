@@ -142,7 +142,7 @@ export class WenchangAdapter implements IAdapter {
      * 清理和验证数据
      * 委托给引擎处理
      */
-    async sanitize(data: any): Promise<{ result: any }> {
+    async sanitize(data: any): Promise<any> {
         logger.debug("🌌 文昌适配器转发净化请求");
         return this.engine.sanitize(data);
     }
