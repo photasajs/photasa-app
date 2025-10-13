@@ -2,9 +2,10 @@ import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 import { resolve } from "path";
 import svgLoader from "vite-svg-loader";
+import yaml from "@rollup/plugin-yaml";
 
 export default defineConfig({
-    plugins: [vue(), svgLoader()],
+    plugins: [vue(), svgLoader(), yaml()],
     resolve: {
         alias: {
             "@main": resolve("src/main/"),

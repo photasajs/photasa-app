@@ -1,13 +1,13 @@
 /**
  * Store自动同步配置加载器的单元测试
  * 目标：100%代码覆盖率
+ *
+ * 注意：YAML文件通过import直接加载，无需mock fs
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { loadMatterSyncConfig, validateMatterSyncConfig } from "../index";
 import type { MatterSyncMetadata } from "../index";
-import * as fs from "fs";
-import * as path from "path";
 
 // Mock logger
 vi.mock("@common/logger", () => ({
@@ -21,10 +21,6 @@ vi.mock("@common/logger", () => ({
     },
 }));
 
-// Mock fs and path
-vi.mock("fs");
-vi.mock("path");
-
 describe("store-automation/index", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -35,65 +31,26 @@ describe("store-automation/index", () => {
     });
 
     describe("loadMatterSyncConfig", () => {
-        it("应该成功加载有效的YAML配置", () => {
-            const yamlContent = `
-metadata:
-  version: "1.0.0"
-  description: "Test config"
-  lastUpdated: "2025-10-12"
-  author: "房玄龄"
-
-strategies:
-  merge:
-    description: "深度合并"
-    method: "deepMerge"
-
-matters:
-  theme_change:
-    snapshotPath: "snapshot"
-    syncStrategy: "merge"
-    storePath: "preferences"
-    autoSync: true
-    description: "主题变更"
-  language_change:
-    snapshotPath: "snapshot"
-    syncStrategy: "merge"
-    storePath: "preferences"
-    autoSync: true
-    description: "语言变更"
-`;
-
-            vi.mocked(path.join).mockReturnValue("/mock/path/matter-sync.yml");
-            vi.mocked(fs.readFileSync).mockReturnValue(yamlContent);
-
+        it("应该成功加载真实的YAML配置", () => {
             const result = loadMatterSyncConfig();
 
+            // 验证加载了所有matter配置
             expect(result).toHaveProperty("theme_change");
             expect(result).toHaveProperty("language_change");
-            expect(result.theme_change.snapshotPath).toBe("snapshot");
-            expect(result.language_change.syncStrategy).toBe("merge");
-        });
+            expect(result).toHaveProperty("thumbnail_size_change");
+            expect(result).toHaveProperty("add_path");
+            expect(result).toHaveProperty("remove_path");
+            expect(result).toHaveProperty("add_scan_folder");
+            expect(result).toHaveProperty("get_preferences");
 
-        it("应该在读取文件失败时返回空配置", () => {
-            vi.mocked(path.join).mockReturnValue("/mock/path/matter-sync.yml");
-            vi.mocked(fs.readFileSync).mockImplementation(() => {
-                throw new Error("File not found");
-            });
+            // 验证具体配置内容（基于真实YAML文件）
+            expect(result.theme_change.snapshotPath).toBe("data");
+            expect(result.theme_change.syncStrategy).toBe("merge");
+            expect(result.theme_change.storePath).toBe("preferences");
+            expect(result.theme_change.autoSync).toBe(true);
 
-            const result = loadMatterSyncConfig();
-
-            expect(result).toEqual({});
-        });
-
-        it("应该在YAML解析失败时返回空配置", () => {
-            const invalidYaml = "invalid: yaml: content: [";
-
-            vi.mocked(path.join).mockReturnValue("/mock/path/matter-sync.yml");
-            vi.mocked(fs.readFileSync).mockReturnValue(invalidYaml);
-
-            const result = loadMatterSyncConfig();
-
-            expect(result).toEqual({});
+            expect(result.get_preferences.snapshotPath).toBe(".");
+            expect(result.get_preferences.syncStrategy).toBe("replace");
         });
     });
 
