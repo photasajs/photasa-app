@@ -136,15 +136,13 @@ describe("偏好设置集成测试", () => {
             // ✅ RFC 0038阶段2验证：完整流程成功执行
             expect(response.approved).toBe(true);
             expect(response.matter).toBe(ZOUZHE_MATTERS.GET_PREFERENCES);
-            expect(response.data?.success).toBe(true);
 
             // ✅ 验证天枢引擎被调用
             expect(mockTianshu.processCommand).toHaveBeenCalled();
 
-            // ✅ 验证返回的偏好数据
-            expect(response.data?.tianjieDelta).toBeDefined();
-            expect(response.data?.tianjieDelta.acknowledged).toBe(true);
-            expect(response.data?.tianjieDelta.data).toEqual(mockPreferenceData);
+            // ✅ 验证返回的偏好数据（拆箱后直接是业务数据）
+            expect(response.data).toBeDefined();
+            expect(response.data).toEqual(mockPreferenceData);
         });
 
         it("应该完整处理THEME_CHANGE流程：奏折→诏令→符箓→天枢", async () => {
@@ -218,8 +216,9 @@ describe("偏好设置集成测试", () => {
             const response = await fangXuanLingService.processZouzhe(zouzhe);
 
             // ✅ RFC 0038阶段2验证：错误处理
-            // 天枢失败时，acknowledged应该为false
-            expect(response.data?.tianjieDelta?.acknowledged).toBe(false);
+            // 天枢失败时，approved应该为false，data为null
+            expect(response.approved).toBe(false);
+            expect(response.data).toBeNull();
 
             // 验证天枢被调用
             expect(mockTianshu.processCommand).toHaveBeenCalled();

@@ -10,6 +10,8 @@ import {
     applyReplaceStrategy,
     applyPatchStrategy,
     syncStoreWithSnapshot,
+    getStoreFieldData,
+    setStoreFieldData,
 } from "../store-sync-utils";
 import type { ZhaolingResponse } from "@renderer/interfaces/yuan-tian-gang.interface";
 import type { MatterSyncMetadata } from "../index";
@@ -19,6 +21,7 @@ import type { PreferenceState } from "@renderer/stores/preference";
 vi.mock("@common/logger", () => ({
     loggers: {
         fangxuanling: {
+            debug: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
             info: vi.fn(),
@@ -88,7 +91,7 @@ describe("store-sync-utils", () => {
             expect(result).toBeNull();
         });
 
-        it("应该在snapshot不是对象时返回null", () => {
+        it("应该成功提取非对象类型的snapshot（验证由策略函数负责）", () => {
             const response: ZhaolingResponse = {
                 acknowledged: true,
                 command: "test",
@@ -100,7 +103,9 @@ describe("store-sync-utils", () => {
             };
 
             const result = extractSnapshotFromResponse(response, "snapshot");
-            expect(result).toBeNull();
+            // extractSnapshotFromResponse只负责路径提取，不验证类型
+            // 类型验证由各个策略函数（applyMergeStrategy等）负责
+            expect(result).toBe("not an object");
         });
 
         it("应该在提取过程中捕获异常并返回null", () => {
@@ -117,10 +122,10 @@ describe("store-sync-utils", () => {
 
     describe("applyMergeStrategy", () => {
         it("应该成功合并snapshot到Store preferences", () => {
-            const storePreferences = {
+            const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light", language: "en" },
                 display: { thumbnailSize: 100 },
-            } as unknown as PreferenceState["preferences"];
+            };
 
             const snapshot = {
                 ui: { theme: "dark" },
@@ -134,18 +139,18 @@ describe("store-sync-utils", () => {
         });
 
         it("应该在snapshot无效时返回原Store数据", () => {
-            const storePreferences = {
+            const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light" },
-            } as unknown as PreferenceState["preferences"];
+            };
 
             const result = applyMergeStrategy(storePreferences, null);
             expect(result).toBe(storePreferences);
         });
 
         it("应该在snapshot不是对象时返回原Store数据", () => {
-            const storePreferences = {
+            const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light" },
-            } as unknown as PreferenceState["preferences"];
+            };
 
             const result = applyMergeStrategy(storePreferences, "invalid");
             expect(result).toBe(storePreferences);
@@ -164,7 +169,7 @@ describe("store-sync-utils", () => {
 
             const result = applyReplaceStrategy(storeData, snapshot, "preferences.ui");
 
-            expect(result.preferences.ui).toEqual(snapshot);
+            expect((result.preferences as Record<string, unknown>).ui).toEqual(snapshot);
             // 验证是深拷贝，不是原对象
             expect(result).not.toBe(storeData);
         });
@@ -226,10 +231,10 @@ describe("store-sync-utils", () => {
 
     describe("applyPatchStrategy", () => {
         it("应该成功进行浅层合并", () => {
-            const storePreferences = {
+            const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light", language: "en" },
                 display: { thumbnailSize: 100 },
-            } as unknown as PreferenceState["preferences"];
+            };
 
             const snapshot = {
                 ui: { theme: "dark" },
@@ -244,18 +249,18 @@ describe("store-sync-utils", () => {
         });
 
         it("应该在snapshot无效时返回原Store数据", () => {
-            const storePreferences = {
+            const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light" },
-            } as unknown as PreferenceState["preferences"];
+            };
 
             const result = applyPatchStrategy(storePreferences, null);
             expect(result).toBe(storePreferences);
         });
 
         it("应该在snapshot不是对象时返回原Store数据", () => {
-            const storePreferences = {
+            const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light" },
-            } as unknown as PreferenceState["preferences"];
+            };
 
             const result = applyPatchStrategy(storePreferences, 123);
             expect(result).toBe(storePreferences);
@@ -263,9 +268,8 @@ describe("store-sync-utils", () => {
     });
 
     describe("syncStoreWithSnapshot", () => {
-        let mockStore: {
-            preferences: PreferenceState["preferences"];
-            $state: PreferenceState;
+        let mockStore: Record<string, unknown> & {
+            $patch: (data: Record<string, unknown>) => void;
         };
 
         beforeEach(() => {
@@ -275,6 +279,7 @@ describe("store-sync-utils", () => {
                     display: { thumbnailSize: 100 },
                 } as unknown as PreferenceState["preferences"],
                 $state: {} as PreferenceState,
+                $patch: vi.fn(),
             };
         });
 
@@ -422,15 +427,20 @@ describe("store-sync-utils", () => {
             expect(result).toBe(false);
         });
 
-        it("应该在applyPreferencesToStore抛出异常时返回false", async () => {
-            // 导入mock模块
-            const utilsMock = await import("../../utils");
-
-            // 临时mock applyPreferencesToStore抛出异常
-            const originalImpl = utilsMock.applyPreferencesToStore;
-            vi.mocked(utilsMock.applyPreferencesToStore).mockImplementationOnce(() => {
-                throw new Error("Store update failed");
-            });
+        it("应该在$patch抛出异常时返回false", () => {
+            // 创建一个抛出异常的mock store
+            const errorStore: Record<string, unknown> & {
+                $patch: (data: Record<string, unknown>) => void;
+            } = {
+                preferences: {
+                    ui: { theme: "light", language: "en" },
+                    display: { thumbnailSize: 100 },
+                },
+                $state: {},
+                $patch: vi.fn(() => {
+                    throw new Error("Store update failed");
+                }),
+            };
 
             const response: ZhaolingResponse = {
                 acknowledged: true,
@@ -452,12 +462,114 @@ describe("store-sync-utils", () => {
                 description: "test",
             };
 
-            const result = syncStoreWithSnapshot("theme_change", response, syncMetadata, mockStore);
+            const result = syncStoreWithSnapshot(
+                "theme_change",
+                response,
+                syncMetadata,
+                errorStore,
+            );
 
             expect(result).toBe(false);
+        });
+    });
 
-            // 恢复原始实现
-            vi.mocked(utilsMock.applyPreferencesToStore).mockImplementation(originalImpl);
+    describe("getStoreFieldData", () => {
+        it("应该成功获取单层路径的数据", () => {
+            const store: Record<string, unknown> = {
+                preferences: {
+                    ui: { theme: "light" },
+                },
+            };
+
+            const result = getStoreFieldData(store, "preferences");
+            expect(result).toEqual({ ui: { theme: "light" } });
+        });
+
+        it("应该成功获取嵌套路径的数据", () => {
+            const store: Record<string, unknown> = {
+                preferences: {
+                    ui: { theme: "light", language: "en" },
+                },
+            };
+
+            const result = getStoreFieldData(store, "preferences.ui");
+            expect(result).toEqual({ theme: "light", language: "en" });
+        });
+
+        it("应该在路径不存在时返回空对象", () => {
+            const store: Record<string, unknown> = {
+                preferences: {},
+            };
+
+            const result = getStoreFieldData(store, "nonexistent");
+            expect(result).toEqual({});
+        });
+    });
+
+    describe("setStoreFieldData", () => {
+        it("应该成功设置单层路径的数据", () => {
+            const mockPatch = vi.fn();
+            const store: Record<string, unknown> & {
+                $patch: (data: Record<string, unknown>) => void;
+            } = {
+                preferences: {
+                    ui: { theme: "light" },
+                },
+                $patch: mockPatch,
+            };
+
+            const newData = { ui: { theme: "dark" } };
+            setStoreFieldData(store, "preferences", newData);
+
+            expect(mockPatch).toHaveBeenCalledWith({
+                preferences: newData,
+            });
+        });
+
+        it("应该成功设置嵌套路径的数据", () => {
+            const mockPatch = vi.fn();
+            const store: Record<string, unknown> & {
+                $patch: (data: Record<string, unknown>) => void;
+            } = {
+                preferences: {
+                    ui: { theme: "light" },
+                },
+                $patch: mockPatch,
+            };
+
+            const newData = { theme: "dark", language: "zh" };
+            setStoreFieldData(store, "preferences.ui", newData);
+
+            expect(mockPatch).toHaveBeenCalledWith({
+                preferences: {
+                    ui: newData,
+                },
+            });
+        });
+
+        it("应该成功设置多层嵌套路径的数据", () => {
+            const mockPatch = vi.fn();
+            const store: Record<string, unknown> & {
+                $patch: (data: Record<string, unknown>) => void;
+            } = {
+                preferences: {
+                    ui: {
+                        theme: { mode: "light", variant: "default" },
+                    },
+                },
+                $patch: mockPatch,
+            };
+
+            const newData = { mode: "dark", variant: "blue" };
+            setStoreFieldData(store, "preferences.ui.theme", newData);
+
+            expect(mockPatch).toHaveBeenCalledWith({
+                preferences: {
+                    ui: {
+                        theme: newData,
+                    },
+                },
+            });
         });
     });
 });

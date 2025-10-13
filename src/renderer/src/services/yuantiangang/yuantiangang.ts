@@ -219,21 +219,21 @@ export class YuanTianGangService implements IYuanTianGangService {
             fulu.intent === ZOUZHE_MATTERS.ADD_SCAN_FOLDER
         ) {
             // 转换人界格式到天界统一偏好格式
-            let convertedDelta = {};
+            let convertedDelta: Record<string, unknown> = {};
 
-            if (fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE && fulu.context.themeId) {
+            if (fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE && fulu.context?.themeId) {
                 convertedDelta = {
                     ui: {
                         theme: fulu.context.themeId,
                     },
                 };
-            } else if (fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE && fulu.context.locale) {
+            } else if (fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE && fulu.context?.locale) {
                 convertedDelta = {
                     ui: {
                         language: fulu.context.locale,
                     },
                 };
-            } else if (fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE && fulu.context.size) {
+            } else if (fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE && fulu.context?.size) {
                 convertedDelta = {
                     display: {
                         thumbnailSize: fulu.context.size,
@@ -246,10 +246,10 @@ export class YuanTianGangService implements IYuanTianGangService {
             ) {
                 // ✅ 路径操作：context已经是完整的delta格式 { scanning: { paths: [...] } }
                 // 由FangXuanLing.computePreferenceDelta计算好的
-                convertedDelta = fulu.context;
+                convertedDelta = fulu.context || {};
             } else {
                 // 如果已经是统一格式，直接使用
-                convertedDelta = fulu.context;
+                convertedDelta = fulu.context || {};
             }
 
             params = {

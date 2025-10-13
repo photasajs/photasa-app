@@ -22,7 +22,7 @@ import { usePreferenceStore } from "../../stores/preference";
 import { useNotificationStore } from "../../stores/notification";
 import { usePhotosStore } from "../../stores/photos";
 import { loggers } from "@common/logger";
-import { loadMatterSyncConfig, type MatterSyncMetadata } from "./store-automation";
+import { loadMatterSyncConfig, type MatterSyncMetadata, getStoreByPath } from "./store-automation";
 import { syncStoreWithSnapshot } from "./store-automation/store-sync-utils";
 
 const logger = loggers.fangxuanling;
@@ -108,8 +108,15 @@ export class FangXuanLingService implements IFangXuanLingService {
             if (zhaolingResponse.acknowledged) {
                 const syncMetadata = this._matterSyncConfig[zouzhe.matter];
                 if (syncMetadata?.autoSync) {
-                    const store = usePreferenceStore();
-                    syncStoreWithSnapshot(zouzhe.matter, zhaolingResponse, syncMetadata, store);
+                    // ✅ RFC 0038: 使用Store注册表动态获取Store，不再硬编码
+                    const store = getStoreByPath(syncMetadata.storePath);
+                    if (store) {
+                        syncStoreWithSnapshot(zouzhe.matter, zhaolingResponse, syncMetadata, store);
+                    } else {
+                        logger.error(
+                            `📜 Store自动同步失败: 未找到Store「${syncMetadata.storePath}」for matter「${zouzhe.matter}」`,
+                        );
+                    }
                 }
             }
 

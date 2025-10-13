@@ -6,15 +6,75 @@
  * 2. 输入相同则输出相同
  * 3. 易于测试和维护
  * 4. 函数组合优于类继承
+ * 5. 配置驱动，支持任意Store类型
  */
 
 import type { MatterSyncMetadata } from "./index";
 import type { ZhaolingResponse } from "@renderer/interfaces/yuan-tian-gang.interface";
 import { loggers } from "@common/logger";
-import { mergePreferencesFromTianjie, applyPreferencesToStore } from "../utils";
-import type { PreferenceState } from "@renderer/stores/preference";
+import { mergePreferencesFromTianjie } from "../utils";
+import { get, isEmpty } from "radash";
 
 const logger = loggers.fangxuanling;
+
+/**
+ * 从Store中获取指定路径的数据（纯函数）
+ *
+ * @param store - Store实例
+ * @param storePath - 数据路径（如"preferences"、"preferences.ui"）
+ * @returns 目标数据
+ */
+export function getStoreFieldData(
+    store: Record<string, unknown>,
+    storePath: string,
+): Record<string, unknown> {
+    const pathParts = storePath.split(".");
+
+    // 如果只有一个部分（如"preferences"），直接返回store对应字段
+    if (pathParts.length === 1) {
+        return (store[pathParts[0]] as Record<string, unknown>) || {};
+    }
+
+    // 否则使用get方法获取嵌套字段
+    return get(store, storePath, {}) as Record<string, unknown>;
+}
+
+/**
+ * 设置Store指定路径的数据（有副作用）
+ *
+ * @param store - Store实例
+ * @param storePath - 数据路径（如"preferences"、"preferences.ui"）
+ * @param newData - 新数据
+ */
+export function setStoreFieldData(
+    store: Record<string, unknown> & { $patch: (data: Record<string, unknown>) => void },
+    storePath: string,
+    newData: Record<string, unknown>,
+): void {
+    const pathParts = storePath.split(".");
+
+    // 如果只有一个部分（如"preferences"），使用$patch直接更新
+    if (pathParts.length === 1) {
+        store.$patch({
+            [pathParts[0]]: newData,
+        });
+        logger.debug(`📜 Store字段已更新: ${storePath}`);
+        return;
+    }
+
+    // 对于嵌套路径，需要构建完整的更新对象
+    const updateObj: Record<string, unknown> = {};
+    let current: Record<string, unknown> = updateObj;
+
+    for (let i = 0; i < pathParts.length - 1; i++) {
+        current[pathParts[i]] = {};
+        current = current[pathParts[i]] as Record<string, unknown>;
+    }
+    current[pathParts[pathParts.length - 1]] = newData;
+
+    store.$patch(updateObj);
+    logger.debug(`📜 Store嵌套字段已更新: ${storePath}`);
+}
 
 /**
  * 从天界响应中提取snapshot数据（纯函数）
@@ -28,24 +88,19 @@ export function extractSnapshotFromResponse(
     snapshotPath: string,
 ): unknown | null {
     try {
-        let snapshot: unknown = zhaolingResponse.data;
-        const pathParts = snapshotPath.split(".");
-
-        for (const part of pathParts) {
-            if (snapshot && typeof snapshot === "object" && part in snapshot) {
-                snapshot = (snapshot as Record<string, unknown>)[part];
-            } else {
-                logger.warn(`📜 无法从天界响应中提取snapshot: ${snapshotPath}`);
-                return null;
-            }
-        }
-
+        const snapshot: unknown = zhaolingResponse.data;
+        // 如果snapshot为空或不是对象，则返回null
         if (!snapshot || typeof snapshot !== "object") {
             logger.warn(`📜 提取的snapshot数据无效`);
             return null;
         }
 
-        return snapshot;
+        // 如果snapshotPath为空或为.，则返回snapshot
+        if (isEmpty(snapshotPath) || snapshotPath === ".") {
+            return snapshot;
+        }
+
+        return get(snapshot, snapshotPath);
     } catch (error) {
         logger.error(`📜 提取snapshot失败: ${snapshotPath}`, error);
         return null;
@@ -55,21 +110,21 @@ export function extractSnapshotFromResponse(
 /**
  * 应用merge策略：深度合并snapshot到Store（纯函数）
  *
- * @param storePreferences - Store当前preferences
+ * @param storeData - Store当前数据
  * @param snapshot - 天界snapshot数据
- * @returns 合并后的preferences
+ * @returns 合并后的数据
  */
 export function applyMergeStrategy(
-    storePreferences: PreferenceState["preferences"],
+    storeData: Record<string, unknown>,
     snapshot: unknown,
-): PreferenceState["preferences"] {
+): Record<string, unknown> {
     if (!snapshot || typeof snapshot !== "object") {
         logger.warn("📜 snapshot数据无效，返回原Store数据");
-        return storePreferences;
+        return storeData;
     }
 
-    const mergedPreferences = mergePreferencesFromTianjie(storePreferences, snapshot);
-    return mergedPreferences;
+    const mergedData = mergePreferencesFromTianjie(storeData, snapshot);
+    return mergedData;
 }
 
 /**
@@ -114,39 +169,38 @@ export function applyReplaceStrategy(
 /**
  * 应用patch策略：浅层合并snapshot到Store（纯函数）
  *
- * @param storePreferences - Store当前preferences
+ * @param storeData - Store当前数据
  * @param snapshot - 天界snapshot数据
- * @returns 合并后的preferences
+ * @returns 合并后的数据
  */
 export function applyPatchStrategy(
-    storePreferences: PreferenceState["preferences"],
+    storeData: Record<string, unknown>,
     snapshot: unknown,
-): PreferenceState["preferences"] {
+): Record<string, unknown> {
     if (!snapshot || typeof snapshot !== "object") {
         logger.warn("📜 snapshot数据无效，返回原Store数据");
-        return storePreferences;
+        return storeData;
     }
 
     // 浅层合并
-    return { ...storePreferences, ...(snapshot as Record<string, unknown>) };
+    return { ...storeData, ...(snapshot as Record<string, unknown>) };
 }
 
 /**
  * 同步Store的主函数（唯一有副作用的函数，调用Store的方法）
  *
+ * ✅ RFC 0038: 支持任意Store，不再硬编码到PreferenceStore
+ *
  * @param matter - 奏折类型
  * @param zhaolingResponse - 天界响应
- * @param syncMetadata - 同步配置
- * @param store - PreferenceStore实例
+ * @param syncMetadata - 同步配置（包含storePath决定使用哪个Store）
+ * @param store - 任意Pinia Store实例
  */
 export function syncStoreWithSnapshot(
     matter: string,
     zhaolingResponse: ZhaolingResponse,
     syncMetadata: MatterSyncMetadata,
-    store: {
-        preferences: PreferenceState["preferences"];
-        $state: PreferenceState;
-    },
+    store: Record<string, unknown> & { $patch: (data: Record<string, unknown>) => void },
 ): boolean {
     try {
         // 1. 提取snapshot（纯函数）
@@ -155,27 +209,34 @@ export function syncStoreWithSnapshot(
             return false;
         }
 
-        logger.info(`📜 开始Store自动同步: ${matter} (策略: ${syncMetadata.syncStrategy})`);
+        logger.info(
+            `📜 开始Store自动同步: ${matter} (策略: ${syncMetadata.syncStrategy}, 目标: ${syncMetadata.storePath})`,
+        );
 
-        // 2. 根据策略处理数据（纯函数）
-        let updatedPreferences: PreferenceState["preferences"];
+        // 2. 获取Store当前数据
+        const currentStoreData = getStoreFieldData(store, syncMetadata.storePath);
+
+        // 3. 根据策略处理数据（纯函数）
+        let updatedData: Record<string, unknown>;
 
         switch (syncMetadata.syncStrategy) {
             case "merge":
-                updatedPreferences = applyMergeStrategy(store.preferences, snapshot);
+                updatedData = applyMergeStrategy(currentStoreData, snapshot);
                 logger.info(`📜 Store深度合并完成: ${matter}`);
                 break;
 
-            case "replace": {
-                // replace策略需要特殊处理，因为要替换嵌套路径
-                // 这里我们简化为merge策略，真正的replace需要更复杂的逻辑
-                updatedPreferences = applyMergeStrategy(store.preferences, snapshot);
+            case "replace":
+                // replace策略：完全替换
+                if (typeof snapshot !== "object" || snapshot === null) {
+                    logger.error(`📜 replace策略要求snapshot为对象`);
+                    return false;
+                }
+                updatedData = snapshot as Record<string, unknown>;
                 logger.info(`📜 Store字段替换完成: ${syncMetadata.storePath}`);
                 break;
-            }
 
             case "patch":
-                updatedPreferences = applyPatchStrategy(store.preferences, snapshot);
+                updatedData = applyPatchStrategy(currentStoreData, snapshot);
                 logger.info(`📜 Store浅层合并完成: ${matter}`);
                 break;
 
@@ -184,8 +245,8 @@ export function syncStoreWithSnapshot(
                 return false;
         }
 
-        // 3. 应用到Store（有副作用的操作）
-        applyPreferencesToStore(store, updatedPreferences);
+        // 4. 应用到Store（有副作用的操作）
+        setStoreFieldData(store, syncMetadata.storePath, updatedData);
         logger.info(`📜 Store自动同步成功: ${matter} -> ${syncMetadata.storePath}`);
 
         return true;
