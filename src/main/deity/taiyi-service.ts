@@ -131,7 +131,7 @@ export default class TaiyiService implements IService, IStepExecutor {
 
             // 🎯 干净数据流：直接暴露引擎原始数据，避免复杂嵌套
             const rawData = this.engine.getEngineResult(engineResult);
-            
+
             // 根据步骤的output定义处理返回数据
             let processedData: unknown = rawData;
             if (step.output && typeof step.output === "object") {

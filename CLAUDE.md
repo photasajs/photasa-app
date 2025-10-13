@@ -1054,7 +1054,7 @@ logger.error("🌌 Engine call failed: builtin.return", error);
 
 **记住：让日志记录充满趣味，同时保持技术准确性！**
 
-# 五、测试验证规则 (2025-09-28)
+# 五、测试验证规则 (2025-09-28, 更新 2025-10-12)
 
 ## 关键要求：声称测试通过时必须提供具体证据
 
@@ -1069,16 +1069,64 @@ logger.error("🌌 Engine call failed: builtin.return", error);
    - 测试套件状态
 5. **修复测试问题时，重新运行测试并显示成功输出作为证据**
 
+### 代码质量三大铁律 (2025-10-12)
+
+**编写任何代码（包括测试代码）时必须遵守：**
+
+1. **零 `any` 类型警告**
+   - 生产代码：严禁使用 `any`，必须使用 `unknown`、`Record<string, unknown>` 或具体类型
+   - 测试代码：同样严禁使用 `any`，测试代码也必须类型安全
+   - 检查命令：`npx eslint <目标目录> --ext .ts`
+
+2. **100% 代码覆盖率**
+   - 语句覆盖率 (Stmts): 100%
+   - 分支覆盖率 (Branch): 100%
+   - 函数覆盖率 (Funcs): 100%
+   - 行覆盖率 (Lines): 100%
+   - 检查命令：`npm run test:unit:renderer -- <测试文件> --coverage`
+   - 必须覆盖所有边界条件和异常处理
+
+3. **零 Lint 错误**
+   - 生产代码：零错误、零警告
+   - 测试代码：同样零错误、零警告
+   - 完整检查：必须同时检查源文件和测试文件
+   - 检查示例：
+     ```bash
+     npx eslint src/path/to/module/ --ext .ts
+     npx eslint src/path/to/module/__tests__/ --ext .ts
+     ```
+
+### 完整验证流程
+
+编写或修改代码后，必须执行以下验证步骤：
+
+```bash
+# 1. 运行测试并检查覆盖率
+npm run test:unit:renderer -- <测试文件> --coverage
+
+# 2. 检查源代码的 lint
+npx eslint src/path/to/source/ --ext .ts
+
+# 3. 检查测试代码的 lint
+npx eslint src/path/to/__tests__/ --ext .ts
+```
+
+**只有以上三步全部通过，才能声称"100% code coverage and test pass and zero lint error"！**
+
 ### 错误示例：
 ❌ "All tests pass now"（无证据）
 ❌ "Tests are working fine"（无证明）
+❌ "零 lint 错误"（但只检查了源代码，没检查测试代码）
+❌ "100% 覆盖率"（但没有显示实际覆盖率报告）
 
 ### 正确示例：
 ✅ 运行 `npm run test:unit:main` 并显示完整输出
 ✅ "Test Results: X passed, Y failed" 并提供具体详情
 ✅ 测试失败时显示实际错误消息
+✅ 显示覆盖率报告：`store-sync-utils.ts | 100% | 100% | 100% | 100% |`
+✅ 同时检查源代码和测试代码的 lint，并确认都是零错误
 
-**记住：用户需要的是证明，不是承诺！**
+**记住：用户需要的是证明，不是承诺！测试代码本身也必须符合代码质量标准！**
 
 # 六、Git 操作规则
 

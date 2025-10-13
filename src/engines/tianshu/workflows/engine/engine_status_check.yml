@@ -54,9 +54,7 @@ steps:
       statusSuccess: "success"
     # 声明适配器返回结构，使工作流自解释
     output_schema:
-      result:
-        type: object
-        description: "所有引擎状态映射"
+      result: object
       success: boolean
       timestamp: number
       engineName: string
@@ -72,9 +70,7 @@ steps:
       availableSuccess: "success"
     # 声明适配器返回结构，使工作流自解释
     output_schema:
-      result:
-        type: array
-        description: "可用引擎列表"
+      result: array
       success: boolean
       timestamp: number
       engineName: string
@@ -93,9 +89,7 @@ steps:
       specificSuccess: "success"
     # 声明适配器返回结构，使工作流自解释
     output_schema:
-      result:
-        type: object
-        description: "特定引擎状态"
+      result: object
       success: boolean
       timestamp: number
       engineName: string
@@ -118,9 +112,7 @@ steps:
       wenchangSuccess: "success"
     # 声明适配器返回结构，使工作流自解释
     output_schema:
-      result:
-        type: object
-        description: "文昌引擎测试结果"
+      result: object
       success: boolean
       timestamp: number
       engineName: string
@@ -170,9 +162,7 @@ steps:
       detailedReport: "result"
     # 声明适配器返回结构，使工作流自解释
     output_schema:
-      result:
-        type: object
-        description: "详细状态报告"
+      result: object
       success: boolean
       timestamp: number
       engineName: string
@@ -196,9 +186,7 @@ steps:
       simpleReport: "result"
     # 声明适配器返回结构，使工作流自解释
     output_schema:
-      result:
-        type: object
-        description: "简化状态报告"
+      result: object
       success: boolean
       timestamp: number
       engineName: string

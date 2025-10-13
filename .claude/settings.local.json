@@ -1,25 +1,33 @@
 {
-    "permissions": {
-        "allow": [
-            "Bash(volta run npx tsx scripts/validate-workflows.ts --verbose)",
-            "Read(//Volumes/ORICO/ws/prj/picasa/**)",
-            "Bash(npm run test:unit:main:*)",
-            "Bash(find:*)",
-            "Bash(npm test:*)",
-            "Bash(npm run lint)",
-            "Bash(mkdir:*)",
-            "Bash(npm run typecheck:*)",
-            "Bash(npm run test:unit:renderer:*)",
-            "Bash(npm run test:unit:main:engines:*)",
-            "Bash(npm run test:unit:main:vitest:*)",
-            "Read(//Users/albert.li/.photasa/preferences/**)",
-            "Bash(cat:*)",
-            "Read(//tmp/**)",
-            "Bash(git show:*)",
-            "Bash(git add:*)",
-            "Bash(git commit:*)"
-        ],
-        "deny": [],
-        "ask": []
-    }
+  "permissions": {
+    "allow": [
+      "Bash(volta run npx tsx scripts/validate-workflows.ts --verbose)",
+      "Read(//Volumes/ORICO/ws/prj/picasa/**)",
+      "Bash(npm run test:unit:main:*)",
+      "Bash(find:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run lint)",
+      "Bash(mkdir:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run test:unit:renderer:*)",
+      "Bash(npm run test:unit:main:engines:*)",
+      "Bash(npm run test:unit:main:vitest:*)",
+      "Read(//Users/albert.li/.photasa/preferences/**)",
+      "Bash(cat:*)",
+      "Read(//tmp/**)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run lint:*)",
+      "Bash(awk:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx js-yaml:*)",
+      "Bash(volta run npx tsx:*)",
+      "Bash(npm run typecheck:main:*)",
+      "Bash(npm run typecheck:web:*)",
+      "Bash(npm install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
 }

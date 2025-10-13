@@ -5,11 +5,13 @@
 - **标题**: 偏好设置工作流集成与Store边界统一
 - **状态**: 🟢 **核心完成** (Core Completed) - 架构纯化和Store边界已完成
 - **创建日期**: 2025-09-28
-- **最后更新**: 2025-10-11
+- **最后更新**: 2025-10-12
 - **目标版本**: v2.0.0
 - **完成进度**:
   - ✅ 阶段1-2: Store边界统一（scanFolders删除、preferences结构统一）
   - ✅ 阶段5: 架构纯化（删除业务逻辑、事件统一）
+  - 🔨 **阶段0.1: 事件链实现（袁天罡→李世民→服务响应）- 设计中**
+  - 🔨 **阶段0.2: Store自动同步机制（元数据驱动）- 设计中**
   - ⏳ 阶段3: useQinQiong()访问模式（待实施）
   - 📋 阶段4: scanningFolder迁移（待规划）
 - **相关RFC**:
@@ -432,6 +434,429 @@ export type PreferenceState = {
     }
 }
 ```
+
+### 实施阶段计划
+
+#### 阶段0.1：事件链实现 🔨 设计中 (2025-10-12)
+
+**目标**：建立中央集权事件系统，实现天界事件的监听和分发机制。
+
+**架构设计**：
+```
+┌──────────────────────────────────────────────────────────────┐
+│ 1. @common/events/tianjie-events.ts                         │
+│    - 天界事件定义（天枢和袁天罡共享）                          │
+│    - 只定义事件类型和数据结构，不包含映射逻辑                  │
+└──────────────────────────────────────────────────────────────┘
+                    ↓                           ↓
+         ┌──────────────────┐         ┌──────────────────────────┐
+         │   天枢 (天界)     │         │  袁天罡 (人界)            │
+         │                  │         │  + event-mapping.yml     │
+         │  发射事件        │         │    (内部自动加载)         │
+         └──────────────────┘         └──────────────────────────┘
+                                               ↓
+                                      ┌──────────────────┐
+                                      │  李世民          │
+                                      │  中央路由        │
+                                      └──────────────────┘
+```
+
+**关键职责划分**：
+- **@common/events**：天界事件定义（共享），只定义类型和数据结构
+- **袁天罡**：唯一监听IPC事件的服务，内部YAML配置事件映射
+- **李世民**：中央集权路由中心，接收袁天罡上报并分发到各服务
+
+**文件结构**：
+```
+src/
+├── common/
+│   └── events/
+│       └── tianjie-events.ts        # 天界事件定义（共享）
+│
+└── renderer/src/services/
+    ├── yuantiangang/
+    │   ├── yuantiangang.ts          # 袁天罡服务
+    │   ├── event-mapping.yml        # 事件映射配置（内部）
+    │   └── config-loader.ts         # 配置加载器
+    │
+    └── li-shi-ming.service.ts       # 李世民服务
+```
+
+**实现要点**：
+
+1. **共享事件定义 (@common/events/tianjie-events.ts)**
+   ```typescript
+   /**
+    * 天界事件类型
+    * 天枢引擎通过IPC发射的所有事件
+    */
+   export enum TianjieEventType {
+       PREFERENCES_CHANGED = 'tianjie:preferences_changed',
+       SCAN_PROGRESS = 'tianjie:scan_progress',
+       SCAN_COMPLETED = 'tianjie:scan_completed',
+       WORKFLOW_STATUS = 'tianjie:workflow_status',
+   }
+
+   /**
+    * 天界事件数据结构
+    */
+   export interface TianjieEventData {
+       [TianjieEventType.PREFERENCES_CHANGED]: {
+           snapshot: any;
+           delta: any;
+           source: string;
+       };
+       // ... 其他事件数据结构
+   }
+
+   /**
+    * 天界事件基础结构
+    */
+   export interface TianjieEvent<T extends TianjieEventType = TianjieEventType> {
+       type: T;
+       data: TianjieEventData[T];
+       timestamp: number;
+       source: string;
+   }
+   ```
+
+2. **袁天罡事件映射配置 (yuantiangang/event-mapping.yml)**
+   ```yaml
+   # 袁天罡事件映射配置
+   # 定义如何将天界事件映射为人界事件
+
+   metadata:
+     version: "1.0.0"
+     description: "天界事件到人界事件的映射配置"
+
+   # 事件映射规则
+   mappings:
+     tianjie:preferences_changed:
+       renjieEventType: "preferenceChanged"
+       description: "偏好设置变更事件"
+       priority: "high"
+
+     tianjie:scan_progress:
+       renjieEventType: "scanProgress"
+       description: "扫描进度更新事件"
+       priority: "normal"
+   ```
+
+3. **袁天罡自动监听所有事件**
+   ```typescript
+   // yuantiangang/yuantiangang.ts
+   import { TianjieEventType, TianjieEvent } from '@common/events/tianjie-events';
+   import { loadEventMappingConfig } from './config-loader';
+
+   export class YuanTianGangService extends EventEmitter {
+       private eventMappings: Record<string, any>;
+
+       constructor() {
+           super();
+           // ✅ 构造函数中自动加载映射配置
+           this.eventMappings = loadEventMappingConfig();
+           this.observeTianjieEvents();
+       }
+
+       /**
+        * 观测天界动态 - 自动注册所有已定义的天界事件
+        */
+       private observeTianjieEvents(): void {
+           // ✅ 遍历所有天界事件类型，自动注册监听
+           Object.values(TianjieEventType).forEach((tianjieEventType) => {
+               window.electron.on(tianjieEventType, (event: TianjieEvent) => {
+                   logger.info(`🔮 袁天罡观测到天象: ${tianjieEventType}`);
+
+                   // ✅ 从配置获取映射规则
+                   const mapping = this.eventMappings[tianjieEventType];
+                   if (!mapping) {
+                       logger.warn(`🔮 天象${tianjieEventType}无映射配置`);
+                       return;
+                   }
+
+                   // ✅ 转换为人界事件并发射给李世民
+                   this.emit('renjieEvent', {
+                       type: mapping.renjieEventType,
+                       data: event.data,
+                       timestamp: event.timestamp,
+                   });
+               });
+           });
+       }
+   }
+   ```
+
+4. **李世民中央集权分发**
+   ```typescript
+   // li-shi-ming.service.ts
+   private setupImperialDecrees(): void {
+       this.yuanTianGangService.on('renjieEvent', (event: RenjieEvent) => {
+           logger.info(`👑 李世民收到袁天罡上报: ${event.type}`);
+           this.dispatchToMinistry(event);
+       });
+   }
+   ```
+
+**架构优势**：
+- ✅ **类型安全**：天枢添加新事件时，更新@common/events，编译时检查
+- ✅ **自动同步**：袁天罡遍历TianjieEventType，自动监听所有事件
+- ✅ **配置驱动**：事件映射规则在YAML中，易于维护
+- ✅ **边界清晰**：事件定义共享，映射逻辑属于袁天罡内部
+
+**与操作链的关系**：
+- **操作链**（褚遂良→房玄龄→袁天罡→天枢→文昌）：负责数据修改和Store更新
+- **事件链**（天界→IPC→袁天罡→李世民→服务）：负责UI响应、日志、反应
+- 两条链互不冲突，各司其职
+
+#### 阶段0.2：Store自动同步机制 🔨 设计中 (2025-10-12)
+
+**目标**：实现房玄龄的元数据驱动Store同步机制，消除硬编码的matter处理逻辑。
+
+**当前问题**：
+- 房玄龄中存在硬编码的switch case处理不同matter
+- Store更新逻辑散落在各个case中
+- 缺乏统一的同步策略
+
+**架构设计**：
+```
+┌─────────────────────────────────────────────────────────────┐
+│  房玄龄服务目录结构                                           │
+│                                                              │
+│  fangxuanling/                                               │
+│  ├── fangxuanling.ts          # 主服务                       │
+│  ├── utils.ts                 # 工具函数                     │
+│  ├── metadata/                # 元数据配置目录                │
+│  │   ├── matter-sync.yml      # Store同步配置（自动加载）     │
+│  │   └── index.ts             # 配置加载器                   │
+│  └── interfaces.ts            # 接口定义                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**文件结构**：
+```
+src/renderer/src/services/
+└── fangxuanling/
+    ├── fangxuanling.ts          # 房玄龄服务
+    ├── utils.ts                 # 工具函数
+    ├── metadata/
+    │   ├── matter-sync.yml      # Store同步配置（内部）
+    │   └── index.ts             # 配置加载器
+    └── interfaces.ts            # 接口定义
+```
+
+**设计方案**：
+
+1. **YAML配置文件 (fangxuanling/metadata/matter-sync.yml)**
+   ```yaml
+   # 房玄龄Store自动同步配置
+   # 这是房玄龄内部的元数据配置，在构造函数中自动加载
+
+   metadata:
+     version: "1.0.0"
+     description: "奏折matter与Store同步配置"
+     lastUpdated: "2025-10-12"
+
+   # 同步策略定义
+   strategies:
+     merge:
+       description: "深度合并到Store"
+     replace:
+       description: "完全替换Store字段"
+     patch:
+       description: "浅层合并到Store"
+
+   # 奏折matter同步规则
+   matters:
+     THEME_CHANGE:
+       snapshotPath: "snapshot"
+       syncStrategy: "merge"
+       storePath: "preferences"
+       autoSync: true
+       description: "主题变更自动同步"
+
+     LANGUAGE_CHANGE:
+       snapshotPath: "snapshot"
+       syncStrategy: "merge"
+       storePath: "preferences"
+       autoSync: true
+       description: "语言变更自动同步"
+
+     THUMBNAIL_SIZE_CHANGE:
+       snapshotPath: "snapshot"
+       syncStrategy: "merge"
+       storePath: "preferences"
+       autoSync: true
+       description: "缩略图大小变更自动同步"
+
+     ADD_PATH:
+       snapshotPath: "snapshot"
+       syncStrategy: "merge"
+       storePath: "preferences"
+       autoSync: true
+       description: "添加路径自动同步"
+
+     REMOVE_PATH:
+       snapshotPath: "snapshot"
+       syncStrategy: "merge"
+       storePath: "preferences"
+       autoSync: true
+       description: "移除路径自动同步"
+
+     GET_PREFERENCES:
+       snapshotPath: "snapshot"
+       syncStrategy: "replace"
+       storePath: "preferences"
+       autoSync: true
+       description: "获取完整偏好设置快照"
+   ```
+
+2. **配置加载器 (fangxuanling/metadata/index.ts)**
+   ```typescript
+   import yaml from 'js-yaml';
+
+   /**
+    * 奏折matter与Store同步元数据配置
+    */
+   export interface MatterSyncMetadata {
+       snapshotPath: string;
+       syncStrategy: 'merge' | 'replace' | 'patch';
+       storePath: string;
+       autoSync: boolean;
+       description?: string;
+   }
+
+   /**
+    * 加载matter同步配置
+    * 房玄龄构造函数中自动调用
+    */
+   export function loadMatterSyncConfig(): Record<string, MatterSyncMetadata> {
+       try {
+           // ✅ 使用webpack/vite的raw-loader加载YAML
+           const configContent = require('./matter-sync.yml');
+           const config = yaml.load(configContent);
+
+           logger.info(`📜 加载matter同步配置: v${config.metadata.version}`);
+           logger.info(`📜 配置matters数量: ${Object.keys(config.matters).length}`);
+
+           return config.matters;
+       } catch (error) {
+           logger.error('📜 加载matter同步配置失败', error);
+           // ✅ 降级：返回空配置
+           return {};
+       }
+   }
+   ```
+
+3. **房玄龄自动加载配置**
+   ```typescript
+   // fangxuanling/fangxuanling.ts
+   import { loadMatterSyncConfig, MatterSyncMetadata } from './metadata';
+
+   export class FangXuanLingService {
+       private matterSyncConfig: Record<string, MatterSyncMetadata>;
+
+       constructor(yuanTianGang: YuanTianGangService) {
+           // ✅ 构造函数中自动加载配置
+           this.matterSyncConfig = loadMatterSyncConfig();
+
+           logger.info("📜 房玄龄就任，开始处理奏折");
+           logger.info(`📜 已加载${Object.keys(this.matterSyncConfig).length}个matter同步规则`);
+       }
+
+       /**
+        * 根据配置自动同步Store
+        * 元数据驱动的Store更新机制
+        */
+       private async autoSyncStore(
+           matter: string,
+           tianjieResponse: ZhaolingResponse
+       ): Promise<void> {
+           // ✅ 从内部配置获取同步规则
+           const syncConfig = this.matterSyncConfig[matter];
+
+           if (!syncConfig) {
+               logger.warn(`📜 matter无同步配置: ${matter}`);
+               return;
+           }
+
+           if (!syncConfig.autoSync) {
+               logger.debug(`📜 matter未启用自动同步: ${matter}`);
+               return;
+           }
+
+           // 从天界响应中提取snapshot
+           const snapshot = _.get(tianjieResponse.data, syncConfig.snapshotPath);
+           if (!snapshot) {
+               logger.warn(`📜 天界响应无snapshot数据: ${matter}`);
+               return;
+           }
+
+           logger.info(`📜 开始自动同步Store: ${matter}, 策略: ${syncConfig.syncStrategy}`);
+
+           // 根据策略更新Store
+           try {
+               switch (syncConfig.syncStrategy) {
+                   case 'merge':
+                       // 深度合并
+                       this.$patch((state) => {
+                           const merged = mergePreferencesFromTianjie(
+                               state[syncConfig.storePath],
+                               snapshot
+                           );
+                           state[syncConfig.storePath] = merged;
+                       });
+                       logger.info(`📜 Store合并完成: ${syncConfig.storePath}`);
+                       break;
+
+                   case 'replace':
+                       // 完全替换
+                       this.$patch({
+                           [syncConfig.storePath]: snapshot,
+                       });
+                       logger.info(`📜 Store替换完成: ${syncConfig.storePath}`);
+                       break;
+
+                   case 'patch':
+                       // 浅层合并
+                       this.$patch((state) => {
+                           Object.assign(state[syncConfig.storePath], snapshot);
+                       });
+                       logger.info(`📜 Store更新完成: ${syncConfig.storePath}`);
+                       break;
+
+                   default:
+                       logger.error(`📜 未知的同步策略: ${syncConfig.syncStrategy}`);
+               }
+           } catch (error) {
+               logger.error(`📜 Store同步失败: ${matter}`, error);
+               throw error;
+           }
+       }
+
+       /**
+        * 处理奏折 - 房玄龄的核心职责
+        */
+       async processZouzhe(zouzhe: Zouzhe): Promise<ZouzheResponse> {
+           // 1. 计算delta（如果需要）
+           // 2. 上报天界
+           const response = await this.escalateToTianjie(zhaoling);
+
+           // 3. ✅ 自动同步Store（元数据驱动）
+           if (response.acknowledged) {
+               await this.autoSyncStore(zouzhe.matter, response);
+           }
+
+           return response;
+       }
+   }
+   ```
+
+**架构优势**：
+- ✅ **消除硬编码**：不再有switch case处理不同matter
+- ✅ **配置驱动**：YAML配置文件，易于维护和扩展
+- ✅ **自动加载**：构造函数中自动加载，不需要外部依赖
+- ✅ **统一机制**：所有matter使用相同的同步逻辑
+- ✅ **可扩展**：添加新matter只需在YAML中添加配置
 
 ### 四阶段统一计划
 

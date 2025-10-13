@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /// <reference types="vite-plugin-comlink/client" />
 
 declare module "*.vue" {
@@ -32,4 +33,14 @@ declare module "*.svg?component" {
     import type { DefineComponent } from "vue";
     const component: DefineComponent<object, object, any>;
     export default component;
+}
+
+declare module "*.yml" {
+    const data: any;
+    export default data;
+}
+
+declare module "*.yaml" {
+    const data: any;
+    export default data;
 }

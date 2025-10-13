@@ -1,0 +1,87 @@
+# 房玄龄Store自动同步配置
+# 这是房玄龄内部的元数据配置，在构造函数中自动加载
+#
+# 定义如何将天界响应自动同步到本地Store
+# 遵循"schema/metadata driven"原则，配置而非硬编码
+
+metadata:
+    version: "1.0.0"
+    description: "奏折matter与Store同步配置"
+    lastUpdated: "2025-10-12"
+    author: "房玄龄"
+
+# 同步策略定义
+strategies:
+    merge:
+        description: "深度合并到Store - 保留现有值，只更新变更字段"
+        method: "deepMerge"
+    replace:
+        description: "完全替换Store字段 - 用天界数据完全替换"
+        method: "replace"
+    patch:
+        description: "浅层合并到Store - Object.assign方式合并"
+        method: "shallowMerge"
+
+# 奏折matter同步规则
+# 当天界确认后，根据这些规则自动更新本地Store
+matters:
+    # 主题变更
+    theme_change:
+        snapshotPath: "data"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "用户主题变更 - 合并preferences"
+
+    # 语言变更
+    language_change:
+        snapshotPath: "data"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "用户语言变更 - 合并preferences"
+
+    # 缩略图大小变更
+    thumbnail_size_change:
+        snapshotPath: "data"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "缩略图大小变更 - 合并preferences"
+
+    # 添加监控路径
+    add_path:
+        snapshotPath: "data"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "添加监控路径 - 合并preferences.scanning.paths"
+
+    # 移除监控路径
+    remove_path:
+        snapshotPath: "data"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "移除监控路径 - 合并preferences.scanning.paths"
+
+    # 添加扫描文件夹
+    add_scan_folder:
+        snapshotPath: "data"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "添加扫描文件夹 - 合并preferences"
+
+    # 获取偏好设置
+    get_preferences:
+        snapshotPath: "."
+        syncStrategy: "replace"
+        storePath: "preferences"
+        autoSync: true
+        description: "获取完整偏好设置快照 - 需要自动同步"
+
+# 特殊规则（将来扩展）
+specialRules:
+    # 如果将来需要自定义处理逻辑，可以在这里配置
+    customHandlers: []

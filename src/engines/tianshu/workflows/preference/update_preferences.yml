@@ -68,8 +68,8 @@ steps:
     description: "根据验证结果决定是否继续执行"
     dependsOn: ["simple_test"]
     condition:
-      # 🎯 简化路径：直接访问引擎返回值
-      field: "steps.validate_delta.valid"
+      # 访问validate步骤返回的result.valid字段
+      field: "steps.validate_delta.result.valid"
       operator: "eq"
       value: true
     onTrue: []  # 验证通过，继续执行后续步骤
@@ -81,8 +81,8 @@ steps:
         input:
           success: false
           error: "偏好设置数据验证失败"
-          # 🎯 简化路径：直接访问引擎返回值
-          details: "{{steps.validate_delta.errors}}"
+          # 访问validate步骤返回的result.errors字段
+          details: "{{steps.validate_delta.result.errors}}"
 
   - id: "sanitize_values"
     name: "清理和验证偏好值"
@@ -136,8 +136,8 @@ steps:
     service: "wenchang"
     action: "updatePreferences"
     input:
-      # 🎯 简化路径：直接访问引擎返回值
-      delta: "{{steps.sanitize_values}}"
+      # 访问sanitize_values步骤返回的result字段
+      delta: "{{steps.sanitize_values.result}}"
       source: "{{inputs.source}}"
     output:
       result: "result"
@@ -176,8 +176,8 @@ steps:
       event: "preferences_changed"
       data:
         # 🎯 简化路径：直接访问引擎返回值
-        delta: "{{steps.sanitize_values}}"
-        snapshot: "{{steps.get_updated_snapshot}}"
+        delta: "{{steps.sanitize_values.result}}"
+        snapshot: "{{steps.get_updated_snapshot.result}}"
         source: "{{inputs.source}}"
         timestamp: "{{now()}}"
     output:
@@ -194,8 +194,8 @@ steps:
       success: true
       data:
         # 🎯 简化路径：直接访问引擎返回值
-        updated: "{{steps.sanitize_values}}"
-        snapshot: "{{steps.get_updated_snapshot}}"
+        updated: "{{steps.sanitize_values.result}}"
+        snapshot: "{{steps.get_updated_snapshot.result}}"
       timestamp: "{{now()}}"
       source: "wenchang_engine"
     output:

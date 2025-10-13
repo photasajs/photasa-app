@@ -4,10 +4,8 @@
  */
 
 import { WorkflowStep, ExecutionContext } from "../types/workflows";
-import { loggers } from "@common/logger";
 import { isObject } from "radash";
-
-const logger = loggers.tianshu;
+import { generateUUID } from "./utils";
 
 /**
  * TaiyiEngine 包装结构类型
@@ -55,7 +53,7 @@ export class VariableResolver {
     constructor(config: VariableResolverConfig) {
         this.config = {
             variablePrefix: "{{",
-            strictMode: false,
+            strictMode: true, // 默认启用严格模式，确保output_schema验证失败时抛出错误
             ...config,
         };
     }
@@ -241,7 +239,7 @@ export class VariableResolver {
             case "$random":
                 return Math.random();
             case "$uuid":
-                return this.generateUUID();
+                return generateUUID();
             default:
                 if (this.config.strictMode) {
                     throw new Error(`🌌 【符咒解析】未知天机「${variableName}」`);
@@ -258,10 +256,12 @@ export class VariableResolver {
         const root = parts[0];
 
         let value: any;
+        let isInputPath = false; // 标记是否为 input/inputs 路径
+
         switch (root) {
-            case "input":
             case "inputs": // 支持inputs和input两种格式
                 value = context.input;
+                isInputPath = true; // inputs/input 字段是用户输入，可能不存在
                 break;
             case "variables":
                 value = context.variables;
@@ -271,10 +271,8 @@ export class VariableResolver {
                 break;
             case "steps": // 修正：应该是"steps"而不是"step"
                 value = this.getStepOutputs(context);
-                // 如果是步骤输出路径，验证路径有效性
-                if (parts.length >= 3 && this.config.workflowSteps) {
-                    this.validateStepOutputPath(parts, context);
-                }
+                // 注意：output_schema验证应该在步骤执行完成后进行（WorkflowOrchestrator负责），
+                // 而不是在变量解析时验证。这里只负责获取数据。
                 break;
             default:
                 if (this.config.strictMode) {
@@ -288,6 +286,11 @@ export class VariableResolver {
             if (value && isObject(value) && parts[i] in value) {
                 value = value[parts[i]];
             } else {
+                // 对于 inputs/input 路径，即使字段不存在也返回 undefined，不抛错
+                // 因为这些是用户输入，可能是 optional 的
+                if (isInputPath) {
+                    return undefined;
+                }
                 if (this.config.strictMode) {
                     throw new Error(`🌌 【符咒解析】仙径未寻「${variableName}」`);
                 }
@@ -412,67 +415,6 @@ export class VariableResolver {
         }
 
         return outputs;
-    }
-
-    /**
-     * 生成UUID
-     */
-    private generateUUID(): string {
-        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-            const r = (Math.random() * 16) | 0;
-            const v = c === "x" ? r : (r & 0x3) | 0x8;
-            return v.toString(16);
-        });
-    }
-
-    /**
-     * 验证步骤输出路径有效性
-     * 基于工作流中的output_schema声明
-     */
-    private validateStepOutputPath(pathParts: string[], _context: ExecutionContext): void {
-        if (!this.config.workflowSteps) {
-            return;
-        }
-
-        const [, stepId, outputKey, ...remainingPath] = pathParts;
-
-        // 查找步骤定义
-        const stepDef = this.config.workflowSteps.find((step) => step.id === stepId);
-        if (!stepDef || !stepDef.output_schema) {
-            logger.debug(`🌌 【符咒解析】步骤「${stepId}」未定义output_schema，跳过验证`);
-            return;
-        }
-
-        // 验证路径是否存在于output_schema中
-        let currentSchema = stepDef.output_schema;
-        const fullPath = [outputKey, ...remainingPath];
-
-        for (let i = 0; i < fullPath.length; i++) {
-            const key = fullPath[i];
-            if (currentSchema && isObject(currentSchema) && key in currentSchema) {
-                currentSchema = currentSchema[key];
-            } else {
-                const validPaths =
-                    currentSchema && isObject(currentSchema) ? Object.keys(currentSchema) : [];
-
-                logger.warn(`🌌 【符咒解析】路径验证失败「${pathParts.join(".")}」在「${key}」处`);
-                logger.debug(
-                    `🌌 【符咒解析】步骤「${stepId}」的「${outputKey}」可用字段:`,
-                    validPaths,
-                );
-
-                // 在严格模式下，路径验证失败应该抛出错误
-                if (this.config.strictMode) {
-                    throw new Error(
-                        `🌌 【符咒解析】路径有误「${pathParts.join(".")}」。` +
-                            `步骤「${outputKey}」可用字段：${validPaths.join("、")}`,
-                    );
-                }
-                return;
-            }
-        }
-
-        logger.debug(`🌌 【符咒解析】路径验证通过「${pathParts.join(".")}」`);
     }
 
     /**

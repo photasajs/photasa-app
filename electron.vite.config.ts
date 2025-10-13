@@ -7,6 +7,7 @@ import vueJsx from "@vitejs/plugin-vue-jsx";
 import { babel } from "@rollup/plugin-babel";
 import { comlink } from "vite-plugin-comlink";
 import svgLoader from "vite-svg-loader";
+import yaml from "@rollup/plugin-yaml";
 /**
  * Check if the mode is development or debug
  * @param mode - The mode to check
@@ -72,7 +73,7 @@ export default defineConfig(({ mode }) => ({
                 // 注意：@shared 不应该在渲染进程中使用，因为包含 Node.js 依赖
             },
         },
-        plugins: [vue(), vueJsx(), comlink(), svgLoader()],
+        plugins: [vue(), vueJsx(), comlink(), svgLoader(), yaml()],
         css: {
             preprocessorOptions: {
                 less: {

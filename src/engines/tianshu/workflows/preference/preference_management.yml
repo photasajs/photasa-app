@@ -91,10 +91,9 @@ steps:
     output_schema:
       result:
         result:
-          type: object
-          description: "当前偏好快照"
-          properties:
-            revision: number
+          revision: number
+          data: object
+          timestamp: number
         success: boolean
       success: boolean
       timestamp: number
@@ -119,7 +118,7 @@ steps:
     input:
       success: true
       snapshot: {{steps.get_current_preferences.output.result.result}}
-      revision: {{steps.get_current_preferences.output.result.result.properties.revision}}
+      revision: {{steps.get_current_preferences.output.result.result.revision}}
     condition:
       field: "input.action"
       operator: "eq"
@@ -194,10 +193,9 @@ steps:
     output_schema:
       result:
         result:
-          type: object
-          description: "最终偏好快照"
-          properties:
-            revision: number
+          revision: number
+          data: object
+          timestamp: number
         success: boolean
       success: boolean
       timestamp: number
@@ -218,8 +216,8 @@ steps:
       success: true
       finalSnapshot: {{steps.get_final_snapshot.output.result.result}}
       currentSnapshot: {{steps.get_current_preferences.output.result.result}}
-      finalRevision: {{steps.get_final_snapshot.output.result.result.properties.revision}}
-      currentRevision: {{steps.get_current_preferences.output.result.result.properties.revision}}
+      finalRevision: {{steps.get_final_snapshot.output.result.result.revision}}
+      currentRevision: {{steps.get_current_preferences.output.result.result.revision}}
     dependsOn: ["handle_get_action", "get_final_snapshot"]
 
 # 错误处理

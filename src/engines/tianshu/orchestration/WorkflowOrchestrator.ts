@@ -15,6 +15,8 @@ import {
 import { VariableResolver } from "./VariableResolver";
 import { IStepExecutor } from "@engines/common/interfaces";
 import { loggers } from "@common/logger";
+import { validateStepOutput, type ValidationResult } from "./schema-validator";
+import { extractOutputFromStep, generateExecutionId } from "./utils";
 
 const logger = loggers.tianshu;
 
@@ -107,7 +109,7 @@ export class WorkflowOrchestrator extends EventEmitter {
         command: UICommand,
         options: WorkflowExecutionOptions = {},
     ): Promise<string> {
-        const executionId = this.generateExecutionId();
+        const executionId = generateExecutionId();
 
         // 更新变量解析器配置，传入工作流步骤定义用于output_schema验证
         this.variableResolver = new VariableResolver({
@@ -383,6 +385,29 @@ export class WorkflowOrchestrator extends EventEmitter {
                 } else {
                     throw new Error(stepExecutionResult.error || "Step execution failed");
                 }
+            }
+
+            // 验证步骤输出是否匹配 output_schema (JSON Schema)
+            if (step.output_schema) {
+                const validationResult: ValidationResult = validateStepOutput(
+                    result.output,
+                    step.output_schema,
+                    step.id || "unknown",
+                );
+
+                if (validationResult.valid === false) {
+                    // 类型守卫：validationResult.valid === false 时，errors属性存在
+                    const errorMsg =
+                        `🌌 步骤「${step.id}」输出数据不符合output_schema:\n` +
+                        validationResult.errors.map((e: string) => `  - ${e}`).join("\n") +
+                        `\n实际输出: ${JSON.stringify(result.output, null, 2)}` +
+                        `\n预期schema: ${JSON.stringify(step.output_schema, null, 2)}`;
+
+                    logger.error(errorMsg);
+                    throw new Error(errorMsg);
+                }
+
+                logger.info(`🌌 步骤「${step.id}」输出数据验证通过`);
             }
 
             result.status = "completed";
@@ -789,13 +814,6 @@ export class WorkflowOrchestrator extends EventEmitter {
     }
 
     /**
-     * 生成执行ID
-     */
-    private generateExecutionId(): string {
-        return `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    /**
      * 收集工作流输出结果
      */
     private collectWorkflowOutput(
@@ -812,7 +830,7 @@ export class WorkflowOrchestrator extends EventEmitter {
                 if (lastStepResult && lastStepResult.output) {
                     // 如果最后一步有output定义，使用它
                     if (lastStep.output) {
-                        return this.extractOutputFromStep(lastStep, lastStepResult);
+                        return extractOutputFromStep(lastStep, lastStepResult, logger);
                     }
                     // 否则直接返回步骤输出
                     return lastStepResult.output;
@@ -869,51 +887,5 @@ export class WorkflowOrchestrator extends EventEmitter {
 
         // 如果无法提取特定字段，返回整个输出
         return stepOutput;
-    }
-
-    /**
-     * 从步骤定义中提取输出
-     */
-    private extractOutputFromStep(step: WorkflowStep, stepResult: StepResult): Record<string, any> {
-        if (!step.output || !stepResult.output) {
-            return stepResult.output || {};
-        }
-
-        const output: Record<string, any> = {};
-
-        // 根据步骤的output定义提取数据
-        for (const [outputKey, outputPath] of Object.entries(step.output)) {
-            try {
-                output[outputKey] = this.resolveOutputPath(stepResult.output, outputPath);
-            } catch (error) {
-                logger.warn(`提取步骤输出 ${outputKey} 失败:`, error);
-                output[outputKey] = undefined;
-            }
-        }
-
-        return output;
-    }
-
-    /**
-     * 解析输出路径
-     */
-    private resolveOutputPath(data: any, path: string): any {
-        if (!path || !data) {
-            return data;
-        }
-
-        // 简单的路径解析，支持点号分隔的路径
-        const parts = path.split(".");
-        let current = data;
-
-        for (const part of parts) {
-            if (current && typeof current === "object" && part in current) {
-                current = current[part];
-            } else {
-                return undefined;
-            }
-        }
-
-        return current;
     }
 }

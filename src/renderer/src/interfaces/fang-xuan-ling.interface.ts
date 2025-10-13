@@ -23,26 +23,26 @@ export interface IPreference {
     readonly paths: string[];
 
     // 状态访问（只读）
-    readonly state: any;
+    readonly state: Record<string, unknown>;
 }
 
 /**
  * 通知管理接口
  */
 export interface INotification {
-    show(notification: any): void;
+    show(notification: Record<string, unknown>): void;
     hide(id: string): void;
     clear(): void;
-    readonly notifications: any[];
+    readonly notifications: Record<string, unknown>[];
 }
 
 /**
  * 照片管理接口
  */
 export interface IPhotos {
-    readonly currentPhoto: any;
-    setCurrentPhoto(photo: any): void;
-    readonly photos: any[];
+    readonly currentPhoto: Record<string, unknown> | null;
+    setCurrentPhoto(photo: Record<string, unknown>): void;
+    readonly photos: Record<string, unknown>[];
 }
 
 /**
@@ -57,9 +57,9 @@ export interface IFangXuanLingService {
 
     // 全局状态管理
     getGlobalState(): {
-        preference: any;
-        notification: any;
-        photos: any;
+        preference: Record<string, unknown>;
+        notification: Record<string, unknown>[];
+        photos: Record<string, unknown>[];
     };
 
     // 全局重置
@@ -81,7 +81,7 @@ export interface IFangXuanLingService {
 export interface Zouzhe {
     department: string; // 部门名称
     matter: string; // 事务类型
-    content?: any; // 奏折内容
+    content?: Record<string, unknown>; // 奏折内容
     timestamp: number; // 上奏时间
     priority: "urgent" | "normal" | "low"; // 优先级
 }
@@ -89,7 +89,7 @@ export interface Zouzhe {
 export interface ZouzheResponse {
     approved: boolean; // 是否批准
     matter: string; // 原始事务
-    data: any; // 最终业务数据，房玄龄已拆箱处理
+    data: unknown; // 最终业务数据，房玄龄已拆箱处理
     instruction: string; // 宰相明确指示
     timestamp: number; // 批复时间
     officials?: string[]; // 处理官员链
@@ -107,7 +107,7 @@ export interface ZouzheResponse {
  */
 export interface Zhaoling {
     command: string; // 指令内容
-    context?: any; // 上下文信息
+    context?: Record<string, unknown>; // 上下文信息
     timestamp: number; // 发布时间
     source: string; // 来源部门
     priority: "imperial" | "urgent" | "normal"; // 优先级
@@ -117,7 +117,7 @@ export interface Zhaoling {
 export interface ZhaolingResponse {
     acknowledged: boolean; // 袁天罡是否接受诏令
     command: string; // 原始指令
-    data: any; // 直接的业务数据，袁天罡已拆箱处理
+    data: unknown; // 直接的业务数据，袁天罡已拆箱处理
     blessing: string; // 钦天监加持
     timestamp: number; // 回馈时间
     error?: string; // 错误信息

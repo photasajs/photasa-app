@@ -114,6 +114,7 @@
         "@electron/notarize": "^1.2.3",
         "@playwright/test": "^1.52.0",
         "@rollup/plugin-babel": "^6.0.3",
+        "@rollup/plugin-yaml": "^4.1.2",
         "@rushstack/eslint-patch": "^1.2.0",
         "@testing-library/vue": "^8.1.0",
         "@types/file-type": "^10.6.0",

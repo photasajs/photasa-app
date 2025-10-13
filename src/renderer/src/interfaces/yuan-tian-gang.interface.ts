@@ -4,14 +4,14 @@
  */
 
 import type { Zhaoling, ZhaolingResponse } from "./fang-xuan-ling.interface";
-
+export type { Zhaoling, ZhaolingResponse } from "./fang-xuan-ling.interface";
 /**
  * 符箓数据结构
  * 符箓：袁天罡向天枢发送的天界通信文书
  */
 export interface Fulu {
     intent: string; // 祈请意图
-    context?: any; // 上下文信息
+    context?: Record<string, unknown>; // 上下文信息
     timestamp: number; // 发送时间
     source: string; // 来源
     urgency: "critical" | "high" | "normal"; // 紧急程度
@@ -20,9 +20,9 @@ export interface Fulu {
 export interface FuluResponse {
     success: boolean; // 天枢是否响应
     intent: string; // 原始意图
-    context?: any; // 原始上下文
+    context?: Record<string, unknown>; // 原始上下文
     timestamp: number; // 回馈时间
-    response?: any; // 天枢回馈内容
+    response?: unknown; // 天枢回馈内容
     error?: string; // 错误信息
     blessing?: string; // 天枢加持
 }

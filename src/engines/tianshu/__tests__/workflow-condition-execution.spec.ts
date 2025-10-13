@@ -14,12 +14,12 @@ class MockStepExecutor implements IStepExecutor {
     public mockResults: Record<string, any> = {};
 
     constructor() {
-        // 设置模拟返回值 - 注意这里的数据结构要匹配实际返回的格式
-        this.mockResults["wenchang.validate"] = { valid: true, errors: [] };
+        // 设置模拟返回值 - 数据结构必须匹配工作流output_schema定义
+        this.mockResults["wenchang.validate"] = { result: { valid: true, errors: [] } };
         this.mockResults["wenchang.sanitize"] = { result: { ui: { theme: "dark" } } };
         this.mockResults["wenchang.updatePreferences"] = { result: { revision: 2, success: true } };
         this.mockResults["wenchang.getCurrentSnapshot"] = {
-            result: { revision: 2, ui: { theme: "dark" } },
+            result: { revision: 2, data: { ui: { theme: "dark" } }, timestamp: Date.now() },
         };
         this.mockResults["wenchang.emitEvent"] = { id: "event-123" };
         this.mockResults["wenchang.formatResponse"] = { result: { success: true } };
@@ -114,8 +114,8 @@ describe("工作流条件步骤执行", () => {
     });
 
     it("应该执行条件步骤的onTrue分支", async () => {
-        // 设置验证成功
-        mockExecutor.mockResults["wenchang.validate"] = { valid: true, errors: [] };
+        // 设置验证成功 - 数据结构必须匹配output_schema
+        mockExecutor.mockResults["wenchang.validate"] = { result: { valid: true, errors: [] } };
 
         // 创建更新偏好的命令
         const command: UICommand = {
@@ -153,8 +153,10 @@ describe("工作流条件步骤执行", () => {
     });
 
     it("应该执行条件步骤的onFalse分支", async () => {
-        // 设置验证失败
-        mockExecutor.mockResults["wenchang.validate"] = { valid: false, errors: ["测试错误"] };
+        // 设置验证失败 - 数据结构必须匹配output_schema
+        mockExecutor.mockResults["wenchang.validate"] = {
+            result: { valid: false, errors: ["测试错误"] },
+        };
 
         // 创建更新偏好的命令
         const command: UICommand = {

@@ -101,8 +101,8 @@ export class YuanTianGangService implements IYuanTianGangService {
             logger.info(
                 `🔮 天枢响应: ${fuluResponse.success ? "成功" : "失败"}, 意图: ${fuluResponse.intent}`,
             );
-            logger.info(`🔮 拆箱结果: ${unboxedData ? "有数据" : "无数据"}`);
-            logger.info(
+            logger.debug(`🔮 拆箱结果: ${unboxedData ? "有数据" : "无数据"}`);
+            logger.debug(
                 `🔮 装箱完成: 确认=${reboxedResponse.acknowledged}, 加持=${reboxedResponse.blessing}`,
             );
 
@@ -282,11 +282,16 @@ export class YuanTianGangService implements IYuanTianGangService {
     /**
      * 拆箱天枢响应 - 严格按契约提取业务数据
      * 袁天罡职责：理解天枢的数据结构，提取纯业务数据
+     *
+     * 天枢标准格式优先级：
+     * 1. response.result.data (标准格式)
+     * 2. response.result (简化格式)
+     * 3. response (原始格式)
      */
-    private unboxTianshuResponse(fuluResponse: FuluResponse): any {
+    private unboxTianshuResponse(fuluResponse: FuluResponse): unknown {
         logger.info("🔮 开始拆箱天枢响应");
 
-        // 检查符箓响应基本状态
+        // 早返回：检查基本状态
         if (!fuluResponse.success) {
             logger.error("🔮 天枢处理失败", fuluResponse.error);
             return null;
@@ -297,43 +302,23 @@ export class YuanTianGangService implements IYuanTianGangService {
             return null;
         }
 
-        const response = fuluResponse.response;
+        const response = fuluResponse.response as Record<string, unknown>;
 
-        // 严格按照天枢的数据契约提取业务数据
-        // 天枢标准格式：{ success, result: { data: actualBusinessData } }
-        try {
-            let businessData = null;
+        // 早返回：按优先级尝试提取数据
+        const result = response.result as Record<string, unknown> | undefined;
 
-            // 第一层：检查response.result
-            if (response.result) {
-                // 第二层：检查result.result (某些引擎的双层结构)
-                if (response.result.result && response.result.result.data) {
-                    businessData = response.result.result.data;
-                    logger.info("🔮 提取路径: response.result.result.data");
-                }
-                // 第二层：检查result.data
-                else if (response.result.data) {
-                    businessData = response.result.data;
-                    logger.info("🔮 提取路径: response.result.data");
-                }
-                // 直接使用result
-                else {
-                    businessData = response.result;
-                    logger.info("🔮 提取路径: response.result");
-                }
-            }
-            // 直接使用response
-            else {
-                businessData = response;
-                logger.info("🔮 提取路径: response");
-            }
-
-            logger.info("🔮 拆箱完成", { hasData: !!businessData });
-            return businessData;
-        } catch (error) {
-            logger.error("🔮 拆箱过程出错", error);
-            return null;
+        if (result?.data) {
+            logger.info("🔮 提取路径: response.result.data");
+            return result.data;
         }
+
+        if (result) {
+            logger.info("🔮 提取路径: response.result");
+            return result;
+        }
+
+        logger.info("🔮 提取路径: response (原始)");
+        return response;
     }
 
     /**
@@ -342,42 +327,39 @@ export class YuanTianGangService implements IYuanTianGangService {
      */
     private reboxAsZhaolingResponse(
         originalZhaoling: Zhaoling,
-        businessData: any,
+        businessData: unknown,
         fuluResponse: FuluResponse,
         processTime: number,
     ): ZhaolingResponse {
         logger.info(`🔮 开始装箱为钦天监格式: ${originalZhaoling.command}`);
 
+        // 映射优先级（避免重复代码）
+        const urgency =
+            originalZhaoling.priority === "imperial"
+                ? "critical"
+                : originalZhaoling.priority === "urgent"
+                  ? "high"
+                  : "normal";
+
         const hasData = businessData !== null && businessData !== undefined;
+        const responseObj = fuluResponse.response as Record<string, unknown> | undefined;
         const engineName =
-            fuluResponse.response?.engineName ||
-            fuluResponse.response?.result?.engineName ||
+            (responseObj?.engineName as string) ||
+            ((responseObj?.result as Record<string, unknown>)?.engineName as string) ||
             "unknown";
 
         const response: ZhaolingResponse = {
             acknowledged: fuluResponse.success,
             command: originalZhaoling.command,
-            data: businessData.result.result.data, //
+            data: businessData,
             blessing:
                 fuluResponse.blessing ||
-                this.generateBlessing(
-                    originalZhaoling.priority === "imperial"
-                        ? "critical"
-                        : originalZhaoling.priority === "urgent"
-                          ? "high"
-                          : "normal",
-                    fuluResponse.success ? "completed" : "failed",
-                ),
+                this.generateBlessing(urgency, fuluResponse.success ? "completed" : "failed"),
             timestamp: Date.now(),
             metadata: {
                 engineName,
                 processTime,
-                urgency:
-                    originalZhaoling.priority === "imperial"
-                        ? "critical"
-                        : originalZhaoling.priority === "urgent"
-                          ? "high"
-                          : "normal",
+                urgency,
             },
         };
 
