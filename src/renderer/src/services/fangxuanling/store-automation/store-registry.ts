@@ -65,12 +65,12 @@ export function getStoreByPath(storePath: string): any | null {
 
     if (!storeFactory) {
         logger.error(
-            `📜 未找到Store: ${storeName}，可用Store: ${Object.keys(STORE_REGISTRY).join(", ")}`,
+            `❌ 未找到Store: ${storeName}，可用Store: ${Object.keys(STORE_REGISTRY).join(", ")}`,
         );
         return null;
     }
 
-    logger.debug(`📜 获取Store: ${storeName}`);
+    logger.debug(`📚 获取Store: ${storeName}`);
     return storeFactory();
 }
 

@@ -17,6 +17,7 @@ import {
     ZOUZHE_PRIORITIES,
     ZHAOLING_PRIORITIES,
     ERROR_MESSAGES,
+    ZOUZHE_MATTERS,
 } from "../../interfaces/fang-xuan-ling.interface";
 import { usePreferenceStore } from "../../stores/preference";
 import { useNotificationStore } from "../../stores/notification";
@@ -54,18 +55,18 @@ export class FangXuanLingService implements IFangXuanLingService {
         }
 
         this._yuanTianGang = yuanTianGang;
-        logger.info("📜 就任，开始统筹政务");
+        logger.info("🏛️ 房玄龄就任宰相，统筹朝政");
 
         // 加载Store自动同步配置
         this._matterSyncConfig = loadMatterSyncConfig();
-        logger.info("📜 Store自动同步配置已加载");
+        logger.info("📚 朝廷典章制度已备");
 
         // 初始化各部门管理器
         this._preference = this.createPreference();
         this._notification = this.createNotification();
         this._photos = this.createPhotos();
 
-        logger.info("📜 各部门管理器初始化完成");
+        logger.info("🏛️ 六部百官各司其职");
     }
 
     get preference(): IPreference {
@@ -80,17 +81,77 @@ export class FangXuanLingService implements IFangXuanLingService {
         return this._photos;
     }
 
+    /**
+     * 计算paths相关matter的delta
+     * 房玄龄负责业务逻辑：根据当前paths数组计算新的完整数组
+     *
+     * @param matter - 奏折事项（add_path或remove_path）
+     * @param content - 奏折内容（包含单个path）
+     * @returns PreferenceDelta对象或null
+     */
+    private computePathsDelta(
+        matter: string,
+        content: Record<string, unknown>,
+    ): Record<string, unknown> | null {
+        if (matter === ZOUZHE_MATTERS.ADD_PATH) {
+            const store = usePreferenceStore();
+            const currentPaths = store.preferences?.scanning?.paths || [];
+            const newPath = content.path as string;
+
+            logger.debug(`📚 房玄龄计算添加路径delta: ${newPath}`);
+            logger.debug(`📚 当前paths数量: ${currentPaths.length}`);
+
+            return {
+                scanning: {
+                    paths: [...currentPaths, newPath],
+                },
+            };
+        }
+
+        if (matter === ZOUZHE_MATTERS.REMOVE_PATH) {
+            const store = usePreferenceStore();
+            const currentPaths = store.preferences?.scanning?.paths || [];
+            const pathToRemove = content.path as string;
+
+            logger.debug(`📚 房玄龄计算移除路径delta: ${pathToRemove}`);
+            logger.debug(`📚 当前paths数量: ${currentPaths.length}`);
+
+            return {
+                scanning: {
+                    paths: currentPaths.filter((p) => p !== pathToRemove),
+                },
+            };
+        }
+
+        return null;
+    }
+
     async processZouzhe(zouzhe: Zouzhe): Promise<ZouzheResponse> {
-        logger.info(`📜 处理${zouzhe.department}奏折: ${zouzhe.matter}`, zouzhe);
+        logger.info(`📝 收到${zouzhe.department}奏章: ${zouzhe.matter}`, zouzhe);
 
         try {
             const startTime = Date.now();
+
+            // 特殊处理：paths matter需要计算完整delta
+            let context = zouzhe.content || {};
+            if (
+                zouzhe.matter === ZOUZHE_MATTERS.ADD_PATH ||
+                zouzhe.matter === ZOUZHE_MATTERS.REMOVE_PATH
+            ) {
+                const pathsDelta = this.computePathsDelta(zouzhe.matter, zouzhe.content || {});
+                if (pathsDelta) {
+                    context = pathsDelta; // 使用计算后的完整delta
+                    logger.info(
+                        `📚 房玄龄已计算paths delta，新paths数组长度: ${(pathsDelta.scanning as any)?.paths?.length || 0}`,
+                    );
+                }
+            }
 
             // 统一流程：所有matter都走同样的流程
             // 1. 构造诏令上报天界
             const zhaoling: Zhaoling = {
                 command: zouzhe.matter,
-                context: zouzhe.content || {},
+                context: context, // 使用处理后的context
                 timestamp: Date.now(),
                 source: zouzhe.department,
                 priority:
@@ -114,7 +175,7 @@ export class FangXuanLingService implements IFangXuanLingService {
                         syncStoreWithSnapshot(zouzhe.matter, zhaolingResponse, syncMetadata, store);
                     } else {
                         logger.error(
-                            `📜 Store自动同步失败: 未找到Store「${syncMetadata.storePath}」for matter「${zouzhe.matter}」`,
+                            `❌ 典籍归档失败: 未找到册库「${syncMetadata.storePath}」办理「${zouzhe.matter}」`,
                         );
                     }
                 }
@@ -140,10 +201,10 @@ export class FangXuanLingService implements IFangXuanLingService {
                 },
             };
 
-            logger.info(`📜 奏折处理完成: ${zouzhe.matter}, 耗时: ${processTime}ms`);
+            logger.info(`📝 奏章已批: ${zouzhe.matter}, 耗时: ${processTime}ms`);
             return response;
         } catch (error) {
-            logger.error(`❌ 奏疏有误，请重新草拟: ${zouzhe.matter}`, error);
+            logger.error(`❌ 奏疏有误，退回重拟: ${zouzhe.matter}`, error);
 
             return {
                 approved: false,
@@ -239,17 +300,17 @@ export class FangXuanLingService implements IFangXuanLingService {
 
         return {
             show(notification: any) {
-                logger.info("📜 协调显示通知", notification);
+                logger.info("🔔 鸣钟击鼓，传令天下", notification);
                 store.add(notification);
             },
 
             hide(id: string) {
-                logger.info(`📜 协调隐藏通知: ${id}`);
+                logger.info(`🔔 撤销告示: ${id}`);
                 store.remove(id);
             },
 
             clear() {
-                logger.info("📜 协调清空所有通知");
+                logger.info("🔔 清除所有告示");
                 store.clear();
             },
 
@@ -272,7 +333,7 @@ export class FangXuanLingService implements IFangXuanLingService {
             },
 
             setCurrentPhoto(photo: any) {
-                logger.info("📜 协调设置当前照片", photo);
+                logger.info("📚 协调设置当前照片", photo);
                 // 暂时使用setCurrentFolder
                 if (photo?.folder) {
                     store.setCurrentFolder(photo.folder);

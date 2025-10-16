@@ -141,6 +141,8 @@ export const ZOUZHE_MATTERS = {
     ADD_PATH: "add_path", // 添加监控路径
     REMOVE_PATH: "remove_path", // 移除监控路径
     ADD_SCAN_FOLDER: "add_scan_folder", // 添加扫描文件夹
+    START_SCAN: "start_scan", // 开始扫描（尉迟恭 → 天界）
+    STOP_SCAN: "stop_scan", // 停止扫描（尉迟恭 → 天界）
 } as const;
 
 /**
@@ -166,6 +168,7 @@ export const ZOUZHE_PRIORITIES = {
  */
 export const GUANYUAN_NAMES = {
     CHU_SUILIANG: "褚遂良", // 文书管理官员 - 唐朝书法家、政治家
+    YU_CHI_GONG: "尉迟恭", // 扫描队列管理官员 - 唐朝名将
     THEME_SETTINGS: "阎立本", // 主题设置官员 - 唐朝著名画家、工艺家
     LANGUAGE_SETTINGS: "玄奘", // 语言设置官员 - 唐朝翻译家
     NOTIFICATION_SETTINGS: "狄仁杰", // 通知设置官员 - 唐朝名臣

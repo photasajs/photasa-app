@@ -45,8 +45,9 @@ export function validateStepOutput(
  * @param schema - JSON Schema定义
  * @param path - 当前路径（用于错误消息）
  * @returns 错误消息数组
+ * @internal - 导出仅供测试使用
  */
-function validateAgainstSchema(
+export function validateAgainstSchema(
     data: unknown,
     schema: Record<string, unknown>,
     path = "root",

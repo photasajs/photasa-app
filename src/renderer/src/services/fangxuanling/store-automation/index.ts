@@ -67,7 +67,7 @@ export function loadMatterSyncConfig(): Record<string, MatterSyncMetadata> {
     const config = matterSyncYaml as MatterSyncConfig;
 
     logger.info(
-        `📜 加载matter同步配置: v${config.metadata.version}, 配置matters数量: ${Object.keys(config.matters).length}`,
+        `📚 朝廷典章加载: v${config.metadata.version}, 配置matters数量: ${Object.keys(config.matters).length}`,
     );
 
     return config.matters;
@@ -81,23 +81,23 @@ export function loadMatterSyncConfig(): Record<string, MatterSyncMetadata> {
  */
 export function validateMatterSyncConfig(config: Record<string, MatterSyncMetadata>): boolean {
     if (!config || Object.keys(config).length === 0) {
-        logger.warn("📜 配置为空，Store自动同步功能将被禁用");
+        logger.warn("⚠️ 典章空缺，自动同步功能将被禁用");
         return false;
     }
 
     // 验证每个matter配置的必需字段
     for (const [matter, metadata] of Object.entries(config)) {
         if (!metadata.snapshotPath || !metadata.syncStrategy || !metadata.storePath) {
-            logger.error(`📜 matter配置不完整: ${matter}`, metadata);
+            logger.error(`❌ matter配置不完整: ${matter}`, metadata);
             return false;
         }
 
         if (!["merge", "replace", "patch"].includes(metadata.syncStrategy)) {
-            logger.error(`📜 无效的同步策略: ${metadata.syncStrategy} (matter: ${matter})`);
+            logger.error(`❌ 无效的同步策略: ${metadata.syncStrategy} (matter: ${matter})`);
             return false;
         }
     }
 
-    logger.info("📜 配置验证通过");
+    logger.info("📚 典章验证通过");
     return true;
 }

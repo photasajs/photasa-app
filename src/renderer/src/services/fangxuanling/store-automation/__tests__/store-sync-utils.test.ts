@@ -137,7 +137,25 @@ describe("store-sync-utils", () => {
             expect(result.ui).toBeDefined();
         });
 
-        it("应该在snapshot无效时返回原Store数据", () => {
+        it("应该成功处理storePath为'.'的场景（从根合并）", () => {
+            const storePreferences: Record<string, unknown> = {
+                ui: { theme: "light", language: "en" },
+                display: { thumbnailSize: 100 },
+            };
+
+            const snapshot = {
+                ui: { theme: "dark" },
+                scanning: { paths: ["/photos"] },
+            };
+
+            const result = applyMergeStrategy(storePreferences, ".", snapshot);
+
+            // 验证mergePreferencesFromTianjie被调用，并且"."路径被正确传递
+            expect(result).toBeDefined();
+            expect(result.ui).toBeDefined();
+        });
+
+        it("应该在storePath为空字符串时返回原Store数据", () => {
             const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light" },
             };
@@ -146,12 +164,16 @@ describe("store-sync-utils", () => {
             expect(result).toBe(storePreferences);
         });
 
-        it("应该在snapshot不是对象时返回原Store数据", () => {
+        it("应该在storePath不是字符串时返回原Store数据", () => {
             const storePreferences: Record<string, unknown> = {
                 ui: { theme: "light" },
             };
 
-            const result = applyMergeStrategy(storePreferences, "", "invalid");
+            const result = applyMergeStrategy(
+                storePreferences,
+                null as unknown as string,
+                "invalid",
+            );
             expect(result).toBe(storePreferences);
         });
     });

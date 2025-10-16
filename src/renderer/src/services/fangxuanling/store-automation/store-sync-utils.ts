@@ -13,7 +13,7 @@ import type { MatterSyncMetadata } from "./index";
 import type { ZhaolingResponse } from "@renderer/interfaces/yuan-tian-gang.interface";
 import { loggers } from "@common/logger";
 import { mergePreferencesFromTianjie } from "../utils";
-import { get, isEmpty, isObject } from "radash";
+import { get, isEmpty, isObject, isString } from "radash";
 
 const logger = loggers.fangxuanling;
 
@@ -58,7 +58,7 @@ export function setStoreFieldData(
         store.$patch({
             [pathParts[0]]: newData,
         });
-        logger.debug(`📜 Store字段已更新: ${storePath}`);
+        logger.debug(`📚 册库字段已更新: ${storePath}`);
         return;
     }
 
@@ -73,7 +73,7 @@ export function setStoreFieldData(
     current[pathParts[pathParts.length - 1]] = newData;
 
     store.$patch(updateObj);
-    logger.debug(`📜 Store嵌套字段已更新: ${storePath}`);
+    logger.debug(`📚 册库嵌套字段已更新: ${storePath}`);
 }
 
 /**
@@ -92,7 +92,7 @@ export function extractSnapshotFromResponse(
 
         // 如果snapshot为空或不是对象，则返回null
         if (!isObject(snapshot)) {
-            logger.warn(`📜 提取的snapshot数据无效`);
+            logger.warn(`⚠️ 提取的snapshot数据无效`);
             return null;
         }
 
@@ -103,7 +103,7 @@ export function extractSnapshotFromResponse(
 
         return get(snapshot, snapshotPath);
     } catch (error) {
-        logger.error(`📜 提取snapshot失败: ${snapshotPath}`, error);
+        logger.error(`❌ 提取snapshot失败: ${snapshotPath}`, error);
         return null;
     }
 }
@@ -112,6 +112,7 @@ export function extractSnapshotFromResponse(
  * 应用merge策略：深度合并snapshot到Store（纯函数）
  *
  * @param storeData - Store当前数据
+ * @param storePath - 合并路径："."表示从根合并整个对象
  * @param snapshot - 天界snapshot数据
  * @returns 合并后的数据
  */
@@ -120,8 +121,9 @@ export function applyMergeStrategy(
     storePath: string,
     snapshot: unknown,
 ): Record<string, unknown> {
-    if (!storePath) {
-        logger.warn("📜 snapshot数据无效，返回原Store数据");
+    // storePath可以是"."（表示从根合并），只需要检查是否为有效字符串
+    if (!isString(storePath) || isEmpty(storePath)) {
+        logger.warn("⚠️ storePath无效，返回原Store数据");
         return storeData;
     }
 
@@ -151,7 +153,7 @@ export function applyReplaceStrategy(
         for (let i = 0; i < targetPathParts.length - 1; i++) {
             const nextTarget = target[targetPathParts[i]];
             if (!nextTarget || typeof nextTarget !== "object") {
-                logger.error(`📜 Store路径不存在: ${storePath}`);
+                logger.error(`❌ Store路径不存在: ${storePath}`);
                 return storeData; // 返回原数据
             }
             target = nextTarget as Record<string, unknown>;
@@ -163,7 +165,7 @@ export function applyReplaceStrategy(
 
         return newStoreData;
     } catch (error) {
-        logger.error(`📜 replace策略执行失败: ${storePath}`, error);
+        logger.error(`❌ replace策略执行失败: ${storePath}`, error);
         return storeData; // 返回原数据
     }
 }
@@ -180,7 +182,7 @@ export function applyPatchStrategy(
     snapshot: unknown,
 ): Record<string, unknown> {
     if (!isObject(snapshot)) {
-        logger.warn("📜 snapshot数据无效，返回原Store数据");
+        logger.warn("⚠️ snapshot数据无效，返回原Store数据");
         return storeData;
     }
 
@@ -212,7 +214,7 @@ export function syncStoreWithSnapshot(
         }
 
         logger.info(
-            `📜 开始Store自动同步: ${matter} (策略: ${syncMetadata.syncStrategy}, 目标: ${syncMetadata.storePath})`,
+            `📚 开始册库自动同步: ${matter} (策略: ${syncMetadata.syncStrategy}, 目标: ${syncMetadata.storePath})`,
         );
 
         // 2. 获取Store当前数据
@@ -228,36 +230,36 @@ export function syncStoreWithSnapshot(
                     syncMetadata.snapshotPath,
                     snapshot,
                 );
-                logger.info(`📜 Store深度合并完成: ${matter}`);
+                logger.info(`📚 册库深度合并完成: ${matter}`);
                 break;
 
             case "replace":
                 // replace策略：完全替换
                 if (!isObject(snapshot)) {
-                    logger.error(`📜 replace策略要求snapshot为对象`);
+                    logger.error(`❌ replace策略要求snapshot为对象`);
                     return false;
                 }
                 updatedData = snapshot as Record<string, unknown>;
-                logger.info(`📜 Store字段替换完成: ${syncMetadata.storePath}`);
+                logger.info(`📚 册库字段替换完成: ${syncMetadata.storePath}`);
                 break;
 
             case "patch":
                 updatedData = applyPatchStrategy(currentStoreData, snapshot);
-                logger.info(`📜 Store浅层合并完成: ${matter}`);
+                logger.info(`📚 册库浅层合并完成: ${matter}`);
                 break;
 
             default:
-                logger.error(`📜 未知的同步策略: ${syncMetadata.syncStrategy}`);
+                logger.error(`❌ 未知的同步策略: ${syncMetadata.syncStrategy}`);
                 return false;
         }
 
         // 4. 应用到Store（有副作用的操作）
         setStoreFieldData(store, syncMetadata.storePath, updatedData);
-        logger.info(`📜 Store自动同步成功: ${matter} -> ${syncMetadata.storePath}`);
+        logger.info(`📚 册库自动同步成功: ${matter} -> ${syncMetadata.storePath}`);
 
         return true;
     } catch (error) {
-        logger.error(`📜 Store自动同步失败: ${matter}`, error);
+        logger.error(`❌ 册库自动同步失败: ${matter}`, error);
         return false;
     }
 }
