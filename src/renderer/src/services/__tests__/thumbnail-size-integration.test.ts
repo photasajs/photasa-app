@@ -203,7 +203,6 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
 
     describe("场景2：奏折处理链完整性", () => {
         it("应该正确创建并传递缩略图变更奏折", async () => {
-            const store = usePreferenceStore();
             const newSize = 250;
 
             mockTianshu.processCommand.mockResolvedValueOnce({

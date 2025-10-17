@@ -28,7 +28,7 @@
 4. **Don't break things** - 不破坏现有功能
 
 **四步路线图**（修正后）：
-- **Step 1**: 房玄龄创建专用ScanningQueueStore（Store分离优先）
+- **Step 1**: 房玄龄创建专用ScanningStore（Store分离优先）
 - **Step 2**: 千里眼追踪scanning.json持久化（天界优先）
 - **Step 3**: 尉迟恭接管App.vue扫描编排（业务逻辑下沉）
 - **Step 4**: scan-service迁移讨论（天界化，待评估）
@@ -107,16 +107,16 @@ YuChiGong → FangXuanLing.getScanningQueue() → ScanningQueueStore
 
 ---
 
-## Step 1: 房玄龄创建ScanningQueueStore（Store先行）
+## Step 1: 房玄龄创建ScanningStore（Store先行）
 
 ### 目标
 
-**优先级1**: 将scanningFolder从PreferenceStore.appState中分离出来，创建专用的ScanningQueueStore。
+**优先级1**: 将scanningFolder从PreferenceStore.appState中分离出来，创建专用的ScanningStore。
 
 **核心原则**:
 - ✅ **只有FangXuanLing可以管理Store**
 - ✅ Store分离必须先行，后续服务才能正确访问
-- ✅ 运行时队列不应混在preference中
+- ✅ 运行时扫描状态不应混在preference中
 
 ### 当前架构问题
 
@@ -138,10 +138,10 @@ export interface PreferenceState {
 
 ### 迁移设计
 
-#### 1.1 FangXuanLing创建ScanningQueueStore
+#### 1.1 FangXuanLing创建ScanningStore
 
 ```typescript
-// src/renderer/src/services/fangxuanling/scanning-queue-store.ts
+// src/renderer/src/services/fangxuanling/scanning-store.ts
 
 import { defineStore } from "pinia";
 import type { ScanAction } from "@common/scan-types";
@@ -150,12 +150,12 @@ import { loggers } from "@common/logger";
 const logger = loggers.app;
 
 /**
- * 扫描队列State接口
+ * 扫描State接口
  *
  * ⚠️ 注意：此Store不持久化（persist: false）
- * 运行时队列状态，持久化由天界（千里眼）管理
+ * 运行时扫描状态，持久化由天界（千里眼）管理
  */
-export interface ScanningQueueState {
+export interface ScanningState {
     /** 扫描队列 */
     queue: ScanAction[];
 
@@ -167,19 +167,20 @@ export interface ScanningQueueState {
 }
 
 /**
- * 扫描队列Store
+ * 扫描Store
  *
  * 职责：
- * - 管理扫描队列的运行时状态
+ * - 管理扫描队列和扫描状态
  * - 提供队列增删改查接口
+ * - 管理扫描进度和状态
  * - 不负责持久化（由千里眼管理scanning.json）
  *
  * 访问方式：
  * - ❌ 服务不能直接访问此Store
  * - ✅ 必须通过FangXuanLing提供的服务方法访问
  */
-export const useScanningQueueStore = defineStore("scanningQueue", {
-    state: (): ScanningQueueState => ({
+export const useScanningStore = defineStore("scanning", {
+    state: (): ScanningState => ({
         queue: [],
         isProcessing: false,
         currentPath: null,
@@ -281,9 +282,9 @@ export const useScanningQueueStore = defineStore("scanningQueue", {
 });
 
 /**
- * ScanningQueueStore类型导出
+ * ScanningStore类型导出
  */
-export type ScanningQueueStore = ReturnType<typeof useScanningQueueStore>;
+export type ScanningStore = ReturnType<typeof useScanningStore>;
 ```
 
 #### 1.2 FangXuanLing提供服务方法（Store访问封装）
@@ -291,11 +292,11 @@ export type ScanningQueueStore = ReturnType<typeof useScanningQueueStore>;
 ```typescript
 // src/renderer/src/services/fangxuanling/fangxuanling.ts
 
-import { useScanningQueueStore, type ScanningQueueStore } from "./scanning-queue-store";
+import { useScanningStore, type ScanningStore } from "./scanning-store";
 import type { ScanAction } from "@common/scan-types";
 
 export class FangXuanLingService {
-    private scanningQueueStore: ScanningQueueStore | null = null;
+    private scanningStore: ScanningStore | null = null;
 
     /**
      * 初始化所有Store
@@ -306,8 +307,8 @@ export class FangXuanLingService {
         // 初始化PreferenceStore
         const preferenceStore = usePreferenceStore();
 
-        // ✅ 新增：初始化ScanningQueueStore
-        this.scanningQueueStore = useScanningQueueStore();
+        // ✅ 新增：初始化ScanningStore
+        this.scanningStore = useScanningStore();
 
         logger.info("🏛️ 房玄龄：Store系统初始化完成");
     }
@@ -324,31 +325,31 @@ export class FangXuanLingService {
      * - UI组件展示队列状态
      */
     getScanningQueue(): ScanAction[] {
-        if (!this.scanningQueueStore) {
-            logger.error("🏛️ 房玄龄：ScanningQueueStore未初始化");
+        if (!this.scanningStore) {
+            logger.error("🏛️ 房玄龄：ScanningStore未初始化");
             return [];
         }
-        return [...this.scanningQueueStore.queue];
+        return [...this.scanningStore.queue];
     }
 
     /**
      * 获取队列大小
      */
     getScanningQueueSize(): number {
-        if (!this.scanningQueueStore) {
+        if (!this.scanningStore) {
             return 0;
         }
-        return this.scanningQueueStore.queueSize;
+        return this.scanningStore.queueSize;
     }
 
     /**
      * 检查路径是否在队列中
      */
     isInScanningQueue(path: string): boolean {
-        if (!this.scanningQueueStore) {
+        if (!this.scanningStore) {
             return false;
         }
-        return this.scanningQueueStore.isInQueue(path);
+        return this.scanningStore.isInQueue(path);
     }
 
     /**
@@ -361,13 +362,13 @@ export class FangXuanLingService {
      * - UI组件手动添加扫描任务
      */
     addToScanningQueue(action: ScanAction): void {
-        if (!this.scanningQueueStore) {
-            logger.error("🏛️ 房玄龄：ScanningQueueStore未初始化");
+        if (!this.scanningStore) {
+            logger.error("🏛️ 房玄龄：ScanningStore未初始化");
             return;
         }
 
         logger.info(`🏛️ 房玄龄：添加扫描任务 ${action.path}`);
-        this.scanningQueueStore.addToQueue(action);
+        this.scanningStore.addToQueue(action);
     }
 
     /**
@@ -380,13 +381,13 @@ export class FangXuanLingService {
      * - 用户取消扫描
      */
     removeFromScanningQueue(path: string): void {
-        if (!this.scanningQueueStore) {
-            logger.error("🏛️ 房玄龄：ScanningQueueStore未初始化");
+        if (!this.scanningStore) {
+            logger.error("🏛️ 房玄龄：ScanningStore未初始化");
             return;
         }
 
         logger.info(`🏛️ 房玄龄：移除扫描任务 ${path}`);
-        this.scanningQueueStore.removeFromQueue(path);
+        this.scanningStore.removeFromQueue(path);
     }
 
     /**
@@ -397,13 +398,13 @@ export class FangXuanLingService {
      * - 应用退出时清理
      */
     clearScanningQueue(): void {
-        if (!this.scanningQueueStore) {
-            logger.error("🏛️ 房玄龄：ScanningQueueStore未初始化");
+        if (!this.scanningStore) {
+            logger.error("🏛️ 房玄龄：ScanningStore未初始化");
             return;
         }
 
         logger.info("🏛️ 房玄龄：清空扫描队列");
-        this.scanningQueueStore.clearQueue();
+        this.scanningStore.clearQueue();
     }
 
     /**
@@ -415,13 +416,13 @@ export class FangXuanLingService {
      * - 从天界（千里眼）恢复队列
      */
     setScanningQueue(queue: ScanAction[]): void {
-        if (!this.scanningQueueStore) {
-            logger.error("🏛️ 房玄龄：ScanningQueueStore未初始化");
+        if (!this.scanningStore) {
+            logger.error("🏛️ 房玄龄：ScanningStore未初始化");
             return;
         }
 
         logger.info(`🏛️ 房玄龄：设置扫描队列 (${queue.length}个任务)`);
-        this.scanningQueueStore.setQueue(queue);
+        this.scanningStore.setQueue(queue);
     }
 
     /**
@@ -431,11 +432,11 @@ export class FangXuanLingService {
      * @param progress 进度信息
      */
     updateScanningProgress(path: string, progress: { processed: number; total: number }): void {
-        if (!this.scanningQueueStore) {
+        if (!this.scanningStore) {
             return;
         }
 
-        this.scanningQueueStore.updateProgress(path, progress);
+        this.scanningStore.updateProgress(path, progress);
     }
 }
 ```
@@ -462,7 +463,7 @@ export type PreferenceState = {
 // - addScanFolder()
 // - addFileOperation()
 // - completeScanPath()
-// 这些功能现在通过FangXuanLing访问ScanningQueueStore
+// 这些功能现在通过FangXuanLing访问ScanningStore
 ```
 
 #### 1.4 数据迁移逻辑（首次启动）
@@ -509,10 +510,10 @@ export class LisshimingService {
 
 ### 实施计划
 
-#### Phase 1.1: ScanningQueueStore创建（1天）
-- [ ] 创建scanning-queue-store.ts
+#### Phase 1.1: ScanningStore创建（1天）
+- [ ] 创建scanning-store.ts
 - [ ] 实现所有state、getters、actions
-- [ ] 单元测试：ScanningQueueStore基础功能
+- [ ] 单元测试：ScanningStore基础功能
 
 #### Phase 1.2: FangXuanLing封装（1天）
 - [ ] FangXuanLing添加Store初始化逻辑
@@ -535,7 +536,7 @@ export class LisshimingService {
 
 ### 验收标准
 
-- ✅ ScanningQueueStore独立运行
+- ✅ ScanningStore独立运行
 - ✅ FangXuanLing提供完整服务方法
 - ✅ PreferenceStore不再包含scanningFolder
 - ✅ 数据迁移自动完成
@@ -546,7 +547,7 @@ export class LisshimingService {
 ### 回滚计划
 
 如果Step 1失败：
-1. Revert ScanningQueueStore相关代码
+1. Revert ScanningStore相关代码
 2. Restore PreferenceStore.scanningFolder
 3. Revert FangXuanLing的新方法
 4. **数据迁移可回滚**：旧Store仍保留数据
@@ -1214,7 +1215,11 @@ export class LisshimingService {
    - ❌ 旧顺序：Step 1 App.vue迁移 → Step 2 Store分离
    - ✅ 新顺序：Step 1 Store分离 → Step 2 QianLiYan持久化 → Step 3 App.vue迁移
 
-3. **持久化优先**
+3. **命名改进**
+   - ❌ 旧命名：ScanningQueueStore（只强调队列）
+   - ✅ 新命名：ScanningStore（强调扫描状态管理，包括队列、进度、状态等）
+
+4. **持久化优先**
    - ❌ 旧设计：Step 3才考虑持久化
    - ✅ 新设计：Step 2就实现持久化（用户明确要求）
 
