@@ -46,25 +46,17 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             const newThumbnailSize = 200;
 
             // 模拟天枢成功响应
+            // 注意：根据matter-sync.yml配置，thumbnail_size_change的snapshotPath是"display.thumbnailSize"
+            // yuanTianGang会将result.data作为zhaolingResponse.data
+            // syncStoreWithSnapshot会从zhaolingResponse.data中提取"display.thumbnailSize"
             mockTianshu.processCommand.mockResolvedValueOnce({
                 status: "completed",
                 result: {
                     engineName: "wenchang",
                     success: true,
                     data: {
-                        snapshot: {
-                            data: {
-                                ui: store.preferences.ui,
-                                display: {
-                                    ...store.preferences.display,
-                                    thumbnailSize: newThumbnailSize,
-                                },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
-                            },
-                            revision: 2,
-                            timestamp: Date.now(),
+                        display: {
+                            thumbnailSize: newThumbnailSize,
                         },
                     },
                 },
@@ -220,19 +212,8 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     engineName: "wenchang",
                     success: true,
                     data: {
-                        snapshot: {
-                            data: {
-                                ui: store.preferences.ui,
-                                display: {
-                                    ...store.preferences.display,
-                                    thumbnailSize: newSize,
-                                },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
-                            },
-                            revision: 2,
-                            timestamp: Date.now(),
+                        display: {
+                            thumbnailSize: newSize,
                         },
                     },
                 },
@@ -293,19 +274,8 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     engineName: "wenchang",
                     success: true,
                     data: {
-                        snapshot: {
-                            data: {
-                                ui: store.preferences.ui,
-                                display: {
-                                    ...store.preferences.display,
-                                    thumbnailSize: newSize,
-                                },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
-                            },
-                            revision: 2,
-                            timestamp: Date.now(),
+                        display: {
+                            thumbnailSize: newSize,
                         },
                     },
                 },
@@ -339,19 +309,8 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     engineName: "wenchang",
                     success: true,
                     data: {
-                        snapshot: {
-                            data: {
-                                ui: store.preferences.ui,
-                                display: {
-                                    ...store.preferences.display,
-                                    thumbnailSize: newSize,
-                                },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
-                            },
-                            revision: 2,
-                            timestamp: Date.now(),
+                        display: {
+                            thumbnailSize: newSize,
                         },
                     },
                 },
@@ -412,19 +371,8 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     engineName: "wenchang",
                     success: true,
                     data: {
-                        snapshot: {
-                            data: {
-                                ui: store.preferences.ui,
-                                display: {
-                                    ...store.preferences.display,
-                                    thumbnailSize: 200,
-                                },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
-                            },
-                            revision: 2,
-                            timestamp: Date.now(),
+                        display: {
+                            thumbnailSize: 200,
                         },
                     },
                 },
@@ -437,19 +385,8 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     engineName: "wenchang",
                     success: true,
                     data: {
-                        snapshot: {
-                            data: {
-                                ui: store.preferences.ui,
-                                display: {
-                                    ...store.preferences.display,
-                                    thumbnailSize: 300,
-                                },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
-                            },
-                            revision: 3,
-                            timestamp: Date.now(),
+                        display: {
+                            thumbnailSize: 300,
                         },
                     },
                 },
