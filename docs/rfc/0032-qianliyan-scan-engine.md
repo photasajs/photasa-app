@@ -4,9 +4,12 @@
 - **标题**: 千里眼扫描引擎
 - **作者**: 李鹏
 - **开始日期**: 2024-05-24
-- **状态**: ✅ **已完成**
-- **完成日期**: 2024-05-24
+- **状态**: 🔨 **进行中**
+- **最后更新**: 2025-10-16
 - **类型**: 功能
+- **相关RFC**:
+  - RFC 0042: scanningFolder四步渐进式迁移（Phase 3的前置条件）
+  - RFC 0043: useQinQiong()访问模式（appState访问统一）
 
 ## 摘要
 
@@ -88,9 +91,10 @@ Electron (世界 - World) - 整个应用宇宙
 src/engines/ (引擎库)
 ├── common/ - 通用契约和测试基架
 ├── tianshu/ - 工作流编排引擎 (由神位tianshu-service托管)
-├── taiyi/ - 引擎服务注册中心
+├── taiyi/ - 引擎适配器注册中心
 ├── qianliyan/ - 千里眼扫描引擎
 ├── sibu/ - 司簿配置管理引擎
+├── siming/ - 司命appState管理引擎
 ├── wenchang/ - 文昌偏好管理引擎
 └── maliang/ - 马良图像处理引擎 (已实现)
 ```
@@ -124,7 +128,7 @@ src/engines/ (引擎库)
 - 位置：src/main/deity/tianshu-service.ts - 已创建
 - TianshuEngine通过太乙(Taiyi)调度各专业引擎
 - 太乙的@Service装饰器重命名为@Adapter，明确其适配器角色
-- 专业引擎(千里眼、司簿、文昌、马良等)通过@Adapter暴露能力
+- 专业引擎(千里眼、司簿、司命、文昌、马良等)通过@Adapter暴露能力
 
 **渐进式迁移策略**：
 1. **Phase 0**: 契约冻结 - 建立通用契约、样例数据、测试基架
@@ -149,35 +153,47 @@ src/engines/ (引擎库)
   2. 将判定结果封装为千里眼的 `ScanCommand`，并通过太乙引擎下达执行指令；
   3. 在扫描期间订阅太乙返回的进度/子目录信息，并根据工作流逻辑决定是否追加队列、是否触发 quick/full、是否生成新意图；
   4. 当千里眼扫描完成后，指导太乙调用司簿写回 manifest，并向 UI 汇报队列与完成事件。
-- **太乙引擎（Taiyi Engine）**：`src/engines/taiyi/`，应用服务管理引擎，负责：
+- **太乙（Taiyi）**：`src/engines/taiyi/`，适配器注册中心（不是引擎），负责：
   - 维持 `@Adapter` 注册中心以声明引擎适配能力，并代表天枢执行具体引擎方法；
-  - 提供"司命（DispatchQueue）"持久化队列能力，对天枢委派的扫描/补偿任务进行入队、出队与恢复；
-  - 集成"文昌（WenchangService）"偏好管理能力，提供独立的偏好持久化和镜像服务；
-  - 将千里眼的进度/结果、顺风耳的文件事件、司簿与马良的状态更新标准化后回传给天枢；
-  - 将千里眼上报的新增目录或补偿请求封装为意图通知天枢，不与其他引擎直接对话。
-- **千里眼（Qianliyan）**：专注扫描执行，根据太乙送达的命令选择 full/quick 模式，扫描过程中新增目录会回报太乙。
-- **司簿（Sibu）**：提供 manifest 及智能判断所需的元信息（上次 full scan、变更计数、TTL 等）；实际何时写回或更新队列由天枢工作流决定，司簿仅按天枢指令执行读取/持久化，不自行判断扫描完成状态。
+  - 管理各引擎的生命周期和健康检查；
+  - 将各引擎的进度/结果标准化后回传给天枢；
+  - 提供引擎间通信的桥梁。
+- **千里眼（Qianliyan）**：`src/engines/qianliyan/`，独立扫描引擎，负责：
+  - 扫描执行：根据命令选择 full/quick 模式，扫描过程中新增目录会回报天枢；
+  - 扫描队列持久化：管理 `~/.photasa/scanning.json`，保证崩溃后队列可恢复。
+- **司簿（Sibu）**：`src/engines/sibu/`，独立清单管理引擎，负责：
+  - 提供单照片文件夹的 `.photasa.json` manifest 及元信息（上次 full scan、变更计数、TTL 等）；
+  - 实际何时写回由天枢工作流决定，司簿仅按天枢指令执行读取/持久化。
+- **司命（Siming）**：`src/engines/siming/`，独立 appState 管理引擎，负责：
+  - 通用应用状态持久化：管理 `~/.photasa/appState/` 目录；
+  - 窗口状态、会话状态、其他应用级状态的存储和恢复。
+- **文昌（Wenchang）**：`src/engines/wenchang/`，独立偏好管理引擎，负责：
+  - 用户偏好持久化：管理 `~/.photasa/preferences/` 目录；
+  - 提供偏好数据的镜像服务和增量更新。
 - **渲染层**：所有扫描相关交互只面向天枢（Tianshu），UI 不直接感知下层引擎；天枢直接暴露 IPC 通道并与太乙协同，把进度与结果再回馈 UI。
 
-### 太乙·司命（持久化队列能力）
+### 千里眼扫描队列持久化
 
-为保证监听发现、补偿任务与用户手动意图在崩溃或重启后仍能被处理，太乙层新增“司命（Taiyi DispatchQueue）”服务：
+为保证监听发现、补偿任务与用户手动意图在崩溃或重启后仍能被处理，千里眼引擎管理扫描队列持久化：
 
-1. **入队协议**：天枢在编排过程中通过太乙 API 向司命提交 `ScanCommand` 或衍生的补偿任务，司命负责去重、持久化与打标（触发来源、优先级、profile 等）。
-2. **出队与节流**：太乙根据当前执行窗口和天枢下达的调度策略，将队列任务逐一派发给千里眼；若扫描空闲，司命会主动向天枢报告“队列尚有待处理”以触发下一轮意图。
-3. **状态恢复**：应用重启或崩溃后，司命会恢复未完成任务并通知天枢重建编排上下文；天枢可选择继续执行、重新评估或放弃任务。
+1. **队列管理**：千里眼在 `~/.photasa/scanning.json` 中持久化扫描队列，包括待扫描路径、执行状态等。
+2. **状态恢复**：应用重启或崩溃后，千里眼会从 `scanning.json` 恢复未完成任务并通知天枢。
+3. **队列操作**：天枢通过太乙调度千里眼，对队列进行入队、出队操作。
 4. **事件回流**：千里眼执行中的进度、错误、发现事件通过太乙汇聚后再交给天枢；天枢基于这些事件可追加新任务入队或取消既有任务。
 
 **持久化位置**
-- 司簿配置：`~/.photasa/config/`（按目录维护 manifest、策略、preferences/ 镜像）。
-- 司命队列：`~/.photasa/queue/`（入队索引、执行中快照、重试日志）。
-两者分目录存储，便于独立备份与滚动清理，避免配置、排队策略互相污染。
+- 千里眼扫描队列：`~/.photasa/scanning.json`（扫描队列、执行状态）
+- 司簿清单：`/path/to/photos/.photasa.json`（每个照片文件夹的 manifest、策略、照片清单）
+- 司命状态：`~/.photasa/appState/`（窗口状态、会话状态、应用级状态）
+- 文昌偏好：`~/.photasa/preferences/`（用户偏好、UI设置、应用配置）
+
+各引擎独立管理各自的持久化位置，便于独立备份与滚动清理，避免数据互相污染。
 
 **渲染层镜像**：UI 不再直接持久化 `scanningFolder`；Pinia `PreferenceStore` 仅透过天枢接收镜像数据，消除双写源头。
 
-司命的实现可复用天庭中现有的 `ScanService` 队列与缓存逻辑，但需抽象为模块化服务，支持引擎无关的接口与单元测试基架。通过神位架构实现现代化的队列管理。
+**队列管理实现**：千里眼引擎可复用天庭中现有的 `ScanService` 队列与缓存逻辑，但需抽象为模块化服务，支持引擎无关的接口与单元测试基架。通过神位架构实现现代化的扫描队列管理。
 
-### 太乙·文昌（独立偏好管理引擎）
+### 文昌（独立偏好管理引擎）
 
 文昌作为独立的偏好管理引擎，与司簿无交叉依赖，承担所有用户偏好的持久化、镜像和同步职责：
 
@@ -228,10 +244,11 @@ sequenceDiagram
 
 **关键设计原则**：UI层完全无感知底层服务架构，仅通过天枢的统一IPC接口操作偏好数据。
 
-天枢内部管理三个完全独立的引擎：
-- **司簿引擎**：配置文件管理 (`~/.photasa/config/`) - 管理 `.photasa.json`、扫描策略、照片清单
-- **司命引擎**：任务队列管理 (`~/.photasa/queue/`) - 扫描任务入队、执行状态、重试机制
-- **文昌引擎**：偏好数据管理 (`~/.photasa/preferences/`) - 用户偏好、UI设置、应用状态
+天枢作为工作流编排引擎，通过太乙适配器调用各个独立引擎：
+- **千里眼引擎**：扫描执行 + 扫描队列持久化 (`~/.photasa/scanning.json`) - 管理扫描任务队列、执行状态
+- **司簿引擎**：单照片文件夹清单管理 (`.photasa.json`) - 管理每个照片文件夹的配置、扫描策略、照片清单
+- **司命引擎**：通用appState持久化 (`~/.photasa/appState/`) - 管理应用状态、窗口状态、会话状态
+- **文昌引擎**：用户偏好管理 (`~/.photasa/preferences/`) - 用户偏好、UI设置、应用配置
 
 **天枢偏好订阅管道设计**：
 
@@ -351,11 +368,11 @@ interface ScanJobState {
 
 ### 状态生命周期
 
-1. 天枢指令经太乙·司命持久化入队，司命发布 `queued` 事件。
+1. 天枢指令经太乙调度千里眼持久化入队，千里眼发布 `queued` 事件。
 2. `TaskQueue` 取出任务并交付千里眼 → 发出带初始进度的 `running` 状态。
 3. Worker 进度事件由太乙转译 → 持续更新 `progress`。
-4. 任务完成 → 写入清单并发出包含结果路径、缩略图的 `completed`；司命检查是否仍有待处理任务并通知天枢。
-5. 发生错误 → 触发可配置的重试策略，并发出带诊断信息的 `failed`；司命记录重试计数并向天枢请求决策（继续、降级或放弃）。
+4. 任务完成 → 写入清单并发出包含结果路径、缩略图的 `completed`；千里眼检查是否仍有待处理任务并通知天枢。
+5. 发生错误 → 触发可配置的重试策略，并发出带诊断信息的 `failed`；千里眼记录重试计数并向天枢请求决策（继续、降级或放弃）。
 
 ### 旧版迁移策略（已更新为双轨制架构）
 
@@ -398,8 +415,301 @@ interface ScanJobState {
 | Phase 0 | 契约冻结、样例数据、测试基架 | 🔄 进行中 | 建立 `src/engines/common/` 契约基础 |
 | Phase 1 | 骨架搭建 - tianshu-service + 基础引擎 | 🔄 进行中 | 太乙重构完成，正在集成太乙服务到天枢 |
 | Phase 2 | 功能验证 - 核心功能验证 | ⬜ 未启动 | 扫描、偏好管理等功能测试 |
-| Phase 3 | 服务迁移 - 旧服务迁移到太乙架构 | ⬜ 未启动 | 移除 renderer 队列桥接 |
+| Phase 3 | scan-service迁移 - 扫描服务天界化 | ⬜ 未启动 | orchestrateScan迁移到千里眼引擎 |
 | Phase 4 | 架构统一 - 清理旧代码完成统一 | ⬜ 未启动 | 限流、失败恢复、指标上报 |
+
+### Phase 3: scan-service迁移到千里眼引擎
+
+**前置条件**：
+- RFC 0042 Step 1-3 已完成（ScanningStore、QianLiYan持久化、YuChiGong编排）
+- 天枢-太乙-千里眼调度链已建立
+
+#### 3.1 当前架构问题
+
+**问题1: 扫描引擎位置错误**
+```typescript
+// ❌ 当前：orchestrateScan在Renderer进程
+// src/renderer/src/services/scan/scan-service.ts
+
+export async function orchestrateScan(
+    items: ScanAction[],
+    callbacks: ScanCallbacks
+): Promise<void> {
+    // 复杂的扫描编排逻辑在人界
+    // ❌ 应该在天界（Main进程）
+}
+```
+
+**问题2: IPC通信开销大**
+- Renderer通过IPC调用Main进程的扫描能力
+- 每个进度更新都需要IPC通信
+- 大量文件扫描时性能瓶颈明显
+
+**问题3: 职责边界不清**
+- YuChiGong（人界）包含扫描编排逻辑
+- QianLiYan（天界）仅作为扫描worker
+- 违反了天界主导、人界辅助的架构原则
+
+#### 3.2 目标架构
+
+```
+天界（Main进程）
+├── 千里眼引擎（QianLiYanEngine）
+│   ├── 扫描编排（orchestrateScan）
+│   ├── 任务队列管理
+│   ├── Worker池管理
+│   └── 进度聚合
+└── 太乙服务（TaiyiService）
+    └── 千里眼适配器（QianLiYanAdapter）
+
+人界（Renderer进程）
+├── 尉迟恭服务（YuChiGongService）
+│   ├── 扫描意图发起（通过IPC）
+│   ├── 进度展示（接收IPC事件）
+│   └── UI状态同步
+└── 房玄龄服务（FangXuanLingService）
+    └── ScanningStore管理（镜像天界队列）
+```
+
+#### 3.3 迁移策略
+
+**Step 3.1: 千里眼引擎扩展（3天）**
+
+创建完整的千里眼扫描引擎：
+
+```typescript
+// src/engines/qianliyan/core/QianLiYanEngine.ts
+
+export class QianLiYanEngine {
+    /**
+     * 核心扫描编排方法（从Renderer迁移）
+     */
+    async orchestrateScan(
+        items: ScanAction[],
+        options: ScanOptions
+    ): Promise<ScanResult> {
+        logger.info("🌌 千里眼：开始扫描编排");
+
+        // 1. 任务预处理
+        const processedItems = this.preprocessScanItems(items);
+
+        // 2. Worker池分配
+        const workers = await this.allocateWorkers(processedItems.length);
+
+        // 3. 并行扫描执行
+        const results = await this.executeParallelScan(processedItems, workers);
+
+        // 4. 结果聚合
+        return this.aggregateResults(results);
+    }
+
+    /**
+     * 进度事件发射（通过太乙广播）
+     */
+    private emitProgress(event: ScanProgressEvent): void {
+        this.taiyi.broadcast('qianliyan.progress', event);
+    }
+}
+```
+
+**Step 3.2: 千里眼适配器创建（2天）**
+
+通过太乙@Adapter暴露千里眼能力：
+
+```typescript
+// src/engines/qianliyan/adapters/QianLiYanAdapter.ts
+
+@Adapter({
+    name: 'qianliyan',
+    description: '千里眼扫描引擎',
+    dependencies: [],
+    priority: 100
+})
+export class QianLiYanAdapter extends BaseAdapter {
+    private engine: QianLiYanEngine;
+
+    async initialize(): Promise<void> {
+        this.engine = new QianLiYanEngine(this.taiyi);
+        logger.info("🌌 千里眼仙君归位，掌管扫描功能");
+    }
+
+    /**
+     * 暴露给天枢的扫描编排方法
+     */
+    async orchestrate(
+        items: ScanAction[],
+        options: ScanOptions
+    ): Promise<ScanResult> {
+        return this.engine.orchestrateScan(items, options);
+    }
+
+    /**
+     * 任务队列管理
+     */
+    async enqueue(action: ScanAction): Promise<void> {
+        return this.engine.enqueueTask(action);
+    }
+
+    async getQueue(): Promise<ScanAction[]> {
+        return this.engine.getCurrentQueue();
+    }
+}
+```
+
+**Step 3.3: 天枢调度集成（2天）**
+
+天枢通过太乙调度千里眼：
+
+```typescript
+// src/main/deity/tianshu-service.ts
+
+export class TianshuService extends BaseService {
+    /**
+     * IPC处理：扫描编排请求
+     */
+    async handleScanRequest(
+        items: ScanAction[],
+        options: ScanOptions
+    ): Promise<ScanResult> {
+        logger.info("🌌 天枢：收到扫描请求");
+
+        // 1. 通过太乙调度千里眼
+        const result = await this.taiyi.callAdapter(
+            'qianliyan',
+            'orchestrate',
+            items,
+            options
+        );
+
+        // 2. 广播扫描完成事件
+        this.broadcastToRenderers('scan.completed', result);
+
+        return result;
+    }
+
+    /**
+     * 订阅千里眼进度事件并转发给Renderer
+     */
+    private setupProgressForwarding(): void {
+        this.taiyi.on('qianliyan.progress', (event: ScanProgressEvent) => {
+            this.broadcastToRenderers('scan.progress', event);
+        });
+    }
+}
+```
+
+**Step 3.4: 尉迟恭简化（1天）**
+
+YuChiGong从扫描编排者变为扫描发起者：
+
+```typescript
+// src/renderer/src/services/yuchigong/yuchigong.ts
+
+export class YuChiGongService {
+    /**
+     * 发起扫描（仅发送IPC请求）
+     */
+    async startScanning(): Promise<void> {
+        logger.info("🏛️ 尉迟恭：发起扫描请求");
+
+        // ✅ 简化：仅通过IPC请求天枢
+        const queue = this.fangXuanLingService.getScanningQueue();
+
+        await window.electron.ipcRenderer.invoke(
+            'tianshu.scan.request',
+            queue,
+            { /* options */ }
+        );
+
+        logger.info("🏛️ 尉迟恭：扫描请求已发送");
+    }
+
+    /**
+     * 监听扫描进度（接收IPC事件）
+     */
+    private setupProgressListener(): void {
+        window.electron.ipcRenderer.on(
+            'scan.progress',
+            (event: ScanProgressEvent) => {
+                logger.debug("🏛️ 尉迟恭：收到扫描进度", event);
+                // 更新UI状态
+                this.updateScanProgress(event);
+            }
+        );
+    }
+}
+```
+
+**Step 3.5: 旧代码清理（1天）**
+
+```typescript
+// ❌ 删除：src/renderer/src/services/scan/scan-service.ts
+// - orchestrateScan() 函数
+// - 所有扫描编排逻辑
+
+// ❌ 删除：src/renderer/src/services/yuchigong/yuchigong.ts
+// - 本地扫描编排代码
+// - Worker管理逻辑
+
+// ✅ 保留：
+// - IPC通信接口
+// - 进度展示逻辑
+// - UI状态同步
+```
+
+#### 3.4 测试策略
+
+**单元测试**：
+- QianLiYanEngine核心方法测试
+- QianLiYanAdapter注册和调用测试
+- 天枢-太乙-千里眼调度链测试
+
+**集成测试**：
+- 完整扫描流程测试（Renderer → 天枢 → 太乙 → 千里眼）
+- 进度事件广播测试
+- 多窗口同步测试
+
+**性能测试**：
+- 大量文件扫描性能对比（迁移前后）
+- IPC通信开销测量
+- Worker池效率验证
+
+#### 3.5 风险与缓解
+
+**风险1: 迁移期间功能破坏**
+- **缓解**: 采用feature flag控制，支持新旧架构并存
+- **回滚**: 快速切换回旧架构
+
+**风险2: 性能回退**
+- **缓解**: 详细的性能基准测试
+- **监控**: 实时性能指标对比
+
+**风险3: 兼容性问题**
+- **缓解**: 保持IPC接口契约不变
+- **测试**: 覆盖所有现有扫描场景
+
+#### 3.6 实施计划
+
+| 子任务 | 工期 | 依赖 | 验收标准 |
+|--------|------|------|----------|
+| 3.1 千里眼引擎扩展 | 3天 | Phase 1-2完成 | orchestrateScan迁移完成 |
+| 3.2 千里眼适配器创建 | 2天 | 3.1完成 | @Adapter注册成功 |
+| 3.3 天枢调度集成 | 2天 | 3.2完成 | IPC调度链打通 |
+| 3.4 尉迟恭简化 | 1天 | 3.3完成 | Renderer简化完成 |
+| 3.5 旧代码清理 | 1天 | 3.4完成 | 旧代码完全移除 |
+| 3.6 测试验证 | 2天 | 3.5完成 | 所有测试通过 |
+
+**总工期**: 11天
+
+#### 3.7 验收标准
+
+- ✅ orchestrateScan完全在Main进程执行
+- ✅ Renderer进程仅负责UI交互和状态展示
+- ✅ 扫描性能≥原架构性能
+- ✅ 所有现有扫描场景正常工作
+- ✅ 单元测试覆盖率≥90%
+- ✅ 零lint错误
+- ✅ 支持优雅降级（feature flag控制）
 
 ### Phase 0 详细任务清单
 

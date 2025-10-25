@@ -11,6 +11,7 @@ import {
     ScanProgress,
     ScanStatus,
 } from "../qianliyan/core/QianliyanEngine";
+import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
 
 const logger = loggers.qianliyan;
@@ -36,8 +37,6 @@ export class QianliyanAdapter implements IAdapter {
         this.engine = new QianliyanEngine({
             maxConcurrentScans: 3,
             scanTimeout: 300000,
-            enableIncrementalScan: true,
-            enableCache: true,
         });
 
         // 转发引擎事件
@@ -229,6 +228,30 @@ export class QianliyanAdapter implements IAdapter {
             avgScanTime: 2500,
             lastScanTime: Date.now() - 3600000,
         };
+    }
+
+    /**
+     * ✅ RFC 0042 Step 2: 持久化扫描队列
+     * 委托给千里眼引擎的persistQueue方法
+     */
+    async persistQueue(queue: ScanAction[]): Promise<void> {
+        return this.engine.persistQueue(queue);
+    }
+
+    /**
+     * ✅ RFC 0042 Step 2: 恢复扫描队列
+     * 委托给千里眼引擎的restoreQueue方法
+     */
+    async restoreQueue(): Promise<ScanAction[]> {
+        return this.engine.restoreQueue();
+    }
+
+    /**
+     * ✅ RFC 0042 Step 2: 清空持久化队列
+     * 委托给千里眼引擎的clearPersistedQueue方法
+     */
+    async clearPersistedQueue(): Promise<void> {
+        return this.engine.clearPersistedQueue();
     }
 
     /**

@@ -5,9 +5,9 @@ This directory contains RFCs for significant changes to the photo management app
 ## RFC Statistics
 
 - **Total RFCs**: 43
-- **Completed**: 22 (51.2%)
-- **In Progress**: 2 (4.6%)
-- **Draft**: 19 (44.2%)
+- **Completed**: 21 (48.8%)
+- **In Progress**: 1 (2.3%)
+- **Draft**: 21 (48.8%)
 - **Rejected**: 0 (0%)
 
 ### By Version
@@ -90,11 +90,14 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0028](./0028-ffmpeg-binary-packaging-fix.md)                     | FFmpeg Binary Packaging Fix                     | Draft               | 李鹏   | v2.0.0         |
 | [0029](./0029-process-based-thumbnail-architecture.md)            | 基于进程的缩略图架构                            | Draft               | 李鹏   | v2.0.0         |
 | [0029](./0029-scan-skip-strategy-completion-fix.md)               | 扫描跳过策略完成修复                            | Draft               | 李鹏   | v2.0.0         |
+| [0032](./0032-qianliyan-scan-engine.md)                           | 千里眼扫描引擎 (含scan-service迁移)              | 🔨 In Progress      | 李鹏   | v2.0.0         |
 | [0033](./0033-shunfenger-watch-engine.md)                         | 顺风耳监听引擎                                  | Draft               | 李鹏   | v2.0.0         |
 | [0034](./0034-linglong-vision-engine.md)                          | 玲珑视觉引擎                                    | Draft               | 李鹏   | v2.0.0         |
 | [0037](./0037-tianshu-yaml-workflow-dsl.md)                       | 天枢YAML工作流DSL                               | Draft               | 李鹏   | v2.0.0         |
-| [0038](./0038-preference-workflow-integration.md)                 | 偏好设置工作流集成与Store边界统一                | In Progress         | 李鹏   | v2.0.0         |
+| [0038](./completed/0038-preference-workflow-integration.md)       | 偏好设置工作流集成与Store边界统一                | ✅ Completed        | 李鹏   | v2.0.0         |
 | [0039](./0039-tianshu-workflow-syntax-specification.md)           | 天枢工作流语法规范                              | Draft               | 李鹏   | v2.0.0         |
+| [0042](./0042-scanning-folder-migration.md)                       | scanningFolder三步渐进式迁移                     | Draft               | AI     | v2.0.0         |
+| [0043](./0043-useqinqiong-access-pattern.md)                      | useQinQiong()访问模式 - appState统一访问         | Draft               | AI     | v2.0.0         |
 
 ## Implemented RFCs
 
@@ -117,7 +120,6 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0027](./completed/0027-wasm-memory-management-optimization.md)                          | WASM内存管理优化与HEIF解码错误处理              | 李鹏   | v2.0.0         | 优化WASM HEIF解码器内存管理机制，增强错误处理，提升大型HEIF图像处理稳定性                  |
 | [0030](./completed/0030-scan-status-reporting-fix.md)                                    | 扫描状态报告修复                                | 李鹏   | v2.0.0         | 修复扫描过程中的状态报告问题，确保UI状态栏正确显示扫描进度和完成状态                       |
 | [0031](./completed/0031-maliang-image-processing-engine.md)                              | Ma-Liang 统一图像处理引擎                       | 李鹏   | v2.0.0         | 创建统一图像处理引擎，整合FFmpeg、Sharp、WASM-HEIF和Photon库，支持BMP和MPEG/MPG格式      |
-| [0032](./completed/0032-qianliyan-scan-engine.md)                                        | 千里眼扫描引擎                                  | 李鹏   | v2.0.0         | 建立专用扫描引擎，集中处理文件夹与媒体扫描职责，保持环境无关，提供统一接口                 |
 | [0035](./completed/0035-five-engine-orchestration-architecture.md)                      | 天枢·顺风耳·千里眼·司簿·马良五引擎编排架构      | 李鹏   | v2.0.0         | 建立五大核心引擎协同系统，通过太乙服务层桥接和YAML工作流元数据驱动，实现完整链路           |
 | [0036](./completed/0036-wenchang-preference-integration.md)                              | 偏好设置启动加载和保存机制                      | 李鹏   | v2.0.0         | 完整的偏好设置双向通信机制，启动加载、智能合并、实时保存，391测试通过                      |
 | [0040](./completed/0040-removepath-functionality-fix.md)                                 | RemovePath功能修复 - 天界人界数据同步完整实现   | 李鹏   | v2.0.0         | 天界人界数据同步完整实现，修复UI更新问题，后续被RFC 0041进一步优化                         |

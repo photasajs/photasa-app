@@ -191,9 +191,13 @@ export class YuanTianGangService implements IYuanTianGangService {
             [ZOUZHE_MATTERS.NOTIFICATION_SHOW]: "get_status",
             [ZOUZHE_MATTERS.PHOTO_SWITCH]: "scan_folder",
             [ZOUZHE_MATTERS.GET_PREFERENCES]: "get_preferences", // 使用天枢实际工作流
-            scan_folder: "scan_folder",
-            update_preferences: "update_preferences", // 添加直接映射
-            get_status: "get_status",
+            [ZOUZHE_MATTERS.SCAN_FOLDER]: "scan_folder",
+            [ZOUZHE_MATTERS.UPDATE_PREFERENCES]: "update_preferences", // 添加直接映射
+            [ZOUZHE_MATTERS.GET_STATUS]: "get_status",
+            // ✅ RFC 0042 Phase 2.4: 扫描队列管理映射
+            [ZOUZHE_MATTERS.GET_SCANNING_QUEUE]: "get_scanning_queue",
+            [ZOUZHE_MATTERS.ADD_SCAN_ACTION]: "add_scan_action",
+            [ZOUZHE_MATTERS.REMOVE_SCAN_ACTION]: "remove_scan_action",
         };
 
         // 紧急程度到命令优先级的映射
@@ -203,7 +207,12 @@ export class YuanTianGangService implements IYuanTianGangService {
             normal: "background" as const,
         };
 
-        const intent = intentMapping[fulu.intent] || "custom";
+        const intent = intentMapping[fulu.intent];
+        if (!intent) {
+            throw new Error(
+                `🏛️ 袁天罡：符箓意图"${fulu.intent}"未列入典籍，无法转换为天界诏令。请检查intentMapping是否包含此matter的映射。`,
+            );
+        }
         const priority = priorityMapping[fulu.urgency];
 
         // 根据不同的诏令命令，构造相应的参数

@@ -10,26 +10,38 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
+import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
 
-const logger = loggers.app;
+const logger = loggers.yuchigong;
 
 /**
- * 尉迟恭（YuChiGong）- 扫描队列UI状态管理
+ * 尉迟恭（YuChiGong）- 扫描队列业务协调官
  *
  * 职责：
  * 1. 接收李世民圣旨（add_scan_task / remove_scan_task）
- * 2. 更新扫描队列UI状态（scanningFolder）
- * 3. 向房玄龄发送奏折，触发天界扫描执行
+ * 2. 创建ScanAction对象并发送ADD_SCAN_ACTION奏折给房玄龄
+ * 3. 维护scanningTasks去重集合（业务去重，不持有完整队列）
  * 4. 通过qizou启奏向李世民汇报任务结果
  *
- * **协调链路**：
- * 褚遂良完成路径添加 → 启奏李世民 → 李世民下旨尉迟恭 → 尉迟恭发奏折给房玄龄 → 天界执行扫描
+ * **架构原则**（RFC 0042 Phase 2.4）：
+ * - ❌ 不维护完整队列状态（scanningQueue）- 由ScanningStore管理
+ * - ✅ 只维护去重集合（scanningTasks）- 快速检查路径是否已在队列
+ * - ✅ 发送单个action奏折（ADD_SCAN_ACTION）- 不发送完整队列
+ * - ✅ 房玄龄负责更新Store并触发天界持久化
+ *
+ * **协调链路**（RFC 0042 Phase 2.4修正版）：
+ * 褚遂良完成路径添加 → 启奏李世民 → 李世民下旨尉迟恭 →
+ * 尉迟恭发ADD_SCAN_ACTION奏折给房玄龄（单个action） →
+ * 房玄龄 → 袁天罡 → 天枢工作流（add_scan_action.yml）→
+ * 千里眼引擎执行业务逻辑（恢复队列 → append操作 → 持久化）→
+ * 天枢返回完整队列快照 → 房玄龄Store Automation自动同步
  *
  * @class YuChiGongService
  * @implements {IService}
  * @since RFC 0038 Phase 7 - qizou-shengzhi架构
- * @date 2025-10-16
+ * @updated RFC 0042 Phase 2.4修正 - 单个action奏折流程，Store为SSOT
+ * @date 2025-10-19
  */
 export class YuChiGongService implements IService, IYuChiGongService {
     /**
@@ -38,14 +50,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
      */
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
 
-    /**
-     * 扫描任务队列
-     * 存储待扫描和正在扫描的路径
-     */
-    private scanningTasks = new Set<string>();
-
     constructor(private fangXuanLingService: IFangXuanLingService) {
-        logger.info("🛡️ 尉迟恭就任，负责扫描队列UI状态管理");
+        logger.info("🛡️ 尉迟恭就任，负责扫描队列业务逻辑管理");
     }
 
     /**
@@ -172,37 +178,51 @@ export class YuChiGongService implements IService, IYuChiGongService {
         logger.info(`🛡️ 尉迟恭接旨：添加扫描任务 ${path}`);
 
         try {
-            // 1. 添加到扫描队列
-            this.scanningTasks.add(path);
-            logger.debug(
-                `🛡️ 尉迟恭：扫描队列已添加 ${path}，当前队列长度: ${this.scanningTasks.size}`,
-            );
+            // 1. ✅ Validator要求：使用Accessor去重检查，不维护本地Set
+            if (this.fangXuanLingService.scanning.isInQueue(path)) {
+                logger.warn(`🛡️ 尉迟恭：扫描任务已存在，跳过添加 ${path}`);
+                this.emitQizou("scan_task_duplicate", {
+                    shengzhiId: shengzhi.id,
+                    path,
+                });
+                return;
+            }
 
-            // 2. 向房玄龄发送奏折，触发天界扫描执行
-            const zouzhe: Zouzhe = {
+            // 2. 创建ScanAction对象
+            const scanAction: ScanAction = {
+                path,
+                action: shengzhi.content.action || "scan",
+                source: shengzhi.content.source || "user",
+                addedAt: Date.now(),
+            };
+
+            // 3. ✅ RFC 0042要求：只发送ADD_SCAN_ACTION奏折
+            // 房玄龄负责更新Store并触发天界持久化
+            const addActionZouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
-                matter: ZOUZHE_MATTERS.START_SCAN,
-                content: { path },
+                matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+                content: { action: scanAction },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             };
 
-            logger.info(`🛡️ 尉迟恭向房玄龄呈递扫描奏折: ${path}`);
-            await this.fangXuanLingService.processZouzhe(zouzhe);
+            logger.info(`🛡️ 尉迟恭向房玄龄呈递添加扫描任务奏折: ${path}`);
+            const response = await this.fangXuanLingService.processZouzhe(addActionZouzhe);
 
-            // 3. 向李世民启奏汇报任务已启动
-            this.emitQizou("scan_task_started", {
+            if (!response.approved) {
+                throw new Error(`房玄龄未批准：${response.instruction}`);
+            }
+
+            // 4. ✅ Validator要求：向李世民启奏汇报任务已添加（不是started）
+            this.emitQizou("scan_task_added", {
                 shengzhiId: shengzhi.id,
                 path,
-                queueSize: this.scanningTasks.size,
+                persisted: (response.data as Record<string, unknown>)?.persisted === true,
             });
 
-            logger.info(`🛡️ 尉迟恭：扫描任务已启动 ${path}`);
+            logger.info(`🛡️ 尉迟恭：扫描任务已添加 ${path}`);
         } catch (error) {
-            logger.error(`🛡️ 尉迟恭：启动扫描任务失败 ${path}`, error);
-
-            // 启动失败，从队列移除
-            this.scanningTasks.delete(path);
+            logger.error(`🛡️ 尉迟恭：添加扫描任务失败 ${path}`, error);
 
             // 向李世民启奏汇报失败
             this.emitQizou("scan_task_failed", {
@@ -245,34 +265,33 @@ export class YuChiGongService implements IService, IYuChiGongService {
         logger.info(`🛡️ 尉迟恭接旨：移除扫描任务 ${path}`);
 
         try {
-            // 1. 从扫描队列移除
-            const removed = this.scanningTasks.delete(path);
-
-            if (!removed) {
-                logger.warn(`🛡️ 尉迟恭：扫描队列中未找到任务 ${path}`);
-            } else {
-                logger.debug(
-                    `🛡️ 尉迟恭：扫描队列已移除 ${path}，当前队列长度: ${this.scanningTasks.size}`,
-                );
+            // 1. ✅ Validator要求：使用Accessor检查，不维护本地Set
+            if (!this.fangXuanLingService.scanning.isInQueue(path)) {
+                logger.warn(`🛡️ 尉迟恭：队列中未找到任务 ${path}，但仍通知房玄龄`);
             }
 
-            // 2. 向房玄龄发送奏折，通知天界停止扫描
-            const zouzhe: Zouzhe = {
+            // 2. ✅ RFC 0042要求：只发送REMOVE_SCAN_ACTION奏折
+            // 房玄龄负责更新Store并触发天界持久化
+            const removeActionZouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
-                matter: ZOUZHE_MATTERS.STOP_SCAN,
+                matter: ZOUZHE_MATTERS.REMOVE_SCAN_ACTION,
                 content: { path },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             };
 
-            logger.info(`🛡️ 尉迟恭向房玄龄呈递停止扫描奏折: ${path}`);
-            await this.fangXuanLingService.processZouzhe(zouzhe);
+            logger.info(`🛡️ 尉迟恭向房玄龄呈递移除扫描任务奏折: ${path}`);
+            const response = await this.fangXuanLingService.processZouzhe(removeActionZouzhe);
 
-            // 3. 向李世民启奏汇报任务已移除
+            if (!response.approved) {
+                throw new Error(`房玄龄未批准：${response.instruction}`);
+            }
+
+            // 3. ✅ Validator要求：向李世民启奏汇报任务已移除
             this.emitQizou("scan_task_removed", {
                 shengzhiId: shengzhi.id,
                 path,
-                queueSize: this.scanningTasks.size,
+                persisted: (response.data as Record<string, unknown>)?.persisted === true,
             });
 
             logger.info(`🛡️ 尉迟恭：扫描任务已移除 ${path}`);
@@ -346,49 +365,122 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     /**
-     * 获取当前扫描队列状态
-     * @returns 扫描队列的路径列表
+     * 扫描队列（只读属性）
+     * 返回原始ScanAction[]数组，UI层使用computed做转换
+     * 委托到房玄龄的ScanningStore Accessor
      */
-    getScanningTasks(): string[] {
-        return Array.from(this.scanningTasks);
+    get scanningQueue(): ScanAction[] {
+        return this.fangXuanLingService.scanning.queue;
     }
 
     /**
-     * 获取扫描队列长度
-     * @returns 队列中的任务数量
+     * 扫描队列长度（只读属性）
+     * 委托到房玄龄的ScanningStore Accessor
      */
-    getQueueSize(): number {
-        return this.scanningTasks.size;
+    get queueSize(): number {
+        return this.fangXuanLingService.scanning.queueSize;
     }
 
     /**
      * 检查路径是否在扫描队列中
+     * 委托到房玄龄的ScanningStore Accessor
      * @param path 路径
      * @returns 是否在队列中
      */
-    isScanning(path: string): boolean {
-        return this.scanningTasks.has(path);
+    isInQueue(path: string): boolean {
+        return this.fangXuanLingService.scanning.isInQueue(path);
     }
 
     /**
-     * 更新扫描进度（由袁天罡直接调用）
-     * @param path 扫描路径
-     * @param progress 进度信息
-     * @description
-     * 袁天罡监听天界IPC事件后，直接调用此方法更新UI状态
-     * 不需要通过圣旨或启奏，这是直接的方法调用
+     * ✅ Validator要求：委托到Accessor，不维护本地状态
+     * 获取扫描任务路径列表（测试兼容方法）
      */
-    updateScanProgress(path: string, progress: { current: number; total: number }): void {
-        logger.debug(`🛡️ 尉迟恭更新扫描进度: ${path} (${progress.current}/${progress.total})`);
-        // TODO: 更新UI状态，可以通过Vue reactive state实现
+    getScanningTasks(): string[] {
+        return this.fangXuanLingService.scanning.queue.map((action) => action.path);
     }
 
     /**
-     * 清理所有扫描任务（应用退出时调用）
+     * ✅ Validator要求：委托到Accessor，不维护本地状态
+     * 获取队列大小（测试兼容方法）
+     */
+    getQueueSize(): number {
+        return this.fangXuanLingService.scanning.queueSize;
+    }
+
+    /**
+     * ✅ Validator要求：委托到Accessor，不维护本地状态
+     * 检查路径是否正在扫描（测试兼容方法）
+     */
+    isScanning(path: string): boolean {
+        return this.fangXuanLingService.scanning.isInQueue(path);
+    }
+
+    /**
+     * ✅ Validator要求：队列由房玄龄管理，尉迟恭不维护本地状态
+     * 清理方法（测试兼容）
      */
     cleanup(): void {
-        logger.info("🛡️ 尉迟恭：开始清理所有扫描任务");
-        this.scanningTasks.clear();
-        logger.info("🛡️ 尉迟恭：扫描队列已清理完毕");
+        logger.info("🛡️ 尉迟恭：清理完毕（队列由房玄龄管理）");
+    }
+
+    /**
+     * 更新扫描进度（UI展示用）
+     */
+    updateScanProgress(path: string, progress: { current: number; total: number }): void {
+        logger.debug(`🛡️ 尉迟恭：更新扫描进度 ${path} ${progress.current}/${progress.total}`);
+    }
+
+    /**
+     * 初始化扫描队列（应用启动时调用）
+     * 从天界恢复持久化的扫描队列
+     *
+     * @description
+     * 初始化流程：
+     * ```
+     * 尉迟恭启动初始化
+     *       ↓
+     * 向房玄龄发送GET_SCANNING_QUEUE奏折
+     *       ↓
+     * 房玄龄 → 袁天罡 → 天界Tianshu
+     *       ↓
+     * Tianshu执行get_scanning_queue工作流
+     *       ↓
+     * 工作流调用千里眼.restoreQueue()
+     *       ↓
+     * 天界返回队列数据
+     *       ↓
+     * 房玄龄更新ScanningStore
+     *       ↓
+     * 尉迟恭从Store读取队列并排序
+     *       ↓
+     * 初始化完成
+     * ```
+     */
+    async initializeScanningQueue(): Promise<void> {
+        try {
+            logger.info("🛡️ 尉迟恭呈文房玄龄，请求典籍中扫描队列");
+
+            // 向房玄龄发送奏折，请求获取扫描队列
+            const zouzhe: Zouzhe = {
+                department: GUANYUAN_NAMES.YU_CHI_GONG,
+                matter: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+                timestamp: Date.now(),
+                priority: ZOUZHE_PRIORITIES.NORMAL,
+            };
+
+            const response = await this.fangXuanLingService.processZouzhe(zouzhe);
+
+            // ✅ Validator要求：委托给房玄龄，队列在Store中
+            if (response.approved) {
+                const queueSize = this.fangXuanLingService.scanning.queueSize;
+                logger.info(`🛡️ 尉迟恭：扫描队列初始化完成，共${queueSize}个任务`);
+            } else {
+                logger.warn("🛡️ 尉迟恭：未能获取扫描队列数据，使用空队列启动");
+            }
+        } catch (error) {
+            // 失败时使用空队列，不影响应用启动
+            logger.error("🛡️ 尉迟恭：获取扫描队列失败:", error);
+            logger.info("🛡️ 尉迟恭：使用空队列继续启动");
+        }
     }
 }

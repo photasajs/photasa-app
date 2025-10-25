@@ -11,11 +11,13 @@ export type UserIntent =
     | "update_config"
     | "get_preferences"
     | "update_preferences"
+    | "get_scanning_queue" // ✅ RFC 0042 Phase 2.3: 获取扫描队列
+    | "add_scan_action" // ✅ RFC 0042 Phase 2.4: 添加单个扫描任务（天界workflow）
+    | "remove_scan_action" // ✅ RFC 0042 Phase 2.4: 移除单个扫描任务（天界workflow）
     | "generate_thumbnail"
     | "process_media"
     | "stop_operation"
-    | "get_status"
-    | "custom";
+    | "get_status";
 
 /**
  * 命令优先级

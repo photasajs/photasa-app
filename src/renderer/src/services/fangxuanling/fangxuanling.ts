@@ -25,6 +25,13 @@ import { usePhotosStore } from "../../stores/photos";
 import { loggers } from "@common/logger";
 import { loadMatterSyncConfig, type MatterSyncMetadata, getStoreByPath } from "./store-automation";
 import { syncStoreWithSnapshot } from "./store-automation/store-sync-utils";
+import { useScanningStore } from "./scanning-store";
+import {
+    createPreferenceService,
+    createNotificationService,
+    createPhotosService,
+} from "./service-builders";
+import { ScanningAccessor, type IScanningAccessor } from "./accessors/scanning-accessor";
 
 const logger = loggers.fangxuanling;
 
@@ -48,6 +55,7 @@ export class FangXuanLingService implements IFangXuanLingService {
     private _photos: IPhotos;
     private _yuanTianGang!: IYuanTianGangService;
     private _matterSyncConfig: Record<string, MatterSyncMetadata>;
+    private _scanningAccessor: IScanningAccessor;
 
     constructor(yuanTianGang: IYuanTianGangService) {
         if (!yuanTianGang) {
@@ -61,10 +69,15 @@ export class FangXuanLingService implements IFangXuanLingService {
         this._matterSyncConfig = loadMatterSyncConfig();
         logger.info("📚 朝廷典章制度已备");
 
-        // 初始化各部门管理器
-        this._preference = this.createPreference();
-        this._notification = this.createNotification();
-        this._photos = this.createPhotos();
+        // 初始化各部门管理器（使用独立的builder函数）
+        this._preference = createPreferenceService();
+        this._notification = createNotificationService();
+        this._photos = createPhotosService();
+
+        // ✅ RFC 0042 Step 1: 初始化ScanningStore访问器
+        const scanningStore = useScanningStore();
+        this._scanningAccessor = new ScanningAccessor(scanningStore);
+        logger.info("📋 房玄龄：扫描队列Store已就绪");
 
         logger.info("🏛️ 六部百官各司其职");
     }
@@ -79,6 +92,14 @@ export class FangXuanLingService implements IFangXuanLingService {
 
     get photos(): IPhotos {
         return this._photos;
+    }
+
+    /**
+     * 扫描队列访问器
+     * ✅ RFC 0042 Step 1: 通过访问器模式访问ScanningStore
+     */
+    get scanning(): IScanningAccessor {
+        return this._scanningAccessor;
     }
 
     /**
@@ -140,9 +161,9 @@ export class FangXuanLingService implements IFangXuanLingService {
             ) {
                 const pathsDelta = this.computePathsDelta(zouzhe.matter, zouzhe.content || {});
                 if (pathsDelta) {
-                    context = pathsDelta; // 使用计算后的完整delta
+                    context = pathsDelta;
                     logger.info(
-                        `📚 房玄龄已计算paths delta，新paths数组长度: ${(pathsDelta.scanning as any)?.paths?.length || 0}`,
+                        `📚 房玄龄已计算paths delta，新paths数组长度: ${(pathsDelta.scanning as Record<string, unknown> | undefined)?.paths ? ((pathsDelta.scanning as Record<string, unknown>).paths as unknown[]).length : 0}`,
                     );
                 }
             }
@@ -244,109 +265,5 @@ export class FangXuanLingService implements IFangXuanLingService {
         photosStore.$reset();
 
         logger.info("🏛️ 重整朝纲已毕，百官归位");
-    }
-
-    /**
-     * 创建偏好管理器
-     */
-    private createPreference(): IPreference {
-        const store = usePreferenceStore();
-
-        // 注意：主题和语言更新现在应该通过褚遂良的奏折链路处理
-        // 房玄龄只负责处理奏折并与天界通信，不直接操作Store
-        // Store的更新应该在天界响应后由相应的处理机制完成
-
-        return {
-            // 主题管理
-            get currentTheme() {
-                return store.preferences.ui.theme;
-            },
-
-            // 语言管理
-            get currentLanguage() {
-                return store.preferences.ui.language;
-            },
-
-            // 暗色模式
-            get isDarkMode() {
-                return store.preferences.ui.theme === "dark";
-            },
-
-            // 缩略图大小 - 只读访问
-            get thumbnailSize() {
-                return store.preferences.display.thumbnailSize;
-            },
-
-            /**
-             * 路径管理 - 只读访问
-             * ✅ RFC 0038: 从preferences.scanning.paths访问，而非appState.paths
-             */
-            get paths() {
-                return store.preferences.scanning.paths || [];
-            },
-
-            // 完整状态访问（只读）
-            get state() {
-                return store.$state as unknown as Record<string, unknown>;
-            },
-        };
-    }
-
-    /**
-     * 创建通知管理器
-     */
-    private createNotification(): INotification {
-        const store = useNotificationStore();
-
-        return {
-            show(notification: any) {
-                logger.info("🔔 鸣钟击鼓，传令天下", notification);
-                store.add(notification);
-            },
-
-            hide(id: string) {
-                logger.info(`🔔 撤销告示: ${id}`);
-                store.remove(id);
-            },
-
-            clear() {
-                logger.info("🔔 清除所有告示");
-                store.clear();
-            },
-
-            get notifications() {
-                return store.notifications;
-            },
-        };
-    }
-
-    /**
-     * 创建照片管理器
-     */
-    private createPhotos(): IPhotos {
-        const store = usePhotosStore();
-
-        return {
-            get currentPhoto() {
-                // 暂时返回当前文件夹信息
-                return store.currentFolder ? { folder: store.currentFolder } : null;
-            },
-
-            setCurrentPhoto(photo: any) {
-                logger.info("📚 协调设置当前照片", photo);
-                // 暂时使用setCurrentFolder
-                if (photo?.folder) {
-                    store.setCurrentFolder(photo.folder);
-                }
-            },
-
-            get photos() {
-                // 暂时返回当前文件夹的文件集合
-                return Array.from(store.files.values()).flat() as unknown as Record<
-                    string,
-                    unknown
-                >[];
-            },
-        };
     }
 }

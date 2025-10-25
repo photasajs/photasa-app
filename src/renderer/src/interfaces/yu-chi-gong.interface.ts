@@ -1,45 +1,68 @@
 import type { InjectionKey } from "vue";
+import type { ScanAction } from "@common/scan-types";
 
 /**
  * 尉迟恭服务接口
- * 扫描队列UI状态管理
+ *
+ * 职责定位（RFC 0042）：
+ * - ✅ UI层的扫描队列业务接口（UI只通过useYuChiGong访问）
+ * - ✅ 接收李世民圣旨，协调扫描任务添加/移除
+ * - ✅ 通过启奏向李世民汇报任务结果
+ * - ✅ 委托房玄龄访问ScanningStore（不直接持有队列）
+ *
+ * 架构原则：
+ * - UI组件 → useYuChiGong() → 尉迟恭 → 房玄龄 → ScanningStore
+ * - UI组件永远不知道房玄龄的存在
+ * - 业务层返回原始数据，UI层用computed做转换
+ * - Getter用于查询，方法用于CRUD操作
  */
 export interface IYuChiGongService {
     /**
-     * 服务名称
+     * 服务名称（IService接口要求）
      */
     readonly name: string;
 
     /**
-     * 获取当前扫描队列状态
-     * @returns 扫描队列的路径列表
+     * 扫描队列（只读属性）
+     * 返回原始ScanAction[]数组，UI层使用computed做转换
+     *
+     * @example
+     * // 业务层：返回原始数据
+     * const yuChiGong = useYuChiGong();
+     * const queue = yuChiGong.scanningQueue;  // ScanAction[]
+     *
+     * // UI层：使用computed做转换
+     * const scanningPaths = computed(() =>
+     *     yuChiGong.scanningQueue.map(action => action.path)
+     * );
      */
-    getScanningTasks(): string[];
+    readonly scanningQueue: ScanAction[];
 
     /**
-     * 获取扫描队列长度
-     * @returns 队列中的任务数量
+     * 扫描队列长度（只读属性）
+     * @example
+     * const yuChiGong = useYuChiGong();
+     * const size = yuChiGong.queueSize;  // 5
      */
-    getQueueSize(): number;
+    readonly queueSize: number;
 
     /**
      * 检查路径是否在扫描队列中
      * @param path 路径
      * @returns 是否在队列中
+     * @example
+     * const yuChiGong = useYuChiGong();
+     * const inQueue = yuChiGong.isInQueue('/test/path');
      */
-    isScanning(path: string): boolean;
+    isInQueue(path: string): boolean;
 
     /**
-     * 更新扫描进度（由袁天罡直接调用）
-     * @param path 扫描路径
-     * @param progress 进度信息
+     * 初始化扫描队列（应用启动时调用）
+     * 从天界恢复持久化的扫描队列
+     *
+     * CRUD分类：Read操作
      */
-    updateScanProgress(path: string, progress: { current: number; total: number }): void;
-
-    /**
-     * 清理所有扫描任务（应用退出时调用）
-     */
-    cleanup(): void;
+    initializeScanningQueue(): Promise<void>;
 }
 
 /**

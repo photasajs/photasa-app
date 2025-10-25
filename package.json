@@ -48,6 +48,7 @@
         "validate:workflows:fix": "npx tsx scripts/validate-workflows.ts --fix",
         "validate:workflows:verbose": "npx tsx scripts/validate-workflows.ts --verbose",
         "check:locales": "node scripts/check-locales.js",
+        "docs": "docsify serve docs --port 3000",
         "generate:sha512": "node scripts/generate-sha512.js",
         "prepare": "husky"
     },
@@ -144,6 +145,7 @@
         "comlink": "^4.4.1",
         "commander": "^14.0.1",
         "del-cli": "^6.0.0",
+        "docsify-cli": "^4.4.4",
         "electron": "^38.1.0",
         "electron-builder": "^26.0.20",
         "electron-vite": "^3.1.0",

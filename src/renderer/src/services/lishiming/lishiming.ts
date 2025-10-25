@@ -204,6 +204,9 @@ export class LisshimingService implements ILisshimingService {
 
             logger.info("👑 玄奘法师服务初始化语言设置");
             await this.xuanzangService.initializeLocalization();
+
+            logger.info("👑 尉迟恭大将军服务初始化扫描队列");
+            await this.yuChiGongService.initializeScanningQueue();
         } catch (error) {
             logger.error("👑偏好设置初始化失败，继续启动应用:", error);
         }

@@ -141,8 +141,12 @@ export const ZOUZHE_MATTERS = {
     ADD_PATH: "add_path", // 添加监控路径
     REMOVE_PATH: "remove_path", // 移除监控路径
     ADD_SCAN_FOLDER: "add_scan_folder", // 添加扫描文件夹
-    START_SCAN: "start_scan", // 开始扫描（尉迟恭 → 天界）
-    STOP_SCAN: "stop_scan", // 停止扫描（尉迟恭 → 天界）
+    GET_SCANNING_QUEUE: "get_scanning_queue", // 获取扫描队列（应用启动时恢复）
+    ADD_SCAN_ACTION: "add_scan_action", // ✅ RFC 0042 Phase 2.4: 添加单个扫描任务（尉迟恭 → 房玄龄 → 天界）
+    REMOVE_SCAN_ACTION: "remove_scan_action", // ✅ RFC 0042 Phase 2.4: 移除单个扫描任务（尉迟恭 → 房玄龄 → 天界）
+    UPDATE_PREFERENCES: "update_preferences", // 更新偏好设置
+    SCAN_FOLDER: "scan_folder", // 扫描文件夹
+    GET_STATUS: "get_status", // 获取状态
 } as const;
 
 /**

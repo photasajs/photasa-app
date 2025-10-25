@@ -81,6 +81,46 @@ matters:
         autoSync: true
         description: "获取完整偏好设置快照 - 需要自动同步"
 
+    # ✅ RFC 0042 Phase 2.4: 添加扫描任务
+    add_scan_action:
+        snapshotPath: "queue"
+        syncStrategy: "replace"
+        storePath: "scanning"
+        autoSync: true
+        description: "添加扫描任务 - 天界返回完整队列，替换本地Store"
+
+    # ✅ RFC 0042 Phase 2.4: 移除扫描任务
+    remove_scan_action:
+        snapshotPath: "queue"
+        syncStrategy: "replace"
+        storePath: "scanning"
+        autoSync: true
+        description: "移除扫描任务 - 天界返回完整队列，替换本地Store"
+
+    # ✅ RFC 0043: 切换当前文件夹
+    switch_current_folder:
+        snapshotPath: "data.appState"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "切换当前文件夹 - 合并 appState.currentFolder + currentFolderConfig"
+
+    # ✅ RFC 0043: 添加文件夹到树
+    add_folder_to_tree:
+        snapshotPath: "data.appState.folderTree"
+        syncStrategy: "merge"
+        storePath: "preferences"
+        autoSync: true
+        description: "添加文件夹到树 - 合并 appState.folderTree"
+
+    # ✅ RFC 0043: 更新整个文件夹树
+    update_folder_tree:
+        snapshotPath: "data.appState.folderTree"
+        syncStrategy: "replace"
+        storePath: "preferences"
+        autoSync: true
+        description: "更新整个文件夹树 - 替换 appState.folderTree"
+
 # 特殊规则（将来扩展）
 specialRules:
     # 如果将来需要自定义处理逻辑，可以在这里配置

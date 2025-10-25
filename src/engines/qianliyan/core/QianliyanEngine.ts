@@ -12,7 +12,10 @@
 
 import { EventEmitter } from "events";
 import { join } from "path";
+import { homedir } from "os";
+import { writeFile, readFile, mkdir } from "fs/promises";
 import { loggers } from "@common/logger";
+import type { ScanAction } from "@common/scan-types";
 
 const logger = loggers.qianliyan;
 
@@ -121,20 +124,15 @@ export interface ScanStatus {
 
 /**
  * 千里眼引擎配置
+ *
+ * ✅ RFC 0032: 千里眼职责是扫描执行和队列持久化
+ * 配置选项应该最小化，大部分行为应该是固定的
  */
 export interface QianliyanEngineConfig {
     /** 最大并发扫描任务数 */
     maxConcurrentScans?: number;
     /** 扫描超时时间（毫秒） */
     scanTimeout?: number;
-    /** 缓存目录 */
-    cacheDir?: string;
-    /** 是否启用增量扫描 */
-    enableIncrementalScan?: boolean;
-    /** 是否启用缓存 */
-    enableCache?: boolean;
-    /** 是否启用进度报告 */
-    enableProgressReporting?: boolean;
     /** 默认扫描过滤器 */
     defaultFilters?: ScanCommand["filters"];
 }
@@ -149,16 +147,19 @@ export class QianliyanEngine extends EventEmitter {
     private activeTasks = new Map<string, ScanCommand>();
     private scanRegistry = new Map<string, { lastScan: number; fingerprint: string }>();
     private requestCounter = 0;
+    private scanningQueuePath: string;
+    private readonly appDataPath: string;
 
     constructor(config: QianliyanEngineConfig = {}) {
         super();
+
+        // ✅ 使用Node.js标准API获取用户主目录
+        // os.homedir() 跨平台支持 (Windows/Mac/Linux)
+        this.appDataPath = join(homedir(), ".photasa");
+
         this.config = {
             maxConcurrentScans: 3,
             scanTimeout: 300000, // 5分钟
-            cacheDir: "scan/cache",
-            enableIncrementalScan: true,
-            enableCache: true,
-            enableProgressReporting: true,
             defaultFilters: {
                 includePatterns: [
                     "*.jpg",
@@ -176,6 +177,10 @@ export class QianliyanEngine extends EventEmitter {
             },
             ...config,
         };
+
+        // ✅ RFC 0032 Line 185 + RFC 0042 Step 2: 千里眼扫描队列持久化路径
+        // 路径：~/.photasa/scan/scanning.json
+        this.scanningQueuePath = join(this.appDataPath, "scan", "scanning.json");
     }
 
     /**
@@ -187,12 +192,10 @@ export class QianliyanEngine extends EventEmitter {
         }
 
         try {
-            logger.info("🌌 初始化千里眼扫描引擎");
+            logger.info("🌌 千里眼仙君归位，开始初始化");
 
-            // 初始化缓存目录
-            if (this.config.enableCache) {
-                await this.initializeCache();
-            }
+            // 初始化缓存目录（扫描结果缓存）
+            await this.initializeCache();
 
             // 加载扫描注册表
             await this.loadScanRegistry();
@@ -215,7 +218,7 @@ export class QianliyanEngine extends EventEmitter {
         }
 
         try {
-            logger.info("🌌 关闭千里眼扫描引擎");
+            logger.info("🌌 千里眼仙君：开始关闭引擎");
 
             // 取消所有活跃任务
             for (const [requestId] of this.activeTasks) {
@@ -223,9 +226,7 @@ export class QianliyanEngine extends EventEmitter {
             }
 
             // 保存扫描注册表
-            if (this.config.enableCache) {
-                await this.saveScanRegistry();
-            }
+            await this.saveScanRegistry();
 
             this.isInitialized = false;
             logger.info("🌌 千里眼扫描引擎关闭完成");
@@ -351,6 +352,107 @@ export class QianliyanEngine extends EventEmitter {
             queuedScans: this.taskQueue.length,
             totalScans: 0, // TODO: 实现实际统计
         };
+    }
+
+    /**
+     * ✅ RFC 0032 Line 177-181: 千里眼扫描队列持久化
+     * ✅ RFC 0042 Step 2: 保存扫描队列到~/.photasa/scan/scanning.json
+     *
+     * 职责：持久化扫描队列到文件，供断电恢复使用
+     * 路径：~/.photasa/scan/scanning.json
+     */
+    async persistQueue(queue: ScanAction[]): Promise<void> {
+        try {
+            logger.debug(`🌌 千里眼仙君：持久化扫描队列 (${queue.length}个任务)`);
+
+            // 确保scan目录存在
+            await mkdir(join(this.appDataPath, "scan"), { recursive: true });
+
+            const data = JSON.stringify(
+                {
+                    version: "1.0",
+                    timestamp: Date.now(),
+                    queue: queue,
+                },
+                null,
+                2,
+            );
+
+            await writeFile(this.scanningQueuePath, data, "utf-8");
+
+            logger.info(`🌌 千里眼仙君：扫描队列已封存至 ${this.scanningQueuePath}`);
+        } catch (error) {
+            logger.error("🌌 千里眼仙君：封存队列失败", error);
+            throw error;
+        }
+    }
+
+    /**
+     * ✅ RFC 0032 Line 180: 千里眼从scanning.json恢复未完成任务
+     * ✅ RFC 0042 Step 2: 从~/.photasa/scan/scanning.json恢复扫描队列
+     *
+     * 职责：启动时恢复上次未完成的扫描队列
+     * 路径：~/.photasa/scan/scanning.json
+     */
+    async restoreQueue(): Promise<ScanAction[]> {
+        try {
+            logger.debug("🌌 千里眼仙君：尝试恢复扫描队列");
+
+            const data = await readFile(this.scanningQueuePath, "utf-8");
+            const parsed = JSON.parse(data) as {
+                version: string;
+                timestamp: number;
+                queue: ScanAction[];
+            };
+
+            if (!parsed.queue || !Array.isArray(parsed.queue)) {
+                logger.warn("🌌 千里眼仙君：scanning.json格式无效，重置为空队列");
+                await this.clearPersistedQueue();
+                return [];
+            }
+
+            logger.info(`🌌 千里眼仙君：恢复扫描队列 (${parsed.queue.length}个任务)`);
+            return parsed.queue;
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+                logger.debug("🌌 千里眼仙君：scanning.json不存在，创建空配置文件");
+                await this.clearPersistedQueue(); // 创建空配置文件
+                return [];
+            }
+            logger.error("🌌 千里眼仙君：恢复扫描队列失败", error);
+            return [];
+        }
+    }
+
+    /**
+     * ✅ RFC 0042 Step 2: 清空持久化队列
+     *
+     * 职责：清空~/.photasa/scan/scanning.json文件，用于用户手动清空队列时
+     * 路径：~/.photasa/scan/scanning.json
+     */
+    async clearPersistedQueue(): Promise<void> {
+        try {
+            // 确保scan目录存在
+            await mkdir(join(this.appDataPath, "scan"), { recursive: true });
+
+            await writeFile(
+                this.scanningQueuePath,
+                JSON.stringify(
+                    {
+                        version: "1.0",
+                        timestamp: Date.now(),
+                        queue: [],
+                    },
+                    null,
+                    2,
+                ),
+                "utf-8",
+            );
+
+            logger.info("🌌 千里眼仙君：已清空持久化队列");
+        } catch (error) {
+            logger.error("🌌 千里眼仙君：清空持久化队列失败", error);
+        }
     }
 
     /**
@@ -510,10 +612,13 @@ export class QianliyanEngine extends EventEmitter {
 
     /**
      * 初始化缓存
+     *
+     * RFC 0032 Line 40: 在 scan/cache 下存储扫描清单
      */
     private async initializeCache(): Promise<void> {
         // TODO: 实现缓存目录创建和初始化
-        logger.info(`🌌 缓存初始化完成: ${this.config.cacheDir}`);
+        const cacheDir = join(this.appDataPath, "scan", "cache");
+        logger.info(`🌌 千里眼仙君：缓存初始化完成 ${cacheDir}`);
     }
 
     /**

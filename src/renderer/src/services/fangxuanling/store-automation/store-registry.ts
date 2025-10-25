@@ -11,6 +11,7 @@
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { useNotificationStore } from "@renderer/stores/notification";
 import { usePhotosStore } from "@renderer/stores/photos";
+import { useScanningStore } from "@renderer/stores/scanning";
 import { loggers } from "@common/logger";
 
 const logger = loggers.fangxuanling;
@@ -31,11 +32,14 @@ export type StoreRegistry = Record<string, StoreFactory>;
 /**
  * 全局Store注册表
  * 映射storePath到对应的Pinia Store composable
+ *
+ * ✅ RFC 0042 Step 1: 添加ScanningStore注册
  */
 const STORE_REGISTRY: StoreRegistry = {
     preferences: usePreferenceStore,
     notification: useNotificationStore,
     photos: usePhotosStore,
+    scanning: useScanningStore, // ✅ RFC 0042: ScanningStore注册
 };
 
 /**

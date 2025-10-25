@@ -21,11 +21,85 @@ import {
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 
 /**
+ * Mock扫描队列Store（模拟房玄龄的scanning Store）
+ */
+class MockScanningStore {
+    private queue: Array<{ path: string; action: string; source: string; addedAt: number }> = [];
+
+    addAction(action: { path: string; action: string; source: string; addedAt: number }): void {
+        this.queue.push(action);
+    }
+
+    removeAction(path: string): void {
+        this.queue = this.queue.filter((action) => action.path !== path);
+    }
+
+    isInQueue(path: string): boolean {
+        return this.queue.some((action) => action.path === path);
+    }
+
+    getQueue(): Array<{ path: string; action: string; source: string; addedAt: number }> {
+        return [...this.queue];
+    }
+
+    get queueSize(): number {
+        return this.queue.length;
+    }
+
+    clear(): void {
+        this.queue = [];
+    }
+}
+
+/**
+ * Mock扫描队列Accessor（模拟房玄龄的scanning Accessor）
+ */
+class MockScanningAccessor {
+    constructor(private store: MockScanningStore) {}
+
+    get queue(): Array<{ path: string; action: string; source: string; addedAt: number }> {
+        return this.store.getQueue();
+    }
+
+    get queueSize(): number {
+        return this.store.queueSize;
+    }
+
+    isInQueue(path: string): boolean {
+        return this.store.isInQueue(path);
+    }
+
+    get isProcessing(): boolean {
+        return false;
+    }
+
+    get currentPath(): string | null {
+        return null;
+    }
+
+    get nextScanAction(): { path: string; action: string; source: string; addedAt: number } | null {
+        return this.queue[0] || null;
+    }
+}
+
+/**
  * Mock房玄龄服务实现
  */
 class MockFangXuanLingService implements IFangXuanLingService {
     public receivedZouzhes: Zouzhe[] = [];
     public shouldThrowError = false;
+    private mockScanningStore: MockScanningStore;
+    private mockScanningAccessor: MockScanningAccessor;
+
+    constructor() {
+        this.mockScanningStore = new MockScanningStore();
+        this.mockScanningAccessor = new MockScanningAccessor(this.mockScanningStore);
+    }
+
+    // ✅ RFC 0042: 实现scanning Accessor
+    get scanning(): MockScanningAccessor {
+        return this.mockScanningAccessor;
+    }
 
     // 实现IFangXuanLingService必需的属性和方法
     get preference(): never {
@@ -55,6 +129,7 @@ class MockFangXuanLingService implements IFangXuanLingService {
     resetAll(): void {
         this.receivedZouzhes = [];
         this.shouldThrowError = false;
+        this.mockScanningStore.clear();
     }
 
     async processZouzhe(zouzhe: Zouzhe): Promise<ZouzheResponse> {
@@ -62,10 +137,28 @@ class MockFangXuanLingService implements IFangXuanLingService {
             throw new Error("房玄龄处理奏折失败");
         }
         this.receivedZouzhes.push(zouzhe);
+
+        // ✅ RFC 0042: Mock processZouzhe should update store for ADD_SCAN_ACTION
+        if (zouzhe.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
+            const action = (zouzhe.content as Record<string, unknown>).action as {
+                path: string;
+                action: string;
+                source: string;
+                addedAt: number;
+            };
+            this.mockScanningStore.addAction(action);
+        }
+
+        // ✅ RFC 0042: Mock processZouzhe should update store for REMOVE_SCAN_ACTION
+        if (zouzhe.matter === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
+            const path = (zouzhe.content as Record<string, unknown>).path as string;
+            this.mockScanningStore.removeAction(path);
+        }
+
         return {
             approved: true,
             matter: zouzhe.matter,
-            data: null,
+            data: { persisted: true },
             instruction: "已批准",
             timestamp: Date.now(),
         };
@@ -74,6 +167,7 @@ class MockFangXuanLingService implements IFangXuanLingService {
     reset(): void {
         this.receivedZouzhes = [];
         this.shouldThrowError = false;
+        this.mockScanningStore.clear();
     }
 }
 
@@ -171,11 +265,12 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 setTimeout(() => {
                     expect(yuchiGong.getQueueSize()).toBeGreaterThan(0);
 
-                    // 清理队列
+                    // ✅ RFC 0042: cleanup()不清空队列，队列由房玄龄管理
                     yuchiGong.cleanup();
 
-                    expect(yuchiGong.getQueueSize()).toBe(0);
-                    expect(yuchiGong.getScanningTasks()).toEqual([]);
+                    // 队列仍然存在，因为是房玄龄管理的
+                    expect(yuchiGong.getQueueSize()).toBeGreaterThan(0);
+                    expect(yuchiGong.getScanningTasks()).toContain("/test/path");
                     resolve();
                 }, 50);
             });
@@ -207,19 +302,27 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     expect(mockFangXuanLing.receivedZouzhes).toHaveLength(1);
                     const zouzhe = mockFangXuanLing.receivedZouzhes[0];
                     expect(zouzhe.department).toBe(GUANYUAN_NAMES.YU_CHI_GONG);
-                    expect(zouzhe.matter).toBe(ZOUZHE_MATTERS.START_SCAN);
-                    expect(zouzhe.content).toEqual({ path: testPath });
+                    expect(zouzhe.matter).toBe(ZOUZHE_MATTERS.ADD_SCAN_ACTION);
+                    // ✅ RFC 0042: 奏折content包含完整的action对象，不仅仅是path
+                    expect(zouzhe.content).toMatchObject({
+                        action: {
+                            path: testPath,
+                            action: "scan",
+                            source: "user",
+                        },
+                    });
                     expect(zouzhe.priority).toBe(ZOUZHE_PRIORITIES.NORMAL);
 
                     // 验证向李世民启奏
                     expect(emittedQizous).toHaveLength(1);
                     const qizou = emittedQizous[0];
-                    expect(qizou.matter).toBe("scan_task_started");
+                    expect(qizou.matter).toBe("scan_task_added");
                     expect(qizou.from).toBe("尉迟恭");
+                    // ✅ RFC 0042: 启奏内容包含persisted标志
                     expect(qizou.content).toMatchObject({
                         shengzhiId: shengzhi.id,
                         path: testPath,
-                        queueSize: 1,
+                        persisted: true,
                     });
 
                     resolve();
@@ -479,20 +582,22 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                         expect(yuchiGong.isScanning(testPath)).toBe(false);
                         expect(yuchiGong.getQueueSize()).toBe(0);
 
-                        // 验证向房玄龄发送了停止扫描奏折
+                        // 验证向房玄龄发送了移除扫描奏折
                         expect(mockFangXuanLing.receivedZouzhes).toHaveLength(1);
                         const zouzhe = mockFangXuanLing.receivedZouzhes[0];
-                        expect(zouzhe.matter).toBe(ZOUZHE_MATTERS.STOP_SCAN);
+                        expect(zouzhe.matter).toBe(ZOUZHE_MATTERS.REMOVE_SCAN_ACTION);
+                        // ✅ RFC 0042: 移除奏折只包含path
                         expect(zouzhe.content).toEqual({ path: testPath });
 
                         // 验证向李世民启奏
                         expect(emittedQizous).toHaveLength(1);
                         const qizou = emittedQizous[0];
                         expect(qizou.matter).toBe("scan_task_removed");
+                        // ✅ RFC 0042: 启奏内容包含persisted标志
                         expect(qizou.content).toMatchObject({
                             shengzhiId: removeShengzhi.id,
                             path: testPath,
-                            queueSize: 0,
+                            persisted: true,
                         });
 
                         resolve();
