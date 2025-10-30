@@ -116,7 +116,7 @@ export class FangXuanLingService implements IFangXuanLingService {
     ): Record<string, unknown> | null {
         if (matter === ZOUZHE_MATTERS.ADD_PATH) {
             const store = usePreferenceStore();
-            const currentPaths = store.preferences?.scanning?.paths || [];
+            const currentPaths = store?.scanning?.paths || [];
             const newPath = content.path as string;
 
             logger.debug(`📚 房玄龄计算添加路径delta: ${newPath}`);
@@ -131,7 +131,7 @@ export class FangXuanLingService implements IFangXuanLingService {
 
         if (matter === ZOUZHE_MATTERS.REMOVE_PATH) {
             const store = usePreferenceStore();
-            const currentPaths = store.preferences?.scanning?.paths || [];
+            const currentPaths = store?.scanning?.paths || [];
             const pathToRemove = content.path as string;
 
             logger.debug(`📚 房玄龄计算移除路径delta: ${pathToRemove}`);
@@ -191,12 +191,13 @@ export class FangXuanLingService implements IFangXuanLingService {
                 const syncMetadata = this._matterSyncConfig[zouzhe.matter];
                 if (syncMetadata?.autoSync) {
                     // ✅ RFC 0038: 使用Store注册表动态获取Store，不再硬编码
-                    const store = getStoreByPath(syncMetadata.storePath);
+                    // ✅ RFC 0042: storePath → storeName (Linus "好品味"设计)
+                    const store = getStoreByPath(syncMetadata.storeName);
                     if (store) {
                         syncStoreWithSnapshot(zouzhe.matter, zhaolingResponse, syncMetadata, store);
                     } else {
                         logger.error(
-                            `❌ 典籍归档失败: 未找到册库「${syncMetadata.storePath}」办理「${zouzhe.matter}」`,
+                            `❌ 典籍归档失败: 未找到册库「${syncMetadata.storeName}」办理「${zouzhe.matter}」`,
                         );
                     }
                 }

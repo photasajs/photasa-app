@@ -363,7 +363,15 @@ export class QianliyanEngine extends EventEmitter {
      */
     async persistQueue(queue: ScanAction[]): Promise<void> {
         try {
-            logger.debug(`🌌 千里眼仙君：持久化扫描队列 (${queue.length}个任务)`);
+            // 防御性检查：确保queue是数组
+            if (!Array.isArray(queue)) {
+                logger.error(`🌌 天劫降临：封印之术收到非法仙令，类型=${typeof queue}`, {
+                    queueValue: queue,
+                });
+                throw new Error(`persistQueue expects array, got ${typeof queue}`);
+            }
+
+            logger.debug(`🌌 千里眼仙君施展封印之术，封存${queue.length}卷仙令`);
 
             // 确保scan目录存在
             await mkdir(join(this.appDataPath, "scan"), { recursive: true });
@@ -380,9 +388,9 @@ export class QianliyanEngine extends EventEmitter {
 
             await writeFile(this.scanningQueuePath, data, "utf-8");
 
-            logger.info(`🌌 千里眼仙君：扫描队列已封存至 ${this.scanningQueuePath}`);
+            logger.info(`🌌 封印大功告成，${queue.length}卷仙令已封存至仙府密库`);
         } catch (error) {
-            logger.error("🌌 千里眼仙君：封存队列失败", error);
+            logger.error("🌌 天劫降临：封印之术功败垂成", error);
             throw error;
         }
     }
@@ -396,7 +404,7 @@ export class QianliyanEngine extends EventEmitter {
      */
     async restoreQueue(): Promise<ScanAction[]> {
         try {
-            logger.debug("🌌 千里眼仙君：尝试恢复扫描队列");
+            logger.debug("🌌 千里眼仙君施展唤灵之术，开启仙令召回");
 
             const data = await readFile(this.scanningQueuePath, "utf-8");
             const parsed = JSON.parse(data) as {
@@ -406,20 +414,20 @@ export class QianliyanEngine extends EventEmitter {
             };
 
             if (!parsed.queue || !Array.isArray(parsed.queue)) {
-                logger.warn("🌌 千里眼仙君：scanning.json格式无效，重置为空队列");
+                logger.warn("🌌 【警示】仙令符文损坏，重铸空白仙卷");
                 await this.clearPersistedQueue();
                 return [];
             }
 
-            logger.info(`🌌 千里眼仙君：恢复扫描队列 (${parsed.queue.length}个任务)`);
+            logger.info(`🌌 唤灵大功告成，召回${parsed.queue.length}卷仙令`);
             return parsed.queue;
         } catch (error) {
             if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-                logger.debug("🌌 千里眼仙君：scanning.json不存在，创建空配置文件");
+                logger.debug("🌌 仙令密库空无一物，铸造空白仙卷");
                 await this.clearPersistedQueue(); // 创建空配置文件
                 return [];
             }
-            logger.error("🌌 千里眼仙君：恢复扫描队列失败", error);
+            logger.error("🌌 天劫降临：唤灵之术功败垂成", error);
             return [];
         }
     }
@@ -432,6 +440,8 @@ export class QianliyanEngine extends EventEmitter {
      */
     async clearPersistedQueue(): Promise<void> {
         try {
+            logger.debug("🌌 千里眼仙君施展净化之术，荡涤仙令密库");
+
             // 确保scan目录存在
             await mkdir(join(this.appDataPath, "scan"), { recursive: true });
 
@@ -449,9 +459,9 @@ export class QianliyanEngine extends EventEmitter {
                 "utf-8",
             );
 
-            logger.info("🌌 千里眼仙君：已清空持久化队列");
+            logger.info("🌌 净化大功告成，仙令密库空明如初");
         } catch (error) {
-            logger.error("🌌 千里眼仙君：清空持久化队列失败", error);
+            logger.error("🌌 天劫降临：净化之术功败垂成", error);
         }
     }
 

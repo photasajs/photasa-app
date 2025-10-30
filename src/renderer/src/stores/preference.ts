@@ -57,7 +57,7 @@ export interface AutoUpdateConfig {
  * 此接口与src/engines/wenchang/types/index.ts中的UserPreferences保持完全一致
  * 形成天界-人界镜像关系，确保数据结构统一
  */
-interface UnifiedPreferences {
+export interface PreferenceState {
     /** 用户界面相关偏好设置 */
     ui: {
         /** 主题标识：支持light、dark、solarized-light、solarized-dark等 */
@@ -121,21 +121,6 @@ interface UnifiedPreferences {
         /** 自动更新配置 */
         autoUpdate: AutoUpdateConfig;
     };
-}
-
-/**
- * 偏好设置Store状态类型
- * ✅ RFC 0038: 明确划分preferences和appState边界
- *
- * preferences: 用户偏好设置，与天界Wenchang保持同步
- * appState: 应用运行时状态，仅存在于人界Store
- */
-export type PreferenceState = {
-    /**
-     * 统一偏好设置 - 与天界一致
-     * 此对象结构应与Wenchang的UserPreferences完全一致
-     */
-    preferences: UnifiedPreferences;
 
     /**
      * 应用运行时状态 - Store特有
@@ -161,7 +146,7 @@ export type PreferenceState = {
          */
         scanningFolder: ScanAction[];
     };
-};
+}
 
 export type PreferenceStore = ReturnType<typeof usePreferenceStore>;
 
@@ -172,64 +157,63 @@ export const usePreferenceStore = defineStore("preference", {
              * 统一偏好设置 - 与天界一致
              * ✅ RFC 0038: 添加scanning和system字段，与Wenchang保持同步
              */
-            preferences: {
-                /** UI默认设置 */
-                ui: {
-                    theme: "solarized-dark", // 默认使用solarized-dark主题，与Wenchang一致
-                    language: "zh-CN", // 默认简体中文
-                    layout: "grid", // 默认网格布局
-                    sidebarWidth: 240, // 默认侧边栏宽度240px
-                    zoomLevel: 1.0, // 默认缩放级别100%
-                },
 
-                /** 显示默认设置 */
-                display: {
-                    thumbnailSize: 150, // 默认缩略图尺寸150px，与Wenchang一致
-                    sortOrder: "name", // 默认按名称排序，与Wenchang一致
-                    groupBy: "none", // 默认不分组，与Wenchang一致
-                    showHidden: false, // 默认不显示隐藏文件
-                    showMetadata: true, // 默认显示元数据
-                },
+            /** UI默认设置 */
+            ui: {
+                theme: "solarized-dark", // 默认使用solarized-dark主题，与Wenchang一致
+                language: "zh-CN", // 默认简体中文
+                layout: "grid", // 默认网格布局
+                sidebarWidth: 240, // 默认侧边栏宽度240px
+                zoomLevel: 1.0, // 默认缩放级别100%
+            },
 
-                /**
-                 * 扫描默认设置
-                 * ✅ RFC 0038: 从appState迁移到preferences.scanning
-                 */
-                scanning: {
-                    paths: [], // 初始监控路径为空，由用户添加
-                    excludePatterns: [
-                        ".photasaoriginal", // Photasa原始文件跟踪文件夹
-                        ".photasaoriginals", // Photasa缩略图缓存文件夹
-                        ".photasa.json", // Photasa配置文件
-                        ".DS_Store", // macOS系统文件
-                        "Thumbs.db", // Windows缩略图文件
-                        ".git", // Git版本控制文件夹
-                        ".svn", // SVN版本控制文件夹
-                        "node_modules", // Node.js依赖文件夹
-                    ],
-                    autoScan: true, // 默认启用自动扫描
-                    concurrency: 4, // 默认并发数为4
-                    watchEnabled: true, // 默认启用文件监控
-                },
+            /** 显示默认设置 */
+            display: {
+                thumbnailSize: 150, // 默认缩略图尺寸150px，与Wenchang一致
+                sortOrder: "name", // 默认按名称排序，与Wenchang一致
+                groupBy: "none", // 默认不分组，与Wenchang一致
+                showHidden: false, // 默认不显示隐藏文件
+                showMetadata: true, // 默认显示元数据
+            },
 
-                /** 性能默认设置 */
-                performance: {
-                    maxCacheSize: 1024, // 默认最大缓存1024MB
-                    preloadCount: 20, // 默认预加载20个缩略图
-                    enableGpuAcceleration: true, // 默认启用GPU加速
-                },
+            /**
+             * 扫描默认设置
+             * ✅ RFC 0038: 从appState迁移到preferences.scanning
+             */
+            scanning: {
+                paths: [], // 初始监控路径为空，由用户添加
+                excludePatterns: [
+                    ".photasaoriginal", // Photasa原始文件跟踪文件夹
+                    ".photasaoriginals", // Photasa缩略图缓存文件夹
+                    ".photasa.json", // Photasa配置文件
+                    ".DS_Store", // macOS系统文件
+                    "Thumbs.db", // Windows缩略图文件
+                    ".git", // Git版本控制文件夹
+                    ".svn", // SVN版本控制文件夹
+                    "node_modules", // Node.js依赖文件夹
+                ],
+                autoScan: true, // 默认启用自动扫描
+                concurrency: 4, // 默认并发数为4
+                watchEnabled: true, // 默认启用文件监控
+            },
 
-                /**
-                 * 系统默认设置
-                 * ✅ RFC 0038: 从appState迁移到preferences.system
-                 */
-                system: {
-                    autoUpdate: {
-                        enabled: true, // 默认启用自动更新
-                        checkInterval: 24, // 每天检查一次
-                        allowPrerelease: false, // 默认不允许预发布版本
-                        autoInstall: false, // 默认不自动安装，让用户确认
-                    },
+            /** 性能默认设置 */
+            performance: {
+                maxCacheSize: 1024, // 默认最大缓存1024MB
+                preloadCount: 20, // 默认预加载20个缩略图
+                enableGpuAcceleration: true, // 默认启用GPU加速
+            },
+
+            /**
+             * 系统默认设置
+             * ✅ RFC 0038: 从appState迁移到preferences.system
+             */
+            system: {
+                autoUpdate: {
+                    enabled: true, // 默认启用自动更新
+                    checkInterval: 24, // 每天检查一次
+                    allowPrerelease: false, // 默认不允许预发布版本
+                    autoInstall: false, // 默认不自动安装，让用户确认
                 },
             },
 
@@ -260,29 +244,29 @@ export const usePreferenceStore = defineStore("preference", {
          * 这些getter提供对preferences对象的快捷访问
          */
         /** 主题标识 */
-        themeId: (state) => state.preferences.ui.theme,
+        themeId: (state) => state.ui.theme,
         /** 语言代码 */
-        locale: (state) => state.preferences.ui.language,
+        locale: (state) => state.ui.language,
         /** 缩略图尺寸 */
-        thumbnailSize: (state) => state.preferences.display.thumbnailSize,
+        thumbnailSize: (state) => state.display.thumbnailSize,
         /** 是否深色模式 */
-        darkMode: (state) => state.preferences.ui.theme === "dark",
+        darkMode: (state) => state.ui.theme === "dark",
 
         /**
          * 偏好设置getter - 扫描相关
          * ✅ RFC 0038: 从preferences.scanning访问，而非appState
          */
         /** 监控路径列表 */
-        paths: (state) => state.preferences.scanning.paths,
+        paths: (state) => state.scanning.paths,
         /** 排除路径模式列表 */
-        excludePaths: (state) => state.preferences.scanning.excludePatterns,
+        excludePaths: (state) => state.scanning.excludePatterns,
 
         /**
          * 偏好设置getter - 系统相关
          * ✅ RFC 0038: 从preferences.system访问，而非appState
          */
         /** 自动更新配置 */
-        autoUpdate: (state) => state.preferences.system.autoUpdate,
+        autoUpdate: (state) => state.system.autoUpdate,
 
         /**
          * 应用状态getter - 运行时状态
@@ -317,9 +301,9 @@ export const usePreferenceStore = defineStore("preference", {
         addPath(path: string) {
             if (this.appState.firstTime) {
                 this.appState.firstTime = false;
-                this.preferences.scanning.paths = [];
+                this.scanning.paths = [];
                 this.appState.folderTree = [];
-                this.preferences.scanning.paths.push(path);
+                this.scanning.paths.push(path);
                 this.appState.folderTree.push({
                     title: path,
                     key: path,
@@ -330,14 +314,14 @@ export const usePreferenceStore = defineStore("preference", {
 
             path = normalizePath(path);
 
-            if (!this.preferences.scanning.paths.find((p) => path.indexOf(p) >= 0)) {
-                this.preferences.scanning.paths.push(path);
+            if (!this.scanning.paths.find((p) => path.indexOf(p) >= 0)) {
+                this.scanning.paths.push(path);
                 this.appState.folderTree.push({
                     title: path,
                     key: path,
                     children: [],
                 });
-                this.preferences.scanning.paths = this.preferences.scanning.paths.sort();
+                this.scanning.paths = this.scanning.paths.sort();
             }
         },
         async addScanFolder(
@@ -412,7 +396,7 @@ export const usePreferenceStore = defineStore("preference", {
                 {
                     path: folder,
                     action,
-                    thumbnailSize: this.preferences.display.thumbnailSize,
+                    thumbnailSize: this.display.thumbnailSize,
                     operationType: "directory", // Default to directory for legacy compatibility
                 },
                 source,
@@ -535,7 +519,7 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         updateThumbnailSize(size: number) {
-            this.preferences.display.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
+            this.display.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
         completeScanPath(folder: string): void {
             logger.debug(`✍️ 尝试完成扫描: ${folder}`);
@@ -626,7 +610,7 @@ export const usePreferenceStore = defineStore("preference", {
             // Reset current folder if it was the removed one
             if (this.currentFolder === path) {
                 // ✅ RFC 0038: 从preferences.scanning.paths读取
-                this.appState.currentFolder = this.preferences.scanning.paths[0] || "";
+                this.appState.currentFolder = this.scanning.paths[0] || "";
                 logger.info("✍️ 重置当前文件夹为:", this.currentFolder);
             }
         },
@@ -653,10 +637,10 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         setLocale(locale: string) {
-            this.preferences.ui.language = locale;
+            this.ui.language = locale;
         },
         setThemeId(themeId: string) {
-            this.preferences.ui.theme = themeId;
+            this.ui.theme = themeId;
         },
         /**
          * 更新排除路径列表
@@ -665,7 +649,7 @@ export const usePreferenceStore = defineStore("preference", {
          * @param excludePaths 新的排除路径数组
          */
         updateExcludePaths(excludePaths: string[]) {
-            this.preferences.scanning.excludePatterns = excludePaths;
+            this.scanning.excludePatterns = excludePaths;
         },
 
         /**
@@ -676,7 +660,7 @@ export const usePreferenceStore = defineStore("preference", {
          */
         addExcludePath(path: string) {
             if (!this.excludePaths.includes(path)) {
-                this.preferences.scanning.excludePatterns.push(path);
+                this.scanning.excludePatterns.push(path);
             }
         },
 
@@ -689,7 +673,7 @@ export const usePreferenceStore = defineStore("preference", {
         removeExcludePath(path: string) {
             const index = this.excludePaths.indexOf(path);
             if (index >= 0) {
-                this.preferences.scanning.excludePatterns.splice(index, 1);
+                this.scanning.excludePatterns.splice(index, 1);
             }
         },
 
@@ -698,7 +682,7 @@ export const usePreferenceStore = defineStore("preference", {
          * ✅ RFC 0038: 更新为访问preferences.scanning.excludePatterns
          */
         resetExcludePaths() {
-            this.preferences.scanning.excludePatterns = [
+            this.scanning.excludePatterns = [
                 ".photasaoriginal",
                 ".photasaoriginals",
                 ".photasa.json",
@@ -722,7 +706,7 @@ export const usePreferenceStore = defineStore("preference", {
             if (scanPhotosTask.isRunning) {
                 scanPhotosTask.cancelAll();
             }
-            this.preferences.scanning.paths = [];
+            this.scanning.paths = [];
             this.appState.folderTree = [];
             this.appState.scanningFolder = [];
             for (const dir of newDirs) {
@@ -737,8 +721,8 @@ export const usePreferenceStore = defineStore("preference", {
          * @param config 要更新的配置对象（部分更新）
          */
         updateAutoUpdateConfig(config: Partial<AutoUpdateConfig>) {
-            this.preferences.system.autoUpdate = {
-                ...this.preferences.system.autoUpdate,
+            this.system.autoUpdate = {
+                ...this.system.autoUpdate,
                 ...config,
             };
             logger.debug("✍️ 更新自动更新配置:", this.autoUpdate);
@@ -753,7 +737,7 @@ export const usePreferenceStore = defineStore("preference", {
         setAutoUpdateLastCheck(timestamp: string | number) {
             const dateStr =
                 typeof timestamp === "string" ? timestamp : new Date(timestamp).toISOString();
-            this.preferences.system.autoUpdate.lastCheck = dateStr;
+            this.system.autoUpdate.lastCheck = dateStr;
             logger.debug("✍️ 更新自动更新最后检查时间:", dateStr);
         },
 
@@ -762,7 +746,7 @@ export const usePreferenceStore = defineStore("preference", {
          * ✅ RFC 0038: 更新为访问preferences.system.autoUpdate
          */
         resetAutoUpdateConfig() {
-            this.preferences.system.autoUpdate = {
+            this.system.autoUpdate = {
                 enabled: true,
                 checkInterval: 24,
                 allowPrerelease: false,

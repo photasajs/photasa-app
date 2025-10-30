@@ -18,6 +18,7 @@ import type {
 } from "../../interfaces/fang-xuan-ling.interface";
 import { usePreferenceStore } from "../../stores/preference";
 import { useNotificationStore } from "../../stores/notification";
+import type { NotificationConfig } from "@renderer/types/notification";
 import { usePhotosStore } from "../../stores/photos";
 import { loggers } from "@common/logger";
 
@@ -40,22 +41,22 @@ export function createPreferenceService(): IPreference {
     return {
         // 主题管理
         get currentTheme() {
-            return store.preferences.ui.theme;
+            return store.ui.theme;
         },
 
         // 语言管理
         get currentLanguage() {
-            return store.preferences.ui.language;
+            return store.ui.language;
         },
 
         // 暗色模式
         get isDarkMode() {
-            return store.preferences.ui.theme === "dark";
+            return store.ui.theme === "dark";
         },
 
         // 缩略图大小 - 只读访问
         get thumbnailSize() {
-            return store.preferences.display.thumbnailSize;
+            return store.display.thumbnailSize;
         },
 
         /**
@@ -63,7 +64,7 @@ export function createPreferenceService(): IPreference {
          * ✅ RFC 0038: 从preferences.scanning.paths访问，而非appState.paths
          */
         get paths() {
-            return store.preferences.scanning.paths || [];
+            return store.scanning.paths || [];
         },
 
         // 完整状态访问（只读）
@@ -86,7 +87,7 @@ export function createNotificationService(): INotification {
     return {
         show(notification: unknown) {
             logger.info("🔔 鸣钟击鼓，传令天下", notification);
-            store.add(notification);
+            store.add(notification as NotificationConfig);
         },
 
         hide(id: string) {

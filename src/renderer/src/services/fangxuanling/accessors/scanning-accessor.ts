@@ -50,15 +50,19 @@ export class ScanningAccessor implements IScanningAccessor {
     constructor(private readonly store: ScanningStore | null) {}
 
     /**
-     * 查阅扫描队列（只读副本）
+     * 查阅扫描队列（响应式引用）
      * 如同翻阅典籍目录，只可查看不可改动
+     *
+     * ✅ RFC 0042: 返回响应式数组引用，而非副本
+     * 这样Vue computed可以正确追踪数组变化
      */
     get queue(): ScanAction[] {
         if (!this.store) {
             logger.error("🏛️ 房玄龄：典籍库未开放，无法查阅扫描卷宗");
             return [];
         }
-        return [...this.store.queue];
+        // ✅ 返回响应式数组引用，Vue可以追踪变化
+        return this.store.queue;
     }
 
     /**

@@ -43,13 +43,13 @@ describe("store-automation/index", () => {
             expect(result).toHaveProperty("add_scan_folder");
             expect(result).toHaveProperty("get_preferences");
 
-            // 验证具体配置内容（基于真实YAML文件）
-            expect(result.theme_change.snapshotPath).toBe("ui.theme");
-            expect(result.theme_change.syncStrategy).toBe("merge");
-            expect(result.theme_change.storePath).toBe("preferences");
+            // ✅ RFC 0042: 验证具体配置内容（基于新的propertyPath和storeName字段）
+            expect(result.theme_change.propertyPath).toBe("ui.theme");
+            expect(result.theme_change.syncStrategy).toBe("replace");
+            expect(result.theme_change.storeName).toBe("preferences");
             expect(result.theme_change.autoSync).toBe(true);
 
-            expect(result.get_preferences.snapshotPath).toBe(".");
+            expect(result.get_preferences.propertyPath).toBe(".");
             expect(result.get_preferences.syncStrategy).toBe("replace");
         });
     });
@@ -58,16 +58,16 @@ describe("store-automation/index", () => {
         it("应该验证有效的配置", () => {
             const validConfig: Record<string, MatterSyncMetadata> = {
                 theme_change: {
-                    snapshotPath: "snapshot",
+                    propertyPath: "snapshot",
                     syncStrategy: "merge",
-                    storePath: "preferences",
+                    storeName: "preferences",
                     autoSync: true,
                     description: "主题变更",
                 },
                 language_change: {
-                    snapshotPath: "snapshot",
-                    syncStrategy: "patch",
-                    storePath: "preferences",
+                    propertyPath: "snapshot",
+                    syncStrategy: "replace",
+                    storeName: "preferences",
                     autoSync: true,
                 },
             };
@@ -91,12 +91,12 @@ describe("store-automation/index", () => {
             expect(result).toBe(false);
         });
 
-        it("应该拒绝缺少snapshotPath的配置", () => {
+        it("应该拒绝缺少propertyPath的配置", () => {
             const invalidConfig: Record<string, MatterSyncMetadata> = {
                 theme_change: {
-                    snapshotPath: "",
+                    propertyPath: "",
                     syncStrategy: "merge",
-                    storePath: "preferences",
+                    storeName: "preferences",
                     autoSync: true,
                 },
             };
@@ -109,9 +109,9 @@ describe("store-automation/index", () => {
         it("应该拒绝缺少syncStrategy的配置", () => {
             const invalidConfig: Record<string, MatterSyncMetadata> = {
                 theme_change: {
-                    snapshotPath: "snapshot",
+                    propertyPath: "snapshot",
                     syncStrategy: "" as "merge",
-                    storePath: "preferences",
+                    storeName: "preferences",
                     autoSync: true,
                 },
             };
@@ -121,12 +121,12 @@ describe("store-automation/index", () => {
             expect(result).toBe(false);
         });
 
-        it("应该拒绝缺少storePath的配置", () => {
+        it("应该拒绝缺少storeName的配置", () => {
             const invalidConfig: Record<string, MatterSyncMetadata> = {
                 theme_change: {
-                    snapshotPath: "snapshot",
+                    propertyPath: "snapshot",
                     syncStrategy: "merge",
-                    storePath: "",
+                    storeName: "",
                     autoSync: true,
                 },
             };
@@ -139,9 +139,9 @@ describe("store-automation/index", () => {
         it("应该拒绝无效的syncStrategy", () => {
             const invalidConfig: Record<string, MatterSyncMetadata> = {
                 theme_change: {
-                    snapshotPath: "snapshot",
+                    propertyPath: "snapshot",
                     syncStrategy: "invalid" as "merge",
-                    storePath: "preferences",
+                    storeName: "preferences",
                     autoSync: true,
                 },
             };
@@ -152,11 +152,11 @@ describe("store-automation/index", () => {
         });
 
         it("应该接受所有有效的syncStrategy", () => {
-            const configs = ["merge", "replace", "patch"].map((strategy) => ({
+            const configs = ["merge", "replace"].map((strategy) => ({
                 test_matter: {
-                    snapshotPath: "snapshot",
-                    syncStrategy: strategy as "merge" | "replace" | "patch",
-                    storePath: "preferences",
+                    propertyPath: "snapshot",
+                    syncStrategy: strategy as "merge" | "replace",
+                    storeName: "preferences",
                     autoSync: true,
                 },
             }));

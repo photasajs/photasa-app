@@ -21,14 +21,14 @@ const logger = loggers.yuchigong;
  * 职责：
  * 1. 接收李世民圣旨（add_scan_task / remove_scan_task）
  * 2. 创建ScanAction对象并发送ADD_SCAN_ACTION奏折给房玄龄
- * 3. 维护scanningTasks去重集合（业务去重，不持有完整队列）
+ * 3. 通过FangXuanLing.scanning Accessor去重检查（不维护本地状态）
  * 4. 通过qizou启奏向李世民汇报任务结果
  *
- * **架构原则**（RFC 0042 Phase 2.4）：
- * - ❌ 不维护完整队列状态（scanningQueue）- 由ScanningStore管理
- * - ✅ 只维护去重集合（scanningTasks）- 快速检查路径是否已在队列
+ * **架构原则**（RFC 0042 Step 1）：
+ * - ✅ 不维护本地状态 - 所有队列访问委托给FangXuanLing.scanning Accessor
+ * - ✅ 使用Accessor去重检查 - fangXuanLingService.scanning.isInQueue(path)
  * - ✅ 发送单个action奏折（ADD_SCAN_ACTION）- 不发送完整队列
- * - ✅ 房玄龄负责更新Store并触发天界持久化
+ * - ✅ 房玄龄负责更新Store并触发天界持久化（matter-sync.yml）
  *
  * **协调链路**（RFC 0042 Phase 2.4修正版）：
  * 褚遂良完成路径添加 → 启奏李世民 → 李世民下旨尉迟恭 →
@@ -191,9 +191,11 @@ export class YuChiGongService implements IService, IYuChiGongService {
             // 2. 创建ScanAction对象
             const scanAction: ScanAction = {
                 path,
-                action: shengzhi.content.action || "scan",
-                source: shengzhi.content.source || "user",
-                addedAt: Date.now(),
+                action: (shengzhi.content.action as "scan" | "rescan" | "current") || "scan",
+                thumbnailSize: 150, // 默认缩略图大小
+                source: (shengzhi.content.source as "user" | "auto") || "user",
+                timestamp: Date.now(),
+                operationType: "directory",
             };
 
             // 3. ✅ RFC 0042要求：只发送ADD_SCAN_ACTION奏折
@@ -425,10 +427,16 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
     /**
      * 更新扫描进度（UI展示用）
+     * ❌ RFC 0042: 注释掉 - UI层不应该更新进度，应由千里眼（Qianliyan）在底层自动管理
+     * 进度更新应该在扫描引擎层面自动同步到store，UI只负责读取显示
      */
-    updateScanProgress(path: string, progress: { current: number; total: number }): void {
-        logger.debug(`🛡️ 尉迟恭：更新扫描进度 ${path} ${progress.current}/${progress.total}`);
-    }
+    // updateScanProgress(path: string, progress: { current: number; total: number }): void {
+    //     logger.debug(`🛡️ 尉迟恭：更新扫描进度 ${path} ${progress.current}/${progress.total}`);
+    //     this.fangXuanLingService.scanning.updateProgress(path, {
+    //         processed: progress.current,
+    //         total: progress.total,
+    //     });
+    // }
 
     /**
      * 初始化扫描队列（应用启动时调用）

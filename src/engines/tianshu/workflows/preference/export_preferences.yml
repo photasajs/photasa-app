@@ -61,7 +61,7 @@ steps:
     action: "formatResponse"
     input:
       success: true
-      data: {{steps.export_from_engine.output.data}}
+      data: {{steps.export_from_engine.data}}
       format: {{input.format}}
       timestamp: {{now()}}
       source: "wenchang_engine"

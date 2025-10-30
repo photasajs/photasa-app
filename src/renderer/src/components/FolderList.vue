@@ -24,7 +24,7 @@ import { loggers } from "@common/logger";
  * I18n
  */
 const { t } = useI18n();
-const logger = loggers.renderer;
+const logger = loggers.lishiming;
 
 /**
  * Preference store
@@ -32,9 +32,9 @@ const logger = loggers.renderer;
 const preferenceStore = usePreferenceStore();
 
 /**
- * Add scan folder
+ * ✅ RFC 0042: addScanFolder 已废弃
+ * TODO: 需要实现新的 rescan API（直接通过尉迟恭添加扫描任务）
  */
-const { addScanFolder } = preferenceStore;
 
 /**
  * Store to refs
@@ -179,8 +179,14 @@ async function rescan(key: string): Promise<void> {
     try {
         await resetPhotasaConfig(key);
         logger.info(`[FolderList] Reset config completed for: ${key}`);
-        addScanFolder(key, "rescan");
-        logger.info(`[FolderList] Added scan folder to queue: ${key}`);
+
+        // ✅ RFC 0042: addScanFolder 已废弃
+        // TODO: 实现新的 rescan 机制
+        // 应该通过尉迟恭直接添加扫描任务：
+        // await yuChiGong.addScanTask({ path: key, action: "rescan", source: "user" });
+        logger.warn(`⚠️ Rescan 功能暂时禁用，等待 RFC 0042 完成后端实现`);
+
+        logger.info(`[FolderList] Rescan prepared for: ${key}`);
     } catch (error) {
         logger.error(`[FolderList] Error during rescan of ${key}:`, error);
     }

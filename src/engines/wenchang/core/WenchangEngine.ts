@@ -415,14 +415,12 @@ export class WenchangEngine extends EventEmitter {
 
             // 添加调试信息，显示实际验证的数据类型和内容
             const actualType = Array.isArray(targetData) ? "array" : typeof targetData;
-            logger.debug(`🌌 文昌星君查验数据：类型=${actualType}`, {
-                dataKeys: Array.isArray(targetData)
-                    ? `数组长度=${targetData.length}`
-                    : typeof targetData === "object"
-                      ? Object.keys(targetData)
-                      : "非对象类型",
-                dataType: actualType,
-            });
+            const dataInfo = Array.isArray(targetData)
+                ? `数组[长度=${targetData.length}]`
+                : typeof targetData === "object"
+                  ? `对象[字段=${Object.keys(targetData).length}个]`
+                  : `${actualType}`;
+            logger.debug(`🌌 文昌星君查验数据：${dataInfo}`);
 
             // 解析YAML格式的验证规则
             if (data.rules && Array.isArray(data.rules)) {

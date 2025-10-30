@@ -314,6 +314,63 @@ output_schema:
 - update_preferences.yml 删除所有不必要的output定义
 - output_schema现在正确匹配Engine的实际返回值
 
+#### 4. YAML变量访问模式（2025-10-27更新）
+
+**核心原则**：VariableResolver直接暴露`steps.stepId = result.output`（已unwrap的数据）
+
+**允许的访问模式**：
+
+1. **直接访问完整输出**：
+   ```yaml
+   # 获取步骤的完整输出
+   array: "{{steps.restore_queue}}"  # ✅ 获得完整数组
+   data: "{{steps.get_snapshot}}"    # ✅ 获得完整对象
+   ```
+
+2. **字段访问**：
+   ```yaml
+   # 访问输出的特定字段
+   valid: "{{steps.validate_delta.valid}}"      # ✅ 访问boolean字段
+   errors: "{{steps.validate_delta.errors}}"    # ✅ 访问数组字段
+   data: "{{steps.get_snapshot.data}}"          # ✅ 访问对象字段
+   ```
+
+3. **嵌套字段访问**：
+   ```yaml
+   # 访问嵌套字段
+   theme: "{{steps.get_snapshot.data.ui.theme}}"  # ✅ 深度访问
+   ```
+
+**禁止的访问模式**：
+
+```yaml
+# ❌ 禁止：显式使用.output（这是内部实现细节）
+data: "{{steps.get_snapshot.output}}"
+data: "{{steps.get_snapshot.output.data}}"
+
+# validate-workflows.ts (Line 72-77) 会检测并报错
+```
+
+**架构原理**：
+
+VariableResolver (`src/engines/tianshu/orchestration/VariableResolver.ts` Line 396-417) 实现：
+```typescript
+private getStepOutputs(context: ExecutionContext): Record<string, any> {
+    const outputs: Record<string, any> = {};
+    for (const [stepId, result] of context.stepResults.entries()) {
+        // 直接暴露result.output（已unwrap）
+        outputs[stepId] = result.output;  // steps.stepId → output
+    }
+    return outputs;
+}
+```
+
+**设计理由**：
+- **简洁性**：`steps.stepId`比`steps.stepId.output`更简洁
+- **语义清晰**：stepId直接代表步骤的输出，无需额外后缀
+- **架构一致**：与RFC 0045数据扁平化策略保持一致
+- **实现细节隐藏**：`.output`是内部存储字段，不应暴露给YAML
+
 ### 工作流优势
 
 #### 1. 运行时逻辑描述
@@ -1699,11 +1756,16 @@ src/renderer/src/services/
 
    /**
     * 奏折matter与Store同步元数据配置
+    *
+    * ⚠️ 命名重构计划 (2025-10-27)：
+    * - snapshotPath → propertyPath（更准确反映其双重职责）
+    * - storePath → storeName（明确是Store名称而非路径）
+    * 详见：RFC 0042 "Store Automation设计说明"章节
     */
    export interface MatterSyncMetadata {
-       snapshotPath: string;
+       snapshotPath: string;  // 将重命名为：propertyPath
        syncStrategy: 'merge' | 'replace' | 'patch';
-       storePath: string;
+       storePath: string;     // 将重命名为：storeName
        autoSync: boolean;
        description?: string;
    }

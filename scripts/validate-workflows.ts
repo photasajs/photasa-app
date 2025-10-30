@@ -57,21 +57,22 @@ function validateTemplateVariables(content: string, _filePath: string): string[]
 
             // 检查变量路径格式
             if (variableContent.includes("steps.")) {
-                // 验证步骤变量路径格式: steps.stepId.output.field 或 steps.stepId.field
+                // 验证步骤变量路径格式: steps.stepId 或 steps.stepId.field
+                // RFC 0045: .output是内部实现，YAML语法使用 {{steps.stepId}} 直接访问
                 const stepPathPattern =
-                    /^steps\.([a-zA-Z_][a-zA-Z0-9_]*)(\.output)?(\.[a-zA-Z_][a-zA-Z0-9_.]*)$/;
+                    /^steps\.([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z_][a-zA-Z0-9_.]*)?$/;
                 if (!stepPathPattern.test(variableContent)) {
                     errors.push(
                         `第${lineNumber}行: 步骤符路格式有误 "{{${variableContent}}}"，` +
-                            `正确符路应为: steps.步骤名.output.字段 或 steps.步骤名.字段`,
+                            `正确符路应为: steps.步骤名 或 steps.步骤名.字段`,
                     );
                 }
 
-                // 检查是否有双重.output路径（常见错误）
-                if (variableContent.includes(".output.output")) {
+                // RFC 0045: 禁止在YAML中显式使用.output（这是内部实现细节）
+                if (variableContent.match(/^steps\.[a-zA-Z_][a-zA-Z0-9_]*\.output($|\.)/)) {
                     errors.push(
-                        `第${lineNumber}行: 发现重复的output符路 "{{${variableContent}}}"，` +
-                            `此乃重叠符路之误，请检查符路书写`,
+                        `第${lineNumber}行: 检测到显式使用.output "{{${variableContent}}}"，` +
+                            `根据RFC 0045，.output是内部实现，应使用 steps.步骤名 或 steps.步骤名.字段`,
                     );
                 }
             } else if (variableContent.includes("input.")) {

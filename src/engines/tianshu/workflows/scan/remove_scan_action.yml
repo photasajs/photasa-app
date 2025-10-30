@@ -39,14 +39,15 @@ steps:
     - id: "filter_action"
       name: "从队列移除任务"
       type: "builtin"
-      action: "transform"
+      action: "arrayFilter"
       input:
-          type: "filter"
           array: "{{steps.restore_queue}}"
           condition:
               field: "path"
               operator: "ne"
               value: "{{inputs.path}}"
+      # output_schema定义arrayFilter的返回值类型（Raw Data = unknown[]）
+      # TaiyiService已unwrap，所以steps.filter_action直接就是数组
       output_schema:
           type: array
           description: "移除任务后的完整队列"
@@ -62,14 +63,22 @@ steps:
           methodName: "persistQueue"
           params:
               - "{{steps.filter_action}}"
-      output_schema:
-          type: object
-          properties:
-              success:
-                  type: boolean
-              timestamp:
-                  type: number
+      # ✅ RFC 0045: persistQueue是副作用操作(返回void)，不产生输出，因此不声明output_schema
+      # 成功完成即表示持久化成功，失败则抛出异常由错误处理机制捕获
       dependsOn: ["filter_action"]
+
+    - id: "calculate_size"
+      name: "计算队列大小"
+      type: "builtin"
+      action: "arrayCount"
+      input:
+          array: "{{steps.filter_action}}"
+      # output_schema定义arrayCount的返回值类型（Raw Data = number）
+      # TaiyiService已unwrap，所以steps.calculate_size直接就是数字
+      output_schema:
+          type: number
+          description: "队列大小"
+      dependsOn: ["persist_queue"]
 
     - id: "format_response"
       name: "返回完整队列"
@@ -78,9 +87,9 @@ steps:
       input:
           success: true
           queue: "{{steps.filter_action}}"
-          queueSize: "{{steps.filter_action.length}}"
+          queueSize: "{{steps.calculate_size}}"
           persisted: true
-      dependsOn: ["persist_queue"]
+      dependsOn: ["calculate_size"]
 
 outputs:
     queue:

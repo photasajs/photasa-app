@@ -12,80 +12,110 @@
 import type { MatterSyncMetadata } from "./index";
 import type { ZhaolingResponse } from "@renderer/interfaces/yuan-tian-gang.interface";
 import { loggers } from "@common/logger";
-import { mergePreferencesFromTianjie } from "../utils";
-import { get, isEmpty, isObject, isString } from "radash";
+import { mergeStoreData } from "../utils";
+import { get, isEmpty, isObject, set } from "radash";
 
 const logger = loggers.fangxuanling;
 
 /**
  * 从Store中获取指定路径的数据（纯函数）
  *
+ * ✅ RFC 0042 Store Automation修正 (Linus "好品味"设计):
+ * - 参数名从storePath改为propertyPath，明确表示属性链而非路径
+ *
  * @param store - Store实例
- * @param storePath - 数据路径（如"preferences"、"preferences.ui"）
+ * @param propertyPath - 属性链（如"queue"、"ui.theme"、"."表示根级别）
  * @returns 目标数据
  */
 export function getStoreFieldData(
     store: Record<string, unknown>,
-    storePath: string,
+    propertyPath: string,
 ): Record<string, unknown> {
-    const pathParts = storePath.split(".");
+    const pathParts = propertyPath.split(".");
 
-    // 如果只有一个部分（如"preferences"），直接返回store对应字段
+    // 如果只有一个部分（如"queue"），直接返回store对应字段
     if (pathParts.length === 1) {
         return (store[pathParts[0]] as Record<string, unknown>) || {};
     }
 
     // 否则使用get方法获取嵌套字段
-    return get(store, storePath, {}) as Record<string, unknown>;
+    return get(store, propertyPath, {}) as Record<string, unknown>;
 }
 
 /**
  * 设置Store指定路径的数据（有副作用）
  *
+ * ✅ RFC 0042 Store Automation修正 (Linus "好品味"设计):
+ * - 参数名从snapshotPath改为propertyPath，明确表示属性链
+ *
  * @param store - Store实例
- * @param storePath - 数据路径（如"preferences"、"preferences.ui"）
+ * @param propertyPath - 属性链（如"."、"queue"、"ui.theme"）
+ *   - "." 表示在字段根级别深度合并（如preferences字段）
+ *   - "queue" 表示设置字段内的queue属性
+ *   - "ui.theme" 表示设置嵌套路径ui.theme
  * @param newData - 新数据
+ *
+ * 示例：
+ * - setStoreFieldData(preferencesStore, ".", { ui: {...} })
+ *   → 深度合并到preferences字段：preferencesStore.$patch({ preferences: { ui: {...} } })
+ * - setStoreFieldData(scanningStore, "queue", [...])
+ *   → 设置queue属性：scanningStore.$patch({ queue: [...] })
  */
 export function setStoreFieldData(
-    store: Record<string, unknown> & { $patch: (data: Record<string, unknown>) => void },
-    storePath: string,
-    newData: Record<string, unknown>,
+    store: Record<string, unknown> & {
+        $patch:
+            | ((data: Record<string, unknown>) => void)
+            | ((fn: (state: unknown) => void) => void);
+    },
+    propertyPath: string,
+    newData: unknown,
 ): void {
-    const pathParts = storePath.split(".");
-
-    // 如果只有一个部分（如"preferences"），使用$patch直接更新
-    if (pathParts.length === 1) {
-        store.$patch({
-            [pathParts[0]]: newData,
-        });
-        logger.debug(`📚 册库字段已更新: ${storePath}`);
+    // ✅ 特殊处理："."表示在字段根级别深度合并
+    // 例如：preferences字段接收整个preferences对象 { ui, display, scanning, ... }
+    if (propertyPath === "." || isEmpty(propertyPath)) {
+        if (!isObject(newData)) {
+            logger.error(`❌ propertyPath为"."时，newData必须是对象`);
+            return;
+        }
+        (store.$patch as (data: Record<string, unknown>) => void)(
+            newData as Record<string, unknown>,
+        );
+        logger.debug(`📚 册库已深度合并整个对象到字段根级别`);
         return;
     }
 
-    // 对于嵌套路径，需要构建完整的更新对象
-    const updateObj: Record<string, unknown> = {};
-    let current: Record<string, unknown> = updateObj;
+    // ✅ 修复：使用函数式 $patch 来正确更新属性
+    // 这样可以避免覆盖父对象的其他属性
+    (store.$patch as (fn: (state: unknown) => void) => void)((state) => {
+        const stateObj = state as Record<string, unknown>;
 
-    for (let i = 0; i < pathParts.length - 1; i++) {
-        current[pathParts[i]] = {};
-        current = current[pathParts[i]] as Record<string, unknown>;
-    }
-    current[pathParts[pathParts.length - 1]] = newData;
-
-    store.$patch(updateObj);
-    logger.debug(`📚 册库嵌套字段已更新: ${storePath}`);
+        // 检查是否是嵌套路径
+        if (propertyPath.includes(".")) {
+            // 嵌套路径：使用 radash set（它会正确处理嵌套路径）
+            // 例如：set(state, "ui.theme", "dark") 只更新 theme，保留 language, layout 等其他属性
+            set(stateObj, propertyPath, newData);
+        } else {
+            // 顶层路径：直接赋值（radash set 对顶层路径不修改原对象）
+            // 例如：state["preferences"] = newData
+            stateObj[propertyPath] = newData;
+        }
+    });
+    logger.debug(`📚 册库嵌套字段已更新: ${propertyPath}`);
 }
 
 /**
  * 从天界响应中提取snapshot数据（纯函数）
  *
+ * ✅ RFC 0042 Store Automation修正 (Linus "好品味"设计):
+ * - 参数名从snapshotPath改为propertyPath，明确表示属性链
+ *
  * @param zhaolingResponse - 天界响应
- * @param snapshotPath - snapshot路径（如 "snapshot" 或 "data.result"）
+ * @param propertyPath - 属性链（如"queue"、"."表示根级别）
  * @returns 提取的snapshot数据，失败返回null
  */
 export function extractSnapshotFromResponse(
     zhaolingResponse: ZhaolingResponse,
-    snapshotPath: string,
+    propertyPath: string,
 ): unknown | null {
     try {
         const snapshot: unknown = zhaolingResponse.data;
@@ -96,108 +126,30 @@ export function extractSnapshotFromResponse(
             return null;
         }
 
-        // 如果snapshotPath为空或为.，则返回snapshot
-        if (isEmpty(snapshotPath) || snapshotPath === ".") {
+        // 如果propertyPath为空或为.，则返回snapshot
+        if (isEmpty(propertyPath) || propertyPath === ".") {
             return snapshot;
         }
 
-        return get(snapshot, snapshotPath);
+        return get(snapshot, propertyPath);
     } catch (error) {
-        logger.error(`❌ 提取snapshot失败: ${snapshotPath}`, error);
+        logger.error(`❌ 提取snapshot失败: ${propertyPath}`, error);
         return null;
     }
-}
-
-/**
- * 应用merge策略：深度合并snapshot到Store（纯函数）
- *
- * @param storeData - Store当前数据
- * @param storePath - 合并路径："."表示从根合并整个对象
- * @param snapshot - 天界snapshot数据
- * @returns 合并后的数据
- */
-export function applyMergeStrategy(
-    storeData: Record<string, unknown>,
-    storePath: string,
-    snapshot: unknown,
-): Record<string, unknown> {
-    // storePath可以是"."（表示从根合并），只需要检查是否为有效字符串
-    if (!isString(storePath) || isEmpty(storePath)) {
-        logger.warn("⚠️ storePath无效，返回原Store数据");
-        return storeData;
-    }
-
-    const mergedData = mergePreferencesFromTianjie(storeData, storePath, snapshot);
-    return mergedData;
-}
-
-/**
- * 应用replace策略：完全替换Store字段（纯函数）
- *
- * @param storeData - Store当前数据
- * @param snapshot - 天界snapshot数据
- * @param storePath - Store路径（如 "preferences.ui"）
- * @returns 更新后的Store数据
- */
-export function applyReplaceStrategy(
-    storeData: Record<string, unknown>,
-    snapshot: unknown,
-    storePath: string,
-): Record<string, unknown> {
-    try {
-        const targetPathParts = storePath.split(".");
-        const newStoreData = JSON.parse(JSON.stringify(storeData)); // 深拷贝
-        let target: Record<string, unknown> = newStoreData;
-
-        // 导航到目标路径的父级
-        for (let i = 0; i < targetPathParts.length - 1; i++) {
-            const nextTarget = target[targetPathParts[i]];
-            if (!nextTarget || typeof nextTarget !== "object") {
-                logger.error(`❌ Store路径不存在: ${storePath}`);
-                return storeData; // 返回原数据
-            }
-            target = nextTarget as Record<string, unknown>;
-        }
-
-        // 替换最终字段
-        const lastKey = targetPathParts[targetPathParts.length - 1];
-        target[lastKey] = snapshot;
-
-        return newStoreData;
-    } catch (error) {
-        logger.error(`❌ replace策略执行失败: ${storePath}`, error);
-        return storeData; // 返回原数据
-    }
-}
-
-/**
- * 应用patch策略：浅层合并snapshot到Store（纯函数）
- *
- * @param storeData - Store当前数据
- * @param snapshot - 天界snapshot数据
- * @returns 合并后的数据
- */
-export function applyPatchStrategy(
-    storeData: Record<string, unknown>,
-    snapshot: unknown,
-): Record<string, unknown> {
-    if (!isObject(snapshot)) {
-        logger.warn("⚠️ snapshot数据无效，返回原Store数据");
-        return storeData;
-    }
-
-    // 浅层合并
-    return { ...storeData, ...(snapshot as Record<string, unknown>) };
 }
 
 /**
  * 同步Store的主函数（唯一有副作用的函数，调用Store的方法）
  *
  * ✅ RFC 0038: 支持任意Store，不再硬编码到PreferenceStore
+ * ✅ RFC 0042 Store Automation修正 (Linus "好品味"设计):
+ * - syncMetadata.snapshotPath → syncMetadata.propertyPath
+ * - syncMetadata.storePath → syncMetadata.storeName
+ * - 修复merge/patch策略：直接在完整Store上操作，而不是提取单个字段
  *
  * @param matter - 奏折类型
  * @param zhaolingResponse - 天界响应
- * @param syncMetadata - 同步配置（包含storePath决定使用哪个Store）
+ * @param syncMetadata - 同步配置（包含storeName决定使用哪个Store）
  * @param store - 任意Pinia Store实例
  */
 export function syncStoreWithSnapshot(
@@ -208,44 +160,47 @@ export function syncStoreWithSnapshot(
 ): boolean {
     try {
         // 1. 提取snapshot（纯函数）
-        const snapshot = extractSnapshotFromResponse(zhaolingResponse, syncMetadata.snapshotPath);
+        const snapshot = extractSnapshotFromResponse(zhaolingResponse, syncMetadata.propertyPath);
         if (!snapshot) {
+            logger.error(`❌ 提取snapshot失败: ${syncMetadata.propertyPath}`);
             return false;
         }
 
         logger.info(
-            `📚 开始册库自动同步: ${matter} (策略: ${syncMetadata.syncStrategy}, 目标: ${syncMetadata.storePath})`,
+            `📚 开始册库自动同步: ${matter} (策略: ${syncMetadata.syncStrategy}, 目标: ${syncMetadata.storeName})`,
         );
 
-        // 2. 获取Store当前数据
-        const currentStoreData = getStoreFieldData(store, syncMetadata.storePath);
-
-        // 3. 根据策略处理数据（纯函数）
-        let updatedData: Record<string, unknown>;
-
+        // 2. 根据策略处理数据
         switch (syncMetadata.syncStrategy) {
-            case "merge":
-                updatedData = applyMergeStrategy(
-                    currentStoreData,
-                    syncMetadata.snapshotPath,
-                    snapshot,
+            case "replace":
+                // replace策略：直接替换指定路径的数据（可以是任何值：对象、数组、字符串、数字等）
+                setStoreFieldData(store, syncMetadata.propertyPath, snapshot);
+                logger.info(
+                    `📚 册库字段替换完成: ${syncMetadata.storeName}.${syncMetadata.propertyPath}`,
                 );
-                logger.info(`📚 册库深度合并完成: ${matter}`);
                 break;
 
-            case "replace":
-                // replace策略：完全替换
+            case "merge":
+                // merge策略：深度合并到Store指定路径
+                // ✅ 关键修复：传入Store的当前数据（$state），而不是Store对象本身
                 if (!isObject(snapshot)) {
-                    logger.error(`❌ replace策略要求snapshot为对象`);
+                    logger.error(`❌ merge策略要求snapshot为对象`);
                     return false;
                 }
-                updatedData = snapshot as Record<string, unknown>;
-                logger.info(`📚 册库字段替换完成: ${syncMetadata.storePath}`);
-                break;
 
-            case "patch":
-                updatedData = applyPatchStrategy(currentStoreData, snapshot);
-                logger.info(`📚 册库浅层合并完成: ${matter}`);
+                // 获取Store的当前数据（普通对象，不是响应式Store）
+                const currentData = { ...store } as Record<string, unknown>;
+
+                // 执行深度合并，返回要patch的数据对象
+                const patchData = mergeStoreData(currentData, syncMetadata.propertyPath, snapshot);
+
+                // 应用patch到Store
+                if (isObject(patchData) && Object.keys(patchData).length > 0) {
+                    store.$patch(patchData as Record<string, unknown>);
+                    logger.info(`📚 册库深度合并完成: ${matter}`);
+                } else {
+                    logger.warn(`⚠️ 合并结果为空，跳过patch: ${matter}`);
+                }
                 break;
 
             default:
@@ -253,10 +208,7 @@ export function syncStoreWithSnapshot(
                 return false;
         }
 
-        // 4. 应用到Store（有副作用的操作）
-        setStoreFieldData(store, syncMetadata.storePath, updatedData);
-        logger.info(`📚 册库自动同步成功: ${matter} -> ${syncMetadata.storePath}`);
-
+        logger.info(`📚 册库自动同步成功: ${matter} -> ${syncMetadata.storeName}`);
         return true;
     } catch (error) {
         logger.error(`❌ 册库自动同步失败: ${matter}`, error);

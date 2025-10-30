@@ -52,13 +52,17 @@ steps:
                   addedAt:
                       type: number
 
-    - id: "log_success"
-      name: "记录成功日志"
+    - id: "calculate_size"
+      name: "计算队列大小"
       type: "builtin"
-      action: "log"
+      action: "arrayCount"
       input:
-          level: "info"
-          message: "🔧 扫描队列已恢复 ({{steps.restore_queue.length || 0}}个任务)"
+          array: "{{steps.restore_queue}}"
+      # output_schema定义arrayCount的返回值类型（Raw Data = number）
+      # TaiyiService已unwrap，所以steps.calculate_size直接就是数字
+      output_schema:
+          type: number
+          description: "队列中的扫描任务数量"
       dependsOn: ["restore_queue"]
 
     - id: "format_response"
@@ -67,11 +71,11 @@ steps:
       action: "return"
       input:
           success: true
-          queue: "{{steps.restore_queue || []}}"
-          queueSize: "{{steps.restore_queue.length || 0}}"
+          queue: "{{steps.restore_queue}}"
+          queueSize: "{{steps.calculate_size}}"
           source: "{{inputs.source}}"
           timestamp: "{{now()}}"
-      dependsOn: ["log_success"]
+      dependsOn: ["calculate_size"]
 
 # 输出定义
 outputs:

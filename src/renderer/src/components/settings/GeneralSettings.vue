@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { chooseDirectory, scanSubfolders } from "@renderer/utils/api";
+import { chooseDirectory } from "@renderer/utils/api";
 import { PhFolder as FolderTwoTone, PhX as CloseOutlined } from "@phosphor-icons/vue";
 import { notification } from "@renderer/services/notification-manager";
 import { BaseButton, BaseSpace } from "@renderer/components/ui";
@@ -12,6 +12,9 @@ import {
     isPathSafe,
     detectPathType,
 } from "@renderer/services/chusuiliang/path-utils";
+import { loggers } from "@common/logger";
+
+const logger = loggers.lishiming;
 
 /**
  * 通用设置组件 - 褚遂良中书令
@@ -109,7 +112,7 @@ async function onChoose(): Promise<void> {
 
         // 显示路径类型信息
         const pathType = detectPathType(path);
-        console.debug("📝 选择的路径类型信息", {
+        logger.debug("📝 选择的路径类型信息", {
             original: path,
             normalized: validationResult.normalizedPath,
             type: pathType.type,
@@ -117,28 +120,10 @@ async function onChoose(): Promise<void> {
             hasUrlEncoding: pathType.hasUrlEncoding,
         });
 
-        // 使用ChuSuiLiang服务添加路径（内部会再次验证和规范化）
+        // ✅ RFC 0042: 使用ChuSuiLiang服务添加路径
+        // 添加到 watched folder list 后，李世民路由会自动触发尉迟恭添加扫描任务
+        // UI层不再负责子文件夹扫描和批量添加扫描任务（后端职责）
         await chuSuiLiang.addPath(path);
-
-        try {
-            const folders = await scanSubfolders(validationResult.normalizedPath);
-            for (const f of folders) {
-                await chuSuiLiang.addScanFolder(f, "scan");
-            }
-            await chuSuiLiang.addScanFolder(validationResult.normalizedPath, "current");
-        } catch (scanError: unknown) {
-            // If scanning fails, still add the main path but show a warning
-            const errorMessage =
-                scanError instanceof Error ? scanError.message : t("notification.unknownError");
-            notification.warning({
-                title: t("notification.scanError.title"),
-                message: t("notification.scanError.message", {
-                    path: validationResult.normalizedPath,
-                    error: errorMessage,
-                }),
-            });
-            await chuSuiLiang.addScanFolder(validationResult.normalizedPath, "current");
-        }
     } catch (error: unknown) {
         const errorMessage =
             error instanceof Error ? error.message : t("notification.unknownError");

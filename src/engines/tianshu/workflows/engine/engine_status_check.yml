@@ -130,8 +130,8 @@ steps:
     service: "builtin"
     action: "calculate"
     input:
-      allStatus: {{steps.get_all_engine_status.output.result}}
-      availableList: {{steps.get_available_engines.output.result}}
+      allStatus: {{steps.get_all_engine_status.allStatus}}
+      availableList: {{steps.get_available_engines.availableList}}
     output:
       stats: "result"
     # 声明适配器返回结构，使工作流自解释
@@ -152,12 +152,12 @@ steps:
     service: "builtin"
     action: "compile"
     input:
-      engines: {{steps.get_all_engine_status.output.result}}
-      availableEngines: {{steps.get_available_engines.output.result}}
+      engines: {{steps.get_all_engine_status.allStatus}}
+      availableEngines: {{steps.get_available_engines.availableList}}
       specificEngine: {{input.engineName}}
-      specificStatus: {{steps.check_specific_engine.output.result}}
-      wenchangTest: {{steps.test_wenchang_engine.output.result}}
-      statistics: {{steps.calculate_statistics.output.result}}
+      specificStatus: {{steps.check_specific_engine.specificStatus}}
+      wenchangTest: {{steps.test_wenchang_engine.wenchangResult}}
+      statistics: {{steps.calculate_statistics.stats}}
     output:
       detailedReport: "result"
     # 声明适配器返回结构，使工作流自解释
@@ -179,9 +179,9 @@ steps:
     service: "builtin"
     action: "compile"
     input:
-      engines: {{steps.get_all_engine_status.output.result}}
-      availableEngines: {{steps.get_available_engines.output.result}}
-      statistics: {{steps.calculate_statistics.output.result}}
+      engines: {{steps.get_all_engine_status.allStatus}}
+      availableEngines: {{steps.get_available_engines.availableList}}
+      statistics: {{steps.calculate_statistics.stats}}
     output:
       simpleReport: "result"
     # 声明适配器返回结构，使工作流自解释
@@ -204,13 +204,13 @@ steps:
     action: "return"
     input:
       success: true
-      engines: {{steps.get_all_engine_status.output.result}}
-      availableEngines: {{steps.get_available_engines.output.result}}
-      totalEngines: {{steps.calculate_statistics.output.result.totalEngines}}
-      readyEngines: {{steps.calculate_statistics.output.result.readyEngines}}
-      timestamp: {{steps.calculate_statistics.output.result.timestamp}}
-      detailedReport: {{steps.compile_detailed_report.output.result}}
-      simpleReport: {{steps.compile_simple_report.output.result}}
+      engines: {{steps.get_all_engine_status.allStatus}}
+      availableEngines: {{steps.get_available_engines.availableList}}
+      totalEngines: {{steps.calculate_statistics.stats.totalEngines}}
+      readyEngines: {{steps.calculate_statistics.stats.readyEngines}}
+      timestamp: {{steps.calculate_statistics.stats.timestamp}}
+      detailedReport: {{steps.compile_detailed_report.detailedReport}}
+      simpleReport: {{steps.compile_simple_report.simpleReport}}
     dependsOn: ["compile_detailed_report", "compile_simple_report"]
 
 # 错误处理

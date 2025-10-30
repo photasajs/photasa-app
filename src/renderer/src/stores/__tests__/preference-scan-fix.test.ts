@@ -79,7 +79,7 @@ describe("preference-scan-fix", () => {
             const folderPath = "/test/scanned-folder";
 
             // 先设置根路径，这样 buildDataNode 才能工作
-            store.preferences.scanning.paths = ["/test"];
+            store.scanning.paths = ["/test"];
             store.appState.folderTree = [
                 {
                     key: "/test",
@@ -302,7 +302,7 @@ describe("preference-scan-fix", () => {
             const folders = Array.from({ length: 10 }, (_, i) => `/test/scanned-folder${i}`);
 
             // 先设置根路径，这样 buildDataNode 才能工作
-            store.preferences.scanning.paths = ["/test"];
+            store.scanning.paths = ["/test"];
             store.appState.folderTree = [
                 {
                     key: "/test",
@@ -360,7 +360,7 @@ describe("preference-scan-fix", () => {
             const filePath = "/test/photos/image.jpg";
 
             // 先设置根路径，确保 buildDataNode 能工作
-            store.preferences.scanning.paths = ["/test"];
+            store.scanning.paths = ["/test"];
             store.appState.folderTree = [
                 {
                     key: "/test",
@@ -403,7 +403,7 @@ describe("preference-scan-fix", () => {
             const dirPath = "/test/new-folder";
 
             // 先设置根路径
-            store.preferences.scanning.paths = ["/test"];
+            store.scanning.paths = ["/test"];
             store.appState.folderTree = [
                 {
                     key: "/test",

@@ -12,6 +12,7 @@ import { YuChiGongService } from "../yuchigong";
 import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
 import type { Qizou } from "@common/interfaces/qizou.interface";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
+import type { ScanAction } from "@common/scan-types";
 import {
     ZOUZHE_MATTERS,
     ZOUZHE_PRIORITIES,
@@ -24,9 +25,9 @@ import {
  * Mock扫描队列Store（模拟房玄龄的scanning Store）
  */
 class MockScanningStore {
-    private queue: Array<{ path: string; action: string; source: string; addedAt: number }> = [];
+    private queue: ScanAction[] = [];
 
-    addAction(action: { path: string; action: string; source: string; addedAt: number }): void {
+    addAction(action: ScanAction): void {
         this.queue.push(action);
     }
 
@@ -38,7 +39,7 @@ class MockScanningStore {
         return this.queue.some((action) => action.path === path);
     }
 
-    getQueue(): Array<{ path: string; action: string; source: string; addedAt: number }> {
+    getQueue(): ScanAction[] {
         return [...this.queue];
     }
 
@@ -57,8 +58,12 @@ class MockScanningStore {
 class MockScanningAccessor {
     constructor(private store: MockScanningStore) {}
 
-    get queue(): Array<{ path: string; action: string; source: string; addedAt: number }> {
-        return this.store.getQueue();
+    get queue(): ScanAction[] {
+        return this.store.getQueue().map((item) => ({
+            ...item,
+            thumbnailSize: 150,
+            operationType: "directory" as const,
+        }));
     }
 
     get queueSize(): number {
@@ -77,7 +82,7 @@ class MockScanningAccessor {
         return null;
     }
 
-    get nextScanAction(): { path: string; action: string; source: string; addedAt: number } | null {
+    get nextScanAction(): ScanAction | null {
         return this.queue[0] || null;
     }
 }
@@ -140,13 +145,17 @@ class MockFangXuanLingService implements IFangXuanLingService {
 
         // ✅ RFC 0042: Mock processZouzhe should update store for ADD_SCAN_ACTION
         if (zouzhe.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
-            const action = (zouzhe.content as Record<string, unknown>).action as {
-                path: string;
-                action: string;
-                source: string;
-                addedAt: number;
+            const content = zouzhe.content as Record<string, unknown>;
+            const actionData = content.action as Record<string, unknown>;
+            const scanAction: ScanAction = {
+                path: actionData.path as string,
+                action: (actionData.action as "scan" | "rescan" | "current") || "scan",
+                thumbnailSize: (actionData.thumbnailSize as number) || 150,
+                source: (actionData.source as "user" | "auto") || "user",
+                timestamp: (actionData.addedAt as number) || Date.now(),
+                operationType: (actionData.operationType as "directory" | "file") || "directory",
             };
-            this.mockScanningStore.addAction(action);
+            this.mockScanningStore.addAction(scanAction);
         }
 
         // ✅ RFC 0042: Mock processZouzhe should update store for REMOVE_SCAN_ACTION
@@ -742,12 +751,18 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
     });
 
     describe("扫描进度更新测试", () => {
-        it("应该能够更新扫描进度", () => {
-            const testPath = "/test/progress-path";
-            const progress = { current: 50, total: 100 };
+        it("✅ RFC 0042: updateScanProgress已移除 - 进度由千里眼自动管理", () => {
+            // ✅ RFC 0042架构要求：
+            // - UI层不应该更新进度，应由千里眼（Qianliyan）在底层自动管理
+            // - 进度更新应该在扫描引擎层面自动同步到store，UI只负责读取显示
+            // - YuChiGong的updateScanProgress方法已在Line 431-437被注释掉
 
-            // 不应该抛出错误
-            expect(() => yuchiGong.updateScanProgress(testPath, progress)).not.toThrow();
+            // 验证：updateScanProgress方法不存在
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((yuchiGong as any).updateScanProgress).toBeUndefined();
+
+            // 正确的架构：UI层通过FangXuanLing.scanning读取进度
+            // 示例：const progress = fangXuanLing.scanning.currentProgress;
         });
     });
 

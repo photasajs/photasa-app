@@ -63,7 +63,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             });
 
             // 记录初始状态
-            const initialSize = store.preferences.display.thumbnailSize;
+            const initialSize = store.display.thumbnailSize;
             expect(initialSize).toBe(150); // 默认值
 
             // 执行：用户通过褚遂良更新缩略图大小
@@ -90,7 +90,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             });
 
             // 验证Store自动同步
-            expect(store.preferences.display.thumbnailSize).toBe(newThumbnailSize);
+            expect(store.display.thumbnailSize).toBe(newThumbnailSize);
         });
 
         it("应该验证缩略图大小范围（最小值）", async () => {
@@ -106,14 +106,14 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     data: {
                         snapshot: {
                             data: {
-                                ui: store.preferences.ui,
+                                ui: store.ui,
                                 display: {
-                                    ...store.preferences.display,
+                                    ...store.display,
                                     thumbnailSize: 150, // 褚遂良验证后返回150
                                 },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
+                                scanning: store.scanning,
+                                performance: store.performance,
+                                system: store.system,
                             },
                             revision: 2,
                             timestamp: Date.now(),
@@ -127,7 +127,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             // 验证天枢被调用，褚遂良已处理边界值
             expect(mockTianshu.processCommand).toHaveBeenCalled();
             // 褚遂良服务updateThumbnailSize方法验证size>=150，小于则使用150
-            expect(store.preferences.display.thumbnailSize).toBe(150);
+            expect(store.display.thumbnailSize).toBe(150);
         });
 
         it("应该验证缩略图大小范围（最大值）", async () => {
@@ -143,14 +143,14 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     data: {
                         snapshot: {
                             data: {
-                                ui: store.preferences.ui,
+                                ui: store.ui,
                                 display: {
-                                    ...store.preferences.display,
+                                    ...store.display,
                                     thumbnailSize: 150, // 褚遂良验证后返回150
                                 },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
+                                scanning: store.scanning,
+                                performance: store.performance,
+                                system: store.system,
                             },
                             revision: 2,
                             timestamp: Date.now(),
@@ -162,7 +162,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             await chuSuiLiang.updateThumbnailSize(tooLargeSize);
 
             // 褚遂良服务updateThumbnailSize方法验证size<=400，大于则使用150
-            expect(store.preferences.display.thumbnailSize).toBe(150);
+            expect(store.display.thumbnailSize).toBe(150);
         });
 
         it("应该在超出最大值时使用默认值", async () => {
@@ -178,14 +178,14 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     data: {
                         snapshot: {
                             data: {
-                                ui: store.preferences.ui,
+                                ui: store.ui,
                                 display: {
-                                    ...store.preferences.display,
+                                    ...store.display,
                                     thumbnailSize: 150, // sanitize返回默认值
                                 },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
+                                scanning: store.scanning,
+                                performance: store.performance,
+                                system: store.system,
                             },
                             revision: 2,
                             timestamp: Date.now(),
@@ -197,7 +197,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             await chuSuiLiang.updateThumbnailSize(tooLargeSize);
 
             // sanitize应该返回默认值150
-            expect(store.preferences.display.thumbnailSize).toBe(150);
+            expect(store.display.thumbnailSize).toBe(150);
         });
     });
 
@@ -265,7 +265,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             const newSize = 180;
 
             // 记录初始值
-            const initialSize = store.preferences.display.thumbnailSize;
+            const initialSize = store.display.thumbnailSize;
 
             mockTianshu.processCommand.mockResolvedValueOnce({
                 status: "completed",
@@ -285,12 +285,12 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
 
             // 验证Store自动同步
             // matter-sync.yml中配置了thumbnail_size_change使用merge策略
-            expect(store.preferences.display.thumbnailSize).toBe(newSize);
-            expect(store.preferences.display.thumbnailSize).not.toBe(initialSize);
+            expect(store.display.thumbnailSize).toBe(newSize);
+            expect(store.display.thumbnailSize).not.toBe(initialSize);
 
             // 验证其他偏好设置未受影响
-            expect(store.preferences.ui.theme).toBe("solarized-dark");
-            expect(store.preferences.scanning.paths).toEqual([]);
+            expect(store.ui.theme).toBe("solarized-dark");
+            expect(store.scanning.paths).toEqual([]);
         });
 
         it("应该保持其他display设置不变", async () => {
@@ -298,9 +298,9 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             const newSize = 220; // 在褚遂良验证范围内（150-400）
 
             // 记录其他设置的初始值
-            const initialSortOrder = store.preferences.display.sortOrder;
-            const initialGroupBy = store.preferences.display.groupBy;
-            const initialShowHidden = store.preferences.display.showHidden;
+            const initialSortOrder = store.display.sortOrder;
+            const initialGroupBy = store.display.groupBy;
+            const initialShowHidden = store.display.showHidden;
 
             mockTianshu.processCommand.mockResolvedValueOnce({
                 status: "completed",
@@ -318,10 +318,10 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             await chuSuiLiang.updateThumbnailSize(newSize);
 
             // 验证只有thumbnailSize变化，其他设置不变
-            expect(store.preferences.display.thumbnailSize).toBe(newSize);
-            expect(store.preferences.display.sortOrder).toBe(initialSortOrder);
-            expect(store.preferences.display.groupBy).toBe(initialGroupBy);
-            expect(store.preferences.display.showHidden).toBe(initialShowHidden);
+            expect(store.display.thumbnailSize).toBe(newSize);
+            expect(store.display.sortOrder).toBe(initialSortOrder);
+            expect(store.display.groupBy).toBe(initialGroupBy);
+            expect(store.display.showHidden).toBe(initialShowHidden);
         });
     });
 
@@ -337,14 +337,14 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     data: {
                         snapshot: {
                             data: {
-                                ui: store.preferences.ui,
+                                ui: store.ui,
                                 display: {
-                                    ...store.preferences.display,
+                                    ...store.display,
                                     thumbnailSize: 150, // sanitize返回默认值
                                 },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
+                                scanning: store.scanning,
+                                performance: store.performance,
+                                system: store.system,
                             },
                             revision: 2,
                             timestamp: Date.now(),
@@ -357,7 +357,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             await chuSuiLiang.updateThumbnailSize("invalid");
 
             // sanitize应该返回默认值
-            expect(store.preferences.display.thumbnailSize).toBe(150);
+            expect(store.display.thumbnailSize).toBe(150);
         });
 
         it("应该处理并发更新请求", async () => {
@@ -396,7 +396,7 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
             await chuSuiLiang.updateThumbnailSize(300);
 
             // 最终值应该是最后一个成功的更新
-            expect(store.preferences.display.thumbnailSize).toBe(300);
+            expect(store.display.thumbnailSize).toBe(300);
             expect(mockTianshu.processCommand).toHaveBeenCalledTimes(2);
         });
     });
@@ -413,14 +413,14 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
                     data: {
                         snapshot: {
                             data: {
-                                ui: store.preferences.ui,
+                                ui: store.ui,
                                 display: {
-                                    ...store.preferences.display,
+                                    ...store.display,
                                     thumbnailSize: 175,
                                 },
-                                scanning: store.preferences.scanning,
-                                performance: store.preferences.performance,
-                                system: store.preferences.system,
+                                scanning: store.scanning,
+                                performance: store.performance,
+                                system: store.system,
                             },
                             revision: 2,
                             timestamp: Date.now(),

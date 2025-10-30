@@ -90,8 +90,15 @@ export class BuiltinAdapter implements IAdapter {
             throw new Error(errorMsg);
         }
 
-        // 直接返回数据，不包装
-        const result = params.data;
+        // ✅ RFC 0042: 如果有data字段，返回data；否则返回所有非控制字段
+        const {
+            success: _success,
+            error: _error,
+            message: _message,
+            details: _details,
+            ...dataFields
+        } = params;
+        const result = params.data !== undefined ? params.data : dataFields;
 
         logger.info(`🔧 仙令已成: 大功告成`, {
             message: params.message || "操作完成",
@@ -261,5 +268,194 @@ export class BuiltinAdapter implements IAdapter {
             logger.error(`🔧 转化之术失败，法力耗尽: ${params.operation}`, error);
             throw error;
         }
+    }
+
+    /**
+     * 数组追加
+     * 追加元素到数组末尾（纯函数，返回新数组）
+     * RFC 0045: Builtin数组操作增强
+     *
+     * 遵循数据扁平化策略：直接返回数组，不包装
+     */
+    async arrayAppend(params: { array: unknown[]; item: unknown }): Promise<unknown[]> {
+        // 最大数组大小限制
+        const MAX_ARRAY_SIZE = 100000;
+
+        try {
+            // 参数验证
+            if (params.array === null || params.array === undefined) {
+                throw new Error("array参数不能为null或undefined");
+            }
+
+            if (!Array.isArray(params.array)) {
+                throw new Error(`array参数必须是数组类型，当前类型: ${typeof params.array}`);
+            }
+
+            // 大小限制检查
+            if (params.array.length >= MAX_ARRAY_SIZE) {
+                throw new Error(`数组过大，最大支持${MAX_ARRAY_SIZE}个元素`);
+            }
+
+            // 纯函数：创建新数组
+            const result = [...params.array, params.item];
+
+            logger.debug(`🔧 施展合并之术`, {
+                arrayLength: params.array.length,
+                itemType: typeof params.item,
+                resultLength: result.length,
+            });
+
+            // 直接返回数组，无包装
+            return result;
+        } catch (error) {
+            logger.error(`🔧 合并之术失败: ${(error as Error).message}`, {
+                operation: "arrayAppend",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 数组计数
+     * 计算数组元素数量
+     * RFC 0045: Builtin数组操作增强
+     *
+     * 遵循数据扁平化策略：直接返回数字，不包装
+     */
+    async arrayCount(params: { array: unknown[] }): Promise<number> {
+        try {
+            // 参数验证
+            if (params.array === null || params.array === undefined) {
+                throw new Error("array参数不能为null或undefined");
+            }
+
+            if (!Array.isArray(params.array)) {
+                throw new Error(`array参数必须是数组类型，当前类型: ${typeof params.array}`);
+            }
+
+            const result = params.array.length;
+
+            logger.debug(`🔧 施展计数之术: 得${result}个元素`);
+
+            // 直接返回数字，无包装
+            return result;
+        } catch (error) {
+            logger.error(`🔧 计数之术失败: ${(error as Error).message}`, {
+                operation: "arrayCount",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 数组过滤
+     * 根据条件过滤数组元素（纯函数，返回新数组）
+     * RFC 0045: Builtin数组操作增强
+     *
+     * 遵循数据扁平化策略：直接返回数组，不包装
+     */
+    async arrayFilter(params: {
+        array: unknown[];
+        condition: {
+            field: string;
+            operator: "eq" | "ne" | "gt" | "lt" | "gte" | "lte";
+            value: unknown;
+        };
+    }): Promise<unknown[]> {
+        // 最大数组大小限制
+        const MAX_ARRAY_SIZE = 100000;
+
+        try {
+            // 参数验证
+            if (params.array === null || params.array === undefined) {
+                throw new Error("array参数不能为null或undefined");
+            }
+
+            if (!Array.isArray(params.array)) {
+                throw new Error(`array参数必须是数组类型，当前类型: ${typeof params.array}`);
+            }
+
+            if (!params.condition || !params.condition.field || !params.condition.operator) {
+                throw new Error("condition参数结构错误，必须包含field和operator");
+            }
+
+            // 大小限制检查
+            if (params.array.length > MAX_ARRAY_SIZE) {
+                throw new Error(`数组过大，最大支持${MAX_ARRAY_SIZE}个元素`);
+            }
+
+            // 支持的操作符
+            const validOperators = ["eq", "ne", "gt", "lt", "gte", "lte"];
+            if (!validOperators.includes(params.condition.operator)) {
+                throw new Error(
+                    `不支持的操作符: ${params.condition.operator}，支持: ${validOperators.join(", ")}`,
+                );
+            }
+
+            // 纯函数：过滤数组
+            const result = params.array.filter((item) => {
+                // 安全地获取嵌套字段值
+                const fieldValue = this.getNestedValue(item, params.condition.field);
+                const expectedValue = params.condition.value;
+
+                // 根据操作符比较
+                switch (params.condition.operator) {
+                    case "eq":
+                        return fieldValue === expectedValue;
+                    case "ne":
+                        return fieldValue !== expectedValue;
+                    case "gt":
+                        return (fieldValue as number) > (expectedValue as number);
+                    case "lt":
+                        return (fieldValue as number) < (expectedValue as number);
+                    case "gte":
+                        return (fieldValue as number) >= (expectedValue as number);
+                    case "lte":
+                        return (fieldValue as number) <= (expectedValue as number);
+                    default:
+                        return false;
+                }
+            });
+
+            logger.debug(`🔧 施展筛选之术`, {
+                condition: params.condition,
+                inputCount: params.array.length,
+                resultCount: result.length,
+            });
+
+            // 直接返回数组，无包装
+            return result;
+        } catch (error) {
+            logger.error(`🔧 筛选之术失败: ${(error as Error).message}`, {
+                operation: "arrayFilter",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 获取对象的嵌套字段值
+     * 支持路径如 "user.profile.name"
+     * @private
+     */
+    private getNestedValue(obj: unknown, path: string): unknown {
+        if (obj === null || obj === undefined) {
+            return undefined;
+        }
+
+        const keys = path.split(".");
+        let result: any = obj;
+
+        for (const key of keys) {
+            if (result === null || result === undefined) {
+                return undefined;
+            }
+            result = (result as Record<string, unknown>)[key];
+        }
+
+        return result;
     }
 }

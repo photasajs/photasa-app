@@ -133,7 +133,7 @@ export class TianshuEngine extends EventEmitter {
             throw new Error("Tianshu engine not initialized");
         }
 
-        logger.info("🌌 处理命令", { commandId: command.id, intent: command.intent });
+        logger.info(`🌌 处理命令: ${command.intent} [${command.id}]`);
 
         try {
             // 创建响应对象
@@ -153,10 +153,7 @@ export class TianshuEngine extends EventEmitter {
                     "WORKFLOW_NOT_FOUND",
                     `No workflow found for intent: ${command.intent}`,
                 );
-                logger.error("🌌 没有找到工作流", {
-                    commandId: command.id,
-                    intent: command.intent,
-                });
+                logger.error(`🌌 没有找到工作流: ${command.intent} [${command.id}]`);
                 return response;
             }
 
@@ -170,11 +167,7 @@ export class TianshuEngine extends EventEmitter {
 
             return response;
         } catch (error) {
-            logger.error("🌌 处理命令失败", {
-                commandId: command.id,
-                intent: command.intent,
-                error,
-            });
+            logger.error(`🌌 处理命令失败: ${command.intent} [${command.id}]`, error);
             return {
                 commandId: command.id,
                 intent: command.intent,
@@ -519,10 +512,7 @@ export class TianshuEngine extends EventEmitter {
         try {
             const workflow = await this.selectWorkflow(command);
             if (!workflow) {
-                logger.error("🌌 没有找到工作流", {
-                    commandId: command.id,
-                    intent: command.intent,
-                });
+                logger.error(`🌌 没有找到工作流: ${command.intent} [${command.id}]`);
                 throw new Error(`No workflow found for intent: ${command.intent}`);
             }
 

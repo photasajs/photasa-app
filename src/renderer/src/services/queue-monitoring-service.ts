@@ -13,7 +13,7 @@ import type {
     ChartDataPoint,
 } from "@common/queue-monitoring-types";
 import { DEFAULT_MONITORING_CONFIG, QueueMonitoringUtils } from "@common/queue-monitoring-types";
-import { usePreferenceStore } from "@renderer/stores/preference";
+import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { loggers } from "@common/logger";
 
 const logger = loggers.app;
@@ -131,18 +131,19 @@ export class QueueMonitoringService {
 
     /**
      * Collect current queue metrics
+     * ✅ RFC 0042: 使用尉迟恭获取扫描队列，而不是直接访问store
      */
     private collectMetrics(): void {
         try {
-            const preferenceStore = usePreferenceStore();
-            const scanningFolder = preferenceStore.scanningFolder || [];
+            const yuChiGong = useYuChiGong();
+            const scanningQueue = yuChiGong.scanningQueue;
 
             // Calculate basic metrics
-            const currentSize = scanningFolder.length;
-            const oldestOperation = this.getOldestOperation(scanningFolder);
-            const eventTypes = this.calculateEventTypes(scanningFolder);
-            const statusCounts = this.calculateStatusCounts(scanningFolder);
-            const memoryUsage = this.estimateMemoryUsage(scanningFolder);
+            const currentSize = scanningQueue.length;
+            const oldestOperation = this.getOldestOperation(scanningQueue);
+            const eventTypes = this.calculateEventTypes(scanningQueue);
+            const statusCounts = this.calculateStatusCounts(scanningQueue);
+            const memoryUsage = this.estimateMemoryUsage(scanningQueue);
 
             // Add current state to processing history
             const historyEntry: ProcessingHistoryEntry = {

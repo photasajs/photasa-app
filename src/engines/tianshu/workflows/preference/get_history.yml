@@ -76,8 +76,8 @@ steps:
     action: "formatResponse"
     input:
       success: true
-      data: {{steps.get_history_from_engine.output.data}}
-      count: {{steps.get_history_from_engine.output.count}}
+      data: {{steps.get_history_from_engine.data}}
+      count: {{steps.get_history_from_engine.count}}
       timestamp: {{now()}}
       source: "wenchang_engine"
     output:

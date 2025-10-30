@@ -45,6 +45,7 @@ import { scanMonitoringService } from "@renderer/services/scan-monitoring-servic
 import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
+import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 
 /**
  * 日志记录器
@@ -55,8 +56,12 @@ const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
-const { paths, currentFolder, scanningFolder, thumbnailSize } = storeToRefs(preferenceStore);
-const { addPath, completeScanPath, addScanFolder, updateFolderTree } = preferenceStore;
+const { paths, currentFolder, thumbnailSize } = storeToRefs(preferenceStore);
+const { addPath, completeScanPath, updateFolderTree } = preferenceStore;
+
+// ✅ RFC 0042: 使用尉迟恭获取扫描队列，不直接访问store
+const yuChiGong = useYuChiGong();
+const scanningFolder = computed(() => yuChiGong.scanningQueue);
 
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
@@ -137,6 +142,8 @@ async function initializeApp(): Promise<void> {
     }
 }
 
+const chuSuiLiang = useChuSuiLiang();
+
 onMounted(async () => {
     // APP 启动时推送初始化状态
     statusBarStore.update({
@@ -158,7 +165,7 @@ onMounted(async () => {
     themes.value = themeManager.getThemes();
 
     // 获取Store中的主题设置
-    const storeThemeId = preferenceStore.preferences.ui.theme;
+    const storeThemeId = chuSuiLiang.currentTheme;
     currentThemeId.value = storeThemeId || themes.value[0]?.id || "";
 
     // 应用主题到DOM
@@ -183,7 +190,7 @@ onMounted(async () => {
 
     // 监听Store中主题变化，自动应用主题
     watch(
-        () => preferenceStore.preferences.ui.theme,
+        () => preferenceStore.ui.theme,
         async (newThemeId) => {
             if (newThemeId && newThemeId !== currentThemeId.value) {
                 try {
@@ -227,22 +234,8 @@ watchArray(
     { deep: true },
 );
 
-// 包装 addScanFolder 增加日志和source参数
-function addScanFolderWithLog(
-    folder: string,
-    action: "scan" | "rescan" | "current",
-    source: "user" | "auto" = "user",
-) {
-    logger.info(
-        `👑 [addScanFolderWithLog] Adding folder to queue: ${folder}, action: ${action}, source: ${source}`,
-    );
-
-    // 直接添加到队列，让 preference store 处理优先级和去重
-    // preference store 会根据优先级决定是否更新或跳过
-    addScanFolder(folder, action, source);
-
-    logger.info(`[addScanFolderWithLog] Folder added to queue: ${folder} with source: ${source}`);
-}
+// ✅ RFC 0042: addScanFolder 已废弃，不再需要 addScanFolderWithLog
+// 添加 watched folder 后，李世民路由会自动触发尉迟恭添加扫描任务
 
 watchArray(
     scanningFolder,
@@ -314,9 +307,10 @@ const callbacks: ScanCallbacks = {
     completeScanPath: completeScanPath,
 
     scanSubfolders: scanSubfolders,
-    addScanFolderToQueue: (path: string, action: string) => {
-        // 子目录发现使用 "auto" 源，以区分用户手动添加
-        addScanFolderWithLog(path, action as "scan" | "rescan" | "current", "auto");
+    // ✅ RFC 0042: addScanFolderToQueue 已废弃
+    // 子文件夹扫描应该由后端自动处理，不再通过 UI 层触发
+    addScanFolderToQueue: (_path: string, _action: string) => {
+        logger.warn("⚠️ addScanFolderToQueue 已废弃，请等待后端实现自动子文件夹扫描");
     },
 
     performScanTask: async (action) => {
@@ -403,23 +397,12 @@ findPhotoService.onFindPhoto((args: any) => {
         scanMonitoringService.recordActivity();
     }
 
-    // 处理进度更新 - 更新scanningFolder中对应项目的progress信息
-    if (args.progress && args.action?.path) {
-        const targetIndex = scanningFolder.value.findIndex(
-            (item) => item.path === args.action.path,
-        );
-        if (targetIndex >= 0) {
-            logger.debug(
-                `👑 Updating progress for ${args.action.path}: ${args.progress.processed}/${args.progress.total}`,
-                `Updating progress for ${args.action.path}: ${args.progress.processed}/${args.progress.total}`,
-            );
-            scanningFolder.value[targetIndex].progress = {
-                processed: args.progress.processed || 0,
-                total: args.progress.total || 0,
-                cacheEnabled: true,
-            };
-        }
+    // ❌ RFC 0042: UI层不应该更新进度
+    // 进度更新应该由千里眼（Qianliyan）在底层自动同步到store
+    // UI只负责读取和显示 scanningFolder（通过 yuChiGong.scanningQueue）
+    // 进度数据会通过 store automation 自动从后端响应同步
 
+    if (args.action?.path) {
         // 更新当前处理的文件信息到状态栏
         // 关键修复：确保状态栏显示完整文件路径而不是仅文件名
         if (args.currentFile) {

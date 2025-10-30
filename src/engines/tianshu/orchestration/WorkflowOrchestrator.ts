@@ -441,11 +441,11 @@ export class WorkflowOrchestrator extends EventEmitter {
 
         const conditionResult = this.evaluateCondition(step.condition, context);
 
-        logger.info(`🌌 条件评估: ${step.id || step.name} = ${conditionResult}`, {
-            stepId: step.id || step.name,
-            condition: step.condition,
-            result: conditionResult,
-        });
+        // 简化日志：只显示关键信息
+        const conditionSummary = `${step.condition.field} ${step.condition.operator} ${step.condition.value}`;
+        logger.info(
+            `🌌 条件评估: ${step.id || step.name} = ${conditionResult} [${conditionSummary}]`,
+        );
 
         // 执行条件分支中的步骤
         const branchResults: any[] = [];

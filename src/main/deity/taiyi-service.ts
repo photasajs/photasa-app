@@ -107,7 +107,9 @@ export default class TaiyiService implements IService, IStepExecutor {
                     // 太乙路由模式：从input中解析真实的目标引擎和方法
                     const engineName = step.input?.engineName || "system";
                     const methodName = step.input?.methodName || "execute";
-                    const args = step.input?.args || (step.input ? [step.input] : []);
+                    // 支持 args 或 params 字段（优先使用 params）
+                    const args =
+                        step.input?.params || step.input?.args || (step.input ? [step.input] : []);
 
                     routeInfo = `taiyi-route:${engineName}.${methodName}`;
                     engineResult = await this.engine.callEngine(engineName, methodName, ...args);

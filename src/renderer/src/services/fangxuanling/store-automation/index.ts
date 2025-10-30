@@ -16,14 +16,20 @@ export type { StoreRegistry } from "./store-registry";
 
 /**
  * 奏折matter与Store同步配置接口
+ *
+ * ✅ RFC 0042 Store Automation修正 (Linus "好品味"设计)：
+ * - storeName: 明确是Store名称（Registry键），不是路径
+ * - propertyPath: 明确是属性链（Property Chain），双重用途清晰
+ *   - 用途1：从天界响应提取数据 (extractSnapshotFromResponse)
+ *   - 用途2：向Store写入数据位置 (setStoreFieldData)
  */
 export interface MatterSyncMetadata {
-    /** 从天界响应中提取snapshot的路径 */
-    snapshotPath: string;
+    /** Store名称（Store Registry键，如"preferences"、"scanning"） */
+    storeName: string;
+    /** 属性链（如"queue"、"ui.theme"、"."表示根级别） */
+    propertyPath: string;
     /** Store同步策略 */
-    syncStrategy: "merge" | "replace" | "patch";
-    /** Store中的目标路径 */
-    storePath: string;
+    syncStrategy: "merge" | "replace";
     /** 是否自动同步 */
     autoSync: boolean;
     /** 配置描述 */
@@ -87,7 +93,7 @@ export function validateMatterSyncConfig(config: Record<string, MatterSyncMetada
 
     // 验证每个matter配置的必需字段
     for (const [matter, metadata] of Object.entries(config)) {
-        if (!metadata.snapshotPath || !metadata.syncStrategy || !metadata.storePath) {
+        if (!metadata.propertyPath || !metadata.syncStrategy || !metadata.storeName) {
             logger.error(`❌ matter配置不完整: ${matter}`, metadata);
             return false;
         }

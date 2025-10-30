@@ -96,8 +96,8 @@ steps:
     input:
       event: "preferences_imported"
       data:
-        backup: {{steps.backup_current.output.backup}}
-        snapshot: {{steps.get_imported_snapshot.output.snapshot}}
+        backup: {{steps.backup_current.backup}}
+        snapshot: {{steps.get_imported_snapshot.snapshot}}
         timestamp: {{now()}}
     output:
       eventId: "event.id"
@@ -112,8 +112,8 @@ steps:
     input:
       success: true
       data:
-        snapshot: {{steps.get_imported_snapshot.output.snapshot}}
-        backup: {{steps.backup_current.output.backup}}
+        snapshot: {{steps.get_imported_snapshot.snapshot}}
+        backup: {{steps.backup_current.backup}}
       timestamp: {{now()}}
       source: "wenchang_engine"
     output:

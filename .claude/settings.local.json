@@ -15,8 +15,6 @@
             "Read(//Users/albert.li/.photasa/preferences/**)",
             "Bash(cat:*)",
             "Read(//tmp/**)",
-            "Bash(git show:*)",
-            "Bash(git add:*)",
             "Bash(npm run lint:*)",
             "Bash(awk:*)",
             "Bash(npx eslint:*)",
@@ -28,7 +26,6 @@
             "Bash(node:*)",
             "Read(//Users/albert.li/.claude/memory/**)",
             "Read(//Users/albert.li/.claude/**)",
-            "Bash(git checkout:*)",
             "Bash(xargs npx eslint:*)",
             "Bash(npx tsc:*)",
             "Bash(npx jest:*)"

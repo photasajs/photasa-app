@@ -6,9 +6,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
     extractSnapshotFromResponse,
-    applyMergeStrategy,
-    applyReplaceStrategy,
-    applyPatchStrategy,
     syncStoreWithSnapshot,
     getStoreFieldData,
     setStoreFieldData,
@@ -31,7 +28,12 @@ vi.mock("@common/logger", () => ({
 
 // Mock utils
 vi.mock("../../utils", () => ({
-    mergePreferencesFromTianjie: vi.fn((storePrefs, snapshot) => ({
+    mergeStoreData: vi.fn((storeData, _propertyPath, snapshot) => ({
+        ...storeData,
+        ...(snapshot as Record<string, unknown>),
+    })),
+    // 保留旧函数名用于向后兼容
+    mergePreferencesFromTianjie: vi.fn((storePrefs, _storePath, snapshot) => ({
         ...storePrefs,
         ...(snapshot as Record<string, unknown>),
     })),
@@ -119,175 +121,6 @@ describe("store-sync-utils", () => {
         });
     });
 
-    describe("applyMergeStrategy", () => {
-        it("应该成功合并snapshot到Store preferences", () => {
-            const storePreferences: Record<string, unknown> = {
-                ui: { theme: "light", language: "en" },
-                display: { thumbnailSize: 100 },
-            };
-
-            const snapshot = {
-                ui: { theme: "dark" },
-            };
-
-            const result = applyMergeStrategy(storePreferences, "preferences.ui", snapshot);
-
-            // 验证mergePreferencesFromTianjie被调用
-            expect(result).toBeDefined();
-            expect(result.ui).toBeDefined();
-        });
-
-        it("应该成功处理storePath为'.'的场景（从根合并）", () => {
-            const storePreferences: Record<string, unknown> = {
-                ui: { theme: "light", language: "en" },
-                display: { thumbnailSize: 100 },
-            };
-
-            const snapshot = {
-                ui: { theme: "dark" },
-                scanning: { paths: ["/photos"] },
-            };
-
-            const result = applyMergeStrategy(storePreferences, ".", snapshot);
-
-            // 验证mergePreferencesFromTianjie被调用，并且"."路径被正确传递
-            expect(result).toBeDefined();
-            expect(result.ui).toBeDefined();
-        });
-
-        it("应该在storePath为空字符串时返回原Store数据", () => {
-            const storePreferences: Record<string, unknown> = {
-                ui: { theme: "light" },
-            };
-
-            const result = applyMergeStrategy(storePreferences, "", null);
-            expect(result).toBe(storePreferences);
-        });
-
-        it("应该在storePath不是字符串时返回原Store数据", () => {
-            const storePreferences: Record<string, unknown> = {
-                ui: { theme: "light" },
-            };
-
-            const result = applyMergeStrategy(
-                storePreferences,
-                null as unknown as string,
-                "invalid",
-            );
-            expect(result).toBe(storePreferences);
-        });
-    });
-
-    describe("applyReplaceStrategy", () => {
-        it("应该成功替换Store中的嵌套字段", () => {
-            const storeData = {
-                preferences: {
-                    ui: { theme: "light" },
-                },
-            };
-
-            const snapshot = { theme: "dark", language: "zh" };
-
-            const result = applyReplaceStrategy(storeData, snapshot, "preferences.ui");
-
-            expect((result.preferences as Record<string, unknown>).ui).toEqual(snapshot);
-            // 验证是深拷贝，不是原对象
-            expect(result).not.toBe(storeData);
-        });
-
-        it("应该成功替换根级别字段", () => {
-            const storeData = {
-                preferences: {
-                    ui: { theme: "light" },
-                },
-            };
-
-            const snapshot = {
-                ui: { theme: "dark" },
-            };
-
-            const result = applyReplaceStrategy(storeData, snapshot, "preferences");
-
-            expect(result.preferences).toEqual(snapshot);
-        });
-
-        it("应该在路径不存在时返回原数据", () => {
-            const storeData = {
-                preferences: {
-                    ui: { theme: "light" },
-                },
-            };
-
-            const snapshot = { theme: "dark" };
-
-            const result = applyReplaceStrategy(storeData, snapshot, "nonexistent.path");
-
-            expect(result).toBe(storeData);
-        });
-
-        it("应该在执行失败时捕获异常并返回原数据", () => {
-            const storeData = {
-                preferences: null,
-            };
-
-            const snapshot = { theme: "dark" };
-
-            const result = applyReplaceStrategy(storeData, snapshot, "preferences.ui");
-
-            expect(result).toBe(storeData);
-        });
-
-        it("应该在JSON.parse失败时捕获异常", () => {
-            // 创建一个无法被JSON序列化的对象
-            const circularRef: Record<string, unknown> = {};
-            circularRef.self = circularRef;
-
-            const snapshot = { theme: "dark" };
-
-            const result = applyReplaceStrategy(circularRef, snapshot, "self");
-
-            expect(result).toBe(circularRef);
-        });
-    });
-
-    describe("applyPatchStrategy", () => {
-        it("应该成功进行浅层合并", () => {
-            const storePreferences: Record<string, unknown> = {
-                ui: { theme: "light", language: "en" },
-                display: { thumbnailSize: 100 },
-            };
-
-            const snapshot = {
-                ui: { theme: "dark" },
-                scanning: { paths: ["/photos"] },
-            };
-
-            const result = applyPatchStrategy(storePreferences, snapshot);
-
-            expect(result.ui).toEqual({ theme: "dark" });
-            expect(result.scanning).toEqual({ paths: ["/photos"] });
-            expect(result.display).toEqual({ thumbnailSize: 100 });
-        });
-
-        it("应该在snapshot无效时返回原Store数据", () => {
-            const storePreferences: Record<string, unknown> = {
-                ui: { theme: "light" },
-            };
-
-            const result = applyPatchStrategy(storePreferences, null);
-            expect(result).toBe(storePreferences);
-        });
-
-        it("应该在snapshot不是对象时返回原Store数据", () => {
-            const storePreferences: Record<string, unknown> = {
-                ui: { theme: "light" },
-            };
-
-            const result = applyPatchStrategy(storePreferences, 123);
-            expect(result).toBe(storePreferences);
-        });
-    });
-
     describe("syncStoreWithSnapshot", () => {
         let mockStore: Record<string, unknown> & {
             $patch: (data: Record<string, unknown>) => void;
@@ -295,12 +128,12 @@ describe("store-sync-utils", () => {
 
         beforeEach(() => {
             mockStore = {
-                preferences: {
-                    ui: { theme: "light", language: "en" },
-                    display: { thumbnailSize: 100 },
-                } as unknown as PreferenceState["preferences"],
+                ui: { theme: "light", language: "en" },
+                display: { thumbnailSize: 100 },
                 $state: {} as PreferenceState,
                 $patch: vi.fn(),
+            } as Record<string, unknown> & {
+                $patch: (data: Record<string, unknown>) => void;
             };
         });
 
@@ -318,9 +151,9 @@ describe("store-sync-utils", () => {
             };
 
             const syncMetadata: MatterSyncMetadata = {
-                snapshotPath: "snapshot",
+                propertyPath: "snapshot",
                 syncStrategy: "merge",
-                storePath: "preferences",
+                storeName: "preferences",
                 autoSync: true,
                 description: "test",
             };
@@ -344,35 +177,9 @@ describe("store-sync-utils", () => {
             };
 
             const syncMetadata: MatterSyncMetadata = {
-                snapshotPath: "snapshot",
+                propertyPath: "snapshot",
                 syncStrategy: "replace",
-                storePath: "preferences.ui",
-                autoSync: true,
-                description: "test",
-            };
-
-            const result = syncStoreWithSnapshot("theme_change", response, syncMetadata, mockStore);
-
-            expect(result).toBe(true);
-        });
-
-        it("应该成功使用patch策略同步Store", () => {
-            const response: ZhaolingResponse = {
-                acknowledged: true,
-                command: "test",
-                data: {
-                    snapshot: {
-                        ui: { theme: "dark" },
-                    },
-                },
-                blessing: "",
-                timestamp: 0,
-            };
-
-            const syncMetadata: MatterSyncMetadata = {
-                snapshotPath: "snapshot",
-                syncStrategy: "patch",
-                storePath: "preferences",
+                storeName: "preferences.ui",
                 autoSync: true,
                 description: "test",
             };
@@ -394,9 +201,9 @@ describe("store-sync-utils", () => {
             };
 
             const syncMetadata: MatterSyncMetadata = {
-                snapshotPath: "snapshot",
+                propertyPath: "snapshot",
                 syncStrategy: "merge",
-                storePath: "preferences",
+                storeName: "preferences",
                 autoSync: true,
                 description: "test",
             };
@@ -420,9 +227,9 @@ describe("store-sync-utils", () => {
             };
 
             const syncMetadata: MatterSyncMetadata = {
-                snapshotPath: "snapshot",
+                propertyPath: "snapshot",
                 syncStrategy: "unknown" as unknown as "merge",
-                storePath: "preferences",
+                storeName: "preferences",
                 autoSync: true,
                 description: "test",
             };
@@ -436,9 +243,9 @@ describe("store-sync-utils", () => {
             const response = null as unknown as ZhaolingResponse;
 
             const syncMetadata: MatterSyncMetadata = {
-                snapshotPath: "snapshot",
+                propertyPath: "snapshot",
                 syncStrategy: "merge",
-                storePath: "preferences",
+                storeName: "preferences",
                 autoSync: true,
                 description: "test",
             };
@@ -476,9 +283,9 @@ describe("store-sync-utils", () => {
             };
 
             const syncMetadata: MatterSyncMetadata = {
-                snapshotPath: "snapshot",
+                propertyPath: "snapshot",
                 syncStrategy: "merge",
-                storePath: "preferences",
+                storeName: "preferences",
                 autoSync: true,
                 description: "test",
             };
@@ -531,7 +338,7 @@ describe("store-sync-utils", () => {
         it("应该成功设置单层路径的数据", () => {
             const mockPatch = vi.fn();
             const store: Record<string, unknown> & {
-                $patch: (data: Record<string, unknown>) => void;
+                $patch: (fn: (state: unknown) => void) => void;
             } = {
                 preferences: {
                     ui: { theme: "light" },
@@ -542,18 +349,23 @@ describe("store-sync-utils", () => {
             const newData = { ui: { theme: "dark" } };
             setStoreFieldData(store, "preferences", newData);
 
-            expect(mockPatch).toHaveBeenCalledWith({
-                preferences: newData,
-            });
+            // 验证使用函数式 $patch
+            expect(mockPatch).toHaveBeenCalledTimes(1);
+            expect(typeof mockPatch.mock.calls[0][0]).toBe("function");
+
+            // 验证函数执行后的效果
+            const patchFn = mockPatch.mock.calls[0][0];
+            patchFn(store);
+            expect(store).toEqual(newData);
         });
 
         it("应该成功设置嵌套路径的数据", () => {
             const mockPatch = vi.fn();
             const store: Record<string, unknown> & {
-                $patch: (data: Record<string, unknown>) => void;
+                $patch: (fn: (state: unknown) => void) => void;
             } = {
                 preferences: {
-                    ui: { theme: "light" },
+                    ui: { theme: "light", language: "en" },
                 },
                 $patch: mockPatch,
             };
@@ -561,21 +373,25 @@ describe("store-sync-utils", () => {
             const newData = { theme: "dark", language: "zh" };
             setStoreFieldData(store, "preferences.ui", newData);
 
-            expect(mockPatch).toHaveBeenCalledWith({
-                preferences: {
-                    ui: newData,
-                },
-            });
+            // 验证使用函数式 $patch
+            expect(mockPatch).toHaveBeenCalledTimes(1);
+            expect(typeof mockPatch.mock.calls[0][0]).toBe("function");
+
+            // 验证函数执行后的效果
+            const patchFn = mockPatch.mock.calls[0][0];
+            patchFn(store);
+            expect((store as Record<string, unknown>).ui).toEqual(newData);
         });
 
         it("应该成功设置多层嵌套路径的数据", () => {
             const mockPatch = vi.fn();
             const store: Record<string, unknown> & {
-                $patch: (data: Record<string, unknown>) => void;
+                $patch: (fn: (state: unknown) => void) => void;
             } = {
                 preferences: {
                     ui: {
                         theme: { mode: "light", variant: "default" },
+                        language: "en",
                     },
                 },
                 $patch: mockPatch,
@@ -584,13 +400,16 @@ describe("store-sync-utils", () => {
             const newData = { mode: "dark", variant: "blue" };
             setStoreFieldData(store, "preferences.ui.theme", newData);
 
-            expect(mockPatch).toHaveBeenCalledWith({
-                preferences: {
-                    ui: {
-                        theme: newData,
-                    },
-                },
-            });
+            // 验证使用函数式 $patch
+            expect(mockPatch).toHaveBeenCalledTimes(1);
+            expect(typeof mockPatch.mock.calls[0][0]).toBe("function");
+
+            // 验证函数执行后的效果，并确认其他属性未被覆盖
+            const patchFn = mockPatch.mock.calls[0][0];
+            patchFn(store);
+            const ui = (store as Record<string, unknown>).ui as Record<string, unknown>;
+            expect(ui.theme).toEqual(newData);
+            expect(ui.language).toBe("en"); // ✅ 验证其他属性未被覆盖
         });
     });
 });

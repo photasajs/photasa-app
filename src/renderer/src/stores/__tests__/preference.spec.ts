@@ -45,7 +45,7 @@ describe("preferenceStore.resetAllFolders", () => {
     it("should clear and rebuild all folders", async () => {
         const store = usePreferenceStore();
         // ✅ RFC 0038: 使用preferences.scanning.paths而非appState.paths
-        store.preferences.scanning.paths = ["/a", "/b"];
+        store.scanning.paths = ["/a", "/b"];
         store.appState.folderTree = [
             { path: "/a" } as unknown as DataNode,
             { path: "/b" } as unknown as DataNode,

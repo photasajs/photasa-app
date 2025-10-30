@@ -3,6 +3,8 @@
  * 定义统一Store API的标准接口，避免直接依赖具体实现
  */
 
+import { IScanningAccessor } from "@/services/fangxuanling/accessors/scanning-accessor";
+
 /**
  * 偏好管理接口
  */
@@ -54,6 +56,7 @@ export interface IFangXuanLingService {
     readonly preference: IPreference;
     readonly notification: INotification;
     readonly photos: IPhotos;
+    readonly scanning: IScanningAccessor;
 
     // 全局状态管理
     getGlobalState(): {

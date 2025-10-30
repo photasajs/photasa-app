@@ -96,8 +96,8 @@ steps:
       event: "preferences_restored"
       data:
         revision: {{input.revision}}
-        backup: {{steps.backup_current.output.backup}}
-        snapshot: {{steps.get_restored_snapshot.output.snapshot}}
+        backup: {{steps.backup_current.backup}}
+        snapshot: {{steps.get_restored_snapshot.snapshot}}
         timestamp: {{now()}}
     output:
       eventId: "event.id"
@@ -113,8 +113,8 @@ steps:
       success: true
       data:
         revision: {{input.revision}}
-        snapshot: {{steps.get_restored_snapshot.output.snapshot}}
-        backup: {{steps.backup_current.output.backup}}
+        snapshot: {{steps.get_restored_snapshot.snapshot}}
+        backup: {{steps.backup_current.backup}}
       timestamp: {{now()}}
       source: "wenchang_engine"
     output:

@@ -104,7 +104,7 @@ steps:
     name: "检查获取偏好是否成功"
     type: "condition"
     condition:
-      field: "steps.get_current_preferences.output.callSuccess"
+      field: "steps.get_current_preferences.callSuccess"
       operator: "eq"
       value: true
     dependsOn: ["get_current_preferences"]
@@ -117,8 +117,8 @@ steps:
     action: "return"
     input:
       success: true
-      snapshot: {{steps.get_current_preferences.output.result.result}}
-      revision: {{steps.get_current_preferences.output.result.result.revision}}
+      snapshot: {{steps.get_current_preferences.currentSnapshot}}
+      revision: {{steps.get_current_preferences.currentSnapshot.revision}}
     condition:
       field: "input.action"
       operator: "eq"
@@ -147,7 +147,7 @@ steps:
     input:
       engineName: "wenchang"
       methodName: "applyDelta"
-      args:
+      params:
         - {{input.delta}}
         - {{input.source}}
     output:
@@ -214,10 +214,10 @@ steps:
     action: "return"
     input:
       success: true
-      finalSnapshot: {{steps.get_final_snapshot.output.result.result}}
-      currentSnapshot: {{steps.get_current_preferences.output.result.result}}
-      finalRevision: {{steps.get_final_snapshot.output.result.result.revision}}
-      currentRevision: {{steps.get_current_preferences.output.result.result.revision}}
+      finalSnapshot: {{steps.get_final_snapshot.finalSnapshot}}
+      currentSnapshot: {{steps.get_current_preferences.currentSnapshot}}
+      finalRevision: {{steps.get_final_snapshot.finalSnapshot.revision}}
+      currentRevision: {{steps.get_current_preferences.currentSnapshot.revision}}
     dependsOn: ["handle_get_action", "get_final_snapshot"]
 
 # 错误处理
