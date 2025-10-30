@@ -200,9 +200,7 @@ describe("YuanTianGangService", () => {
             }
         });
 
-        it("应该为未知命令使用custom映射", async () => {
-            mockTianshu.processCommand.mockResolvedValue({ status: "completed" });
-
+        it("应该为未知命令返回错误响应", async () => {
             const zhaoling: Zhaoling = {
                 command: "unknown_command",
                 context: {},
@@ -211,15 +209,15 @@ describe("YuanTianGangService", () => {
                 priority: "normal",
             };
 
-            await yuanTianGangService.executeZhaoling(zhaoling);
+            const response = await yuanTianGangService.executeZhaoling(zhaoling);
 
-            // 先确认 processCommand 被调用了
-            expect(mockTianshu.processCommand).toHaveBeenCalled();
-            const calls = mockTianshu.processCommand.mock.calls;
-            expect(calls.length).toBeGreaterThan(0);
+            // 未知命令应该返回失败响应
+            expect(response.acknowledged).toBe(false);
+            expect(response.blessing).toBe("天枢暂时忙碌，需再次祈请");
+            expect(response.data).toBeNull();
 
-            const lastCall = calls[calls.length - 1];
-            expect(lastCall[0].intent).toBe("custom");
+            // processCommand 不应该被调用，因为在转换符箓时就失败了
+            expect(mockTianshu.processCommand).not.toHaveBeenCalled();
         });
     });
 
