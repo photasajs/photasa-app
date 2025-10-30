@@ -21,7 +21,7 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
     });
 
     describe("只读属性：queue", () => {
-        it("应该返回队列副本", () => {
+        it("应该返回响应式队列引用（RFC 0042设计）", () => {
             const action: ScanAction = {
                 path: "/test/path1",
                 action: "scan",
@@ -37,14 +37,20 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(queue).toHaveLength(1);
             expect(queue[0]).toEqual(action);
 
-            // 验证返回的是副本，不是引用
-            queue.push({
+            // ✅ RFC 0042: 返回响应式数组引用，使Vue可以追踪变化
+            // 验证返回的是同一个响应式引用
+            expect(fangXuanLing.scanning.queue).toBe(queue);
+
+            // 通过Store添加另一个action
+            scanningStore.addToQueue({
                 path: "/test/path2",
                 action: "scan",
                 thumbnailSize: 150,
                 operationType: "directory",
             });
-            expect(fangXuanLing.scanning.queue).toHaveLength(1);
+
+            // 验证响应式引用会自动更新
+            expect(fangXuanLing.scanning.queue).toHaveLength(2);
         });
 
         it("Store未初始化时应返回空数组", async () => {
