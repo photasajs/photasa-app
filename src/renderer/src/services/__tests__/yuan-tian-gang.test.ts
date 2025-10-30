@@ -213,7 +213,12 @@ describe("YuanTianGangService", () => {
 
             await yuanTianGangService.executeZhaoling(zhaoling);
 
-            const lastCall = mockTianshu.processCommand.mock.calls.slice(-1)[0];
+            // 先确认 processCommand 被调用了
+            expect(mockTianshu.processCommand).toHaveBeenCalled();
+            const calls = mockTianshu.processCommand.mock.calls;
+            expect(calls.length).toBeGreaterThan(0);
+
+            const lastCall = calls[calls.length - 1];
             expect(lastCall[0].intent).toBe("custom");
         });
     });

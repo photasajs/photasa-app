@@ -340,14 +340,13 @@ describe("store-sync-utils", () => {
             const store: Record<string, unknown> & {
                 $patch: (fn: (state: unknown) => void) => void;
             } = {
-                preferences: {
-                    ui: { theme: "light" },
-                },
+                ui: { theme: "light" },
+                display: { thumbnailSize: 100 },
                 $patch: mockPatch,
             };
 
-            const newData = { ui: { theme: "dark" } };
-            setStoreFieldData(store, "preferences", newData);
+            const newData = { theme: "dark" };
+            setStoreFieldData(store, "ui", newData);
 
             // 验证使用函数式 $patch
             expect(mockPatch).toHaveBeenCalledTimes(1);
@@ -356,7 +355,7 @@ describe("store-sync-utils", () => {
             // 验证函数执行后的效果
             const patchFn = mockPatch.mock.calls[0][0];
             patchFn(store);
-            expect(store).toEqual(newData);
+            expect(store.ui).toEqual(newData);
         });
 
         it("应该成功设置嵌套路径的数据", () => {
@@ -364,14 +363,13 @@ describe("store-sync-utils", () => {
             const store: Record<string, unknown> & {
                 $patch: (fn: (state: unknown) => void) => void;
             } = {
-                preferences: {
-                    ui: { theme: "light", language: "en" },
-                },
+                ui: { theme: "light", language: "en" },
+                display: { thumbnailSize: 100 },
                 $patch: mockPatch,
             };
 
             const newData = { theme: "dark", language: "zh" };
-            setStoreFieldData(store, "preferences.ui", newData);
+            setStoreFieldData(store, "ui", newData);
 
             // 验证使用函数式 $patch
             expect(mockPatch).toHaveBeenCalledTimes(1);
@@ -388,17 +386,16 @@ describe("store-sync-utils", () => {
             const store: Record<string, unknown> & {
                 $patch: (fn: (state: unknown) => void) => void;
             } = {
-                preferences: {
-                    ui: {
-                        theme: { mode: "light", variant: "default" },
-                        language: "en",
-                    },
+                ui: {
+                    theme: { mode: "light", variant: "default" },
+                    language: "en",
                 },
+                display: { thumbnailSize: 100 },
                 $patch: mockPatch,
             };
 
             const newData = { mode: "dark", variant: "blue" };
-            setStoreFieldData(store, "preferences.ui.theme", newData);
+            setStoreFieldData(store, "ui.theme", newData);
 
             // 验证使用函数式 $patch
             expect(mockPatch).toHaveBeenCalledTimes(1);
