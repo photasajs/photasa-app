@@ -47,6 +47,7 @@ import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
+import { useWeiZheng } from "./composables/useWeiZheng";
 
 /**
  * 日志记录器
@@ -58,17 +59,28 @@ const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, thumbnailSize } = storeToRefs(preferenceStore);
-const { addPath, completeScanPath, updateFolderTree } = preferenceStore;
+const { addPath, completeScanPath } = preferenceStore;
 
-// ✅ RFC 0042: 使用尉迟恭获取扫描队列，不直接访问store
+/**
+ * YuChiGong service
+ */
 const yuChiGong = useYuChiGong();
-const scanningFolder = computed(() => yuChiGong.scanningQueue);
 
-// ✅ RFC 0042: 使用秦琼处理文件系统事件
+/**
+ * QinQiong service
+ */
 const qinQiong = useQinQiong();
+
+/**
+ * WeiZheng service
+ */
+const weiZheng = useWeiZheng();
 
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
+
+// ✅ RFC 0042: 使用尉迟恭获取扫描队列，不直接访问store
+const scanningFolder = computed(() => yuChiGong.scanningQueue);
 
 // 使用对话框管理器统一管理对话框状态
 const showImportDialog = ref(false);
@@ -129,6 +141,7 @@ async function initializeApp(): Promise<void> {
         }
 
         if (paths.value.length > 0) {
+            // ✅ RFC 0042: 使用秦琼处理文件系统事件
             startFileWatching(paths.value, preferenceStore, qinQiong);
         } else {
             // Open preference to config
@@ -300,14 +313,19 @@ const callbacks: ScanCallbacks = {
         });
     },
 
-    updateFolderTree: updateFolderTree,
+    updateFolderTree: (path: string) => {
+        // ✅ RFC 0042: 使用魏征处理扫描后的文件夹树更新
+        weiZheng.addFolderPath(path);
+    },
+
     completeScanPath: completeScanPath,
 
     scanSubfolders: scanSubfolders,
     // ✅ RFC 0042: addScanFolderToQueue 已废弃
-    // 子文件夹扫描应该由后端自动处理，不再通过 UI 层触发
-    addScanFolderToQueue: (_path: string, _action: string) => {
-        logger.warn("⚠️ addScanFolderToQueue 已废弃，请等待后端实现自动子文件夹扫描");
+    // TODO 子文件夹扫描应该由后端自动处理，不再通过 UI 层触发
+    addScanFolderToQueue: (path: string, action: string) => {
+        // ✅ RFC 0042: 使用尉迟恭添加扫描任务
+        yuChiGong.addScanTask(path, action as "scan" | "rescan" | "current");
     },
 
     performScanTask: async (action) => {

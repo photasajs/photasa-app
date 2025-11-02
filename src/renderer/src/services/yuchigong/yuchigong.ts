@@ -1,7 +1,7 @@
-import { IService } from "@common/interfaces/service.interface";
+import { IService } from "@/interfaces/service.interface";
 import { IYuChiGongService } from "@renderer/interfaces/yu-chi-gong.interface";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
-import type { Qizou } from "@common/interfaces/qizou.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
 import { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import {
@@ -10,8 +10,10 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
+
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
 const logger = loggers.yuchigong;
@@ -218,14 +220,11 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 throw new Error(`房玄龄未批准：${response.instruction}`);
             }
 
-            // 4. ✅ Validator要求：向李世民启奏汇报任务已添加（不是started）
-            this.emitQizou("scan_task_added", {
-                shengzhiId: shengzhi.id,
-                path,
-                persisted: (response.data as Record<string, unknown>)?.persisted === true,
-            });
+            // 4. ✅ 响应圣旨时不发送 SCAN_TASK_ADDED 启奏
+            // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
+            // SCAN_TASK_ADDED 启奏只在直接调用 addScanTask() 时发送，用于触发魏征的 check_and_add_path
 
-            logger.info(`🛡️ 尉迟恭：扫描任务已添加 ${path}`);
+            logger.info(`🛡️ 尉迟恭：扫描任务已添加（响应圣旨） ${path}`);
         } catch (error) {
             logger.error(`🛡️ 尉迟恭：添加扫描任务失败 ${path}`, error);
 
@@ -394,6 +393,75 @@ export class YuChiGongService implements IService, IYuChiGongService {
      */
     isInQueue(path: string): boolean {
         return this.fangXuanLingService.scanning.isInQueue(path);
+    }
+
+    /**
+     * 添加扫描任务到队列
+     * @param path 要扫描的路径
+     * @param action 扫描动作类型，可选，默认为 "scan"
+     */
+    async addScanTask(path: string, action: "scan" | "rescan" | "current" = "scan"): Promise<void> {
+        // 路径参数验证
+        if (!path || typeof path !== "string") {
+            throw new Error("路径参数无效：必须是非空字符串");
+        }
+
+        // 路径安全验证：不能为空字符串
+        if (path.trim() === "") {
+            throw new Error("路径不能为空字符串");
+        }
+
+        logger.info(`🛡️ 尉迟恭：添加扫描任务 ${path} (${action})`);
+
+        try {
+            // 1. 使用Accessor去重检查
+            if (!this.fangXuanLingService.scanning.isInQueue(path)) {
+                // 2. 创建ScanAction对象
+                const scanAction: ScanAction = {
+                    path,
+                    action,
+                    thumbnailSize: 150, // 默认缩略图大小
+                    source: "user", // UI层调用默认为用户操作
+                    timestamp: Date.now(),
+                    operationType: "directory",
+                };
+
+                // 3. ✅ RFC 0042要求：只发送ADD_SCAN_ACTION奏折
+                // 房玄龄负责更新Store并触发天界持久化
+                const addActionZouzhe: Zouzhe = {
+                    department: GUANYUAN_NAMES.YU_CHI_GONG,
+                    matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+                    content: { action: scanAction },
+                    timestamp: Date.now(),
+                    priority: ZOUZHE_PRIORITIES.NORMAL,
+                };
+
+                logger.info(`🛡️ 尉迟恭向房玄龄呈递添加扫描任务奏折: ${path}`);
+                const response = await this.fangXuanLingService.processZouzhe(addActionZouzhe);
+
+                if (!response.approved) {
+                    throw new Error(`房玄龄未批准：${response.instruction}`);
+                }
+
+                // 4. 向李世民启奏汇报任务已添加
+                // 通知魏征智能检查并添加路径（check_and_add_path）
+                this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
+                    path,
+                    persisted: (response.data as Record<string, unknown>)?.persisted === true,
+                });
+            } else {
+                // 如果路径已存在，直接汇报任务已添加
+                this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
+                    path,
+                    persisted: true,
+                });
+            }
+
+            logger.info(`🛡️ 尉迟恭：扫描任务已添加 ${path}`);
+        } catch (error) {
+            logger.error(`🛡️ 尉迟恭：添加扫描任务失败 ${path}`, error);
+            throw error;
+        }
     }
 
     /**

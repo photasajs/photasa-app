@@ -13,6 +13,9 @@ export const QizouMatters = {
     SCAN_READY: "scan_ready",
     SCAN_FAILED: "scan_failed",
 
+    // 尉迟恭 - 扫描队列事件相关
+    SCAN_TASK_ADDED: "scan_task_added", // ✅ 扫描任务已添加到队列
+
     // 秦琼 - 文件系统事件相关
     FOLDER_DISCOVERED: "folder_discovered",
     FOLDER_REMOVED: "folder_removed",
@@ -38,11 +41,14 @@ export const ShengzhiCommands = {
     REMOVE_SCAN_TASK: "remove_scan_task",
 
     // 魏征 - appState管理
+    ADD_ROOT: "add_root",
+    REMOVE_ROOT: "remove_root",
     UPDATE_FOLDER_TREE: "update_folder_tree",
     FOLDER_DISCOVERED: "folder_discovered",
     FOLDER_REMOVED: "folder_removed",
     ADD_PATHS: "add_paths",
     SWITCH_FOLDER: "switch_folder",
+    CHECK_AND_ADD_PATH: "check_and_add_path", // ✅ 智能检查并添加路径（根节点或子节点）
 } as const;
 
 /**

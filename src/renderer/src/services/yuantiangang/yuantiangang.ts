@@ -10,10 +10,11 @@ import type {
 } from "../../interfaces/yuan-tian-gang.interface";
 import type { Zhaoling, ZhaolingResponse } from "../../interfaces/fang-xuan-ling.interface";
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
-import type { Qizou } from "@common/interfaces/qizou.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
 import { loggers } from "@common/logger";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import { ScanActionEvent } from "@common/scan-types";
 
 const logger = loggers.yuantiangang;
 
@@ -80,23 +81,18 @@ export class YuanTianGangService implements IYuanTianGangService {
      */
     private setupQianliyanEventListening(): void {
         try {
-            const ipc = (window as any).electron?.ipcRenderer;
+            const ipc = window.electron.ipcRenderer;
             if (!ipc) {
                 logger.warn("🔮 无法访问IPC，跳过千里眼事件监听");
                 return;
             }
 
             // 监听千里眼扫描事件
-            const handler = (_: any, args: any) => {
+            const handler = (_: any, args: ScanActionEvent) => {
                 this.handleQianliyanEvent(args);
             };
 
-            ipc.on("picasa:find-photo", handler);
-
-            // 保存清理函数
-            this.qianliyanCleanupFn = () => {
-                ipc.removeListener("picasa:find-photo", handler);
-            };
+            this.qianliyanCleanupFn = ipc.on("picasa:find-photo", handler);
 
             logger.info("🔮 千里眼事件监听已建立（临时方案）");
         } catch (error) {
@@ -110,7 +106,7 @@ export class YuanTianGangService implements IYuanTianGangService {
      * @param args 扫描事件参数
      * @private
      */
-    private handleQianliyanEvent(args: any): void {
+    private handleQianliyanEvent(args: ScanActionEvent): void {
         logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path);
 
         let paths: string[] = [];

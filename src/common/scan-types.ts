@@ -123,3 +123,18 @@ export interface ScanArgs {
  * 扫描回调
  */
 export type ScanCallback = (action: ScanArgs) => void;
+
+/**
+ * 千里眼 扫描事件类型
+ * @description 千里眼扫描事件类型，用于千里眼扫描服务与袁天罡通信
+ */
+export type ScanActionEvent = {
+    type: "action" | "complete";
+    action?:
+        | {
+              path: string;
+              isDirectory: boolean;
+          }
+        | undefined;
+    paths?: string[] | undefined;
+};

@@ -60,6 +60,17 @@ export interface IYuChiGongService {
     isInQueue(path: string): boolean;
 
     /**
+     * 添加扫描任务到队列
+     * @param path 要扫描的路径
+     * @param action 扫描动作类型，可选，默认为 "scan"
+     * @returns Promise<void>
+     * @example
+     * const yuChiGong = useYuChiGong();
+     * await yuChiGong.addScanTask('/test/path', 'scan');
+     */
+    addScanTask(path: string, action?: "scan" | "rescan" | "current"): Promise<void>;
+
+    /**
      * 初始化扫描队列（应用启动时调用）
      * 从天界恢复持久化的扫描队列
      *

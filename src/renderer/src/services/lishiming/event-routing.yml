@@ -24,21 +24,38 @@ qizou_routes:
                       path: "{{qizou.content.path}}"
                   priority: "normal"
               description: "路径添加完成后，下旨尉迟恭添加扫描任务"
-        # 圣旨2：魏征立即添加路径到folderTree
+        # 圣旨2：魏征添加根节点到folderTree
         - when:
               from: "褚遂良"
               type: "report"
           then:
               service: "魏征"
               shengzhi:
-                  command: "add_paths"
+                  command: "add_root"
                   content:
-                      paths: ["{{qizou.content.path}}"]
+                      rootPath: "{{qizou.content.path}}"
                   priority: "normal"
-              description: "路径添加完成后，下旨魏征立即添加到folderTree"
+              description: "路径添加完成后，下旨魏征添加根节点到folderTree"
 
-    # 褚遂良报告路径移除完成 → 李世民协调尉迟恭移除扫描任务
+    # ✅ RFC 0042: 尉迟恭报告扫描任务已添加 → 李世民协调魏征智能检查并添加路径
+    # 使用场景：当用户直接通过 yuChiGong.addScanTask() 添加扫描任务时（绕过褚遂良流程）
+    # 魏征会智能判断：路径是否已在树中、是否为根节点、是否在根节点下，并采取相应行动
+    scan_task_added:
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "check_and_add_path"
+                  content:
+                      folderPath: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "扫描任务添加后，下旨魏征智能检查并添加路径到文件夹树（如不在树中则添加根节点，如在根节点下则添加子节点，如已是根节点则跳过）"
+
+    # 褚遂良报告路径移除完成 → 李世民协调两件事
     remove_path_completed:
+        # 圣旨1：尉迟恭移除扫描任务
         - when:
               from: "褚遂良"
               type: "report"
@@ -50,6 +67,18 @@ qizou_routes:
                       path: "{{qizou.content.path}}"
                   priority: "normal"
               description: "路径移除完成后，下旨尉迟恭移除扫描任务"
+        # 圣旨2：魏征移除根节点
+        - when:
+              from: "褚遂良"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "remove_root"
+                  content:
+                      rootPath: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "路径移除完成后，下旨魏征移除根节点"
 
     # ✅ RFC 0042 Step 2.5: 袁天罡报告扫描完成 → 李世民下旨魏征批量更新
     scan_ready:

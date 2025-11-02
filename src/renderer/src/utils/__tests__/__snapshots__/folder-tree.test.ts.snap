@@ -1,0 +1,179 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Folder Tree > should add deep nested nodes 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "key": "root1/child1/child2",
+            "title": "child2",
+          },
+        ],
+        "key": "root1/child1",
+        "title": "child1",
+      },
+    ],
+    "key": "root1",
+    "title": "root1",
+  },
+]
+`;
+
+exports[`Folder Tree > should add deep nested nodes when root exists 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "key": "root1/child1/child2",
+            "title": "child2",
+          },
+        ],
+        "key": "root1/child1",
+        "title": "child1",
+      },
+    ],
+    "key": "root1",
+    "title": "root1",
+  },
+]
+`;
+
+exports[`Folder Tree > should add multiple root nodes 1`] = `
+[
+  {
+    "children": [],
+    "key": "root1",
+    "title": "root1",
+  },
+  {
+    "children": [],
+    "key": "root2",
+    "title": "root2",
+  },
+]
+`;
+
+exports[`Folder Tree > should build folder tree when root exists 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "key": "/test/google.com/test.jpg",
+            "title": "test.jpg",
+          },
+        ],
+        "key": "/test/google.com",
+        "title": "google.com",
+      },
+    ],
+    "key": "/test",
+    "title": "/test",
+  },
+]
+`;
+
+exports[`Folder Tree > should clean deep nested children recursively 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "key": "root1/child1/child2",
+            "title": "child2",
+          },
+        ],
+        "key": "root1/child1",
+        "title": "child1",
+      },
+    ],
+    "key": "root1",
+    "title": "root1",
+  },
+]
+`;
+
+exports[`Folder Tree > should clean node at various levels 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "key": "root1/child1",
+        "title": "child1",
+      },
+    ],
+    "key": "root1",
+    "title": "root1",
+  },
+]
+`;
+
+exports[`Folder Tree > should clean node at various levels 2`] = `
+[
+  {
+    "children": [],
+    "key": "root1",
+    "title": "root1",
+  },
+]
+`;
+
+exports[`Folder Tree > should handle empty roots and empty path 1`] = `[]`;
+
+exports[`Folder Tree > should not add duplicate nodes 1`] = `
+[
+  {
+    "children": [],
+    "key": "root1",
+    "title": "root1",
+  },
+  {
+    "children": [],
+    "key": "root1",
+    "title": "root1",
+  },
+]
+`;
+
+exports[`Folder Tree > should not change roots when cleaning non-existent node 1`] = `
+[
+  {
+    "children": [],
+    "key": "root1",
+    "title": "root1",
+  },
+]
+`;
+
+exports[`Folder Tree > should return a FolderNode 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "key": "test/google.com/test.jpg",
+            "title": "test.jpg",
+          },
+        ],
+        "key": "test/google.com",
+        "title": "google.com",
+      },
+    ],
+    "key": "test",
+    "title": "test",
+  },
+]
+`;

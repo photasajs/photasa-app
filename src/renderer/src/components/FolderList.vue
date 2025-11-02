@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, reactive } from "vue";
+import { ref, watch, reactive, computed } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { useI18n } from "vue-i18n";
 import type { PhotasaConfig } from "@common/config-types";
 import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
 import { openInFinder } from "@renderer/utils/api-path";
@@ -19,17 +18,25 @@ import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
 import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
 import { loggers } from "@common/logger";
+import { useWeiZheng } from "@renderer/composables/useWeiZheng";
+import { useXuanzang } from "@renderer/composables/useXuanzang";
 
-/**
- * I18n
- */
-const { t } = useI18n();
 const logger = loggers.lishiming;
 
 /**
  * Preference store
  */
 const preferenceStore = usePreferenceStore();
+
+/**
+ * WeiZheng service
+ */
+const weiZheng = useWeiZheng();
+
+/**
+ * Xuanzang service
+ */
+const xuanzang = useXuanzang();
 
 /**
  * ✅ RFC 0042: addScanFolder 已废弃
@@ -39,7 +46,14 @@ const preferenceStore = usePreferenceStore();
 /**
  * Store to refs
  */
-const { paths, currentFolder, folderTree } = storeToRefs(preferenceStore);
+const { paths, currentFolder } = storeToRefs(preferenceStore);
+
+/**
+ * Folder tree computed from weiZheng service
+ * This is a computed property that returns the folder tree from the weiZheng service
+ * It is used to display the folder tree in the FolderList component
+ */
+const folderTree = computed(() => weiZheng.folderTree);
 
 /**
  * Expanded keys
@@ -203,7 +217,7 @@ defineExpose({
         <div class="px-4 py-2 border-b border-gray-100 flex items-center">
             <BaseBreadcrumb class="folder-list-header">
                 <BaseBreadcrumbItem>
-                    {{ t("app.folderList") }}
+                    {{ xuanzang.translate("app.folderList") }}
                 </BaseBreadcrumbItem>
             </BaseBreadcrumb>
         </div>
@@ -243,7 +257,7 @@ defineExpose({
                                     close();
                                 "
                             >
-                                {{ t("menu.rescan") }}
+                                {{ xuanzang.translate("menu.rescan") }}
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
@@ -251,7 +265,7 @@ defineExpose({
                                     close();
                                 "
                             >
-                                {{ t("menu.getConfig") }}
+                                {{ xuanzang.translate("menu.getConfig") }}
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
@@ -259,7 +273,7 @@ defineExpose({
                                     close();
                                 "
                             >
-                                {{ t("menu.open") }}
+                                {{ xuanzang.translate("menu.open") }}
                             </BaseMenuItem>
                         </template>
                     </BaseContextMenu>

@@ -28,7 +28,7 @@ export interface FuluResponse {
 }
 
 import type { Emitter } from "mitt";
-import type { Qizou } from "@common/interfaces/qizou.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
 
 /**
  * 袁天罡钦天监服务接口

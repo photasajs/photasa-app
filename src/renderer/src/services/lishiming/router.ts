@@ -1,6 +1,6 @@
 import mitt, { type Emitter } from "mitt";
-import type { Qizou } from "@common/interfaces/qizou.interface";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@common/logger";
 import { DuRuHuiService } from "../duruhui/duruhui";
 import eventRoutingConfig from "./event-routing.yml";
@@ -203,8 +203,7 @@ export class QiZouRouter {
                 // 委托杜如晦下发圣旨
                 this.duruhui.issueShengzhi(route.then.service, shengzhi);
 
-                // 只执行第一个匹配的规则
-                break;
+                // 继续执行所有匹配的规则（支持一个启奏触发多个圣旨）
             }
         }
     }

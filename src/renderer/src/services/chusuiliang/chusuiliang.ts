@@ -1,6 +1,6 @@
 import { IChusuiliangService } from "../../interfaces/chu-sui-liang.interface";
 import { IFangXuanLingService } from "../../interfaces/fang-xuan-ling.interface";
-import { IService } from "@common/interfaces/service.interface";
+import { IService } from "@renderer/interfaces/service.interface";
 import { loggers } from "@common/logger";
 import {
     ZOUZHE_MATTERS,
@@ -16,8 +16,8 @@ import {
     detectPathType,
     PathProcessingStats,
 } from "./path-utils";
-import type { Qizou } from "@common/interfaces/qizou.interface";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { Emitter } from "mitt";
 
 export type { ThemeMeta, ThemeManager } from "./theme-manage";

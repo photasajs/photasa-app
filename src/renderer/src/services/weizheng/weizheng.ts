@@ -1,7 +1,7 @@
-import { IService } from "@common/interfaces/service.interface";
+import { IService } from "@/interfaces/service.interface";
 import { IWeiZhengService } from "@renderer/interfaces/wei-zheng.interface";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
-import type { Qizou } from "@common/interfaces/qizou.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
 import { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import {
@@ -12,8 +12,9 @@ import {
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import type { FolderNode } from "@common/folder-types";
 import { loggers } from "@common/logger";
-import { addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
+import { addRoot, removeRoot, addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
+import { deepClone } from "@common/object/clone";
 
 const logger = loggers.weizheng;
 
@@ -171,6 +172,12 @@ export class WeiZhengService implements IService, IWeiZhengService {
     private async processShengzhi(shengzhi: Shengzhi): Promise<void> {
         try {
             switch (shengzhi.command) {
+                case ShengzhiCommands.ADD_ROOT:
+                    await this.handleAddRoot(shengzhi);
+                    break;
+                case ShengzhiCommands.REMOVE_ROOT:
+                    await this.handleRemoveRoot(shengzhi);
+                    break;
                 case ShengzhiCommands.FOLDER_DISCOVERED:
                     await this.handleFolderDiscovered(shengzhi);
                     break;
@@ -182,6 +189,9 @@ export class WeiZhengService implements IService, IWeiZhengService {
                     break;
                 case ShengzhiCommands.UPDATE_FOLDER_TREE:
                     await this.handleUpdateFolderTree(shengzhi);
+                    break;
+                case ShengzhiCommands.CHECK_AND_ADD_PATH:
+                    await this.handleCheckAndAddPath(shengzhi);
                     break;
                 case "switch_folder":
                     await this.handleSwitchFolder(shengzhi);
@@ -205,12 +215,177 @@ export class WeiZhengService implements IService, IWeiZhengService {
     }
 
     /**
+     * 处理add_root圣旨
+     * 用户主动添加监控路径，创建根节点
+     */
+    private async handleAddRoot(shengzhi: Shengzhi): Promise<void> {
+        const rootPath = shengzhi.content?.rootPath as string;
+
+        if (!rootPath) {
+            logger.warn("🏛️ 魏征：add_root圣旨参数无效，rootPath必须提供");
+            this.emitQizou("shengzhi_failed", {
+                shengzhiId: shengzhi.id,
+                command: shengzhi.command,
+                error: "rootPath参数无效",
+            });
+            return;
+        }
+
+        logger.info(`🏛️ 魏征：添加根节点到树：${rootPath}`);
+
+        // 1. 获取当前文件夹树
+        const currentTree = this.folderTree;
+
+        // 2. 深拷贝避免直接修改store
+        const newTree: FolderNode[] = deepClone(currentTree);
+
+        // 3. 使用addRoot添加根节点
+        addRoot(newTree, rootPath);
+
+        // 4. 发送奏折给房玄龄，触发天界持久化
+        const zouzhe: Zouzhe = {
+            department: GUANYUAN_NAMES.WEI_ZHENG,
+            matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
+            content: { tree: newTree },
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        };
+
+        await this.fangXuanLingService.processZouzhe(zouzhe);
+
+        logger.info(`🏛️ 魏征：根节点添加完成：${rootPath}`);
+    }
+
+    /**
+     * 处理remove_root圣旨
+     * 用户主动移除监控路径，删除根节点
+     */
+    private async handleRemoveRoot(shengzhi: Shengzhi): Promise<void> {
+        const rootPath = shengzhi.content?.rootPath as string;
+
+        if (!rootPath) {
+            logger.warn("🏛️ 魏征：remove_root圣旨参数无效，rootPath必须提供");
+            this.emitQizou("shengzhi_failed", {
+                shengzhiId: shengzhi.id,
+                command: shengzhi.command,
+                error: "rootPath参数无效",
+            });
+            return;
+        }
+
+        logger.info(`🏛️ 魏征：从树中移除根节点：${rootPath}`);
+
+        // 1. 获取当前文件夹树
+        const currentTree = this.folderTree;
+
+        // 2. 深拷贝避免直接修改store
+        const newTree: FolderNode[] = deepClone(currentTree);
+
+        // 3. 使用removeRoot移除根节点
+        removeRoot(newTree, rootPath);
+
+        // 4. 发送奏折给房玄龄，触发天界持久化
+        const zouzhe: Zouzhe = {
+            department: GUANYUAN_NAMES.WEI_ZHENG,
+            matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
+            content: { tree: newTree },
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        };
+
+        await this.fangXuanLingService.processZouzhe(zouzhe);
+
+        logger.info(`🏛️ 魏征：根节点移除完成：${rootPath}`);
+    }
+
+    /**
      * 处理folder_discovered圣旨
      * 添加文件夹到树
      */
     private async handleFolderDiscovered(shengzhi: Shengzhi): Promise<void> {
         const folderPath = shengzhi.content?.folderPath as string;
         await this.addFolderPath(folderPath);
+    }
+
+    /**
+     * 处理check_and_add_path圣旨
+     * ✅ 智能检查并添加路径：根据路径在树中的状态决定添加根节点或子节点
+     *
+     * 逻辑：
+     * 1. 如果路径已经是根节点 → 静默跳过（避免重复）
+     * 2. 如果路径在某个根节点下 → 调用 addFolderPath() 添加子节点
+     * 3. 如果路径不在树中 → 调用 handleAddRoot() 添加根节点
+     *
+     * 使用场景：
+     * - 扫描任务添加后，需要确保路径在文件夹树中
+     * - 避免重复添加，同时正确处理根节点和子节点
+     */
+    private async handleCheckAndAddPath(shengzhi: Shengzhi): Promise<void> {
+        const folderPath = shengzhi.content?.folderPath as string;
+
+        if (!folderPath || typeof folderPath !== "string") {
+            logger.warn("🏛️ 魏征：check_and_add_path圣旨参数无效，folderPath必须提供");
+            this.emitQizou("shengzhi_failed", {
+                shengzhiId: shengzhi.id,
+                command: shengzhi.command,
+                error: "folderPath参数无效",
+            });
+            return;
+        }
+
+        logger.info(`🏛️ 魏征：智能检查并添加路径：${folderPath}`);
+
+        // 1. 获取当前文件夹树
+        const currentTree = this.folderTree;
+
+        // 2. 检查路径是否已经是根节点
+        const isRoot = currentTree.some((node) => node.key === folderPath);
+        if (isRoot) {
+            logger.debug(`🏛️ 魏征：路径已是根节点，跳过添加：${folderPath}`);
+            this.emitQizou(QizouMatters.FOLDER_DISCOVERED_HANDLED, {
+                shengzhiId: shengzhi.id,
+                command: shengzhi.command,
+                result: { folderPath, action: "skipped", reason: "already_root" },
+            });
+            return;
+        }
+
+        // 3. 检查路径是否在某个根节点下（路径以根节点key开头）
+        const parentRoot = currentTree.find((node) => {
+            const rootKey = node.key as string;
+            // 使用规范化路径比较，避免大小写和斜杠问题
+            const normalizedPath = folderPath.replace(/\\/g, "/");
+            const normalizedRoot = rootKey.replace(/\\/g, "/");
+            return (
+                normalizedPath.startsWith(normalizedRoot + "/") || normalizedPath === normalizedRoot
+            );
+        });
+
+        if (parentRoot) {
+            // 路径在某个根节点下，添加子节点
+            logger.info(
+                `🏛️ 魏征：路径在根节点下，添加子节点：${folderPath}（父节点：${parentRoot.key}）`,
+            );
+            await this.addFolderPath(folderPath);
+            this.emitQizou(QizouMatters.FOLDER_DISCOVERED_HANDLED, {
+                shengzhiId: shengzhi.id,
+                command: shengzhi.command,
+                result: { folderPath, action: "added_as_child", parentRoot: parentRoot.key },
+            });
+            return;
+        }
+
+        // 4. 路径不在树中，添加根节点
+        logger.info(`🏛️ 魏征：路径不在树中，添加根节点：${folderPath}`);
+        await this.handleAddRoot({
+            ...shengzhi,
+            content: { ...shengzhi.content, rootPath: folderPath },
+        });
+        this.emitQizou(QizouMatters.FOLDER_DISCOVERED_HANDLED, {
+            shengzhiId: shengzhi.id,
+            command: shengzhi.command,
+            result: { folderPath, action: "added_as_root" },
+        });
     }
 
     /**
@@ -396,7 +571,7 @@ export class WeiZhengService implements IService, IWeiZhengService {
         const currentTree = this.folderTree;
 
         // 2. 深拷贝避免直接修改store
-        const newTree: FolderNode[] = JSON.parse(JSON.stringify(currentTree));
+        const newTree: FolderNode[] = deepClone(currentTree);
 
         // 3. 使用addFolderToTree构建树结构
         addFolderToTree(newTree, {
@@ -437,8 +612,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
         // 1. 获取当前文件夹树
         const currentTree = this.folderTree;
 
-        // 2. 深拷贝避免直接修改store (使用 structuredClone 替代 JSON 序列化，性能更好)
-        const newTree: FolderNode[] = structuredClone(currentTree);
+        // 2. 深拷贝避免直接修改store
+        const newTree: FolderNode[] = deepClone(currentTree);
 
         // 3. 使用cleanDataNode清理树结构
         cleanDataNode(newTree, {

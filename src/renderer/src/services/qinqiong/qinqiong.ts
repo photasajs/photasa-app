@@ -1,7 +1,7 @@
-import { IService } from "@common/interfaces/service.interface";
+import { IService } from "@/interfaces/service.interface";
 import { IQinQiongService } from "@renderer/interfaces/qin-qiong.interface";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
-import type { Qizou } from "@common/interfaces/qizou.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
 import { loggers } from "@common/logger";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
@@ -13,9 +13,7 @@ const logger = loggers.qinqiong;
  * RFC 0042 Step 2.5: 文件系统事件监听和路由
  *
  * 职责：
- * 1. 接收李世民圣旨（folder_discovered / folder_removed / scan_completed）
- * 2. 协调魏征服务更新folderTree
- * 3. 通过qizou启奏向李世民汇报处理结果
+ * 1. 通过qizou启奏向李世民汇报处理结果
  *
  * **架构原则**（RFC 0042 Step 2.5）：
  * - ✅ 不维护本地状态 - 文件系统事件即时路由

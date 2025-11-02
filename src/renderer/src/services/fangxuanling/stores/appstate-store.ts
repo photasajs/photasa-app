@@ -42,12 +42,6 @@ export const useAppStateStore = defineStore("appstate", {
 
     getters: {
         /**
-         * 获取完整文件夹树
-         * 🏛️ 朝廷开卷：查阅完整文件夹树典籍
-         */
-        folderTree: (state) => state.folderTree,
-
-        /**
          * 获取文件夹树节点数量
          * 🏛️ 朝廷统计：文件夹树节点总数
          */

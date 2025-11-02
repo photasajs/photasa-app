@@ -3,12 +3,18 @@ import { loggers } from "@common/logger";
 import { IFangXuanLingService } from "@/interfaces/fang-xuan-ling.interface";
 import { i18n } from "../../i18n/config";
 import { watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 const logger = loggers.xuanzang;
 
 export class XuanzangService implements IXuanzangService {
     constructor(private fangXuanLingService: IFangXuanLingService) {
         logger.info("🔮 就任，开始处理玄奘法师");
+    }
+
+    translate(text: string): string {
+        const { t } = useI18n();
+        return t(text);
     }
 
     async initializeLocalization() {

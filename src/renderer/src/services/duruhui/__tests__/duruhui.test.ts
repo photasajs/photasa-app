@@ -8,8 +8,8 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { DuRuHuiService } from "../duruhui";
-import type { IService } from "@common/interfaces/service.interface";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
+import type { IService } from "@renderer/interfaces/service.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 
 /**
  * Mock服务实现

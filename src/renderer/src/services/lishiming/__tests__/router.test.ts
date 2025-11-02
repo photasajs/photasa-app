@@ -9,9 +9,9 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { QiZouRouter } from "../router";
 import { DuRuHuiService } from "../../duruhui/duruhui";
-import type { Qizou } from "@common/interfaces/qizou.interface";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
-import type { IService } from "@common/interfaces/service.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
+import type { IService } from "@renderer/interfaces/service.interface";
 
 /**
  * Mock服务实现

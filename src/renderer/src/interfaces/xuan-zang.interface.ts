@@ -4,6 +4,8 @@
 
 export interface IXuanzangService {
     initializeLocalization(): Promise<void>;
+
+    translate(text: string): string;
 }
 
 export const XUANZANG_TOKEN = Symbol("Xuanzang");

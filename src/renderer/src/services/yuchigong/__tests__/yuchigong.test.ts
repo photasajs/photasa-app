@@ -9,8 +9,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import mitt from "mitt";
 import { YuChiGongService } from "../yuchigong";
-import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
-import type { Qizou } from "@common/interfaces/qizou.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type {
     IFangXuanLingService,
     IScanning,

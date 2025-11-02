@@ -77,16 +77,16 @@ steps:
       action: "return"
       input:
           success: true
-          tree: "{{steps.update_tree}}"
+          folderTree: "{{steps.update_tree}}"
           nodeCount: "{{steps.count_nodes}}"
           persisted: true
       dependsOn: ["count_nodes"]
 
 outputs:
-    tree:
+    folderTree:
         description: "完整的文件夹树（用于Store同步）"
         type: "array"
-        path: "tree"
+        path: "folderTree"
     nodeCount:
         description: "节点数量"
         type: "number"
