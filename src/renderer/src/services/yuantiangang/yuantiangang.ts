@@ -9,10 +9,13 @@ import type {
     FuluResponse,
 } from "../../interfaces/yuan-tian-gang.interface";
 import type { Zhaoling, ZhaolingResponse } from "../../interfaces/fang-xuan-ling.interface";
-import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
+import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
+import type { Qizou } from "@common/interfaces/qizou.interface";
+import type { Emitter } from "mitt";
 import { loggers } from "@common/logger";
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
-const logger = loggers.yuantiangang || loggers.main;
+const logger = loggers.yuantiangang;
 
 /**
  * 袁天罡钦天监服务实现
@@ -21,10 +24,22 @@ const logger = loggers.yuantiangang || loggers.main;
 export class YuanTianGangService implements IYuanTianGangService {
     private progressCleanupFn?: () => void;
     private statusCleanupFn?: () => void;
+    private qianliyanCleanupFn?: () => void;
+    private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
 
     constructor() {
         logger.info("🔮 就任，开始处理天界通信");
         this.setupTianshuEventListening();
+        this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
+    }
+
+    /**
+     * 设置启奏事件总线
+     * @param qizouBus mitt事件总线，用于发送qizou启奏
+     */
+    setQizouBus(qizouBus: Emitter<{ qizou: Qizou }>): void {
+        logger.info("🔮 袁天罡建立启奏通道");
+        this._qizouBus = qizouBus;
     }
 
     /**
@@ -52,6 +67,98 @@ export class YuanTianGangService implements IYuanTianGangService {
     }
 
     /**
+     * ⏳ 临时：监听千里眼IPC事件（picasa:find-photo）
+     *
+     * RFC 0042 临时方案：
+     * - 当前千里眼还未统一到天枢架构
+     * - 扫描完成事件通过 IPC "picasa:find-photo" 发送
+     * - 袁天罡临时监听这个事件并发送启奏给李世民
+     *
+     * 未来：千里眼统一后，此方法将被移除
+     *
+     * @private
+     */
+    private setupQianliyanEventListening(): void {
+        try {
+            const ipc = (window as any).electron?.ipcRenderer;
+            if (!ipc) {
+                logger.warn("🔮 无法访问IPC，跳过千里眼事件监听");
+                return;
+            }
+
+            // 监听千里眼扫描事件
+            const handler = (_: any, args: any) => {
+                this.handleQianliyanEvent(args);
+            };
+
+            ipc.on("picasa:find-photo", handler);
+
+            // 保存清理函数
+            this.qianliyanCleanupFn = () => {
+                ipc.removeListener("picasa:find-photo", handler);
+            };
+
+            logger.info("🔮 千里眼事件监听已建立（临时方案）");
+        } catch (error) {
+            logger.warn("🔮 建立千里眼事件监听失败", error);
+        }
+    }
+
+    /**
+     * ⏳ 临时：处理千里眼扫描事件
+     *
+     * @param args 扫描事件参数
+     * @private
+     */
+    private handleQianliyanEvent(args: any): void {
+        logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path);
+
+        let paths: string[] = [];
+
+        if (args.type === "complete" && Array.isArray(args.paths)) {
+            paths = args.paths;
+        } else if (args?.action?.path && args?.action?.isDirectory) {
+            paths = [args.action.path as string];
+        }
+
+        // 批量发送启奏
+        this.reportScanCompletion(paths);
+    }
+
+    /**
+     * ⏳ 临时：向李世民发送扫描完成启奏
+     *
+     * @param paths 扫描完成的路径数组
+     * @private
+     */
+    private reportScanCompletion(paths: string[]): void {
+        try {
+            if (!this._qizouBus) {
+                logger.error("🔮 启奏通道未建立，无法发送启奏");
+                return;
+            }
+
+            // 构建启奏
+            const qizou: Qizou = {
+                matter: QizouMatters.SCAN_READY,
+                content: { paths },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: {
+                    type: "report",
+                    priority: "normal",
+                },
+            };
+
+            // 通过mitt发送启奏给李世民
+            this._qizouBus.emit("qizou", qizou);
+            logger.info(`🔮 启奏李世民: 批量扫描完成 (${paths.length}个路径)`, paths);
+        } catch (error) {
+            logger.error(`🔮 发送启奏失败:`, error);
+        }
+    }
+
+    /**
      * 清理事件监听（在服务销毁时调用）
      */
     destroy(): void {
@@ -60,6 +167,9 @@ export class YuanTianGangService implements IYuanTianGangService {
         }
         if (this.statusCleanupFn) {
             this.statusCleanupFn();
+        }
+        if (this.qianliyanCleanupFn) {
+            this.qianliyanCleanupFn();
         }
         logger.info("🔮 事件监听已清理");
     }
@@ -198,6 +308,10 @@ export class YuanTianGangService implements IYuanTianGangService {
             [ZOUZHE_MATTERS.GET_SCANNING_QUEUE]: "get_scanning_queue",
             [ZOUZHE_MATTERS.ADD_SCAN_ACTION]: "add_scan_action",
             [ZOUZHE_MATTERS.REMOVE_SCAN_ACTION]: "remove_scan_action",
+            // ✅ RFC 0042 Step 2.5: appState管理映射
+            [ZOUZHE_MATTERS.RESTORE_APP_STATE]: "restore_app_state",
+            [ZOUZHE_MATTERS.UPDATE_FOLDER_TREE]: "update_folder_tree",
+            [ZOUZHE_MATTERS.SWITCH_FOLDER]: "switch_current_folder",
         };
 
         // 紧急程度到命令优先级的映射

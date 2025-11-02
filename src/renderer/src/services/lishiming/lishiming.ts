@@ -9,6 +9,10 @@ import { CHU_SUI_LIANG_TOKEN } from "@renderer/interfaces/chu-sui-liang.interfac
 import { ChusuiliangService } from "@renderer/services/chusuiliang";
 import { YU_CHI_GONG_TOKEN } from "@renderer/interfaces/yu-chi-gong.interface";
 import { YuChiGongService } from "@renderer/services/yuchigong";
+import { WEI_ZHENG_TOKEN } from "@renderer/interfaces/wei-zheng.interface";
+import { WeiZhengService } from "@renderer/services/weizheng";
+import { QIN_QIONG_TOKEN } from "@renderer/interfaces/qin-qiong.interface";
+import { QinQiongService } from "@renderer/services/qinqiong";
 import { XUANZANG_TOKEN } from "@renderer/interfaces/xuan-zang.interface";
 import { XuanzangService } from "@renderer/services/xuanzang";
 import { DuRuHuiService } from "@renderer/services/duruhui";
@@ -72,6 +76,12 @@ export class LisshimingService implements ILisshimingService {
     /** 尉迟恭服务 - 大将军（扫描队列UI管理） */
     private yuChiGongService!: YuChiGongService;
 
+    /** 魏征服务 - 谏议大夫（appState监察） */
+    private weiZhengService!: WeiZhengService;
+
+    /** 秦琼服务 - 守门大将（文件系统事件守护者） */
+    private qinQiongService!: QinQiongService;
+
     /** 玄奘服务 - 法师（国际化多语言） */
     private xuanzangService!: XuanzangService;
 
@@ -95,6 +105,8 @@ export class LisshimingService implements ILisshimingService {
             this.fangXuanLingService &&
             this.chuSuiLiangService &&
             this.yuChiGongService &&
+            this.weiZhengService &&
+            this.qinQiongService &&
             this.xuanzangService
         );
     }
@@ -120,6 +132,14 @@ export class LisshimingService implements ILisshimingService {
         logger.info("👑 尉迟恭大将军服务就任");
         this.yuChiGongService = new YuChiGongService(this.fangXuanLingService);
         this.app.provide(YU_CHI_GONG_TOKEN, this.yuChiGongService);
+
+        logger.info("👑 魏征谏议大夫服务就任");
+        this.weiZhengService = new WeiZhengService(this.fangXuanLingService);
+        this.app.provide(WEI_ZHENG_TOKEN, this.weiZhengService);
+
+        logger.info("👑 秦琼守门大将服务就任");
+        this.qinQiongService = new QinQiongService();
+        this.app.provide(QIN_QIONG_TOKEN, this.qinQiongService);
 
         logger.info("👑 玄奘法师服务就任");
         this.xuanzangService = new XuanzangService(this.fangXuanLingService);
@@ -190,6 +210,23 @@ export class LisshimingService implements ILisshimingService {
         // 6. 将qizouBus传递给尉迟恭，供其发送启奏
         this.yuChiGongService.setQizouBus(this.router.getQizouBus());
 
+        // 7. 建立魏征与杜如晦的MessageChannel通道
+        logger.info("📋 杜如晦为魏征建立圣旨通道");
+        this.duRuHuiService.connect(this.weiZhengService);
+
+        // 8. 将qizouBus传递给魏征，供其发送启奏
+        this.weiZhengService.setQizouBus(this.router.getQizouBus());
+
+        // 9. 建立秦琼与杜如晦的MessageChannel通道
+        logger.info("📋 杜如晦为秦琼建立圣旨通道");
+        this.duRuHuiService.connect(this.qinQiongService);
+
+        // 10. 将qizouBus传递给秦琼，供其发送启奏
+        this.qinQiongService.setQizouBus(this.router.getQizouBus());
+
+        // 11. 将qizouBus传递给袁天罡，供其发送启奏（用于千里眼扫描完成事件）
+        this.yuanTianGangService.setQizouBus(this.router.getQizouBus());
+
         logger.info("👑 启奏-圣旨系统初始化完成");
         logger.info("👑 李世民已开始监听所有启奏事件，并根据event-routing.yml自动路由");
     }
@@ -205,10 +242,13 @@ export class LisshimingService implements ILisshimingService {
             logger.info("👑 玄奘法师服务初始化语言设置");
             await this.xuanzangService.initializeLocalization();
 
+            logger.info("👑 魏征谏议大夫服务初始化应用状态");
+            await this.weiZhengService.initializeAppState();
+
             logger.info("👑 尉迟恭大将军服务初始化扫描队列");
             await this.yuChiGongService.initializeScanningQueue();
         } catch (error) {
-            logger.error("👑偏好设置初始化失败，继续启动应用:", error);
+            logger.error("👑初始化失败，继续启动应用:", error);
         }
     }
 }

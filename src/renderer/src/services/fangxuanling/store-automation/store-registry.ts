@@ -11,7 +11,8 @@
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { useNotificationStore } from "@renderer/stores/notification";
 import { usePhotosStore } from "@renderer/stores/photos";
-import { useScanningStore } from "@renderer/stores/scanning";
+import { useScanningStore } from "../stores/scanning-store";
+import { useAppStateStore } from "../stores/appstate-store";
 import { loggers } from "@common/logger";
 
 const logger = loggers.fangxuanling;
@@ -40,6 +41,7 @@ const STORE_REGISTRY: StoreRegistry = {
     notification: useNotificationStore,
     photos: usePhotosStore,
     scanning: useScanningStore, // ✅ RFC 0042: ScanningStore注册
+    appState: useAppStateStore, // ✅ RFC 0042: AppStateStore注册
 };
 
 /**

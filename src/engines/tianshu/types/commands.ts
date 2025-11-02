@@ -17,7 +17,10 @@ export type UserIntent =
     | "generate_thumbnail"
     | "process_media"
     | "stop_operation"
-    | "get_status";
+    | "get_status"
+    | "restore_app_state" // ✅ RFC 0042 Step 2.5: 应用状态管理workflow
+    | "update_folder_tree" // ✅ RFC 0042 Step 2.5: 文件夹树管理workflow
+    | "switch_current_folder"; // ✅ RFC 0042 Step 2.5: 当前文件夹管理workflow
 
 /**
  * 命令优先级

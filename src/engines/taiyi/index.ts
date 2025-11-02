@@ -24,6 +24,9 @@
  * - 性能监控和负载均衡
  */
 
+// ⚠️ 关键：必须先导入所有适配器，确保@Adapter装饰器在引擎初始化前执行
+import "../adapters";
+
 // 核心引擎
 export { TaiyiEngine } from "./core/TaiyiEngine";
 export type { TaiyiEngineConfig } from "./core/TaiyiEngine";

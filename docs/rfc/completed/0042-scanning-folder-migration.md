@@ -4,14 +4,17 @@
 - **标题**: scanningFolder四步渐进式迁移
 - **作者**: AI Architect (Agent 1)
 - **开始日期**: 2025-10-16
-- **状态**: 🚧 进行中 - Step 1已完成
-- **最后更新**: 2025-10-20 (Architect修正文档：更新Line 1046-1098流程图，添加Builder TODO清单，补充测试期望值规范)
+- **状态**: ✅ 已完成 - Step 1完成，后续步骤已拆分为独立RFC
+- **最后更新**: 2025-11-01 (Agent 1将未完成任务拆分为RFC 0046/0047/0048)
 - **类型**: 架构重构
 - **目标版本**: v2.0.0
 - **依赖RFC**:
   - RFC 0038: 偏好设置工作流集成与Store边界统一（已完成）✅
   - RFC 0038 Phase 7: qizou-shengzhi架构（已完成）✅
-- **后续RFC**:
+- **后续RFC** (Step 2-3已拆分为独立RFC):
+  - RFC 0046: 扫描队列持久化 - 千里眼scanning.json管理（Step 2）
+  - RFC 0047: folderTree持久化与初始化 - 司命/千里眼appState管理（Step 2.5）
+  - RFC 0048: 扫描编排业务逻辑下沉 - 尉迟恭接管App.vue（Step 3）
   - RFC 0043: useQinQiong()访问模式（appState访问统一）
   - RFC 0044: 移除computeDelta反模式，统一天界业务逻辑
   - RFC 0032 Phase 3: scan-service迁移到千里眼（天界化扫描引擎）
@@ -42,13 +45,19 @@
 - ✅ 正确的架构流程已文档化（Line 804-850）
 - ✅ 原始反馈章节已标记为"已采纳"并删除线（保留供历史参考）
 
-**三步路线图**（修正后）：
+**四步路线图**（修正后）：
 - **Step 1**: ✅ **已完成** - 房玄龄创建专用ScanningStore（Store分离优先 + Accessor/Builder架构）
   - Phase 1.1: ✅ 创建ScanningStore
   - Phase 1.2: ✅ 实现只读Accessor + Builder模式
   - Phase 1.3: ✅ 注册到Store Registry
   - 测试: 16/16 passed, 100% coverage, zero lint errors
 - **Step 2**: 📋 待实施 - 千里眼追踪scanning.json持久化（天界优先）
+- **Step 2.5**: ⚠️ **需要修复** - folderTree持久化实现（尉迟恭→房玄龄→天枢→千里眼）
+  - ✅ 基础设施完成：千里眼持久化方法、工作流YAML、Store自动同步配置
+  - ❌ 架构违规1：尉迟恭直接访问preferenceStore（Line 344-351）
+  - ❌ 架构违规2：袁天罡intentMapping缺少UPDATE_FOLDER_TREE映射
+  - ⚠️ 配置差异：matter-sync.yml配置与RFC设计不一致（需确认）
+  - 🔨 Builder任务：修复所有架构违规，严格按RFC实施
 - **Step 3**: 📋 待实施 - 尉迟恭接管App.vue扫描编排（业务逻辑下沉）
 
 **注**：原Step 4（scan-service迁移到千里眼）因复杂度高，已合并到RFC 0032 Phase 3进行详细设计
@@ -2453,9 +2462,9 @@ Linus
 - [x] 单元测试 ✅
 
 #### Phase 2.6: 集成测试（1.5小时）
-- [ ] 端到端测试：尉迟恭→房玄龄→袁天罡→天枢→千里眼
-- [ ] 断电恢复场景测试
-- [ ] 100%覆盖率验证
+- [x] 端到端测试：尉迟恭→房玄龄→袁天罡→天枢→千里眼 ✅ 2025-10-29完成
+- [x] 断电恢复场景测试 ✅ 2025-10-29完成
+- [x] 100%覆盖率验证 ✅ 2025-10-29完成 (13/13 tests passing)
 
 ##### 测试用例期望值规范（2025-10-20补充）
 
@@ -2542,6 +2551,1015 @@ expect(zouzhe.content).toEqual({ path: testPath });
 3. Revert intentToWorkflowMap修改
 4. Revert尉迟恭和房玄龄修改
 5. **队列恢复到Step 1状态（内存only）**
+
+---
+
+## Step 2.5: folderTree持久化架构设计（司命引擎天界化）
+
+**状态**: 📋 架构设计阶段 - 重大架构调整
+**作者**: Architect (Linus Torvalds风格)
+**创建日期**: 2025-10-29
+**架构调整日期**: 2025-10-30
+
+**⚠️ 重大架构变更（2025-10-30）**：
+- **服务职责分离**：创建魏征（WeiZheng）专门管理appState，秦琼（QinQiong）只负责file watch
+- **引擎变更**：folderTree持久化从千里眼引擎改为司命引擎（SimingEngine）
+- **目标**：避免秦琼职责重叠（watch + appState管理），遵循单一职责原则
+
+### 🎯 核心问题
+
+**当前错误架构**：
+```typescript
+// ❌ 错误1：尉迟恭直接调用preferenceStore.updateFolderTree()
+preferenceStore.updateFolderTree(path);  // ← 违反Store访问规则！
+
+// ❌ 错误2：folderTree只在内存store中更新，没有持久化
+this._scanningStore.folderTree = [...]; // ← 没有持久化到磁盘！
+
+// ❌ 错误3：App.vue直接更新folderTree
+args.paths.forEach((p: string) => updateFolderTree(p)); // ← UI层直接修改！
+```
+
+**根本问题**：
+1. **folderTree必须持久化** - 应用重启后文件夹树结构应该恢复
+2. **千里眼负责持久化** - 扫描完成后，通过标准流程持久化到独立文件 `appstate/foldertree.json`
+3. **Store Automation自动同步** - 持久化数据应自动同步到store，无需手动调用
+4. **必须走标准流程** - 不能绕过 奏折→诏令→符箓→天枢→千里眼 架构
+5. **违反了"Bad programmers worry about code, good programmers worry about data structures"原则** - 我们没有先设计清楚数据流！
+
+### 🏗️ 正确的数据流架构
+
+**Linus哲学**：先设计数据结构和数据流，再写代码！
+
+```
+【数据结构】
+FolderNode[]  // 文件夹树结构，需要持久化
+
+【持久化位置】
+~/.photasa/appstate/foldertree.json  // 独立文件，与scanning queue保持一致
+{
+  "version": "1.0",
+  "timestamp": 1234567890,
+  "tree": FolderNode[]
+}
+
+【数据流方向】
+扫描完成
+→ 完整的奏折→诏令→符箓→天枢→千里眼流程
+→ 千里眼持久化到 appstate/foldertree.json（磁盘）
+→ 返回结果给房玄龄
+→ Store Automation自动同步到PreferenceStore.appState.folderTree（内存）
+→ Vue响应式系统更新UI
+```
+
+### 🎨 架构设计：两条数据流
+
+**Linus哲学**："好代码的关键不在于代码本身，而在于数据流是否清晰。"
+
+本系统有两条完全不同的数据流，各自独立但最终汇聚到同一个标准流程：
+
+---
+
+#### Flow 1: 扫描完成事件流（异步通知 → 启奏 → 圣旨 → 奏折）
+
+**触发源**：千里眼扫描服务完成扫描（Main进程）
+
+**完整数据流**：
+```
+千里眼扫描服务 (Main进程 IPC "picasa:find-photo")
+  ↓
+袁天罡监听IPC事件 (setupQianliyanEventListening)
+  ↓ 构造启奏 (Qizou: matter="scan_completed", content={paths})
+李世民路由 (LiShiMing via mitt qizouBus)
+  ↓ event-routing.yml 路由决策
+杜如晦下旨 (DuRuHui via MessageChannel)
+  ↓ 圣旨 (Shengzhi: command="update_folder_tree", content={paths})
+尉迟恭接旨 (YuChiGong.handleUpdateFolderTree)
+  ↓ 发送奏折 (Zouzhe: matter="UPDATE_FOLDER_TREE", content={tree})
+房玄龄处理奏折 (FangXuanLing.processZouzhe)
+  ↓ 构造诏令 (Zhaoling)
+袁天罡执行诏令 (YuanTianGang.executeZhaoling)
+  ↓ 转换为符箓 (Fulu)
+天枢工作流 (update_folder_tree.yml)
+  ↓ 太乙路由 (TaiYi callEngine protocol)
+千里眼引擎 (persistFolderTree/restoreFolderTree)
+  ↓ 持久化到磁盘
+本地JSON文件 (~/.photasa/appstate/foldertree.json)
+  ↓ 返回结果
+房玄龄自动同步Store (syncStoreWithSnapshot via matter-sync.yml)
+  ↓
+PreferenceStore.appState.folderTree 自动更新
+```
+
+**Flow 1关键点**：
+- ⏳ **临时方案** - 袁天罡监听IPC事件（等待scan-service天界化）
+- ✅ **启奏机制** - 通过mitt事件总线发送启奏给李世民
+- ✅ **圣旨路由** - 李世民通过event-routing.yml路由到尉迟恭
+- ✅ **标准流程** - 尉迟恭发奏折，完整走标准流程
+- ✅ **自动同步** - Store Automation自动同步到PreferenceStore
+
+---
+
+#### Flow 2: File Watcher流（文件系统事件 → 启奏 → 圣旨）
+
+**触发源**：File Watcher监听文件系统变化（Renderer进程）
+
+**⏳ 重要说明**：秦琼（QinQiong）负责File Watcher，依赖RFC 0043实现，但**最终也路由到尉迟恭**！
+
+**完整数据流**：
+```
+File Watcher (chokidar监听文件系统)
+  ↓ add/change/delete事件
+秦琼守护 (useQinQiong().handleFileEvent)
+  ↓ 启奏 (qizouBus.emit: matter="folder_discovered") - 像袁天罡一样发起启奏！
+李世民路由 (LiShiMing via event-routing.yml)
+  ↓ 圣旨 (Shengzhi: command="update_folder_tree")
+尉迟恭接旨 (YuChiGong.handleUpdateFolderTree) - Flow 1和Flow 2汇聚点！
+  ↓ 发送奏折 (Zouzhe: matter="UPDATE_FOLDER_TREE")
+房玄龄 (FangXuanLing.processZouzhe)
+  ↓ 构造诏令 (Zhaoling)
+袁天罡 (YuanTianGang.executeZhaoling)
+  ↓ 转换为符箓 (Fulu)
+天枢工作流 (update_folder_tree.yml)
+  ↓ 太乙路由 (TaiYi callEngine protocol)
+千里眼引擎 (persistFolderTree/restoreFolderTree)
+  ↓ 持久化到磁盘
+本地JSON文件 (~/.photasa/appstate/foldertree.json)
+  ↓ 返回结果
+房玄龄自动同步Store (syncStoreWithSnapshot via matter-sync.yml)
+  ↓
+PreferenceStore.appState.folderTree 自动更新
+```
+
+**Flow 2关键点**：
+- ✅ **秦琼使用启奏系统** - 像袁天罡一样，发起启奏给李世民
+- ✅ **最终路由到尉迟恭** - 李世民将圣旨路由到尉迟恭（汇聚点！）
+- ⏳ **依赖RFC 0043** - 秦琼实现在RFC 0043，但架构设计在本RFC
+- ⏳ **临时状态** - 当前file-handler.ts直接调用Store（待RFC 0043修复）
+
+**当前临时代码（待废弃）**：
+```typescript
+// ❌ file-handler.ts Line 50 - 临时代码，违反架构
+preferenceStore.updateFolderTree(state.path);  // 待RFC 0043用秦琼替换
+
+// ✅ RFC 0043实现后应该是：
+const qinqiong = useQinQiong();
+await qinqiong.handleFileEvent(state);  // 秦琼内部发起启奏
+```
+
+---
+
+#### 两条流的汇聚点：尉迟恭
+
+**✅ 架构决策：尉迟恭（YuChiGong）是Flow 1和Flow 2的汇聚点**
+
+**决策依据**（2025-10-29）：
+1. **统一处理** - 无论来自IPC事件还是File Watcher，都需要更新folderTree
+2. **职责一致性** - 尉迟恭负责所有扫描相关的folderTree更新
+3. **秦琼使用启奏** - 秦琼发起启奏给李世民，李世民路由到尉迟恭
+4. **避免重复代码** - 两条流共享相同的奏折→千里眼持久化逻辑
+
+**尉迟恭统一处理机制（Flow 1 + Flow 2）**：
+```typescript
+// 尉迟恭统一处理：无论来自Flow 1（IPC）还是Flow 2（File Watcher）
+private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
+    // 1. 从圣旨中提取paths（可能来自IPC事件或File Watcher）
+    const paths = shengzhi.content.paths;
+
+    // 2. 将paths转换为FolderNode[] tree结构
+    const tree = this.convertPathsToTree(paths);
+
+    // 3. 构造奏折发送给房玄龄
+    const zouzhe: Zouzhe = {
+        department: GUANYUAN_NAMES.YU_CHI_GONG,
+        matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
+        content: { tree },  // 发送完整tree结构
+        timestamp: Date.now(),
+        priority: ZOUZHE_PRIORITIES.NORMAL,
+    };
+
+    // 4. 房玄龄→袁天罡→天枢→千里眼→持久化→Store同步
+    await this.fangXuanLingService.processZouzhe(zouzhe);
+}
+```
+
+**关键修正**：
+- ✅ 尉迟恭是Flow 1（IPC）和Flow 2（File Watcher）的汇聚点
+- ✅ 尉迟恭接收圣旨（包含paths数组），转换为tree结构
+- ✅ 尉迟恭发送 `UPDATE_FOLDER_TREE` 奏折给房玄龄
+- ✅ 完整走 奏折→诏令→符箓→天枢→千里眼 标准流程
+- ✅ Store Automation自动同步，无需手动更新
+- ⏳ Flow 2的秦琼实现在RFC 0043，但最终也路由到尉迟恭
+
+---
+
+### 🔧 技术实现设计
+
+#### 实施步骤清单
+
+**🚧 已完成（Architect错误地实现，但代码保留）**：
+
+1. ✅ **创建共享类型定义**
+   - 文件：`src/common/folder-types.ts`
+   - 内容：`FolderNode` 接口定义（供Main和Renderer共享）
+
+2. ✅ **千里眼引擎添加folder tree持久化方法**
+   - 文件：`src/engines/qianliyan/core/QianliyanEngine.ts`
+   - 已实现方法：
+     - `persistFolderTree(tree: FolderNode[]): Promise<void>`
+     - `restoreFolderTree(): Promise<FolderNode[]>`
+     - `clearFolderTree(): Promise<void>`
+   - 存储路径：`~/.photasa/appstate/foldertree.json`
+   - 日志风格：天界风格（🎨画图/📖读图/🧹净化）
+
+3. ✅ **创建天枢工作流YAML - update_folder_tree**
+   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
+   - 步骤：restore_tree → update_tree → persist_tree → count_nodes → format_response
+   - 合并策略：初期使用replace全量替换
+
+---
+
+**📋 Builder待完成任务（Flow 1核心 + Flow 2临时修复 + 初始化支持）**：
+
+**🎯 初始化工作流任务（必须最先完成）**：
+
+1. **创建restore_folder_tree.yml工作流**
+   - 文件：`src/engines/tianshu/workflows/appstate/restore_folder_tree.yml`（新建）
+   - **目标**：应用启动时从千里眼恢复folderTree
+   - **工作流定义**：
+     ```yaml
+     version: "1.0"
+     id: "restore_folder_tree"
+     name: "恢复文件夹树"
+     description: "应用启动时从持久化文件恢复文件夹树"
+
+     inputs: {}
+
+     steps:
+       - id: "restore_tree"
+         name: "千里眼：恢复文件夹树"
+         type: "action"
+         service: "taiyi"
+         action: "callEngine"
+         input:
+           engineName: "qianliyan"
+           methodName: "restoreFolderTree"
+         output_schema:
+           type: array
+           description: "恢复的文件夹树（FolderNode[]）"
+
+       - id: "count_nodes"
+         name: "计算节点数量"
+         type: "builtin"
+         action: "arrayCount"
+         input:
+           array: "{{steps.restore_tree}}"
+         output_schema:
+           type: number
+           description: "文件夹树节点数量"
+         dependsOn: ["restore_tree"]
+
+       - id: "format_response"
+         name: "返回恢复结果"
+         type: "builtin"
+         action: "return"
+         input:
+           success: true
+           tree: "{{steps.restore_tree}}"
+           nodeCount: "{{steps.count_nodes}}"
+           restored: true
+         dependsOn: ["count_nodes"]
+
+     outputs:
+       tree:
+         description: "恢复的文件夹树（用于Store同步）"
+         type: "array"
+         path: "tree"
+       nodeCount:
+         description: "节点数量"
+         type: "number"
+         path: "nodeCount"
+       restored:
+         description: "是否成功恢复"
+         type: "boolean"
+         path: "restored"
+     ```
+
+2. **添加RESTORE_FOLDER_TREE matter常量**
+   - 文件：`src/renderer/src/interfaces/fang-xuan-ling.interface.ts`
+   - 在`ZOUZHE_MATTERS`中添加：
+     ```typescript
+     RESTORE_FOLDER_TREE: "restore_folder_tree",
+     ```
+
+3. **在袁天罡添加RESTORE_FOLDER_TREE映射**
+   - 文件：`src/renderer/src/services/yuantiangang/yuantiangang.ts`
+   - 在`intentMapping`对象中添加：
+     ```typescript
+     [ZOUZHE_MATTERS.RESTORE_FOLDER_TREE]: "restore_folder_tree",
+     ```
+
+4. **配置restore_folder_tree Store自动同步**
+   - 文件：`src/renderer/src/services/fangxuanling/store-automation/matter-sync.yml`
+   - 添加配置：
+     ```yaml
+     restore_folder_tree:
+         propertyPath: "folderTree"
+         storeName: "appstate"
+         syncStrategy: "replace"
+         autoSync: true
+         description: "恢复文件夹树 - 从千里眼持久化文件恢复到appstate store"
+     ```
+
+5. **在尉迟恭添加initializeFolderTree方法**
+   - 文件：`src/renderer/src/services/yuchigong/yuchigong.ts`
+   - **参考模式**：完全复制initializeScanningQueue的实现模式（Line 574-600）
+   - **新增public方法**：
+     ```typescript
+     /**
+      * 初始化folderTree（应用启动时调用）
+      * 从天界恢复持久化的folderTree
+      *
+      * @description
+      * 初始化流程：
+      * ```
+      * 尉迟恭启动初始化
+      *       ↓
+      * 向房玄龄发送RESTORE_FOLDER_TREE奏折
+      *       ↓
+      * 房玄龄 → 袁天罡 → 天界Tianshu
+      *       ↓
+      * Tianshu执行restore_folder_tree工作流
+      *       ↓
+      * 工作流调用千里眼.restoreFolderTree()
+      *       ↓
+      * 天界返回folderTree数据
+      *       ↓
+      * 房玄龄Store Automation更新AppState Store
+      *       ↓
+      * 初始化完成
+      * ```
+      */
+     async initializeFolderTree(): Promise<void> {
+         try {
+             logger.info("🛡️ 尉迟恭呈文房玄龄，请求典籍中文件夹树");
+
+             // 向房玄龄发送奏折，请求恢复folderTree
+             const zouzhe: Zouzhe = {
+                 department: GUANYUAN_NAMES.YU_CHI_GONG,
+                 matter: ZOUZHE_MATTERS.RESTORE_FOLDER_TREE,
+                 content: {},
+                 timestamp: Date.now(),
+                 priority: ZOUZHE_PRIORITIES.NORMAL,
+             };
+
+             const response = await this.fangXuanLingService.processZouzhe(zouzhe);
+
+             // ✅ 委托给房玄龄，folderTree在AppState Store中
+             if (response.approved) {
+                 const nodeCount = response.data?.nodeCount ?? 0;
+                 logger.info(`🛡️ 尉迟恭：文件夹树初始化完成，共${nodeCount}个节点`);
+             } else {
+                 logger.warn("🛡️ 尉迟恭：未能获取文件夹树数据，使用空树启动");
+             }
+         } catch (error) {
+             // 失败时使用空树，不影响应用启动
+             logger.error("🛡️ 尉迟恭：获取文件夹树失败:", error);
+             logger.info("🛡️ 尉迟恭：使用空树继续启动");
+         }
+     }
+     ```
+
+6. **在IYuChiGongService接口添加initializeFolderTree声明**
+   - 文件：`src/renderer/src/interfaces/yu-chi-gong.interface.ts`
+   - 添加方法声明：
+     ```typescript
+     /**
+      * 初始化folderTree（应用启动时调用）
+      * 从天界恢复持久化的folderTree
+      */
+     initializeFolderTree(): Promise<void>;
+     ```
+
+7. **在李世民startZhengguan中调用尉迟恭初始化**
+   - 文件：`src/renderer/src/services/lishiming/lishiming.ts`
+   - **参考模式**：完全复制Line 209的模式
+   - **位置**：startZhengguan方法中，initializeScanningQueue之后
+   - **添加代码**（Line 210之后）：
+     ```typescript
+     logger.info("👑 尉迟恭大将军服务初始化文件夹树");
+     await this.yuChiGongService.initializeFolderTree();
+     ```
+
+8. **更新工作流验证脚本**
+   - 文件：`scripts/validate-workflows.ts` (Line 20-30区域)
+   - **位置**：WORKFLOW_DIRS数组中
+   - **添加**（如果尚未添加）：
+     ```typescript
+     path.join(TIANSHU_ROOT, 'workflows/appstate'),
+     ```
+
+---
+
+**🎯 基础架构任务**：
+
+9. **创建独立的AppState Store**
+   - 文件：`src/renderer/src/stores/appstate.ts`（新建）
+   - **目标**：仅迁移folderTree到独立Store（Step 2.5范围）
+   - **职责分离原则（Linus好品味）**：
+     - **preferences.ts** - 只管理用户偏好设置（持久化配置）
+     - **scanning.ts** - 已在Step 1迁移scanningFolder（已完成✅）
+     - **appstate.ts** - 只管理folderTree（本RFC Step 2.5唯一任务）
+   - **State定义**：
+     ```typescript
+     export interface AppState {
+         /** 文件夹树结构（Step 2.5唯一迁移内容） */
+         folderTree: FolderNode[];
+     }
+     ```
+   - **导出**：`export const useAppStateStore = defineStore("appstate", {...})`
+   - **持久化**：`persist: true`
+   - **日志风格**：人界风格（🏛️ 朝廷/官府相关）
+
+10. **更新stores/index.ts导出AppState Store**
+    - 文件：`src/renderer/src/stores/index.ts`
+    - 添加：`export * from './appstate'`
+
+11. **更新PreferenceStore仅移除folderTree字段**
+    - 文件：`src/renderer/src/stores/preference.ts`
+    - **移除**：`appState.folderTree` 字段（Line 141）
+    - **移除**：`folderTree` getter（Line 286）
+    - **保留**：appState的其他字段（firstTime、lastOpenedFolder、currentFolder、scannedFolder、currentFolderConfig）
+    - **注意**：scanningFolder已在Step 1迁移到ScanningStore（已完成✅）
+    - **替换**：所有对`this.appState.folderTree`的引用为 `useAppStateStore().folderTree`
+    - **不要删除**：appState对象本身和其他保留字段
+
+---
+
+**🎯 核心任务（Flow 1 - IPC事件流）**：
+
+12. **添加UPDATE_FOLDER_TREE matter常量**
+   - 文件：`src/renderer/src/interfaces/fang-xuan-ling.interface.ts`
+   - 位置：`ZOUZHE_MATTERS` 常量对象
+   - 内容：`UPDATE_FOLDER_TREE: "update_folder_tree"`
+
+5. **修复尉迟恭handleUpdateFolderTree方法（Flow 1核心）**
+   - 文件：`src/renderer/src/services/yuchigong/yuchigong.ts` (Line 323-374)
+   - **移除**：
+     ```typescript
+     // ❌ 删除这些代码
+     const preferenceStore = usePreferenceStore();
+     paths.forEach((path: unknown) => {
+         preferenceStore.updateFolderTree(path);
+     });
+     ```
+   - **替换为**：
+     ```typescript
+     // ✅ 构造奏折发送给房玄龄（参考handleAddScanTask模式）
+     const zouzhe: Zouzhe = {
+         department: GUANYUAN_NAMES.YU_CHI_GONG,
+         matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
+         content: { tree },  // 从shengzhi.content提取tree
+         timestamp: Date.now(),
+         priority: ZOUZHE_PRIORITIES.NORMAL,
+     };
+     const response = await this.fangXuanLingService.processZouzhe(zouzhe);
+     ```
+
+6. **配置Store自动同步**
+   - 文件：`src/renderer/src/services/fangxuanling/store-automation/matter-sync.yml`
+   - 新增配置：
+     ```yaml
+     update_folder_tree:
+         propertyPath: "folderTree"
+         storeName: "appstate"
+         syncStrategy: "replace"
+         autoSync: true
+         description: "更新文件夹树 - 从response.data.tree提取，替换appstate store的folderTree"
+     ```
+
+7. **更新袁天罡的intentMapping**
+   - 文件：`src/renderer/src/services/yuantiangang/yuantiangang.ts` (Line 306-323)
+   - 在`intentMapping`对象中添加：
+     ```typescript
+     [ZOUZHE_MATTERS.UPDATE_FOLDER_TREE]: "update_folder_tree",
+     ```
+
+8. **更新工作流验证脚本**
+   - 文件：`scripts/validate-workflows.ts` (Line 20-30区域)
+   - 在`WORKFLOW_DIRS`数组中添加：
+     ```typescript
+     path.join(TIANSHU_ROOT, 'workflows/appstate'),
+     ```
+
+9. **运行工作流验证**
+   - 命令：`volta run npx tsx scripts/validate-workflows.ts --verbose`
+   - 确保：update_folder_tree.yml通过所有验证
+
+10. **编写单元测试**
+    - 文件：`src/engines/qianliyan/__tests__/QianliyanEngine-foldertree.spec.ts`
+    - 测试覆盖：persistFolderTree、restoreFolderTree、clearFolderTree
+    - 覆盖率要求：100% (Stmts/Branch/Funcs/Lines)
+
+11. **编写集成测试**
+    - 文件：`src/engines/tianshu/__tests__/workflows-foldertree-integration.spec.ts`
+    - 测试场景：完整工作流执行（restore → update → persist → return）
+
+12. **运行lint检查（Flow 1核心代码）**
+    - 命令：`npx eslint src/engines/qianliyan/ src/renderer/src/services/yuchigong/ --ext .ts`
+    - 要求：零错误、零警告
+
+---
+
+**🔥 Flow 2完全替换任务（必须完成 - 替换所有updateFolderTree调用）**：
+
+### 📋 所有updateFolderTree使用场景分析
+
+**使用场景清单**：
+1. ✅ **preference.ts Line 381, 413** - addFolderForScan内部调用（需保留，Store内部）
+2. ✅ **preference.ts Line 506, 513** - addFileOperation内部调用（需保留，Store内部）
+3. ✅ **preference.ts Line 539** - 方法定义（标记@deprecated）
+4. 🔥 **file-handler.ts Line 50** - File Watcher处理（**必须替换为秦琼**）
+5. 🔥 **AppHelper.ts Line 163, 204** - 扫描回调（**必须替换为秦琼**）
+6. 🔥 **App.vue Line 60, 299** - 暴露给AppHelper（**必须移除**）
+
+**替换策略**：
+- ✅ **Store内部调用**（Line 381, 413, 506, 513）：保留不变，因为是Store的内部实现
+- 🔥 **外部调用**（file-handler, AppHelper, App.vue）：全部替换为秦琼+启奏系统
+
+---
+
+13. **创建秦琼服务基础结构（临时简化版）**
+    - 文件：`src/renderer/src/services/qinqiong/qinqiong.ts`（新建）
+    - **目标**：创建简化版秦琼服务，只提供`handleFileEvent`方法
+    - **职责**：守护File Watcher，发起启奏给李世民
+    - **实现要点**：
+      - 实现`setQizouBus()`方法，接收启奏通道
+      - 实现`handleFileEvent(path: string)`方法，发起启奏
+      - 启奏matter: `"folder_discovered"`
+      - 启奏from: `"秦琼"`
+      - 启奏content: `{ paths: [path] }`
+    - **日志风格**：人界风格（🛡️ 秦琼）
+    - **导出**：`export function useQinQiong(): QinQiongService`
+
+14. **在李世民中添加秦琼路由规则**
+    - 文件：`src/renderer/src/services/lishiming/event-routing.yml`
+    - **添加路由**：
+      ```yaml
+      # 秦琼发现文件夹 → 尉迟恭更新folderTree
+      - matter: "folder_discovered"
+        from: "秦琼"
+        target: "尉迟恭"
+        command: "update_folder_tree"
+        priority: "normal"
+        description: "秦琼发现新文件夹，通知尉迟恭更新folderTree"
+      ```
+
+15. **在App.vue初始化秦琼**
+    - 文件：`src/renderer/src/App.vue`
+    - **初始化位置**：李世民初始化后，onMounted中
+    - **初始化代码**：
+      ```typescript
+      // 初始化秦琼并注册启奏通道
+      const qinqiong = useQinQiong();
+      qinqiong.setQizouBus(qizouBus);
+      logger.info("🛡️ 秦琼就位，守护File Watcher");
+      ```
+
+16. **替换file-handler.ts使用秦琼**
+    - 文件：`src/renderer/src/utils/file-handler.ts` (Line 46-52)
+    - **移除**：
+      ```typescript
+      // ❌ 删除PreferenceStore依赖
+      import type { PreferenceStore } from "@renderer/stores/preference";
+      async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore)
+      ```
+    - **替换为**：
+      ```typescript
+      // ✅ 使用秦琼
+      import { useQinQiong } from "@renderer/services/qinqiong/qinqiong";
+
+      async function handleAddFile(state: WatchState): Promise<void> {
+          if (!state.isFile && state.path?.length > 0) {
+              const qinqiong = useQinQiong();
+              await qinqiong.handleFileEvent(state.path);
+              return;
+          }
+          // ... 其余代码保持不变
+      }
+      ```
+    - **同步修改**：
+      - 移除所有函数签名中的`preferenceStore`参数
+      - 修改`handleFileTask`的调用签名
+      - 修改`startFileWatching`的调用签名
+
+17. **替换AppHelper.ts使用秦琼**
+    - 文件：`src/renderer/src/AppHelper.ts` (Line 163, 204)
+    - **接口修改**：
+      ```typescript
+      // ❌ 删除callbacks中的updateFolderTree
+      export interface ScanCallbacks {
+          // ... 其他callbacks
+          updateFolderTree: (path: string) => void;  // 删除此行
+      }
+      ```
+    - **替换调用**：
+      ```typescript
+      // Line 163附近
+      // ❌ 删除
+      callbacks.updateFolderTree(parentDir);
+
+      // ✅ 替换为
+      const qinqiong = useQinQiong();
+      await qinqiong.handleFileEvent(parentDir);
+
+      // Line 204附近
+      // ❌ 删除
+      callbacks.updateFolderTree(result.action.path);
+
+      // ✅ 替换为
+      const qinqiong = useQinQiong();
+      await qinqiong.handleFileEvent(result.action.path);
+      ```
+
+18. **移除App.vue的updateFolderTree暴露**
+    - 文件：`src/renderer/src/App.vue` (Line 60, 299)
+    - **Line 60移除**：
+      ```typescript
+      // ❌ 删除
+      const { addPath, completeScanPath, updateFolderTree } = preferenceStore;
+
+      // ✅ 替换为
+      const { addPath, completeScanPath } = preferenceStore;
+      ```
+    - **Line 299移除**：
+      ```typescript
+      // ❌ 删除
+      updateFolderTree: updateFolderTree,
+
+      // （不需要替换，直接删除此行）
+      ```
+
+19. **在PreferenceStore标记updateFolderTree为@deprecated**
+    - 文件：`src/renderer/src/stores/preference.ts` (Line 539)
+    - **添加JSDoc**：
+      ```typescript
+      /**
+       * @deprecated RFC 0042已废弃，外部请使用秦琼服务（useQinQiong）
+       * 此方法仅供Store内部（addFolderForScan/addFileOperation）使用
+       * @internal
+       */
+      updateFolderTree(folder: string) {
+          // 现有实现保持不变
+      }
+      ```
+    - **保留原因**：Store内部方法（Line 381, 413, 506, 513）仍需调用
+      // ❌ 当前：直接调用Store（违反架构）
+      // ✅ 未来：秦琼守护File Watcher，使用启奏系统
+      // 长期：顺风耳接管File Watcher，秦琼与顺风耳协作
+      async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore): Promise<void> {
+          if (!state.isFile && state.path?.length > 0) {
+              // TODO RFC 0043: 用秦琼替换
+              // const qinqiong = useQinQiong();
+              // await qinqiong.handleFileEvent(state);
+              preferenceStore.updateFolderTree(state.path);  // 临时代码
+              return;
+          }
+          // ... 其余代码
+      }
+      ```
+
+14. **标记App.vue的updateFolderTree为待废弃**
+    - 文件：`src/renderer/src/App.vue` (Line 60, 299)
+    - **添加注释**：
+      ```typescript
+      // Line 60
+      // ⏳ 临时代码（等待RFC 0043秦琼实现废弃）
+      const { addPath, completeScanPath, updateFolderTree } = preferenceStore;
+
+      // Line 299
+      // ⏳ 临时代码（等待RFC 0043秦琼实现废弃）
+      updateFolderTree: updateFolderTree,
+      ```
+
+15. **在PreferenceStore标记updateFolderTree为@deprecated**
+    - 文件：`src/renderer/src/stores/preference.ts` (Line 539)
+    - **添加JSDoc**：
+      ```typescript
+      /**
+       * ⏳ 临时方法（等待RFC 0043秦琼实现废弃）
+       * @deprecated 违反架构设计，应使用秦琼（QinQiong）+ 启奏系统
+       * 长期方案：顺风耳接管File Watcher
+       */
+      updateFolderTree(folder: string) {
+          // 现有实现
+      }
+      ```
+
+---
+
+**🎯 最终验证（Flow 1必须，Flow 2可选）**：
+
+16. **验证Flow 1完整性**
+    - [ ] 所有Flow 1测试通过（100%覆盖率）
+    - [ ] 零lint错误
+    - [ ] 工作流验证通过
+    - [ ] 尉迟恭handleUpdateFolderTree正确发送奏折
+    - [ ] 千里眼持久化到`~/.photasa/appstate/foldertree.json`
+    - [ ] Store Automation自动同步成功
+
+17. **验证Flow 2标记（可选）**
+    - [ ] file-handler.ts添加临时代码注释
+    - [ ] App.vue添加待废弃注释
+    - [ ] PreferenceStore.updateFolderTree标记@deprecated
+    - [ ] 代码遵循双界日志风格规范
+
+---
+
+**❌ 禁止的操作**：
+- ❌ 不在尉迟恭中调用 `preferenceStore.updateFolderTree()`
+- ❌ 不在App.vue中直接更新folderTree（Flow 2临时保留，等RFC 0043）
+- ❌ 不在内存store中更新folderTree而不持久化
+- ❌ 不绕过奏折→诏令→符箓→天枢→千里眼标准流程（Flow 1严格要求）
+
+### 📝 遗留问题清单
+
+1. ~~**架构决策**：【待定服务X】应该是谁？~~ ✅ **已解决** - 尉迟恭接收圣旨
+2. **数据合并策略**：千里眼如何合并folderTree？
+   - **决策**：使用 `builtin.merge` 或 `builtin.replace` 策略
+   - **临时方案**：初期使用 `replace` 全量替换（简单可靠）
+   - **未来优化**：实现增量更新（性能优化）
+3. **存储路径选择**：
+   - **决策**：使用独立文件 `~/.photasa/appstate/foldertree.json`
+   - **理由**：与scanning queue保持一致，避免preferences.json过大
+   - **未来**：考虑统一appState持久化策略
+4. **临时方案时间线**：
+   - 当前：袁天罡监听IPC事件 `picasa:find-photo`（临时方案）
+   - 未来：千里眼完全天界化后，由千里眼直接更新folderTree
+   - 依赖：RFC 0032 Phase 3 scan-service迁移完成
+5. **测试策略**：
+   - 单元测试：千里眼持久化方法（persistFolderTree/restoreFolderTree）
+   - 集成测试：完整工作流执行（update_folder_tree.yml）
+   - E2E测试：扫描完成后folderTree自动更新
+
+### 🚫 禁止的错误模式
+
+**Linus警告**：以下模式绝对禁止！
+
+```typescript
+// ❌ 错误1：UI层直接更新数据
+args.paths.forEach((p: string) => updateFolderTree(p));
+
+// ❌ 错误2：服务直接访问Store
+preferenceStore.updateFolderTree(path);
+
+// ❌ 错误3：只更新内存不持久化
+this._scanningStore.folderTree = [...];
+
+// ❌ 错误4：循环发送启奏
+paths.forEach(path => {
+    this.reportScanCompletion(path);  // ← 批量处理！
+});
+
+// ❌ 错误5：访问全局变量
+(window as any).qizouBus.emit('qizou', qizou);  // ← 依赖注入！
+```
+
+### 验收标准
+
+**架构设计验收**：
+- [ ] 数据流清晰，所有箭头方向明确
+- [ ] 职责分配明确，无职责越界
+- [ ] 持久化策略清晰，无数据丢失风险
+- [ ] 启奏-圣旨流程完整，符合RFC 0038规范
+- [ ] 临时方案标记清晰，废弃时间线明确
+
+**代码实现验收**：
+- [ ] folderTree变化立即持久化到 `~/.photasa/appstate/foldertree.json`
+- [ ] 应用启动自动恢复folderTree
+- [ ] 断电后folderTree不丢失
+- [ ] 零UI层直接更新
+- [ ] 零服务直接访问Store
+- [ ] Store Automation自动同步
+- [ ] 工作流验证脚本通过（validate-workflows.ts）
+- [ ] 单元测试覆盖率100%（千里眼folder tree方法）
+- [ ] 集成测试通过（update_folder_tree.yml完整流程）
+- [ ] 零lint错误（源代码 + 测试代码）
+
+---
+
+## Architect最终审查 (2025-10-29)
+
+**审查状态**: ✅ **架构设计完成，RFC文档已修正所有错误**
+
+### 审查结论
+
+**状态**: ⚠️ **部分完成，存在严重架构违规，需要立即修复**
+
+### 已完成项目 ✅
+
+1. **千里眼引擎folderTree持久化方法** ✅
+   - 文件：`src/engines/qianliyan/core/QianliyanEngine.ts`
+   - 已实现：`persistFolderTree()` (Line 481), `restoreFolderTree()` (Line 522), `clearFolderTree()` (Line 559)
+   - 日志风格正确（天界风格）
+   - 存储路径正确（`~/.photasa/appstate/foldertree.json`）
+
+2. **天枢工作流YAML** ✅
+   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
+   - 结构正确：restore_tree → update_tree → persist_tree → count_nodes → format_response
+   - 完全复用scanning queue的四步模式
+   - 数据扁平化策略注释清晰
+
+3. **Store自动同步配置** ✅
+   - 文件：`src/renderer/src/services/fangxuanling/store-automation/matter-sync.yml`
+   - 配置存在（Line 129-134）
+   - 注：配置与RFC设计有差异，可能是RFC 0043修改，需确认
+
+### 发现的架构违规 ❌
+
+#### 🚨 严重违规1：尉迟恭直接访问Store
+
+**文件**: `src/renderer/src/services/yuchigong/yuchigong.ts` (Line 344-351)
+
+**违规代码**：
+```typescript
+// ❌ 严重违规：直接访问preferenceStore
+const { usePreferenceStore } = await import("@renderer/stores/preference");
+const preferenceStore = usePreferenceStore();
+paths.forEach((path: unknown) => {
+    if (typeof path === "string") {
+        preferenceStore.updateFolderTree(path);  // ← 违反RFC 0042设计！
+    }
+});
+```
+
+**违反的RFC条款**：
+- Line 2732: "尉迟恭不再直接调用 `preferenceStore.updateFolderTree()`"
+- Line 2733: "尉迟恭发送 `UPDATE_FOLDER_TREE` 奏折给房玄龄"
+- Line 2790: "不在尉迟恭中调用preferenceStore.updateFolderTree()"
+- Line 2822: "服务直接访问Store"是禁止的错误模式
+
+**正确实现**（参考Line 2775-2779设计）：
+```typescript
+// ✅ 正确：发送奏折给房玄龄
+this.fangXuanLingService.sendZouzhe({
+    matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
+    content: { tree: [...] }  // 注：需要构建完整的tree结构，不是paths数组
+});
+```
+
+**修复要求**：
+1. 完全删除 Line 344-351 的preferenceStore访问代码
+2. 参考 `handleAddScanTask()` 的正确模式（Line 182-210）
+3. 发送奏折，让数据流经过：房玄龄 → 袁天罡 → 天枢 → 千里眼 → Store Automation
+
+#### ⚠️ 违规2：袁天罡intentMapping缺少UPDATE_FOLDER_TREE映射
+
+**文件**: `src/renderer/src/services/yuantiangang/yuantiangang.ts` (Line 306-323)
+
+**问题**: intentMapping中没有 `UPDATE_FOLDER_TREE` 映射
+
+**应该添加**（Line 322后）：
+```typescript
+[ZOUZHE_MATTERS.UPDATE_FOLDER_TREE]: "update_folder_tree",
+```
+
+**影响**: 即使尉迟恭发送了UPDATE_FOLDER_TREE奏折，袁天罡也无法将其转换为天枢工作流intent！
+
+#### 📋 差异3：matter-sync.yml配置与RFC设计不一致
+
+**当前配置** (Line 129-134):
+```yaml
+update_folder_tree:
+    propertyPath: "."           # ← RFC设计是 "appState.folderTree"
+    syncStrategy: "merge"       # ← RFC设计是 "replace"
+```
+
+**RFC设计** (Line 2767-2773):
+```yaml
+update_folder_tree:
+    propertyPath: "appState.folderTree"
+    syncStrategy: "replace"
+```
+
+**处理方式**: 需要确认是RFC 0043的有意修改还是实施错误。如果是错误，需要改回RFC 0042设计。
+
+### 数据流断点分析
+
+**当前（断裂的）数据流**：
+```
+千里眼扫描 → 袁天罡监听IPC → 李世民路由 → 杜如晦下旨
+  ↓
+尉迟恭接旨 → ❌ **断点1：直接调用preferenceStore（违规）**
+  ↓
+袁天罡intentMapping → ❌ **断点2：缺少UPDATE_FOLDER_TREE映射**
+```
+
+**正确（完整的）数据流**：
+```
+尉迟恭接旨 → 发送UPDATE_FOLDER_TREE奏折 → 房玄龄处理
+  ↓
+袁天罡转换符箓 → 天枢执行update_folder_tree.yml
+  ↓
+千里眼持久化 → Store Automation自动同步
+```
+
+### Builder修复清单（必须100%按RFC执行）
+
+#### 任务1：修复尉迟恭handleUpdateFolderTree方法（高优先级）
+
+**文件**: `src/renderer/src/services/yuchigong/yuchigong.ts`
+
+**步骤**：
+1. **删除** Line 344-351 的所有preferenceStore访问代码
+2. **参考** `handleAddScanTask()` 方法（Line 182-210）的正确模式
+3. **实现** 正确的奏折发送逻辑：
+   ```typescript
+   private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
+       const paths = shengzhi.content.paths;
+
+       // 参数验证
+       if (!Array.isArray(paths) || paths.length === 0) {
+           logger.warn("🛡️ 尉迟恭：圣旨paths无效");
+           return;
+       }
+
+       logger.info(`🛡️ 尉迟恭接旨：批量更新文件夹树 (${paths.length}个路径)`);
+
+       // ✅ 正确：构建tree结构并发送奏折
+       const tree = await this.buildFolderTreeFromPaths(paths);
+
+       try {
+           await this.fangXuanLingService.sendZouzhe({
+               matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
+               content: { tree },
+               urgency: "normal",
+           });
+
+           logger.info(`🛡️ 尉迟恭：已发送奏折给房玄龄，等待天界处理`);
+       } catch (error) {
+           logger.error(`🛡️ 尉迟恭：发送奏折失败`, error);
+           throw error;
+       }
+   }
+   ```
+
+4. **注意**：需要实现 `buildFolderTreeFromPaths()` 辅助方法，将paths数组转换为FolderNode[]树结构
+
+#### 任务2：添加袁天罡intentMapping（高优先级）
+
+**文件**: `src/renderer/src/services/yuantiangang/yuantiangang.ts`
+
+**位置**: Line 322后
+
+**代码**：
+```typescript
+[ZOUZHE_MATTERS.UPDATE_FOLDER_TREE]: "update_folder_tree",
+```
+
+#### 任务3：确认matter-sync.yml配置（中优先级）
+
+**文件**: `src/renderer/src/services/fangxuanling/store-automation/matter-sync.yml`
+
+**行动**：
+1. 检查RFC 0043是否有新的架构决策修改了这个配置
+2. 如果没有，改回RFC 0042 Step 2.5 Line 2767-2773的设计：
+   ```yaml
+   update_folder_tree:
+       propertyPath: "appState.folderTree"
+       syncStrategy: "replace"
+       storeName: "preferences"
+       autoSync: true
+   ```
+
+#### 任务4：验证修复（必须100%通过）
+
+**测试清单**：
+1. ✅ 零直接Store访问（grep检查：`preferenceStore.updateFolderTree`应无结果）
+2. ✅ 袁天罡intentMapping包含UPDATE_FOLDER_TREE
+3. ✅ 工作流执行成功（从尉迟恭 → 千里眼 → Store完整链路）
+4. ✅ folderTree持久化到磁盘（`~/.photasa/appstate/foldertree.json`）
+5. ✅ Store Automation自动同步（PreferenceStore.appState.folderTree更新）
+6. ✅ 单元测试通过
+7. ✅ 零lint错误
+
+### Linus Torvalds最终评语
+
+> "这是典型的'差品味'实现！问题的根源在于Builder没有理解数据流的本质。当你看到 `preferenceStore.updateFolderTree(path)` 时，应该立即意识到这是错误的——因为它破坏了整个Zouzhe-Shengzhi架构的单向数据流！
+>
+> **正确的做法永远是：发送奏折，让数据流自然流动，Store Automation自动同步。** 不要试图'聪明地'直接修改Store——那是在制造技术债务！
+>
+> 修复方法很简单：**删除所有直接Store访问，严格遵循奏折流程。** 这就是架构的意义——强制你做对的事情！不要再犯同样的错误了！"
+
+### 强制要求（Builder必读）
+
+- ⛔ **禁止任何形式的直接Store访问** - 包括`preferenceStore.updateFolderTree()`
+- ⛔ **禁止绕过奏折流程** - 所有人界→天界通信必须通过Zouzhe
+- ⛔ **禁止自行修改架构设计** - 必须100%按照RFC 0042 Step 2.5设计实施
+- ✅ **必须参考正确模式** - `handleAddScanTask()`是标准模式，必须遵循
+- ✅ **必须验证完整数据流** - 从尉迟恭到Store的完整链路必须测试通过
+
+**如果Builder对设计有疑问，必须先与Architect讨论，不得自行修改！**
 
 ---
 
@@ -3049,3 +4067,859 @@ Linus
 - [ ] 所有示例代码使用ADD_SCAN_ACTION/REMOVE_SCAN_ACTION
 - [ ] Phase实施清单准确反映实际架构
 - [ ] 文档与实际代码实现100%一致
+
+---
+
+## Step 2.5 架构变更：魏征服务 + 司命引擎（2025-10-30）
+
+### 变更原因
+
+**发现的问题**：秦琼（QinQiong）在RFC 0043中承担双重职责：
+1. ✅ 管理appState（folderTree等）
+2. ✅ 处理file watch监控
+
+**冲突点**：职责重叠（overlap），违反单一职责原则
+
+**解决方案**：创建魏征（WeiZheng）服务专门管理appState，秦琼只负责file watch
+
+### 新架构设计
+
+#### 服务职责分离
+
+**魏征（WeiZheng）- appState监察者**
+```
+职责：
+  ✅ 管理appState（folderTree + currentFolder + lastOpenedFolder等）
+  ✅ 提供appState访问接口（通过房玄龄Accessor）
+  ✅ 提供appState修改方法（updateFolderTree, switchFolder等）
+  ✅ 对接司命引擎进行appState持久化
+  ✅ 接收圣旨执行appState更新指令
+
+引擎对接：
+  魏征 → 司命引擎（Siming）→ ~/.photasa/appState/
+
+历史背景：
+  魏征，唐朝著名谏臣，以直言进谏、监察朝政著称
+  在架构中负责监察和管理应用运行时状态
+```
+
+**秦琼（QinQiong）- File Watch监控者**
+```
+职责：
+  ✅ 监控文件系统变化（通过顺风耳引擎）
+  ✅ 分析watch事件影响
+  ✅ 通知魏征更新appState（通过李世民启奏/圣旨系统）
+  ❌ 不再管理appState
+  ❌ 不再提供appState修改方法
+
+引擎对接：
+  秦琼 → 顺风耳引擎（ShunFengEr）→ File System Watcher
+
+历史背景：
+  秦琼，唐朝开国名将，门神之一
+  在架构中负责守卫文件系统变化边界
+```
+
+**尉迟恭（YuChiGong）- scanningQueue管理者**（保持不变）
+```
+职责：
+  ✅ 管理scanningQueue
+  ✅ 对接千里眼引擎进行scanningQueue持久化
+
+引擎对接：
+  尉迟恭 → 千里眼引擎（QianLiYan）→ ~/.photasa/scanning.json
+```
+
+#### 引擎职责分离
+
+**司命引擎（SimingEngine）** - 新增
+```
+职责：
+  ✅ 持久化appState到 ~/.photasa/appState/
+  ✅ 恢复appState
+  ✅ 提供appState的CRUD操作
+
+存储结构：
+  ~/.photasa/appState/
+    ├── folderTree.json      # 文件夹树结构
+    ├── currentFolder.json   # 当前文件夹
+    └── appState.json        # 完整appState快照
+
+方法：
+  - restoreAppState(): Promise<AppState>
+  - restoreFolderTree(): Promise<FolderNode[]>
+  - updateFolderTree(params): Promise<FolderNode[]>
+  - persistFolderTree(params): Promise<void>
+  - persistAppState(appState): Promise<void>
+```
+
+**千里眼引擎（QianLiYan）**（保持不变）
+```
+职责：
+  ✅ 只负责scanningQueue持久化
+  ❌ 不再负责folderTree持久化（移至司命引擎）
+
+存储位置：
+  ~/.photasa/scanning.json
+```
+
+**文昌引擎（Wenchang）**（保持不变）
+```
+职责：
+  ✅ 只负责preferences持久化
+
+存储位置：
+  ~/.photasa/preferences/preferences.json
+```
+
+### 数据流程变更
+
+#### 场景1：用户手动扫描文件夹（更新后）
+
+**旧流程**（错误）：
+```
+用户操作 → 组件调用preferenceStore.updateFolderTree(path) ❌
+```
+
+**新流程**（正确）：
+```
+用户操作 → 组件调用魏征.updateFolderTree(path)
+         ↓
+魏征发送奏折（UPDATE_FOLDER_TREE）→ 房玄龄 → 袁天罡 → 天枢
+         ↓
+天枢执行update_folder_tree工作流
+         ↓
+工作流调用司命引擎.restoreFolderTree() → updateFolderTree() → persistFolderTree()
+         ↓
+司命引擎持久化到 ~/.photasa/appState/folderTree.json
+         ↓
+房玄龄Store Automation更新AppState Store
+         ↓
+UI自动刷新
+```
+
+#### 场景2：文件系统监视到变化（未来）
+
+```
+File System Change → 顺风耳引擎检测
+         ↓
+秦琼接收watch事件
+         ↓
+秦琼分析影响并启奏李世民（folder_discovered）
+         ↓
+李世民路由到魏征（根据event-routing.yml）
+         ↓
+李世民发圣旨给魏征（update_folder_tree）
+         ↓
+魏征执行updateFolderTree(path)
+         ↓
+（后续流程同场景1）
+```
+
+### 工作流变更
+
+#### restore_app_state.yml（新增）
+
+```yaml
+version: "1.0"
+id: "restore_app_state"
+name: "恢复应用状态"
+description: "应用启动时从司命引擎恢复appState"
+
+inputs: {}
+
+steps:
+  - id: "restore_state"
+    name: "司命：恢复应用状态"
+    type: "action"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "siming"
+      methodName: "restoreAppState"
+
+  - id: "return_state"
+    name: "返回状态数据"
+    type: "return"
+    input:
+      appState: "{{steps.restore_state.output}}"
+      success: true
+```
+
+#### update_folder_tree.yml（更新）
+
+**旧版本**：调用千里眼引擎（qianliyan）
+**新版本**：调用司命引擎（siming）
+
+```yaml
+version: "1.0"
+id: "update_folder_tree"
+name: "更新文件夹树"
+description: "更新指定路径的文件夹树结构并持久化"
+
+inputs:
+  folderPath:
+    type: "string"
+    required: true
+    description: "要更新的文件夹路径"
+
+steps:
+  - id: "restore_tree"
+    name: "司命：恢复当前文件夹树"  # 改：千里眼 → 司命
+    type: "action"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "siming"  # 改：qianliyan → siming
+      methodName: "restoreFolderTree"
+
+  - id: "update_tree"
+    name: "司命：更新文件夹树"  # 改：千里眼 → 司命
+    type: "action"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "siming"  # 改：qianliyan → siming
+      methodName: "updateFolderTree"
+      params:
+        currentTree: "{{steps.restore_tree.output}}"
+        folderPath: "{{inputs.folderPath}}"
+
+  - id: "persist_tree"
+    name: "司命：持久化文件夹树"  # 改：千里眼 → 司命
+    type: "action"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "siming"  # 改：qianliyan → siming
+      methodName: "persistFolderTree"
+      params:
+        folderTree: "{{steps.update_tree.output}}"
+
+  - id: "return_result"
+    name: "返回更新结果"
+    type: "return"
+    input:
+      folderTree: "{{steps.update_tree.output}}"
+      nodeCount: "{{steps.update_tree.output.length}}"
+      success: true
+```
+
+### 初始化流程变更
+
+**LiShiMing.startZhengguan()初始化**：
+
+**旧流程**：
+```typescript
+async startZhengguan(): Promise<void> {
+  // 1. 初始化扫描队列（尉迟恭）
+  logger.info("👑 尉迟恭大将军服务初始化扫描队列");
+  await this.yuChiGongService.initializeScanningQueue();
+
+  // 其他初始化...
+}
+```
+
+**新流程**：
+```typescript
+async startZhengguan(): Promise<void> {
+  // 1. 初始化扫描队列（尉迟恭）
+  logger.info("👑 尉迟恭大将军服务初始化扫描队列");
+  await this.yuChiGongService.initializeScanningQueue();
+
+  // 2. 初始化应用状态（魏征）⭐ 新增
+  logger.info("👑 魏征大人初始化应用状态");
+  await this.weiZhengService.initializeAppState();
+
+  // 其他初始化...
+}
+```
+
+### 奏折（Zouzhe）变更
+
+**在 fang-xuan-ling.interface.ts 中添加**：
+
+```typescript
+export const ZOUZHE_MATTERS = {
+  // ... 现有matters
+
+  // 魏征专属matters（新增）
+  RESTORE_APP_STATE: "restore_app_state",      // 恢复appState
+  UPDATE_FOLDER_TREE: "update_folder_tree",    // 更新文件夹树（从尉迟恭转移）
+  SWITCH_CURRENT_FOLDER: "switch_current_folder", // 切换当前文件夹
+  PERSIST_APP_STATE: "persist_app_state",      // 持久化appState
+} as const;
+
+export const GUANYUAN_NAMES = {
+  // ... 现有names
+
+  WEI_ZHENG: "魏征",  // appState管理官员 - 唐朝谏议大夫（新增）
+} as const;
+```
+
+### Store变更
+
+#### AppState Store（新增）
+
+**文件**：`src/renderer/src/stores/appstate.ts`（新建）
+
+```typescript
+import { defineStore } from 'pinia';
+import type { FolderNode } from '@common/types';
+
+export interface AppState {
+  /** 文件夹树结构（Step 2.5唯一迁移内容） */
+  folderTree: FolderNode[];
+}
+
+export const useAppStateStore = defineStore("appstate", {
+  state: (): AppState => ({
+    folderTree: []
+  }),
+
+  getters: {
+    /** 文件夹树 */
+    folderTree: (state) => state.folderTree,
+  },
+
+  persist: true
+});
+```
+
+#### PreferenceStore变更
+
+**文件**：`src/renderer/src/stores/preference.ts`
+
+**删除**：
+- `appState.folderTree` 字段定义
+- `folderTree` getter
+- `updateFolderTree` 方法（标记为@deprecated，引导使用魏征服务）
+
+**保留**：
+- 其他appState字段（firstTime, lastOpenedFolder, currentFolder, scannedFolder等）
+- 这些字段将在未来迁移到AppState Store
+
+### Builder实施清单（更新）
+
+**⚠️ 重要**：以下清单完全替换原Step 2.5的尉迟恭相关任务
+
+#### Phase 1：司命引擎创建（Main进程）
+
+1. **创建司命引擎目录结构**
+   - `src/engines/siming/core/SimingEngine.ts`（新建）
+   - `src/engines/siming/adapters/SimingAdapter.ts`（新建）
+   - `src/engines/siming/types/index.ts`（新建）
+   - `src/engines/siming/index.ts`（新建）
+
+2. **实现司命引擎核心方法**
+   - `initialize()` - 引擎初始化
+   - `shutdown()` - 引擎关闭
+   - `restoreAppState()` - 恢复完整appState
+   - `restoreFolderTree()` - 恢复folderTree
+   - `updateFolderTree(params)` - 更新folderTree
+   - `persistFolderTree(params)` - 持久化folderTree
+   - `persistAppState(appState)` - 持久化完整appState
+
+3. **实现SimingAdapter**
+   - 使用`@Adapter`装饰器
+   - 注册到太乙引擎
+
+4. **在太乙引擎中注册司命引擎**
+   - 文件：`src/engines/taiyi/core/TaiyiEngine.ts`
+   - 导入司命引擎
+   - 在`initialize()`中初始化司命引擎
+
+#### Phase 2：工作流创建（Main进程）
+
+5. **创建restore_app_state工作流**
+   - 文件：`src/engines/tianshu/workflows/appstate/restore_app_state.yml`（新建）
+   - 调用司命引擎.restoreAppState()
+
+6. **更新update_folder_tree工作流**
+   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
+   - 将所有`qianliyan`改为`siming`
+   - 确保调用司命引擎的方法
+
+#### Phase 3：魏征服务创建（Renderer进程）
+
+7. **创建AppState Store**
+   - 文件：`src/renderer/src/stores/appstate.ts`（新建）
+   - 只包含folderTree字段
+   - 启用persist
+
+8. **创建魏征服务类**
+   - 文件：`src/renderer/src/services/weizheng/weizheng.ts`（新建）
+   - 实现`WeiZheng`类
+   - 实现`initializeAppState()`方法
+   - 实现`updateFolderTree()`方法
+   - 实现`switchFolder()`方法
+   - 实现`setShengzhiPort()`和`handleShengzhi()`
+
+9. **创建魏征接口定义**
+   - 文件：`src/renderer/src/interfaces/wei-zheng.interface.ts`（新建）
+   - 定义`IWeiZhengService`接口
+   - 定义魏征相关的Zouzhe和Shengzhi类型
+
+10. **在fang-xuan-ling.interface.ts中添加魏征常量**
+    - 添加`WEI_ZHENG`到`GUANYUAN_NAMES`
+    - 添加魏征相关的`ZOUZHE_MATTERS`
+
+11. **创建AppState Accessor**
+    - 文件：`src/renderer/src/services/fangxuanling/accessors/appstate-accessor.ts`（新建）
+    - 实现`IAppStateAccessor`接口
+    - 提供folderTree只读访问
+
+12. **在FangXuanLing中注册AppState Accessor**
+    - 文件：`src/renderer/src/services/fangxuanling/fangxuanling.ts`
+    - 添加`_appStateAccessor`私有属性
+    - 添加`appState`getter
+    - 在构造函数中初始化Accessor
+
+#### Phase 4：Store Automation配置
+
+13. **更新matter-sync.yml**
+    - 文件：`src/renderer/src/services/fangxuanling/store-automation/matter-sync.yml`
+    - 添加`restore_app_state`映射
+    - 更新`update_folder_tree`映射（指向appstate store）
+
+14. **验证Store Automation工作**
+    - 确保工作流返回的数据能自动同步到AppState Store
+
+#### Phase 5：服务注册和初始化
+
+15. **在LiShiMing中注册魏征服务**
+    - 文件：`src/renderer/src/services/lishiming/lishiming.ts`
+    - 添加`weiZhengService`属性
+    - 在构造函数中初始化魏征服务
+    - 在`startZhengguan()`中调用`weiZhengService.initializeAppState()`
+
+16. **更新event-routing.yml**
+    - 文件：`src/renderer/src/services/lishiming/event-routing.yml`
+    - 更新秦琼的folder_discovered路由：
+      ```yaml
+      # 秦琼发现文件夹 → 魏征更新folderTree（改）
+      - matter: "folder_discovered"
+        from: "秦琼"
+        target: "魏征"  # 改：尉迟恭 → 魏征
+        command: "update_folder_tree"
+        priority: "normal"
+        description: "秦琼发现新文件夹，通知魏征更新folderTree"
+      ```
+
+#### Phase 6：清理和迁移
+
+17. **替换external updateFolderTree调用**
+    - 搜索所有`preferenceStore.updateFolderTree()`调用
+    - 替换为`weiZhengService.updateFolderTree()`
+    - 文件：`src/renderer/src/utils/file-handler.ts`等
+
+18. **更新App.vue**
+    - 删除`updateFolderTree`的provide暴露
+    - 如果需要，提供`weiZhengService`
+
+19. **标记PreferenceStore.updateFolderTree为@deprecated**
+    - 保留方法但标记为内部使用
+    - 添加注释引导使用魏征服务
+
+#### Phase 7：测试和验证
+
+20. **编写单元测试**
+    - 司命引擎单元测试
+    - 魏征服务单元测试
+    - AppState Accessor单元测试
+
+21. **编写集成测试**
+    - 完整流程测试（组件 → 魏征 → 工作流 → 司命引擎 → Store）
+    - 初始化流程测试
+
+22. **验证清单**
+    - [ ] 零直接Store访问（grep检查）
+    - [ ] 袁天罡intentMapping包含UPDATE_FOLDER_TREE和RESTORE_APP_STATE
+    - [ ] 工作流执行成功（魏征 → 司命引擎 → Store完整链路）
+    - [ ] folderTree持久化到`~/.photasa/appState/folderTree.json`
+    - [ ] Store Automation自动同步成功
+    - [ ] 单元测试100%通过，100% coverage
+    - [ ] 零lint错误
+    - [ ] 初始化流程正常工作
+
+### 关键差异总结
+
+| 项目 | 旧设计（错误） | 新设计（正确） |
+|------|----------------|----------------|
+| **服务** | 尉迟恭管理folderTree | 魏征管理folderTree |
+| **引擎** | 千里眼持久化folderTree | 司命引擎持久化folderTree |
+| **Store** | PreferenceStore.appState.folderTree | AppState Store.folderTree |
+| **工作流** | 调用qianliyan引擎 | 调用siming引擎 |
+| **存储路径** | ~/.photasa/appstate/foldertree.json | ~/.photasa/appState/folderTree.json |
+| **初始化** | YuChiGong.initializeScanningQueue() | WeiZheng.initializeAppState() |
+| **秦琼职责** | watch + appState管理（重叠） | 只负责watch（单一职责） |
+
+### Linus Torvalds评语
+
+**"这才是正确的架构！"**
+
+- ✅ **单一职责**：每个服务只做一件事并做好
+- ✅ **清晰边界**：魏征管appState，秦琼管watch，尉迟恭管scanningQueue
+- ✅ **引擎分离**：司命管appState，千里眼管scanningQueue，文昌管preferences
+- ✅ **好品味**：消除了秦琼的职责重叠，架构更清晰
+- ✅ **不破坏用户**：渐进式迁移，向后兼容
+
+**"Builder，不要他妈的又给我搞砸！严格按照这个新设计实施！"**
+
+---
+
+## 秦琼（QinQiong）服务设计 - File Watch监控者（2025-10-30）
+
+### 服务定位
+
+**秦琼（Qin Qiong）- File Watch监控者**
+
+**历史背景**：秦琼，唐朝开国名将，门神之一，守护门户安全。在架构中负责守护文件系统边界，监视文件系统变化。
+
+**核心职责**：
+1. 接收file watch事件（来自file-handler.ts）
+2. 分析事件影响（判断是否需要更新folderTree）
+3. 通过启奏系统通知魏征更新appState
+4. ❌ **不直接管理appState**（职责分离）
+5. ❌ **不直接调用魏征**（通过李世民路由）
+
+**架构约束**：
+- ✅ 只负责watch事件的接收和分析
+- ✅ 通过李世民启奏系统通知其他服务
+- ❌ 不直接修改folderTree
+- ❌ 不直接调用魏征服务
+
+### 服务接口设计
+
+```typescript
+/**
+ * 秦琼（QinQiong）- File Watch监控者
+ *
+ * 职责：
+ * - 接收file watch事件
+ * - 分析事件影响
+ * - 启奏李世民通知相关服务
+ *
+ * 架构约束：
+ * - 不直接管理appState
+ * - 不直接调用魏征
+ * - 所有通知通过李世民启奏系统
+ */
+export class QinQiongService implements IService {
+  private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
+
+  get name() {
+    return "秦琼";
+  }
+
+  /**
+   * 设置启奏事件总线
+   * @param qizouBus mitt事件总线
+   */
+  setQizouBus(qizouBus: Emitter<{ qizou: Qizou }>): void {
+    this._qizouBus = qizouBus;
+  }
+
+  /**
+   * 处理file watch事件（核心方法）
+   *
+   * @param state - File watch状态
+   *
+   * @description
+   * 处理流程：
+   * ```
+   * file-handler.ts检测到文件系统变化
+   *       ↓
+   * 调用秦琼.handleFileEvent(state)
+   *       ↓
+   * 秦琼分析：
+   *   - 是文件还是目录？
+   *   - 是add/change/delete？
+   *   - 是否影响folderTree？
+   *       ↓
+   * 如果影响folderTree：
+   *   启奏李世民（folder_discovered / folder_removed）
+   *       ↓
+   * 李世民根据event-routing.yml路由
+   *       ↓
+   * 李世民发圣旨给魏征（update_folder_tree）
+   *       ↓
+   * 魏征执行实际更新
+   * ```
+   */
+  async handleFileEvent(state: WatchState): Promise<void> {
+    // 只处理目录事件（文件事件由其他逻辑处理）
+    if (state.isFile) {
+      return;
+    }
+
+    // 检查路径有效性
+    if (!state.path || state.path.length === 0) {
+      return;
+    }
+
+    // 根据action类型启奏李世民
+    switch (state.action) {
+      case 'add':
+        // 发现新文件夹
+        this.emitQizou('folder_discovered', {
+          folderPath: state.path,
+          action: 'add',
+          timestamp: Date.now(),
+        });
+        break;
+
+      case 'delete':
+        // 文件夹被删除
+        this.emitQizou('folder_removed', {
+          folderPath: state.path,
+          action: 'delete',
+          timestamp: Date.now(),
+        });
+        break;
+
+      // change事件不影响folderTree结构，忽略
+      case 'change':
+      default:
+        break;
+    }
+  }
+
+  /**
+   * 发送启奏给李世民
+   */
+  private emitQizou(matter: string, content: Record<string, unknown>): void {
+    if (!this._qizouBus) {
+      logger.warn("🛡️ 秦琼：启奏通道未建立，无法发送启奏");
+      return;
+    }
+
+    const qizou: Qizou = {
+      matter,
+      content,
+      from: this.name,
+      timestamp: Date.now(),
+      metadata: { type: 'notification' },
+    };
+
+    logger.debug("🛡️ 秦琼启奏:", qizou);
+    this._qizouBus.emit("qizou", qizou);
+  }
+}
+```
+
+### 李世民路由配置
+
+**在 event-routing.yml 中添加秦琼路由规则**：
+
+```yaml
+# 秦琼发现新文件夹 → 魏征更新folderTree
+folder_discovered:
+  - when:
+      type: "notification"
+      from: "秦琼"
+    then:
+      target: "魏征"
+      command: "update_folder_tree"
+      params:
+        folderPath: "{{content.folderPath}}"
+      priority: "normal"
+    description: "秦琼发现新文件夹，通知魏征更新folderTree"
+
+# 秦琼发现文件夹删除 → 魏征清理folderTree
+folder_removed:
+  - when:
+      type: "notification"
+      from: "秦琼"
+    then:
+      target: "魏征"
+      command: "clean_folder_tree"
+      params:
+        folderPath: "{{content.folderPath}}"
+      priority: "normal"
+    description: "秦琼发现文件夹删除，通知魏征清理folderTree"
+```
+
+### file-handler.ts集成
+
+**当前代码（错误）**：
+```typescript
+async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore): Promise<void> {
+    // ❌ 直接调用preferenceStore - 架构违规
+    if (!state.isFile && state.path?.length > 0) {
+        preferenceStore.updateFolderTree(state.path);
+        return;
+    }
+    // ...
+}
+```
+
+**更新后（正确）**：
+```typescript
+import { useQinQiong } from "@renderer/services/qinqiong";
+
+async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore): Promise<void> {
+    // ✅ 调用秦琼服务处理file watch事件
+    const qinqiong = useQinQiong();
+    await qinqiong.handleFileEvent(state);
+
+    // 如果是文件（不是目录），继续原有的缩略图处理逻辑
+    if (state.isFile && canHandleFile(state)) {
+        const request = {
+            path: state.path as string,
+            thumbnail: state.thumbnail as string,
+            width: preferenceStore.thumbnailSize,
+            height: preferenceStore.thumbnailSize,
+            preview: "",
+        };
+
+        await createThumbnailTask.perform(request);
+        await addToPhotoList(state.path);
+
+        if (isFileUnderFolder(state.path, preferenceStore.currentFolder)) {
+            preferenceStore.addToCurrentPhotasaConfig(request);
+        }
+    }
+}
+```
+
+**同样更新 handleDeleteFile**：
+```typescript
+async function handleDeleteFile(state: WatchState, preferenceStore: PreferenceStore): Promise<void> {
+    // ✅ 调用秦琼服务处理file watch事件
+    const qinqiong = useQinQiong();
+    await qinqiong.handleFileEvent(state);
+
+    // 如果是文件，继续原有的缩略图清理逻辑
+    if (state.isFile && state.path?.length > 0 && isMedia(state)) {
+        // ... 原有缩略图清理逻辑
+    }
+}
+```
+
+### 数据流程完整链路
+
+```
+File System Change
+       ↓
+Chokidar Watcher检测变化
+       ↓
+file-handler.ts: handleFileTask.perform(state)
+       ↓
+handleAddFile/handleDeleteFile调用
+       ↓
+秦琼.handleFileEvent(state)  ← 入口点
+       ↓
+秦琼分析事件类型和影响
+       ↓
+【如果是目录add】
+  秦琼启奏李世民: folder_discovered
+       ↓
+  李世民查找路由规则（event-routing.yml）
+       ↓
+  李世民发圣旨给魏征: update_folder_tree
+       ↓
+  魏征接收圣旨
+       ↓
+  魏征发奏折给房玄龄
+       ↓
+  房玄龄 → 袁天罡 → 天枢 → 司命引擎
+       ↓
+  司命引擎更新并持久化folderTree
+       ↓
+  房玄龄Store Automation自动同步AppState Store
+       ↓
+  UI自动刷新
+
+【如果是目录delete】
+  秦琼启奏李世民: folder_removed
+       ↓
+  李世民发圣旨给魏征: clean_folder_tree
+       ↓
+  （后续流程同上）
+
+【如果是文件add/delete】
+  秦琼忽略（文件不影响folderTree）
+       ↓
+  file-handler继续执行缩略图处理逻辑
+```
+
+### Builder实施清单（新增）
+
+**Phase 8：秦琼服务创建**（在Phase 7之后）
+
+23. **创建秦琼服务目录结构**
+    - `src/renderer/src/services/qinqiong/qinqiong.ts`（新建）
+    - `src/renderer/src/services/qinqiong/index.ts`（新建）
+
+24. **创建秦琼接口定义**
+    - `src/renderer/src/interfaces/qin-qiong.interface.ts`（新建）
+    - 定义`IQinQiongService`接口
+    - 添加`QIN_QIONG_TOKEN`注入令牌
+
+25. **实现秦琼服务类**
+    - 实现`QinQiongService`类
+    - 实现`handleFileEvent(state: WatchState)`方法
+    - 实现`setQizouBus()`方法
+    - 实现`emitQizou()`私有方法
+
+26. **在李世民中注册秦琼服务**
+    - 文件：`src/renderer/src/services/lishiming/lishiming.ts`
+    - 添加`qinQiongService`属性
+    - 在构造函数中初始化秦琼服务
+    - 建立秦琼与杜如晦的MessageChannel通道
+    - 传递qizouBus给秦琼
+
+27. **更新event-routing.yml**
+    - 文件：`src/renderer/src/services/lishiming/event-routing.yml`
+    - 添加`folder_discovered`路由规则
+    - 添加`folder_removed`路由规则
+
+28. **更新file-handler.ts**
+    - 导入`useQinQiong`
+    - 在`handleAddFile`中调用`qinqiong.handleFileEvent(state)`
+    - 在`handleDeleteFile`中调用`qinqiong.handleFileEvent(state)`
+    - 删除直接调用`preferenceStore.updateFolderTree()`的代码
+    - 删除直接调用`preferenceStore.cleanFolderTree()`的代码
+
+29. **魏征服务更新**
+    - 添加`clean_folder_tree`圣旨处理
+    - 实现`handleCleanFolderTree()`方法
+    - 发送奏折触发天界清理工作流
+
+30. **测试秦琼服务**
+    - 编写秦琼服务单元测试
+    - 测试`handleFileEvent`方法
+    - 测试启奏发送逻辑
+    - 编写集成测试（file-handler → 秦琼 → 李世民 → 魏征）
+
+### 关键架构原则（再次强调）
+
+**秦琼的职责边界**：
+- ✅ **只负责watch** - 接收和分析file watch事件
+- ✅ **只负责启奏** - 通知李世民，不直接调用其他服务
+- ❌ **不管理状态** - appState由魏征管理
+- ❌ **不直接路由** - 路由由李世民负责
+
+**魏征的职责边界**：
+- ✅ **只管理appState** - 包括folderTree
+- ✅ **接收圣旨** - 从李世民接收update_folder_tree指令
+- ✅ **发送奏折** - 触发天界工作流
+- ❌ **不处理watch事件** - watch由秦琼负责
+
+**李世民的职责边界**：
+- ✅ **中央路由** - 根据event-routing.yml路由启奏到服务
+- ✅ **通道管理** - 委托杜如晦管理MessageChannel
+- ❌ **不执行业务逻辑** - 只负责路由和协调
+
+### Linus Torvalds最终评语
+
+**"这才是TM正确的职责分离！"**
+
+- ✅ **单一职责完美实现**：秦琼管watch，魏征管state，李世民管路由
+- ✅ **消除直接依赖**：所有服务通过启奏-圣旨系统通信，零硬依赖
+- ✅ **好品味的架构**：每个服务只做一件事，边界清晰如水晶
+- ✅ **可测试性极高**：每个服务都可以独立测试，mock变得简单
+- ✅ **向后兼容**：渐进式替换，不破坏现有功能
+
+**"Builder，我TM最后警告你一次：file-handler必须调用秦琼，不是魏征！秦琼启奏李世民，李世民路由到魏征！这是架构铁律！"**

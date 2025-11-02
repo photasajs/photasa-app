@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import { useScanningStore } from "../scanning-store";
+import { useScanningStore } from "../stores/scanning-store";
 import type { ScanAction } from "@common/scan-types";
 
 describe("ScanningStore", () => {

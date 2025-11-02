@@ -49,7 +49,7 @@ export class ServiceRegistry extends EventEmitter {
      * 注册服务
      */
     register(metadata: ServiceMetadata, factory: ServiceFactory): void {
-        logger.debug(`Registering service: ${metadata.name}`);
+        logger.debug(`🌌 注册服务: ${metadata.name}`);
         this.services.set(metadata.name, metadata);
         this.factories.set(metadata.name, factory);
         this.serviceStatus.set(metadata.name, {
@@ -116,7 +116,7 @@ export class ServiceRegistry extends EventEmitter {
             // 注册到常规服务注册表
             this.register(decoratedService, factory);
 
-            logger.debug(`Registered decorated service: ${decoratedService.name}`);
+            logger.debug(`🌌 注册装饰器服务: ${decoratedService.name}`);
         }
     }
 
@@ -125,25 +125,25 @@ export class ServiceRegistry extends EventEmitter {
      */
     async initializeByPriority(): Promise<void> {
         const startTime = Date.now();
-        logger.info("Starting service initialization by priority");
+        logger.info("🌌 开始按优先级初始化服务");
 
         try {
             const grouped = this.groupByPriority();
 
             // 初始化关键服务（阻塞）
-            logger.debug("Initializing critical services...");
+            logger.debug("🌌 初始化关键服务...");
             await this.initializeGroup(grouped.critical, {
                 blocking: true,
             });
 
             // 异步初始化重要服务
-            logger.debug("Initializing important services...");
+            logger.debug("🌌 异步初始化重要服务...");
             this.initializeGroup(grouped.important, {
                 blocking: false,
             });
 
             // 延迟初始化后台服务
-            logger.debug("Scheduling background services...");
+            logger.debug("🌌 延迟初始化后台服务...");
             setTimeout(() => {
                 this.initializeGroup(grouped.background, {
                     blocking: false,
@@ -153,9 +153,9 @@ export class ServiceRegistry extends EventEmitter {
             }, 3000);
 
             const elapsed = Date.now() - startTime;
-            logger.info(`Service initialization scheduled in ${elapsed}ms`);
+            logger.info(`🌌 服务初始化计划完成 in ${elapsed}ms`);
         } catch (error) {
-            logger.error("Service initialization failed:", error);
+            logger.error("🌌 服务初始化失败:", error);
             throw error;
         }
     }
@@ -203,7 +203,7 @@ export class ServiceRegistry extends EventEmitter {
         const visit = (metadata: ServiceMetadata) => {
             if (visited.has(metadata.name)) return;
             if (visiting.has(metadata.name)) {
-                throw new Error(`Circular dependency detected: ${metadata.name}`);
+                throw new Error(`🌌 检测到循环依赖: ${metadata.name}`);
             }
 
             visiting.add(metadata.name);
@@ -294,7 +294,7 @@ export class ServiceRegistry extends EventEmitter {
     private async doInitializeService(metadata: ServiceMetadata): Promise<IService> {
         const { name, dependencies, startupDelay } = metadata;
 
-        logger.debug(`Initializing service: ${name}`);
+        logger.debug(`🌌 初始化服务: ${name}`);
 
         try {
             // 等待启动延迟
@@ -308,7 +308,7 @@ export class ServiceRegistry extends EventEmitter {
             // 创建服务实例
             const factory = this.factories.get(name);
             if (!factory) {
-                throw new Error(`Service factory not found: ${name}`);
+                throw new Error(`🌌 未找到服务工厂: ${name}`);
             }
 
             const instance = factory(this.ipcMain, this.mainWindow, this.app, deps);
@@ -330,10 +330,10 @@ export class ServiceRegistry extends EventEmitter {
                 timestamp: new Date(),
             });
 
-            logger.info(`Service initialized: ${name}`);
+            logger.info(`🌌 服务初始化完成: ${name}`);
             return instance;
         } catch (error) {
-            logger.error(`Failed to initialize service ${name}:`, error);
+            logger.error(`🌌 服务初始化失败: ${name}:`, error);
 
             // 更新状态
             this.updateServiceStatus(name, {
@@ -371,7 +371,7 @@ export class ServiceRegistry extends EventEmitter {
         for (const depName of dependencies) {
             const depMetadata = this.services.get(depName);
             if (!depMetadata) {
-                throw new Error(`Dependency not found: ${depName}`);
+                throw new Error(`🌌 未找到依赖: ${depName}`);
             }
 
             const instance = await this.initializeService(depMetadata);
@@ -390,12 +390,10 @@ export class ServiceRegistry extends EventEmitter {
         const restartCount = status?.restartCount || 0;
 
         if (restartCount >= maxRetries) {
-            throw new Error(`Service ${metadata.name} failed after ${maxRetries} retries`);
+            throw new Error(`🌌 服务 ${metadata.name} 初始化失败 after ${maxRetries} 次重试`);
         }
 
-        logger.warn(
-            `Retrying service ${metadata.name} initialization (attempt ${restartCount + 1}/${maxRetries})`,
-        );
+        logger.warn(`🌌 重试服务 ${metadata.name} 初始化 (尝试 ${restartCount + 1}/${maxRetries})`);
 
         // 更新重启计数
         this.updateServiceStatus(metadata.name, {
@@ -474,7 +472,7 @@ export class ServiceRegistry extends EventEmitter {
                 if (instance?.shutdown) {
                     shutdownPromises.push(
                         instance.shutdown().catch((error) => {
-                            logger.error(`Error shutting down ${metadata.name}:`, error);
+                            logger.error(`🌌 关闭服务失败: ${metadata.name}:`, error);
                         }),
                     );
                 }
@@ -488,7 +486,7 @@ export class ServiceRegistry extends EventEmitter {
         this.initPromises.clear();
         this.serviceStatus.clear();
 
-        logger.info("All services shut down");
+        logger.info("🌌 所有服务已关闭");
     }
 
     /**
@@ -541,7 +539,7 @@ export class ServiceRegistry extends EventEmitter {
      */
     startHealthMonitoring(): void {
         // 健康监控功能的实现将在后续版本中添加
-        logger.info("Health monitoring feature will be implemented in future versions");
+        logger.info("🌌 健康监控功能将在后续版本中添加");
     }
 
     /**
@@ -549,6 +547,6 @@ export class ServiceRegistry extends EventEmitter {
      */
     stopHealthMonitoring(): void {
         // 健康监控功能的实现将在后续版本中添加
-        logger.info("Health monitoring feature will be implemented in future versions");
+        logger.info("🌌 健康监控功能将在后续版本中添加");
     }
 }

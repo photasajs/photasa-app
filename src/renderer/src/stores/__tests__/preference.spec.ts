@@ -1,8 +1,6 @@
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { usePreferenceStore } from "../preference";
-import type { DataNode } from "@renderer/stores/preference";
-import type { ScanAction } from "@common/scan-types";
 
 // Mock dependencies
 vi.mock("@renderer/utils/path", () => ({
@@ -10,7 +8,7 @@ vi.mock("@renderer/utils/path", () => ({
 }));
 
 vi.mock("@renderer/utils/folder-tree", () => ({
-    buildDataNode: vi.fn(),
+    addFolderToTree: vi.fn(),
     cleanDataNode: vi.fn(),
 }));
 
@@ -30,42 +28,6 @@ vi.mock("@common/logger", () => ({
         },
     },
 }));
-
-describe("preferenceStore.resetAllFolders", () => {
-    beforeEach(() => {
-        setActivePinia(createPinia());
-        // mock window.api.resetPhotasaConfig
-        (window as any).api = {
-            resetPhotasaConfig: vi.fn(),
-            normalizePath: (p: string) => (p.endsWith("/") ? p : p + "/"),
-            mergePath: (l: string, r = "") => l + (r ? "/" + r : ""),
-        };
-    });
-
-    it("should clear and rebuild all folders", async () => {
-        const store = usePreferenceStore();
-        // ✅ RFC 0038: 使用preferences.scanning.paths而非appState.paths
-        store.scanning.paths = ["/a", "/b"];
-        store.appState.folderTree = [
-            { path: "/a" } as unknown as DataNode,
-            { path: "/b" } as unknown as DataNode,
-        ];
-        store.appState.scanningFolder = [
-            { path: "/a", action: "scan", thumbnailSize: 200 },
-        ] as unknown as ScanAction[];
-        const newDirs = ["/c", "/d"];
-        await store.resetAllFolders(newDirs);
-        // 修正断言，忽略末尾斜杠
-        const trimRight = (s: string) => s.replace(/\/+$/, "");
-        expect(store.paths.map(trimRight)).toEqual(["/c", "/d"]);
-        // 修正断言，folderTree 应与 paths 一致
-        expect(store.folderTree.map((x) => x.key)).toEqual(store.paths);
-        expect(store.scanningFolder).toEqual([]);
-        expect((window as any).api.resetPhotasaConfig).toHaveBeenCalledTimes(2);
-        expect((window as any).api.resetPhotasaConfig).toHaveBeenCalledWith("/c");
-        expect((window as any).api.resetPhotasaConfig).toHaveBeenCalledWith("/d");
-    });
-});
 
 describe("preferenceStore.addFileOperation", () => {
     beforeEach(async () => {
@@ -253,7 +215,7 @@ describe("preferenceStore.addFileOperation", () => {
 
     it("should call updateFolderTree for directory operations", async () => {
         const store = usePreferenceStore();
-        const { buildDataNode } = vi.mocked(await import("@renderer/utils/folder-tree"));
+        const { addFolderToTree } = vi.mocked(await import("@renderer/utils/folder-tree"));
 
         const operation = {
             path: "/test/directory",
@@ -264,7 +226,7 @@ describe("preferenceStore.addFileOperation", () => {
 
         await store.addFileOperation(operation);
 
-        expect(buildDataNode).toHaveBeenCalledWith(store.folderTree, {
+        expect(addFolderToTree).toHaveBeenCalledWith(store.folderTree, {
             path: "/test/directory",
             thumbnail: "",
             isVideo: false,
@@ -273,7 +235,7 @@ describe("preferenceStore.addFileOperation", () => {
 
     it("should not call updateFolderTree for file operations", async () => {
         const store = usePreferenceStore();
-        const { buildDataNode } = vi.mocked(await import("@renderer/utils/folder-tree"));
+        const { addFolderToTree } = vi.mocked(await import("@renderer/utils/folder-tree"));
 
         const operation = {
             path: "/test/file.jpg",
@@ -284,12 +246,12 @@ describe("preferenceStore.addFileOperation", () => {
 
         await store.addFileOperation(operation);
 
-        expect(buildDataNode).not.toHaveBeenCalled();
+        expect(addFolderToTree).not.toHaveBeenCalled();
     });
 
     it("should not call updateFolderTree for file non-add operations", async () => {
         const store = usePreferenceStore();
-        const { buildDataNode } = vi.mocked(await import("@renderer/utils/folder-tree"));
+        const { addFolderToTree } = vi.mocked(await import("@renderer/utils/folder-tree"));
 
         const operation = {
             path: "/test/file.jpg",
@@ -300,7 +262,7 @@ describe("preferenceStore.addFileOperation", () => {
 
         await store.addFileOperation(operation);
 
-        expect(buildDataNode).not.toHaveBeenCalled();
+        expect(addFolderToTree).not.toHaveBeenCalled();
     });
 
     it("should log debug messages during operation", async () => {

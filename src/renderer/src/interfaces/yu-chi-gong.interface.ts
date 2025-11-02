@@ -1,5 +1,6 @@
 import type { InjectionKey } from "vue";
 import type { ScanAction } from "@common/scan-types";
+// ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要FolderNode导入
 
 /**
  * 尉迟恭服务接口
@@ -37,6 +38,8 @@ export interface IYuChiGongService {
      * );
      */
     readonly scanningQueue: ScanAction[];
+
+    // ✅ RFC 0042 Step 2.5: folderTree已迁移到魏征服务，使用useWeiZheng()访问
 
     /**
      * 扫描队列长度（只读属性）

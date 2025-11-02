@@ -5,7 +5,7 @@ import { cleanupScanQueue } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@common/config-types";
 import type { ScanAction, FileOperationInput } from "@common/scan-types";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
-import { buildDataNode, cleanDataNode } from "@renderer/utils/folder-tree";
+import { addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 import { toDirName } from "@renderer/utils/api-path";
 // 导入优先级排序工具
@@ -18,20 +18,9 @@ import {
 } from "@renderer/utils/scan-priority";
 
 import { loggers } from "@common/logger";
+import { FolderNode } from "@common/folder-types";
 // 获取logger实例
 const logger = loggers.fangxuanling;
-
-// 自定义 DataNode 类型定义
-export interface DataNode {
-    key: string | number;
-    title: string;
-    children?: DataNode[];
-    isLeaf?: boolean;
-    disabled?: boolean;
-    selectable?: boolean;
-    checkable?: boolean;
-    [key: string]: any;
-}
 
 /**
  * 自动更新配置接口
@@ -138,7 +127,7 @@ export interface PreferenceState {
         /** 当前文件夹的Photasa配置 */
         currentFolderConfig: PhotasaConfig;
         /** 文件夹树结构 */
-        folderTree: DataNode[];
+        folderTree: FolderNode[];
         /**
          * 扫描队列
          * ⏳ 临时保留，将来通过尉迟恭服务(人界)迁移到千里眼引擎(天界)
@@ -536,15 +525,53 @@ export const usePreferenceStore = defineStore("preference", {
                 logger.debug(`✍️ 在扫描队列中找不到文件夹: ${folder}`);
             }
         },
+        /**
+         * @deprecated ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务
+         * 请使用 useWeiZheng().addFolderPath(folder) 替代
+         * 此方法将在未来版本中移除
+         *
+         * 迁移示例：
+         * ```typescript
+         * // ❌ 旧代码
+         * preferenceStore.updateFolderTree(folder);
+         *
+         * // ✅ 新代码
+         * const weiZheng = useWeiZheng();
+         * await weiZheng.addFolderPath(folder);
+         * ```
+         */
         updateFolderTree(folder: string) {
+            logger.warn(
+                "⚠️ PreferenceStore.updateFolderTree已废弃，请使用 useWeiZheng().addFolderPath()，路径:",
+                folder,
+            );
             const path = normalizePath(folder);
-            buildDataNode(this.folderTree, {
+            addFolderToTree(this.folderTree, {
                 path,
                 thumbnail: "",
                 isVideo: false,
             });
         },
+        /**
+         * @deprecated ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务
+         * 请使用 useWeiZheng().removeFolderPath(folder) 替代
+         * 此方法将在未来版本中移除
+         *
+         * 迁移示例：
+         * ```typescript
+         * // ❌ 旧代码
+         * preferenceStore.cleanFolderTree(folder);
+         *
+         * // ✅ 新代码
+         * const weiZheng = useWeiZheng();
+         * await weiZheng.removeFolderPath(folder);
+         * ```
+         */
         cleanFolderTree(folder: string) {
+            logger.warn(
+                "⚠️ PreferenceStore.cleanFolderTree已废弃，请使用 useWeiZheng().removeFolderPath()，路径:",
+                folder,
+            );
             const path = normalizePath(folder);
             cleanDataNode(this.folderTree, {
                 path,

@@ -3,35 +3,35 @@
  * 定义统一Store API的标准接口，避免直接依赖具体实现
  */
 
-import { IScanningAccessor } from "@/services/fangxuanling/accessors/scanning-accessor";
+import type { FolderNode } from "@common/folder-types";
+import type { ScanAction } from "@common/scan-types";
+
+export interface IBaseStore {
+    reset(): void;
+}
 
 /**
  * 偏好管理接口
  */
-export interface IPreference {
+export interface IPreference extends IBaseStore {
     // 主题管理 - 只读访问
     readonly currentTheme: string;
 
     // 语言管理 - 只读访问
     readonly currentLanguage: string;
 
-    // 暗色模式 - 只读访问
-    readonly isDarkMode: boolean;
-
     // 缩略图大小 - 只读访问
     readonly thumbnailSize: number;
 
     // 路径管理 - 只读访问
+    // TODO: should clean up
     readonly paths: string[];
-
-    // 状态访问（只读）
-    readonly state: Record<string, unknown>;
 }
 
 /**
  * 通知管理接口
  */
-export interface INotification {
+export interface INotification extends IBaseStore {
     show(notification: Record<string, unknown>): void;
     hide(id: string): void;
     clear(): void;
@@ -41,12 +41,40 @@ export interface INotification {
 /**
  * 照片管理接口
  */
-export interface IPhotos {
+export interface IPhotos extends IBaseStore {
     readonly currentPhoto: Record<string, unknown> | null;
     setCurrentPhoto(photo: Record<string, unknown>): void;
     readonly photos: Record<string, unknown>[];
 }
 
+/**
+ * 扫描队列访问器接口
+ *
+ * ⚠️ 重要设计原则：只读访问模式
+ * - 房玄龄只提供典籍查阅（只读访问）
+ * - 所有修改操作需通过奏折系统（Zouzhe）
+ * - 由其他官员（如尉迟恭）呈递奏折，经批准后执行
+ */
+export interface IScanning extends IBaseStore {
+    /** 查阅扫描队列（只读副本） */
+    readonly queue: ScanAction[];
+    /** 查询队列大小（只读） */
+    readonly queueSize: number;
+    /** 查询当前处理状态（只读） */
+    readonly isProcessing: boolean;
+    /** 查询当前处理路径（只读） */
+    readonly currentPath: string | null;
+    /** 检查路径是否在队列中（只读查询） */
+    isInQueue(path: string): boolean;
+    /** 查询下一个待处理任务（只读） */
+    readonly nextScanAction: ScanAction | null;
+}
+
+export interface IAppState extends IBaseStore {
+    readonly folderTree: FolderNode[];
+    readonly currentFolder: string;
+    readonly lastOpenedFolder: string;
+}
 /**
  * 房玄龄宰相服务主接口
  * 统一管理所有Store API，提供类型安全的契约
@@ -56,14 +84,8 @@ export interface IFangXuanLingService {
     readonly preference: IPreference;
     readonly notification: INotification;
     readonly photos: IPhotos;
-    readonly scanning: IScanningAccessor;
-
-    // 全局状态管理
-    getGlobalState(): {
-        preference: Record<string, unknown>;
-        notification: Record<string, unknown>[];
-        photos: Record<string, unknown>[];
-    };
+    readonly scanning: IScanning;
+    readonly appState: IAppState;
 
     // 全局重置
     resetAll(): void;
@@ -147,6 +169,11 @@ export const ZOUZHE_MATTERS = {
     GET_SCANNING_QUEUE: "get_scanning_queue", // 获取扫描队列（应用启动时恢复）
     ADD_SCAN_ACTION: "add_scan_action", // ✅ RFC 0042 Phase 2.4: 添加单个扫描任务（尉迟恭 → 房玄龄 → 天界）
     REMOVE_SCAN_ACTION: "remove_scan_action", // ✅ RFC 0042 Phase 2.4: 移除单个扫描任务（尉迟恭 → 房玄龄 → 天界）
+    // ✅ RFC 0042 Step 2.5: 魏征appState管理事务
+    RESTORE_APP_STATE: "restore_app_state", // 恢复应用状态（应用启动时调用）
+    UPDATE_FOLDER_TREE: "update_folder_tree", // 更新文件夹树（魏征 → 房玄龄 → 天界）
+    SWITCH_FOLDER: "switch_folder", // 切换当前文件夹
+    GET_FOLDER_TREE: "get_folder_tree", // 获取文件夹树（应用启动时恢复）
     UPDATE_PREFERENCES: "update_preferences", // 更新偏好设置
     SCAN_FOLDER: "scan_folder", // 扫描文件夹
     GET_STATUS: "get_status", // 获取状态
@@ -176,12 +203,15 @@ export const ZOUZHE_PRIORITIES = {
 export const GUANYUAN_NAMES = {
     CHU_SUILIANG: "褚遂良", // 文书管理官员 - 唐朝书法家、政治家
     YU_CHI_GONG: "尉迟恭", // 扫描队列管理官员 - 唐朝名将
+    WEI_ZHENG: "魏征", // ✅ RFC 0042 Step 2.5: appState监察官员 - 唐朝谏臣
     THEME_SETTINGS: "阎立本", // 主题设置官员 - 唐朝著名画家、工艺家
     LANGUAGE_SETTINGS: "玄奘", // 语言设置官员 - 唐朝翻译家
     NOTIFICATION_SETTINGS: "狄仁杰", // 通知设置官员 - 唐朝名臣
     UPDATE_SETTINGS: "张择端", // 更新设置官员 - 宋代画家
     SCAN_SETTINGS: "米芾", // 扫描设置官员 - 宋代书法家
     ADVANCED_SETTINGS: "高士廉", // 高级设置官员 - 唐朝书法家
+    QIN_QIONG: "秦琼", // 文件系统事件守护官员 - 唐朝名将
+    YUANTIANGANG: "袁天罡", // 天界守护官员 - 唐朝道士
 } as const;
 
 /**

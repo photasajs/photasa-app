@@ -46,6 +46,7 @@ import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
+import { useQinQiong } from "@renderer/composables/useQinQiong";
 
 /**
  * 日志记录器
@@ -62,6 +63,9 @@ const { addPath, completeScanPath, updateFolderTree } = preferenceStore;
 // ✅ RFC 0042: 使用尉迟恭获取扫描队列，不直接访问store
 const yuChiGong = useYuChiGong();
 const scanningFolder = computed(() => yuChiGong.scanningQueue);
+
+// ✅ RFC 0042: 使用秦琼处理文件系统事件
+const qinQiong = useQinQiong();
 
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
@@ -125,7 +129,7 @@ async function initializeApp(): Promise<void> {
         }
 
         if (paths.value.length > 0) {
-            startFileWatching(paths.value, preferenceStore);
+            startFileWatching(paths.value, preferenceStore, qinQiong);
         } else {
             // Open preference to config
             showPreference.value = true;
@@ -152,13 +156,6 @@ onMounted(async () => {
         task: t("app.title"),
         timestamp: Date.now(),
     });
-
-    // 验证事件处理器绑定
-    logger.debug("验证事件处理器绑定状态...");
-    logger.debug("handleOpenScanList:", typeof handleOpenScanList);
-    logger.debug("handleOpenQueueDashboard:", typeof handleOpenQueueDashboard);
-    logger.debug("handleOpenImportPhotos:", typeof handleOpenImportPhotos);
-    logger.debug("handleOpenPreference:", typeof handleOpenPreference);
 
     // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
@@ -228,7 +225,7 @@ watchArray(
     () => {
         // Stop current watching, then start a new one
         stopWatching().then(() => {
-            startFileWatching(paths.value, preferenceStore);
+            startFileWatching(paths.value, preferenceStore, qinQiong);
         });
     },
     { deep: true },
@@ -386,7 +383,7 @@ const title = computed(() => {
 });
 useTitle(title);
 
-// 监听 find-photo 事件，用于刷新树结构
+// 监听 Scan Service find-photo 通知事件，用于刷新状态栏
 // 🔧 状态栏路径显示修复：processScannedFileTask 回调中增强了路径构造逻辑
 // 相关修改：将 args.currentFile (文件名) 与 args.action.path (目录路径) 结合，构造完整文件路径
 findPhotoService.onFindPhoto((args: any) => {
@@ -429,15 +426,28 @@ findPhotoService.onFindPhoto((args: any) => {
         }
     }
 
+    // ✅ RFC 0042 Step 2.5: folderTree更新已完全迁移到天界
+    // App.vue只负责UI状态，不再直接修改folderTree
+    //
+    // 数据流：
+    //   袁天罡监听IPC → 启奏李世民 → 褚遂良持久化 → 天界工作流
+    //   → Store Automation自动同步 → Vue响应式更新UI
+    //
+    // App.vue只需要清理UI状态，folderTree会通过Store自动更新
+
     // 批量刷新树结构
     if (args.type === "complete" && Array.isArray(args.paths)) {
-        args.paths.forEach((p: string) => updateFolderTree(p));
+        // ❌ 已删除：args.paths.forEach((p: string) => updateFolderTree(p));
+        // ✅ 袁天罡会触发天界持久化 → Store Automation自动同步
+
         // 清理处理文件状态
         processingFile.value = "";
         // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
     } else if (args?.action?.path && args?.action?.isDirectory) {
         // 单个刷新树结构
-        updateFolderTree(args.action.path as string);
+        // ❌ 已删除：updateFolderTree(args.action.path as string);
+        // ✅ 袁天罡会触发天界持久化 → Store Automation自动同步
+
         // 如果是单个完成事件，也清理处理文件状态
         if (args.type === "complete") {
             processingFile.value = "";

@@ -87,11 +87,13 @@ export class StartupPerformanceMonitor {
         };
 
         logger.info("=== Startup Performance Report ===");
-        logger.info("Milestones:", this.metrics);
-        logger.info("Phase Durations:", {
-            ...phases,
-            total: `${this.metrics.totalTime}ms`,
-        });
+        logger.info(`Milestones: ${JSON.stringify(this.metrics)}`);
+        logger.info(
+            `Phase Durations: ${JSON.stringify({
+                ...phases,
+                total: `${this.metrics.totalTime}ms`,
+            })}`,
+        );
 
         // 性能警告
         if (this.metrics.totalTime && this.metrics.totalTime > 3000) {

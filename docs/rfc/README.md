@@ -4,14 +4,14 @@ This directory contains RFCs for significant changes to the photo management app
 
 ## RFC Statistics
 
-- **Total RFCs**: 43
-- **Completed**: 21 (48.8%)
-- **In Progress**: 1 (2.3%)
-- **Draft**: 21 (48.8%)
+- **Total RFCs**: 47
+- **Completed**: 23 (48.9%)
+- **In Progress**: 1 (2.1%)
+- **Draft**: 23 (48.9%)
 - **Rejected**: 0 (0%)
 
 ### By Version
-- **v2.0.0**: 43 RFCs
+- **v2.0.0**: 47 RFCs
 - **Future**: 0 RFCs
 
 ## RFC Process
@@ -96,8 +96,11 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0037](./0037-tianshu-yaml-workflow-dsl.md)                       | 天枢YAML工作流DSL                               | Draft               | 李鹏   | v2.0.0         |
 | [0038](./completed/0038-preference-workflow-integration.md)       | 偏好设置工作流集成与Store边界统一                | ✅ Completed        | 李鹏   | v2.0.0         |
 | [0039](./0039-tianshu-workflow-syntax-specification.md)           | 天枢工作流语法规范                              | Draft               | 李鹏   | v2.0.0         |
-| [0042](./0042-scanning-folder-migration.md)                       | scanningFolder三步渐进式迁移                     | Draft               | AI     | v2.0.0         |
+| [0042](./completed/0042-scanning-folder-migration.md)             | scanningFolder三步渐进式迁移（Step 1已完成）      | ✅ Completed        | AI     | v2.0.0         |
 | [0043](./0043-useqinqiong-access-pattern.md)                      | useQinQiong()访问模式 - appState统一访问         | Draft               | AI     | v2.0.0         |
+| [0046](./0046-scanning-queue-persistence.md)                      | 扫描队列持久化 - 千里眼scanning.json管理          | Draft               | AI     | v2.0.0         |
+| [0047](./0047-foldertree-persistence-initialization.md)           | folderTree持久化与初始化 - 魏征appState管理 + 司命持久化 | Draft               | AI     | v2.0.0         |
+| [0048](./0048-scan-orchestration-business-logic-migration.md)     | 扫描编排业务逻辑下沉 - 尉迟恭接管App.vue          | Draft               | AI     | v2.0.0         |
 
 ## Implemented RFCs
 
@@ -124,6 +127,8 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0036](./completed/0036-wenchang-preference-integration.md)                              | 偏好设置启动加载和保存机制                      | 李鹏   | v2.0.0         | 完整的偏好设置双向通信机制，启动加载、智能合并、实时保存，391测试通过                      |
 | [0040](./completed/0040-removepath-functionality-fix.md)                                 | RemovePath功能修复 - 天界人界数据同步完整实现   | 李鹏   | v2.0.0         | 天界人界数据同步完整实现，修复UI更新问题，后续被RFC 0041进一步优化                         |
 | [0041](./completed/0041-preference-architecture-refactor-business-logic-separation.md)   | 偏好架构重构 - 业务逻辑与存储层分离             | 李鹏   | v2.0.0         | 应用Linus"好品味"原则，业务逻辑从WenchangEngine分离到FangXuanLing，架构更清晰易维护        |
+| [0042](./completed/0042-scanning-folder-migration.md)                                    | scanningFolder四步渐进式迁移（Step 1已完成）     | AI     | v2.0.0         | Step 1完成：ScanningStore创建（Accessor+Builder架构），后续步骤拆分为RFC 0046/0047/0048  |
+| [0045](./completed/0045-builtin-array-operations.md)                                     | Builtin数组操作增强                             | AI     | v2.0.0         | 新增arrayAppend/arrayCount/arrayFilter方法，消除数据嵌套，38测试通过，100%覆盖率          |
 
 ## Rejected RFCs
 

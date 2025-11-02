@@ -8,6 +8,8 @@ import type {
     IPreference,
     INotification,
     IPhotos,
+    IScanning,
+    IAppState,
     Zouzhe,
     ZouzheResponse,
     Zhaoling,
@@ -20,18 +22,16 @@ import {
     ZOUZHE_MATTERS,
 } from "../../interfaces/fang-xuan-ling.interface";
 import { usePreferenceStore } from "../../stores/preference";
-import { useNotificationStore } from "../../stores/notification";
-import { usePhotosStore } from "../../stores/photos";
 import { loggers } from "@common/logger";
 import { loadMatterSyncConfig, type MatterSyncMetadata, getStoreByPath } from "./store-automation";
 import { syncStoreWithSnapshot } from "./store-automation/store-sync-utils";
-import { useScanningStore } from "./scanning-store";
 import {
     createPreferenceService,
     createNotificationService,
     createPhotosService,
-} from "./service-builders";
-import { ScanningAccessor, type IScanningAccessor } from "./accessors/scanning-accessor";
+    createScanningService,
+    createAppStateService,
+} from "./accessors/service-builders";
 
 const logger = loggers.fangxuanling;
 
@@ -51,11 +51,16 @@ const RESPONSE_MESSAGES = {
  */
 export class FangXuanLingService implements IFangXuanLingService {
     private _preference: IPreference;
+    private _appState: IAppState;
     private _notification: INotification;
     private _photos: IPhotos;
     private _yuanTianGang!: IYuanTianGangService;
     private _matterSyncConfig: Record<string, MatterSyncMetadata>;
-    private _scanningAccessor: IScanningAccessor;
+    /**
+     * ScanningStore访问器
+     * ✅ RFC 0042 Step 1: 通过访问器模式访问ScanningStore
+     */
+    private _scanning: IScanning;
 
     constructor(yuanTianGang: IYuanTianGangService) {
         if (!yuanTianGang) {
@@ -73,13 +78,10 @@ export class FangXuanLingService implements IFangXuanLingService {
         this._preference = createPreferenceService();
         this._notification = createNotificationService();
         this._photos = createPhotosService();
+        this._scanning = createScanningService();
+        this._appState = createAppStateService();
 
-        // ✅ RFC 0042 Step 1: 初始化ScanningStore访问器
-        const scanningStore = useScanningStore();
-        this._scanningAccessor = new ScanningAccessor(scanningStore);
-        logger.info("📋 房玄龄：扫描队列Store已就绪");
-
-        logger.info("🏛️ 六部百官各司其职");
+        logger.info("🏛️ 房玄龄：扫描队列Store已就绪");
     }
 
     get preference(): IPreference {
@@ -95,11 +97,19 @@ export class FangXuanLingService implements IFangXuanLingService {
     }
 
     /**
+     * 应用状态访问器
+     * ✅ RFC 0042 Step 2.5: 通过访问器模式访问AppStateStore
+     */
+    get appState(): IAppState {
+        return this._appState;
+    }
+
+    /**
      * 扫描队列访问器
      * ✅ RFC 0042 Step 1: 通过访问器模式访问ScanningStore
      */
-    get scanning(): IScanningAccessor {
-        return this._scanningAccessor;
+    get scanning(): IScanning {
+        return this._scanning;
     }
 
     /**
@@ -245,25 +255,15 @@ export class FangXuanLingService implements IFangXuanLingService {
         }
     }
 
-    getGlobalState() {
-        return {
-            preference: this._preference.state,
-            notification: this._notification.notifications,
-            photos: this._photos.photos,
-        };
-    }
-
     resetAll() {
         logger.warn("🏛️ 朝廷下令，重整朝纲");
 
         // 调用各store的重置方法
-        const preferenceStore = usePreferenceStore();
-        const notificationStore = useNotificationStore();
-        const photosStore = usePhotosStore();
-
-        preferenceStore.$reset();
-        notificationStore.$reset();
-        photosStore.$reset();
+        this._preference.reset();
+        this._notification.reset();
+        this._photos.reset();
+        this._scanning.reset();
+        this._appState.reset();
 
         logger.info("🏛️ 重整朝纲已毕，百官归位");
     }

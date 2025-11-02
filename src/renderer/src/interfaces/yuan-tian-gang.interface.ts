@@ -27,6 +27,9 @@ export interface FuluResponse {
     blessing?: string; // 天枢加持
 }
 
+import type { Emitter } from "mitt";
+import type { Qizou } from "@common/interfaces/qizou.interface";
+
 /**
  * 袁天罡钦天监服务接口
  * 接收房玄龄的诏令，与天枢引擎通信
@@ -38,6 +41,12 @@ export interface IYuanTianGangService {
      * @returns 执行结果
      */
     executeZhaoling(zhaoling: Zhaoling): Promise<ZhaolingResponse>;
+
+    /**
+     * 设置启奏事件总线
+     * @param qizouBus mitt事件总线
+     */
+    setQizouBus(qizouBus: Emitter<{ qizou: Qizou }>): void;
 }
 
 /**

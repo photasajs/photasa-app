@@ -71,7 +71,7 @@ export default class TianshuService implements IService {
         this.tianshuEngine = new TianshuEngine({
             workflowDir: "src/engines/tianshu/workflows",
             maxConcurrentWorkflows: 5,
-            defaultTimeout: 30000,
+            defaultTimeout: 600000, // 10分钟超时（应对复杂文件夹扫描）
             enableHotReload: false,
             stepExecutor: this.taiyiService as IStepExecutor,
         });
@@ -171,11 +171,11 @@ export default class TianshuService implements IService {
         // 天枢星君命令处理 - 使用requestId模式跟踪Promise
         this.ipcMain.handle("tianshu.command", async (_, command) => {
             return new Promise((resolve, reject) => {
-                // 设置超时
+                // 设置超时（10分钟，应对复杂文件夹扫描操作）
                 const timeout = setTimeout(() => {
                     this.pendingCommands.delete(command.id);
-                    reject(new Error(`Command ${command.id} timed out after 30 seconds`));
-                }, 30000);
+                    reject(new Error(`Command ${command.id} timed out after 10 minutes`));
+                }, 600000);
 
                 // 将Promise存储到跟踪器中
                 this.pendingCommands.set(command.id, {

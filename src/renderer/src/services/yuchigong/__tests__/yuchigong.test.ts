@@ -11,7 +11,10 @@ import mitt from "mitt";
 import { YuChiGongService } from "../yuchigong";
 import type { Shengzhi } from "@common/interfaces/shengzhi.interface";
 import type { Qizou } from "@common/interfaces/qizou.interface";
-import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
+import type {
+    IFangXuanLingService,
+    IScanning,
+} from "@renderer/interfaces/fang-xuan-ling.interface";
 import type { ScanAction } from "@common/scan-types";
 import {
     ZOUZHE_MATTERS,
@@ -24,23 +27,30 @@ import {
 /**
  * Mock扫描队列Store（模拟房玄龄的scanning Store）
  */
-class MockScanningStore {
-    private queue: ScanAction[] = [];
+class MockScanningStore implements IScanning {
+    isProcessing = false;
+    currentPath: string | null = null;
+    nextScanAction: ScanAction | null = null;
+    private _queue: ScanAction[] = [];
+
+    reset(): void {
+        this._queue = [];
+    }
 
     addAction(action: ScanAction): void {
-        this.queue.push(action);
+        this._queue.push(action);
     }
 
     removeAction(path: string): void {
-        this.queue = this.queue.filter((action) => action.path !== path);
+        this._queue = this._queue.filter((action) => action.path !== path);
     }
 
     isInQueue(path: string): boolean {
-        return this.queue.some((action) => action.path === path);
+        return this._queue.some((action) => action.path === path);
     }
 
-    getQueue(): ScanAction[] {
-        return [...this.queue];
+    get queue(): ScanAction[] {
+        return [...this._queue];
     }
 
     get queueSize(): number {
@@ -48,42 +58,7 @@ class MockScanningStore {
     }
 
     clear(): void {
-        this.queue = [];
-    }
-}
-
-/**
- * Mock扫描队列Accessor（模拟房玄龄的scanning Accessor）
- */
-class MockScanningAccessor {
-    constructor(private store: MockScanningStore) {}
-
-    get queue(): ScanAction[] {
-        return this.store.getQueue().map((item) => ({
-            ...item,
-            thumbnailSize: 150,
-            operationType: "directory" as const,
-        }));
-    }
-
-    get queueSize(): number {
-        return this.store.queueSize;
-    }
-
-    isInQueue(path: string): boolean {
-        return this.store.isInQueue(path);
-    }
-
-    get isProcessing(): boolean {
-        return false;
-    }
-
-    get currentPath(): string | null {
-        return null;
-    }
-
-    get nextScanAction(): ScanAction | null {
-        return this.queue[0] || null;
+        this._queue = [];
     }
 }
 
@@ -94,16 +69,14 @@ class MockFangXuanLingService implements IFangXuanLingService {
     public receivedZouzhes: Zouzhe[] = [];
     public shouldThrowError = false;
     private mockScanningStore: MockScanningStore;
-    private mockScanningAccessor: MockScanningAccessor;
 
     constructor() {
         this.mockScanningStore = new MockScanningStore();
-        this.mockScanningAccessor = new MockScanningAccessor(this.mockScanningStore);
     }
 
     // ✅ RFC 0042: 实现scanning Accessor
-    get scanning(): MockScanningAccessor {
-        return this.mockScanningAccessor;
+    get scanning(): IScanning {
+        return this.mockScanningStore;
     }
 
     // 实现IFangXuanLingService必需的属性和方法
@@ -119,16 +92,8 @@ class MockFangXuanLingService implements IFangXuanLingService {
         throw new Error("Mock: photos not implemented");
     }
 
-    getGlobalState(): {
-        preference: Record<string, unknown>;
-        notification: Record<string, unknown>[];
-        photos: Record<string, unknown>[];
-    } {
-        return {
-            preference: {},
-            notification: [],
-            photos: [],
-        };
+    get appState(): never {
+        throw new Error("Mock: appState not implemented");
     }
 
     resetAll(): void {

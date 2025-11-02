@@ -142,11 +142,11 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { DataNode } from "@renderer/stores/preference";
+import type { FolderNode } from "@common/folder-types";
 
 export type Key = string | number;
 
-interface TreeNode extends DataNode {
+interface TreeNode extends FolderNode {
     key: Key;
     title: string;
     children?: TreeNode[];

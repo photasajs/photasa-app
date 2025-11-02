@@ -329,4 +329,124 @@ describe("Schema Validator", () => {
             expect(errors).toEqual([]);
         });
     });
+
+    describe("Bug修复回归测试 - YAML裸字符串input问题", () => {
+        /**
+         * 问题背景：
+         * - YAML中 `input: "{{inputs.tree}}"` 被解析为对象键，导致return返回{}
+         * - Schema期望array，但实际收到object（空对象）
+         * - 此测试组确保类型验证正确捕获这类问题
+         */
+
+        it("应拒绝空对象当schema期望array", () => {
+            const schema = {
+                type: "array",
+                description: "更新后的完整文件夹树",
+            };
+            const data = {}; // 空对象（YAML裸字符串导致）
+
+            const errors = validateAgainstSchema(data, schema, "update_tree");
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]).toContain("类型错误");
+            expect(errors[0]).toContain("期望: array");
+            expect(errors[0]).toContain("实际: object");
+        });
+
+        it("应接受有效的数组当schema期望array", () => {
+            const schema = {
+                type: "array",
+                description: "更新后的完整文件夹树",
+            };
+            const data = [{ path: "/test", children: [] }];
+
+            const errors = validateAgainstSchema(data, schema, "update_tree");
+
+            expect(errors).toEqual([]);
+        });
+
+        it("应拒绝字符串当schema期望array", () => {
+            const schema = {
+                type: "array",
+            };
+            const data = "{{inputs.tree}}"; // 未解析的模板字符串
+
+            const errors = validateAgainstSchema(data, schema, "update_tree");
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]).toContain("类型错误");
+            expect(errors[0]).toContain("期望: array");
+            expect(errors[0]).toContain("实际: string");
+        });
+
+        it("应拒绝对象当schema期望array", () => {
+            const schema = {
+                type: "array",
+            };
+            const data = { "{{inputs.tree}}": null }; // YAML错误解析
+
+            const errors = validateAgainstSchema(data, schema, "update_tree");
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]).toContain("类型错误");
+            expect(errors[0]).toContain("期望: array");
+        });
+
+        it("应拒绝空对象当schema期望object", () => {
+            const schema = {
+                type: "object",
+                properties: {
+                    folderTree: { type: "array" },
+                    currentFolder: { type: "string" },
+                },
+                required: ["folderTree", "currentFolder"],
+            };
+            const data = {}; // 空对象，缺少必需字段
+
+            const errors = validateAgainstSchema(data, schema, "restore_app_state");
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors.some((e) => e.includes("缺失"))).toBe(true);
+        });
+
+        it("应正确验证完整的对象schema", () => {
+            const schema = {
+                type: "object",
+                properties: {
+                    folderTree: { type: "array" },
+                    currentFolder: { type: "string" },
+                    lastOpenedFolder: { type: "string" },
+                },
+            };
+            const data = {
+                folderTree: [{ path: "/test", children: [] }],
+                currentFolder: "/test",
+                lastOpenedFolder: "/test",
+            };
+
+            const errors = validateAgainstSchema(data, schema, "restore_app_state");
+
+            expect(errors).toEqual([]);
+        });
+
+        it("应检测嵌套字段的类型错误", () => {
+            const schema = {
+                type: "object",
+                properties: {
+                    tree: { type: "array" },
+                    nodeCount: { type: "number" },
+                },
+            };
+            const data = {
+                tree: {}, // 错误：应该是array
+                nodeCount: 0,
+            };
+
+            const errors = validateAgainstSchema(data, schema, "format_response");
+
+            expect(errors.length).toBeGreaterThan(0);
+            expect(errors[0]).toContain("tree");
+            expect(errors[0]).toContain("类型错误");
+        });
+    });
 });

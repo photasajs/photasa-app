@@ -136,7 +136,7 @@ export interface ServiceEventData {
     /** 时间戳 */
     timestamp: Date;
     /** 额外数据 */
-    data?: any;
+    data?: never; // 不要使用 any，使用 never 代替 额外数据 防止类型污染
     /** 错误信息 */
     error?: Error;
 }

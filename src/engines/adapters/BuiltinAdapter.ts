@@ -73,7 +73,35 @@ export class BuiltinAdapter implements IAdapter {
      * 直接返回数据，避免不必要的包装
      */
     async return(params: ReturnParams = {}): Promise<any> {
-        logger.debug(`🔧 收到仙家回禀:`, params.message);
+        // 🔧 智能日志：如果params.message存在则显示，否则显示数据摘要
+        if (params.message !== undefined) {
+            logger.debug(`🔧 收到仙家回禀:`, params.message);
+        } else {
+            // 如果传入的是任意数据对象（非标准ReturnParams），显示数据摘要
+            const {
+                success: _success,
+                error: _error,
+                message: _message,
+                details: _details,
+                data: _data,
+                ...dataFields
+            } = params;
+            const dataToLog = params.data !== undefined ? params.data : dataFields;
+
+            // 根据数据类型选择合适的日志格式
+            if (dataToLog && typeof dataToLog === "object") {
+                const keys = Object.keys(dataToLog);
+                const preview =
+                    keys.length > 0
+                        ? `数据字段: ${keys.slice(0, 3).join(", ")}${keys.length > 3 ? `, ... (共${keys.length}个字段)` : ""}`
+                        : "空对象";
+                logger.debug(`🔧 收到仙家回禀: ${preview}`);
+            } else if (dataToLog !== undefined && dataToLog !== null) {
+                logger.debug(`🔧 收到仙家回禀:`, dataToLog);
+            } else {
+                logger.debug(`🔧 收到仙家回禀: (无数据)`);
+            }
+        }
 
         // 如果有错误，抛出异常而不是返回包装结构
         if (params.error) {

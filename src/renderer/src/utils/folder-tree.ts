@@ -1,14 +1,14 @@
-import type { DataNode } from "@renderer/stores/preference";
+import type { FolderNode } from "@common/folder-types";
 import { splitPath, normalizePath, mergePath } from "@renderer/utils/api-path";
 import type { Photo } from "@common/config-types";
 
-function normalizeRoot(root: DataNode): void {
+function normalizeRoot(root: FolderNode): void {
     if (!root.children) {
         root.children = [];
     }
 }
 
-export function cleanDataNode(roots: DataNode[], file: Photo): void {
+export function cleanDataNode(roots: FolderNode[], file: Photo): void {
     const pathParts = splitPath(file.path).filter((part) => part !== "");
     if (pathParts.length <= 1) {
         return;
@@ -22,7 +22,7 @@ export function cleanDataNode(roots: DataNode[], file: Photo): void {
     cleanChild(root.children, file);
 }
 
-function cleanChild(nodes: DataNode[], file: Photo): void {
+function cleanChild(nodes: FolderNode[], file: Photo): void {
     const index = nodes.findIndex((child) => normalizePath(child.key as string) === file.path);
     // 如果子节点存在，则删除子节点
     if (index >= 0) {
@@ -37,13 +37,18 @@ function cleanChild(nodes: DataNode[], file: Photo): void {
 }
 
 /**
- * 向目录树添加节点，仅当第一级为已存在根节点时才允许添加。
- * - 若第一级未匹配到 roots，则放弃添加，防止自动扩展根目录。
- * - 只允许用户主动添加的根目录作为树的第一级。
- * @param roots 目录树根节点数组
- * @param file 需添加的文件/目录节点
+ * 向文件夹树添加文件夹节点
+ *
+ * 设计目的：从文件路径构建文件夹层级结构
+ * - 用于扫描过程中，根据图片文件路径自动构建文件夹树
+ * - 仅当第一级为已存在根节点时才允许添加子文件夹
+ * - 若第一级未匹配到 roots，则放弃添加，防止自动扩展根目录
+ * - 只允许用户主动添加的根目录作为树的第一级
+ *
+ * @param roots 文件夹树根节点数组
+ * @param file 文件对象（使用其path属性构建文件夹结构）
  */
-export function buildDataNode(roots: DataNode[], file: Photo): void {
+export function addFolderToTree(roots: FolderNode[], file: Photo): void {
     // 如果文件路径为空，则放弃添加
     let pathParts = splitPath(file.path).filter((part) => part !== "");
     if (pathParts.length === 0) {
@@ -72,7 +77,14 @@ export function buildDataNode(roots: DataNode[], file: Photo): void {
     traverseTree(root, pathParts, file);
 }
 
-function traverseTree(root: DataNode, pathParts: string[], file: Photo): DataNode {
+/**
+ * 遍历目录树，添加子节点
+ * @param root 根节点
+ * @param pathParts 路径部分
+ * @param file 文件/目录节点
+ * @returns 子节点
+ */
+function traverseTree(root: FolderNode, pathParts: string[], file: Photo): FolderNode {
     normalizeRoot(root);
     // 如果路径为空，则返回根节点
     if (pathParts.length == 0) {

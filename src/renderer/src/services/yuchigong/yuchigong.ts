@@ -12,6 +12,7 @@ import {
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
+// ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
 const logger = loggers.yuchigong;
 
@@ -60,6 +61,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
     get name(): string {
         return "尉迟恭";
     }
+    // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务
 
     /**
      * IService接口实现 - 设置圣旨接收通道（单向）
@@ -130,6 +132,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 case "remove_scan_task":
                     await this.handleRemoveScanTask(shengzhi);
                     break;
+                // ✅ RFC 0042 Step 2.5: update_folder_tree已迁移到魏征服务
                 default:
                     logger.warn(`🛡️ 尉迟恭收到未知圣旨命令: ${shengzhi.command}`);
                     this.emitQizou("shengzhi_unknown", {
@@ -438,6 +441,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
     //     });
     // }
 
+    // ✅ RFC 0042 Step 2.5: handleUpdateFolderTree已迁移到魏征服务
+
     /**
      * 初始化扫描队列（应用启动时调用）
      * 从天界恢复持久化的扫描队列
@@ -491,4 +496,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
             logger.info("🛡️ 尉迟恭：使用空队列继续启动");
         }
     }
+
+    // ✅ RFC 0042 Step 2.5: initializeFolderTree已迁移到魏征服务的initializeAppState()
 }

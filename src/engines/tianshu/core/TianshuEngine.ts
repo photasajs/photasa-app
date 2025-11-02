@@ -34,6 +34,9 @@ const intentToWorkflowMap: Record<UserIntent, string> = {
     get_scanning_queue: "scan/get_scanning_queue", // ✅ RFC 0042 Phase 2.3: 获取扫描队列
     add_scan_action: "scan/add_scan_action", // ✅ RFC 0042 Phase 2.4: 添加扫描任务workflow
     remove_scan_action: "scan/remove_scan_action", // ✅ RFC 0042 Phase 2.4: 移除扫描任务workflow
+    restore_app_state: "appstate/restore_app_state", // ✅ RFC 0042 Step 2.5: 应用状态管理workflow
+    update_folder_tree: "appstate/update_folder_tree", // ✅ RFC 0042 Step 2.5: 文件夹树管理workflow
+    switch_current_folder: "appstate/switch_current_folder", // ✅ RFC 0042 Step 2.5: 当前文件夹管理workflow
 };
 
 /**
@@ -73,7 +76,7 @@ export class TianshuEngine extends EventEmitter {
         super();
         this.config = {
             maxConcurrentWorkflows: 10,
-            defaultTimeout: 30000,
+            defaultTimeout: 600000, // 10分钟默认超时
             enableHotReload: false,
             logLevel: "info",
             globalVariables: {},

@@ -67,6 +67,7 @@ describe("FangXuanLingService", () => {
         // Mock 袁天罡服务
         mockYuanTianGang = {
             executeZhaoling: vi.fn(),
+            setQizouBus: vi.fn(),
         };
 
         fangXuanLingService = new FangXuanLingService(mockYuanTianGang);
@@ -226,14 +227,6 @@ describe("FangXuanLingService", () => {
     });
 
     describe("全局状态管理", () => {
-        it("应该正确返回全局状态", () => {
-            const globalState = fangXuanLingService.getGlobalState();
-
-            expect(globalState).toHaveProperty("preference");
-            expect(globalState).toHaveProperty("notification");
-            expect(globalState).toHaveProperty("photos");
-        });
-
         it("应该正确执行全局重置", () => {
             fangXuanLingService.resetAll();
 

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { FangXuanLingService } from "../fangxuanling";
-import { useScanningStore } from "../scanning-store";
+import { useScanningStore } from "../stores/scanning-store";
+import { createScanningService } from "../accessors/service-builders";
 import type { ScanAction } from "@common/scan-types";
 import type { IYuanTianGangService } from "@renderer/interfaces/yuan-tian-gang.interface";
 
@@ -53,11 +54,9 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.queue).toHaveLength(2);
         });
 
-        it("Store未初始化时应返回空数组", async () => {
-            // 创建新的accessor实例，Store为null
-            const emptyAccessor = new (
-                await import("../accessors/scanning-accessor")
-            ).ScanningAccessor(null);
+        it("Store未初始化时应返回空数组", () => {
+            // 创建新的accessor实例
+            const emptyAccessor = createScanningService();
             expect(emptyAccessor.queue).toEqual([]);
         });
     });
@@ -86,10 +85,8 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.queueSize).toBe(2);
         });
 
-        it("Store未初始化时应返回0", async () => {
-            const emptyAccessor = new (
-                await import("../accessors/scanning-accessor")
-            ).ScanningAccessor(null);
+        it("Store未初始化时应返回0", () => {
+            const emptyAccessor = createScanningService();
             expect(emptyAccessor.queueSize).toBe(0);
         });
     });
@@ -104,10 +101,8 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.isProcessing).toBe(true);
         });
 
-        it("Store未初始化时应返回false", async () => {
-            const emptyAccessor = new (
-                await import("../accessors/scanning-accessor")
-            ).ScanningAccessor(null);
+        it("Store未初始化时应返回false", () => {
+            const emptyAccessor = createScanningService();
             expect(emptyAccessor.isProcessing).toBe(false);
         });
     });
@@ -122,10 +117,8 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.currentPath).toBe("/test/current");
         });
 
-        it("Store未初始化时应返回null", async () => {
-            const emptyAccessor = new (
-                await import("../accessors/scanning-accessor")
-            ).ScanningAccessor(null);
+        it("Store未初始化时应返回null", () => {
+            const emptyAccessor = createScanningService();
             expect(emptyAccessor.currentPath).toBeNull();
         });
     });
@@ -147,10 +140,8 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.nextScanAction).toEqual(action);
         });
 
-        it("Store未初始化时应返回null", async () => {
-            const emptyAccessor = new (
-                await import("../accessors/scanning-accessor")
-            ).ScanningAccessor(null);
+        it("Store未初始化时应返回null", () => {
+            const emptyAccessor = createScanningService();
             expect(emptyAccessor.nextScanAction).toBeNull();
         });
     });
@@ -173,10 +164,8 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.isInQueue("/test/other")).toBe(false);
         });
 
-        it("Store未初始化时应返回false", async () => {
-            const emptyAccessor = new (
-                await import("../accessors/scanning-accessor")
-            ).ScanningAccessor(null);
+        it("Store未初始化时应返回false", () => {
+            const emptyAccessor = createScanningService();
             expect(emptyAccessor.isInQueue("/any/path")).toBe(false);
         });
     });

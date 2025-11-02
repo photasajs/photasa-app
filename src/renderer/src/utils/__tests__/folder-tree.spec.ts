@@ -1,5 +1,5 @@
-import { buildDataNode, cleanDataNode } from "../folder-tree";
-import type { DataNode } from "@renderer/stores/preference";
+import { addFolderToTree, cleanDataNode } from "../folder-tree";
+import type { FolderNode } from "@common/folder-types";
 import { describe, it, expect, beforeAll } from "vitest";
 
 beforeAll(() => {
@@ -22,11 +22,11 @@ beforeAll(() => {
 });
 
 describe("Folder Tree", () => {
-    it("should return a DataNode", () => {
-        const roots: DataNode[] = [];
+    it("should return a FolderNode", () => {
+        const roots: FolderNode[] = [];
         const path = "/test/google.com/test.jpg";
 
-        buildDataNode(roots, {
+        addFolderToTree(roots, {
             path,
             thumbnail: "/test/google.com/.picasaoriginals/test.jpg",
             isVideo: false,
@@ -35,44 +35,44 @@ describe("Folder Tree", () => {
     });
 
     it("should handle empty roots and empty path", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
     });
 
     it("should add multiple root nodes", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root2", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "root1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root2", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
     });
 
     it("should add deep nested nodes", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "root1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
     });
 
     it("should not add duplicate nodes", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "root1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
     });
 
     it("should not add child if root does not exist", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
     });
 
     it("should clean node at various levels", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "root1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
         cleanDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
         cleanDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
@@ -80,18 +80,18 @@ describe("Folder Tree", () => {
     });
 
     it("should not change roots when cleaning non-existent node", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "root1", thumbnail: "", isVideo: false });
         cleanDataNode(roots, { path: "root1/childX", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
     });
 
     it("should clean deep nested children recursively", () => {
-        const roots: DataNode[] = [];
-        buildDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
-        buildDataNode(roots, { path: "root1/child1/child2/child3", thumbnail: "", isVideo: false });
+        const roots: FolderNode[] = [];
+        addFolderToTree(roots, { path: "root1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1/child1/child2", thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "root1/child1/child2/child3", thumbnail: "", isVideo: false });
         cleanDataNode(roots, { path: "root1/child1/child2/child3", thumbnail: "", isVideo: false });
         expect(roots).toMatchSnapshot();
     });

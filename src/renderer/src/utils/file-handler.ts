@@ -13,6 +13,7 @@ import type { WatchState } from "@common/watch-types";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { deepCopy } from "./object";
 import type { PreferenceStore } from "@renderer/stores/preference";
+import type { IQinQiongService } from "@renderer/interfaces/qin-qiong.interface";
 
 /**
  * 判断是否为媒体文件
@@ -42,12 +43,17 @@ export function canHandleFile(state: WatchState): boolean {
  * 处理添加文件
  * @param state - 状态
  * @param preferenceStore - 偏好设置
+ * @param qinQiongService - 秦琼服务（文件系统事件守护者）
  */
-async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore): Promise<void> {
-    // 新增：如果是目录添加，自动更新 folderTree
+async function handleAddFile(
+    state: WatchState,
+    preferenceStore: PreferenceStore,
+    qinQiongService: IQinQiongService,
+): Promise<void> {
+    // ✅ RFC 0042: 如果是目录添加，通过秦琼服务更新 folderTree
     if (!state.isFile && state.path?.length > 0) {
-        // 目录添加，更新目录树
-        preferenceStore.updateFolderTree(state.path);
+        // 目录添加，秦琼发起启奏给李世民
+        await qinQiongService.addPath(state.path);
         return;
     }
     // Skip hidden or empty path or ignored file
@@ -72,13 +78,20 @@ async function handleAddFile(state: WatchState, preferenceStore: PreferenceStore
     }
 }
 
+/**
+ * 处理删除文件
+ * @param state - 状态
+ * @param preferenceStore - 偏好设置
+ * @param qinQiongService - 秦琼服务（文件系统事件守护者）
+ */
 async function handleDeleteFile(
     state: WatchState,
     preferenceStore: PreferenceStore,
+    qinQiongService: IQinQiongService,
 ): Promise<void> {
-    // Directory skip hidden
+    // ✅ RFC 0042: 目录删除，通过秦琼服务更新 folderTree
     if (!state.isFile) {
-        preferenceStore.cleanFolderTree(state.path);
+        await qinQiongService.removePath(state.path);
         return;
     }
 
@@ -144,10 +157,11 @@ export const handleFileTask = useTask(function* (
     _,
     state: WatchState,
     preferenceStore: PreferenceStore,
+    qinQiongService: IQinQiongService,
 ) {
     const handler = actions[state.action];
     if (handler) {
-        yield handler(state, preferenceStore);
+        yield handler(state, preferenceStore, qinQiongService);
     }
 })
     .enqueue()
@@ -157,8 +171,13 @@ export const handleFileTask = useTask(function* (
  * 开始监听文件
  * @param dirs - 目录
  * @param preferenceStore - 偏好设置
+ * @param qinQiongService - 秦琼服务（文件系统事件守护者）
  */
-export function startFileWatching(dirs: string[], preferenceStore: PreferenceStore): void {
+export function startFileWatching(
+    dirs: string[],
+    preferenceStore: PreferenceStore,
+    qinQiongService: IQinQiongService,
+): void {
     startWatching(
         {
             path: dirs[0],
@@ -171,7 +190,7 @@ export function startFileWatching(dirs: string[], preferenceStore: PreferenceSto
             },
         },
         (state: WatchState) => {
-            handleFileTask.perform(state, preferenceStore);
+            handleFileTask.perform(state, preferenceStore, qinQiongService);
         },
     );
 }
