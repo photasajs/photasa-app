@@ -287,17 +287,10 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     });
                     expect(zouzhe.priority).toBe(ZOUZHE_PRIORITIES.NORMAL);
 
-                    // 验证向李世民启奏
-                    expect(emittedQizous).toHaveLength(1);
-                    const qizou = emittedQizous[0];
-                    expect(qizou.matter).toBe("scan_task_added");
-                    expect(qizou.from).toBe("尉迟恭");
-                    // ✅ RFC 0042: 启奏内容包含persisted标志
-                    expect(qizou.content).toMatchObject({
-                        shengzhiId: shengzhi.id,
-                        path: testPath,
-                        persisted: true,
-                    });
+                    // ✅ 修复循环问题：响应圣旨时不发送 SCAN_TASK_ADDED 启奏
+                    // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
+                    // SCAN_TASK_ADDED 启奏只在直接调用 addScanTask() 时发送，用于触发魏征的 check_and_add_path
+                    expect(emittedQizous).toHaveLength(0);
 
                     resolve();
                 }, 50);
@@ -329,8 +322,9 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     // 验证发送了3个奏折
                     expect(mockFangXuanLing.receivedZouzhes).toHaveLength(3);
 
-                    // 验证启奏了3次
-                    expect(emittedQizous).toHaveLength(3);
+                    // ✅ 修复循环问题：响应圣旨时不发送 SCAN_TASK_ADDED 启奏
+                    // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
+                    expect(emittedQizous).toHaveLength(0);
 
                     resolve();
                 }, 100);
@@ -824,8 +818,9 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     // 应该发送了10个奏折
                     expect(mockFangXuanLing.receivedZouzhes).toHaveLength(10);
 
-                    // 应该启奏了10次
-                    expect(emittedQizous).toHaveLength(10);
+                    // ✅ 修复循环问题：响应圣旨时不发送 SCAN_TASK_ADDED 启奏
+                    // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
+                    expect(emittedQizous).toHaveLength(0);
 
                     resolve();
                 }, 200);
