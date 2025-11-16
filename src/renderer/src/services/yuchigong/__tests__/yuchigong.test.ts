@@ -116,19 +116,21 @@ class MockFangXuanLingService implements IFangXuanLingService {
         if (zouzhe.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
             const content = zouzhe.content as Record<string, unknown>;
             // ✅ 修复：工作流期望 actions 数组
-            const actionsArray = content.actions as Record<string, unknown>[];
-            if (actionsArray && actionsArray.length > 0) {
-                const actionData = actionsArray[0];
-                const scanAction: ScanAction = {
-                    path: actionData.path as string,
-                    action: (actionData.action as "scan" | "rescan" | "current") || "scan",
-                    thumbnailSize: (actionData.thumbnailSize as number) || 150,
-                    source: (actionData.source as "user" | "auto") || "user",
-                    timestamp: (actionData.addedAt as number) || Date.now(),
-                    operationType:
-                        (actionData.operationType as "directory" | "file") || "directory",
-                };
-                this.mockScanningStore.addAction(scanAction);
+            const actionsArray = content.actions;
+            if (Array.isArray(actionsArray) && actionsArray.length > 0) {
+                const actionData = actionsArray[0] as Record<string, unknown>;
+                if (actionData && typeof actionData === "object") {
+                    const scanAction: ScanAction = {
+                        path: actionData.path as string,
+                        action: (actionData.action as "scan" | "rescan" | "current") || "scan",
+                        thumbnailSize: (actionData.thumbnailSize as number) || 150,
+                        source: (actionData.source as "user" | "auto") || "user",
+                        timestamp: (actionData.addedAt as number) || Date.now(),
+                        operationType:
+                            (actionData.operationType as "directory" | "file") || "directory",
+                    };
+                    this.mockScanningStore.addAction(scanAction);
+                }
             }
         }
 
