@@ -18,14 +18,19 @@ export interface LogEntry {
 // 正确的 log4js interceptor appender 实现
 const createInterceptorAppender = (interceptorInstance: LogInterceptor) => {
     return {
-        configure: (_config: any, _layouts: any) => {
+        configure: (_config: unknown, _layouts: unknown) => {
             // 创建 appender 函数
-            const appender = (logEvent: any) => {
+            const appender = (logEvent: {
+                startTime: number;
+                level: { levelStr: string };
+                categoryName: string;
+                data: unknown[];
+            }) => {
                 // 只有在激活时才进行拦截处理
                 if (interceptorInstance.isActive) {
                     const entry: LogEntry = {
                         timestamp: new Date(logEvent.startTime).toISOString(),
-                        level: logEvent.level.levelStr.toLowerCase() as any,
+                        level: logEvent.level.levelStr.toLowerCase() as LogEntry["level"],
                         category: logEvent.categoryName,
                         message: logEvent.data.join(" "),
                         source: "main",
@@ -48,8 +53,18 @@ const createInterceptorAppender = (interceptorInstance: LogInterceptor) => {
 export class LogInterceptor {
     private listeners = new Set<(entry: LogEntry) => void>();
     private _isActive = false;
-    private originalConsole: any = {};
-    private appenderModule: any;
+    private originalConsole: Partial<Console> = {};
+    private appenderModule: {
+        configure: (
+            config: unknown,
+            layouts: unknown,
+        ) => (logEvent: {
+            startTime: number;
+            level: { levelStr: string };
+            categoryName: string;
+            data: unknown[];
+        }) => void;
+    };
 
     constructor() {
         // 创建这个实例专用的 appender 模块
@@ -106,7 +121,7 @@ export class LogInterceptor {
                     },
                 },
                 interceptor: {
-                    type: this.appenderModule, // 正确的模块引用方式
+                    type: this.appenderModule as unknown as string, // 正确的模块引用方式
                 },
             },
             categories: {
@@ -149,17 +164,18 @@ export class LogInterceptor {
         };
 
         // 非侵入式拦截：保持原有功能，添加拦截逻辑
-        ["debug", "info", "warn", "error"].forEach((level) => {
-            const originalMethod = console[level as keyof Console] as any;
-            (console as any)[level] = function (...args: any[]) {
+        (["debug", "info", "warn", "error"] as const).forEach((level) => {
+            const originalMethod = console[level] as typeof console.debug;
+            const self = this;
+            (console[level] as typeof console.debug) = function (...args: unknown[]) {
                 // 始终调用原始方法保持正常输出
                 originalMethod.apply(console, args);
 
                 // 只有在激活时才进行拦截
-                if (this._isActive) {
+                if (self._isActive) {
                     const entry: LogEntry = {
                         timestamp: new Date().toISOString(),
-                        level: level as any,
+                        level: level as LogEntry["level"],
                         category: "renderer",
                         message: args
                             .map((arg) =>
@@ -169,7 +185,7 @@ export class LogInterceptor {
                         source: "renderer",
                     };
                     // 在 renderer 进程中，直接通知本地监听器（log viewer UI）
-                    this.notify(entry);
+                    self.notify(entry);
                 }
             };
         });
@@ -178,10 +194,10 @@ export class LogInterceptor {
     private detachBrowserInterceptor() {
         // 恢复原始console方法
         if (this.originalConsole.debug) {
-            console.debug = this.originalConsole.debug;
-            console.info = this.originalConsole.info;
-            console.warn = this.originalConsole.warn;
-            console.error = this.originalConsole.error;
+            console.debug = this.originalConsole.debug as typeof console.debug;
+            console.info = this.originalConsole.info as typeof console.info;
+            console.warn = this.originalConsole.warn as typeof console.warn;
+            console.error = this.originalConsole.error as typeof console.error;
         }
     }
 }
@@ -292,7 +308,7 @@ export class BrowserLogger {
 
             const entry: LogEntry = {
                 timestamp: new Date().toISOString(),
-                level: level as any,
+                level: level as LogEntry["level"],
                 category: this.category,
                 message,
                 source: "renderer",

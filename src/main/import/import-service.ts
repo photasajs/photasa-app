@@ -305,10 +305,11 @@ export default class ImportService implements IService {
                 { action: "preview_import", payload: serializableConfig as any },
                 (progress) => {
                     // 转发预览进度到渲染进程，确保包含发现的文件
+                    const progressData = progress as { discoveredFiles?: unknown };
                     this.mainWindow?.webContents.send("preview:progress", {
                         previewId,
                         progress,
-                        files: progress.discoveredFiles, // 显式传递发现的文件
+                        files: progressData.discoveredFiles, // 显式传递发现的文件
                     });
                 },
             );

@@ -29,8 +29,14 @@ export const useStatusBarStore = defineStore("statusBar", {
             this.timestamp = payload.timestamp;
             this.data = payload.data;
             // 进度可选从 data 结构中提取
-            if (payload.data && typeof payload.data.progress === "number") {
-                this.progress = payload.data.progress;
+            if (
+                payload.data &&
+                typeof payload.data === "object" &&
+                payload.data !== null &&
+                "progress" in payload.data &&
+                typeof (payload.data as { progress?: number }).progress === "number"
+            ) {
+                this.progress = (payload.data as { progress: number }).progress;
             } else {
                 this.progress = undefined;
             }

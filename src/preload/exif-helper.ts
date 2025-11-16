@@ -53,7 +53,10 @@ export async function checkExifDate(filePath: string): Promise<Date | null> {
                         delete tags["MakerNote"];
 
                         // Use shared EXIF utility for consistent date extraction
-                        const result = extractDateTimeFromExif(tags, EXIF_DATE_FIELDS);
+                        const result = extractDateTimeFromExif(
+                            tags as unknown as import("@common/exif-util").ExifTags,
+                            EXIF_DATE_FIELDS,
+                        );
                         resolve(result);
                     } catch (error) {
                         // Most time. it's not a image file which have exif.

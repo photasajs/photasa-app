@@ -19,16 +19,16 @@ export interface ExifTag {
  * EXIF tags structure that can contain date fields
  * Using any to be compatible with ExifReader's Tags type
  */
-export interface ExifTags {
-    [key: string]: any;
-}
+export type ExifTags = Record<string, unknown>;
 
 /**
  * Extracts date string from an EXIF tag, handling different data structures
  * @param dateTag - The EXIF tag containing date information
  * @returns The date string or null if not found
  */
-export function extractDateStringFromTag(dateTag: any): string | null {
+export function extractDateStringFromTag(
+    dateTag: ExifTag | string | null | undefined,
+): string | null {
     if (!dateTag) {
         return null;
     }
@@ -56,7 +56,9 @@ export function extractDateStringFromTag(dateTag: any): string | null {
  * @param offsetTag - The EXIF OffsetTime tag
  * @returns The timezone offset string or null if not found
  */
-export function extractTimezoneOffset(offsetTag: any): string | null {
+export function extractTimezoneOffset(
+    offsetTag: ExifTag | string | null | undefined,
+): string | null {
     return extractDateStringFromTag(offsetTag);
 }
 
@@ -77,7 +79,7 @@ export function normalizeExifDateString(dateStr: string): string {
  * @returns A Date object or null if extraction/parsing fails
  */
 export function extractDateTimeFromExifField(
-    tags: any,
+    tags: ExifTags,
     field: string,
     _debug = false,
 ): Date | null {
@@ -85,7 +87,12 @@ export function extractDateTimeFromExifField(
         return null;
     }
 
-    const dateStr = extractDateStringFromTag(tags[field]);
+    const fieldValue = tags[field];
+    const dateStr =
+        typeof fieldValue === "string" ||
+        (typeof fieldValue === "object" && fieldValue !== null && !Array.isArray(fieldValue))
+            ? extractDateStringFromTag(fieldValue as ExifTag | string | null | undefined)
+            : null;
     if (!dateStr) {
         return null;
     }
@@ -96,7 +103,12 @@ export function extractDateTimeFromExifField(
 
         // Handle timezone offset if present
         let finalDateStr = normalizedDateStr;
-        const offsetStr = extractTimezoneOffset(tags.OffsetTime);
+        const offsetValue = tags.OffsetTime;
+        const offsetStr =
+            typeof offsetValue === "string" ||
+            (typeof offsetValue === "object" && offsetValue !== null && !Array.isArray(offsetValue))
+                ? extractTimezoneOffset(offsetValue as ExifTag | string | null | undefined)
+                : null;
         if (offsetStr) {
             finalDateStr += offsetStr;
         }
@@ -122,7 +134,7 @@ export function extractDateTimeFromExifField(
  * @returns A Date object or null if no valid date is found
  */
 export function extractDateTimeFromExif(
-    tags: any,
+    tags: ExifTags,
     fields: readonly string[] = EXIF_DATE_FIELDS,
     _debug = false,
 ): Date | null {

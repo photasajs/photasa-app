@@ -59,8 +59,8 @@ describe("logger.ts", () => {
     });
 
     describe("BrowserLogger 安全序列化功能", () => {
-        let consoleErrorSpy: any;
-        let browserLogger: any;
+        let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+        let browserLogger: InstanceType<typeof loggerModule.BrowserLogger>;
 
         beforeEach(() => {
             // 模拟浏览器环境
@@ -73,7 +73,7 @@ describe("logger.ts", () => {
         });
 
         it("应该安全处理循环引用对象", () => {
-            const obj: any = { name: "test" };
+            const obj: { name: string; self?: unknown } = { name: "test" };
             obj.self = obj; // 创建循环引用
 
             expect(() => {
@@ -188,7 +188,7 @@ describe("logger.ts", () => {
             const longArray = Array(20)
                 .fill(0)
                 .map((_, i) => i);
-            const manyProps: any = {};
+            const manyProps: Record<string, number> = {};
             for (let i = 0; i < 20; i++) {
                 manyProps[`prop${i}`] = i;
             }

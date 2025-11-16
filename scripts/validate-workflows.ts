@@ -14,12 +14,25 @@ import Table from "cli-table3";
 import boxen from "boxen";
 import ora from "ora";
 
+interface WorkflowStep {
+    id?: string;
+    name?: string;
+    output_schema?: Record<string, unknown>;
+    [key: string]: unknown;
+}
+
 interface WorkflowDefinition {
     id: string;
     name: string;
     version: string;
-    steps: any[];
-    [key: string]: any;
+    steps: WorkflowStep[];
+    [key: string]: unknown;
+}
+
+interface ValidationError {
+    file: string;
+    errors: string[];
+    warnings: string[];
 }
 
 /**
@@ -128,11 +141,15 @@ function validateWorkflowRequired(workflow: WorkflowDefinition, _filePath: strin
  * 验证步骤间的变量路径语义
  * 检查 steps.xxx.output.yyy 路径是否与 output_schema 匹配
  */
-function validateStepOutputReferences(steps: any[], content: string, _filePath: string): string[] {
+function validateStepOutputReferences(
+    steps: WorkflowStep[],
+    content: string,
+    _filePath: string,
+): string[] {
     const errors: string[] = [];
 
     // 构建步骤ID到output_schema的映射
-    const stepSchemas = new Map<string, any>();
+    const stepSchemas = new Map<string, Record<string, unknown>>();
     for (const step of steps) {
         if (step.id && step.output_schema) {
             stepSchemas.set(step.id, step.output_schema);
@@ -188,11 +205,15 @@ function validateStepOutputReferences(steps: any[], content: string, _filePath: 
 /**
  * 验证条件语法格式
  */
-function validateConditionSyntax(workflow: any, content: string): string[] {
+function validateConditionSyntax(workflow: WorkflowDefinition, content: string): string[] {
     const errors: string[] = [];
     const lines = content.split("\n");
 
-    function validateCondition(condition: any, stepName: string, lineNumber: number) {
+    function validateCondition(
+        condition: Record<string, unknown>,
+        stepName: string,
+        lineNumber: number,
+    ) {
         if (!condition || typeof condition !== "object") return;
 
         // 检查是否使用了错误的RFC语法 (value/test 而不是 field/operator/value)
@@ -213,14 +234,20 @@ function validateConditionSyntax(workflow: any, content: string): string[] {
 
         // 递归检查嵌套条件
         if (condition.conditions && Array.isArray(condition.conditions)) {
-            condition.conditions.forEach((nestedCondition: any) => {
-                validateCondition(nestedCondition, stepName, lineNumber);
+            condition.conditions.forEach((nestedCondition: unknown) => {
+                if (typeof nestedCondition === "object" && nestedCondition !== null) {
+                    validateCondition(
+                        nestedCondition as Record<string, unknown>,
+                        stepName,
+                        lineNumber,
+                    );
+                }
             });
         }
     }
 
     if (workflow.steps && Array.isArray(workflow.steps)) {
-        workflow.steps.forEach((step: any, _index: number) => {
+        workflow.steps.forEach((step: WorkflowStep, _index: number) => {
             const stepLineNumber =
                 lines.findIndex(
                     (line) => line.includes(`id: "${step.id}"`) || line.includes(`id: ${step.id}`),
@@ -233,7 +260,7 @@ function validateConditionSyntax(workflow: any, content: string): string[] {
             // 检查 onTrue/onFalse 中的条件
             ["onTrue", "onFalse"].forEach((branch) => {
                 if (step[branch] && Array.isArray(step[branch])) {
-                    step[branch].forEach((subStep: any) => {
+                    (step[branch] as WorkflowStep[]).forEach((subStep: WorkflowStep) => {
                         if (subStep.condition) {
                             validateCondition(
                                 subStep.condition,
@@ -253,7 +280,7 @@ function validateConditionSyntax(workflow: any, content: string): string[] {
 /**
  * 验证输出路径是否存在于schema中
  */
-function validateOutputPath(schema: any, pathParts: string[]): boolean {
+function validateOutputPath(schema: Record<string, unknown>, pathParts: string[]): boolean {
     let current = schema;
 
     for (const part of pathParts) {
@@ -270,7 +297,7 @@ function validateOutputPath(schema: any, pathParts: string[]): boolean {
 /**
  * 获取schema中所有可用的路径
  */
-function getAvailablePaths(schema: any, prefix = ""): string[] {
+function getAvailablePaths(schema: Record<string, unknown>, prefix = ""): string[] {
     const paths: string[] = [];
 
     if (schema && typeof schema === "object") {
@@ -466,7 +493,7 @@ async function validateWorkflows(options: ValidateOptions) {
  * 输出JSON格式结果
  */
 function outputJSON(data: {
-    allErrors: any[];
+    allErrors: ValidationError[];
     totalErrors: number;
     totalWarnings: number;
     workflowFiles: string[];
@@ -488,7 +515,7 @@ function outputJSON(data: {
  * 输出表格格式结果
  */
 function outputTable(data: {
-    allErrors: any[];
+    allErrors: ValidationError[];
     totalErrors: number;
     totalWarnings: number;
     workflowFiles: string[];
@@ -524,7 +551,7 @@ function outputTable(data: {
  * 输出简单格式结果
  */
 function outputSimple(data: {
-    allErrors: any[];
+    allErrors: ValidationError[];
     totalErrors: number;
     totalWarnings: number;
     workflowFiles: string[];

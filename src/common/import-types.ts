@@ -467,7 +467,7 @@ export interface FileMetadata {
     };
     codec?: string;
     // Raw metadata for advanced display
-    rawMetadata?: Record<string, any>;
+    rawMetadata?: Record<string, unknown>;
     creationTime?: Date;
     // AI file-specific properties
     layers?: number;

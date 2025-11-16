@@ -8,11 +8,11 @@ import type { WorkerMessage, WorkerResponse } from "@common/types";
 // 任务ID到Promise的映射
 const pendingTasks = new Map<
     string,
-    { resolve: (value: any) => void; reject: (reason?: any) => void } // value and reason can be of any type
+    { resolve: (value: unknown) => void; reject: (reason?: unknown) => void } // value and reason can be of any type
 >();
 
 // 任务ID到进度回调的映射
-const progressCallbacks = new Map<string, (progress: any) => void>();
+const progressCallbacks = new Map<string, (progress: unknown) => void>();
 
 // Worker 泛型类型，主进程与 worker 端类型安全通信
 export interface Worker<T, R> {
@@ -28,12 +28,15 @@ export function sendWorkerTask<W extends Worker<T, R>, T, R>(
     worker: W,
     action: string,
     payload: T,
-    onProgress?: (progress: any) => void,
+    onProgress?: (progress: unknown) => void,
 ): Promise<R> {
     const id = uuidv4();
     const message: WorkerMessage<T> = { id, action, payload };
     return new Promise<R>((resolve, reject) => {
-        pendingTasks.set(id, { resolve, reject });
+        pendingTasks.set(id, {
+            resolve: resolve as (value: unknown) => void,
+            reject: reject as (reason?: unknown) => void,
+        });
 
         // 存储进度回调
         if (onProgress) {
@@ -94,8 +97,8 @@ export interface ProgressEvent {
         currentFile: string;
         speed: number;
         estimatedTimeRemaining: number;
-        errors?: any[];
-        warnings?: any[];
+        errors?: unknown[];
+        warnings?: unknown[];
     };
 }
 
@@ -105,7 +108,7 @@ export interface ProgressEvent {
 export interface PreviewProgressEvent {
     type: "preview_progress";
     taskId: string;
-    data: any; // PreviewProgress类型，避免循环依赖
+    data: unknown; // PreviewProgress类型，避免循环依赖
 }
 
 /**
@@ -127,7 +130,7 @@ export function createProgressEvent(
  */
 export function createPreviewProgressEvent(
     taskId: string,
-    progressData: any, // PreviewProgress类型
+    progressData: unknown, // PreviewProgress类型
 ): PreviewProgressEvent {
     return {
         type: "preview_progress",

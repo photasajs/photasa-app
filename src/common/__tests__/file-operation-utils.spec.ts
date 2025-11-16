@@ -294,7 +294,7 @@ describe("file-operation-utils pure functions", () => {
         });
 
         it("should map unknown operations to scan action", () => {
-            expect(mapFileOperationToScanAction("unknown" as any)).toBe("scan");
+            expect(mapFileOperationToScanAction("unknown" as never)).toBe("scan");
         });
 
         it("should be deterministic - same input produces same output", () => {
@@ -563,7 +563,7 @@ describe("file-operation-utils pure functions", () => {
         });
 
         it("should return empty array when no matches", () => {
-            const filtered = filterOperationsByType(operations, ["unknown" as any]);
+            const filtered = filterOperationsByType(operations, ["unknown" as never]);
             expect(filtered).toEqual([]);
         });
 

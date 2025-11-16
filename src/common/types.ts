@@ -3,14 +3,14 @@
 /**
  * 通用 worker 消息协议
  */
-export interface WorkerMessage<T = any> {
+export interface WorkerMessage<T = unknown> {
     // T can be any type depending on the action
     id: string; // 唯一任务ID
     action: string; // 动作类型
     payload: T; // 任务参数
 }
 
-export interface WorkerResponse<R = any> {
+export interface WorkerResponse<R = unknown> {
     // R can be any type depending on the result
     id: string; // 唯一任务ID
     result?: R; // 任务结果
@@ -32,7 +32,7 @@ export interface NotifyPayload {
     type: string; // 任务类型，如 scan/thumbnail/import
     task: string; // 具体任务名或ID
     status: string; // 状态，如 start/success/fail/progress/skip
-    data?: any; // Related data, can be of various types depending on the notification context // 相关数据
+    data?: unknown; // Related data, can be of various types depending on the notification context // 相关数据
     error?: string; // 错误信息
     timestamp: number; // 时间戳
 }
@@ -45,17 +45,17 @@ export type ImageTypeResult = "jpeg" | "png" | "gif" | "webp" | "tiff" | "unknow
 /**
  * 标签
  */
-export type Tags = Record<string, any>; // EXIF tags can have various data types
+export type Tags = Record<string, unknown>; // EXIF tags can have various data types
 
 /**
  * Icc 标签
  */
-export type IccTags = Record<string, any>; // ICC tags can have various data types
+export type IccTags = Record<string, unknown>; // ICC tags can have various data types
 
 /**
  * Xmp 标签
  */
-export type XmpTags = Record<string, any>; // XMP tags can have various data types
+export type XmpTags = Record<string, unknown>; // XMP tags can have various data types
 
 /**
  * 图片信息

@@ -69,7 +69,7 @@ describe("Error Handler", () => {
     describe("handleError", () => {
         it("should handle PhotasaError correctly", () => {
             const error = new PhotasaError("Test error", "TEST_ERROR");
-            const result = handleError(error, mockLogger as any, "TestContext");
+            const result = handleError(error, mockLogger as PhotasaLogger, "TestContext");
 
             expect(result).toBe(error);
             expect(mockLogger.error).toHaveBeenCalledWith("[TestContext] Test error", {
@@ -80,7 +80,7 @@ describe("Error Handler", () => {
 
         it("should handle standard Error correctly", () => {
             const error = new Error("Standard error");
-            const result = handleError(error, mockLogger as any);
+            const result = handleError(error, mockLogger as PhotasaLogger);
 
             expect(result).toBeInstanceOf(PhotasaError);
             expect(result.code).toBe("UNKNOWN_ERROR");
@@ -89,7 +89,7 @@ describe("Error Handler", () => {
 
         it("should handle unknown error types correctly", () => {
             const error = "String error";
-            const result = handleError(error, mockLogger as any);
+            const result = handleError(error, mockLogger as PhotasaLogger);
 
             expect(result).toBeInstanceOf(PhotasaError);
             expect(result.message).toBe("An unknown error occurred");
@@ -100,7 +100,7 @@ describe("Error Handler", () => {
     describe("retryOperation", () => {
         it("should succeed on first attempt", async () => {
             const operation = vi.fn().mockResolvedValue("success");
-            const result = await retryOperation(operation, 3, 100, mockLogger as any);
+            const result = await retryOperation(operation, 3, 100, mockLogger as PhotasaLogger);
 
             expect(result).toBe("success");
             expect(operation).toHaveBeenCalledTimes(1);
@@ -114,7 +114,7 @@ describe("Error Handler", () => {
                 .mockRejectedValueOnce(new Error("Second failure"))
                 .mockResolvedValueOnce("success");
 
-            const result = await retryOperation(operation, 3, 100, mockLogger as any);
+            const result = await retryOperation(operation, 3, 100, mockLogger as PhotasaLogger);
 
             expect(result).toBe("success");
             expect(operation).toHaveBeenCalledTimes(3);
@@ -125,9 +125,9 @@ describe("Error Handler", () => {
             const error = new Error("Persistent failure");
             const operation = vi.fn().mockRejectedValue(error);
 
-            await expect(retryOperation(operation, 2, 100, mockLogger as any)).rejects.toThrow(
-                "Persistent failure",
-            );
+            await expect(
+                retryOperation(operation, 2, 100, mockLogger as PhotasaLogger),
+            ).rejects.toThrow("Persistent failure");
 
             expect(operation).toHaveBeenCalledTimes(2);
             expect(mockLogger.warn).toHaveBeenCalledTimes(2);

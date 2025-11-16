@@ -22,10 +22,10 @@ declare global {
         electron: ElectronAPI;
 
         tianshu: {
-            processCommand: (command: any) => Promise<any>;
-            getStatus: () => Promise<any>;
-            onProgress: (callback: (progress: any) => void) => () => void;
-            onStatus: (callback: (status: any) => void) => () => void;
+            processCommand: (command: unknown) => Promise<unknown>;
+            getStatus: () => Promise<unknown>;
+            onProgress: (callback: (progress: unknown) => void) => () => void;
+            onStatus: (callback: (status: unknown) => void) => () => void;
         };
         api: {
             // 开始监听

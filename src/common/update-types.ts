@@ -40,7 +40,7 @@ export interface UpdateProgressInfo {
     progress?: number;
     error?: string;
     version?: string;
-    info?: any; // electron-updater的UpdateInfo类型
+    info?: unknown; // electron-updater的UpdateInfo类型
 }
 
 /**
@@ -49,5 +49,5 @@ export interface UpdateProgressInfo {
 export interface UpdateCheckResult {
     hasUpdate: boolean;
     version?: string;
-    info?: any;
+    info?: unknown;
 }
