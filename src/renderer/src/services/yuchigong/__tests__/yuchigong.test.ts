@@ -192,6 +192,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
         yuchiGong.cleanup();
         messageChannel.port1.close();
         messageChannel.port2.close();
+        mockFangXuanLing.reset(); // ✅ 重置mock状态，避免测试间污染
     });
 
     describe("基本功能测试", () => {
