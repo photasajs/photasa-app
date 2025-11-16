@@ -15,6 +15,7 @@ import {
     generateValidatorsFromSchema,
     generateValidatorsFromSchemas,
 } from "../generators/schema-to-validators";
+import { load } from "js-yaml";
 
 /**
  * 🌌 CLI版本信息
@@ -156,8 +157,7 @@ program
 
             // 解析YAML/JSON
             if (options.file.endsWith(".yaml") || options.file.endsWith(".yml")) {
-                const yaml = await import("yaml");
-                workflowData = yaml.parse(workflowContent);
+                workflowData = load(workflowContent);
             } else {
                 workflowData = JSON.parse(workflowContent);
             }

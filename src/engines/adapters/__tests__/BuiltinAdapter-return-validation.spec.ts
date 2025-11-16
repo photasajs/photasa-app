@@ -35,7 +35,7 @@ describe("BuiltinAdapter - return操作类型验证", () => {
 
             expect(Array.isArray(result)).toBe(true);
             expect(result).toEqual(testArray);
-            expect(result.length).toBe(2);
+            expect((result as unknown[]).length).toBe(2);
         });
 
         it("应正确处理对象包装的对象", async () => {
