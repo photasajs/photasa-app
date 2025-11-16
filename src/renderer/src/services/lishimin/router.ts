@@ -5,7 +5,7 @@ import { loggers } from "@common/logger";
 import { DuRuHuiService } from "../duruhui/duruhui";
 import eventRoutingConfig from "./event-routing.yml";
 
-const logger = loggers.lishiming;
+const logger = loggers.lishimin;
 
 /**
  * YAML路由规则接口

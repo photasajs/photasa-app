@@ -936,7 +936,7 @@ class DuRuHuiService {
 
 #### 4. 李世民服务设计（mitt监听 + 杜如晦下旨）
 
-**李世民服务实现** (`src/renderer/src/services/lishiming/lishiming.ts`):
+**李世民服务实现** (`src/renderer/src/services/lishimin/lishimin.ts`):
 ```typescript
 import { renjieEventBus } from '../renjie-event-bus';
 import type { DuRuHuiService } from '../duruhui/duruhui';
@@ -1105,7 +1105,7 @@ export interface ShengzhiResponse {
 
 #### 6. 李世民事件路由配置
 
-**配置文件** (`src/renderer/src/services/lishiming/event-routing.yml`):
+**配置文件** (`src/renderer/src/services/lishimin/event-routing.yml`):
 ```yaml
 # 李世民事件路由配置
 # 定义如何处理启奏事件（mitt）和天界事件（mitt）
@@ -1302,8 +1302,8 @@ src/
 │   ├── renjie-event-bus.ts               # mitt事件总线配置（新增）
 │   │   # 导出：renjieEventBus, RenjieEvents类型
 │   │
-│   ├── lishiming/                        # 李世民服务（中央路由）
-│   │   ├── lishiming.ts                  # - mitt监听启奏和天界事件
+│   ├── lishimin/                         # 李世民服务（中央路由）
+│   │   ├── lishimin.ts                   # - mitt监听启奏和天界事件
 │   │   │   # - 委托杜如晦下发圣旨
 │   │   │   # - 事件路由决策
 │   │   ├── event-routing.yml             # 事件路由配置
@@ -2522,7 +2522,7 @@ npm install mitt  # 200字节事件总线
 ```
 src/renderer/src/services/
 ├── renjie-event-bus.ts      # mitt事件总线
-├── lishiming/               # 李世民（路由）
+├── lishimin/                # 李世民（路由）
 ├── duruhui/                 # 杜如晦（通道管理）
 └── chusuiliang/             # 服务示例
 ```

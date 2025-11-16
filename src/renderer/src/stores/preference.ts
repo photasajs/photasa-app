@@ -510,21 +510,8 @@ export const usePreferenceStore = defineStore("preference", {
         updateThumbnailSize(size: number) {
             this.display.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
         },
-        completeScanPath(folder: string): void {
-            logger.debug(`✍️ 尝试完成扫描: ${folder}`);
-            logger.debug(
-                `✍️ 当前扫描文件夹 before:`,
-                this.scanningFolder.map((f) => f.path),
-            );
-
-            const index = this.scanningFolder.findIndex((f) => f.path === folder);
-            if (index > -1) {
-                this.scanningFolder.splice(index, 1);
-                logger.debug(`✍️ 成功从扫描队列中移除文件夹: 索引 ${index}: ${folder}`);
-            } else {
-                logger.debug(`✍️ 在扫描队列中找不到文件夹: ${folder}`);
-            }
-        },
+        // ❌ RFC 0048: completeScanPath 已删除
+        // 队列清理由尉迟恭自动处理（watch 机制），无需手动干预
         /**
          * @deprecated ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务
          * 请使用 useWeiZheng().addFolderPath(folder) 替代
@@ -631,8 +618,7 @@ export const usePreferenceStore = defineStore("preference", {
             });
             logger.info(`✍️ 从扫描队列中移除 ${originalLength - this.scanningFolder.length} 项`);
 
-            // Complete scan for the removed path
-            this.completeScanPath(path);
+            // ✅ RFC 0048: 队列清理由尉迟恭自动处理（watch 机制），无需手动调用 completeScanPath
 
             // Reset current folder if it was the removed one
             if (this.currentFolder === path) {

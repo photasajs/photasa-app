@@ -80,23 +80,36 @@ export default class WatchService implements IService {
      */
     async initialize(): Promise<void> {
         // Stop watching files
-        this.ipc.handle("picasa:stop-file-watch", () => {
+        this.ipc.handle("picasa:stop-file-watch", async () => {
             this.logger.info("Stop watching files......");
-            this.FileWatcherHandler?.close();
+            if (this.FileWatcherHandler) {
+                try {
+                    await this.FileWatcherHandler.close();
+                    this.FileWatcherHandler = undefined;
+                } catch (error) {
+                    this.logger.warn("[WatchService] 停止文件监听时出错:", error);
+                }
+            }
         });
 
         // Start watching files
-        this.ipc.on(WatchServiceEvent.start, (_event: IpcMainEvent, args: WatchConfig) => {
-            this.startWatching(args);
+        this.ipc.on(WatchServiceEvent.start, async (_event: IpcMainEvent, args: WatchConfig) => {
+            await this.startWatching(args);
         });
 
         this.logger.info("[WatchService] 文件监视服务已初始化");
     }
 
-    private startWatching(args: WatchConfig): void {
+    private async startWatching(args: WatchConfig): Promise<void> {
         this.logger.info("Start watching files: ", args.paths);
-        // Close the previous watcher
-        this.FileWatcherHandler?.close();
+        // ✅ 修复：等待之前的监听器完全关闭，避免资源泄漏
+        if (this.FileWatcherHandler) {
+            try {
+                await this.FileWatcherHandler.close();
+            } catch (error) {
+                this.logger.warn("[WatchService] 关闭之前的文件监听器时出错:", error);
+            }
+        }
         // Create a new watcher
         this.FileWatcherHandler = chokidar.watch(args.paths, args.options);
 
@@ -208,8 +221,15 @@ export default class WatchService implements IService {
             this.processPendingEvents();
         }
 
-        this.FileWatcherHandler?.close();
-        this.FileWatcherHandler = undefined;
+        // ✅ 修复：等待文件监听器完全关闭，避免应用关闭时的竞态条件
+        if (this.FileWatcherHandler) {
+            try {
+                await this.FileWatcherHandler.close();
+            } catch (error) {
+                this.logger.warn("[WatchService] 关闭文件监听器时出错:", error);
+            }
+            this.FileWatcherHandler = undefined;
+        }
 
         this.logger.info("[WatchService] 文件监视服务已关闭");
     }

@@ -1,5 +1,6 @@
 import { electronAPI } from "@electron-toolkit/preload";
 import { ImportEvents } from "@common/constants";
+import type { FileOperation } from "@common/scan-types";
 import { startWatching, stopWatching } from "./fs-watch";
 import { importPhotos, scanPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
@@ -260,8 +261,8 @@ export const api = {
     /**
      * 监听文件监视服务发送的批量操作事件
      */
-    onScanQueueAdd: (callback: (operations: any[]) => void) => {
-        const handler = (_: any, operations: any[]) => callback(operations);
+    onScanQueueAdd: (callback: (operations: FileOperation[]) => void) => {
+        const handler = (_: unknown, operations: FileOperation[]) => callback(operations);
         electronAPI.ipcRenderer.on("picasa:add-to-scan-queue", handler);
 
         return () => electronAPI.ipcRenderer.removeListener("picasa:add-to-scan-queue", handler);

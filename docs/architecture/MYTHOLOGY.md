@@ -509,7 +509,7 @@ logger.error("🌌 玲珑仙术失败：解码异常", error)
 **历史背景**: 唐太宗李世民，贞观之治的缔造者，英明君主
 
 **英文名**: LiShiming Service
-**位置**: `src/renderer/src/services/lishiming/`
+**位置**: `src/renderer/src/services/lishimin/`
 **级别**: 主路由服务
 
 **职责**:
@@ -1011,7 +1011,7 @@ logger.info("🏛️ 房玄龄收到仙家回禀")  // 混用天界词汇"仙家
 
 | 服务 | 位置 | 级别 | 职责 | 状态 |
 |------|------|------|------|------|
-| **李世民<br>LiShiming** | `src/renderer/src/services/lishiming/` | 主路由 | 应用启动<br>圣旨分发 | ✅ 已实现 |
+| **李世民<br>LiShiming** | `src/renderer/src/services/lishimin/` | 主路由 | 应用启动<br>圣旨分发 | ✅ 已实现 |
 | **房玄龄<br>FangXuanLing** | `src/renderer/src/services/fangxuanling/` | 宰相 | Store管理<br>奏折处理 | ✅ 已实现 |
 | **褚遂良<br>ChuSuiLiang** | `src/renderer/src/services/chusuiliang/` | 业务服务 | 偏好设置UI | ✅ 已实现 |
 | **尉迟恭<br>YuChiGong** | `src/renderer/src/services/yuchigong/` | 业务服务 | 扫描队列UI | ✅ 已实现 |

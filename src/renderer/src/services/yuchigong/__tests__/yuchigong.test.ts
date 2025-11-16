@@ -68,6 +68,8 @@ class MockScanningStore implements IScanning {
 class MockFangXuanLingService implements IFangXuanLingService {
     public receivedZouzhes: Zouzhe[] = [];
     public shouldThrowError = false;
+    public shouldApprove = true;
+    public mockInstruction = "已批准";
     private mockScanningStore: MockScanningStore;
 
     constructor() {
@@ -99,6 +101,8 @@ class MockFangXuanLingService implements IFangXuanLingService {
     resetAll(): void {
         this.receivedZouzhes = [];
         this.shouldThrowError = false;
+        this.shouldApprove = true;
+        this.mockInstruction = "已批准";
         this.mockScanningStore.clear();
     }
 
@@ -111,16 +115,21 @@ class MockFangXuanLingService implements IFangXuanLingService {
         // ✅ RFC 0042: Mock processZouzhe should update store for ADD_SCAN_ACTION
         if (zouzhe.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
             const content = zouzhe.content as Record<string, unknown>;
-            const actionData = content.action as Record<string, unknown>;
-            const scanAction: ScanAction = {
-                path: actionData.path as string,
-                action: (actionData.action as "scan" | "rescan" | "current") || "scan",
-                thumbnailSize: (actionData.thumbnailSize as number) || 150,
-                source: (actionData.source as "user" | "auto") || "user",
-                timestamp: (actionData.addedAt as number) || Date.now(),
-                operationType: (actionData.operationType as "directory" | "file") || "directory",
-            };
-            this.mockScanningStore.addAction(scanAction);
+            // ✅ 修复：工作流期望 actions 数组
+            const actionsArray = content.actions as Record<string, unknown>[];
+            if (actionsArray && actionsArray.length > 0) {
+                const actionData = actionsArray[0];
+                const scanAction: ScanAction = {
+                    path: actionData.path as string,
+                    action: (actionData.action as "scan" | "rescan" | "current") || "scan",
+                    thumbnailSize: (actionData.thumbnailSize as number) || 150,
+                    source: (actionData.source as "user" | "auto") || "user",
+                    timestamp: (actionData.addedAt as number) || Date.now(),
+                    operationType:
+                        (actionData.operationType as "directory" | "file") || "directory",
+                };
+                this.mockScanningStore.addAction(scanAction);
+            }
         }
 
         // ✅ RFC 0042: Mock processZouzhe should update store for REMOVE_SCAN_ACTION
@@ -130,10 +139,10 @@ class MockFangXuanLingService implements IFangXuanLingService {
         }
 
         return {
-            approved: true,
+            approved: this.shouldApprove,
             matter: zouzhe.matter,
             data: { persisted: true },
-            instruction: "已批准",
+            instruction: this.mockInstruction,
             timestamp: Date.now(),
         };
     }
@@ -141,6 +150,8 @@ class MockFangXuanLingService implements IFangXuanLingService {
     reset(): void {
         this.receivedZouzhes = [];
         this.shouldThrowError = false;
+        this.shouldApprove = true;
+        this.mockInstruction = "已批准";
         this.mockScanningStore.clear();
     }
 }
@@ -277,19 +288,21 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     const zouzhe = mockFangXuanLing.receivedZouzhes[0];
                     expect(zouzhe.department).toBe(GUANYUAN_NAMES.YU_CHI_GONG);
                     expect(zouzhe.matter).toBe(ZOUZHE_MATTERS.ADD_SCAN_ACTION);
-                    // ✅ RFC 0042: 奏折content包含完整的action对象，不仅仅是path
+                    // ✅ RFC 0042: 奏折content包含actions数组，不是单个action对象
                     expect(zouzhe.content).toMatchObject({
-                        action: {
-                            path: testPath,
-                            action: "scan",
-                            source: "user",
-                        },
+                        actions: [
+                            {
+                                path: testPath,
+                                action: "scan",
+                                source: "user",
+                            },
+                        ],
                     });
                     expect(zouzhe.priority).toBe(ZOUZHE_PRIORITIES.NORMAL);
 
                     // ✅ 修复循环问题：响应圣旨时不发送 SCAN_TASK_ADDED 启奏
                     // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
-                    // SCAN_TASK_ADDED 启奏只在直接调用 addScanTask() 时发送，用于触发魏征的 check_and_add_path
+                    // SCAN_TASK_ADDED 启奏只在直接调用 addScanTasks() 时发送，用于触发魏征的 add_paths 批量处理
                     expect(emittedQizous).toHaveLength(0);
 
                     resolve();
@@ -825,6 +838,67 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     resolve();
                 }, 200);
             });
+        });
+    });
+
+    describe("removeScanTask - 移除扫描任务", () => {
+        it("应该正确发送REMOVE_SCAN_ACTION奏折", async () => {
+            // 1. 先添加一个任务到队列（直接通过mock store）
+            (mockFangXuanLing.scanning as MockScanningStore).addAction({
+                path: "/test/remove-path",
+                action: "scan",
+                thumbnailSize: 150,
+                source: "user",
+                timestamp: Date.now(),
+                operationType: "directory",
+            });
+
+            // 2. 移除任务
+            await yuchiGong.removeScanTask("/test/remove-path");
+
+            // 3. 验证奏折
+            expect(mockFangXuanLing.receivedZouzhes).toHaveLength(1);
+            const zouzhe = mockFangXuanLing.receivedZouzhes[0];
+            expect(zouzhe.department).toBe(GUANYUAN_NAMES.YU_CHI_GONG);
+            expect(zouzhe.matter).toBe(ZOUZHE_MATTERS.REMOVE_SCAN_ACTION);
+            expect(zouzhe.content?.path).toBe("/test/remove-path");
+            expect(zouzhe.priority).toBe(ZOUZHE_PRIORITIES.NORMAL);
+        });
+
+        it("路径不在队列中时应该静默返回", async () => {
+            // 移除不存在的路径
+            await yuchiGong.removeScanTask("/test/non-existent");
+
+            // 不应该发送奏折
+            expect(mockFangXuanLing.receivedZouzhes).toHaveLength(0);
+        });
+
+        it("参数验证：空字符串应该抛出错误", async () => {
+            await expect(yuchiGong.removeScanTask("")).rejects.toThrow("路径参数无效");
+        });
+
+        it("参数验证：null应该抛出错误", async () => {
+            // @ts-expect-error - 测试运行时验证
+            await expect(yuchiGong.removeScanTask(null)).rejects.toThrow("路径参数无效");
+        });
+
+        it("房玄龄拒绝时应该抛出错误", async () => {
+            (mockFangXuanLing.scanning as MockScanningStore).addAction({
+                path: "/test/rejected-path",
+                action: "scan",
+                thumbnailSize: 150,
+                source: "user",
+                timestamp: Date.now(),
+                operationType: "directory",
+            });
+
+            // Mock房玄龄拒绝
+            mockFangXuanLing.shouldApprove = false;
+            mockFangXuanLing.mockInstruction = "测试拒绝";
+
+            await expect(yuchiGong.removeScanTask("/test/rejected-path")).rejects.toThrow(
+                "房玄龄未批准：测试拒绝",
+            );
         });
     });
 });

@@ -14,7 +14,7 @@ import {
 } from "@renderer/services/chusuiliang/path-utils";
 import { loggers } from "@common/logger";
 
-const logger = loggers.lishiming;
+const logger = loggers.lishimin;
 
 /**
  * 通用设置组件 - 褚遂良中书令

@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen, protocol } from "electron";
+import { app, shell, BrowserWindow, ipcMain, screen, protocol, Menu } from "electron";
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import isDev from "electron-is-dev";
@@ -222,6 +222,59 @@ function setupWindowHandlers(): void {
         shell.openExternal(details.url);
         return { action: "deny" };
     });
+
+    // 允许 DevTools 中的复制粘贴快捷键（仅在开发模式下）
+    // 当 DevTools 打开时，临时添加 Edit 菜单以支持复制粘贴
+    if (isDev) {
+        let originalMenu: Menu | null = null;
+        mainWindow.webContents.on("devtools-opened", () => {
+            // 保存原始菜单
+            originalMenu = Menu.getApplicationMenu();
+
+            // 创建包含 Edit 菜单的临时菜单
+            const editMenuTemplate: Electron.MenuItemConstructorOptions = {
+                label: "Edit",
+                submenu: [
+                    { role: "undo", label: "Undo" },
+                    { role: "redo", label: "Redo" },
+                    { type: "separator" },
+                    { role: "cut", label: "Cut" },
+                    { role: "copy", label: "Copy" },
+                    { role: "paste", label: "Paste" },
+                    { type: "separator" },
+                    { role: "selectAll", label: "Select All" },
+                ],
+            };
+
+            // 如果有原始菜单，合并 Edit 菜单；否则创建新菜单
+            const currentMenu = Menu.getApplicationMenu();
+            if (currentMenu) {
+                const template = currentMenu.items.map((item) => ({
+                    label: item.label,
+                    role: item.role,
+                    submenu: item.submenu,
+                })) as Electron.MenuItemConstructorOptions[];
+
+                // 检查是否已有 Edit 菜单
+                const hasEditMenu = template.some((item) => item.label === "Edit");
+                if (!hasEditMenu) {
+                    // 在第一个菜单后插入 Edit 菜单
+                    template.splice(1, 0, editMenuTemplate);
+                    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+                }
+            } else {
+                Menu.setApplicationMenu(Menu.buildFromTemplate([editMenuTemplate]));
+            }
+        });
+
+        // 当 DevTools 关闭时，恢复原始菜单
+        mainWindow.webContents.on("devtools-closed", () => {
+            if (originalMenu) {
+                Menu.setApplicationMenu(originalMenu);
+                originalMenu = null;
+            }
+        });
+    }
 }
 
 async function loadRenderer(): Promise<void> {

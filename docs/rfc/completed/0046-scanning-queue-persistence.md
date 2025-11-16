@@ -4,7 +4,7 @@
 - **标题**: 扫描队列持久化 - 千里眼scanning.json管理
 - **作者**: AI Architect (Agent 1)
 - **开始日期**: 2025-11-01
-- **状态**: ✅ 已完成 (2025-11-02)
+- **状态**: ⚠️ 部分完成 (90%) - 缺少尉迟恭.removeScanTask() 方法 (2025-11-09 核查)
 - **类型**: 架构实现
 - **目标版本**: v2.0.0
 - **依赖RFC**:
@@ -918,15 +918,24 @@ restore_queue → append_action → persist_queue → format_response
 
 **Linus评价**: "这是好品味的命名演进，简洁优于冗长。RFC应该记录实际实现，而不是相反。"
 
-### 验证结论
+### 验证结论（2025-11-09更新）
 
-✅ **RFC 0046完全实施完成**
+⚠️ **RFC 0046部分完成（90%）**
 
-所有核心功能均已实现并验证通过：
-- 千里眼引擎持久化方法 ✅
-- 天枢工作流YAML配置 ✅
-- Store Automation自动同步 ✅
-- 尉迟恭业务逻辑协调 ✅
-- 实际文件持久化运行 ✅
+**已完成的核心功能**：
+- ✅ 千里眼引擎持久化方法（`persistQueue`, `restoreQueue`）
+- ✅ 天枢工作流YAML配置（`add_scan_action.yml`, `remove_scan_action.yml`）
+- ✅ Store Automation自动同步配置
+- ✅ 尉迟恭添加任务逻辑（`addScanTasks` → 奏折 → 天界）
+- ✅ 实际文件持久化运行
 
-**无需任何修复或补充工作，架构完全符合RFC设计。**
+**缺失的关键部分（10%）**：
+- ❌ **尉迟恭缺少 `removeScanTask` 方法** - 导致扫描完成后无法清理队列
+- ❌ `App.vue` 的 `completeScanPath` 还在直接操作 `PreferenceStore.scanningFolder`
+- ❌ 双重队列管理：`PreferenceStore.scanningFolder` 与 `ScanningStore.queue` 并存
+
+**当前问题**：
+扫描完成后，`orchestrateScan` 调用 `PreferenceStore.completeScanPath` 直接 splice 数组，不会触发 `watchArray`，导致下一个扫描任务不会自动启动。
+
+**修复方案**：
+实现 `yuChiGong.removeScanTask(path)` 方法，通过奏折系统调用 `remove_scan_action.yml`，Store Automation 自动同步到 `ScanningStore.queue`，触发 `watchArray` 启动下一次扫描。

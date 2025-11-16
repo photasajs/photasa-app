@@ -21,7 +21,7 @@ import { loggers } from "@common/logger";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
 
-const logger = loggers.lishiming;
+const logger = loggers.lishimin;
 
 /**
  * Preference store

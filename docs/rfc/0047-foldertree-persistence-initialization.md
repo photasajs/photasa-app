@@ -832,7 +832,7 @@ async initializeAppState(): Promise<void> {
 
 #### 10. 李世民启动初始化
 
-**文件**: `src/renderer/src/services/lishiming/lishiming.ts`
+**文件**: `src/renderer/src/services/lishimin/lishimin.ts`
 
 ```typescript
 // startZhengguan方法中，初始化魏征服务
@@ -898,7 +898,7 @@ updateFolderTree(folder: string) {
 - [x] ✅ 魏征添加handleUpdateFolderTree方法（Flow 1和Flow 2汇聚点）
 - [x] ✅ 魏征添加initializeAppState方法（实际方法名，非initializeFolderTree）
 - [x] ✅ 魏征添加handleCheckAndAddPath方法（Flow 3，超出RFC设计）
-- [x] ✅ 李世民启动时调用魏征初始化（lishiming.ts:246）
+- [x] ✅ 李世民启动时调用魏征初始化（lishimin.ts:246）
 - [ ] ⚠️ Store Automation配置验证（需确认matter-sync.yml）
 - [ ] ⚠️ 单元测试：魏征业务逻辑（待补充）
 
@@ -1065,7 +1065,7 @@ updateFolderTree(folder: string) {
 - **差异说明**：实际实现发现了第三条数据流（尉迟恭→魏征协同）
 
 #### 6. 启动初始化集成 ✅
-- **实际代码**（lishiming.ts:246）：
+- **实际代码**（lishimin.ts:246）：
   ```typescript
   await this.weiZhengService.initializeAppState();
   ```

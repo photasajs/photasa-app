@@ -145,7 +145,7 @@ const appState = useQinQiong();
 appState.currentFolder.value = "/new/path";  // 不允许！
 
 // ✅ 正确：通过圣旨系统
-import { useLishiming } from "@renderer/services/lishiming";
+import { useLishiming } from "@renderer/services/lishimin";
 
 const lishiming = useLishiming();
 lishiming.qizou({
@@ -1034,7 +1034,7 @@ function onFileDrop(filePath: string) {
 ```typescript
 // src/renderer/src/services/qinqiong/qinqiong.ts
 
-import type { IService, Shengzhi } from "@renderer/interfaces/lishiming.interface";
+import type { IService, Shengzhi } from "@renderer/interfaces/li-shi-ming.interface";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { useFangxuanling } from "@renderer/services/fangxuanling/fangxuanling";
 import { renjieEventBus } from "../renjie-event-bus";

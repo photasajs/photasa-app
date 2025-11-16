@@ -19,7 +19,7 @@ import { DuRuHuiService } from "@renderer/services/duruhui";
 import { QiZouRouter } from "./router";
 
 import { loggers } from "@common/logger";
-const logger = loggers.lishiming;
+const logger = loggers.lishimin;
 
 /**
  * 李世民服务（LisshimingService）- 大唐朝廷总管

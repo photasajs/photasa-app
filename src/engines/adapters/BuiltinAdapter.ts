@@ -13,23 +13,23 @@ const logger = loggers.taiyi;
  */
 interface ReturnParams {
     success?: boolean;
-    data?: any;
+    data?: unknown;
     message?: string;
     error?: string;
     // 支持额外的结构化信息，保持向后兼容
-    details?: any;
-    [key: string]: any; // 允许扩展字段
+    details?: unknown;
+    [key: string]: unknown; // 允许扩展字段
 }
 
 interface SetVariableParams {
     name: string;
-    value: any;
+    value: unknown;
 }
 
 interface LogParams {
     level: "info" | "warn" | "error" | "debug";
     message: string;
-    metadata?: any;
+    metadata?: unknown;
 }
 
 interface DelayParams {
@@ -72,7 +72,7 @@ export class BuiltinAdapter implements IAdapter {
      * 用于工作流步骤返回最终结果
      * 直接返回数据，避免不必要的包装
      */
-    async return(params: ReturnParams = {}): Promise<any> {
+    async return(params: ReturnParams = {}): Promise<unknown> {
         // 🔧 智能日志：如果params.message存在则显示，否则显示数据摘要
         if (params.message !== undefined) {
             logger.debug(`🔧 收到仙家回禀:`, params.message);
@@ -220,9 +220,9 @@ export class BuiltinAdapter implements IAdapter {
     async throwError(params: { message: string; code?: string }): Promise<never> {
         logger.error(`🔧 天劫降临: ${params.message}`, { code: params.code });
 
-        const error = new Error(params.message);
+        const error = new Error(params.message) as Error & { code?: string };
         if (params.code) {
-            (error as any).code = params.code;
+            error.code = params.code;
         }
 
         throw error;
@@ -234,9 +234,9 @@ export class BuiltinAdapter implements IAdapter {
      */
     async branch(params: {
         condition: boolean;
-        onTrue?: any;
-        onFalse?: any;
-    }): Promise<{ success: boolean; result: any; branch: "true" | "false" }> {
+        onTrue?: unknown;
+        onFalse?: unknown;
+    }): Promise<{ success: boolean; result: unknown; branch: "true" | "false" }> {
         const branch = params.condition ? "true" : "false";
         const result = params.condition ? params.onTrue : params.onFalse;
 
@@ -254,10 +254,10 @@ export class BuiltinAdapter implements IAdapter {
      * 对输入数据进行简单的转换操作
      */
     async transform(params: {
-        input: any;
+        input: unknown;
         operation: "stringify" | "parse" | "keys" | "values" | "length";
-    }): Promise<{ success: boolean; result: any; operation: string }> {
-        let result: any;
+    }): Promise<{ success: boolean; result: unknown; operation: string }> {
+        let result: unknown;
 
         try {
             switch (params.operation) {
@@ -265,18 +265,18 @@ export class BuiltinAdapter implements IAdapter {
                     result = JSON.stringify(params.input);
                     break;
                 case "parse":
-                    result = JSON.parse(params.input);
+                    result = JSON.parse(params.input as string);
                     break;
                 case "keys":
-                    result = Object.keys(params.input);
+                    result = Object.keys(params.input as object);
                     break;
                 case "values":
-                    result = Object.values(params.input);
+                    result = Object.values(params.input as object);
                     break;
                 case "length":
                     result = Array.isArray(params.input)
                         ? params.input.length
-                        : Object.keys(params.input).length;
+                        : Object.keys(params.input as object).length;
                     break;
                 default:
                     throw new Error(`不支持的转换操作: ${params.operation}`);
@@ -338,6 +338,76 @@ export class BuiltinAdapter implements IAdapter {
         } catch (error) {
             logger.error(`🔧 合并之术失败: ${(error as Error).message}`, {
                 operation: "arrayAppend",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 数组连接
+     * 连接两个数组，返回新数组
+     * RFC 0045: Builtin数组操作增强
+     *
+     * 遵循数据扁平化策略：直接返回数组，不包装
+     */
+    async arrayConcat(params: { array1: unknown[]; array2: unknown[] }): Promise<unknown[]> {
+        // 最大数组大小限制
+        const MAX_ARRAY_SIZE = 100000;
+
+        try {
+            // ✅ 容错处理：参数验证使用 fallback + log，不抛出错误
+
+            // array1 容错处理
+            if (params.array1 === null || params.array1 === undefined) {
+                logger.warn("🔧 array1参数为null或undefined，使用空数组作为默认值");
+                params.array1 = [];
+            }
+
+            if (!Array.isArray(params.array1)) {
+                logger.warn(
+                    `🔧 array1参数不是数组类型 (${typeof params.array1})，使用空数组作为默认值`,
+                );
+                params.array1 = [];
+            }
+
+            // array2 容错处理
+            if (params.array2 === null || params.array2 === undefined) {
+                logger.warn("🔧 array2参数为null或undefined，使用空数组作为默认值");
+                params.array2 = [];
+            }
+
+            if (!Array.isArray(params.array2)) {
+                logger.warn(
+                    `🔧 array2参数不是数组类型 (${typeof params.array2})，使用空数组作为默认值`,
+                );
+                params.array2 = [];
+            }
+
+            // ✅ 大小限制检查：仅记录警告，不截断
+            // 实际场景中很少会遇到超过 100000 个元素的情况
+            // 如果真的超过，记录警告但继续执行，让调用者决定如何处理
+            const totalLength = params.array1.length + params.array2.length;
+            if (totalLength > MAX_ARRAY_SIZE) {
+                logger.warn(
+                    `🔧 合并后数组过大 (${totalLength}个元素)，最大建议${MAX_ARRAY_SIZE}个元素，继续执行`,
+                );
+            }
+
+            // 纯函数：创建新数组
+            const result = [...params.array1, ...params.array2];
+
+            logger.debug(`🔧 施展连接之术`, {
+                array1Length: params.array1.length,
+                array2Length: params.array2.length,
+                resultLength: result.length,
+            });
+
+            // 直接返回数组，无包装
+            return result;
+        } catch (error) {
+            logger.error(`🔧 连接之术失败: ${(error as Error).message}`, {
+                operation: "arrayConcat",
                 error,
             });
             throw error;
@@ -475,7 +545,7 @@ export class BuiltinAdapter implements IAdapter {
         }
 
         const keys = path.split(".");
-        let result: any = obj;
+        let result: unknown = obj;
 
         for (const key of keys) {
             if (result === null || result === undefined) {

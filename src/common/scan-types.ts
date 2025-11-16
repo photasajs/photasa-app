@@ -138,3 +138,27 @@ export type ScanActionEvent = {
         | undefined;
     paths?: string[] | undefined;
 };
+
+/**
+ * FindPhoto事件接口
+ * @description 扫描worker通过IPC发送给renderer的事件，用于更新UI状态和folderTree
+ */
+export interface FindPhotoEvent {
+    /** 事件类型：进度更新、完成或错误 */
+    type: "progress" | "complete" | "error";
+    /** 请求ID，用于匹配请求和响应 */
+    requestId: string;
+    /** 扫描的路径信息 */
+    action?: {
+        path: string;
+        isDirectory: boolean;
+    };
+    /** 扫描进度（已处理的文件数） */
+    progress?: number;
+    /** 当前正在处理的文件名 */
+    currentFile?: string;
+    /** 批量完成时的路径数组 */
+    paths?: string[];
+    /** 错误信息（错误事件时） */
+    error?: unknown;
+}

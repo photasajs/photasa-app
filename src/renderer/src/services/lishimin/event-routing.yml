@@ -37,9 +37,9 @@ qizou_routes:
                   priority: "normal"
               description: "路径添加完成后，下旨魏征添加根节点到folderTree"
 
-    # ✅ RFC 0042: 尉迟恭报告扫描任务已添加 → 李世民协调魏征智能检查并添加路径
-    # 使用场景：当用户直接通过 yuChiGong.addScanTask() 添加扫描任务时（绕过褚遂良流程）
-    # 魏征会智能判断：路径是否已在树中、是否为根节点、是否在根节点下，并采取相应行动
+    # ✅ RFC 0042: 尉迟恭报告扫描任务已添加 → 李世民协调魏征批量添加路径
+    # 使用场景：当用户直接通过 yuChiGong.addScanTasks() 添加扫描任务时（绕过褚遂良流程）
+    # 魏征会批量处理路径数组，智能判断每个路径的状态并采取相应行动
     scan_task_added:
         - when:
               from: "尉迟恭"
@@ -47,26 +47,26 @@ qizou_routes:
           then:
               service: "魏征"
               shengzhi:
-                  command: "check_and_add_path"
+                  command: "add_paths"
                   content:
-                      folderPath: "{{qizou.content.path}}"
+                      paths: "{{qizou.content.paths}}"
                   priority: "normal"
-              description: "扫描任务添加后，下旨魏征智能检查并添加路径到文件夹树（如不在树中则添加根节点，如在根节点下则添加子节点，如已是根节点则跳过）"
+              description: "扫描任务批量添加后，下旨魏征批量添加路径到文件夹树（每个路径都会智能检查状态并处理）"
 
     # 褚遂良报告路径移除完成 → 李世民协调两件事
     remove_path_completed:
-        # 圣旨1：尉迟恭移除扫描任务
+        # 圣旨1：尉迟恭清理扫描队列（移除监控文件夹时，清理该路径及其所有子目录的未扫描任务）
         - when:
               from: "褚遂良"
               type: "report"
           then:
               service: "尉迟恭"
               shengzhi:
-                  command: "remove_scan_task"
+                  command: "cleanup_scan_queue_for_path"
                   content:
                       path: "{{qizou.content.path}}"
                   priority: "normal"
-              description: "路径移除完成后，下旨尉迟恭移除扫描任务"
+              description: "路径移除完成后，下旨尉迟恭清理扫描队列（包括所有子目录的未扫描任务）"
         # 圣旨2：魏征移除根节点
         - when:
               from: "褚遂良"
@@ -121,3 +121,16 @@ qizou_routes:
                       folderPath: "{{qizou.content.folderPath}}"
                   priority: "normal"
               description: "秦琼发现文件夹移除后，下旨魏征从folderTree中移除"
+
+    scan_completed:
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_paths"
+                  content:
+                      paths:
+                          - "{{qizou.content.path}}"
+              description: "扫描完成后，下旨魏征更新树"

@@ -381,7 +381,7 @@ export const loggers: Record<string, PhotasaLogger> = {
     maliang: getLogger("马良"),
     shunfenger: getLogger("顺风耳"),
     // 人界
-    lishiming: getLogger("李世民"), // 皇帝 主宰 App
+    lishimin: getLogger("李世民"), // 皇帝 主宰 App
     fangxuanling: getLogger("房玄龄"), // 宰相 负责 Pinia Store
     yuantiangang: getLogger("袁天罡"), // 钦天监 负责天界通信
     duruhui: getLogger("杜如晦"), // 尚书 Router

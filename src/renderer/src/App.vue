@@ -7,18 +7,15 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import {
-    getDirectory,
-    stopWatching,
-    resetPhotasaConfig,
-    scanSubfolders,
-} from "@renderer/utils/api";
+import { getDirectory, stopWatching } from "@renderer/utils/api";
 // deepCopy removed as no longer needed
-import { orchestrateScan, type ScanCallbacks } from "./AppHelper";
+// ✅ RFC 0048: orchestrateScan 已迁移到 YuChiGong
+// ✅ RFC 0048: scanPhotosTask, waitForTaskIdle 已不再使用
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@common/logger";
 import { mapFileOperationToScanAction } from "@common/file-operation-utils";
+import type { FindPhotoEvent, FileOperation } from "@common/scan-types";
 
 import UserPreference from "./components/UserPreference.vue";
 import ScanQueueDialog from "./components/ScanQueueDialog.vue";
@@ -47,19 +44,20 @@ import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
-import { useWeiZheng } from "./composables/useWeiZheng";
+// ✅ RFC 0048: useWeiZheng 不再直接在 App.vue 使用
+// import { useWeiZheng } from "./composables/useWeiZheng";
 
 /**
  * 日志记录器
  */
-const logger = loggers.lishiming;
+const logger = loggers.lishimin;
 const themeManager = useChuSuiLiang().themeManager;
 const { t } = useI18n();
 const photosStore = usePhotosStore();
 const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, thumbnailSize } = storeToRefs(preferenceStore);
-const { addPath, completeScanPath } = preferenceStore;
+const { addPath } = preferenceStore;
 
 /**
  * YuChiGong service
@@ -71,10 +69,8 @@ const yuChiGong = useYuChiGong();
  */
 const qinQiong = useQinQiong();
 
-/**
- * WeiZheng service
- */
-const weiZheng = useWeiZheng();
+// ✅ RFC 0048: weiZheng 不再直接在 App.vue 使用，通过启奏-圣旨协调
+// const weiZheng = useWeiZheng();
 
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
@@ -149,8 +145,7 @@ async function initializeApp(): Promise<void> {
         }
 
         processingFile.value = t("status.loadingConfig");
-        // Start to check if any leftover folder need to scan
-        startScanning();
+        // ✅ RFC 0048: 尉迟恭会自动处理扫描
     } catch (error) {
         logger.error("👑 李世民登基失败:", error);
         loading.value = false;
@@ -218,8 +213,8 @@ onMounted(async () => {
     // 初始化扫描监控服务
     scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
     scanMonitoringService.startMonitoring(() => {
-        logger.info("👑 [扫描监控] 自动恢复触发，重启扫描");
-        startScanning();
+        logger.info("👑 [扫描监控] 自动恢复触发");
+        // ✅ RFC 0048: 尉迟恭的watch会自动触发扫描
     });
 
     // Initialize the application
@@ -247,137 +242,20 @@ watchArray(
 // ✅ RFC 0042: addScanFolder 已废弃，不再需要 addScanFolderWithLog
 // 添加 watched folder 后，李世民路由会自动触发尉迟恭添加扫描任务
 
-watchArray(
-    scanningFolder,
-    () => {
-        if (scanPhotosTask.isIdle) {
-            logger.info("👑 scanPhotosTask is idle, calling startScanning");
-            startScanning();
+// ✅ RFC 0048: 尉迟恭自动处理扫描，App.vue 只监听队列更新 UI
+watch(
+    () => yuChiGong.scanningQueue,
+    (newQueue) => {
+        if (newQueue.length > 0) {
+            processingFile.value = t("status.scanningPath", { path: newQueue[0].path });
         } else {
-            logger.info("👑 scanPhotosTask is not idle, will retry in 500ms");
-            setTimeout(() => {
-                if (scanPhotosTask.isIdle) {
-                    logger.debug("👑 scanPhotosTask became idle, retrying startScanning");
-                    startScanning();
-                } else {
-                    logger.warn("👑 scanPhotosTask still not idle after 500ms");
-                }
-            }, 500);
+            processingFile.value = "";
         }
     },
     { deep: true },
 );
 
-// 创建回调对象，连接纯函数与副作用
-const callbacks: ScanCallbacks = {
-    logInfo: logger.info.bind(logger),
-    logDebug: logger.debug.bind(logger),
-    logError: logger.error.bind(logger),
-
-    // 国际化
-    t: (key: string, params?: Record<string, any>) => t(key, params || {}),
-
-    updateProcessingStatus: (status: string) => {
-        processingFile.value = status;
-        // 同时更新状态栏
-        statusBarStore.update({
-            type: "scan",
-            status: "scanning",
-            task: status,
-            timestamp: Date.now(),
-        });
-    },
-
-    updateFileProgress: (fileName: string, current?: number, total?: number) => {
-        // 更新文件级别的处理状态 - 直接显示完整文件路径
-        const progressText = current && total ? ` (${current}/${total})` : "";
-        processingFile.value = `${fileName}${progressText}`;
-        // 同时更新状态栏，传递完整路径到data.currentFile
-        statusBarStore.update({
-            type: "scan",
-            status: "scanning",
-            task: `${fileName}${progressText}`,
-            data: { currentFile: fileName },
-            timestamp: Date.now(),
-        });
-    },
-
-    clearProcessingStatus: () => {
-        processingFile.value = "";
-        // 清理状态栏扫描状态
-        statusBarStore.update({
-            type: "scan",
-            status: "ready",
-            task: t("app.title"),
-            timestamp: Date.now(),
-        });
-    },
-
-    updateFolderTree: (path: string) => {
-        // ✅ RFC 0042: 使用魏征处理扫描后的文件夹树更新
-        weiZheng.addFolderPath(path);
-    },
-
-    completeScanPath: completeScanPath,
-
-    scanSubfolders: scanSubfolders,
-    // ✅ RFC 0042: addScanFolderToQueue 已废弃
-    // TODO 子文件夹扫描应该由后端自动处理，不再通过 UI 层触发
-    addScanFolderToQueue: (path: string, action: string) => {
-        // ✅ RFC 0042: 使用尉迟恭添加扫描任务
-        yuChiGong.addScanTask(path, action as "scan" | "rescan" | "current");
-    },
-
-    performScanTask: async (action) => {
-        action.thumbnailSize = thumbnailSize.value;
-        return await scanPhotosTask.perform(action);
-    },
-
-    resetPhotasaConfig: async (path: string) => {
-        await resetPhotasaConfig(path);
-    },
-
-    extractParentDir: (path: string) => {
-        try {
-            return window.api.toDirName(path);
-        } catch {
-            return null;
-        }
-    },
-
-    scheduleNextScan: () => {
-        setTimeout(() => startScanning(), 0);
-    },
-};
-
-async function startScanning(): Promise<void> {
-    logger.debug("👑 [扫描启动] 开始扫描流程");
-
-    try {
-        // 记录扫描活动
-        scanMonitoringService.recordActivity();
-
-        // 调用纯函数处理扫描逻辑
-        const result = await orchestrateScan(scanningFolder.value, callbacks);
-
-        // 根据结果决定是否继续
-        if (result.shouldScheduleNext) {
-            callbacks.scheduleNextScan();
-        }
-
-        if (result.error) {
-            logger.error("👑 Scan orchestration error:", result.error);
-            scanMonitoringService.recordFailure();
-        } else {
-            // 记录成功的扫描活动
-            scanMonitoringService.recordActivity();
-        }
-    } catch (error) {
-        logger.error("👑 [扫描启动] 扫描过程中发生异常", error);
-        scanMonitoringService.recordFailure();
-        throw error;
-    }
-}
+// ✅ RFC 0048: callbacks 和 startScanning 已废弃，逻辑迁移到尉迟恭
 
 function handlePreferenceOk(): void {
     logger.debug("Closing preference dialog...");
@@ -404,7 +282,7 @@ useTitle(title);
 // 监听 Scan Service find-photo 通知事件，用于刷新状态栏
 // 🔧 状态栏路径显示修复：processScannedFileTask 回调中增强了路径构造逻辑
 // 相关修改：将 args.currentFile (文件名) 与 args.action.path (目录路径) 结合，构造完整文件路径
-findPhotoService.onFindPhoto((args: any) => {
+findPhotoService.onFindPhoto((args: FindPhotoEvent) => {
     logger.debug("👑 onFindPhoto received:", args.type, args.action?.path, args.progress);
 
     // 记录扫描活动（表示有进展）
@@ -460,7 +338,7 @@ findPhotoService.onFindPhoto((args: any) => {
 
         // 清理处理文件状态
         processingFile.value = "";
-        // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
+        // ✅ RFC 0048: 扫描队列管理已迁移到尉迟恭，自动处理，无需手动干预
     } else if (args?.action?.path && args?.action?.isDirectory) {
         // 单个刷新树结构
         // ❌ 已删除：updateFolderTree(args.action.path as string);
@@ -475,7 +353,7 @@ findPhotoService.onFindPhoto((args: any) => {
 });
 
 // 监听统一队列事件，处理文件监视产生的批量操作
-window.api?.onScanQueueAdd((operations: any[]) => {
+window.api?.onScanQueueAdd((operations: FileOperation[]) => {
     logger.debug(`👑 Received ${operations.length} file operations from watch service`);
 
     // Process batch of file operations

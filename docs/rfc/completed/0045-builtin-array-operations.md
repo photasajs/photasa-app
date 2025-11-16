@@ -495,6 +495,55 @@ async arrayFilter(params: {
       filtered: "{{steps.filter_action}}"  # 直接访问unwrap后的数据
 ```
 
+#### 4. arrayConcat - 数组连接
+
+连接两个数组，返回新数组。
+
+**接口定义**：
+```typescript
+async arrayConcat(params: {
+    array1: unknown[];
+    array2: unknown[];
+}): Promise<unknown[]>  // 直接返回连接后的数组，无包装
+```
+
+**实现要点**：
+- 纯函数：返回新数组，不修改原数组
+- 使用扩展运算符：`[...params.array1, ...params.array2]`
+- **容错处理**：参数验证使用 fallback + log，不抛出错误
+  - `array1` 为 null/undefined 或非数组类型 → fallback 空数组 + log
+  - `array2` 为 null/undefined 或非数组类型 → fallback 空数组 + log
+  - 数组过大（>100000元素）→ log 警告但继续执行
+- 直接返回：`return newArray;`  不包装！
+
+**容错策略**：
+- **原则**：容错处理，不中断工作流执行
+- **null/undefined 参数**：使用空数组作为默认值，记录警告日志
+- **非数组类型**：转换为空数组，记录警告日志
+- **数组过大**：记录警告日志但继续执行，让调用者决定如何处理
+
+**YAML使用示例**：
+```yaml
+- id: "append_actions"
+  type: "builtin"
+  action: "arrayConcat"
+  input:
+      array1: "{{steps.restore_queue}}"  # 现有队列
+      array2: "{{inputs.actions}}"       # 新任务数组
+  # arrayConcat合并两个数组：现有队列 + 新任务数组
+  output_schema:
+      type: array
+      description: "添加新任务后的完整队列"
+  dependsOn: ["restore_queue"]
+
+# 访问结果
+- id: "use_concatenated"
+  type: "builtin"
+  action: "return"
+  input:
+      queue: "{{steps.append_actions}}"  # 直接访问unwrap后的数据
+```
+
 ### 关于对象构造的说明
 
 **不引入专门的`objectCreate`方法**，理由如下：
@@ -822,8 +871,9 @@ volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workf
 - `arrayFilter(10000元素数组)` < 100ms
 
 **大数组限制**：
-- 单次操作最大支持 **100,000** 个元素
-- 超过限制时抛出明确错误：`"数组过大，最大支持100000个元素"`
+- 单次操作最大建议 **100,000** 个元素
+- **容错策略**：超过限制时记录警告日志但继续执行，不抛出错误
+- 让调用者决定如何处理超大数组，而不是强制中断工作流
 
 **性能测试示例**：
 ```typescript
@@ -850,11 +900,12 @@ describe('性能测试', () => {
         expect(duration).toBeLessThan(100);
     });
 
-    it('应在超过100000元素时抛出错误', async () => {
+    it('应在超过100000元素时记录警告但继续执行', async () => {
         const tooLargeArray = Array(100001).fill(0);
-        await expect(
-            adapter.arrayAppend({ array: tooLargeArray, item: 1 })
-        ).rejects.toThrow('数组过大');
+        // 容错处理：记录警告但继续执行，不抛出错误
+        const result = await adapter.arrayAppend({ array: tooLargeArray, item: 1 });
+        expect(result).toHaveLength(100002);
+        // 验证警告日志被记录（通过 mock logger 验证）
     });
 });
 ```

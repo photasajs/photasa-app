@@ -71,6 +71,27 @@ export interface IYuChiGongService {
     addScanTask(path: string, action?: "scan" | "rescan" | "current"): Promise<void>;
 
     /**
+     * 添加扫描任务到队列
+     * @param paths 要扫描的路径数组
+     * @param action 扫描动作类型，可选，默认为 "scan"
+     * @returns Promise<void>
+     * @example
+     * const yuChiGong = useYuChiGong();
+     * await yuChiGong.addScanTasks(['/test/path1', '/test/path2'], 'scan');
+     */
+    addScanTasks(paths: string[], action?: "scan" | "rescan" | "current"): Promise<void>;
+
+    /**
+     * 移除扫描任务从队列
+     * @param path 要移除的路径
+     * @returns Promise<void>
+     * @example
+     * const yuChiGong = useYuChiGong();
+     * await yuChiGong.removeScanTask('/test/path');
+     */
+    removeScanTask(path: string): Promise<void>;
+
+    /**
      * 初始化扫描队列（应用启动时调用）
      * 从天界恢复持久化的扫描队列
      *

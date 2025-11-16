@@ -48,7 +48,6 @@ export const ShengzhiCommands = {
     FOLDER_REMOVED: "folder_removed",
     ADD_PATHS: "add_paths",
     SWITCH_FOLDER: "switch_folder",
-    CHECK_AND_ADD_PATH: "check_and_add_path", // ✅ 智能检查并添加路径（根节点或子节点）
 } as const;
 
 /**

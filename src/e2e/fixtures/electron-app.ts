@@ -64,8 +64,12 @@ export class ElectronAppManager {
             ...options,
         });
 
-        // 获取主窗口
-        this.page = await this.app.firstWindow();
+        // 等待所有窗口创建（包括启动画面和主窗口）
+        // 应用启动流程：先创建启动画面，再创建主窗口
+        await this.waitForAllWindows();
+
+        // 获取主窗口（不是启动画面窗口）
+        this.page = await this.getMainWindowPage();
 
         // 等待应用初始化完成
         await this.waitForAppReady();
@@ -89,6 +93,115 @@ export class ElectronAppManager {
             testConfig,
             { spaces: 2 },
         );
+    }
+
+    /**
+     * 等待主窗口创建完成
+     * 应用启动流程：先创建启动画面，再创建主窗口
+     * 我们需要等待主窗口（有 #app 元素的窗口）创建完成
+     */
+    private async waitForAllWindows(): Promise<void> {
+        if (!this.app) throw new Error("App not initialized");
+
+        let attempts = 0;
+        const maxAttempts = 60; // 最多等待30秒（60 * 500ms）
+
+        while (attempts < maxAttempts) {
+            const windows = this.app.windows();
+
+            // 检查是否有主窗口（有 #app 元素的窗口）
+            for (const window of windows) {
+                try {
+                    // 检查窗口是否已加载
+                    const url = window.url();
+
+                    // 跳过启动画面窗口（URL 包含 splash）
+                    if (url.includes("splash")) {
+                        continue;
+                    }
+
+                    // 尝试检查是否有 #app 元素（主窗口标识）
+                    const hasApp = await window
+                        .evaluate(() => {
+                            return !!document.getElementById("app");
+                        })
+                        .catch(() => false);
+
+                    if (hasApp) {
+                        // 找到主窗口，可以继续
+                        return;
+                    }
+                } catch {
+                    // 窗口可能还在加载，继续检查下一个窗口
+                    continue;
+                }
+            }
+
+            // 等待一下再重试
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            attempts++;
+        }
+
+        // 如果超时，至少确保有窗口
+        const windows = this.app.windows();
+        if (windows.length === 0) {
+            throw new Error("No windows created after timeout");
+        }
+    }
+
+    /**
+     * 获取主窗口页面（不是启动画面窗口）
+     * 通过 URL 和 #app 元素来识别主窗口
+     */
+    private async getMainWindowPage(): Promise<Page> {
+        if (!this.app) throw new Error("App not initialized");
+
+        const windows = this.app.windows();
+
+        // 优先查找主窗口（有 #app 元素且 URL 不包含 splash）
+        for (const window of windows) {
+            try {
+                const url = window.url();
+
+                // 跳过启动画面窗口
+                if (url.includes("splash")) {
+                    continue;
+                }
+
+                // 检查是否有 #app 元素
+                const hasApp = await window
+                    .evaluate(() => {
+                        return !!document.getElementById("app");
+                    })
+                    .catch(() => false);
+
+                if (hasApp) {
+                    return window;
+                }
+            } catch {
+                // 窗口可能还在加载，继续查找下一个
+                continue;
+            }
+        }
+
+        // Fallback: 返回第一个非启动画面窗口
+        for (const window of windows) {
+            try {
+                const url = window.url();
+                if (!url.includes("splash")) {
+                    return window;
+                }
+            } catch {
+                continue;
+            }
+        }
+
+        // 最后的 fallback: 返回第一个窗口
+        if (windows.length > 0) {
+            return windows[0];
+        }
+
+        throw new Error("No windows available");
     }
 
     private async waitForAppReady(): Promise<void> {
@@ -121,7 +234,16 @@ export class ElectronAppManager {
         }
 
         // 最后等待一小段时间确保所有初始化完成
-        await this.page.waitForTimeout(2000);
+        // 检查页面是否仍然有效，避免在页面关闭后调用 waitForTimeout
+        try {
+            if (this.page && !this.page.isClosed()) {
+                await this.page.waitForTimeout(2000);
+            }
+        } catch (error) {
+            // 如果页面已关闭，记录警告但不抛出错误
+            // 因为前面的检查已经确保应用基本就绪
+            console.warn("⚠️ Warning: Page closed during final wait:", error);
+        }
     }
 
     async getMainWindow(): Promise<Page> {

@@ -19,7 +19,7 @@ import { globalLogInterceptor } from "@common/logger";
 import { LisshimingService, LISSHIMING_TOKEN } from "./services";
 import { loggers } from "@common/logger";
 
-const logger = loggers.lishiming;
+const logger = loggers.lishimin;
 
 logger.info("📦 开天辟地");
 const app = createApp(App);

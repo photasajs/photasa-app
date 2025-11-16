@@ -1092,7 +1092,7 @@ export type PreferenceState = {
 #### 1.4 数据迁移逻辑（首次启动）
 
 ```typescript
-// src/renderer/src/services/lishiming/lishiming.ts
+// src/renderer/src/services/lishimin/lishimin.ts
 
 export class LisshimingService {
     /**
@@ -2942,7 +2942,7 @@ private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
      ```
 
 7. **在李世民startZhengguan中调用尉迟恭初始化**
-   - 文件：`src/renderer/src/services/lishiming/lishiming.ts`
+   - 文件：`src/renderer/src/services/lishimin/lishimin.ts`
    - **参考模式**：完全复制Line 209的模式
    - **位置**：startZhengguan方法中，initializeScanningQueue之后
    - **添加代码**（Line 210之后）：
@@ -3103,7 +3103,7 @@ private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
     - **导出**：`export function useQinQiong(): QinQiongService`
 
 14. **在李世民中添加秦琼路由规则**
-    - 文件：`src/renderer/src/services/lishiming/event-routing.yml`
+    - 文件：`src/renderer/src/services/lishimin/event-routing.yml`
     - **添加路由**：
       ```yaml
       # 秦琼发现文件夹 → 尉迟恭更新folderTree
@@ -4488,13 +4488,13 @@ export const useAppStateStore = defineStore("appstate", {
 #### Phase 5：服务注册和初始化
 
 15. **在LiShiMing中注册魏征服务**
-    - 文件：`src/renderer/src/services/lishiming/lishiming.ts`
+    - 文件：`src/renderer/src/services/lishimin/lishimin.ts`
     - 添加`weiZhengService`属性
     - 在构造函数中初始化魏征服务
     - 在`startZhengguan()`中调用`weiZhengService.initializeAppState()`
 
 16. **更新event-routing.yml**
-    - 文件：`src/renderer/src/services/lishiming/event-routing.yml`
+    - 文件：`src/renderer/src/services/lishimin/event-routing.yml`
     - 更新秦琼的folder_discovered路由：
       ```yaml
       # 秦琼发现文件夹 → 魏征更新folderTree（改）
@@ -4864,14 +4864,14 @@ handleAddFile/handleDeleteFile调用
     - 实现`emitQizou()`私有方法
 
 26. **在李世民中注册秦琼服务**
-    - 文件：`src/renderer/src/services/lishiming/lishiming.ts`
+    - 文件：`src/renderer/src/services/lishimin/lishimin.ts`
     - 添加`qinQiongService`属性
     - 在构造函数中初始化秦琼服务
     - 建立秦琼与杜如晦的MessageChannel通道
     - 传递qizouBus给秦琼
 
 27. **更新event-routing.yml**
-    - 文件：`src/renderer/src/services/lishiming/event-routing.yml`
+    - 文件：`src/renderer/src/services/lishimin/event-routing.yml`
     - 添加`folder_discovered`路由规则
     - 添加`folder_removed`路由规则
 

@@ -1,3 +1,4 @@
+import { watchArray } from "@vueuse/core";
 import { IService } from "@/interfaces/service.interface";
 import { IYuChiGongService } from "@renderer/interfaces/yu-chi-gong.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
@@ -13,6 +14,7 @@ import {
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import type { ScanAction } from "@common/scan-types";
 import { loggers } from "@common/logger";
+import { normalizePath } from "@renderer/utils/path";
 
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
@@ -53,8 +55,112 @@ export class YuChiGongService implements IService, IYuChiGongService {
      */
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
 
+    /**
+     * 扫描处理标志
+     * 防止并发扫描
+     */
+    private isProcessing = false;
+
     constructor(private fangXuanLingService: IFangXuanLingService) {
         logger.info("🛡️ 尉迟恭就任，负责扫描队列业务逻辑管理");
+        this.startAutoScan(); // 启动自动扫描监听
+    }
+
+    /**
+     * 启动自动扫描监听
+     * 监听队列变化，自动触发扫描
+     *
+     * @private
+     * @since RFC 0048
+     * @fix 使用 watchArray 正确追踪 getter 返回的响应式数组
+     */
+    private startAutoScan(): void {
+        logger.info("🛡️ 尉迟恭：启动自动扫描监听");
+        watchArray(
+            () => this.scanningQueue,
+            () => {
+                logger.debug("🛡️ 尉迟恭：检测到扫描队列变化");
+                if (!this.isProcessing && this.scanningQueue.length > 0) {
+                    logger.info(`🛡️ 尉迟恭：队列有 ${this.scanningQueue.length} 个任务，触发扫描`);
+                    setTimeout(() => this.processNextTask(), 0);
+                } else {
+                    logger.debug(
+                        `🛡️ 尉迟恭：isProcessing=${this.isProcessing}, queue.length=${this.scanningQueue.length}`,
+                    );
+                }
+            },
+            { deep: true },
+        );
+    }
+
+    /**
+     * 处理下一个扫描任务（RFC 0048 - 核心扫描逻辑）
+     *
+     * @description
+     * 扫描编排7步流程：
+     * 1. 启奏开始
+     * 2. 重扫描时重置配置
+     * 3. 文件操作 - 记录父目录
+     * 4. 目录操作 - 扫描子文件夹
+     * 5. 执行扫描
+     * 6. 移除任务
+     * 7. 启奏完成/失败
+     *
+     * @private
+     * @since RFC 0048
+     */
+    private async processNextTask(): Promise<void> {
+        const task = this.scanningQueue[0];
+        if (!task) return;
+        this.isProcessing = true;
+
+        // 1. 启奏开始
+        this.emitQizou("scan_started", { path: task.path });
+
+        try {
+            // 2. 重扫描时重置配置
+            if (task.action === "rescan" && task.operationType === "directory") {
+                await window.api.resetPhotasaConfig(task.path);
+            }
+
+            // 3. 文件操作 - 记录父目录
+            let parentDir: string | null = null;
+            if (task.operationType === "file") {
+                parentDir = window.api.toDirName(task.path);
+            }
+
+            // 4. 目录操作 - 扫描子文件夹
+            if (task.operationType === "directory") {
+                const subfolders = await window.api.scanSubfolders(task.path);
+                if (subfolders.length > 0) {
+                    await this.addScanTasks(subfolders, "scan");
+                }
+            }
+
+            // 5. 执行扫描
+            await window.api.scanPhotos({
+                path: task.path,
+                action: task.action,
+                thumbnailSize: 150,
+                isDirectory: task.operationType !== "file",
+            });
+
+            // 6. 移除任务
+            await this.removeScanTask(task.path);
+
+            // 7. 启奏完成
+            this.emitQizou("scan_completed", {
+                path: task.path,
+                parentDir: parentDir,
+                operationType: task.operationType,
+            });
+        } catch (error) {
+            logger.error(`🛡️ 扫描失败 ${task.path}`, error);
+            await this.removeScanTask(task.path);
+            this.emitQizou("scan_failed", { path: task.path, error: String(error) });
+        }
+
+        this.isProcessing = false;
     }
 
     /**
@@ -134,6 +240,9 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 case "remove_scan_task":
                     await this.handleRemoveScanTask(shengzhi);
                     break;
+                case "cleanup_scan_queue_for_path":
+                    await this.handleCleanupScanQueueForPath(shengzhi);
+                    break;
                 // ✅ RFC 0042 Step 2.5: update_folder_tree已迁移到魏征服务
                 default:
                     logger.warn(`🛡️ 尉迟恭收到未知圣旨命令: ${shengzhi.command}`);
@@ -208,7 +317,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             const addActionZouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
-                content: { action: scanAction },
+                content: { actions: [scanAction] }, // ✅ 修复：工作流期望 actions 数组
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             };
@@ -222,7 +331,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
             // 4. ✅ 响应圣旨时不发送 SCAN_TASK_ADDED 启奏
             // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
-            // SCAN_TASK_ADDED 启奏只在直接调用 addScanTask() 时发送，用于触发魏征的 check_and_add_path
+            // SCAN_TASK_ADDED 启奏只在直接调用 addScanTasks() 时发送，用于触发魏征的 add_paths 批量处理
 
             logger.info(`🛡️ 尉迟恭：扫描任务已添加（响应圣旨） ${path}`);
         } catch (error) {
@@ -240,7 +349,145 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     /**
-     * 处理移除扫描任务圣旨
+     * 处理清理扫描队列圣旨（移除监控文件夹时）
+     * ✅ Bug修复：当移除监控文件夹时，需要清理该路径及其所有子目录的未扫描任务
+     *
+     * @param shengzhi 圣旨内容，包含要清理的路径
+     */
+    private async handleCleanupScanQueueForPath(shengzhi: Shengzhi): Promise<void> {
+        const path = shengzhi.content.path;
+
+        // 路径参数验证
+        if (!path || typeof path !== "string") {
+            logger.error("🛡️ 尉迟恭：圣旨缺少path参数或类型错误");
+            this.emitQizou("scan_queue_cleanup_failed", {
+                shengzhiId: shengzhi.id,
+                error: "缺少path参数或类型错误",
+            });
+            return;
+        }
+
+        // 路径安全验证：不能为空字符串
+        if (path.trim() === "") {
+            logger.error("🛡️ 尉迟恭：圣旨path为空字符串");
+            this.emitQizou("scan_queue_cleanup_failed", {
+                shengzhiId: shengzhi.id,
+                error: "path为空字符串",
+            });
+            return;
+        }
+
+        const normalizedPathToRemove = normalizePath(path);
+        logger.info(`🛡️ 尉迟恭接旨：清理扫描队列 ${normalizedPathToRemove}（包括所有子目录）`);
+
+        try {
+            // 找出所有需要移除的路径（包括子目录）
+            const queue = this.fangXuanLingService.scanning.queue;
+            const pathsToRemove: string[] = [];
+
+            // 遍历队列，找出所有需要移除的路径
+            for (const action of queue) {
+                const itemPath = normalizePath(action.path);
+
+                // 如果路径是要移除的路径本身，或者是其子目录，则标记为需要移除
+                if (normalizedPathToRemove === "/") {
+                    // 如果移除的是根路径，移除所有项
+                    pathsToRemove.push(itemPath);
+                } else {
+                    const isExactMatch = itemPath === normalizedPathToRemove;
+                    const isSubdirectory = itemPath.startsWith(normalizedPathToRemove + "/");
+                    if (isExactMatch || isSubdirectory) {
+                        pathsToRemove.push(itemPath);
+                    }
+                }
+            }
+
+            if (pathsToRemove.length === 0) {
+                logger.info(`🛡️ 尉迟恭：扫描队列中无相关任务需要清理 ${normalizedPathToRemove}`);
+                // 即使没有任务，也向李世民启奏汇报
+                this.emitQizou("scan_queue_cleanup_completed", {
+                    shengzhiId: shengzhi.id,
+                    path: normalizedPathToRemove,
+                    removedCount: 0,
+                });
+                return;
+            }
+
+            logger.info(
+                `🛡️ 尉迟恭：发现 ${pathsToRemove.length} 个相关扫描任务需要清理（包括子目录）`,
+            );
+
+            // 批量移除扫描任务（逐个发送REMOVE_SCAN_ACTION奏折，因为工作流只支持单个路径）
+            let successCount = 0;
+            let failedCount = 0;
+            const errors: string[] = [];
+
+            for (const pathToRemoveFromQueue of pathsToRemove) {
+                try {
+                    // ✅ RFC 0042要求：只发送REMOVE_SCAN_ACTION奏折
+                    // 房玄龄负责更新Store并触发天界持久化
+                    const removeActionZouzhe: Zouzhe = {
+                        department: GUANYUAN_NAMES.YU_CHI_GONG,
+                        matter: ZOUZHE_MATTERS.REMOVE_SCAN_ACTION,
+                        content: { path: pathToRemoveFromQueue },
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    };
+
+                    logger.debug(`🛡️ 尉迟恭向房玄龄呈递移除扫描任务奏折: ${pathToRemoveFromQueue}`);
+                    const response =
+                        await this.fangXuanLingService.processZouzhe(removeActionZouzhe);
+
+                    if (!response.approved) {
+                        throw new Error(`房玄龄未批准：${response.instruction}`);
+                    }
+
+                    successCount++;
+                } catch (error) {
+                    failedCount++;
+                    const errorMsg = error instanceof Error ? error.message : String(error);
+                    errors.push(`${pathToRemoveFromQueue}: ${errorMsg}`);
+                    logger.warn(`🛡️ 尉迟恭：移除扫描任务失败 ${pathToRemoveFromQueue}:`, error);
+                    // 继续处理其他任务，不中断流程
+                }
+            }
+
+            // ✅ Validator要求：向李世民启奏汇报队列清理完成
+            if (failedCount > 0) {
+                logger.warn(
+                    `🛡️ 尉迟恭：清理扫描队列部分失败，成功 ${successCount} 个，失败 ${failedCount} 个`,
+                );
+                this.emitQizou("scan_queue_cleanup_partially_completed", {
+                    shengzhiId: shengzhi.id,
+                    path: normalizedPathToRemove,
+                    removedCount: successCount,
+                    failedCount,
+                    errors,
+                });
+            } else {
+                logger.info(`🛡️ 尉迟恭：成功清理 ${successCount} 个扫描任务（包括子目录）`);
+                this.emitQizou("scan_queue_cleanup_completed", {
+                    shengzhiId: shengzhi.id,
+                    path: normalizedPathToRemove,
+                    removedCount: successCount,
+                });
+            }
+        } catch (error) {
+            logger.error(`🛡️ 尉迟恭：清理扫描队列失败 ${normalizedPathToRemove}`, error);
+
+            // 向李世民启奏汇报失败
+            this.emitQizou("scan_queue_cleanup_failed", {
+                shengzhiId: shengzhi.id,
+                path: normalizedPathToRemove,
+                error: String(error),
+            });
+
+            throw error;
+        }
+    }
+
+    /**
+     * 处理移除扫描任务圣旨（扫描完成后移除单个任务）
      * @param shengzhi 圣旨内容
      */
     private async handleRemoveScanTask(shengzhi: Shengzhi): Promise<void> {
@@ -396,70 +643,161 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     /**
-     * 添加扫描任务到队列
+     * 批量添加扫描任务到队列（核心实现）
+     * @param paths 要扫描的路径数组
+     * @param action 扫描动作类型，可选，默认为 "scan"
+     *
+     * @description
+     * Linus "好品味"设计：批量处理，单次通信
+     * - addScanTask(path) 只是 addScanTasks([path]) 的便利方法
+     * - 批量去重、批量创建、一次性发送给天界
+     */
+    async addScanTasks(
+        paths: string[],
+        action: "scan" | "rescan" | "current" = "scan",
+    ): Promise<void> {
+        logger.info(`🛡️ 尉迟恭：批量添加扫描任务，共${paths.length}个路径`);
+
+        // 1. 批量验证和去重
+        const validPaths: string[] = [];
+        const duplicatePaths: string[] = [];
+
+        // 批量验证和去重
+        paths.forEach((path) => {
+            if (!path || typeof path !== "string" || path.trim() === "") {
+                logger.error(`🛡️ 尉迟恭：路径参数无效：${path}`);
+                return;
+            }
+
+            if (this.fangXuanLingService.scanning.isInQueue(path)) {
+                duplicatePaths.push(path);
+            } else {
+                validPaths.push(path);
+            }
+        });
+
+        // 如果没有新路径需要添加，直接返回
+        if (validPaths.length === 0) {
+            logger.info(
+                `🛡️ 尉迟恭：所有路径已存在或无效 (重复${duplicatePaths.length}个，无效${paths.length - duplicatePaths.length}个)`,
+            );
+            // 批量汇报重复路径（如果有）
+            if (duplicatePaths.length > 0) {
+                this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
+                    paths: duplicatePaths,
+                    persisted: true,
+                });
+            }
+            return;
+        }
+
+        try {
+            // 2. 批量创建ScanAction对象
+            const scanActions: ScanAction[] = validPaths.map((path) => ({
+                path,
+                action,
+                thumbnailSize: 150,
+                source: "user",
+                timestamp: Date.now(),
+                operationType: "directory" as const,
+            }));
+
+            // 3. ✅ 一次性发送ADD_SCAN_ACTION奏折（天界支持数组）
+            const addActionZouzhe: Zouzhe = {
+                department: GUANYUAN_NAMES.YU_CHI_GONG,
+                matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+                content: { actions: scanActions }, // 发送数组
+                timestamp: Date.now(),
+                priority: ZOUZHE_PRIORITIES.NORMAL,
+            };
+
+            logger.info(`🛡️ 尉迟恭向房玄龄呈递批量添加扫描任务奏折: ${validPaths.length}个路径`);
+            const response = await this.fangXuanLingService.processZouzhe(addActionZouzhe);
+
+            if (!response.approved) {
+                throw new Error(`房玄龄未批准：${response.instruction}`);
+            }
+
+            // 4. 批量启奏汇报所有新添加的路径
+            const persisted = (response.data as Record<string, unknown>)?.persisted === true;
+
+            this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
+                paths: validPaths,
+                persisted,
+            });
+
+            logger.info(
+                `🛡️ 尉迟恭：批量添加完成 (新增${validPaths.length}个，重复${duplicatePaths.length}个)`,
+            );
+        } catch (error) {
+            logger.error(`🛡️ 尉迟恭：批量添加失败`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * 添加单个扫描任务到队列（便利方法）
      * @param path 要扫描的路径
      * @param action 扫描动作类型，可选，默认为 "scan"
+     *
+     * @description
+     * 这只是 addScanTasks([path]) 的便利方法
+     * 所有实际逻辑都在 addScanTasks 中实现
      */
     async addScanTask(path: string, action: "scan" | "rescan" | "current" = "scan"): Promise<void> {
+        return this.addScanTasks([path], action);
+    }
+
+    /**
+     * 移除扫描任务从队列
+     * @param path 要移除的路径
+     *
+     * @description
+     * Linus "好品味"设计：统一数据流
+     * - 移除操作也走奏折系统
+     * - 利用现有 remove_scan_action.yml 工作流
+     * - Store Automation自动同步
+     * - watchArray监听到变化，自动触发下一个任务
+     */
+    async removeScanTask(path: string): Promise<void> {
         // 路径参数验证
         if (!path || typeof path !== "string") {
             throw new Error("路径参数无效：必须是非空字符串");
         }
 
-        // 路径安全验证：不能为空字符串
+        // 路径安全验证
         if (path.trim() === "") {
             throw new Error("路径不能为空字符串");
         }
 
-        logger.info(`🛡️ 尉迟恭：添加扫描任务 ${path} (${action})`);
+        logger.info(`🛡️ 尉迟恭：移除扫描任务 ${path}`);
 
         try {
-            // 1. 使用Accessor去重检查
+            // 队列检查（可选优化）
             if (!this.fangXuanLingService.scanning.isInQueue(path)) {
-                // 2. 创建ScanAction对象
-                const scanAction: ScanAction = {
-                    path,
-                    action,
-                    thumbnailSize: 150, // 默认缩略图大小
-                    source: "user", // UI层调用默认为用户操作
-                    timestamp: Date.now(),
-                    operationType: "directory",
-                };
-
-                // 3. ✅ RFC 0042要求：只发送ADD_SCAN_ACTION奏折
-                // 房玄龄负责更新Store并触发天界持久化
-                const addActionZouzhe: Zouzhe = {
-                    department: GUANYUAN_NAMES.YU_CHI_GONG,
-                    matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
-                    content: { action: scanAction },
-                    timestamp: Date.now(),
-                    priority: ZOUZHE_PRIORITIES.NORMAL,
-                };
-
-                logger.info(`🛡️ 尉迟恭向房玄龄呈递添加扫描任务奏折: ${path}`);
-                const response = await this.fangXuanLingService.processZouzhe(addActionZouzhe);
-
-                if (!response.approved) {
-                    throw new Error(`房玄龄未批准：${response.instruction}`);
-                }
-
-                // 4. 向李世民启奏汇报任务已添加
-                // 通知魏征智能检查并添加路径（check_and_add_path）
-                this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
-                    path,
-                    persisted: (response.data as Record<string, unknown>)?.persisted === true,
-                });
-            } else {
-                // 如果路径已存在，直接汇报任务已添加
-                this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
-                    path,
-                    persisted: true,
-                });
+                logger.warn(`🛡️ 尉迟恭：路径不在队列中，静默返回: ${path}`);
+                return;
             }
 
-            logger.info(`🛡️ 尉迟恭：扫描任务已添加 ${path}`);
+            // 发送REMOVE_SCAN_ACTION奏折
+            const removeActionZouzhe: Zouzhe = {
+                department: GUANYUAN_NAMES.YU_CHI_GONG,
+                matter: ZOUZHE_MATTERS.REMOVE_SCAN_ACTION,
+                content: { path },
+                timestamp: Date.now(),
+                priority: ZOUZHE_PRIORITIES.NORMAL,
+            };
+
+            logger.info(`🛡️ 尉迟恭向房玄龄呈递移除扫描任务奏折: ${path}`);
+            const response = await this.fangXuanLingService.processZouzhe(removeActionZouzhe);
+
+            if (!response.approved) {
+                throw new Error(`房玄龄未批准：${response.instruction}`);
+            }
+
+            logger.info(`🛡️ 尉迟恭：扫描任务已移除 ${path}`);
         } catch (error) {
-            logger.error(`🛡️ 尉迟恭：添加扫描任务失败 ${path}`, error);
+            logger.error(`🛡️ 尉迟恭：移除扫描任务失败 ${path}`, error);
             throw error;
         }
     }

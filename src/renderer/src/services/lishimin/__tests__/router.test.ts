@@ -126,12 +126,13 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
 
             await new Promise<void>((resolve) => {
                 setTimeout(() => {
+                    // ✅ 修复：只期望尉迟恭收到1个圣旨，魏征服务未注册所以没有第二个圣旨
                     expect(yuchiGongService.receivedShengzhis).toHaveLength(1);
-                    const shengzhi = yuchiGongService.receivedShengzhis[0];
+                    const yuchiGongShengzhi = yuchiGongService.receivedShengzhis[0];
 
-                    expect(shengzhi.command).toBe("remove_scan_task");
-                    expect(shengzhi.content.path).toBe("/test/old-photos");
-                    expect(shengzhi.from).toBe("李世民");
+                    expect(yuchiGongShengzhi.command).toBe("cleanup_scan_queue_for_path"); // ✅ 修复：路由配置使用cleanup命令
+                    expect(yuchiGongShengzhi.content.path).toBe("/test/old-photos");
+                    expect(yuchiGongShengzhi.from).toBe("李世民");
                     resolve();
                 }, 20);
             });
