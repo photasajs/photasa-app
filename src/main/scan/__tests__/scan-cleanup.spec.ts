@@ -13,6 +13,22 @@ import {
 } from "../scan-cleanup";
 import type { PhotasaLogger } from "@common/logger";
 
+// Mock pool-manager to avoid ?nodeWorker import issue
+jest.mock("../worker/pool-manager", () => ({
+    cleanupWorkerPool: jest.fn().mockResolvedValue(undefined),
+    getWorkerPool: jest.fn(),
+    shutdownWorkerPool: jest.fn(),
+    isWorkerPoolAvailable: jest.fn(),
+    getWorkerPoolStatus: jest.fn(),
+    getWorkerPoolStats: jest.fn(),
+    resetWorkerPoolManager: jest.fn(),
+    updateWorkerPoolConfig: jest.fn(),
+    getWorkerPoolConfig: jest.fn(),
+    PoolStatus: {},
+    DEFAULT_THUMBNAIL_WORKER_CONFIG: {},
+    WorkerPoolManager: jest.fn(),
+}));
+
 // Mock external dependencies
 jest.mock("fs-extra");
 

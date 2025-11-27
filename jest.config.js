@@ -74,6 +74,8 @@ module.exports = {
         "^@engines/common/(.*)$": "<rootDir>/src/engines/common/$1",
         "^@qianliyan/(.*)$": "<rootDir>/src/engines/qianliyan/$1",
         "^@engines/(.*)$": "<rootDir>/src/engines/$1",
+        // Map ?nodeWorker query parameter to the actual module
+        "^(.+)\\?nodeWorker$": "$1",
     },
 
     // 测试超时设置
