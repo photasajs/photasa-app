@@ -47,6 +47,7 @@ export class CommandAdapter {
             thumbnailSize: profile.thumbnailSize,
             operationType: "directory",
             source: "auto",
+            fileOperationId: observation.id,
         };
     }
 

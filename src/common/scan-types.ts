@@ -66,6 +66,9 @@ export interface ScanAction {
 
     /** 重试次数（可选，用于失败重试） */
     retryCount?: number;
+
+    /** 关联的文件操作ID（可选，用于追踪原始文件操作） */
+    fileOperationId?: string;
 }
 
 /**
