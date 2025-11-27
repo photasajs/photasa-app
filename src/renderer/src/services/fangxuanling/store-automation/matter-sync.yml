@@ -109,6 +109,14 @@ matters:
         autoSync: true
         description: "移除扫描任务 - 从response.data.queue提取数组，替换scanning store的queue字段"
 
+    # ✅ RFC 0048 v3 Phase 3: 更新扫描任务状态
+    update_scan_action_status:
+        propertyPath: "queue"
+        syncStrategy: "replace"
+        storeName: "scanning"
+        autoSync: true
+        description: "更新扫描任务状态 - 从response.data.queue提取更新后的完整队列，替换scanning store的queue字段"
+
     # ✅ RFC 0043: 切换当前文件夹
     switch_current_folder:
         propertyPath: "currentFolder"

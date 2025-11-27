@@ -23,7 +23,7 @@ import { useNotificationStore } from "@renderer/stores/notification";
 import { useScanningStore } from "../stores/scanning-store";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { loggers } from "@common/logger";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { NotificationConfig } from "@renderer/types/notification";
 import { useAppStateStore } from "../stores/appstate-store";
 import type { FolderNode } from "@common/folder-types";
@@ -163,13 +163,13 @@ export function createScanningService(): IScanning {
 
     return {
         /**
-         * 查阅扫描队列（响应式引用）
+         * 查阅扫描队列（响应式引用，v3: ScanQueueItem）
          * 如同翻阅典籍目录，只可查看不可改动
          *
          * ✅ RFC 0042: 返回响应式数组引用，而非副本
          * 这样Vue computed可以正确追踪数组变化
          */
-        get queue(): ScanAction[] {
+        get queue(): ScanQueueItem[] {
             return store.queue;
         },
 
@@ -198,10 +198,10 @@ export function createScanningService(): IScanning {
         },
 
         /**
-         * 查询下一个待处理任务
+         * 查询下一个待处理任务（v3: ScanQueueItem）
          * 预览待审卷宗中的下一份
          */
-        get nextScanAction(): ScanAction | null {
+        get nextScanAction(): ScanQueueItem | null {
             return store.nextScanAction;
         },
 

@@ -556,4 +556,353 @@ export class BuiltinAdapter implements IAdapter {
 
         return result;
     }
+
+    /**
+     * 数组查找
+     * 在数组中查找满足条件的元素或其索引
+     * RFC 0048 v3: 扫描状态机工作流支持
+     *
+     * @param params.array - 要搜索的数组
+     * @param params.predicate - 查找条件（字符串表达式或对象条件）
+     * @param params.returnIndex - 是否返回索引（默认返回元素）
+     * @returns 找到的元素或索引，未找到时返回 undefined 或 -1
+     */
+    async arrayFind(params: {
+        array: unknown[];
+        predicate: string | { field: string; value: unknown };
+        returnIndex?: boolean;
+    }): Promise<unknown> {
+        try {
+            // 参数验证
+            if (params.array === null || params.array === undefined) {
+                throw new Error("array参数不能为null或undefined");
+            }
+
+            if (!Array.isArray(params.array)) {
+                throw new Error(`array参数必须是数组类型，当前类型: ${typeof params.array}`);
+            }
+
+            if (!params.predicate) {
+                throw new Error("predicate参数不能为空");
+            }
+
+            let findFn: (item: unknown, index: number) => boolean;
+
+            // 解析谓词
+            if (typeof params.predicate === "string") {
+                // 字符串表达式，如 "item.path === inputs.path"
+                // 由于模板变量在工作流引擎层面已解析，这里 predicate 应该是已解析的值
+                // 如果是简单的相等比较 "item.path === 某值"，需要特殊处理
+                const predicateStr = params.predicate;
+                findFn = (item: unknown) => {
+                    // 尝试解析简单的相等表达式
+                    const match = predicateStr.match(/^item\.(\w+)\s*===\s*(.+)$/);
+                    if (match) {
+                        const [, field, valueStr] = match;
+                        const itemValue = this.getNestedValue(item, field);
+                        // 尝试解析值（去掉引号如果有的话）
+                        let expectedValue: unknown = valueStr.trim();
+                        if (
+                            (expectedValue as string).startsWith('"') &&
+                            (expectedValue as string).endsWith('"')
+                        ) {
+                            expectedValue = (expectedValue as string).slice(1, -1);
+                        } else if (
+                            (expectedValue as string).startsWith("'") &&
+                            (expectedValue as string).endsWith("'")
+                        ) {
+                            expectedValue = (expectedValue as string).slice(1, -1);
+                        }
+                        return itemValue === expectedValue;
+                    }
+                    // 如果无法解析，返回 false
+                    logger.warn(`🔧 无法解析查找条件: ${predicateStr}`);
+                    return false;
+                };
+            } else {
+                // 对象条件，如 { field: "path", value: "/some/path" }
+                const predicateObj = params.predicate;
+                findFn = (item: unknown) => {
+                    const itemValue = this.getNestedValue(item, predicateObj.field);
+                    return itemValue === predicateObj.value;
+                };
+            }
+
+            // 执行查找
+            if (params.returnIndex) {
+                const index = params.array.findIndex(findFn);
+                logger.debug(`🔧 施展寻觅之术: 索引=${index}`, {
+                    arrayLength: params.array.length,
+                    predicate: params.predicate,
+                });
+                return index;
+            } else {
+                const found = params.array.find(findFn);
+                logger.debug(`🔧 施展寻觅之术: ${found ? "觅得真物" : "无果而终"}`, {
+                    arrayLength: params.array.length,
+                    predicate: params.predicate,
+                });
+                return found;
+            }
+        } catch (error) {
+            logger.error(`🔧 寻觅之术失败: ${(error as Error).message}`, {
+                operation: "arrayFind",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 条件判断
+     * 根据条件返回不同的结果
+     * RFC 0048 v3: 扫描状态机工作流支持
+     *
+     * @param params.condition - 条件（布尔值或可求值为布尔的表达式结果）
+     * @param params.onTrue - 条件为真时返回的值
+     * @param params.onFalse - 条件为假时返回的值
+     * @returns onTrue 或 onFalse 的值
+     */
+    async conditional(params: {
+        condition: boolean | number | string;
+        onTrue?: unknown;
+        onFalse?: unknown;
+    }): Promise<unknown> {
+        try {
+            // 将条件转换为布尔值
+            let conditionResult: boolean;
+
+            if (typeof params.condition === "boolean") {
+                conditionResult = params.condition;
+            } else if (typeof params.condition === "number") {
+                // 数字：0 为 false，其他为 true
+                // 特殊情况：-1 常用于表示"未找到"，应视为 false
+                conditionResult = params.condition >= 0;
+            } else if (typeof params.condition === "string") {
+                // 字符串：尝试解析简单的比较表达式
+                const trimmed = params.condition.trim().toLowerCase();
+                if (trimmed === "true") {
+                    conditionResult = true;
+                } else if (trimmed === "false") {
+                    conditionResult = false;
+                } else {
+                    // 尝试解析数值比较
+                    const numMatch = params.condition.match(
+                        /^(-?\d+)\s*(>=|>|<=|<|===|==|!==|!=)\s*(-?\d+)$/,
+                    );
+                    if (numMatch) {
+                        const [, leftStr, operator, rightStr] = numMatch;
+                        const left = Number(leftStr);
+                        const right = Number(rightStr);
+                        switch (operator) {
+                            case ">=":
+                                conditionResult = left >= right;
+                                break;
+                            case ">":
+                                conditionResult = left > right;
+                                break;
+                            case "<=":
+                                conditionResult = left <= right;
+                                break;
+                            case "<":
+                                conditionResult = left < right;
+                                break;
+                            case "===":
+                            case "==":
+                                conditionResult = left === right;
+                                break;
+                            case "!==":
+                            case "!=":
+                                conditionResult = left !== right;
+                                break;
+                            default:
+                                conditionResult = false;
+                        }
+                    } else {
+                        // 无法解析，非空字符串视为 true
+                        conditionResult = trimmed.length > 0;
+                    }
+                }
+            } else {
+                // 其他类型：truthy/falsy 判断
+                conditionResult = Boolean(params.condition);
+            }
+
+            const result = conditionResult ? params.onTrue : params.onFalse;
+
+            logger.debug(`🔧 施展判断之术: ${conditionResult ? "阳" : "阴"}`, {
+                condition: params.condition,
+                branch: conditionResult ? "onTrue" : "onFalse",
+            });
+
+            return result;
+        } catch (error) {
+            logger.error(`🔧 判断之术失败: ${(error as Error).message}`, {
+                operation: "conditional",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 数组取值
+     * 获取数组指定索引的元素
+     * RFC 0048 v3: 扫描状态机工作流支持
+     *
+     * @param params.array - 要访问的数组
+     * @param params.index - 索引（支持负数，-1 表示最后一个元素）
+     * @returns 指定索引的元素，索引越界时返回 undefined
+     */
+    async arrayGet(params: { array: unknown[]; index: number }): Promise<unknown> {
+        try {
+            // 参数验证
+            if (params.array === null || params.array === undefined) {
+                throw new Error("array参数不能为null或undefined");
+            }
+
+            if (!Array.isArray(params.array)) {
+                throw new Error(`array参数必须是数组类型，当前类型: ${typeof params.array}`);
+            }
+
+            if (typeof params.index !== "number" || isNaN(params.index)) {
+                throw new Error(`index参数必须是有效数字，当前值: ${params.index}`);
+            }
+
+            // 处理负数索引
+            let actualIndex = params.index;
+            if (actualIndex < 0) {
+                actualIndex = params.array.length + actualIndex;
+            }
+
+            // 边界检查
+            if (actualIndex < 0 || actualIndex >= params.array.length) {
+                logger.warn(
+                    `🔧 取值之术：索引越界 (index=${params.index}, length=${params.array.length})`,
+                );
+                return undefined;
+            }
+
+            const result = params.array[actualIndex];
+
+            logger.debug(`🔧 施展取值之术: 索引=${params.index}`, {
+                arrayLength: params.array.length,
+                actualIndex,
+                hasResult: result !== undefined,
+            });
+
+            return result;
+        } catch (error) {
+            logger.error(`🔧 取值之术失败: ${(error as Error).message}`, {
+                operation: "arrayGet",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 对象合并
+     * 合并多个对象（浅合并）
+     * RFC 0048 v3: 扫描状态机工作流支持
+     *
+     * @param params.base - 基础对象
+     * @param params.updates - 更新对象
+     * @param params.additional - 额外更新对象（可选）
+     * @returns 合并后的新对象
+     */
+    async objectMerge(params: {
+        base: Record<string, unknown>;
+        updates: Record<string, unknown>;
+        additional?: Record<string, unknown>;
+    }): Promise<Record<string, unknown>> {
+        try {
+            // 参数验证
+            if (params.base === null || params.base === undefined) {
+                throw new Error("base参数不能为null或undefined");
+            }
+
+            if (typeof params.base !== "object") {
+                throw new Error(`base参数必须是对象类型，当前类型: ${typeof params.base}`);
+            }
+
+            // 执行合并
+            const result = {
+                ...params.base,
+                ...params.updates,
+                ...(params.additional || {}),
+            };
+
+            logger.debug(`🔧 施展融合之术: 合并${Object.keys(result).length}个字段`, {
+                baseKeys: Object.keys(params.base),
+                updateKeys: Object.keys(params.updates),
+            });
+
+            return result;
+        } catch (error) {
+            logger.error(`🔧 融合之术失败: ${(error as Error).message}`, {
+                operation: "objectMerge",
+                error,
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * 数组设值
+     * 设置数组指定索引的元素（纯函数，返回新数组）
+     * RFC 0048 v3: 扫描状态机工作流支持
+     *
+     * @param params.array - 要操作的数组
+     * @param params.index - 索引（支持负数）
+     * @param params.value - 新值
+     * @returns 更新后的新数组
+     */
+    async arraySet(params: {
+        array: unknown[];
+        index: number;
+        value: unknown;
+    }): Promise<unknown[]> {
+        try {
+            // 参数验证
+            if (params.array === null || params.array === undefined) {
+                throw new Error("array参数不能为null或undefined");
+            }
+
+            if (!Array.isArray(params.array)) {
+                throw new Error(`array参数必须是数组类型，当前类型: ${typeof params.array}`);
+            }
+
+            if (typeof params.index !== "number" || isNaN(params.index)) {
+                throw new Error(`index参数必须是有效数字，当前值: ${params.index}`);
+            }
+
+            // 处理负数索引
+            let actualIndex = params.index;
+            if (actualIndex < 0) {
+                actualIndex = params.array.length + actualIndex;
+            }
+
+            // 边界检查
+            if (actualIndex < 0 || actualIndex >= params.array.length) {
+                throw new Error(`索引越界: index=${params.index}, length=${params.array.length}`);
+            }
+
+            // 纯函数：创建新数组
+            const result = [...params.array];
+            result[actualIndex] = params.value;
+
+            logger.debug(`🔧 施展置换之术: 索引=${params.index}`, {
+                arrayLength: params.array.length,
+            });
+
+            return result;
+        } catch (error) {
+            logger.error(`🔧 置换之术失败: ${(error as Error).message}`, {
+                operation: "arraySet",
+                error,
+            });
+            throw error;
+        }
+    }
 }

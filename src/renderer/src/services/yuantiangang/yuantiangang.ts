@@ -15,6 +15,9 @@ import type { Emitter } from "mitt";
 import { loggers } from "@common/logger";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@common/scan-types";
+import { computeScannedFilePaths } from "./utils";
+import { IntentToFuluMapping } from "./intent";
+import { E } from "vitest/dist/chunks/environment.d.cL3nLXbE";
 
 const logger = loggers.yuantiangang;
 
@@ -88,15 +91,18 @@ export class YuanTianGangService implements IYuanTianGangService {
             }
 
             // 监听千里眼扫描事件
-            const handler = (_: any, args: ScanActionEvent) => {
+            const handler = (_: unknown, args: ScanActionEvent) => {
                 this.handleQianliyanEvent(args);
             };
 
             this.qianliyanCleanupFn = ipc.on("picasa:find-photo", handler);
 
             logger.info("🔮 千里眼事件监听已建立（临时方案）");
-        } catch (error) {
-            logger.warn("🔮 建立千里眼事件监听失败", error);
+        } catch (error: Error | unknown) {
+            logger.warn(
+                "🔮 建立千里眼事件监听失败",
+                error instanceof Error ? error.message : String(error),
+            );
         }
     }
 
@@ -108,17 +114,8 @@ export class YuanTianGangService implements IYuanTianGangService {
      */
     private handleQianliyanEvent(args: ScanActionEvent): void {
         logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path);
-
-        let paths: string[] = [];
-
-        if (args.type === "complete" && Array.isArray(args.paths)) {
-            paths = args.paths;
-        } else if (args?.action?.path && args?.action?.isDirectory) {
-            paths = [args.action.path as string];
-        }
-
-        // 批量发送启奏
-        this.reportScanCompletion(paths);
+        // 批量发送扫描完成启奏，其中包含进行中或者完成的路径
+        this.reportScanCompletion(computeScannedFilePaths(args), args);
     }
 
     /**
@@ -127,17 +124,22 @@ export class YuanTianGangService implements IYuanTianGangService {
      * @param paths 扫描完成的路径数组
      * @private
      */
-    private reportScanCompletion(paths: string[]): void {
+    private reportScanCompletion(paths: string[], scanAction: ScanActionEvent): void {
         try {
             if (!this._qizouBus) {
                 logger.error("🔮 启奏通道未建立，无法发送启奏");
                 return;
             }
 
+            // 🔍 验证步骤2：检查 reportScanCompletion 发送的内容
+            logger.info(
+                `🔍 [验证步骤2] 袁天罡 reportScanCompletion: paths=${JSON.stringify(paths)}, scanAction.type=${scanAction.type}, scanAction.action?.path=${scanAction.action?.path}`,
+            );
+
             // 构建启奏
             const qizou: Qizou = {
                 matter: QizouMatters.SCAN_READY,
-                content: { paths },
+                content: { paths, scanAction },
                 from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: {
@@ -286,30 +288,6 @@ export class YuanTianGangService implements IYuanTianGangService {
      * 将符箓转换为天枢UICommand
      */
     private convertFuluToUICommand(fulu: Fulu): any {
-        // 符箓意图到天枢UserIntent的映射（使用ZOUZHE_MATTERS常量值）
-        const intentMapping: Record<string, string> = {
-            [ZOUZHE_MATTERS.THEME_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
-            [ZOUZHE_MATTERS.LANGUAGE_CHANGE]: "update_preferences", // 修正：使用天枢实际工作流
-            [ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE]: "update_preferences", // 缩略图大小变更
-            [ZOUZHE_MATTERS.ADD_PATH]: "update_preferences", // 添加路径操作
-            [ZOUZHE_MATTERS.REMOVE_PATH]: "update_preferences", // 移除路径操作
-            [ZOUZHE_MATTERS.ADD_SCAN_FOLDER]: "update_preferences", // 添加扫描文件夹操作
-            [ZOUZHE_MATTERS.NOTIFICATION_SHOW]: "get_status",
-            [ZOUZHE_MATTERS.PHOTO_SWITCH]: "scan_folder",
-            [ZOUZHE_MATTERS.GET_PREFERENCES]: "get_preferences", // 使用天枢实际工作流
-            [ZOUZHE_MATTERS.SCAN_FOLDER]: "scan_folder",
-            [ZOUZHE_MATTERS.UPDATE_PREFERENCES]: "update_preferences", // 添加直接映射
-            [ZOUZHE_MATTERS.GET_STATUS]: "get_status",
-            // ✅ RFC 0042 Phase 2.4: 扫描队列管理映射
-            [ZOUZHE_MATTERS.GET_SCANNING_QUEUE]: "get_scanning_queue",
-            [ZOUZHE_MATTERS.ADD_SCAN_ACTION]: "add_scan_action",
-            [ZOUZHE_MATTERS.REMOVE_SCAN_ACTION]: "remove_scan_action",
-            // ✅ RFC 0042 Step 2.5: appState管理映射
-            [ZOUZHE_MATTERS.RESTORE_APP_STATE]: "restore_app_state",
-            [ZOUZHE_MATTERS.UPDATE_FOLDER_TREE]: "update_folder_tree",
-            [ZOUZHE_MATTERS.SWITCH_FOLDER]: "switch_current_folder",
-        };
-
         // 紧急程度到命令优先级的映射
         const priorityMapping = {
             critical: "system" as const,
@@ -317,7 +295,7 @@ export class YuanTianGangService implements IYuanTianGangService {
             normal: "background" as const,
         };
 
-        const intent = intentMapping[fulu.intent];
+        const intent = IntentToFuluMapping[fulu.intent];
         if (!intent) {
             throw new Error(
                 `🏛️ 袁天罡：符箓意图"${fulu.intent}"未列入典籍，无法转换为天界诏令。请检查intentMapping是否包含此matter的映射。`,

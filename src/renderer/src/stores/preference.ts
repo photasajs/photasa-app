@@ -3,7 +3,7 @@ import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { cleanupScanQueue } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@common/config-types";
-import type { ScanAction, FileOperationInput } from "@common/scan-types";
+import type { FileOperationInput } from "@common/scan-types";
 import type { ThumbnailRequest } from "@common/thumbnail-types";
 import { addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
@@ -133,7 +133,7 @@ export interface PreferenceState {
          * ⏳ 临时保留，将来通过尉迟恭服务(人界)迁移到千里眼引擎(天界)
          * 参考RFC 0032和RFC 0038
          */
-        scanningFolder: ScanAction[];
+        scanningFolder: FileOperationInput[];
     };
 }
 

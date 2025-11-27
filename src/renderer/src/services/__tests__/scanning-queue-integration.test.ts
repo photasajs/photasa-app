@@ -23,6 +23,20 @@ import {
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 
+/**
+ * Helper: 创建测试用 ScanAction（IPC 契约）
+ */
+function createTestScanAction(overrides: Partial<ScanAction> = {}): ScanAction {
+    return {
+        path: "/test/path",
+        action: "scan",
+        thumbnailSize: 150,
+        operationType: "directory",
+        source: "user",
+        ...overrides,
+    };
+}
+
 describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
     let fangXuanLing: FangXuanLingService;
 
@@ -92,14 +106,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                 content: {
-                    action: {
+                    action: createTestScanAction({
                         path: testPath,
                         action: "scan",
                         thumbnailSize: 150,
                         source: "user",
-                        timestamp: Date.now(),
                         operationType: "directory",
-                    } as ScanAction,
+                    }),
                 },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -176,22 +189,22 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
         it("应该在重启后恢复扫描队列状态", async () => {
             // 模拟断电前的状态：队列中有待处理任务
             const mockQueueBeforeCrash: ScanAction[] = [
-                {
+                createTestScanAction({
                     path: "/test/folder1",
                     action: "scan",
                     thumbnailSize: 150,
                     source: "user",
                     timestamp: Date.now() - 1000,
                     operationType: "directory",
-                },
-                {
+                }),
+                createTestScanAction({
                     path: "/test/folder2",
                     action: "rescan",
                     thumbnailSize: 150,
                     source: "auto",
                     timestamp: Date.now() - 500,
                     operationType: "directory",
-                },
+                }),
             ];
 
             // Mock天枢返回恢复的队列
@@ -224,14 +237,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
 
         it("应该在断电后正确处理部分完成的扫描任务", async () => {
             // 模拟断电前正在处理的任务
-            const partiallyCompletedAction: ScanAction = {
+            const partiallyCompletedAction: ScanAction = createTestScanAction({
                 path: "/test/partial",
                 action: "scan",
                 thumbnailSize: 150,
                 source: "user",
-                timestamp: Date.now(),
                 operationType: "directory",
-            };
+            });
 
             // Mock天枢返回部分完成的任务状态
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -307,14 +319,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                 content: {
-                    action: {
+                    action: createTestScanAction({
                         path: "/test/path",
                         action: "scan",
                         thumbnailSize: 150,
                         source: "user",
-                        timestamp: Date.now(),
                         operationType: "directory",
-                    } as ScanAction,
+                    }),
                 },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -339,14 +350,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                 content: {
-                    action: {
+                    action: createTestScanAction({
                         path: "/invalid/path",
                         action: "scan",
                         thumbnailSize: 150,
                         source: "user",
-                        timestamp: Date.now(),
                         operationType: "directory",
-                    } as ScanAction,
+                    }),
                 },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -365,14 +375,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                 content: {
-                    action: {
+                    action: createTestScanAction({
                         path: invalidPath,
                         action: "scan",
                         thumbnailSize: 150,
                         source: "user",
-                        timestamp: Date.now(),
                         operationType: "directory",
-                    } as ScanAction,
+                    }),
                 },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -394,14 +403,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                     success: true,
                     queueSize: 1,
                     updatedQueue: [
-                        {
+                        createTestScanAction({
                             path: "/test/reactive",
                             action: "scan",
                             thumbnailSize: 150,
                             source: "user",
-                            timestamp: Date.now(),
                             operationType: "directory",
-                        },
+                        }),
                     ],
                 },
             });
@@ -415,14 +423,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                 content: {
-                    action: {
+                    action: createTestScanAction({
                         path: "/test/reactive",
                         action: "scan",
                         thumbnailSize: 150,
                         source: "user",
-                        timestamp: Date.now(),
                         operationType: "directory",
-                    } as ScanAction,
+                    }),
                 },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -452,14 +459,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                     department: GUANYUAN_NAMES.YU_CHI_GONG,
                     matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                     content: {
-                        action: {
+                        action: createTestScanAction({
                             path: `/test/path${i}`,
                             action: "scan",
                             thumbnailSize: 150,
                             source: "user",
-                            timestamp: Date.now(),
                             operationType: "directory",
-                        } as ScanAction,
+                        }),
                     },
                     timestamp: Date.now(),
                     priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -483,14 +489,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                     department: GUANYUAN_NAMES.YU_CHI_GONG,
                     matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                     content: {
-                        action: {
+                        action: createTestScanAction({
                             path,
                             action: "scan",
                             thumbnailSize: 150,
                             source: "user",
-                            timestamp: Date.now(),
                             operationType: "directory",
-                        } as ScanAction,
+                        }),
                     },
                     timestamp: Date.now(),
                     priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -532,14 +537,13 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
                 content: {
-                    action: {
+                    action: createTestScanAction({
                         path: "/test/path",
                         action: "scan",
                         thumbnailSize: 150,
                         source: "user",
-                        timestamp: Date.now(),
                         operationType: "directory",
-                    } as ScanAction,
+                    }),
                 },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,

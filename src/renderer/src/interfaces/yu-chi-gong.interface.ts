@@ -1,5 +1,5 @@
 import type { InjectionKey } from "vue";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要FolderNode导入
 
 /**
@@ -37,7 +37,7 @@ export interface IYuChiGongService {
      *     yuChiGong.scanningQueue.map(action => action.path)
      * );
      */
-    readonly scanningQueue: ScanAction[];
+    readonly scanningQueue: ScanQueueItem[];
 
     // ✅ RFC 0042 Step 2.5: folderTree已迁移到魏征服务，使用useWeiZheng()访问
 
@@ -59,27 +59,8 @@ export interface IYuChiGongService {
      */
     isInQueue(path: string): boolean;
 
-    /**
-     * 添加扫描任务到队列
-     * @param path 要扫描的路径
-     * @param action 扫描动作类型，可选，默认为 "scan"
-     * @returns Promise<void>
-     * @example
-     * const yuChiGong = useYuChiGong();
-     * await yuChiGong.addScanTask('/test/path', 'scan');
-     */
-    addScanTask(path: string, action?: "scan" | "rescan" | "current"): Promise<void>;
-
-    /**
-     * 添加扫描任务到队列
-     * @param paths 要扫描的路径数组
-     * @param action 扫描动作类型，可选，默认为 "scan"
-     * @returns Promise<void>
-     * @example
-     * const yuChiGong = useYuChiGong();
-     * await yuChiGong.addScanTasks(['/test/path1', '/test/path2'], 'scan');
-     */
-    addScanTasks(paths: string[], action?: "scan" | "rescan" | "current"): Promise<void>;
+    // ✅ RFC 0048 v3 Phase 4: addScanTask() 和 addScanTasks() 已删除
+    // 原因：违反 "Store as SSOT" 原则，应使用 Qizou-Shengzhi-FangXuanLing 流程
 
     /**
      * 移除扫描任务从队列

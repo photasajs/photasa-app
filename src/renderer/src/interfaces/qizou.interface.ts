@@ -1,3 +1,13 @@
+import { ScanActionEvent } from "@common/scan-types";
+
+/**
+ * 启奏 - 扫描完成内容
+ */
+export interface ScanCompletionContent {
+    paths: string[];
+    scanAction: ScanActionEvent;
+}
+
 /**
  * 启奏 - 服务通过mitt事件总线向李世民报告事项
  */
@@ -6,7 +16,7 @@ export interface Qizou {
     matter: string;
 
     /** 启奏内容 */
-    content: Record<string, unknown>;
+    content: Record<string, unknown> | ScanCompletionContent;
 
     /** 来源服务 */
     from: string;

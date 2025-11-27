@@ -4,7 +4,7 @@
  */
 
 import type { FolderNode } from "@common/folder-types";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 
 export interface IBaseStore {
     reset(): void;
@@ -48,7 +48,7 @@ export interface IPhotos extends IBaseStore {
 }
 
 /**
- * 扫描队列访问器接口
+ * 扫描队列访问器接口（RFC 0048 v3）
  *
  * ⚠️ 重要设计原则：只读访问模式
  * - 房玄龄只提供典籍查阅（只读访问）
@@ -56,8 +56,8 @@ export interface IPhotos extends IBaseStore {
  * - 由其他官员（如尉迟恭）呈递奏折，经批准后执行
  */
 export interface IScanning extends IBaseStore {
-    /** 查阅扫描队列（只读副本） */
-    readonly queue: ScanAction[];
+    /** 查阅扫描队列（只读副本，v3: 包含状态机） */
+    readonly queue: ScanQueueItem[];
     /** 查询队列大小（只读） */
     readonly queueSize: number;
     /** 查询当前处理状态（只读） */
@@ -66,8 +66,8 @@ export interface IScanning extends IBaseStore {
     readonly currentPath: string | null;
     /** 检查路径是否在队列中（只读查询） */
     isInQueue(path: string): boolean;
-    /** 查询下一个待处理任务（只读） */
-    readonly nextScanAction: ScanAction | null;
+    /** 查询下一个待处理任务（只读，v3: ScanQueueItem） */
+    readonly nextScanAction: ScanQueueItem | null;
 }
 
 export interface IAppState extends IBaseStore {
@@ -169,6 +169,7 @@ export const ZOUZHE_MATTERS = {
     GET_SCANNING_QUEUE: "get_scanning_queue", // 获取扫描队列（应用启动时恢复）
     ADD_SCAN_ACTION: "add_scan_action", // ✅ RFC 0042 Phase 2.4: 添加单个扫描任务（尉迟恭 → 房玄龄 → 天界）
     REMOVE_SCAN_ACTION: "remove_scan_action", // ✅ RFC 0042 Phase 2.4: 移除单个扫描任务（尉迟恭 → 房玄龄 → 天界）
+    UPDATE_SCAN_ACTION_STATUS: "update_scan_action_status", // ✅ RFC 0048 v3: 更新扫描任务状态（状态机转换）
     // ✅ RFC 0042 Step 2.5: 魏征appState管理事务
     RESTORE_APP_STATE: "restore_app_state", // 恢复应用状态（应用启动时调用）
     UPDATE_FOLDER_TREE: "update_folder_tree", // 更新文件夹树（魏征 → 房玄龄 → 天界）

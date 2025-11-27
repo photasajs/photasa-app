@@ -46,11 +46,7 @@ export class CommandAdapter {
             action: "scan",
             thumbnailSize: profile.thumbnailSize,
             operationType: "directory",
-            priority: profile.priority === "user" ? 0 : 10,
-            timestamp: Date.now(),
             source: "auto",
-            retryCount: 0,
-            fileOperationId: observation.id,
         };
     }
 

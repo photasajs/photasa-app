@@ -14,6 +14,7 @@ export type UserIntent =
     | "get_scanning_queue" // ✅ RFC 0042 Phase 2.3: 获取扫描队列
     | "add_scan_action" // ✅ RFC 0042 Phase 2.4: 添加单个扫描任务（天界workflow）
     | "remove_scan_action" // ✅ RFC 0042 Phase 2.4: 移除单个扫描任务（天界workflow）
+    | "update_scan_action_status" // ✅ RFC 0048 v3: 更新扫描任务状态（状态机转换）
     | "generate_thumbnail"
     | "process_media"
     | "stop_operation"

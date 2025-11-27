@@ -5,6 +5,7 @@
 * **架构文档**
   * [神话架构说明](architecture/MYTHOLOGY.md)
   * [Accessor/Builder模式](architecture/accessor-builder-pattern.md)
+  * [🔴 Zouzhe工作流开发指南](architecture/zouzhe-workflow-guide.md)
 
 * **RFC 文档**
   * [RFC 索引](rfc/README.md)

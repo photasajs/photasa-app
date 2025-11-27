@@ -1,18 +1,18 @@
 import { defineStore } from "pinia";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import { loggers } from "@common/logger";
 
 const logger = loggers.app;
 
 /**
- * 扫描状态接口
+ * 扫描状态接口（RFC 0048 v3）
  *
  * ⚠️ 注意：此典籍不入库（persist: false）
  * 运行时卷宗状态，持久归档由天界千里眼掌管
  */
 export interface ScanningState {
-    /** 扫描队列 - 待审卷宗列表 */
-    queue: ScanAction[];
+    /** 扫描队列 - 待审卷宗列表（v3: 使用 ScanQueueItem 包含状态机） */
+    queue: ScanQueueItem[];
 
     /** 是否正在处理 - 当前是否有官员在审阅 */
     isProcessing: boolean;
@@ -76,9 +76,9 @@ export const useScanningStore = defineStore("scanning", {
          * ⚠️ 内部方法：不得擅自调用
          * 应通过房玄龄宰相的奏折系统访问
          */
-        addToQueue(action: ScanAction): void {
-            logger.debug(`📋 卷宗库：新卷入册 ${action.path}`);
-            this.queue.push(action);
+        addToQueue(item: ScanQueueItem): void {
+            logger.debug(`📋 卷宗库：新卷入册 ${item.path}`);
+            this.queue.push(item);
         },
 
         /**
@@ -110,7 +110,7 @@ export const useScanningStore = defineStore("scanning", {
          * 批量设置队列（从天界恢复卷宗）
          * 应用重启后，从千里眼处取回卷宗清单
          */
-        setQueue(queue: ScanAction[]): void {
+        setQueue(queue: ScanQueueItem[]): void {
             logger.info(`📋 卷宗库：从天界恢复卷宗，共${queue.length}份待审`);
             this.queue = [...queue];
         },

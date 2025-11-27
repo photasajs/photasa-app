@@ -2,9 +2,11 @@
  * RFC 0018: 扫描文件夹优先级排序工具（修复版）
  *
  * 提供扫描文件夹的优先级计算和排序功能，处理向后兼容性
+ *
+ * @deprecated 此模块将在 RFC 0048 v3 中被移除，因为优先级管理已被状态机制取代
  */
 
-import type { ScanAction } from "@common/scan-types";
+import type { FileOperationInput } from "@common/scan-types";
 
 /**
  * 优先级规则配置
@@ -27,15 +29,16 @@ export const PRIORITY_RULES = {
 
 /**
  * 完整的扫描动作类型（所有字段都必需）
+ * @deprecated 使用 FileOperationInput 替代
  */
-export type CompleteScanAction = Required<ScanAction>;
+export type CompleteScanAction = Required<FileOperationInput>;
 
 /**
  * 计算扫描动作的优先级
  */
 export function calculatePriority(
-    action: ScanAction["action"],
-    source: NonNullable<ScanAction["source"]> = "user",
+    action: FileOperationInput["action"],
+    source: NonNullable<FileOperationInput["source"]> = "user",
 ): number {
     const actionPriority = PRIORITY_RULES.action[action];
     const sourceBonus = PRIORITY_RULES.source[source];
@@ -46,7 +49,7 @@ export function calculatePriority(
 /**
  * 确保扫描动作拥有所有必需的字段
  */
-export function ensureCompleteScanAction(scanAction: ScanAction): CompleteScanAction {
+export function ensureCompleteScanAction(scanAction: FileOperationInput): CompleteScanAction {
     const source = scanAction.source || "user";
     const timestamp = scanAction.timestamp || Date.now();
     const priority = scanAction.priority ?? calculatePriority(scanAction.action, source);
@@ -55,9 +58,9 @@ export function ensureCompleteScanAction(scanAction: ScanAction): CompleteScanAc
     const operationType = scanAction.operationType || "directory";
 
     return {
+        ...scanAction,
         operationType,
         retryCount: 0,
-        ...scanAction,
         priority,
         timestamp,
         source,
@@ -68,8 +71,8 @@ export function ensureCompleteScanAction(scanAction: ScanAction): CompleteScanAc
  * 创建带优先级信息的扫描动作
  */
 export function createScanAction(
-    baseScanAction: Omit<ScanAction, "priority" | "timestamp" | "source">,
-    source: NonNullable<ScanAction["source"]> = "user",
+    baseScanAction: Omit<FileOperationInput, "priority" | "timestamp" | "source">,
+    source: NonNullable<FileOperationInput["source"]> = "user",
 ): CompleteScanAction {
     const timestamp = Date.now();
     const priority = calculatePriority(baseScanAction.action, source);
@@ -90,7 +93,7 @@ export function createScanAction(
 /**
  * 排序函数：按优先级、路径、时间戳排序
  */
-export function sortScanningFolders(folders: ScanAction[]): ScanAction[] {
+export function sortScanningFolders(folders: FileOperationInput[]): FileOperationInput[] {
     return [...folders].map(ensureCompleteScanAction).sort((a, b) => {
         // 1. 按优先级排序（数值越小优先级越高）
         const priorityDiff = a.priority - b.priority;
@@ -109,9 +112,9 @@ export function sortScanningFolders(folders: ScanAction[]): ScanAction[] {
  * 更新扫描动作的优先级（保持时间戳不变）
  */
 export function updateScanActionPriority(
-    scanAction: ScanAction,
-    newAction?: ScanAction["action"],
-    newSource?: NonNullable<ScanAction["source"]>,
+    scanAction: FileOperationInput,
+    newAction?: FileOperationInput["action"],
+    newSource?: NonNullable<FileOperationInput["source"]>,
 ): CompleteScanAction {
     const complete = ensureCompleteScanAction(scanAction);
     const action = newAction || complete.action;
@@ -130,9 +133,9 @@ export function updateScanActionPriority(
  * 检查是否需要更新现有扫描动作
  */
 export function shouldUpdateScanAction(
-    existing: ScanAction,
-    newAction: ScanAction["action"],
-    newSource: NonNullable<ScanAction["source"]>,
+    existing: FileOperationInput,
+    newAction: FileOperationInput["action"],
+    newSource: NonNullable<FileOperationInput["source"]>,
 ): boolean {
     const existingComplete = ensureCompleteScanAction(existing);
     const newPriority = calculatePriority(newAction, newSource);
@@ -142,7 +145,7 @@ export function shouldUpdateScanAction(
 /**
  * 获取优先级的可读描述
  */
-export function getPriorityDescription(scanAction: ScanAction): string {
+export function getPriorityDescription(scanAction: FileOperationInput): string {
     const complete = ensureCompleteScanAction(scanAction);
     const actionDesc = {
         current: "current",
@@ -161,7 +164,7 @@ export function getPriorityDescription(scanAction: ScanAction): string {
 /**
  * 调试函数：打印排序后的文件夹列表
  */
-export function debugPrintScanningFolders(folders: ScanAction[], title = "scanning_queue"): void {
+export function debugPrintScanningFolders(folders: FileOperationInput[], title = "scanning_queue"): void {
     console.group(`🗂️ ${title} (${folders.length} folders)`);
     folders.forEach((folder, index) => {
         const complete = ensureCompleteScanAction(folder);

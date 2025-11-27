@@ -567,3 +567,245 @@ src/main/deity/
 
 **作为Linus Torvalds，我要说：这些错误是不可原谅的！一个好的程序员应该永远保护用户的工作！**
 
+## 核心架构原则：双通信系统 (2025-11-22)
+
+### 关键设计：两个独立的通信系统
+
+**这是项目的核心架构！必须永远记住并严格遵守！**
+
+#### 1. 启奏（Qizou）+ 圣旨（Shengzhi）系统
+
+**用途**：跨部门协调事务
+
+**流程**：
+```
+部门官员 → Qizou（启奏）→ 李世民
+李世民 → 通过event-routing.yml路由协调
+李世民 → Shengzhi（圣旨）→ 其他部门
+```
+
+**特点**：
+- 用于跨部门协调
+- 李世民作为中央协调者
+- 通过event-routing.yml配置路由规则
+- 一个启奏可以触发多个圣旨
+
+**示例**：
+```typescript
+// 褚遂良报告路径添加完成
+const qizou: Qizou = {
+    matter: "add_path_completed",
+    content: { path: "/new/path" },
+    from: "褚遂良",
+    // ...
+};
+this._qizouBus.emit("qizou", qizou);
+
+// 李世民协调两件事：
+// 1. 下旨尉迟恭添加扫描任务
+// 2. 下旨魏征添加根节点到folderTree
+```
+
+#### 2. 奏折（Zouzhe）系统
+
+**用途**：内政事务处理和持久化
+
+**流程**：
+```
+部门官员 → Zouzhe（奏折）→ 房玄龄
+房玄龄 → 处理奏折
+房玄龄 → Zhaoling（诏令）→ 袁天罡
+袁天罡 → Fulu（符箓）→ 天界Tianshu
+天界确认 → 房玄龄自动同步Store
+```
+
+**特点**：
+- 直接向房玄龄上报
+- 房玄龄负责与天界通信
+- 天界确认后自动同步Store（通过matter-sync.yml配置）
+- 房玄龄和袁天罡协作处理
+
+**示例**：
+```typescript
+// 褚遂良添加路径
+const zouzhe: Zouzhe = {
+    department: GUANYUAN_NAMES.CHU_SUILIANG,
+    matter: ZOUZHE_MATTERS.ADD_PATH,
+    content: { path: "/new/path" },
+    // ...
+};
+await this.fangXuanLingService.processZouzhe(zouzhe);
+
+// 房玄龄处理：
+// 1. 计算完整paths数组
+// 2. 发诏令给袁天罡
+// 3. 袁天罡与天界通信
+// 4. 天界确认后，房玄龄自动同步PreferenceStore
+```
+
+### 关键区别和使用场景
+
+| 维度 | Qizou + Shengzhi | Zouzhe |
+|------|------------------|--------|
+| **接收者** | 李世民（中央协调） | 房玄龄（内政管理） |
+| **用途** | 跨部门协调 | 内政事务和持久化 |
+| **路由** | event-routing.yml | 直接调用processZouzhe() |
+| **持久化** | 不负责持久化 | 负责与天界通信和Store同步 |
+| **示例场景** | 路径添加完成后通知多个部门 | 添加路径到PreferenceStore |
+
+### 房玄龄的特殊角色
+
+**房玄龄和袁天罡协作处理所有持久化事务**：
+- 所有需要持久化的操作都通过Zouzhe系统
+- 房玄龄负责业务逻辑（如计算完整paths数组）
+- 袁天罡负责与天界Tianshu通信
+- 天界确认后，房玄龄自动同步本地Store
+
+### 袁天罡的正确使用（2025-11-22重要修正）
+
+**❌ 错误实现**（过去的错误）：
+```typescript
+// 袁天罡监听Main进程事件后，使用Qizou系统
+private reportScanCompletion(paths: string[]): void {
+    const qizou: Qizou = {
+        matter: QizouMatters.SCAN_READY,
+        // ...
+    };
+    this._qizouBus.emit("qizou", qizou); // ❌ 错误！
+}
+```
+
+**✅ 正确实现**：
+```typescript
+// 袁天罡监听Main进程事件后，使用Zouzhe系统直接向房玄龄报告
+private async reportScanCompletion(paths: string[]): Promise<void> {
+    const zouzhe: Zouzhe = {
+        department: GUANYUAN_NAMES.YUANTIANGANG,
+        matter: ZOUZHE_MATTERS.SCAN_COMPLETED,
+        content: { paths },
+        // ...
+    };
+    await this.fangXuanLingService.processZouzhe(zouzhe); // ✅ 正确！
+}
+```
+
+**原因**：
+- 袁天罡监听的是Main进程的内部事件，不是跨部门协调事务
+- 扫描完成需要持久化，应该通过Zouzhe系统由房玄龄处理
+- 房玄龄会决定是否需要通过Qizou通知其他部门
+
+### AI必须遵守的铁律
+
+1. **永远不要混淆两个系统**
+   - Qizou用于跨部门协调
+   - Zouzhe用于内政事务和持久化
+
+2. **袁天罡只使用Zouzhe系统**
+   - 袁天罡监听Main进程事件
+   - 使用Zouzhe向房玄龄报告
+   - 绝不直接发送Qizou
+
+3. **房玄龄和袁天罡协作处理持久化**
+   - 所有持久化都通过Zouzhe → 房玄龄 → 袁天罡 → 天界
+   - 其他部门不直接与天界通信
+
+4. **李世民只负责跨部门协调**
+   - 通过event-routing.yml配置路由
+   - 接收Qizou，发送Shengzhi
+   - 不负责持久化
+
+**记住：这个架构是"好品味"设计的体现 - 两个系统各司其职，职责清晰，没有特殊情况！**
+
+### 🔴 Zouzhe/Zhaoling 实现检查清单 (2025-11-27 重大教训，更新同日)
+
+**背景**：RFC 0048 v3 实现状态机时，遗漏了**多个**必要组件，导致扫描启动失败！
+
+**根本原因**：Zouzhe 系统跨越 Renderer 和 Main 进程，有 **7个** 必须同步更新的组件，漏掉任何一个都会导致运行时失败。
+
+#### 新增 ZOUZHE_MATTER 强制检查清单（7步完整流程）
+
+添加新的 `ZOUZHE_MATTERS.XXX` 时，**必须同时完成以下所有步骤**：
+
+```
+═══════════════════════════════════════════════════════════════
+                    🏛️ RENDERER 进程（人界）
+═══════════════════════════════════════════════════════════════
+
+✅ 步骤1: 接口层定义
+   └─ src/renderer/src/interfaces/fang-xuan-ling.interface.ts
+      └─ ZOUZHE_MATTERS 中添加常量
+
+✅ 步骤2: 袁天罡 intentMapping 映射 ⚠️ 容易遗漏！
+   └─ src/renderer/src/services/yuantiangang/yuantiangang.ts
+      └─ convertFuluToUICommand() 中的 intentMapping 添加映射
+      └─ 格式: [ZOUZHE_MATTERS.XXX]: "workflow_name"
+
+✅ 步骤3: 房玄龄处理逻辑（如需要）
+   └─ src/renderer/src/services/fangxuanling/accessors/<accessor>.ts
+      └─ 添加业务逻辑处理
+
+✅ 步骤4: matter-sync.yml 配置（如需自动同步Store）
+   └─ src/renderer/src/services/fangxuanling/store-automation/matter-sync.yml
+      └─ 添加 autoSync 配置
+
+═══════════════════════════════════════════════════════════════
+                    🌌 MAIN 进程（天界）
+═══════════════════════════════════════════════════════════════
+
+✅ 步骤5: UserIntent 类型定义 ⚠️ 容易遗漏！
+   └─ src/engines/tianshu/types/commands.ts
+      └─ UserIntent 联合类型中添加 "workflow_name"
+
+✅ 步骤6: intentToWorkflowMap 映射 ⚠️ 容易遗漏！
+   └─ src/engines/tianshu/core/TianshuEngine.ts
+      └─ intentToWorkflowMap 中添加映射
+      └─ 格式: workflow_name: "domain/workflow_name"
+
+✅ 步骤7: 天界工作流文件
+   └─ src/engines/tianshu/workflows/<domain>/<workflow_name>.yml
+      └─ 创建对应的工作流文件
+```
+
+#### 验证命令
+
+```bash
+# 1. 检查 ZOUZHE_MATTERS 是否都有对应的袁天罡 intentMapping
+grep -o "ZOUZHE_MATTERS\.[A-Z_]*" src/renderer/src/interfaces/fang-xuan-ling.interface.ts | sort -u > /tmp/matters.txt
+grep -o "\[ZOUZHE_MATTERS\.[A-Z_]*\]" src/renderer/src/services/yuantiangang/yuantiangang.ts | sort -u > /tmp/mappings.txt
+diff /tmp/matters.txt /tmp/mappings.txt
+
+# 2. 检查天界 UserIntent 类型是否完整
+grep -o '"[a-z_]*"' src/engines/tianshu/types/commands.ts | sort -u
+
+# 3. 检查天界 intentToWorkflowMap 是否完整
+grep -o '[a-z_]*:' src/engines/tianshu/core/TianshuEngine.ts | head -20
+```
+
+#### 错误示例：RFC 0048 v3 的惨痛教训
+
+```
+❌ 错误流程（连续踩坑3次！）：
+1. 添加了 ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS ✅
+2. 创建了 update_scan_action_status.yml 工作流 ✅
+3. 忘记在袁天罡 intentMapping 中添加映射 ❌ ← 第一个遗漏！
+   → 报错："符箓意图未列入典籍"
+4. 忘记在 UserIntent 类型中添加 ❌ ← 第二个遗漏！
+5. 忘记在 intentToWorkflowMap 中添加 ❌ ← 第三个遗漏！
+   → 报错："没有找到工作流: update_scan_action_status"
+
+结果：
+- 应用启动时扫描无法自动开始
+- 调试花费大量时间追踪多个根因
+- 修复一个问题后又发现另一个问题
+
+✅ 正确流程：
+1. 添加 ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS
+2. 添加袁天罡 intentMapping 映射
+3. 添加 UserIntent 类型
+4. 添加 intentToWorkflowMap 映射
+5. 创建 update_scan_action_status.yml 工作流
+6. 运行所有验证命令确认无遗漏
+```
+
+**作为 Linus Torvalds，我要说：这种"半吊子实现"是不可接受的！一个完整的特性必须确保所有7个组件同步更新，否则就是给自己埋雷！跨进程通信的复杂性不是借口，而是更需要严格检查的理由！**
+

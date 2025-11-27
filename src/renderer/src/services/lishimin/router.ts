@@ -187,10 +187,15 @@ export class QiZouRouter {
                 );
 
                 // 构建圣旨
+                const resolvedContent = this.resolveContent(route.then.shengzhi.content, qizou);
+                // 🔍 验证步骤2：检查路由解析后的内容
+                logger.info(
+                    `🔍 [验证步骤2] 李世民路由解析: matter=${matter}, 原始content=${JSON.stringify(route.then.shengzhi.content)}, 解析后content=${JSON.stringify(resolvedContent)}`,
+                );
                 const shengzhi: Shengzhi = {
                     id: this.generateShengzhiId(),
                     command: route.then.shengzhi.command,
-                    content: this.resolveContent(route.then.shengzhi.content, qizou),
+                    content: resolvedContent,
                     priority: route.then.shengzhi.priority,
                     from: "李世民",
                     timestamp: Date.now(),

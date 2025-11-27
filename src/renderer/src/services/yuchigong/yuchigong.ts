@@ -1,4 +1,4 @@
-import { watchArray } from "@vueuse/core";
+import PQueue from "p-queue";
 import { IService } from "@/interfaces/service.interface";
 import { IYuChiGongService } from "@renderer/interfaces/yu-chi-gong.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
@@ -11,8 +11,9 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
-import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+// ✅ RFC 0048 v3 Phase 4: QizouMatters 导入已删除（随persistToStore()一起删除）
 import type { ScanAction } from "@common/scan-types";
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import { loggers } from "@common/logger";
 import { normalizePath } from "@renderer/utils/path";
 
@@ -25,28 +26,26 @@ const logger = loggers.yuchigong;
  *
  * 职责：
  * 1. 接收李世民圣旨（add_scan_task / remove_scan_task）
- * 2. 创建ScanAction对象并发送ADD_SCAN_ACTION奏折给房玄龄
- * 3. 通过FangXuanLing.scanning Accessor去重检查（不维护本地状态）
+ * 2. 主动控制扫描任务执行（使用 p-queue）
+ * 3. 创建ScanAction对象并发送ADD_SCAN_ACTION奏折给房玄龄（用于持久化）
  * 4. 通过qizou启奏向李世民汇报任务结果
  *
- * **架构原则**（RFC 0042 Step 1）：
- * - ✅ 不维护本地状态 - 所有队列访问委托给FangXuanLing.scanning Accessor
- * - ✅ 使用Accessor去重检查 - fangXuanLingService.scanning.isInQueue(path)
- * - ✅ 发送单个action奏折（ADD_SCAN_ACTION）- 不发送完整队列
- * - ✅ 房玄龄负责更新Store并触发天界持久化（matter-sync.yml）
+ * **架构原则**（2025-01-16 重构）：
+ * - ✅ 服务主动控制执行 - 使用 p-queue 管理扫描任务执行
+ * - ✅ 不依赖 Store 触发 - 执行队列（p-queue）独立于持久化队列（Store）
+ * - ✅ 持久化仅用于恢复 - Store 只用于应用重启后恢复未完成任务
+ * - ✅ 无响应式监听 - 不使用 watchArray，纯业务逻辑控制
  *
- * **协调链路**（RFC 0042 Phase 2.4修正版）：
- * 褚遂良完成路径添加 → 启奏李世民 → 李世民下旨尉迟恭 →
- * 尉迟恭发ADD_SCAN_ACTION奏折给房玄龄（单个action） →
- * 房玄龄 → 袁天罡 → 天枢工作流（add_scan_action.yml）→
- * 千里眼引擎执行业务逻辑（恢复队列 → append操作 → 持久化）→
- * 天枢返回完整队列快照 → 房玄龄Store Automation自动同步
+ * **执行流程**：
+ * 1. addScanTasks() → 添加到 p-queue（执行） + 发奏折（持久化）
+ * 2. p-queue 自动按序执行任务
+ * 3. executeScan() 执行单个扫描任务
+ * 4. 扫描完成后从持久化队列移除
  *
  * @class YuChiGongService
  * @implements {IService}
  * @since RFC 0038 Phase 7 - qizou-shengzhi架构
- * @updated RFC 0042 Phase 2.4修正 - 单个action奏折流程，Store为SSOT
- * @date 2025-10-19
+ * @updated 2025-01-16 - 使用 p-queue 替代 watchArray，服务主动控制执行
  */
 export class YuChiGongService implements IService, IYuChiGongService {
     /**
@@ -56,111 +55,251 @@ export class YuChiGongService implements IService, IYuChiGongService {
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
 
     /**
-     * 扫描处理标志
-     * 防止并发扫描
+     * 扫描执行队列
+     * 使用 p-queue 确保任务按序执行，同时只运行一个扫描任务
      */
-    private isProcessing = false;
+    private scanQueue: PQueue;
 
     constructor(private fangXuanLingService: IFangXuanLingService) {
         logger.info("🛡️ 尉迟恭就任，负责扫描队列业务逻辑管理");
-        this.startAutoScan(); // 启动自动扫描监听
+
+        // 初始化执行队列：concurrency: 1 确保同时只执行一个扫描任务
+        this.scanQueue = new PQueue({ concurrency: 1 });
+
+        // ✅ 添加错误监听器，防止未捕获错误导致队列停止
+        this.scanQueue.on("error", (error) => {
+            logger.error("🛡️ 尉迟恭：扫描队列发生未捕获错误", error);
+        });
+
+        logger.info("🛡️ 尉迟恭：扫描执行队列已就绪");
     }
 
     /**
-     * 启动自动扫描监听
-     * 监听队列变化，自动触发扫描
-     *
-     * @private
-     * @since RFC 0048
-     * @fix 使用 watchArray 正确追踪 getter 返回的响应式数组
-     */
-    private startAutoScan(): void {
-        logger.info("🛡️ 尉迟恭：启动自动扫描监听");
-        watchArray(
-            () => this.scanningQueue,
-            () => {
-                logger.debug("🛡️ 尉迟恭：检测到扫描队列变化");
-                if (!this.isProcessing && this.scanningQueue.length > 0) {
-                    logger.info(`🛡️ 尉迟恭：队列有 ${this.scanningQueue.length} 个任务，触发扫描`);
-                    setTimeout(() => this.processNextTask(), 0);
-                } else {
-                    logger.debug(
-                        `🛡️ 尉迟恭：isProcessing=${this.isProcessing}, queue.length=${this.scanningQueue.length}`,
-                    );
-                }
-            },
-            { deep: true },
-        );
-    }
-
-    /**
-     * 处理下一个扫描任务（RFC 0048 - 核心扫描逻辑）
+     * 执行单个扫描任务（核心扫描逻辑）
      *
      * @description
      * 扫描编排7步流程：
      * 1. 启奏开始
      * 2. 重扫描时重置配置
      * 3. 文件操作 - 记录父目录
-     * 4. 目录操作 - 扫描子文件夹
+     * 4. 目录操作 - 扫描子文件夹（递归添加到队列）
      * 5. 执行扫描
-     * 6. 移除任务
+     * 6. 移除任务（从持久化队列）
      * 7. 启奏完成/失败
      *
+     * @param path 扫描路径
+     * @param action 扫描动作类型
+     * @param operationType 操作类型（文件或目录）
+     *
      * @private
-     * @since RFC 0048
+     * @since 2025-01-16 重构
      */
-    private async processNextTask(): Promise<void> {
-        const task = this.scanningQueue[0];
-        if (!task) return;
-        this.isProcessing = true;
+    private async executeScan(
+        path: string,
+        action: "scan" | "rescan" | "current",
+        operationType: "directory" | "file" = "directory",
+    ): Promise<void> {
+        logger.info(`🛡️ 尉迟恭：开始扫描 ${path}`);
 
-        // 1. 启奏开始
-        this.emitQizou("scan_started", { path: task.path });
+        // 1. ✅ RFC 0048 v3: pending → processing
+        await this.updateTaskStatus(path, "processing", { startedAt: Date.now() });
+
+        // 2. 启奏开始
+        this.emitQizou("scan_started", { path });
 
         try {
-            // 2. 重扫描时重置配置
-            if (task.action === "rescan" && task.operationType === "directory") {
-                await window.api.resetPhotasaConfig(task.path);
+            // 3. 重扫描时重置配置
+            if (action === "rescan" && operationType === "directory") {
+                await window.api.resetPhotasaConfig(path);
             }
 
-            // 3. 文件操作 - 记录父目录
+            // 4. 文件操作 - 记录父目录
             let parentDir: string | null = null;
-            if (task.operationType === "file") {
-                parentDir = window.api.toDirName(task.path);
+            if (operationType === "file") {
+                parentDir = window.api.toDirName(path);
             }
 
-            // 4. 目录操作 - 扫描子文件夹
-            if (task.operationType === "directory") {
-                const subfolders = await window.api.scanSubfolders(task.path);
+            // 5. 目录操作 - 扫描子文件夹（递归 + ✅ RFC 0048 v3: 批量持久化）
+            if (operationType === "directory") {
+                const subfolders = await window.api.scanSubfolders(path);
                 if (subfolders.length > 0) {
-                    await this.addScanTasks(subfolders, "scan");
+                    logger.info(
+                        `🛡️ 尉迟恭：发现 ${subfolders.length} 个子文件夹，持久化到Store并添加到p-queue`,
+                    );
+
+                    // ✅ RFC 0048 v3: 批量创建pending任务到Store
+                    const subfolderActions: ScanAction[] = subfolders.map((subfolder) => ({
+                        path: subfolder,
+                        action,
+                        thumbnailSize: 150,
+                        operationType: "directory" as const,
+                        source: "auto" as const, // 自动发现的子文件夹
+                        timestamp: Date.now(),
+                    }));
+
+                    await this.createTasks(subfolderActions);
+
+                    // 添加子文件夹到 p-queue（会自动按序执行）
+                    for (const subfolder of subfolders) {
+                        this.scanQueue
+                            .add(() => this.executeScan(subfolder, action, operationType))
+                            .catch((error) => {
+                                // ✅ 捕获递归扫描错误
+                                logger.error(`🛡️ 尉迟恭：子文件夹扫描失败 ${subfolder}`, error);
+                            });
+                    }
                 }
             }
 
-            // 5. 执行扫描
+            // 6. 执行扫描
             await window.api.scanPhotos({
-                path: task.path,
-                action: task.action,
+                path,
+                action,
                 thumbnailSize: 150,
-                isDirectory: task.operationType !== "file",
+                isDirectory: operationType !== "file",
             });
 
-            // 6. 移除任务
-            await this.removeScanTask(task.path);
+            // 7. ✅ RFC 0048 v3: 完成即删除（无completed状态）
+            await this.deleteTask(path);
 
-            // 7. 启奏完成
+            // 8. 启奏完成
+            // 🔍 验证步骤1：尉迟恭发出 scan_completed 启奏
+            logger.info(
+                `🔍 [验证] 尉迟恭发出 scan_completed: path=${path}, operationType=${operationType}`,
+            );
             this.emitQizou("scan_completed", {
-                path: task.path,
-                parentDir: parentDir,
-                operationType: task.operationType,
+                path,
+                parentDir,
+                operationType,
             });
+
+            logger.info(`🛡️ 尉迟恭：扫描完成并清理 ${path}`);
         } catch (error) {
-            logger.error(`🛡️ 扫描失败 ${task.path}`, error);
-            await this.removeScanTask(task.path);
-            this.emitQizou("scan_failed", { path: task.path, error: String(error) });
+            logger.error(`🛡️ 尉迟恭：扫描失败 ${path}`, error);
+
+            // ✅ RFC 0048 v3: 失败时更新为failed状态（支持重试）
+            try {
+                await this.updateTaskStatus(path, "failed", {
+                    error: String(error),
+                    retryCount: 0, // TODO: Phase 3 - 从Store读取当前retryCount并递增
+                });
+            } catch (statusError) {
+                logger.error(`🛡️ 尉迟恭：更新失败状态错误 ${path}`, statusError);
+            }
+
+            this.emitQizou("scan_failed", { path, error: String(error) });
+        }
+    }
+
+    /**
+     * 更新任务状态（RFC 0048 v3 状态机核心）
+     *
+     * @description
+     * 状态转换规则：
+     * - pending → processing: 任务开始执行
+     * - processing → failed: 任务执行失败（可重试）
+     * - processing → [删除]: 任务执行成功（立即清理）
+     *
+     * @param path 任务路径
+     * @param status 目标状态
+     * @param updates 额外更新字段（error, startedAt等）
+     * @private
+     * @since RFC 0048 Phase 2
+     */
+    private async updateTaskStatus(
+        path: string,
+        status: "pending" | "processing" | "failed",
+        updates: Partial<ScanQueueItem> = {},
+    ): Promise<void> {
+        logger.debug(`🛡️ 尉迟恭：更新任务状态 ${path} → ${status}`, updates);
+
+        // ✅ RFC 0048 v3 Phase 3: 通过Zouzhe更新Store状态
+        const updateZouzhe: Zouzhe = {
+            department: GUANYUAN_NAMES.YU_CHI_GONG,
+            matter: ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS,
+            content: { path, status, updates },
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.URGENT, // 状态更新是紧急操作
+        };
+
+        const response = await this.fangXuanLingService.processZouzhe(updateZouzhe);
+
+        if (!response.approved) {
+            logger.error(`🛡️ 尉迟恭：状态更新失败 ${path} - ${response.instruction}`);
+            throw new Error(`房玄龄状态更新失败：${response.instruction}`);
         }
 
-        this.isProcessing = false;
+        logger.debug(`🛡️ 尉迟恭：状态更新成功 ${path} → ${status}`);
+    }
+
+    /**
+     * 批量创建pending任务到Store（RFC 0048 v3 子文件夹持久化）
+     *
+     * @description
+     * 用于子文件夹扫描时，将发现的子文件夹批量持久化到Store
+     * 所有任务初始状态为pending，等待p-queue调度执行
+     *
+     * @param scanActions IPC层的ScanAction数组
+     * @private
+     * @since RFC 0048 Phase 2
+     */
+    private async createTasks(scanActions: ScanAction[]): Promise<void> {
+        if (scanActions.length === 0) return;
+
+        logger.info(`🛡️ 尉迟恭：批量创建pending任务 ${scanActions.length}个`);
+
+        // 注意：转换为ScanQueueItem由Store层的createScanQueueItem()完成
+        // 这里只发送IPC契约类型（ScanAction），保持架构分层清晰
+
+        // 通过Zouzhe批量添加到Store
+        const addActionsZouzhe: Zouzhe = {
+            department: GUANYUAN_NAMES.YU_CHI_GONG,
+            matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+            content: { actions: scanActions }, // 工作流期望IPC类型
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        };
+
+        const response = await this.fangXuanLingService.processZouzhe(addActionsZouzhe);
+
+        if (!response.approved) {
+            throw new Error(`房玄龄批量创建任务失败：${response.instruction}`);
+        }
+
+        logger.info(`🛡️ 尉迟恭：批量创建任务成功 ${scanActions.length}个`);
+    }
+
+    /**
+     * 删除任务（RFC 0048 v3 立即清理）
+     *
+     * @description
+     * 任务完成后立即从Store删除，不保留completed状态
+     * 符合"Store = SSOT + 零历史"原则
+     *
+     * @param path 任务路径
+     * @private
+     * @since RFC 0048 Phase 2
+     */
+    private async deleteTask(path: string): Promise<void> {
+        logger.debug(`🛡️ 尉迟恭：删除任务 ${path}`);
+
+        // 通过Zouzhe删除Store任务
+        const removeZouzhe: Zouzhe = {
+            department: GUANYUAN_NAMES.YU_CHI_GONG,
+            matter: ZOUZHE_MATTERS.REMOVE_SCAN_ACTION,
+            content: { path },
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        };
+
+        const response = await this.fangXuanLingService.processZouzhe(removeZouzhe);
+
+        if (!response.approved) {
+            logger.error(`🛡️ 尉迟恭：删除任务失败 ${path} - ${response.instruction}`);
+            throw new Error(`房玄龄删除任务失败：${response.instruction}`);
+        }
+
+        logger.debug(`🛡️ 尉迟恭：任务已删除 ${path}`);
     }
 
     /**
@@ -302,12 +441,16 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 return;
             }
 
-            // 2. 创建ScanAction对象
+            // 2. 创建 ScanAction（IPC 契约）
             const scanAction: ScanAction = {
                 path,
                 action: (shengzhi.content.action as "scan" | "rescan" | "current") || "scan",
                 thumbnailSize: 150, // 默认缩略图大小
-                source: (shengzhi.content.source as "user" | "auto") || "user",
+                // discovered 来源映射为 auto（IPC 层只支持 user/auto）
+                source:
+                    shengzhi.content.source === "discovered"
+                        ? "auto"
+                        : (shengzhi.content.source as "user" | "auto") || "user",
                 timestamp: Date.now(),
                 operationType: "directory",
             };
@@ -329,11 +472,22 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 throw new Error(`房玄龄未批准：${response.instruction}`);
             }
 
-            // 4. ✅ 响应圣旨时不发送 SCAN_TASK_ADDED 启奏
+            // 4. ✅ RFC 0048 v3: 添加到 p-queue 执行队列（修复：扫描未启动问题）
+            // Store 是 SSOT，但 p-queue 是执行器，必须同时添加到 p-queue 才能执行
+            const action = (shengzhi.content.action as "scan" | "rescan" | "current") || "scan";
+            logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${path}`);
+            this.scanQueue
+                .add(() => this.executeScan(path, action, "directory"))
+                .catch((error) => {
+                    // ✅ 捕获任何未处理的错误，防止队列停止
+                    logger.error(`🛡️ 尉迟恭：任务执行失败 ${path}`, error);
+                });
+
+            // 5. ✅ 响应圣旨时不发送 SCAN_TASK_ADDED 启奏
             // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
             // SCAN_TASK_ADDED 启奏只在直接调用 addScanTasks() 时发送，用于触发魏征的 add_paths 批量处理
 
-            logger.info(`🛡️ 尉迟恭：扫描任务已添加（响应圣旨） ${path}`);
+            logger.info(`🛡️ 尉迟恭：扫描任务已添加并开始执行（响应圣旨） ${path}`);
         } catch (error) {
             logger.error(`🛡️ 尉迟恭：添加扫描任务失败 ${path}`, error);
 
@@ -616,11 +770,11 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     /**
-     * 扫描队列（只读属性）
-     * 返回原始ScanAction[]数组，UI层使用computed做转换
+     * 扫描队列（只读属性，v3: 返回 ScanQueueItem[] 包含状态机）
+     * UI层可以直接访问任务状态（pending/processing/failed）
      * 委托到房玄龄的ScanningStore Accessor
      */
-    get scanningQueue(): ScanAction[] {
+    get scanningQueue(): ScanQueueItem[] {
         return this.fangXuanLingService.scanning.queue;
     }
 
@@ -642,122 +796,20 @@ export class YuChiGongService implements IService, IYuChiGongService {
         return this.fangXuanLingService.scanning.isInQueue(path);
     }
 
-    /**
-     * 批量添加扫描任务到队列（核心实现）
-     * @param paths 要扫描的路径数组
-     * @param action 扫描动作类型，可选，默认为 "scan"
-     *
-     * @description
-     * Linus "好品味"设计：批量处理，单次通信
-     * - addScanTask(path) 只是 addScanTasks([path]) 的便利方法
-     * - 批量去重、批量创建、一次性发送给天界
-     */
-    async addScanTasks(
-        paths: string[],
-        action: "scan" | "rescan" | "current" = "scan",
-    ): Promise<void> {
-        logger.info(`🛡️ 尉迟恭：批量添加扫描任务，共${paths.length}个路径`);
-
-        // 1. 批量验证和去重
-        const validPaths: string[] = [];
-        const duplicatePaths: string[] = [];
-
-        // 批量验证和去重
-        paths.forEach((path) => {
-            if (!path || typeof path !== "string" || path.trim() === "") {
-                logger.error(`🛡️ 尉迟恭：路径参数无效：${path}`);
-                return;
-            }
-
-            if (this.fangXuanLingService.scanning.isInQueue(path)) {
-                duplicatePaths.push(path);
-            } else {
-                validPaths.push(path);
-            }
-        });
-
-        // 如果没有新路径需要添加，直接返回
-        if (validPaths.length === 0) {
-            logger.info(
-                `🛡️ 尉迟恭：所有路径已存在或无效 (重复${duplicatePaths.length}个，无效${paths.length - duplicatePaths.length}个)`,
-            );
-            // 批量汇报重复路径（如果有）
-            if (duplicatePaths.length > 0) {
-                this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
-                    paths: duplicatePaths,
-                    persisted: true,
-                });
-            }
-            return;
-        }
-
-        try {
-            // 2. 批量创建ScanAction对象
-            const scanActions: ScanAction[] = validPaths.map((path) => ({
-                path,
-                action,
-                thumbnailSize: 150,
-                source: "user",
-                timestamp: Date.now(),
-                operationType: "directory" as const,
-            }));
-
-            // 3. ✅ 一次性发送ADD_SCAN_ACTION奏折（天界支持数组）
-            const addActionZouzhe: Zouzhe = {
-                department: GUANYUAN_NAMES.YU_CHI_GONG,
-                matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
-                content: { actions: scanActions }, // 发送数组
-                timestamp: Date.now(),
-                priority: ZOUZHE_PRIORITIES.NORMAL,
-            };
-
-            logger.info(`🛡️ 尉迟恭向房玄龄呈递批量添加扫描任务奏折: ${validPaths.length}个路径`);
-            const response = await this.fangXuanLingService.processZouzhe(addActionZouzhe);
-
-            if (!response.approved) {
-                throw new Error(`房玄龄未批准：${response.instruction}`);
-            }
-
-            // 4. 批量启奏汇报所有新添加的路径
-            const persisted = (response.data as Record<string, unknown>)?.persisted === true;
-
-            this.emitQizou(QizouMatters.SCAN_TASK_ADDED, {
-                paths: validPaths,
-                persisted,
-            });
-
-            logger.info(
-                `🛡️ 尉迟恭：批量添加完成 (新增${validPaths.length}个，重复${duplicatePaths.length}个)`,
-            );
-        } catch (error) {
-            logger.error(`🛡️ 尉迟恭：批量添加失败`, error);
-            throw error;
-        }
-    }
+    // ✅ RFC 0048 v3 Phase 4: addScanTask(), addScanTasks() 和 persistToStore() 已删除
+    // 原因：违反 "Store as SSOT" 原则，绕过了 Qizou-Shengzhi-FangXuanLing 标准流程
+    // 替代方案：所有扫描任务添加必须通过李世民圣旨系统触发
 
     /**
-     * 添加单个扫描任务到队列（便利方法）
-     * @param path 要扫描的路径
-     * @param action 扫描动作类型，可选，默认为 "scan"
-     *
-     * @description
-     * 这只是 addScanTasks([path]) 的便利方法
-     * 所有实际逻辑都在 addScanTasks 中实现
-     */
-    async addScanTask(path: string, action: "scan" | "rescan" | "current" = "scan"): Promise<void> {
-        return this.addScanTasks([path], action);
-    }
-
-    /**
-     * 移除扫描任务从队列
+     * 移除扫描任务从持久化队列
      * @param path 要移除的路径
      *
      * @description
-     * Linus "好品味"设计：统一数据流
-     * - 移除操作也走奏折系统
+     * 只负责从持久化队列移除，执行队列由 p-queue 自动管理
+     * - 移除操作走奏折系统
      * - 利用现有 remove_scan_action.yml 工作流
      * - Store Automation自动同步
-     * - watchArray监听到变化，自动触发下一个任务
+     * - p-queue 会自动继续处理下一个任务，无需手动触发
      */
     async removeScanTask(path: string): Promise<void> {
         // 路径参数验证
@@ -889,10 +941,109 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
             const response = await this.fangXuanLingService.processZouzhe(zouzhe);
 
-            // ✅ Validator要求：委托给房玄龄，队列在Store中
             if (response.approved) {
-                const queueSize = this.fangXuanLingService.scanning.queueSize;
-                logger.info(`🛡️ 尉迟恭：扫描队列初始化完成，共${queueSize}个任务`);
+                // ✅ 获取 Store 中的所有任务（包含状态）
+                const allTasks = this.scanningQueue;
+
+                // 🔍 验证步骤1：检查Store中是否有任务
+                logger.info(`🔍 [验证步骤1] Store中的任务数量: ${allTasks.length}`);
+                if (allTasks.length > 0) {
+                    logger.info(
+                        `🔍 [验证步骤1] 任务列表:`,
+                        allTasks.map((t) => ({
+                            path: t.path,
+                            status: t.status,
+                            action: t.action,
+                        })),
+                    );
+                    logger.info(`🛡️ 尉迟恭：开始状态恢复，共 ${allTasks.length} 个任务`);
+
+                    // ✅ RFC 0048 v3: 状态恢复逻辑
+                    const now = Date.now();
+                    const FAILED_TASK_TTL = 24 * 60 * 60 * 1000; // 24小时
+
+                    for (const task of allTasks) {
+                        // 1. processing → pending（孤儿任务：上次应用崩溃时正在执行的任务）
+                        if (task.status === "processing") {
+                            logger.warn(`🛡️ 尉迟恭：发现孤儿任务 ${task.path}，重置为pending`);
+                            await this.updateTaskStatus(task.path, "pending", {
+                                startedAt: undefined,
+                            });
+                            // 添加到执行队列
+                            logger.info(`🔍 [验证步骤1] 添加孤儿任务到p-queue: ${task.path}`);
+                            this.scanQueue
+                                .add(() =>
+                                    this.executeScan(task.path, task.action, task.operationType),
+                                )
+                                .catch((error) => {
+                                    logger.error(`🛡️ 尉迟恭：孤儿任务执行失败 ${task.path}`, error);
+                                });
+                        }
+                        // 2. failed → 重试或删除（超24h删除）
+                        else if (task.status === "failed") {
+                            const taskAge = now - task.createdAt;
+                            if (taskAge > FAILED_TASK_TTL) {
+                                logger.info(
+                                    `🛡️ 尉迟恭：删除超时失败任务 ${task.path}（已失败${Math.round(taskAge / 3600000)}小时）`,
+                                );
+                                await this.deleteTask(task.path);
+                            } else if (task.retryCount < task.maxRetries) {
+                                logger.info(
+                                    `🛡️ 尉迟恭：重试失败任务 ${task.path}（重试${task.retryCount + 1}/${task.maxRetries}）`,
+                                );
+                                await this.updateTaskStatus(task.path, "pending", {
+                                    retryCount: task.retryCount + 1,
+                                    error: undefined,
+                                });
+                                // 添加到执行队列
+                                logger.info(`🔍 [验证步骤1] 添加重试任务到p-queue: ${task.path}`);
+                                this.scanQueue
+                                    .add(() =>
+                                        this.executeScan(
+                                            task.path,
+                                            task.action,
+                                            task.operationType,
+                                        ),
+                                    )
+                                    .catch((error) => {
+                                        logger.error(
+                                            `🛡️ 尉迟恭：失败任务重试执行失败 ${task.path}`,
+                                            error,
+                                        );
+                                    });
+                            } else {
+                                logger.warn(
+                                    `🛡️ 尉迟恭：删除达到重试上限的失败任务 ${task.path}（${task.retryCount}/${task.maxRetries}）`,
+                                );
+                                await this.deleteTask(task.path);
+                            }
+                        }
+                        // 3. pending 或无状态（兼容旧格式）→ 恢复到p-queue继续执行
+                        else {
+                            // ✅ 兜底逻辑：pending 任务或旧格式任务（无status字段）都当作pending处理
+                            logger.info(
+                                `🛡️ 尉迟恭：恢复任务到执行队列 ${task.path}（状态：${task.status || "legacy-pending"}）`,
+                            );
+                            // 🔍 验证步骤1：确认任务被添加到p-queue
+                            logger.info(`🔍 [验证步骤1] 添加任务到p-queue: ${task.path}`);
+                            this.scanQueue
+                                .add(() =>
+                                    this.executeScan(task.path, task.action, task.operationType),
+                                )
+                                .catch((error) => {
+                                    logger.error(`🛡️ 尉迟恭：任务执行失败 ${task.path}`, error);
+                                });
+                            // 🔍 验证步骤1：检查p-queue状态
+                            logger.info(
+                                `🔍 [验证步骤1] p-queue状态: pending=${this.scanQueue.pending}, size=${this.scanQueue.size}`,
+                            );
+                        }
+                    }
+
+                    logger.info(`🛡️ 尉迟恭：扫描队列初始化完成，自动继续执行`);
+                } else {
+                    logger.info("🛡️ 尉迟恭：扫描队列为空，无需恢复");
+                }
             } else {
                 logger.warn("🛡️ 尉迟恭：未能获取扫描队列数据，使用空队列启动");
             }

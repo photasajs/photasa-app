@@ -67,23 +67,29 @@ export default class TianshuService implements IService {
      * 唤醒天枢星君，建立工作流编排体系
      */
     async initialize(): Promise<void> {
-        // 创建天枢引擎实例，传入太乙服务作为步骤执行器
-        this.tianshuEngine = new TianshuEngine({
-            workflowDir: "src/engines/tianshu/workflows",
-            maxConcurrentWorkflows: 5,
-            defaultTimeout: 600000, // 10分钟超时（应对复杂文件夹扫描）
-            enableHotReload: false,
-            stepExecutor: this.taiyiService as IStepExecutor,
-        });
+        try {
+            // 创建天枢引擎实例，传入太乙服务作为步骤执行器
+            this.tianshuEngine = new TianshuEngine({
+                workflowDir: "src/engines/tianshu/workflows",
+                maxConcurrentWorkflows: 5,
+                defaultTimeout: 600000, // 10分钟超时（应对复杂文件夹扫描）
+                enableHotReload: false,
+                stepExecutor: this.taiyiService as IStepExecutor,
+            });
 
-        await this.tianshuEngine.initialize();
+            await this.tianshuEngine.initialize();
 
-        // 设置工作流事件监听器
-        this.setupWorkflowEventListeners();
+            // 设置工作流事件监听器
+            this.setupWorkflowEventListeners();
 
-        // 注册IPC处理器
-        this.setupIpcHandlers();
-        logger.info("天枢服务已初始化");
+            // 注册IPC处理器
+            this.setupIpcHandlers();
+            logger.info("天枢服务已初始化");
+        } catch (error) {
+            // ✅ 修复：初始化失败时清理已注册的 handler，避免重试时重复注册
+            this.cleanupIpcHandlers();
+            throw error;
+        }
     }
 
     /**
@@ -91,6 +97,9 @@ export default class TianshuService implements IService {
      * 让天枢星君进入休眠状态，保存当前状态
      */
     async shutdown(): Promise<void> {
+        // 清理IPC处理器
+        this.cleanupIpcHandlers();
+
         // 清理所有pending的Promise
         for (const [_commandId, pending] of this.pendingCommands) {
             clearTimeout(pending.timeout);
@@ -101,6 +110,16 @@ export default class TianshuService implements IService {
         if (this.tianshuEngine) {
             await this.tianshuEngine.shutdown();
         }
+    }
+
+    /**
+     * 清理IPC处理器（用于初始化失败或关闭时）
+     * @private
+     */
+    private cleanupIpcHandlers(): void {
+        this.ipcMain.removeHandler("tianshu.command");
+        this.ipcMain.removeHandler("tianshu.status");
+        logger.debug("🌌 天枢星君IPC处理器已清理");
     }
 
     /**
@@ -168,6 +187,12 @@ export default class TianshuService implements IService {
      * 建立与渲染进程的通信桥梁，处理各种天庭事务
      */
     private setupIpcHandlers(): void {
+        // ✅ 修复：防止重复注册 handler（服务可能被重复初始化）
+        // 先移除已存在的 handler，避免 "Attempted to register a second handler" 错误
+        // removeHandler 是幂等的，如果 handler 不存在也不会报错
+        this.ipcMain.removeHandler("tianshu.command");
+        this.ipcMain.removeHandler("tianshu.status");
+
         // 天枢星君命令处理 - 使用requestId模式跟踪Promise
         this.ipcMain.handle("tianshu.command", async (_, command) => {
             return new Promise((resolve, reject) => {

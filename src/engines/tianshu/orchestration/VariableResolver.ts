@@ -283,7 +283,13 @@ export class VariableResolver {
 
         // 遍历路径
         for (let i = 1; i < parts.length; i++) {
-            if (value && isObject(value) && parts[i] in value) {
+            // ✅ 修复：支持数组属性访问（如 array.length）
+            // isObject() 可能排除数组，需要单独检查数组
+            const isArray = Array.isArray(value);
+            const isPlainObject = isObject(value);
+            const hasProperty = parts[i] in value;
+
+            if (value && (isArray || isPlainObject) && hasProperty) {
                 value = value[parts[i]];
             } else {
                 // 对于 inputs/input 路径，即使字段不存在也返回 undefined，不抛错

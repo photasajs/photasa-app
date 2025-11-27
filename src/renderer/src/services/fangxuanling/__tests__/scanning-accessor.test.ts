@@ -3,8 +3,22 @@ import { setActivePinia, createPinia } from "pinia";
 import { FangXuanLingService } from "../fangxuanling";
 import { useScanningStore } from "../stores/scanning-store";
 import { createScanningService } from "../accessors/service-builders";
-import type { ScanAction } from "@common/scan-types";
+import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { IYuanTianGangService } from "@renderer/interfaces/yuan-tian-gang.interface";
+
+/**
+ * Helper: 创建测试用 ScanQueueItem（Store 内部类型）
+ */
+function createTestScanQueueItem(overrides: Partial<ScanQueueItem> = {}): ScanQueueItem {
+    return createScanQueueItem({
+        path: overrides.path || "/test/path",
+        action: overrides.action || "scan",
+        thumbnailSize: overrides.thumbnailSize || 150,
+        operationType: overrides.operationType || "directory",
+        source: overrides.source || "user",
+        maxRetries: overrides.maxRetries || 3,
+    });
+}
 
 // Mock YuanTianGang服务
 const mockYuanTianGang = {
@@ -23,12 +37,10 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
 
     describe("只读属性：queue", () => {
         it("应该返回响应式队列引用（RFC 0042设计）", () => {
-            const action: ScanAction = {
+            const action = createTestScanQueueItem({
                 path: "/test/path1",
                 action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
+            });
 
             // 通过Store直接添加（模拟其他服务通过Zouzhe修改）
             scanningStore.addToQueue(action);
@@ -43,12 +55,10 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.queue).toBe(queue);
 
             // 通过Store添加另一个action
-            scanningStore.addToQueue({
+            scanningStore.addToQueue(createTestScanQueueItem({
                 path: "/test/path2",
                 action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            });
+            }));
 
             // 验证响应式引用会自动更新
             expect(fangXuanLing.scanning.queue).toHaveLength(2);
@@ -66,21 +76,11 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.queueSize).toBe(0);
 
             // 通过Store直接添加（模拟其他服务通过Zouzhe修改）
-            scanningStore.addToQueue({
-                path: "/test/path1",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            });
+            scanningStore.addToQueue(createTestScanQueueItem({ path: "/test/path1", action: "scan" }));
 
             expect(fangXuanLing.scanning.queueSize).toBe(1);
 
-            scanningStore.addToQueue({
-                path: "/test/path2",
-                action: "rescan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            });
+            scanningStore.addToQueue(createTestScanQueueItem({ path: "/test/path2", action: "rescan" }));
 
             expect(fangXuanLing.scanning.queueSize).toBe(2);
         });
@@ -127,12 +127,7 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
         it("应该返回下一个待处理任务", () => {
             expect(fangXuanLing.scanning.nextScanAction).toBeNull();
 
-            const action: ScanAction = {
-                path: "/test/path1",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
+            const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
             // 通过Store添加任务（模拟其他服务通过Zouzhe修改）
             scanningStore.addToQueue(action);
@@ -153,12 +148,7 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.isInQueue(path)).toBe(false);
 
             // 通过Store添加任务（模拟其他服务通过Zouzhe修改）
-            scanningStore.addToQueue({
-                path,
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            });
+            scanningStore.addToQueue(createTestScanQueueItem({ path }));
 
             expect(fangXuanLing.scanning.isInQueue(path)).toBe(true);
             expect(fangXuanLing.scanning.isInQueue("/test/other")).toBe(false);
@@ -192,12 +182,7 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
 
         it("应该与Store状态实时同步（只读）", () => {
             // 通过Store修改（模拟其他服务通过Zouzhe修改）
-            scanningStore.addToQueue({
-                path: "/test/path",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            });
+            scanningStore.addToQueue(createTestScanQueueItem({ path: "/test/path", action: "scan" }));
 
             // accessor应该立即反映变化
             expect(fangXuanLing.scanning.queueSize).toBe(1);
@@ -220,18 +205,8 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.currentPath).toBeNull();
 
             // 2. 其他服务通过Zouzhe添加任务（这里直接操作Store模拟）
-            const action1: ScanAction = {
-                path: "/test/path1",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
-            const action2: ScanAction = {
-                path: "/test/path2",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
+            const action1 = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
+            const action2 = createTestScanQueueItem({ path: "/test/path2", action: "scan" });
 
             scanningStore.addToQueue(action1);
             scanningStore.addToQueue(action2);

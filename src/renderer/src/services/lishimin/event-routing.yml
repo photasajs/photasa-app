@@ -37,8 +37,9 @@ qizou_routes:
                   priority: "normal"
               description: "路径添加完成后，下旨魏征添加根节点到folderTree"
 
-    # ✅ RFC 0042: 尉迟恭报告扫描任务已添加 → 李世民协调魏征批量添加路径
-    # 使用场景：当用户直接通过 yuChiGong.addScanTasks() 添加扫描任务时（绕过褚遂良流程）
+    # ✅ RFC 0048 v3 Phase 4: 尉迟恭报告扫描任务已添加 → 李世民协调魏征批量添加路径
+    # 注意：yuChiGong.addScanTasks() 已在 Phase 4 中删除（违反 Store as SSOT 原则）
+    # 新流程：所有扫描任务添加必须通过李世民圣旨系统触发（Qizou-Shengzhi-FangXuanLing）
     # 魏征会批量处理路径数组，智能判断每个路径的状态并采取相应行动
     scan_task_added:
         - when:

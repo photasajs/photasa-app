@@ -32,30 +32,40 @@ export interface FileOperation {
 }
 
 /**
- * Enhanced ScanAction interface with support for file operations and priority sorting
- * @description Unified interface for both directory scans and file operations with priority-based sorting
+ * 扫描任务接口 - IPC通信契约（Renderer ↔ Main）
+ *
+ * @description
+ * 这是renderer进程与main进程之间的IPC通信接口，定义了扫描请求的数据格式。
+ * 此接口必须保持向后兼容，不能随意修改，因为main进程依赖这个契约。
+ *
+ * @important
+ * - 这是IPC契约，不是Store内部的数据结构
+ * - Store可以有自己的接口（包含状态机等字段）
+ * - 修改此接口会影响renderer与main的通信
+ *
+ * @since RFC 0042 - IPC契约定义
  */
 export interface ScanAction {
-    path: string; // 扫描路径
-    action: "scan" | "rescan" | "current"; // 扫描动作
-    thumbnailSize: number; // 缩略图大小
+    /** 扫描路径 */
+    path: string;
 
-    // Priority sorting fields (RFC 0018)
-    priority?: number; // 优先级（数值越小优先级越高）
-    timestamp?: number; // 时间戳（用于相同优先级的排序）
-    source?: "user" | "auto"; // 来源：用户手动添加或自动发现
+    /** 扫描动作类型 */
+    action: "scan" | "rescan" | "current";
 
-    // Unified processing fields
+    /** 缩略图大小 */
+    thumbnailSize: number;
+
+    /** 操作类型（可选，用于区分文件和目录） */
     operationType?: "directory" | "file";
-    retryCount?: number;
-    fileOperationId?: string; // Link to FileOperation if applicable
 
-    // Progress tracking for incremental cache
-    progress?: {
-        processed: number;
-        total: number;
-        cacheEnabled?: boolean;
-    };
+    /** 任务来源（可选，用于追踪任务来源） */
+    source?: "user" | "auto";
+
+    /** 时间戳（可选，用于排序） */
+    timestamp?: number;
+
+    /** 重试次数（可选，用于失败重试） */
+    retryCount?: number;
 }
 
 /**
@@ -129,14 +139,15 @@ export type ScanCallback = (action: ScanArgs) => void;
  * @description 千里眼扫描事件类型，用于千里眼扫描服务与袁天罡通信
  */
 export type ScanActionEvent = {
-    type: "action" | "complete";
+    type: "action" | "complete"; // 事件类型
+    currentFile?: string; // 当前处理的文件名
     action?:
         | {
               path: string;
               isDirectory: boolean;
           }
-        | undefined;
-    paths?: string[] | undefined;
+        | undefined; // 扫描动作
+    paths?: string[]; // 扫描路径数组
 };
 
 /**

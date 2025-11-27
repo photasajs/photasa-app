@@ -1,7 +1,21 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useScanningStore } from "../stores/scanning-store";
-import type { ScanAction } from "@common/scan-types";
+import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
+
+/**
+ * Helper: 创建测试用 ScanQueueItem（Store 内部类型）
+ */
+function createTestScanQueueItem(overrides: Partial<ScanQueueItem> = {}): ScanQueueItem {
+    return createScanQueueItem({
+        path: overrides.path || "/test/path",
+        action: overrides.action || "scan",
+        thumbnailSize: overrides.thumbnailSize || 150,
+        operationType: overrides.operationType || "directory",
+        source: overrides.source || "user",
+        maxRetries: overrides.maxRetries || 3,
+    });
+}
 
 describe("ScanningStore", () => {
     beforeEach(() => {
@@ -23,12 +37,7 @@ describe("ScanningStore", () => {
             const store = useScanningStore();
             expect(store.queueSize).toBe(0);
 
-            const action: ScanAction = {
-                path: "/test/path1",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
+            const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
             store.addToQueue(action);
 
             expect(store.queueSize).toBe(1);
@@ -37,18 +46,8 @@ describe("ScanningStore", () => {
         it("queuePaths应该返回所有路径", () => {
             const store = useScanningStore();
 
-            const action1: ScanAction = {
-                path: "/test/path1",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
-            const action2: ScanAction = {
-                path: "/test/path2",
-                action: "rescan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
+            const action1 = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
+            const action2 = createTestScanQueueItem({ path: "/test/path2", action: "rescan" });
 
             store.addToQueue(action1);
             store.addToQueue(action2);
@@ -59,12 +58,7 @@ describe("ScanningStore", () => {
         it("isInQueue应该正确检查路径是否在队列中", () => {
             const store = useScanningStore();
 
-            const action: ScanAction = {
-                path: "/test/path1",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
+            const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
             expect(store.isInQueue("/test/path1")).toBe(false);
 
@@ -79,18 +73,8 @@ describe("ScanningStore", () => {
 
             expect(store.nextScanAction).toBe(null);
 
-            const action1: ScanAction = {
-                path: "/test/path1",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
-            const action2: ScanAction = {
-                path: "/test/path2",
-                action: "rescan",
-                thumbnailSize: 150,
-                operationType: "directory",
-            };
+            const action1 = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
+            const action2 = createTestScanQueueItem({ path: "/test/path2", action: "rescan" });
 
             store.addToQueue(action1);
             store.addToQueue(action2);
@@ -104,12 +88,7 @@ describe("ScanningStore", () => {
             it("应该成功添加任务到队列", () => {
                 const store = useScanningStore();
 
-                const action: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
                 store.addToQueue(action);
 
@@ -120,18 +99,8 @@ describe("ScanningStore", () => {
             it("应该能添加多个任务", () => {
                 const store = useScanningStore();
 
-                const action1: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
-                const action2: ScanAction = {
-                    path: "/test/path2",
-                    action: "rescan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action1 = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
+                const action2 = createTestScanQueueItem({ path: "/test/path2", action: "rescan" });
 
                 store.addToQueue(action1);
                 store.addToQueue(action2);
@@ -146,12 +115,7 @@ describe("ScanningStore", () => {
             it("应该成功从队列中移除任务", () => {
                 const store = useScanningStore();
 
-                const action: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
                 store.addToQueue(action);
                 expect(store.queue).toHaveLength(1);
@@ -163,12 +127,7 @@ describe("ScanningStore", () => {
             it("移除不存在的路径不应报错", () => {
                 const store = useScanningStore();
 
-                const action: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
                 store.addToQueue(action);
                 expect(store.queue).toHaveLength(1);
@@ -180,18 +139,8 @@ describe("ScanningStore", () => {
             it("应该只移除第一个匹配的任务", () => {
                 const store = useScanningStore();
 
-                const action1: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
-                const action2: ScanAction = {
-                    path: "/test/path2",
-                    action: "rescan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action1 = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
+                const action2 = createTestScanQueueItem({ path: "/test/path2", action: "rescan" });
 
                 store.addToQueue(action1);
                 store.addToQueue(action2);
@@ -207,12 +156,7 @@ describe("ScanningStore", () => {
             it("应该清空队列和重置状态", () => {
                 const store = useScanningStore();
 
-                const action: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
                 store.addToQueue(action);
                 store.setProcessingStatus(true, "/test/path1");
@@ -233,19 +177,9 @@ describe("ScanningStore", () => {
             it("应该批量设置队列", () => {
                 const store = useScanningStore();
 
-                const actions: ScanAction[] = [
-                    {
-                        path: "/test/path1",
-                        action: "scan",
-                        thumbnailSize: 150,
-                        operationType: "directory",
-                    },
-                    {
-                        path: "/test/path2",
-                        action: "rescan",
-                        thumbnailSize: 150,
-                        operationType: "directory",
-                    },
+                const actions: ScanQueueItem[] = [
+                    createTestScanQueueItem({ path: "/test/path1", action: "scan" }),
+                    createTestScanQueueItem({ path: "/test/path2", action: "rescan" }),
                 ];
 
                 store.setQueue(actions);
@@ -257,24 +191,14 @@ describe("ScanningStore", () => {
             it("应该创建队列副本而不是引用", () => {
                 const store = useScanningStore();
 
-                const actions: ScanAction[] = [
-                    {
-                        path: "/test/path1",
-                        action: "scan",
-                        thumbnailSize: 150,
-                        operationType: "directory",
-                    },
+                const actions: ScanQueueItem[] = [
+                    createTestScanQueueItem({ path: "/test/path1", action: "scan" }),
                 ];
 
                 store.setQueue(actions);
 
                 // 修改原数组不应影响store
-                actions.push({
-                    path: "/test/path2",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                });
+                actions.push(createTestScanQueueItem({ path: "/test/path2", action: "scan" }));
 
                 expect(store.queue).toHaveLength(1);
             });
@@ -282,29 +206,14 @@ describe("ScanningStore", () => {
             it("应该替换现有队列", () => {
                 const store = useScanningStore();
 
-                const action1: ScanAction = {
-                    path: "/test/old",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action1 = createTestScanQueueItem({ path: "/test/old", action: "scan" });
 
                 store.addToQueue(action1);
                 expect(store.queue).toHaveLength(1);
 
-                const newActions: ScanAction[] = [
-                    {
-                        path: "/test/new1",
-                        action: "scan",
-                        thumbnailSize: 150,
-                        operationType: "directory",
-                    },
-                    {
-                        path: "/test/new2",
-                        action: "rescan",
-                        thumbnailSize: 150,
-                        operationType: "directory",
-                    },
+                const newActions: ScanQueueItem[] = [
+                    createTestScanQueueItem({ path: "/test/new1", action: "scan" }),
+                    createTestScanQueueItem({ path: "/test/new2", action: "rescan" }),
                 ];
 
                 store.setQueue(newActions);
@@ -341,12 +250,7 @@ describe("ScanningStore", () => {
             it("应该更新任务进度", () => {
                 const store = useScanningStore();
 
-                const action: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
                 store.addToQueue(action);
 
@@ -362,12 +266,7 @@ describe("ScanningStore", () => {
             it("更新不存在路径的进度不应报错", () => {
                 const store = useScanningStore();
 
-                const action: ScanAction = {
-                    path: "/test/path1",
-                    action: "scan",
-                    thumbnailSize: 150,
-                    operationType: "directory",
-                };
+                const action = createTestScanQueueItem({ path: "/test/path1", action: "scan" });
 
                 store.addToQueue(action);
 

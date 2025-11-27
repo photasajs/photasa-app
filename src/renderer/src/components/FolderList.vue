@@ -194,11 +194,13 @@ async function rescan(key: string): Promise<void> {
         await resetPhotasaConfig(key);
         logger.info(`[FolderList] Reset config completed for: ${key}`);
 
-        // ✅ RFC 0042: addScanFolder 已废弃
+        // ✅ RFC 0048 v3 Phase 4: addScanTask() 已删除（违反 Store as SSOT 原则）
         // TODO: 实现新的 rescan 机制
-        // 应该通过尉迟恭直接添加扫描任务：
-        // await yuChiGong.addScanTask({ path: key, action: "rescan", source: "user" });
-        logger.warn(`⚠️ Rescan 功能暂时禁用，等待 RFC 0042 完成后端实现`);
+        // 应该通过李世民圣旨系统触发扫描任务：
+        // 1. UI 发送圣旨给李世民（ADD_SCAN_TASK）
+        // 2. 李世民调用天界 workflow（add_scan_action.yml）
+        // 3. FangXuanLing 自动同步到 Store
+        logger.warn(`⚠️ Rescan 功能暂时禁用，等待 RFC 0048 v3 圣旨系统实现`);
 
         logger.info(`[FolderList] Rescan prepared for: ${key}`);
     } catch (error) {

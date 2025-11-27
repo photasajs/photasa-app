@@ -32,7 +32,10 @@
             "Bash(npm run test:e2e:*)",
             "Bash(tee:*)",
             "Bash(npm run typecheck:node:*)",
-            "Bash(git log:*)"
+            "Bash(git log:*)",
+            "Bash(git grep:*)",
+            "Bash(perl:*)",
+            "Bash(cut:*)"
         ],
         "deny": [],
         "ask": []

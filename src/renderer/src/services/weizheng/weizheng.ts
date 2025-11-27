@@ -326,6 +326,11 @@ export class WeiZhengService implements IService, IWeiZhengService {
     private async handleAddPaths(shengzhi: Shengzhi): Promise<void> {
         const paths = shengzhi.content?.paths as string[];
 
+        // 🔍 验证步骤2：检查魏征收到的圣旨内容
+        logger.info(
+            `🔍 [验证步骤2] 魏征收到 add_paths 圣旨: paths=${JSON.stringify(paths)}, content=${JSON.stringify(shengzhi.content)}`,
+        );
+
         // 🔧 防御性编程：确保paths是有效数组
         if (!paths || !Array.isArray(paths) || paths.length === 0) {
             logger.warn("🏛️ 魏征：add_paths圣旨参数无效，paths必须是非空数组");
