@@ -22,6 +22,26 @@ import {
 } from "../pool-manager";
 import { PhotasaLogger } from "@common/logger";
 
+// Mock thumbnail-worker?nodeWorker
+// Use a manual mock that intercepts the import
+const mockCreateWorker = jest.fn(() => ({
+    postMessage: jest.fn(),
+    on: jest.fn(),
+    terminate: jest.fn(),
+    ref: jest.fn(),
+    unref: jest.fn(),
+}));
+
+// Mock the module before importing pool-manager
+jest.mock(
+    "../../thumbnail/thumbnail-worker",
+    () => ({
+        __esModule: true,
+        default: mockCreateWorker,
+    }),
+    { virtual: true },
+);
+
 // Mock dependencies
 jest.mock("../../../workers/worker-pool", () => ({
     WorkerPool: jest.fn().mockImplementation(() => ({

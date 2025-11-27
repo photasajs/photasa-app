@@ -84,11 +84,15 @@ const mockDate = new Date(1640995200000); // 2022-01-01T00:00:00.000Z
 const OriginalDate = global.Date;
 
 // Mock Date constructor
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 global.Date = class extends OriginalDate {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(...args: any[]) {
         if (args.length === 0) {
             super(mockDate.getTime());
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            // @ts-expect-error - Date constructor accepts various argument types
             super(...args);
         }
     }
@@ -104,6 +108,7 @@ global.Date = class extends OriginalDate {
     getTime() {
         return mockDate.getTime();
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 // Copy static methods without causing circular reference
@@ -122,6 +127,34 @@ Object.defineProperty(global.Date, "UTC", {
     value: OriginalDate.UTC,
     writable: true,
 });
+
+// 确保window对象存在并具有必要的方法
+if (typeof window !== "undefined") {
+    // 确保window.addEventListener存在
+    if (!window.addEventListener) {
+        window.addEventListener = vi.fn();
+    }
+    // 确保window.removeEventListener存在
+    if (!window.removeEventListener) {
+        window.removeEventListener = vi.fn();
+    }
+    // 确保document.addEventListener存在
+    if (typeof document !== "undefined" && !document.addEventListener) {
+        document.addEventListener = vi.fn();
+    }
+    // 确保Event构造函数可用
+    if (!window.Event) {
+        window.Event = global.Event as typeof Event;
+    }
+    // 确保MouseEvent构造函数可用
+    if (!window.MouseEvent) {
+        window.MouseEvent = global.MouseEvent as typeof MouseEvent;
+    }
+    // 确保KeyboardEvent构造函数可用
+    if (!window.KeyboardEvent) {
+        window.KeyboardEvent = global.KeyboardEvent as typeof KeyboardEvent;
+    }
+}
 
 // Clean up after each test
 afterEach(() => {
