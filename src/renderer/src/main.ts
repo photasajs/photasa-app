@@ -16,7 +16,7 @@ import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
 import { FindPhotoServiceKey } from "@renderer/interfaces/find-photo-service.interface";
 import { globalLogInterceptor } from "@common/logger";
 
-import { LisshiminService, LISSHIMING_TOKEN } from "./services";
+import { LishiminService, LISSHIMING_TOKEN } from "./services";
 import { loggers } from "@common/logger";
 
 const logger = loggers.lishimin;
@@ -42,7 +42,7 @@ const findPhotoServiceIpc = new FindPhotoServiceIpc();
 app.provide(FindPhotoServiceKey, findPhotoServiceIpc);
 
 // 大唐李世民登基
-const lishiminService = new LisshiminService(app);
+const lishiminService = new LishiminService(app);
 app.provide(LISSHIMING_TOKEN, lishiminService);
 
 // 初始化 renderer 日志拦截器 - 直接发送到 log viewer

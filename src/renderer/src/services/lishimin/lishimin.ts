@@ -1,4 +1,4 @@
-import { ILisshiminService } from "@renderer/interfaces/li-shi-min.interface";
+import { ILishiminService } from "@renderer/interfaces/li-shi-min.interface";
 import { App } from "vue";
 
 import { YUAN_TIAN_GANG_TOKEN } from "@renderer/interfaces/yuan-tian-gang.interface";
@@ -22,7 +22,7 @@ import { loggers } from "@common/logger";
 const logger = loggers.lishimin;
 
 /**
- * 李世民服务（LisshiminService）- 大唐朝廷总管
+ * 李世民服务（LishiminService）- 大唐朝廷总管
  *
  * 职责：
  * 1. 统筹朝廷百官就任（服务初始化与依赖注入）
@@ -58,12 +58,12 @@ const logger = loggers.lishimin;
  *      李世民路由器监听
  * ```
  *
- * @class LisshiminService
- * @implements {ILisshiminService}
+ * @class LishiminService
+ * @implements {ILishiminService}
  * @since RFC 0038 Phase 7 - qizou-shengzhi架构
  * @date 2025-10-16
  */
-export class LisshiminService implements ILisshiminService {
+export class LishiminService implements ILishiminService {
     /** 袁天罡服务 - 钦天监（IPC事件监听） */
     private yuanTianGangService!: YuanTianGangService;
 
