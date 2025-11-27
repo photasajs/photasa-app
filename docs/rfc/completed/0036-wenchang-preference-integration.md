@@ -152,7 +152,7 @@ RFC 0036已成功完成所有既定目标，建立了完整的偏好设置双向
 4. **App启动时偏好加载**（李世民服务）✅
    - 文件：[li-shi-ming.service.ts:64](../../../src/renderer/src/services/li-shi-ming.service.ts#L64)
    - 流程：启动时调用`initializePreferences()`
-   - 入口：[main.ts:52](../../../src/renderer/src/main.ts#L52) `await lisshimingService.startZhengguan()`
+   - 入口：[main.ts:52](../../../src/renderer/src/main.ts#L52) `await LisshiminService.startZhengguan()`
 
 5. **智能数据合并**（房玄龄工具函数）✅
    - 文件：[utils.ts](../../../src/renderer/src/services/fangxuanling/utils.ts)

@@ -1,4 +1,4 @@
-export interface ILisshimingService {
+export interface ILisshiminService {
     startZhengguan(): void;
 }
 

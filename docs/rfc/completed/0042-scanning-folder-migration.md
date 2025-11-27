@@ -1094,7 +1094,7 @@ export type PreferenceState = {
 ```typescript
 // src/renderer/src/services/lishimin/lishimin.ts
 
-export class LisshimingService {
+export class LisshiminService {
     /**
      * 首次启动时迁移现有scanningFolder数据
      */

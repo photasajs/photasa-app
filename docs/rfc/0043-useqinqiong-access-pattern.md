@@ -1034,7 +1034,7 @@ function onFileDrop(filePath: string) {
 ```typescript
 // src/renderer/src/services/qinqiong/qinqiong.ts
 
-import type { IService, Shengzhi } from "@renderer/interfaces/li-shi-ming.interface";
+import type { IService, Shengzhi } from "@renderer/interfaces/li-shi-min.interface";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { useFangxuanling } from "@renderer/services/fangxuanling/fangxuanling";
 import { renjieEventBus } from "../renjie-event-bus";
