@@ -496,7 +496,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 setTimeout(() => {
                     expect(yuchiGong.getQueueSize()).toBe(0);
                     expect(emittedQizous[0].matter).toBe("scan_task_failed");
-                    expect(emittedQizous[0].content.error).toContain("空字符串");
+                    expect((emittedQizous[0].content as Record<string, unknown>).error).toContain("空字符串");
                     resolve();
                 }, 50);
             });
@@ -518,7 +518,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 setTimeout(() => {
                     expect(yuchiGong.getQueueSize()).toBe(0);
                     expect(emittedQizous[0].matter).toBe("scan_task_failed");
-                    expect(emittedQizous[0].content.error).toContain("类型错误");
+                    expect((emittedQizous[0].content as Record<string, unknown>).error).toContain("类型错误");
                     resolve();
                 }, 50);
             });
@@ -688,7 +688,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 setTimeout(() => {
                     expect(mockFangXuanLing.receivedZouzhes).toHaveLength(0);
                     expect(emittedQizous[0].matter).toBe("scan_task_failed");
-                    expect(emittedQizous[0].content.error).toContain("空字符串");
+                    expect((emittedQizous[0].content as Record<string, unknown>).error).toContain("空字符串");
                     resolve();
                 }, 50);
             });
@@ -1000,11 +1000,11 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             // 验证启奏
             const startedQizou = emittedQizous.find((q) => q.matter === "scan_started");
             expect(startedQizou).toBeDefined();
-            expect(startedQizou?.content.path).toBe(testPath);
+            expect((startedQizou?.content as Record<string, unknown>).path).toBe(testPath);
 
             const completedQizou = emittedQizous.find((q) => q.matter === "scan_completed");
             expect(completedQizou).toBeDefined();
-            expect(completedQizou?.content.path).toBe(testPath);
+            expect((completedQizou?.content as Record<string, unknown>).path).toBe(testPath);
         });
 
         it("应该在重扫描时重置配置", async () => {
@@ -1069,7 +1069,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             // 验证启奏包含parentDir
             await new Promise((resolve) => setTimeout(resolve, 100));
             const completedQizou = emittedQizous.find((q) => q.matter === "scan_completed");
-            expect(completedQizou?.content.parentDir).toBe("/parent/dir");
+            expect((completedQizou?.content as Record<string, unknown>).parentDir).toBe("/parent/dir");
         });
 
         it("应该处理扫描失败情况", async () => {
@@ -1086,8 +1086,8 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             // 验证启奏失败消息
             const failedQizou = emittedQizous.find((q) => q.matter === "scan_failed");
             expect(failedQizou).toBeDefined();
-            expect(failedQizou?.content.path).toBe(testPath);
-            expect(failedQizou?.content.error).toContain("扫描失败");
+            expect((failedQizou?.content as Record<string, unknown>).path).toBe(testPath);
+            expect((failedQizou?.content as Record<string, unknown>).error).toContain("扫描失败");
         });
 
         // ✅ RFC 0048 v3 Phase 4: 已删除测试 "应该在扫描失败后继续处理下一个任务"
