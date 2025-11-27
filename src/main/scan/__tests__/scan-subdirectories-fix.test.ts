@@ -6,6 +6,24 @@ import { scanPhotos } from "../scan-photos";
 import type { ScanAction } from "@common/scan-types";
 import type { PhotasaLogger } from "@common/logger";
 
+// Mock thumbnail-worker
+vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => ({
+    default: vi.fn(() => ({
+        on: vi.fn(),
+        postMessage: vi.fn(),
+        terminate: vi.fn(),
+    })),
+}));
+
+// Mock pool-manager
+vi.mock("../worker/pool-manager", () => ({
+    getWorkerPool: vi.fn(() => ({
+        addTask: vi.fn().mockResolvedValue(undefined),
+        shutdown: vi.fn().mockResolvedValue(true),
+    })),
+    shutdownWorkerPool: vi.fn().mockResolvedValue(true),
+}));
+
 describe("扫描子目录修复测试", () => {
     let tempDir: string;
     let testFolder: string;

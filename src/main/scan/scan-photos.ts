@@ -214,12 +214,8 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
             return;
         }
 
+        // 获取 Worker 池，如果初始化失败会抛出错误
         const workerPool = getWorkerPool(logger);
-
-        // 如果没有 Worker 池（测试环境），使用简化的处理方式
-        if (!workerPool) {
-            logger.debug("[scanPhotos] 使用简化处理模式（无 Worker 池）");
-        }
 
         // 对于目录扫描，先进行策略决策
         if (isDirectoryScan(scan)) {
@@ -348,12 +344,6 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                                                 await cacheManager.recordFileProcessed(action);
                                             }
 
-                                            if (!workerPool) {
-                                                logger.warn(
-                                                    "[processFileList] Worker池不可用，跳过缩略图创建",
-                                                );
-                                                return action;
-                                            }
                                             return processPhotoFile(
                                                 action,
                                                 scan,
@@ -408,12 +398,6 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                                             scan.action,
                                             logger,
                                         );
-                                        if (!workerPool) {
-                                            logger.warn(
-                                                "[processFileList] Worker池不可用，跳过缩略图创建",
-                                            );
-                                            return action;
-                                        }
                                         return processPhotoFile(
                                             action,
                                             scan,
@@ -442,10 +426,6 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
                             scan.action,
                             logger,
                         );
-                        if (!workerPool) {
-                            logger.warn("[processFileList] Worker池不可用，跳过缩略图创建");
-                            return action;
-                        }
                         return processPhotoFile(action, scan, shouldProcess, workerPool, logger);
                     }),
                 )
@@ -470,7 +450,7 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
  * @param files - 待处理的文件列表
  * @param scan - 扫描动作配置
  * @param cacheManager - 增量缓存管理器
- * @param workerPool - Worker 池实例（可为 null）
+ * @param workerPool - Worker 池实例
  * @param logger - 日志记录器
  * @param subscriber - Observable 订阅器，用于发送处理结果
  *
@@ -480,19 +460,15 @@ async function processFileList(
     files: PhotoFileRequest[],
     scan: ScanAction,
     cacheManager: IncrementalCacheManager,
-    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse> | null,
+    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse>,
     logger: PhotasaLogger,
-    subscriber: any,
+    subscriber: Subscriber<PhotoFileRequest>,
 ) {
     for (const file of files) {
         try {
             const shouldProcess = await shouldProcessFile(file.path, scan.action, logger);
 
             if (shouldProcess) {
-                if (!workerPool) {
-                    logger.warn("[processFileList] Worker池不可用，跳过缩略图创建");
-                    return;
-                }
                 await processPhotoFile(file, scan, shouldProcess, workerPool, logger);
                 await cacheManager.recordFileProcessed(file);
             }

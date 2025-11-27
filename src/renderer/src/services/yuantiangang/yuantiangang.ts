@@ -17,7 +17,6 @@ import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@common/scan-types";
 import { computeScannedFilePaths } from "./utils";
 import { IntentToFuluMapping } from "./intent";
-import { E } from "vitest/dist/chunks/environment.d.cL3nLXbE";
 
 const logger = loggers.yuantiangang;
 
@@ -130,11 +129,6 @@ export class YuanTianGangService implements IYuanTianGangService {
                 logger.error("🔮 启奏通道未建立，无法发送启奏");
                 return;
             }
-
-            // 🔍 验证步骤2：检查 reportScanCompletion 发送的内容
-            logger.info(
-                `🔍 [验证步骤2] 袁天罡 reportScanCompletion: paths=${JSON.stringify(paths)}, scanAction.type=${scanAction.type}, scanAction.action?.path=${scanAction.action?.path}`,
-            );
 
             // 构建启奏
             const qizou: Qizou = {

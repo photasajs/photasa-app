@@ -166,13 +166,12 @@ export class LogInterceptor {
         // 非侵入式拦截：保持原有功能，添加拦截逻辑
         (["debug", "info", "warn", "error"] as const).forEach((level) => {
             const originalMethod = console[level] as typeof console.debug;
-            const self = this;
-            (console[level] as typeof console.debug) = function (...args: unknown[]) {
+            (console[level] as typeof console.debug) = (...args: unknown[]) => {
                 // 始终调用原始方法保持正常输出
                 originalMethod.apply(console, args);
 
                 // 只有在激活时才进行拦截
-                if (self._isActive) {
+                if (this._isActive) {
                     const entry: LogEntry = {
                         timestamp: new Date().toISOString(),
                         level: level as LogEntry["level"],
@@ -185,7 +184,7 @@ export class LogInterceptor {
                         source: "renderer",
                     };
                     // 在 renderer 进程中，直接通知本地监听器（log viewer UI）
-                    self.notify(entry);
+                    this.notify(entry);
                 }
             };
         });

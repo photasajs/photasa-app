@@ -55,10 +55,12 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.queue).toBe(queue);
 
             // 通过Store添加另一个action
-            scanningStore.addToQueue(createTestScanQueueItem({
-                path: "/test/path2",
-                action: "scan",
-            }));
+            scanningStore.addToQueue(
+                createTestScanQueueItem({
+                    path: "/test/path2",
+                    action: "scan",
+                }),
+            );
 
             // 验证响应式引用会自动更新
             expect(fangXuanLing.scanning.queue).toHaveLength(2);
@@ -76,11 +78,15 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
             expect(fangXuanLing.scanning.queueSize).toBe(0);
 
             // 通过Store直接添加（模拟其他服务通过Zouzhe修改）
-            scanningStore.addToQueue(createTestScanQueueItem({ path: "/test/path1", action: "scan" }));
+            scanningStore.addToQueue(
+                createTestScanQueueItem({ path: "/test/path1", action: "scan" }),
+            );
 
             expect(fangXuanLing.scanning.queueSize).toBe(1);
 
-            scanningStore.addToQueue(createTestScanQueueItem({ path: "/test/path2", action: "rescan" }));
+            scanningStore.addToQueue(
+                createTestScanQueueItem({ path: "/test/path2", action: "rescan" }),
+            );
 
             expect(fangXuanLing.scanning.queueSize).toBe(2);
         });
@@ -182,7 +188,9 @@ describe("FangXuanLing 扫描队列访问器（只读模式）", () => {
 
         it("应该与Store状态实时同步（只读）", () => {
             // 通过Store修改（模拟其他服务通过Zouzhe修改）
-            scanningStore.addToQueue(createTestScanQueueItem({ path: "/test/path", action: "scan" }));
+            scanningStore.addToQueue(
+                createTestScanQueueItem({ path: "/test/path", action: "scan" }),
+            );
 
             // accessor应该立即反映变化
             expect(fangXuanLing.scanning.queueSize).toBe(1);

@@ -164,7 +164,10 @@ export function getPriorityDescription(scanAction: FileOperationInput): string {
 /**
  * 调试函数：打印排序后的文件夹列表
  */
-export function debugPrintScanningFolders(folders: FileOperationInput[], title = "scanning_queue"): void {
+export function debugPrintScanningFolders(
+    folders: FileOperationInput[],
+    title = "scanning_queue",
+): void {
     console.group(`🗂️ ${title} (${folders.length} folders)`);
     folders.forEach((folder, index) => {
         const complete = ensureCompleteScanAction(folder);

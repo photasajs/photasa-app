@@ -163,10 +163,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
             await this.deleteTask(path);
 
             // 8. 启奏完成
-            // 🔍 验证步骤1：尉迟恭发出 scan_completed 启奏
-            logger.info(
-                `🔍 [验证] 尉迟恭发出 scan_completed: path=${path}, operationType=${operationType}`,
-            );
             this.emitQizou("scan_completed", {
                 path,
                 parentDir,
@@ -945,17 +941,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 // ✅ 获取 Store 中的所有任务（包含状态）
                 const allTasks = this.scanningQueue;
 
-                // 🔍 验证步骤1：检查Store中是否有任务
-                logger.info(`🔍 [验证步骤1] Store中的任务数量: ${allTasks.length}`);
                 if (allTasks.length > 0) {
-                    logger.info(
-                        `🔍 [验证步骤1] 任务列表:`,
-                        allTasks.map((t) => ({
-                            path: t.path,
-                            status: t.status,
-                            action: t.action,
-                        })),
-                    );
                     logger.info(`🛡️ 尉迟恭：开始状态恢复，共 ${allTasks.length} 个任务`);
 
                     // ✅ RFC 0048 v3: 状态恢复逻辑
@@ -970,7 +956,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
                                 startedAt: undefined,
                             });
                             // 添加到执行队列
-                            logger.info(`🔍 [验证步骤1] 添加孤儿任务到p-queue: ${task.path}`);
                             this.scanQueue
                                 .add(() =>
                                     this.executeScan(task.path, task.action, task.operationType),
@@ -996,7 +981,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
                                     error: undefined,
                                 });
                                 // 添加到执行队列
-                                logger.info(`🔍 [验证步骤1] 添加重试任务到p-queue: ${task.path}`);
                                 this.scanQueue
                                     .add(() =>
                                         this.executeScan(
@@ -1024,8 +1008,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
                             logger.info(
                                 `🛡️ 尉迟恭：恢复任务到执行队列 ${task.path}（状态：${task.status || "legacy-pending"}）`,
                             );
-                            // 🔍 验证步骤1：确认任务被添加到p-queue
-                            logger.info(`🔍 [验证步骤1] 添加任务到p-queue: ${task.path}`);
                             this.scanQueue
                                 .add(() =>
                                     this.executeScan(task.path, task.action, task.operationType),
@@ -1033,10 +1015,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
                                 .catch((error) => {
                                     logger.error(`🛡️ 尉迟恭：任务执行失败 ${task.path}`, error);
                                 });
-                            // 🔍 验证步骤1：检查p-queue状态
-                            logger.info(
-                                `🔍 [验证步骤1] p-queue状态: pending=${this.scanQueue.pending}, size=${this.scanQueue.size}`,
-                            );
                         }
                     }
 

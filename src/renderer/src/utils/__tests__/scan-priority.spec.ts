@@ -69,9 +69,33 @@ describe("scan-priority utilities", () => {
     describe("sortScanningFolders", () => {
         test("should prioritize current over rescan over scan", () => {
             const folders: FileOperationInput[] = [
-                createScanAction({ path: "/path1", action: "scan", thumbnailSize: 200, operationType: "directory" }, "user"),
-                createScanAction({ path: "/path2", action: "rescan", thumbnailSize: 200, operationType: "directory" }, "user"),
-                createScanAction({ path: "/path3", action: "current", thumbnailSize: 200, operationType: "directory" }, "user"),
+                createScanAction(
+                    {
+                        path: "/path1",
+                        action: "scan",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
+                createScanAction(
+                    {
+                        path: "/path2",
+                        action: "rescan",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
+                createScanAction(
+                    {
+                        path: "/path3",
+                        action: "current",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
             ];
 
             const sorted = sortScanningFolders(folders);
@@ -83,8 +107,24 @@ describe("scan-priority utilities", () => {
 
         test("should prioritize user over auto source", () => {
             const folders: FileOperationInput[] = [
-                createScanAction({ path: "/path1", action: "scan", thumbnailSize: 200, operationType: "directory" }, "auto"),
-                createScanAction({ path: "/path2", action: "scan", thumbnailSize: 200, operationType: "directory" }, "user"),
+                createScanAction(
+                    {
+                        path: "/path1",
+                        action: "scan",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "auto",
+                ),
+                createScanAction(
+                    {
+                        path: "/path2",
+                        action: "scan",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
             ];
 
             const sorted = sortScanningFolders(folders);
@@ -95,8 +135,24 @@ describe("scan-priority utilities", () => {
 
         test("should sort by path when priority is same", () => {
             const folders: FileOperationInput[] = [
-                createScanAction({ path: "/z-path", action: "scan", thumbnailSize: 200, operationType: "directory" }, "user"),
-                createScanAction({ path: "/a-path", action: "scan", thumbnailSize: 200, operationType: "directory" }, "user"),
+                createScanAction(
+                    {
+                        path: "/z-path",
+                        action: "scan",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
+                createScanAction(
+                    {
+                        path: "/a-path",
+                        action: "scan",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
             ];
 
             const sorted = sortScanningFolders(folders);
@@ -106,7 +162,12 @@ describe("scan-priority utilities", () => {
         });
 
         test("should sort by timestamp when path and priority are same", () => {
-            const baseAction = { path: "/same-path", action: "scan" as const, thumbnailSize: 200, operationType: "directory" as const };
+            const baseAction = {
+                path: "/same-path",
+                action: "scan" as const,
+                thumbnailSize: 200,
+                operationType: "directory" as const,
+            };
 
             const older = createScanAction(baseAction, "user");
             // Simulate newer timestamp
@@ -123,8 +184,24 @@ describe("scan-priority utilities", () => {
 
         test("should not mutate original array", () => {
             const folders: FileOperationInput[] = [
-                createScanAction({ path: "/path2", action: "scan", thumbnailSize: 200, operationType: "directory" }, "user"),
-                createScanAction({ path: "/path1", action: "current", thumbnailSize: 200, operationType: "directory" }, "user"),
+                createScanAction(
+                    {
+                        path: "/path2",
+                        action: "scan",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
+                createScanAction(
+                    {
+                        path: "/path1",
+                        action: "current",
+                        thumbnailSize: 200,
+                        operationType: "directory",
+                    },
+                    "user",
+                ),
             ];
             const originalOrder = folders.map((f) => f.path);
 
@@ -189,7 +266,12 @@ describe("scan-priority utilities", () => {
 
         test("should return false when new priority is lower (higher number)", () => {
             const existing = createScanAction(
-                { path: "/test", action: "current", thumbnailSize: 200, operationType: "directory" },
+                {
+                    path: "/test",
+                    action: "current",
+                    thumbnailSize: 200,
+                    operationType: "directory",
+                },
                 "user",
             );
 
@@ -235,7 +317,12 @@ describe("scan-priority utilities", () => {
 
         test("should return readable description for current action", () => {
             const scanAction = createScanAction(
-                { path: "/test", action: "current", thumbnailSize: 200, operationType: "directory" },
+                {
+                    path: "/test",
+                    action: "current",
+                    thumbnailSize: 200,
+                    operationType: "directory",
+                },
                 "auto",
             );
 
@@ -282,11 +369,41 @@ describe("scan-priority utilities", () => {
 describe("integration scenarios", () => {
     test("complex priority sorting scenario", () => {
         const folders: FileOperationInput[] = [
-            createScanAction({ path: "/path-d", action: "scan", thumbnailSize: 200, operationType: "directory" }, "auto"), // priority: 13
-            createScanAction({ path: "/path-c", action: "scan", thumbnailSize: 200, operationType: "directory" }, "user"), // priority: 3
-            createScanAction({ path: "/path-b", action: "rescan", thumbnailSize: 200, operationType: "directory" }, "auto"), // priority: 12
-            createScanAction({ path: "/path-a", action: "current", thumbnailSize: 200, operationType: "directory" }, "user"), // priority: 1
-            createScanAction({ path: "/path-e", action: "current", thumbnailSize: 200, operationType: "directory" }, "auto"), // priority: 11
+            createScanAction(
+                { path: "/path-d", action: "scan", thumbnailSize: 200, operationType: "directory" },
+                "auto",
+            ), // priority: 13
+            createScanAction(
+                { path: "/path-c", action: "scan", thumbnailSize: 200, operationType: "directory" },
+                "user",
+            ), // priority: 3
+            createScanAction(
+                {
+                    path: "/path-b",
+                    action: "rescan",
+                    thumbnailSize: 200,
+                    operationType: "directory",
+                },
+                "auto",
+            ), // priority: 12
+            createScanAction(
+                {
+                    path: "/path-a",
+                    action: "current",
+                    thumbnailSize: 200,
+                    operationType: "directory",
+                },
+                "user",
+            ), // priority: 1
+            createScanAction(
+                {
+                    path: "/path-e",
+                    action: "current",
+                    thumbnailSize: 200,
+                    operationType: "directory",
+                },
+                "auto",
+            ), // priority: 11
         ];
 
         const sorted = sortScanningFolders(folders);

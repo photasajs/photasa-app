@@ -14,6 +14,13 @@ import { loggers } from "@common/logger";
 // Mock 依赖
 vi.mock("fs-extra");
 vi.mock("../strategy/scan-strategy");
+vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => ({
+    default: vi.fn(() => ({
+        on: vi.fn(),
+        postMessage: vi.fn(),
+        terminate: vi.fn(),
+    })),
+}));
 vi.mock("../cache/incremental-cache", () => ({
     IncrementalCacheManager: vi.fn().mockImplementation(() => ({
         initialize: vi.fn().mockResolvedValue({}),

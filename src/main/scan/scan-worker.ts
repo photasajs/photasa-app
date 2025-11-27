@@ -136,9 +136,18 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
             postMessage({
                 type: "progress",
                 requestId,
-                action: { path: scan.path, isDirectory: true }, // Use scan folder path for UI matching
+                // 🔧 修复：使用实际文件的路径，而不是扫描的根文件夹路径
+                // 问题：当扫描根文件夹时，如果处理的文件在子文件夹中，使用根文件夹路径会导致路径不匹配
+                // 修复：使用实际文件的完整路径，确保前端能正确匹配文件位置
+                action: {
+                    path: action?.path || scan.path, // 使用实际文件/目录路径，如果不存在则回退到扫描路径
+                    isDirectory: action?.isDirectory || false,
+                },
                 progress: progressData,
-                currentFile: action?.path ? path.basename(action.path) : undefined, // 添加当前处理的文件名
+                // 🔧 修复：如果 action.path 是文件路径，则不需要 currentFile（前端直接使用 action.path）
+                // 如果 action.path 是目录路径，则 currentFile 为 undefined（目录没有文件名）
+                currentFile:
+                    action?.path && !action?.isDirectory ? path.basename(action.path) : undefined,
             });
         },
         error: (error) => {

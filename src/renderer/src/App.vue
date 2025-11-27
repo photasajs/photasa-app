@@ -297,27 +297,18 @@ findPhotoService.onFindPhoto((args: FindPhotoEvent) => {
 
     if (args.action?.path) {
         // 更新当前处理的文件信息到状态栏
-        // 关键修复：确保状态栏显示完整文件路径而不是仅文件名
-        if (args.currentFile) {
-            /**
-             * 路径构造逻辑：
-             * - args.action.path: 扫描的目录路径（完整路径）
-             * - args.currentFile: 当前处理的文件名（仅文件名，来自 scan-worker.ts 的 path.basename()）
-             * - 目标：构造完整的文件路径供状态栏显示
-             *
-             * 示例：
-             * - args.action.path = "/Users/john/Photos"
-             * - args.currentFile = "bamm.jpg"
-             * - fullFilePath = "/Users/john/Photos/bamm.jpg"
-             *
-             * 安全处理：
-             * - replace(/\/+/g, "/") 确保路径中不会出现双斜杠问题
-             * - 支持 Unix/Linux/macOS 路径格式
-             */
+        // 🔧 修复：正确处理文件路径和目录路径
+        // 问题：当 action.path 是文件路径时，不应该再拼接 currentFile
+        // 修复：如果 action.path 是文件路径（isDirectory: false），直接使用；否则构造路径
+        if (args.action.isDirectory === false) {
+            // action.path 是文件路径，直接使用
+            processingFile.value = `${t("status.scanning")} ${args.action.path}`;
+        } else if (args.currentFile) {
+            // action.path 是目录路径，需要拼接文件名
             const fullFilePath = `${args.action.path}/${args.currentFile}`.replace(/\/+/g, "/");
             processingFile.value = `${t("status.scanning")} ${fullFilePath}`;
         } else {
-            // 当没有具体文件信息时，显示目录路径
+            // action.path 是目录路径，但没有文件名，显示目录路径
             processingFile.value = `${t("status.scanning")} ${args.action.path}`;
         }
     }

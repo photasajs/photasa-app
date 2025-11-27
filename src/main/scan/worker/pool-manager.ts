@@ -18,20 +18,7 @@ import type { WorkerOptions } from "worker_threads";
 import type { Worker as NodeWorker } from "worker_threads";
 import { PhotasaLogger } from "@common/logger";
 import { cpus } from "os";
-
-// 动态导入 createWorker 以避免在测试环境中立即执行
-let createWorker: ((options?: unknown) => NodeWorker) | null = null;
-
-try {
-    if (process.env.NODE_ENV !== "test" && process.env.VITEST !== "true") {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const workerModule = require("../../thumbnail/thumbnail-worker?nodeWorker");
-        createWorker = workerModule.default;
-    }
-} catch (error) {
-    // 在测试环境中忽略导入错误
-    createWorker = null;
-}
+import createWorker from "../../thumbnail/thumbnail-worker?nodeWorker";
 
 /**
  * 缩略图Worker池配置
@@ -91,12 +78,7 @@ export interface PoolStats {
 export const DEFAULT_THUMBNAIL_WORKER_CONFIG: ThumbnailWorkerConfig = {
     minWorkers: 1,
     maxWorkers: Math.min(4, Math.max(2, Math.floor((cpus()?.length || 4) / 2))),
-    createWorker: (options?: unknown) => {
-        if (!createWorker) {
-            throw new Error("Worker池创建失败：createWorker 不可用");
-        }
-        return createWorker(options as WorkerOptions);
-    },
+    createWorker: (options?: unknown) => createWorker(options as WorkerOptions),
     workerOptions: {
         resourceLimits: {
             maxOldGenerationSizeMb: 100,
@@ -153,23 +135,33 @@ class WorkerPoolManager {
     public getWorkerPool(
         logger: PhotasaLogger,
         config?: Partial<ThumbnailWorkerConfig>,
-    ): WorkerPool<ThumbnailRequest, ThumbnailResponse> | null {
+    ): WorkerPool<ThumbnailRequest, ThumbnailResponse> {
         this.logger = logger;
-
-        // 在测试环境中跳过Worker创建
-        if (this.isTestEnvironment()) {
-            logger.debug("[WorkerPoolManager] 跳过Worker池创建（测试环境）");
-            return null;
-        }
 
         // 应用配置覆盖
         if (config) {
             this.config = { ...this.config, ...config };
         }
 
+        // 如果已经 shutdown，尝试重新初始化
+        if (this.status === PoolStatus.SHUTDOWN) {
+            logger.info("[WorkerPoolManager] Worker池已关闭，尝试重新初始化");
+            this.status = PoolStatus.UNINITIALIZED;
+            this.workerPool = null;
+        }
+
         // 懒加载：仅在首次调用时创建Worker池
         if (!this.workerPool && this.status === PoolStatus.UNINITIALIZED) {
             this.initializeWorkerPool(logger);
+        }
+
+        // Worker池必须存在，如果不存在说明初始化失败，抛出错误
+        if (!this.workerPool) {
+            const error = new Error(
+                "[WorkerPoolManager] Worker池初始化失败：无法创建Worker池实例。这通常表示系统资源不足或Worker模块加载失败。",
+            );
+            logger.error(error.message);
+            throw error;
         }
 
         return this.workerPool;
@@ -202,19 +194,6 @@ class WorkerPoolManager {
             logger.error("[WorkerPoolManager] Worker池初始化失败", error);
             throw error;
         }
-    }
-
-    /**
-     * 检查是否为测试环境
-     */
-    private isTestEnvironment(): boolean {
-        return (
-            process.env.NODE_ENV === "test" ||
-            createWorker === null ||
-            typeof createWorker !== "function" ||
-            process.env.VITEST === "true" ||
-            process.env.NODE_ENV === "development" // Also skip in development
-        );
     }
 
     /**
@@ -348,7 +327,7 @@ class WorkerPoolManager {
 export function getWorkerPool(
     logger: PhotasaLogger,
     config?: Partial<ThumbnailWorkerConfig>,
-): WorkerPool<ThumbnailRequest, ThumbnailResponse> | null {
+): WorkerPool<ThumbnailRequest, ThumbnailResponse> {
     return WorkerPoolManager.getInstance().getWorkerPool(logger, config);
 }
 
