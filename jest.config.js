@@ -52,7 +52,7 @@ module.exports = {
                         "@qianliyan/*": ["./src/engines/qianliyan/*"],
                         "@engines/*": ["./src/engines/*"],
                     },
-                    typeRoots: ["node_modules/@types", "src/main/scan/worker/__tests__"],
+                    typeRoots: ["node_modules/@types", "test"],
                 },
             },
         ],
