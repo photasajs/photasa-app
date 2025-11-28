@@ -6,19 +6,23 @@
  */
 
 // Mock thumbnail-worker?nodeWorker before any imports
-jest.mock("../../thumbnail/thumbnail-worker", () => {
-    const mockCreateWorker = jest.fn(() => ({
-        postMessage: jest.fn(),
-        on: jest.fn(),
-        terminate: jest.fn(),
-        ref: jest.fn(),
-        unref: jest.fn(),
-    }));
-    return {
-        __esModule: true,
-        default: mockCreateWorker,
-    };
-}, { virtual: true });
+jest.mock(
+    "../../thumbnail/thumbnail-worker",
+    () => {
+        const mockCreateWorker = jest.fn(() => ({
+            postMessage: jest.fn(),
+            on: jest.fn(),
+            terminate: jest.fn(),
+            ref: jest.fn(),
+            unref: jest.fn(),
+        }));
+        return {
+            __esModule: true,
+            default: mockCreateWorker,
+        };
+    },
+    { virtual: true },
+);
 
 // Jest globals are available without import when Jest types are configured
 import {

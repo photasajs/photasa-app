@@ -27,7 +27,7 @@ jest.mock("../worker/pool-manager", () => ({
     PoolStatus: {},
     DEFAULT_THUMBNAIL_WORKER_CONFIG: {},
     WorkerPoolManager: jest.fn(),
-}));
+}), { virtual: true });
 
 // Mock external dependencies
 jest.mock("fs-extra");
