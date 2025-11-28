@@ -5,4 +5,3 @@ declare module "*?nodeWorker" {
     const createWorker: (options?: { workerData?: unknown }) => Worker;
     export default createWorker;
 }
-

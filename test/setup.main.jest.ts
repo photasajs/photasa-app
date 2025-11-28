@@ -3,6 +3,10 @@
  * 为main进程测试提供Jest环境设置
  */
 
+// 引用类型声明文件以支持?nodeWorker查询参数
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
+/// <reference path="./vite-node-worker.d.ts" />
+
 // 不再mock Sharp - 让真实的图像处理库正常工作
 // Sharp是标准的Node.js图像处理库，在测试环境中应该正常工作
 
@@ -68,6 +72,32 @@ jest.mock("electron", () => ({
 
 // 不再mock Jimp - 让真实的图像处理库正常工作
 // Jimp是我们BmpBrush的核心功能，应该测试真实的行为
+
+// Mock os module
+jest.mock("os", () => ({
+    platform: jest.fn(() => "darwin"),
+    cpus: jest.fn(() => [{}, {}, {}, {}]),
+    totalmem: jest.fn(() => 8589934592),
+    freemem: jest.fn(() => 4294967296),
+    arch: jest.fn(() => "arm64"),
+    type: jest.fn(() => "Darwin"),
+    release: jest.fn(() => "21.0.0"),
+    homedir: jest.fn(() => "/Users/test"),
+    hostname: jest.fn(() => "test-host"),
+    networkInterfaces: jest.fn(() => ({})),
+    tmpdir: jest.fn(() => "/tmp"),
+    endianness: jest.fn(() => "LE"),
+    EOL: "\n",
+    loadavg: jest.fn(() => [0, 0, 0]),
+    uptime: jest.fn(() => 3600),
+    userInfo: jest.fn(() => ({
+        username: "test",
+        uid: 1000,
+        gid: 1000,
+        shell: "/bin/zsh",
+        homedir: "/Users/test",
+    })),
+}));
 
 // Mock worker_threads
 jest.mock("worker_threads", () => ({

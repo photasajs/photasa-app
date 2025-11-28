@@ -33,8 +33,25 @@ jest.mock(
     { virtual: true },
 );
 
+// Mock ffmpeg-static and ffprobe-static to avoid os.platform issues
+jest.mock("ffmpeg-static", () => ({
+    __esModule: true,
+    default: "/mock/path/to/ffmpeg",
+}));
+
+jest.mock("ffprobe-static", () => ({
+    __esModule: true,
+    default: "/mock/path/to/ffprobe",
+}));
+
 // Mock external dependencies
 jest.mock("fs-extra");
+jest.mock("os", () => ({
+    platform: jest.fn(() => "darwin"),
+    cpus: jest.fn(() => [{}]),
+    totalmem: jest.fn(() => 8589934592),
+    freemem: jest.fn(() => 4294967296),
+}));
 
 const mockFs = fs as any;
 const mockLogger: PhotasaLogger = {
