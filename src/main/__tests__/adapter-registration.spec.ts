@@ -7,6 +7,21 @@ import { describe, it, expect, beforeAll, afterAll, jest } from "@jest/globals";
 import "@engines/adapters"; // 模拟主进程的适配器导入
 import TaiyiService from "../deity/taiyi-service";
 import { WorkflowStep, ExecutionContext } from "../../engines/tianshu/types/workflows";
+import * as os from "os";
+import * as path from "path";
+import * as fs from "fs/promises";
+
+// Mock os.homedir to return a temporary directory
+jest.mock("os", () => {
+    const actualOs = jest.requireActual<typeof import("os")>("os");
+    return {
+        ...actualOs,
+        homedir: jest.fn(() => {
+            // Use a temporary directory that we can create
+            return path.join(actualOs.tmpdir(), `photasa-test-${Date.now()}`);
+        }),
+    };
+});
 
 // Mock logger
 jest.mock("@common/logger", () => ({
@@ -46,14 +61,31 @@ jest.mock("@common/logger", () => ({
 
 describe("主进程适配器注册集成测试", () => {
     let taiyiService: TaiyiService;
+    let testPreferencesDir: string;
 
     beforeAll(async () => {
+        // Create a temporary directory for preferences
+        const tmpDir = os.tmpdir();
+        testPreferencesDir = path.join(tmpDir, `photasa-test-preferences-${Date.now()}`);
+        await fs.mkdir(testPreferencesDir, { recursive: true });
+
+        // Set environment variable to use the test preferences directory
+        process.env.PHOTASA_TEST_PREFERENCES_DIR = testPreferencesDir;
+
         taiyiService = new TaiyiService();
         await taiyiService.initialize();
     });
 
     afterAll(async () => {
         await taiyiService?.shutdown();
+        // Clean up test preferences directory
+        try {
+            if (testPreferencesDir) {
+                await fs.rm(testPreferencesDir, { recursive: true, force: true });
+            }
+        } catch (error) {
+            // Ignore cleanup errors
+        }
     });
 
     it("应该能够调用builtin适配器的return方法", async () => {

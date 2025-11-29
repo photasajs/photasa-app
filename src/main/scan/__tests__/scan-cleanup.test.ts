@@ -147,7 +147,9 @@ describe("scan-cleanup", () => {
         it("应该成功关闭Worker Pool", async () => {
             const mockPool = {
                 shutdown: vi.fn().mockResolvedValue(undefined),
-            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
+            } as unknown as Awaited<
+                ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
+            >;
 
             const result = await cleanupWorkerPool(mockPool, 5000, mockLogger);
 
@@ -160,7 +162,9 @@ describe("scan-cleanup", () => {
             const error = new Error("Shutdown failed");
             const mockPool = {
                 shutdown: vi.fn().mockRejectedValue(error),
-            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
+            } as unknown as Awaited<
+                ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
+            >;
 
             const result = await cleanupWorkerPool(mockPool, 5000, mockLogger);
 
@@ -180,7 +184,9 @@ describe("scan-cleanup", () => {
                             setTimeout(() => resolve(undefined), 5000); // 5秒后才解决，但超时是100ms
                         }),
                 ),
-            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
+            } as unknown as Awaited<
+                ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
+            >;
 
             // 启动cleanup并立即推进所有计时器
             const cleanupPromise = cleanupWorkerPool(mockPool, 100, mockLogger);

@@ -44,7 +44,10 @@ export class WenchangAdapter implements IAdapter {
 
     constructor(config: WenchangAdapterConfig = {}) {
         // 默认偏好目录：~/.photasa/preferences/
-        const defaultPreferencesDir = path.join(os.homedir(), ".photasa", "preferences");
+        // 在测试环境中，使用环境变量指定的目录
+        const defaultPreferencesDir = process.env.PHOTASA_TEST_PREFERENCES_DIR
+            ? process.env.PHOTASA_TEST_PREFERENCES_DIR
+            : path.join(os.homedir(), ".photasa", "preferences");
         const preferencesDir = config.customPreferencesDir || defaultPreferencesDir;
 
         const engineConfig: WenchangEngineConfig = {
