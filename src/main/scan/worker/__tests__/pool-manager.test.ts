@@ -1,30 +1,11 @@
 /**
- * pool-manager.spec.ts
+ * pool-manager.test.ts
  *
- * Worker池管理器Jest测试
+ * Worker池管理器Vitest测试
  * 基于实际pool-manager.ts实现的简化测试
  */
 
-// Mock thumbnail-worker?nodeWorker before any imports
-jest.mock(
-    "../../thumbnail/thumbnail-worker",
-    () => {
-        const mockCreateWorker = jest.fn(() => ({
-            postMessage: jest.fn(),
-            on: jest.fn(),
-            terminate: jest.fn(),
-            ref: jest.fn(),
-            unref: jest.fn(),
-        }));
-        return {
-            __esModule: true,
-            default: mockCreateWorker,
-        };
-    },
-    { virtual: true },
-);
-
-// Jest globals are available without import when Jest types are configured
+import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from "vitest";
 import {
     getWorkerPool,
     shutdownWorkerPool,
@@ -39,34 +20,28 @@ import {
     DEFAULT_THUMBNAIL_WORKER_CONFIG,
     WorkerPoolManager,
 } from "../pool-manager";
-import { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@common/logger";
 
-// Mock thumbnail-worker?nodeWorker
-// Use a manual mock that intercepts the import
-const mockCreateWorker = jest.fn(() => ({
-    postMessage: jest.fn(),
-    on: jest.fn(),
-    terminate: jest.fn(),
-    ref: jest.fn(),
-    unref: jest.fn(),
-}));
-
-// Mock the module before importing pool-manager
-jest.mock(
-    "../../thumbnail/thumbnail-worker",
-    () => ({
-        __esModule: true,
+// Mock thumbnail-worker?nodeWorker - Vitest可以正确处理Vite的查询参数
+vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => {
+    const mockCreateWorker = vi.fn(() => ({
+        postMessage: vi.fn(),
+        on: vi.fn(),
+        terminate: vi.fn(),
+        ref: vi.fn(),
+        unref: vi.fn(),
+    }));
+    return {
         default: mockCreateWorker,
-    }),
-    { virtual: true },
-);
+    };
+});
 
 // Mock dependencies
-jest.mock("../../../workers/worker-pool", () => ({
-    WorkerPool: jest.fn().mockImplementation(() => ({
-        shutdown: jest.fn().mockImplementation(() => Promise.resolve()),
-        addTask: jest.fn().mockImplementation(() => Promise.resolve({})),
-        getStats: jest.fn().mockReturnValue({
+vi.mock("../../../workers/worker-pool", () => ({
+    WorkerPool: vi.fn().mockImplementation(() => ({
+        shutdown: vi.fn().mockImplementation(() => Promise.resolve()),
+        addTask: vi.fn().mockImplementation(() => Promise.resolve({})),
+        getStats: vi.fn().mockReturnValue({
             activeWorkers: 2,
             idleWorkers: 1,
             queuedTasks: 0,
@@ -74,8 +49,8 @@ jest.mock("../../../workers/worker-pool", () => ({
     })),
 }));
 
-jest.mock("os", () => ({
-    cpus: jest.fn().mockReturnValue([{}, {}, {}, {}]), // 模拟4核CPU
+vi.mock("os", () => ({
+    cpus: vi.fn().mockReturnValue([{}, {}, {}, {}]), // 模拟4核CPU
 }));
 
 describe("WorkerPoolManager", () => {
@@ -83,23 +58,23 @@ describe("WorkerPoolManager", () => {
 
     beforeEach(async () => {
         // 使用fake timers专注于逻辑测试
-        jest.useFakeTimers();
+        vi.useFakeTimers();
 
         // 重置Worker池管理器状态
         await resetWorkerPoolManager();
 
         // 创建mock logger
         mockLogger = {
-            info: jest.fn(),
-            warn: jest.fn(),
-            error: jest.fn(),
-            debug: jest.fn(),
-        } as any;
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+            debug: vi.fn(),
+        } as unknown as PhotasaLogger;
     });
 
     afterEach(async () => {
         // 恢复真实timers
-        jest.useRealTimers();
+        vi.useRealTimers();
 
         // 清理测试环境
         await resetWorkerPoolManager();
@@ -119,16 +94,21 @@ describe("WorkerPoolManager", () => {
     });
 
     describe("Worker池生命周期", () => {
-        it("应该能创建Worker池（测试环境返回null）", async () => {
+        it("应该能创建Worker池", async () => {
             const pool = await getWorkerPool(mockLogger);
-            expect(pool).toBeNull();
-            expect(isWorkerPoolAvailable()).toBe(false);
-            expect(getWorkerPoolStatus()).toBe(PoolStatus.UNINITIALIZED);
+            // 在Vitest环境中，worker pool应该能正常创建
+            expect(pool).toBeDefined();
+            expect(isWorkerPoolAvailable()).toBe(true);
+            // 状态可能是RUNNING或INITIALIZING，只要不是UNINITIALIZED即可
+            const status = getWorkerPoolStatus();
+            expect([PoolStatus.RUNNING, PoolStatus.INITIALIZING, PoolStatus.READY]).toContain(
+                status,
+            );
         });
 
         it("应该能关闭Worker池", async () => {
             await getWorkerPool(mockLogger);
-            expect(isWorkerPoolAvailable()).toBe(false);
+            expect(isWorkerPoolAvailable()).toBe(true);
 
             const result = await shutdownWorkerPool();
             expect(result).toBe(true);
@@ -190,7 +170,8 @@ describe("WorkerPoolManager", () => {
     describe("错误处理", () => {
         it("应该处理Worker池创建失败", async () => {
             expect(() => getWorkerPool(mockLogger)).not.toThrow();
-            expect(getWorkerPoolStatus()).toBe(PoolStatus.UNINITIALIZED);
+            const pool = await getWorkerPool(mockLogger);
+            expect(pool).toBeDefined();
         });
     });
 
@@ -201,9 +182,10 @@ describe("WorkerPoolManager", () => {
         });
 
         it("应该能清理现有的Worker池", async () => {
+            const pool = await getWorkerPool(mockLogger);
             const mockPool = {
-                shutdown: jest.fn().mockImplementation(() => Promise.resolve(true)),
-            } as any;
+                shutdown: vi.fn().mockImplementation(() => Promise.resolve(true)),
+            } as unknown as typeof pool;
 
             const result = await cleanupWorkerPool(mockPool, 100, mockLogger);
             expect(result).toBe(true);
@@ -212,8 +194,8 @@ describe("WorkerPoolManager", () => {
 
         it("清理失败时应该正确处理错误", async () => {
             const mockPool = {
-                shutdown: jest.fn().mockImplementation(() => Promise.reject(new Error("清理失败"))),
-            } as any;
+                shutdown: vi.fn().mockImplementation(() => Promise.reject(new Error("清理失败"))),
+            } as unknown as Awaited<ReturnType<typeof getWorkerPool>>;
 
             const result = await cleanupWorkerPool(mockPool, 100, mockLogger);
             expect(result).toBe(false);

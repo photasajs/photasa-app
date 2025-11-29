@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import fs from "fs-extra";
 import {
     validateCleanupOptions,
@@ -13,68 +13,78 @@ import {
 } from "../scan-cleanup";
 import type { PhotasaLogger } from "@common/logger";
 
-// Mock pool-manager to avoid ?nodeWorker import issue
-jest.mock(
-    "../worker/pool-manager",
-    () => ({
-        cleanupWorkerPool: jest.fn().mockResolvedValue(undefined),
-        getWorkerPool: jest.fn(),
-        shutdownWorkerPool: jest.fn(),
-        isWorkerPoolAvailable: jest.fn(),
-        getWorkerPoolStatus: jest.fn(),
-        getWorkerPoolStats: jest.fn(),
-        resetWorkerPoolManager: jest.fn(),
-        updateWorkerPoolConfig: jest.fn(),
-        getWorkerPoolConfig: jest.fn(),
-        PoolStatus: {},
-        DEFAULT_THUMBNAIL_WORKER_CONFIG: {},
-        WorkerPoolManager: jest.fn(),
-    }),
-    { virtual: true },
-);
+// Mock pool-manager - Vitest可以正确处理?nodeWorker查询参数
+// 注意：我们需要确保 cleanupWorkerPool 函数可以正常工作
+// 由于 scan-cleanup.ts 中的 cleanupWorkerPool 是从 pool-manager 重新导出的
+// 我们需要确保 mock 不会破坏 cleanupWorkerPool 的功能
+vi.mock("../worker/pool-manager", async () => {
+    const actual = await vi.importActual<typeof import("../worker/pool-manager")>("../worker/pool-manager");
+    // 保持 cleanupWorkerPool 和 WorkerPoolManager 不变，让它们正常工作
+    return {
+        ...actual,
+        // 只 mock 其他不需要的函数
+        getWorkerPool: vi.fn(),
+        shutdownWorkerPool: vi.fn(),
+        isWorkerPoolAvailable: vi.fn().mockReturnValue(false), // 默认返回 false，这样 cleanupWorkerPool(null) 会返回 true
+        getWorkerPoolStatus: vi.fn(),
+        getWorkerPoolStats: vi.fn(),
+        resetWorkerPoolManager: vi.fn(),
+        updateWorkerPoolConfig: vi.fn(),
+        getWorkerPoolConfig: vi.fn(),
+    };
+});
 
 // Mock ffmpeg-static and ffprobe-static to avoid os.platform issues
-jest.mock("ffmpeg-static", () => ({
-    __esModule: true,
+vi.mock("ffmpeg-static", () => ({
     default: "/mock/path/to/ffmpeg",
 }));
 
-jest.mock("ffprobe-static", () => ({
-    __esModule: true,
+vi.mock("ffprobe-static", () => ({
     default: "/mock/path/to/ffprobe",
 }));
 
 // Mock external dependencies
-jest.mock("fs-extra");
-jest.mock("os", () => ({
-    platform: jest.fn(() => "darwin"),
-    cpus: jest.fn(() => [{}]),
-    totalmem: jest.fn(() => 8589934592),
-    freemem: jest.fn(() => 4294967296),
+vi.mock("fs-extra", () => ({
+    default: {
+        readdir: vi.fn(),
+        stat: vi.fn(),
+        pathExists: vi.fn(),
+        readFile: vi.fn(),
+        remove: vi.fn(),
+    },
 }));
 
-const mockFs = fs as any;
-const mockLogger: PhotasaLogger = {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-} as any;
+vi.mock("os", () => ({
+    platform: vi.fn(() => "darwin"),
+    cpus: vi.fn(() => [{}]),
+    totalmem: vi.fn(() => 8589934592),
+    freemem: vi.fn(() => 4294967296),
+}));
 
-// Mock WorkerPool
-const mockWorkerPool = {
-    shutdown: jest.fn(),
+const mockFs = fs as unknown as {
+    readdir: ReturnType<typeof vi.fn>;
+    stat: ReturnType<typeof vi.fn>;
+    pathExists: ReturnType<typeof vi.fn>;
+    readFile: ReturnType<typeof vi.fn>;
+    remove: ReturnType<typeof vi.fn>;
 };
+
+const mockLogger: PhotasaLogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+} as unknown as PhotasaLogger;
 
 describe("scan-cleanup", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-        jest.useFakeTimers();
+        vi.clearAllMocks();
+        vi.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.clearAllTimers();
-        jest.useRealTimers();
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     describe("validateCleanupOptions", () => {
@@ -101,7 +111,10 @@ describe("scan-cleanup", () => {
         });
 
         it("应该拒绝无效的日志级别", () => {
-            const options = { ...DEFAULT_CLEANUP_OPTIONS, logLevel: "invalid" as any };
+            const options = {
+                ...DEFAULT_CLEANUP_OPTIONS,
+                logLevel: "invalid" as unknown as "minimal" | "detailed",
+            };
             const result = validateCleanupOptions(options);
 
             expect(result.isValid).toBe(false);
@@ -131,11 +144,15 @@ describe("scan-cleanup", () => {
         });
 
         it("应该成功关闭Worker Pool", async () => {
-            (mockWorkerPool.shutdown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(
-                undefined,
-            );
+            vi.mocked(mockWorkerPool.shutdown).mockResolvedValue(undefined);
 
-            const result = await cleanupWorkerPool(mockWorkerPool as any, 5000, mockLogger);
+            const result = await cleanupWorkerPool(
+                mockWorkerPool as unknown as Awaited<
+                    ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
+                >,
+                5000,
+                mockLogger,
+            );
 
             expect(result).toBe(true);
             expect(mockWorkerPool.shutdown).toHaveBeenCalled();
@@ -144,11 +161,15 @@ describe("scan-cleanup", () => {
 
         it("应该处理Worker Pool关闭失败", async () => {
             const error = new Error("Shutdown failed");
-            (mockWorkerPool.shutdown as jest.MockedFunction<() => Promise<void>>).mockRejectedValue(
-                error,
-            );
+            vi.mocked(mockWorkerPool.shutdown).mockRejectedValue(error);
 
-            const result = await cleanupWorkerPool(mockWorkerPool as any, 5000, mockLogger);
+            const result = await cleanupWorkerPool(
+                mockWorkerPool as unknown as Awaited<
+                    ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
+                >,
+                5000,
+                mockLogger,
+            );
 
             expect(result).toBe(false);
             expect(mockLogger.error).toHaveBeenCalledWith(
@@ -159,7 +180,7 @@ describe("scan-cleanup", () => {
 
         it("应该处理超时情况", async () => {
             // 模拟一个延时很长的Promise来触发超时
-            mockWorkerPool.shutdown.mockImplementation(
+            vi.mocked(mockWorkerPool.shutdown).mockImplementation(
                 () =>
                     new Promise((resolve) => {
                         setTimeout(() => resolve(undefined), 5000); // 5秒后才解决，但超时是100ms
@@ -167,8 +188,14 @@ describe("scan-cleanup", () => {
             );
 
             // 启动cleanup并立即推进所有计时器
-            const cleanupPromise = cleanupWorkerPool(mockWorkerPool as any, 100, mockLogger);
-            await jest.runAllTimersAsync();
+            const cleanupPromise = cleanupWorkerPool(
+                mockWorkerPool as unknown as Awaited<
+                    ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
+                >,
+                100,
+                mockLogger,
+            );
+            await vi.runAllTimersAsync();
             const result = await cleanupPromise;
 
             expect(result).toBe(false);
@@ -182,7 +209,7 @@ describe("scan-cleanup", () => {
     describe("cleanupInvalidCaches", () => {
         beforeEach(() => {
             // Mock fs.readdir to return empty results for most paths
-            mockFs.readdir.mockResolvedValue([]);
+            vi.mocked(mockFs.readdir).mockResolvedValue([]);
         });
 
         it("应该处理没有缓存文件的情况", async () => {
@@ -195,18 +222,22 @@ describe("scan-cleanup", () => {
 
         it("应该删除过期的缓存文件", async () => {
             // 模拟找到缓存文件
-            mockFs.readdir
+            vi.mocked(mockFs.readdir)
                 .mockResolvedValueOnce([
                     { name: ".photasa-folder.json", isDirectory: () => false, isFile: () => true },
-                ])
+                ] as unknown as Awaited<ReturnType<typeof mockFs.readdir>>)
                 .mockResolvedValue([]); // 其他调用返回空
 
             // 模拟过期的缓存文件
             const oldDate = new Date(Date.now() - 100000000); // 很久以前
-            mockFs.stat.mockResolvedValue({ mtime: oldDate });
-            mockFs.pathExists.mockResolvedValue(true);
-            mockFs.readFile.mockResolvedValue('{"version": "1.0", "folderHash": "test"}');
-            mockFs.remove.mockResolvedValue(undefined);
+            vi.mocked(mockFs.stat).mockResolvedValue({ mtime: oldDate } as unknown as Awaited<
+                ReturnType<typeof mockFs.stat>
+            >);
+            vi.mocked(mockFs.pathExists).mockResolvedValue(true);
+            vi.mocked(mockFs.readFile).mockResolvedValue(
+                '{"version": "1.0", "folderHash": "test"}',
+            );
+            vi.mocked(mockFs.remove).mockResolvedValue(undefined);
 
             const result = await cleanupInvalidCaches("/test/path", 86400000, mockLogger);
 
@@ -216,17 +247,21 @@ describe("scan-cleanup", () => {
         });
 
         it("应该处理缓存文件删除错误", async () => {
-            mockFs.readdir
+            vi.mocked(mockFs.readdir)
                 .mockResolvedValueOnce([
                     { name: ".photasa-folder.json", isDirectory: () => false, isFile: () => true },
-                ])
+                ] as unknown as Awaited<ReturnType<typeof mockFs.readdir>>)
                 .mockResolvedValue([]);
 
             const oldDate = new Date(Date.now() - 100000000);
-            mockFs.stat.mockResolvedValue({ mtime: oldDate });
-            mockFs.pathExists.mockResolvedValue(true);
-            mockFs.readFile.mockResolvedValue('{"version": "1.0", "folderHash": "test"}');
-            mockFs.remove.mockRejectedValue(new Error("Delete failed"));
+            vi.mocked(mockFs.stat).mockResolvedValue({ mtime: oldDate } as unknown as Awaited<
+                ReturnType<typeof mockFs.stat>
+            >);
+            vi.mocked(mockFs.pathExists).mockResolvedValue(true);
+            vi.mocked(mockFs.readFile).mockResolvedValue(
+                '{"version": "1.0", "folderHash": "test"}',
+            );
+            vi.mocked(mockFs.remove).mockRejectedValue(new Error("Delete failed"));
 
             const result = await cleanupInvalidCaches("/test/path", 86400000, mockLogger);
 
@@ -238,12 +273,12 @@ describe("scan-cleanup", () => {
     describe("optimizeMemory", () => {
         it("应该执行内存优化", () => {
             // 模拟global.gc存在
-            (global as any).gc = jest.fn();
+            (global as unknown as { gc?: () => void }).gc = vi.fn();
 
             const result = optimizeMemory(mockLogger);
 
             expect(result).toBeGreaterThan(0);
-            expect((global as any).gc).toHaveBeenCalled();
+            expect((global as unknown as { gc?: ReturnType<typeof vi.fn> }).gc).toHaveBeenCalled();
             expect(mockLogger.debug).toHaveBeenCalledWith(
                 expect.stringContaining("[optimizeMemory]"),
             );
@@ -251,7 +286,7 @@ describe("scan-cleanup", () => {
 
         it("应该处理没有gc函数的情况", () => {
             // 确保global.gc不存在
-            delete (global as any).gc;
+            delete (global as unknown as { gc?: () => void }).gc;
 
             const result = optimizeMemory(mockLogger);
 
@@ -268,7 +303,7 @@ describe("scan-cleanup", () => {
             cacheFilesProcessed: 10,
             invalidCacheFilesRemoved: 3,
             memoryFreed: 150.5,
-            errors: [],
+            errors: [] as string[],
         };
 
         it("应该生成最小化报告", () => {
@@ -328,13 +363,13 @@ describe("scan-cleanup", () => {
         });
 
         it("应该执行完整的清理流程", async () => {
-            (mockWorkerPool.shutdown as jest.MockedFunction<() => Promise<void>>).mockResolvedValue(
-                undefined,
-            );
-            mockFs.readdir.mockResolvedValue([]);
+            const mockPool = {
+                shutdown: vi.fn().mockResolvedValue(undefined),
+            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
+            vi.mocked(mockFs.readdir).mockResolvedValue([]);
 
             const result = await performExtendedCleanup(
-                mockWorkerPool as any,
+                mockPool,
                 "/test/path",
                 DEFAULT_CLEANUP_OPTIONS,
                 mockLogger,
@@ -355,13 +390,13 @@ describe("scan-cleanup", () => {
                 cleanupInvalidCaches: true, // 确保启用缓存清理以触发错误
             };
             // 模拟缓存清理失败 - 让findCacheFiles返回一些文件，但删除时失败
-            mockFs.readdir.mockResolvedValue([
+            vi.mocked(mockFs.readdir).mockResolvedValue([
                 { name: ".photasa-folder.json", isDirectory: () => false, isFile: () => true },
-            ]);
-            mockFs.stat.mockResolvedValue({
+            ] as unknown as Awaited<ReturnType<typeof mockFs.readdir>>);
+            vi.mocked(mockFs.stat).mockResolvedValue({
                 mtime: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-            }); // 8天前
-            mockFs.remove.mockRejectedValue(new Error("Delete failed"));
+            } as unknown as Awaited<ReturnType<typeof mockFs.stat>>); // 8天前
+            vi.mocked(mockFs.remove).mockRejectedValue(new Error("Delete failed"));
 
             const result = await performExtendedCleanup(null, "/test/path", options, mockLogger);
 

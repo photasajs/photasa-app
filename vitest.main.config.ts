@@ -47,7 +47,11 @@ export default defineConfig({
                 "src/renderer/src/test/**/*",
             ],
         },
-        include: ["src/main/**/*.test.{js,ts,jsx,tsx}", "src/engines/**/*.test.{js,ts,jsx,tsx}"],
+        include: [
+            "src/main/**/*.test.{js,ts,jsx,tsx}",
+            "src/main/**/__tests__/**/*.test.{js,ts,jsx,tsx}",
+            "src/engines/**/*.test.{js,ts,jsx,tsx}",
+        ],
         server: {
             deps: {
                 inline: [/@vue/, /@vueuse/, /@ant-design/, /radash/],
