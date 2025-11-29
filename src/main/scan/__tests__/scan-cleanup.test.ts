@@ -18,7 +18,8 @@ import type { PhotasaLogger } from "@common/logger";
 // 由于 scan-cleanup.ts 中的 cleanupWorkerPool 是从 pool-manager 重新导出的
 // 我们需要确保 mock 不会破坏 cleanupWorkerPool 的功能
 vi.mock("../worker/pool-manager", async () => {
-    const actual = await vi.importActual<typeof import("../worker/pool-manager")>("../worker/pool-manager");
+    const actual =
+        await vi.importActual<typeof import("../worker/pool-manager")>("../worker/pool-manager");
     // 保持 cleanupWorkerPool 和 WorkerPoolManager 不变，让它们正常工作
     return {
         ...actual,
@@ -144,32 +145,24 @@ describe("scan-cleanup", () => {
         });
 
         it("应该成功关闭Worker Pool", async () => {
-            vi.mocked(mockWorkerPool.shutdown).mockResolvedValue(undefined);
+            const mockPool = {
+                shutdown: vi.fn().mockResolvedValue(undefined),
+            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
 
-            const result = await cleanupWorkerPool(
-                mockWorkerPool as unknown as Awaited<
-                    ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
-                >,
-                5000,
-                mockLogger,
-            );
+            const result = await cleanupWorkerPool(mockPool, 5000, mockLogger);
 
             expect(result).toBe(true);
-            expect(mockWorkerPool.shutdown).toHaveBeenCalled();
+            expect(mockPool.shutdown).toHaveBeenCalled();
             expect(mockLogger.info).toHaveBeenCalledWith("[cleanupWorkerPool] Worker池已成功关闭");
         });
 
         it("应该处理Worker Pool关闭失败", async () => {
             const error = new Error("Shutdown failed");
-            vi.mocked(mockWorkerPool.shutdown).mockRejectedValue(error);
+            const mockPool = {
+                shutdown: vi.fn().mockRejectedValue(error),
+            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
 
-            const result = await cleanupWorkerPool(
-                mockWorkerPool as unknown as Awaited<
-                    ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
-                >,
-                5000,
-                mockLogger,
-            );
+            const result = await cleanupWorkerPool(mockPool, 5000, mockLogger);
 
             expect(result).toBe(false);
             expect(mockLogger.error).toHaveBeenCalledWith(
@@ -180,21 +173,17 @@ describe("scan-cleanup", () => {
 
         it("应该处理超时情况", async () => {
             // 模拟一个延时很长的Promise来触发超时
-            vi.mocked(mockWorkerPool.shutdown).mockImplementation(
-                () =>
-                    new Promise((resolve) => {
-                        setTimeout(() => resolve(undefined), 5000); // 5秒后才解决，但超时是100ms
-                    }),
-            );
+            const mockPool = {
+                shutdown: vi.fn().mockImplementation(
+                    () =>
+                        new Promise((resolve) => {
+                            setTimeout(() => resolve(undefined), 5000); // 5秒后才解决，但超时是100ms
+                        }),
+                ),
+            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
 
             // 启动cleanup并立即推进所有计时器
-            const cleanupPromise = cleanupWorkerPool(
-                mockWorkerPool as unknown as Awaited<
-                    ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
-                >,
-                100,
-                mockLogger,
-            );
+            const cleanupPromise = cleanupWorkerPool(mockPool, 100, mockLogger);
             await vi.runAllTimersAsync();
             const result = await cleanupPromise;
 
@@ -365,7 +354,9 @@ describe("scan-cleanup", () => {
         it("应该执行完整的清理流程", async () => {
             const mockPool = {
                 shutdown: vi.fn().mockResolvedValue(undefined),
-            } as unknown as Awaited<ReturnType<typeof import("../worker/pool-manager").getWorkerPool>>;
+            } as unknown as Awaited<
+                ReturnType<typeof import("../worker/pool-manager").getWorkerPool>
+            >;
             vi.mocked(mockFs.readdir).mockResolvedValue([]);
 
             const result = await performExtendedCleanup(
