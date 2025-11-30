@@ -4,14 +4,14 @@ This directory contains RFCs for significant changes to the photo management app
 
 ## RFC Statistics
 
-- **Total RFCs**: 47
-- **Completed**: 24 (51.1%)
+- **Total RFCs**: 48
+- **Completed**: 25 (52.1%)
 - **In Progress**: 1 (2.1%)
-- **Draft**: 22 (46.8%)
+- **Draft**: 22 (45.8%)
 - **Rejected**: 0 (0%)
 
 ### By Version
-- **v2.0.0**: 47 RFCs
+- **v2.0.0**: 48 RFCs
 - **Future**: 0 RFCs
 
 ## RFC Process
@@ -100,7 +100,10 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0043](./0043-useqinqiong-access-pattern.md)                      | useQinQiong()访问模式 - appState统一访问         | Draft               | AI     | v2.0.0         |
 | [0046](./completed/0046-scanning-queue-persistence.md)            | 扫描队列持久化 - 千里眼scanning.json管理          | ✅ Completed        | AI     | v2.0.0         |
 | [0047](./0047-foldertree-persistence-initialization.md)           | folderTree持久化与初始化 - 魏征appState管理 + 司命持久化 | In Progress (~85%) | AI     | v2.0.0         |
-| [0048](./0048-scan-orchestration-business-logic-migration.md)     | 扫描编排业务逻辑下沉 - 尉迟恭接管App.vue          | Draft               | AI     | v2.0.0         |
+| [0049](./0049-correct-e2e-testing-architecture.md)                 | 正确的E2E测试架构设计                              | Draft               | AI     | v2.0.0         |
+| [0050](./0050-taiyi-workflow-engine.md)                          | 太乙工作流引擎                                    | Draft               | AI     | v2.0.0         |
+| [0055](./0055-taiyi-workflow-summary.md)                          | 太乙工作流总结                                    | Draft               | AI     | v2.0.0         |
+| [0056](./0056-yuchigong-code-quality-improvements.md)            | 尉迟恭代码质量改进                                | Draft               | AI     | v2.0.0         |
 
 ## Implemented RFCs
 
@@ -130,6 +133,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0042](./completed/0042-scanning-folder-migration.md)                                    | scanningFolder四步渐进式迁移（Step 1已完成）     | AI     | v2.0.0         | Step 1完成：ScanningStore创建（Accessor+Builder架构），后续步骤拆分为RFC 0046/0047/0048  |
 | [0045](./completed/0045-builtin-array-operations.md)                                     | Builtin数组操作增强                             | AI     | v2.0.0         | 新增arrayAppend/arrayCount/arrayFilter方法，消除数据嵌套，38测试通过，100%覆盖率          |
 | [0046](./completed/0046-scanning-queue-persistence.md)                                   | 扫描队列持久化 - 千里眼scanning.json管理          | AI     | v2.0.0         | 千里眼引擎持久化队列到~/.photasa/scan/scanning.json，工作流架构，完整验证报告             |
+| [0048](./completed/0048-scan-orchestration-business-logic-migration.md)                  | 扫描编排业务逻辑迁移 - 职责自洽架构                | AI     | v2.0.0         | Store SSOT + 状态机制 + 立即清理，删除AppHelper.ts (306行)，App.vue减少~180行，已通过测试验证 |
 
 ## Rejected RFCs
 
