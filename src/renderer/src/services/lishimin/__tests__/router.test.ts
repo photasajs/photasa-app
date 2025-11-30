@@ -243,6 +243,34 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 }, 20);
             });
         });
+
+        it("应该正确解析数组中的模板变量（scan_completed场景）", async () => {
+            const testPath = "/scan/completed/path";
+            const testQizou: Qizou = {
+                matter: "scan_completed",
+                content: { path: testPath },
+                from: "尉迟恭",
+                timestamp: Date.now(),
+                metadata: { type: "report" },
+            };
+
+            // 需要添加魏征服务来接收圣旨
+            const weizhengService = new MockService("魏征");
+            duruhui.connect(weizhengService);
+
+            (router as any).qizouBus.emit("qizou", testQizou);
+
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    expect(weizhengService.receivedShengzhis.length).toBeGreaterThan(0);
+                    const shengzhi = weizhengService.receivedShengzhis[0];
+                    expect(shengzhi.command).toBe("add_paths");
+                    expect(Array.isArray(shengzhi.content.paths)).toBe(true);
+                    expect(shengzhi.content.paths).toContain(testPath);
+                    resolve();
+                }, 20);
+            });
+        });
     });
 
     describe("圣旨生成测试", () => {

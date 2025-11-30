@@ -15,6 +15,7 @@ import { loggers } from "@common/logger";
 import { addRoot, removeRoot, addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { deepClone } from "@common/object/clone";
+import { determineRootPathToAdd } from "./folder-tree-helpers";
 
 const logger = loggers.weizheng;
 
@@ -354,29 +355,11 @@ export class WeiZhengService implements IService, IWeiZhengService {
                 continue;
             }
 
-            // ✅ 修复：检查路径是否是根路径（来自preference.paths）
-            // 如果是根路径，先添加根节点（如果不存在）
-            const isRootPath = rootPaths.includes(folderPath);
-            if (isRootPath) {
-                const rootExists = newTree.some((node) => node.key === folderPath);
-                if (!rootExists) {
-                    logger.info(`🏛️ 魏征：检测到根路径 ${folderPath}，先添加根节点`);
-                    addRoot(newTree, folderPath);
-                }
-            } else {
-                // 如果是子路径，找到对应的根路径并确保根节点存在
-                const rootPath = rootPaths.find(
-                    (rp) => folderPath.startsWith(rp + "/") || folderPath === rp,
-                );
-                if (rootPath) {
-                    const rootExists = newTree.some((node) => node.key === rootPath);
-                    if (!rootExists) {
-                        logger.info(
-                            `🏛️ 魏征：检测到子路径 ${folderPath} 的根路径 ${rootPath}，先添加根节点`,
-                        );
-                        addRoot(newTree, rootPath);
-                    }
-                }
+            // ✅ 修复：使用纯函数确定需要添加的根路径
+            const rootPathToAdd = determineRootPathToAdd(folderPath, rootPaths, newTree);
+            if (rootPathToAdd) {
+                logger.info(`🏛️ 魏征：检测到路径 ${folderPath} 需要添加根节点 ${rootPathToAdd}`);
+                addRoot(newTree, rootPathToAdd);
             }
 
             // 使用addFolderToTree构建树结构
