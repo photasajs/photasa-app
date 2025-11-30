@@ -16,6 +16,13 @@ import type { ScanAction } from "@common/scan-types";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import { loggers } from "@common/logger";
 import { normalizePath } from "@renderer/utils/path";
+import {
+    calculateTaskAge,
+    calculateHoursAgo,
+    getFailedTaskAction,
+    calculateNextRetryCount,
+    getTaskStatusDisplayText,
+} from "./task-helpers";
 
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
@@ -946,75 +953,18 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
                     // ✅ RFC 0048 v3: 状态恢复逻辑
                     const now = Date.now();
-                    const FAILED_TASK_TTL = 24 * 60 * 60 * 1000; // 24小时
 
+                    // ✅ RFC 0056: 使用提取的方法简化条件分支
                     for (const task of allTasks) {
-                        // 1. processing → pending（孤儿任务：上次应用崩溃时正在执行的任务）
                         if (task.status === "processing") {
-                            logger.warn(`🛡️ 尉迟恭：发现孤儿任务 ${task.path}，重置为pending`);
-                            await this.updateTaskStatus(task.path, "pending", {
-                                startedAt: undefined,
-                            });
-                            // 添加到执行队列
-                            this.scanQueue
-                                .add(() =>
-                                    this.executeScan(task.path, task.action, task.operationType),
-                                )
-                                .catch((error) => {
-                                    logger.error(`🛡️ 尉迟恭：孤儿任务执行失败 ${task.path}`, error);
-                                });
-                        }
-                        // 2. failed → 重试或删除（超24h删除）
-                        else if (task.status === "failed") {
-                            const taskAge = now - task.createdAt;
-                            if (taskAge > FAILED_TASK_TTL) {
-                                logger.info(
-                                    `🛡️ 尉迟恭：删除超时失败任务 ${task.path}（已失败${Math.round(taskAge / 3600000)}小时）`,
-                                );
-                                await this.deleteTask(task.path);
-                            } else if (task.retryCount < task.maxRetries) {
-                                logger.info(
-                                    `🛡️ 尉迟恭：重试失败任务 ${task.path}（重试${task.retryCount + 1}/${task.maxRetries}）`,
-                                );
-                                await this.updateTaskStatus(task.path, "pending", {
-                                    retryCount: task.retryCount + 1,
-                                    error: undefined,
-                                });
-                                // 添加到执行队列
-                                this.scanQueue
-                                    .add(() =>
-                                        this.executeScan(
-                                            task.path,
-                                            task.action,
-                                            task.operationType,
-                                        ),
-                                    )
-                                    .catch((error) => {
-                                        logger.error(
-                                            `🛡️ 尉迟恭：失败任务重试执行失败 ${task.path}`,
-                                            error,
-                                        );
-                                    });
-                            } else {
-                                logger.warn(
-                                    `🛡️ 尉迟恭：删除达到重试上限的失败任务 ${task.path}（${task.retryCount}/${task.maxRetries}）`,
-                                );
-                                await this.deleteTask(task.path);
-                            }
-                        }
-                        // 3. pending 或无状态（兼容旧格式）→ 恢复到p-queue继续执行
-                        else {
-                            // ✅ 兜底逻辑：pending 任务或旧格式任务（无status字段）都当作pending处理
-                            logger.info(
-                                `🛡️ 尉迟恭：恢复任务到执行队列 ${task.path}（状态：${task.status || "legacy-pending"}）`,
-                            );
-                            this.scanQueue
-                                .add(() =>
-                                    this.executeScan(task.path, task.action, task.operationType),
-                                )
-                                .catch((error) => {
-                                    logger.error(`🛡️ 尉迟恭：任务执行失败 ${task.path}`, error);
-                                });
+                            // 1. processing → pending（孤儿任务：上次应用崩溃时正在执行的任务）
+                            await this.handleProcessingTask(task);
+                        } else if (task.status === "failed") {
+                            // 2. failed → 重试或删除（超24h删除）
+                            await this.handleFailedTask(task, now);
+                        } else {
+                            // 3. pending 或无状态（兼容旧格式）→ 恢复到p-queue继续执行
+                            this.handlePendingTask(task);
                         }
                     }
 
@@ -1033,4 +983,107 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     // ✅ RFC 0042 Step 2.5: initializeFolderTree已迁移到魏征服务的initializeAppState()
+
+    /**
+     * 将任务添加到执行队列（RFC 0056: 提取公共函数，消除代码重复）
+     *
+     * @description
+     * 统一处理任务入队逻辑，消除三处重复代码块。
+     * 包含统一的错误处理，提高可维护性。
+     *
+     * @param task 扫描队列任务
+     * @param context 上下文描述（用于日志）
+     * @private
+     * @since RFC 0056
+     */
+    private enqueueTask(task: ScanQueueItem, context: string): void {
+        this.scanQueue
+            .add(() => this.executeScan(task.path, task.action, task.operationType))
+            .catch((error) => {
+                logger.error(`🛡️ 尉迟恭：${context}执行失败 ${task.path}`, error);
+            });
+    }
+
+    /**
+     * 处理processing状态任务（孤儿任务恢复）
+     *
+     * @description
+     * 将processing状态的任务重置为pending，并添加到执行队列。
+     * 用于应用重启后恢复上次崩溃时正在执行的任务。
+     *
+     * @param task 扫描队列任务
+     * @private
+     * @since RFC 0056
+     */
+    private async handleProcessingTask(task: ScanQueueItem): Promise<void> {
+        logger.warn(`🛡️ 尉迟恭：发现孤儿任务 ${task.path}，重置为pending`);
+        await this.updateTaskStatus(task.path, "pending", {
+            startedAt: undefined,
+        });
+        this.enqueueTask(task, "孤儿任务");
+    }
+
+    /**
+     * 处理failed状态任务（失败任务重试或删除）
+     *
+     * @description
+     * 根据任务年龄和重试次数决定是重试还是删除。
+     * 使用纯函数进行决策，提高可测试性和可维护性。
+     *
+     * @param task 扫描队列任务
+     * @param now 当前时间戳
+     * @private
+     * @since RFC 0056
+     */
+    private async handleFailedTask(task: ScanQueueItem, now: number): Promise<void> {
+        // ✅ RFC 0056: 使用纯函数进行决策
+        const taskAge = calculateTaskAge(now, task.createdAt);
+        const action = getFailedTaskAction(taskAge, task.retryCount, task.maxRetries);
+
+        switch (action) {
+            case "delete-ttl": {
+                const hoursAgo = calculateHoursAgo(taskAge);
+                logger.info(`🛡️ 尉迟恭：删除超时失败任务 ${task.path}（已失败${hoursAgo}小时）`);
+                await this.deleteTask(task.path);
+                break;
+            }
+            case "retry": {
+                const nextRetryCount = calculateNextRetryCount(task.retryCount);
+                logger.info(
+                    `🛡️ 尉迟恭：重试失败任务 ${task.path}（重试${nextRetryCount}/${task.maxRetries}）`,
+                );
+                await this.updateTaskStatus(task.path, "pending", {
+                    retryCount: nextRetryCount,
+                    error: undefined,
+                });
+                this.enqueueTask(task, "失败任务重试");
+                break;
+            }
+            case "delete-max-retries": {
+                logger.warn(
+                    `🛡️ 尉迟恭：删除达到重试上限的失败任务 ${task.path}（${task.retryCount}/${task.maxRetries}）`,
+                );
+                await this.deleteTask(task.path);
+                break;
+            }
+        }
+    }
+
+    /**
+     * 处理pending状态任务（恢复执行）
+     *
+     * @description
+     * 将pending状态的任务添加到执行队列继续执行。
+     * 也用于兼容旧格式任务（无status字段）。
+     *
+     * @param task 扫描队列任务
+     * @private
+     * @since RFC 0056
+     */
+    private handlePendingTask(task: ScanQueueItem): void {
+        // ✅ RFC 0056: 使用纯函数获取状态显示文本
+        const statusText = getTaskStatusDisplayText(task);
+        logger.info(`🛡️ 尉迟恭：恢复任务到执行队列 ${task.path}（状态：${statusText}）`);
+        this.enqueueTask(task, "任务");
+    }
 }

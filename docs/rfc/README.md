@@ -5,9 +5,9 @@ This directory contains RFCs for significant changes to the photo management app
 ## RFC Statistics
 
 - **Total RFCs**: 48
-- **Completed**: 26 (54.2%)
+- **Completed**: 29 (60.4%)
 - **In Progress**: 1 (2.1%)
-- **Draft**: 21 (43.8%)
+- **Draft**: 18 (37.5%)
 - **Rejected**: 0 (0%)
 
 ### By Version
@@ -86,9 +86,9 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0022](./0022-test-stabilization-issues-and-solutions.md)         | Test Stabilization Issues and Solutions         | Draft               | 李鹏   | v2.0.0         |
 | [0023](./0023-startup-performance-optimization.md)                | Startup Performance Optimization                | Draft               | 李鹏   | v2.0.0         |
 | [0025](./0025-tree-auto-focus-on-expand.md)                       | 树组件自动聚焦展开优化                          | Draft               | 李鹏   | v2.0.0         |
-| [0026](./0026-file-type-indicator.md)                             | 文件类型指示器                                  | Draft               | 李鹏   | v2.0.0         |
-| [0028](./0028-ffmpeg-binary-packaging-fix.md)                     | FFmpeg Binary Packaging Fix                     | Draft               | 李鹏   | v2.0.0         |
-| [0029](./0029-process-based-thumbnail-architecture.md)            | 基于进程的缩略图架构                            | Draft               | 李鹏   | v2.0.0         |
+| [0026](./completed/0026-file-type-indicator.md)                   | 文件类型指示器                                  | ✅ Completed        | 李鹏   | v2.0.0         |
+| [0028](./completed/0028-ffmpeg-binary-packaging-fix.md)           | FFmpeg Binary Packaging Fix                     | ✅ Completed        | 李鹏   | v2.0.0         |
+| [0029](./completed/0029-process-based-thumbnail-architecture.md)  | 基于进程的缩略图架构                            | ✅ Completed        | 李鹏   | v2.0.0         |
 | [0029](./0029-scan-skip-strategy-completion-fix.md)               | 扫描跳过策略完成修复                            | Draft               | 李鹏   | v2.0.0         |
 | [0032](./0032-qianliyan-scan-engine.md)                           | 千里眼扫描引擎 (含scan-service迁移)              | 🔨 In Progress      | 李鹏   | v2.0.0         |
 | [0033](./0033-shunfenger-watch-engine.md)                         | 顺风耳监听引擎                                  | Draft               | 李鹏   | v2.0.0         |
@@ -123,7 +123,10 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0017](./completed/0017-production-log-viewer.md)                                        | Production Log Viewer System                   | 李鹏   | v2.0.0         | 按需激活的生产环境日志查看器，零性能影响，支持主进程和Worker线程日志实时显示               |
 | [0019](./completed/0019-auto-update-system.md)                                           | Auto-Update System - Client Implementation     | 李鹏   | v2.0.0         | 客户端自动更新系统实现，采用electron-updater方案，支持安全的preload集成                    |
 | [0024](./completed/0024-log-viewer-resizable-panel.md)                                   | 日志查看器可调整大小面板增强                    | 李鹏   | v2.0.0         | 为日志查看器添加可调整大小面板功能，提升可用性和改善日志内容可见性                         |
+| [0026](./completed/0026-file-type-indicator.md)                                          | 文件类型指示器                                  | 李鹏   | v2.0.0         | 图片列表添加文件类型视觉指示器，提升用户识别效率和交互体验                                  |
 | [0027](./completed/0027-wasm-memory-management-optimization.md)                          | WASM内存管理优化与HEIF解码错误处理              | 李鹏   | v2.0.0         | 优化WASM HEIF解码器内存管理机制，增强错误处理，提升大型HEIF图像处理稳定性                  |
+| [0028](./completed/0028-ffmpeg-binary-packaging-fix.md)                                  | FFmpeg Binary Packaging Fix                     | 李鹏   | v2.0.0         | 修复打包后ffmpeg二进制文件访问问题，确保生产环境视频处理功能正常工作                       |
+| [0029](./completed/0029-process-based-thumbnail-architecture.md)                         | 基于进程的缩略图架构                            | 李鹏   | v2.0.0         | 进程池混合架构，隔离重型任务，有效控制内存，提升多核性能，增强稳定性                        |
 | [0030](./completed/0030-scan-status-reporting-fix.md)                                    | 扫描状态报告修复                                | 李鹏   | v2.0.0         | 修复扫描过程中的状态报告问题，确保UI状态栏正确显示扫描进度和完成状态                       |
 | [0031](./completed/0031-maliang-image-processing-engine.md)                              | Ma-Liang 统一图像处理引擎                       | 李鹏   | v2.0.0         | 创建统一图像处理引擎，整合FFmpeg、Sharp、WASM-HEIF和Photon库，支持BMP和MPEG/MPG格式      |
 | [0035](./completed/0035-five-engine-orchestration-architecture.md)                      | 天枢·顺风耳·千里眼·司簿·马良五引擎编排架构      | 李鹏   | v2.0.0         | 建立五大核心引擎协同系统，通过太乙服务层桥接和YAML工作流元数据驱动，实现完整链路           |

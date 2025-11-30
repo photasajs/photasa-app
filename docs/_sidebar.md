@@ -25,6 +25,7 @@
   * [调试指南](DEBUG.md)
 
 * **设计文档**
+  * [系统架构设计](design/system-architecture-design.md)
   * [项目架构与技术方案分析](design/20250609-项目架构与技术方案分析.md)
   * [配置系统设计](design/20250603-config-system.md)
   * [扫描照片设计](design/20250628-scan-photos-design.md)
