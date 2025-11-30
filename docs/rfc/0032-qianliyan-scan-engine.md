@@ -4,12 +4,14 @@
 - **标题**: 千里眼扫描引擎
 - **作者**: 李鹏
 - **开始日期**: 2024-05-24
-- **状态**: 🔨 **进行中**
-- **最后更新**: 2025-10-16
+- **状态**: 🔨 **进行中** - Phase 1 已完成，Phase 2-4 待实施
+- **最后更新**: 2025-01-23
 - **类型**: 功能
 - **相关RFC**:
   - RFC 0042: scanningFolder四步渐进式迁移（Phase 3的前置条件）
   - RFC 0043: useQinQiong()访问模式（appState访问统一）
+  - RFC 0046: 扫描队列持久化 - 千里眼scanning.json管理（已完成）✅
+  - RFC 0048: 扫描编排业务逻辑迁移 - 尉迟恭自治架构（已完成）✅
 
 ## 摘要
 
@@ -412,45 +414,85 @@ interface ScanJobState {
 
 | 阶段 | 范围 | 当前状态 | 备注 |
 | ---- | ---- | -------- | ---- |
-| Phase 0 | 契约冻结、样例数据、测试基架 | 🔄 进行中 | 建立 `src/engines/common/` 契约基础 |
-| Phase 1 | 骨架搭建 - tianshu-service + 基础引擎 | 🔄 进行中 | 太乙重构完成，正在集成太乙服务到天枢 |
-| Phase 2 | 功能验证 - 核心功能验证 | ⬜ 未启动 | 扫描、偏好管理等功能测试 |
-| Phase 3 | scan-service迁移 - 扫描服务天界化 | ⬜ 未启动 | orchestrateScan迁移到千里眼引擎 |
+| Phase 0 | 契约冻结、样例数据、测试基架 | ✅ 已完成 | 建立 `src/engines/common/` 契约基础 |
+| Phase 1 | 骨架搭建 - tianshu-service + 基础引擎 | ✅ 已完成 | 太乙重构完成，千里眼引擎和适配器已实现 |
+| Phase 2 | 功能验证 - 核心功能验证 | 🔄 部分完成 | 千里眼队列持久化已验证（RFC 0046），扫描编排待验证 |
+| Phase 3 | scan-service迁移 - 扫描服务天界化 | ⚠️ 架构不一致 | **当前状态**：编排在人界（RFC 0048），目标：编排在天界 |
 | Phase 4 | 架构统一 - 清理旧代码完成统一 | ⬜ 未启动 | 限流、失败恢复、指标上报 |
 
 ### Phase 3: scan-service迁移到千里眼引擎
 
+**⚠️ 重要架构不一致说明（2025-01-23）**：
+
+**RFC 0032 的目标**：将扫描编排逻辑迁移到**天界**（Main进程）的千里眼引擎
+
+**RFC 0048 的实际完成**：扫描编排逻辑迁移到**人界**（Renderer进程）的尉迟恭服务
+
+**当前实际架构**：
+```
+人界（Renderer进程）
+├── 尉迟恭服务（YuChiGongService）
+│   ├── 扫描编排（executeScan）✅ 已实现
+│   ├── 任务队列管理（p-queue）✅ 已实现
+│   ├── 状态机制（pending → processing → [删除]）✅ 已实现
+│   └── 通过IPC调用天界扫描执行（window.api.scanPhotos）✅ 已实现
+│
+天界（Main进程）
+├── 千里眼引擎（QianLiYanEngine）
+│   ├── 队列持久化（persistQueue/restoreQueue）✅ 已实现
+│   └── 扫描执行（planScan/scan）✅ 已实现
+└── 扫描服务（scan-service）
+    └── 实际文件扫描执行（scanPhotos IPC handler）✅ 已实现
+```
+
+**架构分析**：
+- ✅ **优点**：RFC 0048 实现了 Store SSOT + 状态机制，架构清晰，已通过测试验证
+- ⚠️ **不一致**：编排逻辑在人界而非天界，与 RFC 0032 的"天界主导"原则不符
+- ⚠️ **影响**：IPC通信开销（每个扫描任务需要IPC调用），但当前性能可接受
+
+**长期目标决策（2025-01-23）**：
+1. **选项A（临时方案）**：接受当前架构，保持 RFC 0048 的架构（编排在人界），优化IPC通信
+2. **选项B（长期目标）**：✅ **已确认为长期目标** - 将编排逻辑迁移到天界，与天界架构对齐
+   - 需要仔细审查和设计
+   - 需要重新设计状态管理机制（Store SSOT 如何在天界实现）
+   - 需要详细的迁移路径和风险评估
+
 **前置条件**：
-- RFC 0042 Step 1-3 已完成（ScanningStore、QianLiYan持久化、YuChiGong编排）
-- 天枢-太乙-千里眼调度链已建立
+- ✅ RFC 0042 Step 1-3 已完成（ScanningStore、QianLiYan持久化、YuChiGong编排）
+- ✅ 天枢-太乙-千里眼调度链已建立
+- ✅ RFC 0048 已完成（尉迟恭编排架构）
 
-#### 3.1 当前架构问题
+#### 3.1 当前架构问题（已更新 2025-01-23）
 
-**问题1: 扫描引擎位置错误**
+**问题1: 扫描编排位置（已部分解决）**
 ```typescript
-// ❌ 当前：orchestrateScan在Renderer进程
-// src/renderer/src/services/scan/scan-service.ts
+// ✅ RFC 0048 已完成：编排逻辑已迁移到尉迟恭（人界）
+// src/renderer/src/services/yuchigong/yuchigong.ts
 
-export async function orchestrateScan(
-    items: ScanAction[],
-    callbacks: ScanCallbacks
+private async executeScan(
+    path: string,
+    action: "scan" | "rescan" | "current",
+    operationType: "directory" | "file"
 ): Promise<void> {
-    // 复杂的扫描编排逻辑在人界
-    // ❌ 应该在天界（Main进程）
+    // ✅ 扫描编排逻辑在人界（尉迟恭）
+    // ⚠️ RFC 0032 目标：应该在天界（千里眼）
+    await window.api.scanPhotos({ ... }); // IPC调用天界执行
 }
 ```
 
-**问题2: IPC通信开销大**
-- Renderer通过IPC调用Main进程的扫描能力
-- 每个进度更新都需要IPC通信
-- 大量文件扫描时性能瓶颈明显
+**问题2: IPC通信开销（当前可接受）**
+- ✅ 尉迟恭通过IPC调用Main进程的扫描能力（`window.api.scanPhotos`）
+- ✅ 进度更新通过IPC事件流式传输
+- ⚠️ 大量文件扫描时可能存在性能瓶颈，但当前测试验证性能可接受
 
-**问题3: 职责边界不清**
-- YuChiGong（人界）包含扫描编排逻辑
-- QianLiYan（天界）仅作为扫描worker
-- 违反了天界主导、人界辅助的架构原则
+**问题3: 职责边界（架构不一致）**
+- ⚠️ YuChiGong（人界）包含扫描编排逻辑（RFC 0048 已完成）
+- ✅ QianLiYan（天界）负责队列持久化和扫描执行
+- ⚠️ 与 RFC 0032 的"天界主导"原则不一致，但当前架构已稳定运行
 
-#### 3.2 目标架构
+#### 3.2 目标架构（RFC 0032 原始设计）
+
+**⚠️ 注意**：以下为 RFC 0032 的原始目标架构，但 RFC 0048 实际实现的是不同的架构（编排在人界）。需要决策是否继续 Phase 3 或调整目标。
 
 ```
 天界（Main进程）
@@ -471,7 +513,153 @@ export async function orchestrateScan(
     └── ScanningStore管理（镜像天界队列）
 ```
 
-#### 3.3 迁移策略
+#### 3.3 迁移策略（长期目标：选项B）
+
+**✅ 长期目标确认（2025-01-23）**：
+- **选项B已确认为长期目标** - 将编排逻辑迁移到天界，与天界架构对齐
+- 需要仔细审查和设计，确保迁移方案稳健可靠
+- 当前架构（RFC 0048）作为临时方案，保持稳定运行
+
+**当前状态**：
+- ✅ RFC 0048 已完成，架构稳定运行
+- ⚠️ 架构与 RFC 0032 的"天界主导"原则不一致
+- ⚠️ 当前架构作为临时方案，长期目标是将编排逻辑迁移到天界
+
+**重新设计思路（2025-01-23）**：
+
+**核心原则**：
+- ✅ **scan-service 已设计良好，不需要改变**
+- ✅ **只需将 scan-service 包装在千里眼适配器中**
+- ✅ **遵循天枢和太乙的标准接口设计模式**
+
+**标准适配器模式**（参考文昌、司命适配器）：
+```
+1. 适配器使用 @Adapter 装饰器注册
+2. 适配器实现 IAdapter 接口（initialize/shutdown）
+3. 适配器包装现有服务/引擎，委托方法调用
+4. 太乙通过 callEngine(engineName, methodName, ...args) 调用
+```
+
+**千里眼适配器设计**：
+```typescript
+@Adapter({
+    name: "qianliyan",
+    displayName: "千里眼扫描引擎",
+    priority: AdapterPriority.High,
+    description: "包装scan-service为标准适配器接口",
+    engineType: "scan",
+    dependencies: ["scan"], // 依赖scan-service
+})
+export class QianliyanAdapter implements IAdapter {
+    private scanService: ScanService; // 包装scan-service
+
+    async initialize(): Promise<void> {
+        // 获取scan-service实例（通过依赖注入）
+        this.scanService = getScanService();
+        // scan-service已经初始化，无需再次初始化
+    }
+
+    async shutdown(): Promise<void> {
+        // scan-service自己管理生命周期，无需处理
+    }
+
+    // 委托scan-service的方法
+    async scanPhotos(requestId: string, scanAction: ScanAction): Promise<void> {
+        return this.scanService.scanPhotos(requestId, scanAction);
+    }
+
+    // 添加队列管理、状态管理等额外功能
+    async planScan(command: ScanCommand): Promise<string> {
+        // 使用千里眼引擎的队列管理逻辑
+        // 最终委托给scan-service执行
+    }
+}
+```
+
+**关键设计挑战**：
+
+1. **scan-service 包装策略**
+   - **当前**：scan-service 是 @Service 装饰的服务，有独立的生命周期
+   - **方案**：QianliyanAdapter 包装 scan-service，不改变 scan-service 本身
+   - **实现**：通过依赖注入获取 scan-service 实例，委托方法调用
+
+2. **队列管理位置**
+   - **当前**：人界使用 p-queue 管理队列
+   - **方案**：千里眼适配器内部维护队列（使用千里眼引擎的队列逻辑）
+   - **实现**：QianliyanAdapter 使用 QianliyanEngine 的队列管理，最终委托给 scan-service 执行
+
+3. **状态管理策略**
+   - **当前**：人界 Store 管理状态（pending → processing → [删除]）
+   - **方案**：千里眼适配器维护状态，通过 IPC 事件同步到人界 Store
+   - **实现**：适配器内部状态机 + IPC 事件广播
+
+4. **IPC通信优化**
+   - **当前**：每个任务 IPC 调用（`window.api.scanPhotos`）
+   - **方案**：批量提交 + 流式进度事件
+   - **实现**：
+     - 批量提交接口：`submitScanTasks(actions: ScanAction[])`
+     - 进度事件流：适配器监听 scan-service 事件，通过 IPC 广播
+
+5. **Store同步机制**
+   - **当前**：人界 Store 为 SSOT
+   - **方案**：天界适配器为 SSOT，人界 Store 为只读镜像
+   - **实现**：
+     - 适配器通过 IPC 事件推送状态变化
+     - 房玄龄监听事件，更新 Store 镜像
+     - Store 变为只读，移除直接修改逻辑
+
+**迁移路径设计**（待详细设计）：
+
+**Phase 3.1: 千里眼适配器包装scan-service**（1-2周）
+- 创建 `QianliyanAdapter` 包装 `ScanService`
+- 实现标准 `IAdapter` 接口（initialize/shutdown）
+- 通过依赖注入获取 `ScanService` 实例
+- 委托 `scan-service` 的方法调用
+- 使用 `@Adapter` 装饰器注册到太乙
+
+**Phase 3.2: 队列管理集成**（1-2周）
+- 在适配器中集成 `QianliyanEngine` 的队列管理
+- 实现任务队列（替代人界p-queue）
+- 实现状态机（pending → processing → [删除]）
+- 队列持久化到 `~/.photasa/scan/scanning.json`
+
+**Phase 3.3: IPC通信重构**（1-2周）
+- 设计批量任务提交接口：`submitScanTasks(actions: ScanAction[])`
+- 适配器监听 `scan-service` 事件，通过 IPC 广播进度
+- 实现状态同步机制（适配器 → IPC事件 → 人界Store）
+
+**Phase 3.4: 人界Store镜像化**（1-2周）
+- 将Store改为只读镜像
+- 房玄龄监听IPC事件，更新Store镜像
+- 移除人界直接修改Store的逻辑（尉迟恭不再直接修改Store）
+
+**Phase 3.5: 尉迟恭简化**（1周）
+- 移除编排逻辑（p-queue、executeScan）
+- 通过IPC批量提交扫描意图
+- 接收进度事件并更新UI状态
+
+**Phase 3.6: 测试和验证**（2周）
+- 完整迁移路径测试
+- 性能对比测试（批量提交 vs 单个IPC调用）
+- 崩溃恢复测试（从持久化队列恢复）
+- 多窗口同步测试
+
+**总工期估算**：8-11周（2-2.5个月）
+
+**关键设计要点**：
+- ✅ **不改变 scan-service**：保持 scan-service 的现有设计和实现
+- ✅ **标准适配器模式**：遵循文昌、司命适配器的设计模式
+- ✅ **依赖注入**：通过太乙的依赖系统获取 scan-service 实例
+- ✅ **委托模式**：适配器委托 scan-service 执行实际扫描
+- ✅ **队列管理**：适配器内部管理队列，scan-service 只负责执行
+
+**风险评估**：
+- ⚠️ **高风险**：大规模重构，可能破坏现有稳定架构
+- ⚠️ **复杂度高**：需要重新设计状态管理、IPC通信、事件广播
+- ⚠️ **测试覆盖**：需要全面的集成测试和性能测试
+- ✅ **长期收益**：符合架构原则，性能优化，可扩展性提升
+
+**原始迁移策略**（保留作为参考）：
 
 **Step 3.1: 千里眼引擎扩展（3天）**
 
@@ -701,15 +889,29 @@ export class YuChiGongService {
 
 **总工期**: 11天
 
-#### 3.7 验收标准
+#### 3.7 验收标准（待更新 2025-01-23）
 
-- ✅ orchestrateScan完全在Main进程执行
-- ✅ Renderer进程仅负责UI交互和状态展示
-- ✅ 扫描性能≥原架构性能
-- ✅ 所有现有扫描场景正常工作
-- ✅ 单元测试覆盖率≥90%
-- ✅ 零lint错误
-- ✅ 支持优雅降级（feature flag控制）
+**⚠️ 架构状态**：RFC 0048 已完成，但架构与 RFC 0032 Phase 3 目标不一致。
+
+**如果选择选项A（接受当前架构）**：
+- ✅ 扫描编排逻辑在尉迟恭（人界）已稳定运行
+- ✅ 通过IPC调用天界扫描执行（`window.api.scanPhotos`）
+- ✅ 性能可接受（已通过测试验证）
+- ⚠️ 与 RFC 0032 的"天界主导"原则不一致，但架构稳定
+
+**如果选择选项B（继续 Phase 3）**：
+- ⬜ orchestrateScan完全在Main进程执行
+- ⬜ Renderer进程仅负责UI交互和状态展示
+- ⬜ 扫描性能≥原架构性能
+- ⬜ 所有现有扫描场景正常工作
+- ⬜ 单元测试覆盖率≥90%
+- ⬜ 零lint错误
+- ⬜ 支持优雅降级（feature flag控制）
+
+**如果选择选项C（混合架构）**：
+- ⬜ 状态管理保持在人界（Store SSOT）
+- ⬜ Worker池管理和进度聚合迁移到天界
+- ⬜ 职责边界清晰，架构稳定
 
 ### Phase 0 详细任务清单
 
@@ -923,3 +1125,99 @@ graph TD
 - 天枢掌控编排与智能判断；
 - 司簿专注于 manifest 存取，千里眼专注于扫描执行；
 - UI 与服务层只与天枢交互，为后续 Agentic 能力预留空间。
+
+---
+
+## 架构状态更新（2025-01-23）
+
+### 当前实际架构状态
+
+**已实现**：
+- ✅ 千里眼引擎已实现（`QianliyanEngine` + `QianliyanAdapter`）
+- ✅ 队列持久化功能已验证（RFC 0046）
+- ✅ 扫描编排逻辑已迁移到尉迟恭（RFC 0048）
+- ✅ Store SSOT + 状态机制已实现（RFC 0048）
+
+**架构不一致**：
+- ⚠️ RFC 0032 目标：扫描编排在天界（千里眼引擎）
+- ⚠️ RFC 0048 实际：扫描编排在人界（尉迟恭服务）
+- ⚠️ 当前架构：尉迟恭通过IPC调用天界扫描执行（`window.api.scanPhotos`）
+
+**决策建议**：
+1. **选项A（推荐）**：接受当前架构，保持 RFC 0048 的架构，调整 RFC 0032 Phase 3 目标为"优化IPC通信"而非"迁移编排逻辑"
+2. **选项B**：继续 Phase 3，将编排逻辑迁移到天界，但需要重新设计状态管理机制（Store SSOT 如何在天界实现）
+3. **选项C（折中）**：混合架构，保持状态管理在人界，将部分编排逻辑（Worker池管理、进度聚合）迁移到天界
+
+**待决策问题**：
+- Phase 3 是否需要继续执行？
+- 如果继续，如何平衡架构原则和实现复杂度？
+- 当前架构的性能是否满足需求？
+
+**当前架构流程**（RFC 0048 实际实现 - 临时方案）：
+```
+用户操作 → 尉迟恭（人界）
+         ↓
+    1️⃣ 创建 pending 任务到 Store（SSOT - 人界）
+         ↓
+    2️⃣ 添加到 p-queue 执行队列（人界）
+         ↓
+    3️⃣ p-queue 执行 executeScan()（人界）
+         ├─ Store 状态: pending → processing（人界）
+         ├─ IPC调用: window.api.scanPhotos() → 天界扫描执行
+         ├─ 发现子文件夹 → 批量创建 pending 到 Store（人界）
+         └─ 完成 → 立即从 Store 删除（人界）
+```
+
+**RFC 0032 目标流程**（长期目标 - 待实现）：
+```
+用户操作 → 尉迟恭（人界）
+         ↓
+    1️⃣ 通过IPC提交扫描意图 → 天枢（天界）
+         ↓
+    2️⃣ 天枢编排 → 太乙调度 → 千里眼执行（天界）
+         ├─ 千里眼管理任务队列（天界SSOT）
+         ├─ 千里眼管理Worker池（天界）
+         ├─ 千里眼状态机：pending → processing → [删除]（天界）
+         └─ 千里眼聚合进度（天界）
+         ↓
+    3️⃣ 进度事件通过IPC广播到人界
+         ├─ 房玄龄更新Store镜像（只读）
+         └─ 尉迟恭更新UI状态
+         ↓
+    4️⃣ 扫描完成 → 天界从队列删除 → IPC通知人界同步
+```
+
+**关键差异对比**：
+
+| 维度 | 当前架构（RFC 0048） | 目标架构（RFC 0032） |
+|------|---------------------|---------------------|
+| **SSOT位置** | 人界（Store） | 天界（千里眼引擎） |
+| **队列管理** | 人界（p-queue） | 天界（千里眼taskQueue） |
+| **状态管理** | 人界（Store状态机） | 天界（千里眼状态机） |
+| **编排逻辑** | 人界（executeScan） | 天界（千里眼orchestrateScan） |
+| **IPC通信** | 每个任务IPC调用 | 批量提交 + 流式事件 |
+| **Store角色** | 可写SSOT | 只读镜像 |
+| **Worker池** | 天界（scan-service） | 天界（千里眼管理） |
+| **进度聚合** | 人界聚合 | 天界聚合 |
+
+**迁移关键决策点**：
+
+1. **状态存储选择**：
+   - JSON文件（简单，当前使用）
+   - SQLite（复杂查询，事务支持）
+   - 内存 + 定期持久化（性能优先）
+
+2. **IPC通信模式**：
+   - 请求-响应（简单，但开销大）
+   - 事件流（复杂，但性能好）
+   - 混合模式（请求提交 + 事件流进度）
+
+3. **Store同步策略**：
+   - 全量同步（简单，但开销大）
+   - 增量同步（复杂，但性能好）
+   - 按需同步（平衡）
+
+4. **错误恢复机制**：
+   - 天界崩溃恢复（从持久化恢复）
+   - 人界崩溃恢复（从IPC重新同步）
+   - 双向同步一致性保证
