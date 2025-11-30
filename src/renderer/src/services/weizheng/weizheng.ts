@@ -322,6 +322,7 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * - 遍历所有路径，批量构建树结构
      * - 只发送一次奏折，一次持久化
      * - 避免循环中重复发送奏折的低效操作
+     * - ✅ 修复：检查根节点，确保子文件夹可以正确添加
      */
     private async handleAddPaths(shengzhi: Shengzhi): Promise<void> {
         const paths = shengzhi.content?.paths as string[];
@@ -339,8 +340,9 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
         logger.info(`🏛️ 魏征：批量添加${paths.length}个路径到树`);
 
-        // 1. 获取当前文件夹树
+        // 1. 获取当前文件夹树和偏好设置中的根路径
         const currentTree = this.folderTree;
+        const rootPaths = this.fangXuanLingService.preference.paths || [];
 
         // 2. 深拷贝避免直接修改store
         const newTree: FolderNode[] = deepClone(currentTree);
@@ -350,6 +352,31 @@ export class WeiZhengService implements IService, IWeiZhengService {
             if (!folderPath || typeof folderPath !== "string") {
                 logger.warn(`🏛️ 魏征：跳过无效路径：${folderPath}`);
                 continue;
+            }
+
+            // ✅ 修复：检查路径是否是根路径（来自preference.paths）
+            // 如果是根路径，先添加根节点（如果不存在）
+            const isRootPath = rootPaths.includes(folderPath);
+            if (isRootPath) {
+                const rootExists = newTree.some((node) => node.key === folderPath);
+                if (!rootExists) {
+                    logger.info(`🏛️ 魏征：检测到根路径 ${folderPath}，先添加根节点`);
+                    addRoot(newTree, folderPath);
+                }
+            } else {
+                // 如果是子路径，找到对应的根路径并确保根节点存在
+                const rootPath = rootPaths.find(
+                    (rp) => folderPath.startsWith(rp + "/") || folderPath === rp,
+                );
+                if (rootPath) {
+                    const rootExists = newTree.some((node) => node.key === rootPath);
+                    if (!rootExists) {
+                        logger.info(
+                            `🏛️ 魏征：检测到子路径 ${folderPath} 的根路径 ${rootPath}，先添加根节点`,
+                        );
+                        addRoot(newTree, rootPath);
+                    }
+                }
             }
 
             // 使用addFolderToTree构建树结构
