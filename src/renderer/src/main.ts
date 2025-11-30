@@ -10,16 +10,10 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import VueVideoPlayer from "@videojs-player/vue";
 import { i18n } from "./i18n/config";
 
-import { useStatusBarStore } from "@renderer/stores/statusBar";
-
-import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
-import { FindPhotoServiceKey } from "@renderer/interfaces/find-photo-service.interface";
-import { globalLogInterceptor } from "@common/logger";
-
 import { LishiminService, LISSHIMING_TOKEN } from "./services";
 import { loggers } from "@common/logger";
 
-const logger = loggers.lishimin;
+const logger = loggers.app;
 
 logger.info("📦 开天辟地");
 const app = createApp(App);
@@ -37,28 +31,12 @@ app.use(VueVideoPlayer);
 logger.info("📦 挂载 pinia");
 app.use(pinia);
 
-logger.info("📦 提供 Legacy FindPhotoServiceIpc 实例");
-const findPhotoServiceIpc = new FindPhotoServiceIpc();
-app.provide(FindPhotoServiceKey, findPhotoServiceIpc);
-
 // 大唐李世民登基
 const lishiminService = new LishiminService(app);
 app.provide(LISSHIMING_TOKEN, lishiminService);
 
-// 初始化 renderer 日志拦截器 - 直接发送到 log viewer
-globalLogInterceptor.activate();
-
 // 启动大唐贞观之治
 await lishiminService.startZhengguan();
-
-// 初始化状态栏
-const statusBarStore = useStatusBarStore();
-// TODO: move to preload api instead
-if (window.electron && window.electron.ipcRenderer) {
-    window.electron.ipcRenderer.on("notify:status", (_event, payload) => {
-        statusBarStore.update(payload);
-    });
-}
 
 logger.info("📦 挂载 App.vue 应用");
 app.mount("#app");

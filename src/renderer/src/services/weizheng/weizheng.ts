@@ -217,7 +217,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * 用户主动添加监控路径，创建根节点
      */
     private async handleAddRoot(shengzhi: Shengzhi): Promise<void> {
-        const rootPath = shengzhi.content?.rootPath as string;
+        const content = shengzhi.content as Record<string, unknown>;
+        const rootPath = content?.rootPath as string;
 
         if (!rootPath) {
             logger.warn("🏛️ 魏征：add_root圣旨参数无效，rootPath必须提供");
@@ -259,7 +260,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * 用户主动移除监控路径，删除根节点
      */
     private async handleRemoveRoot(shengzhi: Shengzhi): Promise<void> {
-        const rootPath = shengzhi.content?.rootPath as string;
+        const content = shengzhi.content as Record<string, unknown>;
+        const rootPath = content?.rootPath as string;
 
         if (!rootPath) {
             logger.warn("🏛️ 魏征：remove_root圣旨参数无效，rootPath必须提供");
@@ -301,7 +303,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * 添加文件夹到树
      */
     private async handleFolderDiscovered(shengzhi: Shengzhi): Promise<void> {
-        const folderPath = shengzhi.content?.folderPath as string;
+        const content = shengzhi.content as Record<string, unknown>;
+        const folderPath = content?.folderPath as string;
         await this.addFolderPath(folderPath);
     }
 
@@ -310,7 +313,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * 从树中移除文件夹
      */
     private async handleFolderRemoved(shengzhi: Shengzhi): Promise<void> {
-        const folderPath = shengzhi.content?.folderPath as string;
+        const content = shengzhi.content as Record<string, unknown>;
+        const folderPath = content?.folderPath as string;
         await this.removeFolderPath(folderPath);
     }
 
@@ -326,7 +330,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * - ✅ 修复：检查根节点，确保子文件夹可以正确添加
      */
     private async handleAddPaths(shengzhi: Shengzhi): Promise<void> {
-        const paths = shengzhi.content?.paths as string[];
+        const content = shengzhi.content as Record<string, unknown>;
+        const paths = content?.paths as string[];
 
         // 🔧 防御性编程：确保paths是有效数组
         if (!paths || !Array.isArray(paths) || paths.length === 0) {
@@ -389,7 +394,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * 更新整个文件夹树
      */
     private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
-        const tree = shengzhi.content?.tree as FolderNode[];
+        const content = shengzhi.content as Record<string, unknown>;
+        const tree = content?.tree as FolderNode[];
 
         if (!tree || !Array.isArray(tree)) {
             logger.error("🏛️ 魏征：update_folder_tree圣旨参数无效，tree必须是数组");
@@ -429,7 +435,8 @@ export class WeiZhengService implements IService, IWeiZhengService {
      * 切换当前文件夹
      */
     private async handleSwitchFolder(shengzhi: Shengzhi): Promise<void> {
-        const folderPath = shengzhi.content?.folderPath as string;
+        const content = shengzhi.content as Record<string, unknown>;
+        const folderPath = content?.folderPath as string;
 
         if (!folderPath || typeof folderPath !== "string") {
             logger.error("🏛️ 魏征：switch_folder圣旨参数无效，folderPath必须是字符串");

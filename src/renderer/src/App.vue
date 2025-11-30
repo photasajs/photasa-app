@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, inject, onUnmounted, watch } from "vue";
+import { computed, ref, onUnmounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import ImportPhotos from "./components/ImportPhotos.vue";
 import SplitView from "./components/SplitView.vue";
@@ -15,14 +15,12 @@ import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@common/logger";
 import { mapFileOperationToScanAction } from "@common/file-operation-utils";
-import type { FindPhotoEvent, FileOperation } from "@common/scan-types";
+import type { FileOperation } from "@common/scan-types";
 
 import UserPreference from "./components/UserPreference.vue";
 import ScanQueueDialog from "./components/ScanQueueDialog.vue";
 import { useI18n } from "vue-i18n";
 import { useTitle, watchArray } from "@vueuse/core";
-import { useStatusBarStore } from "@renderer/stores/statusBar";
-import { FindPhotoServiceKey } from "@renderer/interfaces/find-photo-service.interface";
 import type { ThemeMeta } from "@/services/chusuiliang/theme-manage";
 import { onMounted } from "vue";
 import StatusBar from "./components/common/StatusBar.vue";
@@ -38,12 +36,14 @@ import {
 } from "@renderer/components/ui";
 import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
-import { scanMonitoringService } from "@renderer/services/scan-monitoring-service";
+import { scanMonitoringService } from "@renderer/services/yushinan/scan-monitoring-service";
 import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
+import { useYuShiNan } from "@renderer/composables/useYuShiNan";
+// ✅ RFC 0057: Vue 组件通过 yuShiNan 服务更新状态栏，不直接访问房玄龄
 // ✅ RFC 0048: useWeiZheng 不再直接在 App.vue 使用
 // import { useWeiZheng } from "./composables/useWeiZheng";
 
@@ -85,14 +85,9 @@ const showScanList = ref(false);
 const showQueueDashboard = ref(false);
 const loading = ref(false);
 
-const findPhotoService = inject(FindPhotoServiceKey);
-if (!findPhotoService) {
-    throw new Error("FindPhotoService not provided");
-}
-
 const themes = ref<ThemeMeta[]>([]);
 const currentThemeId = ref<string>("");
-const statusBarStore = useStatusBarStore();
+// ✅ RFC 0057: statusBarStore 已迁移到 yuShiNan 服务管理，通过房玄龄访问
 const menusStore = useMenusStore();
 
 const isMac = window.api.isMac();
@@ -155,10 +150,11 @@ async function initializeApp(): Promise<void> {
 }
 
 const chuSuiLiang = useChuSuiLiang();
+const yuShiNan = useYuShiNan(); // ✅ RFC 0057: 通过虞世南服务更新状态栏
 
 onMounted(async () => {
-    // APP 启动时推送初始化状态
-    statusBarStore.update({
+    // ✅ RFC 0057: APP 启动时推送初始化状态（通过虞世南服务）
+    yuShiNan.updateStatus({
         type: "app",
         status: "initializing",
         task: t("app.title"),
@@ -183,8 +179,8 @@ onMounted(async () => {
         }
     }
 
-    // 主题加载完毕，切换为 ready 状态
-    statusBarStore.update({
+    // ✅ RFC 0057: 主题加载完毕，切换为 ready 状态（通过虞世南服务）
+    yuShiNan.updateStatus({
         type: "app",
         status: "ready",
         task: t("app.title"),
@@ -243,14 +239,15 @@ watchArray(
 // 添加 watched folder 后，李世民路由会自动触发尉迟恭添加扫描任务
 
 // ✅ RFC 0048: 尉迟恭自动处理扫描，App.vue 只监听队列更新 UI
+// ✅ RFC 0057: processingFile 现在由 yushinan 通过 photoStore 管理
+// App.vue 不再直接更新 processingFile，而是通过 photoStore.processingFile 读取
+// 此 watch 保留用于队列状态显示，但不更新 processingFile（由 yushinan 处理）
 watch(
     () => yuChiGong.scanningQueue,
     (newQueue) => {
-        if (newQueue.length > 0) {
-            processingFile.value = t("status.scanningPath", { path: newQueue[0].path });
-        } else {
-            processingFile.value = "";
-        }
+        // ✅ RFC 0057: processingFile 由 yushinan 管理，此处不再更新
+        // 队列状态显示逻辑保留，但不影响 processingFile
+        logger.debug("👑 扫描队列更新:", newQueue.length, "个任务");
     },
     { deep: true },
 );
@@ -278,70 +275,6 @@ const title = computed(() => {
     return `${t("app.title")} - ${currentFolder.value}`;
 });
 useTitle(title);
-
-// 监听 Scan Service find-photo 通知事件，用于刷新状态栏
-// 🔧 状态栏路径显示修复：processScannedFileTask 回调中增强了路径构造逻辑
-// 相关修改：将 args.currentFile (文件名) 与 args.action.path (目录路径) 结合，构造完整文件路径
-findPhotoService.onFindPhoto((args: FindPhotoEvent) => {
-    logger.debug("👑 onFindPhoto received:", args.type, args.action?.path, args.progress);
-
-    // 记录扫描活动（表示有进展）
-    if (args.progress || args.type === "complete") {
-        scanMonitoringService.recordActivity();
-    }
-
-    // ❌ RFC 0042: UI层不应该更新进度
-    // 进度更新应该由千里眼（Qianliyan）在底层自动同步到store
-    // UI只负责读取和显示 scanningFolder（通过 yuChiGong.scanningQueue）
-    // 进度数据会通过 store automation 自动从后端响应同步
-
-    if (args.action?.path) {
-        // 更新当前处理的文件信息到状态栏
-        // 🔧 修复：正确处理文件路径和目录路径
-        // 问题：当 action.path 是文件路径时，不应该再拼接 currentFile
-        // 修复：如果 action.path 是文件路径（isDirectory: false），直接使用；否则构造路径
-        if (args.action.isDirectory === false) {
-            // action.path 是文件路径，直接使用
-            processingFile.value = `${t("status.scanning")} ${args.action.path}`;
-        } else if (args.currentFile) {
-            // action.path 是目录路径，需要拼接文件名
-            const fullFilePath = `${args.action.path}/${args.currentFile}`.replace(/\/+/g, "/");
-            processingFile.value = `${t("status.scanning")} ${fullFilePath}`;
-        } else {
-            // action.path 是目录路径，但没有文件名，显示目录路径
-            processingFile.value = `${t("status.scanning")} ${args.action.path}`;
-        }
-    }
-
-    // ✅ RFC 0042 Step 2.5: folderTree更新已完全迁移到天界
-    // App.vue只负责UI状态，不再直接修改folderTree
-    //
-    // 数据流：
-    //   袁天罡监听IPC → 启奏李世民 → 褚遂良持久化 → 天界工作流
-    //   → Store Automation自动同步 → Vue响应式更新UI
-    //
-    // App.vue只需要清理UI状态，folderTree会通过Store自动更新
-
-    // 批量刷新树结构
-    if (args.type === "complete" && Array.isArray(args.paths)) {
-        // ❌ 已删除：args.paths.forEach((p: string) => updateFolderTree(p));
-        // ✅ 袁天罡会触发天界持久化 → Store Automation自动同步
-
-        // 清理处理文件状态
-        processingFile.value = "";
-        // ✅ RFC 0048: 扫描队列管理已迁移到尉迟恭，自动处理，无需手动干预
-    } else if (args?.action?.path && args?.action?.isDirectory) {
-        // 单个刷新树结构
-        // ❌ 已删除：updateFolderTree(args.action.path as string);
-        // ✅ 袁天罡会触发天界持久化 → Store Automation自动同步
-
-        // 如果是单个完成事件，也清理处理文件状态
-        if (args.type === "complete") {
-            processingFile.value = "";
-        }
-        // 注意：不要在这里调用completeScanPath和startScanning，因为startScanning函数内部已经处理了这些逻辑
-    }
-});
 
 // 监听统一队列事件，处理文件监视产生的批量操作
 window.api?.onScanQueueAdd((operations: FileOperation[]) => {

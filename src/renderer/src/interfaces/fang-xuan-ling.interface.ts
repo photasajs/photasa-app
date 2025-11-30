@@ -45,6 +45,14 @@ export interface IPhotos extends IBaseStore {
     readonly currentPhoto: Record<string, unknown> | null;
     setCurrentPhoto(photo: Record<string, unknown>): void;
     readonly photos: Record<string, unknown>[];
+    /** ✅ RFC 0057: 当前正在扫描的文件路径（只读） */
+    readonly processingFile: string;
+    /** ✅ RFC 0057: 当前扫描进度（只读） */
+    readonly scanProgress: number;
+    /** ✅ RFC 0057: 更新扫描进度 */
+    updateScanProgress(filePath: string, progress: number): void;
+    /** ✅ RFC 0057: 清空扫描进度 */
+    clearScanProgress(): void;
 }
 
 /**
@@ -75,6 +83,34 @@ export interface IAppState extends IBaseStore {
     readonly currentFolder: string;
     readonly lastOpenedFolder: string;
 }
+
+/**
+ * ✅ RFC 0057: 状态栏管理接口
+ */
+export interface IStatusBar extends IBaseStore {
+    /** 当前任务（只读） */
+    readonly currentTask: string;
+    /** 状态（只读） */
+    readonly status: string;
+    /** 进度（只读） */
+    readonly progress: number | undefined;
+    /** 错误信息（只读） */
+    readonly error: string | undefined;
+    /** 更新时间戳（只读） */
+    readonly timestamp: number;
+    /** 更新状态栏 */
+    update(payload: {
+        type: string;
+        task: string;
+        status: string;
+        error?: string;
+        timestamp: number;
+        data?: unknown;
+    }): void;
+    /** 清空状态栏 */
+    clear(): void;
+}
+
 /**
  * 房玄龄宰相服务主接口
  * 统一管理所有Store API，提供类型安全的契约
@@ -86,6 +122,8 @@ export interface IFangXuanLingService {
     readonly photos: IPhotos;
     readonly scanning: IScanning;
     readonly appState: IAppState;
+    /** ✅ RFC 0057: 状态栏管理接口 */
+    readonly statusBar: IStatusBar;
 
     // 全局重置
     resetAll(): void;

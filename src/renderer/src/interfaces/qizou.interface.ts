@@ -1,4 +1,5 @@
 import { ScanActionEvent } from "@common/scan-types";
+import { StatusNotificationShengzhiContent } from "./yu-shinan.interface";
 
 /**
  * 启奏 - 扫描完成内容
@@ -16,7 +17,7 @@ export interface Qizou {
     matter: string;
 
     /** 启奏内容 */
-    content: Record<string, unknown> | ScanCompletionContent;
+    content: Record<string, unknown> | ScanCompletionContent | StatusNotificationShengzhiContent;
 
     /** 来源服务 */
     from: string;

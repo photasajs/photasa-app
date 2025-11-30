@@ -10,6 +10,7 @@ import type {
     IPhotos,
     IScanning,
     IAppState,
+    IStatusBar,
     Zouzhe,
     ZouzheResponse,
     Zhaoling,
@@ -31,6 +32,7 @@ import {
     createPhotosService,
     createScanningService,
     createAppStateService,
+    createStatusBarService,
 } from "./accessors/service-builders";
 
 const logger = loggers.fangxuanling;
@@ -61,6 +63,10 @@ export class FangXuanLingService implements IFangXuanLingService {
      * ✅ RFC 0042 Step 1: 通过访问器模式访问ScanningStore
      */
     private _scanning: IScanning;
+    /**
+     * ✅ RFC 0057: 状态栏访问器
+     */
+    private _statusBar: IStatusBar;
 
     constructor(yuanTianGang: IYuanTianGangService) {
         if (!yuanTianGang) {
@@ -80,6 +86,7 @@ export class FangXuanLingService implements IFangXuanLingService {
         this._photos = createPhotosService();
         this._scanning = createScanningService();
         this._appState = createAppStateService();
+        this._statusBar = createStatusBarService(); // ✅ RFC 0057: 状态栏访问器
 
         logger.info("🏛️ 房玄龄：扫描队列Store已就绪");
     }
@@ -102,6 +109,14 @@ export class FangXuanLingService implements IFangXuanLingService {
      */
     get appState(): IAppState {
         return this._appState;
+    }
+
+    /**
+     * ✅ RFC 0057: 状态栏访问器
+     * 虞世南通过此访问器更新状态栏
+     */
+    get statusBar(): IStatusBar {
+        return this._statusBar;
     }
 
     /**

@@ -4,14 +4,14 @@ This directory contains RFCs for significant changes to the photo management app
 
 ## RFC Statistics
 
-- **Total RFCs**: 48
-- **Completed**: 29 (60.4%)
-- **In Progress**: 1 (2.1%)
-- **Draft**: 18 (37.5%)
+- **Total RFCs**: 49
+- **Completed**: 30 (61.2%)
+- **In Progress**: 1 (2.0%)
+- **Draft**: 18 (36.7%)
 - **Rejected**: 0 (0%)
 
 ### By Version
-- **v2.0.0**: 48 RFCs
+- **v2.0.0**: 49 RFCs
 - **Future**: 0 RFCs
 
 ## RFC Process
@@ -138,6 +138,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0046](./completed/0046-scanning-queue-persistence.md)                                   | 扫描队列持久化 - 千里眼scanning.json管理          | AI     | v2.0.0         | 千里眼引擎持久化队列到~/.photasa/scan/scanning.json，工作流架构，完整验证报告             |
 | [0047](./completed/0047-foldertree-persistence-initialization.md)                        | folderTree持久化与初始化 - 魏征appState管理        | AI     | v2.0.0         | 三条数据流汇聚魏征，司命引擎持久化，Store Automation自动同步，核心功能100%完成              |
 | [0048](./completed/0048-scan-orchestration-business-logic-migration.md)                  | 扫描编排业务逻辑迁移 - 职责自洽架构                | AI     | v2.0.0         | Store SSOT + 状态机制 + 立即清理，删除AppHelper.ts (306行)，App.vue减少~180行，已通过测试验证 |
+| [0057](./completed/0057-yushinan-scan-progress-display.md)                                | 虞世南扫描进度展示服务 - 统一findPhotoService到qizou流程 | AI     | v2.0.0         | 统一findPhotoService到qizou流程，创建虞世南服务，消除双重监听反模式，所有Vue组件遵循服务模式 |
 
 ## Rejected RFCs
 

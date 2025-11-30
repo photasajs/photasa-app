@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { scanMonitoringService, type ScanMonitorConfig } from "../scan-monitoring-service";
+import { scanMonitoringService, type ScanMonitorConfig } from "../yushinan/scan-monitoring-service";
 
 // Mock Vue
 vi.mock("vue", () => ({

@@ -83,34 +83,41 @@
                         >{{ t("preference.scanMonitoring.healthStatus") }}:</span
                     >
                     <span
-                        :class="['status-value', healthStatus.isHealthy ? 'healthy' : 'unhealthy']"
+                        :class="[
+                            'status-value',
+                            healthStatus.value.isHealthy ? 'healthy' : 'unhealthy',
+                        ]"
                     >
-                        {{ healthStatus.isHealthy ? t("common.healthy") : t("common.unhealthy") }}
+                        {{
+                            healthStatus.value.isHealthy
+                                ? t("common.healthy")
+                                : t("common.unhealthy")
+                        }}
                     </span>
                 </div>
                 <div class="status-item">
                     <span class="status-label"
                         >{{ t("preference.scanMonitoring.queueLength") }}:</span
                     >
-                    <span class="status-value">{{ healthStatus.queueLength }}</span>
+                    <span class="status-value">{{ healthStatus.value.queueLength }}</span>
                 </div>
                 <div class="status-item">
                     <span class="status-label"
                         >{{ t("preference.scanMonitoring.scanStatus") }}:</span
                     >
                     <span class="status-value">
-                        {{ healthStatus.isIdle ? t("common.idle") : t("common.running") }}
+                        {{ healthStatus.value.isIdle ? t("common.idle") : t("common.running") }}
                     </span>
                 </div>
                 <div class="status-item">
                     <span class="status-label"
                         >{{ t("preference.scanMonitoring.consecutiveFailures") }}:</span
                     >
-                    <span class="status-value">{{ healthStatus.consecutiveFailures }}</span>
+                    <span class="status-value">{{ healthStatus.value.consecutiveFailures }}</span>
                 </div>
                 <div class="status-message">
                     <strong>{{ t("preference.scanMonitoring.statusMessage") }}:</strong>
-                    <span>{{ healthStatus.message }}</span>
+                    <span>{{ healthStatus.value.message }}</span>
                 </div>
             </div>
 
@@ -129,15 +136,18 @@
 
 <script setup lang="ts">
 import { reactive, computed } from "vue";
-import { useI18n } from "vue-i18n";
-import {
-    scanMonitoringService,
-    type ScanMonitorConfig,
-} from "@renderer/services/scan-monitoring-service";
+import { useXuanzang } from "@renderer/composables/useXuanzang";
+import { useYuShiNan } from "@renderer/composables/useYuShiNan";
+import type { ScanMonitorConfig } from "@renderer/interfaces/yu-shinan.interface";
 import { BaseSelect, BaseCheckbox, BaseInlineFormField } from "@renderer/components/ui";
 import { notification } from "@renderer/services/notification-manager";
 
-const { t } = useI18n();
+// ✅ 通过 xuanzang 服务访问 i18n，与 FolderList.vue 对齐
+const xuanzang = useXuanzang();
+const yuShiNan = useYuShiNan();
+
+// 使用 xuanzang.translate 替代 useI18n
+const t = (key: string) => xuanzang.translate(key);
 
 // 本地配置副本
 const localConfig = reactive<ScanMonitorConfig>({
@@ -148,9 +158,9 @@ const localConfig = reactive<ScanMonitorConfig>({
     enableAutoRecovery: true,
 });
 
-// 监控状态
-const monitoringStatus = computed(() => scanMonitoringService.getMonitoringStatus());
-const healthStatus = computed(() => scanMonitoringService.healthStatus.value);
+// ✅ 通过 yuShiNan 访问扫描监控服务
+const monitoringStatus = computed(() => yuShiNan.getMonitoringStatus());
+const healthStatus = computed(() => yuShiNan.healthStatus);
 
 // 下拉选项配置
 const healthCheckIntervalOptions = computed(() => [
@@ -188,14 +198,14 @@ const maxRetriesOptions = [
 
 // 初始化配置
 const initConfig = () => {
-    const currentStatus = scanMonitoringService.getMonitoringStatus();
+    const currentStatus = yuShiNan.getMonitoringStatus();
     Object.assign(localConfig, currentStatus.config);
 };
 
 // 更新配置
 const updateConfig = async () => {
     try {
-        scanMonitoringService.updateConfig(localConfig);
+        yuShiNan.updateMonitoringConfig(localConfig);
         notification.success({
             title: t("notification.configUpdated.title"),
             message: t("notification.configUpdated.message"),
@@ -212,12 +222,12 @@ const updateConfig = async () => {
 
 // 立即检查健康状态
 const checkHealthNow = () => {
-    scanMonitoringService.checkHealthNow();
+    yuShiNan.checkHealthNow();
 };
 
 // 重置监控状态
 const resetMonitoring = () => {
-    scanMonitoringService.reset();
+    yuShiNan.resetMonitoring();
 };
 
 // 组件挂载时初始化

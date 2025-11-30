@@ -12,9 +12,11 @@ export const QizouMatters = {
     // 袁天罡 - 扫描事件相关
     SCAN_READY: "scan_ready",
     SCAN_FAILED: "scan_failed",
+    SCAN_PROGRESS: "scan_progress", // ✅ RFC 0057: 扫描进度更新事件
 
     // 尉迟恭 - 扫描队列事件相关
     SCAN_TASK_ADDED: "scan_task_added", // ✅ 扫描任务已添加到队列
+    SCAN_QUEUE_EMPTY: "scan_queue_empty", // ✅ RFC 0057: 扫描队列为空，通知清空状态
 
     // 秦琼 - 文件系统事件相关
     FOLDER_DISCOVERED: "folder_discovered",
@@ -27,6 +29,9 @@ export const QizouMatters = {
     FOLDER_REMOVED_HANDLED: "folder_removed_handled",
     SCAN_COMPLETED_HANDLED: "scan_completed_handled",
     UPDATE_FOLDER_TREE_HANDLED: "update_folder_tree_handled",
+
+    // ✅ RFC 0057: 状态栏通知（来自主进程的 notify:status IPC 事件）
+    STATUS_NOTIFICATION: "status_notification",
 } as const;
 
 /**
@@ -48,6 +53,9 @@ export const ShengzhiCommands = {
     FOLDER_REMOVED: "folder_removed",
     ADD_PATHS: "add_paths",
     SWITCH_FOLDER: "switch_folder",
+
+    // ✅ RFC 0057: 虞世南 - 状态栏通知管理
+    UPDATE_STATUS_NOTIFICATION: "update_status_notification",
 } as const;
 
 /**

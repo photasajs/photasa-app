@@ -17,16 +17,19 @@ import type {
     IPhotos,
     IScanning,
     IAppState,
+    IStatusBar,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { useNotificationStore } from "@renderer/stores/notification";
 import { useScanningStore } from "../stores/scanning-store";
 import { usePhotosStore } from "@renderer/stores/photos";
+import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { loggers } from "@common/logger";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { NotificationConfig } from "@renderer/types/notification";
 import { useAppStateStore } from "../stores/appstate-store";
 import type { FolderNode } from "@common/folder-types";
+import type { NotifyPayload } from "@common/types";
 const logger = loggers.fangxuanling;
 
 /**
@@ -143,10 +146,87 @@ export function createPhotosService(): IPhotos {
         },
 
         /**
+         * ✅ RFC 0057: 获取当前正在扫描的文件路径（只读）
+         * 虞世南秘书监通过此访问器查阅扫描进度
+         */
+        get processingFile(): string {
+            return store.processingFile;
+        },
+
+        /**
+         * ✅ RFC 0057: 获取当前扫描进度（只读）
+         * 虞世南秘书监通过此访问器查阅扫描进度
+         */
+        get scanProgress(): number {
+            return store.scanProgress;
+        },
+
+        /**
+         * ✅ RFC 0057: 更新扫描进度
+         * 虞世南通过此方法更新扫描进度
+         */
+        updateScanProgress(filePath: string, progress: number): void {
+            store.updateScanProgress(filePath, progress);
+        },
+
+        /**
+         * ✅ RFC 0057: 清空扫描进度
+         * 虞世南通过此方法清空扫描进度
+         */
+        clearScanProgress(): void {
+            store.clearScanProgress();
+        },
+
+        /**
          * 重置照片管理器
          * 清空当前文件夹和文件集合
          */
         reset() {
+            store.$reset();
+        },
+    };
+}
+
+/**
+ * ✅ RFC 0057: 状态栏访问器实现
+ *
+ * 职责：
+ * - 提供对 statusBarStore 的访问
+ * - 虞世南通过此访问器更新状态栏
+ */
+export function createStatusBarService(): IStatusBar {
+    const store = useStatusBarStore();
+
+    return {
+        get currentTask(): string {
+            return store.currentTask;
+        },
+
+        get status(): string {
+            return store.status;
+        },
+
+        get progress(): number | undefined {
+            return store.progress;
+        },
+
+        get error(): string | undefined {
+            return store.error;
+        },
+
+        get timestamp(): number {
+            return store.timestamp;
+        },
+
+        update(payload: NotifyPayload): void {
+            store.update(payload);
+        },
+
+        clear(): void {
+            store.clear();
+        },
+
+        reset(): void {
             store.$reset();
         },
     };

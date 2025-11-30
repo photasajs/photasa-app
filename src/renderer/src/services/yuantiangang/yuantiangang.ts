@@ -15,6 +15,7 @@ import type { Emitter } from "mitt";
 import { loggers } from "@common/logger";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@common/scan-types";
+import type { NotifyPayload } from "@common/types";
 import { computeScannedFilePaths } from "./utils";
 import { IntentToFuluMapping } from "./intent";
 
@@ -28,12 +29,14 @@ export class YuanTianGangService implements IYuanTianGangService {
     private progressCleanupFn?: () => void;
     private statusCleanupFn?: () => void;
     private qianliyanCleanupFn?: () => void;
+    private notifyStatusCleanupFn?: () => void;
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
 
     constructor() {
         logger.info("🔮 就任，开始处理天界通信");
         this.setupTianshuEventListening();
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
+        this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
     }
 
     /**
@@ -106,15 +109,86 @@ export class YuanTianGangService implements IYuanTianGangService {
     }
 
     /**
-     * ⏳ 临时：处理千里眼扫描事件
+     * ✅ RFC 0057: 处理千里眼扫描事件
      *
-     * @param args 扫描事件参数
+     * @param args 扫描事件参数（FindPhotoEvent）
      * @private
      */
     private handleQianliyanEvent(args: ScanActionEvent): void {
         logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path);
-        // 批量发送扫描完成启奏，其中包含进行中或者完成的路径
-        this.reportScanCompletion(computeScannedFilePaths(args), args);
+
+        if (args.type === "progress") {
+            // ✅ RFC 0057 Phase 2: 发送 SCAN_PROGRESS qizou 给虞世南
+            this.reportScanProgress(args);
+        } else if (args.type === "complete") {
+            // ✅ RFC 0057: 发送 SCAN_PROGRESS qizou 给虞世南（type: "complete"）以清空进度
+            this.reportScanProgress(args);
+            // ✅ 保留：发送 SCAN_READY qizou 给魏征
+            this.reportScanCompletion(computeScannedFilePaths(args), args);
+        }
+        // error 类型暂不处理
+    }
+
+    /**
+     * ✅ RFC 0057 Phase 2: 向李世民发送扫描进度启奏
+     *
+     * @param scanEvent ScanActionEvent 事件（统一类型）
+     * @private
+     */
+    /**
+     * ✅ RFC 0057: 向李世民发送扫描进度启奏
+     * 简化逻辑：所有处理由 yuShiNan 负责
+     *
+     * @param scanEvent ScanActionEvent 事件（统一类型）
+     * @private
+     */
+    private reportScanProgress(scanEvent: ScanActionEvent): void {
+        try {
+            if (!this._qizouBus) {
+                logger.error("🔮 启奏通道未建立，无法发送启奏");
+                return;
+            }
+
+            // ✅ 构造完整文件路径（由 yuShiNan 处理 complete 类型的清空逻辑）
+            let filePath = "";
+            if (scanEvent.action?.isDirectory === false) {
+                // 如果是文件，直接使用 action.path
+                filePath = scanEvent.action.path;
+            } else if (scanEvent.action?.path && scanEvent.currentFile) {
+                // 如果是目录，拼接目录路径和当前文件名
+                filePath = `${scanEvent.action.path}/${scanEvent.currentFile}`.replace(/\/+/g, "/");
+            } else if (scanEvent.action?.path) {
+                // 如果只有目录路径，使用目录路径
+                filePath = scanEvent.action.path;
+            }
+
+            // 获取进度值（已处理的文件数）
+            const progress = scanEvent.progress?.processed ?? 0;
+
+            // ✅ 构建启奏，类型直接使用 scanEvent.type（progress 或 complete）
+            // yuShiNan 会处理 complete 类型的清空逻辑
+            const qizou: Qizou = {
+                matter: QizouMatters.SCAN_PROGRESS,
+                content: {
+                    filePath: scanEvent.type === "complete" ? "" : filePath, // complete 时清空路径
+                    progress: scanEvent.type === "complete" ? 0 : progress, // complete 时清空进度
+                    type: scanEvent.type === "complete" ? "complete" : "progress", // ✅ 保持类型一致
+                },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: {
+                    type: "report",
+                    priority: "normal",
+                },
+            };
+
+            this._qizouBus.emit("qizou", qizou);
+            logger.debug(
+                `🔮 启奏李世民: 扫描${scanEvent.type === "complete" ? "完成" : "进度更新"} - ${filePath} (进度: ${progress})`,
+            );
+        } catch (error) {
+            logger.error(`🔮 发送扫描进度启奏失败:`, error);
+        }
     }
 
     /**
@@ -151,6 +225,75 @@ export class YuanTianGangService implements IYuanTianGangService {
     }
 
     /**
+     * ✅ RFC 0057: 设置 notify:status IPC 事件监听
+     * 监听主进程发送的状态通知，通过 qizou 流程发送给虞世南
+     *
+     * @private
+     */
+    private setupNotifyStatusEventListening(): void {
+        try {
+            const ipc = window.electron?.ipcRenderer;
+            if (!ipc) {
+                logger.warn("🔮 无法访问IPC，跳过 notify:status 事件监听");
+                return;
+            }
+
+            // 监听主进程的状态通知
+            const handler = (_: unknown, payload: NotifyPayload) => {
+                this.reportStatusNotification(payload);
+            };
+
+            this.notifyStatusCleanupFn = ipc.on("notify:status", handler);
+
+            logger.info("🔮 notify:status 事件监听已建立");
+        } catch (error: Error | unknown) {
+            logger.warn(
+                "🔮 建立 notify:status 事件监听失败",
+                error instanceof Error ? error.message : String(error),
+            );
+        }
+    }
+
+    /**
+     * ✅ RFC 0057: 向李世民发送状态通知启奏
+     *
+     * @param payload 状态通知载荷
+     * @private
+     */
+    private reportStatusNotification(payload: NotifyPayload): void {
+        try {
+            if (!this._qizouBus) {
+                logger.error("🔮 启奏通道未建立，无法发送启奏");
+                return;
+            }
+
+            // 构建启奏
+            const qizou: Qizou = {
+                matter: QizouMatters.STATUS_NOTIFICATION,
+                content: {
+                    type: payload.type,
+                    task: payload.task,
+                    status: payload.status,
+                    error: payload.error,
+                    timestamp: payload.timestamp,
+                    data: payload.data,
+                },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: {
+                    type: "report",
+                    priority: "normal",
+                },
+            };
+
+            this._qizouBus.emit("qizou", qizou);
+            logger.debug(`🔮 启奏李世民: 状态通知 - ${payload.type}/${payload.status}`);
+        } catch (error) {
+            logger.error(`🔮 发送状态通知启奏失败:`, error);
+        }
+    }
+
+    /**
      * 清理事件监听（在服务销毁时调用）
      */
     destroy(): void {
@@ -162,6 +305,9 @@ export class YuanTianGangService implements IYuanTianGangService {
         }
         if (this.qianliyanCleanupFn) {
             this.qianliyanCleanupFn();
+        }
+        if (this.notifyStatusCleanupFn) {
+            this.notifyStatusCleanupFn();
         }
         logger.info("🔮 事件监听已清理");
     }

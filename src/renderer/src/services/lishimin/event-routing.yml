@@ -81,6 +81,57 @@ qizou_routes:
                   priority: "normal"
               description: "路径移除完成后，下旨魏征移除根节点"
 
+    # ✅ RFC 0057 Phase 3: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
+    scan_progress:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_scan_progress"
+                  content:
+                      filePath: "{{qizou.content.filePath}}"
+                      progress: "{{qizou.content.progress}}"
+                      type: "{{qizou.content.type}}"
+                  priority: "normal"
+              description: "扫描进度更新后，下旨虞世南更新状态栏显示"
+
+    # ✅ RFC 0057: 尉迟恭报告扫描队列为空 → 李世民下旨虞世南清空状态
+    scan_queue_empty:
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_scan_progress"
+                  content:
+                      filePath: ""
+                      progress: 0
+                      type: "complete"
+                  priority: "normal"
+              description: "扫描队列为空后，下旨虞世南清空扫描状态"
+
+    # ✅ RFC 0057: 袁天罡报告状态通知 → 李世民下旨虞世南更新状态栏
+    status_notification:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_status_notification"
+                  content:
+                      type: "{{qizou.content.type}}"
+                      task: "{{qizou.content.task}}"
+                      status: "{{qizou.content.status}}"
+                      error: "{{qizou.content.error}}"
+                      timestamp: "{{qizou.content.timestamp}}"
+                      data: "{{qizou.content.data}}"
+                  priority: "normal"
+              description: "主进程状态通知后，下旨虞世南更新状态栏显示"
+
     # ✅ RFC 0042 Step 2.5: 袁天罡报告扫描完成 → 李世民下旨魏征批量更新
     scan_ready:
         - when:

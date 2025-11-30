@@ -407,4 +407,5 @@ export const loggers: Record<string, PhotasaLogger> = {
     xuanzang: getLogger("玄奘"), // 法师 负责Localization
     yuchigong: getLogger("尉迟恭"), // 大将军 负责扫描队列
     qinqiong: getLogger("琴琼"), // 仙家 负责文件夹配置
+    yushinan: getLogger("虞世南"), // 秘书监 负责扫描进度展示
 };

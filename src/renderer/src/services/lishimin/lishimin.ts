@@ -15,6 +15,8 @@ import { QIN_QIONG_TOKEN } from "@renderer/interfaces/qin-qiong.interface";
 import { QinQiongService } from "@renderer/services/qinqiong";
 import { XUANZANG_TOKEN } from "@renderer/interfaces/xuan-zang.interface";
 import { XuanzangService } from "@renderer/services/xuanzang";
+import { YU_SHINAN_TOKEN } from "@renderer/interfaces/yu-shinan.interface";
+import { YuShiNanService } from "@renderer/services/yushinan";
 import { DuRuHuiService } from "@renderer/services/duruhui";
 import { QiZouRouter } from "./router";
 
@@ -85,6 +87,9 @@ export class LishiminService implements ILishiminService {
     /** 玄奘服务 - 法师（国际化多语言） */
     private xuanzangService!: XuanzangService;
 
+    /** 虞世南服务 - 秘书监（扫描进度展示） */
+    private yuShiNanService!: YuShiNanService;
+
     /** 杜如晦服务 - 中书侍郎（MessageChannel管理器） */
     private duRuHuiService!: DuRuHuiService;
 
@@ -107,7 +112,8 @@ export class LishiminService implements ILishiminService {
             this.yuChiGongService &&
             this.weiZhengService &&
             this.qinQiongService &&
-            this.xuanzangService
+            this.xuanzangService &&
+            this.yuShiNanService
         );
     }
 
@@ -144,6 +150,10 @@ export class LishiminService implements ILishiminService {
         logger.info("👑 玄奘法师服务就任");
         this.xuanzangService = new XuanzangService(this.fangXuanLingService);
         this.app.provide(XUANZANG_TOKEN, this.xuanzangService);
+
+        logger.info("👑 虞世南秘书监服务就任");
+        this.yuShiNanService = new YuShiNanService(this.fangXuanLingService);
+        this.app.provide(YU_SHINAN_TOKEN, this.yuShiNanService);
 
         // 初始化启奏-圣旨系统
         this.initializeQizouShengzhiSystem();
@@ -227,6 +237,10 @@ export class LishiminService implements ILishiminService {
         // 11. 将qizouBus传递给袁天罡，供其发送启奏（用于千里眼扫描完成事件）
         this.yuanTianGangService.setQizouBus(this.router.getQizouBus());
 
+        // 12. 建立虞世南与杜如晦的MessageChannel通道
+        logger.info("📋 杜如晦为虞世南建立圣旨通道");
+        this.duRuHuiService.connect(this.yuShiNanService);
+
         logger.info("👑 启奏-圣旨系统初始化完成");
         logger.info("👑 李世民已开始监听所有启奏事件，并根据event-routing.yml自动路由");
     }
@@ -247,6 +261,9 @@ export class LishiminService implements ILishiminService {
 
             logger.info("👑 尉迟恭大将军服务初始化扫描队列");
             await this.yuChiGongService.initializeScanningQueue();
+
+            logger.info("👑 虞世南秘书监服务初始化日志拦截器");
+            this.yuShiNanService.initializeLogInterceptor();
         } catch (error) {
             logger.error("👑初始化失败，继续启动应用:", error);
         }

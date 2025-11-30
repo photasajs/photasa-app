@@ -138,37 +138,37 @@ export interface ScanArgs {
 export type ScanCallback = (action: ScanArgs) => void;
 
 /**
- * 千里眼 扫描事件类型
- * @description 千里眼扫描事件类型，用于千里眼扫描服务与袁天罡通信
+ * 扫描事件类型
+ * @description 扫描事件类型，用于扫描事件和扫描任务
  */
-export type ScanActionEvent = {
-    type: "action" | "complete"; // 事件类型
-    currentFile?: string; // 当前处理的文件名
-    action?:
-        | {
-              path: string;
-              isDirectory: boolean;
-          }
-        | undefined; // 扫描动作
-    paths?: string[]; // 扫描路径数组
-};
+export type ScanType = "action" | "progress" | "complete" | "error";
 
 /**
- * FindPhoto事件接口
- * @description 扫描worker通过IPC发送给renderer的事件，用于更新UI状态和folderTree
+ * 扫描动作基础类型
+ * @description 扫描动作基础类型，用于扫描事件和扫描任务
  */
-export interface FindPhotoEvent {
+export interface BaseScanAction {
+    path: string;
+    isDirectory: boolean;
+}
+
+/**
+ * 扫描事件类型（统一类型，用于 IPC 通信和内部事件）
+ * @description 扫描worker通过IPC发送给renderer的事件，用于更新UI状态和folderTree
+ * 统一了原 ScanActionEvent 和 FindPhotoEvent，消除重复定义
+ */
+export interface ScanActionEvent {
     /** 事件类型：进度更新、完成或错误 */
-    type: "progress" | "complete" | "error";
-    /** 请求ID，用于匹配请求和响应 */
-    requestId: string;
+    type: ScanType;
+    /** 请求ID，用于匹配请求和响应（IPC 事件必需） */
+    requestId?: string;
     /** 扫描的路径信息 */
-    action?: {
-        path: string;
-        isDirectory: boolean;
+    action?: BaseScanAction;
+    /** 扫描进度（已处理的文件数和总数） */
+    progress?: {
+        processed: number;
+        total: number;
     };
-    /** 扫描进度（已处理的文件数） */
-    progress?: number;
     /** 当前正在处理的文件名 */
     currentFile?: string;
     /** 批量完成时的路径数组 */
@@ -176,3 +176,9 @@ export interface FindPhotoEvent {
     /** 错误信息（错误事件时） */
     error?: unknown;
 }
+
+/**
+ * @deprecated 使用 ScanActionEvent 替代
+ * FindPhotoEvent 已与 ScanActionEvent 合并，保留此类型仅为向后兼容
+ */
+export type FindPhotoEvent = ScanActionEvent;

@@ -78,6 +78,17 @@ export class YuChiGongService implements IService, IYuChiGongService {
             logger.error("🛡️ 尉迟恭：扫描队列发生未捕获错误", error);
         });
 
+        // ✅ RFC 0057: 监听队列空闲事件，当队列为空时通知 yuShiNan 清空状态
+        this.scanQueue.on("idle", () => {
+            // 检查持久化队列是否也为空
+            const persistentQueueSize = this.fangXuanLingService.scanning.queueSize;
+            if (persistentQueueSize === 0) {
+                logger.info("🛡️ 尉迟恭：扫描队列已完全清空，通知虞世南清空状态");
+                // ✅ 发送 qizou 通知 yuShiNan 清空扫描状态
+                this.emitQizou("scan_queue_empty", {});
+            }
+        });
+
         logger.info("🛡️ 尉迟恭：扫描执行队列已就绪");
     }
 
@@ -409,7 +420,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
      * @param shengzhi 圣旨内容
      */
     private async handleAddScanTask(shengzhi: Shengzhi): Promise<void> {
-        const path = shengzhi.content.path;
+        const content = shengzhi.content as Record<string, unknown>;
+        const path = content.path as string;
 
         // 路径参数验证
         if (!path || typeof path !== "string") {
@@ -447,13 +459,13 @@ export class YuChiGongService implements IService, IYuChiGongService {
             // 2. 创建 ScanAction（IPC 契约）
             const scanAction: ScanAction = {
                 path,
-                action: (shengzhi.content.action as "scan" | "rescan" | "current") || "scan",
+                action: (content.action as "scan" | "rescan" | "current") || "scan",
                 thumbnailSize: 150, // 默认缩略图大小
                 // discovered 来源映射为 auto（IPC 层只支持 user/auto）
                 source:
-                    shengzhi.content.source === "discovered"
+                    content.source === "discovered"
                         ? "auto"
-                        : (shengzhi.content.source as "user" | "auto") || "user",
+                        : (content.source as "user" | "auto") || "user",
                 timestamp: Date.now(),
                 operationType: "directory",
             };
@@ -477,7 +489,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
             // 4. ✅ RFC 0048 v3: 添加到 p-queue 执行队列（修复：扫描未启动问题）
             // Store 是 SSOT，但 p-queue 是执行器，必须同时添加到 p-queue 才能执行
-            const action = (shengzhi.content.action as "scan" | "rescan" | "current") || "scan";
+            const action = (content.action as "scan" | "rescan" | "current") || "scan";
             logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${path}`);
             this.scanQueue
                 .add(() => this.executeScan(path, action, "directory"))
@@ -512,7 +524,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
      * @param shengzhi 圣旨内容，包含要清理的路径
      */
     private async handleCleanupScanQueueForPath(shengzhi: Shengzhi): Promise<void> {
-        const path = shengzhi.content.path;
+        const content = shengzhi.content as Record<string, unknown>;
+        const path = content.path as string;
 
         // 路径参数验证
         if (!path || typeof path !== "string") {
@@ -648,7 +661,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
      * @param shengzhi 圣旨内容
      */
     private async handleRemoveScanTask(shengzhi: Shengzhi): Promise<void> {
-        const path = shengzhi.content.path;
+        const content = shengzhi.content as Record<string, unknown>;
+        const path = content.path as string;
 
         // 路径参数验证
         if (!path || typeof path !== "string") {

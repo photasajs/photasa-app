@@ -14,91 +14,25 @@
  */
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { useStatusBarStore } from "@renderer/stores/statusBar";
-import { usePhotosStore } from "@renderer/stores/photos";
-import { storeToRefs } from "pinia";
+import { useYuShiNan } from "@renderer/composables/useYuShiNan";
 import BuyMeCoffeeButton from "./BuyMeCoffeeButton.vue";
 
-const statusBarStore = useStatusBarStore();
-const photosStore = usePhotosStore();
-const { processingFile } = storeToRefs(photosStore);
+// ✅ RFC 0057: 通过虞世南服务访问扫描进度数据，不直接使用 store
+const yuShiNan = useYuShiNan();
 const { t } = useI18n();
 
-const statusText = computed(() =>
-    statusBarStore.status ? t(`status.${statusBarStore.status}`) : "",
-);
+// ✅ RFC 0057: 所有逻辑已移到 yuShiNan，StatusBar 仅负责显示
+// 通过 yuShiNan 访问扫描状态和路径
+const isScanning = yuShiNan.isScanning;
+const scanningPathRaw = yuShiNan.scanningPath;
 
-// 检测是否正在扫描
-const isScanning = computed(() => {
-    const scanningText = t("status.scanning");
-    // 使用正则表达式匹配进度文本格式（如 "5/100"）
-    const progressPattern = /\d+\/\d+/;
-
-    return (
-        processingFile.value?.includes(scanningText) ||
-        (processingFile.value && progressPattern.test(processingFile.value)) ||
-        statusBarStore.currentTask?.includes(scanningText) ||
-        (statusBarStore.currentTask && progressPattern.test(statusBarStore.currentTask)) ||
-        statusBarStore.status === "scanning"
-    );
-});
-
-/**
- * 提取扫描路径用于显示（确保显示完整路径而不是仅文件名）
- *
- * 问题背景：
- * - scan-worker.ts 发送的 currentFile 是通过 path.basename() 提取的文件名（如 "bamm"）
- * - 用户期望在状态栏中看到完整路径（如 "/path/to/directory/bamm"）
- *
- * 数据来源优先级：
- * 1. processingFile.value - 来自 processScannedFileTask 回调，已构造完整路径
- * 2. statusBarStore.data.currentFile - 来自 updateFileProgress，可能是完整路径或文件名
- * 3. statusBarStore.currentTask - 通用任务描述，作为最终后备
- *
- * 显示策略：
- * - 优先使用已确认包含完整路径信息的数据源
- * - 对于可能只是文件名的数据，进行路径检测后决定是否使用
- * - 确保用户始终能看到有意义的路径信息
- */
+// ✅ 添加 i18n 前缀（UI 层负责）
 const scanningPath = computed(() => {
-    // 第一优先级：processingFile.value
-    // 来源：App.vue 中的 processScannedFileTask 回调
-    // 特点：已通过 ${args.action.path}/${args.currentFile} 构造完整路径
-    // 可靠性：高 - 明确包含完整路径信息
-    if (processingFile.value) {
-        return processingFile.value;
+    const path = scanningPathRaw?.value;
+    if (path) {
+        return `${t("status.scanning")} ${path}`;
     }
-
-    // 第二优先级：statusBarStore.data.currentFile（带路径验证）
-    // 来源：App.vue 中的 updateFileProgress 回调 -> statusBarStore.update()
-    // 特点：可能是完整路径（来自 AppHelper.ts 的 scanAction.path），
-    //       也可能是文件名（来自其他调用源）
-    if (
-        statusBarStore.data &&
-        typeof statusBarStore.data === "object" &&
-        statusBarStore.data !== null &&
-        "currentFile" in statusBarStore.data
-    ) {
-        const currentFile = (statusBarStore.data as any).currentFile;
-
-        // 路径检测：如果包含路径分隔符，认为是完整路径
-        // 支持 Unix-style (/) 和 Windows-style (\) 路径
-        // 注意：这个检测不是100%准确，但对于大多数实际情况有效
-        if (currentFile && (currentFile.includes("/") || currentFile.includes("\\"))) {
-            return currentFile;
-        }
-
-        // 如果currentFile看起来只是文件名，不使用它，避免显示不完整信息
-        // 例如："bamm" 这样的纯文件名对用户来说不够有用
-        // 转而使用更通用的任务描述
-        return statusBarStore.currentTask || "";
-    }
-
-    // 第三优先级：statusBarStore.currentTask（最终后备）
-    // 来源：各种状态更新调用中的 task 字段
-    // 特点：通用任务描述，可能包含国际化文本
-    // 使用场景：当没有具体文件路径信息时的后备显示
-    return statusBarStore.currentTask || "";
+    return "";
 });
 </script>
 <template>
@@ -123,10 +57,10 @@ const scanningPath = computed(() => {
                         <span v-if="scanningPath" class="scanning-path">{{ scanningPath }}</span>
                         <span v-else class="scanning-label">{{ t("status.scanning") }}</span>
                         <span
-                            v-if="statusBarStore.progress !== undefined"
+                            v-if="yuShiNan.scanProgress.value && yuShiNan.scanProgress.value > 0"
                             class="scanning-progress"
                         >
-                            ({{ statusBarStore.progress }}%)
+                            ({{ yuShiNan.scanProgress.value }})
                         </span>
                     </div>
 
@@ -139,17 +73,7 @@ const scanningPath = computed(() => {
                 </div>
             </template>
 
-            <!-- 原有状态栏内容 -->
-            <template v-else-if="statusBarStore.status">
-                {{ statusText }}
-                <span v-if="statusBarStore.currentTask">: {{ statusBarStore.currentTask }}</span>
-                <span v-if="statusBarStore.progress !== undefined">
-                    ({{ statusBarStore.progress }}%)
-                </span>
-                <span v-if="statusBarStore.error">
-                    [{{ t("notification.error") }}: {{ statusBarStore.error }}]
-                </span>
-            </template>
+            <!-- ✅ RFC 0057: 原有状态栏内容已移除，仅使用 yuShiNan 提供的数据 -->
 
             <!-- processingFile 显示（非扫描状态） -->
             <template v-else-if="scanningPath && !isScanning">
@@ -272,13 +196,14 @@ const scanningPath = computed(() => {
     .scanning-label {
         font-weight: 500;
         color: var(--color-primary);
+        font-size: 1em; /* ✅ 统一字体大小 */
         animation: labelPulse 2s ease-in-out infinite alternate;
     }
 
     .scanning-path {
         color: var(--color-text);
         font-family: monospace;
-        font-size: 0.85em;
+        font-size: 1em; /* ✅ 统一字体大小 */
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -287,6 +212,7 @@ const scanningPath = computed(() => {
     .scanning-progress {
         color: var(--color-primary);
         font-weight: 600;
+        font-size: 1em; /* ✅ 统一字体大小 */
         margin-left: 4px;
         animation: progressUpdate 0.3s ease;
         flex-shrink: 0;

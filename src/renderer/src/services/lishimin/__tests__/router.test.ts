@@ -102,7 +102,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                     const shengzhi = yuchiGongService.receivedShengzhis[0];
 
                     expect(shengzhi.command).toBe("add_scan_task");
-                    expect(shengzhi.content.path).toBe("/test/photos");
+                    expect((shengzhi.content as Record<string, unknown>).path).toBe("/test/photos");
                     expect(shengzhi.from).toBe("李世民");
                     resolve();
                 }, 20);
@@ -131,7 +131,9 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                     const yuchiGongShengzhi = yuchiGongService.receivedShengzhis[0];
 
                     expect(yuchiGongShengzhi.command).toBe("cleanup_scan_queue_for_path"); // ✅ 修复：路由配置使用cleanup命令
-                    expect(yuchiGongShengzhi.content.path).toBe("/test/old-photos");
+                    expect((yuchiGongShengzhi.content as Record<string, unknown>).path).toBe(
+                        "/test/old-photos",
+                    );
                     expect(yuchiGongShengzhi.from).toBe("李世民");
                     resolve();
                 }, 20);
@@ -215,7 +217,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             await new Promise<void>((resolve) => {
                 setTimeout(() => {
                     const shengzhi = yuchiGongService.receivedShengzhis[0];
-                    expect(shengzhi.content.path).toBe(testPath);
+                    expect((shengzhi.content as Record<string, unknown>).path).toBe(testPath);
                     resolve();
                 }, 20);
             });
@@ -237,7 +239,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                     if (yuchiGongService.receivedShengzhis.length > 0) {
                         const shengzhi = yuchiGongService.receivedShengzhis[0];
                         // 缺失的变量应该保持原模板或为undefined
-                        expect(shengzhi.content.path).toBeDefined();
+                        expect((shengzhi.content as Record<string, unknown>).path).toBeDefined();
                     }
                     resolve();
                 }, 20);
@@ -265,8 +267,9 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                     expect(weizhengService.receivedShengzhis.length).toBeGreaterThan(0);
                     const shengzhi = weizhengService.receivedShengzhis[0];
                     expect(shengzhi.command).toBe("add_paths");
-                    expect(Array.isArray(shengzhi.content.paths)).toBe(true);
-                    expect(shengzhi.content.paths).toContain(testPath);
+                    const content = shengzhi.content as Record<string, unknown>;
+                    expect(Array.isArray(content.paths)).toBe(true);
+                    expect(content.paths).toContain(testPath);
                     resolve();
                 }, 20);
             });
