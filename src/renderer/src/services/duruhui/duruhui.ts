@@ -1,5 +1,9 @@
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { IService } from "@renderer/interfaces/service.interface";
+import type { Qizou } from "@renderer/interfaces/qizou.interface";
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import { EventNames } from "@renderer/constants/event-names";
+import type { Emitter } from "mitt";
 import { loggers } from "@common/logger";
 
 const logger = loggers.duruhui;
@@ -12,9 +16,9 @@ const logger = loggers.duruhui;
  * 2. 持有所有通道的port1端（李世民端）
  * 3. 将port2端交给服务（setShengzhiPort）
  * 4. 提供统一的下旨接口（issueShengzhi）
+ * 5. ✅ RFC 0058: 监听百姓上书 DOM 事件，转换为 qizou
  *
  * **不负责**：
- * - ❌ 不监听启奏事件（mitt.on('qizou')）- 这是李世民的职责
  * - ❌ 不做路由决策 - 这是李世民的职责
  * - ❌ 不监听服务回复（port.onmessage）- 服务通过qizou启奏汇报
  *
@@ -30,8 +34,111 @@ export class DuRuHuiService {
      */
     private serviceChannels = new Map<string, MessagePort>();
 
+    /**
+     * qizou 事件总线
+     * 用于发送百姓上书转换的 qizou
+     */
+    private qizouBus?: Emitter<{ qizou: Qizou }>;
+
     constructor() {
         logger.info("📋 杜如晦中书侍郎就任，负责圣旨通道管理");
+    }
+
+    /**
+     * 设置 qizou 事件总线
+     * 供李世民调用，用于发送百姓上书转换的 qizou
+     *
+     * 设置后自动初始化百姓上书言路监听
+     *
+     * @param qizouBus qizou 事件总线
+     */
+    setQizouBus(qizouBus: Emitter<{ qizou: Qizou }>): void {
+        this.qizouBus = qizouBus;
+    }
+
+    /**
+     * 初始化 DOM 事件监听系统
+     * ✅ RFC 0058: 监听百姓上书言路（百姓上书DOM事件），转换为 qizou
+     *
+     * 架构：
+     * ```
+     * 百姓（UI 组件） → dispatchEvent('picasa:shangshu', { action, ...params })
+     *   → 杜如晦监听 → 转换为 qizou → 通过 qizouBus 发送 → 路由器处理 → 下旨给服务
+     * ```
+     *
+     * @public
+     */
+    public initializeBaiXingShangshuYanLu(): void {
+        if (!this.qizouBus) {
+            logger.warn("📋 杜如晦：qizouBus 未设置，无法监听百姓上书事件");
+            return;
+        }
+
+        logger.info("📋 杜如晦：初始化 DOM 事件监听系统，监听百姓上书事件");
+
+        // 监听统一的上书事件
+        window.addEventListener(EventNames.BAIXING_SHANGSHU, ((
+            event: CustomEvent<{ action: string; [key: string]: unknown }>,
+        ) => {
+            const { action, ...params } = event.detail;
+            logger.info(`📋 杜如晦收到百姓上书: ${action}`, params);
+
+            // 将百姓上书转换为 qizou，通过 qizouBus 发送
+            this.convertShangshuToQizou(action, params);
+        }) as EventListener);
+
+        logger.info("📋 杜如晦：DOM 事件监听系统初始化完成，可接收百姓上书");
+    }
+
+    /**
+     * 将百姓上书转换为 qizou，通过 qizouBus 发送
+     *
+     * @param action 操作类型
+     * @param params 操作参数
+     * @private
+     */
+    private convertShangshuToQizou(action: string, params: Record<string, unknown>): void {
+        if (!this.qizouBus) {
+            logger.error("📋 杜如晦：qizouBus 未设置，无法发送 qizou");
+            return;
+        }
+
+        let matter: string;
+        let content: Record<string, unknown>;
+
+        switch (action) {
+            case QizouMatters.OPEN_EXTERNAL: {
+                matter = QizouMatters.OPEN_EXTERNAL;
+                content = { url: params.url as string };
+                break;
+            }
+
+            case QizouMatters.OPEN_IN_FINDER: {
+                matter = QizouMatters.OPEN_IN_FINDER;
+                content = { path: params.path as string };
+                break;
+            }
+
+            default:
+                logger.warn(`📋 杜如晦：未知的百姓上书操作 ${action}，忽略`);
+                return;
+        }
+
+        // 转换为 qizou
+        const qizou: Qizou = {
+            matter,
+            content,
+            from: "百姓", // 标记来源为百姓（UI 层）
+            timestamp: Date.now(),
+            metadata: {
+                type: "request",
+                priority: "normal",
+            },
+        };
+
+        // 通过 qizouBus 发送，由路由器统一处理（与官员启奏走同一流程）
+        logger.info(`📋 杜如晦发送 qizou: ${qizou.matter} from ${qizou.from}`, qizou);
+        this.qizouBus.emit("qizou", qizou);
     }
 
     /**

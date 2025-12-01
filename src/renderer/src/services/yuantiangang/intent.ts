@@ -24,4 +24,9 @@ export const IntentToFuluMapping: Record<string, string> = {
     [ZOUZHE_MATTERS.RESTORE_APP_STATE]: "restore_app_state",
     [ZOUZHE_MATTERS.UPDATE_FOLDER_TREE]: "update_folder_tree",
     [ZOUZHE_MATTERS.SWITCH_FOLDER]: "switch_current_folder",
+    // ✅ RFC 0058: 菜单更新映射
+    [ZOUZHE_MATTERS.UPDATE_MENU]: "menu.apply",
+    // ✅ RFC 0058: Shell 操作映射
+    [ZOUZHE_MATTERS.OPEN_EXTERNAL]: "shell.openExternal",
+    [ZOUZHE_MATTERS.OPEN_IN_FINDER]: "shell.openInFinder",
 };

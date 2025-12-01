@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import bmcButton from "@renderer/assets/bmc-button.png";
+import { EventNames } from "@renderer/constants/event-names";
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
 const props = defineProps<{ height?: string }>();
 const height = props.height || "28px";
 
+// ✅ RFC 0058: 直接使用 DOM 事件，完全解耦 UI 和服务层
 function openBuyMeCoffee() {
-    window.api.openExternal("https://www.buymeacoffee.com/PpVB0uO");
+    const event = new CustomEvent(EventNames.BAIXING_SHANGSHU, {
+        detail: { action: QizouMatters.OPEN_EXTERNAL, url: "https://www.buymeacoffee.com/PpVB0uO" },
+        bubbles: true,
+        cancelable: true,
+    });
+    window.dispatchEvent(event);
 }
 </script>
 <template>

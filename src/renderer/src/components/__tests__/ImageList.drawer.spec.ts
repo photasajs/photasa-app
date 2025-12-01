@@ -29,9 +29,7 @@ vi.mock("@renderer/utils/api", () => ({
     }),
 }));
 
-vi.mock("@renderer/utils/api-path", () => ({
-    openInFinder: vi.fn(),
-}));
+// ✅ RFC 0058: openInFinder 已迁移到 useZhangSunWuJi 服务，不再需要 mock
 
 describe("ImageList Drawer Functionality", () => {
     it("should have proper test structure", () => {
@@ -52,11 +50,6 @@ describe("ImageList Drawer Functionality", () => {
         expect(config.version).toBe("1.0.0");
     });
 
-    it("should mock utility functions correctly", async () => {
-        const { openInFinder } = await import("@renderer/utils/api-path");
-
-        // Test that mocked function works
-        expect(openInFinder).toBeDefined();
-        expect(typeof openInFinder).toBe("function");
-    });
+    // ✅ RFC 0058: openInFinder 已迁移到 useZhangSunWuJi 服务
+    // 如果需要测试，应该 mock useZhangSunWuJi composable
 });

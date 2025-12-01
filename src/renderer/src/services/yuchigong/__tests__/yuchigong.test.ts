@@ -109,6 +109,10 @@ class MockFangXuanLingService implements IFangXuanLingService {
         throw new Error("Mock: photos not implemented");
     }
 
+    get menus(): never {
+        throw new Error("Mock: menus not implemented");
+    }
+
     get statusBar(): never {
         throw new Error("Mock: statusBar not implemented");
     }

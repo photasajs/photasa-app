@@ -5,6 +5,7 @@
 
 import type { FolderNode } from "@common/folder-types";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
+import type { MenuItemData } from "@common/menu-types";
 
 export interface IBaseStore {
     reset(): void;
@@ -112,6 +113,18 @@ export interface IStatusBar extends IBaseStore {
 }
 
 /**
+ * ✅ RFC 0058: 菜单管理接口
+ */
+export interface IMenus extends IBaseStore {
+    /** 当前菜单数据（只读） */
+    readonly menus: MenuItemData[];
+    /** 刷新菜单（国际化） */
+    refreshMenus(t: (key: string) => string): void;
+    /** 设置菜单项禁用状态 */
+    setMenuDisabled(key: string, disabled: boolean): void;
+}
+
+/**
  * 房玄龄宰相服务主接口
  * 统一管理所有Store API，提供类型安全的契约
  */
@@ -124,6 +137,8 @@ export interface IFangXuanLingService {
     readonly appState: IAppState;
     /** ✅ RFC 0057: 状态栏管理接口 */
     readonly statusBar: IStatusBar;
+    /** ✅ RFC 0058: 菜单管理接口 */
+    readonly menus: IMenus;
 
     // 全局重置
     resetAll(): void;
@@ -216,6 +231,9 @@ export const ZOUZHE_MATTERS = {
     UPDATE_PREFERENCES: "update_preferences", // 更新偏好设置
     SCAN_FOLDER: "scan_folder", // 扫描文件夹
     GET_STATUS: "get_status", // 获取状态
+    UPDATE_MENU: "update_menu", // ✅ RFC 0058: 更新菜单（长孙无忌 → 房玄龄 → 袁天罡 → 天枢引擎）
+    OPEN_EXTERNAL: "open_external", // ✅ RFC 0058: 打开外部链接（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
+    OPEN_IN_FINDER: "open_in_finder", // ✅ RFC 0058: 在 Finder 中显示文件（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
 } as const;
 
 /**
@@ -251,6 +269,7 @@ export const GUANYUAN_NAMES = {
     ADVANCED_SETTINGS: "高士廉", // 高级设置官员 - 唐朝书法家
     QIN_QIONG: "秦琼", // 文件系统事件守护官员 - 唐朝名将
     YUANTIANGANG: "袁天罡", // 天界守护官员 - 唐朝道士
+    ZHANG_SUN_WU_JI: "长孙无忌", // ✅ RFC 0058: 菜单规范管理官员 - 唐朝司空
 } as const;
 
 /**

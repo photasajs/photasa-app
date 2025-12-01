@@ -8,7 +8,8 @@ import { type Card, type Image, toImageMeta, groupImagesByColumns } from "@rende
 // removeFileProtocol 通过 preload API 使用
 import * as R from "ramda";
 import { useI18n } from "vue-i18n";
-import { openInFinder } from "@renderer/utils/api-path";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+// ✅ RFC 0058: 使用服务而不是直接 API 调用
 import {
     BaseImage,
     BaseContextMenu,
@@ -42,6 +43,8 @@ const emit = defineEmits<{
 // 国际化
 const { t } = useI18n();
 const logger = loggers.renderer;
+// ✅ RFC 0058: 使用长孙无忌服务
+const zhangSunWuJi = useZhangSunWuJi();
 // 偏好设置
 const preferenceStore = usePreferenceStore();
 // 偏好设置的引用
@@ -108,9 +111,10 @@ async function openImageMeta(image: Image): Promise<void> {
     }
 }
 
-// 打开文件夹 - 直接传递 file:// URL，让 preload 层处理转换
+// 打开文件夹 - 通过长孙无忌服务，使用 qizou 流程
 function openFileInFolder(image: Image): void {
-    openInFinder(image.raw);
+    // ✅ RFC 0058: 服务层统一处理 file:// URL 转换，组件直接传递原始路径
+    zhangSunWuJi.openInFinder(image.raw);
 }
 
 // 更新容器宽度

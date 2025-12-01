@@ -6,5 +6,7 @@ export const EventNames = Object.freeze({
     WINDOW_CLOSE: "window-close",
     APP_LOGIN: "app-login",
     APP_LOGOUT: "app-logout",
+    // ✅ RFC 0058: 百姓上书 DOM 事件
+    BAIXING_SHANGSHU: "picasa:shangshu",
     // ...后续补充
 });

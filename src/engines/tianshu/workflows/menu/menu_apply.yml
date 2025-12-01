@@ -1,0 +1,78 @@
+# 菜单应用工作流
+# RFC 0058: 统一菜单管理到 qizou 流程
+#
+# 流程：
+# 长孙无忌 → 房玄龄 → 袁天罡 → 天枢引擎（本工作流）→ 太白金星适配器
+
+id: "menu.apply"
+name: "应用系统菜单"
+description: "接收菜单数据，通过太白金星适配器设置系统菜单"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+    - intent: "menu.apply"
+
+# 输入参数
+inputs:
+    menus:
+        type: "array"
+        required: true
+        description: "菜单数据数组 MenuItemData[]"
+        # 从 zouzhe content 中提取 menus
+        # zouzhe.content.menus 会被传递到这里
+
+# 工作流步骤
+steps:
+    - id: "apply_system_menu"
+      name: "太白金星：设置系统菜单"
+      type: "action"
+      service: "taibaijinxing"
+      action: "applySystemMenu"
+      input:
+          menus: "{{inputs.menus}}"
+      # applySystemMenu 是副作用操作（返回 void），不产生输出
+      # 成功完成即表示菜单设置成功，失败则抛出异常由错误处理机制捕获
+      output_schema:
+          type: null
+          description: "菜单设置操作无返回值"
+
+    - id: "format_response"
+      name: "返回成功结果"
+      type: "builtin"
+      action: "return"
+      input:
+          success: true
+          message: "菜单已成功设置"
+          timestamp: "{{now()}}"
+      dependsOn: ["apply_system_menu"]
+
+# 输出定义
+outputs:
+    success:
+        description: "菜单设置是否成功"
+        type: "boolean"
+        path: "success"
+    message:
+        description: "操作结果消息"
+        type: "string"
+        path: "message"
+    timestamp:
+        description: "操作时间戳"
+        type: "number"
+        path: "timestamp"
+
+# 错误处理
+error_handling:
+    adapter_error:
+        type: "return_error"
+        response:
+            success: false
+            error: "太白金星适配器设置菜单失败"
+            reason: "{{ error.message }}"
+
+timeout: 5000
+priority: "user"

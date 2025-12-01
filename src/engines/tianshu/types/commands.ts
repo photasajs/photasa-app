@@ -21,7 +21,10 @@ export type UserIntent =
     | "get_status"
     | "restore_app_state" // ✅ RFC 0042 Step 2.5: 应用状态管理workflow
     | "update_folder_tree" // ✅ RFC 0042 Step 2.5: 文件夹树管理workflow
-    | "switch_current_folder"; // ✅ RFC 0042 Step 2.5: 当前文件夹管理workflow
+    | "switch_current_folder" // ✅ RFC 0042 Step 2.5: 当前文件夹管理workflow
+    | "menu.apply" // ✅ RFC 0058: 菜单应用workflow
+    | "shell.openExternal" // ✅ RFC 0058: 打开外部链接workflow
+    | "shell.openInFinder"; // ✅ RFC 0058: 在 Finder 中显示文件workflow
 
 /**
  * 命令优先级

@@ -17,6 +17,8 @@ import { XUANZANG_TOKEN } from "@renderer/interfaces/xuan-zang.interface";
 import { XuanzangService } from "@renderer/services/xuanzang";
 import { YU_SHINAN_TOKEN } from "@renderer/interfaces/yu-shinan.interface";
 import { YuShiNanService } from "@renderer/services/yushinan";
+import { ZHANG_SUN_WU_JI_TOKEN } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
+import { ZhangSunWuJiService } from "@renderer/services/zhangsunwuji";
 import { DuRuHuiService } from "@renderer/services/duruhui";
 import { QiZouRouter } from "./router";
 
@@ -90,6 +92,9 @@ export class LishiminService implements ILishiminService {
     /** 虞世南服务 - 秘书监（扫描进度展示） */
     private yuShiNanService!: YuShiNanService;
 
+    /** 长孙无忌服务 - 司空（菜单规范管理） */
+    private zhangSunWuJiService!: ZhangSunWuJiService;
+
     /** 杜如晦服务 - 中书侍郎（MessageChannel管理器） */
     private duRuHuiService!: DuRuHuiService;
 
@@ -113,7 +118,8 @@ export class LishiminService implements ILishiminService {
             this.weiZhengService &&
             this.qinQiongService &&
             this.xuanzangService &&
-            this.yuShiNanService
+            this.yuShiNanService &&
+            this.zhangSunWuJiService
         );
     }
 
@@ -154,6 +160,10 @@ export class LishiminService implements ILishiminService {
         logger.info("👑 虞世南秘书监服务就任");
         this.yuShiNanService = new YuShiNanService(this.fangXuanLingService);
         this.app.provide(YU_SHINAN_TOKEN, this.yuShiNanService);
+
+        logger.info("👑 长孙无忌司空服务就任");
+        this.zhangSunWuJiService = new ZhangSunWuJiService(this.fangXuanLingService);
+        this.app.provide(ZHANG_SUN_WU_JI_TOKEN, this.zhangSunWuJiService);
 
         // 初始化启奏-圣旨系统
         this.initializeQizouShengzhiSystem();
@@ -206,6 +216,9 @@ export class LishiminService implements ILishiminService {
         logger.info("👑 李世民中央路由器启动");
         this.router = new QiZouRouter(this.duRuHuiService);
 
+        // 2.5. 将 qizouBus 传递给杜如晦，供其监听百姓上书 DOM 事件
+        this.duRuHuiService.setQizouBus(this.router.getQizouBus());
+
         // 3. 建立褚遂良与杜如晦的MessageChannel通道
         logger.info("📋 杜如晦为褚遂良建立圣旨通道");
         this.duRuHuiService.connect(this.chuSuiLiangService);
@@ -234,12 +247,23 @@ export class LishiminService implements ILishiminService {
         // 10. 将qizouBus传递给秦琼，供其发送启奏
         this.qinQiongService.setQizouBus(this.router.getQizouBus());
 
-        // 11. 将qizouBus传递给袁天罡，供其发送启奏（用于千里眼扫描完成事件）
+        // 11. 建立袁天罡与杜如晦的MessageChannel通道（✅ RFC 0058: 袁天罡实现 IService，需要接收圣旨）
+        logger.info("📋 杜如晦为袁天罡建立圣旨通道");
+        this.duRuHuiService.connect(this.yuanTianGangService);
+
+        // 12. 将qizouBus传递给袁天罡，供其发送启奏（用于千里眼扫描完成事件）
         this.yuanTianGangService.setQizouBus(this.router.getQizouBus());
 
-        // 12. 建立虞世南与杜如晦的MessageChannel通道
+        // 13. 建立虞世南与杜如晦的MessageChannel通道
         logger.info("📋 杜如晦为虞世南建立圣旨通道");
         this.duRuHuiService.connect(this.yuShiNanService);
+
+        // 14. 建立长孙无忌与杜如晦的MessageChannel通道
+        logger.info("📋 杜如晦为长孙无忌建立圣旨通道");
+        this.duRuHuiService.connect(this.zhangSunWuJiService);
+
+        // 15. 将qizouBus传递给长孙无忌，供其发送启奏
+        this.zhangSunWuJiService.setQizouBus(this.router.getQizouBus());
 
         logger.info("👑 启奏-圣旨系统初始化完成");
         logger.info("👑 李世民已开始监听所有启奏事件，并根据event-routing.yml自动路由");
@@ -250,6 +274,9 @@ export class LishiminService implements ILishiminService {
         this.employ();
         // 各部门通过奏折系统初始化
         try {
+            logger.info("👑 杜如晦中书侍郎服务初始化百姓上书言路");
+            this.duRuHuiService.initializeBaiXingShangshuYanLu();
+
             logger.info("👑 褚遂良中书令服务初始化偏好设置");
             await this.chuSuiLiangService.initializePreferences();
 

@@ -1,0 +1,56 @@
+# 在 Finder 中显示文件工作流
+# 由长孙无忌服务通过 zouzhe 触发，袁天罡转换为符箓，天枢引擎执行
+# 调用太白金星适配器在 Finder 中显示文件
+
+id: "shell.openInFinder"
+name: "在 Finder 中显示文件"
+description: "接收文件路径，通过太白金星适配器在 Finder 中显示"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+triggers:
+    - intent: "shell.openInFinder"
+
+inputs:
+    path:
+        type: "string"
+        required: true
+        description: "要在 Finder 中显示的文件路径"
+
+steps:
+    - id: "open_in_finder"
+      name: "太白金星：在 Finder 中显示文件"
+      type: "action"
+      service: "taibaijinxing"
+      action: "openInFinder"
+      input:
+          path: "{{inputs.path}}"
+      output_schema:
+          type: object
+          properties:
+              success:
+                  type: "boolean"
+                  description: "是否成功在 Finder 中显示文件"
+
+outputs:
+    success:
+        description: "是否成功在 Finder 中显示文件"
+        type: "boolean"
+        path: "success"
+    message:
+        description: "操作结果消息"
+        type: "string"
+        path: "message"
+
+error_handling:
+    default:
+        type: "return_error"
+        response:
+            success: false
+            error: "在 Finder 中显示文件失败"
+            reason: "{{ error.message }}"
+
+timeout: 5000
+priority: "user"

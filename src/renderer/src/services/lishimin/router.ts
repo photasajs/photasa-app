@@ -116,6 +116,18 @@ export class QiZouRouter {
     }
 
     /**
+     * 路由启奏事件（公共方法，供李世民直接调用）
+     *
+     * @param qizou 启奏内容
+     *
+     * @description
+     * 供李世民直接调用，处理百姓上书或官员启奏
+     */
+    route(qizou: Qizou): void {
+        this.routeQizou(qizou);
+    }
+
+    /**
      * 路由启奏事件（核心路由决策逻辑）
      *
      * @param qizou 启奏内容
@@ -172,17 +184,25 @@ export class QiZouRouter {
     private routeQizou(qizou: Qizou): void {
         const { matter, metadata, from } = qizou;
 
+        logger.debug(`👑 李世民路由决策: matter=${matter}, from=${from}, type=${metadata?.type}`);
+
         // 查找对应的路由规则
         const routes = this.routingConfig.qizou_routes[matter];
 
         if (!routes || routes.length === 0) {
-            logger.info(`👑 李世民：无路由规则，启奏${matter}无需处理`);
+            logger.warn(`👑 李世民：无路由规则，启奏${matter}无需处理`);
             return;
         }
 
+        logger.debug(`👑 李世民找到 ${routes.length} 条路由规则`);
+
         // 遍历所有路由规则，匹配条件
         for (const route of routes) {
-            if (this.matchRouteCondition(route.when, { metadata, from })) {
+            const matched = this.matchRouteCondition(route.when, { metadata, from });
+            logger.debug(
+                `👑 李世民检查路由规则: when.from=${route.when.from}, when.type=${route.when.type}, matched=${matched}`,
+            );
+            if (matched) {
                 logger.info(
                     `👑 李世民匹配路由规则: ${matter} → ${route.then.service} (${route.then.shengzhi.command})`,
                 );

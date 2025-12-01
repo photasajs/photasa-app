@@ -18,12 +18,14 @@ import type {
     IScanning,
     IAppState,
     IStatusBar,
+    IMenus,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { useNotificationStore } from "@renderer/stores/notification";
 import { useScanningStore } from "../stores/scanning-store";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
+import { useMenusStore } from "@renderer/stores/menus";
 import { loggers } from "@common/logger";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { NotificationConfig } from "@renderer/types/notification";
@@ -224,6 +226,36 @@ export function createStatusBarService(): IStatusBar {
 
         clear(): void {
             store.clear();
+        },
+
+        reset(): void {
+            store.$reset();
+        },
+    };
+}
+
+/**
+ * ✅ RFC 0058: 菜单访问器实现
+ *
+ * 职责：
+ * - 提供对 menusStore 的访问
+ * - 长孙无忌通过此访问器访问菜单数据
+ */
+export function createMenusService(): IMenus {
+    const store = useMenusStore();
+
+    return {
+        get menus() {
+            // ✅ 返回副本，防止外部修改
+            return JSON.parse(JSON.stringify(store.menus));
+        },
+
+        refreshMenus(t: (key: string) => string): void {
+            store.refreshMenus(t);
+        },
+
+        setMenuDisabled(key: string, disabled: boolean): void {
+            store.setMenuDisabled(key, disabled);
         },
 
         reset(): void {

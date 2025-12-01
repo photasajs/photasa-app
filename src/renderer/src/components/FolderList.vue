@@ -4,9 +4,9 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import type { PhotasaConfig } from "@common/config-types";
 import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
-import { openInFinder } from "@renderer/utils/api-path";
 import { isEmpty } from "radash";
-// removeFileProtocol 通过 preload API 使用
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+// ✅ RFC 0058: 使用服务而不是直接 API 调用
 import {
     BaseContextMenu,
     BaseMenuItem,
@@ -22,6 +22,11 @@ import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
 
 const logger = loggers.lishimin;
+
+/**
+ * ✅ RFC 0058: 使用长孙无忌服务
+ */
+const zhangSunWuJi = useZhangSunWuJi();
 
 /**
  * Preference store
@@ -167,11 +172,12 @@ async function openPhotasaConfig(folder: string): Promise<void> {
 }
 
 /**
- * Open the file in finder - 直接传递 file:// URL，让 preload 层处理转换
- * @param key - The folder to open in finder
+ * Open the file in finder - 通过长孙无忌服务，使用 qizou 流程
+ * @param key - The folder to open in finder (可能是 file:// URL 或普通路径)
  */
 function openFileInFinder(key: string): void {
-    openInFinder(key);
+    // ✅ RFC 0058: 服务层统一处理 file:// URL 转换，组件直接传递原始路径
+    zhangSunWuJi.openInFinder(key);
 }
 
 /**

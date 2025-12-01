@@ -10,8 +10,8 @@ import ConfigService from "./config/config-service";
 import ScanService from "./scan/scan-service";
 import WatchService from "./watch/watch-service";
 import WindowService from "./window/window-service";
-import MenuService from "./menu/menu-service";
-import ShellService from "./shell/shell-service";
+// ✅ RFC 0058: MenuService 已移除，菜单管理迁移到 TaibaijinxingAdapter
+// ✅ RFC 0058: ShellService 已合并到 TaibaijinxingAdapter
 import ImportService from "./import/import-service";
 import LogViewerService from "./log-viewer/log-viewer-service";
 import UpdateService from "./update/update-service";
@@ -79,8 +79,8 @@ export class StartupOptimizer {
 
             // 重要服务：可以在主窗口显示后立即初始化
             important: [
-                () => this.createMenuService(),
-                () => this.createShellService(),
+                // ✅ RFC 0058: MenuService 已移除，菜单管理迁移到 TaibaijinxingAdapter
+                // ✅ RFC 0058: ShellService 已合并到 TaibaijinxingAdapter
                 () => this.createUpdateService(),
             ],
 
@@ -178,17 +178,8 @@ export class StartupOptimizer {
         return service;
     }
 
-    private async createMenuService(): Promise<MenuService> {
-        const service = new MenuService(this.ipcMain, this.mainWindow);
-        this.services.set("menu", service);
-        return service;
-    }
-
-    private async createShellService(): Promise<ShellService> {
-        const service = new ShellService(this.ipcMain, this.mainWindow);
-        this.services.set("shell", service);
-        return service;
-    }
+    // ✅ RFC 0058: MenuService 已移除，菜单管理迁移到 TaibaijinxingAdapter
+    // ✅ RFC 0058: ShellService 已合并到 TaibaijinxingAdapter
 
     private async createUpdateService(): Promise<UpdateService> {
         const service = new UpdateService(this.ipcMain, this.mainWindow);

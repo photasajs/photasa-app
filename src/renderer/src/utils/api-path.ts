@@ -38,11 +38,19 @@ export function getRoot(path: string) {
     return window.api.getRoot(path);
 }
 
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+
 /**
- * 打开文件夹 - 直接调用 preload 层函数，让 preload 层处理 file:// URL 转换
+ * 打开文件夹 - 通过长孙无忌服务，使用 qizou 流程
  * @param path 文件夹路径（可能是 file:// URL 或普通路径）
+ *
+ * 注意：此函数现在通过 qizou-shengzhi 流程处理：
+ * 长孙无忌 → 房玄龄 → 袁天罡 → 天枢引擎工作流 → 太白金星适配器
+ *
+ * 如果需要 file:// URL 转换，应该在调用此函数前处理
  */
 export function openInFinder(path: string): void {
-    // 直接调用 preload 层的 openInFinder，让它处理 file:// URL 转换
-    window.api.openInFinder(path);
+    // ✅ RFC 0058: 使用新的服务架构，通过 qizou 流程
+    const zhangSunWuJi = useZhangSunWuJi();
+    zhangSunWuJi.openInFinder(path);
 }

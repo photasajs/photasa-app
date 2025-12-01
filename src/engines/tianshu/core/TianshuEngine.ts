@@ -18,27 +18,9 @@ import { WorkflowOrchestrator } from "../orchestration/WorkflowOrchestrator";
 import { VariableResolver } from "../orchestration/VariableResolver";
 import { IStepExecutor } from "../../common/interfaces";
 import { loggers } from "@common/logger";
+import { IntentToWorkflowMap } from "./intent";
 
 const logger = loggers.tianshu;
-
-const intentToWorkflowMap: Record<UserIntent, string> = {
-    scan_folder: "scan/folder_scan",
-    scan_file: "scan/file_scan",
-    update_config: "preference/preference_management",
-    generate_thumbnail: "media/generate_thumbnail",
-    process_media: "media/process_media",
-    stop_operation: "system/stop_operation",
-    get_status: "engine/engine_status_check",
-    get_preferences: "get_preferences", // 修正：直接映射到工作流ID
-    update_preferences: "update_preferences", // 修正：直接映射到工作流ID
-    get_scanning_queue: "scan/get_scanning_queue", // ✅ RFC 0042 Phase 2.3: 获取扫描队列
-    add_scan_action: "scan/add_scan_action", // ✅ RFC 0042 Phase 2.4: 添加扫描任务workflow
-    remove_scan_action: "scan/remove_scan_action", // ✅ RFC 0042 Phase 2.4: 移除扫描任务workflow
-    update_scan_action_status: "scan/update_scan_action_status", // ✅ RFC 0048 v3: 状态机更新workflow
-    restore_app_state: "appstate/restore_app_state", // ✅ RFC 0042 Step 2.5: 应用状态管理workflow
-    update_folder_tree: "appstate/update_folder_tree", // ✅ RFC 0042 Step 2.5: 文件夹树管理workflow
-    switch_current_folder: "appstate/switch_current_folder", // ✅ RFC 0042 Step 2.5: 当前文件夹管理workflow
-};
 
 /**
  * Tianshu引擎配置
@@ -487,7 +469,7 @@ export class TianshuEngine extends EventEmitter {
      * 根据意图获取工作流ID
      */
     private getWorkflowIdForIntent(intent: UserIntent): string {
-        return intentToWorkflowMap[intent] || "system/default";
+        return IntentToWorkflowMap[intent] || "system/default";
     }
 
     /**

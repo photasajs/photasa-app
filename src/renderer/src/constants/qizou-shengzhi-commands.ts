@@ -32,6 +32,12 @@ export const QizouMatters = {
 
     // ✅ RFC 0057: 状态栏通知（来自主进程的 notify:status IPC 事件）
     STATUS_NOTIFICATION: "status_notification",
+
+    // ✅ RFC 0058: 菜单点击事件（来自主进程的 menu:action IPC 事件）
+    MENU_ACTION: "menu_action",
+    // ✅ RFC 0058: Shell 操作事件（不需要 store，直接通过 qizou 处理）
+    OPEN_EXTERNAL: "open_external", // 打开外部链接
+    OPEN_IN_FINDER: "open_in_finder", // 在 Finder 中显示文件
 } as const;
 
 /**
@@ -56,6 +62,12 @@ export const ShengzhiCommands = {
 
     // ✅ RFC 0057: 虞世南 - 状态栏通知管理
     UPDATE_STATUS_NOTIFICATION: "update_status_notification",
+
+    // ✅ RFC 0058: 长孙无忌 - 菜单点击事件处理
+    MENU_ACTION: "menu_action",
+    // ✅ RFC 0058: 长孙无忌 - Shell 操作命令
+    OPEN_EXTERNAL: "open_external", // 打开外部链接
+    OPEN_IN_FINDER: "open_in_finder", // 在 Finder 中显示文件
 } as const;
 
 /**

@@ -3,3 +3,4 @@ import "./BuiltinAdapter";
 import "./WenchangAdapter";
 import "./QianliyanAdapter";
 import "./SimingAdapter";
+import "./TaibaijinxingAdapter";

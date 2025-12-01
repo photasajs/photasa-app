@@ -20,8 +20,8 @@ import "../config/config-service";
 import "../window/window-service";
 import "../directory/directory-service";
 import "../log-viewer/log-viewer-service";
-import "../menu/menu-service";
-import "../shell/shell-service";
+// ✅ RFC 0058: MenuService 已移除，菜单管理迁移到 TaibaijinxingAdapter
+// ✅ RFC 0058: ShellService 已合并到 TaibaijinxingAdapter
 import "../update/update-service";
 import "../thumbnail/thumbnail-service";
 import "../scan/scan-service";

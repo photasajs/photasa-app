@@ -14,7 +14,7 @@ import {
     fileUrlFromPath,
 } from "./image-helper";
 import { normalizePath } from "@shared/path-util";
-import { openInFinder } from "./shell-helper";
+// ✅ RFC 0058: openInFinder 已迁移到服务架构，不再通过 preload API
 import type { LogEntry } from "@common/logger";
 import { updateApi } from "./update-helper";
 import {
@@ -33,7 +33,6 @@ import {
     isFileUnderFolder,
     toFileName,
     isHiddenFile,
-    removeFileProtocol,
     toDirName,
 } from "@shared/path-util";
 
@@ -57,7 +56,7 @@ export const api = {
     getImageType,
     getFileMetadata,
     removeThumbnail,
-    openInFinder,
+    // ✅ RFC 0058: openInFinder 已迁移到服务架构，使用 useZhangSunWuJi().openInFinder()
     addToPhotoList,
     removeFromPhotoList,
     getPhotasaConfig,
@@ -71,7 +70,6 @@ export const api = {
     resetPhotasaConfig,
     isHiddenFile,
     shouldIgnorePhotasaPath,
-    removeFileProtocol,
     toDirName,
     isVideoFile,
     isImageFile,
@@ -117,7 +115,7 @@ export const api = {
     onMenuAction: (cb: (payload: any) => void) => {
         electronAPI.ipcRenderer.on("menu:action", (_event, payload) => cb(payload));
     },
-    openExternal: (url: string) => electronAPI.ipcRenderer.invoke("shell:openExternal", url),
+    // ✅ RFC 0058: openExternal 已迁移到服务架构，使用 useZhangSunWuJi().openExternal()
 
     // ==================== 自动更新功能 API ====================
     ...updateApi,

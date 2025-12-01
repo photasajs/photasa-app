@@ -653,6 +653,75 @@ await this.fangXuanLingService.processZouzhe(zouzhe);
 | **持久化** | 不负责持久化 | 负责与天界通信和Store同步 |
 | **示例场景** | 路径添加完成后通知多个部门 | 添加路径到PreferenceStore |
 
+### UI 层通信方式：服务 vs DOM 事件 (2025-11-30)
+
+**这是 UI 层与系统通信的两种方式！必须根据场景选择正确的方式！**
+
+#### 1. 使用服务（Service Composable）
+
+**用途**：需要访问服务状态或调用服务方法
+
+**使用场景**：
+- ✅ 需要访问服务的响应式状态（如 `menus`, `scanningQueue`）
+- ✅ 需要调用服务的复杂方法（如 `refreshMenus()`, `setMenuDisabled()`）
+- ✅ 需要处理服务事件（如 `handleMenuAction()`）
+- ✅ 组件已经依赖服务层的其他功能
+
+**流程**：
+```
+组件 → useZhangSunWuJi().openExternal()
+  → ZhangSunWuJiService.openExternal()
+  → qizouBus.emit('qizou')
+  → 路由器处理 → 下旨给服务
+```
+
+**示例**：
+```typescript
+// ✅ 需要访问菜单状态
+const zhangSunWuJi = useZhangSunWuJi();
+const menus = zhangSunWuJi.menus;  // 响应式状态
+zhangSunWuJi.refreshMenus(t);      // 调用服务方法
+```
+
+#### 2. 使用 DOM 事件（百姓上书）
+
+**用途**：完全解耦，只触发简单操作
+
+**使用场景**：
+- ✅ 只需要触发简单操作（如 `openExternal()`, `openInFinder()`）
+- ✅ 不需要访问服务的响应式状态
+- ✅ 完全解耦，组件不依赖服务层
+- ✅ 简单组件（如按钮、链接）只需要触发操作
+
+**流程**：
+```
+组件 → window.dispatchEvent('picasa:shangshu', { action, ...params })
+  → 杜如晦监听（initializeBaiXingShangshuYanLu）
+  → 转换为 qizou (from: "百姓")
+  → qizouBus.emit('qizou')
+  → 路由器处理 → 下旨给服务
+```
+
+**示例**：
+```typescript
+// ✅ 简单操作，不需要服务状态
+function openBuyMeCoffee() {
+    const event = new CustomEvent(EventNames.BAIXING_SHANGSHU, {
+        detail: { action: QizouMatters.OPEN_EXTERNAL, url: "..." },
+        bubbles: true,
+        cancelable: true,
+    });
+    window.dispatchEvent(event);
+}
+```
+
+**关键原则**：
+- ✅ **两种方式最终都走同一个 qizou 路由系统**，只是入口不同
+- ✅ **服务方式**：通过服务层封装，适合需要状态访问的场景
+- ✅ **DOM 事件方式**：完全解耦，适合简单操作的场景
+- ✅ **杜如晦负责监听百姓上书**：`initializeBaiXingShangshuYanLu()` 监听 `picasa:shangshu` 事件
+- ✅ **必须使用常量**：事件名使用 `EventNames.BAIXING_SHANGSHU`，action 使用 `QizouMatters.OPEN_EXTERNAL` 等
+
 ### 房玄龄的特殊角色
 
 **房玄龄和袁天罡协作处理所有持久化事务**：

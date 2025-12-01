@@ -272,7 +272,8 @@ import {
     PhFolderOpen,
     PhWrench,
 } from "@phosphor-icons/vue";
-import { openInFinder } from "@renderer/utils/api-path";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+// ✅ RFC 0058: 使用服务而不是直接 API 调用
 import { loggers } from "@common/logger";
 
 // 定义组件属性
@@ -315,6 +316,8 @@ const modelValue = computed({
 // 国际化
 const { t } = useI18n();
 const logger = loggers.renderer;
+// ✅ RFC 0058: 使用长孙无忌服务
+const zhangSunWuJi = useZhangSunWuJi();
 
 // 响应式数据
 const showRawConfig = ref(false);
@@ -432,7 +435,8 @@ function handleClose() {
 async function handleOpenInFinder() {
     if (props.photasa?.path) {
         try {
-            await openInFinder(props.photasa.path);
+            // ✅ RFC 0058: 服务层统一处理 file:// URL 转换，组件直接传递原始路径
+            zhangSunWuJi.openInFinder(props.photasa.path);
         } catch (error) {
             logger.error("Failed to open in finder:", error);
         }

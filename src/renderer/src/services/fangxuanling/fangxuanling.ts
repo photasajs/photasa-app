@@ -11,6 +11,7 @@ import type {
     IScanning,
     IAppState,
     IStatusBar,
+    IMenus,
     Zouzhe,
     ZouzheResponse,
     Zhaoling,
@@ -33,6 +34,7 @@ import {
     createScanningService,
     createAppStateService,
     createStatusBarService,
+    createMenusService,
 } from "./accessors/service-builders";
 
 const logger = loggers.fangxuanling;
@@ -67,6 +69,10 @@ export class FangXuanLingService implements IFangXuanLingService {
      * ✅ RFC 0057: 状态栏访问器
      */
     private _statusBar: IStatusBar;
+    /**
+     * ✅ RFC 0058: 菜单访问器
+     */
+    private _menus: IMenus;
 
     constructor(yuanTianGang: IYuanTianGangService) {
         if (!yuanTianGang) {
@@ -87,6 +93,7 @@ export class FangXuanLingService implements IFangXuanLingService {
         this._scanning = createScanningService();
         this._appState = createAppStateService();
         this._statusBar = createStatusBarService(); // ✅ RFC 0057: 状态栏访问器
+        this._menus = createMenusService(); // ✅ RFC 0058: 菜单访问器
 
         logger.info("🏛️ 房玄龄：扫描队列Store已就绪");
     }
@@ -117,6 +124,14 @@ export class FangXuanLingService implements IFangXuanLingService {
      */
     get statusBar(): IStatusBar {
         return this._statusBar;
+    }
+
+    /**
+     * ✅ RFC 0058: 菜单访问器
+     * 长孙无忌通过此访问器访问菜单数据
+     */
+    get menus(): IMenus {
+        return this._menus;
     }
 
     /**
@@ -279,6 +294,8 @@ export class FangXuanLingService implements IFangXuanLingService {
         this._photos.reset();
         this._scanning.reset();
         this._appState.reset();
+        this._statusBar.reset();
+        this._menus.reset(); // ✅ RFC 0058: 菜单重置
 
         logger.info("🏛️ 重整朝纲已毕，百官归位");
     }

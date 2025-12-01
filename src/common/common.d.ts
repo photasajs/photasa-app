@@ -47,8 +47,7 @@ declare global {
             // 获取图片类型
             getImageType: (path: string) => Promise<ImageInfo>;
             getFileMetadata: (pathOrUrl: string) => Promise<FileMetadata>;
-            // 打开文件夹
-            openInFinder: (path: string) => void;
+            // ✅ RFC 0058: openInFinder 已迁移到服务架构，使用 useZhangSunWuJi().openInFinder()
             // 获取 Photasa 配置
             getPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
             // 添加到照片列表

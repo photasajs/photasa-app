@@ -12,10 +12,13 @@ import type { Zhaoling, ZhaolingResponse } from "../../interfaces/fang-xuan-ling
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
+import { IService } from "@renderer/interfaces/service.interface";
+import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@common/logger";
-import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@common/scan-types";
 import type { NotifyPayload } from "@common/types";
+import type { MenuActionPayload } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
 import { computeScannedFilePaths } from "./utils";
 import { IntentToFuluMapping } from "./intent";
 
@@ -25,18 +28,76 @@ const logger = loggers.yuantiangang;
  * 袁天罡钦天监服务实现
  * 接收房玄龄诏令，与天枢引擎通信
  */
-export class YuanTianGangService implements IYuanTianGangService {
+export class YuanTianGangService implements IService, IYuanTianGangService {
+    readonly name = "袁天罡";
     private progressCleanupFn?: () => void;
     private statusCleanupFn?: () => void;
     private qianliyanCleanupFn?: () => void;
     private notifyStatusCleanupFn?: () => void;
+    private menuActionCleanupFn?: () => void; // ✅ RFC 0058: 菜单点击事件清理函数
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
+    /** 圣旨接收通道 */
+    private shengzhiPort?: MessagePort;
 
     constructor() {
         logger.info("🔮 就任，开始处理天界通信");
         this.setupTianshuEventListening();
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
+        this.setupMenuActionEventListening(); // ✅ RFC 0058: 监听 menu:action IPC 事件
+    }
+
+    /**
+     * 设置圣旨接收通道（IService 接口要求）
+     * 由杜如晦调用，建立与李世民的通信通道
+     *
+     * @param port MessageChannel的port2端，用于接收圣旨
+     */
+    setShengzhiPort(port: MessagePort): void {
+        logger.info("🔮 袁天罡建立圣旨接收通道");
+        this.shengzhiPort = port;
+        this.shengzhiPort.onmessage = async (event: MessageEvent) => {
+            const shengzhi: Shengzhi = event.data;
+            await this.processShengzhi(shengzhi);
+        };
+    }
+
+    /**
+     * 处理圣旨（由 setShengzhiPort 中的 onmessage 调用）
+     * 对于 Shell 操作，将圣旨转换为诏令，通过 executeZhaoling 发送到天枢引擎工作流
+     *
+     * @param shengzhi 圣旨内容
+     * @private
+     */
+    private async processShengzhi(shengzhi: Shengzhi): Promise<void> {
+        try {
+            switch (shengzhi.command) {
+                case ShengzhiCommands.MENU_ACTION:
+                    // 菜单点击事件已通过 IPC 处理，这里不需要处理
+                    logger.warn("🔮 袁天罡：收到 MENU_ACTION 圣旨，但菜单点击应通过 IPC 处理");
+                    break;
+                case ShengzhiCommands.OPEN_EXTERNAL:
+                case ShengzhiCommands.OPEN_IN_FINDER:
+                    // ✅ RFC 0058: Shell 操作通过天枢引擎工作流处理
+                    // 将圣旨转换为诏令，通过 executeZhaoling 发送到天枢引擎
+                    // 注意：圣旨的 command 是 ShengzhiCommands.OPEN_EXTERNAL/OPEN_IN_FINDER (值为 "open_external"/"open_in_finder")
+                    // 这与 ZOUZHE_MATTERS.OPEN_EXTERNAL/OPEN_IN_FINDER 的值相同，可以直接用作符箓的 intent
+                    const zhaoling: Zhaoling = {
+                        command: shengzhi.command, // "open_external" 或 "open_in_finder"
+                        context: (shengzhi.content as Record<string, unknown>) || {},
+                        timestamp: Date.now(),
+                        source: shengzhi.from || "袁天罡",
+                        priority: shengzhi.priority === "urgent" ? "urgent" : "normal",
+                        requiresTianshuApproval: true,
+                    };
+                    await this.executeZhaoling(zhaoling);
+                    break;
+                default:
+                    logger.warn(`🔮 袁天罡：未知圣旨命令 ${shengzhi.command}`);
+            }
+        } catch (error) {
+            logger.error(`🔮 袁天罡：处理圣旨失败`, error);
+        }
     }
 
     /**
@@ -255,6 +316,75 @@ export class YuanTianGangService implements IYuanTianGangService {
     }
 
     /**
+     * ✅ RFC 0058: 设置菜单点击事件监听
+     * 监听主进程的 menu:action IPC 事件，发送 MENU_ACTION qizou
+     *
+     * @private
+     */
+    private setupMenuActionEventListening(): void {
+        try {
+            const ipc = window.electron?.ipcRenderer;
+            if (!ipc) {
+                logger.warn("🔮 无法访问IPC，跳过 menu:action 事件监听");
+                return;
+            }
+
+            // 监听主进程的菜单点击事件
+            const handler = (_: unknown, payload: MenuActionPayload) => {
+                this.reportMenuAction(payload);
+            };
+
+            this.menuActionCleanupFn = ipc.on("menu:action", handler);
+
+            logger.info("🔮 袁天罡：已建立 menu:action 事件监听，可接收主进程菜单点击");
+        } catch (error: Error | unknown) {
+            logger.warn(
+                "🔮 建立 menu:action 事件监听失败",
+                error instanceof Error ? error.message : String(error),
+            );
+        }
+    }
+
+    /**
+     * ✅ RFC 0058: 向李世民发送菜单点击事件启奏
+     *
+     * @param payload 菜单点击事件载荷
+     * @private
+     */
+    private reportMenuAction(payload: MenuActionPayload): void {
+        try {
+            if (!this._qizouBus) {
+                logger.error("🔮 启奏通道未建立，无法发送启奏");
+                return;
+            }
+
+            // 构建启奏
+            const qizou: Qizou = {
+                matter: QizouMatters.MENU_ACTION,
+                content: {
+                    key: payload.key,
+                    label: payload.label,
+                    shortcut: payload.shortcut,
+                    role: payload.role,
+                    url: payload.url,
+                },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: {
+                    type: "report",
+                    priority: "normal",
+                },
+            };
+
+            // 发送启奏
+            this._qizouBus.emit("qizou", qizou);
+            logger.info(`🔮 袁天罡：已将菜单点击事件启奏上报陛下 (${payload.key})`);
+        } catch (error) {
+            logger.error("🔮 袁天罡：发送菜单点击事件启奏失败", error);
+        }
+    }
+
+    /**
      * ✅ RFC 0057: 向李世民发送状态通知启奏
      *
      * @param payload 状态通知载荷
@@ -308,6 +438,9 @@ export class YuanTianGangService implements IYuanTianGangService {
         }
         if (this.notifyStatusCleanupFn) {
             this.notifyStatusCleanupFn();
+        }
+        if (this.menuActionCleanupFn) {
+            this.menuActionCleanupFn();
         }
         logger.info("🔮 事件监听已清理");
     }
@@ -381,7 +514,14 @@ export class YuanTianGangService implements IYuanTianGangService {
 
         try {
             // 符箓到UICommand的转换
-            const uiCommand = this.convertFuluToUICommand(fulu);
+            const uiCommand = this.convertFuluToUICommand(fulu) as {
+                id: string;
+                intent: string;
+                params: unknown;
+                priority: string;
+                context: unknown;
+                createdAt: number;
+            };
             logger.info(`🔮 符箓转换为天枢命令: ${uiCommand.intent}, ID: ${uiCommand.id}`);
 
             // 通过IPC调用天枢引擎
@@ -427,7 +567,7 @@ export class YuanTianGangService implements IYuanTianGangService {
     /**
      * 将符箓转换为天枢UICommand
      */
-    private convertFuluToUICommand(fulu: Fulu): any {
+    private convertFuluToUICommand(fulu: Fulu): unknown {
         // 紧急程度到命令优先级的映射
         const priorityMapping = {
             critical: "system" as const,

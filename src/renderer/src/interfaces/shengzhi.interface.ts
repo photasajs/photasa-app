@@ -1,5 +1,6 @@
 import type { Qizou } from "./qizou.interface";
 import type { ScanProgressShengzhiContent } from "./yu-shinan.interface";
+import type { MenuActionPayload } from "./zhang-sun-wu-ji.interface";
 
 /**
  * 圣旨 - 李世民通过 MessageChannel 向各服务下达的指令
@@ -12,7 +13,7 @@ export interface Shengzhi {
     command: string;
 
     /** 圣旨内容 */
-    content: Record<string, unknown> | ScanProgressShengzhiContent;
+    content: Record<string, unknown> | ScanProgressShengzhiContent | MenuActionPayload;
 
     /** 优先级 */
     priority: "urgent" | "normal";

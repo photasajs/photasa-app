@@ -4,14 +4,14 @@ This directory contains RFCs for significant changes to the photo management app
 
 ## RFC Statistics
 
-- **Total RFCs**: 49
-- **Completed**: 30 (61.2%)
-- **In Progress**: 1 (2.0%)
-- **Draft**: 18 (36.7%)
+- **Total RFCs**: 50
+- **Completed**: 30 (60.0%)
+- **In Progress**: 2 (4.0%)
+- **Draft**: 18 (36.0%)
 - **Rejected**: 0 (0%)
 
 ### By Version
-- **v2.0.0**: 49 RFCs
+- **v2.0.0**: 50 RFCs
 - **Future**: 0 RFCs
 
 ## RFC Process
@@ -104,6 +104,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0050](./0050-taiyi-workflow-engine.md)                          | 太乙工作流引擎                                    | Draft               | AI     | v2.0.0         |
 | [0055](./0055-taiyi-workflow-summary.md)                          | 太乙工作流总结                                    | Draft               | AI     | v2.0.0         |
 | [0056](./0056-yuchigong-code-quality-improvements.md)            | 尉迟恭代码质量改进                                | Draft               | AI     | v2.0.0         |
+| [0058](./0058-zhangsunwuji-menu-service.md)                      | 长孙无忌菜单服务 - 统一菜单管理到qizou流程          | 🔨 In Progress      | AI     | v2.0.0         |
 
 ## Implemented RFCs
 
