@@ -1,0 +1,443 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://schemas.systembug.io/workflow/v1.0.0/template-syntax.schema.json",
+    "title": "驺吾工作流模板语法规范",
+    "description": "工作流中{{}}模板语法的验证规则和语法定义",
+
+    "definitions": {
+        "TemplateVariable": {
+            "type": "string",
+            "pattern": "^\\{\\{.*\\}\\}$",
+            "description": "模板变量，必须以{{开头，}}结尾"
+        },
+
+        "VariableReference": {
+            "type": "object",
+            "description": "变量引用解析结果",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["inputs", "variables", "steps", "loopContext", "branchContext"],
+                    "description": "变量类型"
+                },
+                "path": {
+                    "type": "string",
+                    "description": "变量路径"
+                },
+                "expression": {
+                    "type": "string",
+                    "description": "完整表达式"
+                },
+                "hasDefault": {
+                    "type": "boolean",
+                    "description": "是否包含默认值"
+                },
+                "defaultValue": {
+                    "description": "默认值"
+                }
+            }
+        },
+
+        "TemplateExpressionPatterns": {
+            "type": "object",
+            "description": "模板表达式模式定义",
+            "properties": {
+                "simpleVariable": {
+                    "type": "string",
+                    "const": "^\\{\\{\\s*([a-zA-Z_][a-zA-Z0-9_.\\[\\]]*?)\\s*\\}\\}$",
+                    "description": "简单变量引用：{{inputs.userName}}"
+                },
+                "withDefault": {
+                    "type": "string",
+                    "const": "^\\{\\{\\s*([a-zA-Z_][a-zA-Z0-9_.\\[\\]]*?)\\s*\\|\\|\\s*(.+?)\\s*\\}\\}$",
+                    "description": "带默认值：{{inputs.name || 'default'}}"
+                },
+                "expression": {
+                    "type": "string",
+                    "const": "^\\{\\{\\s*(.+?)\\s*\\}\\}$",
+                    "description": "复杂表达式：{{Date.now()}}"
+                },
+                "stepOutput": {
+                    "type": "string",
+                    "const": "^\\{\\{\\s*steps\\.([a-zA-Z_][a-zA-Z0-9_]*)\\.output(?:\\.(.+?))?\\s*\\}\\}$",
+                    "description": "步骤输出引用：{{steps.stepId.output.field}}"
+                },
+                "loopVariable": {
+                    "type": "string",
+                    "const": "^\\{\\{\\s*(currentFile|fileIndex|loopContext\\.[a-zA-Z_][a-zA-Z0-9_]*)\\s*\\}\\}$",
+                    "description": "循环变量：{{currentFile}} {{loopContext.index}}"
+                }
+            }
+        },
+
+        "ValidVariablePaths": {
+            "type": "object",
+            "description": "有效的变量路径定义",
+            "properties": {
+                "inputs": {
+                    "type": "array",
+                    "description": "输入参数路径",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "inputs.delta",
+                            "inputs.action",
+                            "inputs.source",
+                            "inputs.files[0].name",
+                            "inputs.user.profile.name"
+                        ]
+                    }
+                },
+                "variables": {
+                    "type": "array",
+                    "description": "工作流变量路径",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "variables.requestId",
+                            "variables.timestamp",
+                            "variables.maxRetries"
+                        ]
+                    }
+                },
+                "steps": {
+                    "type": "object",
+                    "description": "步骤输出路径",
+                    "patternProperties": {
+                        "^[a-zA-Z_][a-zA-Z0-9_]*$": {
+                            "type": "object",
+                            "description": "步骤输出schema",
+                            "properties": {
+                                "output": {
+                                    "type": "object",
+                                    "description": "输出字段定义"
+                                }
+                            }
+                        }
+                    }
+                },
+                "loopContext": {
+                    "type": "array",
+                    "description": "循环上下文变量",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "loopContext.index",
+                            "loopContext.total",
+                            "loopContext.processedCount",
+                            "loopContext.errorCount",
+                            "loopContext.isFirst",
+                            "loopContext.isLast"
+                        ]
+                    }
+                },
+                "branchContext": {
+                    "type": "array",
+                    "description": "并行分支上下文变量",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "branches.branchName.stepId.output",
+                            "branchContext.branchName",
+                            "branchContext.completedBranches"
+                        ]
+                    }
+                }
+            }
+        },
+
+        "BuiltinFunctions": {
+            "type": "object",
+            "description": "内置函数定义",
+            "properties": {
+                "uuid": {
+                    "type": "object",
+                    "properties": {
+                        "signature": { "const": "uuid()" },
+                        "returnType": { "const": "string" },
+                        "description": { "const": "生成UUID字符串" }
+                    }
+                },
+                "timestamp": {
+                    "type": "object",
+                    "properties": {
+                        "signature": { "const": "timestamp()" },
+                        "returnType": { "const": "number" },
+                        "description": { "const": "获取当前时间戳（毫秒）" }
+                    }
+                },
+                "hash": {
+                    "type": "object",
+                    "properties": {
+                        "signature": { "const": "hash(data)" },
+                        "returnType": { "const": "string" },
+                        "description": { "const": "计算数据哈希值" }
+                    }
+                },
+                "base64": {
+                    "type": "object",
+                    "properties": {
+                        "signature": { "const": "base64(text)" },
+                        "returnType": { "const": "string" },
+                        "description": { "const": "Base64编码" }
+                    }
+                },
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "signature": { "const": "json(object)" },
+                        "returnType": { "const": "string" },
+                        "description": { "const": "JSON序列化" }
+                    }
+                },
+                "formatDate": {
+                    "type": "object",
+                    "properties": {
+                        "signature": { "const": "formatDate(date, format)" },
+                        "returnType": { "const": "string" },
+                        "description": { "const": "格式化日期" }
+                    }
+                },
+                "validateEmail": {
+                    "type": "object",
+                    "properties": {
+                        "signature": { "const": "validateEmail(email)" },
+                        "returnType": { "const": "boolean" },
+                        "description": { "const": "验证邮箱格式" }
+                    }
+                }
+            }
+        },
+
+        "JavaScriptExpressions": {
+            "type": "object",
+            "description": "支持的JavaScript表达式",
+            "properties": {
+                "dateOperations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["Date.now()", "new Date().toISOString()", "new Date().getTime()"]
+                    }
+                },
+                "mathOperations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "variables.count + 1",
+                            "inputs.price * 0.8",
+                            "Math.round(inputs.value)",
+                            "Math.max(inputs.a, inputs.b)"
+                        ]
+                    }
+                },
+                "stringOperations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "inputs.name.toUpperCase()",
+                            "inputs.email.split('@')[1]",
+                            "inputs.text.trim()",
+                            "inputs.str.replace(/\\s+/g, '_')"
+                        ]
+                    }
+                },
+                "arrayOperations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "inputs.files.length",
+                            "inputs.tags.join(', ')",
+                            "inputs.items.filter(item => item.active)",
+                            "inputs.numbers.reduce((a, b) => a + b, 0)"
+                        ]
+                    }
+                },
+                "conditionalExpressions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "inputs.type === 'admin' ? 'full_access' : 'limited_access'",
+                            "inputs.count > 10 ? 'many' : 'few'",
+                            "inputs.user ? inputs.user.name : 'anonymous'"
+                        ]
+                    }
+                }
+            }
+        },
+
+        "ValidationRules": {
+            "type": "object",
+            "description": "模板语法验证规则",
+            "properties": {
+                "syntax": {
+                    "type": "object",
+                    "properties": {
+                        "mustStartWithDoubleBrace": {
+                            "description": "模板变量必须以{{开头",
+                            "pattern": "^\\{\\{"
+                        },
+                        "mustEndWithDoubleBrace": {
+                            "description": "模板变量必须以}}结尾",
+                            "pattern": "\\}\\}$"
+                        },
+                        "noNestedBraces": {
+                            "description": "不允许嵌套的双花括号",
+                            "pattern": "^(?!.*\\{\\{.*\\{\\{).*$"
+                        }
+                    }
+                },
+                "semantics": {
+                    "type": "object",
+                    "properties": {
+                        "validVariableReference": {
+                            "description": "变量引用必须存在于作用域中"
+                        },
+                        "stepOutputPathExists": {
+                            "description": "步骤输出路径必须在output_schema中定义"
+                        },
+                        "functionSignatureCorrect": {
+                            "description": "函数调用签名必须正确"
+                        },
+                        "typeCompatibility": {
+                            "description": "类型必须兼容"
+                        }
+                    }
+                }
+            }
+        },
+
+        "CommonTemplatePatterns": {
+            "type": "object",
+            "description": "常见模板模式示例",
+            "properties": {
+                "inputAccess": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "{{inputs.delta}}",
+                            "{{inputs.source || 'user'}}",
+                            "{{inputs.user.profile.name}}",
+                            "{{inputs.files[0].name}}"
+                        ]
+                    }
+                },
+                "stepOutput": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "{{steps.validate_delta.output.valid}}",
+                            "{{steps.get_data.output.result.data}}",
+                            "{{steps.process.output.success}}"
+                        ]
+                    }
+                },
+                "dynamicValues": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "{{Date.now()}}",
+                            "{{timestamp()}}",
+                            "{{uuid()}}",
+                            "{{variables.requestId || 'auto-' + timestamp()}}"
+                        ]
+                    }
+                },
+                "conditionalLogic": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "{{inputs.type === 'update' ? inputs.delta : {}}}",
+                            "{{steps.validation.output.valid ? 'proceed' : 'abort'}}",
+                            "{{inputs.enableAdvanced ? ['advanced_step'] : ['basic_step']}}"
+                        ]
+                    }
+                },
+                "loopContext": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "examples": [
+                            "{{currentFile.name}}",
+                            "{{fileIndex}}",
+                            "{{loopContext.index}}",
+                            "{{loopContext.isLast ? 'final' : 'continue'}}"
+                        ]
+                    }
+                }
+            }
+        },
+
+        "ErrorCategories": {
+            "type": "object",
+            "description": "模板语法错误分类",
+            "properties": {
+                "syntaxErrors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "code": { "type": "string" },
+                            "message": { "type": "string" },
+                            "examples": {
+                                "type": "array",
+                                "items": { "type": "string" }
+                            }
+                        }
+                    },
+                    "examples": [
+                        {
+                            "code": "MISSING_CLOSING_BRACE",
+                            "message": "模板变量缺少结束的}}",
+                            "examples": ["{{inputs.name"]
+                        },
+                        {
+                            "code": "INVALID_VARIABLE_NAME",
+                            "message": "变量名不符合命名规范",
+                            "examples": ["{{inputs.2name}}", "{{inputs.-test}}"]
+                        }
+                    ]
+                },
+                "semanticErrors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "code": { "type": "string" },
+                            "message": { "type": "string" },
+                            "examples": {
+                                "type": "array",
+                                "items": { "type": "string" }
+                            }
+                        }
+                    },
+                    "examples": [
+                        {
+                            "code": "UNDEFINED_VARIABLE",
+                            "message": "引用了未定义的变量",
+                            "examples": ["{{inputs.nonexistent}}", "{{variables.undefined}}"]
+                        },
+                        {
+                            "code": "INVALID_STEP_REFERENCE",
+                            "message": "引用了不存在的步骤",
+                            "examples": ["{{steps.nonexistent.output}}"]
+                        },
+                        {
+                            "code": "INVALID_OUTPUT_PATH",
+                            "message": "输出路径在schema中不存在",
+                            "examples": ["{{steps.validate.output.nonexistent}}"]
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

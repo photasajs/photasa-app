@@ -1,0 +1,130 @@
+# 驺吾工作流示例
+# ZouWu Workflow Sample - Demonstrating the Five-Colored Benevolent Guardian
+
+id: "sample_zouwu_workflow"
+name: "驺吾示例工作流"
+description: "展示驺吾五彩斑斓、仁德守护的特性"
+version: "1.0.0"
+author: "ZouWu System"
+
+# 驺吾触发器
+triggers:
+  - intent: "demo_workflow"
+  - event: "zouwu_awakens"
+
+# 输入参数
+inputs:
+  data:
+    type: "object"
+    required: true
+    description: "待处理数据"
+
+# 驺吾五彩步骤 (Five-Colored Steps)
+colors:
+  # 青色 - 条件判断 (Blue - Condition)
+  - id: "guardian_check"
+    name: "驺吾守护检查"
+    color: blue
+    type: "condition"
+    description: "驺吾以仁德之心检查数据"
+    condition:
+      field: "{{inputs.data}}"
+      operator: "exists"
+    guardian:
+      gentle: true
+      safe: true
+
+  # 赤色 - 动作执行 (Red - Action)
+  - id: "benevolent_action"
+    name: "驺吾仁德处理"
+    color: red
+    type: "action"
+    description: "驺吾温和地处理数据"
+    service: "wenchang"
+    action: "process"
+    benevolent:
+      nonDestructive: true
+      preserveOriginal: true
+    input:
+      data: "{{inputs.data}}"
+    dependsOn: ["guardian_check"]
+
+  # 黄色 - 内置操作 (Yellow - Builtin)
+  - id: "gentle_log"
+    name: "驺吾记录"
+    color: yellow
+    type: "builtin"
+    action: "log"
+    input:
+      level: "info"
+      message: "🎨 驺吾五彩处理中..."
+    dependsOn: ["benevolent_action"]
+
+  # 白色 - 并行处理 (White - Parallel)
+  - id: "dual_wings"
+    name: "驺吾双翼"
+    color: white
+    type: "parallel"
+    description: "驺吾展开双翼并行处理"
+    wings:
+      left: "validation"
+      right: "transformation"
+    branches:
+      - name: "validation"
+        steps:
+          - id: "validate"
+            type: "action"
+            service: "wenchang"
+            action: "validate"
+      - name: "transformation"
+        steps:
+          - id: "transform"
+            type: "action"
+            service: "wenchang"
+            action: "transform"
+    dependsOn: ["gentle_log"]
+
+  # 玄色 - 循环处理 (Black - Loop)
+  - id: "tail_recursion"
+    name: "驺吾长尾"
+    color: black
+    type: "loop"
+    description: "驺吾尾长于身的链式处理"
+    iterator:
+      source: "{{inputs.data.items || []}}"
+      variable: "item"
+    steps:
+      - id: "process_item"
+        type: "builtin"
+        action: "log"
+        input:
+          message: "处理: {{item}}"
+    tail:
+      long: true
+      graceful: true
+    dependsOn: ["dual_wings"]
+
+# 输出定义
+outputs:
+  success:
+    type: "boolean"
+    description: "处理是否成功"
+  guardian:
+    type: "object"
+    description: "驺吾守护状态"
+
+# 驺吾特性配置
+zouwu:
+  benevolence: true      # 仁德模式
+  fiveColors: true       # 五彩斑斓
+  guardian: true         # 守护模式
+  preserveData: true     # 不食活物
+  tailLength: "long"     # 长尾特性
+
+# 错误处理 - 仁德包容
+error_handling:
+  default:
+    type: "gentle_recovery"
+    response:
+      success: false
+      message: "驺吾温和地处理了异常"

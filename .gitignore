@@ -34,3 +34,8 @@ coverage/
 # TypeScript build info files (should be ignored in CI/CD)
 *.tsbuildinfo
 guide
+
+# VitePress build artifacts
+.vitepress/.temp
+.vitepress/cache
+.vitepress/dist
