@@ -39,3 +39,6 @@ guide
 .vitepress/.temp
 .vitepress/cache
 .vitepress/dist
+
+# TurboRepo cache
+.turbo
