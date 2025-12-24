@@ -753,7 +753,9 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             <BaseButton
                                 variant="danger"
                                 size="sm"
-                                @click="removeSourcePath(index, stepData || {}, setStepData)"
+                                @click="
+                                    removeSourcePath(Number(index), stepData || {}, setStepData)
+                                "
                             >
                                 <TrashIcon class="w-4 h-4 text-current" />
                             </BaseButton>

@@ -26,7 +26,7 @@ import { onMounted } from "vue";
 import StatusBar from "./components/common/StatusBar.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
-import { useMenusStore } from "@renderer/stores/menus";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import {
     NotificationContainer,
     PortalProvider,
@@ -88,7 +88,7 @@ const loading = ref(false);
 const themes = ref<ThemeMeta[]>([]);
 const currentThemeId = ref<string>("");
 // ✅ RFC 0057: statusBarStore 已迁移到 yuShiNan 服务管理，通过房玄龄访问
-const menusStore = useMenusStore();
+const zhangSunWuJi = useZhangSunWuJi();
 
 const isMac = window.api.isMac();
 
@@ -187,7 +187,7 @@ onMounted(async () => {
         timestamp: Date.now(),
     });
     // 应用启动时全局初始化菜单栏数据（国际化）
-    menusStore.refreshMenus(t);
+    zhangSunWuJi.refreshMenus(t);
 
     // 监听Store中主题变化，自动应用主题
     watch(

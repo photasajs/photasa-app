@@ -1,0 +1,11 @@
+node_modules
+dist
+out
+.gitignore
+test-results
+coverage
+*.tsbuildinfo
+.vitest
+.turbo
+build
+resources

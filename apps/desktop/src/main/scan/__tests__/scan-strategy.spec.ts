@@ -126,9 +126,8 @@ describe("scan-strategy", () => {
 
     describe("decideScanStrategy", () => {
         it("应该为首次扫描返回FULL策略", async () => {
-            const { computeFolderHash, getCacheInfo } = await import(
-                "../cache/folder-cache-manager"
-            );
+            const { computeFolderHash, getCacheInfo } =
+                await import("../cache/folder-cache-manager");
             (computeFolderHash as any).mockResolvedValue("hash123");
             (getCacheInfo as any).mockResolvedValue(null);
             mockGetPhotasaConfig.mockResolvedValue({ photoList: [] });
@@ -149,9 +148,8 @@ describe("scan-strategy", () => {
         });
 
         it("应该使用缓存比较决定策略", async () => {
-            const { computeFolderHash, getCacheInfo, compareHashesAndDecide } = await import(
-                "../cache/folder-cache-manager"
-            );
+            const { computeFolderHash, getCacheInfo, compareHashesAndDecide } =
+                await import("../cache/folder-cache-manager");
             const mockCache = { folderHash: "oldHash", scanCompleted: true };
             const mockDecision = {
                 strategy: ScanStrategy.SKIP,

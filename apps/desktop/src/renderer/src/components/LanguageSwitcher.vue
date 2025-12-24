@@ -2,12 +2,12 @@
 import { computed, nextTick } from "vue";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
 import { i18nUtils, type Locale } from "../i18n/config";
-import { useMenusStore } from "@renderer/stores/menus";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import { useI18n } from "vue-i18n";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { loggers } from "@common/logger";
 
-const menusStore = useMenusStore();
+const zhangSunWuJi = useZhangSunWuJi();
 const { t } = useI18n();
 
 /**
@@ -33,7 +33,7 @@ async function selectLocale(locale: Locale) {
     // 2. 立即更新i18n显示，提供即时反馈
     i18nUtils.setLocale(locale);
     await nextTick();
-    menusStore.refreshMenus(t); // 切换语言后刷新菜单
+    zhangSunWuJi.refreshMenus(t); // 切换语言后刷新菜单
 }
 
 const currentLocale = computed(() => i18nUtils.getCurrentLocale());

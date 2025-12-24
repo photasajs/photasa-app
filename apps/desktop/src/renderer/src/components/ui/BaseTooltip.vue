@@ -83,6 +83,9 @@ const hideTooltip = () => {
 
 const updatePosition = () => {
     // Simple positioning - could be enhanced with more sophisticated logic
+    if (tooltipRef.value) {
+        // Placeholder for future positioning logic
+    }
     tooltipStyle.value = {
         position: "fixed",
         zIndex: "9999",

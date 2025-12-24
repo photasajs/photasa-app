@@ -19,10 +19,7 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { onMounted, onUnmounted, watch } from "vue";
-import { useMenusStore } from "@renderer/stores/menus";
 import { BaseSpace } from "@renderer/components/ui";
-// import type { MenuItemData } from "@common/menu-types";
 import {
     PhClock as CoffeeOutlined,
     PhFolder as ImportOutlined,
@@ -31,6 +28,10 @@ import {
 } from "@phosphor-icons/vue";
 
 const { t } = useI18n();
+// ✅ RFC 0058: Introducting ZhangSunWuJi Service for menu management
+// Note: syncing logic is now handled in App.vue via refreshMenus
+// const zhangSunWuJi = useZhangSunWuJi();
+
 const emit = defineEmits([
     "openScanList",
     "openQueueDashboard",
@@ -51,46 +52,6 @@ function openImportPhotos() {
 function openPreference() {
     emit("openPreference");
 }
-
-// ========== 菜单同步与事件桥接 ========== //
-const menusStore = useMenusStore();
-// const menus = menusStore.menus as MenuItemData[]; // 保证类型一致
-
-// 监听 menus 变化，自动同步到 preload 层
-watch(
-    () => menusStore.menus,
-    (newMenus) => {
-        if (window.api?.applySystemMenu) {
-            window.api.applySystemMenu(JSON.parse(JSON.stringify(newMenus)));
-        }
-    },
-    { immediate: true, deep: true },
-);
-
-// 菜单事件监听句柄
-let offMenuAction: (() => void) | null = null;
-
-onMounted(() => {
-    // 注册菜单点击事件监听
-    if (window.api?.onMenuAction) {
-        const handler = (payload: any) => {
-            // 收到主进程菜单点击事件，转发到父组件
-            emit("menu-action", payload);
-        };
-        window.api.onMenuAction(handler);
-        // 提供移除监听的能力（如有 off 方法）
-        offMenuAction = () => {
-            if (window.api?.offMenuAction) {
-                window.api.offMenuAction(handler);
-            }
-        };
-    }
-});
-
-onUnmounted(() => {
-    // 组件卸载时移除菜单事件监听
-    if (offMenuAction) offMenuAction();
-});
 </script>
 
 <style lang="less" scoped>
