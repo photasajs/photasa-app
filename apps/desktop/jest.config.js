@@ -57,12 +57,8 @@ module.exports = {
                         "@zouwu-wf/workflow/runtime": [
                             "../../packages/@zouwu-wf/workflow/src/runtime/index",
                         ],
-                        "@zouwu-wf/workflow/*": [
-                            "../../packages/@zouwu-wf/workflow/src/*",
-                        ],
-                        "@zouwu-wf/workflow": [
-                            "../../packages/@zouwu-wf/workflow/src/index",
-                        ],
+                        "@zouwu-wf/workflow/*": ["../../packages/@zouwu-wf/workflow/src/*"],
+                        "@zouwu-wf/workflow": ["../../packages/@zouwu-wf/workflow/src/index"],
                         "@systembug/logger": ["../../packages/@systembug/logger/src/index"],
                     },
                     typeRoots: ["node_modules/@types", "test"],
@@ -95,10 +91,8 @@ module.exports = {
             "<rootDir>/../../packages/@zouwu-wf/workflow/src/runtime/$1",
         "^@zouwu-wf/workflow/runtime$":
             "<rootDir>/../../packages/@zouwu-wf/workflow/src/runtime/index",
-        "^@zouwu-wf/workflow/(.*)$":
-            "<rootDir>/../../packages/@zouwu-wf/workflow/src/$1",
-        "^@zouwu-wf/workflow$":
-            "<rootDir>/../../packages/@zouwu-wf/workflow/src/index",
+        "^@zouwu-wf/workflow/(.*)$": "<rootDir>/../../packages/@zouwu-wf/workflow/src/$1",
+        "^@zouwu-wf/workflow$": "<rootDir>/../../packages/@zouwu-wf/workflow/src/index",
         "^@systembug/logger$": "<rootDir>/../../packages/@systembug/logger/src/index",
     },
 

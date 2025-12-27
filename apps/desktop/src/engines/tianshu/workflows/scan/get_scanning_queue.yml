@@ -104,4 +104,4 @@ error_handling:
 
 # 超时设置
 timeout: 10000
-priority: "normal"
+priority: "background"

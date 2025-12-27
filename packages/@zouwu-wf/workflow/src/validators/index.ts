@@ -489,38 +489,8 @@ export class WorkflowValidator {
             }
         }
 
-        // 添加步骤输出变量
-        if (workflow.steps) {
-            for (const step of workflow.steps) {
-                if (step.id) {
-                    // 支持直连引用 (steps.id) 和 .output 引用
-                    availableVariables.add(`steps.${step.id}`);
-                    availableVariables.add(`steps.${step.id}.output`);
-                    availableVariables.add(`steps.${step.id}.result`);
-                    availableVariables.add(`steps.${step.id}.data`);
-
-                    // 递归添加 output_schema 中定义的路径
-                    if (step.output_schema) {
-                        this.addPathsFromSchema(
-                            availableVariables,
-                            `steps.${step.id}`,
-                            step.output_schema,
-                        );
-                        // 同时也支持 .result 和 .output 前缀下的路径
-                        this.addPathsFromSchema(
-                            availableVariables,
-                            `steps.${step.id}.result`,
-                            step.output_schema,
-                        );
-                        this.addPathsFromSchema(
-                            availableVariables,
-                            `steps.${step.id}.output`,
-                            step.output_schema,
-                        );
-                    }
-                }
-            }
-        }
+        // 递归收集所有步骤定义的变量
+        this.collectVariablesFromSteps(workflow.steps || [], availableVariables);
 
         // 使用表达式解析器验证模板变量引用
         const validationResult = validateTemplateExpressionsInObject(
@@ -587,6 +557,43 @@ export class WorkflowValidator {
                     value: err.data,
                     schema: err.schemaPath,
                 });
+            }
+        }
+    }
+
+    /**
+     * 🌌 递归收集步骤定义的变量
+     */
+    private collectVariablesFromSteps(steps: any[], set: Set<string>): void {
+        for (const step of steps) {
+            if (!step.id) continue;
+
+            // 1. 基础输出变量
+            set.add(`steps.${step.id}`);
+            set.add(`steps.${step.id}.output`);
+            set.add(`steps.${step.id}.result`);
+            set.add(`steps.${step.id}.data`);
+
+            // 2. Schema 派生路径
+            if (step.output_schema) {
+                this.addPathsFromSchema(set, `steps.${step.id}`, step.output_schema);
+                this.addPathsFromSchema(set, `steps.${step.id}.result`, step.output_schema);
+                this.addPathsFromSchema(set, `steps.${step.id}.output`, step.output_schema);
+            }
+
+            // 3. setVariable 定义的动态变量
+            if (step.type === "builtin" && step.action === "setVariable" && step.input?.variable) {
+                set.add(`variables.${step.input.variable}`);
+            }
+
+            // 4. 递归处理嵌套步骤
+            if (step.onTrue) this.collectVariablesFromSteps(step.onTrue, set);
+            if (step.onFalse) this.collectVariablesFromSteps(step.onFalse, set);
+            if (step.steps) this.collectVariablesFromSteps(step.steps, set);
+            if (step.branches) {
+                for (const branch of step.branches) {
+                    this.collectVariablesFromSteps(branch.steps || [], set);
+                }
             }
         }
     }
