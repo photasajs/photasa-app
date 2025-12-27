@@ -1241,9 +1241,9 @@ export class LishiminService {
    ↓
 10. TianshuEngine.processCommand()
    ↓
-11. selectWorkflow() → "scan/add_scan_action.yml"  // ✅ 正确的工作流
+11. selectWorkflow() → "scan/add_scan_action.zouwu"  // ✅ 正确的工作流
    ↓
-12. WorkflowOrchestrator执行add_scan_action.yml工作流
+12. WorkflowOrchestrator执行add_scan_action.zouwu工作流
    ↓
    Step 1: restore_queue
    ├─ 千里眼.restoreQueue()
@@ -1423,12 +1423,12 @@ export interface ScanningQueueData {
 #### 2.2 添加天枢工作流YAML
 
 **创建工作流文件**：
-- ~~`src/engines/tianshu/workflows/scan/update_scanning_queue.yml`~~ ❌ 已废弃（2025-10-20）- 改用 `add_scan_action.yml` 和 `remove_scan_action.yml`
-- `src/engines/tianshu/workflows/scan/get_scanning_queue.yml` ✅
-- `src/engines/tianshu/workflows/scan/add_scan_action.yml` ✅ RFC 0042 Phase 2.4
-- `src/engines/tianshu/workflows/scan/remove_scan_action.yml` ✅ RFC 0042 Phase 2.4
+- ~~`src/engines/tianshu/workflows/scan/update_scanning_queue.yml`~~ ❌ 已废弃（2025-10-20）- 改用 `add_scan_action.zouwu` 和 `remove_scan_action.zouwu`
+- `src/engines/tianshu/workflows/scan/get_scanning_queue.zouwu` ✅
+- `src/engines/tianshu/workflows/scan/add_scan_action.zouwu` ✅ RFC 0042 Phase 2.4
+- `src/engines/tianshu/workflows/scan/remove_scan_action.zouwu` ✅ RFC 0042 Phase 2.4
 
-**工作流设计参考**：`workflows/preference/update_preferences.yml`
+**工作流设计参考**：`workflows/preference/update_preferences.zouwu`
 
 #### 2.3 更新天枢intent映射
 
@@ -1953,7 +1953,7 @@ export class FangXuanLingService {
 ↓
 
 【袁天罡 → 天枢 → 千里眼】
-1. 天枢触发 add_scan_action.yml 工作流
+1. 天枢触发 add_scan_action.zouwu 工作流
 2. 千里眼执行业务逻辑：
    - restoreQueue() - 恢复当前队列
    - append(新action) - 追加新任务
@@ -1970,7 +1970,7 @@ export class FangXuanLingService {
 1. ✅ 李世民→杜如晦链路已通过event-routing.yml配置完成
 2. ✅ 尉迟恭已实现add_scan_task圣旨处理（handleAddScanTask）
 3. ✅ 尉迟恭发送ADD_SCAN_ACTION奏折（单个action）
-4. ✅ 天界工作流add_scan_action.yml执行业务逻辑（append操作）
+4. ✅ 天界工作流add_scan_action.zouwu执行业务逻辑（append操作）
 5. ✅ 千里眼引擎负责持久化（不需要UPDATE_SCANNING_QUEUE）
 6. ✅ 房玄龄Store Automation自动同步队列快照
 
@@ -2132,7 +2132,7 @@ export class FangXuanLingService {
    │  }
    └─ 🔮 袁天罡 → 天界IPC
    ↓
-   🌌 天枢.executeWorkflow("add_scan_action.yml")
+   🌌 天枢.executeWorkflow("add_scan_action.zouwu")
 
    Step 1: restore_queue
    ├─ 千里眼.restoreQueue()
@@ -2430,10 +2430,10 @@ Linus
 
 #### Phase 2.2: 创建天枢工作流YAML（2小时）
 - [x] ~~创建`workflows/scan/update_scanning_queue.yml`~~ ❌ 已废弃（2025-10-20）
-- [x] 创建`workflows/scan/get_scanning_queue.yml` ✅ 已完成
-- [x] 创建`workflows/scan/add_scan_action.yml` ✅ RFC 0042 Phase 2.4已完成
-- [x] 创建`workflows/scan/remove_scan_action.yml` ✅ RFC 0042 Phase 2.4已完成
-- [x] 参考`workflows/preference/update_preferences.yml`设计 ✅
+- [x] 创建`workflows/scan/get_scanning_queue.zouwu` ✅ 已完成
+- [x] 创建`workflows/scan/add_scan_action.zouwu` ✅ RFC 0042 Phase 2.4已完成
+- [x] 创建`workflows/scan/remove_scan_action.zouwu` ✅ RFC 0042 Phase 2.4已完成
+- [x] 参考`workflows/preference/update_preferences.zouwu`设计 ✅
 - [x] 工作流步骤调用：`taiyi.callEngine("qianliyan", "persistQueue", {{queue}})` ✅
 
 #### Phase 2.3: 更新天枢intent映射（0.5小时）
@@ -2640,7 +2640,7 @@ FolderNode[]  // 文件夹树结构，需要持久化
   ↓ 构造诏令 (Zhaoling)
 袁天罡执行诏令 (YuanTianGang.executeZhaoling)
   ↓ 转换为符箓 (Fulu)
-天枢工作流 (update_folder_tree.yml)
+天枢工作流 (update_folder_tree.zouwu)
   ↓ 太乙路由 (TaiYi callEngine protocol)
 千里眼引擎 (persistFolderTree/restoreFolderTree)
   ↓ 持久化到磁盘
@@ -2680,7 +2680,7 @@ File Watcher (chokidar监听文件系统)
   ↓ 构造诏令 (Zhaoling)
 袁天罡 (YuanTianGang.executeZhaoling)
   ↓ 转换为符箓 (Fulu)
-天枢工作流 (update_folder_tree.yml)
+天枢工作流 (update_folder_tree.zouwu)
   ↓ 太乙路由 (TaiYi callEngine protocol)
 千里眼引擎 (persistFolderTree/restoreFolderTree)
   ↓ 持久化到磁盘
@@ -2773,7 +2773,7 @@ private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
    - 日志风格：天界风格（🎨画图/📖读图/🧹净化）
 
 3. ✅ **创建天枢工作流YAML - update_folder_tree**
-   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
+   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.zouwu`
    - 步骤：restore_tree → update_tree → persist_tree → count_nodes → format_response
    - 合并策略：初期使用replace全量替换
 
@@ -3054,7 +3054,7 @@ private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
 
 9. **运行工作流验证**
    - 命令：`volta run npx tsx scripts/validate-workflows.ts --verbose`
-   - 确保：update_folder_tree.yml通过所有验证
+   - 确保：update_folder_tree.zouwu通过所有验证
 
 10. **编写单元测试**
     - 文件：`src/engines/qianliyan/__tests__/QianliyanEngine-foldertree.spec.ts`
@@ -3299,7 +3299,7 @@ private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
    - 依赖：RFC 0032 Phase 3 scan-service迁移完成
 5. **测试策略**：
    - 单元测试：千里眼持久化方法（persistFolderTree/restoreFolderTree）
-   - 集成测试：完整工作流执行（update_folder_tree.yml）
+   - 集成测试：完整工作流执行（update_folder_tree.zouwu）
    - E2E测试：扫描完成后folderTree自动更新
 
 ### 🚫 禁止的错误模式
@@ -3343,7 +3343,7 @@ paths.forEach(path => {
 - [ ] Store Automation自动同步
 - [ ] 工作流验证脚本通过（validate-workflows.ts）
 - [ ] 单元测试覆盖率100%（千里眼folder tree方法）
-- [ ] 集成测试通过（update_folder_tree.yml完整流程）
+- [ ] 集成测试通过（update_folder_tree.zouwu完整流程）
 - [ ] 零lint错误（源代码 + 测试代码）
 
 ---
@@ -3365,7 +3365,7 @@ paths.forEach(path => {
    - 存储路径正确（`~/.photasa/appstate/foldertree.json`）
 
 2. **天枢工作流YAML** ✅
-   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
+   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.zouwu`
    - 结构正确：restore_tree → update_tree → persist_tree → count_nodes → format_response
    - 完全复用scanning queue的四步模式
    - 数据扁平化策略注释清晰
@@ -3459,7 +3459,7 @@ update_folder_tree:
 ```
 尉迟恭接旨 → 发送UPDATE_FOLDER_TREE奏折 → 房玄龄处理
   ↓
-袁天罡转换符箓 → 天枢执行update_folder_tree.yml
+袁天罡转换符箓 → 天枢执行update_folder_tree.zouwu
   ↓
 千里眼持久化 → Store Automation自动同步
 ```
@@ -4218,7 +4218,7 @@ File System Change → 顺风耳引擎检测
 
 ### 工作流变更
 
-#### restore_app_state.yml（新增）
+#### restore_app_state.zouwu（新增）
 
 ```yaml
 version: "1.0"
@@ -4246,7 +4246,7 @@ steps:
       success: true
 ```
 
-#### update_folder_tree.yml（更新）
+#### update_folder_tree.zouwu（更新）
 
 **旧版本**：调用千里眼引擎（qianliyan）
 **新版本**：调用司命引擎（siming）
@@ -4432,11 +4432,11 @@ export const useAppStateStore = defineStore("appstate", {
 #### Phase 2：工作流创建（Main进程）
 
 5. **创建restore_app_state工作流**
-   - 文件：`src/engines/tianshu/workflows/appstate/restore_app_state.yml`（新建）
+   - 文件：`src/engines/tianshu/workflows/appstate/restore_app_state.zouwu`（新建）
    - 调用司命引擎.restoreAppState()
 
 6. **更新update_folder_tree工作流**
-   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
+   - 文件：`src/engines/tianshu/workflows/appstate/update_folder_tree.zouwu`
    - 将所有`qianliyan`改为`siming`
    - 确保调用司命引擎的方法
 

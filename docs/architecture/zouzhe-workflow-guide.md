@@ -428,7 +428,7 @@ const intentToWorkflowMap: Record<UserIntent, string> = {
 ### 5. 工作流文件
 
 ```yaml
-# src/engines/tianshu/workflows/scan/update_scan_action_status.yml
+# src/engines/tianshu/workflows/scan/update_scan_action_status.zouwu
 version: "1.0"
 id: "update_scan_action_status"
 name: "更新扫描任务状态"

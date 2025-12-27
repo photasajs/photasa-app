@@ -55,9 +55,9 @@ export class NodeWorkflowLoader extends BaseWorkflowLoader {
                 workflows.push(...subWorkflows);
             } else if (entry.isFile()) {
                 if (
+                    entry.name.endsWith(".zouwu") ||
                     entry.name.endsWith(".yaml") ||
-                    entry.name.endsWith(".yml") ||
-                    entry.name.endsWith(".json")
+                    entry.name.endsWith(".yml")
                 ) {
                     try {
                         const workflow = await this.load(fullPath);

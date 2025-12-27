@@ -142,7 +142,7 @@ RFC 0036已成功完成所有既定目标，建立了完整的偏好设置双向
    - 映射：`[ZOUZHE_MATTERS.GET_PREFERENCES]: "get_preferences"`
 
 2. **天枢工作流**（天枢引擎）✅
-   - 文件：[get_preferences.yml](../../../src/engines/tianshu/workflows/preference/get_preferences.yml)
+   - 文件：[get_preferences.zouwu](../../../src/engines/tianshu/workflows/preference/get_preferences.zouwu)
    - 功能：完整的偏好获取工作流，支持文昌引擎快照
 
 3. **文昌适配器方法**（WenchangAdapter）✅
@@ -182,7 +182,7 @@ App启动 → LiShiMingService.startZhengguan()
        ↓
        符箓转换(get_preferences) → TianshuEngine
        ↓
-       执行工作流 → get_preferences.yml
+       执行工作流 → get_preferences.zouwu
        ↓
        调用WenchangAdapter.getCurrentSnapshot()
        ↓
@@ -207,7 +207,7 @@ App启动 → LiShiMingService.startZhengguan()
   - 褚遂良：`src/renderer/src/services/chusuiliang/chusuiliang.ts`
   - 李世民：`src/renderer/src/services/li-shi-ming.service.ts`
   - 文昌适配器：`src/engines/adapters/WenchangAdapter.ts`
-  - 工作流：`src/engines/tianshu/workflows/preference/get_preferences.yml`
+  - 工作流：`src/engines/tianshu/workflows/preference/get_preferences.zouwu`
 
 ### ✅ 验证完成日期
 2025-10-09

@@ -166,7 +166,7 @@ export const usePreferenceStore = defineStore("preference", {
 
 #### 2. 工作流定义
 
-**获取偏好设置工作流** (`src/engines/tianshu/workflows/preference/get_preferences.yml`)：
+**获取偏好设置工作流** (`src/engines/tianshu/workflows/preference/get_preferences.zouwu`)：
 
 ```yaml
 id: "get_preferences"
@@ -179,7 +179,7 @@ steps:
       input: {}
 ```
 
-**更新偏好设置工作流** (`src/engines/tianshu/workflows/preference/update_preferences.yml`)：
+**更新偏好设置工作流** (`src/engines/tianshu/workflows/preference/update_preferences.zouwu`)：
 
 ```yaml
 id: "update_preferences"
@@ -334,7 +334,7 @@ output_schema:
 **本次修复**：
 
 - WenchangEngine.sanitize() 从返回`{ result: data }`改为直接返回`data`
-- update_preferences.yml 删除所有不必要的output定义
+- update_preferences.zouwu 删除所有不必要的output定义
 - output_schema现在正确匹配Engine的实际返回值
 
 #### 4. YAML变量访问模式（2025-10-27更新）
@@ -521,7 +521,7 @@ private getStepOutputs(context: ExecutionContext): Record<string, any> {
 
 - [x] 移除WenchangEngine.sanitize()的不必要包装层
 - [x] 统一Engine方法返回结构（与validate()保持一致）
-- [x] 删除update_preferences.yml中所有不必要的output定义
+- [x] 删除update_preferences.zouwu中所有不必要的output定义
 - [x] 修正工作流访问路径以匹配设计原则
 - [ ] 待用户测试验证theme/language/paths设置保存功能
 
@@ -654,8 +654,8 @@ await window.tianshu.processCommand({
     - 清晰的职责划分
 
 3. **工作流集成**
-    - `get_preferences.yml` - 获取偏好设置
-    - `update_preferences.yml` - 更新偏好设置
+    - `get_preferences.zouwu` - 获取偏好设置
+    - `update_preferences.zouwu` - 更新偏好设置
     - 完整的调用链：褚遂良 → 房玄龄 → 袁天罡 → 天枢 → 文昌
 
 4. **测试验证**

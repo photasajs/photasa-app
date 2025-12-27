@@ -120,7 +120,7 @@ preferenceStore.updateFolderTree(path);  // 违反Store访问规则！
   ↓ 构造诏令 (Zhaoling)
 袁天罡执行诏令 (YuanTianGang.executeZhaoling)
   ↓ 转换为符箓 (Fulu)
-天枢工作流 (update_folder_tree.yml)
+天枢工作流 (update_folder_tree.zouwu)
   ↓ 太乙路由 (TaiYi callEngine protocol)
 司命引擎 (persistFolderTree/restoreFolderTree)
   ↓ 持久化到磁盘
@@ -160,7 +160,7 @@ File Watcher (chokidar监听文件系统)
   ↓ 构造诏令 (Zhaoling)
 袁天罡 (YuanTianGang.executeZhaoling)
   ↓ 转换为符箓 (Fulu)
-天枢工作流 (update_folder_tree.yml)
+天枢工作流 (update_folder_tree.zouwu)
   ↓ 太乙路由 (TaiYi callEngine protocol)
 司命引擎 (persistFolderTree/restoreFolderTree)
   ↓ 持久化到磁盘
@@ -213,7 +213,7 @@ await qinqiong.handleFileEvent(state);  // 秦琼内部发起启奏
   ↓ 构造诏令 (Zhaoling)
 袁天罡执行诏令 (YuanTianGang.executeZhaoling)
   ↓ 转换为符箓 (Fulu)
-天枢工作流 (update_folder_tree.yml)
+天枢工作流 (update_folder_tree.zouwu)
   ↓ 太乙路由 (TaiYi callEngine protocol)
 司命引擎 (persistFolderTree)
   ↓ 持久化到磁盘
@@ -531,9 +531,9 @@ export * from './appstate';
 
 #### 4. 天枢工作流YAML
 
-##### update_folder_tree.yml
+##### update_folder_tree.zouwu
 
-**文件**: `src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
+**文件**: `src/engines/tianshu/workflows/appstate/update_folder_tree.zouwu`
 
 ```yaml
 version: "1.0"
@@ -884,9 +884,9 @@ updateFolderTree(folder: string) {
 ### Phase 2: 天界持久化（2天）✅ **已完成**
 
 - [x] ✅ 司命引擎添加folderTree持久化方法（`persistFolderTree`, `restoreFolderTree`, `persistAppState`, `restoreAppState`）
-- [x] ✅ 创建`update_folder_tree.yml`工作流（路径：`src/engines/tianshu/workflows/appstate/update_folder_tree.yml`）
-- [x] ✅ 创建`restore_app_state.yml`工作流（实际文件名，功能更全面）
-- [x] ✅ 额外创建`switch_current_folder.yml`工作流（超出RFC设计）
+- [x] ✅ 创建`update_folder_tree.zouwu`工作流（路径：`src/engines/tianshu/workflows/appstate/update_folder_tree.zouwu`）
+- [x] ✅ 创建`restore_app_state.zouwu`工作流（实际文件名，功能更全面）
+- [x] ✅ 额外创建`switch_current_folder.zouwu`工作流（超出RFC设计）
 - [ ] ⚠️ 单元测试：引擎持久化方法（待补充）
 - [ ] ⚠️ 集成测试：工作流执行（待补充）
 
@@ -1052,9 +1052,9 @@ updateFolderTree(folder: string) {
 - **差异说明**：实际实现使用统一的photasa.json存储所有appState数据，而非单独文件
 
 #### 4. 天枢工作流完整创建 ✅
-- ✅ `src/engines/tianshu/workflows/appstate/update_folder_tree.yml`
-- ✅ `src/engines/tianshu/workflows/appstate/restore_app_state.yml`
-- ✅ `src/engines/tianshu/workflows/appstate/switch_current_folder.yml`
+- ✅ `src/engines/tianshu/workflows/appstate/update_folder_tree.zouwu`
+- ✅ `src/engines/tianshu/workflows/appstate/restore_app_state.zouwu`
+- ✅ `src/engines/tianshu/workflows/appstate/switch_current_folder.zouwu`
 - **差异说明**：实际实现创建了完整的appstate工作流套件，包括切换文件夹功能
 
 #### 5. 李世民事件路由 ✅

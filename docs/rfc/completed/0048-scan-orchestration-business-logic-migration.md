@@ -391,7 +391,7 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 
 **已完成的实现**：
 - ✅ `ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS` 常量已添加
-- ✅ `update_scan_action_status.yml` 天界工作流已创建
+- ✅ `update_scan_action_status.zouwu` 天界工作流已创建
   - 支持通过path更新任务状态（pending | processing | failed）
   - 支持额外字段更新（startedAt, error, retryCount等）
   - 返回更新后的完整队列用于Store同步
@@ -1278,7 +1278,7 @@ removePath(path: string): void {
 ### Phase 3: ScanningStore 状态机支持（1 天）✅ **100%完成**
 
 **3.1 天界工作流创建** ✅
-- [x] 创建 `update_scan_action_status.yml` 工作流
+- [x] 创建 `update_scan_action_status.zouwu` 工作流
   - 输入：`{ path, status, updates }`
   - 步骤：restore_queue → find_task → validate → merge_updates → replace_task → persist → return
   - 输出：`{ task, queue, queueSize, persisted }`

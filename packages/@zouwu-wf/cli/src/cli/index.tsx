@@ -178,7 +178,7 @@ program
             if (options.file) {
                 files.push(options.file);
             } else if (options.dir) {
-                const pattern = path.join(options.dir, "**/*.{yml,yaml}").replace(/\\/g, "/");
+                const pattern = path.join(options.dir, "**/*.{zouwu,yml,yaml}").replace(/\\/g, "/");
                 files = await glob(pattern);
             } else {
                 console.error("❌ 请提供 -f <文件> 或 -d <目录>");
@@ -209,7 +209,11 @@ program
                         const workflowContent = await fs.promises.readFile(file, "utf-8");
                         let workflowData: any;
 
-                        if (file.endsWith(".yaml") || file.endsWith(".yml")) {
+                        if (
+                            file.endsWith(".zouwu") ||
+                            file.endsWith(".yaml") ||
+                            file.endsWith(".yml")
+                        ) {
                             workflowData = load(workflowContent);
                         } else {
                             workflowData = JSON.parse(workflowContent);
@@ -283,7 +287,7 @@ program
             if (options.input) {
                 files.push(path.resolve(options.input));
             } else if (options.dir) {
-                const pattern = path.join(options.dir, "**/*.{yml,yaml}").replace(/\\/g, "/");
+                const pattern = path.join(options.dir, "**/*.{zouwu,yml,yaml}").replace(/\\/g, "/");
                 files = await glob(pattern);
             } else {
                 console.error("❌ 请提供 -i <文件> 或 -d <目录>");
@@ -301,7 +305,7 @@ program
                 const workflowContent = await fs.promises.readFile(file, "utf-8");
                 let workflowData: any;
 
-                if (file.endsWith(".yaml") || file.endsWith(".yml")) {
+                if (file.endsWith(".zouwu") || file.endsWith(".yaml") || file.endsWith(".yml")) {
                     workflowData = load(workflowContent);
                 } else {
                     workflowData = JSON.parse(workflowContent);
@@ -446,7 +450,7 @@ program
             };
 
             await fs.promises.writeFile(
-                path.join(projectDir, "workflows/example.yml"),
+                path.join(projectDir, "workflows/example.zouwu"),
                 `# 示例工作流
 ${JSON.stringify(exampleWorkflow, null, 2)}`,
             );
@@ -454,7 +458,7 @@ ${JSON.stringify(exampleWorkflow, null, 2)}`,
             console.log(`🌌 项目初始化仙术完成！
 📁 项目目录: ${projectDir}
 📜 配置文件: workflow-schema.config.json
-🔧 示例工作流: workflows/example.yml
+🔧 示例工作流: workflows/example.zouwu
 
 使用以下命令开始开发：
   cd ${path.relative(process.cwd(), projectDir)}

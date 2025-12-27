@@ -650,21 +650,21 @@ logger.error("Array operation failed", error);
 
 需要更新以下工作流文件。**关键变更**：action名称从`transform`改为专用操作名。
 
-1. **add_scan_action.yml** (2处action修改)
+1. **add_scan_action.zouwu** (2处action修改)
    - Line 45: `action: "transform"` → `action: "arrayAppend"`
    - Line 77: `action: "transform"` → `action: "arrayCount"`
    - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
 
-2. **remove_scan_action.yml** (2处action修改)
+2. **remove_scan_action.zouwu** (2处action修改)
    - Line 42: `action: "transform"` → `action: "arrayFilter"`
    - Line 77: `action: "transform"` → `action: "arrayCount"`
    - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
 
-3. **get_scanning_queue.yml** (1处action修改)
+3. **get_scanning_queue.zouwu** (1处action修改)
    - Line 58: `action: "transform"` → `action: "arrayCount"`
    - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
 
-4. **switch_current_folder.yml**
+4. **switch_current_folder.zouwu**
    - **无需objectCreate**：直接在YAML中构造对象即可
 
 **总计**：
@@ -837,9 +837,9 @@ npm run test:unit:main -- workflows-builtin-array.integration.test.ts --coverage
 volta run npx tsx scripts/validate-workflows.ts --verbose
 
 # 2. 验证特定工作流文件
-volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workflows/scan/add_scan_action.yml
-volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workflows/scan/remove_scan_action.yml
-volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workflows/scan/get_scanning_queue.yml
+volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workflows/scan/add_scan_action.zouwu
+volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workflows/scan/remove_scan_action.zouwu
+volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workflows/scan/get_scanning_queue.zouwu
 ```
 
 **验证器必须通过的检查**：
@@ -850,9 +850,9 @@ volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workf
 
 **预期结果**：
 ```
-✨ src/engines/tianshu/workflows/scan/add_scan_action.yml 秘籍真传，无虞
-✨ src/engines/tianshu/workflows/scan/remove_scan_action.yml 秘籍真传，无虞
-✨ src/engines/tianshu/workflows/scan/get_scanning_queue.yml 秘籍真传，无虞
+✨ src/engines/tianshu/workflows/scan/add_scan_action.zouwu 秘籍真传，无虞
+✨ src/engines/tianshu/workflows/scan/remove_scan_action.zouwu 秘籍真传，无虞
+✨ src/engines/tianshu/workflows/scan/get_scanning_queue.zouwu 秘籍真传，无虞
 
 📈 总览:
   典籍数: 14
@@ -945,10 +945,10 @@ describe('性能测试', () => {
 
 ### 阶段二：工作流更新（高优先级）
 
-7. ⬜ 更新add_scan_action.yml（2处action修改）
-8. ⬜ 更新remove_scan_action.yml（2处action修改）
-9. ⬜ 更新get_scanning_queue.yml（1处action修改）
-10. ⬜ 更新switch_current_folder.yml（移除objectCreate，直接构造）
+7. ⬜ 更新add_scan_action.zouwu（2处action修改）
+8. ⬜ 更新remove_scan_action.zouwu（2处action修改）
+9. ⬜ 更新get_scanning_queue.zouwu（1处action修改）
+10. ⬜ 更新switch_current_folder.zouwu（移除objectCreate，直接构造）
 
 **关键变更**：action名称从`transform`改为专用方法（arrayAppend/arrayCount/arrayFilter），步骤引用保持`{{steps.stepId}}`直接访问模式
 
@@ -998,9 +998,9 @@ npm run test:unit:main -- workflows-builtin-array.integration.test.ts
 # 运行工作流验证器（必须零错误）
 volta run npx tsx scripts/validate-workflows.ts --verbose
 ```
-22. ⬜ add_scan_action.yml 验证通过（零谬误）
-23. ⬜ remove_scan_action.yml 验证通过（零谬误）
-24. ⬜ get_scanning_queue.yml 验证通过（零谬误）
+22. ⬜ add_scan_action.zouwu 验证通过（零谬误）
+23. ⬜ remove_scan_action.zouwu 验证通过（零谬误）
+24. ⬜ get_scanning_queue.zouwu 验证通过（零谬误）
 25. ⬜ 全部14个工作流验证通过（总计0个谬误）
 
 #### 4.4 Lint检查（零错误零警告）
@@ -1210,9 +1210,9 @@ async arrayFilter(params): Promise<unknown[]>  // 直接返回数组
 #### 2. 工作流更新
 
 **修改的文件**：
-- `src/engines/tianshu/workflows/scan/add_scan_action.yml` - 4处修改
-- `src/engines/tianshu/workflows/scan/remove_scan_action.yml` - 4处修改
-- `src/engines/tianshu/workflows/scan/get_scanning_queue.yml` - 1处修改
+- `src/engines/tianshu/workflows/scan/add_scan_action.zouwu` - 4处修改
+- `src/engines/tianshu/workflows/scan/remove_scan_action.zouwu` - 4处修改
+- `src/engines/tianshu/workflows/scan/get_scanning_queue.zouwu` - 1处修改
 
 **关键变更**：
 - ✅ 替换`action: "transform"`为专用方法（`arrayAppend`/`arrayCount`/`arrayFilter`）
@@ -1373,7 +1373,7 @@ return array;  // 直接返回，无包装
 **正确答案**：
 1. **`persistQueue` 的本质**：这是一个**副作用操作**（写文件到磁盘），不是数据转换
 2. **返回 `void` 是正确的设计**：成功完成即表示持久化成功，失败则抛出异常
-3. **工作流不使用输出**：查看 `add_scan_action.yml` 和 `remove_scan_action.yml`，后续步骤都**不使用** `persist_queue` 的输出
+3. **工作流不使用输出**：查看 `add_scan_action.zouwu` 和 `remove_scan_action.zouwu`，后续步骤都**不使用** `persist_queue` 的输出
 4. **修改Adapter违反原则**：为了满足一个错误的schema声明而修改正确的实现，是本末倒置
 
 ### 正确的解决方案
@@ -1428,8 +1428,8 @@ return array;  // 直接返回，无包装
 ### 受影响的文件
 
 **修复的工作流**：
-1. `src/engines/tianshu/workflows/scan/add_scan_action.yml` - 删除 `persist_queue` 的 `output_schema`
-2. `src/engines/tianshu/workflows/scan/remove_scan_action.yml` - 删除 `persist_queue` 的 `output_schema`
+1. `src/engines/tianshu/workflows/scan/add_scan_action.zouwu` - 删除 `persist_queue` 的 `output_schema`
+2. `src/engines/tianshu/workflows/scan/remove_scan_action.zouwu` - 删除 `persist_queue` 的 `output_schema`
 
 **Adapter保持不变**：
 - `QianliyanEngine.persistQueue()` - 继续返回 `Promise<void>`

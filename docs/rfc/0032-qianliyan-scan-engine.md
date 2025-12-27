@@ -150,7 +150,7 @@ src/engines/ (引擎库)
 #### 服务集成流程
 
 - **App → 天枢（Tianshu）**：应用层（含 UI、顺风耳触发）统一发起"扫描意图"给天枢，引擎本身只接受 `ScanCommand` 而不感知调用来源。
-- **天枢流程编排**：天枢根据 YAML 工作流（如 `workflows/scan/folder_scan.yml`）决定扫描路径：
+- **天枢流程编排**：天枢根据 YAML 工作流（如 `workflows/scan/folder_scan.zouwu`）决定扫描路径：
   1. 解析用户意图，向司簿 (`SibuEngine`) 请求 manifest 与差异信息；
   2. 将判定结果封装为千里眼的 `ScanCommand`，并通过太乙引擎下达执行指令；
   3. 在扫描期间订阅太乙返回的进度/子目录信息，并根据工作流逻辑决定是否追加队列、是否触发 quick/full、是否生成新意图；

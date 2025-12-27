@@ -353,7 +353,7 @@ applyDelta(delta: PreferenceDelta): void {
    - 移除`pathOperations`相关的特殊处理
 
 2. **简化天枢工作流**
-   - `update_preferences.yml`不再需要处理`pathOperations`
+   - `update_preferences.zouwu`不再需要处理`pathOperations`
    - 只处理标准的delta格式
 
 ### 阶段4：清理和测试
@@ -578,7 +578,7 @@ describe('端到端路径管理', () => {
 **根本原因**:
 - YuanTianGang只对THEME_CHANGE/LANGUAGE_CHANGE/THUMBNAIL_SIZE_CHANGE做特殊处理
 - ADD_PATH/REMOVE_PATH/ADD_SCAN_FOLDER不在if条件中，所以params直接等于context
-- 工作流update_preferences.yml期待`inputs.delta`，但收到的是裸delta对象
+- 工作流update_preferences.zouwu期待`inputs.delta`，但收到的是裸delta对象
 
 **修复** (lines 213-263):
 ```typescript
@@ -781,7 +781,7 @@ UI自动刷新 (Vue响应式) ✅
 
 **影响范围**:
 - `src/renderer/src/services/fangxuanling/strategies/` - 策略执行器仍使用pathOperations
-- `src/engines/wenchang/workflows/preference/update_preferences.yml` - 工作流仍期望pathOperations
+- `src/engines/wenchang/workflows/preference/update_preferences.zouwu` - 工作流仍期望pathOperations
 
 **决策**: 暂缓Phase 3，因为:
 1. 策略执行器仍在使用（非路径操作场景）

@@ -86,9 +86,9 @@
    ↓
 10. TianshuEngine.processCommand()
    ↓
-11. selectWorkflow() → "scan/add_scan_action.yml"
+11. selectWorkflow() → "scan/add_scan_action.zouwu"
    ↓
-12. WorkflowOrchestrator执行add_scan_action.yml工作流
+12. WorkflowOrchestrator执行add_scan_action.zouwu工作流
    ↓
    Step 1: restore_queue
    ├─ 千里眼.restoreQueue()
@@ -257,9 +257,9 @@ export interface ScanningQueueData {
 
 #### 3. 天枢工作流YAML
 
-##### add_scan_action.yml
+##### add_scan_action.zouwu
 
-**文件**: `src/engines/tianshu/workflows/scan/add_scan_action.yml`
+**文件**: `src/engines/tianshu/workflows/scan/add_scan_action.zouwu`
 
 ```yaml
 version: "1.0"
@@ -331,9 +331,9 @@ outputs:
     path: "persisted"
 ```
 
-##### remove_scan_action.yml
+##### remove_scan_action.zouwu
 
-**文件**: `src/engines/tianshu/workflows/scan/remove_scan_action.yml`
+**文件**: `src/engines/tianshu/workflows/scan/remove_scan_action.zouwu`
 
 ```yaml
 version: "1.0"
@@ -405,9 +405,9 @@ outputs:
     path: "removed"
 ```
 
-##### get_scanning_queue.yml
+##### get_scanning_queue.zouwu
 
-**文件**: `src/engines/tianshu/workflows/scan/get_scanning_queue.yml`
+**文件**: `src/engines/tianshu/workflows/scan/get_scanning_queue.zouwu`
 
 ```yaml
 version: "1.0"
@@ -596,9 +596,9 @@ matters:
 
 ### Phase 2: 天枢工作流创建（1天）
 
-- [ ] 创建 `add_scan_action.yml`
-- [ ] 创建 `remove_scan_action.yml`
-- [ ] 创建 `get_scanning_queue.yml`
+- [ ] 创建 `add_scan_action.zouwu`
+- [ ] 创建 `remove_scan_action.zouwu`
+- [ ] 创建 `get_scanning_queue.zouwu`
 - [ ] 更新天枢command映射
 - [ ] 单元测试：工作流执行
 
@@ -775,13 +775,13 @@ matters:
 
 #### 2. ✅ 工作流YAML文件验证
 
-##### add_scan_action.yml
+##### add_scan_action.zouwu
 **RFC设计** (Lines 260-332):
 ```yaml
 restore_queue → append_action → persist_queue → format_response
 ```
 
-**实际实现** (`src/engines/tianshu/workflows/scan/add_scan_action.yml`):
+**实际实现** (`src/engines/tianshu/workflows/scan/add_scan_action.zouwu`):
 - Line 16-41: `restore_queue` - 调用 `qianliyan.restoreQueue()` ✅
 - Line 42-54: `append_action` - 使用 `builtin.arrayAppend` ✅
 - Line 56-68: `persist_queue` - 调用 `qianliyan.persistQueue()` ✅
@@ -793,16 +793,16 @@ restore_queue → append_action → persist_queue → format_response
 - `queueSize` (number) ✅
 - `persisted` (boolean) ✅
 
-##### remove_scan_action.yml
-**实际实现** (`src/engines/tianshu/workflows/scan/remove_scan_action.yml`):
+##### remove_scan_action.zouwu
+**实际实现** (`src/engines/tianshu/workflows/scan/remove_scan_action.zouwu`):
 - Line 16-37: `restore_queue` ✅
 - Line 39-54: `filter_action` - 使用 `builtin.arrayFilter` 过滤路径 ✅
 - Line 56-68: `persist_queue` ✅
 - Line 70-81: `calculate_size` ✅
 - Line 83-92: `format_response` ✅
 
-##### get_scanning_queue.yml
-**实际实现** (`src/engines/tianshu/workflows/scan/get_scanning_queue.yml`):
+##### get_scanning_queue.zouwu
+**实际实现** (`src/engines/tianshu/workflows/scan/get_scanning_queue.zouwu`):
 - Line 27-53: `restore_queue` - 直接调用千里眼恢复队列 ✅
 - Line 55-66: `calculate_size` ✅
 - Line 68-78: `format_response` ✅
@@ -924,7 +924,7 @@ restore_queue → append_action → persist_queue → format_response
 
 **已完成的核心功能**：
 - ✅ 千里眼引擎持久化方法（`persistQueue`, `restoreQueue`）
-- ✅ 天枢工作流YAML配置（`add_scan_action.yml`, `remove_scan_action.yml`）
+- ✅ 天枢工作流YAML配置（`add_scan_action.zouwu`, `remove_scan_action.zouwu`）
 - ✅ Store Automation自动同步配置
 - ✅ 尉迟恭添加任务逻辑（`addScanTasks` → 奏折 → 天界）
 - ✅ 实际文件持久化运行
@@ -938,4 +938,4 @@ restore_queue → append_action → persist_queue → format_response
 扫描完成后，`orchestrateScan` 调用 `PreferenceStore.completeScanPath` 直接 splice 数组，不会触发 `watchArray`，导致下一个扫描任务不会自动启动。
 
 **修复方案**：
-实现 `yuChiGong.removeScanTask(path)` 方法，通过奏折系统调用 `remove_scan_action.yml`，Store Automation 自动同步到 `ScanningStore.queue`，触发 `watchArray` 启动下一次扫描。
+实现 `yuChiGong.removeScanTask(path)` 方法，通过奏折系统调用 `remove_scan_action.zouwu`，Store Automation 自动同步到 `ScanningStore.queue`，触发 `watchArray` 启动下一次扫描。

@@ -12,7 +12,7 @@
   - RFC 0042: 扫描文件夹迁移
 - **相关文件**:
   - `src/renderer/src/services/fangxuanling/fangxuanling.ts`
-  - `src/engines/tianshu/workflows/preference/update_preferences.yml`
+  - `src/engines/tianshu/workflows/preference/update_preferences.zouwu`
 
 ---
 

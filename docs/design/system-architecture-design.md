@@ -1010,7 +1010,7 @@ sequenceDiagram
     YCG->>YCG: 创建ScanAction
     YCG->>FXL: 发送奏折 (ADD_SCAN_ACTION)
     FXL->>YTG: 发送诏令 (add_scan_action)
-    YTG->>TS: 执行工作流 (add_scan_action.yml)
+    YTG->>TS: 执行工作流 (add_scan_action.zouwu)
     TS->>QLY: 恢复队列
     TS->>QLY: 追加任务
     TS->>QLY: 持久化队列

@@ -940,7 +940,7 @@ function switchFolder(newFolder: string) {
 │     ↓                                                        │
 │   千里眼 → 天枢工作流                                       │
 │     ↓                                                        │
-│   天枢执行 workflow: "scan/update_folder_tree.yml"          │
+│   天枢执行 workflow: "scan/update_folder_tree.zouwu"          │
 │     step:                                                   │
 │       - send_ipc_event:                                    │
 │           event: "folder_discovered"                       │

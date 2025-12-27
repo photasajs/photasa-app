@@ -89,7 +89,7 @@ const zhaoling: Zhaoling = {
 
 天枢（Tianshu）：
   职责：执行工作流
-  执行：update_preferences.yml  ✅
+  执行：update_preferences.zouwu  ✅
 ```
 
 **问题**：在房玄龄层面就把`command`改成`"update_preferences"`，破坏了诏令的业务语义边界。
@@ -100,7 +100,7 @@ const zhaoling: Zhaoling = {
 
 **工作流期望的格式**：
 ```yaml
-# update_preferences.yml
+# update_preferences.zouwu
 inputs:
   delta:
     type: "object"
@@ -272,7 +272,7 @@ params = {
    ↓
 
 5. 天枢工作流
-   update_preferences.yml
+   update_preferences.zouwu
    → validate_delta (验证delta格式)  ✅ 通过
    → sanitize_values
    → update_engine (调用wenchang.updatePreferences)
@@ -342,7 +342,7 @@ UI组件层 (GeneralSettings.vue)
   发送：符箓 (Fulu) - 天枢意图
   ↓
 天枢引擎 (Tianshu)
-  执行：工作流 (update_preferences.yml)
+  执行：工作流 (update_preferences.zouwu)
   ↓
 文昌引擎 (WenchangEngine)
   执行：实际业务逻辑
