@@ -1,7 +1,7 @@
 # 恢复应用状态工作流
 # RFC 0042 Step 2.5: 天界恢复完整appState（启动时调用）
 
-version: "1.0"
+version: "1.0.0"
 id: "restore_app_state"
 name: "恢复应用状态"
 description: "从司命引擎恢复完整appState，包括folderTree, currentFolder等"

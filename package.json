@@ -4,7 +4,6 @@
     "private": true,
     "scripts": {
         "build": "turbo run build",
-        "dev": "turbo run dev",
         "test": "turbo run test",
         "lint": "turbo run lint",
         "typecheck": "turbo run typecheck",
@@ -13,7 +12,8 @@
         "dev:desktop": "pnpm --filter @photasa/desktop dev",
         "build:desktop": "pnpm --filter @photasa/desktop build",
         "test:desktop": "pnpm --filter @photasa/desktop test",
-        "typecheck:desktop": "pnpm --filter @photasa/desktop typecheck"
+        "typecheck:desktop": "pnpm --filter @photasa/desktop typecheck",
+        "workflow:validate": "pnpm --filter @photasa/desktop run workflow:validate"
     },
     "devDependencies": {
         "turbo": "^2.3.3",

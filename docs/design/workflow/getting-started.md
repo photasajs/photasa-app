@@ -7,19 +7,19 @@
 ### 安装核心包
 
 ```bash
-npm install @systembug/zouwu-workflow
+npm install @zouwu-wf/workflow
 ```
 
 ### 安装 CLI 工具
 
 ```bash
-npm install -g @systembug/zouwu-cli
+npm install -g @zouwu-wf/cli
 ```
 
 ### 安装表达式解析器
 
 ```bash
-npm install @systembug/zouwu-expression-parser
+npm install @zouwu-wf/expression-parser
 ```
 
 ## 基本使用
@@ -27,7 +27,7 @@ npm install @systembug/zouwu-expression-parser
 ### 使用核心包验证工作流
 
 ```typescript
-import { validateWorkflow } from '@systembug/zouwu-workflow';
+import { validateWorkflow } from '@zouwu-wf/workflow';
 
 const workflow = {
     id: 'example_workflow',
@@ -70,7 +70,7 @@ workflow validate -f my-workflow.yml
 ### 使用表达式解析器
 
 ```typescript
-import { extractTemplateExpressions } from '@systembug/zouwu-expression-parser';
+import { extractTemplateExpressions } from '@zouwu-wf/expression-parser';
 
 const result = extractTemplateExpressions('Hello \{\{inputs.name\}\}!');
 console.log(result.variables); // [{ type: 'inputs', path: 'name', ... }]

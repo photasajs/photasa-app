@@ -25,7 +25,7 @@ module.exports = {
                 tsconfig: {
                     module: "commonjs",
                     target: "es2020",
-                    lib: ["es2020"],
+                    lib: ["es2020", "dom"],
                     allowSyntheticDefaultImports: true,
                     esModuleInterop: true,
                     skipLibCheck: true,
@@ -51,6 +51,19 @@ module.exports = {
                         "@engines/common/*": ["./src/engines/common/*"],
                         "@qianliyan/*": ["./src/engines/qianliyan/*"],
                         "@engines/*": ["./src/engines/*"],
+                        "@zouwu-wf/workflow/runtime/*": [
+                            "../../packages/@zouwu-wf/workflow/src/runtime/*",
+                        ],
+                        "@zouwu-wf/workflow/runtime": [
+                            "../../packages/@zouwu-wf/workflow/src/runtime/index",
+                        ],
+                        "@zouwu-wf/workflow/*": [
+                            "../../packages/@zouwu-wf/workflow/src/*",
+                        ],
+                        "@zouwu-wf/workflow": [
+                            "../../packages/@zouwu-wf/workflow/src/index",
+                        ],
+                        "@systembug/logger": ["../../packages/@systembug/logger/src/index"],
                     },
                     typeRoots: ["node_modules/@types", "test"],
                 },
@@ -76,6 +89,17 @@ module.exports = {
         "^@engines/(.*)$": "<rootDir>/src/engines/$1",
         // Map ?nodeWorker query parameter to the actual module
         "^(.+)\\?nodeWorker$": "$1",
+
+        // Workspace packages mapping
+        "^@zouwu-wf/workflow/runtime/(.*)$":
+            "<rootDir>/../../packages/@zouwu-wf/workflow/src/runtime/$1",
+        "^@zouwu-wf/workflow/runtime$":
+            "<rootDir>/../../packages/@zouwu-wf/workflow/src/runtime/index",
+        "^@zouwu-wf/workflow/(.*)$":
+            "<rootDir>/../../packages/@zouwu-wf/workflow/src/$1",
+        "^@zouwu-wf/workflow$":
+            "<rootDir>/../../packages/@zouwu-wf/workflow/src/index",
+        "^@systembug/logger$": "<rootDir>/../../packages/@systembug/logger/src/index",
     },
 
     // 测试超时设置

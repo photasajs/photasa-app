@@ -9,5 +9,6 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "typescript.tsdk": "node_modules/typescript/lib",
-    "cSpell.words": ["BAIXING", "Shangshu", "Taibaijinxing", "ZHANG"]
+    "cSpell.words": ["BAIXING", "Shangshu", "Taibaijinxing", "ZHANG"],
+    "vitest.disableWorkspaceWarning": true
 }

@@ -1183,7 +1183,7 @@ zouwu:
 
 - **验证器**: ZouWuValidator - 验证工作流语法
 - **解析器**: ZouWuParser - 解析.zouwu文件
-- **CLI工具**: @systembug/zouwu-cli - 命令行工具
+- **CLI工具**: @zouwu-wf/cli - 命令行工具
 - **VS Code插件**: 语法高亮和智能提示（计划中）
 
 ## 结论

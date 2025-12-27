@@ -2,7 +2,7 @@
 # 由长孙无忌服务通过 zouzhe 触发，袁天罡转换为符箓，天枢引擎执行
 # 调用太白金星适配器在 Finder 中显示文件
 
-id: "shell.openInFinder"
+id: "shell_openInFinder"
 name: "在 Finder 中显示文件"
 description: "接收文件路径，通过太白金星适配器在 Finder 中显示"
 version: "1.0.0"

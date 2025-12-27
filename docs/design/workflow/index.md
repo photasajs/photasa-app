@@ -52,7 +52,7 @@ npm run lint:fix
 
 ## 📚 包说明
 
-### @systembug/zouwu-workflow
+### @zouwu-wf/workflow
 
 核心 Schema 包，提供：
 
@@ -60,7 +60,7 @@ npm run lint:fix
 - **类型定义**：TypeScript 接口和类型
 - **验证器**：运行时工作流验证功能
 
-### @systembug/zouwu-cli
+### @zouwu-wf/cli
 
 命令行工具包，提供：
 
@@ -68,7 +68,7 @@ npm run lint:fix
 - **工作流验证**：验证 YAML/JSON 工作流文件
 - **项目初始化**：快速创建工作流项目结构
 
-### @systembug/zouwu-expression-parser
+### @zouwu-wf/expression-parser
 
 表达式解析器包，提供：
 

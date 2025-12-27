@@ -11,7 +11,7 @@
 - **后续**: RFC 0041进一步优化架构，移除业务逻辑到服务层
 - **相关RFC**:
   - RFC 0036: 文昌偏好集成
-  - RFC 0037: 天枢YAML工作流DSL
+  - RFC 0037: 驺吾(Zouwu)工作流DSL
   - RFC 0038: 偏好工作流集成
   - RFC 0039: 天枢工作流语法规范
   - RFC 0041: 偏好架构重构（改进本RFC的架构设计）
@@ -450,7 +450,7 @@ RFC 0041在RFC 0040的基础上实现了更优雅的架构：
 ## 相关资源
 
 - [RFC 0036: 文昌偏好集成](./0036-wenchang-preference-integration.md)
-- [RFC 0037: 天枢YAML工作流DSL](./0037-tianshu-yaml-workflow-dsl.md)
+- [RFC 0037: 驺吾(Zouwu)工作流DSL](./0037-zouwu-workflow-dsl.md)
 - [RFC 0039: 天枢工作流语法规范](./0039-tianshu-workflow-syntax-specification.md)
 - [RFC 0041: 偏好架构重构 - 业务逻辑分离](./0041-preference-architecture-refactor-business-logic-separation.md) ⭐ **架构改进**
 - [代码: FangXuanLing](../../src/renderer/src/services/fangxuanling/fangxuanling.ts)

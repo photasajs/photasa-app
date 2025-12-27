@@ -2686,6 +2686,6 @@ src/renderer/src/services/
 
 - RFC 0035: 五引擎编排架构
 - RFC 0036: 文昌偏好设置集成（实际实现基础）⭐
-- RFC 0037: 天枢YAML工作流DSL
+- RFC 0037: 驺吾(Zouwu)工作流DSL
 - RFC 0040: RemovePath功能修复（架构实践）⭐
 - RFC 0041: 偏好架构重构 - 业务逻辑分离（架构优化）⭐

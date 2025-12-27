@@ -8,9 +8,10 @@
 - **状态**: 活跃
 - **取代**: RFC 0055 (天枢工作流总结)
 
-## 摘要
+本RFC定义驺吾(ZouWu)工作流DSL - 一种基于YAML的声明式领域特定语言，用于定义通用的工作流逻辑。驺吾被设计为一个两层架构：
 
-本RFC定义驺吾(ZouWu)工作流DSL - 一种基于YAML的声明式领域特定语言，用于在Picasa应用中定义工作流。驺吾是一个独立的工作流规范，可被任何工作流引擎使用，天枢(Tianshu)是主要的消费者。
+1. **核心语法层 (Core Syntax)**: 定义工作流的结构、步骤流转、条件逻辑、并行与循环以及变量引用语法。它是平台中立且通用的。
+2. **运行时扩展层 (Runtime Extensions)**: 具体的执行引擎（如天枢）通过提供特定的服务列表 (Services) 和内置动作 (Builtin Actions) 来扩展核心语法。
 
 ## 动机
 
@@ -137,8 +138,8 @@ tags: ["workflow", "scan"] # 可选: 分类标签
   name: "获取用户偏好"
   type: "action"
   description: "通过文昌获取当前偏好"
-  service: "wenchang" # 目标服务/适配器
-  action: "getCurrentSnapshot" # 要调用的方法
+  service: "wenchang" # 目标服务/适配器。注意：可用服务列表由执行引擎在运行时定义。
+  action: "getCurrentSnapshot" # 要调用的方法。
   input:
       # 输入参数
   output:
@@ -163,7 +164,7 @@ tags: ["workflow", "scan"] # 可选: 分类标签
 - id: "return_result"
   name: "返回结果"
   type: "builtin"
-  action: "return" # return, setVariable, log, delay, transform, error
+  action: "return" # 内置操作类型。注意：可用动作列表由执行引擎在运行时定义。
   input:
       success: true
       data: "{{steps.get_preferences.output.snapshot}}"
@@ -250,19 +251,48 @@ steps:
           path: "{{steps.get_path.output}}" # 解析为 "/path/to/folder"
 ```
 
-### 4. Schema验证
+### 4. 验证架构 (Validation Architecture)
 
-所有工作流必须符合`@systembug/zouwu-workflow`中定义的JSON Schema：
+驺吾工作流采用 **双阶段验证策略 (Two-Stage Validation Strategy)**，确保工作流既符合标准规范，又能适应特定的运行时上下文。
 
-- `workflow.schema.json` - 主工作流schema
-- `step-types.schema.json` - 步骤类型定义
-- `template-syntax.schema.json` - 模板表达式语法
+#### 4.1 阶段一：结构验证 (Structural Validation)
+
+使用 JSON Schema 进行基础结构验证。这一阶段负责检查：
+
+- 必需字段的完整性（如 `id`, `name`, `steps`）
+- 字段类型的正确性
+- 正则表达式匹配（如 ID 格式、语义版本号）
+- 枚举值约束（如步骤类型、并行策略）
+
+主要 Schema 文件：
+
+- `workflow.schema.json` - 主工作流核心规范
+- `step-types.schema.json` - 核心步骤类型定义
+- `template-syntax.schema.json` - 模板表达式基础语法
+
+#### 4.2 阶段二：深度逻辑验证 (Deep Logic Validation)
+
+手动执行无法通过 JSON Schema 简单描述的复杂逻辑检查：
+
+- **ID 唯一性**: 确保同一个工作流中没有重复的步骤 ID。
+- **依赖完整性 (Reference Integrity)**: 检查 `dependsOn` 中引用的步骤 ID 是否真实存在。
+- **循环依赖检测 (Circular Dependency)**: 构建依赖图并检测是否存在相互依赖导致的死锁。
+- **变量/表达式作用域**: 验证模板变量引用的路径是否在当前上下文中有效。
+
+#### 4.3 自定义上下文扩展 (Customized Context)
+
+验证器支持运行时选项，以便针对不同的执行引擎进行定制：
+
+- **支持的服务 (supportedServices)**: 定义当前引擎支持的 `action` 步骤服务列表。
+- **支持的操作符 (supportedOperators)**: 扩展 `condition` 步骤可用的比较操作符。
+- **扩展 Schema (extensionSchema)**: 允许引擎提供补丁 Schema，以验证自定义的步骤字段或运行时特有的元数据。
 
 ### 5. CLI工具
 
-`@systembug/zouwu-cli`包提供工具：
+`@zouwu-wf/cli`包提供工具：
 
-- **验证**: `zouwu validate <workflow.yml>`
+- **验证**: `zouwu validate <workflow.yml> --context <context.json>`
+    - 使用 `--context` 参数提供运行时特定的限制（如 `supportedServices`）。
 - **类型生成**: `zouwu generate-types <schema.json>`
 - **代码检查**: `zouwu lint <workflow.yml>`
 
@@ -271,7 +301,7 @@ steps:
 ### 包结构
 
 ```
-@systembug/zouwu-workflow/
+@zouwu-wf/workflow/
 ├── schemas/                    # JSON Schema定义
 │   ├── workflow.schema.json
 │   ├── step-types.schema.json
@@ -282,13 +312,13 @@ steps:
 │   ├── validators/            # 运行时验证器
 │   └── index.ts
 
-@systembug/zouwu-expression-parser/
+@zouwu-wf/expression-parser/
 ├── src/
 │   ├── parser.ts              # 表达式解析器
 │   ├── validator.ts           # 表达式验证器
 │   └── types.ts
 
-@systembug/zouwu-cli/
+@zouwu-wf/cli/
 ├── src/
 │   ├── commands/
 │   │   ├── validate.ts        # 验证命令
@@ -322,17 +352,83 @@ steps:
 2. **JSON Schema**: 人类可读性较差
 3. **自定义二进制格式**: 无法人工编辑
 
+## 实施计划
+
+### 最终架构 (Final Architecture)
+
+确立清晰的职责分离：`@zouwu-wf/workflow` 专注于**定义、解析与验证**，而天枢 (Tianshu) 负责**IO、编排与执行**。
+
+```
+驺吾 (@zouwu-wf/workflow) - 平台中立的DSL库
+├── schemas/ - JSON Schema定义
+├── types/ - TypeScript类型定义
+├── parsers/ - 解析逻辑 (YAML/JSON String -> Workflow Object)
+├── validators/ - 运行时验证器
+└── index.ts - 统一导出
+
+天枢 (@systembug/tianshu) - 统一工作流执行引擎包
+├── src/core/
+│   ├── TianshuEngine.ts - 引擎入口
+│   └── WorkflowLoader.ts - 文件读取 (使用Node.js fs -> Zouwu Parser)
+└── src/orchestration/
+    ├── WorkflowOrchestrator.ts - 核心编排逻辑
+    └── executors/ - 步骤执行器
+```
+
+### Phase 1: 驺吾包增强 (Parser)
+
+目标：将解析逻辑 (YAML/JSON Parsing) 移入 Zouwu。
+
+- 添加 `parsers/WorkflowParser.ts`：
+    - 封装 `js-yaml`。
+    - 提供 `parse(content: string): WorkflowDefinition`。
+    - 集成 `Validator`，在解析后自动验证。
+- 导出 `WorkflowParser`。
+
+### Phase 2: 天枢调用流程
+
+目标：Tianshu 不再直接依赖 `js-yaml`，而是依赖 Zouwu 进行解析。
+
+1. **读取**: `NodeWorkflowLoader` 使用 `fs.readFile` 读取文件内容 (String)。
+2. **解析**: 调用 `Zouwu.WorkflowParser.parse(content)`。
+    - Zouwu 内部处理 YAML/JSON 转换。
+    - Zouwu 内部进行 Schema 验证。
+3. **执行**: 获取验证后的 `WorkflowDefinition` 对象，传递给 `WorkflowOrchestrator`。
+
+### Phase 3: 职责划分总结
+
+| 功能                    | 负责组件             | 说明                        |
+| ----------------------- | -------------------- | --------------------------- |
+| **定义 (DSL)**          | `@zouwu-wf/workflow` | Schema, Types               |
+| **解析 (String->Obj)**  | `@zouwu-wf/workflow` | 封装 js-yaml, 语法检查      |
+| **验证 (Obj->Obj)**     | `@zouwu-wf/workflow` | Schema Validation, 逻辑检查 |
+| **加载 (File->String)** | `@systembug/tianshu` | Node.js fs                  |
+| **编排 (Execution)**    | `@systembug/tianshu` | 状态机, 步骤流转            |
+
+### Phase 4: 依赖关系
+
+- `apps/desktop` -> `@zouwu-wf/workflow` (Types, Validators)
+- `apps/desktop` -> `@zouwu-wf/expression-parser` (Expression Evaluation)
+- `apps/desktop` -> `@systembug/logger` (Logging)
+
+### Phase 5: CLI工具 (计划中)
+
+- `validate`: 使用 `Zouwu` 的验证器检查工作流文件。
+- `lint`: 静态代码分析。
+
 ## 迁移路径
 
-现有的天枢工作流将逐步迁移到驺吾DSL格式。`@systembug/zouwu-cli`中将提供迁移工具。
+现有的天枢工作流将逐步迁移到驺吾DSL格式。`@zouwu-wf/cli`中将提供迁移工具。
 
 ## 参考文献
 
 - [驺吾工作流规范 v1.0](../../design/workflow/zouwu-workflow-specification-v1.0.md)
-- [RFC 0050: 太乙工作流引擎设计](./0050-taiyi-workflow-engine.md)
-- [@systembug/zouwu-workflow 包](../../packages/@systembug/zouwu-workflow/)
+- [RFC 0039: 天枢工作流语法规范](./0039-tianshu-workflow-syntax-specification.md)
+- [RFC 0050: 太乙工作流引擎设计](./0050-taiyi-workflow-adapter-engine.md)
+- [@zouwu-wf/workflow 包](../../packages/@zouwu-wf/workflow/)
+- [@systembug/tianshu 包](../../packages/@systembug/tianshu/)
 
 ## 变更日志
 
 - **2025-12-24**: 更新为专注于驺吾DSL，取代RFC 0055
-- **2025-09-29**: 初始版本，定义天枢YAML工作流DSL
+- **2025-09-29**: 初始版本，定义驺吾(Zouwu)工作流DSL

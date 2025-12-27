@@ -1168,7 +1168,7 @@ Adapter返回T → TaiyiEngine包装{success, result: T} → TaiyiService unwrap
 ## 参考
 
 - RFC 0039: 天枢工作流语法规范
-- RFC 0037: 天枢YAML工作流DSL
+- RFC 0037: 驺吾(Zouwu)工作流DSL
 - RFC 0035: 五引擎编排架构
 - CLAUDE.md: 纯函数黄金法则
 - CLAUDE.md: 双界日志风格规范

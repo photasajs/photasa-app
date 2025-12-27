@@ -2,7 +2,7 @@
 # 由长孙无忌服务通过 zouzhe 触发，袁天罡转换为符箓，天枢引擎执行
 # 调用太白金星适配器打开外部链接
 
-id: "shell.openExternal"
+id: "shell_openExternal"
 name: "打开外部链接"
 description: "接收外部链接 URL，通过太白金星适配器打开"
 version: "1.0.0"

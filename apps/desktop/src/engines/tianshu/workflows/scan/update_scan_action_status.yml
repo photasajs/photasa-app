@@ -1,7 +1,7 @@
 # 更新扫描任务状态工作流
 # RFC 0048 v3 Phase 3: 状态机转换支持
 
-version: "1.0"
+version: "1.0.0"
 id: "update_scan_action_status"
 name: "更新扫描任务状态"
 description: "支持pending→processing→failed状态转换，更新状态机字段（startedAt, error, retryCount等）"

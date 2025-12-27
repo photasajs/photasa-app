@@ -11,6 +11,7 @@ This directory contains RFCs for significant changes to the photo management app
 - **Rejected**: 0 (0%)
 
 ### By Version
+
 - **v2.0.0**: 50 RFCs
 - **Future**: 0 RFCs
 
@@ -73,73 +74,74 @@ What parts of the design do you expect to resolve through the RFC process before
 
 ## Active RFCs
 
-| RFC                                                               | Title                                           | Status              | Author | Target Release |
-| ----------------------------------------------------------------- | ----------------------------------------------- | ------------------- | ------ | -------------- |
-| [0004](./0004-ai-file-preview-service.md)                         | AI文件在线预览服务                              | Draft               | 李鹏   | v2.0.0         |
-| [0008](./0008-scan-strategy-optimization.md)                      | 扫描策略优化                                    | Draft               | 李鹏   | v2.0.0         |
-| [0010](./0010-folder-statistics-display.md)                       | 文件夹树节点统计信息显示                        | Draft               | 李鹏   | v2.0.0         |
-| [0012](./0012-unified-path-handling-architecture.md)              | 统一路径处理架构重构                            | Draft               | 李鹏   | v2.0.0         |
-| [0014](./0014-file-scan-folder-tree-update.md)                    | 文件扫描时文件夹树更新优化                      | Draft               | 李鹏   | v2.0.0         |
-| [0018](./0018-scanning-folder-priority-sorting.md)                | 扫描文件夹优先级排序优化                        | Draft               | 李鹏   | v2.0.0         |
-| [0020](./0020-auto-update-server.md)                              | Auto-Update System - Server Implementation      | Draft               | 李鹏   | v2.0.0         |
-| [0021](./0021-playwright-e2e-testing-architecture-enhancement.md) | Playwright E2E Testing Architecture Enhancement | Draft               | 李鹏   | v2.0.0         |
-| [0022](./0022-test-stabilization-issues-and-solutions.md)         | Test Stabilization Issues and Solutions         | Draft               | 李鹏   | v2.0.0         |
-| [0023](./0023-startup-performance-optimization.md)                | Startup Performance Optimization                | Draft               | 李鹏   | v2.0.0         |
-| [0025](./0025-tree-auto-focus-on-expand.md)                       | 树组件自动聚焦展开优化                          | Draft               | 李鹏   | v2.0.0         |
-| [0026](./completed/0026-file-type-indicator.md)                   | 文件类型指示器                                  | ✅ Completed        | 李鹏   | v2.0.0         |
-| [0028](./completed/0028-ffmpeg-binary-packaging-fix.md)           | FFmpeg Binary Packaging Fix                     | ✅ Completed        | 李鹏   | v2.0.0         |
-| [0029](./completed/0029-process-based-thumbnail-architecture.md)  | 基于进程的缩略图架构                            | ✅ Completed        | 李鹏   | v2.0.0         |
-| [0029](./0029-scan-skip-strategy-completion-fix.md)               | 扫描跳过策略完成修复                            | Draft               | 李鹏   | v2.0.0         |
-| [0032](./0032-qianliyan-scan-engine.md)                           | 千里眼扫描引擎 (含scan-service迁移)              | 🔨 In Progress      | 李鹏   | v2.0.0         |
-| [0033](./0033-shunfenger-watch-engine.md)                         | 顺风耳监听引擎                                  | Draft               | 李鹏   | v2.0.0         |
-| [0034](./0034-linglong-vision-engine.md)                          | 玲珑视觉引擎                                    | Draft               | 李鹏   | v2.0.0         |
-| [0037](./0037-tianshu-yaml-workflow-dsl.md)                       | 天枢YAML工作流DSL                               | Draft               | 李鹏   | v2.0.0         |
-| [0038](./completed/0038-preference-workflow-integration.md)       | 偏好设置工作流集成与Store边界统一                | ✅ Completed        | 李鹏   | v2.0.0         |
-| [0039](./0039-tianshu-workflow-syntax-specification.md)           | 天枢工作流语法规范                              | Draft               | 李鹏   | v2.0.0         |
-| [0042](./completed/0042-scanning-folder-migration.md)             | scanningFolder三步渐进式迁移（Step 1已完成）      | ✅ Completed        | AI     | v2.0.0         |
-| [0043](./0043-useqinqiong-access-pattern.md)                      | useQinQiong()访问模式 - appState统一访问         | Draft               | AI     | v2.0.0         |
-| [0046](./completed/0046-scanning-queue-persistence.md)            | 扫描队列持久化 - 千里眼scanning.json管理          | ✅ Completed        | AI     | v2.0.0         |
-| [0047](./completed/0047-foldertree-persistence-initialization.md) | folderTree持久化与初始化 - 魏征appState管理 + 司命持久化 | ✅ Completed        | AI     | v2.0.0         |
-| [0049](./0049-correct-e2e-testing-architecture.md)                 | 正确的E2E测试架构设计                              | Draft               | AI     | v2.0.0         |
-| [0050](./0050-taiyi-workflow-engine.md)                          | 太乙工作流引擎                                    | Draft               | AI     | v2.0.0         |
-| [0055](./0055-taiyi-workflow-summary.md)                          | 太乙工作流总结                                    | Draft               | AI     | v2.0.0         |
-| [0056](./0056-yuchigong-code-quality-improvements.md)            | 尉迟恭代码质量改进                                | Draft               | AI     | v2.0.0         |
-| [0058](./0058-zhangsunwuji-menu-service.md)                      | 长孙无忌菜单服务 - 统一菜单管理到qizou流程          | 🔨 In Progress      | AI     | v2.0.0         |
+| RFC                                                               | Title                                                    | Status         | Author | Target Release |
+| ----------------------------------------------------------------- | -------------------------------------------------------- | -------------- | ------ | -------------- |
+| [0004](./0004-ai-file-preview-service.md)                         | AI文件在线预览服务                                       | Draft          | 李鹏   | v2.0.0         |
+| [0008](./0008-scan-strategy-optimization.md)                      | 扫描策略优化                                             | Draft          | 李鹏   | v2.0.0         |
+| [0010](./0010-folder-statistics-display.md)                       | 文件夹树节点统计信息显示                                 | Draft          | 李鹏   | v2.0.0         |
+| [0012](./0012-unified-path-handling-architecture.md)              | 统一路径处理架构重构                                     | Draft          | 李鹏   | v2.0.0         |
+| [0014](./0014-file-scan-folder-tree-update.md)                    | 文件扫描时文件夹树更新优化                               | Draft          | 李鹏   | v2.0.0         |
+| [0018](./0018-scanning-folder-priority-sorting.md)                | 扫描文件夹优先级排序优化                                 | Draft          | 李鹏   | v2.0.0         |
+| [0020](./0020-auto-update-server.md)                              | Auto-Update System - Server Implementation               | Draft          | 李鹏   | v2.0.0         |
+| [0021](./0021-playwright-e2e-testing-architecture-enhancement.md) | Playwright E2E Testing Architecture Enhancement          | Draft          | 李鹏   | v2.0.0         |
+| [0022](./0022-test-stabilization-issues-and-solutions.md)         | Test Stabilization Issues and Solutions                  | Draft          | 李鹏   | v2.0.0         |
+| [0023](./0023-startup-performance-optimization.md)                | Startup Performance Optimization                         | Draft          | 李鹏   | v2.0.0         |
+| [0025](./0025-tree-auto-focus-on-expand.md)                       | 树组件自动聚焦展开优化                                   | Draft          | 李鹏   | v2.0.0         |
+| [0026](./completed/0026-file-type-indicator.md)                   | 文件类型指示器                                           | ✅ Completed   | 李鹏   | v2.0.0         |
+| [0028](./completed/0028-ffmpeg-binary-packaging-fix.md)           | FFmpeg Binary Packaging Fix                              | ✅ Completed   | 李鹏   | v2.0.0         |
+| [0029](./completed/0029-process-based-thumbnail-architecture.md)  | 基于进程的缩略图架构                                     | ✅ Completed   | 李鹏   | v2.0.0         |
+| [0029](./0029-scan-skip-strategy-completion-fix.md)               | 扫描跳过策略完成修复                                     | Draft          | 李鹏   | v2.0.0         |
+| [0032](./0032-qianliyan-scan-engine.md)                           | 千里眼扫描引擎 (含scan-service迁移)                      | 🔨 In Progress | 李鹏   | v2.0.0         |
+| [0033](./0033-shunfenger-watch-engine.md)                         | 顺风耳监听引擎                                           | Draft          | 李鹏   | v2.0.0         |
+| [0034](./0034-linglong-vision-engine.md)                          | 玲珑视觉引擎                                             | Draft          | 李鹏   | v2.0.0         |
+| [0037](./0037-zouwu-workflow-dsl.md)                              | 驺吾(Zouwu)工作流DSL                                     | Draft          | 李鹏   | v2.0.0         |
+| [0038](./completed/0038-preference-workflow-integration.md)       | 偏好设置工作流集成与Store边界统一                        | ✅ Completed   | 李鹏   | v2.0.0         |
+| [0039](./0039-tianshu-workflow-syntax-specification.md)           | 天枢工作流语法规范                                       | Draft          | 李鹏   | v2.0.0         |
+| [0042](./completed/0042-scanning-folder-migration.md)             | scanningFolder三步渐进式迁移（Step 1已完成）             | ✅ Completed   | AI     | v2.0.0         |
+| [0043](./0043-useqinqiong-access-pattern.md)                      | useQinQiong()访问模式 - appState统一访问                 | Draft          | AI     | v2.0.0         |
+| [0046](./completed/0046-scanning-queue-persistence.md)            | 扫描队列持久化 - 千里眼scanning.json管理                 | ✅ Completed   | AI     | v2.0.0         |
+| [0047](./completed/0047-foldertree-persistence-initialization.md) | folderTree持久化与初始化 - 魏征appState管理 + 司命持久化 | ✅ Completed   | AI     | v2.0.0         |
+| [0049](./0049-correct-e2e-testing-architecture.md)                | 正确的E2E测试架构设计                                    | Draft          | AI     | v2.0.0         |
+| [0050](./0050-taiyi-workflow-engine.md)                           | 太乙工作流引擎                                           | Draft          | AI     | v2.0.0         |
+| [0055](./0055-taiyi-workflow-summary.md)                          | 太乙工作流总结                                           | Draft          | AI     | v2.0.0         |
+| [0056](./0056-yuchigong-code-quality-improvements.md)             | 尉迟恭代码质量改进                                       | Draft          | AI     | v2.0.0         |
+| [0058](./0058-zhangsunwuji-menu-service.md)                       | 长孙无忌菜单服务 - 统一菜单管理到qizou流程               | 🔨 In Progress | AI     | v2.0.0         |
+| [0061](./0061-zouwu-workflow-visualization.md)                    | 驺吾工作流可视化 (Workflow Visualization)                | Draft          | AI     | v2.0.0         |
 
 ## Implemented RFCs
 
-| RFC                                                                                      | Title                                          | Author | Implemented In | Notes                                                                                      |
-| ---------------------------------------------------------------------------------------- | ---------------------------------------------- | ------ | -------------- | ------------------------------------------------------------------------------------------ |
-| [0001](./completed/0001-import-wizard-system.md)                                         | Import Wizard System                           | 李鹏   | v2.0.0         | Complete import wizard with multi-step flow                                                |
-| [0002](./completed/0002-headless-ui-components.md)                                       | Headless UI Components for Picasa Vue          | 李鹏   | v2.0.0         | 48 BaseUI components implemented, Ant Design fully removed, ~2.25MB bundle size reduction  |
-| [0003](./completed/0003-unify-watch-to-scan-queue.md)                                    | Unify File Watch Events to Scan Queue          | 李鹏   | v2.0.0         | Persistent file operation queue with event deduplication                                   |
-| [0005](./completed/0005-local-ai-file-preview.md)                                        | 本地AI文件预览功能                              | 李鹏   | v2.0.0         | 支持AI、PSD等设计文件的本地预览功能                                                        |
-| [0006](./completed/0006-photo-detail-drawer-decoupling.md)                               | Photo Detail Drawer Decoupling from Ant Design | 李鹏   | v2.0.0         | Successfully replaced Ant Design drawer with custom BaseDrawer component                   |
-| [0007](./completed/0007-folder-scan-cache-optimization.md)                               | Folder Scan Cache Optimization                 | 李鹏   | v2.0.0         | Intelligent incremental scanning and cleanup mechanisms                                    |
-| [0009](./completed/0009-video-thumbnail-orientation.md)                                  | Video Thumbnail Orientation Support            | 李鹏   | v2.0.0         | Enhanced video thumbnail generation with rotation metadata support                         |
-| [0011](./completed/0011-imagelist-file-count-display.md)                                 | ImageList File Count Display                   | 李鹏   | v2.0.0         | 在ImageList头部显示图片和视频文件计数，支持大数字格式化和响应式设计                        |
-| [0013](./completed/0013-default-folder-selection.md)                                     | 默认文件夹选择功能                              | 李鹏   | v2.0.0         | 应用启动时自动选择默认文件夹，重启后恢复用户上次选择的文件夹                               |
-| [0015](./completed/0015-intelligent-scan-optimization.md)                                | 验证智能扫描策略的子文件夹发现功能              | 李鹏   | v2.0.0         | 验证并修复智能扫描策略，确认子文件夹发现功能正常工作                                       |
-| [0016](./completed/0016-basetree-component-implementation.md)                            | BaseTree Component Implementation               | 李鹏   | v2.0.0         | 实现BaseTree组件替代ant-design-vue的a-tree，支持虚拟滚动和100% API兼容性                  |
-| [0017](./completed/0017-production-log-viewer.md)                                        | Production Log Viewer System                   | 李鹏   | v2.0.0         | 按需激活的生产环境日志查看器，零性能影响，支持主进程和Worker线程日志实时显示               |
-| [0019](./completed/0019-auto-update-system.md)                                           | Auto-Update System - Client Implementation     | 李鹏   | v2.0.0         | 客户端自动更新系统实现，采用electron-updater方案，支持安全的preload集成                    |
-| [0024](./completed/0024-log-viewer-resizable-panel.md)                                   | 日志查看器可调整大小面板增强                    | 李鹏   | v2.0.0         | 为日志查看器添加可调整大小面板功能，提升可用性和改善日志内容可见性                         |
-| [0026](./completed/0026-file-type-indicator.md)                                          | 文件类型指示器                                  | 李鹏   | v2.0.0         | 图片列表添加文件类型视觉指示器，提升用户识别效率和交互体验                                  |
-| [0027](./completed/0027-wasm-memory-management-optimization.md)                          | WASM内存管理优化与HEIF解码错误处理              | 李鹏   | v2.0.0         | 优化WASM HEIF解码器内存管理机制，增强错误处理，提升大型HEIF图像处理稳定性                  |
-| [0028](./completed/0028-ffmpeg-binary-packaging-fix.md)                                  | FFmpeg Binary Packaging Fix                     | 李鹏   | v2.0.0         | 修复打包后ffmpeg二进制文件访问问题，确保生产环境视频处理功能正常工作                       |
-| [0029](./completed/0029-process-based-thumbnail-architecture.md)                         | 基于进程的缩略图架构                            | 李鹏   | v2.0.0         | 进程池混合架构，隔离重型任务，有效控制内存，提升多核性能，增强稳定性                        |
-| [0030](./completed/0030-scan-status-reporting-fix.md)                                    | 扫描状态报告修复                                | 李鹏   | v2.0.0         | 修复扫描过程中的状态报告问题，确保UI状态栏正确显示扫描进度和完成状态                       |
-| [0031](./completed/0031-maliang-image-processing-engine.md)                              | Ma-Liang 统一图像处理引擎                       | 李鹏   | v2.0.0         | 创建统一图像处理引擎，整合FFmpeg、Sharp、WASM-HEIF和Photon库，支持BMP和MPEG/MPG格式      |
-| [0035](./completed/0035-five-engine-orchestration-architecture.md)                      | 天枢·顺风耳·千里眼·司簿·马良五引擎编排架构      | 李鹏   | v2.0.0         | 建立五大核心引擎协同系统，通过太乙服务层桥接和YAML工作流元数据驱动，实现完整链路           |
-| [0036](./completed/0036-wenchang-preference-integration.md)                              | 偏好设置启动加载和保存机制                      | 李鹏   | v2.0.0         | 完整的偏好设置双向通信机制，启动加载、智能合并、实时保存，391测试通过                      |
-| [0040](./completed/0040-removepath-functionality-fix.md)                                 | RemovePath功能修复 - 天界人界数据同步完整实现   | 李鹏   | v2.0.0         | 天界人界数据同步完整实现，修复UI更新问题，后续被RFC 0041进一步优化                         |
-| [0041](./completed/0041-preference-architecture-refactor-business-logic-separation.md)   | 偏好架构重构 - 业务逻辑与存储层分离             | 李鹏   | v2.0.0         | 应用Linus"好品味"原则，业务逻辑从WenchangEngine分离到FangXuanLing，架构更清晰易维护        |
-| [0042](./completed/0042-scanning-folder-migration.md)                                    | scanningFolder四步渐进式迁移（Step 1已完成）     | AI     | v2.0.0         | Step 1完成：ScanningStore创建（Accessor+Builder架构），后续步骤拆分为RFC 0046/0047/0048  |
-| [0045](./completed/0045-builtin-array-operations.md)                                     | Builtin数组操作增强                             | AI     | v2.0.0         | 新增arrayAppend/arrayCount/arrayFilter方法，消除数据嵌套，38测试通过，100%覆盖率          |
-| [0046](./completed/0046-scanning-queue-persistence.md)                                   | 扫描队列持久化 - 千里眼scanning.json管理          | AI     | v2.0.0         | 千里眼引擎持久化队列到~/.photasa/scan/scanning.json，工作流架构，完整验证报告             |
-| [0047](./completed/0047-foldertree-persistence-initialization.md)                        | folderTree持久化与初始化 - 魏征appState管理        | AI     | v2.0.0         | 三条数据流汇聚魏征，司命引擎持久化，Store Automation自动同步，核心功能100%完成              |
-| [0048](./completed/0048-scan-orchestration-business-logic-migration.md)                  | 扫描编排业务逻辑迁移 - 职责自洽架构                | AI     | v2.0.0         | Store SSOT + 状态机制 + 立即清理，删除AppHelper.ts (306行)，App.vue减少~180行，已通过测试验证 |
-| [0057](./completed/0057-yushinan-scan-progress-display.md)                                | 虞世南扫描进度展示服务 - 统一findPhotoService到qizou流程 | AI     | v2.0.0         | 统一findPhotoService到qizou流程，创建虞世南服务，消除双重监听反模式，所有Vue组件遵循服务模式 |
+| RFC                                                                                    | Title                                                    | Author | Implemented In | Notes                                                                                         |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------ | -------------- | --------------------------------------------------------------------------------------------- |
+| [0001](./completed/0001-import-wizard-system.md)                                       | Import Wizard System                                     | 李鹏   | v2.0.0         | Complete import wizard with multi-step flow                                                   |
+| [0002](./completed/0002-headless-ui-components.md)                                     | Headless UI Components for Picasa Vue                    | 李鹏   | v2.0.0         | 48 BaseUI components implemented, Ant Design fully removed, ~2.25MB bundle size reduction     |
+| [0003](./completed/0003-unify-watch-to-scan-queue.md)                                  | Unify File Watch Events to Scan Queue                    | 李鹏   | v2.0.0         | Persistent file operation queue with event deduplication                                      |
+| [0005](./completed/0005-local-ai-file-preview.md)                                      | 本地AI文件预览功能                                       | 李鹏   | v2.0.0         | 支持AI、PSD等设计文件的本地预览功能                                                           |
+| [0006](./completed/0006-photo-detail-drawer-decoupling.md)                             | Photo Detail Drawer Decoupling from Ant Design           | 李鹏   | v2.0.0         | Successfully replaced Ant Design drawer with custom BaseDrawer component                      |
+| [0007](./completed/0007-folder-scan-cache-optimization.md)                             | Folder Scan Cache Optimization                           | 李鹏   | v2.0.0         | Intelligent incremental scanning and cleanup mechanisms                                       |
+| [0009](./completed/0009-video-thumbnail-orientation.md)                                | Video Thumbnail Orientation Support                      | 李鹏   | v2.0.0         | Enhanced video thumbnail generation with rotation metadata support                            |
+| [0011](./completed/0011-imagelist-file-count-display.md)                               | ImageList File Count Display                             | 李鹏   | v2.0.0         | 在ImageList头部显示图片和视频文件计数，支持大数字格式化和响应式设计                           |
+| [0013](./completed/0013-default-folder-selection.md)                                   | 默认文件夹选择功能                                       | 李鹏   | v2.0.0         | 应用启动时自动选择默认文件夹，重启后恢复用户上次选择的文件夹                                  |
+| [0015](./completed/0015-intelligent-scan-optimization.md)                              | 验证智能扫描策略的子文件夹发现功能                       | 李鹏   | v2.0.0         | 验证并修复智能扫描策略，确认子文件夹发现功能正常工作                                          |
+| [0016](./completed/0016-basetree-component-implementation.md)                          | BaseTree Component Implementation                        | 李鹏   | v2.0.0         | 实现BaseTree组件替代ant-design-vue的a-tree，支持虚拟滚动和100% API兼容性                      |
+| [0017](./completed/0017-production-log-viewer.md)                                      | Production Log Viewer System                             | 李鹏   | v2.0.0         | 按需激活的生产环境日志查看器，零性能影响，支持主进程和Worker线程日志实时显示                  |
+| [0019](./completed/0019-auto-update-system.md)                                         | Auto-Update System - Client Implementation               | 李鹏   | v2.0.0         | 客户端自动更新系统实现，采用electron-updater方案，支持安全的preload集成                       |
+| [0024](./completed/0024-log-viewer-resizable-panel.md)                                 | 日志查看器可调整大小面板增强                             | 李鹏   | v2.0.0         | 为日志查看器添加可调整大小面板功能，提升可用性和改善日志内容可见性                            |
+| [0026](./completed/0026-file-type-indicator.md)                                        | 文件类型指示器                                           | 李鹏   | v2.0.0         | 图片列表添加文件类型视觉指示器，提升用户识别效率和交互体验                                    |
+| [0027](./completed/0027-wasm-memory-management-optimization.md)                        | WASM内存管理优化与HEIF解码错误处理                       | 李鹏   | v2.0.0         | 优化WASM HEIF解码器内存管理机制，增强错误处理，提升大型HEIF图像处理稳定性                     |
+| [0028](./completed/0028-ffmpeg-binary-packaging-fix.md)                                | FFmpeg Binary Packaging Fix                              | 李鹏   | v2.0.0         | 修复打包后ffmpeg二进制文件访问问题，确保生产环境视频处理功能正常工作                          |
+| [0029](./completed/0029-process-based-thumbnail-architecture.md)                       | 基于进程的缩略图架构                                     | 李鹏   | v2.0.0         | 进程池混合架构，隔离重型任务，有效控制内存，提升多核性能，增强稳定性                          |
+| [0030](./completed/0030-scan-status-reporting-fix.md)                                  | 扫描状态报告修复                                         | 李鹏   | v2.0.0         | 修复扫描过程中的状态报告问题，确保UI状态栏正确显示扫描进度和完成状态                          |
+| [0031](./completed/0031-maliang-image-processing-engine.md)                            | Ma-Liang 统一图像处理引擎                                | 李鹏   | v2.0.0         | 创建统一图像处理引擎，整合FFmpeg、Sharp、WASM-HEIF和Photon库，支持BMP和MPEG/MPG格式           |
+| [0035](./completed/0035-five-engine-orchestration-architecture.md)                     | 天枢·顺风耳·千里眼·司簿·马良五引擎编排架构               | 李鹏   | v2.0.0         | 建立五大核心引擎协同系统，通过太乙服务层桥接和YAML工作流元数据驱动，实现完整链路              |
+| [0036](./completed/0036-wenchang-preference-integration.md)                            | 偏好设置启动加载和保存机制                               | 李鹏   | v2.0.0         | 完整的偏好设置双向通信机制，启动加载、智能合并、实时保存，391测试通过                         |
+| [0040](./completed/0040-removepath-functionality-fix.md)                               | RemovePath功能修复 - 天界人界数据同步完整实现            | 李鹏   | v2.0.0         | 天界人界数据同步完整实现，修复UI更新问题，后续被RFC 0041进一步优化                            |
+| [0041](./completed/0041-preference-architecture-refactor-business-logic-separation.md) | 偏好架构重构 - 业务逻辑与存储层分离                      | 李鹏   | v2.0.0         | 应用Linus"好品味"原则，业务逻辑从WenchangEngine分离到FangXuanLing，架构更清晰易维护           |
+| [0042](./completed/0042-scanning-folder-migration.md)                                  | scanningFolder四步渐进式迁移（Step 1已完成）             | AI     | v2.0.0         | Step 1完成：ScanningStore创建（Accessor+Builder架构），后续步骤拆分为RFC 0046/0047/0048       |
+| [0045](./completed/0045-builtin-array-operations.md)                                   | Builtin数组操作增强                                      | AI     | v2.0.0         | 新增arrayAppend/arrayCount/arrayFilter方法，消除数据嵌套，38测试通过，100%覆盖率              |
+| [0046](./completed/0046-scanning-queue-persistence.md)                                 | 扫描队列持久化 - 千里眼scanning.json管理                 | AI     | v2.0.0         | 千里眼引擎持久化队列到~/.photasa/scan/scanning.json，工作流架构，完整验证报告                 |
+| [0047](./completed/0047-foldertree-persistence-initialization.md)                      | folderTree持久化与初始化 - 魏征appState管理              | AI     | v2.0.0         | 三条数据流汇聚魏征，司命引擎持久化，Store Automation自动同步，核心功能100%完成                |
+| [0048](./completed/0048-scan-orchestration-business-logic-migration.md)                | 扫描编排业务逻辑迁移 - 职责自洽架构                      | AI     | v2.0.0         | Store SSOT + 状态机制 + 立即清理，删除AppHelper.ts (306行)，App.vue减少~180行，已通过测试验证 |
+| [0057](./completed/0057-yushinan-scan-progress-display.md)                             | 虞世南扫描进度展示服务 - 统一findPhotoService到qizou流程 | AI     | v2.0.0         | 统一findPhotoService到qizou流程，创建虞世南服务，消除双重监听反模式，所有Vue组件遵循服务模式  |
 
 ## Rejected RFCs
 

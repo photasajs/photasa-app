@@ -4,7 +4,7 @@
 # 流程：
 # 长孙无忌 → 房玄龄 → 袁天罡 → 天枢引擎（本工作流）→ 太白金星适配器
 
-id: "menu.apply"
+id: "menu_apply"
 name: "应用系统菜单"
 description: "接收菜单数据，通过太白金星适配器设置系统菜单"
 version: "1.0.0"

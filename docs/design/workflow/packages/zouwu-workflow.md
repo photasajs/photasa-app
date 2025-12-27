@@ -1,4 +1,4 @@
-# @systembug/zouwu-workflow
+# @zouwu-wf/workflow
 
 核心 Schema 包，提供工作流 Schema 定义和运行时验证器。
 
@@ -12,13 +12,13 @@
 ## 安装
 
 ```bash
-npm install @systembug/zouwu-workflow
+npm install @zouwu-wf/workflow
 ```
 
 ## 使用示例
 
 ```typescript
-import { validateWorkflow } from '@systembug/zouwu-workflow';
+import { validateWorkflow } from '@zouwu-wf/workflow';
 
 const result = validateWorkflow(workflowData);
 if (result.valid) {

@@ -1,4 +1,4 @@
-# @systembug/zouwu-cli
+# @zouwu-wf/cli
 
 命令行工具包，提供代码生成、验证和项目管理功能。
 
@@ -11,7 +11,7 @@
 ## 安装
 
 ```bash
-npm install -g @systembug/zouwu-cli
+npm install -g @zouwu-wf/cli
 ```
 
 ## 使用示例

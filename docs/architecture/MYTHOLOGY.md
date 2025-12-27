@@ -1028,7 +1028,7 @@ logger.info("🏛️ 房玄龄收到仙家回禀")  // 混用天界词汇"仙家
 - [RFC 0033: 顺风耳监听引擎](../rfc/0033-shunfenger-watch-engine.md)
 - [RFC 0031: 马良图像处理引擎](../rfc/completed/0031-maliang-image-processing-engine.md)
 - [RFC 0036: 文昌偏好设置集成](../rfc/completed/0036-wenchang-preference-integration.md)
-- [RFC 0037: 天枢工作流DSL](../rfc/0037-tianshu-yaml-workflow-dsl.md)
+- [RFC 0037: 天枢工作流DSL](../rfc/0037-zouwu-workflow-dsl.md)
 
 **规划中引擎**:
 - [RFC 0034: 玲珑影像播放引擎](../rfc/0034-linglong-vision-engine.md) 🚧

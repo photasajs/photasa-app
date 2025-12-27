@@ -18,7 +18,8 @@ import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
 import { TaiyiEngine, TaiyiEngineConfig } from "../../engines/taiyi/core/TaiyiEngine";
 import { loggers } from "@common/logger";
-import { WorkflowStep, ExecutionContext } from "../../engines/tianshu/types/workflows";
+import { ActionStep, BuiltinStep, WorkflowStep, ExecutionContext } from "@systembug/tianshu";
+import { EngineCallResult } from "../../engines/workflow";
 import { IStepExecutor, StepExecutionResult } from "@engines/common/interfaces";
 
 const logger = loggers.taiyi;
@@ -89,10 +90,12 @@ export default class TaiyiService implements IService, IStepExecutor {
             }
 
             // 太乙服务作为薄包装层，根据步骤类型和service字段正确路由
-            let engineResult: any;
+            // Import EngineCallResult type from relative path or define it if not exported
+            // Assuming EngineCallResult is { success: boolean, result?: any, error?: Error, timestamp: number, engineName: string }
+            let engineResult: EngineCallResult<unknown>;
             let routeInfo = "";
 
-            if (step.type === "builtin" || step.service === "builtin") {
+            if (step.type === "builtin") {
                 // 内置操作：路由到builtin适配器
                 routeInfo = `builtin.${step.action}`;
 
@@ -105,11 +108,12 @@ export default class TaiyiService implements IService, IStepExecutor {
                 // 动作步骤：根据service字段路由
                 if (step.service === "taiyi" && step.action === "callEngine") {
                     // 太乙路由模式：从input中解析真实的目标引擎和方法
-                    const engineName = step.input?.engineName || "system";
-                    const methodName = step.input?.methodName || "execute";
+                    // Type guard/assertion needed for step.input
+                    const input = (step.input as Record<string, any>) || {};
+                    const engineName = input.engineName || "system";
+                    const methodName = input.methodName || "execute";
                     // 支持 args 或 params 字段（优先使用 params）
-                    const args =
-                        step.input?.params || step.input?.args || (step.input ? [step.input] : []);
+                    const args = input.params || input.args || (step.input ? [step.input] : []);
 
                     routeInfo = `taiyi-route:${engineName}.${methodName}`;
                     engineResult = await this.engine.callEngine(engineName, methodName, ...args);
@@ -123,9 +127,10 @@ export default class TaiyiService implements IService, IStepExecutor {
                     engineResult = await this.engine.callEngine(engineName, methodName, ...args);
                 }
             } else {
-                // 未知步骤类型
+                // 忽略 workflow, parallel 等其他类型或由 TianshuEngine 处理
+                // 如果 flow engine 调用到这里，说明是不支持的类型
                 throw new Error(
-                    `Unknown step type: ${step.type} in step ${step.id}. Supported types: action, builtin`,
+                    `Unsupported step type for TaiyiService: ${step.type} in step ${step.id}. Supported types: action, builtin`,
                 );
             }
 
@@ -135,13 +140,18 @@ export default class TaiyiService implements IService, IStepExecutor {
             const rawData = this.engine.getEngineResult(engineResult);
 
             // 根据步骤的output定义处理返回数据
+            // 注意：只有 ActionStep 和 ParallelStep 有 output 属性
             let processedData: unknown = rawData;
-            if (step.output && typeof step.output === "object") {
+
+            if ("output" in step && step.output && typeof step.output === "object") {
                 processedData = {};
                 for (const [outputKey, outputPath] of Object.entries(step.output)) {
                     try {
                         (processedData as Record<string, unknown>)[outputKey] =
-                            this.extractValueByPath(rawData, outputPath);
+                            this.extractValueByPath(
+                                rawData as Record<string, unknown>,
+                                outputPath as string,
+                            );
                     } catch (error) {
                         logger.warn(`提取步骤输出 ${outputKey} 失败:`, error);
                         (processedData as Record<string, unknown>)[outputKey] = undefined;
@@ -151,24 +161,39 @@ export default class TaiyiService implements IService, IStepExecutor {
 
             // 🎯 关键：直接暴露引擎原始数据到工作流上下文
             // 这样YAML中可以直接引用 steps.stepId.field，而不是 steps.stepId.result.field
+            // 注意：如果 step 是 ActionStep, 我们可能还需要 step.service 等信息放入 metadata
+
+            const metadata: { duration: number; engineName?: string; [key: string]: any } = {
+                duration: Date.now() - startTime,
+                stepId: step.id,
+                executedAt: engineResult.timestamp || Date.now(),
+                route: routeInfo,
+                stepType: step.type,
+                engineName: engineResult.engineName,
+            };
+
+            const errorMsg =
+                engineResult.error instanceof Error
+                    ? engineResult.error.message
+                    : engineResult.error
+                      ? String(engineResult.error)
+                      : undefined;
+
             const result: StepExecutionResult = {
-                success: engineResult.success,
+                success: engineResult.success !== undefined ? engineResult.success : true,
                 data: processedData,
-                error: engineResult.error?.message,
-                metadata: {
-                    duration: Date.now() - startTime,
-                    stepId: step.id,
-                    executedAt: engineResult.timestamp,
-                    route: routeInfo,
-                    stepType: step.type,
-                    engineName: engineResult.engineName,
-                },
+                error: errorMsg,
+                metadata: metadata,
             };
 
             return result;
         } catch (error) {
+            // Need cast to access service/action if possible or use safe access
+            const serviceName = (step as ActionStep).service || "unknown";
+            const actionName = (step as ActionStep | BuiltinStep).action || "unknown";
+
             logger.error(
-                `🌌 太乙路由失败: ${step.type}/${step.service}.${step.action} -> ${step.id}`,
+                `🌌 太乙路由失败: ${step.type}/${serviceName}.${actionName} -> ${step.id}`,
                 error,
             );
 

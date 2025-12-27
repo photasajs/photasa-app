@@ -34,7 +34,7 @@
 ## 🚀 快速开始
 
 ```typescript
-import { ZouWuWorkflow, ZouWuValidator } from '@systembug/zouwu-workflow';
+import { ZouWuWorkflow, ZouWuValidator } from '@zouwu-wf/workflow';
 
 // 创建驺吾工作流
 const workflow: ZouWuWorkflow = {
@@ -141,8 +141,8 @@ wings:
 
 ## 🛠️ 工具生态
 
-- **@systembug/zouwu-workflow** - 驺吾工作流核心包
-- **@systembug/zouwu-cli** - 驺吾命令行工具
+- **@zouwu-wf/workflow** - 驺吾工作流核心包
+- **@zouwu-wf/cli** - 驺吾命令行工具
 - **zouwu-vscode** - VS Code 插件（计划中）
 - **zouwu-studio** - 可视化设计器（计划中）
 

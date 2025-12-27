@@ -15,15 +15,31 @@
  * - 状态管理：监控执行过程，确保任务顺利完成
  */
 
-import { type IpcMain, BrowserWindow } from "electron";
+import { type IpcMain, BrowserWindow, app } from "electron";
+import path from "path";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
-import { TianshuEngine } from "../../engines/tianshu/core/TianshuEngine";
+import { TianshuEngine } from "@systembug/tianshu";
 import { loggers } from "@common/logger";
 import type TaiyiService from "./taiyi-service";
 import { IStepExecutor } from "@engines/common/interfaces";
 
 const logger = loggers.tianshu || loggers.main;
+
+/**
+ * 获取工作流目录
+ * 根据环境确定工作流目录
+ * 在生产环境中，工作流目录在 resources/workflows（通过 extraResources 复制）
+ * 在开发环境中，工作流目录在源代码位置
+ */
+function getWorkflowDir() {
+    // Determine workflow directory based on environment
+    // In production, workflows are in resources/workflows (copied via extraResources)
+    // In development, they are in their source location
+    return app.isPackaged
+        ? path.join(process.resourcesPath, "workflows")
+        : path.resolve(process.cwd(), "src/engines/tianshu/workflows");
+}
 
 @Service({
     name: "tianshu",
@@ -68,12 +84,15 @@ export default class TianshuService implements IService {
      */
     async initialize(): Promise<void> {
         try {
+            const workflowDir = getWorkflowDir();
+            logger.info(`Tianshu initializing with workflow dir: ${workflowDir}`);
+
             // 创建天枢引擎实例，传入太乙服务作为步骤执行器
             this.tianshuEngine = new TianshuEngine({
-                workflowDir: "src/engines/tianshu/workflows",
+                workflowDir,
                 maxConcurrentWorkflows: 5,
                 defaultTimeout: 600000, // 10分钟超时（应对复杂文件夹扫描）
-                enableHotReload: false,
+                enableHotReload: !app.isPackaged,
                 stepExecutor: this.taiyiService as IStepExecutor,
             });
 
