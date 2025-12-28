@@ -327,11 +327,10 @@ describe("RFC 0037 工作流语法规范合规性", () => {
 
     beforeAll(async () => {
         // 查找所有工作流YAML文件
-        const workflowDir = path.resolve(
-            __dirname,
-            "../../../../apps/desktop/src/engines/tianshu/workflows",
-        );
-        const pattern = path.join(workflowDir, "**/*.{yml,yaml}").replace(/\\/g, "/");
+        const PROJECT_ROOT = path.resolve(__dirname, "../../../../../");
+        const DOCS_DIR = path.join(PROJECT_ROOT, "docs");
+        const WORKFLOW_DIR = path.join(PROJECT_ROOT, "apps/desktop/src/engines/tianshu/workflows");
+        const pattern = path.join(WORKFLOW_DIR, "**/*.{yml,yaml,zouwu}").replace(/\\/g, "/");
         workflowFiles = await glob(pattern);
 
         console.log(`发现 ${workflowFiles.length} 个工作流文件待验证`);

@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeAll, afterAll, jest } from "@jest/globals";
 import "@engines/adapters"; // 模拟主进程的适配器导入
 import TaiyiService from "../deity/taiyi-service";
-import { WorkflowStep, ExecutionContext } from "../../engines/tianshu/types/workflows";
+import { WorkflowStep, ExecutionContext } from "@photasa/tianshu";
 import * as os from "os";
 import * as path from "path";
 import * as fs from "fs/promises";

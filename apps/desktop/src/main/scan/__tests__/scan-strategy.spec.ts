@@ -16,11 +16,13 @@ import type { PhotasaLogger } from "@photasa/common";
 jest.mock("fs-extra");
 
 // Create mock function
-const mockGetPhotasaConfig = jest.fn() as jest.MockedFunction<() => Promise<any>>;
+const mockGetPhotasaConfig = jest.fn() as jest.MockedFunction<
+    (folderPath: string, logger?: any) => Promise<any>
+>;
 
 // Mock the config-storage module
 jest.mock("../../config/config-storage", () => ({
-    getPhotasaConfig: () => mockGetPhotasaConfig(),
+    getPhotasaConfig: (folder: string, logger: any) => mockGetPhotasaConfig(folder, logger),
 }));
 jest.mock("../cache/folder-cache-manager", () => ({
     computeFolderHash: jest.fn(),

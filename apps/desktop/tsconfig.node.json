@@ -30,11 +30,13 @@
             "@shunfenger/*": ["./src/engines/shunfenger/*"],
             "@sibu": ["./src/engines/sibu/index"],
             "@sibu/*": ["./src/engines/sibu/*"],
-            "@tianshu": ["./src/engines/tianshu/index"],
-            "@tianshu/*": ["./src/engines/tianshu/*"],
             "@engines/common/*": ["./src/engines/common/*"],
             "@qianliyan/*": ["./src/engines/qianliyan/*"],
             "@engines/*": ["./src/engines/*"],
+            "@photasa/common": ["../../packages/common/src/index.ts"],
+            "@photasa/common/*": ["../../packages/common/src/*"],
+            "@photasa/tianshu": ["../../packages/@photasa/tianshu/src/index.ts"],
+            "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"]
         },
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true
