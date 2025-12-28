@@ -3,10 +3,10 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "build": "turbo run build",
-        "test": "turbo run test",
-        "lint": "turbo run lint",
-        "typecheck": "turbo run typecheck",
+        "build": "nx run-many -t build",
+        "test": "nx run-many -t test",
+        "lint": "nx run-many -t lint",
+        "typecheck": "nx run-many -t typecheck",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "prepare": "husky",
         "dev:desktop": "pnpm --filter @photasa/desktop dev",
@@ -16,10 +16,10 @@
         "workflow:validate": "pnpm --filter @photasa/desktop run workflow:validate"
     },
     "devDependencies": {
-        "turbo": "^2.3.3",
-        "husky": "^9.1.7",
-        "prettier": "^3.2.5",
         "eslint": "^8.57.0",
+        "husky": "^9.1.7",
+        "nx": "^22.3.3",
+        "prettier": "^3.2.5",
         "typescript": "^5.3.3"
     },
     "packageManager": "pnpm@9.0.0"
