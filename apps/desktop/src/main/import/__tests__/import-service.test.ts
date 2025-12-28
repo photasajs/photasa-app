@@ -53,6 +53,32 @@ vi.mock("../import-worker?nodeWorker", () => ({
 vi.mock("@photasa/common", () => ({
     sendWorkerTask: vi.fn(),
     onWorkerResponse: vi.fn(),
+    loggers: {
+        import: {
+            info: vi.fn(),
+            debug: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
+    },
+    ImportEvents: {
+        EXECUTE: "import:execute",
+        CANCEL: "import:cancel",
+        PAUSE: "import:pause",
+        RESUME: "import:resume",
+        PREVIEW: "import:preview",
+        SCAN_DIRECTORIES: "import:scan-directories",
+        GET_HISTORY: "import:get-history",
+        GET_DETAILS: "import:get-details",
+        GET_PROGRESS: "import:get-progress",
+        PREVIEW_UNDO: "import:preview-undo",
+        UNDO: "import:undo",
+        CHOOSE_DIRECTORIES: "import:choose-directories",
+        EXTRACT_METADATA: "import:extract-metadata",
+        PROGRESS: "import:progress",
+        COMPLETE: "import:complete",
+        ERROR: "import:error",
+    },
 }));
 
 // Mock importHistoryManager

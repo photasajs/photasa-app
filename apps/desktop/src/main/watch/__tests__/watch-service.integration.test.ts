@@ -26,9 +26,22 @@ vi.mock("@photasa/common", () => ({
             error: vi.fn(),
         },
     },
-}));
-
-vi.mock("@photasa/common", () => ({
+    EventLossPreventionConfig: {
+        MaxPendingEvents: 8000,
+        ForceProcessInterval: 5000,
+    },
+    WatchServiceEvent: {
+        start: "picasa:start-file-watch",
+        stop: "picasa:stop-file-watch",
+        add: "picasa:file-add",
+        addDir: "picasa:file-add-dir",
+        change: "picasa:file-change",
+        unlink: "picasa:file-unlink",
+        unlinkDir: "picasa:file-unlink-dir",
+        error: "picasa:file-error",
+        ready: "picasa:file-ready",
+        raw: "picasa:file-raw",
+    },
     createFileOperation: vi.fn((type, path, isFile, thumbnailSize) => ({
         id: `mock-id-${Date.now()}`,
         type,
@@ -42,8 +55,8 @@ vi.mock("@photasa/common", () => ({
             lastModified: Date.now(),
         },
     })),
-    getDeduplicationWindow: vi.fn((type) => {
-        const windows = { add: 50, change: 200, delete: 100 };
+    getDeduplicationWindow: vi.fn((type: string) => {
+        const windows: Record<string, number> = { add: 50, change: 200, delete: 100 };
         return windows[type] || 100;
     }),
     calculateDebounceTime: vi.fn((pendingCount) => {

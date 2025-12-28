@@ -6,7 +6,8 @@ export default defineConfig({
         alias: {
             "@main": resolve("src/main/"),
             "@preload": resolve("src/preload/"),
-            "@common": resolve("src/common/"),
+            "@photasa/common": resolve("../../packages/common/src/index.ts"),
+            "@photasa/common/*": resolve("../../packages/common/src/*"),
             "@shared": resolve("src/shared/"),
         },
     },
