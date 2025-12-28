@@ -1,5 +1,5 @@
 import { StepResult, WorkflowStep } from "../types/workflows";
-import type { Logger } from "@systembug/logger";
+import type { Logger } from "@systembug/diting";
 
 /**
  * 生成UUID

@@ -14,7 +14,7 @@ import {
 import { VariableResolver } from "./VariableResolver";
 import { ConditionExecutor } from "./executors/ConditionExecutor";
 import { LoopExecutor } from "./executors/LoopExecutor";
-import { createLogger, type Logger } from "@systembug/logger";
+import { createLogger, type Logger } from "@systembug/diting";
 import type {
     WorkflowDefinition,
     WorkflowStep,

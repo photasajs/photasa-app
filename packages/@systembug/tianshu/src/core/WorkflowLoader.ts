@@ -7,7 +7,7 @@ import * as fs from "fs-extra";
 import * as path from "path";
 import * as yaml from "js-yaml";
 import { WorkflowDefinition } from "../types/workflows";
-import { createLogger, Logger } from "@systembug/logger";
+import { createLogger, Logger } from "@systembug/diting";
 
 /**
  * 工作流加载器配置

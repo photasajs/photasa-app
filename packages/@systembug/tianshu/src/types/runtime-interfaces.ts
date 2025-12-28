@@ -3,7 +3,7 @@
  * 保持平台中立，不依赖Node.js或浏览器特定API
  */
 
-import type { Logger } from "@systembug/logger";
+import type { Logger } from "@systembug/diting";
 
 /**
  * 工作流执行选项

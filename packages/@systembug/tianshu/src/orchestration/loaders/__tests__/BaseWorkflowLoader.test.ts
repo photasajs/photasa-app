@@ -4,7 +4,7 @@
 
 import { BaseWorkflowLoader, WorkflowData } from "../BaseWorkflowLoader";
 import { describe, expect, vi, beforeEach, test } from "vitest";
-import { Logger } from "@systembug/logger";
+import { Logger } from "@systembug/diting";
 
 // Mock具体实现类
 class MockLoader extends BaseWorkflowLoader {

@@ -26,7 +26,7 @@ import { VariableResolver, WorkflowOrchestrator, NodeWorkflowLoader } from "../o
 import { IStepExecutor } from "../common/interfaces";
 // import { loggers } from "@common/logger";
 import { IntentToWorkflowMap } from "./intent";
-import { createLogger, LogLevel } from "@systembug/logger";
+import { createLogger, LogLevel } from "@systembug/diting";
 
 /**
  * Tianshu引擎配置

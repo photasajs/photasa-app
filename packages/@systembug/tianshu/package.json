@@ -28,9 +28,9 @@
     "author": "SystemBug",
     "license": "MIT",
     "dependencies": {
-        "@zouwu-wf/workflow": "workspace:*",
-        "@systembug/logger": "workspace:*",
-        "@zouwu-wf/expression-parser": "workspace:*",
+        "@zouwu-wf/workflow": "^0.0.7",
+        "@systembug/diting": "^0.0.7",
+        "@zouwu-wf/expression-parser": "^0.0.7",
         "lodash": "^4.17.21"
     },
     "devDependencies": {
