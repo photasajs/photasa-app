@@ -14,7 +14,7 @@ updatedAt: 1727544000000
 
 # 触发条件
 triggers:
-    - intent: "menu.apply"
+    - intent: "menu_apply"
 
 # 输入参数
 inputs:

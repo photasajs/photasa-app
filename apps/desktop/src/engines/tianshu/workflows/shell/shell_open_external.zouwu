@@ -12,7 +12,7 @@ updatedAt: 1727544000000
 
 # 触发条件
 triggers:
-    - intent: "shell.openExternal"
+    - intent: "shell_openExternal"
 
 # 输入参数
 inputs:
