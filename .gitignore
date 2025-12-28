@@ -42,3 +42,11 @@ guide
 
 # TurboRepo cache
 .turbo
+
+# Nx cache
+.nx/cache
+.nx/workspace-data
+
+# Nx Graph artifacts
+static/
+graph.html

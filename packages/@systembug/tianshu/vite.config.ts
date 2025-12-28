@@ -35,7 +35,7 @@ export default defineConfig({
                 "js-yaml",
                 "glob",
                 "lodash",
-                "@systembug/logger",
+                "@systembug/diting",
                 "@zouwu-wf/workflow",
                 "@zouwu-wf/expression-parser",
             ],

@@ -59,7 +59,6 @@ module.exports = {
                         ],
                         "@zouwu-wf/workflow/*": ["../../packages/@zouwu-wf/workflow/src/*"],
                         "@zouwu-wf/workflow": ["../../packages/@zouwu-wf/workflow/src/index"],
-                        "@systembug/logger": ["../../packages/@systembug/logger/src/index"],
                     },
                     typeRoots: ["node_modules/@types", "test"],
                 },
@@ -93,7 +92,6 @@ module.exports = {
             "<rootDir>/../../packages/@zouwu-wf/workflow/src/runtime/index",
         "^@zouwu-wf/workflow/(.*)$": "<rootDir>/../../packages/@zouwu-wf/workflow/src/$1",
         "^@zouwu-wf/workflow$": "<rootDir>/../../packages/@zouwu-wf/workflow/src/index",
-        "^@systembug/logger$": "<rootDir>/../../packages/@systembug/logger/src/index",
     },
 
     // 测试超时设置

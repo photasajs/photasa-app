@@ -409,7 +409,7 @@ steps:
 
 - `apps/desktop` -> `@zouwu-wf/workflow` (Types, Validators)
 - `apps/desktop` -> `@zouwu-wf/expression-parser` (Expression Evaluation)
-- `apps/desktop` -> `@systembug/logger` (Logging)
+- `apps/desktop` -> `@systembug/diting` (Logging)
 
 ### Phase 5: CLI工具 (计划中)
 
