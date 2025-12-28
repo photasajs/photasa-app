@@ -1,4 +1,4 @@
-import type { PhotasaConfig } from "@common/config-types";
+import type { PhotasaConfig } from "@photasa/common";
 
 interface CacheEntry {
     manifest: PhotasaConfig;

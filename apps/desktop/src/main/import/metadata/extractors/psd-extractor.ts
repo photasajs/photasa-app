@@ -1,8 +1,8 @@
 import path from "path";
 import { readFile } from "fs-extra";
 import { readPsd } from "ag-psd";
-import type { PhotasaLogger } from "@common/logger";
-import type { FileMetadata } from "@common/import-types";
+import type { PhotasaLogger } from "@photasa/common";
+import type { FileMetadata } from "@photasa/common";
 
 /**
  * PSD文件元数据接口

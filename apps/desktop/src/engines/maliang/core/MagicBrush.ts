@@ -3,7 +3,7 @@
  * 每支神笔的基本能力定义
  */
 
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import type {
     PaintOperation,
     ThumbnailOptions,

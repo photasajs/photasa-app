@@ -24,7 +24,7 @@ jest.mock("os", () => {
 });
 
 // Mock logger
-jest.mock("@common/logger", () => ({
+jest.mock("@photasa/common", () => ({
     loggers: {
         taiyi: {
             info: jest.fn(),

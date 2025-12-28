@@ -274,7 +274,7 @@ import {
 } from "@phosphor-icons/vue";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 // ✅ RFC 0058: 使用服务而不是直接 API 调用
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 // 定义组件属性
 interface PhotasaInfo {

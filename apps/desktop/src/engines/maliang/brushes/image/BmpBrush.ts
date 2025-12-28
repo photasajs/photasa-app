@@ -22,7 +22,7 @@
  * @since 1.0.0
  */
 
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import type {
     Metadata,
     ThumbnailOptions,

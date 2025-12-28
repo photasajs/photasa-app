@@ -9,7 +9,7 @@
  * - 可测试：逻辑独立，易于单元测试
  */
 import { isEmpty, set, get, isObject, isString } from "radash";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.fangxuanling;
 

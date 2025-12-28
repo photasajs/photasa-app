@@ -9,7 +9,7 @@
  */
 
 import { BuiltinAdapter } from "../BuiltinAdapter";
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 
 describe("BuiltinAdapter - return操作类型验证", () => {
     let adapter: BuiltinAdapter;

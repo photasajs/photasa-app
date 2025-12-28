@@ -8,7 +8,7 @@ import { TaiyiEngine } from "../core/TaiyiEngine";
 import { EngineCallResult } from "../../workflow";
 
 // Mock logger
-jest.mock("@common/logger", () => ({
+jest.mock("@photasa/common", () => ({
     loggers: {
         taiyi: {
             info: jest.fn(),

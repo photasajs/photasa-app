@@ -24,7 +24,7 @@ vi.mock("@renderer/utils/path", () => ({
     }),
 }));
 
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         chusuiliang: {
             debug: vi.fn(),

@@ -3,9 +3,9 @@
  * 定义统一Store API的标准接口，避免直接依赖具体实现
  */
 
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
-import type { MenuItemData } from "@common/menu-types";
+import type { MenuItemData } from "@photasa/common";
 
 export interface IBaseStore {
     reset(): void;

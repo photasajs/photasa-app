@@ -11,8 +11,8 @@ import {
     ScanProgress,
     ScanStatus,
 } from "../qianliyan/core/QianliyanEngine";
-import type { ScanAction } from "@common/scan-types";
-import { loggers } from "@common/logger";
+import type { ScanAction } from "@photasa/common";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.qianliyan;
 

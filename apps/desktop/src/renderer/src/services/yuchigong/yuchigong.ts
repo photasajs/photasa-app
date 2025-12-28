@@ -12,9 +12,9 @@ import {
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 // ✅ RFC 0048 v3 Phase 4: QizouMatters 导入已删除（随persistToStore()一起删除）
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { normalizePath } from "@renderer/utils/path";
 import {
     calculateTaskAge,

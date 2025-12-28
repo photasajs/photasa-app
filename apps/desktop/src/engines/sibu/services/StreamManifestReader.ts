@@ -3,8 +3,8 @@ import { promises as fsp } from "fs";
 import Assembler from "stream-json/Assembler";
 import { chain } from "stream-chain";
 import { parser } from "stream-json";
-import type { PhotasaConfig } from "@common/config-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaConfig } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 import { createEmptyManifest, normalizeManifest } from "../support/manifest-normalizer";
 
 export class StreamManifestReader {

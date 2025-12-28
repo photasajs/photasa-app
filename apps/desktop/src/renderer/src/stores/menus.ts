@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { SystemMenus } from "@renderer/components/common/menu-data";
-import type { MenuItemData } from "@common/menu-types";
+import type { MenuItemData } from "@photasa/common";
 
 // 递归深拷贝 SystemMenus，并将 label 国际化
 function cloneMenus(menus: readonly MenuItemData[], t: (key: string) => string): MenuItemData[] {

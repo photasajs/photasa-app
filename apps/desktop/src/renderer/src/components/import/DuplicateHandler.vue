@@ -327,7 +327,7 @@ import {
     PhLightbulb as BulbOutlined,
     PhWarning as WarningOutlined,
 } from "@phosphor-icons/vue";
-import type { DuplicateFileInfo, DuplicateStrategy, FileComparison } from "@common/import-types";
+import type { DuplicateFileInfo, DuplicateStrategy, FileComparison } from "@photasa/common";
 import {
     BaseButton,
     BaseTag,

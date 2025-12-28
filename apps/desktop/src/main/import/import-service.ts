@@ -2,7 +2,7 @@ import createWorker from "./import-worker?nodeWorker";
 import type { IpcMain } from "electron";
 import { dialog, app } from "electron";
 import { getAppPath } from "@shared/path-util";
-import type { WorkerResponse } from "@common/types";
+import type { WorkerResponse } from "@photasa/common";
 import {
     sendWorkerTask,
     onWorkerResponse,
@@ -10,9 +10,9 @@ import {
     Worker,
     type ProgressEvent,
     type PreviewProgressEvent,
-} from "@common/worker-util";
-import { loggers } from "@common/logger";
-import { ImportEvents } from "@common/constants";
+} from "@photasa/common";
+import { loggers } from "@photasa/common";
+import { ImportEvents } from "@photasa/common";
 import { importHistoryManager } from "./history-manager";
 import type {
     ImportRequest,
@@ -30,7 +30,7 @@ import type {
     ScanDirectoriesRequest,
     ImportSession,
     EnhancedImportCallback,
-} from "@common/import-types";
+} from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
 

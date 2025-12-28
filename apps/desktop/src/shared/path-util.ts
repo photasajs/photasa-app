@@ -1,6 +1,6 @@
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
-import { PHOTASA_ORIGINALS } from "@common/utils";
+import { PHOTASA_ORIGINALS } from "@photasa/common";
 import fs from "fs";
 
 /**

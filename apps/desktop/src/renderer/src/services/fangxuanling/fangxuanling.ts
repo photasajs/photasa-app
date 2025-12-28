@@ -24,7 +24,7 @@ import {
     ZOUZHE_MATTERS,
 } from "../../interfaces/fang-xuan-ling.interface";
 import { usePreferenceStore } from "../../stores/preference";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { loadMatterSyncConfig, type MatterSyncMetadata, getStoreByPath } from "./store-automation";
 import { syncStoreWithSnapshot } from "./store-automation/store-sync-utils";
 import {

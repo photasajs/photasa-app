@@ -4,7 +4,7 @@
  */
 
 import { App, BrowserWindow, IpcMain } from "electron";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { ServiceRegistry } from "./core/service-registry";
 import { serviceConfig } from "./config/service-config";
 import { serviceFactories } from "./factories/service-factories";

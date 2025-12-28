@@ -10,7 +10,7 @@ import {
     createStrategyErrorHandlers,
 } from "../strategy/scan-strategy";
 import { ScanStrategy } from "../cache/folder-cache-manager";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock external dependencies
 jest.mock("fs-extra");

@@ -20,7 +20,7 @@ import {
     DEFAULT_THUMBNAIL_WORKER_CONFIG,
     WorkerPoolManager,
 } from "../pool-manager";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock thumbnail-worker?nodeWorker - Vitest可以正确处理Vite的查询参数
 vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => {

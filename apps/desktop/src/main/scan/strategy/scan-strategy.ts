@@ -13,7 +13,7 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { PhotasaLogger } from "@common/logger";
+import { PhotasaLogger } from "@photasa/common";
 import { getPhotasaConfig } from "../../config/config-storage";
 import {
     computeFolderHash,

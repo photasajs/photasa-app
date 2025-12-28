@@ -3,7 +3,7 @@ import { IQinQiongService } from "@renderer/interfaces/qin-qiong.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
 const logger = loggers.qinqiong;

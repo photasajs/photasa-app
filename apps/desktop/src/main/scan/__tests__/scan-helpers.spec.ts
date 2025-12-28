@@ -12,8 +12,8 @@ import {
     isDirectoryScan,
     createSubscriptionHandlers,
 } from "../scan-helpers";
-import type { ScanAction, PhotoFileRequest } from "@common/scan-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { ScanAction, PhotoFileRequest } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock external dependencies
 jest.mock("fs-extra");

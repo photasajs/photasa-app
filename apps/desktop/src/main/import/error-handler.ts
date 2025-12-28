@@ -1,5 +1,5 @@
-import { getLogger } from "@common/logger";
-import type { ImportError, ErrorCategory, ErrorSeverity } from "@common/import-types";
+import { getLogger } from "@photasa/common";
+import type { ImportError, ErrorCategory, ErrorSeverity } from "@photasa/common";
 
 const logger = getLogger("import-error");
 

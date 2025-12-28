@@ -11,7 +11,7 @@ import VueVideoPlayer from "@videojs-player/vue";
 import { i18n } from "./i18n/config";
 
 import { LishiminService, LISSHIMING_TOKEN } from "./services";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.app;
 

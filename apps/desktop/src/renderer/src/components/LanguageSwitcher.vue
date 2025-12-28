@@ -5,7 +5,7 @@ import { i18nUtils, type Locale } from "../i18n/config";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import { useI18n } from "vue-i18n";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const zhangSunWuJi = useZhangSunWuJi();
 const { t } = useI18n();

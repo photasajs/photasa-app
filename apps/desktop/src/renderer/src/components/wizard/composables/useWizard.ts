@@ -1,6 +1,6 @@
 import { ref, computed, reactive } from "vue";
 import type { WizardConfig, WizardState, WizardStep } from "../types";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.renderer;
 

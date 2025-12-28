@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import { exists, remove, access } from "fs-extra";
 
 /**

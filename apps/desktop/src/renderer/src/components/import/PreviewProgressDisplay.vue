@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PreviewProgress } from "@common/import-types";
+import type { PreviewProgress } from "@photasa/common";
 
 interface Props {
     progress: PreviewProgress;

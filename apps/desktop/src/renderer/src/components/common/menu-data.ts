@@ -1,4 +1,4 @@
-import type { MenuItemData } from "@common/menu-types";
+import type { MenuItemData } from "@photasa/common";
 
 export const SystemMenus: readonly MenuItemData[] = Object.freeze([
     // macOS 专属 appMenu

@@ -1,11 +1,11 @@
 import { Glob } from "glob";
 import path from "path";
 import { removeFromPhotoList, addToPhotasaConfig } from "./config-storage";
-import type { PhotasaConfigResult } from "@common/config-types";
+import type { PhotasaConfigResult } from "@photasa/common";
 import { Observable, Subscriber, from, mergeMap } from "rxjs";
-import { FileSystemError, ConfigError, handleError } from "@common/error-handler";
-import type { ConfigRequest } from "@common/config-types";
-import { PhotasaLogger } from "@common/logger";
+import { FileSystemError, ConfigError, handleError } from "@photasa/common";
+import type { ConfigRequest } from "@photasa/common";
+import { PhotasaLogger } from "@photasa/common";
 
 function globPhotasaConfigFromFolders(folder: string, logger: PhotasaLogger): Observable<string> {
     const pattern = `**/*.photasa.json`;

@@ -17,7 +17,7 @@ vi.mock("chokidar", () => ({
     },
 }));
 
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         watch: {
             info: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock("@common/logger", () => ({
     },
 }));
 
-vi.mock("@common/file-operation-utils", () => ({
+vi.mock("@photasa/common", () => ({
     createFileOperation: vi.fn((type, path, isFile, thumbnailSize) => ({
         id: `mock-id-${Date.now()}`,
         type,
@@ -151,7 +151,7 @@ describe("WatchService Integration Tests", () => {
         });
 
         it("should use adaptive debounce based on event load", async () => {
-            const { calculateDebounceTime } = await import("@common/file-operation-utils");
+            const { calculateDebounceTime } = await import("@photasa/common");
 
             // Simulate high load scenario
             for (let i = 0; i < 1500; i++) {
@@ -195,7 +195,7 @@ describe("WatchService Integration Tests", () => {
 
     describe("Priority System", () => {
         it("should assign correct priorities to different event types", async () => {
-            const { createFileOperation } = await import("@common/file-operation-utils");
+            const { createFileOperation } = await import("@photasa/common");
 
             const handleFileEvent = (watchService as any).handleFileEvent;
 

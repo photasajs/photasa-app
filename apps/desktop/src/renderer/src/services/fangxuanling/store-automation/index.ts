@@ -5,7 +5,7 @@
  * 实现Store自动同步的配置驱动机制
  */
 
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import matterSyncYaml from "./matter-sync.yml";
 
 const logger = loggers.fangxuanling;

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { extractMetadata } from "../import-handler";
-import type { MetadataRequest } from "@common/import-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { MetadataRequest } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 import path from "path";
 import fs from "fs-extra";
 

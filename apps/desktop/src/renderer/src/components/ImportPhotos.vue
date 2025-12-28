@@ -35,7 +35,7 @@
 import { computed, ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { chooseDirectories, previewImport, onPreviewProgress } from "@renderer/utils/api";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 import {
     createDefaultFilters,
     addSourceDirectories,
@@ -54,7 +54,7 @@ import {
 } from "@renderer/utils/import-wizard-helpers";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import { DuplicateStrategies, FileTypeDetectors } from "@common/constants";
+import { DuplicateStrategies, FileTypeDetectors } from "@photasa/common";
 import {
     PhTrash as TrashIcon,
     PhPlus as PlusIcon,
@@ -78,7 +78,7 @@ import { BaseWizard, createWizardStep, createWizardConfig } from "@renderer/comp
 import VirtualList from "@renderer/components/ui/VirtualList.vue";
 import ImportProgressModal from "./ImportProgressModal.vue";
 import PreviewProgressDisplay from "./import/PreviewProgressDisplay.vue";
-import type { ImportConfig, ImportResult, PreviewProgress } from "@common/import-types";
+import type { ImportConfig, ImportResult, PreviewProgress } from "@photasa/common";
 
 /**
  * Component Props Definition

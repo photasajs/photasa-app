@@ -1,5 +1,5 @@
 import type { BrowserWindow } from "electron";
-import type { NotifyPayload } from "@common/types";
+import type { NotifyPayload } from "@photasa/common";
 
 /**
  * 通用 notify 状态推送工具

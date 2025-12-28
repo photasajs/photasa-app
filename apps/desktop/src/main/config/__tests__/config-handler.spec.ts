@@ -1,7 +1,7 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
 import * as configHandler from "../config-handler";
-import type { PhotasaLogger } from "@common/logger";
-import { ConfigRequest } from "@common/config-types";
+import type { PhotasaLogger } from "@photasa/common";
+import { ConfigRequest } from "@photasa/common";
 
 // 创建mock函数
 const mockAddToPhotasaConfig = jest.fn() as jest.MockedFunction<

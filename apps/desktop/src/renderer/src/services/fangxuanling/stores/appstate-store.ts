@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 
 /**
  * 应用状态接口

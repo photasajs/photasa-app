@@ -26,12 +26,12 @@ import { useScanningStore } from "../stores/scanning-store";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { useStatusBarStore } from "@renderer/stores/statusBar";
 import { useMenusStore } from "@renderer/stores/menus";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { NotificationConfig } from "@renderer/types/notification";
 import { useAppStateStore } from "../stores/appstate-store";
-import type { FolderNode } from "@common/folder-types";
-import type { NotifyPayload } from "@common/types";
+import type { FolderNode } from "@photasa/common";
+import type { NotifyPayload } from "@photasa/common";
 const logger = loggers.fangxuanling;
 
 /**

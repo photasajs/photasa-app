@@ -1,17 +1,17 @@
 import { readChunk } from "read-chunk";
 import imageType, { minimumBytes } from "image-type";
 import { electronAPI } from "@electron-toolkit/preload";
-import type { ImageInfo, ImageTypeResult } from "@common/types";
-import type { FileMetadata, DateSource } from "@common/import-types";
-import type { ThumbnailRequest } from "@common/thumbnail-types";
+import type { ImageInfo, ImageTypeResult } from "@photasa/common";
+import type { FileMetadata, DateSource } from "@photasa/common";
+import type { ThumbnailRequest } from "@photasa/common";
 import { getExifInfo } from "./exif-helper";
-import { extractDateTimeFromExif, EXIF_DATE_FIELDS } from "@common/exif-util";
+import { extractDateTimeFromExif, EXIF_DATE_FIELDS } from "@photasa/common";
 import isVideo from "is-video";
 import isImage from "is-image";
-import { ThumbnailServiceAction } from "@common/thumbnail-types";
+import { ThumbnailServiceAction } from "@photasa/common";
 import fs from "fs-extra";
 import path from "path";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { normalizePath } from "@shared/path-util";
 
 const { ipcRenderer } = electronAPI;

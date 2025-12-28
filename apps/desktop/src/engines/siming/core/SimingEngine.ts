@@ -15,8 +15,8 @@
 import { join } from "path";
 import { homedir } from "os";
 import { writeFile, readFile, mkdir } from "fs/promises";
-import { loggers } from "@common/logger";
-import type { FolderNode } from "@common/folder-types";
+import { loggers } from "@photasa/common";
+import type { FolderNode } from "@photasa/common";
 
 const logger = loggers.siming;
 

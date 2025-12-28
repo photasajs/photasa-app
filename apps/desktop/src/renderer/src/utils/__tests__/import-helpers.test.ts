@@ -17,7 +17,7 @@ import {
     createInitialFilePreviewState,
     validateImportConfig,
 } from "../import-helpers";
-import type { ImportFilters, FileGroup, ImportConfig } from "@common/import-types";
+import type { ImportFilters, FileGroup, ImportConfig } from "@photasa/common";
 
 describe("import-helpers", () => {
     describe("createDefaultFilters", () => {

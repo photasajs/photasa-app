@@ -1,4 +1,4 @@
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { validateServiceConfig, serviceConfig, sortServicesByDependency } from "./service-config";
 
 const logger = loggers.main;

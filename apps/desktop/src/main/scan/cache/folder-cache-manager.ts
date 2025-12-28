@@ -14,7 +14,7 @@
 import fs from "fs-extra";
 import path from "path";
 import crypto from "crypto";
-import { PhotasaLogger } from "@common/logger";
+import { PhotasaLogger } from "@photasa/common";
 import isImage from "is-image";
 import isVideo from "is-video";
 

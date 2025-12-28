@@ -8,10 +8,10 @@
 import fs from "fs-extra";
 import path from "path";
 import { Subscriber as _Subscriber } from "rxjs";
-import type { ScanAction, PhotoFileRequest } from "@common/scan-types";
-import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
+import type { ScanAction, PhotoFileRequest } from "@photasa/common";
+import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
 import { WorkerPool } from "../workers/worker-pool";
-import { PhotasaLogger } from "@common/logger";
+import { PhotasaLogger } from "@photasa/common";
 import { addToPhotasaConfig } from "../config/config-storage";
 import { buildThumbnailPath } from "@shared/path-util";
 

@@ -1,5 +1,5 @@
-import { loggers } from "@common/logger";
-import { getDeduplicationWindow } from "@common/file-operation-utils";
+import { loggers } from "@photasa/common";
+import { getDeduplicationWindow } from "@photasa/common";
 import type { FileObservation, ObservationListener, WatchEventKind } from "./types";
 
 const logger = loggers.shunfenger;

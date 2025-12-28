@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "events";
 import UpdateService from "../update-service";
-import type { AutoUpdateConfig } from "@common/update-types";
+import type { AutoUpdateConfig } from "@photasa/common";
 import { autoUpdater } from "electron-updater";
 
 // Mock electron-updater
@@ -20,7 +20,7 @@ vi.mock("electron-updater", () => ({
 }));
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         update: {
             info: vi.fn(),

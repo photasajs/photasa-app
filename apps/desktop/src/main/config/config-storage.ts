@@ -7,13 +7,13 @@
 
 import fs from "fs/promises";
 import path from "path";
-import type { PhotasaConfig, PhotasaConfigResult } from "@common/config-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaConfig, PhotasaConfigResult } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 import { shortenThumbnailName } from "@shared/path-util";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
 // import { debounce } from "lodash"; // Temporarily removed for debugging
-import { FileSystemError, ConfigError, handleError, retryOperation } from "@common/error-handler";
+import { FileSystemError, ConfigError, handleError, retryOperation } from "@photasa/common";
 import { CACHE_TTL, configCache } from "./config-cache";
 import { toRelativeThumbnailPath, toFileName } from "@shared/path-util";
 import { SibuEngine } from "@sibu";

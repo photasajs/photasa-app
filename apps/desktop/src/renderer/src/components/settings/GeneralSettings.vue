@@ -12,7 +12,7 @@ import {
     isPathSafe,
     detectPathType,
 } from "@renderer/services/chusuiliang/path-utils";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.lishimin;
 

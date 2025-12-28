@@ -1,4 +1,4 @@
-import type { FileOperation, ScanAction } from "@common/scan-types";
+import type { FileOperation, ScanAction } from "@photasa/common";
 
 export type WatchEventKind =
     | "add"

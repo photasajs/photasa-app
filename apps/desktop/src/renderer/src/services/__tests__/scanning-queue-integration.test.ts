@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction } from "@photasa/common";
 import { createPinia, setActivePinia } from "pinia";
 import { FangXuanLingService } from "../fangxuanling/fangxuanling";
 import { YuanTianGangService } from "../yuantiangang";

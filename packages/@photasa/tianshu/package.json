@@ -1,5 +1,5 @@
 {
-    "name": "@systembug/tianshu",
+    "name": "@photasa/tianshu",
     "version": "1.0.0",
     "description": "Tianshu Workflow Runtime Engine",
     "main": "./dist/index.js",

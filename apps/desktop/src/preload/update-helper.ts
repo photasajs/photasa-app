@@ -1,5 +1,5 @@
 import { electronAPI } from "@electron-toolkit/preload";
-import type { AutoUpdateConfig } from "@common/update-types";
+import type { AutoUpdateConfig } from "@photasa/common";
 
 const { ipcRenderer } = electronAPI;
 

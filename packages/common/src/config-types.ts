@@ -1,4 +1,4 @@
-import { PhotasaLogger } from "@common/logger";
+import { PhotasaLogger } from "./logger";
 
 /**
  * 照片动作

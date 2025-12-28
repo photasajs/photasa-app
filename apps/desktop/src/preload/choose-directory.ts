@@ -1,5 +1,5 @@
 import { electronAPI } from "@electron-toolkit/preload";
-import type { DirectorySelection, PathName } from "@common/types";
+import type { DirectorySelection, PathName } from "@photasa/common";
 
 const { ipcRenderer } = electronAPI;
 

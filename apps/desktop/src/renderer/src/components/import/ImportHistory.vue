@@ -314,8 +314,8 @@ import {
 } from "@phosphor-icons/vue";
 import { BaseButton, BaseInput, BaseSelect, BaseModal } from "@renderer/components/ui";
 import { getImportHistory, undoImport } from "@renderer/utils/api";
-import type { ImportHistory, UndoPreview } from "@common/import-types";
-import { getLogger } from "@common/logger";
+import type { ImportHistory, UndoPreview } from "@photasa/common";
+import { getLogger } from "@photasa/common";
 import path from "path";
 
 const logger = getLogger("import-history");

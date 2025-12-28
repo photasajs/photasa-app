@@ -5,9 +5,9 @@
  * including validation, data transformation, and configuration management.
  */
 
-import type { ImportConfig, DuplicateStrategy, ImportFilters } from "@common/import-types";
+import type { ImportConfig, DuplicateStrategy, ImportFilters } from "@photasa/common";
 import { createDefaultFilters } from "./import-helpers";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 
 const logger = getLogger("import-wizard-helpers");
 

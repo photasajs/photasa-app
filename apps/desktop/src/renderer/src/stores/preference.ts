@@ -2,9 +2,9 @@ import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { cleanupScanQueue } from "@renderer/utils/api";
-import type { PhotasaConfig } from "@common/config-types";
-import type { FileOperationInput } from "@common/scan-types";
-import type { ThumbnailRequest } from "@common/thumbnail-types";
+import type { PhotasaConfig } from "@photasa/common";
+import type { FileOperationInput } from "@photasa/common";
+import type { ThumbnailRequest } from "@photasa/common";
 import { addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
 import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 import { toDirName } from "@renderer/utils/api-path";
@@ -17,8 +17,8 @@ import {
     debugPrintScanningFolders,
 } from "@renderer/utils/scan-priority";
 
-import { loggers } from "@common/logger";
-import { FolderNode } from "@common/folder-types";
+import { loggers } from "@photasa/common";
+import { FolderNode } from "@photasa/common";
 // 获取logger实例
 const logger = loggers.fangxuanling;
 

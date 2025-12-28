@@ -13,10 +13,10 @@
  */
 
 import { WorkerPool } from "../../workers/worker-pool";
-import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
+import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
 import type { WorkerOptions } from "worker_threads";
 import type { Worker as NodeWorker } from "worker_threads";
-import { PhotasaLogger } from "@common/logger";
+import { PhotasaLogger } from "@photasa/common";
 import { cpus } from "os";
 import createWorker from "../../thumbnail/thumbnail-worker?nodeWorker";
 

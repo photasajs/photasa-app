@@ -19,7 +19,7 @@
 import { inject } from "vue";
 import { YU_CHI_GONG_TOKEN } from "../interfaces/yu-chi-gong.interface";
 import type { IYuChiGongService } from "../interfaces/yu-chi-gong.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.yuchigong;
 

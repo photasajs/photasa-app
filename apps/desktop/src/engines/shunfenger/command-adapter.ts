@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { FileOperation, ScanAction } from "@common/scan-types";
+import type { FileOperation, ScanAction } from "@photasa/common";
 import type { FileObservation, ShunfengerCommand, CommandDispatcher, WatchProfile } from "./types";
 
 export interface CommandAdapterOptions {

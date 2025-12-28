@@ -19,8 +19,8 @@ import { type IpcMain, BrowserWindow, app } from "electron";
 import path from "path";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
-import { TianshuEngine } from "@systembug/tianshu";
-import { loggers } from "@common/logger";
+import { TianshuEngine } from "@photasa/tianshu";
+import { loggers } from "@photasa/common";
 import type TaiyiService from "./taiyi-service";
 import { IStepExecutor } from "@engines/common/interfaces";
 

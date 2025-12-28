@@ -6,7 +6,7 @@
  * @deprecated 此模块将在 RFC 0048 v3 中被移除，因为优先级管理已被状态机制取代
  */
 
-import type { FileOperationInput } from "@common/scan-types";
+import type { FileOperationInput } from "@photasa/common";
 
 /**
  * 优先级规则配置

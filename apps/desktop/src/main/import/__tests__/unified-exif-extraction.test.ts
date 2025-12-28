@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractDateTimeFromExif } from "@common/exif-util";
+import { extractDateTimeFromExif } from "@photasa/common";
 
 // Import the processors and functions we want to test
 // Note: These are internal classes/functions, so we'll need to access them through the module

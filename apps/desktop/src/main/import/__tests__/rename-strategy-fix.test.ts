@@ -9,7 +9,7 @@ import path from "path";
 import { tmpdir } from "os";
 import { RenameDuplicateHandler } from "../duplicate-handler";
 // import { performFileImport } from "../import-worker"; // Not exported
-// import type { FileGroup, ImportConfig } from "@common/import-types";
+// import type { FileGroup, ImportConfig } from "@photasa/common";
 
 describe("Rename Strategy Fix", () => {
     let tempDir: string;

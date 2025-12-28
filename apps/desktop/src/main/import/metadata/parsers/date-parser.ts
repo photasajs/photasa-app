@@ -1,4 +1,4 @@
-import { DateSources } from "@common/constants";
+import { DateSources } from "@photasa/common";
 
 /**
  * 验证日期是否有效

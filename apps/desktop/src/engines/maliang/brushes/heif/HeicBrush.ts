@@ -8,12 +8,12 @@ import path from "path";
 import sharp from "sharp";
 import ExifReader from "exifreader";
 import { initializeHeifModule } from "@main/wasm/heif-module";
-import { extractDateTimeFromExif } from "@common/exif-util";
+import { extractDateTimeFromExif } from "@photasa/common";
 import { extractGPSInfo } from "@main/import/metadata/parsers/gps-parser";
 import { extractCameraInfo } from "@main/import/metadata/parsers/camera-parser";
 import { BaseMagicBrush } from "../../core/MagicBrush";
 
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import type { Metadata, ThumbnailOptions, PaintOperation } from "../../types/BrushTypes";
 
 /**

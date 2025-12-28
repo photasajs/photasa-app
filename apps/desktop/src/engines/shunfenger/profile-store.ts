@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import type { WatchProfile } from "./types";
 
 const logger = loggers.shunfenger;

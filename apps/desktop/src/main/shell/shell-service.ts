@@ -1,4 +1,4 @@
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import type { BrowserWindow, IpcMain } from "electron";
 import { shell } from "electron";
 import { Service } from "@main/tianting/decorators/service-decorators";

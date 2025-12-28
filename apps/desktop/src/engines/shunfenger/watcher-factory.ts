@@ -1,5 +1,5 @@
 import chokidar, { type FSWatcher, type WatchOptions } from "chokidar";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.shunfenger;
 

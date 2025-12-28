@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import { readFile } from "fs-extra";
 import path from "path";
 import { isPsdFile, extractPsdMetadata } from "../psd-extractor";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock logger for integration test
 const mockLogger: PhotasaLogger = {

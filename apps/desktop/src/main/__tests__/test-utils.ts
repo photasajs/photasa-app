@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 /**
  * 创建测试用的Logger对象

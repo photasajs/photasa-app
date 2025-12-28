@@ -10,7 +10,7 @@ import fs from "fs-extra";
 import path from "path";
 import os from "os";
 import { restoreCachedFiles } from "../scan-helpers";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import { Subscriber } from "rxjs";
 // Mock buildThumbnailPath
 import { buildThumbnailPath } from "@shared/path-util";

@@ -8,7 +8,7 @@ import {
     ImportProgress,
     ImportResult,
     ImportError,
-} from "../../common/import-types";
+} from "@photasa/common";
 import { ImportErrorHandler } from "./error-handler";
 
 /**

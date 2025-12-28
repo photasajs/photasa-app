@@ -1,9 +1,9 @@
 import createWorker from "./scan-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
-import type { ScanAction } from "@common/scan-types";
-import { loggers } from "@common/logger";
+import type { ScanAction } from "@photasa/common";
+import { loggers } from "@photasa/common";
 import { notifyStatus } from "./status/notify";
-import type { NotifyPayload } from "@common/types";
+import type { NotifyPayload } from "@photasa/common";
 import { getAppPath } from "@shared/path-util";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";

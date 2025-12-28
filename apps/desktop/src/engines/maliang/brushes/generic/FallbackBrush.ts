@@ -8,7 +8,7 @@ import path from "path";
 import sharp from "sharp";
 import { BaseMagicBrush } from "../../core/MagicBrush";
 
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import type { Metadata, ThumbnailOptions, PaintOperation } from "../../types/BrushTypes";
 
 /**

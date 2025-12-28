@@ -19,7 +19,7 @@
 import { inject } from "vue";
 import { WEI_ZHENG_TOKEN } from "../interfaces/wei-zheng.interface";
 import type { IWeiZhengService } from "../interfaces/wei-zheng.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.weizheng;
 

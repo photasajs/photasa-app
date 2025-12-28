@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { processFileGroup } from "../import-handler";
-import type { FileGroup, FileInfo } from "@common/import-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { FileGroup, FileInfo } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 
 const mockLogger: PhotasaLogger = {
     debug: () => {},

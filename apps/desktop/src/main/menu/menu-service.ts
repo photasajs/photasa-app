@@ -1,7 +1,7 @@
 import { Menu } from "electron";
 import type { IpcMain, BrowserWindow as TBrowserWindow } from "electron";
-import { loggers } from "@common/logger";
-import type { MenuItemData } from "@common/menu-types";
+import { loggers } from "@photasa/common";
+import type { MenuItemData } from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
 

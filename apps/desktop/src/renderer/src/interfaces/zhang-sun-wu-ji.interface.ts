@@ -18,7 +18,7 @@
 
 import type { InjectionKey } from "vue";
 import type { Emitter } from "mitt";
-import type { MenuItemData } from "@common/menu-types";
+import type { MenuItemData } from "@photasa/common";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 
 /**

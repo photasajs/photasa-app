@@ -21,7 +21,7 @@
 import path from "path";
 import os from "os";
 import type { FSWatcher } from "chokidar";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import type {
     CommandDispatcher,
     EngineEventListener,

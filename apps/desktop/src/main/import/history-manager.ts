@@ -2,7 +2,7 @@ import { app } from "electron";
 import * as fs from "fs-extra";
 import * as path from "path";
 import * as crypto from "crypto";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 import type {
     ImportResult,
     ImportHistory,
@@ -10,8 +10,8 @@ import type {
     ImportHistoryEntry,
     FileImportInfo,
     UndoPreview,
-} from "@common/import-types";
-import type { PhotasaConfig } from "@common/config-types";
+} from "@photasa/common";
+import type { PhotasaConfig } from "@photasa/common";
 
 const logger = getLogger("import-history");
 

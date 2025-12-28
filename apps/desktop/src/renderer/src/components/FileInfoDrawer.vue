@@ -214,7 +214,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import type { FileMetadata } from "@common/import-types";
+import type { FileMetadata } from "@photasa/common";
 import { JsonTreeView } from "json-tree-view-vue3";
 import { BaseDrawer, BaseSpinContainer } from "@renderer/components/ui";
 import { PhImage, PhVideoCamera, PhInfo, PhClock, PhGear, PhCode } from "@phosphor-icons/vue";

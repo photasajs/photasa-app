@@ -13,7 +13,7 @@ import {
     ZHANG_SUN_WU_JI_TOKEN,
     type MenuActionPayload,
 } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
-import type { MenuItemData } from "@common/menu-types";
+import type { MenuItemData } from "@photasa/common";
 
 /**
  * 长孙无忌服务 Composable

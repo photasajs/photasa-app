@@ -19,7 +19,7 @@ import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useChuSuiLiang, type ThemeMeta } from "@renderer/composables/useChuSuiLiang";
 import ThemePreviewBox from "./ThemePreviewBox.vue";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 /**
  * 日志记录器

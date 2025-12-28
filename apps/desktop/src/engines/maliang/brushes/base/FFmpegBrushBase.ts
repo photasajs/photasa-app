@@ -20,7 +20,7 @@ import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
 import { ensureDir, exists, remove } from "fs-extra";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import { BaseMagicBrush } from "../../core/MagicBrush";
 import type {
     ThumbnailOptions,

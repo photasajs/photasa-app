@@ -84,8 +84,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
-import type { LogEntry } from "@common/logger";
-import { globalLogInterceptor } from "@common/logger";
+import type { LogEntry } from "@photasa/common";
+import { globalLogInterceptor } from "@photasa/common";
 import BaseSelect from "./ui/BaseSelect.vue";
 
 const { t } = useI18n();

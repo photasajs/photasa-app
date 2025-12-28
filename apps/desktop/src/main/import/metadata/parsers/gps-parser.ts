@@ -1,4 +1,4 @@
-import type { GPSInfo } from "@common/import-types";
+import type { GPSInfo } from "@photasa/common";
 
 /**
  * 解析GPS坐标字符串为十进制度数

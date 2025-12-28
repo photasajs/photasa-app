@@ -123,11 +123,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, reactive } from "vue";
 import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
-import { QueueMonitoringUtils } from "@common/queue-monitoring-types";
-import type { MetricCardConfig } from "@common/queue-monitoring-types";
+import { QueueMonitoringUtils } from "@photasa/common";
+import type { MetricCardConfig } from "@photasa/common";
 import BaseMetricsCard from "./BaseMetricsCard.vue";
 import QueueChart from "./QueueChart.vue";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { PhChartBar, PhGear } from "@phosphor-icons/vue";
 
 const logger = loggers.app;

@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { computed, type PropType } from "vue";
-import type { MetricCardConfig } from "@common/queue-monitoring-types";
+import type { MetricCardConfig } from "@photasa/common";
 
 // Import Phosphor Icons for consistency
 import { PhTrendUp, PhTrendDown, PhMinus } from "@phosphor-icons/vue";

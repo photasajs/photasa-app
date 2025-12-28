@@ -25,11 +25,11 @@ import isImage from "is-image";
 import isVideo from "is-video";
 import fs from "fs-extra";
 import path from "path";
-import { shouldIgnorePhotasaPath } from "@common/utils";
+import { shouldIgnorePhotasaPath } from "@photasa/common";
 import { buildThumbnailPath, isHiddenFile } from "@shared/path-util";
-import type { ScanAction, PhotoFileRequest } from "@common/scan-types";
+import type { ScanAction, PhotoFileRequest } from "@photasa/common";
 
-import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
+import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
 import type { WorkerPool } from "../workers/worker-pool";
 import {
     processPhotoFile,
@@ -44,7 +44,7 @@ import {
     shouldProcessFile,
     decideScanStrategy,
 } from "./strategy/scan-strategy";
-import { loggers, PhotasaLogger } from "@common/logger";
+import { loggers, PhotasaLogger } from "@photasa/common";
 import { getWorkerPool } from "./worker/pool-manager";
 
 const logger = loggers.scan;

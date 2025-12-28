@@ -1,9 +1,9 @@
 import { parentPort } from "worker_threads";
 import { createThumbnail, removeThumbnail } from "./thumbnail-handler";
-import { loggers } from "@common/logger";
-import { createResponse } from "@common/worker-util";
-import type { WorkerMessage } from "@common/types";
-import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
+import { loggers } from "@photasa/common";
+import { createResponse } from "@photasa/common";
+import type { WorkerMessage } from "@photasa/common";
+import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
 
 const logger = loggers.thumbnail;
 

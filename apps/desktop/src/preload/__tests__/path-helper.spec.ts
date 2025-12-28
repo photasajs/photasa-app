@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { toFullPath, ensureDir } from "../path-helper";
 import { vol } from "memfs";
-import type { FileAction } from "@common/types";
+import type { FileAction } from "@photasa/common";
 import { firstValueFrom } from "rxjs";
 import path from "path";
 import * as pathHelper from "../path-helper";

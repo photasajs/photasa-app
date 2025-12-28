@@ -1,6 +1,6 @@
 import { ref, computed, type Ref } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.scan;
 

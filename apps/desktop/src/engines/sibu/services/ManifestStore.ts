@@ -1,7 +1,7 @@
 import path from "path";
 import { promises as fsp } from "fs";
-import type { PhotasaConfig } from "@common/config-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaConfig } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 import { StreamManifestReader } from "./StreamManifestReader";
 import { createEmptyManifest, normalizeManifest } from "../support/manifest-normalizer";
 

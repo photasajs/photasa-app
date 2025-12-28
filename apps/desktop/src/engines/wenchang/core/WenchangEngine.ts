@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.wenchang;
 

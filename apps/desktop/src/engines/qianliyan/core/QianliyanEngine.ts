@@ -14,8 +14,8 @@ import { EventEmitter } from "events";
 import { join } from "path";
 import { homedir } from "os";
 import { writeFile, readFile, mkdir } from "fs/promises";
-import { loggers } from "@common/logger";
-import type { ScanAction } from "@common/scan-types";
+import { loggers } from "@photasa/common";
+import type { ScanAction } from "@photasa/common";
 
 const logger = loggers.qianliyan;
 

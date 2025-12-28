@@ -1,5 +1,5 @@
 import { createThumbnailTask } from "@renderer/utils/api";
-import type { PhotasaConfig } from "@common/config-types";
+import type { PhotasaConfig } from "@photasa/common";
 import { toImage } from "@renderer/common/image";
 import { defaultTo, map, pipe } from "ramda";
 

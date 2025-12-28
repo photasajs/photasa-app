@@ -3,7 +3,7 @@
  * 统一的图像处理引擎，管理所有神笔并提供统一的处理接口
  */
 
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import type {
     PaintRequest,
     PaintResult,

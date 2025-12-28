@@ -2,7 +2,7 @@
 import { ref, watch, reactive, computed } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import type { PhotasaConfig } from "@common/config-types";
+import type { PhotasaConfig } from "@photasa/common";
 import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
 import { isEmpty } from "radash";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
@@ -17,7 +17,7 @@ import {
 import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
 import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
 

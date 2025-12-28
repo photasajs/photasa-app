@@ -22,7 +22,7 @@ import { ZhangSunWuJiService } from "@renderer/services/zhangsunwuji";
 import { DuRuHuiService } from "@renderer/services/duruhui";
 import { QiZouRouter } from "./router";
 
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 const logger = loggers.lishimin;
 
 /**

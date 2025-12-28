@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.app;
 

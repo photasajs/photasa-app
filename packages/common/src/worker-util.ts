@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type { WorkerMessage, WorkerResponse } from "@common/types";
+import type { WorkerMessage, WorkerResponse } from "./types";
 /**
  * 确保主进程与 worker 端通过 WorkerMessage 和 WorkerResponse 进行通信
  * 请求与响应通过一一对应，用于 invoke/handle 模式通过Promise保持同步

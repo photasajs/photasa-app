@@ -4,7 +4,7 @@
  */
 
 import { App, BrowserWindow, IpcMain } from "electron";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import ThumbnailService from "./thumbnail/thumbnail-service";
 import ConfigService from "./config/config-service";
 import ScanService from "./scan/scan-service";

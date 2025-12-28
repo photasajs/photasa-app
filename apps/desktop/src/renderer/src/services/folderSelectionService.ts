@@ -10,7 +10,7 @@
  */
 
 import { getDirectory } from "@renderer/utils/api";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.app;
 

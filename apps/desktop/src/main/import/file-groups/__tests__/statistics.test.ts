@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { FileGroup, FileInfo } from "@common/import-types";
+import type { FileGroup, FileInfo } from "@photasa/common";
 
 const createFileInfo = (name: string, size = 1024): FileInfo =>
     ({

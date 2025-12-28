@@ -110,7 +110,8 @@
         "uuid": "^11.1.0",
         "@zouwu-wf/workflow": "^0.0.7",
         "@zouwu-wf/expression-parser": "^0.0.7",
-        "@systembug/tianshu": "workspace:*",
+        "@photasa/common": "workspace:*",
+        "@photasa/tianshu": "workspace:*",
         "@systembug/diting": "^0.0.7",
         "vue3-markdown-it": "^1.0.10"
     },

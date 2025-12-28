@@ -2,10 +2,10 @@ import { from } from "rxjs";
 import { filter, concatMap, mergeMap } from "rxjs/operators";
 import { copyFile } from "./file-helper";
 import { ensureDir, scanFolder } from "./path-helper";
-import type { FileAction, ImportCallback } from "@common/types";
-import type { ScanAction, ScanArgs } from "@common/scan-types";
+import type { FileAction, ImportCallback } from "@photasa/common";
+import type { ScanAction, ScanArgs } from "@photasa/common";
 import { electronAPI } from "@electron-toolkit/preload";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 
 const logger = getLogger("photo-import");
 

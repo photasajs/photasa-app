@@ -2,8 +2,8 @@ import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import { selectBestDate } from "../parsers/date-parser";
 import { extractVideoGPS } from "../parsers/gps-parser";
-import type { PhotasaLogger } from "@common/logger";
-import type { VideoMetadata } from "@common/import-types";
+import type { PhotasaLogger } from "@photasa/common";
+import type { VideoMetadata } from "@photasa/common";
 
 // 提取器返回的元数据接口（不包含dateSource，由主函数处理）
 type ExtractedVideoMetadata = Omit<VideoMetadata, "dateSource">;

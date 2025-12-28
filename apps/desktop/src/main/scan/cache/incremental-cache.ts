@@ -7,9 +7,9 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { PhotasaLogger } from "@common/logger";
+import { PhotasaLogger } from "@photasa/common";
 import { FolderCache, createDefaultCache } from "./folder-cache-manager";
-import type { PhotoFileRequest } from "@common/scan-types";
+import type { PhotoFileRequest } from "@photasa/common";
 
 /**
  * 增量缓存接口 - 扩展基础缓存，添加进度跟踪

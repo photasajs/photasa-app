@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { toPreviewableImage, toFileProtocol, toImage, groupImagesByColumns } from "../image";
 // removeFileProtocol 现在通过 preload API 使用，测试移到 shared 层
-import type { Photo } from "@common/config-types";
+import type { Photo } from "@photasa/common";
 
 const mockPhotoHeic: Photo = {
     path: "photos/holiday.heic",

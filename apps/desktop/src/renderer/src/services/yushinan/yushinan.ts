@@ -30,7 +30,7 @@ import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { IService } from "@renderer/interfaces/service.interface";
 import { scanMonitoringService } from "./scan-monitoring-service";
-import { loggers, globalLogInterceptor } from "@common/logger";
+import { loggers, globalLogInterceptor } from "@photasa/common";
 
 const logger = loggers.yushinan;
 

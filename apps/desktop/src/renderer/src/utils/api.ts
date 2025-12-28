@@ -1,11 +1,11 @@
-import type { ImportCallback } from "@common/types";
-import type { DirectorySelection, PathName } from "@common/types";
+import type { ImportCallback } from "@photasa/common";
+import type { DirectorySelection, PathName } from "@photasa/common";
 import { useTask } from "vue-concurrency";
-import type { WatchConfig, WatchCallback } from "@common/watch-types";
-import type { ThumbnailRequest } from "@common/thumbnail-types";
-import type { ImageInfo } from "@common/types";
-import type { ScanAction, ScanArgs } from "@common/scan-types";
-import type { PhotasaConfig } from "@common/config-types";
+import type { WatchConfig, WatchCallback } from "@photasa/common";
+import type { ThumbnailRequest } from "@photasa/common";
+import type { ImageInfo } from "@photasa/common";
+import type { ScanAction, ScanArgs } from "@photasa/common";
+import type { PhotasaConfig } from "@photasa/common";
 import type {
     ImportConfig,
     ImportPreview,
@@ -17,8 +17,8 @@ import type {
     EnhancedImportCallback,
     ImportFilters,
     FileMetadata,
-} from "@common/import-types";
-import { loggers } from "@common/logger";
+} from "@photasa/common";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.api;
 

@@ -1,4 +1,4 @@
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import type { IpcMain, BrowserWindow, App } from "electron";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";

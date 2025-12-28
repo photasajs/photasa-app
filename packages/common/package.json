@@ -1,0 +1,28 @@
+{
+    "name": "@photasa/common",
+    "version": "1.0.0",
+    "private": true,
+    "main": "./src/index.ts",
+    "module": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "typecheck": "tsc --noEmit"
+    },
+    "peerDependencies": {
+        "electron": ">=28.0.0"
+    },
+    "dependencies": {
+        "@systembug/diting": "^0.0.7",
+        "lodash": "^4.17.21",
+        "log4js": "^6.9.1",
+        "uuid": "^11.1.0"
+    },
+    "devDependencies": {
+        "@types/lodash": "^4.14.202",
+        "@types/node": "^20.11.24",
+        "@types/uuid": "^10.0.0",
+        "electron": "^33.2.1",
+        "typescript": "^5.3.3",
+        "vitest": "^4.0.16"
+    }
+}

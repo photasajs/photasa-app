@@ -1,4 +1,4 @@
-import type { CameraInfo } from "@common/import-types";
+import type { CameraInfo } from "@photasa/common";
 
 /**
  * 从EXIF数据中提取相机信息

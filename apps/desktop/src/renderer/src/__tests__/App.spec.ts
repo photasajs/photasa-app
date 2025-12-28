@@ -11,7 +11,7 @@ vi.mock("@renderer/stores/photos");
 vi.mock("@renderer/stores/statusBar");
 vi.mock("@renderer/stores/menus");
 
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         app: {
             debug: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock("@common/logger", () => ({
     })),
 }));
 
-vi.mock("@common/file-operation-utils", () => ({
+vi.mock("@photasa/common", () => ({
     mapFileOperationToScanAction: vi.fn((type: string) => {
         const mapping = {
             add: "scan",
@@ -70,7 +70,7 @@ describe("App.vue IPC Event Handler Logic", () => {
 
         // Get stores and mocks
         preferenceStore = usePreferenceStore();
-        mockLogger = vi.mocked(await import("@common/logger")).loggers.app;
+        mockLogger = vi.mocked(await import("@photasa/common")).loggers.app;
 
         // Mock store methods
         vi.spyOn(preferenceStore, "addFileOperation");
@@ -82,7 +82,7 @@ describe("App.vue IPC Event Handler Logic", () => {
     describe("onScanQueueAdd Handler Logic", () => {
         // Simulate the IPC handler logic directly
         const simulateIpcHandler = async (operations: any[]) => {
-            const { mapFileOperationToScanAction } = await import("@common/file-operation-utils");
+            const { mapFileOperationToScanAction } = await import("@photasa/common");
 
             mockLogger.debug(`Received ${operations.length} file operations from watch service`);
 
@@ -251,7 +251,7 @@ describe("App.vue IPC Event Handler Logic", () => {
         });
 
         it("should use mapFileOperationToScanAction for action conversion", async () => {
-            const { mapFileOperationToScanAction } = await import("@common/file-operation-utils");
+            const { mapFileOperationToScanAction } = await import("@photasa/common");
             const mockOperations = [
                 {
                     id: "op-convert",

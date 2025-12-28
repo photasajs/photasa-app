@@ -3,7 +3,7 @@
  * 处理旧的PhotasaConfig与新的ConfigManifest之间的转换
  */
 
-import type { PhotasaConfig } from "@common/config-types";
+import type { PhotasaConfig } from "@photasa/common";
 import type { ConfigManifest } from "../types/manifests";
 import { normalizeConfigManifest } from "../support/manifest-normalizer";
 

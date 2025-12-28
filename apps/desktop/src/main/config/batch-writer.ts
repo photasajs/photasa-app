@@ -4,8 +4,8 @@
  */
 
 import fs from "fs/promises";
-import type { PhotasaLogger } from "@common/logger";
-import { FileSystemError, handleError, retryOperation } from "@common/error-handler";
+import type { PhotasaLogger } from "@photasa/common";
+import { FileSystemError, handleError, retryOperation } from "@photasa/common";
 
 interface WriteBatchItem {
     data: string;

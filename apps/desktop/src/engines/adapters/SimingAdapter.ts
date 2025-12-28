@@ -14,8 +14,8 @@
 
 import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
 import { SimingEngine, type AppState } from "../siming/core/SimingEngine";
-import type { FolderNode } from "@common/folder-types";
-import { loggers } from "@common/logger";
+import type { FolderNode } from "@photasa/common";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.siming;
 

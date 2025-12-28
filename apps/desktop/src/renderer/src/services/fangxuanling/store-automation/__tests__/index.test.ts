@@ -10,7 +10,7 @@ import { loadMatterSyncConfig, validateMatterSyncConfig } from "../index";
 import type { MatterSyncMetadata } from "../index";
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         fangxuanling: {
             info: vi.fn(),

@@ -1,8 +1,8 @@
 import { watch } from "vue";
 import { useTask } from "vue-concurrency";
 import { createThumbnailTask, scanPhotos, addToPhotoList } from "@renderer/utils/api";
-import type { ScanAction, ScanArgs } from "@common/scan-types";
-import { loggers } from "@common/logger";
+import type { ScanAction, ScanArgs } from "@photasa/common";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.scan;
 

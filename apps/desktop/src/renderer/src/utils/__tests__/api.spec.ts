@@ -25,7 +25,7 @@ import {
 } from "../api";
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         api: {
             debug: vi.fn(),

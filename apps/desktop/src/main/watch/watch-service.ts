@@ -1,13 +1,13 @@
-import { loggers } from "@common/logger";
-import { WatchServiceEvent, type WatchConfig } from "@common/watch-types";
-import type { FileOperation } from "@common/scan-types";
-import { EventLossPreventionConfig } from "@common/constants";
+import { loggers } from "@photasa/common";
+import { WatchServiceEvent, type WatchConfig } from "@photasa/common";
+import type { FileOperation } from "@photasa/common";
+import { EventLossPreventionConfig } from "@photasa/common";
 import {
     createFileOperation,
     getDeduplicationWindow,
     calculateDebounceTime,
     shouldDeduplicateEvent,
-} from "@common/file-operation-utils";
+} from "@photasa/common";
 import chokidar, { type FSWatcher } from "chokidar";
 import type { IpcMain, IpcMainEvent, BrowserWindow } from "electron";
 import { Service } from "@main/tianting/decorators/service-decorators";

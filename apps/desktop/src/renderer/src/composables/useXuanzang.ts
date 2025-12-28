@@ -17,7 +17,7 @@
  */
 
 import { inject } from "vue";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { IXuanzangService, XUANZANG_TOKEN } from "@renderer/interfaces/xuan-zang.interface";
 
 const logger = loggers.xuanzang;

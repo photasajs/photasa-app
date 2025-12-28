@@ -1,5 +1,5 @@
 import type { InjectionKey } from "vue";
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 
 /**
  * 魏征服务接口

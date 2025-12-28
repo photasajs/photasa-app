@@ -1,8 +1,17 @@
 import { contextBridge } from "electron";
 import { api } from "./legacy";
 import { Tianshu } from "./tianshu";
+import { ElectronAPI } from "@electron-toolkit/preload";
 
-import { loggers } from "@common/logger";
+declare global {
+    interface Window {
+        electron: ElectronAPI;
+        tianshu: typeof Tianshu;
+        api: any;
+    }
+}
+
+import { loggers } from "@photasa/common";
 
 const logger = loggers.yuantiangang;
 

@@ -18,7 +18,7 @@ import BaseModalContainer from "../BaseModalContainer.vue";
 import BaseModalBody from "../BaseModalBody.vue";
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     getLogger: () => ({
         debug: vi.fn(),
         info: vi.fn(),

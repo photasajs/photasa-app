@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { usePreferenceStore } from "../preference";
-// import type { PhotasaLogger } from "@common/logger";
+// import type { PhotasaLogger } from "@photasa/common";
 
 // Mock the API module
 vi.mock("@renderer/utils/api", () => ({
@@ -16,7 +16,7 @@ vi.mock("@renderer/utils/api", () => ({
 }));
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         fangxuanling: {
             debug: vi.fn(),

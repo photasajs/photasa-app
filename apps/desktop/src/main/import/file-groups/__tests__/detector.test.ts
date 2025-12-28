@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { detectFileGroups, areFilesRelated } from "../detector";
-import type { FileInfo } from "@common/import-types";
+import type { FileInfo } from "@photasa/common";
 
 const createFileInfo = (path: string, name: string, size = 1024): FileInfo =>
     ({

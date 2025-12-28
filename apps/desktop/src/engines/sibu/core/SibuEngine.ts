@@ -1,5 +1,5 @@
-import type { PhotasaConfig } from "@common/config-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaConfig } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 import type { ConfigManifest, FolderManifest } from "../types/manifests";
 import { ManifestStore } from "../services/ManifestStore";
 import { ManifestCache } from "../services/ManifestCache";

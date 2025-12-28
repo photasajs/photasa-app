@@ -258,7 +258,7 @@ import {
     PhStop as StopOutlined,
     PhCheck as CheckOutlined,
 } from "@phosphor-icons/vue";
-import type { ImportProgress } from "@common/import-types";
+import type { ImportProgress } from "@photasa/common";
 import {
     BaseButton,
     BaseBadge,

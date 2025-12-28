@@ -17,7 +17,7 @@ vi.mock("@renderer/utils/api", () => ({
 }));
 
 // Mock the logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     getLogger: vi.fn(() => ({
         error: vi.fn(),
         warn: vi.fn(),
@@ -534,7 +534,7 @@ describe("ImportPhotos", () => {
     describe("Error Handling", () => {
         it("should handle invalid wizard completion data", async () => {
             // Get logger mock from our mocked module
-            const { getLogger } = await import("@common/logger");
+            const { getLogger } = await import("@photasa/common");
 
             const wrapper = createWrapper();
 

@@ -2,12 +2,12 @@ import fs from "fs-extra";
 import path from "path";
 import ExifReader from "exifreader";
 import { initializeHeifModule } from "@main/wasm/heif-module";
-import { extractDateTimeFromExif } from "@common/exif-util";
+import { extractDateTimeFromExif } from "@photasa/common";
 import { extractGPSInfo } from "../parsers/gps-parser";
 import { extractCameraInfo } from "../parsers/camera-parser";
 
-import type { PhotasaLogger } from "@common/logger";
-import type { ImageMetadata } from "@common/import-types";
+import type { PhotasaLogger } from "@photasa/common";
+import type { ImageMetadata } from "@photasa/common";
 
 // 提取器返回的元数据接口（不包含dateSource，由主函数处理）
 type ExtractedImageMetadata = Omit<ImageMetadata, "dateSource">;

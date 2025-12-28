@@ -18,7 +18,7 @@ import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 import ffmpeg from "fluent-ffmpeg";
 import * as fs from "fs-extra";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 
 const logger = getLogger("ffmpeg-config");
 

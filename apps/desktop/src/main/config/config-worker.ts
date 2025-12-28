@@ -1,8 +1,8 @@
 import { parentPort } from "worker_threads";
 import { queryConfig, addConfig, removeConfig } from "./config-handler";
-import { WorkerError, handleError } from "@common/error-handler";
-import type { ConfigRequest, ConfigResponse, ConfigHandlers } from "@common/config-types";
-import { loggers } from "@common/logger";
+import { WorkerError, handleError } from "@photasa/common";
+import type { ConfigRequest, ConfigResponse, ConfigHandlers } from "@photasa/common";
+import { loggers } from "@photasa/common";
 
 const port = parentPort;
 if (!port) {

@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, screen, protocol, Menu } from "elec
 import path from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import isDev from "electron-is-dev";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { isMac } from "./platform";
 import * as Sentry from "@sentry/electron/main";
 import icon from "../../resources/icon.png?asset";

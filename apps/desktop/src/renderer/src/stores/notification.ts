@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import type { NotificationConfig, NotificationItem } from "@renderer/types/notification";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 const logger = loggers.fangxuanling;
 
 /**

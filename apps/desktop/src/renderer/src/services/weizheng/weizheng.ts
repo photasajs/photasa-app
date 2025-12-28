@@ -10,11 +10,11 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
-import type { FolderNode } from "@common/folder-types";
-import { loggers } from "@common/logger";
+import type { FolderNode } from "@photasa/common";
+import { loggers } from "@photasa/common";
 import { addRoot, removeRoot, addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
-import { deepClone } from "@common/object/clone";
+import { deepClone } from "@photasa/common";
 import { determineRootPathToAdd } from "./folder-tree-helpers";
 
 const logger = loggers.weizheng;

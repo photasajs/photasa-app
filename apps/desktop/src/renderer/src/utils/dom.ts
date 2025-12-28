@@ -1,4 +1,4 @@
-import type { Position } from "@common/types";
+import type { Position } from "@photasa/common";
 
 export function getPosition(target: HTMLElement): Position {
     let xPosition = 0;

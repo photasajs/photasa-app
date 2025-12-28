@@ -1,7 +1,7 @@
 import mitt, { type Emitter } from "mitt";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { DuRuHuiService } from "../duruhui/duruhui";
 import eventRoutingConfig from "./event-routing.yml";
 import { resolveContent } from "./template-resolver";

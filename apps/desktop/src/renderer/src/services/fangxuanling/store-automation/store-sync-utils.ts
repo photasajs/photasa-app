@@ -11,7 +11,7 @@
 
 import type { MatterSyncMetadata } from "./index";
 import type { ZhaolingResponse } from "@renderer/interfaces/yuan-tian-gang.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { mergeStoreData } from "../utils";
 import { get, isEmpty, isObject, set } from "radash";
 

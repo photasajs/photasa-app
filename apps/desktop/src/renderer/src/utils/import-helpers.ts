@@ -4,7 +4,7 @@ import type {
     ImportFilters,
     DuplicateStrategy,
     FileType,
-} from "@common/import-types";
+} from "@photasa/common";
 
 /**
  * 导入功能的纯函数工具集

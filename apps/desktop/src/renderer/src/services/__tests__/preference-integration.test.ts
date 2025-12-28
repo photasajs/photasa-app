@@ -4,7 +4,7 @@ import { YuanTianGangService } from "../yuantiangang";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         fangxuanling: {
             info: vi.fn(),

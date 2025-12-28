@@ -4,8 +4,8 @@ import moment from "moment";
 import fs from "fs-extra";
 import ExifReader, { Tags, XmpTags, IccTags, ExifTags } from "exifreader";
 import isImage from "is-image";
-import type { FileAction } from "@common/types";
-import { extractDateTimeFromExif, EXIF_DATE_FIELDS } from "@common/exif-util";
+import type { FileAction } from "@photasa/common";
+import { extractDateTimeFromExif, EXIF_DATE_FIELDS } from "@photasa/common";
 
 /**
  * 获取图片的 EXIF 信息
@@ -54,7 +54,7 @@ export async function checkExifDate(filePath: string): Promise<Date | null> {
 
                         // Use shared EXIF utility for consistent date extraction
                         const result = extractDateTimeFromExif(
-                            tags as unknown as import("@common/exif-util").ExifTags,
+                            tags as unknown as import("@photasa/common").ExifTags,
                             EXIF_DATE_FIELDS,
                         );
                         resolve(result);

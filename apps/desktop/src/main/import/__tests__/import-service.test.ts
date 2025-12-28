@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import ImportService from "../import-service";
-import type { ImportConfig } from "@common/import-types";
+import type { ImportConfig } from "@photasa/common";
 
 // Mock the worker and IPC dependencies
 const mockWorker = {
@@ -50,7 +50,7 @@ vi.mock("../import-worker?nodeWorker", () => ({
 }));
 
 // Mock sendWorkerTask
-vi.mock("@common/worker-util", () => ({
+vi.mock("@photasa/common", () => ({
     sendWorkerTask: vi.fn(),
     onWorkerResponse: vi.fn(),
 }));
@@ -71,7 +71,7 @@ describe("ImportService Event-Driven Architecture", () => {
         vi.useFakeTimers();
 
         // Mock sendWorkerTask to return successful response by default
-        const { sendWorkerTask } = await import("@common/worker-util");
+        const { sendWorkerTask } = await import("@photasa/common");
         (sendWorkerTask as any).mockResolvedValue({
             success: true,
             data: {
@@ -150,7 +150,7 @@ describe("ImportService Event-Driven Architecture", () => {
     describe("Event-Driven Import Flow", () => {
         it("should generate unique import ID and create session", async () => {
             // Mock sendWorkerTask to return immediately
-            const { sendWorkerTask } = await import("@common/worker-util");
+            const { sendWorkerTask } = await import("@photasa/common");
             (sendWorkerTask as any).mockResolvedValue({
                 success: true,
                 data: {
@@ -359,7 +359,7 @@ describe("ImportService Event-Driven Architecture", () => {
 
     describe("Error Handling", () => {
         it("should handle worker task failures gracefully", async () => {
-            const { sendWorkerTask } = await import("@common/worker-util");
+            const { sendWorkerTask } = await import("@photasa/common");
             (sendWorkerTask as any).mockRejectedValue(new Error("Worker failed"));
 
             const backgroundMethod = (importService as any).executeImportInBackground;

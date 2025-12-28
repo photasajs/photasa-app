@@ -9,7 +9,7 @@ import { restoreCachedFiles } from "../scan-helpers";
 import * as scanStrategy from "../strategy/scan-strategy";
 import { ScanStrategy } from "../cache/folder-cache-manager";
 import fs from "fs-extra";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 // Mock 依赖
 vi.mock("fs-extra");

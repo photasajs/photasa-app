@@ -1,14 +1,14 @@
 import klaw from "klaw";
 import path from "path";
-import type { FileAction } from "@common/types";
+import type { FileAction } from "@photasa/common";
 import { from, map, mergeMap, Observable, Subscriber } from "rxjs";
 import fs from "fs-extra";
 import { resolveExifDate } from "./exif-helper";
 import isImage from "is-image";
 import isVideo from "is-video";
-import { shouldIgnorePhotasaPath } from "@common/utils";
+import { shouldIgnorePhotasaPath } from "@photasa/common";
 import { buildThumbnailPath } from "@shared/path-util";
-import type { ScanAction, PhotoPath } from "@common/scan-types";
+import type { ScanAction, PhotoPath } from "@photasa/common";
 import {
     isFileUnderFolder,
     toFileName,

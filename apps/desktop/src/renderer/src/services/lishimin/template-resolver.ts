@@ -11,7 +11,7 @@
  */
 
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.lishimin;
 

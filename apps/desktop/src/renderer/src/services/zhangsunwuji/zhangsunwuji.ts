@@ -40,13 +40,13 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
-import type { MenuItemData } from "@common/menu-types";
+import type { MenuItemData } from "@photasa/common";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
 import { IService } from "@renderer/interfaces/service.interface";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.zhangsunwuji;
 

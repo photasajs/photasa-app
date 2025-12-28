@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import createHeifModule from "@saschazar/wasm-heif";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 
 const logger = getLogger("heif-module");
 

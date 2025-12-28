@@ -11,10 +11,10 @@ import type {
     QueueControlAction,
     QueueStatus,
     ChartDataPoint,
-} from "@common/queue-monitoring-types";
-import { DEFAULT_MONITORING_CONFIG, QueueMonitoringUtils } from "@common/queue-monitoring-types";
+} from "@photasa/common";
+import { DEFAULT_MONITORING_CONFIG, QueueMonitoringUtils } from "@photasa/common";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.app;
 

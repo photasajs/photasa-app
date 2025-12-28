@@ -7,7 +7,7 @@ import { promises as fs } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { createThumbnail } from "../thumbnail-handler";
-import type { ThumbnailRequest } from "@common/thumbnail-types";
+import type { ThumbnailRequest } from "@photasa/common";
 import type { Logger } from "log4js";
 import sharp from "sharp";
 import { describe, it, beforeEach, afterEach, expect } from "@jest/globals";

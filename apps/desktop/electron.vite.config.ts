@@ -24,11 +24,14 @@ const isProd = (mode) => mode === "production";
 
 export default defineConfig(({ mode }) => ({
     main: {
-        plugins: [externalizeDepsPlugin()],
+        plugins: [
+            externalizeDepsPlugin({
+                exclude: ["@photasa/common"],
+            }),
+        ],
         resolve: {
             alias: {
                 "@main": resolve("src/main/"),
-                "@common": resolve("src/common/"),
                 "@shared": resolve("src/shared/"),
                 "@maliang": resolve("src/engines/maliang/"),
                 "@shunfenger": resolve("src/engines/shunfenger/"),
@@ -44,12 +47,16 @@ export default defineConfig(({ mode }) => ({
         },
     },
     preload: {
-        plugins: [externalizeDepsPlugin(), babel({ babelHelpers: "bundled" })],
+        plugins: [
+            externalizeDepsPlugin({
+                exclude: ["@photasa/common"],
+            }),
+            babel({ babelHelpers: "bundled" }),
+        ],
         resolve: {
             alias: {
                 "@renderer": resolve("src/renderer/src"),
                 "@preload": resolve("src/preload/"),
-                "@common": resolve("src/common/"),
                 "@shared": resolve("src/shared/"),
             },
         },
@@ -69,7 +76,6 @@ export default defineConfig(({ mode }) => ({
             alias: {
                 "@renderer": resolve("src/renderer/src"),
                 "@preload": resolve("src/preload/"),
-                "@common": resolve("src/common/"),
                 // 注意：@shared 不应该在渲染进程中使用，因为包含 Node.js 依赖
             },
         },

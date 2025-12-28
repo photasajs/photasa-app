@@ -1,7 +1,7 @@
 import { inject } from "vue";
 import type { IQinQiongService } from "@renderer/interfaces/qin-qiong.interface";
 import { QIN_QIONG_TOKEN } from "@renderer/interfaces/qin-qiong.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.qinqiong;
 

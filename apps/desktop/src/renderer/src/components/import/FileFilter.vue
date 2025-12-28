@@ -255,7 +255,7 @@ import {
     PhGear as SettingOutlined,
     PhQuestion as QuestionCircleOutlined,
 } from "@phosphor-icons/vue";
-import type { ImportFilters } from "@common/import-types";
+import type { ImportFilters } from "@photasa/common";
 import {
     BaseButton,
     BaseRow,

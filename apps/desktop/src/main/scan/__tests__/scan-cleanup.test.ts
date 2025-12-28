@@ -11,7 +11,7 @@ import {
     DEFAULT_CLEANUP_OPTIONS,
     type CleanupOptions,
 } from "../scan-cleanup";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock pool-manager - Vitest可以正确处理?nodeWorker查询参数
 // 注意：我们需要确保 cleanupWorkerPool 函数可以正常工作

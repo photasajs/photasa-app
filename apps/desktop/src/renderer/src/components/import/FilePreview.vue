@@ -273,7 +273,7 @@ import {
     PhFileText as FileOutlined,
     PhCaretRight as ArrowRightOutlined,
 } from "@phosphor-icons/vue";
-import type { FileGroup, DuplicateFileInfo, GPSInfo } from "@common/import-types";
+import type { FileGroup, DuplicateFileInfo, GPSInfo } from "@photasa/common";
 import {
     BaseButton,
     BaseSpace,

@@ -4,7 +4,7 @@ import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import { EventNames } from "@renderer/constants/event-names";
 import type { Emitter } from "mitt";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.duruhui;
 

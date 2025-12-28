@@ -1,4 +1,4 @@
-import { ScanActionEvent } from "@common/scan-types";
+import { ScanActionEvent } from "@photasa/common";
 
 /**
  * 计算扫描路径

@@ -12,7 +12,7 @@
 import sharp, { Sharp } from "sharp";
 import { ensureDir, exists } from "fs-extra";
 import path from "path";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import { BaseMagicBrush } from "../../core/MagicBrush";
 import type { ThumbnailOptions, Metadata, EditOperation } from "../../types/BrushTypes";
 import type {

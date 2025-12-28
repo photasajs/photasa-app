@@ -3,7 +3,7 @@
  * 天枢引擎通过此接口与太乙引擎建立双向通信
  */
 
-import { WorkflowStep, ExecutionContext } from "@systembug/tianshu";
+import { WorkflowStep, ExecutionContext } from "@photasa/tianshu";
 
 /**
  * 步骤执行结果

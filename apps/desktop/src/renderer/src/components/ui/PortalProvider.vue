@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 
 const logger = getLogger("portal-provider");
 

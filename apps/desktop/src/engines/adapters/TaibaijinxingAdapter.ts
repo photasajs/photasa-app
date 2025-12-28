@@ -19,8 +19,8 @@
 import { Menu, shell } from "electron";
 import type { IpcMain, BrowserWindow } from "electron";
 import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
-import { loggers } from "@common/logger";
-import type { MenuItemData } from "@common/menu-types";
+import { loggers } from "@photasa/common";
+import type { MenuItemData } from "@photasa/common";
 
 const logger = loggers.window;
 

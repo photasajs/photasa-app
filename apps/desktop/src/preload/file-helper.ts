@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { Observable, from } from "rxjs";
-import type { FileAction, FileException } from "@common/types";
+import type { FileAction, FileException } from "@photasa/common";
 import { PathOption, toFullPath } from "./path-helper";
 
 /**

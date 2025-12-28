@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { QueueMonitoringService } from "@renderer/services/queue-monitoring-service";
-import type { QueueMonitoringConfig } from "@common/queue-monitoring-types";
+import type { QueueMonitoringConfig } from "@photasa/common";
 import { usePreferenceStore } from "@renderer/stores/preference";
 
 // Mock preference store
@@ -16,7 +16,7 @@ vi.mock("@renderer/stores/preference", () => ({
 }));
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         app: {
             info: vi.fn(),

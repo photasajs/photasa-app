@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import type { Photo } from "@common/config-types";
-import { loggers } from "@common/logger";
+import type { Photo } from "@photasa/common";
+import { loggers } from "@photasa/common";
 const logger = loggers.fangxuanling;
 
 type PhotoState = {

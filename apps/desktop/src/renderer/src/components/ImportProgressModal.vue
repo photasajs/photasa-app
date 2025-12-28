@@ -22,8 +22,8 @@ import {
     PhWarning,
     PhXCircle,
 } from "@phosphor-icons/vue";
-import type { ImportConfig, ImportProgress, ImportResult } from "@common/import-types";
-import { loggers } from "@common/logger";
+import type { ImportConfig, ImportProgress, ImportResult } from "@photasa/common";
+import { loggers } from "@photasa/common";
 
 interface Props {
     show: boolean;

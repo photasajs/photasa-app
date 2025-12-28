@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import { WorkerPool } from "../worker-pool";
 
 // Mock Worker class

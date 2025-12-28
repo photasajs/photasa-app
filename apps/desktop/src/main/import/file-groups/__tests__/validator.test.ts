@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { FileGroup, FileInfo } from "@common/import-types";
+import type { FileGroup, FileInfo } from "@photasa/common";
 import fs from "fs";
 
 // Mock fs

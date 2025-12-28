@@ -1,4 +1,4 @@
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import * as Sentry from "@sentry/electron/main";
 import isDev from "electron-is-dev";
 

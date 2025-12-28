@@ -13,7 +13,7 @@ import { useNotificationStore } from "@renderer/stores/notification";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { useScanningStore } from "../stores/scanning-store";
 import { useAppStateStore } from "../stores/appstate-store";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.fangxuanling;
 

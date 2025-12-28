@@ -15,7 +15,7 @@ import type { MatterSyncMetadata } from "../index";
 import type { PreferenceState } from "@renderer/stores/preference";
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         fangxuanling: {
             debug: vi.fn(),

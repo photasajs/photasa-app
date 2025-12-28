@@ -10,7 +10,7 @@ import path from "path";
 import os from "os";
 import { decideScanStrategy } from "../strategy/scan-strategy";
 import { ScanStrategy } from "../cache/folder-cache-manager";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock external dependencies
 vi.mock("fs-extra");

@@ -142,7 +142,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 
 export type Key = string | number;
 

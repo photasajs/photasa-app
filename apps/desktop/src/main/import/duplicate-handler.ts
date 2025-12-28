@@ -1,7 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import crypto from "crypto";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 import type {
     FileInfo,
     DuplicateFileInfo,
@@ -10,7 +10,7 @@ import type {
     DuplicateResult,
     FileGroup,
     DuplicateAction,
-} from "@common/import-types";
+} from "@photasa/common";
 
 const logger = getLogger("duplicate-handler");
 

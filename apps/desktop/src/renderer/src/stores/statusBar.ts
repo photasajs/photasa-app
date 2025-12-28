@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import type { NotifyPayload } from "@common/types";
+import type { NotifyPayload } from "@photasa/common";
 
 export interface StatusBarState {
     currentTask: string;

@@ -1,7 +1,7 @@
-import { onWorkerResponse, sendWorkerTask, Worker } from "@common/worker-util";
+import { onWorkerResponse, sendWorkerTask, Worker } from "@photasa/common";
 import { Worker as NodeWorker } from "worker_threads";
-import type { PhotasaLogger } from "@common/logger";
-import type { WorkerResponse } from "@common/types";
+import type { PhotasaLogger } from "@photasa/common";
+import type { WorkerResponse } from "@photasa/common";
 
 interface Task<T, R> {
     action: string;

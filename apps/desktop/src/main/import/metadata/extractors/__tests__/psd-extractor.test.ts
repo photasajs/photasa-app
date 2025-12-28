@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { isPsdFile, extractPsdMetadata, getPsdFormatName } from "../psd-extractor";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock ag-psd
 vi.mock("ag-psd", () => ({

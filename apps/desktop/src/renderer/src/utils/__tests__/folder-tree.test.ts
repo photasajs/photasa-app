@@ -1,5 +1,5 @@
 import { addRoot, removeRoot, addFolderToTree, cleanDataNode } from "../folder-tree";
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 import { describe, it, expect, beforeAll } from "vitest";
 
 beforeAll(() => {

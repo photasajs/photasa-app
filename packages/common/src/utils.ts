@@ -1,5 +1,5 @@
 import config from "./config";
-import type { VideoSize } from "@common/types";
+import type { VideoSize } from "./types";
 
 export const PHOTASA_ORIGINALS = ".photasaoriginals";
 export const HeicExtensionRE = new RegExp(`\.(${config.acceptedHeicExtensions.join("|")})$`, "i");

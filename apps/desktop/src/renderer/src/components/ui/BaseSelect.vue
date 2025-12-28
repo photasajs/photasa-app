@@ -117,7 +117,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, nextTick, watch, onBeforeUnmount } from "vue";
 import { PhCheck, PhCaretDown } from "@phosphor-icons/vue";
-import { getLogger } from "@common/logger";
+import { getLogger } from "@photasa/common";
 import { useDropdownManager } from "@renderer/composables/useDropdownManager";
 
 const logger = getLogger("base-select");

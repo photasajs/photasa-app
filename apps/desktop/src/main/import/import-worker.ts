@@ -1,11 +1,7 @@
 import { parentPort } from "worker_threads";
-import { loggers } from "@common/logger";
-import {
-    createResponse,
-    createPreviewProgressEvent,
-    createProgressEvent,
-} from "@common/worker-util";
-import type { WorkerMessage } from "@common/types";
+import { loggers } from "@photasa/common";
+import { createResponse, createPreviewProgressEvent, createProgressEvent } from "@photasa/common";
+import type { WorkerMessage } from "@photasa/common";
 import type {
     ImportRequest,
     ImportResponse,
@@ -18,7 +14,7 @@ import type {
     ImportPreview,
     FileStatistics,
     DuplicateFileInfo,
-} from "@common/import-types";
+} from "@photasa/common";
 import {
     ImportWorkerActions,
     ImportWorkerActionType,
@@ -28,7 +24,7 @@ import {
     ErrorSeverities,
     DateSources,
     FileGroupTypes,
-} from "@common/constants";
+} from "@photasa/common";
 import {
     extractMetadata,
     processFileGroup,
@@ -42,7 +38,7 @@ import path from "path";
 import isImage from "is-image";
 import isVideo from "is-video";
 import { v4 as uuidv4 } from "uuid";
-import { shouldIgnorePhotasaPath } from "@common/utils";
+import { shouldIgnorePhotasaPath } from "@photasa/common";
 
 const logger = loggers.import;
 

@@ -1,7 +1,7 @@
 import { parentPort } from "worker_threads";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction } from "@photasa/common";
 import { scanPhotos, processMediaFile } from "./scan-photos";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import isImage from "is-image";
 import isVideo from "is-video";
 import fs from "fs-extra";

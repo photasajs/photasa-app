@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { toImageList, computeColumns, requestThumbnail } from "../ImageListHelper";
-import type { PhotasaConfig } from "@common/config-types";
-import type { Photo } from "@common/config-types";
+import type { PhotasaConfig } from "@photasa/common";
+import type { Photo } from "@photasa/common";
 import type { Image } from "@renderer/common/image";
 import { createThumbnailTask } from "@renderer/utils/api";
 

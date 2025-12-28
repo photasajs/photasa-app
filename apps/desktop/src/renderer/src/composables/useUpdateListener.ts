@@ -2,7 +2,7 @@ import { onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useUpdateStore } from "@renderer/stores/update";
 import { useNotificationStore } from "@renderer/stores/notification";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 /**
  * 更新事件监听器

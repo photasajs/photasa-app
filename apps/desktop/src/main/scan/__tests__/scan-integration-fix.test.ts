@@ -10,7 +10,7 @@ import fs from "fs-extra";
 import path from "path";
 import { decideScanStrategy } from "../strategy/scan-strategy";
 import { ScanStrategy } from "../cache/folder-cache-manager";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import { getPhotasaConfig } from "@main/config/config-storage";
 
 // Mock external dependencies

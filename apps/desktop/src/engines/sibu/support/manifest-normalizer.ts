@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
-import type { PhotasaLogger } from "@common/logger";
-import type { PhotasaConfig } from "@common/config-types";
+import type { PhotasaLogger } from "@photasa/common";
+import type { PhotasaConfig } from "@photasa/common";
 import type {
     ConfigManifest,
     FolderManifest,

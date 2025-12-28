@@ -1,4 +1,4 @@
-import { ScanActionEvent } from "@common/scan-types";
+import { ScanActionEvent } from "@photasa/common";
 import { StatusNotificationShengzhiContent } from "./yu-shinan.interface";
 
 /**

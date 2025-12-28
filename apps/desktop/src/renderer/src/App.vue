@@ -13,9 +13,9 @@ import { getDirectory, stopWatching } from "@renderer/utils/api";
 // ✅ RFC 0048: scanPhotosTask, waitForTaskIdle 已不再使用
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
-import { loggers } from "@common/logger";
-import { mapFileOperationToScanAction } from "@common/file-operation-utils";
-import type { FileOperation } from "@common/scan-types";
+import { loggers } from "@photasa/common";
+import { mapFileOperationToScanAction } from "@photasa/common";
+import type { FileOperation } from "@photasa/common";
 
 import UserPreference from "./components/UserPreference.vue";
 import ScanQueueDialog from "./components/ScanQueueDialog.vue";

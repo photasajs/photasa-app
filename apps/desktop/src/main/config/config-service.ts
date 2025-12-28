@@ -1,9 +1,9 @@
 import createWorker from "./config-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
-import type { ConfigRequest, ConfigResponse } from "@common/config-types";
+import type { ConfigRequest, ConfigResponse } from "@photasa/common";
 import { Service } from "../tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "../tianting/core/service-types";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.sibu;
 

@@ -6,8 +6,8 @@ import { extractRawMetadata, isRawFile } from "./extractors/raw-extractor";
 import { extractImageMetadata, isImageFile } from "./extractors/image-extractor";
 import { extractPsdMetadata, isPsdFile } from "./extractors/psd-extractor";
 import { generateDatePath, isValidDate, computeFallbackDate } from "./parsers/date-parser";
-import type { PhotasaLogger } from "@common/logger";
-import type { MetadataRequest, FileMetadata, FileGroup } from "@common/import-types";
+import type { PhotasaLogger } from "@photasa/common";
+import type { MetadataRequest, FileMetadata, FileGroup } from "@photasa/common";
 
 type MediaType = "heic" | "image" | "raw" | "video" | "psd" | "other";
 /**

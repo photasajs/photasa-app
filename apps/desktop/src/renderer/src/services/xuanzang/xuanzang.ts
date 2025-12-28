@@ -1,5 +1,5 @@
 import { IXuanzangService } from "@/interfaces/xuan-zang.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { IFangXuanLingService } from "@/interfaces/fang-xuan-ling.interface";
 import { i18n } from "../../i18n/config";
 import { watch } from "vue";

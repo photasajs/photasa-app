@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, type PropType } from "vue";
 import { useI18n } from "vue-i18n";
-import type { ChartDataPoint } from "@common/queue-monitoring-types";
+import type { ChartDataPoint } from "@photasa/common";
 import { BaseSpinner, BaseSelect } from "@renderer/components/ui";
 import { PhChartBar } from "@phosphor-icons/vue";
 

@@ -6,7 +6,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { mount, type VueWrapper } from "@vue/test-utils";
 import BaseMetricsCard from "@renderer/components/queue-monitoring/BaseMetricsCard.vue";
-import type { MetricCardConfig } from "@common/queue-monitoring-types";
+import type { MetricCardConfig } from "@photasa/common";
 
 describe("BaseMetricsCard", () => {
     let wrapper: VueWrapper<any>;

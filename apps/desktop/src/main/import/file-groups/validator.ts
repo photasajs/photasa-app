@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
-import type { FileGroup } from "@common/import-types";
+import type { FileGroup } from "@photasa/common";
 
 /**
  * 文件组验证结果接口

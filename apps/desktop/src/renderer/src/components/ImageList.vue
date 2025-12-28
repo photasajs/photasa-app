@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import { getFileMetadata } from "@renderer/utils/api";
-import type { FileMetadata } from "@common/import-types";
+import type { FileMetadata } from "@photasa/common";
 import { type Card, type Image, toImageMeta, groupImagesByColumns } from "@renderer/common/image";
 // removeFileProtocol 通过 preload API 使用
 import * as R from "ramda";
@@ -20,7 +20,7 @@ import {
     BaseCard,
     FileCountBadge,
 } from "@renderer/components/ui";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 // 在测试环境中使用data URL，避免网络请求
 import fallbackImage from "@renderer/assets/images/fallback.png";
 const ImageFallback =

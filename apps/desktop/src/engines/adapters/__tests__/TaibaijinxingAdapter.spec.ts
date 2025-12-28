@@ -20,7 +20,7 @@ jest.mock("electron", () => ({
 }));
 
 // Mock logger
-jest.mock("@common/logger", () => ({
+jest.mock("@photasa/common", () => ({
     loggers: {
         window: {
             info: jest.fn(),

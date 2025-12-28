@@ -18,7 +18,7 @@ vi.mock("@renderer/stores/preference", () => ({
 }));
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         scan: {
             info: vi.fn(),

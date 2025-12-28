@@ -4,7 +4,7 @@
 
 import { EventEmitter } from "events";
 import { BrowserWindow, IpcMain, App } from "electron";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import {
     IService,
     ServiceMetadata,

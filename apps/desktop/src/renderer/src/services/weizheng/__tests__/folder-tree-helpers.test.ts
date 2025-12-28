@@ -12,7 +12,7 @@ import {
     isRootNodeExists,
     determineRootPathToAdd,
 } from "../folder-tree-helpers";
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 
 describe("文件夹树辅助函数（纯函数）", () => {
     const createTestTree = (paths: string[]): FolderNode[] => {

@@ -3,7 +3,7 @@
  * 管理所有神笔的注册、发现和选择
  */
 
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import type { MagicBrush } from "./MagicBrush";
 import type { BrushRegistration, PaintOperation } from "../types/BrushTypes";
 import { FormatDetector, type DetectionResult } from "./FormatDetector";

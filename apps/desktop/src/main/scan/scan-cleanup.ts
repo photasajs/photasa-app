@@ -13,9 +13,9 @@
 
 import fs from "fs-extra";
 import path from "path";
-import { PhotasaLogger } from "@common/logger";
+import { PhotasaLogger } from "@photasa/common";
 import type { WorkerPool } from "../workers/worker-pool";
-import type { ThumbnailRequest, ThumbnailResponse } from "@common/thumbnail-types";
+import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
 import { cleanupWorkerPool } from "./worker/pool-manager";
 
 // Re-export for backward compatibility

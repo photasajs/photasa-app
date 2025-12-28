@@ -7,11 +7,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import DirectoryService from "../directory-service";
 import fs from "fs";
 import path from "path";
-// import { loggers } from "@common/logger";
+// import { loggers } from "@photasa/common";
 
 // Mock dependencies
 vi.mock("fs");
-vi.mock("@common/logger");
+vi.mock("@photasa/common");
 
 // const _mockLogger = loggers.main;
 

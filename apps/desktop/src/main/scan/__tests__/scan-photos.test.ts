@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { walkthroughPhotosInFolder, shouldProcessFile } from "../scan-photos";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction } from "@photasa/common";
 import fs from "fs-extra";
 import path from "path";
 
@@ -18,7 +18,7 @@ vi.mock("@shared/path-util", () => ({
 vi.mock("@main/config/config-storage", () => ({
     getPhotasaConfig: vi.fn(),
 }));
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         scan: {
             debug: vi.fn(),

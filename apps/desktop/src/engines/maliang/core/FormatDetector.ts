@@ -5,7 +5,7 @@
 
 import { readFile } from "fs-extra";
 import path from "path";
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 
 // 文件签名定义
 interface FileSignature {

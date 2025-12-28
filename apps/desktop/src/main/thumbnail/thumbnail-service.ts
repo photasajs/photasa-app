@@ -1,13 +1,9 @@
 import createWorker from "./thumbnail-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
 import { getAppPath } from "@shared/path-util";
-import {
-    ThumbnailServiceAction,
-    ThumbnailRequest,
-    ThumbnailResponse,
-} from "@common/thumbnail-types";
-import { sendWorkerTask, onWorkerResponse, Worker } from "@common/worker-util";
-import { loggers } from "@common/logger";
+import { ThumbnailServiceAction, ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
+import { sendWorkerTask, onWorkerResponse, Worker } from "@photasa/common";
+import { loggers } from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
 

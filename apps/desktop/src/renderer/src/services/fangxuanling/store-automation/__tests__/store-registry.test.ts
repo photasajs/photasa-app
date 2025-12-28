@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from "vitest";
 import { extractStoreName, getStoreByPath, isValidStorePath } from "../store-registry";
 
 // Mock logger
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         fangxuanling: {
             debug: vi.fn(),

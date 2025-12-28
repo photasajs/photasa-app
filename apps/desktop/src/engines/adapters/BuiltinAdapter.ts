@@ -4,7 +4,7 @@
  */
 
 import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.taiyi;
 

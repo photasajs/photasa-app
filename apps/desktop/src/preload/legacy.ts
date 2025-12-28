@@ -1,6 +1,6 @@
 import { electronAPI } from "@electron-toolkit/preload";
-import { ImportEvents } from "@common/constants";
-import type { FileOperation } from "@common/scan-types";
+import { ImportEvents } from "@photasa/common";
+import type { FileOperation } from "@photasa/common";
 import { startWatching, stopWatching } from "./fs-watch";
 import { importPhotos, scanPhotos } from "./photo-import";
 import { chooseDirectory, getDirectory } from "./choose-directory";
@@ -15,7 +15,7 @@ import {
 } from "./image-helper";
 import { normalizePath } from "@shared/path-util";
 // ✅ RFC 0058: openInFinder 已迁移到服务架构，不再通过 preload API
-import type { LogEntry } from "@common/logger";
+import type { LogEntry } from "@photasa/common";
 import { updateApi } from "./update-helper";
 import {
     addToPhotoList,
@@ -25,7 +25,7 @@ import {
     resetPhotasaConfig,
 } from "./file-config";
 import { scanSubfolders, cleanupScanQueue, checkPhotasaConfig } from "./query-config";
-import { shouldIgnorePhotasaPath } from "@common/index";
+import { shouldIgnorePhotasaPath } from "@photasa/common";
 import * as pathHelper from "./path-helper";
 import {
     toThumbnailName,

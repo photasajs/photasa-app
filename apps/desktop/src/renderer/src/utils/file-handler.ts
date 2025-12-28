@@ -9,8 +9,8 @@ import {
     shouldIgnorePhotasaPath,
     startWatching,
 } from "@renderer/utils/api";
-import type { WatchState } from "@common/watch-types";
-import type { ThumbnailRequest } from "@common/thumbnail-types";
+import type { WatchState } from "@photasa/common";
+import type { ThumbnailRequest } from "@photasa/common";
 import { deepCopy } from "./object";
 import type { PreferenceStore } from "@renderer/stores/preference";
 import type { IQinQiongService } from "@renderer/interfaces/qin-qiong.interface";

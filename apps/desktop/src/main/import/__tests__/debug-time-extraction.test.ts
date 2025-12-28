@@ -3,8 +3,8 @@ import fs from "fs-extra";
 import ExifReader from "exifreader";
 import ffmpeg from "fluent-ffmpeg";
 import { extractMetadata } from "../import-handler";
-import type { PhotasaLogger } from "@common/logger";
-import type { MetadataRequest } from "@common/import-types";
+import type { PhotasaLogger } from "@photasa/common";
+import type { MetadataRequest } from "@photasa/common";
 
 // Mock logger
 const mockLogger = {

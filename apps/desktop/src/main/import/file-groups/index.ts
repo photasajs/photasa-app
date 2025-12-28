@@ -31,4 +31,4 @@ export {
 } from "./validator";
 
 // 重新导出类型
-export type { FileGroup, FileInfo } from "@common/import-types";
+export type { FileGroup, FileInfo } from "@photasa/common";

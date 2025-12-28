@@ -1,6 +1,6 @@
 import path from "path";
-import type { FileInfo, FileGroup } from "@common/import-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { FileInfo, FileGroup } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 
 /**
  * 基础关联文件扩展名映射

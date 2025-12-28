@@ -12,7 +12,7 @@ import ImportProgressModal from "../ImportProgressModal.vue";
 vi.mock("@renderer/utils/api");
 vi.mock("@renderer/utils/import-helpers");
 vi.mock("@renderer/utils/import-wizard-helpers");
-vi.mock("@common/logger");
+vi.mock("@photasa/common");
 
 describe("ImportProgressModal", () => {
     beforeEach(() => {

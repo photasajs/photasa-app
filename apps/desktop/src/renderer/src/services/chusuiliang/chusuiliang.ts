@@ -1,7 +1,7 @@
 import { IChusuiliangService } from "../../interfaces/chu-sui-liang.interface";
 import { IFangXuanLingService } from "../../interfaces/fang-xuan-ling.interface";
 import { IService } from "@renderer/interfaces/service.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import {
     ZOUZHE_MATTERS,
     ZOUZHE_PRIORITIES,

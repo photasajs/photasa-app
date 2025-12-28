@@ -3,7 +3,7 @@
  */
 
 import { describe, test, expect } from "vitest";
-import type { FileOperationInput } from "@common/scan-types";
+import type { FileOperationInput } from "@photasa/common";
 import {
     PRIORITY_RULES,
     calculatePriority,

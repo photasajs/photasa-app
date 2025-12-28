@@ -17,7 +17,7 @@
 import { inject } from "vue";
 import { FANG_XUAN_LING_TOKEN } from "../interfaces/fang-xuan-ling.interface";
 import type { IFangXuanLingService } from "../interfaces/fang-xuan-ling.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 const logger = loggers.fangxuanling;
 

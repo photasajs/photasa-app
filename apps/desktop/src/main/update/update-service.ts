@@ -1,7 +1,7 @@
 import { autoUpdater, UpdateInfo } from "electron-updater";
 import type { IpcMain, BrowserWindow } from "electron";
-import { loggers } from "@common/logger";
-import type { AutoUpdateConfig, UpdateStatus, UpdateProgressInfo } from "@common/update-types";
+import { loggers } from "@photasa/common";
+import type { AutoUpdateConfig, UpdateStatus, UpdateProgressInfo } from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService, ServiceStatus } from "@main/tianting/core/service-types";
 

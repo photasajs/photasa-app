@@ -8,7 +8,7 @@
  * @since 2025-01-23
  */
 
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 
 /**
  * 检查路径是否是根路径

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction } from "@photasa/common";
 
 // Create mock parentPort using vi.hoisted to ensure it's available before module imports
 const mockParentPort = vi.hoisted(() => ({
@@ -59,7 +59,7 @@ vi.mock("electron", () => ({
     app: {},
 }));
 
-vi.mock("@common/logger", () => ({
+vi.mock("@photasa/common", () => ({
     loggers: {
         worker: {
             debug: vi.fn(),

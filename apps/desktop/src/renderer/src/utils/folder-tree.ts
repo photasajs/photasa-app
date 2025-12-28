@@ -1,6 +1,6 @@
-import type { FolderNode } from "@common/folder-types";
+import type { FolderNode } from "@photasa/common";
 import { splitPath, normalizePath, mergePath } from "@renderer/utils/api-path";
-import type { Photo } from "@common/config-types";
+import type { Photo } from "@photasa/common";
 
 function normalizeRoot(root: FolderNode): void {
     if (!root.children) {

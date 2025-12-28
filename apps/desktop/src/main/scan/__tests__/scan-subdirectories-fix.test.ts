@@ -3,8 +3,8 @@ import fs from "fs-extra";
 import path from "path";
 import os from "os";
 import { scanPhotos } from "../scan-photos";
-import type { ScanAction } from "@common/scan-types";
-import type { PhotasaLogger } from "@common/logger";
+import type { ScanAction } from "@photasa/common";
+import type { PhotasaLogger } from "@photasa/common";
 
 // Mock thumbnail-worker
 vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => ({

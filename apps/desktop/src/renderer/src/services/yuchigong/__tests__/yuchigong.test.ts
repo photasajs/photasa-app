@@ -15,7 +15,7 @@ import type {
     IFangXuanLingService,
     IScanning,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
-import type { ScanAction } from "@common/scan-types";
+import type { ScanAction } from "@photasa/common";
 import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
 import {
     ZOUZHE_MATTERS,

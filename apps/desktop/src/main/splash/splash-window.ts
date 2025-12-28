@@ -1,6 +1,6 @@
 import { BrowserWindow, nativeTheme } from "electron";
 import path from "path";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 import { is } from "@electron-toolkit/utils";
 
 const logger = loggers.main;

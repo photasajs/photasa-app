@@ -1,4 +1,4 @@
-import type { Photo } from "@common/config-types";
+import type { Photo } from "@photasa/common";
 import type { ImageTypeResult } from "image-type";
 import type { Tags, XmpTags, IccTags } from "exifreader";
 import { splitEvery } from "ramda";

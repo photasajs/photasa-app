@@ -1,5 +1,5 @@
 import path from "path";
-import type { FileGroup } from "@common/import-types";
+import type { FileGroup } from "@photasa/common";
 
 /**
  * 文件组统计信息接口

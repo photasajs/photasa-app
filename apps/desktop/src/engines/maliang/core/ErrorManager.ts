@@ -9,7 +9,7 @@
  * 4. 可观测性 - 所有错误都被记录和监控
  */
 
-import type { PhotasaLogger } from "@common/logger";
+import type { PhotasaLogger } from "@photasa/common";
 import type { PaintRequest, PaintResult } from "../types/BrushTypes";
 
 /**

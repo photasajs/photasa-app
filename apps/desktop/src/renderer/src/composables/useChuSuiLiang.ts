@@ -18,7 +18,7 @@
 import { inject } from "vue";
 import { CHU_SUI_LIANG_TOKEN } from "../interfaces/chu-sui-liang.interface";
 import type { IChusuiliangService } from "../interfaces/chu-sui-liang.interface";
-import { loggers } from "@common/logger";
+import { loggers } from "@photasa/common";
 
 export type { IThemeManager, ThemeMeta } from "../interfaces/chu-sui-liang.interface";
 const logger = loggers.chusuiliang;

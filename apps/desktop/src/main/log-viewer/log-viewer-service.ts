@@ -1,7 +1,7 @@
 import type { IpcMain, BrowserWindow } from "electron";
 import { globalShortcut } from "electron";
-import { globalLogInterceptor, type LogEntry } from "@common/logger";
-import { loggers } from "@common/logger";
+import { globalLogInterceptor, type LogEntry } from "@photasa/common";
+import { loggers } from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
 
