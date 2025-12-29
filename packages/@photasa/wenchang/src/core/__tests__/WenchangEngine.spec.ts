@@ -242,12 +242,12 @@ describe("WenchangEngine", () => {
         it("should handle scanning and performance updates", async () => {
             // Covers applyDelta branches for scanning and performance
             await engine.applyDelta({
-                scanning: { interval: 999 },
-                performance: { maxWorkers: 8 },
+                scanning: { concurrency: 5 },
+                performance: { maxCacheSize: 1024 },
             });
             const snapshot = engine.getCurrentSnapshot();
-            expect(snapshot.data.scanning.interval).toBe(999);
-            expect(snapshot.data.performance.maxWorkers).toBe(8);
+            expect(snapshot.data.scanning.concurrency).toBe(5);
+            expect(snapshot.data.performance.maxCacheSize).toBe(1024);
         });
     });
 
@@ -285,7 +285,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("最小值为 18");
+            expect(result.errors![0]).toContain("最小值为 18");
         });
 
         it("should validate max value", async () => {
@@ -295,7 +295,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("最大值为 100");
+            expect(result.errors![0]).toContain("最大值为 100");
         });
 
         it("should validate required field", async () => {
@@ -305,7 +305,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("字段 name 是必需的");
+            expect(result.errors![0]).toContain("字段 name 是必需的");
         });
 
         it("should validate field type", async () => {
@@ -315,7 +315,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("类型不正确");
+            expect(result.errors![0]).toContain("类型不正确");
         });
 
         // Advanced rules coverage
@@ -326,7 +326,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("期望 object");
+            expect(result.errors![0]).toContain("期望 object");
         });
 
         it("should validate array type in rule", async () => {
@@ -336,7 +336,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("期望 array");
+            expect(result.errors![0]).toContain("期望 array");
         });
 
         it("should validate other types in rule", async () => {
@@ -346,7 +346,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("期望 string");
+            expect(result.errors![0]).toContain("期望 string");
         });
 
         it("should validate empty check for object", async () => {
@@ -356,7 +356,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("数据不能为空");
+            expect(result.errors![0]).toContain("数据不能为空");
         });
 
         it("should validate empty check for array", async () => {
@@ -366,7 +366,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("数据不能为空");
+            expect(result.errors![0]).toContain("数据不能为空");
         });
 
         it("should validate allowed keys for object", async () => {
@@ -376,7 +376,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("不允许的字段");
+            expect(result.errors![0]).toContain("不允许的字段");
         });
 
         it("should handle allowedKeys validation on non-object", async () => {
@@ -386,7 +386,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("期望对象格式");
+            expect(result.errors![0]).toContain("期望对象格式");
         });
 
         it("should handle allowedKeys validation on array", async () => {
@@ -396,7 +396,7 @@ describe("WenchangEngine", () => {
             };
             const result = await engine.validate(data);
             expect(result.valid).toBe(false);
-            expect(result.errors[0]).toContain("期望对象格式");
+            expect(result.errors![0]).toContain("期望对象格式");
         });
 
         it("should log different data types for debug info", async () => {
