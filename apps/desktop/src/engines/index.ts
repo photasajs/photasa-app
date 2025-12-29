@@ -20,14 +20,14 @@ export * from "./taiyi";
 // 天枢 - 工作流编排引擎 (Moved to @photasa/tianshu)
 export * from "@photasa/tianshu";
 
-// 马良 - 图像处理引擎
-export * from "./maliang";
+// 马良 - 图像处理引擎 (Moved to @photasa/maliang)
+export * from "@photasa/maliang";
 
 // 顺风耳 - 音频处理引擎
 export * from "./shunfenger";
 
 // 思补 - 缓存存储引擎
-export * from "./sibu";
+export * from "./adapters/SibuAdapter"; // Export adapter instead of folder
 
 // 引擎通用类型和接口
 export type { EngineCallResult } from "./workflow";

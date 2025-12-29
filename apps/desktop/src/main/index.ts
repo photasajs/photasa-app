@@ -12,7 +12,7 @@ import { StartupOptimizerV2 } from "./tianting/startup-optimizer-v2";
 import { SingleInstanceManager } from "./single-instance-manager";
 import { startupMonitor } from "./performance/startup-performance-monitor";
 import { validateConfig } from "./tianting/config/service-config-validator";
-import { configureFFmpeg } from "../engines/maliang/brushes/video/ffmpeg-config";
+import { configureFFmpeg } from "@photasa/maliang-bundle";
 
 /**
  * 导入天庭非神位服务，确保@Service装饰器被执行

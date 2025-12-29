@@ -9,6 +9,7 @@
         "typecheck": "nx run-many -t typecheck",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "prepare": "husky",
+        "validate": "pnpm --filter @photasa/desktop run validate",
         "dev:desktop": "pnpm --filter @photasa/desktop dev",
         "build:desktop": "pnpm --filter @photasa/desktop build",
         "test:desktop": "pnpm --filter @photasa/desktop test",

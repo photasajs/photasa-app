@@ -1,0 +1,38 @@
+{
+    "name": "@photasa/maliang-cli",
+    "private": true,
+    "version": "0.0.1",
+    "description": "CLI tools for Photasa setup and maintenance",
+    "type": "module",
+    "bin": {
+        "maliang": "./dist/index.js"
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite build --watch",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint . --ext .ts"
+    },
+    "dependencies": {
+        "@photasa/common": "workspace:*",
+        "@photasa/maliang-bundle": "workspace:*",
+        "commander": "^11.0.0",
+        "ora": "^7.0.1",
+        "chalk": "^5.3.0",
+        "fs-extra": "^11.1.1",
+        "ffmpeg-static": "^5.1.0",
+        "ffprobe-static": "^3.1.0"
+    },
+    "devDependencies": {
+        "@types/fs-extra": "^11.0.1",
+        "@types/node": "^18.16.0",
+        "typescript": "^5.0.4",
+        "vite": "^5.0.0",
+        "vite-plugin-dts": "^3.0.0",
+        "vitest": "^1.0.0"
+    }
+}

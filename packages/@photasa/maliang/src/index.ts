@@ -1,0 +1,37 @@
+/**
+ * 马良引擎 - MaLiang Engine
+ *
+ * 神话背景：
+ * 马良，民间传说中的神笔马良，拥有一支神奇的画笔。
+ * 传说马良出身贫寒但心地善良，梦想成为画师却买不起笔墨。
+ * 一位神仙被他的诚心感动，赐给他一支神笔，
+ * 用这支笔画出的东西都能变成真的，马良用它来帮助穷苦百姓。
+ *
+ * 在本架构中，马良引擎继承了神笔的神奇力量，
+ * 就如同神话中的马良能够神笔点睛、画物成真一样，
+ * 它能够将原始的图像和视频文件转化为各种格式的衍生品，
+ * 创造出缩略图、预览图、不同尺寸的版本等，
+ * 让数字媒体内容焕发新的生命力。
+ *
+ * 核心能力：
+ * - 图像和视频的格式转换
+ * - 缩略图和预览图的生成
+ * - 媒体元数据的提取
+ * - 多种画笔策略的智能选择
+ * - 高效的批处理和并发处理
+ */
+
+export * from "./core/MaLiang";
+export * from "./core/MagicBrush";
+export * from "./core/FormatDetector";
+export * from "./types/BrushTypes";
+export * from "./types/EditTypes";
+export * from "./parsers/gps-parser";
+export * from "./parsers/camera-parser";
+export * from "./brushes/image/BmpBrush";
+export * from "./brushes/image/SharpBrush";
+export * from "./brushes/video/FfmpegBrush";
+export * from "./brushes/heif/HeicBrush";
+export * from "./brushes/generic/FallbackBrush";
+export * from "./parsers/date-parser";
+export { initializeHeifModule, resetHeifModule } from "@photasa/maliang-bundle";

@@ -7,13 +7,15 @@ import type { ThumbnailRequest } from "@photasa/common";
 import { toPreviewPath } from "@shared/path-util";
 import { HeicExtensionRE } from "@photasa/common";
 import { PhotasaLogger } from "@photasa/common";
-import { MaLiang } from "@maliang/core/MaLiang";
-import { BmpBrush } from "@maliang/brushes/image/BmpBrush";
-import { SharpBrush } from "@maliang/brushes/image/SharpBrush";
-import { FfmpegBrush } from "@maliang/brushes/video/FfmpegBrush";
-import { HeicBrush } from "@maliang/brushes/heif/HeicBrush";
-import { FallbackBrush } from "../../engines/maliang/brushes/generic/FallbackBrush";
-import type { PaintRequest } from "@maliang/types/BrushTypes";
+import {
+    MaLiang,
+    BmpBrush,
+    SharpBrush,
+    FfmpegBrush,
+    HeicBrush,
+    FallbackBrush,
+    type PaintRequest,
+} from "@photasa/maliang";
 // 移除 ffmpeg-config 导入，路径将通过参数传递
 
 /**

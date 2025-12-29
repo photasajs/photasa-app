@@ -1,7 +1,6 @@
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { selectBestDate } from "../parsers/date-parser";
-import { extractVideoGPS } from "../parsers/gps-parser";
+import { selectBestDate, extractVideoGPS } from "@photasa/maliang";
 import type { PhotasaLogger } from "@photasa/common";
 import type { VideoMetadata } from "@photasa/common";
 

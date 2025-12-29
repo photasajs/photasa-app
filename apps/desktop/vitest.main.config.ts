@@ -12,6 +12,7 @@ export default defineConfig({
             "@shunfenger": resolve("src/engines/shunfenger/"),
             "@sibu": resolve("src/engines/sibu/"),
             "@engines/common/*": resolve("src/engines/common/*"),
+            "@photasa/ffmpeg": resolve("../../packages/@photasa/ffmpeg/src/index.ts"),
         },
     },
     test: {

@@ -50,3 +50,6 @@ guide
 # Nx Graph artifacts
 static/
 graph.html
+
+# Test output
+packages/@photasa/maliang/src/__tests__/output

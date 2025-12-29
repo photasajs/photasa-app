@@ -26,15 +26,17 @@
             "@preload/*": ["./src/preload/*"],
             "@shared/*": ["./src/shared/*"],
             "@renderer/*": ["./src/renderer/src/*"],
-            "@maliang/*": ["./src/engines/maliang/*"],
             "@shunfenger/*": ["./src/engines/shunfenger/*"],
             "@tianshu/*": ["./src/engines/tianshu/*"],
-            "@sibu": ["./src/engines/sibu/index"],
-            "@sibu/*": ["./src/engines/sibu/*"],
             "@engines/*": ["./src/engines/*"],
             "@engines/common/*": ["./src/engines/common/*"],
-            "@photasa/wenchang": ["../../packages/wenchang/src/index.ts"],
-            "@photasa/wenchang/*": ["../../packages/wenchang/src/*"]
+            "@photasa/common/*": ["../../packages/common/src/*"],
+            "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"],
+            "@photasa/wenchang/*": ["../../packages/@photasa/wenchang/src/*"],
+            "@photasa/sibu": ["../../packages/@photasa/sibu/src/index.ts"],
+            "@photasa/maliang-bundle": ["../../packages/@photasa/maliang-bundle/src/index.ts"],
+            "@photasa/maliang": ["../../packages/@photasa/maliang/src/index.ts"],
+            "@photasa/sibu/*": ["../../packages/@photasa/sibu/src/*"]
         }
     }
 }

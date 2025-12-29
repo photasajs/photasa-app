@@ -32,7 +32,7 @@
 在传统神话中，司簿府负责记录人间生死、功过记录，司簿神官手持生死簿，详细记录每个人的生平事迹，确保天道轮回的公正。
 
 **职责**: 配置文件管理、格式自动迁移、数据规范化验证、配置历史追踪
-**状态**: ✅ 已实现
+**状态**: ✅ 已实现 (独立包 @photasa/sibu)
 
 ## 🎨 马良引擎 (MaLiang Engine) - 媒体处理创造
 
@@ -42,13 +42,18 @@
 **职责**: 图像视频处理、缩略图生成、格式转换、媒体元数据提取
 **状态**: ✅ 已实现
 
-## 📜 文昌引擎 (Wenchang Engine) - 偏好典籍管理
-
-**神话背景**: 文昌帝君，掌管文运禄籍的神仙，主宰功名利禄
-传说中，文昌帝君掌管天下的文运和功名，手持丹桂，主宰士人的考试命运，记录世人的功过阴骘。
-
-**职责**: 用户偏好设置管理、配置版本控制、跨进程配置同步
-**状态**: ✅ 已实现 (独立包 @photasa/wenchang)
+- **Maliang** (Painting Engine): Graphic editing and processing
+    - Status: Active
+    - Refactoring: FFmpeg handling extracted to `@photasa/ffmpeg`
+- **Tianshu** (Book of Heaven): Metadata management
+    - Status: Active
+    - Refactoring: Core logic moved to `@photasa/tianshu`
+- **Sibu** (Ministry of Works): Configuration management
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/sibu`
+- **Wenchang** (God of Culture): Workflow engine
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/wenchang`
 
 ## 🏛 太乙层 (Taiyi Services) - 服务桥接枢纽
 

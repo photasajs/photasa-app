@@ -5,7 +5,7 @@ import { extractVideoMetadata, isSupportedVideoFile } from "./extractors/video-e
 import { extractRawMetadata, isRawFile } from "./extractors/raw-extractor";
 import { extractImageMetadata, isImageFile } from "./extractors/image-extractor";
 import { extractPsdMetadata, isPsdFile } from "./extractors/psd-extractor";
-import { generateDatePath, isValidDate, computeFallbackDate } from "./parsers/date-parser";
+import { generateDatePath, isValidDate, computeFallbackDate } from "@photasa/maliang";
 import type { PhotasaLogger } from "@photasa/common";
 import type { MetadataRequest, FileMetadata, FileGroup } from "@photasa/common";
 
@@ -338,11 +338,25 @@ function determineGroupTargetDate(group: FileGroup, logger: PhotasaLogger): Date
     return targetDate;
 }
 
-// 重新导出所有提取器和解析器
+// 重新导出所有提取器
 export * from "./extractors/heic-extractor";
 export * from "./extractors/video-extractor";
 export * from "./extractors/raw-extractor";
 export * from "./extractors/image-extractor";
-export * from "./parsers/gps-parser";
-export * from "./parsers/camera-parser";
-export * from "./parsers/date-parser";
+
+// Re-export specific parsers from @photasa/maliang to maintain backward compatibility
+export {
+    extractGPSInfo,
+    parseGPSCoordinate,
+    parseISO6709GPS,
+    extractVideoGPS,
+    extractCameraInfo,
+    isValidCameraInfo,
+    formatCameraInfo,
+    isValidDate,
+    isValidVideoDate,
+    safeParseDate,
+    selectBestDate,
+    computeFallbackDate,
+    generateDatePath,
+} from "@photasa/maliang";

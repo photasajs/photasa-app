@@ -16,8 +16,8 @@ import isVideo from "is-video";
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@photasa/common";
 import { CACHE_TTL, configCache } from "./config-cache";
 import { toRelativeThumbnailPath, toFileName } from "@shared/path-util";
-import { SibuEngine } from "@sibu";
-import type { SibuManifestResult } from "@sibu";
+import { SibuEngine } from "@photasa/sibu";
+import type { SibuManifestResult } from "@photasa/sibu";
 
 const sibuEngine = new SibuEngine();
 

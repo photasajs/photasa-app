@@ -1,0 +1,40 @@
+{
+    "name": "@photasa/maliang-bundle",
+    "version": "1.0.0",
+    "description": "Bundled binaries and decoders for Photasa (FFmpeg, HEIF)",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "require": "./dist/index.js",
+            "import": "./dist/index.mjs",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite build --watch",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "eslint . --ext .ts,.tsx --fix",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@photasa/common": "workspace:*",
+        "@saschazar/wasm-heif": "^2.0.0",
+        "ffmpeg-static": "^5.2.0",
+        "ffprobe-static": "^3.1.0",
+        "fluent-ffmpeg": "^2.1.3",
+        "fs-extra": "^11.1.1"
+    },
+    "devDependencies": {
+        "@types/fluent-ffmpeg": "^2.1.24",
+        "@types/fs-extra": "11.0.1",
+        "@types/node": "^18.19.115",
+        "typescript": "^5.9.2",
+        "vite": "^6.3.5",
+        "vite-plugin-dts": "^3.9.1",
+        "vitest": "^4.0.16"
+    }
+}

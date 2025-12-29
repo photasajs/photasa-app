@@ -1,10 +1,8 @@
 import fs from "fs-extra";
 import path from "path";
 import ExifReader from "exifreader";
-import { initializeHeifModule } from "@main/wasm/heif-module";
+import { initializeHeifModule, extractGPSInfo, extractCameraInfo } from "@photasa/maliang";
 import { extractDateTimeFromExif } from "@photasa/common";
-import { extractGPSInfo } from "../parsers/gps-parser";
-import { extractCameraInfo } from "../parsers/camera-parser";
 
 import type { PhotasaLogger } from "@photasa/common";
 import type { ImageMetadata } from "@photasa/common";

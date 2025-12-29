@@ -32,7 +32,7 @@ import {
     generateDatePath,
 } from "./import-handler";
 import { DuplicateDetector, DuplicateHandlerFactory } from "./duplicate-handler";
-import { computeFallbackDate } from "./metadata/parsers/date-parser";
+import { computeFallbackDate } from "@photasa/maliang";
 import fs from "fs-extra";
 import path from "path";
 import isImage from "is-image";
@@ -384,7 +384,7 @@ function createSerializableError(error: unknown) {
               message: error.message,
               name: error.name,
               stack: error.stack,
-              code: (error as any).code || undefined,
+              code: (error as { code?: string }).code || undefined,
           }
         : { message: String(error) };
 }
@@ -396,7 +396,7 @@ function createSerializableError(error: unknown) {
  */
 async function scanDirectoriesForFiles(
     paths: string[],
-    filters?: any,
+    filters?: ImportConfig["filters"],
     progressCallback?: (progress: any) => void,
 ): Promise<FileGroup[]> {
     const allFiles: FileInfo[] = [];
@@ -458,7 +458,7 @@ async function scanDirectoriesForFiles(
  */
 async function scanSingleDirectory(
     dirPath: string,
-    filters?: any,
+    filters?: ImportConfig["filters"],
     progressCallback?: (progress: any) => void,
     allFiles?: FileInfo[],
 ): Promise<FileInfo[]> {
@@ -564,7 +564,7 @@ async function createFileInfo(filePath: string): Promise<FileInfo | null> {
             name: fileName,
             size: stats.size,
             type: fileType,
-            dateSource: dateSource as any, // ✅ Use extracted metadata
+            dateSource: dateSource, // ✅ Use extracted metadata
             modifiedTime: stats.mtime,
             createdTime: stats.birthtime,
             dateTime: dateTime, // ✅ Use extracted metadata
@@ -601,7 +601,7 @@ function detectFileType(filePath: string): "image" | "video" | "other" {
 /**
  * 检查文件是否应该包含在扫描结果中 - 使用策略模式
  */
-function shouldIncludeFile(filePath: string, filters?: any): boolean {
+function shouldIncludeFile(filePath: string, filters?: ImportConfig["filters"]): boolean {
     const fileName = path.basename(filePath);
 
     if (fileName.startsWith(".") || shouldIgnorePhotasaPath(filePath)) {
@@ -614,7 +614,7 @@ function shouldIncludeFile(filePath: string, filters?: any): boolean {
 /**
  * 应用文件类型过滤器 - 使用策略模式
  */
-function applyFileTypeFilter(filePath: string, filters?: any): boolean {
+function applyFileTypeFilter(filePath: string, filters?: ImportConfig["filters"]): boolean {
     if (!filters?.fileTypes || filters.fileTypes.length === 0) {
         return true;
     }
@@ -633,7 +633,7 @@ function applyFileTypeFilter(filePath: string, filters?: any): boolean {
 /**
  * 应用文件大小过滤器 - 使用策略模式
  */
-function applySizeFilter(filePath: string, filters?: any): boolean {
+function applySizeFilter(filePath: string, filters?: ImportConfig["filters"]): boolean {
     if (!filters?.sizeRange) {
         return true;
     }

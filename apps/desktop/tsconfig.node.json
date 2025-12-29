@@ -28,15 +28,17 @@
             "@shared/*": ["./src/shared/*"],
             "@maliang/*": ["./src/engines/maliang/*"],
             "@shunfenger/*": ["./src/engines/shunfenger/*"],
-            "@sibu": ["./src/engines/sibu/index"],
-            "@sibu/*": ["./src/engines/sibu/*"],
             "@engines/common/*": ["./src/engines/common/*"],
             "@qianliyan/*": ["./src/engines/qianliyan/*"],
             "@engines/*": ["./src/engines/*"],
+            "@photasa/common/*": ["../../packages/common/src/*"],
             "@photasa/tianshu": ["../../packages/@photasa/tianshu/src/index.ts"],
             "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"],
             "@photasa/wenchang": ["../../packages/wenchang/src/index.ts"],
-            "@photasa/wenchang/*": ["../../packages/wenchang/src/*"]
+            "@photasa/wenchang/*": ["../../packages/wenchang/src/*"],
+            "@photasa/sibu": ["../../packages/@photasa/sibu/src/index.ts"],
+            "@photasa/ffmpeg": ["../../packages/@photasa/ffmpeg/src/index.ts"],
+            "@photasa/sibu/*": ["../../packages/@photasa/sibu/src/*"]
         },
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true

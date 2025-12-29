@@ -947,7 +947,7 @@ export const resourceLeakDetector = new ResourceLeakDetector();
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { memoryMonitor } from "@main/monitoring/memory-monitor";
 import { heifQueue } from "@main/processing/heif-queue";
-import { initializeHeifModule, resetHeifModule } from "@main/wasm/heif-module";
+import { initializeHeifModule, resetHeifModule } from "@photasa/maliang";
 
 describe("Memory Pressure Tests", () => {
     beforeEach(() => {

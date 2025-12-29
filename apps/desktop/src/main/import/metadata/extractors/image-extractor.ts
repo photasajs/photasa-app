@@ -2,8 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import ExifReader from "exifreader";
 import { extractDateTimeFromExif } from "@photasa/common";
-import { extractGPSInfo } from "../parsers/gps-parser";
-import { extractCameraInfo } from "../parsers/camera-parser";
+import { extractGPSInfo, extractCameraInfo } from "@photasa/maliang";
 import type { PhotasaLogger } from "@photasa/common";
 import type { ImageMetadata } from "@photasa/common";
 
