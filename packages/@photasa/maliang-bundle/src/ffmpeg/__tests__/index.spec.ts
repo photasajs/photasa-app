@@ -125,8 +125,22 @@ describe("Photasa FFmpeg Path Resolution", () => {
             default: {
                 setFfmpegPath: vi.fn(),
                 setFfprobePath: vi.fn(),
+                // getAvailableFormats is not used by getFFmpegVersion but keeping it for completeness if needed
                 getAvailableFormats: vi.fn((cb) => cb(null, { ffmpeg: { version: "5.1.2" } })),
             },
+        }));
+
+        vi.doMock("child_process", () => ({
+            spawn: vi.fn(() => ({
+                stdout: {
+                    on: vi.fn((event, cb) => {
+                        if (event === "data") cb("ffmpeg version 5.1.2\nCopyright...");
+                    }),
+                },
+                on: vi.fn((event, cb) => {
+                    if (event === "close") cb(0);
+                }),
+            })),
         }));
 
         const { getFFmpegVersion } = await import("../index");
@@ -168,6 +182,15 @@ describe("Photasa FFmpeg Path Resolution", () => {
             },
         }));
 
+        vi.doMock("child_process", () => ({
+            spawn: vi.fn(() => ({
+                stdout: { on: vi.fn() },
+                on: vi.fn((event, cb) => {
+                    if (event === "error") cb(new Error("Spawn failed"));
+                }),
+            })),
+        }));
+
         const { getFFmpegVersion } = await import("../index");
         const version = await getFFmpegVersion();
         expect(version).toBeNull();
@@ -201,8 +224,21 @@ describe("Photasa FFmpeg Path Resolution", () => {
             },
         }));
 
+        vi.doMock("child_process", () => ({
+            spawn: vi.fn(() => ({
+                stdout: {
+                    on: vi.fn((event, cb) => {
+                        if (event === "data") cb("Arbitrary output without version info\n");
+                    }),
+                },
+                on: vi.fn((event, cb) => {
+                    if (event === "close") cb(0);
+                }),
+            })),
+        }));
+
         const { getFFmpegVersion } = await import("../index");
         const version = await getFFmpegVersion();
-        expect(version).toBe("unknown");
+        expect(version).toBe("Arbitrary output without version info");
     });
 });
