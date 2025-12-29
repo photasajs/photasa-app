@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectBestDate } from "../metadata/parsers/date-parser";
+import { selectBestDate } from "@photasa/maliang";
 
 // Video time field priorities for testing
 const VIDEO_TIME_FIELDS = ["com.apple.quicktime.creationdate", "creation_time", "date"];

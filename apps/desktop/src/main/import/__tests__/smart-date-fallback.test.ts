@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { computeFallbackDate } from "../metadata/parsers/date-parser";
+import { computeFallbackDate } from "@photasa/maliang";
 
 describe("Compute Fallback Date Logic", () => {
     it("should choose the earlier date when both createdTime and modifiedTime are valid", () => {
