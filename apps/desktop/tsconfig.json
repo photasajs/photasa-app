@@ -33,6 +33,8 @@
             "@sibu/*": ["./src/engines/sibu/*"],
             "@engines/*": ["./src/engines/*"],
             "@engines/common/*": ["./src/engines/common/*"],
+            "@photasa/wenchang": ["../../packages/wenchang/src/index.ts"],
+            "@photasa/wenchang/*": ["../../packages/wenchang/src/*"]
         }
     }
 }

@@ -20,9 +20,6 @@ export * from "./taiyi";
 // 天枢 - 工作流编排引擎 (Moved to @photasa/tianshu)
 export * from "@photasa/tianshu";
 
-// 文昌 - 偏好管理引擎
-export * from "./wenchang";
-
 // 马良 - 图像处理引擎
 export * from "./maliang";
 

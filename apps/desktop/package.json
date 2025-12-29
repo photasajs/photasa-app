@@ -59,6 +59,7 @@
         "@phosphor-icons/vue": "^2.2.1",
         "@photasa/common": "workspace:*",
         "@photasa/tianshu": "workspace:*",
+        "@photasa/wenchang": "workspace:*",
         "@saschazar/wasm-heif": "^2.0.0",
         "@sentry/electron": "^7.0.0",
         "@systembug/diting": "^0.0.7",

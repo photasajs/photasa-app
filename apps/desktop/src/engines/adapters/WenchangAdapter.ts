@@ -4,8 +4,8 @@
  */
 
 import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
-import { WenchangEngine, WenchangEngineConfig } from "../wenchang/core/WenchangEngine";
-import type { PreferenceSnapshot, PreferenceDelta } from "../wenchang/types/index";
+import { WenchangEngine, WenchangEngineConfig } from "@photasa/wenchang";
+import type { PreferenceSnapshot, PreferenceDelta } from "@photasa/wenchang";
 import { loggers } from "@photasa/common";
 import * as path from "path";
 import * as os from "os";

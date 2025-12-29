@@ -7,8 +7,6 @@ export default defineConfig({
             "@main": resolve("src/main/"),
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
-            "@photasa/tianshu": resolve("../../packages/@photasa/tianshu/src/index.ts"),
-            "@photasa/tianshu/*": resolve("../../packages/@photasa/tianshu/src/*"),
             "@shared": resolve("src/shared/"),
             "@maliang": resolve("src/engines/maliang/"),
             "@shunfenger": resolve("src/engines/shunfenger/"),

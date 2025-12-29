@@ -405,13 +405,13 @@ export class WenchangEngine extends EventEmitter {
         try {
             const errors: string[] = [];
 
-            // 基本数据验证 - 检查主要数据字段
-            const targetData = data.delta || data.data || data;
-
-            if (targetData === null || targetData === undefined) {
+            if (data === null || data === undefined) {
                 errors.push("验证数据不能为空");
                 return { valid: false, errors };
             }
+
+            // 基本数据验证 - 检查主要数据字段
+            const targetData = data.delta || data.data || data;
 
             // 添加调试信息，显示实际验证的数据类型和内容
             const actualType = Array.isArray(targetData) ? "array" : typeof targetData;

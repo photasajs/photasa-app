@@ -43,7 +43,7 @@ export interface AutoUpdateConfig {
  * 统一偏好设置接口 - 与天界(Wenchang)保持一致
  * ✅ RFC 0038: Store边界统一，添加scanning和system字段
  *
- * 此接口与src/engines/wenchang/types/index.ts中的UserPreferences保持完全一致
+ * 此接口与@photasa/wenchang中的UserPreferences保持完全一致
  * 形成天界-人界镜像关系，确保数据结构统一
  */
 export interface PreferenceState {

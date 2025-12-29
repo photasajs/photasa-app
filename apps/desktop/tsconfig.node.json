@@ -34,7 +34,9 @@
             "@qianliyan/*": ["./src/engines/qianliyan/*"],
             "@engines/*": ["./src/engines/*"],
             "@photasa/tianshu": ["../../packages/@photasa/tianshu/src/index.ts"],
-            "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"]
+            "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"],
+            "@photasa/wenchang": ["../../packages/wenchang/src/index.ts"],
+            "@photasa/wenchang/*": ["../../packages/wenchang/src/*"]
         },
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true
