@@ -78,7 +78,7 @@ export interface PoolStats {
 export const DEFAULT_THUMBNAIL_WORKER_CONFIG: ThumbnailWorkerConfig = {
     minWorkers: 1,
     maxWorkers: Math.min(4, Math.max(2, Math.floor((cpus()?.length || 4) / 2))),
-    createWorker: (options?: unknown) => createWorker(options as WorkerOptions),
+    createWorker: (options?: unknown) => new (createWorker as any)(options as WorkerOptions),
     workerOptions: {
         resourceLimits: {
             maxOldGenerationSizeMb: 100,

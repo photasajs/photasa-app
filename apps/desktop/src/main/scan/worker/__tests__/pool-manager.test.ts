@@ -38,15 +38,15 @@ vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => {
 
 // Mock dependencies
 vi.mock("../../../workers/worker-pool", () => ({
-    WorkerPool: vi.fn().mockImplementation(() => ({
-        shutdown: vi.fn().mockImplementation(() => Promise.resolve()),
-        addTask: vi.fn().mockImplementation(() => Promise.resolve({})),
-        getStats: vi.fn().mockReturnValue({
+    WorkerPool: class {
+        shutdown = vi.fn().mockResolvedValue(undefined);
+        addTask = vi.fn().mockResolvedValue({});
+        getStats = vi.fn().mockReturnValue({
             activeWorkers: 2,
             idleWorkers: 1,
             queuedTasks: 0,
-        }),
-    })),
+        });
+    },
 }));
 
 vi.mock("os", () => ({
@@ -101,9 +101,7 @@ describe("WorkerPoolManager", () => {
             expect(isWorkerPoolAvailable()).toBe(true);
             // 状态可能是RUNNING或INITIALIZING，只要不是UNINITIALIZED即可
             const status = getWorkerPoolStatus();
-            expect([PoolStatus.RUNNING, PoolStatus.INITIALIZING, PoolStatus.READY]).toContain(
-                status,
-            );
+            expect([PoolStatus.RUNNING, PoolStatus.INITIALIZING]).toContain(status);
         });
 
         it("应该能关闭Worker池", async () => {

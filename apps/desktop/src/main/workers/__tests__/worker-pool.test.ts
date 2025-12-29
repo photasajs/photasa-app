@@ -3,22 +3,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PhotasaLogger } from "@photasa/common";
 import { WorkerPool } from "../worker-pool";
 
-// Mock Worker class
-class MockWorker extends EventEmitter {
-    public isBusy = false;
-    public postMessage = vi.fn();
-    public terminate = vi.fn().mockResolvedValue(undefined);
-}
-
 // Mock Worker constructor
 vi.mock("worker_threads", async (importOriginal) => {
+    const { EventEmitter } = await import("events");
+    class MockWorker extends EventEmitter {
+        public isBusy = false;
+        public postMessage = vi.fn();
+        public terminate = vi.fn().mockResolvedValue(undefined);
+    }
     const actual = await importOriginal();
     return {
         ...((typeof actual === "object" && actual) || {}),
-        Worker: vi.fn().mockImplementation(() => new MockWorker()),
+        Worker: MockWorker,
         default: {
             ...(typeof actual === "object" && actual ? actual : {}),
-            Worker: vi.fn().mockImplementation(() => new MockWorker()),
+            Worker: MockWorker,
         },
     };
 });
@@ -48,7 +47,7 @@ describe("WorkerPool", () => {
     });
 
     it("should handle worker errors", async () => {
-        const worker = workerPool["workers"][0] as unknown as MockWorker;
+        const worker = workerPool["workers"][0] as any;
         const error = new Error("Test error");
 
         worker.emit("error", error);
@@ -58,7 +57,7 @@ describe("WorkerPool", () => {
     });
 
     it("should replace workers that exit with non-zero code", async () => {
-        const worker = workerPool["workers"][0] as unknown as MockWorker;
+        const worker = workerPool["workers"][0] as any;
         worker.emit("exit", 1);
 
         expect(mockLogger.warn).toHaveBeenCalledWith("Worker exited with code 1");
@@ -67,7 +66,7 @@ describe("WorkerPool", () => {
 
     it("should shutdown all workers", async () => {
         await workerPool.shutdown();
-        const workers = workerPool["workers"] as unknown as MockWorker[];
+        const workers = workerPool["workers"] as unknown as any[];
 
         expect(workers).toHaveLength(0);
         workers.forEach((w) => {

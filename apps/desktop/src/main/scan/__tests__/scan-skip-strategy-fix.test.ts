@@ -15,20 +15,20 @@ import { loggers } from "@photasa/common";
 vi.mock("fs-extra");
 vi.mock("../strategy/scan-strategy");
 vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => ({
-    default: vi.fn(() => ({
-        on: vi.fn(),
-        postMessage: vi.fn(),
-        terminate: vi.fn(),
-    })),
+    default: class {
+        on = vi.fn();
+        postMessage = vi.fn();
+        terminate = vi.fn();
+    },
 }));
 vi.mock("../cache/incremental-cache", () => ({
-    IncrementalCacheManager: vi.fn().mockImplementation(() => ({
-        initialize: vi.fn().mockResolvedValue({}),
-        markScanComplete: vi.fn().mockResolvedValue(undefined),
-        isFileProcessed: vi.fn().mockReturnValue(false),
-        setPendingFiles: vi.fn(),
-        recordFileProcessed: vi.fn().mockResolvedValue(undefined),
-    })),
+    IncrementalCacheManager: class {
+        initialize = vi.fn().mockResolvedValue({});
+        markScanComplete = vi.fn().mockResolvedValue(undefined);
+        isFileProcessed = vi.fn().mockReturnValue(false);
+        setPendingFiles = vi.fn();
+        recordFileProcessed = vi.fn().mockResolvedValue(undefined);
+    },
 }));
 
 describe("Skip Strategy Fix", () => {
