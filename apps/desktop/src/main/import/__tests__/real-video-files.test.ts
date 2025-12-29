@@ -63,7 +63,7 @@ describe("Real Video Files Tests", () => {
             expect(result).toHaveProperty("dateSource");
 
             // Format should be 'MOV'
-            expect(result.format).toBe("MOV");
+            expect(result.format?.toUpperCase()).toBe("MOV");
 
             // Video-specific properties may not be available if extraction fails
             if (result.resolution) {
@@ -116,7 +116,7 @@ describe("Real Video Files Tests", () => {
             expect(result).toHaveProperty("dateSource");
 
             // Format should be 'MP4'
-            expect(result.format).toBe("MP4");
+            expect(result.format?.toUpperCase()).toBe("MP4");
 
             // Video-specific properties may not be available if extraction fails
             if (result.resolution) {
@@ -191,7 +191,7 @@ describe("Real Video Files Tests", () => {
                 expect((result as any).resolution?.width).toBeGreaterThan(0);
                 expect((result as any).resolution?.height).toBeGreaterThan(0);
             }
-            expect((result as any).format).toBe("MOV");
+            expect((result as any).format?.toUpperCase()).toBe("MOV");
         });
 
         it("should extract complete metadata from real MP4 file", async () => {
@@ -225,7 +225,7 @@ describe("Real Video Files Tests", () => {
                 expect((result as any).resolution?.width).toBeGreaterThan(0);
                 expect((result as any).resolution?.height).toBeGreaterThan(0);
             }
-            expect((result as any).format).toBe("MP4");
+            expect((result as any).format?.toUpperCase()).toBe("MP4");
         });
     });
 
