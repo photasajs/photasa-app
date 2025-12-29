@@ -41,25 +41,37 @@ picasa-vue/
     - 从 `@systembug/tianshu` 迁移而来。
     - **导入规则**: 从 `@photasa/tianshu` 导入。
 
-### 跨进程代码共享与构建策略
+### Cross-Process Code Sharing and Build Strategy
 
-Photasa 根据包的用途采用不同的构建策略：
+Photasa uses a **Unified Packaging Strategy** for all internal packages (monorepo packages):
 
-#### 1. 同构包 (Isomorphic Packages) - 如 `@photasa/common`
+#### Unified Vite Library Mode Strategy
 
-由于 `common` 包同时被 **Main** (Node.js) 和 **Renderer** (Browser) 进程使用，我们采用 **源码打包策略 (Source Bundling Strategy)**：
+All packages (whether shared, node-only, or renderer-only) must be built using **Vite Library Mode**. We do not use source code sharing (no `ts-node` or direct `src/` imports).
 
-- **配置**: `package.json` 的 `main` 指向 `./src/index.ts`。
-- **构建**: 消费端 (`apps/desktop`) 的构建工具 (`electron-vite`) 负责将其转译为目标环境的代码 (CJS 或 ESM)。
-- **注意**: 在 `electron.vite.config.ts` 中需将其**排除**在外部依赖之外。
-
-#### 2. 主进程专用包 (Main-Process Packages) - 如 `@photasa/tianshu`
-
-对于仅在 Node.js 环境（Main 进程）运行的包，我们采用 **标准打包策略 (Standard Packaging Strategy)**：
-
-- **配置**: `package.json` 的 `main` 指向编译后的 `./dist/index.js`。
-- **构建**: 包自身负责构建 (`pnpm build`)，消费端将其视为普通 NPM 依赖。
-- **注意**: 包含原生依赖或仅限 Node 的逻辑。
+1.  **Build Tool**: `vite` with `vite-plugin-dts`.
+2.  **Output Format**:
+    - **CJS**: `dist/index.cjs` (for Main process/Node)
+    - **ESM**: `dist/index.mjs` (for Renderer/Vite)
+    - **Types**: `dist/index.d.ts`
+3.  **`package.json` Standard**:
+    ```json
+    {
+        "type": "module",
+        "main": "./dist/index.cjs",
+        "module": "./dist/index.mjs",
+        "types": "./dist/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.mjs",
+                "require": "./dist/index.cjs"
+            }
+        },
+        "files": ["dist"]
+    }
+    ```
+4.  **Consumption**: Consumers (apps) install the package and use it as a standard node module. No build configuration (externalization vs bundling) is needed in the consumer's `vite.config.ts` other than standard dependency handling.
 
 ## Development Setup
 

@@ -2,11 +2,24 @@
     "name": "@photasa/common",
     "version": "1.0.0",
     "private": true,
-    "main": "./src/index.ts",
-    "module": "./src/index.ts",
-    "types": "./src/index.ts",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
     "scripts": {
-        "typecheck": "tsc --noEmit"
+        "build": "vite build",
+        "dev": "vite build --watch",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run"
     },
     "peerDependencies": {
         "electron": ">=28.0.0"
@@ -21,8 +34,11 @@
         "@types/lodash": "^4.14.202",
         "@types/node": "^20.11.24",
         "@types/uuid": "^10.0.0",
+        "@vitest/coverage-v8": "^4.0.16",
         "electron": "^33.2.1",
         "typescript": "^5.3.3",
+        "vite": "^6.3.5",
+        "vite-plugin-dts": "^3.9.1",
         "vitest": "^4.0.16"
     }
 }

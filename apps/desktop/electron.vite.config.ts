@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
     main: {
         plugins: [
             externalizeDepsPlugin({
-                exclude: ["@photasa/common"],
+                exclude: [],
             }),
         ],
         resolve: {
@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => ({
     preload: {
         plugins: [
             externalizeDepsPlugin({
-                exclude: ["@photasa/common"],
+                exclude: [],
             }),
             babel({ babelHelpers: "bundled" }),
         ],

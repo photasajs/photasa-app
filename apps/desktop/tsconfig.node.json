@@ -33,8 +33,6 @@
             "@engines/common/*": ["./src/engines/common/*"],
             "@qianliyan/*": ["./src/engines/qianliyan/*"],
             "@engines/*": ["./src/engines/*"],
-            "@photasa/common": ["../../packages/common/src/index.ts"],
-            "@photasa/common/*": ["../../packages/common/src/*"],
             "@photasa/tianshu": ["../../packages/@photasa/tianshu/src/index.ts"],
             "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"]
         },

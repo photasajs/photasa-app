@@ -11,8 +11,6 @@ export default defineConfig({
             "@main": resolve("src/main/"),
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
-            "@photasa/common": resolve("../../packages/common/src/index.ts"),
-            "@photasa/common/*": resolve("../../packages/common/src/*"),
             "@photasa/tianshu": resolve("../../packages/@photasa/tianshu/src/index.ts"),
             "@photasa/tianshu/*": resolve("../../packages/@photasa/tianshu/src/*"),
         },

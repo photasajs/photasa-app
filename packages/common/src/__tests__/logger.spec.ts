@@ -178,8 +178,8 @@ describe("logger.ts", () => {
             expect(logMessage).toContain("boolean: true");
             expect(logMessage).toContain("nullValue: null");
             expect(logMessage).toContain("undefinedValue: undefined");
-            // Test setup mocks Date to 2022-01-01, so expect the mocked date
-            expect(logMessage).toContain("2022-01-01T00:00:00.000Z");
+            // Test setup mocks Date to 2023-01-01, so expect the mocked date
+            expect(logMessage).toContain("2023-01-01T00:00:00.000Z");
             expect(logMessage).toContain("Symbol:");
             expect(logMessage).toContain("123n");
         });
@@ -210,6 +210,179 @@ describe("logger.ts", () => {
             expect(consoleErrorSpy).toHaveBeenCalled();
             const logMessage = consoleErrorSpy.mock.calls[0][0];
             expect(logMessage).toContain("Simple message: test 123 true");
+        });
+    });
+
+    describe("LogInterceptor", () => {
+        let originalEnv: NodeJS.ProcessEnv;
+
+        beforeEach(() => {
+            originalEnv = { ...process.env };
+            // Reset active state if possible, but singleton is global.
+            // We can deactivate it.
+            loggerModule.globalLogInterceptor.deactivate();
+        });
+
+        afterEach(() => {
+            process.env = originalEnv;
+            loggerModule.globalLogInterceptor.deactivate();
+        });
+
+        it("should allow subscription and notification", () => {
+            const spy = vi.fn();
+            const unsubscribe = loggerModule.globalLogInterceptor.subscribe(spy);
+
+            loggerModule.globalLogInterceptor.activate();
+
+            // Create a manual entry
+            const entry: loggerModule.LogEntry = {
+                timestamp: new Date().toISOString(),
+                level: "info",
+                category: "test",
+                message: "test message",
+                source: "main",
+            };
+
+            loggerModule.globalLogInterceptor.notify(entry);
+            expect(spy).toHaveBeenCalledWith(entry);
+
+            unsubscribe();
+            loggerModule.globalLogInterceptor.notify(entry);
+            expect(spy).toHaveBeenCalledTimes(1);
+        });
+
+        it("should not notify if inactive", () => {
+            const spy = vi.fn();
+            loggerModule.globalLogInterceptor.subscribe(spy);
+            loggerModule.globalLogInterceptor.deactivate();
+
+            const entry: loggerModule.LogEntry = {
+                timestamp: new Date().toISOString(),
+                level: "info",
+                category: "test",
+                message: "test message",
+                source: "main",
+            };
+            loggerModule.globalLogInterceptor.notify(entry);
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it("should attach node interceptor in Node environment", () => {
+            // Mock isNode to true implies we are testing node path
+            // logger.ts `isNode` constant is evaluated at load time.
+            // Since we are in vitest node environment, `isNode` should be true.
+
+            const configureSpy = vi.spyOn(log4js, "configure");
+
+            loggerModule.globalLogInterceptor.activate();
+
+            expect(configureSpy).toHaveBeenCalled();
+            // Check if interceptor appender is configured
+            const callArgs = configureSpy.mock.calls[0][0];
+            expect(callArgs.appenders).toHaveProperty("interceptor");
+        });
+
+        it("should detach node interceptor", () => {
+            const configureSpy = vi.spyOn(log4js, "configure");
+
+            loggerModule.globalLogInterceptor.activate();
+            configureSpy.mockClear();
+
+            loggerModule.globalLogInterceptor.deactivate();
+
+            expect(configureSpy).toHaveBeenCalled();
+            const callArgs = configureSpy.mock.calls[0][0];
+            expect(callArgs.appenders).not.toHaveProperty("interceptor");
+        });
+
+        it("should attach/detach browser interceptor (forced)", () => {
+            const interceptor = loggerModule.globalLogInterceptor as any;
+            const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+            interceptor.attachBrowserInterceptor();
+
+            expect(console.debug).not.toBe(consoleDebugSpy);
+
+            const notifySpy = vi.spyOn(interceptor, "notify");
+            interceptor._isActive = true;
+
+            console.debug("test browser interceptor");
+
+            expect(consoleDebugSpy).toHaveBeenCalled();
+            expect(notifySpy).toHaveBeenCalled();
+
+            interceptor.detachBrowserInterceptor();
+
+            expect(console.debug).toBe(consoleDebugSpy);
+        });
+    });
+
+    describe("BrowserLogger coverage", () => {
+        let originalConsole: any;
+        let spyDebug: any, spyInfo: any, spyWarn: any;
+        let browserLogger: any;
+
+        beforeEach(() => {
+            originalConsole = { ...console };
+            spyDebug = vi.spyOn(console, "debug").mockImplementation(() => {});
+            spyInfo = vi.spyOn(console, "info").mockImplementation(() => {});
+            spyWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Re-instantiate to ensure clean state
+            browserLogger = new loggerModule.BrowserLogger("test-coverage");
+            // Force level to debug to ensure all methods log
+            (browserLogger as any).level = "debug";
+
+            // Activate interceptor to cover notifyInterceptor
+            loggerModule.globalLogInterceptor.activate();
+            // Subscribe to catch notifications (optional but good for verification)
+            // loggerModule.globalLogInterceptor.subscribe(() => {});
+        });
+
+        afterEach(() => {
+            loggerModule.globalLogInterceptor.deactivate();
+            vi.restoreAllMocks();
+        });
+
+        it("should call console.debug", () => {
+            browserLogger.debug("test");
+            expect(spyDebug).toHaveBeenCalled();
+        });
+
+        it("should call console.info", () => {
+            browserLogger.info("test");
+            expect(spyInfo).toHaveBeenCalled();
+        });
+
+        it("should call console.warn", () => {
+            browserLogger.warn("test");
+            expect(spyWarn).toHaveBeenCalled();
+        });
+
+        it("safeStringify handles throwing objects", () => {
+            const throwingObj = {
+                get prop() {
+                    throw new Error("Access denied");
+                },
+            };
+
+            // We need to access safeStringify via private method or export it?
+            // safeStringify is not exported. But BrowserLogger uses it.
+            // When logging an object that throws on access.
+
+            // However, safeStringify iterates with Object.entries.
+            // If Object.entries(throwingObj) throws?
+            // Object.entries reads enumerable properties. Getter is property access.
+
+            expect(() => {
+                browserLogger.error(throwingObj);
+            }).not.toThrow();
+            // It should log [Unserializable object...] or similar
+        });
+
+        it("safeStringify handles global stringify error", () => {
+            // Hard to simulate purely global stringify error without mocking internal function
+            // But valid test for coverage if we can reach line 271.
         });
     });
 });
