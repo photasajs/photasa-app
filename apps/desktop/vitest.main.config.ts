@@ -24,13 +24,7 @@ export default defineConfig({
         hookTimeout: 15000,
         teardownTimeout: 10000,
         pool: "forks",
-        poolOptions: {
-            forks: {
-                singleFork: false,
-                maxForks: 4,
-                isolate: true,
-            },
-        },
+        // poolOptions removed in v4, using defaults
         maxConcurrency: 4,
         isolate: true,
         passWithNoTests: true,

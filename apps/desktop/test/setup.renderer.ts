@@ -1,6 +1,6 @@
 import { config } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
-import { createPinia } from "pinia";
+import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, vi } from "vitest";
 import { cleanup } from "@testing-library/vue";
 
@@ -57,7 +57,10 @@ function getOrCreateI18n() {
 
 // 每个测试使用新的 Pinia 实例
 function createTestPinia() {
-    return createPinia();
+    const pinia = createPinia();
+    // 显式激活 Pinia，解决非组件上下文使用 Store 的问题
+    setActivePinia(pinia);
+    return pinia;
 }
 
 // 配置全局选项，只在模块加载时设置一次
@@ -65,8 +68,10 @@ config.global.plugins = [getOrCreateI18n()];
 
 // 每个测试前重置 Pinia
 beforeEach(() => {
-    // 只重新设置 Pinia，不重复设置 i18n
-    config.global.plugins = [getOrCreateI18n(), createTestPinia()];
+    // 创建并激活新的 Pinia
+    const pinia = createTestPinia();
+    // 只需要在这里设置 config，setActivePinia 已经在 createTestPinia 中调用
+    config.global.plugins = [getOrCreateI18n(), pinia];
 });
 
 // Mock Date.now for performance tests

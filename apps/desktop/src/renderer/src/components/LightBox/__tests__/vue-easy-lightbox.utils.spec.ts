@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { mutateDragging, MutateDraggingOptions, isImg, zoom } from "../vue-easy-lightbox.utils";
 import type { Img, IImgState, IImgWrapperState } from "../types";
 
 describe("mutateDragging", () => {
-    let onNext: ReturnType<typeof vi.fn>;
-    let onPrev: ReturnType<typeof vi.fn>;
-    let canMove: ReturnType<typeof vi.fn>;
+    let onNext: Mock<() => void>;
+    let onPrev: Mock<() => void>;
+    let canMove: Mock<() => boolean>;
     let imgWrapperState: MutateDraggingOptions["imgWrapperState"];
     const swipeTolerance = 30;
 

@@ -2,14 +2,14 @@
  * Unit tests for useWizard composable
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { useWizard } from "../composables/useWizard";
 import type { WizardConfig } from "../types";
 
 describe("useWizard", () => {
     let mockConfig: WizardConfig;
-    let mockValidationFn: ReturnType<typeof vi.fn>;
-    let mockOnEnterFn: ReturnType<typeof vi.fn>;
+    let mockValidationFn: Mock<any>; // Using any for simplicity as strict type matching with optional args is tricky
+    let mockOnEnterFn: Mock<any>;
 
     beforeEach(() => {
         mockValidationFn = vi.fn();
@@ -20,8 +20,8 @@ describe("useWizard", () => {
                 {
                     id: "step1",
                     title: "Step 1",
-                    isValid: mockValidationFn,
-                    onEnter: mockOnEnterFn,
+                    isValid: mockValidationFn as any,
+                    onEnter: mockOnEnterFn as any,
                 },
                 {
                     id: "step2",
