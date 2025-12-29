@@ -9,7 +9,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
         vi.doMock("ffmpeg-static", () => ({ default: "/node_modules/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/node_modules/ffprobe" } }));
         // Mock fs-extra for imports in index.ts
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -24,7 +24,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     it("should resolve production path for ffmpeg", async () => {
         vi.doMock("ffmpeg-static", () => ({ default: "/resources/app.asar/node_modules/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/node_modules/ffprobe" } })); // stub
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -50,7 +50,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
         vi.doMock("ffprobe-static", () => ({
             default: { path: "/resources/app.asar/node_modules/ffprobe" },
         }));
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -65,7 +65,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     it("should export getFFmpegConfig", async () => {
         vi.doMock("ffmpeg-static", () => ({ default: "/bin/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/bin/ffprobe" } }));
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -84,7 +84,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
 
         vi.doMock("ffmpeg-static", () => ({ default: "/bin/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/bin/ffprobe" } }));
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -100,7 +100,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     it("should handle missing binaries gracefully", async () => {
         vi.doMock("ffmpeg-static", () => ({ default: "/missing/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/missing/ffprobe" } }));
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => false) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => false) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -117,7 +117,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     it("should get ffmpeg version", async () => {
         vi.doMock("ffmpeg-static", () => ({ default: "/bin/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/bin/ffprobe" } }));
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -138,7 +138,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     });
 
     it("should return null version if unavailable", async () => {
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => false) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => false) } }));
         vi.doMock("ffmpeg-static", () => ({ default: "/bin/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/bin/ffprobe" } }));
         vi.doMock("@photasa/common", () => ({
@@ -156,7 +156,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     it("should handle version check error", async () => {
         vi.doMock("ffmpeg-static", () => ({ default: "/bin/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/bin/ffprobe" } }));
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -176,7 +176,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     it("should handle ffprobe-static as string", async () => {
         vi.doMock("ffprobe-static", () => ({ default: "/path/to/ffprobe_string" }));
         // Ensure path check logic passes
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
@@ -189,7 +189,7 @@ describe("Photasa FFmpeg Path Resolution", () => {
     it("should return unknown version if format data missing", async () => {
         vi.doMock("ffmpeg-static", () => ({ default: "/bin/ffmpeg" }));
         vi.doMock("ffprobe-static", () => ({ default: { path: "/bin/ffprobe" } }));
-        vi.doMock("fs-extra", () => ({ existsSync: vi.fn(() => true) }));
+        vi.doMock("fs-extra", () => ({ default: { existsSync: vi.fn(() => true) } }));
         vi.doMock("@photasa/common", () => ({
             getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
         }));
