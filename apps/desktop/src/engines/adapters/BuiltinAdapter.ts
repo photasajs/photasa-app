@@ -3,7 +3,7 @@
  * 处理工作流内置操作，如return、setVariable、log等
  */
 
-import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
+import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
 import { loggers } from "@photasa/common";
 
 const logger = loggers.taiyi;

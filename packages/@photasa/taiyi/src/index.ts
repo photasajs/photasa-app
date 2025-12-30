@@ -25,10 +25,12 @@
  */
 
 // ⚠️ 关键：必须先导入所有适配器，确保@Adapter装饰器在引擎初始化前执行
-import "../adapters";
+// Adapters are external to the engine core
+// import "../adapters";
 
 // 核心引擎
 export { TaiyiEngine } from "./core/TaiyiEngine";
 export type { TaiyiEngineConfig } from "./core/TaiyiEngine";
 export { Adapter, AdapterPriority } from "./core/adapter-decorators";
 export type { IAdapter } from "./core/adapter-decorators";
+export * from "./core/workflow";

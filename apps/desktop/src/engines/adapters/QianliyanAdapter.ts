@@ -3,7 +3,7 @@
  * 将千里眼引擎集成到太乙引擎架构中
  */
 
-import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
+import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
 import {
     QianliyanEngine,
     ScanCommand,

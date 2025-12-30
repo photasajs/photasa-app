@@ -12,7 +12,7 @@
  * 在架构中负责管理和持久化应用运行时状态
  */
 
-import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
+import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
 import { SimingEngine, type AppState } from "../siming/core/SimingEngine";
 import type { FolderNode } from "@photasa/common";
 import { loggers } from "@photasa/common";

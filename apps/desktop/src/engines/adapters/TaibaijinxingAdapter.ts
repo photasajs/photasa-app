@@ -18,7 +18,7 @@
 
 import { Menu, shell } from "electron";
 import type { IpcMain, BrowserWindow } from "electron";
-import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
+import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
 import { loggers } from "@photasa/common";
 import type { MenuItemData } from "@photasa/common";
 

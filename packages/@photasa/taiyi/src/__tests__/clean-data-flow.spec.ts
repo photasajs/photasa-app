@@ -3,9 +3,9 @@
  * 验证引擎层不关心工作流，数据流简洁无复杂嵌套
  */
 
-import { describe, it, expect, jest } from "@jest/globals";
+import { describe, it, expect, vi as jest, beforeEach } from "vitest";
 import { TaiyiEngine } from "../core/TaiyiEngine";
-import { EngineCallResult } from "../../workflow";
+import { EngineCallResult } from "../core/workflow";
 
 // Mock logger
 jest.mock("@photasa/common", () => ({

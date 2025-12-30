@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { AdapterRegistry } from "./adapter-registry";
 import { loggers } from "@photasa/common";
-import { EngineCallResult } from "../../workflow";
+import { EngineCallResult } from "./workflow";
 
 const logger = loggers.taiyi;
 

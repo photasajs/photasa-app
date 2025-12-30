@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, afterEach, vi as jest } from "vitest";
 import { TaiyiEngine } from "../core/TaiyiEngine";
 import { AdapterRegistry } from "../core/adapter-registry";
 import { Adapter, AdapterPriority, IAdapter } from "../core/adapter-decorators";
@@ -137,6 +137,96 @@ describe("TaiyiEngine", () => {
             await engine.shutdown();
 
             expect(shutdownSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe("health check", () => {
+        it("should start and stop health check", async () => {
+            jest.useFakeTimers();
+            const healthEngine = new TaiyiEngine({
+                enableHealthCheck: true,
+                healthCheckInterval: 1000,
+            });
+
+            const healthSpy = jest.fn();
+            healthEngine.on("healthCheck", healthSpy);
+
+            // Need to mock AdapterRegistry.getAllEngineStatus?
+            // TaiyiEngine uses AdapterRegistry.getAllEngineStatus()
+            // So we should register an adapter first
+            AdapterRegistry.registerAdapter(
+                { name: "test", priority: 1, displayName: "", description: "", engineType: "t" },
+                TestAdapter,
+            );
+
+            await healthEngine.initialize();
+
+            jest.advanceTimersByTime(1100);
+            expect(healthSpy).toHaveBeenCalled();
+
+            healthEngine.shutdown();
+            jest.useRealTimers();
+        });
+
+        it("should emit failure event if engine error", async () => {
+            jest.useFakeTimers();
+            const healthEngine = new TaiyiEngine({
+                enableHealthCheck: true,
+                healthCheckInterval: 1000,
+            });
+
+            const failureSpy = jest.fn();
+            healthEngine.on("engineFailure", failureSpy);
+
+            // Mock getEngineStatus return error
+            // We can cheat by directly setting status in registry if accessible, or mock the method
+            // Since getAllEngineStatus calls AdapterRegistry, let's mock AdapterRegistry.getRegisteredAdapters
+            // But AdapterRegistry is a static class.
+            // We can register an adapter that we can manipulate?
+            // Or better, just spy on getAllEngineStatus of the engine itself
+            const statusSpy = jest.spyOn(healthEngine, "getAllEngineStatus").mockReturnValue({
+                "failed-engine": "error",
+            });
+
+            await healthEngine.initialize();
+            jest.advanceTimersByTime(1100);
+
+            expect(failureSpy).toHaveBeenCalledWith(["failed-engine"]);
+
+            healthEngine.shutdown();
+            jest.useRealTimers();
+        });
+    });
+
+    describe("idempotency and errors", () => {
+        it("should not initialize twice", async () => {
+            await engine.initialize();
+            const emitSpy = jest.spyOn(engine, "emit");
+            await engine.initialize();
+            expect(emitSpy).not.toHaveBeenCalledWith("initialized");
+        });
+
+        it("should not shutdown if not initialized", async () => {
+            const emitSpy = jest.spyOn(engine, "emit");
+            await engine.shutdown();
+            expect(emitSpy).not.toHaveBeenCalledWith("shutdown");
+        });
+
+        it("should handle initialization error", async () => {
+            const errorMock = new Error("Init fail");
+            // Mock AdapterRegistry.initializeAll to throw
+            jest.spyOn(AdapterRegistry, "initializeAll").mockRejectedValueOnce(errorMock);
+
+            await expect(engine.initialize()).rejects.toThrow("Init fail");
+        });
+
+        it("should handle shutdown error", async () => {
+            await engine.initialize();
+            const errorMock = new Error("Shutdown fail");
+            // Mock AdapterRegistry.shutdownAll to throw
+            jest.spyOn(AdapterRegistry, "shutdownAll").mockRejectedValueOnce(errorMock);
+
+            await expect(engine.shutdown()).rejects.toThrow("Shutdown fail");
         });
     });
 });

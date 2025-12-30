@@ -3,7 +3,7 @@
  * 实现太乙@Adapter模式，包装WenchangEngine为标准适配器接口
  */
 
-import { Adapter, AdapterPriority, IAdapter } from "../taiyi/core/adapter-decorators";
+import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
 import { WenchangEngine, WenchangEngineConfig } from "@photasa/wenchang";
 import type { PreferenceSnapshot, PreferenceDelta } from "@photasa/wenchang";
 import { loggers } from "@photasa/common";

@@ -59,6 +59,7 @@
         "@photasa/tianshu": "workspace:*",
         "@photasa/wenchang": "workspace:*",
         "@photasa/sibu": "workspace:*",
+        "@photasa/taiyi": "workspace:*",
         "@photasa/maliang": "workspace:*",
         "@photasa/maliang-bundle": "workspace:*",
         "@photasa/maliang-cli": "workspace:*",

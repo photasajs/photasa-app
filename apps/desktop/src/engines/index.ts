@@ -15,7 +15,7 @@
  */
 
 // 太乙 - 适配器管理引擎
-export * from "./taiyi";
+// export * from "./taiyi"; // Moved to @photasa/taiyi
 
 // 天枢 - 工作流编排引擎 (Moved to @photasa/tianshu)
 export * from "@photasa/tianshu";
@@ -30,4 +30,4 @@ export * from "./shunfenger";
 export * from "./adapters/SibuAdapter"; // Export adapter instead of folder
 
 // 引擎通用类型和接口
-export type { EngineCallResult } from "./workflow";
+// export type { EngineCallResult } from "./workflow"; // Moved to @photasa/taiyi
