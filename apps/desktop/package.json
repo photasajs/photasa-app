@@ -61,6 +61,7 @@
         "@photasa/sibu": "workspace:*",
         "@photasa/taiyi": "workspace:*",
         "@photasa/maliang": "workspace:*",
+        "@photasa/siming": "workspace:*",
         "@photasa/maliang-bundle": "workspace:*",
         "@photasa/maliang-cli": "workspace:*",
         "@saschazar/wasm-heif": "^2.0.0",

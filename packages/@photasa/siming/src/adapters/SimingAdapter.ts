@@ -13,7 +13,7 @@
  */
 
 import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
-import { SimingEngine, type AppState } from "../siming/core/SimingEngine";
+import { SimingEngine, type AppState } from "../core/SimingEngine";
 import type { FolderNode } from "@photasa/common";
 import { loggers } from "@photasa/common";
 
@@ -23,6 +23,7 @@ const logger = loggers.siming;
  * 司命引擎适配器
  * 使用@Adapter装饰器注册到太乙注册中心
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 @Adapter({
     name: "siming",
     displayName: "司命appState管理适配器",

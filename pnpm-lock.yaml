@@ -59,6 +59,9 @@ importers:
       '@photasa/sibu':
         specifier: workspace:*
         version: link:../../packages/@photasa/sibu
+      '@photasa/siming':
+        specifier: workspace:*
+        version: link:../../packages/@photasa/siming
       '@photasa/taiyi':
         specifier: workspace:*
         version: link:../../packages/@photasa/taiyi
@@ -643,6 +646,55 @@ importers:
       eslint:
         specifier: ^8.39.0
         version: 8.57.1
+      typescript:
+        specifier: ^5.0.4
+        version: 5.9.3
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(@types/node@18.19.130)(less@4.5.1)(sass@1.97.1)(terser@5.44.1)
+      vite-plugin-dts:
+        specifier: ^3.0.0
+        version: 3.9.1(@types/node@18.19.130)(rollup@4.54.0)(typescript@5.9.3)(vite@5.4.21(@types/node@18.19.130)(less@4.5.1)(sass@1.97.1)(terser@5.44.1))
+      vitest:
+        specifier: ^1.0.0
+        version: 1.6.1(@types/node@18.19.130)(happy-dom@17.6.3)(jsdom@23.2.0)(less@4.5.1)(sass@1.97.1)(terser@5.44.1)
+
+  packages/@photasa/siming:
+    dependencies:
+      '@photasa/common':
+        specifier: workspace:*
+        version: link:../../common
+      '@photasa/taiyi':
+        specifier: workspace:*
+        version: link:../taiyi
+      fs-extra:
+        specifier: ^11.1.1
+        version: 11.3.3
+      inversify:
+        specifier: ^6.0.1
+        version: 6.2.2(reflect-metadata@0.1.14)
+      reflect-metadata:
+        specifier: ^0.1.13
+        version: 0.1.14
+    devDependencies:
+      '@types/fs-extra':
+        specifier: ^11.0.1
+        version: 11.0.4
+      '@types/node':
+        specifier: ^18.16.0
+        version: 18.19.130
+      '@vitejs/plugin-vue':
+        specifier: ^5.0.0
+        version: 5.2.4(vite@5.4.21(@types/node@18.19.130)(less@4.5.1)(sass@1.97.1)(terser@5.44.1))(vue@3.5.26(typescript@5.9.3))
+      '@vitest/coverage-v8':
+        specifier: ^1.0.0
+        version: 1.6.1(vitest@1.6.1(@types/node@18.19.130)(happy-dom@17.6.3)(jsdom@23.2.0)(less@4.5.1)(sass@1.97.1)(terser@5.44.1))
+      eslint:
+        specifier: ^8.39.0
+        version: 8.57.1
+      rimraf:
+        specifier: ^5.0.0
+        version: 5.0.10
       typescript:
         specifier: ^5.0.4
         version: 5.9.3
