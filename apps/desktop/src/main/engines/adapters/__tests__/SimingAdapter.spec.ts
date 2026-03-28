@@ -1,9 +1,18 @@
 import "reflect-metadata";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SimingAdapter } from "../adapters/SimingAdapter";
+import { SimingAdapter } from "../SimingAdapter";
 
 // Mock SimingEngine
-vi.mock("../core/SimingEngine");
+vi.mock("@photasa/siming", () => ({
+    SimingEngine: vi.fn().mockImplementation(() => ({
+        initialize: vi.fn().mockResolvedValue(undefined),
+        shutdown: vi.fn().mockResolvedValue(undefined),
+        persistFolderTree: vi.fn().mockResolvedValue(undefined),
+        restoreFolderTree: vi.fn().mockResolvedValue([]),
+        clearFolderTree: vi.fn().mockResolvedValue(undefined),
+        restoreAppState: vi.fn().mockResolvedValue({}),
+    })),
+}));
 
 describe("SimingAdapter", () => {
     let adapter: SimingAdapter;

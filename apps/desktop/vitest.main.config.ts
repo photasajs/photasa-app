@@ -8,10 +8,7 @@ export default defineConfig({
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
             "@shared": resolve("src/shared/"),
-            "@maliang": resolve("src/engines/maliang/"),
-            "@shunfenger": resolve("src/engines/shunfenger/"),
-            "@sibu": resolve("src/engines/sibu/"),
-            "@engines/common/*": resolve("src/engines/common/*"),
+            "@engines/common/*": resolve("src/main/engines/common/*"),
             "@photasa/ffmpeg": resolve("../../packages/@photasa/ffmpeg/src/index.ts"),
         },
     },
@@ -43,7 +40,6 @@ export default defineConfig({
         include: [
             "src/main/**/*.test.{js,ts,jsx,tsx}",
             "src/main/**/__tests__/**/*.test.{js,ts,jsx,tsx}",
-            "src/engines/**/*.test.{js,ts,jsx,tsx}",
         ],
         server: {
             deps: {

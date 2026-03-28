@@ -1,3 +1,6 @@
+# Git worktrees
+.worktrees/
+
 # Logs
 logs
 *.log
@@ -7,10 +10,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies and build output
 node_modules
 dist
 dist-ssr
+out
 *.local
+
+# Environment and secrets (do not commit)
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Editor directories and files
 .vscode/*
@@ -23,10 +36,13 @@ dist-ssr
 *.sln
 *.sw?
 
-# Playwright test results
+# Playwright test results and reports
 test-results/
+playwright-report/
+blob-report/
+.playwright/
 
-out
+# Coverage and history
 *.log*
 .history
 coverage/
@@ -34,6 +50,9 @@ coverage/
 # TypeScript build info files (should be ignored in CI/CD)
 *.tsbuildinfo
 guide
+
+# Vite cache and build artifacts
+.vite/
 
 # VitePress build artifacts
 .vitepress/.temp
@@ -43,13 +62,18 @@ guide
 # TurboRepo cache
 .turbo
 
-# Nx cache
+# Nx cache and artifacts
 .nx/cache
 .nx/workspace-data
-
-# Nx Graph artifacts
 static/
 graph.html
 
-# Test output
+# Tauri (Rust build and codegen)
+**/src-tauri/target/
+**/src-tauri/gen/
+
+# Electron builder release output (installers, unpacked)
+release/
+
+# Test output (project-specific)
 packages/@photasa/maliang/src/__tests__/output

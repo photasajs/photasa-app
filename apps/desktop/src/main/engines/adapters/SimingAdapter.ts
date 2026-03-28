@@ -13,7 +13,7 @@
  */
 
 import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
-import { SimingEngine, type AppState } from "../core/SimingEngine";
+import { SimingEngine, type AppState } from "@photasa/siming";
 import type { FolderNode } from "@photasa/common";
 import { loggers } from "@photasa/common";
 

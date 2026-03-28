@@ -34,7 +34,7 @@ import { EventBuffer } from "./event-buffer";
 import { CommandAdapter } from "./command-adapter";
 // import { WatcherFactory } from "./watcher-factory";
 
-const logger = loggers.watch;
+const logger = loggers.shunfenger || loggers.watch;
 
 export interface ShunfengerEngineOptions {
     storageRoot?: string;
@@ -201,3 +201,25 @@ class ShunfengerEngineImpl implements ShunfengerEngine {
 export function createShunfengerEngine(options: ShunfengerEngineOptions = {}): ShunfengerEngine {
     return new ShunfengerEngineImpl(options);
 }
+
+// 导出类型
+export type {
+    WatchProfile,
+    FileObservation,
+    WatchEventKind,
+    ShunfengerEngineEvent,
+    ShunfengerStatusEvent,
+    ShunfengerObservationEvent,
+    ShunfengerCommandEvent,
+    ShunfengerCommand,
+    CommandDispatcher,
+    EngineEventListener,
+    ObservationListener,
+} from "./types";
+
+// 导出内部组件（用于测试）
+export { StatusBus } from "./status-bus";
+export { ProfileStore } from "./profile-store";
+export { EventBuffer } from "./event-buffer";
+export { CommandAdapter } from "./command-adapter";
+export { WatcherFactory } from "./watcher-factory";

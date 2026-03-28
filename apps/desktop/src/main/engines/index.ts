@@ -10,7 +10,8 @@
  * - 天枢(Tianshu): 工作流编排引擎，负责复杂任务的分解和调度
  * - 文昌(Wenchang): 偏好管理引擎，负责用户设置和配置管理
  * - 马良(MaLiang): 图像处理引擎，负责各种格式的图像处理
- * - 顺风耳(Shunfenger): 音频处理引擎，负责音频文件的处理
+ * - 顺风耳(Shunfenger): 文件监听引擎，负责文件系统变化监听
+ * - 千里眼(Qianliyan): 文件扫描引擎，负责文件系统扫描和媒体发现
  * - 司簿(Sibu): 缓存和存储引擎，负责数据的快速访问
  */
 
@@ -23,8 +24,11 @@ export * from "@photasa/tianshu";
 // 马良 - 图像处理引擎 (Moved to @photasa/maliang)
 export * from "@photasa/maliang";
 
-// 顺风耳 - 音频处理引擎
-export * from "./shunfenger";
+// 顺风耳 - 文件监听引擎 (Moved to @photasa/shunfenger)
+export * from "@photasa/shunfenger";
+
+// 千里眼 - 文件扫描引擎 (Moved to @photasa/qianliyan)
+export * from "@photasa/qianliyan";
 
 // 思补 - 缓存存储引擎
 export * from "./adapters/SibuAdapter"; // Export adapter instead of folder

@@ -22,7 +22,7 @@ import { ServicePriority, IService } from "@main/tianting/core/service-types";
 import { TianshuEngine } from "@photasa/tianshu";
 import { loggers } from "@photasa/common";
 import type TaiyiService from "./taiyi-service";
-import { IStepExecutor } from "@engines/common/interfaces";
+import { IStepExecutor } from "@main/engines/common/interfaces";
 
 const logger = loggers.tianshu || loggers.main;
 
@@ -38,7 +38,7 @@ function getWorkflowDir() {
     // In development, they are in their source location
     return app.isPackaged
         ? path.join(process.resourcesPath, "workflows")
-        : path.resolve(process.cwd(), "src/engines/tianshu/workflows");
+        : path.resolve(process.cwd(), "src/main/engines/tianshu/workflows");
 }
 
 @Service({

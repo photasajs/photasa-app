@@ -10,7 +10,7 @@ import {
     // ScanResult,
     ScanProgress,
     ScanStatus,
-} from "../qianliyan/core/QianliyanEngine";
+} from "@photasa/qianliyan";
 import type { ScanAction } from "@photasa/common";
 import { loggers } from "@photasa/common";
 

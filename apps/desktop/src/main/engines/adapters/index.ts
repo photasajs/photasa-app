@@ -2,5 +2,5 @@
 import "./BuiltinAdapter";
 import "./WenchangAdapter";
 import "./QianliyanAdapter";
-import "@photasa/siming";
+import "./SimingAdapter";
 import "./TaibaijinxingAdapter";

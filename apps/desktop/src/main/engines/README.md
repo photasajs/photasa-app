@@ -16,7 +16,7 @@
 传说中，顺风耳原为轩辕黄帝手下的两员大将之一，与千里眼并肩作战，能够听到千里之外的细微声响，负责收集远方的消息动态。
 
 **职责**: 文件系统事件监听、变化事件归一化、高效事件缓冲
-**状态**: ✅ 已实现
+**状态**: ✅ 已实现 (独立包 @photasa/shunfenger)
 
 ## 👁 千里眼引擎 (Qianliyan Engine) - 文件扫描探索
 
@@ -24,7 +24,7 @@
 传说中，千里眼能够看穿千里之外的景象，洞悉事物的本质，与顺风耳配合，一个观察一个聆听，共同守护天下。
 
 **职责**: 文件扫描计划、任务调度、数据库同步、媒体任务编排
-**状态**: 🔄 规划中
+**状态**: ✅ 已实现 (独立包 @photasa/qianliyan)
 
 ## 📚 司簿引擎 (Sibu Engine) - 配置管理中枢
 
@@ -54,6 +54,12 @@
 - **Wenchang** (God of Culture): Workflow engine
     - Status: Active
     - Refactoring: Extracted to `@photasa/wenchang`
+- **Shunfenger** (File Watcher): File system event monitoring
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/shunfenger`
+- **Qianliyan** (File Scanner): File scanning and media discovery
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/qianliyan`
 
 ## 🏛 太乙层 (Taiyi Services) - 服务桥接枢纽
 

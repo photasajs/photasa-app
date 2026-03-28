@@ -15,5 +15,4 @@
  */
 
 // 导出核心类型和引擎
-export * from "./core/QianliyanEngine";
-export * from "../adapters/QianliyanAdapter";
+export * from "./core";

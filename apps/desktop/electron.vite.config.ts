@@ -33,12 +33,8 @@ export default defineConfig(({ mode }) => ({
             alias: {
                 "@main": resolve("src/main/"),
                 "@shared": resolve("src/shared/"),
-                "@maliang": resolve("src/engines/maliang/"),
-                "@shunfenger": resolve("src/engines/shunfenger/"),
-                "@sibu": resolve("src/engines/sibu/"),
-                "@tianshu": resolve("src/engines/tianshu/"),
-                "@qianliyan": resolve("src/engines/qianliyan/"),
-                "@engines": resolve("src/engines/"),
+                "@tianshu": resolve("src/main/engines/tianshu/"),
+                "@engines": resolve("src/main/engines/"),
             },
         },
         build: {

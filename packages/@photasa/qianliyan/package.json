@@ -1,0 +1,41 @@
+{
+    "name": "@photasa/qianliyan",
+    "version": "1.0.0",
+    "description": "Qianliyan File Scanning Engine",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "vite build",
+        "watch": "vite build --watch",
+        "clean": "rm -rf dist",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run"
+    },
+    "keywords": [
+        "scan",
+        "engine",
+        "qianliyan",
+        "file-scanning"
+    ],
+    "author": "SystemBug",
+    "license": "MIT",
+    "dependencies": {
+        "@photasa/common": "workspace:*",
+        "events": "^1.0.0"
+    },
+    "devDependencies": {
+        "vite": "^5.4.2",
+        "vite-plugin-dts": "^3.9.1",
+        "vitest": "^1.6.0",
+        "typescript": "^5.3.3",
+        "@types/node": "^20.11.24"
+    }
+}

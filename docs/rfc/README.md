@@ -4,16 +4,28 @@ This directory contains RFCs for significant changes to the photo management app
 
 ## RFC Statistics
 
-- **Total RFCs**: 50
-- **Completed**: 30 (60.0%)
-- **In Progress**: 2 (4.0%)
-- **Draft**: 18 (36.0%)
+- **Total RFCs**: 51
+- **Completed**: 30 (58.8%)
+- **In Progress**: 2 (3.9%)
+- **Draft**: 19 (37.3%)
 - **Rejected**: 0 (0%)
 
 ### By Version
 
 - **v2.0.0**: 50 RFCs
-- **Future**: 0 RFCs
+- **v2.1.0 (Tauri Migration)**: 1 RFC (0067 + 子 RFCs)
+
+## Tauri 迁移 RFC 系列
+
+### 主 RFC
+- **[RFC 0067](./0067-tauri-app-photasa.md)**: 创建 Tauri 应用 Photasa - 总体架构与迁移策略
+
+### 子 RFC（服务迁移详细计划）
+- **[RFC 0068](./0068-tauri-scan-service-migration.md)**: 扫描服务迁移到 Tauri ✅
+- **RFC 0069**: 缩略图服务迁移到 Tauri (待创建)
+- **RFC 0070**: 导入服务迁移到 Tauri (待创建)
+- **RFC 0071**: 配置服务迁移到 Tauri (待创建)
+- **RFC 0072**: 天枢服务迁移到 Tauri (待创建)
 
 ## RFC Process
 
@@ -87,26 +99,21 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0022](./0022-test-stabilization-issues-and-solutions.md)         | Test Stabilization Issues and Solutions                  | Draft          | 李鹏   | v2.0.0         |
 | [0023](./0023-startup-performance-optimization.md)                | Startup Performance Optimization                         | Draft          | 李鹏   | v2.0.0         |
 | [0025](./0025-tree-auto-focus-on-expand.md)                       | 树组件自动聚焦展开优化                                   | Draft          | 李鹏   | v2.0.0         |
-| [0026](./completed/0026-file-type-indicator.md)                   | 文件类型指示器                                           | ✅ Completed   | 李鹏   | v2.0.0         |
-| [0028](./completed/0028-ffmpeg-binary-packaging-fix.md)           | FFmpeg Binary Packaging Fix                              | ✅ Completed   | 李鹏   | v2.0.0         |
-| [0029](./completed/0029-process-based-thumbnail-architecture.md)  | 基于进程的缩略图架构                                     | ✅ Completed   | 李鹏   | v2.0.0         |
 | [0029](./0029-scan-skip-strategy-completion-fix.md)               | 扫描跳过策略完成修复                                     | Draft          | 李鹏   | v2.0.0         |
 | [0032](./0032-qianliyan-scan-engine.md)                           | 千里眼扫描引擎 (含scan-service迁移)                      | 🔨 In Progress | 李鹏   | v2.0.0         |
 | [0033](./0033-shunfenger-watch-engine.md)                         | 顺风耳监听引擎                                           | Draft          | 李鹏   | v2.0.0         |
 | [0034](./0034-linglong-vision-engine.md)                          | 玲珑视觉引擎                                             | Draft          | 李鹏   | v2.0.0         |
 | [0037](./0037-zouwu-workflow-dsl.md)                              | 驺吾(Zouwu)工作流DSL                                     | Draft          | 李鹏   | v2.0.0         |
-| [0038](./completed/0038-preference-workflow-integration.md)       | 偏好设置工作流集成与Store边界统一                        | ✅ Completed   | 李鹏   | v2.0.0         |
 | [0039](./0039-tianshu-workflow-syntax-specification.md)           | 天枢工作流语法规范                                       | Draft          | 李鹏   | v2.0.0         |
-| [0042](./completed/0042-scanning-folder-migration.md)             | scanningFolder三步渐进式迁移（Step 1已完成）             | ✅ Completed   | AI     | v2.0.0         |
 | [0043](./0043-useqinqiong-access-pattern.md)                      | useQinQiong()访问模式 - appState统一访问                 | Draft          | AI     | v2.0.0         |
-| [0046](./completed/0046-scanning-queue-persistence.md)            | 扫描队列持久化 - 千里眼scanning.json管理                 | ✅ Completed   | AI     | v2.0.0         |
-| [0047](./completed/0047-foldertree-persistence-initialization.md) | folderTree持久化与初始化 - 魏征appState管理 + 司命持久化 | ✅ Completed   | AI     | v2.0.0         |
 | [0049](./0049-correct-e2e-testing-architecture.md)                | 正确的E2E测试架构设计                                    | Draft          | AI     | v2.0.0         |
 | [0050](./0050-taiyi-workflow-engine.md)                           | 太乙工作流引擎                                           | Draft          | AI     | v2.0.0         |
 | [0055](./0055-taiyi-workflow-summary.md)                          | 太乙工作流总结                                           | Draft          | AI     | v2.0.0         |
 | [0056](./0056-yuchigong-code-quality-improvements.md)             | 尉迟恭代码质量改进                                       | Draft          | AI     | v2.0.0         |
 | [0058](./0058-zhangsunwuji-menu-service.md)                       | 长孙无忌菜单服务 - 统一菜单管理到qizou流程               | 🔨 In Progress | AI     | v2.0.0         |
 | [0061](./0061-zouwu-workflow-visualization.md)                    | 驺吾工作流可视化 (Workflow Visualization)                | Draft          | AI     | v2.0.0         |
+| [0067](./0067-tauri-app-photasa.md)                               | 创建 Tauri 应用 Photasa - 总体架构与迁移策略            | Draft          | AI     | v2.1.0         |
+| [0068](./0068-tauri-scan-service-migration.md)                   | 扫描服务迁移到 Tauri                                     | Draft          | AI     | v2.1.0         |
 
 ## Implemented RFCs
 
@@ -123,7 +130,7 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0013](./completed/0013-default-folder-selection.md)                                   | 默认文件夹选择功能                                       | 李鹏   | v2.0.0         | 应用启动时自动选择默认文件夹，重启后恢复用户上次选择的文件夹                                  |
 | [0015](./completed/0015-intelligent-scan-optimization.md)                              | 验证智能扫描策略的子文件夹发现功能                       | 李鹏   | v2.0.0         | 验证并修复智能扫描策略，确认子文件夹发现功能正常工作                                          |
 | [0016](./completed/0016-basetree-component-implementation.md)                          | BaseTree Component Implementation                        | 李鹏   | v2.0.0         | 实现BaseTree组件替代ant-design-vue的a-tree，支持虚拟滚动和100% API兼容性                      |
-| [0017](./completed/0017-production-log-viewer.md)                                      | Production Log Viewer System                             | 李鹏   | v2.0.0         | 按需激活的生产环境日志查看器，零性能影响，支持主进程和Worker线程日志实时显示                  |
+| [0017](./completed/0017-production-log-viewer.md)                                     | Production Log Viewer System                             | 李鹏   | v2.0.0         | 按需激活的生产环境日志查看器，零性能影响，支持主进程和Worker线程日志实时显示                  |
 | [0019](./completed/0019-auto-update-system.md)                                         | Auto-Update System - Client Implementation               | 李鹏   | v2.0.0         | 客户端自动更新系统实现，采用electron-updater方案，支持安全的preload集成                       |
 | [0024](./completed/0024-log-viewer-resizable-panel.md)                                 | 日志查看器可调整大小面板增强                             | 李鹏   | v2.0.0         | 为日志查看器添加可调整大小面板功能，提升可用性和改善日志内容可见性                            |
 | [0026](./completed/0026-file-type-indicator.md)                                        | 文件类型指示器                                           | 李鹏   | v2.0.0         | 图片列表添加文件类型视觉指示器，提升用户识别效率和交互体验                                    |

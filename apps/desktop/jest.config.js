@@ -7,10 +7,9 @@ module.exports = {
     // 测试环境
     testEnvironment: "node",
 
-    // 测试文件匹配模式 - 匹配main和engines目录下的测试
+    // 测试文件匹配模式 - 匹配main目录下的测试
     testMatch: [
         "<rootDir>/src/main/**/__tests__/**/*.spec.ts",
-        "<rootDir>/src/engines/**/__tests__/**/*.spec.ts",
     ],
 
     // TypeScript支持
@@ -42,14 +41,8 @@ module.exports = {
                         "@main/*": ["./src/main/*"],
                         "@renderer/*": ["./src/renderer/*"],
                         "@shared/*": ["./src/shared/*"],
-                        "@maliang/*": ["./src/engines/maliang/*"],
-                        "@shunfenger/*": ["./src/engines/shunfenger/*"],
-                        "@sibu": ["./src/engines/sibu/index"],
-                        "@sibu/*": ["./src/engines/sibu/*"],
-                        // @tianshu aliases removed as they should point to @photasa/tianshu
-                        "@engines/common/*": ["./src/engines/common/*"],
-                        "@qianliyan/*": ["./src/engines/qianliyan/*"],
-                        "@engines/*": ["./src/engines/*"],
+                        "@engines/common/*": ["./src/main/engines/common/*"],
+                        "@engines/*": ["./src/main/engines/*"],
                         "@zouwu-wf/workflow/runtime/*": [
                             "../../packages/@zouwu-wf/workflow/src/runtime/*",
                         ],
@@ -76,15 +69,10 @@ module.exports = {
         "^@main/(.*)$": "<rootDir>/src/main/$1",
         "^@renderer/(.*)$": "<rootDir>/src/renderer/$1",
         "^@shared/(.*)$": "<rootDir>/src/shared/$1",
-        "^@maliang/(.*)$": "<rootDir>/src/engines/maliang/$1",
-        "^@shunfenger/(.*)$": "<rootDir>/src/engines/shunfenger/$1",
-        "^@sibu$": "<rootDir>/src/engines/sibu/index",
-        "^@sibu/(.*)$": "<rootDir>/src/engines/sibu/$1",
-        "^@tianshu$": "<rootDir>/src/engines/tianshu/index",
-        "^@tianshu/(.*)$": "<rootDir>/src/engines/tianshu/$1",
-        "^@engines/common/(.*)$": "<rootDir>/src/engines/common/$1",
-        "^@qianliyan/(.*)$": "<rootDir>/src/engines/qianliyan/$1",
-        "^@engines/(.*)$": "<rootDir>/src/engines/$1",
+        "^@tianshu$": "<rootDir>/src/main/engines/tianshu/index",
+        "^@tianshu/(.*)$": "<rootDir>/src/main/engines/tianshu/$1",
+        "^@engines/common/(.*)$": "<rootDir>/src/main/engines/common/$1",
+        "^@engines/(.*)$": "<rootDir>/src/main/engines/$1",
         // Map ?nodeWorker query parameter to the actual module
         "^(.+)\\?nodeWorker$": "$1",
 
@@ -103,11 +91,8 @@ module.exports = {
     // 覆盖率设置
     collectCoverageFrom: [
         "src/main/**/*.ts",
-        "src/engines/**/*.ts",
         "!src/main/**/*.d.ts",
-        "!src/engines/**/*.d.ts",
         "!src/main/**/__tests__/**",
-        "!src/engines/**/__tests__/**",
     ],
 
     // 设置文件
