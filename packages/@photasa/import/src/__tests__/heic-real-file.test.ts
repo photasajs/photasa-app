@@ -41,10 +41,12 @@ describe("HEIC Real File Test", () => {
         // 验证日期时间字段存在（这个HEIC文件必须有DateTimeOriginal）
         expect(tags.DateTimeOriginal).toBeDefined();
         expect(tags.DateTimeOriginal?.value).toBeDefined();
-        expect(tags.DateTimeOriginal?.value?.[0]).toBeDefined();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((tags.DateTimeOriginal?.value as any)?.[0]).toBeDefined();
 
         // 验证时区转换功能
-        const exifDateStr = tags.DateTimeOriginal?.value?.[0];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const exifDateStr = (tags.DateTimeOriginal?.value as any)?.[0];
         expect(exifDateStr).toBeDefined();
 
         const dateStr = exifDateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");

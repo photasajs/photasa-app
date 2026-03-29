@@ -1,4 +1,3 @@
-import { app } from "electron";
 import * as fs from "fs-extra";
 import * as path from "path";
 import * as crypto from "crypto";
@@ -24,8 +23,7 @@ export class ImportHistoryManager {
     private readonly maxHistoryEntries = 100;
     private historyCache: ImportHistory[] | null = null;
 
-    constructor() {
-        const userDataPath = app.getPath("userData");
+    constructor(userDataPath: string) {
         const photasaDir = path.join(userDataPath, ".photasa");
         this.historyFile = path.join(photasaDir, "import-history.json");
     }
@@ -467,5 +465,6 @@ export class ImportHistoryManager {
     }
 }
 
-// 导出单例实例
-export const importHistoryManager = new ImportHistoryManager();
+// Note: ImportHistoryManager requires a userDataPath argument.
+// Callers (e.g. Electron apps) should instantiate it as:
+//   new ImportHistoryManager(app.getPath("userData"))

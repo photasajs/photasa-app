@@ -30,8 +30,9 @@ import {
     processFileGroup,
     FileGroupDetector,
     generateDatePath,
-} from "./import-handler";
-import { DuplicateDetector, DuplicateHandlerFactory } from "./duplicate-handler";
+    DuplicateDetector,
+    DuplicateHandlerFactory,
+} from "@photasa/import";
 import { computeFallbackDate } from "@photasa/maliang";
 import fs from "fs-extra";
 import path from "path";

@@ -214,13 +214,16 @@ export async function extractMetadata(
 
         const type = typeOfMedia(filePath);
 
-        const extractor = MediaExtractorTypeMap[type];
+        const extractor = type in MediaExtractorTypeMap
+            ? MediaExtractorTypeMap[type as keyof typeof MediaExtractorTypeMap]
+            : undefined;
 
         if (extractor) {
             const metadata = await extractor(filePath, logger);
             if (metadata) {
                 // Successfully extracted metadata
-                return MediaBuilderTypeMap[type](baseMetadata, metadata);
+                const builder = MediaBuilderTypeMap[type as keyof typeof MediaBuilderTypeMap];
+                return builder(baseMetadata, metadata);
             }
             // Extraction failed, use fallback
         }

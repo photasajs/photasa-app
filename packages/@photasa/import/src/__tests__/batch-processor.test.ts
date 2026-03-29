@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { BatchProcessor } from "../batch-processor";
-import { ImportConfig, FileInfo, FileGroup } from "../../@photasa/common";
+import { ImportConfig, FileInfo, FileGroup } from "@photasa/common";
 import path from "path";
 import os from "os";
 
