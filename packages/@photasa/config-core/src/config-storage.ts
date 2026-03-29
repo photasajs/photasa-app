@@ -9,13 +9,12 @@ import fs from "fs/promises";
 import path from "path";
 import type { PhotasaConfig, PhotasaConfigResult } from "@photasa/common";
 import type { PhotasaLogger } from "@photasa/common";
-import { shortenThumbnailName } from "@shared/path-util";
+import { shortenThumbnailName, toRelativeThumbnailPath, toFileName } from "./path-util";
 import { concatMap, from } from "rxjs";
 import isVideo from "is-video";
 // import { debounce } from "lodash"; // Temporarily removed for debugging
 import { FileSystemError, ConfigError, handleError, retryOperation } from "@photasa/common";
 import { CACHE_TTL, configCache } from "./config-cache";
-import { toRelativeThumbnailPath, toFileName } from "@shared/path-util";
 import { SibuEngine } from "@photasa/sibu";
 import type { SibuManifestResult } from "@photasa/sibu";
 
@@ -491,7 +490,7 @@ interface RequestQueue {
     pending: number;
     isPaused: boolean;
     start: () => void;
-    on: (event: string, callback: (...args: any[]) => void) => void;
+    on: (event: string, callback: (...args: unknown[]) => void) => void;
 }
 
 // 并发队列实例
@@ -536,7 +535,7 @@ function throttleLog(key: string, interval: number, logFn: () => void) {
 }
 
 // 已注册队列集合，防止重复注册
-const registeredQueues = new WeakSet<any>();
+const registeredQueues = new WeakSet<object>();
 
 /**
  * 注册队列事件，输出队列状态日志。
@@ -681,7 +680,7 @@ function addConfig(
                     } else {
                         lastQueuedCount = count;
                     }
-                }, config.DELAY_NOTIFY_DONE);
+                }, storageConfig.DELAY_NOTIFY_DONE);
             },
         });
 }
@@ -757,7 +756,7 @@ export function cleanupQueueForFolder(folderPath: string): void {
 }
 
 // 队列通知延迟配置
-export const config = {
+export const storageConfig = {
     DELAY_NOTIFY_DONE: 3000,
 };
 

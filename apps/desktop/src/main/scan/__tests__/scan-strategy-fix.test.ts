@@ -15,7 +15,7 @@ import type { PhotasaLogger } from "@photasa/common";
 
 // Mock external dependencies
 vi.mock("fs-extra");
-vi.mock("@main/config/config-storage", () => ({
+vi.mock("@photasa/config-core", () => ({
     getPhotasaConfig: vi.fn(),
 }));
 vi.mock("@main/scan/cache/folder-cache-manager", () => ({
@@ -67,7 +67,7 @@ describe("scan-strategy-fix", () => {
             await fs.writeFile(configPath, JSON.stringify(validConfig, null, 2));
 
             // Mock getPhotasaConfig 返回有效配置
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             (getPhotasaConfig as any).mockResolvedValue(validConfig);
 
             // Mock fs.existsSync 返回 true
@@ -115,7 +115,7 @@ describe("scan-strategy-fix", () => {
             await fs.writeFile(configPath, JSON.stringify(emptyConfig, null, 2));
 
             // Mock getPhotasaConfig 返回空配置
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             (getPhotasaConfig as any).mockResolvedValue(emptyConfig);
 
             // Mock fs.existsSync 返回 true
@@ -136,7 +136,7 @@ describe("scan-strategy-fix", () => {
             mockFs.existsSync.mockReturnValue(true);
 
             // Mock getPhotasaConfig 抛出错误
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             (getPhotasaConfig as any).mockRejectedValue(new Error("读取失败"));
 
             const result = await decideScanStrategy(testFolder, mockLogger);
@@ -162,7 +162,7 @@ describe("scan-strategy-fix", () => {
             await fs.writeFile(configPath, JSON.stringify(validConfig, null, 2));
 
             // Mock getPhotasaConfig 返回有效配置
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             (getPhotasaConfig as any).mockResolvedValue(validConfig);
 
             // Mock fs.existsSync 返回 true

@@ -14,7 +14,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { PhotasaLogger } from "@photasa/common";
-import { getPhotasaConfig } from "../../config/config-storage";
+import { getPhotasaConfig } from "@photasa/config-core";
 import {
     computeFolderHash,
     // getCacheInfo,

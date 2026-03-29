@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
 import * as configHandler from "../config-handler";
 import type { PhotasaLogger } from "@photasa/common";
@@ -20,9 +21,9 @@ const mockPostMessage = jest.fn();
 
 // Mock config-storage模块
 jest.mock("../config-storage", () => ({
-    addToPhotasaConfig: (...args: any[]) =>
+    addToPhotasaConfig: (...args: unknown[]) =>
         mockAddToPhotasaConfig(...(args as Parameters<typeof mockAddToPhotasaConfig>)),
-    removeFromPhotoList: (...args: any[]) =>
+    removeFromPhotoList: (...args: unknown[]) =>
         mockRemoveFromPhotoList(...(args as Parameters<typeof mockRemoveFromPhotoList>)),
 }));
 
@@ -32,7 +33,7 @@ jest.mock("glob", () => ({
         stream: jest.fn().mockReturnValue({
             on: jest
                 .fn()
-                .mockImplementation((event: string, callback: (...args: any[]) => void) => {
+                .mockImplementation((event: any, callback: any) => {
                     if (event === "data") {
                         setTimeout(() => callback("file1.photasa.json"), 10);
                     } else if (event === "end") {
@@ -48,16 +49,16 @@ jest.mock("glob", () => ({
 
 // Mock rxjs模块 - 使用更简单的方法
 jest.mock("rxjs", () => {
-    const actual = jest.requireActual("rxjs") as any;
+    const actual = jest.requireActual("rxjs") as Record<string, unknown>;
     return {
         ...actual,
-        from: jest.fn().mockImplementation((arr: any[]) => {
+        from: jest.fn().mockImplementation((arr: any) => {
             return {
                 pipe: jest.fn().mockReturnValue({
                     subscribe: jest.fn().mockImplementation((observer: any) => {
                         // 同步执行，不使用setTimeout
                         if (observer.next) {
-                            arr.forEach((item) => observer.next(item));
+                            (arr as unknown[]).forEach((item) => observer.next(item));
                         }
                         if (observer.complete) {
                             observer.complete();
@@ -66,7 +67,7 @@ jest.mock("rxjs", () => {
                 }),
             };
         }),
-        mergeMap: jest.fn().mockImplementation((fn: (...args: any[]) => any) => {
+        mergeMap: jest.fn().mockImplementation((fn: any) => {
             return (source: any) => {
                 return {
                     subscribe: jest.fn().mockImplementation((observer: any) => {
@@ -115,7 +116,7 @@ describe("config-handler", () => {
             const request: ConfigRequest = {
                 action: "add",
                 queueId: 123,
-            } as any;
+            } as ConfigRequest;
 
             configHandler.addConfig(request, mockPostMessage, mockLogger);
 
@@ -167,7 +168,7 @@ describe("config-handler", () => {
             const request: ConfigRequest = {
                 action: "query",
                 queueId: 1,
-            } as any;
+            } as ConfigRequest;
 
             expect(() => {
                 configHandler.queryConfig(request, mockPostMessage, mockLogger);
@@ -212,7 +213,7 @@ describe("config-handler", () => {
             const request: ConfigRequest = {
                 action: "remove",
                 queueId: 1,
-            } as any;
+            } as ConfigRequest;
 
             expect(() => {
                 configHandler.removeConfig(request, mockPostMessage, mockLogger);
@@ -223,7 +224,7 @@ describe("config-handler", () => {
             const request: ConfigRequest = {
                 action: "remove",
                 paths: ["/test/path"],
-            } as any;
+            } as ConfigRequest;
 
             expect(() => {
                 configHandler.removeConfig(request, mockPostMessage, mockLogger);

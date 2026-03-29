@@ -602,7 +602,7 @@ export async function processMediaFile(
     const { normalizePath } = await import("@shared/path-util");
     const { buildThumbnailPath } = await import("@shared/path-util");
     const { shouldProcessFile } = await import("./strategy/scan-strategy");
-    const { addToPhotasaConfig, removeFromPhotoList } = await import("../config/config-storage");
+    const { addToPhotasaConfig, removeFromPhotoList } = await import("@photasa/config-core");
 
     // 使用统一的路径处理API规范化路径
     const normalizedFilePath = normalizePath(filePath);

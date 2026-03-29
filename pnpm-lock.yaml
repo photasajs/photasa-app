@@ -47,6 +47,9 @@ importers:
       '@photasa/common':
         specifier: workspace:*
         version: link:../../packages/common
+      '@photasa/config-core':
+        specifier: workspace:*
+        version: link:../../packages/@photasa/config-core
       '@photasa/maliang':
         specifier: workspace:*
         version: link:../../packages/@photasa/maliang
@@ -496,6 +499,64 @@ importers:
       vue:
         specifier: ^3.5.14
         version: 3.5.26(typescript@5.9.3)
+
+  packages/@photasa/config-core:
+    dependencies:
+      '@photasa/common':
+        specifier: workspace:*
+        version: link:../../common
+      '@photasa/sibu':
+        specifier: workspace:*
+        version: link:../sibu
+      glob:
+        specifier: ^11.0.3
+        version: 11.1.0
+      is-video:
+        specifier: ^1.0.1
+        version: 1.0.1
+      p-queue:
+        specifier: ^8.1.0
+        version: 8.1.1
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+    devDependencies:
+      '@jest/globals':
+        specifier: ^30.2.0
+        version: 30.2.0
+      '@types/node':
+        specifier: ^18.16.0
+        version: 18.19.130
+      '@vitejs/plugin-vue':
+        specifier: ^5.0.0
+        version: 5.2.4(vite@5.4.21(@types/node@18.19.130)(less@4.5.1)(sass@1.97.1)(terser@5.44.1))(vue@3.5.26(typescript@5.9.3))
+      '@vitest/coverage-v8':
+        specifier: ^1.0.0
+        version: 1.6.1(vitest@1.6.1(@types/node@18.19.130)(happy-dom@17.6.3)(jsdom@23.2.0(canvas@3.2.0))(less@4.5.1)(sass@1.97.1)(terser@5.44.1))
+      eslint:
+        specifier: ^8.39.0
+        version: 8.57.1
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@18.19.130)
+      rimraf:
+        specifier: ^5.0.0
+        version: 5.0.10
+      ts-jest:
+        specifier: ^29.4.4
+        version: 29.4.6(@babel/core@7.21.8)(@jest/transform@30.2.0)(@jest/types@30.2.0)(babel-jest@29.7.0(@babel/core@7.21.8))(jest-util@30.2.0)(jest@29.7.0(@types/node@18.19.130))(typescript@5.9.3)
+      typescript:
+        specifier: ^5.0.4
+        version: 5.9.3
+      vite:
+        specifier: ^5.0.0
+        version: 5.4.21(@types/node@18.19.130)(less@4.5.1)(sass@1.97.1)(terser@5.44.1)
+      vite-plugin-dts:
+        specifier: ^3.0.0
+        version: 3.9.1(@types/node@18.19.130)(rollup@4.54.0)(typescript@5.9.3)(vite@5.4.21(@types/node@18.19.130)(less@4.5.1)(sass@1.97.1)(terser@5.44.1))
+      vitest:
+        specifier: ^1.0.0
+        version: 1.6.1(@types/node@18.19.130)(happy-dom@17.6.3)(jsdom@23.2.0(canvas@3.2.0))(less@4.5.1)(sass@1.97.1)(terser@5.44.1)
 
   packages/@photasa/maliang:
     dependencies:
@@ -5454,7 +5515,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-agent@3.0.0:
     resolution: {integrity: sha512-PT6XReJ+D07JvGoxQMkT6qji/jVNfX/h364XHZOWeRzy64sSFr+xJ5OX7LI3b4MPQzdL4H8Y8M0xzPpsVMwA8Q==}

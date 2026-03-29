@@ -11,11 +11,11 @@ import path from "path";
 import { decideScanStrategy } from "../strategy/scan-strategy";
 import { ScanStrategy } from "../cache/folder-cache-manager";
 import type { PhotasaLogger } from "@photasa/common";
-import { getPhotasaConfig } from "@main/config/config-storage";
+import { getPhotasaConfig } from "@photasa/config-core";
 
 // Mock external dependencies
 vi.mock("fs-extra");
-vi.mock("@main/config/config-storage", () => ({
+vi.mock("@photasa/config-core", () => ({
     getPhotasaConfig: vi.fn(),
 }));
 vi.mock("../cache/folder-cache-manager", () => ({
@@ -62,7 +62,7 @@ describe("scan-integration-fix", () => {
             };
 
             // 设置 mock 行为
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             vi.mocked(getPhotasaConfig).mockImplementation((folderPath, _logger) => {
                 if (folderPath === scannedFolder) {
                     return Promise.resolve(scannedConfig);
@@ -117,7 +117,7 @@ describe("scan-integration-fix", () => {
             ];
 
             // 设置 mock 行为
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             vi.mocked(getPhotasaConfig).mockImplementation((folderPath, _logger) => {
                 const folder = folders.find((f) => f.path === folderPath);
                 if (folder?.hasConfig) {
@@ -164,7 +164,7 @@ describe("scan-integration-fix", () => {
             const corruptedFolder = "/test/corrupted";
 
             const mockGetPhotasaConfig = vi.fn();
-            vi.doMock("@main/config/config-storage", () => ({
+            vi.doMock("@photasa/config-core", () => ({
                 getPhotasaConfig: mockGetPhotasaConfig,
             }));
 

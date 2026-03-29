@@ -8,9 +8,7 @@ module.exports = {
     testEnvironment: "node",
 
     // 测试文件匹配模式 - 匹配main目录下的测试
-    testMatch: [
-        "<rootDir>/src/main/**/__tests__/**/*.spec.ts",
-    ],
+    testMatch: ["<rootDir>/src/main/**/__tests__/**/*.spec.ts"],
 
     // TypeScript支持
     preset: "ts-jest",
@@ -89,11 +87,7 @@ module.exports = {
     testTimeout: 15000,
 
     // 覆盖率设置
-    collectCoverageFrom: [
-        "src/main/**/*.ts",
-        "!src/main/**/*.d.ts",
-        "!src/main/**/__tests__/**",
-    ],
+    collectCoverageFrom: ["src/main/**/*.ts", "!src/main/**/*.d.ts", "!src/main/**/__tests__/**"],
 
     // 设置文件
     setupFilesAfterEnv: ["<rootDir>/test/setup.main.jest.ts"],

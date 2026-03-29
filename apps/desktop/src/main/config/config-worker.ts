@@ -1,5 +1,5 @@
 import { parentPort } from "worker_threads";
-import { queryConfig, addConfig, removeConfig } from "./config-handler";
+import { queryConfig, addConfig, removeConfig } from "@photasa/config-core";
 import { WorkerError, handleError } from "@photasa/common";
 import type { ConfigRequest, ConfigResponse, ConfigHandlers } from "@photasa/common";
 import { loggers } from "@photasa/common";

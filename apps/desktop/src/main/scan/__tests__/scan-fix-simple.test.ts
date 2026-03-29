@@ -14,7 +14,7 @@ import type { PhotasaLogger } from "@photasa/common";
 
 // Mock external dependencies
 vi.mock("fs-extra");
-vi.mock("@main/config/config-storage", () => ({
+vi.mock("@photasa/config-core", () => ({
     getPhotasaConfig: vi.fn(),
 }));
 vi.mock("@main/scan/cache/folder-cache-manager", () => ({
@@ -66,7 +66,7 @@ describe("scan-fix-simple", () => {
             await fs.writeFile(configPath, JSON.stringify(validConfig, null, 2));
 
             // Mock 外部依赖
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             (getPhotasaConfig as any).mockResolvedValue(validConfig);
             mockFs.existsSync.mockReturnValue(true);
 
@@ -102,7 +102,7 @@ describe("scan-fix-simple", () => {
             await fs.writeFile(configPath, JSON.stringify(emptyConfig, null, 2));
 
             // Mock 外部依赖
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             const { computeFolderHash } = await import("@main/scan/cache/folder-cache-manager");
 
             (getPhotasaConfig as any).mockResolvedValue(emptyConfig);
@@ -128,7 +128,7 @@ describe("scan-fix-simple", () => {
             await fs.writeFile(configPath, JSON.stringify(validConfig, null, 2));
 
             // Mock 外部依赖
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             const { getCacheInfo } = await import("@main/scan/cache/folder-cache-manager");
 
             (getPhotasaConfig as any).mockResolvedValue(validConfig);

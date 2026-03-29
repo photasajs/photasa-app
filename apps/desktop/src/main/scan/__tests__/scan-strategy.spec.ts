@@ -21,7 +21,7 @@ const mockGetPhotasaConfig = jest.fn() as jest.MockedFunction<
 >;
 
 // Mock the config-storage module
-jest.mock("../../config/config-storage", () => ({
+jest.mock("@photasa/config-core", () => ({
     getPhotasaConfig: (folder: string, logger: any) => mockGetPhotasaConfig(folder, logger),
 }));
 jest.mock("../cache/folder-cache-manager", () => ({

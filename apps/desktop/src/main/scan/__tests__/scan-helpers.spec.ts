@@ -17,7 +17,7 @@ import type { PhotasaLogger } from "@photasa/common";
 
 // Mock external dependencies
 jest.mock("fs-extra");
-jest.mock("../../config/config-storage", () => ({
+jest.mock("@photasa/config-core", () => ({
     addToPhotasaConfig: jest.fn(),
 }));
 

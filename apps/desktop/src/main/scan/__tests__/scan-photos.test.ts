@@ -15,7 +15,7 @@ vi.mock("is-video", () => ({
 vi.mock("@shared/path-util", () => ({
     buildThumbnailPath: vi.fn((path: string) => `${path}.thumb.jpg`),
 }));
-vi.mock("@main/config/config-storage", () => ({
+vi.mock("@photasa/config-core", () => ({
     getPhotasaConfig: vi.fn(),
 }));
 vi.mock("@photasa/common", () => ({
@@ -192,7 +192,7 @@ describe("scan-photos enhanced functionality", () => {
             mockFs.existsSync.mockReturnValue(true);
 
             // Mock the getPhotasaConfig function specifically for this test
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             vi.mocked(getPhotasaConfig).mockResolvedValue({
                 version: "1.0",
                 photoList: [{ path: "other-file.jpg", thumbnail: "", isVideo: false, history: [] }],
@@ -207,7 +207,7 @@ describe("scan-photos enhanced functionality", () => {
             mockFs.existsSync.mockReturnValue(true);
 
             // Mock the getPhotasaConfig function specifically for this test
-            const { getPhotasaConfig } = await import("@main/config/config-storage");
+            const { getPhotasaConfig } = await import("@photasa/config-core");
             vi.mocked(getPhotasaConfig).mockResolvedValue({
                 version: "1.0",
                 photoList: [
