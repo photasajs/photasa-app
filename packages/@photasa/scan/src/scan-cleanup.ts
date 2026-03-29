@@ -5,7 +5,6 @@
  * 提供扫描完成后的资源清理、内存优化和缓存维护功能
  *
  * 职责:
- * - Worker Pool 资源清理
  * - 缓存文件清理和维护
  * - 内存管理优化
  * - 清理过程监控和报告
@@ -14,12 +13,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { PhotasaLogger } from "@photasa/common";
-import type { WorkerPool } from "../workers/worker-pool";
-import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
-import { cleanupWorkerPool } from "./worker/pool-manager";
-
-// Re-export for backward compatibility
-export { cleanupWorkerPool };
+import type { WorkerPool } from "./scan-helpers";
 
 /**
  * 清理统计接口
@@ -320,22 +314,56 @@ export function generateCleanupReport(
 }
 
 /**
- * 主要的扩展清理函数
- * RFC 0007 Milestone 3 的核心实现
+ * 关闭 Worker 池
  *
- * @param workerPool - Worker Pool实例
- * @param basePath - 扫描基础路径
+ * @param workerPool - Worker 池实例（可为 null）
+ * @param timeout - 超时时间（毫秒）
+ * @param logger - 日志记录器
+ * @returns 是否成功关闭
+ */
+export async function cleanupWorkerPool(
+    workerPool: WorkerPool<unknown, unknown> | null,
+    timeout: number,
+    logger: PhotasaLogger,
+): Promise<boolean> {
+    if (!workerPool) {
+        logger.debug("[cleanupWorkerPool] 没有可用的Worker池需要清理");
+        return true;
+    }
+
+    try {
+        logger.debug("[cleanupWorkerPool] 开始关闭传入的Worker池实例");
+
+        const shutdownPromise = workerPool.shutdown();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Worker池关闭超时")), timeout),
+        );
+
+        await Promise.race([shutdownPromise, timeoutPromise]);
+
+        logger.info("[cleanupWorkerPool] Worker池已成功关闭");
+        return true;
+    } catch (error) {
+        logger.error("[cleanupWorkerPool] Worker池关闭失败", error);
+        return false;
+    }
+}
+
+/**
+ * 执行完整的扩展清理流程
+ *
+ * @param workerPool - Worker 池实例（可为 null）
+ * @param basePath - 基础扫描路径
  * @param options - 清理选项
  * @param logger - 日志记录器
  * @returns 清理统计结果
  */
 export async function performExtendedCleanup(
-    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse> | null,
+    workerPool: WorkerPool<unknown, unknown> | null,
     basePath: string,
     options: CleanupOptions = DEFAULT_CLEANUP_OPTIONS,
     logger: PhotasaLogger,
 ): Promise<CleanupStats> {
-    // 验证选项
     const validation = validateCleanupOptions(options);
     if (!validation.isValid) {
         throw new Error(`清理选项验证失败: ${validation.error}`);

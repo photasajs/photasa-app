@@ -13,7 +13,7 @@ import { restoreCachedFiles } from "../scan-helpers";
 import type { PhotasaLogger } from "@photasa/common";
 import { Subscriber } from "rxjs";
 // Mock buildThumbnailPath
-import { buildThumbnailPath } from "@shared/path-util";
+import { buildThumbnailPath } from "../utils/path-utils";
 // Mock external dependencies
 vi.mock("fs-extra");
 vi.mock("@shared/path-util");

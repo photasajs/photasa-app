@@ -75,12 +75,8 @@ const mockIsImage = vi.mocked(await import("is-image")).default;
 const mockIsVideo = vi.mocked(await import("is-video")).default;
 const mockFs = vi.mocked(await import("fs-extra")).default;
 const mockShouldProcessFile = vi.mocked(await import("../scan-photos")).shouldProcessFile;
-const mockAddToPhotasaConfig = vi.mocked(
-    await import("@photasa/config-core"),
-).addToPhotasaConfig;
-const mockRemoveFromPhotoList = vi.mocked(
-    await import("@photasa/config-core"),
-).removeFromPhotoList;
+const mockAddToPhotasaConfig = vi.mocked(await import("@photasa/config-core")).addToPhotasaConfig;
+const mockRemoveFromPhotoList = vi.mocked(await import("@photasa/config-core")).removeFromPhotoList;
 
 // Create mock logger that matches PhotasaLogger interface
 const mockLogger = {

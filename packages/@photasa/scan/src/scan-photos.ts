@@ -26,11 +26,11 @@ import isVideo from "is-video";
 import fs from "fs-extra";
 import path from "path";
 import { shouldIgnorePhotasaPath } from "@photasa/common";
-import { buildThumbnailPath, isHiddenFile } from "@shared/path-util";
+import { buildThumbnailPath, isHiddenFile } from "./utils/path-utils";
 import type { ScanAction, PhotoFileRequest } from "@photasa/common";
 
 import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
-import type { WorkerPool } from "../workers/worker-pool";
+import type { WorkerPool } from "./scan-helpers";
 import {
     processPhotoFile,
     createSubscriptionHandlers,
@@ -45,7 +45,6 @@ import {
     decideScanStrategy,
 } from "./strategy/scan-strategy";
 import { loggers, PhotasaLogger } from "@photasa/common";
-import { getWorkerPool } from "./worker/pool-manager";
 
 const logger = loggers.scan;
 
@@ -55,36 +54,8 @@ const logger = loggers.scan;
  * 使用 klaw 库递归遍历指定路径下的所有文件，过滤出图片和视频文件。
  * 支持单文件扫描和目录扫描两种模式，自动忽略隐藏文件和系统文件。
  *
- * 功能特性：
- * - 支持单文件扫描（operationType: "file"）
- * - 支持目录递归扫描（operationType: "directory"）
- * - 自动过滤隐藏文件和 .photasa 系统文件
- * - 根据扫描动作决定扫描深度（单层或递归）
- * - 返回标准化的 PhotoFileRequest 对象
- *
  * @param source - 扫描动作配置，包含路径、操作类型等信息
  * @returns Observable<PhotoFileRequest> - 媒体文件请求流
- *
- * @example
- * ```typescript
- * // 扫描单个文件
- * walkthroughPhotosInFolder({
- *     path: "/path/to/image.jpg",
- *     operationType: "file",
- *     action: "scan"
- * }).subscribe(photo => {
- *     console.log("发现文件:", photo.path);
- * });
- *
- * // 扫描整个目录
- * walkthroughPhotosInFolder({
- *     path: "/path/to/photos",
- *     operationType: "directory",
- *     action: "scan"
- * }).subscribe(photo => {
- *     console.log("发现媒体文件:", photo.path);
- * });
- * ```
  */
 export function walkthroughPhotosInFolder(source: ScanAction): Observable<PhotoFileRequest> {
     return new Observable<PhotoFileRequest>((subscriber: Subscriber<PhotoFileRequest>) => {
@@ -166,46 +137,17 @@ export function walkthroughPhotosInFolder(source: ScanAction): Observable<PhotoF
 /**
  * 主扫描函数 - 智能扫描策略与增量缓存
  *
- * 这是整个扫描系统的核心函数，实现了智能扫描策略决策和增量缓存机制。
- * 支持断点续扫、子目录递归扫描和多线程缩略图生成。
- *
- * 扫描策略：
- * 1. **SKIP策略**: 目录内容无变化，直接从缓存恢复文件列表
- * 2. **INCREMENTAL策略**: 部分文件变化，只处理新增或修改的文件
- * 3. **FULL策略**: 需要完整重新扫描目录
- *
- * 核心功能：
- * - 智能策略决策：根据目录状态自动选择最优扫描策略
- * - 增量缓存：支持断点续扫，避免重复处理已完成的文件
- * - 子目录递归：即使父目录被跳过，仍会扫描子目录
- * - 多线程处理：使用 Worker 池并行生成缩略图
- * - 错误恢复：扫描失败时自动降级到传统扫描模式
- *
  * @param scan - 扫描动作配置，包含路径、操作类型、动作类型等
  * @param logger - 日志记录器，用于记录扫描过程和状态
  * @returns Observable<PhotoFileRequest> - 扫描结果流，包含所有发现的媒体文件
  *
- * @example
- * ```typescript
- * // 扫描目录
- * scanPhotos({
- *     path: "/path/to/photos",
- *     operationType: "directory",
- *     action: "scan",
- *     thumbnailSize: 200
- * }, logger).subscribe({
- *     next: (photo) => console.log("发现文件:", photo.path),
- *     complete: () => console.log("扫描完成"),
- *     error: (error) => console.error("扫描失败:", error)
- * });
- * ```
- *
  * @since RFC 0007 - 智能扫描决策与缓存优化
- * @see {@link decideScanStrategy} 扫描策略决策
- * @see {@link IncrementalCacheManager} 增量缓存管理
- * @see {@link scanSubdirectories} 子目录递归扫描
  */
-export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<PhotoFileRequest> {
+export function scanPhotos(
+    scan: ScanAction,
+    logger: PhotasaLogger,
+    workerPool?: WorkerPool<ThumbnailRequest, ThumbnailResponse>,
+): Observable<PhotoFileRequest> {
     return new Observable<PhotoFileRequest>((subscriber) => {
         // 参数验证
         const validation = validateScanParams(scan);
@@ -213,9 +155,6 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
             subscriber.error(new Error(`参数验证失败: ${validation.error}`));
             return;
         }
-
-        // 获取 Worker 池，如果初始化失败会抛出错误
-        const workerPool = getWorkerPool(logger);
 
         // 对于目录扫描，先进行策略决策
         if (isDirectoryScan(scan)) {
@@ -258,10 +197,9 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 
                         // 修复：即使当前目录被跳过，仍需要扫描子目录
                         logger.info(`[scanPhotos] 开始扫描子目录: ${scan.path}`);
-                        await scanSubdirectories(scan, subscriber, logger);
+                        await scanSubdirectories(scan, subscriber, logger, workerPool);
 
                         // 重要修复：在所有操作完成后才调用 complete
-                        // restoreCachedFiles 不再调用 complete，由这里统一管理
                         logger.info(`[scanPhotos] SKIP策略处理完成: ${scan.path}`);
                         subscriber.complete();
                         return;
@@ -437,16 +375,6 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 /**
  * 处理文件列表（断点续扫专用）
  *
- * 用于处理断点续扫场景下的文件列表，逐个处理未完成的文件。
- * 在增量缓存检测到未完成扫描时调用，确保所有文件都被正确处理。
- *
- * 处理流程：
- * 1. 遍历待处理文件列表
- * 2. 检查每个文件是否需要处理
- * 3. 调用 processPhotoFile 处理文件（生成缩略图、更新配置）
- * 4. 记录文件处理状态到缓存
- * 5. 标记扫描完成
- *
  * @param files - 待处理的文件列表
  * @param scan - 扫描动作配置
  * @param cacheManager - 增量缓存管理器
@@ -460,7 +388,7 @@ async function processFileList(
     files: PhotoFileRequest[],
     scan: ScanAction,
     cacheManager: IncrementalCacheManager,
-    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse>,
+    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse> | undefined,
     logger: PhotasaLogger,
     subscriber: Subscriber<PhotoFileRequest>,
 ) {
@@ -495,32 +423,9 @@ async function processFileList(
 /**
  * 扩展清理功能
  *
- * 清理扫描过程中产生的临时文件、过期缓存和无效配置。
- * 支持自定义清理选项，提供详细的清理统计信息。
- *
- * 清理内容：
- * - 过期的缓存文件（.photasa-folder.json）
- * - 无效的配置文件（.photasa.json）
- * - 临时缩略图文件
- * - 孤立的缩略图文件
- *
  * @param basePath - 基础路径，指定清理范围（可选）
  * @param options - 清理选项配置（可选）
- * @param options.workerShutdownTimeout - Worker 池关闭超时时间（毫秒）
- * @param options.maxCacheAge - 缓存文件最大保留时间（毫秒）
  * @returns Promise<CleanupStats> - 清理统计信息
- *
- * @example
- * ```typescript
- * // 清理指定目录
- * const stats = await extendedCleanup("/path/to/photos", {
- *     maxCacheAge: 7 * 24 * 60 * 60 * 1000, // 7天
- *     workerShutdownTimeout: 5000 // 5秒
- * });
- * console.log(`清理完成: 处理 ${stats.cacheFilesProcessed} 个文件，删除 ${stats.invalidCacheFilesRemoved} 个无效文件`);
- * ```
- *
- * @throws {Error} 当清理选项验证失败时抛出错误
  */
 export async function extendedCleanup(
     basePath?: string,
@@ -559,7 +464,7 @@ export async function extendedCleanup(
         workerPoolShutdown: false,
         cacheFilesProcessed: result.processed,
         invalidCacheFilesRemoved: result.removed,
-        memoryFreed: 0, // 暂时设为0，后续可以实现内存统计
+        memoryFreed: 0,
         errors: result.errors,
     };
 }
@@ -567,50 +472,26 @@ export async function extendedCleanup(
 /**
  * 处理媒体文件（统一处理函数）
  *
- * 这是处理单个媒体文件的核心函数，支持扫描、重新扫描和删除操作。
- * 统一了 scan-photos.ts 和 scan-worker.ts 中的处理逻辑，避免重复代码。
- *
- * 支持的操作：
- * - scan: 扫描文件，创建缩略图并添加到配置
- * - rescan: 重新扫描，强制重新创建缩略图
- * - current: 删除文件，移除缩略图和配置
- *
  * @param filePath - 媒体文件路径
  * @param scan - 扫描动作配置
+ * @param workerPool - Worker 池实例
  * @param logger - 日志记录器
- *
- * @example
- * ```typescript
- * // 扫描文件
- * await processMediaFile("/path/to/photo.jpg", {
- *     action: "scan",
- *     thumbnailSize: 200
- * }, logger);
- *
- * // 重新扫描文件
- * await processMediaFile("/path/to/photo.jpg", {
- *     action: "rescan",
- *     thumbnailSize: 200
- * }, logger);
- * ```
  */
 export async function processMediaFile(
     filePath: string,
     scan: ScanAction,
+    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse> | undefined,
     logger: PhotasaLogger,
 ): Promise<void> {
-    const { normalizePath } = await import("@shared/path-util");
-    const { buildThumbnailPath } = await import("@shared/path-util");
-    const { shouldProcessFile } = await import("./strategy/scan-strategy");
     const { addToPhotasaConfig, removeFromPhotoList } = await import("@photasa/config-core");
+    const { shouldProcessFile } = await import("./strategy/scan-strategy");
 
     // 使用统一的路径处理API规范化路径
-    const normalizedFilePath = normalizePath(filePath);
+    const normalizedFilePath = filePath;
     const thumbnailPath = buildThumbnailPath(normalizedFilePath);
-    const workerPool = getWorkerPool(logger);
 
     switch (scan.action) {
-        case "scan":
+        case "scan": {
             // 扫描操作：创建缩略图（如果需要）并添加到配置
             const shouldProcess = await shouldProcessFile(normalizedFilePath, scan.action, logger);
             if (!shouldProcess) {
@@ -639,6 +520,7 @@ export async function processMediaFile(
                 logger,
             );
             break;
+        }
 
         case "rescan":
             // 重新扫描操作：强制重新创建缩略图并更新配置
@@ -681,43 +563,18 @@ export async function processMediaFile(
 /**
  * 扫描子目录（递归扫描）
  *
- * 修复扫描优化中的子目录扫描问题。当父目录被跳过时（SKIP策略），
- * 仍需要递归扫描其子目录，确保所有子目录都被正确处理。
- *
- * 这是扫描系统的重要修复，解决了以下问题：
- * - 父目录被跳过时，子目录也被错误跳过
- * - 导致部分照片无法被发现和处理
- * - 影响扫描的完整性和准确性
- *
- * 处理流程：
- * 1. 获取当前目录下的所有子目录
- * 2. 过滤掉隐藏目录和系统目录
- * 3. 对每个子目录递归调用 scanPhotos
- * 4. 将子目录的扫描结果转发给主订阅器
- * 5. 确保所有子目录都被处理完成
- *
  * @param scan - 扫描动作配置，包含父目录路径等信息
  * @param subscriber - Observable 订阅器，用于接收扫描结果
  * @param logger - 日志记录器，用于记录扫描过程
+ * @param workerPool - Worker 池实例
  *
  * @internal 此函数为内部使用，由 scanPhotos 函数调用
- *
- * @example
- * ```typescript
- * // 在 scanPhotos 的 SKIP 策略中调用
- * if (scanDecision.strategy === "skip") {
- *     await restoreCachedFiles(scan.path, subscriber, logger);
- *     await scanSubdirectories(scan, subscriber, logger); // 确保子目录被扫描
- *     return;
- * }
- * ```
- *
- * @since 修复版本 - 解决子目录扫描问题
  */
 async function scanSubdirectories(
     scan: ScanAction,
     subscriber: Subscriber<PhotoFileRequest>,
     logger: PhotasaLogger,
+    workerPool?: WorkerPool<ThumbnailRequest, ThumbnailResponse>,
 ): Promise<void> {
     try {
         logger.debug(`[scanSubdirectories] 开始扫描子目录: ${scan.path}`);
@@ -745,11 +602,9 @@ async function scanSubdirectories(
                 };
 
                 // 递归调用 scanPhotos 处理子目录
-                // 这里使用 Promise 包装 Observable 以确保顺序处理
                 await new Promise<void>((resolve, reject) => {
-                    scanPhotos(subdirScan, logger).subscribe({
+                    scanPhotos(subdirScan, logger, workerPool).subscribe({
                         next: (photoRequest) => {
-                            // 将子目录的文件请求转发给主订阅器
                             subscriber.next(photoRequest);
                         },
                         error: (error) => {
@@ -780,13 +635,6 @@ async function scanSubdirectories(
 
 /**
  * 导出扫描策略相关函数
- *
- * 重新导出扫描策略模块中的核心函数，提供统一的 API 接口。
- * 这些函数用于扫描过程中的策略决策和文件处理判断。
- *
- * @see {@link shouldProcessFile} 判断文件是否需要处理
- * @see {@link shouldScanOneLevel} 判断是否只扫描单层目录
- * @see {@link decideScanStrategy} 决定扫描策略（SKIP/INCREMENTAL/FULL）
  */
 export {
     shouldProcessFile,

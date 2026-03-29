@@ -10,10 +10,15 @@ import path from "path";
 import { Subscriber as _Subscriber } from "rxjs";
 import type { ScanAction, PhotoFileRequest } from "@photasa/common";
 import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
-import { WorkerPool } from "../workers/worker-pool";
 import { PhotasaLogger } from "@photasa/common";
 import { addToPhotasaConfig } from "@photasa/config-core";
-import { buildThumbnailPath } from "@shared/path-util";
+import { buildThumbnailPath } from "./utils/path-utils";
+
+// WorkerPool interface (subset used by scan helpers — avoids pulling in desktop deps)
+export interface WorkerPool<TRequest, TResponse> {
+    addTask(type: string, request: TRequest): Promise<TResponse>;
+    shutdown(): Promise<boolean>;
+}
 
 /**
  * 纯函数：检查缩略图是否需要创建
@@ -72,7 +77,7 @@ export async function processPhotoFile(
     action: PhotoFileRequest,
     scan: ScanAction,
     shouldProcess: boolean,
-    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse>,
+    workerPool: WorkerPool<ThumbnailRequest, ThumbnailResponse> | undefined,
     logger: PhotasaLogger,
 ): Promise<PhotoFileRequest> {
     // 如果文件不需要处理，直接返回
@@ -255,9 +260,9 @@ export async function restoreCachedFiles(
         const configContent = await fs.readFile(configPath, "utf8");
 
         // RFC 0015 修复：增强JSON解析错误处理
-        let config: any;
+        let config: { photoList?: Array<{ path: string; thumbnail?: string; isImage?: boolean; isVideo?: boolean }> };
         try {
-            config = JSON.parse(configContent);
+            config = JSON.parse(configContent) as typeof config;
         } catch (parseError) {
             logger.error(`[restoreCachedFiles] JSON解析失败: ${configPath}`, parseError);
             logger.info(`[restoreCachedFiles] 文件内容长度: ${configContent.length} 字节`);

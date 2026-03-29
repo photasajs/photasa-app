@@ -1,6 +1,6 @@
 import { parentPort } from "worker_threads";
 import type { ScanAction } from "@photasa/common";
-import { scanPhotos, processMediaFile } from "./scan-photos";
+import { scanPhotos, processMediaFile, getWorkerPool } from "@photasa/scan";
 import { loggers } from "@photasa/common";
 import isImage from "is-image";
 import isVideo from "is-video";
@@ -89,7 +89,8 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
     }
 
     // 执行目录扫描
-    scanPhotos(scan, logger).subscribe({
+    const workerPool = getWorkerPool(logger);
+    scanPhotos(scan, logger, workerPool).subscribe({
         next: (action) => {
             processed++;
             if (action && action.path && action.isDirectory) {
@@ -200,8 +201,9 @@ async function executeFileOperation(requestId: string, scan: ScanAction): Promis
             return;
         }
 
-        // Process media file using unified function from scan-photos.ts
-        await processMediaFile(filePath, scan, logger);
+        // Process media file using unified function from @photasa/scan
+        const workerPool = getWorkerPool(logger);
+        await processMediaFile(filePath, scan, workerPool, logger);
 
         postMessage({
             type: "complete",
