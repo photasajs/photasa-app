@@ -58,6 +58,7 @@
         "@photasa/common": "workspace:*",
         "@photasa/import": "workspace:*",
         "@photasa/scan": "workspace:*",
+        "@photasa/thumbnail": "workspace:*",
         "@photasa/config-core": "workspace:*",
         "@photasa/maliang": "workspace:*",
         "@photasa/maliang-bundle": "workspace:*",

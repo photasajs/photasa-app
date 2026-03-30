@@ -4,7 +4,7 @@ import { ensureDir, exists, remove } from "fs-extra";
 import { ensureAccess } from "./utils";
 import path from "path";
 import type { ThumbnailRequest } from "@photasa/common";
-import { toPreviewPath } from "@shared/path-util";
+import { toPreviewPath } from "@photasa/config-core";
 import { HeicExtensionRE } from "@photasa/common";
 import { PhotasaLogger } from "@photasa/common";
 import {
