@@ -1,0 +1,596 @@
+{
+    "app": {
+        "title": "Photasa",
+        "folderList": "Список папок"
+    },
+    "preference": {
+        "settings": "Настройки",
+        "tabs": {
+            "general": "Общие",
+            "about": "О программе",
+            "theme": "Тема",
+            "advanced": "Дополнительно",
+            "autoUpdate": "Автообновление",
+            "scanMonitoring": "Scan Monitoring"
+        },
+        "folderList": "Список папок",
+        "folderListUsage": "Способ использования",
+        "folderListDesc": "После добавления папки в список Photasa может управлять фотографиями и видео в папке в реальном времени.",
+        "watchFolderList": "Photasa может управлять фотографиями и видео в следующих папках.",
+        "chooseDirectory": "Выберите папку и добавьте в список",
+        "thumbnailSize": "Размер миниатюры",
+        "darkMode": "Темный режим",
+        "language": "Язык",
+        "scanning": "Сканирование",
+        "resetFolders": {
+            "title": "Продвинутое действие: Сброс хранилища каталогов",
+            "desc": "Это очистит все настройки каталогов и немедленно пересоздаст кэш. Это действие необратимо. Продолжайте осторожно!",
+            "button": "Сбросить хранилище каталогов"
+        }
+    },
+    "import": {
+        "title": "Импорт фотографий",
+        "photos": "Импортировать фото",
+        "allowDuplicateRename": "Разрешить переименование дубликатов фото",
+        "targetDirectory": "Папка экспорта",
+        "chooseDirectory": "Выберите папку для импорта",
+        "button": {
+            "import": "Импортировать",
+            "cancel": "Отмена"
+        },
+        "sourceDirectories": "Исходные папки",
+        "addSource": "Добавить исходную папку",
+        "browse": "Обзор",
+        "options": "Параметры импорта",
+        "fileTypes": {
+            "label": "Типы файлов",
+            "images": "Изображения",
+            "videos": "Видео",
+            "image": "Изображение",
+            "video": "Видео",
+            "other": "Другое"
+        },
+        "images": "Изображения",
+        "videos": "Видео",
+        "includeSubfolders": "Включить подпапки",
+        "duplicateHandling": "Обработка дубликатов",
+        "duplicate": {
+            "label": "Дубликат",
+            "rename": "Переименовать",
+            "skip": "Пропустить",
+            "overwrite": "Перезаписать",
+            "keepBoth": "Сохранить оба"
+        },
+        "useMD5ForDuplicates": "Использовать MD5 проверку для обнаружения дубликатов",
+        "useMD5ForDuplicatesDescription": "Когда включено, файлы будут сравниваться с использованием MD5 хеша для точного обнаружения дубликатов, независимо от дат изменения файлов",
+        "preview": {
+            "scanning": "Сканирование файлов",
+            "filesFound": "Найдено файлов",
+            "directoriesScanned": "Просканировано каталогов",
+            "progress": "Прогресс сканирования",
+            "currentPath": "Текущий путь",
+            "recentlyFound": "Недавно найденные",
+            "noFilesFound": "Файлы не найдены"
+        },
+        "totalFiles": "Всего файлов",
+        "totalSize": "Общий размер",
+        "group": "{count} файлов",
+        "processed": "Обработано",
+        "speed": "Скорость",
+        "filesPerSec": "файлов/сек",
+        "filesPerMin": "файлов/мин",
+        "remaining": "Осталось",
+        "processing": "Обработка",
+        "previewButton": "Предпросмотр",
+        "importButton": "Импортировать",
+        "pauseButton": "Пауза",
+        "resumeButton": "Продолжить",
+        "cancelButton": "Отмена",
+        "closeButton": "Закрыть",
+        "nextButton": "Далее",
+        "backButton": "Назад",
+        "doneButton": "Готово",
+        "importFailed": "Ошибка импорта",
+        "importCompleted": "Импорт завершён",
+        "importCompletedDesc": "Успешно импортировано {count} файлов",
+        "duplicates": "Дубликаты",
+        "moreFiles": "еще {count} файлов",
+        "selectTarget": "Выбрать целевую папку",
+        "filePreview": "Предпросмотр файлов",
+        "selectAll": "Выбрать все",
+        "deselectAll": "Снять выделение",
+        "invertSelection": "Инвертировать выбор",
+        "selected": "Выбрано",
+        "selectedSize": "Размер выбранного",
+        "fileGroups": "Группы файлов",
+        "pagination": "{start}-{end} из {total}",
+        "toggleSelection": "Переключить выбор",
+        "viewDetails": "Просмотр деталей",
+        "image": "Изображение",
+        "video": "Видео",
+        "unknown": "Неизвестно",
+        "fileDetails": "Детали файла",
+        "basicInfo": "Основная информация",
+        "fileName": "Имя файла",
+        "fileSize": "Размер файла",
+        "fileType": "Тип файла",
+        "dateTime": "Дата и время",
+        "modifiedTime": "Время изменения",
+        "groupFiles": "Группировать файлы",
+        "targetPath": "Целевой путь",
+        "metadata": "Метаданные",
+        "dimensions": "Размеры",
+        "duration": "Длительность",
+        "format": "Формат",
+        "location": "Местоположение",
+        "percentage": "Процент",
+        "errors": "Ошибки ({count})",
+        "warnings": "Предупреждения ({count})",
+        "moreErrors": "еще {count} ошибок",
+        "moreWarnings": "еще {count} предупреждений",
+        "retry": "Повторить",
+        "showLess": "Показать меньше",
+        "showMore": "Показать еще {count}",
+        "status": {
+            "preparing": "Подготовка",
+            "processing": "Обработка",
+            "paused": "Приостановлено",
+            "completed": "Завершено",
+            "cancelled": "Отменено",
+            "error": "Ошибка",
+            "unknown": "Неизвестно"
+        },
+        "now": "Сейчас",
+        "filters": "Фильтры",
+        "resetFilters": "Сбросить фильтры",
+        "showAdvanced": "Показать расширенные",
+        "hideAdvanced": "Скрыть расширенные",
+        "advancedFilters": "Расширенные фильтры",
+        "fileSizeRange": "Диапазон размера файла",
+        "fileSizeHelp": "Фильтровать файлы по размеру",
+        "dateRange": "Диапазон дат",
+        "dateRangeHelp": "Фильтровать файлы по дате создания",
+        "startDate": "Начальная дата",
+        "endDate": "Конечная дата",
+        "quickDateFilters": "Быстрые фильтры по дате",
+        "fileNamePattern": "Шаблон имени файла",
+        "fileNamePatternHelp": "Фильтровать файлы по шаблону имени, поддерживаются подстановочные знаки (* и ?)",
+        "fileNamePatternPlaceholder": "например, IMG_*.jpg",
+        "excludePatterns": "Исключающие шаблоны",
+        "excludePatternsHelp": "Шаблоны для исключения файлов, по одному на строку",
+        "excludePatternsPlaceholder": "например, .DS_Store, Thumbs.db",
+        "reset": "Сброс",
+        "filteredFiles": "Отфильтрованные файлы",
+        "datePresets": {
+            "today": "Сегодня",
+            "yesterday": "Вчера",
+            "thisWeek": "Эта неделя",
+            "thisMonth": "Этот месяц",
+            "lastMonth": "Прошлый месяц"
+        },
+        "dateSource": {
+            "label": "Источник даты",
+            "exif": "EXIF метаданные",
+            "file_created": "Файл создан",
+            "file_modified": "Файл изменён",
+            "custom": "Пользовательский"
+        },
+        "duplicateFiles": "Дублирующиеся файлы",
+        "duplicatesFound": "Найдено дубликатов",
+        "wastedSpace": "Потерянное пространство",
+        "batchStrategy": "Массовая стратегия",
+        "applyToAll": "Применить ко всем",
+        "autoResolve": "Автоматическое решение",
+        "originalFile": "Оригинальный файл",
+        "existing": "Существующий",
+        "duplicateFile": "Дублирующийся файл",
+        "importing": "Импортируемый",
+        "action": "Действие",
+        "strategy": {
+            "skip": {
+                "label": "Пропустить",
+                "description": "Пропустить импорт этого файла"
+            },
+            "rename": {
+                "label": "Переименовать",
+                "description": "Переименовать файл перед импортом"
+            },
+            "overwrite": {
+                "label": "Перезаписать",
+                "description": "Перезаписать существующий файл"
+            },
+            "keepBoth": {
+                "label": "Сохранить оба",
+                "description": "Сохранить оба файла с разными именами"
+            }
+        },
+        "recommendation": "Рекомендация",
+        "recommendations": {
+            "keep_original": "Сохранить оригинал",
+            "keep_duplicate": "Сохранить дубликат",
+            "keep_both": "Сохранить оба",
+            "skipIdentical": "Пропустить (идентичные файлы)",
+            "keepLarger": "Сохранить файл большего размера"
+        },
+        "warning": {
+            "overwriteLarger": "Внимание: Вы собираетесь перезаписать файл большего размера",
+            "overwriteNewer": "Внимание: Вы собираетесь перезаписать более новый файл"
+        },
+        "compare": "Сравнить",
+        "fileComparison": "Сравнение файлов",
+        "comparisonAnalysis": "Анализ сравнения",
+        "sizeDifference": "Разница в размере",
+        "timeDifference": "Разница во времени",
+        "sameSize": "Одинаковый размер",
+        "sameTime": "Одинаковое время",
+        "daysNewer": "новее на {days} дней",
+        "daysOlder": "старше на {days} дней",
+        "hoursNewer": "новее на {hours} часов",
+        "hoursOlder": "старше на {hours} часов",
+        "newer": "Новее",
+        "older": "Старше",
+        "confirmBatchAction": "Подтвердить массовое действие",
+        "apply": "Применить",
+        "cancel": "Отмена",
+        "batchConfirmMessage": "Применить {strategy} к {count} выбранным файлам?",
+        "overwriteWarning": "Внимание: Перезапись файлов не может быть отменена",
+        "batchProgress": "Прогресс пакетной обработки",
+        "directories": "Директории",
+        "complete": "Завершено",
+        "overallProgress": "Общий прогресс",
+        "currentDirectory": "Текущая директория",
+        "eta": "Примерное время",
+        "completed": "Завершено",
+        "error": {
+            "label": "Ошибка",
+            "title": "Операция не удалась",
+            "network": "Ошибка сетевого подключения, проверьте соединение и повторите попытку",
+            "validation": "Ошибка проверки конфигурации, проверьте настройки каталогов",
+            "permission": "Недостаточно прав, убедитесь, что у вас есть доступ к каталогам",
+            "api": "Ошибка сервера, повторите попытку позже",
+            "unknown": "Произошла неизвестная ошибка, повторите попытку",
+            "retry": "Повторить",
+            "dismiss": "Отклонить"
+        },
+        "paused": "Приостановлено",
+        "pending": "Ожидание",
+        "finishing": "Завершение",
+        "pauseAll": "Приостановить все",
+        "resumeAll": "Продолжить все",
+        "cancelAll": "Отменить все",
+        "close": "Закрыть",
+        "confirmCancelAll": "Подтвердить отмену всех",
+        "yes": "Да",
+        "no": "Нет",
+        "cancelAllWarning": "Вы уверены, что хотите отменить все оставшиеся импорты?",
+        "cancelAllProgress": "{completed} из {total} директорий завершено",
+        "recentFiles": "Недавние файлы",
+        "elapsed": "Прошло времени",
+        "files": "Файлы",
+        "successful": "Успешно",
+        "skipped": "Пропущено",
+        "steps": {
+            "configuration": "Конфигурация",
+            "configurationDesc": "Выберите исходную и целевую папки",
+            "preview": "Предпросмотр",
+            "previewDesc": "Просмотрите и выберите файлы для импорта",
+            "importing": "Импорт",
+            "importingDesc": "Импорт файлов в целевую папку"
+        },
+        "loading": {
+            "text": "Загрузка...",
+            "preview": "Загрузка данных предпросмотра...",
+            "directories": "Выбор каталогов...",
+            "label": "Загрузка...",
+            "switchingFolder": "Переключение папки..."
+        }
+    },
+    "menu": {
+        "getInfo": "Информация о фото",
+        "open": "Открыть в файловом менеджере",
+        "rebuildThumbnail": "Пересоздать миниатюру",
+        "getConfig": "Получить информацию о фотобиблиотеке",
+        "rescan": "Пересканировать папку",
+        "app": {
+            "menu": "Приложение",
+            "about": "О Photasa",
+            "services": "Сервисы",
+            "hide": "Скрыть Photasa",
+            "hideOthers": "Скрыть другие",
+            "unhide": "Показать все",
+            "quit": "Выйти"
+        },
+        "view": {
+            "menu": "Вид",
+            "reload": "Перезагрузить",
+            "forceReload": "Принудительная перезагрузка",
+            "toggleDevTools": "Переключить инструменты разработчика",
+            "resetZoom": "Сбросить масштаб",
+            "zoomIn": "Увеличить",
+            "zoomOut": "Уменьшить",
+            "toggleFullScreen": "Переключить полноэкранный режим"
+        },
+        "window": {
+            "menu": "Окно",
+            "minimize": "Свернуть",
+            "maximize": "Развернуть",
+            "close": "Закрыть"
+        },
+        "help": {
+            "menu": "Справка",
+            "learnMore": "Узнать больше",
+            "about": "О Photasa"
+        },
+        "separator": "Разделитель"
+    },
+    "notification": {
+        "info": "Информация",
+        "warn": "Внимание",
+        "error": "Ошибка",
+        "scan": {
+            "title": "Сканирование папки",
+            "message": "Сканирование папки завершено, фото импортированы в Photasa."
+        },
+        "duplicatePath": {
+            "title": "Дубликат папки",
+            "message": "Папка [{folder}] уже существует в Photasa."
+        },
+        "emptyPath": {
+            "title": "Выберите папку",
+            "message": "Пожалуйста, выберите папку и завершите добавление."
+        },
+        "scanError": {
+            "title": "Ошибка сканирования",
+            "message": "Не удалось просканировать подпапки [{path}]. Ошибка: {error}. Основная папка будет добавлена."
+        },
+        "unknownError": "Произошла неизвестная ошибка",
+        "resetFolders": {
+            "title": "Сброс завершен",
+            "message": "Все кэши папок были пересозданы."
+        }
+    },
+    "status": {
+        "initializing": "Инициализация",
+        "idle": "Ожидание",
+        "updating": "Обновление",
+        "ready": "Готово",
+        "readingConfig": "Загрузка информации о библиотеке [{config}]",
+        "loadingConfig": "Чтение информации о библиотеке",
+        "processing": "Обработка [{file}]",
+        "scanned": "Завершено",
+        "scanComplete": "Папка [{path}] обработана.",
+        "start": "Начать сканирование",
+        "progress": "Прогресс сканирования",
+        "processingFile": "Обработка: {fileName}",
+        "scanningPath": "Сканирование: {path}",
+        "complete": "Сканирование завершено",
+        "error": "Ошибка сканирования",
+        "scanFailed": "Сканирование не удалось: {path}"
+    },
+    "button": {
+        "import": "Импортировать",
+        "cancel": "Отмена",
+        "ok": "ОК",
+        "fixConfig": "Исправить информацию о библиотеке"
+    },
+    "about": {
+        "antvDescription": "Решение для визуализации данных",
+        "introduction": {
+            "title": "Введение",
+            "content": "Здравствуйте! Это инструмент для управления и организации фотографий.",
+            "summary": "Это приложение фокусируется на",
+            "highlight": "удобном интерфейсе",
+            "userExperience": "пользовательском опыте",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Ресурсы",
+            "content": "Доступны следующие ресурсы:",
+            "download": "Скачать ресурсы"
+        },
+        "press": "Нажмите",
+        "toExit": "для выхода",
+        "markdown": "# О Photasa\n\nPhotasa — это современный, ориентированный на конфиденциальность инструмент для локального управления фотографиями, вдохновленный классическим Photasa.\nОн поддерживает эффективный просмотр, организацию и управление вашими фотографиями и видео, имеет красивый интерфейс и мощные локальные функции, не требуя облака.\n\n## Основные функции\n\n- Умный импорт и управление локальными фото и видео\n- Быстрое создание миниатюр и предпросмотр\n- Многоязычный интерфейс и смена тем\n- Пакетные операции и эффективный поиск\n- Защита данных и конфиденциальности\n\nНажмите `Esc` для выхода"
+    },
+    "preferences": {
+        "title": "Настройки",
+        "language": {
+            "title": "Язык",
+            "description": "Выберите предпочитаемый язык интерфейса приложения."
+        },
+        "thumbnail": {
+            "title": "Размер миниатюры",
+            "description": "Настройте размер миниатюр фотографий в галерее."
+        },
+        "theme": {
+            "title": "Тема",
+            "description": "Переключение между светлым и темным режимом.",
+            "light": "Светлая",
+            "dark": "Темная"
+        }
+    },
+    "scan": {
+        "queueTitle": "Очередь сканирования",
+        "queueEmpty": "Очередь пуста",
+        "processing": "Обработка очереди",
+        "allTasksCompleted": "Все задачи сканирования завершены",
+        "pathHeader": "Путь",
+        "timestampHeader": "Создано",
+        "actionHeader": "Действие",
+        "unknownFolder": "Неизвестная папка",
+        "noTimestamp": "Нет отметки времени",
+        "timeJustNow": "Только что",
+        "timeMinutesAgo": "{count}м назад",
+        "timeHoursAgo": "{count}ч назад",
+        "timeDaysAgo": "{count}д назад",
+        "priority": "Приоритет",
+        "actions": {
+            "scan": "Сканировать",
+            "rescan": "Пересканировать",
+            "current": "Текущее сканирование"
+        },
+        "processed": "Обработано",
+        "incrementalCache": "Инкрементный кеш: сохранение прогресса в реальном времени, избегание повторного сканирования"
+    },
+    "advancedSettings": {
+        "title": "Дополнительные настройки",
+        "resetFoldersTitle": "Доп. действие: Сбросить хранение папок",
+        "resetFoldersDesc": "Это действие очистит все настройки папок и немедленно пересоздаст кэш. Это действие необратимо, пожалуйста, будьте осторожны!",
+        "resetFoldersBtn": "Сбросить хранение папок"
+    },
+    "empty": {
+        "image": "Нет изображений",
+        "openConfigDirBtn": "Открыть папку настроек",
+        "importBtn": "Импортировать изображения"
+    },
+    "fileInfo": {
+        "title": "Информация о файле",
+        "fileName": "Имя файла",
+        "fileType": "Тип файла",
+        "format": "Формат",
+        "size": "Размер",
+        "imageWidth": "Ширина изображения",
+        "imageHeight": "Высота изображения",
+        "resolution": "Разрешение",
+        "aspectRatio": "Соотношение сторон",
+        "duration": "Длительность",
+        "codec": "Кодек",
+        "dateTaken": "Дата съемки",
+        "dateSource": "Источник даты",
+        "modified": "Изменено",
+        "created": "Создано",
+        "location": "Местоположение",
+        "gpsLatitude": "GPS широта",
+        "gpsLongitude": "GPS долгота",
+        "cameraMake": "Марка камеры",
+        "cameraModel": "Модель камеры",
+        "rawMetadata": "Исходные метаданные",
+        "unknown": "Неизвестно",
+        "showRawData": "Показать исходные данные",
+        "hideRawData": "Скрыть исходные данные",
+        "infoTitle": "{name} - Информация о {type}",
+        "dateSources": {
+            "exif": "Данные EXIF",
+            "video_metadata": "Метаданные видео",
+            "file_created": "Время создания файла",
+            "file_modified": "Время изменения файла",
+            "current_date": "Текущая дата"
+        },
+        "basicInfo": "Основная информация",
+        "mediaProperties": "Свойства медиа",
+        "videoProperties": "Свойства видео",
+        "timeInfo": "Временная информация",
+        "technicalInfo": "Техническая информация",
+        "createdAt": "Создано",
+        "modifiedAt": "Изменено",
+        "camera": "Камера",
+        "lens": "Объектив",
+        "iso": "ISO",
+        "aperture": "Диафрагма",
+        "dimensions": "Размеры",
+        "noMetadata": "Нет метаданных"
+    },
+    "common": {
+        "files": "файлов",
+        "file": "файл",
+        "images": "изображений",
+        "image": "изображение",
+        "videos": "видео",
+        "video": "видео",
+        "counting": "Подсчет..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} файлов",
+            "images": "{count} изображений",
+            "videos": "{count} видео",
+            "mixed": "{images} изображений, {videos} видео",
+            "empty": "Нет файлов"
+        }
+    },
+    "imageInfo": {
+        "title": "Информация об изображении",
+        "lastUpdated": "Последнее обновление",
+        "openInFinder": "Открыть в Finder",
+        "repairLibrary": "Восстановить библиотеку фото",
+        "fileCount": "Количество файлов",
+        "folderSize": "Размер папки",
+        "basicInfo": "Основная информация",
+        "location": "Расположение",
+        "scanDate": "Дата сканирования",
+        "configVersion": "Версия конфигурации",
+        "configuration": "Конфигурация",
+        "showRaw": "Показать сырую конфигурацию",
+        "hideRaw": "Скрыть сырую конфигурацию",
+        "totalImages": "Всего изображений",
+        "totalVideos": "Всего видео",
+        "scannedFolders": "Сканированные папки",
+        "rawConfiguration": "Сырая конфигурация",
+        "copyPath": "Копировать путь",
+        "copyConfig": "Копировать конфигурацию",
+        "operationHistory": "История операций",
+        "lastScan": "Последнее сканирование",
+        "configCreated": "Конфигурация создана",
+        "never": "Никогда",
+        "statusTypes": {
+            "completed": "Завершено",
+            "success": "Успешно",
+            "warning": "Предупреждение",
+            "partial": "Частично",
+            "error": "Ошибка",
+            "failed": "Не удалось",
+            "unknown": "Неизвестно"
+        }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "Последний час",
+            "6h": "Последние 6 часов",
+            "24h": "Последние 24 часа"
+        }
+    },
+    "logViewer": {
+        "title": "Просмотрщик логов",
+        "levels": {
+            "all": "Все уровни",
+            "error": "Ошибка",
+            "warn": "Предупреждение",
+            "info": "Информация",
+            "debug": "Отладка"
+        },
+        "buttons": {
+            "clear": "Очистить",
+            "export": "Экспорт",
+            "opacity": "Прозрачность",
+            "close": "Закрыть"
+        },
+        "search": "Поиск в логах...",
+        "messages": {
+            "noLogs": "Логи недоступны",
+            "logsCleared": "Логи очищены",
+            "logsExported": "Логи экспортированы в {fileName}",
+            "exportFailed": "Ошибка экспорта логов: {error}"
+        },
+        "dragInfo": "Перетащите для перемещения окна"
+    },
+    "update": {
+        "notification": {
+            "title": "Доступна новая версия",
+            "message": "Версия {version} доступна",
+            "cancel": "Отмена",
+            "install": "Установить",
+            "cancelDownload": "Отменить загрузку",
+            "installNow": "Установить сейчас",
+            "viewDetails": "Показать детали"
+        },
+        "popup": {
+            "title": "Доступна новая версия",
+            "message": "Версия {version} доступна",
+            "cancel": "Отмена",
+            "install": "Установить",
+            "cancelDownload": "Отменить загрузку",
+            "installNow": "Установить сейчас",
+            "close": "Закрыть"
+        }
+    }
+}

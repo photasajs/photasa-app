@@ -6,7 +6,7 @@ Another Picasa App powered by [Electron Vite](https://evite.netlify.app/)
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Development
 npm run dev
@@ -16,6 +16,15 @@ npm run build:mac    # macOS
 npm run build:win    # Windows
 npm run build:linux  # Linux
 ```
+
+### 从根目录 / 包内启动 Tauri 应用 (Photasa)
+
+| 场景 | 根目录 (repo root) | 包内 (apps/photasa) |
+|------|--------------------|----------------------|
+| 启动 Tauri 开发 | `pnpm run tauri:dev` 或 `pnpm run dev:photasa` | `pnpm run dev` |
+| 仅前端 (无窗口) | `pnpm --filter @photasa/photasa run dev:web` | `pnpm run dev:web` |
+| Tauri 生产构建 | `pnpm run tauri:build` | `pnpm run tauri:build` |
+| 前端构建 (Vite) | `pnpm run build:photasa` | `pnpm run build` |
 
 ## Documentation
 

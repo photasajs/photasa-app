@@ -1,0 +1,17 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "default",
+    "description": "主窗口 IPC 能力；含官方文档要求的 mcp-bridge（MCP 调试）",
+    "windows": ["*"],
+    "permissions": [
+        "core:default",
+        "shell:default",
+        "dialog:default",
+        "fs:default",
+        "mcp-bridge:default",
+        "updater:default",
+        "global-shortcut:allow-register",
+        "global-shortcut:allow-unregister",
+        "global-shortcut:allow-is-registered"
+    ]
+}

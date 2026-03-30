@@ -1,7 +1,7 @@
 # RFC 0068: 扫描服务迁移到 Tauri
 
 - **作者**: AI Assistant
-- **状态**: Draft
+- **状态**: ✅ 已完成
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
@@ -35,8 +35,8 @@ apps/desktop/src/main/scan/
 ### 核心功能
 
 1. **IPC 通信**
-   - `picasa:scan-photos` - 接收扫描请求
-   - `picasa:find-photo` - 发送扫描结果
+   - `picasa:scan-photos`：renderer 使用 `ipcRenderer.send` 发送，参数 `{ requestId: string, scanAction: ScanAction }`；主进程 `ipcMain.on` 接收，无返回值。
+   - `picasa:find-photo`：主进程向 renderer `webContents.send` 发送扫描进度/结果/错误。
 
 2. **Worker 线程**
    - 使用 Node.js Worker Threads

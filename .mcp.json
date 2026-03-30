@@ -8,10 +8,9 @@
             "command": "npx",
             "args": ["-y", "@executeautomation/playwright-mcp-server"]
         },
-        "nx-mcp": {
-            "type": "stdio",
+        "tauri": {
             "command": "npx",
-            "args": ["nx", "mcp"]
+            "args": ["-y", "@hypothesi/tauri-mcp-server"]
         }
     }
 }

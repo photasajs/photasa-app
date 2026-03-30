@@ -1,7 +1,7 @@
 # RFC 0071: 配置服务迁移到 Tauri
 
 - **作者**: AI Assistant
-- **状态**: Draft
+- **状态**: ✅ 已完成
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
@@ -24,19 +24,27 @@ apps/desktop/src/main/config/
 
 ### 核心功能
 
-1. **IPC 通信**
-   - `picasa:query-config` - 查询配置
-   - `picasa:add-config` - 添加配置
-   - `picasa:remove-config` - 移除配置
+1. **IPC 通信（主进程 config-service）**
+   - `picasa:query-config`：`ipcMain.on`（fire-and-forget），参数 `{ paths: string[] }`；结果由 Worker 处理后由 main 发送 `picasa:photasa-config` 到 renderer。
+   - `picasa:add-config`：`ipcMain.handle`，参数 `{ paths: string[] }`，返回 `Promise<void>`。
+   - `picasa:remove-config`：非 invoke；主进程在 Worker 完成移除后向 renderer 发送 `picasa:remove-config`（事件）。
 
-2. **配置管理**
+2. **Preload 中的配置相关 API（legacy.ts）**
+   - `getPhotasaConfig`, `addToPhotoList`, `removeFromPhotoList`, `resetPhotasaConfig`, `fixPhotasaConfig` 来自 `preload/file-config.ts`；其中 `addToPhotoList` 实际调用 main `picasa:add-config`，其余在 preload 中用 Node `fs` 读写 `.photasa.json` 内容（photoList 等）。
+   - Tauri 无 preload Node 环境，必须在 Rust 中实现**内容级**配置能力，并通过命令暴露，供扁平 legacy-api 调用。
+
+3. **必须实现的 Rust 命令（内容级）**
+   - `get_photasa_config(folder: String) -> Result<PhotasaConfig>`：读取目录下 `.photasa.json`，解析并返回完整配置（含 photoList）。
+   - `add_to_photo_list(photoPath: String)`：确保对应目录存在 .photasa.json，并将该照片加入 photoList（与现有 add_config 语义对齐或扩展）。
+   - `remove_from_photo_list(photoPath: String) -> Result<{ path, config }>`：从对应目录的 .photasa.json 的 photoList 中移除该照片，写回并返回路径与更新后 config。
+   - `reset_photasa_config(folder: String)`：将 photoList 置空并写回。
+   - `fix_photasa_config(folder: String)`：规范化 photoList 中每项的 path/thumbnail/isVideo 等并写回。
+   - 文件级命令 `query_config` / `add_config` / `remove_config` 已存在；内容级以上 5 个为迁移 preload file-config 所必需，需在本 RFC 范围内实现。
+
+4. **配置管理**
    - 读取/写入 `.photasa.json` 文件
    - 批量操作
-   - 缓存管理
-
-3. **Worker 线程**
-   - 使用 Node.js Worker Threads
-   - 处理配置操作，避免阻塞主进程
+   - Worker 线程处理，避免阻塞主进程
 
 ## Tauri Rust 迁移计划
 

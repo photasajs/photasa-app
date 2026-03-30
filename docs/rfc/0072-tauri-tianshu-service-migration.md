@@ -1,7 +1,7 @@
 # RFC 0072: 天枢服务迁移到 Tauri
 
 - **作者**: AI Assistant
-- **状态**: Draft
+- **状态**: ✅ 已完成
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 

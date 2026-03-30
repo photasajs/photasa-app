@@ -1,0 +1,31 @@
+# RFC 0092: Menu (applySystemMenu, onMenuAction) in Tauri
+
+- **Start Date**: 2025-03-07
+- **RFC PR**: (leave empty)
+- **Implementation Issue**: (leave empty)
+- **状态**: ✅ 已完成
+
+## Summary
+
+One concern: **application menu**. Map Electron’s applySystemMenu / onMenuAction to Tauri’s menu API. Flat legacy API (RFC 0075) exposes same methods; adapter calls Tauri menu when in Tauri. No Node.
+
+## Motivation
+
+ROADMAP: “applySystemMenu / onMenuAction – Main: menu service, Electron.Menu. Tauri menu API; map in adapter.” One RFC for this single capability.
+
+## Detailed design
+
+- **Surface**: `window.api.applySystemMenu(...)`, `window.api.onMenuAction(...)` or equivalent. In Tauri: build menu via Tauri menu API; emit or callback on action so frontend handler runs.
+- **Rust**: Tauri menu types and events; no Node.
+
+## Drawbacks
+
+Menu structure/API differs between Electron and Tauri; mapping layer may be non-trivial.
+
+## Alternatives
+
+Stub (no-op menu) until needed; this RFC defines the contract.
+
+## Unresolved questions
+
+Exact Electron menu item shape and event payload.

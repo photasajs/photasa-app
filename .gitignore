@@ -68,7 +68,10 @@ guide
 static/
 graph.html
 
-# Tauri (Rust build and codegen)
+# Rust workspace: `cargo build` at repo root writes here (members share one tree)
+/target/
+
+# Tauri codegen / nested-only builds (e.g. `cargo` run inside `src-tauri`)
 **/src-tauri/target/
 **/src-tauri/gen/
 

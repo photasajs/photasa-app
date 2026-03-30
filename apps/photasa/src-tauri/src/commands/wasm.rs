@@ -1,101 +1,46 @@
-/**
- * WASM 命令接口
+/*!
+ * WASM 命令（已清空）
  *
- * 提供 Tauri 命令来调用 WASM 模块中的函数
- * 这是过渡方案，最终这些功能将完全重写为 Rust
+ * wasmtime 依赖已移除。工作流引擎由 zouwu-core 提供，通过 tianshu_command 调用。
+ * 此文件保留空命令占位，待 main.rs 清理后删除。
  */
-
 use crate::utils::wasm::WasmModuleCache;
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tauri::State;
 
-/// WASM 模块缓存状态
-type WasmCacheState = State<'_, Arc<Mutex<WasmModuleCache>>>;
+/// 加载 WASM 模块（已废弃，保留签名防止 main.rs 编译报错）
+#[tauri::command]
+pub async fn load_wasm_module(
+    _cache: tauri::State<'_, Arc<Mutex<WasmModuleCache>>>,
+    _name: String,
+    _path: String,
+) -> Result<(), String> {
+    Ok(())
+}
 
-/// 调用 WASM 函数的参数
-#[derive(Debug, Deserialize)]
+/// 调用 WASM 函数（已废弃）
+#[derive(Debug, serde::Deserialize)]
 pub struct WasmCallParams {
     pub module: String,
     pub function: String,
     pub args: Vec<serde_json::Value>,
 }
 
-/// 调用 WASM 函数的结果
-#[derive(Debug, Serialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct WasmCallResult {
     pub success: bool,
     pub result: Option<serde_json::Value>,
     pub error: Option<String>,
 }
 
-/// 加载 WASM 模块
-#[tauri::command]
-pub async fn load_wasm_module(
-    cache: WasmCacheState,
-    name: String,
-    path: String,
-) -> Result<(), String> {
-    let mut cache = cache.lock().await;
-    cache
-        .load_module(name, &path)
-        .await
-        .map_err(|e| format!("Failed to load WASM module: {}", e))
-}
-
-/// 调用 WASM 函数
 #[tauri::command]
 pub async fn call_wasm_function(
-    cache: WasmCacheState,
-    params: WasmCallParams,
+    _cache: tauri::State<'_, Arc<Mutex<WasmModuleCache>>>,
+    _params: WasmCallParams,
 ) -> Result<WasmCallResult, String> {
-    // 将 JSON 参数转换为 wasmtime::Val
-    // 注意：这是一个简化版本，实际使用时需要更完善的类型转换
-    let wasm_args: Vec<wasmtime::Val> = params
-        .args
-        .iter()
-        .filter_map(|v| {
-            if let Some(n) = v.as_i64() {
-                Some(wasmtime::Val::I32(n as i32))
-            } else if let Some(n) = v.as_f64() {
-                Some(wasmtime::Val::F64(n))
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    let mut cache = cache.lock().await;
-    match cache
-        .call_cached_function(&params.module, &params.function, &wasm_args)
-        .await
-    {
-        Ok(results) => {
-            // 将结果转换回 JSON
-            // 注意：这是一个简化版本，实际使用时需要更完善的类型转换
-            let result_value = if results.len() == 1 {
-                match results[0] {
-                    wasmtime::Val::I32(n) => Some(serde_json::json!(n)),
-                    wasmtime::Val::I64(n) => Some(serde_json::json!(n)),
-                    wasmtime::Val::F32(n) => Some(serde_json::json!(n)),
-                    wasmtime::Val::F64(n) => Some(serde_json::json!(n)),
-                    _ => None,
-                }
-            } else {
-                None
-            };
-
-            Ok(WasmCallResult {
-                success: true,
-                result: result_value,
-                error: None,
-            })
-        }
-        Err(e) => Ok(WasmCallResult {
-            success: false,
-            result: None,
-            error: Some(format!("{}", e)),
-        }),
-    }
+    Ok(WasmCallResult {
+        success: false,
+        result: None,
+        error: Some("WASM 命令已废弃，请使用 tianshu_command".to_string()),
+    })
 }

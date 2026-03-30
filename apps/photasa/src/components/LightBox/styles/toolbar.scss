@@ -1,0 +1,33 @@
+// 采用Sass官方推荐的@use语法替换@import，避免未来版本兼容性问题
+@use "./variables.scss" as *;
+
+.#{$prefix-cls}-toolbar {
+    user-select: none;
+    position: absolute;
+    overflow: hidden;
+    bottom: 8px;
+    left: 50%;
+    transform: translate(-50%);
+    opacity: 0.9;
+    display: flex;
+    background-color: var(--color-toolbar-bg);
+    border-radius: 4px;
+    padding: 0;
+
+    .toolbar-btn {
+        user-select: none;
+        flex-shrink: 0;
+        cursor: pointer;
+        padding: 6px 10px;
+        font-size: 20px;
+        color: var(--color-white);
+        background-color: var(--color-btn-bg);
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+
+        &:hover,
+        &:active {
+            background-color: var(--color-btn-hover);
+        }
+    }
+}

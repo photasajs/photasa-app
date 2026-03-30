@@ -1,7 +1,7 @@
 # RFC 0070: 导入服务迁移到 Tauri
 
 - **作者**: AI Assistant
-- **状态**: Draft
+- **状态**: 🚧 部分完成 - execute_import 仍为 stub
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
@@ -26,16 +26,9 @@ apps/desktop/src/main/import/
 
 ### 核心功能
 
-1. **IPC 通信**
-   - `import:scan-directories` - 扫描源目录
-   - `import:preview` - 预览导入
-   - `import:execute` - 执行导入
-   - `import:cancel` - 取消导入
-   - `import:pause` - 暂停导入
-   - `import:resume` - 恢复导入
-   - `import:get-progress` - 获取进度
-   - `import:get-history` - 获取历史
-   - `import:undo` - 撤销导入
+1. **IPC 通信**（通道名以 `packages/common` 的 `ImportEvents` 为准，主进程 `import-service.ts` 使用 `ipc.handle`）
+   - Invoke：`import:scan-directories`, `import:preview`, `import:execute`, `import:cancel`, `import:pause`, `import:resume`, `import:get-progress`, `import:get-history`, `import:get-details`, `import:preview-undo`, `import:undo`, `import:choose-directories`, `import:extract-metadata`
+   - Main→Renderer 事件：`import:progress`, `import:complete`, `import:error`
 
 2. **导入流程**
    - 扫描源目录

@@ -1,7 +1,7 @@
 # RFC 0069: 缩略图服务迁移到 Tauri
 
 - **作者**: AI Assistant
-- **状态**: Draft
+- **状态**: ✅ 已完成
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
@@ -24,8 +24,8 @@ apps/desktop/src/main/thumbnail/
 ### 核心功能
 
 1. **IPC 通信**
-   - `thumbnail:create` - 创建缩略图
-   - `thumbnail:remove` - 删除缩略图
+   - `picasa:create-thumbnail` - 创建缩略图（`ThumbnailServiceAction.create`，invoke，参数 `ThumbnailRequest`）
+   - `picasa:remove-thumbnail` - 删除缩略图（`ThumbnailServiceAction.remove`，invoke）
 
 2. **Worker 线程**
    - 使用 Node.js Worker Threads
@@ -269,16 +269,30 @@ pub async fn remove_thumbnail(
 }
 ```
 
+## Image processing support plan (Tauri)
+
+Electron 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处理：SharpBrush（JPEG/PNG/WebP/TIFF/GIF/AVIF）、BmpBrush（Jimp+Sharp）、HeicBrush（WASM，一次解码同时出预览+缩略图）、FfmpegBrush（视频）、FallbackBrush。Tauri 侧采用分阶段、按格式选方案的策略，不新增独立 RFC，以本 RFC 为唯一说明。
+
+| 阶段 | 格式/范围 | 方案 |
+|------|-----------|------|
+| 1 | 常见图片（JPEG/PNG/WebP/GIF 等） | Rust `image`（及可选 `imageproc`）在缩略图服务内实现，单一“画笔”模块。 |
+| 2 | 视频缩略图 | 保留 **FFmpeg** 二进制，由 Rust 调用（如 `std::process::Command` 或 FFI）。不再依赖 Node。 |
+| 3 | HEIC/HEIF | **A**：Rust `libheif`/heif-rs 绑定；**B**：在 Tauri 中加载现有 **WASM** 解码器；**C**（过渡）：仅 HEIC 暂时通过 Tauri 调用小型 Node 辅助进程，待 A 或 B 就绪后移除。长期以 A 或 B 为主。 |
+| 4 | BMP 等边缘格式 | Rust `image` 或专用解码；或短期返回占位图。 |
+| 5 | HEIC 预览+缩略图一次解码 | 若采用 WASM：沿用 HeicBrush 模式一次解码多路输出；若采用 heif-rs：一次解码后在 Rust 中生成预览与缩略图。 |
+
+**原则**：Tauri 侧保留单一缩略图命令入口，内部按格式分“画笔”/策略，与 Ma-Liang 概念对齐；过渡期可对 HEIC/BMP 返回“不支持”，先保证常见图片与视频（FFmpeg）可用。
+
 ## 技术挑战和解决方案
 
 ### 1. 图像处理库选择
 
 **问题**：需要替代 Sharp、FFmpeg 等 Node.js 库
 
-**解决方案**：
-- **图片处理**：使用 `image-rs` 和 `imageproc`
-- **视频处理**：通过 FFI 调用 FFmpeg 二进制，或使用 `ffmpeg-next`
-- **HEIC 支持**：使用 `heif-rs` 或通过 FFI 调用现有库
+**解决方案**（与上表一致）：
+- **常见图片**：`image` / `imageproc`
+- **视频**：保留 FFmpeg 二进制，Rust 侧调用
+- **HEIC**：`heif-rs` 或现有 WASM；过渡期可选 Node 子进程
 
 ### 2. 性能优化
 

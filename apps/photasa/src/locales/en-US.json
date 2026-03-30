@@ -1,0 +1,651 @@
+{
+    "app": {
+        "title": "Photasa",
+        "folderList": "Folder List"
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "Last 1 hour",
+            "6h": "Last 6 hours",
+            "24h": "Last 24 hours"
+        }
+    },
+    "logViewer": {
+        "title": "System Log Console",
+        "searchPlaceholder": "Search logs...",
+        "allLevels": "All Levels",
+        "debug": "Debug",
+        "info": "Info",
+        "warn": "Warn",
+        "error": "Error",
+        "clear": "Clear",
+        "export": "Export",
+        "opacity": "Opacity",
+        "noLogs": "No logs available",
+        "showing": "Showing {filtered} / {total} logs",
+        "autoScroll": "Auto Scroll"
+    },
+    "preference": {
+        "settings": "Settings",
+        "tabs": {
+            "general": "General",
+            "about": "About",
+            "theme": "Theme",
+            "advanced": "Advanced",
+            "autoUpdate": "Auto Update",
+            "scanMonitoring": "Scan Monitoring"
+        },
+        "folderList": "Folder List",
+        "folderListUsage": "Usage",
+        "folderListDesc": "After adding a directory to the list, Photasa can manage photos and videos in that directory in real time.",
+        "watchFolderList": "Photasa can manage photos and videos in the following directories.",
+        "chooseDirectory": "Choose directory and add to list",
+        "thumbnailSize": "Thumbnail Size",
+        "darkMode": "Dark Mode",
+        "language": "Language",
+        "scanning": "Scanning",
+        "resetFolders": {
+            "title": "Advanced Action: Reset Directory Storage",
+            "desc": "This will clear all directory settings and immediately rebuild the cache. This action is irreversible. Proceed with caution!",
+            "button": "Reset Directory Storage"
+        },
+        "scanMonitoring": {
+            "title": "Scan Monitoring",
+            "description": "Monitor scan queue status to ensure scan tasks are always running normally",
+            "enableAutoRecovery": "Enable Auto Recovery",
+            "enableAutoRecoveryHelp": "Automatically attempt to restart scanning when scan anomalies are detected",
+            "healthCheckInterval": "Health Check Interval",
+            "healthCheckIntervalHelp": "How often to check scan queue status",
+            "idleTimeout": "Idle Timeout",
+            "idleTimeoutHelp": "How long after queue is non-empty but scanning is idle before triggering recovery",
+            "staleTimeout": "Stale Timeout",
+            "staleTimeoutHelp": "How long after scanning is running but has no progress before forcing restart",
+            "maxRetries": "Max Retries",
+            "maxRetriesHelp": "How many consecutive recovery failures before stopping auto recovery",
+            "currentStatus": "Current Status",
+            "isMonitoring": "Monitoring Status",
+            "healthStatus": "Health Status",
+            "queueLength": "Queue Length",
+            "scanStatus": "Scan Status",
+            "consecutiveFailures": "Consecutive Failures",
+            "statusMessage": "Status Message",
+            "checkNow": "Check Now",
+            "reset": "Reset Status"
+        },
+        "autoUpdate": {
+            "title": "Auto Update",
+            "description": "Configure automatic application updates to ensure you always have the latest version of Photasa",
+            "enabled": "Enable auto update",
+            "checkInterval": "Check interval",
+            "prerelease": "Include pre-release versions",
+            "prereleaseDescription": "Enable to receive Beta and RC version updates, which may contain untested features",
+            "autoInstall": "Auto install updates",
+            "autoInstallDescription": "When enabled, updates will be installed automatically in the background and take effect on next restart",
+            "checkNow": "Check now",
+            "downloadUpdate": "Download update",
+            "installUpdate": "Install and restart",
+            "currentVersion": "Current version",
+            "latestVersion": "Latest version",
+            "lastCheck": "Last check",
+            "intervals": {
+                "hourly": "Hourly",
+                "sixHours": "Every 6 hours",
+                "daily": "Daily",
+                "weekly": "Weekly"
+            },
+            "status": {
+                "idle": "Idle",
+                "checking": "Checking for updates...",
+                "downloading": "Downloading ({progress}%)",
+                "downloaded": "Update downloaded",
+                "upToDate": "Already up to date",
+                "error": "Error checking for updates"
+            }
+        }
+    },
+    "import": {
+        "title": "Import Photos",
+        "photos": "Import Photos",
+        "progress": "Import Progress",
+        "chooseDirectory": "Choose Directory",
+        "targetDirectory": "Target Directory",
+        "selectTarget": "Select target directory",
+        "allowDuplicateRename": "Allow Duplicate Rename",
+        "button": {
+            "import": "Import",
+            "cancel": "Cancel"
+        },
+        "sourceDirectories": "Source Directories",
+        "addSource": "Add Source Directory",
+        "browse": "Browse",
+        "options": "Import Options",
+        "fileTypes": {
+            "label": "File Types",
+            "images": "Images",
+            "videos": "Videos",
+            "image": "Image",
+            "video": "Video",
+            "other": "Other"
+        },
+        "images": "Images",
+        "videos": "Videos",
+        "includeSubfolders": "Include Subfolders",
+        "duplicateHandling": "Duplicate Handling",
+        "duplicate": {
+            "label": "Duplicate",
+            "rename": "Rename",
+            "skip": "Skip",
+            "overwrite": "Overwrite",
+            "keepBoth": "Keep Both"
+        },
+        "useMD5ForDuplicates": "Use MD5 verification for duplicate detection",
+        "useMD5ForDuplicatesDescription": "When enabled, files will be compared using MD5 hash for accurate duplicate detection, regardless of file modification dates",
+        "preview": {
+            "scanning": "Scanning Files",
+            "filesFound": "Files Found",
+            "directoriesScanned": "Directories Scanned",
+            "progress": "Scan Progress",
+            "currentPath": "Current Path",
+            "recentlyFound": "Recently Found",
+            "noFilesFound": "No Files Found"
+        },
+        "totalFiles": "Total Files",
+        "totalSize": "Total Size",
+        "group": "{count} files",
+        "processed": "Processed",
+        "speed": "Speed",
+        "filesPerSec": "files/sec",
+        "filesPerMin": "files/min",
+        "remaining": "Remaining",
+        "processing": "Processing",
+        "previewButton": "Preview",
+        "importButton": "Import",
+        "nextButton": "Next",
+        "backButton": "Back",
+        "pauseButton": "Pause",
+        "resumeButton": "Resume",
+        "cancelButton": "Cancel",
+        "closeButton": "Close",
+        "doneButton": "Done",
+        "importFailed": "Import Failed",
+        "importCompleted": "Import Completed",
+        "importCompletedDesc": "Successfully imported {count} files",
+        "duplicates": "Duplicates",
+        "moreFiles": "{count} more files",
+        "filePreview": "File Preview",
+        "selectAll": "Select All",
+        "deselectAll": "Deselect All",
+        "invertSelection": "Invert Selection",
+        "selected": "Selected",
+        "selectedSize": "Selected Size",
+        "fileGroups": "File Groups",
+        "pagination": "{start}-{end} of {total}",
+        "toggleSelection": "Toggle Selection",
+        "viewDetails": "View Details",
+        "image": "Image",
+        "video": "Video",
+        "unknown": "Unknown",
+        "fileDetails": "File Details",
+        "basicInfo": "Basic Information",
+        "fileName": "File Name",
+        "fileSize": "File Size",
+        "fileType": "File Type",
+        "dateTime": "Date & Time",
+        "modifiedTime": "Modified Time",
+        "groupFiles": "Group Files",
+        "targetPath": "Target Path",
+        "metadata": "Metadata",
+        "dimensions": "Dimensions",
+        "duration": "Duration",
+        "format": "Format",
+        "location": "Location",
+        "percentage": "Percentage",
+        "errors": "Errors ({count})",
+        "warnings": "Warnings ({count})",
+        "moreErrors": "{count} more errors",
+        "moreWarnings": "{count} more warnings",
+        "retry": "Retry",
+        "showLess": "Show Less",
+        "showMore": "Show {count} More",
+        "status": {
+            "preparing": "Preparing",
+            "processing": "Processing",
+            "paused": "Paused",
+            "completed": "Completed",
+            "cancelled": "Cancelled",
+            "error": "Error",
+            "unknown": "Unknown"
+        },
+        "now": "Now",
+        "loading": {
+            "label": "Loading...",
+            "preview": "Loading preview data...",
+            "directories": "Selecting directories...",
+            "switchingFolder": "Switching folder..."
+        },
+        "error": {
+            "label": "Error",
+            "title": "Operation Failed",
+            "network": "Network connection failed, please check your connection and try again",
+            "validation": "Configuration validation failed, please check source and target directory settings",
+            "permission": "Insufficient permissions, please ensure you have access to the directories",
+            "api": "Server error, please try again later",
+            "unknown": "An unknown error occurred, please retry",
+            "retry": "Retry",
+            "dismiss": "Dismiss"
+        },
+        "filters": "Filters",
+        "resetFilters": "Reset Filters",
+        "showAdvanced": "Show Advanced",
+        "hideAdvanced": "Hide Advanced",
+        "advancedFilters": "Advanced Filters",
+        "fileSizeRange": "File Size Range",
+        "fileSizeHelp": "Filter files by size range",
+        "dateRange": "Date Range",
+        "dateRangeHelp": "Filter files by creation date",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "quickDateFilters": "Quick Date Filters",
+        "fileNamePattern": "File Name Pattern",
+        "fileNamePatternHelp": "Filter files by name pattern, supports wildcards (* and ?)",
+        "fileNamePatternPlaceholder": "e.g. IMG_*.jpg",
+        "excludePatterns": "Exclude Patterns",
+        "excludePatternsHelp": "Patterns to exclude files, one per line",
+        "excludePatternsPlaceholder": "e.g. .DS_Store, Thumbs.db",
+        "reset": "Reset",
+        "filteredFiles": "Filtered Files",
+        "datePresets": {
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "thisWeek": "This Week",
+            "thisMonth": "This Month",
+            "lastMonth": "Last Month"
+        },
+        "dateSource": {
+            "label": "Date Source",
+            "exif": "EXIF Metadata",
+            "file_created": "File Created",
+            "file_modified": "File Modified",
+            "custom": "Custom"
+        },
+        "duplicateFiles": "Duplicate Files",
+        "duplicatesFound": "Duplicates Found",
+        "wastedSpace": "Wasted Space",
+        "batchStrategy": "Batch Strategy",
+        "applyToAll": "Apply to All",
+        "autoResolve": "Auto Resolve",
+        "originalFile": "Original File",
+        "existing": "Existing",
+        "duplicateFile": "Duplicate File",
+        "importing": "Importing",
+        "action": "Action",
+        "strategy": {
+            "skip": {
+                "label": "Skip",
+                "description": "Skip importing this file"
+            },
+            "rename": {
+                "label": "Rename",
+                "description": "Rename the file before importing"
+            },
+            "overwrite": {
+                "label": "Overwrite",
+                "description": "Overwrite the existing file"
+            },
+            "keepBoth": {
+                "label": "Keep Both",
+                "description": "Keep both files with different names"
+            }
+        },
+        "recommendation": "Recommendation",
+        "recommendations": {
+            "keep_original": "Keep Original",
+            "keep_duplicate": "Keep Duplicate",
+            "keep_both": "Keep Both",
+            "skipIdentical": "Skip (identical files)",
+            "keepLarger": "Keep the larger file"
+        },
+        "warning": {
+            "overwriteLarger": "Warning: You are about to overwrite a larger file",
+            "overwriteNewer": "Warning: You are about to overwrite a newer file"
+        },
+        "compare": "Compare",
+        "fileComparison": "File Comparison",
+        "comparisonAnalysis": "Comparison Analysis",
+        "sizeDifference": "Size Difference",
+        "timeDifference": "Time Difference",
+        "sameSize": "Same Size",
+        "sameTime": "Same Time",
+        "daysNewer": "{days} days newer",
+        "daysOlder": "{days} days older",
+        "hoursNewer": "{hours} hours newer",
+        "hoursOlder": "{hours} hours older",
+        "newer": "Newer",
+        "older": "Older",
+        "confirmBatchAction": "Confirm Batch Action",
+        "apply": "Apply",
+        "cancel": "Cancel",
+        "batchConfirmMessage": "Apply {strategy} to {count} selected files?",
+        "overwriteWarning": "Warning: Overwriting files cannot be undone",
+        "batchProgress": "Batch Progress",
+        "directories": "Directories",
+        "complete": "Complete",
+        "overallProgress": "Overall Progress",
+        "currentDirectory": "Current Directory",
+        "eta": "ETA",
+        "completed": "Completed",
+        "paused": "Paused",
+        "pending": "Pending",
+        "finishing": "Finishing",
+        "pauseAll": "Pause All",
+        "resumeAll": "Resume All",
+        "cancelAll": "Cancel All",
+        "close": "Close",
+        "confirmCancelAll": "Confirm Cancel All",
+        "yes": "Yes",
+        "no": "No",
+        "cancelAllWarning": "Are you sure you want to cancel all remaining imports?",
+        "cancelAllProgress": "{completed} of {total} directories completed",
+        "recentFiles": "Recent Files",
+        "elapsed": "Elapsed",
+        "files": "Files",
+        "successful": "Successful",
+        "skipped": "Skipped",
+        "steps": {
+            "configuration": "Configuration",
+            "configurationDesc": "Select source and target directories",
+            "preview": "Preview",
+            "previewDesc": "Review and select files to import",
+            "importing": "Importing",
+            "importingDesc": "Import files to target directory"
+        }
+    },
+    "menu": {
+        "getInfo": "Photo Info",
+        "open": "Open in File Manager",
+        "rebuildThumbnail": "Rebuild Thumbnail",
+        "getConfig": "Get Photo Library Info",
+        "rescan": "Rescan Directory",
+        "app": {
+            "menu": "App",
+            "about": "About Photasa",
+            "services": "Services",
+            "hide": "Hide Photasa",
+            "hideOthers": "Hide Others",
+            "unhide": "Show All",
+            "quit": "Quit"
+        },
+        "view": {
+            "menu": "View",
+            "reload": "Reload",
+            "forceReload": "Force Reload",
+            "toggleDevTools": "Toggle Developer Tools",
+            "resetZoom": "Reset Zoom",
+            "zoomIn": "Zoom In",
+            "zoomOut": "Zoom Out",
+            "toggleFullScreen": "Toggle Full Screen"
+        },
+        "window": {
+            "menu": "Window",
+            "minimize": "Minimize",
+            "maximize": "Maximize",
+            "close": "Close"
+        },
+        "help": {
+            "menu": "Help",
+            "learnMore": "Learn More",
+            "about": "About Photasa"
+        },
+        "separator": "Separator"
+    },
+    "notification": {
+        "info": "Info",
+        "warn": "Warning",
+        "error": "Error",
+        "scan": {
+            "title": "Scan Directory",
+            "message": "Directory scan complete, photos have been imported into Photasa."
+        },
+        "duplicatePath": {
+            "title": "Duplicate Directory",
+            "message": "Directory [{folder}] already exists in Photasa."
+        },
+        "emptyPath": {
+            "title": "Choose Directory",
+            "message": "Please select a directory and complete the add operation."
+        },
+        "scanError": {
+            "title": "Scan Error",
+            "message": "Could not scan subdirectories of [{path}]. Error: {error}. The main directory will still be added."
+        },
+        "unknownError": "An unknown error occurred",
+        "resetFolders": {
+            "title": "Reset Complete",
+            "message": "All directory caches have been rebuilt."
+        }
+    },
+    "status": {
+        "initializing": "Initializing",
+        "idle": "Idle",
+        "updating": "Updating",
+        "ready": "Ready",
+        "readingConfig": "Loading library info [{config}]",
+        "loadingConfig": "Reading library info",
+        "processing": "Processing [{file}]",
+        "processingFile": "Processing: {fileName}",
+        "scanned": "Completed",
+        "scanComplete": "Directory [{path}] has been processed.",
+        "start": "Scan started",
+        "scanning": "Scanning",
+        "scanningPath": "Scanning: {path}",
+        "progress": "Scanning progress",
+        "complete": "Scan complete",
+        "error": "Scan error",
+        "scanFailed": "Scan failed: {path}"
+    },
+    "button": {
+        "import": "Import",
+        "cancel": "Cancel",
+        "ok": "OK",
+        "fixConfig": "Fix Library Info"
+    },
+    "about": {
+        "antvDescription": "Data Visualization Solution",
+        "introduction": {
+            "title": "About Photasa",
+            "content": "Photasa is a modern, privacy-friendly photo management tool inspired by Photasa. Organize, browse, and enjoy your photos and videos with powerful local features and a beautiful interface—no cloud required.",
+            "summary": "Photasa helps you rediscover and manage your memories with ease.",
+            "highlight": "local-first, fast, and user-friendly",
+            "userExperience": "photo management experience",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Resources",
+            "content": "Explore additional resources and documentation for Photasa.",
+            "download": "Download Resources"
+        },
+        "press": "Press",
+        "toExit": "to exit",
+        "markdown": "# About Photasa\n\nPhotasa is a modern, privacy-friendly local photo management tool inspired by the classic Photasa.\nIt supports efficient browsing, organizing, and managing your photos and videos, with a beautiful interface and powerful local features—no cloud required.\n\n## Key Features\n\n- Smart local import and management of photos and videos\n- Fast thumbnail generation and preview\n- Multi-language interface and theme switching\n- Batch operations and efficient search\n- Data privacy and security protection\n\nPress `Esc` to exit"
+    },
+    "preferences": {
+        "title": "Preferences",
+        "language": {
+            "title": "Language",
+            "description": "Choose your preferred language for the application interface."
+        },
+        "thumbnail": {
+            "title": "Thumbnail Size",
+            "description": "Adjust the size of photo thumbnails in the gallery view."
+        },
+        "theme": {
+            "title": "Theme",
+            "description": "Switch between light and dark mode.",
+            "light": "Light",
+            "dark": "Dark"
+        }
+    },
+    "scan": {
+        "queueTitle": "Scan Queue",
+        "queueEmpty": "Queue is empty",
+        "processing": "Processing queue",
+        "allTasksCompleted": "All scan tasks completed",
+        "pathHeader": "Path",
+        "timestampHeader": "Created",
+        "actionHeader": "Action",
+        "unknownFolder": "Unknown folder",
+        "noTimestamp": "No timestamp",
+        "timeJustNow": "Just now",
+        "timeMinutesAgo": "{count}m ago",
+        "timeHoursAgo": "{count}h ago",
+        "timeDaysAgo": "{count}d ago",
+        "priority": "Priority",
+        "actions": {
+            "scan": "Scan",
+            "rescan": "Rescan",
+            "current": "Current scan"
+        },
+        "processed": "Processed",
+        "incrementalCache": "Incremental Cache: Real-time progress saving, avoid rescanning"
+    },
+    "advancedSettings": {
+        "title": "Advanced Settings",
+        "resetFoldersTitle": "Advanced: Reset Folder Storage",
+        "resetFoldersDesc": "This will clear all folder configs and rebuild cache immediately. This action is irreversible. Proceed with caution!",
+        "resetFoldersBtn": "Reset Folder Storage"
+    },
+    "empty": {
+        "image": "No images",
+        "openConfigDirBtn": "Open Config Directory",
+        "importBtn": "Import Images"
+    },
+    "fileInfo": {
+        "title": "File Info",
+        "fileName": "File Name",
+        "fileType": "File Type",
+        "format": "Format",
+        "size": "Size",
+        "imageWidth": "Image Width",
+        "imageHeight": "Image Height",
+        "resolution": "Resolution",
+        "aspectRatio": "Aspect Ratio",
+        "duration": "Duration",
+        "codec": "Codec",
+        "dateTaken": "Date Taken",
+        "dateSource": "Date Source",
+        "modified": "Modified",
+        "created": "Created",
+        "location": "Location",
+        "gpsLatitude": "GPS Latitude",
+        "gpsLongitude": "GPS Longitude",
+        "cameraMake": "Camera Make",
+        "cameraModel": "Camera Model",
+        "rawMetadata": "Raw Metadata",
+        "unknown": "Unknown",
+        "showRawData": "Show Raw Data",
+        "hideRawData": "Hide Raw Data",
+        "infoTitle": "{name} - {type} Info",
+        "dateSources": {
+            "exif": "EXIF Data",
+            "video_metadata": "Video Metadata",
+            "file_created": "File Creation Time",
+            "file_modified": "File Modification Time",
+            "current_date": "Current Date"
+        },
+        "basicInfo": "Basic Information",
+        "mediaProperties": "Media Properties",
+        "videoProperties": "Video Properties",
+        "timeInfo": "Time Information",
+        "technicalInfo": "Technical Information",
+        "createdAt": "Created At",
+        "modifiedAt": "Modified At",
+        "camera": "Camera",
+        "lens": "Lens",
+        "iso": "ISO",
+        "aperture": "Aperture",
+        "dimensions": "Dimensions",
+        "noMetadata": "No Metadata"
+    },
+    "common": {
+        "files": "files",
+        "file": "file",
+        "images": "images",
+        "image": "image",
+        "videos": "videos",
+        "video": "video",
+        "counting": "Counting...",
+        "yes": "Yes",
+        "no": "No",
+        "healthy": "Healthy",
+        "unhealthy": "Unhealthy",
+        "idle": "Idle",
+        "running": "Running",
+        "minute": "minute",
+        "minutes": "minutes",
+        "hour": "hour",
+        "hours": "hours"
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} files",
+            "images": "{count} images",
+            "videos": "{count} videos",
+            "mixed": "{images} images, {videos} videos",
+            "empty": "No files"
+        }
+    },
+    "imageInfo": {
+        "title": "Image Info",
+        "lastUpdated": "Last Updated",
+        "openInFinder": "Open in Finder",
+        "repairLibrary": "Repair Photo Library",
+        "fileCount": "File Count",
+        "folderSize": "Folder Size",
+        "basicInfo": "Basic Information",
+        "location": "Location",
+        "scanDate": "Scan Date",
+        "configVersion": "Config Version",
+        "configuration": "Configuration",
+        "showRaw": "Show Raw Config",
+        "hideRaw": "Hide Raw Config",
+        "totalImages": "Total Images",
+        "totalVideos": "Total Videos",
+        "scannedFolders": "Scanned Folders",
+        "rawConfiguration": "Raw Configuration",
+        "copyPath": "Copy Path",
+        "copyConfig": "Copy Config",
+        "operationHistory": "Operation History",
+        "lastScan": "Last Scan",
+        "configCreated": "Config Created",
+        "never": "Never",
+        "statusTypes": {
+            "completed": "Completed",
+            "success": "Success",
+            "warning": "Warning",
+            "partial": "Partial",
+            "error": "Error",
+            "failed": "Failed",
+            "unknown": "Unknown"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "viewDetails": "View Details"
+        },
+        "popup": {
+            "title": "New Version Available",
+            "message": "Version {version} is available",
+            "cancel": "Cancel",
+            "install": "Install",
+            "cancelDownload": "Cancel Download",
+            "installNow": "Install Now",
+            "close": "Close"
+        }
+    }
+}

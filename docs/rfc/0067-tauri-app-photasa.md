@@ -1,15 +1,16 @@
 # RFC 0067: 创建 Tauri 应用 Photasa - 总体架构与迁移策略
 
 - **作者**: AI Assistant
-- **状态**: Draft
+- **状态**: ✅ 已完成
 - **创建日期**: 2025-01-02
 - **关联项目**: Photasa Desktop (Electron)
 - **关联 RFC**:
+  - [RFC 0073: UI 迁移与适配层](./0073-tauri-ui-migration-adapter.md)（最高优先级，先于后端迁移）
   - [RFC 0068: 扫描服务迁移](./0068-tauri-scan-service-migration.md)
-  - [RFC 0069: 缩略图服务迁移](./0069-tauri-thumbnail-service-migration.md) (待创建)
-  - [RFC 0070: 导入服务迁移](./0070-tauri-import-service-migration.md) (待创建)
-  - [RFC 0071: 配置服务迁移](./0071-tauri-config-service-migration.md) (待创建)
-  - [RFC 0072: 天枢服务迁移](./0072-tauri-tianshu-service-migration.md) (待创建)
+  - [RFC 0069: 缩略图服务迁移](./0069-tauri-thumbnail-service-migration.md)
+  - [RFC 0070: 导入服务迁移](./0070-tauri-import-service-migration.md)
+  - [RFC 0071: 配置服务迁移](./0071-tauri-config-service-migration.md)
+  - [RFC 0072: 天枢服务迁移](./0072-tauri-tianshu-service-migration.md)
 
 ## 摘要
 
@@ -342,34 +343,64 @@ if (isTauri) {
 
 **推荐使用方案一**，因为它提供了更好的类型安全和代码组织。
 
+### Electron 端 API/IPC 对照（代码审查）
+
+以下为对 `apps/desktop/src/main` 与 `preload/legacy.ts` 的审查结果，迁移时须与此一致。
+
+| 领域 | 主进程 IPC（channel） | 方向 | 说明 |
+|------|------------------------|------|------|
+| **扫描** | `picasa:scan-photos` | renderer → main (send) | 参数 `{ requestId, scanAction }` |
+| | `picasa:find-photo` | main → renderer (send) | 扫描进度/结果/错误 |
+| **缩略图** | `picasa:create-thumbnail` | invoke | `ThumbnailServiceAction.create` |
+| | `picasa:remove-thumbnail` | invoke | `ThumbnailServiceAction.remove` |
+| **导入** | `import:scan-directories` | invoke | 见 `packages/common` 的 `ImportEvents` |
+| | `import:preview`, `import:execute`, `import:cancel`, `import:pause`, `import:resume` | invoke | |
+| | `import:get-progress`, `import:get-history`, `import:get-details`, `import:preview-undo`, `import:undo`, `import:choose-directories`, `import:extract-metadata` | invoke | |
+| | `import:progress`, `import:complete`, `import:error` | main → renderer (send) | 事件 |
+| **配置（主进程）** | `picasa:query-config` | on (fire-and-forget) | 参数 `{ paths: string[] }`，结果由 main 发 `picasa:photasa-config` |
+| | `picasa:add-config` | handle | 参数 `{ paths: string[] }` |
+| | `picasa:remove-config` | main → renderer (send) | Worker 完成后由 main 发送 |
+| **目录** | `picasa:get-directory` | handle | 参数 `{ name }` |
+| | `picasa:choose-directory` | send → on `picasa:selected-directory` | 选择目录 |
+| | `picasa:check-photasa-config` | handle | 参数 folderPath |
+| | `picasa:sub-folders` | handle | 参数 `{ parent }` |
+| **天枢** | `tianshu.command` | handle | |
+| | `tianshu.status` | handle | |
+| **Shell** | `shell:openExternal` | handle | url |
+| | `picasa:open-in-finder` | on | args: `{ path }` |
+| **窗口** | `window:minimize/maximize/unmaximize/close/queryMaximized` | send | |
+| | `window:maximized/unmaximized/maximizedState` | main → renderer | |
+| **日志** | `log:viewer-open`, `log:viewer-close` | invoke | `log:entry`, `log:toggle-viewer` 为 on |
+
+说明：渲染层使用的 `window.api` 由 `preload/legacy.ts` 暴露，为**扁平 API**（如 `minimizeWindow()`, `scanPhotos()`, `createThumbnail()`）。Preload 中部分配置相关逻辑在 `file-config.ts` 内用 Node/fs 实现（如 `getPhotasaConfig`, `addToPhotoList`, `resetPhotasaConfig`, `fixPhotasaConfig`），未走主进程 config-service；Tauri 迁移时需在 Rust 或兼容层中统一实现等价能力。
+
 ### 关键服务迁移清单
 
 每个服务都有独立的 RFC 文档，详细说明迁移步骤和技术细节：
 
 #### 核心服务（必须迁移）
 
-1. **扫描服务 (ScanService)** - [RFC 0068](./0068-tauri-scan-service-migration.md) ✅
-   - IPC: `picasa:scan-photos`, `picasa:find-photo`
+1. **扫描服务 (ScanService)** - [RFC 0068](./0068-tauri-scan-service-migration.md)
+   - IPC: `picasa:scan-photos` (send), `picasa:find-photo` (main→renderer)
    - 功能：照片扫描和索引
-   - 状态：详细计划已制定
    - 预计时间：2-3 周
 
-2. **缩略图服务 (ThumbnailService)** - RFC 0069 (待创建)
-   - IPC: `thumbnail:create`, `thumbnail:remove` 等
+2. **缩略图服务 (ThumbnailService)** - [RFC 0069](./0069-tauri-thumbnail-service-migration.md)
+   - IPC: `picasa:create-thumbnail`, `picasa:remove-thumbnail` (invoke)
    - 功能：缩略图生成和缓存
    - 预计时间：2-3 周
 
-3. **导入服务 (ImportService)** - RFC 0070 (待创建)
-   - IPC: `import:scan-directories`, `import:preview`, `import:execute` 等
+3. **导入服务 (ImportService)** - [RFC 0070](./0070-tauri-import-service-migration.md)
+   - IPC: `ImportEvents.*`（见上表及 `packages/common`）
    - 功能：照片导入管理
    - 预计时间：2-3 周
 
-4. **配置服务 (ConfigService)** - RFC 0071 (待创建)
-   - IPC: `config:get`, `config:set` 等
-   - 功能：应用配置管理
+4. **配置服务 (ConfigService)** - [RFC 0071](./0071-tauri-config-service-migration.md)
+   - IPC: `picasa:query-config` (on), `picasa:add-config` (handle), `picasa:photasa-config` / `picasa:remove-config` (main→renderer)
+   - 功能：应用配置与 .photasa.json；preload 中 getPhotasaConfig/addToPhotoList 等亦需在 Tauri 侧实现
    - 预计时间：1-2 周
 
-5. **天枢服务 (TianshuService)** - RFC 0072 (待创建)
+5. **天枢服务 (TianshuService)** - [RFC 0072](./0072-tauri-tianshu-service-migration.md)
    - IPC: `tianshu.command`, `tianshu.status`
    - 功能：工作流编排引擎
    - 预计时间：3-4 周（最复杂）
@@ -395,14 +426,13 @@ if (isTauri) {
 
 #### 1. 图像处理库
 
-**问题**：当前使用 Sharp、FFmpeg 等 Node.js 库进行图像处理。
+**问题**：当前使用 Sharp、FFmpeg 等 Node.js 库进行图像处理；Ma-Liang 引擎（见 RFC 0031）在 `thumbnail-handler.ts` 中统一调度各“神笔”（Sharp/Heic/FFmpeg/Bmp/Fallback）。
 
-**解决方案**：
-- **选项 A**：使用 Rust 图像库（image-rs, imageproc）- **最终目标**
-- **选项 B**：通过 FFI 调用现有二进制（FFmpeg）- **长期保留**
-- **选项 C**：保留 Node.js worker 进程，通过 IPC 通信（**短期过渡**）
-
-**决策**：采用选项 C（短期过渡）→ 选项 A（最终目标）。FFmpeg 通过 FFI 调用保留，其他图像处理逐步迁移到 Rust 库。
+**解决方案**：分阶段、按格式迁移，详见 [RFC 0069 的 Image processing support plan](./0069-tauri-thumbnail-service-migration.md#image-processing-support-plan-tauri)。要点：
+- **常见图片**：Rust `image` / `imageproc`。
+- **视频**：保留 FFmpeg 二进制，由 Rust 调用。
+- **HEIC**：`heif-rs` 或现有 WASM；过渡期可选 Node 子进程仅处理 HEIC。
+- 不新增独立“图像处理迁移”RFC；0069 为唯一规格。
 
 #### 2. 工作流引擎
 
@@ -481,19 +511,19 @@ async fn ensure_single_instance() -> Result<(), String> {
    - Worker 线程 → Tokio Tasks
    - 预计时间：2-3 周
 
-2. **迁移缩略图服务** - RFC 0069 (待创建)
+2. **迁移缩略图服务** - [RFC 0069](./0069-tauri-thumbnail-service-migration.md)
    - 图像处理库选择
-   - 缩略图生成实现
+   - 缩略图生成实现（IPC: `picasa:create-thumbnail`, `picasa:remove-thumbnail`）
    - 缓存管理
    - 预计时间：2-3 周
 
-3. **迁移导入服务** - RFC 0070 (待创建)
+3. **迁移导入服务** - [RFC 0070](./0070-tauri-import-service-migration.md)
    - 文件扫描和元数据提取
-   - 导入操作流程
+   - 导入操作流程（`ImportEvents.*`）
    - 进度跟踪
    - 预计时间：2-3 周
 
-4. **迁移天枢服务** - RFC 0072 (待创建)
+4. **迁移天枢服务** - [RFC 0072](./0072-tauri-tianshu-service-migration.md)
    - 工作流引擎设计
    - 命令处理系统
    - 状态管理
@@ -616,13 +646,10 @@ notify = "6.0"   # 文件系统监听
   - [ ] 状态管理
   - [ ] 事件系统
 
-#### 阶段四：Renderer 代码迁移
+#### 阶段 2.5：UI 与扁平 API 兼容层（见 [RFC 0073](./0073-tauri-ui-migration-adapter.md)）
 
-- [ ] 复制 `apps/desktop/src/renderer` 内容到 `apps/photasa/src`
-- [ ] 替换 Electron API 调用为 Tauri API
-- [ ] 更新所有服务调用
-- [ ] 测试基础 UI 渲染
-- [ ] 端到端功能测试
+- [ ] 提供与 `preload/legacy.ts` 一致的扁平 `window.api`，使现有 Vue/utils 无需改调用即可在 Tauri 下运行
+- [ ] 复制/同步 renderer 内容后验证 `npm run tauri dev` 可启动且无 `window.api.xxx` 未定义错误
 
 #### 阶段五：测试和验证
 

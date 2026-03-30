@@ -1,0 +1,117 @@
+:root,
+[data-theme] {
+    --color-bg: #1e1e1e;
+    --color-bg-secondary: #252526;
+    --color-text: #d4d4d4;
+    --color-text-primary: var(--color-text);
+    --color-text-secondary: #cccccc;
+    --color-text-tertiary: #888888;
+    --color-border: #333333;
+    --color-shadow: rgba(0, 0, 0, 0.7);
+    --color-primary: #3794ff;
+    --color-primary-rgb: 55, 148, 255;
+    --color-primary-light: #9cdcfe;
+    --color-success: #73c991;
+    --color-warning: #cca700;
+    --color-danger: #f48771;
+    --color-info: #007acc;
+    --color-info-bg: #252526;
+    --color-btn-bg: #0e639c;
+    --color-btn-hover: #1177bb;
+    --color-card-bg: #1e1e1e;
+    --color-card-border: #333333;
+    --color-card-shadow: rgba(0, 0, 0, 0.7);
+    --color-card-selected: #252526;
+    --color-placeholder: #888888;
+    --color-disabled: #424242;
+    --color-skeleton-from: #333333;
+    --color-skeleton-to: #252526;
+    --color-toolbar-bg: #252526;
+    --color-white: #fff;
+    --color-black: #000;
+    --color-white-alpha: rgba(255, 255, 255, 0.2);
+
+    /* Border radius variables */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    --color-tree-bg: #232323;
+    --color-tree-selected: #3794ff;
+    --color-tree-text: #d4d4d4;
+    --color-tree-border: #333333;
+    --color-tree-hover: #252526;
+    --color-tree-hover-text: #3794ff;
+    --color-tree-active: #3794ff;
+    --color-tree-active-text: #fff;
+    --color-tree-disabled-bg: #232323;
+    --color-tree-disabled-text: #555;
+    --color-tree-switcher-hover: #333333;
+    --color-card-hover: #232323;
+    --color-card-hover-border: #3794ff;
+    --color-card-hover-shadow: rgba(0, 0, 0, 0.18);
+    --color-card-active: #252526;
+    --color-card-active-border: #3794ff;
+    --color-card-disabled: #232323;
+    --color-card-disabled-text: #555;
+    --color-card-disabled-border: #333;
+    --color-footer-bg: #232323;
+    --color-footer-text: #d4d4d4;
+    --color-footer-border: #333333;
+    --color-statusbar-fg: #d4d4d4;
+    --color-scrollbar-bg: #232323;
+    --color-scrollbar-thumb: #333333;
+    --color-scrollbar-thumb-hover: #3794ff;
+    --color-scrollbar-thumb-active: #096dd9;
+    --color-scrollbar-track: #232323;
+    --color-scrollbar-track-hover: #2a2a2a;
+    --color-scrollbar-width: 8px;
+    --color-scrollbar-width-thin: 4px;
+    --color-scrollbar-border-radius: 4px;
+    --color-splitter-bg: #333333;
+    --color-splitter-border: #232323;
+
+    /* 空状态图标专用颜色，提高对比度 */
+    --color-empty-icon-bg: #404040;
+    --color-empty-icon-accent: #666666;
+    --color-empty-icon-border: #555555;
+    --color-splitter-hover: #3794ff;
+    --color-image-item-bg: #10232d;
+    --color-thumbnail-image-bg: #10232d;
+    --color-list-bg: #1e1e1e;
+    --color-list-header-bg: #232323;
+    --color-list-footer-bg: #232323;
+    --color-list-border: #333333;
+    --color-list-item-bg: #1e1e1e;
+    --color-list-item-hover-bg: #232323;
+    --color-list-item-active-bg: #252526;
+    --color-list-item-meta-title: #d4d4d4;
+    --color-list-item-meta-description: #cccccc;
+    --color-list-split: #333333;
+    --color-list-empty-bg: #232323;
+    --color-list-skeleton-bg: #333333;
+    --color-descriptions-title: #d4d4d4;
+    --color-descriptions-header-bg: #232323;
+    --color-descriptions-bordered: #333333;
+
+    /* 现代化设计扩展变量 */
+    --color-bg-tertiary: #2a2a2a;
+    --color-text-primary: #d4d4d4;
+    --color-primary-dark: #096dd9;
+    --color-primary-light: #9cdcfe;
+
+    /* 现代化阴影系统 */
+    --shadow-modern-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 6px rgba(0, 0, 0, 0.15);
+    --shadow-modern-md:
+        0 4px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2), 0 1px 4px rgba(0, 0, 0, 0.15);
+    --shadow-modern-lg:
+        0 16px 40px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+    --shadow-modern-xl:
+        0 25px 50px rgba(0, 0, 0, 0.5), 0 12px 24px rgba(0, 0, 0, 0.4),
+        0 6px 12px rgba(0, 0, 0, 0.3);
+
+    /* 现代化动画变量 */
+    --transition-modern: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-modern-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-modern-slow: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}

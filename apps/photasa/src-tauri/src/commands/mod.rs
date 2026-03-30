@@ -1,1 +1,25 @@
 pub mod window;
+pub mod shell;
+pub mod config;
+pub mod wasm;
+pub mod stubs;
+pub mod platform;
+pub mod path;
+pub mod directory;
+pub mod watch;
+pub mod watch_scan_queue;
+pub mod thumbnail;
+pub mod ffmpeg_next_util;
+pub mod menu;
+pub mod import_path_filter;
+pub mod import_legacy;
+pub mod import_preview;
+pub mod import_session_store;
+pub mod import_execute;
+pub mod extract_metadata;
+mod extract_metadata_exif;
+mod extract_metadata_video;
+pub mod log_viewer;
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+pub mod log_toggle_shortcut;
+pub mod update;

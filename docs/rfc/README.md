@@ -4,28 +4,82 @@ This directory contains RFCs for significant changes to the photo management app
 
 ## RFC Statistics
 
-- **Total RFCs**: 51
-- **Completed**: 30 (58.8%)
-- **In Progress**: 2 (3.9%)
-- **Draft**: 19 (37.3%)
+- **Total RFCs**: 98
+- **Completed**: 54 (55.1%)
+- **In Progress**: 2 (2.0%)
+- **Draft**: 42 (42.9%)
 - **Rejected**: 0 (0%)
 
 ### By Version
 
 - **v2.0.0**: 50 RFCs
-- **v2.1.0 (Tauri Migration)**: 1 RFC (0067 + 子 RFCs)
+- **v2.1.0 (Tauri Migration)**: 27 RFCs (0067-0073 architecture; 0074-0093 one-RFC-one-thing)
 
 ## Tauri 迁移 RFC 系列
 
 ### 主 RFC
 - **[RFC 0067](./0067-tauri-app-photasa.md)**: 创建 Tauri 应用 Photasa - 总体架构与迁移策略
 
+### ✅ 已完成
+- **[RFC 0073](./0073-tauri-ui-migration-adapter.md)**: UI 迁移与适配层设计 ✅
+
 ### 子 RFC（服务迁移详细计划）
-- **[RFC 0068](./0068-tauri-scan-service-migration.md)**: 扫描服务迁移到 Tauri ✅
-- **RFC 0069**: 缩略图服务迁移到 Tauri (待创建)
-- **RFC 0070**: 导入服务迁移到 Tauri (待创建)
-- **RFC 0071**: 配置服务迁移到 Tauri (待创建)
-- **RFC 0072**: 天枢服务迁移到 Tauri (待创建)
+- **[RFC 0068](./0068-tauri-scan-service-migration.md)**: 扫描服务迁移到 Tauri ✅（scan_photos + scan_directories 均已实现）
+- **[RFC 0069](./0069-tauri-thumbnail-service-migration.md)**: 缩略图服务迁移到 Tauri ✅
+- **[RFC 0070](./0070-tauri-import-service-migration.md)**: 导入服务迁移到 Tauri 🚧 部分完成（`execute_import` / `cancel` / 见 **0096** 暂停恢复已实现；预览/历史/元数据见 **0097**）
+- **[RFC 0071](./0071-tauri-config-service-migration.md)**: 配置服务迁移到 Tauri ✅
+- **[RFC 0072](./0072-tauri-tianshu-service-migration.md)**: 天枢服务迁移到 Tauri ✅
+
+### 迁移顺序建议
+
+```
+1. RFC 0073 (UI + 适配层) ← 先跑起来！
+2. RFC 0071 (配置服务) ← 最简单
+3. RFC 0068 (扫描服务)
+4. RFC 0069 (缩略图服务)
+5. RFC 0070 (导入服务)
+6. RFC 0072 (天枢服务) ← 最复杂
+```
+
+## One RFC, one thing (scope rule)
+
+Each RFC must address **one substantial change or one clear topic**. Do not write fat, catch-all RFCs.
+
+- **One concern per RFC**: e.g. "Tauri adapter concept" or "flat legacy API layer" or "path utilities in Rust," not "adapter + legacy API + path + config" in a single doc.
+- **Inspired by**: [Rust RFC process](https://rust-lang.github.io/rfcs/0002-rfc-process.html) (single-purpose design), [Vue RFCs](https://github.com/vuejs/rfcs) (one RFC per feature/change).
+- **Existing 0067–0073**: Kept as architecture or per-service overviews; new or split work uses **small RFCs** numbered 0074+.
+
+### Tauri small RFCs (0074+): one RFC, one thing
+
+| RFC | Topic | Status |
+|-----|-------|--------|
+| [0074](./0074-tauri-adapter-concept.md) | Tauri adapter concept and env detection | ✅ Implemented |
+| [0075](./0075-tauri-flat-legacy-api-layer.md) | Flat legacy API layer (window.api shape) | ✅ Implemented |
+| [0076](./0076-tauri-path-utilities-rust.md) | Path utilities in Rust (1:1 from Node, zero Node) | ✅ Implemented |
+| [0077](./0077-tauri-get-photasa-config.md) | get_photasa_config command | ✅ Implemented |
+| [0078](./0078-tauri-add-to-photo-list.md) | add_to_photo_list command | ✅ Implemented |
+| [0079](./0079-tauri-remove-from-photo-list.md) | remove_from_photo_list command | ✅ Implemented |
+| [0080](./0080-tauri-reset-photasa-config.md) | reset_photasa_config command | ✅ Implemented |
+| [0081](./0081-tauri-fix-photasa-config.md) | fix_photasa_config command | ✅ Implemented |
+| [0082](./0082-tauri-watch-start-stop-commands.md) | Watch start/stop commands | ✅ Implemented |
+| [0083](./0083-tauri-watch-event-contract.md) | Watch event contract (same names as Electron) | ✅ Implemented |
+| [0084](./0084-tauri-choose-directory.md) | choose_directory command | ✅ Implemented |
+| [0085](./0085-tauri-get-directory.md) | get_directory command | ✅ Implemented |
+| [0086](./0086-tauri-sub-folders.md) | sub_folders command | ✅ Implemented |
+| [0087](./0087-tauri-check-photasa-config-folder.md) | check_photasa_config (folder validation) command | ✅ Implemented |
+| [0088](./0088-tauri-log-viewer-open.md) | Log viewer open/state command | ✅ Implemented（Photasa：`log_viewer_open` / `log_viewer_close`） |
+| [0089](./0089-tauri-log-stream-events.md) | Log stream events (same contract as Electron) | ✅ Implemented（Photasa：`log:entry` 桥接） |
+| [0090](./0090-tauri-update-service.md) | Update service (checkForUpdates) | ✅ Implemented（Photasa：`invoke` + `picasa:update-*`；生产端点待配置） |
+| [0091](./0091-tauri-platform-is-mac.md) | Platform / isMac / get_platform | ✅ Implemented |
+| [0092](./0092-tauri-menu-api.md) | Menu (applySystemMenu, onMenuAction) | ✅ Implemented |
+| [0093](./0093-tauri-import-photos-legacy.md) | importPhotos legacy copy flow | ✅ Implemented（Photasa：`import_photos_legacy`；与 Electron 1:1 测试收口待办） |
+| [0094](./0094-tauri-choose-directories-multi.md) | choose_directories（单/多选目录） | ✅ Implemented |
+| [0095](./0095-tauri-get-path-root.md) | get_path_root（api-path getRoot） | ✅ Implemented |
+| [0096](./0096-tauri-import-pause-resume.md) | pause_import / resume_import | ✅ Implemented |
+| [0097](./0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪（导入元数据精度、0093、updater 运维） | 🚧 Partial |
+| [0098](./0098-main-module-extraction-to-packages.md) | src/main 模块提取 — scan/import/config-core 为独立 packages | Draft |
+
+---
 
 ## RFC Process
 
@@ -114,6 +168,31 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0061](./0061-zouwu-workflow-visualization.md)                    | 驺吾工作流可视化 (Workflow Visualization)                | Draft          | AI     | v2.0.0         |
 | [0067](./0067-tauri-app-photasa.md)                               | 创建 Tauri 应用 Photasa - 总体架构与迁移策略            | Draft          | AI     | v2.1.0         |
 | [0068](./0068-tauri-scan-service-migration.md)                   | 扫描服务迁移到 Tauri                                     | Draft          | AI     | v2.1.0         |
+| [0069](./0069-tauri-thumbnail-service-migration.md)              | 缩略图服务迁移到 Tauri                                   | Draft          | AI     | v2.1.0         |
+| [0070](./0070-tauri-import-service-migration.md)                 | 导入服务迁移到 Tauri                                     | Draft          | AI     | v2.1.0         |
+| [0071](./0071-tauri-config-service-migration.md)                 | 配置服务迁移到 Tauri                                     | Draft          | AI     | v2.1.0         |
+| [0072](./0072-tauri-tianshu-service-migration.md)                | 天枢服务迁移到 Tauri                                     | Draft          | AI     | v2.1.0         |
+| [0073](./0073-tauri-ui-migration-adapter.md)                     | 🔴 UI 迁移与适配层设计（最高优先级）                      | Draft          | AI     | v2.1.0         |
+| [0074](./0074-tauri-adapter-concept.md)                           | Tauri adapter concept and env detection                  | Draft          | AI     | v2.1.0         |
+| [0075](./0075-tauri-flat-legacy-api-layer.md)                    | Flat legacy API layer (window.api shape)                  | Draft          | AI     | v2.1.0         |
+| [0076](./0076-tauri-path-utilities-rust.md)                     | Path utilities in Rust (1:1 from Node, zero Node)          | Draft          | AI     | v2.1.0         |
+| [0077](./0077-tauri-get-photasa-config.md)                      | get_photasa_config command                                 | Draft          | AI     | v2.1.0         |
+| [0078](./0078-tauri-add-to-photo-list.md)                       | add_to_photo_list command                                  | Draft          | AI     | v2.1.0         |
+| [0079](./0079-tauri-remove-from-photo-list.md)                  | remove_from_photo_list command                             | Draft          | AI     | v2.1.0         |
+| [0080](./0080-tauri-reset-photasa-config.md)                    | reset_photasa_config command                               | Draft          | AI     | v2.1.0         |
+| [0081](./0081-tauri-fix-photasa-config.md)                     | fix_photasa_config command                                 | Draft          | AI     | v2.1.0         |
+| [0082](./0082-tauri-watch-start-stop-commands.md)               | Watch start/stop commands                                  | Draft          | AI     | v2.1.0         |
+| [0083](./0083-tauri-watch-event-contract.md)                    | Watch event contract                                       | Draft          | AI     | v2.1.0         |
+| [0084](./0084-tauri-choose-directory.md)                         | choose_directory command                                   | Draft          | AI     | v2.1.0         |
+| [0085](./0085-tauri-get-directory.md)                            | get_directory command                                      | Draft          | AI     | v2.1.0         |
+| [0086](./0086-tauri-sub-folders.md)                             | sub_folders command                                        | Draft          | AI     | v2.1.0         |
+| [0087](./0087-tauri-check-photasa-config-folder.md)              | check_photasa_config (folder validation) command           | Draft          | AI     | v2.1.0         |
+| [0088](./0088-tauri-log-viewer-open.md)                          | Log viewer open/state command                              | Draft          | AI     | v2.1.0         |
+| [0089](./0089-tauri-log-stream-events.md)                       | Log stream events                                          | Draft          | AI     | v2.1.0         |
+| [0090](./0090-tauri-update-service.md)                          | Update service                                             | Draft          | AI     | v2.1.0         |
+| [0091](./0091-tauri-platform-is-mac.md)                          | Platform / isMac / get_platform                            | Draft          | AI     | v2.1.0         |
+| [0092](./0092-tauri-menu-api.md)                                | Menu (applySystemMenu, onMenuAction)                        | Draft          | AI     | v2.1.0         |
+| [0093](./0093-tauri-import-photos-legacy.md)                    | importPhotos legacy copy flow                              | Draft          | AI     | v2.1.0         |
 
 ## Implemented RFCs
 

@@ -2,12 +2,16 @@
 <html lang="zh-CN">
     <head>
         <meta charset="UTF-8" />
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Photasa</title>
+        <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self' file:;script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self' data:;"
+        />
     </head>
+
     <body>
-        <div id="app"></div>
+        <div id="app" data-theme></div>
         <script type="module" src="/src/main.ts"></script>
     </body>
 </html>

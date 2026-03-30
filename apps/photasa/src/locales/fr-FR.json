@@ -1,0 +1,617 @@
+{
+    "app": {
+        "title": "Photasa",
+        "folderList": "Liste des dossiers"
+    },
+    "logViewer": {
+        "title": "Console de logs système",
+        "searchPlaceholder": "Rechercher dans les logs...",
+        "allLevels": "Tous les niveaux",
+        "debug": "Débogage",
+        "info": "Info",
+        "warn": "Avertissement",
+        "error": "Erreur",
+        "clear": "Effacer",
+        "export": "Exporter",
+        "opacity": "Opacité",
+        "noLogs": "Aucun log disponible",
+        "showing": "Affichage de {filtered} / {total} logs",
+        "autoScroll": "Défilement automatique"
+    },
+    "preference": {
+        "settings": "Paramètres",
+        "tabs": {
+            "general": "Général",
+            "about": "À propos",
+            "theme": "Thème",
+            "advanced": "Paramètres avancés",
+            "autoUpdate": "Mise à Jour Auto",
+            "scanMonitoring": "Surveillance du Scan"
+        },
+        "folderList": "Liste des dossiers",
+        "folderListUsage": "Utilisation",
+        "folderListDesc": "Après avoir ajouté un dossier à la liste, Photasa peut gérer les photos et vidéos dans ce dossier en temps réel.",
+        "watchFolderList": "Photasa peut gérer les photos et vidéos dans les dossiers suivants.",
+        "chooseDirectory": "Choisir un dossier et l'ajouter à la liste",
+        "thumbnailSize": "Taille de la vignette",
+        "darkMode": "Mode sombre",
+        "language": "Langue",
+        "scanning": "Analyse en cours",
+        "resetFolders": {
+            "title": "Action Avancée : Réinitialiser le Stockage de Répertoires",
+            "desc": "Cela effacera tous les paramètres de répertoires et reconstruira immédiatement le cache. Cette action est irréversible. Procédez avec prudence !",
+            "button": "Réinitialiser le Stockage de Répertoires"
+        },
+        "autoUpdate": {
+            "title": "Mise à Jour Automatique",
+            "description": "Configurez les mises à jour automatiques de l'application pour vous assurer d'avoir toujours la dernière version de Photasa",
+            "enabled": "Activer la mise à jour automatique",
+            "checkInterval": "Intervalle de vérification",
+            "prerelease": "Inclure les versions pré-release",
+            "prereleaseDescription": "Activer pour recevoir les mises à jour Beta et RC, qui peuvent contenir des fonctionnalités non testées",
+            "autoInstall": "Installer automatiquement les mises à jour",
+            "autoInstallDescription": "Lorsqu'activé, les mises à jour seront installées automatiquement en arrière-plan et prendront effet au prochain redémarrage",
+            "checkNow": "Vérifier maintenant",
+            "downloadUpdate": "Télécharger la mise à jour",
+            "installUpdate": "Installer et redémarrer",
+            "currentVersion": "Version actuelle",
+            "latestVersion": "Dernière version",
+            "lastCheck": "Dernière vérification",
+            "intervals": {
+                "hourly": "Toutes les heures",
+                "sixHours": "Toutes les 6 heures",
+                "daily": "Quotidiennement",
+                "weekly": "Hebdomadairement"
+            },
+            "status": {
+                "idle": "Inactif",
+                "checking": "Vérification des mises à jour...",
+                "downloading": "Téléchargement ({progress}%)",
+                "downloaded": "Mise à jour téléchargée",
+                "upToDate": "Déjà à jour",
+                "error": "Erreur lors de la vérification des mises à jour"
+            }
+        }
+    },
+    "import": {
+        "title": "Importer des photos",
+        "photos": "Importer des photos",
+        "chooseDirectory": "Choisir le dossier",
+        "targetDirectory": "Dossier de destination",
+        "selectTarget": "Sélectionner le dossier de destination",
+        "allowDuplicateRename": "Autoriser le renommage des fichiers en double",
+        "button": {
+            "import": "Importer",
+            "cancel": "Annuler"
+        },
+        "sourceDirectories": "Dossiers sources",
+        "addSource": "Ajouter un dossier source",
+        "browse": "Parcourir",
+        "options": "Options d'importation",
+        "fileTypes": {
+            "label": "Types de fichiers",
+            "images": "Images",
+            "videos": "Vidéos",
+            "image": "Image",
+            "video": "Vidéo",
+            "other": "Autre"
+        },
+        "images": "Images",
+        "videos": "Vidéos",
+        "includeSubfolders": "Inclure les sous-dossiers",
+        "duplicateHandling": "Gestion des doublons",
+        "duplicate": {
+            "label": "Doublon",
+            "rename": "Renommer",
+            "skip": "Ignorer",
+            "overwrite": "Écraser",
+            "keepBoth": "Conserver les deux"
+        },
+        "useMD5ForDuplicates": "Utiliser la vérification MD5 pour la détection des doublons",
+        "useMD5ForDuplicatesDescription": "Quand activé, les fichiers seront comparés en utilisant le hachage MD5 pour une détection précise des doublons, indépendamment des dates de modification",
+        "preview": {
+            "scanning": "Analyse des fichiers",
+            "filesFound": "Fichiers trouvés",
+            "directoriesScanned": "Dossiers analysés",
+            "progress": "Progression de l'analyse",
+            "currentPath": "Chemin actuel",
+            "recentlyFound": "Récemment trouvés",
+            "noFilesFound": "Aucun fichier trouvé"
+        },
+        "totalFiles": "Nombre total de fichiers",
+        "totalSize": "Taille totale",
+        "duplicates": "Fichiers en double",
+        "moreFiles": "Il y a encore {count} fichiers",
+        "group": "{count} fichiers",
+        "processing": "Traitement en cours",
+        "previewButton": "Aperçu",
+        "importButton": "Importer",
+        "cancelButton": "Annuler",
+        "pauseButton": "Pause",
+        "resumeButton": "Reprendre",
+        "closeButton": "Fermer",
+        "nextButton": "Suivant",
+        "backButton": "Précédent",
+        "doneButton": "Terminé",
+        "importFailed": "Échec de l'importation",
+        "importCompleted": "Importation terminée",
+        "importCompletedDesc": "{count} fichiers importés avec succès",
+        "filePreview": "Aperçu des fichiers",
+        "selectAll": "Tout sélectionner",
+        "deselectAll": "Tout désélectionner",
+        "invertSelection": "Inverser la sélection",
+        "selected": "Sélectionné",
+        "selectedSize": "Taille sélectionnée",
+        "fileGroups": "Groupes de fichiers",
+        "pagination": "{start}-{end} sur {total} éléments",
+        "toggleSelection": "Basculer la sélection",
+        "viewDetails": "Voir les détails",
+        "image": "Image",
+        "video": "Vidéo",
+        "unknown": "Inconnu",
+        "fileDetails": "Détails du fichier",
+        "basicInfo": "Informations de base",
+        "fileName": "Nom du fichier",
+        "fileSize": "Taille du fichier",
+        "fileType": "Type de fichier",
+        "dateTime": "Date et heure",
+        "modifiedTime": "Date de modification",
+        "groupFiles": "Fichiers du groupe",
+        "targetPath": "Chemin de destination",
+        "metadata": "Métadonnées",
+        "dimensions": "Dimensions",
+        "duration": "Durée",
+        "format": "Format",
+        "location": "Emplacement",
+        "processed": "Traité",
+        "percentage": "Pourcentage",
+        "speed": "Vitesse",
+        "filesPerSec": "fichiers/sec",
+        "filesPerMin": "fichiers/min",
+        "remaining": "Temps restant",
+        "errors": "Erreurs ({count})",
+        "warnings": "Avertissements ({count})",
+        "moreErrors": "Il y a encore {count} erreurs",
+        "moreWarnings": "Il y a encore {count} avertissements",
+        "retry": "Réessayer",
+        "showLess": "Afficher moins",
+        "showMore": "Afficher {count} autres éléments",
+        "status": {
+            "preparing": "Préparation",
+            "processing": "Traitement en cours",
+            "paused": "En pause",
+            "completed": "Terminé",
+            "cancelled": "Annulé",
+            "error": "Erreur",
+            "unknown": "Inconnu"
+        },
+        "now": "Maintenant",
+        "filters": "Filtres",
+        "resetFilters": "Réinitialiser les filtres",
+        "showAdvanced": "Afficher les options avancées",
+        "hideAdvanced": "Masquer les options avancées",
+        "advancedFilters": "Filtres avancés",
+        "fileSizeRange": "Plage de taille de fichier",
+        "fileSizeHelp": "Filtrer par plage de taille de fichier",
+        "dateRange": "Plage de dates",
+        "dateRangeHelp": "Filtrer les fichiers par date de création",
+        "startDate": "Date de début",
+        "endDate": "Date de fin",
+        "quickDateFilters": "Filtres de date rapides",
+        "fileNamePattern": "Modèle de nom de fichier",
+        "fileNamePatternHelp": "Filtrer par modèle de nom de fichier, prend en charge les caractères génériques (* et ?)",
+        "fileNamePatternPlaceholder": "Par exemple : IMG_*.jpg",
+        "excludePatterns": "Modèles d'exclusion",
+        "excludePatternsHelp": "Modèles pour exclure des fichiers, un par ligne",
+        "excludePatternsPlaceholder": "Par exemple : .DS_Store, Thumbs.db",
+        "reset": "Réinitialiser",
+        "filteredFiles": "Fichiers filtrés",
+        "datePresets": {
+            "today": "Aujourd'hui",
+            "yesterday": "Hier",
+            "thisWeek": "Cette semaine",
+            "thisMonth": "Ce mois-ci",
+            "lastMonth": "Le mois dernier"
+        },
+        "dateSource": {
+            "label": "Source de date",
+            "exif": "Métadonnées EXIF",
+            "file_created": "Date de création du fichier",
+            "file_modified": "Date de modification du fichier",
+            "custom": "Personnalisé"
+        },
+        "duplicateFiles": "Fichiers en double",
+        "duplicatesFound": "Doublons trouvés",
+        "wastedSpace": "Espace gaspillé",
+        "batchStrategy": "Stratégie par lot",
+        "applyToAll": "Appliquer à tous",
+        "autoResolve": "Résolution automatique",
+        "originalFile": "Fichier original",
+        "existing": "Existant",
+        "duplicateFile": "Fichier en double",
+        "importing": "Importation",
+        "action": "Action",
+        "strategy": {
+            "skip": {
+                "label": "Ignorer",
+                "description": "Ignorer l'importation de ce fichier"
+            },
+            "rename": {
+                "label": "Renommer",
+                "description": "Renommer le fichier avant l'importation"
+            },
+            "overwrite": {
+                "label": "Écraser",
+                "description": "Écraser le fichier existant"
+            },
+            "keepBoth": {
+                "label": "Conserver les deux",
+                "description": "Conserver les deux fichiers avec des noms différents"
+            }
+        },
+        "recommendation": "Recommandation",
+        "recommendations": {
+            "keep_original": "Conserver le fichier original",
+            "keep_duplicate": "Conserver le fichier en double",
+            "keep_both": "Conserver les deux",
+            "skipIdentical": "Ignorer (fichiers identiques)",
+            "keepLarger": "Conserver le fichier plus volumineux"
+        },
+        "warning": {
+            "overwriteLarger": "Attention : Vous allez écraser un fichier plus volumineux",
+            "overwriteNewer": "Attention : Vous allez écraser un fichier plus récent"
+        },
+        "compare": "Comparer",
+        "fileComparison": "Comparaison de fichiers",
+        "comparisonAnalysis": "Analyse comparative",
+        "sizeDifference": "Différence de taille",
+        "timeDifference": "Différence de temps",
+        "sameSize": "Même taille",
+        "sameTime": "Même heure",
+        "daysNewer": "{days} jours plus récent",
+        "daysOlder": "{days} jours plus ancien",
+        "hoursNewer": "{hours} heures plus récent",
+        "hoursOlder": "{hours} heures plus ancien",
+        "newer": "Plus récent",
+        "older": "Plus ancien",
+        "confirmBatchAction": "Confirmer l'action par lot",
+        "apply": "Appliquer",
+        "cancel": "Annuler",
+        "batchConfirmMessage": "Appliquer {strategy} à {count} fichiers sélectionnés ?",
+        "overwriteWarning": "Attention : L'écrasement des fichiers ne peut pas être annulé",
+        "batchProgress": "Progression du lot",
+        "directories": "Dossiers",
+        "complete": "Terminé",
+        "overallProgress": "Progression globale",
+        "currentDirectory": "Dossier actuel",
+        "eta": "Temps estimé",
+        "completed": "Terminé",
+        "error": {
+            "label": "Erreur",
+            "title": "Opération échouée",
+            "network": "Échec de connexion réseau, vérifiez votre connexion et réessayez",
+            "validation": "Échec de validation de la configuration, vérifiez les paramètres des répertoires",
+            "permission": "Permissions insuffisantes, assurez-vous d'avoir accès aux répertoires",
+            "api": "Erreur du serveur, veuillez réessayer plus tard",
+            "unknown": "Une erreur inconnue s'est produite, veuillez réessayer",
+            "retry": "Réessayer",
+            "dismiss": "Ignorer"
+        },
+        "paused": "En pause",
+        "pending": "En attente",
+        "finishing": "Finalisation",
+        "pauseAll": "Tout mettre en pause",
+        "resumeAll": "Tout reprendre",
+        "cancelAll": "Tout annuler",
+        "close": "Fermer",
+        "confirmCancelAll": "Confirmer l'annulation de tout",
+        "yes": "Oui",
+        "no": "Non",
+        "cancelAllWarning": "Êtes-vous sûr de vouloir annuler toutes les tâches d'importation restantes ?",
+        "cancelAllProgress": "{completed} / {total} dossiers terminés",
+        "recentFiles": "Fichiers récents",
+        "elapsed": "Temps écoulé",
+        "files": "Fichiers",
+        "successful": "Réussi",
+        "skipped": "Ignoré",
+        "steps": {
+            "configuration": "Configuration",
+            "configurationDesc": "Sélectionner les dossiers source et de destination",
+            "preview": "Aperçu",
+            "previewDesc": "Examiner et sélectionner les fichiers à importer",
+            "importing": "Importation",
+            "importingDesc": "Importer les fichiers vers le dossier de destination"
+        },
+        "loading": {
+            "text": "Chargement...",
+            "preview": "Chargement des données d'aperçu...",
+            "directories": "Sélection des répertoires...",
+            "label": "Chargement...",
+            "switchingFolder": "Changement de dossier..."
+        }
+    },
+    "menu": {
+        "getInfo": "Infos photo",
+        "open": "Ouvrir dans le gestionnaire de fichiers",
+        "rebuildThumbnail": "Reconstruire la vignette",
+        "getConfig": "Obtenir les informations sur la photothèque",
+        "rescan": "Réanalyser le dossier",
+        "app": {
+            "menu": "Application",
+            "about": "À propos de Photasa",
+            "services": "Services",
+            "hide": "Masquer Photasa",
+            "hideOthers": "Masquer les autres",
+            "unhide": "Tout afficher",
+            "quit": "Quitter"
+        },
+        "view": {
+            "menu": "Affichage",
+            "reload": "Recharger",
+            "forceReload": "Forcer le rechargement",
+            "toggleDevTools": "Basculer les outils de développement",
+            "resetZoom": "Réinitialiser le zoom",
+            "zoomIn": "Agrandir",
+            "zoomOut": "Rétrécir",
+            "toggleFullScreen": "Basculer en plein écran"
+        },
+        "window": {
+            "menu": "Fenêtre",
+            "minimize": "Minimiser",
+            "maximize": "Maximiser",
+            "close": "Fermer"
+        },
+        "help": {
+            "menu": "Aide",
+            "learnMore": "En savoir plus",
+            "about": "À propos de Photasa"
+        },
+        "separator": "Séparateur"
+    },
+    "notification": {
+        "info": "Info",
+        "warn": "Avertissement",
+        "error": "Erreur",
+        "scan": {
+            "title": "Analyser le dossier",
+            "message": "Analyse du dossier terminée, les photos ont été importées dans Photasa."
+        },
+        "duplicatePath": {
+            "title": "Dossier en double",
+            "message": "Le dossier [{folder}] existe déjà dans Photasa."
+        },
+        "emptyPath": {
+            "title": "Choisir un dossier",
+            "message": "Veuillez sélectionner un dossier puis terminer l'ajout."
+        },
+        "scanError": {
+            "title": "Erreur de Scan",
+            "message": "Impossible de scanner les sous-répertoires de [{path}]. Erreur: {error}. Le répertoire principal sera tout de même ajouté."
+        },
+        "unknownError": "Une erreur inconnue s'est produite",
+        "resetFolders": {
+            "title": "Réinitialisation terminée",
+            "message": "Tous les caches de dossiers ont été reconstruits."
+        }
+    },
+    "status": {
+        "initializing": "Initialisation en cours",
+        "idle": "Inactif",
+        "updating": "Mise à jour en cours",
+        "ready": "Prêt",
+        "readingConfig": "Chargement des infos de la bibliothèque [{config}]",
+        "loadingConfig": "Lecture des infos de la bibliothèque",
+        "processing": "Traitement [{file}]",
+        "scanned": "Terminé",
+        "scanComplete": "Le dossier [{path}] a été traité.",
+        "start": "Démarrage du scan",
+        "progress": "Progression du scan",
+        "processingFile": "Traitement: {fileName}",
+        "scanningPath": "Scan: {path}",
+        "complete": "Scan terminé",
+        "error": "Erreur de scan",
+        "scanFailed": "Échec du scan: {path}"
+    },
+    "button": {
+        "import": "Importer",
+        "cancel": "Annuler",
+        "ok": "OK",
+        "fixConfig": "Corriger les infos de la bibliothèque"
+    },
+    "about": {
+        "antvDescription": "Solution de Visualisation de Données",
+        "introduction": {
+            "title": "À propos de Photasa",
+            "content": "Photasa est un outil moderne et respectueux de la vie privée pour la gestion de photos. Organisez, parcourez et profitez de vos photos et vidéos avec des fonctionnalités locales puissantes et une belle interface—sans nuage.",
+            "summary": "Photasa vous aide à redécouvrir et à gérer vos souvenirs facilement.",
+            "highlight": "local, rapide et convivial",
+            "userExperience": "expérience de gestion de photos",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Ressources",
+            "content": "Explorez des ressources et une documentation supplémentaires pour Photasa.",
+            "download": "Télécharger les Ressources"
+        },
+        "press": "Appuyez sur",
+        "toExit": "pour quitter",
+        "markdown": "# À propos de Photasa\n\nPhotasa est un outil moderne et respectueux de la vie privée pour la gestion locale des photos, inspiré du classique Photasa.\nIl prend en charge la navigation, l'organisation et la gestion efficaces de vos photos et vidéos, avec une interface élégante et de puissantes fonctionnalités locales, sans dépendance au cloud.\n\n## Fonctionnalités principales\n\n- Importation et gestion intelligente des photos et vidéos locales\n- Génération et aperçu rapides des vignettes\n- Interface multilingue et changement de thème\n- Opérations par lot et recherche efficace\n- Protection de la confidentialité et de la sécurité des données\n\nAppuyez sur `Esc` pour quitter"
+    },
+    "preferences": {
+        "title": "Préférences",
+        "language": {
+            "title": "Langue",
+            "description": "Choisissez votre langue préférée pour l'interface de l'application."
+        },
+        "thumbnail": {
+            "title": "Taille de la vignette",
+            "description": "Ajustez la taille des vignettes photo dans la vue galerie."
+        },
+        "theme": {
+            "title": "Thème",
+            "description": "Basculer entre le mode clair et le mode sombre.",
+            "light": "Clair",
+            "dark": "Sombre"
+        }
+    },
+    "advancedSettings": {
+        "title": "Paramètres avancés",
+        "resetFoldersTitle": "Opération avancée : Réinitialiser le stockage des dossiers",
+        "resetFoldersDesc": "Cette opération effacera toutes les configurations de dossiers et reconstruira immédiatement le cache. Cette action est irréversible, veuillez faire attention !",
+        "resetFoldersBtn": "Réinitialiser le stockage des dossiers"
+    },
+    "scan": {
+        "queueTitle": "File d'attente de scan",
+        "queueEmpty": "La file d'attente est vide",
+        "processing": "Traitement de la file d'attente",
+        "allTasksCompleted": "Toutes les tâches de scan terminées",
+        "pathHeader": "Chemin",
+        "timestampHeader": "Créé",
+        "actionHeader": "Action",
+        "unknownFolder": "Dossier inconnu",
+        "noTimestamp": "Pas d'horodatage",
+        "timeJustNow": "À l'instant",
+        "timeMinutesAgo": "il y a {count}m",
+        "timeHoursAgo": "il y a {count}h",
+        "timeDaysAgo": "il y a {count}j",
+        "priority": "Priorité",
+        "actions": {
+            "scan": "Scanner",
+            "rescan": "Rescanner",
+            "current": "Scan en cours"
+        },
+        "processed": "Traité",
+        "incrementalCache": "Cache incrémental: sauvegarde de progrès en temps réel, éviter de rescanner"
+    },
+    "empty": {
+        "image": "Aucune image",
+        "openConfigDirBtn": "Ouvrir le dossier de configuration",
+        "importBtn": "Importer des images"
+    },
+    "fileInfo": {
+        "title": "Informations du fichier",
+        "fileName": "Nom du fichier",
+        "fileType": "Type de fichier",
+        "format": "Format",
+        "size": "Taille",
+        "imageWidth": "Largeur de l'image",
+        "imageHeight": "Hauteur de l'image",
+        "resolution": "Résolution",
+        "aspectRatio": "Rapport d'aspect",
+        "duration": "Durée",
+        "codec": "Codec",
+        "dateTaken": "Date de prise",
+        "dateSource": "Source de date",
+        "modified": "Modifié",
+        "created": "Créé",
+        "location": "Localisation",
+        "gpsLatitude": "Latitude GPS",
+        "gpsLongitude": "Longitude GPS",
+        "cameraMake": "Marque de l'appareil photo",
+        "cameraModel": "Modèle de l'appareil photo",
+        "rawMetadata": "Métadonnées brutes",
+        "unknown": "Inconnu",
+        "showRawData": "Afficher les données brutes",
+        "hideRawData": "Masquer les données brutes",
+        "infoTitle": "{name} - Informations {type}",
+        "dateSources": {
+            "exif": "Données EXIF",
+            "video_metadata": "Métadonnées vidéo",
+            "file_created": "Heure de création du fichier",
+            "file_modified": "Heure de modification du fichier",
+            "current_date": "Date actuelle"
+        },
+        "basicInfo": "Informations de base",
+        "mediaProperties": "Propriétés média",
+        "videoProperties": "Propriétés vidéo",
+        "timeInfo": "Informations temporelles",
+        "technicalInfo": "Informations techniques",
+        "createdAt": "Créé le",
+        "modifiedAt": "Modifié le",
+        "camera": "Appareil photo",
+        "lens": "Objectif",
+        "iso": "ISO",
+        "aperture": "Ouverture",
+        "dimensions": "Dimensions",
+        "noMetadata": "Aucune métadonnée"
+    },
+    "common": {
+        "files": "fichiers",
+        "file": "fichier",
+        "images": "images",
+        "image": "image",
+        "videos": "vidéos",
+        "video": "vidéo",
+        "counting": "Comptage..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} fichiers",
+            "images": "{count} images",
+            "videos": "{count} vidéos",
+            "mixed": "{images} images, {videos} vidéos",
+            "empty": "Aucun fichier"
+        }
+    },
+    "imageInfo": {
+        "title": "Informations d'image",
+        "lastUpdated": "Dernière mise à jour",
+        "openInFinder": "Ouvrir dans le Finder",
+        "repairLibrary": "Réparer la bibliothèque de photos",
+        "fileCount": "Nombre de fichiers",
+        "folderSize": "Taille du dossier",
+        "basicInfo": "Informations de base",
+        "location": "Emplacement",
+        "scanDate": "Date de numérisation",
+        "configVersion": "Version de configuration",
+        "configuration": "Configuration",
+        "showRaw": "Afficher la configuration brute",
+        "hideRaw": "Masquer la configuration brute",
+        "totalImages": "Total des images",
+        "totalVideos": "Total des vidéos",
+        "scannedFolders": "Dossiers scannés",
+        "rawConfiguration": "Configuration brute",
+        "copyPath": "Copier le chemin",
+        "copyConfig": "Copier la configuration",
+        "operationHistory": "Historique des opérations",
+        "lastScan": "Dernière numérisation",
+        "configCreated": "Configuration créée",
+        "never": "Jamais",
+        "statusTypes": {
+            "completed": "Terminé",
+            "success": "Succès",
+            "warning": "Avertissement",
+            "partial": "Partiel",
+            "error": "Erreur",
+            "failed": "Échec",
+            "unknown": "Inconnu"
+        }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "Dernière heure",
+            "6h": "Dernières 6 heures",
+            "24h": "Dernières 24 heures"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "Nouvelle version disponible",
+            "message": "La version {version} est disponible",
+            "cancel": "Annuler",
+            "install": "Installer",
+            "cancelDownload": "Annuler le téléchargement",
+            "installNow": "Installer maintenant",
+            "viewDetails": "Voir les détails"
+        },
+        "popup": {
+            "title": "Nouvelle version disponible",
+            "message": "La version {version} est disponible",
+            "cancel": "Annuler",
+            "install": "Installer",
+            "cancelDownload": "Annuler le téléchargement",
+            "installNow": "Installer maintenant",
+            "close": "Fermer"
+        }
+    }
+}
