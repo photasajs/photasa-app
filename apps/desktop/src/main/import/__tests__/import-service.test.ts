@@ -53,6 +53,12 @@ vi.mock("../import-worker?nodeWorker", () => ({
 vi.mock("@photasa/common", () => ({
     sendWorkerTask: vi.fn(),
     onWorkerResponse: vi.fn(),
+    getLogger: vi.fn(() => ({
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+    })),
     loggers: {
         import: {
             info: vi.fn(),
