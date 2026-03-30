@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, jest } from "@jest/globals";
-import "@engines/adapters"; // 模拟主进程的适配器导入
+import "@main/engines/adapters"; // 模拟主进程的适配器导入
 import TaiyiService from "../deity/taiyi-service";
 import { WorkflowStep, ExecutionContext } from "@photasa/tianshu";
 import * as os from "os";

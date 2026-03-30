@@ -28,19 +28,16 @@ vi.mock("fs-extra", () => ({
     },
 }));
 
-vi.mock("@shared/path-util", () => ({
-    buildThumbnailPath: vi.fn((path: string) => `${path}.thumb.jpg`),
-    getAppPath: vi.fn(() => "/mock/app/path"),
-}));
-
-vi.mock("../scan-photos", () => ({
+vi.mock("@photasa/scan", () => ({
     shouldProcessFile: vi.fn(),
     scanPhotos: vi.fn(() => ({
         subscribe: vi.fn(),
     })),
+    processMediaFile: vi.fn(),
+    getWorkerPool: vi.fn(),
 }));
 
-vi.mock("../../config/config-storage", () => ({
+vi.mock("@photasa/config-core", () => ({
     addToPhotasaConfig: vi.fn(),
     removeFromPhotoList: vi.fn(),
 }));
@@ -61,6 +58,12 @@ vi.mock("electron", () => ({
 
 vi.mock("@photasa/common", () => ({
     loggers: {
+        scan: {
+            debug: vi.fn(),
+            info: vi.fn(),
+            warn: vi.fn(),
+            error: vi.fn(),
+        },
         worker: {
             debug: vi.fn(),
             info: vi.fn(),
@@ -68,19 +71,17 @@ vi.mock("@photasa/common", () => ({
             error: vi.fn(),
         },
     },
+    buildThumbnailPath: vi.fn((path: string) => `${path}.thumb.jpg`),
+    getAppPath: vi.fn(() => "/mock/app/path"),
 }));
 
 // Get mocked functions
 const mockIsImage = vi.mocked(await import("is-image")).default;
 const mockIsVideo = vi.mocked(await import("is-video")).default;
 const mockFs = vi.mocked(await import("fs-extra")).default;
-const mockShouldProcessFile = vi.mocked(await import("../scan-photos")).shouldProcessFile;
-const mockAddToPhotasaConfig = vi.mocked(
-    await import("../../config/config-storage"),
-).addToPhotasaConfig;
-const mockRemoveFromPhotoList = vi.mocked(
-    await import("../../config/config-storage"),
-).removeFromPhotoList;
+const mockShouldProcessFile = vi.mocked(await import("@photasa/scan")).shouldProcessFile;
+const mockAddToPhotasaConfig = vi.mocked(await import("@photasa/config-core")).addToPhotasaConfig;
+const mockRemoveFromPhotoList = vi.mocked(await import("@photasa/config-core")).removeFromPhotoList;
 
 // Create mock logger that matches PhotasaLogger interface
 const mockLogger = {

@@ -329,7 +329,8 @@ describe("RFC 0037 工作流语法规范合规性", () => {
         // 查找所有工作流YAML文件
         const PROJECT_ROOT = path.resolve(__dirname, "../../../../../");
         const DOCS_DIR = path.join(PROJECT_ROOT, "docs");
-        const WORKFLOW_DIR = path.join(PROJECT_ROOT, "apps/desktop/src/engines/tianshu/workflows");
+        // 工作流源文件位于 main 进程（Electron）目录，与运行时 TianshuEngine 使用的路径一致
+        const WORKFLOW_DIR = path.join(PROJECT_ROOT, "apps/desktop/src/main/engines/tianshu/workflows");
         const pattern = path.join(WORKFLOW_DIR, "**/*.{yml,yaml,zouwu}").replace(/\\/g, "/");
         workflowFiles = await glob(pattern);
 

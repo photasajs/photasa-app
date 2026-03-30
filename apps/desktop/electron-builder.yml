@@ -9,7 +9,7 @@ files:
     - "!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
     - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}"
 extraResources:
-    - from: "src/engines/tianshu/workflows"
+    - from: "src/main/engines/tianshu/workflows"
       to: "workflows"
 asarUnpack:
     - resources/*

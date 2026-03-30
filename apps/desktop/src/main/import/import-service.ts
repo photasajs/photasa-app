@@ -13,7 +13,7 @@ import {
 } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import { ImportEvents } from "@photasa/common";
-import { importHistoryManager } from "./history-manager";
+import { ImportHistoryManager } from "@photasa/import";
 import type {
     ImportRequest,
     ImportResponse,
@@ -55,6 +55,7 @@ export default class ImportService implements IService {
     readonly name = "import";
     private ipc: IpcMain;
     private worker: ImportWorker;
+    private importHistoryManager: ImportHistoryManager;
 
     // 活跃的导入会话
     private activeSessions = new Map<string, ImportSession>();
@@ -67,6 +68,7 @@ export default class ImportService implements IService {
         private mainWindow?: Electron.BrowserWindow,
     ) {
         this.ipc = ipcMain;
+        this.importHistoryManager = new ImportHistoryManager(app.getPath("userData"));
         logger.info("ImportService: Creating import service...");
         logger.info(`ImportService: mainWindow provided: ${!!mainWindow}`);
 
@@ -608,7 +610,7 @@ export default class ImportService implements IService {
         logger.info(`[import-service] Getting import history (limit: ${limit})`);
 
         try {
-            return await importHistoryManager.getHistory(limit);
+            return await this.importHistoryManager.getHistory(limit);
         } catch (error) {
             logger.error(`[import-service] Get import history failed: ${error}`);
             throw error;
@@ -622,7 +624,7 @@ export default class ImportService implements IService {
         logger.info(`[import-service] Getting import details: ${historyId}`);
 
         try {
-            return await importHistoryManager.getImportDetails(historyId);
+            return await this.importHistoryManager.getImportDetails(historyId);
         } catch (error) {
             logger.error(`[import-service] Get import details failed: ${error}`);
             throw error;
@@ -636,7 +638,7 @@ export default class ImportService implements IService {
         logger.info(`[import-service] Previewing undo for import: ${historyId}`);
 
         try {
-            return await importHistoryManager.previewUndo(historyId);
+            return await this.importHistoryManager.previewUndo(historyId);
         } catch (error) {
             logger.error(`[import-service] Preview undo failed: ${error}`);
             throw error;
@@ -650,7 +652,7 @@ export default class ImportService implements IService {
         logger.info(`[import-service] Undoing import: ${historyId}`);
 
         try {
-            return await importHistoryManager.undoImport(historyId);
+            return await this.importHistoryManager.undoImport(historyId);
         } catch (error) {
             logger.error(`[import-service] Undo import failed: ${error}`);
             throw error;
@@ -725,7 +727,7 @@ export default class ImportService implements IService {
         logger.debug(`[import-service] Recording import history: ${result.importId}`);
 
         try {
-            await importHistoryManager.recordImport(result);
+            await this.importHistoryManager.recordImport(result);
             logger.info(`[import-service] Import history recorded: ${result.importId}`);
         } catch (error) {
             logger.error(`[import-service] Record import history failed: ${error}`);

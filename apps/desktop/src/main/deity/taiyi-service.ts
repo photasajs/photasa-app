@@ -20,7 +20,7 @@ import { TaiyiEngine, TaiyiEngineConfig, EngineCallResult } from "@photasa/taiyi
 import { loggers } from "@photasa/common";
 import { ActionStep, BuiltinStep, WorkflowStep, ExecutionContext } from "@photasa/tianshu";
 
-import { IStepExecutor, StepExecutionResult } from "@engines/common/interfaces";
+import { IStepExecutor, StepExecutionResult } from "@main/engines/common/interfaces";
 
 const logger = loggers.taiyi;
 

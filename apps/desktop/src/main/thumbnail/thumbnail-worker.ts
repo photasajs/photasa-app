@@ -1,5 +1,5 @@
 import { parentPort } from "worker_threads";
-import { createThumbnail, removeThumbnail } from "./thumbnail-handler";
+import { createThumbnail, removeThumbnail } from "@photasa/thumbnail";
 import { loggers } from "@photasa/common";
 import { createResponse } from "@photasa/common";
 import type { WorkerMessage } from "@photasa/common";

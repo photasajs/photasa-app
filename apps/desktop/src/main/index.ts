@@ -27,7 +27,7 @@ import "./deity";
 /**
  * 导入太乙适配器，确保@Adapter装饰器被执行
  */
-import "@engines/adapters";
+import "@main/engines/adapters";
 
 const logger = loggers.main;
 
