@@ -4,6 +4,7 @@ import { globalLogInterceptor, type LogEntry } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
+import { LOG_VIEWER_STATUS_TYPE, WORKER_LOG_CHANNEL } from "@main/workers/worker-log-viewer-bridge";
 
 const logger = loggers.main;
 
@@ -53,7 +54,7 @@ export default class LogViewerService implements IService {
         });
 
         // 处理Worker日志
-        this.ipcMain.on("worker:log", (_, entry: LogEntry) => {
+        this.ipcMain.on(WORKER_LOG_CHANNEL, (_, entry: LogEntry) => {
             if (this.isActive) {
                 // 转发给前端
                 this.mainWindow.webContents.send("log:entry", entry);
@@ -75,7 +76,7 @@ export default class LogViewerService implements IService {
         // 清理 IPC 处理器
         this.ipcMain.removeHandler("log:viewer-open");
         this.ipcMain.removeHandler("log:viewer-close");
-        this.ipcMain.removeAllListeners("worker:log");
+        this.ipcMain.removeAllListeners(WORKER_LOG_CHANNEL);
 
         // 注销全局快捷键
         globalShortcut.unregister("CommandOrControl+Shift+L");
@@ -153,7 +154,7 @@ export default class LogViewerService implements IService {
         this.workers.forEach((worker) => {
             if (worker && worker.postMessage) {
                 worker.postMessage({
-                    type: "log:viewer-status",
+                    type: LOG_VIEWER_STATUS_TYPE,
                     active,
                 });
             }
@@ -167,7 +168,7 @@ export default class LogViewerService implements IService {
         // 如果日志查看器已激活，立即通知该worker
         if (this.isActive) {
             worker.postMessage({
-                type: "log:viewer-status",
+                type: LOG_VIEWER_STATUS_TYPE,
                 active: true,
             });
         }

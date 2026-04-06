@@ -222,13 +222,16 @@ describe("scan-helpers", () => {
             const startTime = Date.now() - 5000;
             const fileCount = 10;
 
+            const beforeCall = Date.now();
             const result = createCacheUpdateData(folderPath, startTime, fileCount);
+            const afterCall = Date.now();
 
             expect(result.folderPath).toBe(folderPath);
             expect(result.fileCount).toBe(fileCount);
             expect(result.duration).toBeGreaterThan(4900);
             expect(result.duration).toBeLessThan(5100);
-            expect(result.scanTime).toBeGreaterThan(Date.now() - 100);
+            expect(result.scanTime).toBeGreaterThanOrEqual(beforeCall);
+            expect(result.scanTime).toBeLessThanOrEqual(afterCall);
         });
 
         it("应该使用默认文件数量0", () => {

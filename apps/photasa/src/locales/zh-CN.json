@@ -632,7 +632,8 @@
             "videos": "{count} 个视频",
             "mixed": "{images} 张图片，{videos} 个视频",
             "empty": "无文件"
-        }
+        },
+        "placeholderThumbnail": "占位预览"
     },
     "imageInfo": {
         "title": "图片信息",

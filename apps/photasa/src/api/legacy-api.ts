@@ -27,21 +27,21 @@ import {
 
 const NOT_IMPLEMENTED = "Tauri: not implemented";
 
-/** Tauri：更新事件取消订阅（供 removeAllUpdateListeners） */
+/** Tauri：更新事件取消订阅（供 removeAllUpdateListeners）；用 globalThis 以便 Vitest/node 与 webview 一致 */
 function getUpdateUnsubs(): Array<() => void> {
-    const w = window as unknown as { __photasaUpdateUnsubs?: Array<() => void> };
-    if (!w.__photasaUpdateUnsubs) w.__photasaUpdateUnsubs = [];
-    return w.__photasaUpdateUnsubs;
+    const g = globalThis as unknown as { __photasaUpdateUnsubs?: Array<() => void> };
+    if (!g.__photasaUpdateUnsubs) g.__photasaUpdateUnsubs = [];
+    return g.__photasaUpdateUnsubs;
 }
 
 /** 与 `src-tauri/commands/import_legacy.rs` 中 `IMPORT_PHOTOS_LEGACY_EVENT` 一致（仅桥接，无业务逻辑） */
 const IMPORT_PHOTOS_LEGACY_EVENT = "picasa:import-photos-legacy" as const;
 
-/** Tauri：导入事件取消订阅收集（供 removeImportListeners） */
+/** Tauri：导入事件取消订阅收集（供 removeImportListeners）；用 globalThis 以便 Vitest/node 与 webview 一致 */
 function getImportUnsubs(): Array<() => void> {
-    const w = window as unknown as { __photasaImportUnsubs?: Array<() => void> };
-    if (!w.__photasaImportUnsubs) w.__photasaImportUnsubs = [];
-    return w.__photasaImportUnsubs;
+    const g = globalThis as unknown as { __photasaImportUnsubs?: Array<() => void> };
+    if (!g.__photasaImportUnsubs) g.__photasaImportUnsubs = [];
+    return g.__photasaImportUnsubs;
 }
 
 function stubAsync<T = never>(): Promise<T> {
@@ -66,6 +66,16 @@ function parseIsoDate(value: unknown): Date {
     if (value instanceof Date) return value;
     if (typeof value === "string" || typeof value === "number") return new Date(value);
     return new Date(0);
+}
+
+/** RFC 0093：Rust 事件 JSON 中 `created` 为 RFC3339 字符串，与 Electron preload 传入的 `Date` 对齐 */
+function normalizeImportPhotosActionFromRust(action: unknown): unknown {
+    if (!action || typeof action !== "object") return action;
+    const a = { ...(action as Record<string, unknown>) };
+    if ("created" in a && a.created != null && !(a.created instanceof Date)) {
+        a.created = parseIsoDate(a.created);
+    }
+    return a;
 }
 
 function normalizeUndoPreviewFromRust(raw: unknown, fallbackId: string): UndoPreview {
@@ -266,30 +276,43 @@ export function createLegacyApi(): Record<string, unknown> {
             if (!isTauri()) return (window as any).electronAPI?.api?.importPhotos?.(paths, target, callback);
             // RFC 0093：复制与遍历在 Rust `import_photos_legacy`；此处仅 invoke + 事件转发
             void (async () => {
-                const invoke = await ensureInvoke();
-                const { listen } = await import("@tauri-apps/api/event");
-                const sessionId = await invoke<string>("import_photos_legacy", { folders: paths, target });
-                const unlisten = await listen<{
-                    sessionId: string;
-                    type: string;
-                    error?: string | null;
-                    action: unknown;
-                }>(IMPORT_PHOTOS_LEGACY_EVENT, (event) => {
-                    const payload = event.payload;
-                    if (payload.sessionId !== sessionId) return;
-                    if (payload.type === "next") {
-                        callback({ type: "next", error: null, action: payload.action });
-                    } else if (payload.type === "error") {
-                        callback({
-                            type: "error",
-                            error: payload.error ?? "unknown",
-                            action: {},
-                        });
-                    } else if (payload.type === "complete") {
-                        callback({ type: "complete", error: null, action: {} });
-                        unlisten();
-                    }
-                });
+                try {
+                    const invoke = await ensureInvoke();
+                    const { listen } = await import("@tauri-apps/api/event");
+                    const sessionId = await invoke<string>("import_photos_legacy", { folders: paths, target });
+                    const unlisten = await listen<{
+                        sessionId: string;
+                        type: string;
+                        error?: string | null;
+                        action: unknown;
+                    }>(IMPORT_PHOTOS_LEGACY_EVENT, (event) => {
+                        const payload = event.payload;
+                        if (payload.sessionId !== sessionId) return;
+                        if (payload.type === "next") {
+                            callback({
+                                type: "next",
+                                error: null,
+                                action: normalizeImportPhotosActionFromRust(payload.action),
+                            });
+                        } else if (payload.type === "error") {
+                            callback({
+                                type: "error",
+                                error: payload.error ?? "unknown",
+                                action: {},
+                            });
+                        } else if (payload.type === "complete") {
+                            callback({ type: "complete", error: null, action: {} });
+                            unlisten();
+                            const subs = getImportUnsubs();
+                            const ix = subs.lastIndexOf(unlisten);
+                            if (ix >= 0) subs.splice(ix, 1);
+                        }
+                    });
+                    getImportUnsubs().push(unlisten);
+                } catch (e) {
+                    const msg = e instanceof Error ? e.message : String(e);
+                    callback({ type: "error", error: msg, action: {} });
+                }
             })();
             return undefined;
         },
@@ -405,6 +428,17 @@ export function createLegacyApi(): Record<string, unknown> {
             return invoke("unmaximize_window");
         },
         closeWindow: () => api.window.close(),
+        /** RFC 0099：Tauri 调 Rust `reload_window`；Electron 无 preload 项时用 `location.reload` */
+        reloadWindow: () => {
+            if (!isTauri()) {
+                const elApi = (window as { electronAPI?: { api?: { reloadWindow?: () => Promise<void> } } })
+                    .electronAPI?.api;
+                if (typeof elApi?.reloadWindow === "function") return elApi.reloadWindow();
+                window.location.reload();
+                return Promise.resolve();
+            }
+            return ensureInvoke().then((invoke) => invoke<void>("reload_window"));
+        },
         queryMaximized: () => api.window.isMaximized(),
         onWindowMaximized: (cb: (...args: any[]) => void) => {
             import("@tauri-apps/api/event").then(({ listen }) => {

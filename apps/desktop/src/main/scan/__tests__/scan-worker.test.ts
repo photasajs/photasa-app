@@ -7,18 +7,30 @@ const mockParentPort = vi.hoisted(() => ({
     on: vi.fn(),
 }));
 
+// Mock workspace 包时使用 hoisted 引用，避免 await import 触发 Vite 解析未构建的 dist
+const mockIsImageFile = vi.hoisted(() => vi.fn());
+const mockIsVideoFile = vi.hoisted(() => vi.fn());
+const mockShouldProcessFile = vi.hoisted(() => vi.fn());
+const mockScanPhotos = vi.hoisted(() =>
+    vi.fn(() => ({
+        subscribe: vi.fn(),
+    })),
+);
+const mockProcessMediaFileExport = vi.hoisted(() => vi.fn());
+const mockGetWorkerPool = vi.hoisted(() => vi.fn());
+const mockAddToPhotasaConfig = vi.hoisted(() => vi.fn());
+const mockRemoveFromPhotoList = vi.hoisted(() => vi.fn());
+const mockWorkerPool = vi.hoisted(() => vi.fn());
+
 // Mock all dependencies
 vi.mock("worker_threads", () => ({
     default: {},
     parentPort: mockParentPort,
 }));
 
-vi.mock("is-image", () => ({
-    default: vi.fn(),
-}));
-
-vi.mock("is-video", () => ({
-    default: vi.fn(),
+vi.mock("@photasa/import", () => ({
+    isImageFile: mockIsImageFile,
+    isVideoFile: mockIsVideoFile,
 }));
 
 vi.mock("fs-extra", () => ({
@@ -29,23 +41,19 @@ vi.mock("fs-extra", () => ({
 }));
 
 vi.mock("@photasa/scan", () => ({
-    shouldProcessFile: vi.fn(),
-    scanPhotos: vi.fn(() => ({
-        subscribe: vi.fn(),
-    })),
-    processMediaFile: vi.fn(),
-    getWorkerPool: vi.fn(),
+    shouldProcessFile: mockShouldProcessFile,
+    scanPhotos: mockScanPhotos,
+    processMediaFile: mockProcessMediaFileExport,
+    getWorkerPool: mockGetWorkerPool,
 }));
 
 vi.mock("@photasa/config-core", () => ({
-    addToPhotasaConfig: vi.fn(),
-    removeFromPhotoList: vi.fn(),
+    addToPhotasaConfig: mockAddToPhotasaConfig,
+    removeFromPhotoList: mockRemoveFromPhotoList,
 }));
 
 vi.mock("../../workers/worker-pool", () => ({
-    WorkerPool: vi.fn().mockImplementation(() => ({
-        addTask: vi.fn(),
-    })),
+    WorkerPool: mockWorkerPool,
 }));
 
 vi.mock("../../thumbnail/thumbnail-worker?nodeWorker", () => ({
@@ -75,13 +83,8 @@ vi.mock("@photasa/common", () => ({
     getAppPath: vi.fn(() => "/mock/app/path"),
 }));
 
-// Get mocked functions
-const mockIsImage = vi.mocked(await import("is-image")).default;
-const mockIsVideo = vi.mocked(await import("is-video")).default;
+// Get mocked functions（fs-extra 为 npm 包，动态 import 可正常解析）
 const mockFs = vi.mocked(await import("fs-extra")).default;
-const mockShouldProcessFile = vi.mocked(await import("@photasa/scan")).shouldProcessFile;
-const mockAddToPhotasaConfig = vi.mocked(await import("@photasa/config-core")).addToPhotasaConfig;
-const mockRemoveFromPhotoList = vi.mocked(await import("@photasa/config-core")).removeFromPhotoList;
 
 // Create mock logger that matches PhotasaLogger interface
 const mockLogger = {
@@ -106,7 +109,6 @@ const mockLogger = {
     clearContext: vi.fn(),
     setParseCallStackFunction: vi.fn(),
 } as any;
-const mockWorkerPool = vi.mocked(await import("../../workers/worker-pool")).WorkerPool;
 
 // Test implementation of worker logic
 async function executeWorkerLogic(requestId: string, scan: ScanAction): Promise<void> {
@@ -114,7 +116,7 @@ async function executeWorkerLogic(requestId: string, scan: ScanAction): Promise<
 
     try {
         if (operationType === "file") {
-            if (mockIsImage(filePath) || mockIsVideo(filePath)) {
+            if (mockIsImageFile(filePath) || mockIsVideoFile(filePath)) {
                 await processMediaFile(requestId, filePath, action);
             } else {
                 mockParentPort.postMessage({
@@ -231,8 +233,8 @@ describe("Scan Worker Logic", () => {
                 operationType: "file",
             };
 
-            mockIsImage.mockReturnValue(false);
-            mockIsVideo.mockReturnValue(false);
+            mockIsImageFile.mockReturnValue(false);
+            mockIsVideoFile.mockReturnValue(false);
 
             await executeWorkerLogic("test-request-1", scanAction);
 
@@ -256,8 +258,8 @@ describe("Scan Worker Logic", () => {
                 operationType: "file",
             };
 
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
+            mockIsImageFile.mockReturnValue(true);
+            mockIsVideoFile.mockReturnValue(false);
             vi.mocked(mockFs.existsSync).mockReturnValue(false); // No existing thumbnail
 
             await executeWorkerLogic("test-request-2", scanAction);
@@ -287,8 +289,8 @@ describe("Scan Worker Logic", () => {
                 operationType: "file",
             };
 
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
+            mockIsImageFile.mockReturnValue(true);
+            mockIsVideoFile.mockReturnValue(false);
             mockShouldProcessFile.mockResolvedValue(false); // File should not be processed
 
             await executeWorkerLogic("test-request-4", scanAction);
@@ -312,8 +314,8 @@ describe("Scan Worker Logic", () => {
                 operationType: "file",
             };
 
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
+            mockIsImageFile.mockReturnValue(true);
+            mockIsVideoFile.mockReturnValue(false);
             vi.mocked(mockFs.existsSync).mockReturnValue(true); // Thumbnail exists
 
             await executeWorkerLogic("test-request-6", scanAction);
@@ -360,8 +362,8 @@ describe("Scan Worker Logic", () => {
                 operationType: "file",
             };
 
-            mockIsImage.mockReturnValue(true);
-            mockIsVideo.mockReturnValue(false);
+            mockIsImageFile.mockReturnValue(true);
+            mockIsVideoFile.mockReturnValue(false);
             mockShouldProcessFile.mockRejectedValue(new Error("Processing error"));
 
             await executeWorkerLogic("test-request-8", scanAction);

@@ -33,6 +33,7 @@ import type {
     IZhangSunWuJiService,
     MenuActionPayload,
 } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
+import { MENU_KEY_VIEW_FORCE_RELOAD, MENU_KEY_VIEW_RELOAD } from "../../constants/menu-keys";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import {
     ZOUZHE_MATTERS,
@@ -201,6 +202,16 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
         logger.info(`📋 长孙无忌：收到菜单点击事件，处理 ${payload.key}`);
 
         try {
+            // 0. 重新加载：Tauri 系统菜单仅回传 `key`（无 role），须在此显式 invoke（RFC 0099）
+            if (payload.key === MENU_KEY_VIEW_RELOAD || payload.key === MENU_KEY_VIEW_FORCE_RELOAD) {
+                void Promise.resolve((window as { api?: { reloadWindow?: () => Promise<void> } }).api?.reloadWindow?.()).catch(
+                    (err: unknown) => {
+                        logger.error(`📋 长孙无忌：重新加载失败（${payload.key}）`, err);
+                    },
+                );
+                return;
+            }
+
             // 1. 有 role 的菜单项：由 Electron 自动处理，无需额外操作
             if (payload.role) {
                 logger.debug(

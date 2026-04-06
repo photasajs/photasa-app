@@ -250,13 +250,13 @@ describe("Real Video Files Tests", () => {
                 expect(result.creationTime).toBeDefined();
             }
 
-            // Validate that we get a reasonable date (not too far in the past, not in the future)
+            // 合理区间：不能太新（未来）；过去下界用固定早年份，避免「N 年前」随日历年滚动把 2023 样例误判为过时
             if (result.creationTime) {
                 const now = new Date();
-                const twoYearsAgo = new Date(now.getFullYear() - 2, 0, 1); // More lenient range
+                const notBefore = new Date(2000, 0, 1);
                 const futureDate = new Date(now.getFullYear() + 1, 0, 1);
 
-                expect(result.creationTime.getTime()).toBeGreaterThan(twoYearsAgo.getTime());
+                expect(result.creationTime.getTime()).toBeGreaterThan(notBefore.getTime());
                 expect(result.creationTime.getTime()).toBeLessThan(futureDate.getTime());
             }
         });

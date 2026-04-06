@@ -8,7 +8,7 @@
   * [🔴 Zouzhe工作流开发指南](architecture/zouzhe-workflow-guide.md)
 
 * **RFC 文档**
-  * [RFC 索引](rfc/README.md)
+  * [RFC / ROADMAP](../ROADMAP.md)
   * **进行中**
     * [RFC 0032: 千里眼扫描引擎](rfc/0032-qianliyan-scan-engine.md)
     * [RFC 0042: scanningFolder迁移](rfc/0042-scanning-folder-migration.md)

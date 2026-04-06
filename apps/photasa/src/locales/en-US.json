@@ -592,7 +592,8 @@
             "videos": "{count} videos",
             "mixed": "{images} images, {videos} videos",
             "empty": "No files"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "Image Info",

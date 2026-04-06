@@ -5,11 +5,12 @@
  * - 图片（JPEG/PNG/WebP/BMP/GIF/TIFF）：用 `image` crate 缩放
  * - HEIC/HEIF/AVIF：用 `libheif-rs` 解码后缩放
  * - 视频：`ffmpeg-next`（libav）约 1s 处截帧并缩放
- * - RAW：暂不支持（需专用解码器）
+ * - RAW：无专用解码器时输出 JPEG 占位图（RFC 0102，`fallback: true`）
  * - 删除：直接移除目标文件
  */
 use std::path::Path;
 
+use image::ImageBuffer;
 use libheif_rs::{ColorSpace, HeifContext, LibHeif, RgbChroma};
 use serde::{Deserialize, Serialize};
 
@@ -34,14 +35,21 @@ pub struct ThumbnailResponse {
     pub success: bool,
     pub file: Option<String>,
     pub error: Option<String>,
+    /// 为 true 时表示为占位/回退缩略图（如 RAW），前端可选提示
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fallback: Option<bool>,
 }
 
 impl ThumbnailResponse {
     fn ok(file: String) -> Self {
-        Self { success: true, file: Some(file), error: None }
+        Self { success: true, file: Some(file), error: None, fallback: None }
+    }
+    /// RAW 等无解码器路径：成功写入占位 JPEG
+    fn ok_fallback(file: String) -> Self {
+        Self { success: true, file: Some(file), error: None, fallback: Some(true) }
     }
     fn err(msg: impl Into<String>) -> Self {
-        Self { success: false, file: None, error: Some(msg.into()) }
+        Self { success: false, file: None, error: Some(msg.into()), fallback: None }
     }
 }
 
@@ -131,10 +139,46 @@ pub async fn create_thumbnail(request: ThumbnailRequest) -> ThumbnailResponse {
             .await
             .unwrap_or_else(|e| ThumbnailResponse::err(format!("线程异常: {e}")))
     } else if RAW_EXTS.contains(&e.as_str()) {
-        ThumbnailResponse::err(format!("暂不支持 RAW 格式（{e}）缩略图"))
+        let req = ThumbnailRequest {
+            path: request.path.clone(),
+            thumbnail: request.thumbnail.clone(),
+            width: request.width,
+            height: request.height,
+            without_enlargement: request.without_enlargement,
+            preview: request.preview.clone(),
+            always: request.always,
+        };
+        tokio::task::spawn_blocking(move || make_raw_placeholder_thumbnail(&req.thumbnail, &req))
+            .await
+            .unwrap_or_else(|e| ThumbnailResponse::err(format!("线程异常: {e}")))
     } else {
         ThumbnailResponse::err(format!("未知文件类型: {e}"))
     }
+}
+
+// ============================================================
+// RAW 占位缩略图（纯 Rust，无外部 RAW 解码器）
+// ============================================================
+
+fn make_raw_placeholder_thumbnail(dst: &str, req: &ThumbnailRequest) -> ThumbnailResponse {
+    let w = req.width.unwrap_or(256).max(1);
+    let h = req.height.unwrap_or(256).max(1);
+    let img: image::RgbImage =
+        ImageBuffer::from_fn(w, h, |_, _| image::Rgb([110u8, 112, 118]));
+    if let Err(e) = img.save(dst) {
+        return ThumbnailResponse::err(format!("保存 RAW 占位缩略图失败: {e}"));
+    }
+    if let Some(preview_path) = &req.preview {
+        if let Some(parent) = Path::new(preview_path).parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let pw = 512u32;
+        let ph = 512u32;
+        let pimg: image::RgbImage =
+            ImageBuffer::from_fn(pw, ph, |_, _| image::Rgb([110u8, 112, 118]));
+        let _ = pimg.save(preview_path);
+    }
+    ThumbnailResponse::ok_fallback(dst.to_string())
 }
 
 // ============================================================
@@ -303,5 +347,33 @@ pub async fn remove_thumbnail(request: ThumbnailRequest) -> ThumbnailResponse {
     match std::fs::remove_file(dst) {
         Ok(_) => ThumbnailResponse::ok(dst.clone()),
         Err(e) => ThumbnailResponse::err(format!("删除失败: {e}")),
+    }
+}
+
+#[cfg(test)]
+mod raw_placeholder_tests {
+    use super::*;
+    use uuid::Uuid;
+
+    #[test]
+    fn raw_placeholder_writes_file_and_sets_fallback() {
+        let dir = std::env::temp_dir().join(format!("photasa-raw-thumb-{}", Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).expect("mkdir");
+        let dst = dir.join("thumb.jpg");
+        let dst_str = dst.to_string_lossy().to_string();
+        let req = ThumbnailRequest {
+            path: "/fake/sample.cr2".into(),
+            thumbnail: dst_str.clone(),
+            width: Some(64),
+            height: Some(48),
+            without_enlargement: Some(true),
+            preview: None,
+            always: Some(true),
+        };
+        let res = make_raw_placeholder_thumbnail(&dst_str, &req);
+        assert!(res.success, "{res:?}");
+        assert_eq!(res.fallback, Some(true));
+        assert!(Path::new(&dst_str).exists());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

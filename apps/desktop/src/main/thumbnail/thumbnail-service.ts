@@ -6,6 +6,7 @@ import { sendWorkerTask, onWorkerResponse, Worker } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
+import { WORKER_LOG_CHANNEL } from "@main/workers/worker-log-viewer-bridge";
 
 /**
  * 缩略图 worker 类型
@@ -77,17 +78,14 @@ export default class ThumbnailService implements IService {
                 const data = message as any; // 临时使用any类型，因为消息可能包含额外字段
 
                 // 为不同类型的消息提供更清晰的日志
-                if (data.type === "worker:log") {
-                    // 处理 worker 日志消息，通过 IPC 发送给 LogViewerService
+                if (data.type === WORKER_LOG_CHANNEL) {
                     if (logViewerService) {
-                        // 使用 IPC 发送，让 LogViewerService 统一处理
-                        this.ipc.emit("worker:log", null, data.entry);
+                        this.ipc.emit(WORKER_LOG_CHANNEL, null, data.entry);
                     }
-                    // 为 worker:log 提供简洁的调试日志
                     logger.debug(
                         `[ThumbnailService] Worker log [${data.entry?.level?.toUpperCase()}]: ${data.entry?.message || "N/A"}`,
                     );
-                    return; // worker:log 消息不需要进一步处理
+                    return;
                 }
 
                 // 处理标准的 thumbnail 响应消息

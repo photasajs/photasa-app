@@ -520,7 +520,8 @@
             "videos": "{count} 個影片",
             "mixed": "{images} 張圖片，{videos} 個影片",
             "empty": "無檔案"
-        }
+        },
+        "placeholderThumbnail": "佔位預覽"
     },
     "imageInfo": {
         "title": "圖片資訊",

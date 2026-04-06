@@ -1,11 +1,12 @@
 //! JPEG/TIFF EXIF enrichment for `extract_metadata`（`kamadak-exif`，对齐常见 EXIF 标签）
 
-use chrono::{Local, NaiveDateTime};
+use chrono::{DateTime, Datelike, Local, NaiveDateTime, Utc};
 use exif::{Exif, Reader, Tag, Value as ExifValue};
 use serde_json::{json, Map, Value};
 use std::fs::File;
 use std::io::{Cursor, Read};
 use std::path::Path;
+use std::time::SystemTime;
 
 fn read_file_bytes(path: &Path) -> Option<Vec<u8>> {
     let mut f = File::open(path).ok()?;
@@ -52,6 +53,27 @@ fn parse_exif_datetime(s: &str) -> Option<String> {
     Some(local.to_rfc3339())
 }
 
+/// 读取 EXIF 中第一个 rational，转为 `num/denom` 浮点（用于焦距、光圈、`ExposureTime` 秒数等）
+fn first_rational_as_f64(v: &ExifValue) -> Option<f64> {
+    match v {
+        ExifValue::Rational(parts) => {
+            let r = parts.first()?;
+            let d = r.denom.max(1);
+            Some(f64::from(r.num) / f64::from(d))
+        }
+        _ => None,
+    }
+}
+
+/// ISO / 感光度：常见为 `PhotographicSensitivity` Short，部分机型为 Long
+fn iso_from_exif_value(v: &ExifValue) -> Option<u32> {
+    match v {
+        ExifValue::Short(parts) => parts.first().map(|&x| u32::from(x)),
+        ExifValue::Long(parts) => parts.first().copied(),
+        _ => None,
+    }
+}
+
 fn apply_parsed(exif: &Exif, out: &mut Value) {
     let mut datetime_raw: Option<String> = None;
     let mut gps_lat: Option<&ExifValue> = None;
@@ -61,6 +83,12 @@ fn apply_parsed(exif: &Exif, out: &mut Value) {
     let mut gps_alt: Option<&ExifValue> = None;
     let mut make: Option<String> = None;
     let mut model: Option<String> = None;
+    let mut lens: Option<String> = None;
+    let mut iso_primary: Option<u32> = None;
+    let mut iso_fallback: Option<u32> = None;
+    let mut focal_mm: Option<f64> = None;
+    let mut aperture: Option<f64> = None;
+    let mut shutter_sec: Option<f64> = None;
 
     for f in exif.fields() {
         match f.tag {
@@ -89,9 +117,41 @@ fn apply_parsed(exif: &Exif, out: &mut Value) {
                     model = ascii_first(&f.value);
                 }
             }
+            Tag::LensModel => {
+                if lens.is_none() {
+                    lens = ascii_first(&f.value);
+                }
+            }
+            Tag::PhotographicSensitivity | Tag::RecommendedExposureIndex => {
+                if iso_primary.is_none() {
+                    iso_primary = iso_from_exif_value(&f.value);
+                }
+            }
+            Tag::ISOSpeed | Tag::StandardOutputSensitivity => {
+                if iso_fallback.is_none() {
+                    iso_fallback = iso_from_exif_value(&f.value);
+                }
+            }
+            Tag::FocalLength => {
+                if focal_mm.is_none() {
+                    focal_mm = first_rational_as_f64(&f.value);
+                }
+            }
+            Tag::FNumber => {
+                if aperture.is_none() {
+                    aperture = first_rational_as_f64(&f.value);
+                }
+            }
+            Tag::ExposureTime => {
+                if shutter_sec.is_none() {
+                    shutter_sec = first_rational_as_f64(&f.value);
+                }
+            }
             _ => {}
         }
     }
+
+    let iso = iso_primary.or(iso_fallback);
 
     let Some(root) = out.as_object_mut() else {
         return;
@@ -135,7 +195,14 @@ fn apply_parsed(exif: &Exif, out: &mut Value) {
         }
     }
 
-    if make.is_some() || model.is_some() {
+    let has_camera_info = make.is_some()
+        || model.is_some()
+        || lens.is_some()
+        || iso.is_some()
+        || focal_mm.is_some()
+        || aperture.is_some()
+        || shutter_sec.is_some();
+    if has_camera_info {
         let mut cam = Map::new();
         if let Some(s) = make {
             cam.insert("make".to_string(), json!(s));
@@ -143,11 +210,76 @@ fn apply_parsed(exif: &Exif, out: &mut Value) {
         if let Some(s) = model {
             cam.insert("model".to_string(), json!(s));
         }
+        if let Some(s) = lens {
+            cam.insert("lens".to_string(), json!(s));
+        }
+        if let Some(i) = iso {
+            cam.insert("iso".to_string(), json!(i));
+        }
+        if let Some(f) = focal_mm {
+            cam.insert("focalLength".to_string(), json!(f));
+        }
+        if let Some(a) = aperture {
+            cam.insert("aperture".to_string(), json!(a));
+        }
+        if let Some(s) = shutter_sec {
+            cam.insert("shutterSpeed".to_string(), json!(s));
+        }
         root.insert("cameraInfo".to_string(), Value::Object(cam));
     }
 }
 
-/// 若文件含可读 EXIF，向 `out` 写入 `dateTime`（RFC3339）、`dateSource: exif`、`gpsInfo`、`cameraInfo`
+/// 读取 EXIF 中 `DateTimeOriginal` / `DateTime`，解析为本地时区时刻（与 preload `checkExifDate` 一致）
+fn read_exif_capture_local(path: &Path) -> Option<DateTime<Local>> {
+    let buf = read_file_bytes(path)?;
+    let mut cursor = Cursor::new(buf);
+    let exif = Reader::new().read_from_container(&mut cursor).ok()?;
+    let mut datetime_raw: Option<String> = None;
+    for f in exif.fields() {
+        match f.tag {
+            Tag::DateTimeOriginal => {
+                if datetime_raw.is_none() {
+                    datetime_raw = ascii_first(&f.value);
+                }
+            }
+            Tag::DateTime => {
+                if datetime_raw.is_none() {
+                    datetime_raw = ascii_first(&f.value);
+                }
+            }
+            _ => {}
+        }
+    }
+    let asc = datetime_raw?;
+    let naive = NaiveDateTime::parse_from_str(asc.trim(), "%Y:%m:%d %H:%M:%S").ok()?;
+    naive.and_local_timezone(Local).single()
+}
+
+/// RFC 0093：与 Electron `preload/exif-helper.resolveExifDate` + `moment(..., "YYYY/YYYYMMDD")` 一致。
+/// 仅**图片**写入 `年/年日月日` 子目录（`apps/desktop/src/preload/__tests__/exif-helper.spec.ts` 的 `^\d{4}/\d{8}$`）；**视频**返回 `None`，文件落在目标根目录（与 preload 中 `checkExifDate` 拒识视频后 `targetName` 为空一致）。
+pub(crate) fn legacy_import_target_name(
+    path: &Path,
+    is_image: bool,
+    meta: &std::fs::Metadata,
+) -> Option<String> {
+    if !is_image {
+        return None;
+    }
+    let local_dt: DateTime<Local> = if let Some(dt) = read_exif_capture_local(path) {
+        dt
+    } else {
+        let st: SystemTime = meta.created().ok().or_else(|| meta.modified().ok())?;
+        let utc: DateTime<Utc> = st.into();
+        utc.with_timezone(&Local)
+    };
+    Some(format!(
+        "{}/{}",
+        local_dt.year(),
+        local_dt.format("%Y%m%d")
+    ))
+}
+
+/// 若文件含可读 EXIF，向 `out` 写入 `dateTime`（RFC3339）、`dateSource: exif`、`gpsInfo`、`cameraInfo`（含 lens / iso / focalLength / aperture / shutterSpeed 等，对齐 `@photasa/common` 的 `CameraInfo`）
 pub(crate) fn enrich_from_exif(path: &Path, out: &mut Value) {
     let bytes = match read_file_bytes(path) {
         Some(b) => b,
@@ -159,4 +291,56 @@ pub(crate) fn enrich_from_exif(path: &Path, out: &mut Value) {
         Err(_) => return,
     };
     apply_parsed(&exif, out);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use exif::Rational;
+    use regex::Regex;
+    use std::fs;
+    use uuid::Uuid;
+
+    #[test]
+    fn legacy_import_target_name_video_returns_none() {
+        let dir = std::env::temp_dir().join(format!("photasa-legacy-vid-{}", Uuid::new_v4()));
+        fs::create_dir_all(&dir).expect("mkdir");
+        let p = dir.join("clip.mp4");
+        fs::write(&p, []).expect("write");
+        let meta = fs::metadata(&p).expect("meta");
+        assert!(legacy_import_target_name(&p, false, &meta).is_none());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn legacy_import_target_name_image_matches_yyyy_slash_yyyymmdd() {
+        let dir = std::env::temp_dir().join(format!("photasa-legacy-img-{}", Uuid::new_v4()));
+        fs::create_dir_all(&dir).expect("mkdir");
+        let p = dir.join("n.jpg");
+        // 最小 JPEG SOI/EOI，无 EXIF，应回退到文件元数据时间
+        fs::write(&p, [0xff, 0xd8, 0xff, 0xd9]).expect("write");
+        let meta = fs::metadata(&p).expect("meta");
+        let name = legacy_import_target_name(&p, true, &meta).expect("target name");
+        assert!(
+            Regex::new(r"^\d{4}/\d{8}$").unwrap().is_match(&name),
+            "unexpected {name}"
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn first_rational_as_f64_exposure_one_two_fiftieth() {
+        let v = ExifValue::Rational(vec![Rational {
+            num: 1,
+            denom: 250,
+        }]);
+        let sec = first_rational_as_f64(&v).expect("rational");
+        assert!((sec - (1.0 / 250.0)).abs() < 1e-9);
+    }
+
+    #[test]
+    fn iso_from_short() {
+        let v = ExifValue::Short(vec![400]);
+        assert_eq!(iso_from_exif_value(&v), Some(400));
+    }
 }

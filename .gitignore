@@ -54,6 +54,9 @@ guide
 # Vite cache and build artifacts
 .vite/
 
+# Vitest local storage roots (e.g. shunfenger engine tests)
+.vitest/
+
 # VitePress build artifacts
 .vitepress/.temp
 .vitepress/cache

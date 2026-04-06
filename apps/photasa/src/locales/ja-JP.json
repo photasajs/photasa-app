@@ -551,7 +551,8 @@
             "videos": "{count}件の動画",
             "mixed": "画像{images}枚、動画{videos}件",
             "empty": "ファイルなし"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "画像情報",

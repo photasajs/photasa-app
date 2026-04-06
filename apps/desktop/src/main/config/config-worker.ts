@@ -3,6 +3,10 @@ import { queryConfig, addConfig, removeConfig } from "@photasa/config-core";
 import { WorkerError, handleError } from "@photasa/common";
 import type { ConfigRequest, ConfigResponse, ConfigHandlers } from "@photasa/common";
 import { loggers } from "@photasa/common";
+import {
+    createWorkerLogViewerBridge,
+    handleLogViewerStatusMessage,
+} from "../workers/worker-log-viewer-bridge";
 
 const port = parentPort;
 if (!port) {
@@ -14,34 +18,19 @@ if (!port) {
 
 const logger = loggers.config;
 
-// 日志查看器状态
-let logViewerActive = false;
+const CONFIG_WORKER_THREAD_ID = "config-worker";
 
-/**
- * 包装日志函数以支持日志查看器
- * @param level - 日志级别
- * @param category - 日志分类
- * @param message - 日志消息
- */
-function workerLog(level: "debug" | "info" | "warn" | "error", category: string, message: string) {
-    // 正常输出到控制台
-    logger[level](message);
-
-    // 仅在日志查看器激活时上报
-    if (logViewerActive && port) {
-        port.postMessage({
-            type: "worker:log",
-            entry: {
-                timestamp: new Date().toISOString(),
-                level,
-                category,
-                message,
-                source: "worker",
-                threadId: "config-worker",
-            },
-        });
-    }
-}
+const configLogBridge = createWorkerLogViewerBridge({
+    port,
+    baseLogger: {
+        debug: (m) => logger.debug(m),
+        info: (m) => logger.info(m),
+        warn: (m) => logger.warn(m),
+        error: (m) => logger.error(m),
+    },
+    threadId: CONFIG_WORKER_THREAD_ID,
+});
+const { workerLog, createCategoryLogger } = configLogBridge;
 
 const handler: ConfigHandlers = {
     query: queryConfig,
@@ -50,14 +39,7 @@ const handler: ConfigHandlers = {
 };
 
 port?.on("message", (message: any) => {
-    // 处理日志查看器状态消息
-    if (message.type === "log:viewer-status") {
-        logViewerActive = message.active;
-        workerLog(
-            "debug",
-            "config-worker",
-            `Log viewer ${logViewerActive ? "activated" : "deactivated"}`,
-        );
+    if (handleLogViewerStatusMessage(message, configLogBridge, CONFIG_WORKER_THREAD_ID)) {
         return;
     }
 
@@ -79,13 +61,7 @@ port?.on("message", (message: any) => {
             (response: string) => {
                 port?.postMessage(response);
             },
-            // 传递包装的logger以支持LogViewerService
-            {
-                debug: (msg: string) => workerLog("debug", "config-worker", msg),
-                info: (msg: string) => workerLog("info", "config-worker", msg),
-                warn: (msg: string) => workerLog("warn", "config-worker", msg),
-                error: (msg: string) => workerLog("error", "config-worker", msg),
-            } as any,
+            createCategoryLogger(CONFIG_WORKER_THREAD_ID) as any,
         );
     } catch (error) {
         workerLog("error", "config-worker", `Failed to process worker message: ${error}`);

@@ -11,6 +11,10 @@
   - [RFC 0070: 导入服务迁移](./0070-tauri-import-service-migration.md)
   - [RFC 0071: 配置服务迁移](./0071-tauri-config-service-migration.md)
   - [RFC 0072: 天枢服务迁移](./0072-tauri-tianshu-service-migration.md)
+- **Phase 5（1:1 体验与工程补齐，已完成）**:
+  - [RFC 0101: 启动 Splash](./completed/0101-tauri-startup-splash.md)
+  - [RFC 0102: RAW 缩略图占位回退](./completed/0102-tauri-thumbnail-raw-fallback.md)
+  - [RFC 0103: 原生依赖构建策略](./completed/0103-tauri-native-deps-build-strategy.md)
 
 ## 摘要
 

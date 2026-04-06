@@ -122,7 +122,7 @@ class RFCManager {
         console.log(`🔗 Next steps:`);
         console.log(`   1. Edit the RFC file with your proposal`);
         console.log(`   2. Create a pull request for review`);
-        console.log(`   3. Update the RFC index in docs/rfc/README.md`);
+        console.log(`   3. Update TASK_TRACKING.md (and ROADMAP.md if needed)`);
 
         return { number, filename, filepath };
     }

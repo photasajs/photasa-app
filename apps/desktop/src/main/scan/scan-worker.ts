@@ -2,46 +2,34 @@ import { parentPort } from "worker_threads";
 import type { ScanAction } from "@photasa/common";
 import { scanPhotos, processMediaFile, getWorkerPool } from "@photasa/scan";
 import { loggers } from "@photasa/common";
-import isImage from "is-image";
-import isVideo from "is-video";
 import fs from "fs-extra";
 import path from "path";
+import {
+    createWorkerLogViewerBridge,
+    handleLogViewerStatusMessage,
+} from "../workers/worker-log-viewer-bridge";
+import { isPhotasaMediaFile } from "../workers/media-file-guard";
 
 const logger = loggers.scan;
+
+const SCAN_WORKER_THREAD_ID = "scan-worker";
 
 const port = parentPort;
 if (!port) {
     throw new Error("IllegalState");
 }
 
-// 日志查看器状态
-let logViewerActive = false;
-
-/**
- * 包装日志函数以支持日志查看器
- * @param level - 日志级别
- * @param category - 日志分类
- * @param message - 日志消息
- */
-function workerLog(level: "debug" | "info" | "warn" | "error", category: string, message: string) {
-    // 正常输出到控制台
-    logger[level](message);
-
-    // 仅在日志查看器激活时上报
-    if (logViewerActive && port) {
-        port.postMessage({
-            type: "worker:log",
-            entry: {
-                timestamp: new Date().toISOString(),
-                level,
-                category,
-                message,
-                source: "worker",
-                threadId: "scan-worker",
-            },
-        });
-    }
-}
+const scanLogBridge = createWorkerLogViewerBridge({
+    port,
+    baseLogger: {
+        debug: (m) => logger.debug(m),
+        info: (m) => logger.info(m),
+        warn: (m) => logger.warn(m),
+        error: (m) => logger.error(m),
+    },
+    threadId: SCAN_WORKER_THREAD_ID,
+});
+const { workerLog } = scanLogBridge;
 
 /**
  * 注意：Worker 池现在由 scan-photos.ts 统一管理
@@ -189,7 +177,7 @@ async function executeFileOperation(requestId: string, scan: ScanAction): Promis
     workerLog("debug", "scan-worker", `Executing file operation: ${scan.action} for ${filePath}`);
 
     try {
-        const isMediaFile = isImage(filePath) || isVideo(filePath);
+        const isMediaFile = isPhotasaMediaFile(filePath);
 
         if (!isMediaFile) {
             // Non-media file, complete immediately
@@ -259,14 +247,7 @@ export async function execute(requestId: string, scan: ScanAction): Promise<void
  * @param message - 消息
  */
 port.on("message", async (message: any) => {
-    // 处理日志查看器状态消息
-    if (message.type === "log:viewer-status") {
-        logViewerActive = message.active;
-        workerLog(
-            "debug",
-            "scan-worker",
-            `Log viewer ${logViewerActive ? "activated" : "deactivated"}`,
-        );
+    if (handleLogViewerStatusMessage(message, scanLogBridge, SCAN_WORKER_THREAD_ID)) {
         return;
     }
 

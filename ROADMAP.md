@@ -23,11 +23,110 @@ Existing 0067–0073 remain as high-level or per-service docs; new or split work
 
 ---
 
+## RFC 仓库索引（canonical）
+
+RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 为准**；规范正文在 `docs/rfc/*.md` 与 `docs/rfc/completed/*.md`，**不再维护** `docs/rfc/README.md`。
+
+### 统计（维护时随新增 RFC 更新）
+
+| 指标 | 数量（基准日 2026-04-05） |
+|------|---------------------------|
+| RFC 正文 `.md`（含 `completed/`，不含 `README.md`） | 99 |
+| 已归档于 `docs/rfc/completed/` | 60 |
+
+Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Active RFCs** 表为准。
+
+### By version（概览）
+
+- **v2.0.0**：Electron / 主线能力（Implemented 与待办见 `TASK_TRACKING.md`）。
+- **v2.1.0（Tauri migration）**：0067–0073 架构概览 + 下表 **0074+ 一事一 RFC**。
+
+### Tauri 迁移 RFC 系列（架构与服务）
+
+- **主 RFC**：[RFC 0067](docs/rfc/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略  
+- **已完成（服务层）**：[0073](docs/rfc/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](docs/rfc/0068-tauri-scan-service-migration.md) 扫描；[0069](docs/rfc/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](docs/rfc/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](docs/rfc/0071-tauri-config-service-migration.md) 配置；[0072](docs/rfc/0072-tauri-tianshu-service-migration.md) 天枢
+
+**建议实施顺序**：0073（UI+适配）→ 0071 → 0068 → 0069 → 0070 → 0072。
+
+### Tauri small RFCs（0074+）：一事一表
+
+| RFC | Topic | Status |
+|-----|-------|--------|
+| [0074](docs/rfc/completed/0074-tauri-adapter-concept.md) | Tauri adapter concept and env detection | ✅ Implemented |
+| [0075](docs/rfc/completed/0075-tauri-flat-legacy-api-layer.md) | Flat legacy API layer (window.api shape) | ✅ Implemented |
+| [0076](docs/rfc/completed/0076-tauri-path-utilities-rust.md) | Path utilities in Rust (1:1 from Node, zero Node) | ✅ Implemented |
+| [0077](docs/rfc/completed/0077-tauri-get-photasa-config.md) | get_photasa_config command | ✅ Implemented |
+| [0078](docs/rfc/completed/0078-tauri-add-to-photo-list.md) | add_to_photo_list command | ✅ Implemented |
+| [0079](docs/rfc/completed/0079-tauri-remove-from-photo-list.md) | remove_from_photo_list command | ✅ Implemented |
+| [0080](docs/rfc/completed/0080-tauri-reset-photasa-config.md) | reset_photasa_config command | ✅ Implemented |
+| [0081](docs/rfc/completed/0081-tauri-fix-photasa-config.md) | fix_photasa_config command | ✅ Implemented |
+| [0082](docs/rfc/completed/0082-tauri-watch-start-stop-commands.md) | Watch start/stop commands | ✅ Implemented |
+| [0083](docs/rfc/completed/0083-tauri-watch-event-contract.md) | Watch event contract (same names as Electron) | ✅ Implemented |
+| [0084](docs/rfc/completed/0084-tauri-choose-directory.md) | choose_directory command | ✅ Implemented |
+| [0085](docs/rfc/completed/0085-tauri-get-directory.md) | get_directory command | ✅ Implemented |
+| [0086](docs/rfc/completed/0086-tauri-sub-folders.md) | sub_folders command | ✅ Implemented |
+| [0087](docs/rfc/completed/0087-tauri-check-photasa-config-folder.md) | check_photasa_config (folder validation) command | ✅ Implemented |
+| [0088](docs/rfc/completed/0088-tauri-log-viewer-open.md) | Log viewer open/state command | ✅ Implemented（Photasa：`log_viewer_open` / `log_viewer_close`） |
+| [0089](docs/rfc/completed/0089-tauri-log-stream-events.md) | Log stream events (same contract as Electron) | ✅ Implemented（Photasa：`log:entry` 桥接） |
+| [0090](docs/rfc/completed/0090-tauri-update-service.md) | Update service (checkForUpdates) | ✅ Implemented（生产端点待配置） |
+| [0091](docs/rfc/completed/0091-tauri-platform-is-mac.md) | Platform / isMac / get_platform | ✅ Implemented |
+| [0092](docs/rfc/completed/0092-tauri-menu-api.md) | Menu (applySystemMenu, onMenuAction) | ✅ Implemented |
+| [0093](docs/rfc/completed/0093-tauri-import-photos-legacy.md) | importPhotos legacy copy flow | ✅ Implemented |
+| [0094](docs/rfc/completed/0094-tauri-choose-directories-multi.md) | choose_directories（单/多选目录） | ✅ Implemented |
+| [0095](docs/rfc/completed/0095-tauri-get-path-root.md) | get_path_root（api-path getRoot） | ✅ Implemented |
+| [0096](docs/rfc/completed/0096-tauri-import-pause-resume.md) | pause_import / resume_import | ✅ Implemented |
+| [0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪 | 🚧 Partial |
+| [0098](docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages | ✅ Implemented |
+| [0099](docs/rfc/completed/0099-tauri-window-reload.md) | window_reload（对齐 Electron reload） | ✅ Implemented |
+| [0100](docs/rfc/completed/0100-tauri-single-instance.md) | 单实例（对齐 Electron） | ✅ Implemented |
+| [0101](docs/rfc/completed/0101-tauri-startup-splash.md) | 启动 Splash 屏幕 | ✅ Implemented |
+| [0102](docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 缩略图 RAW 回退策略 | ✅ Implemented |
+| [0103](docs/rfc/completed/0103-tauri-native-deps-build-strategy.md) | 原生依赖构建策略（libheif + ffmpeg-next） | ✅ Implemented |
+
+### RFC 流程（摘要）
+
+1. **Creation**：`docs/rfc/NNNN-feature-name.md`，取下一可用编号，提 PR。  
+2. **Review**：Draft → Under Review → Accepted → Implemented（或 Rejected / Withdrawn）。  
+3. **Tracking**：RFC 与实现 PR 互链；偏差写在 RFC 正文。
+
+### RFC 模板（最小字段）
+
+```markdown
+# RFC NNNN: Feature Name
+- **Start Date**: YYYY-MM-DD
+- **RFC PR**: (empty)
+- **Implementation Issue**: (empty)
+## Summary
+## Motivation
+## Detailed Design
+## Drawbacks
+## Alternatives
+## Unresolved Questions
+```
+
+### 何时写 / 不写 RFC
+
+**应写**：重大功能、破坏性变更、核心架构、明显性能/安全取舍。**可不写**：小 bugfix、纯文档、无用户影响的内部重构、仅升级依赖。
+
+### 生命周期
+
+`Draft → Under Review → Accepted → Implementation → Implemented`；旁路：`Rejected`、`Withdrawn`。
+
+### Contributing（摘要）
+
+作者：先查既有 RFC 与代码 → 讨论 → 按模板撰写 → PR → 迭代 → 推动实现。评审者：读全文、提问、评估长期影响并保持建设性。
+
+### 工具与渊源
+
+Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust RFCs](https://github.com/rust-lang/rfcs)、[Vue RFCs](https://github.com/vuejs/rfcs)、[React RFCs](https://github.com/reactjs/rfcs)。
+
+---
+
 ## Tauri migration: RFC index and phases
 
 **Architecture / overview (fat RFCs, kept as-is):** 0067 (overall), 0068 scan, 0069 thumbnail, 0070 import, 0071 config, 0072 tianshu, 0073 UI/adapter.
 
-**One-RFC-one-thing (0074–0093):** Each item below has a dedicated RFC. See `docs/rfc/README.md` for the full table.
+**One-RFC-one-thing（0074–0103）：** 逐条状态见上文 **RFC 仓库索引 → Tauri small RFCs（0074+）** 表；阶段总览如下。
 
 | Phase | RFCs | What |
 |-------|------|------|
@@ -37,6 +136,7 @@ Existing 0067–0073 remain as high-level or per-service docs; new or split work
 | **Phase 3b – Directory & watch** | **0084–0087**, **0082–0083** | choose_directory (0084), get_directory (0085), sub_folders (0086), check_photasa_config folder (0087). Watch start/stop (0082), watch event contract (0083). |
 | **Phase 3c – Services** | **0068**, **0069**, **0070**, **0093**, **0072** | Scan (0068), thumbnail (0069), import executeImport (0070), importPhotos legacy (0093), tianshu (0072). |
 | **Phase 4 – Cleanup & rest** | **0088–0089**, **0090**, **0092** | Log viewer open (0088), log stream (0089), update service (0090), menu (0092). Path/log/update tests, docs. |
+| **Phase 5 – 1:1 Parity gaps** | **0101–0103**（0099–0100 ✅，0101–0103 ✅） | window_reload (0099 ✅), single-instance (0100 ✅), startup splash (0101 ✅), RAW thumbnail fallback (0102 ✅), native deps build strategy (0103 ✅)。 |
 
 **Current state**
 
@@ -44,9 +144,10 @@ Existing 0067–0073 remain as high-level or per-service docs; new or split work
 - **2026-03 增量：**RFC **0094** `choose_directories`、**0095** `get_path_root`、**0096** 导入暂停/恢复已接 `legacy-api`。
 - **Phase 4（日志 / 更新）：** Rust：`log_viewer_open` / `log_viewer_close`、全局 `log` 桥接发射 `log:entry`；`check_for_updates` / `download_update` / `install_update` / `get_update_status` / `update_auto_update_config` 与 `picasa:update-*` 事件；`tauri-plugin-updater` + `capabilities` `updater:default`。前端：`legacy-api` 已 `invoke` + `listen` 对齐 Electron 同名事件。
 - **RFC 0092 扩展：** 已用 `tauri-plugin-global-shortcut` 注册与 Electron 相同的日志查看器全局快捷键（macOS `cmd+shift+alt+KeyL` / 其他 `ctrl+shift+alt+KeyL`），按下时发射 `log:toggle-viewer`；系统菜单仍为 macOS `apply_system_menu`（既有实现）。
-- **RFC 0097（Tauri 导入表面）：** `previewImport` → `preview_import`；`extractMetadata` → `extract_metadata`（读盘 + 栅格图 `image_dimensions`）；`execute_import` 完成后写入内存 `ImportSessionStore`（历史 + 可撤销 `fileList`），`getImportHistory` / `getImportDetails` / `getImportProgress`、`preview_undo_import` / `undo_import_execute` 已接 `legacy-api`。`tauri-import-stubs` 仅保留测试等占位。**余量：** 导入历史已落盘至应用数据目录 `import_history_v1.json`（Rust `ImportSessionStore`，原子写入）；`extract_metadata`：图片 EXIF（`kamadak-exif`）、视频 **`ffmpeg-next`（`build`+`build-zlib`，静态 FFmpeg，不依赖系统 ffmpeg）**（时长/编码/分辨率/容器时间/GPS/旋转）、可选 `computeMd5`；与 Electron 的细标签与回退行为仍待对拍；预览 `targetStructure` 粗粒度；`updater` 密钥与端点待配置。
+- **RFC 0097（Tauri 导入表面）：** `previewImport` → `preview_import`；`extractMetadata` → `extract_metadata`（读盘 + 栅格图 `image_dimensions`）；`execute_import` 完成后写入内存 `ImportSessionStore`（历史 + 可撤销 `fileList`），`getImportHistory` / `getImportDetails` / `getImportProgress`、`preview_undo_import` / `undo_import_execute` 已接 `legacy-api`。`tauri-import-stubs` 仅保留测试等占位。**余量：** 导入历史已落盘至应用数据目录 `import_history_v1.json`（Rust `ImportSessionStore`，原子写入）；`extract_metadata`：图片 EXIF（`kamadak-exif`，含 `cameraInfo`：**lens / iso / focalLength / aperture / shutterSpeed** 等标准标签）、视频 **`ffmpeg-next`（`build`+`build-zlib`，静态 FFmpeg，不依赖系统 ffmpeg）**（时长/编码/分辨率/容器时间/GPS/旋转）、可选 `computeMd5`；与 Electron 的细标签与回退行为仍待对拍；**预览**已与 Electron `import-worker` 预览链 **1:1**（每组 `extract_metadata_request`、`processFileGroup` 式合并、`determineGroupTargetDate`/`generateDatePath`、`targetPath`/`targetStructure`/`statistics`、`estimatedDuration`）；`updater` 密钥与端点待配置。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
-- **Next step:** `extract_metadata` 视频与 Electron **逐项对拍**（边界标签、错误回退）；静态图 EXIF 细字段（镜头、ISO 等）；预览 `targetStructure` 细化；**0093** `importPhotos` 与 Electron 1:1 核查；配置真实 `updater.pubkey` 与 `endpoints`。`extract_metadata` 已含：图片 EXIF、视频 `ffmpeg-next` 静态构建（时长/编码/分辨率/容器时间/GPS/旋转）、可选 MD5。
+- **Next step:** `extract_metadata` 视频与 Electron **逐项对拍**（边界标签、错误回退）；静态图 EXIF 与 MakerNote 细字段；**0093** `importPhotos` 核心已对齐（Rust `copy_with_unique_name` 单测、`legacy-api` 桥接 + `created`→`Date` Vitest；见 RFC 0093）；配置真实 `updater.pubkey` 与 `endpoints`。`extract_metadata` 已含：图片 EXIF（含扩展 `cameraInfo`）、视频 `ffmpeg-next` 静态构建（时长/编码/分辨率/容器时间/GPS/旋转）、可选 MD5；**Rust 单测**已覆盖缺文件、MD5、非媒体 `other`、最小 JPEG、`fileType` 提示（`extract_metadata.rs`），以及视频侧与 ffprobe/Electron 同构的旋转/宽高/日期优先级/GPS（`extract_metadata_video.rs`）。
+- **Phase 5 – 1:1 Parity gaps（2026-04）：** **RFC 0099** `reload_window`。**RFC 0100** 单实例 + macOS `RunEvent::Reopen`。**RFC 0101** 双窗 Splash + `close_splashscreen` + `public/splash.html`。**RFC 0102** RAW → JPEG 占位 + `ThumbnailResponse.fallback`。**RFC 0103** 文档与 `Cargo.toml` 对齐：`ffmpeg-next` 静态构建；`libheif-rs` 使用 **`embedded-libheif`**（非系统 libheif）。**余量：** Splash 进度/状态事件（Electron `updateProgress` 等价）、RAW 占位图上的扩展名绘制、`otool`/`ldd` 验证可纳入 CI 可选步骤。
 
 ---
 
@@ -78,7 +179,7 @@ Existing 0067–0073 remain as high-level or per-service docs; new or split work
 
 ## Change summary (Tauri/RFC 本轮)
 
-规划与规范：ROADMAP 本身 + `docs/rfc/README.md`（One RFC one thing、0074–0093 表、统计）。  
+规划与规范：ROADMAP 本身（含 **RFC 仓库索引**）+ [`TASK_TRACKING.md`](./TASK_TRACKING.md)（Active/Implemented 全表）。  
 新增 RFC：0074–0093 共 20 个（一事一 RFC）；删除 4 个 fat RFC（0077/0078/0079/0080 旧版）。  
 Photasa 前端：`apps/photasa/src/api/legacy-api.ts` 新增，`adapter.ts` 改为注入 createLegacyApi()。  
 Rust 后端（子代理）：commands/platform.rs, path.rs, directory.rs, watch.rs，config 内容级扩展，main.rs 注册，Cargo.toml 依赖，legacy-api 部分 stub 改为 invoke。

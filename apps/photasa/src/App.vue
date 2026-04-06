@@ -40,6 +40,7 @@ import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
 import { useYuShiNan } from "@renderer/composables/useYuShiNan";
+import { isTauri } from "./api/env";
 
 /**
  * 日志记录器
@@ -208,7 +209,19 @@ onMounted(async () => {
     });
 
     // Initialize the application
-    await initializeApp();
+    try {
+        await initializeApp();
+    } finally {
+        // RFC 0101：主界面首屏就绪后关闭 Splash、显示主窗
+        if (isTauri()) {
+            try {
+                const { invoke } = await import("@tauri-apps/api/core");
+                await invoke("close_splashscreen");
+            } catch (e) {
+                logger.warn("⚠️ 告示：关闭启动画面未果", e);
+            }
+        }
+    }
 });
 
 // 组件卸载时清理监控服务

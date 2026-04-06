@@ -22,8 +22,48 @@ use tauri::Manager;
 use tokio::sync::{Mutex as TokioMutex, RwLock};
 use utils::wasm::WasmModuleCache;
 
+/// 与 `tauri.conf.json` 首窗默认 label 一致（未显式写 `label` 时为 `main`）
+const MAIN_WEBVIEW_LABEL: &str = "main";
+
+/// macOS Dock 重开且无可见窗口：恢复或按配置重建主窗（RFC 0100）
+#[cfg(target_os = "macos")]
+fn restore_main_window(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window(MAIN_WEBVIEW_LABEL) {
+        let _ = w.unminimize();
+        let _ = w.show();
+        let _ = w.set_focus();
+        log::info!("🌌 Dock 重开：已恢复主窗口");
+        return;
+    }
+    if let Some(cfg) = app.config().app.windows.first() {
+        match tauri::WebviewWindowBuilder::from_config(app, cfg).and_then(|b| b.build()) {
+            Ok(_) => log::info!("🌌 Dock 重开：已按配置重建主窗口"),
+            Err(e) => log::warn!("⚠️ Dock 重开：重建主窗口失败：{e}"),
+        }
+    } else {
+        log::warn!("⚠️ Dock 重开：无窗口配置可重建");
+    }
+}
+
 fn main() {
-    let mut builder = tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+
+    // RFC 0100：须尽早注册；第二实例被插件终止前，首实例在此回调聚焦主窗
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(w) = app.get_webview_window(MAIN_WEBVIEW_LABEL) {
+                let _ = w.unminimize();
+                let _ = w.show();
+                let _ = w.set_focus();
+                log::info!("🌌 单实例：再次启动已转交首实例，主窗口已聚焦");
+            } else {
+                log::warn!("⚠️ 单实例回调：主窗口尚未就绪，跳过聚焦");
+            }
+        }));
+    }
+
+    builder = builder
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init());
@@ -98,6 +138,8 @@ fn main() {
             window::unmaximize_window,
             window::close_window,
             window::is_maximized,
+            window::reload_window,
+            window::close_splashscreen,
             // Shell 命令
             shell::show_in_folder,
             shell::open_external,
@@ -176,8 +218,26 @@ fn main() {
             update::get_update_status,
             update::update_auto_update_config,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            #[cfg(target_os = "macos")]
+            {
+                if let tauri::RunEvent::Reopen {
+                    has_visible_windows,
+                    ..
+                } = event
+                {
+                    if !has_visible_windows {
+                        restore_main_window(app_handle);
+                    }
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                let _ = (app_handle, event);
+            }
+        });
 }
 
 // ============================================================

@@ -24,6 +24,8 @@ import {
     ErrorSeverities,
     DateSources,
     FileGroupTypes,
+    shouldIgnorePhotasaPath,
+    uuidv4,
 } from "@photasa/common";
 import {
     extractMetadata,
@@ -32,16 +34,20 @@ import {
     generateDatePath,
     DuplicateDetector,
     DuplicateHandlerFactory,
+    isImageFile,
+    isVideoFile,
 } from "@photasa/import";
 import { computeFallbackDate } from "@photasa/maliang";
 import fs from "fs-extra";
 import path from "path";
-import isImage from "is-image";
-import isVideo from "is-video";
-import { v4 as uuidv4 } from "uuid";
-import { shouldIgnorePhotasaPath } from "@photasa/common";
+import {
+    createWorkerLogViewerBridge,
+    handleLogViewerStatusMessage,
+} from "../workers/worker-log-viewer-bridge";
 
 const logger = loggers.import;
+
+const IMPORT_WORKER_THREAD_ID = "import-worker";
 
 const port = parentPort;
 if (!port) {
@@ -51,42 +57,19 @@ if (!port) {
     }
 }
 
-// 日志查看器状态
-let logViewerActive = false;
+const importLogBridge = createWorkerLogViewerBridge({
+    port,
+    baseLogger: {
+        debug: (m) => logger.debug(m),
+        info: (m) => logger.info(m),
+        warn: (m) => logger.warn(m),
+        error: (m) => logger.error(m),
+    },
+    threadId: IMPORT_WORKER_THREAD_ID,
+});
+const { workerLog, createCategoryLogger } = importLogBridge;
 
-/**
- * 包装日志函数以支持日志查看器
- * @param level - 日志级别
- * @param category - 日志分类
- * @param message - 日志消息
- */
-function workerLog(level: "debug" | "info" | "warn" | "error", category: string, message: string) {
-    // 正常输出到控制台
-    logger[level](message);
-
-    // 仅在日志查看器激活时上报
-    if (logViewerActive && port) {
-        port.postMessage({
-            type: "worker:log",
-            entry: {
-                timestamp: new Date().toISOString(),
-                level,
-                category,
-                message,
-                source: "worker",
-                threadId: "import-worker",
-            },
-        });
-    }
-}
-
-// 创建包装的 logger，将所有调用转发到 workerLog
-const wrappedLogger = {
-    debug: (message: string) => workerLog("debug", "import-worker", message),
-    info: (message: string) => workerLog("info", "import-worker", message),
-    warn: (message: string) => workerLog("warn", "import-worker", message),
-    error: (message: string) => workerLog("error", "import-worker", message),
-} as any;
+const wrappedLogger = createCategoryLogger(IMPORT_WORKER_THREAD_ID) as any;
 
 // ==================== 映射设计模式：动作处理器映射 ====================
 
@@ -107,8 +90,8 @@ const ACTION_HANDLERS = {
  * 文件类型检测映射 - 使用工厂模式创建文件类型检测器
  */
 const FILE_TYPE_DETECTORS = {
-    [FileTypeDetectors.IMAGE]: isImage,
-    [FileTypeDetectors.VIDEO]: isVideo,
+    [FileTypeDetectors.IMAGE]: isImageFile,
+    [FileTypeDetectors.VIDEO]: isVideoFile,
 } as const;
 
 // ==================== 核心消息处理逻辑 ====================
@@ -117,14 +100,7 @@ const FILE_TYPE_DETECTORS = {
  * 主消息处理器 - 使用映射模式路由到相应的处理器
  */
 parentPort?.on("message", async (message: WorkerMessage<ImportRequest> | any) => {
-    // 处理日志查看器状态消息
-    if (message.type === "log:viewer-status") {
-        logViewerActive = message.active;
-        workerLog(
-            "debug",
-            "import-worker",
-            `Log viewer ${logViewerActive ? "activated" : "deactivated"}`,
-        );
+    if (handleLogViewerStatusMessage(message, importLogBridge, IMPORT_WORKER_THREAD_ID)) {
         return;
     }
 

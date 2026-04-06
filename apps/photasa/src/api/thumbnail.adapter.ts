@@ -19,6 +19,8 @@ export interface ThumbnailResponse {
     success: boolean;
     file?: string;
     error?: string;
+    /** Rust 占位缩略图（如 RAW）时为 true */
+    fallback?: boolean;
 }
 
 export const thumbnailAdapter = {

@@ -503,7 +503,8 @@
             "videos": "{count} video",
             "mixed": "{images} immagini, {videos} video",
             "empty": "Nessun file"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "Informazioni immagine",

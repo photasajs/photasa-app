@@ -1,7 +1,7 @@
 # RFC 0070: 导入服务迁移到 Tauri
 
 - **作者**: AI Assistant
-- **状态**: 🚧 部分完成 - execute_import 仍为 stub
+- **状态**: ✅ 核心执行流已在 Rust 落地（`execute_import` / `cancel_import` / `pause_import` / `resume_import`、`ImportSessionStore` 历史与撤销）；与 Electron 全量特性对拍见 [RFC 0097](./0097-tauri-legacy-api-deferred-surface.md)
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 

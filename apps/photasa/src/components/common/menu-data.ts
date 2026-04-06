@@ -1,4 +1,5 @@
 import type { MenuItemData } from "@photasa/common";
+import { MENU_KEY_VIEW_FORCE_RELOAD, MENU_KEY_VIEW_RELOAD } from "../../constants/menu-keys";
 
 export const SystemMenus: readonly MenuItemData[] = Object.freeze([
     // macOS 专属 appMenu
@@ -38,8 +39,8 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
         key: "view",
         label: "menu.view.menu",
         items: [
-            { key: "view-reload", label: "menu.view.reload", role: "reload", shortcut: "Ctrl+R" },
-            { key: "view-force-reload", label: "menu.view.forceReload", role: "forceReload" },
+            { key: MENU_KEY_VIEW_RELOAD, label: "menu.view.reload", role: "reload", shortcut: "Ctrl+R" },
+            { key: MENU_KEY_VIEW_FORCE_RELOAD, label: "menu.view.forceReload", role: "forceReload" },
             {
                 key: "view-toggle-devtools",
                 label: "menu.view.toggleDevTools",

@@ -2,7 +2,7 @@
 name: rfc-management
 description: >-
   RFC lifecycle operations: treat root ROADMAP.md as the single source of truth for
-  RFC progress; specs live under docs/rfc with conventions in docs/rfc/README.md; optional
+  RFC progress in ROADMAP.md + TASK_TRACKING.md; specs under docs/rfc and docs/rfc/completed; naming in ROADMAP RFC section; optional
   TASK_TRACKING.md for sprint checklists. Use when the user asks to manage RFCs, start or
   finish an RFC, sync roadmap or task tracking, implement according to an RFC, or wants the
   agent to drive work from RFC documents.
@@ -23,11 +23,11 @@ description: >-
 
 ## 文件分工（进度以根目录 **`ROADMAP.md`** 为准）
 
-以下路径为常见约定；若仓库不同，在 **`AGENTS.md`** 或 **`docs/rfc/README.md`** 中查找实际路径并替换。
+以下路径为常见约定；若仓库不同，在 **`AGENTS.md`** 或 **`ROADMAP.md`** 中查找实际路径并替换。
 
 1. **`ROADMAP.md`（仓库根目录）** — **权威进度表**：✅ 🔨 ⏳ ❌、阶段、备注。
 2. **`docs/rfc/NNN-kebab-title.md`** — 各 RFC 规格；**依赖**写在篇内。
-3. **`docs/rfc/README.md`** — 命名、目录与模板约定。
+3. **`ROADMAP.md`**（RFC 流程/命名）+ **`TASK_TRACKING.md`** — 索引与全表。
 4. **`TASK_TRACKING.md`**（可选）— 当前 1～2 个 RFC 的冲刺 `[ ]` 清单与日期。
 
 资源：**`docs/rfc/assets/`**（若存在）。
@@ -37,7 +37,7 @@ description: >-
 ### A. 「新建 RFC / 加阶段 / 立项」
 
 1. 打开 **`ROADMAP.md`** + 列出 `docs/rfc/*.md`，确定 **NNN** 与阶段。
-2. 新建 `docs/rfc/NNN-….md`（见 **`docs/rfc/README.md`**）。
+2. 新建 `docs/rfc/NNN-….md`（命名见 **`ROADMAP.md`** RFC 流程），并更新 **`TASK_TRACKING.md`**。
 3. 在 **`ROADMAP.md`** 增加一行，状态 **⏳**。
 4. **不要**在未开工时填满 **`TASK_TRACKING.md`** 长清单（若仓库使用该文件）。
 

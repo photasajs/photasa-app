@@ -2,14 +2,17 @@
  * RFC 0093：旧版 `importPhotos` 的遍历、过滤、去重复制 **全部在 Rust 内实现**。
  * 不依赖 TypeScript/Node 业务逻辑；前端只 `invoke` + 监听事件并转调回调。
  */
+use crate::commands::extract_metadata_exif::legacy_import_target_name;
 use crate::commands::import_path_filter::{
     basename_hidden, classify_media, should_ignore_photasa_path,
 };
 use chrono::{DateTime, Utc};
+use filetime::{set_file_times, FileTime};
 use log::{info, warn};
 use serde::Serialize;
 use serde_json::json;
 use std::fs;
+use std::fs::Metadata;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use tauri::{AppHandle, Emitter};
@@ -31,7 +34,7 @@ fn file_created_iso(meta: &std::fs::Metadata) -> Option<String> {
 }
 
 /// 复制到目标目录；若重名则 `name_1.ext`、`name_2.ext`…（对齐 Electron `file-helper.copyFile`）
-fn copy_with_unique_name(src: &Path, target_dir: &Path) -> Result<PathBuf, String> {
+fn copy_with_unique_name(src: &Path, target_dir: &Path, src_meta: &Metadata) -> Result<PathBuf, String> {
     let orig_name = src
         .file_name()
         .and_then(|s| s.to_str())
@@ -53,6 +56,18 @@ fn copy_with_unique_name(src: &Path, target_dir: &Path) -> Result<PathBuf, Strin
     }
 
     fs::copy(src, &dest).map_err(|e| e.to_string())?;
+    // 与 Electron `file-helper.copyFile` 一致：尽量保留源文件的访问/修改时间
+    let at = src_meta
+        .accessed()
+        .unwrap_or_else(|_| src_meta.modified().unwrap_or_else(|_| SystemTime::now()));
+    let mt = src_meta.modified().unwrap_or(at);
+    if let Err(te) = set_file_times(
+        &dest,
+        FileTime::from_system_time(at),
+        FileTime::from_system_time(mt),
+    ) {
+        warn!("🌌 未能铭刻文件时日（旧版导入）: {}", te);
+    }
     Ok(dest)
 }
 
@@ -152,9 +167,27 @@ pub async fn import_photos_legacy(
                     .unwrap_or("")
                     .to_string();
 
-                let target_dir_str = target_path.to_string_lossy().replace('\\', "/");
+                let dest_parent = match legacy_import_target_name(path, is_image, &meta) {
+                    Some(rel) => target_path.join(rel),
+                    None => target_path.clone(),
+                };
 
-                match copy_with_unique_name(path, &target_path) {
+                if let Err(e) = fs::create_dir_all(&dest_parent) {
+                    let _ = app.emit(
+                        IMPORT_PHOTOS_LEGACY_EVENT,
+                        json!({
+                            "sessionId": sid,
+                            "type": "error",
+                            "error": format!("创建目标子目录失败: {e}"),
+                            "action": {},
+                        }),
+                    );
+                    continue;
+                }
+
+                let target_dir_str = dest_parent.to_string_lossy().replace('\\', "/");
+
+                match copy_with_unique_name(path, &dest_parent, &meta) {
                     Ok(dest) => {
                         let dest_s = dest.to_string_lossy().replace('\\', "/");
                         let final_name = dest
@@ -216,4 +249,58 @@ pub async fn import_photos_legacy(
     });
 
     Ok(session_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use uuid::Uuid;
+
+    #[test]
+    fn copy_with_unique_name_keeps_original_basename_when_free() {
+        let tmp = std::env::temp_dir().join(format!("photasa-import-leg-{}", Uuid::new_v4()));
+        fs::create_dir_all(&tmp).expect("mkdir tmp");
+        let src = tmp.join("photo.txt");
+        fs::write(&src, b"x").expect("write src");
+        let meta = fs::metadata(&src).expect("meta src");
+        let dest_dir = tmp.join("out");
+        fs::create_dir_all(&dest_dir).expect("mkdir out");
+        let dest = copy_with_unique_name(&src, &dest_dir, &meta).expect("copy");
+        assert_eq!(dest.file_name().and_then(|s| s.to_str()), Some("photo.txt"));
+        assert!(dest.is_file());
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn copy_with_unique_name_appends_suffix_when_name_collides() {
+        let tmp = std::env::temp_dir().join(format!("photasa-import-leg-dup-{}", Uuid::new_v4()));
+        fs::create_dir_all(&tmp).expect("mkdir tmp");
+        let src = tmp.join("dup.jpg");
+        fs::write(&src, b"new").expect("write src");
+        let meta = fs::metadata(&src).expect("meta src");
+        let dest_dir = tmp.join("out2");
+        fs::create_dir_all(&dest_dir).expect("mkdir out");
+        fs::write(dest_dir.join("dup.jpg"), b"existing").expect("seed collision");
+        let dest = copy_with_unique_name(&src, &dest_dir, &meta).expect("copy");
+        assert_eq!(dest.file_name().and_then(|s| s.to_str()), Some("dup_1.jpg"));
+        assert_eq!(fs::read_to_string(&dest).expect("read dest"), "new");
+        let _ = fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn copy_with_unique_name_increments_until_free_slot() {
+        let tmp = std::env::temp_dir().join(format!("photasa-import-leg-multi-{}", Uuid::new_v4()));
+        fs::create_dir_all(&tmp).expect("mkdir tmp");
+        let src = tmp.join("x.png");
+        fs::write(&src, b"v").expect("write src");
+        let meta = fs::metadata(&src).expect("meta src");
+        let dest_dir = tmp.join("out3");
+        fs::create_dir_all(&dest_dir).expect("mkdir out");
+        fs::write(dest_dir.join("x.png"), b"0").expect("x.png");
+        fs::write(dest_dir.join("x_1.png"), b"1").expect("x_1.png");
+        let dest = copy_with_unique_name(&src, &dest_dir, &meta).expect("copy");
+        assert_eq!(dest.file_name().and_then(|s| s.to_str()), Some("x_2.png"));
+        let _ = fs::remove_dir_all(&tmp);
+    }
 }

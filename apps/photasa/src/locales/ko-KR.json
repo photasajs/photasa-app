@@ -506,7 +506,8 @@
             "videos": "{count}개 동영상",
             "mixed": "이미지 {images}개, 동영상 {videos}개",
             "empty": "파일 없음"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "이미지 정보",

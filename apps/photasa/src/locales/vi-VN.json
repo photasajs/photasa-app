@@ -506,7 +506,8 @@
             "videos": "{count} video",
             "mixed": "{images} hình ảnh, {videos} video",
             "empty": "Không có tệp"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "Thông tin hình ảnh",

@@ -206,5 +206,6 @@ describe("Maliang Integration Tests", () => {
         if (brush.cleanup) {
             await brush.cleanup(logger);
         }
-    });
+        // HEIC/WASM 解码在部分机器上可能超过 Vitest 默认 5s，避免 pre-push 误杀
+    }, 60_000);
 });

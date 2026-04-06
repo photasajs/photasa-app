@@ -506,7 +506,8 @@
             "videos": "{count} فيديوهات",
             "mixed": "{images} صور، {videos} فيديوهات",
             "empty": "لا توجد ملفات"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "معلومات الصورة",

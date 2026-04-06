@@ -361,4 +361,90 @@ mod tests {
         let d = select_best_date(&meta).expect("date");
         assert!(d.contains("2021"));
     }
+
+    /// 对齐 `video-extractor.getVideoRotation`：stream.tags.rotate
+    #[test]
+    fn video_rotation_from_stream_tags_rotate_string() {
+        let meta = json!({
+            "streams": [{ "codec_type": "video", "tags": { "rotate": "90" } }]
+        });
+        assert_eq!(video_rotation(&meta), 90);
+    }
+
+    /// Display Matrix side_data.rotation（与 ffprobe JSON 一致）
+    #[test]
+    fn video_rotation_from_display_matrix_negative_normalizes() {
+        let meta = json!({
+            "streams": [{
+                "codec_type": "video",
+                "side_data_list": [
+                    { "side_data_type": "Display Matrix", "rotation": -90.0 }
+                ]
+            }]
+        });
+        assert_eq!(video_rotation(&meta), 270);
+    }
+
+    /// format.tags.rotate 回退（与 TS 方法 3 一致）
+    #[test]
+    fn video_rotation_from_format_tags() {
+        let meta = json!({
+            "format": { "tags": { "rotate": "180" } },
+            "streams": [{ "codec_type": "video", "width": 640, "height": 480 }]
+        });
+        assert_eq!(video_rotation(&meta), 180);
+    }
+
+    /// `extractVideoStreamInfo`：90°/270° 时交换宽高
+    #[test]
+    fn video_stream_dims_swap_width_height_when_rotated_90() {
+        let meta = json!({
+            "streams": [{
+                "codec_type": "video",
+                "width": 1920,
+                "height": 1080,
+                "tags": { "rotate": "90" },
+                "codec_name": "h264"
+            }]
+        });
+        let (w, h, c) = video_stream_dims(&meta, video_rotation(&meta));
+        assert_eq!((w, h, c.as_str()), (1080, 1920, "h264"));
+    }
+
+    /// Apple QuickTime 日期优先于 `creation_time`（`VIDEO_TIME_FIELDS` 顺序与 TS 一致）
+    #[test]
+    fn select_best_date_prefers_apple_quicktime_over_creation_time() {
+        let meta = json!({
+            "format": {
+                "tags": {
+                    "creation_time": "2020-01-01T00:00:00.000000Z",
+                    "com.apple.quicktime.creationdate": "2022-08-20T15:00:00.000000Z"
+                }
+            },
+            "streams": []
+        });
+        let d = select_best_date(&meta).expect("date");
+        assert!(d.contains("2022"));
+    }
+
+    /// stream.tags 中的 GPS（与 `extractVideoGPS` / ISO6709 一致）
+    #[test]
+    fn extract_video_gps_from_stream_location_tag() {
+        let meta = json!({
+            "streams": [{
+                "codec_type": "video",
+                "tags": { "location": "+35.0+139.0/" }
+            }]
+        });
+        let (lat, lon) = extract_video_gps(&meta).expect("gps");
+        assert!((lat - 35.0).abs() < 0.001);
+        assert!((lon - 139.0).abs() < 0.001);
+    }
+
+    /// 非 epoch 的 creation_time 变体（空格分隔）
+    #[test]
+    fn parse_video_date_str_space_separated() {
+        let r = parse_video_date_str("2023-12-01 08:00:00").expect("parsed");
+        assert!(r.contains("2023-12-01"));
+    }
 }

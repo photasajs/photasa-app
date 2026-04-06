@@ -506,7 +506,8 @@
             "videos": "{count} відео",
             "mixed": "{images} зображень, {videos} відео",
             "empty": "Немає файлів"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "Інформація про зображення",

@@ -7,6 +7,7 @@ import type { NotifyPayload } from "@photasa/common";
 import { getAppPath } from "@shared/path-util";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
+import { WORKER_LOG_CHANNEL } from "@main/workers/worker-log-viewer-bridge";
 import isDev from "electron-is-dev";
 
 const logger = loggers.scan;
@@ -99,17 +100,16 @@ export default class ScanService implements IService {
                 const data = message;
 
                 // 为不同类型的消息提供更清晰的日志
-                if (data.type === "worker:log") {
+                if (data.type === WORKER_LOG_CHANNEL) {
                     // 处理 worker 日志消息，通过 IPC 发送给 LogViewerService
                     if (logViewerService) {
                         // 使用 IPC 发送，让 LogViewerService 统一处理
-                        this.ipc.emit("worker:log", null, data.entry);
+                        this.ipc.emit(WORKER_LOG_CHANNEL, null, data.entry);
                     }
-                    // 为 worker:log 提供简洁的调试日志
                     logger.debug(
                         `[ScanService] Worker log [${data.entry?.level?.toUpperCase()}]: ${data.entry?.message || "N/A"}`,
                     );
-                    return; // worker:log 消息不需要进一步处理
+                    return;
                 }
 
                 // 为其他类型消息提供详细的调试日志

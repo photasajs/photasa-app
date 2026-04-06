@@ -506,7 +506,8 @@
             "videos": "{count} video",
             "mixed": "{images} resim, {videos} video",
             "empty": "Dosya yok"
-        }
+        },
+        "placeholderThumbnail": "Placeholder preview"
     },
     "imageInfo": {
         "title": "Resim bilgisi",

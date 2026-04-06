@@ -34,6 +34,10 @@ import LoadingState from "./common/LoadingState.vue";
 import FileInfoDrawer from "./FileInfoDrawer.vue";
 import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
 import { safePositiveNumber } from "@renderer/common/number";
+import {
+    getThumbnailFallbackFlag,
+    thumbnailFallbackEpoch,
+} from "@renderer/utils/thumbnail-fallback-cache";
 
 // 定义组件事件
 const emit = defineEmits<{
@@ -92,6 +96,12 @@ const fileMeta = ref<FileMetadata | null>(null);
 // 重建缩略图
 async function rebuildThumbnail(image: Image) {
     await requestThumbnail(image, safeThumbnailSize.value);
+}
+
+/** 占位缩略图（RAW 等）：依赖 epoch 以便缓存更新后重绘 */
+function rawShowsPlaceholderThumb(raw: string): boolean {
+    void thumbnailFallbackEpoch.value;
+    return getThumbnailFallbackFlag(raw);
 }
 
 // 打开文件元数据（支持图片/视频/文件）
@@ -443,6 +453,9 @@ onUnmounted(() => {
                                                     :fallback="fallback"
                                                     :raw="image.raw"
                                                     :is-video="image.isVideo"
+                                                    :is-placeholder-thumbnail="
+                                                        rawShowsPlaceholderThumb(image.raw)
+                                                    "
                                                 />
                                             </BaseCard>
                                         </BaseTooltip>
