@@ -17,7 +17,7 @@
 | 导入扩展 | `previewImport`、`extractMetadata`、`executeImport`、暂停/恢复（0096）、`getImportHistory`、`getImportDetails`、`getImportProgress`、`previewUndo`、`undoImport` | ✅ Photasa 已 `invoke` | 历史落盘：`app_data_dir/import_history_v1.json`（`ImportSessionStore`，原子写）。**`extract_metadata`：** 图片侧 `kamadak-exif`（日期/GPS、`cameraInfo.make/model`）；并已写入 **`cameraInfo.lens`（LensModel）、`iso`（PhotographicSensitivity / REI / ISOSpeed 等）、`focalLength`、`aperture`（FNumber）、`shutterSpeed`（ExposureTime，秒）**；视频侧 **`ffmpeg-next`（libavformat 探测，与 ffprobe JSON 同构的合并逻辑）**：`duration`、`codec`、`width`/`height`、`resolution`、`dateTime`+`dateSource:video_metadata`、`gpsInfo`（ISO6709 类标签）、`rawMetadata.rotation`；`computeMd5: true` → `rawMetadata.md5`。**构建**：`ffmpeg-next` **`build` + `build-zlib`**，静态链接 FFmpeg，**不**要求用户或 CI 安装系统 `ffmpeg` / `pkg-config`；构建机需能编译 C/汇编（见根目录 `AGENTS.md`）。**`preview_import`**：每组对每个候选文件调用同一 `extract_metadata_request` 再合并（`processFileGroup` 级），`determineGroupTargetDate`/`generateDatePath` 定 `targetPath`，`targetStructure`/`statistics`/`estimatedDuration` 与 Electron 预览对齐。**回归单测（Rust）**：`extract_metadata.rs` — 缺文件、`computeMd5`、`.txt`→`other`、最小 JPEG→`image`、`fileType:image` 覆盖未知扩展名；`extract_metadata_video.rs` — 与 `video-extractor.ts` 同构逻辑：`video_rotation`（tags/side_data/format）、`video_stream_dims` 90° 交换宽高、`select_best_date` Apple 优先、`extract_video_gps`、`parse_video_date_str`。**仍差**：真实容器 fixtures 端到端、MakerNote/静态图细字段 |
 | 扫描队列 | `picasa:add-to-scan-queue` | ✅ Photasa | `watch_scan_queue.rs` + `notify` 合并发射；与 ROADMAP「对齐 WatchService」一致 |
 | 遗留导入 | `importPhotos(…)` 整流 | ✅ Photasa（核心） | RFC **0093**：`import_photos_legacy` + `legacy-api`；`action.created` 规范为 `Date`；Rust/TS 单测已加；可选 fixtures 端到端对拍 |
-| 缩略图 | `create_thumbnail` / `thumbnail.create` | ✅ Photasa | RFC **0069**；**0102**：RAW（CR2/NEF/…）→ JPEG 纯色占位 + `fallback: true`；Electron `FallbackBrush` 可带格式标签，Tauri 当前无文字叠加 |
+| 缩略图 | `create_thumbnail` / `thumbnail.create` | ✅ Photasa | RFC **0069**；**0102**：RAW → JPEG 占位 + `fallback: true`；网格上 **「占位预览」** 徽标（`thumbnail-fallback-cache` + `BaseImage`）；扩展名绘入图内仍可选 |
 | 启动 | Splash → 主窗 | ✅ Photasa（核心） | RFC **0101**：双窗 + `close_splashscreen`；**仍差**：Electron `SplashWindow.updateProgress` / `updateStatus` 类事件驱动文案（可选） |
 
 ## 仍差（下一批实现 / 文档）
@@ -26,7 +26,7 @@
 2. ~~**0093**~~：`importPhotos` 核心已与 Electron 行为与 `FileAction` 形状对齐（见 **0093** 正文「Callback / event shape」）；大规模双端回归夹具仍为可选。
 3. **0090 运维**：`tauri.conf.json` / builder 侧真实 `pubkey` 与更新端点。
 4. **0101 延伸**：Splash 页若需与 Electron 一致的可变进度/状态，需 `emit`/`listen` 或 IPC 小协议（当前为静态 HTML）。
-5. **0102 延伸**：`legacy-api` / UI 在 `fallback === true` 时展示「占位」徽标；或在占位图上绘制扩展名（更接近 `FallbackBrush`）。
+5. **0102 延伸**（部分已做）：`ImageList` + `BaseImage` 在内存缓存命中占位标记时展示「占位预览」徽标；占位图上绘制扩展名（更接近 `FallbackBrush`）仍为可选。
 
 ## 说明
 

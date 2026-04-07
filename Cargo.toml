@@ -4,6 +4,7 @@ members = [
     "crates/zouwu-core",
     "crates/zouwu-builtin",
     "crates/libheif-sys",
+    "crates/photasa-wenchang-preferences",
     "apps/photasa/src-tauri",
 ]
 

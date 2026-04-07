@@ -20,7 +20,7 @@ use zouwu_core::parser::parse_workflow;
 use zouwu_core::types::WorkflowDefinition;
 use zouwu_builtin::BuiltinAdapter;
 
-use crate::adapters::{ConfigAdapter, ScanAdapter};
+use crate::adapters::{ConfigAdapter, PreferencesAdapter, ScanAdapter};
 
 // ============================================================
 // TianshuError
@@ -134,7 +134,17 @@ impl TianshuService {
         // 2. 构建 AdapterRegistry
         let mut registry = AdapterRegistry::new();
         registry.register(Arc::new(BuiltinAdapter::new()));
+
+        // 文件夹级配置（.photasa.json）
         registry.register(Arc::new(ConfigAdapter::new()));
+
+        // 应用级偏好（~/.photasa/preferences/preferences.json）
+        registry.register(Arc::new(
+            PreferencesAdapter::new()
+                .await
+                .map_err(|e| TianshuError::Parse(format!("preferences adapter init error: {e}")))?,
+        ));
+
         registry.register(Arc::new(ScanAdapter::new(app_handle)));
 
         // 3. 构建引擎，注入子工作流解析器

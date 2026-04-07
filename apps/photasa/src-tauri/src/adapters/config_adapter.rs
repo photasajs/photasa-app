@@ -1,9 +1,10 @@
 /*!
- * ConfigAdapter（文昌 Adapter）
+ * ConfigAdapter（配置 Adapter）
  *
- * 实现配置相关工作流步骤：读取/写入 .photasa.json 文件
- * 对应 service: "wenchang"
- * 无需 AppHandle（无事件推送）
+ * 实现文件夹级配置：读取/写入 `.photasa.json`
+ *
+ * 注意：此 Adapter **不是**“文昌偏好”（应用级 preferences）。
+ * 文昌偏好在 Tauri 侧由 `PreferencesAdapter`（service: "wenchang"）负责。
  */
 use async_trait::async_trait;
 use serde_json::{json, Value};
@@ -54,7 +55,7 @@ impl ConfigAdapter {
 #[async_trait]
 impl Adapter for ConfigAdapter {
     fn name(&self) -> &str {
-        "wenchang"
+        "config"
     }
 
     fn supported_actions(&self) -> &[&str] {

@@ -3717,6 +3717,7 @@ dependencies = [
  "md-5",
  "notify",
  "pathdiff",
+ "photasa-wenchang-preferences",
  "regex",
  "serde",
  "serde_json",
@@ -3735,6 +3736,17 @@ dependencies = [
  "walkdir",
  "zouwu-builtin",
  "zouwu-core",
+]
+
+[[package]]
+name = "photasa-wenchang-preferences"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Manager, WebviewWindow, Window};
+use tauri::{AppHandle, Emitter, Manager, WebviewWindow, Window};
 
 /// Splash 窗口 label，须与 `tauri.conf.json` 中第二窗一致（RFC 0101）
 const SPLASH_WEBVIEW_LABEL: &str = "splash";
@@ -7,8 +7,10 @@ const MAIN_WEBVIEW_LABEL: &str = "main";
 
 /// 主界面就绪后关闭 Splash 并显示主窗（RFC 0101）
 #[tauri::command]
-pub fn close_splashscreen(app: AppHandle) -> Result<(), String> {
+pub async fn close_splashscreen(app: AppHandle) -> Result<(), String> {
     if let Some(splash) = app.get_webview_window(SPLASH_WEBVIEW_LABEL) {
+        let _ = splash.emit("splash:fade-out", ());
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
         splash.close().map_err(|e| e.to_string())?;
     }
     if let Some(main) = app.get_webview_window(MAIN_WEBVIEW_LABEL) {

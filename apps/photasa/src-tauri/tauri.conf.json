@@ -33,6 +33,9 @@
                 "decorations": false,
                 "alwaysOnTop": true,
                 "skipTaskbar": true,
+                "minimizable": false,
+                "maximizable": false,
+                "closable": false,
                 "visible": true,
                 "center": true
             }

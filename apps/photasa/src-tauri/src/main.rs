@@ -18,6 +18,7 @@ use services::{TianshuService, tianshu::resolve_workflows_dir};
 use commands::import_execute::ImportTaskRegistry;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use tauri::Emitter;
 use tauri::Manager;
 use tokio::sync::{Mutex as TokioMutex, RwLock};
 use utils::wasm::WasmModuleCache;
@@ -87,10 +88,21 @@ fn main() {
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             log_toggle_shortcut::register_log_toggle_shortcut(&app.handle());
 
+            // RFC 0101：尽早向 Splash 报告启动进度（对齐 Electron SplashWindow.updateStatus/updateProgress）
+            if let Some(splash) = app.get_webview_window("splash") {
+                let _ = splash.emit("splash:status-update", "启动应用程序...");
+                let _ = splash.emit("splash:progress-update", -1);
+            }
+
             // 目录存储与文件监视状态
             app.manage(directory::DirectoryStore(Mutex::new(HashMap::new())));
             app.manage(watch::WatchState::new());
             app.manage(Arc::new(ImportTaskRegistry::default()));
+
+            if let Some(splash) = app.get_webview_window("splash") {
+                let _ = splash.emit("splash:status-update", "初始化核心服务...");
+                let _ = splash.emit("splash:progress-update", 25);
+            }
             let app_dir = app.path().app_data_dir().map_err(|e| {
                 log::error!("❌ 无法解析应用数据目录：{e}");
                 e
@@ -113,6 +125,10 @@ fn main() {
 
             // 异步初始化天枢服务，完成后填入 slot
             let handle = app.handle().clone();
+            if let Some(splash) = app.get_webview_window("splash") {
+                let _ = splash.emit("splash:status-update", "载入天枢典籍...");
+                let _ = splash.emit("splash:progress-update", 55);
+            }
             let workflows_dir = resolve_workflows_dir(&handle);
             log::info!("🌌 天枢开坛，工作流典籍路径：{}", workflows_dir.display());
 
@@ -122,9 +138,17 @@ fn main() {
                         let slot = handle.state::<Arc<RwLock<Option<TianshuService>>>>();
                         *slot.write().await = Some(service);
                         log::info!("🌌 天枢天书已开启，万仙归位");
+                        if let Some(splash) = handle.get_webview_window("splash") {
+                            let _ = splash.emit("splash:status-update", "加载用户界面...");
+                            let _ = splash.emit("splash:progress-update", 80);
+                        }
                     }
                     Err(e) => {
                         log::error!("❌ 天枢初始化失败：{e}");
+                        if let Some(splash) = handle.get_webview_window("splash") {
+                            let _ = splash.emit("splash:status-update", "天枢初始化失败");
+                            let _ = splash.emit("splash:progress-update", -1);
+                        }
                     }
                 }
             });

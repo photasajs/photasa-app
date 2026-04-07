@@ -31,7 +31,7 @@ RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRA
 
 | 指标 | 数量（基准日 2026-04-05） |
 |------|---------------------------|
-| RFC 正文 `.md`（含 `completed/`，不含 `README.md`） | 99 |
+| RFC 正文 `.md`（含 `completed/`，不含 `README.md`） | 102 |
 | 已归档于 `docs/rfc/completed/` | 60 |
 
 Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Active RFCs** 表为准。
@@ -82,6 +82,10 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0101](docs/rfc/completed/0101-tauri-startup-splash.md) | 启动 Splash 屏幕 | ✅ Implemented |
 | [0102](docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 缩略图 RAW 回退策略 | ✅ Implemented |
 | [0103](docs/rfc/completed/0103-tauri-native-deps-build-strategy.md) | 原生依赖构建策略（libheif + ffmpeg-next） | ✅ Implemented |
+| [0104](docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | 📋 Draft |
+| [0105](docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | 📋 Draft |
+| [0106](docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check timer | 📋 Draft |
+| [0107](docs/rfc/0107-tauri-wenchang-preferences-storage.md) | Wenchang preferences storage parity (Tauri) | 🔨 In Progress |
 
 ### RFC 流程（摘要）
 
@@ -137,6 +141,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 | **Phase 3c – Services** | **0068**, **0069**, **0070**, **0093**, **0072** | Scan (0068), thumbnail (0069), import executeImport (0070), importPhotos legacy (0093), tianshu (0072). |
 | **Phase 4 – Cleanup & rest** | **0088–0089**, **0090**, **0092** | Log viewer open (0088), log stream (0089), update service (0090), menu (0092). Path/log/update tests, docs. |
 | **Phase 5 – 1:1 Parity gaps** | **0101–0103**（0099–0100 ✅，0101–0103 ✅） | window_reload (0099 ✅), single-instance (0100 ✅), startup splash (0101 ✅), RAW thumbnail fallback (0102 ✅), native deps build strategy (0103 ✅)。 |
+| **Phase 6 – Deep code parity** | **0104–0106** | execute_import date-folder organization (0104), scan incremental cache .photasa-folder.json (0105), update periodic check timer (0106). |
 
 **Current state**
 
@@ -148,6 +153,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
 - **Next step:** `extract_metadata` 视频与 Electron **逐项对拍**（边界标签、错误回退）；静态图 EXIF 与 MakerNote 细字段；**0093** `importPhotos` 核心已对齐（Rust `copy_with_unique_name` 单测、`legacy-api` 桥接 + `created`→`Date` Vitest；见 RFC 0093）；配置真实 `updater.pubkey` 与 `endpoints`。`extract_metadata` 已含：图片 EXIF（含扩展 `cameraInfo`）、视频 `ffmpeg-next` 静态构建（时长/编码/分辨率/容器时间/GPS/旋转）、可选 MD5；**Rust 单测**已覆盖缺文件、MD5、非媒体 `other`、最小 JPEG、`fileType` 提示（`extract_metadata.rs`），以及视频侧与 ffprobe/Electron 同构的旋转/宽高/日期优先级/GPS（`extract_metadata_video.rs`）。
 - **Phase 5 – 1:1 Parity gaps（2026-04）：** **RFC 0099** `reload_window`。**RFC 0100** 单实例 + macOS `RunEvent::Reopen`。**RFC 0101** 双窗 Splash + `close_splashscreen` + `public/splash.html`。**RFC 0102** RAW → JPEG 占位 + `ThumbnailResponse.fallback`。**RFC 0103** 文档与 `Cargo.toml` 对齐：`ffmpeg-next` 静态构建；`libheif-rs` 使用 **`embedded-libheif`**（非系统 libheif）。**余量：** Splash 进度/状态事件（Electron `updateProgress` 等价）、RAW 占位图上的扩展名绘制、`otool`/`ldd` 验证可纳入 CI 可选步骤。
+- **Phase 6 – Deep code parity（2026-04）：** Deep line-by-line review of every Rust command vs TypeScript equivalent found 3 new gaps. **RFC 0104** `execute_import` currently copies flat to `targetPath`; needs to apply `generate_date_path_utc` (already in `import_preview.rs`) so files land in `<targetPath>/{year}/{YYYYMMDD}/`. **RFC 0105** `scan_photos` lacks `.photasa-folder.json` incremental cache — no `processedFiles`/`pendingFiles` tracking, no resume, no accurate `progress.total` for frontend. **RFC 0106** `update.rs` stores `check_interval` but never starts a background Tokio timer; Electron fires a `setInterval` every N hours plus a 5-second startup check.
 
 ---
 

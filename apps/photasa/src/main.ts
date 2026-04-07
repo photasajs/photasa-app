@@ -12,6 +12,7 @@ import { i18n } from "./i18n/config";
 
 import { LishiminService, LISSHIMING_TOKEN } from "./services";
 import { loggers } from "@photasa/common";
+import { isTauri } from "./api/env";
 
 // 导入 API 适配层
 import "./api/adapter";
@@ -38,8 +39,17 @@ app.use(pinia);
 const lishiminService = new LishiminService(app);
 app.provide(LISSHIMING_TOKEN, lishiminService);
 
-// 启动大唐贞观之治
-await lishiminService.startZhengguan();
+// 先同步就位再挂载，避免在 mount 之前被天枢/奏折 IPC 长时间阻塞（否则 Splash 永不关）
+lishiminService.prepareCourt();
 
 logger.info("📦 挂载 App.vue 应用");
 app.mount("#app");
+
+// 壳层已挂载：立即关闭 Splash、显示主窗，不等待 onMounted 内异步链（RFC 0101）
+if (isTauri()) {
+    import("@tauri-apps/api/core")
+        .then(({ invoke }) => invoke("close_splashscreen"))
+        .catch((err) => logger.warn("告示：关闭启动画面未果", err));
+}
+
+await lishiminService.initializeDepartments();

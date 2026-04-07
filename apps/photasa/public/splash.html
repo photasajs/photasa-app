@@ -1,68 +1,150 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Photasa</title>
-        <style>
-            :root {
-                color-scheme: light dark;
-            }
-            * {
-                box-sizing: border-box;
-            }
-            html,
-            body {
-                margin: 0;
-                height: 100%;
-                font-family:
-                    system-ui,
-                    -apple-system,
-                    "Segoe UI",
-                    Roboto,
-                    sans-serif;
-                background: #1a1d23;
-                color: #e8eaed;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .wrap {
-                text-align: center;
-                padding: 1.5rem;
-            }
-            h1 {
-                margin: 0 0 0.75rem;
-                font-size: 1.35rem;
-                font-weight: 600;
-                letter-spacing: 0.04em;
-            }
-            p {
-                margin: 0;
-                font-size: 0.85rem;
-                opacity: 0.72;
-            }
-            .spinner {
-                width: 36px;
-                height: 36px;
-                margin: 1rem auto 0;
-                border: 3px solid rgba(255, 255, 255, 0.12);
-                border-top-color: #6b9fff;
-                border-radius: 50%;
-                animation: spin 0.85s linear infinite;
-            }
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-        </style>
+        <title>Photasa - Photo Management</title>
+        <link rel="stylesheet" href="splash.css" />
     </head>
-    <body>
-        <div class="wrap">
-            <h1>Photasa</h1>
-            <p>正在载入…</p>
-            <div class="spinner" aria-hidden="true"></div>
+    <body data-theme="dark">
+        <div class="splash-container">
+            <div class="logo-section">
+                <div class="app-logo">
+                    <!-- Professional camera icon with animation -->
+                    <svg
+                        width="128"
+                        height="128"
+                        viewBox="0 0 128 128"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="logo-svg"
+                    >
+                        <!-- Main background circle with pulsing animation -->
+                        <circle cx="64" cy="64" r="56" fill="url(#gradient)" class="logo-bg" />
+
+                        <!-- Camera body -->
+                        <rect
+                            x="28"
+                            y="45"
+                            width="72"
+                            height="48"
+                            rx="8"
+                            fill="white"
+                            fill-opacity="0.95"
+                            class="camera-body"
+                        />
+
+                        <!-- Camera lens with rotation animation -->
+                        <circle
+                            cx="64"
+                            cy="69"
+                            r="18"
+                            fill="url(#lensGradient)"
+                            class="camera-lens"
+                        />
+                        <circle cx="64" cy="69" r="12" fill="white" fill-opacity="0.2" />
+                        <circle cx="64" cy="69" r="8" fill="url(#innerLens)" />
+
+                        <!-- Flash -->
+                        <rect
+                            x="80"
+                            y="48"
+                            width="8"
+                            height="6"
+                            rx="2"
+                            fill="url(#flashGradient)"
+                            class="camera-flash"
+                        />
+
+                        <!-- Viewfinder -->
+                        <rect
+                            x="48"
+                            y="36"
+                            width="32"
+                            height="12"
+                            rx="6"
+                            fill="url(#viewfinderGradient)"
+                        />
+
+                        <!-- Shutter button -->
+                        <circle
+                            cx="90"
+                            cy="54"
+                            r="3"
+                            fill="url(#buttonGradient)"
+                            class="shutter-btn"
+                        />
+
+                        <!-- Aperture blades with animation -->
+                        <g class="aperture-blades">
+                            <path
+                                d="M64 61 L70 66 L64 71 L58 66 Z"
+                                fill="white"
+                                fill-opacity="0.3"
+                            />
+                            <path
+                                d="M61 64 L66 70 L71 64 L66 58 Z"
+                                fill="white"
+                                fill-opacity="0.2"
+                            />
+                        </g>
+
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color: #3b82f6" />
+                                <stop offset="100%" style="stop-color: #1d4ed8" />
+                            </linearGradient>
+                            <radialGradient id="lensGradient" cx="50%" cy="40%" r="60%">
+                                <stop offset="0%" style="stop-color: #1f2937" />
+                                <stop offset="100%" style="stop-color: #111827" />
+                            </radialGradient>
+                            <radialGradient id="innerLens" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color: #374151" />
+                                <stop offset="100%" style="stop-color: #1f2937" />
+                            </radialGradient>
+                            <linearGradient id="flashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color: #fbbf24" />
+                                <stop offset="100%" style="stop-color: #f59e0b" />
+                            </linearGradient>
+                            <linearGradient
+                                id="viewfinderGradient"
+                                x1="0%"
+                                y1="0%"
+                                x2="100%"
+                                y2="100%"
+                            >
+                                <stop offset="0%" style="stop-color: #6b7280" />
+                                <stop offset="100%" style="stop-color: #4b5563" />
+                            </linearGradient>
+                            <radialGradient id="buttonGradient" cx="30%" cy="30%" r="70%">
+                                <stop offset="0%" style="stop-color: #ef4444" />
+                                <stop offset="100%" style="stop-color: #dc2626" />
+                            </radialGradient>
+                        </defs>
+                    </svg>
+                </div>
+
+                <!-- Animated product name with language switching -->
+                <div class="name-container">
+                    <h1 class="app-name" data-lang="en">Photasa</h1>
+                    <p class="app-subtitle" data-lang="en">Photo Management</p>
+                </div>
+            </div>
+
+            <div class="loading-section">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+                <p class="status-text">Initializing...</p>
+            </div>
+
+            <div class="version-section">
+                <span class="version-text">Version 0.1.0</span>
+            </div>
         </div>
+
+        <script src="splash.js"></script>
     </body>
 </html>

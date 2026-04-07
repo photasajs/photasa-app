@@ -15,6 +15,18 @@
 | window_reload 命令 | [0099](./docs/rfc/completed/0099-tauri-window-reload.md) | 🟡 Medium | Done | 否 |
 | RAW 缩略图回退 | [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 🟢 Low | Done | 否 |
 | 启动 Splash 屏幕 | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md) | 🟢 Low | Done | 否 |
+| 应用偏好（文昌）落盘 | [0107](./docs/rfc/0107-tauri-wenchang-preferences-storage.md) | 🔴 High | 🔨 In Progress | 是（偏好无法持久化） |
+
+### RFC 0107 — 应用偏好（文昌）落盘
+
+**目标**：Tauri 侧与 Electron 等价：应用级偏好落盘 `~/.photasa/preferences/preferences.json`，并能通过天枢 `get_preferences` / `update_preferences` 回传并自动同步到 Renderer store。
+
+- [ ] 新增 workspace crate：`crates/photasa-wenchang-preferences`
+- [ ] `ConfigAdapter` 改名为 `config`（不再占用 `wenchang`）
+- [ ] 新增 `PreferencesAdapter`：`name() == "wenchang"`，实现 preference 工作流所需 actions
+- [ ] `TianshuService`：注册 `PreferencesAdapter` 与 `ConfigAdapter`
+- [ ] Rust 单测：默认偏好、apply delta、history、restore revision
+- [ ] 验证证据：`cargo test -p photasa-wenchang-preferences` + `cargo build -p photasa`
 
 ### RFC 0100 — 单实例管理
 
@@ -52,7 +64,7 @@
 - [x] `thumbnail.rs`：`make_raw_placeholder_thumbnail`（纯色 JPEG 占位）
 - [x] `create_thumbnail`：RAW 分支走占位逻辑
 - [x] `ThumbnailResponse`：`fallback: Option<bool>`
-- [ ] 前端：收到 `fallback: true` 时显示格式标签（可选）
+- [x] 前端：`ImageList` / `BaseImage` 「占位预览」徽标（`thumbnail-fallback-cache`）；扩展名绘入图内仍可选
 
 ### RFC 0101 — 启动 Splash 屏幕
 
@@ -63,6 +75,53 @@
 - [x] `main.rs`：注册 `close_splashscreen`
 - [x] `apps/photasa/public/splash.html`：轻量 Splash UI
 - [x] `App.vue`：`initializeApp` 的 `finally` 中 `invoke("close_splashscreen")`
+
+---
+
+---
+
+## Phase 6 – Deep Code Parity（2026-04）
+
+Deep line-by-line review of every Rust command file against its TypeScript equivalent found 3 additional gaps.
+
+| 任务 | RFC | 优先级 | 状态 | 说明 |
+|------|-----|--------|------|------|
+| execute_import 日期目录组织 | [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | 🔴 High | 📋 Draft | Rust 平铺复制；TS 生成 `{year}/{YYYYMMDD}/` |
+| 扫描增量缓存 | [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | 🔴 High | 📋 Draft | Rust 无 `.photasa-folder.json`；前端进度 total=0 |
+| 更新定时检查 | [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | 🟡 Medium | 📋 Draft | Rust 无后台 Tokio 定时器；仅命令调用 |
+
+### RFC 0104 — execute_import 日期目录组织
+
+**目标**：导入执行时按文件拍摄日期生成 `{year}/{YYYYMMDD}/` 子目录，与 Electron 行为 1:1 一致。
+
+- [ ] 将 `import_preview.rs` 中 `generate_date_path_utc` / `determine_group_target_utc` 提取为 `pub(crate)`（或新建 `import_date_util.rs`）
+- [ ] `import_execute.rs`：每个文件调用 `extract_metadata_request` 获取日期
+- [ ] 用 `generate_date_path_utc` 构造子目录：`target_dir = target_path / date_sub_path`
+- [ ] 调用 `copy_one(src, &target_dir, strategy)` 替代现有平铺复制
+- [ ] 更新 `imported_files[].targetPath` 为完整相对路径 `{year}/{YYYYMMDD}/filename`
+- [ ] 单元测试：创建临时目录，执行 execute_import，断言文件在 `<tmp>/2024/20240315/`
+
+### RFC 0105 — 扫描增量缓存
+
+**目标**：Rust `scan_photos` 读写 `.photasa-folder.json` 缓存，对前端上报准确 `processed/total`，支持断点续扫。
+
+- [ ] 设计 `ScanFolderCache` 结构体（`version`, `scannedAt`, `processedFiles`, `pendingFiles`）
+- [ ] Discovery 阶段：walkdir 收集所有候选路径写入 `pendingFiles`，持久化 `.photasa-folder.json`
+- [ ] Processing 循环：每处理一文件更新缓存文件，emit `progress { processed, total }`
+- [ ] Resume：如缓存已存在且 `pendingFiles` 非空，跳过 discovery 直接处理
+- [ ] `operationType == "file"`：复用 `isPhotasaMediaFile` 扩展名守卫
+- [ ] `scan_adapter.rs` 的 `scanPaths` action 同步使用新缓存逻辑
+- [ ] 单元测试：缓存创建、resume、扩展名过滤
+
+### RFC 0106 — 更新定时检查
+
+**目标**：app 启动后 5 秒自动检查一次，并按配置的 `checkInterval` 小时循环检查。
+
+- [ ] `main.rs` setup 中 `tauri::async_runtime::spawn` 后台任务
+- [ ] 初始延迟 `tokio::time::sleep(Duration::from_secs(5))`
+- [ ] 循环读取 `UpdateState.auto_config.enabled` / `check_interval`，按需调用检查逻辑
+- [ ] `get_app_version` 命令（若未实现）：`app.package_info().version.to_string()`
+- [ ] 清理：`RunEvent::ExitRequested` 取消后台任务
 
 ---
 
@@ -84,9 +143,9 @@
 
 | 服务 | Electron | Rust/Tauri | 状态 |
 |------|----------|------------|------|
-| 扫描 | `scan-service.ts` + `scan-worker.ts` | `stubs.rs::scan_photos` (walkdir) | ✅ |
+| 扫描 | `scan-service.ts` + `scan-worker.ts` | `stubs.rs::scan_photos` (walkdir) | ⚠️ 缺增量缓存 RFC 0105 |
 | 缩略图 | `thumbnail-service.ts` (MaLiang) | `thumbnail.rs` (image/libheif/ffmpeg) | ✅（RAW 占位 RFC 0102） |
-| 导入执行 | `import-service.ts` | `import_execute.rs` | ✅ |
+| 导入执行 | `import-service.ts` | `import_execute.rs` | ⚠️ 平铺复制缺日期目录 RFC 0104 |
 | 导入预览 | `import-service.ts` | `import_preview.rs` | ✅ |
 | 导入历史 | `ImportHistoryManager` | `import_session_store.rs` | ✅ |
 | 遗留导入 | `preload/legacy.ts` RxJS 流 | `import_legacy.rs` | ✅ |
@@ -98,7 +157,7 @@
 | Shell | `shell-service.ts` | `shell.rs` | ✅ |
 | 菜单 | `menu-service.ts` | `menu.rs` | ✅ |
 | 日志查看器 | `log-viewer-service.ts` | `log_viewer.rs` + `log_toggle_shortcut.rs` | ✅ |
-| 自动更新 | `update-service.ts` | `update.rs` | ✅ (端点待配置) |
+| 自动更新 | `update-service.ts` | `update.rs` | ⚠️ 缺定时后台任务 RFC 0106（端点待配置） |
 | 平台检测 | `platform.ts` | `platform.rs` | ✅ |
 | 路径工具 | `@shared/path-util` | `path.rs` | ✅ |
 | 单实例 | `single-instance-manager.ts` | `tauri-plugin-single-instance` + `RunEvent::Reopen` | ✅ RFC 0100 |
@@ -170,6 +229,9 @@
 | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md) | Tauri 启动 Splash | Implemented | AI | v2.1.0 |
 | [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 缩略图 RAW 回退策略 | Implemented | AI | v2.1.0 |
 | [0103](./docs/rfc/completed/0103-tauri-native-deps-build-strategy.md) | 原生依赖构建策略 | Implemented | AI | v2.1.0 |
+| [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | 📋 Draft | AI | v2.1.0 |
+| [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | 📋 Draft | AI | v2.1.0 |
+| [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check timer | 📋 Draft | AI | v2.1.0 |
 
 > **说明**：上表「Draft」多为历史索引快照；Tauri 0074–0096 等在 [ROADMAP.md](./ROADMAP.md) **Tauri small RFCs** 表中已标为 Implemented 的，以实现为准。
 

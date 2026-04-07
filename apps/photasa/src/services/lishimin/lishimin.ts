@@ -269,10 +269,20 @@ export class LishiminService implements ILishiminService {
         logger.info("👑 李世民已开始监听所有启奏事件，并根据event-routing.yml自动路由");
     }
 
-    async startZhengguan() {
-        logger.info("👑 开始启动大唐贞观之治");
+    /**
+     * 同步就位：创建并注入各服务、建立启奏-圣旨系统。
+     * 须在 `app.mount` 之前调用，且不应包含可能长时间阻塞的 IPC。
+     */
+    prepareCourt(): void {
+        logger.info("👑 百官就位，启奏系统立朝");
         this.employ();
-        // 各部门通过奏折系统初始化
+    }
+
+    /**
+     * 异步初始化各部门（偏好、语言、应用状态、扫描队列等）。
+     * 可与首屏渲染并行，避免天枢/奏折链路阻塞导致 Splash 永不关闭。
+     */
+    async initializeDepartments(): Promise<void> {
         try {
             logger.info("👑 杜如晦中书侍郎服务初始化百姓上书言路");
             this.duRuHuiService.initializeBaiXingShangshuYanLu();
@@ -294,5 +304,11 @@ export class LishiminService implements ILishiminService {
         } catch (error) {
             logger.error("👑初始化失败，继续启动应用:", error);
         }
+    }
+
+    async startZhengguan() {
+        logger.info("👑 开始启动大唐贞观之治");
+        this.prepareCourt();
+        await this.initializeDepartments();
     }
 }
