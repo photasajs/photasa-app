@@ -109,7 +109,7 @@ Production builds must bundle `workflows/` into `resource_dir/workflows` (tracke
   - history + revisions files updated
   - restoreRevision loads previous snapshot
 - Tauri compile proof:
-  - `cargo test -p photasa-wenchang-preferences`
+  - `cargo test -p wenchang-preferences`
   - `cargo build -p photasa`
 - Optional manual validation:
   - Renderer triggers `get_preferences` and sees preferences store replaced via `matter-sync.yml`

@@ -16,7 +16,7 @@ tauri-build = { version = "2.0", features = [] }
 # workspace crates
 zouwu-core = { path = "../../../crates/zouwu-core" }
 zouwu-builtin = { path = "../../../crates/zouwu-builtin" }
-photasa-wenchang-preferences = { path = "../../../crates/photasa-wenchang-preferences" }
+wenchang-preferences = { path = "../../../crates/wenchang-preferences" }
 
 # workspace 共享依赖
 serde = { workspace = true }

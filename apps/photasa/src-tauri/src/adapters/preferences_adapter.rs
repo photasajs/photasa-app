@@ -4,14 +4,14 @@
  * 对齐 Electron 的 `WenchangAdapter`：
  * - 默认落盘目录：`~/.photasa/preferences/`
  * - 核心文件：`preferences.json`（以及 history/revisions）
- * - 对应 service: "wenchang"（供 preference/*.zouwu 工作流调用）
+ * - 对应 service: "wenchang"（供 preference 相关 .zouwu 工作流调用）
  */
 use async_trait::async_trait;
-use photasa_wenchang_preferences::PreferencesStore;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use wenchang_preferences::PreferencesStore;
 
 use zouwu_core::adapter::{Adapter, AdapterError};
 use zouwu_core::types::ExecutionContext;
@@ -85,10 +85,9 @@ impl Adapter for PreferencesAdapter {
                     .and_then(|v| v.as_str())
                     .unwrap_or("user_action");
                 let mut store = self.store.write().await;
-                let new_revision = store
-                    .update_preferences(delta, source)
-                    .await
-                    .map_err(|e| AdapterError::Internal(format!("update preferences error: {e}")))?;
+                let new_revision = store.update_preferences(delta, source).await.map_err(|e| {
+                    AdapterError::Internal(format!("update preferences error: {e}"))
+                })?;
                 Ok(json!({ "result": { "revision": new_revision }, "success": true }))
             }
 
@@ -103,11 +102,12 @@ impl Adapter for PreferencesAdapter {
 
             "exportPreferences" => {
                 let store = self.store.read().await;
-                let data = store
-                    .export_preferences()
-                    .await
-                    .map_err(|e| AdapterError::Internal(format!("export preferences error: {e}")))?;
-                Ok(json!({ "export": { "result": data }, "success": true, "timestamp": now_ms(), "engineName": "wenchang" }))
+                let data = store.export_preferences().await.map_err(|e| {
+                    AdapterError::Internal(format!("export preferences error: {e}"))
+                })?;
+                Ok(
+                    json!({ "export": { "result": data }, "success": true, "timestamp": now_ms(), "engineName": "wenchang" }),
+                )
             }
 
             "importPreferences" => {
@@ -120,10 +120,9 @@ impl Adapter for PreferencesAdapter {
                     .and_then(|v| v.as_str())
                     .unwrap_or("import");
                 let mut store = self.store.write().await;
-                let snapshot = store
-                    .import_preferences(data, source)
-                    .await
-                    .map_err(|e| AdapterError::Internal(format!("import preferences error: {e}")))?;
+                let snapshot = store.import_preferences(data, source).await.map_err(|e| {
+                    AdapterError::Internal(format!("import preferences error: {e}"))
+                })?;
                 Ok(json!({ "result": snapshot, "success": true }))
             }
 
@@ -159,7 +158,7 @@ impl Adapter for PreferencesAdapter {
             // Workflow-layer validation/sanitize: keep minimal but deterministic.
             // - validate returns { valid, errors? }
             // - sanitize returns sanitized object directly (not wrapped)
-            "validate" => Ok(json!({ "valid": true, "errors": [] as [String; 0] })),
+            "validate" => Ok(json!({ "valid": true, "errors": [] })),
 
             "sanitize" => Ok(input.get("source").cloned().unwrap_or(Value::Null)),
 
@@ -190,4 +189,3 @@ fn now_ms() -> u64 {
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0)
 }
-

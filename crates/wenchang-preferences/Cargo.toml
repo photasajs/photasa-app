@@ -1,5 +1,5 @@
 [package]
-name = "photasa-wenchang-preferences"
+name = "wenchang-preferences"
 version = "0.1.0"
 edition = "2021"
 description = "Wenchang preferences persistence (Photasa)"

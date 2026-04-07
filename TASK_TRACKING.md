@@ -21,12 +21,12 @@
 
 **目标**：Tauri 侧与 Electron 等价：应用级偏好落盘 `~/.photasa/preferences/preferences.json`，并能通过天枢 `get_preferences` / `update_preferences` 回传并自动同步到 Renderer store。
 
-- [ ] 新增 workspace crate：`crates/photasa-wenchang-preferences`
+- [ ] 新增 workspace crate：`crates/wenchang-preferences`
 - [ ] `ConfigAdapter` 改名为 `config`（不再占用 `wenchang`）
 - [ ] 新增 `PreferencesAdapter`：`name() == "wenchang"`，实现 preference 工作流所需 actions
 - [ ] `TianshuService`：注册 `PreferencesAdapter` 与 `ConfigAdapter`
 - [ ] Rust 单测：默认偏好、apply delta、history、restore revision
-- [ ] 验证证据：`cargo test -p photasa-wenchang-preferences` + `cargo build -p photasa`
+- [ ] 验证证据：`cargo test -p wenchang-preferences` + `cargo build -p photasa`
 
 ### RFC 0100 — 单实例管理
 

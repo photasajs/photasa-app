@@ -16,47 +16,52 @@ pub enum PreferencesError {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct UserPreferences {
     pub revision: u64,
     pub ui: UiPreferences,
     pub display: DisplayPreferences,
     pub scanning: ScanningPreferences,
     pub performance: PerformancePreferences,
-    pub lastModified: u64,
+    pub last_modified: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct UiPreferences {
     pub theme: String,
     pub layout: String,
     pub language: String,
-    pub sidebarWidth: u64,
-    pub zoomLevel: f64,
+    pub sidebar_width: u64,
+    pub zoom_level: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct DisplayPreferences {
-    pub thumbnailSize: u64,
-    pub sortOrder: String,
-    pub groupBy: String,
-    pub showHidden: bool,
-    pub showMetadata: bool,
+    pub thumbnail_size: u64,
+    pub sort_order: String,
+    pub group_by: String,
+    pub show_hidden: bool,
+    pub show_metadata: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct ScanningPreferences {
-    pub autoScan: bool,
-    pub excludePatterns: Vec<String>,
+    pub auto_scan: bool,
+    pub exclude_patterns: Vec<String>,
     pub concurrency: u64,
-    pub watchEnabled: bool,
+    pub watch_enabled: bool,
     pub paths: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct PerformancePreferences {
-    pub maxCacheSize: u64,
-    pub preloadCount: u64,
-    pub enableGpuAcceleration: bool,
+    pub max_cache_size: u64,
+    pub preload_count: u64,
+    pub enable_gpu_acceleration: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -93,7 +98,6 @@ const HISTORY_FILE_NAME: &str = "history.json";
 const REVISIONS_DIR_NAME: &str = "revisions";
 
 pub struct PreferencesStore {
-    preferences_dir: PathBuf,
     preferences_file: PathBuf,
     history_file: PathBuf,
     revisions_dir: PathBuf,
@@ -118,7 +122,6 @@ impl PreferencesStore {
 
         let now = now_ms();
         let mut store = Self {
-            preferences_dir,
             preferences_file,
             history_file,
             revisions_dir,
@@ -151,7 +154,7 @@ impl PreferencesStore {
         let mut merged: UserPreferences = serde_json::from_value(merged_value)?;
 
         merged.revision = next_revision;
-        merged.lastModified = now_ms();
+        merged.last_modified = now_ms();
         self.preferences = merged;
 
         self.append_history(next_revision, delta, source)?;
@@ -177,7 +180,7 @@ impl PreferencesStore {
     pub async fn import_preferences(&mut self, data: Value, source: &str) -> Result<PreferenceSnapshot, PreferencesError> {
         let mut imported: UserPreferences = serde_json::from_value(data)?;
         imported.revision = self.preferences.revision.saturating_add(1).max(1);
-        imported.lastModified = now_ms();
+        imported.last_modified = now_ms();
         self.preferences = imported;
 
         self.append_history(self.preferences.revision, serde_json::json!({}), source)?;
@@ -281,29 +284,29 @@ fn default_preferences(now: u64) -> UserPreferences {
             theme: DEFAULT_THEME.to_string(),
             layout: DEFAULT_LAYOUT.to_string(),
             language: DEFAULT_LANGUAGE.to_string(),
-            sidebarWidth: 240,
-            zoomLevel: 1.0,
+            sidebar_width: 240,
+            zoom_level: 1.0,
         },
         display: DisplayPreferences {
-            thumbnailSize: 150,
-            sortOrder: DEFAULT_SORT_ORDER.to_string(),
-            groupBy: DEFAULT_GROUP_BY.to_string(),
-            showHidden: false,
-            showMetadata: true,
+            thumbnail_size: 150,
+            sort_order: DEFAULT_SORT_ORDER.to_string(),
+            group_by: DEFAULT_GROUP_BY.to_string(),
+            show_hidden: false,
+            show_metadata: true,
         },
         scanning: ScanningPreferences {
-            autoScan: true,
-            excludePatterns: vec!["node_modules".to_string(), ".git".to_string(), "*.tmp".to_string()],
+            auto_scan: true,
+            exclude_patterns: vec!["node_modules".to_string(), ".git".to_string(), "*.tmp".to_string()],
             concurrency: 4,
-            watchEnabled: true,
+            watch_enabled: true,
             paths: vec![],
         },
         performance: PerformancePreferences {
-            maxCacheSize: 1000,
-            preloadCount: 50,
-            enableGpuAcceleration: true,
+            max_cache_size: 1000,
+            preload_count: 50,
+            enable_gpu_acceleration: true,
         },
-        lastModified: now,
+        last_modified: now,
     }
 }
 
@@ -343,8 +346,7 @@ mod tests {
     use super::*;
 
     fn temp_preferences_dir() -> PathBuf {
-        let base = std::env::temp_dir().join(format!("photasa-wenchang-{}", uuid::Uuid::new_v4()));
-        base
+        std::env::temp_dir().join(format!("wenchang-preferences-{}", uuid::Uuid::new_v4()))
     }
 
     #[tokio::test]
