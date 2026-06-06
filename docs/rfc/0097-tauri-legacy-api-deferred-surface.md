@@ -4,9 +4,17 @@
 - **Status**: 🚧 Partial — 导入/扫描队列/watch/缩略图主干/Splash 核心已在 Photasa 接线；与 Electron 仍差元数据精度（含 MakerNote）、更新端点配置、Splash 进度事件、RAW 占位信息量等（见表与「仍差」）
 - **Depends on**: RFC 0075（扁平 API）；0088、0089、0090（日志/更新 — Photasa 已实现）；0070 + Rust（导入执行内核）
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
-本 RFC 跟踪 **`window.api` 上与 Electron 尚未 1:1** 或需持续对齐的条目，避免把多主题塞进单篇「胖 RFC」。逐项完成后在此表更新状态并同步根目录 `ROADMAP.md` / `TASK_TRACKING.md`（RFC 全表）。
+本 RFC 跟踪 **`window.api` 上与 Electron 尚未达到契约级 1:1** 的条目。对拍方式为 **Rust 实现 + Electron 行为规格**（见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)），**不是**回退到复制 TypeScript 或扩展 `@photasa/*` Node 包。
 
 ## 状态表（相对 Electron）
 

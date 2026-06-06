@@ -5,6 +5,14 @@
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## 摘要
 
 本文档详细说明如何将 Electron 的扫描服务迁移到 Tauri Rust 实现。扫描服务是 Photasa 的核心功能，负责发现、索引和管理照片/视频文件。
@@ -70,11 +78,11 @@ apps/photasa/src-tauri/src/
 ├── services/
 │   └── scan/
 │       ├── mod.rs                    # 模块导出
-│       ├── scan_service.rs          # 主服务（对应 scan-service.ts）
-│       ├── scanner.rs                # 核心扫描逻辑（对应 scan-photos.ts）
-│       ├── worker.rs                 # 异步任务处理（对应 scan-worker.ts）
-│       ├── helpers.rs                # 辅助函数（对应 scan-helpers.ts）
-│       ├── cleanup.rs                # 清理功能（对应 scan-cleanup.ts）
+│       ├── scan_service.rs          # 主服务（行为规格参考：scan-service.ts，Rust 独立实现）
+│       ├── scanner.rs                # 核心扫描逻辑（行为规格参考：scan-photos.ts，Rust 独立实现）
+│       ├── worker.rs                 # 异步任务处理（行为规格参考：scan-worker.ts，Rust 独立实现）
+│       ├── helpers.rs                # 辅助函数（行为规格参考：scan-helpers.ts，Rust 独立实现）
+│       ├── cleanup.rs                # 清理功能（行为规格参考：scan-cleanup.ts，Rust 独立实现）
 │       ├── cache/
 │       │   └── incremental_cache.rs  # 增量缓存管理
 │       ├── strategy/
@@ -210,7 +218,7 @@ use std::path::{Path, PathBuf};
 use crate::services::scan::types::*;
 
 /// 遍历文件夹中的媒体文件
-/// 对应 scan-photos.ts 中的 walkthroughPhotosInFolder
+/// 行为规格参考 scan-photos.ts — Rust 独立实现， walkthroughPhotosInFolder
 pub fn walkthrough_photos_in_folder(
     source: &ScanAction,
     depth_limit: Option<usize>,
@@ -338,7 +346,7 @@ use std::fs;
 use anyhow::Result;
 
 /// 决定扫描策略
-/// 对应 scan-strategy.ts 中的 decideScanStrategy
+/// 行为规格参考 scan-strategy.ts — Rust 独立实现， decideScanStrategy
 pub async fn decide_scan_strategy(
     path: &str,
     action: &ScanActionType,

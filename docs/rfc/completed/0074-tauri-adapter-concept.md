@@ -5,13 +5,21 @@
 - **Implementation Issue**: (leave empty)
 - **状态**: ✅ 已完成
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 Define the **adapter** as the single boundary between the Vue frontend and the backend. The frontend never assumes Electron or Tauri; it always goes through the adapter. The adapter detects the environment (Tauri vs Electron) and delegates to the correct implementation (e.g. `invoke` in Tauri, IPC in Electron).
 
 ## Motivation
 
-- **Goal**: Tauri + full Rust backend + Vue frontend. No Node in Tauri backend; 1:1 mapping from Node to Rust.
+- **Goal**: Tauri + full Rust backend + Vue frontend. No Node in Tauri backend; 1:1 contract parity via Rust rewrite (not TS copy).
 - **Problem**: Vue and shared `utils/api.ts` currently call `window.api.xxx()`. Those calls must work in both Electron (preload/legacy) and Tauri (no preload; need a single injection point).
 - **Solution**: One adapter layer that (1) exposes the same API shape to the app, (2) knows whether it runs under Tauri or Electron, (3) forwards to the right backend (Rust commands via Tauri `invoke`, or existing Electron IPC).
 

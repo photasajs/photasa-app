@@ -5,6 +5,14 @@
 - **RFC PR**: (leave empty)
 - **Implementation Issue**: (leave empty)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 One concern: **importPhotos(folders, target, callback)** – the legacy copy flow. Today preload runs RxJS + path-helper + Node fs (scan folders, filter image/video, ensure dirs, copy files, progress callback). In Tauri this must be one (or a few) Rust commands: scan folders, copy, emit progress; no Node. executeImport (full import UI) is a separate service (RFC 0070).

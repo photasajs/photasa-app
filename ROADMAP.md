@@ -10,6 +10,19 @@ High-level plans and “what’s next” live here. Do not duplicate this as ran
 - **Backend**: 100% Rust. **1:1 mapping** from current Node/Electron main and preload logic to Rust; **no Node usage** in Tauri backend.
 - **Frontend–backend boundary**: **Adapter concept**. Vue (and shared `utils/api`) talk to the backend only through an adapter layer. The adapter hides whether the backend is Electron or Tauri and how it is invoked (IPC vs `invoke`). All backend capabilities are exposed as a single, stable surface (e.g. flat `window.api`) implemented behind the adapter.
 
+### Golden rule: Rust rewrite, not TypeScript copy
+
+Canonical policy: [`docs/rfc/TAURI_RUST_REWRITE_POLICY.md`](docs/rfc/TAURI_RUST_REWRITE_POLICY.md). **All Photasa/Tauri RFCs must comply.**
+
+| Do | Don't |
+|----|-------|
+| Implement backend in Rust (`src-tauri`, `crates/`) | Import Node packages (`@photasa/scan`, `@photasa/import`, …) from Tauri |
+| Use Electron/TS as **behavior spec** (IPC, events, on-disk JSON) | Port, mirror, or line-copy TypeScript into Rust or shared TS for Tauri |
+| Verify **1:1 parity** via contracts and golden tests | Treat RFC 0098 (Electron package extraction) as the Photasa backend path |
+
+- **Vue UI** may be reused from `apps/desktop` renderer; **backend** is always a Rust rewrite.
+- **RFC 0098** is Electron-only maintenance; Phase 2 does not substitute Tauri work (e.g. RFC 0105 scan cache in Rust).
+
 ---
 
 ## RFC policy: one RFC, one thing
@@ -26,6 +39,8 @@ Existing 0067–0073 remain as high-level or per-service docs; new or split work
 ## RFC 仓库索引（canonical）
 
 RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 为准**；规范正文在 `docs/rfc/*.md` 与 `docs/rfc/completed/*.md`，**不再维护** `docs/rfc/README.md`。
+
+**历史说明：** v2.0 Electron RFC（如扫描缓存、导入向导）描述 legacy Node 栈。Photasa/Tauri 等价能力按 [TAURI_RUST_REWRITE_POLICY.md](docs/rfc/TAURI_RUST_REWRITE_POLICY.md) **在 Rust 中重写**，不以复制 TS 或共享 `@photasa/*` 后端包为实现路径。RFC 0098 仅服务 Electron 维护。
 
 ### 统计（维护时随新增 RFC 更新）
 
@@ -76,16 +91,16 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0095](docs/rfc/completed/0095-tauri-get-path-root.md) | get_path_root（api-path getRoot） | ✅ Implemented |
 | [0096](docs/rfc/completed/0096-tauri-import-pause-resume.md) | pause_import / resume_import | ✅ Implemented |
 | [0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪 | 🚧 Partial |
-| [0098](docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages | ✅ Implemented |
+| [0098](docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages（**Electron-only**；非 Photasa 路径） | ⚠️ Partial（Phase 1 ✅；Phase 2 冻结，见 RFC 正文） |
 | [0099](docs/rfc/completed/0099-tauri-window-reload.md) | window_reload（对齐 Electron reload） | ✅ Implemented |
 | [0100](docs/rfc/completed/0100-tauri-single-instance.md) | 单实例（对齐 Electron） | ✅ Implemented |
 | [0101](docs/rfc/completed/0101-tauri-startup-splash.md) | 启动 Splash 屏幕 | ✅ Implemented |
 | [0102](docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 缩略图 RAW 回退策略 | ✅ Implemented |
 | [0103](docs/rfc/completed/0103-tauri-native-deps-build-strategy.md) | 原生依赖构建策略（libheif + ffmpeg-next） | ✅ Implemented |
-| [0104](docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | 📋 Draft |
+| [0104](docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | ✅ Implemented |
 | [0105](docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | 📋 Draft |
 | [0106](docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check timer | 📋 Draft |
-| [0107](docs/rfc/0107-tauri-wenchang-preferences-storage.md) | Wenchang preferences storage parity (Tauri) | 🔨 In Progress |
+| [0107](docs/rfc/0107-tauri-wenchang-preferences-storage.md) | Wenchang preferences storage parity (Tauri) | ✅ Implemented |
 
 ### RFC 流程（摘要）
 
@@ -100,6 +115,8 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 - **Start Date**: YYYY-MM-DD
 - **RFC PR**: (empty)
 - **Implementation Issue**: (empty)
+## Implementation principle (Photasa / Tauri — if applicable)
+> Link [TAURI_RUST_REWRITE_POLICY.md](docs/rfc/TAURI_RUST_REWRITE_POLICY.md). Rust rewrite; TS/Electron = spec only.
 ## Summary
 ## Motivation
 ## Detailed Design
@@ -153,7 +170,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
 - **Next step:** `extract_metadata` 视频与 Electron **逐项对拍**（边界标签、错误回退）；静态图 EXIF 与 MakerNote 细字段；**0093** `importPhotos` 核心已对齐（Rust `copy_with_unique_name` 单测、`legacy-api` 桥接 + `created`→`Date` Vitest；见 RFC 0093）；配置真实 `updater.pubkey` 与 `endpoints`。`extract_metadata` 已含：图片 EXIF（含扩展 `cameraInfo`）、视频 `ffmpeg-next` 静态构建（时长/编码/分辨率/容器时间/GPS/旋转）、可选 MD5；**Rust 单测**已覆盖缺文件、MD5、非媒体 `other`、最小 JPEG、`fileType` 提示（`extract_metadata.rs`），以及视频侧与 ffprobe/Electron 同构的旋转/宽高/日期优先级/GPS（`extract_metadata_video.rs`）。
 - **Phase 5 – 1:1 Parity gaps（2026-04）：** **RFC 0099** `reload_window`。**RFC 0100** 单实例 + macOS `RunEvent::Reopen`。**RFC 0101** 双窗 Splash + `close_splashscreen` + `public/splash.html`。**RFC 0102** RAW → JPEG 占位 + `ThumbnailResponse.fallback`。**RFC 0103** 文档与 `Cargo.toml` 对齐：`ffmpeg-next` 静态构建；`libheif-rs` 使用 **`embedded-libheif`**（非系统 libheif）。**余量：** Splash 进度/状态事件（Electron `updateProgress` 等价）、RAW 占位图上的扩展名绘制、`otool`/`ldd` 验证可纳入 CI 可选步骤。
-- **Phase 6 – Deep code parity（2026-04）：** Deep line-by-line review of every Rust command vs TypeScript equivalent found 3 new gaps. **RFC 0104** `execute_import` currently copies flat to `targetPath`; needs to apply `generate_date_path_utc` (already in `import_preview.rs`) so files land in `<targetPath>/{year}/{YYYYMMDD}/`. **RFC 0105** `scan_photos` lacks `.photasa-folder.json` incremental cache — no `processedFiles`/`pendingFiles` tracking, no resume, no accurate `progress.total` for frontend. **RFC 0106** `update.rs` stores `check_interval` but never starts a background Tokio timer; Electron fires a `setInterval` every N hours plus a 5-second startup check.
+- **Phase 6 – Deep code parity（2026-04）：** **RFC 0104** ✅：`commands/import_date_util.rs` 与预览共用 `generate_date_path_utc` / `determine_group_target_utc` / `extract_metadata` 链；`execute_import` 写入 `<targetPath>/{year}/{YYYYMMDD}/`，`imported_files[].targetPath` 为相对路径 `{year}/{YYYYMMDD}/filename`。**RFC 0105** `scan_photos` 仍缺 `.photasa-folder.json` 增量缓存。**RFC 0106** `update.rs` 仍缺后台 Tokio 定时检查。
 
 ---
 

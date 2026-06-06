@@ -4,6 +4,14 @@
 - **Status**: Implemented
 - **Depends on**: RFC 0067 (Tauri overall)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 在 Tauri 中实现与 Electron `SingleInstanceManager` 1:1 对等的单实例约束：第二个实例启动时聚焦已有窗口并退出，macOS 点击 Dock 图标时若无窗口则新建。

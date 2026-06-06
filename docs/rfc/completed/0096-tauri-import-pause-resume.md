@@ -4,6 +4,14 @@
 - **Status**: Implemented（与 RFC 0070 `execute_import` 同一任务注册表）
 - **Depends on**: RFC 0070
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 为 `window.api.pauseImport` / `resumeImport` 提供 Tauri 命令，使 `execute_import` 后台复制循环在**文件边界**处阻塞直至 `resume`，并与 `cancel_import` 协同（暂停等待期间取消仍生效）。

@@ -4,6 +4,14 @@
 - **Status**: Implemented
 - **Depends on**: RFC 0073 (UI adapter), RFC 0075 (flat legacy API)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 在 Tauri 中实现 `window_reload` 命令，与 Electron 的 `window:reload` IPC 和菜单 `role: "reload"` 保持 1:1 对齐。

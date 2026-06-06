@@ -5,13 +5,21 @@
 - **Implementation Issue**: (leave empty)
 - **状态**: ✅ 已完成
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 Implement path-related behavior used by the app (normalizePath, mergePath, toFileName, toDirName, getSeparator, isHiddenFile, resolvePath, relativePath, etc.) **in Rust** in the Tauri backend, with **no Node usage**. Each function is a 1:1 replacement for the current Node `path` / `path-util` / preload path-helper behavior, exposed as Tauri commands. The flat legacy API layer (RFC 0075) calls these commands when running under Tauri.
 
 ## Motivation
 
-- **Goal**: Tauri backend is 100% Rust; 1:1 mapping from Node to Rust.
+- **Goal**: Tauri backend is 100% Rust; 1:1 contract parity via Rust rewrite (not TS copy).
 - **Current state**: Path logic lives in Node (`path`, `@shared/path-util`, preload path-helper). In Tauri we must not run Node; the same semantics must be provided by Rust (e.g. `std::path` or a crate like `path-clean` / `normpath` for normalization).
 
 ## Detailed design

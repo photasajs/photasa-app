@@ -5,6 +5,14 @@
 - **Implementation Issue**: (leave empty)
 - **状态**: ✅ 已完成
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 One Tauri command: **get_photasa_config(folder)**. Read `.photasa.json` under the given folder, parse, return `PhotasaConfig` (e.g. `{ photoList, … }`). Same shape as current preload `getPhotasaConfig`. Rust only; no Node.

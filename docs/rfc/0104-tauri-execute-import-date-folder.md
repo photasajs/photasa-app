@@ -1,7 +1,17 @@
 # RFC 0104 – execute_import: date-based folder organization
 
-**Status**: Draft  
+
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
+**Status**: ✅ Implemented  
 **Created**: 2026-04-05  
+**Last updated**: 2026-06-06  
 **Area**: Tauri / Import
 
 ---
@@ -25,7 +35,7 @@ const groupDir  = path.join(targetPath, datePath);
 ```
 
 `import_preview.rs` already implements `generate_date_path_utc` and
-`determine_group_target_utc` with 1:1 alignment to the TypeScript originals.
+`determine_group_target_utc` to match the **Electron preview contract** (Rust implementation; TS is spec reference only).
 `execute_import` must use the **same per-file date sub-path** so the files on
 disk match what the preview step presented to the user.
 
@@ -72,3 +82,9 @@ The date is resolved with the same fallback chain already used by `determine_gro
 - `import_preview.rs` already generates and shows date paths to the user;
   this RFC closes the gap so the actual copy matches the preview.
 - No API or event shape change; only the on-disk layout changes.
+
+---
+
+## Verification (2026-06-06)
+
+Implemented in Rust (`commands/import_date_util.rs`, shared by `import_preview` / `import_execute`). Electron `import-worker.ts` used as **behavior spec only** per [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).

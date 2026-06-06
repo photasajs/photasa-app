@@ -4,6 +4,14 @@
 - **Status**: Implemented（方案 A：纯色占位 JPEG；扩展名文字见后续迭代）
 - **Depends on**: RFC 0069 (缩略图服务迁移)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 为 Tauri `thumbnail.rs` 中当前未处理的 RAW 相机格式（CR2/CR3/NEF/ARW/DNG/RAF/ORF 等）定义明确的回退策略，与 Electron MaLiang `FallbackBrush` 行为保持 1:1 对齐。

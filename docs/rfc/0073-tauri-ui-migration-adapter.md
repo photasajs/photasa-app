@@ -6,6 +6,14 @@
 - **优先级**: 🔴 最高优先级（应在所有后端服务迁移之前完成）
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## 摘要
 
 本文档详细说明如何将 Electron 应用的 UI 层迁移到 Tauri，并通过适配器模式实现渐进式后端替换。**这是最高优先级的迁移任务**，因为它让 Tauri 应用可以立即运行，为后续的后端服务迁移提供可视化验证环境。
@@ -45,7 +53,7 @@ RFC 0067 将 UI 迁移放在"阶段四"，这是错误的顺序：
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Vue UI 组件                           │
-│            (从 desktop/src/renderer 复制)                │
+│     (UI adapted from desktop renderer — not backend)    │
 └──────────────────────┬──────────────────────────────────┘
                        │
                        ▼

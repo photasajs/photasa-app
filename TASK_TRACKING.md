@@ -2,6 +2,8 @@
 
 当前活跃任务和 RFC 实现进度。不重复 ROADMAP.md 中的战略规划；本文件只跟踪**具体实现任务**的当前状态。
 
+**Photasa 黄金规则：** [TAURI_RUST_REWRITE_POLICY.md](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — Rust 重写后端；Electron/TS 仅作行为规格，禁止复制 TS 到 Tauri。
+
 ---
 
 ## Phase 5 – 1:1 Parity Gaps（2026-04）
@@ -15,18 +17,18 @@
 | window_reload 命令 | [0099](./docs/rfc/completed/0099-tauri-window-reload.md) | 🟡 Medium | Done | 否 |
 | RAW 缩略图回退 | [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 🟢 Low | Done | 否 |
 | 启动 Splash 屏幕 | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md) | 🟢 Low | Done | 否 |
-| 应用偏好（文昌）落盘 | [0107](./docs/rfc/0107-tauri-wenchang-preferences-storage.md) | 🔴 High | 🔨 In Progress | 是（偏好无法持久化） |
+| 应用偏好（文昌）落盘 | [0107](./docs/rfc/0107-tauri-wenchang-preferences-storage.md) | 🔴 High | Done | 否 |
 
 ### RFC 0107 — 应用偏好（文昌）落盘
 
 **目标**：Tauri 侧与 Electron 等价：应用级偏好落盘 `~/.photasa/preferences/preferences.json`，并能通过天枢 `get_preferences` / `update_preferences` 回传并自动同步到 Renderer store。
 
-- [ ] 新增 workspace crate：`crates/wenchang-preferences`
-- [ ] `ConfigAdapter` 改名为 `config`（不再占用 `wenchang`）
-- [ ] 新增 `PreferencesAdapter`：`name() == "wenchang"`，实现 preference 工作流所需 actions
-- [ ] `TianshuService`：注册 `PreferencesAdapter` 与 `ConfigAdapter`
-- [ ] Rust 单测：默认偏好、apply delta、history、restore revision
-- [ ] 验证证据：`cargo test -p wenchang-preferences` + `cargo build -p photasa`
+- [x] 新增 workspace crate：`crates/wenchang-preferences`
+- [x] `ConfigAdapter` 改名为 `config`（不再占用 `wenchang`）
+- [x] 新增 `PreferencesAdapter`：`name() == "wenchang"`，实现 preference 工作流所需 actions
+- [x] `TianshuService`：注册 `PreferencesAdapter` 与 `ConfigAdapter`
+- [x] Rust 单测：默认偏好、apply delta、history、restore revision
+- [x] 验证证据：`cargo test -p wenchang-preferences` + `cargo build -p photasa`（2026-04-12）
 
 ### RFC 0100 — 单实例管理
 
@@ -86,7 +88,7 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 | 任务 | RFC | 优先级 | 状态 | 说明 |
 |------|-----|--------|------|------|
-| execute_import 日期目录组织 | [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | 🔴 High | 📋 Draft | Rust 平铺复制；TS 生成 `{year}/{YYYYMMDD}/` |
+| execute_import 日期目录组织 | [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | 🔴 High | Done | `import_date_util` + `execute_import` 日期子目录与相对 `targetPath` |
 | 扫描增量缓存 | [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | 🔴 High | 📋 Draft | Rust 无 `.photasa-folder.json`；前端进度 total=0 |
 | 更新定时检查 | [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | 🟡 Medium | 📋 Draft | Rust 无后台 Tokio 定时器；仅命令调用 |
 
@@ -94,12 +96,11 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 **目标**：导入执行时按文件拍摄日期生成 `{year}/{YYYYMMDD}/` 子目录，与 Electron 行为 1:1 一致。
 
-- [ ] 将 `import_preview.rs` 中 `generate_date_path_utc` / `determine_group_target_utc` 提取为 `pub(crate)`（或新建 `import_date_util.rs`）
-- [ ] `import_execute.rs`：每个文件调用 `extract_metadata_request` 获取日期
-- [ ] 用 `generate_date_path_utc` 构造子目录：`target_dir = target_path / date_sub_path`
-- [ ] 调用 `copy_one(src, &target_dir, strategy)` 替代现有平铺复制
-- [ ] 更新 `imported_files[].targetPath` 为完整相对路径 `{year}/{YYYYMMDD}/filename`
-- [ ] 单元测试：创建临时目录，执行 execute_import，断言文件在 `<tmp>/2024/20240315/`
+- [x] 将 `generate_date_path_utc` / `determine_group_target_utc` 等提取至 `commands/import_date_util.rs`，`import_preview` 复用
+- [x] 每文件经 `date_subpath_for_import_source`（内部 `extract_metadata_request`）解析日期
+- [x] `target_dir = join_date_subpath(target_path, date_sub)` + `copy_one`
+- [x] `imported_files[].targetPath` 为相对路径 `{year}/{YYYYMMDD}/filename`
+- [x] 单元测试：`import_date_util` 中 `date_subpath_follows_file_mtime_when_no_exif` 等（2026-04-12）
 
 ### RFC 0105 — 扫描增量缓存
 
@@ -145,7 +146,7 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 |------|----------|------------|------|
 | 扫描 | `scan-service.ts` + `scan-worker.ts` | `stubs.rs::scan_photos` (walkdir) | ⚠️ 缺增量缓存 RFC 0105 |
 | 缩略图 | `thumbnail-service.ts` (MaLiang) | `thumbnail.rs` (image/libheif/ffmpeg) | ✅（RAW 占位 RFC 0102） |
-| 导入执行 | `import-service.ts` | `import_execute.rs` | ⚠️ 平铺复制缺日期目录 RFC 0104 |
+| 导入执行 | `import-service.ts` | `import_execute.rs` | ✅ RFC 0104 日期子目录 |
 | 导入预览 | `import-service.ts` | `import_preview.rs` | ✅ |
 | 导入历史 | `ImportHistoryManager` | `import_session_store.rs` | ✅ |
 | 遗留导入 | `preload/legacy.ts` RxJS 流 | `import_legacy.rs` | ✅ |
@@ -225,11 +226,11 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0095](./docs/rfc/completed/0095-tauri-get-path-root.md) | get_path_root | Draft | AI | v2.1.0 |
 | [0096](./docs/rfc/completed/0096-tauri-import-pause-resume.md) | pause_import / resume_import | Draft | AI | v2.1.0 |
 | [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪 | 🚧 Partial | AI | v2.1.0 |
-| [0098](./docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages | Implemented | AI | v2.1.0 |
+| [0098](./docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages（**Electron-only**） | ⚠️ Partial / Phase 2 冻结 | AI | v2.1.0 |
 | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md) | Tauri 启动 Splash | Implemented | AI | v2.1.0 |
 | [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 缩略图 RAW 回退策略 | Implemented | AI | v2.1.0 |
 | [0103](./docs/rfc/completed/0103-tauri-native-deps-build-strategy.md) | 原生依赖构建策略 | Implemented | AI | v2.1.0 |
-| [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | 📋 Draft | AI | v2.1.0 |
+| [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | ✅ Implemented | AI | v2.1.0 |
 | [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | 📋 Draft | AI | v2.1.0 |
 | [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check timer | 📋 Draft | AI | v2.1.0 |
 

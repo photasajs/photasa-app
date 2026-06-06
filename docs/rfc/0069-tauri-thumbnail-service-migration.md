@@ -6,6 +6,14 @@
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 - **延伸（RAW 占位）**: [RFC 0102: RAW 缩略图回退](./completed/0102-tauri-thumbnail-raw-fallback.md)（`ThumbnailResponse.fallback`、无解码器时的 JPEG 占位）
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## 摘要
 
 本文档详细说明如何将 Electron 的缩略图服务迁移到 Tauri Rust 实现。缩略图服务负责生成和管理照片/视频的缩略图，是 Photasa 的核心功能之一。

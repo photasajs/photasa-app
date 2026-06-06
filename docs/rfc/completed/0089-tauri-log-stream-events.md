@@ -5,6 +5,14 @@
 - **RFC PR**: (leave empty)
 - **Implementation Issue**: (leave empty)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 One concern: **log stream to frontend**. Rust backend collects log output (e.g. `tracing`), forwards to webview via Tauri events. Channel name(s) and payload shape must match Electron (e.g. `picasa:log-entry`) so existing log-viewer UI works. No Node.

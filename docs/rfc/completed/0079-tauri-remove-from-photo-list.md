@@ -5,6 +5,14 @@
 - **Implementation Issue**: (leave empty)
 - **状态**: ✅ 已完成
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 One Tauri command: **remove_from_photo_list(photo_path)**. Find the config that contains this photo in photoList, splice it out, write config back. Return value for UI (e.g. `{ path, config }`). Rust only; no Node.

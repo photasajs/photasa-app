@@ -4,6 +4,14 @@
 - **Status**: Implemented
 - **Depends on**: RFC 0067 (Tauri overall)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 在 Tauri 中实现与 Electron `SplashWindow` 等价的启动画面：应用启动时显示轻量 Splash 窗口（进度 + 状态文字），主窗口就绪后隐藏。

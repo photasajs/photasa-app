@@ -5,6 +5,14 @@
 - **Implementation Issue**: (leave empty)
 - **状态**: ✅ 已完成
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 Provide a **flat** `window.api` in the Tauri app that is **1:1** with the Electron preload surface from `apps/desktop/src/preload/legacy.ts`. Every method name and signature (that the Vue app and `utils/api.ts` use) exists on `window.api` and delegates to the adapter (which then uses Tauri `invoke` or stub). No nested `api.window` / `api.scan`; the app keeps calling `window.api.minimizeWindow()`, `window.api.scanPhotos()`, etc.

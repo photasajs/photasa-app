@@ -5,6 +5,14 @@
 - **RFC PR**: (leave empty)
 - **Implementation Issue**: (leave empty)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 One concern: **log viewer open/state**. If the app needs a command to signal “viewer opened” (e.g. for buffering or enabling log stream), expose one Tauri command (e.g. `log_viewer_open()`). Otherwise this RFC may state “no command; stream only (RFC 0089).” Rust only; no Node.

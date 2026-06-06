@@ -4,6 +4,14 @@
 - **Status**: Implemented（文档与 `apps/photasa/src-tauri/Cargo.toml` 对齐）
 - **Depends on**: RFC 0069 (缩略图), RFC 0097 (导入元数据)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 记录并规范 Tauri Rust 后端中 `libheif-rs` 和 `ffmpeg-next` 两个重型原生依赖的静态链接策略、CI 构建环境要求和跨平台分发保障。

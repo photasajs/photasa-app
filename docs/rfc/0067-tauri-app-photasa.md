@@ -16,6 +16,14 @@
   - [RFC 0102: RAW 缩略图占位回退](./completed/0102-tauri-thumbnail-raw-fallback.md)
   - [RFC 0103: 原生依赖构建策略](./completed/0103-tauri-native-deps-build-strategy.md)
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## 摘要
 
 在 `apps` 目录下创建一个新的 Tauri 应用 `photasa`，将现有的 Electron 应用迁移到 Tauri 架构。本 RFC 作为总体架构文档和迁移策略索引，具体的服务迁移细节请参考各个子 RFC。
@@ -67,19 +75,20 @@ Tauri 应用将采用以下架构：
 
 ```
 ┌─────────────────────────────────────┐
-│   Frontend (Vue3) - 可重用          │
-│   - 完全重用 apps/desktop/src/renderer 内容到 src/ │
-│   - 适配 Tauri API                  │
+│   Frontend (Vue3) — UI reuse only     │
+│   - Adapt apps/desktop/src/renderer   │
+│   - No backend logic in renderer      │
 └──────────────┬──────────────────────┘
                │ Tauri Invoke API
 ┌──────────────▼──────────────────────┐
-│   Tauri Rust Backend                 │
-│   - Commands (等价于 IPC handlers)   │
-│   - 服务系统（Rust 实现）            │
-│   - 文件系统操作                     │
-│   - 系统集成                        │
+│   Tauri Rust Backend (rewrite)       │
+│   - Commands — Rust 独立实现         │
+│   - 不 import Node / @photasa/* 包   │
+│   - Electron main 仅作行为规格参考   │
 └─────────────────────────────────────┘
 ```
+
+> **Frontend reuse ≠ backend reuse.** Vue 可从 desktop 复制/adapt；Main 进程逻辑必须在 Rust 中重写，见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)。
 
 ### 目录结构
 
@@ -87,7 +96,7 @@ Tauri 应用将采用以下架构：
 apps/
 ├── desktop/          # 现有 Electron 应用
 └── photasa/          # 新 Tauri 应用
-    ├── src/          # Frontend (Vue3) - 直接重用 desktop/src/renderer 内容
+    ├── src/          # Frontend (Vue3) — UI from desktop renderer (spec/adapt only)
     │   ├── main.ts   # Vue 应用入口
     │   ├── App.vue   # 主组件
     │   ├── components/  # Vue 组件
@@ -121,6 +130,8 @@ apps/
 ```
 
 ### Electron Main → Tauri Rust 映射
+
+> **映射表仅索引 Electron 行为规格**（IPC 名、事件、磁盘格式）。实现方式为 **Rust 重写**，不得复制 TypeScript 源码或引用 `@photasa/*` Node 包。
 
 #### 1. 窗口管理
 
@@ -689,23 +700,20 @@ notify = "6.0"   # 文件系统监听
 
 ## 替代方案
 
-### 方案 A：完全重写（不推荐）
+### 方案 A：全栈从零重写（不推荐）
 
-完全重写整个应用为 Tauri，不重用任何代码。
-- **优点**：架构更清晰
-- **缺点**：工作量大，风险高
+从零编写全新 Vue + Rust，**不**复用 desktop renderer。成本高、与当前渐进迁移策略不符。
 
-### 方案 B：渐进式迁移（推荐）
+### 方案 B：渐进迁移（推荐，已采用）
 
-保持 Electron 版本，逐步迁移功能到 Tauri。
-- **优点**：风险可控，可对比测试
-- **缺点**：需要维护两套代码一段时间
+- **Backend**：Rust **重写**（非 TS 复制），Electron main 仅作行为规格（[TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)）
+- **Frontend**：复用/adapt `desktop` renderer UI，经 adapter 调 Rust
+- **优点**：风险可控，可对比测试，UI 交付快
+- **缺点**：过渡期内需维护 Electron + Tauri 两套后端
 
-### 方案 C：混合架构（过渡方案）
+### 方案 C：混合架构（已拒绝 — 违反黄金规则）
 
-Tauri 主进程 + Node.js Worker 进程处理复杂任务。
-- **优点**：迁移成本低
-- **缺点**：仍有 Node.js 依赖，包体积较大
+Tauri 主进程 + Node.js Worker 处理复杂任务。**不采用**：Photasa 目标为 **100% Rust 后端**，禁止在 Tauri 路径保留 Node worker 或复制 TS 包。
 
 ## 未解决的问题
 

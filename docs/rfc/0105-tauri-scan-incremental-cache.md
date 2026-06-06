@@ -1,5 +1,14 @@
 # RFC 0105 – Tauri scan: incremental cache (.photasa-folder.json)
 
+
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 **Status**: Draft  
 **Created**: 2026-04-05  
 **Area**: Tauri / Scan
@@ -22,9 +31,8 @@ progressData = {
 };
 ```
 
-The cache is populated by `@photasa/scan` (`scanPhotos` / `processMediaFile`)
-during the scan and allows resuming a partial scan and reporting accurate
-`processed/total` progress to the frontend.
+The cache is populated during scan in Rust (walkdir + media filter)—**not** by calling `@photasa/scan` from Tauri.
+`processed/total` progress to the frontend. Resuming a partial scan uses the same on-disk format as Electron.
 
 The Rust `scan_photos` in `stubs.rs` and `scan_adapter.rs` perform a raw
 `walkdir` traversal.  They emit each found path as a `picasa:find-photo` event
@@ -38,8 +46,7 @@ but:
 
 ## Decision
 
-Implement a per-folder cache file `.photasa-folder.json` in Rust to mirror the
-TypeScript behaviour.
+Implement `.photasa-folder.json` **in Rust** (`scan_cache.rs` or dedicated module). The JSON schema and `picasa:find-photo` progress payloads must match the **legacy Electron contract**. TypeScript / `@photasa/scan` are **spec references only**—not code to port or import.
 
 ### Cache file schema (matches existing TS format)
 

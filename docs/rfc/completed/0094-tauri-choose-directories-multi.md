@@ -4,6 +4,14 @@
 - **Status**: Implemented
 - **Depends on**: RFC 0084（单目录 `choose_directory`）、`tauri-plugin-dialog`
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 为扁平 `window.api.chooseDirectories(multiSelect)` 提供 Tauri 命令，返回与 Electron `ImportService.chooseDirectories` 相同的 `{ filePaths: string[] }` 形状；取消选择时返回空数组。

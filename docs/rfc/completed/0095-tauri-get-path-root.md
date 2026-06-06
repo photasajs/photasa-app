@@ -4,6 +4,14 @@
 - **Status**: Implemented
 - **Depends on**: RFC 0076（路径工具）
 
+## Implementation principle (Photasa / Tauri)
+
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+
+- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
+- **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
+
 ## Summary
 
 实现 `window.api.getRoot(path)` 的 Tauri 侧等价：返回路径的**根前缀**（POSIX 为 `/`，Windows 为盘符前缀等）；相对路径无根分量时返回空字符串。
