@@ -10,6 +10,7 @@ export {
 export type { SerializableWorkerError } from "./import-config-normalize";
 
 export { serializeImportConfigForWorker } from "./import-serialize";
+export type { ImportConfigWorkerMessage } from "./import-serialize";
 
 export {
     ImportSessionManager,

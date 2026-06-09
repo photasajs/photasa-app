@@ -10,6 +10,7 @@ import type {
     FileInfo,
     ScanDirectoriesRequest,
     ImportConfig,
+    ImportConfigWorkerMessage,
     ImportResult,
     ImportPreview,
     FileStatistics,
@@ -214,8 +215,7 @@ async function handleScanDirectories(message: WorkerMessage<ImportRequest>): Pro
  * 处理导入预览请求
  */
 async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promise<void> {
-    const request = message.payload as ImportRequest;
-    const config = request.payload as ImportConfig;
+    const config = (message.payload as ImportRequest).payload as ImportConfigWorkerMessage;
 
     try {
         const processedConfig = processImportConfigForWorker(config);
@@ -246,19 +246,19 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
  * 处理执行导入请求
  */
 async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promise<void> {
-    const request = message.payload as ImportRequest;
-    const configWithImportId = request.payload as ImportConfig & { importId?: string };
-    const config = configWithImportId as ImportConfig;
-    const importId = configWithImportId.importId;
+    const payload = (message.payload as ImportRequest).payload as ImportConfigWorkerMessage & {
+        importId?: string;
+    };
+    const importId = payload.importId;
 
     workerLog(
         "debug",
         "import-worker",
-        `执行导入: ${config.sourcePaths?.join(", ") || "无源路径"}, importId: ${importId}`,
+        `执行导入: ${payload.sourcePaths?.join(", ") || "无源路径"}, importId: ${importId}`,
     );
 
     try {
-        const processedConfig = processImportConfigForWorker(config);
+        const processedConfig = processImportConfigForWorker(payload);
         const result = await executeImportProcess(processedConfig, importId);
 
         const serializableResult = JSON.parse(JSON.stringify(result));

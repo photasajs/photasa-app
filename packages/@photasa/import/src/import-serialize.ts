@@ -1,11 +1,6 @@
-import type { ImportConfig } from "@photasa/common";
+import type { ImportConfig, ImportConfigWorkerMessage } from "@photasa/common";
 
-/** 经 postMessage 发往 worker 的配置（日期字段为 ISO 字符串） */
-export type ImportConfigWorkerMessage = Omit<ImportConfig, "filters"> & {
-    filters: Omit<ImportConfig["filters"], "dateRange"> & {
-        dateRange: { start: string; end: string };
-    };
-};
+export type { ImportConfigWorkerMessage } from "@photasa/common";
 
 /**
  * 主进程发往 import worker 前将配置中的 Date 转为 ISO 字符串（与原先 import-service 一致）。

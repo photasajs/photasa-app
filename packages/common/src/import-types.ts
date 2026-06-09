@@ -189,6 +189,13 @@ export interface ImportConfig {
     useMD5ForDuplicates?: boolean; // 是否使用 MD5 验证重复文件
 }
 
+/** 经 postMessage 发往 import worker 的配置（dateRange 为 ISO 字符串） */
+export type ImportConfigWorkerMessage = Omit<ImportConfig, "filters"> & {
+    filters: Omit<ImportConfig["filters"], "dateRange"> & {
+        dateRange: { start: string; end: string };
+    };
+};
+
 /**
  * 导入错误信息
  */
@@ -495,8 +502,12 @@ export interface ImportRequest {
         | "scan_directories"
         | "execute_import"
         | "preview_import";
-    /** execute_import 可在配置旁带 importId；其余 action 仅使用 ImportConfig 字段 */
-    payload: MetadataRequest | FileGroup | ScanDirectoriesRequest | (ImportConfig & { importId?: string });
+    /** execute_import / preview_import 使用序列化后的配置；其余 action 使用对应请求类型 */
+    payload:
+        | MetadataRequest
+        | FileGroup
+        | ScanDirectoriesRequest
+        | (ImportConfigWorkerMessage & { importId?: string });
 }
 
 /**
