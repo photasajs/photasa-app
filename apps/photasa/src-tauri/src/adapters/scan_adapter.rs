@@ -13,7 +13,7 @@ use tauri::AppHandle;
 use zouwu_core::adapter::{Adapter, AdapterError};
 use zouwu_core::types::ExecutionContext;
 
-use crate::commands::scan_runner::run_directory_scan_sync;
+use crate::commands::scan_runner::{run_directory_scan_sync, ScanAction};
 
 pub struct ScanAdapter {
     app_handle: Arc<AppHandle>,
@@ -34,7 +34,7 @@ impl Adapter for ScanAdapter {
     }
 
     fn supported_actions(&self) -> &[&str] {
-        &["validatePaths", "scanPaths", "restoreQueue"]
+        &["validatePaths", "scanPaths", "restoreQueue", "persistQueue"]
     }
 
     async fn execute(
@@ -79,7 +79,13 @@ impl Adapter for ScanAdapter {
                                 run_directory_scan_sync(
                                     app,
                                     request_id,
-                                    scan_root,
+                                    ScanAction {
+                                        path: scan_root.clone(),
+                                        operation_type: String::new(),
+                                        action: "scan".to_string(),
+                                        thumbnail_size: Some(256),
+                                        is_directory: true,
+                                    },
                                     recursive,
                                 );
                             }
@@ -99,6 +105,8 @@ impl Adapter for ScanAdapter {
 
             "restoreQueue" => restore_scanning_queue().await,
 
+            "persistQueue" => persist_scanning_queue(input).await,
+
             _ => Err(AdapterError::UnsupportedAction(action.to_string())),
         }
     }
@@ -106,12 +114,70 @@ impl Adapter for ScanAdapter {
 
 const SCAN_QUEUE_DIR: &str = ".photasa/scan";
 const SCAN_QUEUE_FILE: &str = "scanning.json";
+const SCAN_QUEUE_VERSION: &str = "1.0";
 
-async fn restore_scanning_queue() -> Result<Value, AdapterError> {
-    let path = dirs::home_dir()
+fn scanning_queue_path() -> std::path::PathBuf {
+    dirs::home_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join(SCAN_QUEUE_DIR)
-        .join(SCAN_QUEUE_FILE);
+        .join(SCAN_QUEUE_FILE)
+}
+
+fn build_scanning_queue_document(queue: &[Value]) -> Value {
+    json!({
+        "version": SCAN_QUEUE_VERSION,
+        "timestamp": chrono::Utc::now().timestamp_millis(),
+        "queue": queue,
+    })
+}
+
+fn extract_queue_array(input: &Value) -> Result<Vec<Value>, AdapterError> {
+    match input {
+        Value::Array(items) => Ok(items.clone()),
+        Value::Object(obj) => obj
+            .get("queue")
+            .and_then(|v| v.as_array())
+            .map(|items| items.clone())
+            .ok_or_else(|| {
+                AdapterError::InvalidInput(
+                    "persistQueue expects array or object with queue field".to_string(),
+                )
+            }),
+        _ => Err(AdapterError::InvalidInput(
+            "persistQueue expects array".to_string(),
+        )),
+    }
+}
+
+async fn persist_scanning_queue(input: Value) -> Result<Value, AdapterError> {
+    let queue = extract_queue_array(&input)?;
+    let path = scanning_queue_path();
+
+    if let Some(parent) = path.parent() {
+        tokio::fs::create_dir_all(parent)
+            .await
+            .map_err(AdapterError::Io)?;
+    }
+
+    let payload = build_scanning_queue_document(&queue);
+    let serialized = serde_json::to_string_pretty(&payload)
+        .map_err(|e| AdapterError::Serialization(e.to_string()))?;
+
+    tokio::fs::write(&path, serialized)
+        .await
+        .map_err(AdapterError::Io)?;
+
+    log::info!(
+        "🌌 千里眼：扫描队列已持久化 {} 项 -> {}",
+        queue.len(),
+        path.display()
+    );
+
+    Ok(json!({ "success": true, "queueSize": queue.len() }))
+}
+
+async fn restore_scanning_queue() -> Result<Value, AdapterError> {
+    let path = scanning_queue_path();
 
     match tokio::fs::read_to_string(&path).await {
         Ok(content) => {
@@ -139,4 +205,72 @@ fn extract_paths(input: &Value) -> Result<Vec<String>, AdapterError> {
                 .collect()
         })
         .ok_or_else(|| AdapterError::InvalidInput("missing or invalid 'paths' field".to_string()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_queue_array_accepts_top_level_array() {
+        let input = json!([{ "path": "/photos", "action": "rescan" }]);
+        let queue = extract_queue_array(&input).expect("array input should parse");
+        assert_eq!(queue.len(), 1);
+        assert_eq!(queue[0]["path"], "/photos");
+    }
+
+    #[test]
+    fn extract_queue_array_accepts_wrapped_object() {
+        let input = json!({ "queue": [{ "path": "/docs", "action": "scan" }] });
+        let queue = extract_queue_array(&input).expect("wrapped queue should parse");
+        assert_eq!(queue.len(), 1);
+        assert_eq!(queue[0]["path"], "/docs");
+    }
+
+    #[test]
+    fn build_scanning_queue_document_matches_contract() {
+        let queue = vec![json!({ "path": "/a", "action": "rescan" })];
+        let doc = build_scanning_queue_document(&queue);
+        assert_eq!(doc["version"], SCAN_QUEUE_VERSION);
+        assert!(doc["timestamp"].is_number());
+        assert_eq!(doc["queue"].as_array().map(|items| items.len()), Some(1));
+    }
+
+    #[tokio::test]
+    async fn persist_and_restore_round_trip_uses_temp_file() {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "photasa-scan-queue-test-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&temp_dir).expect("temp dir should be created");
+        let file_path = temp_dir.join(SCAN_QUEUE_FILE);
+
+        let queue = vec![json!({
+            "path": "/tmp/rescan-test",
+            "action": "rescan",
+            "source": "user",
+            "timestamp": 1_700_000_000_000_i64
+        })];
+        let payload = build_scanning_queue_document(&queue);
+        let serialized = serde_json::to_string_pretty(&payload).expect("serialize queue");
+        tokio::fs::write(&file_path, serialized)
+            .await
+            .expect("write queue file");
+
+        let content = tokio::fs::read_to_string(&file_path)
+            .await
+            .expect("read queue file");
+        let parsed: Value = serde_json::from_str(&content).expect("parse queue file");
+        let restored = parsed
+            .get("queue")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+
+        assert_eq!(restored.len(), 1);
+        assert_eq!(restored[0]["path"], "/tmp/rescan-test");
+        assert_eq!(restored[0]["action"], "rescan");
+
+        let _ = tokio::fs::remove_dir_all(&temp_dir).await;
+    }
 }

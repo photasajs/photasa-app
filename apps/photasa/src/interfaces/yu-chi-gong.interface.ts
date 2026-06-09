@@ -73,6 +73,12 @@ export interface IYuChiGongService {
     removeScanTask(path: string): Promise<void>;
 
     /**
+     * 用户触发的目录重新扫描（清空缓存后全量扫描）
+     * @param path 目录绝对路径
+     */
+    requestRescan(path: string): Promise<void>;
+
+    /**
      * 初始化扫描队列（应用启动时调用）
      * 从天界恢复持久化的扫描队列
      *

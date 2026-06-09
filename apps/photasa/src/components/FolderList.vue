@@ -3,9 +3,11 @@ import { ref, watch, reactive, computed } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import type { PhotasaConfig } from "@photasa/common";
-import { fixPhotasaConfig, getPhotasaConfig, resetPhotasaConfig } from "@renderer/utils/api";
+import { fixPhotasaConfig, getPhotasaConfig } from "@renderer/utils/api";
+import { normalizePath } from "@renderer/utils/path";
 import { isEmpty } from "radash";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 // ✅ RFC 0058: 使用服务而不是直接 API 调用
 import {
     BaseContextMenu,
@@ -27,6 +29,7 @@ const logger = loggers.lishimin;
  * ✅ RFC 0058: 使用长孙无忌服务
  */
 const zhangSunWuJi = useZhangSunWuJi();
+const yuChiGong = useYuChiGong();
 
 /**
  * Preference store
@@ -44,8 +47,7 @@ const weiZheng = useWeiZheng();
 const xuanzang = useXuanzang();
 
 /**
- * ✅ RFC 0042: addScanFolder 已废弃
- * TODO: 需要实现新的 rescan API（直接通过尉迟恭添加扫描任务）
+ * ✅ RFC 0048 v3: 通过尉迟恭入队 rescan（reset + 全量扫描）
  */
 
 /**
@@ -196,22 +198,21 @@ async function fixConfig(): Promise<void> {
  * @param key - The folder to rescan
  */
 async function rescan(key: string): Promise<void> {
-    logger.info(`[FolderList] Starting rescan for folder: ${key}`);
+    const folderPath = normalizePath(key);
+    logger.info(`[FolderList] Starting rescan for folder: ${folderPath}`);
     try {
-        await resetPhotasaConfig(key);
-        logger.info(`[FolderList] Reset config completed for: ${key}`);
+        if (currentFolder.value === folderPath) {
+            preferenceStore.appState.currentFolderConfig = {
+                version: "",
+                photoList: [],
+                lastModified: 0,
+            } satisfies PhotasaConfig;
+        }
 
-        // ✅ RFC 0048 v3 Phase 4: addScanTask() 已删除（违反 Store as SSOT 原则）
-        // TODO: 实现新的 rescan 机制
-        // 应该通过李世民圣旨系统触发扫描任务：
-        // 1. UI 发送圣旨给李世民（ADD_SCAN_TASK）
-        // 2. 李世民调用天界 workflow（add_scan_action.yml）
-        // 3. FangXuanLing 自动同步到 Store
-        logger.warn(`⚠️ Rescan 功能暂时禁用，等待 RFC 0048 v3 圣旨系统实现`);
-
-        logger.info(`[FolderList] Rescan prepared for: ${key}`);
+        await yuChiGong.requestRescan(folderPath);
+        logger.info(`[FolderList] Rescan queued for: ${folderPath}`);
     } catch (error) {
-        logger.error(`[FolderList] Error during rescan of ${key}:`, error);
+        logger.error(`[FolderList] Error during rescan of ${folderPath}:`, error);
     }
 }
 

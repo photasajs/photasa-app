@@ -138,12 +138,24 @@ impl FolderScanCache {
     }
 }
 
+/// 删除目录下的 `.photasa-folder.json`，用于 rescan 强制全量扫描
+pub fn clear_folder_scan_cache(folder: &Path) -> Result<(), String> {
+    let path = folder_cache_path(folder);
+    if path.exists() {
+        fs::remove_file(&path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 /// 准备目录扫描缓存：resume 或全新 discovery
 pub fn prepare_folder_scan_cache(
     folder: &Path,
     discovered_files: Vec<String>,
+    force_full_rescan: bool,
 ) -> Result<FolderScanCache, String> {
-    if FolderScanCache::can_resume(folder) {
+    if force_full_rescan {
+        clear_folder_scan_cache(folder)?;
+    } else if FolderScanCache::can_resume(folder) {
         if let Some(mut cache) = FolderScanCache::load(folder) {
             cache.in_progress = true;
             cache.scan_start_time = now_millis();
@@ -211,7 +223,27 @@ mod tests {
         cache.save(&dir).unwrap();
         assert!(FolderScanCache::can_resume(&dir));
 
-        let resumed = prepare_folder_scan_cache(&dir, vec!["/should/not/use.jpg".into()]).unwrap();
+        let resumed = prepare_folder_scan_cache(&dir, vec!["/should/not/use.jpg".into()], false).unwrap();
         assert_eq!(resumed.pending_files, vec![full]);
+    }
+
+    #[test]
+    fn force_full_rescan_rebuilds_from_discovery() {
+        let dir = temp_scan_dir("force-rescan");
+        let file = dir.join("pic.jpg");
+        let mut f = fs::File::create(&file).unwrap();
+        f.write_all(b"x").unwrap();
+        drop(f);
+        let full = normalize_path_string(&file);
+
+        let mut cache = FolderScanCache::new_for_discovery(&dir, vec![full.clone()]);
+        cache.mark_file_processed(&full);
+        cache.mark_scan_complete();
+        cache.save(&dir).unwrap();
+
+        let rebuilt = prepare_folder_scan_cache(&dir, vec![full.clone()], true).unwrap();
+        assert_eq!(rebuilt.pending_files, vec![full]);
+        assert!(rebuilt.processed_files.is_empty());
+        assert!(!rebuilt.scan_completed);
     }
 }

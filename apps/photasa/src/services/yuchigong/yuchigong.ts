@@ -284,6 +284,33 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     /**
+     * 持久化并入队单个目录扫描任务（Store + p-queue）
+     */
+    private async scheduleDirectoryScan(
+        path: string,
+        action: "scan" | "rescan" | "current",
+        source: "user" | "auto",
+    ): Promise<void> {
+        const scanAction: ScanAction = {
+            path,
+            action,
+            thumbnailSize: 150,
+            source,
+            timestamp: Date.now(),
+            operationType: "directory",
+        };
+
+        await this.createTasks([scanAction]);
+
+        logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${path} (${action})`);
+        this.scanQueue
+            .add(() => this.executeScan(path, action, "directory"))
+            .catch((error) => {
+                logger.error(`🛡️ 尉迟恭：任务执行失败 ${path}`, error);
+            });
+    }
+
+    /**
      * 删除任务（RFC 0048 v3 立即清理）
      *
      * @description
@@ -446,61 +473,27 @@ export class YuChiGongService implements IService, IYuChiGongService {
         logger.info(`🛡️ 尉迟恭接旨：添加扫描任务 ${path}`);
 
         try {
-            // 1. ✅ Validator要求：使用Accessor去重检查，不维护本地Set
-            if (this.fangXuanLingService.scanning.isInQueue(path)) {
-                logger.warn(`🛡️ 尉迟恭：扫描任务已存在，跳过添加 ${path}`);
-                this.emitQizou("scan_task_duplicate", {
-                    shengzhiId: shengzhi.id,
-                    path,
-                });
-                return;
-            }
-
-            // 2. 创建 ScanAction（IPC 契约）
-            const scanAction: ScanAction = {
-                path,
-                action: (content.action as "scan" | "rescan" | "current") || "scan",
-                thumbnailSize: 150, // 默认缩略图大小
-                // discovered 来源映射为 auto（IPC 层只支持 user/auto）
-                source:
-                    content.source === "discovered"
-                        ? "auto"
-                        : (content.source as "user" | "auto") || "user",
-                timestamp: Date.now(),
-                operationType: "directory",
-            };
-
-            // 3. ✅ RFC 0042要求：只发送ADD_SCAN_ACTION奏折
-            // 房玄龄负责更新Store并触发天界持久化
-            const addActionZouzhe: Zouzhe = {
-                department: GUANYUAN_NAMES.YU_CHI_GONG,
-                matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
-                content: { actions: [scanAction] }, // ✅ 修复：工作流期望 actions 数组
-                timestamp: Date.now(),
-                priority: ZOUZHE_PRIORITIES.NORMAL,
-            };
-
-            logger.info(`🛡️ 尉迟恭向房玄龄呈递添加扫描任务奏折: ${path}`);
-            const response = await this.fangXuanLingService.processZouzhe(addActionZouzhe);
-
-            if (!response.approved) {
-                throw new Error(`房玄龄未批准：${response.instruction}`);
-            }
-
-            // 4. ✅ RFC 0048 v3: 添加到 p-queue 执行队列（修复：扫描未启动问题）
-            // Store 是 SSOT，但 p-queue 是执行器，必须同时添加到 p-queue 才能执行
             const action = (content.action as "scan" | "rescan" | "current") || "scan";
-            logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${path}`);
-            this.scanQueue
-                .add(() => this.executeScan(path, action, "directory"))
-                .catch((error) => {
-                    // ✅ 捕获任何未处理的错误，防止队列停止
-                    logger.error(`🛡️ 尉迟恭：任务执行失败 ${path}`, error);
-                });
+            const source =
+                content.source === "discovered"
+                    ? "auto"
+                    : ((content.source as "user" | "auto") || "user");
 
-            // 5. ✅ 响应圣旨时不发送 SCAN_TASK_ADDED 启奏
-            // 原因：避免循环 - 在 add_path_completed 流程中，魏征已通过 add_root 圣旨处理了路径
-            // SCAN_TASK_ADDED 启奏只在直接调用 addScanTasks() 时发送，用于触发魏征的 add_paths 批量处理
+            // 1. 非 rescan：队列中已有则跳过；rescan：先移除再重新入队
+            if (this.fangXuanLingService.scanning.isInQueue(path)) {
+                if (action !== "rescan") {
+                    logger.warn(`🛡️ 尉迟恭：扫描任务已存在，跳过添加 ${path}`);
+                    this.emitQizou("scan_task_duplicate", {
+                        shengzhiId: shengzhi.id,
+                        path,
+                    });
+                    return;
+                }
+                logger.info(`🛡️ 尉迟恭：rescan 替换队列中已有任务 ${path}`);
+                await this.removeScanTask(path);
+            }
+
+            await this.scheduleDirectoryScan(path, action, source);
 
             logger.info(`🛡️ 尉迟恭：扫描任务已添加并开始执行（响应圣旨） ${path}`);
         } catch (error) {
@@ -817,17 +810,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
     // 原因：违反 "Store as SSOT" 原则，绕过了 Qizou-Shengzhi-FangXuanLing 标准流程
     // 替代方案：所有扫描任务添加必须通过李世民圣旨系统触发
 
-    /**
-     * 移除扫描任务从持久化队列
-     * @param path 要移除的路径
-     *
-     * @description
-     * 只负责从持久化队列移除，执行队列由 p-queue 自动管理
-     * - 移除操作走奏折系统
-     * - 利用现有 remove_scan_action.yml 工作流
-     * - Store Automation自动同步
-     * - p-queue 会自动继续处理下一个任务，无需手动触发
-     */
     async removeScanTask(path: string): Promise<void> {
         // 路径参数验证
         if (!path || typeof path !== "string") {
@@ -869,6 +851,25 @@ export class YuChiGongService implements IService, IYuChiGongService {
             logger.error(`🛡️ 尉迟恭：移除扫描任务失败 ${path}`, error);
             throw error;
         }
+    }
+
+    /**
+     * 用户从文件夹树触发的重新扫描
+     */
+    async requestRescan(path: string): Promise<void> {
+        const normalizedPath = normalizePath(path);
+
+        if (!normalizedPath || normalizedPath.trim() === "") {
+            throw new Error("路径不能为空字符串");
+        }
+
+        logger.info(`🛡️ 尉迟恭：用户请求重新扫描 ${normalizedPath}`);
+
+        if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
+            await this.removeScanTask(normalizedPath);
+        }
+
+        await this.scheduleDirectoryScan(normalizedPath, "rescan", "user");
     }
 
     /**

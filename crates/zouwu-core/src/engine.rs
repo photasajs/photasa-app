@@ -311,11 +311,15 @@ impl ZouwuEngine {
                 })
             }
 
-            // 未实现的 builtin action — 输出 Null 继续流程（不阻断）
             other => {
-                eprintln!("[WARN] builtin action '{other}' not implemented, skipping");
-                ctx.set_step_output(&step.base.id, Value::Null);
-                Ok(StepResult::Output(Value::Null))
+                if let Some(output) = crate::builtin_ops::run_builtin_action(other, &input, ctx) {
+                    ctx.set_step_output(&step.base.id, output.clone());
+                    Ok(StepResult::Output(output))
+                } else {
+                    eprintln!("[WARN] builtin action '{other}' not implemented, skipping");
+                    ctx.set_step_output(&step.base.id, Value::Null);
+                    Ok(StepResult::Output(Value::Null))
+                }
             }
         }
     }

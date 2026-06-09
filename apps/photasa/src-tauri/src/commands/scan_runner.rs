@@ -158,13 +158,22 @@ fn emit_file_complete(app: &AppHandle, request_id: &str, file_path: &str) {
 pub(crate) fn run_directory_scan_sync(
     app: Arc<AppHandle>,
     request_id: String,
-    scan_root: String,
+    scan: ScanAction,
     recursive: bool,
 ) {
+    let scan_root = scan.path.clone();
+    let force_rescan = scan.action == "rescan";
+    let thumb_size = scan.thumbnail_size.unwrap_or(256);
     let root = Path::new(&scan_root);
     info!(
-        "🌌 千里眼开坛，目录扫描: {} (requestId: {})",
-        scan_root, request_id
+        "🌌 千里眼开坛，目录扫描: {} (requestId: {}, action: {})",
+        scan_root,
+        request_id,
+        if scan.action.is_empty() {
+            "scan"
+        } else {
+            &scan.action
+        }
     );
 
     let discovered = match collect_media_files(root, recursive) {
@@ -176,7 +185,7 @@ pub(crate) fn run_directory_scan_sync(
         }
     };
 
-    let mut cache = match prepare_folder_scan_cache(root, discovered) {
+    let mut cache = match prepare_folder_scan_cache(root, discovered, force_rescan) {
         Ok(c) => c,
         Err(err) => {
             error!("🌌 千里眼缓存初始化失败: {}", err);
@@ -195,11 +204,11 @@ pub(crate) fn run_directory_scan_sync(
         let thumb_result = create_thumbnail_sync(&ThumbnailRequest {
             path: full_path.clone(),
             thumbnail: thumb_path,
-            width: Some(256),
-            height: Some(256),
+            width: Some(thumb_size),
+            height: Some(thumb_size),
             without_enlargement: Some(true),
             preview: None,
-            always: Some(false),
+            always: Some(force_rescan),
         });
         if !thumb_result.success {
             if let Some(err) = thumb_result.error {
@@ -272,9 +281,9 @@ pub fn spawn_scan_job(app: AppHandle, request_id: String, scan: ScanAction, recu
     let app = Arc::new(app);
     tokio::spawn(async move {
         if routes_to_directory_scan(&scan) {
-            let scan_root = scan.path.clone();
+            let scan_clone = scan.clone();
             tokio::task::spawn_blocking(move || {
-                run_directory_scan_sync(app, request_id, scan_root, recursive);
+                run_directory_scan_sync(app, request_id, scan_clone, recursive);
             })
             .await
             .ok();

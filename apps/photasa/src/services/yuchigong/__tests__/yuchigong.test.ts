@@ -978,6 +978,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             scanSubfolders: ReturnType<typeof vi.fn>;
             toDirName: ReturnType<typeof vi.fn>;
             scanPhotos: ReturnType<typeof vi.fn>;
+            normalizePath: ReturnType<typeof vi.fn>;
         };
 
         beforeEach(() => {
@@ -987,6 +988,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 scanSubfolders: vi.fn().mockResolvedValue([]),
                 toDirName: vi.fn().mockReturnValue("/parent/dir"),
                 scanPhotos: vi.fn().mockResolvedValue(undefined),
+                normalizePath: vi.fn((path: string) => path.replace(/\\/g, "/")),
             };
 
             // 注入mock到global
@@ -1038,6 +1040,33 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             // 验证重置配置被调用
             expect(mockWindowApi.resetPhotasaConfig).toHaveBeenCalledWith(testPath);
             expect(mockWindowApi.scanPhotos).toHaveBeenCalled();
+        });
+
+        it("requestRescan 应入队 rescan 并在执行时重置配置", async () => {
+            const testPath = "/test/rescan-ui-path";
+            mockWindowApi.scanSubfolders.mockResolvedValue([]);
+
+            await yuchiGong.requestRescan(testPath);
+            await new Promise((resolve) => setTimeout(resolve, 150));
+
+            const addActionZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+            );
+            expect(addActionZouzhe).toBeDefined();
+            expect((addActionZouzhe?.content as { actions: ScanAction[] }).actions[0]).toEqual(
+                expect.objectContaining({
+                    path: testPath,
+                    action: "rescan",
+                    operationType: "directory",
+                }),
+            );
+            expect(mockWindowApi.resetPhotasaConfig).toHaveBeenCalledWith(testPath);
+            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    path: testPath,
+                    action: "rescan",
+                }),
+            );
         });
 
         it("应该递归扫描子文件夹", async () => {

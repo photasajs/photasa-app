@@ -86,7 +86,9 @@ impl WorkflowStore {
     }
 
     fn get_by_intent(&self, intent: &str) -> Option<&WorkflowDefinition> {
-        self.by_intent.get(intent)
+        self.by_intent
+            .get(intent)
+            .or_else(|| self.get_by_id(intent))
     }
 
     fn get_by_id(&self, id: &str) -> Option<&WorkflowDefinition> {
@@ -303,4 +305,38 @@ pub fn resolve_workflows_dir(app: &tauri::AppHandle) -> PathBuf {
         .unwrap_or_default();
 
     dev_path
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_by_intent_falls_back_to_workflow_id() {
+        let mut store = WorkflowStore::new();
+        let wf = WorkflowDefinition {
+            id: "add_scan_action".to_string(),
+            name: "添加扫描任务".to_string(),
+            version: "1.0.0".to_string(),
+            description: None,
+            inputs: None,
+            input_schema: None,
+            outputs: None,
+            output_schema: None,
+            variables: None,
+            triggers: None,
+            timeout: None,
+            enabled: None,
+            tags: None,
+            error_handling: None,
+            on_error: None,
+            priority: None,
+            retry_on_error: None,
+            steps: vec![],
+        };
+        store.insert(wf);
+
+        assert!(store.get_by_intent("add_scan_action").is_some());
+        assert!(store.get_by_intent("missing_intent").is_none());
+    }
 }
