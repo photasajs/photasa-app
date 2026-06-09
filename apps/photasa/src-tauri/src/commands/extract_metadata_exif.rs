@@ -2,6 +2,29 @@
 
 use chrono::{DateTime, Datelike, Local, NaiveDateTime, Utc};
 use exif::{Exif, Reader, Tag, Value as ExifValue};
+
+/// EXIF tag numbers（按 number 匹配，兼容 Pillow 等写入 `Context::Tiff` 的 Exif 标签）
+mod exif_tag_no {
+    pub const DATE_TIME: u16 = 0x0132;
+    pub const MAKE: u16 = 0x010f;
+    pub const MODEL: u16 = 0x0110;
+    pub const EXPOSURE_TIME: u16 = 0x829a;
+    pub const F_NUMBER: u16 = 0x829d;
+    pub const PHOTOGRAPHIC_SENSITIVITY: u16 = 0x8827;
+    pub const RECOMMENDED_EXPOSURE_INDEX: u16 = 0x9212;
+    pub const ISO_SPEED: u16 = 0x8833;
+    pub const STANDARD_OUTPUT_SENSITIVITY: u16 = 0x8830;
+    pub const FOCAL_LENGTH: u16 = 0x920a;
+    pub const DATE_TIME_ORIGINAL: u16 = 0x9003;
+    pub const DATE_TIME_DIGITIZED: u16 = 0x9004;
+    pub const GPS_LATITUDE_REF: u16 = 0x0001;
+    pub const GPS_LATITUDE: u16 = 0x0002;
+    pub const GPS_LONGITUDE_REF: u16 = 0x0003;
+    pub const GPS_LONGITUDE: u16 = 0x0004;
+    pub const GPS_ALTITUDE: u16 = 0x0006;
+    pub const LENS_MODEL: u16 = 0xa434;
+}
+use exif_tag_no as etn;
 use serde_json::{json, Map, Value};
 use std::fs::File;
 use std::io::{Cursor, Read};
@@ -53,16 +76,24 @@ fn parse_exif_datetime(s: &str) -> Option<String> {
     Some(local.to_rfc3339())
 }
 
-/// 读取 EXIF 中第一个 rational，转为 `num/denom` 浮点（用于焦距、光圈、`ExposureTime` 秒数等）
-fn first_rational_as_f64(v: &ExifValue) -> Option<f64> {
+/// 读取 EXIF 中第一个 rational / double / 整数，转为浮点（Pillow 等写入 `Double` 而非 `Rational`）
+fn first_numeric_as_f64(v: &ExifValue) -> Option<f64> {
     match v {
         ExifValue::Rational(parts) => {
             let r = parts.first()?;
             let d = r.denom.max(1);
             Some(f64::from(r.num) / f64::from(d))
         }
+        ExifValue::Double(parts) => parts.first().copied(),
+        ExifValue::Short(parts) => parts.first().map(|&x| f64::from(x)),
+        ExifValue::Long(parts) => parts.first().map(|&x| f64::from(x)),
         _ => None,
     }
+}
+
+/// 读取 EXIF 中第一个 rational，转为 `num/denom` 浮点（用于焦距、光圈、`ExposureTime` 秒数等）
+fn first_rational_as_f64(v: &ExifValue) -> Option<f64> {
+    first_numeric_as_f64(v)
 }
 
 /// ISO / 感光度：常见为 `PhotographicSensitivity` Short，部分机型为 Long
@@ -91,58 +122,53 @@ fn apply_parsed(exif: &Exif, out: &mut Value) {
     let mut shutter_sec: Option<f64> = None;
 
     for f in exif.fields() {
-        match f.tag {
-            Tag::DateTimeOriginal => {
+        match f.tag.number() {
+            etn::DATE_TIME_ORIGINAL | etn::DATE_TIME_DIGITIZED | etn::DATE_TIME => {
                 if datetime_raw.is_none() {
                     datetime_raw = ascii_first(&f.value);
                 }
             }
-            Tag::DateTime => {
-                if datetime_raw.is_none() {
-                    datetime_raw = ascii_first(&f.value);
-                }
-            }
-            Tag::GPSLatitude => gps_lat = Some(&f.value),
-            Tag::GPSLongitude => gps_lon = Some(&f.value),
-            Tag::GPSLatitudeRef => gps_lat_ref = ascii_first(&f.value),
-            Tag::GPSLongitudeRef => gps_lon_ref = ascii_first(&f.value),
-            Tag::GPSAltitude => gps_alt = Some(&f.value),
-            Tag::Make => {
+            etn::GPS_LATITUDE => gps_lat = Some(&f.value),
+            etn::GPS_LONGITUDE => gps_lon = Some(&f.value),
+            etn::GPS_LATITUDE_REF => gps_lat_ref = ascii_first(&f.value),
+            etn::GPS_LONGITUDE_REF => gps_lon_ref = ascii_first(&f.value),
+            etn::GPS_ALTITUDE => gps_alt = Some(&f.value),
+            etn::MAKE => {
                 if make.is_none() {
                     make = ascii_first(&f.value);
                 }
             }
-            Tag::Model => {
+            etn::MODEL => {
                 if model.is_none() {
                     model = ascii_first(&f.value);
                 }
             }
-            Tag::LensModel => {
+            etn::LENS_MODEL => {
                 if lens.is_none() {
                     lens = ascii_first(&f.value);
                 }
             }
-            Tag::PhotographicSensitivity | Tag::RecommendedExposureIndex => {
+            etn::PHOTOGRAPHIC_SENSITIVITY | etn::RECOMMENDED_EXPOSURE_INDEX => {
                 if iso_primary.is_none() {
                     iso_primary = iso_from_exif_value(&f.value);
                 }
             }
-            Tag::ISOSpeed | Tag::StandardOutputSensitivity => {
+            etn::ISO_SPEED | etn::STANDARD_OUTPUT_SENSITIVITY => {
                 if iso_fallback.is_none() {
                     iso_fallback = iso_from_exif_value(&f.value);
                 }
             }
-            Tag::FocalLength => {
+            etn::FOCAL_LENGTH => {
                 if focal_mm.is_none() {
                     focal_mm = first_rational_as_f64(&f.value);
                 }
             }
-            Tag::FNumber => {
+            etn::F_NUMBER => {
                 if aperture.is_none() {
                     aperture = first_rational_as_f64(&f.value);
                 }
             }
-            Tag::ExposureTime => {
+            etn::EXPOSURE_TIME => {
                 if shutter_sec.is_none() {
                     shutter_sec = first_rational_as_f64(&f.value);
                 }
@@ -236,13 +262,8 @@ fn read_exif_capture_local(path: &Path) -> Option<DateTime<Local>> {
     let exif = Reader::new().read_from_container(&mut cursor).ok()?;
     let mut datetime_raw: Option<String> = None;
     for f in exif.fields() {
-        match f.tag {
-            Tag::DateTimeOriginal => {
-                if datetime_raw.is_none() {
-                    datetime_raw = ascii_first(&f.value);
-                }
-            }
-            Tag::DateTime => {
+        match f.tag.number() {
+            etn::DATE_TIME_ORIGINAL | etn::DATE_TIME_DIGITIZED | etn::DATE_TIME => {
                 if datetime_raw.is_none() {
                     datetime_raw = ascii_first(&f.value);
                 }
@@ -299,6 +320,7 @@ mod tests {
     use exif::Rational;
     use regex::Regex;
     use std::fs;
+    use std::path::PathBuf;
     use uuid::Uuid;
 
     #[test]
@@ -339,8 +361,112 @@ mod tests {
     }
 
     #[test]
+    fn first_numeric_as_f64_reads_double_exposure() {
+        let v = ExifValue::Double(vec![0.004]);
+        assert!((first_numeric_as_f64(&v).unwrap() - 0.004).abs() < 1e-9);
+    }
+
+    #[test]
+    fn nikon_fixture_photographic_sensitivity_tag_matches() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/metadata/nikon-exif-sample.jpg");
+        let mut f = File::open(&path).expect("open");
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf).expect("read");
+        let mut cursor = Cursor::new(buf);
+        let exif = Reader::new()
+            .read_from_container(&mut cursor)
+            .expect("exif");
+        let mut found = false;
+        for field in exif.fields() {
+            if field.tag.number() == etn::PHOTOGRAPHIC_SENSITIVITY {
+                found = true;
+                assert_eq!(iso_from_exif_value(&field.value), Some(400));
+            }
+        }
+        assert!(found, "PhotographicSensitivity tag missing");
+    }
+
+    #[test]
+    fn enrich_fixture_jpegs_match_golden_camera_fields() {
+        let cases: &[(&str, &str, u32, f64, f64, f64)] = &[
+            (
+                "nikon-exif-sample.jpg",
+                "NIKON CORPORATION",
+                400,
+                70.0,
+                2.8,
+                0.004,
+            ),
+            ("canon-exif-sample.jpg", "Canon", 800, 50.0, 5.6, 0.00625),
+            ("sony-exif-sample.jpg", "SONY", 200, 35.0, 4.0, 0.002),
+        ];
+        for (file, make, iso, focal, aperture, shutter) in cases {
+            let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("tests/fixtures/metadata")
+                .join(file);
+            let mut out = json!({ "dateSource": "file_modified" });
+            enrich_from_exif(&path, &mut out);
+            assert_eq!(
+                out.get("dateSource").and_then(|v| v.as_str()),
+                Some("exif"),
+                "{file} dateSource"
+            );
+            let cam = out.get("cameraInfo").expect("{file} cameraInfo");
+            assert_eq!(cam.get("make").and_then(|v| v.as_str()), Some(*make));
+            assert_eq!(
+                cam.get("iso").and_then(|v| v.as_u64()),
+                Some(u64::from(*iso)),
+                "{file} iso"
+            );
+            assert!(
+                (cam.get("focalLength").and_then(|v| v.as_f64()).unwrap() - focal).abs() < 1e-3,
+                "{file} focalLength"
+            );
+            assert!(
+                (cam.get("aperture").and_then(|v| v.as_f64()).unwrap() - aperture).abs() < 1e-3,
+                "{file} aperture"
+            );
+            assert!(
+                (cam.get("shutterSpeed").and_then(|v| v.as_f64()).unwrap() - shutter).abs() < 1e-6,
+                "{file} shutterSpeed"
+            );
+        }
+    }
+
+    #[test]
     fn iso_from_short() {
         let v = ExifValue::Short(vec![400]);
         assert_eq!(iso_from_exif_value(&v), Some(400));
+    }
+
+    /// 开发：打印 fixture 内 kamadak 可见标签
+    #[test]
+    #[ignore]
+    fn dump_nikon_fixture_exif_tags() {
+        dump_fixture_exif_tags("nikon-exif-sample.jpg");
+    }
+
+    #[test]
+    #[ignore]
+    fn dump_canon_fixture_exif_tags() {
+        dump_fixture_exif_tags("canon-exif-sample.jpg");
+    }
+
+    fn dump_fixture_exif_tags(name: &str) {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/metadata")
+            .join(name);
+        let mut f = File::open(&path).expect("open");
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf).expect("read");
+        let mut cursor = Cursor::new(buf);
+        let exif = Reader::new()
+            .read_from_container(&mut cursor)
+            .expect("exif");
+        eprintln!("=== {name} ===");
+        for field in exif.fields() {
+            eprintln!("{:?} = {:?}", field.tag, field.value);
+        }
     }
 }

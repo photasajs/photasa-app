@@ -3,6 +3,7 @@ import { useIntersectionObserver } from "@vueuse/core";
 import { onMounted, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { prefetchImageTask } from "@renderer/utils/image-prefetch";
+import { ensureWebviewMediaUrl } from "@renderer/utils/media-url";
 import { BaseSpinner, FileTypeBadge } from "@renderer/components/ui";
 
 // Define props and emits
@@ -17,7 +18,7 @@ const props = defineProps<{
     isPlaceholderThumbnail?: boolean;
 }>();
 
-const { src, height, width, fallback, isVideo, isPlaceholderThumbnail } = toRefs(props);
+const { src, height, width, fallback, isVideo, isPlaceholderThumbnail, raw, preview } = toRefs(props);
 const { t } = useI18n();
 const isReady = ref(false);
 const actualSrc = ref("");
@@ -34,14 +35,15 @@ watch(src, () => {
 });
 
 async function prefetchImage(imageSrc: string): Promise<void> {
+    const loadableSrc = ensureWebviewMediaUrl(imageSrc);
     try {
-        await prefetchImageTask.perform(imageSrc);
+        await prefetchImageTask.perform(loadableSrc);
     } catch {
         /* empty */
     } finally {
         isLoading.value = false;
         isReady.value = true;
-        actualSrc.value = imageSrc;
+        actualSrc.value = loadableSrc;
     }
 }
 
@@ -90,7 +92,16 @@ useIntersectionObserver(target, ([{ isIntersecting }]) => {
                 @error="
                     (event: Event) => {
                         const target = event.target as HTMLImageElement;
-                        if (target) target.src = fallback;
+                        if (!target) return;
+                        const fallbackRaw = preview?.value || raw?.value;
+                        if (fallbackRaw) {
+                            const fallbackSrc = ensureWebviewMediaUrl(fallbackRaw);
+                            if (target.src !== fallbackSrc) {
+                                target.src = fallbackSrc;
+                                return;
+                            }
+                        }
+                        target.src = fallback;
                     }
                 "
             />

@@ -6,6 +6,7 @@
 
 import { isTauri } from "./env";
 import { api } from "./adapter";
+import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 import { normalizeImportProgressPayload } from "./import.adapter";
 import type { ScanAction, ScanResult } from "./scan.adapter";
 import type { ThumbnailRequest, ThumbnailResponse } from "./thumbnail.adapter";
@@ -358,10 +359,16 @@ export function createLegacyApi(): Record<string, unknown> {
         getImageType: (path: string) =>
             isTauri() ? ensureInvoke().then((invoke) => invoke<string>("get_image_type", { path })) : stubAsync(),
         getFileMetadata: (path: string) =>
-            isTauri() ? ensureInvoke().then((invoke) => invoke("get_file_metadata", { path })) : stubAsync(),
+            isTauri()
+                ? ensureInvoke().then((invoke) =>
+                      invoke("get_file_metadata", {
+                          path: webviewMediaUrlToAbsolutePath(path),
+                      }),
+                  )
+                : stubAsync(),
         fileUrlFromPath: (path: string) =>
             isTauri()
-                ? ensureInvoke().then((invoke) => invoke<string>("file_url_from_path", { path }))
+                ? Promise.resolve(toWebviewMediaUrl(webviewMediaUrlToAbsolutePath(path)))
                 : Promise.resolve(path.startsWith("/") ? `file://${path}` : `file:///${path}`),
 
         // ---------- 配置内容级 (RFC 0077-0081) ----------
@@ -573,7 +580,12 @@ export function createLegacyApi(): Record<string, unknown> {
         },
 
         // ---------- 导入增强 ----------
-        scanDirectories: (paths: string[]) => api.import.scanDirectories(paths),
+    scanDirectories: (paths: string[], filters?: unknown) =>
+        isTauri()
+            ? ensureInvoke().then((invoke) =>
+                  invoke("scan_directories", { paths, filters: filters ?? null }),
+              )
+            : (window as any).electronAPI?.api?.scanDirectories?.(paths, filters) ?? stubAsync(),
         previewImport: (config: unknown) =>
             isTauri()
                 ? (async () => {

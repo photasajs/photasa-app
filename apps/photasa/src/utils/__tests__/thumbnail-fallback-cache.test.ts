@@ -14,6 +14,12 @@ describe("thumbnailFallbackCacheKey", () => {
         expect(thumbnailFallbackCacheKey(path)).toBe(path);
     });
 
+    it("unifies asset:// URL and POSIX path", () => {
+        const path = "/Photos/a.CR2";
+        const url = `asset://localhost/${encodeURIComponent(path)}`;
+        expect(thumbnailFallbackCacheKey(url)).toBe(path);
+    });
+
     it("normalizes Windows-style separators", () => {
         expect(thumbnailFallbackCacheKey(String.raw`C:\foo\bar.nef`)).toBe("C:/foo/bar.nef");
     });

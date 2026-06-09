@@ -1,5 +1,7 @@
 # Photasa - Tauri 版本
 
+**Rust-first：** 后端逻辑在 `src-tauri` / `crates/`；Electron/TS 仅作契约对照。禁止 WASM / Node 过渡方案 — 见 [`docs/rfc/TAURI_RUST_REWRITE_POLICY.md`](../../docs/rfc/TAURI_RUST_REWRITE_POLICY.md)。
+
 这是 Photasa 的 Tauri 实现版本，基于 RFC 0067 创建。
 
 ## 项目结构

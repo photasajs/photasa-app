@@ -4,6 +4,8 @@
 
 **Photasa 黄金规则：** [TAURI_RUST_REWRITE_POLICY.md](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — Rust 重写后端；Electron/TS 仅作行为规格，禁止复制 TS 到 Tauri。
 
+**Active RFC 规则：** 凡标为 **Photasa Active** 的 RFC，实现目标必须是 **`apps/photasa/src-tauri` / `crates/` 中的 Rust**；不得把 `@photasa/*` Node 包或 Electron main 抽包当作 Photasa 交付路径。
+
 ---
 
 ## Phase 5 – 1:1 Parity Gaps（2026-04）
@@ -89,8 +91,8 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | 任务 | RFC | 优先级 | 状态 | 说明 |
 |------|-----|--------|------|------|
 | execute_import 日期目录组织 | [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | 🔴 High | Done | `import_date_util` + `execute_import` 日期子目录与相对 `targetPath` |
-| 扫描增量缓存 | [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | 🔴 High | 📋 Draft | Rust 无 `.photasa-folder.json`；前端进度 total=0 |
-| 更新定时检查 | [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | 🟡 Medium | 📋 Draft | Rust 无后台 Tokio 定时器；仅命令调用 |
+| 扫描增量缓存 | [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | 🔴 High | ✅ Done | `scan_cache` + `scan_runner`；progress total 对齐 Electron |
+| 更新定时检查 | [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | 🟡 Medium | ✅ Done | `update_periodic.rs` Tokio 后台循环 |
 
 ### RFC 0104 — execute_import 日期目录组织
 
@@ -106,33 +108,79 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 **目标**：Rust `scan_photos` 读写 `.photasa-folder.json` 缓存，对前端上报准确 `processed/total`，支持断点续扫。
 
-- [ ] 设计 `ScanFolderCache` 结构体（`version`, `scannedAt`, `processedFiles`, `pendingFiles`）
-- [ ] Discovery 阶段：walkdir 收集所有候选路径写入 `pendingFiles`，持久化 `.photasa-folder.json`
-- [ ] Processing 循环：每处理一文件更新缓存文件，emit `progress { processed, total }`
-- [ ] Resume：如缓存已存在且 `pendingFiles` 非空，跳过 discovery 直接处理
-- [ ] `operationType == "file"`：复用 `isPhotasaMediaFile` 扩展名守卫
-- [ ] `scan_adapter.rs` 的 `scanPaths` action 同步使用新缓存逻辑
-- [ ] 单元测试：缓存创建、resume、扩展名过滤
+- [x] `FolderScanCache` 结构体（`version`, `processedFiles`, `pendingFiles`, …）— `scan_cache.rs`
+- [x] Discovery 阶段：walkdir 收集候选路径写入 `pendingFiles`，持久化 `.photasa-folder.json`
+- [x] Processing 循环：每处理一文件更新缓存，emit `progress { processed, total }`
+- [x] Resume：缓存存在且 `pendingFiles` 非空时跳过 discovery
+- [x] `operationType == "file"`：`is_photasa_media_file` 扩展名守卫（`scan_runner.rs`）
+- [x] `scan_adapter.rs` 的 `scanPaths` 使用 `run_directory_scan_sync`
+- [x] 单元测试：`scan_cache` + `scan_runner` routing（2026-06-06）
 
 ### RFC 0106 — 更新定时检查
 
 **目标**：app 启动后 5 秒自动检查一次，并按配置的 `checkInterval` 小时循环检查。
 
-- [ ] `main.rs` setup 中 `tauri::async_runtime::spawn` 后台任务
-- [ ] 初始延迟 `tokio::time::sleep(Duration::from_secs(5))`
-- [ ] 循环读取 `UpdateState.auto_config.enabled` / `check_interval`，按需调用检查逻辑
-- [ ] `get_app_version` 命令（若未实现）：`app.package_info().version.to_string()`
-- [ ] 清理：`RunEvent::ExitRequested` 取消后台任务
+- [x] `main.rs` setup 中 `spawn_periodic_update_checker` 后台任务
+- [x] 初始延迟 5 秒 + 启动时始终检查（对齐 Electron）
+- [x] 循环读取 `UpdateState.auto_config.enabled` / `check_interval`，禁用时跳过检查但保持循环
+- [x] `perform_check_for_updates` 供命令与后台共用
+- [x] `RunEvent::ExitRequested` 取消后台任务
+- [x] `get_app_version` 已在 `platform.rs` 注册
+- [x] 单元测试：`check_interval_secs`（2026-06-06）
 
 ---
 
-## RFC 0097 — extract_metadata 对拍清单（持续）
+## Phase 7 – Rust Parity Closure（2026-06）
 
-状态：🚧 Partial
+**父跟踪 RFC：[0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md)**。全部交付物为 Rust；Electron/TS 仅作契约对照。
 
-- [ ] 视频：边界标签逐项对拍（与 Electron `ffprobe` JSON 输出比较）
-- [ ] 图片：MakerNote 字段（Nikon/Canon/Sony 私有 EXIF）与 Electron 展示级对比
-- [ ] `updater` 生产端点：配置真实 `pubkey` 和 `endpoints`（`tauri.conf.json`）
+| 任务 | RFC | 优先级 | 状态 | 说明 |
+|------|-----|--------|------|------|
+| 扫描 `notify:status` | [0111](./docs/rfc/0111-tauri-scan-notify-status-bridge.md) | 🔴 High | ✅ Done | `scan_notify.rs` + `scan_runner` 双 emit |
+| 元数据 golden 对拍 | [0112](./docs/rfc/0112-tauri-extract-metadata-golden-parity.md) | 🔴 High | ✅ Done | fixtures + golden 测试 + EXIF tag-number 修复 |
+| 更新运维 + 偏好同步 | [0113](./docs/rfc/0113-tauri-updater-production-and-prefs-sync.md) | 🟡 Medium | ✅ Done | `update_config.rs` + `UPDATER.md` + `system.autoUpdate` |
+| legacy-api 小项 | [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md) | 🟡 Medium | ✅ Done | `get_directory` OS 路径；`scan_directories` FileGroup+filters |
+| 废弃 WASM 命令 | 0114 | 🟢 Low | ✅ Done | 已删除 `load_wasm_module` / `call_wasm_function` + `wasm.rs`；无 wasmtime 依赖 |
+| WebView 本地图片 asset 协议 | [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | 🔴 High | ✅ Done | `convertFileSrc` + CSP/assetProtocol；修复 file:// 不可加载 |
+
+**建议执行顺序：** ~~0111 → 0112 → 0113 → 0114~~ ✅ **Phase 7 全部完成。** 0097 已标 ✅ Implemented。0115 为图库显示 hotfix（2026-06-06）。
+
+### RFC 0115 — WebView 本地图片（asset 协议）
+
+- [x] `media-url.ts`：`ensureWebviewMediaUrl`、`parseAssetWebviewUrl`
+- [x] `index.html` + `tauri.conf.json` CSP 对齐 `asset:`
+- [x] `BaseImage.vue` / `image-prefetch.ts` 加载前转换
+- [x] `legacy-api` + `path.rs` 停止产出 `file://` 给 WebView
+- [x] Vitest + `file_url_from_path` Rust 单测
+- [ ] 手测：重启 `tauri dev` 后网格缩略图可见，`src` 为 `asset://localhost/…`
+
+### RFC 0111 — notify:status
+
+- [x] `commands/scan_notify.rs` + 单测
+- [x] `scan_runner.rs` progress/complete/error 双 emit
+- [ ] 手测：Tauri 扫描时状态栏有进度
+
+### RFC 0112 — extract_metadata golden
+
+- [x] fixtures + golden JSON（`tests/fixtures/metadata/`）
+- [x] Nikon/Canon/Sony EXIF + sample/corrupt video
+- [x] 缺文件 / 损坏容器回退；EXIF 按 tag number + Double 解析
+
+### RFC 0113 — updater 生产 + 偏好
+
+- [x] `main.rs` setup：从 `preferences.json` 灌 `UpdateState`（`update_config.rs`）
+- [x] 文档化 `tauri.conf.json` pubkey/endpoints（`apps/photasa/src-tauri/UPDATER.md`）
+- [x] 单测：preferences 影响 periodic checker
+- [x] `wenchang-preferences`：`system.autoUpdate` 字段
+
+### RFC 0097 / 0114 — 剩余 Rust 收口
+
+- [x] **`get_directory`**：`desktop`/`documents`/`home` 映射 OS 路径（Electron `app.getPath`），非空 `DirectoryStore` 优先
+- [x] **`scan_directories`**：返回 `FileGroup[]` + 可选 `filters`（非 flat `string[]`）
+- [x] **WASM 清理**：删除 stub 命令与 `wasm.rs`；**禁止** wasmtime / WASM 过渡方案（见 [TAURI_RUST_REWRITE_POLICY](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md)）
+- [x] **RAW 占位扩展名**：`thumbnail_placeholder.rs` 位图字体（0102 迭代）
+- [x] **`picasa:engine-status`**：`engine_status.rs` — setup 里程碑发射（`initializing` / `ready` / `error`）
+- [x] **Splash 主题同步**：`splash_bridge.rs` — `splash:theme-changed` + `WindowEvent::ThemeChanged`
 
 ---
 
@@ -144,8 +192,8 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 | 服务 | Electron | Rust/Tauri | 状态 |
 |------|----------|------------|------|
-| 扫描 | `scan-service.ts` + `scan-worker.ts` | `stubs.rs::scan_photos` (walkdir) | ⚠️ 缺增量缓存 RFC 0105 |
-| 缩略图 | `thumbnail-service.ts` (MaLiang) | `thumbnail.rs` (image/libheif/ffmpeg) | ✅（RAW 占位 RFC 0102） |
+| 扫描 | `scan-service.ts` + `scan-worker.ts` | `scan_runner.rs` + `scan_cache.rs` | ✅ RFC 0105 增量缓存 |
+| 缩略图 | `thumbnail-service.ts` (MaLiang) | `thumbnail.rs` (image/libheif/ffmpeg + RAW 扩展名占位) | ✅（RAW 标签 2026-06） |
 | 导入执行 | `import-service.ts` | `import_execute.rs` | ✅ RFC 0104 日期子目录 |
 | 导入预览 | `import-service.ts` | `import_preview.rs` | ✅ |
 | 导入历史 | `ImportHistoryManager` | `import_session_store.rs` | ✅ |
@@ -158,7 +206,7 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | Shell | `shell-service.ts` | `shell.rs` | ✅ |
 | 菜单 | `menu-service.ts` | `menu.rs` | ✅ |
 | 日志查看器 | `log-viewer-service.ts` | `log_viewer.rs` + `log_toggle_shortcut.rs` | ✅ |
-| 自动更新 | `update-service.ts` | `update.rs` | ⚠️ 缺定时后台任务 RFC 0106（端点待配置） |
+| 自动更新 | `update-service.ts` | `update.rs` + `update_periodic.rs` | ✅ RFC 0106 定时检查（端点待配置） |
 | 平台检测 | `platform.ts` | `platform.rs` | ✅ |
 | 路径工具 | `@shared/path-util` | `path.rs` | ✅ |
 | 单实例 | `single-instance-manager.ts` | `tauri-plugin-single-instance` + `RunEvent::Reopen` | ✅ RFC 0100 |
@@ -166,7 +214,37 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 ---
 
-## Active RFCs（全量索引）
+## Photosa Active RFCs（Rust-only — 唯一活跃 sprint 源）
+
+以下 RFC **允许**作为 Photasa 当前/下一 sprint 的实现依据。后端交付物必须是 Rust；Electron/TS 仅作契约对照。全量对拍见 [ROADMAP.md](./ROADMAP.md) → **Electron → Rust parity audit（2026-06）**。
+
+| RFC | Title | Status | Rust 交付 |
+|-----|-------|--------|-----------|
+| [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪（**父 RFC**） | ✅ Implemented | Phase 7（0111–0114）全部完成 |
+| [0111](./docs/rfc/0111-tauri-scan-notify-status-bridge.md) | 扫描 `notify:status` 桥 | ✅ Implemented | `scan_notify.rs` + `scan_runner` |
+| [0112](./docs/rfc/0112-tauri-extract-metadata-golden-parity.md) | `extract_metadata` golden | ✅ Implemented | fixtures + golden 测试 |
+| [0113](./docs/rfc/0113-tauri-updater-production-and-prefs-sync.md) | updater 生产 + 偏好同步 | ✅ Implemented | `update_config.rs` + `UPDATER.md` |
+| [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md) | `get_directory` OS 路径 + `scan_directories` FileGroup[] | ✅ Implemented | `directory.rs` + `import_file_groups.rs` + `import_scan_directories.rs` |
+| [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片 asset 协议 | ✅ Implemented | `media-url.ts` + CSP/assetProtocol + `path.rs` |
+
+**Phase 7（0111–0114）全部完成。** 0097 已标 ✅ Implemented。**Photasa 后端：Rust-only，无 WASM。**
+
+**Phase 5–6（0100–0107）** 已全部 Done。不得激活 **0098** 或 v2.0 Electron Draft RFC 作为 Photasa 后端路径。
+
+---
+
+## Legacy / Electron backlog（非 Photasa Active）
+
+v2.0 Electron RFC（Draft / In Progress）**不算** Photasa 活跃项。若要在 Photasa 交付同等能力，必须 **新建或引用已有 Tauri Rust RFC**（如 0105 替代 Electron 扫描缓存），**不得**直接推进下表作为 Tauri 路径。
+
+| RFC | Title | Status | 说明 |
+|-----|-------|--------|------|
+| [0098](./docs/rfc/0098-main-module-extraction-to-packages.md) | main → `@photasa/*` packages | ⏸️ Deferred | **Electron-only**；Phase 2 冻结；非 Photasa |
+| [0004](./docs/rfc/0004-ai-file-preview-service.md) … [0061](./docs/rfc/0061-zouwu-workflow-visualization.md) | （v2.0 能力草案） | Draft / 🔨 | Legacy Electron；见下表全量索引 |
+
+---
+
+## Active RFCs（全量历史索引 — 含 Legacy）
 
 路径相对仓库根。状态与正文头部不一致时，以 RFC 文件内 **Status** 为准并回写本表。
 
@@ -225,16 +303,21 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0094](./docs/rfc/completed/0094-tauri-choose-directories-multi.md) | choose_directories（单/多选目录） | Draft | AI | v2.1.0 |
 | [0095](./docs/rfc/completed/0095-tauri-get-path-root.md) | get_path_root | Draft | AI | v2.1.0 |
 | [0096](./docs/rfc/completed/0096-tauri-import-pause-resume.md) | pause_import / resume_import | Draft | AI | v2.1.0 |
-| [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪 | 🚧 Partial | AI | v2.1.0 |
-| [0098](./docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages（**Electron-only**） | ⚠️ Partial / Phase 2 冻结 | AI | v2.1.0 |
+| [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪 | ✅ Implemented（Photasa Active） | AI | v2.1.0 |
+| [0098](./docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages（Electron-only） | ⏸️ Deferred | AI | v2.1.0 |
 | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md) | Tauri 启动 Splash | Implemented | AI | v2.1.0 |
 | [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 缩略图 RAW 回退策略 | Implemented | AI | v2.1.0 |
 | [0103](./docs/rfc/completed/0103-tauri-native-deps-build-strategy.md) | 原生依赖构建策略 | Implemented | AI | v2.1.0 |
 | [0104](./docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | ✅ Implemented | AI | v2.1.0 |
-| [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | 📋 Draft | AI | v2.1.0 |
-| [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check timer | 📋 Draft | AI | v2.1.0 |
+| [0105](./docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | ✅ Implemented | AI | v2.1.0 |
+| [0106](./docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check | ✅ Implemented | AI | v2.1.0 |
+| [0107](./docs/rfc/0107-tauri-wenchang-preferences-storage.md) | Wenchang preferences storage | ✅ Implemented | AI | v2.1.0 |
+| [0111](./docs/rfc/0111-tauri-scan-notify-status-bridge.md) | Scan notify:status Rust bridge | 📋 Draft | AI | v2.1.0 |
+| [0112](./docs/rfc/0112-tauri-extract-metadata-golden-parity.md) | extract_metadata golden parity | ✅ Implemented | AI | v2.1.0 |
+| [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md) | get_directory OS 路径 + scan_directories FileGroup[] | ✅ Implemented | AI | v2.1.0 |
+| [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片 asset 协议（非 file://） | ✅ Implemented | AI | v2.1.0 |
 
-> **说明**：上表「Draft」多为历史索引快照；Tauri 0074–0096 等在 [ROADMAP.md](./ROADMAP.md) **Tauri small RFCs** 表中已标为 Implemented 的，以实现为准。
+> **说明**：**Photasa  sprint 只看上一节「Photasa Active RFCs」。** 本表含 v2.0 Legacy 与历史快照；Tauri 0074–0107 在 [ROADMAP.md](./ROADMAP.md) 已标 Implemented 的，以实现为准。
 
 ## Implemented RFCs（归档索引）
 

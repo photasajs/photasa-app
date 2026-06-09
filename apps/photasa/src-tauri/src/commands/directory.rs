@@ -9,6 +9,21 @@ use std::sync::Mutex;
 use tauri_plugin_dialog::DialogExt;
 use tokio::fs;
 
+/// Electron `app.getPath(name)` 等价映射（RFC 0097）
+pub fn resolve_known_directory_path(name: &str) -> Option<String> {
+    let path = match name {
+        "home" => dirs::home_dir(),
+        "desktop" => dirs::desktop_dir(),
+        "documents" => dirs::document_dir(),
+        "downloads" => dirs::download_dir(),
+        "music" => dirs::audio_dir(),
+        "pictures" => dirs::picture_dir(),
+        "videos" => dirs::video_dir(),
+        _ => None,
+    }?;
+    Some(path.to_string_lossy().into_owned())
+}
+
 /// 应用内存储的目录名 -> 路径（与 Electron get-directory 语义一致）
 pub struct DirectoryStore(pub Mutex<HashMap<String, String>>);
 
@@ -75,11 +90,16 @@ pub async fn choose_directories(
     .map_err(|e| format!("选择目录任务异常: {e}"))?
 }
 
-/// 根据名称返回已存储的目录路径；无则返回 null
+/// 根据名称返回目录路径：优先非空 `DirectoryStore`，否则 OS 标准路径（desktop/home 等）
 #[tauri::command]
 pub fn get_directory(name: String, state: tauri::State<DirectoryStore>) -> Result<Option<String>, String> {
     let store = state.0.lock().map_err(|e| format!("锁异常: {e}"))?;
-    Ok(store.get(&name).cloned())
+    if let Some(path) = store.get(&name) {
+        if !path.is_empty() {
+            return Ok(Some(path.clone()));
+        }
+    }
+    Ok(resolve_known_directory_path(&name))
 }
 
 /// 存储目录路径到指定名称（供 get_directory 查询）
@@ -120,4 +140,30 @@ pub async fn check_photasa_config(folder_path: String) -> Result<bool, String> {
         .map_err(|e| format!("读取配置失败: {e}"))?;
     let v: serde_json::Value = serde_json::from_str(&content).map_err(|_| "无效 JSON".to_string())?;
     Ok(v.get("photoList").map(|a| a.is_array()).unwrap_or(false))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolve_known_directory_home_is_some() {
+        assert!(resolve_known_directory_path("home").is_some());
+    }
+
+    #[test]
+    fn resolve_unknown_name_is_none() {
+        assert!(resolve_known_directory_path("not-a-path-name").is_none());
+    }
+
+    #[test]
+    fn get_directory_prefers_non_empty_store_over_os() {
+        let store = DirectoryStore(Mutex::new(HashMap::from([(
+            "desktop".to_string(),
+            "/custom/desktop".to_string(),
+        )])));
+        let guard = store.0.lock().unwrap();
+        let path = guard.get("desktop").cloned();
+        assert_eq!(path.as_deref(), Some("/custom/desktop"));
+    }
 }

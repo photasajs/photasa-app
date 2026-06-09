@@ -52,4 +52,8 @@ if (isTauri()) {
         .catch((err) => logger.warn("告示：关闭启动画面未果", err));
 }
 
+if (isTauri()) {
+    const { tianshuAdapter } = await import("./api/tianshu.adapter");
+    await tianshuAdapter.waitUntilReady();
+}
 await lishiminService.initializeDepartments();

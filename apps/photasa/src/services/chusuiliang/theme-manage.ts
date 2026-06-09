@@ -14,6 +14,7 @@ import darkTheme from "@renderer/themes/dark/theme.json";
 import solarizedLightTheme from "@renderer/themes/solarized-light/theme.json";
 import solarizedDarkTheme from "@renderer/themes/solarized-dark/theme.json";
 import type { IThemeManager, ThemeMeta } from "@renderer/interfaces/chu-sui-liang.interface";
+import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
 
 // 导出ThemeMeta类型供其他模块使用
 export type { ThemeMeta };
@@ -148,7 +149,7 @@ export class ThemeManager implements IThemeManager {
     async initTheme(userConfigThemeId?: string) {
         await this.loadBuiltInThemes();
         const themeId = userConfigThemeId || this.getDefaultThemeId();
-        await this.applyTheme(themeId, "/src/renderer/src/themes");
+        await this.applyTheme(themeId, THEME_BASE_PATH);
     }
 
     // 获取默认主题id（无配置时fallback到dark）

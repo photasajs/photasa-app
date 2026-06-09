@@ -1,7 +1,10 @@
 /*!
  * executeImport / cancelImport / pauseImport / resumeImport（RFC 0070 + 0096）
- * 按前端 `ImportConfig` 的 selectedFiles 复制到 targetPath，发送与 Electron 相近的进度/完成事件。
+ * 按前端 `ImportConfig` 的 selectedFiles 复制到 targetPath（RFC 0104：`{year}/{YYYYMMDD}/` 子目录与预览一致），发送与 Electron 相近的进度/完成事件。
  */
+use crate::commands::import_date_util::{
+    date_subpath_for_import_source, join_date_subpath, relative_target_path_for_import,
+};
 use crate::commands::import_session_store::ImportSessionStore;
 use log::{info, warn};
 use serde::Deserialize;
@@ -269,17 +272,25 @@ pub async fn execute_import(
                 continue;
             }
 
-            match copy_one(src, &target_pb, strategy) {
+            // RFC 0104：与预览一致按拍摄/文件日期写入 `{year}/{YYYYMMDD}/`
+            let date_sub = date_subpath_for_import_source(src);
+            let target_dir = join_date_subpath(&target_pb, &date_sub);
+
+            match copy_one(src, &target_dir, strategy) {
                 Ok((copied, dest)) => {
                     if copied {
                         successful += 1;
-                        let dest_s = dest.to_string_lossy().replace('\\', "/");
                         let sz = fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
                         total_size += sz;
                         let src_norm = src_s.replace('\\', "/");
+                        let dest_name = dest
+                            .file_name()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("");
+                        let target_rel = relative_target_path_for_import(&date_sub, dest_name);
                         imported_files.push(json!({
                             "originalPath": src_norm,
-                            "targetPath": dest_s,
+                            "targetPath": target_rel,
                             "size": sz,
                             "checksum": serde_json::Value::Null,
                             "importTime": chrono::Utc::now().to_rfc3339(),

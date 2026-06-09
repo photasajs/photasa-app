@@ -14,7 +14,7 @@
 
 | Allowed | Forbidden |
 |---------|-----------|
-| Rust implementation in `apps/photasa/src-tauri` and `crates/` | Importing `@photasa/scan`, `@photasa/import`, `@photasa/config-core`, or other Node packages from Tauri |
+| Rust implementation in `apps/photasa/src-tauri` and `crates/` | Importing `@photasa/scan`, `@photasa/import`, `@photasa/config-core`, or other Node packages from Tauri | **WASM / wasmtime / wasm-pack** as a backend or “transition” layer for Photasa |
 | Reading Electron/TS **only** to learn IPC names, event payloads, on-disk JSON schemas | Translating TS line-by-line into Rust or “shared” TS packages for Tauri |
 | Golden tests: same inputs → same outputs as Electron | Calling Node from Tauri, embedding worker_threads logic from desktop |
 | Vue frontend reuse (components, stores, services that call `window.api`) | Growing new backend logic in renderer or new Node-only paths for Photasa |
@@ -66,6 +66,7 @@ Vue UI may be copied/adapted from `apps/desktop` renderer. That is **UI reuse**,
 - “Port `scan-photos.ts` to Rust”
 - “Mirror TypeScript implementation”
 - “Reuse `@photasa/scan` from Tauri”
+- “WASM transition”, “compile TS to WASM”, “wasmtime runtime”, or Ma-Liang WASM as a Tauri decode path
 - “对应 scan-service.ts” as the **implementation** target (OK as **spec** index if labeled “behavior reference”)
 
 ---
@@ -74,3 +75,22 @@ Vue UI may be copied/adapted from `apps/desktop` renderer. That is **UI reuse**,
 
 - Root [`ROADMAP.md`](../../ROADMAP.md) — goal: Tauri + full Rust backend
 - [`AGENTS.md`](../../AGENTS.md) — Rust-first (always)
+- [`TASK_TRACKING.md`](../../TASK_TRACKING.md) — **Photasa Active RFCs** table (Rust-only)
+
+---
+
+## Active RFC gate (Photasa)
+
+**All RFCs that are Active for Photasa must target Rust implementation** in `apps/photasa/src-tauri` and/or `crates/`.
+
+| Allowed as **Photasa Active** | Not allowed as **Photasa Active** |
+|-------------------------------|-----------------------------------|
+| Tauri RFCs (`0067+`, `*tauri*.md`) whose **Implementation** section specifies Rust commands/crates | RFC **0098** and any RFC whose primary deliverable is `@photasa/*` Node packages or `apps/desktop` main extraction |
+| New work filed as a **new numbered Tauri RFC** with **Implementation principle** linking this policy | v2.0 Electron RFCs (0004–0061, etc.) unless **superseded** by an explicit Rust RFC that owns the same capability |
+| **0097** (legacy-api surface) — remaining gaps closed **only** by adding Rust commands, not TS backend | “Mirror TS”, “port worker to package”, “shared `@photasa/scan` for Tauri” |
+
+**Workflow:**
+
+1. Before marking an RFC **Active** in `ROADMAP.md` / `TASK_TRACKING.md`, confirm backend scope is **Rust-only**.
+2. Electron/legacy Draft RFCs stay in the **Legacy backlog** index; they are **not** Photasa sprint work.
+3. To ship a legacy Electron idea on Photasa, **open a new Tauri RFC** (or extend an existing Rust RFC)—do not activate the Electron RFC as-is.

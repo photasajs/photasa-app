@@ -4,14 +4,17 @@
  * `targetPath` 仅为日期相对路径、`targetDir`/`targetFullPath` 为落盘目录结构、`FileStatistics.groupCount` 在纯 single 组时为 0。
  */
 use crate::commands::extract_metadata::extract_metadata_request;
+use crate::commands::import_date_util::{
+    determine_group_target_utc, generate_date_path_utc, merge_extract_into_file_info,
+    rfc3339_pair_from_fs_meta,
+};
 use crate::commands::import_path_filter::{basename_hidden, classify_media, should_ignore_photasa_path};
-use chrono::{DateTime, Datelike, Utc};
 use log::{info, warn};
 use serde_json::{json, Map, Value};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 use walkdir::WalkDir;
 
@@ -21,119 +24,6 @@ pub const IMPORT_PREVIEW_PROGRESS_EVENT: &str = "import:preview-progress";
 const PROGRESS_FILE_BATCH: usize = 32;
 const PROGRESS_MIN_INTERVAL: Duration = Duration::from_millis(250);
 const DISCOVERED_TAIL: usize = 24;
-
-/// 与 `@photasa/maliang` `generateDatePath` 一致：`{year}/{year}{MM}{DD}`（例 `2021/20210515`）
-fn generate_date_path_utc(dt: DateTime<Utc>) -> String {
-    let d = dt.date_naive();
-    let y = d.year();
-    let m = d.month();
-    let day = d.day();
-    format!("{}/{}{m:02}{day:02}", y, y)
-}
-
-/// 与 `@photasa/maliang` `isValidVideoDate` 对齐，过滤不可用 `dateTime` 字符串
-fn is_plausible_datetime_str(s: &str) -> bool {
-    let t = s.trim();
-    !t.is_empty()
-        && t != "0000-00-00T00:00:00.000000Z"
-        && t != "invalid-date"
-        && !t.starts_with("1970-01-01T00:00:00")
-}
-
-fn parse_rfc3339_utc(s: &str) -> Option<DateTime<Utc>> {
-    let t = s.trim();
-    if t.is_empty() {
-        return None;
-    }
-    DateTime::parse_from_rfc3339(t)
-        .ok()
-        .map(|d| d.with_timezone(&Utc))
-}
-
-/// 与 `@photasa/maliang` `computeFallbackDate` 一致：两时间皆有效取较早
-fn compute_fallback_date_utc(created_rfc: &str, modified_rfc: &str) -> DateTime<Utc> {
-    let c = parse_rfc3339_utc(created_rfc);
-    let m = parse_rfc3339_utc(modified_rfc);
-    match (c, m) {
-        (Some(ct), Some(mt)) => {
-            if ct <= mt {
-                ct
-            } else {
-                mt
-            }
-        }
-        (Some(ct), None) => ct,
-        (None, Some(mt)) => mt,
-        (None, None) => Utc::now(),
-    }
-}
-
-/// 与 `@photasa/import` `determineGroupTargetDate` 一致（1:1 Electron 预览分桶日期）
-fn determine_group_target_utc(main: &Value) -> DateTime<Utc> {
-    if let Some(ds) = main.get("dateTime").and_then(|v| v.as_str()) {
-        if is_plausible_datetime_str(ds) {
-            if let Ok(dt) = DateTime::parse_from_rfc3339(ds) {
-                return dt.with_timezone(&Utc);
-            }
-        }
-    }
-    if let Some(cs) = main.get("createdTime").and_then(|v| v.as_str()) {
-        if let Some(dt) = parse_rfc3339_utc(cs) {
-            return dt;
-        }
-    }
-    let created = main.get("createdTime").and_then(|v| v.as_str()).unwrap_or("");
-    let modified = main.get("modifiedTime").and_then(|v| v.as_str()).unwrap_or("");
-    compute_fallback_date_utc(created, modified)
-}
-
-/// 将 `extract_metadata` 结果并入预览 `FileInfo`（对齐 `processFileGroup`）
-fn merge_extract_into_file_info(fi: &mut Value, meta: &Value, created_rfc: &str, modified_rfc: &str) {
-    let Some(obj) = fi.as_object_mut() else {
-        return;
-    };
-    let mut from_meta = false;
-    if let Some(dt) = meta.get("dateTime").and_then(|v| v.as_str()) {
-        if is_plausible_datetime_str(dt) {
-            obj.insert("dateTime".to_string(), json!(dt));
-            let ds = meta
-                .get("dateSource")
-                .and_then(|v| v.as_str())
-                .unwrap_or("file_modified");
-            obj.insert("dateSource".to_string(), json!(ds));
-            from_meta = true;
-        }
-    }
-    if !from_meta {
-        if parse_rfc3339_utc(created_rfc).is_some() {
-            obj.insert("dateTime".to_string(), json!(created_rfc));
-            obj.insert("dateSource".to_string(), json!("file_created"));
-        } else if parse_rfc3339_utc(modified_rfc).is_some() {
-            obj.insert("dateTime".to_string(), json!(modified_rfc));
-            obj.insert("dateSource".to_string(), json!("file_modified"));
-        } else {
-            let u = compute_fallback_date_utc(created_rfc, modified_rfc);
-            obj.insert("dateTime".to_string(), json!(u.to_rfc3339()));
-            obj.insert("dateSource".to_string(), json!("file_created"));
-        }
-    }
-    for key in [
-        "width",
-        "height",
-        "duration",
-        "codec",
-        "resolution",
-        "gpsInfo",
-        "cameraInfo",
-        "format",
-    ] {
-        if let Some(v) = meta.get(key) {
-            if !v.is_null() {
-                obj.insert(key.to_string(), v.clone());
-            }
-        }
-    }
-}
 
 fn base_file_info_preview(
     path_str: &str,
@@ -213,26 +103,6 @@ fn build_target_structure_map(file_groups: &[Value], target_root: &str) -> Map<S
         }
     }
     structure
-}
-
-fn system_time_to_rfc3339(t: SystemTime) -> Option<String> {
-    let dt: DateTime<Utc> = t.into();
-    Some(dt.to_rfc3339())
-}
-
-fn rfc3339_from_meta(meta: &std::fs::Metadata) -> (String, String) {
-    let modified = meta
-        .modified()
-        .ok()
-        .and_then(system_time_to_rfc3339)
-        .unwrap_or_default();
-    let created = meta
-        .created()
-        .or_else(|_| meta.modified())
-        .ok()
-        .and_then(system_time_to_rfc3339)
-        .unwrap_or_else(|| modified.clone());
-    (created, modified)
 }
 
 fn norm(p: &str) -> String {
@@ -356,7 +226,7 @@ fn scan_preview_blocking(
                 .and_then(|s| s.to_str())
                 .unwrap_or("")
                 .to_string();
-            let (created, modified) = rfc3339_from_meta(&meta);
+            let (created, modified) = rfc3339_pair_from_fs_meta(&meta);
 
             if is_image {
                 images += 1;
@@ -463,39 +333,11 @@ mod target_structure_tests {
     use super::*;
 
     #[test]
-    fn generate_date_path_matches_maliang_example() {
-        let dt = DateTime::parse_from_rfc3339("2021-05-15T10:30:00+00:00")
-            .unwrap()
-            .with_timezone(&Utc);
-        assert_eq!(generate_date_path_utc(dt), "2021/20210515");
-    }
-
-    #[test]
     fn estimate_duration_matches_worker_formula() {
         let e = estimate_import_duration_electron_style(10, 100 * 1024 * 1024);
         let size_based = 100.0 / 100.0;
         let file_based = 1.0;
         assert!((e - (size_based + file_based)).abs() < 0.001);
-    }
-
-    #[test]
-    fn determine_group_prefers_metadata_date_time() {
-        let main = json!({
-            "dateTime": "2020-06-01T12:00:00+00:00",
-            "createdTime": "2019-01-01T12:00:00+00:00",
-            "modifiedTime": "2021-01-01T12:00:00+00:00",
-        });
-        let dt = determine_group_target_utc(&main);
-        assert_eq!(generate_date_path_utc(dt), "2020/20200601");
-    }
-
-    #[test]
-    fn compute_fallback_picks_earlier_timestamp() {
-        let e = compute_fallback_date_utc(
-            "2022-01-02T00:00:00+00:00",
-            "2021-12-31T00:00:00+00:00",
-        );
-        assert_eq!(e.date_naive().to_string(), "2021-12-31");
     }
 }
 

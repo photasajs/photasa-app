@@ -169,18 +169,37 @@ pub fn get_image_type(path: String) -> String {
     }
 }
 
-/// 将本地文件路径转换为 file:// URL
+/// 将本地路径转为 WebView 可加载 URL（Tauri asset 协议，非 file://）
 #[tauri::command]
 pub fn file_url_from_path(path: String) -> String {
-    let p = Path::new(&path);
-    // 统一正斜杠（Windows 兼容）
-    let normalized = p.to_string_lossy().replace('\\', "/");
-    if normalized.starts_with('/') {
-        format!("file://{normalized}")
-    } else {
-        // Windows 盘符：C:/foo → file:///C:/foo
-        format!("file:///{normalized}")
+    let normalized = normalize_path(path);
+    let encoded = encode_uri_component(&normalized);
+    #[cfg(any(windows, target_os = "android"))]
+    {
+        format!("http://asset.localhost/{encoded}")
     }
+    #[cfg(not(any(windows, target_os = "android")))]
+    {
+        format!("asset://localhost/{encoded}")
+    }
+}
+
+/// 与 JS `encodeURIComponent` 一致，整段路径编码（含 `/`）
+fn encode_uri_component(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    for byte in input.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'!' | b'~' | b'*' | b'\'' | b'(' | b')' => {
+                out.push(byte as char);
+            }
+            _ => {
+                out.push('%');
+                out.push(char::from(b"0123456789ABCDEF"[(byte >> 4) as usize]));
+                out.push(char::from(b"0123456789ABCDEF"[(byte & 0xf) as usize]));
+            }
+        }
+    }
+    out
 }
 
 #[derive(serde::Serialize)]
@@ -234,5 +253,37 @@ mod tests {
     #[test]
     fn get_path_root_relative() {
         assert_eq!(get_path_root("foo/bar".into()), "");
+    }
+
+    #[test]
+    fn file_url_from_path_uses_asset_protocol_not_file_scheme() {
+        let url = file_url_from_path("/Volumes/SUCAI/a b.jpg".into());
+        assert!(!url.starts_with("file:"));
+        #[cfg(not(any(windows, target_os = "android")))]
+        assert!(url.starts_with("asset://localhost/"));
+        let decoded = url.split('/').last().unwrap_or("");
+        assert_eq!(
+            percent_decode(decoded),
+            "/Volumes/SUCAI/a b.jpg".to_string()
+        );
+    }
+
+    fn percent_decode(input: &str) -> String {
+        let mut out = String::new();
+        let bytes = input.as_bytes();
+        let mut i = 0;
+        while i < bytes.len() {
+            if bytes[i] == b'%' && i + 2 < bytes.len() {
+                let hex = &input[i + 1..i + 3];
+                if let Ok(v) = u8::from_str_radix(hex, 16) {
+                    out.push(v as char);
+                    i += 3;
+                    continue;
+                }
+            }
+            out.push(bytes[i] as char);
+            i += 1;
+        }
+        out
     }
 }

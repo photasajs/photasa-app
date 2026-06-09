@@ -40,19 +40,23 @@ pub struct MenuActionPayload {
 // apply_system_menu — 构建并设置系统菜单
 // ============================================================
 
-/// 接收前端菜单数据，构建 macOS 系统菜单
-#[tauri::command]
-pub fn apply_system_menu(app: AppHandle, menus: Vec<MenuItemData>) -> Result<(), String> {
+/// 接收菜单数据，构建 macOS 系统菜单（供 Tauri 命令与天枢适配器共用）
+pub fn apply_menus(app: &AppHandle, menus: Vec<MenuItemData>) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
-        build_and_set_menu(&app, menus)?;
+        build_and_set_menu(app, menus)?;
     }
     #[cfg(not(target_os = "macos"))]
     {
-        // Windows/Linux 暂不设置系统菜单
         let _ = (app, menus);
     }
     Ok(())
+}
+
+/// 接收前端菜单数据，构建 macOS 系统菜单
+#[tauri::command]
+pub fn apply_system_menu(app: AppHandle, menus: Vec<MenuItemData>) -> Result<(), String> {
+    apply_menus(&app, menus)
 }
 
 #[cfg(target_os = "macos")]

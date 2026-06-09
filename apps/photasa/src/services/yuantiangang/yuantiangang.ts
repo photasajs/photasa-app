@@ -561,16 +561,19 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             );
 
             // 转换天枢响应为符箓响应
+            const errorMessage =
+                tianshuResponse.error ??
+                (tianshuResponse.success ? undefined : "天枢处理失败");
+
             const fuluResponse: FuluResponse = {
                 success: tianshuResponse.success,
                 intent: fulu.intent,
                 context: fulu.context,
                 timestamp: Date.now(),
+                error: errorMessage,
                 response: {
                     approved: tianshuResponse.success,
-                    message: tianshuResponse.error
-                        ? tianshuResponse.error
-                        : "天枢已处理符箓请求",
+                    message: errorMessage ?? "天枢已处理符箓请求",
                     result: tianshuResponse.result,
                     status,
                 },
@@ -698,7 +701,11 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
         // 早返回：检查基本状态
         if (!fuluResponse.success) {
-            logger.error("🔮 天枢处理失败", fuluResponse.error);
+            const response = fuluResponse.response as Record<string, unknown> | undefined;
+            const failureMessage =
+                fuluResponse.error ??
+                (typeof response?.message === "string" ? response.message : "天枢处理失败");
+            logger.error("🔮 天枢处理失败", failureMessage);
             return null;
         }
 

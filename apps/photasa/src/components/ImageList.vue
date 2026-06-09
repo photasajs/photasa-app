@@ -2,7 +2,9 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getFileMetadata } from "@renderer/utils/api";
+import { getFileMetadata, getPhotasaConfig } from "@renderer/utils/api";
+import { scanAdapter } from "@renderer/api/scan.adapter";
+import type { PhotasaConfig } from "@photasa/common";
 import type { FileMetadata } from "@photasa/common";
 import { type Card, type Image, toImageMeta, groupImagesByColumns } from "@renderer/common/image";
 // removeFileProtocol 通过 preload API 使用
@@ -299,8 +301,26 @@ watch(
     { flush: "post" },
 );
 
+/** 扫描完成后刷新当前文件夹的 .photasa.json 到列表 */
+async function reloadCurrentFolderConfig(folder: string): Promise<void> {
+    try {
+        const config = await getPhotasaConfig(folder);
+        preferenceStore.appState.currentFolderConfig =
+            config ||
+            ({
+                version: "",
+                photoList: [],
+                lastModified: 0,
+            } satisfies PhotasaConfig);
+    } catch (error) {
+        logger.error("扫描完成后刷新文件夹配置失败:", error);
+    }
+}
+
+let unlistenScanComplete: (() => void) | undefined;
+
 // 挂载
-onMounted(() => {
+onMounted(async () => {
     // 确保初始状态是干净的
     clearDataState();
 
@@ -321,6 +341,17 @@ onMounted(() => {
 
     window.addEventListener("resize", debouncedUpdate);
 
+    unlistenScanComplete = await scanAdapter.onScanResult(async (result) => {
+        if (result.type !== "complete") {
+            return;
+        }
+        const scannedPath = result.action?.path;
+        if (!scannedPath || scannedPath !== currentFolder.value) {
+            return;
+        }
+        await reloadCurrentFolderConfig(scannedPath);
+    });
+
     // 使用 ResizeObserver 监听容器宽度变化
     if (imageListRef.value) {
         resizeObserver = new ResizeObserver(debouncedUpdate);
@@ -329,6 +360,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    unlistenScanComplete?.();
     window.removeEventListener("resize", debouncedUpdate);
     if (updateTimeout) {
         clearTimeout(updateTimeout);

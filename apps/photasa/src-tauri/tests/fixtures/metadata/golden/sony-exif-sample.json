@@ -1,0 +1,19 @@
+{
+  "fixture": "sony-exif-sample.jpg",
+  "expectDateTimePrefix": "2022-07-04",
+  "expect": {
+    "type": "image",
+    "format": "jpg",
+    "dateSource": "exif",
+    "width": 48,
+    "height": 32,
+    "cameraInfo": {
+      "make": "SONY",
+      "model": "ILCE-7M4",
+      "iso": 200,
+      "focalLength": 35.0,
+      "aperture": 4.0,
+      "shutterSpeed": 0.002
+    }
+  }
+}

@@ -19,8 +19,12 @@ use zouwu_core::engine::{EngineError, WorkflowResolver, ZouwuEngine};
 use zouwu_core::parser::parse_workflow;
 use zouwu_core::types::WorkflowDefinition;
 use zouwu_builtin::BuiltinAdapter;
+use zouwu_core::adapter::Adapter;
 
-use crate::adapters::{ConfigAdapter, PreferencesAdapter, ScanAdapter};
+use crate::adapters::{
+    ConfigAdapter, PreferencesAdapter, ScanAdapter, SimingAdapter, TaibaijinxingAdapter,
+    TaiyiAdapter,
+};
 
 // ============================================================
 // TianshuError
@@ -131,21 +135,44 @@ impl TianshuService {
         let loaded = store.read().await.by_id.len();
         log::info!("🌌 天枢天书已载入 {loaded} 卷工作流典籍");
 
-        // 2. 构建 AdapterRegistry
-        let mut registry = AdapterRegistry::new();
-        registry.register(Arc::new(BuiltinAdapter::new()));
-
-        // 文件夹级配置（.photasa.json）
-        registry.register(Arc::new(ConfigAdapter::new()));
-
-        // 应用级偏好（~/.photasa/preferences/preferences.json）
-        registry.register(Arc::new(
+        // 2. 构建 AdapterRegistry（含太乙路由层）
+        let builtin = Arc::new(BuiltinAdapter::new());
+        let config = Arc::new(ConfigAdapter::new());
+        let preferences = Arc::new(
             PreferencesAdapter::new()
                 .await
-                .map_err(|e| TianshuError::Parse(format!("preferences adapter init error: {e}")))?,
-        ));
+                .map_err(|e| {
+                    TianshuError::Parse(format!("preferences adapter init error: {e}"))
+                })?,
+        );
+        let scan = Arc::new(ScanAdapter::new(app_handle.clone()));
+        let siming = Arc::new(SimingAdapter::new());
+        let taibaijinxing = Arc::new(TaibaijinxingAdapter::new(app_handle));
 
-        registry.register(Arc::new(ScanAdapter::new(app_handle)));
+        let mut taiyi_engines: HashMap<String, Arc<dyn Adapter>> = HashMap::new();
+        taiyi_engines.insert("builtin".to_string(), builtin.clone() as Arc<dyn Adapter>);
+        taiyi_engines.insert("config".to_string(), config.clone() as Arc<dyn Adapter>);
+        taiyi_engines.insert(
+            "wenchang".to_string(),
+            preferences.clone() as Arc<dyn Adapter>,
+        );
+        taiyi_engines.insert("qianliyan".to_string(), scan.clone() as Arc<dyn Adapter>);
+        taiyi_engines.insert("siming".to_string(), siming.clone() as Arc<dyn Adapter>);
+        taiyi_engines.insert(
+            "taibaijinxing".to_string(),
+            taibaijinxing.clone() as Arc<dyn Adapter>,
+        );
+
+        let taiyi = Arc::new(TaiyiAdapter::new(taiyi_engines));
+
+        let mut registry = AdapterRegistry::new();
+        registry.register(builtin);
+        registry.register(config);
+        registry.register(preferences);
+        registry.register(scan);
+        registry.register(siming);
+        registry.register(taibaijinxing);
+        registry.register(taiyi);
 
         // 3. 构建引擎，注入子工作流解析器
         let resolver = Arc::new(SubWorkflowResolver {

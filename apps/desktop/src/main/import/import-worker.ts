@@ -36,6 +36,8 @@ import {
     DuplicateHandlerFactory,
     isImageFile,
     isVideoFile,
+    processImportConfigForWorker,
+    createSerializableWorkerError,
 } from "@photasa/import";
 import { computeFallbackDate } from "@photasa/maliang";
 import fs from "fs-extra";
@@ -216,7 +218,7 @@ async function handlePreviewImport(message: WorkerMessage<ImportRequest>): Promi
     const config = request.payload as ImportConfig;
 
     try {
-        const processedConfig = processImportConfig(config);
+        const processedConfig = processImportConfigForWorker(config);
 
         // 创建进度回调函数，将进度事件发送给主进程
         const progressCallback = (progress: any) => {
@@ -256,7 +258,7 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     );
 
     try {
-        const processedConfig = processImportConfig(config);
+        const processedConfig = processImportConfigForWorker(config);
         const result = await executeImportProcess(processedConfig, importId);
 
         const serializableResult = JSON.parse(JSON.stringify(result));
@@ -268,7 +270,7 @@ async function handleExecuteImport(message: WorkerMessage<ImportRequest>): Promi
     } catch (error) {
         workerLog("error", "import-worker", `导入执行失败: ${error}`);
 
-        const serializableError = createSerializableError(error);
+        const serializableError = createSerializableWorkerError(error);
         const response = createResponse<ImportRequest, ImportResponse>(message, {
             success: false,
             error: serializableError.message,
@@ -311,59 +313,6 @@ function sendProgressUpdate(
     });
 
     parentPort?.postMessage(progressEvent);
-}
-
-/**
- * 处理导入配置 - 使用工厂模式处理日期对象
- */
-function processImportConfig(config: ImportConfig): ImportConfig {
-    return {
-        ...config,
-        filters: config.filters
-            ? {
-                  ...config.filters,
-                  dateRange: config.filters.dateRange
-                      ? {
-                            start: normalizeDate(config.filters.dateRange.start),
-                            end: normalizeDate(config.filters.dateRange.end),
-                        }
-                      : { start: new Date(0), end: new Date() },
-              }
-            : createDefaultFilters(),
-    };
-}
-
-/**
- * 创建默认过滤器 - 使用工厂模式
- */
-function createDefaultFilters() {
-    return {
-        fileTypes: [],
-        sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-        dateRange: { start: new Date(0), end: new Date() },
-        includeSubfolders: true,
-    };
-}
-
-/**
- * 标准化日期对象 - 使用策略模式处理不同类型的日期输入
- */
-function normalizeDate(dateInput: Date | string): Date {
-    return dateInput instanceof Date ? dateInput : new Date(dateInput);
-}
-
-/**
- * 创建可序列化的错误对象 - 使用工厂模式
- */
-function createSerializableError(error: unknown) {
-    return error instanceof Error
-        ? {
-              message: error.message,
-              name: error.name,
-              stack: error.stack,
-              code: (error as { code?: string }).code || undefined,
-          }
-        : { message: String(error) };
 }
 
 // ==================== 文件扫描逻辑 ====================

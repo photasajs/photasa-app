@@ -179,7 +179,10 @@ impl Adapter for PreferencesAdapter {
 }
 
 fn default_preferences_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    // macOS/Linux: HOME；Windows：USERPROFILE（与 Electron `~/.photasa` 等价语义）
+    let home = std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .unwrap_or_else(|_| ".".to_string());
     PathBuf::from(home).join(DEFAULT_PREFERENCES_DIR_NAME)
 }
 

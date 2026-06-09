@@ -9,8 +9,9 @@
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
-**Status**: Draft  
+**Status**: ✅ Implemented  
 **Created**: 2026-04-05  
+**Last updated**: 2026-06-06  
 **Area**: Tauri / Scan
 
 ---
@@ -67,8 +68,7 @@ Implement `.photasa-folder.json` **in Rust** (`scan_cache.rs` or dedicated modul
 2. **Processing loop**: for each path in `pendingFiles`:
    - Move path from `pendingFiles` to `processedFiles` in the cache.
    - Write updated `.photasa-folder.json` to disk.
-   - Emit `picasa:find-photo { type: "found", requestId, path }`.
-   - Emit `picasa:find-photo { type: "progress", requestId, progress: { processed, total } }`.
+   - Emit `picasa:find-photo { type: "progress", requestId, progress: { processed, total }, currentFile }`.
 3. **Completion**: emit `picasa:find-photo { type: "complete", … }`.
 4. **Resume**: if `.photasa-folder.json` already exists and `pendingFiles` is
    non-empty, skip the discovery phase and process only the remaining
@@ -85,9 +85,12 @@ Match the Electron scan-worker behaviour:
 
 ### Implementation location
 
-Extend `apps/photasa/src-tauri/src/commands/stubs.rs::scan_photos` (or extract
-to a dedicated `scan_cache.rs` module).  The `scan_adapter.rs` `scanPaths`
-action should also use the cache for parity with the Tianting workflow path.
+Rust modules (no `@photasa/scan` dependency):
+
+- `apps/photasa/src-tauri/src/commands/scan_media.rs` — media filter + walkdir discovery
+- `apps/photasa/src-tauri/src/commands/scan_cache.rs` — `.photasa-folder.json` read/write/resume
+- `apps/photasa/src-tauri/src/commands/scan_runner.rs` — orchestration + `picasa:find-photo` events
+- `stubs.rs::scan_photos` and `scan_adapter.rs::scanPaths` delegate to `scan_runner`
 
 ---
 
@@ -97,3 +100,16 @@ action should also use the cache for parity with the Tianting workflow path.
 - Long scans of large directories can be resumed after an app crash or restart.
 - On-disk format is identical to Electron output; future hybrid
   Electron↔Tauri scenarios remain compatible.
+
+---
+
+## Verification (2026-06-06)
+
+Implemented in Rust (`scan_media.rs`, `scan_cache.rs`, `scan_runner.rs`). Electron `scan-worker.ts` / `.photasa-folder.json` format used as **behavior spec only** per [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+
+```bash
+cd apps/photasa/src-tauri && cargo test scan_
+cd apps/photasa/src-tauri && cargo build -p photasa
+```
+
+Unit tests cover `progress_counts`, basename in `processedFiles`, save/load roundtrip, and resume skipping discovery when `pendingFiles` is non-empty.

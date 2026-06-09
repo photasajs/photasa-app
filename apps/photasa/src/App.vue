@@ -41,6 +41,7 @@ import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
 import { useYuShiNan } from "@renderer/composables/useYuShiNan";
 import { isTauri } from "./api/env";
+import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
 
 /**
  * 日志记录器
@@ -143,9 +144,6 @@ async function initializeApp(): Promise<void> {
 
 const chuSuiLiang = useChuSuiLiang();
 const yuShiNan = useYuShiNan(); // ✅ RFC 0057: 通过虞世南服务更新状态栏
-
-// Tauri 中主题文件在 /src/themes（与 Electron /src/renderer/src/themes 不同）
-const THEME_BASE_PATH = "/src/themes";
 
 onMounted(async () => {
     // ✅ RFC 0057: APP 启动时推送初始化状态（通过虞世南服务）

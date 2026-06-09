@@ -210,6 +210,16 @@ pub struct ImportProgressArgs {
     pub import_id: String,
 }
 
+/// `fileList[].targetPath` 在 RFC 0104 下为相对 `{year}/{YYYYMMDD}/name`；与导入根目录拼成绝对路径
+fn resolve_undo_target_file_path(import_root: &str, stored_target: &str) -> PathBuf {
+    let p = Path::new(stored_target);
+    if p.is_absolute() {
+        p.to_path_buf()
+    } else {
+        Path::new(import_root).join(stored_target)
+    }
+}
+
 fn preview_undo_payload(store: &ImportSessionStore, history_id: &str) -> Value {
     if store.is_undone(history_id) {
         return json!({
@@ -235,6 +245,8 @@ fn preview_undo_payload(store: &ImportSessionStore, history_id: &str) -> Value {
         });
     };
 
+    let import_root = entry.get("targetPath").and_then(|v| v.as_str()).unwrap_or("");
+
     let file_list = entry
         .get("fileList")
         .and_then(|v| v.as_array())
@@ -259,11 +271,13 @@ fn preview_undo_payload(store: &ImportSessionStore, history_id: &str) -> Value {
             continue;
         }
 
-        let p = Path::new(target);
+        let abs_pb = resolve_undo_target_file_path(import_root, target);
+        let abs_norm = abs_pb.to_string_lossy().replace('\\', "/");
+        let p = abs_pb.as_path();
         if p.is_file() {
             can_undo = true;
             files_to_delete.push(json!({
-                "path": target,
+                "path": abs_norm,
                 "size": size,
                 "originalPath": original,
                 "importTime": import_time,
@@ -276,7 +290,7 @@ fn preview_undo_payload(store: &ImportSessionStore, history_id: &str) -> Value {
             }
         } else {
             issues.push(json!({
-                "file": target,
+                "file": abs_norm,
                 "issue": "目标文件不存在，可能已被移动或删除",
                 "severity": "warning",
             }));
@@ -463,5 +477,42 @@ mod tests {
         let store3 = ImportSessionStore::load_or_new_for_test(path.clone());
         assert!(store3.is_undone("h1"));
         let _ = fs::remove_file(&path);
+    }
+
+    /// RFC 0104：`fileList[].targetPath` 为相对路径时，撤销预览应拼上历史中的 `targetPath` 根
+    #[test]
+    fn preview_undo_resolves_relative_target_under_import_root() {
+        let dir = std::env::temp_dir().join(format!("photasa_undo_rel_{}", uuid::Uuid::new_v4()));
+        fs::create_dir_all(dir.join("2024/20240315")).unwrap();
+        let file_path = dir.join("2024/20240315/keep.jpg");
+        fs::write(&file_path, b"x").unwrap();
+
+        let hist_path = tmp_history_path();
+        let _ = fs::remove_file(&hist_path);
+        let store = ImportSessionStore::load_or_new_for_test(hist_path.clone());
+        store.push_history(
+            json!({
+                "id": "hid_rel",
+                "targetPath": dir.to_string_lossy(),
+                "fileList": [{
+                    "targetPath": "2024/20240315/keep.jpg",
+                    "originalPath": "/src/a.jpg",
+                    "size": 1u64,
+                    "importTime": "2024-01-01T00:00:00Z",
+                }],
+            }),
+            200,
+        );
+
+        let pre = preview_undo_payload(&store, "hid_rel");
+        assert_eq!(pre.get("canUndo").and_then(|v| v.as_bool()), Some(true));
+        let files = pre.get("filesToDelete").and_then(|v| v.as_array()).unwrap();
+        assert_eq!(files.len(), 1);
+        let p = files[0].get("path").and_then(|v| v.as_str()).unwrap();
+        assert!(Path::new(p).is_file(), "resolved path should exist: {p}");
+
+        let _ = fs::remove_file(&file_path);
+        let _ = fs::remove_dir_all(&dir);
+        let _ = fs::remove_file(&hist_path);
     }
 }

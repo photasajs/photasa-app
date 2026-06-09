@@ -20,3 +20,6 @@ tokio = { version = "1", features = ["full"] }
 thiserror = "1"
 pest = "2"
 pest_derive = "2"
+zouwu-core = { path = "crates/zouwu-core" }
+zouwu-builtin = { path = "crates/zouwu-builtin" }
+wenchang-preferences = { path = "crates/wenchang-preferences" }

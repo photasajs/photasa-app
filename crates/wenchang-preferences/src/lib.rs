@@ -23,6 +23,8 @@ pub struct UserPreferences {
     pub display: DisplayPreferences,
     pub scanning: ScanningPreferences,
     pub performance: PerformancePreferences,
+    #[serde(default)]
+    pub system: SystemPreferences,
     pub last_modified: u64,
 }
 
@@ -64,6 +66,45 @@ pub struct PerformancePreferences {
     pub enable_gpu_acceleration: bool,
 }
 
+/// 自动更新偏好（与人界 `PreferenceState.system.autoUpdate` 对齐，RFC 0113）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AutoUpdatePreferences {
+    pub enabled: bool,
+    pub check_interval: u32,
+    pub allow_prerelease: bool,
+    pub auto_install: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_check: Option<String>,
+}
+
+impl Default for AutoUpdatePreferences {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            check_interval: 24,
+            allow_prerelease: false,
+            auto_install: false,
+            last_check: None,
+        }
+    }
+}
+
+/// 系统级偏好（RFC 0038 / 0113）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemPreferences {
+    pub auto_update: AutoUpdatePreferences,
+}
+
+impl Default for SystemPreferences {
+    fn default() -> Self {
+        Self {
+            auto_update: AutoUpdatePreferences::default(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PreferenceSnapshot {
     pub revision: u64,
@@ -77,6 +118,7 @@ pub struct PreferenceDelta {
     pub display: Option<Value>,
     pub scanning: Option<Value>,
     pub performance: Option<Value>,
+    pub system: Option<Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -306,6 +348,7 @@ fn default_preferences(now: u64) -> UserPreferences {
             preload_count: 50,
             enable_gpu_acceleration: true,
         },
+        system: SystemPreferences::default(),
         last_modified: now,
     }
 }
@@ -377,6 +420,57 @@ mod tests {
         let persisted: UserPreferences = serde_json::from_str(&content).unwrap();
         assert_eq!(persisted.ui.theme, "dark");
         assert_eq!(persisted.revision, rev2);
+    }
+
+    #[tokio::test]
+    async fn update_preferences_records_history() {
+        let dir = temp_preferences_dir();
+        let mut store = PreferencesStore::initialize(&dir).await.unwrap();
+        store
+            .update_preferences(serde_json::json!({ "ui": { "theme": "paper" } }), "unit-test")
+            .await
+            .unwrap();
+        let (entries, total) = store.get_history(10, 0);
+        assert_eq!(total, 1);
+        assert_eq!(entries[0].source, "unit-test");
+        assert!(entries[0].delta.get("ui").is_some());
+    }
+
+    #[test]
+    fn deserialize_legacy_preferences_without_system_uses_auto_update_defaults() {
+        let legacy = serde_json::json!({
+            "revision": 2,
+            "ui": {
+                "theme": "dark",
+                "layout": "grid",
+                "language": "zh-CN",
+                "sidebarWidth": 240,
+                "zoomLevel": 1.0
+            },
+            "display": {
+                "thumbnailSize": 150,
+                "sortOrder": "name",
+                "groupBy": "none",
+                "showHidden": false,
+                "showMetadata": true
+            },
+            "scanning": {
+                "autoScan": true,
+                "excludePatterns": [],
+                "concurrency": 4,
+                "watchEnabled": true,
+                "paths": []
+            },
+            "performance": {
+                "maxCacheSize": 1000,
+                "preloadCount": 50,
+                "enableGpuAcceleration": true
+            },
+            "lastModified": 1
+        });
+        let prefs: UserPreferences = serde_json::from_value(legacy).unwrap();
+        assert!(prefs.system.auto_update.enabled);
+        assert_eq!(prefs.system.auto_update.check_interval, 24);
     }
 
     #[tokio::test]

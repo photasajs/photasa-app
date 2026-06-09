@@ -1,9 +1,14 @@
 import { parentPort } from "worker_threads";
 import type { ScanAction } from "@photasa/common";
-import { scanPhotos, processMediaFile, getWorkerPool } from "@photasa/scan";
+import {
+    scanPhotos,
+    processMediaFile,
+    getWorkerPool,
+    mergeDirectoryScanProgressWithCache,
+    buildDirectoryScanProgressMessage,
+} from "@photasa/scan";
 import { loggers } from "@photasa/common";
 import fs from "fs-extra";
-import path from "path";
 import {
     createWorkerLogViewerBridge,
     handleLogViewerStatusMessage,
@@ -85,59 +90,20 @@ function executeDirectoryScan(requestId: string, scan: ScanAction): void {
                 foundPaths.push(action.path);
             }
 
-            // 尝试从缓存文件读取真实的增量缓存统计信息
             let progressData = { processed, total: 0 };
-
             if (scan.operationType === "directory") {
-                try {
-                    const cacheFilePath = path.join(scan.path, ".photasa-folder.json");
-                    if (fs.existsSync(cacheFilePath)) {
-                        const cacheContent = fs.readFileSync(cacheFilePath, "utf8");
-                        const cache = JSON.parse(cacheContent);
-
-                        if (Array.isArray(cache?.processedFiles)) {
-                            const processedCount = cache.processedFiles.length;
-                            const pendingCount = cache.pendingFiles ? cache.pendingFiles.length : 0;
-
-                            progressData = {
-                                processed: processedCount,
-                                total: processedCount + pendingCount,
-                            };
-
-                            workerLog(
-                                "debug",
-                                "scan-worker",
-                                `Cache stats from file: processed=${processedCount}, total=${processedCount + pendingCount}`,
-                            );
-                        }
-                    }
-                } catch (error) {
-                    workerLog(
-                        "debug",
-                        "scan-worker",
-                        `Could not read cache file for progress: ${error}`,
-                    );
-                    // 使用基础计数器作为后备
-                    progressData = { processed, total: 0 };
-                }
+                const logDbg = (msg: string) => workerLog("debug", "scan-worker", msg);
+                progressData = mergeDirectoryScanProgressWithCache(scan.path, processed, logDbg);
             }
 
-            postMessage({
-                type: "progress",
-                requestId,
-                // 🔧 修复：使用实际文件的路径，而不是扫描的根文件夹路径
-                // 问题：当扫描根文件夹时，如果处理的文件在子文件夹中，使用根文件夹路径会导致路径不匹配
-                // 修复：使用实际文件的完整路径，确保前端能正确匹配文件位置
-                action: {
-                    path: action?.path || scan.path, // 使用实际文件/目录路径，如果不存在则回退到扫描路径
-                    isDirectory: action?.isDirectory || false,
-                },
-                progress: progressData,
-                // 🔧 修复：如果 action.path 是文件路径，则不需要 currentFile（前端直接使用 action.path）
-                // 如果 action.path 是目录路径，则 currentFile 为 undefined（目录没有文件名）
-                currentFile:
-                    action?.path && !action?.isDirectory ? path.basename(action.path) : undefined,
-            });
+            postMessage(
+                buildDirectoryScanProgressMessage({
+                    requestId,
+                    scanFallbackPath: scan.path,
+                    action,
+                    progress: progressData,
+                }),
+            );
         },
         error: (error) => {
             workerLog(

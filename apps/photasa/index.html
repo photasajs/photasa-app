@@ -4,9 +4,10 @@
         <meta charset="UTF-8" />
         <title>Photasa</title>
         <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+        <!-- Tauri 本地图：asset 协议（convertFileSrc），非 file:// -->
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self' file:;script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:; font-src 'self' data:;"
+            content="default-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; media-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; font-src 'self' data:;"
         />
     </head>
 

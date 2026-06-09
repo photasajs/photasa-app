@@ -1,32 +1,26 @@
 /*!
  * ScanAdapter（千里眼 Adapter）
  *
- * 实现文件夹扫描：walkdir 递归扫描，发现文件后通过 AppHandle
- * emit "picasa:find-photo" 事件推送给前端。
+ * 目录扫描：Rust scan_runner + `.photasa-folder.json` 增量缓存，
+ * 通过 `picasa:find-photo` 推送 progress/complete 事件。
  * 对应 service: "qianliyan"
  */
 use async_trait::async_trait;
 use serde_json::{json, Value};
 use std::sync::Arc;
-use tauri::Emitter;
-use walkdir::WalkDir;
+use tauri::AppHandle;
 
 use zouwu_core::adapter::{Adapter, AdapterError};
 use zouwu_core::types::ExecutionContext;
 
-/// 支持的图片和视频扩展名
-static PHOTO_EXTENSIONS: &[&str] = &[
-    "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif",
-    "heic", "heif", "avif", "raw", "cr2", "cr3", "nef", "arw",
-    "mp4", "mov", "avi", "mkv", "m4v", "3gp",
-];
+use crate::commands::scan_runner::run_directory_scan_sync;
 
 pub struct ScanAdapter {
-    app_handle: Arc<tauri::AppHandle>,
+    app_handle: Arc<AppHandle>,
 }
 
 impl ScanAdapter {
-    pub fn new(app_handle: tauri::AppHandle) -> Self {
+    pub fn new(app_handle: AppHandle) -> Self {
         Self {
             app_handle: Arc::new(app_handle),
         }
@@ -40,7 +34,7 @@ impl Adapter for ScanAdapter {
     }
 
     fn supported_actions(&self) -> &[&str] {
-        &["validatePaths", "scanPaths"]
+        &["validatePaths", "scanPaths", "restoreQueue"]
     }
 
     async fn execute(
@@ -50,7 +44,6 @@ impl Adapter for ScanAdapter {
         _ctx: &ExecutionContext,
     ) -> Result<Value, AdapterError> {
         match action {
-            // 验证路径是否存在
             "validatePaths" => {
                 let paths = extract_paths(&input)?;
                 let valid_paths: Vec<String> = paths
@@ -64,7 +57,6 @@ impl Adapter for ScanAdapter {
                 }))
             }
 
-            // 扫描路径，发现照片后推送事件
             "scanPaths" => {
                 let paths = extract_paths(&input)?;
                 let recursive = input
@@ -73,60 +65,28 @@ impl Adapter for ScanAdapter {
                     .unwrap_or(true);
                 let request_id = uuid::Uuid::new_v4().to_string();
                 let handle = Arc::clone(&self.app_handle);
-
                 let paths_clone = paths.clone();
                 let request_id_clone = request_id.clone();
 
-                // 在后台任务中扫描，不阻塞工作流执行
                 tokio::spawn(async move {
-                    let mut file_count = 0usize;
-
-                    for base_path in &paths_clone {
-                        let walker = if recursive {
-                            WalkDir::new(base_path)
-                        } else {
-                            WalkDir::new(base_path).max_depth(1)
-                        };
-
-                        for entry in walker.into_iter().filter_map(|e| e.ok()) {
-                            let path = entry.path();
-                            if !path.is_file() {
-                                continue;
-                            }
-
-                            let ext = path
-                                .extension()
-                                .and_then(|e| e.to_str())
-                                .map(|e| e.to_lowercase())
-                                .unwrap_or_default();
-
-                            if PHOTO_EXTENSIONS.contains(&ext.as_str()) {
-                                file_count += 1;
-                                let path_str = path.to_string_lossy().replace('\\', "/");
-
-                                // 推送单个文件发现事件
-                                let _ = handle.emit(
-                                    "picasa:find-photo",
-                                    json!({
-                                        "type": "found",
-                                        "requestId": request_id_clone,
-                                        "path": path_str
-                                    }),
+                    let app = Arc::new((*handle).clone());
+                    for base_path in paths_clone {
+                        tokio::task::spawn_blocking({
+                            let app = Arc::clone(&app);
+                            let request_id = request_id_clone.clone();
+                            let scan_root = base_path.clone();
+                            move || {
+                                run_directory_scan_sync(
+                                    app,
+                                    request_id,
+                                    scan_root,
+                                    recursive,
                                 );
                             }
-                        }
+                        })
+                        .await
+                        .ok();
                     }
-
-                    // 推送完成事件
-                    let _ = handle.emit(
-                        "picasa:find-photo",
-                        json!({
-                            "type": "complete",
-                            "requestId": request_id_clone,
-                            "paths": [],
-                            "fileCount": file_count
-                        }),
-                    );
                 });
 
                 Ok(json!({
@@ -137,8 +97,35 @@ impl Adapter for ScanAdapter {
                 }))
             }
 
+            "restoreQueue" => restore_scanning_queue().await,
+
             _ => Err(AdapterError::UnsupportedAction(action.to_string())),
         }
+    }
+}
+
+const SCAN_QUEUE_DIR: &str = ".photasa/scan";
+const SCAN_QUEUE_FILE: &str = "scanning.json";
+
+async fn restore_scanning_queue() -> Result<Value, AdapterError> {
+    let path = dirs::home_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(SCAN_QUEUE_DIR)
+        .join(SCAN_QUEUE_FILE);
+
+    match tokio::fs::read_to_string(&path).await {
+        Ok(content) => {
+            let parsed: Value = serde_json::from_str(&content)
+                .map_err(|e| AdapterError::Serialization(e.to_string()))?;
+            let queue = parsed
+                .get("queue")
+                .and_then(|v| v.as_array())
+                .cloned()
+                .unwrap_or_default();
+            Ok(Value::Array(queue))
+        }
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(Value::Array(vec![])),
+        Err(err) => Err(AdapterError::Io(err)),
     }
 }
 

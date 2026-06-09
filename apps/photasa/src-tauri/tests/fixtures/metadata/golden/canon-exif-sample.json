@@ -1,0 +1,19 @@
+{
+  "fixture": "canon-exif-sample.jpg",
+  "expectDateTimePrefix": "2023-11-02",
+  "expect": {
+    "type": "image",
+    "format": "jpg",
+    "dateSource": "exif",
+    "width": 64,
+    "height": 48,
+    "cameraInfo": {
+      "make": "Canon",
+      "model": "Canon EOS R5",
+      "iso": 800,
+      "focalLength": 50.0,
+      "aperture": 5.6,
+      "shutterSpeed": 0.00625
+    }
+  }
+}

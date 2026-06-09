@@ -6,3 +6,5 @@ export * from "./cache/incremental-cache";
 export * from "./strategy/scan-strategy";
 export * from "./utils/path-utils";
 export * from "./worker/pool-manager";
+export * from "./worker/directory-scan-progress";
+export * from "./status/build-notify-payload";

@@ -81,12 +81,12 @@ export const importAdapter = {
     /**
      * 扫描目录
      */
-    scanDirectories: async (paths: string[]): Promise<string[]> => {
+    scanDirectories: async (paths: string[], filters?: unknown): Promise<unknown[]> => {
         if (isTauri()) {
             const { invoke } = await import("@tauri-apps/api/core");
-            return await invoke("scan_directories", { paths });
+            return await invoke("scan_directories", { paths, filters: filters ?? null });
         }
-        const out = await (window as any).electronAPI?.api?.scanDirectories?.(paths);
+        const out = await (window as any).electronAPI?.api?.scanDirectories?.(paths, filters);
         return out ?? [];
     },
 

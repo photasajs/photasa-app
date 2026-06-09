@@ -23,6 +23,18 @@ Canonical policy: [`docs/rfc/TAURI_RUST_REWRITE_POLICY.md`](docs/rfc/TAURI_RUST_
 - **Vue UI** may be reused from `apps/desktop` renderer; **backend** is always a Rust rewrite.
 - **RFC 0098** is Electron-only maintenance; Phase 2 does not substitute Tauri work (e.g. RFC 0105 scan cache in Rust).
 
+### Active RFCs must target Rust (Photasa)
+
+**Only Rust-targeting RFCs may be Active for Photasa.** See [`TASK_TRACKING.md`](./TASK_TRACKING.md) → **Photasa Active RFCs**.
+
+| Photasa Active | Not Photasa Active |
+|----------------|-------------------|
+| **[0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md)** — close gaps via **Rust commands** | **[0098](docs/rfc/0098-main-module-extraction-to-packages.md)** — **Deferred** (Electron `@photasa/*` packages) |
+| Future Tauri RFCs (`0110+`) with Rust implementation in `src-tauri` / `crates/` | v2.0 Electron Draft RFCs (0004–0061) — **legacy backlog** unless superseded by a Rust RFC |
+| Completed **0074–0107** (maintenance fixes still Rust-only) | Any RFC whose primary deliverable is Node/TS backend for Photasa |
+
+New Photasa features: **new Tauri RFC + Rust impl** — never activate Electron-only RFCs as the migration path.
+
 ---
 
 ## RFC policy: one RFC, one thing
@@ -49,7 +61,7 @@ RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRA
 | RFC 正文 `.md`（含 `completed/`，不含 `README.md`） | 102 |
 | 已归档于 `docs/rfc/completed/` | 60 |
 
-Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Active RFCs** 表为准。
+Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Photasa Active RFCs** 与 **Legacy backlog** 为准。
 
 ### By version（概览）
 
@@ -90,17 +102,22 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0094](docs/rfc/completed/0094-tauri-choose-directories-multi.md) | choose_directories（单/多选目录） | ✅ Implemented |
 | [0095](docs/rfc/completed/0095-tauri-get-path-root.md) | get_path_root（api-path getRoot） | ✅ Implemented |
 | [0096](docs/rfc/completed/0096-tauri-import-pause-resume.md) | pause_import / resume_import | ✅ Implemented |
-| [0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪 | 🚧 Partial |
-| [0098](docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages（**Electron-only**；非 Photasa 路径） | ⚠️ Partial（Phase 1 ✅；Phase 2 冻结，见 RFC 正文） |
+| [0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md) | legacy-api 与 Electron 1:1 跟踪 | ✅ Implemented（Phase 7 全部完成） |
+| [0098](docs/rfc/0098-main-module-extraction-to-packages.md) | src/main 模块提取为 packages（**Electron-only**） | ⏸️ Deferred（非 Photasa Active；Phase 2 冻结） |
 | [0099](docs/rfc/completed/0099-tauri-window-reload.md) | window_reload（对齐 Electron reload） | ✅ Implemented |
 | [0100](docs/rfc/completed/0100-tauri-single-instance.md) | 单实例（对齐 Electron） | ✅ Implemented |
 | [0101](docs/rfc/completed/0101-tauri-startup-splash.md) | 启动 Splash 屏幕 | ✅ Implemented |
 | [0102](docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md) | 缩略图 RAW 回退策略 | ✅ Implemented |
 | [0103](docs/rfc/completed/0103-tauri-native-deps-build-strategy.md) | 原生依赖构建策略（libheif + ffmpeg-next） | ✅ Implemented |
 | [0104](docs/rfc/0104-tauri-execute-import-date-folder.md) | execute_import date-based folder organization | ✅ Implemented |
-| [0105](docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | 📋 Draft |
-| [0106](docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check timer | 📋 Draft |
+| [0105](docs/rfc/0105-tauri-scan-incremental-cache.md) | Scan incremental cache (.photasa-folder.json) | ✅ Implemented |
+| [0106](docs/rfc/0106-tauri-update-periodic-check.md) | Updater background periodic check timer | ✅ Implemented |
 | [0107](docs/rfc/0107-tauri-wenchang-preferences-storage.md) | Wenchang preferences storage parity (Tauri) | ✅ Implemented |
+| [0111](docs/rfc/0111-tauri-scan-notify-status-bridge.md) | Scan `notify:status` Rust bridge (0057) | ✅ Implemented |
+| [0112](docs/rfc/0112-tauri-extract-metadata-golden-parity.md) | extract_metadata golden parity + MakerNote | ✅ Implemented |
+| [0113](docs/rfc/0113-tauri-updater-production-and-prefs-sync.md) | Updater production config + prefs → UpdateState | ✅ Implemented |
+| [0114](docs/rfc/0114-tauri-get-directory-os-paths.md) | get_directory OS paths + scan_directories FileGroup[] | ✅ Implemented |
+| [0115](docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片（asset 协议，非 file://） | ✅ Implemented |
 
 ### RFC 流程（摘要）
 
@@ -151,7 +168,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 
 | Phase | RFCs | What |
 |-------|------|------|
-| **Phase 1 – Infra** | (done) | Photasa app, window/shell/config file-level, WASM, stubs. |
+| **Phase 1 – Infra** | (done) | Photasa app, window/shell/config file-level, stubs. |
 | **Phase 2 – UI runnable** | **0074**, **0075**, **0091** | Adapter concept (0074), flat legacy API layer (0075), platform/isMac (0091). Legacy-api stubs every `window.api.xxx`; real impl can follow in Phase 3/4. |
 | **Phase 3a – Path & config content** | **0076**, **0077–0081** | Path utilities in Rust (0076). Config content: get_photasa_config (0077), add_to_photo_list (0078), remove_from_photo_list (0079), reset_photasa_config (0080), fix_photasa_config (0081). |
 | **Phase 3b – Directory & watch** | **0084–0087**, **0082–0083** | choose_directory (0084), get_directory (0085), sub_folders (0086), check_photasa_config folder (0087). Watch start/stop (0082), watch event contract (0083). |
@@ -159,6 +176,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 | **Phase 4 – Cleanup & rest** | **0088–0089**, **0090**, **0092** | Log viewer open (0088), log stream (0089), update service (0090), menu (0092). Path/log/update tests, docs. |
 | **Phase 5 – 1:1 Parity gaps** | **0101–0103**（0099–0100 ✅，0101–0103 ✅） | window_reload (0099 ✅), single-instance (0100 ✅), startup splash (0101 ✅), RAW thumbnail fallback (0102 ✅), native deps build strategy (0103 ✅)。 |
 | **Phase 6 – Deep code parity** | **0104–0106** | execute_import date-folder organization (0104), scan incremental cache .photasa-folder.json (0105), update periodic check timer (0106). |
+| **Phase 7 – Rust parity closure** | **0111–0114** | scan notify:status (0111), extract_metadata golden (0112), updater ops + prefs sync (0113), get_directory + scan_directories + WASM cleanup (0114). Parent tracker: **0097** ✅ |
 
 **Current state**
 
@@ -169,8 +187,77 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **RFC 0097（Tauri 导入表面）：** `previewImport` → `preview_import`；`extractMetadata` → `extract_metadata`（读盘 + 栅格图 `image_dimensions`）；`execute_import` 完成后写入内存 `ImportSessionStore`（历史 + 可撤销 `fileList`），`getImportHistory` / `getImportDetails` / `getImportProgress`、`preview_undo_import` / `undo_import_execute` 已接 `legacy-api`。`tauri-import-stubs` 仅保留测试等占位。**余量：** 导入历史已落盘至应用数据目录 `import_history_v1.json`（Rust `ImportSessionStore`，原子写入）；`extract_metadata`：图片 EXIF（`kamadak-exif`，含 `cameraInfo`：**lens / iso / focalLength / aperture / shutterSpeed** 等标准标签）、视频 **`ffmpeg-next`（`build`+`build-zlib`，静态 FFmpeg，不依赖系统 ffmpeg）**（时长/编码/分辨率/容器时间/GPS/旋转）、可选 `computeMd5`；与 Electron 的细标签与回退行为仍待对拍；**预览**已与 Electron `import-worker` 预览链 **1:1**（每组 `extract_metadata_request`、`processFileGroup` 式合并、`determineGroupTargetDate`/`generateDatePath`、`targetPath`/`targetStructure`/`statistics`、`estimatedDuration`）；`updater` 密钥与端点待配置。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
 - **Next step:** `extract_metadata` 视频与 Electron **逐项对拍**（边界标签、错误回退）；静态图 EXIF 与 MakerNote 细字段；**0093** `importPhotos` 核心已对齐（Rust `copy_with_unique_name` 单测、`legacy-api` 桥接 + `created`→`Date` Vitest；见 RFC 0093）；配置真实 `updater.pubkey` 与 `endpoints`。`extract_metadata` 已含：图片 EXIF（含扩展 `cameraInfo`）、视频 `ffmpeg-next` 静态构建（时长/编码/分辨率/容器时间/GPS/旋转）、可选 MD5；**Rust 单测**已覆盖缺文件、MD5、非媒体 `other`、最小 JPEG、`fileType` 提示（`extract_metadata.rs`），以及视频侧与 ffprobe/Electron 同构的旋转/宽高/日期优先级/GPS（`extract_metadata_video.rs`）。
-- **Phase 5 – 1:1 Parity gaps（2026-04）：** **RFC 0099** `reload_window`。**RFC 0100** 单实例 + macOS `RunEvent::Reopen`。**RFC 0101** 双窗 Splash + `close_splashscreen` + `public/splash.html`。**RFC 0102** RAW → JPEG 占位 + `ThumbnailResponse.fallback`。**RFC 0103** 文档与 `Cargo.toml` 对齐：`ffmpeg-next` 静态构建；`libheif-rs` 使用 **`embedded-libheif`**（非系统 libheif）。**余量：** Splash 进度/状态事件（Electron `updateProgress` 等价）、RAW 占位图上的扩展名绘制、`otool`/`ldd` 验证可纳入 CI 可选步骤。
-- **Phase 6 – Deep code parity（2026-04）：** **RFC 0104** ✅：`commands/import_date_util.rs` 与预览共用 `generate_date_path_utc` / `determine_group_target_utc` / `extract_metadata` 链；`execute_import` 写入 `<targetPath>/{year}/{YYYYMMDD}/`，`imported_files[].targetPath` 为相对路径 `{year}/{YYYYMMDD}/filename`。**RFC 0105** `scan_photos` 仍缺 `.photasa-folder.json` 增量缓存。**RFC 0106** `update.rs` 仍缺后台 Tokio 定时检查。
+- **Phase 5 – 1:1 Parity gaps（2026-04）：** … **余量：** Splash 主题同步（可选）、`otool`/`ldd` 验证可纳入 CI 可选步骤。**RAW 占位扩展名** ✅（`thumbnail_placeholder.rs`）。
+- **Phase 6 – Deep code parity（2026-04）：** **RFC 0104** ✅ … **RFC 0105** ✅ … **RFC 0106** ✅ …
+
+---
+
+## Electron → Rust parity audit（2026-06）
+
+**规则：** [TAURI_RUST_REWRITE_POLICY.md](docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — 后端 **仅 Rust**；Electron/TS **仅作契约对照**。跟踪 RFC：**[0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md)**（Photasa Active）。
+
+### 总结
+
+| 类别 | 数量 | 说明 |
+|------|------|------|
+| ✅ **已在 Rust 重写** | ~98% flat `window.api` + 天枢/文昌 | legacy-api Tauri 分支无 stub；Phase 7 完成 |
+| 🚧 **可选 polish** | 2 项 | Splash 主题同步、`picasa:engine-status`（低优先级） |
+| ❌ **未重写 / 已清理** | 0 项 | WASM 占位已删除（0114） |
+| ⛔ **不得作为 Photasa 路径** | Electron-only | `@photasa/*` 抽包（0098）、preload 本地 fs、Ma-Liang Node |
+
+### ✅ 已在 Rust 重写（按 Electron 能力域）
+
+| 能力域 | Electron 入口 | Rust 交付 | RFC |
+|--------|-----------------|-----------|-----|
+| 窗口 | `window:*` | `commands/window.rs` | 0074/0075, 0099 |
+| 路径 | preload path-helper | `commands/path.rs` | 0076 |
+| 配置内容 | file-config + worker | `commands/config.rs` | 0077–0081 |
+| 目录/对话框 | directory-service | `commands/directory.rs` | 0084–0087, 0094 |
+| 扫描 | scan-service + worker | `scan_runner` + `scan_cache` | 0068, **0105** |
+| 监视 | watch-service | `watch.rs` + `watch_scan_queue.rs` | 0082–0083 |
+| 缩略图 | Ma-Liang worker | `thumbnail.rs`（image + libheif + ffmpeg-next + RAW 扩展名占位） | 0069, 0102, 0103 |
+| 导入（增强） | import-service + worker | `import_*` + `import_date_util` | 0070, 0104, 0096 |
+| 遗留导入 | preload RxJS+fs | `import_photos_legacy` | 0093 |
+| 元数据 | import worker / preload EXIF | `extract_metadata*.rs` | 0097（主干） |
+| 日志 | log-viewer-service | `log_viewer.rs` + `log:entry` | 0088–0089 |
+| 更新 | update-service | `update.rs` + `update_periodic.rs` | 0090, **0106** |
+| 菜单/Shell | menu + shell | `menu.rs`, `shell.rs`, 天枢 shell 工作流 | 0092, 0058 |
+| 平台 | `process.platform` | `platform.rs` | 0091 |
+| 天枢/偏好 | tianshu + wenchang | `TianshuService` + `wenchang-preferences` | 0072, **0107** |
+| 启动/Splash/单实例 | splash + single-instance | 双窗 + `close_splashscreen` + plugin | 0100, 0101 |
+
+### 🚧 可选 polish（不阻断 0097）
+
+| 缺口 | Electron 行为 | 当前 Tauri | 状态 |
+|------|---------------|------------|------|
+| RAW 占位扩展名 | FallbackBrush SVG 标签 | ✅ `thumbnail_placeholder.rs` 位图字体 | **0102 迭代完成** |
+| Splash 主题 | `setTheme` + OS `nativeTheme` | ✅ `splash_bridge.rs` — 启动 + `ThemeChanged` | **完成** |
+| 配置 worker 健康 | `picasa:engine-status` | ✅ `engine_status.rs` — Rust 里程碑探针 | **完成** |
+
+### ❌ 未重写 / 已清理的占位
+
+| 项 | 说明 | 状态 |
+|----|------|------|
+| `load_wasm_module` / `call_wasm_function` | 废弃空命令 | ✅ 已从 `main.rs` 移除（**0114**） |
+| `@photasa/*` 作为 Tauri 后端 | 0098 Electron 包 | **禁止**；扫描缓存已在 **0105 Rust** |
+
+### ⛔ 不算 Photasa 缺口（Electron-only，勿激活）
+
+- **RFC 0098** — `@photasa/scan|import|config-core` 抽包（Deferred）
+- **v2.0 Draft RFC**（0032 千里眼引擎等）— legacy Node 架构描述；Photasa 用 **0068/0105 Rust**
+- **preload 纯本地**（splitPath/joinPath 等）— 允许 **Vue 纯 TS**（非后端）；或已由 **0076** 覆盖 invoke 路径
+
+### Phase 7 – Rust parity closure（✅ 全部完成）
+
+| RFC | 标题 | 状态 |
+|-----|------|------|
+| **[0111](docs/rfc/0111-tauri-scan-notify-status-bridge.md)** | 扫描 `notify:status` Rust 桥 | ✅ Implemented |
+| **[0112](docs/rfc/0112-tauri-extract-metadata-golden-parity.md)** | `extract_metadata` golden 对拍 | ✅ Implemented |
+| **[0113](docs/rfc/0113-tauri-updater-production-and-prefs-sync.md)** | updater 生产配置 + 启动同步 `UpdateState` | ✅ Implemented |
+| **[0114](docs/rfc/0114-tauri-get-directory-os-paths.md)** | `get_directory` OS 路径 + `scan_directories` FileGroup[] + WASM 清理 | ✅ Implemented |
+| **[0115](docs/rfc/0115-tauri-webview-local-image-asset-protocol.md)** | WebView 本地图片：`convertFileSrc` + assetProtocol + CSP（修复 file:// 不可加载） | ✅ Implemented |
+
+**0097** Phase 7 全部落地 → 标 ✅ Implemented。
 
 ---
 
@@ -211,26 +298,22 @@ Rust 后端（子代理）：commands/platform.rs, path.rs, directory.rs, watch.
 
 ## Image processing support plan (Tauri)
 
-Electron today: **Ma-Liang** in `thumbnail-handler.ts` with brushes: **SharpBrush** (JPEG/PNG/WebP/TIFF/GIF/AVIF), **BmpBrush** (Jimp+Sharp), **HeicBrush** (WASM, preview+thumbnail in one decode), **FfmpegBrush** (video), **FallbackBrush**. Single entry point: `createThumbnail` → `shouldUseMaLiang` → `maLiang.paint()`.
+Electron today: **Ma-Liang** (Node/Sharp/WASM). **Photasa: Rust-only** per [TAURI_RUST_REWRITE_POLICY.md](docs/rfc/TAURI_RUST_REWRITE_POLICY.md).
 
-**Tauri strategy (phased):**
+| Format / area | Tauri approach | RFC |
+|---------------|----------------|-----|
+| JPEG/PNG/WebP/GIF/TIFF/AVIF | Rust `image` + `thumbnail.rs` | 0069, 0102 |
+| HEIC/HEIF | **`libheif-rs` + `embedded-libheif`** | 0103 |
+| Video | **`ffmpeg-next` static build** | 0103, 0069 |
+| RAW | JPEG 占位 + `fallback: true` | 0102 |
 
-| Phase | Format / area | Approach |
-|-------|----------------|----------|
-| 1 | Common images (JPEG, PNG, WebP, GIF, etc.) | Rust `image` crate (and/or `imageproc`) in thumbnail service; one “brush” module. |
-| 2 | Video thumbnails | Keep **FFmpeg** binary, call via Rust (e.g. `std::process::Command` or existing FFI). No Node. |
-| 3 | HEIC/HEIF | **Option A**: Rust `libheif`/heif-rs bindings. **Option B**: Keep existing **WASM** decoder in Tauri (load same WASM from Rust). **Option C** (transition): Tauri invokes a small Node helper only for HEIC until A or B is ready. Prefer A or B for long term. |
-| 4 | BMP / other edge cases | Rust `image` or dedicated decoder; or short-term fallback to “placeholder” icon. |
-| 5 | Preview + thumbnail in one go (HEIC) | If HEIC uses WASM: reuse same decode for preview + thumbnail like HeicBrush. If heif-rs: decode once, then produce both outputs in Rust. |
-
-**Principles:**
-- One **thumbnail command** entry point in Tauri; internal “brush”/strategy per format (mirror Ma-Liang conceptually).
-- No new ad-hoc RFC for image processing; **RFC 0069** is the place for this plan and any updates.
-- Transition: stub can return “unsupported” for HEIC/BMP until the chosen phase is implemented; common images and video (FFmpeg) first.
+**禁止：** Tauri 加载 Ma-Liang WASM、Node helper、或 `@photasa/maliang` 作为解码路径。
 
 ---
 
 ## Deep analysis: implementation source and gaps
+
+> **2026-06 更新：** 实施顺序与缺口以本节上文 **Electron → Rust parity audit** 为准。以下内容保留作历史对照。
 
 ### 1. Where each legacy API runs (Electron) and which RFC (Tauri)
 
@@ -283,11 +366,9 @@ Recommendation: **Option C** or **B** for Phase 2 (fewer commands, faster UI); a
 
 **RFC 0083** defines the contract: same channel names and payload as Electron (`picasa:file-add`, `picasa:file-change`, etc.). Implementation (0082) must emit these so frontend listeners work unchanged.
 
-### 6. HEIC in Tauri: WASM vs libheif
+### 6. HEIC in Tauri
 
-- **WASM**: Photasa already uses wasmtime (for tianshu). The existing HEIC decoder is likely a WASM module (from @photasa/maliang or similar). So we could **load the same WASM from Rust** via wasmtime, pass buffer in, get decoded image out. No rewrite of HEIC logic; same binary. Need to verify: where is the HEIC WASM built and how is it loaded in Node (worker/main)? Then mirror in Rust.
-- **heif-rs / libheif**: Native Rust bindings; one less dependency on WASM toolchain. Risk: heif-rs maturity and platform binaries (libheif on Windows/Mac/Linux). Prefer validating heif-rs on all targets before committing.
-- **Transition**: Stub HEIC as “unsupported” until either WASM load in Rust or heif-rs is proven; common images + video (FFmpeg) first.
+**已决策（RFC 0103）：** `libheif-rs` + **`embedded-libheif`**。禁止 WASM-in-Rust 或 Node 过渡方案。
 
 ### 7. Dependency order (by RFC)
 
@@ -318,4 +399,4 @@ Recommendation: **Option C** or **B** for Phase 2 (fewer commands, faster UI); a
 - **Phase 2:** **RFC 0075** – Flat `legacy-api.ts` with every `window.api` method from `legacy.ts`; Tauri branch invokes Rust or stubs. **0074** adapter concept, **0091** platform (get_platform / isMac) so legacy-api can detect env. Path: prefer pure TS in renderer + get_separator (0091 or 0076) to unblock quickly.
 - **Phase 3a:** **0076** path (Rust or TS), **0077–0081** config content (five commands). Phase 3b: **0084–0087** directory/dialog, **0082–0083** watch. Phase 3c: **0068** scan, **0069** thumbnail, **0070** import, **0093** importPhotos legacy, **0072** tianshu.
 - **Phase 4:** **0088–0089** log viewer, **0090** update, **0092** menu; tests and docs.
-- **Image processing:** RFC **0069** (phased plan); HEIC via WASM-in-Rust or heif-rs; FFmpeg for video; Rust `image` for common formats.
+- **Image processing:** RFC **0069** / **0103** — Rust `image`, **`libheif-rs` + embedded-libheif**, **`ffmpeg-next` static build**. **No WASM.**

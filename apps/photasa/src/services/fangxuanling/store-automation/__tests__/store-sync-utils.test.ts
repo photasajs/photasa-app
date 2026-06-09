@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
     extractSnapshotFromResponse,
+    peelPreferenceSyncPayload,
     syncStoreWithSnapshot,
     getStoreFieldData,
     setStoreFieldData,
@@ -40,7 +41,45 @@ vi.mock("../../utils", () => ({
 }));
 
 describe("store-sync-utils", () => {
+    describe("peelPreferenceSyncPayload", () => {
+        it("应在同时存在 updated 与 snapshot 时剥出 snapshot", () => {
+            const inner = { ui: { theme: "dark", language: "zh-CN" }, revision: 2 };
+            const peeled = peelPreferenceSyncPayload({
+                updated: { ui: { language: "zh-CN" } },
+                snapshot: inner,
+            });
+            expect(peeled).toEqual(inner);
+        });
+
+        it("应在缺少 updated 时保持原对象（如 get_preferences 的 data 即快照）", () => {
+            const prefs = { ui: { theme: "light" }, revision: 1 };
+            expect(peelPreferenceSyncPayload(prefs)).toEqual(prefs);
+        });
+    });
+
     describe("extractSnapshotFromResponse", () => {
+        it("应剥开 formatResponse 的 { updated, snapshot } 再按路径提取", () => {
+            const response: ZhaolingResponse = {
+                acknowledged: true,
+                command: "test",
+                data: {
+                    updated: { ui: { language: "en-US" } },
+                    snapshot: {
+                        ui: { theme: "paper", language: "en-US" },
+                        revision: 3,
+                    },
+                },
+                blessing: "",
+                timestamp: 0,
+            };
+
+            expect(extractSnapshotFromResponse(response, ".")).toEqual({
+                ui: { theme: "paper", language: "en-US" },
+                revision: 3,
+            });
+            expect(extractSnapshotFromResponse(response, "ui.theme")).toBe("paper");
+        });
+
         it("应该成功从响应中提取简单路径的snapshot", () => {
             const response: ZhaolingResponse = {
                 acknowledged: true,

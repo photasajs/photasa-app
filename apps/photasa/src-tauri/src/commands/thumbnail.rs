@@ -10,9 +10,10 @@
  */
 use std::path::Path;
 
-use image::ImageBuffer;
 use libheif_rs::{ColorSpace, HeifContext, LibHeif, RgbChroma};
 use serde::{Deserialize, Serialize};
+
+use super::thumbnail_placeholder::{extension_label_from_path, render_labeled_placeholder};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -84,15 +85,20 @@ fn ext(path: &str) -> String {
 /// 创建缩略图（Tauri command）
 #[tauri::command]
 pub async fn create_thumbnail(request: ThumbnailRequest) -> ThumbnailResponse {
+    tokio::task::spawn_blocking(move || create_thumbnail_sync(&request))
+        .await
+        .unwrap_or_else(|e| ThumbnailResponse::err(format!("线程异常: {e}")))
+}
+
+/// 同步创建缩略图（scan_runner 等 Rust 内部路径）
+pub fn create_thumbnail_sync(request: &ThumbnailRequest) -> ThumbnailResponse {
     let src = &request.path;
     let dst = &request.thumbnail;
 
-    // 若目标已存在且不强制重建，直接返回
     if !request.always.unwrap_or(false) && Path::new(dst).exists() {
         return ThumbnailResponse::ok(dst.clone());
     }
 
-    // 确保目标目录存在
     if let Some(parent) = Path::new(dst).parent() {
         if let Err(e) = std::fs::create_dir_all(parent) {
             return ThumbnailResponse::err(format!("创建目录失败: {e}"));
@@ -102,55 +108,18 @@ pub async fn create_thumbnail(request: ThumbnailRequest) -> ThumbnailResponse {
     let e = ext(src);
 
     if IMAGE_EXTS.contains(&e.as_str()) {
-        // 同步 CPU 密集操作放入 spawn_blocking，不阻塞 Tokio 运行时
-        let req = ThumbnailRequest {
-            path: request.path.clone(),
-            thumbnail: request.thumbnail.clone(),
-            width: request.width,
-            height: request.height,
-            without_enlargement: request.without_enlargement,
-            preview: request.preview.clone(),
-            always: request.always,
-        };
-        tokio::task::spawn_blocking(move || make_image_thumbnail(&req.path, &req.thumbnail, &req))
-            .await
-            .unwrap_or_else(|e| ThumbnailResponse::err(format!("线程异常: {e}")))
+        make_image_thumbnail(src, dst, request)
     } else if VIDEO_EXTS.contains(&e.as_str()) {
-        let src_owned = src.to_string();
-        let dst_owned = dst.to_string();
-        let w = request.width.unwrap_or(256);
-        let h = request.height.unwrap_or(256);
-        tokio::task::spawn_blocking(move || {
-            make_video_thumbnail_blocking(&src_owned, &dst_owned, w, h)
-        })
-        .await
-        .unwrap_or_else(|e| ThumbnailResponse::err(format!("线程异常: {e}")))
+        make_video_thumbnail_blocking(
+            src,
+            dst,
+            request.width.unwrap_or(256),
+            request.height.unwrap_or(256),
+        )
     } else if HEIC_EXTS.contains(&e.as_str()) {
-        let req = ThumbnailRequest {
-            path: request.path.clone(),
-            thumbnail: request.thumbnail.clone(),
-            width: request.width,
-            height: request.height,
-            without_enlargement: request.without_enlargement,
-            preview: request.preview.clone(),
-            always: request.always,
-        };
-        tokio::task::spawn_blocking(move || make_heic_thumbnail(&req.path, &req.thumbnail, &req))
-            .await
-            .unwrap_or_else(|e| ThumbnailResponse::err(format!("线程异常: {e}")))
+        make_heic_thumbnail(src, dst, request)
     } else if RAW_EXTS.contains(&e.as_str()) {
-        let req = ThumbnailRequest {
-            path: request.path.clone(),
-            thumbnail: request.thumbnail.clone(),
-            width: request.width,
-            height: request.height,
-            without_enlargement: request.without_enlargement,
-            preview: request.preview.clone(),
-            always: request.always,
-        };
-        tokio::task::spawn_blocking(move || make_raw_placeholder_thumbnail(&req.thumbnail, &req))
-            .await
-            .unwrap_or_else(|e| ThumbnailResponse::err(format!("线程异常: {e}")))
+        make_raw_placeholder_thumbnail(src, dst, request)
     } else {
         ThumbnailResponse::err(format!("未知文件类型: {e}"))
     }
@@ -160,11 +129,11 @@ pub async fn create_thumbnail(request: ThumbnailRequest) -> ThumbnailResponse {
 // RAW 占位缩略图（纯 Rust，无外部 RAW 解码器）
 // ============================================================
 
-fn make_raw_placeholder_thumbnail(dst: &str, req: &ThumbnailRequest) -> ThumbnailResponse {
+fn make_raw_placeholder_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> ThumbnailResponse {
     let w = req.width.unwrap_or(256).max(1);
     let h = req.height.unwrap_or(256).max(1);
-    let img: image::RgbImage =
-        ImageBuffer::from_fn(w, h, |_, _| image::Rgb([110u8, 112, 118]));
+    let label = extension_label_from_path(src);
+    let img = render_labeled_placeholder(w, h, &label);
     if let Err(e) = img.save(dst) {
         return ThumbnailResponse::err(format!("保存 RAW 占位缩略图失败: {e}"));
     }
@@ -172,10 +141,7 @@ fn make_raw_placeholder_thumbnail(dst: &str, req: &ThumbnailRequest) -> Thumbnai
         if let Some(parent) = Path::new(preview_path).parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        let pw = 512u32;
-        let ph = 512u32;
-        let pimg: image::RgbImage =
-            ImageBuffer::from_fn(pw, ph, |_, _| image::Rgb([110u8, 112, 118]));
+        let pimg = render_labeled_placeholder(512, 512, &label);
         let _ = pimg.save(preview_path);
     }
     ThumbnailResponse::ok_fallback(dst.to_string())
@@ -370,7 +336,7 @@ mod raw_placeholder_tests {
             preview: None,
             always: Some(true),
         };
-        let res = make_raw_placeholder_thumbnail(&dst_str, &req);
+        let res = make_raw_placeholder_thumbnail(&req.path, &dst_str, &req);
         assert!(res.success, "{res:?}");
         assert_eq!(res.fallback, Some(true));
         assert!(Path::new(&dst_str).exists());

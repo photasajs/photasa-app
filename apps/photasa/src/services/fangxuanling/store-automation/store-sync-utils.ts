@@ -18,6 +18,22 @@ import { get, isEmpty, isObject, set } from "radash";
 const logger = loggers.fangxuanling;
 
 /**
+ * update_preferences 工作流经 formatResponse 后，data 常为 { updated, snapshot }。
+ * 册库同步需要 UserPreferences 本体（snapshot），否则会合并错对象且 ui.theme 提取失败。
+ */
+export function peelPreferenceSyncPayload(data: unknown): unknown {
+    if (!isObject(data)) {
+        return data;
+    }
+    const rec = data as Record<string, unknown>;
+    const inner = rec.snapshot;
+    if (inner !== undefined && rec.updated !== undefined && isObject(inner)) {
+        return inner;
+    }
+    return data;
+}
+
+/**
  * 从Store中获取指定路径的数据（纯函数）
  *
  * ✅ RFC 0042 Store Automation修正 (Linus "好品味"设计):
@@ -118,7 +134,7 @@ export function extractSnapshotFromResponse(
     propertyPath: string,
 ): unknown | null {
     try {
-        const snapshot: unknown = zhaolingResponse.data;
+        const snapshot: unknown = peelPreferenceSyncPayload(zhaolingResponse.data);
 
         // 如果snapshot为空或不是对象，则返回null
         if (!isObject(snapshot)) {

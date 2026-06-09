@@ -62,7 +62,8 @@ description: >-
 3. 文首元数据：编号、标题、状态（默认 Draft）、阶段、作者、创建日期、最后更新、**依赖**
 4. 正文建议章节：Summary、Context / Problem、Goals、**Implementation principle (Photasa / Tauri)**（链接 [TAURI_RUST_REWRITE_POLICY.md](../docs/rfc/TAURI_RUST_REWRITE_POLICY.md)）、Proposed Solution、Implementation Details（含检查清单）、Alternatives、Risks、Testing Strategy、Dependencies。
 5. 在 **`ROADMAP.md`** 进度表中**增加一行**（初始 ⏳）。
-6. **不要**在尚未开工时把大段检查清单塞进 `TASK_TRACKING.md`；开工时再复制。
+6. **Photasa Active 门禁**：若 RFC 后端交付物不是 Rust（`src-tauri` / `crates/`），不得登记为 **Photasa Active**；Electron-only 工作标 **Deferred** 或 **Legacy backlog**（见 [TAURI_RUST_REWRITE_POLICY.md](../docs/rfc/TAURI_RUST_REWRITE_POLICY.md) → Active RFC gate）。
+7. **不要**在尚未开工时把大段检查清单塞进 `TASK_TRACKING.md`；开工时再复制。
 
 ## 更新现有 RFC 步骤
 

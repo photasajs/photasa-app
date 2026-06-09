@@ -1,7 +1,7 @@
 # RFC 0102: 缩略图 RAW 格式回退策略（Tauri）
 
 - **Start Date**: 2026-04-05
-- **Status**: Implemented（方案 A：纯色占位 JPEG；扩展名文字见后续迭代）
+- **Status**: Implemented（方案 A：占位 JPEG + 扩展名位图标签，2026-06）
 - **Depends on**: RFC 0069 (缩略图服务迁移)
 
 ## Implementation principle (Photasa / Tauri)

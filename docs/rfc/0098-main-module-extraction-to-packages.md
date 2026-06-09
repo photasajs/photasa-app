@@ -3,7 +3,7 @@
 - **Start Date**: 2026-03-28
 - **RFC PR**: (leave this empty)
 - **Implementation Issue**: (leave this empty)
-- **Status**: Partially Implemented (Phase 1 done；Phase 2 任务 1–2 已完成，任务 3–5 部分推进 — 见 Compliance Audit)
+- **Status**: ⏸️ Deferred for Photasa (Electron-only maintenance). Partially Implemented — Phase 1 done；Phase 2 **frozen**（见 Compliance Audit）
 - **Author**: AI
 - **Target Release**: v2.1.0
 

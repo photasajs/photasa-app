@@ -102,31 +102,32 @@ watch(
 watch(
     selectedKeys,
     async () => {
-        // Only when Current folder changed, update current folder and load photasa config
-        if (!isEmpty(selectedKeys.value) && currentFolder.value !== selectedKeys.value[0]) {
-            const newFolderPath = selectedKeys.value[0];
+        if (isEmpty(selectedKeys.value)) {
+            return;
+        }
+
+        const newFolderPath = selectedKeys.value[0];
+        if (currentFolder.value !== newFolderPath) {
             preferenceStore.appState.currentFolder = newFolderPath;
+        }
 
-            try {
-                // 自动加载新文件夹的配置
-                const config = await getPhotasaConfig(newFolderPath);
+        try {
+            const config = await getPhotasaConfig(newFolderPath);
 
-                preferenceStore.appState.currentFolderConfig =
-                    config ||
-                    ({
-                        version: "",
-                        photoList: [],
-                        lastModified: 0,
-                    } satisfies PhotasaConfig);
-            } catch (error) {
-                logger.warn("无法加载文件夹配置:", error);
-                // 如果加载失败，使用空配置
-                preferenceStore.appState.currentFolderConfig = {
+            preferenceStore.appState.currentFolderConfig =
+                config ||
+                ({
                     version: "",
                     photoList: [],
                     lastModified: 0,
-                } satisfies PhotasaConfig;
-            }
+                } satisfies PhotasaConfig);
+        } catch (error) {
+            logger.warn("无法加载文件夹配置:", error);
+            preferenceStore.appState.currentFolderConfig = {
+                version: "",
+                photoList: [],
+                lastModified: 0,
+            } satisfies PhotasaConfig;
         }
     },
     { deep: true, flush: "post" },

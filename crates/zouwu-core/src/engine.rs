@@ -289,6 +289,17 @@ impl ZouwuEngine {
                 Ok(StepResult::Output(input))
             }
 
+            "arrayCount" => {
+                let count = input
+                    .get("array")
+                    .and_then(|v| v.as_array())
+                    .map(|items| items.len())
+                    .unwrap_or(0);
+                let output = serde_json::json!(count);
+                ctx.set_step_output(&step.base.id, output.clone());
+                Ok(StepResult::Output(output))
+            }
+
             "error" => {
                 let msg = input
                     .get("message")

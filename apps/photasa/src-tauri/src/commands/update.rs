@@ -1,4 +1,4 @@
-//! 自动更新命令：与 Electron `picasa:*` 更新 IPC 及事件对齐（RFC 0090）
+//! 自动更新命令：与 Electron `picasa:*` 更新 IPC 及事件对齐（RFC 0090 / 0106）
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -20,13 +20,52 @@ pub struct UpdateState {
     pub auto_config: Mutex<AutoUpdateConfigState>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutoUpdateConfigState {
     pub enabled: bool,
+    #[serde(default = "default_check_interval")]
     pub check_interval: u32,
     pub allow_prerelease: bool,
     pub auto_install: bool,
+}
+
+impl Default for AutoUpdateConfigState {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            check_interval: default_check_interval(),
+            allow_prerelease: false,
+            auto_install: false,
+        }
+    }
+}
+
+/// 将完整 autoUpdate 配置写入内存（命令与启动同步共用）
+pub fn apply_auto_update_config(state: &UpdateState, config: &AutoUpdateConfigState) {
+    let mut guard = state.auto_config.lock().expect("auto_config mutex poisoned");
+    *guard = config.clone();
+}
+
+/// 按 patch 合并 autoUpdate 配置
+pub fn apply_auto_update_patch(state: &UpdateState, patch: &AutoUpdatePatch) {
+    let mut guard = state.auto_config.lock().expect("auto_config mutex poisoned");
+    if let Some(v) = patch.enabled {
+        guard.enabled = v;
+    }
+    if let Some(v) = patch.check_interval {
+        guard.check_interval = v;
+    }
+    if let Some(v) = patch.allow_prerelease {
+        guard.allow_prerelease = v;
+    }
+    if let Some(v) = patch.auto_install {
+        guard.auto_install = v;
+    }
+}
+
+fn default_check_interval() -> u32 {
+    24
 }
 
 const EVENT_PROGRESS: &str = "picasa:update-progress";
@@ -51,14 +90,13 @@ fn emit_status(
     let _ = app.emit(EVENT_STATUS_CHANGED, payload);
 }
 
-/// 检查更新（失败时返回 hasUpdate: false，避免打断启动流程）
-#[tauri::command]
-pub async fn check_for_updates(
-    app: AppHandle,
-    state: State<'_, UpdateState>,
+/// 检查更新核心逻辑（命令与后台定时任务共用）
+pub async fn perform_check_for_updates(
+    app: &AppHandle,
+    state: &UpdateState,
 ) -> Result<serde_json::Value, String> {
     *state.status.lock().map_err(|e| e.to_string())? = "checking".to_string();
-    emit_status(&app, "checking", 0.0, None, None);
+    emit_status(app, "checking", 0.0, None, None);
 
     let updater = match app.updater() {
         Ok(u) => u,
@@ -75,7 +113,7 @@ pub async fn check_for_updates(
             log::warn!("🌌 检查更新失败：{e}");
             *state.status.lock().map_err(|e| e.to_string())? = "idle".to_string();
             *state.last_error.lock().map_err(|e| e.to_string())? = Some(e.to_string());
-            emit_status(&app, "error", 0.0, Some(e.to_string()), None);
+            emit_status(app, "error", 0.0, Some(e.to_string()), None);
             let _ = app.emit("picasa:update-error", e.to_string());
             return Ok(json!({ "hasUpdate": false }));
         }
@@ -83,7 +121,7 @@ pub async fn check_for_updates(
 
     let Some(ref update) = update else {
         *state.status.lock().map_err(|e| e.to_string())? = "upToDate".to_string();
-        emit_status(&app, "upToDate", 0.0, None, None);
+        emit_status(app, "upToDate", 0.0, None, None);
         return Ok(json!({ "hasUpdate": false }));
     };
 
@@ -97,13 +135,22 @@ pub async fn check_for_updates(
         EVENT_AVAILABLE,
         json!({ "version": version, "info": info.clone() }),
     );
-    emit_status(&app, "idle", 0.0, None, Some(version.as_str()));
+    emit_status(app, "idle", 0.0, None, Some(version.as_str()));
 
     Ok(json!({
         "hasUpdate": true,
         "version": version,
         "info": info,
     }))
+}
+
+/// 检查更新（失败时返回 hasUpdate: false，避免打断启动流程）
+#[tauri::command]
+pub async fn check_for_updates(
+    app: AppHandle,
+    state: State<'_, UpdateState>,
+) -> Result<serde_json::Value, String> {
+    perform_check_for_updates(&app, &state).await
 }
 
 /// 下载更新包（不安装）；发射进度与下载完成事件
@@ -190,19 +237,7 @@ pub fn update_auto_update_config(
     patch: serde_json::Value,
 ) -> Result<bool, String> {
     let patch: AutoUpdatePatch = serde_json::from_value(patch).map_err(|e| e.to_string())?;
-    let mut c = state.auto_config.lock().map_err(|e| e.to_string())?;
-    if let Some(v) = patch.enabled {
-        c.enabled = v;
-    }
-    if let Some(v) = patch.check_interval {
-        c.check_interval = v;
-    }
-    if let Some(v) = patch.allow_prerelease {
-        c.allow_prerelease = v;
-    }
-    if let Some(v) = patch.auto_install {
-        c.auto_install = v;
-    }
+    apply_auto_update_patch(&state, &patch);
     Ok(true)
 }
 

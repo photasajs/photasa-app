@@ -1,8 +1,9 @@
 # RFC 0097: Tauri 扁平 legacy-api 延期表面（跟踪清单）
 
 - **Start Date**: 2026-03-21
-- **Status**: 🚧 Partial — 导入/扫描队列/watch/缩略图主干/Splash 核心已在 Photasa 接线；与 Electron 仍差元数据精度（含 MakerNote）、更新端点配置、Splash 进度事件、RAW 占位信息量等（见表与「仍差」）
-- **Depends on**: RFC 0075（扁平 API）；0088、0089、0090（日志/更新 — Photasa 已实现）；0070 + Rust（导入执行内核）
+- **Last updated**: 2026-06-08
+- **Status**: ✅ Implemented — Phase 7（0111–0114）全部完成
+- **Depends on**: RFC 0075（扁平 API）；0088–0090；0070 + Rust 导入内核；[TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)
 
 ## Implementation principle (Photasa / Tauri)
 
@@ -14,29 +15,87 @@
 
 ## Summary
 
-本 RFC 跟踪 **`window.api` 上与 Electron 尚未达到契约级 1:1** 的条目。对拍方式为 **Rust 实现 + Electron 行为规格**（见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)），**不是**回退到复制 TypeScript 或扩展 `@photasa/*` Node 包。
+本 RFC 是 **Photasa 唯一的 Active 跟踪 RFC**：对照 Electron 全量后端能力，列出 **已在 Rust 重写**、**Partial**、**未重写/禁止路径**。对拍方式 = Rust 实现 + Electron 契约，见 [ROADMAP.md](../ROADMAP.md) → **Electron → Rust parity audit**。
 
-## 状态表（相对 Electron）
+---
 
-| 区域 | API / 行为 | 状态 | 说明 |
-|------|--------------|------|------|
-| 更新 | `checkForUpdates`、`downloadUpdate`、`installUpdate`、`getUpdateStatus`、`updateAutoUpdateConfig` + `picasa:update-*` | ✅ Photasa | RFC 0090；**生产**仍需配置 `updater` 公钥与 endpoints |
-| 日志 | `log_viewer_open` / `log_viewer_close`、`log:entry` 桥接 | ✅ Photasa | RFC 0088、0089 |
-| 导入扩展 | `previewImport`、`extractMetadata`、`executeImport`、暂停/恢复（0096）、`getImportHistory`、`getImportDetails`、`getImportProgress`、`previewUndo`、`undoImport` | ✅ Photasa 已 `invoke` | 历史落盘：`app_data_dir/import_history_v1.json`（`ImportSessionStore`，原子写）。**`extract_metadata`：** 图片侧 `kamadak-exif`（日期/GPS、`cameraInfo.make/model`）；并已写入 **`cameraInfo.lens`（LensModel）、`iso`（PhotographicSensitivity / REI / ISOSpeed 等）、`focalLength`、`aperture`（FNumber）、`shutterSpeed`（ExposureTime，秒）**；视频侧 **`ffmpeg-next`（libavformat 探测，与 ffprobe JSON 同构的合并逻辑）**：`duration`、`codec`、`width`/`height`、`resolution`、`dateTime`+`dateSource:video_metadata`、`gpsInfo`（ISO6709 类标签）、`rawMetadata.rotation`；`computeMd5: true` → `rawMetadata.md5`。**构建**：`ffmpeg-next` **`build` + `build-zlib`**，静态链接 FFmpeg，**不**要求用户或 CI 安装系统 `ffmpeg` / `pkg-config`；构建机需能编译 C/汇编（见根目录 `AGENTS.md`）。**`preview_import`**：每组对每个候选文件调用同一 `extract_metadata_request` 再合并（`processFileGroup` 级），`determineGroupTargetDate`/`generateDatePath` 定 `targetPath`，`targetStructure`/`statistics`/`estimatedDuration` 与 Electron 预览对齐。**回归单测（Rust）**：`extract_metadata.rs` — 缺文件、`computeMd5`、`.txt`→`other`、最小 JPEG→`image`、`fileType:image` 覆盖未知扩展名；`extract_metadata_video.rs` — 与 `video-extractor.ts` 同构逻辑：`video_rotation`（tags/side_data/format）、`video_stream_dims` 90° 交换宽高、`select_best_date` Apple 优先、`extract_video_gps`、`parse_video_date_str`。**仍差**：真实容器 fixtures 端到端、MakerNote/静态图细字段 |
-| 扫描队列 | `picasa:add-to-scan-queue` | ✅ Photasa | `watch_scan_queue.rs` + `notify` 合并发射；与 ROADMAP「对齐 WatchService」一致 |
-| 遗留导入 | `importPhotos(…)` 整流 | ✅ Photasa（核心） | RFC **0093**：`import_photos_legacy` + `legacy-api`；`action.created` 规范为 `Date`；Rust/TS 单测已加；可选 fixtures 端到端对拍 |
-| 缩略图 | `create_thumbnail` / `thumbnail.create` | ✅ Photasa | RFC **0069**；**0102**：RAW → JPEG 占位 + `fallback: true`；网格上 **「占位预览」** 徽标（`thumbnail-fallback-cache` + `BaseImage`）；扩展名绘入图内仍可选 |
-| 启动 | Splash → 主窗 | ✅ Photasa（核心） | RFC **0101**：双窗 + `close_splashscreen`；**仍差**：Electron `SplashWindow.updateProgress` / `updateStatus` 类事件驱动文案（可选） |
+## Electron 能力 → Rust 状态总表
 
-## 仍差（下一批实现 / 文档）
+| 能力域 | Electron | Rust | 状态 |
+|--------|----------|------|------|
+| 窗口 / Shell / 平台 | preload + main | `window`, `shell`, `platform` | ✅ |
+| 路径 | Node path-util | `path.rs` + 少量 Vue 纯 TS | ✅ |
+| 配置读写 | worker + preload fs | `config.rs` | ✅ |
+| 目录对话框 | directory-service | `directory.rs` | ✅（**0114** OS 路径映射） |
+| 扫描 | scan-worker + cache | `scan_runner` + `scan_cache` | ✅（0105） |
+| 扫描状态条 | `notify:status` | **`scan_notify.rs` + scan_runner** | ✅（**0111**） |
+| 监视 / 扫描队列 | watch-service | `watch` + `watch_scan_queue` | ✅ |
+| 缩略图 | Ma-Liang worker | `thumbnail.rs` | ✅（0102/0103） |
+| 导入流水线 | import-worker | `import_*` + `import_date_util` | ✅（0104, **0114** scan FileGroup） |
+| 遗留导入 | preload fs | `import_photos_legacy` | ✅（0093） |
+| 元数据 | worker + preload EXIF | `extract_metadata*.rs` | ✅（**0112** golden） |
+| 日志 | log-viewer | `log_viewer.rs` | ✅ |
+| 更新 | update-service | `update.rs` + `update_periodic` + `update_config` | ✅（**0113**） |
+| 菜单 | menu-service | `menu.rs` + 天枢 | ✅ |
+| 天枢 / 偏好 | tianshu + wenchang | `TianshuService` + `wenchang-preferences` | ✅（0107） |
+| Splash / 单实例 | splash + single-instance | 0100/0101 | 🚧 UI polish 可选 |
+| WASM 命令 | （历史） | ✅ **已删除**（0114） | 
+| `@photasa/*` 包 | 0098 Electron | **禁止** Tauri 引用 | ⛔ |
 
-1. **0097 导入表面**：`extract_metadata` 视频与 Electron **逐项对拍**（回退、边缘标签）；静态图 EXIF 已与 `CameraInfo` 对齐常见标签（镜头/ISO/焦距/光圈/快门），**MakerNote 与 UI 展示级差异**仍待对拍；`preview_import` 已与 Electron 预览链 **1:1**（每组全量元数据合并 + 目标路径/结构/统计/时长估算）。（静态图 EXIF 核心、视频 `ffmpeg-next` 探测主干、按需 MD5 已在 Rust 落地。）
-2. ~~**0093**~~：`importPhotos` 核心已与 Electron 行为与 `FileAction` 形状对齐（见 **0093** 正文「Callback / event shape」）；大规模双端回归夹具仍为可选。
-3. **0090 运维**：`tauri.conf.json` / builder 侧真实 `pubkey` 与更新端点。
-4. **0101 延伸**：Splash 页若需与 Electron 一致的可变进度/状态，需 `emit`/`listen` 或 IPC 小协议（当前为静态 HTML）。
-5. **0102 延伸**（部分已做）：`ImageList` + `BaseImage` 在内存缓存命中占位标记时展示「占位预览」徽标；占位图上绘制扩展名（更接近 `FallbackBrush`）仍为可选。
+---
+
+## ✅ 已在 Rust 重写（0097 子项）
+
+| 区域 | API / 行为 | RFC |
+|------|------------|-----|
+| 更新命令 + 事件 + 定时 | `checkForUpdates`… + `picasa:update-*` + 后台 loop | 0090, **0106** |
+| 日志 | `log_viewer_*` + `log:entry` | 0088, 0089 |
+| 导入扩展 | preview/execute/cancel/pause/resume/history/undo | 0070, 0096, 0104 |
+| 扫描 | `scan_photos` + `.photasa-folder.json` + progress | **0105** |
+| 扫描队列 | `picasa:add-to-scan-queue` | watch_scan_queue |
+| 遗留导入 | `importPhotos` 流 | 0093 |
+| 缩略图 | RAW fallback | 0069, 0102 |
+| Splash 核心 | 双窗 + close | 0101 |
+
+---
+
+## 🚧 Partial — 已全部收口（Phase 7）
+
+| 缺口 | Rust 下一步 | 子 RFC |
+|------|-------------|--------|
+| **`notify:status` 缺失** | ~~`build_scan_notify_payload`~~ | ✅ **0111** |
+| 元数据 golden / MakerNote | fixtures + 对拍测试 | ✅ **0112** |
+| **updater pubkey + 启动灌配置** | preferences → `UpdateState` | ✅ **0113** |
+| **`scanDirectories` 形状** | 返回 `FileGroup[]` + 可选 `filters` | ✅ **0114** |
+| **`get_directory` OS 路径** | `desktop`/`documents`/`home` → `dirs::*_dir()` | ✅ **0114** |
+| **Splash / RAW 占位 polish** | ✅ RAW 扩展名 + Splash 主题同步 | 完成 |
+| **WASM 废弃文件** | `wasm.rs` × 2 删除，`main.rs` 解注册 | ✅ **0114** |
+
+---
+
+## ⛔ 不是 Photasa 重写目标（勿误标为缺口）
+
+| 项 | 原因 |
+|----|------|
+| **RFC 0098** `@photasa/*` 抽包 | Electron-only，Deferred |
+| **Ma-Liang / `@photasa/maliang` WASM** | 已由 Rust `image` + libheif + ffmpeg 替代 |
+| **preload 本地 `importPhotos` fs** | 已由 `import_photos_legacy` Rust 替代 |
+| **v2.0 Electron RFC（0032 等）** | Legacy 索引；Photasa 用 0068/0105 |
+
+---
+
+## ✅ 全部完成（Phase 7 收口）
+
+1. ~~**0111**~~ ✅ — `notify:status`
+2. ~~**0112**~~ ✅ — `extract_metadata` golden
+3. ~~**0113**~~ ✅ — updater 生产 + preferences 同步
+4. ~~**0114**~~ ✅ — `get_directory` OS 路径映射 + `scan_directories` → `FileGroup[]` + WASM 清理
+
+**Status: ✅ Implemented。**
+
+---
 
 ## 说明
 
-- `cleanupScanQueue`：Electron 侧为空实现；Tauri 保持空操作即可，不单独 RFC。
-- 从本清单移除某项时：同步更新本文件 Status、`README.md` 小表、必要时 `ROADMAP.md`「Current state」。
+- `cleanupScanQueue`：Electron 空实现；Tauri 保持空操作。
+- 从本清单移除某项时：同步 ROADMAP parity audit、`TASK_TRACKING.md` Photasa Active 表。

@@ -9,8 +9,9 @@
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
-**Status**: Draft  
+**Status**: ✅ Implemented  
 **Created**: 2026-04-05  
+**Last updated**: 2026-06-06  
 **Area**: Tauri / Update
 
 ---
@@ -80,14 +81,21 @@ tauri::async_runtime::spawn(async move {
 
 ### `get_app_version` command
 
-The Electron service also exposes `picasa:get-app-version`.  The Rust
-equivalent should be wired in `generate_handler![]` if not already present:
+Already wired in `commands/platform.rs` and registered in `main.rs` as `platform::get_app_version` (returns `CARGO_PKG_VERSION`).
 
-```rust
-#[tauri::command]
-pub fn get_app_version(app: AppHandle) -> String {
-    app.package_info().version.to_string()
-}
+---
+
+## Verification (2026-06-06)
+
+Implemented in Rust:
+
+- `commands/update.rs` — `perform_check_for_updates` shared by command + background task
+- `commands/update_periodic.rs` — Tokio loop (5s startup check, then interval sleep; skips check when `enabled == false`)
+- `main.rs` — spawns checker in `setup`, stops on `RunEvent::ExitRequested`
+
+```bash
+cd apps/photasa/src-tauri && cargo test update_periodic
+cd apps/photasa/src-tauri && cargo build -p photasa
 ```
 
 ---

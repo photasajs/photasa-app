@@ -7,21 +7,21 @@ mod services;
 mod utils;
 
 use commands::{
-    config, directory, extract_metadata, import_execute, import_legacy, import_preview,
-    import_session_store, log_viewer, menu, path, platform, shell, stubs, thumbnail, update, wasm, watch,
-    window,
+    config, directory, engine_status, extract_metadata, import_execute, import_legacy,
+    import_preview, import_scan_directories, import_session_store, log_viewer, menu, path,
+    platform, shell, splash_bridge, stubs, thumbnail, update, watch, window,
 };
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use commands::log_toggle_shortcut;
 use commands::update::UpdateState;
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+use commands::update_periodic::UpdatePeriodicHandle;
 use services::{TianshuService, tianshu::resolve_workflows_dir};
 use commands::import_execute::ImportTaskRegistry;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tauri::Emitter;
 use tauri::Manager;
-use tokio::sync::{Mutex as TokioMutex, RwLock};
-use utils::wasm::WasmModuleCache;
+use tokio::sync::RwLock;
 
 /// 与 `tauri.conf.json` 首窗默认 label 一致（未显式写 `label` 时为 `main`）
 const MAIN_WEBVIEW_LABEL: &str = "main";
@@ -88,21 +88,21 @@ fn main() {
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             log_toggle_shortcut::register_log_toggle_shortcut(&app.handle());
 
-            // RFC 0101：尽早向 Splash 报告启动进度（对齐 Electron SplashWindow.updateStatus/updateProgress）
-            if let Some(splash) = app.get_webview_window("splash") {
-                let _ = splash.emit("splash:status-update", "启动应用程序...");
-                let _ = splash.emit("splash:progress-update", -1);
-            }
+            let app_handle = app.handle().clone();
+            engine_status::emit_engine_status(&app_handle, "initializing");
+
+            // RFC 0101：尽早向 Splash 报告启动进度与系统主题
+            splash_bridge::sync_splash_theme(&app_handle);
+            splash_bridge::emit_splash_status(&app_handle, "启动应用程序...");
+            splash_bridge::emit_splash_progress(&app_handle, -1);
 
             // 目录存储与文件监视状态
             app.manage(directory::DirectoryStore(Mutex::new(HashMap::new())));
             app.manage(watch::WatchState::new());
             app.manage(Arc::new(ImportTaskRegistry::default()));
 
-            if let Some(splash) = app.get_webview_window("splash") {
-                let _ = splash.emit("splash:status-update", "初始化核心服务...");
-                let _ = splash.emit("splash:progress-update", 25);
-            }
+            splash_bridge::emit_splash_status(&app_handle, "初始化核心服务...");
+            splash_bridge::emit_splash_progress(&app_handle, 25);
             let app_dir = app.path().app_data_dir().map_err(|e| {
                 log::error!("❌ 无法解析应用数据目录：{e}");
                 e
@@ -114,21 +114,28 @@ fn main() {
             app.manage(Arc::new(
                 import_session_store::ImportSessionStore::load_or_new(app_dir),
             ));
-            app.manage(UpdateState::default());
-            // WASM 缓存占位（已废弃，保留防止命令签名报错）
-            app.manage(Arc::new(TokioMutex::new(WasmModuleCache::new())));
+            let update_state = UpdateState::default();
+            commands::update_config::sync_update_state_from_preferences(&update_state);
+            app.manage(update_state);
+            #[cfg(not(any(target_os = "android", target_os = "ios")))]
+            {
+                let periodic = commands::update_periodic::spawn_periodic_update_checker(
+                    app.handle().clone(),
+                );
+                app.manage(periodic);
+            }
 
             // 先注册占位，保证命令提取 State 不 panic
             let tianshu_slot: Arc<RwLock<Option<TianshuService>>> =
                 Arc::new(RwLock::new(None));
             app.manage(tianshu_slot.clone());
 
+            engine_status::emit_engine_status(&app_handle, "ready");
+
             // 异步初始化天枢服务，完成后填入 slot
             let handle = app.handle().clone();
-            if let Some(splash) = app.get_webview_window("splash") {
-                let _ = splash.emit("splash:status-update", "载入天枢典籍...");
-                let _ = splash.emit("splash:progress-update", 55);
-            }
+            splash_bridge::emit_splash_status(&app_handle, "载入天枢典籍...");
+            splash_bridge::emit_splash_progress(&app_handle, 55);
             let workflows_dir = resolve_workflows_dir(&handle);
             log::info!("🌌 天枢开坛，工作流典籍路径：{}", workflows_dir.display());
 
@@ -138,17 +145,14 @@ fn main() {
                         let slot = handle.state::<Arc<RwLock<Option<TianshuService>>>>();
                         *slot.write().await = Some(service);
                         log::info!("🌌 天枢天书已开启，万仙归位");
-                        if let Some(splash) = handle.get_webview_window("splash") {
-                            let _ = splash.emit("splash:status-update", "加载用户界面...");
-                            let _ = splash.emit("splash:progress-update", 80);
-                        }
+                        splash_bridge::emit_splash_status(&handle, "加载用户界面...");
+                        splash_bridge::emit_splash_progress(&handle, 80);
                     }
                     Err(e) => {
                         log::error!("❌ 天枢初始化失败：{e}");
-                        if let Some(splash) = handle.get_webview_window("splash") {
-                            let _ = splash.emit("splash:status-update", "天枢初始化失败");
-                            let _ = splash.emit("splash:progress-update", -1);
-                        }
+                        engine_status::emit_engine_status(&handle, "error");
+                        splash_bridge::emit_splash_status(&handle, "天枢初始化失败");
+                        splash_bridge::emit_splash_progress(&handle, -1);
                     }
                 }
             });
@@ -213,15 +217,12 @@ fn main() {
             thumbnail::remove_thumbnail,
             // 系统菜单
             menu::apply_system_menu,
-            // WASM（已废弃，保留命令签名）
-            wasm::load_wasm_module,
-            wasm::call_wasm_function,
             // 天枢命令（真实引擎）
             tianshu_command,
             tianshu_status,
             // Stub 命令（待逐步替换）
             stubs::scan_photos,
-            stubs::scan_directories,
+            import_scan_directories::scan_directories,
             import_execute::execute_import,
             import_execute::cancel_import,
             import_execute::pause_import,
@@ -245,6 +246,19 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
+            if let tauri::RunEvent::ExitRequested { .. } = event {
+                #[cfg(not(any(target_os = "android", target_os = "ios")))]
+                if let Some(periodic) = app_handle.try_state::<UpdatePeriodicHandle>() {
+                    periodic.stop();
+                }
+            }
+            if let tauri::RunEvent::WindowEvent {
+                event: tauri::WindowEvent::ThemeChanged(theme),
+                ..
+            } = event
+            {
+                splash_bridge::emit_splash_theme(app_handle, theme);
+            }
             #[cfg(target_os = "macos")]
             {
                 if let tauri::RunEvent::Reopen {
@@ -271,7 +285,47 @@ fn main() {
 #[derive(Debug, serde::Deserialize)]
 struct TianshuCommandInput {
     pub intent: Option<String>,
+    #[serde(default)]
     pub inputs: Option<serde_json::Value>,
+    /// UICommand 使用 params；Electron 工作流使用 inputs
+    #[serde(default)]
+    pub params: Option<serde_json::Value>,
+}
+
+fn resolve_tianshu_inputs(input: &TianshuCommandInput) -> serde_json::Value {
+    input
+        .inputs
+        .clone()
+        .or_else(|| input.params.clone())
+        .filter(|value| !value.is_null())
+        .unwrap_or_else(|| serde_json::json!({}))
+}
+
+#[cfg(test)]
+mod tianshu_command_tests {
+    use super::{resolve_tianshu_inputs, TianshuCommandInput};
+
+    #[test]
+    fn prefers_inputs_over_params() {
+        let input = TianshuCommandInput {
+            intent: Some("get_preferences".to_string()),
+            inputs: Some(serde_json::json!({ "key": "ui.theme" })),
+            params: Some(serde_json::json!({ "key": "ignored" })),
+        };
+        let resolved = resolve_tianshu_inputs(&input);
+        assert_eq!(resolved["key"], "ui.theme");
+    }
+
+    #[test]
+    fn falls_back_to_params_when_inputs_missing() {
+        let input = TianshuCommandInput {
+            intent: Some("update_preferences".to_string()),
+            inputs: None,
+            params: Some(serde_json::json!({ "action": "update" })),
+        };
+        let resolved = resolve_tianshu_inputs(&input);
+        assert_eq!(resolved["action"], "update");
+    }
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -290,11 +344,10 @@ async fn tianshu_command(
     let input: TianshuCommandInput = serde_json::from_value(command)
         .map_err(|e| format!("invalid command: {e}"))?;
 
+    let inputs = resolve_tianshu_inputs(&input);
     let intent = input
         .intent
         .ok_or_else(|| "missing intent field".to_string())?;
-
-    let inputs = input.inputs.unwrap_or(serde_json::json!({}));
 
     let guard = service.read().await;
     match guard.as_ref() {

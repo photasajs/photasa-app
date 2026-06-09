@@ -2,8 +2,8 @@ import createWorker from "./scan-worker?nodeWorker";
 import type { IpcMain, BrowserWindow } from "electron";
 import type { ScanAction } from "@photasa/common";
 import { loggers } from "@photasa/common";
-import { notifyStatus } from "./status/notify";
-import type { NotifyPayload } from "@photasa/common";
+import { buildScanNotifyPayload } from "@photasa/scan";
+import { notifyStatus } from "./status/notify-bridge";
 import { getAppPath } from "@shared/path-util";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
@@ -117,8 +117,6 @@ export default class ScanService implements IService {
                     `[ScanService] Received ${data.type} from worker: requestId=${data.requestId || "N/A"}, path=${data.action?.path || "N/A"}, progress=${data.progress ? `${data.progress.processed}/${data.progress.total}` : "N/A"}`,
                 );
 
-                // 推送 notifyStatus
-                let payload: NotifyPayload | undefined;
                 if (data.type === "error") {
                     logger.error(
                         `[ScanService] Worker reported error: ${data.error?.message || String(data.error)}`,
@@ -127,38 +125,12 @@ export default class ScanService implements IService {
                             path: data.action?.path,
                         },
                     );
-                    payload = {
-                        type: "scan",
-                        task: data.action?.path || "",
-                        status: "error",
-                        error: data.error?.message || String(data.error),
-                        timestamp: Date.now(),
-                    };
                 } else if (data.type === "complete") {
-                    logger.info("[ScanService] Scan complete for " + data.action.path);
-                    payload = {
-                        type: "scan",
-                        task: data.action?.path || "",
-                        status: "complete",
-                        timestamp: Date.now(),
-                    };
-                } else if (data.type === "progress") {
-                    // 如果有当前处理的文件，传递文件名让前端处理国际化；否则显示路径
-                    const taskDisplay = data.currentFile || data.action?.path || "";
-
-                    payload = {
-                        type: "scan",
-                        task: taskDisplay,
-                        status: "progress",
-                        data: {
-                            ...data.progress,
-                            currentFile: data.currentFile, // 传递文件名给前端
-                        },
-                        timestamp: Date.now(),
-                    };
+                    logger.info("[ScanService] Scan complete for " + (data.action?.path ?? ""));
                 }
-                if (payload) {
-                    notifyStatus(this.mainWindow, payload);
+                const notifyPayload = buildScanNotifyPayload(data);
+                if (notifyPayload) {
+                    notifyStatus(this.mainWindow, notifyPayload);
                 }
                 // 若有批量paths，优先推送paths，否则推送单个data
                 if (data.type === "complete" && Array.isArray(data.paths)) {

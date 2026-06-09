@@ -1,6 +1,10 @@
 import { createThumbnailTask } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@photasa/common";
 import { toImage } from "@renderer/common/image";
+import {
+    absoluteThumbnailPathForSource,
+    webviewMediaUrlToAbsolutePath,
+} from "@renderer/utils/media-url";
 import { defaultTo, map, pipe } from "ramda";
 
 import type { Image } from "@renderer/common/image";
@@ -31,16 +35,18 @@ export function toImageList(currentFolder: string, currentFolderConfig: PhotasaC
  * @returns
  */
 export async function requestThumbnail(image: Image, thumbnailSize: number): Promise<void> {
+    const sourcePath = webviewMediaUrlToAbsolutePath(image.raw || image.preview);
+    const thumbnailPath = absoluteThumbnailPathForSource(sourcePath);
+
     await createThumbnailTask.perform({
-        path: image.raw ?? image.preview,
-        thumbnail: image.src as string,
+        path: sourcePath,
+        thumbnail: thumbnailPath,
         width: thumbnailSize,
         height: thumbnailSize,
         always: true,
         preview: "",
     });
 
-    // force to render the component
     image.thumbnail = `${image.src}?${Date.now()}`;
 }
 

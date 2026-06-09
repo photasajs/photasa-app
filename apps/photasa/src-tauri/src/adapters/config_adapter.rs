@@ -75,7 +75,7 @@ impl Adapter for ConfigAdapter {
         _ctx: &ExecutionContext,
     ) -> Result<Value, AdapterError> {
         match action {
-            // 获取当前配置快照（对应 wenchang.getCurrentSnapshot）
+            // 获取当前文件夹配置快照（.photasa.json；service 为 config）
             "getCurrentSnapshot" | "getSnapshot" => {
                 let folder = input
                     .get("folder")

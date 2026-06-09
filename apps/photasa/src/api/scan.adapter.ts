@@ -18,7 +18,12 @@ export interface ScanResult {
     requestId: string;
     paths?: string[];
     error?: string;
-    file?: any;
+    file?: unknown;
+    action?: {
+        path: string;
+        isDirectory?: boolean;
+    };
+    fileCount?: number;
 }
 
 export const scanAdapter = {

@@ -495,7 +495,8 @@ export interface ImportRequest {
         | "scan_directories"
         | "execute_import"
         | "preview_import";
-    payload: MetadataRequest | FileGroup | ScanDirectoriesRequest | ImportConfig;
+    /** execute_import 可在配置旁带 importId；其余 action 仅使用 ImportConfig 字段 */
+    payload: MetadataRequest | FileGroup | ScanDirectoriesRequest | (ImportConfig & { importId?: string });
 }
 
 /**

@@ -41,7 +41,29 @@
             }
         ],
         "security": {
-            "csp": null
+            "csp": {
+                "default-src": "'self' ipc: http://ipc.localhost asset: asset://localhost http://asset.localhost https://asset.localhost",
+                "script-src": "'self' 'unsafe-eval' http://localhost:1421",
+                "style-src": "'self' 'unsafe-inline' http://localhost:1421",
+                "img-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:",
+                "media-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:",
+                "connect-src": "ipc: http://ipc.localhost http://localhost:1421 ws://localhost:1421"
+            },
+            "assetProtocol": {
+                "enable": true,
+                "scope": {
+                    "requireLiteralLeadingDot": false,
+                    "allow": [
+                        "$HOME/**",
+                        "$PICTURE/**",
+                        "$DOCUMENT/**",
+                        "$DOWNLOAD/**",
+                        "$DESKTOP/**",
+                        "/Volumes/**",
+                        "**"
+                    ]
+                }
+            }
         }
     },
     "bundle": {

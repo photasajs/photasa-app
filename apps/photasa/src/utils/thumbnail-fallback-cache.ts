@@ -3,6 +3,7 @@
  * 按源文件路径归一化缓存，避免把 `fallback` 写进持久化 Photo 模型。
  */
 import { ref } from "vue";
+import { parseAssetWebviewUrl, isAssetWebviewUrl } from "./media-url";
 
 const PLACEHOLDER_BY_KEY = new Map<string, boolean>();
 
@@ -14,11 +15,14 @@ function bumpEpoch(): void {
 }
 
 /**
- * 将 file:// URL 或本地路径统一为缓存键（POSIX 斜杠）
+ * 将 file:// / Tauri asset URL / 本地路径统一为缓存键（POSIX 斜杠）
  */
 export function thumbnailFallbackCacheKey(fileUrlOrPath: string): string {
     let s = fileUrlOrPath.trim();
-    if (s.startsWith("file://")) {
+
+    if (isAssetWebviewUrl(s)) {
+        s = parseAssetWebviewUrl(s);
+    } else if (s.startsWith("file://")) {
         s = s.slice("file://".length);
         if (s.startsWith("//")) {
             s = s.slice(1);
@@ -29,6 +33,7 @@ export function thumbnailFallbackCacheKey(fileUrlOrPath: string): string {
             /* 保持原串 */
         }
     }
+
     return s.replace(/\\/g, "/");
 }
 

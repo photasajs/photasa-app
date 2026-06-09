@@ -1,11 +1,13 @@
 import { useTask } from "vue-concurrency";
+import { ensureWebviewMediaUrl } from "@renderer/utils/media-url";
 
 function prefetchImage(src: string): Promise<void> {
     const image = document.createElement("img");
+    const loadableSrc = ensureWebviewMediaUrl(src);
     return new Promise((resolve, reject) => {
         image.onload = (): void => resolve();
         image.onerror = reject;
-        image.src = src;
+        image.src = loadableSrc;
     });
 }
 

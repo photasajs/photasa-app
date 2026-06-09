@@ -78,7 +78,10 @@
       "Bash(rm apps/desktop/src/main/thumbnail/thumbnail-handler.ts apps/desktop/src/main/thumbnail/utils.ts)",
       "Bash(rm -rf apps/desktop/src/main/thumbnail/__tests__)",
       "Bash(npx vitest:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(cargo doc *)",
+      "WebSearch",
+      "Bash(sort -t'/' -k8)"
     ],
     "deny": [],
     "ask": []

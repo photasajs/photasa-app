@@ -13,7 +13,12 @@ import {
 } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import { ImportEvents } from "@photasa/common";
-import { ImportHistoryManager } from "@photasa/import";
+import {
+    ImportHistoryManager,
+    ImportSessionManager,
+    generateImportSessionId,
+    serializeImportConfigForWorker,
+} from "@photasa/import";
 import type {
     ImportRequest,
     ImportResponse,
@@ -28,7 +33,6 @@ import type {
     MetadataRequest,
     FileMetadata,
     ScanDirectoriesRequest,
-    ImportSession,
     EnhancedImportCallback,
 } from "@photasa/common";
 import { Service } from "@main/tianting/decorators/service-decorators";
@@ -56,12 +60,7 @@ export default class ImportService implements IService {
     private ipc: IpcMain;
     private worker: ImportWorker;
     private importHistoryManager: ImportHistoryManager;
-
-    // 活跃的导入会话
-    private activeSessions = new Map<string, ImportSession>();
-
-    // 导入进度回调
-    private progressCallbacks = new Map<string, EnhancedImportCallback>();
+    private readonly sessionManager = new ImportSessionManager();
 
     constructor(
         ipcMain: IpcMain,
@@ -118,21 +117,8 @@ export default class ImportService implements IService {
         const { taskId, data } = progressEvent;
         logger.debug(`[import-service] Progress event for task ${taskId}:`, data);
 
-        // 查找对应的导入会话
-        const session = this.activeSessions.get(taskId);
+        const session = this.sessionManager.applyProgressFromWorker(taskId, data);
         if (session) {
-            // 更新会话进度
-            session.progress = {
-                ...session.progress,
-                processedFiles: data.processedFiles,
-                totalFiles: data.totalFiles,
-                currentFile: data.currentFile,
-                speed: data.speed,
-                estimatedTimeRemaining: data.estimatedTimeRemaining,
-                remainingTime: data.estimatedTimeRemaining,
-            };
-
-            // 转发进度事件到renderer
             this.sendImportEvent(taskId, ImportEvents.PROGRESS, {
                 progress: session.progress,
             });
@@ -280,23 +266,7 @@ export default class ImportService implements IService {
         }
 
         try {
-            // 序列化配置中的日期对象
-            const serializableConfig = {
-                ...config,
-                filters: {
-                    ...config.filters,
-                    dateRange: {
-                        start:
-                            config.filters.dateRange.start instanceof Date
-                                ? config.filters.dateRange.start.toISOString()
-                                : config.filters.dateRange.start,
-                        end:
-                            config.filters.dateRange.end instanceof Date
-                                ? config.filters.dateRange.end.toISOString()
-                                : config.filters.dateRange.end,
-                    },
-                },
-            };
+            const serializableConfig = serializeImportConfigForWorker(config);
 
             // 创建临时的预览ID用于进度跟踪
             const previewId = `preview_${Date.now()}`;
@@ -304,7 +274,7 @@ export default class ImportService implements IService {
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
                 this.worker,
                 "preview_import",
-                { action: "preview_import", payload: serializableConfig as any },
+                { action: "preview_import", payload: serializableConfig },
                 (progress) => {
                     // 转发预览进度到渲染进程，确保包含发现的文件
                     const progressData = progress as { discoveredFiles?: unknown };
@@ -337,21 +307,11 @@ export default class ImportService implements IService {
     private async startImport(
         config: ImportConfig & { importId?: string },
     ): Promise<{ importId: string }> {
-        const importId = config.importId || this.generateImportId();
+        const importId = config.importId || generateImportSessionId();
 
         logger.info(`[import-service] Starting import session: ${importId}`);
 
-        // 创建导入会话
-        const session: ImportSession = {
-            importId,
-            config: config as ImportConfig,
-            status: "preparing",
-            progress: this.createInitialProgress(),
-            cancelRequested: false,
-            startTime: new Date(),
-        };
-
-        this.activeSessions.set(importId, session);
+        this.sessionManager.createPreparingSession(importId, config as ImportConfig);
 
         // 异步执行导入，不阻塞响应
         this.executeImportInBackground(importId);
@@ -363,7 +323,7 @@ export default class ImportService implements IService {
      * 后台异步执行导入
      */
     private async executeImportInBackground(importId: string): Promise<void> {
-        const session = this.activeSessions.get(importId);
+        const session = this.sessionManager.getSession(importId);
         if (!session) {
             logger.error(`[import-service] Session not found: ${importId}`);
             return;
@@ -373,8 +333,7 @@ export default class ImportService implements IService {
             session.status = "processing";
             logger.info(`[import-service] Background execution started: ${importId}`);
 
-            // 序列化配置中的日期对象
-            const serializableConfig = this.serializeImportConfig(session.config);
+            const serializableConfig = serializeImportConfigForWorker(session.config);
 
             // 执行导入
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
@@ -415,8 +374,7 @@ export default class ImportService implements IService {
             });
             logger.error(`[import-service] Import failed: ${importId}, error: ${error}`);
         } finally {
-            // 清理会话（保留5分钟用于查询）
-            setTimeout(() => this.activeSessions.delete(importId), 300000);
+            this.sessionManager.scheduleSessionRemoval(importId);
         }
     }
 
@@ -432,33 +390,16 @@ export default class ImportService implements IService {
         try {
             // 如果提供了回调，存储它
             if (callback) {
-                // 这里需要一个导入ID，实际实现中应该从config或生成
                 const importId = `import_${Date.now()}`;
-                this.progressCallbacks.set(importId, callback);
+                this.sessionManager.setProgressCallback(importId, callback);
             }
 
-            // 序列化配置中的日期对象，以便通过 Worker 传递
-            const serializableConfig = {
-                ...config,
-                filters: {
-                    ...config.filters,
-                    dateRange: {
-                        start:
-                            config.filters.dateRange.start instanceof Date
-                                ? config.filters.dateRange.start.toISOString()
-                                : config.filters.dateRange.start,
-                        end:
-                            config.filters.dateRange.end instanceof Date
-                                ? config.filters.dateRange.end.toISOString()
-                                : config.filters.dateRange.end,
-                    },
-                },
-            };
+            const serializableConfig = serializeImportConfigForWorker(config);
 
             const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
                 this.worker,
                 "execute_import",
-                { action: "execute_import", payload: serializableConfig as any },
+                { action: "execute_import", payload: serializableConfig },
             );
 
             if (!response.success || !response.data) {
@@ -487,21 +428,13 @@ export default class ImportService implements IService {
         logger.info(`[import-service] Cancelling import: ${importId}`);
 
         try {
-            const session = this.activeSessions.get(importId);
+            const session = this.sessionManager.getSession(importId);
             if (session) {
-                session.cancelRequested = true;
-                session.cancelTime = new Date();
-
-                // 如果是在处理中，标记为取消中
-                if (session.status === "processing") {
-                    session.status = "cancelled";
+                const wasProcessing = session.status === "processing";
+                this.sessionManager.requestCancel(importId);
+                if (wasProcessing) {
                     this.sendImportEvent(importId, "import:cancelled", {});
                 }
-
-                this.activeSessions.set(importId, session);
-
-                // 清理回调
-                this.progressCallbacks.delete(importId);
 
                 logger.info(`[import-service] Import cancellation requested: ${importId}`);
                 return true;
@@ -522,12 +455,7 @@ export default class ImportService implements IService {
         logger.info(`[import-service] Pausing import: ${importId}`);
 
         try {
-            const session = this.activeSessions.get(importId);
-            if (session && session.status === "processing") {
-                session.status = "paused";
-                session.pauseTime = new Date();
-                this.activeSessions.set(importId, session);
-
+            if (this.sessionManager.pauseIfProcessing(importId)) {
                 logger.info(`[import-service] Import paused: ${importId}`);
                 return true;
             }
@@ -549,14 +477,8 @@ export default class ImportService implements IService {
         logger.info(`[import-service] Resuming import: ${importId}`);
 
         try {
-            const session = this.activeSessions.get(importId);
-            if (session && session.status === "paused") {
-                session.status = "processing";
-                session.resumeCount = (session.resumeCount || 0) + 1;
-                session.lastResumeTime = new Date();
-                this.activeSessions.set(importId, session);
-
-                // 继续执行导入
+            const session = this.sessionManager.resumeFromPaused(importId);
+            if (session) {
                 const result = await this.executeImport(session.config);
 
                 logger.info(`[import-service] Import resumed and completed: ${importId}`);
@@ -577,26 +499,7 @@ export default class ImportService implements IService {
         logger.debug(`[import-service] Getting import progress: ${importId}`);
 
         try {
-            const session = this.activeSessions.get(importId);
-            if (session) {
-                return session.progress;
-            }
-
-            // 如果会话不存在，返回默认进度
-            return {
-                totalFiles: 0,
-                processedFiles: 0,
-                successfulFiles: 0,
-                skippedFiles: 0,
-                errorFiles: 0,
-                speed: 0,
-                estimatedTimeRemaining: 0,
-                remainingTime: 0,
-                startTime: new Date(),
-                errors: [],
-                warnings: [],
-                status: "completed",
-            };
+            return this.sessionManager.getProgressOrDefault(importId);
         } catch (error) {
             logger.error(`[import-service] Get import progress failed: ${error}`);
             throw error;
@@ -757,16 +660,13 @@ export default class ImportService implements IService {
             this.ipc.removeHandler(ImportEvents.CHOOSE_DIRECTORIES);
             this.ipc.removeHandler(ImportEvents.EXTRACT_METADATA);
 
-            // 取消所有活跃的导入会话
-            for (const [importId, session] of this.activeSessions) {
+            this.sessionManager.forEachSession((session) => {
                 if (session.status === "processing") {
-                    await this.cancelImport(importId);
+                    void this.cancelImport(session.importId);
                 }
-            }
+            });
 
-            // 清理回调
-            this.progressCallbacks.clear();
-            this.activeSessions.clear();
+            this.sessionManager.clearAllTimersAndSessions();
 
             // 终止worker
             if (this.worker) {
@@ -777,56 +677,6 @@ export default class ImportService implements IService {
         } catch (error) {
             logger.error(`[import-service] Cleanup failed: ${error}`);
         }
-    }
-
-    /**
-     * 生成唯一导入ID
-     */
-    private generateImportId(): string {
-        return `import_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    /**
-     * 创建初始进度对象
-     */
-    private createInitialProgress(): ImportProgress {
-        return {
-            totalFiles: 0,
-            processedFiles: 0,
-            successfulFiles: 0,
-            skippedFiles: 0,
-            errorFiles: 0,
-            speed: 0,
-            estimatedTimeRemaining: 0,
-            remainingTime: 0,
-            startTime: new Date(),
-            errors: [],
-            warnings: [],
-            status: "preparing",
-            currentFile: "",
-        };
-    }
-
-    /**
-     * 序列化导入配置（处理Date对象）
-     */
-    private serializeImportConfig(config: ImportConfig): any {
-        return {
-            ...config,
-            filters: {
-                ...config.filters,
-                dateRange: {
-                    start:
-                        config.filters.dateRange.start instanceof Date
-                            ? config.filters.dateRange.start.toISOString()
-                            : config.filters.dateRange.start,
-                    end:
-                        config.filters.dateRange.end instanceof Date
-                            ? config.filters.dateRange.end.toISOString()
-                            : config.filters.dateRange.end,
-                },
-            },
-        };
     }
 
     /**
@@ -852,8 +702,8 @@ export default class ImportService implements IService {
         workerStatus: string;
     } {
         return {
-            activeSessions: this.activeSessions.size,
-            activeCallbacks: this.progressCallbacks.size,
+            activeSessions: this.sessionManager.getActiveSessionsCount(),
+            activeCallbacks: this.sessionManager.getProgressCallbacksCount(),
             workerStatus: this.worker ? "active" : "inactive",
         };
     }
