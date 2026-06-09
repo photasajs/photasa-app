@@ -139,5 +139,23 @@ describe("BaseImage", () => {
         expect(prefetchImageTask.perform).toHaveBeenCalledWith(
             "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A",
         );
+    it("uses viewport fit mode in lightbox without fixed pixel box", async () => {
+        const wrapper = shallowMount(BaseImage, {
+            props: { ...defaultProps, fitViewport: true, eagerLoad: true },
+            global: {
+                stubs: {
+                    BaseSpinner: MockBaseSpinner,
+                },
+            },
+        });
+        if (targetIsVisibleRef) targetIsVisibleRef.value = true;
+        await nextTick();
+        await nextTick();
+
+        expect(wrapper.find(".thumbnail-image--fit-viewport").exists()).toBe(true);
+        const img = wrapper.find("img");
+        expect(img.attributes("style")).toContain("max-width: 80vw");
+        expect(img.attributes("style")).toContain("max-height: 80vh");
+        expect(img.attributes("style")).not.toContain("width: 300px");
     });
 });

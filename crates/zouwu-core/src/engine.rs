@@ -348,10 +348,7 @@ impl ZouwuEngine {
                 return Ok(StepResult::Output(Value::Null));
             }
             match self.run_steps(steps, ctx).await? {
-                StepResult::Return(val) => {
-                    // 分支内有 builtin.return，向上传播
-                    return Ok(StepResult::Return(val));
-                }
+                StepResult::Return(val) => Ok(StepResult::Return(val)),
                 StepResult::Output(val) => {
                     ctx.set_step_output(&step.base.id, json!({ "branch": pass, "result": val }));
                     Ok(StepResult::Output(Value::Null))

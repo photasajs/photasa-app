@@ -1,7 +1,7 @@
 //! `.photasa-folder.json` 增量扫描缓存（RFC 0105 — Rust 重写，磁盘格式与 Electron 契约兼容）
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
@@ -162,6 +162,7 @@ pub fn prepare_folder_scan_cache(
 mod tests {
     use super::*;
     use std::io::Write;
+    use std::path::PathBuf;
 
     fn temp_scan_dir(name: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!("photasa-scan-cache-{name}-{}", uuid::Uuid::new_v4()));

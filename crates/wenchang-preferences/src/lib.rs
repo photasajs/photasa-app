@@ -91,18 +91,10 @@ impl Default for AutoUpdatePreferences {
 }
 
 /// 系统级偏好（RFC 0038 / 0113）
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct SystemPreferences {
     pub auto_update: AutoUpdatePreferences,
-}
-
-impl Default for SystemPreferences {
-    fn default() -> Self {
-        Self {
-            auto_update: AutoUpdatePreferences::default(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

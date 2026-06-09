@@ -73,20 +73,14 @@ impl Adapter for BuiltinAdapter {
             // 统计计算：接收任意对象，返回统计摘要
             // 主要用于 engine_status_check.zouwu 中的 calculate 步骤
             "calculate" => {
-                let total = if let Some(all_status) = input.get("allStatus") {
-                    match all_status {
-                        Value::Object(map) => map.len(),
-                        _ => 0,
-                    }
+                let total = if let Some(Value::Object(map)) = input.get("allStatus") {
+                    map.len()
                 } else {
                     0
                 };
 
-                let ready = if let Some(list) = input.get("availableList") {
-                    match list {
-                        Value::Array(arr) => arr.len(),
-                        _ => 0,
-                    }
+                let ready = if let Some(Value::Array(arr)) = input.get("availableList") {
+                    arr.len()
                 } else {
                     0
                 };

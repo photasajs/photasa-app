@@ -127,8 +127,7 @@ fn parse_source_paths(config: &Value) -> Result<Vec<String>, String> {
 fn parse_target_path(config: &Value) -> Result<String, String> {
     config
         .get("targetPath")
-        .and_then(|v| v.as_str())
-        .map(|s| norm(s))
+        .and_then(|v| v.as_str().map(norm))
         .ok_or_else(|| "缺少 targetPath".to_string())
 }
 
@@ -281,7 +280,7 @@ fn scan_preview_blocking(
                 discovered_buf.drain(0..drain_start);
             }
 
-            let should_emit = files_found % PROGRESS_FILE_BATCH == 0
+            let should_emit = files_found.is_multiple_of(PROGRESS_FILE_BATCH)
                 || last_emit.elapsed() >= PROGRESS_MIN_INTERVAL;
             if should_emit {
                 last_emit = Instant::now();

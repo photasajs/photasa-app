@@ -200,7 +200,8 @@ pub fn detect_enhanced_file_groups(files: &[Value]) -> Vec<Value> {
     groups
 }
 
-/// 两文件是否关联（对齐 `areFilesRelated`）
+/// 两文件是否关联（对齐 `areFilesRelated`；单元测试覆盖，供后续 import 分组复用）
+#[allow(dead_code)]
 pub fn are_files_related(main_file: &str, candidate_file: &str) -> bool {
     let (main_stem, _) = stem_and_ext(main_file);
     let (cand_stem, cand_ext) = stem_and_ext(candidate_file);

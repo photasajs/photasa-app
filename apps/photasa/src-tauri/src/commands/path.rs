@@ -261,7 +261,7 @@ mod tests {
         assert!(!url.starts_with("file:"));
         #[cfg(not(any(windows, target_os = "android")))]
         assert!(url.starts_with("asset://localhost/"));
-        let decoded = url.split('/').last().unwrap_or("");
+        let decoded = url.split('/').next_back().unwrap_or("");
         assert_eq!(
             percent_decode(decoded),
             "/Volumes/SUCAI/a b.jpg".to_string()

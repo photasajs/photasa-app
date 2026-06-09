@@ -23,6 +23,7 @@ pub mod import_execute;
 pub mod import_file_groups;
 pub mod import_scan_directories;
 pub mod extract_metadata;
+#[cfg(test)]
 pub mod metadata_golden;
 pub mod scan_media;
 pub mod scan_cache;

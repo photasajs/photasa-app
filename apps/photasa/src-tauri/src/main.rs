@@ -84,9 +84,9 @@ fn main() {
 
     builder
         .setup(|app| {
-            log_viewer::init_log_emit_bridge(&app.handle());
+            log_viewer::init_log_emit_bridge(app.handle());
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
-            log_toggle_shortcut::register_log_toggle_shortcut(&app.handle());
+            log_toggle_shortcut::register_log_toggle_shortcut(app.handle());
 
             let app_handle = app.handle().clone();
             engine_status::emit_engine_status(&app_handle, "initializing");

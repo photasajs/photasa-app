@@ -100,7 +100,7 @@ pub fn save_video_thumbnail(src: &Path, dst: &Path, max_w: u32, max_h: u32) -> R
     for (s, packet) in ictx.packets() {
         if s.index() == video_stream_index {
             decoder.send_packet(&packet).map_err(|e| e.to_string())?;
-            while decoder.receive_frame(&mut decoded).is_ok() {
+            if decoder.receive_frame(&mut decoded).is_ok() {
                 scaler.run(&decoded, &mut rgb).map_err(|e| e.to_string())?;
                 save_rgb(&rgb)?;
                 return Ok(());
@@ -109,7 +109,7 @@ pub fn save_video_thumbnail(src: &Path, dst: &Path, max_w: u32, max_h: u32) -> R
     }
 
     decoder.send_eof().map_err(|e| e.to_string())?;
-    while decoder.receive_frame(&mut decoded).is_ok() {
+    if decoder.receive_frame(&mut decoded).is_ok() {
         scaler.run(&decoded, &mut rgb).map_err(|e| e.to_string())?;
         save_rgb(&rgb)?;
         return Ok(());

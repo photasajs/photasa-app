@@ -38,6 +38,14 @@
     will-change: transform opacity;
 }
 
+.#{$prefix-cls}-default-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 80vw;
+    max-height: 80vh;
+}
+
 .#{$prefix-cls}-img {
     user-select: none;
     max-width: 80vw;

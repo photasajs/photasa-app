@@ -122,7 +122,7 @@ fn compute_scale(width: u32, height: u32, char_count: usize) -> u32 {
     let max_h = height.saturating_sub(8).max(1);
     let scale_w = max_w / base_w.max(1);
     let scale_h = max_h / base_h.max(1);
-    scale_w.min(scale_h).max(1).min(6)
+    scale_w.min(scale_h).clamp(1, 6)
 }
 
 fn fill_rect(img: &mut RgbImage, x: u32, y: u32, w: u32, h: u32, color: Rgb<u8>) {

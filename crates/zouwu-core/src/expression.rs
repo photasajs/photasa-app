@@ -147,7 +147,7 @@ fn eval_expr(expr: &str, ctx: &ExecutionContext) -> Result<Value, ExprError> {
         _ => {
             // 尝试作为顶层 inputs 的字段（兼容旧写法）
             get_path(&ctx.inputs, expr)
-                .or_else(|_| Err(ExprError::Invalid(format!("unknown expression root: {expr}"))))
+                .map_err(|_| ExprError::Invalid(format!("unknown expression root: {expr}")))
         }
     }
 }
@@ -263,8 +263,8 @@ pub fn eval_condition(
     let field_val = resolve_condition_field(field, ctx);
 
     match operator {
-        "eq" | "equals" => value.map_or(false, |v| &field_val == v),
-        "ne" | "notEquals" => value.map_or(true, |v| &field_val != v),
+        "eq" | "equals" => value == Some(&field_val),
+        "ne" | "notEquals" => value != Some(&field_val),
         "exists" => !field_val.is_null(),
         "not_exists" | "notExists" => field_val.is_null(),
         "isEmpty" => is_empty_value(&field_val),
@@ -283,15 +283,15 @@ pub fn eval_condition(
                 return true;
             }
             let max = value.and_then(|v| v.as_u64()).unwrap_or(u64::MAX);
-            field_val.as_str().map_or(false, |s| s.len() as u64 <= max)
+            field_val.as_str().is_some_and(|s| s.len() as u64 <= max)
         }
         "string_maxlen" => {
             let max = value.and_then(|v| v.as_u64()).unwrap_or(u64::MAX);
-            field_val.as_str().map_or(false, |s| s.len() as u64 <= max)
+            field_val.as_str().is_some_and(|s| s.len() as u64 <= max)
         }
         "string_minlen" => {
             let min = value.and_then(|v| v.as_u64()).unwrap_or(0);
-            field_val.as_str().map_or(false, |s| s.len() as u64 >= min)
+            field_val.as_str().is_some_and(|s| s.len() as u64 >= min)
         }
         "matches" => {
             // 简单字符串包含检查（不引入 regex 依赖）

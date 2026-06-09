@@ -1,7 +1,7 @@
 //! JPEG/TIFF EXIF enrichment for `extract_metadata`（`kamadak-exif`，对齐常见 EXIF 标签）
 
 use chrono::{DateTime, Datelike, Local, NaiveDateTime, Utc};
-use exif::{Exif, Reader, Tag, Value as ExifValue};
+use exif::{Exif, Reader, Value as ExifValue};
 
 /// EXIF tag numbers（按 number 匹配，兼容 Pillow 等写入 `Context::Tiff` 的 Exif 标签）
 mod exif_tag_no {

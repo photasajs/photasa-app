@@ -66,13 +66,12 @@ the `Cargo.toml` of all crates in the dependency tree.
 
 ## Example of reading and decoding HEIF-image
 
-```rust
+```rust,no_run
 use std::ffi;
 use std::ptr;
 
 use libheif_sys as lh;
 
-#[test]
 fn read_and_decode_heif_file() {
     unsafe {
         lh::heif_init(ptr::null_mut());

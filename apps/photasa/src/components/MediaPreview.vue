@@ -2,6 +2,12 @@
 import { ref, watch } from "vue";
 import VueEasyLightbox from "./LightBox";
 import { BaseImage } from "@renderer/components/ui";
+import fallbackImage from "@renderer/assets/images/fallback.png";
+
+const IMAGE_LOAD_FALLBACK =
+    process.env.NODE_ENV === "test"
+        ? "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
+        : fallbackImage;
 
 const props = defineProps<{
     images: Array<{
@@ -54,29 +60,49 @@ function handleOnIndexChange(newIndex: number) {
         @on-index-change="handleOnIndexChange"
     >
         <template #default="{ currentImg }">
-            <video-player
-                v-if="currentImg.isVideo"
-                :class="['vjs-big-play-centered']"
-                :src="currentImg.raw"
-                :poster="currentImg.thumbnail"
-                :width="currentImg.w"
-                :height="currentImg.h"
-                playsinline
-                controls
-                :loop="true"
-                :volume="0.6"
-            />
+            <div v-if="currentImg.isVideo" class="media-preview-video-wrap">
+                <video-player
+                    :class="['vjs-big-play-centered']"
+                    :src="currentImg.raw"
+                    :poster="currentImg.thumbnail"
+                    :width="currentImg.w"
+                    :height="currentImg.h"
+                    playsinline
+                    controls
+                    :loop="true"
+                    :volume="0.6"
+                />
+            </div>
             <BaseImage
                 v-else
-                :src="currentImg.preview || currentImg.raw"
+                :src="currentImg.preview || currentImg.raw || ''"
+                :preview="currentImg.preview"
                 :width="currentImg.w"
                 :height="currentImg.h"
-                :fallback="currentImg.thumbnail || ''"
+                :fallback="IMAGE_LOAD_FALLBACK"
+                :fallback-to-thumbnail="false"
+                :eager-load="true"
+                :fit-viewport="true"
                 :isVideo="false"
-                :raw="currentImg.raw"
+                :raw="currentImg.raw || ''"
                 :alt="currentImg.title"
-                style="max-width: 100%; max-height: 80vh"
             />
         </template>
     </VueEasyLightbox>
 </template>
+<style scoped lang="less">
+.media-preview-video-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 80vw;
+    max-height: 80vh;
+
+    :deep(.video-js) {
+        max-width: 80vw;
+        max-height: 80vh;
+        width: 100%;
+        height: auto;
+    }
+}
+</style>

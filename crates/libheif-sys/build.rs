@@ -109,17 +109,13 @@ fn compile_libheif() -> String {
     }
 
     // Enable some options
-    for key in [
-        "WITH_REDUCED_VISIBILITY",
-        // WITH_LIBSHARPYUV 需要系统库，关闭以实现零依赖
+    build_config.define("WITH_REDUCED_VISIBILITY", "ON");
+    // WITH_LIBSHARPYUV 需要系统库，关闭以实现零依赖
         // TODO: Try to enable this in the future.
         //       Right now it is the reason of linker's errors like
         //       "undefined reference to `BrotliEncoderDestroyInstance'"
         // "WITH_UNCOMPRESSED_CODEC",
         // "WITH_HEADER_COMPRESSION",
-    ] {
-        build_config.define(key, "ON");
-    }
 
     // List of encoders and decoders that have corresponding plugins
     let encoders_decoders = [

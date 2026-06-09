@@ -9,7 +9,7 @@
  */
 use serde_json::Value;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tauri::Manager;
 use tokio::sync::RwLock;
@@ -202,7 +202,8 @@ impl TianshuService {
         Ok(result.output)
     }
 
-    /// 按工作流 id 直接执行
+    /// 按工作流 id 直接执行（调试 / 后续 IPC 扩展）
+    #[allow(dead_code)]
     pub async fn execute_by_id(
         &self,
         workflow_id: &str,
@@ -237,10 +238,10 @@ impl TianshuService {
 
 /// 递归扫描目录，解析所有 .zouwu 文件并存入 WorkflowStore
 async fn load_workflows(
-    dir: &PathBuf,
+    dir: &Path,
     store: &Arc<RwLock<WorkflowStore>>,
 ) -> Result<(), TianshuError> {
-    let mut stack = vec![dir.clone()];
+    let mut stack = vec![dir.to_path_buf()];
 
     while let Some(current) = stack.pop() {
         let mut entries = tokio::fs::read_dir(&current).await.map_err(TianshuError::Io)?;
@@ -249,7 +250,7 @@ async fn load_workflows(
             let path = entry.path();
             if path.is_dir() {
                 stack.push(path);
-            } else if path.extension().map_or(false, |e| e == "zouwu") {
+            } else if path.extension().is_some_and(|e| e == "zouwu") {
                 let content = tokio::fs::read_to_string(&path)
                     .await
                     .map_err(TianshuError::Io)?;

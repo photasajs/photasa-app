@@ -80,10 +80,10 @@ pub(crate) fn extract_metadata_request(request: &Value) -> Result<Value, String>
 
     if file_type == "image" {
         if let Ok((w, h)) = image::image_dimensions(path_ref) {
-            out.as_object_mut().map(|m| {
+            if let Some(m) = out.as_object_mut() {
                 m.insert("width".to_string(), json!(w));
                 m.insert("height".to_string(), json!(h));
-            });
+            }
         }
         // JPEG/TIFF/HEIF/PNG/WebP 等：由 `kamadak-exif` 读容器内 EXIF（无则静默跳过）
         enrich_from_exif(path_ref, &mut out);
@@ -99,8 +99,8 @@ pub(crate) fn extract_metadata_request(request: &Value) -> Result<Value, String>
         .unwrap_or(false)
     {
         if let Ok(hex) = md5_hex_file(path_ref) {
-            match out.as_object_mut() {
-                Some(m) => match m.get_mut("rawMetadata") {
+            if let Some(m) = out.as_object_mut() {
+                match m.get_mut("rawMetadata") {
                     Some(Value::Object(rm)) => {
                         rm.insert("md5".to_string(), Value::String(hex));
                     }
@@ -110,8 +110,7 @@ pub(crate) fn extract_metadata_request(request: &Value) -> Result<Value, String>
                             json!({ "md5": hex }),
                         );
                     }
-                },
-                None => {}
+                }
             }
         }
     }

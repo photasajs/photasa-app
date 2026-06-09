@@ -10,6 +10,8 @@ const SCAN_NOTIFY_DOMAIN: &str = "scan";
 #[derive(Debug, Clone, Default)]
 pub struct ScanNotifyAction {
     pub path: Option<String>,
+    /// Electron worker 消息字段；当前 notify payload 未消费，保留对拍结构
+    #[allow(dead_code)]
     pub is_directory: Option<bool>,
 }
 
