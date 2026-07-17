@@ -19,7 +19,14 @@ import type {
     UndoPreview,
     UndoResult,
 } from "@photasa/common";
-import { shouldIgnorePhotasaPath as ignorePhotasaPathUtil } from "@photasa/common";
+import {
+    shouldIgnorePhotasaPath as ignorePhotasaPathUtil,
+} from "@photasa/common";
+import {
+    shortenThumbnailName as shortenThumbnailRelativePath,
+    toFileNameFromPath,
+    toThumbnailName as toThumbnailFileName,
+} from "@renderer/utils/photasa-path";
 import {
     EVENT_IMPORT_PREVIEW_PROGRESS,
     EVENT_SCAN_QUEUE_ADD,
@@ -395,9 +402,11 @@ export function createLegacyApi(): Record<string, unknown> {
                       Boolean((window as any).electronAPI?.api?.isFileUnderFolder?.(file, folder)),
                   ),
         toFileName: (path: string) =>
-            isTauri() ? ensureInvoke().then((invoke) => invoke<string>("to_file_name", { path })) : (path ? path.replace(/^.*[/\\]/, "") : ""),
-        toThumbnailName: (path: string) => (path ? path.replace(/^.*[/\\]/, "") : ""),
-        shortenThumbnailName: (path: string) => (path ? path.replace(/^.*[/\\]/, "") : ""),
+            isTauri()
+                ? ensureInvoke().then((invoke) => invoke<string>("to_file_name", { path }))
+                : toFileNameFromPath(path),
+        toThumbnailName: (path: string) => toThumbnailFileName(path),
+        shortenThumbnailName: (path: string) => shortenThumbnailRelativePath(path),
         isHiddenFile: (fileName: string) =>
             isTauri() ? ensureInvoke().then((invoke) => invoke<boolean>("is_hidden_file", { fileName })) : Promise.resolve(fileName.startsWith(".")),
         shouldIgnorePhotasaPath: (fileName: string) => Promise.resolve(ignorePhotasaPathUtil(fileName)),

@@ -118,6 +118,8 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0113](docs/rfc/0113-tauri-updater-production-and-prefs-sync.md) | Updater production config + prefs → UpdateState | ✅ Implemented |
 | [0114](docs/rfc/0114-tauri-get-directory-os-paths.md) | get_directory OS paths + scan_directories FileGroup[] | ✅ Implemented |
 | [0115](docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片（asset 协议，非 file://） | ✅ Implemented |
+| [0116](docs/rfc/0116-tauri-photasa-config-thumbnail-parity.md) | `.photasa.json` 缩略图路径 Electron 契约 + rescan/切换文件夹修复 | ✅ Implemented |
+| [0117](docs/rfc/0117-tauri-scan-pipeline-parity.md) | 扫描流水线 Electron 契约：策略决策 + 文件级门控 + 串行缩略图 + 子目录递归（SKIP-only）| ✅ Implemented |
 
 ### RFC 流程（摘要）
 

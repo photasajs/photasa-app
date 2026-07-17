@@ -104,32 +104,28 @@ watch(
 watch(
     selectedKeys,
     async () => {
-        if (isEmpty(selectedKeys.value)) {
-            return;
-        }
-
-        const newFolderPath = selectedKeys.value[0];
-        if (currentFolder.value !== newFolderPath) {
+        if (!isEmpty(selectedKeys.value) && currentFolder.value !== selectedKeys.value[0]) {
+            const newFolderPath = selectedKeys.value[0];
             preferenceStore.appState.currentFolder = newFolderPath;
-        }
 
-        try {
-            const config = await getPhotasaConfig(newFolderPath);
+            try {
+                const config = await getPhotasaConfig(newFolderPath);
 
-            preferenceStore.appState.currentFolderConfig =
-                config ||
-                ({
+                preferenceStore.appState.currentFolderConfig =
+                    config ||
+                    ({
+                        version: "",
+                        photoList: [],
+                        lastModified: 0,
+                    } satisfies PhotasaConfig);
+            } catch (error) {
+                logger.warn("无法加载文件夹配置:", error);
+                preferenceStore.appState.currentFolderConfig = {
                     version: "",
                     photoList: [],
                     lastModified: 0,
-                } satisfies PhotasaConfig);
-        } catch (error) {
-            logger.warn("无法加载文件夹配置:", error);
-            preferenceStore.appState.currentFolderConfig = {
-                version: "",
-                photoList: [],
-                lastModified: 0,
-            } satisfies PhotasaConfig;
+                } satisfies PhotasaConfig;
+            }
         }
     },
     { deep: true, flush: "post" },
@@ -201,14 +197,6 @@ async function rescan(key: string): Promise<void> {
     const folderPath = normalizePath(key);
     logger.info(`[FolderList] Starting rescan for folder: ${folderPath}`);
     try {
-        if (currentFolder.value === folderPath) {
-            preferenceStore.appState.currentFolderConfig = {
-                version: "",
-                photoList: [],
-                lastModified: 0,
-            } satisfies PhotasaConfig;
-        }
-
         await yuChiGong.requestRescan(folderPath);
         logger.info(`[FolderList] Rescan queued for: ${folderPath}`);
     } catch (error) {

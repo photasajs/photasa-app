@@ -142,8 +142,36 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | legacy-api 小项 | [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md) | 🟡 Medium | ✅ Done | `get_directory` OS 路径；`scan_directories` FileGroup+filters |
 | 废弃 WASM 命令 | 0114 | 🟢 Low | ✅ Done | 已删除 `load_wasm_module` / `call_wasm_function` + `wasm.rs`；无 wasmtime 依赖 |
 | WebView 本地图片 asset 协议 | [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | 🔴 High | ✅ Done | `convertFileSrc` + CSP/assetProtocol；修复 file:// 不可加载 |
+| `.photasa.json` 缩略图路径 parity | [0116](./docs/rfc/0116-tauri-photasa-config-thumbnail-parity.md) | 🔴 High | ✅ Done | Electron `toRelativeThumbnailPath`；fix legacy stubs + folder race |
+| 扫描流水线 Electron 契约 | [0117](./docs/rfc/0117-tauri-scan-pipeline-parity.md) | 🔴 High | ✅ Done | SKIP-only 递归 + SKIP progress `(N,N)` 已修；52 scan 测试通过 |
 
-**建议执行顺序：** ~~0111 → 0112 → 0113 → 0114~~ ✅ **Phase 7 全部完成。** 0097 已标 ✅ Implemented。0115 为图库显示 hotfix（2026-06-06）。
+**建议执行顺序：** ~~0111 → 0112 → 0113 → 0114~~ ✅ **Phase 7 全部完成。** 0097 已标 ✅ Implemented。0115 为图库显示 hotfix（2026-06-06）。**0116** 修复 config/thumbnail/rescan 契约（2026-06-06 ✅）。**0117** 扫描流水线对齐 Electron（2026-06-06 ✅，含 SKIP-only 递归 + SKIP progress 修复）。
+
+### RFC 0117 — 扫描流水线 Electron 契约
+
+**目标**：`scan_runner.rs` 按 Electron `@photasa/scan` **行为契约**补回 SKIP/FULL 策略、文件级门控、续扫、子目录递归与批量缓存写入。
+
+- [x] `scan_strategy.rs`：`decide_scan_strategy` / `should_process_file` / `should_scan_one_level` / `compute_folder_hash`（精确决策表 + 单测）
+- [x] `scan_runner.rs`：策略驱动编排（SKIP / FULL fresh / FULL resume / fallback）
+- [x] `scan_runner.rs`：SKIP 路径 `restore_cached_files` + **仅 SKIP** 子目录递归（`should_recurse_subdirs`）
+- [x] 串行 `create_thumbnail_sync`（与 Electron `concatMap` 一致）；`should_process_file` 门控
+- [x] `IncrementalCacheManager` 批量写入（20/50/200 + 5s）；progress `currentFile` 契约修正；内存计数
+- [x] 统一 process→record 顺序；去掉 50ms sleep（同步写）
+- [x] `scan_cleanup.rs`：`extended_cleanup`（7 天 GC）+ 单测（**已移植但无 live caller，未接线**）
+- [x] **BUG①**：FULL 不递归子目录；`current` 不递归 — `should_recurse_subdirs` + 3 单测
+- [x] **BUG②**：SKIP progress `(idx+1, N)` → `(N,N)` — `restore_cached_files` + 映射单测
+- [x] `complete.paths` 恒 `[]`（Electron parity）
+- [x] `cargo test scan_`（**52 passed**）+ `cargo build -p photasa`
+- [ ] **集成测试**：`app.emit` 副作用序列仍需 Tauri harness（可选后续）
+
+### RFC 0116 — `.photasa.json` thumbnail parity
+
+- [x] `photasa_config.rs`：`fix_config_sync` + `add_photo_to_folder_list` 对齐 Electron
+- [x] `config_adapter.rs`：`fixConfig` 委托 Rust `fix_config_sync`
+- [x] `scan_runner.rs`：rescan 完成后 `fix_config_sync`
+- [x] `photasa-path.ts` + `legacy-api.ts` 路径 stub 修复
+- [x] `FolderList.vue` / `ImageList.vue` 切换文件夹竞态
+- [x] `cargo test` + Vitest
 
 ### RFC 0115 — WebView 本地图片（asset 协议）
 

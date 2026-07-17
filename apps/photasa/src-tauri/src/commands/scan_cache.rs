@@ -130,7 +130,8 @@ impl FolderScanCache {
         serde_json::from_str(&content).ok()
     }
 
-    /// 断点续扫：pending 非空则跳过 discovery
+    /// 断点续扫：pending 非空则跳过 discovery（遗留 API；RFC 0117 使用 `IncrementalCacheManager`）
+    #[allow(dead_code)]
     pub fn can_resume(folder: &Path) -> bool {
         Self::load(folder)
             .map(|c| !c.pending_files.is_empty())
@@ -147,7 +148,133 @@ pub fn clear_folder_scan_cache(folder: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// 准备目录扫描缓存：resume 或全新 discovery
+const UPDATE_INTERVAL_MS: u64 = 5000;
+const MIN_BATCH_SIZE: usize = 20;
+const MAX_BATCH_SIZE: usize = 200;
+
+/// Electron `IncrementalCacheManager` — 批量写入 `.photasa-folder.json`
+pub struct IncrementalCacheManager {
+    cache: FolderScanCache,
+    folder: std::path::PathBuf,
+    processed_since_last_update: usize,
+    last_flush_millis: u64,
+    pending_flush: bool,
+}
+
+impl IncrementalCacheManager {
+    pub fn initialize(folder: &Path, force_full_rescan: bool) -> Result<Self, String> {
+        if force_full_rescan {
+            clear_folder_scan_cache(folder)?;
+        }
+
+        if let Some(mut existing) = FolderScanCache::load(folder) {
+            if existing.in_progress {
+                existing.scan_start_time = now_millis();
+                let mut mgr = Self {
+                    cache: existing,
+                    folder: folder.to_path_buf(),
+                    processed_since_last_update: 0,
+                    last_flush_millis: now_millis(),
+                    pending_flush: false,
+                };
+                mgr.flush()?;
+                return Ok(mgr);
+            }
+        }
+
+        let cache = FolderScanCache::new_for_discovery(folder, Vec::new());
+        let mut mgr = Self {
+            cache,
+            folder: folder.to_path_buf(),
+            processed_since_last_update: 0,
+            last_flush_millis: now_millis(),
+            pending_flush: true,
+        };
+        mgr.flush()?;
+        Ok(mgr)
+    }
+
+    pub fn cache(&self) -> &FolderScanCache {
+        &self.cache
+    }
+
+    pub fn is_resume_scan(&self) -> bool {
+        self.cache.in_progress && !self.cache.processed_files.is_empty()
+    }
+
+    pub fn is_file_processed(&self, file_path: &str) -> bool {
+        let base = Path::new(file_path)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(file_path);
+        self.cache.processed_files.iter().any(|p| p == base)
+    }
+
+    pub fn set_pending_files(&mut self, files: Vec<String>) -> Result<(), String> {
+        self.cache.pending_files = files;
+        self.cache.total_files = self.cache.processed_files.len() + self.cache.pending_files.len();
+        self.pending_flush = true;
+        self.flush()
+    }
+
+    fn dynamic_batch_size(&self) -> usize {
+        let total = self.cache.total_files.max(self.cache.processed_files.len());
+        if total < 100 {
+            MIN_BATCH_SIZE
+        } else if total < 1000 {
+            50
+        } else {
+            MAX_BATCH_SIZE
+        }
+    }
+
+    /// 记录已处理文件（basename）；`thumbnail_generated` 时递增 thumbnails_generated
+    pub fn record_file_processed(
+        &mut self,
+        file_path: &str,
+        thumbnail_generated: bool,
+    ) -> Result<(), String> {
+        self.cache.mark_file_processed(file_path);
+        if thumbnail_generated {
+            self.cache.thumbnails_generated += 1;
+        }
+        self.processed_since_last_update += 1;
+        self.pending_flush = true;
+
+        let batch = self.dynamic_batch_size();
+        let now = now_millis();
+        let batch_reached = self.processed_since_last_update >= batch;
+        let interval_elapsed =
+            now.saturating_sub(self.last_flush_millis) >= UPDATE_INTERVAL_MS;
+        if batch_reached || interval_elapsed {
+            self.flush()?;
+        }
+        Ok(())
+    }
+
+    pub fn mark_scan_complete(&mut self) -> Result<(), String> {
+        self.cache.mark_scan_complete();
+        self.pending_flush = true;
+        self.flush()
+    }
+
+    pub fn flush(&mut self) -> Result<(), String> {
+        if self.pending_flush {
+            self.cache.save(&self.folder)?;
+            self.pending_flush = false;
+            self.processed_since_last_update = 0;
+            self.last_flush_millis = now_millis();
+        }
+        Ok(())
+    }
+
+    pub fn progress_counts(&self) -> (usize, usize) {
+        self.cache.progress_counts()
+    }
+}
+
+/// 准备目录扫描缓存：resume 或全新 discovery（遗留 API；RFC 0117 使用 `IncrementalCacheManager`）
+#[allow(dead_code)]
 pub fn prepare_folder_scan_cache(
     folder: &Path,
     discovered_files: Vec<String>,

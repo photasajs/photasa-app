@@ -13,6 +13,8 @@ use std::path::{Path, PathBuf};
 use zouwu_core::adapter::{Adapter, AdapterError};
 use zouwu_core::types::ExecutionContext;
 
+use crate::commands::photasa_config;
+
 pub struct ConfigAdapter;
 
 impl ConfigAdapter {
@@ -119,29 +121,24 @@ impl Adapter for ConfigAdapter {
                 Ok(json!({ "success": true }))
             }
 
-            // 修复配置（去重、统一路径）
+            // 修复配置（Electron fixPhotasaConfig → photasa_config::fix_config_sync）
             "fixConfig" => {
                 let folder = input
                     .get("folder")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| AdapterError::InvalidInput("missing folder".to_string()))?;
-                let mut config = Self::read_config(folder).await?;
-                if let Some(list) = config.get_mut("photoList").and_then(|v| v.as_array_mut()) {
-                    let mut seen = std::collections::HashSet::new();
-                    let deduped: Vec<Value> = list
-                        .iter()
-                        .filter_map(|v| v.as_str())
-                        .map(|s| s.replace('\\', "/"))
-                        .filter(|s| seen.insert(s.clone()))
-                        .map(Value::String)
-                        .collect();
-                    *list = deduped;
-                }
-                if let Some(obj) = config.as_object_mut() {
-                    obj.insert("lastModified".to_string(), json!(now_ms()));
-                }
-                Self::write_config(folder, &config).await?;
-                Ok(json!({ "success": true }))
+                let folder_owned = folder.to_string();
+                let config = tokio::task::spawn_blocking(move || {
+                    photasa_config::fix_config_sync(&folder_owned)
+                })
+                .await
+                .map_err(|e| AdapterError::Internal(format!("fixConfig task failed: {e}")))?
+                .map_err(|e| AdapterError::Internal(e))?;
+                Ok(json!({
+                    "success": true,
+                    "config": photasa_config::config_to_json_value(&config),
+                    "timestamp": now_ms()
+                }))
             }
 
             _ => Err(AdapterError::UnsupportedAction(action.to_string())),

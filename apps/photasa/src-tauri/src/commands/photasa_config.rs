@@ -2,6 +2,11 @@
  * `.photasa.json` 读写 — 与 Electron / `@photasa/config-core` 契约对齐
  *
  * `photoList` 元素为 `{ path, thumbnail, isVideo, history? }`，`path` 为文件名（非绝对路径）。
+ *
+ * 行为必须与 `config-storage.ts` 一致：
+ * - `readConfig`：原样读取（不做静默迁移）
+ * - `addToPhotoList`：新条目用 `toRelativeThumbnailPath`；已有且 `thumbnail` 非空则跳过
+ * - `fixPhotasaConfig`：`path` → basename；`thumbnail` → `shortenThumbnailName`
  */
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -53,7 +58,7 @@ pub fn config_path_for_folder(folder: &str) -> PathBuf {
     Path::new(folder).join(PHOTASA_CONFIG_FILE)
 }
 
-/// 缩略图相对路径：`.photasaoriginals/thumbnail-{fileName}.png`
+/// 缩略图相对路径：`.photasaoriginals/thumbnail-{fileName}.png`（Electron `toRelativeThumbnailPath`）
 pub fn to_relative_thumbnail_path(photo_path: &str) -> String {
     let file_name = to_file_name(photo_path.to_string());
     format!(
@@ -79,7 +84,16 @@ fn normalize_photo_file_name(path_or_name: &str) -> String {
     name.replace('\\', "/")
 }
 
-/// 解析 `photoList` 数组：兼容 Electron 对象项与历史 Rust 字符串项
+/// Electron `shortenThumbnailName`: `.photasaoriginals/` + basename
+pub fn shorten_thumbnail_relative_path(thumbnail: &str) -> String {
+    let base = Path::new(thumbnail)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(thumbnail);
+    format!("{}/{}", PHOTASA_ORIGINALS_DIR, base.replace('\\', "/"))
+}
+
+/// 解析 `photoList`：对象项保留磁盘上的 `thumbnail`；仅 legacy 字符串项迁移为对象
 pub fn parse_photo_list(value: Option<&Value>) -> Vec<PhotoEntry> {
     let Some(array) = value.and_then(|v| v.as_array()) else {
         return Vec::new();
@@ -139,6 +153,7 @@ pub fn parse_config_value(value: &Value) -> PhotasaConfigData {
     }
 }
 
+/// 读取 `.photasa.json`（Electron `readConfig`：不静默改写磁盘）
 pub fn read_config_sync(folder: &str) -> Result<Option<PhotasaConfigData>, String> {
     let path = config_path_for_folder(folder);
     if !path.exists() {
@@ -172,18 +187,34 @@ pub fn absolute_thumbnail_path_for_source(source_path: &str) -> String {
         .replace('\\', "/")
 }
 
-/// 将一张照片加入文件夹 `.photasa.json`（幂等）
+/// Electron `addToPhotoList`
+/// 从 photoList 移除照片并写回（Electron `removeFromPhotoList`）
+pub fn remove_photo_from_folder_list(folder: &str, photo_path: &str) -> Result<PhotasaConfigData, String> {
+    let mut config = read_config_sync(folder)?.unwrap_or_else(PhotasaConfigData::empty);
+    let file_name = normalize_photo_file_name(photo_path);
+    config.photo_list.retain(|p| p.path != file_name);
+    config.last_modified = now_millis();
+    write_config_sync(folder, &config)?;
+    Ok(config)
+}
+
 pub fn add_photo_to_folder_list(folder: &str, photo_path: &str) -> Result<PhotasaConfigData, String> {
     let mut config = read_config_sync(folder)?.unwrap_or_else(PhotasaConfigData::empty);
     let file_name = normalize_photo_file_name(photo_path);
+    let thumbnail_name = to_relative_thumbnail_path(photo_path);
 
-    if config.photo_list.iter().any(|p| p.path == file_name) {
+    if let Some(existing) = config.photo_list.iter_mut().find(|p| p.path == file_name) {
+        if existing.thumbnail.is_empty() {
+            existing.thumbnail = thumbnail_name;
+            config.last_modified = now_millis();
+            write_config_sync(folder, &config)?;
+        }
         return Ok(config);
     }
 
     config.photo_list.push(PhotoEntry {
         path: file_name.clone(),
-        thumbnail: to_relative_thumbnail_path(photo_path),
+        thumbnail: thumbnail_name,
         is_video: is_video_file(photo_path.to_string()),
         history: Vec::new(),
     });
@@ -192,12 +223,15 @@ pub fn add_photo_to_folder_list(folder: &str, photo_path: &str) -> Result<Photas
     Ok(config)
 }
 
-/// 去重并规范化 `photoList`
+/// Electron `fixPhotasaConfig`
 pub fn fix_config_sync(folder: &str) -> Result<PhotasaConfigData, String> {
     let Some(mut config) = read_config_sync(folder)? else {
         return Ok(PhotasaConfigData::empty());
     };
-    config.photo_list = parse_photo_list(Some(&json!(config.photo_list)));
+    for photo in &mut config.photo_list {
+        photo.path = normalize_photo_file_name(&photo.path);
+        photo.thumbnail = shorten_thumbnail_relative_path(&photo.thumbnail);
+    }
     config.last_modified = now_millis();
     write_config_sync(folder, &config)?;
     Ok(config)
@@ -219,6 +253,21 @@ mod tests {
         let list = parse_photo_list(Some(&raw));
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].path, "a.jpg");
+        assert_eq!(list[0].thumbnail, ".photasaoriginals/thumbnail-a.jpg.png");
+    }
+
+    #[test]
+    fn parse_photo_list_preserves_stored_thumbnail_on_read() {
+        let raw = json!([{
+            "path": "20250101_195246097_iOS.heic",
+            "thumbnail": ".photasaoriginals/.photasaoriginals/20250101_195246097_iOS.heic.png",
+            "isVideo": false
+        }]);
+        let list = parse_photo_list(Some(&raw));
+        assert_eq!(
+            list[0].thumbnail,
+            ".photasaoriginals/.photasaoriginals/20250101_195246097_iOS.heic.png"
+        );
     }
 
     #[test]
@@ -228,6 +277,128 @@ mod tests {
         assert_eq!(list.len(), 2);
         assert_eq!(list[0].path, "b.jpg");
         assert!(list[1].is_video);
+    }
+
+    #[test]
+    fn shorten_thumbnail_relative_path_matches_electron() {
+        assert_eq!(
+            shorten_thumbnail_relative_path(
+                "/album/.photasaoriginals/thumbnail-vacation.jpg.png"
+            ),
+            ".photasaoriginals/thumbnail-vacation.jpg.png"
+        );
+    }
+
+    #[test]
+    fn read_config_sync_does_not_rewrite_disk() {
+        let dir = std::env::temp_dir().join(format!(
+            "photasa-read-config-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let folder = dir.to_string_lossy().replace('\\', "/");
+        let raw = json!({
+            "version": "1.0",
+            "photoList": [{
+                "path": "20250101_195246097_iOS.heic",
+                "thumbnail": ".photasaoriginals/.photasaoriginals/20250101_195246097_iOS.heic.png",
+                "isVideo": false
+            }],
+            "lastModified": 0
+        });
+        let raw_str = serde_json::to_string_pretty(&raw).unwrap();
+        std::fs::write(dir.join(PHOTASA_CONFIG_FILE), &raw_str).unwrap();
+
+        let _loaded = read_config_sync(&folder).unwrap().expect("config");
+        let on_disk = std::fs::read_to_string(dir.join(PHOTASA_CONFIG_FILE)).unwrap();
+        assert_eq!(on_disk, raw_str);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn fix_config_sync_matches_electron_shorten_only() {
+        let dir = std::env::temp_dir().join(format!(
+            "photasa-fix-config-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let folder = dir.to_string_lossy().replace('\\', "/");
+        let raw = json!({
+            "version": "1.0",
+            "photoList": [{
+                "path": "holiday.heic",
+                "thumbnail": ".photasaoriginals/.photasaoriginals/holiday.heic.png",
+                "isVideo": false
+            }],
+            "lastModified": 0
+        });
+        std::fs::write(
+            dir.join(PHOTASA_CONFIG_FILE),
+            serde_json::to_string_pretty(&raw).unwrap(),
+        )
+        .unwrap();
+
+        let fixed = fix_config_sync(&folder).unwrap();
+        assert_eq!(
+            fixed.photo_list[0].thumbnail,
+            ".photasaoriginals/holiday.heic.png"
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn add_photo_skips_when_thumbnail_already_set() {
+        let dir = std::env::temp_dir().join(format!(
+            "photasa-add-photo-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let folder = dir.to_string_lossy().replace('\\', "/");
+        let photo_path = format!("{folder}/holiday.heic");
+        std::fs::write(&photo_path, b"x").unwrap();
+
+        let legacy_thumb = ".photasaoriginals/.photasaoriginals/holiday.heic.png";
+        let raw = json!({
+            "version": "1.0",
+            "photoList": [{
+                "path": "holiday.heic",
+                "thumbnail": legacy_thumb,
+                "isVideo": false
+            }],
+            "lastModified": 0
+        });
+        std::fs::write(
+            dir.join(PHOTASA_CONFIG_FILE),
+            serde_json::to_string_pretty(&raw).unwrap(),
+        )
+        .unwrap();
+
+        let updated = add_photo_to_folder_list(&folder, &photo_path).unwrap();
+        assert_eq!(updated.photo_list[0].thumbnail, legacy_thumb);
+
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn add_photo_writes_canonical_thumbnail_for_new_entry() {
+        let dir = std::env::temp_dir().join(format!(
+            "photasa-add-photo-new-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let folder = dir.to_string_lossy().replace('\\', "/");
+        let photo_path = format!("{folder}/holiday.heic");
+        std::fs::write(&photo_path, b"x").unwrap();
+
+        let updated = add_photo_to_folder_list(&folder, &photo_path).unwrap();
+        assert_eq!(
+            updated.photo_list[0].thumbnail,
+            ".photasaoriginals/thumbnail-holiday.heic.png"
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

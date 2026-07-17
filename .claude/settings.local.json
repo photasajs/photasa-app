@@ -81,7 +81,9 @@
       "Bash(gh pr:*)",
       "Bash(cargo doc *)",
       "WebSearch",
-      "Bash(sort -t'/' -k8)"
+      "Bash(sort -t'/' -k8)",
+      "Bash(cargo clippy *)",
+      "Bash(xargs -I{} echo \"{} scan-file warnings\")"
     ],
     "deny": [],
     "ask": []

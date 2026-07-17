@@ -20,11 +20,6 @@ import type {
 } from "@photasa/common";
 import { loggers } from "@photasa/common";
 
-import {
-    applyThumbnailFallbackResult,
-    clearThumbnailFallbackFlag,
-} from "./thumbnail-fallback-cache";
-
 const logger = loggers.api;
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
@@ -58,9 +53,7 @@ export function getDirectory(name: PathName): Promise<string> {
 }
 
 export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    // 路径规范化现在在preload层处理，直接传递请求
     const result = yield window.api.createThumbnail(request);
-    applyThumbnailFallbackResult(request.path, result);
     return result;
 })
     .enqueue()
@@ -68,13 +61,6 @@ export const createThumbnailTask = useTask(function* (_, request: ThumbnailReque
 
 export const removeThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
     const result = yield window.api.removeThumbnail(request);
-    if (
-        result !== null &&
-        typeof result === "object" &&
-        (result as { success?: boolean }).success === true
-    ) {
-        clearThumbnailFallbackFlag(request.path);
-    }
     return result;
 })
     .enqueue()

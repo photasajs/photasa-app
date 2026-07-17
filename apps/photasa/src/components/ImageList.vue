@@ -2,9 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getFileMetadata, getPhotasaConfig } from "@renderer/utils/api";
-import { scanAdapter } from "@renderer/api/scan.adapter";
-import type { PhotasaConfig } from "@photasa/common";
+import { getFileMetadata } from "@renderer/utils/api";
 import type { FileMetadata } from "@photasa/common";
 import { type Card, type Image, toImageMeta, groupImagesByColumns } from "@renderer/common/image";
 // removeFileProtocol 通过 preload API 使用
@@ -36,10 +34,6 @@ import LoadingState from "./common/LoadingState.vue";
 import FileInfoDrawer from "./FileInfoDrawer.vue";
 import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
 import { safePositiveNumber } from "@renderer/common/number";
-import {
-    getThumbnailFallbackFlag,
-    thumbnailFallbackEpoch,
-} from "@renderer/utils/thumbnail-fallback-cache";
 
 // 定义组件事件
 const emit = defineEmits<{
@@ -98,12 +92,6 @@ const fileMeta = ref<FileMetadata | null>(null);
 // 重建缩略图
 async function rebuildThumbnail(image: Image) {
     await requestThumbnail(image, safeThumbnailSize.value);
-}
-
-/** 占位缩略图（RAW 等）：依赖 epoch 以便缓存更新后重绘 */
-function rawShowsPlaceholderThumb(raw: string): boolean {
-    void thumbnailFallbackEpoch.value;
-    return getThumbnailFallbackFlag(raw);
 }
 
 // 打开文件元数据（支持图片/视频/文件）
@@ -234,7 +222,6 @@ watch(currentFolder, (newFolder, oldFolder) => {
 watch(
     currentFolderConfig,
     () => {
-        // 配置已加载，隐藏加载状态
         loadingPhotasaConfig.value = false;
     },
     { immediate: true },
@@ -301,26 +288,8 @@ watch(
     { flush: "post" },
 );
 
-/** 扫描完成后刷新当前文件夹的 .photasa.json 到列表 */
-async function reloadCurrentFolderConfig(folder: string): Promise<void> {
-    try {
-        const config = await getPhotasaConfig(folder);
-        preferenceStore.appState.currentFolderConfig =
-            config ||
-            ({
-                version: "",
-                photoList: [],
-                lastModified: 0,
-            } satisfies PhotasaConfig);
-    } catch (error) {
-        logger.error("扫描完成后刷新文件夹配置失败:", error);
-    }
-}
-
-let unlistenScanComplete: (() => void) | undefined;
-
 // 挂载
-onMounted(async () => {
+onMounted(() => {
     // 确保初始状态是干净的
     clearDataState();
 
@@ -341,17 +310,6 @@ onMounted(async () => {
 
     window.addEventListener("resize", debouncedUpdate);
 
-    unlistenScanComplete = await scanAdapter.onScanResult(async (result) => {
-        if (result.type !== "complete") {
-            return;
-        }
-        const scannedPath = result.action?.path;
-        if (!scannedPath || scannedPath !== currentFolder.value) {
-            return;
-        }
-        await reloadCurrentFolderConfig(scannedPath);
-    });
-
     // 使用 ResizeObserver 监听容器宽度变化
     if (imageListRef.value) {
         resizeObserver = new ResizeObserver(debouncedUpdate);
@@ -360,7 +318,6 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-    unlistenScanComplete?.();
     window.removeEventListener("resize", debouncedUpdate);
     if (updateTimeout) {
         clearTimeout(updateTimeout);
@@ -485,9 +442,6 @@ onUnmounted(() => {
                                                     :fallback="fallback"
                                                     :raw="image.raw"
                                                     :is-video="image.isVideo"
-                                                    :is-placeholder-thumbnail="
-                                                        rawShowsPlaceholderThumb(image.raw)
-                                                    "
                                                 />
                                             </BaseCard>
                                         </BaseTooltip>
