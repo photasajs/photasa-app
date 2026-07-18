@@ -4,7 +4,7 @@
 - **Last updated**: 2026-07-18
 - **Status**: ✅ Implemented（2026-07-18；T2 user-signed）
 - **Area**: Photasa / Import / UI（`apps/photasa` only）
-- **Depends on**: [0070](../0070-tauri-import-service-migration.md), [0096](./0096-tauri-import-pause-resume.md), [0001](./0001-import-wizard-system.md)（规格）
+- **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0096](./0096-tauri-import-pause-resume.md), [0001](./0001-import-wizard-system.md)（规格）
 - **Path**: `.spec/rfc/completed/0118-tauri-import-background-ui.md`
 
 ## Implementation principle (Photasa / Tauri)

@@ -3,7 +3,7 @@
 - **Start Date**: 2026-07-18
 - **Status**: ✅ Implemented（2026-07-18）
 - **Area**: Photasa / Import / Performance
-- **Depends on**: [0070](../0070-tauri-import-service-migration.md)
+- **Depends on**: [0070](./0070-tauri-import-service-migration.md)
 - **One thing only**: throttle `import:progress` emission (currently one event per file, no batching)
 
 ## Implementation principle (Photasa / Tauri)

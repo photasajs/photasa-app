@@ -3,7 +3,7 @@
 - **Start Date**: 2026-07-17
 - **Status**: ✅ Implemented（2026-07-18）
 - **Area**: Photasa / Import / Resilience
-- **Depends on**: [0070](../0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
+- **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
 - **Tracks gap**: **G11** (0118 gap analysis)
 
 ## Implementation principle (Photasa / Tauri)

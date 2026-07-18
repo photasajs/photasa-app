@@ -4,7 +4,7 @@
 - **Status**: ✅ Implemented
 - **Area**: Photasa / Import / Events
 - **Path**: `.spec/rfc/completed/0128-tauri-import-progress-import-id.md`
-- **Depends on**: [0070](../0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
+- **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
 - **One thing only**: `import:progress` event payload → add `importId`
 
 ## Implementation principle (Photasa / Tauri)

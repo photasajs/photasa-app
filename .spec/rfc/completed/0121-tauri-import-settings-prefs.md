@@ -3,7 +3,7 @@
 - **Start Date**: 2026-07-17
 - **Status**: ✅ Implemented（2026-07-18）
 - **Area**: Photasa / Import / Settings UI
-- **Depends on**: [0070](../0070-tauri-import-service-migration.md), [0107](../0107-tauri-wenchang-preferences-storage.md)
+- **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0107](../0107-tauri-wenchang-preferences-storage.md)
 - **Tracks gap**: **G12** (0118 gap analysis)
 
 ## Implementation principle (Photasa / Tauri)

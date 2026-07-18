@@ -72,7 +72,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 ### Tauri 迁移 RFC 系列（架构与服务）
 
 - **主 RFC**：[RFC 0067](.spec/rfc/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略
-- **已完成（服务层）**：[0073](.spec/rfc/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/0072-tauri-tianshu-service-migration.md) 天枢
+- **已完成（服务层）**：[0073](.spec/rfc/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/0072-tauri-tianshu-service-migration.md) 天枢
 
 **建议实施顺序**：0073（UI+适配）→ 0071 → 0068 → 0069 → 0070 → 0072。
 
@@ -135,8 +135,8 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0129](.spec/rfc/completed/0129-tauri-import-progress-throttle.md)         | `import:progress` 无节流                                                               | ✅ Implemented                                                    |
 | [0130](.spec/rfc/completed/0130-tauri-import-legacy-copy-dedup.md)         | `import_legacy.rs` wrapper + legacy 复制逻辑去重                                       | ✅ Implemented                                                    |
 | [0131](.spec/rfc/completed/0131-tauri-photasa-import-crate.md)             | `photasa-import` 独立 crate（算法可测、零 Tauri）                                      | ✅ Implemented                                                    |
-| [0132](.spec/rfc/0132-tauri-photasa-scan-crate.md)                         | `photasa-scan` 独立 crate（策略/缓存/walk/notify，零 Tauri）                           | ⏳ Draft                                                          |
-| [0133](.spec/rfc/0133-tauri-photasa-watch-crate.md)                        | `photasa-watch` 独立 crate（队列合并/防抖，零 Tauri）                                  | ⏳ Draft                                                          |
+| [0132](.spec/rfc/0132-tauri-photasa-scan-crate.md)                         | `photasa-scan` 独立 crate（策略/缓存/walk/notify，零 Tauri）                           | ⏳ Draft（P1）                                                    |
+| [0133](.spec/rfc/0133-tauri-photasa-watch-crate.md)                        | `photasa-watch` 独立 crate（队列合并/防抖，零 Tauri）                                  | ⏳ Draft（P1）                                                    |
 
 ### Photasa next priorities（2026-07）
 
@@ -157,8 +157,8 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | **P3g**      | `import:progress` 无节流                             | **0129** ✅ |
 | **P4**       | `import_legacy.rs` wrapper + 复制逻辑去重（cleanup） | **0130** ✅ |
 | **P0-infra** | `photasa-import` crate 拆分（可测性）                | **0131** ✅ |
-| **P0-infra** | `photasa-scan` crate 拆分（可测性）                  | **0132** ⏳ |
-| **P0-infra** | `photasa-watch` crate 拆分（可测性）                 | **0133** ⏳ |
+| **P1**       | `photasa-scan` crate 拆分（可测性）                  | **0132** ⏳ |
+| **P1**       | `photasa-watch` crate 拆分（可测性）                 | **0133** ⏳ |
 | **P3h**      | Quit 恢复                                            | **0120** ✅ |
 | **P3i**      | Settings 导入                                        | **0121** ✅ |
 | —            | Legacy importPhotos UX                               | **0122** ❌ |
@@ -292,12 +292,12 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **RFC 0092 扩展：** 已用 `tauri-plugin-global-shortcut` 注册与 Electron 相同的日志查看器全局快捷键（macOS `cmd+shift+alt+KeyL` / 其他 `ctrl+shift+alt+KeyL`），按下时发射 `log:toggle-viewer`；系统菜单仍为 macOS `apply_system_menu`（既有实现）。
 - **RFC 0097（迁移跟踪）：** ✅ Implemented。导入表面已 Rust：`preview_import` / `execute_import` / history·undo / `extract_metadata`（0112 golden）/ 日期目录（0104）/ pause·resume（0096）。`tauri-import-stubs` = 前端兜底形状 only，**不是**未接入后端。导入历史落盘 `import_history_v1.json`。Updater 接线见 **0113** + `UPDATER.md`（生产密钥走 CI/运维，不进仓库）。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
-- **Next step（以「Photasa next priorities」为准）：** **P0-infra** **0132** (`photasa-scan`) → **0133** (`photasa-watch`)；import deferred 已清零（0120/0121 ✅，0122/0126 ❌）。
+- **Next step（以「Photasa next priorities」为准）：** **P1** **0132** (`photasa-scan`) → **0133** (`photasa-watch`)；import deferred 已清零（0120/0121 ✅，0122/0126 ❌）。
 - **Phase 5 – 1:1 Parity gaps（2026-04）：** … Splash / RAW / engine-status 已收口；`otool`/`ldd` 可选 CI。
 - **Phase 6 – Deep code parity（2026-04）：** **RFC 0104** ✅ … **RFC 0105** ✅ … **RFC 0106** ✅ …
 - **Phase 8 – Import UX（2026-07）：** **0118** ✅ — **P2 UX**（非 Rust 迁移）；正文：`.spec/rfc/completed/0118-tauri-import-background-ui.md`。T1 Vitest 已绿；T2 用户签收。
 - **0118–0131（2026-07-18）：** import line closed；completed → `.spec/rfc/completed/`，rejected → `.spec/rfc/rejected/`。
-- **0132 / 0133（2026-07-18）：** ⏳ Draft — `photasa-scan` / `photasa-watch` crate 拆分（RFC first，未开工）。
+- **0132 / 0133（2026-07-18）：** ⏳ Draft（P1）— `photasa-scan` / `photasa-watch` crate 拆分（RFC first，未开工）。
 
 ---
 
@@ -310,7 +310,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 | 类别                         | 数量                               | 说明                                                      |
 | ---------------------------- | ---------------------------------- | --------------------------------------------------------- |
 | ✅ **已在 Rust 重写**        | ~98% flat `window.api` + 天枢/文昌 | legacy-api Tauri 分支无 stub；Phase 7 完成                |
-| 🚧 **可选 polish（非迁移）** | 见 **Photasa next priorities**     | **P0-infra** 0132/0133 ⏳；import Deferred cleared        |
+| 🚧 **可选 polish（非迁移）** | 见 **Photasa next priorities**     | **P1** 0132/0133 ⏳；import Deferred cleared              |
 | ❌ **未重写 / 已清理**       | 0 项                               | WASM 占位已删除（0114）                                   |
 | ⛔ **不得作为 Photasa 路径** | Electron-only                      | `@photasa/*` 抽包（0098）、preload 本地 fs、Ma-Liang Node |
 

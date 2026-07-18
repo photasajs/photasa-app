@@ -3,135 +3,151 @@
 - **Start Date**: 2026-07-18
 - **Last updated**: 2026-07-18
 - **Status**: ⏳ Draft
-- **Area**: Photasa / Rust crates / Watch
+- **Priority**: P1
+- **Area**: Photasa / Rust crates / Watch（scan 族：喂前端 scan queue）
 - **Depends on**: [0082](./completed/0082-tauri-watch-start-stop-commands.md), [0083](./completed/0083-tauri-watch-event-contract.md), [0003](./completed/0003-unify-watch-to-scan-queue.md)
-- **Related**: [0132](./0132-tauri-photasa-scan-crate.md)（scan pipeline 另案；本 crate **不**依赖 photasa-scan）
+- **Related（scan 族）**: [0068](./0068-tauri-scan-service-migration.md), [0069](./0069-tauri-thumbnail-service-migration.md), [0071](./0071-tauri-config-service-migration.md), [0116](./0116-tauri-photasa-config-thumbnail-parity.md), [0117](./0117-tauri-scan-pipeline-parity.md), [0132](./0132-tauri-photasa-scan-crate.md)
 - **Path**: `.spec/rfc/0133-tauri-photasa-watch-crate.md`
 
 ## Implementation principle (Photasa / Tauri)
 
 > **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
 
-- Watch **queue algorithm** (dedupe / debounce / `FileOperation` JSON) lives in **`crates/photasa-watch`** — **zero Tauri**.
+- Watch **queue algorithm** (dedupe / debounce / `FileOperation`) lives in **`crates/photasa-watch`** — **zero Tauri**.
 - Electron `WatchService` = behavioral contract only.
-- OS filesystem watcher (`notify` crate) + `AppHandle::emit` stay in `src-tauri` thin layer.
+- OS watcher (`notify`) + `AppHandle::emit` stay in `src-tauri`.
+
+## Scan family（本 RFC 在族中的位置）
+
+Watch **不是**目录扫描流水线，但是 scan 族的**上游入口**：FS 事件 → 合并 → `picasa:add-to-scan-queue` → 前端/天枢再驱动 0068/0117 扫描。
+
+| RFC              | 角色                                           |
+| ---------------- | ---------------------------------------------- |
+| **0068**         | scan 服务入口                                  |
+| **0069**         | 缩略图（bridge / thumbnailSize）               |
+| **0071**         | `.photasa.json`                                |
+| **0116**         | thumb 路径 + rescan config                     |
+| **0117**         | 流水线 parity（行为规格）                      |
+| **0132**         | → `photasa-scan`                               |
+| **0133**（本篇） | → `photasa-watch`（queue 上游，不跑 pipeline） |
+
+**本 crate 不依赖 `photasa-scan`。** 不执行 SKIP/FULL、不写 `.photasa-folder.json`、不调缩略图引擎。
 
 ## Goal
 
-`ScanQueueCoalescer` and pure helpers become workspace crate testable with:
-
 ```bash
 cargo test -p photasa-watch
+cargo tree -p photasa-watch | grep -i tauri   # must be empty
 ```
 
-Commands `start_file_watch` / `stop_file_watch` remain Tauri wrappers that own `RecommendedWatcher` and emit:
+`start_file_watch` / `stop_file_watch` 仍为 Tauri 包装：持有 `RecommendedWatcher`，发射：
 
-- `picasa:file-*` / `picasa:file-ready` / `picasa:file-error`（event names unchanged — RFC 0083）
-- `picasa:add-to-scan-queue`（`FileOperation[]` — RFC 0003）
+- `picasa:file-*` / `picasa:file-ready` / `picasa:file-error`（0083）
+- `picasa:add-to-scan-queue`（0003 `FileOperation[]`）
 
 ## Problem
 
-| File                  | ~LOC | Issue                                                                  |
-| --------------------- | ---- | ---------------------------------------------------------------------- |
-| `watch_scan_queue.rs` | ~227 | Algorithm + **`tauri::AppHandle`** + **`tauri::async_runtime::spawn`** |
-| `watch.rs`            | ~180 | `notify` watcher + emit; correctly Tauri-bound                         |
+| File                  | ~LOC | Issue                                              |
+| --------------------- | ---- | -------------------------------------------------- |
+| `watch_scan_queue.rs` | ~219 | 算法 + `AppHandle` + `tauri::async_runtime::spawn` |
+| `watch.rs`            | ~184 | `notify` + emit；应留 Tauri                        |
 
-Only priority / dedup window / debounce tier tests run today; flush scheduling and batch emit need Window or are untested. Same class of problem as pre-**0131** import.
+现测仅 priority / window / debounce；flush 与 batch emit 未脱离 Window。
 
-## Design criteria
+## Design criteria（硬门 — 审查锁定）
 
-1. **Testability first** — pending map, dedupe windows, debounce tiers, `FileOperation` shape, flush token cancel — all under `-p photasa-watch`.
-2. **Zero Tauri** in crate.
-3. **Emit via sink** — `ScanQueueSink::emit_batch(ops: Vec<serde_json::Value>)` (or typed `FileOperation` struct + serde).
-4. **Timer via injectable clock/spawn** — do **not** call `tauri::async_runtime` from crate. Options (pick one in implementation):
-    - **A.** `async` flush with `tokio` (crate dep `tokio` with `time` only) + sink; Tauri passes runtime; tests use tokio test runtime.
-    - **B.** Sync: crate returns “schedule flush after N ms” intents; Tauri owns timer (harder to unit-test flush).
-    - **Recommend A** if workspace already has tokio; keep crate free of `tauri`.
-5. **Event-name / CreateKind mapping** may stay in `watch.rs` (Tauri) **or** move pure `(EventKind → op_type + event_name)` helpers into crate as pure functions — prefer helpers in crate for tests.
-6. **No dependency on `photasa-scan`** — watch only enqueues ops for the **frontend** scan queue; does not run directory scan.
-7. **No behavior change** — same windows (add 50ms, change 200ms, …), same debounce tiers, same JSON keys as Electron `createFileOperation`.
+1. **Testability first** — pending / dedupe / debounce / flush cancel / batch shape 全在 `-p photasa-watch`.
+2. **Zero Tauri**.
+3. **Typed `FileOperation` + serde**（禁止长期 `serde_json::Value` 双轨）；JSON 键对齐 Electron `createFileOperation`（含 `metadata.thumbnailSize`，与 0069 默认 150 一致）.
+4. **Timer 定案 A：`tokio`（`time` feature）** — 禁止 `tauri::async_runtime`；测用 tokio test runtime.
+5. **`ScanQueueSink::emit_batch(&[FileOperation])`** — src-tauri 转 `app.emit("picasa:add-to-scan-queue", …)`.
+6. **`event_map` v1 不迁** — `CreateKind` / 事件名映射留 `watch.rs`；crate 不依赖 `notify` 类型.
+7. **无 `photasa-scan` 依赖**.
+8. **No behavior change** — 窗口/防抖/事件名不变.
 
 ## Proposed crate layout
 
 ```
 crates/photasa-watch/
-  Cargo.toml          # serde, serde_json, uuid, log, tokio (time); NO tauri
+  Cargo.toml          # serde, serde_json, uuid, log, tokio (time); NO tauri; NO notify
   src/
     lib.rs
-    priority.rs       # event_priority
-    dedupe.rs         # deduplication_window_ms, should_deduplicate
-    debounce.rs       # calculate_debounce_ms
-    file_operation.rs # build FileOperation JSON / struct
-    coalescer.rs      # ScanQueueCoalescer + ScanQueueSink
-    event_map.rs      # optional: notify EventKind → (event_name, op_type, is_file)
+    priority.rs
+    dedupe.rs
+    debounce.rs
+    file_operation.rs   # typed FileOperation
+    coalescer.rs        # ScanQueueCoalescer + ScanQueueSink
+    # event_map.rs — NOT in v1
 ```
 
 ### What stays in `src-tauri`
 
-| Stay                                   | Reason                          |
-| -------------------------------------- | ------------------------------- |
-| `start_file_watch` / `stop_file_watch` | Tauri commands + `WatchState`   |
-| `notify::RecommendedWatcher`           | OS integration                  |
-| `app.emit(...)` for `picasa:file-*`    | UI contract                     |
-| Adapter implementing `ScanQueueSink`   | emit `picasa:add-to-scan-queue` |
+| Stay                                                  | Reason           |
+| ----------------------------------------------------- | ---------------- |
+| `start_file_watch` / `stop_file_watch` / `WatchState` | Tauri commands   |
+| `notify::RecommendedWatcher` + event_map              | OS + 0083 事件名 |
+| `ScanQueueSink` adapter                               | emit queue       |
 
 ### Dependency graph
 
 ```
-photasa-watch          (standalone)
-photasa-scan ──► photasa-import   (0132; unrelated to watch)
+photasa-watch                 (standalone)
+photasa-scan ──► photasa-import   (0132)
 photasa (src-tauri) ──► photasa-watch + photasa-scan + photasa-import
 ```
 
 ## Alternatives
 
-| Option                                     | Pros                            | Cons                                                    |
-| ------------------------------------------ | ------------------------------- | ------------------------------------------------------- |
-| **A. Separate `photasa-watch` (this RFC)** | Matches 一事一 RFC; small crate | Two crates to maintain                                  |
-| **B. Fold coalescer into `photasa-scan`**  | One less crate                  | Couples FS-watch queue to scan pipeline; wrong boundary |
-| **C. Keep in src-tauri**                   | No move                         | Cannot test flush without Tauri                         |
+| Option                                | Pros               | Cons                               |
+| ------------------------------------- | ------------------ | ---------------------------------- |
+| **A. 独立 `photasa-watch`（本 RFC）** | 一事一 RFC；边界净 | 多一 crate                         |
+| **B. 并进 `photasa-scan`**            | 少 crate           | 把 WatchService 绑进 scan pipeline |
+| **C. 留 src-tauri**                   | 不搬家             | flush 难测                         |
 
-**Recommend A.** Watch queue is Electron `WatchService` domain; scan is `@photasa/scan` domain.
+**Recommend A.**
 
-## Implementation checklist（开工后勾选；Draft 阶段勿写代码）
+## Implementation checklist（开工后勾选；Draft 勿写代码）
 
-- [ ] Workspace member `crates/photasa-watch` + root workspace wiring
-- [ ] Move coalescer + pure helpers; introduce `ScanQueueSink`
-- [ ] Replace `tauri::async_runtime` with tokio (or approved timer abstraction)
-- [ ] `watch.rs` thin: notify + emit file events + call coalescer
-- [ ] Unit tests: priority, windows, debounce, dedupe, flush cancel token, batch JSON shape
-- [ ] `cargo test -p photasa-watch` green
-- [ ] `cargo check -p photasa` green；手动：start/stop watch → `add-to-scan-queue` still fires
+- [ ] Workspace member `crates/photasa-watch` + root wiring
+- [ ] Typed `FileOperation` + coalescer + `ScanQueueSink`
+- [ ] tokio time 替换 `tauri::async_runtime`
+- [ ] `watch.rs`：notify + 事件名映射 + 调 coalescer（event_map 不进 crate）
+- [ ] 单测：priority / windows / debounce / dedupe / flush cancel / batch JSON keys
+- [ ] `cargo test -p photasa-watch`；`cargo tree -p photasa-watch` 无 tauri
+- [ ] `cargo check -p photasa`；手动 touch 文件 → `file-change` + `add-to-scan-queue`
 - [ ] ROADMAP / TASK_TRACKING → ✅；RFC → `completed/`
 
 ## Out of scope
 
-| Topic                                | Owner                                          |
-| ------------------------------------ | ---------------------------------------------- |
-| Scan strategy / cache / thumbnails   | **[0132](./0132-tauri-photasa-scan-crate.md)** |
-| Changing event names or payload keys | would need new 0083-style RFC                  |
-| Shunfenger / Electron watch package  | Legacy; not Photasa path                       |
+| Topic                          | Owner                                                     |
+| ------------------------------ | --------------------------------------------------------- |
+| Scan strategy / cache / runner | **[0132](./0132-tauri-photasa-scan-crate.md)** / **0117** |
+| Config / thumb 路径契约        | **0071 / 0116**                                           |
+| Thumbnail 引擎                 | **0069**                                                  |
+| 事件名 / payload 键变更        | 新 0083 类 RFC                                            |
+| `event_map` 迁入 crate         | v2 可选                                                   |
 
 ## Risks
 
-| Risk                                           | Mitigation                                     |
-| ---------------------------------------------- | ---------------------------------------------- |
-| Timer semantics drift (tauri runtime vs tokio) | Same debounce ms; integration smoke after move |
-| UUID / timestamp shape in `FileOperation.id`   | Keep `"{ms}-{uuid}"` format; snapshot test     |
-| Accidentally linking watch → scan              | Explicit non-dependency in Cargo.toml + review |
+| Risk                          | Mitigation                     |
+| ----------------------------- | ------------------------------ |
+| tokio vs tauri runtime 时序差 | 同 debounce ms；手动 smoke     |
+| `FileOperation.id` 形状       | 保持 `"{ms}-{uuid}"`；snapshot |
+| 误依赖 photasa-scan           | Cargo.toml 禁；审查            |
 
 ## Testing strategy
 
 ```bash
 cargo test -p photasa-watch
+cargo tree -p photasa-watch
 cargo check -p photasa
 ```
 
-Manual (post-implement): start watch on a folder, touch a file, confirm renderer receives `picasa:file-change` and batched `picasa:add-to-scan-queue`.
+Manual：watch 目录 → touch 文件 → `picasa:file-change` + batched `picasa:add-to-scan-queue`.
 
 ## Acceptance
 
-1. `crates/photasa-watch` has **no** `tauri` dependency.
-2. Coalescer algorithm tests run under `-p photasa-watch`.
-3. Event names and `FileOperation` JSON keys unchanged vs RFC 0083 / 0003.
-4. Indexed in ROADMAP + TASK_TRACKING as ✅ when done.
+1. `crates/photasa-watch` **无** `tauri`、**无** `notify`、**无** `photasa-scan`.
+2. Typed `FileOperation`；coalescer 测在 `-p photasa-watch`.
+3. 事件名与 JSON 键相对 0083 / 0003 不变.
+4. ROADMAP / TASK_TRACKING ✅；正文进 `completed/`.
