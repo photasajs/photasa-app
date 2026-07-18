@@ -46,7 +46,13 @@ export const thumbnailAdapter = {
             const normalized = await normalizeThumbnailRequestPaths(request);
             return await invoke("create_thumbnail", { request: normalized });
         }
-        return await (window as Window & { electronAPI?: { thumbnail?: { create: (r: ThumbnailRequest) => Promise<ThumbnailResponse> } } }).electronAPI?.thumbnail?.create(request) as ThumbnailResponse;
+        return (await (
+            window as Window & {
+                electronAPI?: {
+                    thumbnail?: { create: (r: ThumbnailRequest) => Promise<ThumbnailResponse> };
+                };
+            }
+        ).electronAPI?.thumbnail?.create(request)) as ThumbnailResponse;
     },
 
     remove: async (request: ThumbnailRequest): Promise<ThumbnailResponse> => {
@@ -55,6 +61,12 @@ export const thumbnailAdapter = {
             const normalized = await normalizeThumbnailRequestPaths(request);
             return await invoke("remove_thumbnail", { request: normalized });
         }
-        return await (window as Window & { electronAPI?: { thumbnail?: { remove: (r: ThumbnailRequest) => Promise<ThumbnailResponse> } } }).electronAPI?.thumbnail?.remove(request) as ThumbnailResponse;
+        return (await (
+            window as Window & {
+                electronAPI?: {
+                    thumbnail?: { remove: (r: ThumbnailRequest) => Promise<ThumbnailResponse> };
+                };
+            }
+        ).electronAPI?.thumbnail?.remove(request)) as ThumbnailResponse;
     },
 };

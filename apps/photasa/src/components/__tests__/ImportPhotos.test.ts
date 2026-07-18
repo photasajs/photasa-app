@@ -241,10 +241,23 @@ vi.mock("pinia", async (importOriginal) => {
     const actual = (await importOriginal()) as any;
     return {
         ...actual,
-        storeToRefs: (store: any) => ({
-            paths: { value: store.paths },
-            excludePaths: { value: store.excludePaths },
-        }),
+        storeToRefs: (store: any) => {
+            const refs: any = {};
+            for (const key in store) {
+                if (typeof store[key] !== "function") {
+                    refs[key] = {
+                        __v_isRef: true,
+                        get value() {
+                            return store[key];
+                        },
+                        set value(val) {
+                            store[key] = val;
+                        },
+                    };
+                }
+            }
+            return refs;
+        },
     };
 });
 

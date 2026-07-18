@@ -264,12 +264,12 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0125](./.spec/rfc/0125-tauri-import-paused-progress-emit.md) | paused progress emit | ⏳ Draft（**P3d**） | 一事 |
 | [0126](./.spec/rfc/0126-electron-import-background-ux-parity.md) | Electron desktop UX | ⏸️ Deferred | 一事 |
 | [0127](./.spec/rfc/0127-tauri-import-error-payload-shape.md) | `import:error` payload 形状（`[object Object]`） | ⏳ Draft（**P3e**） | 一事 |
-| [0128](./.spec/rfc/0128-tauri-import-progress-import-id.md) | `import:progress` 缺 `importId` | ⏳ Draft（**P3f**） | 一事 |
+| [0128](./.spec/rfc/0128-tauri-import-progress-import-id.md) | `import:progress` 缺 `importId` | ✅ Implemented | Rust progress JSON + frontend filter (2026-07-18) |
 | [0129](./.spec/rfc/0129-tauri-import-progress-throttle.md) | `import:progress` 无节流 | ⏳ Draft（**P3g**） | 一事 |
 | [0130](./.spec/rfc/0130-tauri-import-legacy-copy-dedup.md) | `import_legacy.rs` 复制逻辑去重 | ⏳ Draft（**P4**，cleanup） | 一事 |
-| [0131](./.spec/rfc/0131-tauri-photasa-import-crate.md) | `photasa-import` 独立 crate | 🔨 In Progress | 算法零 Tauri；`cargo test -p photasa-import` |
+| [0131](./.spec/rfc/0131-tauri-photasa-import-crate.md) | `photasa-import` 独立 crate | ✅ Implemented | 算法零 Tauri；`cargo test -p photasa-import` **36 passed**（2026-07-18） |
 
-**Gap/T3 铁律：** 一事一 RFC；禁 mono 袋。P1 验收 → **P2 0118** → **P3a–g 0119/0123/0124/0125/0127/0128/0129** → **P4 0130**；infra **0131**。
+**Gap/T3 铁律：** 一事一 RFC；禁 mono 袋。P1 验收 → **P2 0118** → **P3a–g 0119/0123/0124/0125/0127/0128✅/0129** → **P4 0130**；infra **0131** ✅。
 
 **Phase 5–6** Done。禁 **0098** 作 Photasa 路径。
 

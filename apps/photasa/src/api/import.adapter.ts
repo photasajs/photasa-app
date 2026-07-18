@@ -3,7 +3,12 @@
  * 适配导入服务 API（类型与 @photasa/common 一致，便于与 Electron / Rust 事件对齐）
  */
 
-import type { DirectorySelection, ImportConfig, ImportProgress, ImportResult } from "@photasa/common";
+import type {
+    DirectorySelection,
+    ImportConfig,
+    ImportProgress,
+    ImportResult,
+} from "@photasa/common";
 import { ImportEvents } from "@photasa/common";
 import { isTauri } from "./env";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -56,8 +61,7 @@ export function normalizeImportProgressPayload(raw: unknown): ImportProgress {
     const r = raw as Record<string, unknown>;
     const nested = (r.progress as Record<string, unknown> | undefined) ?? r;
     const st = nested.startTime;
-    const startTime =
-        st instanceof Date ? st : typeof st === "string" ? new Date(st) : new Date();
+    const startTime = st instanceof Date ? st : typeof st === "string" ? new Date(st) : new Date();
 
     return {
         importId: nested.importId as string | undefined,
@@ -68,12 +72,8 @@ export function normalizeImportProgressPayload(raw: unknown): ImportProgress {
         errorFiles: Number(nested.errorFiles ?? 0),
         currentFile: nested.currentFile as string | undefined,
         speed: Number(nested.speed ?? 0),
-        estimatedTimeRemaining: Number(
-            nested.estimatedTimeRemaining ?? nested.remainingTime ?? 0,
-        ),
-        remainingTime: Number(
-            nested.remainingTime ?? nested.estimatedTimeRemaining ?? 0,
-        ),
+        estimatedTimeRemaining: Number(nested.estimatedTimeRemaining ?? nested.remainingTime ?? 0),
+        remainingTime: Number(nested.remainingTime ?? nested.estimatedTimeRemaining ?? 0),
         startTime,
         errors: (nested.errors as ImportProgress["errors"]) ?? [],
         warnings: (nested.warnings as ImportProgress["warnings"]) ?? [],

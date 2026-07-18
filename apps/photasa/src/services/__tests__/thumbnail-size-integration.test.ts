@@ -34,6 +34,22 @@ describe("🏛️ 缩略图大小变更集成测试 - 端到端流程", () => {
         // 注入到全局window
         (window as any).tianshu = mockTianshu;
 
+        (window as any).electronAPI = {
+            tianshu: {
+                processCommand: async (cmd: any) => {
+                    const res = await mockTianshu.processCommand(cmd);
+                    if (res && typeof res === "object") {
+                        if (res.success === undefined) {
+                            res.success = res.status === "completed";
+                        }
+                    }
+                    return res;
+                },
+                onProgress: mockTianshu.onProgress,
+                onStatus: mockTianshu.onStatus,
+            },
+        };
+
         // 初始化服务链：褚遂良 → 房玄龄 → 袁天罡
         yuanTianGang = new YuanTianGangService();
         fangXuanLing = new FangXuanLingService(yuanTianGang);

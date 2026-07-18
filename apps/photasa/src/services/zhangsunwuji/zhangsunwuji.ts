@@ -203,12 +203,17 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
 
         try {
             // 0. 重新加载：Tauri 系统菜单仅回传 `key`（无 role），须在此显式 invoke（RFC 0099）
-            if (payload.key === MENU_KEY_VIEW_RELOAD || payload.key === MENU_KEY_VIEW_FORCE_RELOAD) {
-                void Promise.resolve((window as { api?: { reloadWindow?: () => Promise<void> } }).api?.reloadWindow?.()).catch(
-                    (err: unknown) => {
-                        logger.error(`📋 长孙无忌：重新加载失败（${payload.key}）`, err);
-                    },
-                );
+            if (
+                payload.key === MENU_KEY_VIEW_RELOAD ||
+                payload.key === MENU_KEY_VIEW_FORCE_RELOAD
+            ) {
+                void Promise.resolve(
+                    (
+                        window as { api?: { reloadWindow?: () => Promise<void> } }
+                    ).api?.reloadWindow?.(),
+                ).catch((err: unknown) => {
+                    logger.error(`📋 长孙无忌：重新加载失败（${payload.key}）`, err);
+                });
                 return;
             }
 

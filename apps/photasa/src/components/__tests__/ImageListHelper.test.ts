@@ -177,8 +177,8 @@ describe("ImageListHelper", () => {
             await requestThumbnail(image, 200);
 
             expect(mockPerform).toHaveBeenCalledWith({
-                path: "file:///test/test.jpg",
-                thumbnail: "file:///test/thumb.jpg",
+                path: "/test/test.jpg",
+                thumbnail: "/test/.photasaoriginals/thumbnail-test.jpg.png",
                 width: 200,
                 height: 200,
                 always: true,
@@ -202,8 +202,8 @@ describe("ImageListHelper", () => {
             await requestThumbnail(image, 150);
 
             expect(mockPerform).toHaveBeenCalledWith({
-                path: "file:///test/preview.jpg",
-                thumbnail: "file:///test/thumb.jpg",
+                path: "/test/preview.jpg",
+                thumbnail: "/test/.photasaoriginals/thumbnail-preview.jpg.png",
                 width: 150,
                 height: 150,
                 always: true,
@@ -252,8 +252,8 @@ describe("ImageListHelper", () => {
             await requestThumbnail(image, 250);
 
             expect(mockPerform).toHaveBeenCalledWith({
-                path: "file:///test/test.mp4",
-                thumbnail: "file:///test/thumb.jpg",
+                path: "/test/test.mp4",
+                thumbnail: "/test/.photasaoriginals/thumbnail-test.mp4.png",
                 width: 250,
                 height: 250,
                 always: true,

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FangXuanLingService } from "../fangxuanling";
 import { YuanTianGangService } from "../yuantiangang";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
+import { createPinia, setActivePinia } from "pinia";
 
 // Mock logger
 vi.mock("@photasa/common", () => ({
@@ -79,12 +80,18 @@ Object.defineProperty(window, "tianshu", {
     writable: true,
 });
 
+Object.defineProperty(window, "electronAPI", {
+    value: { tianshu: mockTianshu },
+    writable: true,
+});
+
 describe("偏好设置集成测试", () => {
     let fangXuanLingService: FangXuanLingService;
     let yuanTianGangService: YuanTianGangService;
 
     beforeEach(() => {
         vi.clearAllMocks();
+        setActivePinia(createPinia());
 
         // 创建真实的袁天罡服务
         yuanTianGangService = new YuanTianGangService();
@@ -107,6 +114,7 @@ describe("偏好设置集成测试", () => {
             };
 
             mockTianshu.processCommand.mockResolvedValue({
+                success: true,
                 status: "completed",
                 result: {
                     data: mockPreferenceData,
@@ -144,6 +152,7 @@ describe("偏好设置集成测试", () => {
         it("应该完整处理THEME_CHANGE流程：奏折→诏令→符箓→天枢", async () => {
             // 模拟天枢引擎确认主题变更成功
             mockTianshu.processCommand.mockResolvedValue({
+                success: true,
                 status: "completed",
                 result: {
                     success: true,
@@ -195,6 +204,7 @@ describe("偏好设置集成测试", () => {
         it("应该正确处理天枢引擎错误情况并降级", async () => {
             // 模拟天枢引擎返回错误
             mockTianshu.processCommand.mockResolvedValue({
+                success: false,
                 status: "failed",
                 result: {
                     success: false,

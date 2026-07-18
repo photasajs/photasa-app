@@ -3,6 +3,4 @@
 export const IMPORT_MODAL_MODE_START = "start" as const;
 export const IMPORT_MODAL_MODE_REATTACH = "reattach" as const;
 
-export type ImportModalMode =
-    | typeof IMPORT_MODAL_MODE_START
-    | typeof IMPORT_MODAL_MODE_REATTACH;
+export type ImportModalMode = typeof IMPORT_MODAL_MODE_START | typeof IMPORT_MODAL_MODE_REATTACH;

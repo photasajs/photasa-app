@@ -20,6 +20,7 @@ pub use photasa_import::copy_loop::ImportTaskRegistry;
 
 fn emit_cancelled_progress(
     window: &Window,
+    import_id: &str,
     total_files: u32,
     processed: u32,
     successful: u32,
@@ -29,7 +30,7 @@ fn emit_cancelled_progress(
 ) {
     let _ = window.emit(
         "import:progress",
-        cancelled_progress_json(total_files, processed, successful, skipped, errors, current_file),
+        cancelled_progress_json(import_id, total_files, processed, successful, skipped, errors, current_file),
     );
 }
 
@@ -115,6 +116,7 @@ pub async fn execute_import(
         let window_for_cb = window_clone.clone();
 
         let loop_result = run_import_file_loop(
+            &import_id_emit,
             &files,
             Path::new(&target_path),
             strategy,
@@ -147,6 +149,7 @@ pub async fn execute_import(
             }) => {
                 emit_cancelled_progress(
                     &window_clone,
+                    &import_id_emit,
                     total_files,
                     processed,
                     successful,

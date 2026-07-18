@@ -225,6 +225,7 @@ export interface ImportWarning {
  * 导入进度信息
  */
 export interface ImportProgress {
+    importId?: string;
     totalFiles: number;
     processedFiles: number;
     successfulFiles: number;

@@ -33,6 +33,11 @@ Object.defineProperty(window, "tianshu", {
     writable: true,
 });
 
+Object.defineProperty(window, "electronAPI", {
+    value: { tianshu: mockTianshu },
+    writable: true,
+});
+
 describe("YuanTianGangService", () => {
     let yuanTianGangService: YuanTianGangService;
 
@@ -45,6 +50,7 @@ describe("YuanTianGangService", () => {
         it("应该正确将GET_PREFERENCES诏令转换为天枢符箓", async () => {
             // 模拟天枢引擎返回成功响应
             const mockTianshuResponse = {
+                success: true,
                 status: "completed",
                 result: {
                     ui: {
@@ -88,30 +94,31 @@ describe("YuanTianGangService", () => {
             });
 
             // 验证天枢引擎被正确调用
-            expect(mockTianshu.processCommand).toHaveBeenCalledWith({
-                id: expect.stringMatching(/^fulu-\d+-[a-z0-9]+$/),
-                intent: "get_preferences", // 关键：验证映射正确
-                params: zhaoling.context,
-                priority: "user",
-                context: {
-                    source: "api",
-                    metadata: {
-                        originalFuluIntent: ZOUZHE_MATTERS.GET_PREFERENCES,
-                        fuluSource: zhaoling.source,
-                        fuluTimestamp: expect.any(Number),
+            expect(mockTianshu.processCommand).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: expect.stringMatching(/^fulu-\d+-[a-z0-9]+$/),
+                    intent: "get_preferences", // 关键：验证映射正确
+                    params: zhaoling.context,
+                    priority: "user",
+                    context: {
+                        source: "api",
+                        metadata: {
+                            originalFuluIntent: ZOUZHE_MATTERS.GET_PREFERENCES,
+                            fuluSource: zhaoling.source,
+                            fuluTimestamp: expect.any(Number),
+                        },
                     },
-                },
-                createdAt: expect.any(Number),
-            });
+                    createdAt: expect.any(Number),
+                }),
+            );
         });
 
         it("应该正确处理天枢引擎的失败响应", async () => {
             // 模拟天枢引擎返回失败响应
             const mockTianshuResponse = {
+                success: false,
                 status: "failed",
-                error: {
-                    message: "文昌引擎暂时不可用",
-                },
+                error: "文昌引擎暂时不可用",
             };
 
             mockTianshu.processCommand.mockResolvedValue(mockTianshuResponse);

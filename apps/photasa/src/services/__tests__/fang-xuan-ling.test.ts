@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { FangXuanLingService } from "../fangxuanling";
+import { createPinia, setActivePinia } from "pinia";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 import type { IYuanTianGangService } from "../../interfaces/yuan-tian-gang.interface";
 
@@ -63,6 +64,7 @@ describe("FangXuanLingService", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        setActivePinia(createPinia());
 
         // Mock 袁天罡服务
         mockYuanTianGang = {

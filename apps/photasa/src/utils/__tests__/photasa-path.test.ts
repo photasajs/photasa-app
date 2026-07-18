@@ -18,9 +18,9 @@ describe("photasa-path (Electron contract)", () => {
     });
 
     it("shortenThumbnailName keeps .photasaoriginals prefix", () => {
-        expect(
-            shortenThumbnailName("/Volumes/pics/.photasaoriginals/thumbnail-a.jpg.png"),
-        ).toBe(".photasaoriginals/thumbnail-a.jpg.png");
+        expect(shortenThumbnailName("/Volumes/pics/.photasaoriginals/thumbnail-a.jpg.png")).toBe(
+            ".photasaoriginals/thumbnail-a.jpg.png",
+        );
     });
 
     it("toFileNameFromPath strips directories", () => {

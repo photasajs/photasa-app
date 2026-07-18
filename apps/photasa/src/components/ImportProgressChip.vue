@@ -28,9 +28,7 @@ const counts = computed(() => {
     return `${p.processedFiles}/${p.totalFiles}`;
 });
 
-const liveText = computed(
-    () => `${label.value} ${counts.value} ${progressPercent.value}%`.trim(),
-);
+const liveText = computed(() => `${label.value} ${counts.value} ${progressPercent.value}%`.trim());
 
 function onOpen(): void {
     logger.info("📝 点选导入进度 chip，复开模态", {

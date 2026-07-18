@@ -151,16 +151,19 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     private setupQianliyanEventListening(): void {
         // Tauri 模式：通过 scan adapter 监听 picasa:find-photo 事件
         if (!(window as any).electron) {
-            scanAdapter.onScanResult((result) => {
-                this.handleQianliyanEvent(result as unknown as ScanActionEvent);
-            }).then((unlisten) => {
-                this.qianliyanCleanupFn = unlisten;
-            }).catch((error: Error | unknown) => {
-                logger.warn(
-                    "🔮 建立千里眼事件监听失败（Tauri模式）",
-                    error instanceof Error ? error.message : String(error),
-                );
-            });
+            scanAdapter
+                .onScanResult((result) => {
+                    this.handleQianliyanEvent(result as unknown as ScanActionEvent);
+                })
+                .then((unlisten) => {
+                    this.qianliyanCleanupFn = unlisten;
+                })
+                .catch((error: Error | unknown) => {
+                    logger.warn(
+                        "🔮 建立千里眼事件监听失败（Tauri模式）",
+                        error instanceof Error ? error.message : String(error),
+                    );
+                });
             logger.info("🔮 千里眼事件监听已建立（Tauri模式）");
             return;
         }
@@ -562,8 +565,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
             // 转换天枢响应为符箓响应
             const errorMessage =
-                tianshuResponse.error ??
-                (tianshuResponse.success ? undefined : "天枢处理失败");
+                tianshuResponse.error ?? (tianshuResponse.success ? undefined : "天枢处理失败");
 
             const fuluResponse: FuluResponse = {
                 success: tianshuResponse.success,

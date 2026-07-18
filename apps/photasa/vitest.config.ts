@@ -1,9 +1,10 @@
 import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
+import yaml from "@rollup/plugin-yaml";
 
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [vue(), yaml()],
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),

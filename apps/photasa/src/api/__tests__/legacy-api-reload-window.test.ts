@@ -47,7 +47,7 @@ describe("createLegacyApi reloadWindow (Tauri)", () => {
         vi.clearAllMocks();
     });
 
-    it("应调用 invoke(\"reload_window\")", async () => {
+    it('应调用 invoke("reload_window")', async () => {
         invokeMock.mockResolvedValueOnce(undefined);
         const { createLegacyApi } = await import("../legacy-api");
         const api = createLegacyApi() as { reloadWindow: () => Promise<void> };

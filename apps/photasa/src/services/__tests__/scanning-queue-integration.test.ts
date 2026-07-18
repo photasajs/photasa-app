@@ -72,6 +72,12 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
             offProgress: vi.fn(),
         };
 
+        (window as any).electronAPI = {
+            get tianshu() {
+                return (window as any).tianshu;
+            },
+        };
+
         // 某些服务可能使用 window.api
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).api = {
@@ -310,8 +316,9 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
             // Mock天枢返回错误状态
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).tianshu.processCommand = vi.fn().mockResolvedValue({
+                success: false,
                 status: "failed",
-                error: { message: "天枢繁忙，请稍后再试" },
+                error: "天枢繁忙，请稍后再试",
                 result: null,
             });
 
@@ -341,8 +348,9 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
             // Mock天枢成功但千里眼失败的场景
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (window as any).tianshu.processCommand = vi.fn().mockResolvedValue({
+                success: false,
                 status: "failed",
-                error: { message: "千里眼执行失败" },
+                error: "千里眼执行失败",
                 result: null,
             });
 

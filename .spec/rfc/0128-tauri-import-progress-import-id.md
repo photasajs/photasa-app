@@ -1,7 +1,7 @@
 # RFC 0128: Tauri `import:progress` — missing `importId` field
 
 - **Start Date**: 2026-07-18
-- **Status**: ⏳ Draft / **P3**（未开工）
+- **Status**: ✅ Implemented
 - **Area**: Photasa / Import / Events
 - **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
 - **One thing only**: `import:progress` event payload → add `importId`
@@ -31,11 +31,11 @@ Add `importId` to every `import:progress` payload (normal per-file tick, initial
 
 ## Checklist
 
-- [ ] Add `importId` to normal progress JSON (`copy_loop.rs` per-file + initial tick)
-- [ ] Add `importId` to `cancelled_progress_json`
-- [ ] Frontend `import-session.ts`: ignore `import:progress` events whose `importId` mismatches session
-- [ ] Rust / Vitest test: stale progress from a cancelled import is dropped by a new session
-- [ ] ROADMAP ✅
+- [x] Add `importId` to normal progress JSON (`copy_loop.rs` per-file + initial tick)
+- [x] Add `importId` to `cancelled_progress_json`
+- [x] Frontend `import-session.ts`: ignore `import:progress` events whose `importId` mismatches session
+- [x] Rust / Vitest test: stale progress from a cancelled import is dropped by a new session
+- [x] ROADMAP ✅
 
 ## Testing
 

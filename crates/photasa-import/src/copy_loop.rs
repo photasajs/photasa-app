@@ -107,6 +107,7 @@ pub fn copy_one(src: &Path, target_dir: &Path, strategy: &str) -> Result<(bool, 
 }
 
 pub fn cancelled_progress_json(
+    import_id: &str,
     total_files: u32,
     processed: u32,
     successful: u32,
@@ -115,6 +116,7 @@ pub fn cancelled_progress_json(
     current_file: &str,
 ) -> Value {
     json!({
+        "importId": import_id,
         "totalFiles": total_files,
         "processedFiles": processed,
         "successfulFiles": successful,
@@ -150,6 +152,7 @@ pub enum ImportLoopEnd {
 
 /// 纯算法：按文件边界尊重 pause/cancel；通过 `on_progress` 回调进度 JSON
 pub fn run_import_file_loop(
+    import_id: &str,
     files: &[String],
     target_path: &Path,
     strategy: &str,
@@ -172,6 +175,7 @@ pub fn run_import_file_loop(
     let mut total_size: u64 = 0;
 
     let initial_progress = json!({
+        "importId": import_id,
         "totalFiles": total_files,
         "processedFiles": 0u32,
         "successfulFiles": 0u32,
@@ -259,6 +263,7 @@ pub fn run_import_file_loop(
         };
 
         on_progress(json!({
+            "importId": import_id,
             "totalFiles": total_files,
             "processedFiles": processed,
             "successfulFiles": successful,
@@ -445,8 +450,9 @@ mod tests {
 
     #[test]
     fn cancelled_progress_json_shape() {
-        let v = cancelled_progress_json(3, 1, 1, 0, 0, "/a.jpg");
+        let v = cancelled_progress_json("id-1", 3, 1, 1, 0, 0, "/a.jpg");
         assert_eq!(v["status"], "cancelled");
+        assert_eq!(v["importId"], "id-1");
         assert_eq!(v["totalFiles"], 3);
         assert_eq!(v["currentFile"], "/a.jpg");
     }
@@ -492,6 +498,7 @@ mod tests {
         let meta = EmptyMetadata;
 
         let end = run_import_file_loop(
+            "id-1",
             &files,
             &dst,
             "rename",
@@ -536,6 +543,7 @@ mod tests {
         let meta = EmptyMetadata;
 
         let end1 = run_import_file_loop(
+            "id-1",
             &files,
             &dst,
             "rename",
@@ -549,6 +557,7 @@ mod tests {
         assert!(matches!(end1, ImportLoopEnd::Completed { successful: 1, .. }));
 
         let end2 = run_import_file_loop(
+            "id-2",
             &files,
             &dst,
             "skip",
@@ -597,6 +606,7 @@ mod tests {
         let paused = AtomicBool::new(false);
         let meta = EmptyMetadata;
         let end = run_import_file_loop(
+            "id-1",
             &[dir_as_src.to_string_lossy().to_string()],
             &dst,
             "rename",
@@ -633,6 +643,7 @@ mod tests {
         let paused = AtomicBool::new(false);
         let meta = EmptyMetadata;
         let r = run_import_file_loop(
+            "id-1",
             &["/tmp/nope.jpg".to_string()],
             Path::new("/dev/null/photasa-cannot-create"),
             "rename",
@@ -655,6 +666,7 @@ mod tests {
         let paused = AtomicBool::new(false);
         let meta = EmptyMetadata;
         let end = run_import_file_loop(
+            "id-1",
             &[src.to_string_lossy().to_string()],
             &dst,
             "rename",
@@ -688,6 +700,7 @@ mod tests {
         let meta = EmptyMetadata;
 
         let end = run_import_file_loop(
+            "id-1",
             &files,
             &dst,
             "rename",

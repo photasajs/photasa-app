@@ -1,16 +1,28 @@
-/**
- * RFC 0118 — import-session store（T1.4–T1.7）
- */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import {
-    IMPORT_ALREADY_RUNNING,
-    useImportSessionStore,
-} from "../import-session";
+import { IMPORT_ALREADY_RUNNING, useImportSessionStore } from "../import-session";
 import type { ImportProgress, ImportResult } from "@photasa/common";
 
+const { mockEnv, mockListeners } = vi.hoisted(() => ({
+    mockEnv: { isTauri: false },
+    mockListeners: {
+        "import:progress": [] as any[],
+        "import:complete": [] as any[],
+        "import:error": [] as any[],
+    },
+}));
+
 vi.mock("@renderer/api/env", () => ({
-    isTauri: () => false,
+    isTauri: () => mockEnv.isTauri,
+}));
+
+vi.mock("@tauri-apps/api/event", () => ({
+    listen: vi.fn(async (name: string, handler: any) => {
+        if (name === "import:progress") mockListeners["import:progress"].push(handler);
+        if (name === "import:complete") mockListeners["import:complete"].push(handler);
+        if (name === "import:error") mockListeners["import:error"].push(handler);
+        return () => {};
+    }),
 }));
 
 vi.mock("@renderer/services/notification-manager", () => ({
@@ -176,5 +188,66 @@ describe("useImportSessionStore (RFC 0118)", () => {
         const before = store.openModalRequest;
         store.requestOpenModal();
         expect(store.openModalRequest).toBe(before + 1);
+    });
+
+    it("RFC 0128: ignores progress, complete, and error events with mismatched importId", async () => {
+        mockEnv.isTauri = true;
+        mockListeners["import:progress"] = [];
+        mockListeners["import:complete"] = [];
+        mockListeners["import:error"] = [];
+
+        const store = useImportSessionStore();
+        await store.begin("current-id");
+
+        // Simulate progress from old/cancelled import
+        const oldProgress = sampleProgress({ importId: "stale-id", processedFiles: 5 });
+        mockListeners["import:progress"].forEach((cb) => cb({ payload: oldProgress }));
+        expect(store.progress?.processedFiles).toBe(0); // unchanged
+
+        // Simulate progress from current import
+        const currentProgress = sampleProgress({ importId: "current-id", processedFiles: 3 });
+        mockListeners["import:progress"].forEach((cb) => cb({ payload: currentProgress }));
+        expect(store.progress?.processedFiles).toBe(3); // updated
+
+        // Simulate complete from old/cancelled import
+        const oldComplete = {
+            success: true,
+            totalFiles: 2,
+            successfulFiles: 2,
+            skippedFiles: 0,
+            errorFiles: 0,
+            totalSize: 0,
+            processedSize: 0,
+            errors: [],
+            warnings: [],
+            duration: 1,
+            importedFiles: [],
+            importId: "stale-id",
+            sourcePaths: [],
+            targetPath: "",
+        };
+        mockListeners["import:complete"].forEach((cb) => cb({ payload: oldComplete }));
+        expect(store.phase).toBe("running"); // still running, complete ignored
+
+        // Simulate complete from current import
+        const currentComplete = { ...oldComplete, importId: "current-id" };
+        mockListeners["import:complete"].forEach((cb) => cb({ payload: currentComplete }));
+        expect(store.phase).toBe("completed"); // updated!
+
+        // Re-begin store to test error
+        store.clear();
+        await store.begin("current-id-2");
+
+        // Simulate error from old/cancelled import
+        mockListeners["import:error"].forEach((cb) =>
+            cb({ payload: { message: "stale error", importId: "stale-id" } }),
+        );
+        expect(store.phase).toBe("running"); // still running, error ignored
+
+        // Simulate error from current import
+        mockListeners["import:error"].forEach((cb) =>
+            cb({ payload: { message: "current error", importId: "current-id-2" } }),
+        );
+        expect(store.phase).toBe("failed"); // failed!
     });
 });

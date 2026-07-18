@@ -59,7 +59,7 @@ describe("🏛️ 杜如晦（DuRuHui）MessageChannel管理器", () => {
 
             // 验证服务收到了port
             expect(mockService.port).not.toBeNull();
-            expect(mockService.port).toBeInstanceOf(MessagePort);
+            expect(mockService.port?.constructor.name).toBe("MessagePort");
         });
 
         it("应该能够通过通道下发圣旨", () => {

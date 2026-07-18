@@ -477,7 +477,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             const source =
                 content.source === "discovered"
                     ? "auto"
-                    : ((content.source as "user" | "auto") || "user");
+                    : (content.source as "user" | "auto") || "user";
 
             // 1. 非 rescan：队列中已有则跳过；rescan：先移除再重新入队
             if (this.fangXuanLingService.scanning.isInQueue(path)) {

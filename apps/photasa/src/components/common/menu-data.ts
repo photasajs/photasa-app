@@ -39,8 +39,17 @@ export const SystemMenus: readonly MenuItemData[] = Object.freeze([
         key: "view",
         label: "menu.view.menu",
         items: [
-            { key: MENU_KEY_VIEW_RELOAD, label: "menu.view.reload", role: "reload", shortcut: "Ctrl+R" },
-            { key: MENU_KEY_VIEW_FORCE_RELOAD, label: "menu.view.forceReload", role: "forceReload" },
+            {
+                key: MENU_KEY_VIEW_RELOAD,
+                label: "menu.view.reload",
+                role: "reload",
+                shortcut: "Ctrl+R",
+            },
+            {
+                key: MENU_KEY_VIEW_FORCE_RELOAD,
+                label: "menu.view.forceReload",
+                role: "forceReload",
+            },
             {
                 key: "view-toggle-devtools",
                 label: "menu.view.toggleDevTools",

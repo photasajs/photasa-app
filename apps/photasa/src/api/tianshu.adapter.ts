@@ -27,10 +27,11 @@ function sleep(ms: number): Promise<void> {
     });
 }
 
-function normalizeTianshuCommand(command: Fulu): Fulu {
+function normalizeTianshuCommand(command: any): any {
     const intent = command.intent;
     const inputs = command.inputs ?? command.params ?? {};
     return {
+        ...command,
         intent,
         inputs,
         params: inputs,
@@ -67,7 +68,9 @@ export const tianshuAdapter = {
         }
         const processCommand = (
             window as unknown as {
-                electronAPI?: { tianshu?: { processCommand: (c: Fulu) => Promise<ZhaolingResponse> } };
+                electronAPI?: {
+                    tianshu?: { processCommand: (c: Fulu) => Promise<ZhaolingResponse> };
+                };
             }
         ).electronAPI?.tianshu?.processCommand;
         if (!processCommand) {

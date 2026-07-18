@@ -11,7 +11,10 @@ export const isTauri = (): boolean => {
     try {
         return coreIsTauri();
     } catch {
-        return typeof window !== "undefined" && typeof (window as Window & { __TAURI__?: unknown }).__TAURI__ !== "undefined";
+        return (
+            typeof window !== "undefined" &&
+            typeof (window as Window & { __TAURI__?: unknown }).__TAURI__ !== "undefined"
+        );
     }
 };
 

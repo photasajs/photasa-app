@@ -88,12 +88,36 @@ export const useImportSessionStore = defineStore("importSession", () => {
             return;
         }
         progressUnlisten = await listen<unknown>("import:progress", (event) => {
-            applyProgress(normalizeImportProgressPayload(event.payload));
+            const next = normalizeImportProgressPayload(event.payload);
+            if (next.importId && next.importId !== importId.value) {
+                logger.warn("📚 收到不匹配的 import:progress 丢弃", {
+                    eventId: next.importId,
+                    currentId: importId.value,
+                });
+                return;
+            }
+            applyProgress(next);
         });
         completeUnlisten = await listen<unknown>("import:complete", (event) => {
-            complete(event.payload as ImportResult);
+            const res = event.payload as ImportResult | null;
+            if (res && res.importId && res.importId !== importId.value) {
+                logger.warn("📚 收到不匹配的 import:complete 丢弃", {
+                    eventId: res.importId,
+                    currentId: importId.value,
+                });
+                return;
+            }
+            complete(res as ImportResult);
         });
         errorUnlisten = await listen<unknown>("import:error", (event) => {
+            const payload = event.payload as { importId?: string } | null;
+            if (payload && payload.importId && payload.importId !== importId.value) {
+                logger.warn("📚 收到不匹配的 import:error 丢弃", {
+                    eventId: payload.importId,
+                    currentId: importId.value,
+                });
+                return;
+            }
             fail(normalizeImportErrorPayload(event.payload));
         });
         logger.debug("📚 导入会话事件监听已挂起");

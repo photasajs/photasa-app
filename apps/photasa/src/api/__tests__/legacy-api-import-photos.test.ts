@@ -16,10 +16,12 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 vi.mock("@tauri-apps/api/event", () => ({
-    listen: vi.fn(async (_name: string, handler: (e: { payload: Record<string, unknown> }) => void) => {
-        listenHandler = handler;
-        return unlistenMock;
-    }),
+    listen: vi.fn(
+        async (_name: string, handler: (e: { payload: Record<string, unknown> }) => void) => {
+            listenHandler = handler;
+            return unlistenMock;
+        },
+    ),
 }));
 
 vi.mock("../adapter", () => ({
@@ -89,7 +91,10 @@ describe("createLegacyApi importPhotos (Tauri)", () => {
         const cb = vi.fn();
         createLegacyApi().importPhotos(["/folder"], "/target", cb);
         await waitForImportPhotosSetup();
-        expect(invokeMock).toHaveBeenCalledWith("import_photos_legacy", { folders: ["/folder"], target: "/target" });
+        expect(invokeMock).toHaveBeenCalledWith("import_photos_legacy", {
+            folders: ["/folder"],
+            target: "/target",
+        });
         expect(listenHandler).toBeTypeOf("function");
 
         listenHandler!({

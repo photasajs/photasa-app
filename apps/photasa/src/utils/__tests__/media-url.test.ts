@@ -10,9 +10,7 @@ import {
 } from "../media-url";
 
 vi.mock("@tauri-apps/api/core", () => ({
-    convertFileSrc: vi.fn(
-        (path: string) => `asset://localhost/${encodeURIComponent(path)}`,
-    ),
+    convertFileSrc: vi.fn((path: string) => `asset://localhost/${encodeURIComponent(path)}`),
     isTauri: vi.fn(() => false),
 }));
 
