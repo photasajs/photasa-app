@@ -1,0 +1,41 @@
+{
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.node.json"
+        },
+        {
+            "path": "./tsconfig.web.json"
+        }
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ],
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "baseUrl": ".",
+        "paths": {
+            "@main/*": ["./src/main/*"],
+            "@common/*": ["./src/common/*"],
+            "@preload/*": ["./src/preload/*"],
+            "@shared/*": ["./src/shared/*"],
+            "@renderer/*": ["./src/renderer/src/*"],
+            "@tianshu/*": ["./src/main/engines/tianshu/*"],
+            "@engines/*": ["./src/main/engines/*"],
+            "@engines/common/*": ["./src/main/engines/common/*"],
+            "@photasa/common/*": ["../../packages/common/src/*"],
+            "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"],
+            "@photasa/wenchang/*": ["../../packages/@photasa/wenchang/src/*"],
+            "@photasa/sibu": ["../../packages/@photasa/sibu/src/index.ts"],
+            "@photasa/maliang-bundle": ["../../packages/@photasa/maliang-bundle/src/index.ts"],
+            "@photasa/maliang": ["../../packages/@photasa/maliang/src/index.ts"],
+            "@photasa/sibu/*": ["../../packages/@photasa/sibu/src/*"]
+        }
+    }
+}

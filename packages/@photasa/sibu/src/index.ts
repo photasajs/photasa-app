@@ -1,0 +1,28 @@
+/**
+ * 司簿引擎 - Sibu Engine
+ *
+ * 神话背景：
+ * 司簿，掌管生死簿的神官，负责记录天下众生的命运轨迹。
+ * 在传统神话中，司簿府是掌管人间生死、功过记录的重要机构，
+ * 司簿神官手持生死簿，详细记录着每个人的生平事迹、功德过失，
+ * 确保天道轮回的公正与准确。
+ *
+ * 在本架构中，司簿引擎承担着配置管理的重任，
+ * 就如同神话中的司簿记录众生命运一样，
+ * 它精心管理着应用的各种配置信息、用户偏好、历史记录，
+ * 确保数据的完整性和一致性，为整个系统提供可靠的配置基础。
+ *
+ * 核心能力：
+ * - 配置文件的读取和写入
+ * - 配置格式的自动迁移和兼容
+ * - 配置数据的规范化和验证
+ * - 配置历史的记录和追踪
+ * - 多种配置格式的统一管理
+ */
+
+export { SibuEngine } from "./core/SibuEngine";
+export type { SibuEngineOptions, SibuManifestResult } from "./core/SibuEngine";
+export { normalizeConfigManifest } from "./support/manifest-normalizer";
+export { ConfigAdapter } from "./adapters/config-adapter";
+export type { ConfigManifest, FolderManifest, ProfileManifest } from "./types/manifests";
+export * from "./types/index";

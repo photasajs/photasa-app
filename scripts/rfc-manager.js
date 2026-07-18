@@ -13,7 +13,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const RFC_DIR = path.join(__dirname, "..", "docs", "rfcs");
+const RFC_DIR = path.join(__dirname, "..", "docs", "rfc");
 const RFC_TEMPLATE = `# RFC NNNN: Feature Name
 
 - **Start Date**: ${new Date().toISOString().split("T")[0]}
@@ -122,7 +122,7 @@ class RFCManager {
         console.log(`🔗 Next steps:`);
         console.log(`   1. Edit the RFC file with your proposal`);
         console.log(`   2. Create a pull request for review`);
-        console.log(`   3. Update the RFC index in docs/rfcs/README.md`);
+        console.log(`   3. Update the RFC index in docs/rfc/README.md`);
 
         return { number, filename, filepath };
     }

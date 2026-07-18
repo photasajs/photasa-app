@@ -1,0 +1,92 @@
+# 导出用户偏好设置工作流
+# 通过文昌引擎导出偏好设置为JSON格式
+
+id: "export_preferences"
+name: "导出用户偏好设置"
+description: "导出用户偏好设置为JSON格式"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "export_preferences"
+  - intent: "preference_export"
+
+# 输入参数
+inputs:
+  format:
+    type: "string"
+    required: false
+    default: "json"
+    description: "导出格式，目前支持json"
+
+# 工作流步骤
+steps:
+  - id: "validate_format"
+    name: "验证导出格式"
+    type: "action"
+    description: "验证导出格式"
+    service: "wenchang"
+    action: "validate"
+    input:
+      format: {{input.format}}
+      rules:
+        - type: "enum"
+        - values: ["json"]
+
+  - id: "export_from_engine"
+    name: "从文昌引擎导出偏好"
+    type: "action"
+    description: "从文昌引擎导出偏好"
+    service: "wenchang"
+    action: "exportPreferences"
+    input: {}
+    output:
+      data: "export.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      data: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["validate_format"]
+
+  - id: "format_response"
+    name: "格式化导出结果"
+    type: "action"
+    description: "格式化导出结果"
+    service: "wenchang"
+    action: "formatResponse"
+    input:
+      success: true
+      data: {{steps.export_from_engine.data}}
+      format: {{input.format}}
+      timestamp: {{now()}}
+      source: "wenchang_engine"
+    output:
+      response: "format.result"
+    dependsOn: ["export_from_engine"]
+
+# 输出定义
+outputs:
+  data:
+    description: "导出的偏好设置数据"
+    type: "string"
+  success:
+    description: "导出是否成功"
+    type: "boolean"
+
+# 错误处理
+error_handling:
+  default:
+    type: "graceful_failure"
+    response:
+      success: false
+      error: "导出偏好设置时发生错误"
+      data: null
+
+# 超时设置
+timeout: 5000
+priority: "user"

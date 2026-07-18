@@ -1,0 +1,44 @@
+{
+    "$id": "https://schemas.systembug.io/workflow/extensions/tianshu.schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Tianshu Workflow Extension Schema",
+    "description": "天枢引擎特定的工作流验证规则扩展",
+    "type": "object",
+    "properties": {
+        "steps": {
+            "type": "array",
+            "items": {
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": { "type": { "const": "action" } }
+                        },
+                        "then": {
+                            "properties": {
+                                "service": {
+                                    "type": "string",
+                                    "description": "天枢支持的服务列表"
+                                }
+                            },
+                            "required": ["service"]
+                        }
+                    },
+                    {
+                        "if": {
+                            "properties": { "type": { "const": "builtin" } }
+                        },
+                        "then": {
+                            "properties": {
+                                "action": {
+                                    "type": "string",
+                                    "description": "天枢支持的内置动作"
+                                }
+                            },
+                            "required": ["action"]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}

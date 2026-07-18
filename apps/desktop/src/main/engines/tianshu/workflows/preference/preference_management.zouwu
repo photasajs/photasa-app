@@ -1,0 +1,241 @@
+id: "preference_management"
+name: "偏好管理工作流"
+description: "通过太乙引擎管理用户偏好设置"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 输入参数定义
+inputSchema:
+  type: "object"
+  properties:
+    action:
+      type: "string"
+      enum: ["get", "update", "reset"]
+      description: "偏好操作类型"
+    delta:
+      type: "object"
+      description: "偏好变更增量（仅update时需要）"
+      properties:
+        ui:
+          type: "object"
+          properties:
+            theme:
+              type: "string"
+              enum: ["system", "light", "dark"]
+            layout:
+              type: "string"
+              enum: ["grid", "list"]
+            language:
+              type: "string"
+        display:
+          type: "object"
+          properties:
+            thumbnailSize:
+              type: "number"
+              minimum: 100
+              maximum: 500
+            sortOrder:
+              type: "string"
+              enum: ["dateAsc", "dateDesc", "nameAsc", "nameDesc", "sizeAsc", "sizeDesc"]
+            groupBy:
+              type: "string"
+              enum: ["date", "type", "size"]
+    source:
+      type: "string"
+      description: "变更来源标识"
+      default: "tianshu"
+
+# 输出参数定义
+outputSchema:
+  type: "object"
+  properties:
+    success:
+      type: "boolean"
+      description: "操作是否成功"
+    snapshot:
+      type: "object"
+      description: "当前偏好快照"
+    revision:
+      type: "number"
+      description: "偏好版本号"
+    error:
+      type: "string"
+      description: "错误信息（如果有）"
+
+# 工作流步骤
+steps:
+  - id: "validate_action"
+    name: "验证操作类型"
+    type: "condition"
+    description: "验证请求的操作类型是否有效"
+    condition:
+      field: "input.action"
+      operator: "in"
+      value: ["get", "update", "reset"]
+
+  - id: "get_current_preferences"
+    name: "获取当前偏好"
+    type: "action"
+    description: "通过太乙引擎获取当前偏好快照"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "wenchang"
+      methodName: "getCurrentSnapshot"
+    output:
+      currentSnapshot: "result.result"
+      callSuccess: "result.success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        result:
+          revision: number
+          data: object
+          timestamp: number
+        success: boolean
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["validate_action"]
+
+  - id: "check_get_success"
+    name: "检查获取偏好是否成功"
+    type: "condition"
+    condition:
+      field: "steps.get_current_preferences.callSuccess"
+      operator: "eq"
+      value: true
+    dependsOn: ["get_current_preferences"]
+
+  - id: "handle_get_action"
+    name: "处理获取操作"
+    type: "action"
+    description: "当操作类型为get时，直接返回当前偏好"
+    service: "builtin"
+    action: "return"
+    input:
+      success: true
+      snapshot: {{steps.get_current_preferences.currentSnapshot}}
+      revision: {{steps.get_current_preferences.currentSnapshot.revision}}
+    condition:
+      field: "input.action"
+      operator: "eq"
+      value: "get"
+    dependsOn: ["check_get_success"]
+
+  - id: "validate_update_delta"
+    name: "验证更新增量"
+    type: "condition"
+    description: "验证update操作的delta参数"
+    condition:
+      field: "input.delta"
+      operator: "exists"
+    when:
+      field: "input.action"
+      operator: "eq"
+      value: "update"
+    dependsOn: ["check_get_success"]
+
+  - id: "apply_preference_delta"
+    name: "应用偏好变更"
+    type: "action"
+    description: "通过太乙引擎应用偏好变更"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "wenchang"
+      methodName: "applyDelta"
+      params:
+        - {{input.delta}}
+        - {{input.source}}
+    output:
+      newRevision: "result.result"
+      updateSuccess: "result.success"
+    condition:
+      field: "input.action"
+      operator: "eq"
+      value: "update"
+    dependsOn: ["validate_update_delta"]
+
+  - id: "reset_preferences"
+    name: "重置偏好到默认值"
+    type: "action"
+    description: "通过太乙引擎重置偏好到默认值"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "wenchang"
+      methodName: "resetToDefaults"
+    output:
+      resetSnapshot: "result.result"
+      resetSuccess: "result.success"
+    condition:
+      field: "input.action"
+      operator: "eq"
+      value: "reset"
+    dependsOn: ["check_get_success"]
+
+  - id: "get_final_snapshot"
+    name: "获取最终偏好快照"
+    type: "action"
+    description: "获取操作后的最终偏好状态"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "wenchang"
+      methodName: "getCurrentSnapshot"
+    output:
+      finalSnapshot: "result.result"
+      finalSuccess: "result.success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        result:
+          revision: number
+          data: object
+          timestamp: number
+        success: boolean
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["apply_preference_delta", "reset_preferences"]
+    condition:
+      field: "input.action"
+      operator: "in"
+      value: ["update", "reset"]
+
+  - id: "return_success_result"
+    name: "返回成功结果"
+    type: "action"
+    description: "返回操作成功的结果"
+    service: "builtin"
+    action: "return"
+    input:
+      success: true
+      finalSnapshot: {{steps.get_final_snapshot.finalSnapshot}}
+      currentSnapshot: {{steps.get_current_preferences.currentSnapshot}}
+      finalRevision: {{steps.get_final_snapshot.finalSnapshot.revision}}
+      currentRevision: {{steps.get_current_preferences.currentSnapshot.revision}}
+    dependsOn: ["handle_get_action", "get_final_snapshot"]
+
+# 错误处理
+onError:
+  - id: "handle_error"
+    name: "处理错误"
+    type: "action"
+    service: "builtin"
+    action: "return"
+    input:
+      success: false
+      error: {{error.message}}
+      snapshot: null
+      revision: null
+
+# 工作流配置
+enabled: true
+timeout: 30000  # 30秒超时
+retryOnError: true
+maxRetries: 2
+tags: ["preference", "taiyi", "wenchang"]

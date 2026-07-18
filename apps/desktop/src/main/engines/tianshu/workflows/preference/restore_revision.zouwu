@@ -1,0 +1,157 @@
+# 恢复偏好设置到指定版本工作流
+# 通过文昌引擎恢复偏好到历史版本
+
+id: "restore_preference_revision"
+name: "恢复偏好设置到指定历史版本"
+description: "恢复偏好设置到指定历史版本"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "restore_preference_revision"
+  - intent: "preference_restore"
+
+# 输入参数
+inputs:
+  revision:
+    type: "number"
+    required: true
+    description: "要恢复到的版本号"
+  backup:
+    type: "boolean"
+    required: false
+    default: true
+    description: "是否在恢复前备份当前设置"
+
+# 工作流步骤
+steps:
+  - id: "validate_revision"
+    name: "验证版本号"
+    type: "action"
+    description: "验证版本号"
+    service: "wenchang"
+    action: "validate"
+    input:
+      revision: {{input.revision}}
+      rules:
+        - type: "number"
+        - min: 1
+
+  - id: "backup_current"
+    name: "备份当前偏好设置"
+    type: "action"
+    description: "备份当前偏好设置"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output:
+      backup: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      backup: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["validate_revision"]
+
+  - id: "restore_revision"
+    name: "恢复到指定版本"
+    type: "action"
+    description: "恢复到指定版本"
+    service: "wenchang"
+    action: "restoreRevision"
+    input:
+      revision: {{input.revision}}
+    output:
+      result: "restore.result"
+    dependsOn: ["backup_current"]
+
+  - id: "get_restored_snapshot"
+    name: "获取恢复后的偏好快照"
+    type: "action"
+    description: "获取恢复后的偏好快照"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output:
+      snapshot: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      snapshot: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["restore_revision"]
+
+  - id: "emit_restore_event"
+    name: "发送偏好恢复事件"
+    type: "action"
+    description: "发送偏好恢复事件"
+    service: "wenchang"
+    action: "emitEvent"
+    input:
+      event: "preferences_restored"
+      data:
+        revision: {{input.revision}}
+        backup: {{steps.backup_current.backup}}
+        snapshot: {{steps.get_restored_snapshot.snapshot}}
+        timestamp: {{now()}}
+    output:
+      eventId: "event.id"
+    dependsOn: ["get_restored_snapshot"]
+
+  - id: "format_response"
+    name: "格式化恢复结果"
+    type: "action"
+    description: "格式化恢复结果"
+    service: "wenchang"
+    action: "formatResponse"
+    input:
+      success: true
+      data:
+        revision: {{input.revision}}
+        snapshot: {{steps.get_restored_snapshot.snapshot}}
+        backup: {{steps.backup_current.backup}}
+      timestamp: {{now()}}
+      source: "wenchang_engine"
+    output:
+      response: "format.result"
+    dependsOn: ["emit_restore_event"]
+
+# 输出定义
+outputs:
+  success:
+    description: "恢复是否成功"
+    type: "boolean"
+  revision:
+    description: "恢复到的版本号"
+    type: "number"
+  snapshot:
+    description: "恢复后的偏好快照"
+    type: "object"
+  backup:
+    description: "恢复前的备份快照"
+    type: "object"
+
+# 错误处理
+error_handling:
+  validation_error:
+    type: "return_error"
+    response:
+      success: false
+      error: "版本号验证失败"
+      details: "{{ error.details }}"
+
+  restore_error:
+    type: "return_error"
+    response:
+      success: false
+      error: "恢复偏好版本失败"
+      reason: "{{ error.message }}"
+
+# 超时设置
+timeout: 8000
+priority: "user"

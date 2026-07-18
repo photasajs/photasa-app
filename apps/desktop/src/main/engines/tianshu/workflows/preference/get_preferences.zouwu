@@ -1,0 +1,123 @@
+# 获取用户偏好设置工作流
+# 通过文昌引擎获取当前的偏好快照
+
+id: "get_preferences"
+name: "获取用户偏好设置"
+description: "获取当前用户偏好设置"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "get_preferences"
+  - intent: "preference_get"
+
+# 输入参数
+inputs:
+  key:
+    type: "string"
+    required: false
+    description: "可选的偏好键路径，如'ui.theme'，为空则返回全部"
+
+# 工作流步骤
+steps:
+  # 步骤1: 验证输入参数（如果key存在且超过100字符，则报错）
+  - id: "validate_input"
+    name: "验证输入参数"
+    type: "condition"
+    description: "验证输入参数长度"
+    condition:
+      field: "inputs.key"
+      operator: "optional_string_maxlen"
+      value: 100
+    onTrue: []  # 验证通过，继续执行
+    onFalse:    # 验证失败，返回错误
+      - id: "return_validation_error"
+        name: "返回验证错误"
+        type: "builtin"
+        action: "return"
+        input:
+          success: false
+          error: "key 参数长度超过100字符"
+          timestamp: "{{ $timestamp }}"
+
+  # 步骤2: 获取完整偏好快照
+  - id: "get_snapshot"
+    name: "获取偏好快照"
+    type: "action"
+    description: "从文昌引擎获取偏好快照"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output_schema:
+      data: object
+      revision: number
+      timestamp: number
+    dependsOn: ["validate_input"]
+    onError:
+      type: "return_error"
+      message: "获取偏好设置失败"
+
+  # 步骤3: 根据是否提供key，返回不同数据
+  - id: "check_key_exists"
+    name: "检查是否提供key"
+    type: "condition"
+    description: "根据是否提供key决定返回数据"
+    condition:
+      field: "inputs.key"
+      operator: "exists"
+    dependsOn: ["get_snapshot"]
+    onTrue:     # 提供了key，提取特定值
+      - id: "extract_value"
+        name: "提取特定键值"
+        type: "builtin"
+        action: "setVariable"
+        input:
+          variable: "extracted_value"
+          source: "steps.get_snapshot.data"
+          path: "{{ inputs.key }}"
+      - id: "return_extracted"
+        name: "返回提取的值"
+        type: "builtin"
+        action: "return"
+        input:
+          success: true
+          data: "{{ variables.extracted_value }}"
+          key: "{{ inputs.key }}"
+          timestamp: "{{ $timestamp }}"
+          source: "wenchang_engine"
+        dependsOn: ["extract_value"]
+    onFalse:    # 未提供key，返回完整快照
+      - id: "return_full_snapshot"
+        name: "返回完整快照"
+        type: "builtin"
+        action: "return"
+        input:
+          success: true
+          data: "{{ steps.get_snapshot.data }}"
+          timestamp: "{{ $timestamp }}"
+          source: "wenchang_engine"
+
+# 输出定义
+outputs:
+  preferences:
+    description: "偏好设置数据"
+    type: "object"
+  success:
+    description: "操作是否成功"
+    type: "boolean"
+
+# 错误处理
+error_handling:
+  default:
+    type: "graceful_failure"
+    response:
+      success: false
+      error: "获取偏好设置时发生错误"
+      data: null
+
+# 超时设置
+timeout: 5000
+priority: "user"

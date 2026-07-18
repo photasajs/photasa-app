@@ -1,0 +1,32 @@
+{
+    "supportedServices": [
+        "taiyi",
+        "wenchang",
+        "sibu",
+        "siming",
+        "qianliyan",
+        "maliang",
+        "taibaijinxing",
+        "builtin"
+    ],
+    "supportedBuiltinActions": [
+        "return",
+        "setVariable",
+        "log",
+        "delay",
+        "transform",
+        "error",
+        "arrayConcat",
+        "arrayCount",
+        "arrayFind",
+        "arrayGet",
+        "arraySet",
+        "arrayFilter",
+        "objectMerge",
+        "validate",
+        "conditional",
+        "calculate",
+        "compile"
+    ],
+    "supportedOperators": ["optional_string_maxlen"]
+}

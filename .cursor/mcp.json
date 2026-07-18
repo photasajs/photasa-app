@@ -1,0 +1,8 @@
+{
+    "mcpServers": {
+        "nodejs-debugger": {
+            "command": "npx",
+            "args": ["-y", "@hyperdrive-eng/mcp-nodejs-debugger"]
+        }
+    }
+}

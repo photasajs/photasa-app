@@ -1,0 +1,84 @@
+# 六引擎架构神话体系
+
+本项目采用六引擎架构，每个引擎都以中国古代神话传说中的神仙命名，体现了其独特的功能特性和设计理念。
+
+## 🌟 天枢引擎 (Tianshu Engine) - 编排决策中心
+
+**神话背景**: 天枢，北斗七星之首，天帝座下的决策之星
+传说中，天枢位于北斗七星的枢纽位置，是天帝下达旨意、统筹全局的关键星辰。它能够洞察全局，协调各方，确保天庭运转有序。
+
+**职责**: 用户意图理解、工作流编排、决策调度、状态管理
+**状态**: 🔄 规划中
+
+## 👂 顺风耳引擎 (Shunfenger Engine) - 文件监听守护
+
+**神话背景**: 顺风耳，千里眼的挚友，拥有超凡听力的神将
+传说中，顺风耳原为轩辕黄帝手下的两员大将之一，与千里眼并肩作战，能够听到千里之外的细微声响，负责收集远方的消息动态。
+
+**职责**: 文件系统事件监听、变化事件归一化、高效事件缓冲
+**状态**: ✅ 已实现 (独立包 @photasa/shunfenger)
+
+## 👁 千里眼引擎 (Qianliyan Engine) - 文件扫描探索
+
+**神话背景**: 千里眼，顺风耳的战友，拥有洞察千里的神目
+传说中，千里眼能够看穿千里之外的景象，洞悉事物的本质，与顺风耳配合，一个观察一个聆听，共同守护天下。
+
+**职责**: 文件扫描计划、任务调度、数据库同步、媒体任务编排
+**状态**: ✅ 已实现 (独立包 @photasa/qianliyan)
+
+## 📚 司簿引擎 (Sibu Engine) - 配置管理中枢
+
+**神话背景**: 司簿，掌管生死簿的神官，记录众生命运轨迹
+在传统神话中，司簿府负责记录人间生死、功过记录，司簿神官手持生死簿，详细记录每个人的生平事迹，确保天道轮回的公正。
+
+**职责**: 配置文件管理、格式自动迁移、数据规范化验证、配置历史追踪
+**状态**: ✅ 已实现 (独立包 @photasa/sibu)
+
+## 🎨 马良引擎 (MaLiang Engine) - 媒体处理创造
+
+**神话背景**: 马良，神笔马良，拥有化腐朽为神奇的画笔
+传说马良心地善良，神仙赐给他一支神笔，用这支笔画出的东西都能变成真的，他用神笔帮助穷苦百姓，创造美好生活。
+
+**职责**: 图像视频处理、缩略图生成、格式转换、媒体元数据提取
+**状态**: ✅ 已实现
+
+- **Maliang** (Painting Engine): Graphic editing and processing
+    - Status: Active
+    - Refactoring: FFmpeg handling extracted to `@photasa/ffmpeg`
+- **Tianshu** (Book of Heaven): Metadata management
+    - Status: Active
+    - Refactoring: Core logic moved to `@photasa/tianshu`
+- **Sibu** (Ministry of Works): Configuration management
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/sibu`
+- **Wenchang** (God of Culture): Workflow engine
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/wenchang`
+- **Shunfenger** (File Watcher): File system event monitoring
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/shunfenger`
+- **Qianliyan** (File Scanner): File scanning and media discovery
+    - Status: Active
+    - Refactoring: Extracted to `@photasa/qianliyan`
+
+## 🏛 太乙层 (Taiyi Services) - 服务桥接枢纽
+
+**神话背景**: 太乙真人，道教中的至高神仙，位列十二金仙之首
+太乙真人法力无边，智慧超群，善于统筹协调，能够调和阴阳五行，平衡天地万物，是确保正义之师胜利的关键协调者。
+
+**职责**: 服务包装、协议转换、标准化接口、错误包装
+**状态**: 🔄 基于现有Service Registry实现
+
+## 架构理念
+
+这五个引擎相互配合，形成了一个完整的数字资产管理生态系统：
+
+1. **天枢** 作为大脑，理解用户意图并编排工作流
+2. **顺风耳** 作为感官，监听文件系统的一切变化
+3. **千里眼** 作为眼睛，深入扫描和分析文件内容
+4. **司簿** 作为记忆，管理所有配置和状态信息
+5. **马良** 作为巧手，处理和转换各种媒体内容
+6. **文昌** 作为典籍，掌管用户偏好与设置
+7. **太乙** 作为桥梁，连接各个引擎并提供统一服务
+
+通过这样的神话体系命名，不仅让技术架构更富有文化内涵，也让每个组件的职责更加形象生动，便于理解和记忆。

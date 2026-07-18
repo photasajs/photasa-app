@@ -1,0 +1,107 @@
+# 获取扫描队列工作流
+# 通过千里眼引擎从~/.photasa/scan/scanning.json恢复扫描队列
+
+id: "get_scanning_queue"
+name: "获取扫描队列"
+description: "从千里眼引擎管理的存储中恢复扫描队列"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1729267200000
+updatedAt: 1729267200000
+
+# 触发条件
+triggers:
+    - intent: "get_scanning_queue"
+    - intent: "scanning_queue_restore"
+
+# 输入参数
+inputs:
+    source:
+        type: "string"
+        required: false
+        default: "startup"
+        description: "获取来源标识（startup/manual/refresh）"
+
+# 工作流步骤
+steps:
+    - id: "restore_queue"
+      name: "千里眼恢复扫描队列"
+      type: "action"
+      description: "调用千里眼引擎从~/.photasa/scan/scanning.json恢复扫描队列"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "qianliyan"
+          methodName: "restoreQueue"
+          params: []
+      # ✅ 太乙服务的数据扁平化策略：
+      # engine.callEngine() 返回 { success: true, result: ScanAction[], ... }
+      # engine.getEngineResult() 提取 result 字段
+      # 因此 steps.restore_queue 直接就是 ScanAction[]，无需 .result 嵌套
+      output_schema:
+          type: array
+          items:
+              type: object
+              properties:
+                  path:
+                      type: string
+                  action:
+                      type: string
+                  source:
+                      type: string
+                  addedAt:
+                      type: number
+
+    - id: "calculate_size"
+      name: "计算队列大小"
+      type: "builtin"
+      action: "arrayCount"
+      input:
+          array: "{{steps.restore_queue}}"
+      # output_schema定义arrayCount的返回值类型（Raw Data = number）
+      # TaiyiService已unwrap，所以steps.calculate_size直接就是数字
+      output_schema:
+          type: number
+          description: "队列中的扫描任务数量"
+      dependsOn: ["restore_queue"]
+
+    - id: "format_response"
+      name: "格式化返回结果"
+      type: "builtin"
+      action: "return"
+      input:
+          success: true
+          queue: "{{steps.restore_queue}}"
+          queueSize: "{{steps.calculate_size}}"
+          source: "{{inputs.source}}"
+          timestamp: "{{now()}}"
+      dependsOn: ["calculate_size"]
+
+# 输出定义
+outputs:
+    success:
+        description: "恢复是否成功"
+        type: "boolean"
+    queue:
+        description: "恢复的扫描队列"
+        type: "array"
+    queueSize:
+        description: "恢复的队列大小"
+        type: "number"
+    source:
+        description: "获取来源"
+        type: "string"
+
+# 错误处理
+error_handling:
+    engine_error:
+        type: "return_error"
+        response:
+            success: false
+            error: "千里眼引擎恢复队列失败"
+            reason: "{{ error.message }}"
+            queue: []
+
+# 超时设置
+timeout: 10000
+priority: "background"

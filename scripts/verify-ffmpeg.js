@@ -21,14 +21,25 @@ function verifyDevelopment() {
     const checks = [
         {
             name: "ffmpeg-static module",
-            path: path.join(__dirname, "../node_modules/ffmpeg-static"),
+            path: (() => {
+                try {
+                    return path.dirname(require.resolve("ffmpeg-static/package.json"));
+                } catch {
+                    return path.join(__dirname, "../node_modules/ffmpeg-static");
+                }
+            })(),
             type: "dir",
         },
         {
             name: "ffmpeg binary",
             path: path.join(
-                __dirname,
-                "../node_modules/ffmpeg-static",
+                (() => {
+                    try {
+                        return path.dirname(require.resolve("ffmpeg-static/package.json"));
+                    } catch {
+                        return path.join(__dirname, "../node_modules/ffmpeg-static");
+                    }
+                })(),
                 process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg",
             ),
             type: "file",
@@ -37,10 +48,23 @@ function verifyDevelopment() {
         {
             name: "ffprobe binary",
             path: path.join(
-                __dirname,
-                "../node_modules/ffprobe-static/bin",
-                process.platform,
-                process.arch,
+                (() => {
+                    try {
+                        return path.join(
+                            path.dirname(require.resolve("ffprobe-static/package.json")),
+                            "bin",
+                            process.platform,
+                            process.arch,
+                        );
+                    } catch {
+                        return path.join(
+                            __dirname,
+                            "../node_modules/ffprobe-static/bin",
+                            process.platform,
+                            process.arch,
+                        );
+                    }
+                })(),
                 process.platform === "win32" ? "ffprobe.exe" : "ffprobe",
             ),
             type: "file",

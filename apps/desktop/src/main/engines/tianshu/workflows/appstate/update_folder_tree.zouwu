@@ -1,0 +1,97 @@
+# 更新文件夹树工作流
+# RFC 0042 Step 2.5: 天界处理文件夹树更新（参考scanning queue模式）
+
+version: "1.0.0"
+id: "update_folder_tree"
+name: "更新文件夹树"
+description: "接收文件夹树，恢复现有，替换/合并，持久化，返回完整树"
+
+triggers:
+    - intent: "update_folder_tree"
+
+inputs:
+    tree:
+        type: "array"
+        required: true
+        description: "要更新的文件夹树数组 FolderNode[]"
+
+steps:
+    - id: "restore_tree"
+      name: "司命：恢复当前文件夹树"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "siming"
+          methodName: "restoreFolderTree"
+      # ✅ 太乙服务的数据扁平化策略：
+      # engine.callEngine() 返回 { success: true, result: FolderNode[], ... }
+      # engine.getEngineResult() 提取 result 字段
+      # 因此 steps.restore_tree 直接就是 FolderNode[]，无需 .result 嵌套
+      output_schema:
+          type: array
+          description: "当前保存的文件夹树"
+
+    - id: "update_tree"
+      name: "替换文件夹树（全量更新）"
+      type: "builtin"
+      action: "return"
+      input:
+          data: "{{inputs.tree}}"
+      # ✅ RFC 0042 Step 2.5: 初期使用全量替换策略（简单可靠）
+      # 未来优化：实现 builtin.merge 增量合并策略
+      output_schema:
+          type: array
+          description: "更新后的完整文件夹树"
+      dependsOn: ["restore_tree"]
+
+    - id: "persist_tree"
+      name: "司命：持久化文件夹树"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "siming"
+          methodName: "persistFolderTree"
+          params:
+              - "{{steps.update_tree}}"
+      # ✅ persistFolderTree是副作用操作(返回void)，不产生输出
+      # 成功完成即表示持久化成功，失败则抛出异常由错误处理机制捕获
+      dependsOn: ["update_tree"]
+
+    - id: "count_nodes"
+      name: "计算节点数量"
+      type: "builtin"
+      action: "arrayCount"
+      input:
+          array: "{{steps.update_tree}}"
+      # output_schema定义arrayCount的返回值类型（Raw Data = number）
+      output_schema:
+          type: number
+          description: "文件夹树节点数量"
+      dependsOn: ["persist_tree"]
+
+    - id: "format_response"
+      name: "返回完整文件夹树"
+      type: "builtin"
+      action: "return"
+      input:
+          success: true
+          folderTree: "{{steps.update_tree}}"
+          nodeCount: "{{steps.count_nodes}}"
+          persisted: true
+      dependsOn: ["count_nodes"]
+
+outputs:
+    folderTree:
+        description: "完整的文件夹树（用于Store同步）"
+        type: "array"
+        path: "folderTree"
+    nodeCount:
+        description: "节点数量"
+        type: "number"
+        path: "nodeCount"
+    persisted:
+        description: "是否已持久化"
+        type: "boolean"
+        path: "persisted"

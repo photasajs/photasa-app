@@ -1,0 +1,116 @@
+# 添加扫描任务工作流
+# RFC 0042 Phase 2.4: 天界处理批量扫描任务添加
+
+version: "1.0.0"
+id: "add_scan_action"
+name: "添加扫描任务"
+description: "接收ScanAction数组，恢复队列，批量添加，持久化，返回完整队列"
+
+inputs:
+    actions:
+        type: "array"
+        required: true
+        description: "ScanAction对象数组（支持单个路径传[action]）"
+        items:
+            type: "object"
+            properties:
+                path:
+                    type: string
+                action:
+                    type: string
+                source:
+                    type: string
+                timestamp:
+                    type: number
+
+steps:
+    - id: "restore_queue"
+      name: "千里眼：恢复当前队列"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "qianliyan"
+          methodName: "restoreQueue"
+      # ✅ 太乙服务的数据扁平化策略：
+      # engine.callEngine() 返回 { success: true, result: ScanAction[], ... }
+      # engine.getEngineResult() 提取 result 字段
+      # 因此 steps.restore_queue 直接就是 ScanAction[]，无需 .result 嵌套
+      output_schema:
+          type: array
+          items:
+              type: object
+              properties:
+                  path:
+                      type: string
+                  action:
+                      type: string
+                  source:
+                      type: string
+                  addedAt:
+                      type: number
+
+    - id: "append_actions"
+      name: "批量添加任务到队列"
+      type: "builtin"
+      action: "arrayConcat"
+      input:
+          array1: "{{steps.restore_queue}}"
+          array2: "{{inputs.actions}}"
+      # arrayConcat合并两个数组：现有队列 + 新任务数组
+      output_schema:
+          type: array
+          description: "添加新任务后的完整队列"
+      dependsOn: ["restore_queue"]
+
+    - id: "persist_queue"
+      name: "千里眼：持久化队列"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "qianliyan"
+          methodName: "persistQueue"
+          params:
+              - "{{steps.append_actions}}"
+      # ✅ RFC 0045: persistQueue是副作用操作(返回void)，不产生输出，因此不声明output_schema
+      # 成功完成即表示持久化成功，失败则抛出异常由错误处理机制捕获
+      dependsOn: ["append_actions"]
+
+    - id: "calculate_size"
+      name: "计算队列大小"
+      type: "builtin"
+      action: "arrayCount"
+      input:
+          array: "{{steps.append_actions}}"
+      # output_schema定义arrayCount的返回值类型（Raw Data = number）
+      # TaiyiService已unwrap，所以steps.calculate_size直接就是数字
+      output_schema:
+          type: number
+          description: "队列大小"
+      dependsOn: ["persist_queue"]
+
+    - id: "format_response"
+      name: "返回完整队列"
+      type: "builtin"
+      action: "return"
+      input:
+          success: true
+          queue: "{{steps.append_actions}}"
+          queueSize: "{{steps.calculate_size}}"
+          persisted: true
+      dependsOn: ["calculate_size"]
+
+outputs:
+    queue:
+        description: "完整的扫描队列（用于Store同步）"
+        type: "array"
+        path: "queue"
+    queueSize:
+        description: "队列大小"
+        type: "number"
+        path: "queueSize"
+    persisted:
+        description: "是否已持久化"
+        type: "boolean"
+        path: "persisted"

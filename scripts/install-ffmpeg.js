@@ -37,7 +37,12 @@ function getPlatformConfig(platform, arch) {
 async function installFFmpeg() {
     const platform = process.platform;
     const arch = process.arch;
-    const ffmpegStaticPath = path.join(__dirname, "../node_modules/ffmpeg-static");
+    let ffmpegStaticPath;
+    try {
+        ffmpegStaticPath = path.dirname(require.resolve("ffmpeg-static/package.json"));
+    } catch (e) {
+        ffmpegStaticPath = path.join(__dirname, "../node_modules/ffmpeg-static");
+    }
 
     // 检查是否已存在
     const ffmpegBinary = platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
@@ -52,7 +57,8 @@ async function installFFmpeg() {
 
     // 方案1：尝试通过 npm 包的 install 脚本
     try {
-        execSync("node node_modules/ffmpeg-static/install.js", { stdio: "inherit" });
+        const installScript = path.join(ffmpegStaticPath, "install.js");
+        execSync(`node "${installScript}"`, { stdio: "inherit" });
         if (fs.existsSync(ffmpegPath)) {
             console.log("✓ FFmpeg installed via npm package");
             return;

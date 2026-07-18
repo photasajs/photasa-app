@@ -1,0 +1,48 @@
+# 恢复应用状态工作流
+# RFC 0042 Step 2.5: 天界恢复完整appState（启动时调用）
+
+version: "1.0.0"
+id: "restore_app_state"
+name: "恢复应用状态"
+description: "从司命引擎恢复完整appState，包括folderTree, currentFolder等"
+
+triggers:
+    - intent: "restore_app_state"
+
+inputs: {}
+
+steps:
+    - id: "restore_app_state"
+      name: "司命：恢复完整应用状态"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "siming"
+          methodName: "restoreAppState"
+      # ✅ restoreAppState返回完整AppState对象: { folderTree, currentFolder, lastOpenedFolder }
+      output_schema:
+          type: object
+          description: "完整的AppState对象"
+
+    - id: "format_response"
+      name: "返回完整appState"
+      type: "builtin"
+      action: "return"
+      input:
+          data: "{{steps.restore_app_state}}"
+      dependsOn: ["restore_app_state"]
+
+outputs:
+    folderTree:
+        description: "恢复的文件夹树（用于Store同步）"
+        type: "array"
+        path: "folderTree"
+    currentFolder:
+        description: "当前文件夹路径"
+        type: "string"
+        path: "currentFolder"
+    lastOpenedFolder:
+        description: "最后打开的文件夹路径"
+        type: "string"
+        path: "lastOpenedFolder"

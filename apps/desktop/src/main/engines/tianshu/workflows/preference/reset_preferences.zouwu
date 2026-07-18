@@ -1,0 +1,147 @@
+# 重置用户偏好设置工作流
+# 通过文昌引擎重置偏好到默认值
+
+id: "reset_preferences"
+name: "重置用户偏好设置到默认值"
+description: "重置用户偏好设置到默认值"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "reset_preferences"
+  - intent: "preference_reset"
+
+# 输入参数
+inputs:
+  scope:
+    type: "string"
+    required: false
+    default: "all"
+    description: "重置范围：all|ui|display|scan|performance"
+  confirmToken:
+    type: "string"
+    required: false
+    description: "确认令牌，用于防止误操作"
+
+# 工作流步骤
+steps:
+  - id: "validate_scope"
+    name: "验证重置范围"
+    type: "action"
+    description: "验证重置范围"
+    service: "wenchang"
+    action: "validate"
+    input:
+      scope: {{input.scope}}
+      rules:
+        - type: "enum"
+        - values: ["all", "ui", "display", "scan", "performance", "advanced"]
+
+  - id: "backup_current"
+    name: "备份当前偏好设置"
+    type: "action"
+    description: "备份当前偏好设置"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output:
+      backup: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      backup: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["validate_scope"]
+
+  - id: "reset_engine"
+    name: "调用文昌引擎重置偏好"
+    type: "action"
+    description: "调用文昌引擎重置偏好"
+    service: "wenchang"
+    action: "resetToDefaults"
+    input:
+      scope: {{input.scope}}
+    output:
+      result: "reset.result"
+    dependsOn: ["backup_current"]
+
+  - id: "get_reset_snapshot"
+    name: "获取重置后的偏好快照"
+    type: "action"
+    description: "获取重置后的偏好快照"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output:
+      snapshot: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      snapshot: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["reset_engine"]
+
+  - id: "emit_reset_event"
+    name: "发送偏好重置事件"
+    type: "action"
+    description: "发送偏好重置事件"
+    service: "wenchang"
+    action: "emitEvent"
+    input:
+      event: "preferences_reset"
+      data:
+        scope: {{input.scope}}
+        backup: {{steps.backup_current.backup}}
+        snapshot: {{steps.get_reset_snapshot.snapshot}}
+        timestamp: {{now()}}
+    output:
+      eventId: "event.id"
+    dependsOn: ["get_reset_snapshot"]
+
+  - id: "format_response"
+    name: "格式化返回结果"
+    type: "action"
+    description: "格式化返回结果"
+    service: "wenchang"
+    action: "formatResponse"
+    input:
+      success: true
+      data:
+        scope: {{input.scope}}
+        snapshot: {{steps.get_reset_snapshot.snapshot}}
+        backup: {{steps.backup_current.backup}}
+      timestamp: {{now()}}
+      source: "wenchang_engine"
+    output:
+      response: "format.result"
+    dependsOn: ["emit_reset_event"]
+
+# 输出定义
+outputs:
+  success:
+    description: "重置是否成功"
+    type: "boolean"
+  snapshot:
+    description: "重置后的偏好快照"
+    type: "object"
+  backup:
+    description: "重置前的备份快照"
+    type: "object"
+
+# 错误处理
+error_handling:
+  default:
+    type: "graceful_failure"
+    response:
+      success: false
+      error: "重置偏好设置时发生错误"
+      details: "{{ error.message }}"
+
+# 超时设置
+timeout: 8000
+priority: "user"

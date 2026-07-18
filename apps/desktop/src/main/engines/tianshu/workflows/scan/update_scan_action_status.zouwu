@@ -1,0 +1,174 @@
+# 更新扫描任务状态工作流
+# RFC 0048 v3 Phase 3: 状态机转换支持
+
+version: "1.0.0"
+id: "update_scan_action_status"
+name: "更新扫描任务状态"
+description: "支持pending→processing→failed状态转换，更新状态机字段（startedAt, error, retryCount等）"
+
+inputs:
+    path:
+        type: "string"
+        required: true
+        description: "任务路径（唯一标识符）"
+    status:
+        type: "string"
+        required: true
+        description: "新状态: pending | processing | failed"
+        enum: ["pending", "processing", "failed"]
+    updates:
+        type: "object"
+        required: false
+        description: "额外字段更新（如startedAt, error, retryCount, maxRetries, progress）"
+        properties:
+            startedAt:
+                type: number
+            error:
+                type: string
+            retryCount:
+                type: number
+            maxRetries:
+                type: number
+            progress:
+                type: object
+
+steps:
+    - id: "restore_queue"
+      name: "千里眼：恢复当前队列"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "qianliyan"
+          methodName: "restoreQueue"
+      output_schema:
+          type: array
+          items:
+              type: object
+              properties:
+                  path:
+                      type: string
+                  action:
+                      type: string
+                  status:
+                      type: string
+                  createdAt:
+                      type: number
+
+    - id: "find_task_index"
+      name: "查找任务索引"
+      type: "builtin"
+      action: "arrayFind"
+      input:
+          array: "{{steps.restore_queue}}"
+          predicate: "item.path === inputs.path"
+          returnIndex: true
+      output_schema:
+          type: number
+          description: "任务在队列中的索引（-1表示未找到）"
+      dependsOn: ["restore_queue"]
+
+    - id: "validate_task_exists"
+      name: "验证任务存在"
+      type: "builtin"
+      action: "conditional"
+      input:
+          condition: "{{steps.find_task_index}} >= 0"
+          onTrue:
+              success: true
+              message: "任务存在于队列中"
+          onFalse:
+              success: false
+              error: "任务不存在: {{inputs.path}}"
+      output_schema:
+          type: object
+          properties:
+              success:
+                  type: boolean
+              message:
+                  type: string
+              error:
+                  type: string
+      dependsOn: ["find_task_index"]
+
+    - id: "get_current_task"
+      name: "获取当前任务"
+      type: "builtin"
+      action: "arrayGet"
+      input:
+          array: "{{steps.restore_queue}}"
+          index: "{{steps.find_task_index}}"
+      output_schema:
+          type: object
+          description: "当前任务对象"
+      dependsOn: ["validate_task_exists"]
+
+    - id: "merge_updates"
+      name: "合并状态更新"
+      type: "builtin"
+      action: "objectMerge"
+      input:
+          base: "{{steps.get_current_task}}"
+          updates:
+              status: "{{inputs.status}}"
+          additional: "{{inputs.updates}}"
+      output_schema:
+          type: object
+          description: "更新后的任务对象"
+      dependsOn: ["get_current_task"]
+
+    - id: "replace_task"
+      name: "替换队列中的任务"
+      type: "builtin"
+      action: "arraySet"
+      input:
+          array: "{{steps.restore_queue}}"
+          index: "{{steps.find_task_index}}"
+          value: "{{steps.merge_updates}}"
+      output_schema:
+          type: array
+          description: "更新后的完整队列"
+      dependsOn: ["merge_updates"]
+
+    - id: "persist_queue"
+      name: "千里眼：持久化队列"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "qianliyan"
+          methodName: "persistQueue"
+          params:
+              - "{{steps.replace_task}}"
+      # RFC 0045: persistQueue是副作用操作(返回void)，不产生输出
+      dependsOn: ["replace_task"]
+
+    - id: "format_response"
+      name: "返回更新结果"
+      type: "builtin"
+      action: "return"
+      input:
+          success: true
+          task: "{{steps.merge_updates}}"
+          queue: "{{steps.replace_task}}"
+          queueSize: "{{steps.replace_task.length}}"
+          persisted: true
+      dependsOn: ["persist_queue"]
+
+outputs:
+    task:
+        description: "更新后的任务对象"
+        type: "object"
+        path: "task"
+    queue:
+        description: "更新后的完整队列（用于Store同步）"
+        type: "array"
+        path: "queue"
+    queueSize:
+        description: "队列大小"
+        type: "number"
+        path: "queueSize"
+    persisted:
+        description: "是否已持久化"
+        type: "boolean"
+        path: "persisted"

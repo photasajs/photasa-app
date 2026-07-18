@@ -1,0 +1,236 @@
+id: "engine_status_check"
+name: "引擎状态检查工作流"
+description: "通过太乙引擎检查所有注册引擎的状态"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 输入参数定义
+inputSchema:
+  type: "object"
+  properties:
+    engineName:
+      type: "string"
+      description: "特定引擎名称（可选，不提供则检查所有引擎）"
+    includeDetails:
+      type: "boolean"
+      description: "是否包含详细状态信息"
+      default: true
+
+# 输出参数定义
+outputSchema:
+  type: "object"
+  properties:
+    success:
+      type: "boolean"
+      description: "检查是否成功"
+    engines:
+      type: "object"
+      description: "引擎状态映射"
+    availableEngines:
+      type: "array"
+      description: "可用引擎列表"
+    totalEngines:
+      type: "number"
+      description: "引擎总数"
+    readyEngines:
+      type: "number"
+      description: "就绪引擎数量"
+    timestamp:
+      type: "number"
+      description: "检查时间戳"
+
+# 工作流步骤
+steps:
+  - id: "get_all_engine_status"
+    name: "获取所有引擎状态"
+    type: "action"
+    description: "通过太乙引擎获取所有注册引擎的状态"
+    service: "taiyi"
+    action: "getAllEngineStatus"
+    output:
+      allStatus: "result"
+      statusSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result: object
+      success: boolean
+      timestamp: number
+      engineName: string
+
+  - id: "get_available_engines"
+    name: "获取可用引擎列表"
+    type: "action"
+    description: "获取当前可用的引擎列表"
+    service: "taiyi"
+    action: "getAvailableEngines"
+    output:
+      availableList: "result"
+      availableSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result: array
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["get_all_engine_status"]
+
+  - id: "check_specific_engine"
+    name: "检查特定引擎状态"
+    type: "action"
+    description: "检查指定引擎的状态"
+    service: "taiyi"
+    action: "getEngineStatus"
+    input:
+      engineName: {{input.engineName}}
+    output:
+      specificStatus: "result"
+      specificSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    condition:
+      field: "input.engineName"
+      operator: "exists"
+    dependsOn: ["get_all_engine_status"]
+
+  - id: "test_wenchang_engine"
+    name: "测试文昌引擎功能"
+    type: "action"
+    description: "测试文昌引擎的基本功能"
+    service: "taiyi"
+    action: "callEngine"
+    input:
+      engineName: "wenchang"
+      methodName: "getCurrentSnapshot"
+    output:
+      wenchangResult: "result"
+      wenchangSuccess: "success"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    condition:
+      field: "input.includeDetails"
+      operator: "eq"
+      value: true
+    dependsOn: ["get_available_engines"]
+    ignoreError: true
+
+  - id: "calculate_statistics"
+    name: "计算统计信息"
+    type: "action"
+    description: "计算引擎状态统计"
+    service: "builtin"
+    action: "calculate"
+    input:
+      allStatus: {{steps.get_all_engine_status.allStatus}}
+      availableList: {{steps.get_available_engines.availableList}}
+    output:
+      stats: "result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result:
+        totalEngines: number
+        readyEngines: number
+        timestamp: number
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["get_available_engines"]
+
+  - id: "compile_detailed_report"
+    name: "编译详细报告"
+    type: "action"
+    description: "编译包含所有细节的状态报告"
+    service: "builtin"
+    action: "compile"
+    input:
+      engines: {{steps.get_all_engine_status.allStatus}}
+      availableEngines: {{steps.get_available_engines.availableList}}
+      specificEngine: {{input.engineName}}
+      specificStatus: {{steps.check_specific_engine.specificStatus}}
+      wenchangTest: {{steps.test_wenchang_engine.wenchangResult}}
+      statistics: {{steps.calculate_statistics.stats}}
+    output:
+      detailedReport: "result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    condition:
+      field: "input.includeDetails"
+      operator: "eq"
+      value: true
+    dependsOn: ["calculate_statistics", "test_wenchang_engine"]
+
+  - id: "compile_simple_report"
+    name: "编译简单报告"
+    type: "action"
+    description: "编译简化的状态报告"
+    service: "builtin"
+    action: "compile"
+    input:
+      engines: {{steps.get_all_engine_status.allStatus}}
+      availableEngines: {{steps.get_available_engines.availableList}}
+      statistics: {{steps.calculate_statistics.stats}}
+    output:
+      simpleReport: "result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      result: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    condition:
+      field: "input.includeDetails"
+      operator: "ne"
+      value: true
+    dependsOn: ["calculate_statistics"]
+
+  - id: "return_final_result"
+    name: "返回最终结果"
+    type: "action"
+    description: "返回状态检查的最终结果"
+    service: "builtin"
+    action: "return"
+    input:
+      success: true
+      engines: {{steps.get_all_engine_status.allStatus}}
+      availableEngines: {{steps.get_available_engines.availableList}}
+      totalEngines: {{steps.calculate_statistics.stats.totalEngines}}
+      readyEngines: {{steps.calculate_statistics.stats.readyEngines}}
+      timestamp: {{steps.calculate_statistics.stats.timestamp}}
+      detailedReport: {{steps.compile_detailed_report.detailedReport}}
+      simpleReport: {{steps.compile_simple_report.simpleReport}}
+    dependsOn: ["compile_detailed_report", "compile_simple_report"]
+
+# 错误处理
+onError:
+  - id: "handle_error"
+    name: "处理错误"
+    type: "action"
+    service: "builtin"
+    action: "return"
+    input:
+      success: false
+      error: {{error.message}}
+      engines: {}
+      availableEngines: []
+      totalEngines: 0
+      readyEngines: 0
+      timestamp: 0
+
+# 工作流配置
+enabled: true
+timeout: 15000  # 15秒超时
+retryOnError: false
+tags: ["engine", "status", "taiyi", "monitoring"]

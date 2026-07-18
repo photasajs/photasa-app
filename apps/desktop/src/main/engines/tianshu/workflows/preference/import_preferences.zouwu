@@ -1,0 +1,153 @@
+# 导入用户偏好设置工作流
+# 通过文昌引擎导入偏好设置
+
+id: "import_preferences"
+name: "导入用户偏好设置"
+description: "导入用户偏好设置"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "import_preferences"
+  - intent: "preference_import"
+
+# 输入参数
+inputs:
+  data:
+    type: "string"
+    required: true
+    description: "要导入的偏好设置JSON数据"
+  backup:
+    type: "boolean"
+    required: false
+    default: true
+    description: "是否在导入前备份当前设置"
+
+# 工作流步骤
+steps:
+  - id: "validate_data"
+    name: "验证导入数据格式"
+    type: "action"
+    description: "验证导入数据格式"
+    service: "wenchang"
+    action: "validate"
+    input:
+      data: {{input.data}}
+      rules:
+        - type: "string"
+        - notEmpty: true
+        - isJson: true
+
+  - id: "backup_current"
+    name: "备份当前偏好设置"
+    type: "action"
+    description: "备份当前偏好设置"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output:
+      backup: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      backup: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["validate_data"]
+
+  - id: "import_to_engine"
+    name: "导入偏好到文昌引擎"
+    type: "action"
+    description: "导入偏好到文昌引擎"
+    service: "wenchang"
+    action: "importPreferences"
+    input:
+      data: {{input.data}}
+    output:
+      result: "import.result"
+    dependsOn: ["backup_current"]
+
+  - id: "get_imported_snapshot"
+    name: "获取导入后的偏好快照"
+    type: "action"
+    description: "获取导入后的偏好快照"
+    service: "wenchang"
+    action: "getCurrentSnapshot"
+    input: {}
+    output:
+      snapshot: "snapshot.result"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      snapshot: object
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["import_to_engine"]
+
+  - id: "emit_import_event"
+    name: "发送偏好导入事件"
+    type: "action"
+    description: "发送偏好导入事件"
+    service: "wenchang"
+    action: "emitEvent"
+    input:
+      event: "preferences_imported"
+      data:
+        backup: {{steps.backup_current.backup}}
+        snapshot: {{steps.get_imported_snapshot.snapshot}}
+        timestamp: {{now()}}
+    output:
+      eventId: "event.id"
+    dependsOn: ["get_imported_snapshot"]
+
+  - id: "format_response"
+    name: "格式化导入结果"
+    type: "action"
+    description: "格式化导入结果"
+    service: "wenchang"
+    action: "formatResponse"
+    input:
+      success: true
+      data:
+        snapshot: {{steps.get_imported_snapshot.snapshot}}
+        backup: {{steps.backup_current.backup}}
+      timestamp: {{now()}}
+      source: "wenchang_engine"
+    output:
+      response: "format.result"
+    dependsOn: ["emit_import_event"]
+
+# 输出定义
+outputs:
+  success:
+    description: "导入是否成功"
+    type: "boolean"
+  snapshot:
+    description: "导入后的偏好快照"
+    type: "object"
+  backup:
+    description: "导入前的备份快照"
+    type: "object"
+
+# 错误处理
+error_handling:
+  validation_error:
+    type: "return_error"
+    response:
+      success: false
+      error: "导入数据格式验证失败"
+      details: "{{ error.details }}"
+
+  import_error:
+    type: "return_error"
+    response:
+      success: false
+      error: "导入偏好设置失败"
+      reason: "{{ error.message }}"
+
+# 超时设置
+timeout: 10000
+priority: "user"

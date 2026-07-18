@@ -1,0 +1,110 @@
+# 获取偏好设置历史工作流
+# 通过文昌引擎获取偏好变更历史
+
+id: "get_preference_history"
+name: "获取偏好设置变更历史"
+description: "获取偏好设置变更历史"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+  - intent: "get_preference_history"
+  - intent: "preference_history"
+
+# 输入参数
+inputs:
+  limit:
+    type: "number"
+    required: false
+    default: 10
+    description: "返回的历史记录数量限制"
+  offset:
+    type: "number"
+    required: false
+    default: 0
+    description: "历史记录的偏移量"
+
+# 工作流步骤
+steps:
+  - id: "validate_params"
+    name: "验证输入参数"
+    type: "action"
+    description: "验证输入参数"
+    service: "wenchang"
+    action: "validate"
+    input:
+      limit: {{input.limit}}
+      offset: {{input.offset}}
+      rules:
+        limit:
+          - type: "number"
+          - min: 1
+          - max: 100
+        offset:
+          - type: "number"
+          - min: 0
+
+  - id: "get_history_from_engine"
+    name: "从文昌引擎获取历史记录"
+    type: "action"
+    description: "从文昌引擎获取历史记录"
+    service: "wenchang"
+    action: "getHistory"
+    input:
+      limit: {{input.limit}}
+      offset: {{input.offset}}
+    output:
+      data: "history.result"
+      count: "history.count"
+    # 声明适配器返回结构，使工作流自解释
+    output_schema:
+      data: array
+      count: number
+      success: boolean
+      timestamp: number
+      engineName: string
+    dependsOn: ["validate_params"]
+
+  - id: "format_response"
+    name: "格式化历史数据"
+    type: "action"
+    description: "格式化历史数据"
+    service: "wenchang"
+    action: "formatResponse"
+    input:
+      success: true
+      data: {{steps.get_history_from_engine.data}}
+      count: {{steps.get_history_from_engine.count}}
+      timestamp: {{now()}}
+      source: "wenchang_engine"
+    output:
+      response: "format.result"
+    dependsOn: ["get_history_from_engine"]
+
+# 输出定义
+outputs:
+  data:
+    description: "偏好设置历史记录"
+    type: "array"
+  count:
+    description: "返回的记录数量"
+    type: "number"
+  success:
+    description: "获取是否成功"
+    type: "boolean"
+
+# 错误处理
+error_handling:
+  default:
+    type: "graceful_failure"
+    response:
+      success: false
+      error: "获取偏好历史时发生错误"
+      data: []
+
+# 超时设置
+timeout: 5000
+priority: "user"

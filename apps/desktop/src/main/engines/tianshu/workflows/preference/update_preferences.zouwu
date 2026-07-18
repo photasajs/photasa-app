@@ -1,0 +1,226 @@
+# 更新用户偏好设置工作流
+# 通过文昌引擎更新偏好设置并广播变更
+
+id: "update_preferences"
+name: "更新用户偏好设置"
+description: "更新用户偏好设置"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 触发条件
+triggers:
+    - intent: "update_preferences"
+    - intent: "preference_update"
+
+# 输入参数
+inputs:
+    delta:
+        type: "object"
+        required: true
+        description: "要更新的偏好设置增量对象"
+    source:
+        type: "string"
+        required: false
+        default: "user_action"
+        description: "更新来源标识"
+
+# 工作流步骤
+steps:
+    - id: "validate_delta"
+      name: "验证偏好更新数据"
+      type: "action"
+      description: "验证偏好更新数据"
+      service: "wenchang"
+      action: "validate"
+      input:
+          delta: "{{inputs.delta}}"
+          rules:
+              - type: "object"
+              - notEmpty: true
+              # ✅ RFC 0038: pathOperations已删除，路径操作通过scanning.paths字段处理
+              - allowedKeys: ["ui", "display", "scanning", "performance", "system"]
+      # 声明适配器返回结构，使工作流自解释
+      # 使用JSON Schema标准格式描述数组类型
+      output_schema:
+          type: object
+          properties:
+              valid:
+                  type: boolean
+              errors:
+                  type: array
+                  items:
+                      type: string
+
+    - id: "simple_test"
+      name: "简单测试步骤"
+      type: "builtin"
+      action: "log"
+      input:
+          level: "info"
+          message: "🎯 简单测试步骤执行了！"
+      dependsOn: ["validate_delta"]
+
+    - id: "check_validation"
+      name: "check_validation"
+      type: "condition"
+      description: "根据验证结果决定是否继续执行"
+      dependsOn: ["simple_test"]
+      condition:
+          # 访问validate步骤返回的valid字段
+          field: "{{steps.validate_delta.valid}}"
+          operator: "eq"
+          value: true
+      onTrue: [] # 验证通过，继续执行后续步骤
+      onFalse:
+          - id: "return_validation_error"
+            name: "return_validation_error"
+            type: "builtin"
+            action: "return"
+            input:
+                success: false
+                error: "偏好设置数据验证失败"
+                # 访问validate步骤返回的errors字段
+                details: "{{steps.validate_delta.errors}}"
+
+    - id: "sanitize_values"
+      name: "清理和验证偏好值"
+      type: "action"
+      description: "清理和验证偏好值"
+      service: "wenchang"
+      action: "sanitize"
+      input:
+          source: "{{inputs.delta}}"
+          rules:
+              ui.theme:
+                  type: "string"
+                  minLength: 1
+                  default: "solarized-dark"
+              ui.language:
+                  type: "string"
+                  pattern: "^[a-z]{2}-[A-Z]{2}$"
+                  default: "zh-CN"
+              display.thumbnailSize:
+                  type: "number"
+                  min: 50
+                  max: 500
+                  default: 150
+              display.viewMode:
+                  type: "enum"
+                  values: ["grid", "list", "timeline"]
+                  default: "grid"
+              # ✅ RFC 0038: pathOperations已删除
+              # 路径操作现在通过scanning.paths字段直接处理，由房玄龄负责业务逻辑
+              scanning.paths:
+                  type: "array"
+                  required: false
+                  items:
+                      type: "string"
+      # 声明适配器返回结构，使工作流自解释
+      # sanitize直接返回sanitizedData对象，不包装在result中
+      output_schema:
+          type: object # sanitizedData的结构
+      dependsOn: ["check_validation"]
+
+    - id: "update_engine"
+      name: "调用文昌引擎更新偏好"
+      type: "action"
+      description: "调用文昌引擎更新偏好"
+      service: "wenchang"
+      action: "updatePreferences"
+      input:
+          # 访问sanitize_values步骤返回的sanitizedData
+          delta: "{{steps.sanitize_values}}"
+          source: "{{inputs.source}}"
+      output:
+          result: "result"
+      dependsOn: ["sanitize_values"]
+
+    # ✅ RFC 0038: handle_path_operations步骤已删除
+    # pathOperations不再存在，路径操作通过scanning.paths字段统一处理
+    # 所有偏好变更（包括路径）都通过同一个流程：validate -> sanitize -> updatePreferences
+
+    - id: "get_updated_snapshot"
+      name: "获取更新后的偏好快照"
+      type: "action"
+      description: "获取更新后的偏好快照"
+      service: "wenchang"
+      action: "getCurrentSnapshot"
+      input: {}
+      # 声明适配器返回结构，使工作流自解释
+      # getCurrentSnapshot直接返回{ data, revision, timestamp }
+      output_schema:
+          data: object
+          revision: number
+          timestamp: number
+      # ✅ RFC 0038: 依赖改为update_engine，因为handle_path_operations已删除
+      dependsOn: ["update_engine"]
+
+    - id: "emit_change_event"
+      name: "发送偏好变更事件"
+      type: "action"
+      description: "发送偏好变更事件"
+      service: "wenchang"
+      action: "emitEvent"
+      input:
+          event: "preferences_changed"
+          data:
+              # 🎯 简化路径：直接访问引擎返回值
+              delta: "{{steps.sanitize_values}}"
+              snapshot: "{{steps.get_updated_snapshot.data}}"
+              source: "{{inputs.source}}"
+              timestamp: "{{now()}}"
+      output:
+          eventId: "id"
+      dependsOn: ["get_updated_snapshot"]
+
+    - id: "format_response"
+      name: "格式化返回结果"
+      type: "action"
+      description: "格式化返回结果"
+      service: "wenchang"
+      action: "formatResponse"
+      input:
+          success: true
+          data:
+              # 🎯 简化路径：直接访问引擎返回值
+              updated: "{{steps.sanitize_values}}"
+              snapshot: "{{steps.get_updated_snapshot.data}}"
+          timestamp: "{{now()}}"
+          source: "wenchang_engine"
+      output:
+          response: "result"
+      dependsOn: ["emit_change_event"]
+
+# 输出定义
+outputs:
+    success:
+        description: "更新是否成功"
+        type: "boolean"
+    updated:
+        description: "实际更新的偏好项"
+        type: "object"
+    snapshot:
+        description: "更新后的完整偏好快照"
+        type: "object"
+
+# 错误处理
+error_handling:
+    validation_error:
+        type: "return_error"
+        response:
+            success: false
+            error: "偏好设置数据验证失败"
+            details: "{{ error.details }}"
+
+    engine_error:
+        type: "return_error"
+        response:
+            success: false
+            error: "文昌引擎更新失败"
+            reason: "{{ error.message }}"
+
+# 超时设置
+timeout: 10000
+priority: "user"

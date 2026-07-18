@@ -1,0 +1,155 @@
+# 房玄龄Store自动同步配置
+# 这是房玄龄内部的元数据配置，在构造函数中自动加载
+#
+# 定义如何将天界响应自动同步到本地Store
+# 遵循"schema/metadata driven"原则，配置而非硬编码
+#
+# ✅ RFC 0042 Store Automation修正 (Linus "好品味"设计 - 2025-10-27):
+# - storePath → storeName: 明确是Store名称（Registry键）
+# - snapshotPath → propertyPath: 明确是属性链（双重用途清晰）
+
+metadata:
+    version: "2.0.0"
+    description: "奏折matter与Store同步配置"
+    lastUpdated: "2025-10-27"
+    author: "房玄龄"
+
+# 同步策略定义
+strategies:
+    merge:
+        description: "深度合并到Store - 保留现有值，只更新变更字段"
+        method: "deepMerge"
+    replace:
+        description: "完全替换Store字段 - 用天界数据完全替换"
+        method: "replace"
+    patch:
+        description: "浅层合并到Store - Object.assign方式合并"
+        method: "shallowMerge"
+
+# 奏折matter同步规则
+# 当天界确认后，根据这些规则自动更新本地Store
+matters:
+    # 主题变更
+    theme_change:
+        propertyPath: "ui.theme"
+        syncStrategy: "replace"
+        storeName: "preferences"
+        autoSync: true
+        description: "用户主题变更 - 替换ui.theme字符串值"
+
+    # 语言变更
+    language_change:
+        propertyPath: "."
+        syncStrategy: "merge"
+        storeName: "preferences"
+        autoSync: true
+        description: "用户语言变更 - 从response.data提取完整preferences对象，深度合并到store"
+
+    # 缩略图大小变更
+    thumbnail_size_change:
+        propertyPath: "display.thumbnailSize"
+        syncStrategy: "replace"
+        storeName: "preferences"
+        autoSync: true
+        description: "缩略图大小变更 - 替换display.thumbnailSize数字值"
+
+    # 添加监控路径
+    add_path:
+        propertyPath: "."
+        syncStrategy: "merge"
+        storeName: "preferences"
+        autoSync: true
+        description: "添加监控路径 - 从response.data提取完整preferences对象，深度合并到preferences字段"
+
+    # 移除监控路径
+    remove_path:
+        propertyPath: "."
+        syncStrategy: "merge"
+        storeName: "preferences"
+        autoSync: true
+        description: "移除监控路径 - 从response.data提取完整preferences对象，深度合并到preferences字段"
+
+    # 添加扫描文件夹
+    add_scan_folder:
+        propertyPath: "."
+        syncStrategy: "merge"
+        storeName: "preferences"
+        autoSync: true
+        description: "添加扫描文件夹 - 从response.data提取完整preferences对象，深度合并到preferences字段"
+
+    # 获取偏好设置
+    get_preferences:
+        propertyPath: "."
+        syncStrategy: "replace"
+        storeName: "preferences"
+        autoSync: true
+        description: "获取完整偏好设置快照 - 从response.data提取完整preferences对象，替换preferences字段"
+
+    # ✅ RFC 0042 Phase 2.4: 获取扫描队列
+    get_scanning_queue:
+        propertyPath: "queue"
+        syncStrategy: "replace"
+        storeName: "scanning"
+        autoSync: true
+        description: "获取扫描队列 - 从response.data.queue提取数组，替换scanning store的queue字段"
+
+    # ✅ RFC 0042 Phase 2.4: 添加扫描任务
+    add_scan_action:
+        propertyPath: "queue"
+        syncStrategy: "replace"
+        storeName: "scanning"
+        autoSync: true
+        description: "添加扫描任务 - 从response.data.queue提取数组，替换scanning store的queue字段"
+
+    # ✅ RFC 0042 Phase 2.4: 移除扫描任务
+    remove_scan_action:
+        propertyPath: "queue"
+        syncStrategy: "replace"
+        storeName: "scanning"
+        autoSync: true
+        description: "移除扫描任务 - 从response.data.queue提取数组，替换scanning store的queue字段"
+
+    # ✅ RFC 0048 v3 Phase 3: 更新扫描任务状态
+    update_scan_action_status:
+        propertyPath: "queue"
+        syncStrategy: "replace"
+        storeName: "scanning"
+        autoSync: true
+        description: "更新扫描任务状态 - 从response.data.queue提取更新后的完整队列，替换scanning store的queue字段"
+
+    # ✅ RFC 0043: 切换当前文件夹
+    switch_current_folder:
+        propertyPath: "currentFolder"
+        syncStrategy: "merge"
+        storeName: "appState"
+        autoSync: true
+        description: "切换当前文件夹 - 从response.data提取完整appState对象，深度合并到preferences store"
+
+    # ✅ RFC 0043: 添加文件夹到树
+    add_folder_to_tree:
+        propertyPath: "folderTree"
+        syncStrategy: "replace"
+        storeName: "appState"
+        autoSync: true
+        description: "添加文件夹到树 - 从response.data提取完整appState对象，深度合并到preferences store"
+
+    # ✅ RFC 0042 Step 2.5: 恢复应用状态（启动时）
+    restore_app_state:
+        propertyPath: "."
+        syncStrategy: "replace"
+        storeName: "appState"
+        autoSync: true
+        description: "恢复完整appState - 从response.data提取完整appState对象，替换整个appstate store"
+
+    # ✅ RFC 0042 Step 2.5 + RFC 0043: 更新文件夹树
+    update_folder_tree:
+        propertyPath: "folderTree"
+        syncStrategy: "replace"
+        storeName: "appState"
+        autoSync: true
+        description: "更新folderTree - 从response.data.tree提取数组，替换appstate.folderTree"
+
+# 特殊规则（将来扩展）
+specialRules:
+    # 如果将来需要自定义处理逻辑，可以在这里配置
+    customHandlers: []

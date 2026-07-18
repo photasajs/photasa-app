@@ -1,0 +1,50 @@
+{
+    "name": "@photasa/tianshu",
+    "version": "1.0.0",
+    "description": "Tianshu Workflow Runtime Engine",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "vite build",
+        "watch": "vite build --watch",
+        "clean": "rm -rf dist",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run"
+    },
+    "keywords": [
+        "workflow",
+        "runtime",
+        "engine",
+        "tianshu"
+    ],
+    "author": "SystemBug",
+    "license": "MIT",
+    "dependencies": {
+        "@zouwu-wf/workflow": "^0.0.7",
+        "@systembug/diting": "^0.0.7",
+        "@zouwu-wf/expression-parser": "^0.0.7",
+        "lodash": "^4.17.21"
+    },
+    "devDependencies": {
+        "vite": "^5.4.2",
+        "vite-plugin-dts": "^3.9.1",
+        "vitest": "^1.6.0",
+        "typescript": "^5.3.3",
+        "@types/node": "^20.11.24",
+        "@types/lodash": "^4.14.202",
+        "@types/fs-extra": "^11.0.4",
+        "@types/js-yaml": "^4.0.9",
+        "@types/glob": "^8.1.0",
+        "fs-extra": "^11.2.0",
+        "js-yaml": "^4.1.0",
+        "glob": "^10.3.10"
+    }
+}

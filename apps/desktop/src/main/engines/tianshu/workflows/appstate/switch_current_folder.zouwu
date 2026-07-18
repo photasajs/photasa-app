@@ -1,0 +1,224 @@
+# 切换当前文件夹工作流
+# 自动获取文件夹配置并更新 appState
+
+id: "switch_current_folder"
+name: "切换当前文件夹"
+description: "切换当前文件夹，自动获取.photasa.json配置并更新appState"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1729267200000
+updatedAt: 1729267200000
+
+# 触发条件
+triggers:
+    - intent: "switch_current_folder"
+    - intent: "folder_switch"
+
+# 输入参数
+inputs:
+    folder:
+        type: "string"
+        required: true
+        description: "目标文件夹路径"
+    source:
+        type: "string"
+        required: false
+        default: "user_action"
+        description: "切换来源标识"
+
+# 工作流步骤
+steps:
+    # 1️⃣ 验证文件夹路径
+    - id: "validate_folder"
+      name: "验证文件夹路径"
+      type: "builtin"
+      action: "validate"
+      description: "验证文件夹路径格式"
+      input:
+          value: "{{inputs.folder}}"
+          rules:
+              - type: "string"
+              - notEmpty: true
+              - minLength: 1
+      output_schema:
+          valid:
+              type: boolean
+          errors:
+              type: array
+              items:
+                  type: string
+
+    # 2️⃣ 检查验证结果
+    - id: "check_validation"
+      name: "检查验证结果"
+      type: "condition"
+      description: "验证通过才继续执行"
+      dependsOn: ["validate_folder"]
+      condition:
+          field: "{{steps.validate_folder.valid}}"
+          operator: "eq"
+          value: true
+      onTrue: [] # 继续后续步骤
+      onFalse:
+          - id: "return_validation_error"
+            name: "返回验证错误"
+            type: "builtin"
+            action: "return"
+            input:
+                success: false
+                error: "文件夹路径验证失败"
+                details: "{{steps.validate_folder.errors}}"
+
+    # 3️⃣ 调用司簿引擎获取文件夹配置
+    - id: "get_folder_config"
+      name: "获取文件夹配置"
+      type: "action"
+      description: "调用司簿引擎读取.photasa.json配置"
+      service: "taiyi"
+      action: "callEngine"
+      dependsOn: ["check_validation"]
+      input:
+          engineName: "sibu"
+          methodName: "readFolderConfig"
+          params:
+              - "{{inputs.folder}}"
+      # 司簿引擎返回结构
+      output_schema:
+          result:
+              type: object
+              properties:
+                  config:
+                      type: object
+                      description: "PhotasaConfig对象或null"
+                  exists:
+                      type: boolean
+                      description: "配置文件是否存在"
+
+    # 4️⃣ 记录配置获取结果
+    - id: "log_config_result"
+      name: "记录配置获取结果"
+      type: "builtin"
+      action: "log"
+      dependsOn: ["get_folder_config"]
+      input:
+          level: "info"
+          message: "🔧 文件夹配置读取完成: {{inputs.folder}} (存在: {{steps.get_folder_config.result.exists}})"
+
+    # 5️⃣ 构造 appState delta
+    - id: "build_appstate_delta"
+      name: "构造appState更新数据"
+      type: "builtin"
+      action: "transform"
+      description: "构造包含folder和config的完整delta"
+      dependsOn: ["log_config_result"]
+      input:
+          data:
+              appState:
+                  currentFolder: "{{inputs.folder}}"
+                  currentFolderConfig: "{{steps.get_folder_config.result.config}}"
+      output_schema:
+          type: object
+          properties:
+              appState:
+                  type: object
+
+    # 6️⃣ 调用司命引擎更新 appState
+    - id: "update_appstate"
+      name: "更新appState"
+      type: "action"
+      description: "调用司命引擎持久化appState"
+      service: "taiyi"
+      action: "callEngine"
+      dependsOn: ["build_appstate_delta"]
+      input:
+          engineName: "siming"
+          methodName: "updateAppState"
+          params:
+              - "{{steps.build_appstate_delta.appState}}"
+      # 司命引擎返回结构
+      output_schema:
+          result:
+              type: object
+              description: "更新后的完整appState"
+
+    # 7️⃣ 记录更新结果
+    - id: "log_update_result"
+      name: "记录更新结果"
+      type: "builtin"
+      action: "log"
+      dependsOn: ["update_appstate"]
+      input:
+          level: "info"
+          message: "🔧 appState已更新: currentFolder={{inputs.folder}}, config存在={{steps.get_folder_config.result.exists}}"
+
+    # 8️⃣ 格式化返回结果
+    - id: "format_response"
+      name: "格式化返回结果"
+      type: "builtin"
+      action: "return"
+      dependsOn: ["log_update_result"]
+      input:
+          success: true
+          data:
+              # 返回完整的 appState delta（供房玄龄同步Store）
+              appState:
+                  currentFolder: "{{inputs.folder}}"
+                  currentFolderConfig: "{{steps.get_folder_config.result.config}}"
+              # 额外元数据
+              metadata:
+                  configExists: "{{steps.get_folder_config.result.exists}}"
+                  source: "{{inputs.source}}"
+          timestamp: "{{now()}}"
+
+# 输出定义
+outputs:
+    success:
+        description: "切换是否成功"
+        type: "boolean"
+    data:
+        description: "appState delta对象"
+        type: "object"
+        properties:
+            appState:
+                type: object
+                properties:
+                    currentFolder:
+                        type: string
+                    currentFolderConfig:
+                        type: object
+    timestamp:
+        description: "操作时间戳"
+        type: "number"
+
+# 错误处理
+error_handling:
+    validation_error:
+        type: "return_error"
+        response:
+            success: false
+            error: "文件夹路径验证失败"
+            details: "{{ error.details }}"
+
+    sibu_error:
+        type: "graceful_failure" # 配置读取失败不算错误，返回null
+        response:
+            success: true
+            data:
+                appState:
+                    currentFolder: "{{ inputs.folder }}"
+                    currentFolderConfig: null
+                metadata:
+                    configExists: false
+                    error: "配置文件读取失败"
+            timestamp: "{{now()}}"
+
+    siming_error:
+        type: "return_error"
+        response:
+            success: false
+            error: "appState持久化失败"
+            reason: "{{ error.message }}"
+
+# 超时设置
+timeout: 10000
+priority: "user"

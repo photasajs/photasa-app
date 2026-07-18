@@ -1,0 +1,93 @@
+# 文件夹扫描工作流
+# RFC 0032: 千里眼扫描引擎集成工作流
+
+id: "folder_scan"
+name: "文件夹扫描工作流"
+description: "通过千里眼引擎执行文件夹扫描任务"
+version: "1.0.0"
+author: "Tianshu Engine"
+createdAt: 1727544000000
+updatedAt: 1727544000000
+
+# 输入参数定义
+inputSchema:
+  type: "object"
+  properties:
+    paths:
+      type: "array"
+      description: "要扫描的文件夹路径列表"
+      items:
+        type: "string"
+    recursive:
+      type: "boolean"
+      description: "是否递归扫描子文件夹"
+      default: true
+    priority:
+      type: "string"
+      description: "扫描优先级"
+      enum: ["urgent", "normal", "background"]
+      default: "normal"
+    filters:
+      type: "object"
+      description: "扫描过滤器配置"
+      properties:
+        includePatterns:
+          type: "array"
+          items:
+            type: "string"
+          description: "包含的文件模式"
+        excludePatterns:
+          type: "array"
+          items:
+            type: "string"
+          description: "排除的文件模式"
+
+# 输出参数定义
+outputSchema:
+  type: "object"
+  properties:
+    requestId:
+      type: "string"
+      description: "扫描请求ID"
+    status:
+      type: "string"
+      description: "扫描状态"
+    fileCount:
+      type: "number"
+      description: "扫描的文件数量"
+
+# 工作流步骤
+steps:
+  - id: "validate_paths"
+    name: "验证输入路径"
+    type: "action"
+    description: "验证扫描路径的有效性"
+    service: "qianliyan"
+    action: "validatePaths"
+    input:
+      paths: {{input.paths}}
+    output:
+      validPaths: "validation.validPaths"
+      error: "validation.error"
+
+  - id: "execute_scan"
+    name: "执行扫描"
+    type: "action"
+    description: "通过千里眼引擎执行扫描"
+    service: "qianliyan"
+    action: "scanPaths"
+    input:
+      paths: {{input.paths}}
+      recursive: {{input.recursive}}
+      priority: {{input.priority}}
+      filters: {{input.filters}}
+    output:
+      requestId: "scanResult.requestId"
+      status: "scanResult.status"
+      fileCount: "scanResult.fileCount"
+    dependsOn: ["validate_paths"]
+
+# 工作流配置
+enabled: true
+timeout: 300000  # 5分钟超时
+tags: ["scan", "folder", "qianliyan"]
