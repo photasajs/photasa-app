@@ -1,19 +1,13 @@
 {
     "apps/photasa/src/**/*.{ts,tsx,vue}": [
         "prettier --write",
-        "eslint --fix --max-warnings=0 --no-eslintrc -c apps/photasa/.eslintrc.cjs"
+        "eslint --fix --quiet --cache --cache-location apps/photasa/node_modules/.cache/eslint/lint-staged --no-eslintrc -c apps/photasa/.eslintrc.cjs"
     ],
     "apps/photasa/src/**/*.{js,cjs,mjs}": [
         "prettier --write",
-        "eslint --fix --max-warnings=0 --no-eslintrc -c apps/photasa/.eslintrc.cjs"
+        "eslint --fix --quiet --cache --cache-location apps/photasa/node_modules/.cache/eslint/lint-staged --no-eslintrc -c apps/photasa/.eslintrc.cjs"
     ],
-    "apps/desktop/src/**/*.{ts,tsx,vue,js}": [
-        "prettier --write"
-    ],
-    "packages/**/*.{ts,tsx}": [
-        "prettier --write"
-    ],
-    "**/*.{json,md,yaml,yml}": [
-        "prettier --write"
-    ]
+    "apps/desktop/src/**/*.{ts,tsx,vue,js}": ["prettier --write"],
+    "packages/**/*.{ts,tsx}": ["prettier --write"],
+    "**/*.{json,md,yaml,yml}": ["prettier --write"]
 }
