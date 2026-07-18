@@ -13,6 +13,16 @@
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
+## 当前实现（2026-07-18）
+
+实际落地点不是早期草稿中的 `services/import/*` 目录，而是：
+
+- `crates/photasa-import/`：可测试的导入算法，包括文件收集、复制循环、日期目录、重复策略、历史、撤销、崩溃恢复 journal。
+- `apps/photasa/src-tauri/src/commands/import_*.rs`：Tauri 命令壳，负责 `scan_directories` / `preview_import` / `execute_import` / `cancel_import` / `pause_import` / `resume_import` / history / undo。
+- `apps/photasa/src/api/legacy-api.ts` 与 `apps/photasa/src/api/import.adapter.ts`：前端兼容层，保持 `window.api` 形状。
+
+当前 public `ImportConfig` 以 `packages/common/src/import-types.ts` 为准：`sourcePaths`、`targetPath`、`filters`、`duplicateStrategy`、`fileGroups`、`selectedFiles`、`allowDuplicateRename`。早期草稿中的 `file_naming`、`copy_mode` 不是当前 Photasa/Tauri 契约；当前导入行为是复制，不暴露 move 模式。
+
 ## 摘要
 
 本文档详细说明如何将 Electron 的导入服务迁移到 Tauri Rust 实现。导入服务负责管理照片从外部源导入到目标目录的完整流程。
@@ -35,26 +45,26 @@ apps/desktop/src/main/import/
 ### 核心功能
 
 1. **IPC 通信**（通道名以 `packages/common` 的 `ImportEvents` 为准，主进程 `import-service.ts` 使用 `ipc.handle`）
-   - Invoke：`import:scan-directories`, `import:preview`, `import:execute`, `import:cancel`, `import:pause`, `import:resume`, `import:get-progress`, `import:get-history`, `import:get-details`, `import:preview-undo`, `import:undo`, `import:choose-directories`, `import:extract-metadata`
-   - Main→Renderer 事件：`import:progress`, `import:complete`, `import:error`
+    - Invoke：`import:scan-directories`, `import:preview`, `import:execute`, `import:cancel`, `import:pause`, `import:resume`, `import:get-progress`, `import:get-history`, `import:get-details`, `import:preview-undo`, `import:undo`, `import:choose-directories`, `import:extract-metadata`
+    - Main→Renderer 事件：`import:progress`, `import:complete`, `import:error`
 
 2. **导入流程**
-   - 扫描源目录
-   - 文件分组和去重
-   - 元数据提取
-   - 文件复制/移动
-   - 进度跟踪
-   - 历史记录
+    - 扫描源目录
+    - 文件分组和去重
+    - 元数据提取
+    - 文件复制/移动
+    - 进度跟踪
+    - 历史记录
 
 3. **Worker 线程**
-   - 使用 Node.js Worker Threads
-   - 处理导入任务
+    - 使用 Node.js Worker Threads
+    - 处理导入任务
 
 ## Tauri Rust 迁移计划
 
 ### 阶段 1: 基础架构
 
-#### 1.1 创建 Rust 模块结构
+#### 1.1 Rust 模块结构（早期草稿）
 
 ```
 apps/photasa/src-tauri/src/
@@ -95,50 +105,7 @@ serde_json = "1.0"
 
 ### 阶段 2: 类型定义
 
-```rust
-// src-tauri/src/services/import/types.rs
-
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ImportConfig {
-    pub source_paths: Vec<String>,
-    pub target_path: String,
-    pub file_naming: String,
-    pub duplicate_strategy: DuplicateStrategy,
-    pub copy_mode: CopyMode,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DuplicateStrategy {
-    Skip,
-    Rename,
-    Overwrite,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum CopyMode {
-    Copy,
-    Move,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ImportProgress {
-    pub processed: usize,
-    pub total: usize,
-    pub current_file: Option<String>,
-    pub status: ImportStatus,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ImportStatus {
-    Scanning,
-    Processing,
-    Completed,
-    Cancelled,
-    Error(String),
-}
-```
+以 `packages/common/src/import-types.ts` 的 `ImportConfig` / `ImportProgress` / `ImportResult` 为准；Rust 命令内部使用 `serde_json::Value` 接收该公共契约，算法类型集中在 `crates/photasa-import`。
 
 ### 阶段 3: 核心功能实现
 
@@ -161,11 +128,11 @@ impl ImportScanner {
         filters: Option<ImportFilters>,
     ) -> Result<Vec<ScannedFile>> {
         let mut files = Vec::new();
-        
+
         for entry in WalkDir::new(path) {
             let entry = entry?;
             let path = entry.path();
-            
+
             if path.is_file() && self.is_media_file(path)? {
                 let metadata = self.extract_metadata(path).await?;
                 files.push(ScannedFile {
@@ -175,10 +142,10 @@ impl ImportScanner {
                 });
             }
         }
-        
+
         Ok(files)
     }
-    
+
     fn is_media_file(&self, path: &Path) -> Result<bool> {
         // 使用 infer 库检测文件类型
         Ok(infer::get_from_path(path)?
@@ -208,10 +175,10 @@ impl ImportProcessor {
     ) -> Result<()> {
         // 1. 扫描源目录
         let files = self.scan_source_directories(&config).await?;
-        
+
         // 2. 文件分组和去重
         let groups = self.group_files(files, &config).await?;
-        
+
         // 3. 处理每个文件
         for (idx, group) in groups.iter().enumerate() {
             progress_callback(ImportProgress {
@@ -220,20 +187,20 @@ impl ImportProcessor {
                 current_file: Some(group.path.clone()),
                 status: ImportStatus::Processing,
             });
-            
+
             self.process_file_group(group, &config).await?;
         }
-        
+
         Ok(())
     }
-    
+
     async fn process_file_group(
         &self,
         group: &FileGroup,
         config: &ImportConfig,
     ) -> Result<()> {
         let target_path = self.build_target_path(group, config)?;
-        
+
         match config.copy_mode {
             CopyMode::Copy => {
                 fs::copy(&group.path, &target_path).await?;
@@ -242,7 +209,7 @@ impl ImportProcessor {
                 fs::rename(&group.path, &target_path).await?;
             }
         }
-        
+
         Ok(())
     }
 }
@@ -288,7 +255,7 @@ pub async fn execute_import(
         })
         .await
         .map_err(|e| e.to_string())?;
-    
+
     Ok(import_id)
 }
 ```
@@ -296,16 +263,19 @@ pub async fn execute_import(
 ## 迁移步骤
 
 ### 步骤 1: 基础实现（1 周）
+
 - [ ] 创建模块结构
 - [ ] 实现目录扫描
 - [ ] 实现基础导入流程
 
 ### 步骤 2: 高级功能（1 周）
+
 - [ ] 文件分组和去重
 - [ ] 元数据提取
 - [ ] 进度跟踪
 
 ### 步骤 3: 完善功能（1 周）
+
 - [ ] 导入历史管理
 - [ ] 撤销功能
 - [ ] 暂停/恢复

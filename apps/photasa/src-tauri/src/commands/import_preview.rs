@@ -127,10 +127,14 @@ fn parse_source_paths(config: &Value) -> Result<Vec<String>, String> {
 }
 
 fn parse_target_path(config: &Value) -> Result<String, String> {
-    config
+    let target = config
         .get("targetPath")
         .and_then(|v| v.as_str().map(norm))
-        .ok_or_else(|| "缺少 targetPath".to_string())
+        .ok_or_else(|| "缺少 targetPath".to_string())?;
+    if target.trim().is_empty() {
+        return Err("targetPath 不能为空".to_string());
+    }
+    Ok(target)
 }
 
 fn include_subfolders(config: &Value) -> bool {
@@ -333,6 +337,12 @@ mod target_structure_tests {
         let size_based = 100.0 / 100.0;
         let file_based = 1.0;
         assert!((e - (size_based + file_based)).abs() < 0.001);
+    }
+
+    #[test]
+    fn parse_target_path_rejects_blank_value() {
+        let err = parse_target_path(&json!({ "targetPath": "   " })).unwrap_err();
+        assert_eq!(err, "targetPath 不能为空");
     }
 }
 

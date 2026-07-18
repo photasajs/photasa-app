@@ -71,8 +71,8 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 
 ### Tauri 迁移 RFC 系列（架构与服务）
 
-- **主 RFC**：[RFC 0067](docs/rfc/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略
-- **已完成（服务层）**：[0073](docs/rfc/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](docs/rfc/0068-tauri-scan-service-migration.md) 扫描；[0069](docs/rfc/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](docs/rfc/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](docs/rfc/0071-tauri-config-service-migration.md) 配置；[0072](docs/rfc/0072-tauri-tianshu-service-migration.md) 天枢
+- **主 RFC**：[RFC 0067](.spec/rfc/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略
+- **已完成（服务层）**：[0073](.spec/rfc/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/0072-tauri-tianshu-service-migration.md) 天枢
 
 **建议实施顺序**：0073（UI+适配）→ 0071 → 0068 → 0069 → 0070 → 0072。
 

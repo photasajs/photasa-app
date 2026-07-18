@@ -81,6 +81,46 @@ fn emit_status_from_snapshot(
     sessions.update_active_progress(import_id, payload);
 }
 
+#[derive(Debug)]
+struct ExecuteImportInput {
+    target_path: String,
+    source_paths: Vec<String>,
+    files: Vec<String>,
+    strategy: &'static str,
+}
+
+fn parse_execute_import_input(config: &Value) -> Result<ExecuteImportInput, String> {
+    let target_path = config
+        .get("targetPath")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "缺少 targetPath".to_string())?;
+    if target_path.trim().is_empty() {
+        return Err("targetPath 不能为空".to_string());
+    }
+
+    let files = collect_files(config);
+    if files.is_empty() {
+        return Err("selectedFiles 为空".to_string());
+    }
+
+    let source_paths = config
+        .get("sourcePaths")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    Ok(ExecuteImportInput {
+        target_path: target_path.to_string(),
+        source_paths,
+        files,
+        strategy: take_duplicate_strategy(config),
+    })
+}
+
 /// 执行导入：立即返回 import_id，后台复制并 emit 进度事件
 #[tauri::command]
 pub async fn execute_import(
@@ -89,6 +129,13 @@ pub async fn execute_import(
     sessions: State<'_, Arc<ImportSessionStore>>,
     config: Value,
 ) -> Result<String, String> {
+    let ExecuteImportInput {
+        target_path,
+        source_paths,
+        files,
+        strategy,
+    } = parse_execute_import_input(&config)?;
+
     let import_id = uuid::Uuid::new_v4().to_string();
     let cancel_flag = Arc::new(AtomicBool::new(false));
     let paused_flag = Arc::new(AtomicBool::new(false));
@@ -103,30 +150,6 @@ pub async fn execute_import(
         );
     }
 
-    let target_path = config
-        .get("targetPath")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| "缺少 targetPath".to_string())?
-        .to_string();
-
-    let source_paths: Vec<String> = config
-        .get("sourcePaths")
-        .and_then(|v| v.as_array())
-        .map(|a| {
-            a.iter()
-                .filter_map(|x| x.as_str().map(|s| s.to_string()))
-                .collect()
-        })
-        .unwrap_or_default();
-
-    let files = collect_files(&config);
-    if files.is_empty() {
-        let mut g = registry.0.lock().map_err(|e| e.to_string())?;
-        g.remove(&import_id);
-        return Err("selectedFiles 为空".to_string());
-    }
-
-    let strategy = take_duplicate_strategy(&config);
     let config_for_active = config.clone();
     let import_id_emit = import_id.clone();
     let target_for_result = target_path.clone();
@@ -333,4 +356,47 @@ pub fn resume_import(
         false => warn!("🌌 恢复导入：未知任务 {}", args.import_id),
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_execute_import_input_rejects_blank_target_path() {
+        let err = parse_execute_import_input(&json!({
+            "targetPath": "   ",
+            "selectedFiles": ["/tmp/a.jpg"]
+        }))
+        .unwrap_err();
+
+        assert_eq!(err, "targetPath 不能为空");
+    }
+
+    #[test]
+    fn parse_execute_import_input_rejects_empty_selected_files() {
+        let err = parse_execute_import_input(&json!({
+            "targetPath": "/tmp/imports",
+            "selectedFiles": []
+        }))
+        .unwrap_err();
+
+        assert_eq!(err, "selectedFiles 为空");
+    }
+
+    #[test]
+    fn parse_execute_import_input_collects_files_before_task_registration() {
+        let input = parse_execute_import_input(&json!({
+            "targetPath": "/tmp/imports",
+            "sourcePaths": ["/camera", 1],
+            "selectedFiles": ["/b.jpg", "/a.jpg", "/b.jpg"],
+            "duplicateStrategy": "skip"
+        }))
+        .unwrap();
+
+        assert_eq!(input.target_path, "/tmp/imports");
+        assert_eq!(input.source_paths, vec!["/camera"]);
+        assert_eq!(input.files, vec!["/a.jpg", "/b.jpg"]);
+        assert_eq!(input.strategy, "skip");
+    }
 }
