@@ -325,6 +325,13 @@ export interface ImportResult {
 }
 
 /**
+ * Tauri resumeImport 只恢复同一导入任务；最终结果仍由 import:complete 事件返回
+ */
+export interface ImportResumeResult {
+    importId: string;
+}
+
+/**
  * 导入预览
  */
 export interface ImportPreview {
@@ -363,7 +370,7 @@ export interface ImportHistoryEntry {
         originalPath: string;
         targetPath: string;
         size: number;
-        checksum: string | null;
+        checksum?: string | null;
         importTime: Date;
     }>;
     statistics: ImportHistoryStatistics;
@@ -381,7 +388,7 @@ export interface ImportedFileInfo {
     originalPath: string;
     targetPath: string;
     size: number;
-    checksum: string | null; // 用于验证文件完整性
+    checksum?: string | null; // 用于验证文件完整性；Tauri 可省略未知 checksum
     importTime: Date;
 }
 

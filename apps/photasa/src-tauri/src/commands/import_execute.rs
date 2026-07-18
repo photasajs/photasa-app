@@ -6,7 +6,8 @@ use crate::commands::import_date_util::PhotasaMetadataExtractor;
 use log::{info, warn};
 use photasa_import::copy_loop::{
     cancelled_progress_json, collect_files, registry_set_cancel, registry_set_paused,
-    run_import_file_loop, take_duplicate_strategy, ImportLoopEnd, ImportTaskFlags,
+    run_import_file_loop, take_duplicate_strategy, CancelledProgress, ImportLoopEnd,
+    ImportLoopRequest, ImportTaskFlags,
 };
 use photasa_import::session::ImportSessionStore;
 use serde::Deserialize;
@@ -18,19 +19,46 @@ use tauri::{Emitter, State, Window};
 
 pub use photasa_import::copy_loop::ImportTaskRegistry;
 
-fn emit_cancelled_progress(
-    window: &Window,
-    import_id: &str,
+struct CancelledEmit<'a> {
+    import_id: &'a str,
     total_files: u32,
     processed: u32,
     successful: u32,
     skipped: u32,
     errors: u32,
-    current_file: &str,
+    current_file: &'a str,
+    start_iso: &'a str,
+}
+
+fn emit_cancelled_progress(
+    window: &Window,
+    sessions: &ImportSessionStore,
+    cancelled: CancelledEmit<'_>,
 ) {
+    let snapshot = sessions.get_progress(cancelled.import_id);
+    let speed = snapshot
+        .as_ref()
+        .and_then(|v| v.get("speed"))
+        .and_then(Value::as_f64)
+        .unwrap_or(0.0);
+    let start_time = snapshot
+        .as_ref()
+        .and_then(|v| v.get("startTime"))
+        .and_then(Value::as_str)
+        .unwrap_or(cancelled.start_iso);
     let _ = window.emit(
         "import:progress",
-        cancelled_progress_json(import_id, total_files, processed, successful, skipped, errors, current_file),
+        cancelled_progress_json(CancelledProgress {
+            import_id: cancelled.import_id,
+            total_files: cancelled.total_files,
+            processed: cancelled.processed,
+            successful: cancelled.successful,
+            skipped: cancelled.skipped,
+            errors: cancelled.errors,
+            current_file: cancelled.current_file,
+            speed,
+            start_time,
+        }),
     );
 }
 
@@ -116,14 +144,16 @@ pub async fn execute_import(
         let window_for_cb = window_clone.clone();
 
         let loop_result = run_import_file_loop(
-            &import_id_emit,
-            &files,
-            Path::new(&target_path),
-            strategy,
-            &cancel_flag,
-            &paused_flag,
-            &start_iso,
-            &meta,
+            ImportLoopRequest {
+                import_id: &import_id_emit,
+                files: &files,
+                target_path: Path::new(&target_path),
+                strategy,
+                cancel: &cancel_flag,
+                paused: &paused_flag,
+                start_iso: &start_iso,
+                meta: &meta,
+            },
             |progress_val| {
                 let _ = window_for_cb.emit("import:progress", progress_val.clone());
                 sessions_for_cb.set_progress(&import_id_for_cb, progress_val);
@@ -149,13 +179,17 @@ pub async fn execute_import(
             }) => {
                 emit_cancelled_progress(
                     &window_clone,
-                    &import_id_emit,
-                    total_files,
-                    processed,
-                    successful,
-                    skipped,
-                    errors,
-                    current_file.as_str(),
+                    &sessions_spawn,
+                    CancelledEmit {
+                        import_id: &import_id_emit,
+                        total_files,
+                        processed,
+                        successful,
+                        skipped,
+                        errors,
+                        current_file: current_file.as_str(),
+                        start_iso: &start_iso,
+                    },
                 );
                 let mut g = registry_spawn.0.lock().unwrap();
                 g.remove(&import_id_emit);
@@ -168,6 +202,7 @@ pub async fn execute_import(
                 errors,
                 processed: _,
                 total_size,
+                duplicate_count,
                 imported_files,
                 duration_ms,
             }) => {
@@ -197,7 +232,7 @@ pub async fn execute_import(
                     "skippedFiles": skipped,
                     "errorFiles": errors,
                     "totalSize": total_size,
-                    "duplicateCount": 0,
+                    "duplicateCount": duplicate_count,
                 });
                 let history_entry = json!({
                     "id": import_id_emit,

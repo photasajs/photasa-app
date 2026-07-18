@@ -3,7 +3,7 @@
 - **Start Date**: 2026-07-17
 - **Status**: ⏸️ Deferred
 - **Area**: Electron desktop / Import UI
-- **Depends on**: [0118](./0118-tauri-import-background-ui.md)（Photasa first）
+- **Depends on**: [0118](./completed/0118-tauri-import-background-ui.md)（Photasa first）
 - **One thing only**: Port 0118 dismiss/chip UX to `apps/desktop` if still shipping Electron
 
 ## Implementation principle

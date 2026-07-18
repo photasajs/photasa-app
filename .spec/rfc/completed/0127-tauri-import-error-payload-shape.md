@@ -1,14 +1,14 @@
 # RFC 0127: Tauri import — `import:error` payload shape (`[object Object]` bug)
 
 - **Start Date**: 2026-07-17
-- **Status**: ⏳ Draft / **P3**（未开工）
+- **Status**: ✅ Implemented（2026-07-18）
 - **Area**: Photasa / Import / Contract
-- **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
+- **Depends on**: [0070](../0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
 - **One thing only**: `import:error` event payload → JS `Error` shape at the store boundary
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
 
 ## Summary
 
@@ -27,20 +27,20 @@ Normalize the error payload **once** at the store boundary (`import-session.ts`,
 
 ## Non-goals
 
-| Topic | RFC |
-|-------|-----|
-| `checksum` | **0119** |
-| `duplicateCount` | **0123** |
+| Topic                       | RFC      |
+| --------------------------- | -------- |
+| `checksum`                  | **0119** |
+| `duplicateCount`            | **0123** |
 | `resumeImport` return shape | **0124** |
-| `status: "paused"` emit | **0125** |
-| Background UI | **0118** |
+| `status: "paused"` emit     | **0125** |
+| Background UI               | **0118** |
 
 ## Checklist
 
-- [ ] Normalize `import:error` payload in `import-session.ts` `errorUnlisten` handler (or `fail()`)
-- [ ] Remove now-redundant `instanceof Error` fallback in `ImportProgressModal.vue`
-- [ ] Vitest: error toast / error panel show real Rust `message`, never `"[object Object]"`
-- [ ] ROADMAP ✅
+- [x] Normalize `import:error` payload in `import-session.ts` `errorUnlisten` handler
+- [x] Downstream receives real `Error(message)`
+- [x] Vitest: error toast stores real Rust `message`, never `"[object Object]"`
+- [x] ROADMAP ✅
 
 ## Testing
 

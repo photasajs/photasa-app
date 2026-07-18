@@ -3,7 +3,7 @@
 - **Start Date**: 2026-07-17
 - **Status**: ⏸️ Deferred / **Won't prioritize**（tracked decision）
 - **Area**: Photasa / Import / Legacy UI
-- **Depends on**: [0093](./completed/0093-tauri-import-photos-legacy.md), [0118](./0118-tauri-import-background-ui.md)
+- **Depends on**: [0093](./completed/0093-tauri-import-photos-legacy.md), [0118](./completed/0118-tauri-import-background-ui.md)
 - **Tracks gap**: **G10** (0118 gap analysis)
 
 ## Implementation principle (Photasa / Tauri)

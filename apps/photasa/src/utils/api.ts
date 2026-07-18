@@ -10,6 +10,7 @@ import type {
     ImportConfig,
     ImportPreview,
     ImportResult,
+    ImportResumeResult,
     ImportProgress,
     ImportHistory,
     UndoResult,
@@ -251,7 +252,7 @@ export function pauseImport(importId: string): Promise<boolean> {
  * @param importId 导入任务ID
  * @returns 恢复结果
  */
-export function resumeImport(importId: string): Promise<ImportResult> {
+export function resumeImport(importId: string): Promise<ImportResumeResult> {
     return window.api.resumeImport(importId);
 }
 

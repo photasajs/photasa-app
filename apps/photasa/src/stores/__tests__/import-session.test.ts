@@ -347,4 +347,33 @@ describe("useImportSessionStore (RFC 0118)", () => {
         );
         expect(store.phase).toBe("failed"); // failed!
     });
+
+    it("RFC 0127: stores Rust import:error message instead of [object Object]", async () => {
+        mockEnv.isTauri = true;
+        mockListeners["import:progress"] = [];
+        mockListeners["import:complete"] = [];
+        mockListeners["import:error"] = [];
+        const { notification } = await import("@renderer/services/notification-manager");
+
+        const store = useImportSessionStore();
+        await store.begin("id-error");
+        store.setModalVisible(false);
+
+        mockListeners["import:error"].forEach((cb) =>
+            cb({
+                payload: {
+                    message: "创建目标目录失败: permission denied",
+                    importId: "id-error",
+                },
+            }),
+        );
+
+        expect(store.phase).toBe("failed");
+        expect(store.error).toBeInstanceOf(Error);
+        expect((store.error as Error).message).toBe("创建目标目录失败: permission denied");
+        expect(notification.error).toHaveBeenCalledWith({
+            title: "导入失败",
+            message: "创建目标目录失败: permission denied",
+        });
+    });
 });

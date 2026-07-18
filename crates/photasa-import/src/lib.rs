@@ -3,6 +3,7 @@
 pub mod copy_loop;
 pub mod date;
 pub mod file_groups;
+pub mod legacy_loop;
 pub mod metadata;
 pub mod path_filter;
 pub mod session;

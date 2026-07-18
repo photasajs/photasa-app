@@ -7,35 +7,18 @@ import type {
     DirectorySelection,
     ImportConfig,
     ImportProgress,
-    ImportResult,
+    ImportResumeResult,
 } from "@photasa/common";
 import { ImportEvents } from "@photasa/common";
 import { isTauri } from "./env";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
-export type { DirectorySelection, ImportConfig, ImportProgress };
+export type { DirectorySelection, ImportConfig, ImportProgress, ImportResumeResult };
 
 /**
  * resumeImport：Tauri 仅清 paused 标志并继续同一次 spawn（RFC 0096），不重跑整次导入。
- * 返回最小 ImportResult 占位以兼容调用方类型；完整结果仍走 import:complete 事件（P3 可收紧形状）。
+ * 返回 `{ importId }`；完整结果仍走 import:complete 事件。
  */
-const RESUME_STUB: ImportResult = {
-    success: true,
-    totalFiles: 0,
-    successfulFiles: 0,
-    skippedFiles: 0,
-    errorFiles: 0,
-    totalSize: 0,
-    processedSize: 0,
-    importedFiles: [],
-    errors: [],
-    warnings: [],
-    duration: 0,
-    importId: "",
-    sourcePaths: [],
-    targetPath: "",
-};
-
 const DEFAULT_PROGRESS: ImportProgress = {
     totalFiles: 0,
     processedFiles: 0,
@@ -176,13 +159,16 @@ export const importAdapter = {
     /**
      * 恢复导入
      */
-    resume: async (importId: string): Promise<ImportResult> => {
+    resume: async (importId: string): Promise<ImportResumeResult> => {
         if (isTauri()) {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("resume_import", { importId });
-            return { ...RESUME_STUB, importId };
+            return { importId };
         }
         const r = await (window as any).electronAPI?.api?.resumeImport?.(importId);
-        return r ?? { ...RESUME_STUB, importId };
+        if (r && typeof r === "object" && typeof r.importId === "string") {
+            return { importId: r.importId };
+        }
+        return { importId };
     },
 };
