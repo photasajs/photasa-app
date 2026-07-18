@@ -1,6 +1,4 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-pnpm run lint
-pnpm run typecheck
-pnpm run workflow:validate
+pnpm exec lint-staged

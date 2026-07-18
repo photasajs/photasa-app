@@ -241,4 +241,3 @@ class SplashController {
 // Boot
 // eslint-disable-next-line no-new
 new SplashController();
-
