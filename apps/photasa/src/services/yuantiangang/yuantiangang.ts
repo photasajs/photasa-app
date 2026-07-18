@@ -15,6 +15,7 @@ import type { Emitter } from "mitt";
 import { IService } from "@renderer/interfaces/service.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@photasa/common";
+import { listen } from "@tauri-apps/api/event";
 import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
 import { scanAdapter } from "@renderer/api/scan.adapter";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
@@ -314,6 +315,23 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      */
     private setupNotifyStatusEventListening(): void {
         try {
+            if (!(window as any).electron) {
+                listen<NotifyPayload>("notify:status", (event) => {
+                    this.reportStatusNotification(event.payload);
+                })
+                    .then((unlisten) => {
+                        this.notifyStatusCleanupFn = unlisten;
+                    })
+                    .catch((error: Error | unknown) => {
+                        logger.warn(
+                            "🔮 建立 notify:status 事件监听失败（Tauri模式）",
+                            error instanceof Error ? error.message : String(error),
+                        );
+                    });
+                logger.info("🔮 notify:status 事件监听已建立（Tauri模式）");
+                return;
+            }
+
             const ipc = window.electron?.ipcRenderer;
             if (!ipc) {
                 logger.warn("🔮 无法访问IPC，跳过 notify:status 事件监听");

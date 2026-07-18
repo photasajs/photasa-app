@@ -3,6 +3,10 @@ import { YuanTianGangService } from "../yuantiangang";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 import type { Zhaoling } from "../../interfaces/fang-xuan-ling.interface";
 
+const tauriEventMocks = vi.hoisted(() => ({
+    listen: vi.fn(async () => vi.fn()),
+}));
+
 // Mock logger
 vi.mock("@photasa/common", () => ({
     loggers: {
@@ -19,6 +23,10 @@ vi.mock("@photasa/common", () => ({
             debug: vi.fn(),
         },
     },
+}));
+
+vi.mock("@tauri-apps/api/event", () => ({
+    listen: tauriEventMocks.listen,
 }));
 
 // Mock window.tianshu
@@ -43,6 +51,8 @@ describe("YuanTianGangService", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        tauriEventMocks.listen.mockResolvedValue(vi.fn());
+        delete (window as unknown as { electron?: unknown }).electron;
         yuanTianGangService = new YuanTianGangService();
     });
 
@@ -232,6 +242,17 @@ describe("YuanTianGangService", () => {
         it("应该在初始化时建立天枢事件监听", () => {
             expect(mockTianshu.onProgress).toHaveBeenCalled();
             expect(mockTianshu.onStatus).toHaveBeenCalled();
+        });
+
+        it("Tauri 模式应该监听 notify:status", async () => {
+            const service = new YuanTianGangService();
+            await vi.waitFor(() => {
+                expect(tauriEventMocks.listen).toHaveBeenCalledWith(
+                    "notify:status",
+                    expect.any(Function),
+                );
+            });
+            service.destroy();
         });
 
         it("应该在destroy时清理事件监听", () => {
