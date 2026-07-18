@@ -1,6 +1,9 @@
 /**
- * Tauri 下导入扩展 API 的空占位（RFC 0097）
- * 与 @photasa/common 类型一致，避免 UI 因 reject 崩溃；真实管线仍待 Rust/工作流接入。
+ * 导入相关前端兜底形状（RFC 0097 已收口）
+ *
+ * 真实管线在 Rust：`preview_import` / `execute_import` / history / undo / `extract_metadata`。
+ * 本模块仅保留：空预览占位、撤销归一化失败时的兜底、以及与 Electron 同名的事件常量。
+ * 禁止再当作「后端未接入」的实现路径。
  */
 
 import type {
@@ -22,7 +25,7 @@ export const EMPTY_FILE_STATISTICS: FileStatistics = {
     groupCount: 0,
 };
 
-/** 无扫描结果时的导入预览占位 */
+/** 无扫描结果时的导入预览占位（测试 / 空态 UI） */
 export const EMPTY_IMPORT_PREVIEW: ImportPreview = {
     fileGroups: [],
     statistics: EMPTY_FILE_STATISTICS,
@@ -31,14 +34,15 @@ export const EMPTY_IMPORT_PREVIEW: ImportPreview = {
     targetStructure: new Map(),
 };
 
-const TAURI_UNDO_UNAVAILABLE = "Tauri：撤销预览尚未接入主进程";
+/** 撤销预览载荷非法或缺失时的兜底文案（Rust `preview_undo_import` 已实现） */
+const TAURI_UNDO_NORMALIZE_FALLBACK = "撤销预览数据无效或不可用";
 
-/** 不可撤销时的预览占位 */
+/** 不可撤销 / 归一化失败时的预览占位 */
 export function emptyUndoPreview(historyId: string): UndoPreview {
     return {
         historyId,
         canUndo: false,
-        reason: TAURI_UNDO_UNAVAILABLE,
+        reason: TAURI_UNDO_NORMALIZE_FALLBACK,
         filesToDelete: [],
         directoriesToCleanup: new Set(),
         potentialIssues: [],
@@ -59,7 +63,7 @@ export function noopUndoResult(): UndoResult {
 }
 
 /**
- * 元数据占位：路径取自请求；未读盘时尺寸与时间戳为占位值。
+ * 元数据占位：仅测试/极端兜底；生产路径应 `invoke("extract_metadata")`。
  */
 export function placeholderMetadataFromRequest(request: unknown): FileMetadata {
     const r = request as Partial<MetadataRequest> | null | undefined;
@@ -77,6 +81,6 @@ export function placeholderMetadataFromRequest(request: unknown): FileMetadata {
     };
 }
 
-/** 与 Electron 扫描队列事件名一致（主进程尚未发射时监听器保持空闲） */
+/** 与 Electron / Rust 事件名一致 */
 export const EVENT_IMPORT_PREVIEW_PROGRESS = "import:preview-progress" as const;
 export const EVENT_SCAN_QUEUE_ADD = "picasa:add-to-scan-queue" as const;

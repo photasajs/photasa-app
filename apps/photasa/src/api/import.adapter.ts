@@ -10,7 +10,10 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export type { DirectorySelection, ImportConfig, ImportProgress };
 
-/** resumeImport 在仅恢复任务时返回的最小占位（与 Electron 完整 ImportResult 形状兼容） */
+/**
+ * resumeImport：Tauri 仅清 paused 标志并继续同一次 spawn（RFC 0096），不重跑整次导入。
+ * 返回最小 ImportResult 占位以兼容调用方类型；完整结果仍走 import:complete 事件（P3 可收紧形状）。
+ */
 const RESUME_STUB: ImportResult = {
     success: true,
     totalFiles: 0,

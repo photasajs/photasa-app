@@ -288,6 +288,7 @@ pub async fn execute_import(
                             .and_then(|s| s.to_str())
                             .unwrap_or("");
                         let target_rel = relative_target_path_for_import(&date_sub, dest_name);
+                        // checksum / statistics.duplicateCount：契约字段占位（恒 null / 0）；真值另开 P3 RFC，不挡导入
                         imported_files.push(json!({
                             "originalPath": src_norm,
                             "targetPath": target_rel,

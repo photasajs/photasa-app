@@ -120,6 +120,71 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0115](docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片（asset 协议，非 file://） | ✅ Implemented |
 | [0116](docs/rfc/0116-tauri-photasa-config-thumbnail-parity.md) | `.photasa.json` 缩略图路径 Electron 契约 + rescan/切换文件夹修复 | ✅ Implemented |
 | [0117](docs/rfc/0117-tauri-scan-pipeline-parity.md) | 扫描流水线 Electron 契约：策略决策 + 文件级门控 + 串行缩略图 + 子目录递归（SKIP-only）| ✅ Implemented |
+| [0118](.spec/rfc/0118-tauri-import-background-ui.md) | 导入进度：可关模态、后台继续、再开接回（G1–G9,G13–G14） | ⏳ Draft（**P2**） |
+| [0119](.spec/rfc/0119-tauri-import-contract-polish.md) | Import 契约诚实：checksum / duplicateCount / resume 形状 | ⏳ Draft（**P3**） |
+| [0120](.spec/rfc/0120-tauri-import-quit-recovery.md) | 导入中退出/崩溃恢复（G11） | ⏸️ Deferred |
+| [0121](.spec/rfc/0121-tauri-import-settings-prefs.md) | Settings 导入默认项（G12） | ⏸️ Deferred |
+| [0122](.spec/rfc/0122-tauri-legacy-importphotos-background-ux.md) | 遗留 importPhotos 后台 UX（G10） | ⏸️ Deferred / low |
+
+### Photasa next priorities（2026-07，三角审查后修正）
+
+**迁移（Rust rewrite）按 [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md) 已 ✅。** 0112 / 0113 已 Implemented — **不得再标为开放迁移缺口**。政策：[TAURI_RUST_REWRITE_POLICY.md](.spec/rfc/TAURI_RUST_REWRITE_POLICY.md)。
+
+**Gap 跟踪铁律：** 每个缺口必须挂 **Owning RFC**（见 0118 Gap 表）。禁止「仅注释、无编号」。
+
+| 优先级 | 项 | 编号 | 说明 |
+|--------|-----|------|------|
+| **P1** | 迁移收官验收 | **0097** ✅ | 见下方 P1 plan / test plan |
+| **P2** | 后台导入 UI | **0118** | Gaps **G1–G9, G13–G14** |
+| **P3** | 契约毛刺 | **0119** | checksum / duplicateCount / resume |
+| — | Quit 恢复 | **0120** | G11；Deferred |
+| — | Settings 导入 | **0121** | G12；Deferred |
+| — | Legacy importPhotos UX | **0122** | G10；Deferred |
+
+**编号：** 实现最高曾用 **0117**；**0108–0110 不回填**；**0118–0122** 已登记。
+
+**0118 不做（有独立 RFC）：** 0119 / 0120 / 0121 / 0122 各自跟踪。
+
+---
+
+### P1 — Plan & test plan（迁移收官验收）
+
+**Goal:** Prove Rust import/migration claim is true. **No new feature.** No TS backend.
+
+| Step | Action | Pass |
+|------|--------|------|
+| P1.1 | `cd apps/photasa/src-tauri && cargo test`（至少含 `import_` / `extract_metadata` / `scan_` 相关） | 全绿；贴输出为证据 |
+| P1.2 | Manual Photasa：向导选源→目标→预览→执行→完成 | 文件落到 `{target}/{year}/{YYYYMMDD}/`；进度事件正常 |
+| P1.3 | Pause / Resume / Cancel 各一次 | 行为符合 0096（文件边界） |
+| P1.4 | Import History → Undo 一条 | 目标文件删除/清理符合预期 |
+| P1.5 | Settings smoke：`UpdateSettings` 改 autoUpdate 开关 | `updateAutoUpdateConfig` 无报错（0113）；**无** Import 设置页属预期 |
+| P1.6 | Confirm docs：ROADMAP 无「0112/0113 未完成」假缺口 | 已修正则勾选 |
+
+**P1 fail =** cargo 红、或向导无法完成导入。  
+**P1 不测 =** 0118 dismiss、checksum 字段。
+
+---
+
+### P2 — Plan & test plan（摘要；细节以 0118 为准）
+
+**Goal:** Dismiss progress modal; Rust continues; chip + re-open; Cancel still cancels.
+
+| Phase | Work |
+|-------|------|
+| A | Active-import session store + app-level listeners |
+| B | Modal: dismiss ≠ cancel; keep `importId` on close |
+| C | App chip + re-open without second `executeImport` |
+| D | Block concurrent second import; i18n; mark 0118 ✅ |
+
+**Tests:** RFC 0118 → **T1** Vitest（dismiss/cancel/re-open）+ **T2** manual（后台拷贝、再开、pause、cancel、完成）。  
+**Settings:** no hook / no new panel for 0118.
+
+---
+
+### P3 — Plan & test plan（**0119**）
+
+**Goal:** Honest import JSON (checksum / duplicateCount / resume). See [0119](.spec/rfc/0119-tauri-import-contract-polish.md).  
+**Deferred siblings:** [0120](.spec/rfc/0120-tauri-import-quit-recovery.md) G11 · [0121](.spec/rfc/0121-tauri-import-settings-prefs.md) G12 · [0122](.spec/rfc/0122-tauri-legacy-importphotos-background-ux.md) G10.
 
 ### RFC 流程（摘要）
 
@@ -178,7 +243,8 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 | **Phase 4 – Cleanup & rest** | **0088–0089**, **0090**, **0092** | Log viewer open (0088), log stream (0089), update service (0090), menu (0092). Path/log/update tests, docs. |
 | **Phase 5 – 1:1 Parity gaps** | **0101–0103**（0099–0100 ✅，0101–0103 ✅） | window_reload (0099 ✅), single-instance (0100 ✅), startup splash (0101 ✅), RAW thumbnail fallback (0102 ✅), native deps build strategy (0103 ✅)。 |
 | **Phase 6 – Deep code parity** | **0104–0106** | execute_import date-folder organization (0104), scan incremental cache .photasa-folder.json (0105), update periodic check timer (0106). |
-| **Phase 7 – Rust parity closure** | **0111–0114** | scan notify:status (0111), extract_metadata golden (0112), updater ops + prefs sync (0113), get_directory + scan_directories + WASM cleanup (0114). Parent tracker: **0097** ✅ |
+| **Phase 7 – Rust parity closure** | **0111–0114**（+ **0115–0117** 同阶段收口） | scan notify:status (0111), extract_metadata golden (0112), updater ops + prefs sync (0113), get_directory + scan_directories + WASM cleanup (0114), asset protocol (0115), photasa-config thumbnail (0116), scan pipeline parity (0117). Parent tracker: **0097** ✅ |
+| **Phase 8 – Import UX（非迁移）** | **0118**（⏳ Draft） | 导入进度后台化 UI：关模态不 cancel、可再开接回。**P2**；Rust 内核已在 Phase 3c/6/7。 |
 
 **Current state**
 
@@ -186,11 +252,12 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **2026-03 增量：**RFC **0094** `choose_directories`、**0095** `get_path_root`、**0096** 导入暂停/恢复已接 `legacy-api`。
 - **Phase 4（日志 / 更新）：** Rust：`log_viewer_open` / `log_viewer_close`、全局 `log` 桥接发射 `log:entry`；`check_for_updates` / `download_update` / `install_update` / `get_update_status` / `update_auto_update_config` 与 `picasa:update-*` 事件；`tauri-plugin-updater` + `capabilities` `updater:default`。前端：`legacy-api` 已 `invoke` + `listen` 对齐 Electron 同名事件。
 - **RFC 0092 扩展：** 已用 `tauri-plugin-global-shortcut` 注册与 Electron 相同的日志查看器全局快捷键（macOS `cmd+shift+alt+KeyL` / 其他 `ctrl+shift+alt+KeyL`），按下时发射 `log:toggle-viewer`；系统菜单仍为 macOS `apply_system_menu`（既有实现）。
-- **RFC 0097（Tauri 导入表面）：** `previewImport` → `preview_import`；`extractMetadata` → `extract_metadata`（读盘 + 栅格图 `image_dimensions`）；`execute_import` 完成后写入内存 `ImportSessionStore`（历史 + 可撤销 `fileList`），`getImportHistory` / `getImportDetails` / `getImportProgress`、`preview_undo_import` / `undo_import_execute` 已接 `legacy-api`。`tauri-import-stubs` 仅保留测试等占位。**余量：** 导入历史已落盘至应用数据目录 `import_history_v1.json`（Rust `ImportSessionStore`，原子写入）；`extract_metadata`：图片 EXIF（`kamadak-exif`，含 `cameraInfo`：**lens / iso / focalLength / aperture / shutterSpeed** 等标准标签）、视频 **`ffmpeg-next`（`build`+`build-zlib`，静态 FFmpeg，不依赖系统 ffmpeg）**（时长/编码/分辨率/容器时间/GPS/旋转）、可选 `computeMd5`；与 Electron 的细标签与回退行为仍待对拍；**预览**已与 Electron `import-worker` 预览链 **1:1**（每组 `extract_metadata_request`、`processFileGroup` 式合并、`determineGroupTargetDate`/`generateDatePath`、`targetPath`/`targetStructure`/`statistics`、`estimatedDuration`）；`updater` 密钥与端点待配置。
+- **RFC 0097（迁移跟踪）：** ✅ Implemented。导入表面已 Rust：`preview_import` / `execute_import` / history·undo / `extract_metadata`（0112 golden）/ 日期目录（0104）/ pause·resume（0096）。`tauri-import-stubs` = 前端兜底形状 only，**不是**未接入后端。导入历史落盘 `import_history_v1.json`。Updater 接线见 **0113** + `UPDATER.md`（生产密钥走 CI/运维，不进仓库）。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
-- **Next step:** `extract_metadata` 视频与 Electron **逐项对拍**（边界标签、错误回退）；静态图 EXIF 与 MakerNote 细字段；**0093** `importPhotos` 核心已对齐（Rust `copy_with_unique_name` 单测、`legacy-api` 桥接 + `created`→`Date` Vitest；见 RFC 0093）；配置真实 `updater.pubkey` 与 `endpoints`。`extract_metadata` 已含：图片 EXIF（含扩展 `cameraInfo`）、视频 `ffmpeg-next` 静态构建（时长/编码/分辨率/容器时间/GPS/旋转）、可选 MD5；**Rust 单测**已覆盖缺文件、MD5、非媒体 `other`、最小 JPEG、`fileType` 提示（`extract_metadata.rs`），以及视频侧与 ffprobe/Electron 同构的旋转/宽高/日期优先级/GPS（`extract_metadata_video.rs`）。
-- **Phase 5 – 1:1 Parity gaps（2026-04）：** … **余量：** Splash 主题同步（可选）、`otool`/`ldd` 验证可纳入 CI 可选步骤。**RAW 占位扩展名** ✅（`thumbnail_placeholder.rs`）。
+- **Next step（以「Photasa next priorities」为准）：** **P1** 迁移收官验收（证据命令，禁假缺口）；**P2** 实现 **0118** 导入后台 UI；**P3** 契约毛刺另开 **0119+**。
+- **Phase 5 – 1:1 Parity gaps（2026-04）：** … Splash / RAW / engine-status 已收口；`otool`/`ldd` 可选 CI。
 - **Phase 6 – Deep code parity（2026-04）：** **RFC 0104** ✅ … **RFC 0105** ✅ … **RFC 0106** ✅ …
+- **Phase 8 – Import UX（2026-07）：** **0118** ⏳ Draft — **P2 UX**（非 Rust 迁移）；正文：`.spec/rfc/0118-tauri-import-background-ui.md`。
 
 ---
 
@@ -203,7 +270,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 | 类别 | 数量 | 说明 |
 |------|------|------|
 | ✅ **已在 Rust 重写** | ~98% flat `window.api` + 天枢/文昌 | legacy-api Tauri 分支无 stub；Phase 7 完成 |
-| 🚧 **可选 polish** | 2 项 | Splash 主题同步、`picasa:engine-status`（低优先级） |
+| 🚧 **可选 polish（非迁移）** | 见 **Photasa next priorities** | **P1** 验收证据；**P2** **0118** UX；**P3** 契约毛刺 **0119+** |
 | ❌ **未重写 / 已清理** | 0 项 | WASM 占位已删除（0114） |
 | ⛔ **不得作为 Photasa 路径** | Electron-only | `@photasa/*` 抽包（0098）、preload 本地 fs、Ma-Liang Node |
 

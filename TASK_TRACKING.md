@@ -254,10 +254,17 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0113](./docs/rfc/0113-tauri-updater-production-and-prefs-sync.md) | updater 生产 + 偏好同步 | ✅ Implemented | `update_config.rs` + `UPDATER.md` |
 | [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md) | `get_directory` OS 路径 + `scan_directories` FileGroup[] | ✅ Implemented | `directory.rs` + `import_file_groups.rs` + `import_scan_directories.rs` |
 | [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片 asset 协议 | ✅ Implemented | `media-url.ts` + CSP/assetProtocol + `path.rs` |
+| [0118](./.spec/rfc/0118-tauri-import-background-ui.md) | 导入进度后台 UI（G1–G9,G13–G14） | ⏳ Draft（**P2**） | Vue session + chip；零 Rust 默认 |
+| [0119](./.spec/rfc/0119-tauri-import-contract-polish.md) | Import 契约诚实 | ⏳ Draft（**P3**） | checksum / duplicateCount / resume |
+| [0120](./.spec/rfc/0120-tauri-import-quit-recovery.md) | 导入退出恢复（G11） | ⏸️ Deferred | — |
+| [0121](./.spec/rfc/0121-tauri-import-settings-prefs.md) | Settings 导入默认（G12） | ⏸️ Deferred | — |
+| [0122](./.spec/rfc/0122-tauri-legacy-importphotos-background-ux.md) | Legacy importPhotos 后台 UX（G10） | ⏸️ Deferred | — |
 
-**Phase 7（0111–0114）全部完成。** 0097 已标 ✅ Implemented。**Photasa 后端：Rust-only，无 WASM。**
+**Phase 7（0111–0117）全部完成。** 0097 ✅。**Gap 必须挂 RFC**（0118 表）；禁止无编号缺口。
 
-**Phase 5–6（0100–0107）** 已全部 Done。不得激活 **0098** 或 v2.0 Electron Draft RFC 作为 Photasa 后端路径。
+**排队：** [ROADMAP](./ROADMAP.md) P1 验收 → **P2 0118** → **P3 0119**；0120–0122 Deferred。**0108–0110 不回填。**
+
+**Phase 5–6（0100–0107）** Done。不得激活 **0098** 作 Photasa 路径。
 
 ---
 
