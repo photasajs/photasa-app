@@ -105,10 +105,7 @@ pub(crate) fn extract_metadata_request(request: &Value) -> Result<Value, String>
                         rm.insert("md5".to_string(), Value::String(hex));
                     }
                     _ => {
-                        m.insert(
-                            "rawMetadata".to_string(),
-                            json!({ "md5": hex }),
-                        );
+                        m.insert("rawMetadata".to_string(), json!({ "md5": hex }));
                     }
                 }
             }

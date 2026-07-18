@@ -16,6 +16,9 @@ import {
     previewUndo,
     undoImport,
     getImportProgress,
+    getRecoverableImports,
+    cleanupRecoverableImport,
+    keepRecoverableImport,
     chooseDirectories,
     importPhotosEnhanced,
     scanDirectoriesTask,
@@ -54,6 +57,9 @@ const mockWindowApi = {
     previewUndo: vi.fn(),
     undoImport: vi.fn(),
     getImportProgress: vi.fn(),
+    getRecoverableImports: vi.fn(),
+    cleanupRecoverableImport: vi.fn(),
+    keepRecoverableImport: vi.fn(),
     chooseDirectories: vi.fn(),
     importPhotos: vi.fn(),
 };
@@ -302,6 +308,36 @@ describe("Enhanced Import API Functions", () => {
 
             expect(mockWindowApi.getImportProgress).toHaveBeenCalledWith("test-id");
             expect(result).toEqual(mockProgress);
+        });
+
+        it("should get recoverable imports", async () => {
+            const mockRows = [{ id: "import-1", status: "interrupted" }];
+            mockWindowApi.getRecoverableImports.mockResolvedValue(mockRows);
+
+            const result = await getRecoverableImports();
+
+            expect(mockWindowApi.getRecoverableImports).toHaveBeenCalledWith();
+            expect(result).toEqual(mockRows);
+        });
+
+        it("should cleanup recoverable import", async () => {
+            const mockResult = { success: true, importId: "import-1", deletedFiles: [] };
+            mockWindowApi.cleanupRecoverableImport.mockResolvedValue(mockResult);
+
+            const result = await cleanupRecoverableImport("import-1");
+
+            expect(mockWindowApi.cleanupRecoverableImport).toHaveBeenCalledWith("import-1");
+            expect(result).toEqual(mockResult);
+        });
+
+        it("should keep recoverable import", async () => {
+            const mockResult = { success: true, importId: "import-1", keptFiles: 2 };
+            mockWindowApi.keepRecoverableImport.mockResolvedValue(mockResult);
+
+            const result = await keepRecoverableImport("import-1");
+
+            expect(mockWindowApi.keepRecoverableImport).toHaveBeenCalledWith("import-1");
+            expect(result).toEqual(mockResult);
         });
     });
 

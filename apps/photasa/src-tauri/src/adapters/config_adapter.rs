@@ -79,10 +79,7 @@ impl Adapter for ConfigAdapter {
         match action {
             // 获取当前文件夹配置快照（.photasa.json；service 为 config）
             "getCurrentSnapshot" | "getSnapshot" => {
-                let folder = input
-                    .get("folder")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or(".");
+                let folder = input.get("folder").and_then(|v| v.as_str()).unwrap_or(".");
                 let config = Self::read_config(folder).await?;
                 let ts = now_ms();
                 Ok(json!({
@@ -133,7 +130,7 @@ impl Adapter for ConfigAdapter {
                 })
                 .await
                 .map_err(|e| AdapterError::Internal(format!("fixConfig task failed: {e}")))?
-                .map_err(|e| AdapterError::Internal(e))?;
+                .map_err(AdapterError::Internal)?;
                 Ok(json!({
                     "success": true,
                     "config": photasa_config::config_to_json_value(&config),

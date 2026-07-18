@@ -18,13 +18,15 @@ pub fn register_log_toggle_shortcut(app: &AppHandle) {
     };
 
     let handle = app.clone();
-    match handle.global_shortcut().on_shortcut(shortcut, move |app, _shortcut, event| {
-        if event.state == ShortcutState::Pressed {
-            if let Err(e) = app.emit("log:toggle-viewer", serde_json::json!({})) {
-                log::warn!("🌌 发射 log:toggle-viewer 失败：{e}");
+    match handle
+        .global_shortcut()
+        .on_shortcut(shortcut, move |app, _shortcut, event| {
+            if event.state == ShortcutState::Pressed {
+                if let Err(e) = app.emit("log:toggle-viewer", serde_json::json!({})) {
+                    log::warn!("🌌 发射 log:toggle-viewer 失败：{e}");
+                }
             }
-        }
-    }) {
+        }) {
         Ok(()) => log::info!("🌌 日志查看器全局快捷键已注册：{shortcut}"),
         Err(e) => log::warn!("🌌 日志查看器全局快捷键注册失败：{e}"),
     }

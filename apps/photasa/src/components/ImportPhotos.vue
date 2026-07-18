@@ -136,6 +136,7 @@ watch(
                 props.initialTargetPath,
                 store.paths,
                 excludePaths.value,
+                store.importDefaults,
             );
             wizardStateRef.value.setStepData("configuration", configData);
             wizardStateRef.value.setStepData("preview", null);
@@ -558,6 +559,7 @@ const handleStepChange = async (stepId: string, _stepIndex: number, wizardState:
             // 来自偏好设置的可用路径列表
             excludePaths.value,
             // 来自偏好设置的排除路径列表
+            store.importDefaults,
         );
         wizardState.setStepData("configuration", configData);
     }
@@ -694,6 +696,7 @@ const initializeConfigurationData = (setStepData: (stepId: string, data: any) =>
         props.initialTargetPath,
         store.paths,
         excludePaths.value,
+        store.importDefaults,
     );
     setStepData("configuration", configData);
     return null; // Return null so it doesn't render anything

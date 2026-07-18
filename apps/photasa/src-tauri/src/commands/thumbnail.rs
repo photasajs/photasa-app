@@ -43,14 +43,29 @@ pub struct ThumbnailResponse {
 
 impl ThumbnailResponse {
     fn ok(file: String) -> Self {
-        Self { success: true, file: Some(file), error: None, fallback: None }
+        Self {
+            success: true,
+            file: Some(file),
+            error: None,
+            fallback: None,
+        }
     }
     /// RAW 等无解码器路径：成功写入占位 JPEG
     fn ok_fallback(file: String) -> Self {
-        Self { success: true, file: Some(file), error: None, fallback: Some(true) }
+        Self {
+            success: true,
+            file: Some(file),
+            error: None,
+            fallback: Some(true),
+        }
     }
     fn err(msg: impl Into<String>) -> Self {
-        Self { success: false, file: None, error: Some(msg.into()), fallback: None }
+        Self {
+            success: false,
+            file: None,
+            error: Some(msg.into()),
+            fallback: None,
+        }
     }
 }
 
@@ -59,13 +74,11 @@ impl ThumbnailResponse {
 // ============================================================
 
 static VIDEO_EXTS: &[&str] = &[
-    "mp4", "mov", "avi", "mkv", "m4v", "3gp", "wmv", "flv", "webm",
-    "mpg", "mpeg", "m2v", "mts", "m2ts", "ts",
+    "mp4", "mov", "avi", "mkv", "m4v", "3gp", "wmv", "flv", "webm", "mpg", "mpeg", "m2v", "mts",
+    "m2ts", "ts",
 ];
 
-static IMAGE_EXTS: &[&str] = &[
-    "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif",
-];
+static IMAGE_EXTS: &[&str] = &["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif"];
 
 static HEIC_EXTS: &[&str] = &["heic", "heif", "avif"];
 static RAW_EXTS: &[&str] = &["raw", "cr2", "cr3", "nef", "arw", "dng", "raf", "orf"];
@@ -129,7 +142,11 @@ pub fn create_thumbnail_sync(request: &ThumbnailRequest) -> ThumbnailResponse {
 // RAW 占位缩略图（纯 Rust，无外部 RAW 解码器）
 // ============================================================
 
-fn make_raw_placeholder_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> ThumbnailResponse {
+fn make_raw_placeholder_thumbnail(
+    src: &str,
+    dst: &str,
+    req: &ThumbnailRequest,
+) -> ThumbnailResponse {
     let w = req.width.unwrap_or(256).max(1);
     let h = req.height.unwrap_or(256).max(1);
     let label = extension_label_from_path(src);
@@ -209,7 +226,11 @@ fn make_heic_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> Thumbnai
     };
 
     let has_alpha = handle.has_alpha_channel();
-    let chroma = if has_alpha { RgbChroma::Rgba } else { RgbChroma::Rgb };
+    let chroma = if has_alpha {
+        RgbChroma::Rgba
+    } else {
+        RgbChroma::Rgb
+    };
     let color_space = ColorSpace::Rgb(chroma);
 
     let decoded = match lib_heif.decode(&handle, color_space, None) {
@@ -246,7 +267,11 @@ fn make_heic_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> Thumbnai
     let w = req.width.unwrap_or(256);
     let h = req.height.unwrap_or(256);
     let resized = if req.without_enlargement.unwrap_or(true) {
-        if img_width <= w && img_height <= h { dyn_img } else { dyn_img.thumbnail(w, h) }
+        if img_width <= w && img_height <= h {
+            dyn_img
+        } else {
+            dyn_img.thumbnail(w, h)
+        }
     } else {
         dyn_img.thumbnail(w, h)
     };
@@ -262,21 +287,29 @@ fn make_heic_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> Thumbnai
         }
         if let Ok(ctx2) = HeifContext::read_from_file(src) {
             if let Ok(original) = ctx2.primary_image_handle() {
-            if let Ok(decoded2) = lib_heif.decode(&original, color_space, None) {
-                let planes2 = decoded2.planes();
-                if let Some(p2) = planes2.interleaved {
-                    let preview_img = if has_alpha {
-                        image::RgbaImage::from_raw(decoded2.width(), decoded2.height(), p2.data.to_vec())
+                if let Ok(decoded2) = lib_heif.decode(&original, color_space, None) {
+                    let planes2 = decoded2.planes();
+                    if let Some(p2) = planes2.interleaved {
+                        let preview_img = if has_alpha {
+                            image::RgbaImage::from_raw(
+                                decoded2.width(),
+                                decoded2.height(),
+                                p2.data.to_vec(),
+                            )
                             .map(image::DynamicImage::ImageRgba8)
-                    } else {
-                        image::RgbImage::from_raw(decoded2.width(), decoded2.height(), p2.data.to_vec())
+                        } else {
+                            image::RgbImage::from_raw(
+                                decoded2.width(),
+                                decoded2.height(),
+                                p2.data.to_vec(),
+                            )
                             .map(image::DynamicImage::ImageRgb8)
-                    };
-                    if let Some(pi) = preview_img {
-                        let _ = pi.thumbnail(1024, 1024).save(preview_path);
+                        };
+                        if let Some(pi) = preview_img {
+                            let _ = pi.thumbnail(1024, 1024).save(preview_path);
+                        }
                     }
                 }
-            }
             } // close primary_image_handle
         } // close HeifContext
     }
@@ -288,7 +321,12 @@ fn make_heic_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> Thumbnai
 // 视频缩略图：ffmpeg-next（libav）
 // ============================================================
 
-fn make_video_thumbnail_blocking(src: &str, dst: &str, max_w: u32, max_h: u32) -> ThumbnailResponse {
+fn make_video_thumbnail_blocking(
+    src: &str,
+    dst: &str,
+    max_w: u32,
+    max_h: u32,
+) -> ThumbnailResponse {
     use std::path::Path as StdPath;
 
     use crate::commands::ffmpeg_next_util::save_video_thumbnail;

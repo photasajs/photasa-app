@@ -63,9 +63,7 @@ pub fn to_relative_thumbnail_path(photo_path: &str) -> String {
     let file_name = to_file_name(photo_path.to_string());
     format!(
         "{}/{}{}.png",
-        PHOTASA_ORIGINALS_DIR,
-        "thumbnail-",
-        file_name
+        PHOTASA_ORIGINALS_DIR, "thumbnail-", file_name
     )
 }
 
@@ -159,8 +157,7 @@ pub fn read_config_sync(folder: &str) -> Result<Option<PhotasaConfigData>, Strin
     if !path.exists() {
         return Ok(None);
     }
-    let content =
-        std::fs::read_to_string(&path).map_err(|e| format!("读取配置失败: {e}"))?;
+    let content = std::fs::read_to_string(&path).map_err(|e| format!("读取配置失败: {e}"))?;
     let value: Value =
         serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败: {e}"))?;
     Ok(Some(parse_config_value(&value)))
@@ -189,7 +186,10 @@ pub fn absolute_thumbnail_path_for_source(source_path: &str) -> String {
 
 /// Electron `addToPhotoList`
 /// 从 photoList 移除照片并写回（Electron `removeFromPhotoList`）
-pub fn remove_photo_from_folder_list(folder: &str, photo_path: &str) -> Result<PhotasaConfigData, String> {
+pub fn remove_photo_from_folder_list(
+    folder: &str,
+    photo_path: &str,
+) -> Result<PhotasaConfigData, String> {
     let mut config = read_config_sync(folder)?.unwrap_or_else(PhotasaConfigData::empty);
     let file_name = normalize_photo_file_name(photo_path);
     config.photo_list.retain(|p| p.path != file_name);
@@ -198,7 +198,10 @@ pub fn remove_photo_from_folder_list(folder: &str, photo_path: &str) -> Result<P
     Ok(config)
 }
 
-pub fn add_photo_to_folder_list(folder: &str, photo_path: &str) -> Result<PhotasaConfigData, String> {
+pub fn add_photo_to_folder_list(
+    folder: &str,
+    photo_path: &str,
+) -> Result<PhotasaConfigData, String> {
     let mut config = read_config_sync(folder)?.unwrap_or_else(PhotasaConfigData::empty);
     let file_name = normalize_photo_file_name(photo_path);
     let thumbnail_name = to_relative_thumbnail_path(photo_path);
@@ -282,19 +285,15 @@ mod tests {
     #[test]
     fn shorten_thumbnail_relative_path_matches_electron() {
         assert_eq!(
-            shorten_thumbnail_relative_path(
-                "/album/.photasaoriginals/thumbnail-vacation.jpg.png"
-            ),
+            shorten_thumbnail_relative_path("/album/.photasaoriginals/thumbnail-vacation.jpg.png"),
             ".photasaoriginals/thumbnail-vacation.jpg.png"
         );
     }
 
     #[test]
     fn read_config_sync_does_not_rewrite_disk() {
-        let dir = std::env::temp_dir().join(format!(
-            "photasa-read-config-{}",
-            uuid::Uuid::new_v4()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("photasa-read-config-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).unwrap();
         let folder = dir.to_string_lossy().replace('\\', "/");
         let raw = json!({
@@ -318,10 +317,7 @@ mod tests {
 
     #[test]
     fn fix_config_sync_matches_electron_shorten_only() {
-        let dir = std::env::temp_dir().join(format!(
-            "photasa-fix-config-{}",
-            uuid::Uuid::new_v4()
-        ));
+        let dir = std::env::temp_dir().join(format!("photasa-fix-config-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).unwrap();
         let folder = dir.to_string_lossy().replace('\\', "/");
         let raw = json!({
@@ -350,10 +346,7 @@ mod tests {
 
     #[test]
     fn add_photo_skips_when_thumbnail_already_set() {
-        let dir = std::env::temp_dir().join(format!(
-            "photasa-add-photo-{}",
-            uuid::Uuid::new_v4()
-        ));
+        let dir = std::env::temp_dir().join(format!("photasa-add-photo-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).unwrap();
         let folder = dir.to_string_lossy().replace('\\', "/");
         let photo_path = format!("{folder}/holiday.heic");
@@ -383,10 +376,8 @@ mod tests {
 
     #[test]
     fn add_photo_writes_canonical_thumbnail_for_new_entry() {
-        let dir = std::env::temp_dir().join(format!(
-            "photasa-add-photo-new-{}",
-            uuid::Uuid::new_v4()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("photasa-add-photo-new-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&dir).unwrap();
         let folder = dir.to_string_lossy().replace('\\', "/");
         let photo_path = format!("{folder}/holiday.heic");

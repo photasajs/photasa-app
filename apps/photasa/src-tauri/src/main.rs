@@ -6,18 +6,18 @@ mod commands;
 mod services;
 mod utils;
 
-use commands::{
-    config, directory, engine_status, extract_metadata, import_execute, import_legacy,
-    import_preview, import_scan_directories, import_session_store, log_viewer, menu, path,
-    platform, shell, splash_bridge, stubs, thumbnail, update, watch, window,
-};
+use commands::import_execute::ImportTaskRegistry;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use commands::log_toggle_shortcut;
 use commands::update::UpdateState;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use commands::update_periodic::UpdatePeriodicHandle;
-use services::{TianshuService, tianshu::resolve_workflows_dir};
-use commands::import_execute::ImportTaskRegistry;
+use commands::{
+    config, directory, engine_status, extract_metadata, import_execute, import_legacy,
+    import_preview, import_scan_directories, import_session_store, log_viewer, menu, path,
+    platform, shell, splash_bridge, stubs, thumbnail, update, watch, window,
+};
+use services::{tianshu::resolve_workflows_dir, TianshuService};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
@@ -119,15 +119,13 @@ fn main() {
             app.manage(update_state);
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             {
-                let periodic = commands::update_periodic::spawn_periodic_update_checker(
-                    app.handle().clone(),
-                );
+                let periodic =
+                    commands::update_periodic::spawn_periodic_update_checker(app.handle().clone());
                 app.manage(periodic);
             }
 
             // 先注册占位，保证命令提取 State 不 panic
-            let tianshu_slot: Arc<RwLock<Option<TianshuService>>> =
-                Arc::new(RwLock::new(None));
+            let tianshu_slot: Arc<RwLock<Option<TianshuService>>> = Arc::new(RwLock::new(None));
             app.manage(tianshu_slot.clone());
 
             engine_status::emit_engine_status(&app_handle, "ready");
@@ -230,6 +228,9 @@ fn main() {
             import_session_store::get_import_history,
             import_session_store::get_import_details,
             import_session_store::get_import_progress,
+            import_session_store::get_recoverable_imports,
+            import_session_store::cleanup_recoverable_import,
+            import_session_store::keep_recoverable_import,
             import_session_store::preview_undo_import,
             import_session_store::undo_import_execute,
             extract_metadata::extract_metadata,
@@ -342,8 +343,8 @@ async fn tianshu_command(
     service: tauri::State<'_, Arc<RwLock<Option<TianshuService>>>>,
     command: serde_json::Value,
 ) -> Result<TianshuResponse, String> {
-    let input: TianshuCommandInput = serde_json::from_value(command)
-        .map_err(|e| format!("invalid command: {e}"))?;
+    let input: TianshuCommandInput =
+        serde_json::from_value(command).map_err(|e| format!("invalid command: {e}"))?;
 
     let inputs = resolve_tianshu_inputs(&input);
     let intent = input

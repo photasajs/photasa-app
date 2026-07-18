@@ -26,7 +26,12 @@ impl log::Log for PhotasaLogBridge {
     }
 
     fn log(&self, record: &log::Record) {
-        eprintln!("[{}] {} — {}", record.level(), record.target(), record.args());
+        eprintln!(
+            "[{}] {} — {}",
+            record.level(),
+            record.target(),
+            record.args()
+        );
         if !LOG_VIEWER_ACTIVE.load(Ordering::SeqCst) {
             return;
         }

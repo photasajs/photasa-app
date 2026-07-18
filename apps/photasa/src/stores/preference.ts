@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { cleanupScanQueue } from "@renderer/utils/api";
-import type { PhotasaConfig } from "@photasa/common";
+import type { DuplicateStrategy, ImportPreferences, PhotasaConfig } from "@photasa/common";
 import type { FileOperationInput } from "@photasa/common";
 import type { ThumbnailRequest } from "@photasa/common";
 import { addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
@@ -91,6 +91,8 @@ export interface PreferenceState {
         /** 是否启用文件监控 */
         watchEnabled: boolean;
     };
+
+    importing: ImportPreferences;
 
     /** 性能相关偏好设置 */
     performance: {
@@ -186,6 +188,12 @@ export const usePreferenceStore = defineStore("preference", {
                 watchEnabled: true, // 默认启用文件监控
             },
 
+            importing: {
+                defaultTargetPath: "",
+                duplicateStrategy: "rename",
+                includeSubfolders: true,
+            },
+
             /** 性能默认设置 */
             performance: {
                 maxCacheSize: 1024, // 默认最大缓存1024MB
@@ -249,6 +257,7 @@ export const usePreferenceStore = defineStore("preference", {
         paths: (state) => state.scanning.paths,
         /** 排除路径模式列表 */
         excludePaths: (state) => state.scanning.excludePatterns,
+        importDefaults: (state) => state.importing,
 
         /**
          * 偏好设置getter - 系统相关
@@ -509,6 +518,15 @@ export const usePreferenceStore = defineStore("preference", {
         },
         updateThumbnailSize(size: number) {
             this.display.thumbnailSize = size >= 150 && size <= 400 ? size : 150;
+        },
+        setImportDefaultTargetPath(path: string) {
+            this.importing.defaultTargetPath = path;
+        },
+        setImportDuplicateStrategy(strategy: DuplicateStrategy) {
+            this.importing.duplicateStrategy = strategy;
+        },
+        setImportIncludeSubfolders(value: boolean) {
+            this.importing.includeSubfolders = value;
         },
         // ❌ RFC 0048: completeScanPath 已删除
         // 队列清理由尉迟恭自动处理（watch 机制），无需手动干预

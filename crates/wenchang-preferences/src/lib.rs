@@ -144,7 +144,9 @@ impl PreferencesStore {
     pub async fn initialize(preferences_dir: impl Into<PathBuf>) -> Result<Self, PreferencesError> {
         let preferences_dir = preferences_dir.into();
         if preferences_dir.as_os_str().is_empty() {
-            return Err(PreferencesError::InvalidDir("empty preferences dir".to_string()));
+            return Err(PreferencesError::InvalidDir(
+                "empty preferences dir".to_string(),
+            ));
         }
 
         tokio::fs::create_dir_all(&preferences_dir).await?;
@@ -180,7 +182,11 @@ impl PreferencesStore {
         self.preferences.revision
     }
 
-    pub async fn update_preferences(&mut self, delta: Value, source: &str) -> Result<u64, PreferencesError> {
+    pub async fn update_preferences(
+        &mut self,
+        delta: Value,
+        source: &str,
+    ) -> Result<u64, PreferencesError> {
         let next_revision = self.preferences.revision.saturating_add(1).max(1);
 
         let current_value = serde_json::to_value(&self.preferences)?;
@@ -211,7 +217,11 @@ impl PreferencesStore {
         Ok(serde_json::to_value(&self.preferences)?)
     }
 
-    pub async fn import_preferences(&mut self, data: Value, source: &str) -> Result<PreferenceSnapshot, PreferencesError> {
+    pub async fn import_preferences(
+        &mut self,
+        data: Value,
+        source: &str,
+    ) -> Result<PreferenceSnapshot, PreferencesError> {
         let mut imported: UserPreferences = serde_json::from_value(data)?;
         imported.revision = self.preferences.revision.saturating_add(1).max(1);
         imported.last_modified = now_ms();
@@ -228,11 +238,20 @@ impl PreferencesStore {
             return (vec![], total);
         }
         let end = (offset + limit).min(total);
-        let slice = self.history.iter().skip(offset).take(end - offset).cloned().collect();
+        let slice = self
+            .history
+            .iter()
+            .skip(offset)
+            .take(end - offset)
+            .cloned()
+            .collect();
         (slice, total)
     }
 
-    pub async fn restore_revision(&mut self, revision: u64) -> Result<PreferenceSnapshot, PreferencesError> {
+    pub async fn restore_revision(
+        &mut self,
+        revision: u64,
+    ) -> Result<PreferenceSnapshot, PreferencesError> {
         if revision == 0 {
             return Err(PreferencesError::InvalidRevision(revision));
         }
@@ -275,7 +294,12 @@ impl PreferencesStore {
         Ok(())
     }
 
-    fn append_history(&mut self, revision: u64, delta: Value, source: &str) -> Result<(), PreferencesError> {
+    fn append_history(
+        &mut self,
+        revision: u64,
+        delta: Value,
+        source: &str,
+    ) -> Result<(), PreferencesError> {
         let entry = PreferenceHistory {
             revision,
             delta,
@@ -330,7 +354,11 @@ fn default_preferences(now: u64) -> UserPreferences {
         },
         scanning: ScanningPreferences {
             auto_scan: true,
-            exclude_patterns: vec!["node_modules".to_string(), ".git".to_string(), "*.tmp".to_string()],
+            exclude_patterns: vec![
+                "node_modules".to_string(),
+                ".git".to_string(),
+                "*.tmp".to_string(),
+            ],
             concurrency: 4,
             watch_enabled: true,
             paths: vec![],
@@ -408,7 +436,9 @@ mod tests {
         assert_eq!(rev2, rev1 + 1);
         assert_eq!(store.get_current_snapshot().data.ui.theme, "dark");
 
-        let content = tokio::fs::read_to_string(dir.join(PREFERENCES_FILE_NAME)).await.unwrap();
+        let content = tokio::fs::read_to_string(dir.join(PREFERENCES_FILE_NAME))
+            .await
+            .unwrap();
         let persisted: UserPreferences = serde_json::from_str(&content).unwrap();
         assert_eq!(persisted.ui.theme, "dark");
         assert_eq!(persisted.revision, rev2);
@@ -419,7 +449,10 @@ mod tests {
         let dir = temp_preferences_dir();
         let mut store = PreferencesStore::initialize(&dir).await.unwrap();
         store
-            .update_preferences(serde_json::json!({ "ui": { "theme": "paper" } }), "unit-test")
+            .update_preferences(
+                serde_json::json!({ "ui": { "theme": "paper" } }),
+                "unit-test",
+            )
             .await
             .unwrap();
         let (entries, total) = store.get_history(10, 0);
@@ -485,4 +518,3 @@ mod tests {
         assert_eq!(snap.revision, rev2);
     }
 }
-

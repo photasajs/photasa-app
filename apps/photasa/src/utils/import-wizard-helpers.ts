@@ -5,7 +5,12 @@
  * including validation, data transformation, and configuration management.
  */
 
-import type { ImportConfig, DuplicateStrategy, ImportFilters } from "@photasa/common";
+import type {
+    ImportConfig,
+    DuplicateStrategy,
+    ImportFilters,
+    ImportPreferences,
+} from "@photasa/common";
 import { createDefaultFilters } from "./import-helpers";
 import { getLogger } from "@photasa/common";
 
@@ -69,17 +74,23 @@ export function createInitialConfigurationData(
     initialTargetPath = "",
     defaultPaths: string[] = [],
     excludePaths?: string[],
+    importDefaults?: ImportPreferences,
 ): {
     sourcePaths: string[];
     targetPath: string;
     filters: ImportFilters;
     duplicateStrategy: DuplicateStrategy;
 } {
+    const filters = createDefaultFilters(excludePaths);
+    if (typeof importDefaults?.includeSubfolders === "boolean") {
+        filters.includeSubfolders = importDefaults.includeSubfolders;
+    }
+
     return {
         sourcePaths: Array.isArray(initialSourcePaths) ? [...initialSourcePaths] : [],
-        targetPath: initialTargetPath || defaultPaths[0] || "",
-        filters: createDefaultFilters(excludePaths),
-        duplicateStrategy: "rename" as DuplicateStrategy,
+        targetPath: initialTargetPath || importDefaults?.defaultTargetPath || defaultPaths[0] || "",
+        filters,
+        duplicateStrategy: importDefaults?.duplicateStrategy ?? ("rename" as DuplicateStrategy),
     };
 }
 

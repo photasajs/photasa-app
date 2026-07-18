@@ -35,12 +35,12 @@ fn json_values_equal(left: &Value, right: &Value) -> bool {
 
 fn compare_values(left: &Value, op: &str, right: &Value) -> bool {
     match op {
-        "eq" => json_values_equal(left, right),
-        "ne" => !json_values_equal(left, right),
-        "gt" => left.as_f64().unwrap_or(0.0) > right.as_f64().unwrap_or(0.0),
-        "lt" => left.as_f64().unwrap_or(0.0) < right.as_f64().unwrap_or(0.0),
-        "gte" => left.as_f64().unwrap_or(0.0) >= right.as_f64().unwrap_or(0.0),
-        "lte" => left.as_f64().unwrap_or(0.0) <= right.as_f64().unwrap_or(0.0),
+        "eq" | "==" | "===" => json_values_equal(left, right),
+        "ne" | "!=" | "!==" => !json_values_equal(left, right),
+        "gt" | ">" => left.as_f64().unwrap_or(0.0) > right.as_f64().unwrap_or(0.0),
+        "lt" | "<" => left.as_f64().unwrap_or(0.0) < right.as_f64().unwrap_or(0.0),
+        "gte" | ">=" => left.as_f64().unwrap_or(0.0) >= right.as_f64().unwrap_or(0.0),
+        "lte" | "<=" => left.as_f64().unwrap_or(0.0) <= right.as_f64().unwrap_or(0.0),
         _ => false,
     }
 }
@@ -126,7 +126,7 @@ pub fn array_filter(input: &Value) -> Value {
     let filtered: Vec<Value> = array
         .into_iter()
         .filter(|item| {
-            let actual = get_nested_value(&item, field);
+            let actual = get_nested_value(item, field);
             compare_values(&actual, operator, &expected)
         })
         .collect();
@@ -138,7 +138,11 @@ pub fn array_find(input: &Value, ctx: &ExecutionContext) -> Value {
     let array = match input.get("array") {
         Some(Value::Array(items)) => items.clone(),
         _ => {
-            if input.get("returnIndex").and_then(|v| v.as_bool()).unwrap_or(false) {
+            if input
+                .get("returnIndex")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
                 return json!(-1);
             }
             return Value::Null;
@@ -249,7 +253,10 @@ pub fn object_merge(input: &Value) -> Value {
 }
 
 pub fn conditional(input: &Value) -> Value {
-    let condition = input.get("condition").cloned().unwrap_or(Value::Bool(false));
+    let condition = input
+        .get("condition")
+        .cloned()
+        .unwrap_or(Value::Bool(false));
     let pass = match &condition {
         Value::Bool(b) => *b,
         Value::Number(n) => n.as_i64().unwrap_or(0) >= 0,

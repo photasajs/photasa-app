@@ -7,8 +7,8 @@
  */
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
-use tauri::{AppHandle, Emitter};
 use tauri::menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
+use tauri::{AppHandle, Emitter};
 
 static MENU_LISTENER_REGISTERED: OnceLock<()> = OnceLock::new();
 
@@ -74,9 +74,12 @@ fn build_and_set_menu(app: &AppHandle, menus: Vec<MenuItemData>) -> Result<(), S
     MENU_LISTENER_REGISTERED.get_or_init(|| {
         let app_handle = app.clone();
         app.on_menu_event(move |_app, event| {
-            let _ = app_handle.emit("picasa:menu-action", MenuActionPayload {
-                key: event.id().0.clone(),
-            });
+            let _ = app_handle.emit(
+                "picasa:menu-action",
+                MenuActionPayload {
+                    key: event.id().0.clone(),
+                },
+            );
         });
     });
 

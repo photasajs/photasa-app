@@ -105,10 +105,7 @@ pub fn should_process_file(file_path: &str, action: &str) -> bool {
                 .and_then(|n| n.to_str())
                 .unwrap_or(file_path)
                 .replace('\\', "/");
-            !config
-                .photo_list
-                .iter()
-                .any(|p| p.path == file_name)
+            !config.photo_list.iter().any(|p| p.path == file_name)
         }
         Ok(None) => true,
         Err(_) => true,
@@ -173,7 +170,10 @@ mod tests {
     use std::io::Write;
 
     fn temp_dir(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("photasa-scan-strategy-{name}-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!(
+            "photasa-scan-strategy-{name}-{}",
+            uuid::Uuid::new_v4()
+        ));
         fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -213,7 +213,11 @@ mod tests {
             "photoList": [{ "path": "a.jpg", "thumbnail": ".photasaoriginals/thumbnail-a.jpg.png", "isVideo": false }],
             "lastModified": 0
         });
-        fs::write(dir.join(PHOTASA_CONFIG_FILE), serde_json::to_string(&config).unwrap()).unwrap();
+        fs::write(
+            dir.join(PHOTASA_CONFIG_FILE),
+            serde_json::to_string(&config).unwrap(),
+        )
+        .unwrap();
         let d = decide_scan_strategy(dir.to_str().unwrap(), "scan");
         assert_eq!(d.strategy, ScanStrategy::Skip);
     }
@@ -221,8 +225,11 @@ mod tests {
     #[test]
     fn decide_empty_config_no_media_is_skip() {
         let dir = temp_dir("empty-no-media");
-        fs::write(dir.join(PHOTASA_CONFIG_FILE), r#"{"version":"1.0","photoList":[],"lastModified":0}"#)
-            .unwrap();
+        fs::write(
+            dir.join(PHOTASA_CONFIG_FILE),
+            r#"{"version":"1.0","photoList":[],"lastModified":0}"#,
+        )
+        .unwrap();
         let d = decide_scan_strategy(dir.to_str().unwrap(), "scan");
         assert_eq!(d.strategy, ScanStrategy::Skip);
     }
@@ -230,8 +237,11 @@ mod tests {
     #[test]
     fn decide_empty_config_with_media_is_full() {
         let dir = temp_dir("empty-with-media");
-        fs::write(dir.join(PHOTASA_CONFIG_FILE), r#"{"version":"1.0","photoList":[],"lastModified":0}"#)
-            .unwrap();
+        fs::write(
+            dir.join(PHOTASA_CONFIG_FILE),
+            r#"{"version":"1.0","photoList":[],"lastModified":0}"#,
+        )
+        .unwrap();
         fs::File::create(dir.join("pic.jpg")).unwrap();
         let d = decide_scan_strategy(dir.to_str().unwrap(), "scan");
         assert_eq!(d.strategy, ScanStrategy::Full);
@@ -268,7 +278,11 @@ mod tests {
             "photoList": [{ "path": "x.jpg", "thumbnail": ".photasaoriginals/thumbnail-x.jpg.png", "isVideo": false }],
             "lastModified": 0
         });
-        fs::write(dir.join(PHOTASA_CONFIG_FILE), serde_json::to_string(&config).unwrap()).unwrap();
+        fs::write(
+            dir.join(PHOTASA_CONFIG_FILE),
+            serde_json::to_string(&config).unwrap(),
+        )
+        .unwrap();
         assert!(!should_process_file(photo.to_str().unwrap(), "scan"));
     }
 }

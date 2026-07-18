@@ -11,6 +11,7 @@ import ThemeSettings from "./settings/ThemeSettings.vue";
 import AdvancedSettings from "./settings/AdvancedSettings.vue";
 import UpdateSettings from "./settings/UpdateSettings.vue";
 import ScanMonitoringSettings from "./settings/ScanMonitoringSettings.vue";
+import ImportSettings from "./settings/ImportSettings.vue";
 
 defineOptions({
     name: "UserPreference",
@@ -41,6 +42,7 @@ const label = computed(() => {
             advanced: t("preference.tabs.advanced"),
             autoUpdate: t("preference.tabs.autoUpdate"),
             scanMonitoring: t("preference.tabs.scanMonitoring"),
+            import: t("preference.tabs.import"),
         },
     };
 });
@@ -50,6 +52,7 @@ const tabsData = computed(() => [
     { key: "theme", label: label.value.tabs.theme },
     { key: "language", label: label.value.language },
     { key: "autoUpdate", label: label.value.tabs.autoUpdate },
+    { key: "import", label: label.value.tabs.import },
     { key: "scanMonitoring", label: label.value.tabs.scanMonitoring },
     { key: "about", label: label.value.tabs.about },
     { key: "advanced", label: label.value.tabs.advanced },
@@ -75,6 +78,9 @@ const tabsData = computed(() => [
         </template>
         <template #autoUpdate>
             <UpdateSettings />
+        </template>
+        <template #import>
+            <ImportSettings />
         </template>
         <template #scanMonitoring>
             <ScanMonitoringSettings />

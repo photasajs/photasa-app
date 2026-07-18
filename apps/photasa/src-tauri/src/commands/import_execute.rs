@@ -77,7 +77,8 @@ fn emit_status_from_snapshot(
     snapshot.insert("importId".to_string(), Value::String(import_id.to_string()));
     let payload = Value::Object(snapshot);
     let _ = window.emit("import:progress", payload.clone());
-    sessions.set_progress(import_id, payload);
+    sessions.set_progress(import_id, payload.clone());
+    sessions.update_active_progress(import_id, payload);
 }
 
 /// 执行导入：立即返回 import_id，后台复制并 emit 进度事件
@@ -126,6 +127,7 @@ pub async fn execute_import(
     }
 
     let strategy = take_duplicate_strategy(&config);
+    let config_for_active = config.clone();
     let import_id_emit = import_id.clone();
     let target_for_result = target_path.clone();
     let src_for_result = source_paths.clone();
@@ -139,9 +141,21 @@ pub async fn execute_import(
         let total_files = files.len() as u32;
         let meta = PhotasaMetadataExtractor;
 
+        sessions_spawn.start_active_import(
+            &import_id_emit,
+            json!({
+                "sourcePaths": src_for_result.clone(),
+                "targetPath": target_for_result.clone(),
+                "totalFiles": total_files,
+                "config": config_for_active,
+            }),
+        );
+
         let sessions_for_cb = sessions_spawn.clone();
         let import_id_for_cb = import_id_emit.clone();
         let window_for_cb = window_clone.clone();
+        let sessions_for_file = sessions_spawn.clone();
+        let import_id_for_file = import_id_emit.clone();
 
         let loop_result = run_import_file_loop(
             ImportLoopRequest {
@@ -156,7 +170,11 @@ pub async fn execute_import(
             },
             |progress_val| {
                 let _ = window_for_cb.emit("import:progress", progress_val.clone());
-                sessions_for_cb.set_progress(&import_id_for_cb, progress_val);
+                sessions_for_cb.set_progress(&import_id_for_cb, progress_val.clone());
+                sessions_for_cb.update_active_progress(&import_id_for_cb, progress_val);
+            },
+            |imported_file| {
+                sessions_for_file.add_active_imported_file(&import_id_for_file, imported_file);
             },
         );
 
@@ -169,6 +187,7 @@ pub async fn execute_import(
                 let mut g = registry_spawn.0.lock().unwrap();
                 g.remove(&import_id_emit);
                 sessions_spawn.remove_progress(&import_id_emit);
+                sessions_spawn.remove_active_import(&import_id_emit);
             }
             Ok(ImportLoopEnd::Cancelled {
                 successful,
@@ -194,6 +213,7 @@ pub async fn execute_import(
                 let mut g = registry_spawn.0.lock().unwrap();
                 g.remove(&import_id_emit);
                 sessions_spawn.remove_progress(&import_id_emit);
+                sessions_spawn.remove_active_import(&import_id_emit);
                 info!("🌌 导入已取消: {}", import_id_emit);
             }
             Ok(ImportLoopEnd::Completed {

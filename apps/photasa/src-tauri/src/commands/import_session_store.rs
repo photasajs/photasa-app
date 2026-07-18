@@ -65,6 +65,29 @@ pub fn get_import_progress(
 }
 
 #[tauri::command]
+pub fn get_recoverable_imports(
+    store: tauri::State<'_, Arc<ImportSessionStore>>,
+) -> Result<Vec<Value>, String> {
+    Ok(store.get_recoverable_imports())
+}
+
+#[tauri::command]
+pub fn cleanup_recoverable_import(
+    store: tauri::State<'_, Arc<ImportSessionStore>>,
+    args: ImportProgressArgs,
+) -> Result<Value, String> {
+    Ok(store.cleanup_recoverable_import(&args.import_id))
+}
+
+#[tauri::command]
+pub fn keep_recoverable_import(
+    store: tauri::State<'_, Arc<ImportSessionStore>>,
+    args: ImportProgressArgs,
+) -> Result<Value, String> {
+    Ok(store.keep_recoverable_import(&args.import_id))
+}
+
+#[tauri::command]
 pub fn preview_undo_import(
     store: tauri::State<'_, Arc<ImportSessionStore>>,
     args: HistoryIdArgs,
@@ -90,7 +113,10 @@ pub fn undo_import_execute(
     }
 
     let preview = preview_undo_payload(&store, &history_id);
-    let can = preview.get("canUndo").and_then(|v| v.as_bool()).unwrap_or(false);
+    let can = preview
+        .get("canUndo")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
     if !can {
         return Ok(json!({
             "success": false,

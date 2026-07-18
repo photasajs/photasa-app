@@ -8,7 +8,9 @@ use crate::commands::import_date_util::{
     determine_group_target_utc, generate_date_path_utc, merge_extract_into_file_info,
     rfc3339_pair_from_fs_meta,
 };
-use crate::commands::import_path_filter::{basename_hidden, classify_media, should_ignore_photasa_path};
+use crate::commands::import_path_filter::{
+    basename_hidden, classify_media, should_ignore_photasa_path,
+};
 use log::{info, warn};
 use serde_json::{json, Map, Value};
 use std::fs;
@@ -252,13 +254,7 @@ fn scan_preview_blocking(
             });
 
             let mut fi = base_file_info_preview(
-                &path_str,
-                &name,
-                size,
-                is_image,
-                is_video,
-                &created,
-                &modified,
+                &path_str, &name, size, is_image, is_video, &created, &modified,
             );
             merge_extract_into_file_info(&mut fi, &extracted, &created, &modified);
             let target_dt = determine_group_target_utc(&fi);
@@ -356,7 +352,9 @@ pub async fn preview_import(app: AppHandle, config: Value) -> Result<Value, Stri
 
     let app_arc = Arc::new(app);
     let sid = preview_id.clone();
-    tokio::task::spawn_blocking(move || scan_preview_blocking(app_arc, sid, sources, target_root, recursive))
-        .await
-        .map_err(|e| format!("预览任务异常: {e}"))?
+    tokio::task::spawn_blocking(move || {
+        scan_preview_blocking(app_arc, sid, sources, target_root, recursive)
+    })
+    .await
+    .map_err(|e| format!("预览任务异常: {e}"))?
 }

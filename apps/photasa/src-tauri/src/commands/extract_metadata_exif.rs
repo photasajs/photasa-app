@@ -67,7 +67,11 @@ fn dms_triple(v: &ExifValue) -> Option<(f64, f64, f64)> {
 
 fn signed_decimal(deg: f64, min: f64, sec: f64, positive_ref: bool) -> f64 {
     let v = deg + min / 60.0 + sec / 3600.0;
-    if positive_ref { v } else { -v }
+    if positive_ref {
+        v
+    } else {
+        -v
+    }
 }
 
 fn parse_exif_datetime(s: &str) -> Option<String> {
@@ -198,9 +202,7 @@ fn apply_parsed(exif: &Exif, out: &mut Value) {
     ) {
         let lat_ok = lref.eq_ignore_ascii_case("N");
         let lon_ok = oref.eq_ignore_ascii_case("E");
-        if let (Some((d1, m1, s1)), Some((d2, m2, s2))) =
-            (dms_triple(lat_v), dms_triple(lon_v))
-        {
+        if let (Some((d1, m1, s1)), Some((d2, m2, s2))) = (dms_triple(lat_v), dms_triple(lon_v)) {
             let lat = signed_decimal(d1, m1, s1, lat_ok);
             let lon = signed_decimal(d2, m2, s2, lon_ok);
             let alt = gps_alt.and_then(|v| {
@@ -293,11 +295,7 @@ pub(crate) fn legacy_import_target_name(
         let utc: DateTime<Utc> = st.into();
         utc.with_timezone(&Local)
     };
-    Some(format!(
-        "{}/{}",
-        local_dt.year(),
-        local_dt.format("%Y%m%d")
-    ))
+    Some(format!("{}/{}", local_dt.year(), local_dt.format("%Y%m%d")))
 }
 
 /// 若文件含可读 EXIF，向 `out` 写入 `dateTime`（RFC3339）、`dateSource: exif`、`gpsInfo`、`cameraInfo`（含 lens / iso / focalLength / aperture / shutterSpeed 等，对齐 `@photasa/common` 的 `CameraInfo`）
@@ -352,10 +350,7 @@ mod tests {
 
     #[test]
     fn first_rational_as_f64_exposure_one_two_fiftieth() {
-        let v = ExifValue::Rational(vec![Rational {
-            num: 1,
-            denom: 250,
-        }]);
+        let v = ExifValue::Rational(vec![Rational { num: 1, denom: 250 }]);
         let sec = first_rational_as_f64(&v).expect("rational");
         assert!((sec - (1.0 / 250.0)).abs() < 1e-9);
     }

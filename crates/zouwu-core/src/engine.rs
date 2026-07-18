@@ -4,11 +4,11 @@ use serde_json::{json, Value};
 use std::sync::Arc;
 use thiserror::Error;
 
-use crate::adapter::{AdapterRegistry, AdapterError};
+use crate::adapter::{AdapterError, AdapterRegistry};
 use crate::expression::{eval_condition, resolve_value};
 use crate::types::{
-    ActionStep, BuiltinStep, ConditionStep, ExecutionContext, ExecutionResult,
-    LoopContext, LoopStep, ParallelStep, WorkflowCallStep, WorkflowDefinition, WorkflowStep,
+    ActionStep, BuiltinStep, ConditionStep, ExecutionContext, ExecutionResult, LoopContext,
+    LoopStep, ParallelStep, WorkflowCallStep, WorkflowDefinition, WorkflowStep,
 };
 
 // ============================================================
@@ -103,12 +103,8 @@ impl ZouwuEngine {
             for step in steps {
                 // 检查步骤级条件（step.condition 字段，非 ConditionStep）
                 if let Some(cond) = get_step_condition(step) {
-                    let pass = eval_condition(
-                        &cond.field,
-                        &cond.operator,
-                        cond.value.as_ref(),
-                        ctx,
-                    );
+                    let pass =
+                        eval_condition(&cond.field, &cond.operator, cond.value.as_ref(), ctx);
                     if !pass {
                         // 条件不满足，跳过此步骤
                         continue;
@@ -190,8 +186,7 @@ impl ZouwuEngine {
         if let Some(output_map) = &step.output {
             let mut mapped = serde_json::Map::new();
             for (local_key, path) in output_map {
-                let val = crate::expression::get_path(&raw_output, path)
-                    .unwrap_or(Value::Null);
+                let val = crate::expression::get_path(&raw_output, path).unwrap_or(Value::Null);
                 mapped.insert(local_key.clone(), val);
             }
             step_out = Value::Object(mapped);
@@ -266,11 +261,9 @@ impl ZouwuEngine {
                     let source_val =
                         resolve_value(&Value::String(format!("{{{{{source}}}}}")), ctx);
                     if let Some(path) = input.get("path").and_then(|v| v.as_str()) {
-                        let resolved_path =
-                            resolve_value(&Value::String(path.to_string()), ctx);
+                        let resolved_path = resolve_value(&Value::String(path.to_string()), ctx);
                         let path_str = resolved_path.as_str().unwrap_or(path);
-                        crate::expression::get_path(&source_val, path_str)
-                            .unwrap_or(Value::Null)
+                        crate::expression::get_path(&source_val, path_str).unwrap_or(Value::Null)
                     } else {
                         source_val
                     }
@@ -457,9 +450,10 @@ impl ZouwuEngine {
         step: &WorkflowCallStep,
         ctx: &mut ExecutionContext,
     ) -> Result<StepResult, EngineError> {
-        let resolver = self.resolver.as_ref().ok_or_else(|| {
-            EngineError::Internal("no workflow resolver registered".to_string())
-        })?;
+        let resolver = self
+            .resolver
+            .as_ref()
+            .ok_or_else(|| EngineError::Internal("no workflow resolver registered".to_string()))?;
 
         let sub_workflow = resolver
             .resolve(&step.workflow_id)

@@ -9,11 +9,7 @@ use serde_json::{json, Map, Value};
 use std::path::Path;
 
 /// 与 `VIDEO_TIME_FIELDS`（video-extractor.ts）顺序一致
-const VIDEO_TIME_FIELDS: &[&str] = &[
-    "com.apple.quicktime.creationdate",
-    "creation_time",
-    "date",
-];
+const VIDEO_TIME_FIELDS: &[&str] = &["com.apple.quicktime.creationdate", "creation_time", "date"];
 
 const VIDEO_LOCATION_TAGS: &[&str] = &["location", "com.apple.quicktime.location.ISO6709"];
 
@@ -91,10 +87,7 @@ fn probe_to_json(path: &Path) -> Result<Value, String> {
 
     let format_tags = dict_to_json_map(&ictx.metadata());
     let mut format_obj = Map::new();
-    format_obj.insert(
-        "duration".to_string(),
-        json!(format!("{duration_sec:.6}")),
-    );
+    format_obj.insert("duration".to_string(), json!(format!("{duration_sec:.6}")));
     if !format_tags.is_empty() {
         format_obj.insert("tags".to_string(), Value::Object(format_tags));
     }
@@ -315,10 +308,7 @@ pub(crate) fn enrich_from_ffprobe(path: &Path, out: &mut Value) {
                 rm.insert("rotation".to_string(), json!(rot));
             }
             _ => {
-                root.insert(
-                    "rawMetadata".to_string(),
-                    json!({ "rotation": rot }),
-                );
+                root.insert("rawMetadata".to_string(), json!({ "rotation": rot }));
             }
         }
     }

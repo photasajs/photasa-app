@@ -7,7 +7,13 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { getDirectory, stopWatching } from "@renderer/utils/api";
+import {
+    getDirectory,
+    stopWatching,
+    getRecoverableImports,
+    cleanupRecoverableImport,
+    keepRecoverableImport,
+} from "@renderer/utils/api";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@photasa/common";
@@ -43,6 +49,8 @@ import { useQinQiong } from "@renderer/composables/useQinQiong";
 import { useYuShiNan } from "@renderer/composables/useYuShiNan";
 import { isTauri } from "./api/env";
 import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
+import { notification } from "@renderer/services/notification-manager";
+import type { RecoverableImport } from "@photasa/common";
 
 /**
  * 日志记录器
@@ -143,6 +151,71 @@ async function initializeApp(): Promise<void> {
     }
 }
 
+async function cleanupInterruptedImport(item: RecoverableImport): Promise<void> {
+    const result = await cleanupRecoverableImport(item.id);
+    if (result.success) {
+        notification.success({
+            title: t("import.recovery.cleanedTitle"),
+            message: t("import.recovery.cleanedMessage", {
+                count: result.deletedFiles?.length ?? 0,
+            }),
+        });
+        return;
+    }
+    notification.error({
+        title: t("import.recovery.cleanupFailedTitle"),
+        message: t("import.recovery.cleanupFailedMessage"),
+    });
+}
+
+async function keepInterruptedImport(item: RecoverableImport): Promise<void> {
+    const result = await keepRecoverableImport(item.id);
+    notification.info({
+        title: t("import.recovery.keptTitle"),
+        message: t("import.recovery.keptMessage", {
+            count: result.keptFiles ?? item.fileList.length,
+        }),
+    });
+}
+
+function notifyInterruptedImport(item: RecoverableImport): void {
+    notification.warning({
+        key: `import-recovery-${item.id}`,
+        duration: 0,
+        title: t("import.recovery.title"),
+        message: t("import.recovery.message", {
+            copied: item.fileList.length,
+            total: item.totalFiles,
+        }),
+        actions: [
+            {
+                text: t("import.recovery.cleanup"),
+                type: "danger",
+                onClick: () => {
+                    void cleanupInterruptedImport(item);
+                },
+            },
+            {
+                text: t("import.recovery.keep"),
+                type: "secondary",
+                onClick: () => {
+                    void keepInterruptedImport(item);
+                },
+            },
+        ],
+    });
+}
+
+async function detectRecoverableImports(): Promise<void> {
+    if (!isTauri()) return;
+    try {
+        const imports = await getRecoverableImports();
+        imports.forEach(notifyInterruptedImport);
+    } catch (error) {
+        logger.warn("⚠️ 导入恢复检查失败", error);
+    }
+}
+
 const chuSuiLiang = useChuSuiLiang();
 const yuShiNan = useYuShiNan(); // ✅ RFC 0057: 通过虞世南服务更新状态栏
 
@@ -210,6 +283,7 @@ onMounted(async () => {
     // Initialize the application
     try {
         await initializeApp();
+        await detectRecoverableImports();
     } finally {
         // RFC 0101：主界面首屏就绪后关闭 Splash、显示主窗
         if (isTauri()) {

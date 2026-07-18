@@ -113,6 +113,18 @@ describe("import-wizard-helpers", () => {
             expect(result.targetPath).toBe("/default1");
         });
 
+        it("should prefer import defaults over watched folders", () => {
+            const result = createInitialConfigurationData(["/source"], "", ["/watched"], [], {
+                defaultTargetPath: "/imports",
+                duplicateStrategy: "skip",
+                includeSubfolders: false,
+            });
+
+            expect(result.targetPath).toBe("/imports");
+            expect(result.duplicateStrategy).toBe("skip");
+            expect(result.filters.includeSubfolders).toBe(false);
+        });
+
         it("should handle invalid initial source paths", () => {
             const result = createInitialConfigurationData("not-array" as any);
 

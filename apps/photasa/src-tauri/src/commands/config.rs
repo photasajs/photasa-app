@@ -117,9 +117,11 @@ pub async fn add_to_photo_list(photo_path: String) -> Result<(), String> {
         .ok_or("无效的照片路径")?
         .to_string_lossy()
         .to_string();
-    tokio::task::spawn_blocking(move || photasa_config::add_photo_to_folder_list(&folder, &photo_path))
-        .await
-        .map_err(|e| format!("任务失败: {e}"))??;
+    tokio::task::spawn_blocking(move || {
+        photasa_config::add_photo_to_folder_list(&folder, &photo_path)
+    })
+    .await
+    .map_err(|e| format!("任务失败: {e}"))??;
     Ok(())
 }
 
@@ -138,7 +140,8 @@ pub async fn remove_from_photo_list(photo_path: String) -> Result<serde_json::Va
 
     let photo_path_clone = photo_path.clone();
     let config = tokio::task::spawn_blocking(move || {
-        let mut config = photasa_config::read_config_sync(&folder)?.unwrap_or_else(PhotasaConfigData::empty);
+        let mut config =
+            photasa_config::read_config_sync(&folder)?.unwrap_or_else(PhotasaConfigData::empty);
         let file_name = Path::new(&photo_path_clone)
             .file_name()
             .and_then(|n| n.to_str())

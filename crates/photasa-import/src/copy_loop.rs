@@ -211,6 +211,7 @@ pub enum ImportLoopEnd {
 pub fn run_import_file_loop<M: MetadataExtractor>(
     request: ImportLoopRequest<'_, M>,
     mut on_progress: impl FnMut(Value),
+    mut on_imported_file: impl FnMut(Value),
 ) -> Result<ImportLoopEnd, String> {
     fs::create_dir_all(request.target_path).map_err(|e| format!("创建目标目录失败: {e}"))?;
 
@@ -287,12 +288,14 @@ pub fn run_import_file_loop<M: MetadataExtractor>(
                     let src_norm = src_s.replace('\\', "/");
                     let dest_name = copy.dest.file_name().and_then(|s| s.to_str()).unwrap_or("");
                     let target_rel = relative_target_path_for_import(&date_sub, dest_name);
-                    imported_files.push(json!({
+                    let imported = json!({
                         "originalPath": src_norm,
                         "targetPath": target_rel,
                         "size": sz,
                         "importTime": chrono::Utc::now().to_rfc3339(),
-                    }));
+                    });
+                    on_imported_file(imported.clone());
+                    imported_files.push(imported);
                 } else {
                     skipped += 1;
                 }
@@ -416,6 +419,7 @@ mod tests {
                 meta,
             },
             on_progress,
+            |_| {},
         )
     }
 
@@ -659,6 +663,59 @@ mod tests {
             ImportLoopEnd::Cancelled { .. } => panic!("expected completed"),
         }
         assert!(progress_count.load(Ordering::SeqCst) >= 2);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_import_file_loop_reports_each_copied_file() {
+        let root = temp_dir("copied-callback");
+        let src_dir = root.join("src");
+        let dst = root.join("dst");
+        fs::create_dir_all(&src_dir).unwrap();
+        let f1 = src_dir.join("a.jpg");
+        let f2 = src_dir.join("b.jpg");
+        write_file(&f1, b"a");
+        write_file(&f2, b"b");
+        let files = vec![
+            f1.to_string_lossy().to_string(),
+            f2.to_string_lossy().to_string(),
+        ];
+        let cancel = AtomicBool::new(false);
+        let paused = AtomicBool::new(false);
+        let meta = EmptyMetadata;
+        let mut copied = Vec::new();
+
+        let end = run_import_file_loop(
+            ImportLoopRequest {
+                import_id: "id-cb",
+                files: &files,
+                target_path: &dst,
+                strategy: "rename",
+                cancel: &cancel,
+                paused: &paused,
+                start_iso: "2024-01-01T00:00:00Z",
+                meta: &meta,
+            },
+            |_| {},
+            |file| copied.push(file),
+        )
+        .unwrap();
+
+        assert!(matches!(
+            end,
+            ImportLoopEnd::Completed { successful: 2, .. }
+        ));
+        assert_eq!(copied.len(), 2);
+        let f1_norm = f1.to_string_lossy().replace('\\', "/");
+        assert_eq!(
+            copied[0].get("originalPath").and_then(Value::as_str),
+            Some(f1_norm.as_str())
+        );
+        assert!(copied[0]
+            .get("targetPath")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .ends_with("a.jpg"));
         let _ = fs::remove_dir_all(&root);
     }
 

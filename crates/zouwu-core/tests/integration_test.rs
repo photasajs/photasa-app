@@ -6,6 +6,7 @@
 //! - Conditions：所有操作符（移植自 validator.test.ts）
 //! - 真实工作流文件：folder_scan、get_preferences、engine_status_check
 
+use async_trait::async_trait;
 use serde_json::json;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -13,7 +14,6 @@ use zouwu_core::adapter::{Adapter, AdapterError, AdapterRegistry};
 use zouwu_core::engine::ZouwuEngine;
 use zouwu_core::parser::parse_workflow;
 use zouwu_core::types::ExecutionContext;
-use async_trait::async_trait;
 
 // ============================================================
 // 辅助：工作流文件路径
@@ -46,7 +46,9 @@ struct MockAdapter {
 
 #[async_trait]
 impl Adapter for MockAdapter {
-    fn name(&self) -> &str { &self.name }
+    fn name(&self) -> &str {
+        &self.name
+    }
 
     async fn execute(
         &self,
@@ -163,9 +165,8 @@ fn test_parse_all_workflow_files() {
                 let sub_path = sub.path();
                 if sub_path.extension().map_or(false, |e| e == "zouwu") {
                     let content = std::fs::read_to_string(&sub_path).unwrap();
-                    parse_workflow(&content).unwrap_or_else(|e| {
-                        panic!("解析失败 {}: {e}", sub_path.display())
-                    });
+                    parse_workflow(&content)
+                        .unwrap_or_else(|e| panic!("解析失败 {}: {e}", sub_path.display()));
                     count += 1;
                 }
             }
@@ -302,14 +303,19 @@ steps:
 // 4. Condition 操作符测试（移植自 validator.test.ts）
 // ============================================================
 
-async fn run_condition_test(operator: &str, field_val: serde_json::Value, cmp_val: Option<serde_json::Value>) -> bool {
+async fn run_condition_test(
+    operator: &str,
+    field_val: serde_json::Value,
+    cmp_val: Option<serde_json::Value>,
+) -> bool {
     let cmp_yaml = if let Some(v) = &cmp_val {
         format!("      value: {}", serde_json::to_string(v).unwrap())
     } else {
         String::new()
     };
 
-    let yaml = format!(r#"
+    let yaml = format!(
+        r#"
 id: test
 name: test
 version: 1.0.0
@@ -332,11 +338,15 @@ steps:
         action: return
         input:
           r: false
-"#);
+"#
+    );
 
     let wf = parse_workflow(&yaml).unwrap();
     let engine = ZouwuEngine::new(AdapterRegistry::new());
-    let out = engine.execute(&wf, json!({ "val": field_val })).await.unwrap();
+    let out = engine
+        .execute(&wf, json!({ "val": field_val }))
+        .await
+        .unwrap();
     out.output["r"] == json!(true)
 }
 
@@ -413,10 +423,7 @@ async fn test_execute_get_preferences_workflow() {
     let engine = ZouwuEngine::new(registry);
 
     // 不带 key：返回完整快照
-    let result = engine
-        .execute(&wf, json!({}))
-        .await
-        .unwrap();
+    let result = engine.execute(&wf, json!({})).await.unwrap();
     assert_eq!(result.success, true);
 }
 
@@ -437,7 +444,10 @@ async fn test_execute_folder_scan_workflow() {
 
     let engine = ZouwuEngine::new(registry);
     let result = engine
-        .execute(&wf, json!({ "paths": ["/photos"], "recursive": true, "priority": "normal" }))
+        .execute(
+            &wf,
+            json!({ "paths": ["/photos"], "recursive": true, "priority": "normal" }),
+        )
         .await
         .unwrap();
     assert_eq!(result.success, true);

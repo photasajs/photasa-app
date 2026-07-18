@@ -14,6 +14,8 @@ import type {
     ImportProgress,
     ImportHistory,
     UndoResult,
+    RecoverableImport,
+    RecoverableImportActionResult,
     FileGroup,
     EnhancedImportCallback,
     ImportFilters,
@@ -299,6 +301,18 @@ export function undoImport(historyId: string): Promise<UndoResult> {
  */
 export function getImportProgress(importId: string): Promise<ImportProgress> {
     return window.api.getImportProgress(importId);
+}
+
+export function getRecoverableImports(): Promise<RecoverableImport[]> {
+    return window.api.getRecoverableImports();
+}
+
+export function cleanupRecoverableImport(importId: string): Promise<RecoverableImportActionResult> {
+    return window.api.cleanupRecoverableImport(importId);
+}
+
+export function keepRecoverableImport(importId: string): Promise<RecoverableImportActionResult> {
+    return window.api.keepRecoverableImport(importId);
 }
 
 /**

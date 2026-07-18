@@ -5,7 +5,15 @@ import type {
     DirectorySelection,
     ImageInfo,
 } from "./types";
-import type { FileMetadata } from "./import-types";
+import type {
+    FileMetadata,
+    ImportHistory,
+    ImportProgress,
+    RecoverableImport,
+    RecoverableImportActionResult,
+    UndoPreview,
+    UndoResult,
+} from "./import-types";
 import type { WatchConfig, WatchCallback } from "./watch-types";
 import type { ScanAction, ScanArgs } from "./scan-types";
 import type { ThumbnailRequest } from "./thumbnail-types";
@@ -81,6 +89,14 @@ declare global {
             fileUrlFromPath: (file: string) => string;
             // 清理扫描队列
             cleanupScanQueue: (folderPath: string) => void;
+            getImportHistory: (limit?: number) => Promise<ImportHistory[]>;
+            getImportDetails: (historyId: string) => Promise<ImportHistory | null>;
+            getImportProgress: (importId: string) => Promise<ImportProgress>;
+            previewUndo: (historyId: string) => Promise<UndoPreview>;
+            undoImport: (historyId: string) => Promise<UndoResult>;
+            getRecoverableImports: () => Promise<RecoverableImport[]>;
+            cleanupRecoverableImport: (importId: string) => Promise<RecoverableImportActionResult>;
+            keepRecoverableImport: (importId: string) => Promise<RecoverableImportActionResult>;
         };
     }
 }

@@ -6,7 +6,9 @@ use std::sync::Once;
 use ffmpeg_next as ff;
 use ffmpeg_next::format::Pixel;
 use ffmpeg_next::media::Type as MediaType;
-use ffmpeg_next::software::scaling::{context::Context as ScalingContext, flag::Flags as ScaleFlags};
+use ffmpeg_next::software::scaling::{
+    context::Context as ScalingContext, flag::Flags as ScaleFlags,
+};
 use ffmpeg_next::util::frame::video::Video;
 
 static FFMPEG_INIT: Once = Once::new();
@@ -23,7 +25,9 @@ fn fit_inside(sw: u32, sh: u32, max_w: u32, max_h: u32) -> (u32, u32) {
     if sw == 0 || sh == 0 {
         return (max_w.max(1), max_h.max(1));
     }
-    let scale = (max_w as f64 / sw as f64).min(max_h as f64 / sh as f64).min(1.0);
+    let scale = (max_w as f64 / sw as f64)
+        .min(max_h as f64 / sh as f64)
+        .min(1.0);
     let w = ((sw as f64 * scale).round() as u32).max(1);
     let h = ((sh as f64 * scale).round() as u32).max(1);
     (w, h)

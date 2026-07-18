@@ -12,12 +12,12 @@ use super::photasa_config::{
     self, absolute_thumbnail_path_for_source, read_config_sync, PHOTASA_CONFIG_FILE,
 };
 use super::scan_cache::IncrementalCacheManager;
+pub use super::scan_media::ScanAction;
 use super::scan_media::{
     build_thumbnail_path, classify_media, is_photasa_media_file, list_scan_subdirectories,
     normalize_path_string, relative_thumbnail_path_for_source, validate_scan_params,
     walkthrough_photos_in_folder, PhotoFileRequest,
 };
-pub use super::scan_media::ScanAction;
 use super::scan_notify::{
     build_scan_notify_payload, ScanNotifyAction, ScanNotifyProgress, ScanWorkerNotifySource,
 };
@@ -241,7 +241,10 @@ fn cached_photo_to_request(folder: &str, photo: &serde_json::Value) -> Option<Ph
 fn restore_cached_files(app: &AppHandle, request_id: &str, folder: &str) {
     let config_path = Path::new(folder).join(PHOTASA_CONFIG_FILE);
     if !config_path.exists() {
-        warn!("🌌 【警示】配置文件不存在，跳过缓存恢复: {}", config_path.display());
+        warn!(
+            "🌌 【警示】配置文件不存在，跳过缓存恢复: {}",
+            config_path.display()
+        );
         return;
     }
 
@@ -303,11 +306,7 @@ fn process_file_list(
     }
 }
 
-fn run_traditional_directory_scan(
-    app: &AppHandle,
-    request_id: &str,
-    scan: &ScanAction,
-) -> usize {
+fn run_traditional_directory_scan(app: &AppHandle, request_id: &str, scan: &ScanAction) -> usize {
     let files = match walkthrough_photos_in_folder(scan) {
         Ok(f) => f,
         Err(err) => {
@@ -663,7 +662,10 @@ mod tests {
         });
         let req = cached_photo_to_request("/photos/trip", &photo).expect("mapped");
         assert_eq!(req.path, "/photos/trip/vacation.jpg");
-        assert_eq!(req.thumbnail, ".photasaoriginals/thumbnail-vacation.jpg.png");
+        assert_eq!(
+            req.thumbnail,
+            ".photasaoriginals/thumbnail-vacation.jpg.png"
+        );
         assert!(!req.is_video);
         assert!(!req.is_directory);
     }
@@ -672,7 +674,10 @@ mod tests {
     fn cached_photo_falls_back_thumbnail_when_empty() {
         let photo = serde_json::json!({ "path": "a.jpg", "thumbnail": "", "isVideo": false });
         let req = cached_photo_to_request("/d", &photo).expect("mapped");
-        assert_eq!(req.thumbnail, relative_thumbnail_path_for_source("/d/a.jpg"));
+        assert_eq!(
+            req.thumbnail,
+            relative_thumbnail_path_for_source("/d/a.jpg")
+        );
     }
 
     #[test]

@@ -80,8 +80,14 @@ pub fn determine_group_target_utc(main: &Value) -> DateTime<Utc> {
             return dt;
         }
     }
-    let created = main.get("createdTime").and_then(|v| v.as_str()).unwrap_or("");
-    let modified = main.get("modifiedTime").and_then(|v| v.as_str()).unwrap_or("");
+    let created = main
+        .get("createdTime")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let modified = main
+        .get("modifiedTime")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     compute_fallback_date_utc(created, modified)
 }
 
@@ -221,10 +227,7 @@ mod tests {
 
     #[test]
     fn compute_fallback_picks_earlier_timestamp() {
-        let e = compute_fallback_date_utc(
-            "2022-01-02T00:00:00+00:00",
-            "2021-12-31T00:00:00+00:00",
-        );
+        let e = compute_fallback_date_utc("2022-01-02T00:00:00+00:00", "2021-12-31T00:00:00+00:00");
         assert_eq!(e.date_naive().to_string(), "2021-12-31");
     }
 

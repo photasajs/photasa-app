@@ -114,12 +114,15 @@ fn collect_cache_files(dir: &Path, out: &mut Vec<PathBuf>) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::scan_media::folder_cache_path;
+    use super::*;
     use std::io::Write;
 
     fn temp(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("photasa-scan-cleanup-{name}-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!(
+            "photasa-scan-cleanup-{name}-{}",
+            uuid::Uuid::new_v4()
+        ));
         fs::create_dir_all(&dir).unwrap();
         dir
     }

@@ -16,6 +16,8 @@ import type {
     ImportHistory,
     ImportPreview,
     ImportProgress,
+    RecoverableImport,
+    RecoverableImportActionResult,
     UndoPreview,
     UndoResult,
 } from "@photasa/common";
@@ -145,6 +147,62 @@ function normalizeUndoResultFromRust(raw: unknown): UndoResult {
         errors,
         restoredDirectories,
         undoId: String(r.undoId ?? ""),
+        timestamp: parseIsoDate(r.timestamp),
+    };
+}
+
+function normalizeRecoverableImport(raw: unknown): RecoverableImport {
+    const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const filesRaw = Array.isArray(r.fileList) ? r.fileList : [];
+    const fileList = filesRaw.map((file) => {
+        const f = file as Record<string, unknown>;
+        return {
+            originalPath: String(f.originalPath ?? ""),
+            targetPath: String(f.targetPath ?? ""),
+            size: Number(f.size ?? 0),
+            checksum: f.checksum == null ? null : String(f.checksum),
+            importTime: parseIsoDate(f.importTime),
+        };
+    });
+    const status =
+        r.status === "running" || r.status === "paused" || r.status === "interrupted"
+            ? r.status
+            : "interrupted";
+
+    return {
+        id: String(r.id ?? r.importId ?? ""),
+        importId: typeof r.importId === "string" ? r.importId : undefined,
+        status,
+        sourcePaths: Array.isArray(r.sourcePaths) ? (r.sourcePaths as string[]) : [],
+        targetPath: String(r.targetPath ?? ""),
+        totalFiles: Number(r.totalFiles ?? 0),
+        config:
+            r.config && typeof r.config === "object"
+                ? (r.config as RecoverableImport["config"])
+                : undefined,
+        progress:
+            r.progress && typeof r.progress === "object"
+                ? (r.progress as RecoverableImport["progress"])
+                : undefined,
+        fileList,
+        startedAt: parseIsoDate(r.startedAt),
+        updatedAt: parseIsoDate(r.updatedAt),
+    };
+}
+
+function normalizeRecoverableImportActionResult(raw: unknown): RecoverableImportActionResult {
+    const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const errList = Array.isArray(r.errors) ? r.errors : [];
+    const errors = errList.map((e) => {
+        const x = e as Record<string, unknown>;
+        return { file: String(x.file ?? ""), error: String(x.error ?? "") };
+    });
+    return {
+        success: Boolean(r.success),
+        importId: String(r.importId ?? ""),
+        deletedFiles: Array.isArray(r.deletedFiles) ? (r.deletedFiles as string[]) : undefined,
+        keptFiles: typeof r.keptFiles === "number" ? r.keptFiles : undefined,
+        errors,
         timestamp: parseIsoDate(r.timestamp),
     };
 }
@@ -797,6 +855,33 @@ export function createLegacyApi(): Record<string, unknown> {
                       return normalizeImportProgressPayload(raw);
                   })()
                 : ((window as any).electronAPI?.api?.getImportProgress?.(importId) ?? stubAsync()),
+        getRecoverableImports: () =>
+            isTauri()
+                ? (async () => {
+                      const invoke = await ensureInvoke();
+                      const rows = await invoke<unknown[]>("get_recoverable_imports");
+                      return Array.isArray(rows) ? rows.map(normalizeRecoverableImport) : [];
+                  })()
+                : ((window as any).electronAPI?.api?.getRecoverableImports?.() ??
+                  Promise.resolve([])),
+        cleanupRecoverableImport: (importId: string) =>
+            isTauri()
+                ? (async () => {
+                      const invoke = await ensureInvoke();
+                      const raw = await invoke<unknown>("cleanup_recoverable_import", { importId });
+                      return normalizeRecoverableImportActionResult(raw);
+                  })()
+                : ((window as any).electronAPI?.api?.cleanupRecoverableImport?.(importId) ??
+                  stubAsync()),
+        keepRecoverableImport: (importId: string) =>
+            isTauri()
+                ? (async () => {
+                      const invoke = await ensureInvoke();
+                      const raw = await invoke<unknown>("keep_recoverable_import", { importId });
+                      return normalizeRecoverableImportActionResult(raw);
+                  })()
+                : ((window as any).electronAPI?.api?.keepRecoverableImport?.(importId) ??
+                  stubAsync()),
         chooseDirectories: (multiSelect = true) => api.import.chooseDirectories(multiSelect),
         extractMetadata: (request: unknown) =>
             isTauri()

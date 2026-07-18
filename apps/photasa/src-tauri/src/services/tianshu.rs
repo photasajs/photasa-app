@@ -14,12 +14,12 @@ use std::sync::Arc;
 use tauri::Manager;
 use tokio::sync::RwLock;
 
+use zouwu_builtin::BuiltinAdapter;
+use zouwu_core::adapter::Adapter;
 use zouwu_core::adapter::AdapterRegistry;
 use zouwu_core::engine::{EngineError, WorkflowResolver, ZouwuEngine};
 use zouwu_core::parser::parse_workflow;
 use zouwu_core::types::WorkflowDefinition;
-use zouwu_builtin::BuiltinAdapter;
-use zouwu_core::adapter::Adapter;
 
 use crate::adapters::{
     ConfigAdapter, PreferencesAdapter, ScanAdapter, SimingAdapter, TaibaijinxingAdapter,
@@ -140,13 +140,10 @@ impl TianshuService {
         // 2. 构建 AdapterRegistry（含太乙路由层）
         let builtin = Arc::new(BuiltinAdapter::new());
         let config = Arc::new(ConfigAdapter::new());
-        let preferences = Arc::new(
-            PreferencesAdapter::new()
-                .await
-                .map_err(|e| {
-                    TianshuError::Parse(format!("preferences adapter init error: {e}"))
-                })?,
-        );
+        let preferences =
+            Arc::new(PreferencesAdapter::new().await.map_err(|e| {
+                TianshuError::Parse(format!("preferences adapter init error: {e}"))
+            })?);
         let scan = Arc::new(ScanAdapter::new(app_handle.clone()));
         let siming = Arc::new(SimingAdapter::new());
         let taibaijinxing = Arc::new(TaibaijinxingAdapter::new(app_handle));
@@ -186,11 +183,7 @@ impl TianshuService {
     }
 
     /// 按 intent 执行工作流
-    pub async fn execute_intent(
-        &self,
-        intent: &str,
-        inputs: Value,
-    ) -> Result<Value, TianshuError> {
+    pub async fn execute_intent(&self, intent: &str, inputs: Value) -> Result<Value, TianshuError> {
         let store = self.store.read().await;
         let wf = store
             .get_by_intent(intent)
@@ -246,7 +239,9 @@ async fn load_workflows(
     let mut stack = vec![dir.to_path_buf()];
 
     while let Some(current) = stack.pop() {
-        let mut entries = tokio::fs::read_dir(&current).await.map_err(TianshuError::Io)?;
+        let mut entries = tokio::fs::read_dir(&current)
+            .await
+            .map_err(TianshuError::Io)?;
 
         while let Some(entry) = entries.next_entry().await.map_err(TianshuError::Io)? {
             let path = entry.path();
@@ -267,10 +262,7 @@ async fn load_workflows(
                         store.write().await.insert(wf);
                     }
                     Err(e) => {
-                        log::warn!(
-                            "⚠️ 典籍有误，跳过：{} — {e}",
-                            path.display()
-                        );
+                        log::warn!("⚠️ 典籍有误，跳过：{} — {e}", path.display());
                     }
                 }
             }
@@ -299,9 +291,7 @@ pub fn resolve_workflows_dir(app: &tauri::AppHandle) -> PathBuf {
         .parent()
         .and_then(|p| p.parent())
         .and_then(|p| p.parent())
-        .map(|root| {
-            root.join("apps/desktop/src/main/engines/tianshu/workflows")
-        })
+        .map(|root| root.join("apps/desktop/src/main/engines/tianshu/workflows"))
         .unwrap_or_default();
 
     dev_path

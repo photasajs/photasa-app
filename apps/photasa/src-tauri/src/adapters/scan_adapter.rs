@@ -137,7 +137,7 @@ fn extract_queue_array(input: &Value) -> Result<Vec<Value>, AdapterError> {
         Value::Object(obj) => obj
             .get("queue")
             .and_then(|v| v.as_array())
-            .map(|items| items.clone())
+            .cloned()
             .ok_or_else(|| {
                 AdapterError::InvalidInput(
                     "persistQueue expects array or object with queue field".to_string(),
@@ -238,10 +238,8 @@ mod tests {
 
     #[tokio::test]
     async fn persist_and_restore_round_trip_uses_temp_file() {
-        let temp_dir = std::env::temp_dir().join(format!(
-            "photasa-scan-queue-test-{}",
-            uuid::Uuid::new_v4()
-        ));
+        let temp_dir =
+            std::env::temp_dir().join(format!("photasa-scan-queue-test-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&temp_dir).expect("temp dir should be created");
         let file_path = temp_dir.join(SCAN_QUEUE_FILE);
 

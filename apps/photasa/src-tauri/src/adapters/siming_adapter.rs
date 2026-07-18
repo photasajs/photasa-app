@@ -36,9 +36,7 @@ impl SimingAdapter {
     async fn restore_app_state(&self) -> Result<Value, AdapterError> {
         match tokio::fs::read_to_string(&self.app_state_path).await {
             Ok(content) => parse_app_state(&content),
-            Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-                Ok(default_app_state_value())
-            }
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(default_app_state_value()),
             Err(err) => Err(AdapterError::Io(err)),
         }
     }
@@ -62,8 +60,8 @@ fn default_app_state_value() -> Value {
 }
 
 fn parse_app_state(content: &str) -> Result<Value, AdapterError> {
-    let parsed: Value = serde_json::from_str(content)
-        .map_err(|e| AdapterError::Serialization(e.to_string()))?;
+    let parsed: Value =
+        serde_json::from_str(content).map_err(|e| AdapterError::Serialization(e.to_string()))?;
 
     if parsed.get("folderTree").is_none() {
         return Ok(default_app_state_value());
@@ -122,7 +120,11 @@ mod tests {
         ));
         let adapter = SimingAdapter::with_app_state_path(path);
         let state = adapter
-            .execute(ACTION_RESTORE_APP_STATE, json!({}), &ExecutionContext::new(json!({})))
+            .execute(
+                ACTION_RESTORE_APP_STATE,
+                json!({}),
+                &ExecutionContext::new(json!({})),
+            )
             .await
             .unwrap();
         assert!(state.get("folderTree").unwrap().is_array());
@@ -130,15 +132,17 @@ mod tests {
 
     #[tokio::test]
     async fn restore_app_state_reads_persisted_file() {
-        let path = std::env::temp_dir().join(format!(
-            "photasa-siming-read-{}.json",
-            uuid::Uuid::new_v4()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("photasa-siming-read-{}.json", uuid::Uuid::new_v4()));
         let payload = r#"{"version":"1.0","timestamp":1,"folderTree":[{"id":"a"}],"currentFolder":"/tmp","lastOpenedFolder":"/tmp"}"#;
         tokio::fs::write(&path, payload).await.unwrap();
         let adapter = SimingAdapter::with_app_state_path(path);
         let state = adapter
-            .execute(ACTION_RESTORE_APP_STATE, json!({}), &ExecutionContext::new(json!({})))
+            .execute(
+                ACTION_RESTORE_APP_STATE,
+                json!({}),
+                &ExecutionContext::new(json!({})),
+            )
             .await
             .unwrap();
         assert_eq!(state["currentFolder"], "/tmp");

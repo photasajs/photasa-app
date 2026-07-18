@@ -103,7 +103,8 @@ mod tests {
 
     #[test]
     fn load_auto_update_reads_system_auto_update_from_file() {
-        let dir = std::env::temp_dir().join(format!("photasa-update-config-{}", uuid::Uuid::new_v4()));
+        let dir =
+            std::env::temp_dir().join(format!("photasa-update-config-{}", uuid::Uuid::new_v4()));
         write_preferences_json(
             &dir,
             r#"{
@@ -136,7 +137,8 @@ mod tests {
 
     #[test]
     fn sync_update_state_applies_loaded_config_to_state() {
-        let dir = std::env::temp_dir().join(format!("photasa-update-sync-{}", uuid::Uuid::new_v4()));
+        let dir =
+            std::env::temp_dir().join(format!("photasa-update-sync-{}", uuid::Uuid::new_v4()));
         write_preferences_json(
             &dir,
             r#"{
@@ -163,7 +165,8 @@ mod tests {
 
     #[tokio::test]
     async fn wenchang_store_defaults_include_enabled_auto_update() {
-        let dir = std::env::temp_dir().join(format!("photasa-wenchang-update-{}", uuid::Uuid::new_v4()));
+        let dir =
+            std::env::temp_dir().join(format!("photasa-wenchang-update-{}", uuid::Uuid::new_v4()));
         let store = PreferencesStore::initialize(&dir).await.unwrap();
         let cfg = auto_update_from_user_preferences(&store.get_current_snapshot().data);
         assert!(cfg.enabled);

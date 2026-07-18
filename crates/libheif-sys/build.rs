@@ -43,7 +43,10 @@ fn prepare_libheif_src() -> PathBuf {
         let de265_cmake = libde265_dst.join("CMakeLists.txt");
         if de265_cmake.exists() {
             let mut c = std::fs::read_to_string(&de265_cmake).unwrap();
-            c = c.replace("cmake_minimum_required (VERSION 3.3.2)", "cmake_minimum_required (VERSION 3.5)");
+            c = c.replace(
+                "cmake_minimum_required (VERSION 3.3.2)",
+                "cmake_minimum_required (VERSION 3.5)",
+            );
             std::fs::write(&de265_cmake, c).unwrap();
         }
     }
@@ -111,11 +114,11 @@ fn compile_libheif() -> String {
     // Enable some options
     build_config.define("WITH_REDUCED_VISIBILITY", "ON");
     // WITH_LIBSHARPYUV 需要系统库，关闭以实现零依赖
-        // TODO: Try to enable this in the future.
-        //       Right now it is the reason of linker's errors like
-        //       "undefined reference to `BrotliEncoderDestroyInstance'"
-        // "WITH_UNCOMPRESSED_CODEC",
-        // "WITH_HEADER_COMPRESSION",
+    // TODO: Try to enable this in the future.
+    //       Right now it is the reason of linker's errors like
+    //       "undefined reference to `BrotliEncoderDestroyInstance'"
+    // "WITH_UNCOMPRESSED_CODEC",
+    // "WITH_HEADER_COMPRESSION",
 
     // List of encoders and decoders that have corresponding plugins
     let encoders_decoders = [

@@ -145,9 +145,7 @@ fn validate_workflow(wf: &WorkflowDefinition) -> Result<(), ParseError> {
         return Err(ParseError::Invalid("workflow id is required".to_string()));
     }
     if wf.name.is_empty() {
-        return Err(ParseError::Invalid(
-            "workflow name is required".to_string(),
-        ));
+        return Err(ParseError::Invalid("workflow name is required".to_string()));
     }
     // steps 可以为空（某些工作流只有触发器），不强制要求
     Ok(())
@@ -229,6 +227,10 @@ steps:
       recursive: {{input.recursive}}
 "#;
         let result = parse_workflow(yaml);
-        assert!(result.is_ok(), "带裸表达式的工作流解析失败: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "带裸表达式的工作流解析失败: {:?}",
+            result.err()
+        );
     }
 }

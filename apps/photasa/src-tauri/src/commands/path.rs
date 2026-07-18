@@ -53,7 +53,10 @@ pub fn to_dir_name(path: String) -> String {
 /// 是否为隐藏文件（Unix 点开头；Windows 用 FILE_ATTRIBUTE_HIDDEN）
 #[tauri::command]
 pub fn is_hidden_file(file_name: String) -> bool {
-    let name = Path::new(&file_name).file_name().and_then(|s| s.to_str()).unwrap_or("");
+    let name = Path::new(&file_name)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
     if name.starts_with('.') {
         return true;
     }
@@ -124,14 +127,13 @@ pub fn relative_path(from: String, to: String) -> Result<String, String> {
 // ============================================================
 
 static VIDEO_EXTS: &[&str] = &[
-    "mp4", "mov", "avi", "mkv", "m4v", "3gp", "wmv", "flv", "webm", "mpg", "mpeg",
-    "m2v", "mts", "m2ts", "ts", "vob", "rmvb", "rm",
+    "mp4", "mov", "avi", "mkv", "m4v", "3gp", "wmv", "flv", "webm", "mpg", "mpeg", "m2v", "mts",
+    "m2ts", "ts", "vob", "rmvb", "rm",
 ];
 
 static IMAGE_EXTS: &[&str] = &[
-    "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif",
-    "heic", "heif", "avif", "raw", "cr2", "cr3", "nef", "arw",
-    "svg", "ico", "psd",
+    "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif", "heic", "heif", "avif", "raw",
+    "cr2", "cr3", "nef", "arw", "svg", "ico", "psd",
 ];
 
 fn ext_lower(path: &str) -> String {
@@ -189,7 +191,18 @@ fn encode_uri_component(input: &str) -> String {
     let mut out = String::with_capacity(input.len());
     for byte in input.bytes() {
         match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'!' | b'~' | b'*' | b'\'' | b'(' | b')' => {
+            b'A'..=b'Z'
+            | b'a'..=b'z'
+            | b'0'..=b'9'
+            | b'-'
+            | b'_'
+            | b'.'
+            | b'!'
+            | b'~'
+            | b'*'
+            | b'\''
+            | b'('
+            | b')' => {
                 out.push(byte as char);
             }
             _ => {

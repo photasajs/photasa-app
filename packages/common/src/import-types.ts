@@ -48,6 +48,12 @@ export type DateSource =
  */
 export type DuplicateStrategy = "skip" | "rename" | "overwrite" | "keep_both";
 
+export interface ImportPreferences {
+    defaultTargetPath: string;
+    duplicateStrategy: DuplicateStrategy;
+    includeSubfolders: boolean;
+}
+
 /**
  * 重复文件处理动作
  */
@@ -390,6 +396,29 @@ export interface ImportedFileInfo {
     size: number;
     checksum?: string | null; // 用于验证文件完整性；Tauri 可省略未知 checksum
     importTime: Date;
+}
+
+export interface RecoverableImport {
+    id: string;
+    importId?: string;
+    status: "running" | "paused" | "interrupted";
+    sourcePaths: string[];
+    targetPath: string;
+    totalFiles: number;
+    config?: Partial<ImportConfig>;
+    progress?: Partial<ImportProgress>;
+    fileList: ImportedFileInfo[];
+    startedAt: Date;
+    updatedAt: Date;
+}
+
+export interface RecoverableImportActionResult {
+    success: boolean;
+    importId: string;
+    deletedFiles?: string[];
+    keptFiles?: number;
+    errors: Array<{ file: string; error: string }>;
+    timestamp: Date;
 }
 
 /**

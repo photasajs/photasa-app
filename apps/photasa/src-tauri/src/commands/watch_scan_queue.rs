@@ -53,12 +53,7 @@ fn generate_operation_id() -> String {
     format!("{}-{}", now_ms(), Uuid::new_v4())
 }
 
-fn build_file_operation(
-    op_type: &str,
-    path: &str,
-    is_file: bool,
-    thumbnail_size: u32,
-) -> Value {
+fn build_file_operation(op_type: &str, path: &str, is_file: bool, thumbnail_size: u32) -> Value {
     let t = now_ms();
     json!({
         "id": generate_operation_id(),
@@ -136,7 +131,9 @@ impl ScanQueueCoalescer {
                         if let Some(obj) = existing.as_object() {
                             let mut updated = obj.clone();
                             updated.insert("timestamp".to_string(), json!(now));
-                            if let Some(meta) = updated.get_mut("metadata").and_then(|m| m.as_object_mut()) {
+                            if let Some(meta) =
+                                updated.get_mut("metadata").and_then(|m| m.as_object_mut())
+                            {
                                 meta.insert("lastModified".to_string(), json!(now));
                             }
                             guard.insert(key, Value::Object(updated));
@@ -156,12 +153,7 @@ impl ScanQueueCoalescer {
     fn schedule_flush(&self, app: AppHandle) {
         let my_token = self.inner.schedule_token.fetch_add(1, Ordering::SeqCst) + 1;
         let debounce_ms = {
-            let n = self
-                .inner
-                .pending
-                .lock()
-                .map(|g| g.len())
-                .unwrap_or(0);
+            let n = self.inner.pending.lock().map(|g| g.len()).unwrap_or(0);
             calculate_debounce_ms(n)
         };
         let inner = self.inner.clone();

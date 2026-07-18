@@ -46,9 +46,7 @@ pub fn resolve_value(val: &Value, ctx: &ExecutionContext) -> Value {
                 .collect();
             Value::Object(resolved)
         }
-        Value::Array(arr) => {
-            Value::Array(arr.iter().map(|v| resolve_value(v, ctx)).collect())
-        }
+        Value::Array(arr) => Value::Array(arr.iter().map(|v| resolve_value(v, ctx)).collect()),
         // 数字、布尔、null 直接返回
         other => other.clone(),
     }
@@ -208,7 +206,9 @@ pub fn get_path(root: &Value, path: &str) -> Result<Value, ExprError> {
                     owned = v.clone();
                     current = &owned;
                 } else {
-                    return Err(ExprError::PathNotFound(format!("{path} (missing: {segment})")));
+                    return Err(ExprError::PathNotFound(format!(
+                        "{path} (missing: {segment})"
+                    )));
                 }
             }
             Value::Array(arr) => {
@@ -432,19 +432,44 @@ mod tests {
     #[test]
     fn test_condition_eq() {
         let ctx = make_ctx();
-        assert!(eval_condition("inputs.recursive", "eq", Some(&json!(true)), &ctx));
-        assert!(!eval_condition("inputs.recursive", "eq", Some(&json!(false)), &ctx));
+        assert!(eval_condition(
+            "inputs.recursive",
+            "eq",
+            Some(&json!(true)),
+            &ctx
+        ));
+        assert!(!eval_condition(
+            "inputs.recursive",
+            "eq",
+            Some(&json!(false)),
+            &ctx
+        ));
     }
 
     #[test]
     fn test_condition_optional_string_maxlen() {
         let ctx = make_ctx();
         // key = "ui.theme" (8 chars) <= 100 → true
-        assert!(eval_condition("inputs.key", "optional_string_maxlen", Some(&json!(100)), &ctx));
+        assert!(eval_condition(
+            "inputs.key",
+            "optional_string_maxlen",
+            Some(&json!(100)),
+            &ctx
+        ));
         // missing field → null → 视为通过
-        assert!(eval_condition("inputs.missing", "optional_string_maxlen", Some(&json!(100)), &ctx));
+        assert!(eval_condition(
+            "inputs.missing",
+            "optional_string_maxlen",
+            Some(&json!(100)),
+            &ctx
+        ));
         // key 长度 > 5 → false
-        assert!(!eval_condition("inputs.key", "optional_string_maxlen", Some(&json!(5)), &ctx));
+        assert!(!eval_condition(
+            "inputs.key",
+            "optional_string_maxlen",
+            Some(&json!(5)),
+            &ctx
+        ));
     }
 
     #[test]

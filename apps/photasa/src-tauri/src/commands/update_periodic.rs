@@ -41,7 +41,10 @@ pub fn spawn_periodic_update_checker(app: AppHandle) -> UpdatePeriodicHandle {
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 async fn run_periodic_update_loop(app: AppHandle, cancel: Arc<AtomicBool>) {
-    info!("🌌 更新定时检查：{} 秒后执行启动检查", STARTUP_CHECK_DELAY_SECS);
+    info!(
+        "🌌 更新定时检查：{} 秒后执行启动检查",
+        STARTUP_CHECK_DELAY_SECS
+    );
     if sleep_or_cancel(STARTUP_CHECK_DELAY_SECS, &cancel).await {
         return;
     }

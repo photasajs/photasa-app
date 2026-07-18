@@ -33,7 +33,9 @@ pub struct DirectoryStore(pub Mutex<HashMap<String, String>>);
 pub async fn choose_directory(app: tauri::AppHandle) -> Result<Option<String>, String> {
     log::info!("🌌 choose_directory command invoked!");
     let (tx, rx) = tokio::sync::oneshot::channel();
-    let window = app.get_webview_window("main").ok_or_else(|| "无法获取主窗口".to_string())?;
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "无法获取主窗口".to_string())?;
 
     window.dialog().file().pick_folder(move |picked| {
         let path = picked
@@ -72,7 +74,9 @@ pub async fn choose_directories(
     let multi = args.multi_select;
     log::info!("🌌 choose_directories command invoked! multi: {multi}");
     let (tx, rx) = tokio::sync::oneshot::channel();
-    let window = app.get_webview_window("main").ok_or_else(|| "无法获取主窗口".to_string())?;
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "无法获取主窗口".to_string())?;
 
     if multi {
         window.dialog().file().pick_folders(move |picked| {
@@ -104,7 +108,10 @@ pub async fn choose_directories(
 
 /// 根据名称返回目录路径：优先非空 `DirectoryStore`，否则 OS 标准路径（desktop/home 等）
 #[tauri::command]
-pub fn get_directory(name: String, state: tauri::State<DirectoryStore>) -> Result<Option<String>, String> {
+pub fn get_directory(
+    name: String,
+    state: tauri::State<DirectoryStore>,
+) -> Result<Option<String>, String> {
     let store = state.0.lock().map_err(|e| format!("锁异常: {e}"))?;
     if let Some(path) = store.get(&name) {
         if !path.is_empty() {
@@ -116,7 +123,11 @@ pub fn get_directory(name: String, state: tauri::State<DirectoryStore>) -> Resul
 
 /// 存储目录路径到指定名称（供 get_directory 查询）
 #[tauri::command]
-pub fn set_directory(name: String, path: String, state: tauri::State<DirectoryStore>) -> Result<(), String> {
+pub fn set_directory(
+    name: String,
+    path: String,
+    state: tauri::State<DirectoryStore>,
+) -> Result<(), String> {
     let mut store = state.0.lock().map_err(|e| format!("锁异常: {e}"))?;
     store.insert(name, path);
     Ok(())
@@ -129,7 +140,11 @@ pub async fn sub_folders(folder_path: String) -> Result<Vec<String>, String> {
     let mut entries = fs::read_dir(&folder_path)
         .await
         .map_err(|e| format!("读取目录失败: {e}"))?;
-    while let Some(entry) = entries.next_entry().await.map_err(|e| format!("遍历目录失败: {e}"))? {
+    while let Some(entry) = entries
+        .next_entry()
+        .await
+        .map_err(|e| format!("遍历目录失败: {e}"))?
+    {
         if let Ok(meta) = entry.metadata().await {
             if meta.is_dir() {
                 sub.push(entry.path().to_string_lossy().into_owned());
@@ -150,7 +165,8 @@ pub async fn check_photasa_config(folder_path: String) -> Result<bool, String> {
     let content = fs::read_to_string(&config_path)
         .await
         .map_err(|e| format!("读取配置失败: {e}"))?;
-    let v: serde_json::Value = serde_json::from_str(&content).map_err(|_| "无效 JSON".to_string())?;
+    let v: serde_json::Value =
+        serde_json::from_str(&content).map_err(|_| "无效 JSON".to_string())?;
     Ok(v.get("photoList").map(|a| a.is_array()).unwrap_or(false))
 }
 

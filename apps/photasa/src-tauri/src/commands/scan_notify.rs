@@ -114,14 +114,14 @@ fn build_progress_data(
 ) -> serde_json::Value {
     let mut map = serde_json::Map::new();
     if let Some(p) = progress {
-        map.insert(
-            "processed".into(),
-            serde_json::Value::from(p.processed),
-        );
+        map.insert("processed".into(), serde_json::Value::from(p.processed));
         map.insert("total".into(), serde_json::Value::from(p.total));
     }
     if let Some(cf) = current_file {
-        map.insert("currentFile".into(), serde_json::Value::String(cf.to_string()));
+        map.insert(
+            "currentFile".into(),
+            serde_json::Value::String(cf.to_string()),
+        );
     }
     serde_json::Value::Object(map)
 }

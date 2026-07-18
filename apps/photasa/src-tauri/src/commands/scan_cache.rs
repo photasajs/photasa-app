@@ -244,8 +244,7 @@ impl IncrementalCacheManager {
         let batch = self.dynamic_batch_size();
         let now = now_millis();
         let batch_reached = self.processed_since_last_update >= batch;
-        let interval_elapsed =
-            now.saturating_sub(self.last_flush_millis) >= UPDATE_INTERVAL_MS;
+        let interval_elapsed = now.saturating_sub(self.last_flush_millis) >= UPDATE_INTERVAL_MS;
         if batch_reached || interval_elapsed {
             self.flush()?;
         }
@@ -304,7 +303,10 @@ mod tests {
     use std::path::PathBuf;
 
     fn temp_scan_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("photasa-scan-cache-{name}-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!(
+            "photasa-scan-cache-{name}-{}",
+            uuid::Uuid::new_v4()
+        ));
         fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -329,10 +331,15 @@ mod tests {
     #[test]
     fn save_and_load_roundtrip() {
         let dir = temp_scan_dir("roundtrip");
-        let mut cache = FolderScanCache::new_for_discovery(&dir, vec![normalize_path_string(&dir.join("x.jpg"))]);
+        let mut cache = FolderScanCache::new_for_discovery(
+            &dir,
+            vec![normalize_path_string(&dir.join("x.jpg"))],
+        );
         cache.pending_files = vec![normalize_path_string(&dir.join("x.jpg"))];
         cache.save(&dir).unwrap();
-        assert!(dir.join(crate::commands::scan_media::PHOTASA_FOLDER_CACHE_FILE).exists());
+        assert!(dir
+            .join(crate::commands::scan_media::PHOTASA_FOLDER_CACHE_FILE)
+            .exists());
         let loaded = FolderScanCache::load(&dir).unwrap();
         assert_eq!(loaded.pending_files, cache.pending_files);
     }
@@ -350,7 +357,8 @@ mod tests {
         cache.save(&dir).unwrap();
         assert!(FolderScanCache::can_resume(&dir));
 
-        let resumed = prepare_folder_scan_cache(&dir, vec!["/should/not/use.jpg".into()], false).unwrap();
+        let resumed =
+            prepare_folder_scan_cache(&dir, vec!["/should/not/use.jpg".into()], false).unwrap();
         assert_eq!(resumed.pending_files, vec![full]);
     }
 

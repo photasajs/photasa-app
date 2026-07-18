@@ -84,8 +84,8 @@ pub async fn start_file_watch(
     };
 
     let coalescer = state.coalescer.clone();
-    let mut watcher = notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
-        match res {
+    let mut watcher =
+        notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| match res {
             Ok(event) => {
                 for path in &event.paths {
                     let path_str = path.to_string_lossy().to_string();
@@ -117,7 +117,12 @@ pub async fn start_file_watch(
                         }
                         EventKind::Modify(_) => {
                             let _ = app_for_closure.emit(FILE_CHANGE, payload);
-                            coalescer.handle_fs_event(&app_for_closure, "change", &path_str, is_file);
+                            coalescer.handle_fs_event(
+                                &app_for_closure,
+                                "change",
+                                &path_str,
+                                is_file,
+                            );
                         }
                         EventKind::Remove(remove_kind) => {
                             let (event_name, is_file_override, scan_op) = match remove_kind {
@@ -151,9 +156,8 @@ pub async fn start_file_watch(
                     },
                 );
             }
-        }
-    })
-    .map_err(|e| format!("创建监视器失败: {e}"))?;
+        })
+        .map_err(|e| format!("创建监视器失败: {e}"))?;
 
     for p in &paths {
         watcher

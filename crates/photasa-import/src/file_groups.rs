@@ -88,7 +88,10 @@ fn find_direct_related(
                     .to_string_lossy()
                     .into_owned()
             };
-            if let Some(f) = all.iter().find(|x| x.get("path").and_then(|v| v.as_str()) == Some(candidate.as_str())) {
+            if let Some(f) = all
+                .iter()
+                .find(|x| x.get("path").and_then(|v| v.as_str()) == Some(candidate.as_str()))
+            {
                 if !related.iter().any(|r| r.get("path") == f.get("path")) {
                     related.push(f.clone());
                 }
@@ -99,13 +102,12 @@ fn find_direct_related(
 }
 
 fn push_if_found(all: &[Value], related: &mut Vec<Value>, basename: &str) {
-    if let Some(f) = all
-        .iter()
-        .find(|x| Path::new(x.get("path").and_then(|v| v.as_str()).unwrap_or(""))
+    if let Some(f) = all.iter().find(|x| {
+        Path::new(x.get("path").and_then(|v| v.as_str()).unwrap_or(""))
             .file_name()
             .and_then(|s| s.to_str())
-            == Some(basename))
-    {
+            == Some(basename)
+    }) {
         if !related.iter().any(|r| r.get("path") == f.get("path")) {
             related.push(f.clone());
         }

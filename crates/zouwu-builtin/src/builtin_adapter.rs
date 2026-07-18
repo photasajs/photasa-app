@@ -28,7 +28,14 @@ impl Adapter for BuiltinAdapter {
     }
 
     fn supported_actions(&self) -> &[&str] {
-        &["return", "log", "delay", "calculate", "compile", "transform"]
+        &[
+            "return",
+            "log",
+            "delay",
+            "calculate",
+            "compile",
+            "transform",
+        ]
     }
 
     async fn execute(
@@ -130,8 +137,8 @@ impl Adapter for BuiltinAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use zouwu_core::types::ExecutionContext;
     use serde_json::json;
+    use zouwu_core::types::ExecutionContext;
 
     fn ctx() -> ExecutionContext {
         ExecutionContext::new(json!({}))
@@ -141,7 +148,10 @@ mod tests {
     async fn test_return_action() {
         let adapter = BuiltinAdapter::new();
         let input = json!({ "success": true, "data": [1, 2, 3] });
-        let result = adapter.execute("return", input.clone(), &ctx()).await.unwrap();
+        let result = adapter
+            .execute("return", input.clone(), &ctx())
+            .await
+            .unwrap();
         assert_eq!(result, input);
     }
 
@@ -193,9 +203,7 @@ mod tests {
     #[tokio::test]
     async fn test_unsupported_action() {
         let adapter = BuiltinAdapter::new();
-        let result = adapter
-            .execute("nonexistent", json!({}), &ctx())
-            .await;
+        let result = adapter.execute("nonexistent", json!({}), &ctx()).await;
         assert!(matches!(result, Err(AdapterError::UnsupportedAction(_))));
     }
 }

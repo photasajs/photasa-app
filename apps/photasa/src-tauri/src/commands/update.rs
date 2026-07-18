@@ -43,13 +43,19 @@ impl Default for AutoUpdateConfigState {
 
 /// 将完整 autoUpdate 配置写入内存（命令与启动同步共用）
 pub fn apply_auto_update_config(state: &UpdateState, config: &AutoUpdateConfigState) {
-    let mut guard = state.auto_config.lock().expect("auto_config mutex poisoned");
+    let mut guard = state
+        .auto_config
+        .lock()
+        .expect("auto_config mutex poisoned");
     *guard = config.clone();
 }
 
 /// 按 patch 合并 autoUpdate 配置
 pub fn apply_auto_update_patch(state: &UpdateState, patch: &AutoUpdatePatch) {
-    let mut guard = state.auto_config.lock().expect("auto_config mutex poisoned");
+    let mut guard = state
+        .auto_config
+        .lock()
+        .expect("auto_config mutex poisoned");
     if let Some(v) = patch.enabled {
         guard.enabled = v;
     }
@@ -158,7 +164,10 @@ pub async fn check_for_updates(
 pub async fn download_update(app: AppHandle, state: State<'_, UpdateState>) -> Result<(), String> {
     let update = {
         let guard = state.pending.lock().map_err(|e| e.to_string())?;
-        guard.as_ref().cloned().ok_or_else(|| "请先检查更新".to_string())?
+        guard
+            .as_ref()
+            .cloned()
+            .ok_or_else(|| "请先检查更新".to_string())?
     };
 
     *state.status.lock().map_err(|e| e.to_string())? = "downloading".to_string();
@@ -247,7 +256,11 @@ pub fn get_update_status(state: State<'_, UpdateState>) -> Result<serde_json::Va
     let status = state.status.lock().map_err(|e| e.to_string())?.clone();
     let progress = *state.progress.lock().map_err(|e| e.to_string())?;
     let error = state.last_error.lock().map_err(|e| e.to_string())?.clone();
-    let version = state.last_version.lock().map_err(|e| e.to_string())?.clone();
+    let version = state
+        .last_version
+        .lock()
+        .map_err(|e| e.to_string())?
+        .clone();
     Ok(json!({
         "status": status,
         "progress": progress,

@@ -3,7 +3,9 @@
 use crate::commands::extract_metadata::extract_metadata_request;
 use crate::commands::import_date_util::{merge_extract_into_file_info, rfc3339_pair_from_fs_meta};
 use crate::commands::import_file_groups::detect_enhanced_file_groups;
-use crate::commands::import_path_filter::{basename_hidden, classify_media, should_ignore_photasa_path};
+use crate::commands::import_path_filter::{
+    basename_hidden, classify_media, should_ignore_photasa_path,
+};
 use log::{info, warn};
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -27,7 +29,12 @@ fn include_subfolders(filters: &Option<Value>) -> bool {
         .unwrap_or(true)
 }
 
-fn apply_file_type_filter(_path: &Path, filters: &Option<Value>, is_image: bool, is_video: bool) -> bool {
+fn apply_file_type_filter(
+    _path: &Path,
+    filters: &Option<Value>,
+    is_image: bool,
+    is_video: bool,
+) -> bool {
     let Some(f) = filters else {
         return true;
     };
@@ -55,7 +62,10 @@ fn apply_size_filter(path: &Path, filters: &Option<Value>) -> bool {
         None => return true,
     };
     let min = range.get("min").and_then(|v| v.as_u64()).unwrap_or(0);
-    let max = range.get("max").and_then(|v| v.as_u64()).unwrap_or(u64::MAX);
+    let max = range
+        .get("max")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(u64::MAX);
     let Ok(meta) = fs::metadata(path) else {
         return false;
     };
@@ -63,13 +73,17 @@ fn apply_size_filter(path: &Path, filters: &Option<Value>) -> bool {
     size >= min && size <= max
 }
 
-fn should_include_file(path: &Path, filters: &Option<Value>, is_image: bool, is_video: bool) -> bool {
+fn should_include_file(
+    path: &Path,
+    filters: &Option<Value>,
+    is_image: bool,
+    is_video: bool,
+) -> bool {
     let path_str = path.to_string_lossy();
     if basename_hidden(path) || should_ignore_photasa_path(&path_str) {
         return false;
     }
-    apply_file_type_filter(path, filters, is_image, is_video)
-        && apply_size_filter(path, filters)
+    apply_file_type_filter(path, filters, is_image, is_video) && apply_size_filter(path, filters)
 }
 
 fn base_file_info_scan(
@@ -131,7 +145,9 @@ fn create_file_info(path: &Path, filters: &Option<Value>) -> Option<Value> {
         json!({})
     });
 
-    let mut fi = base_file_info_scan(&path_str, &name, size, is_image, is_video, &created, &modified);
+    let mut fi = base_file_info_scan(
+        &path_str, &name, size, is_image, is_video, &created, &modified,
+    );
     merge_extract_into_file_info(&mut fi, &extracted, &created, &modified);
     Some(fi)
 }
@@ -221,8 +237,8 @@ mod tests {
         write_temp_file(&dir, "photo.jpg", b"\xff\xd8\xff");
         write_temp_file(&dir, "photo.xmp", b"<x/>");
 
-        let groups = scan_directories_for_file_groups(&[dir.to_string_lossy().into_owned()], &None)
-            .unwrap();
+        let groups =
+            scan_directories_for_file_groups(&[dir.to_string_lossy().into_owned()], &None).unwrap();
         assert!(!groups.is_empty());
         assert!(groups[0].get("mainFile").is_some());
         assert!(groups[0].get("files").is_some());

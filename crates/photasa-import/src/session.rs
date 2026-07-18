@@ -4,21 +4,24 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 const PERSIST_VERSION: u32 = 1;
 const HISTORY_FILE_NAME: &str = "import_history_v1.json";
+const JOURNAL_DIR_NAME: &str = "import_journals_v1";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct PersistedImportState {
     version: u32,
     history: Vec<Value>,
     undone_ids: Vec<String>,
+    #[serde(default)]
+    active_imports: Vec<Value>,
 }
 
-/// 进度仅内存；历史与已撤销 id 与磁盘同步（`app_data_dir/import_history_v1.json`）
+/// 进度仅内存；历史、已撤销 id 与未完成导入标记和磁盘同步（`app_data_dir/import_history_v1.json`）
 pub struct ImportSessionStore {
     inner: Mutex<ImportSessionInner>,
     file: PathBuf,
@@ -30,6 +33,7 @@ pub struct ImportSessionInner {
     pub history: Vec<Value>,
     pub progress: HashMap<String, Value>,
     pub undone_ids: HashSet<String>,
+    pub active_imports: HashMap<String, Value>,
 }
 
 impl ImportSessionStore {
@@ -45,16 +49,11 @@ impl ImportSessionStore {
                     Ok(st) if st.version == PERSIST_VERSION => {
                         inner.history = st.history;
                         inner.undone_ids = st.undone_ids.into_iter().collect();
-                        log::info!(
-                            "导入历史已从磁盘载入，条目数 {}",
-                            inner.history.len()
-                        );
+                        inner.active_imports = active_imports_by_id(st.active_imports);
+                        log::info!("导入历史已从磁盘载入，条目数 {}", inner.history.len());
                     }
                     Ok(st) => {
-                        log::warn!(
-                            "导入历史文件版本不兼容（{}），忽略",
-                            st.version
-                        );
+                        log::warn!("导入历史文件版本不兼容（{}），忽略", st.version);
                     }
                     Err(e) => {
                         log::warn!("导入历史 JSON 解析失败，从零开始：{e}");
@@ -79,6 +78,7 @@ impl ImportSessionStore {
                     if st.version == PERSIST_VERSION {
                         inner.history = st.history;
                         inner.undone_ids = st.undone_ids.into_iter().collect();
+                        inner.active_imports = active_imports_by_id(st.active_imports);
                     }
                 }
             }
@@ -95,6 +95,7 @@ impl ImportSessionStore {
                 version: PERSIST_VERSION,
                 history: g.history.clone(),
                 undone_ids: g.undone_ids.iter().cloned().collect(),
+                active_imports: g.active_imports.values().cloned().collect(),
             },
             Err(e) => {
                 log::warn!("导入历史落盘失败（锁异常）：{e}");
@@ -125,6 +126,158 @@ impl ImportSessionStore {
         g.progress.get(import_id).cloned()
     }
 
+    /// 记录一个正在执行的导入；进程崩溃时该标记会在下次启动变成 recoverable。
+    pub fn start_active_import(&self, import_id: &str, payload: Value) {
+        let _ = fs::remove_file(self.journal_path(import_id));
+        let now = chrono::Utc::now().to_rfc3339();
+        let mut entry = match payload {
+            Value::Object(map) => Value::Object(map),
+            _ => json!({}),
+        };
+        if let Some(obj) = entry.as_object_mut() {
+            obj.insert("id".to_string(), json!(import_id));
+            obj.insert("importId".to_string(), json!(import_id));
+            obj.entry("status".to_string())
+                .or_insert_with(|| json!("running"));
+            obj.entry("startedAt".to_string())
+                .or_insert_with(|| json!(now.clone()));
+            obj.insert("updatedAt".to_string(), json!(now));
+        }
+        if let Ok(mut g) = self.inner.lock() {
+            g.active_imports.insert(import_id.to_string(), entry);
+        }
+        self.persist();
+    }
+
+    pub fn update_active_progress(&self, import_id: &str, progress: Value) {
+        let now = chrono::Utc::now().to_rfc3339();
+        let status = progress
+            .get("status")
+            .and_then(Value::as_str)
+            .map(active_status_from_progress);
+        if let Ok(mut g) = self.inner.lock() {
+            let Some(entry) = g.active_imports.get_mut(import_id) else {
+                return;
+            };
+            if let Some(obj) = entry.as_object_mut() {
+                obj.insert("progress".to_string(), progress);
+                obj.insert("updatedAt".to_string(), json!(now));
+                if let Some(status) = status {
+                    obj.insert("status".to_string(), json!(status));
+                }
+            }
+        }
+        self.persist();
+    }
+
+    pub fn add_active_imported_file(&self, import_id: &str, file: Value) {
+        if let Ok(mut g) = self.inner.lock() {
+            if let Some(entry) = g.active_imports.get_mut(import_id) {
+                append_entry_file(entry, file.clone());
+            }
+        }
+        if let Err(e) = self.append_journal_file(import_id, &file) {
+            log::warn!("导入恢复 journal 写入失败：{e}");
+        }
+    }
+
+    pub fn remove_active_import(&self, import_id: &str) {
+        if let Ok(mut g) = self.inner.lock() {
+            g.active_imports.remove(import_id);
+        }
+        let _ = fs::remove_file(self.journal_path(import_id));
+        self.persist();
+    }
+
+    pub fn get_recoverable_imports(&self) -> Vec<Value> {
+        let entries: Vec<Value> = self
+            .inner
+            .lock()
+            .map(|g| g.active_imports.values().cloned().collect())
+            .unwrap_or_default();
+
+        entries
+            .into_iter()
+            .map(|entry| self.with_recovery_fields(entry))
+            .collect()
+    }
+
+    pub fn cleanup_recoverable_import(&self, import_id: &str) -> Value {
+        let recoverable = self
+            .get_recoverable_imports()
+            .into_iter()
+            .find(|entry| active_import_id(entry).as_deref() == Some(import_id));
+
+        let Some(entry) = recoverable else {
+            return json!({
+                "success": false,
+                "importId": import_id,
+                "deletedFiles": [],
+                "errors": [{ "file": "", "error": "未找到可恢复导入" }],
+                "timestamp": chrono::Utc::now().to_rfc3339(),
+            });
+        };
+
+        let import_root = entry
+            .get("targetPath")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let file_list = entry
+            .get("fileList")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let mut deleted_files = Vec::new();
+        let mut errors = Vec::new();
+
+        for file in file_list {
+            let target = file.get("targetPath").and_then(Value::as_str).unwrap_or("");
+            if target.is_empty() {
+                continue;
+            }
+            let path = resolve_undo_target_file_path(import_root, target);
+            if !path.is_file() {
+                continue;
+            }
+            let normalized = path.to_string_lossy().replace('\\', "/");
+            match fs::remove_file(&path) {
+                Ok(()) => deleted_files.push(normalized),
+                Err(e) => errors.push(json!({ "file": normalized, "error": e.to_string() })),
+            }
+        }
+
+        self.remove_active_import(import_id);
+        json!({
+            "success": errors.is_empty(),
+            "importId": import_id,
+            "deletedFiles": deleted_files,
+            "errors": errors,
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+        })
+    }
+
+    pub fn keep_recoverable_import(&self, import_id: &str) -> Value {
+        let kept_files = self
+            .get_recoverable_imports()
+            .into_iter()
+            .find(|entry| active_import_id(entry).as_deref() == Some(import_id))
+            .and_then(|entry| {
+                entry
+                    .get("fileList")
+                    .and_then(Value::as_array)
+                    .map(|files| files.len())
+            })
+            .unwrap_or(0);
+        self.remove_active_import(import_id);
+        json!({
+            "success": true,
+            "importId": import_id,
+            "keptFiles": kept_files,
+            "errors": [],
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+        })
+    }
+
     /// 将完成条目插入历史（最新在前）；可选上限防止膨胀；**写入磁盘**
     pub fn push_history(&self, entry: Value, max_entries: usize) {
         const DEFAULT_CAP: usize = 200;
@@ -133,11 +286,18 @@ impl ImportSessionStore {
         } else {
             max_entries
         };
+        let completed_id = entry_id(&entry).map(ToString::to_string);
         if let Ok(mut g) = self.inner.lock() {
             g.history.insert(0, entry);
+            if let Some(id) = completed_id.as_deref() {
+                g.active_imports.remove(id);
+            }
             if g.history.len() > cap {
                 g.history.truncate(cap);
             }
+        }
+        if let Some(id) = completed_id {
+            let _ = fs::remove_file(self.journal_path(&id));
         }
         self.persist();
     }
@@ -183,10 +343,70 @@ impl ImportSessionStore {
         }
         self.persist();
     }
+
+    fn journal_path(&self, import_id: &str) -> PathBuf {
+        let dir = self
+            .file
+            .parent()
+            .map(|p| p.join(JOURNAL_DIR_NAME))
+            .unwrap_or_else(|| PathBuf::from(JOURNAL_DIR_NAME));
+        dir.join(format!("{}.jsonl", sanitize_import_id(import_id)))
+    }
+
+    fn append_journal_file(&self, import_id: &str, file: &Value) -> Result<(), String> {
+        let path = self.journal_path(import_id);
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+        let mut handle = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .map_err(|e| e.to_string())?;
+        let line = serde_json::to_string(file).map_err(|e| e.to_string())?;
+        handle
+            .write_all(line.as_bytes())
+            .map_err(|e| e.to_string())?;
+        handle.write_all(b"\n").map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    fn read_journal_files(&self, import_id: &str) -> Vec<Value> {
+        let path = self.journal_path(import_id);
+        let Ok(file) = fs::File::open(path) else {
+            return Vec::new();
+        };
+        BufReader::new(file)
+            .lines()
+            .map_while(Result::ok)
+            .filter_map(|line| serde_json::from_str::<Value>(&line).ok())
+            .collect()
+    }
+
+    fn with_recovery_fields(&self, mut entry: Value) -> Value {
+        let id = active_import_id(&entry).unwrap_or_default();
+        let mut files = self.read_journal_files(&id);
+        if files.is_empty() {
+            files = entry
+                .get("fileList")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
+        }
+        if let Some(obj) = entry.as_object_mut() {
+            obj.insert("id".to_string(), json!(id));
+            obj.insert("importId".to_string(), json!(id));
+            obj.insert("status".to_string(), json!("interrupted"));
+            obj.insert("fileList".to_string(), Value::Array(files));
+        }
+        entry
+    }
 }
 
 fn write_persisted_atomically(path: &Path, state: &PersistedImportState) -> Result<(), String> {
-    let dir = path.parent().ok_or_else(|| "导入历史路径无父目录".to_string())?;
+    let dir = path
+        .parent()
+        .ok_or_else(|| "导入历史路径无父目录".to_string())?;
     fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     let json = serde_json::to_string_pretty(state).map_err(|e| e.to_string())?;
     let tmp = path.with_extension("json.tmp");
@@ -201,6 +421,53 @@ fn write_persisted_atomically(path: &Path, state: &PersistedImportState) -> Resu
 
 fn entry_id(entry: &Value) -> Option<&str> {
     entry.get("id").and_then(|v| v.as_str())
+}
+
+fn active_imports_by_id(entries: Vec<Value>) -> HashMap<String, Value> {
+    entries
+        .into_iter()
+        .filter_map(|entry| active_import_id(&entry).map(|id| (id, entry)))
+        .collect()
+}
+
+fn active_import_id(entry: &Value) -> Option<String> {
+    entry
+        .get("id")
+        .or_else(|| entry.get("importId"))
+        .and_then(Value::as_str)
+        .map(ToString::to_string)
+}
+
+fn append_entry_file(entry: &mut Value, file: Value) {
+    let Some(obj) = entry.as_object_mut() else {
+        return;
+    };
+    let files = obj
+        .entry("fileList".to_string())
+        .or_insert_with(|| Value::Array(Vec::new()));
+    if let Some(items) = files.as_array_mut() {
+        items.push(file);
+    }
+}
+
+fn active_status_from_progress(status: &str) -> &'static str {
+    match status {
+        "paused" => "paused",
+        _ => "running",
+    }
+}
+
+fn sanitize_import_id(import_id: &str) -> String {
+    import_id
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
 }
 
 /// `fileList[].targetPath` 在 RFC 0104 下为相对 `{year}/{YYYYMMDD}/name`；与导入根目录拼成绝对路径
@@ -239,7 +506,10 @@ pub fn preview_undo_payload(store: &ImportSessionStore, history_id: &str) -> Val
         });
     };
 
-    let import_root = entry.get("targetPath").and_then(|v| v.as_str()).unwrap_or("");
+    let import_root = entry
+        .get("targetPath")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
 
     let file_list = entry
         .get("fileList")
@@ -253,8 +523,14 @@ pub fn preview_undo_payload(store: &ImportSessionStore, history_id: &str) -> Val
     let mut can_undo = false;
 
     for item in &file_list {
-        let target = item.get("targetPath").and_then(|v| v.as_str()).unwrap_or("");
-        let original = item.get("originalPath").and_then(|v| v.as_str()).unwrap_or("");
+        let target = item
+            .get("targetPath")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let original = item
+            .get("originalPath")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let size = item.get("size").and_then(|v| v.as_u64()).unwrap_or(0);
         let import_time = item
             .get("importTime")
@@ -383,5 +659,62 @@ mod tests {
         let _ = fs::remove_file(&file_path);
         let _ = fs::remove_dir_all(&dir);
         let _ = fs::remove_file(&hist_path);
+    }
+
+    #[test]
+    fn active_imports_survive_restart_and_cleanup_deletes_copied_files() {
+        let dir = std::env::temp_dir().join(format!("photasa_active_{}", uuid::Uuid::new_v4()));
+        let target_root = dir.join("imports");
+        fs::create_dir_all(target_root.join("2024/20240315")).unwrap();
+        let copied_file = target_root.join("2024/20240315/a.jpg");
+        fs::write(&copied_file, b"copied").unwrap();
+
+        let hist_path = dir.join("import_history_v1.json");
+        let store = ImportSessionStore::load_or_new_for_test(hist_path.clone());
+        store.start_active_import(
+            "import-1",
+            json!({
+                "sourcePaths": ["/camera"],
+                "targetPath": target_root.to_string_lossy(),
+                "totalFiles": 2,
+                "config": {
+                    "sourcePaths": ["/camera"],
+                    "targetPath": target_root.to_string_lossy(),
+                    "duplicateStrategy": "rename",
+                },
+            }),
+        );
+        store.update_active_progress(
+            "import-1",
+            json!({ "processedFiles": 1, "status": "processing" }),
+        );
+        store.add_active_imported_file(
+            "import-1",
+            json!({
+                "originalPath": "/camera/a.jpg",
+                "targetPath": "2024/20240315/a.jpg",
+                "size": 6,
+                "importTime": "2026-07-18T19:00:00Z",
+            }),
+        );
+
+        let restarted = ImportSessionStore::load_or_new_for_test(hist_path);
+        let recoverable = restarted.get_recoverable_imports();
+        assert_eq!(recoverable.len(), 1);
+        assert_eq!(
+            recoverable[0].get("id").and_then(|v| v.as_str()),
+            Some("import-1")
+        );
+        assert_eq!(
+            recoverable[0].get("status").and_then(|v| v.as_str()),
+            Some("interrupted")
+        );
+
+        let cleanup = restarted.cleanup_recoverable_import("import-1");
+        assert_eq!(cleanup.get("success").and_then(|v| v.as_bool()), Some(true));
+        assert!(!copied_file.exists());
+        assert!(restarted.get_recoverable_imports().is_empty());
+
+        let _ = fs::remove_dir_all(&dir);
     }
 }

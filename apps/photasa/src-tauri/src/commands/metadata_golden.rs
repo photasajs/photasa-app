@@ -9,7 +9,10 @@ use std::path::{Path, PathBuf};
 use super::extract_metadata::extract_metadata_request;
 
 const FIXTURES_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/metadata");
-const GOLDEN_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/metadata/golden");
+const GOLDEN_DIR: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/tests/fixtures/metadata/golden"
+);
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -58,10 +61,7 @@ fn assert_json_subset(actual: &Value, expected: &Value, path: &str) {
                 "{path}: 数值不匹配 actual={af} expected={ef}"
             );
         }
-        _ => assert_eq!(
-            actual, expected,
-            "字段 {path} 子集不匹配"
-        ),
+        _ => assert_eq!(actual, expected, "字段 {path} 子集不匹配"),
     }
 }
 
@@ -102,7 +102,13 @@ fn run_golden_spec(spec: &GoldenSpec) {
         }
     }
 
-    if !spec.expect.is_null() && !spec.expect.as_object().map(|o| o.is_empty()).unwrap_or(true) {
+    if !spec.expect.is_null()
+        && !spec
+            .expect
+            .as_object()
+            .map(|o| o.is_empty())
+            .unwrap_or(true)
+    {
         assert_json_subset(&actual, &spec.expect, "root");
     }
 
@@ -169,7 +175,10 @@ mod tests {
         for name in names {
             let path = fixture_path(name);
             let r = extract_metadata_request(&json!({ "filePath": path.to_string_lossy() }));
-            eprintln!("=== {name} ===\n{}\n", serde_json::to_string_pretty(&r).unwrap_or_else(|_| format!("ERR: {r:?}")));
+            eprintln!(
+                "=== {name} ===\n{}\n",
+                serde_json::to_string_pretty(&r).unwrap_or_else(|_| format!("ERR: {r:?}"))
+            );
         }
     }
 }

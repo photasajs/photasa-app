@@ -33,7 +33,8 @@
             "theme": "Theme",
             "advanced": "Advanced",
             "autoUpdate": "Auto Update",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "import": "Import"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",
@@ -71,6 +72,14 @@
             "statusMessage": "Status Message",
             "checkNow": "Check Now",
             "reset": "Reset Status"
+        },
+        "import": {
+            "defaultTargetPath": "Default target folder",
+            "defaultTargetPlaceholder": "Use the first watched folder",
+            "clearDefaultTarget": "Clear default target folder",
+            "duplicateStrategy": "Default duplicate handling",
+            "includeSubfolders": "Include subfolders by default",
+            "includeSubfoldersHint": "New import sessions use this as the initial filter."
         },
         "autoUpdate": {
             "title": "Auto Update",
@@ -174,6 +183,18 @@
         "showProgress": "Show progress",
         "importAlreadyRunning": "Import already running",
         "importAlreadyRunningDesc": "An import is in progress. Open the progress panel or wait until it finishes.",
+        "recovery": {
+            "title": "Interrupted import found",
+            "message": "{copied} of {total} files were copied before Photasa closed.",
+            "cleanup": "Clean up",
+            "keep": "Keep files",
+            "cleanedTitle": "Interrupted import cleaned",
+            "cleanedMessage": "Deleted {count} copied files.",
+            "cleanupFailedTitle": "Cleanup failed",
+            "cleanupFailedMessage": "Some copied files could not be deleted. Check the target folder.",
+            "keptTitle": "Copied files kept",
+            "keptMessage": "Kept {count} copied files and cleared the interrupted import marker."
+        },
         "importFailed": "Import Failed",
         "importCompleted": "Import Completed",
         "importCompletedDesc": "Successfully imported {count} files",

@@ -55,7 +55,10 @@ pub fn is_photasa_media_file(path: &Path) -> bool {
 #[allow(dead_code)]
 pub fn collect_media_files(root: &Path, recursive: bool) -> Result<Vec<String>, String> {
     if !root.exists() {
-        return Err(format!("Directory does not exist: {}", normalize_path_string(root)));
+        return Err(format!(
+            "Directory does not exist: {}",
+            normalize_path_string(root)
+        ));
     }
     if !root.is_dir() {
         return Err(format!("Not a directory: {}", normalize_path_string(root)));
@@ -116,7 +119,8 @@ pub fn walkthrough_photos_in_folder(scan: &ScanAction) -> Result<Vec<PhotoFileRe
     let is_directory = meta.is_dir();
     let is_file = meta.is_file();
 
-    let single_file = scan.operation_type == "file" || (is_file && scan.operation_type != "directory");
+    let single_file =
+        scan.operation_type == "file" || (is_file && scan.operation_type != "directory");
 
     if single_file {
         if let Some((is_image, is_video)) = classify_media(root) {
@@ -251,10 +255,7 @@ pub fn relative_thumbnail_path_for_source(source_path: &str) -> String {
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or(source_path);
-    format!(
-        "{}/thumbnail-{}.png",
-        PHOTASA_ORIGINALS_DIR, file_name
-    )
+    format!("{}/thumbnail-{}.png", PHOTASA_ORIGINALS_DIR, file_name)
 }
 
 #[cfg(test)]
@@ -262,7 +263,8 @@ mod walkthrough_tests {
     use super::*;
 
     fn temp(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("photasa-walk-{name}-{}", uuid::Uuid::new_v4()));
+        let dir =
+            std::env::temp_dir().join(format!("photasa-walk-{name}-{}", uuid::Uuid::new_v4()));
         fs::create_dir_all(&dir).unwrap();
         dir
     }
