@@ -23,6 +23,7 @@ Today: kill app mid-`execute_import` → partial files on disk; no resume-from-c
 
 - No implementation while Deferred
 - Must not block 0118 ✅
+- checksum → **0119**; duplicateCount → **0123**; resume → **0124**; paused emit → **0125**
 
 ## Checklist (when activated)
 

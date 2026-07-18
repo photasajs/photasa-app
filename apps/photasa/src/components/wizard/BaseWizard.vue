@@ -44,22 +44,22 @@
                         v-else
                         :name="currentStep?.id"
                         :step="currentStep"
-                        :step-data="getStepData(currentStep?.id || '')"
-                        :wizard-state="state"
-                        :set-step-data="setStepData"
-                        :go-next="handleNext"
-                        :go-back="handleBack"
+                        :stepData="getStepData(currentStep?.id || '')"
+                        :wizardState="state"
+                        :setStepData="setStepData"
+                        :goNext="handleNext"
+                        :goBack="handleBack"
                         :finish="handleFinish"
                         :cancel="handleCancel"
                     >
                         <!-- Default slot -->
                         <slot
                             :step="currentStep"
-                            :step-data="getStepData(currentStep?.id || '')"
-                            :wizard-state="state"
-                            :set-step-data="setStepData"
-                            :go-next="handleNext"
-                            :go-back="handleBack"
+                            :stepData="getStepData(currentStep?.id || '')"
+                            :wizardState="state"
+                            :setStepData="setStepData"
+                            :goNext="handleNext"
+                            :goBack="handleBack"
                             :finish="handleFinish"
                             :cancel="handleCancel"
                         />
@@ -94,9 +94,9 @@
             <!-- Custom Footer Slot -->
             <slot
                 name="footer"
-                :wizard-state="state"
-                :go-next="handleNext"
-                :go-back="handleBack"
+                :wizardState="state"
+                :goNext="handleNext"
+                :goBack="handleBack"
                 :finish="handleFinish"
                 :cancel="handleCancel"
             />

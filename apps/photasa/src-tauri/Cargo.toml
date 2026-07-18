@@ -17,6 +17,7 @@ tauri-build = { version = "2.0", features = [] }
 zouwu-core = { workspace = true }
 zouwu-builtin = { workspace = true }
 wenchang-preferences = { workspace = true }
+photasa-import = { workspace = true }
 
 # workspace 共享依赖
 serde = { workspace = true }

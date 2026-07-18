@@ -82,3 +82,14 @@ pub fn log_viewer_close() -> serde_json::Value {
         "message": "[LogViewer] Log viewer deactivated"
     })
 }
+
+/// 接收渲染进程传回的日志并在主进程打印（用于调试前端错误）
+#[tauri::command]
+pub fn log_from_renderer(level: String, category: String, message: String) {
+    match level.as_str() {
+        "error" => log::error!("🌌 [Renderer][{}] {}", category, message),
+        "warn" => log::warn!("🌌 [Renderer][{}] {}", category, message),
+        "info" => log::info!("🌌 [Renderer][{}] {}", category, message),
+        _ => log::debug!("🌌 [Renderer][{}] {}", category, message),
+    }
+}

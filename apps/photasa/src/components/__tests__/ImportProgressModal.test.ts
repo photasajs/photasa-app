@@ -1,203 +1,201 @@
 /**
- * Unit tests for ImportProgressModal component
+ * RFC 0118 — ImportProgressModal：dismiss ≠ cancel；reattach 不 execute
  */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
+import { createPinia, setActivePinia } from "pinia";
 import ImportProgressModal from "../ImportProgressModal.vue";
+import {
+    IMPORT_MODAL_MODE_REATTACH,
+    IMPORT_MODAL_MODE_START,
+} from "@renderer/constants/import-modal";
+import { useImportSessionStore } from "@renderer/stores/import-session";
+import type { ImportConfig } from "@photasa/common";
 
-// Date is already mocked in the global test setup, no need to mock it again here
+const executeImport = vi.fn();
+const cancelImport = vi.fn();
+const pauseImport = vi.fn();
+const resumeImport = vi.fn();
 
-// Mock all external dependencies
-vi.mock("@renderer/utils/api");
-vi.mock("@renderer/utils/import-helpers");
-vi.mock("@renderer/utils/import-wizard-helpers");
-vi.mock("@photasa/common");
+vi.mock("@renderer/utils/api", () => ({
+    executeImport: (...args: unknown[]) => executeImport(...args),
+    cancelImport: (...args: unknown[]) => cancelImport(...args),
+    pauseImport: (...args: unknown[]) => pauseImport(...args),
+    resumeImport: (...args: unknown[]) => resumeImport(...args),
+}));
 
-describe("ImportProgressModal", () => {
+vi.mock("@renderer/utils/import-helpers", () => ({
+    formatProcessingSpeed: () => "0/s",
+    formatRemainingTime: () => "0s",
+}));
+
+vi.mock("@renderer/utils/import-wizard-helpers", () => ({
+    createSerializableConfig: (c: unknown) => c,
+}));
+
+vi.mock("@renderer/api/env", () => ({
+    isTauri: () => false,
+}));
+
+vi.mock("@renderer/services/notification-manager", () => ({
+    notification: {
+        success: vi.fn(),
+        error: vi.fn(),
+        warning: vi.fn(),
+        info: vi.fn(),
+    },
+}));
+
+vi.mock("@photasa/common", async () => {
+    const actual = await vi.importActual<typeof import("@photasa/common")>("@photasa/common");
+    return {
+        ...actual,
+        loggers: {
+            ...actual.loggers,
+            importProgress: {
+                debug: vi.fn(),
+                info: vi.fn(),
+                error: vi.fn(),
+                warn: vi.fn(),
+            },
+        },
+    };
+});
+
+vi.mock("vue-i18n", () => ({
+    useI18n: () => ({
+        t: (key: string) => key,
+    }),
+}));
+
+function sampleConfig(): ImportConfig {
+    return {
+        sourcePaths: ["/src"],
+        targetPath: "/dst",
+        selectedFiles: ["/src/a.jpg", "/src/b.jpg"],
+        filters: {
+            includeImages: true,
+            includeVideos: false,
+            includeSubfolders: true,
+        } as ImportConfig["filters"],
+        duplicateStrategy: "skip" as ImportConfig["duplicateStrategy"],
+        fileGroups: [],
+        allowDuplicateRename: false,
+        useMD5ForDuplicates: false,
+    };
+}
+
+describe("ImportProgressModal (RFC 0118)", () => {
     beforeEach(() => {
+        setActivePinia(createPinia());
         vi.clearAllMocks();
+        executeImport.mockResolvedValue({ importId: "imp-1" });
+        cancelImport.mockResolvedValue(undefined);
     });
 
-    describe("Component Rendering", () => {
-        it("should render when show is true", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            expect(wrapper.exists()).toBe(true);
+    it("renders when show is true", () => {
+        const wrapper = mount(ImportProgressModal, {
+            props: { show: true, config: null, mode: IMPORT_MODAL_MODE_REATTACH },
+            global: { plugins: [createPinia()] },
         });
-
-        it("should render when show is false", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: false, config: null },
-            });
-            expect(wrapper.exists()).toBe(true);
-        });
+        expect(wrapper.exists()).toBe(true);
     });
 
-    describe("Core Functionality", () => {
-        it("should have correct initial state", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
-
-            expect(vm.importProgress.totalFiles).toBe(0);
-            expect(vm.importProgress.processedFiles).toBe(0);
-            expect(vm.importProgress.speed).toBe(0);
-            expect(vm.importProgress.status).toBe("preparing");
-            expect(vm.isImporting).toBe(false);
-            expect(vm.isPaused).toBe(false);
+    it("T1.3 start mode calls executeImport once", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_START,
+            },
+            global: { plugins: [pinia] },
         });
-
-        it("should calculate progress percentage correctly", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
-
-            // Set progress data
-            vm.importProgress.totalFiles = 100;
-            vm.importProgress.processedFiles = 25;
-
-            // Progress should be 25%
-            expect(vm.progressPercentage).toBe(25);
-        });
-
-        it("should handle zero files gracefully", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
-
-            // Set zero files
-            vm.importProgress.totalFiles = 0;
-            vm.importProgress.processedFiles = 0;
-
-            // Progress should be 0%
-            expect(vm.progressPercentage).toBe(0);
-        });
+        await flushPromises();
+        expect(executeImport).toHaveBeenCalledTimes(1);
+        const session = useImportSessionStore();
+        expect(session.importId).toBe("imp-1");
     });
 
-    describe("Status Management", () => {
-        it("should have correct status icon for different states", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
+    it("T1.3 reattach does not call executeImport", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const session = useImportSessionStore();
+        await session.begin("existing-id", { totalFiles: 2, processedFiles: 1 });
 
-            // Test different statuses
-            vm.importProgress.status = "completed";
-            expect(vm.statusIcon).toBeDefined();
-
-            vm.importProgress.status = "failed";
-            expect(vm.statusIcon).toBeDefined();
-
-            vm.importProgress.status = "cancelled";
-            expect(vm.statusIcon).toBeDefined();
-
-            vm.importProgress.status = "paused";
-            expect(vm.statusIcon).toBeDefined();
+        mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_REATTACH,
+            },
+            global: { plugins: [pinia] },
         });
-
-        it("should have correct status colors", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
-
-            // Test different status colors
-            vm.importProgress.status = "completed";
-            expect(vm.statusColor).toContain("green");
-
-            vm.importProgress.status = "failed";
-            expect(vm.statusColor).toContain("red");
-
-            vm.importProgress.status = "cancelled";
-            expect(vm.statusColor).toContain("red");
-
-            vm.importProgress.status = "paused";
-            expect(vm.statusColor).toContain("yellow");
-        });
-
-        it("should determine if modal can be closed correctly", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
-
-            // Test different states
-            vm.importProgress.status = "processing";
-            expect(vm.canClose).toBe(false);
-
-            vm.importProgress.status = "completed";
-            expect(vm.canClose).toBe(true);
-
-            vm.importProgress.status = "failed";
-            expect(vm.canClose).toBe(true);
-
-            vm.importProgress.status = "cancelled";
-            expect(vm.canClose).toBe(true);
-        });
+        await flushPromises();
+        expect(executeImport).not.toHaveBeenCalled();
+        expect(session.importId).toBe("existing-id");
     });
 
-    describe("Props Validation", () => {
-        it("should accept show prop", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            expect(wrapper.props("show")).toBe(true);
+    it("T1.1 dismiss does not call cancelImport; session keeps importId", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_START,
+            },
+            global: { plugins: [pinia] },
         });
+        await flushPromises();
+        const session = useImportSessionStore();
+        expect(session.importId).toBe("imp-1");
 
-        it("should accept config prop", () => {
-            const mockConfig = {
-                sourcePaths: ["/test"],
-                targetPath: "/target",
-                filters: {
-                    fileTypes: ["image" as const],
-                    sizeRange: { min: 0, max: Number.MAX_SAFE_INTEGER },
-                    dateRange: { start: new Date(0), end: new Date() },
-                    includeSubfolders: true,
-                    excludePaths: [],
-                },
-                duplicateStrategy: "rename" as const,
-                fileGroups: [],
-                selectedFiles: ["test.jpg"],
-                allowDuplicateRename: true,
-            };
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: mockConfig },
-            });
-            expect(wrapper.props("config")).toEqual(mockConfig);
-        });
+        await wrapper.findComponent({ name: "BaseModal" }).vm.$emit("close");
+        await flushPromises();
+
+        expect(cancelImport).not.toHaveBeenCalled();
+        expect(session.importId).toBe("imp-1");
+        expect(wrapper.emitted("dismiss")).toBeTruthy();
     });
 
-    describe("Component Structure", () => {
-        it("should have required reactive properties", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
-
-            expect(vm.importId).toBeDefined();
-            expect(vm.isPaused).toBeDefined();
-            expect(vm.canCancel).toBeDefined();
-            expect(vm.isImporting).toBeDefined();
-            expect(vm.importProgress).toBeDefined();
-            expect(vm.importResult).toBeDefined();
-            expect(vm.importError).toBeDefined();
+    it("T1.2 cancel button calls cancelImport", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_START,
+            },
+            global: { plugins: [pinia] },
         });
+        await flushPromises();
 
-        it("should have required computed properties", () => {
-            const wrapper = mount(ImportProgressModal, {
-                props: { show: true, config: null },
-            });
-            const vm = wrapper.vm as any;
+        const buttons = wrapper.findAllComponents({ name: "BaseButton" });
+        const cancelBtn = buttons.find((b) => b.text().includes("import.cancelButton"));
+        expect(cancelBtn).toBeTruthy();
+        await cancelBtn!.trigger("click");
+        await flushPromises();
 
-            expect(vm.progressPercentage).toBeDefined();
-            expect(vm.statusIcon).toBeDefined();
-            expect(vm.statusColor).toBeDefined();
-            expect(vm.canClose).toBeDefined();
+        expect(cancelImport).toHaveBeenCalledWith("imp-1");
+        expect(useImportSessionStore().phase).toBe("cancelled");
+    });
+
+    it("canClose is true while processing (dismiss allowed)", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_START,
+            },
+            global: { plugins: [pinia] },
         });
+        await flushPromises();
+        const modal = wrapper.findComponent({ name: "BaseModal" });
+        expect(modal.props("closable")).toBe(true);
     });
 });

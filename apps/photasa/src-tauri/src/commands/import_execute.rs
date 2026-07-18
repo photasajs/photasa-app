@@ -1,113 +1,22 @@
 /*!
- * executeImport / cancelImport / pauseImport / resumeImport（RFC 0070 + 0096）
- * 按前端 `ImportConfig` 的 selectedFiles 复制到 targetPath（RFC 0104：`{year}/{YYYYMMDD}/` 子目录与预览一致），发送与 Electron 相近的进度/完成事件。
+ * Tauri 壳：executeImport / cancel / pause / resume
+ * 算法在 `photasa-import::copy_loop`（可 `cargo test -p photasa-import`）
  */
-use crate::commands::import_date_util::{
-    date_subpath_for_import_source, join_date_subpath, relative_target_path_for_import,
-};
-use crate::commands::import_session_store::ImportSessionStore;
+use crate::commands::import_date_util::PhotasaMetadataExtractor;
 use log::{info, warn};
+use photasa_import::copy_loop::{
+    cancelled_progress_json, collect_files, registry_set_cancel, registry_set_paused,
+    run_import_file_loop, take_duplicate_strategy, ImportLoopEnd, ImportTaskFlags,
+};
+use photasa_import::session::ImportSessionStore;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
-use std::time::Instant;
+use std::path::Path;
+use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 use tauri::{Emitter, State, Window};
 
-/// 单任务控制：取消 + 暂停（按 import_id）
-pub struct ImportTaskFlags {
-    pub cancel: Arc<AtomicBool>,
-    pub paused: Arc<AtomicBool>,
-}
-
-pub struct ImportTaskRegistry(pub Mutex<HashMap<String, ImportTaskFlags>>);
-
-impl Default for ImportTaskRegistry {
-    fn default() -> Self {
-        Self(Mutex::new(HashMap::new()))
-    }
-}
-
-/// 暂停等待期间若取消则返回 false
-fn wait_unpaused_or_cancel(cancel: &AtomicBool, paused: &AtomicBool) -> bool {
-    loop {
-        if cancel.load(Ordering::SeqCst) {
-            return false;
-        }
-        if !paused.load(Ordering::SeqCst) {
-            return true;
-        }
-        thread::sleep(Duration::from_millis(50));
-    }
-}
-
-fn take_duplicate_strategy(config: &Value) -> &'static str {
-    match config.get("duplicateStrategy").and_then(|v| v.as_str()) {
-        Some("skip") => "skip",
-        Some("overwrite") => "overwrite",
-        Some("rename") | None => "rename",
-        _ => "rename",
-    }
-}
-
-fn collect_files(config: &Value) -> Vec<String> {
-    if let Some(arr) = config.get("selectedFiles").and_then(|v| v.as_array()) {
-        let mut out: Vec<String> = arr
-            .iter()
-            .filter_map(|x| x.as_str().map(|s| s.to_string()))
-            .collect();
-        out.sort();
-        out.dedup();
-        return out;
-    }
-    Vec::new()
-}
-
-fn ensure_parent(path: &Path) -> Result<(), String> {
-    if let Some(p) = path.parent() {
-        fs::create_dir_all(p).map_err(|e| e.to_string())?;
-    }
-    Ok(())
-}
-
-fn copy_one(src: &Path, target_dir: &Path, strategy: &str) -> Result<(bool, PathBuf), String> {
-    let name = src
-        .file_name()
-        .and_then(|s| s.to_str())
-        .ok_or_else(|| "无效源路径".to_string())?;
-    let mut dest = target_dir.join(name);
-    if dest.exists() {
-        match strategy {
-            "skip" => return Ok((false, dest)),
-            "overwrite" => {}
-            _ => {
-                let mut count = 1u32;
-                let stem = Path::new(name).file_stem().and_then(|s| s.to_str()).unwrap_or("file");
-                let ext = Path::new(name)
-                    .extension()
-                    .and_then(|e| e.to_str())
-                    .map(|e| format!(".{e}"))
-                    .unwrap_or_default();
-                loop {
-                    let alt = format!("{stem}_{count}{ext}");
-                    dest = target_dir.join(&alt);
-                    if !dest.exists() {
-                        break;
-                    }
-                    count += 1;
-                }
-            }
-        }
-    }
-    ensure_parent(&dest)?;
-    fs::copy(src, &dest).map_err(|e| e.to_string())?;
-    Ok((true, dest))
-}
+pub use photasa_import::copy_loop::ImportTaskRegistry;
 
 fn emit_cancelled_progress(
     window: &Window,
@@ -120,21 +29,29 @@ fn emit_cancelled_progress(
 ) {
     let _ = window.emit(
         "import:progress",
-        json!({
-            "totalFiles": total_files,
-            "processedFiles": processed,
-            "successfulFiles": successful,
-            "skippedFiles": skipped,
-            "errorFiles": errors,
-            "currentFile": current_file,
-            "status": "cancelled",
-            "errors": [],
-            "warnings": [],
-        }),
+        cancelled_progress_json(total_files, processed, successful, skipped, errors, current_file),
     );
 }
 
-/// 执行导入：立即返回 import_id，后台复制并 emit `import:progress` / `import:complete` / `import:error`
+/// 暂停/继续：以会话中最后一次快照为底，改 `status` 后重新 emit + 回写会话
+/// （不等复制循环下一次 tick，字段与常规 progress 一致，不再是残缺 payload）
+fn emit_status_from_snapshot(
+    window: &Window,
+    sessions: &ImportSessionStore,
+    import_id: &str,
+    status: &str,
+) {
+    let Some(Value::Object(mut snapshot)) = sessions.get_progress(import_id) else {
+        return;
+    };
+    snapshot.insert("status".to_string(), Value::String(status.to_string()));
+    snapshot.insert("importId".to_string(), Value::String(import_id.to_string()));
+    let payload = Value::Object(snapshot);
+    let _ = window.emit("import:progress", payload.clone());
+    sessions.set_progress(import_id, payload);
+}
+
+/// 执行导入：立即返回 import_id，后台复制并 emit 进度事件
 #[tauri::command]
 pub async fn execute_import(
     window: Window,
@@ -189,49 +106,45 @@ pub async fn execute_import(
     let sessions_spawn = Arc::clone(&*sessions);
 
     tauri::async_runtime::spawn(async move {
-        let started = Instant::now();
-        let total_files = files.len() as u32;
         let start_iso = chrono::Utc::now().to_rfc3339();
+        let total_files = files.len() as u32;
+        let meta = PhotasaMetadataExtractor;
 
-        let initial_progress = json!({
-            "totalFiles": total_files,
-            "processedFiles": 0u32,
-            "successfulFiles": 0u32,
-            "skippedFiles": 0u32,
-            "errorFiles": 0u32,
-            "speed": 0.0,
-            "estimatedTimeRemaining": 0u64,
-            "remainingTime": 0u64,
-            "currentFile": "",
-            "status": "processing",
-            "errors": [],
-            "warnings": [],
-            "startTime": start_iso.clone(),
-        });
-        let _ = window_clone.emit("import:progress", initial_progress.clone());
-        sessions_spawn.set_progress(&import_id_emit, initial_progress);
+        let sessions_for_cb = sessions_spawn.clone();
+        let import_id_for_cb = import_id_emit.clone();
+        let window_for_cb = window_clone.clone();
 
-        if let Err(e) = fs::create_dir_all(Path::new(&target_path)) {
-            let _ = window_clone.emit(
-                "import:error",
-                json!({ "message": format!("创建目标目录失败: {e}"), "importId": import_id_emit }),
-            );
-            let mut g = registry_spawn.0.lock().unwrap();
-            g.remove(&import_id_emit);
-            sessions_spawn.remove_progress(&import_id_emit);
-            return;
-        }
+        let loop_result = run_import_file_loop(
+            &files,
+            Path::new(&target_path),
+            strategy,
+            &cancel_flag,
+            &paused_flag,
+            &start_iso,
+            &meta,
+            |progress_val| {
+                let _ = window_for_cb.emit("import:progress", progress_val.clone());
+                sessions_for_cb.set_progress(&import_id_for_cb, progress_val);
+            },
+        );
 
-        let target_pb = PathBuf::from(&target_path);
-        let mut successful = 0u32;
-        let mut skipped = 0u32;
-        let mut errors = 0u32;
-        let mut processed = 0u32;
-        let mut imported_files: Vec<Value> = Vec::new();
-        let mut total_size: u64 = 0;
-
-        for src_s in &files {
-            if !wait_unpaused_or_cancel(&cancel_flag, &paused_flag) {
+        match loop_result {
+            Err(e) => {
+                let _ = window_clone.emit(
+                    "import:error",
+                    json!({ "message": e, "importId": import_id_emit }),
+                );
+                let mut g = registry_spawn.0.lock().unwrap();
+                g.remove(&import_id_emit);
+                sessions_spawn.remove_progress(&import_id_emit);
+            }
+            Ok(ImportLoopEnd::Cancelled {
+                successful,
+                skipped,
+                errors,
+                processed,
+                current_file,
+            }) => {
                 emit_cancelled_progress(
                     &window_clone,
                     total_files,
@@ -239,147 +152,68 @@ pub async fn execute_import(
                     successful,
                     skipped,
                     errors,
-                    src_s.as_str(),
+                    current_file.as_str(),
                 );
                 let mut g = registry_spawn.0.lock().unwrap();
                 g.remove(&import_id_emit);
                 sessions_spawn.remove_progress(&import_id_emit);
                 info!("🌌 导入已取消: {}", import_id_emit);
-                return;
             }
+            Ok(ImportLoopEnd::Completed {
+                successful,
+                skipped,
+                errors,
+                processed: _,
+                total_size,
+                imported_files,
+                duration_ms,
+            }) => {
+                let success = errors == 0;
+                let result = json!({
+                    "success": success,
+                    "totalFiles": total_files,
+                    "successfulFiles": successful,
+                    "skippedFiles": skipped,
+                    "errorFiles": errors,
+                    "totalSize": total_size,
+                    "processedSize": total_size,
+                    "importedFiles": imported_files.clone(),
+                    "errors": [],
+                    "warnings": [],
+                    "duration": duration_ms,
+                    "importId": import_id_emit,
+                    "sourcePaths": src_for_result.clone(),
+                    "targetPath": target_for_result.clone(),
+                });
 
-            if cancel_flag.load(Ordering::SeqCst) {
-                emit_cancelled_progress(
-                    &window_clone,
-                    total_files,
-                    processed,
-                    successful,
-                    skipped,
-                    errors,
-                    src_s.as_str(),
-                );
+                let _ = window_clone.emit("import:complete", result.clone());
+
+                let stats = json!({
+                    "totalFiles": total_files,
+                    "successfulFiles": successful,
+                    "skippedFiles": skipped,
+                    "errorFiles": errors,
+                    "totalSize": total_size,
+                    "duplicateCount": 0,
+                });
+                let history_entry = json!({
+                    "id": import_id_emit,
+                    "timestamp": chrono::Utc::now().to_rfc3339(),
+                    "sourcePaths": src_for_result,
+                    "targetPath": target_for_result,
+                    "result": result,
+                    "canUndo": !imported_files.is_empty(),
+                    "fileList": imported_files,
+                    "statistics": stats,
+                });
+                sessions_spawn.push_history(history_entry, 200);
+                sessions_spawn.remove_progress(&import_id_emit);
+
                 let mut g = registry_spawn.0.lock().unwrap();
                 g.remove(&import_id_emit);
-                sessions_spawn.remove_progress(&import_id_emit);
-                info!("🌌 导入已取消: {}", import_id_emit);
-                return;
+                info!("🌌 导入完成: {}", import_id_emit);
             }
-
-            let src = Path::new(src_s);
-            if !src.is_file() {
-                errors += 1;
-                processed += 1;
-                continue;
-            }
-
-            // RFC 0104：与预览一致按拍摄/文件日期写入 `{year}/{YYYYMMDD}/`
-            let date_sub = date_subpath_for_import_source(src);
-            let target_dir = join_date_subpath(&target_pb, &date_sub);
-
-            match copy_one(src, &target_dir, strategy) {
-                Ok((copied, dest)) => {
-                    if copied {
-                        successful += 1;
-                        let sz = fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
-                        total_size += sz;
-                        let src_norm = src_s.replace('\\', "/");
-                        let dest_name = dest
-                            .file_name()
-                            .and_then(|s| s.to_str())
-                            .unwrap_or("");
-                        let target_rel = relative_target_path_for_import(&date_sub, dest_name);
-                        // checksum / statistics.duplicateCount：契约字段占位（恒 null / 0）；真值另开 P3 RFC，不挡导入
-                        imported_files.push(json!({
-                            "originalPath": src_norm,
-                            "targetPath": target_rel,
-                            "size": sz,
-                            "checksum": serde_json::Value::Null,
-                            "importTime": chrono::Utc::now().to_rfc3339(),
-                        }));
-                    } else {
-                        skipped += 1;
-                    }
-                }
-                Err(e) => {
-                    warn!("🌌 复制失败 {}: {}", src_s, e);
-                    errors += 1;
-                }
-            }
-            processed += 1;
-
-            let elapsed = started.elapsed().as_secs_f64().max(0.001);
-            let speed = processed as f64 / elapsed;
-            let left = total_files.saturating_sub(processed);
-            let eta = if speed > 0.01 {
-                (left as f64 / speed) as u64
-            } else {
-                0u64
-            };
-
-            let progress_val = json!({
-                "totalFiles": total_files,
-                "processedFiles": processed,
-                "successfulFiles": successful,
-                "skippedFiles": skipped,
-                "errorFiles": errors,
-                "speed": speed,
-                "estimatedTimeRemaining": eta,
-                "remainingTime": eta,
-                "currentFile": src_s,
-                "status": "processing",
-                "errors": [],
-                "warnings": [],
-                "startTime": start_iso.clone(),
-            });
-            let _ = window_clone.emit("import:progress", progress_val.clone());
-            sessions_spawn.set_progress(&import_id_emit, progress_val);
         }
-
-        let duration_ms = started.elapsed().as_millis() as u64;
-        let success = errors == 0;
-        let result = json!({
-            "success": success,
-            "totalFiles": total_files,
-            "successfulFiles": successful,
-            "skippedFiles": skipped,
-            "errorFiles": errors,
-            "totalSize": total_size,
-            "processedSize": total_size,
-            "importedFiles": imported_files.clone(),
-            "errors": [],
-            "warnings": [],
-            "duration": duration_ms,
-            "importId": import_id_emit,
-            "sourcePaths": src_for_result.clone(),
-            "targetPath": target_for_result.clone(),
-        });
-
-        let _ = window_clone.emit("import:complete", result.clone());
-
-        let stats = json!({
-            "totalFiles": total_files,
-            "successfulFiles": successful,
-            "skippedFiles": skipped,
-            "errorFiles": errors,
-            "totalSize": total_size,
-            "duplicateCount": 0,
-        });
-        let history_entry = json!({
-            "id": import_id_emit,
-            "timestamp": chrono::Utc::now().to_rfc3339(),
-            "sourcePaths": src_for_result,
-            "targetPath": target_for_result,
-            "result": result,
-            "canUndo": !imported_files.is_empty(),
-            "fileList": imported_files,
-            "statistics": stats,
-        });
-        sessions_spawn.push_history(history_entry, 200);
-        sessions_spawn.remove_progress(&import_id_emit);
-
-        let mut g = registry_spawn.0.lock().unwrap();
-        g.remove(&import_id_emit);
-        info!("🌌 导入完成: {}", import_id_emit);
     });
 
     Ok(import_id)
@@ -392,39 +226,53 @@ pub struct ImportIdArgs {
 }
 
 #[tauri::command]
-pub fn cancel_import(registry: State<'_, Arc<ImportTaskRegistry>>, args: ImportIdArgs) -> Result<(), String> {
+pub fn cancel_import(
+    registry: State<'_, Arc<ImportTaskRegistry>>,
+    args: ImportIdArgs,
+) -> Result<(), String> {
     let import_id = args.import_id;
-    let g = registry.0.lock().map_err(|e| e.to_string())?;
-    if let Some(flags) = g.get(&import_id) {
-        flags.cancel.store(true, Ordering::SeqCst);
-        info!("🌌 收到取消导入: {}", import_id);
-        Ok(())
-    } else {
-        warn!("🌌 取消导入：未知任务 {}", import_id);
-        Ok(())
+    match registry_set_cancel(&registry, &import_id)? {
+        true => {
+            info!("🌌 收到取消导入: {}", import_id);
+            Ok(())
+        }
+        false => {
+            warn!("🌌 取消导入：未知任务 {}", import_id);
+            Ok(())
+        }
     }
 }
 
 #[tauri::command]
-pub fn pause_import(registry: State<'_, Arc<ImportTaskRegistry>>, args: ImportIdArgs) -> Result<(), String> {
-    let g = registry.0.lock().map_err(|e| e.to_string())?;
-    if let Some(flags) = g.get(&args.import_id) {
-        flags.paused.store(true, Ordering::SeqCst);
-        info!("🌌 收到暂停导入: {}", args.import_id);
-    } else {
-        warn!("🌌 暂停导入：未知任务 {}", args.import_id);
+pub fn pause_import(
+    window: Window,
+    registry: State<'_, Arc<ImportTaskRegistry>>,
+    sessions: State<'_, Arc<ImportSessionStore>>,
+    args: ImportIdArgs,
+) -> Result<(), String> {
+    match registry_set_paused(&registry, &args.import_id, true)? {
+        true => {
+            info!("🌌 收到暂停导入: {}", args.import_id);
+            emit_status_from_snapshot(&window, &sessions, &args.import_id, "paused");
+        }
+        false => warn!("🌌 暂停导入：未知任务 {}", args.import_id),
     }
     Ok(())
 }
 
 #[tauri::command]
-pub fn resume_import(registry: State<'_, Arc<ImportTaskRegistry>>, args: ImportIdArgs) -> Result<(), String> {
-    let g = registry.0.lock().map_err(|e| e.to_string())?;
-    if let Some(flags) = g.get(&args.import_id) {
-        flags.paused.store(false, Ordering::SeqCst);
-        info!("🌌 收到恢复导入: {}", args.import_id);
-    } else {
-        warn!("🌌 恢复导入：未知任务 {}", args.import_id);
+pub fn resume_import(
+    window: Window,
+    registry: State<'_, Arc<ImportTaskRegistry>>,
+    sessions: State<'_, Arc<ImportSessionStore>>,
+    args: ImportIdArgs,
+) -> Result<(), String> {
+    match registry_set_paused(&registry, &args.import_id, false)? {
+        true => {
+            info!("🌌 收到恢复导入: {}", args.import_id);
+            emit_status_from_snapshot(&window, &sessions, &args.import_id, "processing");
+        }
+        false => warn!("🌌 恢复导入：未知任务 {}", args.import_id),
     }
     Ok(())
 }

@@ -21,6 +21,7 @@ import { useTitle, watchArray } from "@vueuse/core";
 import type { ThemeMeta } from "@/services/chusuiliang/theme-manage";
 import { onMounted } from "vue";
 import StatusBar from "./components/common/StatusBar.vue";
+import ImportProgressChip from "./components/ImportProgressChip.vue";
 import TitlebarMac from "./components/TitlebarMac.vue";
 import TitlebarWinLinux from "./components/TitlebarWinLinux.vue";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
@@ -338,6 +339,9 @@ window.api?.onScanQueueAdd((operations: FileOperation[]) => {
                 </template>
             </split-view>
         </div>
+        <div class="import-chip-dock">
+            <ImportProgressChip />
+        </div>
         <StatusBar />
     </div>
     <BaseModal
@@ -415,6 +419,17 @@ window.api?.onScanQueueAdd((operations: FileOperation[]) => {
     display: flex;
     flex-direction: column;
     background: var(--color-bg); /* 确保整个应用使用主题背景色 */
+}
+
+.import-chip-dock {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 0.75rem 0.35rem;
+    pointer-events: none;
+}
+
+.import-chip-dock > * {
+    pointer-events: auto;
 }
 
 .content {

@@ -254,17 +254,24 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0113](./docs/rfc/0113-tauri-updater-production-and-prefs-sync.md) | updater 生产 + 偏好同步 | ✅ Implemented | `update_config.rs` + `UPDATER.md` |
 | [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md) | `get_directory` OS 路径 + `scan_directories` FileGroup[] | ✅ Implemented | `directory.rs` + `import_file_groups.rs` + `import_scan_directories.rs` |
 | [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片 asset 协议 | ✅ Implemented | `media-url.ts` + CSP/assetProtocol + `path.rs` |
-| [0118](./.spec/rfc/0118-tauri-import-background-ui.md) | 导入进度后台 UI（G1–G9,G13–G14） | ⏳ Draft（**P2**） | Vue session + chip；零 Rust 默认 |
-| [0119](./.spec/rfc/0119-tauri-import-contract-polish.md) | Import 契约诚实 | ⏳ Draft（**P3**） | checksum / duplicateCount / resume |
-| [0120](./.spec/rfc/0120-tauri-import-quit-recovery.md) | 导入退出恢复（G11） | ⏸️ Deferred | — |
-| [0121](./.spec/rfc/0121-tauri-import-settings-prefs.md) | Settings 导入默认（G12） | ⏸️ Deferred | — |
-| [0122](./.spec/rfc/0122-tauri-legacy-importphotos-background-ux.md) | Legacy importPhotos 后台 UX（G10） | ⏸️ Deferred | — |
+| [0118](./.spec/rfc/0118-tauri-import-background-ui.md) | 导入后台 UI（G1–G9,G13–G14） | 🔨 In Progress（**P2**） | Vue session + chip |
+| [0119](./.spec/rfc/0119-tauri-import-checksum.md) | checksum 诚实 | ⏳ Draft（**P3a**） | 一事 |
+| [0120](./.spec/rfc/0120-tauri-import-quit-recovery.md) | 退出恢复（G11） | ⏸️ Deferred | 一事 |
+| [0121](./.spec/rfc/0121-tauri-import-settings-prefs.md) | Settings 导入（G12） | ⏸️ Deferred | 一事 |
+| [0122](./.spec/rfc/0122-tauri-legacy-importphotos-background-ux.md) | Legacy importPhotos UX（G10） | ⏸️ Deferred | 一事 |
+| [0123](./.spec/rfc/0123-tauri-import-duplicate-count.md) | duplicateCount 诚实 | ⏳ Draft（**P3b**） | 一事 |
+| [0124](./.spec/rfc/0124-tauri-import-resume-return-shape.md) | resume 返回形状 | ⏳ Draft（**P3c**） | 一事 |
+| [0125](./.spec/rfc/0125-tauri-import-paused-progress-emit.md) | paused progress emit | ⏳ Draft（**P3d**） | 一事 |
+| [0126](./.spec/rfc/0126-electron-import-background-ux-parity.md) | Electron desktop UX | ⏸️ Deferred | 一事 |
+| [0127](./.spec/rfc/0127-tauri-import-error-payload-shape.md) | `import:error` payload 形状（`[object Object]`） | ⏳ Draft（**P3e**） | 一事 |
+| [0128](./.spec/rfc/0128-tauri-import-progress-import-id.md) | `import:progress` 缺 `importId` | ⏳ Draft（**P3f**） | 一事 |
+| [0129](./.spec/rfc/0129-tauri-import-progress-throttle.md) | `import:progress` 无节流 | ⏳ Draft（**P3g**） | 一事 |
+| [0130](./.spec/rfc/0130-tauri-import-legacy-copy-dedup.md) | `import_legacy.rs` 复制逻辑去重 | ⏳ Draft（**P4**，cleanup） | 一事 |
+| [0131](./.spec/rfc/0131-tauri-photasa-import-crate.md) | `photasa-import` 独立 crate | 🔨 In Progress | 算法零 Tauri；`cargo test -p photasa-import` |
 
-**Phase 7（0111–0117）全部完成。** 0097 ✅。**Gap 必须挂 RFC**（0118 表）；禁止无编号缺口。
+**Gap/T3 铁律：** 一事一 RFC；禁 mono 袋。P1 验收 → **P2 0118** → **P3a–g 0119/0123/0124/0125/0127/0128/0129** → **P4 0130**；infra **0131**。
 
-**排队：** [ROADMAP](./ROADMAP.md) P1 验收 → **P2 0118** → **P3 0119**；0120–0122 Deferred。**0108–0110 不回填。**
-
-**Phase 5–6（0100–0107）** Done。不得激活 **0098** 作 Photasa 路径。
+**Phase 5–6** Done。禁 **0098** 作 Photasa 路径。
 
 ---
 

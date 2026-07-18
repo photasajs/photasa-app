@@ -36,6 +36,9 @@ out
 *.sln
 *.sw?
 
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
 # Playwright test results and reports
 test-results/
 playwright-report/
@@ -83,3 +86,4 @@ release/
 
 # Test output (project-specific)
 packages/@photasa/maliang/src/__tests__/output
+.codegraph/

@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed, onMounted, onUnmounted } from "vue";
+/**
+ * RFC 0118 — 导入进度模态：start 执行一次；reattach 只接会话；Dismiss ≠ Cancel
+ */
+import { ref, reactive, watch, computed, onUnmounted } from "vue";
+import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import {
-    executeImport,
-    cancelImport,
-    pauseImport,
-    resumeImport,
-    onImportProgress,
-    onImportComplete,
-    onImportError,
-    removeImportListeners,
-} from "@renderer/utils/api";
+import { executeImport, cancelImport, pauseImport, resumeImport } from "@renderer/utils/api";
 import { formatProcessingSpeed, formatRemainingTime } from "@renderer/utils/import-helpers";
 import { createSerializableConfig } from "@renderer/utils/import-wizard-helpers";
 import { BaseModal, BaseButton } from "@renderer/components/ui";
@@ -24,30 +19,45 @@ import {
 } from "@phosphor-icons/vue";
 import type { ImportConfig, ImportProgress, ImportResult } from "@photasa/common";
 import { loggers } from "@photasa/common";
+import { IMPORT_ALREADY_RUNNING, useImportSessionStore } from "@renderer/stores/import-session";
+import { notification } from "@renderer/services/notification-manager";
+import {
+    IMPORT_MODAL_MODE_REATTACH,
+    IMPORT_MODAL_MODE_START,
+    type ImportModalMode,
+} from "@renderer/constants/import-modal";
 
 interface Props {
     show: boolean;
     config: ImportConfig | null;
+    /** start：execute 一次；reattach：只 hydrate，禁止再 execute */
+    mode?: ImportModalMode;
 }
 
 interface Emits {
     (e: "complete", result: ImportResult): void;
+    /** 用户点 Cancel/Stop 或终态关闭 */
     (e: "cancel"): void;
+    /** 后台继续：关模态，不 cancel */
+    (e: "dismiss"): void;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    mode: IMPORT_MODAL_MODE_START,
+});
 const emit = defineEmits<Emits>();
 
 const { t } = useI18n();
 const logger = loggers.importProgress;
+const session = useImportSessionStore();
+const {
+    importId: sessionImportId,
+    phase,
+    result: sessionResult,
+    error: sessionError,
+} = storeToRefs(session);
 
-// Import state
-const importId = ref("");
-const isPaused = ref(false);
-const canCancel = ref(true);
-const isImporting = ref(false);
-
-// Progress data
+/** 本地展示缓冲（与 session.progress 同步） */
 const importProgress = reactive<ImportProgress>({
     totalFiles: 0,
     processedFiles: 0,
@@ -64,18 +74,23 @@ const importProgress = reactive<ImportProgress>({
     startTime: new Date(),
 });
 
-// Import result
 const importResult = ref<ImportResult | null>(null);
 const importError = ref<Error | null>(null);
+const isPaused = ref(false);
+/** 防 G1：同一次 show 周期内只 execute 一次 */
+const startAttempted = ref(false);
 
-// Event cleanup functions
-let cleanupFunctions: Array<() => void> = [];
-
-// Computed
 const progressPercentage = computed(() => {
     if (importProgress.totalFiles === 0) return 0;
     return Math.round((importProgress.processedFiles / importProgress.totalFiles) * 100);
 });
+
+const isImporting = computed(
+    () =>
+        phase.value === "running" ||
+        phase.value === "paused" ||
+        importProgress.status === "preparing",
+);
 
 const statusIcon = computed(() => {
     switch (importProgress.status) {
@@ -105,20 +120,54 @@ const statusColor = computed(() => {
     }
 });
 
-const canClose = computed(() => {
-    return ["completed", "failed", "cancelled"].includes(importProgress.status);
-});
+/** RFC 0118：运行中也可关（Dismiss） */
+const canClose = computed(() => true);
 
-// Methods
-const startImport = async () => {
-    if (!props.config) return;
+function applySnapshot(snapshot: ImportProgress | null): void {
+    if (!snapshot) return;
+    Object.assign(importProgress, {
+        totalFiles: snapshot.totalFiles ?? 0,
+        processedFiles: snapshot.processedFiles ?? 0,
+        successfulFiles: snapshot.successfulFiles ?? 0,
+        skippedFiles: snapshot.skippedFiles ?? 0,
+        errorFiles: snapshot.errorFiles ?? 0,
+        speed: snapshot.speed ?? 0,
+        estimatedTimeRemaining: snapshot.estimatedTimeRemaining ?? 0,
+        remainingTime: snapshot.remainingTime ?? snapshot.estimatedTimeRemaining ?? 0,
+        currentFile: snapshot.currentFile ?? "",
+        status: snapshot.status ?? "processing",
+        errors: snapshot.errors ?? [],
+        warnings: snapshot.warnings ?? [],
+        startTime: snapshot.startTime ?? importProgress.startTime,
+    });
+    isPaused.value = snapshot.status === "paused" || phase.value === "paused";
+}
+
+function hydrateFromSession(): void {
+    applySnapshot(session.hydrateFromSession());
+    importResult.value = sessionResult.value;
+    importError.value = sessionError.value instanceof Error ? sessionError.value : null;
+    if (phase.value === "completed" && sessionResult.value) {
+        Object.assign(importProgress, {
+            status: "completed",
+            successfulFiles: sessionResult.value.successfulFiles ?? importProgress.successfulFiles,
+            skippedFiles: sessionResult.value.skippedFiles ?? importProgress.skippedFiles,
+            errorFiles: sessionResult.value.errorFiles ?? importProgress.errorFiles,
+            totalFiles: sessionResult.value.totalFiles ?? importProgress.totalFiles,
+            processedFiles: sessionResult.value.totalFiles ?? importProgress.processedFiles,
+        });
+    }
+}
+
+const startImport = async (): Promise<void> => {
+    if (!props.config || startAttempted.value) return;
+    startAttempted.value = true;
 
     try {
-        isImporting.value = true;
+        session.assertCanStart();
+        importError.value = null;
+        importResult.value = null;
         importProgress.status = "preparing";
-        logger.debug("Starting import process", { config: props.config });
-
-        // Reset progress
         Object.assign(importProgress, {
             totalFiles: props.config.selectedFiles.length,
             processedFiles: 0,
@@ -132,186 +181,165 @@ const startImport = async () => {
             currentFile: "",
         });
 
-        // Set up event listeners
-        const cleanupProgress = onImportProgress((progress) => {
-            // Update all progress fields
-            Object.assign(importProgress, {
-                totalFiles: progress.totalFiles || importProgress.totalFiles,
-                processedFiles: progress.processedFiles || 0,
-                successfulFiles: progress.successfulFiles || 0,
-                skippedFiles: progress.skippedFiles || 0,
-                errorFiles: progress.errorFiles || 0,
-                speed: progress.speed || 0,
-                estimatedTimeRemaining: progress.estimatedTimeRemaining || 0,
-                remainingTime: progress.remainingTime || progress.estimatedTimeRemaining || 0,
-                currentFile: progress.currentFile || "",
-                status: progress.status || "processing",
-                errors: progress.errors || [],
-                warnings: progress.warnings || [],
-            });
-        });
-
-        const cleanupComplete = onImportComplete((result) => {
-            logger.debug("Import completed:", result);
-            importResult.value = result;
-
-            // 更新最终统计数据
-            Object.assign(importProgress, {
-                successfulFiles: result.successfulFiles || 0,
-                skippedFiles: result.skippedFiles || 0,
-                errorFiles: result.errorFiles || 0,
-                totalFiles: result.totalFiles || 0,
-                processedFiles: result.totalFiles || 0,
-                status: "completed",
-            });
-
-            isImporting.value = false;
-
-            logger.debug(
-                `Import completed with final stats - successful: ${importProgress.successfulFiles}, skipped: ${importProgress.skippedFiles}, errors: ${importProgress.errorFiles}`,
-            );
-        });
-
-        const cleanupError = onImportError((error) => {
-            logger.error("Import failed:", error);
-            importError.value = error;
-            importProgress.status = "failed";
-            isImporting.value = false;
-        });
-
-        // Store cleanup functions
-        cleanupFunctions = [cleanupProgress, cleanupComplete, cleanupError];
-
-        // Serialize the config to handle Date objects properly for IPC transmission
         const serializableConfig = createSerializableConfig(props.config, false);
-
-        // Start the import (returns importId immediately)
         const { importId: newImportId } = await executeImport(serializableConfig);
-        importId.value = newImportId;
-
-        logger.debug("Import started with ID:", importId.value);
+        await session.begin(newImportId, {
+            totalFiles: props.config.selectedFiles.length,
+            status: "processing",
+        });
+        logger.debug("📚 导入已开衙，会话就位", newImportId);
     } catch (error) {
-        logger.error("Import failed to start:", error);
+        const message = error instanceof Error ? error.message : String(error);
+        if (message === IMPORT_ALREADY_RUNNING) {
+            logger.warn("⚠️ 已有导入在衙，拒开新导入");
+            notification.warning({
+                title: t("import.importAlreadyRunning"),
+                message: t("import.importAlreadyRunningDesc"),
+            });
+            emit("dismiss");
+            return;
+        }
+        logger.error("❌ 导入未能开衙", error);
         importError.value = error as Error;
         importProgress.status = "failed";
-        isImporting.value = false;
+        session.fail(error);
     }
 };
 
-const pauseImportProcess = async () => {
-    if (!importId.value) return;
-
+const pauseImportProcess = async (): Promise<void> => {
+    const id = sessionImportId.value;
+    if (!id) return;
     try {
-        logger.debug("Pausing import:", importId.value);
-        await pauseImport(importId.value);
+        await pauseImport(id);
         isPaused.value = true;
         importProgress.status = "paused";
+        session.setPaused(true);
     } catch (error) {
-        logger.error("Failed to pause import:", error);
+        logger.error("❌ 暂停导入失败", error);
     }
 };
 
-const resumeImportProcess = async () => {
-    if (!importId.value) return;
-
+const resumeImportProcess = async (): Promise<void> => {
+    const id = sessionImportId.value;
+    if (!id) return;
     try {
-        logger.debug("Resuming import:", importId.value);
-        await resumeImport(importId.value);
+        await resumeImport(id);
         isPaused.value = false;
         importProgress.status = "processing";
+        session.setPaused(false);
     } catch (error) {
-        logger.error("Failed to resume import:", error);
+        logger.error("❌ 继续导入失败", error);
     }
 };
 
-const cancelImportProcess = async () => {
-    if (!importId.value) return;
-
+const cancelImportProcess = async (): Promise<void> => {
+    const id = sessionImportId.value;
+    if (!id) return;
     try {
-        logger.debug("Cancelling import:", importId.value);
-        await cancelImport(importId.value);
+        await cancelImport(id);
         importProgress.status = "cancelled";
-        isImporting.value = false;
-    } catch (error) {
-        logger.error("Failed to cancel import:", error);
-    }
-};
-
-const handleComplete = () => {
-    if (importResult.value) {
-        emit("complete", importResult.value);
-    }
-};
-
-const handleCancel = () => {
-    if (isImporting.value) {
-        cancelImportProcess();
-    } else {
+        session.markCancelled();
         emit("cancel");
+    } catch (error) {
+        logger.error("❌ 取消导入失败", error);
     }
 };
 
-// Watch for config changes to start import
+/** 后台继续：关窗不 cancel */
+const handleDismiss = (): void => {
+    logger.info("📚 进度模态后台继续，不取消导入", sessionImportId.value);
+    session.setModalVisible(false);
+    emit("dismiss");
+};
+
+const handleComplete = (): void => {
+    if (importResult.value || sessionResult.value) {
+        emit("complete", (importResult.value ?? sessionResult.value)!);
+    }
+    logger.info("📚 导入完成确认，清会话");
+    session.clear();
+};
+
+const handleTerminalClose = (): void => {
+    if (importProgress.status === "completed") {
+        handleComplete();
+        return;
+    }
+    logger.info("📚 终态关闭进度模态", importProgress.status);
+    session.clear();
+    emit("cancel");
+};
+
 watch(
-    () => props.config,
-    (newConfig) => {
-        logger.debug("Config changed", { newConfig, show: props.show });
-        if (newConfig && props.show) {
-            logger.debug("Starting import...");
-            startImport();
+    () => session.progress,
+    (next) => {
+        if (next) applySnapshot(next);
+    },
+    { deep: true },
+);
+
+watch(
+    () => sessionResult.value,
+    (res) => {
+        if (!res) return;
+        importResult.value = res;
+        Object.assign(importProgress, {
+            successfulFiles: res.successfulFiles ?? 0,
+            skippedFiles: res.skippedFiles ?? 0,
+            errorFiles: res.errorFiles ?? 0,
+            totalFiles: res.totalFiles ?? 0,
+            processedFiles: res.totalFiles ?? 0,
+            status: "completed",
+        });
+    },
+);
+
+watch(
+    () => sessionError.value,
+    (err) => {
+        if (!err) return;
+        importError.value = err instanceof Error ? err : new Error(String(err));
+        importProgress.status = "failed";
+    },
+);
+
+watch(
+    () => phase.value,
+    (p) => {
+        if (p === "cancelled") importProgress.status = "cancelled";
+        if (p === "paused") {
+            isPaused.value = true;
+            importProgress.status = "paused";
+        }
+        if (p === "running") isPaused.value = false;
+    },
+);
+
+watch(
+    () => props.show,
+    (show) => {
+        session.setModalVisible(show);
+        if (!show) {
+            startAttempted.value = false;
+            return;
+        }
+        if (props.mode === IMPORT_MODAL_MODE_REATTACH) {
+            logger.info("📚 进度模态 reattach，不重跑 execute");
+            hydrateFromSession();
+            return;
+        }
+        if (props.config && !startAttempted.value) {
+            logger.info("📚 进度模态 start，即将 executeImport");
+            void startImport();
         }
     },
     { immediate: true },
 );
 
-// Watch progress changes for debugging
-watch(
-    () => importProgress,
-    (_newProgress) => {
-        // Progress updated
-    },
-    { deep: true },
-);
-
-// Reset state when modal closes
-watch(
-    () => props.show,
-    (show) => {
-        if (!show) {
-            logger.debug("Modal closed, cleaning up state");
-            // Cleanup event listeners
-            cleanupFunctions.forEach((cleanup) => cleanup());
-            cleanupFunctions = [];
-
-            // Reset state
-            importId.value = "";
-            isPaused.value = false;
-            isImporting.value = false;
-            importResult.value = null;
-            importError.value = null;
-            Object.assign(importProgress, {
-                totalFiles: 0,
-                processedFiles: 0,
-                speed: 0,
-                estimatedTimeRemaining: 0,
-                errors: [],
-                warnings: [],
-                status: "preparing",
-                currentFile: "",
-            });
-        }
-    },
-);
-
-// Component lifecycle
-onMounted(() => {
-    logger.debug("ImportProgressModal mounted");
-});
-
 onUnmounted(() => {
-    logger.debug("ImportProgressModal unmounting, cleaning up listeners");
-    cleanupFunctions.forEach((cleanup) => cleanup());
-    removeImportListeners();
+    // 只清 UI 标记；会话监听由 store 持有，禁止 removeImportListeners
+    session.setModalVisible(false);
+    logger.debug("📚 进度模态散衙，会话监听仍在");
 });
 </script>
 
@@ -321,10 +349,9 @@ onUnmounted(() => {
         :title="t('import.progress')"
         size="4xl"
         :closable="canClose"
-        @close="handleCancel"
+        @close="handleDismiss"
     >
         <div class="import-progress space-y-6">
-            <!-- Status Header -->
             <div class="flex items-center justify-center space-x-3">
                 <component :is="statusIcon" v-if="statusIcon" :class="['w-8 h-8', statusColor]" />
                 <h3 :class="['text-lg font-semibold', statusColor]">
@@ -332,7 +359,6 @@ onUnmounted(() => {
                 </h3>
             </div>
 
-            <!-- Progress Bar -->
             <div class="space-y-2">
                 <div class="flex justify-between text-sm">
                     <span>{{ t("import.progress") }}</span>
@@ -346,9 +372,7 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Progress Statistics -->
             <div class="grid grid-cols-2 gap-4 min-w-0">
-                <!-- Top Row -->
                 <div class="text-center p-4 bg-[var(--color-bg-secondary)] rounded-lg min-w-0">
                     <div
                         class="text-lg font-semibold text-[var(--color-text)] whitespace-nowrap overflow-hidden text-ellipsis"
@@ -375,7 +399,6 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Detailed Statistics -->
             <div class="grid grid-cols-4 gap-3 min-w-0 text-sm">
                 <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg min-w-0">
                     <div class="text-lg font-semibold text-green-600 dark:text-green-400">
@@ -411,7 +434,6 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Current File -->
             <div
                 v-if="importProgress.currentFile && isImporting"
                 class="p-3 bg-[var(--color-bg-secondary)] rounded-lg"
@@ -424,12 +446,10 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Errors and Warnings -->
             <div
                 v-if="importProgress.errors.length > 0 || importProgress.warnings.length > 0"
                 class="space-y-3"
             >
-                <!-- Errors -->
                 <div v-if="importProgress.errors.length > 0" class="space-y-2">
                     <div class="flex items-center space-x-2 text-red-500">
                         <PhXCircle class="w-5 h-5" />
@@ -448,7 +468,6 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <!-- Warnings -->
                 <div v-if="importProgress.warnings.length > 0" class="space-y-2">
                     <div class="flex items-center space-x-2 text-yellow-500">
                         <PhWarning class="w-5 h-5" />
@@ -468,7 +487,6 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Import Error -->
             <div v-if="importError" class="p-3 bg-red-50 border border-red-200 rounded">
                 <div class="flex items-center space-x-2 text-red-500 mb-2">
                     <PhXCircle class="w-5 h-5" />
@@ -479,7 +497,6 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- Success Message -->
             <div
                 v-if="importProgress.status === 'completed'"
                 class="p-3 bg-green-50 border border-green-200 rounded"
@@ -494,11 +511,12 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- Footer Actions -->
         <template #footer>
             <div class="flex justify-end space-x-3">
-                <!-- Active Import Controls -->
                 <template v-if="isImporting">
+                    <BaseButton variant="secondary" @click="handleDismiss">
+                        {{ t("import.runInBackground") }}
+                    </BaseButton>
                     <BaseButton v-if="!isPaused" variant="secondary" @click="pauseImportProcess">
                         <PauseIcon class="w-4 h-4 mr-2" />
                         {{ t("import.pauseButton") }}
@@ -507,13 +525,12 @@ onUnmounted(() => {
                         <PlayIcon class="w-4 h-4 mr-2" />
                         {{ t("import.resumeButton") }}
                     </BaseButton>
-                    <BaseButton v-if="canCancel" variant="danger" @click="cancelImportProcess">
+                    <BaseButton variant="danger" @click="cancelImportProcess">
                         <StopIcon class="w-4 h-4 mr-2" />
                         {{ t("import.cancelButton") }}
                     </BaseButton>
                 </template>
 
-                <!-- Completed State Controls -->
                 <template v-else>
                     <BaseButton
                         v-if="importProgress.status === 'completed'"
@@ -522,7 +539,7 @@ onUnmounted(() => {
                     >
                         {{ t("import.doneButton") }}
                     </BaseButton>
-                    <BaseButton v-else variant="secondary" @click="handleCancel">
+                    <BaseButton v-else variant="secondary" @click="handleTerminalClose">
                         {{ t("import.closeButton") }}
                     </BaseButton>
                 </template>

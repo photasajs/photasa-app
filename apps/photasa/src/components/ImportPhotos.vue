@@ -78,6 +78,13 @@ import { BaseWizard, createWizardStep, createWizardConfig } from "@renderer/comp
 import VirtualList from "@renderer/components/ui/VirtualList.vue";
 import ImportProgressModal from "./ImportProgressModal.vue";
 import PreviewProgressDisplay from "./import/PreviewProgressDisplay.vue";
+import { useImportSessionStore } from "@renderer/stores/import-session";
+import { notification } from "@renderer/services/notification-manager";
+import {
+    IMPORT_MODAL_MODE_REATTACH,
+    IMPORT_MODAL_MODE_START,
+    type ImportModalMode,
+} from "@renderer/constants/import-modal";
 import type { ImportConfig, ImportResult, PreviewProgress } from "@photasa/common";
 
 /**
@@ -145,9 +152,19 @@ const { paths, excludePaths } = storeToRefs(store);
 // Wizard data storage - this will be managed by the wizard framework
 // We'll access it through the stepData parameter in templates
 
-// Import progress modal state
+// Import progress modal state（RFC 0118）
 const showProgressModal = ref(false);
 const importConfig = ref<ImportConfig | null>(null);
+const progressModalMode = ref<ImportModalMode>(IMPORT_MODAL_MODE_START);
+const importSession = useImportSessionStore();
+const { openModalRequest, showChip, canStart } = storeToRefs(importSession);
+
+watch(openModalRequest, () => {
+    if (!showChip.value) return;
+    progressModalMode.value = IMPORT_MODAL_MODE_REATTACH;
+    importConfig.value = null;
+    showProgressModal.value = true;
+});
 
 // Error state management
 const errorState = reactive({
@@ -189,8 +206,19 @@ const handleWizardComplete = (data: any) => {
 
     // Validate both configuration and preview data
     if (validateConfigurationStep(configData) && validatePreviewStep(previewData)) {
+        if (!canStart.value) {
+            logger.warn("⚠️ 已有导入进行中，拒开新导入向导完成");
+            notification.warning({
+                title: t("import.importAlreadyRunning"),
+                message: t("import.importAlreadyRunningDesc"),
+            });
+            importSession.requestOpenModal();
+            emit("update:show", false);
+            return;
+        }
         // Transform wizard data to import config using pure function
         importConfig.value = transformToImportConfig(configData, previewData);
+        progressModalMode.value = IMPORT_MODAL_MODE_START;
 
         // Close wizard and show progress modal
         emit("update:show", false);
@@ -476,10 +504,19 @@ const toggleFileSelection = (
 const handleImportComplete = (result: ImportResult) => {
     showProgressModal.value = false;
     importConfig.value = null;
+    progressModalMode.value = IMPORT_MODAL_MODE_START;
     emit("import-complete", result);
 };
 
 const handleImportCancel = () => {
+    showProgressModal.value = false;
+    importConfig.value = null;
+    progressModalMode.value = IMPORT_MODAL_MODE_START;
+};
+
+/** 后台继续：关模态，保留会话；清 config 防 G1/G8 */
+const handleImportDismiss = () => {
+    logger.info("📚 导入进度后台继续，清 config 防重跑");
     showProgressModal.value = false;
     importConfig.value = null;
 };
@@ -1176,12 +1213,14 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
         </template>
     </BaseWizard>
 
-    <!-- Import Progress Modal -->
+    <!-- Import Progress Modal（RFC 0118 start / reattach） -->
     <ImportProgressModal
         :show="showProgressModal"
         :config="importConfig"
+        :mode="progressModalMode"
         @complete="handleImportComplete"
         @cancel="handleImportCancel"
+        @dismiss="handleImportDismiss"
     />
 </template>
 

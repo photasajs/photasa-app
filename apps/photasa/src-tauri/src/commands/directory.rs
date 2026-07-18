@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
+use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 use tokio::fs;
 
@@ -30,16 +31,18 @@ pub struct DirectoryStore(pub Mutex<HashMap<String, String>>);
 /// 打开原生文件夹选择器，返回选中路径或 null（取消）
 #[tauri::command]
 pub async fn choose_directory(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    let path = tokio::task::spawn_blocking(move || {
-        app.dialog()
-            .file()
-            .blocking_pick_folder()
+    log::info!("🌌 choose_directory command invoked!");
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let window = app.get_webview_window("main").ok_or_else(|| "无法获取主窗口".to_string())?;
+
+    window.dialog().file().pick_folder(move |picked| {
+        let path = picked
             .and_then(|fp| fp.into_path().ok())
-            .map(|pb| pb.to_string_lossy().to_string())
-    })
-    .await
-    .map_err(|e| format!("选择目录任务异常: {e}"))?;
-    Ok(path)
+            .map(|pb| pb.to_string_lossy().to_string());
+        let _ = tx.send(path);
+    });
+
+    rx.await.map_err(|e| format!("等待通道异常: {e}"))
 }
 
 /// 与 Electron `chooseDirectories` 返回形状一致：`{ filePaths: string[] }`
@@ -67,27 +70,36 @@ pub async fn choose_directories(
     args: ChooseDirectoriesArgs,
 ) -> Result<ChooseDirectoriesResult, String> {
     let multi = args.multi_select;
-    tokio::task::spawn_blocking(move || {
-        let picked = if multi {
-            app.dialog()
-                .file()
-                .blocking_pick_folders()
+    log::info!("🌌 choose_directories command invoked! multi: {multi}");
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let window = app.get_webview_window("main").ok_or_else(|| "无法获取主窗口".to_string())?;
+
+    if multi {
+        window.dialog().file().pick_folders(move |picked| {
+            let file_paths = picked
                 .unwrap_or_default()
-        } else {
-            match app.dialog().file().blocking_pick_folder() {
-                Some(p) => vec![p],
+                .into_iter()
+                .filter_map(|fp| fp.into_path().ok())
+                .map(|pb| pb.to_string_lossy().into_owned())
+                .collect::<Vec<_>>();
+            let _ = tx.send(file_paths);
+        });
+    } else {
+        window.dialog().file().pick_folder(move |picked| {
+            let file_paths = match picked {
+                Some(p) => p
+                    .into_path()
+                    .ok()
+                    .map(|pb| vec![pb.to_string_lossy().into_owned()])
+                    .unwrap_or_default(),
                 None => vec![],
-            }
-        };
-        let file_paths = picked
-            .into_iter()
-            .filter_map(|fp| fp.into_path().ok())
-            .map(|pb| pb.to_string_lossy().into_owned())
-            .collect::<Vec<_>>();
-        Ok(ChooseDirectoriesResult { file_paths })
-    })
-    .await
-    .map_err(|e| format!("选择目录任务异常: {e}"))?
+            };
+            let _ = tx.send(file_paths);
+        });
+    }
+
+    let file_paths = rx.await.map_err(|e| format!("等待通道异常: {e}"))?;
+    Ok(ChooseDirectoriesResult { file_paths })
 }
 
 /// 根据名称返回目录路径：优先非空 `DirectoryStore`，否则 OS 标准路径（desktop/home 等）

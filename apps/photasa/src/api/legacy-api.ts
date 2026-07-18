@@ -353,7 +353,16 @@ export function createLegacyApi(): Record<string, unknown> {
         // ---------- 目录与配置 ----------
         chooseDirectory: () => {
             if (!isTauri()) return (window as any).electronAPI?.api?.chooseDirectory?.();
-            return ensureInvoke().then((invoke) => invoke<string | null>("choose_directory"));
+            return (async () => {
+                const { open } = await import("@tauri-apps/plugin-dialog");
+                const selected = await open({ directory: true, multiple: false });
+                const paths = Array.isArray(selected)
+                    ? selected
+                    : selected
+                      ? [selected]
+                      : [];
+                return { filePaths: paths };
+            })();
         },
         getDirectory: (name: string) => {
             if (!isTauri()) return (window as any).electronAPI?.api?.getDirectory?.(name);

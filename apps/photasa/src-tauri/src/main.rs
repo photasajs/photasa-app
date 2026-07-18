@@ -236,6 +236,7 @@ fn main() {
             // 日志查看器（RFC 0088、0089）
             log_viewer::log_viewer_open,
             log_viewer::log_viewer_close,
+            log_viewer::log_from_renderer,
             // 自动更新（RFC 0090）
             update::check_for_updates,
             update::download_update,

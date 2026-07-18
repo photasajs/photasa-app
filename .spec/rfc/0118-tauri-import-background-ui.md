@@ -2,7 +2,7 @@
 
 - **Start Date**: 2026-07-17
 - **Last updated**: 2026-07-17
-- **Status**: ⏳ Draft（**P2 UX**；非迁移）
+- **Status**: 🔨 In Progress（**P2 UX**；非迁移）
 - **Area**: Photasa / Import / UI（`apps/photasa` only）
 - **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0096](./completed/0096-tauri-import-pause-resume.md), [0001](./completed/0001-import-wizard-system.md)（规格）
 - **Path**: `.spec/rfc/0118-tauri-import-background-ui.md`
@@ -44,38 +44,60 @@ Reviewed against: `ImportProgressModal.vue`, `ImportPhotos.vue`, `legacy-api` im
 | G12 | Settings Import prefs | No defaults panel | **[0121](./0121-tauri-import-settings-prefs.md)** | ⏸️ Deferred |
 | G13 | Concurrent start + History | Race | **0118** | In scope — block second execute |
 | G14 | i18n + a11y chip | Unannounced | **0118** | In scope — i18n + aria-live |
+| G15 | `importError`/`importResult` refs never reset in `ImportProgressModal.vue` | Stale error/result panel leaks into next import run | **0118** | In scope — reset on `startImport` + terminal close |
+| G16 | `applyProgress` no `phase==="cancelled"` guard | Late in-flight `import:progress` event resurrects phase to `"running"` after cancel | **0118** | In scope — no-op once cancelled |
+| G17 | `startListeners()` uses `await import("@tauri-apps/api/event")` | Violates CLAUDE.md ES6-import-only rule; sibling adapters prove static import is safe | **0118** | In scope — hoist to static import |
+| G18 | `en-GB.json` missing `import.status.failed` | Locale gap vs `en-US.json` / `zh-CN.json` | **0118** | In scope — add key |
 
-**Related contract honesty** (not G1–G14, still must have RFC): **[0119](./0119-tauri-import-contract-polish.md)** — checksum / duplicateCount / resume shape / optional paused emit.
+**Related one-thing RFCs** (not G1–G14; each own file — **no mono “contract polish”**):
+
+| Topic | RFC |
+|-------|-----|
+| `checksum` | **[0119](./0119-tauri-import-checksum.md)** |
+| `duplicateCount` | **[0123](./0123-tauri-import-duplicate-count.md)** |
+| `resumeImport` return | **[0124](./0124-tauri-import-resume-return-shape.md)** |
+| pause → `status: "paused"` emit | **[0125](./0125-tauri-import-paused-progress-emit.md)** |
+| Electron desktop same UX | **[0126](./0126-electron-import-background-ux-parity.md)** |
+| `import:error` payload shape | **[0127](./0127-tauri-import-error-payload-shape.md)** |
+| `status: "paused"` emit / cancelled-payload fields | **[0125](./0125-tauri-import-paused-progress-emit.md)** |
+| `import:progress` missing `importId` | **[0128](./0128-tauri-import-progress-import-id.md)** |
+| `import:progress` emit throttling | **[0129](./0129-tauri-import-progress-throttle.md)** |
+| `import_legacy.rs` copy dedup | **[0130](./0130-tauri-import-legacy-copy-dedup.md)** |
 
 ### Gap ownership checklist (0118 only)
 
-- [ ] G1 start vs reattach
-- [ ] G2 session listeners ≠ modal `removeImportListeners`
-- [ ] G3 Dismiss ≠ Cancel
-- [ ] G4 single-flight
-- [ ] G5 hydrate from session
-- [ ] G6 paused flag
-- [ ] G7 toast when dismissed
-- [ ] G8 no re-execute from leftover config
-- [ ] G9 Photasa-only paths
-- [ ] G13 block concurrent
-- [ ] G14 i18n + aria-live
+- [x] G1 start vs reattach
+- [x] G2 session listeners ≠ modal `removeImportListeners`
+- [x] G3 Dismiss ≠ Cancel
+- [x] G4 single-flight
+- [x] G5 hydrate from session
+- [x] G6 paused flag
+- [x] G7 toast when dismissed
+- [x] G8 no re-execute from leftover config
+- [x] G9 Photasa-only paths
+- [x] G13 block concurrent
+- [x] G14 i18n + aria-live
 
 G10 / G11 / G12 → **not** implemented under 0118; progress tracked only on 0122 / 0120 / 0121.
 
 ---
 
-## Sibling RFCs (must not float)
+## Sibling RFCs (one concern each — no mono bags)
 
-| RFC | Role | Priority |
-|-----|------|----------|
+| RFC | One thing | Priority |
+|-----|-----------|----------|
 | **0118** | Background dismiss UI (G1–G9, G13–G14) | **P2** |
-| **0119** | Contract polish | **P3** |
+| **0119** | `checksum` only | **P3** |
 | **0120** | Quit/crash recovery (G11) | Deferred |
 | **0121** | Settings import prefs (G12) | Deferred |
-| **0122** | Legacy importPhotos background UX (G10) | Deferred / low |
-| **0093** | Legacy importPhotos **Rust** API | ✅ Done (not UX) |
-| **0070 / 0096** | Execute / pause Rust | ✅ Done |
+| **0122** | Legacy importPhotos background UX (G10) | Deferred |
+| **0123** | `duplicateCount` only | **P3** |
+| **0124** | `resumeImport` return shape only | **P3** |
+| **0125** | `status: "paused"` emit only | **P3** |
+| **0126** | Electron desktop UX parity only | Deferred |
+| **0127** | `import:error` payload shape only | **P3** |
+| **0093** | Legacy importPhotos Rust API | ✅ |
+| **0070 / 0096** | Execute / pause Rust | ✅ |
 
 ---
 
@@ -83,11 +105,15 @@ G10 / G11 / G12 → **not** implemented under 0118; progress tracked only on 012
 
 | Topic | Tracked by |
 |-------|------------|
-| checksum / duplicateCount / resume shape | **0119** |
+| `checksum` | **0119** |
+| `duplicateCount` | **0123** |
+| resume return shape | **0124** |
+| paused progress emit | **0125** |
 | Quit mid-import recovery | **0120** |
 | Settings Import panel | **0121** |
 | Legacy importPhotos chip/dismiss | **0122** |
-| Re-write import Rust kernel | **0070** ✅ (no new RFC) |
+| Electron desktop same UX | **0126** |
+| Re-write import Rust kernel | **0070** ✅ |
 
 ---
 
@@ -241,31 +267,39 @@ Default **no change**. Revisit only if product requires progress `importId` fiel
 | T2.8 | Start second import while first runs | Blocked + message |
 | T2.9 | Settings smoke (Update / General / Scan) | Unchanged; no Import tab |
 
-### T3 — Covered by other RFCs (do not fail 0118)
+### T3 — One RFC per leftover (do not fail 0118; **no mono**)
 
 | Topic | RFC |
 |-------|-----|
-| checksum / duplicateCount / resume | **0119** |
+| `checksum` | **0119** |
+| `duplicateCount` | **0123** |
+| `resumeImport` return | **0124** |
+| pause `status: "paused"` emit | **0125** |
 | Quit/crash recovery | **0120** |
 | Settings Import panel | **0121** |
 | Legacy importPhotos background UX | **0122** |
-| MakerNote edges | **0112** ✅（已完成；非本缺口） |
+| Electron desktop same UX | **0126** |
+| MakerNote / metadata golden | **0112** ✅ |
 
 ---
 
 ## Implementation checklist
 
-- [ ] A1 Session store + single-flight
-- [ ] A2 App-level listeners (no global remove on dismiss)
-- [ ] B1 Modal start vs reattach
-- [ ] B2 Dismiss ≠ cancel
-- [ ] B3 Preserve session on dismiss
-- [ ] C1 Chip + aria-live
-- [ ] C2 Toast when complete/error while dismissed
-- [ ] C3 i18n
-- [ ] D1 Block concurrent start
-- [ ] T1 green
+- [x] A1 Session store + single-flight
+- [x] A2 App-level listeners (no global remove on dismiss)
+- [x] B1 Modal start vs reattach
+- [x] B2 Dismiss ≠ cancel
+- [x] B3 Preserve session on dismiss
+- [x] C1 Chip + aria-live
+- [x] C2 Toast when complete/error while dismissed
+- [x] C3 i18n
+- [x] D1 Block concurrent start
+- [x] T1 green
 - [ ] T2 signed
+- [ ] G15 reset `importError`/`importResult` on `startImport` + terminal close
+- [ ] G16 `applyProgress` no-op once `phase==="cancelled"`
+- [ ] G17 static `import { listen } from "@tauri-apps/api/event"`
+- [ ] G18 `en-GB.json` add `import.status.failed`
 - [ ] ROADMAP / TASK_TRACKING → ✅
 
 ---

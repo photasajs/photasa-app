@@ -60,6 +60,7 @@ export function normalizeImportProgressPayload(raw: unknown): ImportProgress {
         st instanceof Date ? st : typeof st === "string" ? new Date(st) : new Date();
 
     return {
+        importId: nested.importId as string | undefined,
         totalFiles: Number(nested.totalFiles ?? 0),
         processedFiles: Number(nested.processedFiles ?? 0),
         successfulFiles: Number(nested.successfulFiles ?? 0),
@@ -98,8 +99,14 @@ export const importAdapter = {
      */
     chooseDirectories: async (multiSelect = true): Promise<DirectorySelection> => {
         if (isTauri()) {
-            const { invoke } = await import("@tauri-apps/api/core");
-            return await invoke<DirectorySelection>("choose_directories", { multiSelect });
+            const { open } = await import("@tauri-apps/plugin-dialog");
+            const selected = await open({ directory: true, multiple: multiSelect });
+            if (Array.isArray(selected)) {
+                return { filePaths: selected };
+            } else if (typeof selected === "string") {
+                return { filePaths: [selected] };
+            }
+            return { filePaths: [] };
         }
         const out = await (window as any).electronAPI?.api?.chooseDirectories?.(multiSelect);
         return out ?? { filePaths: [] };
