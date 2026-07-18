@@ -6,7 +6,7 @@
 - **Priority**: P1a（first；must land before 0132/0133）
 - **Area**: Photasa / Rust crates / Thumbnail
 - **Depends on**: [0069](../0069-tauri-thumbnail-service-migration.md)（缩略图实际实现，2026-07-18 已重写对齐现状）, [0102](./0102-tauri-thumbnail-raw-fallback.md)（RAW 占位）, [0103](./0103-tauri-native-deps-build-strategy.md)（`libheif-rs` / `ffmpeg-next` 静态链接策略）
-- **Related（scan 族）**: [0132](../0132-tauri-photasa-scan-crate.md)（P1b；`ThumbnailBridge` await 本 RFC 的 async thumbnail API）
+- **Related（scan 族）**: [0132](./0132-tauri-photasa-scan-crate.md)（P1b；`ThumbnailBridge` await 本 RFC 的 async thumbnail API）
 - **Path**: `.spec/rfc/completed/0134-tauri-photasa-thumbnail-crate.md`
 
 ## Implementation principle (Photasa / Tauri)
@@ -15,7 +15,7 @@
 
 - 缩略图**解码 API**（图片缩放 / HEIC 解码 / 视频截帧 / RAW 占位）迁入 **`crates/photasa-thumbnail`** — **零 Tauri**。
 - **Async always at crate boundary**：crate 对外只暴露 async API；阻塞图片/HEIC/视频解码封在 crate 内部 `tokio::task::spawn_blocking`，调用方不再自己包阻塞工作。
-- 与 [0131](./0131-tauri-photasa-import-crate.md)/[0132](../0132-tauri-photasa-scan-crate.md) 同一拆分原则：算法层零 Tauri、可独立 `cargo test`；`src-tauri` 只留 `#[tauri::command]` 壳。
+- 与 [0131](./0131-tauri-photasa-import-crate.md)/[0132](./0132-tauri-photasa-scan-crate.md) 同一拆分原则：算法层零 Tauri、可独立 `cargo test`；`src-tauri` 只留 `#[tauri::command]` 壳。
 
 ## Scan family order
 
@@ -119,12 +119,12 @@ photasa (src-tauri) ──► photasa-thumbnail + photasa-scan + photasa-watch(0
 
 ## Out of scope
 
-| Topic                                             | Owner                                           |
-| ------------------------------------------------- | ----------------------------------------------- |
-| HEIC 双重解码优化（preview 复用首次 decode 结果） | 未来独立 RFC（不在本次搬家中夹带）              |
-| RAW 真实解码器（当前仅占位图，RFC 0102）          | 未来独立 RFC                                    |
-| 缩略图缓存策略变更                                | 未在范围内                                      |
-| scan crate 拆分本身                               | **[0132](../0132-tauri-photasa-scan-crate.md)** |
+| Topic                                             | Owner                                          |
+| ------------------------------------------------- | ---------------------------------------------- |
+| HEIC 双重解码优化（preview 复用首次 decode 结果） | 未来独立 RFC（不在本次搬家中夹带）             |
+| RAW 真实解码器（当前仅占位图，RFC 0102）          | 未来独立 RFC                                   |
+| 缩略图缓存策略变更                                | 未在范围内                                     |
+| scan crate 拆分本身                               | **[0132](./0132-tauri-photasa-scan-crate.md)** |
 
 ## Risks
 

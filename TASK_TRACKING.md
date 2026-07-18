@@ -269,10 +269,10 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0130](./.spec/rfc/completed/0130-tauri-import-legacy-copy-dedup.md)         | `import_legacy.rs` wrapper + legacy 复制逻辑去重         | ✅ Implemented  | `legacy_loop` 在 `photasa-import`；command 只做事件桥（2026-07-18）                 |
 | [0131](./.spec/rfc/completed/0131-tauri-photasa-import-crate.md)             | `photasa-import` 独立 crate                              | ✅ Implemented  | 算法零 Tauri；`cargo test -p photasa-import` **45 passed**（2026-07-18）            |
 | [0134](./.spec/rfc/completed/0134-tauri-photasa-thumbnail-crate.md)          | `photasa-thumbnail` 独立 crate                           | ✅ Implemented  | async image/libheif/ffmpeg 解码零 Tauri；`cargo test -p photasa-thumbnail` 6 passed |
-| [0132](./.spec/rfc/0132-tauri-photasa-scan-crate.md)                         | `photasa-scan` 独立 crate                                | ⏳ Draft（P1b） | async scan bridge；依赖 photasa-import + photasa-thumbnail                          |
+| [0132](./.spec/rfc/completed/0132-tauri-photasa-scan-crate.md)               | `photasa-types` + `photasa-scan` 独立 crate              | ✅ Implemented  | shared DTO；strategy/cache/media/notify/cleanup 零 Tauri；32 scan tests             |
 | [0133](./.spec/rfc/0133-tauri-photasa-watch-crate.md)                        | `photasa-watch` 独立 crate                               | ⏳ Draft（P1c） | coalescer 零 Tauri；不依赖 photasa-scan                                             |
 
-**Gap/T3 铁律：** 一事一 RFC；禁 mono 袋。Import 线已清：**0118–0131**（0120/0121 ✅，0122/0126 ❌）；**P1 next：0132 scan → 0133 watch** ⏳；0134 thumbnail ✅；Import Deferred 已清零。
+**Gap/T3 铁律：** 一事一 RFC；禁 mono 袋。Import 线已清：**0118–0131**（0120/0121 ✅，0122/0126 ❌）；**P1 next：0133 watch** ⏳；0134 thumbnail ✅；0132 scan ✅；Import Deferred 已清零。
 
 **Phase 5–6** Done。禁 **0098** 作 Photasa 路径。
 

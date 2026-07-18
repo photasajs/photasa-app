@@ -19,6 +19,8 @@ zouwu-builtin = { workspace = true }
 wenchang-preferences = { workspace = true }
 photasa-import = { workspace = true }
 photasa-thumbnail = { workspace = true }
+photasa-types = { workspace = true }
+photasa-scan = { workspace = true }
 
 # workspace 共享依赖
 serde = { workspace = true }

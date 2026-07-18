@@ -7,31 +7,59 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use log::{error, info, warn};
+use photasa_scan::cache::IncrementalCacheManager;
+use photasa_scan::media::{
+    absolute_thumbnail_path_for_source, build_thumbnail_path, classify_media,
+    is_photasa_media_file, list_scan_subdirectories, normalize_path_string,
+    relative_thumbnail_path_for_source, validate_scan_params, walkthrough_photos_in_folder,
+};
+use photasa_scan::notify::build_scan_notify_payload;
+use photasa_scan::strategy::{
+    decide_scan_strategy_with_config, should_process_file_with_config, should_scan_one_level,
+    ScanDecision, ScanStrategy,
+};
 use photasa_thumbnail::{create_thumbnail as create_thumbnail_async, ThumbnailRequest};
+pub use photasa_types::ScanAction;
+use photasa_types::{
+    PhotasaConfigPhoto, PhotasaConfigView, PhotoFileRequest, ScanNotifyAction, ScanNotifyProgress,
+    ScanWorkerNotifySource, PHOTASA_CONFIG_FILE,
+};
 use serde_json::json;
 use tauri::{AppHandle, Emitter};
 
-use super::photasa_config::{
-    self, absolute_thumbnail_path_for_source, read_config_sync, PHOTASA_CONFIG_FILE,
-};
-use super::scan_cache::IncrementalCacheManager;
-pub use super::scan_media::ScanAction;
-use super::scan_media::{
-    build_thumbnail_path, classify_media, is_photasa_media_file, list_scan_subdirectories,
-    normalize_path_string, relative_thumbnail_path_for_source, validate_scan_params,
-    walkthrough_photos_in_folder, PhotoFileRequest,
-};
-use super::scan_notify::{
-    build_scan_notify_payload, ScanNotifyAction, ScanNotifyProgress, ScanWorkerNotifySource,
-};
-use super::scan_strategy::{
-    decide_scan_strategy, should_process_file, should_scan_one_level, ScanStrategy,
-};
+use super::photasa_config::{self, read_config_sync};
 
 type ScanDirectoryFuture<'a> = Pin<Box<dyn Future<Output = usize> + Send + 'a>>;
 
 fn routes_to_directory_scan(scan: &ScanAction) -> bool {
     scan.operation_type != "file"
+}
+
+struct TauriPhotasaConfigView;
+
+impl PhotasaConfigView for TauriPhotasaConfigView {
+    fn has_config(&self, folder: &str) -> bool {
+        Path::new(folder).join(PHOTASA_CONFIG_FILE).exists()
+    }
+
+    fn photo_list(&self, folder: &str) -> Result<Option<Vec<PhotasaConfigPhoto>>, String> {
+        read_config_sync(folder).map(|config| {
+            config.map(|c| {
+                c.photo_list
+                    .into_iter()
+                    .map(|photo| PhotasaConfigPhoto { path: photo.path })
+                    .collect()
+            })
+        })
+    }
+}
+
+fn should_process_scan_file(file_path: &str, action: &str) -> bool {
+    should_process_file_with_config(&TauriPhotasaConfigView, file_path, action)
+}
+
+fn decide_scan_strategy_for_folder(folder: &str, action: &str) -> ScanDecision {
+    decide_scan_strategy_with_config(&TauriPhotasaConfigView, folder, action)
 }
 
 fn emit_scan_event(app: &AppHandle, payload: serde_json::Value) {
@@ -296,7 +324,7 @@ async fn process_file_list(
     cache_mgr: &mut IncrementalCacheManager,
 ) {
     for file in files {
-        let should = should_process_file(&file.path, &scan.action);
+        let should = should_process_scan_file(&file.path, &scan.action);
         if should {
             let thumb = process_photo_file(file, scan).await;
             if let Err(err) = cache_mgr.record_file_processed(&file.path, thumb) {
@@ -326,7 +354,7 @@ async fn run_traditional_directory_scan(
     let total = files.len();
     let mut processed = 0usize;
     for file in &files {
-        if should_process_file(&file.path, &scan.action) {
+        if should_process_scan_file(&file.path, &scan.action) {
             process_photo_file(file, scan).await;
         }
         processed += 1;
@@ -381,7 +409,7 @@ async fn run_full_directory_scan(
         process_file_list(app, request_id, &unprocessed, scan, &mut cache_mgr).await;
     } else {
         for file in &all_files {
-            if should_process_file(&file.path, &scan.action) {
+            if should_process_scan_file(&file.path, &scan.action) {
                 let thumb = process_photo_file(file, scan).await;
                 if let Err(err) = cache_mgr.record_file_processed(&file.path, thumb) {
                     error!("🌌 千里眼缓存记录失败: {err}");
@@ -423,7 +451,7 @@ fn scan_directory_at<'a>(
             }
         );
 
-        let decision = decide_scan_strategy(&folder, &scan.action);
+        let decision = decide_scan_strategy_for_folder(&folder, &scan.action);
         info!(
             "🌌 千里眼策略决策: {:?} — {}",
             decision.strategy, decision.reason
@@ -505,7 +533,7 @@ async fn process_media_file(app: &AppHandle, request_id: &str, scan: &ScanAction
 
     match scan.action.as_str() {
         "scan" => {
-            if !should_process_file(&file_path, "scan") {
+            if !should_process_scan_file(&file_path, "scan") {
                 emit_file_complete(app, request_id, &file_path);
                 return;
             }

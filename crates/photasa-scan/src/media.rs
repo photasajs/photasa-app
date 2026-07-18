@@ -4,51 +4,22 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-use serde::{Deserialize, Serialize};
+pub use photasa_import::path_filter::classify_media;
+use photasa_import::path_filter::{basename_hidden, should_ignore_photasa_path};
+use photasa_types::{PhotoFileRequest, ScanAction, ScanParamValidation};
 
-pub use super::import_path_filter::classify_media;
-use super::import_path_filter::{basename_hidden, should_ignore_photasa_path};
-use super::photasa_config::{absolute_thumbnail_path_for_source, PHOTASA_ORIGINALS_DIR};
-use super::scan_strategy::should_scan_one_level;
+use crate::strategy::should_scan_one_level;
 
-/// Tauri / IPC 扫描动作（与 Electron `ScanAction` 对齐）
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ScanAction {
-    pub path: String,
-    #[serde(default)]
-    pub operation_type: String,
-    #[serde(default)]
-    pub action: String,
-    pub thumbnail_size: Option<u32>,
-    #[serde(default)]
-    pub is_directory: bool,
-}
-
-/// 与 Tauri ScanAdapter / legacy scan-worker 一致的扩展名表
-pub static PHOTO_EXTENSIONS: &[&str] = &[
-    "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif", "heic", "heif", "avif", "raw",
-    "cr2", "cr3", "nef", "arw", "mp4", "mov", "avi", "mkv", "m4v", "3gp",
-];
+pub const PHOTASA_ORIGINALS_DIR: &str = ".photasaoriginals";
 
 /// 统一路径分隔符为 `/`（与前端及缓存 JSON 一致）
 pub fn normalize_path_string(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
 
-fn extension_lower(path: &Path) -> String {
-    path.extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase())
-        .unwrap_or_default()
-}
-
 /// 是否为 Photasa 支持的媒体文件（对应 Electron `isPhotasaMediaFile`）
 pub fn is_photasa_media_file(path: &Path) -> bool {
-    if !path.is_file() {
-        return false;
-    }
-    PHOTO_EXTENSIONS.contains(&extension_lower(path).as_str())
+    path.is_file() && classify_media(path).is_some()
 }
 
 /// 递归收集目录下所有媒体文件的规范化绝对路径（遗留 discovery；RFC 0117 使用 `walkthrough_photos_in_folder`）
@@ -88,19 +59,24 @@ pub fn folder_cache_path(folder: &Path) -> PathBuf {
     folder.join(PHOTASA_FOLDER_CACHE_FILE)
 }
 
-/// 与 Electron `PhotoFileRequest` 对齐的扫描条目
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PhotoFileRequest {
-    pub path: String,
-    pub thumbnail: String,
-    pub is_image: bool,
-    pub is_video: bool,
-    pub is_directory: bool,
-}
-
 /// Electron `buildThumbnailPath` — 绝对路径
 pub fn build_thumbnail_path(photo_path: &str) -> String {
     absolute_thumbnail_path_for_source(photo_path)
+}
+
+pub fn to_relative_thumbnail_path(photo_path: &str) -> String {
+    let file_name = Path::new(photo_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(photo_path);
+    format!("{}/thumbnail-{}.png", PHOTASA_ORIGINALS_DIR, file_name)
+}
+
+pub fn absolute_thumbnail_path_for_source(source_path: &str) -> String {
+    let dir = Path::new(source_path)
+        .parent()
+        .unwrap_or_else(|| Path::new("."));
+    normalize_path_string(&dir.join(to_relative_thumbnail_path(source_path)))
 }
 
 fn path_allowed(item_path: &Path) -> bool {
@@ -190,13 +166,6 @@ pub fn list_scan_subdirectories(folder: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(subdirs)
 }
 
-/// `validateScanParams` 校验结果
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ScanParamValidation {
-    pub is_valid: bool,
-    pub error: Option<String>,
-}
-
 pub fn validate_scan_params(scan: &ScanAction) -> ScanParamValidation {
     if scan.path.is_empty() {
         return ScanParamValidation {
@@ -251,11 +220,7 @@ pub fn validate_scan_params(scan: &ScanAction) -> ScanParamValidation {
 
 /// 相对缩略图路径（用于 restore 回退）
 pub fn relative_thumbnail_path_for_source(source_path: &str) -> String {
-    let file_name = Path::new(source_path)
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or(source_path);
-    format!("{}/thumbnail-{}.png", PHOTASA_ORIGINALS_DIR, file_name)
+    to_relative_thumbnail_path(source_path)
 }
 
 #[cfg(test)]

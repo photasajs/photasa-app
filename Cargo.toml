@@ -7,6 +7,8 @@ members = [
     "crates/wenchang-preferences",
     "crates/photasa-import",
     "crates/photasa-thumbnail",
+    "crates/photasa-types",
+    "crates/photasa-scan",
     "apps/photasa/src-tauri",
 ]
 
@@ -27,3 +29,5 @@ zouwu-builtin = { path = "crates/zouwu-builtin" }
 wenchang-preferences = { path = "crates/wenchang-preferences" }
 photasa-import = { path = "crates/photasa-import" }
 photasa-thumbnail = { path = "crates/photasa-thumbnail" }
+photasa-types = { path = "crates/photasa-types" }
+photasa-scan = { path = "crates/photasa-scan" }

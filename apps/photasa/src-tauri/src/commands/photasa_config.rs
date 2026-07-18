@@ -175,6 +175,7 @@ pub fn write_config_sync(folder: &str, config: &PhotasaConfigData) -> Result<(),
 }
 
 /// 源图绝对路径 → 缩略图绝对路径
+#[allow(dead_code)]
 pub fn absolute_thumbnail_path_for_source(source_path: &str) -> String {
     let dir = Path::new(source_path)
         .parent()

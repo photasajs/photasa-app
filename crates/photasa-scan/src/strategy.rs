@@ -3,10 +3,9 @@
 use std::fs;
 use std::path::Path;
 
+use photasa_import::path_filter::classify_media;
+use photasa_types::{PhotasaConfigPhoto, PhotasaConfigView, PHOTASA_CONFIG_FILE};
 use sha2::{Digest, Sha256};
-
-use super::import_path_filter::classify_media;
-use super::photasa_config::{self, PHOTASA_CONFIG_FILE};
 
 /// 扫描策略：仅 SKIP / FULL（Electron 无 live INCREMENTAL）
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -19,6 +18,55 @@ pub enum ScanStrategy {
 pub struct ScanDecision {
     pub strategy: ScanStrategy,
     pub reason: String,
+}
+
+pub struct JsonFilePhotasaConfigView;
+
+impl PhotasaConfigView for JsonFilePhotasaConfigView {
+    fn has_config(&self, folder: &str) -> bool {
+        Path::new(folder).join(PHOTASA_CONFIG_FILE).exists()
+    }
+
+    fn photo_list(&self, folder: &str) -> Result<Option<Vec<PhotasaConfigPhoto>>, String> {
+        let path = Path::new(folder).join(PHOTASA_CONFIG_FILE);
+        if !path.exists() {
+            return Ok(None);
+        }
+        let content = fs::read_to_string(&path).map_err(|e| format!("读取配置失败: {e}"))?;
+        let value: serde_json::Value =
+            serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败: {e}"))?;
+        Ok(Some(parse_config_photo_list(&value)))
+    }
+}
+
+fn parse_config_photo_list(value: &serde_json::Value) -> Vec<PhotasaConfigPhoto> {
+    let Some(array) = value
+        .get("photoList")
+        .or_else(|| value.get("photo_list"))
+        .and_then(|v| v.as_array())
+    else {
+        return Vec::new();
+    };
+
+    array
+        .iter()
+        .filter_map(|item| {
+            let raw = item
+                .as_str()
+                .or_else(|| item.get("path").and_then(|v| v.as_str()))?;
+            Some(PhotasaConfigPhoto {
+                path: normalize_photo_file_name(raw),
+            })
+        })
+        .collect()
+}
+
+fn normalize_photo_file_name(path_or_name: &str) -> String {
+    let name = Path::new(path_or_name)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(path_or_name);
+    name.replace('\\', "/")
 }
 
 /// `shouldScanOneLevel(action) = (action == "current")`
@@ -84,6 +132,14 @@ pub fn compute_folder_hash(folder: &Path) -> String {
 
 /// 判断单个文件是否需要处理（读 `.photasa.json` photoList）
 pub fn should_process_file(file_path: &str, action: &str) -> bool {
+    should_process_file_with_config(&JsonFilePhotasaConfigView, file_path, action)
+}
+
+pub fn should_process_file_with_config(
+    config: &impl PhotasaConfigView,
+    file_path: &str,
+    action: &str,
+) -> bool {
     if action == "rescan" {
         return true;
     }
@@ -93,19 +149,18 @@ pub fn should_process_file(file_path: &str, action: &str) -> bool {
         return true;
     };
 
-    let config_path = Path::new(dir).join(PHOTASA_CONFIG_FILE);
-    if !config_path.exists() {
+    if !config.has_config(dir) {
         return true;
     }
 
-    match photasa_config::read_config_sync(dir) {
-        Ok(Some(config)) => {
+    match config.photo_list(dir) {
+        Ok(Some(photos)) => {
             let file_name = path
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or(file_path)
                 .replace('\\', "/");
-            !config.photo_list.iter().any(|p| p.path == file_name)
+            !photos.iter().any(|p| p.path == file_name)
         }
         Ok(None) => true,
         Err(_) => true,
@@ -114,6 +169,14 @@ pub fn should_process_file(file_path: &str, action: &str) -> bool {
 
 /// `decideScanStrategy` — SKIP / FULL only
 pub fn decide_scan_strategy(folder: &str, action: &str) -> ScanDecision {
+    decide_scan_strategy_with_config(&JsonFilePhotasaConfigView, folder, action)
+}
+
+pub fn decide_scan_strategy_with_config(
+    config: &impl PhotasaConfigView,
+    folder: &str,
+    action: &str,
+) -> ScanDecision {
     if action == "rescan" {
         return ScanDecision {
             strategy: ScanStrategy::Full,
@@ -122,18 +185,17 @@ pub fn decide_scan_strategy(folder: &str, action: &str) -> ScanDecision {
     }
 
     let folder_path = Path::new(folder);
-    let config_path = folder_path.join(PHOTASA_CONFIG_FILE);
 
-    if !config_path.exists() {
+    if !config.has_config(folder) {
         return ScanDecision {
             strategy: ScanStrategy::Full,
             reason: "配置文件不存在".into(),
         };
     }
 
-    match photasa_config::read_config_sync(folder) {
-        Ok(Some(config)) => {
-            if config.photo_list.is_empty() {
+    match config.photo_list(folder) {
+        Ok(Some(photos)) => {
+            if photos.is_empty() {
                 let hash = compute_folder_hash(folder_path);
                 if !hash.is_empty() {
                     ScanDecision {

@@ -4,7 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use super::scan_media::PHOTASA_FOLDER_CACHE_FILE;
+use crate::media::PHOTASA_FOLDER_CACHE_FILE;
 
 const DEFAULT_MAX_CACHE_AGE_MS: u64 = 7 * 24 * 60 * 60 * 1000;
 
@@ -114,8 +114,8 @@ fn collect_cache_files(dir: &Path, out: &mut Vec<PathBuf>) {
 
 #[cfg(test)]
 mod tests {
-    use super::super::scan_media::folder_cache_path;
     use super::*;
+    use crate::media::folder_cache_path;
     use std::io::Write;
 
     fn temp(name: &str) -> PathBuf {

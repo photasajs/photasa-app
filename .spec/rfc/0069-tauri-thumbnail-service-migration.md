@@ -5,7 +5,7 @@
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 - **延伸（RAW 占位）**: [RFC 0102: RAW 缩略图回退](./completed/0102-tauri-thumbnail-raw-fallback.md)（`ThumbnailResponse.fallback`、无解码器时的 JPEG 占位）
-- **被引用（scan crate 拆分）**: [0132](./0132-tauri-photasa-scan-crate.md)（P1b；async `ThumbnailBridge` 消费 0134）
+- **被引用（scan crate 拆分）**: [0132](./completed/0132-tauri-photasa-scan-crate.md)（P1b；async `ThumbnailBridge` 消费 0134）
 - **后续（crate 拆分）**: [0134](./completed/0134-tauri-photasa-thumbnail-crate.md)（P1a first；thumbnail → async `photasa-thumbnail` crate，✅ Implemented）
 
 ## Implementation principle (Photasa / Tauri)

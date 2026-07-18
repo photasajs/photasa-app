@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 
-use super::scan_media::{folder_cache_path, normalize_path_string};
+use crate::media::{folder_cache_path, normalize_path_string};
 
 fn now_millis() -> u64 {
     SystemTime::now()
@@ -337,9 +337,7 @@ mod tests {
         );
         cache.pending_files = vec![normalize_path_string(&dir.join("x.jpg"))];
         cache.save(&dir).unwrap();
-        assert!(dir
-            .join(crate::commands::scan_media::PHOTASA_FOLDER_CACHE_FILE)
-            .exists());
+        assert!(dir.join(crate::media::PHOTASA_FOLDER_CACHE_FILE).exists());
         let loaded = FolderScanCache::load(&dir).unwrap();
         assert_eq!(loaded.pending_files, cache.pending_files);
     }

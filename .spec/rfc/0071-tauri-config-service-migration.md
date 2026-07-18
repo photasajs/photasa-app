@@ -4,7 +4,7 @@
 - **状态**: ✅ 已完成（本文档 2026-07-18 重写，对齐实际实现 — 见下方「Rewrite note」）
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
-- **被引用（scan crate 拆分）**: [0132](./0132-tauri-photasa-scan-crate.md)（P1；`PhotasaConfigView` 桥接本 RFC 的 `read_config_sync`）
+- **被引用（scan crate 拆分）**: [0132](./completed/0132-tauri-photasa-scan-crate.md)（P1；`PhotasaConfigView` 桥接本 RFC 的 `read_config_sync`）
 
 ## Implementation principle (Photasa / Tauri)
 
@@ -36,7 +36,7 @@ apps/photasa/src-tauri/src/commands/
 
 异步模式：Tauri command 边界（`config.rs`）用 `tokio::fs` 做真异步文件 IO（配置文件小，无需 `spawn_blocking`）；`photasa_config.rs` 的纯函数层用 `std::fs` 同步阻塞，专供 `scan_strategy.rs`/`scan_media.rs` 等非 async 上下文直接调用。两种模式**都正确**，服务不同调用场景，无需统一成一种。
 
-**Scan crate 拆分范围**：[0132](./0132-tauri-photasa-scan-crate.md) 的 `PhotasaConfigView` trait 应只桥接 `read_config_sync`（同步、只读、已是 scan 层唯一依赖的路径）——按 0132 设计准则 #4，暴露 `photo_list`/`has_config` 等价的只读视图，**不要**把整个 `PhotasaConfigData`/`PhotoEntry` struct 或 `config.rs` 的 8 个 Tauri command 搬进 crate。
+**Scan crate 拆分范围**：[0132](./completed/0132-tauri-photasa-scan-crate.md) 的 `PhotasaConfigView` trait 只桥接 `read_config_sync`（同步、只读、已是 scan 层唯一依赖的路径）——按 0132 设计准则 #4，暴露 `photo_list`/`has_config` 等价的只读视图，**不要**把整个 `PhotasaConfigData`/`PhotoEntry` struct 或 `config.rs` 的 8 个 Tauri command 搬进 crate。
 
 ---
 

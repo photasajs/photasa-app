@@ -3748,7 +3748,9 @@ dependencies = [
  "notify",
  "pathdiff",
  "photasa-import",
+ "photasa-scan",
  "photasa-thumbnail",
+ "photasa-types",
  "regex",
  "serde",
  "serde_json",
@@ -3786,6 +3788,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "photasa-scan"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "filetime",
+ "photasa-import",
+ "photasa-thumbnail",
+ "photasa-types",
+ "serde",
+ "serde_json",
+ "sha2",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
 name = "photasa-thumbnail"
 version = "0.1.0"
 dependencies = [
@@ -3794,6 +3812,14 @@ dependencies = [
  "libheif-rs",
  "serde",
  "tokio",
+]
+
+[[package]]
+name = "photasa-types"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

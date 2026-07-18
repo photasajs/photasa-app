@@ -4,7 +4,7 @@
 - **状态**: ✅ 已完成（本文档 2026-07-18 重写，对齐实际实现 — 见下方「Rewrite note」）
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
-- **后续（crate 拆分）**: [0132](./0132-tauri-photasa-scan-crate.md)（scan → `photasa-scan` crate，⏳ Draft（P1））
+- **后续（crate 拆分）**: [0132](./completed/0132-tauri-photasa-scan-crate.md)（scan → `photasa-types` + `photasa-scan` crate，✅ Implemented）
 
 ## Implementation principle (Photasa / Tauri)
 
@@ -18,7 +18,7 @@
 
 本文档原版（2025-01-02）设想了一套 `services/scan/{scan_service,scanner,worker,helpers,cleanup}.rs` 架构、`ScanService` struct + `tokio::spawn` + `mpsc` 通道、`infer` crate 做 MIME 检测、三态 `ScanStrategy::{Skip,Incremental,Full}`。**这套设计从未被构建。**
 
-实际实现是扁平 `commands/scan_*.rs` 文件族，`walkdir` 遍历 + 扩展名分类；主扫描路径已用 `photasa-import::path_filter::classify_media` 统一（见 [0131](./completed/0131-tauri-photasa-import-crate.md)），旧 discovery helper 仍保留兼容扩展名表，后续由 [0132](./0132-tauri-photasa-scan-crate.md) 清掉。策略只有 **SKIP/FULL 两态**——`Incremental` 在 Electron 源码里本身就是死代码，从未被 `decideScanStrategy` 返回过（见 [0117](./0117-tauri-scan-pipeline-parity.md) 的详细表格）。
+实际实现已拆入 `crates/photasa-scan`（见 [0132](./completed/0132-tauri-photasa-scan-crate.md)），`walkdir` 遍历 + 扩展名分类统一使用 `photasa-import::path_filter::classify_media`（见 [0131](./completed/0131-tauri-photasa-import-crate.md)）。策略只有 **SKIP/FULL 两态**——`Incremental` 在 Electron 源码里本身就是死代码，从未被 `decideScanStrategy` 返回过（见 [0117](./0117-tauri-scan-pipeline-parity.md) 的详细表格）。
 
 真正的行为规格、文件清单、测试策略以 [0105](./0105-tauri-scan-incremental-cache.md)（增量缓存）/ [0111](./0111-tauri-scan-notify-status-bridge.md)（notify:status）/ [0116](./0116-tauri-photasa-config-thumbnail-parity.md)（config/thumbnail 路径）/ [0117](./0117-tauri-scan-pipeline-parity.md)（完整流水线 parity，含逐函数对照表）为准——本文档下方「摘要」及「Tauri Rust 迁移计划」章节的具体代码示例已过时，仅保留作历史记录，**不要**按其内容实施。
 
@@ -36,7 +36,7 @@ apps/photasa/src-tauri/src/commands/
 
 真实依赖：`walkdir`、`sha2`（`compute_folder_hash`）、无 `infer`。异步模式：**Tauri command 边界为 `async fn`**（`stubs.rs::scan_photos`），内部 `spawn_scan_job`（`pub fn`，非 async）调用 `tokio::spawn(async move { spawn_blocking(sync_fn).await })` 把实际遍历/IO 丢进阻塞线程池；`scan_strategy.rs`/`scan_cache.rs`/`scan_media.rs`/`scan_notify.rs`/`scan_cleanup.rs` 全部是**纯同步函数**，零 `async fn`，这正是 0132 想抽进 crate 的部分——同步纯函数无需 Tauri runtime 即可单测。已核实（2026-07-18）：此模式正确，无需重新设计。
 
-**下一步**：这套文件即将拆入零-Tauri workspace crate `crates/photasa-scan`（见 [0132](./0132-tauri-photasa-scan-crate.md)，Draft（P1）），`scan_runner.rs`（含 `tokio::spawn`/`AppHandle`/`spawn_blocking` 编排层）在 v1 拆分中保留在 `src-tauri`。
+**状态**：纯算法文件已拆入零-Tauri workspace crate `crates/photasa-scan`（见 [0132](./completed/0132-tauri-photasa-scan-crate.md)），共享 DTO 在 `crates/photasa-types`；`scan_runner.rs`（含 `tokio::spawn`/`AppHandle` 编排层）在 v1 拆分中保留在 `src-tauri`。
 
 ---
 

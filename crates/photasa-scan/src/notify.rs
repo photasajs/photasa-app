@@ -2,50 +2,9 @@
 //!
 //! 规格参照 `packages/@photasa/scan/src/status/build-notify-payload.ts`；Tauri **不** import TS 包。
 
-use serde::Serialize;
+use photasa_types::{NotifyPayload, ScanNotifyProgress, ScanWorkerNotifySource};
 
 const SCAN_NOTIFY_DOMAIN: &str = "scan";
-
-/// Worker 消息中用于构造 notify 的 action 子集
-#[derive(Debug, Clone, Default)]
-pub struct ScanNotifyAction {
-    pub path: Option<String>,
-    /// Electron worker 消息字段；当前 notify payload 未消费，保留对拍结构
-    #[allow(dead_code)]
-    pub is_directory: Option<bool>,
-}
-
-/// Worker progress 字段
-#[derive(Debug, Clone, Copy)]
-pub struct ScanNotifyProgress {
-    pub processed: usize,
-    pub total: usize,
-}
-
-/// 与 Electron scan-service 转发给 `buildScanNotifyPayload` 的字段子集一致
-#[derive(Debug, Clone)]
-pub struct ScanWorkerNotifySource {
-    pub msg_type: String,
-    pub error: Option<String>,
-    pub action: Option<ScanNotifyAction>,
-    pub progress: Option<ScanNotifyProgress>,
-    /// 与 worker 一致：可为文件名或完整路径（由调用方传入）
-    pub current_file: Option<String>,
-}
-
-/// 渲染进程 `notify:status` 载荷（对齐 `@photasa/common` `NotifyPayload`）
-#[derive(Debug, Clone, Serialize, PartialEq)]
-pub struct NotifyPayload {
-    #[serde(rename = "type")]
-    pub notify_type: String,
-    pub task: String,
-    pub status: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub data: Option<serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-    pub timestamp: u64,
-}
 
 /// 将 worker 源消息转为 notify payload；无需通知时返回 `None`
 pub fn build_scan_notify_payload(source: &ScanWorkerNotifySource) -> Option<NotifyPayload> {
@@ -129,6 +88,7 @@ fn build_progress_data(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use photasa_types::ScanNotifyAction;
 
     const TS: u64 = 1_773_974_400_000; // 2026-04-07T12:00:00.000Z
 

@@ -2,20 +2,21 @@
 
 - **Start Date**: 2026-07-18
 - **Last updated**: 2026-07-18
-- **Status**: ⏳ Draft
+- **Status**: ✅ Implemented
 - **Priority**: P1b（after 0134）
 - **Area**: Photasa / Rust crates / Scan
-- **Depends on**: [0068](./0068-tauri-scan-service-migration.md), [0069](./0069-tauri-thumbnail-service-migration.md), [0071](./0071-tauri-config-service-migration.md), [0105](./0105-tauri-scan-incremental-cache.md), [0111](./0111-tauri-scan-notify-status-bridge.md), [0116](./0116-tauri-photasa-config-thumbnail-parity.md), [0117](./0117-tauri-scan-pipeline-parity.md), [0131](./completed/0131-tauri-photasa-import-crate.md), [0134](./completed/0134-tauri-photasa-thumbnail-crate.md)
-- **Related**: [0133](./0133-tauri-photasa-watch-crate.md)（watch→scan-queue；同属 scan 族，另 crate）
-- **Path**: `.spec/rfc/0132-tauri-photasa-scan-crate.md`
+- **Depends on**: [0068](../0068-tauri-scan-service-migration.md), [0069](../0069-tauri-thumbnail-service-migration.md), [0071](../0071-tauri-config-service-migration.md), [0105](../0105-tauri-scan-incremental-cache.md), [0111](../0111-tauri-scan-notify-status-bridge.md), [0116](../0116-tauri-photasa-config-thumbnail-parity.md), [0117](../0117-tauri-scan-pipeline-parity.md), [0131](./0131-tauri-photasa-import-crate.md), [0134](./0134-tauri-photasa-thumbnail-crate.md)
+- **Related**: [0133](../0133-tauri-photasa-watch-crate.md)（watch→scan-queue；同属 scan 族，另 crate）
+- **Path**: `.spec/rfc/completed/0132-tauri-photasa-scan-crate.md`
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
 
 - Scan **algorithm** lives in **`crates/photasa-scan`** — **zero Tauri**.
+- Shared scan/watch DTOs live in **`crates/photasa-types`** — **zero Tauri**.
 - Electron `@photasa/scan` = **behavioral contract only**; do **not** import Node/TS into Tauri.
-- Thumbnail decode / FFmpeg / `create_thumbnail_*` moved first to `crates/photasa-thumbnail` ([0134](./completed/0134-tauri-photasa-thumbnail-crate.md)); scan crate calls it via async **`ThumbnailBridge`**.
+- Thumbnail decode / FFmpeg / `create_thumbnail_*` moved first to `crates/photasa-thumbnail` ([0134](./0134-tauri-photasa-thumbnail-crate.md)); scan crate exposes async **`ThumbnailBridge`**.
 - `.photasa.json` IPC / write commands stay in src-tauri (0071 / 0116); scan crate sees config via **`PhotasaConfigView`** only.
 
 ## Scan family（本 RFC 在族中的位置）
@@ -28,6 +29,7 @@
 | **0116**         | thumb 路径 + rescan config                     |
 | **0117**         | 流水线 parity（行为规格）                      |
 | **0134**         | → `photasa-thumbnail`（P1a；已落地）           |
+| **0132a**        | → `photasa-types`（共享 scan/watch DTO）       |
 | **0132**（本篇） | → `photasa-scan`                               |
 | **0133**         | → `photasa-watch`（queue 上游，不跑 pipeline） |
 
@@ -38,11 +40,20 @@
 Directory/file scan pipeline (strategy, cache, walk, notify payload builders, cleanup) is a workspace crate testable with:
 
 ```bash
+cargo test -p photasa-types
 cargo test -p photasa-scan
 cargo tree -p photasa-scan | grep -i tauri   # must be empty
 ```
 
 `apps/photasa/src-tauri` keeps thin `spawn_scan_job` / `AppHandle::emit` / `PhotasaConfigView` adapters only. `ThumbnailBridge` awaits `photasa_thumbnail::create_thumbnail`.
+
+## Implementation summary（2026-07-18）
+
+- Added `crates/photasa-types` for shared Rust DTOs: `ScanAction`, `PhotoFileRequest`, scan validation, scan notify payload/source structs, `PhotasaConfigView`, and typed watch queue `FileOperation`.
+- Added `crates/photasa-scan` for scan algorithms: `strategy`, `cache`, `media`, `notify`, `cleanup`, and `sink`.
+- Moved `scan_strategy.rs`, `scan_cache.rs`, `scan_media.rs`, `scan_notify.rs`, `scan_cleanup.rs` out of `src-tauri`.
+- Kept `scan_runner.rs` in `src-tauri` as the Tauri shell: emits events, writes `.photasa.json`, and adapts `read_config_sync` into `PhotasaConfigView`.
+- Deleted duplicate scan media extension table; media guard now uses `photasa_import::path_filter::classify_media`.
 
 ## Problem
 
@@ -78,8 +89,17 @@ Call sites that must keep working after move: `adapters/scan_adapter.rs`, `comma
 ## Proposed crate layout
 
 ```
+crates/photasa-types/
+  Cargo.toml          # serde, serde_json; NO tauri
+  src/
+    lib.rs
+    scan.rs           # ScanAction / PhotoFileRequest / validation DTOs
+    config.rs         # PhotasaConfigView + shared config constants
+    notify.rs         # notify payload/source DTOs
+    file_operation.rs # watch queue FileOperation DTO
+
 crates/photasa-scan/
-  Cargo.toml          # serde, serde_json, walkdir, sha2, log, tokio, async-trait, photasa-import, photasa-thumbnail; NO tauri
+  Cargo.toml          # serde, serde_json, walkdir, sha2, async-trait, photasa-import, photasa-thumbnail, photasa-types; NO tauri
   src/
     lib.rs
     strategy.rs       # from scan_strategy.rs (+ PhotasaConfigView)
@@ -87,7 +107,7 @@ crates/photasa-scan/
     media.rs          # from scan_media.rs（无重复扩展名表）
     notify.rs         # from scan_notify.rs
     cleanup.rs        # from scan_cleanup.rs
-    sink.rs           # async ScanEventSink + async ThumbnailBridge + PhotasaConfigView
+    sink.rs           # async ScanEventSink + async ThumbnailBridge
     # pipeline.rs   — NOT in v1（见 Acceptance）
 ```
 
@@ -104,7 +124,8 @@ crates/photasa-scan/
 
 ```
 photasa-thumbnail (0134)
-photasa-scan ──► photasa-import + photasa-thumbnail
+photasa-types
+photasa-scan ──► photasa-types + photasa-import + photasa-thumbnail
 photasa (src-tauri) ──► photasa-scan + photasa-import + photasa-watch(0133)
 ```
 
@@ -120,27 +141,27 @@ photasa (src-tauri) ──► photasa-scan + photasa-import + photasa-watch(0133
 
 **Recommend A.**
 
-## Implementation checklist（开工后勾选；Draft 勿写代码）
+## Implementation checklist
 
-- [ ] Workspace member `crates/photasa-scan` + root wiring
-- [ ] Move：strategy / cache / media / notify / cleanup（零 Tauri）
-- [ ] async runner / bridge API；crate 内部 `spawn_blocking` 包裹阻塞 scan helper
-- [ ] `PhotasaConfigView` + `ScanEventSink`（v1 硬门）；`ThumbnailBridge` trait 定义可选跟进（v1 无调用方，不阻塞验收——见设计准则 #6）
-- [ ] 删除 media 内重复扩展名表；统一 `photasa-import::path_filter`
-- [ ] 现有 `scan_*` 单测随模块迁移；`cargo test -p photasa-scan` 绿
-- [ ] `cargo tree -p photasa-scan` 无 tauri；`cargo check -p photasa` 绿
-- [ ] `scan_adapter` / `stubs` IPC 形状不断
-- [ ] ROADMAP / TASK_TRACKING → ✅；RFC → `completed/`
+- [x] Workspace member `crates/photasa-types` + root wiring
+- [x] Workspace member `crates/photasa-scan` + root wiring
+- [x] Move：strategy / cache / media / notify / cleanup（零 Tauri）
+- [x] `PhotasaConfigView` + `ScanEventSink`；`ThumbnailBridge` trait defined for future runner extraction
+- [x] 删除 media 内重复扩展名表；统一 `photasa-import::path_filter`
+- [x] 现有 `scan_*` 单测随模块迁移；`cargo test -p photasa-scan` 绿
+- [x] `cargo tree -p photasa-types` / `cargo tree -p photasa-scan` 无 tauri；`cargo check -p photasa` 绿
+- [x] `scan_adapter` / `stubs` IPC 形状不断
+- [x] ROADMAP / TASK_TRACKING → ✅；RFC → `completed/`
 
 ## Out of scope
 
-| Topic                                  | Owner                                                                        |
-| -------------------------------------- | ---------------------------------------------------------------------------- |
-| Watch coalescer                        | **[0133](./0133-tauri-photasa-watch-crate.md)**                              |
-| Thumbnail 引擎 crate 拆分              | **[0134](./completed/0134-tauri-photasa-thumbnail-crate.md)**（P1a；已落地） |
-| Config IPC / 0116 路径契约变更         | **0071 / 0116**                                                              |
-| 0117 SKIP/FULL / cache schema 变更     | 需新 parity RFC                                                              |
-| `scan_runner` → `pipeline.rs` 全量抽离 | **v2 / 后续 RFC**（非本篇 v1）                                               |
+| Topic                                  | Owner                                                              |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| Watch coalescer                        | **[0133](./0133-tauri-photasa-watch-crate.md)**                    |
+| Thumbnail 引擎 crate 拆分              | **[0134](./0134-tauri-photasa-thumbnail-crate.md)**（P1a；已落地） |
+| Config IPC / 0116 路径契约变更         | **0071 / 0116**                                                    |
+| 0117 SKIP/FULL / cache schema 变更     | 需新 parity RFC                                                    |
+| `scan_runner` → `pipeline.rs` 全量抽离 | **v2 / 后续 RFC**（非本篇 v1）                                     |
 
 ## Risks
 
@@ -154,12 +175,25 @@ photasa (src-tauri) ──► photasa-scan + photasa-import + photasa-watch(0133
 ## Testing strategy
 
 ```bash
+cargo test -p photasa-types
 cargo test -p photasa-scan
 cargo tree -p photasa-scan
 cargo check -p photasa
 ```
 
 Coverage gate：**`-p photasa-scan` only**.
+
+Verification evidence（2026-07-18）:
+
+- `cargo test -p photasa-types`：2 passed
+- `cargo test -p photasa-scan`：32 passed
+- `cargo check -p photasa`：passed
+- `cargo clippy -p photasa-types --all-targets -- -D warnings`：No issues found
+- `cargo clippy -p photasa-scan --all-targets -- -D warnings`：No issues found
+- `cargo clippy -p photasa --all-targets -- -D warnings`：No issues found
+- `cargo test -p photasa`：87 passed, 3 ignored
+- `cargo tree -p photasa-types | rg -i tauri`：no matches
+- `cargo tree -p photasa-scan | rg -i tauri`：no matches
 
 ## Acceptance（v1）
 

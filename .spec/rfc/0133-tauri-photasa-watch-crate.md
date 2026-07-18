@@ -6,7 +6,7 @@
 - **Priority**: P1c（after 0134/0132）
 - **Area**: Photasa / Rust crates / Watch（scan 族：喂前端 scan queue）
 - **Depends on**: [0082](./completed/0082-tauri-watch-start-stop-commands.md), [0083](./completed/0083-tauri-watch-event-contract.md), [0003](./completed/0003-unify-watch-to-scan-queue.md)
-- **Related（scan 族）**: [0068](./0068-tauri-scan-service-migration.md), [0069](./0069-tauri-thumbnail-service-migration.md), [0071](./0071-tauri-config-service-migration.md), [0116](./0116-tauri-photasa-config-thumbnail-parity.md), [0117](./0117-tauri-scan-pipeline-parity.md), [0132](./0132-tauri-photasa-scan-crate.md)
+- **Related（scan 族）**: [0068](./0068-tauri-scan-service-migration.md), [0069](./0069-tauri-thumbnail-service-migration.md), [0071](./0071-tauri-config-service-migration.md), [0116](./0116-tauri-photasa-config-thumbnail-parity.md), [0117](./0117-tauri-scan-pipeline-parity.md), [0132](./completed/0132-tauri-photasa-scan-crate.md)
 - **Path**: `.spec/rfc/0133-tauri-photasa-watch-crate.md`
 
 ## Implementation principle (Photasa / Tauri)
@@ -29,7 +29,7 @@ Watch **不是**目录扫描流水线，但是 scan 族的**上游入口**：FS 
 | **0116**         | thumb 路径 + rescan config                     |
 | **0117**         | 流水线 parity（行为规格）                      |
 | **0134**         | → `photasa-thumbnail`（P1a；已落地）           |
-| **0132**         | → `photasa-scan`                               |
+| **0132**         | → `photasa-types` + `photasa-scan`             |
 | **0133**（本篇） | → `photasa-watch`（queue 上游，不跑 pipeline） |
 
 **本 crate 不依赖 `photasa-scan`。** 不执行 SKIP/FULL、不写 `.photasa-folder.json`、不调缩略图引擎。
@@ -59,11 +59,11 @@ cargo tree -p photasa-watch | grep -i tauri   # must be empty
 
 1. **Testability first** — pending / dedupe / debounce / flush cancel / batch shape 全在 `-p photasa-watch`.
 2. **Zero Tauri**.
-3. **Typed `FileOperation` + serde**（禁止长期 `serde_json::Value` 双轨）；JSON 键对齐 Electron `createFileOperation`（含 `metadata.thumbnailSize`，与 0069 默认 150 一致）.
+3. **Typed `FileOperation` + serde**（复用 `photasa-types::FileOperation`，禁止长期 `serde_json::Value` 双轨）；JSON 键对齐 Electron `createFileOperation`（含 `metadata.thumbnailSize`，与 0069 默认 150 一致）.
 4. **Timer 定案 A：`tokio`（`time` feature）** — 禁止 `tauri::async_runtime`；测用 tokio test runtime.
 5. **`ScanQueueSink::emit_batch(&[FileOperation])`** — src-tauri 转 `app.emit("picasa:add-to-scan-queue", …)`.
 6. **`event_map` v1 不迁** — `CreateKind` / 事件名映射留 `watch.rs`；crate 不依赖 `notify` 类型.
-7. **无 `photasa-scan` 依赖**.
+7. **无 `photasa-scan` 依赖**；允许依赖 `photasa-types` 共享 DTO.
 8. **No behavior change** — 窗口/防抖/事件名不变.
 
 ## Proposed crate layout
@@ -92,8 +92,9 @@ crates/photasa-watch/
 ### Dependency graph
 
 ```
-photasa-watch                 (standalone)
-photasa-scan ──► photasa-import   (0132)
+photasa-types                 (shared DTOs)
+photasa-watch ──► photasa-types
+photasa-scan ──► photasa-types + photasa-import   (0132)
 photasa (src-tauri) ──► photasa-watch + photasa-scan + photasa-import
 ```
 
@@ -120,13 +121,13 @@ photasa (src-tauri) ──► photasa-watch + photasa-scan + photasa-import
 
 ## Out of scope
 
-| Topic                          | Owner                                                     |
-| ------------------------------ | --------------------------------------------------------- |
-| Scan strategy / cache / runner | **[0132](./0132-tauri-photasa-scan-crate.md)** / **0117** |
-| Config / thumb 路径契约        | **0071 / 0116**                                           |
-| Thumbnail 引擎                 | **0069**                                                  |
-| 事件名 / payload 键变更        | 新 0083 类 RFC                                            |
-| `event_map` 迁入 crate         | v2 可选                                                   |
+| Topic                          | Owner                                                               |
+| ------------------------------ | ------------------------------------------------------------------- |
+| Scan strategy / cache / runner | **[0132](./completed/0132-tauri-photasa-scan-crate.md)** / **0117** |
+| Config / thumb 路径契约        | **0071 / 0116**                                                     |
+| Thumbnail 引擎                 | **0069**                                                            |
+| 事件名 / payload 键变更        | 新 0083 类 RFC                                                      |
+| `event_map` 迁入 crate         | v2 可选                                                             |
 
 ## Risks
 
@@ -148,7 +149,7 @@ Manual：watch 目录 → touch 文件 → `picasa:file-change` + batched `picas
 
 ## Acceptance
 
-1. `crates/photasa-watch` **无** `tauri`、**无** `notify`、**无** `photasa-scan`.
+1. `crates/photasa-watch` **无** `tauri`、**无** `notify`、**无** `photasa-scan`；共享 DTO 只走 `photasa-types`.
 2. Typed `FileOperation`；coalescer 测在 `-p photasa-watch`.
 3. 事件名与 JSON 键相对 0083 / 0003 不变.
 4. ROADMAP / TASK_TRACKING ✅；正文进 `completed/`.
