@@ -85,6 +85,25 @@ function sampleConfig(): ImportConfig {
     };
 }
 
+function sampleResult() {
+    return {
+        success: true,
+        totalFiles: 2,
+        successfulFiles: 2,
+        skippedFiles: 0,
+        errorFiles: 0,
+        totalSize: 0,
+        processedSize: 0,
+        errors: [],
+        warnings: [],
+        duration: 1,
+        importedFiles: [],
+        importId: "imp-1",
+        sourcePaths: [],
+        targetPath: "",
+    };
+}
+
 describe("ImportProgressModal (RFC 0118)", () => {
     beforeEach(() => {
         setActivePinia(createPinia());
@@ -197,5 +216,58 @@ describe("ImportProgressModal (RFC 0118)", () => {
         await flushPromises();
         const modal = wrapper.findComponent({ name: "BaseModal" });
         expect(modal.props("closable")).toBe(true);
+    });
+
+    it("G15 completed modal close clears session and emits complete, not dismiss", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_START,
+            },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const session = useImportSessionStore();
+        const result = sampleResult();
+        session.complete(result);
+        await flushPromises();
+
+        await wrapper.findComponent({ name: "BaseModal" }).vm.$emit("close");
+        await flushPromises();
+
+        expect(wrapper.emitted("complete")).toEqual([[result]]);
+        expect(wrapper.emitted("dismiss")).toBeUndefined();
+        expect(session.phase).toBe("idle");
+        expect(session.importId).toBeNull();
+    });
+
+    it("G15 failed modal close clears session and emits cancel, not dismiss", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_START,
+            },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const session = useImportSessionStore();
+        session.fail(new Error("boom"));
+        await flushPromises();
+
+        await wrapper.findComponent({ name: "BaseModal" }).vm.$emit("close");
+        await flushPromises();
+
+        expect(wrapper.emitted("cancel")).toBeTruthy();
+        expect(wrapper.emitted("dismiss")).toBeUndefined();
+        expect(session.phase).toBe("idle");
+        expect(session.importId).toBeNull();
     });
 });

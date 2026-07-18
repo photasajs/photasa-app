@@ -4,11 +4,11 @@
 - **Last updated**: 2026-07-18
 - **Status**: ✅ Implemented
 - **Area**: Photasa / Rust crates
-- **Path**: `.spec/rfc/0131-tauri-photasa-import-crate.md`
+- **Path**: `.spec/rfc/completed/0131-tauri-photasa-import-crate.md`
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
 
 - Import algorithm in **`crates/photasa-import`** only — **no** `@photasa/import` Node/TS in Tauri backend.
 - Electron/TS = behavior spec only.
@@ -26,14 +26,14 @@ Import **algorithm** lives in workspace crate `crates/photasa-import` with **zer
 
 ## Modules (crate)
 
-| Module | Responsibility |
-|--------|----------------|
-| `path_filter` | media ext / ignore / hidden |
-| `file_groups` | RAW+JPEG grouping |
-| `date` | date subpath + `MetadataExtractor` |
-| `copy_loop` | duplicate strategy, pause/cancel wait, copy loop |
-| `session` | history JSON + undo helpers |
-| `metadata` | re-export trait |
+| Module        | Responsibility                                   |
+| ------------- | ------------------------------------------------ |
+| `path_filter` | media ext / ignore / hidden                      |
+| `file_groups` | RAW+JPEG grouping                                |
+| `date`        | date subpath + `MetadataExtractor`               |
+| `copy_loop`   | duplicate strategy, pause/cancel wait, copy loop |
+| `session`     | history JSON + undo helpers                      |
+| `metadata`    | re-export trait                                  |
 
 ## Checklist
 
@@ -57,10 +57,10 @@ Coverage gate for algorithm: measure **`-p photasa-import`** only — not whole 
 
 ## Out of scope
 
-| Topic | RFC |
-|-------|-----|
-| `import_legacy.rs` copy dedup into crate | **[0130](./0130-tauri-import-legacy-copy-dedup.md)** |
-| `import:progress` missing `importId` | **[0128](./0128-tauri-import-progress-import-id.md)** |
+| Topic                                    | RFC                                                   |
+| ---------------------------------------- | ----------------------------------------------------- |
+| `import_legacy.rs` copy dedup into crate | **[0130](./0130-tauri-import-legacy-copy-dedup.md)**  |
+| `import:progress` missing `importId`     | **[0128](./0128-tauri-import-progress-import-id.md)** |
 
 ## Note
 

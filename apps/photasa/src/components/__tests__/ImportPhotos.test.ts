@@ -31,6 +31,12 @@ vi.mock("@photasa/common", () => ({
             info: vi.fn(),
             debug: vi.fn(),
         },
+        importProgress: {
+            error: vi.fn(),
+            warn: vi.fn(),
+            info: vi.fn(),
+            debug: vi.fn(),
+        },
     },
 }));
 
@@ -109,8 +115,8 @@ vi.mock("../ImportProgressModal.vue", () => ({
     default: {
         name: "ImportProgressModal",
         template: '<div data-testid="progress-modal"></div>',
-        props: ["show", "config"],
-        emits: ["complete", "cancel"],
+        props: ["show", "config", "mode"],
+        emits: ["complete", "cancel", "dismiss"],
     },
 }));
 
@@ -494,6 +500,23 @@ describe("ImportPhotos", () => {
 
             const progressModal = wrapper.findComponent({ name: "ImportProgressModal" });
             expect(progressModal.props("show")).toBe(true);
+        });
+
+        it("RFC 0118 chip request reopens progress modal in reattach mode", async () => {
+            const wrapper = createWrapper();
+            const vm = wrapper.vm as any;
+
+            await vm.importSession.begin("existing-import", {
+                totalFiles: 4,
+                processedFiles: 2,
+            });
+            vm.importSession.requestOpenModal();
+            await nextTick();
+
+            const progressModal = wrapper.findComponent({ name: "ImportProgressModal" });
+            expect(progressModal.props("show")).toBe(true);
+            expect(progressModal.props("mode")).toBe("reattach");
+            expect(progressModal.props("config")).toBeNull();
         });
 
         it("should hide progress modal when import completes", async () => {

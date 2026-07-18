@@ -254,12 +254,20 @@ const handleDismiss = (): void => {
     emit("dismiss");
 };
 
+const resetLocalTerminalState = (): void => {
+    importResult.value = null;
+    importError.value = null;
+    startAttempted.value = false;
+};
+
 const handleComplete = (): void => {
-    if (importResult.value || sessionResult.value) {
-        emit("complete", (importResult.value ?? sessionResult.value)!);
+    const finalResult = importResult.value ?? sessionResult.value;
+    if (finalResult) {
+        emit("complete", finalResult);
     }
     logger.info("📚 导入完成确认，清会话");
     session.clear();
+    resetLocalTerminalState();
 };
 
 const handleTerminalClose = (): void => {
@@ -269,7 +277,16 @@ const handleTerminalClose = (): void => {
     }
     logger.info("📚 终态关闭进度模态", importProgress.status);
     session.clear();
+    resetLocalTerminalState();
     emit("cancel");
+};
+
+const handleCloseRequest = (): void => {
+    if (isImporting.value) {
+        handleDismiss();
+        return;
+    }
+    handleTerminalClose();
 };
 
 watch(
@@ -351,7 +368,7 @@ onUnmounted(() => {
         :title="t('import.progress')"
         size="4xl"
         :closable="canClose"
-        @close="handleDismiss"
+        @close="handleCloseRequest"
     >
         <div class="import-progress space-y-6">
             <div class="flex items-center justify-center space-x-3">
@@ -520,15 +537,21 @@ onUnmounted(() => {
                         {{ t("import.runInBackground") }}
                     </BaseButton>
                     <BaseButton v-if="!isPaused" variant="secondary" @click="pauseImportProcess">
-                        <PauseIcon class="w-4 h-4 mr-2" />
+                        <template #icon>
+                            <PauseIcon class="w-4 h-4" />
+                        </template>
                         {{ t("import.pauseButton") }}
                     </BaseButton>
                     <BaseButton v-if="isPaused" variant="primary" @click="resumeImportProcess">
-                        <PlayIcon class="w-4 h-4 mr-2" />
+                        <template #icon>
+                            <PlayIcon class="w-4 h-4" />
+                        </template>
                         {{ t("import.resumeButton") }}
                     </BaseButton>
                     <BaseButton variant="danger" @click="cancelImportProcess">
-                        <StopIcon class="w-4 h-4 mr-2" />
+                        <template #icon>
+                            <StopIcon class="w-4 h-4" />
+                        </template>
                         {{ t("import.cancelButton") }}
                     </BaseButton>
                 </template>

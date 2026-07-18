@@ -69,6 +69,26 @@ function sampleProgress(partial: Partial<ImportProgress> = {}): ImportProgress {
     };
 }
 
+function sampleResult(partial: Partial<ImportResult> = {}): ImportResult {
+    return {
+        success: true,
+        totalFiles: 2,
+        successfulFiles: 2,
+        skippedFiles: 0,
+        errorFiles: 0,
+        totalSize: 0,
+        processedSize: 0,
+        errors: [],
+        warnings: [],
+        duration: 1,
+        importedFiles: [],
+        importId: "id-result",
+        sourcePaths: [],
+        targetPath: "",
+        ...partial,
+    };
+}
+
 describe("useImportSessionStore (RFC 0118)", () => {
     beforeEach(() => {
         setActivePinia(createPinia());
@@ -172,6 +192,44 @@ describe("useImportSessionStore (RFC 0118)", () => {
         store.clear();
         expect(store.phase).toBe("idle");
         expect(store.importId).toBeNull();
+    });
+
+    it("terminal events after cancellation do not resurrect session", async () => {
+        const store = useImportSessionStore();
+        await store.begin("id-late");
+        store.markCancelled();
+
+        store.complete(sampleResult({ importId: "id-late" }));
+        store.fail(new Error("late error"));
+
+        expect(store.phase).toBe("cancelled");
+        expect(store.result).toBeNull();
+        expect(store.error).toBeNull();
+    });
+
+    it("terminal failure after completion does not overwrite completed session", async () => {
+        const store = useImportSessionStore();
+        await store.begin("id-done");
+        const result = sampleResult({ importId: "id-done" });
+
+        store.complete(result);
+        store.fail(new Error("late error"));
+
+        expect(store.phase).toBe("completed");
+        expect(store.result).toEqual(result);
+        expect(store.error).toBeNull();
+    });
+
+    it("late cancellation after completion does not overwrite completed session", async () => {
+        const store = useImportSessionStore();
+        await store.begin("id-done-cancel");
+        const result = sampleResult({ importId: "id-done-cancel" });
+
+        store.complete(result);
+        store.markCancelled();
+
+        expect(store.phase).toBe("completed");
+        expect(store.result).toEqual(result);
     });
 
     it("setPaused toggles phase", async () => {

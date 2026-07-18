@@ -249,6 +249,13 @@ export const useImportSessionStore = defineStore("importSession", () => {
     }
 
     function complete(res: ImportResult): void {
+        if (isTerminal.value) {
+            logger.warn("📚 终态会话忽略 late complete", {
+                phase: phase.value,
+                importId: idSnippet(),
+            });
+            return;
+        }
         result.value = res;
         phase.value = "completed";
         if (progress.value) {
@@ -273,6 +280,13 @@ export const useImportSessionStore = defineStore("importSession", () => {
     }
 
     function fail(err: unknown): void {
+        if (isTerminal.value) {
+            logger.warn("📚 终态会话忽略 late error", {
+                phase: phase.value,
+                importId: idSnippet(),
+            });
+            return;
+        }
         error.value = err;
         phase.value = "failed";
         if (progress.value) {
@@ -290,6 +304,13 @@ export const useImportSessionStore = defineStore("importSession", () => {
     }
 
     function markCancelled(): void {
+        if (isTerminal.value) {
+            logger.warn("📚 终态会话忽略 late cancel", {
+                phase: phase.value,
+                importId: idSnippet(),
+            });
+            return;
+        }
         phase.value = "cancelled";
         if (progress.value) {
             progress.value = { ...progress.value, status: "cancelled" };

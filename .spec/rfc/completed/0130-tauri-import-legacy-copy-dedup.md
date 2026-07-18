@@ -4,13 +4,13 @@
 - **Last updated**: 2026-07-18
 - **Status**: ✅ Implemented
 - **Area**: Photasa / Import / Maintenance
-- **Path**: `.spec/rfc/0130-tauri-import-legacy-copy-dedup.md`
-- **Depends on**: [0093](./completed/0093-tauri-legacy-importphotos-rust.md), [0131](./0131-tauri-photasa-import-crate.md)
+- **Path**: `.spec/rfc/completed/0130-tauri-import-legacy-copy-dedup.md`
+- **Depends on**: [0093](./0093-tauri-import-photos-legacy.md), [0131](./0131-tauri-photasa-import-crate.md)
 - **One thing only**: `import_legacy.rs`'s `copy_with_unique_name` duplicates the shared `photasa-import` crate's collision-rename logic
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
 
 ## Summary
 

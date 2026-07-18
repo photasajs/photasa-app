@@ -72,7 +72,6 @@ import {
     BaseCheckbox,
     BaseSwitch,
     BaseAlert,
-    BaseSpinner,
 } from "@renderer/components/ui";
 import { BaseWizard, createWizardStep, createWizardConfig } from "@renderer/components/wizard";
 import VirtualList from "@renderer/components/ui/VirtualList.vue";
@@ -811,9 +810,11 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                             :disabled="loadingState.directories"
                             @click="addSourceDirectory(stepData || {}, setStepData)"
                             data-testid="add-source-button"
+                            :loading="loadingState.directories"
                         >
-                            <BaseSpinner v-if="loadingState.directories" class="w-4 h-4 mr-2" />
-                            <PlusIcon v-else class="w-4 h-4 mr-2 text-current" />
+                            <template v-if="!loadingState.directories" #icon>
+                                <PlusIcon class="w-4 h-4 text-current" />
+                            </template>
                             {{
                                 loadingState.directories
                                     ? t("import.loading.label")
@@ -845,9 +846,11 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                         <BaseButton
                             :disabled="loadingState.directories"
                             @click="selectTargetDirectory(stepData || {}, setStepData)"
+                            :loading="loadingState.directories"
                         >
-                            <BaseSpinner v-if="loadingState.directories" class="w-4 h-4 mr-2" />
-                            <FolderOpenIcon v-else class="w-4 h-4 mr-2 text-current" />
+                            <template v-if="!loadingState.directories" #icon>
+                                <FolderOpenIcon class="w-4 h-4 text-current" />
+                            </template>
                             {{
                                 loadingState.directories
                                     ? t("import.loading.label")
@@ -1177,11 +1180,13 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                     @click="goNext"
                     class="whitespace-nowrap"
                 >
-                    <EyeIcon class="w-4 h-4 shrink-0 mr-1.5" />
+                    <template #icon>
+                        <EyeIcon class="w-4 h-4" />
+                    </template>
                     {{ t("import.nextButton") }}
                 </BaseButton>
 
-                <!-- Preview step: edit settings without cancelling import -->
+                <!-- Preview step: edit import options without cancelling import -->
                 <BaseButton
                     v-if="wizardState.currentStep.id === 'preview'"
                     variant="secondary"
@@ -1199,9 +1204,11 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                     :disabled="!wizardState.canFinish || loadingState.preview"
                     @click="finish"
                     class="whitespace-nowrap"
+                    :loading="loadingState.preview"
                 >
-                    <BaseSpinner v-if="loadingState.preview" class="w-4 h-4 shrink-0 mr-1.5" />
-                    <ArrowDownTrayIcon v-else class="w-4 h-4 shrink-0 mr-1.5" />
+                    <template v-if="!loadingState.preview" #icon>
+                        <ArrowDownTrayIcon class="w-4 h-4" />
+                    </template>
                     {{
                         loadingState.preview
                             ? t("import.loading.preview")

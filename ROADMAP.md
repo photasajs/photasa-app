@@ -130,10 +130,10 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0125](.spec/rfc/0125-tauri-import-paused-progress-emit.md)          | pause 时 emit `status: paused` + cancelled payload 字段                                | ⏳ Draft（**P3d**）                                               |
 | [0126](.spec/rfc/0126-electron-import-background-ux-parity.md)       | Electron desktop 同款后台 UX                                                           | ⏸️ Deferred                                                       |
 | [0127](.spec/rfc/0127-tauri-import-error-payload-shape.md)           | `import:error` payload 形状（`[object Object]`）                                       | ⏳ Draft（**P3e**）                                               |
-| [0128](.spec/rfc/0128-tauri-import-progress-import-id.md)            | `import:progress` 缺 `importId`                                                        | ✅ Implemented                                                    |
+| [0128](.spec/rfc/completed/0128-tauri-import-progress-import-id.md)  | `import:progress` 缺 `importId`                                                        | ✅ Implemented                                                    |
 | [0129](.spec/rfc/0129-tauri-import-progress-throttle.md)             | `import:progress` 无节流                                                               | ⏳ Draft（**P3g**）                                               |
-| [0130](.spec/rfc/0130-tauri-import-legacy-copy-dedup.md)             | `import_legacy.rs` 复制逻辑去重                                                        | ✅ Implemented                                                    |
-| [0131](.spec/rfc/0131-tauri-photasa-import-crate.md)                 | `photasa-import` 独立 crate（算法可测、零 Tauri）                                      | ✅ Implemented                                                    |
+| [0130](.spec/rfc/completed/0130-tauri-import-legacy-copy-dedup.md)   | `import_legacy.rs` 复制逻辑去重                                                        | ✅ Implemented                                                    |
+| [0131](.spec/rfc/completed/0131-tauri-photasa-import-crate.md)       | `photasa-import` 独立 crate（算法可测、零 Tauri）                                      | ✅ Implemented                                                    |
 
 ### Photasa next priorities（2026-07）
 

@@ -28,42 +28,42 @@ Dismiss progress modal → Rust keeps copying → chip shows progress → re-ope
 
 Reviewed against: `ImportProgressModal.vue`, `ImportPhotos.vue`, `legacy-api` import unsubs, `import_execute.rs`, `get_import_progress`.
 
-| #   | Gap                                                                        | Risk                                                                                  | Owning RFC                                                    | Status in owner                                    |
-| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------- |
-| G1  | Re-open re-`executeImport` via `watch(config)`                             | Duplicate copies                                                                      | **[0118](./0118-tauri-import-background-ui.md)**              | In scope — start vs reattach                       |
-| G2  | `removeImportListeners` kills chip                                         | Progress dies after dismiss                                                           | **0118**                                                      | In scope — session-owned listeners                 |
-| G3  | X/Esc = cancel                                                             | Cannot dismiss                                                                        | **0118**                                                      | In scope — Dismiss ≠ Cancel                        |
-| G4  | progress JSON no `importId`                                                | Multi-import filter                                                                   | **0118**                                                      | In scope — single-flight                           |
-| G5  | `remove_progress` after done                                               | Bad hydrate                                                                           | **0118**                                                      | In scope — session snapshot                        |
-| G6  | Paused while dismissed                                                     | Lost paused UI                                                                        | **0118**                                                      | In scope — store paused flag                       |
-| G7  | Complete while dismissed                                                   | Silent finish                                                                         | **0118**                                                      | In scope — toast + chip                            |
-| G8  | Wizard config still set                                                    | Re-trigger G1                                                                         | **0118**                                                      | In scope — attachOnly / alreadyStarted             |
-| G9  | desktop vs photasa scope                                                   | Wrong tree edits                                                                      | **0118**                                                      | In scope — Photasa only                            |
-| G10 | Legacy `importPhotos` background UX                                        | Second UI surface                                                                     | **[0122](./0122-tauri-legacy-importphotos-background-ux.md)** | ⏸️ Deferred / won't prioritize                     |
-| G11 | App quit mid-import                                                        | Partial files                                                                         | **[0120](./0120-tauri-import-quit-recovery.md)**              | ⏸️ Deferred                                        |
-| G12 | Settings Import prefs                                                      | No defaults panel                                                                     | **[0121](./0121-tauri-import-settings-prefs.md)**             | ⏸️ Deferred                                        |
-| G13 | Concurrent start + History                                                 | Race                                                                                  | **0118**                                                      | In scope — block second execute                    |
-| G14 | i18n + a11y chip                                                           | Unannounced                                                                           | **0118**                                                      | In scope — i18n + aria-live                        |
-| G15 | `importError`/`importResult` refs never reset in `ImportProgressModal.vue` | Stale error/result panel leaks into next import run                                   | **0118**                                                      | In scope — reset on `startImport` + terminal close |
-| G16 | `applyProgress` no `phase==="cancelled"` guard                             | Late in-flight `import:progress` event resurrects phase to `"running"` after cancel   | **0118**                                                      | In scope — no-op once cancelled                    |
-| G17 | `startListeners()` uses `await import("@tauri-apps/api/event")`            | Violates CLAUDE.md ES6-import-only rule; sibling adapters prove static import is safe | **0118**                                                      | In scope — hoist to static import                  |
-| G18 | `en-GB.json` missing `import.status.failed`                                | Locale gap vs `en-US.json` / `zh-CN.json`                                             | **0118**                                                      | In scope — add key                                 |
-| G19 | Preview step disables Back to avoid stale async preview                    | Confuses setup navigation with running import cancellation                            | **0118**                                                      | In scope — Back means edit settings before Import  |
+| #   | Gap                                                                        | Risk                                                                                  | Owning RFC                                                    | Status in owner                                         |
+| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| G1  | Re-open re-`executeImport` via `watch(config)`                             | Duplicate copies                                                                      | **[0118](./0118-tauri-import-background-ui.md)**              | In scope — start vs reattach                            |
+| G2  | `removeImportListeners` kills chip                                         | Progress dies after dismiss                                                           | **0118**                                                      | In scope — session-owned listeners                      |
+| G3  | X/Esc = cancel                                                             | Cannot dismiss                                                                        | **0118**                                                      | In scope — Dismiss ≠ Cancel                             |
+| G4  | progress JSON no `importId`                                                | Multi-import filter                                                                   | **0118**                                                      | In scope — single-flight                                |
+| G5  | `remove_progress` after done                                               | Bad hydrate                                                                           | **0118**                                                      | In scope — session snapshot                             |
+| G6  | Paused while dismissed                                                     | Lost paused UI                                                                        | **0118**                                                      | In scope — store paused flag                            |
+| G7  | Complete while dismissed                                                   | Silent finish                                                                         | **0118**                                                      | In scope — toast + chip                                 |
+| G8  | Wizard config still set                                                    | Re-trigger G1                                                                         | **0118**                                                      | In scope — attachOnly / alreadyStarted                  |
+| G9  | desktop vs photasa scope                                                   | Wrong tree edits                                                                      | **0118**                                                      | In scope — Photasa only                                 |
+| G10 | Legacy `importPhotos` background UX                                        | Second UI surface                                                                     | **[0122](./0122-tauri-legacy-importphotos-background-ux.md)** | ⏸️ Deferred / won't prioritize                          |
+| G11 | App quit mid-import                                                        | Partial files                                                                         | **[0120](./0120-tauri-import-quit-recovery.md)**              | ⏸️ Deferred                                             |
+| G12 | Settings Import prefs                                                      | No defaults panel                                                                     | **[0121](./0121-tauri-import-settings-prefs.md)**             | ⏸️ Deferred                                             |
+| G13 | Concurrent start + History                                                 | Race                                                                                  | **0118**                                                      | In scope — block second execute                         |
+| G14 | i18n + a11y chip                                                           | Unannounced                                                                           | **0118**                                                      | In scope — i18n + aria-live                             |
+| G15 | `importError`/`importResult` refs never reset in `ImportProgressModal.vue` | Stale error/result panel leaks into next import run                                   | **0118**                                                      | In scope — reset on `startImport` + terminal close      |
+| G16 | `applyProgress` no `phase==="cancelled"` guard                             | Late in-flight `import:progress` event resurrects phase to `"running"` after cancel   | **0118**                                                      | In scope — no-op once cancelled                         |
+| G17 | `startListeners()` uses `await import("@tauri-apps/api/event")`            | Violates CLAUDE.md ES6-import-only rule; sibling adapters prove static import is safe | **0118**                                                      | In scope — hoist to static import                       |
+| G18 | `en-GB.json` missing `import.status.failed`                                | Locale gap vs `en-US.json` / `zh-CN.json`                                             | **0118**                                                      | In scope — add key                                      |
+| G19 | Preview step disables Back to avoid stale async preview                    | Confuses import-options navigation with running import cancellation                   | **0118**                                                      | In scope — Back means edit import options before Import |
 
 **Related one-thing RFCs** (not G1–G14; each own file — **no mono “contract polish”**):
 
-| Topic                                              | RFC                                                        |
-| -------------------------------------------------- | ---------------------------------------------------------- |
-| `checksum`                                         | **[0119](./0119-tauri-import-checksum.md)**                |
-| `duplicateCount`                                   | **[0123](./0123-tauri-import-duplicate-count.md)**         |
-| `resumeImport` return                              | **[0124](./0124-tauri-import-resume-return-shape.md)**     |
-| pause → `status: "paused"` emit                    | **[0125](./0125-tauri-import-paused-progress-emit.md)**    |
-| Electron desktop same UX                           | **[0126](./0126-electron-import-background-ux-parity.md)** |
-| `import:error` payload shape                       | **[0127](./0127-tauri-import-error-payload-shape.md)**     |
-| `status: "paused"` emit / cancelled-payload fields | **[0125](./0125-tauri-import-paused-progress-emit.md)**    |
-| `import:progress` missing `importId`               | **[0128](./0128-tauri-import-progress-import-id.md)**      |
-| `import:progress` emit throttling                  | **[0129](./0129-tauri-import-progress-throttle.md)**       |
-| `import_legacy.rs` copy dedup                      | **[0130](./0130-tauri-import-legacy-copy-dedup.md)**       |
+| Topic                                              | RFC                                                             |
+| -------------------------------------------------- | --------------------------------------------------------------- |
+| `checksum`                                         | **[0119](./0119-tauri-import-checksum.md)**                     |
+| `duplicateCount`                                   | **[0123](./0123-tauri-import-duplicate-count.md)**              |
+| `resumeImport` return                              | **[0124](./0124-tauri-import-resume-return-shape.md)**          |
+| pause → `status: "paused"` emit                    | **[0125](./0125-tauri-import-paused-progress-emit.md)**         |
+| Electron desktop same UX                           | **[0126](./0126-electron-import-background-ux-parity.md)**      |
+| `import:error` payload shape                       | **[0127](./0127-tauri-import-error-payload-shape.md)**          |
+| `status: "paused"` emit / cancelled-payload fields | **[0125](./0125-tauri-import-paused-progress-emit.md)**         |
+| `import:progress` missing `importId`               | **[0128](./completed/0128-tauri-import-progress-import-id.md)** |
+| `import:progress` emit throttling                  | **[0129](./0129-tauri-import-progress-throttle.md)**            |
+| `import_legacy.rs` copy dedup                      | **[0130](./completed/0130-tauri-import-legacy-copy-dedup.md)**  |
 
 ### Gap ownership checklist (0118 only)
 
@@ -78,7 +78,7 @@ Reviewed against: `ImportProgressModal.vue`, `ImportPhotos.vue`, `legacy-api` im
 - [x] G9 Photasa-only paths
 - [x] G13 block concurrent
 - [x] G14 i18n + aria-live
-- [x] G19 preview Back = edit settings; Import boundary owns no Back
+- [x] G19 preview Back = edit import options; Import boundary owns no Back
 
 G10 / G11 / G12 → **not** implemented under 0118; progress tracked only on 0122 / 0120 / 0121.
 
@@ -121,18 +121,18 @@ G10 / G11 / G12 → **not** implemented under 0118; progress tracked only on 012
 
 ## Current vs target
 
-| Action                     | Today                                          | Target                                                   |
-| -------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
-| Running + modal X / Esc    | Blocked or cancel                              | **Dismiss** (task continues)                             |
-| “Cancel” / Stop button     | `cancel_import`                                | Unchanged                                                |
-| “Run in background”        | Missing                                        | Same as dismiss (+ optional explicit button)             |
-| After dismiss              | Listeners torn down; state wiped               | App session + listeners alive; chip visible              |
-| Re-open                    | Would call `startImport` again (bug)           | **Reattach only**                                        |
-| Complete while dismissed   | Silent                                         | Toast + chip done                                        |
-| Second import while active | Possible                                       | **Blocked** + toast                                      |
-| Preview step Back          | Disabled to avoid stale async preview          | **Edit settings**; clear preview-derived data; no cancel |
-| After clicking Import      | Wizard state can still look like previous step | **No Back**; progress modal owns running task            |
-| Settings                   | N/A                                            | Unchanged                                                |
+| Action                     | Today                                          | Target                                                         |
+| -------------------------- | ---------------------------------------------- | -------------------------------------------------------------- |
+| Running + modal X / Esc    | Blocked or cancel                              | **Dismiss** (task continues)                                   |
+| “Cancel” / Stop button     | `cancel_import`                                | Unchanged                                                      |
+| “Run in background”        | Missing                                        | Same as dismiss (+ optional explicit button)                   |
+| After dismiss              | Listeners torn down; state wiped               | App session + listeners alive; chip visible                    |
+| Re-open                    | Would call `startImport` again (bug)           | **Reattach only**                                              |
+| Complete while dismissed   | Silent                                         | Toast + chip done                                              |
+| Second import while active | Possible                                       | **Blocked** + toast                                            |
+| Preview step Back          | Disabled to avoid stale async preview          | **Edit import options**; clear preview-derived data; no cancel |
+| After clicking Import      | Wizard state can still look like previous step | **No Back**; progress modal owns running task                  |
+| Settings                   | N/A                                            | Unchanged                                                      |
 
 ---
 
@@ -142,14 +142,14 @@ G10 / G11 / G12 → **not** implemented under 0118; progress tracked only on 012
 
 Import UI has two separate phases:
 
-| Phase           | Meaning                                                          | Allowed navigation                                             |
-| --------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
-| Setup / preview | User is choosing config and reviewing files; no copy has started | Back means edit settings; close means cancel setup             |
-| Running import  | `executeImport` has returned `importId`; Rust copy is active     | No Back; use Run in background, Pause/Resume, or Cancel import |
+| Phase           | Meaning                                                                  | Allowed navigation                                              |
+| --------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| Setup / preview | User is choosing import options and reviewing files; no copy has started | Back means edit import options; close means cancel import setup |
+| Running import  | `executeImport` has returned `importId`; Rust copy is active             | No Back; use Run in background, Pause/Resume, or Cancel import  |
 
 Rules:
 
-- Preview Back is not Cancel. It returns to Configuration and clears preview-derived data so the next preview is regenerated from the edited config.
+- Preview Back is not Cancel. It returns to Configuration and clears preview-derived data so the next preview is regenerated from the edited import options.
 - The irreversible boundary is the Import button. After it is clicked, wizard closes and progress modal owns the task.
 - Running import UI must never show Back. Going back cannot undo already copied files.
 - Cancel before Import cancels setup only. Cancel after Import calls `cancel_import(importId)`.
@@ -234,7 +234,7 @@ Default **no change**. Revisit only if product requires progress `importId` fiel
 ### Phase B — Modal
 
 4. Allow back navigation from Preview to Configuration.
-5. Rename Preview back action to `Edit settings` / `修改设置`.
+5. Rename Preview back action to `Edit import options` / `编辑导入选项`.
 6. On Preview → Configuration, clear `preview` step data and preview-only progress/errors.
 7. Keep progress modal as the only running-import control surface; no Back after `executeImport`.
 8. Add start vs reattach modes; fix watch so reattach never `executeImport`.
@@ -276,7 +276,7 @@ Default **no change**. Revisit only if product requires progress `importId` fiel
 | T1.6  | Second `canStart` while running | false / blocked                                                             |
 | T1.7  | Modal unmount                   | Session listeners **still** alive (mock: progress still applied)            |
 | T1.8  | Reattach hydrate                | Uses session snapshot; does not require progress map                        |
-| T1.9  | Preview → Edit settings         | `executeImport` not called; `cancelImport` not called; preview data cleared |
+| T1.9  | Preview → Edit import options   | `executeImport` not called; `cancelImport` not called; preview data cleared |
 | T1.10 | Click Import                    | Wizard closes; modal starts in `start` mode; no Back control shown          |
 
 ### T2 — Manual (`tauri:dev`)
@@ -323,11 +323,12 @@ Default **no change**. Revisit only if product requires progress `importId` fiel
 - [x] D1 Block concurrent start
 - [x] T1 green
 - [ ] T2 signed
-- [ ] G15 reset `importError`/`importResult` on `startImport` + terminal close
+- [x] G15 reset `importError`/`importResult` on `startImport` + terminal close
 - [x] G16 `applyProgress` no-op once `phase==="cancelled"`
 - [x] G17 static `import { listen } from "@tauri-apps/api/event"`
 - [x] G18 `en-GB.json` add `import.status.failed`
-- [x] G19 Preview Back = edit settings; clear preview-derived state; no Back after Import
+- [x] G19 Preview Back = edit import options; clear preview-derived state; no Back after Import
+- [x] UI buttons use `BaseButton` icon slot; no stacked icon/text buttons
 - [ ] ROADMAP / TASK_TRACKING → ✅
 
 ---

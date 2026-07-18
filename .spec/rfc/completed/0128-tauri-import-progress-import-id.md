@@ -3,12 +3,13 @@
 - **Start Date**: 2026-07-18
 - **Status**: ✅ Implemented
 - **Area**: Photasa / Import / Events
-- **Depends on**: [0070](./0070-tauri-import-service-migration.md), [0118](./0118-tauri-import-background-ui.md)
+- **Path**: `.spec/rfc/completed/0128-tauri-import-progress-import-id.md`
+- **Depends on**: [0070](../0070-tauri-import-service-migration.md), [0118](../0118-tauri-import-background-ui.md)
 - **One thing only**: `import:progress` event payload → add `importId`
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
 
 ## Summary
 
@@ -22,12 +23,12 @@ Add `importId` to every `import:progress` payload (normal per-file tick, initial
 
 ## Non-goals
 
-| Topic | RFC |
-|-------|-----|
-| `status: "paused"` emit / cancelled-payload fields | **0125** |
-| Progress emit throttling | **0129** |
-| `import_legacy.rs` copy dedup | **0130** |
-| checksum / duplicateCount / resume return | **0119** / **0123** / **0124** |
+| Topic                                              | RFC                            |
+| -------------------------------------------------- | ------------------------------ |
+| `status: "paused"` emit / cancelled-payload fields | **0125**                       |
+| Progress emit throttling                           | **0129**                       |
+| `import_legacy.rs` copy dedup                      | **0130**                       |
+| checksum / duplicateCount / resume return          | **0119** / **0123** / **0124** |
 
 ## Checklist
 
