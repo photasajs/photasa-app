@@ -123,23 +123,24 @@ const logger = getLogger("import-photos");
 // Wizard state reference - declared early to avoid initialization order issues
 const wizardStateRef = ref<any>(null);
 
-// Debug logging for development and initialization
+// Reset wizard state every time the dialog opens so previously removed
+// source folders don't leak into the next session.
 watch(
     () => props.show,
     (newValue) => {
         logger.debug("ImportPhotos show prop changed:", newValue);
 
-        // Initialize wizard data when wizard opens
         if (newValue && wizardStateRef.value?.setStepData) {
-            if (!wizardStateRef.value.stepData.configuration) {
-                const configData = createInitialConfigurationData(
-                    props.initialSourcePaths,
-                    props.initialTargetPath,
-                    store.paths,
-                    excludePaths.value,
-                );
-                wizardStateRef.value.setStepData("configuration", configData);
-            }
+            // Always reset both steps so stale data is cleared
+            const configData = createInitialConfigurationData(
+                props.initialSourcePaths,
+                props.initialTargetPath,
+                store.paths,
+                excludePaths.value,
+            );
+            wizardStateRef.value.setStepData("configuration", configData);
+            wizardStateRef.value.setStepData("preview", null);
+            clearError();
         }
     },
     { immediate: true },
@@ -235,8 +236,11 @@ const handleWizardCancel = () => {
     emit("update:show", false);
 };
 
-// Wizard configuration (only config and preview steps)
+// Wizard configuration — linear flow only (no back navigation from preview)
+// because preview is async-loaded from config data; allowing back would cause
+// stale preview state and double-imports.
 const wizardConfig = createWizardConfig({
+    allowBackNavigation: false,
     steps: [
         createWizardStep({
             id: "configuration",
@@ -247,27 +251,11 @@ const wizardConfig = createWizardConfig({
                 logger.debug(`Configuration validation: valid=${isValid}`);
                 return isValid;
             },
-            onEnter: (stepData: any) => {
-                // Initialize step data if not already present
-                if (!stepData) {
-                    createInitialConfigurationData(
-                        props.initialSourcePaths,
-                        props.initialTargetPath,
-                        store.paths,
-                        excludePaths.value,
-                    );
-                    // We need access to setStepData here, but it's not available in onEnter
-                    // So we'll keep the template initialization as backup
-                }
-            },
         }),
         createWizardStep({
             id: "preview",
             title: t("import.steps.preview"),
             description: t("import.steps.previewDesc"),
-            onEnter: async () => {
-                // Preview data loading will be handled in the step change handler
-            },
             isValid: (stepData: any) => {
                 return validatePreviewStep(stepData);
             },
@@ -1159,56 +1147,41 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
         </template>
 
         <!-- Custom Footer -->
-        <template #footer="{ wizardState, goNext, goBack, finish, cancel }">
-            <div class="flex justify-center">
-                <div class="flex gap-4">
-                    <!-- Back Button -->
-                    <BaseButton
-                        v-if="wizardState.canGoBack"
-                        variant="secondary"
-                        @click="goBack"
-                        class="min-w-[80px]"
-                    >
-                        {{ t("import.backButton") }}
-                    </BaseButton>
+        <template #footer="{ wizardState, goNext, finish, cancel }">
+            <div class="flex items-center justify-center gap-3">
+                <!-- Configuration step: Preview button -->
+                <BaseButton
+                    v-if="wizardState.currentStep.id === 'configuration'"
+                    variant="primary"
+                    :disabled="!wizardState.canGoNext"
+                    @click="goNext"
+                    class="whitespace-nowrap"
+                >
+                    <EyeIcon class="w-4 h-4 shrink-0 mr-1.5" />
+                    {{ t("import.nextButton") }}
+                </BaseButton>
 
-                    <!-- Configuration step -->
-                    <BaseButton
-                        v-if="wizardState.currentStep.id === 'configuration'"
-                        variant="primary"
-                        :disabled="!wizardState.canGoNext"
-                        @click="goNext"
-                        class="min-w-[80px]"
-                    >
-                        <EyeIcon class="w-4 h-4 mr-2 text-current" />
-                        {{ t("import.nextButton") }}
-                    </BaseButton>
+                <!-- Preview step: Import button -->
+                <BaseButton
+                    v-if="wizardState.currentStep.id === 'preview'"
+                    variant="primary"
+                    :disabled="!wizardState.canFinish || loadingState.preview"
+                    @click="finish"
+                    class="whitespace-nowrap"
+                >
+                    <BaseSpinner v-if="loadingState.preview" class="w-4 h-4 shrink-0 mr-1.5" />
+                    <ArrowDownTrayIcon v-else class="w-4 h-4 shrink-0 mr-1.5" />
+                    {{
+                        loadingState.preview
+                            ? t("import.loading.preview")
+                            : t("import.importButton")
+                    }}
+                </BaseButton>
 
-                    <!-- Preview step -->
-                    <BaseButton
-                        v-if="wizardState.currentStep.id === 'preview'"
-                        variant="primary"
-                        :disabled="!wizardState.canFinish || loadingState.preview"
-                        @click="finish"
-                        class="min-w-[80px]"
-                    >
-                        <ArrowDownTrayIcon
-                            v-if="!loadingState.preview"
-                            class="w-4 h-4 mr-2 text-current"
-                        />
-                        <BaseSpinner v-else class="w-4 h-4 mr-2" />
-                        {{
-                            loadingState.preview
-                                ? t("import.loading.preview")
-                                : t("import.importButton")
-                        }}
-                    </BaseButton>
-
-                    <!-- Close Button -->
-                    <BaseButton variant="secondary" @click="cancel" class="min-w-[80px]">
-                        {{ t("import.closeButton") }}
-                    </BaseButton>
-                </div>
+                <!-- Close / Cancel -->
+                <BaseButton variant="secondary" @click="cancel" class="whitespace-nowrap">
+                    {{ t("import.closeButton") }}
+                </BaseButton>
             </div>
         </template>
     </BaseWizard>
