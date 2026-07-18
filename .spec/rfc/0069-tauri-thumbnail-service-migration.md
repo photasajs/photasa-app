@@ -1,10 +1,11 @@
 # RFC 0069: 缩略图服务迁移到 Tauri
 
 - **作者**: AI Assistant
-- **状态**: ✅ 已完成
+- **状态**: ✅ 已完成（本文档 2026-07-18 重写，对齐实际实现 — 见下方「Rewrite note」）
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 - **延伸（RAW 占位）**: [RFC 0102: RAW 缩略图回退](./completed/0102-tauri-thumbnail-raw-fallback.md)（`ThumbnailResponse.fallback`、无解码器时的 JPEG 占位）
+- **被引用（scan crate 拆分）**: [0132](./0132-tauri-photasa-scan-crate.md)（P1；`ThumbnailBridge` 桥接本 RFC 的 `create_thumbnail_sync`）
 
 ## Implementation principle (Photasa / Tauri)
 
@@ -14,7 +15,29 @@
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
-## 摘要
+## Rewrite note（2026-07-18）
+
+本文档原版（2025-01-02）设想了 `services/thumbnail/{thumbnail_service,generator,cache}.rs` 架构，依赖 `image`/`imageproc`/`resize`/`ffmpeg-next` 作为顶层 crate 直接调用。**这套 service 分层从未被构建**——实际是扁平 `commands/thumbnail.rs` + `commands/thumbnail_placeholder.rs`（RAW 占位，见 0102）。CLAUDE.md 中记载的「马良（MaLiang）神笔工坊」多引擎架构（BmpBrush/HeicBrush/FFmpegBrush/SharpBrush/FallbackBrush）**是 Electron 桌面端**（`packages/@photasa/maliang*`）的设计，**不适用于 Photasa/Tauri**——两者是完全独立的实现，不要混淆。
+
+## 实际架构（Actual, 2026-07-18）
+
+```
+apps/photasa/src-tauri/src/commands/
+├── thumbnail.rs             (~383 LOC) — create_thumbnail (Tauri command, async) →
+│                                          create_thumbnail_sync (pure sync, 供 scan_runner 等内部调用)
+│                                          remove_thumbnail (Tauri command, async)
+└── thumbnail_placeholder.rs (~316 LOC) — RAW 占位图生成（RFC 0102）
+```
+
+真实依赖：`image = "0.25"`、`libheif-rs`（HEIC 解码，`embedded-libheif` feature，见 RFC 0103）、`ffmpeg-next`（视频帧提取）。**无** `imageproc`、**无** `resize` 作为独立 crate。
+
+异步模式（已核实，正确，无需重新设计）：`create_thumbnail`（`#[tauri::command] async fn`）= `tokio::task::spawn_blocking(create_thumbnail_sync).await`。`create_thumbnail_sync` 是纯同步函数，`scan_runner.rs` 在自己的 `spawn_blocking` 闭包内直接调用它（非 async 路径）。这正是 [0132](./0132-tauri-photasa-scan-crate.md) 的 `ThumbnailBridge` 应该桥接的目标函数——`ThumbnailBridge` 应调用 `create_thumbnail_sync`（已同步、已是唯一入口），不要再包一层 async。
+
+**Scan crate 拆分范围**：本 RFC 的实现**完全保留在 `src-tauri`**（`crates/photasa-scan` 无 `image`/`libheif-rs`/`ffmpeg-next` 依赖，见 0132 设计准则 #6）；`photasa-scan` 只通过 trait 调用，不内联解码逻辑。
+
+---
+
+## 摘要（原版，2025-01-02，已过时，仅存档）
 
 本文档详细说明如何将 Electron 的缩略图服务迁移到 Tauri Rust 实现。缩略图服务负责生成和管理照片/视频的缩略图，是 Photasa 的核心功能之一。
 
@@ -33,22 +56,22 @@ apps/desktop/src/main/thumbnail/
 ### 核心功能
 
 1. **IPC 通信**
-   - `picasa:create-thumbnail` - 创建缩略图（`ThumbnailServiceAction.create`，invoke，参数 `ThumbnailRequest`）
-   - `picasa:remove-thumbnail` - 删除缩略图（`ThumbnailServiceAction.remove`，invoke）
+    - `picasa:create-thumbnail` - 创建缩略图（`ThumbnailServiceAction.create`，invoke，参数 `ThumbnailRequest`）
+    - `picasa:remove-thumbnail` - 删除缩略图（`ThumbnailServiceAction.remove`，invoke）
 
 2. **Worker 线程**
-   - 使用 Node.js Worker Threads
-   - 处理缩略图生成任务
+    - 使用 Node.js Worker Threads
+    - 处理缩略图生成任务
 
 3. **图像处理引擎**
-   - MaLiang 引擎（统一图像处理）
-   - 支持多种格式：BMP, HEIC, 视频等
-   - 使用 Sharp, FFmpeg, WASM-HEIF 等
+    - MaLiang 引擎（统一图像处理）
+    - 支持多种格式：BMP, HEIC, 视频等
+    - 使用 Sharp, FFmpeg, WASM-HEIF 等
 
 4. **缩略图生成**
-   - 支持图片和视频
-   - 可配置尺寸
-   - 缓存管理
+    - 支持图片和视频
+    - 可配置尺寸
+    - 缓存管理
 
 ## Tauri Rust 迁移计划
 
@@ -139,7 +162,7 @@ impl ThumbnailGenerator {
         thumbnail.save(output_path)?;
         Ok(())
     }
-    
+
     /// 生成视频缩略图（需要 FFmpeg）
     pub async fn generate_video_thumbnail(
         &self,
@@ -175,7 +198,7 @@ impl ThumbnailService {
             generator: ThumbnailGenerator,
         }
     }
-    
+
     /// 创建缩略图
     pub async fn create_thumbnail(
         &self,
@@ -189,11 +212,11 @@ impl ThumbnailService {
                 error: None,
             });
         }
-        
+
         // 在后台任务中生成缩略图
         let generator = self.generator.clone();
         let request_clone = request.clone();
-        
+
         task::spawn(async move {
             // 判断文件类型
             if is_image_file(&request_clone.path)? {
@@ -211,17 +234,17 @@ impl ThumbnailService {
                     request_clone.height.unwrap_or(200),
                 ).await?;
             }
-            
+
             Ok::<(), anyhow::Error>(())
         }).await??;
-        
+
         Ok(ThumbnailResponse {
             success: true,
             file: Some(request.thumbnail),
             error: None,
         })
     }
-    
+
     /// 删除缩略图
     pub async fn remove_thumbnail(
         &self,
@@ -230,7 +253,7 @@ impl ThumbnailService {
         if Path::new(&request.thumbnail).exists() {
             fs::remove_file(&request.thumbnail).await?;
         }
-        
+
         Ok(ThumbnailResponse {
             success: true,
             file: Some(request.thumbnail),
@@ -282,13 +305,13 @@ pub async fn remove_thumbnail(
 
 Electron 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处理：SharpBrush（JPEG/PNG/WebP/TIFF/GIF/AVIF）、BmpBrush（Jimp+Sharp）、HeicBrush（WASM，一次解码同时出预览+缩略图）、FfmpegBrush（视频）、FallbackBrush。Tauri 侧采用分阶段、按格式选方案的策略，不新增独立 RFC，以本 RFC 为唯一说明。
 
-| 阶段 | 格式/范围 | 方案 |
-|------|-----------|------|
-| 1 | 常见图片（JPEG/PNG/WebP/GIF 等） | Rust `image`（及可选 `imageproc`）在缩略图服务内实现，单一“画笔”模块。 |
-| 2 | 视频缩略图 | 保留 **FFmpeg** 二进制，由 Rust 调用（如 `std::process::Command` 或 FFI）。不再依赖 Node。 |
-| 3 | HEIC/HEIF | **A**：Rust `libheif`/heif-rs 绑定；**B**：在 Tauri 中加载现有 **WASM** 解码器；**C**（过渡）：仅 HEIC 暂时通过 Tauri 调用小型 Node 辅助进程，待 A 或 B 就绪后移除。长期以 A 或 B 为主。 |
-| 4 | BMP 等边缘格式 | Rust `image` 或专用解码；或短期返回占位图。 |
-| 5 | HEIC 预览+缩略图一次解码 | 若采用 WASM：沿用 HeicBrush 模式一次解码多路输出；若采用 heif-rs：一次解码后在 Rust 中生成预览与缩略图。 |
+| 阶段 | 格式/范围                        | 方案                                                                                                                                                                                     |
+| ---- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | 常见图片（JPEG/PNG/WebP/GIF 等） | Rust `image`（及可选 `imageproc`）在缩略图服务内实现，单一“画笔”模块。                                                                                                                   |
+| 2    | 视频缩略图                       | 保留 **FFmpeg** 二进制，由 Rust 调用（如 `std::process::Command` 或 FFI）。不再依赖 Node。                                                                                               |
+| 3    | HEIC/HEIF                        | **A**：Rust `libheif`/heif-rs 绑定；**B**：在 Tauri 中加载现有 **WASM** 解码器；**C**（过渡）：仅 HEIC 暂时通过 Tauri 调用小型 Node 辅助进程，待 A 或 B 就绪后移除。长期以 A 或 B 为主。 |
+| 4    | BMP 等边缘格式                   | Rust `image` 或专用解码；或短期返回占位图。                                                                                                                                              |
+| 5    | HEIC 预览+缩略图一次解码         | 若采用 WASM：沿用 HeicBrush 模式一次解码多路输出；若采用 heif-rs：一次解码后在 Rust 中生成预览与缩略图。                                                                                 |
 
 **原则**：Tauri 侧保留单一缩略图命令入口，内部按格式分“画笔”/策略，与 Ma-Liang 概念对齐；过渡期可对 HEIC/BMP 返回“不支持”，先保证常见图片与视频（FFmpeg）可用。
 
@@ -299,6 +322,7 @@ Electron 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处
 **问题**：需要替代 Sharp、FFmpeg 等 Node.js 库
 
 **解决方案**（与上表一致）：
+
 - **常见图片**：`image` / `imageproc`
 - **视频**：保留 FFmpeg 二进制，Rust 侧调用
 - **HEIC**：`heif-rs` 或现有 WASM；过渡期可选 Node 子进程
@@ -308,6 +332,7 @@ Electron 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处
 **问题**：缩略图生成是 CPU 密集型任务
 
 **解决方案**：
+
 - 使用 `tokio::task::spawn_blocking` 处理 CPU 密集型任务
 - 实现任务队列，控制并发数
 - 使用缓存避免重复生成
@@ -317,6 +342,7 @@ Electron 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处
 **问题**：需要支持多种图片和视频格式
 
 **解决方案**：
+
 - 图片：`image-rs` 支持常见格式
 - 特殊格式（HEIC、BMP）：通过 FFI 或专用库
 - 视频：FFmpeg FFI 调用
@@ -324,16 +350,19 @@ Electron 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处
 ## 迁移步骤
 
 ### 步骤 1: 基础实现（3-5 天）
+
 - [ ] 创建模块结构
 - [ ] 实现基础图片缩略图生成
 - [ ] 实现 Tauri 命令接口
 
 ### 步骤 2: 格式支持（3-5 天）
+
 - [ ] 添加视频缩略图支持
 - [ ] 添加 HEIC 格式支持
 - [ ] 添加 BMP 格式支持
 
 ### 步骤 3: 优化和测试（2-3 天）
+
 - [ ] 性能优化
 - [ ] 缓存管理
 - [ ] 错误处理
