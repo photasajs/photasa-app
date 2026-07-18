@@ -3748,6 +3748,7 @@ dependencies = [
  "notify",
  "pathdiff",
  "photasa-import",
+ "photasa-thumbnail",
  "regex",
  "serde",
  "serde_json",
@@ -3782,6 +3783,17 @@ dependencies = [
  "thiserror 1.0.69",
  "uuid",
  "walkdir",
+]
+
+[[package]]
+name = "photasa-thumbnail"
+version = "0.1.0"
+dependencies = [
+ "ffmpeg-next",
+ "image",
+ "libheif-rs",
+ "serde",
+ "tokio",
 ]
 
 [[package]]

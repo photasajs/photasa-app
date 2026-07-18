@@ -3,7 +3,7 @@
 - **Start Date**: 2026-07-18
 - **Last updated**: 2026-07-18
 - **Status**: ⏳ Draft
-- **Priority**: P1
+- **Priority**: P1c（after 0134/0132）
 - **Area**: Photasa / Rust crates / Watch（scan 族：喂前端 scan queue）
 - **Depends on**: [0082](./completed/0082-tauri-watch-start-stop-commands.md), [0083](./completed/0083-tauri-watch-event-contract.md), [0003](./completed/0003-unify-watch-to-scan-queue.md)
 - **Related（scan 族）**: [0068](./0068-tauri-scan-service-migration.md), [0069](./0069-tauri-thumbnail-service-migration.md), [0071](./0071-tauri-config-service-migration.md), [0116](./0116-tauri-photasa-config-thumbnail-parity.md), [0117](./0117-tauri-scan-pipeline-parity.md), [0132](./0132-tauri-photasa-scan-crate.md)
@@ -28,6 +28,7 @@ Watch **不是**目录扫描流水线，但是 scan 族的**上游入口**：FS 
 | **0071**         | `.photasa.json`                                |
 | **0116**         | thumb 路径 + rescan config                     |
 | **0117**         | 流水线 parity（行为规格）                      |
+| **0134**         | → `photasa-thumbnail`（P1a；已落地）           |
 | **0132**         | → `photasa-scan`                               |
 | **0133**（本篇） | → `photasa-watch`（queue 上游，不跑 pipeline） |
 

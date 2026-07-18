@@ -1,9 +1,9 @@
 //! 视频元数据：`ffmpeg-next` / libavformat（与 crate 一并静态链接的 FFmpeg），输出形状对齐原 ffprobe JSON
 
-use super::ffmpeg_next_util::{ensure_ffmpeg_initialized, rotation_deg_from_display_matrix};
 use ffmpeg_next as ff;
 use ffmpeg_next::codec::packet::side_data::Type as PacketSideDataType;
 use ffmpeg_next::media::Type as MediaType;
+use photasa_thumbnail::video::{ensure_ffmpeg_initialized, rotation_deg_from_display_matrix};
 use regex::Regex;
 use serde_json::{json, Map, Value};
 use std::path::Path;

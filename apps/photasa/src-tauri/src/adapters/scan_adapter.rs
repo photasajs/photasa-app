@@ -13,7 +13,7 @@ use tauri::AppHandle;
 use zouwu_core::adapter::{Adapter, AdapterError};
 use zouwu_core::types::ExecutionContext;
 
-use crate::commands::scan_runner::{run_directory_scan_sync, ScanAction};
+use crate::commands::scan_runner::{run_directory_scan, ScanAction};
 
 pub struct ScanAdapter {
     app_handle: Arc<AppHandle>,
@@ -71,27 +71,19 @@ impl Adapter for ScanAdapter {
                 tokio::spawn(async move {
                     let app = Arc::new((*handle).clone());
                     for base_path in paths_clone {
-                        tokio::task::spawn_blocking({
-                            let app = Arc::clone(&app);
-                            let request_id = request_id_clone.clone();
-                            let scan_root = base_path.clone();
-                            move || {
-                                run_directory_scan_sync(
-                                    app,
-                                    request_id,
-                                    ScanAction {
-                                        path: scan_root.clone(),
-                                        operation_type: String::new(),
-                                        action: "scan".to_string(),
-                                        thumbnail_size: Some(256),
-                                        is_directory: true,
-                                    },
-                                    recursive,
-                                );
-                            }
-                        })
-                        .await
-                        .ok();
+                        run_directory_scan(
+                            Arc::clone(&app),
+                            request_id_clone.clone(),
+                            ScanAction {
+                                path: base_path,
+                                operation_type: String::new(),
+                                action: "scan".to_string(),
+                                thumbnail_size: Some(256),
+                                is_directory: true,
+                            },
+                            recursive,
+                        )
+                        .await;
                     }
                 });
 

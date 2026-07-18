@@ -6,6 +6,7 @@ members = [
     "crates/libheif-sys",
     "crates/wenchang-preferences",
     "crates/photasa-import",
+    "crates/photasa-thumbnail",
     "apps/photasa/src-tauri",
 ]
 
@@ -25,3 +26,4 @@ zouwu-core = { path = "crates/zouwu-core" }
 zouwu-builtin = { path = "crates/zouwu-builtin" }
 wenchang-preferences = { path = "crates/wenchang-preferences" }
 photasa-import = { path = "crates/photasa-import" }
+photasa-thumbnail = { path = "crates/photasa-thumbnail" }

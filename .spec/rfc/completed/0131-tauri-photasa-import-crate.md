@@ -26,20 +26,21 @@ Import **algorithm** lives in workspace crate `crates/photasa-import` with **zer
 
 ## Modules (crate)
 
-| Module        | Responsibility                                   |
-| ------------- | ------------------------------------------------ |
-| `path_filter` | media ext / ignore / hidden                      |
-| `file_groups` | RAW+JPEG grouping                                |
-| `date`        | date subpath + `MetadataExtractor`               |
-| `copy_loop`   | duplicate strategy, pause/cancel wait, copy loop |
-| `session`     | history JSON + undo helpers                      |
-| `metadata`    | re-export trait                                  |
+| Module        | Responsibility                                                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `path_filter` | media ext / ignore / hidden                                                                                                             |
+| `file_groups` | RAW+JPEG grouping                                                                                                                       |
+| `date`        | date subpath + `MetadataExtractor`                                                                                                      |
+| `copy_loop`   | duplicate strategy, pause/cancel wait, copy loop; `unique_dest_path` shared collision-rename                                            |
+| `legacy_loop` | legacy `importPhotos` traversal/filter/copy/`set_file_times`（added post-launch, see [0130](./0130-tauri-import-legacy-copy-dedup.md)） |
+| `session`     | history JSON + undo helpers                                                                                                             |
+| `metadata`    | re-export trait                                                                                                                         |
 
 ## Checklist
 
 - [x] Workspace crate `crates/photasa-import` (zero Tauri dep)
-- [x] Modules: path_filter / file_groups / date / copy_loop / session / metadata
-- [x] Tauri thin wrappers re-export / bridge (`import_execute`, `import_date_util`, …)
+- [x] Modules: path_filter / file_groups / date / copy_loop / legacy_loop / session / metadata
+- [x] Tauri thin wrappers re-export / bridge (`import_execute`, `import_date_util`, `import_legacy`, …)
 - [x] `cargo test -p photasa-import` green
 - [x] `cargo check -p photasa` green
 - [x] ROADMAP / TASK_TRACKING → ✅
@@ -51,16 +52,16 @@ cargo test -p photasa-import
 cargo check -p photasa
 ```
 
-**Evidence (2026-07-18):** `cargo test -p photasa-import` → **36 passed**; `cargo check -p photasa` OK; crate sources have **no** `tauri` dependency.
+**Evidence (2026-07-18, updated after 0130 landed):** `cargo test -p photasa-import` → **45 passed**; `cargo check -p photasa` OK; crate sources have **no** `tauri` dependency.
 
 Coverage gate for algorithm: measure **`-p photasa-import`** only — not whole photasa binary.
 
 ## Out of scope
 
-| Topic                                    | RFC                                                   |
-| ---------------------------------------- | ----------------------------------------------------- |
-| `import_legacy.rs` copy dedup into crate | **[0130](./0130-tauri-import-legacy-copy-dedup.md)**  |
-| `import:progress` missing `importId`     | **[0128](./0128-tauri-import-progress-import-id.md)** |
+| Topic                                    | RFC                                                                                      |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `import_legacy.rs` copy dedup into crate | **[0130](./0130-tauri-import-legacy-copy-dedup.md)** ✅ delivered — `legacy_loop` module |
+| `import:progress` missing `importId`     | **[0128](./0128-tauri-import-progress-import-id.md)**                                    |
 
 ## Note
 

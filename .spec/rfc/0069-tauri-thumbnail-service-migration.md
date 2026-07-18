@@ -5,7 +5,8 @@
 - **创建日期**: 2025-01-02
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 - **延伸（RAW 占位）**: [RFC 0102: RAW 缩略图回退](./completed/0102-tauri-thumbnail-raw-fallback.md)（`ThumbnailResponse.fallback`、无解码器时的 JPEG 占位）
-- **被引用（scan crate 拆分）**: [0132](./0132-tauri-photasa-scan-crate.md)（P1；`ThumbnailBridge` 桥接本 RFC 的 `create_thumbnail_sync`）
+- **被引用（scan crate 拆分）**: [0132](./0132-tauri-photasa-scan-crate.md)（P1b；async `ThumbnailBridge` 消费 0134）
+- **后续（crate 拆分）**: [0134](./completed/0134-tauri-photasa-thumbnail-crate.md)（P1a first；thumbnail → async `photasa-thumbnail` crate，✅ Implemented）
 
 ## Implementation principle (Photasa / Tauri)
 
@@ -17,23 +18,27 @@
 
 ## Rewrite note（2026-07-18）
 
-本文档原版（2025-01-02）设想了 `services/thumbnail/{thumbnail_service,generator,cache}.rs` 架构，依赖 `image`/`imageproc`/`resize`/`ffmpeg-next` 作为顶层 crate 直接调用。**这套 service 分层从未被构建**——实际是扁平 `commands/thumbnail.rs` + `commands/thumbnail_placeholder.rs`（RAW 占位，见 0102）。CLAUDE.md 中记载的「马良（MaLiang）神笔工坊」多引擎架构（BmpBrush/HeicBrush/FFmpegBrush/SharpBrush/FallbackBrush）**是 Electron 桌面端**（`packages/@photasa/maliang*`）的设计，**不适用于 Photasa/Tauri**——两者是完全独立的实现，不要混淆。
+本文档原版（2025-01-02）设想了 `services/thumbnail/{thumbnail_service,generator,cache}.rs` 架构，依赖 `image`/`imageproc`/`resize`/`ffmpeg-next` 作为顶层 crate 直接调用。**这套 service 分层从未被构建**——0134 前实际是扁平 `commands/thumbnail.rs` + `commands/thumbnail_placeholder.rs`（RAW 占位，见 0102）；0134 后算法已迁入 `crates/photasa-thumbnail`，app 侧只留 Tauri command 壳。CLAUDE.md 中记载的「马良（MaLiang）神笔工坊」多引擎架构（BmpBrush/HeicBrush/FFmpegBrush/SharpBrush/FallbackBrush）**是 Electron 桌面端**（`packages/@photasa/maliang*`）的设计，**不适用于 Photasa/Tauri**——两者是完全独立的实现，不要混淆。
 
 ## 实际架构（Actual, 2026-07-18）
 
 ```
+crates/photasa-thumbnail/src/
+├── thumbnail.rs   — async create_thumbnail/remove_thumbnail + private decode_thumbnail_blocking
+├── placeholder.rs — RAW 占位图生成（RFC 0102）
+└── video.rs       — ffmpeg-next 视频截帧 helper
+
 apps/photasa/src-tauri/src/commands/
-├── thumbnail.rs             (~383 LOC) — create_thumbnail (Tauri command, async) →
-│                                          create_thumbnail_sync (pure sync, 供 scan_runner 等内部调用)
-│                                          remove_thumbnail (Tauri command, async)
-└── thumbnail_placeholder.rs (~316 LOC) — RAW 占位图生成（RFC 0102）
+└── thumbnail.rs   — create_thumbnail/remove_thumbnail Tauri command thin shell
 ```
 
 真实依赖：`image = "0.25"`、`libheif-rs`（HEIC 解码，`embedded-libheif` feature，见 RFC 0103）、`ffmpeg-next`（视频帧提取）。**无** `imageproc`、**无** `resize` 作为独立 crate。
 
-异步模式（已核实，正确，无需重新设计）：`create_thumbnail`（`#[tauri::command] async fn`）= `tokio::task::spawn_blocking(create_thumbnail_sync).await`。`create_thumbnail_sync` 是纯同步函数，`scan_runner.rs` 在自己的 `spawn_blocking` 闭包内直接调用它（非 async 路径）。这正是 [0132](./0132-tauri-photasa-scan-crate.md) 的 `ThumbnailBridge` 应该桥接的目标函数——`ThumbnailBridge` 应调用 `create_thumbnail_sync`（已同步、已是唯一入口），不要再包一层 async。
+现状异步模式（0134 已落地）：`create_thumbnail`（`#[tauri::command] async fn`）直接 await `photasa_thumbnail::create_thumbnail`；`scan_runner.rs` 也 await 同一 crate API。阻塞解码只在 `photasa-thumbnail` 内部 `spawn_blocking`。
 
-**Scan crate 拆分范围**：本 RFC 的实现**完全保留在 `src-tauri`**（`crates/photasa-scan` 无 `image`/`libheif-rs`/`ffmpeg-next` 依赖，见 0132 设计准则 #6）；`photasa-scan` 只通过 trait 调用，不内联解码逻辑。
+**Scan crate 拆分范围**：`crates/photasa-scan`（0132）无 `image`/`libheif-rs`/`ffmpeg-next` 依赖，只通过 async `ThumbnailBridge` trait 调用，不内联解码逻辑。
+
+**Thumbnail 自身的 crate 拆分**：见 [0134](./completed/0134-tauri-photasa-thumbnail-crate.md)（✅ Implemented，P1a）——本 RFC 描述的算法层（4 个 `make_*` 分发函数 + `placeholder.rs` + `video.rs`）已搬入零-Tauri 的 async `crates/photasa-thumbnail`；`src-tauri` 只留 `create_thumbnail`/`remove_thumbnail` 两个 Tauri command 壳。0132 的 `ThumbnailBridge` 直接依赖 async `photasa-thumbnail`，不再绕 `src-tauri` 转发。
 
 ---
 

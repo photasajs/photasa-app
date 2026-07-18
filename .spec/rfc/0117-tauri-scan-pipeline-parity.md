@@ -12,14 +12,14 @@
 - This RFC fixes a **regression**: the current `scan_runner.rs` collapsed the multi-stage Electron pipeline into a single flat synchronous loop, dropping the strategy decision, per-file gating, resume sub-path, and inlining blocking thumbnail generation.
 - **All tables below are transcribed from the TS source** (`scan-photos.ts`, `scan-helpers.ts`, `strategy/scan-strategy.ts`, `cache/incremental-cache.ts`, `cache/folder-cache-manager.ts`, `worker/directory-scan-progress.ts`, `scan-cleanup.ts`, `utils/path-utils.ts`, `@photasa/common/utils.ts`). They are the literal spec for the Rust port; nothing is summarized away.
 
-| Field | Value |
-|-------|-------|
-| **Status** | ✅ Implemented (2026-06-06) — BUG① subdir SKIP-only + `current` gated; BUG② SKIP progress `(N,N)`; 52 `cargo test scan_` pass |
-| **Created** | 2026-06-09 |
-| **Last updated** | 2026-06-06 |
-| **Area** | Tauri / Scan |
-| **Depends on** | [0105](0105-tauri-scan-incremental-cache.md), [0068](0068-tauri-scan-service-migration.md), [0111](0111-tauri-scan-notify-status-bridge.md), [0116](0116-tauri-photasa-config-thumbnail-parity.md), [0069](0069-tauri-thumbnail-service-migration.md) |
-| **Supersedes scope of** | the `scan_runner.rs` processing-loop portion of [0105](0105-tauri-scan-incremental-cache.md) (cache file format unchanged) |
+| Field                   | Value                                                                                                                                                                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**              | ✅ Implemented (2026-06-06) — BUG① subdir SKIP-only + `current` gated; BUG② SKIP progress `(N,N)`; 52 `cargo test scan_` pass                                                                                                                         |
+| **Created**             | 2026-06-09                                                                                                                                                                                                                                            |
+| **Last updated**        | 2026-06-06                                                                                                                                                                                                                                            |
+| **Area**                | Tauri / Scan                                                                                                                                                                                                                                          |
+| **Depends on**          | [0105](0105-tauri-scan-incremental-cache.md), [0068](0068-tauri-scan-service-migration.md), [0111](0111-tauri-scan-notify-status-bridge.md), [0116](0116-tauri-photasa-config-thumbnail-parity.md), [0069](0069-tauri-thumbnail-service-migration.md) |
+| **Supersedes scope of** | the `scan_runner.rs` processing-loop portion of [0105](0105-tauri-scan-incremental-cache.md) (cache file format unchanged)                                                                                                                            |
 
 ---
 
@@ -29,15 +29,15 @@ The Electron scan is a **layered pipeline**. The Tauri rewrite in `scan_runner.r
 shipped only the discovery + cache layer (RFC 0105) and **reinvented** the rest as a
 flat loop, diverging from the Electron contract:
 
-| # | Electron contract (`@photasa/scan`) | Current `scan_runner.rs` | Symptom |
-|---|--------------------------------------|---------------------------|---------|
-| 1 | `decideScanStrategy` → `SKIP` or `FULL` per directory | No strategy decision; **always** walks + processes every file | Re-scans already-indexed folders on every open; ignores valid `.photasa.json` |
-| 2 | On `SKIP`: `restoreCachedFiles` re-emits photoList from `.photasa.json`, **then** recurses subdirs | No skip path; no cached re-emit | Cannot short-circuit unchanged folders like Electron |
-| 3 | `shouldProcessFile` gates each file: rescan→always, missing config→yes, already in photoList→**no** | Every discovered file written to config + thumbnailed | Redundant `.photasa.json` writes + thumbnail work every scan |
-| 4 | `processPhotoFile` dispatches thumbnails to a **WorkerPool** (decode on a worker thread); `concatMap` + `await addTask` make fresh-scan **serial per file**, off the main/IPC thread | `create_thumbnail_sync` runs in the scan's `spawn_blocking` loop (also serial, also off main thread) | Closest to parity; residual issue is ordering/await coupling and no pool reuse, **not** "blocks the main thread" (see #4 below — narrower than first stated) |
-| 5 | `scanSubdirectories` re-applies the pipeline **per child dir**; `shouldScanOneLevel` (action `current`) limits depth to 0 | One flat `walkdir(recursive)`; depth = single bool | Per-directory skip decisions lost; `current` depth-0 semantics lost |
-| 6 | Resume sub-path inside FULL: `cache.inProgress && processedFiles.length>0` → diff all files vs processed, process only the rest | Cache resume re-processes from `pendingFiles` only; no full-list diff | Resume set can diverge from Electron after partial scans |
-| 7 | `IncrementalCacheManager` **batched** writes (dynamic batch, 5s timer) | `scan_cache.save()` on **every** file | More disk I/O; different write cadence (cosmetic, but a contract delta) |
+| #   | Electron contract (`@photasa/scan`)                                                                                                                                                  | Current `scan_runner.rs`                                                                                                                  | Symptom                                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `decideScanStrategy` → `SKIP` or `FULL` per directory                                                                                                                                | No strategy decision; **always** walks + processes every file                                                                             | Re-scans already-indexed folders on every open; ignores valid `.photasa.json`                                                    |
+| 2   | On `SKIP`: `restoreCachedFiles` re-emits photoList from `.photasa.json`, **then** recurses subdirs                                                                                   | No skip path; no cached re-emit                                                                                                           | Cannot short-circuit unchanged folders like Electron                                                                             |
+| 3   | `shouldProcessFile` gates each file: rescan→always, missing config→yes, already in photoList→**no**                                                                                  | Every discovered file written to config + thumbnailed                                                                                     | Redundant `.photasa.json` writes + thumbnail work every scan                                                                     |
+| 4   | `processPhotoFile` dispatches thumbnails to a **WorkerPool** (decode on a worker thread); `concatMap` + `await addTask` make fresh-scan **serial per file**, off the main/IPC thread | 0134 后 `scan_runner.rs` awaits `photasa_thumbnail::create_thumbnail`; decode blocking work stays inside thumbnail crate `spawn_blocking` | Closest to parity; residual issue is no pool reuse, **not** "blocks the main thread" (see #4 below — narrower than first stated) |
+| 5   | `scanSubdirectories` re-applies the pipeline **per child dir**; `shouldScanOneLevel` (action `current`) limits depth to 0                                                            | One flat `walkdir(recursive)`; depth = single bool                                                                                        | Per-directory skip decisions lost; `current` depth-0 semantics lost                                                              |
+| 6   | Resume sub-path inside FULL: `cache.inProgress && processedFiles.length>0` → diff all files vs processed, process only the rest                                                      | Cache resume re-processes from `pendingFiles` only; no full-list diff                                                                     | Resume set can diverge from Electron after partial scans                                                                         |
+| 7   | `IncrementalCacheManager` **batched** writes (dynamic batch, 5s timer)                                                                                                               | `scan_cache.save()` on **every** file                                                                                                     | More disk I/O; different write cadence (cosmetic, but a contract delta)                                                          |
 
 ---
 
@@ -45,16 +45,16 @@ flat loop, diverging from the Electron contract:
 
 ### Module map
 
-| TS module | Functions ported by this RFC |
-|-----------|------------------------------|
-| `scan-photos.ts` | `walkthroughPhotosInFolder`, `scanPhotos` (skip / full / resume branches + fallback), `scanSubdirectories`, `processMediaFile`, `processFileList`, `extendedCleanup` |
-| `scan-helpers.ts` | `validateScanParams`, `shouldCreateThumbnail`, `buildThumbnailRequest`, `processPhotoFile`, `restoreCachedFiles` (`isDirectoryScan` = `operationType != "file"`, inline; `createSubscriptionHandlers` is RxJS plumbing, N/A in Rust) |
-| `strategy/scan-strategy.ts` | `shouldScanOneLevel`, `shouldProcessFile`, `decideScanStrategy` |
-| `cache/incremental-cache.ts` | `IncrementalCacheManager` (init/resume, batch, mark complete) |
-| `cache/folder-cache-manager.ts` | `computeFolderHash`, `createDefaultCache`; **dead:** `getCacheInfo`, `compareHashesAndDecide` (see note) |
-| `worker/directory-scan-progress.ts` | `mergeDirectoryScanProgressWithCache`, `buildDirectoryScanProgressMessage` |
-| `utils/path-utils.ts` | `buildThumbnailPath`, `isHiddenFile` |
-| `@photasa/common/utils.ts` | `shouldIgnorePhotasaPath`, `PHOTASA_ORIGINALS` |
+| TS module                           | Functions ported by this RFC                                                                                                                                                                                                         |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `scan-photos.ts`                    | `walkthroughPhotosInFolder`, `scanPhotos` (skip / full / resume branches + fallback), `scanSubdirectories`, `processMediaFile`, `processFileList`, `extendedCleanup`                                                                 |
+| `scan-helpers.ts`                   | `validateScanParams`, `shouldCreateThumbnail`, `buildThumbnailRequest`, `processPhotoFile`, `restoreCachedFiles` (`isDirectoryScan` = `operationType != "file"`, inline; `createSubscriptionHandlers` is RxJS plumbing, N/A in Rust) |
+| `strategy/scan-strategy.ts`         | `shouldScanOneLevel`, `shouldProcessFile`, `decideScanStrategy`                                                                                                                                                                      |
+| `cache/incremental-cache.ts`        | `IncrementalCacheManager` (init/resume, batch, mark complete)                                                                                                                                                                        |
+| `cache/folder-cache-manager.ts`     | `computeFolderHash`, `createDefaultCache`; **dead:** `getCacheInfo`, `compareHashesAndDecide` (see note)                                                                                                                             |
+| `worker/directory-scan-progress.ts` | `mergeDirectoryScanProgressWithCache`, `buildDirectoryScanProgressMessage`                                                                                                                                                           |
+| `utils/path-utils.ts`               | `buildThumbnailPath`, `isHiddenFile`                                                                                                                                                                                                 |
+| `@photasa/common/utils.ts`          | `shouldIgnorePhotasaPath`, `PHOTASA_ORIGINALS`                                                                                                                                                                                       |
 
 ### ⚠️ Accuracy note: strategy is **SKIP / FULL only**
 
@@ -176,6 +176,7 @@ else (single file):
 > (`concatMap` awaits each inner async, which `await`s `pool.addTask`). So fresh scan is
 > **serial per file**; the pool's multiple workers are not used concurrently by this path.
 > **Order matters and differs between the two FULL sub-paths:**
+>
 > - **Fresh scan**: `recordFileProcessed` **before** `processPhotoFile` (record-then-process).
 > - **`processFileList` (resume)**: `processPhotoFile` **before** `recordFileProcessed`,
 >   and `subscriber.next(file)` is emitted **unconditionally** (even when not processed).
@@ -276,14 +277,14 @@ This is the single most error-prone part. In `scan-photos.ts`, `scanSubdirectori
 called from **exactly one place — line 200, inside the SKIP branch.** The FULL branch
 does **not** call it.
 
-| Branch | How descendants are covered |
-|--------|------------------------------|
+| Branch   | How descendants are covered                                                                                                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **FULL** | `walkthroughPhotosInFolder` uses `klaw` with `depthLimit: -1` (action `current` → 0). It is **already fully recursive** — one flat pass yields every descendant media file. **No** per-subdir re-entry. |
-| **SKIP** | The parent emitted cached files but processed nothing. Children may be unindexed, so `scanSubdirectories` re-enters `scanPhotos` per child — each child makes its **own** SKIP/FULL decision. |
+| **SKIP** | The parent emitted cached files but processed nothing. Children may be unindexed, so `scanSubdirectories` re-enters `scanPhotos` per child — each child makes its **own** SKIP/FULL decision.           |
 
 **Implication for Rust:** subdir re-entry must be **gated on the SKIP branch**, not run
 unconditionally. Running it on FULL **double-processes** every nested file (recursive
-walkthrough *plus* per-subdir re-walk) — N-deep files processed once per ancestor level —
+walkthrough _plus_ per-subdir re-walk) — N-deep files processed once per ancestor level —
 and emits a spurious `complete` per subdir.
 
 > **✅ Fixed (2026-06-10).** `scan_directory_at` now gates subdir re-entry through the pure
@@ -300,9 +301,9 @@ and emits a spurious `complete` per subdir.
   is ever pushed. The renderer's `computeScannedFilePaths` (`yuantiangang/utils.ts`) handles
   this: empty `paths` ⇒ fall back to `action.path` when `action.isDirectory`. The folder
   tree is driven by **`complete.action.path`**, not by `paths`.
-  - **Do not "fix" `found_paths` by populating it** — empty is correct parity. The Rust
-    `found_paths` local in `scan_runner.rs` is structurally always-empty; drop it or comment
-    it as intentional.
+    - **Do not "fix" `found_paths` by populating it** — empty is correct parity. The Rust
+      `found_paths` local in `scan_runner.rs` is structurally always-empty; drop it or comment
+      it as intentional.
 - **Cardinality**: Rust emits one `complete` **per directory** (`scan_directory_at`
   recurses). Electron's SKIP path also re-enters `scanPhotos` per child (own subscriber →
   own `complete`), so per-directory `complete` is acceptable parity. After the
@@ -368,10 +369,10 @@ missing dir, missing `version`/`folderHash`, unparseable) match TS.
 > workarounds. Three TS details are accidental, not designed — port the **intent**, drop the
 > mechanism:
 
-| TS artifact | Why it exists in TS | Rust action |
-|-------------|---------------------|-------------|
-| **`await sleep(50ms)` before `complete`** (`scanPhotos`, `processFileList`) | Band-aid for `addToPhotasaConfig`'s **async batched** queue writer — give pending writes time to flush before signaling done | Rust `add_photo_to_folder_list` writes **synchronously**. No race ⇒ **no sleep**. Emit `complete` after the loop. |
-| **Per-file progress re-reads `.photasa-folder.json` from disk** (`mergeDirectoryScanProgressWithCache`) | Progress builder lives in a separate module with **no handle to the cache object**, so it reads counts back off disk | Rust holds the cache in memory ⇒ compute `processed/total` from the **in-memory cache**; do not write-then-read-back per file. Same numbers, no disk thrash. |
+| TS artifact                                                                                                 | Why it exists in TS                                                                                                          | Rust action                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`await sleep(50ms)` before `complete`** (`scanPhotos`, `processFileList`)                                 | Band-aid for `addToPhotasaConfig`'s **async batched** queue writer — give pending writes time to flush before signaling done | Rust `add_photo_to_folder_list` writes **synchronously**. No race ⇒ **no sleep**. Emit `complete` after the loop.                                                                                                                                         |
+| **Per-file progress re-reads `.photasa-folder.json` from disk** (`mergeDirectoryScanProgressWithCache`)     | Progress builder lives in a separate module with **no handle to the cache object**, so it reads counts back off disk         | Rust holds the cache in memory ⇒ compute `processed/total` from the **in-memory cache**; do not write-then-read-back per file. Same numbers, no disk thrash.                                                                                              |
 | **Two opposite record/process orders** (fresh: record→process; resume: process→record + unconditional emit) | Two code paths written at different times; the difference is **not designed** — it only matters if `record`/`process` throws | Pick **one** order in Rust (recommend **process→record**: don't mark a file processed until its config/thumbnail actually ran) and apply it to both paths. Document the choice. Observable output (events, final cache) is identical on the success path. |
 
 Everything else in the tables is real contract and must match.
@@ -429,8 +430,9 @@ Land in independently-testable steps, **not** one big-bang rewrite:
 ### 4. Thumbnail dispatch (fix #4 — decided: serial)
 
 - **Decision: serial, off the main/IPC thread.** Electron fresh scan is serial per file
-  (`concatMap` + `await addTask`); the current Rust `create_thumbnail_sync` inside the
-  scan `spawn_blocking` **already matches** (serial, off the main thread). Keep it.
+  (`concatMap` + `await addTask`); after 0134 Rust awaits
+  `photasa_thumbnail::create_thumbnail`, whose blocking decode work is isolated inside
+  the thumbnail crate. Keep the serial call order.
 - **No pool concurrency in this RFC.** It is not Electron's behavior, and it introduces
   out-of-order side effects (cache/config sequencing). If speed becomes a problem, open a
   **separate** RFC for a bounded decode pool — do not smuggle it in here.
@@ -604,7 +606,7 @@ Manual / golden parity:
 - **Parallelize thumbnails only, keep flat loop** — rejected: still skips strategy / per-file
   gating / resume / subdir-per-dir decisions (#1–3, 5, 6).
 - **Port `compareHashesAndDecide` as a live 3-way strategy** — rejected: it is **dead code**
-  in TS (`decideScanStrategy` never returns INCREMENTAL); porting it would *add* behavior
+  in TS (`decideScanStrategy` never returns INCREMENTAL); porting it would _add_ behavior
   Electron does not run.
 - **Import `@photasa/scan` into Tauri** — rejected by
   [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md); no Node in backend.
