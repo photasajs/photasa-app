@@ -236,11 +236,8 @@ const handleWizardCancel = () => {
     emit("update:show", false);
 };
 
-// Wizard configuration — linear flow only (no back navigation from preview)
-// because preview is async-loaded from config data; allowing back would cause
-// stale preview state and double-imports.
 const wizardConfig = createWizardConfig({
-    allowBackNavigation: false,
+    allowBackNavigation: true,
     steps: [
         createWizardStep({
             id: "configuration",
@@ -486,6 +483,29 @@ const toggleFileSelection = (
         selectedFiles.delete(filePath);
     }
     setStepData("preview", { ...stepData, selectedFiles });
+};
+
+const resetPreviewDerivedState = (setStepData?: (stepId: string, data: any) => void) => {
+    loadingState.preview = false;
+    Object.assign(previewProgress, {
+        stage: "scanning",
+        currentPath: "",
+        filesFound: 0,
+        directoriesScanned: 0,
+        totalDirectories: 0,
+        message: "",
+    });
+    discoveredFiles.splice(0);
+    setStepData?.("preview", null);
+    clearError();
+};
+
+const handleEditSettings = async (
+    wizardState: any,
+    goBack: () => Promise<boolean>,
+): Promise<boolean> => {
+    resetPreviewDerivedState(wizardState?.setStepData);
+    return await goBack();
 };
 
 // Progress modal event handlers
@@ -1147,7 +1167,7 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
         </template>
 
         <!-- Custom Footer -->
-        <template #footer="{ wizardState, goNext, finish, cancel }">
+        <template #footer="{ wizardState, goNext, goBack, finish, cancel }">
             <div class="flex items-center justify-center gap-3">
                 <!-- Configuration step: Preview button -->
                 <BaseButton
@@ -1159,6 +1179,17 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                 >
                     <EyeIcon class="w-4 h-4 shrink-0 mr-1.5" />
                     {{ t("import.nextButton") }}
+                </BaseButton>
+
+                <!-- Preview step: edit settings without cancelling import -->
+                <BaseButton
+                    v-if="wizardState.currentStep.id === 'preview'"
+                    variant="secondary"
+                    :disabled="loadingState.preview"
+                    @click="handleEditSettings(wizardState, goBack)"
+                    class="whitespace-nowrap"
+                >
+                    {{ t("import.editSettingsButton") }}
                 </BaseButton>
 
                 <!-- Preview step: Import button -->
@@ -1178,9 +1209,9 @@ const getFullTargetPath = (relativePath: string, basePath?: string): string => {
                     }}
                 </BaseButton>
 
-                <!-- Close / Cancel -->
+                <!-- Setup cancel; running import cancel lives in progress modal -->
                 <BaseButton variant="secondary" @click="cancel" class="whitespace-nowrap">
-                    {{ t("import.closeButton") }}
+                    {{ t("import.cancelSetupButton") }}
                 </BaseButton>
             </div>
         </template>

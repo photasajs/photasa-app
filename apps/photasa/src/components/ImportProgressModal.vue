@@ -181,12 +181,14 @@ const startImport = async (): Promise<void> => {
             currentFile: "",
         });
 
-        const serializableConfig = createSerializableConfig(props.config, false);
-        const { importId: newImportId } = await executeImport(serializableConfig);
-        await session.begin(newImportId, {
+        await session.prepareStart({
             totalFiles: props.config.selectedFiles.length,
             status: "processing",
         });
+
+        const serializableConfig = createSerializableConfig(props.config, false);
+        const { importId: newImportId } = await executeImport(serializableConfig);
+        session.claimImportId(newImportId);
         logger.debug("📚 导入已开衙，会话就位", newImportId);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

@@ -146,7 +146,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     );
 
                     // ✅ RFC 0048 v3: 批量创建pending任务到Store
-                    const subfolderActions: ScanAction[] = subfolders.map((subfolder) => ({
+                    const subfolderActions: ScanAction[] = subfolders.map((subfolder: string) => ({
                         path: subfolder,
                         action,
                         thumbnailSize: 150,

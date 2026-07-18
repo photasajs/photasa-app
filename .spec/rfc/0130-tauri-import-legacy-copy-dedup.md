@@ -1,9 +1,11 @@
 # RFC 0130: `import_legacy.rs` — dedup `copy_with_unique_name` against shared crate
 
 - **Start Date**: 2026-07-18
-- **Status**: ⏳ Draft / **P4**（cleanup，未开工）
+- **Last updated**: 2026-07-18
+- **Status**: ✅ Implemented
 - **Area**: Photasa / Import / Maintenance
-- **Depends on**: [0093](./completed/0093-tauri-legacy-importphotos-rust.md)（legacy importPhotos Rust API）
+- **Path**: `.spec/rfc/0130-tauri-import-legacy-copy-dedup.md`
+- **Depends on**: [0093](./completed/0093-tauri-legacy-importphotos-rust.md), [0131](./0131-tauri-photasa-import-crate.md)
 - **One thing only**: `import_legacy.rs`'s `copy_with_unique_name` duplicates the shared `photasa-import` crate's collision-rename logic
 
 ## Implementation principle (Photasa / Tauri)
@@ -12,29 +14,33 @@
 
 ## Summary
 
-Code review (2026-07-18) confirmed: `apps/photasa/src-tauri/src/commands/import_legacy.rs:37` defines its own `copy_with_unique_name` (collision-suffix rename algorithm: `name_1.ext`, `name_2.ext`, …), independent from `crates/photasa-import/src/copy_loop.rs`'s `copy_one`, which `import_execute.rs` already correctly delegates to (`import_execute.rs`'s doc comment: "算法在 `photasa-import::copy_loop`"). A fix to the collision-suffix algorithm in the shared crate (off-by-one, multi-dot-extension handling, etc.) won't propagate to `import_legacy.rs`'s independent copy, silently leaving the legacy import path on old/possibly-buggy behavior.
+`import_legacy.rs` had its own `copy_with_unique_name` (collision-suffix rename). `import_execute` already used `photasa-import::copy_loop::copy_one`. Fix: shared `unique_dest_path` + `copy_one`; legacy layers `set_file_times` after copy.
 
-`import_legacy.rs`'s version also calls `set_file_times` to preserve mtime/atime, which the crate's `copy_one` does not — a legitimate extra step, not a reason for the whole algorithm to be reimplemented.
+## Fix (delivered)
 
-## Fix
-
-`import_legacy.rs` should call the shared crate's collision-rename helper for path resolution, then layer `set_file_times` on top as a separate post-copy step — rather than reimplementing the rename-suffix loop inline.
+1. `crates/photasa-import/src/copy_loop.rs`: public `unique_dest_path`; `copy_one` rename path uses it.
+2. `import_legacy.rs`: `copy_with_unique_name` → `copy_one(..., "rename")` then `set_file_times`.
 
 ## Non-goals
 
-| Topic | RFC |
-|-------|-----|
+| Topic                                              | RFC      |
+| -------------------------------------------------- | -------- |
 | `status: "paused"` emit / cancelled-payload fields | **0125** |
-| `import:progress` missing `importId` | **0128** |
-| Progress emit throttling | **0129** |
+| `import:progress` missing `importId`               | **0128** |
+| Progress emit throttling                           | **0129** |
 
 ## Checklist
 
-- [ ] Extract/expose a reusable collision-rename function from `crates/photasa-import` usable by both `copy_one` and `import_legacy.rs`
-- [ ] `import_legacy.rs` calls the shared function, then applies `set_file_times`
-- [ ] Existing `import_legacy.rs` tests (`copy_with_unique_name_*`) still pass unchanged (same observable behavior)
-- [ ] ROADMAP ✅
+- [x] Extract/expose `unique_dest_path` from `photasa-import` for `copy_one` + legacy
+- [x] `import_legacy.rs` calls shared `copy_one`, then `set_file_times`
+- [x] Existing `copy_with_unique_name_*` tests pass
+- [x] ROADMAP / TASK_TRACKING → ✅
 
-## Testing
+## Verification
 
-- Existing Rust unit tests for `copy_with_unique_name` (keeps original basename when free / appends suffix on collision / increments until free slot) continue to pass after delegating to the shared implementation.
+```bash
+cargo test -p photasa-import
+cargo test -p photasa copy_with_unique_name
+```
+
+**Evidence (2026-07-18):** `photasa-import` **37 passed**; `copy_with_unique_name_*` **3 passed**.

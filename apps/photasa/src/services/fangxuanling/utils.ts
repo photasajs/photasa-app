@@ -32,14 +32,15 @@ function deepMergeObjects(target: unknown, source: unknown): unknown {
         return JSON.parse(JSON.stringify(source));
     }
 
-    // 创建结果对象，从target开始
-    const result: Record<string, unknown> = { ...target };
+    const targetRecord = target as Record<string, unknown>;
+    const sourceRecord = source as Record<string, unknown>;
+    const result: Record<string, unknown> = { ...targetRecord };
 
     // 遍历source的所有key
-    for (const key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-            const sourceValue = source[key];
-            const targetValue = target[key];
+    for (const key in sourceRecord) {
+        if (Object.prototype.hasOwnProperty.call(sourceRecord, key)) {
+            const sourceValue = sourceRecord[key];
+            const targetValue = targetRecord[key];
 
             // 如果source和target的值都是对象，递归合并
             if (isObject(sourceValue) && isObject(targetValue)) {

@@ -105,7 +105,7 @@ export const cleanupScanQueue = (folderPath: string): void => {
     window.api.cleanupScanQueue(folderPath);
 };
 
-export function scanSubfolders(folder): Promise<string[]> {
+export function scanSubfolders(folder: string): Promise<string[]> {
     return window.api.scanSubfolders(folder);
 }
 
@@ -309,8 +309,8 @@ export function chooseDirectories(multiSelect = true): Promise<DirectorySelectio
     logger.debug(`调用 chooseDirectories，multiSelect: ${multiSelect}`);
     const result = window.api.chooseDirectories(multiSelect);
     result
-        .then((res) => logger.debug(`chooseDirectories 结果:`, res))
-        .catch((err) => logger.error(`chooseDirectories 错误:`, err));
+        .then((res: DirectorySelection) => logger.debug(`chooseDirectories 结果:`, res))
+        .catch((err: unknown) => logger.error(`chooseDirectories 错误:`, err));
     return result;
 }
 

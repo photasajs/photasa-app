@@ -23,6 +23,10 @@ export type ImportSessionPhase =
     | "cancelled";
 
 type Unlisten = () => void;
+type BufferedImportEvent =
+    | { type: "progress"; importId: string; progress: ImportProgress }
+    | { type: "complete"; importId: string; result: ImportResult }
+    | { type: "error"; importId: string; error: Error };
 
 /** Rust `import:error` payload：{message, importId}，非 JS Error */
 function normalizeImportErrorPayload(payload: unknown): Error {
@@ -52,6 +56,7 @@ export const useImportSessionStore = defineStore("importSession", () => {
     let progressUnlisten: Unlisten | null = null;
     let completeUnlisten: Unlisten | null = null;
     let errorUnlisten: Unlisten | null = null;
+    let bufferedEvents: BufferedImportEvent[] = [];
 
     /** 运行中 / 暂停中不可再开新导入 */
     const canStart = computed(() => phase.value !== "running" && phase.value !== "paused");
@@ -81,6 +86,44 @@ export const useImportSessionStore = defineStore("importSession", () => {
         errorUnlisten = null;
     }
 
+    function eventMatchesCurrent(
+        eventId: string | undefined,
+        type: BufferedImportEvent["type"],
+        event: BufferedImportEvent,
+    ): boolean {
+        if (!eventId) {
+            logger.warn("📚 收到无 importId 的导入事件，丢弃", { type });
+            return false;
+        }
+        if (!importId.value) {
+            bufferedEvents.push(event);
+            logger.debug("📚 导入事件早于 importId 返回，先缓冲", { type, eventId });
+            return false;
+        }
+        if (eventId !== importId.value) {
+            logger.warn("📚 收到不匹配的导入事件，丢弃", {
+                type,
+                eventId,
+                currentId: importId.value,
+            });
+            return false;
+        }
+        return true;
+    }
+
+    function flushBufferedEvents(): void {
+        const id = importId.value;
+        if (!id || bufferedEvents.length === 0) return;
+        const events = bufferedEvents;
+        bufferedEvents = [];
+        for (const event of events) {
+            if (event.importId !== id) continue;
+            if (event.type === "progress") applyProgress(event.progress);
+            if (event.type === "complete") complete(event.result);
+            if (event.type === "error") fail(event.error);
+        }
+    }
+
     async function startListeners(): Promise<void> {
         stopListeners();
         if (!isTauri()) {
@@ -89,36 +132,42 @@ export const useImportSessionStore = defineStore("importSession", () => {
         }
         progressUnlisten = await listen<unknown>("import:progress", (event) => {
             const next = normalizeImportProgressPayload(event.payload);
-            if (next.importId && next.importId !== importId.value) {
-                logger.warn("📚 收到不匹配的 import:progress 丢弃", {
-                    eventId: next.importId,
-                    currentId: importId.value,
-                });
+            if (
+                !eventMatchesCurrent(next.importId, "progress", {
+                    type: "progress",
+                    importId: next.importId ?? "",
+                    progress: next,
+                })
+            )
                 return;
-            }
             applyProgress(next);
         });
         completeUnlisten = await listen<unknown>("import:complete", (event) => {
             const res = event.payload as ImportResult | null;
-            if (res && res.importId && res.importId !== importId.value) {
-                logger.warn("📚 收到不匹配的 import:complete 丢弃", {
-                    eventId: res.importId,
-                    currentId: importId.value,
-                });
+            const eventId = res?.importId;
+            if (
+                !res ||
+                !eventMatchesCurrent(eventId, "complete", {
+                    type: "complete",
+                    importId: eventId ?? "",
+                    result: res,
+                })
+            )
                 return;
-            }
-            complete(res as ImportResult);
+            complete(res);
         });
         errorUnlisten = await listen<unknown>("import:error", (event) => {
             const payload = event.payload as { importId?: string } | null;
-            if (payload && payload.importId && payload.importId !== importId.value) {
-                logger.warn("📚 收到不匹配的 import:error 丢弃", {
-                    eventId: payload.importId,
-                    currentId: importId.value,
-                });
+            const err = normalizeImportErrorPayload(event.payload);
+            if (
+                !eventMatchesCurrent(payload?.importId, "error", {
+                    type: "error",
+                    importId: payload?.importId ?? "",
+                    error: err,
+                })
+            )
                 return;
-            }
-            fail(normalizeImportErrorPayload(event.payload));
+            fail(err);
         });
         logger.debug("📚 导入会话事件监听已挂起");
     }
@@ -150,10 +199,11 @@ export const useImportSessionStore = defineStore("importSession", () => {
         logger.info(paused ? "📚 导入会话已暂停" : "📚 导入会话已继续", idSnippet());
     }
 
-    async function begin(id: string, initial?: Partial<ImportProgress>): Promise<void> {
+    async function prepareStart(initial?: Partial<ImportProgress>): Promise<void> {
         assertCanStart();
         clearTerminalState();
-        importId.value = id;
+        bufferedEvents = [];
+        importId.value = null;
         phase.value = "running";
         startedAt.value = Date.now();
         result.value = null;
@@ -175,6 +225,23 @@ export const useImportSessionStore = defineStore("importSession", () => {
             ...initial,
         };
         await startListeners();
+        logger.info("📚 导入会话预备，等待 importId", {
+            totalFiles: progress.value?.totalFiles ?? 0,
+        });
+    }
+
+    function claimImportId(id: string): void {
+        if (!id) return;
+        if (importId.value && importId.value !== id) {
+            throw new Error(`IMPORT_ID_MISMATCH:${importId.value}:${id}`);
+        }
+        importId.value = id;
+        flushBufferedEvents();
+    }
+
+    async function begin(id: string, initial?: Partial<ImportProgress>): Promise<void> {
+        await prepareStart(initial);
+        claimImportId(id);
         logger.info("📚 导入会话开衙", {
             importId: idSnippet(),
             totalFiles: progress.value?.totalFiles ?? 0,
@@ -239,6 +306,7 @@ export const useImportSessionStore = defineStore("importSession", () => {
         result.value = null;
         error.value = null;
         startedAt.value = 0;
+        bufferedEvents = [];
     }
 
     /** 用户关掉 chip / Done 后清会话 */
@@ -251,6 +319,7 @@ export const useImportSessionStore = defineStore("importSession", () => {
         result.value = null;
         error.value = null;
         startedAt.value = 0;
+        bufferedEvents = [];
     }
 
     function setModalVisible(visible: boolean): void {
@@ -307,6 +376,8 @@ export const useImportSessionStore = defineStore("importSession", () => {
         isTerminal,
         showChip,
         progressPercent,
+        prepareStart,
+        claimImportId,
         begin,
         applyProgress,
         setPaused,

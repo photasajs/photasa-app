@@ -5,7 +5,6 @@ import {
     absoluteThumbnailPathForSource,
     webviewMediaUrlToAbsolutePath,
 } from "@renderer/utils/media-url";
-import { defaultTo, map, pipe } from "ramda";
 
 import type { Image } from "@renderer/common/image";
 
@@ -16,10 +15,9 @@ import type { Image } from "@renderer/common/image";
  * @returns 图片列表
  */
 export function toImageList(currentFolder: string, currentFolderConfig: PhotasaConfig) {
-    const images = pipe(
-        defaultTo([]),
-        map(toImage.bind(null, currentFolder)),
-    )(currentFolderConfig.photoList);
+    const images = (currentFolderConfig.photoList ?? []).map((photo) =>
+        toImage(currentFolder, photo),
+    );
 
     return {
         title: currentFolder,

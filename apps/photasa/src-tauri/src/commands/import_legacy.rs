@@ -9,6 +9,7 @@ use crate::commands::import_path_filter::{
 use chrono::{DateTime, Utc};
 use filetime::{set_file_times, FileTime};
 use log::{info, warn};
+use photasa_import::copy_loop::copy_one;
 use serde::Serialize;
 use serde_json::json;
 use std::fs;
@@ -33,29 +34,9 @@ fn file_created_iso(meta: &std::fs::Metadata) -> Option<String> {
         .and_then(system_time_to_rfc3339)
 }
 
-/// 复制到目标目录；若重名则 `name_1.ext`、`name_2.ext`…（对齐 Electron `file-helper.copyFile`）
+/// 复制到目标目录；冲突改名委托 `photasa-import::copy_one`（RFC 0130），再叠 `set_file_times`
 fn copy_with_unique_name(src: &Path, target_dir: &Path, src_meta: &Metadata) -> Result<PathBuf, String> {
-    let orig_name = src
-        .file_name()
-        .and_then(|s| s.to_str())
-        .ok_or_else(|| "无效文件名".to_string())?
-        .to_string();
-
-    let mut dest = target_dir.join(&orig_name);
-    let mut count = 1u32;
-    while dest.exists() {
-        let p = Path::new(&orig_name);
-        let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("file");
-        let ext = p
-            .extension()
-            .and_then(|e| e.to_str())
-            .map(|e| format!(".{e}"))
-            .unwrap_or_default();
-        dest = target_dir.join(format!("{stem}_{count}{ext}"));
-        count += 1;
-    }
-
-    fs::copy(src, &dest).map_err(|e| e.to_string())?;
+    let (_copied, dest) = copy_one(src, target_dir, "rename")?;
     // 与 Electron `file-helper.copyFile` 一致：尽量保留源文件的访问/修改时间
     let at = src_meta
         .accessed()

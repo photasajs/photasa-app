@@ -190,6 +190,45 @@ describe("useImportSessionStore (RFC 0118)", () => {
         expect(store.openModalRequest).toBe(before + 1);
     });
 
+    it("buffers a fast complete event before executeImport returns", async () => {
+        mockEnv.isTauri = true;
+        mockListeners["import:progress"] = [];
+        mockListeners["import:complete"] = [];
+        mockListeners["import:error"] = [];
+
+        const store = useImportSessionStore();
+        await store.prepareStart({ totalFiles: 1 });
+
+        const result: ImportResult = {
+            success: true,
+            totalFiles: 1,
+            successfulFiles: 1,
+            skippedFiles: 0,
+            errorFiles: 0,
+            totalSize: 0,
+            processedSize: 0,
+            errors: [],
+            warnings: [],
+            duration: 1,
+            importedFiles: [],
+            importId: "fast-id",
+            sourcePaths: [],
+            targetPath: "",
+        };
+
+        mockListeners["import:complete"].forEach((cb) => cb({ payload: result }));
+
+        expect(store.importId).toBeNull();
+        expect(store.phase).toBe("running");
+        expect(store.result).toBeNull();
+
+        store.claimImportId("fast-id");
+
+        expect(store.importId).toBe("fast-id");
+        expect(store.phase).toBe("completed");
+        expect(store.result?.importId).toBe("fast-id");
+    });
+
     it("RFC 0128: ignores progress, complete, and error events with mismatched importId", async () => {
         mockEnv.isTauri = true;
         mockListeners["import:progress"] = [];

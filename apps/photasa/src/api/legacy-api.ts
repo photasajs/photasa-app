@@ -9,7 +9,7 @@ import { api } from "./adapter";
 import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 import { normalizeImportProgressPayload } from "./import.adapter";
 import type { ScanAction, ScanResult } from "./scan.adapter";
-import type { ThumbnailRequest, ThumbnailResponse } from "./thumbnail.adapter";
+import type { ThumbnailRequest } from "./thumbnail.adapter";
 import type { ImportConfig } from "./import.adapter";
 import type {
     FileMetadata,
@@ -52,9 +52,6 @@ function getImportUnsubs(): Array<() => void> {
 
 function stubAsync<T = never>(): Promise<T> {
     return Promise.reject(new Error(NOT_IMPLEMENTED));
-}
-function stubSync(): any {
-    return undefined;
 }
 function noopListener(): () => void {
     return () => {};

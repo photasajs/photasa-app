@@ -9,7 +9,7 @@ import {
     shouldIgnorePhotasaPath,
     startWatching,
 } from "@renderer/utils/api";
-import type { WatchState } from "@photasa/common";
+import type { WatchAction, WatchState } from "@photasa/common";
 import type { ThumbnailRequest } from "@photasa/common";
 import { deepCopy } from "./object";
 import type { PreferenceStore } from "@renderer/stores/preference";
@@ -147,7 +147,13 @@ async function handleChangeFile(
     return;
 }
 
-const actions = {
+type FileActionHandler = (
+    state: WatchState,
+    preferenceStore: PreferenceStore,
+    qinQiongService: IQinQiongService,
+) => Promise<void>;
+
+const actions: Partial<Record<WatchAction, FileActionHandler>> = {
     add: handleAddFile,
     change: handleChangeFile,
     delete: handleDeleteFile,

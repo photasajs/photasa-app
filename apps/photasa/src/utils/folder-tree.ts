@@ -62,7 +62,7 @@ export function removeRoot(roots: FolderNode[], rootPath: string): void {
  * - 如果文件路径不存在，则放弃清理
  */
 export function cleanDataNode(roots: FolderNode[], file: Photo): void {
-    const pathParts = splitPath(file.path).filter((part) => part !== "");
+    const pathParts = splitPath(file.path).filter((part: string) => part !== "");
     if (pathParts.length <= 1) {
         return;
     }

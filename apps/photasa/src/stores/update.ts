@@ -2,7 +2,11 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useNotificationStore } from "./notification";
-import type { UpdateInfo } from "electron-updater";
+
+interface UpdateInfo {
+    version: string;
+    [key: string]: unknown;
+}
 
 export const useUpdateStore = defineStore("update", () => {
     // 状态

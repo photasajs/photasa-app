@@ -15,7 +15,7 @@ import type { Emitter } from "mitt";
 import { IService } from "@renderer/interfaces/service.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@photasa/common";
-import { tianshuAdapter } from "@renderer/api/tianshu.adapter";
+import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
 import { scanAdapter } from "@renderer/api/scan.adapter";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@photasa/common";
@@ -546,10 +546,10 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
         try {
             // 符箓到UICommand的转换
-            const uiCommand = this.convertFuluToUICommand(fulu) as {
+            const uiCommand = this.convertFuluToUICommand(fulu) as TianshuCommand & {
                 id: string;
                 intent: string;
-                params: unknown;
+                params: Record<string, unknown>;
                 priority: string;
                 context: unknown;
                 createdAt: number;

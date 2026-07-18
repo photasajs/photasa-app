@@ -1,7 +1,6 @@
 import type { Photo } from "@photasa/common";
 import type { ImageTypeResult } from "image-type";
 import type { Tags, XmpTags, IccTags } from "exifreader";
-import { splitEvery } from "ramda";
 import { safePositiveNumber } from "./number";
 import { toAbsoluteMediaPath, toWebviewMediaUrl } from "@renderer/utils/media-url";
 
@@ -129,10 +128,10 @@ export function toImageMeta(
  * @returns 二维图片数组
  */
 export function groupImagesByColumns(images: Image[], cols: number): Image[][] {
-    // 如果图片数组为空，直接返回空数组
-    if (images.length === 0) {
-        return [];
+    const size = safePositiveNumber(cols);
+    const groups: Image[][] = [];
+    for (let i = 0; i < images.length; i += size) {
+        groups.push(images.slice(i, i + size));
     }
-    // 使用 Ramda 的 splitEvery 实现分组
-    return splitEvery(safePositiveNumber(cols), images);
+    return groups;
 }

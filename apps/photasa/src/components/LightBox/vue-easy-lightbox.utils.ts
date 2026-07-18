@@ -44,8 +44,8 @@ export type MutateDraggingOptions = {
  * @param {number} options.swipeTolerance 拖拽容忍度
  */
 export const mutateDragging = (
-    newStatus,
-    oldStatus,
+    newStatus: boolean,
+    oldStatus: boolean,
     { onNext, onPrev, canMove, imgWrapperState, swipeTolerance }: MutateDraggingOptions,
 ) => {
     const dragged = !newStatus && oldStatus;

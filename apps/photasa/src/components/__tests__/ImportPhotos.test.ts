@@ -205,6 +205,8 @@ vi.mock("vue-i18n", () => ({
                 "import.loading.label": "Loading...",
                 "import.loading.preview": "Loading Preview...",
                 "import.backButton": "Back",
+                "import.editSettingsButton": "Edit settings",
+                "import.cancelSetupButton": "Cancel setup",
                 "import.nextButton": "Next",
                 "import.importButton": "Import",
                 "import.closeButton": "Close",
@@ -371,6 +373,49 @@ describe("ImportPhotos", () => {
             expect(config.steps).toHaveLength(2);
             expect(config.steps[0].id).toBe("configuration");
             expect(config.steps[1].id).toBe("preview");
+        });
+
+        it("RFC 0118 G19 should allow preview back navigation", () => {
+            const wrapper = createWrapper();
+            const baseWizard = wrapper.findComponent({ name: "BaseWizard" });
+            const config = baseWizard.props("config");
+
+            expect(config.allowBackNavigation).toBe(true);
+        });
+
+        it("RFC 0118 G19 edit settings clears preview-derived state before going back", async () => {
+            const wrapper = createWrapper();
+            const vm = wrapper.vm as any;
+            const goBack = vi.fn().mockResolvedValue(true);
+            const wizardState = {
+                stepData: {
+                    preview: {
+                        files: [{ mainFile: { path: "/old.jpg" } }],
+                        selectedFiles: new Set(["/old.jpg"]),
+                    },
+                },
+                setStepData: vi.fn(),
+            };
+
+            vm.discoveredFiles.push({ path: "/old.jpg" });
+            Object.assign(vm.previewProgress, {
+                stage: "processing",
+                currentPath: "/old",
+                filesFound: 1,
+                directoriesScanned: 1,
+                totalDirectories: 1,
+                message: "old",
+            });
+            vm.loadingState.preview = true;
+
+            await vm.handleEditSettings(wizardState, goBack);
+
+            expect(wizardState.setStepData).toHaveBeenCalledWith("preview", null);
+            expect(vm.discoveredFiles).toHaveLength(0);
+            expect(vm.previewProgress.filesFound).toBe(0);
+            expect(vm.previewProgress.currentPath).toBe("");
+            expect(vm.loadingState.preview).toBe(false);
+            expect(goBack).toHaveBeenCalledOnce();
         });
 
         it("should validate configuration step correctly", () => {

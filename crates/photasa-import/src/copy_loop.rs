@@ -71,36 +71,47 @@ pub fn ensure_parent(path: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// 目标目录内为 `file_name` 找空闲路径；重名则 `stem_1.ext`、`stem_2.ext`…
+/// （与 Electron `file-helper.copyFile` / 旧版 importPhotos 冲突改名一致）
+pub fn unique_dest_path(target_dir: &Path, file_name: &str) -> PathBuf {
+    let mut dest = target_dir.join(file_name);
+    if !dest.exists() {
+        return dest;
+    }
+    let stem = Path::new(file_name)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("file");
+    let ext = Path::new(file_name)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| format!(".{e}"))
+        .unwrap_or_default();
+    let mut count = 1u32;
+    loop {
+        dest = target_dir.join(format!("{stem}_{count}{ext}"));
+        if !dest.exists() {
+            return dest;
+        }
+        count += 1;
+    }
+}
+
 /// 复制单文件；`Ok((copied, dest))` — skip 时 `copied=false`
 pub fn copy_one(src: &Path, target_dir: &Path, strategy: &str) -> Result<(bool, PathBuf), String> {
     let name = src
         .file_name()
         .and_then(|s| s.to_str())
         .ok_or_else(|| "无效源路径".to_string())?;
-    let mut dest = target_dir.join(name);
-    if dest.exists() {
+    let dest = if target_dir.join(name).exists() {
         match strategy {
-            "skip" => return Ok((false, dest)),
-            "overwrite" => {}
-            _ => {
-                let mut count = 1u32;
-                let stem = Path::new(name).file_stem().and_then(|s| s.to_str()).unwrap_or("file");
-                let ext = Path::new(name)
-                    .extension()
-                    .and_then(|e| e.to_str())
-                    .map(|e| format!(".{e}"))
-                    .unwrap_or_default();
-                loop {
-                    let alt = format!("{stem}_{count}{ext}");
-                    dest = target_dir.join(&alt);
-                    if !dest.exists() {
-                        break;
-                    }
-                    count += 1;
-                }
-            }
+            "skip" => return Ok((false, target_dir.join(name))),
+            "overwrite" => target_dir.join(name),
+            _ => unique_dest_path(target_dir, name),
         }
-    }
+    } else {
+        target_dir.join(name)
+    };
     ensure_parent(&dest)?;
     fs::copy(src, &dest).map_err(|e| e.to_string())?;
     Ok((true, dest))
@@ -368,6 +379,18 @@ mod tests {
         let nested = root.join("a").join("b").join("c.txt");
         ensure_parent(&nested).unwrap();
         assert!(nested.parent().unwrap().is_dir());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn unique_dest_path_free_and_collision() {
+        let root = temp_dir("unique");
+        let free = unique_dest_path(&root, "a.jpg");
+        assert_eq!(free, root.join("a.jpg"));
+        write_file(&root.join("a.jpg"), b"1");
+        assert_eq!(unique_dest_path(&root, "a.jpg"), root.join("a_1.jpg"));
+        write_file(&root.join("a_1.jpg"), b"2");
+        assert_eq!(unique_dest_path(&root, "a.jpg"), root.join("a_2.jpg"));
         let _ = fs::remove_dir_all(&root);
     }
 

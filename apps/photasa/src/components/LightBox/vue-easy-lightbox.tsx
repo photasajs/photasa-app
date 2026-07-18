@@ -580,7 +580,7 @@ export default defineComponent({
                         vnode.props = {
                             ...vnode.props,
                             draggable: false,
-                            onDragstart: (e) => e.preventDefault(),
+                            onDragstart: (e: DragEvent) => e.preventDefault(),
                         };
                     }
                     return (
@@ -589,7 +589,7 @@ export default defineComponent({
                             style={imgWrapperStyle.value}
                             key="img-wrapper"
                             onMousedown={onWrapperMouseDown}
-                            onDragstart={(e) => e.preventDefault()}
+                            onDragstart={(e: DragEvent) => e.preventDefault()}
                         >
                             {vnode}
                         </div>
@@ -602,13 +602,13 @@ export default defineComponent({
                     style={imgWrapperStyle.value}
                     key="img-wrapper"
                     onMousedown={onWrapperMouseDown}
-                    onDragstart={(e) => e.preventDefault()}
+                    onDragstart={(e: DragEvent) => e.preventDefault()}
                 >
                     {/* 优化：如果有 default slot 则只渲染 slot，否则渲染 <img> */}
                     {slots.default ? (
                         <div
                             class={`${prefixCls}-default-slot`}
-                            onDragstart={(e) => e.preventDefault()}
+                            onDragstart={(e: DragEvent) => e.preventDefault()}
                         >
                             {slots.default({ currentImg: currentImg.value })}
                         </div>
@@ -627,7 +627,7 @@ export default defineComponent({
                             onTouchend={onTouchEnd}
                             onLoad={onImgLoad}
                             onDblclick={onDblclick}
-                            onDragstart={(e) => e.preventDefault()}
+                            onDragstart={(e: DragEvent) => e.preventDefault()}
                         />
                     )}
                 </div>
