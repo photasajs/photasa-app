@@ -1,6 +1,6 @@
 /**
- * 虞世南（YuShiNan）- 扫描进度展示服务
- * RFC 0057: 负责扫描进度的 UI 实时展示
+ * 虞世南（YuShiNan）- 扫描状态执行服务
+ * RFC 0136: 执行扫描进度和状态通知圣旨
  *
  * 职责：
  * 1. 接收李世民的 update_scan_progress 圣旨
@@ -32,7 +32,6 @@ import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { IService } from "@renderer/interfaces/service.interface";
 import { scanMonitoringService } from "./scan-monitoring-service";
-import { deriveScanStatusView } from "./scan-status-model";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { loggers, globalLogInterceptor } from "@photasa/common";
 
@@ -40,7 +39,7 @@ const logger = loggers.yushinan;
 
 /**
  * 虞世南服务实现
- * RFC 0057: 负责扫描进度的 UI 实时展示
+ * RFC 0136: 执行扫描状态相关圣旨
  *
  * 职责：
  * 1. 接收李世民的 update_scan_progress 圣旨
@@ -96,48 +95,24 @@ export class YuShiNanService implements IService, IYuShiNanService {
     /**
      * ✅ RFC 0057: 访问状态栏当前任务（通过房玄龄）
      */
-    get currentTask(): string {
-        return this.fangXuanLingService.statusBar.currentTask;
-    }
-
     /**
      * ✅ RFC 0057: 访问状态栏状态（通过房玄龄）
      */
-    get status(): string {
-        return this.fangXuanLingService.statusBar.status;
-    }
-
     /**
      * ✅ RFC 0057: 访问状态栏进度（通过房玄龄）
      */
-    get progress(): number | undefined {
-        return this.fangXuanLingService.statusBar.progress;
-    }
-
     /**
      * ✅ RFC 0057: 访问状态栏错误信息（通过房玄龄）
      */
-    get error(): string | undefined {
-        return this.fangXuanLingService.statusBar.error;
-    }
-
     /**
      * ✅ RFC 0057: 判断是否正在扫描
      * 从 scanningStore 队列处理状态派生
      */
-    get isScanning(): boolean {
-        return deriveScanStatusView(this.fangXuanLingService.scanning).isScanning;
-    }
-
     /**
      * ✅ RFC 0057: 获取扫描路径显示文本（带"扫描中"前缀）
      * 从 scanningStore 当前处理路径派生
      * 注意：此方法返回纯路径，UI 层负责添加 i18n 前缀
      */
-    get scanningPath(): string {
-        return deriveScanStatusView(this.fangXuanLingService.scanning).path;
-    }
-
     setShengzhiPort(port: MessagePort): void {
         logger.info("📜 虞世南建立圣旨接收通道");
 
@@ -239,23 +214,6 @@ export class YuShiNanService implements IService, IYuShiNanService {
      * ✅ RFC 0057: 更新状态栏（供 Vue 组件调用）
      * Vue 组件通过此方法更新状态栏，而不是直接访问房玄龄
      */
-    updateStatus(payload: {
-        type: string;
-        task: string;
-        status: string;
-        error?: string;
-        timestamp: number;
-        data?: unknown;
-    }): void {
-        // ✅ 通过房玄龄访问 statusBarStore
-        const statusBar = this.fangXuanLingService.statusBar;
-
-        // ✅ 更新状态栏 Store
-        statusBar.update(payload);
-
-        logger.debug(`📜 虞世南：已更新状态栏 - ${payload.type}/${payload.status}`);
-    }
-
     /**
      * ✅ 初始化日志拦截器
      * 激活 renderer 日志拦截器，将日志直接发送到 log viewer

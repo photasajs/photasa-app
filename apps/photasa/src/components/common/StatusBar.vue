@@ -1,45 +1,33 @@
 <script setup lang="ts">
 /**
  * 独立状态栏组件，完全变量化，支持主题 patch
- * - 自动消费 Pinia useStatusBarStore
+ * - 自动消费 Pinia statusBarStore
  * - 支持国际化、进度、错误等
  * - 样式全部用 CSS 变量
  * - 增强扫描动画效果
- *
- * 🔧 状态栏路径显示修复 (Status Bar Path Display Fix)
- * 问题：状态栏只显示文件名 (如 "bamm") 而不是完整路径 (如 "/path/to/directory/bamm")
- * 原因：scan-worker.ts 发送的 currentFile 是通过 path.basename() 提取的文件名
- * 解决：重新设计显示优先级，优先使用包含完整路径的数据源 (见 scanningPath computed)
- * 相关修改：App.vue 的 processScannedFileTask 回调也做了路径构造增强
  */
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { useYuShiNan } from "@renderer/composables/useYuShiNan";
+import { useStatusBarStore } from "@renderer/stores/statusBar";
+import { deriveStatusBarView } from "./status-bar-view-model";
 import BuyMeCoffeeButton from "./BuyMeCoffeeButton.vue";
 
-// ✅ RFC 0057: 通过虞世南服务访问扫描进度数据，不直接使用 store
-const yuShiNan = useYuShiNan();
 const { t } = useI18n();
-
-// ✅ RFC 0057: 所有逻辑已移到 yuShiNan，StatusBar 仅负责显示
-// 通过 yuShiNan 访问扫描状态和路径
-const isScanning = yuShiNan.isScanning;
-const scanningPathRaw = yuShiNan.scanningPath;
-
-// ✅ 添加 i18n 前缀（UI 层负责）
-const scanningPath = computed(() => {
-    const path = scanningPathRaw?.value;
-    if (path) {
-        return `${t("status.scanning")} ${path}`;
-    }
-    return "";
+const statusBar = useStatusBarStore();
+const view = computed(() => {
+    return deriveStatusBarView({
+        type: statusBar.type,
+        status: statusBar.status,
+        currentTask: statusBar.currentTask,
+        error: statusBar.error,
+        data: statusBar.data,
+    });
 });
 </script>
 <template>
     <div class="status-bar">
         <div class="status-content">
-            <!-- 扫描状态增强显示 -->
-            <template v-if="isScanning">
+            <template v-if="view.kind === 'progress'">
                 <div class="scanning-status">
                     <!-- 扫描动画图标 -->
                     <div class="scanning-icon">
@@ -54,13 +42,17 @@ const scanningPath = computed(() => {
 
                     <!-- 扫描文本 -->
                     <div class="scanning-text">
-                        <span v-if="scanningPath" class="scanning-path">{{ scanningPath }}</span>
-                        <span v-else class="scanning-label">{{ t("status.scanning") }}</span>
+                        <span class="scanning-path"
+                            >{{ t("status.scanning") }} {{ view.label }}</span
+                        >
                         <span
-                            v-if="yuShiNan.scanProgress.value && yuShiNan.scanProgress.value > 0"
+                            v-if="view.total && view.processed !== undefined"
                             class="scanning-progress"
                         >
-                            ({{ yuShiNan.scanProgress.value }})
+                            ({{ view.processed }} / {{ view.total }})
+                        </span>
+                        <span v-else-if="view.processed !== undefined" class="scanning-progress">
+                            ({{ view.processed }})
                         </span>
                     </div>
 
@@ -73,17 +65,11 @@ const scanningPath = computed(() => {
                 </div>
             </template>
 
-            <!-- ✅ RFC 0057: 原有状态栏内容已移除，仅使用 yuShiNan 提供的数据 -->
-
-            <!-- 扫描路径显示（非扫描状态） -->
-            <template v-else-if="scanningPath && !isScanning">
-                {{ scanningPath }}
-            </template>
-
-            <!-- 默认插槽 -->
-            <template v-else>
-                <slot> </slot>
-            </template>
+            <template v-else-if="view.kind === 'error'">{{
+                view.label || t("status.error")
+            }}</template>
+            <template v-else-if="view.kind === 'task'">{{ view.label }}</template>
+            <template v-else>{{ t("status.ready") }}</template>
         </div>
 
         <!-- Buy Me a Coffee 按钮始终在最右侧 -->

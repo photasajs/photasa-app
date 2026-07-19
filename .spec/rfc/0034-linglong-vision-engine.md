@@ -1,8 +1,8 @@
 # RFC 0034: Linglong Vision Engine
 
 - **Start Date**: 2025-05-24
-- **RFC PR**: 
-- **Implementation Issue**: 
+- **RFC PR**:
+- **Implementation Issue**:
 
 ## Summary
 
@@ -34,26 +34,26 @@
 
 ### 功能需求
 
-| 类别 | 需求 | 描述 |
-| --- | --- | --- |
-| 格式覆盖 | 视频：MPG/MPEG、AVI、3GP、MKV、MOV | 保持 1080p 播放，至少 30fps |
-|  | 图像：BMP、ICO/ICN、SVG、TIFF、HEIF | 提供缩略图 + 原图渲染 |
-| 解码策略 | 本地离线 | 无需在线 API |
-|  | 可扩展 | 支持第三方插件解码 |
-| 性能 | 首帧 < 1s（缓存命中） | 首次转码可容忍更长但需进度提示 |
-|  | 回放平滑 | 播放时 CPU < 60%，支持拖动 |
-| 缓存 | 统一缓存目录 | 复用 `.photasa` 体系 |
-| 可观测性 | 详细日志/指标 | 格式识别、转码耗时、失败率 |
+| 类别     | 需求                                | 描述                           |
+| -------- | ----------------------------------- | ------------------------------ |
+| 格式覆盖 | 视频：MPG/MPEG、AVI、3GP、MKV、MOV  | 保持 1080p 播放，至少 30fps    |
+|          | 图像：BMP、ICO/ICN、SVG、TIFF、HEIF | 提供缩略图 + 原图渲染          |
+| 解码策略 | 本地离线                            | 无需在线 API                   |
+|          | 可扩展                              | 支持第三方插件解码             |
+| 性能     | 首帧 < 1s（缓存命中）               | 首次转码可容忍更长但需进度提示 |
+|          | 回放平滑                            | 播放时 CPU < 60%，支持拖动     |
+| 缓存     | 统一缓存目录                        | 复用 `.photasa` 体系           |
+| 可观测性 | 详细日志/指标                       | 格式识别、转码耗时、失败率     |
 
 ### 设计备选方案比较
 
-| 方案 | 描述 | 优点 | 缺点 | 维护成本 | 推荐程度 |
-| --- | --- | --- | --- | --- | --- |
-| **A. 主进程 FFmpeg 转封装/转码** | 使用 FFmpeg（本地命令或 Node 绑定）将不支持格式转为 H.264/MP4（视频）或 PNG/WebP（图像） | 成熟稳定；与现有 FFmpeg 配置一致；可批量与离线任务结合；易于缓存 | 首次转码耗时；CPU/GPU 消耗较高；需管理输出缓存与清理；实时播放时首帧延迟 | 中 | ⭐️⭐️⭐️⭐️（推荐） |
-| **B. 内嵌媒体引擎 libmpv/libVLC** | 作为子进程/原生扩展接入 libmpv 或 libVLC，直接渲染到纹理 | 全格式支持；播放质量高；自带字幕/滤镜 | 与 Electron 渲染层集成复杂；原生依赖大；UI 层需处理纹理同步 | 高 | ⭐️⭐️⭐️（中期考量） |
-| **C. 渲染层 wasm 解码 (ffmpeg.wasm)** | 在渲染进程使用 wasm 版 FFmpeg 解码后通过 canvas/WebGL 播放 | 不依赖主进程；易于跨平台 | CPU/内存消耗巨大；大文件体验差；包体积爆炸 | 高 | ⭐️⭐️（不推荐） |
-| **D. 系统原生解码 (AVFoundation/Media Foundation)** | 针对 macOS/Windows 编写原生模块调用系统播放器 | 原生硬解码，流畅度最佳 | 跨平台重复实现；Linux 缺乏统一接口；测试复杂 | 高 | ⭐️⭐️⭐️（长期探索） |
-| **E. 云端转码服务** | 上传服务器转换后回传 | 后端统一管理；轻端负载低 | 需联网；隐私/时延问题；增加服务器成本 | 中 | ⭐️⭐️（备选） |
+| 方案                                                | 描述                                                                                     | 优点                                                             | 缺点                                                                     | 维护成本 | 推荐程度           |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ | -------- | ------------------ |
+| **A. 主进程 FFmpeg 转封装/转码**                    | 使用 FFmpeg（本地命令或 Node 绑定）将不支持格式转为 H.264/MP4（视频）或 PNG/WebP（图像） | 成熟稳定；与现有 FFmpeg 配置一致；可批量与离线任务结合；易于缓存 | 首次转码耗时；CPU/GPU 消耗较高；需管理输出缓存与清理；实时播放时首帧延迟 | 中       | ⭐️⭐️⭐️⭐️（推荐）   |
+| **B. 内嵌媒体引擎 libmpv/libVLC**                   | 作为子进程/原生扩展接入 libmpv 或 libVLC，直接渲染到纹理                                 | 全格式支持；播放质量高；自带字幕/滤镜                            | 与 Electron 渲染层集成复杂；原生依赖大；UI 层需处理纹理同步              | 高       | ⭐️⭐️⭐️（中期考量） |
+| **C. 渲染层 wasm 解码 (ffmpeg.wasm)**               | 在渲染进程使用 wasm 版 FFmpeg 解码后通过 canvas/WebGL 播放                               | 不依赖主进程；易于跨平台                                         | CPU/内存消耗巨大；大文件体验差；包体积爆炸                               | 高       | ⭐️⭐️（不推荐）     |
+| **D. 系统原生解码 (AVFoundation/Media Foundation)** | 针对 macOS/Windows 编写原生模块调用系统播放器                                            | 原生硬解码，流畅度最佳                                           | 跨平台重复实现；Linux 缺乏统一接口；测试复杂                             | 高       | ⭐️⭐️⭐️（长期探索） |
+| **E. 云端转码服务**                                 | 上传服务器转换后回传                                                                     | 后端统一管理；轻端负载低                                         | 需联网；隐私/时延问题；增加服务器成本                                    | 中       | ⭐️⭐️（备选）       |
 
 **结论**：短期采用方案 A，作为玲珑引擎的初代后端；并抽象执行适配层，保留未来接入方案 B/D 的能力。
 
@@ -92,52 +92,52 @@
 
 1. **Format Detector**：利用扩展名、魔数、FFprobe 探测器识别格式与编解码器。
 2. **Strategy Planner**：根据支持矩阵决定路径：
-   - 原生支持 → 直接播放（返回文件 URL）。
-   - 需转封装 → 调用 FFmpeg Adapter `copy codec` 输出 `mp4`。
-   - 需转码 → 调用 FFmpeg Adapter 生成 `h264/aac` `mp4` 或 `png`。
-   - 图像矢量（SVG） → 调用 resvg/Sharp 转栅格。
+    - 原生支持 → 直接播放（返回文件 URL）。
+    - 需转封装 → 调用 FFmpeg Adapter `copy codec` 输出 `mp4`。
+    - 需转码 → 调用 FFmpeg Adapter 生成 `h264/aac` `mp4` 或 `png`。
+    - 图像矢量（SVG） → 调用 resvg/Sharp 转栅格。
 3. **Execution Adapter**：
-   - `FFmpegAdapter`：封装命令/节点绑定，提供进度回调、错误处理。
-   - `SharpAdapter`：处理位图/矢量转栅格。
-   - 预留 `mpvAdapter`、`NativeAdapter` 接口以便未来扩展。
+    - `FFmpegAdapter`：封装命令/节点绑定，提供进度回调、错误处理。
+    - `SharpAdapter`：处理位图/矢量转栅格。
+    - 预留 `mpvAdapter`、`NativeAdapter` 接口以便未来扩展。
 4. **Cache Manager**：
-   - 保存转封装结果（`cache/media/mp4`）。
-   - 保存缩略图/首帧（`cache/thumbnails`）。
-   - 维护 LRU 和引用计数。
+    - 保存转封装结果（`cache/media/mp4`）。
+    - 保存缩略图/首帧（`cache/thumbnails`）。
+    - 维护 LRU 和引用计数。
 5. **Status Bus**：
-   - 事件类型：`detect:start`、`decode:progress`、`decode:complete`、`error` 等。
-   - 提供给 PlaybackService / 监控仪表盘。
+    - 事件类型：`detect:start`、`decode:progress`、`decode:complete`、`error` 等。
+    - 提供给 PlaybackService / 监控仪表盘。
 
 ### API 草案
 
 ```ts
 interface PlaybackCommand {
-  id: string;
-  sourcePath: string;
-  mediaType: 'video' | 'image';
-  preferredOutput?: 'mp4' | 'hls' | 'png' | 'webp' | 'texture';
-  priority: 'user' | 'background';
-  requestedAt: number;
-  hints?: {
-    seekPosition?: number;
-    thumbnailSize?: number;
-  };
+    id: string;
+    sourcePath: string;
+    mediaType: "video" | "image";
+    preferredOutput?: "mp4" | "hls" | "png" | "webp" | "texture";
+    priority: "user" | "background";
+    requestedAt: number;
+    hints?: {
+        seekPosition?: number;
+        thumbnailSize?: number;
+    };
 }
 
 interface PlaybackResult {
-  commandId: string;
-  status: 'ready' | 'processing' | 'failed';
-  outputPath?: string; // mp4/png 等
-  metadata?: MediaMetadata;
-  error?: PlaybackError;
+    commandId: string;
+    status: "ready" | "processing" | "failed";
+    outputPath?: string; // mp4/png 等
+    metadata?: MediaMetadata;
+    error?: PlaybackError;
 }
 
 interface PlaybackEngine {
-  initialize(): Promise<void>;
-  plan(command: PlaybackCommand): Promise<void>;
-  cancel(commandId: string): Promise<void>;
-  onStatus(listener: (event: PlaybackEvent) => void): () => void;
-  shutdown(): Promise<void>;
+    initialize(): Promise<void>;
+    plan(command: PlaybackCommand): Promise<void>;
+    cancel(commandId: string): Promise<void>;
+    onStatus(listener: (event: PlaybackEvent) => void): () => void;
+    shutdown(): Promise<void>;
 }
 ```
 

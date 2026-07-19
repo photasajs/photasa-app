@@ -22,7 +22,7 @@ use zouwu_core::parser::parse_workflow;
 use zouwu_core::types::WorkflowDefinition;
 
 use crate::adapters::{
-    ConfigAdapter, PreferencesAdapter, ScanAdapter, SimingAdapter, TaibaijinxingAdapter,
+    PreferencesAdapter, ScanAdapter, SimingAdapter, TaibaijinxingAdapter,
     TaiyiAdapter,
 };
 
@@ -139,7 +139,6 @@ impl TianshuService {
 
         // 2. 构建 AdapterRegistry（含太乙路由层）
         let builtin = Arc::new(BuiltinAdapter::new());
-        let config = Arc::new(ConfigAdapter::new());
         let preferences =
             Arc::new(PreferencesAdapter::new().await.map_err(|e| {
                 TianshuError::Parse(format!("preferences adapter init error: {e}"))
@@ -150,7 +149,6 @@ impl TianshuService {
 
         let mut taiyi_engines: HashMap<String, Arc<dyn Adapter>> = HashMap::new();
         taiyi_engines.insert("builtin".to_string(), builtin.clone() as Arc<dyn Adapter>);
-        taiyi_engines.insert("config".to_string(), config.clone() as Arc<dyn Adapter>);
         taiyi_engines.insert(
             "wenchang".to_string(),
             preferences.clone() as Arc<dyn Adapter>,
@@ -166,7 +164,6 @@ impl TianshuService {
 
         let mut registry = AdapterRegistry::new();
         registry.register(builtin);
-        registry.register(config);
         registry.register(preferences);
         registry.register(scan);
         registry.register(siming);

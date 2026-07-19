@@ -25,7 +25,9 @@ export function mergeDirectoryScanProgressWithCache(
 
             if (Array.isArray(cache?.processedFiles)) {
                 const processedCount = cache.processedFiles.length;
-                const pendingCount = Array.isArray(cache.pendingFiles) ? cache.pendingFiles.length : 0;
+                const pendingCount = Array.isArray(cache.pendingFiles)
+                    ? cache.pendingFiles.length
+                    : 0;
 
                 progressData = {
                     processed: processedCount,

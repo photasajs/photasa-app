@@ -119,6 +119,12 @@ export class DuRuHuiService {
                 break;
             }
 
+            case QizouMatters.REQUEST_RESCAN: {
+                matter = QizouMatters.REQUEST_RESCAN;
+                content = { path: params.path as string };
+                break;
+            }
+
             default:
                 logger.warn(`📋 杜如晦：未知的百姓上书操作 ${action}，忽略`);
                 return;

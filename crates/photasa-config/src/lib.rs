@@ -1,19 +1,17 @@
-/*!
- * `.photasa.json` 读写 — 与 Electron / `@photasa/config-core` 契约对齐
- *
- * `photoList` 元素为 `{ path, thumbnail, isVideo, history? }`，`path` 为文件名（非绝对路径）。
- *
- * 行为必须与 `config-storage.ts` 一致：
- * - `readConfig`：原样读取（不做静默迁移）
- * - `addToPhotoList`：新条目用 `toRelativeThumbnailPath`；已有且 `thumbnail` 非空则跳过
- * - `fixPhotasaConfig`：`path` → basename；`thumbnail` → `shortenThumbnailName`
- */
+//! `.photasa.json` 读写 — 与 Electron / `@photasa/config-core` 契约对齐
+//!
+//! `photoList` 元素为 `{ path, thumbnail, isVideo, history? }`，`path` 为文件名（非绝对路径）。
+//!
+//! 行为必须与 `config-storage.ts` 一致：
+//! - `read_config`：原样读取（不做静默迁移）
+//! - `add_photo_to_folder_list`：新条目用 `to_relative_thumbnail_path`；已有且 `thumbnail` 非空则跳过
+//! - `fix_config`：`path` → basename；`thumbnail` → `shorten_thumbnail_relative_path`
+
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-
-use super::path::{is_video_file, to_file_name};
+use photasa_media::is_video_file;
 
 pub const PHOTASA_ORIGINALS_DIR: &str = ".photasaoriginals";
 pub const PHOTASA_CONFIG_FILE: &str = ".photasa.json";
@@ -58,9 +56,18 @@ pub fn config_path_for_folder(folder: &str) -> PathBuf {
     Path::new(folder).join(PHOTASA_CONFIG_FILE)
 }
 
+/// Path 最后一段（文件名，等价 Node path.basename / Tauri `commands::path::to_file_name`）
+fn file_name_of(path: &str) -> String {
+    Path::new(path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_string()
+}
+
 /// 缩略图相对路径：`.photasaoriginals/thumbnail-{fileName}.png`（Electron `toRelativeThumbnailPath`）
 pub fn to_relative_thumbnail_path(photo_path: &str) -> String {
-    let file_name = to_file_name(photo_path.to_string());
+    let file_name = file_name_of(photo_path);
     format!(
         "{}/{}{}.png",
         PHOTASA_ORIGINALS_DIR, "thumbnail-", file_name
@@ -106,7 +113,7 @@ pub fn parse_photo_list(value: Option<&Value>) -> Vec<PhotoEntry> {
             PhotoEntry {
                 path: file_name.clone(),
                 thumbnail: to_relative_thumbnail_path(&file_name),
-                is_video: is_video_file(file_name.clone()),
+                is_video: is_video_file(&file_name),
                 history: Vec::new(),
             }
         } else if let Ok(mut photo) = serde_json::from_value::<PhotoEntry>(item.clone()) {
@@ -185,8 +192,7 @@ pub fn absolute_thumbnail_path_for_source(source_path: &str) -> String {
         .replace('\\', "/")
 }
 
-/// Electron `addToPhotoList`
-/// 从 photoList 移除照片并写回（Electron `removeFromPhotoList`）
+/// Electron `removeFromPhotoList`
 pub fn remove_photo_from_folder_list(
     folder: &str,
     photo_path: &str,
@@ -199,6 +205,7 @@ pub fn remove_photo_from_folder_list(
     Ok(config)
 }
 
+/// Electron `addToPhotoList` — 扫描发现媒体文件时调用，写入 `.photasa.json`
 pub fn add_photo_to_folder_list(
     folder: &str,
     photo_path: &str,
@@ -219,7 +226,7 @@ pub fn add_photo_to_folder_list(
     config.photo_list.push(PhotoEntry {
         path: file_name.clone(),
         thumbnail: thumbnail_name,
-        is_video: is_video_file(photo_path.to_string()),
+        is_video: is_video_file(photo_path),
         history: Vec::new(),
     });
     config.last_modified = now_millis();

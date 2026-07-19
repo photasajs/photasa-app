@@ -17,8 +17,8 @@ npm install @zouwu-wf/expression-parser
 ## 使用示例
 
 ```typescript
-import { extractTemplateExpressions } from '@zouwu-wf/expression-parser';
+import { extractTemplateExpressions } from "@zouwu-wf/expression-parser";
 
-const result = extractTemplateExpressions('Hello \{\{inputs.name\}\}!');
+const result = extractTemplateExpressions("Hello \{\{inputs.name\}\}!");
 console.log(result.variables);
 ```

@@ -8,12 +8,12 @@
 use async_trait::async_trait;
 use serde_json::{json, Value};
 use std::sync::Arc;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 use zouwu_core::adapter::{Adapter, AdapterError};
 use zouwu_core::types::ExecutionContext;
 
-use crate::commands::scan_runner::{run_directory_scan, ScanAction};
+use crate::commands::scan_runner::{ScanAction, ScanWorker};
 
 pub struct ScanAdapter {
     app_handle: Arc<AppHandle>,
@@ -59,36 +59,28 @@ impl Adapter for ScanAdapter {
 
             "scanPaths" => {
                 let paths = extract_paths(&input)?;
-                let recursive = input
-                    .get("recursive")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(true);
-                let request_id = uuid::Uuid::new_v4().to_string();
-                let handle = Arc::clone(&self.app_handle);
-                let paths_clone = paths.clone();
-                let request_id_clone = request_id.clone();
-
-                tokio::spawn(async move {
-                    let app = Arc::new((*handle).clone());
-                    for base_path in paths_clone {
-                        run_directory_scan(
-                            Arc::clone(&app),
-                            request_id_clone.clone(),
+                let worker = self.app_handle.state::<ScanWorker>();
+                let request_ids: Vec<String> = paths
+                    .into_iter()
+                    .map(|path| {
+                        let request_id = uuid::Uuid::new_v4().to_string();
+                        worker.submit(
+                            request_id.clone(),
                             ScanAction {
-                                path: base_path,
+                                path,
                                 operation_type: String::new(),
                                 action: "scan".to_string(),
                                 thumbnail_size: Some(256),
                                 is_directory: true,
                             },
-                            recursive,
-                        )
-                        .await;
-                    }
-                });
+                        )?;
+                        Ok(request_id)
+                    })
+                    .collect::<Result<_, String>>()
+                    .map_err(AdapterError::InvalidInput)?;
 
                 Ok(json!({
-                    "requestId": request_id,
+                    "requestIds": request_ids,
                     "status": "running",
                     "fileCount": 0,
                     "success": true

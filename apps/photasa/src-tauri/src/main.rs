@@ -9,6 +9,7 @@ mod utils;
 use commands::import_execute::ImportTaskRegistry;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use commands::log_toggle_shortcut;
+use commands::stubs::ScanWorker;
 use commands::update::UpdateState;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 use commands::update_periodic::UpdatePeriodicHandle;
@@ -100,6 +101,10 @@ fn main() {
             app.manage(directory::DirectoryStore(Mutex::new(HashMap::new())));
             app.manage(watch::WatchState::new());
             app.manage(Arc::new(ImportTaskRegistry::default()));
+            app.manage(ScanWorker::new(app.handle().clone()).map_err(|error| {
+                log::error!("❌ 无法启动扫描线程：{error}");
+                std::io::Error::other(error)
+            })?);
 
             splash_bridge::emit_splash_status(&app_handle, "初始化核心服务...");
             splash_bridge::emit_splash_progress(&app_handle, 25);

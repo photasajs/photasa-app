@@ -296,8 +296,8 @@
 - Changed `build.rs` to use embedded `.h` files for the bindgen build stage
   instead of `.h` files from the installed libheif library.
 
-  Now you can link the crate with any version of `libheif`
-  that is backward compatible with the version supported by the crate.
+    Now you can link the crate with any version of `libheif`
+    that is backward compatible with the version supported by the crate.
 
 ### Fixes
 
@@ -420,8 +420,8 @@
     - Changed `build.rs` to use embedded `.h` files for the bindgen build stage
       instead of `.h` files from the installed libheif library.
 
-      Now you can link the crate with any version of `libheif`
-      that is backward compatible with the version supported by the crate.
+        Now you can link the crate with any version of `libheif`
+        that is backward compatible with the version supported by the crate.
 
 ## [2.1.1] - 2024-05-08
 
@@ -642,14 +642,14 @@
     - added new values into `heif_suberror_code` "enum":
       `heif_suberror_code_heif_suberror_Wrong_tile_image_pixel_depth`.
     - added new functions: `heif_image_handle_is_premultiplied_alpha`,
-      `heif_image_set_premultiplied_alpha`,  `heif_image_is_premultiplied_alpha`.
+      `heif_image_set_premultiplied_alpha`, `heif_image_is_premultiplied_alpha`.
 
 ## [1.11.0] - 2021-02-03
 
 - Updated "bindings.rs" to correspond `libheif 1.11`:
     - added new type `heif_brand2`;
     - added new functions: `heif_read_main_brand`,
-      `heif_fourcc_to_brand`,  `heif_brand_to_fourcc`,
+      `heif_fourcc_to_brand`, `heif_brand_to_fourcc`,
       `heif_has_compatible_brand`, `heif_list_compatible_brands`,
       `heif_free_list_of_compatible_brands`,
       `heif_image_handle_free_auxiliary_types`,

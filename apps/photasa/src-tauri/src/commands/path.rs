@@ -126,45 +126,24 @@ pub fn relative_path(from: String, to: String) -> Result<String, String> {
 // 文件类型判断（与 Electron is-video / is-image 同行为）
 // ============================================================
 
-static VIDEO_EXTS: &[&str] = &[
-    "mp4", "mov", "avi", "mkv", "m4v", "3gp", "wmv", "flv", "webm", "mpg", "mpeg", "m2v", "mts",
-    "m2ts", "ts", "vob", "rmvb", "rm",
-];
-
-static IMAGE_EXTS: &[&str] = &[
-    "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif", "heic", "heif", "avif", "raw",
-    "cr2", "cr3", "nef", "arw", "svg", "ico", "psd",
-];
-
-fn ext_lower(path: &str) -> String {
-    Path::new(path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase())
-        .unwrap_or_default()
-}
-
 /// 判断路径是否为视频文件（按扩展名）
 #[tauri::command]
 pub fn is_video_file(path: String) -> bool {
-    let ext = ext_lower(&path);
-    VIDEO_EXTS.contains(&ext.as_str())
+    photasa_media::is_video_file(&path)
 }
 
 /// 判断路径是否为图片文件（按扩展名）
 #[tauri::command]
 pub fn is_image_file(path: String) -> bool {
-    let ext = ext_lower(&path);
-    IMAGE_EXTS.contains(&ext.as_str())
+    photasa_media::is_image_file(&path)
 }
 
 /// 返回文件类型字符串："image" | "video" | "unknown"
 #[tauri::command]
 pub fn get_image_type(path: String) -> String {
-    let ext = ext_lower(&path);
-    if IMAGE_EXTS.contains(&ext.as_str()) {
+    if photasa_media::is_image_file(&path) {
         "image".to_string()
-    } else if VIDEO_EXTS.contains(&ext.as_str()) {
+    } else if photasa_media::is_video_file(&path) {
         "video".to_string()
     } else {
         "unknown".to_string()

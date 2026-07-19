@@ -9,8 +9,8 @@
 - **类型**: 架构重构
 - **目标版本**: v2.0.0
 - **依赖RFC**:
-  - RFC 0046: 扫描队列持久化 - 千里眼scanning.json管理（已完成95%）✅
-  - RFC 0042: scanningFolder四步渐进式迁移（Step 1已完成）✅
+    - RFC 0046: 扫描队列持久化 - 千里眼scanning.json管理（已完成95%）✅
+    - RFC 0042: scanningFolder四步渐进式迁移（Step 1已完成）✅
 
 ---
 
@@ -19,11 +19,13 @@
 **职责自洽迁移**：将 App.vue 中的扫描编排逻辑（`orchestrateScan`）迁移到尉迟恭（YuChiGongService），通过启奏-圣旨协调跨职责操作。删除 AppHelper.ts（306行），App.vue 减少 ~200 行代码。
 
 **架构演变**（2025-11-23 Linus "Good Taste" 修正版）：
+
 - **原设计v1**：watchArray 监听 Store 队列变化 → 自动触发扫描
 - **v2实现**：p-queue 是 SSOT + Store 只是持久化层
 - **v3最终设计**：**Store 是 SSOT + 状态机制 + 立即清理**（消除双真相源）
 
 **架构核心理念**（Linus "Good Taste" - 消除特殊情况）：
+
 ```
 【唯一真相】Store = SSOT (Single Source of Truth) + State Machine
     ↓ 状态驱动
@@ -33,14 +35,16 @@
 ```
 
 **关键优势**：
-  - ✅ **Store 是唯一 SSOT** - 消除 p-queue 与 Store 的双真相源问题
-  - ✅ **状态机制** - pending → processing → [删除]（无 completed）
-  - ✅ **立即清理** - 成功即删除，不保留历史
-  - ✅ **失败可重试** - failed 状态支持重试，达上限则删除
-  - ✅ **简单清晰** - 单一真相源，无需同步机制
-  - ✅ **性能优异** - 无双向同步开销
+
+- ✅ **Store 是唯一 SSOT** - 消除 p-queue 与 Store 的双真相源问题
+- ✅ **状态机制** - pending → processing → [删除]（无 completed）
+- ✅ **立即清理** - 成功即删除，不保留历史
+- ✅ **失败可重试** - failed 状态支持重试，达上限则删除
+- ✅ **简单清晰** - 单一真相源，无需同步机制
+- ✅ **性能优异** - 无双向同步开销
 
 **数据流向**（状态机制）：
+
 ```
 用户操作 → handleAddScanTask()（响应圣旨）
          ↓
@@ -63,6 +67,7 @@
 ```
 
 **核心原则** - "Store 单一真相源 + 状态机制 + 立即清理"（2025-11-23 Linus 修正版）：
+
 1. ✅ **Store 是唯一 SSOT** - 所有任务状态以 Store 为准（含状态字段）[Phase 1-3 已实现]
 2. ✅ **p-queue 是执行器** - 仅负责执行，不持有状态 [已实现]
 3. ✅ **状态机制** - pending → processing → [删除]，failed 可重试 [Phase 2-3 已实现]
@@ -85,6 +90,7 @@
 ### ✅ v2架构（p-queue执行）：60%完成
 
 **已完成**：
+
 - ✅ p-queue执行队列架构 (`yuchigong.ts` Line 60-66)
 - ✅ AppHelper.ts删除（306行）
 - ✅ completeScanPath()删除 (`preference.ts` Line 513)
@@ -93,6 +99,7 @@
 - ✅ executeScan()递归扫描子文件夹（添加到p-queue）
 
 **未完成**：
+
 - ❌ 子文件夹批量持久化到Store（只递归添加到p-queue，未持久化）
 - ❌ addScanTask/addScanTasks仍在使用（未废弃）
 
@@ -103,12 +110,14 @@
 #### Phase 1: ScanAction 状态机接口 ✅ 100%完成 (2025-01-23)
 
 **已完成的架构分离**：
+
 - ✅ **IPC契约层**：`ScanAction` (scan-types.ts) - 保持简单，向后兼容
 - ✅ **Store内部层**：`ScanQueueItem` (scanning-types.ts) - 完整状态机字段
 - ✅ **转换层**：`createScanQueueItem()` / `toScanAction()` - IPC ↔ Store 双向转换
 - ✅ **类型安全**：所有生产代码和测试代码 0 类型错误（从55个错误修复到0）
 
 **ScanQueueItem 已实现的字段** (`scanning-types.ts`):
+
 ```typescript
 // ✅ 已实现的完整状态机字段
 status: "pending" | "processing" | "failed";  // 任务状态
@@ -122,6 +131,7 @@ progress?: number;                             // 进度（0-100）
 ```
 
 **架构优势**：
+
 - ✅ IPC契约稳定：scan-types.ts未修改，Main进程无感知
 - ✅ Store类型丰富：ScanQueueItem包含完整生命周期管理
 - ✅ 类型安全保证：接口与实现完全匹配
@@ -130,6 +140,7 @@ progress?: number;                             // 进度（0-100）
 #### Phase 2: YuChiGong 核心逻辑 ✅ 100%完成 (2025-01-23)
 
 **已实现的方法** (`yuchigong.ts`):
+
 ```typescript
 // ✅ 已实现的核心方法
 private async updateTaskStatus(
@@ -147,17 +158,19 @@ private async deleteTask(path: string): Promise<void>
 ```
 
 **已修复的核心逻辑**：
+
 - ✅ `executeScan()` 完整状态转换（pending → processing → [删除]）
-  - Line 106: `await this.updateTaskStatus(path, "processing", { startedAt })`
-  - Line 129-139: 子文件夹批量持久化 `await this.createTasks(subfolderActions)`
-  - Line 162: 完成即删除 `await this.deleteTask(path)`
-  - Line 177-180: 失败状态更新 `await this.updateTaskStatus(path, "failed", { error, retryCount: 0 })`
+    - Line 106: `await this.updateTaskStatus(path, "processing", { startedAt })`
+    - Line 129-139: 子文件夹批量持久化 `await this.createTasks(subfolderActions)`
+    - Line 162: 完成即删除 `await this.deleteTask(path)`
+    - Line 177-180: 失败状态更新 `await this.updateTaskStatus(path, "failed", { error, retryCount: 0 })`
 - ✅ `initializeScanningQueue()` 完整状态恢复（Lines 1021-1104）
-  - processing → pending（孤儿任务重置）
-  - failed → 重试或删除（24小时TTL + retryCount校验）
-  - pending → 恢复执行
+    - processing → pending（孤儿任务重置）
+    - failed → 重试或删除（24小时TTL + retryCount校验）
+    - pending → 恢复执行
 
 **架构完整性**：
+
 - ✅ Store是唯一SSOT，所有状态以Store为准
 - ✅ p-queue纯执行器，不持有状态
 - ✅ 状态机完整流转：pending → processing → [deleted/failed]
@@ -193,11 +206,13 @@ this.scanQueue
 ```
 
 **问题分析**：
+
 - ❌ **违反DRY原则** - 相同逻辑重复3次，维护成本高
 - ❌ **容易出错** - 修改一处需要同步修改三处，容易遗漏
 - ❌ **坏品味** - Linus "好品味"原则要求消除特殊情况，而不是增加条件判断
 
 **修复方案**：
+
 1. 提取公共函数：`private async enqueueTask(task: ScanQueueItem): Promise<void>`
 2. 统一错误处理：三个分支共享同一执行路径
 3. 消除重复：让特殊情况变成正常情况
@@ -206,10 +221,11 @@ this.scanQueue
 
 ```typescript
 // Line 972: 魔法数字
-Math.round(taskAge / 3600000)  // 3600000 是什么？意图不清晰
+Math.round(taskAge / 3600000); // 3600000 是什么？意图不清晰
 ```
 
 **修复方案**：
+
 ```typescript
 const HOURS_IN_MILLISECONDS = 60 * 60 * 1000;
 const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
@@ -224,11 +240,13 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 `.catch()` 只记录错误，没有恢复机制。如果队列添加失败，任务会丢失。
 
 **修复优先级**：
+
 - 🔴 **高优先级**：问题1（代码重复）- 影响可维护性
 - 🟡 **中优先级**：问题2（魔法数字）- 影响可读性
 - 🟢 **低优先级**：问题3-4（嵌套和错误处理）- 可以优化
 
 **修复计划**：
+
 - [ ] 提取 `enqueueTask()` 私有方法
 - [ ] 提取时间计算常量
 - [ ] 简化条件分支逻辑
@@ -239,17 +257,20 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 **问题1：状态栏路径显示错误** - ✅ 已修复 (2025-01-23)
 
 **问题现象**：
+
 - 状态栏总是显示根路径（如 "/Users/photos"）
 - 子文件夹路径（如 "/Users/photos/subfolder"）完全丢失
 
 **根本原因**：
 原代码只显示队列中的第一个任务（`newQueue[0].path`），但队列顺序是：
+
 1. 根路径任务（pending）→ 队列第一个位置
 2. 子文件夹任务（pending）→ 队列后续位置
 
 当根路径开始扫描时，状态变为 processing，但子文件夹扫描时，根路径可能已经完成并删除，或者根路径仍在队列第一个位置，导致状态栏总是显示根路径。
 
 **真实场景**：
+
 ```
 1. 用户添加根路径 "/Users/photos"
 2. 队列：[{path: "/Users/photos", status: "pending"}]
@@ -271,6 +292,7 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 **修复位置**：`src/renderer/src/App.vue` Line 246-263
 
 **修复后的真实场景**：
+
 ```
 1. 根路径开始扫描：状态栏显示 "/Users/photos" ✅
 2. 子文件夹开始扫描：状态栏立即切换到 "/Users/photos/sub1" ✅
@@ -282,40 +304,44 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 **问题2：子文件夹未添加到文件夹树** - ✅ 已修复 (2025-01-23)
 
 **问题现象**：
+
 - 子文件夹扫描完成后，没有添加到文件夹树中
 - 只有根路径出现在文件夹树中
 
 **根本原因分析**：
 
 **原因1：数组模板变量解析失败**
+
 - `event-routing.yml` 配置中，`scan_completed` 路由使用数组格式：
-  ```yaml
-  scan_completed:
-    - when: ...
-      then:
-        shengzhi:
-          content:
-            paths:
-              - "{{qizou.content.path}}"  # ← 数组中的模板变量
-  ```
+    ```yaml
+    scan_completed:
+        - when: ...
+          then:
+              shengzhi:
+                  content:
+                      paths:
+                          - "{{qizou.content.path}}" # ← 数组中的模板变量
+    ```
 - 原 `resolveContent` 方法只处理字符串类型的模板变量，无法处理数组中的模板变量
 - 导致 `paths` 数组保持为 `["{{qizou.content.path}}"]`，而不是实际的路径数组 `["/actual/path"]`
 - 魏征收到圣旨时，`paths` 参数无效（包含模板字符串而非实际路径），导致添加失败
 
 **原因2：根节点不存在导致 addFolderToTree 失败**
+
 - `addFolderToTree` 函数有一个关键限制：它需要根节点存在才能添加子节点
-  ```typescript
-  const root = roots.find((node) => file.path.indexOf(node.key as string) >= 0);
-  if (!root) {
-      return; // 如果找不到根节点，直接返回，不添加
-  }
-  ```
+    ```typescript
+    const root = roots.find((node) => file.path.indexOf(node.key as string) >= 0);
+    if (!root) {
+        return; // 如果找不到根节点，直接返回，不添加
+    }
+    ```
 - 当根路径扫描完成时，根节点可能还没有被添加到文件夹树中（异步延迟）
 - 导致：
-  1. 根路径扫描完成 → `addFolderToTree` 找不到根节点 → 不添加
-  2. 子文件夹扫描完成 → `addFolderToTree` 找不到根节点 → 不添加
+    1. 根路径扫描完成 → `addFolderToTree` 找不到根节点 → 不添加
+    2. 子文件夹扫描完成 → `addFolderToTree` 找不到根节点 → 不添加
 
 **真实场景**：
+
 ```
 1. 子文件夹 "/Users/photos/sub1" 扫描完成
 2. 尉迟恭发出 scan_completed 启奏：{ path: "/Users/photos/sub1", ... }
@@ -341,24 +367,27 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 **修复方案**：
 
 **修复1：数组模板变量解析** - `src/renderer/src/services/lishimin/router.ts`
+
 - 修改 `resolveContent` 方法，支持递归解析数组中的模板变量
 - 提取 `resolveTemplateValue` 辅助方法，提高代码可维护性
 - 现在 `paths: ["{{qizou.content.path}}"]` 可以正确解析为 `["/Users/photos/sub1"]`
 
 **修复2：根节点检测逻辑修复** - `src/renderer/src/services/weizheng/weizheng.ts`
+
 - **原逻辑问题**：原逻辑可能将子文件夹误判为根路径
-  - 原逻辑：`isRootPath = !newTree.some((root) => root.key.indexOf(folderPath) >= 0)`
-  - 问题：如果 `folderPath = "/Users/photos/sub1"` 且 `roots = []`，会错误地认为它是根路径
+    - 原逻辑：`isRootPath = !newTree.some((root) => root.key.indexOf(folderPath) >= 0)`
+    - 问题：如果 `folderPath = "/Users/photos/sub1"` 且 `roots = []`，会错误地认为它是根路径
 - **修复方案**：使用 `preference.paths` 来判断路径是否是根路径
-  - 如果路径在 `preference.paths` 中，说明是用户添加的监控路径（根路径），应该作为根节点
-  - 如果路径不在 `preference.paths` 中，说明是子文件夹，不应该添加为根节点
-  - 修复后的逻辑：`isUserRootPath = userPaths.some((userPath) => userPath === folderPath)`
+    - 如果路径在 `preference.paths` 中，说明是用户添加的监控路径（根路径），应该作为根节点
+    - 如果路径不在 `preference.paths` 中，说明是子文件夹，不应该添加为根节点
+    - 修复后的逻辑：`isUserRootPath = userPaths.some((userPath) => userPath === folderPath)`
 - 在 `handleAddPaths` 中，对于每个路径：
-  1. 检查路径是否在 `preference.paths` 中（用户添加的监控路径）
-  2. 如果是根路径且根节点不存在，先添加根节点
-  3. 然后再调用 `addFolderToTree`，此时根节点已存在，可以正常添加
+    1. 检查路径是否在 `preference.paths` 中（用户添加的监控路径）
+    2. 如果是根路径且根节点不存在，先添加根节点
+    3. 然后再调用 `addFolderToTree`，此时根节点已存在，可以正常添加
 
 **修复后的真实场景**：
+
 ```
 1. 子文件夹 "/Users/photos/sub1" 扫描完成
 2. 尉迟恭发出 scan_completed 启奏：{ path: "/Users/photos/sub1", ... }
@@ -374,15 +403,18 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 ```
 
 **修复位置**：
+
 - `src/renderer/src/services/lishimin/router.ts` - `resolveContent()` 方法
 - `src/renderer/src/services/weizheng/weizheng.ts` - `handleAddPaths()` 方法
 
 **调试日志**：
+
 - `yuchigong.ts`: 记录 `scan_completed` 事件，用于诊断子文件夹未添加到文件夹树的问题
 - `router.ts`: 记录解析后的圣旨内容，用于诊断模板变量解析问题
 - `weizheng.ts`: 记录路径处理过程和根节点检测结果，用于诊断根节点添加问题
 
 **修复状态**：✅ 已修复 (2025-01-23)
+
 - [x] 修复状态栏路径冲突问题（`onFindPhoto` 不再覆盖 `watch` 设置的文件夹路径）
 - [x] 修复根节点检测逻辑（使用 `preference.paths` 判断根路径）
 - [x] 添加调试日志，用于诊断子文件夹未添加到文件夹树的问题
@@ -390,22 +422,24 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 #### Phase 3: ScanningStore 状态机支持 ✅ 100%完成 (2025-01-23, 修复2025-11-27)
 
 **已完成的实现**：
+
 - ✅ `ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS` 常量已添加
 - ✅ `update_scan_action_status.zouwu` 天界工作流已创建
-  - 支持通过path更新任务状态（pending | processing | failed）
-  - 支持额外字段更新（startedAt, error, retryCount等）
-  - 返回更新后的完整队列用于Store同步
+    - 支持通过path更新任务状态（pending | processing | failed）
+    - 支持额外字段更新（startedAt, error, retryCount等）
+    - 返回更新后的完整队列用于Store同步
 - ✅ `matter-sync.yml` 配置已添加
-  - autoSync: true（自动同步到ScanningStore）
-  - syncStrategy: replace（替换完整队列）
-  - propertyPath: "queue"
+    - autoSync: true（自动同步到ScanningStore）
+    - syncStrategy: replace（替换完整队列）
+    - propertyPath: "queue"
 - ✅ `yuchigong.ts` 中的 `updateTaskStatus()` 已实现
-  - 通过Zouzhe发送状态更新请求
-  - 错误处理和响应验证
-  - 完整的状态转换支持
+    - 通过Zouzhe发送状态更新请求
+    - 错误处理和响应验证
+    - 完整的状态转换支持
 - ✅ `yuantiangang.ts` 中的 `intentMapping` 映射已添加 (**2025-11-27修复**)
 
 **技术要点**：
+
 - Workflow使用arrayFind + arraySet实现精确任务更新
 - 更新后持久化完整队列，确保状态一致性
 - 通过objectMerge合并base + status + additional updates
@@ -417,25 +451,27 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 
 **根本原因**：实现Phase 3时遗漏了**4个**必要组件！
 
-| 遗漏 | 位置 | 错误信息 |
-|------|------|----------|
-| ❌ 遗漏1 | 袁天罡 `intentMapping` | "符箓意图未列入典籍" |
-| ❌ 遗漏2 | 天界 `UserIntent` 类型 | TypeScript编译错误 |
-| ❌ 遗漏3 | 天界 `intentToWorkflowMap` | "没有找到工作流" |
+| 遗漏     | 位置                       | 错误信息                       |
+| -------- | -------------------------- | ------------------------------ |
+| ❌ 遗漏1 | 袁天罡 `intentMapping`     | "符箓意图未列入典籍"           |
+| ❌ 遗漏2 | 天界 `UserIntent` 类型     | TypeScript编译错误             |
+| ❌ 遗漏3 | 天界 `intentToWorkflowMap` | "没有找到工作流"               |
 | ❌ 遗漏4 | 天界 `BuiltinAdapter` 方法 | "Method 'arrayFind' not found" |
 
 **修复内容**（2025-11-27）：
+
 1. ✅ `yuantiangang.ts` - 添加 `intentMapping` 映射
 2. ✅ `commands.ts` - 添加 `UserIntent` 类型 `"update_scan_action_status"`
 3. ✅ `TianshuEngine.ts` - 添加 `intentToWorkflowMap` 映射
 4. ✅ `BuiltinAdapter.ts` - 添加5个缺失的builtin actions:
-   - `arrayFind` - 数组查找（支持索引返回）
-   - `conditional` - 条件判断
-   - `arrayGet` - 数组取值
-   - `objectMerge` - 对象合并
-   - `arraySet` - 数组设值
+    - `arrayFind` - 数组查找（支持索引返回）
+    - `conditional` - 条件判断
+    - `arrayGet` - 数组取值
+    - `objectMerge` - 对象合并
+    - `arraySet` - 数组设值
 
 **教训**：Zouzhe系统跨越 Renderer 和 Main 进程，有 **7+个** 必须同步更新的组件。此外，工作流文件使用的所有 builtin actions 必须在 BuiltinAdapter 中有对应实现！详见：
+
 - CLAUDE.md - "Zouzhe/Zhaoling 实现检查清单（7步完整流程）"
 - `docs/architecture/zouzhe-workflow-guide.md` - 完整开发指南
 
@@ -448,13 +484,18 @@ const taskAgeInHours = Math.round(taskAge / HOURS_IN_MILLISECONDS);
 ### 当前架构问题
 
 **问题1：UI层包含复杂业务逻辑**
+
 ```typescript
 // App.vue Line 250-269: watchArray监听scanningFolder变化
-watchArray(scanningFolder, () => {
-    if (scanPhotosTask.isIdle) {
-        startScanning();  // ❌ UI层主动驱动
-    }
-}, { deep: true });
+watchArray(
+    scanningFolder,
+    () => {
+        if (scanPhotosTask.isIdle) {
+            startScanning(); // ❌ UI层主动驱动
+        }
+    },
+    { deep: true },
+);
 
 // App.vue Line 356-383: startScanning函数（27行）
 async function startScanning(): Promise<void> {
@@ -472,6 +513,7 @@ const callbacks: ScanCallbacks = {
 ```
 
 **问题2：AppHelper.ts 作为中间层**
+
 ```typescript
 // AppHelper.ts 306行代码
 export async function orchestrateScan(
@@ -483,11 +525,13 @@ export async function orchestrateScan(
 ```
 
 **问题3：职责不清晰**
+
 - App.vue 既负责 UI 渲染，又负责扫描编排（200+ 行）
 - AppHelper.ts 作为纯函数工具库，但只被 App.vue 使用
 - 扫描逻辑与 UI 耦合，难以测试
 
 **问题4：违反 Linus "简洁执念"**
+
 - 超过 3 层抽象：App.vue → AppHelper → callbacks
 - 复杂的回调机制
 - 代码散落在多个文件
@@ -523,6 +567,7 @@ export async function orchestrateScan(
 ```
 
 **问题**：
+
 - UI 层主动驱动业务逻辑
 - 多层嵌套调用
 - 复杂的回调机制
@@ -564,6 +609,7 @@ export async function orchestrateScan(
 ```
 
 **核心原则：Store 单一真相源 + 状态机制 + 立即清理**
+
 - ✅ **Store 是唯一 SSOT** - 所有任务状态以 Store 为准（含状态字段）
 - ✅ **p-queue 是执行器** - 仅负责执行，不持有状态
 - ✅ **状态机制** - pending → processing → [删除]（成功）或 → failed（失败）
@@ -576,6 +622,7 @@ export async function orchestrateScan(
 - ✅ **UI 监听启奏** - App.vue 通过 mitt 监听启奏事件更新 UI
 
 **优势**：
+
 - ✅ 单一真相源，无需同步机制
 - ✅ 状态清晰，易于理解和调试
 - ✅ 容错性强，支持失败重试和孤儿任务恢复
@@ -692,7 +739,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
     private scanQueue: PQueue;
 
     constructor(
-        private fangXuanLingService: IFangXuanLingService
+        private fangXuanLingService: IFangXuanLingService,
         // ✅ 最小依赖原则：只注入FangXuanLingService
         // ✅ 职责自洽：扫描、删除任务自己完成
         // ✅ 跨职责协调：通过启奏事件（scan_completed）让李世民协调魏征
@@ -733,7 +780,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     // ✅ 将任务恢复到 p-queue 执行队列
                     for (const task of pendingTasks) {
                         this.scanQueue.add(() =>
-                            this.executeScan(task.path, task.action, task.operationType)
+                            this.executeScan(task.path, task.action, task.operationType),
                         );
                     }
 
@@ -770,31 +817,31 @@ export class YuChiGongService implements IService, IYuChiGongService {
         try {
             // 1. 状态转换：pending → processing
             await this.updateTaskStatus(path, "processing", {
-                startedAt: Date.now()
+                startedAt: Date.now(),
             });
 
             // 2. 启奏：扫描开始（✅ 描述事实："扫描开始了"）
-            this.emitQizou('scan_started', { path });
+            this.emitQizou("scan_started", { path });
 
             // 3. 重扫描时重置配置（✅ 职责内操作）
-            if (action === 'rescan' && operationType === 'directory') {
+            if (action === "rescan" && operationType === "directory") {
                 await window.api.resetPhotasaConfig(path);
             }
 
             // 4. 文件操作 - 记录父目录
             let parentDir: string | null = null;
-            if (operationType === 'file') {
+            if (operationType === "file") {
                 parentDir = window.api.toDirName(path);
             }
 
             // 5. 目录操作 - 扫描子文件夹（批量持久化到 Store）
-            if (operationType === 'directory') {
+            if (operationType === "directory") {
                 const subfolders = await window.api.scanSubfolders(path);
                 if (subfolders.length > 0) {
                     logger.info(`🛡️ 尉迟恭：发现 ${subfolders.length} 个子文件夹`);
 
                     // ✅ 批量创建 pending 任务到 Store（SSOT）
-                    const subfolderTasks: ScanAction[] = subfolders.map(subfolder => ({
+                    const subfolderTasks: ScanAction[] = subfolders.map((subfolder) => ({
                         path: subfolder,
                         action,
                         status: "pending",
@@ -803,7 +850,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                         retryCount: 0,
                         maxRetries: 3,
                         operationType: "directory",
-                        thumbnailSize: 150
+                        thumbnailSize: 150,
                     }));
 
                     await this.createTasks(subfolderTasks);
@@ -811,7 +858,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     // ✅ 添加到 p-queue 执行队列
                     for (const subfolder of subfolders) {
                         this.scanQueue.add(() =>
-                            this.executeScan(subfolder, action, operationType)
+                            this.executeScan(subfolder, action, operationType),
                         );
                     }
                 }
@@ -822,26 +869,25 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 path,
                 action,
                 thumbnailSize: 150,
-                isDirectory: operationType !== 'file'
+                isDirectory: operationType !== "file",
             });
 
             // 7. ✅ 立即清理：删除任务（无 completed 状态）
             await this.deleteTask(path);
 
             // 8. 启奏：扫描完成（✅ 描述事实："扫描完成了"）
-            this.emitQizou('scan_completed', {
+            this.emitQizou("scan_completed", {
                 path,
                 parentDir,
                 operationType,
             });
 
             logger.info(`🛡️ 尉迟恭：扫描完成并清理 ${path}`);
-
         } catch (error) {
             logger.error(`🛡️ 尉迟恭：扫描失败 ${path}`, error);
 
             // ✅ 失败处理：更新为 failed 状态并递增重试计数
-            const task = this.scanningQueue.find(t => t.path === path);
+            const task = this.scanningQueue.find((t) => t.path === path);
             if (task) {
                 const newRetryCount = task.retryCount + 1;
 
@@ -849,9 +895,11 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     // 保留 failed 状态，等待重试
                     await this.updateTaskStatus(path, "failed", {
                         error: String(error),
-                        retryCount: newRetryCount
+                        retryCount: newRetryCount,
                     });
-                    logger.warn(`🛡️ 尉迟恭：任务失败，将重试 (${newRetryCount}/${task.maxRetries})`);
+                    logger.warn(
+                        `🛡️ 尉迟恭：任务失败，将重试 (${newRetryCount}/${task.maxRetries})`,
+                    );
                 } else {
                     // 达到重试上限，删除任务
                     await this.deleteTask(path);
@@ -860,7 +908,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             }
 
             // 启奏：扫描失败
-            this.emitQizou('scan_failed', { path, error: String(error) });
+            this.emitQizou("scan_failed", { path, error: String(error) });
         }
     }
 
@@ -873,7 +921,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
     private async updateTaskStatus(
         path: string,
         status: "pending" | "processing" | "failed",
-        updates: Partial<ScanAction> = {}
+        updates: Partial<ScanAction> = {},
     ): Promise<void> {
         const zouzhe: Zouzhe = {
             department: GUANYUAN_NAMES.YU_CHI_GONG,
@@ -945,7 +993,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             retryCount: 0,
             maxRetries: 3,
             operationType: "directory",
-            thumbnailSize: 150
+            thumbnailSize: 150,
         };
 
         await this.createTasks([scanAction]);
@@ -1002,7 +1050,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     logger.info(`🛡️ 尉迟恭：重置孤儿任务 ${task.path}`);
                     await this.updateTaskStatus(task.path, "pending");
                     tasksToRestore.push({ ...task, status: "pending" });
-
                 } else if (task.status === "failed") {
                     // 失败任务：检查是否过期或超重试次数
                     const age = now - task.createdAt;
@@ -1013,11 +1060,12 @@ export class YuChiGongService implements IService, IYuChiGongService {
                         tasksToDelete.push(task.path);
                     } else {
                         // 重置为 pending，重新尝试
-                        logger.info(`🛡️ 尉迟恭：重试失败任务 ${task.path} (${task.retryCount}/${task.maxRetries})`);
+                        logger.info(
+                            `🛡️ 尉迟恭：重试失败任务 ${task.path} (${task.retryCount}/${task.maxRetries})`,
+                        );
                         await this.updateTaskStatus(task.path, "pending");
                         tasksToRestore.push({ ...task, status: "pending" });
                     }
-
                 } else if (task.status === "pending") {
                     // pending 任务：直接恢复
                     tasksToRestore.push(task);
@@ -1034,12 +1082,11 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 logger.info(`🛡️ 尉迟恭：恢复 ${tasksToRestore.length} 个任务到执行队列`);
                 for (const task of tasksToRestore) {
                     this.scanQueue.add(() =>
-                        this.executeScan(task.path, task.action, task.operationType)
+                        this.executeScan(task.path, task.action, task.operationType),
                     );
                 }
                 logger.info(`🛡️ 尉迟恭：扫描队列初始化完成，自动继续执行`);
             }
-
         } catch (error) {
             logger.error("🛡️ 尉迟恭：获取扫描队列失败:", error);
             logger.info("🛡️ 尉迟恭：使用空队列继续启动");
@@ -1060,6 +1107,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
 **文件**: `src/renderer/src/services/lishimin/event-routing.yml`
 
 **YAML 格式规范** ⚠️：
+
 - ✅ **必须使用纯 YAML 语法** - 不使用 JSON 风格
 - ❌ **禁止 JSON 对象语法** - `{from: "尉迟恭"}`
 - ❌ **禁止 JSON 数组语法** - `["path1", "path2"]`
@@ -1068,17 +1116,17 @@ export class YuChiGongService implements IService, IYuChiGongService {
 ```yaml
 # ✅ 正确：纯 YAML 格式
 scan_completed:
-  - when:
-      from: "尉迟恭"
-      type: "report"
-    then:
-      service: "魏征"
-      shengzhi:
-        command: "add_paths"
-        content:
-          paths:
-            - "{{qizou.content.path}}"  # ← YAML 列表语法
-      description: "扫描完成后，下旨魏征更新树"
+    - when:
+          from: "尉迟恭"
+          type: "report"
+      then:
+          service: "魏征"
+          shengzhi:
+              command: "add_paths"
+              content:
+                  paths:
+                      - "{{qizou.content.path}}" # ← YAML 列表语法
+          description: "扫描完成后，下旨魏征更新树"
 
 # ❌ 错误：JSON 风格（已废弃）
 # scan_completed:
@@ -1090,6 +1138,7 @@ scan_completed:
 ```
 
 **关键原则**：
+
 - ✅ **启奏描述事实**："scan_started"、"scan_completed"、"scan_failed"
 - ❌ **启奏不是命令**："update_folder_tree"、"add_to_queue"
 - ✅ **一个启奏多个响应**：scan_completed可同时触发魏征和状态栏
@@ -1103,6 +1152,7 @@ scan_completed:
 **文件**: `src/renderer/src/App.vue`
 
 **删除内容**（~200 行）：
+
 ```typescript
 // ❌ 删除：orchestrateScan 导入（Line 1）
 import { orchestrateScan, type ScanCallbacks } from "./AppHelper";
@@ -1150,28 +1200,31 @@ async function startScanning(): Promise<void> {
 ```
 
 **新增内容**（~20行）：
+
 ```typescript
 // ✅ Linus版本：App.vue只watch Store，不监听mitt！
 // ✅ 李世民路由器负责监听mitt，App.vue只watch Store
 watch(
-  () => yuChiGong.scanningQueue,
-  (newQueue) => {
-    if (newQueue.length > 0) {
-      processingFile.value = t('status.scanningPath', {path: newQueue[0].path});
-    } else {
-      processingFile.value = '';
-    }
-  },
-  {deep: true}
+    () => yuChiGong.scanningQueue,
+    (newQueue) => {
+        if (newQueue.length > 0) {
+            processingFile.value = t("status.scanningPath", { path: newQueue[0].path });
+        } else {
+            processingFile.value = "";
+        }
+    },
+    { deep: true },
 );
 ```
 
 **关键原则**：
+
 - ✅ **李世民路由器负责监听mitt** - 已在lishimin/event-routing.yml中处理
 - ✅ **App.vue只watch Store** - 监听yuChiGong.scanningQueue变化
 - ❌ **App.vue不监听mitt** - 避免重复监听
 
 **代码减少**：
+
 - 删除：~200 行（watchArray, startScanning, callbacks 对象完整删除）
 - 新增：~20 行（watch Store监听队列变化）
 - **净减少：~180 行**
@@ -1185,6 +1238,7 @@ watch(
 **操作**: 完全删除此文件
 
 **理由**:
+
 - `orchestrateScan` 逻辑已集成到 YuChiGong
 - `ScanCallbacks` 接口不再需要
 - 工具函数已内联到 YuChiGong
@@ -1197,6 +1251,7 @@ watch(
 **文件**: `src/renderer/src/stores/preference.ts`
 
 **删除方法**:
+
 ```typescript
 // ❌ 删除：Line 513-527
 completeScanPath(folder: string): void {
@@ -1208,6 +1263,7 @@ completeScanPath(folder: string): void {
 ```
 
 **修复 removePath()**:
+
 ```typescript
 // Line 635: 删除对 completeScanPath 的调用
 removePath(path: string): void {
@@ -1226,6 +1282,7 @@ removePath(path: string): void {
 ## 实施计划（2025-11-23 状态机制版）
 
 **实施状态总览**（2025-01-23 更新）：
+
 - ✅ Phase 1: ScanAction 状态机接口 - **100%完成**（类型系统+接口定义）
 - ✅ Phase 2: YuChiGong 核心逻辑重构 - **100%完成**（三大核心方法+状态转换）
 - ✅ Phase 3: ScanningStore 状态机支持 - **100%完成**（Workflow+Store同步）
@@ -1240,6 +1297,7 @@ removePath(path: string): void {
 ### Phase 1: ScanAction 状态机接口（0.5 天）✅ **100%完成**
 
 **1.1 定义 ScanQueueItem 接口** ✅
+
 - [x] 添加 `status` 字段："pending" | "processing" | "failed"
 - [x] 添加 `createdAt`, `startedAt` 时间戳字段
 - [x] 添加 `source` 字段："user" | "auto"
@@ -1247,9 +1305,11 @@ removePath(path: string): void {
 - [x] 创建IPC↔Store转换层（createScanQueueItem, toScanAction）
 
 **1.2 更新 ZOUZHE_MATTERS 常量** ✅
+
 - [x] 添加 `UPDATE_SCAN_ACTION_STATUS` 常量
 
 **1.3 测试** ✅
+
 - [x] 类型检查通过（55个错误 → 0）
 - [x] 所有测试文件更新并通过
 
@@ -1258,17 +1318,20 @@ removePath(path: string): void {
 ### Phase 2: YuChiGong 核心逻辑重构（2 天）✅ **100%完成**
 
 **2.1 新增状态管理方法** ✅
+
 - [x] 实现 `updateTaskStatus()` - 通过Zouzhe更新状态，完整错误处理
 - [x] 实现 `createTasks()` - 批量创建pending任务到Store
 - [x] 实现 `deleteTask()` - 立即删除已完成任务
 
 **2.2 重构 executeScan()** ✅
+
 - [x] 添加状态转换：pending → processing（Line 106）
 - [x] 子文件夹批量持久化到Store（Lines 129-139）
 - [x] 完成即删除：deleteTask()（Line 162）
 - [x] 失败状态更新：updateTaskStatus("failed")（Lines 177-180）
 
 **2.3 重构 initializeScanningQueue()** ✅
+
 - [x] processing → pending 孤儿任务恢复（Lines 1048-1056）
 - [x] failed → 重试或删除逻辑（24h TTL + retryCount）（Lines 1061-1078）
 - [x] pending → 正常恢复执行（Lines 1082-1089）
@@ -1278,25 +1341,29 @@ removePath(path: string): void {
 ### Phase 3: ScanningStore 状态机支持（1 天）✅ **100%完成**
 
 **3.1 天界工作流创建** ✅
+
 - [x] 创建 `update_scan_action_status.zouwu` 工作流
-  - 输入：`{ path, status, updates }`
-  - 步骤：restore_queue → find_task → validate → merge_updates → replace_task → persist → return
-  - 输出：`{ task, queue, queueSize, persisted }`
-  - 技术：使用builtin actions（arrayFind, arraySet, objectMerge）
+    - 输入：`{ path, status, updates }`
+    - 步骤：restore_queue → find_task → validate → merge_updates → replace_task → persist → return
+    - 输出：`{ task, queue, queueSize, persisted }`
+    - 技术：使用builtin actions（arrayFind, arraySet, objectMerge）
 
 **3.2 Store Automation 配置** ✅
+
 - [x] 更新 `matter-sync.yml` 配置
-  - 添加 `update_scan_action_status` 同步规则
-  - autoSync: true, syncStrategy: replace, propertyPath: "queue"
-  - FangXuanLing统一流程自动处理
+    - 添加 `update_scan_action_status` 同步规则
+    - autoSync: true, syncStrategy: replace, propertyPath: "queue"
+    - FangXuanLing统一流程自动处理
 
 **3.3 YuChiGong集成** ✅
+
 - [x] 完成 `updateTaskStatus()` 实现
-  - 通过Zouzhe发送UPDATE_SCAN_ACTION_STATUS请求
-  - 完整错误处理和响应验证
-  - 优先级：URGENT（状态更新是紧急操作）
+    - 通过Zouzhe发送UPDATE_SCAN_ACTION_STATUS请求
+    - 完整错误处理和响应验证
+    - 优先级：URGENT（状态更新是紧急操作）
 
 **3.4 类型安全验证** ✅
+
 - [x] 类型检查通过（0错误）
 - [x] 常量定义完整（ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS）
 - [x] Workflow输入/输出schema定义完整
@@ -1306,6 +1373,7 @@ removePath(path: string): void {
 ### Phase 4: YuChiGong 接口清理（0.5 天）✅ **100%完成** (2025-01-23)
 
 **4.1 删除公共 API**
+
 - [x] ✅ 从 `IYuChiGongService` 删除 `addScanTask()`
 - [x] ✅ 从 `IYuChiGongService` 删除 `addScanTasks()`
 - [x] ✅ 从 `YuChiGongService` 实现中删除 `addScanTask()`, `addScanTasks()`, `persistToStore()`
@@ -1313,6 +1381,7 @@ removePath(path: string): void {
 - [x] ✅ 更新 FolderList.vue 和 event-routing.yml 注释
 
 **4.2 更新测试代码**
+
 - [x] ✅ 5处executeScan测试改为直接调用私有方法（Lines 977, 1007, 1022, 1074）
 - [x] ✅ 删除测试 "应该在启奏通道未建立时记录错误"（Line 810）
 - [x] ✅ 删除测试 "应该在扫描失败后继续处理下一个任务"（Line 1086）
@@ -1321,11 +1390,13 @@ removePath(path: string): void {
 - [x] ✅ 删除测试块 "p-queue行为验证"（Line 1097）
 
 **4.3 验证**
+
 - [x] ✅ 编译通过，零错误（typecheck passed）
 - [x] ✅ 所有测试通过（59/59 tests passed）
 - [x] ✅ Lint 检查通过（zero errors）
 
 **关键变更**：
+
 - 删除了违反 "Store as SSOT" 原则的直接任务添加方法
 - 强制所有扫描任务添加必须通过 Qizou-Shengzhi-FangXuanLing 标准流程
 - 测试代码改为直接测试 `executeScan()` 方法，更符合测试本质
@@ -1336,6 +1407,7 @@ removePath(path: string): void {
 ### Phase 5: 集成测试（1 天）✅ **100%完成** (2025-01-23)
 
 **5.1 状态机端到端测试**
+
 - [x] ✅ 测试用例 1：正常扫描流程（已通过用户测试验证）
 - [x] ✅ 测试用例 2：子文件夹发现（已通过用户测试验证）
 - [x] ✅ 测试用例 3：失败重试（已通过用户测试验证）
@@ -1343,11 +1415,13 @@ removePath(path: string): void {
 - [x] ✅ 测试用例 5：过期任务清理（已通过用户测试验证）
 
 **5.2 性能测试**
+
 - [x] ✅ 连续扫描任务（已通过用户测试验证）
 - [x] ✅ 状态转换性能监控（已通过用户测试验证）
 - [x] ✅ 内存泄漏检查（已通过用户测试验证）
 
 **5.3 验证三大问题修复**
+
 - [x] ✅ Stuck issue：扫描立即启动（已修复并验证）
 - [x] ✅ Queue only root level：子文件夹批量入队（已修复并验证）
 - [x] ✅ Folder tree not updated：scan_completed 事件触发魏征（已修复并验证）
@@ -1365,6 +1439,7 @@ removePath(path: string): void {
 **总计**: 约 5.5 天
 
 **关键里程碑**：
+
 - Day 1-2: 核心状态机逻辑实现
 - Day 3: Store 状态机支持
 - Day 4: 接口清理和单元测试
@@ -1385,9 +1460,9 @@ removePath(path: string): void {
 - ❌ **子文件夹发现**：扫描时发现子文件夹批量创建 pending 任务到 Store
 - ❌ **失败重试**：失败任务保留 failed 状态，支持重试，达上限删除
 - ❌ **启动恢复**：
-  - processing 任务重置为 pending（孤儿任务）
-  - failed 任务重试或删除（超24h/超重试次数删除）
-  - pending 任务恢复到 p-queue
+    - processing 任务重置为 pending（孤儿任务）
+    - failed 任务重试或删除（超24h/超重试次数删除）
+    - pending 任务恢复到 p-queue
 - ✅ **UI 实时显示**：监听 scan_started 启奏事件更新扫描状态
 - ✅ **文件夹树更新**：scan_completed 启奏 → 李世民路由 → 魏征响应圣旨
 
@@ -1405,12 +1480,14 @@ removePath(path: string): void {
 ### 代码质量 - **部分达成**
 
 **已完成**：
+
 - ✅ 删除 AppHelper.ts (306 行)
 - ❌ App.vue 减少 ~180 行（未验证，需要检查实际代码）
 - ❌ 删除 addScanTask/addScanTasks 公共方法（仍在使用 `yuchigong.ts` Line 760, 657）
 - ⚠️ **总计减少 ~500 行代码**（未达成，只删除了AppHelper.ts的306行）
 
 **未完成**：
+
 - ❌ 单元测试覆盖率 ≥ 90%（v3状态机制无测试）
 - ❌ 零 lint 错误（未验证）
 - ❌ 零 TypeScript 错误（未验证）
@@ -1420,12 +1497,14 @@ removePath(path: string): void {
 **⚠️ 以下测试用例为v3状态机制的目标测试，当前无法实现（缺少状态字段）**
 
 **测试用例 1：正常扫描流程** ❌ 未实现
+
 1. 用户添加路径 → 创建 pending 任务
 2. p-queue 执行 → 状态转换为 processing
 3. 扫描成功 → 任务立即删除（无 completed）
 4. Store 中无该任务记录
 
 **测试用例 2：子文件夹发现** ❌ 未实现
+
 1. 扫描父文件夹 → 发现 3 个子文件夹
 2. 批量创建 3 个 pending 任务到 Store
 3. 添加 3 个任务到 p-queue
@@ -1433,20 +1512,23 @@ removePath(path: string): void {
 5. 3 个子文件夹任务继续执行
 
 **测试用例 3：失败重试** ❌ 未实现
+
 1. 任务执行失败 → 状态转换为 failed，retryCount = 1
 2. 重试 → failed → pending → processing
 3. 再次失败 → failed，retryCount = 2
 4. 继续重试直到 retryCount = 3 → 删除任务
 
 **测试用例 4：应用重启恢复** ❌ 未实现
+
 1. 崩溃前：2 个 pending，1 个 processing，1 个 failed
 2. 重启后：
-   - 2 个 pending → 直接恢复到 p-queue
-   - 1 个 processing → 重置为 pending，恢复到 p-queue
-   - 1 个 failed（未过期）→ 重置为 pending，恢复到 p-queue
+    - 2 个 pending → 直接恢复到 p-queue
+    - 1 个 processing → 重置为 pending，恢复到 p-queue
+    - 1 个 failed（未过期）→ 重置为 pending，恢复到 p-queue
 3. 所有任务继续执行
 
 **测试用例 5：过期任务清理** ❌ 未实现
+
 1. 重启发现 1 个 failed 任务，创建时间 > 24h
 2. 立即删除该任务
 3. Store 中无该任务记录
@@ -1471,12 +1553,12 @@ removePath(path: string): void {
 ### 中风险
 
 - **watch 性能** - 队列频繁更新时的性能
-  - **缓解**: 使用 setTimeout 延迟执行
-  - **监控**: 性能日志
+    - **缓解**: 使用 setTimeout 延迟执行
+    - **监控**: 性能日志
 
 - **并发扫描** - `isScanning` 标志防止并发
-  - **缓解**: 严格的标志检查
-  - **测试**: 并发测试
+    - **缓解**: 严格的标志检查
+    - **测试**: 并发测试
 
 ### 破坏性变更
 
@@ -1519,9 +1601,11 @@ removePath(path: string): void {
 ### 方案A：保留 AppHelper.ts（已否决）
 
 **优点**：
+
 - 纯函数设计，易测试
 
 **缺点**：
+
 - 增加抽象层次
 - 复杂的 callbacks 机制
 - 代码散落在多个文件
@@ -1529,10 +1613,12 @@ removePath(path: string): void {
 ### 方案B：保留原有架构（已否决）
 
 **优点**：
+
 - 无需迁移
 - 风险低
 
 **缺点**：
+
 - UI 层包含业务逻辑
 - 难以测试和维护
 - 违反单一职责原则
@@ -1544,30 +1630,30 @@ removePath(path: string): void {
 ## 未解决问题
 
 1. **失败重试触发时机？**
-   - 选项A：自动重试（启动时自动将 failed 任务重置为 pending）
-   - 选项B：手动重试（需要用户操作触发）
-   - **当前设计**：自动重试（启动时自动处理）
-   - 待确认：是否需要支持手动重试功能
+    - 选项A：自动重试（启动时自动将 failed 任务重置为 pending）
+    - 选项B：手动重试（需要用户操作触发）
+    - **当前设计**：自动重试（启动时自动处理）
+    - 待确认：是否需要支持手动重试功能
 
 2. **过期任务清理策略？**
-   - 选项A：启动时清理（当前设计）
-   - 选项B：定期清理（后台任务）
-   - **当前设计**：启动时清理（简单清晰）
-   - 待确认：是否需要定期清理机制
+    - 选项A：启动时清理（当前设计）
+    - 选项B：定期清理（后台任务）
+    - **当前设计**：启动时清理（简单清晰）
+    - 待确认：是否需要定期清理机制
 
 3. **状态字段默认值处理？**
-   - 旧数据迁移：自动添加默认值（status: "pending", createdAt: now, retryCount: 0）
-   - 新数据创建：必须提供完整字段
-   - **当前设计**：向后兼容，旧数据自动迁移
-   - 待确认：是否需要更严格的验证
+    - 旧数据迁移：自动添加默认值（status: "pending", createdAt: now, retryCount: 0）
+    - 新数据创建：必须提供完整字段
+    - **当前设计**：向后兼容，旧数据自动迁移
+    - 待确认：是否需要更严格的验证
 
 4. **扫描并发策略？**
-   - 当前：串行扫描（p-queue concurrency: 1）
-   - 待确认：是否需要支持并发扫描（提高性能）
+    - 当前：串行扫描（p-queue concurrency: 1）
+    - 待确认：是否需要支持并发扫描（提高性能）
 
 5. **扫描超时策略？**
-   - 当前：无超时限制
-   - 待确认：是否需要单任务超时（防止卡死）
+    - 当前：无超时限制
+    - 待确认：是否需要单任务超时（防止卡死）
 
 ---
 
@@ -1583,43 +1669,51 @@ removePath(path: string): void {
 ## 架构演变历史（2025-11-09）
 
 ### 第一版：最简迁移（19:55）❌ 被否决
+
 ```typescript
 // 注入callbacks对象，复制orchestrateScan逻辑
 constructor(fangXuanLingService, callbacks: ScanCallbacks)
 ```
+
 **问题**：callbacks是脱裤子放屁，违反职责自洽原则
 
 ---
 
 ### 第二版：直接注入服务（19:57）❌ 被否决
+
 ```typescript
 // 直接注入魏征和i18n
-constructor(fangXuanLingService, weiZheng, i18n)
+constructor(fangXuanLingService, weiZheng, i18n);
 await this.weiZheng.addFolderPath(path); // 直接调用魏征
 ```
+
 **问题**：尉迟恭不应该知道需要更新树，违反职责分离
 
 ---
 
 ### 第三版：启奏命令（20:02）❌ 被否决
+
 ```typescript
 // 只注入FangXuanLingService，通过启奏协调
-this.emitQizou('update_folder_tree', {path}); // ❌ 错误：命令式
+this.emitQizou("update_folder_tree", { path }); // ❌ 错误：命令式
 ```
+
 **问题**：update_folder_tree是命令，不是事实描述
 
 ---
 
 ### 第四版：启奏事实（20:04）✅ 最终确定
+
 ```typescript
 // 只注入FangXuanLingService
-constructor(fangXuanLingService)
+constructor(fangXuanLingService);
 
 // 启奏描述事实
-this.emitQizou('scan_completed', {path, isDirectory}); // ✅ 正确：事实描述
+this.emitQizou("scan_completed", { path, isDirectory }); // ✅ 正确：事实描述
 ```
 
 **关键原则**（20:05最终确认）：
+
 1. ✅ **启奏描述"发生了什么"**（事实）：scan_started/completed/failed
 2. ❌ **启奏不是"要做什么"**（命令）：update_folder_tree
 3. ✅ **尉迟恭不知道后果**：只报告扫描完成，李世民决定协调谁
@@ -1630,40 +1724,40 @@ this.emitQizou('scan_completed', {path, isDirectory}); // ✅ 正确：事实描
 ## 更新历史
 
 - **2025-01-23**: RFC 0048 完成 ✅
-  - **状态更新**：标记为已完成，所有 Phase 1-6 完成
-  - **测试验证**：所有功能已通过用户测试验证
-  - **运行时问题修复**（已修复并验证）：
-  - 修复状态栏路径冲突问题（`onFindPhoto` 不再覆盖 `watch` 设置的文件夹路径）
-  - 修复根节点检测逻辑（使用 `preference.paths` 判断根路径）
-  - 添加调试日志，用于诊断子文件夹未添加到文件夹树的问题
-  - **状态栏路径显示修复**：优先显示 processing 状态的任务，而不是队列第一个任务（✅ 已通过用户测试验证）
-  - **子文件夹添加到文件夹树修复**：
-    - 修复数组模板变量解析问题（router.ts）（✅ 已通过用户测试验证）
-    - 修复根节点不存在导致 addFolderToTree 失败问题（weizheng.ts）（✅ 已通过用户测试验证）
-  - **代码质量问题记录**：记录 initializeScanningQueue() 中的代码重复、魔法数字等问题
-    - ⚠️ **注意**：代码质量问题（问题1-4）已记录但未修复，建议创建新 RFC 跟踪
+    - **状态更新**：标记为已完成，所有 Phase 1-6 完成
+    - **测试验证**：所有功能已通过用户测试验证
+    - **运行时问题修复**（已修复并验证）：
+    - 修复状态栏路径冲突问题（`onFindPhoto` 不再覆盖 `watch` 设置的文件夹路径）
+    - 修复根节点检测逻辑（使用 `preference.paths` 判断根路径）
+    - 添加调试日志，用于诊断子文件夹未添加到文件夹树的问题
+    - **状态栏路径显示修复**：优先显示 processing 状态的任务，而不是队列第一个任务（✅ 已通过用户测试验证）
+    - **子文件夹添加到文件夹树修复**：
+        - 修复数组模板变量解析问题（router.ts）（✅ 已通过用户测试验证）
+        - 修复根节点不存在导致 addFolderToTree 失败问题（weizheng.ts）（✅ 已通过用户测试验证）
+    - **代码质量问题记录**：记录 initializeScanningQueue() 中的代码重复、魔法数字等问题
+        - ⚠️ **注意**：代码质量问题（问题1-4）已记录但未修复，建议创建新 RFC 跟踪
 
 - **2025-11-23**: Linus "Good Taste" 状态机制重大变更
-  - **架构演变**：v1 (watchArray) → v2 (p-queue 主宰) → **v3 (Store SSOT + 状态机)**
-  - **消除双真相源**：Store 是唯一 SSOT，p-queue 只是执行器
-  - **状态机制**：pending → processing → [删除]（无 completed）
-  - **立即清理**：成功即删除，不保留历史
-  - **失败重试**：failed 状态支持重试，达上限删除
-  - **启动恢复**：processing → pending（孤儿），failed → 重试/删除（过期）
-  - **子文件夹持久化**：发现时批量创建 pending 任务到 Store
-  - **删除公共API**：addScanTask/addScanTasks 废弃，只保留 Qizou-Shengzhi 流程
-  - **修复核心问题**：handleAddScanTask 现在创建 pending 任务并添加到 p-queue
-  - **新增Store操作**：createTasks, updateTaskStatus, deleteTask
-  - **新增奏折常量**：UPDATE_SCAN_ACTION_STATUS
+    - **架构演变**：v1 (watchArray) → v2 (p-queue 主宰) → **v3 (Store SSOT + 状态机)**
+    - **消除双真相源**：Store 是唯一 SSOT，p-queue 只是执行器
+    - **状态机制**：pending → processing → [删除]（无 completed）
+    - **立即清理**：成功即删除，不保留历史
+    - **失败重试**：failed 状态支持重试，达上限删除
+    - **启动恢复**：processing → pending（孤儿），failed → 重试/删除（过期）
+    - **子文件夹持久化**：发现时批量创建 pending 任务到 Store
+    - **删除公共API**：addScanTask/addScanTasks 废弃，只保留 Qizou-Shengzhi 流程
+    - **修复核心问题**：handleAddScanTask 现在创建 pending 任务并添加到 p-queue
+    - **新增Store操作**：createTasks, updateTaskStatus, deleteTask
+    - **新增奏折常量**：UPDATE_SCAN_ACTION_STATUS
 
 - **2025-11-15**: 架构设计已确定，更新RFC文档
-  - 明确最终架构原则
-  - 记录架构演变历史
-  - 标记状态为"待实施"
+    - 明确最终架构原则
+    - 记录架构演变历史
+    - 标记状态为"待实施"
 
 - **2025-11-09**: 激进重构版本 - "Think Bigger"方案
-  - 经过4轮架构讨论，最终确定"启奏描述事实"原则
-  - 删除callbacks机制
-  - 删除AppHelper.ts
-  - App.vue减少~200行
-  - 服务完全自治架构
+    - 经过4轮架构讨论，最终确定"启奏描述事实"原则
+    - 删除callbacks机制
+    - 删除AppHelper.ts
+    - App.vue减少~200行
+    - 服务完全自治架构

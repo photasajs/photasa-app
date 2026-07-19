@@ -3747,7 +3747,10 @@ dependencies = [
  "md-5",
  "notify",
  "pathdiff",
+ "photasa-config",
  "photasa-import",
+ "photasa-media",
+ "photasa-preference",
  "photasa-scan",
  "photasa-thumbnail",
  "photasa-types",
@@ -3769,9 +3772,18 @@ dependencies = [
  "tokio",
  "uuid",
  "walkdir",
- "wenchang-preferences",
  "zouwu-builtin",
  "zouwu-core",
+]
+
+[[package]]
+name = "photasa-config"
+version = "0.1.0"
+dependencies = [
+ "photasa-media",
+ "serde",
+ "serde_json",
+ "uuid",
 ]
 
 [[package]]
@@ -3781,11 +3793,30 @@ dependencies = [
  "chrono",
  "filetime",
  "log",
+ "photasa-media",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
  "uuid",
  "walkdir",
+]
+
+[[package]]
+name = "photasa-media"
+version = "0.1.0"
+dependencies = [
+ "photasa-types",
+]
+
+[[package]]
+name = "photasa-preference"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -3811,6 +3842,7 @@ dependencies = [
  "ffmpeg-next",
  "image",
  "libheif-rs",
+ "photasa-media",
  "serde",
  "tokio",
 ]
@@ -6544,17 +6576,6 @@ name = "weezl"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88"
-
-[[package]]
-name = "wenchang-preferences"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "uuid",
-]
 
 [[package]]
 name = "winapi"

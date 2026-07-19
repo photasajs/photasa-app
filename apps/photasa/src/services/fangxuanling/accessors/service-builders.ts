@@ -200,6 +200,10 @@ export function createStatusBarService(): IStatusBar {
     const store = useStatusBarStore();
 
     return {
+        get type(): string {
+            return store.type;
+        },
+
         get currentTask(): string {
             return store.currentTask;
         },

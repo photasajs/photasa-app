@@ -9,12 +9,12 @@
 - **目标版本**: v2.0.0
 - **最后更新**: 2025-11-29（状态更新为已完成）
 - **依赖RFC**:
-  - RFC 0042: scanningFolder四步渐进式迁移（Step 1已完成 - ScanningStore创建）✅
-  - RFC 0038: 偏好设置工作流集成与Store边界统一（已完成）✅
-  - RFC 0035: 五引擎编排架构（已完成）✅
-  - RFC 0043: useQinQiong()访问模式（可选 - File Watcher部分依赖）
+    - RFC 0042: scanningFolder四步渐进式迁移（Step 1已完成 - ScanningStore创建）✅
+    - RFC 0038: 偏好设置工作流集成与Store边界统一（已完成）✅
+    - RFC 0035: 五引擎编排架构（已完成）✅
+    - RFC 0043: useQinQiong()访问模式（可选 - File Watcher部分依赖）
 - **后续RFC**:
-  - RFC 0048: 扫描编排业务逻辑下沉 - 尉迟恭接管App.vue
+    - RFC 0048: 扫描编排业务逻辑下沉 - 尉迟恭接管App.vue
 
 ---
 
@@ -25,17 +25,20 @@
 **✅ 实施状态**：本RFC已基本完成（~85%），实际代码实现超前于RFC设计。关键差异详见"实施状态总结"章节。
 
 **关键架构**：
+
 - ✅ **魏征（WeiZheng）** - appState监察者，管理folderTree业务逻辑（Flow 1和Flow 2汇聚点）
 - ✅ **司命（SimingEngine）** - 负责appState持久化到磁盘
 - ✅ **尉迟恭（YuChiGong）** - 不再负责folderTree（只负责扫描队列相关）
 - ✅ **秦琼（QinQiong）** - File Watcher专职（依赖RFC 0043）
 
 **核心问题**：
+
 1. **folderTree未持久化** - 应用重启后文件夹树丢失
 2. **Store职责混淆** - folderTree运行时状态与用户偏好设置混合
 3. **架构违规** - 尉迟恭直接访问preferenceStore，袁天罡缺少UPDATE_FOLDER_TREE映射
 
 **解决方案**：
+
 1. **创建AppStateStore** - 专门管理folderTree运行时状态
 2. **天界持久化** - 司命引擎管理appstate持久化
 3. **双数据流架构** - Flow 1（扫描完成事件）+ Flow 2（File Watcher）汇聚到魏征
@@ -49,27 +52,30 @@
 ### 当前架构问题
 
 **问题1：folderTree未持久化**
+
 ```typescript
 // ❌ 错误：folderTree只在内存store中更新，没有持久化
 this._scanningStore.folderTree = [...]; // 没有持久化到磁盘！
 ```
 
 **问题2：Store职责混淆**
+
 ```typescript
 // ❌ 错误：PreferenceStore混合了用户偏好和运行时状态
 export interface PreferenceState {
-    preferences: UnifiedPreferences;  // 用户偏好设置
+    preferences: UnifiedPreferences; // 用户偏好设置
     appState: {
-        folderTree: DataNode[];       // 运行时状态 - 不应该在这里！
+        folderTree: DataNode[]; // 运行时状态 - 不应该在这里！
     };
 }
 ```
 
 **问题3：架构违规**
+
 ```typescript
 // ❌ 架构违规1：某些地方直接访问preferenceStore更新folderTree
 const preferenceStore = usePreferenceStore();
-preferenceStore.updateFolderTree(path);  // 违反Store访问规则！
+preferenceStore.updateFolderTree(path); // 违反Store访问规则！
 
 // ❌ 架构违规2：袁天罡缺少UPDATE_FOLDER_TREE映射
 // intentMapping对象中没有UPDATE_FOLDER_TREE相关映射
@@ -105,6 +111,7 @@ preferenceStore.updateFolderTree(path);  // 违反Store访问规则！
 **触发源**：千里眼扫描服务完成扫描（Main进程）
 
 **完整数据流**：
+
 ```
 千里眼扫描服务 (Main进程 IPC "picasa:find-photo")
   ↓
@@ -132,6 +139,7 @@ AppStateStore.folderTree 自动更新
 ```
 
 **Flow 1关键点**：
+
 - ⏳ **临时方案** - 袁天罡监听IPC事件（等待scan-service天界化）
 - ✅ **启奏机制** - 通过mitt事件总线发送启奏给李世民
 - ✅ **圣旨路由** - 李世民通过event-routing.yml路由到魏征（不是尉迟恭！）
@@ -147,6 +155,7 @@ AppStateStore.folderTree 自动更新
 **⏳ 重要说明**：秦琼（QinQiong）负责File Watcher，依赖RFC 0043实现，但**最终也路由到魏征**！
 
 **完整数据流**：
+
 ```
 File Watcher (chokidar监听文件系统)
   ↓ add/change/delete事件
@@ -172,19 +181,21 @@ AppStateStore.folderTree 自动更新
 ```
 
 **Flow 2关键点**：
+
 - ✅ **秦琼使用启奏系统** - 像袁天罡一样，发起启奏给李世民
 - ✅ **最终路由到魏征** - 李世民将圣旨路由到魏征（汇聚点！）
 - ⏳ **依赖RFC 0043** - 秦琼实现在RFC 0043，但架构设计在本RFC
 - ⏳ **临时状态** - 当前file-handler.ts直接调用Store（待RFC 0043修复）
 
 **当前临时代码（待废弃）**：
+
 ```typescript
 // ❌ file-handler.ts Line 50 - 临时代码，违反架构
-preferenceStore.updateFolderTree(state.path);  // 待RFC 0043用秦琼替换
+preferenceStore.updateFolderTree(state.path); // 待RFC 0043用秦琼替换
 
 // ✅ RFC 0043实现后应该是：
 const qinqiong = useQinQiong();
-await qinqiong.handleFileEvent(state);  // 秦琼内部发起启奏
+await qinqiong.handleFileEvent(state); // 秦琼内部发起启奏
 ```
 
 ---
@@ -196,6 +207,7 @@ await qinqiong.handleFileEvent(state);  // 秦琼内部发起启奏
 **⚡ 重要发现**：本流程在实际代码中已完整实现，但RFC设计时未预见！这是尉迟恭→魏征的智能协同机制。
 
 **完整数据流**：
+
 ```
 尉迟恭添加扫描任务 (YuChiGongService.addScanTask)
   ↓ 启奏 (qizouBus.emit: matter="scan_task_added", content={path, persisted})
@@ -225,6 +237,7 @@ AppStateStore.folderTree 自动更新
 ```
 
 **Flow 3关键点**：
+
 - ✅ **尉迟恭主动启奏** - 添加扫描任务后立即启奏给李世民
 - ✅ **智能路径检查** - 魏征自动判断路径类型（根节点/子节点/新根节点）
 - ✅ **避免重复添加** - 如果路径已是根节点，直接跳过
@@ -232,6 +245,7 @@ AppStateStore.folderTree 自动更新
 - ✅ **完整持久化** - 最终通过UPDATE_FOLDER_TREE标准流程持久化
 
 **李世民事件路由配置**（event-routing.yml）：
+
 ```yaml
 scan_task_added:
     - when:
@@ -247,6 +261,7 @@ scan_task_added:
 ```
 
 **魏征智能检查逻辑**（实际代码）：
+
 ```typescript
 private async handleCheckAndAddPath(shengzhi: Shengzhi): Promise<void> {
     const folderPath = shengzhi.content.folderPath as string;
@@ -274,6 +289,7 @@ private async handleCheckAndAddPath(shengzhi: Shengzhi): Promise<void> {
 ```
 
 **Flow 3架构优势**：
+
 1. **用户体验优化** - 添加扫描任务时自动更新folderTree，无需手动刷新
 2. **智能化处理** - 自动判断路径层级关系，减少用户操作
 3. **架构一致性** - 完全遵循启奏→圣旨→奏折标准流程
@@ -286,6 +302,7 @@ private async handleCheckAndAddPath(shengzhi: Shengzhi): Promise<void> {
 **✅ 架构决策：魏征（WeiZheng）是Flow 1、Flow 2和Flow 3的汇聚点**
 
 **决策依据**：
+
 1. **统一处理** - 无论来自IPC事件、File Watcher还是扫描任务添加，都需要更新folderTree
 2. **职责一致性** - 魏征是appState监察者，负责所有folderTree相关的业务逻辑
 3. **启奏路由机制** - 袁天罡、秦琼、尉迟恭都通过启奏→李世民→魏征的标准流程
@@ -295,6 +312,7 @@ private async handleCheckAndAddPath(shengzhi: Shengzhi): Promise<void> {
 **魏征统一处理机制（Flow 1 + Flow 2 + Flow 3）**：
 
 Flow 1和Flow 2使用相同的`handleUpdateFolderTree`方法：
+
 ```typescript
 // 魏征统一处理：Flow 1（IPC扫描完成）和 Flow 2（File Watcher）
 private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
@@ -319,6 +337,7 @@ private async handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void> {
 ```
 
 Flow 3使用专门的`handleCheckAndAddPath`方法（智能路径检查）：
+
 ```typescript
 // 魏征智能检查：Flow 3（扫描任务添加）
 private async handleCheckAndAddPath(shengzhi: Shengzhi): Promise<void> {
@@ -345,6 +364,7 @@ private async handleCheckAndAddPath(shengzhi: Shengzhi): Promise<void> {
 ```
 
 **三条流的共同特点**：
+
 - ✅ 都通过启奏→李世民路由→魏征的标准流程
 - ✅ 都最终发送UPDATE_FOLDER_TREE奏折给房玄龄
 - ✅ 都通过司命引擎持久化到`~/.photasa/appState/photasa.json`
@@ -413,11 +433,7 @@ export class SimingEngine {
                 tree: tree,
             };
 
-            await writeFile(
-                this.folderTreePath,
-                JSON.stringify(data, null, 2),
-                "utf-8"
-            );
+            await writeFile(this.folderTreePath, JSON.stringify(data, null, 2), "utf-8");
 
             logger.info("🌌 仙术成功：文件夹树已封存");
         } catch (error) {
@@ -462,12 +478,16 @@ export class SimingEngine {
 
             await writeFile(
                 this.folderTreePath,
-                JSON.stringify({
-                    version: "1.0",
-                    timestamp: Date.now(),
-                    tree: [],
-                }, null, 2),
-                "utf-8"
+                JSON.stringify(
+                    {
+                        version: "1.0",
+                        timestamp: Date.now(),
+                        tree: [],
+                    },
+                    null,
+                    2,
+                ),
+                "utf-8",
             );
 
             logger.info("🌌 仙术成功：文件夹树已清空");
@@ -526,7 +546,7 @@ export const useAppStateStore = defineStore("appstate", {
 
 ```typescript
 // 添加导出
-export * from './appstate';
+export * from "./appstate";
 ```
 
 #### 4. 天枢工作流YAML
@@ -542,79 +562,79 @@ name: "更新文件夹树"
 description: "更新文件夹树并持久化"
 
 inputs:
-  tree:
-    type: array
-    description: "文件夹树结构（FolderNode[]）"
-    required: true
+    tree:
+        type: array
+        description: "文件夹树结构（FolderNode[]）"
+        required: true
 
 steps:
-  - id: "restore_tree"
-    name: "司命：恢复现有树"
-    type: "action"
-    service: "taiyi"
-    action: "callEngine"
-    input:
-      engineName: "siming"  # 或 "qianliyan"
-      methodName: "restoreFolderTree"
-    output_schema:
-      type: array
-      description: "现有文件夹树"
+    - id: "restore_tree"
+      name: "司命：恢复现有树"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "siming" # 或 "qianliyan"
+          methodName: "restoreFolderTree"
+      output_schema:
+          type: array
+          description: "现有文件夹树"
 
-  - id: "update_tree"
-    name: "司命：更新树结构"
-    type: "builtin"
-    action: "return"
-    input:
-      tree: "{{inputs.tree}}"
-    output_schema:
-      type: array
-      description: "更新后的树"
-    dependsOn: ["restore_tree"]
+    - id: "update_tree"
+      name: "司命：更新树结构"
+      type: "builtin"
+      action: "return"
+      input:
+          tree: "{{inputs.tree}}"
+      output_schema:
+          type: array
+          description: "更新后的树"
+      dependsOn: ["restore_tree"]
 
-  - id: "persist_tree"
-    name: "司命：持久化树"
-    type: "action"
-    service: "taiyi"
-    action: "callEngine"
-    input:
-      engineName: "siming"  # 或 "qianliyan"
-      methodName: "persistFolderTree"
-      methodArgs:
-        - "{{steps.update_tree.tree}}"
-    dependsOn: ["update_tree"]
+    - id: "persist_tree"
+      name: "司命：持久化树"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "siming" # 或 "qianliyan"
+          methodName: "persistFolderTree"
+          methodArgs:
+              - "{{steps.update_tree.tree}}"
+      dependsOn: ["update_tree"]
 
-  - id: "count_nodes"
-    name: "计算节点数量"
-    type: "builtin"
-    action: "arrayCount"
-    input:
-      array: "{{steps.update_tree.tree}}"
-    dependsOn: ["persist_tree"]
+    - id: "count_nodes"
+      name: "计算节点数量"
+      type: "builtin"
+      action: "arrayCount"
+      input:
+          array: "{{steps.update_tree.tree}}"
+      dependsOn: ["persist_tree"]
 
-  - id: "format_response"
-    name: "返回结果"
-    type: "builtin"
-    action: "return"
-    input:
-      success: true
-      tree: "{{steps.update_tree.tree}}"
-      nodeCount: "{{steps.count_nodes}}"
-      persisted: true
-    dependsOn: ["count_nodes"]
+    - id: "format_response"
+      name: "返回结果"
+      type: "builtin"
+      action: "return"
+      input:
+          success: true
+          tree: "{{steps.update_tree.tree}}"
+          nodeCount: "{{steps.count_nodes}}"
+          persisted: true
+      dependsOn: ["count_nodes"]
 
 outputs:
-  tree:
-    description: "更新后的文件夹树（用于Store同步）"
-    type: "array"
-    path: "tree"
-  nodeCount:
-    description: "节点数量"
-    type: "number"
-    path: "nodeCount"
-  persisted:
-    description: "是否成功持久化"
-    type: "boolean"
-    path: "persisted"
+    tree:
+        description: "更新后的文件夹树（用于Store同步）"
+        type: "array"
+        path: "tree"
+    nodeCount:
+        description: "节点数量"
+        type: "number"
+        path: "nodeCount"
+    persisted:
+        description: "是否成功持久化"
+        type: "boolean"
+        path: "persisted"
 ```
 
 ##### restore_folder_tree.yml
@@ -630,53 +650,53 @@ description: "应用启动时从持久化文件恢复文件夹树"
 inputs: {}
 
 steps:
-  - id: "restore_tree"
-    name: "司命：恢复文件夹树"
-    type: "action"
-    service: "taiyi"
-    action: "callEngine"
-    input:
-      engineName: "siming"  # 或 "qianliyan"
-      methodName: "restoreFolderTree"
-    output_schema:
-      type: array
-      description: "恢复的文件夹树（FolderNode[]）"
+    - id: "restore_tree"
+      name: "司命：恢复文件夹树"
+      type: "action"
+      service: "taiyi"
+      action: "callEngine"
+      input:
+          engineName: "siming" # 或 "qianliyan"
+          methodName: "restoreFolderTree"
+      output_schema:
+          type: array
+          description: "恢复的文件夹树（FolderNode[]）"
 
-  - id: "count_nodes"
-    name: "计算节点数量"
-    type: "builtin"
-    action: "arrayCount"
-    input:
-      array: "{{steps.restore_tree}}"
-    output_schema:
-      type: number
-      description: "文件夹树节点数量"
-    dependsOn: ["restore_tree"]
+    - id: "count_nodes"
+      name: "计算节点数量"
+      type: "builtin"
+      action: "arrayCount"
+      input:
+          array: "{{steps.restore_tree}}"
+      output_schema:
+          type: number
+          description: "文件夹树节点数量"
+      dependsOn: ["restore_tree"]
 
-  - id: "format_response"
-    name: "返回恢复结果"
-    type: "builtin"
-    action: "return"
-    input:
-      success: true
-      tree: "{{steps.restore_tree}}"
-      nodeCount: "{{steps.count_nodes}}"
-      restored: true
-    dependsOn: ["count_nodes"]
+    - id: "format_response"
+      name: "返回恢复结果"
+      type: "builtin"
+      action: "return"
+      input:
+          success: true
+          tree: "{{steps.restore_tree}}"
+          nodeCount: "{{steps.count_nodes}}"
+          restored: true
+      dependsOn: ["count_nodes"]
 
 outputs:
-  tree:
-    description: "恢复的文件夹树（用于Store同步）"
-    type: "array"
-    path: "tree"
-  nodeCount:
-    description: "节点数量"
-    type: "number"
-    path: "nodeCount"
-  restored:
-    description: "是否成功恢复"
-    type: "boolean"
-    path: "restored"
+    tree:
+        description: "恢复的文件夹树（用于Store同步）"
+        type: "array"
+        path: "tree"
+    nodeCount:
+        description: "节点数量"
+        type: "number"
+        path: "nodeCount"
+    restored:
+        description: "是否成功恢复"
+        type: "boolean"
+        path: "restored"
 ```
 
 #### 5. 奏折常量定义
@@ -710,19 +730,19 @@ private intentMapping: Record<string, string> = {
 
 ```yaml
 matters:
-  update_folder_tree:
-    storeName: "appstate"
-    propertyPath: "folderTree"
-    syncStrategy: "replace"
-    autoSync: true
-    description: "更新文件夹树 - 从response.data.tree提取，替换appstate store的folderTree"
+    update_folder_tree:
+        storeName: "appstate"
+        propertyPath: "folderTree"
+        syncStrategy: "replace"
+        autoSync: true
+        description: "更新文件夹树 - 从response.data.tree提取，替换appstate store的folderTree"
 
-  restore_folder_tree:
-    storeName: "appstate"
-    propertyPath: "folderTree"
-    syncStrategy: "replace"
-    autoSync: true
-    description: "恢复文件夹树 - 从司命持久化文件恢复到appstate store"
+    restore_folder_tree:
+        storeName: "appstate"
+        propertyPath: "folderTree"
+        syncStrategy: "replace"
+        autoSync: true
+        description: "恢复文件夹树 - 从司命持久化文件恢复到appstate store"
 ```
 
 #### 8. Store Registry注册
@@ -743,6 +763,7 @@ export const STORE_REGISTRY: Record<string, () => any> = {
 **文件**: `src/renderer/src/services/weizheng/weizheng.ts`
 
 **实现handleUpdateFolderTree方法**：
+
 ```typescript
 /**
  * 处理更新文件夹树圣旨（Flow 1和Flow 2的汇聚点）
@@ -796,6 +817,7 @@ private convertPathsToTree(paths: string[]): FolderNode[] {
 ```
 
 **添加initializeAppState方法**：
+
 ```typescript
 /**
  * 初始化appState（应用启动时调用）
@@ -927,19 +949,20 @@ updateFolderTree(folder: string) {
 
 ### 📊 实施进度总结
 
-| Phase | 计划时间 | 完成度 | 状态 | 备注 |
-|-------|---------|--------|------|------|
-| Phase 1: 基础架构 | 2天 | 95% | ✅ 已完成 | 仅缺单元测试 |
-| Phase 2: 天界持久化 | 2天 | 95% | ✅ 已完成 | 仅缺单元测试 |
-| Phase 3: 人界集成 | 2天 | 90% | ✅ 已完成 | 缺Store Automation验证和单元测试 |
-| Phase 4: Flow 2临时修复 | 1天 | 100% | ✅ 已完成 | 全部完成 |
-| Phase 5: 集成测试 | 1天 | 0% | ⚠️ 待完成 | 测试用例待补充 |
-| Phase 6: 验证与文档 | 0.5天 | 30% | ⚠️ 部分完成 | 文档已更新，测试待验证 |
-| **总计** | **8.5天** | **~85%** | **基本完成** | **核心功能已实现，待补充测试** |
+| Phase                   | 计划时间  | 完成度   | 状态         | 备注                             |
+| ----------------------- | --------- | -------- | ------------ | -------------------------------- |
+| Phase 1: 基础架构       | 2天       | 95%      | ✅ 已完成    | 仅缺单元测试                     |
+| Phase 2: 天界持久化     | 2天       | 95%      | ✅ 已完成    | 仅缺单元测试                     |
+| Phase 3: 人界集成       | 2天       | 90%      | ✅ 已完成    | 缺Store Automation验证和单元测试 |
+| Phase 4: Flow 2临时修复 | 1天       | 100%     | ✅ 已完成    | 全部完成                         |
+| Phase 5: 集成测试       | 1天       | 0%       | ⚠️ 待完成    | 测试用例待补充                   |
+| Phase 6: 验证与文档     | 0.5天     | 30%      | ⚠️ 部分完成  | 文档已更新，测试待验证           |
+| **总计**                | **8.5天** | **~85%** | **基本完成** | **核心功能已实现，待补充测试**   |
 
 **实际耗时**: 未统计（代码实现超前于RFC文档）
 
 **关键成果**：
+
 - ✅ 所有核心功能已实现并集成
 - ✅ 架构设计完整且超出原始RFC（发现Flow 3）
 - ✅ 向后兼容策略得当（PreferenceStore保留）
@@ -988,38 +1011,38 @@ updateFolderTree(folder: string) {
 ### 高风险
 
 1. **PreferenceStore迁移风险**
-   - 缓解：保留PreferenceStore其他字段不变
-   - 测试：完整回归测试
+    - 缓解：保留PreferenceStore其他字段不变
+    - 测试：完整回归测试
 
 2. **Flow 2依赖RFC 0043**
-   - 缓解：临时保留file-handler.ts调用
-   - 文档：明确标记待修复
+    - 缓解：临时保留file-handler.ts调用
+    - 文档：明确标记待修复
 
 ### 中风险
 
 1. **大树结构性能**
-   - 缓解：添加节点数量限制
-   - 监控：性能日志
+    - 缓解：添加节点数量限制
+    - 监控：性能日志
 
 2. **并发更新冲突**
-   - 缓解：司命引擎内部锁
-   - 监控：冲突检测日志
+    - 缓解：司命引擎内部锁
+    - 监控：冲突检测日志
 
 ---
 
 ## 未解决问题
 
 1. **~~使用司命还是千里眼引擎？~~**
-   - ✅ 已确认：使用司命引擎（专门负责appState持久化）
-   - ✅ 千里眼引擎不参与folderTree持久化
+    - ✅ 已确认：使用司命引擎（专门负责appState持久化）
+    - ✅ 千里眼引擎不参与folderTree持久化
 
 2. **树结构合并策略？**
-   - 当前：replace全量替换
-   - 待确认：是否需要智能合并
+    - 当前：replace全量替换
+    - 待确认：是否需要智能合并
 
 3. **Flow 2最终实现？**
-   - 依赖：RFC 0043 useQinQiong()访问模式
-   - 待确认：秦琼实现时间表
+    - 依赖：RFC 0043 useQinQiong()访问模式
+    - 待确认：秦琼实现时间表
 
 ---
 
@@ -1028,54 +1051,61 @@ updateFolderTree(folder: string) {
 ### ✅ 已完成部分（约85%）
 
 #### 1. AppStateStore创建 ✅
+
 - **实际位置**：`src/renderer/src/services/fangxuanling/stores/appstate-store.ts`
 - **RFC设计**：`src/renderer/src/stores/appstate.ts`
 - **差异说明**：实际实现将AppStateStore放在FangXuanLing服务目录下，与其他Store保持一致的组织结构
 - **状态管理**：folderTree + currentFolder + lastOpenedFolder（完整appState）
 
 #### 2. 魏征服务完整实现 ✅
+
 - **已实现方法**：
-  - `initializeAppState()` - 应用启动时恢复完整appState（RFC设计为`initializeFolderTree`）
-  - `handleUpdateFolderTree()` - Flow 1和Flow 2汇聚点
-  - `handleCheckAndAddPath()` - **Flow 3智能路径检查**（RFC未记录的额外功能）
-  - `handleAddRoot()` - 添加根节点
+    - `initializeAppState()` - 应用启动时恢复完整appState（RFC设计为`initializeFolderTree`）
+    - `handleUpdateFolderTree()` - Flow 1和Flow 2汇聚点
+    - `handleCheckAndAddPath()` - **Flow 3智能路径检查**（RFC未记录的额外功能）
+    - `handleAddRoot()` - 添加根节点
 - **差异说明**：实际实现包含更多智能功能，如自动检测路径是否为子节点还是根节点
 
 #### 3. 司命引擎持久化 ✅
+
 - **已实现方法**：
-  - `persistFolderTree(tree)` - 持久化folderTree
-  - `restoreFolderTree()` - 恢复folderTree
-  - `persistAppState(appState)` - 持久化完整appState
-  - `restoreAppState()` - 恢复完整appState
+    - `persistFolderTree(tree)` - 持久化folderTree
+    - `restoreFolderTree()` - 恢复folderTree
+    - `persistAppState(appState)` - 持久化完整appState
+    - `restoreAppState()` - 恢复完整appState
 - **实际存储位置**：`~/.photasa/appState/photasa.json`（统一文件）
 - **RFC设计**：`~/.photasa/appstate/foldertree.json`（独立文件）
 - **差异说明**：实际实现使用统一的photasa.json存储所有appState数据，而非单独文件
 
 #### 4. 天枢工作流完整创建 ✅
+
 - ✅ `src/engines/tianshu/workflows/appstate/update_folder_tree.zouwu`
 - ✅ `src/engines/tianshu/workflows/appstate/restore_app_state.zouwu`
 - ✅ `src/engines/tianshu/workflows/appstate/switch_current_folder.zouwu`
 - **差异说明**：实际实现创建了完整的appstate工作流套件，包括切换文件夹功能
 
 #### 5. 李世民事件路由 ✅
+
 - **已配置路由**（`event-routing.yml`）：
-  - `scan_completed` → `update_folder_tree`
-  - `folder_discovered` → `update_folder_tree`
-  - `scan_task_added` → `check_and_add_path`（**Flow 3**，RFC未记录）
+    - `scan_completed` → `update_folder_tree`
+    - `folder_discovered` → `update_folder_tree`
+    - `scan_task_added` → `check_and_add_path`（**Flow 3**，RFC未记录）
 - **差异说明**：实际实现发现了第三条数据流（尉迟恭→魏征协同）
 
 #### 6. 启动初始化集成 ✅
+
 - **实际代码**（lishimin.ts:246）：
-  ```typescript
-  await this.weiZhengService.initializeAppState();
-  ```
+    ```typescript
+    await this.weiZhengService.initializeAppState();
+    ```
 - **RFC设计**：
-  ```typescript
-  await this.weiZhengService.initializeFolderTree();
-  ```
+    ```typescript
+    await this.weiZhengService.initializeFolderTree();
+    ```
 - **差异说明**：方法名更准确反映了功能（恢复完整appState而非仅folderTree）
 
 #### 7. PreferenceStore清理 ✅
+
 - **实际实现**：只标记`@deprecated`，不删除代码
 - **RFC设计**：移除folderTree相关代码
 - **差异说明**：遵循"Never break userspace"原则，保持向后兼容
@@ -1083,10 +1113,12 @@ updateFolderTree(folder: string) {
 ### 📋 待完成部分（约15%）
 
 #### 1. Store Automation配置验证 ⚠️
+
 - 需要确认`matter-sync.yml`中AppStateStore的自动同步映射
 - 验证`UPDATE_FOLDER_TREE`工作流结果能否自动同步到Store
 
 #### 2. Flow 3文档化 ❌
+
 - 需要补充Flow 3（尉迟恭→魏征协同）的完整设计文档
 - 记录`handleCheckAndAddPath`的智能检查逻辑
 
@@ -1101,6 +1133,7 @@ updateFolderTree(folder: string) {
 3. **Flow 3**：扫描任务添加协同流（尉迟恭 → 李世民 → 魏征）✅（RFC未记录）
 
 **Flow 3数据流**：
+
 ```
 尉迟恭添加扫描任务 (addScanTask)
   ↓ 启奏 (qizouBus.emit: matter="scan_task_added", content={path})
@@ -1115,35 +1148,35 @@ updateFolderTree(folder: string) {
 
 ### 📊 完成度评估
 
-| 模块 | RFC设计 | 实际实现 | 完成度 | 备注 |
-|------|---------|---------|--------|------|
-| AppStateStore | `stores/appstate.ts` | `fangxuanling/stores/appstate-store.ts` | 100% | 位置不同但功能完整 |
-| 魏征服务 | 基础功能 | 基础+智能检查 | 120% | 超出RFC设计 |
-| 司命引擎 | 独立文件 | 统一文件 | 100% | 实现更优 |
-| 天枢工作流 | 2个YAML | 3个YAML | 150% | 额外功能 |
-| 事件路由 | 2条流 | 3条流 | 150% | 发现新流 |
-| 启动初始化 | ✓ | ✓ | 100% | 方法名不同 |
-| PreferenceStore | 移除代码 | 标记废弃 | 100% | 更安全 |
-| **总体** | **100%** | **~85%** | **85%** | 主要差异在文档对齐 |
+| 模块            | RFC设计              | 实际实现                                | 完成度  | 备注               |
+| --------------- | -------------------- | --------------------------------------- | ------- | ------------------ |
+| AppStateStore   | `stores/appstate.ts` | `fangxuanling/stores/appstate-store.ts` | 100%    | 位置不同但功能完整 |
+| 魏征服务        | 基础功能             | 基础+智能检查                           | 120%    | 超出RFC设计        |
+| 司命引擎        | 独立文件             | 统一文件                                | 100%    | 实现更优           |
+| 天枢工作流      | 2个YAML              | 3个YAML                                 | 150%    | 额外功能           |
+| 事件路由        | 2条流                | 3条流                                   | 150%    | 发现新流           |
+| 启动初始化      | ✓                    | ✓                                       | 100%    | 方法名不同         |
+| PreferenceStore | 移除代码             | 标记废弃                                | 100%    | 更安全             |
+| **总体**        | **100%**             | **~85%**                                | **85%** | 主要差异在文档对齐 |
 
 ### 🎯 后续工作
 
 1. **文档对齐**（本次更新已完成）：
-   - ✅ 更新RFC中的方法名（`initializeAppState`）
-   - ✅ 更新存储文件路径（`appState/photasa.json`）
-   - ✅ 记录实际AppStateStore位置
-   - ✅ 补充PreferenceStore保留策略说明
+    - ✅ 更新RFC中的方法名（`initializeAppState`）
+    - ✅ 更新存储文件路径（`appState/photasa.json`）
+    - ✅ 记录实际AppStateStore位置
+    - ✅ 补充PreferenceStore保留策略说明
 
 2. **Flow 3文档化**（✅ 已完成）：
-   - ✅ 创建独立章节"Flow 3: 扫描任务添加协同流"
-   - ✅ 记录`handleCheckAndAddPath`智能逻辑（包含完整代码和决策树）
-   - ✅ 更新架构决策为"三条流的汇聚点：魏征"
-   - ✅ 记录李世民事件路由配置（event-routing.yml）
-   - ✅ 补充Flow 3架构优势说明
+    - ✅ 创建独立章节"Flow 3: 扫描任务添加协同流"
+    - ✅ 记录`handleCheckAndAddPath`智能逻辑（包含完整代码和决策树）
+    - ✅ 更新架构决策为"三条流的汇聚点：魏征"
+    - ✅ 记录李世民事件路由配置（event-routing.yml）
+    - ✅ 补充Flow 3架构优势说明
 
 3. **Store Automation验证**（待测试）：
-   - 确认matter-sync.yml配置正确
-   - 验证自动同步功能正常
+    - 确认matter-sync.yml配置正确
+    - 验证自动同步功能正常
 
 ### 💡 架构优化亮点
 

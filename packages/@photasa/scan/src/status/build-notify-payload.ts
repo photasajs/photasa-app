@@ -25,7 +25,11 @@ function formatScanWorkerError(error: unknown): string {
     if (typeof error === "string") {
         return error;
     }
-    if (typeof error === "object" && "message" in error && typeof (error as Error).message === "string") {
+    if (
+        typeof error === "object" &&
+        "message" in error &&
+        typeof (error as Error).message === "string"
+    ) {
         return (error as Error).message;
     }
     return String(error);

@@ -4,7 +4,7 @@ use std::fs;
 use std::future::Future;
 use std::path::Path;
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::{mpsc, Arc};
 
 use log::{error, info, warn};
 use photasa_scan::cache::IncrementalCacheManager;
@@ -27,9 +27,7 @@ use photasa_types::{
 use serde_json::json;
 use tauri::{AppHandle, Emitter};
 
-use super::photasa_config::{self, read_config_sync};
-
-type ScanDirectoryFuture<'a> = Pin<Box<dyn Future<Output = usize> + Send + 'a>>;
+use photasa_config::{read_config_sync, PhotasaConfigData};
 
 fn routes_to_directory_scan(scan: &ScanAction) -> bool {
     scan.operation_type != "file"
@@ -43,7 +41,7 @@ impl PhotasaConfigView for TauriPhotasaConfigView {
     }
 
     fn photo_list(&self, folder: &str) -> Result<Option<Vec<PhotasaConfigPhoto>>, String> {
-        read_config_sync(folder).map(|config| {
+        read_config_sync(folder).map(|config: Option<PhotasaConfigData>| {
             config.map(|c| {
                 c.photo_list
                     .into_iter()
@@ -76,6 +74,7 @@ fn emit_status_notify(app: &AppHandle, source: ScanWorkerNotifySource) {
 fn emit_file_progress(
     app: &AppHandle,
     request_id: &str,
+    scan_root: &str,
     file: &PhotoFileRequest,
     processed: usize,
     total: usize,
@@ -106,8 +105,8 @@ fn emit_file_progress(
             "type": "progress",
             "requestId": request_id,
             "action": {
-                "path": file.path,
-                "isDirectory": file.is_directory,
+                "path": scan_root,
+                "isDirectory": true,
             },
             "progress": { "processed": processed, "total": total },
             "currentFile": current_file,
@@ -312,7 +311,7 @@ fn restore_cached_files(app: &AppHandle, request_id: &str, folder: &str) {
     let total = files.len();
 
     for (idx, file) in files.iter().enumerate() {
-        emit_file_progress(app, request_id, file, idx + 1, total);
+        emit_file_progress(app, request_id, folder, file, idx + 1, total);
     }
 }
 
@@ -332,7 +331,7 @@ async fn process_file_list(
             }
         }
         let (processed, total) = cache_mgr.progress_counts();
-        emit_file_progress(app, request_id, file, processed, total);
+        emit_file_progress(app, request_id, &scan.path, file, processed, total);
     }
     if let Err(err) = cache_mgr.mark_scan_complete() {
         error!("🌌 千里眼标记扫描完成失败: {err}");
@@ -343,14 +342,8 @@ async fn run_traditional_directory_scan(
     app: &AppHandle,
     request_id: &str,
     scan: &ScanAction,
-) -> usize {
-    let files = match walkthrough_photos_in_folder(scan) {
-        Ok(f) => f,
-        Err(err) => {
-            emit_error(app, request_id, &err, Some(&scan.path));
-            return 0;
-        }
-    };
+) -> Result<usize, String> {
+    let files = walkthrough_photos_in_folder(scan)?;
     let total = files.len();
     let mut processed = 0usize;
     for file in &files {
@@ -358,16 +351,20 @@ async fn run_traditional_directory_scan(
             process_photo_file(file, scan).await;
         }
         processed += 1;
-        emit_file_progress(app, request_id, file, processed, total);
+        emit_file_progress(app, request_id, &scan.path, file, processed, total);
     }
-    processed
+    Ok(processed)
 }
 
 /// 子目录递归（仅 Electron SKIP 分支调用：`scanSubdirectories`）。
 ///
 /// 每个子目录重入 `scan_directory_at` → 各自决策 SKIP/FULL。子目录错误记录后跳过，
 /// 不中断兄弟目录。`current`（depthLimit 0）不递归——由调用方门控。
-async fn recurse_into_subdirectories(app: &AppHandle, request_id: &str, scan: &ScanAction) {
+async fn recurse_into_subdirectories(
+    app: &AppHandle,
+    request_id: &str,
+    scan: &ScanAction,
+) -> Result<(), String> {
     match list_scan_subdirectories(Path::new(&scan.path)) {
         Ok(subdirs) => {
             for sub in subdirs {
@@ -378,12 +375,11 @@ async fn recurse_into_subdirectories(app: &AppHandle, request_id: &str, scan: &S
                     thumbnail_size: scan.thumbnail_size,
                     is_directory: true,
                 };
-                let _ = scan_directory_at(app, request_id, &sub_scan).await;
+                scan_directory_at(app, request_id, &sub_scan).await?;
             }
+            Ok(())
         }
-        Err(err) => {
-            warn!("🌌 【警示】子目录列举失败 {}: {err}", scan.path);
-        }
+        Err(err) => Err(err),
     }
 }
 
@@ -416,7 +412,7 @@ async fn run_full_directory_scan(
                 }
             }
             let (processed, total) = cache_mgr.progress_counts();
-            emit_file_progress(app, request_id, file, processed, total);
+            emit_file_progress(app, request_id, &scan.path, file, processed, total);
         }
         if let Err(err) = cache_mgr.mark_scan_complete() {
             error!("🌌 千里眼标记扫描完成失败: {err}");
@@ -437,7 +433,7 @@ fn scan_directory_at<'a>(
     app: &'a AppHandle,
     request_id: &'a str,
     scan: &'a ScanAction,
-) -> ScanDirectoryFuture<'a> {
+) -> Pin<Box<dyn Future<Output = Result<usize, String>> + Send + 'a>> {
     Box::pin(async move {
         let folder = scan.path.clone();
         let force_rescan = scan.action == "rescan";
@@ -476,7 +472,7 @@ fn scan_directory_at<'a>(
                 .unwrap_or(0);
 
             if should_recurse_subdirs(decision.strategy, &scan.action) {
-                recurse_into_subdirectories(app, request_id, scan).await;
+                recurse_into_subdirectories(app, request_id, scan).await?;
             }
         } else {
             // FULL：`walkthrough` 已全递归（`current` 时仅一层），**不**再逐目录重入，
@@ -486,23 +482,17 @@ fn scan_directory_at<'a>(
                 Ok(cache_mgr) => {
                     match run_full_directory_scan(app, request_id, scan, cache_mgr).await {
                         Ok(n) => n,
-                        Err(err) => {
-                            emit_error(app, request_id, &err, Some(&folder));
-                            return 0;
-                        }
+                        Err(err) => return Err(err),
                     }
                 }
                 Err(err) => {
                     warn!("🌌 【警示】增量缓存初始化失败，降级传统扫描: {err}");
-                    run_traditional_directory_scan(app, request_id, scan).await
+                    run_traditional_directory_scan(app, request_id, scan).await?
                 }
             };
         }
 
-        // `complete.paths` 始终为空（目录从不被 `classify_media`）；前端用 `action.path`
-        // 回退构建 folderTree（与 Electron klaw 过滤一致，RFC 0117）。
-        emit_directory_complete(app, request_id, &folder, file_count, &[]);
-        file_count
+        Ok(file_count)
     })
 }
 
@@ -511,18 +501,18 @@ pub(crate) async fn run_directory_scan(
     request_id: String,
     scan: ScanAction,
     _recursive: bool,
-) {
+) -> Result<usize, String> {
     // `recursive` 不再控制子目录重入：递归仅在 SKIP 分支发生，深度由 `current`
     // （`should_scan_one_level`）门控（RFC 0117 Recursion model）。保留参数以兼容签名。
     let validation = validate_scan_params(&scan);
     if !validation.is_valid {
         let msg = validation.error.unwrap_or_else(|| "参数验证失败".into());
-        emit_error(&app, &request_id, &msg, Some(&scan.path));
-        return;
+        return Err(msg);
     }
 
-    let _ = scan_directory_at(&app, &request_id, &scan).await;
+    let file_count = scan_directory_at(&app, &request_id, &scan).await?;
     info!("🌌 千里眼目录扫描完功: {}", scan.path);
+    Ok(file_count)
 }
 
 /// `processMediaFile` — 单文件扫描
@@ -534,7 +524,6 @@ async fn process_media_file(app: &AppHandle, request_id: &str, scan: &ScanAction
     match scan.action.as_str() {
         "scan" => {
             if !should_process_scan_file(&file_path, "scan") {
-                emit_file_complete(app, request_id, &file_path);
                 return;
             }
             if should_create_thumbnail(&thumb_path, "scan") {
@@ -589,17 +578,19 @@ async fn process_media_file(app: &AppHandle, request_id: &str, scan: &ScanAction
             is_video,
             is_directory: false,
         };
-        emit_file_progress(app, request_id, &file, 1, 1);
+        emit_file_progress(app, request_id, &scan.path, &file, 1, 1);
     }
-    emit_file_complete(app, request_id, &file_path);
 }
 
-async fn run_file_scan(app: Arc<AppHandle>, request_id: String, scan: ScanAction) {
+async fn run_file_scan(
+    app: Arc<AppHandle>,
+    request_id: String,
+    scan: ScanAction,
+) -> Result<(), String> {
     let validation = validate_scan_params(&scan);
     if !validation.is_valid {
         let msg = validation.error.unwrap_or_else(|| "参数验证失败".into());
-        emit_error(&app, &request_id, &msg, Some(&scan.path));
-        return;
+        return Err(msg);
     }
 
     info!(
@@ -609,28 +600,77 @@ async fn run_file_scan(app: Arc<AppHandle>, request_id: String, scan: ScanAction
 
     if !Path::new(&scan.path).exists() {
         let err = format!("File does not exist: {}", scan.path);
-        emit_error(&app, &request_id, &err, Some(&scan.path));
-        return;
+        return Err(err);
     }
 
     if !is_photasa_media_file(Path::new(&scan.path)) {
-        emit_file_complete(&app, &request_id, &scan.path);
-        return;
+        return Ok(());
     }
 
     process_media_file(&app, &request_id, &scan).await;
+    Ok(())
 }
 
-/// 在后台任务中执行扫描（`scan_photos` 与 adapter 共用）
-pub fn spawn_scan_job(app: AppHandle, request_id: String, scan: ScanAction, recursive: bool) {
-    let app = Arc::new(app);
-    tokio::spawn(async move {
-        if routes_to_directory_scan(&scan) {
-            run_directory_scan(app, request_id, scan, recursive).await;
+struct ScanJob {
+    request_id: String,
+    scan: ScanAction,
+}
+
+pub struct ScanWorker {
+    sender: mpsc::Sender<ScanJob>,
+}
+
+impl ScanWorker {
+    pub fn new(app: AppHandle) -> Result<Self, String> {
+        let (sender, receiver) = mpsc::channel();
+        std::thread::Builder::new()
+            .name("photasa-scan-worker".into())
+            .spawn(move || run_scan_worker(app, receiver))
+            .map_err(|error| format!("启动扫描线程失败: {error}"))?;
+        Ok(Self { sender })
+    }
+
+    pub fn submit(&self, request_id: String, scan: ScanAction) -> Result<(), String> {
+        self.sender
+            .send(ScanJob { request_id, scan })
+            .map_err(|_| "扫描线程已停止".into())
+    }
+}
+
+fn run_scan_worker(app: AppHandle, receiver: mpsc::Receiver<ScanJob>) {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("创建扫描线程 Tokio runtime 失败");
+    for job in receiver {
+        let scan_root = job.scan.path.clone();
+        let is_directory = routes_to_directory_scan(&job.scan);
+        let result = if is_directory {
+            runtime
+                .block_on(run_directory_scan(
+                    Arc::new(app.clone()),
+                    job.request_id.clone(),
+                    job.scan,
+                    true,
+                ))
+                .map(|file_count| (file_count, Vec::new()))
         } else {
-            run_file_scan(app, request_id, scan).await;
+            runtime
+                .block_on(run_file_scan(
+                    Arc::new(app.clone()),
+                    job.request_id.clone(),
+                    job.scan,
+                ))
+                .map(|()| (0, Vec::new()))
+        };
+        match result {
+            Ok((file_count, paths)) if is_directory => {
+                emit_directory_complete(&app, &job.request_id, &scan_root, file_count, &paths);
+            }
+            Ok(_) => emit_file_complete(&app, &job.request_id, &scan_root),
+            Err(error) => emit_error(&app, &job.request_id, &error, Some(&scan_root)),
         }
-    });
+    }
 }
 
 #[cfg(test)]

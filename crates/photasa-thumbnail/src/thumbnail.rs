@@ -70,28 +70,6 @@ impl ThumbnailResponse {
 }
 
 // ============================================================
-// 扩展名分类
-// ============================================================
-
-static VIDEO_EXTS: &[&str] = &[
-    "mp4", "mov", "avi", "mkv", "m4v", "3gp", "wmv", "flv", "webm", "mpg", "mpeg", "m2v", "mts",
-    "m2ts", "ts",
-];
-
-static IMAGE_EXTS: &[&str] = &["jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif"];
-
-static HEIC_EXTS: &[&str] = &["heic", "heif", "avif"];
-static RAW_EXTS: &[&str] = &["raw", "cr2", "cr3", "nef", "arw", "dng", "raf", "orf"];
-
-fn ext(path: &str) -> String {
-    Path::new(path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.to_lowercase())
-        .unwrap_or_default()
-}
-
-// ============================================================
 // create_thumbnail
 // ============================================================
 
@@ -116,23 +94,23 @@ fn decode_thumbnail_blocking(request: &ThumbnailRequest) -> ThumbnailResponse {
         }
     }
 
-    let e = ext(src);
-
-    if IMAGE_EXTS.contains(&e.as_str()) {
-        make_image_thumbnail(src, dst, request)
-    } else if VIDEO_EXTS.contains(&e.as_str()) {
-        make_video_thumbnail_blocking(
+    match photasa_media::classify_media(src) {
+        photasa_media::MediaType::Image => make_image_thumbnail(src, dst, request),
+        photasa_media::MediaType::Video => make_video_thumbnail_blocking(
             src,
             dst,
             request.width.unwrap_or(256),
             request.height.unwrap_or(256),
-        )
-    } else if HEIC_EXTS.contains(&e.as_str()) {
-        make_heic_thumbnail(src, dst, request)
-    } else if RAW_EXTS.contains(&e.as_str()) {
-        make_raw_placeholder_thumbnail(src, dst, request)
-    } else {
-        ThumbnailResponse::err(format!("未知文件类型: {e}"))
+        ),
+        photasa_media::MediaType::Heic => make_heic_thumbnail(src, dst, request),
+        photasa_media::MediaType::Raw => make_raw_placeholder_thumbnail(src, dst, request),
+        photasa_media::MediaType::Unknown => {
+            let e = Path::new(src)
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .unwrap_or("");
+            ThumbnailResponse::err(format!("未知文件类型: {e}"))
+        }
     }
 }
 

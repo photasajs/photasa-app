@@ -130,18 +130,35 @@ export class YuChiGongService implements IService, IYuChiGongService {
         try {
             // 3. 重扫描时重置配置
             if (action === "rescan" && operationType === "directory") {
-                await window.api.resetPhotasaConfig(path);
+                await this.fangXuanLingService.processZouzhe({
+                    department: GUANYUAN_NAMES.YU_CHI_GONG,
+                    matter: ZOUZHE_MATTERS.RESET_FOLDER_CONFIG,
+                    content: { folder: path },
+                    priority: ZOUZHE_PRIORITIES.NORMAL,
+                });
             }
 
             // 4. 文件操作 - 记录父目录
             let parentDir: string | null = null;
             if (operationType === "file") {
-                parentDir = window.api.toDirName(path);
+                const res = await this.fangXuanLingService.processZouzhe({
+                    department: GUANYUAN_NAMES.YU_CHI_GONG,
+                    matter: ZOUZHE_MATTERS.TO_DIR_NAME,
+                    content: { path },
+                    priority: ZOUZHE_PRIORITIES.NORMAL,
+                });
+                parentDir = res.data;
             }
 
             // 5. 目录操作 - 扫描子文件夹（递归 + ✅ RFC 0048 v3: 批量持久化）
             if (operationType === "directory") {
-                const subfolders = await window.api.scanSubfolders(path);
+                const res = await this.fangXuanLingService.processZouzhe({
+                    department: GUANYUAN_NAMES.YU_CHI_GONG,
+                    matter: ZOUZHE_MATTERS.SCAN_SUBFOLDERS,
+                    content: { folderPath: path },
+                    priority: ZOUZHE_PRIORITIES.NORMAL,
+                });
+                const subfolders = res.data || [];
                 if (subfolders.length > 0) {
                     logger.info(
                         `🛡️ 尉迟恭：发现 ${subfolders.length} 个子文件夹，持久化到Store并添加到p-queue`,
@@ -174,11 +191,16 @@ export class YuChiGongService implements IService, IYuChiGongService {
             }
 
             // 6. 执行扫描
-            await window.api.scanPhotos({
-                path,
-                action,
-                thumbnailSize,
-                isDirectory: operationType !== "file",
+            await this.fangXuanLingService.processZouzhe({
+                department: GUANYUAN_NAMES.YU_CHI_GONG,
+                matter: ZOUZHE_MATTERS.SCAN_PHOTOS,
+                content: {
+                    path,
+                    action,
+                    thumbnailSize,
+                    isDirectory: operationType !== "file",
+                },
+                priority: ZOUZHE_PRIORITIES.NORMAL,
             });
 
             // 7. ✅ RFC 0048 v3: 完成即删除（无completed状态）
@@ -515,18 +537,14 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     ? "auto"
                     : (content.source as "user" | "auto") || "user";
 
-            // 1. 非 rescan：队列中已有则跳过；rescan：先移除再重新入队
+            // 1. 队列去重（Deduplication）：如果任务已在队列中，不论是 scan 还是 rescan，一律去重跳过，不重新添加
             if (this.fangXuanLingService.scanning.isInQueue(path)) {
-                if (action !== "rescan") {
-                    logger.warn(`🛡️ 尉迟恭：扫描任务已存在，跳过添加 ${path}`);
-                    this.emitQizou("scan_task_duplicate", {
-                        shengzhiId: shengzhi.id,
-                        path,
-                    });
-                    return;
-                }
-                logger.info(`🛡️ 尉迟恭：rescan 替换队列中已有任务 ${path}`);
-                await this.removeScanTask(path);
+                logger.warn(`🛡️ 尉迟恭：扫描任务已存在，去重跳过添加 ${path}`);
+                this.emitQizou("scan_task_duplicate", {
+                    shengzhiId: shengzhi.id,
+                    path,
+                });
+                return;
             }
 
             await this.scheduleDirectoryScan(path, action, source);

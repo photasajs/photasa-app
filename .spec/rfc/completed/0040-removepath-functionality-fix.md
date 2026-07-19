@@ -10,11 +10,11 @@
 - **目标版本**: v1.9.0
 - **后续**: RFC 0041进一步优化架构，移除业务逻辑到服务层
 - **相关RFC**:
-  - RFC 0036: 文昌偏好集成
-  - RFC 0037: 驺吾(Zouwu)工作流DSL
-  - RFC 0038: 偏好工作流集成
-  - RFC 0039: 天枢工作流语法规范
-  - RFC 0041: 偏好架构重构（改进本RFC的架构设计）
+    - RFC 0036: 文昌偏好集成
+    - RFC 0037: 驺吾(Zouwu)工作流DSL
+    - RFC 0038: 偏好工作流集成
+    - RFC 0039: 天枢工作流语法规范
+    - RFC 0041: 偏好架构重构（改进本RFC的架构设计）
 
 ## 摘要
 
@@ -23,17 +23,19 @@ UI点击移除路径功能不工作，根本原因是策略执行器模式下缺
 ## 问题描述
 
 ### 用户报告
+
 用户在GeneralSettings界面点击删除路径按钮后，UI没有刷新，路径仍然显示在列表中。但检查`~/.photasa/preferences/preferences.json`发现天界已正确移除路径：
 
 ```json
 {
-  "scanning": {
-    "paths": []  // 已正确清空
-  }
+    "scanning": {
+        "paths": [] // 已正确清空
+    }
 }
 ```
 
 ### 初步分析
+
 - **天界（WenchangEngine）**：✅ 正确处理并持久化保存
 - **人界（UI Store）**：❌ 没有更新，导致UI不刷新
 
@@ -44,13 +46,14 @@ UI点击移除路径功能不工作，根本原因是策略执行器模式下缺
 ### 问题1：策略执行后没有更新Store
 
 **调用链分析**：
+
 ```typescript
 // src/renderer/src/services/fangxuanling/fangxuanling.ts
 
 if (this.isStrategyHandledMatter(zouzhe.matter)) {
-    await this._strategyExecutor.execute(zouzhe);  // 策略处理
+    await this._strategyExecutor.execute(zouzhe); // 策略处理
 
-    const tianjieDelta = await this._yuanTianGang.executeZhaoling(zhaoling);  // 上报天界
+    const tianjieDelta = await this._yuanTianGang.executeZhaoling(zhaoling); // 上报天界
 
     // ❌ 问题：这里没有更新Store！
 
@@ -65,19 +68,21 @@ if (this.isStrategyHandledMatter(zouzhe.matter)) {
 ### 问题2：破坏了诏令架构边界
 
 **错误代码**（已修复）：
+
 ```typescript
 // ❌ 错误：在房玄龄层面改变command
 if (this.isPathOperation(zouzhe.matter)) {
-    zhaolingCommand = "update_preferences";  // 破坏业务语义！
+    zhaolingCommand = "update_preferences"; // 破坏业务语义！
 }
 
 const zhaoling: Zhaoling = {
-    command: zhaolingCommand,  // 变成了工作流ID
+    command: zhaolingCommand, // 变成了工作流ID
     context: zhaolingContext,
 };
 ```
 
 **架构边界原则**：
+
 ```
 房玄龄（FangXuanLing）：
   职责：发送诏令，保持业务语义
@@ -99,17 +104,18 @@ const zhaoling: Zhaoling = {
 ### 问题3：参数格式包装问题
 
 **工作流期望的格式**：
+
 ```yaml
 # update_preferences.zouwu
 inputs:
-  delta:
-    type: "object"
-    # 期望格式：
-    # {
-    #   scanning: {
-    #     paths: [完整的paths数组]
-    #   }
-    # }
+    delta:
+        type: "object"
+        # 期望格式：
+        # {
+        #   scanning: {
+        #     paths: [完整的paths数组]
+        #   }
+        # }
 ```
 
 **问题**：袁天罡需要将context包装为`{ action: "update", delta: context }`格式，但ADD_PATH/REMOVE_PATH操作缺少这个包装逻辑。
@@ -133,21 +139,22 @@ RFC 0041进一步改进了架构设计，采用了更优雅的"好品味"(Good T
 #### 核心改进点
 
 1. **移除business logic到服务层**
-   - WenchangEngine只负责存储持久化
-   - FangXuanLing负责业务逻辑计算
+    - WenchangEngine只负责存储持久化
+    - FangXuanLing负责业务逻辑计算
 
 2. **消除pathOperations特殊情况**
-   - 不再使用复杂的pathOperations数组格式
-   - 直接使用完整状态快照（delta格式）
+    - 不再使用复杂的pathOperations数组格式
+    - 直接使用完整状态快照（delta格式）
 
 3. **清晰的数据流**
-   ```
-   Read Store → Compute完整状态 → 发送delta → Heaven持久化 → Update Store
-   ```
+    ```
+    Read Store → Compute完整状态 → 发送delta → Heaven持久化 → Update Store
+    ```
 
 #### 当前实现（RFC 0041后）
 
 **FangXuanLing计算业务逻辑**：
+
 ```typescript
 // src/renderer/src/services/fangxuanling/fangxuanling.ts
 
@@ -191,6 +198,7 @@ private applyDeltaToStore(delta: any): void {
 ```
 
 **WenchangEngine纯存储操作**：
+
 ```typescript
 // src/engines/wenchang/core/WenchangEngine.ts
 
@@ -218,6 +226,7 @@ async applyDelta(delta: PreferenceDelta, _source = "unknown"): Promise<number> {
 ```
 
 **YuanTianGang参数包装**：
+
 ```typescript
 // src/renderer/src/services/yuantiangang/yuantiangang.ts
 
@@ -233,7 +242,7 @@ if (
 
 params = {
     action: "update",
-    delta: convertedDelta,  // ✅ 工作流期待的格式
+    delta: convertedDelta, // ✅ 工作流期待的格式
     source: fulu.source,
 };
 ```
@@ -306,6 +315,7 @@ params = {
 ```
 
 **关键改进点**：
+
 - ❌ 去除了pathOperations复杂格式
 - ✅ 使用完整状态快照（delta.scanning.paths）
 - ✅ WenchangEngine无业务逻辑，纯存储操作
@@ -354,22 +364,24 @@ UI组件层 (GeneralSettings.vue)
 1. **业务语义分离**：诏令保持业务语义，不包含实现细节
 2. **单一职责**：每层只负责自己的转换和处理
 3. **明确边界**：
-   - 房玄龄：业务命令 + 格式转换
-   - 袁天罡：命令映射 + 通信协议
-   - 天枢：工作流编排
-   - 文昌：业务实现
+    - 房玄龄：业务命令 + 格式转换
+    - 袁天罡：命令映射 + 通信协议
+    - 天枢：工作流编排
+    - 文昌：业务实现
 
 ## 测试验证
 
 ### 单元测试
+
 ```bash
 npm run test:unit:renderer -- path-handlers.test.ts
 # ✅ 15/15 tests passed
 ```
 
 ### 手动测试清单
+
 - [ ] UI添加路径功能
-- [ ] UI移除路径功能  ← 本次修复重点
+- [ ] UI移除路径功能 ← 本次修复重点
 - [ ] UI添加扫描文件夹功能
 - [ ] 天界持久化验证（检查preferences.json）
 - [ ] 人界Store同步验证（检查UI更新）
@@ -378,53 +390,62 @@ npm run test:unit:renderer -- path-handlers.test.ts
 ## 影响范围
 
 ### RFC 0040修改的文件
+
 1. `src/renderer/src/services/fangxuanling/fangxuanling.ts`
-   - 初始修复：添加Store更新逻辑
-   - 保持command业务语义
+    - 初始修复：添加Store更新逻辑
+    - 保持command业务语义
 
 ### RFC 0041进一步改进的文件
+
 1. `src/renderer/src/services/fangxuanling/fangxuanling.ts`
-   - ✅ 新增：`computePreferenceDelta`方法（业务逻辑）
-   - ✅ 新增：`applyDeltaToStore`方法（Store更新）
-   - ✅ 简化：移除pathOperations格式转换
+    - ✅ 新增：`computePreferenceDelta`方法（业务逻辑）
+    - ✅ 新增：`applyDeltaToStore`方法（Store更新）
+    - ✅ 简化：移除pathOperations格式转换
 
 2. `src/engines/wenchang/core/WenchangEngine.ts`
-   - ✅ 简化：移除handlePathOperation, handleAddPath, handleRemovePath等业务逻辑
-   - ✅ 简化：applyDelta只做纯存储操作
+    - ✅ 简化：移除handlePathOperation, handleAddPath, handleRemovePath等业务逻辑
+    - ✅ 简化：applyDelta只做纯存储操作
 
 3. `src/renderer/src/services/yuantiangang/yuantiangang.ts`
-   - ✅ 修复：添加ADD_PATH/REMOVE_PATH/ADD_SCAN_FOLDER到delta包装逻辑
+    - ✅ 修复：添加ADD_PATH/REMOVE_PATH/ADD_SCAN_FOLDER到delta包装逻辑
 
 4. `src/engines/adapters/__tests__/WenchangAdapter.spec.ts`
-   - ✅ 更新：测试反映新架构（使用delta而非pathOperations）
+    - ✅ 更新：测试反映新架构（使用delta而非pathOperations）
 
 ### 向后兼容性
+
 ✅ 完全向后兼容，改进了架构清晰度和可维护性
 
 ## 经验教训
 
 ### 1. 架构边界很重要
+
 - ❌ 错误：在房玄龄层面把command改成工作流ID
 - ✅ 正确：保持业务语义，映射由专门的层（袁天罡）负责
 
 ### 2. 数据同步需要显式处理
+
 - ❌ 错误：假设天界更新后人界会自动同步
 - ✅ 正确：天界确认后，显式调用Store更新方法
 
 ### 3. 应用Linus的"好品味"原则（RFC 0041）
+
 - ❌ 错误：创建pathOperations复杂格式，增加特殊情况处理
 - ✅ 正确：使用完整状态快照，消除特殊情况
 
 ### 4. 单一职责原则
+
 - ❌ 错误：WenchangEngine包含业务逻辑
 - ✅ 正确：存储层只负责持久化，业务逻辑在服务层
 
 ### 5. 完整的调用链追踪
+
 - 发现问题需要完整追踪从UI到引擎的每一步
 - 验证数据格式在每一层的转换是否正确
 - 确认实际的业务逻辑是否被执行
 
 ### 6. 测试的重要性
+
 - 单元测试只能测试局部逻辑
 - 需要端到端测试验证完整流程
 - 手动测试UI交互不可或缺
@@ -434,18 +455,18 @@ npm run test:unit:renderer -- path-handlers.test.ts
 RFC 0041在RFC 0040的基础上实现了更优雅的架构：
 
 1. **消除复杂性**
-   - 移除pathOperations格式
-   - 使用简单的delta完整状态快照
+    - 移除pathOperations格式
+    - 使用简单的delta完整状态快照
 
 2. **清晰的职责分离**
-   - FangXuanLing：业务逻辑计算
-   - WenchangEngine：纯存储持久化
-   - YuanTianGang：参数包装和映射
+    - FangXuanLing：业务逻辑计算
+    - WenchangEngine：纯存储持久化
+    - YuanTianGang：参数包装和映射
 
 3. **更好的可维护性**
-   - WenchangEngine代码减少~50行
-   - 业务逻辑集中在服务层
-   - 测试更简单直接
+    - WenchangEngine代码减少~50行
+    - 业务逻辑集中在服务层
+    - 测试更简单直接
 
 ## 相关资源
 
@@ -460,7 +481,9 @@ RFC 0041在RFC 0040的基础上实现了更优雅的架构：
 ## 结论
 
 ### RFC 0040成果
+
 通过正确理解和遵循架构边界原则，成功修复了removePath功能：
+
 1. ✅ 天界正确处理并持久化
 2. ✅ 人界Store同步更新
 3. ✅ UI正确刷新
@@ -468,7 +491,9 @@ RFC 0041在RFC 0040的基础上实现了更优雅的架构：
 5. ✅ 数据流完整可追踪
 
 ### RFC 0041进一步优化
+
 在RFC 0040的基础上，RFC 0041应用Linus的"好品味"原则，实现了更优雅的架构：
+
 1. ✅ 消除pathOperations特殊情况
 2. ✅ 业务逻辑从存储层分离到服务层
 3. ✅ 使用完整状态快照替代操作序列

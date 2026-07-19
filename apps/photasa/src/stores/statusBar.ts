@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import type { NotifyPayload } from "@photasa/common";
 
 export interface StatusBarState {
+    type: string;
     currentTask: string;
     status: string;
     progress?: number;
@@ -13,6 +14,7 @@ export interface StatusBarState {
 
 export const useStatusBarStore = defineStore("statusBar", {
     state: (): StatusBarState => ({
+        type: "",
         currentTask: "",
         status: "",
         progress: undefined,
@@ -23,20 +25,22 @@ export const useStatusBarStore = defineStore("statusBar", {
     }),
     actions: {
         update(payload: NotifyPayload) {
+            this.type = payload.type;
             this.currentTask = payload.task;
             this.status = payload.status;
             this.error = payload.error;
             this.timestamp = payload.timestamp;
             this.data = payload.data;
-            // 进度可选从 data 结构中提取
+            // Rust uses processed; progress stays as legacy fallback.
             if (
                 payload.data &&
                 typeof payload.data === "object" &&
                 payload.data !== null &&
-                "progress" in payload.data &&
-                typeof (payload.data as { progress?: number }).progress === "number"
+                (typeof (payload.data as { processed?: number }).processed === "number" ||
+                    typeof (payload.data as { progress?: number }).progress === "number")
             ) {
-                this.progress = (payload.data as { progress: number }).progress;
+                const data = payload.data as { processed?: number; progress?: number };
+                this.progress = data.processed ?? data.progress;
             } else {
                 this.progress = undefined;
             }
@@ -44,6 +48,7 @@ export const useStatusBarStore = defineStore("statusBar", {
             if (this.history.length > 50) this.history.length = 50;
         },
         clear() {
+            this.type = "";
             this.currentTask = "";
             this.status = "";
             this.progress = undefined;

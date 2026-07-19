@@ -119,6 +119,30 @@ export interface IWeiZhengService {
      * @param folderPath 文件夹路径
      */
     switchFolder(folderPath: string): Promise<void>;
+
+    /**
+     * 获取指定文件夹的配置 (.photasa.json)
+     *
+     * CRUD分类：Read操作
+     * @param folder 文件夹路径
+     */
+    getFolderConfig(folder: string): Promise<any>;
+
+    /**
+     * 修复指定文件夹的配置 (.photasa.json)
+     *
+     * CRUD分类：Update操作
+     * @param folder 文件夹路径
+     */
+    fixFolderConfig(folder: string): Promise<any>;
+
+    /**
+     * 重置指定文件夹的配置 (.photasa.json)
+     *
+     * CRUD分类：Update操作
+     * @param folder 文件夹路径
+     */
+    resetFolderConfig(folder: string): Promise<any>;
 }
 
 /**

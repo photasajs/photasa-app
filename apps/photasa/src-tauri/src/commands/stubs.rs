@@ -3,9 +3,9 @@
  * scan_photos 使用 Rust scan_runner（RFC 0105）；导入命令待后续迁移
  */
 use log::info;
-use tauri::AppHandle;
+use tauri::State;
 
-pub use super::scan_runner::{spawn_scan_job, ScanAction};
+pub use super::scan_runner::{ScanAction, ScanWorker};
 
 // ============================================
 // 扫描命令（Rust 实现）
@@ -14,7 +14,7 @@ pub use super::scan_runner::{spawn_scan_job, ScanAction};
 /// 扫描照片 — 增量缓存 + progress 事件（`picasa:find-photo`）
 #[tauri::command]
 pub async fn scan_photos(
-    app: AppHandle,
+    worker: State<'_, ScanWorker>,
     request_id: String,
     scan_action: ScanAction,
 ) -> Result<(), String> {
@@ -22,8 +22,7 @@ pub async fn scan_photos(
         "🌌 千里眼开坛，扫描路径: {} (requestId: {})",
         scan_action.path, request_id
     );
-    spawn_scan_job(app, request_id, scan_action, true);
-    Ok(())
+    worker.submit(request_id, scan_action)
 }
 
 // ============================================

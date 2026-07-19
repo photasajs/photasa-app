@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use wenchang_preferences::PreferencesStore;
+use photasa_preference::PreferencesStore;
 
 use zouwu_core::adapter::{Adapter, AdapterError};
 use zouwu_core::types::ExecutionContext;

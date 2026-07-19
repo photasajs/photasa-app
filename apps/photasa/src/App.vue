@@ -45,7 +45,6 @@ import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
-import { useYuShiNan } from "@renderer/composables/useYuShiNan";
 import { isTauri } from "./api/env";
 import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
 import { notification } from "@renderer/services/notification-manager";
@@ -221,17 +220,8 @@ async function detectRecoverableImports(): Promise<void> {
 }
 
 const chuSuiLiang = useChuSuiLiang();
-const yuShiNan = useYuShiNan(); // ✅ RFC 0057: 通过虞世南服务更新状态栏
 
 onMounted(async () => {
-    // ✅ RFC 0057: APP 启动时推送初始化状态（通过虞世南服务）
-    yuShiNan.updateStatus({
-        type: "app",
-        status: "initializing",
-        task: t("app.title"),
-        timestamp: Date.now(),
-    });
-
     // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
     themes.value = themeManager.getThemes();
@@ -250,13 +240,6 @@ onMounted(async () => {
         }
     }
 
-    // ✅ RFC 0057: 主题加载完毕，切换为 ready 状态（通过虞世南服务）
-    yuShiNan.updateStatus({
-        type: "app",
-        status: "ready",
-        task: t("app.title"),
-        timestamp: Date.now(),
-    });
     // 应用启动时全局初始化菜单栏数据（国际化）
     zhangSunWuJi.refreshMenus(t);
 

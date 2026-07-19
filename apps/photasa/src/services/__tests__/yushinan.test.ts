@@ -105,32 +105,6 @@ describe("YuShiNanService", () => {
         setActivePinia(createPinia());
     });
 
-    it("扫描队列为空时不把旧 processingFile 当成扫描中", () => {
-        const fangXuanLing = createMockFangXuanLing();
-        vi.spyOn(fangXuanLing.photos, "processingFile", "get").mockReturnValue("/stale/file.jpg");
-        const service = new YuShiNanService(fangXuanLing);
-
-        expect(service.isScanning).toBe(false);
-        expect(service.scanningPath).toBe("");
-    });
-
-    it("扫描状态栏路径来自扫描队列当前任务", () => {
-        const scanningStore = useScanningStore();
-        scanningStore.addToQueue(
-            createScanQueueItem({
-                path: "/album",
-                action: "scan",
-                operationType: "directory",
-            }),
-        );
-        scanningStore.setProcessingStatus(true, "/album");
-
-        const service = new YuShiNanService(createMockFangXuanLing());
-
-        expect(service.isScanning).toBe(true);
-        expect(service.scanningPath).toBe("/album");
-    });
-
     it("应该把扫描进度同步到扫描队列项", async () => {
         const scanningStore = useScanningStore();
         scanningStore.addToQueue(

@@ -1,8 +1,8 @@
 # RFC 0033: Shunfenger Watch Engine
 
 - **Start Date**: 2024-05-24
-- **RFC PR**: 
-- **Implementation Issue**: 
+- **RFC PR**:
+- **Implementation Issue**:
 
 ## Summary
 
@@ -20,19 +20,19 @@ Define the Shunfenger Watch Engine as the unified gateway for filesystem change 
 ### Engine Responsibilities (Environment Agnostic)
 
 1. **Watch Lifecycle Ownership**
-   - 内部管理 chokidar watcher 的创建、暂停、恢复与销毁，暴露 `configure/profile`, `pause`, `resume`, `stop`, `flush` API；出现错误时自动进入 `paused` 状态并通知消费方。
-   - 统一承载现有选项：`ignoreInitial`, `awaitWriteFinish`, 忽略规则、递归策略等，并支持 profile 级覆盖。
+    - 内部管理 chokidar watcher 的创建、暂停、恢复与销毁，暴露 `configure/profile`, `pause`, `resume`, `stop`, `flush` API；出现错误时自动进入 `paused` 状态并通知消费方。
+    - 统一承载现有选项：`ignoreInitial`, `awaitWriteFinish`, 忽略规则、递归策略等，并支持 profile 级覆盖。
 2. **Event Normalization**
-   - Convert chokidar `add/change/delete/addDir/deleteDir/raw` 事件为 `FileObservation`；检测 rename（成对 add+delete）并合并；对非媒体文件打上标记供下游处理。
-   - 复制现有 WatchService 的节流策略：`shouldDeduplicateEvent` + `calculateDebounceTime` 动态延迟，并在 backlog 接近阈值时强制 flush。
+    - Convert chokidar `add/change/delete/addDir/deleteDir/raw` 事件为 `FileObservation`；检测 rename（成对 add+delete）并合并；对非媒体文件打上标记供下游处理。
+    - 复制现有 WatchService 的节流策略：`shouldDeduplicateEvent` + `calculateDebounceTime` 动态延迟，并在 backlog 接近阈值时强制 flush。
 3. **Command Emission**
-   - 将观察事件映射为 `ScanAction`/`FileOperation`：复用 `createFileOperation`/优先级规则，目录事件注入完整的 `priority/timestamp/source` 字段，删除事件触发相应清理命令。
-   - 通过注入的 dispatcher 向千里眼 `planScan` 或 `enqueueOperations` 发送命令，同时允许 Service 监听这些命令以兼容旧 IPC。
+    - 将观察事件映射为 `ScanAction`/`FileOperation`：复用 `createFileOperation`/优先级规则，目录事件注入完整的 `priority/timestamp/source` 字段，删除事件触发相应清理命令。
+    - 通过注入的 dispatcher 向千里眼 `planScan` 或 `enqueueOperations` 发送命令，同时允许 Service 监听这些命令以兼容旧 IPC。
 4. **Health & Diagnostics**
-   - 监听 chokidar `ready/error/raw`，在 `status-bus` 中输出 `ready/paused/error/flushing/raw` 事件、backlog 指标与错误详情，保证监控与 LogViewer 能按原逻辑工作。
-   - 定义错误恢复策略：如 ENOSPC 自动退回 paused，重试策略由引擎配置决定。
+    - 监听 chokidar `ready/error/raw`，在 `status-bus` 中输出 `ready/paused/error/flushing/raw` 事件、backlog 指标与错误详情，保证监控与 LogViewer 能按原逻辑工作。
+    - 定义错误恢复策略：如 ENOSPC 自动退回 paused，重试策略由引擎配置决定。
 5. **Persistent Watch Profiles**
-   - Profile manifest 存储于应用数据目录（默认 `~/.photasa/watch/profiles.json`），支持外部注入路径；加载失败时退回空配置并记录错误。
+    - Profile manifest 存储于应用数据目录（默认 `~/.photasa/watch/profiles.json`），支持外部注入路径；加载失败时退回空配置并记录错误。
 
 ### Module Layout
 
@@ -60,9 +60,9 @@ Existing `watch-service.ts` becomes a thin wrapper around the engine for compati
 
 - `WatchService` 只在初始化/关闭时生存周期管理 Shunfenger，并把 IPC (`WatchServiceEvent.start/stop`, `picasa:stop-file-watch`) 映射到 `configure/pause/resume/flush`；事件全部来源于 `status-bus` / command 流。
 - 兼容策略：
-  1. **Phase 1**：Service 收到命令后继续 mirror 到 `picasa:add-to-scan-queue`，Renderer 保持旧逻辑；
-  2. **Phase 2**：Renderer UI 改为订阅 `qianliyan` 状态和新的 watch 事件；
-  3. **Phase 3**：移除旧 IPC，Service 仅保留薄封装。
+    1. **Phase 1**：Service 收到命令后继续 mirror 到 `picasa:add-to-scan-queue`，Renderer 保持旧逻辑；
+    2. **Phase 2**：Renderer UI 改为订阅 `qianliyan` 状态和新的 watch 事件；
+    3. **Phase 3**：移除旧 IPC，Service 仅保留薄封装。
 - 引擎负责错误时的自动恢复与通知，Service 仅将错误状态传达给 UI。
 
 ### Data Contracts
@@ -71,7 +71,7 @@ Existing `watch-service.ts` becomes a thin wrapper around the engine for compati
 
 ```ts
 interface FileObservation {
-    id: string;                 // hash(eventType + path + mtime)
+    id: string; // hash(eventType + path + mtime)
     path: string;
     kind: "add" | "change" | "delete" | "addDir" | "deleteDir";
     isDirectory: boolean;
@@ -82,8 +82,8 @@ interface FileObservation {
         size?: number;
         mtimeMs?: number;
         thumbnailSize?: number;
-        pairedWith?: string;    // rename pair id
-        rawArgs?: any[];        // chokidar raw payload
+        pairedWith?: string; // rename pair id
+        rawArgs?: any[]; // chokidar raw payload
     };
 }
 ```

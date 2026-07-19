@@ -1,0 +1,9 @@
+[package]
+name = "photasa-media"
+version = "0.1.0"
+edition = "2021"
+description = "Unified image/video extension checking logic (Photasa)"
+license = "MIT"
+
+[dependencies]
+photasa-types = { workspace = true }

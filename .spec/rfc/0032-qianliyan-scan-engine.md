@@ -8,10 +8,10 @@
 - **最后更新**: 2025-01-23
 - **类型**: 功能
 - **相关RFC**:
-  - RFC 0042: scanningFolder四步渐进式迁移（Phase 3的前置条件）
-  - RFC 0043: useQinQiong()访问模式（appState访问统一）
-  - RFC 0046: 扫描队列持久化 - 千里眼scanning.json管理（已完成）✅
-  - RFC 0048: 扫描编排业务逻辑迁移 - 尉迟恭自治架构（已完成）✅
+    - RFC 0042: scanningFolder四步渐进式迁移（Phase 3的前置条件）
+    - RFC 0043: useQinQiong()访问模式（appState访问统一）
+    - RFC 0046: 扫描队列持久化 - 千里眼scanning.json管理（已完成）✅
+    - RFC 0048: 扫描编排业务逻辑迁移 - 尉迟恭自治架构（已完成）✅
 
 ## 摘要
 
@@ -29,21 +29,21 @@
 ### 引擎职责（环境无关）
 
 1. **命令受理**
-   - 提供单一的 `planScan(command: ScanCommand)` API，供主进程服务（渲染进程 IPC、Watcher 集成、计划任务等）调用。
-   - 对输入请求做归一化处理：解析绝对路径、基于指纹去重、合并重复命令。
+    - 提供单一的 `planScan(command: ScanCommand)` API，供主进程服务（渲染进程 IPC、Watcher 集成、计划任务等）调用。
+    - 对输入请求做归一化处理：解析绝对路径、基于指纹去重、合并重复命令。
 2. **策略决策**
-   - 查询增量缓存清单，利用既有策略工具（`strategy/scan-strategy`）选择跳过、增量或全量扫描。
-   - 将结果记录到 `ScanRegistry`，确保同一路径在扫描进行期间不会被重复调度。
+    - 查询增量缓存清单，利用既有策略工具（`strategy/scan-strategy`）选择跳过、增量或全量扫描。
+    - 将结果记录到 `ScanRegistry`，确保同一路径在扫描进行期间不会被重复调度。
 3. **执行流水线**
-   - 将经决策的任务推入 `TaskQueue`，由现有 Worker 池（`scan-worker`）消费。
-   - 维护任务上下文（requestId、触发来源、优先级、取消令牌）。
-   - 将 Worker 的进度、错误、完成事件流式推送给订阅者。
+    - 将经决策的任务推入 `TaskQueue`，由现有 Worker 池（`scan-worker`）消费。
+    - 维护任务上下文（requestId、触发来源、优先级、取消令牌）。
+    - 将 Worker 的进度、错误、完成事件流式推送给订阅者。
 4. **状态与持久化**
-   - 在 `scan/cache` 下存储扫描清单（文件夹指纹 → 最新结果），供应用重启后复用。
-   - 持久化队列状态（待处理/执行中），以便在崩溃或重启后恢复。
+    - 在 `scan/cache` 下存储扫描清单（文件夹指纹 → 最新结果），供应用重启后复用。
+    - 持久化队列状态（待处理/执行中），以便在崩溃或重启后恢复。
 5. **状态广播**
-   - 将扫描状态以结构化事件推送至内部事件总线（`StatusBus`），供主进程服务自行订阅。
-   - 引擎不直接操作 Electron IPC；`ScanService` 等外层消费者将事件转译为现有的 `notifyStatus`、`picasa:find-photo` 等通知。
+    - 将扫描状态以结构化事件推送至内部事件总线（`StatusBus`），供主进程服务自行订阅。
+    - 引擎不直接操作 Electron IPC；`ScanService` 等外层消费者将事件转译为现有的 `notifyStatus`、`picasa:find-photo` 等通知。
 
 ### 模块结构（Tianshu 引擎实现）
 
@@ -75,6 +75,7 @@ src/engines/tianshu/
 #### 引擎架构统一
 
 **三界架构比喻说明**：
+
 ```
 Electron (世界 - World) - 整个应用宇宙
 ├── Main (天界 - Celestial Realm) - 主进程世界
@@ -89,6 +90,7 @@ Electron (世界 - World) - 整个应用宇宙
 ```
 
 **专业引擎架构**：
+
 ```
 src/engines/ (引擎库)
 ├── common/ - 通用契约和测试基架
@@ -102,16 +104,17 @@ src/engines/ (引擎库)
 ```
 
 **三界职责分层**：
+
 - **世界(World - Electron)**：整个应用程序的宇宙容器
 - **天界(Celestial Realm - Main进程)**：神仙居住的高层世界，处理核心业务逻辑
-  - **天庭(Heavenly Court - src/main/tianting/)**：传统行政管理机构，托管现有服务
-    - 保持原有服务架构和@Service装饰器
-    - 处理传统IPC通信和业务逻辑
-    - 逐步迁移到神位架构
-  - **神位(Deity - src/main/deity/)**：新式神仙职位，托管新架构服务
-    - **天枢神位(tianshu-service)**：工作流编排和意图调度的神位
-    - 采用新的服务架构和引擎托管模式
-    - 通过太乙调度专业引擎能力
+    - **天庭(Heavenly Court - src/main/tianting/)**：传统行政管理机构，托管现有服务
+        - 保持原有服务架构和@Service装饰器
+        - 处理传统IPC通信和业务逻辑
+        - 逐步迁移到神位架构
+    - **神位(Deity - src/main/deity/)**：新式神仙职位，托管新架构服务
+        - **天枢神位(tianshu-service)**：工作流编排和意图调度的神位
+        - 采用新的服务架构和引擎托管模式
+        - 通过太乙调度专业引擎能力
 - **人界(Human Realm - 渲染进程)**：用户可见的凡间世界，处理UI交互
 - **引擎库(src/engines/)**：各专业引擎的实现，通过太乙注册中心暴露能力给神位
 
@@ -120,12 +123,14 @@ src/engines/ (引擎库)
 为了确保系统稳定性和渐进式演进，我们采用双轨制运行模式：
 
 **传统系统（天庭服务架构）**：
+
 - 保持现有的config-service、scan-service等天庭服务不变
 - 继续使用现有的@Service装饰器和IPC处理模式
 - 通过天庭(src/main/tianting/)提供传统IPC服务能力
 - 位置：src/main/tianting/ - 已完成目录重命名
 
 **新式系统（神位-引擎架构）**：
+
 - 新增tianshu-service作为神位中的新服务，托管TianshuEngine
 - 位置：src/main/deity/tianshu-service.ts - 已创建
 - TianshuEngine通过太乙(Taiyi)调度各专业引擎
@@ -133,6 +138,7 @@ src/engines/ (引擎库)
 - 专业引擎(千里眼、司簿、司命、文昌、马良等)通过@Adapter暴露能力
 
 **渐进式迁移策略**：
+
 1. **Phase 0**: 契约冻结 - 建立通用契约、样例数据、测试基架
 2. **Phase 1**: 骨架搭建 - 建立tianshu-service和基础引擎架构
 3. **Phase 2**: 功能验证 - 验证新架构的核心功能(扫描、偏好管理等)
@@ -140,6 +146,7 @@ src/engines/ (引擎库)
 5. **Phase 4**: 架构统一 - 清理旧代码，完成架构统一
 
 **目录架构说明**：
+
 - **天庭位置**：src/main/tianting/ - 已完成重命名，托管传统服务
 - **神位位置**：src/main/deity/ - 新建目录，托管新式服务架构
 - **双轨并存**：天庭和神位并行运行，确保平滑迁移
@@ -151,27 +158,27 @@ src/engines/ (引擎库)
 
 - **App → 天枢（Tianshu）**：应用层（含 UI、顺风耳触发）统一发起"扫描意图"给天枢，引擎本身只接受 `ScanCommand` 而不感知调用来源。
 - **天枢流程编排**：天枢根据 YAML 工作流（如 `workflows/scan/folder_scan.zouwu`）决定扫描路径：
-  1. 解析用户意图，向司簿 (`SibuEngine`) 请求 manifest 与差异信息；
-  2. 将判定结果封装为千里眼的 `ScanCommand`，并通过太乙引擎下达执行指令；
-  3. 在扫描期间订阅太乙返回的进度/子目录信息，并根据工作流逻辑决定是否追加队列、是否触发 quick/full、是否生成新意图；
-  4. 当千里眼扫描完成后，指导太乙调用司簿写回 manifest，并向 UI 汇报队列与完成事件。
+    1. 解析用户意图，向司簿 (`SibuEngine`) 请求 manifest 与差异信息；
+    2. 将判定结果封装为千里眼的 `ScanCommand`，并通过太乙引擎下达执行指令；
+    3. 在扫描期间订阅太乙返回的进度/子目录信息，并根据工作流逻辑决定是否追加队列、是否触发 quick/full、是否生成新意图；
+    4. 当千里眼扫描完成后，指导太乙调用司簿写回 manifest，并向 UI 汇报队列与完成事件。
 - **太乙（Taiyi）**：`src/engines/taiyi/`，适配器注册中心（不是引擎），负责：
-  - 维持 `@Adapter` 注册中心以声明引擎适配能力，并代表天枢执行具体引擎方法；
-  - 管理各引擎的生命周期和健康检查；
-  - 将各引擎的进度/结果标准化后回传给天枢；
-  - 提供引擎间通信的桥梁。
+    - 维持 `@Adapter` 注册中心以声明引擎适配能力，并代表天枢执行具体引擎方法；
+    - 管理各引擎的生命周期和健康检查；
+    - 将各引擎的进度/结果标准化后回传给天枢；
+    - 提供引擎间通信的桥梁。
 - **千里眼（Qianliyan）**：`src/engines/qianliyan/`，独立扫描引擎，负责：
-  - 扫描执行：根据命令选择 full/quick 模式，扫描过程中新增目录会回报天枢；
-  - 扫描队列持久化：管理 `~/.photasa/scanning.json`，保证崩溃后队列可恢复。
+    - 扫描执行：根据命令选择 full/quick 模式，扫描过程中新增目录会回报天枢；
+    - 扫描队列持久化：管理 `~/.photasa/scanning.json`，保证崩溃后队列可恢复。
 - **司簿（Sibu）**：`src/engines/sibu/`，独立清单管理引擎，负责：
-  - 提供单照片文件夹的 `.photasa.json` manifest 及元信息（上次 full scan、变更计数、TTL 等）；
-  - 实际何时写回由天枢工作流决定，司簿仅按天枢指令执行读取/持久化。
+    - 提供单照片文件夹的 `.photasa.json` manifest 及元信息（上次 full scan、变更计数、TTL 等）；
+    - 实际何时写回由天枢工作流决定，司簿仅按天枢指令执行读取/持久化。
 - **司命（Siming）**：`src/engines/siming/`，独立 appState 管理引擎，负责：
-  - 通用应用状态持久化：管理 `~/.photasa/appState/` 目录；
-  - 窗口状态、会话状态、其他应用级状态的存储和恢复。
+    - 通用应用状态持久化：管理 `~/.photasa/appState/` 目录；
+    - 窗口状态、会话状态、其他应用级状态的存储和恢复。
 - **文昌（Wenchang）**：`src/engines/wenchang/`，独立偏好管理引擎，负责：
-  - 用户偏好持久化：管理 `~/.photasa/preferences/` 目录；
-  - 提供偏好数据的镜像服务和增量更新。
+    - 用户偏好持久化：管理 `~/.photasa/preferences/` 目录；
+    - 提供偏好数据的镜像服务和增量更新。
 - **渲染层**：所有扫描相关交互只面向天枢（Tianshu），UI 不直接感知下层引擎；天枢直接暴露 IPC 通道并与太乙协同，把进度与结果再回馈 UI。
 
 ### 千里眼扫描队列持久化
@@ -184,6 +191,7 @@ src/engines/ (引擎库)
 4. **事件回流**：千里眼执行中的进度、错误、发现事件通过太乙汇聚后再交给天枢；天枢基于这些事件可追加新任务入队或取消既有任务。
 
 **持久化位置**
+
 - 千里眼扫描队列：`~/.photasa/scanning.json`（扫描队列、执行状态）
 - 司簿清单：`/path/to/photos/.photasa.json`（每个照片文件夹的 manifest、策略、照片清单）
 - 司命状态：`~/.photasa/appState/`（窗口状态、会话状态、应用级状态）
@@ -207,6 +215,7 @@ src/engines/ (引擎库)
 6. **订阅管道**：UI层通过天枢的IPC通道订阅偏好变化，天枢负责从太乙的文昌服务拉取镜像并广播给所有订阅者。
 
 **职责边界**：
+
 - **司簿**：仅管理 `.photasa.json` 配置文件、扫描策略、照片清单
 - **文昌**：独立管理用户偏好、UI状态、应用设置
 - **太乙**：管理所有服务（包括文昌）的注册、调度和生命周期
@@ -247,6 +256,7 @@ sequenceDiagram
 **关键设计原则**：UI层完全无感知底层服务架构，仅通过天枢的统一IPC接口操作偏好数据。
 
 天枢作为工作流编排引擎，通过太乙适配器调用各个独立引擎：
+
 - **千里眼引擎**：扫描执行 + 扫描队列持久化 (`~/.photasa/scanning.json`) - 管理扫描任务队列、执行状态
 - **司簿引擎**：单照片文件夹清单管理 (`.photasa.json`) - 管理每个照片文件夹的配置、扫描策略、照片清单
 - **司命引擎**：通用appState持久化 (`~/.photasa/appState/`) - 管理应用状态、窗口状态、会话状态
@@ -257,35 +267,36 @@ sequenceDiagram
 ```typescript
 // 天枢IPC偏好接口
 interface TianshuPreferenceChannel {
-  // 获取当前偏好镜像
-  'preference.get': () => Promise<PreferenceSnapshot>
+    // 获取当前偏好镜像
+    "preference.get": () => Promise<PreferenceSnapshot>;
 
-  // 应用偏好变更
-  'preference.update': (delta: PreferenceDelta) => Promise<PreferenceSnapshot>
+    // 应用偏好变更
+    "preference.update": (delta: PreferenceDelta) => Promise<PreferenceSnapshot>;
 
-  // 重置偏好
-  'preference.reset': () => Promise<PreferenceSnapshot>
+    // 重置偏好
+    "preference.reset": () => Promise<PreferenceSnapshot>;
 
-  // 导入偏好
-  'preference.import': (prefs: Partial<UserPreferences>) => Promise<PreferenceSnapshot>
+    // 导入偏好
+    "preference.import": (prefs: Partial<UserPreferences>) => Promise<PreferenceSnapshot>;
 }
 
 // 天枢偏好事件广播
 interface TianshuPreferenceEvents {
-  // 偏好变更通知（多窗口同步）
-  'preference.changed': (event: PreferenceChangeEvent) => void
+    // 偏好变更通知（多窗口同步）
+    "preference.changed": (event: PreferenceChangeEvent) => void;
 
-  // 偏好服务状态
-  'preference.service.status': (status: 'connected' | 'disconnected' | 'error') => void
+    // 偏好服务状态
+    "preference.service.status": (status: "connected" | "disconnected" | "error") => void;
 }
 ```
 
 UI视角下只存在天枢一个服务接口：
+
 ```typescript
 // UI只知道这些简单的IPC调用
-window.electron.ipcRenderer.invoke('preference.get')
-window.electron.ipcRenderer.invoke('preference.update', delta)
-window.electron.ipcRenderer.on('preference.changed', callback)
+window.electron.ipcRenderer.invoke("preference.get");
+window.electron.ipcRenderer.invoke("preference.update", delta);
+window.electron.ipcRenderer.on("preference.changed", callback);
 ```
 
 天枢负责将这些简单调用内部路由到太乙的文昌服务，UI无需了解底层的服务包装、引擎调度等实现细节。
@@ -295,43 +306,43 @@ window.electron.ipcRenderer.on('preference.changed', callback)
 ```typescript
 // 文昌服务 - 独立偏好管理
 interface WenchangService {
-  // 偏好持久化（独立存储）
-  loadPreferences(): Promise<UserPreferences>
-  savePreferences(prefs: UserPreferences): Promise<void>
+    // 偏好持久化（独立存储）
+    loadPreferences(): Promise<UserPreferences>;
+    savePreferences(prefs: UserPreferences): Promise<void>;
 
-  // 镜像管理
-  createSnapshot(): PreferenceSnapshot
-  broadcastSnapshot(snapshot: PreferenceSnapshot): void
+    // 镜像管理
+    createSnapshot(): PreferenceSnapshot;
+    broadcastSnapshot(snapshot: PreferenceSnapshot): void;
 
-  // 增量处理
-  applyDelta(delta: PreferenceDelta): Promise<number> // 返回新revision
+    // 增量处理
+    applyDelta(delta: PreferenceDelta): Promise<number>; // 返回新revision
 
-  // 版本管理
-  getRevision(): number
-  getHistory(limit?: number): PreferenceHistory[]
+    // 版本管理
+    getRevision(): number;
+    getHistory(limit?: number): PreferenceHistory[];
 
-  // 热重载
-  watchChanges(callback: (snapshot: PreferenceSnapshot) => void): void
+    // 热重载
+    watchChanges(callback: (snapshot: PreferenceSnapshot) => void): void;
 }
 
 interface UserPreferences {
-  revision: number
-  ui: {
-    theme: string
-    layout: string
-    language: string
-  }
-  display: {
-    thumbnailSize: number
-    sortOrder: string
-    groupBy: string
-  }
-  scanning: {
-    autoScan: boolean
-    excludePatterns: string[]
-    concurrency: number
-  }
-  lastModified: number
+    revision: number;
+    ui: {
+        theme: string;
+        layout: string;
+        language: string;
+    };
+    display: {
+        thumbnailSize: number;
+        sortOrder: string;
+        groupBy: string;
+    };
+    scanning: {
+        autoScan: boolean;
+        excludePatterns: string[];
+        concurrency: number;
+    };
+    lastModified: number;
 }
 ```
 
@@ -341,8 +352,8 @@ interface UserPreferences {
 
 ```ts
 interface ScanCommand {
-    id: string;              // deterministic id (hash(path+action+source))
-    action: ScanAction;      // existing scan payload
+    id: string; // deterministic id (hash(path+action+source))
+    action: ScanAction; // existing scan payload
     source: "manual" | "watch" | "system";
     priority: "user" | "background";
     hints?: {
@@ -412,13 +423,13 @@ interface ScanJobState {
 
 ### 实施进度跟踪
 
-| 阶段 | 范围 | 当前状态 | 备注 |
-| ---- | ---- | -------- | ---- |
-| Phase 0 | 契约冻结、样例数据、测试基架 | ✅ 已完成 | 建立 `src/engines/common/` 契约基础 |
-| Phase 1 | 骨架搭建 - tianshu-service + 基础引擎 | ✅ 已完成 | 太乙重构完成，千里眼引擎和适配器已实现 |
-| Phase 2 | 功能验证 - 核心功能验证 | 🔄 部分完成 | 千里眼队列持久化已验证（RFC 0046），扫描编排待验证 |
-| Phase 3 | scan-service迁移 - 扫描服务天界化 | ⚠️ 架构不一致 | **当前状态**：编排在人界（RFC 0048），目标：编排在天界 |
-| Phase 4 | 架构统一 - 清理旧代码完成统一 | ⬜ 未启动 | 限流、失败恢复、指标上报 |
+| 阶段    | 范围                                  | 当前状态      | 备注                                                   |
+| ------- | ------------------------------------- | ------------- | ------------------------------------------------------ |
+| Phase 0 | 契约冻结、样例数据、测试基架          | ✅ 已完成     | 建立 `src/engines/common/` 契约基础                    |
+| Phase 1 | 骨架搭建 - tianshu-service + 基础引擎 | ✅ 已完成     | 太乙重构完成，千里眼引擎和适配器已实现                 |
+| Phase 2 | 功能验证 - 核心功能验证               | 🔄 部分完成   | 千里眼队列持久化已验证（RFC 0046），扫描编排待验证     |
+| Phase 3 | scan-service迁移 - 扫描服务天界化     | ⚠️ 架构不一致 | **当前状态**：编排在人界（RFC 0048），目标：编排在天界 |
+| Phase 4 | 架构统一 - 清理旧代码完成统一         | ⬜ 未启动     | 限流、失败恢复、指标上报                               |
 
 ### Phase 3: scan-service迁移到千里眼引擎
 
@@ -429,6 +440,7 @@ interface ScanJobState {
 **RFC 0048 的实际完成**：扫描编排逻辑迁移到**人界**（Renderer进程）的尉迟恭服务
 
 **当前实际架构**：
+
 ```
 人界（Renderer进程）
 ├── 尉迟恭服务（YuChiGongService）
@@ -446,18 +458,21 @@ interface ScanJobState {
 ```
 
 **架构分析**：
+
 - ✅ **优点**：RFC 0048 实现了 Store SSOT + 状态机制，架构清晰，已通过测试验证
 - ⚠️ **不一致**：编排逻辑在人界而非天界，与 RFC 0032 的"天界主导"原则不符
 - ⚠️ **影响**：IPC通信开销（每个扫描任务需要IPC调用），但当前性能可接受
 
 **长期目标决策（2025-01-23）**：
+
 1. **选项A（临时方案）**：接受当前架构，保持 RFC 0048 的架构（编排在人界），优化IPC通信
 2. **选项B（长期目标）**：✅ **已确认为长期目标** - 将编排逻辑迁移到天界，与天界架构对齐
-   - 需要仔细审查和设计
-   - 需要重新设计状态管理机制（Store SSOT 如何在天界实现）
-   - 需要详细的迁移路径和风险评估
+    - 需要仔细审查和设计
+    - 需要重新设计状态管理机制（Store SSOT 如何在天界实现）
+    - 需要详细的迁移路径和风险评估
 
 **前置条件**：
+
 - ✅ RFC 0042 Step 1-3 已完成（ScanningStore、QianLiYan持久化、YuChiGong编排）
 - ✅ 天枢-太乙-千里眼调度链已建立
 - ✅ RFC 0048 已完成（尉迟恭编排架构）
@@ -465,6 +480,7 @@ interface ScanJobState {
 #### 3.1 当前架构问题（已更新 2025-01-23）
 
 **问题1: 扫描编排位置（已部分解决）**
+
 ```typescript
 // ✅ RFC 0048 已完成：编排逻辑已迁移到尉迟恭（人界）
 // src/renderer/src/services/yuchigong/yuchigong.ts
@@ -481,11 +497,13 @@ private async executeScan(
 ```
 
 **问题2: IPC通信开销（当前可接受）**
+
 - ✅ 尉迟恭通过IPC调用Main进程的扫描能力（`window.api.scanPhotos`）
 - ✅ 进度更新通过IPC事件流式传输
 - ⚠️ 大量文件扫描时可能存在性能瓶颈，但当前测试验证性能可接受
 
 **问题3: 职责边界（架构不一致）**
+
 - ⚠️ YuChiGong（人界）包含扫描编排逻辑（RFC 0048 已完成）
 - ✅ QianLiYan（天界）负责队列持久化和扫描执行
 - ⚠️ 与 RFC 0032 的"天界主导"原则不一致，但当前架构已稳定运行
@@ -516,11 +534,13 @@ private async executeScan(
 #### 3.3 迁移策略（长期目标：选项B）
 
 **✅ 长期目标确认（2025-01-23）**：
+
 - **选项B已确认为长期目标** - 将编排逻辑迁移到天界，与天界架构对齐
 - 需要仔细审查和设计，确保迁移方案稳健可靠
 - 当前架构（RFC 0048）作为临时方案，保持稳定运行
 
 **当前状态**：
+
 - ✅ RFC 0048 已完成，架构稳定运行
 - ⚠️ 架构与 RFC 0032 的"天界主导"原则不一致
 - ⚠️ 当前架构作为临时方案，长期目标是将编排逻辑迁移到天界
@@ -528,11 +548,13 @@ private async executeScan(
 **重新设计思路（2025-01-23）**：
 
 **核心原则**：
+
 - ✅ **scan-service 已设计良好，不需要改变**
 - ✅ **只需将 scan-service 包装在千里眼适配器中**
 - ✅ **遵循天枢和太乙的标准接口设计模式**
 
 **标准适配器模式**（参考文昌、司命适配器）：
+
 ```
 1. 适配器使用 @Adapter 装饰器注册
 2. 适配器实现 IAdapter 接口（initialize/shutdown）
@@ -541,6 +563,7 @@ private async executeScan(
 ```
 
 **千里眼适配器设计**：
+
 ```typescript
 @Adapter({
     name: "qianliyan",
@@ -579,38 +602,39 @@ export class QianliyanAdapter implements IAdapter {
 **关键设计挑战**：
 
 1. **scan-service 包装策略**
-   - **当前**：scan-service 是 @Service 装饰的服务，有独立的生命周期
-   - **方案**：QianliyanAdapter 包装 scan-service，不改变 scan-service 本身
-   - **实现**：通过依赖注入获取 scan-service 实例，委托方法调用
+    - **当前**：scan-service 是 @Service 装饰的服务，有独立的生命周期
+    - **方案**：QianliyanAdapter 包装 scan-service，不改变 scan-service 本身
+    - **实现**：通过依赖注入获取 scan-service 实例，委托方法调用
 
 2. **队列管理位置**
-   - **当前**：人界使用 p-queue 管理队列
-   - **方案**：千里眼适配器内部维护队列（使用千里眼引擎的队列逻辑）
-   - **实现**：QianliyanAdapter 使用 QianliyanEngine 的队列管理，最终委托给 scan-service 执行
+    - **当前**：人界使用 p-queue 管理队列
+    - **方案**：千里眼适配器内部维护队列（使用千里眼引擎的队列逻辑）
+    - **实现**：QianliyanAdapter 使用 QianliyanEngine 的队列管理，最终委托给 scan-service 执行
 
 3. **状态管理策略**
-   - **当前**：人界 Store 管理状态（pending → processing → [删除]）
-   - **方案**：千里眼适配器维护状态，通过 IPC 事件同步到人界 Store
-   - **实现**：适配器内部状态机 + IPC 事件广播
+    - **当前**：人界 Store 管理状态（pending → processing → [删除]）
+    - **方案**：千里眼适配器维护状态，通过 IPC 事件同步到人界 Store
+    - **实现**：适配器内部状态机 + IPC 事件广播
 
 4. **IPC通信优化**
-   - **当前**：每个任务 IPC 调用（`window.api.scanPhotos`）
-   - **方案**：批量提交 + 流式进度事件
-   - **实现**：
-     - 批量提交接口：`submitScanTasks(actions: ScanAction[])`
-     - 进度事件流：适配器监听 scan-service 事件，通过 IPC 广播
+    - **当前**：每个任务 IPC 调用（`window.api.scanPhotos`）
+    - **方案**：批量提交 + 流式进度事件
+    - **实现**：
+        - 批量提交接口：`submitScanTasks(actions: ScanAction[])`
+        - 进度事件流：适配器监听 scan-service 事件，通过 IPC 广播
 
 5. **Store同步机制**
-   - **当前**：人界 Store 为 SSOT
-   - **方案**：天界适配器为 SSOT，人界 Store 为只读镜像
-   - **实现**：
-     - 适配器通过 IPC 事件推送状态变化
-     - 房玄龄监听事件，更新 Store 镜像
-     - Store 变为只读，移除直接修改逻辑
+    - **当前**：人界 Store 为 SSOT
+    - **方案**：天界适配器为 SSOT，人界 Store 为只读镜像
+    - **实现**：
+        - 适配器通过 IPC 事件推送状态变化
+        - 房玄龄监听事件，更新 Store 镜像
+        - Store 变为只读，移除直接修改逻辑
 
 **迁移路径设计**（待详细设计）：
 
 **Phase 3.1: 千里眼适配器包装scan-service**（1-2周）
+
 - 创建 `QianliyanAdapter` 包装 `ScanService`
 - 实现标准 `IAdapter` 接口（initialize/shutdown）
 - 通过依赖注入获取 `ScanService` 实例
@@ -618,27 +642,32 @@ export class QianliyanAdapter implements IAdapter {
 - 使用 `@Adapter` 装饰器注册到太乙
 
 **Phase 3.2: 队列管理集成**（1-2周）
+
 - 在适配器中集成 `QianliyanEngine` 的队列管理
 - 实现任务队列（替代人界p-queue）
 - 实现状态机（pending → processing → [删除]）
 - 队列持久化到 `~/.photasa/scan/scanning.json`
 
 **Phase 3.3: IPC通信重构**（1-2周）
+
 - 设计批量任务提交接口：`submitScanTasks(actions: ScanAction[])`
 - 适配器监听 `scan-service` 事件，通过 IPC 广播进度
 - 实现状态同步机制（适配器 → IPC事件 → 人界Store）
 
 **Phase 3.4: 人界Store镜像化**（1-2周）
+
 - 将Store改为只读镜像
 - 房玄龄监听IPC事件，更新Store镜像
 - 移除人界直接修改Store的逻辑（尉迟恭不再直接修改Store）
 
 **Phase 3.5: 尉迟恭简化**（1周）
+
 - 移除编排逻辑（p-queue、executeScan）
 - 通过IPC批量提交扫描意图
 - 接收进度事件并更新UI状态
 
 **Phase 3.6: 测试和验证**（2周）
+
 - 完整迁移路径测试
 - 性能对比测试（批量提交 vs 单个IPC调用）
 - 崩溃恢复测试（从持久化队列恢复）
@@ -647,6 +676,7 @@ export class QianliyanAdapter implements IAdapter {
 **总工期估算**：8-11周（2-2.5个月）
 
 **关键设计要点**：
+
 - ✅ **不改变 scan-service**：保持 scan-service 的现有设计和实现
 - ✅ **标准适配器模式**：遵循文昌、司命适配器的设计模式
 - ✅ **依赖注入**：通过太乙的依赖系统获取 scan-service 实例
@@ -654,6 +684,7 @@ export class QianliyanAdapter implements IAdapter {
 - ✅ **队列管理**：适配器内部管理队列，scan-service 只负责执行
 
 **风险评估**：
+
 - ⚠️ **高风险**：大规模重构，可能破坏现有稳定架构
 - ⚠️ **复杂度高**：需要重新设计状态管理、IPC通信、事件广播
 - ⚠️ **测试覆盖**：需要全面的集成测试和性能测试
@@ -672,10 +703,7 @@ export class QianLiYanEngine {
     /**
      * 核心扫描编排方法（从Renderer迁移）
      */
-    async orchestrateScan(
-        items: ScanAction[],
-        options: ScanOptions
-    ): Promise<ScanResult> {
+    async orchestrateScan(items: ScanAction[], options: ScanOptions): Promise<ScanResult> {
         logger.info("🌌 千里眼：开始扫描编排");
 
         // 1. 任务预处理
@@ -695,7 +723,7 @@ export class QianLiYanEngine {
      * 进度事件发射（通过太乙广播）
      */
     private emitProgress(event: ScanProgressEvent): void {
-        this.taiyi.broadcast('qianliyan.progress', event);
+        this.taiyi.broadcast("qianliyan.progress", event);
     }
 }
 ```
@@ -708,10 +736,10 @@ export class QianLiYanEngine {
 // src/engines/qianliyan/adapters/QianLiYanAdapter.ts
 
 @Adapter({
-    name: 'qianliyan',
-    description: '千里眼扫描引擎',
+    name: "qianliyan",
+    description: "千里眼扫描引擎",
     dependencies: [],
-    priority: 100
+    priority: 100,
 })
 export class QianLiYanAdapter extends BaseAdapter {
     private engine: QianLiYanEngine;
@@ -724,10 +752,7 @@ export class QianLiYanAdapter extends BaseAdapter {
     /**
      * 暴露给天枢的扫描编排方法
      */
-    async orchestrate(
-        items: ScanAction[],
-        options: ScanOptions
-    ): Promise<ScanResult> {
+    async orchestrate(items: ScanAction[], options: ScanOptions): Promise<ScanResult> {
         return this.engine.orchestrateScan(items, options);
     }
 
@@ -755,22 +780,14 @@ export class TianshuService extends BaseService {
     /**
      * IPC处理：扫描编排请求
      */
-    async handleScanRequest(
-        items: ScanAction[],
-        options: ScanOptions
-    ): Promise<ScanResult> {
+    async handleScanRequest(items: ScanAction[], options: ScanOptions): Promise<ScanResult> {
         logger.info("🌌 天枢：收到扫描请求");
 
         // 1. 通过太乙调度千里眼
-        const result = await this.taiyi.callAdapter(
-            'qianliyan',
-            'orchestrate',
-            items,
-            options
-        );
+        const result = await this.taiyi.callAdapter("qianliyan", "orchestrate", items, options);
 
         // 2. 广播扫描完成事件
-        this.broadcastToRenderers('scan.completed', result);
+        this.broadcastToRenderers("scan.completed", result);
 
         return result;
     }
@@ -779,8 +796,8 @@ export class TianshuService extends BaseService {
      * 订阅千里眼进度事件并转发给Renderer
      */
     private setupProgressForwarding(): void {
-        this.taiyi.on('qianliyan.progress', (event: ScanProgressEvent) => {
-            this.broadcastToRenderers('scan.progress', event);
+        this.taiyi.on("qianliyan.progress", (event: ScanProgressEvent) => {
+            this.broadcastToRenderers("scan.progress", event);
         });
     }
 }
@@ -803,11 +820,9 @@ export class YuChiGongService {
         // ✅ 简化：仅通过IPC请求天枢
         const queue = this.fangXuanLingService.getScanningQueue();
 
-        await window.electron.ipcRenderer.invoke(
-            'tianshu.scan.request',
-            queue,
-            { /* options */ }
-        );
+        await window.electron.ipcRenderer.invoke("tianshu.scan.request", queue, {
+            /* options */
+        });
 
         logger.info("🏛️ 尉迟恭：扫描请求已发送");
     }
@@ -816,14 +831,11 @@ export class YuChiGongService {
      * 监听扫描进度（接收IPC事件）
      */
     private setupProgressListener(): void {
-        window.electron.ipcRenderer.on(
-            'scan.progress',
-            (event: ScanProgressEvent) => {
-                logger.debug("🏛️ 尉迟恭：收到扫描进度", event);
-                // 更新UI状态
-                this.updateScanProgress(event);
-            }
-        );
+        window.electron.ipcRenderer.on("scan.progress", (event: ScanProgressEvent) => {
+            logger.debug("🏛️ 尉迟恭：收到扫描进度", event);
+            // 更新UI状态
+            this.updateScanProgress(event);
+        });
     }
 }
 ```
@@ -848,16 +860,19 @@ export class YuChiGongService {
 #### 3.4 测试策略
 
 **单元测试**：
+
 - QianLiYanEngine核心方法测试
 - QianLiYanAdapter注册和调用测试
 - 天枢-太乙-千里眼调度链测试
 
 **集成测试**：
+
 - 完整扫描流程测试（Renderer → 天枢 → 太乙 → 千里眼）
 - 进度事件广播测试
 - 多窗口同步测试
 
 **性能测试**：
+
 - 大量文件扫描性能对比（迁移前后）
 - IPC通信开销测量
 - Worker池效率验证
@@ -865,27 +880,30 @@ export class YuChiGongService {
 #### 3.5 风险与缓解
 
 **风险1: 迁移期间功能破坏**
+
 - **缓解**: 采用feature flag控制，支持新旧架构并存
 - **回滚**: 快速切换回旧架构
 
 **风险2: 性能回退**
+
 - **缓解**: 详细的性能基准测试
 - **监控**: 实时性能指标对比
 
 **风险3: 兼容性问题**
+
 - **缓解**: 保持IPC接口契约不变
 - **测试**: 覆盖所有现有扫描场景
 
 #### 3.6 实施计划
 
-| 子任务 | 工期 | 依赖 | 验收标准 |
-|--------|------|------|----------|
-| 3.1 千里眼引擎扩展 | 3天 | Phase 1-2完成 | orchestrateScan迁移完成 |
-| 3.2 千里眼适配器创建 | 2天 | 3.1完成 | @Adapter注册成功 |
-| 3.3 天枢调度集成 | 2天 | 3.2完成 | IPC调度链打通 |
-| 3.4 尉迟恭简化 | 1天 | 3.3完成 | Renderer简化完成 |
-| 3.5 旧代码清理 | 1天 | 3.4完成 | 旧代码完全移除 |
-| 3.6 测试验证 | 2天 | 3.5完成 | 所有测试通过 |
+| 子任务               | 工期 | 依赖          | 验收标准                |
+| -------------------- | ---- | ------------- | ----------------------- |
+| 3.1 千里眼引擎扩展   | 3天  | Phase 1-2完成 | orchestrateScan迁移完成 |
+| 3.2 千里眼适配器创建 | 2天  | 3.1完成       | @Adapter注册成功        |
+| 3.3 天枢调度集成     | 2天  | 3.2完成       | IPC调度链打通           |
+| 3.4 尉迟恭简化       | 1天  | 3.3完成       | Renderer简化完成        |
+| 3.5 旧代码清理       | 1天  | 3.4完成       | 旧代码完全移除          |
+| 3.6 测试验证         | 2天  | 3.5完成       | 所有测试通过            |
 
 **总工期**: 11天
 
@@ -894,12 +912,14 @@ export class YuChiGongService {
 **⚠️ 架构状态**：RFC 0048 已完成，但架构与 RFC 0032 Phase 3 目标不一致。
 
 **如果选择选项A（接受当前架构）**：
+
 - ✅ 扫描编排逻辑在尉迟恭（人界）已稳定运行
 - ✅ 通过IPC调用天界扫描执行（`window.api.scanPhotos`）
 - ✅ 性能可接受（已通过测试验证）
 - ⚠️ 与 RFC 0032 的"天界主导"原则不一致，但架构稳定
 
 **如果选择选项B（继续 Phase 3）**：
+
 - ⬜ orchestrateScan完全在Main进程执行
 - ⬜ Renderer进程仅负责UI交互和状态展示
 - ⬜ 扫描性能≥原架构性能
@@ -909,6 +929,7 @@ export class YuChiGongService {
 - ⬜ 支持优雅降级（feature flag控制）
 
 **如果选择选项C（混合架构）**：
+
 - ⬜ 状态管理保持在人界（Store SSOT）
 - ⬜ Worker池管理和进度聚合迁移到天界
 - ⬜ 职责边界清晰，架构稳定
@@ -916,6 +937,7 @@ export class YuChiGongService {
 ### Phase 0 详细任务清单
 
 **契约冻结任务**：
+
 - [ ] 建立 `src/engines/common/contracts.ts` - 定义引擎间通信契约
 - [ ] 创建 `src/engines/common/fixtures.ts` - 提供测试数据
 - [ ] 实现 `src/engines/common/test-harness.ts` - 测试基架工具
@@ -923,6 +945,7 @@ export class YuChiGongService {
 - [ ] 验证契约一致性和向后兼容性
 
 **目录结构规划**：
+
 ```
 src/engines/common/
 ├── contracts.ts      # 引擎契约定义
@@ -938,36 +961,37 @@ src/engines/common/
 **重大完成项 (2025-09-28)**：
 
 1. **太乙引擎重命名与重构** ✅
-   - 完成从"承宣引擎"到"太乙引擎"的全面重命名
-   - 更新神话背景：太乙真人 - 道教十二金仙之首，统筹协调之神
-   - 重构目录：`src/engines/chengxuan/` → `src/engines/taiyi/`
-   - 更新所有文档和RFC引用
+    - 完成从"承宣引擎"到"太乙引擎"的全面重命名
+    - 更新神话背景：太乙真人 - 道教十二金仙之首，统筹协调之神
+    - 重构目录：`src/engines/chengxuan/` → `src/engines/taiyi/`
+    - 更新所有文档和RFC引用
 
 2. **@Adapter装饰器系统** ✅
-   - 实现完整的`@Adapter`装饰器替代`@Service`
-   - 建立`AdapterRegistry`注册中心，支持依赖解析和优先级
-   - 实现生命周期管理：注册→初始化→健康检查→关闭
-   - 支持错误恢复和重试机制
+    - 实现完整的`@Adapter`装饰器替代`@Service`
+    - 建立`AdapterRegistry`注册中心，支持依赖解析和优先级
+    - 实现生命周期管理：注册→初始化→健康检查→关闭
+    - 支持错误恢复和重试机制
 
 3. **TaiyiEngine核心引擎** ✅
-   - 统一的引擎调用接口：`callEngine(engineName, method, ...args)`
-   - 引擎状态管理和监控
-   - 事件驱动架构支持
-   - 完整的TypeScript类型定义
+    - 统一的引擎调用接口：`callEngine(engineName, method, ...args)`
+    - 引擎状态管理和监控
+    - 事件驱动架构支持
+    - 完整的TypeScript类型定义
 
 4. **文昌适配器实现** ✅
-   - `WenchangEngine`：偏好管理、版本控制、持久化
-   - `WenchangAdapter`：@Adapter模式包装
-   - 完整的测试覆盖（10/10测试通过）
-   - 支持增量更新、事件通知、历史追踪
+    - `WenchangEngine`：偏好管理、版本控制、持久化
+    - `WenchangAdapter`：@Adapter模式包装
+    - 完整的测试覆盖（10/10测试通过）
+    - 支持增量更新、事件通知、历史追踪
 
 5. **太乙神位服务** ✅
-   - 创建`src/main/deity/taiyi-service.ts`
-   - 使用@Service装饰器注册为天庭服务
-   - 提供IPC接口供渲染进程调用
-   - 事件广播和状态同步
+    - 创建`src/main/deity/taiyi-service.ts`
+    - 使用@Service装饰器注册为天庭服务
+    - 提供IPC接口供渲染进程调用
+    - 事件广播和状态同步
 
 **测试验证结果**：
+
 - 太乙引擎测试：11/11 通过 ✅
 - 文昌适配器测试：10/10 通过 ✅
 - 无遗留承宣引用：0个 ✅
@@ -975,36 +999,42 @@ src/engines/common/
 ### Phase 1 详细任务清单
 
 **步骤1: 验证现有天庭服务**
+
 - [ ] 运行应用验证天庭服务(config-service, scan-service等)正常工作
 - [ ] 确认现有@Service装饰器和IPC通信无异常
 - [ ] 验证tianting目录重命名后的导入路径正确性
 - [ ] 运行相关测试确保服务功能完整
 
 **步骤2: 天枢引擎集成**
+
 - [ ] 将现有的TianshuEngine代码集成到`src/main/deity/tianshu-service.ts`
 - [ ] 实现天枢服务的IPC接口暴露
 - [ ] 确保TianshuEngine能够正确初始化和运行
 - [ ] 添加基本的错误处理和日志记录
 
 **步骤3: 太乙架构重构**
+
 - [x] 分析现有太乙代码(从旧服务复制而来) - 完成承宣→太乙重命名
 - [x] 重构太乙为独立的引擎注册中心 - TaiyiEngine + AdapterRegistry实现
 - [x] 实现@Adapter装饰器替代@Service - 完整的@Adapter系统
 - [x] 建立引擎生命周期管理机制 - 依赖解析、健康检查、错误恢复
 
 **步骤4: 文昌适配器实现**
+
 - [x] 创建`src/engines/wenchang/`目录结构 - 完整目录结构
 - [x] 实现WenchangEngine基础功能 - 偏好管理、版本控制、持久化
 - [x] 创建第一个@Adapter包装器 - WenchangAdapter实现
 - [x] 验证adapter/worker模式的可行性 - 测试覆盖100%
 
 **步骤5: 太乙神位服务集成**
+
 - [x] 创建`src/main/deity/taiyi-service.ts` - 太乙神位服务
 - [ ] 将太乙服务注入到天枢服务依赖中
 - [ ] 更新神位入口导入太乙服务
 - [ ] 测试太乙服务与天枢服务的协同工作
 
 **集成测试**：
+
 - [ ] 测试天枢服务与太乙的协同工作
 - [ ] 验证文昌适配器能被天枢正确调用
 - [ ] 确保新旧服务架构能够并存运行
@@ -1012,6 +1042,7 @@ src/engines/common/
 ### 天枢-太乙-文昌调度链设计
 
 **调度链架构**：
+
 ```
 UI层 → 天枢引擎 → 太乙引擎 → 文昌引擎
      ↖                    ↙
@@ -1021,33 +1052,35 @@ UI层 → 天枢引擎 → 太乙引擎 → 文昌引擎
 **调度流程**：
 
 1. **偏好获取流程**：
-   ```
-   UI.invoke('preference.get')
-   → 天枢.handlePreferenceGet()
-   → 太乙.callService('wenchang', 'getCurrentSnapshot')
-   → 文昌.getCurrentSnapshot()
-   → 返回PreferenceSnapshot
-   ```
+
+    ```
+    UI.invoke('preference.get')
+    → 天枢.handlePreferenceGet()
+    → 太乙.callService('wenchang', 'getCurrentSnapshot')
+    → 文昌.getCurrentSnapshot()
+    → 返回PreferenceSnapshot
+    ```
 
 2. **偏好更新流程**：
-   ```
-   UI.invoke('preference.update', delta)
-   → 天枢.handlePreferenceUpdate(delta)
-   → 太乙.callService('wenchang', 'applyDelta', delta)
-   → 文昌.applyDelta(delta)
-   → 文昌.emit('preferenceChanged', event)
-   → 太乙.forwardEvent('wenchang.preferenceChanged', event)
-   → 天枢.broadcastPreferenceChange(event)
-   → UI.receive('preference.changed', event)
-   ```
+
+    ```
+    UI.invoke('preference.update', delta)
+    → 天枢.handlePreferenceUpdate(delta)
+    → 太乙.callService('wenchang', 'applyDelta', delta)
+    → 文昌.applyDelta(delta)
+    → 文昌.emit('preferenceChanged', event)
+    → 太乙.forwardEvent('wenchang.preferenceChanged', event)
+    → 天枢.broadcastPreferenceChange(event)
+    → UI.receive('preference.changed', event)
+    ```
 
 3. **多窗口同步**：
    天枢维护所有窗口的IPC连接，当文昌引擎通过太乙报告偏好变更时，天枢向所有活跃窗口广播变更事件。
 
 4. **错误处理**：
-   - 太乙负责引擎调用的错误捕获和重试
-   - 天枢负责向UI层报告友好的错误信息
-   - 文昌引擎的内部错误通过太乙传播到天枢
+    - 太乙负责引擎调用的错误捕获和重试
+    - 天枢负责向UI层报告友好的错误信息
+    - 文昌引擎的内部错误通过太乙传播到天枢
 
 ### 设计草图：天枢主导的扫描流程
 
@@ -1085,6 +1118,7 @@ graph TD
     Tianshu -->|指示更新 manifest/队列| Taiyi
     Taiyi -->|更新 manifest| Sibu
 ```
+
     Sibu -->|返回版本/变更/TTL| Tianshu
     Tianshu -->|封装 ScanCommand| Taiyi[太乙 Service]
     Taiyi -->|调度执行| Qianliyan[千里眼 Qianliyan]
@@ -1095,6 +1129,7 @@ graph TD
     Taiyi -->|通知完成| Tianshu
     Tianshu -->|写回 manifest/队列| Sibu
     Tianshu -->|更新 UI 状态| App
+
 ```
 
 关键要点：
@@ -1155,36 +1190,40 @@ graph TD
 
 **当前架构流程**（RFC 0048 实际实现 - 临时方案）：
 ```
+
 用户操作 → 尉迟恭（人界）
-         ↓
-    1️⃣ 创建 pending 任务到 Store（SSOT - 人界）
-         ↓
-    2️⃣ 添加到 p-queue 执行队列（人界）
-         ↓
-    3️⃣ p-queue 执行 executeScan()（人界）
-         ├─ Store 状态: pending → processing（人界）
-         ├─ IPC调用: window.api.scanPhotos() → 天界扫描执行
-         ├─ 发现子文件夹 → 批量创建 pending 到 Store（人界）
-         └─ 完成 → 立即从 Store 删除（人界）
+↓
+1️⃣ 创建 pending 任务到 Store（SSOT - 人界）
+↓
+2️⃣ 添加到 p-queue 执行队列（人界）
+↓
+3️⃣ p-queue 执行 executeScan()（人界）
+├─ Store 状态: pending → processing（人界）
+├─ IPC调用: window.api.scanPhotos() → 天界扫描执行
+├─ 发现子文件夹 → 批量创建 pending 到 Store（人界）
+└─ 完成 → 立即从 Store 删除（人界）
+
 ```
 
 **RFC 0032 目标流程**（长期目标 - 待实现）：
 ```
+
 用户操作 → 尉迟恭（人界）
-         ↓
-    1️⃣ 通过IPC提交扫描意图 → 天枢（天界）
-         ↓
-    2️⃣ 天枢编排 → 太乙调度 → 千里眼执行（天界）
-         ├─ 千里眼管理任务队列（天界SSOT）
-         ├─ 千里眼管理Worker池（天界）
-         ├─ 千里眼状态机：pending → processing → [删除]（天界）
-         └─ 千里眼聚合进度（天界）
-         ↓
-    3️⃣ 进度事件通过IPC广播到人界
-         ├─ 房玄龄更新Store镜像（只读）
-         └─ 尉迟恭更新UI状态
-         ↓
-    4️⃣ 扫描完成 → 天界从队列删除 → IPC通知人界同步
+↓
+1️⃣ 通过IPC提交扫描意图 → 天枢（天界）
+↓
+2️⃣ 天枢编排 → 太乙调度 → 千里眼执行（天界）
+├─ 千里眼管理任务队列（天界SSOT）
+├─ 千里眼管理Worker池（天界）
+├─ 千里眼状态机：pending → processing → [删除]（天界）
+└─ 千里眼聚合进度（天界）
+↓
+3️⃣ 进度事件通过IPC广播到人界
+├─ 房玄龄更新Store镜像（只读）
+└─ 尉迟恭更新UI状态
+↓
+4️⃣ 扫描完成 → 天界从队列删除 → IPC通知人界同步
+
 ```
 
 **关键差异对比**：
@@ -1221,3 +1260,4 @@ graph TD
    - 天界崩溃恢复（从持久化恢复）
    - 人界崩溃恢复（从IPC重新同步）
    - 双向同步一致性保证
+```

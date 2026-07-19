@@ -6,7 +6,7 @@
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
-use super::photasa_config::{
+use photasa_config::{
     self, config_to_json_value, fix_config_sync, parse_config_value, PhotasaConfigData,
     PHOTASA_CONFIG_FILE,
 };

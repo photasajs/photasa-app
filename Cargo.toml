@@ -4,12 +4,14 @@ members = [
     "crates/zouwu-core",
     "crates/zouwu-builtin",
     "crates/libheif-sys",
-    "crates/wenchang-preferences",
+    "crates/photasa-preference",
     "crates/photasa-import",
     "crates/photasa-thumbnail",
     "crates/photasa-types",
     "crates/photasa-scan",
     "crates/photasa-watch",
+    "crates/photasa-config",
+    "crates/photasa-media",
     "apps/photasa/src-tauri",
 ]
 
@@ -27,9 +29,11 @@ pest = "2"
 pest_derive = "2"
 zouwu-core = { path = "crates/zouwu-core" }
 zouwu-builtin = { path = "crates/zouwu-builtin" }
-wenchang-preferences = { path = "crates/wenchang-preferences" }
+photasa-preference = { path = "crates/photasa-preference" }
 photasa-import = { path = "crates/photasa-import" }
 photasa-thumbnail = { path = "crates/photasa-thumbnail" }
 photasa-types = { path = "crates/photasa-types" }
 photasa-scan = { path = "crates/photasa-scan" }
 photasa-watch = { path = "crates/photasa-watch" }
+photasa-media = { path = "crates/photasa-media" }
+photasa-config = { path = "crates/photasa-config" }

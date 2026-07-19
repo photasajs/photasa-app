@@ -16,12 +16,14 @@ tauri-build = { version = "2.0", features = [] }
 # workspace crates
 zouwu-core = { workspace = true }
 zouwu-builtin = { workspace = true }
-wenchang-preferences = { workspace = true }
+photasa-preference = { workspace = true }
 photasa-import = { workspace = true }
 photasa-thumbnail = { workspace = true }
 photasa-types = { workspace = true }
 photasa-scan = { workspace = true }
 photasa-watch = { workspace = true }
+photasa-media = { workspace = true }
+photasa-config = { workspace = true }
 
 # workspace 共享依赖
 serde = { workspace = true }

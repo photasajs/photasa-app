@@ -25,15 +25,6 @@ export function useYuShiNan() {
         return {
             currentScanningFile: computed(() => ""),
             scanProgress: computed(() => 0),
-            currentTask: computed(() => ""),
-            status: computed(() => ""),
-            progress: computed(() => undefined),
-            error: computed(() => undefined),
-            isScanning: computed(() => false),
-            scanningPath: computed(() => ""),
-            updateStatus: () => {
-                // No-op if service is not available
-            },
             getMonitoringStatus: () => ({
                 isMonitoring: false,
                 config: {
@@ -89,36 +80,6 @@ export function useYuShiNan() {
 
         /** 当前扫描进度 */
         scanProgress: computed(() => yuShiNanService.scanProgress),
-
-        /** ✅ RFC 0057: 状态栏当前任务 */
-        currentTask: computed(() => yuShiNanService.currentTask),
-
-        /** ✅ RFC 0057: 状态栏状态 */
-        status: computed(() => yuShiNanService.status),
-
-        /** ✅ RFC 0057: 状态栏进度 */
-        progress: computed(() => yuShiNanService.progress),
-
-        /** ✅ RFC 0057: 状态栏错误信息 */
-        error: computed(() => yuShiNanService.error),
-
-        /** ✅ RFC 0057: 判断是否正在扫描（从扫描队列派生） */
-        isScanning: computed(() => yuShiNanService.isScanning),
-
-        /** ✅ RFC 0057: 获取扫描路径（从扫描队列派生） */
-        scanningPath: computed(() => yuShiNanService.scanningPath),
-
-        /** ✅ RFC 0057: 更新状态栏（供 Vue 组件调用） */
-        updateStatus: (payload: {
-            type: string;
-            task: string;
-            status: string;
-            error?: string;
-            timestamp: number;
-            data?: unknown;
-        }) => {
-            yuShiNanService.updateStatus(payload);
-        },
 
         /** ✅ 获取扫描监控状态 */
         getMonitoringStatus: () => {

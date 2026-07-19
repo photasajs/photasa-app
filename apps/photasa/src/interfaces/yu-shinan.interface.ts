@@ -14,9 +14,7 @@
  * 架构原则：
  * - ❌ 虞世南不持有响应式状态
  * - ✅ 虞世南接收圣旨并更新 photoStore、scanningStore 和 statusBarStore
- * - ✅ 扫描中状态由 scanningStore 队列状态派生
- * - ✅ 虞世南提供 getter 供 UI 访问（通过房玄龄）
- * - ✅ UI 通过 useYuShiNan() → 虞世南 → 房玄龄 → Store
+ * - ✅ 虞世南只接收李世民下发的圣旨并更新对应 Store
  */
 export interface IYuShiNanService {
     /**
@@ -30,56 +28,6 @@ export interface IYuShiNanService {
      * 虞世南通过房玄龄访问 photoStore.scanProgress
      */
     readonly scanProgress: number;
-
-    /**
-     * ✅ RFC 0057: 状态栏当前任务（只读）
-     * 虞世南管理 statusBarStore.currentTask
-     */
-    readonly currentTask: string;
-
-    /**
-     * ✅ RFC 0057: 状态栏状态（只读）
-     * 虞世南管理 statusBarStore.status
-     */
-    readonly status: string;
-
-    /**
-     * ✅ RFC 0057: 状态栏进度（只读）
-     * 虞世南管理 statusBarStore.progress
-     */
-    readonly progress: number | undefined;
-
-    /**
-     * ✅ RFC 0057: 状态栏错误信息（只读）
-     * 虞世南管理 statusBarStore.error
-     */
-    readonly error: string | undefined;
-
-    /**
-     * ✅ RFC 0057: 判断是否正在扫描（只读）
-     * 从 scanningStore 队列处理状态派生
-     */
-    readonly isScanning: boolean;
-
-    /**
-     * ✅ RFC 0057: 获取扫描路径（只读）
-     * 从 scanningStore 当前处理路径派生
-     * 返回纯路径，UI 层负责添加 i18n 前缀
-     */
-    readonly scanningPath: string;
-
-    /**
-     * ✅ RFC 0057: 更新状态栏
-     * Vue 组件通过此方法更新状态栏，而不是直接访问房玄龄
-     */
-    updateStatus(payload: {
-        type: string;
-        task: string;
-        status: string;
-        error?: string;
-        timestamp: number;
-        data?: unknown;
-    }): void;
 
     /**
      * ✅ 获取扫描监控状态

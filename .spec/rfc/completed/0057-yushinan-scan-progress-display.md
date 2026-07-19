@@ -53,6 +53,7 @@ findPhotoService.onFindPhoto((args: FindPhotoEvent) => {
 ```
 
 **架构违规**：
+
 1. **双重监听**：两个服务监听同一个 IPC 事件，重复注册监听器
 2. **直接 IPC 访问**：App.vue 通过 findPhotoService 直接访问 IPC，绕过 qizou-shengzhi 架构
 3. **职责混乱**：袁天罡和 findPhotoService 处理同一事件的不同子集
@@ -61,22 +62,26 @@ findPhotoService.onFindPhoto((args: FindPhotoEvent) => {
 ### 为什么不能直接合并到袁天罡？
 
 **事件频率不同**：
+
 - **袁天罡当前处理**：`type === "complete"` 批量扫描完成事件（低频）
 - **findPhotoService 处理**：`type === "progress"` 进度更新事件（高频，每扫描一个文件）
 
 **职责不同**：
+
 - **袁天罡**：钦天监，负责天界通信（Main ↔ Renderer IPC 桥接）
 - **需要的新服务**：负责 UI 实时展示，状态栏更新，扫描活动记录
 
 ### 虞世南的历史背景
 
 **虞世南**（Yu Shinan，字伯施，558-638年）：
+
 - 唐朝著名书法家、文学家、政治家
 - 贞观十二年（638年）官至**秘书监**
 - 主持编纂《北堂书钞》，负责**记录和整理典籍**
 - 以"**博闻强识**"著称，精通记录和展示
 
 **在架构中的职责**（符合历史角色）：
+
 - 作为"秘书监"，负责**实时记录**扫描状态
 - **展示**当前扫描进度到 UI 状态栏
 - **记录**扫描活动到监控系统
@@ -108,6 +113,7 @@ Main 进程 IPC "picasa:find-photo" 事件
 ```
 
 **关键改进**：
+
 1. **单一 IPC 监听点**：只有袁天罡监听 IPC 事件
 2. **职责清晰**：袁天罡（IPC 桥接）→ 李世民（路由）→ 虞世南（UI 展示）
 3. **完全 qizou-shengzhi 架构**：无直接 IPC 访问
@@ -118,6 +124,7 @@ Main 进程 IPC "picasa:find-photo" 事件
 #### 1. 虞世南服务（YuShiNanService）
 
 **职责**：
+
 - 接收李世民的 `update_scan_progress` 圣旨
 - 维护响应式状态：`currentScanningFile`, `scanProgress`
 - 调用 `scanMonitoringService.recordActivity()`
@@ -179,7 +186,10 @@ export interface ScanProgressShengzhiContent {
 ```typescript
 // src/renderer/src/services/yushinan/yushinan.ts
 import { ref, Ref } from "vue";
-import type { IYuShiNanService, ScanProgressShengzhiContent } from "@renderer/interfaces/yu-shinan.interface";
+import type {
+    IYuShiNanService,
+    ScanProgressShengzhiContent,
+} from "@renderer/interfaces/yu-shinan.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@common/logger";
 import { inject } from "vue";
@@ -283,9 +293,7 @@ const { processingFile, scanProgress } = storeToRefs(photosStore);
 
 // 使用响应式状态
 const statusText = computed(() => {
-    return processingFile.value
-        ? `${t("status.scanning")} ${processingFile.value}`
-        : "";
+    return processingFile.value ? `${t("status.scanning")} ${processingFile.value}` : "";
 });
 ```
 
@@ -370,6 +378,7 @@ private reportScanProgress(scanEvent: ScanActionEvent): void {
 ```
 
 **类型统一说明**（2025-11-30）：
+
 - `ScanActionEvent` 已扩展为统一类型，包含所有 IPC 事件字段
 - `FindPhotoEvent` 已标记为 `@deprecated`，使用 `ScanActionEvent` 替代
 - `ScanType` 定义为 `"action" | "progress" | "complete" | "error"`
@@ -437,9 +446,7 @@ const { t } = useI18n();
 
 // 响应式计算状态栏文本
 const processingFile = computed(() => {
-    return currentScanningFile.value
-        ? `${t("status.scanning")} ${currentScanningFile.value}`
-        : "";
+    return currentScanningFile.value ? `${t("status.scanning")} ${currentScanningFile.value}` : "";
 });
 ```
 
@@ -450,12 +457,14 @@ const processingFile = computed(() => {
 ### Phase 1: 虞世南服务创建（核心）
 
 **步骤**：
+
 1. ✅ 创建接口定义：`src/renderer/src/interfaces/yu-shinan.interface.ts`
 2. ✅ 创建服务实现：`src/renderer/src/services/yushinan/yushinan.ts`
 3. ✅ 创建 composable：`src/renderer/src/composables/useYuShiNan.ts`
 4. ✅ 注册服务到 `src/renderer/src/main.ts`
 
 **验收标准**：
+
 - [x] 虞世南服务可以接收 shengzhi
 - [x] 通过 photoStore 更新状态（Store as SSOT）
 - [x] UI 可以通过 photoStore 访问状态
@@ -463,12 +472,14 @@ const processingFile = computed(() => {
 ### Phase 2: 袁天罡扩展（IPC 桥接）
 
 **步骤**：
+
 1. ✅ 添加 `QizouMatters.SCAN_PROGRESS` 常量
 2. ✅ 扩展 `handleQianliyanEvent` 方法处理 progress 事件
 3. ✅ 新增 `reportScanProgress` 方法发送 qizou
 4. ✅ 统一类型定义：`ScanActionEvent` 和 `FindPhotoEvent` 合并
 
 **验收标准**：
+
 - [x] 袁天罡正确识别 progress 和 complete 事件
 - [x] SCAN_PROGRESS qizou 正确发送到李世民
 - [x] 文件路径正确构造（目录+文件名拼接）
@@ -477,10 +488,12 @@ const processingFile = computed(() => {
 ### Phase 3: 李世民路由配置（中央协调）
 
 **步骤**：
+
 1. ✅ 更新 `event-routing.yml` 添加 `scan_progress` 路由
 2. ✅ 验证李世民正确路由 shengzhi 到虞世南
 
 **验收标准**：
+
 - [x] SCAN_PROGRESS qizou 正确路由到虞世南
 - [x] shengzhi 内容正确传递（filePath, progress, type）
 - [x] event-routing.yml 配置已更新
@@ -488,16 +501,19 @@ const processingFile = computed(() => {
 ### Phase 4: App.vue 迁移（UI 层）
 
 **步骤**：
+
 1. ⏳ **待完成**：替换 findPhotoService 依赖为 photoStore
 2. ⏳ **待完成**：删除 IPC 监听逻辑（`findPhotoService.onFindPhoto`）
 3. ✅ 使用响应式 computed 计算状态栏文本（通过 photoStore）
 
 **当前状态**：
+
 - ❌ App.vue 第 285 行仍在使用 `findPhotoService.onFindPhoto()`
 - ✅ photoStore 已支持 `processingFile` 和 `scanProgress`
 - ✅ StatusBar.vue 已使用 photoStore
 
 **验收标准**：
+
 - [ ] 状态栏正确显示扫描进度（通过 photoStore）
 - [ ] 无直接 IPC 访问（移除 findPhotoService.onFindPhoto）
 - [ ] UI 更新流畅无卡顿
@@ -505,6 +521,7 @@ const processingFile = computed(() => {
 ### Phase 5: 清理 Legacy 代码（最终清理）
 
 **步骤**：
+
 1. ⏳ **待完成**：移除 `src/renderer/src/services/find-photo-service.ts`
 2. ⏳ **待完成**：移除 `src/renderer/src/interfaces/find-photo-service.interface.ts`
 3. ⏳ **待完成**：清理 `src/renderer/src/main.ts` 中的 findPhotoService 注册（第 40-42 行）
@@ -512,12 +529,14 @@ const processingFile = computed(() => {
 5. ⏳ **待完成**：更新相关文档和注释
 
 **当前状态**：
+
 - ❌ `find-photo-service.ts` 仍然存在（标记为 @deprecated）
 - ❌ `find-photo-service.interface.ts` 仍然存在
 - ❌ `main.ts` 第 40-42 行仍注册 FindPhotoServiceIpc
 - ❌ `App.vue` 第 88, 285 行仍使用 findPhotoService
 
 **验收标准**：
+
 - [ ] 无 findPhotoService 相关代码
 - [ ] 所有测试通过
 - [ ] 无编译错误
@@ -551,11 +570,11 @@ describe("YuShiNanService", () => {
             content: {
                 filePath: "/test/path/file.jpg",
                 progress: 42,
-                type: "progress"
+                type: "progress",
             },
             from: "李世民",
             timestamp: Date.now(),
-            priority: "normal"
+            priority: "normal",
         };
 
         await service.processShengzhi(shengzhi);
@@ -574,11 +593,11 @@ describe("YuShiNanService", () => {
             content: {
                 filePath: "/another/file.png",
                 progress: 100,
-                type: "progress"
+                type: "progress",
             },
             from: "李世民",
             timestamp: Date.now(),
-            priority: "normal"
+            priority: "normal",
         };
 
         port1.postMessage(shengzhi);
@@ -610,24 +629,25 @@ describe("YuanTianGangService - Scan Progress", () => {
             requestId: "test-req",
             action: {
                 path: "/test/folder",
-                isDirectory: true
+                isDirectory: true,
             },
             currentFile: "photo.jpg",
-            progress: 50
+            progress: 50,
         };
 
         // 触发事件处理（通过模拟 IPC 事件）
         // 注意：实际测试需要 mock window.electron.ipcRenderer
 
-        expect(qizouBus.emit).toHaveBeenCalledWith("qizou",
+        expect(qizouBus.emit).toHaveBeenCalledWith(
+            "qizou",
             expect.objectContaining({
                 matter: QizouMatters.SCAN_PROGRESS,
                 content: expect.objectContaining({
                     filePath: "/test/folder/photo.jpg",
                     progress: 50,
-                    type: "progress"
-                })
-            })
+                    type: "progress",
+                }),
+            }),
         );
     });
 });
@@ -655,12 +675,12 @@ describe("扫描进度集成测试", () => {
                         requestId: "test",
                         action: { path: "/test", isDirectory: true },
                         currentFile: "file.jpg",
-                        progress: 1
+                        progress: 1,
                     };
                     handler(null, progressEvent);
                 }
                 return vi.fn();
-            })
+            }),
         };
         (window as any).electron = { ipcRenderer: ipcMock };
 
@@ -713,22 +733,22 @@ describe("扫描进度集成测试", () => {
 ### 修改的文件
 
 1. **src/renderer/src/services/yuantiangang/yuantiangang.ts**
-   - 新增 `reportScanProgress` 方法（约 30 行）
-   - 修改 `handleQianliyanEvent` 方法（约 10 行）
+    - 新增 `reportScanProgress` 方法（约 30 行）
+    - 修改 `handleQianliyanEvent` 方法（约 10 行）
 
 2. **src/renderer/src/constants/qizou-shengzhi-commands.ts**
-   - 新增 `SCAN_PROGRESS` 常量（1 行）
+    - 新增 `SCAN_PROGRESS` 常量（1 行）
 
 3. **src/renderer/src/services/lishimin/event-routing.yml**
-   - 新增 `scan_progress` 路由规则（约 15 行）
+    - 新增 `scan_progress` 路由规则（约 15 行）
 
 4. **src/renderer/src/App.vue**
-   - 删除 findPhotoService 依赖（约 30 行）
-   - 新增 useYuShiNan() 使用（约 10 行）
+    - 删除 findPhotoService 依赖（约 30 行）
+    - 新增 useYuShiNan() 使用（约 10 行）
 
 5. **src/renderer/src/main.ts**
-   - 删除 findPhotoService 注册（约 5 行）
-   - 新增 YuShiNanService 注册（约 5 行）
+    - 删除 findPhotoService 注册（约 5 行）
+    - 新增 YuShiNanService 注册（约 5 行）
 
 **总计修改**：约 106 行（净增 51 行）
 
@@ -739,6 +759,7 @@ describe("扫描进度集成测试", () => {
 - **净增加**：156 行
 
 **代码质量提升**：
+
 - ✅ 消除双重监听
 - ✅ 100% qizou-shengzhi 架构一致性
 - ✅ 职责单一、边界清晰
@@ -762,10 +783,14 @@ import { throttle } from "lodash-es";
 
 export class YuShiNanService implements IYuShiNanService {
     // 节流：最多每 100ms 更新一次 UI
-    private throttledUpdate = throttle((filePath: string, progress: number) => {
-        this._currentScanningFile.value = filePath;
-        this._scanProgress.value = progress;
-    }, 100, { leading: true, trailing: true });
+    private throttledUpdate = throttle(
+        (filePath: string, progress: number) => {
+            this._currentScanningFile.value = filePath;
+            this._scanProgress.value = progress;
+        },
+        100,
+        { leading: true, trailing: true },
+    );
 
     private async handleUpdateScanProgress(shengzhi: Shengzhi): Promise<void> {
         const content = shengzhi.content as ScanProgressShengzhiContent;
@@ -824,6 +849,7 @@ private _currentScanningFile: Ref<string> = shallowRef("");
 ```
 
 **性能目标**：
+
 - 单次 qizou → shengzhi 延迟 < 10ms
 - UI 更新频率 ≤ 10 次/秒（通过节流）
 - 内存增长 < 1MB（高频事件不应导致内存泄漏）
@@ -835,6 +861,7 @@ private _currentScanningFile: Ref<string> = shallowRef("");
 ### 破坏性变更
 
 **API 移除**：
+
 - ❌ `FindPhotoServiceKey` injection key 被移除
 - ❌ `IFindPhotoService` 接口被移除
 - ❌ `findPhotoService.onFindPhoto()` 方法不再可用
@@ -859,9 +886,7 @@ const { currentScanningFile, scanProgress } = useYuShiNan();
 
 // 使用响应式状态
 const statusText = computed(() => {
-    return currentScanningFile.value
-        ? `扫描中: ${currentScanningFile.value}`
-        : "就绪";
+    return currentScanningFile.value ? `扫描中: ${currentScanningFile.value}` : "就绪";
 });
 ```
 
@@ -883,6 +908,7 @@ const statusText = computed(() => {
 **描述**: 扫描进度是高频事件，qizou-shengzhi 多层传递可能增加延迟。
 
 **缓解措施**:
+
 1. ✅ 实施节流处理（100ms throttle）
 2. ✅ 使用 shallowRef 优化响应式
 3. ✅ 李世民层面批处理 shengzhi
@@ -895,6 +921,7 @@ const statusText = computed(() => {
 **描述**: MessageChannel 在极端情况下可能丢失消息。
 
 **缓解措施**:
+
 1. ✅ 扫描进度不是关键数据，偶尔丢失可接受
 2. ✅ 最终 `SCAN_READY` 事件保证数据完整性
 3. ✅ 添加超时检测和重试机制
@@ -906,6 +933,7 @@ const statusText = computed(() => {
 **描述**: 移除 findPhotoService 可能导致未发现的依赖被破坏。
 
 **缓解措施**:
+
 1. ✅ 渐进式迁移：先新增虞世南，后移除 findPhotoService
 2. ✅ 完整的单元测试和集成测试覆盖
 3. ✅ 手动验证清单确保功能完整
@@ -968,11 +996,13 @@ export class YuShiNanService {
 ### 改进1: scanMonitoringService 移入虞世南
 
 **变更**：
+
 - `scanMonitoringService` 从依赖注入改为直接导入
 - `scan-monitoring-service.ts` 文件移动到 `yushinan` 文件夹
 - 简化了构造函数参数，减少了依赖注入复杂度
 
 **实施**：
+
 - ✅ `yushinan.ts` 直接导入 `scanMonitoringService`
 - ✅ 文件移动到 `src/renderer/src/services/yushinan/scan-monitoring-service.ts`
 - ✅ 更新所有引用路径（App.vue, ScanMonitoringSettings.vue, test文件）
@@ -980,12 +1010,14 @@ export class YuShiNanService {
 ### 改进2: statusBarStore 迁移到 qizou 流程
 
 **变更**：
+
 - `statusBarStore` 的更新逻辑从直接 IPC 监听迁移到 qizou-shengzhi 流程
 - 新增 `STATUS_NOTIFICATION` qizou 类型，用于统一状态栏通知
 - 袁天罡监听 `notify:status` IPC 事件，发送 `STATUS_NOTIFICATION` qizou
 - 虞世南接收 `update_status_notification` 圣旨，更新 `statusBarStore`
 
 **实施**：
+
 - ✅ 添加 `STATUS_NOTIFICATION` 到 `QizouMatters`
 - ✅ 添加 `UPDATE_STATUS_NOTIFICATION` 到 `ShengzhiCommands`
 - ✅ 袁天罡添加 `setupNotifyStatusEventListening` 和 `reportStatusNotification` 方法
@@ -997,12 +1029,14 @@ export class YuShiNanService {
 ### 改进3: 扫描队列为空时状态栏清空
 
 **变更**：
+
 - 当扫描队列为空时，状态栏应自动清空，而不是停留在最后一条消息
 - 新增 `SCAN_QUEUE_EMPTY` qizou 类型
 - 尉迟恭监听 `p-queue` 的 `idle` 事件，当队列为空时发送 `scan_queue_empty` qizou
 - 虞世南接收 `update_scan_progress` 圣旨（`type: "complete"`），清空 `photosStore.scanProgress`
 
 **实施**：
+
 - ✅ 添加 `SCAN_QUEUE_EMPTY` 到 `QizouMatters`
 - ✅ 尉迟恭添加 `scanQueue.on("idle")` 监听器
 - ✅ 袁天罡的 `reportScanProgress` 处理 `type === "complete"` 事件
@@ -1012,10 +1046,12 @@ export class YuShiNanService {
 ### 改进4: isScanning 和 scanningPath getters
 
 **变更**：
+
 - 虞世南提供 `isScanning` 和 `scanningPath` getters，封装扫描状态逻辑
 - `StatusBar.vue` 通过 `useYuShiNan()` 访问这些 getters，而不是直接访问 store
 
 **实施**：
+
 - ✅ `IYuShiNanService` 添加 `isScanning` 和 `scanningPath` getters
 - ✅ `YuShiNanService` 实现这些 getters，通过房玄龄访问 `photosStore`
 - ✅ `useYuShiNan` composable 暴露这些 getters
@@ -1024,19 +1060,23 @@ export class YuShiNanService {
 ### 改进5: 字体大小统一
 
 **变更**：
+
 - `StatusBar.vue` 中的字体大小不一致（`.scanning-label`, `.scanning-path`, `.scanning-progress`）
 - 统一所有字体大小为 `1em`，确保视觉一致性
 
 **实施**：
+
 - ✅ 统一 `.scanning-label`, `.scanning-path`, `.scanning-progress` 的字体大小为 `1em`
 
 ### 改进6: ScanMonitoringSettings 使用 xuanzang 进行 i18n
 
 **变更**：
+
 - `ScanMonitoringSettings.vue` 直接使用 `useI18n().t` 进行国际化
 - 应统一使用 `xuanzang.translate()` 方法，与其他组件保持一致
 
 **实施**：
+
 - ✅ `ScanMonitoringSettings.vue` 移除 `useI18n` 导入
 - ✅ 添加 `useXuanzang` 导入，使用 `xuanzang.translate()` 替换所有 `t()` 调用
 
@@ -1045,27 +1085,30 @@ export class YuShiNanService {
 ## 类型统一改进（2025-11-30）
 
 ### 问题
+
 `FindPhotoEvent` 和 `ScanActionEvent` 存在重复定义，导致类型不一致和维护困难。
 
 ### 解决方案
+
 统一类型定义，消除重复：
 
 1. **扩展 `ScanActionEvent`**：
-   - 从 `type` 改为 `interface`，支持更完整的类型定义
-   - 添加 `requestId?: string`（IPC 事件必需）
-   - 添加 `progress?: { processed: number; total: number }`（统一进度对象格式）
-   - 添加 `error?: unknown`（错误信息）
-   - `ScanType` 更新为 `"action" | "progress" | "complete" | "error"`
+    - 从 `type` 改为 `interface`，支持更完整的类型定义
+    - 添加 `requestId?: string`（IPC 事件必需）
+    - 添加 `progress?: { processed: number; total: number }`（统一进度对象格式）
+    - 添加 `error?: unknown`（错误信息）
+    - `ScanType` 更新为 `"action" | "progress" | "complete" | "error"`
 
 2. **标记 `FindPhotoEvent` 为 deprecated**：
-   - `FindPhotoEvent` 现在定义为 `ScanActionEvent` 的类型别名
-   - 保留仅为向后兼容，新代码应使用 `ScanActionEvent`
+    - `FindPhotoEvent` 现在定义为 `ScanActionEvent` 的类型别名
+    - 保留仅为向后兼容，新代码应使用 `ScanActionEvent`
 
 3. **更新代码引用**：
-   - `yuantiangang.ts` 统一使用 `ScanActionEvent`
-   - 移除对 `FindPhotoEvent` 的直接导入
+    - `yuantiangang.ts` 统一使用 `ScanActionEvent`
+    - 移除对 `FindPhotoEvent` 的直接导入
 
 ### 实施状态
+
 - ✅ 类型定义已统一
 - ✅ `FindPhotoEvent` 已标记为 deprecated
 - ✅ 代码已更新使用统一类型
@@ -1078,17 +1121,20 @@ export class YuShiNanService {
 RFC 0057 通过引入**虞世南**服务，彻底统一 `findPhotoService` 到 qizou-shengzhi 架构，消除了 Renderer 进程直接监听 IPC 事件的反模式。
 
 **核心价值**：
+
 1. ✅ **架构一致性**：100% qizou-shengzhi 流程，无例外
 2. ✅ **职责清晰**：袁天罡（IPC 桥接）→ 李世民（路由）→ 虞世南（UI 展示）
 3. ✅ **单一数据源**：只有袁天罡监听 IPC，消除双重监听
 4. ✅ **历史契合**：虞世南"秘书监"角色完美符合实时记录和展示职责
 
 **实施建议**：
+
 - 采用渐进式迁移策略，先新增虞世南再移除 findPhotoService
 - 重点关注高频事件性能优化（节流、批处理）
 - 完整测试覆盖，确保无回归
 
 **实施完成**：
+
 1. ✅ Phase 1: 创建虞世南服务接口和实现
 2. ✅ Phase 2: 袁天罡发送 SCAN_PROGRESS qizou
 3. ✅ Phase 3: 李世民路由 SCAN_PROGRESS 到虞世南
@@ -1100,6 +1146,7 @@ RFC 0057 通过引入**虞世南**服务，彻底统一 `findPhotoService` 到 q
 9. ✅ 标记 RFC 为已完成
 
 **最终状态**：
+
 - ✅ Phase 1-6 所有代码已完成并验证通过
 - ✅ App.vue 已迁移到 photoStore 和 yuShiNan 服务
 - ✅ main.ts 已移除 FindPhotoServiceIpc 注册

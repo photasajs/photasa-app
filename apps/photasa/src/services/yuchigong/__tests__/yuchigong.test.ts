@@ -90,6 +90,9 @@ class MockFangXuanLingService implements IFangXuanLingService {
     public mockInstruction = "已批准";
     public mockThumbnailSize = 150;
     public skipStoreMutation = false;
+    public mockSubfolders: string[] = [];
+    public shouldScanFail = false;
+    public shouldScanPhotosResolve = true;
     private mockScanningStore: MockScanningStore;
 
     constructor() {
@@ -101,7 +104,7 @@ class MockFangXuanLingService implements IFangXuanLingService {
         return this.mockScanningStore;
     }
 
-    // 实现IFangXuanLingService必需的属性和方法
+    // 实现IFangXuanLingService必需 of properties and methods
     get preference(): IPreference {
         return {
             currentTheme: "dark",
@@ -138,6 +141,9 @@ class MockFangXuanLingService implements IFangXuanLingService {
         this.shouldApprove = true;
         this.mockInstruction = "已批准";
         this.skipStoreMutation = false;
+        this.mockSubfolders = [];
+        this.shouldScanFail = false;
+        this.shouldScanPhotosResolve = true;
         this.mockScanningStore.clear();
     }
 
@@ -146,6 +152,37 @@ class MockFangXuanLingService implements IFangXuanLingService {
             throw new Error("房玄龄处理奏折失败");
         }
         this.receivedZouzhes.push(zouzhe);
+
+        if (zouzhe.matter === ZOUZHE_MATTERS.SCAN_PHOTOS) {
+            if (this.shouldScanFail) {
+                throw new Error("扫描失败");
+            }
+            if (!this.shouldScanPhotosResolve) {
+                return new Promise(() => {}); // never resolves
+            }
+        }
+
+        if (zouzhe.matter === ZOUZHE_MATTERS.TO_DIR_NAME) {
+            return {
+                approved: this.shouldApprove,
+                matter: zouzhe.matter,
+                data: "/parent/dir",
+                instruction: this.mockInstruction,
+                timestamp: Date.now(),
+            };
+        }
+
+        if (zouzhe.matter === ZOUZHE_MATTERS.SCAN_SUBFOLDERS) {
+            const subfolders = this.mockSubfolders;
+            this.mockSubfolders = [];
+            return {
+                approved: this.shouldApprove,
+                matter: zouzhe.matter,
+                data: subfolders,
+                instruction: this.mockInstruction,
+                timestamp: Date.now(),
+            };
+        }
 
         // ✅ RFC 0042: Mock processZouzhe should update store for ADD_SCAN_ACTION
         if (zouzhe.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION && !this.skipStoreMutation) {
@@ -231,6 +268,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
 
         // 创建新的mock服务
         mockFangXuanLing = new MockFangXuanLingService();
+        mockFangXuanLing.shouldScanPhotosResolve = false;
 
         // 使用真实的mitt，收集emit的qizou
         emittedQizous = [];
@@ -999,6 +1037,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
         };
 
         beforeEach(() => {
+            mockFangXuanLing.shouldScanPhotosResolve = true;
             // Mock window.api方法
             mockWindowApi = {
                 resetPhotasaConfig: vi.fn().mockResolvedValue(undefined),
@@ -1017,9 +1056,8 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
 
         it("应该成功执行目录扫描（无子文件夹）", async () => {
             const testPath = "/test/scan-path";
-            mockWindowApi.scanSubfolders.mockResolvedValue([]);
 
-            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除的addScanTask()
+            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除 of addScanTask()
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (yuchiGong as any).executeScan(testPath, "scan", "directory");
 
@@ -1027,8 +1065,18 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             await new Promise((resolve) => setTimeout(resolve, 100));
 
             // 验证扫描流程
-            expect(mockWindowApi.scanSubfolders).toHaveBeenCalledWith(testPath);
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith({
+            const scanSubfoldersZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) =>
+                    z.matter === ZOUZHE_MATTERS.SCAN_SUBFOLDERS &&
+                    z.content?.folderPath === testPath,
+            );
+            expect(scanSubfoldersZouzhe).toBeDefined();
+
+            const scanPhotosZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
+            );
+            expect(scanPhotosZouzhe).toBeDefined();
+            expect(scanPhotosZouzhe?.content).toEqual({
                 path: testPath,
                 action: "scan",
                 thumbnailSize: 150,
@@ -1047,22 +1095,28 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
 
         it("应该在重扫描时重置配置", async () => {
             const testPath = "/test/rescan-path";
-            mockWindowApi.scanSubfolders.mockResolvedValue([]);
 
-            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除的addScanTask()
+            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除 of addScanTask()
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (yuchiGong as any).executeScan(testPath, "rescan", "directory");
             await new Promise((resolve) => setTimeout(resolve, 100));
 
             // 验证重置配置被调用
-            expect(mockWindowApi.resetPhotasaConfig).toHaveBeenCalledWith(testPath);
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalled();
+            const resetConfigZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG,
+            );
+            expect(resetConfigZouzhe).toBeDefined();
+            expect(resetConfigZouzhe?.content?.folder).toBe(testPath);
+
+            const scanPhotosZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
+            );
+            expect(scanPhotosZouzhe).toBeDefined();
         });
 
         it("requestRescan 应入队 rescan 并在执行时重置配置", async () => {
             const testPath = "/test/rescan-ui-path";
             mockFangXuanLing.mockThumbnailSize = 256;
-            mockWindowApi.scanSubfolders.mockResolvedValue([]);
 
             await yuchiGong.requestRescan(testPath);
             await new Promise((resolve) => setTimeout(resolve, 150));
@@ -1079,8 +1133,18 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     operationType: "directory",
                 }),
             );
-            expect(mockWindowApi.resetPhotasaConfig).toHaveBeenCalledWith(testPath);
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith(
+
+            const resetConfigZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG,
+            );
+            expect(resetConfigZouzhe).toBeDefined();
+            expect(resetConfigZouzhe?.content?.folder).toBe(testPath);
+
+            const scanPhotosZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
+            );
+            expect(scanPhotosZouzhe).toBeDefined();
+            expect(scanPhotosZouzhe?.content).toEqual(
                 expect.objectContaining({
                     path: testPath,
                     action: "rescan",
@@ -1092,8 +1156,6 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
         it("requestRescan 应立即写入 UI 运行时队列", async () => {
             const testPath = "/test/rescan-visible";
             mockFangXuanLing.skipStoreMutation = true;
-            mockWindowApi.scanSubfolders.mockResolvedValue([]);
-            mockWindowApi.scanPhotos.mockReturnValue(new Promise(() => {}));
 
             await yuchiGong.requestRescan(testPath);
 
@@ -1108,8 +1170,6 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
         });
 
         it("watch 文件操作应该入尉迟恭队列并启动文件扫描", async () => {
-            mockWindowApi.scanSubfolders.mockResolvedValue([]);
-
             await yuchiGong.scheduleFileOperationsFromWatch(
                 [
                     {
@@ -1145,8 +1205,17 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     fileOperationId: "watch-op-1",
                 }),
             );
-            expect(mockWindowApi.scanSubfolders).not.toHaveBeenCalled();
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith({
+
+            const scanSubfoldersZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_SUBFOLDERS,
+            );
+            expect(scanSubfoldersZouzhe).toBeUndefined();
+
+            const scanPhotosZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
+            );
+            expect(scanPhotosZouzhe).toBeDefined();
+            expect(scanPhotosZouzhe?.content).toEqual({
                 path: "/test/watch/file.jpg",
                 action: "rescan",
                 thumbnailSize: 256,
@@ -1157,25 +1226,20 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
         it("应该递归扫描子文件夹", async () => {
             const testPath = "/test/parent";
             const subfolders = ["/test/parent/sub1", "/test/parent/sub2"];
-            mockWindowApi.scanSubfolders.mockResolvedValueOnce(subfolders).mockResolvedValue([]);
+            mockFangXuanLing.mockSubfolders = subfolders;
 
-            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除的addScanTask()
+            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除 of addScanTask()
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (yuchiGong as any).executeScan(testPath, "scan", "directory");
             await new Promise((resolve) => setTimeout(resolve, 200));
 
-            // 验证父目录扫描
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith(
-                expect.objectContaining({ path: testPath }),
+            // 验证目录扫描 (通过奏折)
+            const scanPhotosZouzhes = mockFangXuanLing.receivedZouzhes.filter(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
             );
-
-            // 验证子文件夹扫描（p-queue递归执行）
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith(
-                expect.objectContaining({ path: subfolders[0] }),
-            );
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith(
-                expect.objectContaining({ path: subfolders[1] }),
-            );
+            expect(scanPhotosZouzhes.some((z) => z.content?.path === testPath)).toBe(true);
+            expect(scanPhotosZouzhes.some((z) => z.content?.path === subfolders[0])).toBe(true);
+            expect(scanPhotosZouzhes.some((z) => z.content?.path === subfolders[1])).toBe(true);
         });
 
         it("应该处理文件类型扫描", async () => {
@@ -1186,13 +1250,24 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             await (yuchiGong as any).executeScan(testPath, "scan", "file");
 
             // 验证文件扫描不调用scanSubfolders
-            expect(mockWindowApi.scanSubfolders).not.toHaveBeenCalled();
+            const scanSubfoldersZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_SUBFOLDERS,
+            );
+            expect(scanSubfoldersZouzhe).toBeUndefined();
 
             // 验证获取父目录
-            expect(mockWindowApi.toDirName).toHaveBeenCalledWith(testPath);
+            const toDirNameZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.TO_DIR_NAME,
+            );
+            expect(toDirNameZouzhe).toBeDefined();
+            expect(toDirNameZouzhe?.content?.path).toBe(testPath);
 
             // 验证扫描参数
-            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith({
+            const scanPhotosZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
+            );
+            expect(scanPhotosZouzhe).toBeDefined();
+            expect(scanPhotosZouzhe?.content).toEqual({
                 path: testPath,
                 action: "scan",
                 thumbnailSize: 150,
@@ -1209,11 +1284,9 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
 
         it("应该处理扫描失败情况", async () => {
             const testPath = "/test/fail-path";
-            const scanError = new Error("扫描失败");
-            mockWindowApi.scanSubfolders.mockResolvedValue([]);
-            mockWindowApi.scanPhotos.mockRejectedValue(scanError);
+            mockFangXuanLing.shouldScanFail = true;
 
-            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除的addScanTask()
+            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除 of addScanTask()
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (yuchiGong as any).executeScan(testPath, "scan", "directory");
             await new Promise((resolve) => setTimeout(resolve, 100));

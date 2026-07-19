@@ -654,4 +654,46 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
         logger.info("🏛️ 魏征：切换文件夹请求已提交");
     }
+
+    /**
+     * 获取指定文件夹的配置 (.photasa.json)
+     */
+    async getFolderConfig(folder: string): Promise<any> {
+        logger.info(`🏛️ 魏征：奏请获取文件夹配置：${folder}`);
+        const response = await this.fangXuanLingService.processZouzhe({
+            department: GUANYUAN_NAMES.WEI_ZHENG,
+            matter: ZOUZHE_MATTERS.GET_FOLDER_CONFIG,
+            content: { folder },
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        });
+        return response.data;
+    }
+
+    /**
+     * 修复指定文件夹的配置 (.photasa.json)
+     */
+    async fixFolderConfig(folder: string): Promise<any> {
+        logger.info(`🏛️ 魏征：奏请修复文件夹配置：${folder}`);
+        const response = await this.fangXuanLingService.processZouzhe({
+            department: GUANYUAN_NAMES.WEI_ZHENG,
+            matter: ZOUZHE_MATTERS.FIX_FOLDER_CONFIG,
+            content: { folder },
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        });
+        return response.data;
+    }
+
+    /**
+     * 重置指定文件夹的配置 (.photasa.json)
+     */
+    async resetFolderConfig(folder: string): Promise<any> {
+        logger.info(`🏛️ 魏征：奏请重置文件夹配置：${folder}`);
+        const response = await this.fangXuanLingService.processZouzhe({
+            department: GUANYUAN_NAMES.WEI_ZHENG,
+            matter: ZOUZHE_MATTERS.RESET_FOLDER_CONFIG,
+            content: { folder },
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        });
+        return response.data;
+    }
 }

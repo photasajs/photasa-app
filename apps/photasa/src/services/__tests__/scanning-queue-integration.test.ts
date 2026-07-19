@@ -22,6 +22,8 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
+import { useScanningStore } from "../fangxuanling/stores/scanning-store";
+import { createScanQueueItem } from "@renderer/stores/scanning-types";
 
 /**
  * Helper: 创建测试用 ScanAction（IPC 契约）
@@ -135,9 +137,7 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
             // 验证房玄龄响应
             expect(response).toBeDefined();
             expect(response.approved).toBe(true);
-
-            // Step 3 & 4 & 5: 验证天枢的调用（房玄龄自动调用袁天罡→天枢→千里眼）
-            expect(window.api.tianshu.processCommand).toHaveBeenCalled();
+            expect(response.data).toHaveProperty("queue");
         });
 
         it("应该成功完成完整的扫描队列移除流程", async () => {
@@ -163,9 +163,7 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
 
             // 验证响应
             expect(response.approved).toBe(true);
-
-            // Step 3 & 4 & 5: 验证天枢的调用
-            expect(window.api.tianshu.processCommand).toHaveBeenCalled();
+            expect(response.data).toHaveProperty("queue");
         });
 
         it("应该成功完成完整的扫描队列查询流程", async () => {
@@ -185,9 +183,7 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
 
             // 验证响应
             expect(response.approved).toBe(true);
-
-            // Step 3 & 4 & 5: 验证天枢的调用
-            expect(window.api.tianshu.processCommand).toHaveBeenCalled();
+            expect(response.data).toHaveProperty("queue");
         });
     });
 
@@ -242,26 +238,16 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
         });
 
         it("应该在断电后正确处理部分完成的扫描任务", async () => {
-            // 模拟断电前正在处理的任务
-            const partiallyCompletedAction: ScanAction = createTestScanAction({
+            // RFC 0143: 袁天罡直接拦截队列 Zouzhe，返回 Pinia store 快照
+            // Tianshu 不再被调用，直接从本地 store 同步状态
+            const scanningStore = useScanningStore();
+            const partialAction = createScanQueueItem({
                 path: "/test/partial",
                 action: "scan",
                 thumbnailSize: 150,
-                source: "user",
                 operationType: "directory",
             });
-
-            // Mock天枢返回部分完成的任务状态
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).tianshu.processCommand = vi.fn().mockResolvedValue({
-                success: true,
-                result: {
-                    success: true,
-                    currentPath: partiallyCompletedAction.path,
-                    isProcessing: true,
-                    queue: [partiallyCompletedAction],
-                },
-            });
+            scanningStore.addToQueue(partialAction);
 
             // 查询当前处理状态
             const zouzhe: Zouzhe = {
@@ -273,28 +259,14 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
 
             const response = await fangXuanLing.processZouzhe(zouzhe);
 
-            // 验证可以识别部分完成的任务
+            // 验证袁天罡直连拦截，返回 Pinia 快照
             expect(response.approved).toBe(true);
-            // 注意：响应数据在response.data.result中
-            expect(response.data).toHaveProperty("success", true);
-            // 这个测试主要验证数据能正确传递，具体字段结构由实际业务决定
+            expect(response.data).toHaveProperty("queue");
+            expect(Array.isArray(response.data.queue)).toBe(true);
         });
 
         it("应该在断电后正确恢复空队列状态", async () => {
-            // Mock天枢返回空队列
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).tianshu.processCommand = vi.fn().mockResolvedValue({
-                success: true,
-                result: {
-                    success: true,
-                    queue: [],
-                    queueSize: 0,
-                    isProcessing: false,
-                    currentPath: null,
-                },
-            });
-
-            // 查询队列状态
+            // RFC 0143: 袁天罡直连拦截，直接返回 Pinia store 快照（此时为空队列）
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
@@ -304,23 +276,22 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
 
             const response = await fangXuanLing.processZouzhe(zouzhe);
 
-            // 验证空队列状态正确
+            // 验证空队列状态正确（Pinia store 初始为空）
             expect(response.approved).toBe(true);
-            expect(response.data).toHaveProperty("success", true);
-            expect(response.data).toHaveProperty("queueSize", 0);
+            expect(response.data).toHaveProperty("queue");
+            expect(Array.isArray(response.data.queue)).toBe(true);
+            expect(response.data.queue).toHaveLength(0);
         });
     });
 
     describe("错误处理测试", () => {
-        it("应该正确处理天枢调用失败的情况", async () => {
-            // Mock天枢返回错误状态
+        it("RFC 0143: 扫描队列 Zouzhe 由袁天罡直连拦截，不经过天枢", async () => {
+            // RFC 0143: ADD_SCAN_ACTION 由袁天罡直连 Pinia 拦截
+            // 即使 Tianshu mock 失败，队列操作也应成功（不依赖 Tianshu）
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).tianshu.processCommand = vi.fn().mockResolvedValue({
-                success: false,
-                status: "failed",
-                error: "天枢繁忙，请稍后再试",
-                result: null,
-            });
+            (window as any).tianshu.processCommand = vi
+                .fn()
+                .mockRejectedValue(new Error("天枢不可用"));
 
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
@@ -340,19 +311,17 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
 
             const response = await fangXuanLing.processZouzhe(zouzhe);
 
-            // 验证错误处理
-            expect(response.approved).toBe(false);
+            // RFC 0143: 袁天罡本地拦截，不依赖 Tianshu，应该成功
+            expect(response.approved).toBe(true);
+            expect(response.data).toHaveProperty("queue");
         });
 
-        it("应该正确处理千里眼调用失败的情况", async () => {
-            // Mock天枢成功但千里眼失败的场景
+        it("RFC 0143: GET_SCANNING_QUEUE 返回本地 Pinia store 快照", async () => {
+            // RFC 0143: GET_SCANNING_QUEUE 由袁天罡直连 Pinia 拦截
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).tianshu.processCommand = vi.fn().mockResolvedValue({
-                success: false,
-                status: "failed",
-                error: "千里眼执行失败",
-                result: null,
-            });
+            (window as any).tianshu.processCommand = vi
+                .fn()
+                .mockRejectedValue(new Error("千里眼不可用"));
 
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
@@ -372,8 +341,9 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
 
             const response = await fangXuanLing.processZouzhe(zouzhe);
 
-            // 验证错误传播
-            expect(response.approved).toBe(false);
+            // RFC 0143: 本地拦截，不传播 Tianshu 错误
+            expect(response.approved).toBe(true);
+            expect(response.data).toHaveProperty("queue");
         });
 
         it("应该正确处理无效的扫描路径", async () => {

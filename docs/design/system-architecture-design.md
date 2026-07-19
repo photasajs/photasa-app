@@ -134,11 +134,11 @@ graph LR
 
 ### 三界详细说明
 
-| 层级 | 进程 | 职责 | 关键组件 |
-|------|------|------|----------|
-| **天界** | Main进程 | 核心业务逻辑、数据持久化、引擎调度 | 天枢、太乙、千里眼、司簿、司命、文昌、马良 |
-| **人界** | Renderer进程 | UI交互、状态管理、用户操作 | 李世民、房玄龄、尉迟恭、袁天罡、魏征、褚遂良、秦琼、杜如晦 |
-| **引擎库** | 共享 | 专业引擎实现，环境无关 | `src/engines/` 目录下所有引擎 |
+| 层级       | 进程         | 职责                               | 关键组件                                                   |
+| ---------- | ------------ | ---------------------------------- | ---------------------------------------------------------- |
+| **天界**   | Main进程     | 核心业务逻辑、数据持久化、引擎调度 | 天枢、太乙、千里眼、司簿、司命、文昌、马良                 |
+| **人界**   | Renderer进程 | UI交互、状态管理、用户操作         | 李世民、房玄龄、尉迟恭、袁天罡、魏征、褚遂良、秦琼、杜如晦 |
+| **引擎库** | 共享         | 专业引擎实现，环境无关             | `src/engines/` 目录下所有引擎                              |
 
 ---
 
@@ -178,12 +178,14 @@ graph TB
 **神话背景**: 北斗七星第一星，掌管天地秩序
 
 **职责**:
+
 - 📋 工作流编排 - 执行 YAML 工作流定义
 - 🎯 用户意图解析 - 将用户意图转换为工作流
 - 🔄 引擎协调 - 通过太乙调度各专业引擎
 - 📊 进度汇总 - 收集并汇报工作流执行状态
 
 **核心能力**:
+
 ```typescript
 // 工作流执行
 processCommand(uiCommand: UICommand): Promise<WorkflowResult>
@@ -224,6 +226,7 @@ sequenceDiagram
 **神话背景**: 太乙真人，道教神仙，掌管万物调度
 
 **职责**:
+
 - 🔌 适配器注册 - 管理 `@Adapter` 装饰器注册系统
 - 📞 引擎调度 - 代理天枢对各引擎的调用
 - 🔗 接口适配 - 标准化引擎调用接口
@@ -246,6 +249,7 @@ graph LR
 ```
 
 **核心能力**:
+
 ```typescript
 // 引擎调度
 callEngine<T>(engineName: string, methodName: string, ...args: any[]): Promise<EngineCallResult<T>>
@@ -269,6 +273,7 @@ class QianliyanAdapter implements IAdapter { ... }
 **神话背景**: 千里眼，能看千里之外的神仙
 
 **职责**:
+
 - 🔍 扫描执行 - 遍历文件系统，识别照片/视频
 - 📝 扫描队列管理 - 管理扫描任务队列
 - 💾 队列持久化 - 保存/恢复扫描队列到 `scanning.json`
@@ -303,6 +308,7 @@ stateDiagram-v2
 ```
 
 **核心能力**:
+
 ```typescript
 // 扫描执行
 planScan(command: ScanCommand): Promise<string>
@@ -322,6 +328,7 @@ reportResult(result: ScanResult): void
 **持久化**: `~/.photasa/scan/scanning.json`
 
 **与scan-service的关系**:
+
 - scan-service 已设计良好，不需要改变
 - 千里眼适配器将包装 scan-service
 - 遵循标准适配器模式（参考文昌、司命适配器）
@@ -333,6 +340,7 @@ reportResult(result: ScanResult): void
 **神话背景**: 顺风耳，千里眼的好友，拥有超凡的听力
 
 **职责**:
+
 - 👂 文件系统监听 - 监听文件夹的创建、修改、删除事件
 - 📋 监听配置管理 - 管理多个监听 Profile
 - 🔄 事件归一化 - 将 chokidar 事件转换为标准 FileObservation
@@ -366,20 +374,22 @@ sequenceDiagram
 **神话背景**: 司簿，掌管文书档案的官职
 
 **职责**:
+
 - 📄 照片文件夹 manifest 管理 - 每个照片文件夹的 `.photasa.json`
 - 📊 扫描元信息管理 - lastFullScanAt, 变更计数, TTL
 - 📋 照片清单管理 - 文件夹内照片列表
 
 **Manifest结构**:
+
 ```json
 {
-  "folderId": "hash-of-path",
-  "lastFullScanAt": "2025-01-23T10:30:00Z",
-  "photos": ["IMG_001.jpg", "IMG_002.jpg"],
-  "changeCount": 0,
-  "scanStrategy": "smart",
-  "ttl": 86400,
-  "version": "1.0"
+    "folderId": "hash-of-path",
+    "lastFullScanAt": "2025-01-23T10:30:00Z",
+    "photos": ["IMG_001.jpg", "IMG_002.jpg"],
+    "changeCount": 0,
+    "scanStrategy": "smart",
+    "ttl": 86400,
+    "version": "1.0"
 }
 ```
 
@@ -393,11 +403,13 @@ sequenceDiagram
 **神话背景**: 司命，掌管生死簿的神祇
 
 **职责**:
+
 - 📦 通用 appState 持久化 - 管理应用级运行时状态
 - 💾 状态恢复 - 应用启动时恢复状态
 - 🔧 状态管理 - 增删改查应用状态
 
 **核心能力**:
+
 ```typescript
 // appState 持久化
 persistAppState(key: string, value: unknown): Promise<void>
@@ -416,11 +428,13 @@ listAppStateKeys(): Promise<string[]>
 **神话背景**: 文昌帝君，掌管文章和学问的神祇
 
 **职责**:
+
 - ⚙️ 用户偏好管理 - 主题、语言、UI设置
 - 🔄 偏好同步 - 天界持久化，人界镜像
 - 📡 变更推送 - 推送偏好更新到 UI
 
 **核心能力**:
+
 ```typescript
 // 偏好管理
 getCurrentSnapshot(): PreferenceSnapshot
@@ -439,11 +453,13 @@ getRevision(): number
 **神话背景**: 马良神笔，能画出真实物体的神笔
 
 **职责**:
+
 - 🖼️ 图像处理 - 格式转换、缩略图生成
 - 🎨 图像编辑 - 裁剪、旋转、滤镜
 - 📐 格式支持 - HEIC/JPEG/PNG/WebP/TIFF/GIF/AVIF
 
 **神笔架构（Brush Pattern）**:
+
 ```mermaid
 graph TB
     ML[马良引擎] --> BR[Brush注册中心]
@@ -500,6 +516,7 @@ graph TB
 **神话背景**: 唐太宗李世民，大唐朝廷总管
 
 **职责**:
+
 - 👑 统筹朝廷百官就任（服务初始化与依赖注入）
 - 🔀 建立启奏-圣旨系统（qizou-shengzhi架构）
 - 📋 开启贞观之治（应用生命周期管理）
@@ -524,6 +541,7 @@ graph TB
 ```
 
 **核心能力**:
+
 ```typescript
 // 服务初始化
 startZhengguan(): Promise<void>
@@ -537,6 +555,7 @@ issueShengzhi(serviceName: string, shengzhi: Shengzhi): void
 
 **位置**: `src/renderer/src/services/lishimin/`
 **关键文件**:
+
 - `lishimin.ts` - 主服务类
 - `router.ts` - 启奏路由器
 
@@ -547,6 +566,7 @@ issueShengzhi(serviceName: string, shengzhi: Shengzhi): void
 **神话背景**: 房玄龄，唐朝名相，以勤政爱民、善于统筹著称
 
 **职责**:
+
 - 📚 统一管理所有Store（PreferenceStore、ScanningStore、AppStateStore等）
 - 📝 处理奏折（Zouzhe）并转换为诏令（Zhaoling）
 - 🔄 Store自动化同步（通过matter-sync.yml配置）
@@ -575,6 +595,7 @@ graph TB
 ```
 
 **核心能力**:
+
 ```typescript
 // 奏折处理
 processZouzhe(zouzhe: Zouzhe): Promise<ZouzheResponse>
@@ -590,6 +611,7 @@ syncStoreWithSnapshot(matter: string, snapshot: unknown): void
 
 **位置**: `src/renderer/src/services/fangxuanling/`
 **关键文件**:
+
 - `fangxuanling.ts` - 主服务类
 - `stores/scanning-store.ts` - ScanningStore定义
 
@@ -600,11 +622,13 @@ syncStoreWithSnapshot(matter: string, snapshot: unknown): void
 **神话背景**: 褚遂良，唐朝名臣，以书法和政务能力著称
 
 **职责**:
+
 - 📁 路径添加/删除管理
 - ✅ 路径验证和去重
 - 📤 启奏路径操作完成
 
 **核心能力**:
+
 ```typescript
 // 路径管理
 handleAddPath(shengzhi: Shengzhi): Promise<void>
@@ -623,6 +647,7 @@ emitQizou(matter: string, content: unknown): void
 **神话背景**: 尉迟恭，唐朝名将，以勇猛和忠诚著称
 
 **职责**:
+
 - 🛡️ 接收扫描任务圣旨（add_scan_task / remove_scan_task）
 - ⚙️ 主动控制扫描任务执行（使用 p-queue）
 - 📝 创建ScanAction对象并发送ADD_SCAN_ACTION奏折
@@ -652,6 +677,7 @@ stateDiagram-v2
 ```
 
 **核心能力**:
+
 ```typescript
 // 扫描编排
 handleAddScanTask(shengzhi: Shengzhi): Promise<void>
@@ -682,6 +708,7 @@ private async updateTaskStatus(
 **神话背景**: 袁天罡，唐朝著名相士和天文学家
 
 **职责**:
+
 - 🔮 监听天界IPC事件
 - 📜 转换诏令（Zhaoling）为符箓（Fulu）
 - 🎯 转换符箓为UICommand并调用天枢
@@ -711,6 +738,7 @@ sequenceDiagram
 ```
 
 **核心能力**:
+
 ```typescript
 // IPC事件监听
 setupQianliyanEventListening(): void
@@ -732,6 +760,7 @@ convertFuluToUICommand(fulu: Fulu): UICommand
 **神话背景**: 魏征，唐朝名臣，以直言敢谏著称
 
 **职责**:
+
 - 🏛️ 管理folderTree业务逻辑
 - 📋 处理UPDATE_FOLDER_TREE奏折
 - 🔍 智能路径检查（根节点/子节点判断）
@@ -754,6 +783,7 @@ graph TB
 ```
 
 **核心能力**:
+
 ```typescript
 // folderTree管理
 handleUpdateFolderTree(shengzhi: Shengzhi): Promise<void>
@@ -775,6 +805,7 @@ private findRootPathForPath(folderPath: string): string | null
 **神话背景**: 秦琼，唐朝开国名将，以守门神身份著称
 
 **职责**:
+
 - 🛡️ 守护文件系统边界
 - 👂 监听文件系统事件
 - 📤 通过启奏向李世民汇报文件变化
@@ -789,6 +820,7 @@ private findRootPathForPath(folderPath: string): string | null
 **神话背景**: 杜如晦，唐朝名相，以政务能力著称
 
 **职责**:
+
 - 📋 MessageChannel管理器
 - 🔗 为每个服务创建专属MessageChannel通道
 - 📜 持有所有通道的port1端（李世民端）
@@ -808,6 +840,7 @@ graph LR
 ```
 
 **核心能力**:
+
 ```typescript
 // 连接服务
 connect(service: IService): void
@@ -858,23 +891,25 @@ sequenceDiagram
 ```
 
 **关键组件**:
+
 - **启奏（Qizou）**: mitt事件总线，服务 → 李世民
 - **李世民**: 中央路由决策，查询event-routing.yml
 - **杜如晦**: MessageChannel管理器
 - **圣旨（Shengzhi）**: MessageChannel传递，李世民 → 服务
 
 **event-routing.yml示例**:
+
 ```yaml
 scan_completed:
-  - when:
-        from: "袁天罡"
-        matter: "scan_completed"
-    then:
-        service: "魏征"
-        shengzhi:
-            command: "update_folder_tree"
-            content:
-                paths: "{{qizou.content.paths}}"
+    - when:
+          from: "袁天罡"
+          matter: "scan_completed"
+      then:
+          service: "魏征"
+          shengzhi:
+              command: "update_folder_tree"
+              content:
+                  paths: "{{qizou.content.paths}}"
 ```
 
 ---
@@ -913,6 +948,7 @@ sequenceDiagram
 ```
 
 **关键组件**:
+
 - **奏折（Zouzhe）**: 服务 → 房玄龄
 - **房玄龄**: 处理奏折，构造诏令
 - **诏令（Zhaoling）**: 房玄龄 → 袁天罡
@@ -920,11 +956,12 @@ sequenceDiagram
 - **UICommand**: 袁天罡 → 天枢引擎
 
 **matter-sync.yml示例**:
+
 ```yaml
 add_scan_action:
-  propertyPath: "queue"
-  syncStrategy: "replace"
-  store: "scanning"
+    propertyPath: "queue"
+    syncStrategy: "replace"
+    store: "scanning"
 ```
 
 ---
@@ -1104,15 +1141,15 @@ graph TB
 
 ### Store职责划分
 
-| Store | 职责 | 持久化 | 访问方式 |
-|-------|------|--------|----------|
-| **PreferenceStore** | 用户偏好设置（主题、语言、路径等） | ✅ 持久化 | 通过房玄龄访问器 |
-| **ScanningStore** | 扫描队列（pending/processing/failed） | ❌ 运行时状态 | 通过房玄龄访问器 |
-| **AppStateStore** | 应用状态（folderTree、currentFolder等） | ✅ 持久化（司命引擎） | 通过房玄龄访问器 |
-| **PhotosStore** | 照片数据（文件列表、元数据） | ❌ 运行时状态 | 通过房玄龄访问器 |
-| **StatusBarStore** | 状态栏信息（当前任务、进度） | ❌ 运行时状态 | 直接访问 |
-| **NotificationStore** | 通知消息 | ❌ 运行时状态 | 直接访问 |
-| **UpdateStore** | 更新状态 | ❌ 运行时状态 | 直接访问 |
+| Store                 | 职责                                    | 持久化                | 访问方式         |
+| --------------------- | --------------------------------------- | --------------------- | ---------------- |
+| **PreferenceStore**   | 用户偏好设置（主题、语言、路径等）      | ✅ 持久化             | 通过房玄龄访问器 |
+| **ScanningStore**     | 扫描队列（pending/processing/failed）   | ❌ 运行时状态         | 通过房玄龄访问器 |
+| **AppStateStore**     | 应用状态（folderTree、currentFolder等） | ✅ 持久化（司命引擎） | 通过房玄龄访问器 |
+| **PhotosStore**       | 照片数据（文件列表、元数据）            | ❌ 运行时状态         | 通过房玄龄访问器 |
+| **StatusBarStore**    | 状态栏信息（当前任务、进度）            | ❌ 运行时状态         | 直接访问         |
+| **NotificationStore** | 通知消息                                | ❌ 运行时状态         | 直接访问         |
+| **UpdateStore**       | 更新状态                                | ❌ 运行时状态         | 直接访问         |
 
 ### Store SSOT原则（RFC 0048 v3）
 
@@ -1135,6 +1172,7 @@ stateDiagram-v2
 ```
 
 **状态转换规则**:
+
 1. **创建任务**: `pending` 状态，`createdAt: now`, `retryCount: 0`
 2. **开始执行**: `pending → processing`, `startedAt: now`
 3. **执行成功**: `processing → [删除]`（不保留completed状态）
@@ -1166,13 +1204,13 @@ graph TB
 
 ### 持久化职责划分
 
-| 引擎/服务 | 持久化内容 | 位置 | 格式 |
-|-----------|-----------|------|------|
-| **千里眼引擎** | 扫描队列 | `~/.photasa/scan/scanning.json` | JSON |
-| **司命引擎** | appState（folderTree等） | `~/.photasa/appState/photasa.json` | JSON |
-| **文昌引擎** | 用户偏好 | `~/.photasa/preferences/` | JSON |
-| **司簿引擎** | 照片文件夹manifest | `/path/to/photos/.photasa.json` | JSON |
-| **PreferenceStore** | 用户偏好镜像 | `localStorage` | JSON |
+| 引擎/服务           | 持久化内容               | 位置                               | 格式 |
+| ------------------- | ------------------------ | ---------------------------------- | ---- |
+| **千里眼引擎**      | 扫描队列                 | `~/.photasa/scan/scanning.json`    | JSON |
+| **司命引擎**        | appState（folderTree等） | `~/.photasa/appState/photasa.json` | JSON |
+| **文昌引擎**        | 用户偏好                 | `~/.photasa/preferences/`          | JSON |
+| **司簿引擎**        | 照片文件夹manifest       | `/path/to/photos/.photasa.json`    | JSON |
+| **PreferenceStore** | 用户偏好镜像             | `localStorage`                     | JSON |
 
 ### 持久化数据流
 
@@ -1490,6 +1528,7 @@ Store作为单一真相源，消除了p-queue与Store的双真相源问题。状
 **目标**: 将扫描编排逻辑迁移到天界，与天界架构对齐
 
 **策略**:
+
 - 不改变scan-service，仅包装在千里眼适配器中
 - 遵循标准适配器模式（参考文昌、司命适配器）
 - 通过依赖注入获取scan-service实例
@@ -1502,6 +1541,7 @@ Store作为单一真相源，消除了p-queue与Store的双真相源问题。状
 **目标**: 改进尉迟恭代码质量（RFC 0056）
 
 **改进点**:
+
 - 提取`enqueueTask()`私有方法，消除代码重复
 - 提取时间计算常量，消除魔法数字
 - 简化条件分支逻辑，减少嵌套
@@ -1528,4 +1568,3 @@ Store作为单一真相源，消除了p-queue与Store的双真相源问题。状
 **文档版本**: 2.0.0
 **最后更新**: 2025-01-23
 **维护者**: AI Architect
-

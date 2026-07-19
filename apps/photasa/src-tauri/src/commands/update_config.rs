@@ -2,7 +2,7 @@
 
 use log::{info, warn};
 use std::path::{Path, PathBuf};
-use wenchang_preferences::{AutoUpdatePreferences, UserPreferences};
+use photasa_preference::{AutoUpdatePreferences, UserPreferences};
 
 use super::update::{apply_auto_update_config, AutoUpdateConfigState, UpdateState};
 
@@ -85,7 +85,7 @@ pub fn sync_update_state_from_preferences(state: &UpdateState) -> AutoUpdateConf
 mod tests {
     use super::*;
     use std::io::Write;
-    use wenchang_preferences::PreferencesStore;
+    use photasa_preference::PreferencesStore;
 
     fn write_preferences_json(dir: &Path, json: &str) {
         std::fs::create_dir_all(dir).unwrap();

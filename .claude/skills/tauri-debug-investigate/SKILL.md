@@ -1,7 +1,7 @@
 ---
 name: tauri-debug-investigate
 description: >-
-  Debugs and investigates Tauri v2 desktop apps using the hypothesi Tauri MCP server (screenshots, DOM, logs, IPC), Rust backend logs, and cargo checks. Use when debugging Photasa or apps/photasa, investigating invoke failures, IPC/MCP bridge, webview errors, or when the user asks for Tauri debugging, MCP tauri tools, or systematic investigation steps.
+    Debugs and investigates Tauri v2 desktop apps using the hypothesi Tauri MCP server (screenshots, DOM, logs, IPC), Rust backend logs, and cargo checks. Use when debugging Photasa or apps/photasa, investigating invoke failures, IPC/MCP bridge, webview errors, or when the user asks for Tauri debugging, MCP tauri tools, or systematic investigation steps.
 ---
 
 # Tauri 调试与排查（Photasa）
@@ -39,11 +39,11 @@ description: >-
 
 ## 常见原因
 
-| 现象 | 检查 |
-|------|------|
+| 现象             | 检查                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------- |
 | MCP 无法操作界面 | `withGlobalTauri`、`mcp-bridge:default`、应用是否为 **debug** 运行、是否先 `driver_session` |
-| `invoke` 报错 | 命令名是否与 `main.rs` 的 `generate_handler!` 一致；capabilities 是否允许对应插件 |
-| 仅 release 失败 | release 不含 MCP 插件属预期；换 **dev** 做 MCP 调试 |
+| `invoke` 报错    | 命令名是否与 `main.rs` 的 `generate_handler!` 一致；capabilities 是否允许对应插件           |
+| 仅 release 失败  | release 不含 MCP 插件属预期；换 **dev** 做 MCP 调试                                         |
 
 ## 约束
 

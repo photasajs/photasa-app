@@ -21,25 +21,27 @@
 当前系统存在严重的**数据契约不一致**问题：
 
 1. **YAML工作流约定**使用 `type` 字段表示操作类型：
-   ```yaml
-   input:
-       type: "count"    # 计数操作
-       type: "append"   # 追加操作
-       type: "filter"   # 过滤操作
-   ```
+
+    ```yaml
+    input:
+        type: "count"    # 计数操作
+        type: "append"   # 追加操作
+        type: "filter"   # 过滤操作
+    ```
 
 2. **BuiltinAdapter接口**使用 `operation` 字段且仅支持简单类型转换：
-   ```typescript
-   async transform(params: {
-       input: any;
-       operation: "stringify" | "parse" | "keys" | "values" | "length";
-   })
-   ```
+
+    ```typescript
+    async transform(params: {
+        input: any;
+        operation: "stringify" | "parse" | "keys" | "values" | "length";
+    })
+    ```
 
 3. **语义不匹配**：
-   - YAML的 `count` ≠ BuiltinAdapter的 `length`
-   - 缺少 `append`、`filter` 等数组专用操作
-   - `transform` 方法职责不清晰
+    - YAML的 `count` ≠ BuiltinAdapter的 `length`
+    - 缺少 `append`、`filter` 等数组专用操作
+    - `transform` 方法职责不清晰
 
 ### 实际影响
 
@@ -54,6 +56,7 @@
 > "Bad programmers worry about the code. Good programmers worry about data structures."
 
 这不是一个简单的bug，而是**数据结构设计问题**：
+
 - 没有统一的数据契约（Data Contract）
 - 不同层使用不同的命名约定
 - `transform` 方法承担了太多职责
@@ -64,15 +67,16 @@
 
 为避免混淆，明确定义本RFC中使用的关键术语：
 
-| 术语 | 定义 | 示例 |
-|------|------|------|
-| **Raw Data (原始数据)** | Adapter方法的直接返回值 | `[1,2,3,4]` 或 `{valid: true}` |
-| **Wrapped Data (包装数据)** | TaiyiEngine添加的元数据包装 | `{success: true, result: [1,2,3,4], timestamp, engineName}` |
-| **Unwrapped Data (解包数据)** | TaiyiService提取的原始数据 | `[1,2,3,4]` (从wrapped.result提取) |
-| **Step Output (步骤输出)** | WorkflowOrchestrator存储的数据 | `stepResult.output = [1,2,3,4]` |
-| **YAML Access (YAML访问)** | 工作流中的变量引用 | `{{steps.stepId}}` → `[1,2,3,4]` |
+| 术语                          | 定义                           | 示例                                                        |
+| ----------------------------- | ------------------------------ | ----------------------------------------------------------- |
+| **Raw Data (原始数据)**       | Adapter方法的直接返回值        | `[1,2,3,4]` 或 `{valid: true}`                              |
+| **Wrapped Data (包装数据)**   | TaiyiEngine添加的元数据包装    | `{success: true, result: [1,2,3,4], timestamp, engineName}` |
+| **Unwrapped Data (解包数据)** | TaiyiService提取的原始数据     | `[1,2,3,4]` (从wrapped.result提取)                          |
+| **Step Output (步骤输出)**    | WorkflowOrchestrator存储的数据 | `stepResult.output = [1,2,3,4]`                             |
+| **YAML Access (YAML访问)**    | 工作流中的变量引用             | `{{steps.stepId}}` → `[1,2,3,4]`                            |
 
 **关键理解**：
+
 - Raw Data = Unwrapped Data = Step Output = YAML Access结果
 - 唯一的包装点：TaiyiEngine
 - 唯一的解包点：TaiyiService
@@ -90,6 +94,7 @@ async methodName(params: InputType): Promise<ReturnType>
 ```
 
 **示例**：
+
 ```typescript
 async arrayAppend(params: {array: unknown[], item: unknown}): Promise<unknown[]> {
     return [...params.array, params.item];  // 返回原始数组
@@ -97,12 +102,13 @@ async arrayAppend(params: {array: unknown[], item: unknown}): Promise<unknown[]>
 ```
 
 **禁止**：
+
 ```typescript
 // ❌ 错误：返回包装对象
-return {success: true, result: array};
+return { success: true, result: array };
 
 // ❌ 错误：返回错误对象
-return {success: false, error: "..."};
+return { success: false, error: "..." };
 ```
 
 #### 契约2: TaiyiEngine → TaiyiService
@@ -111,14 +117,15 @@ return {success: false, error: "..."};
 // TaiyiEngine包装格式
 interface EngineCallResult<T> {
     success: boolean;
-    result?: T;           // 成功时存在，值为Raw Data
-    error?: Error;        // 失败时存在
+    result?: T; // 成功时存在，值为Raw Data
+    error?: Error; // 失败时存在
     timestamp: number;
     engineName: string;
 }
 ```
 
 **保证**：
+
 - `success === true` 时，`result`字段存在且为Raw Data (T)
 - `success === false` 时，`error`字段存在
 
@@ -134,6 +141,7 @@ function getEngineResult<T>(engineResult: EngineCallResult<T>): T | null {
 ```
 
 **保证**：
+
 - 返回值与Adapter返回值类型完全一致
 - 成功返回T，失败返回null（由WorkflowOrchestrator处理错误）
 
@@ -143,9 +151,9 @@ function getEngineResult<T>(engineResult: EngineCallResult<T>): T | null {
 // WorkflowOrchestrator存储格式
 interface StepResult {
     stepId: string;
-    status: 'pending' | 'running' | 'completed' | 'failed';
-    output: T;           // Unwrapped Data
-    error?: string;      // 失败时的错误消息
+    status: "pending" | "running" | "completed" | "failed";
+    output: T; // Unwrapped Data
+    error?: string; // 失败时的错误消息
     startTime: number;
     endTime: number;
     duration: number;
@@ -153,6 +161,7 @@ interface StepResult {
 ```
 
 **保证**：
+
 - `stepResult.output`存储的是Unwrapped Data (T)
 - `output_schema`验证的是`stepResult.output`的结构
 
@@ -163,13 +172,14 @@ interface StepResult {
 function getStepOutputs(context): Record<string, any> {
     const outputs: Record<string, any> = {};
     for (const [stepId, result] of context.stepResults.entries()) {
-        outputs[stepId] = result.output;  // 直接暴露output字段
+        outputs[stepId] = result.output; // 直接暴露output字段
     }
     return outputs;
 }
 ```
 
 **YAML访问契约**：
+
 - `{{steps.stepId}}` → `stepResult.output` → Unwrapped Data (T)
 - `{{steps.stepId.field}}` → `stepResult.output.field` → T的字段
 - ❌ `{{steps.stepId.output}}` → undefined（output不是T的字段）
@@ -183,9 +193,8 @@ function getStepOutputs(context): Record<string, any> {
 - id: "append_action"
   action: "arrayAppend"
   output_schema:
-      type: array          # arrayAppend() 返回 unknown[]
+      type: array # arrayAppend() 返回 unknown[]
       description: "添加后的完整队列"
-
 # YAML访问时看到的数据：
 # {{steps.append_action}} → unknown[] (与output_schema完全一致)
 ```
@@ -193,6 +202,7 @@ function getStepOutputs(context): Record<string, any> {
 **为什么output_schema和YAML访问类型一致？**
 
 因为数据流保证了类型不变：
+
 ```
 Adapter返回T → TaiyiEngine包装{result: T} → TaiyiService解包T
 → Orchestrator存储output=T → Resolver暴露steps.id=T → YAML访问T
@@ -274,6 +284,7 @@ const value = outputs["append_action"];
 ```
 
 **关键观察**：
+
 1. ✅ Raw Data在整个流程中类型不变：`unknown[]`
 2. ✅ 唯一的包装发生在TaiyiEngine，立即被TaiyiService解包
 3. ✅ output_schema验证的是Raw Data的结构
@@ -285,22 +296,23 @@ const value = outputs["append_action"];
 遵循Linus的核心哲学：
 
 1. **好品味（Good Taste）**：
-   - 每个方法只做一件事并做好
-   - 消除特殊情况，而不是增加条件判断
+    - 每个方法只做一件事并做好
+    - 消除特殊情况，而不是增加条件判断
 
 2. **实用主义（Pragmatism）**：
-   - 解决实际问题，不是理论问题
-   - 向后兼容，不破坏现有代码
+    - 解决实际问题，不是理论问题
+    - 向后兼容，不破坏现有代码
 
 3. **简洁执念（Simplicity）**：
-   - 纯函数设计，每个方法 < 50行
-   - 清晰的类型定义，零`any`类型
+    - 纯函数设计，每个方法 < 50行
+    - 清晰的类型定义，零`any`类型
 
 ### 数据扁平化策略 - 直接访问步骤输出
 
 **关键架构决策**：遵循RFC 0038数据扁平化原则，YAML中直接使用 `{{steps.stepId}}` 访问步骤输出，无需 `.output` 后缀。
 
 **核心原则**：
+
 1. Adapter Layer返回原始业务数据（T）
 2. TaiyiEngine包装为 `{success, result: T}`
 3. TaiyiService通过 `getEngineResult()` unwrap回T
@@ -349,17 +361,20 @@ const value = outputs["append_action"];
 ```
 
 **设计理由**：
+
 - **简洁性（Linus原则）**：`steps.stepId`比`steps.stepId.output`更简洁
 - **语义一致性**：与RFC 0038保持一致，避免双层嵌套
 - **架构清晰**：每层职责明确，unwrap点明确（TaiyiService层）
 - **符合现有工作流**：其他YAML文件都使用`steps.stepId`直接访问
 
 **`output_schema`的真实含义**：
+
 - `output_schema`定义的是**Adapter方法的返回值结构**（即原始数据T）
 - 这与VariableResolver暴露给YAML的结构完全一致（因为TaiyiService已unwrap）
 - 因此`output_schema`既是Adapter的返回值约束，也是YAML访问`steps.stepId`时的类型描述
 
 **错误处理**：
+
 - **成功**：Adapter直接返回业务数据T → TaiyiEngine包装 → TaiyiService unwrap → VariableResolver暴露为`steps.stepId`
 - **失败**：Adapter抛出异常 → TaiyiService捕获 → WorkflowOrchestrator记录错误
 
@@ -370,6 +385,7 @@ const value = outputs["append_action"];
 追加元素到数组末尾。
 
 **接口定义**：
+
 ```typescript
 async arrayAppend(params: {
     array: unknown[];
@@ -378,18 +394,20 @@ async arrayAppend(params: {
 ```
 
 **实现要点**：
+
 - 纯函数：返回新数组，不修改原数组
 - 使用扩展运算符：`[...params.array, params.item]`
 - 完整错误处理：验证array参数类型，失败时抛出异常
-- 直接返回：`return newArray;`  不包装！
+- 直接返回：`return newArray;` 不包装！
 
 **YAML使用示例**：
+
 ```yaml
 - id: "append_action"
   type: "builtin"
   action: "arrayAppend"
   input:
-      array: "{{steps.restore_queue}}"  # 直接访问步骤输出
+      array: "{{steps.restore_queue}}" # 直接访问步骤输出
       item: "{{inputs.action}}"
   # output_schema定义builtin.arrayAppend的返回值结构（array）
   # TaiyiService的getEngineResult()已unwrap，所以steps.append_action直接就是数组
@@ -402,7 +420,7 @@ async arrayAppend(params: {
   type: "builtin"
   action: "return"
   input:
-      queue: "{{steps.append_action}}"  # 直接访问unwrap后的数据
+      queue: "{{steps.append_action}}" # 直接访问unwrap后的数据
 ```
 
 #### 2. arrayCount - 数组计数
@@ -410,6 +428,7 @@ async arrayAppend(params: {
 计算数组元素数量。
 
 **接口定义**：
+
 ```typescript
 async arrayCount(params: {
     array: unknown[]
@@ -417,18 +436,20 @@ async arrayCount(params: {
 ```
 
 **实现要点**：
+
 - 直接返回 `params.array.length`
 - 验证array参数存在且为数组，失败时抛出异常
 - 空数组返回0
-- 直接返回：`return length;`  不包装！
+- 直接返回：`return length;` 不包装！
 
 **YAML使用示例**：
+
 ```yaml
 - id: "calculate_size"
   type: "builtin"
   action: "arrayCount"
   input:
-      array: "{{steps.append_action}}"  # 直接访问前一步输出
+      array: "{{steps.append_action}}" # 直接访问前一步输出
   # output_schema定义builtin.arrayCount的返回值结构（number）
   # TaiyiService的getEngineResult()已unwrap，所以steps.calculate_size直接就是数字
   output_schema:
@@ -440,7 +461,7 @@ async arrayCount(params: {
   type: "builtin"
   action: "return"
   input:
-      queueSize: "{{steps.calculate_size}}"  # 直接访问unwrap后的数据
+      queueSize: "{{steps.calculate_size}}" # 直接访问unwrap后的数据
 ```
 
 #### 3. arrayFilter - 数组过滤
@@ -448,6 +469,7 @@ async arrayCount(params: {
 根据条件过滤数组元素。
 
 **接口定义**：
+
 ```typescript
 async arrayFilter(params: {
     array: unknown[];
@@ -460,23 +482,26 @@ async arrayFilter(params: {
 ```
 
 **实现要点**：
+
 - 支持多种比较操作符（eq, ne, gt, lt, gte, lte）
 - 安全的属性访问（处理undefined/null）
 - 纯函数：返回新数组
-- 直接返回：`return filteredArray;`  不包装！
+- 直接返回：`return filteredArray;` 不包装！
 
 **设计权衡**：
+
 - **当前设计**：支持单字段单条件过滤（覆盖90%使用场景）
 - **不支持复杂条件**（AND、OR、嵌套）：遵循YAGNI原则，避免过度设计
 - **扩展路径**：如需复杂过滤，可通过多次调用或自定义步骤实现
 
 **YAML使用示例**：
+
 ```yaml
 - id: "filter_action"
   type: "builtin"
   action: "arrayFilter"
   input:
-      array: "{{steps.restore_queue}}"  # 直接访问步骤输出
+      array: "{{steps.restore_queue}}" # 直接访问步骤输出
       condition:
           field: "path"
           operator: "ne"
@@ -492,7 +517,7 @@ async arrayFilter(params: {
   type: "builtin"
   action: "return"
   input:
-      filtered: "{{steps.filter_action}}"  # 直接访问unwrap后的数据
+      filtered: "{{steps.filter_action}}" # 直接访问unwrap后的数据
 ```
 
 #### 4. arrayConcat - 数组连接
@@ -500,6 +525,7 @@ async arrayFilter(params: {
 连接两个数组，返回新数组。
 
 **接口定义**：
+
 ```typescript
 async arrayConcat(params: {
     array1: unknown[];
@@ -508,28 +534,31 @@ async arrayConcat(params: {
 ```
 
 **实现要点**：
+
 - 纯函数：返回新数组，不修改原数组
 - 使用扩展运算符：`[...params.array1, ...params.array2]`
 - **容错处理**：参数验证使用 fallback + log，不抛出错误
-  - `array1` 为 null/undefined 或非数组类型 → fallback 空数组 + log
-  - `array2` 为 null/undefined 或非数组类型 → fallback 空数组 + log
-  - 数组过大（>100000元素）→ log 警告但继续执行
-- 直接返回：`return newArray;`  不包装！
+    - `array1` 为 null/undefined 或非数组类型 → fallback 空数组 + log
+    - `array2` 为 null/undefined 或非数组类型 → fallback 空数组 + log
+    - 数组过大（>100000元素）→ log 警告但继续执行
+- 直接返回：`return newArray;` 不包装！
 
 **容错策略**：
+
 - **原则**：容错处理，不中断工作流执行
 - **null/undefined 参数**：使用空数组作为默认值，记录警告日志
 - **非数组类型**：转换为空数组，记录警告日志
 - **数组过大**：记录警告日志但继续执行，让调用者决定如何处理
 
 **YAML使用示例**：
+
 ```yaml
 - id: "append_actions"
   type: "builtin"
   action: "arrayConcat"
   input:
-      array1: "{{steps.restore_queue}}"  # 现有队列
-      array2: "{{inputs.actions}}"       # 新任务数组
+      array1: "{{steps.restore_queue}}" # 现有队列
+      array2: "{{inputs.actions}}" # 新任务数组
   # arrayConcat合并两个数组：现有队列 + 新任务数组
   output_schema:
       type: array
@@ -541,7 +570,7 @@ async arrayConcat(params: {
   type: "builtin"
   action: "return"
   input:
-      queue: "{{steps.append_actions}}"  # 直接访问unwrap后的数据
+      queue: "{{steps.append_actions}}" # 直接访问unwrap后的数据
 ```
 
 ### 关于对象构造的说明
@@ -549,9 +578,11 @@ async arrayConcat(params: {
 **不引入专门的`objectCreate`方法**，理由如下：
 
 **Linus哲学**：
+
 > "如果一个函数只是返回输入，那它为什么存在？这是过度设计。"
 
 **YAML原生支持对象构造**：
+
 ```yaml
 # ❌ 不必要的间接层
 - id: "build_delta"
@@ -580,6 +611,7 @@ async arrayConcat(params: {
 **职责定义**：`transform` 方法专注于**数据类型转换**，不处理集合操作。
 
 **支持的转换操作**：
+
 - `stringify` - JSON字符串化（对象/数组 → 字符串）
 - `parse` - JSON解析（字符串 → 对象/数组）
 - `keys` - 提取对象键（对象 → 字符串数组）
@@ -587,6 +619,7 @@ async arrayConcat(params: {
 - `length` - 获取长度（数组/对象 → 数字，保留向后兼容）
 
 **接口定义**：
+
 ```typescript
 async transform(params: {
     input: unknown;
@@ -595,13 +628,15 @@ async transform(params: {
 ```
 
 **架构调整**：
+
 - **修改前**：返回包装对象 `{ success, result, operation }`
 - **修改后**：直接返回转换结果，遵循数据扁平化策略
 - **失败处理**：抛出异常而不是返回错误对象
 
 **不增加数组操作到transform**：
+
 - 数组追加/过滤/计数属于**集合操作**，不是类型转换
-- 职责分离：transform处理转换，array*方法处理集合
+- 职责分离：transform处理转换，array\*方法处理集合
 - 避免单一方法承担过多职责
 
 ### 日志风格规范
@@ -616,7 +651,7 @@ async transform(params: {
 logger.debug(`🔧 施展合并之术`, {
     arrayLength: params.array.length,
     itemType: typeof params.item,
-    resultLength: result.length
+    resultLength: result.length,
 });
 
 // arrayCount
@@ -626,13 +661,13 @@ logger.debug(`🔧 施展计数之术: 得${result}个元素`);
 logger.debug(`🔧 施展筛选之术`, {
     condition: params.condition,
     inputCount: params.array.length,
-    resultCount: result.length
+    resultCount: result.length,
 });
 
 // 错误处理（抛出异常前记录）
 logger.error(`🔧 合并之术失败: ${(error as Error).message}`, {
-    operation: 'arrayAppend',
-    error
+    operation: "arrayAppend",
+    error,
 });
 
 // ❌ 错误 - 现代英文风格
@@ -641,6 +676,7 @@ logger.error("Array operation failed", error);
 ```
 
 **关键原则**：
+
 - 使用简洁的中文描述 + 结构化元数据
 - 保持与现有代码风格一致
 - 错误日志记录后抛出异常（不返回错误对象）
@@ -651,27 +687,29 @@ logger.error("Array operation failed", error);
 需要更新以下工作流文件。**关键变更**：action名称从`transform`改为专用操作名。
 
 1. **add_scan_action.zouwu** (2处action修改)
-   - Line 45: `action: "transform"` → `action: "arrayAppend"`
-   - Line 77: `action: "transform"` → `action: "arrayCount"`
-   - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
+    - Line 45: `action: "transform"` → `action: "arrayAppend"`
+    - Line 77: `action: "transform"` → `action: "arrayCount"`
+    - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
 
 2. **remove_scan_action.zouwu** (2处action修改)
-   - Line 42: `action: "transform"` → `action: "arrayFilter"`
-   - Line 77: `action: "transform"` → `action: "arrayCount"`
-   - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
+    - Line 42: `action: "transform"` → `action: "arrayFilter"`
+    - Line 77: `action: "transform"` → `action: "arrayCount"`
+    - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
 
 3. **get_scanning_queue.zouwu** (1处action修改)
-   - Line 58: `action: "transform"` → `action: "arrayCount"`
-   - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
+    - Line 58: `action: "transform"` → `action: "arrayCount"`
+    - ✅ 步骤引用已正确使用 `{{steps.stepId}}` 直接访问模式
 
 4. **switch_current_folder.zouwu**
-   - **无需objectCreate**：直接在YAML中构造对象即可
+    - **无需objectCreate**：直接在YAML中构造对象即可
 
 **总计**：
+
 - 修改action调用：5处
 - ✅ 步骤引用无需修改：已遵循数据扁平化策略使用`{{steps.stepId}}`
 
 **架构说明**：
+
 - Adapter直接返回原始数据（如`unknown[]`、`number`）
 - TaiyiEngine包装为`{success, result: T}`
 - TaiyiService通过`getEngineResult()`unwrap回T
@@ -689,6 +727,7 @@ logger.error("Array operation failed", error);
 必须达到**100%覆盖率**（语句、分支、函数、行），包括以下具体测试用例：
 
 #### arrayAppend 测试清单
+
 - ✅ 追加单个元素到非空数组
 - ✅ 追加元素到空数组
 - ✅ 追加对象到对象数组
@@ -699,6 +738,7 @@ logger.error("Array operation failed", error);
 - ✅ 非法参数：array为非数组类型（抛出异常）
 
 #### arrayCount 测试清单
+
 - ✅ 计算非空数组长度
 - ✅ 计算空数组长度（返回0）
 - ✅ **验证直接返回数字**（返回类型为`number`，不是包装对象）
@@ -706,13 +746,14 @@ logger.error("Array operation failed", error);
 - ✅ 非法参数：array为非数组类型（抛出异常）
 
 #### arrayFilter 测试清单
+
 - ✅ 所有操作符测试：
-  - eq（等于）
-  - ne（不等于）
-  - gt（大于）
-  - lt（小于）
-  - gte（大于等于）
-  - lte（小于等于）
+    - eq（等于）
+    - ne（不等于）
+    - gt（大于）
+    - lt（小于）
+    - gte（大于等于）
+    - lte（小于等于）
 - ✅ 过滤结果为空数组
 - ✅ 过滤结果为完整数组（无元素被过滤）
 - ✅ 字段不存在的情况
@@ -725,6 +766,7 @@ logger.error("Array operation failed", error);
 - ✅ 非法参数：operator不支持（抛出异常）
 
 #### 类型安全验证
+
 - ✅ 零`any`类型（源代码和测试代码）
 - ✅ 完整TypeScript类型定义
 - ✅ 所有参数和返回值类型明确
@@ -754,8 +796,9 @@ npx eslint src/engines/adapters/__tests__/BuiltinAdapter-array-operations.test.t
 **必须验证的场景**：
 
 1. **场景1：arrayAppend 数据扁平化验证**
+
 ```typescript
-it('arrayAppend应该直接返回数组而不是包装对象', async () => {
+it("arrayAppend应该直接返回数组而不是包装对象", async () => {
     const result = await adapter.arrayAppend({
         array: [1, 2],
         item: 3,
@@ -769,28 +812,30 @@ it('arrayAppend应该直接返回数组而不是包装对象', async () => {
 ```
 
 2. **场景2：arrayCount 数据扁平化验证**
+
 ```typescript
-it('arrayCount应该直接返回数字而不是包装对象', async () => {
+it("arrayCount应该直接返回数字而不是包装对象", async () => {
     const result = await adapter.arrayCount({
         array: [1, 2, 3, 4, 5],
     });
     // 关键验证：直接是数字，不是 {success, result} 对象
-    expect(typeof result).toBe('number');
+    expect(typeof result).toBe("number");
     expect(result).toBe(5);
     expect((result as any).success).toBeUndefined();
 });
 ```
 
 3. **场景3：arrayFilter 数据扁平化验证**
+
 ```typescript
-it('arrayFilter应该直接返回数组而不是包装对象', async () => {
+it("arrayFilter应该直接返回数组而不是包装对象", async () => {
     const testArray = [
-        { id: 1, name: 'Alice', age: 25 },
-        { id: 2, name: 'Bob', age: 30 },
+        { id: 1, name: "Alice", age: 25 },
+        { id: 2, name: "Bob", age: 30 },
     ];
     const result = await adapter.arrayFilter({
         array: testArray,
-        condition: { field: 'age', operator: 'eq', value: 25 },
+        condition: { field: "age", operator: "eq", value: 25 },
     });
     // 关键验证：直接是数组，不是包装对象
     expect(Array.isArray(result)).toBe(true);
@@ -800,13 +845,15 @@ it('arrayFilter应该直接返回数组而不是包装对象', async () => {
 ```
 
 4. **场景4：工作流集成场景验证**
+
 ```typescript
-it('应该能够追加扫描任务到队列', async () => {
-    const mockQueue = [
-        { path: '/folder1', action: 'scan', source: 'manual', addedAt: 1000 },
-    ];
+it("应该能够追加扫描任务到队列", async () => {
+    const mockQueue = [{ path: "/folder1", action: "scan", source: "manual", addedAt: 1000 }];
     const newAction = {
-        path: '/folder2', action: 'scan', source: 'manual', addedAt: 2000,
+        path: "/folder2",
+        action: "scan",
+        source: "manual",
+        addedAt: 2000,
     };
     const result = await adapter.arrayAppend({
         array: mockQueue,
@@ -819,6 +866,7 @@ it('应该能够追加扫描任务到队列', async () => {
 ```
 
 **集成测试验证命令**：
+
 ```bash
 # 运行工作流集成测试
 npm run test:unit:main -- workflows-builtin-array.integration.test.ts
@@ -832,6 +880,7 @@ npm run test:unit:main -- workflows-builtin-array.integration.test.ts --coverage
 **测试目标**：验证所有修改后的YAML工作流语法正确且符合标准。
 
 **验证命令**：
+
 ```bash
 # 1. 运行工作流验证器（必须零错误）
 volta run npx tsx scripts/validate-workflows.ts --verbose
@@ -843,12 +892,14 @@ volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workf
 ```
 
 **验证器必须通过的检查**：
+
 1. ✅ 允许 `{{steps.stepId}}` 直接访问（获取完整输出）
 2. ✅ 允许 `{{steps.stepId.field}}` 字段访问（访问输出的特定字段）
 3. ✅ 禁止 `{{steps.stepId.output}}` 显式使用（.output是内部实现细节，参见validate-workflows.ts Line 72-77）
 4. ✅ `output_schema` 定义与实际使用一致
 
 **预期结果**：
+
 ```
 ✨ src/engines/tianshu/workflows/scan/add_scan_action.zouwu 秘籍真传，无虞
 ✨ src/engines/tianshu/workflows/scan/remove_scan_action.zouwu 秘籍真传，无虞
@@ -866,41 +917,48 @@ volta run npx tsx scripts/validate-workflows.ts --file src/engines/tianshu/workf
 必须通过以下性能基准测试（在测试文件中包含性能测试）：
 
 **性能指标**：
+
 - `arrayAppend(1000元素数组)` < 10ms
 - `arrayCount(10000元素数组)` < 1ms
 - `arrayFilter(10000元素数组)` < 100ms
 
 **大数组限制**：
+
 - 单次操作最大建议 **100,000** 个元素
 - **容错策略**：超过限制时记录警告日志但继续执行，不抛出错误
 - 让调用者决定如何处理超大数组，而不是强制中断工作流
 
 **性能测试示例**：
+
 ```typescript
-describe('性能测试', () => {
-    it('应在10ms内完成arrayAppend操作（1000元素）', async () => {
-        const largeArray = Array(1000).fill(0).map((_, i) => ({ id: i }));
+describe("性能测试", () => {
+    it("应在10ms内完成arrayAppend操作（1000元素）", async () => {
+        const largeArray = Array(1000)
+            .fill(0)
+            .map((_, i) => ({ id: i }));
         const start = Date.now();
         await adapter.arrayAppend({ array: largeArray, item: { id: 1000 } });
         const duration = Date.now() - start;
         expect(duration).toBeLessThan(10);
     });
 
-    it('应在100ms内完成arrayFilter操作（10000元素）', async () => {
-        const largeArray = Array(10000).fill(0).map((_, i) => ({
-            id: i,
-            value: Math.random()
-        }));
+    it("应在100ms内完成arrayFilter操作（10000元素）", async () => {
+        const largeArray = Array(10000)
+            .fill(0)
+            .map((_, i) => ({
+                id: i,
+                value: Math.random(),
+            }));
         const start = Date.now();
         await adapter.arrayFilter({
             array: largeArray,
-            condition: { field: 'value', operator: 'gt', value: 0.5 }
+            condition: { field: "value", operator: "gt", value: 0.5 },
         });
         const duration = Date.now() - start;
         expect(duration).toBeLessThan(100);
     });
 
-    it('应在超过100000元素时记录警告但继续执行', async () => {
+    it("应在超过100000元素时记录警告但继续执行", async () => {
         const tooLargeArray = Array(100001).fill(0);
         // 容错处理：记录警告但继续执行，不抛出错误
         const result = await adapter.arrayAppend({ array: tooLargeArray, item: 1 });
@@ -968,6 +1026,7 @@ describe('性能测试', () => {
 **必须全部通过以下验证，不允许跳过任何一项：**
 
 #### 4.1 单元测试验证（零容忍）
+
 ```bash
 # 运行单元测试（必须100%通过）
 npm run test:unit:main -- BuiltinAdapter-array-operations.test.ts
@@ -977,16 +1036,19 @@ npm run test:unit:main -- BuiltinAdapter-array-operations.test.ts --coverage
 
 # 预期：Stmts 100% | Branch 100% | Funcs 100% | Lines 100%
 ```
+
 13. ⬜ 单元测试100%通过
 14. ⬜ 代码覆盖率100%（所有四项指标）
 15. ⬜ 验证直接返回原始数据（不是包装对象）
 16. ⬜ 验证异常抛出（不是返回错误对象）
 
 #### 4.2 集成测试验证（端到端）
+
 ```bash
 # 运行工作流集成测试（必须100%通过）
 npm run test:unit:main -- workflows-builtin-array.integration.test.ts
 ```
+
 17. ⬜ arrayAppend工作流场景通过
 18. ⬜ arrayCount工作流场景通过
 19. ⬜ arrayFilter工作流场景通过
@@ -994,16 +1056,19 @@ npm run test:unit:main -- workflows-builtin-array.integration.test.ts
 21. ⬜ 验证错误语义（`steps.stepId`）正确失败
 
 #### 4.3 YAML工作流验证（零错误零警告）
+
 ```bash
 # 运行工作流验证器（必须零错误）
 volta run npx tsx scripts/validate-workflows.ts --verbose
 ```
+
 22. ⬜ add_scan_action.zouwu 验证通过（零谬误）
 23. ⬜ remove_scan_action.zouwu 验证通过（零谬误）
 24. ⬜ get_scanning_queue.zouwu 验证通过（零谬误）
 25. ⬜ 全部14个工作流验证通过（总计0个谬误）
 
 #### 4.4 Lint检查（零错误零警告）
+
 ```bash
 # 检查源代码
 npx eslint src/engines/adapters/BuiltinAdapter.ts --ext .ts
@@ -1011,20 +1076,24 @@ npx eslint src/engines/adapters/BuiltinAdapter.ts --ext .ts
 # 检查测试代码
 npx eslint src/engines/adapters/__tests__/ --ext .ts
 ```
+
 26. ⬜ 源代码零lint错误
 27. ⬜ 测试代码零lint错误
 28. ⬜ 零 `any` 类型使用（源代码+测试代码）
 
 #### 4.5 性能基准测试
+
 ```bash
 # 性能测试包含在单元测试中
 ```
+
 29. ⬜ arrayAppend(1000元素) < 10ms
 30. ⬜ arrayCount(10000元素) < 1ms
 31. ⬜ arrayFilter(10000元素) < 100ms
 32. ⬜ 大数组限制（100,000元素）正确触发
 
 #### 4.6 生产验证（实际功能测试）
+
 33. ⬜ 手动测试：添加扫描任务功能正常
 34. ⬜ 手动测试：移除扫描任务功能正常
 35. ⬜ 手动测试：获取扫描队列功能正常
@@ -1033,6 +1102,7 @@ npx eslint src/engines/adapters/__tests__/ --ext .ts
 **预计时间**：2小时
 
 **验收标准**（全部必须满足）：
+
 - ✅ 全部36项验证通过，无例外
 - ✅ 零测试失败
 - ✅ 零lint错误/警告
@@ -1072,14 +1142,17 @@ npx eslint src/engines/adapters/__tests__/ --ext .ts
 ## 风险评估
 
 **高风险**：
+
 - Breaking Change：需要修改Builder已实现的代码
 - 缓解：完整的回归测试 + 渐进式部署
 
 **中风险**：
+
 - 架构理解偏差：Builder可能已经基于旧理解实现
 - 缓解：明确文档化数据扁平化策略，与Builder沟通
 
 **低风险**：
+
 - 性能问题（纯函数创建新数组）
 - 缓解：性能测试 + 数组大小限制
 
@@ -1090,6 +1163,7 @@ npx eslint src/engines/adapters/__tests__/ --ext .ts
 在TaiyiService中添加参数转换逻辑。
 
 **拒绝理由**：
+
 - 违反Service-Engine架构的"薄层服务"原则
 - TaiyiService承担了太多责任
 - 隐藏了真实的接口契约
@@ -1099,6 +1173,7 @@ npx eslint src/engines/adapters/__tests__/ --ext .ts
 在transform中添加向后兼容逻辑。
 
 **拒绝理由**：
+
 - 技术债务 - 支持两套命名约定
 - 违反"好品味"原则 - 增加了特殊情况
 - Linus会说："这是在掩盖真正的问题"
@@ -1121,6 +1196,7 @@ npx eslint src/engines/adapters/__tests__/ --ext .ts
 **关键发现**：Builder的包装对象违反架构分层。
 
 **正确纠正**：
+
 - ✅ Adapter应直接返回原始数据（不包装）
 - ✅ TaiyiEngine统一处理包装（包装为`{success, result: T}`）
 - ✅ TaiyiService自动unwrap（提取result字段）
@@ -1131,6 +1207,7 @@ npx eslint src/engines/adapters/__tests__/ --ext .ts
 **关键发现**：通过代码溯源验证架构正确性。
 
 **VariableResolver实际实现** (`src/engines/tianshu/orchestration/VariableResolver.ts` Line 396-417)：
+
 ```typescript
 private getStepOutputs(context: ExecutionContext): Record<string, any> {
     const outputs: Record<string, any> = {};
@@ -1147,12 +1224,14 @@ private getStepOutputs(context: ExecutionContext): Record<string, any> {
 ```
 
 **架构真相**：
+
 ```
 Adapter返回T → TaiyiEngine包装{success, result: T} → TaiyiService unwrap T
 → Orchestrator存储output=T → Resolver暴露steps.stepId=T
 ```
 
 **YAML访问模式**（validate-workflows.ts Line 61-77已验证）：
+
 1. ✅ **允许直接访问**：`{{steps.stepId}}` → 获得完整输出
 2. ✅ **允许字段访问**：`{{steps.stepId.field}}` → 访问输出的特定字段
 3. ✅ **禁止显式.output**：`{{steps.stepId.output}}` → 这是内部实现细节
@@ -1194,6 +1273,7 @@ Adapter返回T → TaiyiEngine包装{success, result: T} → TaiyiService unwrap
 **文件**：`src/engines/adapters/BuiltinAdapter.ts`
 
 新增三个方法，完全遵循数据扁平化策略：
+
 ```typescript
 async arrayAppend(params): Promise<unknown[]>  // 直接返回数组
 async arrayCount(params): Promise<number>      // 直接返回数字
@@ -1201,6 +1281,7 @@ async arrayFilter(params): Promise<unknown[]>  // 直接返回数组
 ```
 
 **关键特性**：
+
 - ✅ 纯函数实现（不修改原数组）
 - ✅ 完整错误处理（参数验证、类型检查）
 - ✅ 性能限制（最大100,000元素）
@@ -1210,26 +1291,30 @@ async arrayFilter(params): Promise<unknown[]>  // 直接返回数组
 #### 2. 工作流更新
 
 **修改的文件**：
+
 - `src/engines/tianshu/workflows/scan/add_scan_action.zouwu` - 4处修改
 - `src/engines/tianshu/workflows/scan/remove_scan_action.zouwu` - 4处修改
 - `src/engines/tianshu/workflows/scan/get_scanning_queue.zouwu` - 1处修改
 
 **关键变更**：
+
 - ✅ 替换`action: "transform"`为专用方法（`arrayAppend`/`arrayCount`/`arrayFilter`）
 - ✅ **移除所有`.result`访问**（共9处）
 - ✅ 添加数据扁平化策略注释
 
 **修改前**：
+
 ```yaml
 action: "transform"
 input:
-    type: "append"  # 接口不匹配！
+    type: "append" # 接口不匹配！
 
 # 访问时需要嵌套
-queue: "{{steps.append_action.result}}"  # 双层嵌套！
+queue: "{{steps.append_action.result}}" # 双层嵌套！
 ```
 
 **修改后**：
+
 ```yaml
 action: "arrayAppend"
 input:
@@ -1237,12 +1322,13 @@ input:
     item: "{{inputs.action}}"
 
 # 直接访问，数据扁平化
-queue: "{{steps.append_action}}"  # 简洁！
+queue: "{{steps.append_action}}" # 简洁！
 ```
 
 #### 3. 测试覆盖
 
 **单元测试**：`src/engines/adapters/__tests__/BuiltinAdapter-array-operations.spec.ts`
+
 - ✅ 29个测试全部通过
 - ✅ 覆盖所有操作符（eq, ne, gt, lt, gte, lte）
 - ✅ 边界条件测试（null/undefined/空数组）
@@ -1251,12 +1337,14 @@ queue: "{{steps.append_action}}"  # 简洁！
 - ✅ 大小限制测试（100,000元素）
 
 **工作流集成测试**：`src/engines/tianshu/__tests__/workflows-scan-integration.spec.ts`
+
 - ✅ 9个测试全部通过
 - ✅ 三个工作流场景验证
 - ✅ 数据扁平化策略验证
 - ✅ 纯函数行为验证
 
 **测试结果**：
+
 ```
 Test Suites: 2 passed, 2 total
 Tests:       38 passed, 38 total
@@ -1265,12 +1353,14 @@ Tests:       38 passed, 38 total
 #### 4. 代码质量
 
 **Lint检查**：
+
 ```bash
 ✅ 源代码：0 errors, 14 warnings (遗留any，非本次新增)
 ✅ 测试代码：0 errors, 0 warnings
 ```
 
 **类型安全**：
+
 - ✅ 所有新增代码零`any`类型
 - ✅ 测试代码中的`any`都有`eslint-disable`注释
 - ✅ 完整TypeScript类型定义
@@ -1280,16 +1370,18 @@ Tests:       38 passed, 38 total
 #### 初始错误（Builder）
 
 ❌ **错误方案**：返回包装对象
+
 ```typescript
 // ❌ 错误实现
 return {
     success: true,
     result: array,
-    operation: "arrayAppend"
+    operation: "arrayAppend",
 };
 ```
 
 **问题**：
+
 - 导致双层嵌套（Adapter包装 + Engine包装）
 - YAML需要`.result.result`访问
 - 违反数据扁平化策略
@@ -1297,12 +1389,14 @@ return {
 #### Architect纠正
 
 ✅ **正确方案**：直接返回原始数据
+
 ```typescript
 // ✅ 正确实现
-return array;  // 直接返回，无包装
+return array; // 直接返回，无包装
 ```
 
 **优势**：
+
 - 单层包装（仅Engine包装）
 - YAML直接访问`{{steps.stepId}}`
 - 符合架构分层原则
@@ -1312,6 +1406,7 @@ return array;  // 直接返回，无包装
 关键反馈："aboutt he result I think we do a lot of work to reduce it why you b ring uit back"
 
 **洞察**：
+
 - 识别出双层嵌套问题
 - 理解数据扁平化策略的重要性
 - 快速修正架构错误
@@ -1319,11 +1414,13 @@ return array;  // 直接返回，无包装
 ### 性能验证
 
 **性能测试结果**：
+
 - ✅ `arrayAppend(1000元素)` < 10ms
 - ✅ `arrayFilter(1000元素)` < 10ms
 - ✅ 超过100,000元素正确抛出错误
 
 **实际性能**：
+
 - arrayAppend: ~1ms (1000元素)
 - arrayFilter: ~2ms (1000元素)
 - arrayCount: ~0ms (即时返回)
@@ -1349,6 +1446,7 @@ return array;  // 直接返回，无包装
 ### 问题发现
 
 运行时错误：
+
 ```
 🌌 步骤「persist_queue」输出数据不符合output_schema:
   - 字段「persist_queue」类型错误，期望: object，实际: undefined
@@ -1359,6 +1457,7 @@ return array;  // 直接返回，无包装
 ### 根本原因分析
 
 **问题链**：
+
 1. `QianliyanEngine.persistQueue()` 返回 `Promise<void>`（副作用操作）
 2. StepExecutor 把返回值放到 `stepExecutionResult.data` → `undefined`
 3. WorkflowOrchestrator 执行 `result.output = stepExecutionResult.data` → `undefined`
@@ -1371,6 +1470,7 @@ return array;  // 直接返回，无包装
 **用户质问**："why need to change adapter"
 
 **正确答案**：
+
 1. **`persistQueue` 的本质**：这是一个**副作用操作**（写文件到磁盘），不是数据转换
 2. **返回 `void` 是正确的设计**：成功完成即表示持久化成功，失败则抛出异常
 3. **工作流不使用输出**：查看 `add_scan_action.zouwu` 和 `remove_scan_action.zouwu`，后续步骤都**不使用** `persist_queue` 的输出
@@ -1381,6 +1481,7 @@ return array;  // 直接返回，无包装
 **删除工作流中的 `output_schema`**，而不是修改Adapter返回值。
 
 **修复前**（错误）：
+
 ```yaml
 - id: "persist_queue"
   action: "callEngine"
@@ -1388,14 +1489,15 @@ return array;  // 直接返回，无包装
       engineName: "qianliyan"
       methodName: "persistQueue"
       params: ["{{steps.append_action}}"]
-  output_schema:  # ❌ 错误：副作用操作不应声明schema
+  output_schema: # ❌ 错误：副作用操作不应声明schema
       type: object
       properties:
-          success: {type: boolean}
-          timestamp: {type: number}
+          success: { type: boolean }
+          timestamp: { type: number }
 ```
 
 **修复后**（正确）：
+
 ```yaml
 - id: "persist_queue"
   action: "callEngine"
@@ -1410,17 +1512,20 @@ return array;  // 直接返回，无包装
 ### 架构原则
 
 **副作用操作的特征**：
+
 1. 返回 `Promise<void>`
 2. 主要目的是产生副作用（写文件、发送事件、更新状态等）
 3. 后续步骤不依赖其输出
 4. 成功/失败通过异常机制处理
 
 **output_schema的适用场景**：
+
 1. 方法返回有意义的业务数据
 2. 后续步骤需要使用该数据
 3. 需要验证数据结构的正确性
 
 **经验教训**：
+
 - ❌ 错误：为了消除警告而修改正确的Adapter实现
 - ✅ 正确：删除不必要的schema声明，保持Adapter简洁
 - 🎯 原则：让副作用操作返回`void`，让数据转换操作返回数据
@@ -1428,10 +1533,13 @@ return array;  // 直接返回，无包装
 ### 受影响的文件
 
 **修复的工作流**：
+
 1. `src/engines/tianshu/workflows/scan/add_scan_action.zouwu` - 删除 `persist_queue` 的 `output_schema`
 2. `src/engines/tianshu/workflows/scan/remove_scan_action.zouwu` - 删除 `persist_queue` 的 `output_schema`
 
 **Adapter保持不变**：
+
 - `QianliyanEngine.persistQueue()` - 继续返回 `Promise<void>`
 - `QianliyanAdapter.persistQueue()` - 继续返回 `Promise<void>`
+
 5. **数据流优先**：Linus的"good taste"体现在数据结构设计上

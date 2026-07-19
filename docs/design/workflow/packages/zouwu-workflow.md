@@ -18,10 +18,10 @@ npm install @zouwu-wf/workflow
 ## 使用示例
 
 ```typescript
-import { validateWorkflow } from '@zouwu-wf/workflow';
+import { validateWorkflow } from "@zouwu-wf/workflow";
 
 const result = validateWorkflow(workflowData);
 if (result.valid) {
-    console.log('工作流验证通过');
+    console.log("工作流验证通过");
 }
 ```

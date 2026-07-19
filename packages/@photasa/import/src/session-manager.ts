@@ -12,7 +12,9 @@ const IMPORT_ID_RANDOM_LEN = 9;
  * 生成与 ImportService 相同格式的 importId。
  */
 export function generateImportSessionId(): string {
-    return `import_${Date.now()}_${Math.random().toString(36).slice(2, 2 + IMPORT_ID_RANDOM_LEN)}`;
+    return `import_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 2 + IMPORT_ID_RANDOM_LEN)}`;
 }
 
 /**
@@ -71,7 +73,10 @@ export class ImportSessionManager {
     /**
      * 应用 worker 进度事件；返回更新后的 session，若无则 `undefined`。
      */
-    applyProgressFromWorker(taskId: string, data: ProgressEvent["data"]): ImportSession | undefined {
+    applyProgressFromWorker(
+        taskId: string,
+        data: ProgressEvent["data"],
+    ): ImportSession | undefined {
         const session = this.sessions.get(taskId);
         if (!session) {
             return undefined;
@@ -156,7 +161,10 @@ export class ImportSessionManager {
         this.progressCallbacks.delete(importId);
     }
 
-    scheduleSessionRemoval(importId: string, delayMs: number = IMPORT_SESSION_CLEANUP_DELAY_MS): void {
+    scheduleSessionRemoval(
+        importId: string,
+        delayMs: number = IMPORT_SESSION_CLEANUP_DELAY_MS,
+    ): void {
         const prev = this.removalTimers.get(importId);
         if (prev !== undefined) {
             clearTimeout(prev);

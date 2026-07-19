@@ -1,10 +1,10 @@
 ---
 name: rfc-workflow
 description: >-
-  Creates and updates RFC documents under docs/rfc; keeps root ROADMAP.md as the single
-  source of truth for RFC progress; optionally syncs TASK_TRACKING.md. Conventions live
-  in ROADMAP.md + TASK_TRACKING.md (index/tables); naming in ROADMAP RFC section. Use when the user mentions RFC, ROADMAP, roadmap, TASK_TRACKING,
-  docs/rfc, implementing or authoring a feature spec, or updating the RFC index table.
+    Creates and updates RFC documents under docs/rfc; keeps root ROADMAP.md as the single
+    source of truth for RFC progress; optionally syncs TASK_TRACKING.md. Conventions live
+    in ROADMAP.md + TASK_TRACKING.md (index/tables); naming in ROADMAP RFC section. Use when the user mentions RFC, ROADMAP, roadmap, TASK_TRACKING,
+    docs/rfc, implementing or authoring a feature spec, or updating the RFC index table.
 ---
 
 # RFC 工作流（Skill）
@@ -17,14 +17,14 @@ description: >-
 
 若 **`AGENTS.md`** 另有规定，以其为准。
 
-| 路径 | 用途 |
-|------|------|
-| 根目录 **`ROADMAP.md`** | **权威进度表**：各 RFC 状态（✅/🔨/⏳）、阶段、备注。**回答「进度」优先认此文件。** |
-| `ROADMAP.md`（RFC 流程） | **命名与流程**；**进度与全表**另见根目录 `TASK_TRACKING.md`。 |
-| `docs/rfc/NNN-kebab-title.md` | 单个 RFC 规格正文；**依赖**写在各篇元数据与 Dependencies 节。 |
+| 路径                                    | 用途                                                                                      |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 根目录 **`ROADMAP.md`**                 | **权威进度表**：各 RFC 状态（✅/🔨/⏳）、阶段、备注。**回答「进度」优先认此文件。**       |
+| `ROADMAP.md`（RFC 流程）                | **命名与流程**；**进度与全表**另见根目录 `TASK_TRACKING.md`。                             |
+| `docs/rfc/NNN-kebab-title.md`           | 单个 RFC 规格正文；**依赖**写在各篇元数据与 Dependencies 节。                             |
 | `docs/rfc/TAURI_RUST_REWRITE_POLICY.md` | **Photasa 黄金规则**：Rust 重写，TS/Electron 仅作行为规格；所有 `*tauri*.md` RFC 必须链接 |
-| `docs/rfc/assets/` | RFC 配图、流程图等资源 |
-| 根目录 `TASK_TRACKING.md`（可选） | **当前冲刺**：正在实现的 RFC 的检查清单与日期备注 |
+| `docs/rfc/assets/`                      | RFC 配图、流程图等资源                                                                    |
+| 根目录 `TASK_TRACKING.md`（可选）       | **当前冲刺**：正在实现的 RFC 的检查清单与日期备注                                         |
 
 ## 何时更新什么
 

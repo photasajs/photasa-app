@@ -4,14 +4,14 @@
 
 ## 目录
 
-| 文件 | 用途 |
-|------|------|
-| `minimal-no-exif.jpg` | 无 EXIF，验证 `dateSource: file_modified` |
-| `nikon-exif-sample.jpg` | Nikon 标准 EXIF + lens/ISO/曝光 |
-| `canon-exif-sample.jpg` | Canon 标准 EXIF |
-| `sony-exif-sample.jpg` | Sony 标准 EXIF |
-| `sample-video.mp4` | 短 H.264，验证 codec/duration/resolution |
-| `corrupt-video.mp4` | 损坏容器，验证 Rust 回退（仅 type/format） |
+| 文件                    | 用途                                       |
+| ----------------------- | ------------------------------------------ |
+| `minimal-no-exif.jpg`   | 无 EXIF，验证 `dateSource: file_modified`  |
+| `nikon-exif-sample.jpg` | Nikon 标准 EXIF + lens/ISO/曝光            |
+| `canon-exif-sample.jpg` | Canon 标准 EXIF                            |
+| `sony-exif-sample.jpg`  | Sony 标准 EXIF                             |
+| `sample-video.mp4`      | 短 H.264，验证 codec/duration/resolution   |
+| `corrupt-video.mp4`     | 损坏容器，验证 Rust 回退（仅 type/format） |
 
 ## 从 Electron 生成 golden（一次性）
 

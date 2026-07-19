@@ -19,7 +19,6 @@ pub mod menu;
 #[cfg(test)]
 pub mod metadata_golden;
 pub mod path;
-pub mod photasa_config;
 pub mod platform;
 pub mod scan_runner;
 pub mod shell;

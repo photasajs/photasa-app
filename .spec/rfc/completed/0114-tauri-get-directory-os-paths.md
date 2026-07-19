@@ -1,12 +1,12 @@
 # RFC 0114 — `get_directory` OS Path Mapping + `scan_directories` FileGroup[] + WASM Cleanup
 
-| Field | Value |
-|-------|-------|
-| **RFC** | 0114 |
-| **Status** | ✅ Implemented |
-| **Completed** | 2026-06-08 |
-| **Author** | AI |
-| **Target** | apps/photasa (Tauri/Rust) |
+| Field         | Value                     |
+| ------------- | ------------------------- |
+| **RFC**       | 0114                      |
+| **Status**    | ✅ Implemented            |
+| **Completed** | 2026-06-08                |
+| **Author**    | AI                        |
+| **Target**    | apps/photasa (Tauri/Rust) |
 
 ---
 
@@ -70,13 +70,15 @@ pub fn resolve_known_directory_path(name: &str) -> Option<String> {
 ### 2 — `import_file_groups.rs` (`detect_enhanced_file_groups`)
 
 Pure-function port of `@photasa/import` `detectEnhancedFileGroups`:
+
 - Same `ENHANCED_RELATED_EXTENSIONS` map (RAW+JPEG, video+sidecar, etc.)
 - Same file priority sort (video > RAW > HEIC > JPEG > sidecar)
-- Same special patterns (GoPro GOPR→GP0x, DJI_, Sony DSC, Canon IMG_)
+- Same special patterns (GoPro GOPR→GP0x, DJI*, Sony DSC, Canon IMG*)
 
 ### 3 — `import_scan_directories.rs` (`scan_directories` command)
 
 Replaces stub `stubs::scan_directories`:
+
 - Walks each source path with `walkdir`
 - Applies `filters` (fileTypes, sizeRange, includeSubfolders, hidden/photasa exclusions)
 - Calls `extract_metadata_request` per file (matching Electron `createFileInfo`)
@@ -87,20 +89,20 @@ Replaces stub `stubs::scan_directories`:
 
 ## Files Changed
 
-| File | Action |
-|------|--------|
-| `apps/photasa/src-tauri/src/commands/directory.rs` | Add `resolve_known_directory_path`, update `get_directory`, add tests |
-| `apps/photasa/src-tauri/src/commands/import_file_groups.rs` | **New** — `detect_enhanced_file_groups`, `are_files_related` |
-| `apps/photasa/src-tauri/src/commands/import_scan_directories.rs` | **New** — `scan_directories` Tauri command |
-| `apps/photasa/src-tauri/src/commands/stubs.rs` | Remove old `scan_directories` stub |
-| `apps/photasa/src-tauri/src/commands/mod.rs` | Add `import_file_groups`, `import_scan_directories`; remove `wasm` |
-| `apps/photasa/src-tauri/src/main.rs` | Use `import_scan_directories::scan_directories`; remove wasm commands/state |
-| `apps/photasa/src-tauri/src/commands/wasm.rs` | **Deleted** |
-| `apps/photasa/src-tauri/src/utils/wasm.rs` | **Deleted** |
-| `apps/photasa/src-tauri/src/utils/mod.rs` | Remove `pub mod wasm` |
-| `apps/photasa/src-tauri/Cargo.toml` | Add `dirs = "5"` |
-| `apps/photasa/src/api/import.adapter.ts` | `scanDirectories` passes `filters` |
-| `apps/photasa/src/api/legacy-api.ts` | `scanDirectories` passes `filters` |
+| File                                                             | Action                                                                      |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `apps/photasa/src-tauri/src/commands/directory.rs`               | Add `resolve_known_directory_path`, update `get_directory`, add tests       |
+| `apps/photasa/src-tauri/src/commands/import_file_groups.rs`      | **New** — `detect_enhanced_file_groups`, `are_files_related`                |
+| `apps/photasa/src-tauri/src/commands/import_scan_directories.rs` | **New** — `scan_directories` Tauri command                                  |
+| `apps/photasa/src-tauri/src/commands/stubs.rs`                   | Remove old `scan_directories` stub                                          |
+| `apps/photasa/src-tauri/src/commands/mod.rs`                     | Add `import_file_groups`, `import_scan_directories`; remove `wasm`          |
+| `apps/photasa/src-tauri/src/main.rs`                             | Use `import_scan_directories::scan_directories`; remove wasm commands/state |
+| `apps/photasa/src-tauri/src/commands/wasm.rs`                    | **Deleted**                                                                 |
+| `apps/photasa/src-tauri/src/utils/wasm.rs`                       | **Deleted**                                                                 |
+| `apps/photasa/src-tauri/src/utils/mod.rs`                        | Remove `pub mod wasm`                                                       |
+| `apps/photasa/src-tauri/Cargo.toml`                              | Add `dirs = "5"`                                                            |
+| `apps/photasa/src/api/import.adapter.ts`                         | `scanDirectories` passes `filters`                                          |
+| `apps/photasa/src/api/legacy-api.ts`                             | `scanDirectories` passes `filters`                                          |
 
 ---
 

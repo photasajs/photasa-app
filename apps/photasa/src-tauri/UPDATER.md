@@ -55,10 +55,10 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="your-password"
 
 ## 环境变量摘要
 
-| 变量 | 用途 |
-|------|------|
-| `TAURI_SIGNING_PRIVATE_KEY` | 构建时签名更新包（路径或 PEM 内容） |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | 私钥密码（可选） |
+| 变量                                 | 用途                                |
+| ------------------------------------ | ----------------------------------- |
+| `TAURI_SIGNING_PRIVATE_KEY`          | 构建时签名更新包（路径或 PEM 内容） |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | 私钥密码（可选）                    |
 
 ## 验证
 

@@ -258,3 +258,19 @@ qizou_routes:
                       paths:
                           - "{{qizou.content.path}}"
               description: "扫描完成后，下旨魏征更新树"
+
+    # ✅ 用户手动请求重新扫描（百姓启奏）
+    request_rescan:
+        - when:
+              from: "百姓"
+              type: "request"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "add_scan_task"
+                  content:
+                      path: "{{qizou.content.path}}"
+                      action: "rescan"
+                      source: "user"
+                  priority: "normal"
+              description: "百姓请求重新扫描文件夹，下旨尉迟恭添加重新扫描任务"

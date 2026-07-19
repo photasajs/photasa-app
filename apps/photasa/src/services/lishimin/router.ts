@@ -209,6 +209,9 @@ export class QiZouRouter {
 
                 // 构建圣旨
                 const resolvedContent = this.resolveContent(route.then.shengzhi.content, qizou);
+                // ⚠️ JSON round-trip sanitizes Vue Proxy chains / non-cloneable DOM artifacts
+                // so that MessageChannel.postMessage (WebKit structured-clone) succeeds.
+                const sanitizedQizou = JSON.parse(JSON.stringify(qizou));
                 const shengzhi: Shengzhi = {
                     id: this.generateShengzhiId(),
                     command: route.then.shengzhi.command,
@@ -217,7 +220,7 @@ export class QiZouRouter {
                     from: "李世民",
                     timestamp: Date.now(),
                     metadata: {
-                        originalQizou: qizou,
+                        originalQizou: sanitizedQizou,
                         reason: route.then.description || `响应启奏: ${matter}`,
                     },
                 };

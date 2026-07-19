@@ -9,3 +9,4 @@ tokio = { workspace = true }
 image = "0.25"
 libheif-rs = { version = "2.7.0", features = ["image", "embedded-libheif"] }
 ffmpeg-next = { version = "8.1", default-features = false, features = ["build", "build-zlib", "format", "codec", "software-scaling"] }
+photasa-media = { workspace = true }

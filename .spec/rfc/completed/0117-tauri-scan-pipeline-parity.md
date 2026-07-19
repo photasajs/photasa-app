@@ -5,21 +5,21 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - The Electron `@photasa/scan` pipeline is the **behavioral contract**, not a library to import or translate line-by-line.
 - "Parity" = same skip/process decisions, same events, same on-disk JSON, same user-visible outcome — **not** the same code.
 - This RFC fixes a **regression**: the current `scan_runner.rs` collapsed the multi-stage Electron pipeline into a single flat synchronous loop, dropping the strategy decision, per-file gating, resume sub-path, and inlining blocking thumbnail generation.
 - **All tables below are transcribed from the TS source** (`scan-photos.ts`, `scan-helpers.ts`, `strategy/scan-strategy.ts`, `cache/incremental-cache.ts`, `cache/folder-cache-manager.ts`, `worker/directory-scan-progress.ts`, `scan-cleanup.ts`, `utils/path-utils.ts`, `@photasa/common/utils.ts`). They are the literal spec for the Rust port; nothing is summarized away.
 
-| Field                   | Value                                                                                                                                                                                                                                                 |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Status**              | ✅ Implemented (2026-06-06) — BUG① subdir SKIP-only + `current` gated; BUG② SKIP progress `(N,N)`; 52 `cargo test scan_` pass                                                                                                                         |
-| **Created**             | 2026-06-09                                                                                                                                                                                                                                            |
-| **Last updated**        | 2026-06-06                                                                                                                                                                                                                                            |
-| **Area**                | Tauri / Scan                                                                                                                                                                                                                                          |
-| **Depends on**          | [0105](0105-tauri-scan-incremental-cache.md), [0068](0068-tauri-scan-service-migration.md), [0111](0111-tauri-scan-notify-status-bridge.md), [0116](0116-tauri-photasa-config-thumbnail-parity.md), [0069](0069-tauri-thumbnail-service-migration.md) |
-| **Supersedes scope of** | the `scan_runner.rs` processing-loop portion of [0105](0105-tauri-scan-incremental-cache.md) (cache file format unchanged)                                                                                                                            |
+| Field                   | Value                                                                                                                                                                                                                                                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**              | ✅ Implemented (2026-06-06) — BUG① subdir SKIP-only + `current` gated; BUG② SKIP progress `(N,N)`; 52 `cargo test scan_` pass at time of writing (**count stale since 0132 crate split — 2026-07-18 re-verify: 27 `scan_`-matched tests pass workspace-wide, `scan_strategy.rs` now `crates/photasa-scan/src/strategy.rs`**) |
+| **Created**             | 2026-06-09                                                                                                                                                                                                                                                                                                                   |
+| **Last updated**        | 2026-06-06                                                                                                                                                                                                                                                                                                                   |
+| **Area**                | Tauri / Scan                                                                                                                                                                                                                                                                                                                 |
+| **Depends on**          | [0105](../0105-tauri-scan-incremental-cache.md), [0068](../0068-tauri-scan-service-migration.md), [0111](../0111-tauri-scan-notify-status-bridge.md), [0116](./0116-tauri-photasa-config-thumbnail-parity.md), [0069](../0069-tauri-thumbnail-service-migration.md)                                                          |
+| **Supersedes scope of** | the `scan_runner.rs` processing-loop portion of [0105](0105-tauri-scan-incremental-cache.md) (cache file format unchanged)                                                                                                                                                                                                   |
 
 ---
 
@@ -522,7 +522,7 @@ Land in independently-testable steps, **not** one big-bang rewrite:
       cardinality) — pure decision/mapping logic is now tested (`should_recurse_subdirs`,
       `cached_photo_to_request`); the `app.emit` side-effects still lack an integration test
       (dirs never classified as media) — drop it or comment as intentional `[]` parity
-- [x] `cargo test scan_` green (**52 passed**); `cargo build -p photasa`
+- [x] `cargo test scan_` green (**52 passed** at 2026-06-06; re-verified 2026-07-18 post-0132 crate split: **27 passed** workspace-wide, `scan_strategy.rs` moved to `crates/photasa-scan/src/strategy.rs`); `cargo build -p photasa`
 - [x] Register in `ROADMAP.md` + `TASK_TRACKING.md`
 
 ---
@@ -609,7 +609,7 @@ Manual / golden parity:
   in TS (`decideScanStrategy` never returns INCREMENTAL); porting it would _add_ behavior
   Electron does not run.
 - **Import `@photasa/scan` into Tauri** — rejected by
-  [ROADMAP.md](../../ROADMAP.md); no Node in backend.
+  [ROADMAP.md](../../../ROADMAP.md); no Node in backend.
 - **Line-by-line TS→Rust translation** — rejected by policy; the tables are the contract,
   the Rust implementation is independent (pure functions + tests).
 - **Cloning the 50ms sleep / per-file disk re-read / fresh-vs-resume order flip** — rejected:

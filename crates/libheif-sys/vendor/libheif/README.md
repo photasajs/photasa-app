@@ -19,29 +19,29 @@ Alternatively, the libheif codecs can also be built as separate plugins that can
 
 libheif has support for:
 
-* HEIC, AVIF, VVC, AVC, JPEG-in-HEIF, JPEG2000, uncompressed (ISO/IEC 23001-17:2024) codecs
-* alpha channels, depth maps, thumbnails, auxiliary images
-* multiple images in a file
-* HEIF image sequences and MP4 video, including alpha channels
-* tiled images with decoding individual tiles and encoding tiled images by adding tiles one after another
-* HDR images, correct color transform according to embedded color profiles
-* image transformations (crop, mirror, rotate), overlay images
-* plugin interface to add alternative codecs
-* reading EXIF and XMP metadata
-* region annotations and mask images
-* streaming of images and video by requesting data from the network through a data-reader interface
+- HEIC, AVIF, VVC, AVC, JPEG-in-HEIF, JPEG2000, uncompressed (ISO/IEC 23001-17:2024) codecs
+- alpha channels, depth maps, thumbnails, auxiliary images
+- multiple images in a file
+- HEIF image sequences and MP4 video, including alpha channels
+- tiled images with decoding individual tiles and encoding tiled images by adding tiles one after another
+- HDR images, correct color transform according to embedded color profiles
+- image transformations (crop, mirror, rotate), overlay images
+- plugin interface to add alternative codecs
+- reading EXIF and XMP metadata
+- region annotations and mask images
+- streaming of images and video by requesting data from the network through a data-reader interface
 
 Supported codecs:
-| Format       |  Decoders           |  Encoders                    |
+| Format | Decoders | Encoders |
 |:-------------|:-------------------:|:----------------------------:|
-| HEIC         | libde265, ffmpeg    | x265, kvazaar                |
-| AVIF         | libaom, dav1d       | libaom, rav1e, svt-av1       |
-| VVC          | vvdec               | vvenc, uvg266                |
-| AVC          | openh264, ffmpeg    | x264                         |
-| JPEG         | libjpeg(-turbo)     | libjpeg(-turbo)              |
-| JPEG2000     | OpenJPEG            | OpenJPEG                     |
-| HTJ2K        | OpenJPEG            | OpenJPH                      |
-| uncompressed | built-in            | built-in                     |
+| HEIC | libde265, ffmpeg | x265, kvazaar |
+| AVIF | libaom, dav1d | libaom, rav1e, svt-av1 |
+| VVC | vvdec | vvenc, uvg266 |
+| AVC | openh264, ffmpeg | x264 |
+| JPEG | libjpeg(-turbo) | libjpeg(-turbo) |
+| JPEG2000 | OpenJPEG | OpenJPEG |
+| HTJ2K | OpenJPEG | OpenJPH |
+| uncompressed | built-in | built-in |
 
 ## Programming API
 
@@ -133,7 +133,6 @@ There is also a C++ API which is a header-only wrapper to the C API.
 Hence, you can use the C++ API and still be binary compatible.
 Code using the C++ API is much less verbose than using the C API directly.
 
-
 ## Compiling
 
 This library uses the CMake build system (the earlier autotools build files have been removed in v1.16.0).
@@ -146,21 +145,21 @@ An alternative to x265 is kvazaar (BSD).
 
 The basic build steps are as follows (--preset argument needs CMake >= 3.21):
 
-````sh
+```sh
 mkdir build
 cd build
 cmake --preset=release ..
 make
-````
+```
 
 There are CMake presets to cover the most frequent use cases.
 
-* `release`: the preferred preset which compiles all codecs as separate plugins.
+- `release`: the preferred preset which compiles all codecs as separate plugins.
   If you do not want to distribute some of these plugins (e.g. HEIC), you can omit packaging these.
-* `release-noplugins`: this is a smaller, self-contained build of libheif without using the plugin system.
+- `release-noplugins`: this is a smaller, self-contained build of libheif without using the plugin system.
   A single library is built with support for HEIC and AVIF.
-* `testing`: for building and executing the unit tests. Also the internal library symbols are exposed. Do not use for distribution.
-* `fuzzing`: all codecs like in release build, but configured into a self-contained library with enabled fuzzers. The library should not distributed.
+- `testing`: for building and executing the unit tests. Also the internal library symbols are exposed. Do not use for distribution.
+- `fuzzing`: all codecs like in release build, but configured into a self-contained library with enabled fuzzers. The library should not distributed.
 
 You can optionally adapt these standard configurations to your needs.
 This can be done, for example, by calling `ccmake .` from within the `build` directory.
@@ -173,28 +172,28 @@ with a hard dependency, or as a separate plugin file that is loaded dynamically.
 
 For each codec, there are two configuration variables:
 
-* `WITH_{codec}`: enables the codec
-* `WITH_{codec}_PLUGIN`: when enabled, the codec is compiled as a separate plugin.
+- `WITH_{codec}`: enables the codec
+- `WITH_{codec}_PLUGIN`: when enabled, the codec is compiled as a separate plugin.
 
 In order to use dynamic plugins, also make sure that `ENABLE_PLUGIN_LOADING` is enabled.
 The placeholder `{codec}` can have these values: `LIBDE265`, `X265`, `AOM_DECODER`, `AOM_ENCODER`, `SvtEnc`, `DAV1D`, `OpenH264`, `X264`, `FFMPEG_DECODER`, `JPEG_DECODER`, `JPEG_ENCODER`, `KVAZAAR`, `OpenJPEG_DECODER`, `OpenJPEG_ENCODER`, `OPENJPH_ENCODER`, `VVDEC`, `VVENC`, `UVG266`, `WEBCODECS`.
 
 Further options are:
 
-* `WITH_UNCOMPRESSED_CODEC`: enable support for uncompressed images according to ISO/IEC 23001-17:2024. This is *experimental*
-   and not available as a dynamic plugin. When enabled, it adds a dependency to `zlib`, and optionally will use `brotli`.
-* `WITH_HEADER_COMPRESSION`: enables support for compressed metadata. When enabled, it adds a dependency to `zlib`.
-   Note that header compression is not widely supported yet.
-* `WITH_LIBSHARPYUV`: enables high-quality YCbCr/RGB color space conversion algorithms (requires `libsharpyuv`,
-   e.g. from the `third-party` directory).
-* `ENABLE_EXPERIMENTAL_FEATURES`: enables functions that are currently in development and for which the API is not stable yet.
-   When this is enabled, a header `heif_experimental.h` will be installed that contains this unstable API.
-   Distributions that rely on a stable API should not enable this.
-* `ENABLE_MULTITHREADING_SUPPORT`: can be used to disable any multithreading support, e.g. for embedded platforms.
-* `ENABLE_PARALLEL_TILE_DECODING`: when enabled, libheif will decode tiled images in parallel to speed up compilation.
-* `PLUGIN_DIRECTORY`: the directory where libheif will search for dynamic plugins when the environment
+- `WITH_UNCOMPRESSED_CODEC`: enable support for uncompressed images according to ISO/IEC 23001-17:2024. This is _experimental_
+  and not available as a dynamic plugin. When enabled, it adds a dependency to `zlib`, and optionally will use `brotli`.
+- `WITH_HEADER_COMPRESSION`: enables support for compressed metadata. When enabled, it adds a dependency to `zlib`.
+  Note that header compression is not widely supported yet.
+- `WITH_LIBSHARPYUV`: enables high-quality YCbCr/RGB color space conversion algorithms (requires `libsharpyuv`,
+  e.g. from the `third-party` directory).
+- `ENABLE_EXPERIMENTAL_FEATURES`: enables functions that are currently in development and for which the API is not stable yet.
+  When this is enabled, a header `heif_experimental.h` will be installed that contains this unstable API.
+  Distributions that rely on a stable API should not enable this.
+- `ENABLE_MULTITHREADING_SUPPORT`: can be used to disable any multithreading support, e.g. for embedded platforms.
+- `ENABLE_PARALLEL_TILE_DECODING`: when enabled, libheif will decode tiled images in parallel to speed up compilation.
+- `PLUGIN_DIRECTORY`: the directory where libheif will search for dynamic plugins when the environment
   variable `LIBHEIF_PLUGIN_PATH` is not set.
-* `WITH_REDUCED_VISIBILITY`: only export those symbols into the library that are public API.
+- `WITH_REDUCED_VISIBILITY`: only export those symbols into the library that are public API.
   Has to be turned off for running some tests.
 
 ### macOS
@@ -231,7 +230,7 @@ The libheif port in vcpkg is kept up to date by Microsoft team members and commu
 
 ### Adding libaom encoder/decoder for AVIF
 
-* Run the `aom.cmd` script in the `third-party` directory to download libaom and
+- Run the `aom.cmd` script in the `third-party` directory to download libaom and
   compile it.
 
 When running `cmake` or `configure`, make sure that the environment variable
@@ -239,14 +238,14 @@ When running `cmake` or `configure`, make sure that the environment variable
 
 ### Adding rav1e encoder for AVIF
 
-* Install `cargo`.
-* Install `cargo-c` by executing
+- Install `cargo`.
+- Install `cargo-c` by executing
 
 ```sh
 cargo install --force cargo-c
 ```
 
-* Run the `rav1e.cmd` script in the `third-party` directory to download rav1e
+- Run the `rav1e.cmd` script in the `third-party` directory to download rav1e
   and compile it.
 
 When running `cmake`, make sure that the environment variable
@@ -254,8 +253,8 @@ When running `cmake`, make sure that the environment variable
 
 ### Adding dav1d decoder for AVIF
 
-* Install [`meson`](https://mesonbuild.com/).
-* Run the `dav1d.cmd` script in the `third-party` directory to download dav1d
+- Install [`meson`](https://mesonbuild.com/).
+- Run the `dav1d.cmd` script in the `third-party` directory to download dav1d
   and compile it.
 
 When running `cmake`, make sure that the environment variable
@@ -266,7 +265,7 @@ When running `cmake`, make sure that the environment variable
 You can either use the SVT-AV1 encoder libraries installed in the system or use a self-compiled current version.
 If you want to compile SVT-AV1 yourself,
 
-* Run the `svt.cmd` script in the `third-party` directory to download SVT-AV1
+- Run the `svt.cmd` script in the `third-party` directory to download SVT-AV1
   and compile it.
 
 You have to enable SVT-AV1 with CMake.
@@ -288,10 +287,10 @@ You can also add plugin directories programmatically.
 
 ### Codec specific notes
 
-* The FFMPEG decoding plugin can make use of h265 hardware decoders. However, it currently (v1.17.0, ffmpeg v4.4.2) does not work
+- The FFMPEG decoding plugin can make use of h265 hardware decoders. However, it currently (v1.17.0, ffmpeg v4.4.2) does not work
   correctly with all streams. Thus, libheif still prefers the libde265 decoder if it is available.
 
-* The "webcodecs" HEVC decoder can only be used in emscripten builds since it uses the web-browser's API. For the same reason, it is not available as a plugin.
+- The "webcodecs" HEVC decoder can only be used in emscripten builds since it uses the web-browser's API. For the same reason, it is not available as a plugin.
 
 ## Usage
 
@@ -310,15 +309,15 @@ A current benchmark of the AVIF encoders (as of 14 Oct 2022) can be found on the
 
 ## Language bindings
 
-* .NET Platform (C#, F#, and other languages): [libheif-sharp](https://github.com/0xC0000054/libheif-sharp)
-* C++: part of libheif
-* Go: [libheif-go](https://github.com/strukturag/libheif-go), the wrapper distributed with libheif is deprecated
-* JavaScript: by compilation with emscripten (see below)
-* NodeJS module: [libheif-js](https://www.npmjs.com/package/libheif-js)
-* Python: [pyheif](https://pypi.org/project/pyheif/), [pillow_heif](https://pypi.org/project/pillow-heif/)
-* Rust: [libheif-sys](https://github.com/Cykooz/libheif-sys)
-* Swift: [libheif-Xcode](https://swiftpackageregistry.com/SDWebImage/libheif-Xcode)
-* JavaFX: [LibHeifFx](https://github.com/lanthale/LibHeifFX)
+- .NET Platform (C#, F#, and other languages): [libheif-sharp](https://github.com/0xC0000054/libheif-sharp)
+- C++: part of libheif
+- Go: [libheif-go](https://github.com/strukturag/libheif-go), the wrapper distributed with libheif is deprecated
+- JavaScript: by compilation with emscripten (see below)
+- NodeJS module: [libheif-js](https://www.npmjs.com/package/libheif-js)
+- Python: [pyheif](https://pypi.org/project/pyheif/), [pillow_heif](https://pypi.org/project/pillow-heif/)
+- Rust: [libheif-sys](https://github.com/Cykooz/libheif-sys)
+- Swift: [libheif-Xcode](https://swiftpackageregistry.com/SDWebImage/libheif-Xcode)
+- JavaFX: [LibHeifFx](https://github.com/lanthale/LibHeifFX)
 
 Languages that can directly interface with C libraries (e.g., Swift, C#) should work out of the box.
 
@@ -327,11 +326,13 @@ Languages that can directly interface with C libraries (e.g., Swift, C#) should 
 libheif can also be compiled to JavaScript using
 [emscripten](http://kripken.github.io/emscripten-site/).
 It can be built like this (in the libheif directory):
-````
+
+```
 mkdir buildjs
 cd buildjs
 USE_WASM=0 ../build-emscripten.sh ..
-````
+```
+
 Set `USE_WASM=1` to build with WASM output.
 See the `build-emscripten.sh` script for further options.
 
@@ -378,20 +379,20 @@ to update the gdk-pixbuf loader database.
 
 ## Software using libheif
 
-* [GIMP](https://www.gimp.org/)
-* [Krita](https://krita.org)
-* [ImageMagick](https://imagemagick.org/)
-* [GraphicsMagick](http://www.graphicsmagick.org/)
-* [darktable](https://www.darktable.org)
-* [digiKam 7.0.0](https://www.digikam.org/)
-* [libvips](https://github.com/libvips/libvips)
-* [kImageFormats](https://api.kde.org/frameworks/kimageformats/html/index.html)
-* [libGD](https://libgd.github.io/)
-* [Kodi HEIF image decoder plugin](https://kodi.wiki/view/Add-on:HEIF_image_decoder)
-* [bimg](https://github.com/h2non/bimg)
-* [GDAL](https://gdal.org/drivers/raster/heif.html)
-* [OpenImageIO](https://sites.google.com/site/openimageio/)
-* [XnView](https://www.xnview.com)
+- [GIMP](https://www.gimp.org/)
+- [Krita](https://krita.org)
+- [ImageMagick](https://imagemagick.org/)
+- [GraphicsMagick](http://www.graphicsmagick.org/)
+- [darktable](https://www.darktable.org)
+- [digiKam 7.0.0](https://www.digikam.org/)
+- [libvips](https://github.com/libvips/libvips)
+- [kImageFormats](https://api.kde.org/frameworks/kimageformats/html/index.html)
+- [libGD](https://libgd.github.io/)
+- [Kodi HEIF image decoder plugin](https://kodi.wiki/view/Add-on:HEIF_image_decoder)
+- [bimg](https://github.com/h2non/bimg)
+- [GDAL](https://gdal.org/drivers/raster/heif.html)
+- [OpenImageIO](https://sites.google.com/site/openimageio/)
+- [XnView](https://www.xnview.com)
 
 ## Packaging status
 
@@ -404,11 +405,11 @@ You can [sponsor](https://github.com/sponsors/farindk) the development using the
 
 A big thank you goes to these major sponsors for supporting the development of libheif:
 
-* AOMedia
-* OGC (Open Geospatial Consortium)
-* Pinterest
-* Shopify <img src="logos/sponsors/shopify.svg" alt="shopify-logo" height="20"/>
-* StrukturAG
+- AOMedia
+- OGC (Open Geospatial Consortium)
+- Pinterest
+- Shopify <img src="logos/sponsors/shopify.svg" alt="shopify-logo" height="20"/>
+- StrukturAG
 
 ## License
 

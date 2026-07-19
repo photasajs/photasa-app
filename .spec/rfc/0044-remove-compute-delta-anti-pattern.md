@@ -8,11 +8,11 @@
 - **类型**: 架构重构
 - **优先级**: 中
 - **依赖RFC**:
-  - RFC 0038: 偏好设置工作流集成
-  - RFC 0042: 扫描文件夹迁移
+    - RFC 0038: 偏好设置工作流集成
+    - RFC 0042: 扫描文件夹迁移
 - **相关文件**:
-  - `src/renderer/src/services/fangxuanling/fangxuanling.ts`
-  - `src/engines/tianshu/workflows/preference/update_preferences.zouwu`
+    - `src/renderer/src/services/fangxuanling/fangxuanling.ts`
+    - `src/engines/tianshu/workflows/preference/update_preferences.zouwu`
 
 ---
 

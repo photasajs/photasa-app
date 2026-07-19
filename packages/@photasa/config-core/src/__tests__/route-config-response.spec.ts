@@ -4,7 +4,11 @@ import type { ConfigResponse } from "@photasa/common";
 
 describe("routeConfigResponse", () => {
     it("heartbeat", () => {
-        const data = { action: "heartbeat" as const, path: "", config: {} as ConfigResponse["config"] };
+        const data = {
+            action: "heartbeat" as const,
+            path: "",
+            config: {} as ConfigResponse["config"],
+        };
         expect(routeConfigResponse(data as ConfigResponse)).toEqual({ kind: "heartbeat" });
     });
 
@@ -15,7 +19,10 @@ describe("routeConfigResponse", () => {
             path: "/p",
             config: {} as ConfigResponse["config"],
         };
-        expect(routeConfigResponse(data as ConfigResponse)).toEqual({ kind: "query-result", payload: data });
+        expect(routeConfigResponse(data as ConfigResponse)).toEqual({
+            kind: "query-result",
+            payload: data,
+        });
     });
 
     it("add-finished on complete", () => {
@@ -90,6 +97,9 @@ describe("routeConfigResponse", () => {
             path: "",
             config: {} as ConfigResponse["config"],
         };
-        expect(routeConfigResponse(data as ConfigResponse)).toEqual({ kind: "unknown", payload: data });
+        expect(routeConfigResponse(data as ConfigResponse)).toEqual({
+            kind: "unknown",
+            payload: data,
+        });
     });
 });

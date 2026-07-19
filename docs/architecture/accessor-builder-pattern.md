@@ -25,17 +25,25 @@
 ### 问题陈述
 
 传统的FangXuanLing服务存在问题：
+
 ```typescript
 // ❌ 旧模式：每个Store都需要在FangXuanLing中添加方法
 export class FangXuanLingService {
-    getScanningQueue() { /* ... */ }
-    addToScanningQueue() { /* ... */ }
-    removeFromScanningQueue() { /* ... */ }
+    getScanningQueue() {
+        /* ... */
+    }
+    addToScanningQueue() {
+        /* ... */
+    }
+    removeFromScanningQueue() {
+        /* ... */
+    }
     // ... 重复模式，376行代码
 }
 ```
 
 **问题**：
+
 - ❌ 不可扩展：每个新Store需要修改FangXuanLing核心代码
 - ❌ 代码冗长：每个Store需要10+个方法
 - ❌ 违反开闭原则：对修改开放，对扩展关闭
@@ -43,15 +51,21 @@ export class FangXuanLingService {
 ### 解决方案
 
 **Accessor + Builder双模式架构**：
+
 ```typescript
 // ✅ 新模式：通过Accessor和Builder解耦
 export class FangXuanLingService {
-    get scanning() { return this._scanningAccessor; }  // Accessor
-    get preference() { return createPreferenceService(); }  // Builder
+    get scanning() {
+        return this._scanningAccessor;
+    } // Accessor
+    get preference() {
+        return createPreferenceService();
+    } // Builder
 }
 ```
 
 **优势**：
+
 - ✅ 高度可扩展：新Store无需修改FangXuanLing
 - ✅ 代码简洁：从376行减少到90行
 - ✅ 符合开闭原则：对扩展开放，对修改关闭
@@ -64,34 +78,37 @@ export class FangXuanLingService {
 ### 1. "好品味"原则 (Linus Torvalds)
 
 **消除特殊情况**：
+
 ```typescript
 // ❌ 坏品味：每个Store一套方法
-getScanningQueue()
-getPreferenceData()
-getNotificationList()
+getScanningQueue();
+getPreferenceData();
+getNotificationList();
 // ... 无穷无尽
 
 // ✅ 好品味：统一的访问模式
-fangXuanLing.scanning.queue
-fangXuanLing.preference.currentTheme
-fangXuanLing.notification.notifications
+fangXuanLing.scanning.queue;
+fangXuanLing.preference.currentTheme;
+fangXuanLing.notification.notifications;
 ```
 
 ### 2. 只读访问原则
 
 **外部服务只能读取，不能修改**：
+
 ```typescript
 // ✅ 正确：只读访问
 const queue = fangXuanLing.scanning.queue;
 const size = fangXuanLing.scanning.queueSize;
 
 // ❌ 错误：尝试修改（TypeScript阻止）
-fangXuanLing.scanning.addToQueue(action);  // 编译错误！
+fangXuanLing.scanning.addToQueue(action); // 编译错误！
 ```
 
 ### 3. Zouzhe修改原则
 
 **所有修改必须通过Zouzhe系统**：
+
 ```typescript
 // ✅ 正确：通过Zouzhe修改
 const zouzhe: Zouzhe = {
@@ -118,6 +135,7 @@ await fangXuanLing.processZouzhe(zouzhe);
 ### 适用场景
 
 **用于运行时状态Store**（如scanningQueue、progressState）：
+
 - 频繁变化的状态
 - 不需要复杂业务逻辑
 - 纯数据访问
@@ -149,6 +167,7 @@ export interface I[StoreName]Accessor {
 ```
 
 **关键点**：
+
 - ✅ 所有属性都是`readonly`
 - ✅ 没有修改方法（add/remove/update/delete等）
 - ✅ 查询方法不修改状态
@@ -187,6 +206,7 @@ export class [StoreName]Accessor implements I[StoreName]Accessor {
 ```
 
 **关键点**：
+
 - ✅ 防御性编程：检查Store是否初始化
 - ✅ 返回副本：防止外部修改
 - ✅ 无副作用：不修改Store状态
@@ -284,6 +304,7 @@ describe("FangXuanLing [Store描述]访问器", () => {
 ```
 
 **测试覆盖要求**：
+
 - ✅ 所有只读属性
 - ✅ 所有查询方法
 - ✅ Store未初始化场景
@@ -298,6 +319,7 @@ describe("FangXuanLing [Store描述]访问器", () => {
 ### 适用场景
 
 **用于配置类Store**（如preference、settings）：
+
 - 相对稳定的配置
 - 需要复杂业务逻辑
 - 需要计算属性和方法
@@ -361,6 +383,7 @@ export function create[ServiceName]Service(): I[ServiceName] {
 ```
 
 **关键点**：
+
 - ✅ 使用getter实现只读
 - ✅ 返回接口类型，不暴露Store
 - ✅ 可以包含计算逻辑
@@ -389,6 +412,7 @@ export class FangXuanLingService {
 ```
 
 **关键点**：
+
 - ✅ 懒加载：首次访问时创建
 - ✅ 单例：缓存实例
 - ✅ 类型安全：返回接口类型
@@ -400,11 +424,13 @@ export class FangXuanLingService {
 ### 何时使用Accessor模式
 
 **运行时状态Store**：
+
 - ✅ `ScanningStore` - 扫描队列（频繁变化）
 - ✅ `ProgressStore` - 进度状态（实时更新）
 - ✅ `CacheStore` - 缓存状态（动态变化）
 
 **特征**：
+
 - 数据频繁变化
 - 纯数据访问
 - 不需要复杂逻辑
@@ -412,11 +438,13 @@ export class FangXuanLingService {
 ### 何时使用Builder模式
 
 **配置类Store**：
+
 - ✅ `PreferenceStore` - 用户偏好（相对稳定）
 - ✅ `SettingsStore` - 应用设置（配置）
 - ✅ `ThemeStore` - 主题配置（静态）
 
 **特征**：
+
 - 数据相对稳定
 - 需要计算属性
 - 包含业务逻辑
@@ -635,7 +663,7 @@ export const useNotificationQueueStore = defineStore("notificationQueue", {
             this.queue.push(notification);
         },
         removeFromQueue(id: string) {
-            this.queue = this.queue.filter(n => n.id !== id);
+            this.queue = this.queue.filter((n) => n.id !== id);
         },
     },
     persist: false,
@@ -682,7 +710,10 @@ export class NotificationQueueAccessor implements INotificationQueueAccessor {
 
 ```typescript
 // src/renderer/src/services/fangxuanling/fangxuanling.ts
-import { NotificationQueueAccessor, type INotificationQueueAccessor } from "./accessors/notification-queue-accessor";
+import {
+    NotificationQueueAccessor,
+    type INotificationQueueAccessor,
+} from "./accessors/notification-queue-accessor";
 
 export class FangXuanLingService {
     private _notificationQueueAccessor: INotificationQueueAccessor;
@@ -704,7 +735,7 @@ export class FangXuanLingService {
 // store-registry.ts
 const STORE_REGISTRY: StoreRegistry = {
     // ... existing stores
-    notificationQueue: useNotificationQueueStore,  // ✅ 新Store
+    notificationQueue: useNotificationQueueStore, // ✅ 新Store
 };
 ```
 
@@ -737,10 +768,10 @@ await fangXuanLing.processZouzhe({
 
 ### 快速参考
 
-| 模式 | 适用场景 | 实施文件 | 关键特性 |
-|------|---------|---------|---------|
+| 模式         | 适用场景   | 实施文件                       | 关键特性               |
+| ------------ | ---------- | ------------------------------ | ---------------------- |
 | **Accessor** | 运行时状态 | `accessors/[name]-accessor.ts` | 只读、返回副本、防御式 |
-| **Builder** | 配置类 | `service-builders.ts` | 懒加载、计算属性、单例 |
+| **Builder**  | 配置类     | `service-builders.ts`          | 懒加载、计算属性、单例 |
 
 ### 下一步
 

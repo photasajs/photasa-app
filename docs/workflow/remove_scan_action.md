@@ -1,23 +1,28 @@
 # 📜 工作流: 移除扫描任务
+
 > 接收路径，恢复队列，过滤移除，持久化，返回完整队列
 
 ## 📑 基本信息
+
 - **标识 (ID)**: `remove_scan_action`
 - **版本 (Version)**: `1.0.0`
 
 ## 📥 输入参数 (Inputs)
-| 参数名 | 类型 | 必填 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `path` | `string` | ✅ | 要移除的扫描任务路径 |
+
+| 参数名 | 类型     | 必填 | 描述                 |
+| :----- | :------- | :--- | :------------------- |
+| `path` | `string` | ✅   | 要移除的扫描任务路径 |
 
 ## 📤 输出规范 (Outputs)
+
 工作流执行完成后返回如下结构：
+
 ```json
 {
-  "success": true,
-  "queue": "{{steps.filter_action}}",
-  "queueSize": "{{steps.calculate_size}}",
-  "persisted": true
+    "success": true,
+    "queue": "{{steps.filter_action}}",
+    "queueSize": "{{steps.calculate_size}}",
+    "persisted": true
 }
 ```
 

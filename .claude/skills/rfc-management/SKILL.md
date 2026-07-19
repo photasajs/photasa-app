@@ -1,11 +1,11 @@
 ---
 name: rfc-management
 description: >-
-  RFC lifecycle operations: treat root ROADMAP.md as the single source of truth for
-  RFC progress in ROADMAP.md + TASK_TRACKING.md; specs under docs/rfc and docs/rfc/completed; naming in ROADMAP RFC section; optional
-  TASK_TRACKING.md for sprint checklists. Use when the user asks to manage RFCs, start or
-  finish an RFC, sync roadmap or task tracking, implement according to an RFC, or wants the
-  agent to drive work from RFC documents.
+    RFC lifecycle operations: treat root ROADMAP.md as the single source of truth for
+    RFC progress in ROADMAP.md + TASK_TRACKING.md; specs under docs/rfc and docs/rfc/completed; naming in ROADMAP RFC section; optional
+    TASK_TRACKING.md for sprint checklists. Use when the user asks to manage RFCs, start or
+    finish an RFC, sync roadmap or task tracking, implement according to an RFC, or wants the
+    agent to drive work from RFC documents.
 ---
 
 # RFC 管理（代理操作手册）
@@ -14,10 +14,10 @@ description: >-
 
 ## 与 `rfc-workflow` 的分工
 
-| 技能 | 侧重 |
-|------|------|
-| **rfc-workflow** | 规范：各文件职责、何时更新 ROADMAP / TASK_TRACKING、新建 RFC 步骤 |
-| **rfc-management**（本文件） | 执行：用户意图 → 动作序列 → 自检 |
+| 技能                         | 侧重                                                              |
+| ---------------------------- | ----------------------------------------------------------------- |
+| **rfc-workflow**             | 规范：各文件职责、何时更新 ROADMAP / TASK_TRACKING、新建 RFC 步骤 |
+| **rfc-management**（本文件） | 执行：用户意图 → 动作序列 → 自检                                  |
 
 代理遇到 RFC 相关任务时：**先读本文件，再按需打开 `rfc-workflow`**。
 
@@ -49,12 +49,12 @@ description: >-
 
 ### C. 「推进 / 完工 / 取消」
 
-| 事件 | `ROADMAP.md` | `TASK_TRACKING.md` | RFC 正文 |
-|------|--------------|---------------------|----------|
-| 推进 | 保持 🔨 | `[x]` + 日期进度 | 可选 **最后更新** |
-| 主要交付完成 | **🔨 → ✅** | **✅** + 验证命令 | **最后更新** |
-| 取消 / 延期 | **❌ 或 Deferred** | ⏸️ 或 ✅（注明） | 元数据或 Alternatives |
-| 范围变大 / 拆 RFC | **先**更 `ROADMAP.md` | 调整清单 | **Proposed Solution**、篇内依赖 |
+| 事件              | `ROADMAP.md`          | `TASK_TRACKING.md` | RFC 正文                        |
+| ----------------- | --------------------- | ------------------ | ------------------------------- |
+| 推进              | 保持 🔨               | `[x]` + 日期进度   | 可选 **最后更新**               |
+| 主要交付完成      | **🔨 → ✅**           | **✅** + 验证命令  | **最后更新**                    |
+| 取消 / 延期       | **❌ 或 Deferred**    | ⏸️ 或 ✅（注明）   | 元数据或 Alternatives           |
+| 范围变大 / 拆 RFC | **先**更 `ROADMAP.md` | 调整清单           | **Proposed Solution**、篇内依赖 |
 
 ### D. 「只改文档」
 

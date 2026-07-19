@@ -19,11 +19,11 @@ npm run build:linux  # Linux
 
 ### 从根目录 / 包内启动 Tauri 应用 (Photasa)
 
-| 场景 | 根目录 (repo root) | 包内 (apps/photasa) |
-|------|--------------------|----------------------|
-| 启动 Tauri 开发 | `pnpm dev` / `pnpm run tauri:dev` / `pnpm run dev:photasa` | `pnpm run dev` |
-| 仅浏览器调试前端 (无 Tauri 窗口) | `pnpm run vite:dev:photasa` | `pnpm run vite:dev` |
-| Tauri 生产构建 | `pnpm run build:photasa` / `pnpm run tauri:build` | `pnpm run build` |
+| 场景                             | 根目录 (repo root)                                         | 包内 (apps/photasa) |
+| -------------------------------- | ---------------------------------------------------------- | ------------------- |
+| 启动 Tauri 开发                  | `pnpm dev` / `pnpm run tauri:dev` / `pnpm run dev:photasa` | `pnpm run dev`      |
+| 仅浏览器调试前端 (无 Tauri 窗口) | `pnpm run vite:dev:photasa`                                | `pnpm run vite:dev` |
+| Tauri 生产构建                   | `pnpm run build:photasa` / `pnpm run tauri:build`          | `pnpm run build`    |
 
 ## Documentation
 

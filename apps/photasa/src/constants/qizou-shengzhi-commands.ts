@@ -38,6 +38,7 @@ export const QizouMatters = {
     // ✅ RFC 0058: Shell 操作事件（不需要 store，直接通过 qizou 处理）
     OPEN_EXTERNAL: "open_external", // 打开外部链接
     OPEN_IN_FINDER: "open_in_finder", // 在 Finder 中显示文件
+    REQUEST_RESCAN: "request_rescan", // ✅ 百姓请求重新扫描
 } as const;
 
 /**

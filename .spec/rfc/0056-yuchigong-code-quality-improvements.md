@@ -9,7 +9,7 @@
 - **类型**: 代码质量改进
 - **目标版本**: v2.0.0
 - **依赖RFC**:
-  - RFC 0048: 扫描编排业务逻辑迁移（已完成）✅
+    - RFC 0048: 扫描编排业务逻辑迁移（已完成）✅
 
 ---
 
@@ -18,12 +18,14 @@
 **代码质量改进**：修复 `yuchigong.ts` 中 `initializeScanningQueue()` 方法存在的代码质量问题，符合 Linus "Good Taste" 编程哲学。
 
 **核心问题**：
+
 1. **代码重复** - 三处完全相同的代码块（违反 DRY 原则）
 2. **魔法数字** - `3600000` 直接使用，意图不清晰
 3. **嵌套过深** - 可以优化的条件分支逻辑
 4. **错误处理不足** - `.catch()` 只记录错误，没有恢复机制
 
 **改进目标**：
+
 - ✅ 提取公共函数，消除代码重复
 - ✅ 提取常量，提高代码可读性
 - ✅ 简化条件分支逻辑
@@ -63,6 +65,7 @@ this.scanQueue
 ```
 
 **问题分析**：
+
 - ❌ **违反DRY原则** - 相同逻辑重复3次，维护成本高
 - ❌ **容易出错** - 修改一处需要同步修改三处，容易遗漏
 - ❌ **坏品味** - Linus "好品味"原则要求消除特殊情况，而不是增加条件判断
@@ -71,7 +74,7 @@ this.scanQueue
 
 ```typescript
 // Line 972: 魔法数字
-Math.round(taskAge / 3600000)  // 3600000 是什么？意图不清晰
+Math.round(taskAge / 3600000); // 3600000 是什么？意图不清晰
 ```
 
 **问题3：嵌套过深**
@@ -89,60 +92,72 @@ Math.round(taskAge / 3600000)  // 3600000 是什么？意图不清晰
 ### 方案1：提取公共函数（推荐）
 
 **技术原理**：
+
 - 提取 `enqueueTask()` 私有方法，统一处理任务入队逻辑
 - 三个分支共享同一执行路径，消除重复代码
 - 统一错误处理，提高可维护性
 
 **实施步骤**：
+
 1. 创建 `private async enqueueTask(task: ScanQueueItem, context: string): Promise<void>` 方法
 2. 将三个重复代码块替换为 `await this.enqueueTask(task, context)`
 3. 统一错误处理逻辑
 
 **风险分析**：
+
 - **低风险** - 纯重构，不改变业务逻辑
 - **测试覆盖** - 现有测试应该继续通过
 
 ### 方案2：提取常量
 
 **技术原理**：
+
 - 提取 `HOURS_IN_MILLISECONDS` 常量，提高代码可读性
 - 使用语义化常量名称，意图清晰
 
 **实施步骤**：
+
 1. 在文件顶部定义常量：`const HOURS_IN_MILLISECONDS = 60 * 60 * 1000;`
 2. 替换 `3600000` 为 `HOURS_IN_MILLISECONDS`
 
 **风险分析**：
+
 - **无风险** - 纯常量提取，不改变逻辑
 
 ### 方案3：简化条件分支
 
 **技术原理**：
+
 - 使用策略模式或状态机模式简化条件分支
 - 将不同状态的处理逻辑封装为独立方法
 
 **实施步骤**：
+
 1. 创建 `private async handleProcessingTask(task: ScanQueueItem): Promise<void>`
 2. 创建 `private async handleFailedTask(task: ScanQueueItem, now: number): Promise<void>`
 3. 创建 `private async handlePendingTask(task: ScanQueueItem): Promise<void>`
 4. 在 `initializeScanningQueue()` 中调用对应方法
 
 **风险分析**：
+
 - **中风险** - 需要仔细验证状态转换逻辑
 - **测试覆盖** - 需要确保所有测试用例通过
 
 ### 方案4：增强错误恢复机制
 
 **技术原理**：
+
 - 当队列添加失败时，将任务重新标记为 pending 状态
 - 记录错误到任务状态，支持后续重试
 
 **实施步骤**：
+
 1. 在 `enqueueTask()` 中捕获错误
 2. 如果队列添加失败，更新任务状态为 failed
 3. 记录错误信息到任务状态
 
 **风险分析**：
+
 - **中风险** - 可能影响现有错误处理逻辑
 - **测试覆盖** - 需要添加错误恢复测试用例
 
@@ -153,44 +168,53 @@ Math.round(taskAge / 3600000)  // 3600000 是什么？意图不清晰
 ### Phase 1: 提取公共函数和常量（0.5 天）✅ 已完成
 
 **1.1 提取 `enqueueTask()` 方法**
+
 - [x] 创建 `private enqueueTask(task: ScanQueueItem, context: string): void` 方法
 - [x] 将三个重复代码块替换为 `this.enqueueTask(task, context)`
 - [x] 统一错误处理逻辑
 
 **1.2 提取常量**
+
 - [x] 定义 `HOURS_IN_MILLISECONDS` 常量
 - [x] 替换 `3600000` 为 `HOURS_IN_MILLISECONDS`
 
 **1.3 测试验证**
+
 - [x] 运行所有现有测试，确保通过（42个测试全部通过）
 - [x] 验证代码重复已消除
 
 ### Phase 2: 简化条件分支（可选，0.5 天）✅ 已完成
 
 **2.1 提取状态处理方法**
+
 - [x] 创建 `handleProcessingTask()` 方法
 - [x] 创建 `handleFailedTask()` 方法
 - [x] 创建 `handlePendingTask()` 方法
 
 **2.2 重构 `initializeScanningQueue()`**
+
 - [x] 使用提取的方法简化条件分支
 - [x] 验证逻辑正确性
 
 **2.3 测试验证**
+
 - [x] 运行所有现有测试，确保通过（42个测试全部通过）
 - [x] 验证嵌套层级已减少
 
 ### Phase 3: 增强错误恢复机制（可选，0.5 天）
 
 **3.1 实现错误恢复逻辑**
+
 - [ ] 在 `enqueueTask()` 中捕获错误
 - [ ] 实现任务状态回滚机制
 
 **3.2 添加测试用例**
+
 - [ ] 测试队列添加失败场景
 - [ ] 测试错误恢复机制
 
 **3.3 测试验证**
+
 - [ ] 运行所有测试，确保通过
 - [ ] 验证错误恢复机制正常工作
 
@@ -254,23 +278,27 @@ Math.round(taskAge / 3600000)  // 3600000 是什么？意图不清晰
 ### 已完成改进（2025-01-23）
 
 **Phase 1: 提取公共函数和常量** ✅
+
 - ✅ 提取 `enqueueTask()` 私有方法，统一处理任务入队逻辑
 - ✅ 提取 `HOURS_IN_MILLISECONDS` 常量，消除魔法数字 `3600000`
 - ✅ 三处重复代码块合并为一个方法调用
 
 **Phase 2: 简化条件分支** ✅
+
 - ✅ 提取 `handleProcessingTask()` 方法处理孤儿任务恢复
 - ✅ 提取 `handleFailedTask()` 方法处理失败任务重试或删除
 - ✅ 提取 `handlePendingTask()` 方法处理pending任务恢复
 - ✅ `initializeScanningQueue()` 方法从60+行简化到10行
 
 **代码质量提升**:
+
 - ✅ 消除代码重复：3处重复代码块 → 1个公共方法
 - ✅ 消除魔法数字：`3600000` → `HOURS_IN_MILLISECONDS`
 - ✅ 简化条件分支：嵌套if-else → 策略方法调用
 - ✅ 提高可维护性：修改一处即可，无需同步修改多处
 
 **测试验证**:
+
 - ✅ 所有42个现有测试全部通过
 - ✅ 重构不改变业务逻辑
 - ✅ 代码可读性显著提升
@@ -279,13 +307,13 @@ Math.round(taskAge / 3600000)  // 3600000 是什么？意图不清晰
 
 - **新增方法**: 4个（`enqueueTask`, `handleProcessingTask`, `handleFailedTask`, `handlePendingTask`）
 - **新增纯函数模块**: `task-helpers.ts`（113行）
-  - 7个纯函数：`calculateTaskAge`, `calculateHoursAgo`, `shouldDeleteFailedTaskByTTL`, `shouldRetryFailedTask`, `getFailedTaskAction`, `calculateNextRetryCount`, `getTaskStatusDisplayText`
-  - 2个常量：`HOURS_IN_MILLISECONDS`, `FAILED_TASK_TTL`
+    - 7个纯函数：`calculateTaskAge`, `calculateHoursAgo`, `shouldDeleteFailedTaskByTTL`, `shouldRetryFailedTask`, `getFailedTaskAction`, `calculateNextRetryCount`, `getTaskStatusDisplayText`
+    - 2个常量：`HOURS_IN_MILLISECONDS`, `FAILED_TASK_TTL`
 - **新增测试文件**: `task-helpers.test.ts`（21个测试用例，全部通过）
 - **代码行数**:
-  - `yuchigong.ts`: 1089行（从 ~1100行减少，核心逻辑更清晰）
-  - `initializeScanningQueue()` 从 ~130行减少到 ~10行（核心逻辑）
-  - `handleFailedTask()` 从 ~25行减少到 ~32行（使用纯函数，逻辑更清晰）
+    - `yuchigong.ts`: 1089行（从 ~1100行减少，核心逻辑更清晰）
+    - `initializeScanningQueue()` 从 ~130行减少到 ~10行（核心逻辑）
+    - `handleFailedTask()` 从 ~25行减少到 ~32行（使用纯函数，逻辑更清晰）
 - **代码重复**: 从3处重复代码块减少到0处
 - **测试覆盖率**: 新增21个纯函数测试用例，提高业务逻辑测试覆盖率
 
@@ -294,19 +322,18 @@ Math.round(taskAge / 3600000)  // 3600000 是什么？意图不清晰
 ## 更新历史
 
 - **2025-01-23**: RFC 创建
-  - 记录 RFC 0048 中发现的代码质量问题
-  - 制定改进计划和验收标准
+    - 记录 RFC 0048 中发现的代码质量问题
+    - 制定改进计划和验收标准
 
 - **2025-01-23**: Phase 1 & 2 完成 ✅
-  - 提取 `enqueueTask()` 方法，消除代码重复
-  - 提取 `HOURS_IN_MILLISECONDS` 常量，消除魔法数字
-  - 提取状态处理方法，简化条件分支
-  - 所有测试通过，代码质量显著提升
+    - 提取 `enqueueTask()` 方法，消除代码重复
+    - 提取 `HOURS_IN_MILLISECONDS` 常量，消除魔法数字
+    - 提取状态处理方法，简化条件分支
+    - 所有测试通过，代码质量显著提升
 
 - **2025-01-23**: 纯函数提取完成 ✅
-  - 创建 `task-helpers.ts` 纯函数模块
-  - 提取7个纯函数：`calculateTaskAge`, `calculateHoursAgo`, `shouldDeleteFailedTaskByTTL`, `shouldRetryFailedTask`, `getFailedTaskAction`, `calculateNextRetryCount`, `getTaskStatusDisplayText`
-  - 创建完整的测试文件 `task-helpers.test.ts`（21个测试用例，全部通过）
-  - `handleFailedTask` 方法使用纯函数进行决策，提高可测试性和可维护性
-  - 代码文件大小进一步减少，测试覆盖率提升
-
+    - 创建 `task-helpers.ts` 纯函数模块
+    - 提取7个纯函数：`calculateTaskAge`, `calculateHoursAgo`, `shouldDeleteFailedTaskByTTL`, `shouldRetryFailedTask`, `getFailedTaskAction`, `calculateNextRetryCount`, `getTaskStatusDisplayText`
+    - 创建完整的测试文件 `task-helpers.test.ts`（21个测试用例，全部通过）
+    - `handleFailedTask` 方法使用纯函数进行决策，提高可测试性和可维护性
+    - 代码文件大小进一步减少，测试覆盖率提升

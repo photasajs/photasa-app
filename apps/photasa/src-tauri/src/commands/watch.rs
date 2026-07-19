@@ -197,10 +197,9 @@ mod tests {
 
     #[test]
     fn start_config_accepts_camel_case_thumbnail_size() {
-        let cfg: StartFileWatchConfig = serde_json::from_str(
-            r#"{"paths":["/a"],"recursive":true,"thumbnailSize":200}"#,
-        )
-        .unwrap();
+        let cfg: StartFileWatchConfig =
+            serde_json::from_str(r#"{"paths":["/a"],"recursive":true,"thumbnailSize":200}"#)
+                .unwrap();
         assert_eq!(cfg.thumbnail_size, Some(200));
         assert_eq!(cfg.paths, vec!["/a"]);
     }

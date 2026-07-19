@@ -2,17 +2,8 @@
 
 use std::path::Path;
 
-/// 与 Electron `is-image` / `preload` 侧扩展名策略一致
-pub const IMAGE_EXTS: &[&str] = &[
-    "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "tif", "heic", "heif", "avif", "raw",
-    "cr2", "cr3", "nef", "arw", "svg", "ico", "psd",
-];
-
-/// 与 preload 视频扩展名策略一致
-pub const VIDEO_EXTS: &[&str] = &[
-    "mp4", "mov", "avi", "mkv", "m4v", "3gp", "wmv", "flv", "webm", "mpg", "mpeg", "m2v", "mts",
-    "m2ts", "ts", "vob", "rmvb", "rm",
-];
+pub use photasa_media::{IMAGE_EXTS, VIDEO_EXTS};
+use photasa_media::{is_image_file, is_video_file};
 
 pub fn ext_lower(path: &Path) -> String {
     path.extension()
@@ -23,12 +14,9 @@ pub fn ext_lower(path: &Path) -> String {
 
 /// 是否为本流程处理的图片或视频（互斥：通常只有一个为 true）
 pub fn classify_media(path: &Path) -> Option<(bool, bool)> {
-    let ext = ext_lower(path);
-    if ext.is_empty() {
-        return None;
-    }
-    let is_img = IMAGE_EXTS.contains(&ext.as_str());
-    let is_vid = VIDEO_EXTS.contains(&ext.as_str());
+    let path_str = path.to_string_lossy();
+    let is_img = is_image_file(&path_str);
+    let is_vid = is_video_file(&path_str);
     if is_img || is_vid {
         Some((is_img, is_vid))
     } else {

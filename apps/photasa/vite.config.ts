@@ -19,7 +19,7 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
-            "@photasa/common": path.resolve(__dirname, "../../packages/common/dist/index.mjs"),
+            "@photasa/common": path.resolve(__dirname, "../../packages/@photasa/common/dist/index.mjs"),
             "@renderer": path.resolve(__dirname, "./src"),
         },
     },

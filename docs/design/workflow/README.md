@@ -34,20 +34,20 @@
 ## 🚀 快速开始
 
 ```typescript
-import { ZouWuWorkflow, ZouWuValidator } from '@zouwu-wf/workflow';
+import { ZouWuWorkflow, ZouWuValidator } from "@zouwu-wf/workflow";
 
 // 创建驺吾工作流
 const workflow: ZouWuWorkflow = {
-    id: 'sample_workflow',
-    name: '驺吾示例工作流',
-    version: '1.0.0',
+    id: "sample_workflow",
+    name: "驺吾示例工作流",
+    version: "1.0.0",
 
     // 驺吾五彩步骤
     colors: [
         {
-            id: 'guardian_check',
-            color: 'blue', // 青色 - 条件判断
-            type: 'condition',
+            id: "guardian_check",
+            color: "blue", // 青色 - 条件判断
+            type: "condition",
             guardian: {
                 // 驺吾守护
                 gentle: true,
@@ -70,7 +70,7 @@ const validator = new ZouWuValidator();
 const result = validator.validate(workflow);
 
 if (result.valid) {
-    console.log('🎨 驺吾验证通过 - 五彩斑斓，仁德守护');
+    console.log("🎨 驺吾验证通过 - 五彩斑斓，仁德守护");
 }
 ```
 
@@ -126,8 +126,8 @@ tail:
 
 ```yaml
 wings:
-    left: 'validation' # 左翼任务
-    right: 'transformation' # 右翼任务
+    left: "validation" # 左翼任务
+    right: "transformation" # 右翼任务
     synchronized: true # 同步飞行
 ```
 
@@ -163,17 +163,17 @@ wings:
 
 ```yaml
 # sample.zouwu
-id: 'hello_zouwu'
-name: '驺吾问候'
-version: '1.0.0'
+id: "hello_zouwu"
+name: "驺吾问候"
+version: "1.0.0"
 
 colors:
-    - id: 'greeting'
+    - id: "greeting"
       color: yellow
-      type: 'builtin'
-      action: 'log'
+      type: "builtin"
+      action: "log"
       input:
-          message: '🎨 驺吾向您问好 - 五彩斑斓，仁德守护'
+          message: "🎨 驺吾向您问好 - 五彩斑斓，仁德守护"
 
 zouwu:
     benevolence: true

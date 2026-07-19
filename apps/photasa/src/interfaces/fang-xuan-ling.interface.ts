@@ -89,6 +89,8 @@ export interface IAppState extends IBaseStore {
  * ✅ RFC 0057: 状态栏管理接口
  */
 export interface IStatusBar extends IBaseStore {
+    /** 通知域（只读） */
+    readonly type: string;
     /** 当前任务（只读） */
     readonly currentTask: string;
     /** 状态（只读） */
@@ -234,6 +236,14 @@ export const ZOUZHE_MATTERS = {
     UPDATE_MENU: "update_menu", // ✅ RFC 0058: 更新菜单（长孙无忌 → 房玄龄 → 袁天罡 → 天枢引擎）
     OPEN_EXTERNAL: "open_external", // ✅ RFC 0058: 打开外部链接（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
     OPEN_IN_FINDER: "open_in_finder", // ✅ RFC 0058: 在 Finder 中显示文件（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
+    GET_FOLDER_CONFIG: "get_folder_config", // 获取文件夹配置
+    FIX_FOLDER_CONFIG: "fix_folder_config", // 修复文件夹配置
+    RESET_FOLDER_CONFIG: "reset_folder_config", // 重置文件夹配置
+    ADD_PHOTO_TO_LIST: "add_photo_to_list", // 照片归档到配置
+    REMOVE_PHOTO_FROM_LIST: "remove_photo_from_list", // 从配置中移除照片
+    TO_DIR_NAME: "to_dir_name", // 获取父目录名
+    SCAN_SUBFOLDERS: "scan_subfolders", // 扫描子文件夹
+    SCAN_PHOTOS: "scan_photos", // 执行照片扫描
 } as const;
 
 /**

@@ -8,7 +8,7 @@
 - **类型**: 测试架构
 - **目标版本**: v2.0.0
 - **依赖RFC**:
-  - RFC 0048: 扫描编排业务逻辑迁移（测试目标）
+    - RFC 0048: 扫描编排业务逻辑迁移（测试目标）
 
 ---
 
@@ -17,6 +17,7 @@
 **从零设计正确的E2E测试架构**，解决现有架构的根本性问题（Electron单实例锁冲突、测试隔离性差、过度依赖内部API）。
 
 **核心原则** - "简洁、实用、正确"（Linus风格）：
+
 1. ✅ **拥抱单实例锁** - 利用特性，不对抗
 2. ✅ **串行测试** - 避免并发冲突，保证可靠性
 3. ✅ **用户视角** - 模拟真实交互，不操作内部API
@@ -43,6 +44,7 @@ test3-6: electron.launch() // ❌ 全部失败
 ```
 
 **问题本质**：
+
 - Playwright并发运行测试
 - 每个测试启动独立Electron进程
 - 单实例锁机制拒绝后续所有测试
@@ -52,11 +54,12 @@ test3-6: electron.launch() // ❌ 全部失败
 
 ```typescript
 // ❌ 错误：直接操作window对象
-window.yuChiGong?.addScanTasks([testPath], 'scan');
+window.yuChiGong?.addScanTasks([testPath], "scan");
 window.weiZheng?.folderTree;
 ```
 
 **违反原则**：
+
 - 强耦合内部API
 - 绕过正常用户交互
 - 无法验证真实UI体验
@@ -71,6 +74,7 @@ await page.waitForTimeout(30000); // 等待扫描完成
 ```
 
 **问题**：
+
 - 固定延迟导致测试慢或不稳定
 - 快速机器：浪费时间
 - 慢速机器：超时失败
@@ -89,6 +93,7 @@ export class ElectronAppManager {
 ```
 
 **Linus视角**：
+
 - ❌ **Bad Taste** - 复杂解决方案解决错误问题
 - ❌ **Too Many Layers** - fixture → manager → test，层次混乱
 - ❌ **Wrong Abstraction** - manager无法解决单实例冲突
@@ -105,6 +110,7 @@ await fs.remove(testDataDir); // 清理可能失败
 ```
 
 **风险**：
+
 - 测试数据分散，难以管理
 - 清理逻辑不可靠（失败时不执行）
 - 潜在的测试污染
@@ -150,6 +156,7 @@ await fs.remove(testDataDir); // 清理可能失败
 ```
 
 **问题**：
+
 - 单实例锁冲突导致94%失败率
 - 过度依赖内部实现
 - 不可靠的等待机制
@@ -175,6 +182,7 @@ await fs.remove(testDataDir); // 清理可能失败
 ```
 
 **优势**：
+
 - ✅ 100%避免单实例锁冲突
 - ✅ 验证真实用户交互流程
 - ✅ 可靠的事件驱动等待
@@ -190,22 +198,25 @@ await fs.remove(testDataDir); // 清理可能失败
 **选择：串行测试（workers: 1）** ✅
 
 **理由**：
+
 1. **简单可靠** - 完全避免单实例锁冲突
 2. **符合实际** - 用户一次只运行一个应用实例
 3. **测试完整性** - 可以验证单实例锁行为
 4. **Linus实用主义** - 解决实际问题，不追求理论完美
 
 **性能影响**：
+
 - E2E测试本身就慢（需要启动完整应用）
 - 串行 vs 并发差异：~30秒 vs ~15秒（10个测试）
 - **可接受的代价**，换取100%可靠性
 
 **配置**：
+
 ```typescript
 // playwright.config.ts
 export default defineConfig({
-  workers: 1, // ← 强制串行执行
-  fullyParallel: false,
+    workers: 1, // ← 强制串行执行
+    fullyParallel: false,
 });
 ```
 
@@ -216,30 +227,33 @@ export default defineConfig({
 **选择：共享应用进程（globalSetup/globalTeardown）** ✅
 
 **理由**：
+
 1. **启动速度快** - 一次启动，多个测试共享
 2. **资源效率高** - 减少进程创建/销毁开销
 3. **符合实际** - 模拟用户持续使用场景
 4. **简洁设计** - 不需要复杂的进程管理
 
 **隔离机制**：
+
 - `beforeEach`: 准备独立测试数据
 - `afterEach`: 清理测试数据
 - 不修改全局状态（如配置文件）
 
 **实现**：
+
 ```typescript
 // global-setup.ts
 export default async function globalSetup() {
-  const app = await electron.launch({ args: [process.cwd()] });
-  // 存储进程信息供测试使用
-  await writeFile('.electron-pid', app.process().pid!.toString());
-  // 不关闭，让测试使用
+    const app = await electron.launch({ args: [process.cwd()] });
+    // 存储进程信息供测试使用
+    await writeFile(".electron-pid", app.process().pid!.toString());
+    // 不关闭，让测试使用
 }
 
 // global-teardown.ts
 export default async function globalTeardown() {
-  const pid = await readFile('.electron-pid', 'utf-8');
-  process.kill(parseInt(pid));
+    const pid = await readFile(".electron-pid", "utf-8");
+    process.kill(parseInt(pid));
 }
 ```
 
@@ -250,16 +264,18 @@ export default async function globalTeardown() {
 **选择：真实UI交互** ✅
 
 **理由**：
+
 1. **验证真实用户体验** - E2E的本质目标
 2. **解耦内部实现** - 测试不依赖内部API
 3. **捕获UI问题** - 按钮不可点击、表单验证等
 4. **Linus"实用主义"** - 测试实际使用场景
 
 **对比**：
+
 ```typescript
 // ❌ 错误：直接操作内部API
 await page.evaluate(() => {
-  window.yuChiGong?.addScanTasks([path], 'scan');
+    window.yuChiGong?.addScanTasks([path], "scan");
 });
 
 // ✅ 正确：模拟真实用户操作
@@ -269,22 +285,23 @@ await page.click('button[data-testid="confirm"]');
 ```
 
 **Page Object模式**：
+
 ```typescript
 class ScanPage {
-  constructor(private page: Page) {}
+    constructor(private page: Page) {}
 
-  async addFolder(path: string): Promise<void> {
-    await this.page.click('button[data-testid="add-folder"]');
-    await this.page.fill('input[data-testid="folder-path"]', path);
-    await this.page.click('button[data-testid="confirm"]');
-  }
+    async addFolder(path: string): Promise<void> {
+        await this.page.click('button[data-testid="add-folder"]');
+        await this.page.fill('input[data-testid="folder-path"]', path);
+        await this.page.click('button[data-testid="confirm"]');
+    }
 
-  async waitForScanComplete(): Promise<void> {
-    // 等待启奏事件
-    await this.page.waitForFunction(
-      () => window.__testHooks?.lastQizou?.matter === 'scan_completed'
-    );
-  }
+    async waitForScanComplete(): Promise<void> {
+        // 等待启奏事件
+        await this.page.waitForFunction(
+            () => window.__testHooks?.lastQizou?.matter === "scan_completed",
+        );
+    }
 }
 ```
 
@@ -295,24 +312,25 @@ class ScanPage {
 **选择：监听启奏（Qizou）事件** ✅
 
 **理由**：
+
 1. **精确可靠** - 事件发生立即响应
 2. **性能最优** - 不浪费时间等待
 3. **符合架构** - 利用现有启奏系统
 4. **Linus"好品味"** - 消除特殊情况（快/慢机器）
 
 **实现**：
+
 ```typescript
 // ✅ 正确：事件驱动等待
 await page.waitForFunction(
-  () => {
-    const events = window.__testHooks?.qizouEvents || [];
-    return events.some(e =>
-      e.from === '尉迟恭' &&
-      e.matter === 'scan_completed' &&
-      e.content.path === testPath
-    );
-  },
-  { timeout: 30000 }
+    () => {
+        const events = window.__testHooks?.qizouEvents || [];
+        return events.some(
+            (e) =>
+                e.from === "尉迟恭" && e.matter === "scan_completed" && e.content.path === testPath,
+        );
+    },
+    { timeout: 30000 },
 );
 
 // ❌ 错误：固定超时
@@ -320,24 +338,25 @@ await page.waitForTimeout(2000);
 ```
 
 **测试钩子设计**：
+
 ```typescript
 // 仅测试环境注入
-if (import.meta.env.MODE === 'test') {
-  window.__testHooks = {
-    qizouEvents: [],
-    captureQizou: (event: QizouEvent) => {
-      window.__testHooks.qizouEvents.push(event);
-    }
-  };
+if (import.meta.env.MODE === "test") {
+    window.__testHooks = {
+        qizouEvents: [],
+        captureQizou: (event: QizouEvent) => {
+            window.__testHooks.qizouEvents.push(event);
+        },
+    };
 
-  // 拦截mitt.emit
-  const originalEmit = mitt.emit;
-  mitt.emit = (type, event) => {
-    if (type === 'qizou') {
-      window.__testHooks.captureQizou(event);
-    }
-    return originalEmit.call(mitt, type, event);
-  };
+    // 拦截mitt.emit
+    const originalEmit = mitt.emit;
+    mitt.emit = (type, event) => {
+        if (type === "qizou") {
+            window.__testHooks.captureQizou(event);
+        }
+        return originalEmit.call(mitt, type, event);
+    };
 }
 ```
 
@@ -348,44 +367,46 @@ if (import.meta.env.MODE === 'test') {
 **选择：统一的测试数据管理器** ✅
 
 **理由**：
+
 1. **避免测试污染** - 独立数据目录
 2. **可靠清理** - try/finally保证执行
 3. **易于维护** - 集中管理逻辑
 4. **Linus"简洁执念"** - 减少重复代码
 
 **实现**：
+
 ```typescript
 class TestDataManager {
-  private testDataRoot = path.join(__dirname, '../test-data/e2e');
+    private testDataRoot = path.join(__dirname, "../test-data/e2e");
 
-  async createTestFolder(name: string): Promise<string> {
-    const folderPath = path.join(this.testDataRoot, name, Date.now().toString());
-    await fs.ensureDir(folderPath);
-    return folderPath;
-  }
-
-  async addTestImages(folderPath: string, count: number): Promise<void> {
-    for (let i = 0; i < count; i++) {
-      const imagePath = path.join(folderPath, `test-${i}.jpg`);
-      await fs.writeFile(imagePath, `fake image ${i}`);
+    async createTestFolder(name: string): Promise<string> {
+        const folderPath = path.join(this.testDataRoot, name, Date.now().toString());
+        await fs.ensureDir(folderPath);
+        return folderPath;
     }
-  }
 
-  async cleanup(folderPath: string): Promise<void> {
-    try {
-      await fs.remove(folderPath);
-    } catch (error) {
-      console.warn(`⚠️ Cleanup failed for ${folderPath}:`, error);
+    async addTestImages(folderPath: string, count: number): Promise<void> {
+        for (let i = 0; i < count; i++) {
+            const imagePath = path.join(folderPath, `test-${i}.jpg`);
+            await fs.writeFile(imagePath, `fake image ${i}`);
+        }
     }
-  }
 
-  async cleanupAll(): Promise<void> {
-    try {
-      await fs.remove(this.testDataRoot);
-    } catch (error) {
-      console.warn(`⚠️ Full cleanup failed:`, error);
+    async cleanup(folderPath: string): Promise<void> {
+        try {
+            await fs.remove(folderPath);
+        } catch (error) {
+            console.warn(`⚠️ Cleanup failed for ${folderPath}:`, error);
+        }
     }
-  }
+
+    async cleanupAll(): Promise<void> {
+        try {
+            await fs.remove(this.testDataRoot);
+        } catch (error) {
+            console.warn(`⚠️ Full cleanup failed:`, error);
+        }
+    }
 }
 ```
 
@@ -400,26 +421,26 @@ class TestDataManager {
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./src/e2e/tests",
+    testDir: "./src/e2e/tests",
 
-  // ✅ 核心：串行执行，避免单实例锁冲突
-  workers: 1,
-  fullyParallel: false,
+    // ✅ 核心：串行执行，避免单实例锁冲突
+    workers: 1,
+    fullyParallel: false,
 
-  // 全局启动/关闭
-  globalSetup: require.resolve("./src/e2e/fixtures/global-setup"),
-  globalTeardown: require.resolve("./src/e2e/fixtures/global-teardown"),
+    // 全局启动/关闭
+    globalSetup: require.resolve("./src/e2e/fixtures/global-setup"),
+    globalTeardown: require.resolve("./src/e2e/fixtures/global-teardown"),
 
-  use: {
-    headless: false, // E2E测试显示UI
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
-  },
+    use: {
+        headless: false, // E2E测试显示UI
+        screenshot: "only-on-failure",
+        video: "retain-on-failure",
+    },
 
-  timeout: 60000, // 每个测试60秒
-  expect: {
-    timeout: 10000,
-  },
+    timeout: 60000, // 每个测试60秒
+    expect: {
+        timeout: 10000,
+    },
 });
 ```
 
@@ -434,29 +455,29 @@ import fs from "fs-extra";
 import path from "path";
 
 export default async function globalSetup() {
-  console.log("🚀 启动Electron应用...");
+    console.log("🚀 启动Electron应用...");
 
-  const app = await electron.launch({
-    args: [process.cwd()],
-    env: {
-      ...process.env,
-      NODE_ENV: "test",
-      ELECTRON_IS_DEV: "false",
-    },
-  });
+    const app = await electron.launch({
+        args: [process.cwd()],
+        env: {
+            ...process.env,
+            NODE_ENV: "test",
+            ELECTRON_IS_DEV: "false",
+        },
+    });
 
-  // 等待应用准备就绪
-  const page = await app.firstWindow();
-  await page.waitForLoadState("domcontentloaded");
-  await page.waitForTimeout(2000);
+    // 等待应用准备就绪
+    const page = await app.firstWindow();
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(2000);
 
-  // 存储进程信息
-  const pidPath = path.join(process.cwd(), ".test-electron.pid");
-  await fs.writeFile(pidPath, app.process().pid!.toString());
+    // 存储进程信息
+    const pidPath = path.join(process.cwd(), ".test-electron.pid");
+    await fs.writeFile(pidPath, app.process().pid!.toString());
 
-  console.log("✅ Electron应用启动完成");
+    console.log("✅ Electron应用启动完成");
 
-  // 不关闭应用，让测试使用
+    // 不关闭应用，让测试使用
 }
 
 // global-teardown.ts
@@ -464,21 +485,21 @@ import fs from "fs-extra";
 import path from "path";
 
 export default async function globalTeardown() {
-  console.log("🛑 关闭Electron应用...");
+    console.log("🛑 关闭Electron应用...");
 
-  try {
-    const pidPath = path.join(process.cwd(), ".test-electron.pid");
-    const pid = parseInt(await fs.readFile(pidPath, "utf-8"));
+    try {
+        const pidPath = path.join(process.cwd(), ".test-electron.pid");
+        const pid = parseInt(await fs.readFile(pidPath, "utf-8"));
 
-    process.kill(pid, "SIGTERM");
+        process.kill(pid, "SIGTERM");
 
-    // 清理pid文件
-    await fs.remove(pidPath);
+        // 清理pid文件
+        await fs.remove(pidPath);
 
-    console.log("✅ Electron应用已关闭");
-  } catch (error) {
-    console.warn("⚠️ 关闭应用失败:", error);
-  }
+        console.log("✅ Electron应用已关闭");
+    } catch (error) {
+        console.warn("⚠️ 关闭应用失败:", error);
+    }
 }
 ```
 
@@ -493,25 +514,25 @@ import { _electron as electron } from "@playwright/test";
 import { TestDataManager } from "../utils/test-data-manager";
 
 export interface TestFixtures {
-  testData: TestDataManager;
-  page: Page;
+    testData: TestDataManager;
+    page: Page;
 }
 
 export const test = base.extend<TestFixtures>({
-  // 测试数据管理器
-  testData: async ({}, use) => {
-    const manager = new TestDataManager();
-    await use(manager);
-    await manager.cleanupAll();
-  },
+    // 测试数据管理器
+    testData: async ({}, use) => {
+        const manager = new TestDataManager();
+        await use(manager);
+        await manager.cleanupAll();
+    },
 
-  // 共享的Electron Page
-  page: async ({}, use) => {
-    // 连接到已启动的Electron应用
-    const app = await electron.launch({ args: [process.cwd()] });
-    const page = await app.firstWindow();
-    await use(page);
-  },
+    // 共享的Electron Page
+    page: async ({}, use) => {
+        // 连接到已启动的Electron应用
+        const app = await electron.launch({ args: [process.cwd()] });
+        const page = await app.firstWindow();
+        await use(page);
+    },
 });
 
 export { expect } from "@playwright/test";
@@ -527,84 +548,86 @@ import { Page } from "@playwright/test";
 import type { QizouEvent } from "@common/qizou-types";
 
 export class ScanPage {
-  constructor(private page: Page) {}
+    constructor(private page: Page) {}
 
-  /**
-   * 添加文件夹到扫描队列（真实UI交互）
-   */
-  async addFolderToScan(folderPath: string): Promise<void> {
-    // 1. 点击"添加文件夹"按钮
-    await this.page.click('[data-testid="add-folder-button"]');
+    /**
+     * 添加文件夹到扫描队列（真实UI交互）
+     */
+    async addFolderToScan(folderPath: string): Promise<void> {
+        // 1. 点击"添加文件夹"按钮
+        await this.page.click('[data-testid="add-folder-button"]');
 
-    // 2. 在文件选择器中输入路径
-    // （如果是自定义输入框）
-    await this.page.fill('[data-testid="folder-path-input"]', folderPath);
+        // 2. 在文件选择器中输入路径
+        // （如果是自定义输入框）
+        await this.page.fill('[data-testid="folder-path-input"]', folderPath);
 
-    // 3. 确认添加
-    await this.page.click('[data-testid="confirm-add-button"]');
-  }
+        // 3. 确认添加
+        await this.page.click('[data-testid="confirm-add-button"]');
+    }
 
-  /**
-   * 等待扫描开始
-   */
-  async waitForScanStarted(folderPath: string): Promise<void> {
-    await this.page.waitForFunction(
-      ({ path }) => {
-        const events = window.__testHooks?.qizouEvents || [];
-        return events.some(e =>
-          e.from === '尉迟恭' &&
-          e.matter === 'scan_started' &&
-          e.content.path === path
+    /**
+     * 等待扫描开始
+     */
+    async waitForScanStarted(folderPath: string): Promise<void> {
+        await this.page.waitForFunction(
+            ({ path }) => {
+                const events = window.__testHooks?.qizouEvents || [];
+                return events.some(
+                    (e) =>
+                        e.from === "尉迟恭" &&
+                        e.matter === "scan_started" &&
+                        e.content.path === path,
+                );
+            },
+            { path: folderPath },
+            { timeout: 10000 },
         );
-      },
-      { path: folderPath },
-      { timeout: 10000 }
-    );
-  }
+    }
 
-  /**
-   * 等待扫描完成
-   */
-  async waitForScanCompleted(folderPath: string): Promise<void> {
-    await this.page.waitForFunction(
-      ({ path }) => {
-        const events = window.__testHooks?.qizouEvents || [];
-        return events.some(e =>
-          e.from === '尉迟恭' &&
-          e.matter === 'scan_completed' &&
-          e.content.path === path
+    /**
+     * 等待扫描完成
+     */
+    async waitForScanCompleted(folderPath: string): Promise<void> {
+        await this.page.waitForFunction(
+            ({ path }) => {
+                const events = window.__testHooks?.qizouEvents || [];
+                return events.some(
+                    (e) =>
+                        e.from === "尉迟恭" &&
+                        e.matter === "scan_completed" &&
+                        e.content.path === path,
+                );
+            },
+            { path: folderPath },
+            { timeout: 30000 },
         );
-      },
-      { path: folderPath },
-      { timeout: 30000 }
-    );
-  }
+    }
 
-  /**
-   * 验证文件夹树已更新
-   */
-  async verifyFolderInTree(folderPath: string): Promise<boolean> {
-    // 通过UI检查，不是内部状态
-    const folderElement = await this.page.locator(
-      `[data-testid="folder-tree-item"][data-path="${folderPath}"]`
-    );
-    return await folderElement.isVisible();
-  }
+    /**
+     * 验证文件夹树已更新
+     */
+    async verifyFolderInTree(folderPath: string): Promise<boolean> {
+        // 通过UI检查，不是内部状态
+        const folderElement = await this.page.locator(
+            `[data-testid="folder-tree-item"][data-path="${folderPath}"]`,
+        );
+        return await folderElement.isVisible();
+    }
 
-  /**
-   * 获取扫描队列状态（从UI读取）
-   */
-  async getScanQueueStatus(): Promise<{ count: number; current: string | null }> {
-    return await this.page.evaluate(() => {
-      const queueCountEl = document.querySelector('[data-testid="queue-count"]');
-      const currentScanEl = document.querySelector('[data-testid="current-scan-path"]');
+    /**
+     * 获取扫描队列状态（从UI读取）
+     */
+    async getScanQueueStatus(): Promise<{ count: number; current: string | null }> {
+        return await this.page.evaluate(() => {
+            const queueCountEl = document.querySelector('[data-testid="queue-count"]');
+            const currentScanEl = document.querySelector('[data-testid="current-scan-path"]');
 
-      return {
-        count: queueCountEl ? parseInt(queueCountEl.textContent || '0') : 0,
-        current: currentScanEl?.textContent || null,
-      };
-    });
-  }
+            return {
+                count: queueCountEl ? parseInt(queueCountEl.textContent || "0") : 0,
+                current: currentScanEl?.textContent || null,
+            };
+        });
+    }
 }
 ```
 
@@ -618,112 +641,111 @@ import { test, expect } from "../../fixtures/test-fixture";
 import { ScanPage } from "../../pages/scan-page";
 
 test.describe("RFC 0048: YuChiGong自动扫描机制（正确实现）", () => {
+    test("添加文件夹应自动触发扫描并更新树", async ({ page, testData }) => {
+        const scanPage = new ScanPage(page);
 
-  test("添加文件夹应自动触发扫描并更新树", async ({ page, testData }) => {
-    const scanPage = new ScanPage(page);
+        // 1. 准备测试数据
+        const testFolder = await testData.createTestFolder("auto-scan-test");
+        await testData.addTestImages(testFolder, 5);
 
-    // 1. 准备测试数据
-    const testFolder = await testData.createTestFolder("auto-scan-test");
-    await testData.addTestImages(testFolder, 5);
+        // 2. 通过UI添加文件夹（真实用户操作）
+        await scanPage.addFolderToScan(testFolder);
 
-    // 2. 通过UI添加文件夹（真实用户操作）
-    await scanPage.addFolderToScan(testFolder);
+        // 3. 验证队列已更新
+        const queueStatus = await scanPage.getScanQueueStatus();
+        expect(queueStatus.count).toBeGreaterThan(0);
+        expect(queueStatus.current).toBe(testFolder);
 
-    // 3. 验证队列已更新
-    const queueStatus = await scanPage.getScanQueueStatus();
-    expect(queueStatus.count).toBeGreaterThan(0);
-    expect(queueStatus.current).toBe(testFolder);
+        // 4. 等待扫描自动开始
+        await scanPage.waitForScanStarted(testFolder);
 
-    // 4. 等待扫描自动开始
-    await scanPage.waitForScanStarted(testFolder);
+        // 5. 等待扫描自动完成
+        await scanPage.waitForScanCompleted(testFolder);
 
-    // 5. 等待扫描自动完成
-    await scanPage.waitForScanCompleted(testFolder);
+        // 6. 验证魏征树已更新（通过UI检查）
+        const folderVisible = await scanPage.verifyFolderInTree(testFolder);
+        expect(folderVisible).toBe(true);
 
-    // 6. 验证魏征树已更新（通过UI检查）
-    const folderVisible = await scanPage.verifyFolderInTree(testFolder);
-    expect(folderVisible).toBe(true);
-
-    // 7. 验证队列已清空
-    const finalStatus = await scanPage.getScanQueueStatus();
-    expect(finalStatus.count).toBe(0);
-    expect(finalStatus.current).toBeNull();
-  });
-
-  test("验证启奏-圣旨事件流完整性", async ({ page, testData }) => {
-    const scanPage = new ScanPage(page);
-
-    // 准备测试数据
-    const testFolder = await testData.createTestFolder("event-flow-test");
-    await testData.addTestImages(testFolder, 3);
-
-    // 清空事件历史
-    await page.evaluate(() => {
-      window.__testHooks.qizouEvents = [];
+        // 7. 验证队列已清空
+        const finalStatus = await scanPage.getScanQueueStatus();
+        expect(finalStatus.count).toBe(0);
+        expect(finalStatus.current).toBeNull();
     });
 
-    // 触发扫描
-    await scanPage.addFolderToScan(testFolder);
+    test("验证启奏-圣旨事件流完整性", async ({ page, testData }) => {
+        const scanPage = new ScanPage(page);
 
-    // 等待扫描完成
-    await scanPage.waitForScanCompleted(testFolder);
+        // 准备测试数据
+        const testFolder = await testData.createTestFolder("event-flow-test");
+        await testData.addTestImages(testFolder, 3);
 
-    // 验证事件序列
-    const events = await page.evaluate(() => {
-      return window.__testHooks.qizouEvents.filter(e => e.from === '尉迟恭');
+        // 清空事件历史
+        await page.evaluate(() => {
+            window.__testHooks.qizouEvents = [];
+        });
+
+        // 触发扫描
+        await scanPage.addFolderToScan(testFolder);
+
+        // 等待扫描完成
+        await scanPage.waitForScanCompleted(testFolder);
+
+        // 验证事件序列
+        const events = await page.evaluate(() => {
+            return window.__testHooks.qizouEvents.filter((e) => e.from === "尉迟恭");
+        });
+
+        // 应该至少有scan_started和scan_completed
+        const hasScanStarted = events.some((e) => e.matter === "scan_started");
+        const hasScanCompleted = events.some((e) => e.matter === "scan_completed");
+
+        expect(hasScanStarted).toBe(true);
+        expect(hasScanCompleted).toBe(true);
+
+        // 验证事件顺序
+        const startedIndex = events.findIndex((e) => e.matter === "scan_started");
+        const completedIndex = events.findIndex((e) => e.matter === "scan_completed");
+        expect(completedIndex).toBeGreaterThan(startedIndex);
     });
 
-    // 应该至少有scan_started和scan_completed
-    const hasScanStarted = events.some(e => e.matter === 'scan_started');
-    const hasScanCompleted = events.some(e => e.matter === 'scan_completed');
+    test("多文件夹队列自动循环处理", async ({ page, testData }) => {
+        const scanPage = new ScanPage(page);
 
-    expect(hasScanStarted).toBe(true);
-    expect(hasScanCompleted).toBe(true);
+        // 准备3个测试文件夹
+        const folders = [
+            await testData.createTestFolder("batch-1"),
+            await testData.createTestFolder("batch-2"),
+            await testData.createTestFolder("batch-3"),
+        ];
 
-    // 验证事件顺序
-    const startedIndex = events.findIndex(e => e.matter === 'scan_started');
-    const completedIndex = events.findIndex(e => e.matter === 'scan_completed');
-    expect(completedIndex).toBeGreaterThan(startedIndex);
-  });
+        for (const folder of folders) {
+            await testData.addTestImages(folder, 2);
+        }
 
-  test("多文件夹队列自动循环处理", async ({ page, testData }) => {
-    const scanPage = new ScanPage(page);
+        // 批量添加到队列
+        for (const folder of folders) {
+            await scanPage.addFolderToScan(folder);
+        }
 
-    // 准备3个测试文件夹
-    const folders = [
-      await testData.createTestFolder("batch-1"),
-      await testData.createTestFolder("batch-2"),
-      await testData.createTestFolder("batch-3"),
-    ];
+        // 验证队列有3个任务
+        let queueStatus = await scanPage.getScanQueueStatus();
+        expect(queueStatus.count).toBe(3);
 
-    for (const folder of folders) {
-      await testData.addTestImages(folder, 2);
-    }
+        // 等待所有扫描自动完成
+        for (const folder of folders) {
+            await scanPage.waitForScanCompleted(folder);
+        }
 
-    // 批量添加到队列
-    for (const folder of folders) {
-      await scanPage.addFolderToScan(folder);
-    }
+        // 验证队列已清空
+        queueStatus = await scanPage.getScanQueueStatus();
+        expect(queueStatus.count).toBe(0);
 
-    // 验证队列有3个任务
-    let queueStatus = await scanPage.getScanQueueStatus();
-    expect(queueStatus.count).toBe(3);
-
-    // 等待所有扫描自动完成
-    for (const folder of folders) {
-      await scanPage.waitForScanCompleted(folder);
-    }
-
-    // 验证队列已清空
-    queueStatus = await scanPage.getScanQueueStatus();
-    expect(queueStatus.count).toBe(0);
-
-    // 验证所有文件夹都在树中
-    for (const folder of folders) {
-      const visible = await scanPage.verifyFolderInTree(folder);
-      expect(visible).toBe(true);
-    }
-  });
+        // 验证所有文件夹都在树中
+        for (const folder of folders) {
+            const visible = await scanPage.verifyFolderInTree(folder);
+            expect(visible).toBe(true);
+        }
+    });
 });
 ```
 
@@ -738,15 +760,15 @@ test.describe("RFC 0048: YuChiGong自动扫描机制（正确实现）", () => {
  * 用于E2E测试监听启奏事件
  */
 
-import type { QizouEvent } from '@common/qizou-types';
+import type { QizouEvent } from "@common/qizou-types";
 
 declare global {
-  interface Window {
-    __testHooks?: {
-      qizouEvents: QizouEvent[];
-      captureQizou: (event: QizouEvent) => void;
-    };
-  }
+    interface Window {
+        __testHooks?: {
+            qizouEvents: QizouEvent[];
+            captureQizou: (event: QizouEvent) => void;
+        };
+    }
 }
 
 /**
@@ -754,24 +776,24 @@ declare global {
  * 仅在测试环境调用
  */
 export function initTestHooks(): void {
-  if (import.meta.env.MODE !== 'test') {
-    return;
-  }
+    if (import.meta.env.MODE !== "test") {
+        return;
+    }
 
-  console.log('🧪 初始化测试钩子');
+    console.log("🧪 初始化测试钩子");
 
-  window.__testHooks = {
-    qizouEvents: [],
-    captureQizou: (event: QizouEvent) => {
-      window.__testHooks!.qizouEvents.push({
-        ...event,
-        timestamp: new Date().toISOString(),
-      });
-    },
-  };
+    window.__testHooks = {
+        qizouEvents: [],
+        captureQizou: (event: QizouEvent) => {
+            window.__testHooks!.qizouEvents.push({
+                ...event,
+                timestamp: new Date().toISOString(),
+            });
+        },
+    };
 
-  // 拦截mitt.emit以捕获启奏事件
-  // 注意：需要在mitt实例创建后注入
+    // 拦截mitt.emit以捕获启奏事件
+    // 注意：需要在mitt实例创建后注入
 }
 
 /**
@@ -790,11 +812,13 @@ export function initTestHooks(): void {
 #### 测试代码行数
 
 **现有架构**：
+
 - ElectronAppManager: 215行
 - auto-scan.test.ts: 150行
 - 总计: ~365行
 
 **正确架构**：
+
 - Playwright配置: 30行
 - Global setup/teardown: 40行
 - TestDataManager: 50行
@@ -805,6 +829,7 @@ export function initTestHooks(): void {
 **减少**: ~65行（18%）
 
 **但更重要的是**：
+
 - ✅ 代码更清晰
 - ✅ 职责更单一
 - ✅ 易于维护
@@ -815,10 +840,12 @@ export function initTestHooks(): void {
 #### 测试可靠性
 
 **现有架构**：
+
 - 通过率: 2/36 = 5.6%
 - 失败原因: 单实例锁冲突
 
 **正确架构**：
+
 - 预期通过率: 100%
 - 串行执行，无并发冲突
 - 事件驱动等待，无超时问题
@@ -830,16 +857,19 @@ export function initTestHooks(): void {
 ### Phase 1: 基础设施（1天）
 
 **1.1 Playwright配置**
+
 - [ ] 更新playwright.config.ts（串行执行）
 - [ ] 创建global-setup.ts
 - [ ] 创建global-teardown.ts
 
 **1.2 测试工具**
+
 - [ ] 实现TestDataManager
 - [ ] 实现测试钩子（test-hooks.ts）
 - [ ] 在App.vue注入测试钩子
 
 **1.3 Page Objects**
+
 - [ ] 创建BasePage
 - [ ] 创建ScanPage
 - [ ] 创建FolderTreePage
@@ -849,11 +879,13 @@ export function initTestHooks(): void {
 ### Phase 2: RFC 0048测试用例（1天）
 
 **2.1 核心测试**
+
 - [ ] 自动扫描流程测试
 - [ ] 启奏-圣旨事件流测试
 - [ ] 多文件夹队列测试
 
 **2.2 边界测试**
+
 - [ ] 空文件夹扫描
 - [ ] 扫描失败处理
 - [ ] 扫描中断恢复
@@ -863,11 +895,13 @@ export function initTestHooks(): void {
 ### Phase 3: 验证和文档（0.5天）
 
 **3.1 测试执行**
+
 - [ ] 运行所有测试
 - [ ] 验证100%通过率
 - [ ] 性能基准测试
 
 **3.2 文档**
+
 - [ ] 更新E2E测试指南
 - [ ] 编写Page Object添加指南
 - [ ] 标记RFC 0049为已完成
@@ -954,17 +988,20 @@ export function initTestHooks(): void {
 ### 方案A：禁用单实例锁（已否决）
 
 **实现**：
+
 ```typescript
-if (process.env.NODE_ENV === 'test') {
-  // 不调用 app.requestSingleInstanceLock()
+if (process.env.NODE_ENV === "test") {
+    // 不调用 app.requestSingleInstanceLock()
 }
 ```
 
 **优点**：
+
 - 支持并发测试
 - 测试速度快
 
 **缺点**：
+
 - ❌ 测试环境与生产环境不一致
 - ❌ 无法验证单实例锁行为
 - ❌ 违反"Never break userspace"
@@ -974,13 +1011,16 @@ if (process.env.NODE_ENV === 'test') {
 ### 方案B：保留并发测试（已否决）
 
 **实现**：
+
 - 为每个测试创建独立配置文件
 - 使用不同端口/数据目录
 
 **优点**：
+
 - 测试速度快
 
 **缺点**：
+
 - ❌ 复杂度高
 - ❌ 仍然无法解决单实例锁
 - ❌ 违反"简洁执念"
@@ -990,13 +1030,16 @@ if (process.env.NODE_ENV === 'test') {
 ### 方案C：模拟测试（已否决）
 
 **实现**：
+
 - 使用Vitest模拟Electron API
 - 纯单元测试，不启动真实应用
 
 **优点**：
+
 - 速度快
 
 **缺点**：
+
 - ❌ 不是E2E测试
 - ❌ 无法验证真实用户体验
 - ❌ 违反测试目标
@@ -1012,11 +1055,13 @@ if (process.env.NODE_ENV === 'test') {
 ### 问题描述
 
 应用启动流程：
+
 1. **先创建启动画面窗口**（SplashWindow）- 显示启动进度
 2. **再创建主窗口**（MainWindow）- 包含 #app 元素
 3. **启动画面自动关闭** - 主窗口准备好后
 
 **测试中的问题**：
+
 - `app.firstWindow()` 可能返回启动画面窗口，而不是主窗口
 - 启动画面窗口 URL 包含 "splash"，没有 #app 元素
 - 需要等待主窗口创建并准备就绪
@@ -1028,128 +1073,132 @@ if (process.env.NODE_ENV === 'test') {
 **实现步骤**：
 
 1. **等待所有窗口创建**
-   ```typescript
-   private async waitForAllWindows(): Promise<void> {
-     if (!this.app) throw new Error("App not initialized");
 
-     let attempts = 0;
-     const maxAttempts = 60; // 最多等待30秒（60 * 500ms）
+    ```typescript
+    private async waitForAllWindows(): Promise<void> {
+      if (!this.app) throw new Error("App not initialized");
 
-     while (attempts < maxAttempts) {
-       const windows = this.app.windows();
+      let attempts = 0;
+      const maxAttempts = 60; // 最多等待30秒（60 * 500ms）
 
-       // 检查是否有主窗口（有 #app 元素的窗口）
-       for (const window of windows) {
-         try {
-           const url = window.url();
+      while (attempts < maxAttempts) {
+        const windows = this.app.windows();
 
-           // 跳过启动画面窗口（URL 包含 splash）
-           if (url.includes("splash")) continue;
+        // 检查是否有主窗口（有 #app 元素的窗口）
+        for (const window of windows) {
+          try {
+            const url = window.url();
 
-           // 检查是否有 #app 元素（主窗口标识）
-           const hasApp = await window
-             .evaluate(() => !!document.getElementById("app"))
-             .catch(() => false);
+            // 跳过启动画面窗口（URL 包含 splash）
+            if (url.includes("splash")) continue;
 
-           if (hasApp) return; // 找到主窗口
-         } catch {
-           // 窗口可能还在加载，继续检查下一个
-           continue;
-         }
-       }
+            // 检查是否有 #app 元素（主窗口标识）
+            const hasApp = await window
+              .evaluate(() => !!document.getElementById("app"))
+              .catch(() => false);
 
-       // 等待500ms再重试
-       await new Promise(resolve => setTimeout(resolve, 500));
-       attempts++;
-     }
+            if (hasApp) return; // 找到主窗口
+          } catch {
+            // 窗口可能还在加载，继续检查下一个
+            continue;
+          }
+        }
 
-     // 超时后兜底检查：至少确保有窗口
-     const windows = this.app.windows();
-     if (windows.length === 0) {
-       throw new Error("No windows created after timeout");
-     }
-   }
-   ```
+        // 等待500ms再重试
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+
+      // 超时后兜底检查：至少确保有窗口
+      const windows = this.app.windows();
+      if (windows.length === 0) {
+        throw new Error("No windows created after timeout");
+      }
+    }
+    ```
 
 2. **获取主窗口页面**
-   ```typescript
-   private async getMainWindowPage(): Promise<Page> {
-     if (!this.app) throw new Error("App not initialized");
 
-     const windows = this.app.windows();
+    ```typescript
+    private async getMainWindowPage(): Promise<Page> {
+      if (!this.app) throw new Error("App not initialized");
 
-     // 优先查找主窗口（有 #app 元素且 URL 不包含 splash）
-     for (const window of windows) {
-       try {
-         const url = window.url();
+      const windows = this.app.windows();
 
-         // 跳过启动画面窗口
-         if (url.includes("splash")) continue;
+      // 优先查找主窗口（有 #app 元素且 URL 不包含 splash）
+      for (const window of windows) {
+        try {
+          const url = window.url();
 
-         // 检查是否有 #app 元素
-         const hasApp = await window
-           .evaluate(() => !!document.getElementById("app"))
-           .catch(() => false);
+          // 跳过启动画面窗口
+          if (url.includes("splash")) continue;
 
-         if (hasApp) return window;
-       } catch {
-         // 窗口可能还在加载，继续查找下一个
-         continue;
-       }
-     }
+          // 检查是否有 #app 元素
+          const hasApp = await window
+            .evaluate(() => !!document.getElementById("app"))
+            .catch(() => false);
 
-     // Fallback 1: 返回第一个非启动画面窗口
-     for (const window of windows) {
-       try {
-         const url = window.url();
-         if (!url.includes("splash")) {
-           return window;
-         }
-       } catch {
-         continue;
-       }
-     }
+          if (hasApp) return window;
+        } catch {
+          // 窗口可能还在加载，继续查找下一个
+          continue;
+        }
+      }
 
-     // Fallback 2: 返回第一个窗口
-     if (windows.length > 0) {
-       return windows[0];
-     }
+      // Fallback 1: 返回第一个非启动画面窗口
+      for (const window of windows) {
+        try {
+          const url = window.url();
+          if (!url.includes("splash")) {
+            return window;
+          }
+        } catch {
+          continue;
+        }
+      }
 
-     throw new Error("No windows available");
-   }
-   ```
+      // Fallback 2: 返回第一个窗口
+      if (windows.length > 0) {
+        return windows[0];
+      }
+
+      throw new Error("No windows available");
+    }
+    ```
 
 3. **等待应用就绪**
-   ```typescript
-   private async waitForAppReady(): Promise<void> {
-     // 等待 DOM 准备就绪
-     await this.page.waitForLoadState("domcontentloaded");
 
-     // 等待页面完全加载
-     await this.page.waitForFunction(() =>
-       document.readyState === "complete"
-     );
+    ```typescript
+    private async waitForAppReady(): Promise<void> {
+      // 等待 DOM 准备就绪
+      await this.page.waitForLoadState("domcontentloaded");
 
-     // 等待 Vue 应用挂载
-     await this.page.waitForFunction(() => {
-       const app = document.getElementById("app");
-       return app && app.children.length > 0;
-     });
+      // 等待页面完全加载
+      await this.page.waitForFunction(() =>
+        document.readyState === "complete"
+      );
 
-     // 检查页面是否仍然有效，避免在页面关闭后调用 waitForTimeout
-     if (this.page && !this.page.isClosed()) {
-       await this.page.waitForTimeout(2000);
-     }
-   }
-   ```
+      // 等待 Vue 应用挂载
+      await this.page.waitForFunction(() => {
+        const app = document.getElementById("app");
+        return app && app.children.length > 0;
+      });
+
+      // 检查页面是否仍然有效，避免在页面关闭后调用 waitForTimeout
+      if (this.page && !this.page.isClosed()) {
+        await this.page.waitForTimeout(2000);
+      }
+    }
+    ```
 
 **关键点**：
+
 - ✅ **不假设 `firstWindow()` 返回主窗口** - 启动画面可能先创建
 - ✅ **通过 URL 和内容识别主窗口** - 检查 URL 不含 "splash" 且有 #app 元素
 - ✅ **完整的 fallback 机制**：
-  1. 优先：有 #app 元素且 URL 不含 splash
-  2. Fallback 1：第一个 URL 不含 splash 的窗口
-  3. Fallback 2：第一个窗口（极端情况）
+    1. 优先：有 #app 元素且 URL 不含 splash
+    2. Fallback 1：第一个 URL 不含 splash 的窗口
+    3. Fallback 2：第一个窗口（极端情况）
 - ✅ **错误处理完善** - 所有 evaluate 操作都有 try-catch
 - ✅ **超时兜底检查** - 30秒后至少确保有窗口创建
 - ✅ **处理页面关闭情况** - 避免 `waitForTimeout` 在关闭的页面上调用
@@ -1161,25 +1210,28 @@ if (process.env.NODE_ENV === 'test') {
 **推荐：不禁用** ✅
 
 **理由**：
+
 1. **测试真实场景** - 启动画面是生产环境的一部分
 2. **验证启动流程** - 可以测试启动画面的显示和关闭逻辑
 3. **避免环境差异** - 测试环境与生产环境保持一致
 4. **技术可行** - 通过窗口识别机制可靠处理启动画面
 
 **替代方案**（如果启动画面导致测试不稳定）：
+
 ```typescript
 // global-setup.ts
 const app = await electron.launch({
-  args: [process.cwd()],
-  env: {
-    ...process.env,
-    NODE_ENV: "test",
-    SKIP_SPLASH_SCREEN: "true", // ← 仅测试环境跳过启动画面
-  },
+    args: [process.cwd()],
+    env: {
+        ...process.env,
+        NODE_ENV: "test",
+        SKIP_SPLASH_SCREEN: "true", // ← 仅测试环境跳过启动画面
+    },
 });
 ```
 
 **Linus视角**：
+
 - ✅ **"实用主义"** - 如果启动画面不影响测试可靠性，保留它
 - ⚠️ **"简洁执念"** - 如果启动画面增加复杂性，考虑测试环境禁用
 - ✅ **"Never break userspace"** - 无论如何，生产环境必须保留启动画面
@@ -1187,16 +1239,16 @@ const app = await electron.launch({
 ## 未解决问题
 
 1. **是否需要并行测试？**
-   - 当前：串行执行（workers: 1）
-   - 待确认：测试数量增长后是否需要优化
+    - 当前：串行执行（workers: 1）
+    - 待确认：测试数量增长后是否需要优化
 
 2. **测试数据持久化？**
-   - 当前：每次测试创建临时数据
-   - 待确认：是否需要固定测试数据集
+    - 当前：每次测试创建临时数据
+    - 待确认：是否需要固定测试数据集
 
 3. **CI/CD集成？**
-   - 当前：本地运行
-   - 待确认：GitHub Actions配置
+    - 当前：本地运行
+    - 待确认：GitHub Actions配置
 
 ---
 
@@ -1212,16 +1264,16 @@ const app = await electron.launch({
 ## 更新历史
 
 - **2025-11-15**: 初始设计
-  - 分析现有架构问题
-  - 设计全新架构
-  - 定义实施计划
+    - 分析现有架构问题
+    - 设计全新架构
+    - 定义实施计划
 
 - **2025-11-16**: 启动画面处理设计和完善
-  - 添加启动画面处理章节
-  - 说明应用启动流程（启动画面 → 主窗口）
-  - 设计主窗口识别和等待机制
-  - 处理页面关闭情况，避免 waitForTimeout 错误
-  - 完善代码示例，同步实际实现（electron-app.ts）
-  - 添加完整的 fallback 机制（3层）
-  - 添加错误处理和超时兜底检查
-  - 添加测试环境配置建议（保留启动画面 vs 禁用）
+    - 添加启动画面处理章节
+    - 说明应用启动流程（启动画面 → 主窗口）
+    - 设计主窗口识别和等待机制
+    - 处理页面关闭情况，避免 waitForTimeout 错误
+    - 完善代码示例，同步实际实现（electron-app.ts）
+    - 添加完整的 fallback 机制（3层）
+    - 添加错误处理和超时兜底检查
+    - 添加测试环境配置建议（保留启动画面 vs 禁用）

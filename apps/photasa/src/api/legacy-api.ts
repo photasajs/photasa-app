@@ -64,9 +64,6 @@ function noopListener(): () => void {
     return () => {};
 }
 
-/** 用于 scanPhotos：requestId -> resolve */
-const scanResolveMap = new Map<string, (value: ScanResult) => void>();
-
 async function ensureInvoke() {
     const { invoke } = await import("@tauri-apps/api/core");
     return invoke;
@@ -420,20 +417,20 @@ export function createLegacyApi(): Record<string, unknown> {
                 return (window as any).electronAPI?.api?.scanPhotos?.(scan) ?? stubAsync();
             const requestId = `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
             return new Promise<ScanResult>((resolve, reject) => {
-                scanResolveMap.set(requestId, resolve);
                 (async () => {
                     try {
                         const unlisten = await api.scan.onScanResult((result) => {
-                            if (result.requestId === requestId && result.type === "complete") {
-                                const r = scanResolveMap.get(requestId);
-                                scanResolveMap.delete(requestId);
-                                if (r) r(result);
+                            if (result.requestId !== requestId) return;
+                            if (result.type === "complete") {
                                 unlisten();
+                                resolve(result);
+                            } else if (result.type === "error") {
+                                unlisten();
+                                reject(new Error(result.error || "扫描失败"));
                             }
                         });
                         await api.scan.scanPhotos(requestId, scan);
                     } catch (e) {
-                        scanResolveMap.delete(requestId);
                         reject(e);
                     }
                 })();

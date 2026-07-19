@@ -7,7 +7,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron 的 `file://` + `protocol.registerFileProtocol("file", …)` **仅作行为对照**，不是 Tauri 的实现路径。
 - Tauri 下显示本地文件必须使用 **`convertFileSrc()` → asset 协议 URL**，并由 `tauri.conf.json` 的 `security.assetProtocol` 授权路径。

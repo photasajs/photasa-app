@@ -1,0 +1,19 @@
+[package]
+name = "photasa-config"
+version = "0.1.0"
+edition = "2021"
+description = "Folder-level .photasa.json read/write (Photasa)"
+license = "MIT"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+photasa-media = { workspace = true }
+
+[dev-dependencies]
+uuid = { version = "1.0", features = ["v4"] }
+
+[lints.rust]
+warnings = "warn"
+[lints.clippy]
+all = "warn"

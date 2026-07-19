@@ -18,6 +18,7 @@ import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
 import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
 import { scanAdapter } from "@renderer/api/scan.adapter";
+import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@photasa/common";
 import type { NotifyPayload } from "@photasa/common";
@@ -504,6 +505,148 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             `🔮 接收房玄龄诏令: ${zhaoling.command}, 来源: ${zhaoling.source}, 优先级: ${zhaoling.priority}`,
         );
 
+        const startTime = Date.now();
+
+        // ✅ RFC 0143: 尉迟恭/房玄龄/袁天罡 扫描队列管理事务直连并拦截 (直接同步本地Pinia store状态，不经过Tianshu)
+        if (
+            zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE ||
+            zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION ||
+            zhaoling.command === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION ||
+            zhaoling.command === ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS
+        ) {
+            try {
+                const scanningStore = useScanningStore();
+                logger.info(`🔮 钦天监直连拦截队列事务: ${zhaoling.command}，回传Pinia快照`);
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data: { queue: scanningStore.queue },
+                    blessing: "钦天监队列快照同步成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "tauri-store-sync",
+                        processTime: Date.now() - startTime,
+                        urgency:
+                            zhaoling.priority === "imperial"
+                                ? "critical"
+                                : zhaoling.priority === "urgent"
+                                  ? "high"
+                                  : "normal",
+                    },
+                };
+            } catch (error) {
+                logger.error(`🔮 钦天监队列事务同步失败: ${zhaoling.command}`, error);
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "钦天监同步失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "状态同步异常",
+                };
+            }
+        }
+
+        // ✅ RFC 0142: 魏征监管的文件夹配置事务直连天界 (不经过Tianshu workflow)
+        if (
+            zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG ||
+            zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG ||
+            zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG ||
+            zhaoling.command === ZOUZHE_MATTERS.ADD_PHOTO_TO_LIST ||
+            zhaoling.command === ZOUZHE_MATTERS.REMOVE_PHOTO_FROM_LIST ||
+            zhaoling.command === ZOUZHE_MATTERS.TO_DIR_NAME ||
+            zhaoling.command === ZOUZHE_MATTERS.SCAN_SUBFOLDERS ||
+            zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS
+        ) {
+            try {
+                let data: any = null;
+                const { invoke } = await import("@tauri-apps/api/core");
+                if (zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG) {
+                    data = await invoke("get_photasa_config", { folder: zhaoling.context.folder });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG) {
+                    data = await invoke("fix_photasa_config", { folder: zhaoling.context.folder });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG) {
+                    data = await invoke("reset_photasa_config", {
+                        folder: zhaoling.context.folder,
+                    });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_PHOTO_TO_LIST) {
+                    data = await invoke("add_to_photo_list", {
+                        photoPath: zhaoling.context.photoPath,
+                    });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_PHOTO_FROM_LIST) {
+                    data = await invoke("remove_from_photo_list", {
+                        photoPath: zhaoling.context.photoPath,
+                    });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.TO_DIR_NAME) {
+                    data = await invoke("to_dir_name", { path: zhaoling.context.path });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.SCAN_SUBFOLDERS) {
+                    data = await invoke("sub_folders", { folderPath: zhaoling.context.folderPath });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS) {
+                    const { path, action, thumbnailSize } = zhaoling.context as any;
+                    const requestId = `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                    const scanAction = {
+                        path,
+                        action,
+                        thumbnailSize,
+                        operationType: "directory" as const,
+                    };
+
+                    data = await new Promise<any>((resolve, reject) => {
+                        let unlistenFn: (() => void) | null = null;
+
+                        listen<any>("picasa:find-photo", (event) => {
+                            const result = event.payload;
+                            if (result.requestId !== requestId) return;
+                            if (result.type === "complete") {
+                                if (unlistenFn) unlistenFn();
+                                resolve(result);
+                            } else if (result.type === "error") {
+                                if (unlistenFn) unlistenFn();
+                                reject(new Error(result.error || "扫描失败"));
+                            }
+                        })
+                            .then((unlisten) => {
+                                unlistenFn = unlisten;
+                                invoke("scan_photos", { requestId, scanAction }).catch((err) => {
+                                    if (unlistenFn) unlistenFn();
+                                    reject(err);
+                                });
+                            })
+                            .catch(reject);
+                    });
+                }
+
+                logger.info(`🔮 钦天监直连文书上报成功: ${zhaoling.command}`);
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "钦天监直连上报成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "tauri",
+                        processTime: Date.now() - startTime,
+                        urgency:
+                            zhaoling.priority === "imperial"
+                                ? "critical"
+                                : zhaoling.priority === "urgent"
+                                  ? "high"
+                                  : "normal",
+                    },
+                };
+            } catch (error) {
+                logger.error(`🔮 钦天监直连上报失败: ${zhaoling.command}`, error);
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "天界暂时无法响应",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "直连上报异常",
+                };
+            }
+        }
+
         try {
             // 房玄龄既然发诏令给袁天罡，必定需要天界通信
             // 袁天罡作为钦天监，职责是执行通信，无需再次判断
@@ -520,7 +663,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                           : "normal",
             };
 
-            const startTime = Date.now();
             const fuluResponse = await this.sendFuluToTianshu(fulu);
             const processTime = Date.now() - startTime;
 

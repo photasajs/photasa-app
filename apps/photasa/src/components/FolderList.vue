@@ -3,7 +3,6 @@ import { ref, watch, reactive, computed } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import type { PhotasaConfig } from "@photasa/common";
-import { fixPhotasaConfig, getPhotasaConfig } from "@renderer/utils/api";
 import { normalizePath } from "@renderer/utils/path";
 import { isEmpty } from "radash";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
@@ -109,7 +108,7 @@ watch(
             preferenceStore.appState.currentFolder = newFolderPath;
 
             try {
-                const config = await getPhotasaConfig(newFolderPath);
+                const config = await weiZheng.getFolderConfig(newFolderPath);
 
                 preferenceStore.appState.currentFolderConfig =
                     config ||
@@ -161,7 +160,7 @@ async function openPhotasaConfig(folder: string): Promise<void> {
     // TODO: 优化，如果配置文件不存在，则提示用户
     loadingInfo.value = true;
     showConfigModal.value = true;
-    const config = await getPhotasaConfig(folder);
+    const config = await weiZheng.getFolderConfig(folder);
 
     photasa.config = config;
     photasa.path = folder;
@@ -183,7 +182,7 @@ function openFileInFinder(key: string): void {
  * Fix the photasa config
  */
 async function fixConfig(): Promise<void> {
-    const config = await fixPhotasaConfig(photasa.path);
+    const config = await weiZheng.fixFolderConfig(photasa.path);
     photasa.config = config;
     photasa.status = config?.photoList?.length > 0 ? "completed" : "empty";
     photasa.lastModified = new Date(config?.lastModified || Date.now());
@@ -195,13 +194,15 @@ async function fixConfig(): Promise<void> {
  */
 async function rescan(key: string): Promise<void> {
     const folderPath = normalizePath(key);
-    logger.info(`[FolderList] Starting rescan for folder: ${folderPath}`);
-    try {
-        await yuChiGong.requestRescan(folderPath);
-        logger.info(`[FolderList] Rescan queued for: ${folderPath}`);
-    } catch (error) {
-        logger.error(`[FolderList] Error during rescan of ${folderPath}:`, error);
-    }
+    logger.info(`[FolderList] Requesting rescan for folder: ${folderPath}`);
+    window.dispatchEvent(
+        new CustomEvent("picasa:shangshu", {
+            detail: {
+                action: "request_rescan",
+                path: folderPath,
+            },
+        }),
+    );
 }
 
 // Expose methods to parent component

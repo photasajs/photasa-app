@@ -1,8 +1,8 @@
 [package]
-name = "wenchang-preferences"
+name = "photasa-preference"
 version = "0.1.0"
 edition = "2021"
-description = "Wenchang preferences persistence (Photasa)"
+description = "Application-level preferences persistence (Photasa); Tauri service layer name: Wenchang"
 license = "MIT"
 
 [dependencies]

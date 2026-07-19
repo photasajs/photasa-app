@@ -5,10 +5,10 @@
 ### Features
 
 - **MaLiang Image Processing Engine**: Implement unified image processing engine with Magic Brush Workshop Pattern
-  - Add BmpBrush for BMP format support with Jimp preprocessing
-  - Add SharpBrush for universal image processing (JPEG, PNG, WebP, TIFF, GIF, AVIF)
-  - Add FfmpegBrush for universal video processing (MP4, AVI, MOV, MKV, WebM, etc.)
-  - Implement intelligent format routing based on technical boundaries
+    - Add BmpBrush for BMP format support with Jimp preprocessing
+    - Add SharpBrush for universal image processing (JPEG, PNG, WebP, TIFF, GIF, AVIF)
+    - Add FfmpegBrush for universal video processing (MP4, AVI, MOV, MKV, WebM, etc.)
+    - Implement intelligent format routing based on technical boundaries
 - **Architecture Simplification**: Streamline processing architecture from format-specific to technology-boundary-driven design
 - **Configuration Management**: Integrate FFmpeg configuration management into engine architecture
 - **Code Cleanup**: Remove redundant image processing logic and optimize thumbnail generation workflow

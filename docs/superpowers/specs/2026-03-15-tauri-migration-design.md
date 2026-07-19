@@ -212,7 +212,7 @@ impl ZouwuEngine {
 ```yaml
 # 这在 YAML 中不合法，serde_yaml 直接拒绝
 input:
-  paths: {{inputs.paths}}
+    paths: { { inputs.paths } }
 ```
 
 因此采用两阶段解析：
@@ -299,14 +299,14 @@ pub fn build_registry(app_handle: AppHandle) -> AdapterRegistry {
 
 ### Adapter 对应表
 
-| Adapter 名称 | 对应 RFC | 是否需要 AppHandle | 实现位置 |
-|-------------|---------|------------------|---------|
-| `builtin` | — | 否 | `crates/zouwu-builtin` |
-| `wenchang`（配置）| RFC 0071、0077-0081 | 否 | `src-tauri/src/adapters/config_adapter.rs` |
-| `qianliyan`（扫描）| RFC 0068、0082-0087 | **是** | `src-tauri/src/adapters/scan_adapter.rs` |
-| `maliang`（缩略图）| RFC 0069 | 否 | `src-tauri/src/adapters/thumbnail_adapter.rs` |
-| `sibu`（导入）| RFC 0070、0093 | **是** | `src-tauri/src/adapters/import_adapter.rs` |
-| `shell` | RFC 0088、0091 | **是** | `src-tauri/src/adapters/shell_adapter.rs` |
+| Adapter 名称        | 对应 RFC            | 是否需要 AppHandle | 实现位置                                      |
+| ------------------- | ------------------- | ------------------ | --------------------------------------------- |
+| `builtin`           | —                   | 否                 | `crates/zouwu-builtin`                        |
+| `wenchang`（配置）  | RFC 0071、0077-0081 | 否                 | `src-tauri/src/adapters/config_adapter.rs`    |
+| `qianliyan`（扫描） | RFC 0068、0082-0087 | **是**             | `src-tauri/src/adapters/scan_adapter.rs`      |
+| `maliang`（缩略图） | RFC 0069            | 否                 | `src-tauri/src/adapters/thumbnail_adapter.rs` |
+| `sibu`（导入）      | RFC 0070、0093      | **是**             | `src-tauri/src/adapters/import_adapter.rs`    |
+| `shell`             | RFC 0088、0091      | **是**             | `src-tauri/src/adapters/shell_adapter.rs`     |
 
 ---
 
@@ -315,15 +315,17 @@ pub fn build_registry(app_handle: AppHandle) -> AdapterRegistry {
 `.zouwu` 工作流文件需要随应用打包，在运行时通过 Tauri 资源 API 访问：
 
 **`tauri.conf.json` 配置：**
+
 ```json
 {
-  "bundle": {
-    "resources": ["../../apps/desktop/src/main/engines/tianshu/workflows/**"]
-  }
+    "bundle": {
+        "resources": ["../../apps/desktop/src/main/engines/tianshu/workflows/**"]
+    }
 }
 ```
 
 **运行时路径解析：**
+
 ```rust
 // TianshuService 初始化时
 let workflows_dir = app_handle
@@ -344,6 +346,7 @@ let workflows_dir = app_handle
 前端 Vue 组件无需修改。
 
 关键推送事件：
+
 - `picasa:find-photo` — 扫描结果（ScanAdapter emit）
 - `import:progress` — 导入进度（ImportAdapter emit）
 - `picasa:watch-event` — 文件系统变更（ShellAdapter emit）
