@@ -1,9 +1,8 @@
 # RFC 0111 – Tauri scan: `notify:status` bridge (RFC 0057 parity)
 
-
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Implement in `apps/photasa/src-tauri` only; **do not** import `@photasa/scan` `buildScanNotifyPayload` from Tauri.
 - Match Electron **event contract** (`notify:status` + `NotifyPayload` shape from `@photasa/common` spec).

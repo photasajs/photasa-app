@@ -56,6 +56,7 @@
         "@videojs-player/vue": "^1.0.0",
         "@vitejs/plugin-vue": "^5.0.0",
         "@vitejs/plugin-vue-jsx": "^5.0.1",
+        "@vitest/coverage-v8": "^4.0.16",
         "@vue/eslint-config-prettier": "^9.0.0",
         "@vue/eslint-config-typescript": "^11.0.3",
         "@vue/test-utils": "^2.4.6",

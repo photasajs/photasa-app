@@ -11,7 +11,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Scan **algorithm** lives in **`crates/photasa-scan`** — **zero Tauri**.
 - Shared scan/watch DTOs live in **`crates/photasa-types`** — **zero Tauri**.

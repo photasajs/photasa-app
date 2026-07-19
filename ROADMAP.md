@@ -12,16 +12,21 @@ High-level plans and “what’s next” live here. Do not duplicate this as ran
 
 ### Golden rule: Rust rewrite, not TypeScript copy
 
-Canonical policy: [`docs/rfc/TAURI_RUST_REWRITE_POLICY.md`](docs/rfc/TAURI_RUST_REWRITE_POLICY.md). **All Photasa/Tauri RFCs must comply.**
+Canonical policy lives in this section. **All Photasa/Tauri RFCs must comply.**
 
-| Do                                                               | Don't                                                                    |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Implement backend in Rust (`src-tauri`, `crates/`)               | Import Node packages (`@photasa/scan`, `@photasa/import`, …) from Tauri  |
-| Use Electron/TS as **behavior spec** (IPC, events, on-disk JSON) | Port, mirror, or line-copy TypeScript into Rust or shared TS for Tauri   |
-| Verify **1:1 parity** via contracts and golden tests             | Treat RFC 0098 (Electron package extraction) as the Photasa backend path |
+| Do                                                               | Don't                                                                     |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Implement backend in Rust (`src-tauri`, `crates/`)               | Import Node packages (`@photasa/scan`, `@photasa/import`, …) from Tauri   |
+| Use Electron/TS as **behavior spec** (IPC, events, on-disk JSON) | Port, mirror, or line-copy TypeScript into Rust or shared TS for Tauri    |
+| Verify **1:1 parity** via contracts and golden tests             | Treat RFC 0098 (Electron package extraction) as the Photasa backend path  |
+| Reuse Vue UI from `apps/desktop` renderer where useful           | Put heavy I/O, media, persistence, or security-sensitive logic in UI/Node |
+| Use Rust crates for reusable backend logic                       | Use WASM / wasmtime / wasm-pack as Photasa backend transition layer       |
 
 - **Vue UI** may be reused from `apps/desktop` renderer; **backend** is always a Rust rewrite.
 - **RFC 0098** is Electron-only maintenance; Phase 2 does not substitute Tauri work (e.g. RFC 0105 scan cache in Rust).
+- **Parity** means same command names, event names, JSON shapes, disk formats, and user-visible behavior. It does **not** require same algorithm, dependencies, or repo file layout.
+- **Workflow**: specify Electron contract → implement independently in Rust → verify with Rust tests / golden parity → document TS as behavior reference only.
+- **RFC wording**: say “match Electron contract” or “reference implementation (spec only)”; do not say “port TS”, “mirror TypeScript”, or “reuse `@photasa/*`”.
 
 ### Active RFCs must target Rust (Photasa)
 
@@ -52,7 +57,7 @@ Existing 0067–0073 remain as high-level or per-service docs; new or split work
 
 RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 为准**；规范正文在 `.spec/rfc/*.md` 与 `.spec/rfc/completed/*.md`，**不再维护**旧 `docs/rfc/README.md`。
 
-**历史说明：** v2.0 Electron RFC（如扫描缓存、导入向导）描述 legacy Node 栈。Photasa/Tauri 等价能力按 [TAURI_RUST_REWRITE_POLICY.md](.spec/rfc/TAURI_RUST_REWRITE_POLICY.md) **在 Rust 中重写**，不以复制 TS 或共享 `@photasa/*` 后端包为实现路径。RFC 0098 仅服务 Electron 维护。
+**历史说明：** v2.0 Electron RFC（如扫描缓存、导入向导）描述 legacy Node 栈。Photasa/Tauri 等价能力按本文件 **Golden rule** 在 Rust 中重写，不以复制 TS 或共享 `@photasa/*` 后端包为实现路径。RFC 0098 仅服务 Electron 维护。
 
 ### 统计（维护时随新增 RFC 更新）
 
@@ -137,11 +142,12 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0131](.spec/rfc/completed/0131-tauri-photasa-import-crate.md)             | `photasa-import` 独立 crate（算法可测、零 Tauri）                                      | ✅ Implemented                                                    |
 | [0134](.spec/rfc/completed/0134-tauri-photasa-thumbnail-crate.md)          | `photasa-thumbnail` 独立 crate（async image/libheif/ffmpeg 解码，零 Tauri）            | ✅ Implemented                                                    |
 | [0132](.spec/rfc/completed/0132-tauri-photasa-scan-crate.md)               | `photasa-types` + `photasa-scan` 独立 crate（共享类型；零 Tauri）                      | ✅ Implemented                                                    |
-| [0133](.spec/rfc/0133-tauri-photasa-watch-crate.md)                        | `photasa-watch` 独立 crate（队列合并/防抖，零 Tauri）                                  | ⏳ Draft（P1c）                                                   |
+| [0133](.spec/rfc/completed/0133-tauri-photasa-watch-crate.md)              | `photasa-watch` 独立 crate（queue 算法，零 Tauri）                                     | ✅ Implemented                                                    |
+| [0135](.spec/rfc/completed/0135-tauri-watch-ui-contract-fix.md)            | watch UI 契约（`WatchState` / camelCase `isFile` / add·delete×file·folder）            | ✅ Implemented                                                    |
 
 ### Photasa next priorities（2026-07）
 
-**迁移** [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md) ✅。政策：[TAURI_RUST_REWRITE_POLICY.md](.spec/rfc/TAURI_RUST_REWRITE_POLICY.md)。
+**迁移** [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md) ✅。政策：本文件 **Golden rule**。
 
 **铁律：** Gap / T3 残留 → **一事一 RFC**。禁止 mono「contract polish」袋。
 
@@ -160,13 +166,14 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | **P0-infra** | `photasa-import` crate 拆分（可测性）                 | **0131** ✅ |
 | **P1a**      | `photasa-thumbnail` async crate 拆分（可测性）        | **0134** ✅ |
 | **P1b**      | `photasa-types` + `photasa-scan` crate 拆分（可测性） | **0132** ✅ |
-| **P1c**      | `photasa-watch` crate 拆分（可测性）                  | **0133** ⏳ |
+| **P1c**      | `photasa-watch` crate 拆分（可测性）                  | **0133** ✅ |
+| **P1d**      | watch UI 契约（add/delete 文件/目录）                 | **0135** ✅ |
 | **P3h**      | Quit 恢复                                             | **0120** ✅ |
 | **P3i**      | Settings 导入                                         | **0121** ✅ |
 | —            | Legacy importPhotos UX                                | **0122** ❌ |
 | —            | Electron desktop UX                                   | **0126** ❌ |
 
-**编号：** **0108–0110 不回填**；**0118–0134** 已登记。
+**编号：** **0108–0110 不回填**；**0118–0135** 已登记。
 
 ---
 
@@ -234,7 +241,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 
 ## Implementation principle (Photasa / Tauri — if applicable)
 
-> Link [TAURI_RUST_REWRITE_POLICY.md](docs/rfc/TAURI_RUST_REWRITE_POLICY.md). Rust rewrite; TS/Electron = spec only.
+> Link [ROADMAP.md](../../ROADMAP.md) → Golden rule. Rust rewrite; TS/Electron = spec only.
 
 ## Summary
 
@@ -294,29 +301,30 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **RFC 0092 扩展：** 已用 `tauri-plugin-global-shortcut` 注册与 Electron 相同的日志查看器全局快捷键（macOS `cmd+shift+alt+KeyL` / 其他 `ctrl+shift+alt+KeyL`），按下时发射 `log:toggle-viewer`；系统菜单仍为 macOS `apply_system_menu`（既有实现）。
 - **RFC 0097（迁移跟踪）：** ✅ Implemented。导入表面已 Rust：`preview_import` / `execute_import` / history·undo / `extract_metadata`（0112 golden）/ 日期目录（0104）/ pause·resume（0096）。`tauri-import-stubs` = 前端兜底形状 only，**不是**未接入后端。导入历史落盘 `import_history_v1.json`。Updater 接线见 **0113** + `UPDATER.md`（生产密钥走 CI/运维，不进仓库）。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
-- **Next step（以「Photasa next priorities」为准）：** **P1c** **0133** (`photasa-watch`)；import deferred 已清零（0120/0121 ✅，0122/0126 ❌）。
+- **Next step（以「Photasa next priorities」为准）：** watch 线 **0133/0135** ✅；见 Deferred / 其它 polish。
+- **0135（2026-07-18）：** ✅ archived — `watch-event.ts` + camelCase `isFile`；四类 add/delete 通路 A。
+- **0133（2026-07-18）：** ✅ archived — `crates/photasa-watch`；`cargo test -p photasa-watch` **7 passed**；Tauri sink → UI queue。
 - **Phase 5 – 1:1 Parity gaps（2026-04）：** … Splash / RAW / engine-status 已收口；`otool`/`ldd` 可选 CI。
 - **Phase 6 – Deep code parity（2026-04）：** **RFC 0104** ✅ … **RFC 0105** ✅ … **RFC 0106** ✅ …
 - **Phase 8 – Import UX（2026-07）：** **0118** ✅ — **P2 UX**（非 Rust 迁移）；正文：`.spec/rfc/completed/0118-tauri-import-background-ui.md`。T1 Vitest 已绿；T2 用户签收。
 - **0118–0131（2026-07-18）：** import line closed；completed → `.spec/rfc/completed/`，rejected → `.spec/rfc/rejected/`。
 - **0134（2026-07-18）：** ✅ Implemented — `photasa-thumbnail` async crate；零 Tauri，`cargo test -p photasa-thumbnail` 6 passed。
 - **0132（2026-07-18）：** ✅ Implemented — `photasa-types` + `photasa-scan`，32 scan tests，零 Tauri 依赖。
-- **0133（2026-07-18）：** ⏳ Draft（P1c）— `photasa-watch` 仍是下一项。
 
 ---
 
 ## Electron → Rust parity audit（2026-06）
 
-**规则：** [TAURI_RUST_REWRITE_POLICY.md](docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — 后端 **仅 Rust**；Electron/TS **仅作契约对照**。跟踪 RFC：**[0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md)**（Photasa Active）。
+**规则：** 本文件 **Golden rule** — 后端 **仅 Rust**；Electron/TS **仅作契约对照**。跟踪 RFC：**[0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)**（Photasa Active）。
 
 ### 总结
 
-| 类别                         | 数量                               | 说明                                                                       |
-| ---------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
-| ✅ **已在 Rust 重写**        | ~98% flat `window.api` + 天枢/文昌 | legacy-api Tauri 分支无 stub；Phase 7 完成                                 |
-| 🚧 **可选 polish（非迁移）** | 见 **Photasa next priorities**     | **P1a** 0134 ✅；**P1b** 0132 ✅；**P1c** 0133 ⏳；import Deferred cleared |
-| ❌ **未重写 / 已清理**       | 0 项                               | WASM 占位已删除（0114）                                                    |
-| ⛔ **不得作为 Photasa 路径** | Electron-only                      | `@photasa/*` 抽包（0098）、preload 本地 fs、Ma-Liang Node                  |
+| 类别                         | 数量                               | 说明                                                      |
+| ---------------------------- | ---------------------------------- | --------------------------------------------------------- |
+| ✅ **已在 Rust 重写**        | ~98% flat `window.api` + 天枢/文昌 | legacy-api Tauri 分支无 stub；Phase 7 完成                |
+| 🚧 **可选 polish（非迁移）** | 见 **Photasa next priorities**     | **P1a–d** 0134/0132/0133/0135 ✅                          |
+| ❌ **未重写 / 已清理**       | 0 项                               | WASM 占位已删除（0114）                                   |
+| ⛔ **不得作为 Photasa 路径** | Electron-only                      | `@photasa/*` 抽包（0098）、preload 本地 fs、Ma-Liang Node |
 
 ### ✅ 已在 Rust 重写（按 Electron 能力域）
 
@@ -411,7 +419,7 @@ Rust 后端（子代理）：commands/platform.rs, path.rs, directory.rs, watch.
 
 ## Image processing support plan (Tauri)
 
-Electron today: **Ma-Liang** (Node/Sharp/WASM). **Photasa: Rust-only** per [TAURI_RUST_REWRITE_POLICY.md](docs/rfc/TAURI_RUST_REWRITE_POLICY.md).
+Electron today: **Ma-Liang** (Node/Sharp/WASM). **Photasa: Rust-only** per this file **Golden rule**.
 
 | Format / area               | Tauri approach                        | RFC        |
 | --------------------------- | ------------------------------------- | ---------- |

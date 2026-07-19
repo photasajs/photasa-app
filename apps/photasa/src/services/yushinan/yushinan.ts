@@ -4,15 +4,17 @@
  *
  * 职责：
  * 1. 接收李世民的 update_scan_progress 圣旨
- * 2. 通过 photoStore 更新扫描进度
- * 3. 提供 getter 供 UI 访问（通过房玄龄）
- * 4. 记录扫描活动到监控系统
+ * 2. 通过 photoStore 更新当前文件进度
+ * 3. 通过 scanningStore 队列状态派生状态栏扫描状态
+ * 4. 提供 getter 供 UI 访问（通过房玄龄）
+ * 5. 记录扫描活动到监控系统
  *
  * 架构原则：
  * - ❌ 虞世南不持有响应式状态
- * - ✅ 虞世南更新 photoStore
+ * - ✅ 虞世南更新 photoStore 的当前文件进度
+ * - ✅ 扫描中状态以 scanningStore 队列为准
  * - ✅ 虞世南提供 getter 通过房玄龄访问数据
- * - ✅ UI 通过 useYuShiNan() → 虞世南 → 房玄龄 → photoStore
+ * - ✅ UI 通过 useYuShiNan() → 虞世南 → 房玄龄 → Store
  *
  * 历史背景：
  * 虞世南，唐朝秘书监，主持编纂《北堂书钞》
@@ -30,6 +32,8 @@ import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { IService } from "@renderer/interfaces/service.interface";
 import { scanMonitoringService } from "./scan-monitoring-service";
+import { deriveScanStatusView } from "./scan-status-model";
+import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { loggers, globalLogInterceptor } from "@photasa/common";
 
 const logger = loggers.yushinan;
@@ -40,22 +44,24 @@ const logger = loggers.yushinan;
  *
  * 职责：
  * 1. 接收李世民的 update_scan_progress 圣旨
- * 2. 通过 photoStore 更新扫描进度
- * 3. 提供 getter 供 UI 访问（通过房玄龄）
- * 4. 记录扫描活动到监控系统
+ * 2. 通过 photoStore 更新当前文件进度
+ * 3. 通过 scanningStore 队列状态派生状态栏扫描状态
+ * 4. 提供 getter 供 UI 访问（通过房玄龄）
+ * 5. 记录扫描活动到监控系统
  *
  * 架构原则：
  * - ❌ 虞世南不持有响应式状态
- * - ✅ 虞世南更新 photoStore
+ * - ✅ 虞世南更新 photoStore 的当前文件进度
+ * - ✅ 扫描中状态以 scanningStore 队列为准
  * - ✅ 虞世南提供 getter 供 UI 访问（通过房玄龄）
- * - ✅ UI 通过 useYuShiNan() → 虞世南 → 房玄龄 → photoStore
+ * - ✅ UI 通过 useYuShiNan() → 虞世南 → 房玄龄 → Store
  *
  * 历史背景：
  * 虞世南，唐朝秘书监，主持编纂《北堂书钞》
  * 在架构中负责实时记录和展示扫描状态
  */
 export class YuShiNanService implements IService, IYuShiNanService {
-    /** 房玄龄宰相服务（用于访问 photoStore） */
+    /** 房玄龄宰相服务（用于访问 Store） */
 
     constructor(private readonly fangXuanLingService: IFangXuanLingService) {
         logger.info("📜 虞世南就任秘书监，准备记录扫描状态");
@@ -117,24 +123,19 @@ export class YuShiNanService implements IService, IYuShiNanService {
 
     /**
      * ✅ RFC 0057: 判断是否正在扫描
-     * 从 StatusBar.vue 移入，统一由 yuShiNan 管理
+     * 从 scanningStore 队列处理状态派生
      */
     get isScanning(): boolean {
-        const file = this.currentScanningFile;
-        if (!file) {
-            return false;
-        }
-        // 如果有 processingFile，说明正在扫描
-        return file.length > 0;
+        return deriveScanStatusView(this.fangXuanLingService.scanning).isScanning;
     }
 
     /**
      * ✅ RFC 0057: 获取扫描路径显示文本（带"扫描中"前缀）
-     * 从 StatusBar.vue 移入，统一由 yuShiNan 管理
+     * 从 scanningStore 当前处理路径派生
      * 注意：此方法返回纯路径，UI 层负责添加 i18n 前缀
      */
     get scanningPath(): string {
-        return this.currentScanningFile;
+        return deriveScanStatusView(this.fangXuanLingService.scanning).path;
     }
 
     setShengzhiPort(port: MessagePort): void {
@@ -189,11 +190,22 @@ export class YuShiNanService implements IService, IYuShiNanService {
         } else {
             // ✅ 扫描进行中，更新扫描进度
             photosStore.updateScanProgress(content.filePath, content.progress);
+            this.updateQueueProgress(content);
             logger.info(`📜 虞世南：已记录扫描状态 - ${content.filePath}`);
         }
 
         // ✅ 记录扫描活动到监控系统
         scanMonitoringService.recordActivity();
+    }
+
+    private updateQueueProgress(content: ScanProgressShengzhiContent): void {
+        const scanPath = content.scanPath || content.filePath;
+        if (!scanPath) return;
+
+        useScanningStore().updateProgress(scanPath, {
+            processed: content.progress,
+            total: content.total ?? 0,
+        });
     }
 
     /**

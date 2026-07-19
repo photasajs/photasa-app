@@ -7,16 +7,19 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 import mitt from "mitt";
 import { YuChiGongService } from "../yuchigong";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type {
     IFangXuanLingService,
+    IPreference,
     IScanning,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import type { ScanAction } from "@photasa/common";
 import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
+import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import {
     ZOUZHE_MATTERS,
     ZOUZHE_PRIORITIES,
@@ -85,6 +88,8 @@ class MockFangXuanLingService implements IFangXuanLingService {
     public shouldThrowError = false;
     public shouldApprove = true;
     public mockInstruction = "已批准";
+    public mockThumbnailSize = 150;
+    public skipStoreMutation = false;
     private mockScanningStore: MockScanningStore;
 
     constructor() {
@@ -97,8 +102,14 @@ class MockFangXuanLingService implements IFangXuanLingService {
     }
 
     // 实现IFangXuanLingService必需的属性和方法
-    get preference(): never {
-        throw new Error("Mock: preference not implemented");
+    get preference(): IPreference {
+        return {
+            currentTheme: "dark",
+            currentLanguage: "zh-CN",
+            thumbnailSize: this.mockThumbnailSize,
+            paths: [],
+            reset: vi.fn(),
+        };
     }
 
     get notification(): never {
@@ -126,6 +137,7 @@ class MockFangXuanLingService implements IFangXuanLingService {
         this.shouldThrowError = false;
         this.shouldApprove = true;
         this.mockInstruction = "已批准";
+        this.skipStoreMutation = false;
         this.mockScanningStore.clear();
     }
 
@@ -136,7 +148,7 @@ class MockFangXuanLingService implements IFangXuanLingService {
         this.receivedZouzhes.push(zouzhe);
 
         // ✅ RFC 0042: Mock processZouzhe should update store for ADD_SCAN_ACTION
-        if (zouzhe.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
+        if (zouzhe.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION && !this.skipStoreMutation) {
             const content = zouzhe.content as Record<string, unknown>;
             // ✅ 修复：工作流期望 actions 数组
             const actionsArray = content.actions;
@@ -153,9 +165,11 @@ class MockFangXuanLingService implements IFangXuanLingService {
                         action: (actionData.action as "scan" | "rescan" | "current") || "scan",
                         thumbnailSize: (actionData.thumbnailSize as number) || 150,
                         source,
-                        timestamp: (actionData.addedAt as number) || Date.now(),
+                        timestamp: (actionData.timestamp as number) || Date.now(),
                         operationType:
                             (actionData.operationType as "directory" | "file") || "directory",
+                        priority: actionData.priority as number | undefined,
+                        fileOperationId: actionData.fileOperationId as string | undefined,
                     });
                     this.mockScanningStore.addAction(createScanQueueItem(scanAction));
                 }
@@ -163,7 +177,7 @@ class MockFangXuanLingService implements IFangXuanLingService {
         }
 
         // ✅ RFC 0042: Mock processZouzhe should update store for REMOVE_SCAN_ACTION
-        if (zouzhe.matter === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
+        if (zouzhe.matter === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION && !this.skipStoreMutation) {
             const path = (zouzhe.content as Record<string, unknown>).path as string;
             this.mockScanningStore.removeAction(path);
         }
@@ -182,6 +196,7 @@ class MockFangXuanLingService implements IFangXuanLingService {
         this.shouldThrowError = false;
         this.shouldApprove = true;
         this.mockInstruction = "已批准";
+        this.skipStoreMutation = false;
         this.mockScanningStore.clear();
     }
 }
@@ -194,6 +209,8 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
     let messageChannel: MessageChannel;
 
     beforeEach(async () => {
+        setActivePinia(createPinia());
+
         // 先清理旧的状态（如果存在）
         if (messageChannel && messageChannel.port2) {
             messageChannel.port2.onmessage = null;
@@ -1044,6 +1061,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
 
         it("requestRescan 应入队 rescan 并在执行时重置配置", async () => {
             const testPath = "/test/rescan-ui-path";
+            mockFangXuanLing.mockThumbnailSize = 256;
             mockWindowApi.scanSubfolders.mockResolvedValue([]);
 
             await yuchiGong.requestRescan(testPath);
@@ -1057,6 +1075,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 expect.objectContaining({
                     path: testPath,
                     action: "rescan",
+                    thumbnailSize: 256,
                     operationType: "directory",
                 }),
             );
@@ -1065,8 +1084,74 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 expect.objectContaining({
                     path: testPath,
                     action: "rescan",
+                    thumbnailSize: 256,
                 }),
             );
+        });
+
+        it("requestRescan 应立即写入 UI 运行时队列", async () => {
+            const testPath = "/test/rescan-visible";
+            mockFangXuanLing.skipStoreMutation = true;
+            mockWindowApi.scanSubfolders.mockResolvedValue([]);
+            mockWindowApi.scanPhotos.mockReturnValue(new Promise(() => {}));
+
+            await yuchiGong.requestRescan(testPath);
+
+            expect(useScanningStore().queue).toEqual([
+                expect.objectContaining({
+                    path: testPath,
+                    action: "rescan",
+                    status: "pending",
+                    operationType: "directory",
+                }),
+            ]);
+        });
+
+        it("watch 文件操作应该入尉迟恭队列并启动文件扫描", async () => {
+            mockWindowApi.scanSubfolders.mockResolvedValue([]);
+
+            await yuchiGong.scheduleFileOperationsFromWatch(
+                [
+                    {
+                        id: "watch-op-1",
+                        type: "change",
+                        path: "/test/watch/file.jpg",
+                        timestamp: 1_700_000_000_000,
+                        priority: 2,
+                        retryCount: 1,
+                        metadata: {
+                            thumbnailSize: 256,
+                            isFile: true,
+                        },
+                    },
+                ],
+                150,
+            );
+            await new Promise((resolve) => setTimeout(resolve, 150));
+
+            const addActionZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+            );
+            expect(addActionZouzhe).toBeDefined();
+            expect((addActionZouzhe?.content as { actions: ScanAction[] }).actions[0]).toEqual(
+                expect.objectContaining({
+                    path: "/test/watch/file.jpg",
+                    action: "rescan",
+                    thumbnailSize: 256,
+                    operationType: "file",
+                    source: "auto",
+                    priority: 2,
+                    retryCount: 1,
+                    fileOperationId: "watch-op-1",
+                }),
+            );
+            expect(mockWindowApi.scanSubfolders).not.toHaveBeenCalled();
+            expect(mockWindowApi.scanPhotos).toHaveBeenCalledWith({
+                path: "/test/watch/file.jpg",
+                action: "rescan",
+                thumbnailSize: 256,
+                isDirectory: false,
+            });
         });
 
         it("应该递归扫描子文件夹", async () => {

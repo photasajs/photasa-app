@@ -2,7 +2,7 @@
 
 当前活跃任务和 RFC 实现进度。不重复 ROADMAP.md 中的战略规划；本文件只跟踪**具体实现任务**的当前状态。
 
-**Photasa 黄金规则：** [TAURI_RUST_REWRITE_POLICY.md](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — Rust 重写后端；Electron/TS 仅作行为规格，禁止复制 TS 到 Tauri。
+**Photasa 黄金规则：** [ROADMAP.md](./ROADMAP.md) → Golden rule — Rust 重写后端；Electron/TS 仅作行为规格，禁止复制 TS 到 Tauri。
 
 **Active RFC 规则：** 凡标为 **Photasa Active** 的 RFC，实现目标必须是 **`apps/photasa/src-tauri` / `crates/` 中的 Rust**；不得把 `@photasa/*` Node 包或 Electron main 抽包当作 Photasa 交付路径。
 
@@ -205,7 +205,7 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 - [x] **`get_directory`**：`desktop`/`documents`/`home` 映射 OS 路径（Electron `app.getPath`），非空 `DirectoryStore` 优先
 - [x] **`scan_directories`**：返回 `FileGroup[]` + 可选 `filters`（非 flat `string[]`）
-- [x] **WASM 清理**：删除 stub 命令与 `wasm.rs`；**禁止** wasmtime / WASM 过渡方案（见 [TAURI_RUST_REWRITE_POLICY](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md)）
+- [x] **WASM 清理**：删除 stub 命令与 `wasm.rs`；**禁止** wasmtime / WASM 过渡方案（见 [ROADMAP.md](./ROADMAP.md) → Golden rule）
 - [x] **RAW 占位扩展名**：`photasa-thumbnail::placeholder` 位图字体（0102 迭代，0134 后归 crate）
 - [x] **`picasa:engine-status`**：`engine_status.rs` — setup 里程碑发射（`initializing` / `ready` / `error`）
 - [x] **Splash 主题同步**：`splash_bridge.rs` — `splash:theme-changed` + `WindowEvent::ThemeChanged`
@@ -246,33 +246,34 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 以下 RFC **允许**作为 Photasa 当前/下一 sprint 的实现依据。后端交付物必须是 Rust；Electron/TS 仅作契约对照。全量对拍见 [ROADMAP.md](./ROADMAP.md) → **Electron → Rust parity audit（2026-06）**。
 
-| RFC                                                                          | Title                                                    | Status          | Rust 交付                                                                           |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------- |
-| [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md)                 | legacy-api 与 Electron 1:1 跟踪（**父 RFC**）            | ✅ Implemented  | Phase 7（0111–0114）全部完成                                                        |
-| [0111](./docs/rfc/0111-tauri-scan-notify-status-bridge.md)                   | 扫描 `notify:status` 桥                                  | ✅ Implemented  | `scan_notify.rs` + `scan_runner`                                                    |
-| [0112](./docs/rfc/0112-tauri-extract-metadata-golden-parity.md)              | `extract_metadata` golden                                | ✅ Implemented  | fixtures + golden 测试                                                              |
-| [0113](./docs/rfc/0113-tauri-updater-production-and-prefs-sync.md)           | updater 生产 + 偏好同步                                  | ✅ Implemented  | `update_config.rs` + `UPDATER.md`                                                   |
-| [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md)                      | `get_directory` OS 路径 + `scan_directories` FileGroup[] | ✅ Implemented  | `directory.rs` + `import_file_groups.rs` + `import_scan_directories.rs`             |
-| [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md)          | WebView 本地图片 asset 协议                              | ✅ Implemented  | `media-url.ts` + CSP/assetProtocol + `path.rs`                                      |
-| [0118](./.spec/rfc/completed/0118-tauri-import-background-ui.md)             | 导入后台 UI（G1–G9,G13–G14）                             | ✅ Implemented  | Vue session + chip；T2 user-signed                                                  |
-| [0119](./.spec/rfc/completed/0119-tauri-import-checksum.md)                  | checksum 诚实                                            | ✅ Implemented  | Omit unknown checksum; no fake null                                                 |
-| [0120](./.spec/rfc/completed/0120-tauri-import-quit-recovery.md)             | 退出恢复（G11）                                          | ✅ Implemented  | active marker + JSONL copied-file journal；startup cleanup/keep                     |
-| [0121](./.spec/rfc/completed/0121-tauri-import-settings-prefs.md)            | Settings 导入（G12）                                     | ✅ Implemented  | Import tab + persisted defaults；wizard reads defaults                              |
-| [0122](./.spec/rfc/rejected/0122-tauri-legacy-importphotos-background-ux.md) | Legacy importPhotos UX（G10）                            | ❌ Rejected     | Legacy stays wrapper/event bridge；no second UI surface                             |
-| [0123](./.spec/rfc/completed/0123-tauri-import-duplicate-count.md)           | duplicateCount 诚实                                      | ✅ Implemented  | Existing target-name collisions counted                                             |
-| [0124](./.spec/rfc/completed/0124-tauri-import-resume-return-shape.md)       | resume 返回形状                                          | ✅ Implemented  | Tauri returns `{ importId }`; final result via `import:complete`                    |
-| [0125](./.spec/rfc/completed/0125-tauri-import-paused-progress-emit.md)      | paused progress emit                                     | ✅ Implemented  | pause/resume emit status; cancel payload fields complete                            |
-| [0126](./.spec/rfc/rejected/0126-electron-import-background-ux-parity.md)    | Electron desktop UX                                      | ❌ Rejected     | Electron-only parity is not Photasa Active                                          |
-| [0127](./.spec/rfc/completed/0127-tauri-import-error-payload-shape.md)       | `import:error` payload 形状（`[object Object]`）         | ✅ Implemented  | Store normalizes Rust `{ message, importId }`                                       |
-| [0128](./.spec/rfc/completed/0128-tauri-import-progress-import-id.md)        | `import:progress` 缺 `importId`                          | ✅ Implemented  | Rust progress JSON + frontend filter (2026-07-18)                                   |
-| [0129](./.spec/rfc/completed/0129-tauri-import-progress-throttle.md)         | `import:progress` 无节流                                 | ✅ Implemented  | Initial + first + every 25 files + final                                            |
-| [0130](./.spec/rfc/completed/0130-tauri-import-legacy-copy-dedup.md)         | `import_legacy.rs` wrapper + legacy 复制逻辑去重         | ✅ Implemented  | `legacy_loop` 在 `photasa-import`；command 只做事件桥（2026-07-18）                 |
-| [0131](./.spec/rfc/completed/0131-tauri-photasa-import-crate.md)             | `photasa-import` 独立 crate                              | ✅ Implemented  | 算法零 Tauri；`cargo test -p photasa-import` **45 passed**（2026-07-18）            |
-| [0134](./.spec/rfc/completed/0134-tauri-photasa-thumbnail-crate.md)          | `photasa-thumbnail` 独立 crate                           | ✅ Implemented  | async image/libheif/ffmpeg 解码零 Tauri；`cargo test -p photasa-thumbnail` 6 passed |
-| [0132](./.spec/rfc/completed/0132-tauri-photasa-scan-crate.md)               | `photasa-types` + `photasa-scan` 独立 crate              | ✅ Implemented  | shared DTO；strategy/cache/media/notify/cleanup 零 Tauri；32 scan tests             |
-| [0133](./.spec/rfc/0133-tauri-photasa-watch-crate.md)                        | `photasa-watch` 独立 crate                               | ⏳ Draft（P1c） | coalescer 零 Tauri；不依赖 photasa-scan                                             |
+| RFC                                                                          | Title                                                    | Status         | Rust 交付                                                                           |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md)                 | legacy-api 与 Electron 1:1 跟踪（**父 RFC**）            | ✅ Implemented | Phase 7（0111–0114）全部完成                                                        |
+| [0111](./docs/rfc/0111-tauri-scan-notify-status-bridge.md)                   | 扫描 `notify:status` 桥                                  | ✅ Implemented | `scan_notify.rs` + `scan_runner`                                                    |
+| [0112](./docs/rfc/0112-tauri-extract-metadata-golden-parity.md)              | `extract_metadata` golden                                | ✅ Implemented | fixtures + golden 测试                                                              |
+| [0113](./docs/rfc/0113-tauri-updater-production-and-prefs-sync.md)           | updater 生产 + 偏好同步                                  | ✅ Implemented | `update_config.rs` + `UPDATER.md`                                                   |
+| [0114](./docs/rfc/0114-tauri-get-directory-os-paths.md)                      | `get_directory` OS 路径 + `scan_directories` FileGroup[] | ✅ Implemented | `directory.rs` + `import_file_groups.rs` + `import_scan_directories.rs`             |
+| [0115](./docs/rfc/0115-tauri-webview-local-image-asset-protocol.md)          | WebView 本地图片 asset 协议                              | ✅ Implemented | `media-url.ts` + CSP/assetProtocol + `path.rs`                                      |
+| [0118](./.spec/rfc/completed/0118-tauri-import-background-ui.md)             | 导入后台 UI（G1–G9,G13–G14）                             | ✅ Implemented | Vue session + chip；T2 user-signed                                                  |
+| [0119](./.spec/rfc/completed/0119-tauri-import-checksum.md)                  | checksum 诚实                                            | ✅ Implemented | Omit unknown checksum; no fake null                                                 |
+| [0120](./.spec/rfc/completed/0120-tauri-import-quit-recovery.md)             | 退出恢复（G11）                                          | ✅ Implemented | active marker + JSONL copied-file journal；startup cleanup/keep                     |
+| [0121](./.spec/rfc/completed/0121-tauri-import-settings-prefs.md)            | Settings 导入（G12）                                     | ✅ Implemented | Import tab + persisted defaults；wizard reads defaults                              |
+| [0122](./.spec/rfc/rejected/0122-tauri-legacy-importphotos-background-ux.md) | Legacy importPhotos UX（G10）                            | ❌ Rejected    | Legacy stays wrapper/event bridge；no second UI surface                             |
+| [0123](./.spec/rfc/completed/0123-tauri-import-duplicate-count.md)           | duplicateCount 诚实                                      | ✅ Implemented | Existing target-name collisions counted                                             |
+| [0124](./.spec/rfc/completed/0124-tauri-import-resume-return-shape.md)       | resume 返回形状                                          | ✅ Implemented | Tauri returns `{ importId }`; final result via `import:complete`                    |
+| [0125](./.spec/rfc/completed/0125-tauri-import-paused-progress-emit.md)      | paused progress emit                                     | ✅ Implemented | pause/resume emit status; cancel payload fields complete                            |
+| [0126](./.spec/rfc/rejected/0126-electron-import-background-ux-parity.md)    | Electron desktop UX                                      | ❌ Rejected    | Electron-only parity is not Photasa Active                                          |
+| [0127](./.spec/rfc/completed/0127-tauri-import-error-payload-shape.md)       | `import:error` payload 形状（`[object Object]`）         | ✅ Implemented | Store normalizes Rust `{ message, importId }`                                       |
+| [0128](./.spec/rfc/completed/0128-tauri-import-progress-import-id.md)        | `import:progress` 缺 `importId`                          | ✅ Implemented | Rust progress JSON + frontend filter (2026-07-18)                                   |
+| [0129](./.spec/rfc/completed/0129-tauri-import-progress-throttle.md)         | `import:progress` 无节流                                 | ✅ Implemented | Initial + first + every 25 files + final                                            |
+| [0130](./.spec/rfc/completed/0130-tauri-import-legacy-copy-dedup.md)         | `import_legacy.rs` wrapper + legacy 复制逻辑去重         | ✅ Implemented | `legacy_loop` 在 `photasa-import`；command 只做事件桥（2026-07-18）                 |
+| [0131](./.spec/rfc/completed/0131-tauri-photasa-import-crate.md)             | `photasa-import` 独立 crate                              | ✅ Implemented | 算法零 Tauri；`cargo test -p photasa-import` **45 passed**（2026-07-18）            |
+| [0134](./.spec/rfc/completed/0134-tauri-photasa-thumbnail-crate.md)          | `photasa-thumbnail` 独立 crate                           | ✅ Implemented | async image/libheif/ffmpeg 解码零 Tauri；`cargo test -p photasa-thumbnail` 6 passed |
+| [0132](./.spec/rfc/completed/0132-tauri-photasa-scan-crate.md)               | `photasa-types` + `photasa-scan` 独立 crate              | ✅ Implemented | shared DTO；strategy/cache/media/notify/cleanup 零 Tauri；32 scan tests             |
+| [0133](./.spec/rfc/completed/0133-tauri-photasa-watch-crate.md)              | `photasa-watch` 独立 crate（queue 算法，零 Tauri）       | ✅ Implemented | `cargo test -p photasa-watch` **7 passed**；Tauri sink→UI queue（2026-07-18）       |
+| [0135](./.spec/rfc/completed/0135-tauri-watch-ui-contract-fix.md)            | watch UI 契约修复（legacy-api→WatchState）               | ✅ Implemented | camelCase `isFile`；`watch-event.ts`；Vitest 6 + cargo watch 2（2026-07-18）        |
 
-**Gap/T3 铁律：** 一事一 RFC；禁 mono 袋。Import 线已清：**0118–0131**（0120/0121 ✅，0122/0126 ❌）；**P1 next：0133 watch** ⏳；0134 thumbnail ✅；0132 scan ✅；Import Deferred 已清零。
+**Gap/T3 铁律：** 一事一 RFC。scan 族全数落地：**0131 import ✅ / 0132 scan+types ✅ / 0134 thumbnail ✅ / 0133 watch ✅ / 0135 watch UI ✅**。
 
 **Phase 5–6** Done。禁 **0098** 作 Photasa 路径。
 

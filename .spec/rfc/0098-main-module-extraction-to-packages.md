@@ -9,7 +9,7 @@
 
 ## Out of scope (Photasa / Tauri)
 
-> **This RFC is Electron-only.** Photasa backend work follows [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md): **Rust rewrite, not TypeScript copy.** Do not import `@photasa/*` packages from Tauri or treat Phase 2 extraction as the migration path for scan/import/config/thumbnail.
+> **This RFC is Electron-only.** Photasa backend work follows [ROADMAP.md](../../ROADMAP.md): **Rust rewrite, not TypeScript copy.** Do not import `@photasa/*` packages from Tauri or treat Phase 2 extraction as the migration path for scan/import/config/thumbnail.
 
 - **Phase 2+** (service/worker slimming, further `@photasa/*` growth): **Frozen** for Tauri priority. Resume only if Electron maintenance is explicitly extended.
 - Tauri gaps (e.g. RFC 0105 scan cache) are implemented **in Rust**, using Electron behavior as **spec only**.
@@ -29,46 +29,49 @@
 1. **独立测试**：每个包有自己的 vitest 配置，测试不需要启动 Electron，运行更快
 2. **清晰边界**：`*-service.ts` 只负责 IPC 注册，业务逻辑在包里
 3. **独立版本**：可以单独对某个包做 breaking change，不影响整个 desktop 应用构建
-4. **Electron hygiene**：在 Electron 退场前整理 main 模块边界；**不是** Photasa 后端实现路径（Tauri 用 Rust 重写，见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)）
+4. **Electron hygiene**：在 Electron 退场前整理 main 模块边界；**不是** Photasa 后端实现路径（Tauri 用 Rust 重写，见 [ROADMAP.md](../../ROADMAP.md)）
 
 ### 不是为了 Tauri
 
-这些包是 **Node.js-only**，使用 `fs`、`path`、`klaw`、`worker_threads` 等 Node.js API，无法在浏览器或 Tauri WebView 中运行。**Photasa 后端必须在 Rust 中独立重写**（见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)），不得从 Tauri 引用这些包。本 RFC 目的纯粹是 **Electron monorepo 内部的架构整洁**。
+这些包是 **Node.js-only**，使用 `fs`、`path`、`klaw`、`worker_threads` 等 Node.js API，无法在浏览器或 Tauri WebView 中运行。**Photasa 后端必须在 Rust 中独立重写**（见 [ROADMAP.md](../../ROADMAP.md)），不得从 Tauri 引用这些包。本 RFC 目的纯粹是 **Electron monorepo 内部的架构整洁**。
 
 ## Scope Analysis（范围分析）
 
 ### 域模块分类
 
-| 域 | 文件数 | Electron IPC 依赖 | 建议 |
-|---|---|---|---|
-| `scan/` | 22 | ❌ 无（scan-photos, scan-helpers, strategy, cache） | 提取 `@photasa/scan` |
-| `import/` | 44 | ❌ 无（handler, batch-processor, metadata, file-groups） | 提取 `@photasa/import` |
-| `config/` | 7 | ❌ 无（storage, cache, handler, batch-writer） | 提取 `@photasa/config-core` |
-| `thumbnail/` | 6 | ❌ 无（handler, worker, utils） | 提取 `@photasa/thumbnail` 或并入 maliang |
-| `workers/` | 2 | ❌ 无（worker-pool） | 随 scan/import 一起提取或独立 |
-| `tianting/` | 10 | ✅ 有（ServiceRegistry 依赖 Electron） | 保留在 desktop |
-| `deity/` | 3 | ✅ 有（TaiyiService/TianshuService 含 IPC） | 保留在 desktop |
-| `window/` | 1 | ✅ 有（BrowserWindow） | 保留 |
-| `menu/` | 1 | ✅ 有（Electron Menu） | 保留 |
-| `update/` | 2 | ✅ 有（electron-updater） | 保留 |
-| `watch/` | 2 | ✅ 有（IPC 通知）| service 保留，核心 shunfenger 已是包 |
-| `shell/` | 1 | ✅ 有（Electron shell） | 保留 |
-| `splash/` | 1 | ✅ 有（BrowserWindow） | 保留 |
-| `log-viewer/` | 1 | ✅ 有（IPC） | 保留 |
-| `directory/` | 2 | ❌ 无 | 保留（逻辑简单，提取收益低） |
-| `performance/` | 1 | ❌ 无 | 保留（仅 desktop 需要） |
+| 域             | 文件数 | Electron IPC 依赖                                        | 建议                                     |
+| -------------- | ------ | -------------------------------------------------------- | ---------------------------------------- |
+| `scan/`        | 22     | ❌ 无（scan-photos, scan-helpers, strategy, cache）      | 提取 `@photasa/scan`                     |
+| `import/`      | 44     | ❌ 无（handler, batch-processor, metadata, file-groups） | 提取 `@photasa/import`                   |
+| `config/`      | 7      | ❌ 无（storage, cache, handler, batch-writer）           | 提取 `@photasa/config-core`              |
+| `thumbnail/`   | 6      | ❌ 无（handler, worker, utils）                          | 提取 `@photasa/thumbnail` 或并入 maliang |
+| `workers/`     | 2      | ❌ 无（worker-pool）                                     | 随 scan/import 一起提取或独立            |
+| `tianting/`    | 10     | ✅ 有（ServiceRegistry 依赖 Electron）                   | 保留在 desktop                           |
+| `deity/`       | 3      | ✅ 有（TaiyiService/TianshuService 含 IPC）              | 保留在 desktop                           |
+| `window/`      | 1      | ✅ 有（BrowserWindow）                                   | 保留                                     |
+| `menu/`        | 1      | ✅ 有（Electron Menu）                                   | 保留                                     |
+| `update/`      | 2      | ✅ 有（electron-updater）                                | 保留                                     |
+| `watch/`       | 2      | ✅ 有（IPC 通知）                                        | service 保留，核心 shunfenger 已是包     |
+| `shell/`       | 1      | ✅ 有（Electron shell）                                  | 保留                                     |
+| `splash/`      | 1      | ✅ 有（BrowserWindow）                                   | 保留                                     |
+| `log-viewer/`  | 1      | ✅ 有（IPC）                                             | 保留                                     |
+| `directory/`   | 2      | ❌ 无                                                    | 保留（逻辑简单，提取收益低）             |
+| `performance/` | 1      | ❌ 无                                                    | 保留（仅 desktop 需要）                  |
 
 ### 提取优先级
 
 **Priority 1 — 高价值**
+
 - `scan/` 核心 → `@photasa/scan`
 - `import/` 核心 → `@photasa/import`
 - `config/` 核心 → `@photasa/config-core`
 
 **Priority 2 — 中等价值**
+
 - `thumbnail/` handler + worker + utils → `@photasa/thumbnail`（独立新包）
 
 **Priority 3 — 低优先级/暂不提取**
+
 - `workers/worker-pool.ts` — 可随 scan 一起提取
 - `directory/directory-service.ts` — 逻辑简单，暂不提取
 
@@ -252,21 +255,21 @@ RFC 0098 的 **Phase 1（包提取）已完成**：4 个目标包 (`@photasa/con
 
 RFC Migration Rules 仍标 "对应 `*-service.ts` 行数 < 100 行" 为理想目标；下方为 **2026-04-05** `wc -l` 复核：
 
-| 文件 | 当前行数 | RFC 要求 | 超标倍数 | 状态 |
-|---|---:|---:|---:|---|
-| `config/config-service.ts` | 224（监管与路由已迁包） | < 100 | 2.2× | ❌ |
-| `config/config-worker.ts` | 85 | (worker, OK) | — | ✅ |
-| `scan/scan-service.ts` | 221（已迁出 notify 构造） | < 100 | 2.2× | ❌ |
-| `scan/scan-worker.ts` | 249（目录进度逻辑已部分迁 `@photasa/scan/worker/directory-scan-progress`） | (worker) | — | ⚠️ |
-| `scan/status/notify-bridge.ts` | 12 | Electron IPC 桥（payload 构造已在 `@photasa/scan`） | — | ✅ |
-| `import/import-service.ts` | 710（已接 `ImportSessionManager` + `serializeImportConfigForWorker`） | < 100 | 7.1× | ❌ |
-| `import/import-worker.ts` | 1200（配置/错误路径已用 `@photasa/import` 工具函数） | (worker) | — | ❌ |
-| `thumbnail/thumbnail-service.ts` | 155 | < 100 | 1.6× | ❌ |
-| `thumbnail/thumbnail-worker.ts` | 91 | (worker, OK) | — | ✅ |
+| 文件                             |                                                                   当前行数 |                                            RFC 要求 | 超标倍数 | 状态 |
+| -------------------------------- | -------------------------------------------------------------------------: | --------------------------------------------------: | -------: | ---- |
+| `config/config-service.ts`       |                                                    224（监管与路由已迁包） |                                               < 100 |     2.2× | ❌   |
+| `config/config-worker.ts`        |                                                                         85 |                                        (worker, OK) |        — | ✅   |
+| `scan/scan-service.ts`           |                                                  221（已迁出 notify 构造） |                                               < 100 |     2.2× | ❌   |
+| `scan/scan-worker.ts`            | 249（目录进度逻辑已部分迁 `@photasa/scan/worker/directory-scan-progress`） |                                            (worker) |        — | ⚠️   |
+| `scan/status/notify-bridge.ts`   |                                                                         12 | Electron IPC 桥（payload 构造已在 `@photasa/scan`） |        — | ✅   |
+| `import/import-service.ts`       |      710（已接 `ImportSessionManager` + `serializeImportConfigForWorker`） |                                               < 100 |     7.1× | ❌   |
+| `import/import-worker.ts`        |                       1200（配置/错误路径已用 `@photasa/import` 工具函数） |                                            (worker) |        — | ❌   |
+| `thumbnail/thumbnail-service.ts` |                                                                        155 |                                               < 100 |     1.6× | ❌   |
+| `thumbnail/thumbnail-worker.ts`  |                                                                         91 |                                        (worker, OK) |        — | ✅   |
 
 **配套类型**：`packages/common/src/import-types.ts` 中 `ImportRequest.payload` 已包含 `(ImportConfig & { importId?: string })`，与 `execute_import` 传参一致；`serializeImportConfigForWorker` 返回 `ImportConfig`（ISO 日期分支 `as ImportConfig`，worker 内 `processImportConfigForWorker` 再规范化）。
 
-**结论**：RFC 0098 Phase 1（包提取）完成。**Phase 2 已冻结**（见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)：Photasa 用 Rust 重写，不以继续抽 TS 包为迁移路径）。Status 保持 `Partially Implemented`（Electron-only）。
+**结论**：RFC 0098 Phase 1（包提取）完成。**Phase 2 已冻结**（见 [ROADMAP.md](../../ROADMAP.md)：Photasa 用 Rust 重写，不以继续抽 TS 包为迁移路径）。Status 保持 `Partially Implemented`（Electron-only）。
 
 ### 各文件诊断 — 应迁出哪些代码到哪个包
 
@@ -333,7 +336,7 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
 
 **已迁包（Phase 2 任务 3 部分）**：目录扫描进度缓存合并与 `directory_scan_progress` 消息体构造已迁入 `packages/@photasa/scan/src/worker/directory-scan-progress.ts`，含 Vitest `directory-scan-progress.test.ts`。
 
-#### 5. `import/import-service.ts` (710 行；原审计 860)  ❌❌ 仍最严重
+#### 5. `import/import-service.ts` (710 行；原审计 860) ❌❌ 仍最严重
 
 **应留在 desktop**：
 
@@ -357,42 +360,42 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
 
 通过函数列表已确认仍有 **大量**业务函数在 worker 文件内，后续应按 0098-a 迁入 `@photasa/import`：
 
-| 函数 | 行号 | 应迁入的包模块 |
-|---|---:|---|
-| `handleExtractMetadata` | 144 | `@photasa/import/handlers/extract-metadata.ts` |
-| `handleProcessFileGroup` | 167 | `@photasa/import/handlers/process-file-group.ts` |
-| `handleScanDirectories` | 190 | `@photasa/import/handlers/scan-directories.ts` |
-| `handlePreviewImport` | 214 | `@photasa/import/handlers/preview-import.ts` |
-| `handleExecuteImport` | 246 | `@photasa/import/handlers/execute-import.ts` |
-| `processImportConfig` | 319 | `@photasa/import/import-handler.ts` (合并) |
-| `createDefaultFilters` | 339 | 同上 |
-| `normalizeDate` | 351 | `@photasa/import/metadata/` |
-| `createSerializableError` | 358 | `@photasa/import/error-handler.ts` |
-| `scanDirectoriesForFiles` | 374 | `@photasa/import/scan/` |
-| `scanSingleDirectory` | 436 | 同上 |
-| `createFileInfo` | 500 | 同上 |
-| `detectFileType` | 568 | `@photasa/import/file-groups/` |
-| `shouldIncludeFile` | 581 | 同上 |
-| `applyFileTypeFilter` | 594 | 同上 |
-| `applySizeFilter` | 613 | 同上 |
-| `generateImportPreview` | 631 | `@photasa/import/preview/` |
-| `processFileGroups` | 702 | `@photasa/import/file-groups/` |
-| `calculateFileStatistics` | 716 | 同上 |
-| `detectDuplicateFiles` | 758 | `@photasa/import/duplicate-handler.ts` (合并) |
-| `estimateImportDuration` | 771 | `@photasa/import/preview/` |
-| `generateTargetStructure` | 784 | `@photasa/import/preview/` |
-| `executeImportProcess` | 820 | `@photasa/import/import-handler.ts` (合并) |
-| `createErrorResult` | 870 | `@photasa/import/error-handler.ts` |
-| `filterSelectedFiles` | 910 | `@photasa/import/file-groups/` |
-| `performFileImport` | 951 | `@photasa/import/import-handler.ts` |
-| `createImportState` | 993 | 同上 |
-| `processFileGroupImport` | 1009 | 同上 |
-| `updateProgress` | 1085 | 同上 |
-| `handleFileError` | 1104 | `@photasa/import/error-handler.ts` |
-| `handleGroupError` | 1134 | 同上 |
-| `createImportResult` | 1167 | `@photasa/import/import-handler.ts` |
-| `handleDuplicateFile` | 1193 | `@photasa/import/duplicate-handler.ts` |
-| `createTargetFileInfo` | 1231 | `@photasa/import/import-handler.ts` |
+| 函数                      | 行号 | 应迁入的包模块                                   |
+| ------------------------- | ---: | ------------------------------------------------ |
+| `handleExtractMetadata`   |  144 | `@photasa/import/handlers/extract-metadata.ts`   |
+| `handleProcessFileGroup`  |  167 | `@photasa/import/handlers/process-file-group.ts` |
+| `handleScanDirectories`   |  190 | `@photasa/import/handlers/scan-directories.ts`   |
+| `handlePreviewImport`     |  214 | `@photasa/import/handlers/preview-import.ts`     |
+| `handleExecuteImport`     |  246 | `@photasa/import/handlers/execute-import.ts`     |
+| `processImportConfig`     |  319 | `@photasa/import/import-handler.ts` (合并)       |
+| `createDefaultFilters`    |  339 | 同上                                             |
+| `normalizeDate`           |  351 | `@photasa/import/metadata/`                      |
+| `createSerializableError` |  358 | `@photasa/import/error-handler.ts`               |
+| `scanDirectoriesForFiles` |  374 | `@photasa/import/scan/`                          |
+| `scanSingleDirectory`     |  436 | 同上                                             |
+| `createFileInfo`          |  500 | 同上                                             |
+| `detectFileType`          |  568 | `@photasa/import/file-groups/`                   |
+| `shouldIncludeFile`       |  581 | 同上                                             |
+| `applyFileTypeFilter`     |  594 | 同上                                             |
+| `applySizeFilter`         |  613 | 同上                                             |
+| `generateImportPreview`   |  631 | `@photasa/import/preview/`                       |
+| `processFileGroups`       |  702 | `@photasa/import/file-groups/`                   |
+| `calculateFileStatistics` |  716 | 同上                                             |
+| `detectDuplicateFiles`    |  758 | `@photasa/import/duplicate-handler.ts` (合并)    |
+| `estimateImportDuration`  |  771 | `@photasa/import/preview/`                       |
+| `generateTargetStructure` |  784 | `@photasa/import/preview/`                       |
+| `executeImportProcess`    |  820 | `@photasa/import/import-handler.ts` (合并)       |
+| `createErrorResult`       |  870 | `@photasa/import/error-handler.ts`               |
+| `filterSelectedFiles`     |  910 | `@photasa/import/file-groups/`                   |
+| `performFileImport`       |  951 | `@photasa/import/import-handler.ts`              |
+| `createImportState`       |  993 | 同上                                             |
+| `processFileGroupImport`  | 1009 | 同上                                             |
+| `updateProgress`          | 1085 | 同上                                             |
+| `handleFileError`         | 1104 | `@photasa/import/error-handler.ts`               |
+| `handleGroupError`        | 1134 | 同上                                             |
+| `createImportResult`      | 1167 | `@photasa/import/import-handler.ts`              |
+| `handleDuplicateFile`     | 1193 | `@photasa/import/duplicate-handler.ts`           |
+| `createTargetFileInfo`    | 1231 | `@photasa/import/import-handler.ts`              |
 
 **预期 worker 瘦身后（~200 行）**：仅保留 `parentPort` 桥接、`ACTION_HANDLERS` 路由表、`createWorkerLogViewerBridge` 集成。所有 handler 实现 `import { handleExecuteImport, ... } from "@photasa/import/handlers"`。
 
@@ -449,6 +452,7 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
     - 启动应用 → 触发扫描 → 验证状态条显示进度 / 完成 / 错误
 
 **预期产出**：
+
 - `scan-service.ts`: 249 → ~190 行
 - 新增 `@photasa/scan/src/status/build-notify-payload.ts` (~60 行 + 测试)
 
@@ -488,6 +492,7 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
     - 手动 kill worker（`kill -9` worker pid）→ 验证自动重启
 
 **预期产出**：
+
 - `config-service.ts`: 310 → ~140 行
 - 新增 `@photasa/config-core/src/worker-supervisor.ts` (~120 行 + 测试)
 - 新增 `@photasa/config-core/src/route-config-response.ts` (~40 行 + 测试)
@@ -521,6 +526,7 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
     - 启动应用 → 添加新照片目录 → 验证扫描进度 + 结果
 
 **预期产出**：
+
 - `scan-worker.ts`: 283 → ~150 行
 - 新增 `@photasa/scan/src/worker/message-handlers.ts`（行数取决于审计结果）
 
@@ -540,24 +546,26 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
 
 **子 RFC 0098-a 任务概要**（每个为独立 PR）：
 
-| 子任务 | 迁移目标 | 包模块 | 行数 |
-|---:|---|---|---:|
-| 4.1 | metadata helpers (`extractMetadata`, `normalizeDate`, `createSerializableError`) | `@photasa/import/metadata/` + `error-handler.ts` | ~100 |
-| 4.2 | scan helpers (`scanDirectoriesForFiles`, `scanSingleDirectory`, `createFileInfo`) | `@photasa/import/scan/` (新目录) | ~200 |
-| 4.3 | filter helpers (`detectFileType`, `shouldIncludeFile`, `applyFileTypeFilter`, `applySizeFilter`, `filterSelectedFiles`) | `@photasa/import/file-groups/` | ~120 |
-| 4.4 | preview helpers (`generateImportPreview`, `processFileGroups`, `calculateFileStatistics`, `detectDuplicateFiles`, `estimateImportDuration`, `generateTargetStructure`) | `@photasa/import/preview/` (新目录) | ~250 |
-| 4.5 | execute helpers (`executeImportProcess`, `performFileImport`, `processFileGroupImport`, `createImportState`, `updateProgress`, `createImportResult`, `createTargetFileInfo`) | `@photasa/import/import-handler.ts` (合并) | ~300 |
-| 4.6 | error helpers (`createErrorResult`, `handleFileError`, `handleGroupError`) | `@photasa/import/error-handler.ts` | ~100 |
-| 4.7 | duplicate helpers (`handleDuplicateFile`) | `@photasa/import/duplicate-handler.ts` | ~50 |
-| 4.8 | 5 个顶层 handler (`handleExtractMetadata`, `handleProcessFileGroup`, `handleScanDirectories`, `handlePreviewImport`, `handleExecuteImport`) | `@photasa/import/handlers/` (新目录) | ~150 |
-| 4.9 | `import-worker.ts` 收尾：删除已迁出函数，保留 ACTION_HANDLERS 路由表 | (desktop) | -1000 |
+| 子任务 | 迁移目标                                                                                                                                                                     | 包模块                                           |  行数 |
+| -----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ----: |
+|    4.1 | metadata helpers (`extractMetadata`, `normalizeDate`, `createSerializableError`)                                                                                             | `@photasa/import/metadata/` + `error-handler.ts` |  ~100 |
+|    4.2 | scan helpers (`scanDirectoriesForFiles`, `scanSingleDirectory`, `createFileInfo`)                                                                                            | `@photasa/import/scan/` (新目录)                 |  ~200 |
+|    4.3 | filter helpers (`detectFileType`, `shouldIncludeFile`, `applyFileTypeFilter`, `applySizeFilter`, `filterSelectedFiles`)                                                      | `@photasa/import/file-groups/`                   |  ~120 |
+|    4.4 | preview helpers (`generateImportPreview`, `processFileGroups`, `calculateFileStatistics`, `detectDuplicateFiles`, `estimateImportDuration`, `generateTargetStructure`)       | `@photasa/import/preview/` (新目录)              |  ~250 |
+|    4.5 | execute helpers (`executeImportProcess`, `performFileImport`, `processFileGroupImport`, `createImportState`, `updateProgress`, `createImportResult`, `createTargetFileInfo`) | `@photasa/import/import-handler.ts` (合并)       |  ~300 |
+|    4.6 | error helpers (`createErrorResult`, `handleFileError`, `handleGroupError`)                                                                                                   | `@photasa/import/error-handler.ts`               |  ~100 |
+|    4.7 | duplicate helpers (`handleDuplicateFile`)                                                                                                                                    | `@photasa/import/duplicate-handler.ts`           |   ~50 |
+|    4.8 | 5 个顶层 handler (`handleExtractMetadata`, `handleProcessFileGroup`, `handleScanDirectories`, `handlePreviewImport`, `handleExecuteImport`)                                  | `@photasa/import/handlers/` (新目录)             |  ~150 |
+|    4.9 | `import-worker.ts` 收尾：删除已迁出函数，保留 ACTION_HANDLERS 路由表                                                                                                         | (desktop)                                        | -1000 |
 
 **通用要求**：
+
 - 每个子任务结束时 `import-worker.ts` 必须能编译通过、应用必须能启动
 - 每个子任务都要有 `__tests__/` 单元测试
 - 子任务 4.5 / 4.8 涉及核心导入流程，必须做端到端冒烟测试（导入 ≥10 张真实照片）
 
 **预期产出（全部完成后）**：
+
 - `import-worker.ts`: 1251 → ~250 行（仅 parentPort + 路由表 + log bridge）
 - `@photasa/import` 新增约 8 个模块 + 完整测试
 
@@ -593,6 +601,7 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
     - 端到端：导入照片 → 进度更新 → 完成；中途取消导入；并发多个会话
 
 **预期产出**：
+
 - `import-service.ts`: 860 → ~200 行
 - 新增 `@photasa/import/src/session-manager.ts` (~400 行 + 测试)
 
@@ -616,6 +625,7 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
 ```
 
 **建议执行顺序（历史；Phase 2 已冻结）**：
+
 1. 任务 1 → PR → merge（已完成）
 2. 任务 2 → PR → merge（已完成）
 3. 任务 3 → PR → merge（部分完成）
@@ -623,6 +633,7 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
 5. **Photasa 扫描/导入缺口** → 在 Rust 实现（如 RFC 0105），Electron TS 仅作规格
 
 **关闭条件（修订）**：
+
 - Phase 1：`Implemented`（Electron 包已提取）✅
 - Phase 2：`Frozen` — 不再作为 ROADMAP 活跃项；**不得**替代 Tauri Rust RFC
 
@@ -637,7 +648,6 @@ worker 入口本身留 desktop（worker_threads fork 必需），但应只做：
 
 ### 当前状态修正
 
-`Status: Partially Implemented` — Phase 1 ✅；Phase 2 **Frozen**（Photasa 优先 Rust 重写，见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)）。
+`Status: Partially Implemented` — Phase 1 ✅；Phase 2 **Frozen**（Photasa 优先 Rust 重写，见 [ROADMAP.md](../../ROADMAP.md)）。
 
 完整 Phase 2 Implemented 的判定（**仅当恢复 Electron 维护时**）：上表 Phase 2 任务 1–5 全部完成，且新 Migration Rules 全部满足。
-

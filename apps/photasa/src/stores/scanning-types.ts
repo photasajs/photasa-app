@@ -85,6 +85,12 @@ export interface ScanQueueItem {
     /** 最大重试次数 */
     maxRetries: number;
 
+    /** 任务优先级（数值越小越优先） */
+    priority?: number;
+
+    /** 原始文件操作 ID */
+    fileOperationId?: string;
+
     /** 操作类型 */
     operationType: "directory" | "file";
 
@@ -127,6 +133,12 @@ export interface ScanQueueItemCreateOptions {
 
     /** 最大重试次数（默认 3） */
     maxRetries?: number;
+
+    /** 任务优先级 */
+    priority?: number;
+
+    /** 原始文件操作 ID */
+    fileOperationId?: string;
 }
 
 /**
@@ -158,6 +170,8 @@ export function createScanQueueItem(options: ScanQueueItemCreateOptions): ScanQu
         source: options.source || "user",
         retryCount: 0,
         maxRetries: options.maxRetries || 3,
+        priority: options.priority,
+        fileOperationId: options.fileOperationId,
         operationType: options.operationType || "directory",
         thumbnailSize: options.thumbnailSize || 150,
     };
@@ -187,5 +201,7 @@ export function toScanAction(queueItem: ScanQueueItem) {
         source: queueItem.source,
         timestamp: queueItem.createdAt,
         retryCount: queueItem.retryCount,
+        priority: queueItem.priority,
+        fileOperationId: queueItem.fileOperationId,
     };
 }

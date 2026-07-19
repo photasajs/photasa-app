@@ -18,7 +18,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -88,7 +88,7 @@ Tauri 应用将采用以下架构：
 └─────────────────────────────────────┘
 ```
 
-> **Frontend reuse ≠ backend reuse.** Vue 可从 desktop 复制/adapt；Main 进程逻辑必须在 Rust 中重写，见 [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)。
+> **Frontend reuse ≠ backend reuse.** Vue 可从 desktop 复制/adapt；Main 进程逻辑必须在 Rust 中重写，见 [ROADMAP.md](../../ROADMAP.md)。
 
 ### 目录结构
 
@@ -723,7 +723,7 @@ notify = "6.0"   # 文件系统监听
 
 ### 方案 B：渐进迁移（推荐，已采用）
 
-- **Backend**：Rust **重写**（非 TS 复制），Electron main 仅作行为规格（[TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)）
+- **Backend**：Rust **重写**（非 TS 复制），Electron main 仅作行为规格（[ROADMAP.md](../../ROADMAP.md)）
 - **Frontend**：复用/adapt `desktop` renderer UI，经 adapter 调 Rust
 - **优点**：风险可控，可对比测试，UI 交付快
 - **缺点**：过渡期内需维护 Electron + Tauri 两套后端

@@ -102,10 +102,10 @@ export function useYuShiNan() {
         /** ✅ RFC 0057: 状态栏错误信息 */
         error: computed(() => yuShiNanService.error),
 
-        /** ✅ RFC 0057: 判断是否正在扫描（从 StatusBar.vue 移入） */
+        /** ✅ RFC 0057: 判断是否正在扫描（从扫描队列派生） */
         isScanning: computed(() => yuShiNanService.isScanning),
 
-        /** ✅ RFC 0057: 获取扫描路径（从 StatusBar.vue 移入） */
+        /** ✅ RFC 0057: 获取扫描路径（从扫描队列派生） */
         scanningPath: computed(() => yuShiNanService.scanningPath),
 
         /** ✅ RFC 0057: 更新状态栏（供 Vue 组件调用） */

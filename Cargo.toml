@@ -9,6 +9,7 @@ members = [
     "crates/photasa-thumbnail",
     "crates/photasa-types",
     "crates/photasa-scan",
+    "crates/photasa-watch",
     "apps/photasa/src-tauri",
 ]
 
@@ -31,3 +32,4 @@ photasa-import = { path = "crates/photasa-import" }
 photasa-thumbnail = { path = "crates/photasa-thumbnail" }
 photasa-types = { path = "crates/photasa-types" }
 photasa-scan = { path = "crates/photasa-scan" }
+photasa-watch = { path = "crates/photasa-watch" }

@@ -7,7 +7,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron 的 `file://` + `protocol.registerFileProtocol("file", …)` **仅作行为对照**，不是 Tauri 的实现路径。
 - Tauri 下显示本地文件必须使用 **`convertFileSrc()` → asset 协议 URL**，并由 `tauri.conf.json` 的 `security.assetProtocol` 授权路径。
@@ -27,11 +27,11 @@ Photasa（Tauri）在图库列表/预览中无法显示缩略图，控制台报 
 
 ### 误解（曾导致错误排查方向）
 
-| 机制 | 实际作用 | 能否修复 `<img src="file://…">` |
-|------|----------|----------------------------------|
-| `capabilities/default.json` → `fs:scope` | `@tauri-apps/plugin-fs` 读写字库路径 | **否** |
-| CSP 增加 `file:` | 仍被 WebView 跨源策略拒绝 | **否**（引擎层限制） |
-| Rust `file_url_from_path` 返回 `file://` | 与 Electron preload 形状一致 | **在 Tauri WebView 中无效** |
+| 机制                                     | 实际作用                             | 能否修复 `<img src="file://…">` |
+| ---------------------------------------- | ------------------------------------ | ------------------------------- |
+| `capabilities/default.json` → `fs:scope` | `@tauri-apps/plugin-fs` 读写字库路径 | **否**                          |
+| CSP 增加 `file:`                         | 仍被 WebView 跨源策略拒绝            | **否**（引擎层限制）            |
+| Rust `file_url_from_path` 返回 `file://` | 与 Electron preload 形状一致         | **在 Tauri WebView 中无效**     |
 
 ### Electron 为何能用 `file://`
 
@@ -125,42 +125,42 @@ asset:// 或 file:// 或绝对路径
 
 ### 曾发现的实现 bug
 
-| Bug | 后果 | 修复 |
-|-----|------|------|
-| `import.meta.env.TAURI_PLATFORM` 判断 Tauri | Vite 未接 Tauri 插件，恒为 `false`，仍产 `file://` | 改用 `isTauri()` |
-| `index.html` CSP 含 `file:`、无 `asset:` | 与 Tauri 机制冲突 | 对齐 asset CSP |
-| `file_url_from_path`（Rust）返回 `file://` | invoke 路径仍不可显示 | 改为 `asset://localhost/…` |
-| `legacy-api.fileUrlFromPath` 调 Rust 产 `file://` | 同上 | Tauri 分支用 `toWebviewMediaUrl` |
-| `webviewMediaUrlToAbsolutePath` 未识别 `asset://` | invoke 传错路径 | `parseAssetWebviewUrl` |
-| `image-prefetch` / `BaseImage` 直接用传入 `src` | 遗留 `file://` 未转换 | `ensureWebviewMediaUrl` |
+| Bug                                               | 后果                                               | 修复                             |
+| ------------------------------------------------- | -------------------------------------------------- | -------------------------------- |
+| `import.meta.env.TAURI_PLATFORM` 判断 Tauri       | Vite 未接 Tauri 插件，恒为 `false`，仍产 `file://` | 改用 `isTauri()`                 |
+| `index.html` CSP 含 `file:`、无 `asset:`          | 与 Tauri 机制冲突                                  | 对齐 asset CSP                   |
+| `file_url_from_path`（Rust）返回 `file://`        | invoke 路径仍不可显示                              | 改为 `asset://localhost/…`       |
+| `legacy-api.fileUrlFromPath` 调 Rust 产 `file://` | 同上                                               | Tauri 分支用 `toWebviewMediaUrl` |
+| `webviewMediaUrlToAbsolutePath` 未识别 `asset://` | invoke 传错路径                                    | `parseAssetWebviewUrl`           |
+| `image-prefetch` / `BaseImage` 直接用传入 `src`   | 遗留 `file://` 未转换                              | `ensureWebviewMediaUrl`          |
 
 ## Implementation Details
 
 ### 前端
 
-| 文件 | 职责 |
-|------|------|
-| `apps/photasa/src/utils/media-url.ts` | 路径 ↔ WebView URL 转换核心 |
-| `apps/photasa/src/common/image.ts` | `toFileProtocol` → `toWebviewMediaUrl` |
-| `apps/photasa/src/utils/image-prefetch.ts` | 预加载前 `ensureWebviewMediaUrl` |
-| `apps/photasa/src/components/ui/BaseImage.vue` | `actualSrc` 与 `@error` 回退均走 asset URL |
-| `apps/photasa/src/api/legacy-api.ts` | `fileUrlFromPath`、`getFileMetadata` 路径规范化 |
-| `apps/photasa/src/utils/thumbnail-fallback-cache.ts` | 缓存键识别 `asset://` |
+| 文件                                                 | 职责                                            |
+| ---------------------------------------------------- | ----------------------------------------------- |
+| `apps/photasa/src/utils/media-url.ts`                | 路径 ↔ WebView URL 转换核心                     |
+| `apps/photasa/src/common/image.ts`                   | `toFileProtocol` → `toWebviewMediaUrl`          |
+| `apps/photasa/src/utils/image-prefetch.ts`           | 预加载前 `ensureWebviewMediaUrl`                |
+| `apps/photasa/src/components/ui/BaseImage.vue`       | `actualSrc` 与 `@error` 回退均走 asset URL      |
+| `apps/photasa/src/api/legacy-api.ts`                 | `fileUrlFromPath`、`getFileMetadata` 路径规范化 |
+| `apps/photasa/src/utils/thumbnail-fallback-cache.ts` | 缓存键识别 `asset://`                           |
 
 ### Rust
 
-| 文件 | 职责 |
-|------|------|
-| `apps/photasa/src-tauri/src/commands/path.rs` | `file_url_from_path` 产出 asset URL；`encode_uri_component` 对齐 JS |
-| `apps/photasa/src-tauri/tauri.conf.json` | `assetProtocol` + CSP |
-| `apps/photasa/src-tauri/capabilities/default.json` | `fs:scope`（IPC 读写，与显示无关但图库仍需） |
+| 文件                                               | 职责                                                                |
+| -------------------------------------------------- | ------------------------------------------------------------------- |
+| `apps/photasa/src-tauri/src/commands/path.rs`      | `file_url_from_path` 产出 asset URL；`encode_uri_component` 对齐 JS |
+| `apps/photasa/src-tauri/tauri.conf.json`           | `assetProtocol` + CSP                                               |
+| `apps/photasa/src-tauri/capabilities/default.json` | `fs:scope`（IPC 读写，与显示无关但图库仍需）                        |
 
 ### Electron 对照（不变）
 
-| 环境 | WebView URL |
-|------|-------------|
-| Electron | `file://…` + `registerFileProtocol` |
-| Tauri | `asset://localhost/…` 或 `http(s)://asset.localhost/…` |
+| 环境     | WebView URL                                            |
+| -------- | ------------------------------------------------------ |
+| Electron | `file://…` + `registerFileProtocol`                    |
+| Tauri    | `asset://localhost/…` 或 `http(s)://asset.localhost/…` |
 
 API 名称 **`toFileProtocol` / `fileUrlFromPath`** 保留语义「转为可在 WebView 加载的本地媒体 URL」，实现按运行时分支。
 
@@ -260,28 +260,28 @@ because it does not appear in the img-src directive of the Content Security Poli
 **修复**：
 
 1. **`tauri.conf.json` CSP** — `img-src` 和 `media-src` 加入 `asset://localhost`：
-   ```json
-   "img-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:"
-   ```
+    ```json
+    "img-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:"
+    ```
 2. **`media-url.ts` 重构** — 增强 URL 解析，新增：
-   - `isAssetWebviewUrl()` — 识别 `asset://` 和 `http(s)://asset.localhost` 双格式
-   - `parseAssetWebviewUrl()` — 正确 decode `asset://localhost/{encodeURIComponent(path)}`
-   - `ensureWebviewMediaUrl()` — 兼容遗留 `file://`、asset URL、磁盘绝对路径
-   - `isTauriRuntime()` fallback 到 `__TAURI_INTERNALS__` 检测
-   - `absoluteThumbnailPathForSource()` 先调 `webviewMediaUrlToAbsolutePath()` 再算路径
+    - `isAssetWebviewUrl()` — 识别 `asset://` 和 `http(s)://asset.localhost` 双格式
+    - `parseAssetWebviewUrl()` — 正确 decode `asset://localhost/{encodeURIComponent(path)}`
+    - `ensureWebviewMediaUrl()` — 兼容遗留 `file://`、asset URL、磁盘绝对路径
+    - `isTauriRuntime()` fallback 到 `__TAURI_INTERNALS__` 检测
+    - `absoluteThumbnailPathForSource()` 先调 `webviewMediaUrlToAbsolutePath()` 再算路径
 
 **评估过的替代方案**：
 
-| 方案 | 结论 |
-|------|------|
-| 禁用 CSP（`csp: null`） | 不采用 — 虽然内容全本地，但违反安全最佳实践 |
+| 方案                                                                                | 结论                                                                                          |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 禁用 CSP（`csp: null`）                                                             | 不采用 — 虽然内容全本地，但违反安全最佳实践                                                   |
 | 自定义 Rust protocol `photasa-media`（`register_asynchronous_uri_scheme_protocol`） | 不采用 — HTTP scheme CSP 更可靠，但 `asset://localhost` 加入 CSP 后已解决，无需额外 Rust 代码 |
-| `img-src: *` 通配 | 不采用 — CSP `*` 不匹配 custom scheme |
+| `img-src: *` 通配                                                                   | 不采用 — CSP `*` 不匹配 custom scheme                                                         |
 
 **文件变更**：
 
-| 文件 | 变更 |
-|------|------|
-| `apps/photasa/src-tauri/tauri.conf.json` | CSP `img-src`/`media-src` 加 `asset://localhost` |
-| `apps/photasa/src/utils/media-url.ts` | 新增 `isAssetWebviewUrl`、`parseAssetWebviewUrl`、`ensureWebviewMediaUrl`；重构 `isTauriRuntime`、`absoluteThumbnailPathForSource` |
-| `apps/photasa/src/utils/__tests__/media-url.test.ts` | mock 改为 `asset://localhost/` 格式，新增 round-trip 和 `ensureWebviewMediaUrl` 测试 |
+| 文件                                                 | 变更                                                                                                                               |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/photasa/src-tauri/tauri.conf.json`             | CSP `img-src`/`media-src` 加 `asset://localhost`                                                                                   |
+| `apps/photasa/src/utils/media-url.ts`                | 新增 `isAssetWebviewUrl`、`parseAssetWebviewUrl`、`ensureWebviewMediaUrl`；重构 `isTauriRuntime`、`absoluteThumbnailPathForSource` |
+| `apps/photasa/src/utils/__tests__/media-url.test.ts` | mock 改为 `asset://localhost/` 格式，新增 round-trip 和 `ensureWebviewMediaUrl` 测试                                               |

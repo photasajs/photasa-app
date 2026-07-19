@@ -6,7 +6,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -21,6 +21,7 @@
 `thumbnail.rs` 使用 `libheif-rs`（HEIC/HEIF 解码），`extract_metadata.rs` 使用 `ffmpeg-next`（视频元数据探测）。两者均依赖 C/汇编编译器和系统级库。
 
 RFC 0097 已注明"静态链接 FFmpeg，不依赖系统 ffmpeg"，但：
+
 - 未有专门 RFC 记录构建机要求和验证步骤
 - `libheif-rs` 的静态链接策略未文档化
 - CI（GitHub Actions 等）的环境配置未规范
@@ -43,10 +44,10 @@ ffmpeg-next = { version = "8.1", default-features = false, features = ["build", 
 
 **构建机要求：**
 
-| 平台 | 必要工具 |
-|------|---------|
-| macOS | Xcode CLT（`xcode-select --install`），`nasm`（`brew install nasm`） |
-| Linux | `gcc` / `clang`，`nasm`，`make` |
+| 平台    | 必要工具                                                                           |
+| ------- | ---------------------------------------------------------------------------------- |
+| macOS   | Xcode CLT（`xcode-select --install`），`nasm`（`brew install nasm`）               |
+| Linux   | `gcc` / `clang`，`nasm`，`make`                                                    |
 | Windows | MSVC 2019+（Visual Studio Build Tools），NASM（PATH 中），Perl（`strawberryperl`） |
 
 **CI（GitHub Actions）示例：**

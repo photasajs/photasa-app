@@ -1,9 +1,8 @@
 /*!
- * 文件监视命令 (RFC 0082, 0083)
- * start_file_watch / stop_file_watch，使用 notify 发出与 Electron 相同的事件名，
- * 并经 ScanQueueCoalescer 发射 picasa:add-to-scan-queue（FileOperation[]）
+ * 文件监视命令 (RFC 0082, 0083, 0133)
+ * start_file_watch / stop_file_watch：notify → file-* 事件 + photasa-watch coalescer → scan queue
  */
-use crate::commands::watch_scan_queue::ScanQueueCoalescer;
+use crate::commands::watch_scan_queue::{ScanQueueCoalescer, TauriScanQueueSink};
 use notify::event::{CreateKind, RemoveKind};
 use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::Path;
@@ -19,8 +18,9 @@ const FILE_UNLINK_DIR: &str = "picasa:file-unlink-dir";
 const FILE_ERROR: &str = "picasa:file-error";
 const FILE_READY: &str = "picasa:file-ready";
 
-/// 前端期望的 payload 形状：{ isFile: boolean, path: string } 或 { error: string }
+/// 前端期望的 payload 形状：`{ isFile: boolean, path: string }`（RFC 0083 / 0135）
 #[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 struct FileEventPayload {
     is_file: bool,
     path: String,
@@ -31,7 +31,7 @@ struct FileErrorPayload {
     error: String,
 }
 
-/// 当前监视器句柄 + 与 Electron WatchService 对齐的扫描队列合并器
+/// 当前监视器句柄 + 扫描队列合并器
 pub struct WatchState {
     watcher: Mutex<Option<RecommendedWatcher>>,
     coalescer: ScanQueueCoalescer,
@@ -48,6 +48,7 @@ impl WatchState {
 
 /// 启动配置：路径列表与是否递归（与 Electron WatchConfig 对齐）
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StartFileWatchConfig {
     pub paths: Vec<String>,
     #[serde(default)]
@@ -84,6 +85,7 @@ pub async fn start_file_watch(
     };
 
     let coalescer = state.coalescer.clone();
+    let sink = TauriScanQueueSink::new(app_for_closure.clone());
     let mut watcher =
         notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| match res {
             Ok(event) => {
@@ -109,7 +111,7 @@ pub async fn start_file_watch(
                                 },
                             );
                             coalescer.handle_fs_event(
-                                &app_for_closure,
+                                sink.clone(),
                                 scan_op,
                                 &path_str,
                                 is_file_override,
@@ -117,12 +119,7 @@ pub async fn start_file_watch(
                         }
                         EventKind::Modify(_) => {
                             let _ = app_for_closure.emit(FILE_CHANGE, payload);
-                            coalescer.handle_fs_event(
-                                &app_for_closure,
-                                "change",
-                                &path_str,
-                                is_file,
-                            );
+                            coalescer.handle_fs_event(sink.clone(), "change", &path_str, is_file);
                         }
                         EventKind::Remove(remove_kind) => {
                             let (event_name, is_file_override, scan_op) = match remove_kind {
@@ -138,7 +135,7 @@ pub async fn start_file_watch(
                                 },
                             );
                             coalescer.handle_fs_event(
-                                &app_for_closure,
+                                sink.clone(),
                                 scan_op,
                                 &path_str,
                                 is_file_override,
@@ -181,4 +178,30 @@ pub fn stop_file_watch(state: tauri::State<'_, WatchState>) -> Result<(), String
     *guard = None;
     state.coalescer.clear_pending();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn file_event_payload_serializes_camel_case_is_file() {
+        let json = serde_json::to_string(&FileEventPayload {
+            is_file: true,
+            path: "/tmp/a.jpg".into(),
+        })
+        .unwrap();
+        assert!(json.contains("\"isFile\":true"), "got {json}");
+        assert!(!json.contains("\"is_file\""), "got {json}");
+    }
+
+    #[test]
+    fn start_config_accepts_camel_case_thumbnail_size() {
+        let cfg: StartFileWatchConfig = serde_json::from_str(
+            r#"{"paths":["/a"],"recursive":true,"thumbnailSize":200}"#,
+        )
+        .unwrap();
+        assert_eq!(cfg.thumbnail_size, Some(200));
+        assert_eq!(cfg.paths, vec!["/a"]);
+    }
 }

@@ -274,6 +274,43 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 }, 20);
             });
         });
+
+        it("应该保留扫描进度的队列路径和总数", async () => {
+            const yuShiNanService = new MockService("虞世南");
+            duruhui.connect(yuShiNanService);
+
+            const testQizou: Qizou = {
+                matter: "scan_progress",
+                content: {
+                    filePath: "/album/IMG_001.jpg",
+                    scanPath: "/album",
+                    progress: 3,
+                    total: 10,
+                    type: "progress",
+                },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: { type: "report" },
+            };
+
+            (router as any).qizouBus.emit("qizou", testQizou);
+
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    expect(yuShiNanService.receivedShengzhis).toHaveLength(1);
+                    const shengzhi = yuShiNanService.receivedShengzhis[0];
+                    expect(shengzhi.command).toBe("update_scan_progress");
+                    expect(shengzhi.content).toMatchObject({
+                        filePath: "/album/IMG_001.jpg",
+                        scanPath: "/album",
+                        progress: 3,
+                        total: 10,
+                        type: "progress",
+                    });
+                    resolve();
+                }, 20);
+            });
+        });
     });
 
     describe("圣旨生成测试", () => {

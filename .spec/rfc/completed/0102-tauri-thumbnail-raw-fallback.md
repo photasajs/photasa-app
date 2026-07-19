@@ -6,7 +6,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -89,12 +89,14 @@ pub struct ThumbnailResponse {
 ## Implementation Checklist
 
 ### 方案 A（短期）
+
 1. `thumbnail.rs`：添加 `generate_placeholder(ext, dst, w, h)` 纯 Rust 实现
 2. `create_thumbnail`：RAW 分支调用 `generate_placeholder`
 3. `ThumbnailResponse`：添加 `fallback` 字段
 4. `legacy-api.ts`：前端处理 `fallback: true` 时显示格式标签
 
 ### 方案 B（长期，独立 PR）
+
 5. `Cargo.toml`：添加 `rawler`
 6. `thumbnail.rs`：RAW 分支调用 `rawler` 提取内嵌 JPEG 预览
 7. 保留方案 A 作为 `rawler` 失败时的最终回退

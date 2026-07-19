@@ -1,9 +1,8 @@
 # RFC 0113 – Tauri updater: production config + preferences sync
 
-
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 **Status**: ✅ Implemented  
 **Created**: 2026-06-06  

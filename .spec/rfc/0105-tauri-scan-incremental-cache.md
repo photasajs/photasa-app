@@ -1,9 +1,8 @@
 # RFC 0105 – Tauri scan: incremental cache (.photasa-folder.json)
 
-
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -27,8 +26,8 @@ const cache = JSON.parse(fs.readFileSync(cacheFilePath, "utf8"));
 // cache.processedFiles  → already-scanned count
 // cache.pendingFiles    → remaining count
 progressData = {
-  processed: cache.processedFiles.length,
-  total:     cache.processedFiles.length + cache.pendingFiles.length,
+    processed: cache.processedFiles.length,
+    total: cache.processedFiles.length + cache.pendingFiles.length,
 };
 ```
 
@@ -36,7 +35,7 @@ The cache is populated during scan in Rust (walkdir + media filter)—**not** by
 `processed/total` progress to the frontend. Resuming a partial scan uses the same on-disk format as Electron.
 
 The Rust `scan_photos` in `stubs.rs` and `scan_adapter.rs` perform a raw
-`walkdir` traversal.  They emit each found path as a `picasa:find-photo` event
+`walkdir` traversal. They emit each found path as a `picasa:find-photo` event
 but:
 
 - Do not write or read `.photasa-folder.json`.
@@ -63,12 +62,12 @@ Implement `.photasa-folder.json` **in Rust** (`scan_cache.rs` or dedicated modul
 ### Scan flow with cache
 
 1. **Discovery phase**: walkdir the target directory to collect all candidate
-   media paths (use the existing `PHOTO_EXTENSIONS` filter).  Store the full
-   list as `pendingFiles`.  Write initial `.photasa-folder.json`.
+   media paths (use the existing `PHOTO_EXTENSIONS` filter). Store the full
+   list as `pendingFiles`. Write initial `.photasa-folder.json`.
 2. **Processing loop**: for each path in `pendingFiles`:
-   - Move path from `pendingFiles` to `processedFiles` in the cache.
-   - Write updated `.photasa-folder.json` to disk.
-   - Emit `picasa:find-photo { type: "progress", requestId, progress: { processed, total }, currentFile }`.
+    - Move path from `pendingFiles` to `processedFiles` in the cache.
+    - Write updated `.photasa-folder.json` to disk.
+    - Emit `picasa:find-photo { type: "progress", requestId, progress: { processed, total }, currentFile }`.
 3. **Completion**: emit `picasa:find-photo { type: "complete", … }`.
 4. **Resume**: if `.photasa-folder.json` already exists and `pendingFiles` is
    non-empty, skip the discovery phase and process only the remaining
@@ -105,7 +104,7 @@ Rust modules (no `@photasa/scan` dependency):
 
 ## Verification (2026-06-06)
 
-Implemented in Rust (`scan_media.rs`, `scan_cache.rs`, `scan_runner.rs`). Electron `scan-worker.ts` / `.photasa-folder.json` format used as **behavior spec only** per [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+Implemented in Rust (`scan_media.rs`, `scan_cache.rs`, `scan_runner.rs`). Electron `scan-worker.ts` / `.photasa-folder.json` format used as **behavior spec only** per [ROADMAP.md](../../ROADMAP.md).
 
 ```bash
 cd apps/photasa/src-tauri && cargo test scan_

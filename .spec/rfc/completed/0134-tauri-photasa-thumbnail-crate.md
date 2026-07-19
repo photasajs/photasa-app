@@ -11,7 +11,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - 缩略图**解码 API**（图片缩放 / HEIC 解码 / 视频截帧 / RAW 占位）迁入 **`crates/photasa-thumbnail`** — **零 Tauri**。
 - **Async always at crate boundary**：crate 对外只暴露 async API；阻塞图片/HEIC/视频解码封在 crate 内部 `tokio::task::spawn_blocking`，调用方不再自己包阻塞工作。

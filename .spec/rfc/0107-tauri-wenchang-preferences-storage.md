@@ -8,7 +8,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -41,26 +41,26 @@ Current Tauri state:
 ## Goals
 
 1. **Correct responsibility split**
-   - `.photasa.json` (folder-level) is no longer implemented under adapter name `"wenchang"`.
-   - `"wenchang"` is reserved for application-level preferences.
+    - `.photasa.json` (folder-level) is no longer implemented under adapter name `"wenchang"`.
+    - `"wenchang"` is reserved for application-level preferences.
 
 2. **Dedicated crate**
-   - Implement preferences persistence in a new Rust workspace crate under `crates/`.
-   - Keep Tauri adapter as a thin boundary layer.
+    - Implement preferences persistence in a new Rust workspace crate under `crates/`.
+    - Keep Tauri adapter as a thin boundary layer.
 
 3. **Workflow parity**
-   - Implement the minimal action surface needed by Electron preference workflows:
-     - `getCurrentSnapshot`
-     - `updatePreferences`
-     - `resetToDefaults`
-     - `exportPreferences`
-     - `importPreferences`
-     - `getHistory`
-     - `restoreRevision`
-     - `validate`
-     - `sanitize`
-     - `emitEvent`
-     - `formatResponse`
+    - Implement the minimal action surface needed by Electron preference workflows:
+        - `getCurrentSnapshot`
+        - `updatePreferences`
+        - `resetToDefaults`
+        - `exportPreferences`
+        - `importPreferences`
+        - `getHistory`
+        - `restoreRevision`
+        - `validate`
+        - `sanitize`
+        - `emitEvent`
+        - `formatResponse`
 
 ---
 
@@ -112,16 +112,16 @@ Production builds must bundle `workflows/` into `resource_dir/workflows` (tracke
 ## Testing strategy
 
 - Rust unit tests in the new crate:
-  - default initialization (no file) → defaults written
-  - apply delta → revision increments, deep merge works, `preferences.json` persists
-  - history + revisions files updated
-  - restoreRevision loads previous snapshot
+    - default initialization (no file) → defaults written
+    - apply delta → revision increments, deep merge works, `preferences.json` persists
+    - history + revisions files updated
+    - restoreRevision loads previous snapshot
 - Tauri compile proof:
-  - `cargo test -p wenchang-preferences`
-  - `cargo build -p photasa`
+    - `cargo test -p wenchang-preferences`
+    - `cargo build -p photasa`
 - Optional manual validation:
-  - Renderer triggers `get_preferences` and sees preferences store replaced via `matter-sync.yml`
-  - Update theme/language/thumbnailSize triggers `update_preferences` and persists to `~/.photasa/preferences/preferences.json`
+    - Renderer triggers `get_preferences` and sees preferences store replaced via `matter-sync.yml`
+    - Update theme/language/thumbnailSize triggers `update_preferences` and persists to `~/.photasa/preferences/preferences.json`
 
 ---
 
@@ -129,4 +129,3 @@ Production builds must bundle `workflows/` into `resource_dir/workflows` (tracke
 
 - If workflow action shapes differ, store automation may not sync; mitigate by matching Electron workflow expectations precisely.
 - Bundling workflows in production is a separate packaging concern; dev path already points to Electron workflows.
-

@@ -17,5 +17,15 @@ export default defineConfig({
         include: ["src/**/*.test.ts"],
         passWithNoTests: true,
         globals: true,
+        coverage: {
+            provider: "v8",
+            include: ["src/api/watch-event.ts"],
+            thresholds: {
+                lines: 100,
+                functions: 100,
+                branches: 100,
+                statements: 100,
+            },
+        },
     },
 });

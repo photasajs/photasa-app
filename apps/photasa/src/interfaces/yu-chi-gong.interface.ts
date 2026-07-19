@@ -1,4 +1,5 @@
 import type { InjectionKey } from "vue";
+import type { FileOperation } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要FolderNode导入
 
@@ -77,6 +78,16 @@ export interface IYuChiGongService {
      * @param path 目录绝对路径
      */
     requestRescan(path: string): Promise<void>;
+
+    /**
+     * 文件监视批量事件触发的扫描任务
+     * @param operations Rust watch 合并后的文件操作
+     * @param thumbnailSize 当前缩略图大小
+     */
+    scheduleFileOperationsFromWatch(
+        operations: FileOperation[],
+        thumbnailSize: number,
+    ): Promise<void>;
 
     /**
      * 初始化扫描队列（应用启动时调用）

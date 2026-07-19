@@ -1,9 +1,8 @@
 # RFC 0106 – Tauri updater: background periodic check timer
 
-
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -34,12 +33,14 @@ private startPeriodicCheck(): void {
 It also fires a one-time check 5 seconds after startup:
 
 ```ts
-setTimeout(() => { this.checkForUpdates(); }, 5000);
+setTimeout(() => {
+    this.checkForUpdates();
+}, 5000);
 ```
 
 The Rust `update.rs` stores `check_interval` in `AutoUpdateConfigState` but
-**never starts a background loop**.  `check_for_updates` is only called when
-the frontend explicitly invokes the Tauri command.  Automatic background
+**never starts a background loop**. `check_for_updates` is only called when
+the frontend explicitly invokes the Tauri command. Automatic background
 update checking is therefore absent from the Tauri build.
 
 ---
@@ -54,10 +55,10 @@ Wire a background Tokio task in `apps/photasa/src-tauri/src/main.rs` (inside
 2. **Periodic loop**: after each check, sleep for
    `auto_config.check_interval` hours (default `24`) before re-checking.
 3. **Config-driven**: read `auto_config.enabled` and `auto_config.check_interval`
-   from `UpdateState` each iteration.  If `enabled == false`, skip that cycle
+   from `UpdateState` each iteration. If `enabled == false`, skip that cycle
    but keep the loop alive so it picks up future config changes.
 4. **Shutdown on app exit**: use a `CancellationToken` (or `tauri::async_runtime::handle()
-   .spawn`) tied to the `RunEvent::ExitRequested` handler so the background
+.spawn`) tied to the `RunEvent::ExitRequested` handler so the background
    task terminates cleanly.
 
 ### Pseudo-code sketch

@@ -21,6 +21,7 @@ photasa-import = { workspace = true }
 photasa-thumbnail = { workspace = true }
 photasa-types = { workspace = true }
 photasa-scan = { workspace = true }
+photasa-watch = { workspace = true }
 
 # workspace 共享依赖
 serde = { workspace = true }

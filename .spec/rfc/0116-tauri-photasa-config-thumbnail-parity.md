@@ -2,20 +2,20 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron / `@photasa/config-core` / `apps/desktop/src/shared/path-util.ts` are the **only** path contracts.
 - **No new thumbnail naming.** Canonical relative path remains:
   `.photasaoriginals/thumbnail-{fileName}.png` (`toRelativeThumbnailPath` / `toThumbnailName`).
 - Photasa fixes **broken stubs and drift**, not a second schema.
 
-| Field | Value |
-|-------|-------|
-| **Status** | ✅ Implemented |
-| **Created** | 2026-06-06 |
-| **Last updated** | 2026-06-06 |
-| **Area** | Tauri / Config / Scan / WebView |
-| **Depends on** | [0071](0071-tauri-config-service-migration.md), [0068](0068-tauri-scan-service-migration.md), [0105](0105-tauri-scan-incremental-cache.md), [0048](completed/0048-scan-orchestration-business-logic-migration.md), [0115](0115-tauri-webview-local-image-asset-protocol.md) |
+| Field            | Value                                                                                                                                                                                                                                                                       |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**       | ✅ Implemented                                                                                                                                                                                                                                                              |
+| **Created**      | 2026-06-06                                                                                                                                                                                                                                                                  |
+| **Last updated** | 2026-06-06                                                                                                                                                                                                                                                                  |
+| **Area**         | Tauri / Config / Scan / WebView                                                                                                                                                                                                                                             |
+| **Depends on**   | [0071](0071-tauri-config-service-migration.md), [0068](0068-tauri-scan-service-migration.md), [0105](0105-tauri-scan-incremental-cache.md), [0048](completed/0048-scan-orchestration-business-logic-migration.md), [0115](0115-tauri-webview-local-image-asset-protocol.md) |
 
 ---
 
@@ -34,14 +34,14 @@ Rescan (`resetPhotasaConfig` + scan + `always: true`) was already specified in R
 
 ## Electron reference (source of truth)
 
-| Behavior | Electron location |
-|----------|-------------------|
-| Thumbnail relative path | `packages/@photasa/config-core/src/path-util.ts` → `toRelativeThumbnailPath` |
-| Shorten absolute → relative | `shortenThumbnailName` → `.photasaoriginals/` + basename |
-| Add to photoList | `config-storage.ts` → `addToPhotoList` uses `toRelativeThumbnailPath` |
-| Fix config | `fixPhotasaConfig` → normalize `path` + `shortenThumbnailName(thumbnail)` |
-| Rescan | `yuchigong.executeScan` → `resetPhotasaConfig` then scan; `scan-helpers` → `always: rescan` |
-| Scan write config | `addToPhotasaConfig` after thumbnail worker |
+| Behavior                    | Electron location                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| Thumbnail relative path     | `packages/@photasa/config-core/src/path-util.ts` → `toRelativeThumbnailPath`                |
+| Shorten absolute → relative | `shortenThumbnailName` → `.photasaoriginals/` + basename                                    |
+| Add to photoList            | `config-storage.ts` → `addToPhotoList` uses `toRelativeThumbnailPath`                       |
+| Fix config                  | `fixPhotasaConfig` → normalize `path` + `shortenThumbnailName(thumbnail)`                   |
+| Rescan                      | `yuchigong.executeScan` → `resetPhotasaConfig` then scan; `scan-helpers` → `always: rescan` |
+| Scan write config           | `addToPhotasaConfig` after thumbnail worker                                                 |
 
 **Canonical thumbnail path (unchanged since v2.0):**
 

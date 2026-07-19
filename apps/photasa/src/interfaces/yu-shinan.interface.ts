@@ -13,14 +13,15 @@
  *
  * 架构原则：
  * - ❌ 虞世南不持有响应式状态
- * - ✅ 虞世南接收圣旨并更新 photoStore 和 statusBarStore
+ * - ✅ 虞世南接收圣旨并更新 photoStore、scanningStore 和 statusBarStore
+ * - ✅ 扫描中状态由 scanningStore 队列状态派生
  * - ✅ 虞世南提供 getter 供 UI 访问（通过房玄龄）
  * - ✅ UI 通过 useYuShiNan() → 虞世南 → 房玄龄 → Store
  */
 export interface IYuShiNanService {
     /**
      * 当前正在扫描的文件路径（只读）
-     * 虞世南通过房玄龄访问 photoStore.processingFile
+     * 虞世南通过房玄龄访问 photoStore.processingFile，仅用于进度文件文案
      */
     readonly currentScanningFile: string;
 
@@ -56,13 +57,13 @@ export interface IYuShiNanService {
 
     /**
      * ✅ RFC 0057: 判断是否正在扫描（只读）
-     * 从 StatusBar.vue 移入，统一由 yuShiNan 管理
+     * 从 scanningStore 队列处理状态派生
      */
     readonly isScanning: boolean;
 
     /**
      * ✅ RFC 0057: 获取扫描路径（只读）
-     * 从 StatusBar.vue 移入，统一由 yuShiNan 管理
+     * 从 scanningStore 当前处理路径派生
      * 返回纯路径，UI 层负责添加 i18n 前缀
      */
     readonly scanningPath: string;
@@ -159,8 +160,12 @@ export interface ScanHealthStatus {
 export interface ScanProgressShengzhiContent {
     /** 当前扫描的文件路径（完整路径） */
     filePath: string;
+    /** 当前扫描任务路径（队列项路径） */
+    scanPath?: string;
     /** 扫描进度（已处理文件数） */
     progress: number;
+    /** 扫描总数 */
+    total?: number;
     /** 扫描类型：progress 或 complete */
     type: "progress" | "complete";
 }

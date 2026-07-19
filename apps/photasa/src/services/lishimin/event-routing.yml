@@ -92,7 +92,9 @@ qizou_routes:
                   command: "update_scan_progress"
                   content:
                       filePath: "{{qizou.content.filePath}}"
+                      scanPath: "{{qizou.content.scanPath}}"
                       progress: "{{qizou.content.progress}}"
+                      total: "{{qizou.content.total}}"
                       type: "{{qizou.content.type}}"
                   priority: "normal"
               description: "扫描进度更新后，下旨虞世南更新状态栏显示"

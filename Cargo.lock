@@ -3751,6 +3751,7 @@ dependencies = [
  "photasa-scan",
  "photasa-thumbnail",
  "photasa-types",
+ "photasa-watch",
  "regex",
  "serde",
  "serde_json",
@@ -3820,6 +3821,18 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "photasa-watch"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "photasa-types",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

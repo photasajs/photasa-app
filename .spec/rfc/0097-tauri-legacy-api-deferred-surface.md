@@ -3,11 +3,11 @@
 - **Start Date**: 2026-03-21
 - **Last updated**: 2026-06-08
 - **Status**: ✅ Implemented — Phase 7（0111–0114）全部完成
-- **Depends on**: RFC 0075（扁平 API）；0088–0090；0070 + Rust 导入内核；[TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md)
+- **Depends on**: RFC 0075（扁平 API）；0088–0090；0070 + Rust 导入内核；[ROADMAP.md](../../ROADMAP.md)
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -21,66 +21,66 @@
 
 ## Electron 能力 → Rust 状态总表
 
-| 能力域 | Electron | Rust | 状态 |
-|--------|----------|------|------|
-| 窗口 / Shell / 平台 | preload + main | `window`, `shell`, `platform` | ✅ |
-| 路径 | Node path-util | `path.rs` + 少量 Vue 纯 TS | ✅ |
-| 配置读写 | worker + preload fs | `config.rs` | ✅ |
-| 目录对话框 | directory-service | `directory.rs` | ✅（**0114** OS 路径映射） |
-| 扫描 | scan-worker + cache | `scan_runner` + `scan_cache` | ✅（0105） |
-| 扫描状态条 | `notify:status` | **`scan_notify.rs` + scan_runner** | ✅（**0111**） |
-| 监视 / 扫描队列 | watch-service | `watch` + `watch_scan_queue` | ✅ |
-| 缩略图 | Ma-Liang worker | `thumbnail.rs` | ✅（0102/0103） |
-| 导入流水线 | import-worker | `import_*` + `import_date_util` | ✅（0104, **0114** scan FileGroup） |
-| 遗留导入 | preload fs | `import_photos_legacy` | ✅（0093） |
-| 元数据 | worker + preload EXIF | `extract_metadata*.rs` | ✅（**0112** golden） |
-| 日志 | log-viewer | `log_viewer.rs` | ✅ |
-| 更新 | update-service | `update.rs` + `update_periodic` + `update_config` | ✅（**0113**） |
-| 菜单 | menu-service | `menu.rs` + 天枢 | ✅ |
-| 天枢 / 偏好 | tianshu + wenchang | `TianshuService` + `wenchang-preferences` | ✅（0107） |
-| Splash / 单实例 | splash + single-instance | 0100/0101 | 🚧 UI polish 可选 |
-| WASM 命令 | （历史） | ✅ **已删除**（0114） | 
-| `@photasa/*` 包 | 0098 Electron | **禁止** Tauri 引用 | ⛔ |
+| 能力域              | Electron                 | Rust                                              | 状态                                |
+| ------------------- | ------------------------ | ------------------------------------------------- | ----------------------------------- |
+| 窗口 / Shell / 平台 | preload + main           | `window`, `shell`, `platform`                     | ✅                                  |
+| 路径                | Node path-util           | `path.rs` + 少量 Vue 纯 TS                        | ✅                                  |
+| 配置读写            | worker + preload fs      | `config.rs`                                       | ✅                                  |
+| 目录对话框          | directory-service        | `directory.rs`                                    | ✅（**0114** OS 路径映射）          |
+| 扫描                | scan-worker + cache      | `scan_runner` + `scan_cache`                      | ✅（0105）                          |
+| 扫描状态条          | `notify:status`          | **`scan_notify.rs` + scan_runner**                | ✅（**0111**）                      |
+| 监视 / 扫描队列     | watch-service            | `watch` + `watch_scan_queue`                      | ✅                                  |
+| 缩略图              | Ma-Liang worker          | `thumbnail.rs`                                    | ✅（0102/0103）                     |
+| 导入流水线          | import-worker            | `import_*` + `import_date_util`                   | ✅（0104, **0114** scan FileGroup） |
+| 遗留导入            | preload fs               | `import_photos_legacy`                            | ✅（0093）                          |
+| 元数据              | worker + preload EXIF    | `extract_metadata*.rs`                            | ✅（**0112** golden）               |
+| 日志                | log-viewer               | `log_viewer.rs`                                   | ✅                                  |
+| 更新                | update-service           | `update.rs` + `update_periodic` + `update_config` | ✅（**0113**）                      |
+| 菜单                | menu-service             | `menu.rs` + 天枢                                  | ✅                                  |
+| 天枢 / 偏好         | tianshu + wenchang       | `TianshuService` + `wenchang-preferences`         | ✅（0107）                          |
+| Splash / 单实例     | splash + single-instance | 0100/0101                                         | 🚧 UI polish 可选                   |
+| WASM 命令           | （历史）                 | ✅ **已删除**（0114）                             |
+| `@photasa/*` 包     | 0098 Electron            | **禁止** Tauri 引用                               | ⛔                                  |
 
 ---
 
 ## ✅ 已在 Rust 重写（0097 子项）
 
-| 区域 | API / 行为 | RFC |
-|------|------------|-----|
-| 更新命令 + 事件 + 定时 | `checkForUpdates`… + `picasa:update-*` + 后台 loop | 0090, **0106** |
-| 日志 | `log_viewer_*` + `log:entry` | 0088, 0089 |
-| 导入扩展 | preview/execute/cancel/pause/resume/history/undo | 0070, 0096, 0104 |
-| 扫描 | `scan_photos` + `.photasa-folder.json` + progress | **0105** |
-| 扫描队列 | `picasa:add-to-scan-queue` | watch_scan_queue |
-| 遗留导入 | `importPhotos` 流 | 0093 |
-| 缩略图 | RAW fallback | 0069, 0102 |
-| Splash 核心 | 双窗 + close | 0101 |
+| 区域                   | API / 行为                                         | RFC              |
+| ---------------------- | -------------------------------------------------- | ---------------- |
+| 更新命令 + 事件 + 定时 | `checkForUpdates`… + `picasa:update-*` + 后台 loop | 0090, **0106**   |
+| 日志                   | `log_viewer_*` + `log:entry`                       | 0088, 0089       |
+| 导入扩展               | preview/execute/cancel/pause/resume/history/undo   | 0070, 0096, 0104 |
+| 扫描                   | `scan_photos` + `.photasa-folder.json` + progress  | **0105**         |
+| 扫描队列               | `picasa:add-to-scan-queue`                         | watch_scan_queue |
+| 遗留导入               | `importPhotos` 流                                  | 0093             |
+| 缩略图                 | RAW fallback                                       | 0069, 0102       |
+| Splash 核心            | 双窗 + close                                       | 0101             |
 
 ---
 
 ## 🚧 Partial — 已全部收口（Phase 7）
 
-| 缺口 | Rust 下一步 | 子 RFC |
-|------|-------------|--------|
-| **`notify:status` 缺失** | ~~`build_scan_notify_payload`~~ | ✅ **0111** |
-| 元数据 golden / MakerNote | fixtures + 对拍测试 | ✅ **0112** |
-| **updater pubkey + 启动灌配置** | preferences → `UpdateState` | ✅ **0113** |
-| **`scanDirectories` 形状** | 返回 `FileGroup[]` + 可选 `filters` | ✅ **0114** |
-| **`get_directory` OS 路径** | `desktop`/`documents`/`home` → `dirs::*_dir()` | ✅ **0114** |
-| **Splash / RAW 占位 polish** | ✅ RAW 扩展名 + Splash 主题同步 | 完成 |
-| **WASM 废弃文件** | `wasm.rs` × 2 删除，`main.rs` 解注册 | ✅ **0114** |
+| 缺口                            | Rust 下一步                                    | 子 RFC      |
+| ------------------------------- | ---------------------------------------------- | ----------- |
+| **`notify:status` 缺失**        | ~~`build_scan_notify_payload`~~                | ✅ **0111** |
+| 元数据 golden / MakerNote       | fixtures + 对拍测试                            | ✅ **0112** |
+| **updater pubkey + 启动灌配置** | preferences → `UpdateState`                    | ✅ **0113** |
+| **`scanDirectories` 形状**      | 返回 `FileGroup[]` + 可选 `filters`            | ✅ **0114** |
+| **`get_directory` OS 路径**     | `desktop`/`documents`/`home` → `dirs::*_dir()` | ✅ **0114** |
+| **Splash / RAW 占位 polish**    | ✅ RAW 扩展名 + Splash 主题同步                | 完成        |
+| **WASM 废弃文件**               | `wasm.rs` × 2 删除，`main.rs` 解注册           | ✅ **0114** |
 
 ---
 
 ## ⛔ 不是 Photasa 重写目标（勿误标为缺口）
 
-| 项 | 原因 |
-|----|------|
-| **RFC 0098** `@photasa/*` 抽包 | Electron-only，Deferred |
+| 项                                     | 原因                                      |
+| -------------------------------------- | ----------------------------------------- |
+| **RFC 0098** `@photasa/*` 抽包         | Electron-only，Deferred                   |
 | **Ma-Liang / `@photasa/maliang` WASM** | 已由 Rust `image` + libheif + ffmpeg 替代 |
-| **preload 本地 `importPhotos` fs** | 已由 `import_photos_legacy` Rust 替代 |
-| **v2.0 Electron RFC（0032 等）** | Legacy 索引；Photasa 用 0068/0105 |
+| **preload 本地 `importPhotos` fs**     | 已由 `import_photos_legacy` Rust 替代     |
+| **v2.0 Electron RFC（0032 等）**       | Legacy 索引；Photasa 用 0068/0105         |
 
 ---
 

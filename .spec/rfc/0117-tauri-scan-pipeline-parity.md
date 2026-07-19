@@ -5,7 +5,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - The Electron `@photasa/scan` pipeline is the **behavioral contract**, not a library to import or translate line-by-line.
 - "Parity" = same skip/process decisions, same events, same on-disk JSON, same user-visible outcome — **not** the same code.
@@ -609,7 +609,7 @@ Manual / golden parity:
   in TS (`decideScanStrategy` never returns INCREMENTAL); porting it would _add_ behavior
   Electron does not run.
 - **Import `@photasa/scan` into Tauri** — rejected by
-  [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md); no Node in backend.
+  [ROADMAP.md](../../ROADMAP.md); no Node in backend.
 - **Line-by-line TS→Rust translation** — rejected by policy; the tables are the contract,
   the Rust implementation is independent (pure functions + tests).
 - **Cloning the 50ms sleep / per-file disk re-read / fresh-vs-resume order flip** — rejected:

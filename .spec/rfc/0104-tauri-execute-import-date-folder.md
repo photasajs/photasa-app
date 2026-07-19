@@ -1,9 +1,8 @@
 # RFC 0104 – execute_import: date-based folder organization
 
-
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -29,8 +28,8 @@ match copy_one(src, &target_pb, strategy) { … }
 The Electron `import-worker.ts` / `handleExecuteImport` uses:
 
 ```ts
-const datePath = generateDatePath(group);        // → "{year}/{YYYYMMDD}"
-const groupDir  = path.join(targetPath, datePath);
+const datePath = generateDatePath(group); // → "{year}/{YYYYMMDD}"
+const groupDir = path.join(targetPath, datePath);
 // files land in  <targetPath>/2024/20240315/photo.jpg
 ```
 
@@ -52,6 +51,7 @@ destination as:
 ```
 
 The date is resolved with the same fallback chain already used by `determine_group_target_utc`:
+
 1. EXIF `dateTime`
 2. `createdTime` / `modifiedTime` from `extract_metadata_request`
 3. File system `mtime` fallback
@@ -62,12 +62,12 @@ The date is resolved with the same fallback chain already used by `determine_gro
    shared `import_date_util` internal module (or make `import_preview`'s
    functions `pub(crate)`).
 2. In `execute_import`, for each `src` file:
-   - Call `extract_metadata_request` (or read cached metadata from the config
-     payload's `selectedFiles` entries if the preview result is passed in).
-   - Compute date sub-path via `generate_date_path_utc`.
-   - Construct `target_dir = PathBuf::from(&target_path).join(&date_sub_path)`.
-   - Call `copy_one(src, &target_dir, strategy)` instead of using the flat
-     `target_pb`.
+    - Call `extract_metadata_request` (or read cached metadata from the config
+      payload's `selectedFiles` entries if the preview result is passed in).
+    - Compute date sub-path via `generate_date_path_utc`.
+    - Construct `target_dir = PathBuf::from(&target_path).join(&date_sub_path)`.
+    - Call `copy_one(src, &target_dir, strategy)` instead of using the flat
+      `target_pb`.
 3. Emit `targetPath` in the `imported_files` array elements as the full
    `{year}/{YYYYMMDD}/filename` path so the frontend can index them correctly.
 4. Unit test: create temp dir, call execute_import with a known EXIF date,
@@ -87,4 +87,4 @@ The date is resolved with the same fallback chain already used by `determine_gro
 
 ## Verification (2026-06-06)
 
-Implemented in Rust (`commands/import_date_util.rs`, shared by `import_preview` / `import_execute`). Electron `import-worker.ts` used as **behavior spec only** per [TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+Implemented in Rust (`commands/import_date_util.rs`, shared by `import_preview` / `import_execute`). Electron `import-worker.ts` used as **behavior spec only** per [ROADMAP.md](../../ROADMAP.md).

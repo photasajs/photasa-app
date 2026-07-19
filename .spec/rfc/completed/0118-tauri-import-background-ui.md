@@ -9,7 +9,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Import **backend already rewritten** in Rust. This RFC does **not** re-port Electron import-worker or `@photasa/import`.
 - Vue UI only; Rust change only if proven necessary (default: **zero**).

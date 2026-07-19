@@ -247,6 +247,8 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
             // 获取进度值（已处理的文件数）
             const progress = scanEvent.progress?.processed ?? 0;
+            const total = scanEvent.progress?.total ?? 0;
+            const scanPath = scanEvent.action?.path ?? "";
 
             // ✅ 构建启奏，类型直接使用 scanEvent.type（progress 或 complete）
             // yuShiNan 会处理 complete 类型的清空逻辑
@@ -254,7 +256,9 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 matter: QizouMatters.SCAN_PROGRESS,
                 content: {
                     filePath: scanEvent.type === "complete" ? "" : filePath, // complete 时清空路径
+                    scanPath: scanEvent.type === "complete" ? "" : scanPath,
                     progress: scanEvent.type === "complete" ? 0 : progress, // complete 时清空进度
+                    total: scanEvent.type === "complete" ? 0 : total,
                     type: scanEvent.type === "complete" ? "complete" : "progress", // ✅ 保持类型一致
                 },
                 from: "袁天罡",

@@ -8,7 +8,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [../TAURI_RUST_REWRITE_POLICY.md](../TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Import algorithm in **`crates/photasa-import`** only — **no** `@photasa/import` Node/TS in Tauri backend.
 - Electron/TS = behavior spec only.

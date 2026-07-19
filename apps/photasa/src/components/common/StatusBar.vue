@@ -75,7 +75,7 @@ const scanningPath = computed(() => {
 
             <!-- ✅ RFC 0057: 原有状态栏内容已移除，仅使用 yuShiNan 提供的数据 -->
 
-            <!-- processingFile 显示（非扫描状态） -->
+            <!-- 扫描路径显示（非扫描状态） -->
             <template v-else-if="scanningPath && !isScanning">
                 {{ scanningPath }}
             </template>

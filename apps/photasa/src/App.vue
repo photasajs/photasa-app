@@ -17,7 +17,6 @@ import {
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@photasa/common";
-import { mapFileOperationToScanAction } from "@photasa/common";
 import type { FileOperation } from "@photasa/common";
 
 import UserPreference from "./components/UserPreference.vue";
@@ -58,8 +57,6 @@ import type { RecoverableImport } from "@photasa/common";
 const logger = loggers.lishimin;
 const themeManager = useChuSuiLiang().themeManager;
 const { t } = useI18n();
-const photosStore = usePhotosStore();
-const { processingFile } = storeToRefs(photosStore);
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, thumbnailSize } = storeToRefs(preferenceStore);
 const { addPath } = preferenceStore;
@@ -93,6 +90,15 @@ const currentThemeId = ref<string>("");
 const zhangSunWuJi = useZhangSunWuJi();
 
 const isMac = window.api.isMac();
+
+watch(
+    () => scanningFolder.value.length,
+    (queueSize, previousQueueSize) => {
+        if (queueSize > 0 && previousQueueSize === 0) {
+            showScanList.value = true;
+        }
+    },
+);
 
 function handleOpenScanList() {
     logger.debug("Opening scan list dialog...");
@@ -140,8 +146,6 @@ async function initializeApp(): Promise<void> {
             // Open preference to config
             showPreference.value = true;
         }
-
-        processingFile.value = t("status.loadingConfig");
         // ✅ RFC 0048: 尉迟恭会自动处理扫描
     } catch (error) {
         logger.error("👑 李世民登基失败:", error);
@@ -341,28 +345,11 @@ useTitle(title);
 window.api?.onScanQueueAdd((operations: FileOperation[]) => {
     logger.debug(`👑 Received ${operations.length} file operations from watch service`);
 
-    // Process batch of file operations
-    operations.forEach((operation) => {
-        logger.debug("👑 Adding file operation to queue:", operation);
-
-        // Convert FileOperation to enhanced ScanAction for unified processing
-        const fileOperation = {
-            path: operation.path,
-            action: mapFileOperationToScanAction(operation.type),
-            thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize.value,
-            operationType: (operation.metadata?.isFile ? "file" : "directory") as
-                | "file"
-                | "directory",
-            priority: operation.priority,
-            timestamp: operation.timestamp,
-            source: "auto" as const, // File operations are typically auto-generated
-            retryCount: operation.retryCount,
-            fileOperationId: operation.id,
-        };
-
-        // Add to persistent queue using new enhanced method
-        preferenceStore.addFileOperation(fileOperation);
-    });
+    void yuChiGong
+        .scheduleFileOperationsFromWatch(operations, thumbnailSize.value)
+        .catch((error) => {
+            logger.error("👑 Failed to schedule watch scan operations", error);
+        });
 });
 </script>
 

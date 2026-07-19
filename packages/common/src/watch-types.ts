@@ -31,6 +31,8 @@ export interface WatchConfig {
         ignoreInitial: boolean;
         awaitWriteFinish: boolean;
     };
+    /** Tauri coalescer / FileOperation.metadata.thumbnailSize（可选） */
+    thumbnailSize?: number;
 }
 
 /**

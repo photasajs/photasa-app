@@ -1,9 +1,8 @@
 # RFC 0112 – Tauri `extract_metadata` golden parity
 
-
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Golden tests: same fixture files → same JSON field shapes as Electron `import:extract-metadata` (spec from `apps/desktop`, not `@photasa/import` runtime).
 

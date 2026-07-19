@@ -8,7 +8,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -139,19 +139,18 @@ apps/photasa/
  * 检测当前运行环境
  */
 export const isTauri = (): boolean => {
-  return typeof window !== 'undefined' &&
-         typeof (window as any).__TAURI__ !== 'undefined';
+    return typeof window !== "undefined" && typeof (window as any).__TAURI__ !== "undefined";
 };
 
 /**
  * 获取 Tauri invoke 函数
  */
 export const getTauriInvoke = async () => {
-  if (!isTauri()) {
-    throw new Error('Not running in Tauri environment');
-  }
-  const { invoke } = await import('@tauri-apps/api/tauri');
-  return invoke;
+    if (!isTauri()) {
+        throw new Error("Not running in Tauri environment");
+    }
+    const { invoke } = await import("@tauri-apps/api/tauri");
+    return invoke;
 };
 ```
 
@@ -160,14 +159,14 @@ export const getTauriInvoke = async () => {
 ```typescript
 // src/api/adapter.ts
 
-import { isTauri } from './env';
-import { windowAdapter } from './window.adapter';
-import { shellAdapter } from './shell.adapter';
-import { tianshuAdapter } from './tianshu.adapter';
-import { scanAdapter } from './scan.adapter';
-import { thumbnailAdapter } from './thumbnail.adapter';
-import { importAdapter } from './import.adapter';
-import { configAdapter } from './config.adapter';
+import { isTauri } from "./env";
+import { windowAdapter } from "./window.adapter";
+import { shellAdapter } from "./shell.adapter";
+import { tianshuAdapter } from "./tianshu.adapter";
+import { scanAdapter } from "./scan.adapter";
+import { thumbnailAdapter } from "./thumbnail.adapter";
+import { importAdapter } from "./import.adapter";
+import { configAdapter } from "./config.adapter";
 
 /**
  * 统一 API 适配器
@@ -177,37 +176,37 @@ import { configAdapter } from './config.adapter';
  * await api.window.minimize();
  */
 export const api = {
-  /** 窗口控制 */
-  window: windowAdapter,
+    /** 窗口控制 */
+    window: windowAdapter,
 
-  /** Shell 操作 */
-  shell: shellAdapter,
+    /** Shell 操作 */
+    shell: shellAdapter,
 
-  /** 天枢工作流引擎 */
-  tianshu: tianshuAdapter,
+    /** 天枢工作流引擎 */
+    tianshu: tianshuAdapter,
 
-  /** 扫描服务 */
-  scan: scanAdapter,
+    /** 扫描服务 */
+    scan: scanAdapter,
 
-  /** 缩略图服务 */
-  thumbnail: thumbnailAdapter,
+    /** 缩略图服务 */
+    thumbnail: thumbnailAdapter,
 
-  /** 导入服务 */
-  import: importAdapter,
+    /** 导入服务 */
+    import: importAdapter,
 
-  /** 配置服务 */
-  config: configAdapter,
+    /** 配置服务 */
+    config: configAdapter,
 
-  /** 环境信息 */
-  env: {
-    isTauri: isTauri(),
-    platform: isTauri() ? 'tauri' : 'electron',
-  },
+    /** 环境信息 */
+    env: {
+        isTauri: isTauri(),
+        platform: isTauri() ? "tauri" : "electron",
+    },
 };
 
 // 全局注入（可选，用于兼容旧代码）
-if (typeof window !== 'undefined') {
-  (window as any).api = api;
+if (typeof window !== "undefined") {
+    (window as any).api = api;
 }
 
 export default api;
@@ -218,68 +217,68 @@ export default api;
 ```typescript
 // src/api/window.adapter.ts
 
-import { isTauri } from './env';
+import { isTauri } from "./env";
 
 export const windowAdapter = {
-  /**
-   * 最小化窗口
-   */
-  minimize: async (): Promise<void> => {
-    if (isTauri()) {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      await appWindow.minimize();
-    } else {
-      await (window as any).electronAPI?.window?.minimize();
-    }
-  },
+    /**
+     * 最小化窗口
+     */
+    minimize: async (): Promise<void> => {
+        if (isTauri()) {
+            const { appWindow } = await import("@tauri-apps/api/window");
+            await appWindow.minimize();
+        } else {
+            await (window as any).electronAPI?.window?.minimize();
+        }
+    },
 
-  /**
-   * 最大化/还原窗口
-   */
-  maximize: async (): Promise<void> => {
-    if (isTauri()) {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      await appWindow.toggleMaximize();
-    } else {
-      await (window as any).electronAPI?.window?.maximize();
-    }
-  },
+    /**
+     * 最大化/还原窗口
+     */
+    maximize: async (): Promise<void> => {
+        if (isTauri()) {
+            const { appWindow } = await import("@tauri-apps/api/window");
+            await appWindow.toggleMaximize();
+        } else {
+            await (window as any).electronAPI?.window?.maximize();
+        }
+    },
 
-  /**
-   * 关闭窗口
-   */
-  close: async (): Promise<void> => {
-    if (isTauri()) {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      await appWindow.close();
-    } else {
-      await (window as any).electronAPI?.window?.close();
-    }
-  },
+    /**
+     * 关闭窗口
+     */
+    close: async (): Promise<void> => {
+        if (isTauri()) {
+            const { appWindow } = await import("@tauri-apps/api/window");
+            await appWindow.close();
+        } else {
+            await (window as any).electronAPI?.window?.close();
+        }
+    },
 
-  /**
-   * 检查是否最大化
-   */
-  isMaximized: async (): Promise<boolean> => {
-    if (isTauri()) {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      return await appWindow.isMaximized();
-    } else {
-      return await (window as any).electronAPI?.window?.isMaximized() ?? false;
-    }
-  },
+    /**
+     * 检查是否最大化
+     */
+    isMaximized: async (): Promise<boolean> => {
+        if (isTauri()) {
+            const { appWindow } = await import("@tauri-apps/api/window");
+            return await appWindow.isMaximized();
+        } else {
+            return (await (window as any).electronAPI?.window?.isMaximized()) ?? false;
+        }
+    },
 
-  /**
-   * 设置窗口标题
-   */
-  setTitle: async (title: string): Promise<void> => {
-    if (isTauri()) {
-      const { appWindow } = await import('@tauri-apps/api/window');
-      await appWindow.setTitle(title);
-    } else {
-      await (window as any).electronAPI?.window?.setTitle(title);
-    }
-  },
+    /**
+     * 设置窗口标题
+     */
+    setTitle: async (title: string): Promise<void> => {
+        if (isTauri()) {
+            const { appWindow } = await import("@tauri-apps/api/window");
+            await appWindow.setTitle(title);
+        } else {
+            await (window as any).electronAPI?.window?.setTitle(title);
+        }
+    },
 };
 ```
 
@@ -288,32 +287,32 @@ export const windowAdapter = {
 ```typescript
 // src/api/shell.adapter.ts
 
-import { isTauri } from './env';
+import { isTauri } from "./env";
 
 export const shellAdapter = {
-  /**
-   * 在默认浏览器中打开 URL
-   */
-  openExternal: async (url: string): Promise<void> => {
-    if (isTauri()) {
-      const { open } = await import('@tauri-apps/api/shell');
-      await open(url);
-    } else {
-      await (window as any).electronAPI?.shell?.openExternal(url);
-    }
-  },
+    /**
+     * 在默认浏览器中打开 URL
+     */
+    openExternal: async (url: string): Promise<void> => {
+        if (isTauri()) {
+            const { open } = await import("@tauri-apps/api/shell");
+            await open(url);
+        } else {
+            await (window as any).electronAPI?.shell?.openExternal(url);
+        }
+    },
 
-  /**
-   * 在文件管理器中显示文件
-   */
-  showInFolder: async (path: string): Promise<void> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      await invoke('show_in_folder', { path });
-    } else {
-      await (window as any).electronAPI?.shell?.showItemInFolder(path);
-    }
-  },
+    /**
+     * 在文件管理器中显示文件
+     */
+    showInFolder: async (path: string): Promise<void> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            await invoke("show_in_folder", { path });
+        } else {
+            await (window as any).electronAPI?.shell?.showItemInFolder(path);
+        }
+    },
 };
 ```
 
@@ -322,36 +321,36 @@ export const shellAdapter = {
 ```typescript
 // src/api/tianshu.adapter.ts
 
-import { isTauri } from './env';
-import type { Fulu, ZhaolingResponse } from '@/interfaces/fang-xuan-ling.interface';
+import { isTauri } from "./env";
+import type { Fulu, ZhaolingResponse } from "@/interfaces/fang-xuan-ling.interface";
 
 export const tianshuAdapter = {
-  /**
-   * 处理天枢命令
-   *
-   * 初期使用 stub 返回，逐步替换为真实实现
-   */
-  processCommand: async (fulu: Fulu): Promise<ZhaolingResponse> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      return await invoke('tianshu_command', { command: fulu });
-    } else {
-      // Electron 实现
-      return await (window as any).electronAPI?.tianshu?.processCommand(fulu);
-    }
-  },
+    /**
+     * 处理天枢命令
+     *
+     * 初期使用 stub 返回，逐步替换为真实实现
+     */
+    processCommand: async (fulu: Fulu): Promise<ZhaolingResponse> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            return await invoke("tianshu_command", { command: fulu });
+        } else {
+            // Electron 实现
+            return await (window as any).electronAPI?.tianshu?.processCommand(fulu);
+        }
+    },
 
-  /**
-   * 获取天枢状态
-   */
-  getStatus: async (): Promise<{ workflows: number; status: string }> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      return await invoke('tianshu_status');
-    } else {
-      return await (window as any).electronAPI?.tianshu?.getStatus();
-    }
-  },
+    /**
+     * 获取天枢状态
+     */
+    getStatus: async (): Promise<{ workflows: number; status: string }> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            return await invoke("tianshu_status");
+        } else {
+            return await (window as any).electronAPI?.tianshu?.getStatus();
+        }
+    },
 };
 ```
 
@@ -360,53 +359,55 @@ export const tianshuAdapter = {
 ```typescript
 // src/api/scan.adapter.ts
 
-import { isTauri } from './env';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { isTauri } from "./env";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export interface ScanAction {
-  path: string;
-  operationType: 'file' | 'directory';
-  action: 'scan' | 'rescan' | 'current';
-  thumbnailSize?: number;
+    path: string;
+    operationType: "file" | "directory";
+    action: "scan" | "rescan" | "current";
+    thumbnailSize?: number;
 }
 
 export interface ScanResult {
-  type: 'progress' | 'complete' | 'error';
-  requestId: string;
-  paths?: string[];
-  error?: string;
+    type: "progress" | "complete" | "error";
+    requestId: string;
+    paths?: string[];
+    error?: string;
 }
 
 export const scanAdapter = {
-  /**
-   * 扫描照片
-   */
-  scanPhotos: async (requestId: string, scanAction: ScanAction): Promise<void> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      await invoke('scan_photos', { requestId, scanAction });
-    } else {
-      await (window as any).electronAPI?.scan?.scanPhotos(requestId, scanAction);
-    }
-  },
+    /**
+     * 扫描照片
+     */
+    scanPhotos: async (requestId: string, scanAction: ScanAction): Promise<void> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            await invoke("scan_photos", { requestId, scanAction });
+        } else {
+            await (window as any).electronAPI?.scan?.scanPhotos(requestId, scanAction);
+        }
+    },
 
-  /**
-   * 监听扫描结果
-   */
-  onScanResult: async (callback: (result: ScanResult) => void): Promise<UnlistenFn | (() => void)> => {
-    if (isTauri()) {
-      return await listen<ScanResult>('picasa:find-photo', (event) => {
-        callback(event.payload);
-      });
-    } else {
-      // Electron 监听
-      const handler = (_event: any, result: ScanResult) => callback(result);
-      (window as any).electronAPI?.scan?.onResult(handler);
-      return () => {
-        (window as any).electronAPI?.scan?.offResult(handler);
-      };
-    }
-  },
+    /**
+     * 监听扫描结果
+     */
+    onScanResult: async (
+        callback: (result: ScanResult) => void,
+    ): Promise<UnlistenFn | (() => void)> => {
+        if (isTauri()) {
+            return await listen<ScanResult>("picasa:find-photo", (event) => {
+                callback(event.payload);
+            });
+        } else {
+            // Electron 监听
+            const handler = (_event: any, result: ScanResult) => callback(result);
+            (window as any).electronAPI?.scan?.onResult(handler);
+            return () => {
+                (window as any).electronAPI?.scan?.offResult(handler);
+            };
+        }
+    },
 };
 ```
 
@@ -415,48 +416,48 @@ export const scanAdapter = {
 ```typescript
 // src/api/thumbnail.adapter.ts
 
-import { isTauri } from './env';
+import { isTauri } from "./env";
 
 export interface ThumbnailRequest {
-  path: string;
-  thumbnail: string;
-  width?: number;
-  height?: number;
-  withoutEnlargement?: boolean;
-  preview?: string;
-  always?: boolean;
+    path: string;
+    thumbnail: string;
+    width?: number;
+    height?: number;
+    withoutEnlargement?: boolean;
+    preview?: string;
+    always?: boolean;
 }
 
 export interface ThumbnailResponse {
-  success: boolean;
-  file?: string;
-  error?: string;
+    success: boolean;
+    file?: string;
+    error?: string;
 }
 
 export const thumbnailAdapter = {
-  /**
-   * 创建缩略图
-   */
-  create: async (request: ThumbnailRequest): Promise<ThumbnailResponse> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      return await invoke('create_thumbnail', { request });
-    } else {
-      return await (window as any).electronAPI?.thumbnail?.create(request);
-    }
-  },
+    /**
+     * 创建缩略图
+     */
+    create: async (request: ThumbnailRequest): Promise<ThumbnailResponse> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            return await invoke("create_thumbnail", { request });
+        } else {
+            return await (window as any).electronAPI?.thumbnail?.create(request);
+        }
+    },
 
-  /**
-   * 删除缩略图
-   */
-  remove: async (request: ThumbnailRequest): Promise<ThumbnailResponse> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      return await invoke('remove_thumbnail', { request });
-    } else {
-      return await (window as any).electronAPI?.thumbnail?.remove(request);
-    }
-  },
+    /**
+     * 删除缩略图
+     */
+    remove: async (request: ThumbnailRequest): Promise<ThumbnailResponse> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            return await invoke("remove_thumbnail", { request });
+        } else {
+            return await (window as any).electronAPI?.thumbnail?.remove(request);
+        }
+    },
 };
 ```
 
@@ -465,77 +466,79 @@ export const thumbnailAdapter = {
 ```typescript
 // src/api/import.adapter.ts
 
-import { isTauri } from './env';
-import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { isTauri } from "./env";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 export interface ImportConfig {
-  sourcePaths: string[];
-  targetPath: string;
-  fileNaming: string;
-  duplicateStrategy: 'skip' | 'rename' | 'overwrite';
-  copyMode: 'copy' | 'move';
+    sourcePaths: string[];
+    targetPath: string;
+    fileNaming: string;
+    duplicateStrategy: "skip" | "rename" | "overwrite";
+    copyMode: "copy" | "move";
 }
 
 export interface ImportProgress {
-  processed: number;
-  total: number;
-  currentFile?: string;
-  status: 'scanning' | 'processing' | 'completed' | 'cancelled' | 'error';
+    processed: number;
+    total: number;
+    currentFile?: string;
+    status: "scanning" | "processing" | "completed" | "cancelled" | "error";
 }
 
 export const importAdapter = {
-  /**
-   * 扫描目录
-   */
-  scanDirectories: async (paths: string[]): Promise<string[]> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      return await invoke('scan_directories', { paths });
-    } else {
-      return await (window as any).electronAPI?.import?.scanDirectories(paths);
-    }
-  },
+    /**
+     * 扫描目录
+     */
+    scanDirectories: async (paths: string[]): Promise<string[]> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            return await invoke("scan_directories", { paths });
+        } else {
+            return await (window as any).electronAPI?.import?.scanDirectories(paths);
+        }
+    },
 
-  /**
-   * 执行导入
-   */
-  execute: async (config: ImportConfig): Promise<string> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      return await invoke('execute_import', { config });
-    } else {
-      return await (window as any).electronAPI?.import?.execute(config);
-    }
-  },
+    /**
+     * 执行导入
+     */
+    execute: async (config: ImportConfig): Promise<string> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            return await invoke("execute_import", { config });
+        } else {
+            return await (window as any).electronAPI?.import?.execute(config);
+        }
+    },
 
-  /**
-   * 监听导入进度
-   */
-  onProgress: async (callback: (progress: ImportProgress) => void): Promise<UnlistenFn | (() => void)> => {
-    if (isTauri()) {
-      return await listen<ImportProgress>('import:progress', (event) => {
-        callback(event.payload);
-      });
-    } else {
-      const handler = (_event: any, progress: ImportProgress) => callback(progress);
-      (window as any).electronAPI?.import?.onProgress(handler);
-      return () => {
-        (window as any).electronAPI?.import?.offProgress(handler);
-      };
-    }
-  },
+    /**
+     * 监听导入进度
+     */
+    onProgress: async (
+        callback: (progress: ImportProgress) => void,
+    ): Promise<UnlistenFn | (() => void)> => {
+        if (isTauri()) {
+            return await listen<ImportProgress>("import:progress", (event) => {
+                callback(event.payload);
+            });
+        } else {
+            const handler = (_event: any, progress: ImportProgress) => callback(progress);
+            (window as any).electronAPI?.import?.onProgress(handler);
+            return () => {
+                (window as any).electronAPI?.import?.offProgress(handler);
+            };
+        }
+    },
 
-  /**
-   * 取消导入
-   */
-  cancel: async (importId: string): Promise<void> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      await invoke('cancel_import', { importId });
-    } else {
-      await (window as any).electronAPI?.import?.cancel(importId);
-    }
-  },
+    /**
+     * 取消导入
+     */
+    cancel: async (importId: string): Promise<void> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            await invoke("cancel_import", { importId });
+        } else {
+            await (window as any).electronAPI?.import?.cancel(importId);
+        }
+    },
 };
 ```
 
@@ -544,44 +547,44 @@ export const importAdapter = {
 ```typescript
 // src/api/config.adapter.ts
 
-import { isTauri } from './env';
+import { isTauri } from "./env";
 
 export const configAdapter = {
-  /**
-   * 查询配置
-   */
-  query: async (paths: string[]): Promise<string[]> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      return await invoke('query_config', { paths });
-    } else {
-      return await (window as any).electronAPI?.config?.query(paths);
-    }
-  },
+    /**
+     * 查询配置
+     */
+    query: async (paths: string[]): Promise<string[]> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            return await invoke("query_config", { paths });
+        } else {
+            return await (window as any).electronAPI?.config?.query(paths);
+        }
+    },
 
-  /**
-   * 添加配置
-   */
-  add: async (paths: string[]): Promise<void> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      await invoke('add_config', { paths });
-    } else {
-      await (window as any).electronAPI?.config?.add(paths);
-    }
-  },
+    /**
+     * 添加配置
+     */
+    add: async (paths: string[]): Promise<void> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            await invoke("add_config", { paths });
+        } else {
+            await (window as any).electronAPI?.config?.add(paths);
+        }
+    },
 
-  /**
-   * 移除配置
-   */
-  remove: async (paths: string[]): Promise<void> => {
-    if (isTauri()) {
-      const { invoke } = await import('@tauri-apps/api/tauri');
-      await invoke('remove_config', { paths });
-    } else {
-      await (window as any).electronAPI?.config?.remove(paths);
-    }
-  },
+    /**
+     * 移除配置
+     */
+    remove: async (paths: string[]): Promise<void> => {
+        if (isTauri()) {
+            const { invoke } = await import("@tauri-apps/api/tauri");
+            await invoke("remove_config", { paths });
+        } else {
+            await (window as any).electronAPI?.config?.remove(paths);
+        }
+    },
 };
 ```
 

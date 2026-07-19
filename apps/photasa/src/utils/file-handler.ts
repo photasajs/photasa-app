@@ -91,11 +91,14 @@ async function handleDeleteFile(
 ): Promise<void> {
     // ✅ RFC 0042: 目录删除，通过秦琼服务更新 folderTree
     if (!state.isFile) {
+        if (!state.path?.length) {
+            return;
+        }
         await qinQiongService.removePath(state.path);
         return;
     }
 
-    if (state.path?.length < 0) {
+    if (!state.path?.length) {
         return;
     }
 
@@ -124,7 +127,7 @@ async function handleChangeFile(
     // Skip hidden or empty path or ignored file
     if (
         !state.isFile ||
-        state.path?.length < 0 ||
+        !state.path?.length ||
         isHiddenFile(state.path) ||
         shouldIgnorePhotasaPath(state.path)
     ) {
@@ -194,6 +197,7 @@ export function startFileWatching(
                 ignoreInitial: true,
                 awaitWriteFinish: true,
             },
+            thumbnailSize: preferenceStore.thumbnailSize,
         },
         (state: WatchState) => {
             handleFileTask.perform(state, preferenceStore, qinQiongService);

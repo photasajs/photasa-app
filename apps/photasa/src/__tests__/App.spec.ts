@@ -26,9 +26,6 @@ vi.mock("@photasa/common", () => ({
         warn: vi.fn(),
         error: vi.fn(),
     })),
-}));
-
-vi.mock("@photasa/common", () => ({
     mapFileOperationToScanAction: vi.fn((type: string) => {
         const mapping = {
             add: "scan",
@@ -80,37 +77,19 @@ describe("App.vue IPC Event Handler Logic", () => {
     });
 
     describe("onScanQueueAdd Handler Logic", () => {
+        const mockScheduleFileOperationsFromWatch = vi.fn();
+
         // Simulate the IPC handler logic directly
         const simulateIpcHandler = async (operations: any[]) => {
-            const { mapFileOperationToScanAction } = await import("@photasa/common");
-
             mockLogger.debug(`Received ${operations.length} file operations from watch service`);
-
-            // Process batch of file operations (simulate App.vue logic)
-            operations.forEach((operation) => {
-                mockLogger.debug("Adding file operation to queue:", operation);
-
-                // Convert FileOperation to enhanced ScanAction for unified processing
-                const fileOperation = {
-                    path: operation.path,
-                    action: mapFileOperationToScanAction(operation.type),
-                    thumbnailSize:
-                        operation.metadata?.thumbnailSize || preferenceStore.thumbnailSize,
-                    operationType: (operation.metadata?.isFile ? "file" : "directory") as
-                        | "file"
-                        | "directory",
-                    priority: operation.priority,
-                    retryCount: operation.retryCount,
-                    createdAt: operation.timestamp,
-                    fileOperationId: operation.id,
-                };
-
-                // Add to persistent queue using new enhanced method
-                preferenceStore.addFileOperation(fileOperation);
-            });
+            await mockScheduleFileOperationsFromWatch(operations, preferenceStore.thumbnailSize);
         };
 
-        it("should process single file operation correctly", async () => {
+        beforeEach(() => {
+            mockScheduleFileOperationsFromWatch.mockClear();
+        });
+
+        it("should hand watch operations to YuChiGong scan queue", async () => {
             const mockOperations = [
                 {
                     id: "op-123",
@@ -129,21 +108,12 @@ describe("App.vue IPC Event Handler Logic", () => {
 
             await simulateIpcHandler(mockOperations);
 
-            // Verify that addFileOperation was called correctly
-            expect(preferenceStore.addFileOperation).toHaveBeenCalledTimes(1);
-            expect(preferenceStore.addFileOperation).toHaveBeenCalledWith({
-                path: "/test/file.jpg",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "file",
-                priority: 3,
-                retryCount: 0,
-                createdAt: 1234567890,
-                fileOperationId: "op-123",
-            });
+            expect(mockScheduleFileOperationsFromWatch).toHaveBeenCalledTimes(1);
+            expect(mockScheduleFileOperationsFromWatch).toHaveBeenCalledWith(mockOperations, 150);
+            expect(preferenceStore.addFileOperation).not.toHaveBeenCalled();
         });
 
-        it("should process multiple file operations correctly", async () => {
+        it("should pass multiple operations as one batch", async () => {
             const mockOperations = [
                 {
                     id: "op-1",
@@ -184,94 +154,7 @@ describe("App.vue IPC Event Handler Logic", () => {
 
             await simulateIpcHandler(mockOperations);
 
-            expect(preferenceStore.addFileOperation).toHaveBeenCalledTimes(3);
-
-            // Check first operation (add/scan)
-            expect(preferenceStore.addFileOperation).toHaveBeenNthCalledWith(1, {
-                path: "/test/file1.jpg",
-                action: "scan",
-                thumbnailSize: 150,
-                operationType: "file",
-                priority: 3,
-                retryCount: 0,
-                createdAt: 1234567890,
-                fileOperationId: "op-1",
-            });
-
-            // Check second operation (change/rescan)
-            expect(preferenceStore.addFileOperation).toHaveBeenNthCalledWith(2, {
-                path: "/test/file2.jpg",
-                action: "rescan",
-                thumbnailSize: 200,
-                operationType: "file",
-                priority: 2,
-                retryCount: 1,
-                createdAt: 1234567891,
-                fileOperationId: "op-2",
-            });
-
-            // Check third operation (delete/current, directory)
-            expect(preferenceStore.addFileOperation).toHaveBeenNthCalledWith(3, {
-                path: "/test/file3.jpg",
-                action: "current",
-                thumbnailSize: 150, // Falls back to store default
-                operationType: "directory",
-                priority: 1,
-                retryCount: 0,
-                createdAt: 1234567892,
-                fileOperationId: "op-3",
-            });
-        });
-
-        it("should handle operations with missing metadata", async () => {
-            const mockOperations = [
-                {
-                    id: "op-minimal",
-                    type: "add",
-                    path: "/test/minimal.jpg",
-                    timestamp: 1234567890,
-                    priority: 3,
-                    retryCount: 0,
-                    // No metadata provided
-                },
-            ];
-
-            await simulateIpcHandler(mockOperations);
-
-            expect(preferenceStore.addFileOperation).toHaveBeenCalledWith({
-                path: "/test/minimal.jpg",
-                action: "scan",
-                thumbnailSize: 150, // Falls back to store default
-                operationType: "directory", // Defaults to directory when isFile is falsy
-                priority: 3,
-                retryCount: 0,
-                createdAt: 1234567890,
-                fileOperationId: "op-minimal",
-            });
-        });
-
-        it("should use mapFileOperationToScanAction for action conversion", async () => {
-            const { mapFileOperationToScanAction } = await import("@photasa/common");
-            const mockOperations = [
-                {
-                    id: "op-convert",
-                    type: "unknown-type",
-                    path: "/test/unknown.jpg",
-                    timestamp: 1234567890,
-                    priority: 3,
-                    retryCount: 0,
-                    metadata: { isFile: true },
-                },
-            ];
-
-            await simulateIpcHandler(mockOperations);
-
-            expect(mapFileOperationToScanAction).toHaveBeenCalledWith("unknown-type");
-            expect(preferenceStore.addFileOperation).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    action: "scan", // mapFileOperationToScanAction mock returns 'scan' for unknown types
-                }),
-            );
+            expect(mockScheduleFileOperationsFromWatch).toHaveBeenCalledWith(mockOperations, 150);
         });
 
         it("should log debug messages when processing operations", async () => {
@@ -292,10 +175,6 @@ describe("App.vue IPC Event Handler Logic", () => {
             expect(mockLogger.debug).toHaveBeenCalledWith(
                 "Received 1 file operations from watch service",
             );
-            expect(mockLogger.debug).toHaveBeenCalledWith(
-                "Adding file operation to queue:",
-                mockOperations[0],
-            );
         });
 
         it("should handle empty operations array", async () => {
@@ -304,71 +183,8 @@ describe("App.vue IPC Event Handler Logic", () => {
             expect(mockLogger.debug).toHaveBeenCalledWith(
                 "Received 0 file operations from watch service",
             );
+            expect(mockScheduleFileOperationsFromWatch).toHaveBeenCalledWith([], 150);
             expect(preferenceStore.addFileOperation).not.toHaveBeenCalled();
-        });
-
-        it("should use correct operationType based on metadata.isFile", async () => {
-            const mockOperations = [
-                {
-                    id: "op-file",
-                    type: "add",
-                    path: "/test/file.jpg",
-                    timestamp: 1234567890,
-                    priority: 3,
-                    retryCount: 0,
-                    metadata: { isFile: true },
-                },
-                {
-                    id: "op-dir",
-                    type: "add",
-                    path: "/test/directory",
-                    timestamp: 1234567891,
-                    priority: 3,
-                    retryCount: 0,
-                    metadata: { isFile: false },
-                },
-            ];
-
-            await simulateIpcHandler(mockOperations);
-
-            expect(preferenceStore.addFileOperation).toHaveBeenNthCalledWith(
-                1,
-                expect.objectContaining({
-                    operationType: "file",
-                }),
-            );
-
-            expect(preferenceStore.addFileOperation).toHaveBeenNthCalledWith(
-                2,
-                expect.objectContaining({
-                    operationType: "directory",
-                }),
-            );
-        });
-
-        it("should use custom thumbnailSize from metadata when provided", async () => {
-            const mockOperations = [
-                {
-                    id: "op-custom-size",
-                    type: "add",
-                    path: "/test/custom.jpg",
-                    timestamp: 1234567890,
-                    priority: 3,
-                    retryCount: 0,
-                    metadata: {
-                        isFile: true,
-                        thumbnailSize: 300, // Custom size
-                    },
-                },
-            ];
-
-            await simulateIpcHandler(mockOperations);
-
-            expect(preferenceStore.addFileOperation).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    thumbnailSize: 300,
-                }),
-            );
         });
     });
 });

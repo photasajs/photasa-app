@@ -12,9 +12,9 @@ import {
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 // ✅ RFC 0048 v3 Phase 4: QizouMatters 导入已删除（随persistToStore()一起删除）
-import type { ScanAction } from "@photasa/common";
-import type { ScanQueueItem } from "@renderer/stores/scanning-types";
-import { loggers } from "@photasa/common";
+import type { FileOperation, ScanAction } from "@photasa/common";
+import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
+import { loggers, mapFileOperationToScanAction } from "@photasa/common";
 import { normalizePath } from "@renderer/utils/path";
 import {
     calculateTaskAge,
@@ -23,6 +23,7 @@ import {
     calculateNextRetryCount,
     getTaskStatusDisplayText,
 } from "./task-helpers";
+import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
@@ -116,6 +117,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
         path: string,
         action: "scan" | "rescan" | "current",
         operationType: "directory" | "file" = "directory",
+        thumbnailSize = 150,
     ): Promise<void> {
         logger.info(`🛡️ 尉迟恭：开始扫描 ${path}`);
 
@@ -149,7 +151,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     const subfolderActions: ScanAction[] = subfolders.map((subfolder: string) => ({
                         path: subfolder,
                         action,
-                        thumbnailSize: 150,
+                        thumbnailSize,
                         operationType: "directory" as const,
                         source: "auto" as const, // 自动发现的子文件夹
                         timestamp: Date.now(),
@@ -160,7 +162,9 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     // 添加子文件夹到 p-queue（会自动按序执行）
                     for (const subfolder of subfolders) {
                         this.scanQueue
-                            .add(() => this.executeScan(subfolder, action, operationType))
+                            .add(() =>
+                                this.executeScan(subfolder, action, operationType, thumbnailSize),
+                            )
                             .catch((error) => {
                                 // ✅ 捕获递归扫描错误
                                 logger.error(`🛡️ 尉迟恭：子文件夹扫描失败 ${subfolder}`, error);
@@ -173,7 +177,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             await window.api.scanPhotos({
                 path,
                 action,
-                thumbnailSize: 150,
+                thumbnailSize,
                 isDirectory: operationType !== "file",
             });
 
@@ -261,9 +265,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
         if (scanActions.length === 0) return;
 
         logger.info(`🛡️ 尉迟恭：批量创建pending任务 ${scanActions.length}个`);
-
-        // 注意：转换为ScanQueueItem由Store层的createScanQueueItem()完成
-        // 这里只发送IPC契约类型（ScanAction），保持架构分层清晰
+        this.ensureRuntimeTasks(scanActions);
 
         // 通过Zouzhe批量添加到Store
         const addActionsZouzhe: Zouzhe = {
@@ -283,6 +285,48 @@ export class YuChiGongService implements IService, IYuChiGongService {
         logger.info(`🛡️ 尉迟恭：批量创建任务成功 ${scanActions.length}个`);
     }
 
+    private ensureRuntimeTasks(scanActions: ScanAction[]): void {
+        const scanningStore = useScanningStore();
+        for (const scanAction of scanActions) {
+            if (scanningStore.isInQueue(scanAction.path)) continue;
+            scanningStore.addToQueue(createScanQueueItem(scanAction));
+        }
+    }
+
+    private removeRuntimeTask(path: string): void {
+        useScanningStore().removeFromQueue(path);
+    }
+
+    /**
+     * 获取当前缩略图大小
+     */
+    private getCurrentThumbnailSize(): number {
+        const size = this.fangXuanLingService.preference.thumbnailSize;
+        return Number.isFinite(size) && size > 0 ? size : 150;
+    }
+
+    /**
+     * 持久化并入队单个扫描任务（Store + p-queue）
+     */
+    private async scheduleScanAction(scanAction: ScanAction): Promise<void> {
+        await this.createTasks([scanAction]);
+
+        const operationType = scanAction.operationType || "directory";
+        logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`);
+        this.scanQueue
+            .add(() =>
+                this.executeScan(
+                    scanAction.path,
+                    scanAction.action,
+                    operationType,
+                    scanAction.thumbnailSize,
+                ),
+            )
+            .catch((error) => {
+                logger.error(`🛡️ 尉迟恭：任务执行失败 ${scanAction.path}`, error);
+            });
+    }
+
     /**
      * 持久化并入队单个目录扫描任务（Store + p-queue）
      */
@@ -291,23 +335,14 @@ export class YuChiGongService implements IService, IYuChiGongService {
         action: "scan" | "rescan" | "current",
         source: "user" | "auto",
     ): Promise<void> {
-        const scanAction: ScanAction = {
+        await this.scheduleScanAction({
             path,
             action,
-            thumbnailSize: 150,
+            thumbnailSize: this.getCurrentThumbnailSize(),
             source,
             timestamp: Date.now(),
             operationType: "directory",
-        };
-
-        await this.createTasks([scanAction]);
-
-        logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${path} (${action})`);
-        this.scanQueue
-            .add(() => this.executeScan(path, action, "directory"))
-            .catch((error) => {
-                logger.error(`🛡️ 尉迟恭：任务执行失败 ${path}`, error);
-            });
+        });
     }
 
     /**
@@ -334,6 +369,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
         };
 
         const response = await this.fangXuanLingService.processZouzhe(removeZouzhe);
+        this.removeRuntimeTask(path);
 
         if (!response.approved) {
             logger.error(`🛡️ 尉迟恭：删除任务失败 ${path} - ${response.instruction}`);
@@ -870,6 +906,47 @@ export class YuChiGongService implements IService, IYuChiGongService {
         }
 
         await this.scheduleDirectoryScan(normalizedPath, "rescan", "user");
+    }
+
+    /**
+     * 文件监视服务批量事件入扫描执行队列
+     */
+    async scheduleFileOperationsFromWatch(
+        operations: FileOperation[],
+        thumbnailSize: number,
+    ): Promise<void> {
+        for (const operation of operations) {
+            try {
+                const normalizedPath = normalizePath(operation.path);
+                if (!normalizedPath || normalizedPath.trim() === "") {
+                    logger.warn("🛡️ 尉迟恭：跳过空 watch 扫描路径", operation);
+                    continue;
+                }
+
+                const action = mapFileOperationToScanAction(operation.type);
+                if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
+                    if (action !== "rescan") {
+                        logger.warn(`🛡️ 尉迟恭：watch 扫描任务已存在，跳过 ${normalizedPath}`);
+                        continue;
+                    }
+                    await this.removeScanTask(normalizedPath);
+                }
+
+                await this.scheduleScanAction({
+                    path: normalizedPath,
+                    action,
+                    thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize,
+                    source: "auto",
+                    timestamp: operation.timestamp,
+                    operationType: operation.metadata?.isFile ? "file" : "directory",
+                    retryCount: operation.retryCount,
+                    fileOperationId: operation.id,
+                    priority: operation.priority,
+                });
+            } catch (error) {
+                logger.error(`🛡️ 尉迟恭：watch 扫描任务入队失败 ${operation.path}`, error);
+            }
+        }
     }
 
     /**

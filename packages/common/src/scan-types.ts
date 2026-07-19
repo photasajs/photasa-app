@@ -67,6 +67,9 @@ export interface ScanAction {
     /** 重试次数（可选，用于失败重试） */
     retryCount?: number;
 
+    /** 任务优先级（可选，用于 UI 队列排序/展示，数值越小优先级越高） */
+    priority?: number;
+
     /** 关联的文件操作ID（可选，用于追踪原始文件操作） */
     fileOperationId?: string;
 }

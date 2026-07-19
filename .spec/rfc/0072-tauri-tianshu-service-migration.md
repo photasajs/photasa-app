@@ -7,7 +7,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [./TAURI_RUST_REWRITE_POLICY.md](./TAURI_RUST_REWRITE_POLICY.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -38,25 +38,25 @@ packages/@photasa/tianshu/  # 工作流引擎包
 ### 核心功能
 
 1. **IPC 通信**
-   - `tianshu.command` - 处理工作流命令
-   - `tianshu.status` - 查询系统状态
+    - `tianshu.command` - 处理工作流命令
+    - `tianshu.status` - 查询系统状态
 
 2. **工作流引擎**
-   - 解析 YAML 工作流定义（.zouwu 文件）
-   - 执行工作流步骤
-   - 管理工作流状态
-   - 事件系统
+    - 解析 YAML 工作流定义（.zouwu 文件）
+    - 执行工作流步骤
+    - 管理工作流状态
+    - 事件系统
 
 3. **引擎协调**
-   - 通过太乙服务调用各引擎
-   - 管理引擎依赖关系
-   - 处理引擎调用结果
+    - 通过太乙服务调用各引擎
+    - 管理引擎依赖关系
+    - 处理引擎调用结果
 
 4. **工作流特性**
-   - 步骤依赖管理
-   - 条件执行
-   - 错误处理
-   - 内置操作（arrayConcat, return 等）
+    - 步骤依赖管理
+    - 条件执行
+    - 错误处理
+    - 内置操作（arrayConcat, return 等）
 
 ## Tauri Rust 迁移计划
 
@@ -180,17 +180,17 @@ impl WorkflowParser {
         let workflow: WorkflowDefinition = serde_yaml::from_str(&content)?;
         Ok(workflow)
     }
-    
+
     /// 加载所有工作流
     pub fn load_workflows(&self, workflow_dir: &str) -> Result<Vec<WorkflowDefinition>> {
         let mut workflows = Vec::new();
-        
+
         for entry in glob::glob(&format!("{}/**/*.zouwu", workflow_dir))? {
             let path = entry?;
             let workflow = self.parse_workflow(&path)?;
             workflows.push(workflow);
         }
-        
+
         Ok(workflows)
     }
 }
@@ -218,7 +218,7 @@ impl WorkflowExecutor {
             step_results: HashMap::new(),
         }
     }
-    
+
     /// 执行工作流
     pub async fn execute_workflow(
         &mut self,
@@ -227,21 +227,21 @@ impl WorkflowExecutor {
     ) -> Result<serde_json::Value> {
         // 1. 解析步骤依赖关系
         let execution_order = self.resolve_dependencies(&workflow.steps)?;
-        
+
         // 2. 按顺序执行步骤
         for step_id in execution_order {
             let step = workflow.steps.iter()
                 .find(|s| s.id == step_id)
                 .ok_or_else(|| anyhow::anyhow!("Step not found: {}", step_id))?;
-            
+
             let result = self.execute_step(step, &inputs).await?;
             self.step_results.insert(step_id, result);
         }
-        
+
         // 3. 构建输出
         self.build_outputs(&workflow.outputs)
     }
-    
+
     async fn execute_step(
         &self,
         step: &WorkflowStep,
@@ -259,7 +259,7 @@ impl WorkflowExecutor {
             }
         }
     }
-    
+
     fn resolve_dependencies(&self, steps: &[WorkflowStep]) -> Result<Vec<String>> {
         // 实现拓扑排序，解析步骤依赖关系
         // 返回执行顺序
@@ -286,7 +286,7 @@ impl BuiltinOperations {
     pub fn new() -> Self {
         Self
     }
-    
+
     pub async fn execute(
         &self,
         action: &str,
@@ -327,24 +327,24 @@ impl TianshuService {
     pub fn new(workflow_dir: &str) -> Result<Self> {
         let parser = WorkflowParser;
         let workflows = parser.load_workflows(workflow_dir)?;
-        
+
         let mut workflow_map = HashMap::new();
         for workflow in workflows {
             workflow_map.insert(workflow.id.clone(), workflow);
         }
-        
+
         Ok(Self {
             parser,
             executor: WorkflowExecutor::new(),
             workflows: workflow_map,
         })
     }
-    
+
     /// 处理命令
     pub async fn process_command(&mut self, command: TianshuCommand) -> Result<TianshuResponse> {
         // 1. 根据 intent 查找工作流
         let workflow = self.find_workflow_by_intent(&command.intent)?;
-        
+
         // 2. 执行工作流
         match self.executor.execute_workflow(workflow, command.inputs).await {
             Ok(result) => Ok(TianshuResponse {
@@ -359,7 +359,7 @@ impl TianshuService {
             }),
         }
     }
-    
+
     fn find_workflow_by_intent(&self, intent: &str) -> Result<&WorkflowDefinition> {
         self.workflows
             .values()
@@ -413,6 +413,7 @@ pub async fn tianshu_status(
 **问题**：工作流引擎是 TypeScript 实现，包含复杂的表达式求值和步骤编排
 
 **解决方案**：
+
 - **第一步（过渡）**：使用 WASM 运行现有工作流引擎
 - **第二步（最终）**：完全重写为 Rust
 - **表达式求值**：使用 `rhai` 脚本引擎处理 `{{}}` 表达式
@@ -422,6 +423,7 @@ pub async fn tianshu_status(
 **问题**：需要通过太乙服务调用其他引擎
 
 **解决方案**：
+
 - 在 Rust 中实现引擎调用接口
 - 通过 Tauri 命令调用其他服务
 - 或通过 WASM 过渡方案
@@ -431,6 +433,7 @@ pub async fn tianshu_status(
 **问题**：工作流使用自定义 YAML 格式（.zouwu）
 
 **解决方案**：
+
 - 使用 `serde_yaml` 解析 YAML
 - 保持格式兼容性
 - 支持热重载（开发环境）
@@ -440,6 +443,7 @@ pub async fn tianshu_status(
 ### 方案 A：完全重写（推荐，长期）
 
 完全用 Rust 重写工作流引擎
+
 - **优点**：性能最优，类型安全
 - **缺点**：工作量大，需要重写所有内置操作
 - **时间**：3-4 周
@@ -447,6 +451,7 @@ pub async fn tianshu_status(
 ### 方案 B：WASM 过渡（第一步）
 
 将 TypeScript 工作流引擎编译为 WASM
+
 - **优点**：快速迁移，保持现有逻辑
 - **缺点**：仍有 WASM 运行时开销
 - **时间**：1-2 周（过渡）
@@ -460,23 +465,27 @@ pub async fn tianshu_status(
 ## 迁移步骤
 
 ### 步骤 1: WASM 过渡（1-2 周）
+
 - [ ] 将工作流引擎编译为 WASM
 - [ ] 在 Rust 中加载 WASM 模块
 - [ ] 实现基础命令接口
 - [ ] 测试工作流执行
 
 ### 步骤 2: 内置操作迁移（1 周）
+
 - [ ] 重写数组操作（arrayConcat, arrayCount 等）
 - [ ] 重写对象操作（objectMerge 等）
 - [ ] 重写控制流（return, conditional 等）
 
 ### 步骤 3: 引擎核心重写（1-2 周）
+
 - [ ] 重写工作流解析器
 - [ ] 重写工作流执行器
 - [ ] 实现表达式求值
 - [ ] 实现步骤依赖解析
 
 ### 步骤 4: 集成和测试（1 周）
+
 - [ ] 集成测试
 - [ ] 性能优化
 - [ ] 错误处理完善

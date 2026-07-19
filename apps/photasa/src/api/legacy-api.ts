@@ -32,6 +32,11 @@ import {
     EVENT_SCAN_QUEUE_ADD,
     emptyUndoPreview,
 } from "./tauri-import-stubs";
+import {
+    WATCH_FILE_EVENTS,
+    buildWatchStateFromEvent,
+    type WatchFileEventPayload,
+} from "./watch-event";
 
 const NOT_IMPLEMENTED = "Tauri: not implemented";
 
@@ -319,23 +324,35 @@ export function createLegacyApi(): Record<string, unknown> {
                 return (window as any).electronAPI?.api?.startWatching?.(config, callback);
             (async () => {
                 const invoke = await ensureInvoke();
-                const c = config as { paths?: string[]; recursive?: boolean };
+                const c = config as {
+                    paths?: string[];
+                    recursive?: boolean;
+                    thumbnailSize?: number;
+                    thumbnail_size?: number;
+                };
+                const thumbnailSize = c?.thumbnailSize ?? c?.thumbnail_size;
                 await invoke("start_file_watch", {
-                    config: { paths: c?.paths ?? [], recursive: c?.recursive ?? true },
+                    config: {
+                        paths: c?.paths ?? [],
+                        recursive: c?.recursive ?? true,
+                        thumbnailSize,
+                    },
                 });
                 if (typeof callback === "function") {
                     const { listen } = await import("@tauri-apps/api/event");
+                    const cb = callback as (state: unknown) => void;
                     const unlistens: Array<() => void> = [];
-                    for (const name of [
-                        "picasa:file-add",
-                        "picasa:file-add-dir",
-                        "picasa:file-change",
-                        "picasa:file-unlink",
-                        "picasa:file-unlink-dir",
-                    ]) {
-                        const un = await listen(name, (e) =>
-                            (callback as (arg: unknown) => void)(e.payload),
-                        );
+                    // RFC 0133：事件名 → 完整 WatchState（对齐 Electron fs-watch.ts）
+                    for (const name of WATCH_FILE_EVENTS) {
+                        const un = await listen(name, (e) => {
+                            const state = buildWatchStateFromEvent(
+                                name,
+                                e.payload as WatchFileEventPayload,
+                            );
+                            if (state) {
+                                cb(state);
+                            }
+                        });
                         unlistens.push(un);
                     }
                     (window as any).__offFileWatch = () => unlistens.forEach((u) => u());
