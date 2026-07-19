@@ -919,8 +919,10 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
         logger.info(`🛡️ 尉迟恭：用户请求重新扫描 ${normalizedPath}`);
 
+        // ✅ RFC 0143 dedup: 已在队列中则跳过，不移除再重加
         if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
-            await this.removeScanTask(normalizedPath);
+            logger.warn(`🛡️ 尉迟恭：重新扫描任务已在队列中，去重跳过 ${normalizedPath}`);
+            return;
         }
 
         await this.scheduleDirectoryScan(normalizedPath, "rescan", "user");

@@ -270,7 +270,16 @@ export class DuRuHuiService {
         logger.debug(`📋 杜如晦传旨详情：`, shengzhi);
 
         // 通过MessageChannel发送圣旨
-        port.postMessage(shengzhi);
+        // ⚠️ JSON round-trip removes Vue Proxy wrappers, YAML frozen objects, and any other
+        // non-structured-cloneable artifacts so WebKit's postMessage never throws DataCloneError.
+        try {
+            port.postMessage(JSON.parse(JSON.stringify(shengzhi)));
+        } catch (serializeError) {
+            logger.error(
+                `📋 杜如晦传旨序列化失败 ${serviceName} - ${shengzhi.command}`,
+                serializeError,
+            );
+        }
     }
 
     /**

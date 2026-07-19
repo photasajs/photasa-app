@@ -195,14 +195,11 @@ async function fixConfig(): Promise<void> {
 async function rescan(key: string): Promise<void> {
     const folderPath = normalizePath(key);
     logger.info(`[FolderList] Requesting rescan for folder: ${folderPath}`);
-    window.dispatchEvent(
-        new CustomEvent("picasa:shangshu", {
-            detail: {
-                action: "request_rescan",
-                path: folderPath,
-            },
-        }),
-    );
+    try {
+        await yuChiGong.requestRescan(folderPath);
+    } catch (error) {
+        logger.error(`[FolderList] Rescan failed for ${folderPath}:`, error);
+    }
 }
 
 // Expose methods to parent component
