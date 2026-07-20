@@ -210,6 +210,7 @@ const getItemColors = (index: number) => {
 
 // UI helper functions
 function formatPathName(path: string): string {
+    if (!path || typeof path !== "string") return t("scan.unknownFolder");
     const parts = path.split("/");
     return parts[parts.length - 1] || parts[parts.length - 2] || t("scan.unknownFolder");
 }

@@ -70,6 +70,10 @@ pub async fn start_file_watch(
     let recursive = config.recursive;
     let thumb = config.thumbnail_size.unwrap_or(150);
     state.coalescer.set_thumbnail_size(thumb);
+    // fsevents 回调线程无 current runtime；flush 须用主 Tokio handle
+    state
+        .coalescer
+        .set_runtime_handle(tokio::runtime::Handle::current());
 
     // 先停止已有监视并丢弃待合并的扫描项
     {
@@ -87,72 +91,79 @@ pub async fn start_file_watch(
     let coalescer = state.coalescer.clone();
     let sink = TauriScanQueueSink::new(app_for_closure.clone());
     let mut watcher =
-        notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| match res {
-            Ok(event) => {
-                for path in &event.paths {
-                    let path_str = path.to_string_lossy().to_string();
-                    let is_file = Path::new(path).is_file();
-                    let payload = FileEventPayload {
-                        is_file,
-                        path: path_str.clone(),
-                    };
-                    match &event.kind {
-                        EventKind::Create(create_kind) => {
-                            let (event_name, is_file_override, scan_op) = match create_kind {
-                                CreateKind::File => (FILE_ADD, true, "add"),
-                                CreateKind::Folder => (FILE_ADD_DIR, false, "addDir"),
-                                _ => (FILE_ADD, is_file, "add"),
-                            };
-                            let _ = app_for_closure.emit(
-                                event_name,
-                                FileEventPayload {
-                                    is_file: is_file_override,
-                                    path: path_str.clone(),
-                                },
-                            );
-                            coalescer.handle_fs_event(
-                                sink.clone(),
-                                scan_op,
-                                &path_str,
-                                is_file_override,
-                            );
+        notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match res {
+                Ok(event) => {
+                    for path in &event.paths {
+                        let path_str = path.to_string_lossy().to_string();
+                        let is_file = Path::new(path).is_file();
+                        let payload = FileEventPayload {
+                            is_file,
+                            path: path_str.clone(),
+                        };
+                        match &event.kind {
+                            EventKind::Create(create_kind) => {
+                                let (event_name, is_file_override, scan_op) = match create_kind {
+                                    CreateKind::File => (FILE_ADD, true, "add"),
+                                    CreateKind::Folder => (FILE_ADD_DIR, false, "addDir"),
+                                    _ => (FILE_ADD, is_file, "add"),
+                                };
+                                let _ = app_for_closure.emit(
+                                    event_name,
+                                    FileEventPayload {
+                                        is_file: is_file_override,
+                                        path: path_str.clone(),
+                                    },
+                                );
+                                coalescer.handle_fs_event(
+                                    sink.clone(),
+                                    scan_op,
+                                    &path_str,
+                                    is_file_override,
+                                );
+                            }
+                            EventKind::Modify(_) => {
+                                let _ = app_for_closure.emit(FILE_CHANGE, payload);
+                                coalescer.handle_fs_event(
+                                    sink.clone(),
+                                    "change",
+                                    &path_str,
+                                    is_file,
+                                );
+                            }
+                            EventKind::Remove(remove_kind) => {
+                                let (event_name, is_file_override, scan_op) = match remove_kind {
+                                    RemoveKind::File => (FILE_UNLINK, true, "delete"),
+                                    RemoveKind::Folder => (FILE_UNLINK_DIR, false, "deleteDir"),
+                                    _ => (FILE_UNLINK, is_file, "delete"),
+                                };
+                                let _ = app_for_closure.emit(
+                                    event_name,
+                                    FileEventPayload {
+                                        is_file: is_file_override,
+                                        path: path_str.clone(),
+                                    },
+                                );
+                                coalescer.handle_fs_event(
+                                    sink.clone(),
+                                    scan_op,
+                                    &path_str,
+                                    is_file_override,
+                                );
+                            }
+                            _ => {}
                         }
-                        EventKind::Modify(_) => {
-                            let _ = app_for_closure.emit(FILE_CHANGE, payload);
-                            coalescer.handle_fs_event(sink.clone(), "change", &path_str, is_file);
-                        }
-                        EventKind::Remove(remove_kind) => {
-                            let (event_name, is_file_override, scan_op) = match remove_kind {
-                                RemoveKind::File => (FILE_UNLINK, true, "delete"),
-                                RemoveKind::Folder => (FILE_UNLINK_DIR, false, "deleteDir"),
-                                _ => (FILE_UNLINK, is_file, "delete"),
-                            };
-                            let _ = app_for_closure.emit(
-                                event_name,
-                                FileEventPayload {
-                                    is_file: is_file_override,
-                                    path: path_str.clone(),
-                                },
-                            );
-                            coalescer.handle_fs_event(
-                                sink.clone(),
-                                scan_op,
-                                &path_str,
-                                is_file_override,
-                            );
-                        }
-                        _ => {}
                     }
                 }
-            }
-            Err(e) => {
-                let _ = app_for_closure.emit(
-                    FILE_ERROR,
-                    FileErrorPayload {
-                        error: e.to_string(),
-                    },
-                );
-            }
+                Err(e) => {
+                    let _ = app_for_closure.emit(
+                        FILE_ERROR,
+                        FileErrorPayload {
+                            error: e.to_string(),
+                        },
+                    );
+                }
+            }));
         })
         .map_err(|e| format!("创建监视器失败: {e}"))?;
 
