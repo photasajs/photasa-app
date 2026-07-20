@@ -90,14 +90,8 @@ const zhangSunWuJi = useZhangSunWuJi();
 
 const isMac = window.api.isMac();
 
-watch(
-    () => scanningFolder.value.length,
-    (queueSize, previousQueueSize) => {
-        if (queueSize > 0 && previousQueueSize === 0) {
-            showScanList.value = true;
-        }
-    },
-);
+// ⚠️ Do NOT auto-open showScanList modal when queue receives tasks.
+// Users can open the queue modal manually when desired.
 
 function handleOpenScanList() {
     logger.debug("Opening scan list dialog...");

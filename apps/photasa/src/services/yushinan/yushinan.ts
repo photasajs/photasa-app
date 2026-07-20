@@ -159,13 +159,25 @@ export class YuShiNanService implements IService, IYuShiNanService {
 
         // ✅ 根据类型处理：progress 更新进度，complete 清空进度
         if (content.type === "complete") {
-            // ✅ 扫描完成，清空扫描进度
+            // ✅ 扫描完成，清空扫描进度及状态栏
             photosStore.clearScanProgress();
+            this.fangXuanLingService.statusBar.clear();
             logger.info(`📜 虞世南：扫描完成，已清空扫描状态`);
         } else {
-            // ✅ 扫描进行中，更新扫描进度
+            // ✅ 扫描进行中，更新扫描进度及状态栏
             photosStore.updateScanProgress(content.filePath, content.progress);
             this.updateQueueProgress(content);
+            this.fangXuanLingService.statusBar.update({
+                type: "scan",
+                task: content.scanPath || content.filePath,
+                status: "progress",
+                timestamp: Date.now(),
+                data: {
+                    currentFile: content.filePath,
+                    progress: content.progress,
+                    total: content.total,
+                },
+            });
             logger.info(`📜 虞世南：已记录扫描状态 - ${content.filePath}`);
         }
 

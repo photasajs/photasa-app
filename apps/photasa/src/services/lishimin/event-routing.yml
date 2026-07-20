@@ -81,6 +81,22 @@ qizou_routes:
                   priority: "normal"
               description: "路径移除完成后，下旨魏征移除根节点"
 
+    # ✅ 尉迟恭报告扫描开始 → 李世民下旨虞世南更新状态栏显示扫描进行中
+    scan_started:
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_status_notification"
+                  content:
+                      type: "scan"
+                      task: "{{qizou.content.path}}"
+                      status: "progress"
+                  priority: "normal"
+              description: "尉迟恭报告扫描开始后，下旨虞世南更新状态栏显示"
+
     # ✅ RFC 0057 Phase 3: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
     scan_progress:
         - when:
