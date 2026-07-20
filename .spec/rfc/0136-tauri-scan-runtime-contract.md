@@ -5,7 +5,7 @@
 - **Status**: Draft
 - **Priority**: P1e
 - **Area**: Photasa / Tauri scan queue / scan pipeline / scan UI
-- **Depends on**: [0117](./completed/0117-tauri-scan-pipeline-parity.md), [0132](./completed/0132-tauri-photasa-scan-crate.md), [0133](./completed/0133-tauri-photasa-watch-crate.md), [0138](./0138-tauri-photasa-config-crate.md)（文件流水线的 config 写入阶段依赖 `photasa-config` crate 的 `add_photo_to_folder_list`）
+- **Depends on**: [0117](./completed/0117-tauri-scan-pipeline-parity.md), [0132](./completed/0132-tauri-photasa-scan-crate.md), [0133](./completed/0133-tauri-photasa-watch-crate.md), [0138](./completed/0138-tauri-photasa-config-crate.md)（已完成，`photasa-config::add_photo_to_folder_list` 可用）, [0111](./0111-tauri-scan-notify-status-bridge.md)（状态栏桥接需同步改造，见 Rust worker and IPC 章节）
 - **Related**: RFC 0137（`window.api` staged removal；本 RFC 不定义 wrapper）
 - **Path**: `.spec/rfc/0136-tauri-scan-runtime-contract.md`
 
@@ -343,17 +343,11 @@ ScanDirectoryReport
 
 `photasa-scan` never performs these steps. `YuChiGong` owns admission policy, path normalization, de-duplication, and later PQueue scheduling. `FangXuanLing` applies the Zouzhe durable mutation and updates its Store projection. Directory report handling owns none of them.
 
-### Current implementation gap
+### Implementation status（2026-07-20，`e4180c1`）
 
-`walkthrough_photos_in_folder`（`crates/photasa-scan/src/media.rs:92-148`）尚未兑现本节契约。一层遍历（`max_depth(1)`）本身正确，但目录条目和文件条目共用同一个分类过滤器（`classify_media`，按扩展名判定），目录必然判定失败而被跳过——目录报告分支因此从不触发，`ScanDirectoryReport → YuanTianGang → LiShiMin → DuRuHui → YuChiGong` 这条链路没有触发源。
+`walkthrough_photos_in_folder`（`crates/photasa-scan/src/media.rs`）已兑现本节契约：遍历时先分流 `entry.path().is_dir()`，目录直接产出目录报告（不经媒体分类），文件才走 `classify_media` 判定。`photasa-scan` 改为直接依赖 `photasa-media`（`Cargo.toml` 已替换 `photasa-import` → `photasa-media`），`should_ignore_photasa_path`/`basename_hidden`/`classify_media_flags` 权威实现在 `photasa-media`，`photasa-import` 改为纯转发。验证：`cargo tree -p photasa-scan` 不含 `photasa-import`，`cargo tree -p photasa-import` 不含 `photasa-scan`；`cargo test -p photasa-scan -p photasa-import -p photasa-media` 80 passed。
 
-修复：遍历时先分流 `entry.path().is_dir()`——是目录，直接产出目录报告，不经过媒体分类；不是目录，才走 `classify_media` 判定文件类型。
-
-`photasa-scan` 当前依赖 `photasa-import`（`media.rs:7` `pub use photasa_import::path_filter::classify_media;`，以及 `should_ignore_photasa_path`/`basename_hidden`），这条依赖本身违反 Crate boundaries（scan 与 import 是不同用例，互不依赖）。`photasa-import` 自身已依赖 `photasa-media`（0141），但其 `classify_media(path: &Path) -> Option<(bool,bool)>` 是 import 域内的包装，非 `photasa-media` 原生签名；`should_ignore_photasa_path`/`basename_hidden` 目前只存在于 import，无 `photasa-media` 对应项。
-
-修复：`should_ignore_photasa_path`/`basename_hidden` 移入 `photasa-media`；`photasa-media` 补一个 `&Path`/`Option<(bool,bool)>` 形状的判定接口（或由调用方做 `MediaType` 到该形状的薄转换）；`photasa-scan` 与 `photasa-import` 各自直接依赖 `photasa-media`，互不依赖。验收：`cargo tree -p photasa-scan` 不含 `photasa-import`，反之亦然（已列入 Acceptance 第 1 条）。
-
-RFC 0117 记录的"`classify_media` never emits a directory, and that's correct"是 Electron FULL-递归架构下的 parity 事实（那套架构没有目录报告概念，folder tree 由 `complete.action.path` 驱动），不适用于本节定义的队列驱动架构，不构成对本节的反证。
+RFC 0117 记录的"`classify_media` never emits a directory, and that's correct"是 Electron FULL-递归架构下的 parity 事实，不适用于本节定义的队列驱动架构，两者不冲突。
 
 Nothing else is allowed for child directory in current turn:
 
@@ -372,6 +366,10 @@ Child begins only when current task has reached pipeline terminal result and PQu
 One managed process-lifetime Rust thread executes only current PQueue submission. It has no persisted task list, retry logic, priority, child-task API, or detached per-request `tokio::spawn`.
 
 Keep `picasa:find-photo` name during migration.
+
+### notify:status 状态栏桥接（RFC 0111）迁移范围
+
+`scan_runner.rs`（顶部标注"Electron `scanPhotos` 管线 Rust 重写（RFC 0117）"）当前的 `emit_status_notify`/`ScanWorkerNotifySource`/`build_scan_notify_payload`（`photasa-scan/src/notify.rs`）是 0117 时代事件模型的一部分，`NotifyPayload` 不带 `requestId`/`runId`，跟本节下方定义的 `ScanFileReport`/`ScanDirectoryReport`/`ScanTerminal`（均带 `requestId`）是两套不同类型体系。0111 本身的 error/complete/progress 转 payload 映射逻辑没有问题，是虞世南状态栏展示这一层的职责，但它读取的输入类型属于旧 pipeline，本节实现落地时需要同步改造：`ScanWorkerNotifySource` 的构造点从新的 `ScanFileReport`/`ScanDirectoryReport`/`ScanTerminal` 派生，而不是继续依赖 0117 时代 `scan_runner.rs` 的旧编排结构。这条迁移之前未被本节列入范围，一并记录。
 
 ```ts
 type ScanFileReport = {
@@ -431,7 +429,7 @@ UI consumes processed-file projection. It does not consume raw scanner reports, 
 
 ## Acceptance
 
-1. `photasa-scan` compiles without thumbnail/config/Tauri/queue/**`photasa-import`** dependency（`cargo tree -p photasa-scan` 不得出现 `photasa-import`；当前真实违反，见"目录报告分支缺失"复核记录）。
+1. ✅ `photasa-scan` compiles without thumbnail/config/Tauri/queue/`photasa-import` dependency（`cargo tree -p photasa-scan` 不含 `photasa-import`，2026-07-20 验证通过，`e4180c1`）。
 2. Tauri pipeline composes scan, thumbnail, and config stages for each file report.
 3. Directory report only requests Zhenguan durable admission; it does not scan, thumbnail, configure, or await child work.
 4. Parent waits for own file pipeline and child durable-admission receipts, not child directory scans.
@@ -441,13 +439,30 @@ UI consumes processed-file projection. It does not consume raw scanner reports, 
 8. UI shows durable queue state and processed-file progress only.
 9. Pipeline terminal completion emits `scan_completed` Qizou; 李世民 routes it to 魏征 `addFolderPath` so discovered child directories reach `folderTree` — not just `scanningStore`.
 
-## Implementation order
+## Implementation order（2026-07-20 具体化，已核实当前代码状态）
 
-1. Define dependency-free report/request types in `photasa-types`.
-2. Refactor `photasa-scan` to discovery/report only.
-3. Build Tauri scan pipeline composition: file -> thumbnail -> config; directory -> YuanTianGang/QiZou queue-admission request.
-4. Add `scan_directory_discovered` YAML routing, `add_scan_task` Shengzhi delivery, and durable-admission receipt without cross-service calls.
-5. Preserve one persisted `YuChiGong` queue path and PQueue dispatch.
-6. Replace detached Rust scan spawning with managed current-task worker.
-7. Settle PQueue only after pipeline terminal result.
-8. Verify crash recovery, child non-waiting, durable child admission, file-stage ordering, direct YuanTianGang IPC, and UI projection.
+**已完成，不在本轮范围**：
+
+- `photasa-scan` 一层遍历 + 目录/文件分流（`crates/photasa-scan/src/media.rs::walkthrough_photos_in_folder`，`e4180c1`）。
+- `photasa-scan` 零依赖 `photasa-import`（改依赖 `photasa-media`，`cargo tree` 验证）。
+- `ScanWorker` managed 线程（`apps/photasa/src-tauri/src/commands/scan_runner.rs`，单命名线程 + `mpsc` channel，已在 `main.rs` 注册）。
+- `photasa-config::add_photo_to_folder_list`（0138，`crates/photasa-config`）。
+- 扫描队列持久化（`ScanQueueRepository`，0144，`Mutex` 单写者 + 原子落盘）。
+
+**新发现的阻塞问题（2026-07-20，必须在第 2 步一并修复，否则目录条目会被当文件处理）**：
+
+`walkthrough_photos_in_folder` 现在会产出目录条目（`is_directory: true`），但 `scan_runner.rs` 的 `run_traditional_directory_scan`/`run_full_directory_scan`（line 340-396）遍历 `walkthrough_photos_in_folder` 返回值时，对每一条目（不分文件/目录）无差别调用 `process_photo_file`——该函数（line 225-233）无条件执行 `create_thumbnail_for_file` + `photasa_config::add_photo_to_folder_list`。门控函数 `should_process_scan_file`/`should_process_file_with_config`（`crates/photasa-scan/src/strategy.rs:138-`）只判断"文件是否已在 config 里"，不判断是否为目录，`action == "rescan"` 时直接放行。目录条目因此会被尝试生成缩略图、写入 `.photasa.json`——这是错误行为，不是"暂缓处理"，是主动做了不该做的事。
+
+**第 2 步必须包含**：在两个扫描循环里，遍历前先按 `file.is_directory` 分流；`is_directory == true` 的条目跳过 `process_photo_file`，改为构造 `ScanDirectoryReport` 走第 3 步；只有 `is_directory == false` 才进现有文件处理路径。
+
+**待实现，按顺序**：
+
+1. **在 `photasa-types` 定义新 IPC 契约类型**（当前完全不存在，仅存在于本 RFC 文字里，`grep -rn "ScanFileReport\|ScanDirectoryReport\|ScanTerminal" crates apps/photasa/src-tauri/src` 零命中）：
+    - `crates/photasa-types/src/scan_report.rs`（新文件）：`ScanFileReport`/`ScanDirectoryReport`/`ScanTerminal`，字段按本 RFC "Rust worker and IPC" 章节的 TS 类型定义（`requestId`/`rootPath` 必填，与现有 `PhotoFileRequest`/`ScanAction` 不同——新类型专用于 IPC 边界，不复用旧的内部处理类型）。
+    - `crates/photasa-types/src/lib.rs` 导出新模块。
+2. **`scan_runner.rs` 改造为产出新类型**：当前 `emit_scan_event`（line 62-64）发 `picasa:find-photo` + 原始 `serde_json::Value`，改为按 `PhotoFileRequest.is_directory` 分流，构造 `ScanFileReport`（文件）或 `ScanDirectoryReport`（目录），各自 emit；`ScanWorker` 每次 submission 结束时 emit 恰好一条 `ScanTerminal`（complete/error）。事件名可保留 `picasa:find-photo`（本 RFC 已声明兼容期不改名），payload 形状换成新类型。
+3. **目录报告接入 YuanTianGang→QiZou 链路**：`yuantiangang.ts` 新增/复用 Tauri event 订阅，收到 `ScanDirectoryReport` 后 emit `qizou.scan_directory_discovered`（当前 `event-routing.yml` 是否已有该路由需先核实，若无则新增，按本 RFC "Queue entry paths" 章节的路由链：QiZou → LiShiMin YAML → DuRuHui Shengzhi `add_scan_task` → YuChiGong 准入 → Zouzhe `ADD_SCAN_ACTION` → FangXuanLing 持久化收据）。
+4. **文件报告接入现有文件流水线**：`ScanFileReport` → Tauri 组合根（复用现有 thumbnail/config 调用逻辑，当前已在 `scan_runner.rs` 里，只需确认入参从新类型解构而非旧 `PhotoFileRequest`）→ `FileProcessedReport`。
+5. **父任务等待策略改造**：当前逻辑需确认是否已经"不等待子目录扫描，只等子目录入队收据"——若当前实现是等 `ScanTerminal` 才处理子目录（旧模式），改为目录报告到达时立即触发第 3 步，不等本次 `ScanTerminal`。
+6. **`notify:status` 桥接改造**（见 0111 2026-07-20 补记）：`ScanWorkerNotifySource` 的构造点从 `ScanFileReport`/`ScanDirectoryReport`/`ScanTerminal` 派生，替换当前从旧 `PhotoFileRequest`/`ScanAction` 构造的逻辑（`scan_runner.rs::emit_file_progress`/`emit_status_notify`）。
+7. **验证**（对应 Acceptance 2-9）：crash recovery（0144 已验证）、child non-waiting（第 5 步改造后验证）、durable child admission、file-stage ordering、direct YuanTianGang IPC、UI projection、folder tree consequence——**已确认接线**（2026-07-20 读源码核实）：`yuchigong.ts:214` emit Qizou `scan_completed` → `event-routing.yml:265` 路由到魏征 Shengzhi `add_paths` → `weizheng.ts:188` `handleAddPaths` 消费。第 1-6 步改造新事件类型后，需重新确认这条链路的触发点（`yuchigong.ts` emit `scan_completed` 的时机）改用新 `ScanTerminal` 而不是旧事件，不能假设改造后自动保留。

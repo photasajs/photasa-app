@@ -97,6 +97,21 @@ qizou_routes:
                   priority: "normal"
               description: "尉迟恭报告扫描开始后，下旨虞世南更新状态栏显示"
 
+    # ✅ RFC 0136: 袁天罡报告发现直属子目录 → 李世民下旨尉迟恭持久化准入并排入同一 PQueue
+    scan_directory_discovered:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "add_scan_task"
+                  content:
+                      path: "{{qizou.content.directoryPath}}"
+                      source: "discovered"
+                  priority: "normal"
+              description: "袁天罡报告发现直属子目录后，下旨尉迟恭添加扫描任务到队列"
+
     # ✅ RFC 0057 Phase 3: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
     scan_progress:
         - when:

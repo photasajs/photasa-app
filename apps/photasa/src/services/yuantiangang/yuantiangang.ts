@@ -18,13 +18,13 @@ import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
 import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
 import { scanAdapter } from "@renderer/api/scan.adapter";
-import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@photasa/common";
 import type { NotifyPayload } from "@photasa/common";
 import type { MenuActionPayload } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
 import { computeScannedFilePaths } from "./utils";
 import { IntentToFuluMapping } from "./intent";
+import { executeScanQueueZhaoling } from "./scan-queue-bridge";
 
 const logger = loggers.yuantiangang;
 
@@ -198,11 +198,19 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * @param args 扫描事件参数（FindPhotoEvent）
      * @private
      */
-    private handleQianliyanEvent(args: ScanActionEvent): void {
-        logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path);
+    private handleQianliyanEvent(
+        args: ScanActionEvent & { directory?: { path: string }; rootPath?: string },
+    ): void {
+        logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path || args.directory?.path);
 
-        if (args.type === "progress") {
-            // ✅ RFC 0057 Phase 2: 发送 SCAN_PROGRESS qizou 给虞世南
+        if (args.type === "directory") {
+            // ✅ RFC 0136: 收到目录报告，发送 scan_directory_discovered 启奏
+            const directoryPath = args.directory?.path || args.action?.path;
+            if (directoryPath) {
+                this.reportScanDirectoryDiscovered(directoryPath, args.rootPath || directoryPath);
+            }
+        } else if (args.type === "progress" || args.type === "file") {
+            // ✅ RFC 0057 / RFC 0136: 发送 SCAN_PROGRESS qizou 给虞世南
             this.reportScanProgress(args);
         } else if (args.type === "complete") {
             // ✅ RFC 0057: 发送 SCAN_PROGRESS qizou 给虞世南（type: "complete"）以清空进度
@@ -210,7 +218,34 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             // ✅ 保留：发送 SCAN_READY qizou 给魏征
             this.reportScanCompletion(computeScannedFilePaths(args), args);
         }
-        // error 类型暂不处理
+    }
+
+    /**
+     * ✅ RFC 0136: 向李世民发送发现直属子目录启奏
+     */
+    private reportScanDirectoryDiscovered(directoryPath: string, rootPath: string): void {
+        try {
+            if (!this._qizouBus) {
+                logger.error("🔮 启奏通道未建立，无法发送启奏");
+                return;
+            }
+
+            const qizou: Qizou = {
+                type: "report",
+                from: GUANYUAN_NAMES.YUAN_TIAN_GANG,
+                name: "scan_directory_discovered",
+                content: {
+                    directoryPath,
+                    rootPath,
+                },
+                timestamp: Date.now(),
+            };
+
+            this._qizouBus.emit(qizou);
+            logger.info(`🔮 启奏发送成功: scan_directory_discovered -> ${directoryPath}`);
+        } catch (error) {
+            logger.error("🔮 发送 scan_directory_discovered 启奏失败:", error);
+        }
     }
 
     /**
@@ -507,7 +542,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
         const startTime = Date.now();
 
-        // ✅ RFC 0143: 尉迟恭/房玄龄/袁天罡 扫描队列管理事务直连并拦截 (直接同步本地Pinia store状态，不经过Tianshu)
+        // RFC 0143 + 0136：队列奏折 → Rust scanning.json（对齐 Electron 千里眼工作流）
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE ||
             zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION ||
@@ -515,16 +550,21 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             zhaoling.command === ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS
         ) {
             try {
-                const scanningStore = useScanningStore();
-                logger.info(`🔮 钦天监直连拦截队列事务: ${zhaoling.command}，回传Pinia快照`);
+                const data = await executeScanQueueZhaoling(
+                    zhaoling.command,
+                    (zhaoling.context ?? {}) as Record<string, unknown>,
+                );
+                logger.info(
+                    `🔮 钦天监队列已同步 scanning.json: ${zhaoling.command}，${data.queue.length} 项`,
+                );
                 return {
                     acknowledged: true,
                     command: zhaoling.command,
-                    data: { queue: scanningStore.queue },
-                    blessing: "钦天监队列快照同步成功",
+                    data,
+                    blessing: "钦天监队列持久化成功",
                     timestamp: Date.now(),
                     metadata: {
-                        engineName: "tauri-store-sync",
+                        engineName: "qianliyan-scan-queue",
                         processTime: Date.now() - startTime,
                         urgency:
                             zhaoling.priority === "imperial"
@@ -535,14 +575,14 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     },
                 };
             } catch (error) {
-                logger.error(`🔮 钦天监队列事务同步失败: ${zhaoling.command}`, error);
+                logger.error(`🔮 钦天监队列持久化失败: ${zhaoling.command}`, error);
                 return {
                     acknowledged: false,
                     command: zhaoling.command,
                     data: null,
-                    blessing: "钦天监同步失败",
+                    blessing: "钦天监队列持久化失败",
                     timestamp: Date.now(),
-                    error: error instanceof Error ? error.message : "状态同步异常",
+                    error: error instanceof Error ? error.message : "队列持久化异常",
                 };
             }
         }

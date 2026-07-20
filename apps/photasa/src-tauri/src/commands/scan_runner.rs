@@ -20,7 +20,8 @@ use photasa_scan::strategy::{
 use photasa_thumbnail::{create_thumbnail as create_thumbnail_async, ThumbnailRequest};
 pub use photasa_types::ScanAction;
 use photasa_types::{
-    PhotasaConfigPhoto, PhotasaConfigView, PhotoFileRequest, ScanNotifyAction, ScanNotifyProgress,
+    PhotasaConfigPhoto, PhotasaConfigView, PhotoFileRequest, ScanDirectoryPayload,
+    ScanFilePayload, ScanNotifyAction, ScanNotifyProgress, ScanProgressPayload, ScanReport,
     ScanWorkerNotifySource, PHOTASA_CONFIG_FILE,
 };
 use serde_json::json;
@@ -69,6 +70,25 @@ fn emit_status_notify(app: &AppHandle, source: ScanWorkerNotifySource) {
     }
 }
 
+fn emit_directory_report(
+    app: &AppHandle,
+    request_id: &str,
+    scan_root: &str,
+    dir: &PhotoFileRequest,
+) {
+    let report = ScanReport::Directory {
+        request_id: request_id.to_string(),
+        root_path: scan_root.to_string(),
+        directory: ScanDirectoryPayload {
+            path: dir.path.clone(),
+            is_directory: true,
+        },
+    };
+    if let Ok(payload) = serde_json::to_value(&report) {
+        emit_scan_event(app, payload);
+    }
+}
+
 /// Electron `buildDirectoryScanProgressMessage` — `currentFile` 仅当 `path && !isDirectory`
 fn emit_file_progress(
     app: &AppHandle,
@@ -92,56 +112,55 @@ fn emit_file_progress(
         error: None,
         action: Some(ScanNotifyAction {
             path: Some(file.path.clone()),
-            is_directory: Some(file.is_directory),
+            is_directory: Some(false),
         }),
         progress: Some(ScanNotifyProgress { processed, total }),
-        current_file: current_file.clone(),
+        current_file,
     };
     emit_status_notify(app, notify_source);
-    emit_scan_event(
-        app,
-        json!({
-            "type": "progress",
-            "requestId": request_id,
-            "action": {
-                "path": scan_root,
-                "isDirectory": true,
-            },
-            "progress": { "processed": processed, "total": total },
-            "currentFile": current_file,
-        }),
-    );
+
+    let report = ScanReport::File {
+        request_id: request_id.to_string(),
+        root_path: scan_root.to_string(),
+        file: ScanFilePayload {
+            path: file.path.clone(),
+            is_directory: false,
+        },
+        progress: ScanProgressPayload { processed, total },
+    };
+    if let Ok(payload) = serde_json::to_value(&report) {
+        emit_scan_event(app, payload);
+    }
 }
 
 fn emit_error(app: &AppHandle, request_id: &str, message: &str, action_path: Option<&str>) {
+    let root_path = action_path.unwrap_or("");
     let notify_source = ScanWorkerNotifySource {
         msg_type: "error".into(),
         error: Some(message.to_string()),
-        action: action_path.map(|path| ScanNotifyAction {
-            path: Some(path.to_string()),
-            is_directory: None,
+        action: Some(ScanNotifyAction {
+            path: Some(root_path.to_string()),
+            is_directory: Some(true),
         }),
         progress: None,
         current_file: None,
     };
     emit_status_notify(app, notify_source);
-    emit_scan_event(
-        app,
-        json!({
-            "type": "error",
-            "requestId": request_id,
-            "error": message,
-            "action": action_path.map(|path| json!({ "path": path })),
-        }),
-    );
+
+    let report = ScanReport::Error {
+        request_id: request_id.to_string(),
+        root_path: root_path.to_string(),
+        error: message.to_string(),
+    };
+    if let Ok(payload) = serde_json::to_value(&report) {
+        emit_scan_event(app, payload);
+    }
 }
 
 fn emit_directory_complete(
     app: &AppHandle,
     request_id: &str,
     scan_root: &str,
-    file_count: usize,
-    found_paths: &[String],
 ) {
     emit_status_notify(
         app,
@@ -156,16 +175,13 @@ fn emit_directory_complete(
             current_file: None,
         },
     );
-    emit_scan_event(
-        app,
-        json!({
-            "type": "complete",
-            "requestId": request_id,
-            "action": { "path": scan_root, "isDirectory": true },
-            "paths": found_paths,
-            "fileCount": file_count,
-        }),
-    );
+    let report = ScanReport::Complete {
+        request_id: request_id.to_string(),
+        root_path: scan_root.to_string(),
+    };
+    if let Ok(payload) = serde_json::to_value(&report) {
+        emit_scan_event(app, payload);
+    }
 }
 
 fn emit_file_complete(app: &AppHandle, request_id: &str, file_path: &str) {
@@ -322,6 +338,10 @@ async fn process_file_list(
     cache_mgr: &mut IncrementalCacheManager,
 ) {
     for file in files {
+        if file.is_directory {
+            emit_directory_report(app, request_id, &scan.path, file);
+            continue;
+        }
         let should = should_process_scan_file(&file.path, &scan.action);
         if should {
             let thumb = process_photo_file(file, scan).await;
@@ -346,6 +366,10 @@ async fn run_traditional_directory_scan(
     let total = files.len();
     let mut processed = 0usize;
     for file in &files {
+        if file.is_directory {
+            emit_directory_report(app, request_id, &scan.path, file);
+            continue;
+        }
         if should_process_scan_file(&file.path, &scan.action) {
             process_photo_file(file, scan).await;
         }
@@ -354,8 +378,6 @@ async fn run_traditional_directory_scan(
     }
     Ok(processed)
 }
-
-/// 子目录递归（仅 Electron SKIP 分支调用：`scanSubdirectories`）。
 
 /// 处理 FULL 分支文件遍历结果（fresh 或 resume）。返回处理文件数。
 async fn run_full_directory_scan(
@@ -379,6 +401,10 @@ async fn run_full_directory_scan(
         process_file_list(app, request_id, &unprocessed, scan, &mut cache_mgr).await;
     } else {
         for file in &all_files {
+            if file.is_directory {
+                emit_directory_report(app, request_id, &scan.path, file);
+                continue;
+            }
             if should_process_scan_file(&file.path, &scan.action) {
                 let thumb = process_photo_file(file, scan).await;
                 if let Err(err) = cache_mgr.record_file_processed(&file.path, thumb) {
@@ -394,8 +420,6 @@ async fn run_full_directory_scan(
     }
     Ok(cache_mgr.cache().processed_files.len())
 }
-
-
 
 fn scan_directory_at<'a>(
     app: &'a AppHandle,
@@ -439,8 +463,6 @@ fn scan_directory_at<'a>(
                 .map(|c| c.photo_list.len())
                 .unwrap_or(0);
         } else {
-            // FULL：`walkthrough` 已全递归（`current` 时仅一层），**不**再逐目录重入，
-            // 否则嵌套文件被重复处理（RFC 0117 BUG①）。
             file_count = match IncrementalCacheManager::initialize(Path::new(&folder), force_rescan)
             {
                 Ok(cache_mgr) => {
@@ -466,17 +488,24 @@ pub(crate) async fn run_directory_scan(
     scan: ScanAction,
     _recursive: bool,
 ) -> Result<usize, String> {
-    // `recursive` 不再控制子目录重入：递归仅在 SKIP 分支发生，深度由 `current`
-    // （`should_scan_one_level`）门控（RFC 0117 Recursion model）。保留参数以兼容签名。
     let validation = validate_scan_params(&scan);
     if !validation.is_valid {
         let msg = validation.error.unwrap_or_else(|| "参数验证失败".into());
+        emit_error(&app, &request_id, &msg, Some(&scan.path));
         return Err(msg);
     }
 
-    let file_count = scan_directory_at(&app, &request_id, &scan).await?;
-    info!("🌌 千里眼目录扫描完功: {}", scan.path);
-    Ok(file_count)
+    match scan_directory_at(&app, &request_id, &scan).await {
+        Ok(file_count) => {
+            emit_directory_complete(&app, &request_id, &scan.path);
+            info!("🌌 千里眼目录扫描完功: {}", scan.path);
+            Ok(file_count)
+        }
+        Err(err) => {
+            emit_error(&app, &request_id, &err, Some(&scan.path));
+            Err(err)
+        }
+    }
 }
 
 /// `processMediaFile` — 单文件扫描
@@ -617,7 +646,7 @@ fn run_scan_worker(app: AppHandle, receiver: mpsc::Receiver<ScanJob>) {
                     job.scan,
                     true,
                 ))
-                .map(|file_count| (file_count, Vec::new()))
+                .map(|file_count| (file_count, Vec::<String>::new()))
         } else {
             runtime
                 .block_on(run_file_scan(
@@ -625,11 +654,11 @@ fn run_scan_worker(app: AppHandle, receiver: mpsc::Receiver<ScanJob>) {
                     job.request_id.clone(),
                     job.scan,
                 ))
-                .map(|()| (0, Vec::new()))
+                .map(|()| (0, Vec::<String>::new()))
         };
         match result {
-            Ok((file_count, paths)) if is_directory => {
-                emit_directory_complete(&app, &job.request_id, &scan_root, file_count, &paths);
+            Ok((_file_count, _paths)) if is_directory => {
+                emit_directory_complete(&app, &job.request_id, &scan_root);
             }
             Ok(_) => emit_file_complete(&app, &job.request_id, &scan_root),
             Err(error) => emit_error(&app, &job.request_id, &error, Some(&scan_root)),
