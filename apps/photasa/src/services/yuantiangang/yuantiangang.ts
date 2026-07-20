@@ -261,30 +261,33 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * @param scanEvent ScanActionEvent 事件（统一类型）
      * @private
      */
-    private reportScanProgress(scanEvent: ScanActionEvent): void {
+    private reportScanProgress(scanEvent: any): void {
         try {
             if (!this._qizouBus) {
                 logger.error("🔮 启奏通道未建立，无法发送启奏");
                 return;
             }
 
-            // ✅ 构造完整文件路径（由 yuShiNan 处理 complete 类型的清空逻辑）
+            // 支持新 ScanFileReport (file.path, rootPath) 与旧 ScanActionEvent (action.path, currentFile)
+            const fileObj = scanEvent.file || scanEvent.action;
+            const rootPath = scanEvent.rootPath || scanEvent.action?.path || "";
+
             let filePath = "";
-            if (scanEvent.action?.isDirectory === false) {
-                // 如果是文件，直接使用 action.path
-                filePath = scanEvent.action.path;
-            } else if (scanEvent.action?.path && scanEvent.currentFile) {
-                // 如果是目录，拼接目录路径和当前文件名
-                filePath = `${scanEvent.action.path}/${scanEvent.currentFile}`.replace(/\/+/g, "/");
-            } else if (scanEvent.action?.path) {
-                // 如果只有目录路径，使用目录路径
-                filePath = scanEvent.action.path;
+            if (fileObj?.path && fileObj.isDirectory === false) {
+                filePath = fileObj.path;
+            } else if (rootPath && scanEvent.currentFile) {
+                filePath = `${rootPath}/${scanEvent.currentFile}`.replace(/\/+/g, "/");
+            } else if (fileObj?.path) {
+                filePath = fileObj.path;
+            } else if (rootPath) {
+                filePath = rootPath;
             }
+
+            const scanPath = rootPath || filePath;
 
             // 获取进度值（已处理的文件数）
             const progress = scanEvent.progress?.processed ?? 0;
             const total = scanEvent.progress?.total ?? 0;
-            const scanPath = scanEvent.action?.path ?? "";
 
             // ✅ 构建启奏，类型直接使用 scanEvent.type（progress 或 complete）
             // yuShiNan 会处理 complete 类型的清空逻辑
