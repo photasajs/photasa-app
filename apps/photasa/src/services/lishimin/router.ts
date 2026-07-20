@@ -208,10 +208,16 @@ export class QiZouRouter {
                 );
 
                 // 构建圣旨
-                const resolvedContent = this.resolveContent(route.then.shengzhi.content, qizou);
-                // ⚠️ JSON round-trip sanitizes Vue Proxy chains / non-cloneable DOM artifacts
-                // so that MessageChannel.postMessage (WebKit structured-clone) succeeds.
+                // ⚠️ JSON round-trip first: qizou.content may carry Vue Proxy wrappers from the
+                // DOM event chain. resolveContent traverses qizou properties via plain property
+                // access — if any node is a Proxy, the resolved value is also a Proxy (not a
+                // plain string). That Proxy then fails JSON.stringify → path becomes undefined.
+                // Sanitizing here ensures all template variable lookups work on plain objects.
                 const sanitizedQizou = JSON.parse(JSON.stringify(qizou));
+                const resolvedContent = this.resolveContent(
+                    route.then.shengzhi.content,
+                    sanitizedQizou,
+                );
                 const shengzhi: Shengzhi = {
                     id: this.generateShengzhiId(),
                     command: route.then.shengzhi.command,

@@ -248,6 +248,15 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
     beforeEach(async () => {
         setActivePinia(createPinia());
 
+        // RFC 0143: handleAddScanTask / requestRescan 经 normalizePath → window.api
+        global.window = {
+            ...global.window,
+            api: {
+                ...(global.window?.api ?? {}),
+                normalizePath: (path: string) => path.replace(/\\/g, "/"),
+            },
+        } as Window & typeof globalThis;
+
         // 先清理旧的状态（如果存在）
         if (messageChannel && messageChannel.port2) {
             messageChannel.port2.onmessage = null;
@@ -485,6 +494,72 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                 (z) => z.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION,
             );
             expect(addActionZouzhes.length).toBeGreaterThanOrEqual(3);
+        });
+
+        it("RFC 0143: add_scan_task action=rescan 应入队并标记 rescan", async () => {
+            const testPath = "/test/rescan-via-shengzhi";
+            mockFangXuanLing.reset();
+            emittedQizous.length = 0;
+
+            messageChannel.port1.postMessage({
+                id: `shengzhi-rescan-${Date.now()}`,
+                command: "add_scan_task",
+                content: { path: testPath, action: "rescan", source: "user" },
+                priority: "normal",
+                from: "李世民",
+                timestamp: Date.now(),
+            } satisfies Shengzhi);
+
+            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            expect(yuchiGong.isScanning(testPath)).toBe(true);
+            const addZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+            );
+            expect(addZouzhe).toBeDefined();
+            const actions = (addZouzhe?.content as { actions: ScanAction[] }).actions;
+            expect(actions[0]).toMatchObject({
+                path: testPath,
+                action: "rescan",
+                source: "user",
+            });
+        });
+
+        it("RFC 0143: 已在队列时 rescan 圣旨应去重并启奏 scan_task_duplicate", async () => {
+            const testPath = "/test/rescan-dedup";
+            mockFangXuanLing.reset();
+            emittedQizous.length = 0;
+
+            // 先入队占用
+            messageChannel.port1.postMessage({
+                id: "shengzhi-first",
+                command: "add_scan_task",
+                content: { path: testPath, action: "scan", source: "user" },
+                priority: "normal",
+                from: "李世民",
+                timestamp: Date.now(),
+            } satisfies Shengzhi);
+            await new Promise((resolve) => setTimeout(resolve, 150));
+            expect(yuchiGong.isScanning(testPath)).toBe(true);
+            const zouzheCountAfterFirst = mockFangXuanLing.receivedZouzhes.length;
+            emittedQizous.length = 0;
+
+            // 再发 rescan —— 应跳过
+            messageChannel.port1.postMessage({
+                id: "shengzhi-dedup-rescan",
+                command: "add_scan_task",
+                content: { path: testPath, action: "rescan", source: "user" },
+                priority: "normal",
+                from: "李世民",
+                timestamp: Date.now(),
+            } satisfies Shengzhi);
+            await new Promise((resolve) => setTimeout(resolve, 150));
+
+            expect(yuchiGong.getQueueSize()).toBe(1);
+            expect(mockFangXuanLing.receivedZouzhes.length).toBe(zouzheCountAfterFirst);
+            const dup = emittedQizous.find((q) => q.matter === "scan_task_duplicate");
+            expect(dup).toBeDefined();
+            expect(dup?.content).toMatchObject({ path: testPath });
         });
 
         it("应该拒绝缺少path参数的圣旨", () => {

@@ -528,7 +528,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
             return;
         }
 
-        logger.info(`🛡️ 尉迟恭接旨：添加扫描任务 ${path}`);
+        const normalizedPath = normalizePath(path);
+        logger.info(`🛡️ 尉迟恭接旨：添加扫描任务 ${normalizedPath}`);
 
         try {
             const action = (content.action as "scan" | "rescan" | "current") || "scan";
@@ -537,26 +538,26 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     ? "auto"
                     : (content.source as "user" | "auto") || "user";
 
-            // 1. 队列去重（Deduplication）：如果任务已在队列中，不论是 scan 还是 rescan，一律去重跳过，不重新添加
-            if (this.fangXuanLingService.scanning.isInQueue(path)) {
-                logger.warn(`🛡️ 尉迟恭：扫描任务已存在，去重跳过添加 ${path}`);
+            // ✅ RFC 0143: 去重——已在队列则跳过，不移除再入队
+            if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
+                logger.warn(`🛡️ 尉迟恭：扫描任务已存在，去重跳过添加 ${normalizedPath}`);
                 this.emitQizou("scan_task_duplicate", {
                     shengzhiId: shengzhi.id,
-                    path,
+                    path: normalizedPath,
                 });
                 return;
             }
 
-            await this.scheduleDirectoryScan(path, action, source);
+            await this.scheduleDirectoryScan(normalizedPath, action, source);
 
-            logger.info(`🛡️ 尉迟恭：扫描任务已添加并开始执行（响应圣旨） ${path}`);
+            logger.info(`🛡️ 尉迟恭：扫描任务已添加并开始执行（响应圣旨） ${normalizedPath}`);
         } catch (error) {
-            logger.error(`🛡️ 尉迟恭：添加扫描任务失败 ${path}`, error);
+            logger.error(`🛡️ 尉迟恭：添加扫描任务失败 ${normalizedPath}`, error);
 
             // 向李世民启奏汇报失败
             this.emitQizou("scan_task_failed", {
                 shengzhiId: shengzhi.id,
-                path,
+                path: normalizedPath,
                 error: String(error),
             });
 

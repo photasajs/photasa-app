@@ -6,7 +6,6 @@ import type { PhotasaConfig } from "@photasa/common";
 import { normalizePath } from "@renderer/utils/path";
 import { isEmpty } from "radash";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
-import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 // ✅ RFC 0058: 使用服务而不是直接 API 调用
 import {
     BaseContextMenu,
@@ -21,6 +20,8 @@ import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
+import { EventNames } from "@renderer/constants/event-names";
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
 const logger = loggers.lishimin;
 
@@ -28,7 +29,6 @@ const logger = loggers.lishimin;
  * ✅ RFC 0058: 使用长孙无忌服务
  */
 const zhangSunWuJi = useZhangSunWuJi();
-const yuChiGong = useYuChiGong();
 
 /**
  * Preference store
@@ -46,7 +46,7 @@ const weiZheng = useWeiZheng();
 const xuanzang = useXuanzang();
 
 /**
- * ✅ RFC 0048 v3: 通过尉迟恭入队 rescan（reset + 全量扫描）
+ * ✅ RFC 0143: 右键 rescan → 百姓上书 → 李世民 → 尉迟恭
  */
 
 /**
@@ -190,16 +190,23 @@ async function fixConfig(): Promise<void> {
 
 /**
  * Rescan the folder
- * @param key - The folder to rescan
+ * @param key - The folder path (tree node key, already normalized in preference store)
  */
-async function rescan(key: string): Promise<void> {
-    const folderPath = normalizePath(key);
-    logger.info(`[FolderList] Requesting rescan for folder: ${folderPath}`);
-    try {
-        await yuChiGong.requestRescan(folderPath);
-    } catch (error) {
-        logger.error(`[FolderList] Rescan failed for ${folderPath}:`, error);
-    }
+function rescan(key: string): void {
+    // ⚠️ Do NOT call normalizePath(key) here — window.api.normalizePath is async in Tauri
+    // (returns Promise<string> via invoke), even though typed as string. The tree key is
+    // already the canonical normalized path stored in preferences.
+    logger.info(`[FolderList] Requesting rescan for folder: ${key}`);
+    window.dispatchEvent(
+        new CustomEvent("picasa:shangshu", {
+            detail: {
+                action: QizouMatters.REQUEST_RESCAN,
+                path: key,
+            },
+            bubbles: true,
+            cancelable: true,
+        }),
+    );
 }
 
 // Expose methods to parent component

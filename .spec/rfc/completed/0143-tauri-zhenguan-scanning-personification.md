@@ -1,11 +1,16 @@
 # RFC 0143: Tauri scanning & queue commands personification (扫描与队列命令贞观之治设计对齐)
 
 - **Start Date**: 2026-07-19
-- **Status**: Draft
+- **Last updated**: 2026-07-19
+- **Status**: ✅ Implemented
 - **Priority**: P1
-- **Area**: Photasa / Renderer / Zhenguan Design / Scanning
+- **Area**: Photasa / Zhenguan Design / Scanning
 - **Depends on**: [0137](./0137-tauri-zhenguan-direct-ipc-migration.md)（Zhenguan 直连 Tauri IPC 规范）、[0142](./0142-tauri-zhenguan-config-commands-personification.md)（文件夹配置命令拟人化设计对齐）
-- **Path**: `.spec/rfc/0143-tauri-zhenguan-scanning-personification.md`
+- **Path**: `.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md`
+
+## Implementation principle (Photasa / Tauri)
+
+`photasa-scan` / `photasa-watch` 等 crate 用**功能英文名**（机制层）。本 RFC 改的是**人界正官接线**：百姓上书 → 李世民 → 尉迟恭；扫描工具奏折 → 袁天罡直连 Rust command。crate 不改名、不拟人。
 
 ## 1. Decision
 
@@ -157,9 +162,9 @@ else if (
 
 ## 4. 交付清单
 
-- [ ] 增加 Zouzhe 事务声明 ([fang-xuan-ling.interface.ts](file:///Volumes/ORICO/ws/prj/picasa/picasa-vue/apps/photasa/src/interfaces/fang-xuan-ling.interface.ts))
-- [ ] 更正尉迟恭服务，移除 `window.api` 依赖并实现去重策略 ([yuchigong.ts](file:///Volumes/ORICO/ws/prj/picasa/picasa-vue/apps/photasa/src/services/yuchigong/yuchigong.ts))
-- [ ] 编写李世民路由协调规则 ([event-routing.yml](file:///Volumes/ORICO/ws/prj/picasa/picasa-vue/apps/photasa/src/services/lishimin/event-routing.yml))
-- [ ] 改造 `FolderList.vue` 的重新扫描触发方式 ([FolderList.vue](file:///Volumes/ORICO/ws/prj/picasa/picasa-vue/apps/photasa/src/components/FolderList.vue))
-- [ ] 袁天罡钦天监对扫描执行的直连和扫描队列管理状态拦截器的实现 ([yuantiangang.ts](file:///Volumes/ORICO/ws/prj/picasa/picasa-vue/apps/photasa/src/services/yuantiangang/yuantiangang.ts))
-- [ ] 确保 `yuchigong.test.ts` 中的所有单元测试正常运行。
+- [x] 增加 Zouzhe 事务声明 (`fang-xuan-ling.interface.ts`: `TO_DIR_NAME` / `SCAN_SUBFOLDERS` / `SCAN_PHOTOS`)
+- [x] 尉迟恭移除 `window.api`；`executeScan` 走 Zouzhe；`handleAddScanTask` + `requestRescan` 去重
+- [x] 李世民 `event-routing.yml`：`request_rescan` → 尉迟恭 `add_scan_task`
+- [x] `FolderList.vue` rescan → 百姓上书 `picasa:shangshu`（`REQUEST_RESCAN`）
+- [x] 袁天罡：扫描工具直连 IPC + 队列状态奏折拦截（Pinia 快照）
+- [x] `yuchigong.test.ts` 覆盖 Zouzhe / rescan / dedup 路径

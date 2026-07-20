@@ -265,4 +265,42 @@ describe("🏛️ 杜如晦（DuRuHui）MessageChannel管理器", () => {
             });
         });
     });
+
+    describe("RFC 0143: 百姓上书 request_rescan", () => {
+        it("应将 REQUEST_RESCAN 转为 from=百姓 的 qizou", async () => {
+            const { EventNames } = await import("@renderer/constants/event-names");
+            const { QizouMatters } = await import("@renderer/constants/qizou-shengzhi-commands");
+            const mitt = (await import("mitt")).default;
+            type Qizou = import("@renderer/interfaces/qizou.interface").Qizou;
+
+            const emitted: Qizou[] = [];
+            const qizouBus = mitt<{ qizou: Qizou }>();
+            qizouBus.on("qizou", (q) => emitted.push(q));
+
+            duruhui.setQizouBus(qizouBus);
+            duruhui.initializeBaiXingShangshuYanLu();
+
+            const folderPath = "/photos/album-a";
+            window.dispatchEvent(
+                new CustomEvent(EventNames.BAIXING_SHANGSHU, {
+                    detail: {
+                        action: QizouMatters.REQUEST_RESCAN,
+                        path: folderPath,
+                    },
+                    bubbles: true,
+                    cancelable: true,
+                }),
+            );
+
+            await new Promise((resolve) => setTimeout(resolve, 20));
+
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0]).toMatchObject({
+                matter: QizouMatters.REQUEST_RESCAN,
+                from: "百姓",
+                content: { path: folderPath },
+                metadata: { type: "request" },
+            });
+        });
+    });
 });
