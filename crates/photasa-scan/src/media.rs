@@ -8,8 +8,6 @@ pub use photasa_import::path_filter::classify_media;
 use photasa_import::path_filter::{basename_hidden, should_ignore_photasa_path};
 use photasa_types::{PhotoFileRequest, ScanAction, ScanParamValidation};
 
-use crate::strategy::should_scan_one_level;
-
 pub const PHOTASA_ORIGINALS_DIR: &str = ".photasaoriginals";
 
 /// 统一路径分隔符为 `/`（与前端及缓存 JSON 一致）
@@ -124,12 +122,7 @@ pub fn walkthrough_photos_in_folder(scan: &ScanAction) -> Result<Vec<PhotoFileRe
         return Err(format!("Expected directory but got file: {}", scan.path));
     }
 
-    let one_level = should_scan_one_level(&scan.action);
-    let walker = if one_level {
-        WalkDir::new(root).max_depth(1)
-    } else {
-        WalkDir::new(root)
-    };
+    let walker = WalkDir::new(root).max_depth(1);
 
     let mut out = Vec::new();
     for entry in walker
@@ -273,9 +266,9 @@ mod walkthrough_tests {
         assert!(!files[0].is_directory);
     }
 
-    /// RFC 0117：FULL 的 `walkthrough` 一次递归收集嵌套文件；子目录重入会导致双处理。
+    /// 文件夹扫描仅一级：当前层文件立即处理，子文件夹放入队列独立调度处理。
     #[test]
-    fn walkthrough_scan_recurses_nested_media_once() {
+    fn walkthrough_scan_top_level_media_only() {
         let root = temp("nested-full");
         fs::write(root.join("top.jpg"), b"x").unwrap();
         let sub = root.join("sub");
@@ -290,14 +283,8 @@ mod walkthrough_tests {
             is_directory: true,
         };
         let files = walkthrough_photos_in_folder(&scan).unwrap();
-        assert_eq!(files.len(), 2);
-        assert_eq!(
-            files
-                .iter()
-                .filter(|f| f.path.ends_with("nested.jpg"))
-                .count(),
-            1
-        );
+        assert_eq!(files.len(), 1);
+        assert!(files[0].path.ends_with("top.jpg"));
     }
 
     /// RFC 0117：`current` → depthLimit 0，仅当前层。

@@ -10,13 +10,12 @@ use log::{error, info, warn};
 use photasa_scan::cache::IncrementalCacheManager;
 use photasa_scan::media::{
     absolute_thumbnail_path_for_source, build_thumbnail_path, classify_media,
-    is_photasa_media_file, list_scan_subdirectories, normalize_path_string,
-    relative_thumbnail_path_for_source, validate_scan_params, walkthrough_photos_in_folder,
+    is_photasa_media_file, normalize_path_string, relative_thumbnail_path_for_source,
+    validate_scan_params, walkthrough_photos_in_folder,
 };
 use photasa_scan::notify::build_scan_notify_payload;
 use photasa_scan::strategy::{
-    decide_scan_strategy_with_config, should_process_file_with_config, should_scan_one_level,
-    ScanDecision, ScanStrategy,
+    decide_scan_strategy_with_config, should_process_file_with_config, ScanDecision, ScanStrategy,
 };
 use photasa_thumbnail::{create_thumbnail as create_thumbnail_async, ThumbnailRequest};
 pub use photasa_types::ScanAction;
@@ -357,31 +356,6 @@ async fn run_traditional_directory_scan(
 }
 
 /// 子目录递归（仅 Electron SKIP 分支调用：`scanSubdirectories`）。
-///
-/// 每个子目录重入 `scan_directory_at` → 各自决策 SKIP/FULL。子目录错误记录后跳过，
-/// 不中断兄弟目录。`current`（depthLimit 0）不递归——由调用方门控。
-async fn recurse_into_subdirectories(
-    app: &AppHandle,
-    request_id: &str,
-    scan: &ScanAction,
-) -> Result<(), String> {
-    match list_scan_subdirectories(Path::new(&scan.path)) {
-        Ok(subdirs) => {
-            for sub in subdirs {
-                let sub_scan = ScanAction {
-                    path: normalize_path_string(&sub),
-                    operation_type: scan.operation_type.clone(),
-                    action: scan.action.clone(),
-                    thumbnail_size: scan.thumbnail_size,
-                    is_directory: true,
-                };
-                scan_directory_at(app, request_id, &sub_scan).await?;
-            }
-            Ok(())
-        }
-        Err(err) => Err(err),
-    }
-}
 
 /// 处理 FULL 分支文件遍历结果（fresh 或 resume）。返回处理文件数。
 async fn run_full_directory_scan(
@@ -421,13 +395,7 @@ async fn run_full_directory_scan(
     Ok(cache_mgr.cache().processed_files.len())
 }
 
-/// 是否递归子目录（RFC 0117 Recursion model）。
-///
-/// Electron `scanSubdirectories` **仅在 SKIP 分支**调用；FULL 的 `walkthrough` 已全递归，
-/// 再重入会重复处理嵌套文件（BUG①）。`current`（depthLimit 0）任何分支都不递归。
-fn should_recurse_subdirs(strategy: ScanStrategy, action: &str) -> bool {
-    strategy == ScanStrategy::Skip && !should_scan_one_level(action)
-}
+
 
 fn scan_directory_at<'a>(
     app: &'a AppHandle,
@@ -470,10 +438,6 @@ fn scan_directory_at<'a>(
                 .flatten()
                 .map(|c| c.photo_list.len())
                 .unwrap_or(0);
-
-            if should_recurse_subdirs(decision.strategy, &scan.action) {
-                recurse_into_subdirectories(app, request_id, scan).await?;
-            }
         } else {
             // FULL：`walkthrough` 已全递归（`current` 时仅一层），**不**再逐目录重入，
             // 否则嵌套文件被重复处理（RFC 0117 BUG①）。
@@ -713,23 +677,7 @@ mod tests {
 
     // ── RFC 0117 BUG①: subdir recursion is SKIP-only + honors `current` ──
 
-    #[test]
-    fn full_scan_does_not_recurse_subdirs() {
-        // FULL 的 walkthrough 已全递归；再重入会重复处理嵌套文件。
-        assert!(!should_recurse_subdirs(ScanStrategy::Full, "scan"));
-        assert!(!should_recurse_subdirs(ScanStrategy::Full, "rescan"));
-    }
 
-    #[test]
-    fn skip_scan_recurses_subdirs() {
-        assert!(should_recurse_subdirs(ScanStrategy::Skip, "scan"));
-    }
-
-    #[test]
-    fn current_action_never_recurses() {
-        assert!(!should_recurse_subdirs(ScanStrategy::Skip, "current"));
-        assert!(!should_recurse_subdirs(ScanStrategy::Full, "current"));
-    }
 
     // ── RFC 0117 BUG②: restore maps photoList entries correctly ──
 
