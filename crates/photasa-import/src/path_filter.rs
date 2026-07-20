@@ -24,14 +24,15 @@ pub fn classify_media(path: &Path) -> Option<(bool, bool)> {
     }
 }
 
-/// 与 `packages/common` 中 `shouldIgnorePhotasaPath` 字符串规则一致
+/// 与 `packages/common` 中 `shouldIgnorePhotasaPath` 规则一致（忽略 photasa/picasa 内部文件、配置、缓存及 OS 垃圾文件）
 pub fn should_ignore_photasa_path(path: &str) -> bool {
-    path.contains(".photasaoriginals")
-        || path.contains(".picasaoriginals")
-        || path.contains(".photasaoriginal")
-        || path.contains(".picasaoriginal")
-        || path.contains(".photasa.json")
-        || path.contains(".AppleDouble")
+    let lower = path.to_lowercase();
+    lower.contains(".photasa")
+        || lower.contains(".picasa")
+        || lower.contains("picasa.ini")
+        || lower.contains(".appledouble")
+        || lower.contains(".ds_store")
+        || lower.contains("thumbs.db")
 }
 
 /// 与 Node `path.basename` + 点开头 规则一致（隐藏文件跳过）
@@ -68,7 +69,12 @@ mod tests {
     #[test]
     fn should_ignore_matches_common_photasa_paths() {
         assert!(should_ignore_photasa_path("/p/.photasaoriginals/x.jpg"));
+        assert!(should_ignore_photasa_path("/p/.photasa-folder.json"));
+        assert!(should_ignore_photasa_path("/p/.photasa_config.json"));
+        assert!(should_ignore_photasa_path("/p/Picasa.ini"));
         assert!(should_ignore_photasa_path("/p/.AppleDouble/foo"));
+        assert!(should_ignore_photasa_path("/p/.DS_Store"));
+        assert!(should_ignore_photasa_path("/p/Thumbs.db"));
         assert!(!should_ignore_photasa_path("/photos/vacation/img.jpg"));
     }
 

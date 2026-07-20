@@ -19,7 +19,13 @@ pub fn normalize_path_string(path: &Path) -> String {
 
 /// 是否为 Photasa 支持的媒体文件（对应 Electron `isPhotasaMediaFile`）
 pub fn is_photasa_media_file(path: &Path) -> bool {
-    path.is_file() && classify_media(path).is_some()
+    if !path.is_file() {
+        return false;
+    }
+    if !path_allowed(path) {
+        return false;
+    }
+    classify_media(path).is_some()
 }
 
 /// 递归收集目录下所有媒体文件的规范化绝对路径（遗留 discovery；RFC 0117 使用 `walkthrough_photos_in_folder`）
@@ -99,6 +105,9 @@ pub fn walkthrough_photos_in_folder(scan: &ScanAction) -> Result<Vec<PhotoFileRe
         scan.operation_type == "file" || (is_file && scan.operation_type != "directory");
 
     if single_file {
+        if !path_allowed(root) {
+            return Ok(Vec::new());
+        }
         if let Some((is_image, is_video)) = classify_media(root) {
             return Ok(vec![PhotoFileRequest {
                 path: normalize_path_string(root),
@@ -123,11 +132,12 @@ pub fn walkthrough_photos_in_folder(scan: &ScanAction) -> Result<Vec<PhotoFileRe
     };
 
     let mut out = Vec::new();
-    for entry in walker.into_iter().filter_map(|e| e.ok()) {
+    for entry in walker
+        .into_iter()
+        .filter_entry(|e| path_allowed(e.path()))
+        .flatten()
+    {
         let path = entry.path();
-        if !path_allowed(path) {
-            continue;
-        }
         let Some((is_image, is_video)) = classify_media(path) else {
             continue;
         };

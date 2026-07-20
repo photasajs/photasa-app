@@ -5,6 +5,7 @@
 use crate::commands::watch_scan_queue::{ScanQueueCoalescer, TauriScanQueueSink};
 use notify::event::{CreateKind, RemoveKind};
 use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use photasa_import::path_filter::should_ignore_photasa_path;
 use std::path::Path;
 use std::sync::Mutex;
 use tauri::Emitter;
@@ -96,6 +97,9 @@ pub async fn start_file_watch(
                 Ok(event) => {
                     for path in &event.paths {
                         let path_str = path.to_string_lossy().to_string();
+                        if should_ignore_photasa_path(&path_str) {
+                            continue;
+                        }
                         let is_file = Path::new(path).is_file();
                         let payload = FileEventPayload {
                             is_file,
