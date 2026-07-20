@@ -2,6 +2,7 @@
  * 目录与对话框命令 (RFC 0084-0087, 0094)
  * choose_directory, choose_directories, get_directory, sub_folders, check_photasa_config
  */
+use photasa_import::path_filter::{basename_hidden, should_ignore_photasa_path};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -147,7 +148,11 @@ pub async fn sub_folders(folder_path: String) -> Result<Vec<String>, String> {
     {
         if let Ok(meta) = entry.metadata().await {
             if meta.is_dir() {
-                sub.push(entry.path().to_string_lossy().into_owned());
+                let path = entry.path();
+                let path_str = path.to_string_lossy();
+                if !should_ignore_photasa_path(&path_str) && !basename_hidden(&path) {
+                    sub.push(path_str.into_owned());
+                }
             }
         }
     }

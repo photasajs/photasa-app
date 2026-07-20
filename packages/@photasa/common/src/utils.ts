@@ -40,12 +40,13 @@ export function getOptimalThumbnailResolution(
  * @returns 是否为 Photasa 路径
  */
 export function shouldIgnorePhotasaPath(photoPath: string): boolean {
+    const lower = photoPath.toLowerCase();
     return (
-        photoPath.indexOf(".photasaoriginals") >= 0 ||
-        photoPath.indexOf(".picasaoriginals") >= 0 ||
-        photoPath.indexOf(".photasaoriginal") >= 0 ||
-        photoPath.indexOf(".picasaoriginal") >= 0 ||
-        photoPath.indexOf(".photasa.json") >= 0 ||
-        photoPath.indexOf(".AppleDouble") >= 0
+        lower.includes(".photasa") ||
+        lower.includes(".picasa") ||
+        lower.includes("picasa.ini") ||
+        lower.includes(".appledouble") ||
+        lower.includes(".ds_store") ||
+        lower.includes("thumbs.db")
     );
 }

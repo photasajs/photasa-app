@@ -14,7 +14,7 @@ import {
 // ✅ RFC 0048 v3 Phase 4: QizouMatters 导入已删除（随persistToStore()一起删除）
 import type { FileOperation, ScanAction } from "@photasa/common";
 import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
-import { loggers, mapFileOperationToScanAction } from "@photasa/common";
+import { loggers, mapFileOperationToScanAction, shouldIgnorePhotasaPath } from "@photasa/common";
 import { normalizePath } from "@renderer/utils/path";
 import {
     calculateTaskAge,
@@ -158,7 +158,11 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     content: { folderPath: path },
                     priority: ZOUZHE_PRIORITIES.NORMAL,
                 });
-                const subfolders = res.data || [];
+                const rawSubfolders: string[] = res.data || [];
+                const subfolders = rawSubfolders.filter((subfolder: string) => {
+                    const name = subfolder.split("/").pop() || "";
+                    return !shouldIgnorePhotasaPath(subfolder) && !name.startsWith(".");
+                });
                 if (subfolders.length > 0) {
                     logger.info(
                         `🛡️ 尉迟恭：发现 ${subfolders.length} 个子文件夹，持久化到Store并添加到p-queue`,
@@ -505,12 +509,16 @@ export class YuChiGongService implements IService, IYuChiGongService {
      * @param shengzhi 圣旨内容
      */
     private async handleAddScanTask(shengzhi: Shengzhi): Promise<void> {
-        const content = shengzhi.content as Record<string, unknown>;
-        const path = content.path as string;
+        const content = (shengzhi.content ?? {}) as Record<string, unknown>;
+        const rawPath = content.path;
 
-        // 路径参数验证
-        if (!path || typeof path !== "string") {
-            logger.error("🛡️ 尉迟恭：圣旨缺少path参数或类型错误");
+        // 拒绝非字符串（含 Promise：曾因 async normalizePath 进 content，stringify 后 path 消失）
+        if (typeof rawPath !== "string" || rawPath.trim() === "") {
+            logger.error("🛡️ 尉迟恭：圣旨缺少path参数或类型错误", {
+                shengzhiId: shengzhi.id,
+                pathType: rawPath === null ? "null" : typeof rawPath,
+                contentKeys: Object.keys(content),
+            });
             this.emitQizou("scan_task_failed", {
                 shengzhiId: shengzhi.id,
                 error: "缺少path参数或类型错误",
@@ -518,17 +526,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             return;
         }
 
-        // 路径安全验证：不能为空字符串
-        if (path.trim() === "") {
-            logger.error("🛡️ 尉迟恭：圣旨path为空字符串");
-            this.emitQizou("scan_task_failed", {
-                shengzhiId: shengzhi.id,
-                error: "path为空字符串",
-            });
-            return;
-        }
-
-        const normalizedPath = normalizePath(path);
+        const normalizedPath = normalizePath(rawPath.trim());
         logger.info(`🛡️ 尉迟恭接旨：添加扫描任务 ${normalizedPath}`);
 
         try {
