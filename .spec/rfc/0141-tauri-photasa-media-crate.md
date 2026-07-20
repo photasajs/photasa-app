@@ -67,6 +67,7 @@ Workspace crate `crates/photasa-media` 为唯一权威扩展名判定：
 5. ⬜ `watch-event.ts`：要么与权威表对齐（至少补 `dng/raf/orf`），要么明确 Non-goal「TS 另案 / invoke」并写进 Acceptance。
 6. ⬜ ROADMAP / TASK_TRACKING 登记 0141。
 7. ⬜ `grep` 验收：`apps/photasa/src-tauri` + `crates` 下静态 `IMAGE_EXTS`/`VIDEO_EXTS` 定义只命中 `photasa-media`（再导出除外）。
+8. ⬜ **2026-07-20 新发现的遗漏**：本清单第 3 条只核实了 `photasa-import/path_filter.rs` 改用 `photasa_media`，**没核实 `photasa-scan` 这一侧**——`crates/photasa-scan/src/media.rs` 通过 `pub use photasa_import::path_filter::classify_media;` 间接借用 import 的包装函数，不是直接依赖 `photasa-media`，属于本清单遗漏的第四个消费方。`should_ignore_photasa_path`/`basename_hidden` 也只存在于 `photasa-import/path_filter.rs`，不在 `photasa-media` 权威表范围内。这条依赖已被 [0136](./0136-tauri-scan-runtime-contract.md) 判定为架构违规（scan/import 不得互相依赖）且发现连带 bug（`classify_media` 把目录条目误判掉，目录报告分支从未触发）。完整修复方向记录在 0136，不在本 RFC 展开，但本条 Acceptance 补充：`photasa-scan` 也必须直接依赖 `photasa-media`，不经 `photasa-import` 中转。
 
 ## Non-goals
 
@@ -93,6 +94,7 @@ cargo tree -p photasa-media     → 仅 photasa-types（无 tauri）
 3. ✅ 历史分叉已记录；统一表内容已拍板（上表）并保留 IMAGE/HEIC/RAW 解码分流。
 4. ⬜ `watch-event.ts` 与权威表对齐或文档标明另案。
 5. ⬜ ROADMAP 登记；RFC → Implemented / `completed/` 当 4 完成且证据更新。
+6. ⬜ `photasa-scan` 直接依赖 `photasa-media`，不经 `photasa-import` 中转（`cargo tree -p photasa-scan` 不含 `photasa-import`）——2026-07-20 发现的遗漏消费方，见 Goals 第 8 条与 0136。
 
 ## Risks
 

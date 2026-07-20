@@ -184,16 +184,16 @@ Electron currently couples discovery, thumbnail, and config inside `@photasa/sca
 
 ## Crate boundaries
 
-| Layer                | 对应人 (Zhenguan owner)  | Owns                                                                                  | Must not depend on                                        |
-| -------------------- | ------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `photasa-types`      | 无人（纯类型，无职责）   | scan entry, file-processing request/result types                                      | application crates                                        |
-| `photasa-scan`       | 千里眼                   | one current task direct directory/file discovery; emits reports                       | thumbnail crate, config implementation, Tauri, queue      |
-| `photasa-thumbnail`  | 无人（纯机制，无职责）   | thumbnail creation/removal request                                                    | scan crate, config implementation, queue                  |
-| `photasa-watch`      | 顺风耳                   | watched-root observation normalization, debounce, coalescing; emits `FileObservation` | scan crate, queue, thumbnail/config implementation, Tauri |
-| Tauri config module  | 无人（纯机制，无职责）   | `.photasa.json` read/write                                                            | queue/UI services                                         |
-| Tauri scan pipeline  | 袁天罡（交通边界职责内） | connects reports to thumbnail/config stages; task terminal outcome                    | queue storage, UI state                                   |
-| `YuChiGong`（TS 类） | 尉迟恭                   | persisted queue and PQueue dispatch                                                   | scan internals, thumbnail/config internals                |
-| `scanningStore`      | 虞世南（呈现职责内）     | queue UI projection                                                                   | filesystem work                                           |
+| Layer                | 对应人 (Zhenguan owner)  | Owns                                                                                  | Must not depend on                                                                                                                                                                                                          |
+| -------------------- | ------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `photasa-types`      | 无人（纯类型，无职责）   | scan entry, file-processing request/result types                                      | application crates                                                                                                                                                                                                          |
+| `photasa-scan`       | 千里眼                   | one current task direct directory/file discovery; emits reports                       | thumbnail crate, config implementation, Tauri, queue, **`photasa-import`**（scan 是队列驱动一层发现；import 永远递归收集整棵树；两者用例不同，禁止共享判定逻辑或代码路径——2026-07-20 发现真实代码违反此条，见下方复核记录） |
+| `photasa-thumbnail`  | 无人（纯机制，无职责）   | thumbnail creation/removal request                                                    | scan crate, config implementation, queue                                                                                                                                                                                    |
+| `photasa-watch`      | 顺风耳                   | watched-root observation normalization, debounce, coalescing; emits `FileObservation` | scan crate, queue, thumbnail/config implementation, Tauri                                                                                                                                                                   |
+| Tauri config module  | 无人（纯机制，无职责）   | `.photasa.json` read/write                                                            | queue/UI services                                                                                                                                                                                                           |
+| Tauri scan pipeline  | 袁天罡（交通边界职责内） | connects reports to thumbnail/config stages; task terminal outcome                    | queue storage, UI state                                                                                                                                                                                                     |
+| `YuChiGong`（TS 类） | 尉迟恭                   | persisted queue and PQueue dispatch                                                   | scan internals, thumbnail/config internals                                                                                                                                                                                  |
+| `scanningStore`      | 虞世南（呈现职责内）     | queue UI projection                                                                   | filesystem work                                                                                                                                                                                                             |
 
 crate 命名规则：`crates/` 下的 Rust crate 名一律用功能性英文（`photasa-scan`/`photasa-watch`/`photasa-thumbnail`/`photasa-import`/`photasa-types`），不拟人化——crate 是可独立 `cargo test` 的机制层，属于 Rust 生态惯例，不代表贞观职责边界。**贞观人物只出现在 Tauri 应用层的 `src-tauri/src/services/<pinyin>/` 目录**（如 `services/yuchigong`、`services/weizheng`），这一层才是职责边界，才对应上表"对应人"列。一个 crate 没有对应人，说明它是无状态机制（类型定义、纯解码/编解码、纯文件 I/O），只能被 Tauri 组合层或某个人的 service 调用，不能自己越权持有职责（队列策略、准入、UI 投影等）。
 
@@ -343,6 +343,18 @@ ScanDirectoryReport
 
 `photasa-scan` never performs these steps. `YuChiGong` owns admission policy, path normalization, de-duplication, and later PQueue scheduling. `FangXuanLing` applies the Zouzhe durable mutation and updates its Store projection. Directory report handling owns none of them.
 
+### Current implementation gap
+
+`walkthrough_photos_in_folder`（`crates/photasa-scan/src/media.rs:92-148`）尚未兑现本节契约。一层遍历（`max_depth(1)`）本身正确，但目录条目和文件条目共用同一个分类过滤器（`classify_media`，按扩展名判定），目录必然判定失败而被跳过——目录报告分支因此从不触发，`ScanDirectoryReport → YuanTianGang → LiShiMin → DuRuHui → YuChiGong` 这条链路没有触发源。
+
+修复：遍历时先分流 `entry.path().is_dir()`——是目录，直接产出目录报告，不经过媒体分类；不是目录，才走 `classify_media` 判定文件类型。
+
+`photasa-scan` 当前依赖 `photasa-import`（`media.rs:7` `pub use photasa_import::path_filter::classify_media;`，以及 `should_ignore_photasa_path`/`basename_hidden`），这条依赖本身违反 Crate boundaries（scan 与 import 是不同用例，互不依赖）。`photasa-import` 自身已依赖 `photasa-media`（0141），但其 `classify_media(path: &Path) -> Option<(bool,bool)>` 是 import 域内的包装，非 `photasa-media` 原生签名；`should_ignore_photasa_path`/`basename_hidden` 目前只存在于 import，无 `photasa-media` 对应项。
+
+修复：`should_ignore_photasa_path`/`basename_hidden` 移入 `photasa-media`；`photasa-media` 补一个 `&Path`/`Option<(bool,bool)>` 形状的判定接口（或由调用方做 `MediaType` 到该形状的薄转换）；`photasa-scan` 与 `photasa-import` 各自直接依赖 `photasa-media`，互不依赖。验收：`cargo tree -p photasa-scan` 不含 `photasa-import`，反之亦然（已列入 Acceptance 第 1 条）。
+
+RFC 0117 记录的"`classify_media` never emits a directory, and that's correct"是 Electron FULL-递归架构下的 parity 事实（那套架构没有目录报告概念，folder tree 由 `complete.action.path` 驱动），不适用于本节定义的队列驱动架构，不构成对本节的反证。
+
 Nothing else is allowed for child directory in current turn:
 
 ```text
@@ -419,7 +431,7 @@ UI consumes processed-file projection. It does not consume raw scanner reports, 
 
 ## Acceptance
 
-1. `photasa-scan` compiles without thumbnail/config/Tauri/queue dependency.
+1. `photasa-scan` compiles without thumbnail/config/Tauri/queue/**`photasa-import`** dependency（`cargo tree -p photasa-scan` 不得出现 `photasa-import`；当前真实违反，见"目录报告分支缺失"复核记录）。
 2. Tauri pipeline composes scan, thumbnail, and config stages for each file report.
 3. Directory report only requests Zhenguan durable admission; it does not scan, thumbnail, configure, or await child work.
 4. Parent waits for own file pipeline and child durable-admission receipts, not child directory scans.

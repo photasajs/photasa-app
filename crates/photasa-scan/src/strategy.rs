@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::Path;
 
-use photasa_import::path_filter::classify_media;
+use photasa_media::classify_media_flags as classify_media;
 use photasa_types::{PhotasaConfigPhoto, PhotasaConfigView, PHOTASA_CONFIG_FILE};
 use sha2::{Digest, Sha256};
 

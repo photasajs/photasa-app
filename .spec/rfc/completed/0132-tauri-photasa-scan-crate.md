@@ -77,6 +77,7 @@ Call sites that must keep working after move: `adapters/scan_adapter.rs`, `comma
 1. **Testability first** — strategy / cache / notify / walk / cleanup under `-p photasa-scan` without Window.
 2. **Zero Tauri** in crate `Cargo.toml`（`cargo tree` 验收）。v1 迁移的 5 个文件（strategy/cache/media/notify/cleanup）**保持现状纯同步**——已核实零 `async fn`，无需为 v1 引入任何异步面。`scan_runner.rs`（唯一有 async 编排需求的文件）**不在 v1 迁移范围**，仍留 `src-tauri`；其内部 `tokio::spawn`/`spawn_blocking` 编排不变。禁止 `tauri::async_runtime`（适用于任何后续把 `scan_runner` 迁入 crate 的 v2 工作）。
 3. **Reuse `photasa-import`** for media classify / ignore / hidden — **delete** duplicate `PHOTO_EXTENSIONS` table in media module（统一走 `classify_media`）.
+    > **⚠️ 2026-07-20 补记**：这条硬门在当时（无 `photasa-media` crate）是避免第三份扩展名表的唯一办法，合理。[0141](../0141-tauri-photasa-media-crate.md) 落地后已建立权威共享判定 crate，这条"复用 import"的决定**已过时，应被替换为"依赖 `photasa-media`"**——[0136](../0136-tauri-scan-runtime-contract.md) 进一步发现该复用路径本身有隐藏 bug：`classify_media` 按扩展名判定，目录条目必然不匹配而被过滤器跳过，导致 0136 要求的"目录报告"分支从未被触发。此条不再是当前有效设计，修复方向见 0136，不在本 RFC（已 Implemented，不重开）处理。
 4. **Config：定案 `PhotasaConfigView` trait**（禁止拖整份 `photasa_config` command 进 crate）:
     - Trait 提供 strategy 所需：`has_config` / `photo_list`（或等价只读视图）.
     - src-tauri 用现有 `read_config_sync`（0071）实现.

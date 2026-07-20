@@ -4,8 +4,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-pub use photasa_import::path_filter::classify_media;
-use photasa_import::path_filter::{basename_hidden, should_ignore_photasa_path};
+pub use photasa_media::classify_media_flags as classify_media;
+use photasa_media::{basename_hidden, should_ignore_photasa_path};
 use photasa_types::{PhotoFileRequest, ScanAction, ScanParamValidation};
 
 pub const PHOTASA_ORIGINALS_DIR: &str = ".photasaoriginals";
@@ -131,17 +131,29 @@ pub fn walkthrough_photos_in_folder(scan: &ScanAction) -> Result<Vec<PhotoFileRe
         .flatten()
     {
         let path = entry.path();
-        let Some((is_image, is_video)) = classify_media(path) else {
+        if path == root {
             continue;
-        };
-        let is_dir = path.is_dir();
-        out.push(PhotoFileRequest {
-            path: normalize_path_string(path),
-            thumbnail: build_thumbnail_path(&normalize_path_string(path)),
-            is_image,
-            is_video,
-            is_directory: is_dir,
-        });
+        }
+
+        if path.is_dir() {
+            out.push(PhotoFileRequest {
+                path: normalize_path_string(path),
+                thumbnail: String::new(),
+                is_image: false,
+                is_video: false,
+                is_directory: true,
+            });
+        } else if path.is_file() {
+            if let Some((is_image, is_video)) = classify_media(path) {
+                out.push(PhotoFileRequest {
+                    path: normalize_path_string(path),
+                    thumbnail: build_thumbnail_path(&normalize_path_string(path)),
+                    is_image,
+                    is_video,
+                    is_directory: false,
+                });
+            }
+        }
     }
     out.sort_by(|a, b| a.path.cmp(&b.path));
     Ok(out)
@@ -266,9 +278,9 @@ mod walkthrough_tests {
         assert!(!files[0].is_directory);
     }
 
-    /// 文件夹扫描仅一级：当前层文件立即处理，子文件夹放入队列独立调度处理。
+    /// 文件夹扫描仅一级：产出当前层直属文件报告与直属子文件夹目录报告（RFC 0136）。
     #[test]
-    fn walkthrough_scan_top_level_media_only() {
+    fn walkthrough_scan_top_level_media_and_subdirs() {
         let root = temp("nested-full");
         fs::write(root.join("top.jpg"), b"x").unwrap();
         let sub = root.join("sub");
@@ -283,11 +295,14 @@ mod walkthrough_tests {
             is_directory: true,
         };
         let files = walkthrough_photos_in_folder(&scan).unwrap();
-        assert_eq!(files.len(), 1);
-        assert!(files[0].path.ends_with("top.jpg"));
+        assert_eq!(files.len(), 2);
+        assert!(files.iter().any(|f| f.is_directory && f.path.ends_with("sub")));
+        assert!(files.iter().any(|f| !f.is_directory && f.path.ends_with("top.jpg")));
+        // 不包含深层嵌套文件 nested.jpg
+        assert!(!files.iter().any(|f| f.path.ends_with("nested.jpg")));
     }
 
-    /// RFC 0117：`current` → depthLimit 0，仅当前层。
+    /// RFC 0117 / RFC 0136：仅当前层，包含直属子目录与直属文件。
     #[test]
     fn walkthrough_current_only_top_level() {
         let root = temp("nested-current");
@@ -304,7 +319,8 @@ mod walkthrough_tests {
             is_directory: true,
         };
         let files = walkthrough_photos_in_folder(&scan).unwrap();
-        assert_eq!(files.len(), 1);
-        assert!(files[0].path.ends_with("top.jpg"));
+        assert_eq!(files.len(), 2);
+        assert!(files.iter().any(|f| f.is_directory && f.path.ends_with("sub")));
+        assert!(files.iter().any(|f| !f.is_directory && f.path.ends_with("top.jpg")));
     }
 }

@@ -20,6 +20,8 @@
 
 实际实现已拆入 `crates/photasa-scan`（见 [0132](./completed/0132-tauri-photasa-scan-crate.md)），`walkdir` 遍历 + 扩展名分类统一使用 `photasa-import::path_filter::classify_media`（见 [0131](./completed/0131-tauri-photasa-import-crate.md)）。策略只有 **SKIP/FULL 两态**——`Incremental` 在 Electron 源码里本身就是死代码，从未被 `decideScanStrategy` 返回过（见 [0117](./0117-tauri-scan-pipeline-parity.md) 的详细表格）。
 
+> **⚠️ 2026-07-20 补记**：`photasa-scan` 依赖 `photasa-import::path_filter::classify_media` 这条线本身**已被 [0136](./0136-tauri-scan-runtime-contract.md) 判定为架构违规**（scan 与 import 是不同用例，不该互相依赖，且该过滤器把目录条目误判为"不是媒体文件"而跳过，导致目录报告分支从未触发）。本段落是 2026-07-18 时点的实现快照，如实记录当时代码接线方式，**不代表这条依赖是正确设计**——修复方向见 0136 对应章节，不在本 RFC 处理。
+
 真正的行为规格、文件清单、测试策略以 [0105](./0105-tauri-scan-incremental-cache.md)（增量缓存）/ [0111](./0111-tauri-scan-notify-status-bridge.md)（notify:status）/ [0116](./0116-tauri-photasa-config-thumbnail-parity.md)（config/thumbnail 路径）/ [0117](./0117-tauri-scan-pipeline-parity.md)（完整流水线 parity，含逐函数对照表）为准——本文档下方「摘要」及「Tauri Rust 迁移计划」章节的具体代码示例已过时，仅保留作历史记录，**不要**按其内容实施。
 
 ## 实际架构（Actual, 2026-07-18）

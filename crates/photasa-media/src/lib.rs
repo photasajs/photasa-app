@@ -51,6 +51,37 @@ pub fn classify_media(path: &str) -> MediaType {
     }
 }
 
+/// 是否为本流程处理的图片或视频（互斥：通常只有一个为 true）
+pub fn classify_media_flags(path: &Path) -> Option<(bool, bool)> {
+    let path_str = path.to_string_lossy();
+    let is_img = is_image_file(&path_str);
+    let is_vid = is_video_file(&path_str);
+    if is_img || is_vid {
+        Some((is_img, is_vid))
+    } else {
+        None
+    }
+}
+
+/// 忽略 photasa/picasa 内部文件、配置、缓存及 OS 垃圾文件
+pub fn should_ignore_photasa_path(path: &str) -> bool {
+    let lower = path.to_lowercase();
+    lower.contains(".photasa")
+        || lower.contains(".picasa")
+        || lower.contains("picasa.ini")
+        || lower.contains(".appledouble")
+        || lower.contains(".ds_store")
+        || lower.contains("thumbs.db")
+}
+
+/// 点开头隐藏文件跳过
+pub fn basename_hidden(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|s| s.to_str())
+        .map(|n| n.starts_with('.'))
+        .unwrap_or(false)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

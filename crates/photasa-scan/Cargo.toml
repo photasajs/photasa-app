@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 async-trait = { workspace = true }
-photasa-import = { workspace = true }
+photasa-media = { workspace = true }
 photasa-thumbnail = { workspace = true }
 photasa-types = { workspace = true }
 serde = { workspace = true }
