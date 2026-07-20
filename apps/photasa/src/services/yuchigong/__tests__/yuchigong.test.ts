@@ -678,7 +678,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
                     expect(yuchiGong.getQueueSize()).toBe(0);
                     expect(emittedQizous[0].matter).toBe("scan_task_failed");
                     expect((emittedQizous[0].content as Record<string, unknown>).error).toContain(
-                        "空字符串",
+                        "缺少path参数或类型错误",
                     );
                     resolve();
                 }, 50);
@@ -1315,6 +1315,32 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             expect(scanPhotosZouzhes.some((z) => z.content?.path === testPath)).toBe(true);
             expect(scanPhotosZouzhes.some((z) => z.content?.path === subfolders[0])).toBe(true);
             expect(scanPhotosZouzhes.some((z) => z.content?.path === subfolders[1])).toBe(true);
+        });
+
+        it("应该过滤掉 .photasaoriginals 等 Photasa 内部子文件夹与隐藏点目录", async () => {
+            const testPath = "/Volumes/SUCAI/Test";
+            const subfolders = [
+                "/Volumes/SUCAI/Test/SubAlbum",
+                "/Volumes/SUCAI/Test/.photasaoriginals",
+                "/Volumes/SUCAI/Test/.photasa_config",
+            ];
+            mockFangXuanLing.mockSubfolders = subfolders;
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (yuchiGong as any).executeScan(testPath, "scan", "directory");
+            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            const scanPhotosZouzhes = mockFangXuanLing.receivedZouzhes.filter(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
+            );
+            expect(
+                scanPhotosZouzhes.some((z) => z.content?.path === "/Volumes/SUCAI/Test/SubAlbum"),
+            ).toBe(true);
+            expect(
+                scanPhotosZouzhes.some(
+                    (z) => z.content?.path === "/Volumes/SUCAI/Test/.photasaoriginals",
+                ),
+            ).toBe(false);
         });
 
         it("应该处理文件类型扫描", async () => {

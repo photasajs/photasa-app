@@ -40,14 +40,23 @@ describe("utils", () => {
     describe("shouldIgnorePhotasaPath", () => {
         it("should ignore .photasaoriginals", () => {
             expect(shouldIgnorePhotasaPath("/path/to/.photasaoriginals/img.jpg")).toBe(true);
+            expect(shouldIgnorePhotasaPath("/Volumes/SUCAI/Test/.photasaoriginals")).toBe(true);
         });
 
         it("should ignore .picasaoriginals", () => {
             expect(shouldIgnorePhotasaPath("/path/to/.picasaoriginals/img.jpg")).toBe(true);
         });
 
-        it("should ignore .AppleDouble", () => {
+        it("should ignore .photasa-folder.json, .photasa_config.json and Picasa.ini", () => {
+            expect(shouldIgnorePhotasaPath("/path/to/.photasa-folder.json")).toBe(true);
+            expect(shouldIgnorePhotasaPath("/path/to/.photasa_config.json")).toBe(true);
+            expect(shouldIgnorePhotasaPath("/path/to/Picasa.ini")).toBe(true);
+        });
+
+        it("should ignore .AppleDouble, .DS_Store and Thumbs.db", () => {
             expect(shouldIgnorePhotasaPath("/path/to/.AppleDouble/img.jpg")).toBe(true);
+            expect(shouldIgnorePhotasaPath("/path/to/.DS_Store")).toBe(true);
+            expect(shouldIgnorePhotasaPath("/path/to/Thumbs.db")).toBe(true);
         });
 
         it("should not ignore normal paths", () => {
