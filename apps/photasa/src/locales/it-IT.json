@@ -313,7 +313,8 @@
             "menu": "Finestra",
             "minimize": "Minimizza",
             "maximize": "Massimizza",
-            "close": "Chiudi"
+            "close": "Chiudi",
+            "restore": "Ripristina"
         },
         "help": {
             "menu": "Aiuto",
@@ -490,7 +491,10 @@
         "noMetadata": "Nessun metadato"
     },
     "common": {
-        "close": "Chiudi"
+        "close": "Chiudi",
+        "file": "file",
+        "files": "file",
+        "counting": "Conteggio..."
     },
     "imageList": {
         "fileCount": {
@@ -586,5 +590,11 @@
             "installNow": "Installa ora",
             "close": "Chiudi"
         }
+    },
+    "window": {
+        "minimize": "Riduci",
+        "maximize": "Ingrandisci",
+        "restore": "Ripristina",
+        "close": "Chiudi"
     }
 }

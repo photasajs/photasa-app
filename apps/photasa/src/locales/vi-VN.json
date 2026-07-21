@@ -316,7 +316,8 @@
             "menu": "Cửa sổ",
             "minimize": "Thu nhỏ",
             "maximize": "Phóng to",
-            "close": "Đóng"
+            "close": "Đóng",
+            "restore": "Khôi phục"
         },
         "help": {
             "menu": "Trợ giúp",
@@ -493,7 +494,10 @@
         "noMetadata": "Không có siêu dữ liệu"
     },
     "common": {
-        "close": "Đóng"
+        "close": "Đóng",
+        "file": "tệp",
+        "files": "tệp",
+        "counting": "Đang đếm..."
     },
     "imageList": {
         "fileCount": {
@@ -589,5 +593,11 @@
             "installNow": "Cài đặt ngay",
             "close": "Đóng"
         }
+    },
+    "window": {
+        "minimize": "Thu nhỏ",
+        "maximize": "Phóng to",
+        "restore": "Khôi phục",
+        "close": "Đóng"
     }
 }

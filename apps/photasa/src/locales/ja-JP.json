@@ -476,7 +476,8 @@
             "menu": "ウィンドウ",
             "minimize": "最小化",
             "maximize": "最大化",
-            "close": "閉じる"
+            "close": "閉じる",
+            "restore": "元に戻す"
         },
         "help": {
             "menu": "ヘルプ",
@@ -538,7 +539,10 @@
         "noMetadata": "メタデータなし"
     },
     "common": {
-        "close": "閉じる"
+        "close": "閉じる",
+        "file": "ファイル",
+        "files": "ファイル",
+        "counting": "集計中..."
     },
     "imageList": {
         "fileCount": {
@@ -610,5 +614,11 @@
             "installNow": "今すぐインストール",
             "close": "閉じる"
         }
+    },
+    "window": {
+        "minimize": "最小化",
+        "maximize": "最大化",
+        "restore": "元に戻す",
+        "close": "閉じる"
     }
 }

@@ -14,7 +14,7 @@
                 @click.stop="onMenuClick(menu.key)"
                 @mouseenter="onMenuHover(menu.key)"
             >
-                {{ t(menu.label) }}
+                {{ menu.label }}
                 <!-- 下拉子菜单，仅当前激活菜单显示 -->
                 <MenuDropdown
                     v-if="activeMenuKey === menu.key && menu.items"

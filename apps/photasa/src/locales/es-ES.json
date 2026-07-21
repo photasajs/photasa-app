@@ -358,7 +358,8 @@
             "menu": "Ventana",
             "minimize": "Minimizar",
             "maximize": "Maximizar",
-            "close": "Cerrar"
+            "close": "Cerrar",
+            "restore": "Restaurar"
         },
         "help": {
             "menu": "Ayuda",
@@ -535,7 +536,10 @@
         "noMetadata": "Sin metadatos"
     },
     "common": {
-        "close": "Cerrar"
+        "close": "Cerrar",
+        "file": "archivo",
+        "files": "archivos",
+        "counting": "Contando..."
     },
     "imageList": {
         "fileCount": {
@@ -607,5 +611,11 @@
             "installNow": "Instalar ahora",
             "close": "Cerrar"
         }
+    },
+    "window": {
+        "minimize": "Minimizar",
+        "maximize": "Maximizar",
+        "restore": "Restaurar",
+        "close": "Cerrar"
     }
 }

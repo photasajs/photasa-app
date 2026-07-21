@@ -316,7 +316,8 @@
             "menu": "نافذة",
             "minimize": "تصغير",
             "maximize": "تكبير",
-            "close": "إغلاق"
+            "close": "إغلاق",
+            "restore": "استعادة"
         },
         "help": {
             "menu": "مساعدة",
@@ -493,7 +494,10 @@
         "noMetadata": "لا توجد بيانات وصفية"
     },
     "common": {
-        "close": "إغلاق"
+        "close": "إغلاق",
+        "file": "ملف",
+        "files": "ملفات",
+        "counting": "جارٍ العد..."
     },
     "imageList": {
         "fileCount": {
@@ -589,5 +593,11 @@
             "installNow": "تثبيت الآن",
             "close": "إغلاق"
         }
+    },
+    "window": {
+        "minimize": "تصغير",
+        "maximize": "تكبير",
+        "restore": "استعادة",
+        "close": "إغلاق"
     }
 }

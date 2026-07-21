@@ -418,7 +418,8 @@
             "menu": "窗口",
             "minimize": "最小化",
             "maximize": "最大化",
-            "close": "关闭"
+            "close": "关闭",
+            "restore": "还原"
         },
         "help": {
             "menu": "帮助",
@@ -636,7 +637,10 @@
         "noMetadata": "无元数据"
     },
     "common": {
-        "close": "关闭"
+        "close": "关闭",
+        "file": "文件",
+        "files": "文件",
+        "counting": "统计中..."
     },
     "imageList": {
         "fileCount": {
@@ -702,5 +706,11 @@
             "installNow": "立即安装",
             "close": "关闭"
         }
+    },
+    "window": {
+        "minimize": "最小化",
+        "maximize": "最大化",
+        "restore": "还原",
+        "close": "关闭"
     }
 }

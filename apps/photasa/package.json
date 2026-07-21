@@ -14,6 +14,8 @@
         "tauri:build": "tauri build",
         "clippy": "cd src-tauri && cargo clippy -- -D warnings",
         "lint": "eslint src vite.config.ts vitest.config.ts postcss.config.js tailwind.config.js --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --quiet --cache --cache-location node_modules/.cache/eslint/package",
+        "check:locales": "node scripts/check-locales.mjs",
+        "baseline:locales": "node scripts/generate-locale-coverage-baseline.mjs",
         "typecheck": "tsc --noEmit",
         "test:unit:api": "vitest run --config vitest.config.ts src/api/__tests__",
         "test:unit": "vitest run --config vitest.config.ts"

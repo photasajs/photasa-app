@@ -1,7 +1,7 @@
 import { IXuanzangService } from "@/interfaces/xuan-zang.interface";
 import { loggers } from "@photasa/common";
 import { IFangXuanLingService } from "@/interfaces/fang-xuan-ling.interface";
-import { i18n } from "../../i18n/config";
+import { i18n, resolveLocale } from "../../i18n/config";
 import { watch } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -20,24 +20,18 @@ export class XuanzangService implements IXuanzangService {
     async initializeLocalization() {
         logger.info("📦 玄奘法师初始化偏好设置");
 
-        // 设置初始语言
-        const locale = this.fangXuanLingService.preference.currentLanguage as
-            | "en-US"
-            | "zh-CN"
-            | "ja-JP"
-            | "ko-KR"
-            | "fr-FR"
-            | "de-DE"
-            | "es-ES";
-        (i18n.global.locale as unknown as import("vue").Ref<string>).value = locale;
-        document.querySelector("html")?.setAttribute("lang", locale);
+        const applyLocale = (rawLocale: string) => {
+            const locale = resolveLocale(rawLocale);
+            (i18n.global.locale as unknown as import("vue").Ref<string>).value = locale;
+            document.querySelector("html")?.setAttribute("lang", locale);
+        };
 
-        // Watch for changes to keep i18n in sync with Pinia
+        applyLocale(this.fangXuanLingService.preference.currentLanguage);
+
         watch(
             () => this.fangXuanLingService.preference.currentLanguage,
             (newLocale) => {
-                (i18n.global.locale as unknown as import("vue").Ref<string>).value = newLocale;
-                document.querySelector("html")?.setAttribute("lang", newLocale);
+                applyLocale(newLocale);
             },
         );
     }

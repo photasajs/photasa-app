@@ -1,7 +1,12 @@
 {
+    "apps/photasa/src/locales/**/*.json": [
+        "prettier --write",
+        "pnpm --filter @photasa/photasa run check:locales"
+    ],
     "apps/photasa/src/**/*.{ts,tsx,vue}": [
         "prettier --write",
-        "eslint --fix --quiet --cache --cache-location apps/photasa/node_modules/.cache/eslint/lint-staged --no-eslintrc -c apps/photasa/.eslintrc.cjs"
+        "eslint --fix --quiet --cache --cache-location apps/photasa/node_modules/.cache/eslint/lint-staged --no-eslintrc -c apps/photasa/.eslintrc.cjs",
+        "pnpm --filter @photasa/photasa run check:locales"
     ],
     "apps/photasa/src/**/*.{js,cjs,mjs}": [
         "prettier --write",

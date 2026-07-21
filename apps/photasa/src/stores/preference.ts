@@ -24,6 +24,7 @@ import {
 
 import { loggers } from "@photasa/common";
 import { FolderNode } from "@photasa/common";
+import { resolveLocale } from "@renderer/i18n/config";
 // 获取logger实例
 const logger = loggers.fangxuanling;
 
@@ -673,7 +674,7 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         setLocale(locale: string) {
-            this.ui.language = locale;
+            this.ui.language = resolveLocale(locale);
         },
         setThemeId(themeId: string) {
             this.ui.theme = themeId;

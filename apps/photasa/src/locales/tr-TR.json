@@ -316,7 +316,8 @@
             "menu": "Pencere",
             "minimize": "Küçült",
             "maximize": "Büyüt",
-            "close": "Kapat"
+            "close": "Kapat",
+            "restore": "Geri yükle"
         },
         "help": {
             "menu": "Yardım",
@@ -493,7 +494,10 @@
         "noMetadata": "Meta Veri Yok"
     },
     "common": {
-        "close": "Kapat"
+        "close": "Kapat",
+        "file": "dosya",
+        "files": "dosya",
+        "counting": "Sayılıyor..."
     },
     "imageList": {
         "fileCount": {
@@ -589,5 +593,11 @@
             "installNow": "Şimdi yükle",
             "close": "Kapat"
         }
+    },
+    "window": {
+        "minimize": "Küçült",
+        "maximize": "Büyüt",
+        "restore": "Geri yükle",
+        "close": "Kapat"
     }
 }

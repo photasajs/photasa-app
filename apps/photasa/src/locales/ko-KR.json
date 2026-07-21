@@ -316,7 +316,8 @@
             "menu": "창",
             "minimize": "최소화",
             "maximize": "최대화",
-            "close": "닫기"
+            "close": "닫기",
+            "restore": "복원"
         },
         "help": {
             "menu": "도움말",
@@ -493,7 +494,10 @@
         "noMetadata": "메타데이터 없음"
     },
     "common": {
-        "close": "닫기"
+        "close": "닫기",
+        "file": "파일",
+        "files": "파일",
+        "counting": "계산 중..."
     },
     "imageList": {
         "fileCount": {
@@ -589,5 +593,11 @@
             "installNow": "지금 설치",
             "close": "닫기"
         }
+    },
+    "window": {
+        "minimize": "최소화",
+        "maximize": "최대화",
+        "restore": "복원",
+        "close": "닫기"
     }
 }

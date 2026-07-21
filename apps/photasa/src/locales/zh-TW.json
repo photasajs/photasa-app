@@ -330,7 +330,8 @@
             "menu": "窗口",
             "minimize": "最小化",
             "maximize": "最大化",
-            "close": "關閉"
+            "close": "關閉",
+            "restore": "還原"
         },
         "help": {
             "menu": "幫助",
@@ -507,7 +508,10 @@
         "noMetadata": "無中繼資料"
     },
     "common": {
-        "close": "關閉"
+        "close": "關閉",
+        "file": "檔案",
+        "files": "檔案",
+        "counting": "統計中..."
     },
     "imageList": {
         "fileCount": {
@@ -579,5 +583,11 @@
             "installNow": "立即安裝",
             "close": "關閉"
         }
+    },
+    "window": {
+        "minimize": "最小化",
+        "maximize": "最大化",
+        "restore": "還原",
+        "close": "關閉"
     }
 }

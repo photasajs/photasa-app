@@ -146,8 +146,94 @@ const detectBrowserLocale = (): Locale | null => {
 };
 
 // Check if a locale is supported
-const isLocaleSupported = (locale: string): locale is Locale =>
+export const isLocaleSupported = (locale: string): locale is Locale =>
     Object.keys(LOCALES).includes(locale);
+
+/** 遗留偏好 / OS 可能只存语言前缀（如 zh、en） */
+const LANGUAGE_PREFIX_TO_LOCALE: Record<string, Locale> = {
+    zh: "zh-CN",
+    en: "en-US",
+    ja: "ja-JP",
+    ko: "ko-KR",
+    fr: "fr-FR",
+    de: "de-DE",
+    es: "es-ES",
+    it: "it-IT",
+    tr: "tr-TR",
+    vi: "vi-VN",
+    ar: "ar-SA",
+    uk: "uk-UA",
+    ru: "ru-RU",
+};
+
+/**
+ * 将任意语言标识规范为已注册的 Locale。
+ * 避免 preference 存 "zh" 时 intlify 在 zh 消息包中找不到 common.files。
+ */
+export function resolveLocale(input: string | null | undefined): Locale {
+    const raw = input?.trim();
+    if (!raw) {
+        return DEFAULT_LOCALE;
+    }
+    if (isLocaleSupported(raw)) {
+        return raw;
+    }
+
+    const normalized = raw.replace("_", "-");
+    if (isLocaleSupported(normalized)) {
+        return normalized;
+    }
+
+    const lower = normalized.toLowerCase();
+    for (const locale of Object.keys(LOCALES) as Locale[]) {
+        if (locale.toLowerCase() === lower) {
+            return locale;
+        }
+    }
+
+    const baseLang = lower.split("-")[0];
+    const byPrefix = LANGUAGE_PREFIX_TO_LOCALE[baseLang];
+    if (byPrefix) {
+        return byPrefix;
+    }
+
+    return DEFAULT_LOCALE;
+}
+
+const PRIMARY_MESSAGES = {
+    "en-US": enUS,
+    "zh-CN": zhCN,
+    "zh-TW": zhTW,
+    "ja-JP": jaJP,
+    "ko-KR": koKR,
+    "fr-FR": frFR,
+    "de-DE": deDE,
+    "es-ES": esES,
+    "it-IT": itIT,
+    "tr-TR": trTR,
+    "vi-VN": viVN,
+    "ar-SA": arSA,
+    "uk-UA": ukUA,
+    "en-GB": enGB,
+    "ru-RU": ruRU,
+} as const satisfies Record<Locale, MessageSchema>;
+
+/** 短码别名，与 resolveLocale 前缀映射一致 */
+const ALIAS_MESSAGES: Record<string, MessageSchema> = {
+    en: enUS,
+    zh: zhCN,
+    ja: jaJP,
+    ko: koKR,
+    fr: frFR,
+    de: deDE,
+    es: esES,
+    it: itIT,
+    tr: trTR,
+    vi: viVN,
+    ar: arSA,
+    uk: ukUA,
+    ru: ruRU,
+};
 
 // Create i18n instance with proper typing
 export const i18n = createI18n<[MessageSchema], Locale>({
@@ -156,21 +242,8 @@ export const i18n = createI18n<[MessageSchema], Locale>({
     fallbackLocale: FALLBACK_LOCALE,
     globalInjection: true,
     messages: {
-        "en-US": enUS,
-        "zh-CN": zhCN,
-        "zh-TW": zhTW,
-        "ja-JP": jaJP,
-        "ko-KR": koKR,
-        "fr-FR": frFR,
-        "de-DE": deDE,
-        "es-ES": esES,
-        "it-IT": itIT,
-        "tr-TR": trTR,
-        "vi-VN": viVN,
-        "ar-SA": arSA,
-        "uk-UA": ukUA,
-        "en-GB": enGB,
-        "ru-RU": ruRU,
+        ...PRIMARY_MESSAGES,
+        ...ALIAS_MESSAGES,
     },
 });
 
@@ -187,11 +260,12 @@ export const i18nUtils = {
     // Get all available locales
     getAvailableLocales: (): Locale[] => Object.keys(LOCALES) as Locale[],
 
-    // Change the current locale
-    setLocale: (locale: Locale): void => {
+    // Change the current locale（接受短码并规范化为 Locale）
+    setLocale: (locale: string): void => {
+        const resolved = resolveLocale(locale);
         if (i18n.global.locale) {
-            (i18n.global.locale as unknown as Ref<Locale>).value = locale;
-            document.querySelector("html")?.setAttribute("lang", locale);
+            (i18n.global.locale as unknown as Ref<Locale>).value = resolved;
+            document.querySelector("html")?.setAttribute("lang", resolved);
         }
     },
 
