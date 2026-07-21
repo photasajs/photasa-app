@@ -12,7 +12,7 @@ import type {
 import { ImportEvents } from "@photasa/common";
 import { isTauri } from "./env";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { getLegacyPreloadApi, getLegacyShell } from "./legacy-preload-access";
+import { callLegacyPreloadSection, getLegacyPreloadApi } from "./legacy-preload-access";
 
 export type { DirectorySelection, ImportConfig, ImportProgress, ImportResumeResult };
 
@@ -74,7 +74,9 @@ export const importAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             return await invoke("scan_directories", { paths, filters: filters ?? null });
         }
-        const out = await getLegacyPreloadApi()?.api?.scanDirectories?.(paths, filters);
+        const out = (await callLegacyPreloadSection("api", "scanDirectories", paths, filters)) as
+            | unknown[]
+            | undefined;
         return out ?? [];
     },
 
@@ -92,7 +94,9 @@ export const importAdapter = {
             }
             return { filePaths: [] };
         }
-        const out = await getLegacyPreloadApi()?.api?.chooseDirectories?.(multiSelect);
+        const out = (await callLegacyPreloadSection("api", "chooseDirectories", multiSelect)) as
+            | DirectorySelection
+            | undefined;
         return out ?? { filePaths: [] };
     },
 
@@ -104,7 +108,8 @@ export const importAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             return await invoke("execute_import", { config });
         }
-        return await getLegacyPreloadApi()?.api?.executeImport?.(config);
+        const result = await callLegacyPreloadSection("api", "executeImport", config);
+        return typeof result === "string" ? result : "";
     },
 
     /**
@@ -118,21 +123,17 @@ export const importAdapter = {
                 callback(normalizeImportProgressPayload(event.payload));
             });
         }
-        const w = window as any;
         const wrapped = (_event: unknown, eventData: unknown) => {
             const ed = eventData as Record<string, unknown> & { progress?: unknown };
             callback(normalizeImportProgressPayload(ed?.progress ?? ed));
         };
-        const ipc = getLegacyPreloadApi()?.ipcRenderer as
-            | {
-                  on?: (ch: string, h: unknown) => void;
-                  removeListener?: (ch: string, h: unknown) => void;
-              }
-            | undefined;
-        if (ipc?.on) {
+        const ipc = getLegacyPreloadApi()?.ipcRenderer;
+        if (ipc && typeof ipc.on === "function") {
             ipc.on(ImportEvents.PROGRESS, wrapped);
             return () => {
-                ipc.removeListener(ImportEvents.PROGRESS, wrapped);
+                if (typeof ipc.removeListener === "function") {
+                    ipc.removeListener(ImportEvents.PROGRESS, wrapped);
+                }
             };
         }
         return () => {};
@@ -147,7 +148,7 @@ export const importAdapter = {
             await invoke("cancel_import", { importId });
             return;
         }
-        await getLegacyPreloadApi()?.api?.cancelImport?.(importId);
+        await callLegacyPreloadSection("api", "cancelImport", importId);
     },
 
     /**
@@ -159,7 +160,7 @@ export const importAdapter = {
             await invoke("pause_import", { importId });
             return;
         }
-        await getLegacyPreloadApi()?.api?.pauseImport?.(importId);
+        await callLegacyPreloadSection("api", "pauseImport", importId);
     },
 
     /**
@@ -171,9 +172,13 @@ export const importAdapter = {
             await invoke("resume_import", { importId });
             return { importId };
         }
-        const r = await getLegacyPreloadApi()?.api?.resumeImport?.(importId);
-        if (r && typeof r === "object" && typeof r.importId === "string") {
-            return { importId: r.importId };
+        const r = await callLegacyPreloadSection("api", "resumeImport", importId);
+        if (
+            r &&
+            typeof r === "object" &&
+            typeof (r as { importId?: unknown }).importId === "string"
+        ) {
+            return { importId: (r as { importId: string }).importId };
         }
         return { importId };
     },

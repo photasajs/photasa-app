@@ -161,7 +161,9 @@ export function findLocaleCoverageGaps(
     const gaps: LocaleCoverageGap[] = [];
 
     for (const [locale, messages] of Object.entries(localeMessages)) {
-        const legacyMissing = new Set(LEGACY_MISSING_BY_LOCALE[locale] ?? []);
+        const legacyMissing = new Set(
+            LEGACY_MISSING_BY_LOCALE[locale as keyof typeof LEGACY_MISSING_BY_LOCALE] ?? [],
+        );
         const missingKeys = [...requiredKeys]
             .filter((key) => !hasMessagePath(messages, key))
             .filter((key) => !legacyMissing.has(key));

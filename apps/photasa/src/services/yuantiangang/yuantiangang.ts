@@ -148,7 +148,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     private setupQianliyanEventListening(): void {
         scanAdapter
             .onScanResult((result) => {
-                this.handleQianliyanEvent(result as unknown as ScanActionEvent);
+                this.handleQianliyanEvent(result);
             })
             .then((unlisten) => {
                 this.qianliyanCleanupFn = unlisten;
@@ -188,7 +188,10 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             // ✅ RFC 0057: 发送 SCAN_PROGRESS qizou 给虞世南（type: "complete"）以清空进度
             this.reportScanProgress(args);
             // ✅ 保留：发送 SCAN_READY qizou 给魏征
-            this.reportScanCompletion(computeScannedFilePaths(args), args);
+            this.reportScanCompletion(
+                computeScannedFilePaths(args as unknown as ScanActionEvent),
+                args as unknown as ScanActionEvent,
+            );
         }
     }
 
@@ -880,27 +883,32 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS
         ) {
             try {
+                const context = (zhaoling.context ?? {}) as Record<string, unknown>;
                 let data: any = null;
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG) {
-                    data = await invoke("get_photasa_config", { folder: zhaoling.context.folder });
+                    data = await invoke("get_photasa_config", { folder: context.folder });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG) {
-                    data = await invoke("fix_photasa_config", { folder: zhaoling.context.folder });
+                    data = await invoke("fix_photasa_config", { folder: context.folder });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG) {
                     data = await invoke("reset_photasa_config", {
-                        folder: zhaoling.context.folder,
+                        folder: context.folder,
                     });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_PHOTO_TO_LIST) {
                     data = await invoke("add_to_photo_list", {
-                        photoPath: zhaoling.context.photoPath,
+                        photoPath: context.photoPath,
                     });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_PHOTO_FROM_LIST) {
                     data = await invoke("remove_from_photo_list", {
-                        photoPath: zhaoling.context.photoPath,
+                        photoPath: context.photoPath,
                     });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.TO_DIR_NAME) {
-                    data = await invoke("to_dir_name", { path: zhaoling.context.path });
+                    data = await invoke("to_dir_name", { path: context.path });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS) {
-                    const { path, action, thumbnailSize } = zhaoling.context as any;
+                    const { path, action, thumbnailSize } = context as {
+                        path: string;
+                        action: string;
+                        thumbnailSize: number;
+                    };
                     const requestId = `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
                     const scanAction = {
                         path,

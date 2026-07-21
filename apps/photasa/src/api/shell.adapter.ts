@@ -1,10 +1,10 @@
 /**
  * Shell 适配器
- * 适配 Shell 操作 API
+ * 适配系统 shell API（打开外部链接、在文件管理器中显示）
  */
 
 import { isTauri } from "./env";
-import { getLegacyPreloadApi, getLegacyShell } from "./legacy-preload-access";
+import { callLegacyPreloadSection } from "./legacy-preload-access";
 
 export const shellAdapter = {
     /**
@@ -15,19 +15,19 @@ export const shellAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("open_external", { url });
         } else {
-            await getLegacyPreloadApi()?.shell?.openExternal(url);
+            await callLegacyPreloadSection("shell", "openExternal", url);
         }
     },
 
     /**
-     * 在文件管理器中显示文件
+     * 在文件管理器中显示文件/文件夹
      */
-    showInFolder: async (path: string): Promise<void> => {
+    showItemInFolder: async (path: string): Promise<void> => {
         if (isTauri()) {
             const { invoke } = await import("@tauri-apps/api/core");
-            await invoke("show_in_folder", { path });
+            await invoke("show_item_in_folder", { path });
         } else {
-            await getLegacyPreloadApi()?.shell?.showItemInFolder(path);
+            await callLegacyPreloadSection("shell", "showItemInFolder", path);
         }
     },
 };

@@ -114,7 +114,7 @@ export function addFolderToTree(roots: FolderNode[], file: Photo): void {
         return;
     }
 
-    traverseTree(root, segments, folderPath);
+    traverseTree(root, segments);
 }
 
 function traverseTree(root: FolderNode, segments: string[]): FolderNode {
@@ -172,7 +172,10 @@ function dedupeSiblingNodes(parentKey: string | null, children: FolderNode[]): F
             continue;
         }
 
-        existing.children = dedupeSiblingNodes(resolved, [...existing.children, ...child.children]);
+        existing.children = dedupeSiblingNodes(resolved, [
+            ...(existing.children ?? []),
+            ...(child.children ?? []),
+        ]);
     }
 
     return [...grouped.values()].sort((a, b) => String(a.key).localeCompare(String(b.key)));

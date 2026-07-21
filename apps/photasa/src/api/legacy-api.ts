@@ -4,6 +4,7 @@
  * 在 Tauri 下委托给嵌套 adapter 或 invoke，未实现的用 stub，避免 window.api.xxx 未定义。
  */
 
+import type { PhotasaFlatApi } from "@renderer/ipc/photasa-flat-api";
 import { isTauri } from "./env";
 import { api } from "./adapter";
 import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
@@ -22,7 +23,11 @@ import type {
     UndoResult,
 } from "@photasa/common";
 import { shouldIgnorePhotasaPath as ignorePhotasaPathUtil } from "@photasa/common";
-import { getLegacyPreloadApi, getLegacyShell } from "./legacy-preload-access";
+import {
+    callLegacyPreloadNested,
+    callLegacyPreloadSection,
+    getLegacyPreloadApi,
+} from "./legacy-preload-access";
 import {
     shortenThumbnailName as shortenThumbnailRelativePath,
     toFileNameFromPath,
@@ -314,11 +319,12 @@ function normalizeFileMetadataFromRust(raw: unknown): FileMetadata {
 /**
  * 构建扁平 window.api（与 legacy.ts 同形）
  */
-export function createLegacyApi(): Record<string, unknown> {
+export function createLegacyApi() {
     return {
         // ---------- 监听与导入 ----------
         startWatching: (config: unknown, callback: unknown) => {
-            if (!isTauri()) return getLegacyPreloadApi()?.api?.startWatching?.(config, callback);
+            if (!isTauri())
+                return callLegacyPreloadSection("api", "startWatching", config, callback);
             (async () => {
                 const invoke = await ensureInvoke();
                 const c = config as {
@@ -358,13 +364,13 @@ export function createLegacyApi(): Record<string, unknown> {
             return undefined;
         },
         stopWatching: () => {
-            if (!isTauri()) return getLegacyPreloadApi()?.api?.stopWatching?.();
+            if (!isTauri()) return callLegacyPreloadSection("api", "stopWatching");
             (window as any).__offFileWatch?.();
             return ensureInvoke().then((invoke) => invoke("stop_file_watch"));
         },
         importPhotos: (paths: string[], target: string, callback: (arg: any) => void) => {
             if (!isTauri())
-                return getLegacyPreloadApi()?.api?.importPhotos?.(paths, target, callback);
+                return callLegacyPreloadSection("api", "importPhotos", paths, target, callback);
             // RFC 0093：复制与遍历在 Rust `import_photos_legacy`；此处仅 invoke + 事件转发
             void (async () => {
                 try {
@@ -413,7 +419,13 @@ export function createLegacyApi(): Record<string, unknown> {
 
         // ---------- 扫描 ----------
         scanPhotos: (scan: ScanAction): Promise<ScanResult> => {
-            if (!isTauri()) return getLegacyPreloadApi()?.api?.scanPhotos?.(scan) ?? stubAsync();
+            if (!isTauri()) {
+                return (
+                    (callLegacyPreloadSection("api", "scanPhotos", scan) as
+                        | Promise<ScanResult>
+                        | undefined) ?? stubAsync()
+                );
+            }
             const requestId = `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
             return new Promise<ScanResult>((resolve, reject) => {
                 (async () => {
@@ -438,7 +450,7 @@ export function createLegacyApi(): Record<string, unknown> {
 
         // ---------- 目录与配置 ----------
         chooseDirectory: () => {
-            if (!isTauri()) return getLegacyPreloadApi()?.api?.chooseDirectory?.();
+            if (!isTauri()) return callLegacyPreloadSection("api", "chooseDirectory");
             return (async () => {
                 const { open } = await import("@tauri-apps/plugin-dialog");
                 const selected = await open({ directory: true, multiple: false });
@@ -447,7 +459,7 @@ export function createLegacyApi(): Record<string, unknown> {
             })();
         },
         getDirectory: (name: string) => {
-            if (!isTauri()) return getLegacyPreloadApi()?.api?.getDirectory?.(name);
+            if (!isTauri()) return callLegacyPreloadSection("api", "getDirectory", name);
             return ensureInvoke().then((invoke) =>
                 invoke<string | null>("get_directory", { name }),
             );
@@ -512,7 +524,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       invoke<boolean>("is_file_under_folder", { file, folder }),
                   )
                 : Promise.resolve(
-                      Boolean(getLegacyPreloadApi()?.api?.isFileUnderFolder?.(file, folder)),
+                      Boolean(callLegacyPreloadSection("api", "isFileUnderFolder", file, folder)),
                   ),
         toFileName: (path: string) =>
             isTauri()
@@ -564,7 +576,7 @@ export function createLegacyApi(): Record<string, unknown> {
         normalizePath: (path: unknown): string =>
             typeof path === "string" ? path.replace(/\\/g, "/").replace(/\/+/g, "/") : "",
         isMac: async () => {
-            if (!isTauri()) return getLegacyPreloadApi()?.api?.isMac?.() ?? false;
+            if (!isTauri()) return callLegacyPreloadSection("api", "isMac") ?? false;
             try {
                 const invoke = await ensureInvoke();
                 const p = await invoke<string>("get_platform");
@@ -658,32 +670,33 @@ export function createLegacyApi(): Record<string, unknown> {
                           "check_for_updates",
                       ),
                   )
-                : (getLegacyPreloadApi()?.api?.checkForUpdates?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "checkForUpdates") ?? stubAsync()),
         downloadUpdate: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<void>("download_update"))
-                : (getLegacyPreloadApi()?.api?.downloadUpdate?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "downloadUpdate") ?? stubAsync()),
         installUpdate: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<void>("install_update"))
-                : (getLegacyPreloadApi()?.api?.installUpdate?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "installUpdate") ?? stubAsync()),
         getUpdateStatus: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke("get_update_status"))
-                : (getLegacyPreloadApi()?.api?.getUpdateStatus?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getUpdateStatus") ?? stubAsync()),
         getAppVersion: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<string>("get_app_version"))
-                : (getLegacyPreloadApi()?.api?.getAppVersion?.() ?? Promise.resolve("")),
+                : (callLegacyPreloadSection("api", "getAppVersion") ?? Promise.resolve("")),
         updateAutoUpdateConfig: (config: unknown) =>
             isTauri()
                 ? ensureInvoke().then((invoke) =>
                       invoke<boolean>("update_auto_update_config", { patch: config }),
                   )
-                : (getLegacyPreloadApi()?.api?.updateAutoUpdateConfig?.(config) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "updateAutoUpdateConfig", config) ??
+                  stubAsync()),
         onUpdateProgress: (cb: (progress: number) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onUpdateProgress?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateProgress", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen<number>("picasa:update-progress", (e) => cb(e.payload)).then((un) =>
@@ -694,7 +707,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onUpdateDownloaded: (cb: (info?: unknown) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onUpdateDownloaded?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateDownloaded", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("picasa:update-downloaded", (e) => cb(e.payload as unknown)).then((un) =>
@@ -705,7 +718,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onUpdateError: (cb: (error: string) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onUpdateError?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateError", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen<string>("picasa:update-error", (e) => cb(e.payload)).then((un) =>
@@ -716,7 +729,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onUpdateAvailable: (cb: (data: { version: string; info?: unknown }) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onUpdateAvailable?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateAvailable", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("picasa:update-available", (e) =>
@@ -727,7 +740,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onStatusChanged: (cb: (status: unknown) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onStatusChanged?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onStatusChanged", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("picasa:update-status-changed", (e) => cb(e.payload)).then((un) =>
@@ -738,7 +751,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         removeAllUpdateListeners: () => {
             if (!isTauri()) {
-                getLegacyPreloadApi()?.api?.removeAllUpdateListeners?.();
+                callLegacyPreloadSection("api", "removeAllUpdateListeners");
                 return;
             }
             const subs = getUpdateUnsubs();
@@ -753,19 +766,22 @@ export function createLegacyApi(): Record<string, unknown> {
                 ? ensureInvoke().then((invoke) =>
                       invoke("scan_directories", { paths, filters: filters ?? null }),
                   )
-                : (getLegacyPreloadApi()?.api?.scanDirectories?.(paths, filters) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "scanDirectories", paths, filters) ??
+                  stubAsync()),
         previewImport: (config: unknown) =>
             isTauri()
                 ? (async () => {
                       const invoke = await ensureInvoke();
                       return await invoke<ImportPreview>("preview_import", { config });
                   })()
-                : (getLegacyPreloadApi()?.api?.previewImport?.(config) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "previewImport", config) ?? stubAsync()),
         executeImport: (config: ImportConfig): Promise<{ importId: string }> =>
             api.import.execute(config as ImportConfig).then((id) => ({ importId: id })),
         onImportProgress: (callback: (progress: ImportProgress) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onImportProgress?.(callback) ?? noopListener();
+                return (
+                    callLegacyPreloadSection("api", "onImportProgress", callback) ?? noopListener()
+                );
             }
             void api.import.onProgress(callback).then((un) => {
                 getImportUnsubs().push(un);
@@ -776,7 +792,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onPreviewProgress: (cb: (progress: unknown, files?: unknown[]) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onPreviewProgress?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onPreviewProgress", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen(EVENT_IMPORT_PREVIEW_PROGRESS, (e) => {
@@ -795,7 +811,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onImportComplete: (cb: (result: any) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onImportComplete?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onImportComplete", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("import:complete", (e) => cb(e.payload)).then((un) =>
@@ -806,7 +822,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onImportError: (cb: (error: any) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onImportError?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onImportError", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("import:error", (e) => cb(e.payload)).then((un) =>
@@ -817,7 +833,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         removeImportListeners: () => {
             if (!isTauri()) {
-                getLegacyPreloadApi()?.api?.removeImportListeners?.();
+                callLegacyPreloadSection("api", "removeImportListeners");
                 return;
             }
             const subs = getImportUnsubs();
@@ -835,7 +851,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const rows = await invoke<ImportHistory[]>("get_import_history", { limit });
                       return Array.isArray(rows) ? rows : [];
                   })()
-                : (getLegacyPreloadApi()?.api?.getImportHistory?.(limit) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getImportHistory", limit) ?? stubAsync()),
         getImportDetails: (historyId: string) =>
             isTauri()
                 ? (async () => {
@@ -845,7 +861,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       });
                       return row ?? null;
                   })()
-                : (getLegacyPreloadApi()?.api?.getImportDetails?.(historyId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getImportDetails", historyId) ?? stubAsync()),
         previewUndo: (historyId: string) =>
             isTauri()
                 ? (async () => {
@@ -853,7 +869,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("preview_undo_import", { historyId });
                       return normalizeUndoPreviewFromRust(raw, historyId);
                   })()
-                : (getLegacyPreloadApi()?.api?.previewUndo?.(historyId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "previewUndo", historyId) ?? stubAsync()),
         undoImport: (historyId: string) =>
             isTauri()
                 ? (async () => {
@@ -861,7 +877,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("undo_import_execute", { historyId });
                       return normalizeUndoResultFromRust(raw);
                   })()
-                : (getLegacyPreloadApi()?.api?.undoImport?.(historyId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "undoImport", historyId) ?? stubAsync()),
         getImportProgress: (importId: string) =>
             isTauri()
                 ? (async () => {
@@ -869,7 +885,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("get_import_progress", { importId });
                       return normalizeImportProgressPayload(raw);
                   })()
-                : (getLegacyPreloadApi()?.api?.getImportProgress?.(importId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getImportProgress", importId) ?? stubAsync()),
         getRecoverableImports: () =>
             isTauri()
                 ? (async () => {
@@ -877,7 +893,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const rows = await invoke<unknown[]>("get_recoverable_imports");
                       return Array.isArray(rows) ? rows.map(normalizeRecoverableImport) : [];
                   })()
-                : (getLegacyPreloadApi()?.api?.getRecoverableImports?.() ?? Promise.resolve([])),
+                : (callLegacyPreloadSection("api", "getRecoverableImports") ?? Promise.resolve([])),
         cleanupRecoverableImport: (importId: string) =>
             isTauri()
                 ? (async () => {
@@ -885,7 +901,8 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("cleanup_recoverable_import", { importId });
                       return normalizeRecoverableImportActionResult(raw);
                   })()
-                : (getLegacyPreloadApi()?.api?.cleanupRecoverableImport?.(importId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "cleanupRecoverableImport", importId) ??
+                  stubAsync()),
         keepRecoverableImport: (importId: string) =>
             isTauri()
                 ? (async () => {
@@ -893,7 +910,8 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("keep_recoverable_import", { importId });
                       return normalizeRecoverableImportActionResult(raw);
                   })()
-                : (getLegacyPreloadApi()?.api?.keepRecoverableImport?.(importId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "keepRecoverableImport", importId) ??
+                  stubAsync()),
         chooseDirectories: (multiSelect = true) => api.import.chooseDirectories(multiSelect),
         extractMetadata: (request: unknown) =>
             isTauri()
@@ -902,10 +920,10 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("extract_metadata", { request });
                       return normalizeFileMetadataFromRust(raw);
                   })()
-                : (getLegacyPreloadApi()?.api?.extractMetadata?.(request) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "extractMetadata", request) ?? stubAsync()),
         onScanQueueAdd: (cb: (operations: unknown[]) => void) => {
             if (!isTauri()) {
-                return getLegacyPreloadApi()?.api?.onScanQueueAdd?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onScanQueueAdd", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen(EVENT_SCAN_QUEUE_ADD, (e) => cb((e.payload as unknown[]) ?? [])).then((un) =>
@@ -922,16 +940,19 @@ export function createLegacyApi(): Record<string, unknown> {
                     ? ensureInvoke().then((invoke) =>
                           invoke<{ success: boolean; message: string }>("log_viewer_open"),
                       )
-                    : (getLegacyPreloadApi()?.api?.log?.viewerOpen?.() ?? stubAsync()),
+                    : (callLegacyPreloadNested(["api", "log"], "viewerOpen") ?? stubAsync()),
             viewerClose: () =>
                 isTauri()
                     ? ensureInvoke().then((invoke) =>
                           invoke<{ success: boolean; message: string }>("log_viewer_close"),
                       )
-                    : (getLegacyPreloadApi()?.api?.log?.viewerClose?.() ?? stubAsync()),
+                    : (callLegacyPreloadNested(["api", "log"], "viewerClose") ?? stubAsync()),
             onEntry: (callback: (entry: unknown) => void) => {
                 if (!isTauri()) {
-                    return getLegacyPreloadApi()?.api?.log?.onEntry?.(callback) ?? noopListener();
+                    return (
+                        callLegacyPreloadNested(["api", "log"], "onEntry", callback) ??
+                        noopListener()
+                    );
                 }
                 let unlisten: (() => void) | undefined;
                 void import("@tauri-apps/api/event").then(({ listen }) => {
@@ -946,7 +967,7 @@ export function createLegacyApi(): Record<string, unknown> {
             onToggleViewer: (callback: () => void) => {
                 if (!isTauri()) {
                     return (
-                        getLegacyPreloadApi()?.api?.log?.onToggleViewer?.(callback) ??
+                        callLegacyPreloadNested(["api", "log"], "onToggleViewer", callback) ??
                         noopListener()
                     );
                 }
@@ -989,5 +1010,5 @@ export function createLegacyApi(): Record<string, unknown> {
             }
             return Promise.resolve("");
         },
-    };
+    } as unknown as PhotasaFlatApi;
 }

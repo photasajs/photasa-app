@@ -58,7 +58,7 @@ export interface ScanTerminalReportPayload {
 }
 
 import type { ScanReport } from "@photasa/common";
-import { getLegacyPreloadApi, getLegacyShell } from "./legacy-preload-access";
+import { callLegacyPreloadSection } from "./legacy-preload-access";
 
 export type ScanReportEvent = ScanReport;
 
@@ -88,7 +88,7 @@ export const scanAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("scan_photos", { requestId, scanAction });
         } else {
-            await getLegacyPreloadApi()?.scan?.scanPhotos(requestId, scanAction);
+            await callLegacyPreloadSection("scan", "scanPhotos", requestId, scanAction);
         }
     },
 
@@ -104,10 +104,10 @@ export const scanAdapter = {
             });
         } else {
             // contract reference 监听
-            const handler = (_event: any, result: ScanResult) => callback(result);
-            getLegacyPreloadApi()?.scan?.onResult(handler);
+            const handler = (_event: unknown, result: ScanResult) => callback(result);
+            callLegacyPreloadSection("scan", "onResult", handler);
             return () => {
-                getLegacyPreloadApi()?.scan?.offResult(handler);
+                callLegacyPreloadSection("scan", "offResult", handler);
             };
         }
     },

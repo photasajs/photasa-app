@@ -4,7 +4,7 @@
  */
 
 import { isTauri } from "./env";
-import { getLegacyPreloadApi, getLegacyShell } from "./legacy-preload-access";
+import { callLegacyPreloadSection } from "./legacy-preload-access";
 
 export const windowAdapter = {
     /**
@@ -15,7 +15,7 @@ export const windowAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("minimize_window");
         } else {
-            await getLegacyPreloadApi()?.window?.minimize();
+            await callLegacyPreloadSection("window", "minimize");
         }
     },
 
@@ -27,7 +27,7 @@ export const windowAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("maximize_window");
         } else {
-            await getLegacyPreloadApi()?.window?.maximize();
+            await callLegacyPreloadSection("window", "maximize");
         }
     },
 
@@ -39,7 +39,7 @@ export const windowAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("close_window");
         } else {
-            await getLegacyPreloadApi()?.window?.close();
+            await callLegacyPreloadSection("window", "close");
         }
     },
 
@@ -50,8 +50,10 @@ export const windowAdapter = {
         if (isTauri()) {
             const { invoke } = await import("@tauri-apps/api/core");
             return await invoke<boolean>("is_maximized");
-        } else {
-            return (await getLegacyPreloadApi()?.window?.isMaximized()) ?? false;
         }
+        return (
+            ((await callLegacyPreloadSection("window", "isMaximized")) as boolean | undefined) ??
+            false
+        );
     },
 };

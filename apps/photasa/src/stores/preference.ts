@@ -656,10 +656,11 @@ export const usePreferenceStore = defineStore("preference", {
             if (this.currentFolderConfig.photoList.find((photo) => photo.path === relativePath)) {
                 return;
             }
+            const videoFlag = isVideoFile(request.path);
             this.currentFolderConfig.photoList.push({
                 path: relativePath,
                 thumbnail: shortenThumbnailName(request.thumbnail),
-                isVideo: isVideoFile(request.path),
+                isVideo: videoFlag instanceof Promise ? false : videoFlag,
                 history: [],
             });
         },

@@ -62,7 +62,7 @@ export function setupMenu(callback: MenuCallback): void {
     ipc?.on("picasa:import-photos", callback.onImportPhotos);
 }
 
-export function getDirectory(name: PathName): Promise<string> {
+export function getDirectory(name: PathName): Promise<string | null> {
     return api().getDirectory(name);
 }
 
@@ -129,7 +129,7 @@ export function checkPhotasaConfig(
     return api().checkPhotasaConfig(folderPath);
 }
 
-export function isFileUnderFolder(file: string, folder: string): boolean {
+export function isFileUnderFolder(file: string, folder: string): boolean | Promise<boolean> {
     return api().isFileUnderFolder(file, folder);
 }
 
@@ -149,11 +149,11 @@ export function shouldIgnorePhotasaPath(fileName: string): boolean {
     return shouldIgnorePhotasaPathSync(fileName);
 }
 
-export function isVideoFile(fileName: string): boolean {
+export function isVideoFile(fileName: string): boolean | Promise<boolean> {
     return api().isVideoFile(fileName);
 }
 
-export function isImageFile(fileName: string): boolean {
+export function isImageFile(fileName: string): boolean | Promise<boolean> {
     return api().isImageFile(fileName);
 }
 
