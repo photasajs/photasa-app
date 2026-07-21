@@ -2,7 +2,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -10,8 +10,9 @@
 
 **Status**: ✅ Implemented  
 **Created**: 2026-04-05  
-**Last updated**: 2026-06-06  
-**Area**: Tauri / Scan
+**Last updated**: 2026-07-20  
+**Area**: Tauri / Scan  
+**Path**: `.spec/rfc/completed/0105-tauri-scan-incremental-cache.md`
 
 ---
 
@@ -104,7 +105,7 @@ Rust modules (no `@photasa/scan` dependency):
 
 ## Verification (2026-06-06)
 
-Implemented in Rust (`scan_media.rs`, `scan_cache.rs`, `scan_runner.rs`). Electron `scan-worker.ts` / `.photasa-folder.json` format used as **behavior spec only** per [ROADMAP.md](../../ROADMAP.md).
+Implemented in Rust (`scan_media.rs`, `scan_cache.rs`, `scan_runner.rs`). Electron `scan-worker.ts` / `.photasa-folder.json` format used as **behavior spec only** per [ROADMAP.md](../../../ROADMAP.md).
 
 ```bash
 cd apps/photasa/src-tauri && cargo test scan_
@@ -112,3 +113,7 @@ cd apps/photasa/src-tauri && cargo build -p photasa
 ```
 
 Unit tests cover `progress_counts`, basename in `processedFiles`, save/load roundtrip, and resume skipping discovery when `pendingFiles` is non-empty.
+
+## 2026-07-20 归档
+
+RFC 已移至 `completed/`；ROADMAP / TASK_TRACKING 链接已对齐 `.spec/rfc/completed/`。

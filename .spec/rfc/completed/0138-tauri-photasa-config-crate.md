@@ -5,7 +5,7 @@
 - **Status**: ✅ Implemented
 - **Priority**: P1
 - **Area**: Photasa / Rust crates / Config
-- **Depends on**: [0132](../completed/0132-tauri-photasa-scan-crate.md)（crate 抽取模式参照）、[0141](../0141-tauri-photasa-media-crate.md)（`is_video`/`is_image` 判定权威来源，本 crate 不自行维护扩展名表）
+- **Depends on**: [0132](./0132-tauri-photasa-scan-crate.md)（crate 抽取模式参照）、[0141](./0141-tauri-photasa-media-crate.md)（已完成，`is_video`/`is_image` 判定权威来源，本 crate 不自行维护扩展名表）
 - **Blocks**: [0136](../0136-tauri-scan-runtime-contract.md)（扫描发现媒体文件写入 `.photasa.json` 依赖本 crate 的 `add_photo_to_folder_list`）、[0139](../0139-tauri-zouwu-retirement-plan.md)（zouwu 退场顺序计划第一项）
 - **Adapter 迁移模式**: [0140](../0140-tauri-zouwu-adapter-to-command-migration.md)（`config_adapter.rs` 删除+改 command 的具体步骤和验收标准以 0140 为准，本 RFC 只声明"要做"，不重复定义"怎么做"）
 - **Path**: `.spec/rfc/completed/0138-tauri-photasa-config-crate.md`
@@ -29,7 +29,7 @@
 1. `crates/photasa-config`：零 Tauri 依赖，独立 `cargo test`。
     - 迁入 `PhotasaConfigData`/`PhotoEntry`、`read_config_sync`/`write_config_sync`/`fix_config_sync`/`add_photo_to_folder_list`/`remove_photo_from_folder_list`/`parse_photo_list`/`config_to_json_value`/`parse_config_value`/`to_relative_thumbnail_path`/`shorten_thumbnail_relative_path`。
     - 迁入全部 9 个现有单元测试，保持断言不变（不允许"修测试适配代码"，必须先证明行为一致）。
-    - `is_video_file` 依赖：**不在本 crate 复制扩展名表，不用参数化回调过渡**——[0141](./0141-tauri-photasa-media-crate.md) 是本 RFC 的强前置，实现顺序上先落地 0141 再落地 0138，`photasa-config` 直接 `use photasa_media::is_video_file`。两个 RFC 都还是 Draft，没有历史代码要兼容，不需要为一个不会真正存在的过渡态设计回调间接层。`to_file_name` 是几行纯字符串操作（basename 提取），无判定表分叉风险，crate 内部本地实现即可，不需要抽取。
+    - `is_video_file` 依赖：不在本 crate 复制扩展名表，直接 `use photasa_media::is_video_file`（0141 已完成）。`to_file_name` 是几行纯字符串操作（basename 提取），无判定表分叉风险，crate 内部本地实现即可，不需要抽取。
 2. `apps/photasa/src-tauri/src/adapters/config_adapter.rs` 的删除与 `#[tauri::command]` 迁移，按 0140 定义的通用模式执行（不在本 RFC 重复展开步骤）。
 3. `photasa-config` crate 必须支持 0136 的文件流水线场景：扫描发现媒体文件 → `add_photo_to_folder_list` 写入 `.photasa.json`——这是本 crate 对外的核心能力之一，不只是 folder-config 页面的 CRUD 后端。crate 签名统一为纯 Rust 类型进出（`&str`/`PhotasaConfigData`/`Result<_, String>`），不掺 `Value`/JSON——与 0141 的签名原则一致。0136 的 Tauri 组合根和未来的 `#[tauri::command]` 都只是直接调用同一套函数，不需要两种签名，JSON 序列化只在真正的 IPC 边界（`#[tauri::command]` 入口本身）发生。
 

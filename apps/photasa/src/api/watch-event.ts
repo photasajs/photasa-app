@@ -6,7 +6,7 @@ import type { WatchAction, WatchState } from "@photasa/common";
 import { WatchServiceEvent } from "@photasa/common";
 import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
 
-/** 与 `photasa-import` IMAGE_EXTS 对齐（前端纯函数，无 Node/Rust invoke） */
+/** 与 `photasa-media`（RFC 0141 权威表：IMAGE_EXTS ∪ HEIC_EXTS ∪ RAW_EXTS）对齐（前端纯函数，无 Node/Rust invoke） */
 const IMAGE_EXTS = new Set([
     "jpg",
     "jpeg",
@@ -16,6 +16,9 @@ const IMAGE_EXTS = new Set([
     "webp",
     "tiff",
     "tif",
+    "svg",
+    "ico",
+    "psd",
     "heic",
     "heif",
     "avif",
@@ -24,12 +27,12 @@ const IMAGE_EXTS = new Set([
     "cr3",
     "nef",
     "arw",
-    "svg",
-    "ico",
-    "psd",
+    "dng",
+    "raf",
+    "orf",
 ]);
 
-/** 与 `photasa-import` VIDEO_EXTS 对齐 */
+/** 与 `photasa-media` VIDEO_EXTS 对齐 */
 const VIDEO_EXTS = new Set([
     "mp4",
     "mov",

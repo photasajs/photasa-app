@@ -44,6 +44,12 @@ describe("watch-event (RFC 0135)", () => {
         expect(classifyWatchMedia("bare.jpg")).toEqual({ isImage: true, isVideo: false });
     });
 
+    it("classifies RAW formats aligned with photasa-media RAW_EXTS (RFC 0141)", () => {
+        expect(classifyWatchMedia("/a/b/shot.dng")).toEqual({ isImage: true, isVideo: false });
+        expect(classifyWatchMedia("/a/b/shot.raf")).toEqual({ isImage: true, isVideo: false });
+        expect(classifyWatchMedia("/a/b/shot.orf")).toEqual({ isImage: true, isVideo: false });
+    });
+
     it("builds WatchState for file add with camelCase isFile", () => {
         const state = buildWatchStateFromEvent(WatchServiceEvent.add, {
             isFile: true,

@@ -115,9 +115,9 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0101](docs/rfc/completed/0101-tauri-startup-splash.md)                            | 启动 Splash 屏幕                                                                       | ✅ Implemented                                                    |
 | [0102](docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md)                    | 缩略图 RAW 回退策略                                                                    | ✅ Implemented                                                    |
 | [0103](docs/rfc/completed/0103-tauri-native-deps-build-strategy.md)                | 原生依赖构建策略（libheif + ffmpeg-next）                                              | ✅ Implemented                                                    |
-| [0104](docs/rfc/0104-tauri-execute-import-date-folder.md)                          | execute_import date-based folder organization                                          | ✅ Implemented                                                    |
-| [0105](docs/rfc/0105-tauri-scan-incremental-cache.md)                              | Scan incremental cache (.photasa-folder.json)                                          | ✅ Implemented                                                    |
-| [0106](docs/rfc/0106-tauri-update-periodic-check.md)                               | Updater background periodic check timer                                                | ✅ Implemented                                                    |
+| [0104](.spec/rfc/completed/0104-tauri-execute-import-date-folder.md)               | execute_import date-based folder organization                                          | ✅ Implemented                                                    |
+| [0105](.spec/rfc/completed/0105-tauri-scan-incremental-cache.md)                   | Scan incremental cache (.photasa-folder.json)                                          | ✅ Implemented                                                    |
+| [0106](.spec/rfc/completed/0106-tauri-update-periodic-check.md)                    | Updater background periodic check timer                                                | ✅ Implemented                                                    |
 | [0107](.spec/rfc/0107-tauri-wenchang-preferences-storage.md)                       | Wenchang preferences storage parity (Tauri)                                            | ✅ Implemented                                                    |
 | [0111](docs/rfc/0111-tauri-scan-notify-status-bridge.md)                           | Scan `notify:status` Rust bridge (0057)                                                | ✅ Implemented                                                    |
 | [0112](.spec/rfc/completed/0112-tauri-extract-metadata-golden-parity.md)           | extract_metadata golden parity + MakerNote                                             | ✅ Implemented                                                    |
@@ -149,7 +149,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0138](.spec/rfc/completed/0138-tauri-photasa-config-crate.md)                     | `photasa-config` crate（folder-level `.photasa.json`，退出 zouwu）                     | ✅ Implemented                                                    |
 | [0139](.spec/rfc/0139-tauri-zouwu-retirement-plan.md)                              | zouwu/Tianshu workflow 引擎逐域退场排期                                                | 📋 Draft（仅排期分析）                                            |
 | [0140](.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md)                 | zouwu Adapter → Tauri command 直调迁移（通用模式）                                     | 📋 Draft（仅模式定义）                                            |
-| [0141](.spec/rfc/0141-tauri-photasa-media-crate.md)                                | `photasa-media` crate（统一图片/视频扩展名判定，修复三处分叉）                         | 📋 Draft（crate + 三处消费方均已切换，逼近 Acceptance）           |
+| [0141](.spec/rfc/completed/0141-tauri-photasa-media-crate.md)                      | `photasa-media` crate（统一图片/视频扩展名判定，修复四处分叉）                         | ✅ Implemented                                                    |
 | [0142](.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) | 文件夹配置命令贞观之治对齐（魏征接管）                                                 | ✅ Implemented                                                    |
 | [0143](.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md)        | 扫描与队列命令贞观之治对齐（百姓/尉迟恭/袁天罡）                                       | ✅ Implemented                                                    |
 | [0144](.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md)         | 扫描队列持久化对齐贞观/0048/0136（并发锁 + 脱离 zouwu 类型）                           | ✅ Implemented                                                    |
@@ -178,7 +178,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | **P1c**      | `photasa-watch` crate 拆分（可测性）                      | **0133** ✅ |
 | **P1d**      | watch UI 契约（add/delete 文件/目录）                     | **0135** ✅ |
 | **P1e**      | 持久化队列扫描流水线（贞观 who/what + 一层发现）          | **0136** 📋 |
-| **P1f**      | `photasa-media` crate（扩展名判定统一，修复三处分叉）     | **0141** 📋 |
+| **P1f**      | `photasa-media` crate（扩展名判定统一，修复四处分叉）     | **0141** ✅ |
 | **P1g**      | `photasa-config` crate（folder-level config，退出 zouwu） | **0138** ✅ |
 | **P1h**      | 文件夹配置命令贞观之治对齐（魏征接管）                    | **0142** ✅ |
 | **P1i**      | 扫描与队列命令贞观之治对齐                                | **0143** ✅ |
@@ -319,7 +319,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **RFC 0097（迁移跟踪）：** ✅ Implemented。导入表面已 Rust：`preview_import` / `execute_import` / history·undo / `extract_metadata`（0112 golden）/ 日期目录（0104）/ pause·resume（0096）。`tauri-import-stubs` = 前端兜底形状 only，**不是**未接入后端。导入历史落盘 `import_history_v1.json`。Updater 接线见 **0113** + `UPDATER.md`（生产密钥走 CI/运维，不进仓库）。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
 - **Next step（以「Photasa next priorities」为准）：** 0136 Draft：尉迟恭 PQueue + 千里眼一层报告 + 贞观入队链；见 Deferred / 其它 polish。
-- **0141（2026-07-20）：** Rust 侧全部完成——`crates/photasa-media` 落地，`path.rs`/`photasa-import`/`photasa-thumbnail`/`photasa-scan` 四处消费方全部切换依赖（`photasa-scan` 2026-07-20 补上，`cargo tree` 验证不含 `photasa-import`）。**仍 Draft**：仅剩前端 `watch-event.ts` 自建扩展名表未对齐（缺 `dng`/`raf`/`orf`）。
+- **0141（2026-07-20）：** ✅ Implemented——`crates/photasa-media` 落地，`path.rs`/`photasa-import`/`photasa-thumbnail`/`photasa-scan` 四处 Rust 消费方全部切换依赖；`apps/photasa/src/api/watch-event.ts` 前端扩展名表补齐 `dng`/`raf`/`orf` 对齐权威表，新增回归测试，`vitest run` 11 passed，`eslint` 零错误。
 - **0138（2026-07-20）：** ✅ Implemented——`config_adapter.rs` 已删，`commands/config.rs` 直连 `photasa-config` crate，零 zouwu 依赖，renderer 调用链（魏征）已 trace 记录于 0142。
 - **0140：** 通用迁移模式定义，Draft 保持开放——preference/appstate/shell/menu/engine 五域仍待迁移（见 0139），首个案例（0138）已验证模式可行。
 - **0139：** 排期文档，Draft 保持开放——scan/config/preference 三域已核实，appstate/shell/menu/engine 三域仍待盘点。

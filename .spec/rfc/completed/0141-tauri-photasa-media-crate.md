@@ -1,13 +1,13 @@
 # RFC 0141: `photasa-media` crate — 统一图片/视频扩展名判定
 
 - **Start Date**: 2026-07-19
-- **Last updated**: 2026-07-19
-- **Status**: 🔨 Implementing（Rust 侧全部切到 `photasa-media`，含 scan/import/thumbnail/path.rs 四处；仅剩前端 `watch-event.ts` 自建表未对齐，缺 `dng`/`raf`/`orf`）
+- **Last updated**: 2026-07-20
+- **Status**: ✅ Implemented
 - **Priority**: P1（真实分叉 bug，非仅重复代码）
 - **Area**: Photasa / Rust crates / Media type detection
 - **Depends on**: `photasa-types`（`MediaType` 在 `crates/photasa-types/src/media_type.rs`）
-- **Blocks**: [0138](./0138-tauri-photasa-config-crate.md)（`is_video`/`is_image` 权威来源）
-- **Path**: `.spec/rfc/0141-tauri-photasa-media-crate.md`
+- **Blocks**: [0138](./completed/0138-tauri-photasa-config-crate.md)（已完成，`is_video`/`is_image` 权威来源）
+- **Path**: `.spec/rfc/completed/0141-tauri-photasa-media-crate.md`
 
 ## crate 边界
 
@@ -64,9 +64,9 @@ Workspace crate `crates/photasa-media` 为唯一权威扩展名判定：
 2. ✅ `path.rs` command 薄封装 `photasa_media::*`（对外签名不变）。
 3. ✅ `photasa-import/path_filter.rs` 改用 `photasa_media`。
 4. ✅ `photasa-thumbnail` `match classify_media`（删本地四表）。
-5. ⬜ `watch-event.ts`：要么与权威表对齐（至少补 `dng/raf/orf`），要么明确 Non-goal「TS 另案 / invoke」并写进 Acceptance。
-6. ⬜ ROADMAP / TASK_TRACKING 登记 0141。
-7. ⬜ `grep` 验收：`apps/photasa/src-tauri` + `crates` 下静态 `IMAGE_EXTS`/`VIDEO_EXTS` 定义只命中 `photasa-media`（再导出除外）。
+5. ✅ `watch-event.ts`：`IMAGE_EXTS` 补齐 `dng`/`raf`/`orf`，与 `photasa-media`（IMAGE_EXTS ∪ HEIC_EXTS ∪ RAW_EXTS）对齐（2026-07-20）。
+6. ✅ ROADMAP / TASK_TRACKING 登记 0141（2026-07-20）。
+7. ✅ `grep` 验收：`apps/photasa/src-tauri` + `crates` 下静态 `IMAGE_EXTS`/`VIDEO_EXTS` 定义只命中 `photasa-media`（2026-07-20 复核）。
 8. ✅ `photasa-scan` 已改为直接依赖 `photasa-media`（`Cargo.toml` 替换 `photasa-import` → `photasa-media`，`e4180c1`），不再经 `photasa-import` 中转。`should_ignore_photasa_path`/`basename_hidden`/`classify_media_flags` 权威实现已在 `photasa-media`，`photasa-import` 改为纯转发。`cargo tree -p photasa-scan` 验证不含 `photasa-import`。
 
 ## Non-goals
@@ -89,12 +89,19 @@ cargo tree -p photasa-media     → 仅 photasa-types（无 tauri）
 
 ## Acceptance
 
-1. ✅ `photasa-media` 存在；权威表唯一（Rust crates + src-tauri）。
-2. ✅ path / import / thumbnail 删除本地判定表，改依赖 crate。
+1. ✅ `photasa-media` 存在；权威表唯一——`grep -rln "static IMAGE_EXTS\|const IMAGE_EXTS\|static VIDEO_EXTS\|const VIDEO_EXTS" apps/photasa/src-tauri crates` 只命中 `crates/photasa-media/src/lib.rs`（2026-07-20 复核）。
+2. ✅ path / import / thumbnail / scan 删除本地判定表，改依赖 crate（scan 于 `e4180c1` 补齐，见 Goal 8）。
 3. ✅ 历史分叉已记录；统一表内容已拍板（上表）并保留 IMAGE/HEIC/RAW 解码分流。
-4. ⬜ `watch-event.ts` 与权威表对齐或文档标明另案。
-5. ⬜ ROADMAP 登记；RFC → Implemented / `completed/` 当 4 完成且证据更新。
+4. ✅ `watch-event.ts` 与权威表对齐（`IMAGE_EXTS` 补齐 `dng`/`raf`/`orf`，2026-07-20）。
+5. ✅ ROADMAP/TASK_TRACKING 已登记；RFC → Implemented / `completed/`（2026-07-20）。
 6. ✅ `photasa-scan` 直接依赖 `photasa-media`，不经 `photasa-import` 中转（`cargo tree -p photasa-scan` 验证不含 `photasa-import`，2026-07-20，`e4180c1`）。
+
+## Verification（2026-07-20）
+
+- `apps/photasa/src/api/watch-event.ts::IMAGE_EXTS` 从两层（IMAGE 单集合含 raw 系列 + VIDEO）合并对齐权威表三层结构（IMAGE_EXTS ∪ HEIC_EXTS ∪ RAW_EXTS），补齐 `dng`/`raf`/`orf`。
+- 新增回归测试 `classifies RAW formats aligned with photasa-media RAW_EXTS (RFC 0141)`（`apps/photasa/src/api/__tests__/watch-event.test.ts`）。
+- `vitest run src/api/__tests__/watch-event.test.ts` → 11 passed（原 10 + 新增 1）。
+- `eslint apps/photasa/src/api/watch-event.ts apps/photasa/src/api/__tests__/watch-event.test.ts` → 零错误。
 
 ## Risks
 

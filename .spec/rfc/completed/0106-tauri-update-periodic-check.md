@@ -2,7 +2,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -10,8 +10,9 @@
 
 **Status**: ✅ Implemented  
 **Created**: 2026-04-05  
-**Last updated**: 2026-06-06  
-**Area**: Tauri / Update
+**Last updated**: 2026-07-20  
+**Area**: Tauri / Update  
+**Path**: `.spec/rfc/completed/0106-tauri-update-periodic-check.md`
 
 ---
 
@@ -107,3 +108,7 @@ cd apps/photasa/src-tauri && cargo build -p photasa
   manually opening Settings, matching Electron behaviour.
 - The background task is cheap (sleeps most of the time) and uses the existing
   `tauri-plugin-updater` machinery already wired.
+
+## 2026-07-20 归档
+
+RFC 已移至 `completed/`；ROADMAP / TASK_TRACKING 链接已对齐 `.spec/rfc/completed/`。

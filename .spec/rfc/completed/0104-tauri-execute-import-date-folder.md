@@ -2,7 +2,7 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
@@ -10,8 +10,9 @@
 
 **Status**: ✅ Implemented  
 **Created**: 2026-04-05  
-**Last updated**: 2026-06-06  
-**Area**: Tauri / Import
+**Last updated**: 2026-07-20  
+**Area**: Tauri / Import  
+**Path**: `.spec/rfc/completed/0104-tauri-execute-import-date-folder.md`
 
 ---
 
@@ -87,8 +88,12 @@ The date is resolved with the same fallback chain already used by `determine_gro
 
 ## Verification (2026-06-06)
 
-Implemented in Rust (`commands/import_date_util.rs`, shared by `import_preview` / `import_execute`). Electron `import-worker.ts` used as **behavior spec only** per [ROADMAP.md](../../ROADMAP.md).
+Implemented in Rust (`commands/import_date_util.rs`, shared by `import_preview` / `import_execute`). Electron `import-worker.ts` used as **behavior spec only** per [ROADMAP.md](../../../ROADMAP.md).
 
 ## 2026-07-20 复核：路径已随 0131 crate 拆分变化，功能本身无问题
 
-`generate_date_path_utc`/`determine_group_target_utc` 等核心算法已随 [0131](./completed/0131-tauri-photasa-import-crate.md) 迁入 `crates/photasa-import/src/date.rs`（零 Tauri，6 个单测覆盖，`cargo test -p photasa-import date` 全绿）。`commands/import_date_util.rs` 现在是纯转发层（`pub use photasa_import::date::{...}`）+ Tauri 侧 `PhotasaMetadataExtractor`（提供 `extract_metadata_request` 宿主适配，因为元数据提取需要 Tauri app 运行时的 HEIC/FFmpeg 能力，这部分不能下沉进零依赖 crate）。`import_execute.rs`/`import_preview.rs` 实际调用的是这层转发，行为与本 RFC 描述一致，不是分叉或遗留死代码。状态维持 Implemented。
+`generate_date_path_utc`/`determine_group_target_utc` 等核心算法已随 [0131](./0131-tauri-photasa-import-crate.md) 迁入 `crates/photasa-import/src/date.rs`（零 Tauri，6 个单测覆盖，`cargo test -p photasa-import date` 全绿）。`commands/import_date_util.rs` 现在是纯转发层（`pub use photasa_import::date::{...}`）+ Tauri 侧 `PhotasaMetadataExtractor`（提供 `extract_metadata_request` 宿主适配，因为元数据提取需要 Tauri app 运行时的 HEIC/FFmpeg 能力，这部分不能下沉进零依赖 crate）。`import_execute.rs`/`import_preview.rs` 实际调用的是这层转发，行为与本 RFC 描述一致，不是分叉或遗留死代码。
+
+## 2026-07-20 归档
+
+RFC 已移至 `completed/`；ROADMAP / TASK_TRACKING 链接已对齐 `.spec/rfc/completed/`。
