@@ -1,17 +1,19 @@
 <template>
-    <header class="titlebar-container" data-tauri-drag-region>
-        <!-- Traffic lights click-through protector -->
+    <header class="titlebar-container">
+        <!-- Traffic lights click-through protector (no-drag) -->
         <div class="traffic-placeholder" />
         
-        <div class="app-header-content" data-tauri-drag-region>
+        <!-- Draggable area (spacer/title) -->
+        <div class="draggable-area" data-tauri-drag-region>
             <span class="app-title" data-tauri-drag-region>{{ t("app.title") }}</span>
-            
-            <div class="setting-header">
-                <CoffeeOutlined class="system-icon" @click="openScanList" />
-                <DashboardOutlined class="system-icon" @click="openQueueDashboard" />
-                <ImportOutlined class="system-icon" @click="openImportPhotos" />
-                <SettingOutlined class="system-icon" @click="openPreference" />
-            </div>
+        </div>
+        
+        <!-- Action buttons area (no-drag) -->
+        <div class="setting-header">
+            <CoffeeOutlined class="system-icon" @click="openScanList" />
+            <DashboardOutlined class="system-icon" @click="openQueueDashboard" />
+            <ImportOutlined class="system-icon" @click="openImportPhotos" />
+            <SettingOutlined class="system-icon" @click="openPreference" />
         </div>
     </header>
 </template>
@@ -58,24 +60,21 @@ function openPreference() {
     display: flex;
     align-items: center;
     user-select: none;
-    -webkit-app-region: drag; /* Entire titlebar is draggable by default */
 }
 
-/* Explicit no-drag zone for macOS native traffic lights (width ~80px) */
 .traffic-placeholder {
     width: 80px;
     height: 100%;
     flex-shrink: 0;
-    -webkit-app-region: no-drag;
 }
 
-.app-header-content {
+.draggable-area {
     flex: 1;
+    height: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    height: 100%;
-    padding-right: 16px;
+    justify-content: center;
+    cursor: default;
 }
 
 .app-title {
@@ -83,14 +82,14 @@ function openPreference() {
     font-weight: 600;
     font-size: 13px;
     letter-spacing: -0.01em;
-    pointer-events: none; /* Let drag clicks pass through the title text */
 }
 
 .setting-header {
     display: flex;
     align-items: center;
     gap: 16px;
-    -webkit-app-region: no-drag; /* Buttons must be clickable and not drag the window */
+    padding-right: 16px;
+    height: 100%;
 }
 
 .system-icon {
