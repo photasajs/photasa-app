@@ -57,10 +57,9 @@ export interface ScanTerminalReportPayload {
     error?: string;
 }
 
-export type ScanReportEvent =
-    | ScanFileReportPayload
-    | ScanDirectoryReportPayload
-    | ScanTerminalReportPayload;
+import type { ScanReport } from "@renderer/interfaces/gen/scan_report";
+
+export type ScanReportEvent = ScanReport;
 
 export interface ScanResult {
     type: "file" | "directory" | "progress" | "complete" | "error";

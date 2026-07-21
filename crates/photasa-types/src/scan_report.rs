@@ -1,29 +1,34 @@
 //! 扫描 IPC 契约上报类型（RFC 0136 / RFC 0111）
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export, export_to = "../../../apps/photasa/src/interfaces/gen/scan_file_payload.ts")]
 #[serde(rename_all = "camelCase")]
 pub struct ScanFilePayload {
     pub path: String,
     pub is_directory: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export, export_to = "../../../apps/photasa/src/interfaces/gen/scan_progress_payload.ts")]
 #[serde(rename_all = "camelCase")]
 pub struct ScanProgressPayload {
     pub processed: usize,
     pub total: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export, export_to = "../../../apps/photasa/src/interfaces/gen/scan_directory_payload.ts")]
 #[serde(rename_all = "camelCase")]
 pub struct ScanDirectoryPayload {
     pub path: String,
     pub is_directory: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export, export_to = "../../../apps/photasa/src/interfaces/gen/scan_report.ts")]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum ScanReport {
     #[serde(rename = "file", rename_all = "camelCase")]
@@ -55,6 +60,15 @@ pub enum ScanReport {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn export_ts_types() {
+        use ts_rs::TS;
+        ScanFilePayload::export_all().unwrap();
+        ScanProgressPayload::export_all().unwrap();
+        ScanDirectoryPayload::export_all().unwrap();
+        ScanReport::export_all().unwrap();
+    }
 
     #[test]
     fn test_scan_report_serialization() {
