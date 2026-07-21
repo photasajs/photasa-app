@@ -315,85 +315,17 @@ onClickOutside(menuBarRef, () => {
     align-items: center;
 }
 .system-icon {
-    height: 1.5rem;
-    width: 1.5rem;
+    height: 16px;
+    width: 16px;
+    font-size: 16px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    color: var(--color-text-secondary, #cccccc);
+    transition: color 0.15s ease, opacity 0.15s ease;
+    opacity: 0.85;
 
     &:hover {
-        transform: scale(1.1);
+        opacity: 1;
+        color: var(--color-primary, #3794ff);
     }
-}
-
-/* 多彩图标样式 */
-.system-icon {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.system-icon:nth-child(1) {
-    /* 时钟图标 - 蓝色渐变 */
-    background: linear-gradient(135deg, var(--color-info), var(--color-primary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.system-icon:nth-child(2) {
-    /* 仪表板图标 - 紫色渐变 */
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.system-icon:nth-child(3) {
-    /* 文件夹图标 - 绿色渐变 */
-    background: linear-gradient(135deg, var(--color-success), var(--color-success));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.system-icon:nth-child(4) {
-    /* 设置图标 - 橙色渐变 */
-    background: linear-gradient(135deg, var(--color-warning), var(--color-warning));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* 悬停效果 */
-.system-icon:hover {
-    transform: scale(1.15) rotate(5deg);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-.system-icon:nth-child(1):hover {
-    background: linear-gradient(135deg, #60a5fa, #3b82f6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.system-icon:nth-child(2):hover {
-    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.system-icon:nth-child(3):hover {
-    background: linear-gradient(135deg, #34d399, #10b981);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.system-icon:nth-child(4):hover {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 </style>
