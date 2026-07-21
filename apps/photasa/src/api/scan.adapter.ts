@@ -57,7 +57,7 @@ export interface ScanTerminalReportPayload {
     error?: string;
 }
 
-import type { ScanReport } from "@renderer/interfaces/gen/scan_report";
+import type { ScanReport } from "@photasa/common";
 
 export type ScanReportEvent = ScanReport;
 
