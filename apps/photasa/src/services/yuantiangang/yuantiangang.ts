@@ -17,7 +17,7 @@ import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
 import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
-import { scanAdapter } from "@renderer/api/scan.adapter";
+import { scanAdapter, type ScanResult } from "@renderer/api/scan.adapter";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@photasa/common";
 import type { NotifyPayload } from "@photasa/common";
@@ -198,10 +198,12 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * @param args 扫描事件参数（FindPhotoEvent）
      * @private
      */
-    private handleQianliyanEvent(
-        args: ScanActionEvent & { directory?: { path: string }; rootPath?: string },
-    ): void {
-        logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path || args.directory?.path);
+    private handleQianliyanEvent(args: ScanResult): void {
+        logger.debug(
+            "🔮 收到千里眼事件:",
+            args.type,
+            args.action?.path || args.directory?.path || args.file?.path,
+        );
 
         if (args.type === "directory") {
             // ✅ RFC 0136: 收到目录报告，发送 scan_directory_discovered 启奏
@@ -232,7 +234,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
             const qizou: Qizou = {
                 type: "report",
-                from: GUANYUAN_NAMES.YUAN_TIAN_GANG,
+                from: "袁天罡",
                 name: "scan_directory_discovered",
                 content: {
                     directoryPath,
@@ -241,7 +243,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 timestamp: Date.now(),
             };
 
-            this._qizouBus.emit(qizou);
+            this._qizouBus.emit("qizou", qizou);
             logger.info(`🔮 启奏发送成功: scan_directory_discovered -> ${directoryPath}`);
         } catch (error) {
             logger.error("🔮 发送 scan_directory_discovered 启奏失败:", error);
@@ -249,19 +251,13 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     }
 
     /**
-     * ✅ RFC 0057 Phase 2: 向李世民发送扫描进度启奏
-     *
-     * @param scanEvent ScanActionEvent 事件（统一类型）
-     * @private
-     */
-    /**
-     * ✅ RFC 0057: 向李世民发送扫描进度启奏
+     * ✅ RFC 0057 / RFC 0136: 向李世民发送扫描进度启奏
      * 简化逻辑：所有处理由 yuShiNan 负责
      *
-     * @param scanEvent ScanActionEvent 事件（统一类型）
+     * @param scanEvent ScanResult 事件（统一类型）
      * @private
      */
-    private reportScanProgress(scanEvent: any): void {
+    private reportScanProgress(scanEvent: ScanResult): void {
         try {
             if (!this._qizouBus) {
                 logger.error("🔮 启奏通道未建立，无法发送启奏");

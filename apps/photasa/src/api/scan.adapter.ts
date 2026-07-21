@@ -13,16 +13,69 @@ export interface ScanAction {
     thumbnailSize?: number;
 }
 
-export interface ScanResult {
-    type: "progress" | "complete" | "error";
+export interface ScanFileReportPayload {
+    type: "file" | "progress";
     requestId: string;
-    paths?: string[];
-    error?: string;
-    file?: unknown;
+    rootPath: string;
+    file?: {
+        path: string;
+        isDirectory: boolean;
+    };
     action?: {
         path: string;
         isDirectory?: boolean;
     };
+    currentFile?: string;
+    progress?: {
+        processed: number;
+        total: number;
+    };
+}
+
+export interface ScanDirectoryReportPayload {
+    type: "directory";
+    requestId: string;
+    rootPath: string;
+    directory?: {
+        path: string;
+        isDirectory: boolean;
+    };
+    action?: {
+        path: string;
+        isDirectory?: boolean;
+    };
+}
+
+export interface ScanTerminalReportPayload {
+    type: "complete" | "error";
+    requestId: string;
+    rootPath?: string;
+    action?: {
+        path: string;
+        isDirectory?: boolean;
+    };
+    error?: string;
+}
+
+export type ScanReportEvent =
+    | ScanFileReportPayload
+    | ScanDirectoryReportPayload
+    | ScanTerminalReportPayload;
+
+export interface ScanResult {
+    type: "file" | "directory" | "progress" | "complete" | "error";
+    requestId: string;
+    paths?: string[];
+    error?: string;
+    file?: { path: string; isDirectory: boolean };
+    directory?: { path: string; isDirectory: boolean };
+    rootPath?: string;
+    action?: {
+        path: string;
+        isDirectory?: boolean;
+    };
+    currentFile?: string;
+    progress?: { processed: number; total: number };
     fileCount?: number;
 }
 
