@@ -2,15 +2,15 @@
     <header class="titlebar-container">
         <!-- Draggable background handle -->
         <div class="titlebar-drag-handle" data-tauri-drag-region />
-        
+
         <!-- Header content layer -->
         <div class="titlebar-content">
             <!-- Space for macOS native traffic lights (no-drag) -->
             <div class="traffic-placeholder" />
-            
+
             <!-- Absolutely centered title -->
             <span class="app-title">{{ t("app.title") }}</span>
-            
+
             <!-- Action buttons area (clickable) -->
             <div class="setting-header">
                 <CoffeeOutlined class="system-icon" @click="openScanList" />
@@ -119,7 +119,9 @@ function openPreference() {
     font-size: 16px;
     cursor: pointer;
     color: var(--color-text-secondary, #cccccc);
-    transition: color 0.15s ease, opacity 0.15s ease;
+    transition:
+        color 0.15s ease,
+        opacity 0.15s ease;
     opacity: 0.85;
 
     &:hover {

@@ -351,8 +351,7 @@ export class QueueMonitoringService {
      * Update queue status based on current state
      */
     private updateStatus(statusCounts: QueueHealthMetrics["statusCounts"]): void {
-        const activeInQueue =
-            statusCounts.pending + statusCounts.processing + statusCounts.failed;
+        const activeInQueue = statusCounts.pending + statusCounts.processing + statusCounts.failed;
 
         if (activeInQueue === 0) {
             this._status.value = statusCounts.completed > 0 ? "active" : "idle";

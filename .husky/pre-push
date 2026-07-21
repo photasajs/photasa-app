@@ -1,1 +1,2 @@
+pnpm --filter @photasa/photasa run lint
 pnpm --filter @photasa/photasa run test:unit
