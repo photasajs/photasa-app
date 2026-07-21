@@ -246,12 +246,14 @@ defineExpose({
 
 <template>
     <div class="folder-list-card">
-        <div class="px-4 py-2 border-b border-gray-100 flex items-center">
-            <BaseBreadcrumb class="folder-list-header">
-                <BaseBreadcrumbItem>
-                    {{ xuanzang.translate("app.folderList") }}
-                </BaseBreadcrumbItem>
-            </BaseBreadcrumb>
+        <div
+            class="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between"
+        >
+            <span
+                class="text-xs font-semibold tracking-widest uppercase text-[var(--color-text-secondary)]"
+            >
+                {{ xuanzang.translate("app.folderList") }}
+            </span>
         </div>
         <div class="flex-1 min-h-0 overflow-auto tree-container">
             <BaseTree
@@ -261,7 +263,7 @@ defineExpose({
                 :tree-data="folderTree as TreeNode[]"
                 :virtual="true"
                 height="100%"
-                :item-height="28"
+                :item-height="34"
                 :show-icon="true"
                 :show-line="false"
                 :selectable="true"
@@ -270,7 +272,7 @@ defineExpose({
             >
                 <!-- 文件夹图标 -->
                 <template #icon>
-                    <PhFolder :size="14" />
+                    <PhFolder :size="15" class="text-[var(--color-text-tertiary)]" />
                 </template>
 
                 <template #title="{ node, title }">
@@ -320,57 +322,74 @@ defineExpose({
 </template>
 <style lang="scss">
 .root-folder-node {
-    color: var(--color-tree-selected, var(--color-primary));
+    font-weight: 600;
+    color: var(--color-text-primary, var(--color-text));
 }
 
 .folder-node {
     white-space: nowrap;
     color: var(--color-tree-text, var(--color-text));
-    background: var(--color-tree-bg, var(--color-bg));
-    transition:
-        background 0.2s,
-        color 0.2s;
 }
-.folder-node:hover {
-    background: var(--color-tree-hover, var(--color-bg-secondary));
-    color: var(--color-tree-hover-text, var(--color-primary));
-}
-.folder-node.active {
-    background: var(--color-tree-active, var(--color-tree-selected, var(--color-primary)));
-    color: var(--color-tree-active-text, var(--color-white));
-}
-.folder-node.disabled {
-    color: var(--color-tree-disabled-text);
-    background: var(--color-tree-disabled-bg);
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-.folder-list-header {
-    height: 32px;
-    line-height: 32px;
-    background: var(--color-tree-bg);
-    color: var(--color-tree-text);
-    border-bottom: 1px solid var(--color-tree-border);
-    display: flex;
-    align-items: center;
-}
+
 .folder-list-card {
-    flex: 1; /* 使用 flex 占满父容器空间 */
+    flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 让内部 BaseTree 控制滚动 */
+    overflow: hidden;
     background: var(--color-tree-bg);
 }
 
 .tree-container {
-    padding: 0;
+    padding: 4px 0;
     background: var(--color-tree-bg);
-    height: 100%; /* 强制占满剩余空间 */
-    min-height: 0; /* 允许内容滚动 */
+    height: 100%;
+    min-height: 0;
 }
 
 .folder-tree {
-    min-height: 100%; /* 确保树组件至少占满容器高度 */
+    min-height: 100%;
     width: 100%;
+
+    /* Modern directory tree row styling */
+    .base-tree-node {
+        padding: 5px 0;
+        margin: 2px 8px;
+        border-radius: 6px;
+        color: var(--color-text-secondary, #cccccc);
+        font-weight: 500;
+        transition:
+            background-color 0.15s ease,
+            color 0.15s ease;
+        line-height: 24px;
+
+        &:hover {
+            background-color: var(--color-tree-hover, rgba(255, 255, 255, 0.04));
+            color: var(--color-text-primary, #ffffff);
+        }
+
+        &--selected {
+            background-color: rgba(55, 148, 255, 0.12) !important;
+            color: var(--color-primary, #3794ff) !important;
+            font-weight: 600;
+        }
+    }
+
+    /* Modern switcher styling */
+    .base-tree-node__switcher {
+        color: var(--color-text-tertiary, #888888) !important;
+        transition:
+            transform 0.2s ease,
+            opacity 0.2s ease;
+        opacity: 0.8;
+
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            color: var(--color-text-primary, #ffffff) !important;
+        }
+    }
+
+    .base-tree-node__switcher-icon {
+        color: inherit !important;
+    }
 }
 </style>
