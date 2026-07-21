@@ -1,7 +1,12 @@
 # RFC 0066: Extract Siming Package
 
 - **Author**: AI Assistant
-- **Status**: Draft
+- **Status**: ❌ Rejected (2026-07-20)
+
+## Rejection Reason
+
+Photasa / Tauri architecture uses Rust-first backend architecture (`crates/photasa-preference` and `apps/photasa/src-tauri`). Siming Node/TypeScript package extraction is superseded by Rust commands and Siming adapter retirement (RFC 0145). See [ROADMAP.md](../../ROADMAP.md) Golden Rule.
+
 - **Created**: 2025-12-30
 
 ## Abstract

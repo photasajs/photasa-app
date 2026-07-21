@@ -3,9 +3,11 @@
 - Start Date: 2025-12-29
 - RFC PR: (To be added)
 - Implementation PR: (To be added)
-- Status: Implemented
+- Status: ❌ Rejected (2026-07-20)
 
-## Summary
+## Rejection Reason
+
+Photasa / Tauri architecture uses Rust-first backend architecture (`crates/` and direct Rust IPC). Extracting Node/TypeScript main packages (`@photasa/taiyi`) is Electron legacy backlog and not maintained as a Photasa target. See [ROADMAP.md](../../ROADMAP.md) Golden Rule.
 
 Extract the Taiyi Engine (currently in `apps/desktop/src/engines/taiyi`) and its workflow adapter helper (`apps/desktop/src/engines/workflow`) into a dedicated workspace package `@photasa/taiyi`.
 
