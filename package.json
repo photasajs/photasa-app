@@ -17,7 +17,7 @@
         "workflow:validate": "pnpm --filter @photasa/desktop run workflow:validate"
     },
     "devDependencies": {
-        "eslint": "^8.57.0",
+        "eslint": "^10.7.0",
         "husky": "^9.1.7",
         "nx": "^22.3.3",
         "prettier": "^3.2.5",
