@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import VueEasyLightbox from "./LightBox";
-import { BaseImage } from "@renderer/components/ui";
+import { ensureWebviewMediaUrl } from "@renderer/utils/media-url";
 
 const props = defineProps<{
     images: Array<{
@@ -43,6 +43,12 @@ function handleOnIndexChange(newIndex: number) {
         emit("change", newIndex);
     }
 }
+function handleImageError(event: Event, fallback?: string): void {
+    const img = event.target as HTMLImageElement | null;
+    if (img && fallback) {
+        img.src = ensureWebviewMediaUrl(fallback);
+    }
+}
 </script>
 <template>
     <VueEasyLightbox
@@ -56,8 +62,8 @@ function handleOnIndexChange(newIndex: number) {
             <video-player
                 v-if="currentImg.isVideo"
                 :class="['vjs-big-play-centered']"
-                :src="currentImg.raw"
-                :poster="currentImg.thumbnail"
+                :src="ensureWebviewMediaUrl(currentImg.raw)"
+                :poster="ensureWebviewMediaUrl(currentImg.thumbnail || '')"
                 :width="currentImg.w"
                 :height="currentImg.h"
                 playsinline
@@ -65,16 +71,12 @@ function handleOnIndexChange(newIndex: number) {
                 :loop="true"
                 :volume="0.6"
             />
-            <BaseImage
+            <img
                 v-else
-                :src="currentImg.preview || currentImg.raw"
-                :width="currentImg.w"
-                :height="currentImg.h"
-                :fallback="currentImg.thumbnail || ''"
-                :isVideo="false"
-                :raw="currentImg.raw"
-                :alt="currentImg.title"
-                style="max-width: 100%; max-height: 80vh"
+                :src="ensureWebviewMediaUrl(currentImg.preview || currentImg.raw)"
+                :alt="currentImg.title || 'Image'"
+                class="max-w-[85vw] max-h-[80vh] object-contain rounded-md shadow-2xl block m-auto"
+                @error="(e) => handleImageError(e, currentImg.thumbnail)"
             />
         </template>
     </VueEasyLightbox>
