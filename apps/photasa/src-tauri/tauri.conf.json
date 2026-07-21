@@ -17,7 +17,7 @@
                 "fullscreen": false,
                 "resizable": true,
                 "title": "Photasa",
-                "titleBarStyle": "Transparent",
+                "titleBarStyle": "Overlay",
                 "width": 1200,
                 "height": 800,
                 "minWidth": 800,
