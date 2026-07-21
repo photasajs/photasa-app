@@ -90,7 +90,7 @@ describe("YuanTianGangService - Scan Events & Status Bar Progress", () => {
 
         expect(emittedEvents).toHaveLength(1);
         const qizou = emittedEvents[0];
-        expect(qizou.name).toBe("scan_directory_discovered");
+        expect(qizou.matter).toBe(QizouMatters.SCAN_DIRECTORY_DISCOVERED);
         expect(qizou.content.directoryPath).toBe("/Volumes/SUCAI/Test/SubFolder");
         expect(qizou.content.rootPath).toBe("/Volumes/SUCAI/Test");
     });

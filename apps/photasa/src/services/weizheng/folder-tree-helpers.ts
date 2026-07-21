@@ -9,6 +9,7 @@
  */
 
 import type { FolderNode } from "@photasa/common";
+import { canonicalFolderPath, isPathUnderRoot } from "@renderer/utils/folder-tree-path";
 
 /**
  * 检查路径是否是根路径
@@ -18,29 +19,37 @@ import type { FolderNode } from "@photasa/common";
  * @returns 是否是根路径
  */
 export function isRootPath(folderPath: string, rootPaths: string[]): boolean {
-    return rootPaths.includes(folderPath);
+    const normalized = canonicalFolderPath(folderPath);
+    if (!normalized) {
+        return false;
+    }
+    return rootPaths
+        .filter((rp): rp is string => typeof rp === "string" && rp.trim() !== "")
+        .some((rp) => canonicalFolderPath(rp) === normalized);
 }
 
 /**
  * 查找路径对应的根路径
- *
- * @param folderPath 要查找的路径
- * @param rootPaths 根路径数组
- * @returns 对应的根路径，如果找不到则返回 null
  */
 export function findRootPathForPath(folderPath: string, rootPaths: string[]): string | null {
-    return rootPaths.find((rp) => folderPath.startsWith(rp + "/") || folderPath === rp) || null;
+    const normalized = canonicalFolderPath(folderPath);
+    if (!normalized) {
+        return null;
+    }
+    const match = rootPaths
+        .filter((rp): rp is string => typeof rp === "string" && rp.trim() !== "")
+        .map((rp) => canonicalFolderPath(rp))
+        .filter((rp) => isPathUnderRoot(normalized, rp))
+        .sort((a, b) => b.length - a.length)[0];
+    return match ?? null;
 }
 
 /**
  * 检查根节点是否已存在于树中
- *
- * @param tree 文件夹树
- * @param rootPath 根路径
- * @returns 根节点是否存在
  */
 export function isRootNodeExists(tree: FolderNode[], rootPath: string): boolean {
-    return tree.some((node) => node.key === rootPath);
+    const key = canonicalFolderPath(rootPath);
+    return tree.some((node) => canonicalFolderPath(String(node.key)) === key);
 }
 
 /**

@@ -15,6 +15,10 @@ vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => mockInvoke(...args),
 }));
 
+vi.mock("@renderer/api/env", () => ({
+    isTauri: () => true,
+}));
+
 function createTestAction(overrides: Partial<ScanAction> = {}): ScanAction {
     return {
         path: "/test/path",

@@ -20,9 +20,7 @@ export const IntentToFuluMapping: Record<string, string> = {
     [ZOUZHE_MATTERS.REMOVE_SCAN_ACTION]: "remove_scan_action",
     // ✅ RFC 0048 v3 Phase 3: 扫描任务状态更新映射
     [ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS]: "update_scan_action_status",
-    // ✅ RFC 0042 Step 2.5: appState管理映射
-    [ZOUZHE_MATTERS.RESTORE_APP_STATE]: "restore_app_state",
-    [ZOUZHE_MATTERS.UPDATE_FOLDER_TREE]: "update_folder_tree",
+    // RFC 0145: UPDATE_FOLDER_TREE / RESTORE_APP_STATE 由 executeZhaoling → siming-bridge 直连，不在此映射
     [ZOUZHE_MATTERS.SWITCH_FOLDER]: "switch_current_folder",
     // ✅ RFC 0058: 菜单更新映射
     [ZOUZHE_MATTERS.UPDATE_MENU]: "menu_apply",

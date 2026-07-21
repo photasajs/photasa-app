@@ -39,21 +39,21 @@ app.use(pinia);
 const lishiminService = new LishiminService(app);
 app.provide(LISSHIMING_TOKEN, lishiminService);
 
-// 先同步就位再挂载，避免在 mount 之前被天枢/奏折 IPC 长时间阻塞（否则 Splash 永不关）
+// 先同步就位；恢复 appState / 扫描队列后再挂载，避免空树覆盖磁盘或 SKIP 扫描竞态
 lishiminService.prepareCourt();
-
-logger.info("📦 挂载 App.vue 应用");
-app.mount("#app");
-
-// 壳层已挂载：立即关闭 Splash、显示主窗，不等待 onMounted 内异步链（RFC 0101）
-if (isTauri()) {
-    import("@tauri-apps/api/core")
-        .then(({ invoke }) => invoke("close_splashscreen"))
-        .catch((err) => logger.warn("告示：关闭启动画面未果", err));
-}
 
 if (isTauri()) {
     const { tianshuAdapter } = await import("./api/tianshu.adapter");
     await tianshuAdapter.waitUntilReady();
 }
 await lishiminService.initializeDepartments();
+
+logger.info("📦 挂载 App.vue 应用");
+app.mount("#app");
+
+// 壳层已挂载：关闭 Splash、显示主窗（RFC 0101）
+if (isTauri()) {
+    import("@tauri-apps/api/core")
+        .then(({ invoke }) => invoke("close_splashscreen"))
+        .catch((err) => logger.warn("告示：关闭启动画面未果", err));
+}

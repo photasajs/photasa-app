@@ -20,6 +20,8 @@ pub type ScanQueueRepositoryHandle = Arc<ScanQueueRepository>;
 pub struct ScanQueueRepository {
     inner: Mutex<Vec<Value>>,
     path: PathBuf,
+    /// 启动时磁盘加载失败：GET 前尝试重新加载，避免空内存覆盖已有 scanning.json
+    disk_load_failed: Mutex<bool>,
 }
 
 impl ScanQueueRepository {
@@ -27,6 +29,7 @@ impl ScanQueueRepository {
         Self {
             inner: Mutex::new(Vec::new()),
             path,
+            disk_load_failed: Mutex::new(true),
         }
     }
 
@@ -40,6 +43,7 @@ impl ScanQueueRepository {
         Ok(Self {
             inner: Mutex::new(queue),
             path,
+            disk_load_failed: Mutex::new(false),
         })
     }
 
@@ -47,13 +51,37 @@ impl ScanQueueRepository {
         &self.path
     }
 
-    pub async fn get(&self) -> Vec<Value> {
-        self.inner.lock().await.clone()
+    pub async fn get(&self) -> ScanQueueResult<Vec<Value>> {
+        self.reload_from_disk_if_needed().await?;
+        Ok(self.inner.lock().await.clone())
+    }
+
+    /// 启动加载失败时，首次读前从磁盘恢复，避免空内存当 SSOT
+    async fn reload_from_disk_if_needed(&self) -> ScanQueueResult<()> {
+        let needs_reload = *self.disk_load_failed.lock().await;
+        if !needs_reload {
+            return Ok(());
+        }
+
+        match load_queue_from_disk(&self.path) {
+            Ok(queue) => {
+                let mut guard = self.inner.lock().await;
+                *guard = queue;
+                *self.disk_load_failed.lock().await = false;
+                log::info!(
+                    "🌌 千里眼：扫描队列已从磁盘恢复 {} 项 -> {}",
+                    guard.len(),
+                    self.path.display()
+                );
+                Ok(())
+            }
+            Err(error) => Err(error),
+        }
     }
 
     /// 对齐 Electron `get_scanning_queue` / `restoreQueue`
     pub async fn get_json_array(&self) -> ScanQueueResult<Value> {
-        Ok(Value::Array(self.get().await))
+        Ok(Value::Array(self.get().await?))
     }
 
     /// 对齐 Electron `add_scan_action`
@@ -169,9 +197,7 @@ async fn persist_queue_atomic(path: &Path, queue: &[Value]) -> ScanQueueResult<(
     let serialized = serde_json::to_string_pretty(&payload)?;
     tokio::fs::write(&tmp_path, serialized).await?;
 
-    if path.exists() {
-        tokio::fs::remove_file(path).await?;
-    }
+    // POSIX rename 原子替换目标文件；先 delete 会在崩溃时丢队列
     tokio::fs::rename(&tmp_path, path).await?;
 
     log::info!(
@@ -225,7 +251,7 @@ mod tests {
         parent_result.expect("parent add");
         child_result.expect("child add");
 
-        let queue = repo.get().await;
+        let queue = repo.get().await.expect("get queue");
         assert_eq!(queue.len(), 2);
         assert!(queue.iter().any(|item| action_path(item) == Some("/parent")));
         assert!(queue.iter().any(|item| action_path(item) == Some("/child")));
@@ -267,7 +293,7 @@ mod tests {
         update_result.expect("update");
         add_result.expect("add");
 
-        let queue = repo.get().await;
+        let queue = repo.get().await.expect("get queue");
         assert_eq!(queue.len(), 2);
 
         let existing = queue

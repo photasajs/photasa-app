@@ -20,6 +20,10 @@ import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
+import {
+    collectAllFolderKeys,
+    mergeExpandedKeysForNewFolders,
+} from "@renderer/utils/folder-tree-expand";
 
 const logger = loggers.lishimin;
 
@@ -64,6 +68,28 @@ const folderTree = computed(() => weiZheng.folderTree);
  * Expanded keys
  */
 const expandedKeys = ref<string[]>([...paths.value]);
+
+/** 跟踪已展示过的树节点，用于发现新子目录时自动展开祖先 */
+const knownFolderKeys = ref<Set<string>>(new Set(collectAllFolderKeys(folderTree.value)));
+
+watch(
+    folderTree,
+    (newTree) => {
+        const allKeys = collectAllFolderKeys(newTree);
+        const newKeys = allKeys.filter((key) => !knownFolderKeys.value.has(key));
+        if (newKeys.length === 0) {
+            return;
+        }
+
+        knownFolderKeys.value = new Set(allKeys);
+        expandedKeys.value = mergeExpandedKeysForNewFolders(
+            expandedKeys.value,
+            newKeys,
+            paths.value,
+        );
+    },
+    { deep: true },
+);
 
 /**
  * Selected keys

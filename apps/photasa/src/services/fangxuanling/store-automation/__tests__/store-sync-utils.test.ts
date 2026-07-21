@@ -158,6 +158,38 @@ describe("store-sync-utils", () => {
             const result = extractSnapshotFromResponse(response, "snapshot.deep.path");
             expect(result).toBeNull();
         });
+
+        it("RFC 0145: update_folder_tree 从 data.folderTree 提取树数组", () => {
+            const tree = [{ key: "/Volumes/SUCAI/Test", title: "Test", children: [] }];
+            const response: ZhaolingResponse = {
+                acknowledged: true,
+                command: "update_folder_tree",
+                data: { folderTree: tree, persisted: true },
+                blessing: "司命卷轴已更新",
+                timestamp: Date.now(),
+            };
+
+            const result = extractSnapshotFromResponse(response, "folderTree");
+            expect(result).toEqual(tree);
+        });
+
+        it("RFC 0145: restore_app_state 整对象替换 appState store", () => {
+            const appState = {
+                folderTree: [],
+                currentFolder: "/a",
+                lastOpenedFolder: "/a",
+            };
+            const response: ZhaolingResponse = {
+                acknowledged: true,
+                command: "restore_app_state",
+                data: appState,
+                blessing: "司命卷轴已更新",
+                timestamp: Date.now(),
+            };
+
+            const result = extractSnapshotFromResponse(response, ".");
+            expect(result).toEqual(appState);
+        });
     });
 
     describe("syncStoreWithSnapshot", () => {

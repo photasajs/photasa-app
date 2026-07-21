@@ -24,6 +24,7 @@ photasa-scan = { workspace = true }
 photasa-watch = { workspace = true }
 photasa-media = { workspace = true }
 photasa-config = { workspace = true }
+photasa-folder-tree = { workspace = true }
 
 # workspace 共享依赖
 serde = { workspace = true }

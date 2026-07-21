@@ -28,14 +28,14 @@ Tauri 里这个问题不存在：
 
 `apps/desktop/src/main/engines/tianshu/workflows/` 下 6 个域、20 个 `.zouwu` 文件：
 
-| 域         | 文件数 | Tauri 侧 Adapter                                         | 状态                                            |
-| ---------- | ------ | -------------------------------------------------------- | ----------------------------------------------- |
-| scan       | 5      | 无独立 adapter，走 `YuChiGong`/`FangXuanLing` 持久化路径 | 已在 RFC 0136 决定退出 zouwu，直调 Rust command |
-| preference | 8      | `preferences_adapter.rs`（`name() == "wenchang"`）       | 待退场，见下                                    |
-| appstate   | 3      | 未查（需 0139 后续修订补充实际 adapter 名）              | 待排查                                          |
-| shell      | 2      | 未查                                                     | 待排查                                          |
-| menu       | 1      | 未查                                                     | 待排查                                          |
-| engine     | 1      | 未查                                                     | 待排查                                          |
+| 域         | 文件数 | Tauri 侧 Adapter                                                              | 状态                                                  |
+| ---------- | ------ | ----------------------------------------------------------------------------- | ----------------------------------------------------- |
+| scan       | 5      | 无独立 adapter，走 `YuChiGong`/`FangXuanLing` 持久化路径                      | 已在 RFC 0136 决定退出 zouwu，直调 Rust command       |
+| preference | 8      | `preferences_adapter.rs`（`name() == "wenchang"`）                            | 待退场，见下                                          |
+| appstate   | 3      | ~~`siming_adapter.rs`~~ → **0145 ✅** `photasa-folder-tree` + `siming-bridge` | ✅ 已退场（`update_folder_tree`/`restore_app_state`） |
+| shell      | 2      | 未查                                                                          | 待排查                                                |
+| menu       | 1      | 未查                                                                          | 待排查                                                |
+| engine     | 1      | 未查                                                                          | 待排查                                                |
 
 `config`（folder-level `.photasa.json`）严格说不是这 6 个域之一——它没有对应 `.zouwu` 文件，`ConfigAdapter` 只是注册进了 zouwu 的 `AdapterRegistry`，本身没有 workflow YAML 驱动。这是退出成本最低的第一块，已单独立项为 RFC 0138。
 
@@ -48,8 +48,8 @@ Tauri 里这个问题不存在：
 
 **未核实、仅占位猜测（不是排期承诺）**：
 
-3. appstate（3 个文件，folder tree / current folder / restore）：猜测与 0136 的魏征 folder-tree 更新链路相关，但实际 adapter 名称、是否真的被 0136 触碰、耦合程度均未读源码确认。真正排期前必须先补齐"现状盘点"表里这一行的具体信息（对应文件、adapter 名、调用方），才能判断是否要等 0136/0137 落地后再动。
-4. shell / menu / engine（各 1-2 个文件）：同样未读源码确认，"影响面小"是基于文件数量的猜测，不是读过代码的结论。
+3. ✅ **appstate**（3 个 workflow 文件）：[RFC 0145](./completed/0145-tauri-siming-adapter-retirement.md) 已删 `SimingAdapter`，`photasa-folder-tree` crate + `siming-bridge` 单路径；`switch_current_folder` 仍待后续域 RFC。
+4. shell / menu / engine（各 1-2 个文件）：未读源码确认，"影响面小"是基于文件数量的猜测，不是读过代码的结论。
 
 在补齐 appstate/shell/menu/engine 的真实盘点信息之前，第 3、4 项不构成可执行的排期，只是待办清单。
 

@@ -3754,6 +3754,7 @@ dependencies = [
  "notify",
  "pathdiff",
  "photasa-config",
+ "photasa-folder-tree",
  "photasa-import",
  "photasa-media",
  "photasa-preference",
@@ -3789,6 +3790,18 @@ dependencies = [
  "photasa-media",
  "serde",
  "serde_json",
+ "uuid",
+]
+
+[[package]]
+name = "photasa-folder-tree"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "dirs 5.0.1",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
  "uuid",
 ]
 

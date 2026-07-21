@@ -12,6 +12,7 @@ members = [
     "crates/photasa-watch",
     "crates/photasa-config",
     "crates/photasa-media",
+    "crates/photasa-folder-tree",
     "apps/photasa/src-tauri",
 ]
 
@@ -37,3 +38,4 @@ photasa-scan = { path = "crates/photasa-scan" }
 photasa-watch = { path = "crates/photasa-watch" }
 photasa-media = { path = "crates/photasa-media" }
 photasa-config = { path = "crates/photasa-config" }
+photasa-folder-tree = { path = "crates/photasa-folder-tree" }

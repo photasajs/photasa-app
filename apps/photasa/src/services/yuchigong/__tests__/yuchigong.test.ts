@@ -12,6 +12,7 @@ import mitt from "mitt";
 import { YuChiGongService } from "../yuchigong";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import type {
     IFangXuanLingService,
     IPreference,
@@ -525,7 +526,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             });
         });
 
-        it("RFC 0143: 已在队列时 rescan 圣旨应去重并启奏 scan_task_duplicate", async () => {
+        it("RFC 0143: 已在队列时 rescan 应先移除再重新入队", async () => {
             const testPath = "/test/rescan-dedup";
             mockFangXuanLing.reset();
             emittedQizous.length = 0;
@@ -541,10 +542,9 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             } satisfies Shengzhi);
             await new Promise((resolve) => setTimeout(resolve, 150));
             expect(yuchiGong.isScanning(testPath)).toBe(true);
-            const zouzheCountAfterFirst = mockFangXuanLing.receivedZouzhes.length;
             emittedQizous.length = 0;
 
-            // 再发 rescan —— 应跳过
+            // 再发 rescan —— 应 REMOVE 后重新 ADD
             messageChannel.port1.postMessage({
                 id: "shengzhi-dedup-rescan",
                 command: "add_scan_task",
@@ -556,10 +556,21 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             await new Promise((resolve) => setTimeout(resolve, 150));
 
             expect(yuchiGong.getQueueSize()).toBe(1);
-            expect(mockFangXuanLing.receivedZouzhes.length).toBe(zouzheCountAfterFirst);
-            const dup = emittedQizous.find((q) => q.matter === "scan_task_duplicate");
-            expect(dup).toBeDefined();
-            expect(dup?.content).toMatchObject({ path: testPath });
+            const removeZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) =>
+                    z.matter === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION &&
+                    (z.content as { path?: string }).path === testPath,
+            );
+            expect(removeZouzhe).toBeDefined();
+            const addZouzhes = mockFangXuanLing.receivedZouzhes.filter(
+                (z) => z.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+            );
+            const rescanAddZouzhe = addZouzhes[addZouzhes.length - 1];
+            expect(rescanAddZouzhe).toBeDefined();
+            expect((rescanAddZouzhe.content as { actions: ScanAction[] }).actions[0].action).toBe(
+                "rescan",
+            );
+            expect(emittedQizous.find((q) => q.matter === "scan_task_duplicate")).toBeUndefined();
         });
 
         it("应该拒绝缺少path参数的圣旨", () => {
@@ -1139,14 +1150,7 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             // 等待p-queue执行完成
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            // 验证扫描流程
-            const scanSubfoldersZouzhe = mockFangXuanLing.receivedZouzhes.find(
-                (z) =>
-                    z.matter === ZOUZHE_MATTERS.SCAN_SUBFOLDERS &&
-                    z.content?.folderPath === testPath,
-            );
-            expect(scanSubfoldersZouzhe).toBeDefined();
-
+            // 验证扫描流程（子目录发现不在 executeScan，见 RFC 0136 scan_directory_discovered）
             const scanPhotosZouzhe = mockFangXuanLing.receivedZouzhes.find(
                 (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
             );
@@ -1230,11 +1234,11 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
 
         it("requestRescan 应立即写入 UI 运行时队列", async () => {
             const testPath = "/test/rescan-visible";
-            mockFangXuanLing.skipStoreMutation = true;
+            mockFangXuanLing.skipStoreMutation = false;
 
             await yuchiGong.requestRescan(testPath);
 
-            expect(useScanningStore().queue).toEqual([
+            expect(mockFangXuanLing.scanning.queue).toEqual([
                 expect.objectContaining({
                     path: testPath,
                     action: "rescan",
@@ -1298,33 +1302,31 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             });
         });
 
-        it("应该递归扫描子文件夹", async () => {
+        it("目录扫描仅 invoke 当前路径（子目录由千里眼报告入队）", async () => {
             const testPath = "/test/parent";
-            const subfolders = ["/test/parent/sub1", "/test/parent/sub2"];
-            mockFangXuanLing.mockSubfolders = subfolders;
+            mockFangXuanLing.mockSubfolders = ["/test/parent/sub1", "/test/parent/sub2"];
 
-            // ✅ RFC 0048 v3 Phase 4: 直接调用executeScan()代替已删除 of addScanTask()
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (yuchiGong as any).executeScan(testPath, "scan", "directory");
             await new Promise((resolve) => setTimeout(resolve, 200));
 
-            // 验证目录扫描 (通过奏折)
             const scanPhotosZouzhes = mockFangXuanLing.receivedZouzhes.filter(
                 (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
             );
-            expect(scanPhotosZouzhes.some((z) => z.content?.path === testPath)).toBe(true);
-            expect(scanPhotosZouzhes.some((z) => z.content?.path === subfolders[0])).toBe(true);
-            expect(scanPhotosZouzhes.some((z) => z.content?.path === subfolders[1])).toBe(true);
+            expect(scanPhotosZouzhes).toHaveLength(1);
+            expect(scanPhotosZouzhes[0]?.content?.path).toBe(testPath);
+
+            const scanSubfoldersZouzhe = mockFangXuanLing.receivedZouzhes.find(
+                (z) => z.matter === ZOUZHE_MATTERS.SCAN_SUBFOLDERS,
+            );
+            expect(scanSubfoldersZouzhe).toBeUndefined();
+
+            const treeQizou = emittedQizous.find((q) => q.matter === QizouMatters.SCAN_TASK_ADDED);
+            expect(treeQizou).toBeUndefined();
         });
 
-        it("应该过滤掉 .photasaoriginals 等 Photasa 内部子文件夹与隐藏点目录", async () => {
+        it("目录扫描不预枚举子文件夹", async () => {
             const testPath = "/Volumes/SUCAI/Test";
-            const subfolders = [
-                "/Volumes/SUCAI/Test/SubAlbum",
-                "/Volumes/SUCAI/Test/.photasaoriginals",
-                "/Volumes/SUCAI/Test/.photasa_config",
-            ];
-            mockFangXuanLing.mockSubfolders = subfolders;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (yuchiGong as any).executeScan(testPath, "scan", "directory");
@@ -1333,14 +1335,8 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             const scanPhotosZouzhes = mockFangXuanLing.receivedZouzhes.filter(
                 (z) => z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
             );
-            expect(
-                scanPhotosZouzhes.some((z) => z.content?.path === "/Volumes/SUCAI/Test/SubAlbum"),
-            ).toBe(true);
-            expect(
-                scanPhotosZouzhes.some(
-                    (z) => z.content?.path === "/Volumes/SUCAI/Test/.photasaoriginals",
-                ),
-            ).toBe(false);
+            expect(scanPhotosZouzhes).toHaveLength(1);
+            expect(scanPhotosZouzhes[0]?.content?.path).toBe(testPath);
         });
 
         it("应该处理文件类型扫描", async () => {

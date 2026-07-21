@@ -18,6 +18,7 @@ import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
 import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
 import { scanAdapter, type ScanResult } from "@renderer/api/scan.adapter";
+import { isTauri } from "@renderer/api/env";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@photasa/common";
 import type { NotifyPayload } from "@photasa/common";
@@ -25,6 +26,7 @@ import type { MenuActionPayload } from "@renderer/interfaces/zhang-sun-wu-ji.int
 import { computeScannedFilePaths } from "./utils";
 import { IntentToFuluMapping } from "./intent";
 import { executeScanQueueZhaoling } from "./scan-queue-bridge";
+import { executeSimingZhaoling } from "./siming-bridge";
 
 const logger = loggers.yuantiangang;
 
@@ -233,14 +235,17 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             }
 
             const qizou: Qizou = {
-                type: "report",
-                from: "袁天罡",
-                name: "scan_directory_discovered",
+                matter: QizouMatters.SCAN_DIRECTORY_DISCOVERED,
                 content: {
                     directoryPath,
                     rootPath,
                 },
+                from: "袁天罡",
                 timestamp: Date.now(),
+                metadata: {
+                    type: "report",
+                    priority: "normal",
+                },
             };
 
             this._qizouBus.emit("qizou", qizou);
@@ -586,6 +591,48 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             }
         }
 
+        // RFC 0145: folderTree 持久化直连司命 command（Photasa 唯一路径）
+        if (
+            zhaoling.command === ZOUZHE_MATTERS.UPDATE_FOLDER_TREE ||
+            zhaoling.command === ZOUZHE_MATTERS.RESTORE_APP_STATE
+        ) {
+            try {
+                const data = await executeSimingZhaoling(
+                    zhaoling.command,
+                    (zhaoling.context ?? {}) as Record<string, unknown>,
+                );
+
+                logger.info(`🔮 司命直连持久化成功: ${zhaoling.command}`);
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "司命卷轴已更新",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "siming-direct",
+                        processTime: Date.now() - startTime,
+                        urgency:
+                            zhaoling.priority === "imperial"
+                                ? "critical"
+                                : zhaoling.priority === "urgent"
+                                  ? "high"
+                                  : "normal",
+                    },
+                };
+            } catch (error) {
+                logger.error(`🔮 司命直连持久化失败: ${zhaoling.command}`, error);
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "司命卷轴更新失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "司命持久化异常",
+                };
+            }
+        }
+
         // ✅ RFC 0142: 魏征监管的文件夹配置事务直连天界 (不经过Tianshu workflow)
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG ||
@@ -594,7 +641,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             zhaoling.command === ZOUZHE_MATTERS.ADD_PHOTO_TO_LIST ||
             zhaoling.command === ZOUZHE_MATTERS.REMOVE_PHOTO_FROM_LIST ||
             zhaoling.command === ZOUZHE_MATTERS.TO_DIR_NAME ||
-            zhaoling.command === ZOUZHE_MATTERS.SCAN_SUBFOLDERS ||
             zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS
         ) {
             try {
@@ -618,8 +664,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.TO_DIR_NAME) {
                     data = await invoke("to_dir_name", { path: zhaoling.context.path });
-                } else if (zhaoling.command === ZOUZHE_MATTERS.SCAN_SUBFOLDERS) {
-                    data = await invoke("sub_folders", { folderPath: zhaoling.context.folderPath });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS) {
                     const { path, action, thumbnailSize } = zhaoling.context as any;
                     const requestId = `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;

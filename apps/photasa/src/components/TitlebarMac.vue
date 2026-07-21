@@ -86,11 +86,12 @@ function openPreference() {
     -webkit-app-region: no-drag;
 }
 .system-icon {
-    height: 1.5rem;
-    width: 1.5rem;
+    height: 18px;
+    width: 18px;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1));
 }
 
 /* 多彩图标样式 */

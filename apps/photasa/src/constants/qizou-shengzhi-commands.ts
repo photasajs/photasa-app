@@ -13,6 +13,7 @@ export const QizouMatters = {
     SCAN_READY: "scan_ready",
     SCAN_FAILED: "scan_failed",
     SCAN_PROGRESS: "scan_progress", // ✅ RFC 0057: 扫描进度更新事件
+    SCAN_DIRECTORY_DISCOVERED: "scan_directory_discovered", // ✅ RFC 0136: 千里眼发现直属子目录
 
     // 尉迟恭 - 扫描队列事件相关
     SCAN_TASK_ADDED: "scan_task_added", // ✅ 扫描任务已添加到队列

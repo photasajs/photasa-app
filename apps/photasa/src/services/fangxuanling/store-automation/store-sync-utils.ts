@@ -136,18 +136,22 @@ export function extractSnapshotFromResponse(
     try {
         const snapshot: unknown = peelPreferenceSyncPayload(zhaolingResponse.data);
 
-        // 如果snapshot为空或不是对象，则返回null
-        if (!isObject(snapshot)) {
+        // 如果snapshot为空，则返回null（空数组 [] 是合法队列）
+        if (snapshot === null || snapshot === undefined) {
             logger.warn(`⚠️ 提取的snapshot数据无效`);
             return null;
         }
 
         // 如果propertyPath为空或为.，则返回snapshot
         if (isEmpty(propertyPath) || propertyPath === ".") {
-            return snapshot;
+            return isObject(snapshot) ? snapshot : null;
         }
 
-        return get(snapshot, propertyPath);
+        const extracted = get(snapshot, propertyPath);
+        if (extracted === undefined) {
+            return null;
+        }
+        return extracted;
     } catch (error) {
         logger.error(`❌ 提取snapshot失败: ${propertyPath}`, error);
         return null;

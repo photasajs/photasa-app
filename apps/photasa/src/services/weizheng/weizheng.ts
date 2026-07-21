@@ -12,10 +12,18 @@ import {
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import type { FolderNode } from "@photasa/common";
 import { loggers } from "@photasa/common";
-import { addRoot, removeRoot, addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
+import {
+    addRoot,
+    removeRoot,
+    addFolderToTree,
+    cleanDataNode,
+    sanitizeFolderTree,
+} from "@renderer/utils/folder-tree";
+import { mergeDiscoveredPathsIntoTree } from "@renderer/utils/folder-tree-discovered-paths";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { deepClone } from "@photasa/common";
-import { determineRootPathToAdd } from "./folder-tree-helpers";
+import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
+import { isSameFolderTree } from "@renderer/utils/folder-tree-compare";
 
 const logger = loggers.weizheng;
 
@@ -218,9 +226,9 @@ export class WeiZhengService implements IService, IWeiZhengService {
      */
     private async handleAddRoot(shengzhi: Shengzhi): Promise<void> {
         const content = shengzhi.content as Record<string, unknown>;
-        const rootPath = content?.rootPath as string;
+        const rawRootPath = content?.rootPath as string;
 
-        if (!rootPath) {
+        if (!rawRootPath) {
             logger.warn("🏛️ 魏征：add_root圣旨参数无效，rootPath必须提供");
             this.emitQizou("shengzhi_failed", {
                 shengzhiId: shengzhi.id,
@@ -230,28 +238,14 @@ export class WeiZhengService implements IService, IWeiZhengService {
             return;
         }
 
+        const rootPath = canonicalFolderPath(rawRootPath);
         logger.info(`🏛️ 魏征：添加根节点到树：${rootPath}`);
 
-        // 1. 获取当前文件夹树
         const currentTree = this.folderTree;
-
-        // 2. 深拷贝避免直接修改store
         const newTree: FolderNode[] = deepClone(currentTree);
-
-        // 3. 使用addRoot添加根节点
         addRoot(newTree, rootPath);
 
-        // 4. 发送奏折给房玄龄，触发天界持久化
-        const zouzhe: Zouzhe = {
-            department: GUANYUAN_NAMES.WEI_ZHENG,
-            matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
-            content: { tree: newTree },
-            timestamp: Date.now(),
-            priority: ZOUZHE_PRIORITIES.NORMAL,
-        };
-
-        await this.fangXuanLingService.processZouzhe(zouzhe);
-
+        await this.persistFolderTreeIfChanged(currentTree, newTree);
         logger.info(`🏛️ 魏征：根节点添加完成：${rootPath}`);
     }
 
@@ -282,18 +276,9 @@ export class WeiZhengService implements IService, IWeiZhengService {
         const newTree: FolderNode[] = deepClone(currentTree);
 
         // 3. 使用removeRoot移除根节点
-        removeRoot(newTree, rootPath);
+        removeRoot(newTree, canonicalFolderPath(rootPath));
 
-        // 4. 发送奏折给房玄龄，触发天界持久化
-        const zouzhe: Zouzhe = {
-            department: GUANYUAN_NAMES.WEI_ZHENG,
-            matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
-            content: { tree: newTree },
-            timestamp: Date.now(),
-            priority: ZOUZHE_PRIORITIES.NORMAL,
-        };
-
-        await this.fangXuanLingService.processZouzhe(zouzhe);
+        await this.persistFolderTreeIfChanged(currentTree, newTree);
 
         logger.info(`🏛️ 魏征：根节点移除完成：${rootPath}`);
     }
@@ -354,39 +339,34 @@ export class WeiZhengService implements IService, IWeiZhengService {
         const newTree: FolderNode[] = deepClone(currentTree);
 
         // 3. ✅ 批量构建树结构（遍历所有路径，但只修改一次树）
-        for (const folderPath of paths) {
-            if (!folderPath || typeof folderPath !== "string") {
-                logger.warn(`🏛️ 魏征：跳过无效路径：${folderPath}`);
-                continue;
-            }
+        mergeDiscoveredPathsIntoTree(newTree, paths, rootPaths);
+        sanitizeFolderTree(newTree);
 
-            // ✅ 修复：使用纯函数确定需要添加的根路径
-            const rootPathToAdd = determineRootPathToAdd(folderPath, rootPaths, newTree);
-            if (rootPathToAdd) {
-                logger.info(`🏛️ 魏征：检测到路径 ${folderPath} 需要添加根节点 ${rootPathToAdd}`);
-                addRoot(newTree, rootPathToAdd);
-            }
+        await this.persistFolderTreeIfChanged(currentTree, newTree);
+        logger.info(`🏛️ 魏征：批量添加完成，共${paths.length}个路径`);
+    }
 
-            // 使用addFolderToTree构建树结构
-            addFolderToTree(newTree, {
-                path: folderPath,
-                thumbnail: "",
-                isVideo: false,
-            });
+    /**
+     * 仅当 folderTree 有实质变更时才持久化，避免 scan_completed 等无结构变化时覆盖磁盘上的完整树
+     */
+    private async persistFolderTreeIfChanged(
+        previousTree: FolderNode[],
+        nextTree: FolderNode[],
+    ): Promise<void> {
+        if (isSameFolderTree(previousTree, nextTree)) {
+            logger.debug("🏛️ 魏征：folderTree 无变化，跳过持久化");
+            return;
         }
 
-        // 4. ✅ 一次性发送奏折给房玄龄，触发天界持久化（批量优化核心）
         const zouzhe: Zouzhe = {
             department: GUANYUAN_NAMES.WEI_ZHENG,
             matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
-            content: { tree: newTree },
+            content: { tree: nextTree },
             timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
         };
 
         await this.fangXuanLingService.processZouzhe(zouzhe);
-
-        logger.info(`🏛️ 魏征：批量添加完成，共${paths.length}个路径，已一次性持久化`);
     }
 
     /**
@@ -511,6 +491,11 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
             await this.fangXuanLingService.processZouzhe(zouzhe);
 
+            const restoredTree = this.folderTree;
+            const cleanedTree: FolderNode[] = deepClone(restoredTree);
+            sanitizeFolderTree(cleanedTree);
+            await this.persistFolderTreeIfChanged(restoredTree, cleanedTree);
+
             logger.info("🏛️ 魏征：应用状态恢复奏折已呈递朝廷，等待天界确认");
         } catch (error) {
             logger.error("🏛️ 魏征：初始化应用状态失败", error);
@@ -541,21 +526,12 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
         // 3. 使用addFolderToTree构建树结构
         addFolderToTree(newTree, {
-            path: folderPath,
+            path: canonicalFolderPath(folderPath),
             thumbnail: "",
             isVideo: false,
         });
 
-        // 4. 发送奏折给房玄龄，触发天界持久化
-        const zouzhe: Zouzhe = {
-            department: GUANYUAN_NAMES.WEI_ZHENG,
-            matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
-            content: { tree: newTree },
-            timestamp: Date.now(),
-            priority: ZOUZHE_PRIORITIES.NORMAL,
-        };
-
-        await this.fangXuanLingService.processZouzhe(zouzhe);
+        await this.persistFolderTreeIfChanged(currentTree, newTree);
 
         logger.info("🏛️ 魏征：文件夹树已更新并持久化");
     }
@@ -583,21 +559,12 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
         // 3. 使用cleanDataNode清理树结构
         cleanDataNode(newTree, {
-            path: folderPath,
+            path: canonicalFolderPath(folderPath),
             thumbnail: "",
             isVideo: false,
         });
 
-        // 4. 发送奏折给房玄龄，触发天界持久化
-        const zouzhe: Zouzhe = {
-            department: GUANYUAN_NAMES.WEI_ZHENG,
-            matter: ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
-            content: { tree: newTree },
-            timestamp: Date.now(),
-            priority: ZOUZHE_PRIORITIES.NORMAL,
-        };
-
-        await this.fangXuanLingService.processZouzhe(zouzhe);
+        await this.persistFolderTreeIfChanged(currentTree, newTree);
 
         logger.info("🏛️ 魏征：文件夹树已清理并持久化");
     }

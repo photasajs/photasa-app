@@ -8,6 +8,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { ScanAction } from "@photasa/common";
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
+import { isTauri } from "@renderer/api/env";
 import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
 
 /** 与 `commands/scan_queue.rs` 一致 */
@@ -86,6 +87,10 @@ export async function executeScanQueueZhaoling(
     command: ScanQueueZhaolingCommand,
     context: Record<string, unknown>,
 ): Promise<{ queue: ScanQueueItem[] }> {
+    if (!isTauri()) {
+        throw new Error("扫描队列持久化仅支持 Tauri 环境（~/.photasa/scan/scanning.json）");
+    }
+
     let rawQueue: Record<string, unknown>[];
 
     if (command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE) {

@@ -7,7 +7,9 @@ use tauri::State;
 
 #[tauri::command]
 pub async fn scan_queue_get(repo: State<'_, ScanQueueRepositoryHandle>) -> Result<Vec<Value>, String> {
-    Ok(repo.get().await)
+    repo.get()
+        .await
+        .map_err(scan_queue_error_string)
 }
 
 #[tauri::command]

@@ -10,10 +10,12 @@ use log::{error, info, warn};
 use photasa_scan::cache::IncrementalCacheManager;
 use photasa_scan::media::{
     absolute_thumbnail_path_for_source, build_thumbnail_path, classify_media,
-    is_photasa_media_file, normalize_path_string, relative_thumbnail_path_for_source,
-    validate_scan_params, walkthrough_photos_in_folder,
+    is_photasa_media_file, list_scan_subdirectories, normalize_path_string,
+    relative_thumbnail_path_for_source, validate_scan_params, walkthrough_photos_in_folder,
 };
-use photasa_scan::notify::build_scan_notify_payload;
+use photasa_scan::notify::{
+    build_scan_notify_payload, notify_source_from_file_complete, notify_source_from_scan_report,
+};
 use photasa_scan::strategy::{
     decide_scan_strategy_with_config, should_process_file_with_config, ScanDecision, ScanStrategy,
 };
@@ -21,10 +23,8 @@ use photasa_thumbnail::{create_thumbnail as create_thumbnail_async, ThumbnailReq
 pub use photasa_types::ScanAction;
 use photasa_types::{
     PhotasaConfigPhoto, PhotasaConfigView, PhotoFileRequest, ScanDirectoryPayload,
-    ScanFilePayload, ScanNotifyAction, ScanNotifyProgress, ScanProgressPayload, ScanReport,
-    ScanWorkerNotifySource, PHOTASA_CONFIG_FILE,
+    ScanFilePayload, ScanProgressPayload, ScanReport, ScanWorkerNotifySource, PHOTASA_CONFIG_FILE,
 };
-use serde_json::json;
 use tauri::{AppHandle, Emitter};
 
 use photasa_config::{read_config_sync, PhotasaConfigData};
@@ -70,6 +70,38 @@ fn emit_status_notify(app: &AppHandle, source: ScanWorkerNotifySource) {
     }
 }
 
+fn emit_scan_report_with_notify(app: &AppHandle, report: &ScanReport) {
+    if let Some(source) = notify_source_from_scan_report(report) {
+        emit_status_notify(app, source);
+    }
+    if let Ok(payload) = serde_json::to_value(report) {
+        emit_scan_event(app, payload);
+    }
+}
+
+/// SKIP 扫描不重走 walkthrough，仍需把一层子目录报告给前端以更新 folderTree（RFC 0136 方案 A）
+fn emit_immediate_subdirectory_reports(app: &AppHandle, request_id: &str, scan_root: &str) {
+    let folder_path = Path::new(scan_root);
+    let subdirs = match list_scan_subdirectories(folder_path) {
+        Ok(paths) => paths,
+        Err(err) => {
+            warn!("🌌 【警示】SKIP 子目录枚举失败: {err}");
+            return;
+        }
+    };
+
+    for subdir in subdirs {
+        let dir = PhotoFileRequest {
+            path: normalize_path_string(&subdir),
+            thumbnail: String::new(),
+            is_image: false,
+            is_video: false,
+            is_directory: true,
+        };
+        emit_directory_report(app, request_id, scan_root, &dir);
+    }
+}
+
 fn emit_directory_report(
     app: &AppHandle,
     request_id: &str,
@@ -84,9 +116,7 @@ fn emit_directory_report(
             is_directory: true,
         },
     };
-    if let Ok(payload) = serde_json::to_value(&report) {
-        emit_scan_event(app, payload);
-    }
+    emit_scan_report_with_notify(app, &report);
 }
 
 /// Electron `buildDirectoryScanProgressMessage` — `currentFile` 仅当 `path && !isDirectory`
@@ -98,27 +128,6 @@ fn emit_file_progress(
     processed: usize,
     total: usize,
 ) {
-    let current_file = if !file.path.is_empty() && !file.is_directory {
-        Path::new(&file.path)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .map(String::from)
-    } else {
-        None
-    };
-
-    let notify_source = ScanWorkerNotifySource {
-        msg_type: "progress".into(),
-        error: None,
-        action: Some(ScanNotifyAction {
-            path: Some(file.path.clone()),
-            is_directory: Some(false),
-        }),
-        progress: Some(ScanNotifyProgress { processed, total }),
-        current_file,
-    };
-    emit_status_notify(app, notify_source);
-
     let report = ScanReport::File {
         request_id: request_id.to_string(),
         root_path: scan_root.to_string(),
@@ -128,33 +137,17 @@ fn emit_file_progress(
         },
         progress: ScanProgressPayload { processed, total },
     };
-    if let Ok(payload) = serde_json::to_value(&report) {
-        emit_scan_event(app, payload);
-    }
+    emit_scan_report_with_notify(app, &report);
 }
 
 fn emit_error(app: &AppHandle, request_id: &str, message: &str, action_path: Option<&str>) {
     let root_path = action_path.unwrap_or("");
-    let notify_source = ScanWorkerNotifySource {
-        msg_type: "error".into(),
-        error: Some(message.to_string()),
-        action: Some(ScanNotifyAction {
-            path: Some(root_path.to_string()),
-            is_directory: Some(true),
-        }),
-        progress: None,
-        current_file: None,
-    };
-    emit_status_notify(app, notify_source);
-
     let report = ScanReport::Error {
         request_id: request_id.to_string(),
         root_path: root_path.to_string(),
         error: message.to_string(),
     };
-    if let Ok(payload) = serde_json::to_value(&report) {
-        emit_scan_event(app, payload);
-    }
+    emit_scan_report_with_notify(app, &report);
 }
 
 fn emit_directory_complete(
@@ -162,50 +155,25 @@ fn emit_directory_complete(
     request_id: &str,
     scan_root: &str,
 ) {
-    emit_status_notify(
-        app,
-        ScanWorkerNotifySource {
-            msg_type: "complete".into(),
-            error: None,
-            action: Some(ScanNotifyAction {
-                path: Some(scan_root.to_string()),
-                is_directory: Some(true),
-            }),
-            progress: None,
-            current_file: None,
-        },
-    );
     let report = ScanReport::Complete {
         request_id: request_id.to_string(),
         root_path: scan_root.to_string(),
     };
-    if let Ok(payload) = serde_json::to_value(&report) {
-        emit_scan_event(app, payload);
-    }
+    emit_scan_report_with_notify(app, &report);
 }
 
 fn emit_file_complete(app: &AppHandle, request_id: &str, file_path: &str) {
-    emit_status_notify(
-        app,
-        ScanWorkerNotifySource {
-            msg_type: "complete".into(),
-            error: None,
-            action: Some(ScanNotifyAction {
-                path: Some(file_path.to_string()),
-                is_directory: Some(false),
-            }),
-            progress: None,
-            current_file: None,
-        },
-    );
-    emit_scan_event(
-        app,
-        json!({
-            "type": "complete",
-            "requestId": request_id,
-            "action": { "path": file_path, "isDirectory": false },
-        }),
-    );
+    let report = ScanReport::Complete {
+        request_id: request_id.to_string(),
+        root_path: file_path.to_string(),
+    };
+    if let Some(payload) = build_scan_notify_payload(&notify_source_from_file_complete(file_path))
+    {
+        let _ = app.emit("notify:status", &payload);
+    }
+    if let Ok(payload) = serde_json::to_value(&report) {
+        emit_scan_event(app, payload);
+    }
 }
 
 fn should_create_thumbnail(thumbnail_path: &str, action: &str) -> bool {
@@ -457,6 +425,7 @@ fn scan_directory_at<'a>(
                 }
             }
             restore_cached_files(app, request_id, &folder);
+            emit_immediate_subdirectory_reports(app, request_id, &folder);
             file_count = read_config_sync(&folder)
                 .ok()
                 .flatten()
@@ -497,7 +466,6 @@ pub(crate) async fn run_directory_scan(
 
     match scan_directory_at(&app, &request_id, &scan).await {
         Ok(file_count) => {
-            emit_directory_complete(&app, &request_id, &scan.path);
             info!("🌌 千里眼目录扫描完功: {}", scan.path);
             Ok(file_count)
         }

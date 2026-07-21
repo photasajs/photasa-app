@@ -20,8 +20,13 @@ import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
+import { useAppStateStore } from "@renderer/services/fangxuanling/stores/appstate-store";
 import { EventNames } from "@renderer/constants/event-names";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import {
+    collectAllFolderKeys,
+    mergeExpandedKeysForNewFolders,
+} from "@renderer/utils/folder-tree-expand";
 
 const logger = loggers.lishimin;
 
@@ -55,16 +60,37 @@ const xuanzang = useXuanzang();
 const { paths, currentFolder } = storeToRefs(preferenceStore);
 
 /**
- * Folder tree computed from weiZheng service
- * This is a computed property that returns the folder tree from the weiZheng service
- * It is used to display the folder tree in the FolderList component
+ * Folder tree — 直接绑定 Pinia appState，保证 reconcile / 扫描更新后 UI 立即刷新
  */
-const folderTree = computed(() => weiZheng.folderTree);
+const appStateStore = useAppStateStore();
+const { folderTree } = storeToRefs(appStateStore);
 
 /**
  * Expanded keys
  */
 const expandedKeys = ref<string[]>([...paths.value]);
+
+/** 跟踪已展示过的树节点，用于发现新子目录时自动展开祖先 */
+const knownFolderKeys = ref<Set<string>>(new Set(collectAllFolderKeys(folderTree.value)));
+
+watch(
+    folderTree,
+    (newTree) => {
+        const allKeys = collectAllFolderKeys(newTree);
+        const newKeys = allKeys.filter((key) => !knownFolderKeys.value.has(key));
+        if (newKeys.length === 0) {
+            return;
+        }
+
+        knownFolderKeys.value = new Set(allKeys);
+        expandedKeys.value = mergeExpandedKeysForNewFolders(
+            expandedKeys.value,
+            newKeys,
+            paths.value,
+        );
+    },
+    { deep: true },
+);
 
 /**
  * Selected keys

@@ -33,6 +33,10 @@ vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => mockTauriInvoke(...args),
 }));
 
+vi.mock("@renderer/api/env", () => ({
+    isTauri: () => true,
+}));
+
 /**
  * Helper: 创建测试用 ScanAction（IPC 契约）
  */

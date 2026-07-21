@@ -47,6 +47,42 @@ pub fn rotation_deg_from_display_matrix(data: &[u8]) -> Option<f64> {
     Some(theta.round())
 }
 
+/// 获取视频旋转角度 (0, 90, 180, 270)
+pub fn get_video_rotation(ictx: &mut ff::format::context::Input, stream_idx: usize) -> i32 {
+    if let Some(stream) = ictx.stream(stream_idx) {
+        if let Some(rotate_str) = stream.metadata().get("rotate") {
+            if let Ok(deg) = rotate_str.parse::<f64>() {
+                let norm = ((deg.round() as i32 % 360) + 360) % 360;
+                if norm != 0 {
+                    return norm;
+                }
+            }
+        }
+
+        for side_data in stream.side_data() {
+            if side_data.kind() == ff::packet::side_data::Type::DisplayMatrix {
+                if let Some(deg) = rotation_deg_from_display_matrix(side_data.data()) {
+                    let norm = ((deg.round() as i32 % 360) + 360) % 360;
+                    if norm != 0 {
+                        return norm;
+                    }
+                }
+            }
+        }
+    }
+
+    if let Some(rotate_str) = ictx.metadata().get("rotate") {
+        if let Ok(deg) = rotate_str.parse::<f64>() {
+            let norm = ((deg.round() as i32 % 360) + 360) % 360;
+            if norm != 0 {
+                return norm;
+            }
+        }
+    }
+
+    0
+}
+
 /// 约 1s 处截一帧，缩放后写入 `dst`（JPEG，与原先 ffmpeg CLI 行为对齐）
 pub fn save_video_thumbnail(src: &Path, dst: &Path, max_w: u32, max_h: u32) -> Result<(), String> {
     ensure_ffmpeg_initialized();
@@ -57,6 +93,8 @@ pub fn save_video_thumbnail(src: &Path, dst: &Path, max_w: u32, max_h: u32) -> R
         .best(MediaType::Video)
         .ok_or_else(|| "无视频流".to_string())?;
     let video_stream_index = input.index();
+
+    let rotation = get_video_rotation(&mut ictx, video_stream_index);
 
     let seek_ts = i64::from(ff::ffi::AV_TIME_BASE);
     if ictx.seek(seek_ts, std::ops::RangeFull).is_err() {
@@ -73,14 +111,28 @@ pub fn save_video_thumbnail(src: &Path, dst: &Path, max_w: u32, max_h: u32) -> R
         .video()
         .map_err(|e| e.to_string())?;
 
-    let (out_w, out_h) = fit_inside(decoder.width(), decoder.height(), max_w, max_h);
+    let (raw_w, raw_h) = (decoder.width(), decoder.height());
+    let is_swapped = rotation == 90 || rotation == 270;
+    let (eff_w, eff_h) = if is_swapped {
+        (raw_h, raw_w)
+    } else {
+        (raw_w, raw_h)
+    };
+
+    let (out_w, out_h) = fit_inside(eff_w, eff_h, max_w, max_h);
+    let (target_raw_w, target_raw_h) = if is_swapped {
+        (out_h, out_w)
+    } else {
+        (out_w, out_h)
+    };
+
     let mut scaler = ScalingContext::get(
         decoder.format(),
-        decoder.width(),
-        decoder.height(),
+        raw_w,
+        raw_h,
         Pixel::RGB24,
-        out_w,
-        out_h,
+        target_raw_w,
+        target_raw_h,
         ScaleFlags::BILINEAR,
     )
     .map_err(|e| e.to_string())?;
@@ -90,15 +142,23 @@ pub fn save_video_thumbnail(src: &Path, dst: &Path, max_w: u32, max_h: u32) -> R
 
     let save_rgb = |frame: &Video| -> Result<(), String> {
         let stride = frame.stride(0);
-        let row = out_w as usize * 3;
-        let mut packed = Vec::with_capacity(row * out_h as usize);
-        for y in 0..out_h as usize {
+        let row = target_raw_w as usize * 3;
+        let mut packed = Vec::with_capacity(row * target_raw_h as usize);
+        for y in 0..target_raw_h as usize {
             let start = y * stride;
             packed.extend_from_slice(&frame.data(0)[start..start + row]);
         }
-        let img = image::RgbImage::from_raw(out_w, out_h, packed)
+        let img = image::RgbImage::from_raw(target_raw_w, target_raw_h, packed)
             .ok_or_else(|| "RGB 缓冲区与尺寸不符".to_string())?;
-        img.save(dst).map_err(|e| e.to_string())
+
+        let final_img = match rotation {
+            90 => image::imageops::rotate90(&img),
+            180 => image::imageops::rotate180(&img),
+            270 => image::imageops::rotate270(&img),
+            _ => img,
+        };
+
+        final_img.save(dst).map_err(|e| e.to_string())
     };
 
     for (s, packet) in ictx.packets() {
@@ -120,4 +180,33 @@ pub fn save_video_thumbnail(src: &Path, dst: &Path, max_w: u32, max_h: u32) -> R
     }
 
     Err("未能解码出视频帧".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fit_inside_portrait_and_landscape() {
+        // 横屏视频 (1920x1080) -> 256x144
+        assert_eq!(fit_inside(1920, 1080, 256, 256), (256, 144));
+
+        // 竖屏视频 (1080x1920) -> 144x256
+        assert_eq!(fit_inside(1080, 1920, 256, 256), (144, 256));
+
+        // 正方形 (1000x1000) -> 256x256
+        assert_eq!(fit_inside(1000, 1000, 256, 256), (256, 256));
+    }
+
+    #[test]
+    fn test_rotation_deg_from_display_matrix() {
+        // 90度 DisplayMatrix 样例
+        let matrix_90: [i32; 9] = [0, 65536, 0, -65536, 0, 0, 0, 0, 1073741824];
+        let mut bytes = Vec::new();
+        for val in matrix_90 {
+            bytes.extend_from_slice(&val.to_le_bytes());
+        }
+        let rot = rotation_deg_from_display_matrix(&bytes);
+        assert_eq!(rot, Some(-90.0));
+    }
 }

@@ -147,7 +147,7 @@ matters:
         syncStrategy: "replace"
         storeName: "appState"
         autoSync: true
-        description: "更新folderTree - 从response.data.tree提取数组，替换appstate.folderTree"
+        description: "更新folderTree - 从 response.data.folderTree 提取数组，替换 appstate.folderTree"
 
 # 特殊规则（将来扩展）
 specialRules:

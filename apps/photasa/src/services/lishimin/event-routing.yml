@@ -37,23 +37,6 @@ qizou_routes:
                   priority: "normal"
               description: "路径添加完成后，下旨魏征添加根节点到folderTree"
 
-    # ✅ RFC 0048 v3 Phase 4: 尉迟恭报告扫描任务已添加 → 李世民协调魏征批量添加路径
-    # 注意：yuChiGong.addScanTasks() 已在 Phase 4 中删除（违反 Store as SSOT 原则）
-    # 新流程：所有扫描任务添加必须通过李世民圣旨系统触发（Qizou-Shengzhi-FangXuanLing）
-    # 魏征会批量处理路径数组，智能判断每个路径的状态并采取相应行动
-    scan_task_added:
-        - when:
-              from: "尉迟恭"
-              type: "report"
-          then:
-              service: "魏征"
-              shengzhi:
-                  command: "add_paths"
-                  content:
-                      paths: "{{qizou.content.paths}}"
-                  priority: "normal"
-              description: "扫描任务批量添加后，下旨魏征批量添加路径到文件夹树（每个路径都会智能检查状态并处理）"
-
     # 褚遂良报告路径移除完成 → 李世民协调两件事
     remove_path_completed:
         # 圣旨1：尉迟恭清理扫描队列（移除监控文件夹时，清理该路径及其所有子目录的未扫描任务）
@@ -81,7 +64,7 @@ qizou_routes:
                   priority: "normal"
               description: "路径移除完成后，下旨魏征移除根节点"
 
-    # ✅ 尉迟恭报告扫描开始 → 李世民下旨虞世南更新状态栏显示扫描进行中
+    # ✅ 尉迟恭报告扫描开始 → 虞世南状态栏 + 魏征立即把扫描路径写入 folderTree
     scan_started:
         - when:
               from: "尉迟恭"
@@ -96,6 +79,18 @@ qizou_routes:
                       status: "progress"
                   priority: "normal"
               description: "尉迟恭报告扫描开始后，下旨虞世南更新状态栏显示"
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_paths"
+                  content:
+                      paths:
+                          - "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "扫描开始即把当前目录加入 folderTree，不等 scan_completed"
 
     # ✅ RFC 0136: 袁天罡报告发现直属子目录 → 李世民下旨尉迟恭持久化准入并排入同一 PQueue
     scan_directory_discovered:
@@ -111,6 +106,19 @@ qizou_routes:
                       source: "discovered"
                   priority: "normal"
               description: "袁天罡报告发现直属子目录后，下旨尉迟恭添加扫描任务到队列"
+        # ✅ RFC 0136 方案 A: 发现即更新 folder tree（不等子目录 scan_completed）
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_paths"
+                  content:
+                      paths:
+                          - "{{qizou.content.directoryPath}}"
+                  priority: "normal"
+              description: "袁天罡发现直属子目录后，下旨魏征立即加入 folderTree"
 
     # ✅ RFC 0057 Phase 3: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
     scan_progress:

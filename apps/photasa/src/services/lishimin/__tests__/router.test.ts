@@ -338,6 +338,71 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 }, 20);
             });
         });
+
+        it("RFC 0136: scan_directory_discovered 应同时下旨尉迟恭与魏征", async () => {
+            const weizhengService = new MockService("魏征");
+            duruhui.connect(weizhengService);
+
+            const testQizou: Qizou = {
+                matter: "scan_directory_discovered",
+                content: {
+                    directoryPath: "/album/sub",
+                    rootPath: "/album",
+                },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: { type: "report" },
+            };
+
+            (router as any).qizouBus.emit("qizou", testQizou);
+
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    expect(yuchiGongService.receivedShengzhis).toHaveLength(1);
+                    expect(yuchiGongService.receivedShengzhis[0].command).toBe("add_scan_task");
+                    expect(
+                        (yuchiGongService.receivedShengzhis[0].content as Record<string, unknown>)
+                            .path,
+                    ).toBe("/album/sub");
+
+                    expect(weizhengService.receivedShengzhis).toHaveLength(1);
+                    expect(weizhengService.receivedShengzhis[0].command).toBe("add_paths");
+                    const paths = (
+                        weizhengService.receivedShengzhis[0].content as Record<string, unknown>
+                    ).paths;
+                    expect(Array.isArray(paths)).toBe(true);
+                    expect(paths).toContain("/album/sub");
+                    resolve();
+                }, 20);
+            });
+        });
+
+        it("RFC 0136: scan_started 应下旨魏征立即 add_paths（不等 scan_completed）", async () => {
+            const weizhengService = new MockService("魏征");
+            duruhui.connect(weizhengService);
+
+            const testQizou: Qizou = {
+                matter: "scan_started",
+                content: { path: "/Volumes/SUCAI/Test/2026" },
+                from: "尉迟恭",
+                timestamp: Date.now(),
+                metadata: { type: "report" },
+            };
+
+            (router as any).qizouBus.emit("qizou", testQizou);
+
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    expect(weizhengService.receivedShengzhis).toHaveLength(1);
+                    expect(weizhengService.receivedShengzhis[0].command).toBe("add_paths");
+                    const paths = (
+                        weizhengService.receivedShengzhis[0].content as Record<string, unknown>
+                    ).paths;
+                    expect(paths).toEqual(["/Volumes/SUCAI/Test/2026"]);
+                    resolve();
+                }, 20);
+            });
+        });
     });
 
     describe("圣旨生成测试", () => {

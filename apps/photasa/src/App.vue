@@ -45,6 +45,8 @@ import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
+import { useWeiZheng } from "@renderer/composables/useWeiZheng";
+import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { isTauri } from "./api/env";
 import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
 import { notification } from "@renderer/services/notification-manager";
@@ -73,8 +75,8 @@ const qinQiong = useQinQiong();
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
 
-// ✅ RFC 0042: 使用尉迟恭获取扫描队列，不直接访问store
-const scanningFolder = computed(() => yuChiGong.scanningQueue);
+// RFC 0042 + 0144：Pinia storeToRefs 保证队列 UI 响应磁盘恢复与 matter-sync
+const { queue: scanningFolder } = storeToRefs(useScanningStore());
 
 // 使用对话框管理器统一管理对话框状态
 const showImportDialog = ref(false);
@@ -214,6 +216,7 @@ async function detectRecoverableImports(): Promise<void> {
 }
 
 const chuSuiLiang = useChuSuiLiang();
+const weiZheng = useWeiZheng();
 
 onMounted(async () => {
     // 应用启动时全局初始化菜单栏数据（国际化）
@@ -514,8 +517,8 @@ window.api?.onScanQueueAdd((operations: FileOperation[]) => {
 }
 
 .system-icon {
-    height: 1.5ren;
-    width: 1.5rem;
+    height: 18px;
+    width: 18px;
 }
 
 /* 全局滚动条样式 - 使用主题变量 */

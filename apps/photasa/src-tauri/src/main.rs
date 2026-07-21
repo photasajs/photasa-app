@@ -16,7 +16,7 @@ use commands::update_periodic::UpdatePeriodicHandle;
 use commands::{
     config, directory, engine_status, extract_metadata, import_execute, import_legacy,
     import_preview, import_scan_directories, import_session_store, log_viewer, menu, path,
-    platform, scan_queue, shell, splash_bridge, stubs, thumbnail, update, watch, window,
+    platform, scan_queue, shell, siming, splash_bridge, stubs, thumbnail, update, watch, window,
 };
 use services::{tianshu::resolve_workflows_dir, TianshuService};
 use std::collections::HashMap;
@@ -236,6 +236,8 @@ fn main() {
             scan_queue::scan_queue_add_actions,
             scan_queue::scan_queue_remove_action,
             scan_queue::scan_queue_update_action_status,
+            siming::siming_update_folder_tree,
+            siming::siming_restore_app_state,
             thumbnail::create_thumbnail,
             thumbnail::remove_thumbnail,
             // 系统菜单

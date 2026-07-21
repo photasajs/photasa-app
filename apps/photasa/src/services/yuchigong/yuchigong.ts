@@ -12,9 +12,10 @@ import {
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 // ✅ RFC 0048 v3 Phase 4: QizouMatters 导入已删除（随persistToStore()一起删除）
+import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import type { FileOperation, ScanAction } from "@photasa/common";
-import { createScanQueueItem, type ScanQueueItem } from "@renderer/stores/scanning-types";
-import { loggers, mapFileOperationToScanAction, shouldIgnorePhotasaPath } from "@photasa/common";
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
+import { loggers, mapFileOperationToScanAction } from "@photasa/common";
 import { normalizePath } from "@renderer/utils/path";
 import {
     calculateTaskAge,
@@ -23,7 +24,6 @@ import {
     calculateNextRetryCount,
     getTaskStatusDisplayText,
 } from "./task-helpers";
-import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
@@ -150,51 +150,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 parentDir = res.data;
             }
 
-            // 5. 目录操作 - 扫描子文件夹（递归 + ✅ RFC 0048 v3: 批量持久化）
-            if (operationType === "directory") {
-                const res = await this.fangXuanLingService.processZouzhe({
-                    department: GUANYUAN_NAMES.YU_CHI_GONG,
-                    matter: ZOUZHE_MATTERS.SCAN_SUBFOLDERS,
-                    content: { folderPath: path },
-                    priority: ZOUZHE_PRIORITIES.NORMAL,
-                });
-                const rawSubfolders: string[] = res.data || [];
-                const subfolders = rawSubfolders.filter((subfolder: string) => {
-                    const name = subfolder.split("/").pop() || "";
-                    return !shouldIgnorePhotasaPath(subfolder) && !name.startsWith(".");
-                });
-                if (subfolders.length > 0) {
-                    logger.info(
-                        `🛡️ 尉迟恭：发现 ${subfolders.length} 个子文件夹，持久化到Store并添加到p-queue`,
-                    );
-
-                    // ✅ RFC 0048 v3: 批量创建pending任务到Store
-                    const subfolderActions: ScanAction[] = subfolders.map((subfolder: string) => ({
-                        path: subfolder,
-                        action,
-                        thumbnailSize,
-                        operationType: "directory" as const,
-                        source: "auto" as const, // 自动发现的子文件夹
-                        timestamp: Date.now(),
-                    }));
-
-                    await this.createTasks(subfolderActions);
-
-                    // 添加子文件夹到 p-queue（会自动按序执行）
-                    for (const subfolder of subfolders) {
-                        this.scanQueue
-                            .add(() =>
-                                this.executeScan(subfolder, action, operationType, thumbnailSize),
-                            )
-                            .catch((error) => {
-                                // ✅ 捕获递归扫描错误
-                                logger.error(`🛡️ 尉迟恭：子文件夹扫描失败 ${subfolder}`, error);
-                            });
-                    }
-                }
-            }
-
-            // 6. 执行扫描
+            // 5. 执行扫描（子目录发现由千里眼 ScanDirectoryReport → scan_directory_discovered，RFC 0136）
             await this.fangXuanLingService.processZouzhe({
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.SCAN_PHOTOS,
@@ -207,10 +163,10 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             });
 
-            // 7. ✅ RFC 0048 v3: 完成即删除（无completed状态）
+            // 6. ✅ RFC 0048 v3: 完成即删除（无completed状态）
             await this.deleteTask(path);
 
-            // 8. 启奏完成
+            // 7. 启奏完成
             this.emitQizou("scan_completed", {
                 path,
                 parentDir,
@@ -291,9 +247,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
         if (scanActions.length === 0) return;
 
         logger.info(`🛡️ 尉迟恭：批量创建pending任务 ${scanActions.length}个`);
-        this.ensureRuntimeTasks(scanActions);
 
-        // 通过Zouzhe批量添加到Store
         const addActionsZouzhe: Zouzhe = {
             department: GUANYUAN_NAMES.YU_CHI_GONG,
             matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
@@ -309,18 +263,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
         }
 
         logger.info(`🛡️ 尉迟恭：批量创建任务成功 ${scanActions.length}个`);
-    }
-
-    private ensureRuntimeTasks(scanActions: ScanAction[]): void {
-        const scanningStore = useScanningStore();
-        for (const scanAction of scanActions) {
-            if (scanningStore.isInQueue(scanAction.path)) continue;
-            scanningStore.addToQueue(createScanQueueItem(scanAction));
-        }
-    }
-
-    private removeRuntimeTask(path: string): void {
-        useScanningStore().removeFromQueue(path);
     }
 
     /**
@@ -395,7 +337,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
         };
 
         const response = await this.fangXuanLingService.processZouzhe(removeZouzhe);
-        this.removeRuntimeTask(path);
 
         if (!response.approved) {
             logger.error(`🛡️ 尉迟恭：删除任务失败 ${path} - ${response.instruction}`);
@@ -536,14 +477,21 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     ? "auto"
                     : (content.source as "user" | "auto") || "user";
 
-            // ✅ RFC 0143: 去重——已在队列则跳过，不移除再入队
+            // scan 去重；rescan 先 REMOVE 再 ADD（对齐 watch 路径，避免 Rust add_actions 静默跳过）
             if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
-                logger.warn(`🛡️ 尉迟恭：扫描任务已存在，去重跳过添加 ${normalizedPath}`);
-                this.emitQizou("scan_task_duplicate", {
-                    shengzhiId: shengzhi.id,
-                    path: normalizedPath,
-                });
-                return;
+                if (action === "rescan") {
+                    await this.removeScanTask(normalizedPath, { force: true });
+                } else {
+                    logger.warn(`🛡️ 尉迟恭：扫描任务已存在，去重跳过添加 ${normalizedPath}`);
+                    this.emitQizou("scan_task_duplicate", {
+                        shengzhiId: shengzhi.id,
+                        path: normalizedPath,
+                    });
+                    return;
+                }
+            } else if (action === "rescan") {
+                // Pinia 空但 scanning.json 可能仍有条目
+                await this.removeScanTask(normalizedPath, { force: true });
             }
 
             await this.scheduleDirectoryScan(normalizedPath, action, source);
@@ -863,7 +811,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
     // 原因：违反 "Store as SSOT" 原则，绕过了 Qizou-Shengzhi-FangXuanLing 标准流程
     // 替代方案：所有扫描任务添加必须通过李世民圣旨系统触发
 
-    async removeScanTask(path: string): Promise<void> {
+    async removeScanTask(path: string, options?: { force?: boolean }): Promise<void> {
         // 路径参数验证
         if (!path || typeof path !== "string") {
             throw new Error("路径参数无效：必须是非空字符串");
@@ -877,8 +825,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
         logger.info(`🛡️ 尉迟恭：移除扫描任务 ${path}`);
 
         try {
-            // 队列检查（可选优化）
-            if (!this.fangXuanLingService.scanning.isInQueue(path)) {
+            // rescan 须强制落盘移除：Pinia 可能与 scanning.json 不同步
+            if (!options?.force && !this.fangXuanLingService.scanning.isInQueue(path)) {
                 logger.warn(`🛡️ 尉迟恭：路径不在队列中，静默返回: ${path}`);
                 return;
             }
@@ -918,11 +866,8 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
         logger.info(`🛡️ 尉迟恭：用户请求重新扫描 ${normalizedPath}`);
 
-        // ✅ RFC 0143 dedup: 已在队列中则跳过，不移除再重加
-        if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
-            logger.warn(`🛡️ 尉迟恭：重新扫描任务已在队列中，去重跳过 ${normalizedPath}`);
-            return;
-        }
+        // 强制 REMOVE 再入队，避免磁盘去重导致 rescan 不落盘
+        await this.removeScanTask(normalizedPath, { force: true });
 
         await this.scheduleDirectoryScan(normalizedPath, "rescan", "user");
     }
@@ -948,7 +893,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                         logger.warn(`🛡️ 尉迟恭：watch 扫描任务已存在，跳过 ${normalizedPath}`);
                         continue;
                     }
-                    await this.removeScanTask(normalizedPath);
+                    await this.removeScanTask(normalizedPath, { force: true });
                 }
 
                 await this.scheduleScanAction({

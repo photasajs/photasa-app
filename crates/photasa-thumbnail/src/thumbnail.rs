@@ -145,10 +145,13 @@ fn make_raw_placeholder_thumbnail(
 // ============================================================
 
 fn make_image_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> ThumbnailResponse {
-    let img = match image::open(src) {
+    let raw_img = match image::open(src) {
         Ok(i) => i,
         Err(e) => return ThumbnailResponse::err(format!("打开图片失败: {e}")),
     };
+
+    let orientation = crate::exif::get_exif_orientation_from_file(src).unwrap_or(1);
+    let img = crate::exif::apply_orientation(raw_img, orientation);
 
     let w = req.width.unwrap_or(256);
     let h = req.height.unwrap_or(256);
@@ -175,7 +178,10 @@ fn make_image_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> Thumbna
             let _ = std::fs::create_dir_all(parent);
         }
         // 预览图使用更大尺寸（1024x1024）
-        let preview = image::open(src).ok().map(|i| i.thumbnail(1024, 1024));
+        let preview = image::open(src).ok().map(|i| {
+            let oriented = crate::exif::apply_orientation(i, orientation);
+            oriented.thumbnail(1024, 1024)
+        });
         if let Some(p) = preview {
             let _ = p.save(preview_path);
         }
@@ -239,17 +245,22 @@ fn make_heic_thumbnail(src: &str, dst: &str, req: &ThumbnailRequest) -> Thumbnai
         }
     };
 
+    // 读取并应用 EXIF Orientation
+    let orientation = crate::exif::get_exif_orientation_from_file(src).unwrap_or(1);
+    let oriented_img = crate::exif::apply_orientation(dyn_img, orientation);
+
     // 复用 make_image_thumbnail 的缩放逻辑
     let w = req.width.unwrap_or(256);
     let h = req.height.unwrap_or(256);
+    let (ow, oh) = (oriented_img.width(), oriented_img.height());
     let resized = if req.without_enlargement.unwrap_or(true) {
-        if img_width <= w && img_height <= h {
-            dyn_img
+        if ow <= w && oh <= h {
+            oriented_img
         } else {
-            dyn_img.thumbnail(w, h)
+            oriented_img.thumbnail(w, h)
         }
     } else {
-        dyn_img.thumbnail(w, h)
+        oriented_img.thumbnail(w, h)
     };
 
     if let Err(e) = resized.save(dst) {

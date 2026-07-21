@@ -2,9 +2,85 @@
 //!
 //! 规格参照 `packages/@photasa/scan/src/status/build-notify-payload.ts`；Tauri **不** import TS 包。
 
-use photasa_types::{NotifyPayload, ScanNotifyProgress, ScanWorkerNotifySource};
+use std::path::Path;
+
+use photasa_types::{
+    NotifyPayload, ScanNotifyAction, ScanNotifyProgress, ScanReport, ScanWorkerNotifySource,
+};
 
 const SCAN_NOTIFY_DOMAIN: &str = "scan";
+
+fn basename_from_path(path: &str) -> Option<String> {
+    Path::new(path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .map(String::from)
+}
+
+/// 从 RFC 0136 `ScanReport` 派生 `ScanWorkerNotifySource`（RFC 0111 桥接入口）
+///
+/// 目录报告不含 progress 语义，不产出状态栏 notify。
+pub fn notify_source_from_scan_report(report: &ScanReport) -> Option<ScanWorkerNotifySource> {
+    match report {
+        ScanReport::File { file, progress, .. } => {
+            let current_file = if !file.path.is_empty() && !file.is_directory {
+                basename_from_path(&file.path)
+            } else {
+                None
+            };
+            Some(ScanWorkerNotifySource {
+                msg_type: "progress".into(),
+                error: None,
+                action: Some(ScanNotifyAction {
+                    path: Some(file.path.clone()),
+                    is_directory: Some(false),
+                }),
+                progress: Some(ScanNotifyProgress {
+                    processed: progress.processed,
+                    total: progress.total,
+                }),
+                current_file,
+            })
+        }
+        ScanReport::Directory { .. } => None,
+        ScanReport::Complete { root_path, .. } => Some(ScanWorkerNotifySource {
+            msg_type: "complete".into(),
+            error: None,
+            action: Some(ScanNotifyAction {
+                path: Some(root_path.clone()),
+                is_directory: Some(true),
+            }),
+            progress: None,
+            current_file: None,
+        }),
+        ScanReport::Error {
+            root_path, error, ..
+        } => Some(ScanWorkerNotifySource {
+            msg_type: "error".into(),
+            error: Some(error.clone()),
+            action: Some(ScanNotifyAction {
+                path: Some(root_path.clone()),
+                is_directory: Some(true),
+            }),
+            progress: None,
+            current_file: None,
+        }),
+    }
+}
+
+/// 单文件任务完成时的 notify 源（`is_directory: false`）
+pub fn notify_source_from_file_complete(file_path: &str) -> ScanWorkerNotifySource {
+    ScanWorkerNotifySource {
+        msg_type: "complete".into(),
+        error: None,
+        action: Some(ScanNotifyAction {
+            path: Some(file_path.to_string()),
+            is_directory: Some(false),
+        }),
+        progress: None,
+        current_file: None,
+    }
+}
 
 /// 将 worker 源消息转为 notify payload；无需通知时返回 `None`
 pub fn build_scan_notify_payload(source: &ScanWorkerNotifySource) -> Option<NotifyPayload> {
@@ -304,5 +380,63 @@ mod tests {
             current_file: None,
         })
         .is_none());
+    }
+
+    #[test]
+    fn notify_source_from_file_report_matches_progress_contract() {
+        let report = ScanReport::File {
+            request_id: "req-1".into(),
+            root_path: "/album".into(),
+            file: photasa_types::ScanFilePayload {
+                path: "/album/IMG_001.jpg".into(),
+                is_directory: false,
+            },
+            progress: photasa_types::ScanProgressPayload {
+                processed: 2,
+                total: 5,
+            },
+        };
+        let source = notify_source_from_scan_report(&report).expect("file report notify");
+        assert_eq!(source.msg_type, "progress");
+        assert_eq!(source.current_file.as_deref(), Some("IMG_001.jpg"));
+        let progress = source.progress.expect("progress");
+        assert_eq!(progress.processed, 2);
+        assert_eq!(progress.total, 5);
+    }
+
+    #[test]
+    fn notify_source_from_directory_report_is_none() {
+        let report = ScanReport::Directory {
+            request_id: "req-2".into(),
+            root_path: "/album".into(),
+            directory: photasa_types::ScanDirectoryPayload {
+                path: "/album/sub".into(),
+                is_directory: true,
+            },
+        };
+        assert!(notify_source_from_scan_report(&report).is_none());
+    }
+
+    #[test]
+    fn notify_source_from_terminal_complete_and_error() {
+        let complete = ScanReport::Complete {
+            request_id: "req-3".into(),
+            root_path: "/album".into(),
+        };
+        let complete_source = notify_source_from_scan_report(&complete).expect("complete");
+        assert_eq!(complete_source.msg_type, "complete");
+        assert_eq!(
+            complete_source.action.as_ref().and_then(|a| a.path.as_deref()),
+            Some("/album")
+        );
+
+        let error = ScanReport::Error {
+            request_id: "req-4".into(),
+            root_path: "/album".into(),
+            error: "boom".into(),
+        };
+        let error_source = notify_source_from_scan_report(&error).expect("error");
+        assert_eq!(error_source.msg_type, "error");
+        assert_eq!(error_source.error.as_deref(), Some("boom"));
     }
 }

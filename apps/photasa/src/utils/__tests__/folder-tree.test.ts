@@ -1,4 +1,10 @@
-import { addRoot, removeRoot, addFolderToTree, cleanDataNode } from "../folder-tree";
+import {
+    addRoot,
+    removeRoot,
+    addFolderToTree,
+    cleanDataNode,
+    sanitizeFolderTree,
+} from "../folder-tree";
 import type { FolderNode } from "@photasa/common";
 import { describe, it, expect, beforeAll } from "vitest";
 
@@ -146,5 +152,101 @@ describe("Folder Tree", () => {
         const roots: FolderNode[] = [];
         removeRoot(roots, "root1");
         expect(roots.length).toBe(0);
+    });
+
+    it("RFC 0136: 应在 /Volumes 根下添加 2026 子目录", () => {
+        const roots: FolderNode[] = [];
+        addRoot(roots, "/Volumes/SUCAI/Test");
+        addFolderToTree(roots, {
+            path: "/Volumes/SUCAI/Test/2026",
+            thumbnail: "",
+            isVideo: false,
+        });
+        expect(roots[0].children?.[0]?.key).toBe("/Volumes/SUCAI/Test/2026");
+        expect(roots[0].children?.[0]?.title).toBe("2026");
+    });
+
+    it("同一子目录重复添加不应产生重复兄弟节点", () => {
+        const roots: FolderNode[] = [];
+        addRoot(roots, "/Volumes/SUCAI/Test");
+        const photo = { path: "/Volumes/SUCAI/Test/2018", thumbnail: "", isVideo: false };
+        addFolderToTree(roots, photo);
+        addFolderToTree(roots, photo);
+        addFolderToTree(roots, photo);
+        expect(roots[0].children?.length).toBe(1);
+        expect(roots[0].children?.[0]?.key).toBe("/Volumes/SUCAI/Test/2018");
+    });
+
+    it("Tauri 异步 mergePath 下仍应正确去重（buildFolderKey 不得用 window.api）", () => {
+        (globalThis as Record<string, unknown>).window = {
+            api: {
+                splitPath: (path: string) => path.split("/").filter(Boolean),
+                mergePath: () => Promise.resolve("WRONG"),
+                getSeparator: () => "/",
+                normalizePath: (path: string) => path,
+            },
+        };
+        const roots: FolderNode[] = [];
+        addRoot(roots, "/Volumes/SUCAI/Test");
+        const subs = ["2018", "2020", "2021", "2023", "2025", "2026"];
+        for (const year of subs) {
+            addFolderToTree(roots, {
+                path: `/Volumes/SUCAI/Test/${year}`,
+                thumbnail: "",
+                isVideo: false,
+            });
+        }
+        for (const year of subs) {
+            addFolderToTree(roots, {
+                path: `/Volumes/SUCAI/Test/${year}`,
+                thumbnail: "",
+                isVideo: false,
+            });
+        }
+        expect(roots[0].children?.length).toBe(subs.length);
+    });
+
+    it("sanitizeFolderTree 应合并重复兄弟节点", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI/Test",
+                title: "/Volumes/SUCAI/Test",
+                children: [
+                    { key: "/Volumes/SUCAI/Test/2018", title: "2018", children: [] },
+                    { key: "/Volumes/SUCAI/Test/2018", title: "2018", children: [] },
+                    { key: "/Volumes/SUCAI/Test/2020", title: "2020", children: [] },
+                    { key: "/Volumes/SUCAI/Test/2020", title: "2020", children: [] },
+                ],
+            },
+        ];
+        sanitizeFolderTree(roots);
+        expect(roots[0].children?.length).toBe(2);
+    });
+
+    it("sanitizeFolderTree 应合并 Promise 序列化 {} 与全路径 2018", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI/Test",
+                title: "/Volumes/SUCAI/Test",
+                children: [
+                    { key: {} as unknown as string, title: "2018", children: [] },
+                    {
+                        key: "/Volumes/SUCAI/Test/2018",
+                        title: "2018",
+                        children: [
+                            {
+                                key: "/Volumes/SUCAI/Test/2018/20180901",
+                                title: "20180901",
+                                children: [],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+        sanitizeFolderTree(roots);
+        expect(roots[0].children?.length).toBe(1);
+        expect(roots[0].children?.[0]?.key).toBe("/Volumes/SUCAI/Test/2018");
+        expect(roots[0].children?.[0]?.children?.length).toBe(1);
     });
 });

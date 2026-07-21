@@ -1,11 +1,11 @@
 # RFC 0136: Tauri persisted queue scan pipeline
 
 - **Start Date**: 2026-07-18
-- **Last updated**: 2026-07-19
-- **Status**: Draft
+- **Last updated**: 2026-07-21
+- **Status**: 🔨 **Partial** — Rust 扫描管线 + 队列持久化（0144）+ `scan_directory_discovered` 路由 ✅；**renderer folder tree 与贞观边界未收口** ❌（见 §2026-07-21 Postmortem、§Known violations、§Folder tree invariants）
 - **Priority**: P1e
 - **Area**: Photasa / Tauri scan queue / scan pipeline / scan UI
-- **Depends on**: [0117](./completed/0117-tauri-scan-pipeline-parity.md), [0132](./completed/0132-tauri-photasa-scan-crate.md), [0133](./completed/0133-tauri-photasa-watch-crate.md), [0138](./completed/0138-tauri-photasa-config-crate.md)（已完成，`photasa-config::add_photo_to_folder_list` 可用）, [0111](./0111-tauri-scan-notify-status-bridge.md)（状态栏桥接需同步改造，见 Rust worker and IPC 章节）
+- **Depends on**: [0117](./0117-tauri-scan-pipeline-parity.md), [0132](./0132-tauri-photasa-scan-crate.md), [0133](./0133-tauri-photasa-watch-crate.md), [0138](./0138-tauri-photasa-config-crate.md), [0111](./0111-tauri-scan-notify-status-bridge.md)
 - **Related**: RFC 0137（`window.api` staged removal；本 RFC 不定义 wrapper）
 - **Path**: `.spec/rfc/0136-tauri-scan-runtime-contract.md`
 
@@ -101,6 +101,8 @@ Tauri application composes independent crates into one scan pipeline.
 | 树节点更新                           | **魏征**（已处理文件投影之后）                                                                                                        |
 
 **房玄龄持久化路径不经 zouwu/Tianshu workflow，直调 Rust command。** `zouwu-core`/`zouwu-builtin` 是 Electron `TaiyiEngine` 的 Rust 移植，价值在于给 preload 隔离的 renderer 一个跨多 engine 编排的声明式 YAML 入口（RFC 0107 preferences/config/taiyi/siming/taibaijinxing 走这条路，仍在用，不删）。Tauri 扫描队列没有 preload 边界，尉迟恭/房玄龄之间是同进程 Rust 调用，不需要 YAML 模板变量插值这层（`{{steps.xxx}}` 本身是 0048 postmortem 记录过的真实故障源之一）。`add_scan_action`/`update_scan_action_status` 等队列持久化步骤在 Tauri 里必须是普通 Rust 函数，不得新建或复用 `.zouwu` 工作流文件。
+
+**⚠️ 2026-07-20 补记**：司命 folder tree 持久化曾走 zouwu 双轨；[RFC 0145](./completed/0145-tauri-siming-adapter-retirement.md) ✅ 已退场至 `photasa-folder-tree` + `siming-bridge` 单路径。
 
 ### 一条目录任务转手（完整链）
 
@@ -415,6 +417,45 @@ RFC 0048（贞观权威设计）确认：扫描完成不是终点，文件夹树
 
 `YuChiGong` 不得直接调用 `addFolderPath`；魏征不得订阅原始扫描报告或队列事件——都必须经李世民路由，理由同 Golden Rule 表格的"禁止承担"列。
 
+### 2026-07-20 复核发现：新发现子目录不会立即出现在 folder tree
+
+**用户报告的现象**：扫描时能看到新文件夹被发现（进入队列），但 UI 文件夹树没有更新。
+
+**已确认的实现现状**（读源码核实，非猜测）：
+
+1. `scan_runner.rs` 目录分流已实现（`emit_directory_report`，`ScanReport::Directory`），`yuantiangang.ts::handleQianliyanEvent` 已正确处理 `type === "directory"` 分支，emit QiZou `scan_directory_discovered`。
+2. `event-routing.yml:101-113` 的 `scan_directory_discovered` 路由**只下旨尉迟恭**（`add_scan_task`，把子目录排入 PQueue），**没有同时下旨魏征更新 `folderTree`**。
+3. `yuchigong.ts:214`（`executeScan` 完成时）emit 的 `scan_completed` payload 是 `{ path, parentDir, operationType }`——`path` 只是**当前扫描完的这一个目录自己**，不包含"本次扫描过程中新发现的子目录列表"。`event-routing.yml:265` 的 `scan_completed` 路由把这个单一 `path` 塞进魏征 `add_paths` 的 `paths` 数组，只会把目录自己加进树。
+
+**结论**：新发现的子目录要出现在 folder tree，必须等**子目录自己**被 PQueue 取出、扫描、完成，触发它自己的 `scan_completed`——这是异步且有排队延迟的。"发现"和"出现在树上"之间存在真实的、用户可感知的时间窗口。
+
+**已定案：方案 A，发现即更新**（2026-07-20 决定）。`scan_directory_discovered` 路由在下旨尉迟恭排队的**同时**，新增一条同 QiZou 下旨魏征把该路径加入树（乐观更新，子目录此时还没扫描，树节点暂无内容/缩略图，属预期行为，不是 bug）。
+
+**具体改动**：
+
+1. `event-routing.yml` 的 `scan_directory_discovered` 规则（line 101-113）从单条 `then` 改为该 QiZou 触发两条 Shengzhi（一个 QiZou 可以路由给多个目标，0048 postmortem 已有先例：一个 `scan_completed` 同时触发魏征+虞世南）：
+    - 现有：下旨尉迟恭 `add_scan_task`（不变）。
+    - 新增：下旨魏征 `add_paths`，`content.paths: ["{{qizou.content.directoryPath}}"]`（复用现有 `add_paths`/`handleAddPaths` 命令，不新增魏征方法）。
+2. **失败回撤**：子目录扫描失败（`YuChiGong` 标记该任务 `failed`）时，树节点**不撤回**——乐观更新只保证"发现了就先显示"，失败态由 `ScanQueueDialog` 的 `failed: task path, error, retry state` 投影单独呈现（用户在扫描队列面板能看到这个路径失败，树上节点保留，允许用户手动重试/移除，行为与"手动添加了一个后来发现无法访问的文件夹"一致，不需要额外的自动撤回机制）。
+
+3. **去重（规范要求 — 2026-07-21 更正）**：~~已核实幂等，不需要额外去重逻辑~~ **该结论错误，已撤销。**
+
+    **错误核实（2026-07-20）**：在 vitest 中 mock 了**同步** `window.api.mergePath` 后读 `addFolderToTree`/`traverseTree`，未在 Tauri 运行时验证。生产里 `buildFolderKey` 曾依赖 `mergePath` → **返回 `Promise`** → 子节点 `key` 非 string → `JSON.stringify` 落盘为 `key: {}` → 与全路径节点并存 → UI 重复兄弟（如两个 `2018`）。
+
+    **规范不变量（实现必须满足）**：
+    - 兄弟节点在**同一父节点下**按**规范化全路径** `canonicalFolderPath(key)` 唯一；`key` 禁止为 object / Promise / 裸段名（`"2018"`）与全路径（`"/Volumes/.../2018"`）混用。
+    - `buildFolderKey` / 树路径拼接**禁止**调用 `window.api.mergePath`（Tauri 下可为 async）。须用纯同步 `joinFolderSegment`（或等价实现）。
+    - `addFolderToTree` / `mergeDiscoveredPathsIntoTree` 对**同一路径**重复调用必须幂等（兄弟数量不增）。
+    - 每次写 `folderTree` 持久化前须 `sanitizeFolderTree`（合并同路径兄弟、用 `title` 恢复 `{}` 等脏 key）——**临时措施**；收口后仅保留单写路径 + 正确 key 生成，可再评估是否删除。
+    - 自动化测试须包含：**无** `window.api` 或 **`mergePath` 返回 `Promise`** 的用例；同批路径 merge **两次/三次**兄弟数不变；可选 golden：`photasa.json` 含 `key: {}` 的 fixture。
+
+    **多入口写树（当前违规，须删除至单路径）**：合法写树仅经李世民圣旨 → 魏征 `add_paths` / `add_root` / …。下列为 **RFC 未授权** 且与千里眼发现重复，属待删遗留：
+    - 尉迟恭 `executeScan` 内 `SCAN_SUBFOLDERS` + `SCAN_TASK_ADDED` → `add_paths`
+    - 魏征 `reconcileTreeWithWatchPaths` / `listImmediateSubFolders`（直连 `sub_folders`，绕过袁天罡）
+    - 启动双次 reconcile（`initializeAppState` + `App.vue syncFolderTreeWithWatchPaths`）
+
+**设计已锁定**：方案 A（发现即更新）——**仅** `scan_directory_discovered` + `scan_started` / `scan_completed` 路由写树。Implementation 须**删除**上列多入口后再标 ✅。
+
 ## UI
 
 `ScanQueueDialog` reads `useYuChiGong().scanningQueue`, backed by `scanningStore` projection.
@@ -437,32 +478,71 @@ UI consumes processed-file projection. It does not consume raw scanner reports, 
 6. PQueue has one current task; Rust worker has one current scan.
 7. One request has exactly one pipeline terminal result.
 8. UI shows durable queue state and processed-file progress only.
-9. Pipeline terminal completion emits `scan_completed` Qizou; 李世民 routes it to 魏征 `addFolderPath` so discovered child directories reach `folderTree` — not just `scanningStore`.
+9. `scan_directory_discovered` 触发时即下旨魏征 `add_paths`（方案 A）——路由层 ✅；**renderer 树幂等与单写路径**见 §Folder tree invariants，**未验收** ❌。
+10. **Folder tree**：仅圣旨路径写树；无重复兄弟；`photasa.json` 中节点 `key` 均为非空全路径 string；启动 + 扫描 + 重复 merge 后兄弟数稳定。
 
-## Implementation order（2026-07-20 具体化，已核实当前代码状态）
+## Folder tree invariants（normative，2026-07-21）
 
-**已完成，不在本轮范围**：
+| 不变量     | 要求                                                                                                        |
+| ---------- | ----------------------------------------------------------------------------------------------------------- |
+| 写树入口   | 仅 `李世民 event-routing.yml` → 魏征圣旨（`add_paths` / `add_root` / …）                                    |
+| IPC        | 魏征/尉迟恭 **不得** 直连 `invoke('sub_folders')`；目录列举属袁天罡或千里眼报告                             |
+| Pinia      | 魏征 **不得** `useAppStateStore().$patch`；写树仅 `Zouzhe` → 房玄龄 matter-sync                             |
+| 子目录发现 | **仅** 千里眼 `ScanDirectoryReport` → `scan_directory_discovered`；**禁止** 尉迟恭 `SCAN_SUBFOLDERS` 预发现 |
+| 路径 key   | `buildFolderKey` 纯同步拼接；**禁止** `window.api.mergePath`                                                |
+| 幂等       | 同路径 `add_paths` / reconcile 多次 → 兄弟节点数不变                                                        |
+| 持久化     | 落盘前 `sanitizeFolderTree`（过渡期）；无 `key: {}` / `[object Object]`                                     |
 
-- `photasa-scan` 一层遍历 + 目录/文件分流（`crates/photasa-scan/src/media.rs::walkthrough_photos_in_folder`，`e4180c1`）。
-- `photasa-scan` 零依赖 `photasa-import`（改依赖 `photasa-media`，`cargo tree` 验证）。
-- `ScanWorker` managed 线程（`apps/photasa/src-tauri/src/commands/scan_runner.rs`，单命名线程 + `mpsc` channel，已在 `main.rs` 注册）。
-- `photasa-config::add_photo_to_folder_list`（0138，`crates/photasa-config`）。
-- 扫描队列持久化（`ScanQueueRepository`，0144，`Mutex` 单写者 + 原子落盘）。
+## Known implementation violations（must remove before ✅）
 
-**新发现的阻塞问题（2026-07-20，必须在第 2 步一并修复，否则目录条目会被当文件处理）**：
+读码核实（2026-07-21），下列与 Golden Rule / 上表冲突，**不得**视为 0136 已完成的一部分：
 
-`walkthrough_photos_in_folder` 现在会产出目录条目（`is_directory: true`），但 `scan_runner.rs` 的 `run_traditional_directory_scan`/`run_full_directory_scan`（line 340-396）遍历 `walkthrough_photos_in_folder` 返回值时，对每一条目（不分文件/目录）无差别调用 `process_photo_file`——该函数（line 225-233）无条件执行 `create_thumbnail_for_file` + `photasa_config::add_photo_to_folder_list`。门控函数 `should_process_scan_file`/`should_process_file_with_config`（`crates/photasa-scan/src/strategy.rs:138-`）只判断"文件是否已在 config 里"，不判断是否为目录，`action == "rescan"` 时直接放行。目录条目因此会被尝试生成缩略图、写入 `.photasa.json`——这是错误行为，不是"暂缓处理"，是主动做了不该做的事。
+| 违规                                                           | 位置                             | 状态                                                           |
+| -------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------- |
+| 尉迟恭 `SCAN_SUBFOLDERS` + 子目录预入队 + `SCAN_TASK_ADDED`    | `yuchigong.ts` `executeScan`     | ✅ 已删（2026-07-21）                                          |
+| `scan_task_added` → 魏征 `add_paths`                           | `event-routing.yml`              | ✅ 已删                                                        |
+| 魏征 `reconcileTreeWithWatchPaths` + `listImmediateSubFolders` | `weizheng.ts`, `sub-folders.ts`  | ✅ 已删                                                        |
+| 魏征 `persistFolderTreeIfChanged` 先 `$patch` Pinia            | `weizheng.ts`                    | ✅ 已删                                                        |
+| 启动双次 reconcile                                             | `initializeAppState` + `App.vue` | ✅ 已删 `App.vue` 二次调用                                     |
+| 司命 folder tree zouwu 双轨                                    | `yuantiangang.ts`                | ✅ [0145](./completed/0145-tauri-siming-adapter-retirement.md) |
 
-**第 2 步必须包含**：在两个扫描循环里，遍历前先按 `file.is_directory` 分流；`is_directory == true` 的条目跳过 `process_photo_file`，改为构造 `ScanDirectoryReport` 走第 3 步；只有 `is_directory == false` 才进现有文件处理路径。
+## 2026-07-21 Postmortem: false verification + user-visible regressions
 
-**待实现，按顺序**：
+**用户现象**：启动 `path.replace` 崩溃；folder tree 子目录整批重复；两个 `2018` 节点。
 
-1. **在 `photasa-types` 定义新 IPC 契约类型**（当前完全不存在，仅存在于本 RFC 文字里，`grep -rn "ScanFileReport\|ScanDirectoryReport\|ScanTerminal" crates apps/photasa/src-tauri/src` 零命中）：
-    - `crates/photasa-types/src/scan_report.rs`（新文件）：`ScanFileReport`/`ScanDirectoryReport`/`ScanTerminal`，字段按本 RFC "Rust worker and IPC" 章节的 TS 类型定义（`requestId`/`rootPath` 必填，与现有 `PhotoFileRequest`/`ScanAction` 不同——新类型专用于 IPC 边界，不复用旧的内部处理类型）。
-    - `crates/photasa-types/src/lib.rs` 导出新模块。
-2. **`scan_runner.rs` 改造为产出新类型**：当前 `emit_scan_event`（line 62-64）发 `picasa:find-photo` + 原始 `serde_json::Value`，改为按 `PhotoFileRequest.is_directory` 分流，构造 `ScanFileReport`（文件）或 `ScanDirectoryReport`（目录），各自 emit；`ScanWorker` 每次 submission 结束时 emit 恰好一条 `ScanTerminal`（complete/error）。事件名可保留 `picasa:find-photo`（本 RFC 已声明兼容期不改名），payload 形状换成新类型。
-3. **目录报告接入 YuanTianGang→QiZou 链路**：`yuantiangang.ts` 新增/复用 Tauri event 订阅，收到 `ScanDirectoryReport` 后 emit `qizou.scan_directory_discovered`（当前 `event-routing.yml` 是否已有该路由需先核实，若无则新增，按本 RFC "Queue entry paths" 章节的路由链：QiZou → LiShiMin YAML → DuRuHui Shengzhi `add_scan_task` → YuChiGong 准入 → Zouzhe `ADD_SCAN_ACTION` → FangXuanLing 持久化收据）。
-4. **文件报告接入现有文件流水线**：`ScanFileReport` → Tauri 组合根（复用现有 thumbnail/config 调用逻辑，当前已在 `scan_runner.rs` 里，只需确认入参从新类型解构而非旧 `PhotoFileRequest`）→ `FileProcessedReport`。
-5. **父任务等待策略改造**：当前逻辑需确认是否已经"不等待子目录扫描，只等子目录入队收据"——若当前实现是等 `ScanTerminal` 才处理子目录（旧模式），改为目录报告到达时立即触发第 3 步，不等本次 `ScanTerminal`。
-6. **`notify:status` 桥接改造**（见 0111 2026-07-20 补记）：`ScanWorkerNotifySource` 的构造点从 `ScanFileReport`/`ScanDirectoryReport`/`ScanTerminal` 派生，替换当前从旧 `PhotoFileRequest`/`ScanAction` 构造的逻辑（`scan_runner.rs::emit_file_progress`/`emit_status_notify`）。
-7. **验证**（对应 Acceptance 2-9）：crash recovery（0144 已验证）、child non-waiting（第 5 步改造后验证）、durable child admission、file-stage ordering、direct YuanTianGang IPC、UI projection、folder tree consequence——**已确认接线**（2026-07-20 读源码核实）：`yuchigong.ts:214` emit Qizou `scan_completed` → `event-routing.yml:265` 路由到魏征 Shengzhi `add_paths` → `weizheng.ts:188` `handleAddPaths` 消费。第 1-6 步改造新事件类型后，需重新确认这条链路的触发点（`yuchigong.ts` emit `scan_completed` 的时机）改用新 `ScanTerminal` 而不是旧事件，不能假设改造后自动保留。
+**根因链**：
+
+1. `folder-tree-path.ts` 使用 `window.api.mergePath` → Tauri 返回 `Promise` → 去重 key 失效 → 每次 reconcile / `add_paths` 复制整批兄弟。
+2. `Promise` 作 `key` 写入 `photasa.json` → `{}` + `title: "2018"` 与 `/Volumes/.../2018` 并存 → `dedupe` 仅比 string equality 时无法合并。
+3. 测试全局 mock **同步** `mergePath`，RFC L440 写「已核实幂等」→ 阻止加真实防护与删多入口。
+4. Electron 尉迟恭 7 步（`SCAN_SUBFOLDERS`）与 0136 千里眼报告**并行**，树与队列被写多次。
+
+**RFC 教训**：Acceptance 勾选须在 **Tauri 运行时形状**（含 JSON round-trip）验证；禁止在 mock 同步 API 上写「不需要额外去重」。
+
+**代码侧已做（未使 RFC 可标 ✅）**：`joinFolderSegment`、`sanitizeFolderTree`、部分测试——属过渡，**不替代**删违规路径。
+
+## Implementation order（2026-07-20 二次刷新，反映最新代码状态）
+
+**已完成**：
+
+- `photasa-scan` 一层遍历 + 目录/文件分流（`e4180c1`）；零依赖 `photasa-import`。
+- `ScanWorker` managed 线程（`scan_runner.rs`，已注册）。
+- `photasa-config::add_photo_to_folder_list`（0138）；扫描队列持久化（`ScanQueueRepository`，0144，`Mutex` 单写者 + 原子落盘）。
+- IPC 契约新类型：`crates/photasa-types/src/scan_report.rs`（`ScanReport::File`/`Directory`，`ScanDirectoryPayload`）已定义，`scan_runner.rs::emit_directory_report`/`emit_file_progress` 已产出。
+- 扫描循环目录分流：`process_file_list`/`run_traditional_directory_scan`/`run_full_directory_scan`（`scan_runner.rs:340-420`）已按 `file.is_directory` 分流，目录条目不再进入 `process_photo_file`（此前记录的"目录被当文件处理"问题已修复）。
+- `yuantiangang.ts::handleQianliyanEvent` 已处理 `type === "directory"`，emit QiZou `scan_directory_discovered`。
+- `event-routing.yml:101-113` 已有 `scan_directory_discovered` 路由（下旨尉迟恭 `add_scan_task`）。
+- `event-routing.yml` `scan_directory_discovered` 双 Shengzhi（尉迟恭 + 魏征）✅
+- `router.test.ts` + `yuantiangang-scan-events.test.ts` 路由/报告 ✅
+- `notify:status` 从 `ScanReport` 派生 ✅
+
+**未完成（folder tree 验收 — 阻塞标 ✅）**：
+
+4. **验收** §Folder tree invariants + Acceptance #10（含 Tauri/`Promise` mergePath 测试、重复 merge、可选 `photasa.json` golden）。
+
+**曾错误标为已完成（2026-07-21 撤销）**：
+
+- ~~`scan_completed` → `add_paths`「已核实幂等」~~ — 仅在 mock 环境成立，生产已证伪。
+- ~~「不需要额外去重逻辑」~~ — 须 `joinFolderSegment` + `sanitizeFolderTree` + 删多写入口。
+
+**验证**（对应 Acceptance）：crash recovery（0144 ✅）、child non-waiting、durable child admission、file-stage ordering、direct YuanTianGang IPC（扫描 command ✅）、UI queue projection ✅；**folder tree 单路径 + 幂等 ❌ 待 (1)–(4)**。

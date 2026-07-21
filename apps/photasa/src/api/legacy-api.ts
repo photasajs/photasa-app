@@ -544,12 +544,17 @@ export function createLegacyApi(): Record<string, unknown> {
                 : stubAsync(),
         // Electron `query-config.cleanupScanQueue` 为空实现，Tauri 对齐为同步空操作
         cleanupScanQueue: (_folderPath: string) => undefined,
-        mergePath: (left: string, right = "") =>
-            isTauri() && right
-                ? ensureInvoke().then((invoke) => invoke<string>("merge_path", { left, right }))
-                : right
-                  ? `${left.replace(/[/\\]+$/, "")}/${right.replace(/^[/\\]+/, "")}`
-                  : left,
+        mergePath: (left: string, right = "") => {
+            const safeLeft = typeof left === "string" ? left : "";
+            const safeRight = typeof right === "string" ? right : "";
+            return isTauri() && safeRight
+                ? ensureInvoke().then((invoke) =>
+                      invoke<string>("merge_path", { left: safeLeft, right: safeRight }),
+                  )
+                : safeRight
+                  ? `${safeLeft.replace(/[/\\]+$/, "")}/${safeRight.replace(/^[/\\]+/, "")}`
+                  : safeLeft;
+        },
         splitPath: (path: string) => path.split(/[/\\]/).filter(Boolean),
         joinPath: (...parts: string[]) => parts.filter(Boolean).join("/"),
         getSeparator: () =>
@@ -557,8 +562,8 @@ export function createLegacyApi(): Record<string, unknown> {
         // ⚠️ Must stay synchronous. Callers (FolderList / 尉迟恭 / 李世民模板) treat this as
         // `string`. Returning a Promise puts a non-cloneable value into qizou/shengzhi content;
         // JSON.stringify then drops `path`, and 尉迟恭 logs「圣旨缺少path参数或类型错误」.
-        normalizePath: (path: string): string =>
-            (path ?? "").replace(/\\/g, "/").replace(/\/+/g, "/"),
+        normalizePath: (path: unknown): string =>
+            typeof path === "string" ? path.replace(/\\/g, "/").replace(/\/+/g, "/") : "",
         isMac: async () => {
             if (!isTauri()) return (window as any).electronAPI?.api?.isMac?.() ?? false;
             try {
@@ -984,7 +989,7 @@ export function createLegacyApi(): Record<string, unknown> {
             if (isTauri()) {
                 return ensureInvoke().then((invoke) => invoke<string>("get_path_root", { path }));
             }
-            const normalized = path.replace(/\\/g, "/");
+            const normalized = typeof path === "string" ? path.replace(/\\/g, "/") : "";
             if (normalized.startsWith("/")) {
                 return Promise.resolve("/");
             }
