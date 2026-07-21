@@ -1,13 +1,14 @@
 # RFC 0138: `photasa-config` crate — folder-level `.photasa.json`，退出 zouwu
 
 - **Start Date**: 2026-07-19
-- **Status**: Draft
+- **Last updated**: 2026-07-20
+- **Status**: ✅ Implemented
 - **Priority**: P1
 - **Area**: Photasa / Rust crates / Config
-- **Depends on**: [0132](./completed/0132-tauri-photasa-scan-crate.md)（crate 抽取模式参照）、[0141](./0141-tauri-photasa-media-crate.md)（`is_video`/`is_image` 判定权威来源，本 crate 不自行维护扩展名表）
-- **Blocks**: [0136](./0136-tauri-scan-runtime-contract.md)（扫描发现媒体文件写入 `.photasa.json` 依赖本 crate 的 `add_photo_to_folder_list`）、[0139](./0139-tauri-zouwu-retirement-plan.md)（zouwu 退场顺序计划第一项）
-- **Adapter 迁移模式**: [0140](./0140-tauri-zouwu-adapter-to-command-migration.md)（`config_adapter.rs` 删除+改 command 的具体步骤和验收标准以 0140 为准，本 RFC 只声明"要做"，不重复定义"怎么做"）
-- **Path**: `.spec/rfc/0138-tauri-photasa-config-crate.md`
+- **Depends on**: [0132](../completed/0132-tauri-photasa-scan-crate.md)（crate 抽取模式参照）、[0141](../0141-tauri-photasa-media-crate.md)（`is_video`/`is_image` 判定权威来源，本 crate 不自行维护扩展名表）
+- **Blocks**: [0136](../0136-tauri-scan-runtime-contract.md)（扫描发现媒体文件写入 `.photasa.json` 依赖本 crate 的 `add_photo_to_folder_list`）、[0139](../0139-tauri-zouwu-retirement-plan.md)（zouwu 退场顺序计划第一项）
+- **Adapter 迁移模式**: [0140](../0140-tauri-zouwu-adapter-to-command-migration.md)（`config_adapter.rs` 删除+改 command 的具体步骤和验收标准以 0140 为准，本 RFC 只声明"要做"，不重复定义"怎么做"）
+- **Path**: `.spec/rfc/completed/0138-tauri-photasa-config-crate.md`
 
 ## Decision
 
@@ -44,14 +45,14 @@
 - `cargo test -p photasa`：确认 `config_adapter.rs` 改造后 `cargo build -p photasa` 通过，且现有集成测试（如有）不回归。
 - Renderer 侧调用链需要人工确认（trace 代码，非跑 app）：改动前后 `getCurrentSnapshot`/`updateConfig`/`resetConfig`/`fixConfig` 四个 action 的请求/响应形状必须逐字节一致，否则 Store 同步会静默失败。
 
-## Acceptance
+## Acceptance（2026-07-20 验证）
 
-1. `photasa-config` crate 存在，`cargo test -p photasa-config` 全绿，无 `any`/无 warning。
-2. `apps/photasa/src-tauri/src/adapters/config_adapter.rs` 文件不存在（不是"改造保留"）。
-3. 新增的 `#[tauri::command]` 不 `use zouwu_core::*`，也没有任何 Rust 端"袁天罡模块"——TS 侧袁天罡直接 `invoke()` 新 command。
-4. `services/tianshu.rs` 的 `AdapterRegistry` 不再注册 `ConfigAdapter`（因为它已不存在）。
-5. Renderer 调用链 trace 完成并记录在本 RFC（谁调用、经过哪条路径、响应形状对比），不是"看起来应该没问题"。
-6. `cargo clippy -p photasa-config -- -D warnings` 零警告。
+1. ✅ `photasa-config` crate 存在，`cargo test -p photasa-config` 9 passed，无 `any`/无 warning。
+2. ✅ `apps/photasa/src-tauri/src/adapters/config_adapter.rs` 文件不存在。
+3. ✅ `commands/config.rs`（`get_photasa_config`/`add_to_photo_list`/`remove_from_photo_list`/`reset_photasa_config`/`fix_photasa_config`）零 `zouwu_core` 引用；无 Rust 端"袁天罡模块"——TS 侧袁天罡（`yuantiangang.ts`）直接 `invoke()` 这些 command。
+4. ✅ `services/tianshu.rs`/`main.rs` 零 `ConfigAdapter` 命中。
+5. ✅ Renderer 调用链已 trace 并记录在 [0142](../completed/0142-tauri-zhenguan-config-commands-personification.md)（`FolderList.vue` → 魏征 `weizheng.ts` → `processZouzhe` → `executeZhaoling` 直连 → 上述 5 个 command）。
+6. ✅ `cargo clippy -p photasa-config -- -D warnings` 零警告。
 
 ## Risks
 

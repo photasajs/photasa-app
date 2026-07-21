@@ -24,6 +24,14 @@ import {
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { useScanningStore } from "../fangxuanling/stores/scanning-store";
 import { createScanQueueItem } from "@renderer/stores/scanning-types";
+import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/scan-queue-bridge";
+
+const mockTauriInvoke = vi.hoisted(() => vi.fn());
+let mockPersistedQueue: Record<string, unknown>[] = [];
+
+vi.mock("@tauri-apps/api/core", () => ({
+    invoke: (...args: unknown[]) => mockTauriInvoke(...args),
+}));
 
 /**
  * Helper: 创建测试用 ScanAction（IPC 契约）
@@ -43,9 +51,43 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
     let fangXuanLing: FangXuanLingService;
 
     beforeEach(() => {
-        // 创建新的Pinia实例
         const pinia = createPinia();
         setActivePinia(pinia);
+
+        mockPersistedQueue = [];
+        mockTauriInvoke.mockReset();
+        mockTauriInvoke.mockImplementation(
+            async (command: string, args?: Record<string, unknown>) => {
+                if (command === SCAN_QUEUE_COMMANDS.GET) {
+                    return [...mockPersistedQueue];
+                }
+                if (command === SCAN_QUEUE_COMMANDS.ADD) {
+                    const actions = (args?.actions ?? []) as Record<string, unknown>[];
+                    for (const action of actions) {
+                        const path = String(action.path);
+                        if (!mockPersistedQueue.some((item) => item.path === path)) {
+                            mockPersistedQueue.push(action);
+                        }
+                    }
+                    return [...mockPersistedQueue];
+                }
+                if (command === SCAN_QUEUE_COMMANDS.REMOVE) {
+                    const path = String(args?.path ?? "");
+                    mockPersistedQueue = mockPersistedQueue.filter((item) => item.path !== path);
+                    return [...mockPersistedQueue];
+                }
+                if (command === SCAN_QUEUE_COMMANDS.UPDATE) {
+                    const path = String(args?.path ?? "");
+                    const status = String(args?.status ?? "pending");
+                    const updates = (args?.updates ?? {}) as Record<string, unknown>;
+                    mockPersistedQueue = mockPersistedQueue.map((item) =>
+                        item.path === path ? { ...item, status, ...updates } : item,
+                    );
+                    return [...mockPersistedQueue];
+                }
+                return null;
+            },
+        );
 
         // Mock天枢和千里眼的IPC调用
         const mockTianshuCall = vi.fn().mockResolvedValue({

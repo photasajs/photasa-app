@@ -16,13 +16,14 @@ use commands::update_periodic::UpdatePeriodicHandle;
 use commands::{
     config, directory, engine_status, extract_metadata, import_execute, import_legacy,
     import_preview, import_scan_directories, import_session_store, log_viewer, menu, path,
-    platform, shell, splash_bridge, stubs, thumbnail, update, watch, window,
+    platform, scan_queue, shell, splash_bridge, stubs, thumbnail, update, watch, window,
 };
 use services::{tianshu::resolve_workflows_dir, TianshuService};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use tokio::sync::RwLock;
+use utils::scan_queue_repository::{ScanQueueRepository, ScanQueueRepositoryHandle};
 
 /// 与 `tauri.conf.json` 首窗默认 label 一致（未显式写 `label` 时为 `main`）
 const MAIN_WEBVIEW_LABEL: &str = "main";
@@ -100,6 +101,22 @@ fn main() {
             // 目录存储与文件监视状态
             app.manage(directory::DirectoryStore(Mutex::new(HashMap::new())));
             app.manage(watch::WatchState::new());
+            match ScanQueueRepository::load_default() {
+                Ok(repo) => {
+                    log::info!(
+                        "🌌 扫描队列仓库已加载: {}",
+                        repo.queue_path().display()
+                    );
+                    app.manage(Arc::new(repo) as ScanQueueRepositoryHandle);
+                }
+                Err(error) => {
+                    log::warn!("⚠️ 扫描队列加载失败，使用空队列: {error}");
+                    let repo = ScanQueueRepository::empty_at(
+                        utils::scan_queue_storage::scanning_queue_path(),
+                    );
+                    app.manage(Arc::new(repo) as ScanQueueRepositoryHandle);
+                }
+            }
             app.manage(Arc::new(ImportTaskRegistry::default()));
             app.manage(ScanWorker::new(app.handle().clone()).map_err(|error| {
                 log::error!("❌ 无法启动扫描线程：{error}");
@@ -215,7 +232,10 @@ fn main() {
             // 文件监视
             watch::start_file_watch,
             watch::stop_file_watch,
-            // 缩略图
+            scan_queue::scan_queue_get,
+            scan_queue::scan_queue_add_actions,
+            scan_queue::scan_queue_remove_action,
+            scan_queue::scan_queue_update_action_status,
             thumbnail::create_thumbnail,
             thumbnail::remove_thumbnail,
             // 系统菜单

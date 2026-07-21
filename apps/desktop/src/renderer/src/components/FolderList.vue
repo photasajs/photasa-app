@@ -249,19 +249,17 @@ defineExpose({
                     <PhFolder :size="14" />
                 </template>
 
-                <template #title="slotProps">
+                <template #title="{ node, title }">
                     <BaseContextMenu>
-                        <span
-                            v-if="paths.includes((slotProps as any).key)"
-                            class="root-folder-node"
-                            >{{ (slotProps as any).title }}</span
-                        >
-                        <span v-else class="folder-node">{{ (slotProps as any).title }}</span>
+                        <span v-if="paths.includes(node.key)" class="root-folder-node">{{
+                            title
+                        }}</span>
+                        <span v-else class="folder-node">{{ title }}</span>
 
                         <template #menu="{ close }">
                             <BaseMenuItem
                                 @click="
-                                    rescan((slotProps as any).key);
+                                    rescan(node.key);
                                     close();
                                 "
                             >
@@ -269,7 +267,7 @@ defineExpose({
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
-                                    openPhotasaConfig((slotProps as any).key);
+                                    openPhotasaConfig(node.key);
                                     close();
                                 "
                             >
@@ -277,7 +275,7 @@ defineExpose({
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
-                                    openFileInFinder((slotProps as any).key);
+                                    openFileInFinder(node.key);
                                     close();
                                 "
                             >

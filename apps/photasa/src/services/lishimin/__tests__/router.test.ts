@@ -109,6 +109,33 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             });
         });
 
+        it("RFC 0143: request_rescan 应将 path 传到尉迟恭圣旨", async () => {
+            const testPath = "/Users/test/Photos/Album";
+            const testQizou: Qizou = {
+                matter: "request_rescan",
+                content: { path: testPath },
+                from: "百姓",
+                timestamp: Date.now(),
+                metadata: { type: "request" },
+            };
+
+            (router as any).qizouBus.emit("qizou", testQizou);
+
+            await new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    expect(yuchiGongService.receivedShengzhis).toHaveLength(1);
+                    const shengzhi = yuchiGongService.receivedShengzhis[0];
+                    expect(shengzhi.command).toBe("add_scan_task");
+                    expect(shengzhi.content).toMatchObject({
+                        path: testPath,
+                        action: "rescan",
+                        source: "user",
+                    });
+                    resolve();
+                }, 20);
+            });
+        });
+
         it("应该正确处理remove_path_completed路由规则", async () => {
             const testQizou: Qizou = {
                 matter: "remove_path_completed",

@@ -554,10 +554,11 @@ export function createLegacyApi(): Record<string, unknown> {
         joinPath: (...parts: string[]) => parts.filter(Boolean).join("/"),
         getSeparator: () =>
             isTauri() ? ensureInvoke().then((invoke) => invoke<string>("get_separator")) : "/",
-        normalizePath: (path: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) => invoke<string>("normalize_path", { path }))
-                : Promise.resolve(path?.replace(/\\/g, "/").replace(/\/+/g, "/") ?? ""),
+        // ⚠️ Must stay synchronous. Callers (FolderList / 尉迟恭 / 李世民模板) treat this as
+        // `string`. Returning a Promise puts a non-cloneable value into qizou/shengzhi content;
+        // JSON.stringify then drops `path`, and 尉迟恭 logs「圣旨缺少path参数或类型错误」.
+        normalizePath: (path: string): string =>
+            (path ?? "").replace(/\\/g, "/").replace(/\/+/g, "/"),
         isMac: async () => {
             if (!isTauri()) return (window as any).electronAPI?.api?.isMac?.() ?? false;
             try {

@@ -20,6 +20,7 @@ pub mod menu;
 pub mod metadata_golden;
 pub mod path;
 pub mod platform;
+pub mod scan_queue;
 pub mod scan_runner;
 pub mod shell;
 pub mod splash_bridge;

@@ -76,7 +76,7 @@
             }"
             @click="handleTitleClick"
         >
-            <slot name="title" :node="node" :key="node.key" :title="node.title">
+            <slot name="title" :node="node" :node-key="node.key" :title="node.title">
                 {{ node.title }}
             </slot>
         </span>

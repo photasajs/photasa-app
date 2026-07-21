@@ -55,6 +55,8 @@ struct ScanQueueInner {
     pending: Mutex<HashMap<String, FileOperation>>,
     schedule_token: AtomicU64,
     thumbnail_size: AtomicU32,
+    /// notify fsevents 回调不在 Tokio worker 上；flush 须经此 handle 调度
+    runtime_handle: Mutex<Option<tokio::runtime::Handle>>,
 }
 
 /// 与 `WatchService.pendingEvents` + 防抖调度等价
@@ -70,7 +72,15 @@ impl ScanQueueCoalescer {
                 pending: Mutex::new(HashMap::new()),
                 schedule_token: AtomicU64::new(0),
                 thumbnail_size: AtomicU32::new(150),
+                runtime_handle: Mutex::new(None),
             }),
+        }
+    }
+
+    /// 由 Tauri 命令在启动 watch 时注入（fsevents 线程无 current runtime）
+    pub fn set_runtime_handle(&self, handle: tokio::runtime::Handle) {
+        if let Ok(mut guard) = self.inner.runtime_handle.lock() {
+            *guard = Some(handle);
         }
     }
 
@@ -130,6 +140,27 @@ impl ScanQueueCoalescer {
         self.schedule_flush(sink);
     }
 
+    fn spawn_on_runtime<F>(&self, fut: F)
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(fut);
+            return;
+        }
+        let handle = self
+            .inner
+            .runtime_handle
+            .lock()
+            .ok()
+            .and_then(|guard| guard.clone());
+        if let Some(handle) = handle {
+            handle.spawn(fut);
+        } else {
+            log::error!("🌌 扫描队列：无 Tokio runtime handle，防抖 flush 已丢弃");
+        }
+    }
+
     fn schedule_flush(&self, sink: Arc<dyn ScanQueueSink>) {
         let my_token = self.inner.schedule_token.fetch_add(1, Ordering::SeqCst) + 1;
         let debounce_ms = {
@@ -137,7 +168,7 @@ impl ScanQueueCoalescer {
             calculate_debounce_ms(n)
         };
         let inner = self.inner.clone();
-        tokio::spawn(async move {
+        self.spawn_on_runtime(async move {
             tokio::time::sleep(std::time::Duration::from_millis(debounce_ms)).await;
             if inner.schedule_token.load(Ordering::SeqCst) != my_token {
                 return;
@@ -200,6 +231,35 @@ mod tests {
         fn emit_batch(&self, ops: &[FileOperation]) {
             self.batches.lock().unwrap().push(ops.to_vec());
         }
+    }
+
+    #[test]
+    fn flush_from_non_tokio_thread_uses_injected_handle() {
+        std::thread::spawn(|| {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_time()
+                .build()
+                .expect("runtime");
+            let sink = Arc::new(CollectSink::new());
+            let coalescer = ScanQueueCoalescer::new();
+            coalescer.set_runtime_handle(rt.handle().clone());
+
+            let sink_for_thread = sink.clone();
+            let coalescer_for_thread = coalescer.clone();
+            std::thread::spawn(move || {
+                coalescer_for_thread.handle_fs_event(sink_for_thread, "add", "/photos/a.jpg", true);
+            })
+            .join()
+            .expect("thread join");
+
+            rt.block_on(async {
+                tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+            });
+
+            assert_eq!(sink.batch_count(), 1);
+        })
+        .join()
+        .expect("outer thread join");
     }
 
     #[tokio::test]

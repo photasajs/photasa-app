@@ -275,35 +275,32 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 ## Photasa UI RFC drafts（非 Active）
 
-| RFC                                                                  | Title                          | Status   | Scope                                                                                  |
-| -------------------------------------------------------------------- | ------------------------------ | -------- | -------------------------------------------------------------------------------------- |
-| [0136](./.spec/rfc/0136-tauri-scan-runtime-contract.md)              | 持久化队列扫描流水线           | 📋 Draft | 贞观 who/what；千里眼一层报告；尉迟恭 PQueue；待实现                                   |
-| [0137](./.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md)      | 贞观直连 Tauri IPC 迁移        | 📋 Draft | 袁天罡唯一 IPC 边界；扫描先迁移，`window.api` 仅兼容层                                 |
-| [0138](./.spec/rfc/0138-tauri-photasa-config-crate.md)               | `photasa-config` crate         | 📋 Draft | folder-level `.photasa.json`，退出 zouwu；crate 骨架已落地（见下）；adapter 未删       |
-| [0139](./.spec/rfc/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期             | 📋 Draft | 仅排期分析，不含代码；scan/preference/config 已核实，appstate/shell/menu/engine 未核实 |
-| [0140](./.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式 | 📋 Draft | 通用模式定义 + 验收标准，供 0138/0139 及后续域引用，不含代码                           |
-| [0141](./.spec/rfc/0141-tauri-photasa-media-crate.md)                | `photasa-media` crate          | 📋 Draft | 统一图片/视频扩展名判定；crate 骨架已落地（见下）；三处消费方未切换                    |
+| RFC                                                                  | Title                          | Status          | Scope                                                                                       |
+| -------------------------------------------------------------------- | ------------------------------ | --------------- | ------------------------------------------------------------------------------------------- |
+| [0136](./.spec/rfc/0136-tauri-scan-runtime-contract.md)              | 持久化队列扫描流水线           | 📋 Draft        | 贞观 who/what；千里眼一层报告；尉迟恭 PQueue；待实现                                        |
+| [0137](./.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md)      | 贞观直连 Tauri IPC 迁移        | 📋 Draft        | 袁天罡唯一 IPC 边界；扫描先迁移，`window.api` 仅兼容层                                      |
+| [0139](./.spec/rfc/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期             | 📋 Draft        | 仅排期分析，不含代码；scan/config/preference 已核实，appstate/shell/menu/engine 未核实      |
+| [0140](./.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式 | 📋 Draft        | 通用模式定义 + 验收标准，首个案例（0138）已验证可行，保持开放供后续域引用                   |
+| [0141](./.spec/rfc/0141-tauri-photasa-media-crate.md)                | `photasa-media` crate          | 🔨 Implementing | Rust 侧全部完成（scan/import/thumbnail/path.rs 四处切换）；仅剩前端 `watch-event.ts` 未对齐 |
 
-**Gap/T3 铁律：** 一事一 RFC。scan 族全数落地：**0131 import ✅ / 0132 scan+types ✅ / 0134 thumbnail ✅ / 0133 watch ✅ / 0135 watch UI ✅ / 0136 queue pipeline 📋**。config/media 族新起：**0141 media 📋（crate + 三处消费方均已切换，接近 Implemented，仅缺基线对比测试）/ 0138 config 📋（crate 已落地，adapter 未接线，尚早）/ 0140 迁移模式 📋 / 0139 排期 📋**。
+**已归档**：[0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅。
 
-### RFC 0141 — `photasa-media` 落地记录（2026-07-19，RFC 仍 Draft，逼近 Acceptance）
+**Gap/T3 铁律：** 一事一 RFC。scan 族全数落地：**0131 import ✅ / 0132 scan+types ✅ / 0134 thumbnail ✅ / 0133 watch ✅ / 0135 watch UI ✅ / 0136 queue pipeline 📋**。config/media 族：**0138 config ✅ / 0141 media 🔨（仅剩 watch-event.ts）/ 0142 config 拟人化 ✅ / 0143 scan 拟人化 ✅ / 0144 队列并发 ✅ / 0140 迁移模式 📋（开放） / 0139 排期 📋（开放）**。
+
+### RFC 0141 — `photasa-media` 落地记录（2026-07-20 更新，RFC 仍 Draft/Implementing）
 
 - [x] `crates/photasa-media`：`is_image_file`/`is_video_file`/`classify_media`，权威扩展名表（`IMAGE_EXTS`/`HEIC_EXTS`/`RAW_EXTS`/`VIDEO_EXTS`）
-- [x] `crates/photasa-types/src/media_type.rs`：`MediaType` enum 定义（`photasa-media` re-export，符合 0141 crate 边界原则——Review 发现代码曾一度把 `MediaType` 定义在 `photasa-media` 里，2026-07-19 复核确认实际已正确放在 `photasa-types`，无需改动）
-- [x] `apps/photasa/src-tauri/src/commands/path.rs`：`is_video_file`/`is_image_file`/`get_image_type` 三个 `#[tauri::command]` 已改调 `photasa_media::*`（0141 Acceptance 第 2 条 path.rs 部分完成）
-- [x] `crates/photasa-import/src/path_filter.rs`：已切换依赖 `photasa_media::{is_image_file, is_video_file}`，re-export `IMAGE_EXTS`/`VIDEO_EXTS`
-- [x] `crates/photasa-thumbnail/src/thumbnail.rs`：已切换依赖 `photasa_media::classify_media` + `MediaType` 全部分支
-- [x] 验证证据：`cargo test --workspace` → 265 passed, 3 ignored；`cargo clippy -p photasa-types -p photasa-media -p photasa-config -- -D warnings` → 零警告
-- [ ] **未完成**：0141 Acceptance 第 3 条要求"三份原始表差异已记录并明确决定（保留分叉 or 统一）"——当前 `photasa-media::IMAGE_EXTS` 已包含 svg/ico/psd 等，`photasa-thumbnail` 缺失格式是否已按预期扩大、是否验证过真实解码行为，尚未见记录
-- [ ] **未完成**：Testing strategy 要求的"先写对比测试锁定分叉基线"未做（crate 已先行落地，此步骤事后补），需确认不影响已落地实现的正确性
+- [x] `crates/photasa-types/src/media_type.rs`：`MediaType` enum 定义（`photasa-media` re-export，符合 0141 crate 边界原则）
+- [x] `apps/photasa/src-tauri/src/commands/path.rs`：三个 `#[tauri::command]` 已改调 `photasa_media::*`
+- [x] `crates/photasa-import/src/path_filter.rs`：已切换依赖 `photasa_media`，纯转发
+- [x] `crates/photasa-thumbnail/src/thumbnail.rs`：已切换依赖 `photasa_media::classify_media` + `MediaType`
+- [x] `crates/photasa-scan/src/media.rs`：2026-07-20 补上（`e4180c1`），`Cargo.toml` 依赖从 `photasa-import` 换成 `photasa-media`，`cargo tree -p photasa-scan` 验证不含 `photasa-import`
+- [x] 验证证据：`cargo test -p photasa-scan -p photasa-import -p photasa-media` → 80 passed；`cargo test -p photasa` → 74 passed, 3 ignored
+- [ ] **未完成**：`apps/photasa/src/api/watch-event.ts` 前端本地扩展名表未对齐权威表，缺 `dng`/`raf`/`orf`（2026-07-20 复核确认）
 
-### RFC 0138 — `photasa-config` 落地记录（2026-07-19，RFC 仍 Draft，早期阶段）
+### RFC 0138 — `photasa-config`（✅ 已完成，归档 `completed/`）
 
-- [x] `crates/photasa-config`：`photasa_config.rs` 逻辑迁入，直接依赖 `photasa-media::is_video_file`（未走参数化回调，一步到位，workspace 已注册）
-- [x] 验证证据：`cargo test -p photasa-config` 通过（计入上方 265 passed）
-- [ ] **未完成**：`config_adapter.rs` 未删除，仍 `use crate::commands::photasa_config`（旧模块路径，非新 crate）且仍 `impl zouwu_core::adapter::Adapter`（0138/0140 Acceptance 要求删除，尚未开始）
-- [ ] **未完成**：renderer 调用链未 trace（0138 Acceptance 第 5 条）
-- [ ] **未完成**：`services/tianshu.rs` 的 `AdapterRegistry` 仍注册 `ConfigAdapter`
+crate 落地、`config_adapter.rs` 已删、`services/tianshu.rs` 零 `ConfigAdapter` 注册、renderer 调用链经魏征（`weizheng.ts`）trace 确认（见 0142）。验证：`cargo test -p photasa-config` 9 passed，`cargo clippy` 零警告。
 
 **Phase 5–6** Done。禁 **0098** 作 Photasa 路径。
 

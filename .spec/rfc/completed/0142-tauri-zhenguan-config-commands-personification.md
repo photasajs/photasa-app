@@ -1,11 +1,12 @@
 # RFC 0142: Tauri config commands personification (文件夹配置命令拟人化设计对齐)
 
 - **Start Date**: 2026-07-19
-- **Status**: Draft
+- **Last updated**: 2026-07-20
+- **Status**: ✅ Implemented
 - **Priority**: P1
 - **Area**: Photasa / Renderer / Zhenguan Design / Config
-- **Depends on**: [0138](./0138-tauri-photasa-config-crate.md)（已完成，Config 机制层独立）、[0137](./0137-tauri-zhenguan-direct-ipc-migration.md)（Zhenguan 直连 Tauri IPC 规范）
-- **Path**: `.spec/rfc/0142-tauri-zhenguan-config-commands-personification.md`
+- **Depends on**: [0138](../0138-tauri-photasa-config-crate.md)（已完成，Config 机制层独立）、[0137](../0137-tauri-zhenguan-direct-ipc-migration.md)（Zhenguan 直连 Tauri IPC 规范）
+- **Path**: `.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md`
 
 ## 1. Decision
 
@@ -161,3 +162,11 @@ export class WeiZhengService implements IService {
       photasa.config = config;
   }
 ```
+
+## 4. 验收记录（2026-07-20）
+
+实现与设计一致，`executeZhaoling`（`yuantiangang.ts:555-`）以显式 if 分支直连以下 Tauri command，注释标注"✅ RFC 0142"：`get_photasa_config`/`fix_photasa_config`/`reset_photasa_config`/`add_to_photo_list`/`remove_from_photo_list`。`FolderList.vue` 已改用 `useWeiZheng()`，不再直接 import `@renderer/utils/api` 的配置函数。`weizheng.ts` 新增 `getFolderConfig`/`fixFolderConfig`/`resetFolderConfig`，走 `processZouzhe` → `executeZhaoling` → 直连 `invoke()`，不经 zouwu/Tianshu workflow。
+
+零 zouwu 依赖已满足：上述 command 均为 `commands/config.rs` 独立 `#[tauri::command]`，不经 `zouwu_core::adapter::Adapter`（`config_adapter.rs` 已删除，见 0138）。
+
+验证：`vitest run` 相关测试套件（`router.test.ts`/`yuchigong.test.ts`/`scanning-queue-integration.test.ts`/`BaseTree.test.ts`）全部通过。

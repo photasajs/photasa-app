@@ -4,7 +4,7 @@
 - **Status**: Draft（分析/排期，不含代码改动）——**scan/preference/config 三域已读源码核实，appstate/shell/menu/engine 三域 adapter 名称/实际耦合尚未查证，下方"排期顺序"对这三域只是占位猜测，不是确定排期**
 - **Priority**: P2
 - **Area**: Photasa / Tauri / Tianshu / zouwu
-- **Depends on**: [0138](./0138-tauri-photasa-config-crate.md)（第一个退场域，前置）
+- **Depends on**: [0138](./completed/0138-tauri-photasa-config-crate.md)（第一个退场域，已完成，验证退场模式可行）
 - **迁移模式**: [0140](./0140-tauri-zouwu-adapter-to-command-migration.md)（每域退场时"删 adapter 改 command"的具体步骤和验收标准，本 RFC 只排期，不重复定义步骤）
 - **Path**: `.spec/rfc/0139-tauri-zouwu-retirement-plan.md`
 
@@ -43,7 +43,7 @@ Tauri 里这个问题不存在：
 
 **已核实、可排期的两项**：
 
-1. **0138 — `photasa-config`**（folder-level `.photasa.json`）：零 `.zouwu` 文件依赖，只是 adapter 注册用了 zouwu trait，退出成本最低，作为验证"退场模式"的第一个案例。
+1. ✅ **0138 — `photasa-config`**（folder-level `.photasa.json`，已完成）：零 `.zouwu` 文件依赖，只是 adapter 注册用了 zouwu trait，退出成本最低，验证了 0140"退场模式"可行——`config_adapter.rs` 已删，5 个 command 直连，renderer 侧改归魏征（0142）。
 2. **preference**（`photasa-preference`，已改名/已有独立 crate，见 RFC 0107）：8 个 workflow 文件，逻辑已经在 Rust crate 里，退场主要是删 `preferences_adapter.rs`、把 8 个 workflow 步骤翻成 Rust 函数、renderer 侧改调新 command。这是当前"跑不好"的域（RFC 0107 记录的生产打包 bug 亲身证实），优先级仅次于 0138。
 
 **未核实、仅占位猜测（不是排期承诺）**：

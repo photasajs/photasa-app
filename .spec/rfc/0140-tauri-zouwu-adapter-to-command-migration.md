@@ -4,7 +4,7 @@
 - **Status**: Draft（分析/模式定义，不含代码改动）
 - **Priority**: P1
 - **Area**: Photasa / Tauri / Tianshu / zouwu
-- **Depends on**: [0138](./0138-tauri-photasa-config-crate.md)（`photasa-config` crate，第一个迁移对象）
+- **Depends on**: [0138](./completed/0138-tauri-photasa-config-crate.md)（`photasa-config` crate，第一个迁移对象，已完成）
 - **Related**: [0139](./0139-tauri-zouwu-retirement-plan.md)（域退场排期）、[0136](./0136-tauri-scan-runtime-contract.md)（scan 已决定不走 zouwu，本 RFC 定义的是通用迁移模式，不含 scan）
 - **Path**: `.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md`
 
@@ -31,11 +31,11 @@
 5. **TS 侧调用方（trace 出实际是谁——袁天罡或其他角色）改为直接 `invoke("command_name", …)`**，不再经 Zouzhe→Tianshu→zouwu AdapterRegistry 路由。必须先读代码确认当前调用链，不能假设。
 6. **验证**：`grep zouwu_core` 该域源码零命中；新旧响应形状逐字段比对一致（前端 store-sync 依赖响应形状，见 RFC 0107 记录的 preference 链路教训）。
 
-## 首个迁移对象：`ConfigAdapter`（对应 0138）
+## 首个迁移对象：`ConfigAdapter`（已验证，对应 0138/0142）
 
-`config_adapter.rs` 是当前唯一没有对应 `.zouwu` workflow 文件、只是注册进 `AdapterRegistry` 的 adapter（其余 5 域——scan/preference/appstate/shell/menu/engine——都有真实 `.zouwu` 文件驱动，退场顺序见 0139）。5 个 action（`getCurrentSnapshot`/`getSnapshot`/`updateConfig`/`resetConfig`/`fixConfig`）迁移为等量 `#[tauri::command]`，直调 0138 新增的 `photasa-config` crate。
+`config_adapter.rs` 是当前唯一没有对应 `.zouwu` workflow 文件、只是注册进 `AdapterRegistry` 的 adapter（其余 5 域——scan/preference/appstate/shell/menu/engine——都有真实 `.zouwu` 文件驱动，退场顺序见 0139）。5 个 action（`getCurrentSnapshot`/`getSnapshot`/`updateConfig`/`resetConfig`/`fixConfig`）已迁移为对应 `#[tauri::command]`，直调 0138 交付的 `photasa-config` crate。
 
-TS 侧调用方尚未 trace 确认（0138 Acceptance 第 5 条要求先查清楚，不能假设是袁天罡）——若确认是袁天罡，迁移后是"袁天罡直调 Rust command"，与你在本轮讨论中确认的方向一致：**Rust 端不新增任何"袁天罡模块"，袁天罡本身是 TS 角色，只是调用目标从 Zouzhe/matter 变成 `invoke()` command 名**。
+TS 侧调用链已 trace 确认（0142）：不是袁天罡直接归口，而是**魏征**（`WeiZhengService`，`.photasa.json` 解析结果属于 `appState`，归魏征的 `appState` 监管职责；褚遂良只管应用级 `preferences.json`）→ `processZouzhe` → `executeZhaoling` 直连 `invoke()`。验证了本 RFC 定义的模式可行：Rust 端零 zouwu 依赖，TS 端由业务语义决定的角色直连，不强制假设是袁天罡。
 
 ## Non-goals
 

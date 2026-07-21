@@ -189,19 +189,22 @@ async function fixConfig(): Promise<void> {
 }
 
 /**
- * Rescan the folder
- * @param key - The folder path (tree node key, already normalized in preference store)
+ * Rescan the folder — 百姓上书 → 李世民 → 尉迟恭（RFC 0143）
+ * @param key - folder path from tree **node.key**（勿用 slot 的 `key`：Vue 保留属性，永远是 undefined）
  */
 function rescan(key: string): void {
-    // ⚠️ Do NOT call normalizePath(key) here — window.api.normalizePath is async in Tauri
-    // (returns Promise<string> via invoke), even though typed as string. The tree key is
-    // already the canonical normalized path stored in preferences.
-    logger.info(`[FolderList] Requesting rescan for folder: ${key}`);
+    if (typeof key !== "string" || key.trim() === "") {
+        logger.error("[FolderList] rescan 收到无效 key", { key, keyType: typeof key });
+        return;
+    }
+    // Tree key 已是 preference 中的规范路径；勿再调 normalizePath（曾误返回 Promise）
+    const folderPath = key.trim();
+    logger.info(`[FolderList] 百姓上书重新扫描: ${folderPath}`);
     window.dispatchEvent(
-        new CustomEvent("picasa:shangshu", {
+        new CustomEvent(EventNames.BAIXING_SHANGSHU, {
             detail: {
                 action: QizouMatters.REQUEST_RESCAN,
-                path: key,
+                path: folderPath,
             },
             bubbles: true,
             cancelable: true,
@@ -244,19 +247,17 @@ defineExpose({
                     <PhFolder :size="14" />
                 </template>
 
-                <template #title="slotProps">
+                <template #title="{ node, title }">
                     <BaseContextMenu>
-                        <span
-                            v-if="paths.includes((slotProps as any).key)"
-                            class="root-folder-node"
-                            >{{ (slotProps as any).title }}</span
-                        >
-                        <span v-else class="folder-node">{{ (slotProps as any).title }}</span>
+                        <span v-if="paths.includes(node.key)" class="root-folder-node">{{
+                            title
+                        }}</span>
+                        <span v-else class="folder-node">{{ title }}</span>
 
                         <template #menu="{ close }">
                             <BaseMenuItem
                                 @click="
-                                    rescan((slotProps as any).key);
+                                    rescan(node.key);
                                     close();
                                 "
                             >
@@ -264,7 +265,7 @@ defineExpose({
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
-                                    openPhotasaConfig((slotProps as any).key);
+                                    openPhotasaConfig(node.key);
                                     close();
                                 "
                             >
@@ -272,7 +273,7 @@ defineExpose({
                             </BaseMenuItem>
                             <BaseMenuItem
                                 @click="
-                                    openFileInFinder((slotProps as any).key);
+                                    openFileInFinder(node.key);
                                     close();
                                 "
                             >

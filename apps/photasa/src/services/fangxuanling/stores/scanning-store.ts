@@ -28,7 +28,8 @@ export interface ScanningState {
  * - 管理扫描队列和扫描状态（卷宗登记与状态追踪）
  * - 提供队列增删改查接口（卷宗出入库管理）
  * - 管理扫描进度和状态（审阅进度记录）
- * - 不负责持久化（归档由天界千里眼掌管scanning.json）
+ * - 不负责 Pinia localStorage 持久化（persist: false）
+ * - 耐久队列由房玄龄奏折路径 → 袁天罡 invoke Rust → `~/.photasa/scan/scanning.json`（RFC 0136）
  *
  * 访问方式：
  * - ❌ 服务不得擅入典籍库（禁止直接访问Store）
@@ -140,8 +141,7 @@ export const useScanningStore = defineStore("scanning", {
         },
     },
 
-    // ⚠️ 关键：不持久化到localStorage
-    // 运行时卷宗状态，持久归档由天界千里眼掌管
+    // Pinia 仅 UI 投影；耐久队列在 scanning.json（RFC 0136）
     persist: false,
 });
 

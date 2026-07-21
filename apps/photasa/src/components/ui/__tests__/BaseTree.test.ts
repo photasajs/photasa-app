@@ -42,7 +42,7 @@ vi.mock("../BaseTreeNode.vue", () => ({
         template: `
             <div class="mock-tree-node" :data-key="node.key" :data-level="level">
                 {{ node.title }}
-                <slot name="title" :node="node" :key="node.key" :title="node.title" />
+                <slot name="title" :node="node" :node-key="node.key" :title="node.title" />
             </div>
         `,
     },
