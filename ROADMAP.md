@@ -77,7 +77,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 ### Tauri 迁移 RFC 系列（架构与服务）
 
 - **主 RFC**：[RFC 0067](.spec/rfc/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略
-- **已完成（服务层）**：[0073](.spec/rfc/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/0072-tauri-tianshu-service-migration.md) 天枢
+- **已完成（服务层）**：[0073](.spec/rfc/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/0072-tauri-tianshu-service-migration.md) 天枢
 
 **建议实施顺序**：0073（UI+适配）→ 0071 → 0068 → 0069 → 0070 → 0072。
 
@@ -154,6 +154,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0143](.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md)        | 扫描与队列命令贞观之治对齐（百姓/尉迟恭/袁天罡）                                       | ✅ Implemented                                                                   |
 | [0144](.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md)         | 扫描队列持久化对齐贞观/0048/0136（并发锁 + 脱离 zouwu 类型）                           | ✅ Implemented                                                                   |
 | [0145](.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md)                | folder tree 持久化退出 zouwu（`photasa-folder-tree` crate）                            | ✅ Implemented                                                                   |
+| [0147](.spec/rfc/0147-tauri-wenchang-preferences-retirement.md)                    | 文昌 preference 贞观对齐 + 退 zouwu（袁天罡 `executeZhaoling` 内 `invoke`，无 bridge） | ⏳ Planned（P0）                                                                 |
 
 ### Photasa next priorities（2026-07）
 
@@ -161,36 +162,37 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 
 **铁律：** Gap / T3 残留 → **一事一 RFC**。禁止 mono「contract polish」袋。
 
-| 优先级       | 项                                                        | RFC                                   |
-| ------------ | --------------------------------------------------------- | ------------------------------------- |
-| **P1**       | 迁移验收                                                  | **0097** ✅                           |
-| **P2**       | 后台导入 UI                                               | **0118** ✅                           |
-| **P3a**      | checksum                                                  | **0119** ✅                           |
-| **P3b**      | duplicateCount                                            | **0123** ✅                           |
-| **P3c**      | resume 返回形状                                           | **0124** ✅                           |
-| **P3d**      | paused progress emit + cancelled payload 字段             | **0125** ✅                           |
-| **P3e**      | `import:error` payload 形状（`[object Object]`）          | **0127** ✅                           |
-| **P3f**      | `import:progress` 缺 `importId`                           | **0128** ✅                           |
-| **P3g**      | `import:progress` 无节流                                  | **0129** ✅                           |
-| **P4**       | `import_legacy.rs` wrapper + 复制逻辑去重（cleanup）      | **0130** ✅                           |
-| **P0-infra** | `photasa-import` crate 拆分（可测性）                     | **0131** ✅                           |
-| **P1a**      | `photasa-thumbnail` async crate 拆分（可测性）            | **0134** ✅                           |
-| **P1b**      | `photasa-types` + `photasa-scan` crate 拆分（可测性）     | **0132** ✅                           |
-| **P1c**      | `photasa-watch` crate 拆分（可测性）                      | **0133** ✅                           |
-| **P1d**      | watch UI 契约（add/delete 文件/目录）                     | **0135** ✅                           |
-| **P1e**      | 持久化队列扫描流水线（贞观 who/what + 一层发现）          | **0136** 🔨（folder tree 收口待完成） |
-| **P1f**      | `photasa-media` crate（扩展名判定统一，修复四处分叉）     | **0141** ✅                           |
-| **P1g**      | `photasa-config` crate（folder-level config，退出 zouwu） | **0138** ✅                           |
-| **P1h**      | 文件夹配置命令贞观之治对齐（魏征接管）                    | **0142** ✅                           |
-| **P1i**      | 扫描与队列命令贞观之治对齐                                | **0143** ✅                           |
-| **P1j**      | 扫描队列持久化对齐（并发锁 + 脱离 zouwu 类型）            | **0144** ✅                           |
-| **P1k**      | folder tree 持久化退出 zouwu（`photasa-folder-tree`）     | **0145** ✅                           |
-| **P2a**      | zouwu Adapter → command 迁移模式（通用，供后续域引用）    | **0140** 📋                           |
-| **P2b**      | zouwu 逐域退场排期（scan 已排除，config/preference 优先） | **0139** 📋                           |
-| **P3h**      | Quit 恢复                                                 | **0120** ✅                           |
-| **P3i**      | Settings 导入                                             | **0121** ✅                           |
-| —            | Legacy importPhotos UX                                    | **0122** ❌                           |
-| —            | Electron desktop UX                                       | **0126** ❌                           |
+| 优先级       | 项                                                             | RFC                                   |
+| ------------ | -------------------------------------------------------------- | ------------------------------------- |
+| **P1**       | 迁移验收                                                       | **0097** ✅                           |
+| **P2**       | 后台导入 UI                                                    | **0118** ✅                           |
+| **P3a**      | checksum                                                       | **0119** ✅                           |
+| **P3b**      | duplicateCount                                                 | **0123** ✅                           |
+| **P3c**      | resume 返回形状                                                | **0124** ✅                           |
+| **P3d**      | paused progress emit + cancelled payload 字段                  | **0125** ✅                           |
+| **P3e**      | `import:error` payload 形状（`[object Object]`）               | **0127** ✅                           |
+| **P3f**      | `import:progress` 缺 `importId`                                | **0128** ✅                           |
+| **P3g**      | `import:progress` 无节流                                       | **0129** ✅                           |
+| **P4**       | `import_legacy.rs` wrapper + 复制逻辑去重（cleanup）           | **0130** ✅                           |
+| **P0-infra** | `photasa-import` crate 拆分（可测性）                          | **0131** ✅                           |
+| **P1a**      | `photasa-thumbnail` async crate 拆分（可测性）                 | **0134** ✅                           |
+| **P1b**      | `photasa-types` + `photasa-scan` crate 拆分（可测性）          | **0132** ✅                           |
+| **P1c**      | `photasa-watch` crate 拆分（可测性）                           | **0133** ✅                           |
+| **P1d**      | watch UI 契约（add/delete 文件/目录）                          | **0135** ✅                           |
+| **P1e**      | 持久化队列扫描流水线（贞观 who/what + 一层发现）               | **0136** 🔨（folder tree 收口待完成） |
+| **P1f**      | `photasa-media` crate（扩展名判定统一，修复四处分叉）          | **0141** ✅                           |
+| **P1g**      | `photasa-config` crate（folder-level config，退出 zouwu）      | **0138** ✅                           |
+| **P1h**      | 文件夹配置命令贞观之治对齐（魏征接管）                         | **0142** ✅                           |
+| **P1i**      | 扫描与队列命令贞观之治对齐                                     | **0143** ✅                           |
+| **P1j**      | 扫描队列持久化对齐（并发锁 + 脱离 zouwu 类型）                 | **0144** ✅                           |
+| **P1k**      | folder tree 持久化退出 zouwu（`photasa-folder-tree`）          | **0145** ✅                           |
+| **P0**       | 文昌 preference 贞观对齐：袁天罡 `executeZhaoling` 内 `invoke` | **0147** ⏳                           |
+| **P2a**      | zouwu Adapter → command 迁移模式（通用，供后续域引用）         | **0140** 📋                           |
+| **P2b**      | zouwu 逐域退场排期（scan 已排除，config/preference 优先）      | **0139** 📋                           |
+| **P3h**      | Quit 恢复                                                      | **0120** ✅                           |
+| **P3i**      | Settings 导入                                                  | **0121** ✅                           |
+| —            | Legacy importPhotos UX                                         | **0122** ❌                           |
+| —            | Electron desktop UX                                            | **0126** ❌                           |
 
 **编号：** **0108–0110 不回填**；**0118–0144** 已登记。
 
@@ -320,7 +322,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **RFC 0092 扩展：** 已用 `tauri-plugin-global-shortcut` 注册与 Electron 相同的日志查看器全局快捷键（macOS `cmd+shift+alt+KeyL` / 其他 `ctrl+shift+alt+KeyL`），按下时发射 `log:toggle-viewer`；系统菜单仍为 macOS `apply_system_menu`（既有实现）。
 - **RFC 0097（迁移跟踪）：** ✅ Implemented。导入表面已 Rust：`preview_import` / `execute_import` / history·undo / `extract_metadata`（0112 golden）/ 日期目录（0104）/ pause·resume（0096）。`tauri-import-stubs` = 前端兜底形状 only，**不是**未接入后端。导入历史落盘 `import_history_v1.json`。Updater 接线见 **0113** + `UPDATER.md`（生产密钥走 CI/运维，不进仓库）。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
-- **Next step（以「Photasa next priorities」为准）：** **0136 folder tree 验收**（Acceptance #10 幂等/golden）→ 0137 / preference 域 zouwu 退场 / 0139 polish。
+- **Next step（以「Photasa next priorities」为准）：** **0147** 文昌 preference **整域**退出 zouwu → **0136** Acceptance #10 → 0137 / shell·menu·engine / 0139 polish。
 - **0145（2026-07-21）：** ✅ Implemented——`photasa-folder-tree` crate；删 `siming_adapter`；`siming-bridge` 单路径；`intent.ts` 移除 zouwu 映射；matter-sync `folderTree` 对齐。
 - **0141（2026-07-20）：** ✅ Implemented——`crates/photasa-media` 落地，`path.rs`/`photasa-import`/`photasa-thumbnail`/`photasa-scan` 四处 Rust 消费方全部切换依赖；`apps/photasa/src/api/watch-event.ts` 前端扩展名表补齐 `dng`/`raf`/`orf` 对齐权威表，新增回归测试，`vitest run` 11 passed，`eslint` 零错误。
 - **0138（2026-07-20）：** ✅ Implemented——`config_adapter.rs` 已删，`commands/config.rs` 直连 `photasa-config` crate，零 zouwu 依赖，renderer 调用链（魏征）已 trace 记录于 0142。
