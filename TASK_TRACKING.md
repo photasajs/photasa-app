@@ -22,6 +22,16 @@
 | 应用偏好（文昌）落盘 | [0107](./.spec/rfc/completed/0107-tauri-wenchang-preferences-storage.md)       | 🔴 High   | Done（0147 直连 IPC；2026-07-21 手测通过） | 否                                  |
 | 缩略图 EXIF/旋转修复 | [0146](./.spec/rfc/completed/0146-tauri-thumbnail-orientation-aspect-ratio.md) | 🔴 High   | Done                                       | 否                                  |
 | macOS 标题栏与拖动   | [0152](./.spec/rfc/0152-tauri-macos-custom-titlebar-overlay-and-drag.md)       | 🔴 High   | Done（Tauri 2.0 窗口 Overlay 及拖拽权限）  | 否                                  |
+| 重建 Tauri PR 流水线  | [0151](./.spec/rfc/0151-tauri-cicd-redesign.md)                               | 🔴 High   | Done（三平台编译矩阵及复合 Action）        | 否                                  |
+
+### RFC 0151 — 重建 Tauri PR 流水线 ✅ Done
+
+**目标**：删除 Electron `build-matrix.yml`，为 Photasa (Tauri + Rust) 从零重建三平台（macOS/Windows/Linux）矩阵编译及配套 lint/测试 PR 流水线。
+
+- [x] `.github/workflows/build-matrix.yml`：删除 legacy Electron 构建流水线
+- [x] `.github/actions/setup-photasa-toolchain/action.yml`：设计复合 action 封装 checkout, apt-get, rust-toolchain, pnpm, node 核心准备步骤
+- [x] `.github/workflows/photasa-build.yml`：配置三平台 `strategy.matrix`，集成 `pnpm tauri build --debug` 快速 debug 编译校验
+- [x] `.github/workflows/photasa-build.yml`：集成 `cargo test`, `cargo clippy`, eslint, vitest 配套检查项
 
 ### RFC 0152 — macOS 标题栏与拖动 ✅ Done
 
