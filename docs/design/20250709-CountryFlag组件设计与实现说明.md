@@ -3,7 +3,8 @@
 创建日期: 2025-07-09
 创建者: AI
 关联协议: RIPER-5 + 多维 + 代理协议 + AI开发规范
-适用范围: Electron + Vue3 项目国旗组件设计与实现
+历史说明: Electron renderer 组件文档；UI 现位于 apps/photasa/src/
+适用范围: Vue3 桌面应用国旗组件（原 Electron 稿）
 ---
 
 # CountryFlag 组件设计与实现说明

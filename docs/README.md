@@ -5,7 +5,8 @@ Welcome to the Photasa documentation hub. This directory contains all project do
 ## 📚 Documentation Structure
 
 - **`DEV_GUIDE.md`** - Complete development setup and workflow guide
-- **`DEBUG.md`** - Debugging setup and troubleshooting guide
+- **`DEBUG.md`** - Tauri debugging and troubleshooting
+- **`DEBUG_MCP.md`** - Tauri MCP debugging guide
 - **`design/`** - Architecture and design documentation
 - **`rfc/`** - Request for Comments and design decisions
 - **`issue/`** - Known issues and resolutions
@@ -14,7 +15,8 @@ Welcome to the Photasa documentation hub. This directory contains all project do
 ## 🚀 Quick Links
 
 - [Development Guide](DEV_GUIDE.md) - Get started with development
-- [Debug Guide](DEBUG.md) - Debugging and troubleshooting
+- [Debug Guide](DEBUG.md) - Tauri debugging and troubleshooting
+- [MCP Debug](DEBUG_MCP.md) - Tauri MCP debugging
 - [RFC / ROADMAP](../ROADMAP.md) - RFC index and design decisions (canonical)
 - [Design Documents](design/) - Architecture and design docs
 - [Issues](issue/) - Known issues and solutions
@@ -23,7 +25,7 @@ Welcome to the Photasa documentation hub. This directory contains all project do
 
 ## 开发命名规范说明
 
-Photoasa 开发命名规范聚焦于Electron App的开发规范。
+Photasa 为 **Tauri + Vue 3** 桌面应用；命名规范适用于 `apps/photasa/src/`。
 
 ## 1. 组件命名
 
@@ -44,22 +46,22 @@ Photoasa 开发命名规范聚焦于Electron App的开发规范。
 ## 4. 典型用法示例
 
 ```typescript
-// src/renderer/src/services/find-photo-service.ts
-import type { IFindPhotoService } from "@renderer/interface/find-photo-service.interface";
+// apps/photasa/src/services/find-photo-service.ts
+import type { IFindPhotoService } from "@/interfaces/find-photo-service.interface";
 
 export class FindPhotoServiceIpc implements IFindPhotoService {
     /* ... */
 }
 
-// src/renderer/src/interface/find-photo-service.interface.ts
+// apps/photasa/src/interfaces/find-photo-service.interface.ts
 export interface IFindPhotoService {
     /* ... */
 }
 export const FindPhotoServiceKey = Symbol("FindPhotoService");
 
-// src/renderer/src/main.ts
-import { FindPhotoServiceIpc } from "@renderer/services/find-photo-service";
-import { FindPhotoServiceKey } from "@renderer/interface/find-photo-service.interface";
+// apps/photasa/src/main.ts
+import { FindPhotoServiceIpc } from "@/services/find-photo-service";
+import { FindPhotoServiceKey } from "@/interfaces/find-photo-service.interface";
 app.provide(FindPhotoServiceKey, new FindPhotoServiceIpc());
 ```
 

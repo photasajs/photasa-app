@@ -1,5 +1,7 @@
 # 主题与插件包格式与API设计（更新版）
 
+> **历史文档**：撰写时面向 Electron main/renderer。Tauri 实现见 `.spec/rfc/`。
+
 ## 1. 主题包（Theme Package）
 
 ### 本地存储方案

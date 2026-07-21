@@ -1,14 +1,13 @@
 # Tauri 迁移设计文档
 
-**日期**: 2026-03-15
-**状态**: 已审查
-**策略**: B — 先构建 Rust 工作流引擎，再在其之上构建 Tauri 应用层
+**日期**: 2026-03-15  
+**状态**: 已完成（`apps/desktop` 已删除，RFC 0153；zouwu workspace 已移除）
 
 ---
 
 ## 1. 目标
 
-将 `apps/desktop`（Electron）完全替换为 `apps/photasa`（Tauri）。Tauri 不是过渡方案，而是最终形态。Electron 代码库在迁移完成后废弃。
+将 `apps/desktop`（Electron）完全替换为 `apps/photasa`（Tauri）。**已完成**：Electron 代码库已删除。
 
 ---
 
@@ -17,7 +16,7 @@
 ### 2.1 全量替换，非并行运行
 
 - Tauri 完全替换 Electron，不存在"两套并行"阶段
-- `apps/desktop` 作为参考实现保留，直到 Tauri 功能完备后删除
+- ~~`apps/desktop` 作为参考实现保留~~ → **已删除**（2026-07）
 
 ### 2.2 完整 Rust 后端重写
 
@@ -45,14 +44,12 @@
 ```
 picasa-vue/
 ├── apps/
-│   ├── desktop/                  # Electron（保留参考，迁移完成后删除）
-│   └── photasa/                  # Tauri 应用
+│   └── photasa/                  # Tauri 应用（唯一桌面交付）
 │       ├── src/                  # Vue 3 前端
-│       │   └── api/              # 适配器层（window.api 兼容 Electron preload）
+│       │   └── api/              # legacy-api（invoke 兼容层）
 │       └── src-tauri/            # Rust 命令层
 │           ├── src/
-│           │   ├── commands/     # Tauri 命令（tianshu、scan、thumbnail 等）
-│           │   ├── adapters/     # Tauri 侧 Adapter 实现
+│           │   ├── commands/     # Tauri 命令
 │           │   └── services/     # TianshuService（工作流引擎封装）
 │           └── Cargo.toml        # 引用 workspace crates
 ├── crates/                       # Rust workspace（新建）
@@ -312,36 +309,15 @@ pub fn build_registry(app_handle: AppHandle) -> AdapterRegistry {
 
 ## 7. 工作流文件打包与运行时路径
 
-`.zouwu` 工作流文件需要随应用打包，在运行时通过 Tauri 资源 API 访问：
+**已废弃（RFC 0153）**：zouwu `.zouwu` 工作流与 `TianshuService` 已移除；业务逻辑在 `crates/photasa-*` + Tauri 命令中实现。本节仅作迁移史留存。
 
-**`tauri.conf.json` 配置：**
-
-```json
-{
-    "bundle": {
-        "resources": ["../../apps/desktop/src/main/engines/tianshu/workflows/**"]
-    }
-}
-```
-
-**运行时路径解析：**
-
-```rust
-// TianshuService 初始化时
-let workflows_dir = app_handle
-    .path()
-    .resource_dir()
-    .expect("resource dir not found")
-    .join("workflows");
-```
-
-不使用硬编码路径，确保 macOS app bundle、Linux AppImage、Windows 安装包均可正确访问。
+~~`tauri.conf.json` bundle `apps/desktop/.../workflows`~~ — 不再适用。
 
 ---
 
 ## 8. 前端适配器层（window.api）
 
-`apps/photasa/src/api/` 已实现平坦 legacy API，与 Electron preload `legacy.ts` 接口兼容。
+`apps/photasa/src/api/` 已实现平坦 legacy API，与历史 Electron preload `legacy.ts` 接口兼容（Electron 已移除）。
 所有方法最终调用 `invoke("command_name", args)` 或监听 Tauri 事件。
 前端 Vue 组件无需修改。
 
@@ -382,18 +358,16 @@ let workflows_dir = app_handle
 3. 验证 Pinia store 初始化流程
 4. 端到端功能测试（扫描 → 缩略图 → 展示）
 
-### Phase 4 — 提取到 zouwu-wf（后续规划）
+### Phase 4 — 提取到 zouwu-wf
 
-1. 将 `crates/zouwu-core`、`crates/zouwu-builtin` 提取到独立 repo
-2. 实现 `crates/zouwu-wasm`（wasm-bindgen 导出）
-3. 发布 `@zouwu-wf/workflow-wasm` npm 包，替换 TS 工作流库
+**已取消**：RFC 0153 移除 `zouwu-core` / `zouwu-builtin`；后端以 `crates/photasa-*` + Tauri 命令为唯一路径。
 
 ---
 
 ## 10. 成功标准
 
-- [ ] `cargo test --workspace` 全部通过，用现有 `.zouwu` 文件验证引擎
-- [ ] `wasmtime` 依赖已删除，stubs.rs 已替换
-- [ ] `pnpm tauri:dev` 正常启动，扫描和缩略图功能可用
-- [ ] `pnpm tauri:build` 打包成功，工作流文件正确 bundle
-- [ ] `apps/desktop`（Electron）可以安全删除
+- [x] `cargo test --workspace` 全部通过
+- [x] `wasmtime` / zouwu 工作流路径已移除（RFC 0153）
+- [x] `pnpm dev` / Tauri 开发启动，扫描和缩略图可用
+- [x] `apps/desktop`（Electron）已删除
+- [ ] `legacy-api.ts` 逐 capability 退役（RFC 0097，进行中）

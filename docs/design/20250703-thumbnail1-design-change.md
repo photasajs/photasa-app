@@ -1,5 +1,7 @@
 # Thumbnail1 设计变更说明
 
+> **历史文档**：缩略图实现已迁移至 Rust `photasa-thumbnail`（Tauri）。
+
 ## 变更背景
 
 - 旧方案使用 heic-decode 处理 HEIC/HEIF，兼容性和健壮性有限。

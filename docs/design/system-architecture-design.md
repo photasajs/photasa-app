@@ -1,5 +1,7 @@
 # Photasa 系统架构设计文档
 
+> **历史文档（Electron 时代）**：路径与进程模型以 `apps/desktop` 为准。当前实现为 **Tauri**（`apps/photasa` + `crates/photasa-*`）。请参阅 [ROADMAP.md](../../ROADMAP.md) 与 `docs/DEV_GUIDE.md`。
+
 > **版本**: 2.0.0
 > **创建日期**: 2025-01-23
 > **最后更新**: 2025-01-23

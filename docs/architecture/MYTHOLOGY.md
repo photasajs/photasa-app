@@ -1,5 +1,7 @@
 # 神话大唐架构 - Mythology Architecture
 
+> **历史参考文档**：撰写时目标为 Electron（`apps/desktop`、`src/main/` 引擎）。**当前交付为 Tauri + Rust**（`apps/photasa`、`crates/photasa-*`）；Electron 与 zouwu/Tianshu 工作流已移除（RFC 0153）。实现以 [ROADMAP.md](../../ROADMAP.md) 与 `.spec/rfc/` 为准。
+
 > **Picasa Vue 照片管理应用的中国古代神话主题架构设计**
 
 本文档详细说明了项目中所有基于中国古代神话和历史人物的架构组件及其职责。

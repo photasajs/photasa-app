@@ -1,5 +1,7 @@
 # 插件系统设计方案（VSCode风格，main/render双入口）
 
+> **历史文档（Electron main/renderer）**：插件系统未按此文在 Tauri 落地。
+
 ## 1. 设计目标
 
 - 支持插件扩展主进程（main）和渲染进程（render）能力

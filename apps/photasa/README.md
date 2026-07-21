@@ -1,87 +1,54 @@
-# Photasa - Tauri 版本
+# Photasa (Tauri)
 
-**Rust-first：** 后端逻辑在 `src-tauri` / `crates/`；Electron/TS 仅作契约对照。禁止 WASM / Node 过渡方案 — 见 [`docs/rfc/TAURI_RUST_REWRITE_POLICY.md`](../../docs/rfc/TAURI_RUST_REWRITE_POLICY.md)。
+**Rust-first** desktop photo app. Backend in `src-tauri` + `crates/`; Vue renderer for UI and orchestration only.
 
-这是 Photasa 的 Tauri 实现版本，基于 RFC 0067 创建。
+Electron and zouwu (`TianshuService`, `tianshu_command`, workflow YAML) were removed in [RFC 0153](../../.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md). Production IPC is direct `invoke()` via `YuanTianGang` (RFC 0137).
 
-## 项目结构
+## Layout
 
 ```
 apps/photasa/
-├── src/                    # Frontend (Vue3)
-│   ├── main.ts            # Vue 应用入口
-│   ├── App.vue            # 主组件
-│   └── api/               # API 适配层
-│       └── adapter.ts     # Tauri API 适配
-├── src-tauri/             # Rust Backend
-│   ├── src/
-│   │   ├── main.rs        # 应用入口
-│   │   ├── commands/      # Tauri Commands
-│   │   │   ├── mod.rs
-│   │   │   └── window.rs  # 窗口命令
-│   │   ├── services/      # 服务系统（待实现）
-│   │   ├── workers/       # Worker 线程（待实现）
-│   │   └── utils/        # 工具函数
-│   ├── Cargo.toml         # Rust 依赖配置
-│   ├── tauri.conf.json    # Tauri 配置
-│   └── build.rs           # 构建脚本
-├── package.json           # Node.js 依赖
-├── vite.config.ts         # Vite 配置
-└── tsconfig.json          # TypeScript 配置
+├── src/                    # Vue renderer
+│   ├── api/                # legacy-api, adapters (scan, import, config, …)
+│   ├── services/           # Zhenguan domain services (lishimin, fangxuanling, …)
+│   └── main.ts
+└── src-tauri/
+    ├── src/
+    │   ├── main.rs         # Tauri entry, command registration
+    │   ├── commands/       # Typed #[tauri::command] handlers
+    │   └── utils/          # e.g. scan queue persistence
+    ├── Cargo.toml
+    └── tauri.conf.json
 ```
 
-## 开发
+Rust algorithms live in workspace crates (`photasa-scan`, `photasa-import`, `photasa-thumbnail`, `photasa-config`, `photasa-preference`, `photasa-folder-tree`, `photasa-media`, `photasa-watch`, `photasa-types`, `libheif-sys`).
 
-### 前置要求
+## Commands
 
-- Rust (最新稳定版)
-- Node.js 和 pnpm
-- Tauri CLI (`cargo install tauri-cli`)
-
-### 安装依赖
+From repo root:
 
 ```bash
-cd apps/photasa
+pnpm dev                  # tauri dev
+pnpm run build:photasa    # tauri build
+pnpm run clippy           # cargo clippy -p photasa
+```
+
+From this directory:
+
+```bash
 pnpm install
+pnpm run dev
+pnpm run test:unit
+pnpm run lint
+pnpm run typecheck
 ```
 
-### 开发模式
+## Status
 
-```bash
-pnpm tauri:dev
-```
+Core migration is **implemented** (scan, import, thumbnail, config, preferences, folder tree, watch, shell/menu). Track remaining work in [ROADMAP.md](../../ROADMAP.md) — notably `legacy-api.ts` capability retirement (RFC 0097).
 
-这将启动 Vite 开发服务器和 Tauri 应用。
+Umbrella RFC: [0067](../../.spec/rfc/completed/0067-tauri-app-photasa.md). Recent retirements: [0137](../../.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md) (direct IPC), [0139/0140](../../.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md) (zouwu domain exit), [0153](../../.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md) (physical removal).
 
-### 构建
+## Policy
 
-```bash
-pnpm tauri:build
-```
-
-## 当前状态
-
-### ✅ 已完成
-
-- [x] 项目骨架创建
-- [x] 基础目录结构
-- [x] Rust 依赖配置
-- [x] Vite 构建配置
-- [x] 基础窗口命令（minimize, maximize, close, isMaximized）
-- [x] API 适配层框架
-
-### 🚧 进行中
-
-- [ ] 迁移 renderer 代码
-- [ ] 实现更多命令（Shell, Config 等）
-- [ ] 服务系统实现
-
-### 📋 待办
-
-- [ ] 迁移核心服务（扫描、导入、缩略图等）
-- [ ] 工作流引擎迁移
-- [ ] 完整测试
-
-## 参考
-
-- [RFC 0067: 创建 Tauri 应用 Photasa](../../docs/rfc/0067-tauri-app-photasa.md)
+See [TAURI_RUST_REWRITE_POLICY.md](../../docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — match Electron **contracts** in tests; implement in Rust only.
