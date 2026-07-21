@@ -24,7 +24,7 @@ import {
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { useScanningStore } from "../fangxuanling/stores/scanning-store";
 import { createScanQueueItem } from "@renderer/stores/scanning-types";
-import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/scan-queue-bridge";
+import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/tauri-command-names";
 
 const mockTauriInvoke = vi.hoisted(() => vi.fn());
 let mockPersistedQueue: Record<string, unknown>[] = [];
@@ -517,6 +517,15 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                             source: "user",
                             operationType: "directory",
                         }),
+                        actions: [
+                            createTestScanAction({
+                                path,
+                                action: "scan",
+                                thumbnailSize: 150,
+                                source: "user",
+                                operationType: "directory",
+                            }),
+                        ],
                     },
                     timestamp: Date.now(),
                     priority: ZOUZHE_PRIORITIES.NORMAL,
@@ -565,6 +574,15 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                         source: "user",
                         operationType: "directory",
                     }),
+                    actions: [
+                        createTestScanAction({
+                            path: "/test/path",
+                            action: "scan",
+                            thumbnailSize: 150,
+                            source: "user",
+                            operationType: "directory",
+                        }),
+                    ],
                 },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
