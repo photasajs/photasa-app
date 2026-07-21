@@ -493,13 +493,7 @@
         "noMetadata": "لا توجد بيانات وصفية"
     },
     "common": {
-        "files": "ملفات",
-        "file": "ملف",
-        "images": "صور",
-        "image": "صورة",
-        "videos": "فيديوهات",
-        "video": "فيديو",
-        "counting": "جارى العد..."
+        "close": "إغلاق"
     },
     "imageList": {
         "fileCount": {

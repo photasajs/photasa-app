@@ -493,13 +493,7 @@
         "noMetadata": "Meta Veri Yok"
     },
     "common": {
-        "files": "dosyalar",
-        "file": "dosya",
-        "images": "resimler",
-        "image": "resim",
-        "videos": "videolar",
-        "video": "video",
-        "counting": "Sayılıyor..."
+        "close": "Kapat"
     },
     "imageList": {
         "fileCount": {

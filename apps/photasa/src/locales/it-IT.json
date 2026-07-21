@@ -490,13 +490,7 @@
         "noMetadata": "Nessun metadato"
     },
     "common": {
-        "files": "file",
-        "file": "file",
-        "images": "immagini",
-        "image": "immagine",
-        "videos": "video",
-        "video": "video",
-        "counting": "Conteggio..."
+        "close": "Chiudi"
     },
     "imageList": {
         "fileCount": {

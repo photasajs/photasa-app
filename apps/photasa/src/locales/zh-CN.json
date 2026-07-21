@@ -636,23 +636,7 @@
         "noMetadata": "无元数据"
     },
     "common": {
-        "files": "文件",
-        "file": "文件",
-        "images": "图片",
-        "image": "图片",
-        "videos": "视频",
-        "video": "视频",
-        "counting": "统计中...",
-        "yes": "是",
-        "no": "否",
-        "healthy": "健康",
-        "unhealthy": "不健康",
-        "idle": "空闲",
-        "running": "运行中",
-        "minute": "分钟",
-        "minutes": "分钟",
-        "hour": "小时",
-        "hours": "小时"
+        "close": "关闭"
     },
     "imageList": {
         "fileCount": {

@@ -493,13 +493,7 @@
         "noMetadata": "Không có siêu dữ liệu"
     },
     "common": {
-        "files": "tệp",
-        "file": "tệp",
-        "images": "hình ảnh",
-        "image": "hình ảnh",
-        "videos": "video",
-        "video": "video",
-        "counting": "Đang đếm..."
+        "close": "Đóng"
     },
     "imageList": {
         "fileCount": {

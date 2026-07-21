@@ -493,13 +493,7 @@
         "noMetadata": "Немає метаданих"
     },
     "common": {
-        "files": "файлів",
-        "file": "файл",
-        "images": "зображень",
-        "image": "зображення",
-        "videos": "відео",
-        "video": "відео",
-        "counting": "Підрахунок..."
+        "close": "Закрити"
     },
     "imageList": {
         "fileCount": {

@@ -596,23 +596,7 @@
         "noMetadata": "No Metadata"
     },
     "common": {
-        "files": "files",
-        "file": "file",
-        "images": "images",
-        "image": "image",
-        "videos": "videos",
-        "video": "video",
-        "counting": "Counting...",
-        "yes": "Yes",
-        "no": "No",
-        "healthy": "Healthy",
-        "unhealthy": "Unhealthy",
-        "idle": "Idle",
-        "running": "Running",
-        "minute": "minute",
-        "minutes": "minutes",
-        "hour": "hour",
-        "hours": "hours"
+        "close": "Close"
     },
     "imageList": {
         "fileCount": {

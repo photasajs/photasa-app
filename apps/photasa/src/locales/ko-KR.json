@@ -493,13 +493,7 @@
         "noMetadata": "메타데이터 없음"
     },
     "common": {
-        "files": "파일",
-        "file": "파일",
-        "images": "이미지",
-        "image": "이미지",
-        "videos": "동영상",
-        "video": "동영상",
-        "counting": "계산 중..."
+        "close": "닫기"
     },
     "imageList": {
         "fileCount": {

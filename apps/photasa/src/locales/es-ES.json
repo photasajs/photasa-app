@@ -535,13 +535,7 @@
         "noMetadata": "Sin metadatos"
     },
     "common": {
-        "files": "archivos",
-        "file": "archivo",
-        "images": "imágenes",
-        "image": "imagen",
-        "videos": "videos",
-        "video": "video",
-        "counting": "Contando..."
+        "close": "Cerrar"
     },
     "imageList": {
         "fileCount": {

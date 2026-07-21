@@ -538,13 +538,7 @@
         "noMetadata": "Aucune métadonnée"
     },
     "common": {
-        "files": "fichiers",
-        "file": "fichier",
-        "images": "images",
-        "image": "image",
-        "videos": "vidéos",
-        "video": "vidéo",
-        "counting": "Comptage..."
+        "close": "Fermer"
     },
     "imageList": {
         "fileCount": {

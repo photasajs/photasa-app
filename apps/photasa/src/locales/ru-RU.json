@@ -493,13 +493,7 @@
         "noMetadata": "Нет метаданных"
     },
     "common": {
-        "files": "файлов",
-        "file": "файл",
-        "images": "изображений",
-        "image": "изображение",
-        "videos": "видео",
-        "video": "видео",
-        "counting": "Подсчет..."
+        "close": "Закрыть"
     },
     "imageList": {
         "fileCount": {

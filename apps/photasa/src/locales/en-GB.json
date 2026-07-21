@@ -514,13 +514,7 @@
         "noMetadata": "No Metadata"
     },
     "common": {
-        "files": "files",
-        "file": "file",
-        "images": "images",
-        "image": "image",
-        "videos": "videos",
-        "video": "video",
-        "counting": "Counting..."
+        "close": "Close"
     },
     "imageList": {
         "fileCount": {

@@ -538,13 +538,7 @@
         "noMetadata": "メタデータなし"
     },
     "common": {
-        "files": "ファイル",
-        "file": "ファイル",
-        "images": "画像",
-        "image": "画像",
-        "videos": "動画",
-        "video": "動画",
-        "counting": "カウント中..."
+        "close": "閉じる"
     },
     "imageList": {
         "fileCount": {
