@@ -28,13 +28,13 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## 摘要
 
-本文档详细说明如何将 Electron 应用的 UI 层迁移到 Tauri，并通过适配器模式实现渐进式后端替换。**这是最高优先级的迁移任务**，因为它让 Tauri 应用可以立即运行，为后续的后端服务迁移提供可视化验证环境。
+本文档详细说明如何将 桌面应用的 UI 层迁移到 Tauri，并通过适配器模式实现渐进式后端替换。**这是最高优先级的迁移任务**，因为它让 Tauri 应用可以立即运行，为后续的后端服务迁移提供可视化验证环境。
 
 ## 动机
 
@@ -55,7 +55,7 @@ RFC 0067 将 UI 迁移放在"阶段四"，这是错误的顺序：
 阶段一：基础设施 ✅
 阶段二：核心 API 迁移 (Shell, Config, Update)
 阶段三：业务服务迁移 (Scan, Thumbnail, Import, Tianshu)
-阶段四：Renderer 代码迁移  ← 太晚了！
+阶段四：Renderer 代码迁移 ← 太晚了！
 
 ✅ 推荐计划（先跑 UI）：
 阶段一：基础设施 ✅
@@ -70,34 +70,34 @@ RFC 0067 将 UI 迁移放在"阶段四"，这是错误的顺序：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Vue UI 组件                           │
-│     (UI adapted from desktop renderer — not backend)    │
+│ Vue UI 组件 │
+│ (UI adapted from desktop renderer — not backend) │
 └──────────────────────┬──────────────────────────────────┘
-                       │
-                       ▼
+ │
+ ▼
 ┌─────────────────────────────────────────────────────────┐
-│                   适配层 (Adapter)                       │
-│                  src/api/adapter.ts                      │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │  if (isTauri) {                                 │    │
-│  │    return invoke("command", args);              │    │
-│  │  } else {                                       │    │
-│  │    return window.electronAPI.command(args);     │    │
-│  │  }                                              │    │
-│  └─────────────────────────────────────────────────┘    │
+│ 适配层 (Adapter) │
+│ src/api/adapter.ts │
+│ ┌─────────────────────────────────────────────────┐ │
+│ │ if (isTauri) { │ │
+│ │ return invoke("command", args); │ │
+│ │ } else { │ │
+│ │ return window.legacyPreloadAPI.command(args); │ │
+│ │ } │ │
+│ └─────────────────────────────────────────────────┘ │
 └──────────────────────┬──────────────────────────────────┘
-                       │
-          ┌────────────┴────────────┐
-          ▼                         ▼
-┌──────────────────┐      ┌──────────────────┐
-│   Tauri Backend  │      │ Electron Backend │
-│   (Rust/Stub)    │      │   (保持不变)      │
-└──────────────────┘      └──────────────────┘
+ │
+ ┌────────────┴────────────┐
+ ▼ ▼
+┌──────────────────┐ ┌──────────────────┐
+│ Tauri Backend │ │ contract reference Backend │
+│ (Rust/Stub) │ │ (保持不变) │
+└──────────────────┘ └──────────────────┘
 ```
 
 ### 扁平 window.api 与兼容层
 
-渲染层与 `utils/api.ts` 使用的是 **Electron preload 暴露的扁平 API**（见 `apps/desktop/src/preload/legacy.ts`），例如：
+渲染层与 `utils/api.ts` 使用的是 **legacy preload 暴露的扁平 API**（见 `legacy-api.ts (RFC 0075)`），例如：
 
 - 窗口：`minimizeWindow`, `maximizeWindow`, `unmaximizeWindow`, `closeWindow`, `queryMaximized`, `onWindowMaximized`, `onWindowUnmaximized`, `onWindowMaximizedState`, `off*`
 - 路径：`normalizePath`, `mergePath`, `splitPath`, `joinPath`, `getSeparator`, `toFileName`, `toDirName`, `isFileUnderFolder`, `isHiddenFile`, …
@@ -113,32 +113,32 @@ RFC 0067 将 UI 迁移放在"阶段四"，这是错误的顺序：
 
 ```
 apps/photasa/
-├── src/                          # 前端代码（从 desktop/src/renderer 复制）
-│   ├── api/                      # 适配层
-│   │   ├── adapter.ts            # 主适配器（嵌套形态）
-│   │   ├── legacy-api.ts         # 扁平 window.api 兼容层（与 legacy.ts 对齐）
-│   │   ├── env.ts                # isTauri()
-│   │   ├── tianshu.adapter.ts    # 天枢适配器
-│   │   ├── scan.adapter.ts       # 扫描适配器
-│   │   ├── thumbnail.adapter.ts  # 缩略图适配器
-│   │   ├── import.adapter.ts     # 导入适配器
-│   │   ├── config.adapter.ts     # 配置适配器
-│   │   ├── shell.adapter.ts      # Shell 适配器
-│   │   └── window.adapter.ts     # 窗口适配器
-│   ├── components/               # Vue 组件（复制）
-│   ├── composables/              # Composables（复制）
-│   ├── stores/                   # Pinia stores（复制）
-│   ├── services/                 # 前端服务（复制，需适配）
-│   ├── views/                    # 视图组件（复制）
-│   ├── App.vue                   # 主组件
-│   └── main.ts                   # 入口文件
+├── src/ # 前端代码（从 desktop/src/renderer 复制）
+│ ├── api/ # 适配层
+│ │ ├── adapter.ts # 主适配器（嵌套形态）
+│ │ ├── legacy-api.ts # 扁平 window.api 兼容层（与 legacy.ts 对齐）
+│ │ ├── env.ts # isTauri()
+│ │ ├── tianshu.adapter.ts # 天枢适配器
+│ │ ├── scan.adapter.ts # 扫描适配器
+│ │ ├── thumbnail.adapter.ts # 缩略图适配器
+│ │ ├── import.adapter.ts # 导入适配器
+│ │ ├── config.adapter.ts # 配置适配器
+│ │ ├── shell.adapter.ts # Shell 适配器
+│ │ └── window.adapter.ts # 窗口适配器
+│ ├── components/ # Vue 组件（复制）
+│ ├── composables/ # Composables（复制）
+│ ├── stores/ # Pinia stores（复制）
+│ ├── services/ # 前端服务（复制，需适配）
+│ ├── views/ # 视图组件（复制）
+│ ├── App.vue # 主组件
+│ └── main.ts # 入口文件
 ├── src-tauri/
-│   └── src/
-│       └── commands/
-│           ├── mod.rs            # 命令模块
-│           ├── window.rs         # 窗口命令 ✅
-│           ├── shell.rs          # Shell 命令
-│           └── stubs.rs          # Stub 命令（临时）
+│ └── src/
+│ └── commands/
+│ ├── mod.rs # 命令模块
+│ ├── window.rs # 窗口命令 ✅
+│ ├── shell.rs # Shell 命令
+│ └── stubs.rs # Stub 命令（临时）
 ├── index.html
 ├── vite.config.ts
 └── package.json
@@ -218,7 +218,7 @@ export const api = {
     /** 环境信息 */
     env: {
         isTauri: isTauri(),
-        platform: isTauri() ? "tauri" : "electron",
+        platform: isTauri() ? "tauri" : "legacy",
     },
 };
 
@@ -246,7 +246,7 @@ export const windowAdapter = {
             const { appWindow } = await import("@tauri-apps/api/window");
             await appWindow.minimize();
         } else {
-            await (window as any).electronAPI?.window?.minimize();
+            await (window as any).legacyPreloadAPI?.window?.minimize();
         }
     },
 
@@ -258,7 +258,7 @@ export const windowAdapter = {
             const { appWindow } = await import("@tauri-apps/api/window");
             await appWindow.toggleMaximize();
         } else {
-            await (window as any).electronAPI?.window?.maximize();
+            await (window as any).legacyPreloadAPI?.window?.maximize();
         }
     },
 
@@ -270,7 +270,7 @@ export const windowAdapter = {
             const { appWindow } = await import("@tauri-apps/api/window");
             await appWindow.close();
         } else {
-            await (window as any).electronAPI?.window?.close();
+            await (window as any).legacyPreloadAPI?.window?.close();
         }
     },
 
@@ -282,7 +282,7 @@ export const windowAdapter = {
             const { appWindow } = await import("@tauri-apps/api/window");
             return await appWindow.isMaximized();
         } else {
-            return (await (window as any).electronAPI?.window?.isMaximized()) ?? false;
+            return (await (window as any).legacyPreloadAPI?.window?.isMaximized()) ?? false;
         }
     },
 
@@ -294,7 +294,7 @@ export const windowAdapter = {
             const { appWindow } = await import("@tauri-apps/api/window");
             await appWindow.setTitle(title);
         } else {
-            await (window as any).electronAPI?.window?.setTitle(title);
+            await (window as any).legacyPreloadAPI?.window?.setTitle(title);
         }
     },
 };
@@ -316,7 +316,7 @@ export const shellAdapter = {
             const { open } = await import("@tauri-apps/api/shell");
             await open(url);
         } else {
-            await (window as any).electronAPI?.shell?.openExternal(url);
+            await (window as any).legacyPreloadAPI?.shell?.openExternal(url);
         }
     },
 
@@ -328,7 +328,7 @@ export const shellAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             await invoke("show_in_folder", { path });
         } else {
-            await (window as any).electronAPI?.shell?.showItemInFolder(path);
+            await (window as any).legacyPreloadAPI?.shell?.showItemInFolder(path);
         }
     },
 };
@@ -353,8 +353,8 @@ export const tianshuAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             return await invoke("tianshu_command", { command: fulu });
         } else {
-            // Electron 实现
-            return await (window as any).electronAPI?.tianshu?.processCommand(fulu);
+            // 旧实现
+            return await (window as any).legacyPreloadAPI?.tianshu?.processCommand(fulu);
         }
     },
 
@@ -366,7 +366,7 @@ export const tianshuAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             return await invoke("tianshu_status");
         } else {
-            return await (window as any).electronAPI?.tianshu?.getStatus();
+            return await (window as any).legacyPreloadAPI?.tianshu?.getStatus();
         }
     },
 };
@@ -403,7 +403,7 @@ export const scanAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             await invoke("scan_photos", { requestId, scanAction });
         } else {
-            await (window as any).electronAPI?.scan?.scanPhotos(requestId, scanAction);
+            await (window as any).legacyPreloadAPI?.scan?.scanPhotos(requestId, scanAction);
         }
     },
 
@@ -418,11 +418,11 @@ export const scanAdapter = {
                 callback(event.payload);
             });
         } else {
-            // Electron 监听
+            // contract reference 监听
             const handler = (_event: any, result: ScanResult) => callback(result);
-            (window as any).electronAPI?.scan?.onResult(handler);
+            (window as any).legacyPreloadAPI?.scan?.onResult(handler);
             return () => {
-                (window as any).electronAPI?.scan?.offResult(handler);
+                (window as any).legacyPreloadAPI?.scan?.offResult(handler);
             };
         }
     },
@@ -461,7 +461,7 @@ export const thumbnailAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             return await invoke("create_thumbnail", { request });
         } else {
-            return await (window as any).electronAPI?.thumbnail?.create(request);
+            return await (window as any).legacyPreloadAPI?.thumbnail?.create(request);
         }
     },
 
@@ -473,7 +473,7 @@ export const thumbnailAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             return await invoke("remove_thumbnail", { request });
         } else {
-            return await (window as any).electronAPI?.thumbnail?.remove(request);
+            return await (window as any).legacyPreloadAPI?.thumbnail?.remove(request);
         }
     },
 };
@@ -511,7 +511,7 @@ export const importAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             return await invoke("scan_directories", { paths });
         } else {
-            return await (window as any).electronAPI?.import?.scanDirectories(paths);
+            return await (window as any).legacyPreloadAPI?.import?.scanDirectories(paths);
         }
     },
 
@@ -523,7 +523,7 @@ export const importAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             return await invoke("execute_import", { config });
         } else {
-            return await (window as any).electronAPI?.import?.execute(config);
+            return await (window as any).legacyPreloadAPI?.import?.execute(config);
         }
     },
 
@@ -539,9 +539,9 @@ export const importAdapter = {
             });
         } else {
             const handler = (_event: any, progress: ImportProgress) => callback(progress);
-            (window as any).electronAPI?.import?.onProgress(handler);
+            (window as any).legacyPreloadAPI?.import?.onProgress(handler);
             return () => {
-                (window as any).electronAPI?.import?.offProgress(handler);
+                (window as any).legacyPreloadAPI?.import?.offProgress(handler);
             };
         }
     },
@@ -554,7 +554,7 @@ export const importAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             await invoke("cancel_import", { importId });
         } else {
-            await (window as any).electronAPI?.import?.cancel(importId);
+            await (window as any).legacyPreloadAPI?.import?.cancel(importId);
         }
     },
 };
@@ -576,7 +576,7 @@ export const configAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             return await invoke("query_config", { paths });
         } else {
-            return await (window as any).electronAPI?.config?.query(paths);
+            return await (window as any).legacyPreloadAPI?.config?.query(paths);
         }
     },
 
@@ -588,7 +588,7 @@ export const configAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             await invoke("add_config", { paths });
         } else {
-            await (window as any).electronAPI?.config?.add(paths);
+            await (window as any).legacyPreloadAPI?.config?.add(paths);
         }
     },
 
@@ -600,7 +600,7 @@ export const configAdapter = {
             const { invoke } = await import("@tauri-apps/api/tauri");
             await invoke("remove_config", { paths });
         } else {
-            await (window as any).electronAPI?.config?.remove(paths);
+            await (window as any).legacyPreloadAPI?.config?.remove(paths);
         }
     },
 };
@@ -622,40 +622,40 @@ use log::warn;
 
 #[derive(Debug, Deserialize)]
 pub struct TianshuCommand {
-    pub intent: Option<String>,
-    pub inputs: Option<Value>,
+ pub intent: Option<String>,
+ pub inputs: Option<Value>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct TianshuResponse {
-    pub success: bool,
-    pub result: Option<Value>,
-    pub error: Option<String>,
+ pub success: bool,
+ pub result: Option<Value>,
+ pub error: Option<String>,
 }
 
 /// 天枢命令 - Stub 实现
 #[tauri::command]
 pub async fn tianshu_command(command: Value) -> Result<TianshuResponse, String> {
-    warn!("🌌 [Stub] 天枢命令未实现: {:?}", command);
-    Ok(TianshuResponse {
-        success: true,
-        result: Some(json!({
-            "message": "Stub response - Tianshu not yet implemented",
-            "command": command
-        })),
-        error: None,
-    })
+ warn!("🌌 [Stub] 天枢命令未实现: {:?}", command);
+ Ok(TianshuResponse {
+ success: true,
+ result: Some(json!({
+ "message": "Stub response - Tianshu not yet implemented",
+ "command": command
+ })),
+ error: None,
+ })
 }
 
 /// 天枢状态 - Stub 实现
 #[tauri::command]
 pub async fn tianshu_status() -> Result<Value, String> {
-    warn!("🌌 [Stub] 天枢状态查询");
-    Ok(json!({
-        "workflows": 0,
-        "status": "stub",
-        "message": "Tianshu service not yet implemented"
-    }))
+ warn!("🌌 [Stub] 天枢状态查询");
+ Ok(json!({
+ "workflows": 0,
+ "status": "stub",
+ "message": "Tianshu service not yet implemented"
+ }))
 }
 
 // ============================================
@@ -665,31 +665,31 @@ pub async fn tianshu_status() -> Result<Value, String> {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScanAction {
-    pub path: String,
-    pub operation_type: String,
-    pub action: String,
-    pub thumbnail_size: Option<u32>,
+ pub path: String,
+ pub operation_type: String,
+ pub action: String,
+ pub thumbnail_size: Option<u32>,
 }
 
 /// 扫描照片 - Stub 实现
 #[tauri::command]
 pub async fn scan_photos(
-    window: Window,
-    request_id: String,
-    scan_action: ScanAction,
+ window: Window,
+ request_id: String,
+ scan_action: ScanAction,
 ) -> Result<(), String> {
-    warn!("🌌 [Stub] 扫描请求: {} - {:?}", request_id, scan_action.path);
+ warn!("🌌 [Stub] 扫描请求: {} - {:?}", request_id, scan_action.path);
 
-    // 发送完成事件（空结果）
-    window.emit("picasa:find-photo", json!({
-        "type": "complete",
-        "requestId": request_id,
-        "action": scan_action,
-        "paths": [],
-        "message": "Stub response - Scan service not yet implemented"
-    })).map_err(|e| e.to_string())?;
+ // 发送完成事件（空结果）
+ window.emit("picasa:find-photo", json!({
+ "type": "complete",
+ "requestId": request_id,
+ "action": scan_action,
+ "paths": [],
+ "message": "Stub response - Scan service not yet implemented"
+ })).map_err(|e| e.to_string())?;
 
-    Ok(())
+ Ok(())
 }
 
 // ============================================
@@ -699,42 +699,42 @@ pub async fn scan_photos(
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ThumbnailRequest {
-    pub path: String,
-    pub thumbnail: String,
-    pub width: Option<u32>,
-    pub height: Option<u32>,
-    pub without_enlargement: Option<bool>,
-    pub preview: Option<String>,
-    pub always: Option<bool>,
+ pub path: String,
+ pub thumbnail: String,
+ pub width: Option<u32>,
+ pub height: Option<u32>,
+ pub without_enlargement: Option<bool>,
+ pub preview: Option<String>,
+ pub always: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ThumbnailResponse {
-    pub success: bool,
-    pub file: Option<String>,
-    pub error: Option<String>,
+ pub success: bool,
+ pub file: Option<String>,
+ pub error: Option<String>,
 }
 
 /// 创建缩略图 - Stub 实现
 #[tauri::command]
 pub async fn create_thumbnail(request: ThumbnailRequest) -> Result<ThumbnailResponse, String> {
-    warn!("🌌 [Stub] 创建缩略图: {:?}", request.path);
-    Ok(ThumbnailResponse {
-        success: false,
-        file: None,
-        error: Some("Stub - Thumbnail service not yet implemented".to_string()),
-    })
+ warn!("🌌 [Stub] 创建缩略图: {:?}", request.path);
+ Ok(ThumbnailResponse {
+ success: false,
+ file: None,
+ error: Some("Stub - Thumbnail service not yet implemented".to_string()),
+ })
 }
 
 /// 删除缩略图 - Stub 实现
 #[tauri::command]
 pub async fn remove_thumbnail(request: ThumbnailRequest) -> Result<ThumbnailResponse, String> {
-    warn!("🌌 [Stub] 删除缩略图: {:?}", request.path);
-    Ok(ThumbnailResponse {
-        success: true,
-        file: Some(request.thumbnail),
-        error: None,
-    })
+ warn!("🌌 [Stub] 删除缩略图: {:?}", request.path);
+ Ok(ThumbnailResponse {
+ success: true,
+ file: Some(request.thumbnail),
+ error: None,
+ })
 }
 
 // ============================================
@@ -744,36 +744,36 @@ pub async fn remove_thumbnail(request: ThumbnailRequest) -> Result<ThumbnailResp
 /// 扫描目录 - Stub 实现
 #[tauri::command]
 pub async fn scan_directories(paths: Vec<String>) -> Result<Vec<String>, String> {
-    warn!("🌌 [Stub] 扫描目录: {:?}", paths);
-    Ok(vec![])
+ warn!("🌌 [Stub] 扫描目录: {:?}", paths);
+ Ok(vec![])
 }
 
 /// 执行导入 - Stub 实现
 #[tauri::command]
 pub async fn execute_import(
-    window: Window,
-    config: Value,
+ window: Window,
+ config: Value,
 ) -> Result<String, String> {
-    warn!("🌌 [Stub] 执行导入: {:?}", config);
+ warn!("🌌 [Stub] 执行导入: {:?}", config);
 
-    let import_id = uuid::Uuid::new_v4().to_string();
+ let import_id = uuid::Uuid::new_v4().to_string();
 
-    // 发送完成事件
-    window.emit("import:progress", json!({
-        "processed": 0,
-        "total": 0,
-        "status": "completed",
-        "message": "Stub - Import service not yet implemented"
-    })).map_err(|e| e.to_string())?;
+ // 发送完成事件
+ window.emit("import:progress", json!({
+ "processed": 0,
+ "total": 0,
+ "status": "completed",
+ "message": "Stub - Import service not yet implemented"
+ })).map_err(|e| e.to_string())?;
 
-    Ok(import_id)
+ Ok(import_id)
 }
 
 /// 取消导入 - Stub 实现
 #[tauri::command]
 pub async fn cancel_import(import_id: String) -> Result<(), String> {
-    warn!("🌌 [Stub] 取消导入: {}", import_id);
-    Ok(())
+ warn!("🌌 [Stub] 取消导入: {}", import_id);
+ Ok(())
 }
 
 // ============================================
@@ -783,22 +783,22 @@ pub async fn cancel_import(import_id: String) -> Result<(), String> {
 /// 查询配置 - Stub 实现
 #[tauri::command]
 pub async fn query_config(paths: Vec<String>) -> Result<Vec<String>, String> {
-    warn!("🌌 [Stub] 查询配置: {:?}", paths);
-    Ok(vec![])
+ warn!("🌌 [Stub] 查询配置: {:?}", paths);
+ Ok(vec![])
 }
 
 /// 添加配置 - Stub 实现
 #[tauri::command]
 pub async fn add_config(paths: Vec<String>) -> Result<(), String> {
-    warn!("🌌 [Stub] 添加配置: {:?}", paths);
-    Ok(())
+ warn!("🌌 [Stub] 添加配置: {:?}", paths);
+ Ok(())
 }
 
 /// 移除配置 - Stub 实现
 #[tauri::command]
 pub async fn remove_config(paths: Vec<String>) -> Result<(), String> {
-    warn!("🌌 [Stub] 移除配置: {:?}", paths);
-    Ok(())
+ warn!("🌌 [Stub] 移除配置: {:?}", paths);
+ Ok(())
 }
 ```
 
@@ -812,34 +812,34 @@ use std::process::Command;
 /// 在文件管理器中显示文件
 #[tauri::command]
 pub async fn show_in_folder(path: String) -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    {
-        Command::new("open")
-            .args(["-R", &path])
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
+ #[cfg(target_os = "macos")]
+ {
+ Command::new("open")
+ .args(["-R", &path])
+ .spawn()
+ .map_err(|e| e.to_string())?;
+ }
 
-    #[cfg(target_os = "windows")]
-    {
-        Command::new("explorer")
-            .args(["/select,", &path])
-            .spawn()
-            .map_err(|e| e.to_string())?;
-    }
+ #[cfg(target_os = "windows")]
+ {
+ Command::new("explorer")
+ .args(["/select,", &path])
+ .spawn()
+ .map_err(|e| e.to_string())?;
+ }
 
-    #[cfg(target_os = "linux")]
-    {
-        // 尝试使用 xdg-open 打开父目录
-        if let Some(parent) = std::path::Path::new(&path).parent() {
-            Command::new("xdg-open")
-                .arg(parent)
-                .spawn()
-                .map_err(|e| e.to_string())?;
-        }
-    }
+ #[cfg(target_os = "linux")]
+ {
+ // 尝试使用 xdg-open 打开父目录
+ if let Some(parent) = std::path::Path::new(&path).parent() {
+ Command::new("xdg-open")
+ .arg(parent)
+ .spawn()
+ .map_err(|e| e.to_string())?;
+ }
+ }
 
-    Ok(())
+ Ok(())
 }
 ```
 
@@ -863,31 +863,31 @@ pub use window::*;
 mod commands;
 
 fn main() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![
-            // 窗口命令（Tauri 原生，已实现）
-            commands::window::minimize,
-            commands::window::maximize,
-            commands::window::close,
+ tauri::Builder::default()
+ .invoke_handler(tauri::generate_handler![
+ // 窗口命令（Tauri 原生，已实现）
+ commands::window::minimize,
+ commands::window::maximize,
+ commands::window::close,
 
-            // Shell 命令（已实现）
-            commands::shell::show_in_folder,
+ // Shell 命令（已实现）
+ commands::shell::show_in_folder,
 
-            // Stub 命令（待逐步替换）
-            commands::stubs::tianshu_command,
-            commands::stubs::tianshu_status,
-            commands::stubs::scan_photos,
-            commands::stubs::create_thumbnail,
-            commands::stubs::remove_thumbnail,
-            commands::stubs::scan_directories,
-            commands::stubs::execute_import,
-            commands::stubs::cancel_import,
-            commands::stubs::query_config,
-            commands::stubs::add_config,
-            commands::stubs::remove_config,
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+ // Stub 命令（待逐步替换）
+ commands::stubs::tianshu_command,
+ commands::stubs::tianshu_status,
+ commands::stubs::scan_photos,
+ commands::stubs::create_thumbnail,
+ commands::stubs::remove_thumbnail,
+ commands::stubs::scan_directories,
+ commands::stubs::execute_import,
+ commands::stubs::cancel_import,
+ commands::stubs::query_config,
+ commands::stubs::add_config,
+ commands::stubs::remove_config,
+ ])
+ .run(tauri::generate_context!())
+ .expect("error while running tauri application");
 }
 ```
 
@@ -899,7 +899,7 @@ fn main() {
 
 set -e
 
-SOURCE_DIR="apps/desktop/src/renderer"
+SOURCE_DIR="historical renderer"
 TARGET_DIR="apps/photasa/src"
 
 echo "🚀 开始 UI 迁移..."
@@ -1018,7 +1018,7 @@ echo "3. 运行 npm run tauri dev 验证"
 
 ### 风险 1：API 不兼容
 
-**问题**：Electron API 和 Tauri API 签名不同
+**问题**：legacy preload API 和 Tauri API 签名不同
 
 **缓解**：适配器层统一接口，内部处理差异
 
@@ -1030,7 +1030,7 @@ echo "3. 运行 npm run tauri dev 验证"
 
 ### 风险 3：事件系统差异
 
-**问题**：Electron IPC 和 Tauri 事件系统不同
+**问题**：contract reference IPC 和 Tauri 事件系统不同
 
 **缓解**：适配器封装事件监听，统一回调接口
 
@@ -1038,12 +1038,12 @@ echo "3. 运行 npm run tauri dev 验证"
 
 ```
 RFC 0073 (本文档) ─────┬──→ RFC 0067 (总体架构)
-  UI 迁移 + 适配层      │
-                       ├──→ RFC 0068 (扫描服务) - 替换 scan stub
-                       ├──→ RFC 0069 (缩略图服务) - 替换 thumbnail stub
-                       ├──→ RFC 0070 (导入服务) - 替换 import stub
-                       ├──→ RFC 0071 (配置服务) - 替换 config stub
-                       └──→ RFC 0072 (天枢服务) - 替换 tianshu stub
+ UI 迁移 + 适配层 │
+ ├──→ RFC 0068 (扫描服务) - 替换 scan stub
+ ├──→ RFC 0069 (缩略图服务) - 替换 thumbnail stub
+ ├──→ RFC 0070 (导入服务) - 替换 import stub
+ ├──→ RFC 0071 (配置服务) - 替换 config stub
+ └──→ RFC 0072 (天枢服务) - 替换 tianshu stub
 ```
 
 ## 参考资源

@@ -31,17 +31,12 @@ updates:
       commit-message:
           prefix: "deps"
           include: "scope"
-      # Allow updates to development dependencies
       allow:
           - dependency-type: "development"
           - dependency-type: "production"
-      # Ignore specific packages that might cause issues
       ignore:
-          - dependency-name: "electron"
-            update-types: ["version-update:semver-major"]
           - dependency-name: "sharp"
             update-types: ["version-update:semver-major"]
-      # Group updates for related packages
       groups:
           vue-ecosystem:
               patterns:
@@ -58,6 +53,5 @@ updates:
               patterns:
                   - "vite*"
                   - "@vitejs/*"
-                  - "electron-*"
                   - "typescript"
                   - "@types/*"

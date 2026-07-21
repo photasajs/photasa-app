@@ -1,15 +1,15 @@
 # RFC 0117 – Tauri scan pipeline parity (strategy decision, per-file gating, serial thumbnails, subdir recursion)
 
-> **Title fix (review):** "async thumbnails" was wrong — Electron fresh scan is **serial
+> **Title fix (review):** "async thumbnails" was wrong — contract reference fresh scan is **serial
 > per file** (`concatMap` + `await addTask`). Renamed to "serial thumbnails". See §4.
 
 ## Implementation principle (Photasa / Tauri)
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- The Electron `@photasa/scan` pipeline is the **behavioral contract**, not a library to import or translate line-by-line.
+- The contract reference `@photasa/scan` pipeline is the **behavioral contract**, not a library to import or translate line-by-line.
 - "Parity" = same skip/process decisions, same events, same on-disk JSON, same user-visible outcome — **not** the same code.
-- This RFC fixes a **regression**: the current `scan_runner.rs` collapsed the multi-stage Electron pipeline into a single flat synchronous loop, dropping the strategy decision, per-file gating, resume sub-path, and inlining blocking thumbnail generation.
+- This RFC fixes a **regression**: the current `scan_runner.rs` collapsed the multi-stage contract reference pipeline into a single flat synchronous loop, dropping the strategy decision, per-file gating, resume sub-path, and inlining blocking thumbnail generation.
 - **All tables below are transcribed from the TS source** (`scan-photos.ts`, `scan-helpers.ts`, `strategy/scan-strategy.ts`, `cache/incremental-cache.ts`, `cache/folder-cache-manager.ts`, `worker/directory-scan-progress.ts`, `scan-cleanup.ts`, `utils/path-utils.ts`, `@photasa/common/utils.ts`). They are the literal spec for the Rust port; nothing is summarized away.
 
 | Field                   | Value                                                                                                                                                                                                                                                                                                                        |
@@ -25,23 +25,23 @@
 
 ## Problem
 
-The Electron scan is a **layered pipeline**. The Tauri rewrite in `scan_runner.rs`
+The contract reference scan is a **layered pipeline**. The Tauri rewrite in `scan_runner.rs`
 shipped only the discovery + cache layer (RFC 0105) and **reinvented** the rest as a
-flat loop, diverging from the Electron contract:
+flat loop, diverging from the legacy-api contract:
 
-| #   | Electron contract (`@photasa/scan`)                                                                                                                                                  | Current `scan_runner.rs`                                                                                                                  | Symptom                                                                                                                          |
+| #   | legacy-api contract (`@photasa/scan`)                                                                                                                                                | Current `scan_runner.rs`                                                                                                                  | Symptom                                                                                                                          |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | `decideScanStrategy` → `SKIP` or `FULL` per directory                                                                                                                                | No strategy decision; **always** walks + processes every file                                                                             | Re-scans already-indexed folders on every open; ignores valid `.photasa.json`                                                    |
-| 2   | On `SKIP`: `restoreCachedFiles` re-emits photoList from `.photasa.json`, **then** recurses subdirs                                                                                   | No skip path; no cached re-emit                                                                                                           | Cannot short-circuit unchanged folders like Electron                                                                             |
+| 2   | On `SKIP`: `restoreCachedFiles` re-emits photoList from `.photasa.json`, **then** recurses subdirs                                                                                   | No skip path; no cached re-emit                                                                                                           | Cannot short-circuit unchanged folders like contract reference                                                                   |
 | 3   | `shouldProcessFile` gates each file: rescan→always, missing config→yes, already in photoList→**no**                                                                                  | Every discovered file written to config + thumbnailed                                                                                     | Redundant `.photasa.json` writes + thumbnail work every scan                                                                     |
 | 4   | `processPhotoFile` dispatches thumbnails to a **WorkerPool** (decode on a worker thread); `concatMap` + `await addTask` make fresh-scan **serial per file**, off the main/IPC thread | 0134 后 `scan_runner.rs` awaits `photasa_thumbnail::create_thumbnail`; decode blocking work stays inside thumbnail crate `spawn_blocking` | Closest to parity; residual issue is no pool reuse, **not** "blocks the main thread" (see #4 below — narrower than first stated) |
 | 5   | `scanSubdirectories` re-applies the pipeline **per child dir**; `shouldScanOneLevel` (action `current`) limits depth to 0                                                            | One flat `walkdir(recursive)`; depth = single bool                                                                                        | Per-directory skip decisions lost; `current` depth-0 semantics lost                                                              |
-| 6   | Resume sub-path inside FULL: `cache.inProgress && processedFiles.length>0` → diff all files vs processed, process only the rest                                                      | Cache resume re-processes from `pendingFiles` only; no full-list diff                                                                     | Resume set can diverge from Electron after partial scans                                                                         |
+| 6   | Resume sub-path inside FULL: `cache.inProgress && processedFiles.length>0` → diff all files vs processed, process only the rest                                                      | Cache resume re-processes from `pendingFiles` only; no full-list diff                                                                     | Resume set can diverge from contract reference after partial scans                                                               |
 | 7   | `IncrementalCacheManager` **batched** writes (dynamic batch, 5s timer)                                                                                                               | `scan_cache.save()` on **every** file                                                                                                     | More disk I/O; different write cadence (cosmetic, but a contract delta)                                                          |
 
 ---
 
-## Electron reference (source of truth)
+## contract reference reference (source of truth)
 
 ### Module map
 
@@ -73,71 +73,71 @@ from "empty config + no media" (SKIP).
 ### `decideScanStrategy` (exact — scan-strategy.ts)
 
 ```
-if action == "rescan"                        -> FULL  ("强制重新扫描")
-if .photasa.json missing                     -> FULL  ("配置文件不存在")
+if action == "rescan" -> FULL ("强制重新扫描")
+if .photasa.json missing -> FULL ("配置文件不存在")
 read getPhotasaConfig(folder):
-  on read error                              -> FULL  ("配置文件读取失败")
-  if photoList empty:
-    h = computeFolderHash(folder)
-    if h != ""  (folder has media)           -> FULL  ("配置文件为空但文件夹有照片")
-    else        (no media)                   -> SKIP  ("配置文件为空且文件夹无照片")
-  if photoList non-empty                      -> SKIP  ("配置文件存在且有效，无需重新扫描")
-on outer exception                            -> FULL  ("决策失败，使用安全的完整扫描")
+ on read error -> FULL ("配置文件读取失败")
+ if photoList empty:
+ h = computeFolderHash(folder)
+ if h != "" (folder has media) -> FULL ("配置文件为空但文件夹有照片")
+ else (no media) -> SKIP ("配置文件为空且文件夹无照片")
+ if photoList non-empty -> SKIP ("配置文件存在且有效，无需重新扫描")
+on outer exception -> FULL ("决策失败，使用安全的完整扫描")
 ```
 
 ### `shouldProcessFile` (exact — scan-strategy.ts)
 
 ```
-if action == "rescan"                        -> true
+if action == "rescan" -> true
 dir = dirname(filePath); config = dir + "/.photasa.json"
-if config missing                            -> true
+if config missing -> true
 try getPhotasaConfig(dir):
-  return !photoList.some(p => p.path == basename(filePath))
-catch                                        -> true   (read failure ⇒ process)
+ return !photoList.some(p => p.path == basename(filePath))
+catch -> true (read failure ⇒ process)
 ```
 
 ### `shouldScanOneLevel` (exact)
 
 ```
-shouldScanOneLevel(action) = (action == "current")   // depthLimit 0; else -1 (recurse)
+shouldScanOneLevel(action) = (action == "current") // depthLimit 0; else -1 (recurse)
 ```
 
 ### `validateScanParams` (exact — scan-helpers.ts; FULL list)
 
 ```
-!path           -> invalid "扫描路径不能为空"
-!action         -> invalid "扫描动作不能为空"
+!path -> invalid "扫描路径不能为空"
+!action -> invalid "扫描动作不能为空"
 thumbnailSize<=0 / missing -> invalid "缩略图尺寸必须大于0"
-!exists(path)   -> invalid "路径不存在: {path}"
-operationType=="file"      && !isFile(path)      -> invalid "期望文件但得到目录"
+!exists(path) -> invalid "路径不存在: {path}"
+operationType=="file" && !isFile(path) -> invalid "期望文件但得到目录"
 operationType=="directory" && !isDirectory(path) -> invalid "期望目录但得到文件"
-stat throw      -> invalid "路径不存在或无法访问: {path}"
-else            -> valid
+stat throw -> invalid "路径不存在或无法访问: {path}"
+else -> valid
 ```
 
 ### `walkthroughPhotosInFolder` (exact — scan-photos.ts)
 
 ```
-if !exists(path)                       -> error "Path does not exist"
+if !exists(path) -> error "Path does not exist"
 stats = stat(path)
-single-file branch  (operationType=="file" OR (isFile && operationType!="directory")):
-  if isVideo|isImage  -> emit { path, thumbnail=buildThumbnailPath(path), isImage, isVideo, isDirectory:false }
-  else                -> skip (debug log)
-  complete
+single-file branch (operationType=="file" OR (isFile && operationType!="directory")):
+ if isVideo|isImage -> emit { path, thumbnail=buildThumbnailPath(path), isImage, isVideo, isDirectory:false }
+ else -> skip (debug log)
+ complete
 directory branch:
-  if !isDirectory     -> error "Expected directory but got file"
-  depthLimit = shouldScanOneLevel(action) ? 0 : -1
-  filter(item) = !shouldIgnorePhotasaPath(item) && !isHiddenFile(item)
-  for each klaw item where isVideo|isImage:
-    emit { path, thumbnail=buildThumbnailPath, isImage, isVideo, isDirectory: item.stats.isDirectory() }
+ if !isDirectory -> error "Expected directory but got file"
+ depthLimit = shouldScanOneLevel(action) ? 0 : -1
+ filter(item) = !shouldIgnorePhotasaPath(item) && !isHiddenFile(item)
+ for each klaw item where isVideo|isImage:
+ emit { path, thumbnail=buildThumbnailPath, isImage, isVideo, isDirectory: item.stats.isDirectory() }
 ```
 
 ### `shouldIgnorePhotasaPath` (exact — @photasa/common/utils.ts; substring match, 6 terms)
 
 ```
 ignore if path contains ANY of:
-  ".photasaoriginals" | ".picasaoriginals" | ".photasaoriginal" |
-  ".picasaoriginal"   | ".photasa.json"    | ".AppleDouble"
+ ".photasaoriginals" | ".picasaoriginals" | ".photasaoriginal" |
+ ".picasaoriginal" | ".photasa.json" | ".AppleDouble"
 ```
 
 `isHiddenFile(file) = basename(file).startsWith(".")`.
@@ -147,29 +147,29 @@ ignore if path contains ANY of:
 ```
 validate -> on fail: error
 if isDirectoryScan:
-  decision = decideScanStrategy(path, action)
-  if decision == SKIP:
-    cacheManager.initialize(); cacheManager.markScanComplete()
-    restoreCachedFiles(path, subscriber)        // re-emit photoList (no complete here)
-    scanSubdirectories(path)                     // recurse even on skip
-    subscriber.complete()                        // caller owns lifecycle
-  else (FULL):
-    cacheManager.initialize() -> cache
-    if cache.inProgress && cache.processedFiles.length>0:   // RESUME sub-path (#6)
-      allFiles = collect walkthroughPhotosInFolder(path)
-      unprocessed = allFiles.filter(f => !cacheManager.isFileProcessed(f))
-      cacheManager.setPendingFiles(unprocessed.map(path))
-      processFileList(unprocessed, ...)          // per-file gate + record + complete
-    else:                                        // fresh FULL scan
-      walkthrough |> concatMap(async action:
-        shouldProcess = shouldProcessFile(action.path, scan.action)
-        if shouldProcess: cacheManager.recordFileProcessed(action)
-        processPhotoFile(action, scan, shouldProcess, pool))
-      on complete: cacheManager.markScanComplete(); wait 50ms†; subscriber.complete()
-    on cacheManager.initialize() error:          // FALLBACK
-      degrade to traditional scan (walkthrough |> processPhotoFile), NO incremental cache
+ decision = decideScanStrategy(path, action)
+ if decision == SKIP:
+ cacheManager.initialize(); cacheManager.markScanComplete()
+ restoreCachedFiles(path, subscriber) // re-emit photoList (no complete here)
+ scanSubdirectories(path) // recurse even on skip
+ subscriber.complete() // caller owns lifecycle
+ else (FULL):
+ cacheManager.initialize() -> cache
+ if cache.inProgress && cache.processedFiles.length>0: // RESUME sub-path (#6)
+ allFiles = collect walkthroughPhotosInFolder(path)
+ unprocessed = allFiles.filter(f => !cacheManager.isFileProcessed(f))
+ cacheManager.setPendingFiles(unprocessed.map(path))
+ processFileList(unprocessed, ...) // per-file gate + record + complete
+ else: // fresh FULL scan
+ walkthrough |> concatMap(async action:
+ shouldProcess = shouldProcessFile(action.path, scan.action)
+ if shouldProcess: cacheManager.recordFileProcessed(action)
+ processPhotoFile(action, scan, shouldProcess, pool))
+ on complete: cacheManager.markScanComplete(); wait 50ms†; subscriber.complete()
+ on cacheManager.initialize() error: // FALLBACK
+ degrade to traditional scan (walkthrough |> processPhotoFile), NO incremental cache
 else (single file):
-  walkthrough |> processPhotoFile(shouldProcessFile gate)
+ walkthrough |> processPhotoFile(shouldProcessFile gate)
 ```
 
 > **`concatMap` = sequential.** The fresh-FULL pipe processes one file at a time
@@ -185,12 +185,12 @@ else (single file):
 
 ```
 for file in files:
-  shouldProcess = shouldProcessFile(file.path, scan.action)
-  if shouldProcess:
-    processPhotoFile(file, scan, shouldProcess, pool)   // process FIRST
-    cacheManager.recordFileProcessed(file)              // record AFTER
-  subscriber.next(file)                                 // ALWAYS, even if skipped
-  (per-file error logged, loop continues)
+ shouldProcess = shouldProcessFile(file.path, scan.action)
+ if shouldProcess:
+ processPhotoFile(file, scan, shouldProcess, pool) // process FIRST
+ cacheManager.recordFileProcessed(file) // record AFTER
+ subscriber.next(file) // ALWAYS, even if skipped
+ (per-file error logged, loop continues)
 markScanComplete(); wait 50ms†; subscriber.complete()
 ```
 
@@ -202,9 +202,9 @@ markScanComplete(); wait 50ms†; subscriber.complete()
 
 ```
 if !shouldProcess: return action
-if shouldCreateThumbnail(action.thumbnail, scan.action):   // !exists(thumb) || action=="rescan"
-  req = buildThumbnailRequest(action, scan)
-  if pool: pool.addTask("create", req)  else: debug "skip (no pool)"
+if shouldCreateThumbnail(action.thumbnail, scan.action): // !exists(thumb) || action=="rescan"
+ req = buildThumbnailRequest(action, scan)
+ if pool: pool.addTask("create", req) else: debug "skip (no pool)"
 addToPhotasaConfig({ queueId:0, paths:[action.path] })
 return action
 ```
@@ -213,7 +213,7 @@ return action
 
 ```
 { path, thumbnail, width:thumbnailSize, height:thumbnailSize,
-  withoutEnlargement:true, preview:thumbnail, always: scan.action=="rescan" }
+ withoutEnlargement:true, preview:thumbnail, always: scan.action=="rescan" }
 ```
 
 ### `processMediaFile` (exact — scan-photos.ts; per-action branches incl. delete)
@@ -221,15 +221,15 @@ return action
 ```
 thumbnailPath = buildThumbnailPath(filePath)
 action "scan":
-  if !shouldProcessFile(file, "scan"): return
-  if !exists(thumbnailPath) && pool: pool.addTask("create", {...,always:false})
-  addToPhotasaConfig({queueId:0, paths:[file]})
+ if !shouldProcessFile(file, "scan"): return
+ if !exists(thumbnailPath) && pool: pool.addTask("create", {...,always:false})
+ addToPhotasaConfig({queueId:0, paths:[file]})
 action "rescan":
-  if pool: pool.addTask("create", {...,always:true})
-  addToPhotasaConfig({queueId:0, paths:[file]})
-action "current":            // DELETE
-  if exists(thumbnailPath): unlink(thumbnailPath)
-  removeFromPhotoList(file)
+ if pool: pool.addTask("create", {...,always:true})
+ addToPhotasaConfig({queueId:0, paths:[file]})
+action "current": // DELETE
+ if exists(thumbnailPath): unlink(thumbnailPath)
+ removeFromPhotoList(file)
 default: warn "未知的扫描操作"
 ```
 
@@ -237,13 +237,13 @@ default: warn "未知的扫描操作"
 
 ```
 config = path + "/.photasa.json"
-if missing                          -> warn, return (NO complete)
-read+JSON.parse; on parse error     -> error log, warn "损坏将触发完整重扫", return (NO complete)
-if !photoList || !Array             -> warn, return (NO complete)
+if missing -> warn, return (NO complete)
+read+JSON.parse; on parse error -> error log, warn "损坏将触发完整重扫", return (NO complete)
+if !photoList || !Array -> warn, return (NO complete)
 for photo in photoList where photo && photo.path:
-  fullPath = join(folder, photo.path)         // photo.path is filename
-  emit { path:fullPath, thumbnail: photo.thumbnail || buildThumbnailPath(fullPath),
-         isImage: photo.isImage||false, isVideo: photo.isVideo||false, isDirectory:false }
+ fullPath = join(folder, photo.path) // photo.path is filename
+ emit { path:fullPath, thumbnail: photo.thumbnail || buildThumbnailPath(fullPath),
+ isImage: photo.isImage||false, isVideo: photo.isVideo||false, isDirectory:false }
 // never calls subscriber.complete(); caller owns lifecycle
 on exception -> subscriber.error
 ```
@@ -260,12 +260,12 @@ on exception -> subscriber.error
 ```
 entries = readdir(path, withFileTypes)
 subdirs = entries.filter(isDirectory)
-                 .filter(e => !shouldIgnorePhotasaPath(e.name))
-                 .filter(e => !isHiddenFile(e.name))
+ .filter(e => !shouldIgnorePhotasaPath(e.name))
+ .filter(e => !isHiddenFile(e.name))
 for subdir in subdirs:
-  subdirScan = {...scan, path: join(path, subdir.name)}
-  await scanPhotos(subdirScan)   // re-enter full pipeline per child (own strategy decision)
-  // child error is logged and SKIPPED, does not abort siblings
+ subdirScan = {...scan, path: join(path, subdir.name)}
+ await scanPhotos(subdirScan) // re-enter full pipeline per child (own strategy decision)
+ // child error is logged and SKIPPED, does not abort siblings
 ```
 
 > **⚠️ Read the next section before implementing this block.** `scanSubdirectories` is
@@ -295,17 +295,17 @@ and emits a spurious `complete` per subdir.
 
 ### `complete` event: `paths` and cardinality (verified)
 
-- **`complete.paths` is always `[]`** in both Electron and Rust. Electron `foundPaths`
+- **`complete.paths` is always `[]`** in both contract reference and Rust. contract reference `foundPaths`
   (`scan-worker.ts`) only pushes `action.isDirectory` items, but `walkthrough`'s
   `isVideo||isImage` filter (Rust: `classify_media`) **never emits a directory** → nothing
   is ever pushed. The renderer's `computeScannedFilePaths` (`yuantiangang/utils.ts`) handles
   this: empty `paths` ⇒ fall back to `action.path` when `action.isDirectory`. The folder
   tree is driven by **`complete.action.path`**, not by `paths`.
-    - **Do not "fix" `found_paths` by populating it** — empty is correct parity. The Rust
-      `found_paths` local in `scan_runner.rs` is structurally always-empty; drop it or comment
-      it as intentional.
+- **Do not "fix" `found_paths` by populating it** — empty is correct parity. The Rust
+  `found_paths` local in `scan_runner.rs` is structurally always-empty; drop it or comment
+  it as intentional.
 - **Cardinality**: Rust emits one `complete` **per directory** (`scan_directory_at`
-  recurses). Electron's SKIP path also re-enters `scanPhotos` per child (own subscriber →
+  recurses). contract reference's SKIP path also re-enters `scanPhotos` per child (own subscriber →
   own `complete`), so per-directory `complete` is acceptable parity. After the
   recursion-model fix (subdir re-entry SKIP-only): FULL emits one `complete` for the whole
   subtree (single recursive `walkthrough`); SKIP emits one per visited directory. **Pin with
@@ -317,15 +317,15 @@ and emits a spurious `complete` per subdir.
 UPDATE_INTERVAL = 5000 ms ; MIN_BATCH_SIZE = 20 ; MAX_BATCH_SIZE = 200
 dynamic batch: totalFiles<100 -> 20 ; <1000 -> 50 ; else -> 200
 recordFileProcessed(file):
-  push basename(file.path) to processedFiles   // BASENAME only
-  fileCount = processedFiles.length ; lastUpdate = now ; processedSinceLastUpdate++
-  if file.thumbnail: thumbnailsGenerated++
-  if processedSinceLastUpdate >= dynamicBatch: flush now
-  else if no timer: set 5s flush timer
+ push basename(file.path) to processedFiles // BASENAME only
+ fileCount = processedFiles.length ; lastUpdate = now ; processedSinceLastUpdate++
+ if file.thumbnail: thumbnailsGenerated++
+ if processedSinceLastUpdate >= dynamicBatch: flush now
+ else if no timer: set 5s flush timer
 isFileProcessed(filePath) = processedFiles.includes(basename(filePath))
 setPendingFiles(files): pendingFiles=files; totalFiles=processed.length+files.length; save
 markScanComplete: inProgress=false; scanCompleted=true; scanDuration; lastScan=now;
-                  pendingFiles=[]; flush; save
+ pendingFiles=[]; flush; save
 save: atomic write to .photasa-folder.json (tmp + rename, copy+delete fallback, plain-write fallback)
 ```
 
@@ -333,17 +333,17 @@ save: atomic write to .photasa-folder.json (tmp + rename, copy+delete fallback, 
 
 ```
 mergeDirectoryScanProgressWithCache(scanRoot, processedFallback):
-  read scanRoot + "/.photasa-folder.json"
-  if processedFiles is array:
-    processed = processedFiles.length
-    total     = processed + (pendingFiles?.length || 0)
-  else: { processed: processedFallback, total: 0 }
+ read scanRoot + "/.photasa-folder.json"
+ if processedFiles is array:
+ processed = processedFiles.length
+ total = processed + (pendingFiles?.length || 0)
+ else: { processed: processedFallback, total: 0 }
 
 buildDirectoryScanProgressMessage:
-  actPath = action?.path || scanFallbackPath
-  isDir   = action?.isDirectory || false
-  currentFile = (action?.path && !action?.isDirectory) ? basename(action.path) : undefined
-  -> { type:"progress", requestId, action:{path:actPath,isDirectory:isDir}, progress, currentFile }
+ actPath = action?.path || scanFallbackPath
+ isDir = action?.isDirectory || false
+ currentFile = (action?.path && !action?.isDirectory) ? basename(action.path) : undefined
+ -> { type:"progress", requestId, action:{path:actPath,isDirectory:isDir}, progress, currentFile }
 ```
 
 > Current Rust `emit_progress` sets `currentFile` from basename unconditionally — must
@@ -352,7 +352,7 @@ buildDirectoryScanProgressMessage:
 ### `scan-cleanup.ts` (`extendedCleanup`) — ported to `scan_cleanup.rs`, **no live caller**
 
 Note: `extendedCleanup` / `cleanupInvalidCaches` are **exported from `@photasa/scan` but
-called by nobody** in either app — not `apps/desktop` (Electron), not Photasa
+called by nobody** in either app — not `legacy-api contract` (contract reference), not Photasa
 (renderer/Rust). It is dead export surface.
 
 It was nevertheless ported to `scan_cleanup.rs` (with unit tests) for full spec parity.
@@ -381,7 +381,7 @@ Everything else in the tables is real contract and must match.
 
 ## Decision
 
-Implement the **full Electron scan pipeline in Rust**, reproducing each **observable**
+Implement the **full contract reference scan pipeline in Rust**, reproducing each **observable**
 decision stage **as tabulated above**, minus the three TS artifacts called out directly
 above. Keep RFC 0105 `.photasa-folder.json` format and RFC 0116 config / thumbnail-path
 contract unchanged. No `@photasa/scan` import; no line-by-line translation — the tables
@@ -429,11 +429,11 @@ Land in independently-testable steps, **not** one big-bang rewrite:
 
 ### 4. Thumbnail dispatch (fix #4 — decided: serial)
 
-- **Decision: serial, off the main/IPC thread.** Electron fresh scan is serial per file
+- **Decision: serial, off the main/IPC thread.** contract reference fresh scan is serial per file
   (`concatMap` + `await addTask`); after 0134 Rust awaits
   `photasa_thumbnail::create_thumbnail`, whose blocking decode work is isolated inside
   the thumbnail crate. Keep the serial call order.
-- **No pool concurrency in this RFC.** It is not Electron's behavior, and it introduces
+- **No pool concurrency in this RFC.** It is not contract reference's behavior, and it introduces
   out-of-order side effects (cache/config sequencing). If speed becomes a problem, open a
   **separate** RFC for a bounded decode pool — do not smuggle it in here.
 - **Contract preserved**: gate `shouldCreateThumbnail` (`!exists(thumb) || action=="rescan"`),
@@ -471,7 +471,7 @@ Land in independently-testable steps, **not** one big-bang rewrite:
   **RFC 0116** (kept; no post-rescan `fix_config_sync`).
 - `notify:status` payload — **RFC 0111** (`scan_notify.rs`, kept).
 - Thumbnail decode engine (image/HEIC/ffmpeg/placeholder) — **RFC 0069** (kept).
-- `pool-manager.ts` is a **stub** in TS (throws); not ported — the real pool was Electron
+- `pool-manager.ts` is a **stub** in TS (throws); not ported — the real pool was contract reference
   `?nodeWorker`; Rust supplies its own bounded pool (#4).
 
 ---
@@ -482,7 +482,7 @@ Land in independently-testable steps, **not** one big-bang rewrite:
   the biggest win; only changed/new folders pay scan cost.
 - Thumbnail decode stays serial + off the main/IPC thread (already true); no behavior change
   there, just correct gating (`shouldCreateThumbnail`).
-- Per-directory strategy + `current` depth + resume diff restore Electron semantics.
+- Per-directory strategy + `current` depth + resume diff restore contract reference semantics.
 - Fewer disk ops than the current build: in-memory progress (no per-file cache re-read) and
   batched cache writes (no per-file save).
 - On-disk formats and events stay identical to RFC 0105/0111/0116 — store/UI unchanged.
@@ -513,11 +513,11 @@ Land in independently-testable steps, **not** one big-bang rewrite:
       until a trigger is wired; see scan-cleanup note)
 - [x] Keep RFC 0105 cache format; keep RFC 0116 config/thumbnail contract
 - [x] **SKIP progress counts fixed.** `restore_cached_files` now emits `(idx+1, N)` from the
-      photoList (N = entry count) → final `(N, N)`, matching Electron
+      photoList (N = entry count) → final `(N, N)`, matching contract reference
       `mergeDirectoryScanProgressWithCache`. Was `(0,0)` from the empty cache. Mapping pinned
       by `cached_photo_to_request` tests.
 - [x] **Cleanup**: `found_paths` dead local removed; `complete.paths` emits `&[]` with a
-      comment (always-empty = Electron klaw parity)
+      comment (always-empty = contract reference klaw parity)
 - [ ] Orchestration tests with a Tauri `AppHandle` (SKIP/FULL emit sequences, `complete`
       cardinality) — pure decision/mapping logic is now tested (`should_recurse_subdirs`,
       `cached_photo_to_request`); the `app.emit` side-effects still lack an integration test
@@ -535,7 +535,7 @@ cd apps/photasa/src-tauri && cargo test scan_
 cd apps/photasa/src-tauri && cargo build -p photasa
 ```
 
-Unit tests (exact Electron tables):
+Unit tests (exact contract reference tables):
 
 - `decide_scan_strategy`: rescan→FULL; missing config→FULL; read error→FULL; empty+media→FULL;
   empty+no-media→SKIP; valid→SKIP. **No INCREMENTAL case** (dead in TS).
@@ -598,7 +598,7 @@ Manual / golden parity:
 - **Dropping the 50ms sleep**: safe **only** because `add_photo_to_folder_list` is
   synchronous. If config writes ever become async/batched in Rust, the ordering guarantee
   must be re-established explicitly (not via a sleep).
-- **Resume diff cost**: resume collects the full file list to diff — same as Electron;
+- **Resume diff cost**: resume collects the full file list to diff — same as contract reference;
   acceptable, bounded by directory size.
 
 ## Alternatives considered
@@ -607,7 +607,7 @@ Manual / golden parity:
   gating / resume / subdir-per-dir decisions (#1–3, 5, 6).
 - **Port `compareHashesAndDecide` as a live 3-way strategy** — rejected: it is **dead code**
   in TS (`decideScanStrategy` never returns INCREMENTAL); porting it would _add_ behavior
-  Electron does not run.
+  contract reference does not run.
 - **Import `@photasa/scan` into Tauri** — rejected by
   [ROADMAP.md](../../../ROADMAP.md); no Node in backend.
 - **Line-by-line TS→Rust translation** — rejected by policy; the tables are the contract,
@@ -615,5 +615,5 @@ Manual / golden parity:
 - **Cloning the 50ms sleep / per-file disk re-read / fresh-vs-resume order flip** — rejected:
   these are Node-specific workarounds and accidental inconsistencies (see artifacts table),
   not observable contract. Porting them would copy bugs and thrash disk for no benefit.
-- **Bounded decode pool (concurrency)** — deferred to a separate RFC; not Electron's
+- **Bounded decode pool (concurrency)** — deferred to a separate RFC; not contract reference's
   fresh-scan behavior and adds ordering hazard. This RFC stays serial.

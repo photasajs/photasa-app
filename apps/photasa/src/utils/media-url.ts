@@ -25,7 +25,7 @@ export function toAbsoluteMediaPath(currentFolder: string, file: string): string
     return `${trimmedFolder}/${cleanFile}`;
 }
 
-/** 绝对路径 → file:// URL（Electron / 纯 Vitest，非 Tauri WebView） */
+/** 绝对路径 → file:// URL（contract reference / 纯 Vitest，非 Tauri WebView） */
 export function toFileUrlFromAbsolutePath(absolutePath: string): string {
     const normalized = absolutePath.replace(/\\/g, "/");
     const withLeadingSlash = normalized.startsWith("/") ? normalized : `/${normalized}`;

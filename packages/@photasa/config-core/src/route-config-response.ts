@@ -10,7 +10,7 @@ export type ConfigRoutedAction =
     | { kind: "unknown"; payload: ConfigResponse };
 
 /**
- * 将 config worker 的 JSON 解析结果路由为结构化动作，无 Electron、无副作用。
+ * 将 config worker 的 JSON 解析结果路由为结构化动作，无 contract reference、无副作用。
  * 分支顺序与原先 `config-service.handleWorkerMessage` 一致。
  */
 export function routeConfigResponse(data: ConfigResponse): ConfigRoutedAction {

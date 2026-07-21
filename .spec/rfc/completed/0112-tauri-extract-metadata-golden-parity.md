@@ -6,24 +6,24 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Golden tests: same fixture files → same JSON field shapes as Electron `import:extract-metadata` (spec from `apps/desktop`, not `@photasa/import` runtime).
+- Golden tests: same fixture files → same JSON field shapes as contract reference `import:extract-metadata` (spec from `legacy-api contract`, not `@photasa/import` runtime).
 
-**Status**: ✅ Implemented  
-**Created**: 2026-06-06  
-**Implemented**: 2026-06-08  
-**Area**: Tauri / Import / Metadata  
+**Status**: ✅ Implemented
+**Created**: 2026-06-06
+**Implemented**: 2026-06-08
+**Area**: Tauri / Import / Metadata
 **Depends on**: RFC 0097
 
 ---
 
 ## Problem
 
-`extract_metadata.rs` implements the main pipeline in Rust, but **MakerNote**, edge video tags, and real container fixtures are not black-box compared to Electron output.
+`extract_metadata.rs` implements the main pipeline in Rust, but **MakerNote**, edge video tags, and real container fixtures are not black-box compared to contract reference output.
 
 ## Decision
 
 1. Add fixture corpus under `apps/photasa/src-tauri/tests/fixtures/metadata/` (small redistributable samples).
-2. Rust integration tests assert subset equality on `FileMetadata` JSON vs recorded Electron golden JSON (generated once from spec runs).
+2. Rust integration tests assert subset equality on `FileMetadata` JSON vs recorded contract reference golden JSON (generated once from spec runs).
 3. Close 0097 «仍差» for metadata.
 
 ## Implementation checklist

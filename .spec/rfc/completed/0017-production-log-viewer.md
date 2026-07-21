@@ -35,126 +35,126 @@
 ```typescript
 // src/common/logger.ts 扩展
 class LogInterceptor {
-    private listeners: Set<(entry: LogEntry) => void> = new Set();
-    private isActive = false;
-    private originalAppenders: Map<string, any> = new Map();
+ private listeners: Set<(entry: LogEntry) => void> = new Set();
+ private isActive = false;
+ private originalAppenders: Map<string, any> = new Map();
 
-    activate() {
-        if (this.isActive) return;
-        this.isActive = true;
+ activate() {
+ if (this.isActive) return;
+ this.isActive = true;
 
-        // 在Node环境动态添加自定义appender
-        if (isNode) {
-            this.attachInterceptor();
-        }
-    }
+ // 在Node环境动态添加自定义appender
+ if (isNode) {
+ this.attachInterceptor();
+ }
+ }
 
-    deactivate() {
-        if (!this.isActive) return;
-        this.isActive = false;
+ deactivate() {
+ if (!this.isActive) return;
+ this.isActive = false;
 
-        // 移除拦截器
-        if (isNode) {
-            this.detachInterceptor();
-        }
+ // 移除拦截器
+ if (isNode) {
+ this.detachInterceptor();
+ }
 
-        this.listeners.clear();
-    }
+ this.listeners.clear();
+ }
 
-    subscribe(listener: (entry: LogEntry) => void) {
-        this.listeners.add(listener);
-        return () => this.listeners.delete(listener);
-    }
+ subscribe(listener: (entry: LogEntry) => void) {
+ this.listeners.add(listener);
+ return () => this.listeners.delete(listener);
+ }
 
-    private attachInterceptor() {
-        // 为所有logger添加内存appender
-        const categories = log4js.getLogger().categories;
-        for (const [name, category] of categories) {
-            // 保存原始配置
-            this.originalAppenders.set(name, category.appenders);
+ private attachInterceptor() {
+ // 为所有logger添加内存appender
+ const categories = log4js.getLogger().categories;
+ for (const [name, category] of categories) {
+ // 保存原始配置
+ this.originalAppenders.set(name, category.appenders);
 
-            // 添加自定义appender
-            log4js.configure({
-                appenders: {
-                    ...log4js.appenders,
-                    memoryAppender: {
-                        type: 'memory',
-                        layout: { type: 'basic' },
-                        callback: (loggingEvent) => {
-                            if (!this.isActive) return;
+ // 添加自定义appender
+ log4js.configure({
+ appenders: {
+ ...log4js.appenders,
+ memoryAppender: {
+ type: 'memory',
+ layout: { type: 'basic' },
+ callback: (loggingEvent) => {
+ if (!this.isActive) return;
 
-                            const entry: LogEntry = {
-                                timestamp: new Date(loggingEvent.startTime).toISOString(),
-                                level: loggingEvent.level.levelStr.toLowerCase(),
-                                category: loggingEvent.categoryName,
-                                message: loggingEvent.data.join(' '),
-                                source: 'main'
-                            };
+ const entry: LogEntry = {
+ timestamp: new Date(loggingEvent.startTime).toISOString(),
+ level: loggingEvent.level.levelStr.toLowerCase(),
+ category: loggingEvent.categoryName,
+ message: loggingEvent.data.join(' '),
+ source: 'main'
+ };
 
-                            this.listeners.forEach(listener => listener(entry));
-                        }
-                    }
-                },
-                categories: {
-                    [name]: {
-                        appenders: [...category.appenders, 'memoryAppender'],
-                        level: category.level
-                    }
-                }
-            });
-        }
-    }
+ this.listeners.forEach(listener => listener(entry));
+ }
+ }
+ },
+ categories: {
+ [name]: {
+ appenders: [...category.appenders, 'memoryAppender'],
+ level: category.level
+ }
+ }
+ });
+ }
+ }
 
-    private detachInterceptor() {
-        // 恢复原始配置
-        for (const [name, appenders] of this.originalAppenders) {
-            // 恢复原始appenders配置
-        }
-        this.originalAppenders.clear();
-    }
+ private detachInterceptor() {
+ // 恢复原始配置
+ for (const [name, appenders] of this.originalAppenders) {
+ // 恢复原始appenders配置
+ }
+ this.originalAppenders.clear();
+ }
 }
 
 // 浏览器端日志拦截
 export class BrowserLogger {
-    private category: string;
-    private level: string;
-    private static interceptor?: LogInterceptor;
+ private category: string;
+ private level: string;
+ private static interceptor?: LogInterceptor;
 
-    static setInterceptor(interceptor: LogInterceptor) {
-        BrowserLogger.interceptor = interceptor;
-    }
+ static setInterceptor(interceptor: LogInterceptor) {
+ BrowserLogger.interceptor = interceptor;
+ }
 
-    private notifyInterceptor(level: string, ...args: unknown[]) {
-        if (!BrowserLogger.interceptor?.isActive) return;
+ private notifyInterceptor(level: string, ...args: unknown[]) {
+ if (!BrowserLogger.interceptor?.isActive) return;
 
-        const entry: LogEntry = {
-            timestamp: new Date().toISOString(),
-            level: level as any,
-            category: this.category,
-            message: args.map(arg => /* safe stringify */).join(' '),
-            source: 'renderer'
-        };
+ const entry: LogEntry = {
+ timestamp: new Date().toISOString(),
+ level: level as any,
+ category: this.category,
+ message: args.map(arg => /* safe stringify */).join(' '),
+ source: 'renderer'
+ };
 
-        BrowserLogger.interceptor.notify(entry);
-    }
+ BrowserLogger.interceptor.notify(entry);
+ }
 
-    debug(...args: unknown[]): void {
-        if (this.level === "debug") {
-            console.debug(this.formatMessage("debug", ...args));
-            this.notifyInterceptor("debug", ...args);
-        }
-    }
+ debug(...args: unknown[]): void {
+ if (this.level === "debug") {
+ console.debug(this.formatMessage("debug", ...args));
+ this.notifyInterceptor("debug", ...args);
+ }
+ }
 
-    // 其他日志方法类似...
+ // 其他日志方法类似...
 }
 
 interface LogEntry {
-    timestamp: string;
-    level: 'debug' | 'info' | 'warn' | 'error';
-    category: string;
-    message: string;
-    source: 'main' | 'renderer' | 'worker';
-    threadId?: string;
+ timestamp: string;
+ level: 'debug' | 'info' | 'warn' | 'error';
+ category: string;
+ message: string;
+ source: 'main' | 'renderer' | 'worker';
+ threadId?: string;
 }
 ```
 
@@ -408,7 +408,7 @@ contextBridge.exposeInMainWorld("api", {
 
 ## 替代方案
 
-1. 使用Electron的DevTools控制台
+1. 使用Desktop的DevTools控制台
 2. 集成第三方日志服务（如Sentry）
 3. 写入本地文件系统
 
@@ -420,6 +420,6 @@ contextBridge.exposeInMainWorld("api", {
 
 ## 参考资料
 
-- [Electron IPC通信](https://www.electronjs.org/docs/latest/api/ipc-main)
+- [contract reference IPC通信](https://www.desktop-shell.dev/docs/latest/api/ipc-main)
 - [Vue 3 Composition API](https://vuejs.org/guide/extras/composition-api-faq.html)
 - [Log4js Appenders](https://log4js-node.github.io/log4js-node/appenders.html)

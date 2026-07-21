@@ -13,9 +13,9 @@
 | `sample-video.mp4`      | 短 H.264，验证 codec/duration/resolution   |
 | `corrupt-video.mp4`     | 损坏容器，验证 Rust 回退（仅 type/format） |
 
-## 从 Electron 生成 golden（一次性）
+## 从 contract reference 生成 golden（一次性）
 
-1. 将同一 fixture 放入 Electron 可访问路径。
+1. 将同一 fixture 放入 contract reference 可访问路径。
 2. 调用 `window.api.extractMetadata({ filePath, fileType })` 或 import worker `extract_metadata`。
 3. 去掉 volatile 字段：`path`、`name`、`size`、`modifiedTime`、`createdTime`；`dateTime` 只保留日期前缀写入 `expectDateTimePrefix`。
 4. 将子集写入 `golden/<fixture-stem>.json` 的 `expect` 字段。
@@ -38,7 +38,7 @@ cargo test golden_ -- --nocapture
 ## 重新生成 JPEG fixture（Pillow）
 
 ```bash
-python3 scripts/generate-metadata-fixtures.py   # 见仓库内脚本或 TASK_TRACKING 备注
+python3 scripts/generate-metadata-fixtures.py # 见仓库内脚本或 TASK_TRACKING 备注
 ```
 
-当前 fixture 由 Pillow 生成（2026-06-08），模拟 libjpeg/Pillow 写入 `Context::Tiff` 的 Exif 标签；Rust 按 **tag number** 匹配以对齐 Electron/exifr 行为。
+当前 fixture 由 Pillow 生成（2026-06-08），模拟 libjpeg/Pillow 写入 `Context::Tiff` 的 Exif 标签；Rust 按 **tag number** 匹配以对齐 legacy-api/exifr 行为。

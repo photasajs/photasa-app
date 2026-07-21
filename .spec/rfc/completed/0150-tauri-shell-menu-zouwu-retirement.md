@@ -15,7 +15,7 @@
 
 ## 现状（2026-07-21 读源码）
 
-| 能力        | Electron `.zouwu`                  | Photasa 路径                                                        | Rust 实现                        |
+| 能力        | contract reference `.zouwu`        | Photasa 路径                                                        | Rust 实现                        |
 | ----------- | ---------------------------------- | ------------------------------------------------------------------- | -------------------------------- |
 | 打开外链    | `shell/shell_open_external.zouwu`  | `intent.ts` → `shell_openExternal` → zouwu → `TaibaijinxingAdapter` | adapter 内 `ShellExt::open`      |
 | Finder 显示 | `shell/shell_open_in_finder.zouwu` | `intent.ts` → `shell_openInFinder` → zouwu → `TaibaijinxingAdapter` | adapter 内 `reveal_item_in_dir`  |
@@ -57,4 +57,4 @@
 ## 非目标
 
 - 删除整个 `TianshuService` / 全部 `.zouwu`（属 0139 总排期）
-- 改动 Electron `apps/desktop`
+- 改动 The removed desktop tree

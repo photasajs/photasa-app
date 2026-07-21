@@ -4,7 +4,7 @@
  */
 import { createLegacyApi } from "@renderer/api/legacy-api";
 
-/** 与 Electron preload `window.api` 同形的扁平 API */
+/** 与 legacy preload `window.api` 同形的扁平 API */
 export type PhotasaFlatApi = ReturnType<typeof createLegacyApi>;
 
 let cachedApi: PhotasaFlatApi | null = null;

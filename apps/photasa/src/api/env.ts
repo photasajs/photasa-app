@@ -1,6 +1,5 @@
 /**
- * 环境检测工具
- * 检测当前运行环境（Tauri 或 Electron）
+ * 环境检测工具（Tauri）
  */
 import { isTauri as coreIsTauri } from "@tauri-apps/api/core";
 
@@ -20,7 +19,6 @@ export const isTauri = (): boolean => {
 
 /**
  * 获取 Tauri invoke 函数
- * 动态导入 Tauri API
  */
 export const getTauriInvoke = async () => {
     if (!isTauri()) {
@@ -33,11 +31,7 @@ export const getTauriInvoke = async () => {
 /**
  * 获取环境信息
  */
-export const getEnvInfo = () => {
-    return {
-        isTauri: isTauri(),
-        isElectron:
-            typeof window !== "undefined" && typeof (window as any).electronAPI !== "undefined",
-        platform: isTauri() ? "tauri" : "electron",
-    };
-};
+export const getEnvInfo = () => ({
+    isTauri: isTauri(),
+    platform: isTauri() ? ("tauri" as const) : ("unknown" as const),
+});

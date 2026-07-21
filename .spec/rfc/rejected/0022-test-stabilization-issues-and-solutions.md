@@ -26,7 +26,7 @@ These issues needed to be systematically analyzed and resolved to ensure a stabl
 
 #### 1. Test Environment Configuration Issues
 
-- **Main process tests** were running in jsdom environment, causing `@electron-toolkit/utils` errors
+- **Main process tests** were running in jsdom environment, causing `@legacy-toolkit/utils` errors
 - **Renderer process tests** had environment selection issues with event API compatibility
 - Unified Vitest configuration was causing conflicts between different test types
 
@@ -191,7 +191,7 @@ test("button click", async () => {
 ### Alternative 1: Single Test Environment
 
 - **Approach**: Use single jsdom environment for all tests
-- **Drawback**: Main process tests would have Electron API conflicts
+- **Drawback**: Main process tests would have legacy preload API conflicts
 
 ### Alternative 2: Manual Event Mocking
 

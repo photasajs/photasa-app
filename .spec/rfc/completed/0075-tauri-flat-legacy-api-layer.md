@@ -9,13 +9,13 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-Provide a **flat** `window.api` in the Tauri app that is **1:1** with the Electron preload surface from `apps/desktop/src/preload/legacy.ts`. Every method name and signature (that the Vue app and `utils/api.ts` use) exists on `window.api` and delegates to the adapter (which then uses Tauri `invoke` or stub). No nested `api.window` / `api.scan`; the app keeps calling `window.api.minimizeWindow()`, `window.api.scanPhotos()`, etc.
+Provide a **flat** `window.api` in the Tauri app that is **1:1** with the legacy preload surface from `legacy-api.ts (RFC 0075)`. Every method name and signature (that the Vue app and `utils/api.ts` use) exists on `window.api` and delegates to the adapter (which then uses Tauri `invoke` or stub). No nested `api.window` / `api.scan`; the app keeps calling `window.api.minimizeWindow()`, `window.api.scanPhotos()`, etc.
 
 ## Motivation
 
@@ -24,7 +24,7 @@ Provide a **flat** `window.api` in the Tauri app that is **1:1** with the Electr
 
 ## Detailed design
 
-- **Source of truth for the list of methods**: `apps/desktop/src/preload/legacy.ts` (and any `window.api` usage in the codebase). The flat layer must implement every symbol that the app expects on `window.api`.
+- **Source of truth for the list of methods**: `legacy-api.ts (RFC 0075)` (and any `window.api` usage in the codebase). The flat layer must implement every symbol that the app expects on `window.api`.
 - **Implementation**: One module (e.g. `apps/photasa/src/api/legacy-api.ts`) that (1) builds a flat object with the same keys as legacy, (2) each value is a function that calls the adapter (nested) or `invoke('command_name', ...)`. For commands not yet implemented in Rust, stub (return safe default or reject with "not implemented").
 - **Injection**: During app bootstrap in Tauri, assign this flat object to `window.api` so it is available before any component runs.
 

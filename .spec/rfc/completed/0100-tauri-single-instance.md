@@ -8,17 +8,17 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-在 Tauri 中实现与 Electron `SingleInstanceManager` 1:1 对等的单实例约束：第二个实例启动时聚焦已有窗口并退出，macOS 点击 Dock 图标时若无窗口则新建。
+在 Tauri 中实现与 legacy-api `SingleInstanceManager` 1:1 对等的单实例约束：第二个实例启动时聚焦已有窗口并退出，macOS 点击 Dock 图标时若无窗口则新建。
 
 ## Motivation
 
-`apps/desktop/src/main/single-instance-manager.ts` 通过 `app.requestSingleInstanceLock()` 实现：
+`historical main/single-instance-manager.ts` 通过 `app.requestSingleInstanceLock()` 实现：
 
 - 获取锁成功 → 正常启动，监听 `second-instance` 事件；
 - 获取锁失败（已有实例）→ `app.quit()`；
@@ -42,16 +42,16 @@ tauri-plugin-single-instance = "2"
 use tauri_plugin_single_instance::SingleInstance;
 
 tauri::Builder::default()
-    .plugin(
-        tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            // 第二个实例启动时：聚焦已有窗口
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.unminimize();
-                let _ = window.set_focus();
-            }
-        })
-    )
-    // …其余插件与命令…
+ .plugin(
+ tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+ // 第二个实例启动时：聚焦已有窗口
+ if let Some(window) = app.get_webview_window("main") {
+ let _ = window.unminimize();
+ let _ = window.set_focus();
+ }
+ })
+ )
+ // …其余插件与命令…
 ```
 
 ### macOS Dock 点击（`activate` 等价）
@@ -62,12 +62,12 @@ Tauri v2 通过 `tauri::RunEvent::Reopen` 处理 macOS Dock 重激活事件：
 .build(tauri::generate_context!())
 .expect("error while building tauri application")
 .run(|app_handle, event| {
-    if let tauri::RunEvent::Reopen { has_visible_windows, .. } = event {
-        if !has_visible_windows {
-            // 重新创建主窗口（对齐 createWindowOnMacOS）
-            // TODO: 封装为 create_main_window(app_handle)
-        }
-    }
+ if let tauri::RunEvent::Reopen { has_visible_windows, .. } = event {
+ if !has_visible_windows {
+ // 重新创建主窗口（对齐 createWindowOnMacOS）
+ // TODO: 封装为 create_main_window(app_handle)
+ }
+ }
 });
 ```
 

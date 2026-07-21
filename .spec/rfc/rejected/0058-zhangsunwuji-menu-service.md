@@ -101,41 +101,41 @@ menusStore.refreshMenus(t);
 ```
 菜单更新流程（通过 zouzhe + 袁天罡 IPC）：
 Vue 组件（App.vue, LanguageSwitcher.vue）
-    ↓
+ ↓
 useZhangSunWuJi() composable
-    ↓
+ ↓
 长孙无忌服务（ZhangSunWuJiService）
-    ├─ refreshMenus(t) → 更新 menusStore（通过房玄龄）
-    └─ 发送 UPDATE_MENU zouzhe 到房玄龄
-         ↓
+ ├─ refreshMenus(t) → 更新 menusStore（通过房玄龄）
+ └─ 发送 UPDATE_MENU zouzhe 到房玄龄
+ ↓
 房玄龄处理 zouzhe
-    └─ 创建 zhaoling，发送给袁天罡
-         ↓
+ └─ 创建 zhaoling，发送给袁天罡
+ ↓
 袁天罡执行 zhaoling（update_menu）
-    └─ 转换为符箓，发送到天枢引擎
-         ↓
+ └─ 转换为符箓，发送到天枢引擎
+ ↓
 天枢引擎执行工作流（menu.apply）
-    └─ 调用 TaibaijinxingAdapter.applySystemMenu()
-         ↓
+ └─ 调用 TaibaijinxingAdapter.applySystemMenu()
+ ↓
 TaibaijinxingAdapter 直接实现菜单逻辑
-    ├─ 平台检查：仅 macOS 处理系统菜单（process.platform === "darwin"）
-    ├─ 转换菜单：transformMenus() 过滤平台专属项（isMacOnly）
-    ├─ 设置菜单：Menu.setApplicationMenu()
-    └─ 处理点击：菜单项点击时发送 menu:action IPC 到渲染进程
+ ├─ 平台检查：仅 macOS 处理系统菜单（process.platform === "darwin"）
+ ├─ 转换菜单：transformMenus() 过滤平台专属项（isMacOnly）
+ ├─ 设置菜单：Menu.setApplicationMenu()
+ └─ 处理点击：菜单项点击时发送 menu:action IPC 到渲染进程
 
 菜单点击流程（通过 qizou-shengzhi）：
 用户点击菜单项
-    ↓
+ ↓
 TaibaijinxingAdapter（菜单项 click 回调）
-    └─ 发送 menu:action IPC 到渲染进程（mainWindow.webContents.send）
-         ↓
+ └─ 发送 menu:action IPC 到渲染进程（mainWindow.webContents.send）
+ ↓
 袁天罡监听 IPC（menu:action）
-    └─ 发送 MENU_ACTION qizou
-         ↓
+ └─ 发送 MENU_ACTION qizou
+ ↓
 李世民路由到长孙无忌（根据 event-routing.yml）
-    ↓
+ ↓
 长孙无忌处理（handleMenuAction）
-    └─ 根据菜单项 key 分发到相应服务或 emit 事件
+ └─ 根据菜单项 key 分发到相应服务或 emit 事件
 ```
 
 ### 服务接口设计
@@ -227,16 +227,21 @@ export interface IZhangSunWuJiService {
 **任务**：
 
 1. 创建 `src/renderer/src/interfaces/zhang-sun-wu-ji.interface.ts`
-    - 定义 `IZhangSunWuJiService` 接口
-    - 定义 `MenuActionPayload` 类型
-    - 定义 `ZHANG_SUN_WU_JI_TOKEN`
+
+- 定义 `IZhangSunWuJiService` 接口
+- 定义 `MenuActionPayload` 类型
+- 定义 `ZHANG_SUN_WU_JI_TOKEN`
+
 2. 创建 `src/renderer/src/services/zhangsunwuji/zhangsunwuji.ts`
-    - 实现 `IService` 接口
-    - 实现 `IZhangSunWuJiService` 接口
-    - 实现基础方法（getters, refreshMenus, setMenuDisabled）
+
+- 实现 `IService` 接口
+- 实现 `IZhangSunWuJiService` 接口
+- 实现基础方法（getters, refreshMenus, setMenuDisabled）
+
 3. 创建 `src/renderer/src/composables/useZhangSunWuJi.ts`
-    - 提供 `useZhangSunWuJi()` composable
-    - 返回响应式 refs 和方法
+
+- 提供 `useZhangSunWuJi()` composable
+- 返回响应式 refs 和方法
 
 **验收标准**：
 
@@ -251,11 +256,14 @@ export interface IZhangSunWuJiService {
 **任务**：
 
 1. 更新 `src/renderer/src/services/lishimin/lishimin.ts`
-    - 实例化 `ZhangSunWuJiService`
-    - 连接到 `duRuHuiService` 和 `qizouBus`
-    - 在 `startZhengguan()` 中初始化
+
+- 实例化 `ZhangSunWuJiService`
+- 连接到 `duRuHuiService` 和 `qizouBus`
+- 在 `startZhengguan()` 中初始化
+
 2. 更新 `src/renderer/src/main.ts`
-    - 通过 `useZhangSunWuJi()` 提供服务（如果需要）
+
+- 通过 `useZhangSunWuJi()` 提供服务（如果需要）
 
 **验收标准**：
 
@@ -270,44 +278,56 @@ export interface IZhangSunWuJiService {
 **任务**：
 
 1. 更新 `src/renderer/src/interfaces/fang-xuan-ling.interface.ts`
-    - 在 `ZOUZHE_MATTERS` 中添加 `UPDATE_MENU: "update_menu"`
-    - 在 `GUANYUAN_NAMES` 中添加 `ZHANG_SUN_WU_JI: "长孙无忌"`（如果尚未添加）
+
+- 在 `ZOUZHE_MATTERS` 中添加 `UPDATE_MENU: "update_menu"`
+- 在 `GUANYUAN_NAMES` 中添加 `ZHANG_SUN_WU_JI: "长孙无忌"`（如果尚未添加）
+
 2. 实现 `ZhangSunWuJiService.refreshMenus()`
-    - 更新 `menusStore`（通过房玄龄）
-    - 创建 `UPDATE_MENU` zouzhe，发送到房玄龄（`fangXuanLingService.processZouzhe()`）
+
+- 更新 `menusStore`（通过房玄龄）
+- 创建 `UPDATE_MENU` zouzhe，发送到房玄龄（`fangXuanLingService.processZouzhe()`）
+
 3. 更新 `src/renderer/src/services/yuantiangang/intent.ts`
-    - 在 `IntentToFuluMapping` 中添加 `UPDATE_MENU` 映射：
-        ```typescript
-        [ZOUZHE_MATTERS.UPDATE_MENU]: "menu.apply"
-        ```
+
+- 在 `IntentToFuluMapping` 中添加 `UPDATE_MENU` 映射：
+
+```typescript
+[ZOUZHE_MATTERS.UPDATE_MENU]: "menu.apply"
+```
+
 4. 创建菜单适配器（`src/engines/adapters/TaibaijinxingAdapter.ts`）：
-    - 使用 `@Adapter` 装饰器注册
-    - 名称：`taibaijinxing`（太白金星）
-    - 显示名称：`太白金星菜单适配器`
-    - **直接实现菜单逻辑**（不依赖 MenuService）：
-        - 实现 `applySystemMenu(menus: MenuItemData[])` 方法
-        - **平台检查**：仅 macOS 处理系统菜单（`process.platform === "darwin"`）
-        - **菜单转换**：`transformMenus()` 方法，将 `MenuItemData[]` 转换为 `Electron.MenuItemConstructorOptions[]`
-            - 处理分隔符（`type === "separator"`）
-            - 过滤平台专属项（`item.isMacOnly && process.platform !== "darwin"` 时返回 null）
-            - 递归处理子菜单（`item.items`）
-        - **设置菜单**：`Menu.buildFromTemplate()` + `Menu.setApplicationMenu()`
-        - **菜单点击处理**：菜单项 `click` 回调中发送 `menu:action` IPC 到渲染进程
-            - 通过 `mainWindow.webContents.send("menu:action", {...})` 发送
-    - **依赖注入**：需要 `IpcMain` 和 `BrowserWindow`
-        - 适配器构造函数接收 `(ipcMain: IpcMain, mainWindow: BrowserWindow)`
-        - 通过 `AdapterRegistry.initializeAll(ipcMain, mainWindow)` 传递
-        - 需要在适配器初始化时确保这些依赖已可用
-    - **神话背景**：太白金星，中国神话中广为人知的神祇，玉皇大帝的顾问，负责沟通与协调，作为天庭的"门面"代表。在架构中负责菜单界面管理，菜单是应用的门面，太白金星作为天庭顾问，负责协调与展示，与菜单适配器的职责高度契合。
-    - **注意**：天界（Main进程）使用神话人物命名，人界（Renderer进程）使用历史人物命名（长孙无忌）
+
+- 使用 `@Adapter` 装饰器注册
+- 名称：`taibaijinxing`（太白金星）
+- 显示名称：`太白金星菜单适配器`
+- **直接实现菜单逻辑**（不依赖 MenuService）：
+- 实现 `applySystemMenu(menus: MenuItemData[])` 方法
+- **平台检查**：仅 macOS 处理系统菜单（`process.platform === "darwin"`）
+- **菜单转换**：`transformMenus()` 方法，将 `MenuItemData[]` 转换为 `contract reference.MenuItemConstructorOptions[]`
+- 处理分隔符（`type === "separator"`）
+- 过滤平台专属项（`item.isMacOnly && process.platform !== "darwin"` 时返回 null）
+- 递归处理子菜单（`item.items`）
+- **设置菜单**：`Menu.buildFromTemplate()` + `Menu.setApplicationMenu()`
+- **菜单点击处理**：菜单项 `click` 回调中发送 `menu:action` IPC 到渲染进程
+- 通过 `mainWindow.webContents.send("menu:action", {...})` 发送
+- **依赖注入**：需要 `IpcMain` 和 `BrowserWindow`
+- 适配器构造函数接收 `(ipcMain: IpcMain, mainWindow: BrowserWindow)`
+- 通过 `AdapterRegistry.initializeAll(ipcMain, mainWindow)` 传递
+- 需要在适配器初始化时确保这些依赖已可用
+- **神话背景**：太白金星，中国神话中广为人知的神祇，玉皇大帝的顾问，负责沟通与协调，作为天庭的"门面"代表。在架构中负责菜单界面管理，菜单是应用的门面，太白金星作为天庭顾问，负责协调与展示，与菜单适配器的职责高度契合。
+- **注意**：天界（Main进程）使用神话人物命名，人界（Renderer进程）使用历史人物命名（长孙无忌）
+
 5. 在主进程创建菜单工作流（`src/engines/tianshu/workflows/menu.apply.yml`）：
-    - 定义 `menu.apply` 工作流
-    - 调用 `taibaijinxing` 适配器的 `applySystemMenu` action
+
+- 定义 `menu.apply` 工作流
+- 调用 `taibaijinxing` 适配器的 `applySystemMenu` action
+
 6. **移除 `MenuService`**（`src/main/menu/menu-service.ts`）：
-    - 菜单逻辑已迁移到 `TaibaijinxingAdapter`
-    - 从 `src/main/tianting/index.ts` 移除 `MenuService` 导入
-    - 从 `src/main/startup-optimizer.ts` 移除 `createMenuService()` 调用
-    - **向后兼容**：如果仍有旧代码通过 IPC `menu:applySystemMenu` 调用，可以保留一个简单的 IPC 监听器，转发到适配器（可选）
+
+- 菜单逻辑已迁移到 `TaibaijinxingAdapter`
+- 从 `src/main/tianting/index.ts` 移除 `MenuService` 导入
+- 从 `src/main/startup-optimizer.ts` 移除 `createMenuService()` 调用
+- **向后兼容**：如果仍有旧代码通过 IPC `menu:applySystemMenu` 调用，可以保留一个简单的 IPC 监听器，转发到适配器（可选）
 
 **验收标准**：
 
@@ -330,15 +350,22 @@ export interface IZhangSunWuJiService {
 **任务**：
 
 1. 更新 `src/renderer/src/constants/qizou-shengzhi-commands.ts`
-    - 添加 `MENU_ACTION` qizou matter
+
+- 添加 `MENU_ACTION` qizou matter
+
 2. 更新 `src/renderer/src/services/lishimin/event-routing.yml`
-    - 添加 `menu_action` 路由到 `长孙无忌`
+
+- 添加 `menu_action` 路由到 `长孙无忌`
+
 3. 实现 `ZhangSunWuJiService.handleMenuAction()`
-    - 接收 `menu_action` shengzhi
-    - 根据菜单项 key 分发到相应服务或 emit 事件
+
+- 接收 `menu_action` shengzhi
+- 根据菜单项 key 分发到相应服务或 emit 事件
+
 4. 更新 `src/renderer/src/services/yuantiangang/yuantiangang.ts`
-    - 添加 `menu:action` IPC 监听
-    - 发送 `MENU_ACTION` qizou
+
+- 添加 `menu:action` IPC 监听
+- 发送 `MENU_ACTION` qizou
 
 **验收标准**：
 
@@ -353,18 +380,25 @@ export interface IZhangSunWuJiService {
 **任务**：
 
 1. 更新 `src/renderer/src/App.vue`
-    - 移除 `useMenusStore` 直接访问
-    - 使用 `useZhangSunWuJi().refreshMenus(t)`
+
+- 移除 `useMenusStore` 直接访问
+- 使用 `useZhangSunWuJi().refreshMenus(t)`
+
 2. 更新 `src/renderer/src/components/LanguageSwitcher.vue`
-    - 移除 `useMenusStore` 直接访问
-    - 使用 `useZhangSunWuJi().refreshMenus(t)`
+
+- 移除 `useMenusStore` 直接访问
+- 使用 `useZhangSunWuJi().refreshMenus(t)`
+
 3. 更新 `src/renderer/src/components/TitlebarMac.vue`
-    - 移除 `watch(menusStore.menus)` 和 `window.api.applySystemMenu` 调用
-    - 移除 `window.api.onMenuAction` 监听
-    - 使用 `useZhangSunWuJi()` 访问菜单数据
-    - 菜单点击事件通过服务处理
+
+- 移除 `watch(menusStore.menus)` 和 `window.api.applySystemMenu` 调用
+- 移除 `window.api.onMenuAction` 监听
+- 使用 `useZhangSunWuJi()` 访问菜单数据
+- 菜单点击事件通过服务处理
+
 4. 更新 `src/renderer/src/components/TitlebarWinLinux.vue`（如果存在）
-    - 同样迁移到 `useZhangSunWuJi()`
+
+- 同样迁移到 `useZhangSunWuJi()`
 
 **验收标准**：
 
@@ -394,15 +428,15 @@ export interface IZhangSunWuJiService {
 ```
 使用服务：
 组件 → useZhangSunWuJi().openExternal()
-  → ZhangSunWuJiService.openExternal()
-  → qizouBus.emit('qizou')
-  → 路由器处理 → 下旨给服务
+ → ZhangSunWuJiService.openExternal()
+ → qizouBus.emit('qizou')
+ → 路由器处理 → 下旨给服务
 
 使用 DOM 事件：
 组件 → window.dispatchEvent('picasa:shangshu')
-  → 杜如晦监听 → 转换为 qizou
-  → qizouBus.emit('qizou')
-  → 路由器处理 → 下旨给服务
+ → 杜如晦监听 → 转换为 qizou
+ → qizouBus.emit('qizou')
+ → 路由器处理 → 下旨给服务
 ```
 
 **两种方式最终都走同一个 qizou 路由系统，只是入口不同**。
@@ -414,9 +448,13 @@ export interface IZhangSunWuJiService {
 **任务**：
 
 1. 检查 `menusStore` 是否还有其他用途
-    - 如果没有，考虑移除或标记为内部使用
+
+- 如果没有，考虑移除或标记为内部使用
+
 2. 检查 `window.api.applySystemMenu` 和 `window.api.onMenuAction` 是否还有其他用途
-    - 如果没有，考虑从 preload 中移除
+
+- 如果没有，考虑从 preload 中移除
+
 3. 更新文档和注释
 
 **验收标准**：

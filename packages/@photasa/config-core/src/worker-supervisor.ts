@@ -1,6 +1,6 @@
 /**
  * config worker 监管：心跳定时、退出/错误后的延迟重启与重启次数上限。
- * 不依赖 Electron Worker 类型，仅使用回调与时间 API。
+ * 不依赖 contract reference Worker 类型，仅使用回调与时间 API。
  */
 
 export type WorkerSupervisorStatus = "initializing" | "ready" | "error" | "restarting";

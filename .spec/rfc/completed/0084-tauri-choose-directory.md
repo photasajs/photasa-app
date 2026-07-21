@@ -9,13 +9,13 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-One Tauri command: **choose_directory()**. Open native folder picker (Tauri dialog API), return selected path or null on cancel. Same semantics as Electron `picasa:choose-directory` + `picasa:selected-directory`. Rust/Tauri only; no Node.
+One Tauri command: **choose_directory()**. Open native folder picker (Tauri dialog API), return selected path or null on cancel. Same semantics as contract reference `picasa:choose-directory` + `picasa:selected-directory`. Rust/Tauri only; no Node.
 
 ## Motivation
 
@@ -23,7 +23,7 @@ Frontend calls `window.api.chooseDirectory()`; preload currently sends IPC and l
 
 ## Detailed design
 
-- **Command**: `choose_directory() -> string | null`. Use Tauri dialog to open folder picker; return path or null. If app expects event-based flow, command can emit event with same name as Electron; contract must match.
+- **Command**: `choose_directory() -> string | null`. Use Tauri dialog to open folder picker; return path or null. If app expects event-based flow, command can emit event with same name as contract reference; contract must match.
 - **Rust**: Tauri dialog plugin or built-in. No Node.
 
 ## Drawbacks

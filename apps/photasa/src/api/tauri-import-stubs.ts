@@ -2,7 +2,7 @@
  * 导入相关前端兜底形状（RFC 0097 已收口）
  *
  * 真实管线在 Rust：`preview_import` / `execute_import` / history / undo / `extract_metadata`。
- * 本模块仅保留：空预览占位、撤销归一化失败时的兜底、以及与 Electron 同名的事件常量。
+ * 本模块仅保留：空预览占位、撤销归一化失败时的兜底、以及与 legacy-api 同名的事件常量。
  * 禁止再当作「后端未接入」的实现路径。
  */
 
@@ -81,6 +81,6 @@ export function placeholderMetadataFromRequest(request: unknown): FileMetadata {
     };
 }
 
-/** 与 Electron / Rust 事件名一致 */
+/** 与 legacy-api / Rust 事件名一致 */
 export const EVENT_IMPORT_PREVIEW_PROGRESS = "import:preview-progress" as const;
 export const EVENT_SCAN_QUEUE_ADD = "picasa:add-to-scan-queue" as const;

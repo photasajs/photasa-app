@@ -30,22 +30,22 @@
 
 ```
 ┌─────────────────────────────────────────┐
-│         UI Layer (Renderer)             │
-│         用户界面层                       │
+│ UI Layer (Renderer) │
+│ 用户界面层 │
 └─────────────────────────────────────────┘
-              ↕ IPC Contract (意图驱动)
+ ↕ IPC Contract (意图驱动)
 ┌─────────────────────────────────────────┐
-│    🌟 天枢层 (Tianshu Engine)           │
-│         决策编排层                       │
-│    "北斗指引，统筹全局"                 │
+│ 🌟 天枢层 (Tianshu Engine) │
+│ 决策编排层 │
+│ "北斗指引，统筹全局" │
 ├─────────────────────────────────────────┤
-│    📜 太乙层 (Taiyi Services)       │
-│         服务桥接层                       │
-│    "承上启下，宣达指令"                 │
+│ 📜 太乙层 (Taiyi Services) │
+│ 服务桥接层 │
+│ "承上启下，宣达指令" │
 ├─────────────────────────────────────────┤
-│         引擎层 (Engines)                │
-│  👂顺风耳 | 👁千里眼 | 📚司簿 | 🎨马良  │
-│    "各司其职，精专其能"                 │
+│ 引擎层 (Engines) │
+│ 👂顺风耳 | 👁千里眼 | 📚司簿 | 🎨马良 │
+│ "各司其职，精专其能" │
 └─────────────────────────────────────────┘
 ```
 
@@ -71,62 +71,62 @@
 
 ```
 src/main/
-  tianshu/               // 天枢编排引擎
-    core/
-      TianshuEngine.ts   // 主引擎类
-      WorkflowLoader.ts  // 工作流加载器
-    orchestration/
-      WorkflowOrchestrator.ts  // 工作流编排器（依赖IStepExecutor接口）
-      VariableResolver.ts      // 变量解析器
-    scheduling/
-      TaskScheduler.ts   // 任务调度器
-      WorkerPool.ts      // 工作线程池
-    types/
-      workflow.ts        // 工作流类型定义
-      command.ts         // 命令和响应类型
-    workflows/           // YAML工作流定义目录
-      folder/
-        add-folder.yaml
-        remove-folder.yaml
-      photo/
-        organize.yaml
-        search.yaml
-      system/
-        settings.yaml
-        maintenance.yaml
+ tianshu/ // 天枢编排引擎
+ core/
+ TianshuEngine.ts // 主引擎类
+ WorkflowLoader.ts // 工作流加载器
+ orchestration/
+ WorkflowOrchestrator.ts // 工作流编排器（依赖IStepExecutor接口）
+ VariableResolver.ts // 变量解析器
+ scheduling/
+ TaskScheduler.ts // 任务调度器
+ WorkerPool.ts // 工作线程池
+ types/
+ workflow.ts // 工作流类型定义
+ command.ts // 命令和响应类型
+ workflows/ // YAML工作流定义目录
+ folder/
+ add-folder.yaml
+ remove-folder.yaml
+ photo/
+ organize.yaml
+ search.yaml
+ system/
+ settings.yaml
+ maintenance.yaml
 
-  taiyi/            // 太乙服务层
-    core/
-      TaiyiService.ts      // 服务基类
-      TaiyiRegistry.ts     // 服务注册中心
-    services/
-      SibuTaiyi.ts         // 司簿太乙使
-      ShunfengerTaiyi.ts   // 顺风耳太乙使
-      QianliyanTaiyi.ts    // 千里眼太乙使
-      MaliangTaiyi.ts      // 马良太乙使
-    types/
-      capability.ts            // 能力定义
-      error.ts                 // 错误类型
+ taiyi/ // 太乙服务层
+ core/
+ TaiyiService.ts // 服务基类
+ TaiyiRegistry.ts // 服务注册中心
+ services/
+ SibuTaiyi.ts // 司簿太乙使
+ ShunfengerTaiyi.ts // 顺风耳太乙使
+ QianliyanTaiyi.ts // 千里眼太乙使
+ MaliangTaiyi.ts // 马良太乙使
+ types/
+ capability.ts // 能力定义
+ error.ts // 错误类型
 
 src/engines/
-  shunfenger/      // RFC 0033 已定义
-  qianliyan/       // RFC 0032 已定义
-  sibu/            // 配置引擎（已重新设计）
-    core/
-      SibuEngine.ts
-    services/
-      ManifestStore.ts
-      StreamManifestReader.ts
-      ManifestCache.ts
-    support/
-      manifest-normalizer.ts
-    types/
-      manifests.ts     // 新增：正确的数据契约
-  maliang/         // RFC 0031 已定义，提供媒体处理能力
-  common/          // 五引擎共享契约、样例与测试基架
-    contracts.ts         // 统一的数据契约
-    test-harness.ts      // 测试基架
-    error-types.ts       // 通用错误类型
+ shunfenger/ // RFC 0033 已定义
+ qianliyan/ // RFC 0032 已定义
+ sibu/ // 配置引擎（已重新设计）
+ core/
+ SibuEngine.ts
+ services/
+ ManifestStore.ts
+ StreamManifestReader.ts
+ ManifestCache.ts
+ support/
+ manifest-normalizer.ts
+ types/
+ manifests.ts // 新增：正确的数据契约
+ maliang/ // RFC 0031 已定义，提供媒体处理能力
+ common/ // 五引擎共享契约、样例与测试基架
+ contracts.ts // 统一的数据契约
+ test-harness.ts // 测试基架
+ error-types.ts // 通用错误类型
 ```
 
 **架构特点**：
@@ -322,17 +322,17 @@ interface MediaWorkRequest {
 ```yaml
 # 媒体处理工作流示例
 steps:
-    - id: "scan_media"
-      engine: "qianliyan"
-      operation: "scanFolder"
+ - id: "scan_media"
+ engine: "qianliyan"
+ operation: "scanFolder"
 
-    - id: "process_media"
-      engine: "maliang"
-      operation: "batchProcess"
-      dependencies: ["scan_media"] # 依赖千里眼扫描结果
-      params:
-          files: "${steps.scan_media.result.mediaFiles}"
-          operations: ["thumbnail", "metadata"]
+ - id: "process_media"
+ engine: "maliang"
+ operation: "batchProcess"
+ dependencies: ["scan_media"] # 依赖千里眼扫描结果
+ params:
+ files: "${steps.scan_media.result.mediaFiles}"
+ operations: ["thumbnail", "metadata"]
 ```
 
 ### 智能扫描决策机制
@@ -348,37 +348,37 @@ description: "基于photasa-folder状态的智能扫描决策"
 trigger: "SMART_SCAN_FOLDER"
 
 steps:
-    - id: "load_folder_state"
-      engine: "sibu"
-      operation: "loadFolderManifest"
-      params:
-          folderPath: "${payload.folderPath}"
+ - id: "load_folder_state"
+ engine: "sibu"
+ operation: "loadFolderManifest"
+ params:
+ folderPath: "${payload.folderPath}"
 
-    - id: "analyze_changes"
-      engine: "qianliyan"
-      operation: "analyzeFolderChanges"
-      dependencies: ["load_folder_state"]
-      params:
-          folderPath: "${payload.folderPath}"
-          lastScanTime: "${steps.load_folder_state.result.stats.lastFullScanAt}"
-          knownFileCount: "${steps.load_folder_state.result.stats.fileCount}"
+ - id: "analyze_changes"
+ engine: "qianliyan"
+ operation: "analyzeFolderChanges"
+ dependencies: ["load_folder_state"]
+ params:
+ folderPath: "${payload.folderPath}"
+ lastScanTime: "${steps.load_folder_state.result.stats.lastFullScanAt}"
+ knownFileCount: "${steps.load_folder_state.result.stats.fileCount}"
 
-    - id: "decide_scan_strategy"
-      engine: "tianshu"
-      operation: "decideScanStrategy"
-      dependencies: ["load_folder_state", "analyze_changes"]
-      params:
-          folderState: "${steps.load_folder_state.result}"
-          changeIndicators: "${steps.analyze_changes.result}"
+ - id: "decide_scan_strategy"
+ engine: "tianshu"
+ operation: "decideScanStrategy"
+ dependencies: ["load_folder_state", "analyze_changes"]
+ params:
+ folderState: "${steps.load_folder_state.result}"
+ changeIndicators: "${steps.analyze_changes.result}"
 
-    - id: "execute_scan"
-      engine: "qianliyan"
-      operation: "executeScan"
-      dependencies: ["decide_scan_strategy"]
-      condition: "${steps.decide_scan_strategy.result.scanType != 'skip'}"
-      params:
-          scanType: "${steps.decide_scan_strategy.result.scanType}"
-          folderPath: "${payload.folderPath}"
+ - id: "execute_scan"
+ engine: "qianliyan"
+ operation: "executeScan"
+ dependencies: ["decide_scan_strategy"]
+ condition: "${steps.decide_scan_strategy.result.scanType != 'skip'}"
+ params:
+ scanType: "${steps.decide_scan_strategy.result.scanType}"
+ folderPath: "${payload.folderPath}"
 ```
 
 #### 智能决策类型定义
@@ -551,23 +551,28 @@ interface PreferenceSnapshot {
 - 司簿新增可插拔 `SyncAdapter`，默认禁用 (`provider = "none"`)。
 - 支持的 provider 通过依赖注入提供，包括 iCloud/CloudKit、WebDAV、S3 兼容存储、自建 HTTPS API 等。
 - `SyncAdapter` 负责上传/下载 `ConfigManifest` 快照与差异增量，司簿只依赖抽象接口：
-    ```ts
-    interface SyncAdapter {
-        push(manifest: ConfigManifest): Promise<SyncResult>;
-        pull(sinceRevision?: string): Promise<SyncPayload | null>;
-        resolveConflict(local: ConfigManifest, remote: ConfigManifest): Promise<ResolvedManifest>;
-        getPermissions(): Promise<SyncPermissions>;
-    }
-    ```
+
+```ts
+interface SyncAdapter {
+    push(manifest: ConfigManifest): Promise<SyncResult>;
+    pull(sinceRevision?: string): Promise<SyncPayload | null>;
+    resolveConflict(local: ConfigManifest, remote: ConfigManifest): Promise<ResolvedManifest>;
+    getPermissions(): Promise<SyncPermissions>;
+}
+```
 
 **冲突处理**
 
 1. 使用 `revision` + `lastRemoteRevision` 进行乐观锁：
-    - `push` 时携带 `lastRemoteRevision`，若远端版本不同则进入冲突流程。
+
+- `push` 时携带 `lastRemoteRevision`，若远端版本不同则进入冲突流程。
+
 2. 冲突决策流程：
-    - `SyncAdapter.resolveConflict` 默认策略：对 `profiles` 与 `scanningFoldersSnapshot` 做集合合并（并集），对策略字段取最新修改时间较晚者。
-    - 产生冲突时司簿生成 `ConfigStatus.conflict`，包含差异摘要，交给 UI 选择「保留本地 / 采用远程 / 手动合并」。
-    - UI 选择后将合并结果反馈司簿，生成新 revision 并再次 `push`。
+
+- `SyncAdapter.resolveConflict` 默认策略：对 `profiles` 与 `scanningFoldersSnapshot` 做集合合并（并集），对策略字段取最新修改时间较晚者。
+- 产生冲突时司簿生成 `ConfigStatus.conflict`，包含差异摘要，交给 UI 选择「保留本地 / 采用远程 / 手动合并」。
+- UI 选择后将合并结果反馈司簿，生成新 revision 并再次 `push`。
+
 3. 记录冲突历史：保留冲突 manifest（`conflicts/` 目录）以便追溯。
 
 **权限与安全**
@@ -610,9 +615,9 @@ interface PreferenceSnapshot {
 **后续优化计划（可选）**
 
 - 评估引入 proto3/其它二进制格式：
-    - 为 `FolderManifest`、`WatchProfile` 等定义 schema，并通过 `ts-proto`/`protobufjs` 生成访问器。
-    - 在每个监控根目录下建立 `.photasa/` 文件夹存放 `.photasa.bin` 与增量缓存，先并行输出再逐步切换默认读取路径，保留根级 `.photasa.json` 作为回退。
-    - 保留 JSON 导出命令与调试工具，确保可回退。
+- 为 `FolderManifest`、`WatchProfile` 等定义 schema，并通过 `ts-proto`/`protobufjs` 生成访问器。
+- 在每个监控根目录下建立 `.photasa/` 文件夹存放 `.photasa.bin` 与增量缓存，先并行输出再逐步切换默认读取路径，保留根级 `.photasa.json` 作为回退。
+- 保留 JSON 导出命令与调试工具，确保可回退。
 - 根据需要拆分历史日志为独立文件（如 `history.log.json` 或未来的二进制日志），减少主 manifest 大小。
 
 此阶段重点：**先让四引擎协同工作**，再循序渐进升级存储格式，避免过早优化阻碍集成进度。
@@ -621,12 +626,12 @@ interface PreferenceSnapshot {
 
 - **引擎外观**：仅通过 `src/engines/sibu/index.ts` 暴露 `SibuEngine` 类及类型定义，对外接口包含 `loadManifest`, `loadManifestForTarget`, `writeManifest`, `clearCache`, `primeCache` 等，保持与马良一致的统一入口风格，并禁止外泄内部实现细节。
 - **内部组件**：
-    - `core/SibuEngine.ts`：Orchestrator，组合内部服务并管理缓存生命周期；
-    - `services/ManifestStore.ts`：负责路径解析、读写与默认文件创建；
-    - `services/ManifestCache.ts`：负责 TTL 缓存策略；
-    - `services/StreamManifestReader.ts`：封装 stream-json 流式解析；
-    - `support/manifest-normalizer.ts`：负责默认结构与字段补全；
-    - 后续可增补 stats/metrics 子模块，对标马良的 `ErrorManager`、`FormatDetector` 等分层职责。
+- `core/SibuEngine.ts`：Orchestrator，组合内部服务并管理缓存生命周期；
+- `services/ManifestStore.ts`：负责路径解析、读写与默认文件创建；
+- `services/ManifestCache.ts`：负责 TTL 缓存策略；
+- `services/StreamManifestReader.ts`：封装 stream-json 流式解析；
+- `support/manifest-normalizer.ts`：负责默认结构与字段补全；
+- 后续可增补 stats/metrics 子模块，对标马良的 `ErrorManager`、`FormatDetector` 等分层职责。
 - **依赖注入**：构造时仅接受 cache/store 配置，不自动创建单例或耦合 worker；由托管层（ConfigService、worker 等）决定如何实例化/复用。
 - **与服务交互**：服务层显式持有 `SibuEngine` 实例，通过事件/IPC 调用引擎；引擎不会内置 `getInstance` 等宿主逻辑，保持可测试、可替换。
 - **测试策略**：公共契约与样例存于 `src/engines/common/`，Vitest 针对引擎方法与读取工具进行单元测试，保持与马良相同的模块划分与覆盖率要求。
@@ -772,17 +777,17 @@ class TianshuEngine {
 ### 引擎间通信通道
 
 - **Command Bus**（主进程内存队列）：
-    - `WatchCommand`（司簿→顺风耳）：`configure`, `pause`, `resume`, `flush`, `stop`。
-    - `ScanCommand`（司簿/顺风耳/服务层→千里眼）：封装为 `ScanTask` 或复用现有 API。
-    - `MediaWorkRequest`（千里眼→马良）：通过轻量队列，支持优先级与取消。
+- `WatchCommand`（司簿→顺风耳）：`configure`, `pause`, `resume`, `flush`, `stop`。
+- `ScanCommand`（司簿/顺风耳/服务层→千里眼）：封装为 `ScanTask` 或复用现有 API。
+- `MediaWorkRequest`（千里眼→马良）：通过轻量队列，支持优先级与取消。
 - **Status Bus**（基于事件发射器/Observable）：
-    - `WatcherStatus`（顺风耳→服务层/司簿）。
-    - `ScanStatus`（千里眼→服务层/司簿/马良可选订阅，用于反馈依赖）。
-    - `MediaStatus`（马良→千里眼/服务层）。
-    - `ConfigStatus`（司簿→全员），包含 `initialized`、`updated`、`preferenceSynced`、`error`。
+- `WatcherStatus`（顺风耳→服务层/司簿）。
+- `ScanStatus`（千里眼→服务层/司簿/马良可选订阅，用于反馈依赖）。
+- `MediaStatus`（马良→千里眼/服务层）。
+- `ConfigStatus`（司簿→全员），包含 `initialized`、`updated`、`preferenceSynced`、`error`。
 - **Preference Channel**（ConfigService ↔ Renderer）：
-    - 主动推送：`ConfigService` 将最新 `PreferenceSnapshot` 以 IPC 消息发送至 Renderer。
-    - 回执：Renderer 写入 IndexedDB 成功后回发 `PreferenceAck`，如有 UI 本地编辑则发送 `PreferenceDelta`（含 `dirty` 标记和 revision）。
+- 主动推送：`ConfigService` 将最新 `PreferenceSnapshot` 以 IPC 消息发送至 Renderer。
+- 回执：Renderer 写入 IndexedDB 成功后回发 `PreferenceAck`，如有 UI 本地编辑则发送 `PreferenceDelta`（含 `dirty` 标记和 revision）。
 
 所有通道必须带上 `revision` 与 `source` 字段以保证可追踪性。主进程内的事件总线统一采用 TypeScript 泛型约束，防止跨模块误用。
 
@@ -812,9 +817,9 @@ class TianshuEngine {
 # 这是错误的 - 配置迁移只涉及司簿引擎
 name: "config_migration"
 steps:
-    - id: "migrate"
-      engine: "sibu"
-      operation: "migrateConfig"
+ - id: "migrate"
+ engine: "sibu"
+ operation: "migrateConfig"
 ```
 
 **✅ 正确：单引擎操作直接调用**
@@ -831,21 +836,21 @@ await sibuEngine.performAutoMigration();
 # 添加文件夹需要协调多个引擎
 name: "add_folder"
 steps:
-    - id: "validate_path"
-      engine: "sibu"
-      operation: "validatePath"
-    - id: "start_watching"
-      engine: "shunfenger"
-      operation: "startWatcher"
-      dependencies: ["validate_path"]
-    - id: "initial_scan"
-      engine: "qianliyan"
-      operation: "scanFolder"
-      dependencies: ["start_watching"]
-    - id: "process_media"
-      engine: "maliang"
-      operation: "batchProcess"
-      dependencies: ["initial_scan"]
+ - id: "validate_path"
+ engine: "sibu"
+ operation: "validatePath"
+ - id: "start_watching"
+ engine: "shunfenger"
+ operation: "startWatcher"
+ dependencies: ["validate_path"]
+ - id: "initial_scan"
+ engine: "qianliyan"
+ operation: "scanFolder"
+ dependencies: ["start_watching"]
+ - id: "process_media"
+ engine: "maliang"
+ operation: "batchProcess"
+ dependencies: ["initial_scan"]
 ```
 
 ### YAML工作流示例
@@ -855,112 +860,112 @@ steps:
 ```yaml
 # workflows/folder/add-folder.yaml
 metadata:
-    name: add_folder_workflow
-    version: 1.0.0
-    description: 添加文件夹到监控列表并执行初始扫描
+ name: add_folder_workflow
+ version: 1.0.0
+ description: 添加文件夹到监控列表并执行初始扫描
 
 trigger:
-    intent: folder.add
+ intent: folder.add
 
 inputs:
-    - name: folderPath
-      type: string
-      required: true
-    - name: recursive
-      type: boolean
-      default: true
-    - name: autoOrganize
-      type: boolean
-      default: false
+ - name: folderPath
+ type: string
+ required: true
+ - name: recursive
+ type: boolean
+ default: true
+ - name: autoOrganize
+ type: boolean
+ default: false
 
 steps:
-    # Step 1: 验证路径
-    - id: validate_path
-      name: 验证文件夹路径
-      service: sibu
-      action: validatePath
-      input:
-          path: ${inputs.folderPath}
-      output: validationResult
-      onError: fail
+ # Step 1: 验证路径
+ - id: validate_path
+ name: 验证文件夹路径
+ service: sibu
+ action: validatePath
+ input:
+ path: ${inputs.folderPath}
+ output: validationResult
+ onError: fail
 
-    # Step 2: 创建监控配置
-    - id: create_profile
-      name: 创建监控配置
-      service: sibu
-      action: createWatchProfile
-      input:
-          path: ${inputs.folderPath}
-          recursive: ${inputs.recursive}
-          enabled: true
-      output: profile
+ # Step 2: 创建监控配置
+ - id: create_profile
+ name: 创建监控配置
+ service: sibu
+ action: createWatchProfile
+ input:
+ path: ${inputs.folderPath}
+ recursive: ${inputs.recursive}
+ enabled: true
+ output: profile
 
-    # Step 3: 启动文件监听
-    - id: start_watching
-      name: 启动监听
-      service: shunfenger
-      action: startWatcher
-      input:
-          profile: ${profile}
-      output: watcherId
+ # Step 3: 启动文件监听
+ - id: start_watching
+ name: 启动监听
+ service: shunfenger
+ action: startWatcher
+ input:
+ profile: ${profile}
+ output: watcherId
 
-    # Step 4: 执行初始扫描（可并行）
-    - id: initial_scan
-      name: 初始扫描
-      service: qianliyan
-      action: scanFolder
-      input:
-          path: ${inputs.folderPath}
-          profile: ${profile}
-          deep: ${inputs.recursive}
-      output: scanResult
-      parallel: true
+ # Step 4: 执行初始扫描（可并行）
+ - id: initial_scan
+ name: 初始扫描
+ service: qianliyan
+ action: scanFolder
+ input:
+ path: ${inputs.folderPath}
+ profile: ${profile}
+ deep: ${inputs.recursive}
+ output: scanResult
+ parallel: true
 
-    # Step 5: 批量生成缩略图
-    - id: generate_thumbnails
-      name: 生成缩略图
-      service: maliang
-      action: batchProcess
-      input:
-          items: ${scanResult.mediaFiles}
-          operation: thumbnail
-          priority: background
-      output: thumbnails
-      when: ${scanResult.mediaFiles.length > 0}
-      parallel: true
+ # Step 5: 批量生成缩略图
+ - id: generate_thumbnails
+ name: 生成缩略图
+ service: maliang
+ action: batchProcess
+ input:
+ items: ${scanResult.mediaFiles}
+ operation: thumbnail
+ priority: background
+ output: thumbnails
+ when: ${scanResult.mediaFiles.length > 0}
+ parallel: true
 
-    # Step 6: 更新索引
-    - id: update_index
-      name: 更新索引
-      service: sibu
-      action: updateFolderManifest
-      input:
-          folderId: ${profile.id}
-          mediaIndex: ${scanResult.mediaFiles}
-          thumbnails: ${thumbnails}
-      output: indexResult
+ # Step 6: 更新索引
+ - id: update_index
+ name: 更新索引
+ service: sibu
+ action: updateFolderManifest
+ input:
+ folderId: ${profile.id}
+ mediaIndex: ${scanResult.mediaFiles}
+ thumbnails: ${thumbnails}
+ output: indexResult
 
 outputs:
-    folderId: ${profile.id}
-    fileCount: ${scanResult.fileCount}
-    mediaCount: ${scanResult.mediaFiles.length}
-    thumbnailCount: ${thumbnails.length}
+ folderId: ${profile.id}
+ fileCount: ${scanResult.fileCount}
+ mediaCount: ${scanResult.mediaFiles.length}
+ thumbnailCount: ${thumbnails.length}
 
 compensation:
-    # 错误补偿流程
-    - when: ${step.id == 'start_watching'}
-      action:
-          service: shunfenger
-          method: stopWatcher
-          input:
-              watcherId: ${watcherId}
+ # 错误补偿流程
+ - when: ${step.id == 'start_watching'}
+ action:
+ service: shunfenger
+ method: stopWatcher
+ input:
+ watcherId: ${watcherId}
 
-    - when: ${step.id == 'create_profile'}
-      action:
-          service: sibu
-          method: deleteProfile
-          input:
-              profileId: ${profile.id}
+ - when: ${step.id == 'create_profile'}
+ action:
+ service: sibu
+ method: deleteProfile
+ input:
+ profileId: ${profile.id}
 ```
 
 ### 核心工作流执行
@@ -968,72 +973,97 @@ compensation:
 下列流程以时序方式描述关键交互。每一步都要求记录事件日志（包含 revision、profileId、taskId）便于追踪。
 
 1. **启动阶段**
-    1. 司簿加载 manifest，执行 schema 校验与互斥检查：
-        - 若校验失败，广播 `ConfigStatus.error`，阻断后续流程并提示用户修复。
-        - 校验通过后生成新的 `ConfigRevision`（UUID+时间戳），持久化并发出 `ConfigStatus.initialized`。
-    2. 顺风耳收到 `ConfigStatus.initialized`：
-        - 调用 `configure(profiles)` 创建/恢复 watcher，保持 profileId→watcher 映射。
-        - 对于 paused profile，记录状态但不立即启动。
-    3. 千里眼拉取最新 `ScanPolicy` 与 profile 列表：
-        - 初始化队列、策略缓存、重试计数器。
-        - 调用健康检查验证马良引擎可用，并在需要时执行神笔预热（如 HEIF WASM 初始化）。
-    4. ConfigService 将 `profiles` 与 `scanningFoldersSnapshot` 封装为 `PreferenceSnapshot` 通过 IPC 发送给渲染进程；Renderer 写入 IndexedDB 后回传 `PreferenceAck`。
-    5. 司簿根据 manifest 中的 `autoStart` 标记及数据库状态，为千里眼投递 `InitialWalk` 任务（若 DB 缺失或 revision 变化），并记录初始化任务清单以支持故障恢复。
+1. 司簿加载 manifest，执行 schema 校验与互斥检查：
 
-2. **新增/变更文件**
-    1. 顺风耳捕获 `add/change`，将 chokidar payload 归一化为 `FileObservation`，附带 `profileRevision` 与源 profileId。
-    2. 千里眼通过 `planScan(observation)` 进行策略判定：
-        - `PolicyInspector` 查询数据库指纹、缩略图 TTL、正在执行的任务，决定是生成 `FileRefresh`、`IncrementalFolder` 还是直接跳过。
-        - 若跳过，则标记 `ScanStatus.skipped` 并停止流程。
-    3. 对于需要处理的文件，千里眼创建/更新 `ScanTask` 并推入队列，状态变更为 `pending`→`running`：
-        - 执行前再次确认同一路径是否已有活跃任务，避免重复。
-    4. 执行阶段：
-        - 若任务包含媒体操作，千里眼生成 `MediaWorkRequest`，通过媒体队列发送给马良。
-        - 马良选择合适神笔（`selectBrush`），生成缩略图/预览/元数据，期间上报 `MediaStatus.progress`。
-        - 马良完成后返回输出文件路径、体积、耗时等指标；若失败，根据策略决定重试或降级（FallbackBrush）。
-    5. 千里眼汇总结果：
-        - 调用 `DbAdapter` 更新 `photasa.json`、`photasa-folder.json` 或未来数据库。
-        - 将马良产物路径与指纹写入数据库及任务记录，发出 `ScanStatus.completed`。
-        - 若发生错误，发出 `ScanStatus.failed`，并根据策略将任务回退至队列或提示 UI。
+- 若校验失败，广播 `ConfigStatus.error`，阻断后续流程并提示用户修复。
+- 校验通过后生成新的 `ConfigRevision`（UUID+时间戳），持久化并发出 `ConfigStatus.initialized`。
+
+2.  顺风耳收到 `ConfigStatus.initialized`：
+
+- 调用 `configure(profiles)` 创建/恢复 watcher，保持 profileId→watcher 映射。
+- 对于 paused profile，记录状态但不立即启动。
+
+3.  千里眼拉取最新 `ScanPolicy` 与 profile 列表：
+
+- 初始化队列、策略缓存、重试计数器。
+- 调用健康检查验证马良引擎可用，并在需要时执行神笔预热（如 HEIF WASM 初始化）。
+
+4.  ConfigService 将 `profiles` 与 `scanningFoldersSnapshot` 封装为 `PreferenceSnapshot` 通过 IPC 发送给渲染进程；Renderer 写入 IndexedDB 后回传 `PreferenceAck`。
+5.  司簿根据 manifest 中的 `autoStart` 标记及数据库状态，为千里眼投递 `InitialWalk` 任务（若 DB 缺失或 revision 变化），并记录初始化任务清单以支持故障恢复。
+
+6.  **新增/变更文件**
+7.  顺风耳捕获 `add/change`，将 chokidar payload 归一化为 `FileObservation`，附带 `profileRevision` 与源 profileId。
+8.  千里眼通过 `planScan(observation)` 进行策略判定：
+
+- `PolicyInspector` 查询数据库指纹、缩略图 TTL、正在执行的任务，决定是生成 `FileRefresh`、`IncrementalFolder` 还是直接跳过。
+- 若跳过，则标记 `ScanStatus.skipped` 并停止流程。
+
+3.  对于需要处理的文件，千里眼创建/更新 `ScanTask` 并推入队列，状态变更为 `pending`→`running`：
+
+- 执行前再次确认同一路径是否已有活跃任务，避免重复。
+
+4.  执行阶段：
+
+- 若任务包含媒体操作，千里眼生成 `MediaWorkRequest`，通过媒体队列发送给马良。
+- 马良选择合适神笔（`selectBrush`），生成缩略图/预览/元数据，期间上报 `MediaStatus.progress`。
+- 马良完成后返回输出文件路径、体积、耗时等指标；若失败，根据策略决定重试或降级（FallbackBrush）。
+
+5.  千里眼汇总结果：
+
+- 调用 `DbAdapter` 更新 `photasa.json`、`photasa-folder.json` 或未来数据库。
+- 将马良产物路径与指纹写入数据库及任务记录，发出 `ScanStatus.completed`。
+- 若发生错误，发出 `ScanStatus.failed`，并根据策略将任务回退至队列或提示 UI。
 
 3. **新增目录**
-    1. 顺风耳输出 `addDir` 的 `FileObservation`。
-    2. 千里眼生成 `IncrementalFolder` 任务并进入目录遍历：
-        - 先读取缓存中的目录指纹，决定是全量重扫还是部分增量。
-        - 遍历时对每个子项执行与步骤 2 相同的策略判定。
-    3. 对于需要批量生成缩略图的目录：
-        - 千里眼将同批次文件合并为 `MediaWorkRequest` 列表，控制单批次大小与并行度。
-        - 马良按序处理并通过流式回调减少磁盘抖动，完成后返回批次摘要供千里眼更新数据库。
+1. 顺风耳输出 `addDir` 的 `FileObservation`。
+1. 千里眼生成 `IncrementalFolder` 任务并进入目录遍历：
+
+- 先读取缓存中的目录指纹，决定是全量重扫还是部分增量。
+- 遍历时对每个子项执行与步骤 2 相同的策略判定。
+
+3.  对于需要批量生成缩略图的目录：
+
+- 千里眼将同批次文件合并为 `MediaWorkRequest` 列表，控制单批次大小与并行度。
+- 马良按序处理并通过流式回调减少磁盘抖动，完成后返回批次摘要供千里眼更新数据库。
 
 4. **删除/移动**
-    1. `delete` 事件：千里眼生成 `DeleteCleanup` 任务，步骤如下：
-        - 清理数据库记录、索引与统计。
-        - 通知马良删除对应缩略图/预览缓存（若存在批量，可集中处理）。
-        - 若数据库中存在引用（收藏、专辑），交由上层服务触发后续清理。
-    2. `move` 事件：
-        - 顺风耳执行 rename 配对或直接提供 `move` observation，千里眼判断是否跨 profile。
-        - 跨 profile 或移出监控范围 → 视为 delete + add。
-        - 同 profile 移动：
-            - 更新数据库路径，保留指纹。
-            - 如果策略允许 `relocateAssets=true`，协同马良移动/重命名缩略图目录；否则标记旧缓存为脏并在下次访问时重建。
+1. `delete` 事件：千里眼生成 `DeleteCleanup` 任务，步骤如下：
+
+- 清理数据库记录、索引与统计。
+- 通知马良删除对应缩略图/预览缓存（若存在批量，可集中处理）。
+- 若数据库中存在引用（收藏、专辑），交由上层服务触发后续清理。
+
+2.  `move` 事件：
+
+- 顺风耳执行 rename 配对或直接提供 `move` observation，千里眼判断是否跨 profile。
+- 跨 profile 或移出监控范围 → 视为 delete + add。
+- 同 profile 移动：
+- 更新数据库路径，保留指纹。
+- 如果策略允许 `relocateAssets=true`，协同马良移动/重命名缩略图目录；否则标记旧缓存为脏并在下次访问时重建。
 
 5. **配置变更**
-    1. 用户在 UI 提交修改，渲染层生成 `PreferenceDelta`（携带 `dirty=true`、基线 revision）发送给 ConfigService。
-    2. 司簿接收 delta，执行：
-        - 合并 patch，重新校验 profile 冲突/路径合法性。
-        - 写入 manifest，生成新 revision。
-    3. 顺风耳比对新旧 profile：
-        - 新增 profile → 创建 watcher 并在 ready 后发出 `WatcherStatus.ready`。
-        - 删除 profile → 停止 watcher，并通知千里眼/马良清理残余任务。
-        - 修改 profile → 执行 `pause`→`resume` 以应用 ignore/递归策略。
-    4. 千里眼根据差异更新队列：
-        - 为新增/修改目录投递 `InitialWalk` 或 `IncrementalFolder` 任务。
-        - 对被移除目录取消待执行任务并标记数据库条目为 `inactive`。
-    5. 司簿生成新的 `PreferenceSnapshot` 推送给渲染层；Renderer 写入后返回 `PreferenceAck` 并将 UI 本地 `dirty` 清零。
+1. 用户在 UI 提交修改，渲染层生成 `PreferenceDelta`（携带 `dirty=true`、基线 revision）发送给 ConfigService。
+1. 司簿接收 delta，执行：
+
+- 合并 patch，重新校验 profile 冲突/路径合法性。
+- 写入 manifest，生成新 revision。
+
+3.  顺风耳比对新旧 profile：
+
+- 新增 profile → 创建 watcher 并在 ready 后发出 `WatcherStatus.ready`。
+- 删除 profile → 停止 watcher，并通知千里眼/马良清理残余任务。
+- 修改 profile → 执行 `pause`→`resume` 以应用 ignore/递归策略。
+
+4.  千里眼根据差异更新队列：
+
+- 为新增/修改目录投递 `InitialWalk` 或 `IncrementalFolder` 任务。
+- 对被移除目录取消待执行任务并标记数据库条目为 `inactive`。
+
+5. 司簿生成新的 `PreferenceSnapshot` 推送给渲染层；Renderer 写入后返回 `PreferenceAck` 并将 UI 本地 `dirty` 清零。
 
 6. **健康与诊断**
-    1. 四引擎定期上报指标：watch backlog、scan queue 深度、媒体渲染延迟、配置加载错误、最近 revision、Preference 同步延迟等。
-    2. ConfigService 汇总指标并推送至日志系统/UI；遇到阈值超限时触发告警或自动回退策略（例如顺风耳陷入 `paused`，提示释放 inotify；马良失败率升高，自动降级为 FallbackBrush）。
+7. 四引擎定期上报指标：watch backlog、scan queue 深度、媒体渲染延迟、配置加载错误、最近 revision、Preference 同步延迟等。
+8. ConfigService 汇总指标并推送至日志系统/UI；遇到阈值超限时触发告警或自动回退策略（例如顺风耳陷入 `paused`，提示释放 inotify；马良失败率升高，自动降级为 FallbackBrush）。
 
 ### 天枢状态报告机制
 
@@ -1150,23 +1180,23 @@ trigger: "HEARTBEAT"
 interval: 10000 # 10秒间隔，降低性能开销
 
 steps:
-    - id: "collect_all_status"
-      engine: "tianshu"
-      operation: "collectAllEngineStatus"
+ - id: "collect_all_status"
+ engine: "tianshu"
+ operation: "collectAllEngineStatus"
 
-    - id: "evaluate_changes"
-      engine: "tianshu"
-      operation: "evaluateStatusChanges"
-      dependencies: ["collect_all_status"]
+ - id: "evaluate_changes"
+ engine: "tianshu"
+ operation: "evaluateStatusChanges"
+ dependencies: ["collect_all_status"]
 
-    - id: "push_if_changed"
-      engine: "shunfenger"
-      operation: "broadcastToUI"
-      dependencies: ["evaluate_changes"]
-      condition: "${steps.evaluate_changes.result.hasSignificantChanges}"
-      params:
-          event: "system:status-update"
-          data: "${steps.evaluate_changes.result.systemStatus}"
+ - id: "push_if_changed"
+ engine: "shunfenger"
+ operation: "broadcastToUI"
+ dependencies: ["evaluate_changes"]
+ condition: "${steps.evaluate_changes.result.hasSignificantChanges}"
+ params:
+ event: "system:status-update"
+ data: "${steps.evaluate_changes.result.systemStatus}"
 ```
 
 #### UI状态监听简化
@@ -1174,31 +1204,31 @@ steps:
 ```typescript
 // UI只监听天枢推送的聚合状态
 class StatusBar extends Component {
-    componentDidMount() {
-        // 只监听天枢推送的聚合状态
-        ipcRenderer.on('system:status-update', this.handleSystemStatusUpdate);
-        ipcRenderer.on('workflow:status-update', this.handleWorkflowStatusUpdate);
+ componentDidMount() {
+ // 只监听天枢推送的聚合状态
+ ipcRenderer.on('system:status-update', this.handleSystemStatusUpdate);
+ ipcRenderer.on('workflow:status-update', this.handleWorkflowStatusUpdate);
 
-        // 请求当前状态
-        ipcRenderer.invoke('tianshu:get-current-status')
-            .then(this.handleSystemStatusUpdate);
-    }
+ // 请求当前状态
+ ipcRenderer.invoke('tianshu:get-current-status')
+ .then(this.handleSystemStatusUpdate);
+ }
 
-    handleSystemStatusUpdate = (systemStatus: SystemStatus) => {
-        this.setState({ systemStatus });
-    };
+ handleSystemStatusUpdate = (systemStatus: SystemStatus) => {
+ this.setState({ systemStatus });
+ };
 
-    render() {
-        const { systemStatus } = this.state;
-        return (
-            <div className="status-bar">
-                <SystemHealthBadge health={systemStatus.systemHealth} />
-                <WorkflowProgressList workflows={systemStatus.activeWorkflows} />
-                <QueueIndicator count={systemStatus.queuedIntents} />
-                <EngineHealthOverview engines={systemStatus.engines} />
-            </div>
-        );
-    }
+ render() {
+ const { systemStatus } = this.state;
+ return (
+ <div className="status-bar">
+ <SystemHealthBadge health={systemStatus.systemHealth} />
+ <WorkflowProgressList workflows={systemStatus.activeWorkflows} />
+ <QueueIndicator count={systemStatus.queuedIntents} />
+ <EngineHealthOverview engines={systemStatus.engines} />
+ </div>
+ );
+ }
 }
 ```
 
@@ -1224,66 +1254,72 @@ taiyi.onEngineError((engineId, error) => {
 
 ```mermaid
 sequenceDiagram
-    participant Sibu as 司簿
-    participant ConfigSvc as ConfigService
-    participant Shun as 顺风耳
-    participant Qian as 千里眼
-    participant Ma as 马良
-    participant Renderer as 渲染层
-    Sibu->>Sibu: 读取 manifest / 校验
-    Sibu-->>ConfigSvc: ConfigStatus.initialized(revision)
-    ConfigSvc-->>Shun: configure(profiles)
-    ConfigSvc-->>Qian: deliver(ScanPolicy)
-    Qian->>Ma: healthCheck()
-    ConfigSvc-->>Renderer: PreferenceSnapshot(revision)
-    Renderer-->>ConfigSvc: PreferenceAck(revision)
-    Sibu-->>Qian: InitialWalk tasks
-    Qian-->>ConfigSvc: ScanStatus.queued
+ participant Sibu as 司簿
+ participant ConfigSvc as ConfigService
+ participant Shun as 顺风耳
+ participant Qian as 千里眼
+ participant Ma as 马良
+ participant Renderer as 渲染层
+ Sibu->>Sibu: 读取 manifest / 校验
+ Sibu-->>ConfigSvc: ConfigStatus.initialized(revision)
+ ConfigSvc-->>Shun: configure(profiles)
+ ConfigSvc-->>Qian: deliver(ScanPolicy)
+ Qian->>Ma: healthCheck()
+ ConfigSvc-->>Renderer: PreferenceSnapshot(revision)
+ Renderer-->>ConfigSvc: PreferenceAck(revision)
+ Sibu-->>Qian: InitialWalk tasks
+ Qian-->>ConfigSvc: ScanStatus.queued
 ```
 
 **Preference 同步**
 
 ```mermaid
 sequenceDiagram
-    participant Renderer
-    participant ConfigSvc as ConfigService
-    participant Sibu as 司簿
-    Renderer-->>ConfigSvc: PreferenceDelta(baseRevision, payload, dirty=true)
-    ConfigSvc->>Sibu: applyDelta()
-    Sibu-->>ConfigSvc: ConfigStatus.updated(newRevision)
-    ConfigSvc-->>Renderer: PreferenceSnapshot(newRevision)
-    Renderer-->>ConfigSvc: PreferenceAck(newRevision)
+ participant Renderer
+ participant ConfigSvc as ConfigService
+ participant Sibu as 司簿
+ Renderer-->>ConfigSvc: PreferenceDelta(baseRevision, payload, dirty=true)
+ ConfigSvc->>Sibu: applyDelta()
+ Sibu-->>ConfigSvc: ConfigStatus.updated(newRevision)
+ ConfigSvc-->>Renderer: PreferenceSnapshot(newRevision)
+ Renderer-->>ConfigSvc: PreferenceAck(newRevision)
 ```
 
 **媒体任务执行**
 
 ```mermaid
 sequenceDiagram
-    participant Shun as 顺风耳
-    participant Qian as 千里眼
-    participant Ma as 马良
-    participant DB as DbAdapter
-    participant UI as UI/ScanService
-    Shun-->>Qian: FileObservation
-    Qian->>Qian: PolicyInspector 判定
-    Qian-->>Ma: MediaWorkRequest
-    Ma->>Ma: 选择神笔 / 处理
-    Ma-->>Qian: MediaStatus.completed(outputPaths)
-    Qian-->>DB: upsert(thumbnails, metadata)
-    Qian-->>UI: ScanStatus.completed
+ participant Shun as 顺风耳
+ participant Qian as 千里眼
+ participant Ma as 马良
+ participant DB as DbAdapter
+ participant UI as UI/ScanService
+ Shun-->>Qian: FileObservation
+ Qian->>Qian: PolicyInspector 判定
+ Qian-->>Ma: MediaWorkRequest
+ Ma->>Ma: 选择神笔 / 处理
+ Ma-->>Qian: MediaStatus.completed(outputPaths)
+ Qian-->>DB: upsert(thumbnails, metadata)
+ Qian-->>UI: ScanStatus.completed
 ```
 
 ### PreferenceStore 同步流程
 
 1. ConfigService 将 `PreferenceSnapshot`（revision、scanningFolders、lastSyncedAt）通过 IPC 发送给渲染进程。
 2. Renderer 写入 IndexedDB：
-    - 成功后回传 `PreferenceAck`（包含 revision、updatedKeys）。
-    - 写入失败时返回 `PreferenceNack`，ConfigService 记录告警并按退避策略重试。
+
+- 成功后回传 `PreferenceAck`（包含 revision、updatedKeys）。
+- 写入失败时返回 `PreferenceNack`，ConfigService 记录告警并按退避策略重试。
+
 3. 当用户在 UI 新增/移除监控目录时：
-    - Renderer 立即更新本地 IndexedDB 并将 `PreferenceDelta`（dirty=true、baseRevision、payload）发送回 ConfigService。
-    - ConfigService/司簿完成合并→校验→生成新 revision→广播至顺风耳/千里眼/Renderer。
+
+- Renderer 立即更新本地 IndexedDB 并将 `PreferenceDelta`（dirty=true、baseRevision、payload）发送回 ConfigService。
+- ConfigService/司簿完成合并→校验→生成新 revision→广播至顺风耳/千里眼/Renderer。
+
 4. 若 Renderer 离线（窗口关闭/睡眠）：
-    - ConfigService 将 delta 缓存至磁盘；待 Renderer 恢复并广播 `PreferenceHello` 时，回放待处理消息。
+
+- ConfigService 将 delta 缓存至磁盘；待 Renderer 恢复并广播 `PreferenceHello` 时，回放待处理消息。
+
 5. 优先处理冲突：若 `PreferenceDelta.baseRevision` 落后于当前 revision，则 ConfigService 返回 `PreferenceConflict`，UI 弹出冲突提示并提供“覆盖/合并”选项。
 
 ### PreferenceStore 迁移方案
@@ -1298,13 +1334,16 @@ sequenceDiagram
 
 1. **导出旧数据**：在渲染层注入一次性脚本，将 IndexedDB 中 `preferences` store 内容序列化为 `preferences-backup.json` 并通过 IPC 发送给 ConfigService。
 2. **司簿接管**：ConfigService 调用司簿 `importLegacyPreferences(data)`：
-    - 校验路径合法性、过滤不存在目录。
-    - 生成新的 manifest `scanningFoldersSnapshot`，记录来源 `legacyIndexedDB`。
+
+- 校验路径合法性、过滤不存在目录。
+- 生成新的 manifest `scanningFoldersSnapshot`，记录来源 `legacyIndexedDB`。
+
 3. **写回渲染层**：司簿发布 `PreferenceSnapshot`（revision=importRevision）到 Renderer，Renderer 覆盖 IndexedDB 并返回 `PreferenceAck`。
 4. **清理旧逻辑**：渲染层移除对旧 `PreferenceStore` 的写入，仅保留读取镜像；主进程标记迁移完成。
 5. **备份与回滚**：
-    - 将 `preferences-backup.json` 与 importRevision manifest 保存至 `~/.photasa/migrate/<timestamp>/`。
-    - 提供 CLI `photasa config restore <revision>` 以便回滚。
+
+- 将 `preferences-backup.json` 与 importRevision manifest 保存至 `~/.photasa/migrate/<timestamp>/`。
+- 提供 CLI `photasa config restore <revision>` 以便回滚。
 
 **迁移脚本原型**
 
@@ -1318,7 +1357,7 @@ async function exportLegacyPreferences() {
     return Object.fromEntries(entries.map(({ key, value }) => [key, value]));
 }
 const payload = await exportLegacyPreferences();
-window.electron.ipcRenderer.invoke("preferences:migrate", payload);
+window.legacyShell.ipcRenderer.invoke("preferences:migrate", payload);
 ```
 
 主进程接收后写入临时文件，再调用司簿 `importLegacyPreferences`。
@@ -1336,9 +1375,11 @@ window.electron.ipcRenderer.invoke("preferences:migrate", payload);
 3. `media-processing`（子状态）：若包含媒体需求，等待马良完成；千里眼跟踪 `MediaStatus`。
 4. `db-sync`：马良完成后写入数据库与缓存。
 5. `completed` / `skipped` / `failed`：
-    - 成功：记录输出、耗时、指纹。
-    - 跳过：基于策略（TTL/重复）标记并通知 UI。
-    - 失败：记录错误原因、重试计数；超过阈值转入人工干预队列。
+
+- 成功：记录输出、耗时、指纹。
+- 跳过：基于策略（TTL/重复）标记并通知 UI。
+- 失败：记录错误原因、重试计数；超过阈值转入人工干预队列。
+
 6. `archived`：任务及关联日志写入持久化存储，供调试与历史回放。
 
 ### 服务层与 IPC
@@ -1353,39 +1394,50 @@ window.electron.ipcRenderer.invoke("preferences:migrate", payload);
 ### 错误处理与恢复策略
 
 - **顺风耳**：
-    - chokidar 抛出 ENOSPC/EPERM 时自动进入 `paused` 状态，重复退避（1s→30s），并向 ConfigService 发送恢复建议。
-    - 监听 `WatcherStatus.error` 将错误写入日志并提示 UI。
+- chokidar 抛出 ENOSPC/EPERM 时自动进入 `paused` 状态，重复退避（1s→30s），并向 ConfigService 发送恢复建议。
+- 监听 `WatcherStatus.error` 将错误写入日志并提示 UI。
 - **千里眼**：
-    - 任务重试采用指数退避（默认上限 3 次），并在失败后生成 `ScanStatus.failed`，含错误类型（IO、Decode、DbConflict 等）。
-    - 队列支持 `quarantine` 列，专门存放需要人工处理的任务。
+- 任务重试采用指数退避（默认上限 3 次），并在失败后生成 `ScanStatus.failed`，含错误类型（IO、Decode、DbConflict 等）。
+- 队列支持 `quarantine` 列，专门存放需要人工处理的任务。
 - **马良**：
-    - 神笔执行异常时记录刷子名称、输入文件、错误栈；若存在 FallbackBrush 则降级输出占位缩略图。
-    - 对 GPU/CPU 占用进行限流，超过阈值暂停接收新 `MediaWorkRequest` 并通知千里眼降速。
+- 神笔执行异常时记录刷子名称、输入文件、错误栈；若存在 FallbackBrush 则降级输出占位缩略图。
+- 对 GPU/CPU 占用进行限流，超过阈值暂停接收新 `MediaWorkRequest` 并通知千里眼降速。
 - **司簿**：
-    - Manifest 写入失败时保留旧版本并生成临时快照；若多次失败，切换到只读模式并提示用户手动修复。
-    - Preference 同步冲突时提供自动合并策略（取并集）并允许用户选择手动覆盖。
+- Manifest 写入失败时保留旧版本并生成临时快照；若多次失败，切换到只读模式并提示用户手动修复。
+- Preference 同步冲突时提供自动合并策略（取并集）并允许用户选择手动覆盖。
 - **跨引擎协调**：
-    - ConfigService 维护 `RecoveryPlan`，记录需要重跑的 `InitialWalk`、媒体生成或配置同步任务。
-    - 重启后按 `RecoveryPlan` 依次回放，确保状态一致。
+- ConfigService 维护 `RecoveryPlan`，记录需要重跑的 `InitialWalk`、媒体生成或配置同步任务。
+- 重启后按 `RecoveryPlan` 依次回放，确保状态一致。
 
 ### 迁移策略
 
 1. **阶段 0：契约冻结**
-    - 定义并实现 `FileObservation`、`ScanTask`、`ScanPolicy`、`MediaWorkRequest`、`ConfigManifest` TypeScript 接口与测试。
+
+- 定义并实现 `FileObservation`、`ScanTask`、`ScanPolicy`、`MediaWorkRequest`、`ConfigManifest` TypeScript 接口与测试。
+
 2. **阶段 1：司簿落地**
-    - 将现有配置读写逻辑迁移到司簿；`ConfigService` 垫片调用司簿接口，确保 UI 功能不变。
-    - 记录 revision 并为 watch/scan 下发首个配置版本。
-    - 与渲染层协商 PreferenceStore：将 `scanningFolder` 源数据迁移至司簿，PreferenceStore 改为消费司簿广播的镜像数据；提供一次性迁移脚本将 IndexedDB 旧数据导出后写入司簿，再在 UI 侧标记 `dirty=false`。
+
+- 将现有配置读写逻辑迁移到司簿；`ConfigService` 垫片调用司簿接口，确保 UI 功能不变。
+- 记录 revision 并为 watch/scan 下发首个配置版本。
+- 与渲染层协商 PreferenceStore：将 `scanningFolder` 源数据迁移至司簿，PreferenceStore 改为消费司簿广播的镜像数据；提供一次性迁移脚本将 IndexedDB 旧数据导出后写入司簿，再在 UI 侧标记 `dirty=false`。
+
 3. **阶段 2：顺风耳、千里眼接入 Revision**
-    - 更新两个引擎以消费 `profileRevision`、`ScanPolicy` 字段；引擎内产生的任务记录 revision。
-    - Watch 与 Scan 服务移除旧配置耦合逻辑。
+
+- 更新两个引擎以消费 `profileRevision`、`ScanPolicy` 字段；引擎内产生的任务记录 revision。
+- Watch 与 Scan 服务移除旧配置耦合逻辑。
+
 4. **阶段 3：千里眼委托马良**
-    - 将缩略图、预览、元数据生成逻辑迁移到马良，千里眼仅负责打包 `MediaWorkRequest` 并跟踪结果。
-    - 建立 `MediaStatus` 事件或在 `ScanStatus` 中扩展媒体段，保证服务层与 UI 可观测。
+
+- 将缩略图、预览、元数据生成逻辑迁移到马良，千里眼仅负责打包 `MediaWorkRequest` 并跟踪结果。
+- 建立 `MediaStatus` 事件或在 `ScanStatus` 中扩展媒体段，保证服务层与 UI 可观测。
+
 5. **阶段 4：策略增强**
-    - 启用智能复扫、缩略图 TTL 等策略，确保由千里眼与司簿共同维护，并利用马良提供的性能数据做动态限流。
+
+- 启用智能复扫、缩略图 TTL 等策略，确保由千里眼与司簿共同维护，并利用马良提供的性能数据做动态限流。
+
 6. **阶段 5：历史与回滚**
-    - 完成历史日志与一键回滚功能；UI 支持选择旧 revision 并重放。
+
+- 完成历史日志与一键回滚功能；UI 支持选择旧 revision 并重放。
 
 ### 实施进度跟踪
 
@@ -1433,7 +1485,7 @@ window.electron.ipcRenderer.invoke("preferences:migrate", payload);
 
 ```
 正向流程：UI命令 → TianshuService(IPC) → TianshuEngine(编排) → IStepExecutor(TaiyiService适配) → TaiyiEngine(业务) → 具体引擎
-回报链：  具体引擎结果 → TaiyiEngine → TaiyiService.emit(事件) → TianshuEngine → TianshuService(IPC) → 渲染进程UI
+回报链： 具体引擎结果 → TaiyiEngine → TaiyiService.emit(事件) → TianshuEngine → TianshuService(IPC) → 渲染进程UI
 ```
 
 **关键架构原则**：
@@ -1607,11 +1659,11 @@ export class ConfigService implements IService {
 **风险和缓解措施**：
 
 - **风险1**：现有ConfigService改动可能影响现有功能
-    - 缓解：优先进行兼容性测试，保持现有API不变
+- 缓解：优先进行兼容性测试，保持现有API不变
 - **风险2**：司簿引擎集成可能遇到配置格式兼容问题
-    - 缓解：充分测试各种旧格式配置文件的迁移场景
+- 缓解：充分测试各种旧格式配置文件的迁移场景
 - **风险3**：状态报告可能影响应用性能
-    - 缓解：实现状态变化检测，避免不必要的推送
+- 缓解：实现状态变化检测，避免不必要的推送
 
 **验收标准**：
 
@@ -1800,20 +1852,24 @@ export class StatusReportingService implements IService {
 ## 替代方案
 
 1. **保持现有四引擎架构**：不引入天枢层，继续在服务层管理业务逻辑。
-    - 优点：实现简单，学习成本低
-    - 缺点：UI复杂度高，业务逻辑分散，难以维护和扩展
+
+- 优点：实现简单，学习成本低
+- 缺点：UI复杂度高，业务逻辑分散，难以维护和扩展
 
 2. **使用外部工作流引擎**：如Temporal、Apache Airflow等成熟方案。
-    - 优点：功能完善，社区支持
-    - 缺点：依赖重，打包复杂，不易定制
+
+- 优点：功能完善，社区支持
+- 缺点：依赖重，打包复杂，不易定制
 
 3. **简化版事件驱动**：只使用事件总线，不引入工作流概念。
-    - 优点：实现简单，性能好
-    - 缺点：复杂业务流程难以管理，缺乏可视化
+
+- 优点：实现简单，性能好
+- 缺点：复杂业务流程难以管理，缺乏可视化
 
 4. **微服务架构**：将各引擎拆分为独立进程。
-    - 优点：隔离性好，可独立扩展
-    - 缺点：桌面应用过重，IPC复杂度高
+
+- 优点：隔离性好，可独立扩展
+- 缺点：桌面应用过重，IPC复杂度高
 
 ### 天枢-太乙双向通信架构详细设计
 
@@ -1822,34 +1878,34 @@ export class StatusReportingService implements IService {
 #### 双向通信架构概览
 
 ```
-                                双向通信
+ 双向通信
 UI ⟷ TianshuService(IPC) ⟷ TianshuEngine(编排) ⟷ IStepExecutor(TaiyiService适配) ⟷ TaiyiEngine(业务) ⟷ 具体引擎
-    │                       │                    │                                  │
-    │     IPC通信           │    事件转发         │    EventEmitter.on()监听        │
-    └─────────────────────── 状态推送 ←──────────── 事件发送 ←─────────────────────────┘
+ │ │ │ │
+ │ IPC通信 │ 事件转发 │ EventEmitter.on()监听 │
+ └─────────────────────── 状态推送 ←──────────── 事件发送 ←─────────────────────────┘
 ```
 
 #### 通信方向1：天枢 → 太乙 (命令下发) - 统一executeAction
 
 ```
 用户操作 → TianshuService.IPC
-  ↓
+ ↓
 TianshuEngine.executeWorkflow()
-  ↓
+ ↓
 WorkflowOrchestrator.executeStep()
-  ↓
+ ↓
 【关键简化】：无论step.type是什么，都调用同一个方法
-this.stepExecutor.executeAction(step, context)  // 第349行
-  ↓ (太乙服务适配层)
+this.stepExecutor.executeAction(step, context) // 第349行
+ ↓ (太乙服务适配层)
 TaiyiService.executeAction()
-  ↓ 内部根据step.type分发
+ ↓ 内部根据step.type分发
 switch(step.type) {
-  case "action": handleAction()
-  case "condition": handleCondition()
-  case "loop": handleLoop()
-  // 在太乙内部处理，外部接口统一
+ case "action": handleAction()
+ case "condition": handleCondition()
+ case "loop": handleLoop()
+ // 在太乙内部处理，外部接口统一
 }
-  ↓
+ ↓
 TaiyiEngine.callEngine() → 具体引擎执行
 ```
 
@@ -1857,22 +1913,22 @@ TaiyiEngine.callEngine() → 具体引擎执行
 
 ```
 具体引擎执行过程
-  ↓
+ ↓
 【事件源头】：TaiyiEngine业务层产生状态变化
-TaiyiEngine.emit('stepStarted')      // 引擎层事件发送
-TaiyiEngine.emit('stepProgress')     // 引擎层进度更新
-TaiyiEngine.emit('stepCompleted')    // 引擎层完成通知
-TaiyiEngine.emit('stepFailed')       // 引擎层失败通知
-  ↓ 【适配层委托】：TaiyiService.on()直接委托给TaiyiEngine.on()
+TaiyiEngine.emit('stepStarted') // 引擎层事件发送
+TaiyiEngine.emit('stepProgress') // 引擎层进度更新
+TaiyiEngine.emit('stepCompleted') // 引擎层完成通知
+TaiyiEngine.emit('stepFailed') // 引擎层失败通知
+ ↓ 【适配层委托】：TaiyiService.on()直接委托给TaiyiEngine.on()
 TaiyiService.on() → TaiyiEngine.on() (直接hookup，无需转发)
-  ↓ 【关键接收】：WorkflowOrchestrator.setupEventHandlers()
-this.stepExecutor.on('stepStarted', (data) => {...})   // 第196行
-this.stepExecutor.on('stepProgress', (data) => {...})  // 第208行
+ ↓ 【关键接收】：WorkflowOrchestrator.setupEventHandlers()
+this.stepExecutor.on('stepStarted', (data) => {...}) // 第196行
+this.stepExecutor.on('stepProgress', (data) => {...}) // 第208行
 this.stepExecutor.on('stepCompleted', (data) => {...}) // 第200行
-this.stepExecutor.on('stepFailed', (data) => {...})    // 第204行
-  ↓ 事件转发到天枢引擎
+this.stepExecutor.on('stepFailed', (data) => {...}) // 第204行
+ ↓ 事件转发到天枢引擎
 this.emit('stepStarted', data)
-  ↓
+ ↓
 TianshuService监听 → IPC推送 → 渲染进程UI实时更新
 ```
 
@@ -1883,9 +1939,9 @@ TianshuService监听 → IPC推送 → 渲染进程UI实时更新
 - **接口**: `IStepExecutor.executeAction(step, context): Promise<StepExecutionResult>`
 - **核心简化**: 无论step.type是什么，都使用同一个executeAction方法
 - **设计优势**:
-    - WorkflowOrchestrator不需要关心步骤类型细节
-    - step参数包含所有必要信息（type, action, input, condition, loop等）
-    - 太乙服务内部根据step.type自行分发处理
+- WorkflowOrchestrator不需要关心步骤类型细节
+- step参数包含所有必要信息（type, action, input, condition, loop等）
+- 太乙服务内部根据step.type自行分发处理
 - **数据流**: WorkflowStep(包含type) + ExecutionContext → 太乙内部分发 → 标准化结果
 
 **2. 状态回报机制 (太乙 → 天枢) - .on()方法监听**
@@ -1901,10 +1957,10 @@ this.stepExecutor.on("stepProgress", (data) => this.emit("stepProgress", data));
 ```
 
 - **事件类型**:
-    - `stepStarted`: 步骤开始执行 - 立即通知UI开始状态
-    - `stepProgress`: 执行进度更新 (0-100%) - 实时进度条更新
-    - `stepCompleted`: 步骤执行完成 - 成功状态通知
-    - `stepFailed`: 步骤执行失败 - 错误状态和消息
+- `stepStarted`: 步骤开始执行 - 立即通知UI开始状态
+- `stepProgress`: 执行进度更新 (0-100%) - 实时进度条更新
+- `stepCompleted`: 步骤执行完成 - 成功状态通知
+- `stepFailed`: 步骤执行失败 - 错误状态和消息
 - **数据流**: TaiyiEngine.emit() → TaiyiService.on()委托 → WorkflowOrchestrator直接监听引擎 → TianshuEngine → IPC → UI
 
 **3. 双向通信的关键设计**
@@ -1923,18 +1979,18 @@ this.stepExecutor.on("stepProgress", (data) => this.emit("stepProgress", data));
 ```typescript
 // src/engines/tianshu/orchestration/WorkflowOrchestrator.ts:193-209
 private setupEventHandlers(): void {
-    this.stepExecutor.on("stepStarted", (data) => {
-        this.emit("stepStarted", data);
-    });
-    this.stepExecutor.on("stepCompleted", (data) => {
-        this.emit("stepCompleted", data);
-    });
-    this.stepExecutor.on("stepFailed", (data) => {
-        this.emit("stepFailed", data);
-    });
-    this.stepExecutor.on("stepProgress", (data) => {
-        this.emit("stepProgress", data);
-    });
+ this.stepExecutor.on("stepStarted", (data) => {
+ this.emit("stepStarted", data);
+ });
+ this.stepExecutor.on("stepCompleted", (data) => {
+ this.emit("stepCompleted", data);
+ });
+ this.stepExecutor.on("stepFailed", (data) => {
+ this.emit("stepFailed", data);
+ });
+ this.stepExecutor.on("stepProgress", (data) => {
+ this.emit("stepProgress", data);
+ });
 }
 ```
 
@@ -2063,8 +2119,8 @@ WorkflowOrchestrator处理结果
 ```typescript
 // UI发起命令请求
 const response = await ipcRenderer.invoke('tianshu.command', {
-    intent: 'preference_update',
-    payload: { theme: 'dark' }
+ intent: 'preference_update',
+ payload: { theme: 'dark' }
 });
 
 // 结果同步返回到UI
@@ -2112,26 +2168,26 @@ throw new WenChangError('偏好验证失败', { field: 'theme' });
 
 // 太乙服务包装错误
 catch (error) {
-    throw new TaiyiExecutionError('步骤执行失败', {
-        originalError: error,
-        stepId: step.id,
-        serviceName: step.service
-    });
+ throw new TaiyiExecutionError('步骤执行失败', {
+ originalError: error,
+ stepId: step.id,
+ serviceName: step.service
+ });
 }
 
 // 天枢引擎统一错误处理
 catch (error) {
-    this.emit('error', {
-        commandId: command.id,
-        workflowId: workflow.id,
-        error: this.wrapError(error),
-        timestamp: Date.now()
-    });
+ this.emit('error', {
+ commandId: command.id,
+ workflowId: workflow.id,
+ error: this.wrapError(error),
+ timestamp: Date.now()
+ });
 }
 
 // 渲染进程接收错误
 ipcRenderer.on('tianshu.error', (errorData) => {
-    showErrorNotification(errorData.error.message);
+ showErrorNotification(errorData.error.message);
 });
 ```
 
@@ -2210,12 +2266,13 @@ ipcRenderer.on('tianshu.error', (errorData) => {
 - **问题**：YAML中`action: "callEngine"`，但代码将其作为方法名传递
 - **修复**：正确解析`input.methodName`作为实际调用方法
 - **示例**：
-    ```yaml
-    action: "callEngine"
-    input:
-        engineName: "wenchang"
-        methodName: "getCurrentSnapshot" # 实际调用方法
-    ```
+
+```yaml
+action: "callEngine"
+input:
+engineName: "wenchang"
+methodName: "getCurrentSnapshot" # 实际调用方法
+```
 
 #### 5. 架构验证
 
@@ -2227,35 +2284,35 @@ ipcRenderer.on('tianshu.error', (errorData) => {
 
 - **问题**：TaiyiService的executeAction方法路由逻辑错误，无法正确解析YAML工作流格式
 - **根本原因**：
-    - 错误地将`step.service`直接作为引擎名传递给`callEngine()`
-    - 对于`service: "taiyi"`的路由模式，应该从`input.engineName`解析真实目标引擎
-    - 三种路由模式（builtin、taiyi路由、直接引擎调用）混淆
+- 错误地将`step.service`直接作为引擎名传递给`callEngine()`
+- 对于`service: "taiyi"`的路由模式，应该从`input.engineName`解析真实目标引擎
+- 三种路由模式（builtin、taiyi路由、直接引擎调用）混淆
 - **解决方案**：实现正确的条件分支路由逻辑
 
-    ```typescript
-    // 修复前（错误）
-    const engineName = step.service || "system"; // 直接使用step.service
+```typescript
+// 修复前（错误）
+const engineName = step.service || "system"; // 直接使用step.service
 
-    // 修复后（正确）
-    if (step.service === "builtin") {
-        // 内置操作路由
-    } else if (step.service === "taiyi" && step.action === "callEngine") {
-        // 太乙路由模式：从input解析真实目标
-        const engineName = step.input?.engineName;
-        const methodName = step.input?.methodName;
-    } else {
-        // 直接引擎调用模式
-    }
-    ```
+// 修复后（正确）
+if (step.service === "builtin") {
+    // 内置操作路由
+} else if (step.service === "taiyi" && step.action === "callEngine") {
+    // 太乙路由模式：从input解析真实目标
+    const engineName = step.input?.engineName;
+    const methodName = step.input?.methodName;
+} else {
+    // 直接引擎调用模式
+}
+```
 
 - **YAML格式支持**：
-    - **Builtin模式**：`service: "builtin", action: "return"`
-    - **太乙路由模式**：`service: "taiyi", action: "callEngine", input: {engineName: "wenchang", methodName: "getCurrentSnapshot"}`
-    - **直接引擎调用**：`service: "qianliyan", action: "validatePaths"`
+- **Builtin模式**：`service: "builtin", action: "return"`
+- **太乙路由模式**：`service: "taiyi", action: "callEngine", input: {engineName: "wenchang", methodName: "getCurrentSnapshot"}`
+- **直接引擎调用**：`service: "qianliyan", action: "validatePaths"`
 - **技术改进**：
-    - 添加路由决策日志便于调试（`routeInfo`字段）
-    - 增强错误处理包含路由上下文信息
-    - 元数据包含路由信息支持问题排查
+- 添加路由决策日志便于调试（`routeInfo`字段）
+- 增强错误处理包含路由上下文信息
+- 元数据包含路由信息支持问题排查
 - **影响**：修复了工作流执行失败的根本原因，确保天枢能正确调度各专业引擎
 
 ### 技术债务清理

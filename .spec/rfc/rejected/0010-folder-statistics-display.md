@@ -420,24 +420,25 @@ watch(expandedKeys, (newKeys, oldKeys) => {
 
 1. **紧凑模式**（默认）：
 
-    ```
-    📁 Documents    📷 120  🎬 5
-    📁 Pictures     📷 3.2k
-    📁 Videos       🎬 45
-    ```
+```
+📁 Documents 📷 120 🎬 5
+📁 Pictures 📷 3.2k
+📁 Videos 🎬 45
+```
 
 2. **详细模式**（可选）：
 
-    ```
-    📁 Documents    (120 images, 5 videos)
-    📁 Pictures     (3,234 images)
-    📁 Videos       (45 videos)
-    ```
+```
+📁 Documents (120 images, 5 videos)
+📁 Pictures (3,234 images)
+📁 Videos (45 videos)
+```
 
 3. **进度指示**：
-    ```
-    📁 Processing... ⏳
-    ```
+
+```
+📁 Processing... ⏳
+```
 
 ### 交互设计
 
@@ -478,24 +479,28 @@ watch(expandedKeys, (newKeys, oldKeys) => {
 ## 成功指标
 
 1. **功能完整性**
-    - ✅ 正确显示图片和视频数量
-    - ✅ 支持递归统计（可选）
-    - ✅ 实时更新统计信息
+
+- ✅ 正确显示图片和视频数量
+- ✅ 支持递归统计（可选）
+- ✅ 实时更新统计信息
 
 2. **性能指标**
-    - 📊 文件夹树展开延迟 < 200ms
-    - 📊 统计信息缓存命中率 > 80%
-    - 📊 大文件夹（1000+文件）统计时间 < 2s
+
+- 📊 文件夹树展开延迟 < 200ms
+- 📊 统计信息缓存命中率 > 80%
+- 📊 大文件夹（1000+文件）统计时间 < 2s
 
 3. **用户体验**
-    - 🎯 清晰的视觉反馈
-    - 🎯 非阻塞的异步加载
-    - 🎯 直观的错误处理
+
+- 🎯 清晰的视觉反馈
+- 🎯 非阻塞的异步加载
+- 🎯 直观的错误处理
 
 4. **系统稳定性**
-    - 🔧 处理文件系统权限错误
-    - 🔧 优雅处理大文件夹场景
-    - 🔧 内存使用保持稳定
+
+- 🔧 处理文件系统权限错误
+- 🔧 优雅处理大文件夹场景
+- 🔧 内存使用保持稳定
 
 ## 潜在风险与对策
 
@@ -529,24 +534,27 @@ watch(expandedKeys, (newKeys, oldKeys) => {
 ## 未来扩展
 
 1. **高级统计**
-    - 文件大小统计
-    - 创建时间分布
-    - 文件类型详细分类
+
+- 文件大小统计
+- 创建时间分布
+- 文件类型详细分类
 
 2. **可视化增强**
-    - 文件夹大小的可视化指示
-    - 统计信息的图表展示
-    - 自定义显示选项
+
+- 文件夹大小的可视化指示
+- 统计信息的图表展示
+- 自定义显示选项
 
 3. **搜索集成**
-    - 基于统计信息的智能搜索
-    - 快速定位特定类型文件夹
+
+- 基于统计信息的智能搜索
+- 快速定位特定类型文件夹
 
 ## 参考资料
 
 - [现有文件扫描实现](../src/main/scan/folder-scanner.ts)
 - [Pinia状态管理模式](https://pinia.vuejs.org/core-concepts/)
-- [Electron IPC最佳实践](https://www.electronjs.org/docs/latest/tutorial/ipc)
+- [contract reference IPC最佳实践](https://www.desktop-shell.dev/docs/latest/tutorial/ipc)
 - [Vue 3 Composition API](https://vuejs.org/guide/extras/composition-api-faq.html)
 
 ## 变更日志

@@ -42,7 +42,7 @@ export function createInitialImportProgress(): ImportProgress {
 export const IMPORT_SESSION_CLEANUP_DELAY_MS = 300_000;
 
 /**
- * 管理 `activeSessions` 与 `progressCallbacks`，无 Electron 依赖。
+ * 管理 `activeSessions` 与 `progressCallbacks`，无 contract reference 依赖。
  */
 export class ImportSessionManager {
     private readonly sessions = new Map<string, ImportSession>();

@@ -23,6 +23,7 @@ import type {
 } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import { getPhotasaApi } from "@renderer/ipc/api-access";
+import { getLegacyShell } from "@/api/legacy-preload-access";
 import {
     isHiddenFileSync,
     shouldIgnorePhotasaPathSync,
@@ -56,8 +57,9 @@ export interface MenuCallback {
 }
 
 export function setupMenu(callback: MenuCallback): void {
-    window.electron.ipcRenderer.on("picasa:open-preference", callback.onPreference);
-    window.electron.ipcRenderer.on("picasa:import-photos", callback.onImportPhotos);
+    const ipc = getLegacyShell()?.ipcRenderer;
+    ipc?.on("picasa:open-preference", callback.onPreference);
+    ipc?.on("picasa:import-photos", callback.onImportPhotos);
 }
 
 export function getDirectory(name: PathName): Promise<string> {

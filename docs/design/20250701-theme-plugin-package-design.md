@@ -1,12 +1,12 @@
 # 主题与插件包格式与API设计（更新版）
 
-> **历史文档**：撰写时面向 Electron main/renderer。Tauri 实现见 `.spec/rfc/`。
+> **历史文档**：撰写时面向 legacy main/renderer。Tauri 实现见 `.spec/rfc/`。
 
 ## 1. 主题包（Theme Package）
 
 ### 本地存储方案
 
-- 桌面端/Electron应用：所有主题包解压后存储于 `userData/themes/{themeId}/` 目录。
+- 桌面端/桌面应用：所有主题包解压后存储于 `userData/themes/{themeId}/` 目录。
 - 每个主题包为独立文件夹，包含 `theme.json`、`theme.css`、`preview.png` 等静态资源。
 - 主题管理器维护一个主题索引（如 `themes/index.json`），记录所有已安装主题的元信息。
 
@@ -14,17 +14,17 @@
 
 ```
 userData/
-  themes/
-    retro-80s/
-      theme.json
-      theme.css
-      preview.png
-    dark-classic/
-      theme.json
-      theme.css
-      preview.png
-    ...
-  themes/index.json // 主题索引（可选）
+ themes/
+ retro-80s/
+ theme.json
+ theme.css
+ preview.png
+ dark-classic/
+ theme.json
+ theme.css
+ preview.png
+ ...
+ themes/index.json // 主题索引（可选）
 ```
 
 ### 主题包的安装/导入/导出/删除
@@ -61,13 +61,13 @@ userData/
 
 ```json
 "colors": {
-  "primary": "#ff00cc",
-  "background": "#1a0033",
-  "accent": "#00fff7",
-  "text": "#fffbe6",
-  "card": "#2d004d",
-  "button": "#ff00cc",
-  "border": "#00fff7"
+ "primary": "#ff00cc",
+ "background": "#1a0033",
+ "accent": "#00fff7",
+ "text": "#fffbe6",
+ "card": "#2d004d",
+ "button": "#ff00cc",
+ "border": "#00fff7"
 }
 ```
 
@@ -87,10 +87,10 @@ userData/
 
 ```
 my-cool-plugin/
-  plugin.json
-  main.js
-  icon.png
-  README.md
+ plugin.json
+ main.js
+ icon.png
+ README.md
 ```
 
 ### plugin.json 字段说明
@@ -111,20 +111,20 @@ my-cool-plugin/
 
 ```json
 "contributes": {
-  "commands": [
-    {
-      "command": "imageExifView",
-      "title": "查看图片EXIF信息"
-    }
-  ],
-  "menus": {
-    "photoContext": [
-      {
-        "command": "imageExifView",
-        "title": "查看EXIF"
-      }
-    ]
-  }
+ "commands": [
+ {
+ "command": "imageExifView",
+ "title": "查看图片EXIF信息"
+ }
+ ],
+ "menus": {
+ "photoContext": [
+ {
+ "command": "imageExifView",
+ "title": "查看EXIF"
+ }
+ ]
+ }
 }
 ```
 

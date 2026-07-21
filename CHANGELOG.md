@@ -5,10 +5,10 @@
 ### Features
 
 - **MaLiang Image Processing Engine**: Implement unified image processing engine with Magic Brush Workshop Pattern
-    - Add BmpBrush for BMP format support with Jimp preprocessing
-    - Add SharpBrush for universal image processing (JPEG, PNG, WebP, TIFF, GIF, AVIF)
-    - Add FfmpegBrush for universal video processing (MP4, AVI, MOV, MKV, WebM, etc.)
-    - Implement intelligent format routing based on technical boundaries
+- Add BmpBrush for BMP format support with Jimp preprocessing
+- Add SharpBrush for universal image processing (JPEG, PNG, WebP, TIFF, GIF, AVIF)
+- Add FfmpegBrush for universal video processing (MP4, AVI, MOV, MKV, WebM, etc.)
+- Implement intelligent format routing based on technical boundaries
 - **Architecture Simplification**: Streamline processing architecture from format-specific to technology-boundary-driven design
 - **Configuration Management**: Integrate FFmpeg configuration management into engine architecture
 - **Code Cleanup**: Remove redundant image processing logic and optimize thumbnail generation workflow
@@ -79,7 +79,7 @@
 - adjust split view init size ([b58ce5c](https://github.com/systembugtj/picasa-vue/commit/b58ce5ca3f77420cff184e2787fa161ed168c523))
 - adjust thumbnail size ([fb67332](https://github.com/systembugtj/picasa-vue/commit/fb67332c5fb241c486545363bc2344a6a929d0ca))
 - adjust ui ([1af9e88](https://github.com/systembugtj/picasa-vue/commit/1af9e88e342ca4092c95d177984eb87539263a90))
-- bugsnag electron ([3c4c7fd](https://github.com/systembugtj/picasa-vue/commit/3c4c7fd607d157bc64432d0485ffcd5237da556e))
+- bugsnag legacy ([3c4c7fd](https://github.com/systembugtj/picasa-vue/commit/3c4c7fd607d157bc64432d0485ffcd5237da556e))
 - **bugsnag:** add context metadata and breadcrumbs for improved error tracking ([03d8fc9](https://github.com/systembugtj/picasa-vue/commit/03d8fc9a872149c2dadf69a8e1651f829a7791ce))
 - build tree node from path ([da1187d](https://github.com/systembugtj/picasa-vue/commit/da1187da1d3b258cd19007583c237d76810d6763))
 - click tree node, will filter image list. ([3f1297c](https://github.com/systembugtj/picasa-vue/commit/3f1297cd82a18fe5f1847ce638b52c1f705511da))

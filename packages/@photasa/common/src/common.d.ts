@@ -19,7 +19,7 @@ import type { ScanAction, ScanArgs } from "./scan-types";
 import type { ThumbnailRequest } from "./thumbnail-types";
 
 /**
- * Electron API
+ * legacy preload API
  */
 
 /**
@@ -27,8 +27,8 @@ import type { ThumbnailRequest } from "./thumbnail-types";
  */
 declare global {
     interface Window {
-        /** Desktop Electron preload only; undefined under Tauri. */
-        electron?: unknown;
+        /** Desktop legacy preload only; undefined under Tauri. */
+        legacyPreload?: unknown;
 
         tianshu: {
             processCommand: (command: unknown) => Promise<unknown>;

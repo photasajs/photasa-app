@@ -19,15 +19,13 @@
     - `ipc_monitor` / `ipc_execute_command` — `invoke` 排查
     - `webview_interact` / `webview_execute_js` — 自动化点击与脚本
 
-## 与 Electron 调试的区别
+## 调试栈
 
-| 旧（已移除）                     | 现（Tauri）                            |
-| -------------------------------- | -------------------------------------- |
-| `electron --inspect` 主进程      | Rust：`RUST_LOG` + LLDB / `cargo test` |
-| `remote-debugging-port` 渲染进程 | WebView DevTools 或 MCP `read_logs`    |
-| `src/main/`、`preload/`          | `src-tauri/`、`crates/`                |
-
-Electron `apps/desktop` 已删除；勿再按 Electron 端口 9229/9222 配置。
+| 场景      | 方式                             |
+| --------- | -------------------------------- |
+| Rust 后端 | `RUST_LOG` + LLDB / `cargo test` |
+| WebView   | DevTools 或 MCP `read_logs`      |
+| 源码布局  | `src-tauri/`、`crates/`          |
 
 ## 常见现象
 

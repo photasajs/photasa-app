@@ -2,23 +2,23 @@
 
 **Rust-first** desktop photo app. Backend in `src-tauri` + `crates/`; Vue renderer for UI and orchestration only.
 
-Electron and zouwu (`TianshuService`, `tianshu_command`, workflow YAML) were removed in [RFC 0153](../../.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md). Production IPC is direct `invoke()` via `YuanTianGang` (RFC 0137).
+Zouwu (`TianshuService`, `tianshu_command`, workflow YAML) were removed in [RFC 0153](../../.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md). Production IPC is direct `invoke()` via `YuanTianGang` (RFC 0137).
 
 ## Layout
 
 ```
 apps/photasa/
-├── src/                    # Vue renderer
-│   ├── api/                # legacy-api, adapters (scan, import, config, …)
-│   ├── services/           # Zhenguan domain services (lishimin, fangxuanling, …)
-│   └── main.ts
+├── src/ # Vue renderer
+│ ├── api/ # legacy-api, adapters (scan, import, config, …)
+│ ├── services/ # Zhenguan domain services (lishimin, fangxuanling, …)
+│ └── main.ts
 └── src-tauri/
-    ├── src/
-    │   ├── main.rs         # Tauri entry, command registration
-    │   ├── commands/       # Typed #[tauri::command] handlers
-    │   └── utils/          # e.g. scan queue persistence
-    ├── Cargo.toml
-    └── tauri.conf.json
+ ├── src/
+ │ ├── main.rs # Tauri entry, command registration
+ │ ├── commands/ # Typed #[tauri::command] handlers
+ │ └── utils/ # e.g. scan queue persistence
+ ├── Cargo.toml
+ └── tauri.conf.json
 ```
 
 Rust algorithms live in workspace crates (`photasa-scan`, `photasa-import`, `photasa-thumbnail`, `photasa-config`, `photasa-preference`, `photasa-folder-tree`, `photasa-media`, `photasa-watch`, `photasa-types`, `libheif-sys`).
@@ -28,9 +28,9 @@ Rust algorithms live in workspace crates (`photasa-scan`, `photasa-import`, `pho
 From repo root:
 
 ```bash
-pnpm dev                  # tauri dev
-pnpm run build:photasa    # tauri build
-pnpm run clippy           # cargo clippy -p photasa
+pnpm dev # tauri dev
+pnpm run build:photasa # tauri build
+pnpm run clippy # cargo clippy -p photasa
 ```
 
 From this directory:
@@ -51,4 +51,4 @@ Umbrella RFC: [0067](../../.spec/rfc/completed/0067-tauri-app-photasa.md). Recen
 
 ## Policy
 
-See [TAURI_RUST_REWRITE_POLICY.md](../../docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — match Electron **contracts** in tests; implement in Rust only.
+See [TAURI_RUST_REWRITE_POLICY.md](../../docs/rfc/TAURI_RUST_REWRITE_POLICY.md) — match legacy-api **contracts** in tests; implement in Rust only.

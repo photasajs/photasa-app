@@ -11,7 +11,7 @@ export interface MenuItemData {
     label: string;
     shortcut?: string;
     disabled?: boolean;
-    role?: string; // Electron role 菜单项
+    role?: string; // contract reference role 菜单项
     url?: string; // 自定义菜单项（如 help.learnMore）
     isMacOnly?: boolean; // 平台专属标志
     items?: MenuItemData[];

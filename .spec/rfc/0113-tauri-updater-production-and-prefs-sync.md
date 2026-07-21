@@ -8,14 +8,14 @@
 **Created**: 2026-06-06
 **Area**: Tauri / Update
 **Depends on**: RFC 0090, RFC 0106, RFC 0107
-**Related**: [0151](./0151-tauri-cicd-redesign.md)（PR 阶段构建/测试 workflow 重设计；本 RFC 只管 `main` 分支 release/updater 发布，两者共同替换现有三个 Electron workflow）
+**Related**: [0151](./0151-tauri-cicd-redesign.md)（PR 阶段构建/测试 workflow 重设计；本 RFC 只管 `main` 分支 release/updater 发布，两者共同替换现有三个 retired workflow）
 
 ---
 
 ## Problem
 
 1. **Production:** `tauri.conf.json` / builder lacks real updater `pubkey` and endpoints (0090 运维项).
-2. **Runtime:** Electron `UpdateService.initializeWithConfig` loads preferences on startup; Tauri `UpdateState.auto_config` defaults until user opens Settings — periodic checker may run with `enabled: false` incorrectly.
+2. **Runtime:** contract reference `UpdateService.initializeWithConfig` loads preferences on startup; Tauri `UpdateState.auto_config` defaults until user opens Settings — periodic checker may run with `enabled: false` incorrectly.
 
 ## Decision
 
@@ -34,7 +34,7 @@
 
 ## Impact
 
-Auto-update matches Electron without renderer-side config hacks.
+Auto-update matches contract reference without renderer-side config hacks.
 
 ---
 
@@ -43,24 +43,24 @@ Auto-update matches Electron without renderer-side config hacks.
 ### 现状核实（读源码，非猜测）
 
 - `apps/photasa/src-tauri/tauri.conf.json:88-91`：`plugins.updater.pubkey: ""`，`endpoints: []`——生产 updater 从未真正配置过，`UPDATER.md` 写的是"如何配置"的操作手册，不是已完成状态。
-- 仓库 `.github/workflows/` 现有三个 workflow（`release.yml`/`build-matrix.yml`/`upload-release-assets.yml`）**全部是 Electron `apps/desktop` 专属**——用 `npm run build:linux/mac/win`（electron-builder），产物路径 `dist/out/release/build`，跟 `apps/photasa`（Tauri）无关，不能复用。**没有任何现存 workflow 会构建 Photasa 或产出 Tauri updater 需要的签名 `latest.json`。**
+- 仓库 `.github/workflows/` 现有三个 workflow（`release.yml`/`build-matrix.yml`/`upload-release-assets.yml`）**全部是 The removed desktop tree 专属**——用 `npm run build:linux/mac/win`（legacy packager），产物路径 `dist/out/release/build`，跟 `apps/photasa`（Tauri）无关，不能复用。**没有任何现存 workflow 会构建 Photasa 或产出 Tauri updater 需要的签名 `latest.json`。**
 - 仓库地址：`systembugtj/picasa-vue`；Photasa `identifier`: `me.photasa.app`；`@tauri-apps/cli: ^2.0.0`。
 
 ### 方案：Tauri 官方 `tauri-action` + GitHub Release
 
-Tauri v2 官方提供 [`tauri-apps/tauri-action`](https://github.com/tauri-apps/tauri-action)，一步完成"构建各平台包 → 签名 → 创建/更新 GitHub Release → 生成 updater 需要的 `latest.json`"，是 Tauri + GitHub Release 组合的标准做法，不需要手写 electron-builder 那套上传逻辑。
+Tauri v2 官方提供 [`tauri-apps/tauri-action`](https://github.com/tauri-apps/tauri-action)，一步完成"构建各平台包 → 签名 → 创建/更新 GitHub Release → 生成 updater 需要的 `latest.json`"，是 Tauri + GitHub Release 组合的标准做法，不需要手写 legacy packager 那套上传逻辑。
 
-**新增 workflow**（`.github/workflows/photasa-release.yml`，替换现有三个 Electron workflow，见下方删除说明）：
+**新增 workflow**（`.github/workflows/photasa-release.yml`，替换现有三个 retired workflow，见下方删除说明）：
 
 **触发条件——只允许 `main` 分支发布，`develop` 绝不触发**：
 
 ```yaml
 on:
     push:
-        branches:
-            - main
-        tags:
-            - "v*"
+    branches:
+        - main
+    tags:
+        - "v*"
     workflow_dispatch: {}
 ```
 
@@ -69,11 +69,11 @@ on:
 ```yaml
 jobs:
     release:
-        runs-on: ${{ matrix.os }}
-        if: github.ref == 'refs/heads/main' || github.event.base_ref == 'refs/heads/main'
-        strategy:
-            matrix:
-                os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    if: github.ref == 'refs/heads/main' || github.event.base_ref == 'refs/heads/main'
+    strategy:
+    matrix:
+    os: [macos-latest, windows-latest, ubuntu-latest]
 ```
 
 - 矩阵：macOS（arm64 + x86_64，或 universal）、Windows、Linux——与 `apps/photasa/src-tauri` 目标平台一致。
@@ -85,20 +85,20 @@ jobs:
 
 ```json
 "plugins": {
-  "updater": {
-    "pubkey": "<CI 注入或 build 前 patch>",
-    "endpoints": [
-      "https://github.com/photasajs/photasa-app/releases/latest/download/latest.json"
-    ]
-  }
+ "updater": {
+ "pubkey": "<CI 注入或 build 前 patch>",
+ "endpoints": [
+ "https://github.com/photasajs/photasa-app/releases/latest/download/latest.json"
+ ]
+ }
 }
 ```
 
 `pubkey` 私钥不进仓库（`UPDATER.md` 已有此约定）；`endpoints` 指向 Release 固定资产名 `latest.json`（`tauri-action` 默认产出此文件名，随每次 Release 更新）。
 
-### `.github/workflows/` 现存三个 workflow 是 Electron 遗留物，应删除
+### `.github/workflows/` 现存三个 workflow 是 contract reference 遗留物，应删除
 
-`release.yml`（release-please）/`build-matrix.yml`/`upload-release-assets.yml` 全部针对 `apps/desktop`（`npm run build:linux/mac/win`，electron-builder 产物路径），仓库已是 Photasa 专属（`photasajs/photasa-app`），不再需要维护 Electron 构建路径。这三个文件应随本 RFC 一并删除，替换为新的 Tauri-only workflow，不是"共存"。
+`release.yml`（release-please）/`build-matrix.yml`/`upload-release-assets.yml` 全部针对 `legacy-api contract`（`npm run build:linux/mac/win`，legacy packager 产物路径），仓库已是 Photasa 专属（`photasajs/photasa-app`），不再需要维护 legacy 构建路径。这三个文件应随本 RFC 一并删除，替换为新的 Tauri-only workflow，不是"共存"。
 
 ### Non-goals（本次不做）
 
@@ -107,7 +107,7 @@ jobs:
 
 ### Acceptance（新增）
 
-1. 新 workflow 文件存在，`apps/photasa/src-tauri` 专属，仓库不再有 Electron 构建路径。
+1. 新 workflow 文件存在，`apps/photasa/src-tauri` 专属，仓库不再有 legacy 构建路径。
 2. `tauri.conf.json` 的 `endpoints` 指向真实可达的 GitHub Release URL（`photasajs/photasa-app`）。
 3. 手动触发一次 workflow，产出签名更新包并成功创建/更新 GitHub Release，`latest.json` 内容与本次构建版本一致。
 4. 私钥全程不出现在仓库或日志中（GitHub Secrets 遮蔽验证）。
@@ -119,4 +119,4 @@ jobs:
 
 - `tauri-action` 的默认 GitHub Release 行为可能是"draft"或"prerelease"，需要明确配置发布状态，避免 updater 端点读到未发布的草稿 Release（草稿 Release 资产不可通过公开 URL 访问，会导致 updater 静默失败）。
 - 首次签名密钥生成后需要安全存档（如密钥丢失，所有已发布版本的用户都无法验证后续更新签名，需要重新分发新公钥——这是不可逆操作，需谨慎执行一次即可，不要重复生成）。
-- 删除现有三个 Electron workflow 是不可逆操作（虽可从 git 历史恢复），随本 RFC 实施时一并执行。
+- 删除现有三个 retired workflow 是不可逆操作（虽可从 git 历史恢复），随本 RFC 实施时一并执行。

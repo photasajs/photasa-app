@@ -19,11 +19,11 @@
 
 ## 不在范围
 
-| 项                      | 原因                                      |
-| ----------------------- | ----------------------------------------- |
-| Electron `apps/desktop` | 维护模式；非 Photasa Active               |
-| 0098 `@photasa/*` 抽包  | Electron-only，Deferred                   |
-| 新增 `window.api` 能力  | 禁止；新功能走贞观 + Rust command（0137） |
+| 项                       | 原因                                      |
+| ------------------------ | ----------------------------------------- |
+| The removed desktop tree | 维护模式；非 Photasa Active               |
+| 0098 `@photasa/*` 抽包   | deferred，Deferred                        |
+| 新增 `window.api` 能力   | 禁止；新功能走贞观 + Rust command（0137） |
 
 ## 进度（2026-07-21）
 

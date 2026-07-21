@@ -33,13 +33,13 @@
 
 ```text
 rebuildThumbnail(image)
-  → requestThumbnail(image, preferenceStore.thumbnailSize)   // ImageListHelper.ts
-    → createThumbnailTask.perform({ path, thumbnail, width, height, always: true, preview: "" })
-      → window.api.createThumbnail                           // legacy-api → thumbnail.adapter
-        → invoke("create_thumbnail", { request })          // normalize_path 后
-          → photasa_thumbnail::create_thumbnail (Rust)
-  → rebuiltThumbnailSrcByKey[image.key] = webviewUrl + "?t=" + Date.now()
-  → BaseImage :src="thumbnailDisplaySrc(image)" :key="..."
+ → requestThumbnail(image, preferenceStore.thumbnailSize) // ImageListHelper.ts
+ → createThumbnailTask.perform({ path, thumbnail, width, height, always: true, preview: "" })
+ → window.api.createThumbnail // legacy-api → thumbnail.adapter
+ → invoke("create_thumbnail", { request }) // normalize_path 后
+ → photasa_thumbnail::create_thumbnail (Rust)
+ → rebuiltThumbnailSrcByKey[image.key] = webviewUrl + "?t=" + Date.now()
+ → BaseImage :src="thumbnailDisplaySrc(image)" :key="..."
 ```
 
 ### 路径契约
@@ -52,7 +52,7 @@ rebuildThumbnail(image)
 | `raw`               | `currentFolder` + `photo.path` → asset URL                                               |
 | `thumbnail` / `src` | `currentFolder` + `photo.thumbnail`（通常 `.photasaoriginals/thumbnail-{basename}.png`） |
 
-`requestThumbnail` 将 asset/file URL 转为磁盘路径后调用 Rust；**目标缩略图路径必须来自 config 已有 `photo.thumbnail`**，禁止仅从 `raw` 父目录重算（与 Electron `ImageListHelper` 语义一致：`thumbnail: image.src`）。
+`requestThumbnail` 将 asset/file URL 转为磁盘路径后调用 Rust；**目标缩略图路径必须来自 config 已有 `photo.thumbnail`**，禁止仅从 `raw` 父目录重算（与 legacy-api `ImageListHelper` 语义一致：`thumbnail: image.src`）。
 
 ### Rust 行为（已有，本 RFC 不扩 scope）
 
@@ -108,8 +108,8 @@ rebuildThumbnail(image)
 ```bash
 # 无独立 CLI；验收为 Vitest + 手动右键单图
 pnpm --filter @photasa/photasa exec vitest run \
-  src/components/__tests__/ImageListHelper.test.ts \
-  src/utils/__tests__/image-prefetch.test.ts
+ src/components/__tests__/ImageListHelper.test.ts \
+ src/utils/__tests__/image-prefetch.test.ts
 ```
 
 ## Out of scope
@@ -117,7 +117,7 @@ pnpm --filter @photasa/photasa exec vitest run \
 - 批量重建 / CLI
 - 重建 HEIC **preview**（`.jpeg`）
 - 修改 `.photasa.json` 或 `photoList` 条目
-- 将单图重建迁入贞观（无业务必要性；保持薄 IPC 与 Electron 一致）
+- 将单图重建迁入贞观（无业务必要性；保持薄 IPC 与 legacy-api 一致）
 
 ## Related
 

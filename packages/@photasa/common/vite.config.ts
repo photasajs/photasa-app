@@ -19,7 +19,7 @@ export default defineConfig({
             formats: ["es", "cjs"],
         },
         rollupOptions: {
-            external: ["electron", "log4js", "uuid", "lodash", "@systembug/diting"],
+            external: ["log4js", "uuid", "lodash", "@systembug/diting"],
         },
         sourcemap: true,
         emptyOutDir: true,

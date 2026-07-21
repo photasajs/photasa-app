@@ -466,5 +466,5 @@ export class ImportHistoryManager {
 }
 
 // Note: ImportHistoryManager requires a userDataPath argument.
-// Callers (e.g. Electron apps) should instantiate it as:
-//   new ImportHistoryManager(app.getPath("userData"))
+// Callers (e.g. contract reference apps) should instantiate it as:
+// new ImportHistoryManager(app.getPath("userData"))

@@ -301,18 +301,18 @@ export function joinFileProtocolPath(...segments: string[]): string {
 }
 
 /**
- * 获取应用程序路径（兼容 worker 线程和非 Electron 环境）
- * 使用新的 Electron API 替代废弃的 app.getAppPath()
- * @param electronApp 可选的 Electron app 实例
+ * 获取应用程序路径（兼容 worker 线程和非 legacy preload 环境）
+ * 使用新的 legacy preload API 替代废弃的 app.getAppPath()
+ * @param desktopShellApp 可选的 contract reference app 实例
  * @returns 应用程序路径
  */
-export function getAppPath(electronApp?: { getPath: (name: "exe") => string }): string {
-    // 如果传入了 Electron app 实例，使用新的 API
-    if (electronApp && typeof electronApp.getPath === "function") {
+export function getAppPath(desktopShellApp?: { getPath: (name: "exe") => string }): string {
+    // 如果传入了 contract reference app 实例，使用新的 API
+    if (desktopShellApp && typeof desktopShellApp.getPath === "function") {
         try {
-            return path.dirname(electronApp.getPath("exe"));
+            return path.dirname(desktopShellApp.getPath("exe"));
         } catch {
-            // Electron API 调用失败时继续执行下面的逻辑
+            // legacy preload API 调用失败时继续执行下面的逻辑
         }
     }
 

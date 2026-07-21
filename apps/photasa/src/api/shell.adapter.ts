@@ -4,6 +4,7 @@
  */
 
 import { isTauri } from "./env";
+import { getLegacyPreloadApi, getLegacyShell } from "./legacy-preload-access";
 
 export const shellAdapter = {
     /**
@@ -14,7 +15,7 @@ export const shellAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("open_external", { url });
         } else {
-            await (window as any).electronAPI?.shell?.openExternal(url);
+            await getLegacyPreloadApi()?.shell?.openExternal(url);
         }
     },
 
@@ -26,7 +27,7 @@ export const shellAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("show_in_folder", { path });
         } else {
-            await (window as any).electronAPI?.shell?.showItemInFolder(path);
+            await getLegacyPreloadApi()?.shell?.showItemInFolder(path);
         }
     },
 };

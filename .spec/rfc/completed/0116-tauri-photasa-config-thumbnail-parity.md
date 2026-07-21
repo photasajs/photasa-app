@@ -4,7 +4,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron / `@photasa/config-core` / `apps/desktop/src/shared/path-util.ts` are the **only** path contracts.
+- contract reference / `@photasa/config-core` / `historical shared/path-util.ts` are the **only** path contracts.
 - **No new thumbnail naming.** Canonical relative path remains:
   `.photasaoriginals/thumbnail-{fileName}.png` (`toRelativeThumbnailPath` / `toThumbnailName`).
 - Photasa fixes **broken stubs and drift**, not a second schema.
@@ -24,17 +24,17 @@
 Tauri Photasa shows `tauri::protocol::asset` 404s and broken grids because:
 
 1. **`legacy-api.ts` path stubs** return basename only for `shortenThumbnailName` / `toThumbnailName`, corrupting `photoList[].thumbnail` when scan events update the store.
-2. **`ConfigAdapter.fixConfig`** treats `photoList` as string array (wrong); Rust `fix_photasa_config` did not normalize thumbnails to the Electron contract.
-3. **`add_photo_to_folder_list`** skips existing photos even when `thumbnail` is legacy/wrong (Electron updates when `!photo.thumbnail`).
+2. **`ConfigAdapter.fixConfig`** treats `photoList` as string array (wrong); Rust `fix_photasa_config` did not normalize thumbnails to the legacy-api contract.
+3. **`add_photo_to_folder_list`** skips existing photos even when `thumbnail` is legacy/wrong (deferred updates when `!photo.thumbnail`).
 4. **Folder switch race**: `currentFolder` updates before `currentFolderConfig` reload, so UI builds `asset://` URLs with folder A + photoList from folder B.
 
-Rescan (`resetPhotasaConfig` + scan + `always: true`) was already specified in RFC 0048 / Electron `yuchigong.ts`; this RFC ensures **on-disk config and UI** stay on the **same Electron path contract** before and after rescan.
+Rescan (`resetPhotasaConfig` + scan + `always: true`) was already specified in RFC 0048 / contract reference `yuchigong.ts`; this RFC ensures **on-disk config and UI** stay on the **same contract reference path contract** before and after rescan.
 
 ---
 
-## Electron reference (source of truth)
+## contract reference reference (source of truth)
 
-| Behavior                    | Electron location                                                                           |
+| Behavior                    | contract reference location                                                                 |
 | --------------------------- | ------------------------------------------------------------------------------------------- |
 | Thumbnail relative path     | `packages/@photasa/config-core/src/path-util.ts` → `toRelativeThumbnailPath`                |
 | Shorten absolute → relative | `shortenThumbnailName` → `.photasaoriginals/` + basename                                    |
@@ -53,14 +53,14 @@ Legacy corrupt paths observed in the field (e.g. `.photasaoriginals/.photasaorig
 
 ---
 
-## Proposed solution (strict Electron port — no read-time migration)
+## Proposed solution (strict contract reference port — no read-time migration)
 
 ### 1. Rust `photasa_config.rs`
 
-- **`read_config_sync`**: return parsed config; **never** silently rewrite disk (Electron `readConfig`).
+- **`read_config_sync`**: return parsed config; **never** silently rewrite disk (deferred `readConfig`).
 - **`parse_photo_list`**: preserve `thumbnail` from disk for object entries; only fill via `to_relative_thumbnail_path` when empty; legacy string entries still migrate to objects.
-- **`add_photo_to_folder_list`**: new entries use `to_relative_thumbnail_path`; existing entries updated **only if `thumbnail` is empty** (Electron `addToPhotoList`).
-- **`fix_config_sync`**: `path = basename`; `thumbnail = shortenThumbnailName(thumbnail)` only — **not** `to_relative_thumbnail_path` for all entries (Electron `fixPhotasaConfig`).
+- **`add_photo_to_folder_list`**: new entries use `to_relative_thumbnail_path`; existing entries updated **only if `thumbnail` is empty** (deferred `addToPhotoList`).
+- **`fix_config_sync`**: `path = basename`; `thumbnail = shortenThumbnailName(thumbnail)` only — **not** `to_relative_thumbnail_path` for all entries (deferred `fixPhotasaConfig`).
 
 ### 2. Rust `config_adapter.rs`
 
@@ -68,21 +68,21 @@ Legacy corrupt paths observed in the field (e.g. `.photasaoriginals/.photasaorig
 
 ### 3. Photasa renderer `photasa-path.ts`
 
-- Pure TS helpers mirroring `apps/desktop/src/shared/path-util.ts`:
+- Pure TS helpers mirroring `historical shared/path-util.ts`:
   `shortenThumbnailName`, `toThumbnailName`, `toRelativeThumbnailPath`.
 - `legacy-api.ts` uses these instead of basename-only stubs.
-- `preference.ts` `addToCurrentPhotasaConfig` uses `shortenThumbnailName(request.thumbnail)` (Electron desktop), **not** `toRelativeThumbnailPath(request.path)`.
+- `preference.ts` `addToCurrentPhotasaConfig` uses `shortenThumbnailName(request.thumbnail)` (contract reference), **not** `toRelativeThumbnailPath(request.path)`.
 
 ### 4. Folder switch (renderer)
 
-- **Electron `FolderList`**：仅当 `currentFolder !== selectedKeys[0]` 时更新 folder 并 `getPhotasaConfig`；不预先清空 `photoList`。
-- **Electron `ImageList`**：`card` 始终 `toImageList`；loading 遮罩盖住旧数据；`currentFolderConfig` watch 立即 `loadingPhotasaConfig = false`。
+- **contract reference `FolderList`**：仅当 `currentFolder !== selectedKeys[0]` 时更新 folder 并 `getPhotasaConfig`；不预先清空 `photoList`。
+- **contract reference `ImageList`**：`card` 始终 `toImageList`；loading 遮罩盖住旧数据；`currentFolderConfig` watch 立即 `loadingPhotasaConfig = false`。
 - Photasa 已对齐上述行为（移除 RFC 0116 占位清空、lastModified 门控、ImageList 内 scan 监听）。
 
-### 5. BaseImage / MediaPreview（Electron 6-prop 设计）
+### 5. BaseImage / MediaPreview（contract reference 6-prop 设计）
 
 - 网格：`src=thumbnail`，`@error` → 仅 `fallback` 占位图（**不** preview/raw 链）。
-- Lightbox：`src=preview||raw`，`fallback=thumbnail`（与 Electron `MediaPreview.vue` 一致）。
+- Lightbox：`src=preview||raw`，`fallback=thumbnail`（与 legacy-api `MediaPreview.vue` 一致）。
 - 移除 Photasa 自创：`base-image-error-fallback`、`fallbackToThumbnail`、`eagerLoad`、`fitViewport`、RAW 占位角标、`thumbnail-fallback-cache` UI 挂钩。
 
 - `resetPhotasaConfig` clears `photoList`, then scan with `always: true` re-adds entries via `addToPhotoList` (canonical `thumbnail-*` paths).
@@ -98,7 +98,7 @@ Legacy corrupt paths observed in the field (e.g. `.photasaoriginals/.photasaorig
 ## Implementation checklist
 
 - [x] RFC 0116 registered in `ROADMAP.md` + `TASK_TRACKING.md`
-- [x] `photasa_config.rs` strict Electron parity + tests (9 cases)
+- [x] `photasa_config.rs` strict contract parity + tests (9 cases)
 - [x] `config_adapter.rs` fixConfig parity
 - [x] Removed post-rescan `fix_config_sync` from `scan_runner.rs`
 - [x] `photasa-path.ts` + `legacy-api.ts` stubs
@@ -121,11 +121,11 @@ Manual: open folder with legacy `.photasa.json` → Fix Config or Rescan → gri
 
 ## Risks
 
-- Legacy corrupt paths (e.g. `.photasaoriginals/.photasaoriginals/foo.heic.png`) remain until user runs **Rescan** or **Fix Config** — same as Electron; no silent migration on read.
+- Legacy corrupt paths (e.g. `.photasaoriginals/.photasaoriginals/foo.heic.png`) remain until user runs **Rescan** or **Fix Config** — same as contract reference; no silent migration on read.
 - `fixPhotasaConfig` shortens to basename only; it does not rebuild `thumbnail-*` names. Full repair requires rescan after reset.
 
 ## Alternatives considered
 
-- **Read-time auto-migration to canonical `thumbnail-*`** — rejected (user requirement: port Electron, do not recreate behavior).
+- **Read-time auto-migration to canonical `thumbnail-*`** — rejected (user requirement: port contract reference, do not recreate behavior).
 - **New preview-style path** — rejected (user requirement: no new patterns).
-- **Frontend-only workaround** — rejected; config on disk must match Electron contract after explicit user actions.
+- **Frontend-only workaround** — rejected; config on disk must match legacy-api contract after explicit user actions.

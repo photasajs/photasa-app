@@ -11,7 +11,7 @@
 
 ## Summary
 
-`legacy-api.ts` 的 `startWatching` 未按 Electron `fs-watch.ts` 契约把 Rust 事件映射为完整 `WatchState`，导致文件/目录直连 UI（通路 A）失效。本 RFC 修前端映射 + Rust payload camelCase；与 0133 crate 拆分无关。
+`legacy-api.ts` 的 `startWatching` 未按 contract reference `fs-watch.ts` 契约把 Rust 事件映射为完整 `WatchState`，导致文件/目录直连 UI（通路 A）失效。本 RFC 修前端映射 + Rust payload camelCase；与 0133 crate 拆分无关。
 
 ## Problem（已修复）
 

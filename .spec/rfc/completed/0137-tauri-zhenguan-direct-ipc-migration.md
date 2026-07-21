@@ -31,7 +31,7 @@ Rust event
 
 贞观拟人化边界在 IPC 迁移中保持不变：袁天罡只管交通，李世民只管跨功能路由，杜如晦只传圣旨，房玄龄只落状态；任何人不接管另一个人的功能。
 
-1. No Zhenguan person imports or calls `window.api`, `legacy-api.ts`, Electron preload APIs, or a wrapper around them.
+1. No Zhenguan person imports or calls `window.api`, `legacy-api.ts`, legacy preload APIs, or a wrapper around them.
 2. No component invokes Rust directly. Components submit intent through the Zhenguan path to the responsible person.
 3. Only `YuanTianGang` imports Tauri IPC primitives for personified feature traffic.
 4. `YuanTianGang` translates only transport contracts. It does not mutate Pinia, persist queue state, run scan pipelines, or decide queue policy.
@@ -41,7 +41,7 @@ Rust event
 
 ## Scope
 
-This RFC migrates Zhenguan service IPC capability by capability. It does not remove the entire compatibility surface at once and does not change Electron behavior.
+This RFC migrates Zhenguan service IPC capability by capability. It does not remove the entire compatibility surface at once and does not change contract reference behavior.
 
 Initial order:
 
@@ -66,7 +66,7 @@ Initial order:
 - No rewrite of all frontend adapter code in one change.
 - No direct component-to-Rust invocation.
 - No service-to-service direct call to avoid routing.
-- No new Node or Electron backend dependency.
+- No new Node or contract reference backend dependency.
 
 ## Acceptance
 

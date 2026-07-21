@@ -2,6 +2,7 @@
  * 缩略图适配器 — invoke 前必须把 WebView URL 转成磁盘路径
  */
 import { isTauri } from "./env";
+import { getLegacyPreloadApi } from "./legacy-preload-access";
 import { webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 
 export interface ThumbnailRequest {
@@ -47,12 +48,10 @@ export const thumbnailAdapter = {
             return await invoke("create_thumbnail", { request: normalized });
         }
         return (await (
-            window as Window & {
-                electronAPI?: {
-                    thumbnail?: { create: (r: ThumbnailRequest) => Promise<ThumbnailResponse> };
-                };
+            getLegacyPreloadApi() as {
+                thumbnail?: { create: (r: ThumbnailRequest) => Promise<ThumbnailResponse> };
             }
-        ).electronAPI?.thumbnail?.create(request)) as ThumbnailResponse;
+        )?.thumbnail?.create(request)) as ThumbnailResponse;
     },
 
     remove: async (request: ThumbnailRequest): Promise<ThumbnailResponse> => {
@@ -62,11 +61,9 @@ export const thumbnailAdapter = {
             return await invoke("remove_thumbnail", { request: normalized });
         }
         return (await (
-            window as Window & {
-                electronAPI?: {
-                    thumbnail?: { remove: (r: ThumbnailRequest) => Promise<ThumbnailResponse> };
-                };
+            getLegacyPreloadApi() as {
+                thumbnail?: { remove: (r: ThumbnailRequest) => Promise<ThumbnailResponse> };
             }
-        ).electronAPI?.thumbnail?.remove(request)) as ThumbnailResponse;
+        )?.thumbnail?.remove(request)) as ThumbnailResponse;
     },
 };

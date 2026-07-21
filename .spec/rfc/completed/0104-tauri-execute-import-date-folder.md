@@ -4,14 +4,14 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
-**Status**: ✅ Implemented  
-**Created**: 2026-04-05  
-**Last updated**: 2026-07-20  
-**Area**: Tauri / Import  
+**Status**: ✅ Implemented
+**Created**: 2026-04-05
+**Last updated**: 2026-07-20
+**Area**: Tauri / Import
 **Path**: `.spec/rfc/completed/0104-tauri-execute-import-date-folder.md`
 
 ---
@@ -23,19 +23,19 @@ flat into the raw `targetPath` directory:
 
 ```rust
 match copy_one(src, &target_pb, strategy) { … }
-// target_pb == PathBuf::from(&target_path)  ← no subdirectory generation
+// target_pb == PathBuf::from(&target_path) ← no subdirectory generation
 ```
 
-The Electron `import-worker.ts` / `handleExecuteImport` uses:
+The contract reference `import-worker.ts` / `handleExecuteImport` uses:
 
 ```ts
 const datePath = generateDatePath(group); // → "{year}/{YYYYMMDD}"
 const groupDir = path.join(targetPath, datePath);
-// files land in  <targetPath>/2024/20240315/photo.jpg
+// files land in <targetPath>/2024/20240315/photo.jpg
 ```
 
 `import_preview.rs` already implements `generate_date_path_utc` and
-`determine_group_target_utc` to match the **Electron preview contract** (Rust implementation; TS is spec reference only).
+`determine_group_target_utc` to match the **contract reference preview contract** (Rust implementation; TS is spec reference only).
 `execute_import` must use the **same per-file date sub-path** so the files on
 disk match what the preview step presented to the user.
 
@@ -63,12 +63,14 @@ The date is resolved with the same fallback chain already used by `determine_gro
    shared `import_date_util` internal module (or make `import_preview`'s
    functions `pub(crate)`).
 2. In `execute_import`, for each `src` file:
-    - Call `extract_metadata_request` (or read cached metadata from the config
-      payload's `selectedFiles` entries if the preview result is passed in).
-    - Compute date sub-path via `generate_date_path_utc`.
-    - Construct `target_dir = PathBuf::from(&target_path).join(&date_sub_path)`.
-    - Call `copy_one(src, &target_dir, strategy)` instead of using the flat
-      `target_pb`.
+
+- Call `extract_metadata_request` (or read cached metadata from the config
+  payload's `selectedFiles` entries if the preview result is passed in).
+- Compute date sub-path via `generate_date_path_utc`.
+- Construct `target_dir = PathBuf::from(&target_path).join(&date_sub_path)`.
+- Call `copy_one(src, &target_dir, strategy)` instead of using the flat
+  `target_pb`.
+
 3. Emit `targetPath` in the `imported_files` array elements as the full
    `{year}/{YYYYMMDD}/filename` path so the frontend can index them correctly.
 4. Unit test: create temp dir, call execute_import with a known EXIF date,
@@ -79,7 +81,7 @@ The date is resolved with the same fallback chain already used by `determine_gro
 ## Impact
 
 - Files imported via Tauri will be organized in the same date-hierarchy as
-  files imported via Electron, ensuring the photo library is consistent.
+  files imported via contract reference, ensuring the photo library is consistent.
 - `import_preview.rs` already generates and shows date paths to the user;
   this RFC closes the gap so the actual copy matches the preview.
 - No API or event shape change; only the on-disk layout changes.
@@ -88,7 +90,7 @@ The date is resolved with the same fallback chain already used by `determine_gro
 
 ## Verification (2026-06-06)
 
-Implemented in Rust (`commands/import_date_util.rs`, shared by `import_preview` / `import_execute`). Electron `import-worker.ts` used as **behavior spec only** per [ROADMAP.md](../../../ROADMAP.md).
+Implemented in Rust (`commands/import_date_util.rs`, shared by `import_preview` / `import_execute`). contract reference `import-worker.ts` used as **behavior spec only** per [ROADMAP.md](../../../ROADMAP.md).
 
 ## 2026-07-20 复核：路径已随 0131 crate 拆分变化，功能本身无问题
 

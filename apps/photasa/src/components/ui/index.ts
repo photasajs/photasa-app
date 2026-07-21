@@ -7,7 +7,7 @@
  * - 无样式依赖：组件只提供逻辑和行为，样式完全由TailwindCSS控制
  * - Vue原生：充分利用Vue 3特性，无第三方适配层
  * - Portal友好：天然支持Vue Teleport，无事件冲突
- * - 桌面优化：专为Electron等桌面应用设计，无移动端负担
+ * - 桌面优化：专为 Tauri 等桌面应用设计，无移动端负担
  * - 组件化：每个组件单一职责，可组合使用
  *
  * @see RFC文档: /docs/rfcs/headless-ui-components.md

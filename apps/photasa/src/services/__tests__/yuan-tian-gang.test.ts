@@ -53,7 +53,7 @@ Object.defineProperty(window, "tianshu", {
     writable: true,
 });
 
-Object.defineProperty(window, "electronAPI", {
+Object.defineProperty(window, "legacyPreloadAPI", {
     value: { tianshu: mockTianshu },
     writable: true,
 });
@@ -65,7 +65,7 @@ describe("YuanTianGangService", () => {
         vi.clearAllMocks();
         mockIsTauri.mockReturnValue(true);
         tauriEventMocks.listen.mockResolvedValue(vi.fn());
-        delete (window as unknown as { electron?: unknown }).electron;
+        delete (window as unknown as { legacyShell?: unknown }).legacyShell;
         yuanTianGangService = new YuanTianGangService();
     });
 
@@ -158,9 +158,9 @@ describe("YuanTianGangService", () => {
     });
 
     describe("事件监听管理", () => {
-        it("应该在初始化时建立天枢事件监听", () => {
-            expect(mockTianshu.onProgress).toHaveBeenCalled();
-            expect(mockTianshu.onStatus).toHaveBeenCalled();
+        it("Tauri 模式不依赖 window.tianshu 进度监听", () => {
+            expect(mockTianshu.onProgress).not.toHaveBeenCalled();
+            expect(mockTianshu.onStatus).not.toHaveBeenCalled();
         });
 
         it("Tauri 模式应该监听 notify:status", async () => {
@@ -174,18 +174,15 @@ describe("YuanTianGangService", () => {
             service.destroy();
         });
 
-        it("应该在destroy时清理事件监听", () => {
-            const progressCleanup = vi.fn();
-            const statusCleanup = vi.fn();
-
-            mockTianshu.onProgress.mockReturnValue(progressCleanup);
-            mockTianshu.onStatus.mockReturnValue(statusCleanup);
-
-            const newService = new YuanTianGangService();
-            newService.destroy();
-
-            expect(progressCleanup).toHaveBeenCalled();
-            expect(statusCleanup).toHaveBeenCalled();
+        it("destroy 应清理 Tauri 事件订阅", async () => {
+            const unlisten = vi.fn();
+            tauriEventMocks.listen.mockResolvedValue(unlisten);
+            const service = new YuanTianGangService();
+            await vi.waitFor(() => {
+                expect(tauriEventMocks.listen).toHaveBeenCalled();
+            });
+            service.destroy();
+            expect(unlisten).toHaveBeenCalled();
         });
     });
 

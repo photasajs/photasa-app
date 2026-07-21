@@ -49,14 +49,14 @@
 test ! -f apps/photasa/src-tauri/src/adapters/siming_adapter.rs
 ! grep -q SimingAdapter apps/photasa/src-tauri/src/services/tianshu.rs
 ! grep -q zouwu_core apps/photasa/src-tauri/src/commands/siming.rs
-cargo test -p photasa-folder-tree -p photasa   # 78 passed, 3 ignored
+cargo test -p photasa-folder-tree -p photasa # 78 passed, 3 ignored
 pnpm --filter @photasa/photasa exec vitest run \
-  src/services/yuantiangang/__tests__/siming-bridge.test.ts \
-  src/services/fangxuanling/store-automation/__tests__/store-sync-utils.test.ts
+ src/services/yuantiangang/__tests__/siming-bridge.test.ts \
+ src/services/fangxuanling/store-automation/__tests__/store-sync-utils.test.ts
 ```
 
 ## Non-goals
 
 - 不改变 `photasa.json` 磁盘格式
 - 不处理 `switch_current_folder`（仍走 zouwu workflow，留 0139）
-- Electron `apps/desktop` 的 `SimingAdapter.ts` 不在本 RFC 范围
+- The removed desktop tree 的 `SimingAdapter.ts` 不在本 RFC 范围

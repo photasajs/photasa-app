@@ -1,6 +1,6 @@
 # Photasa
 
-Desktop photo manager — **Tauri 2 + Vue 3 + Rust**. Electron (`apps/desktop`) and the zouwu workflow engine have been removed; backend logic lives in `apps/photasa/src-tauri` and `crates/`.
+Desktop photo manager — **Tauri 2 + Vue 3 + Rust**. Legacy Node desktop and zouwu workflow engine removed; backend in `apps/photasa/src-tauri` and `crates/`.
 
 ## Quick Start
 
@@ -37,15 +37,15 @@ pnpm run build:photasa
 
 ```
 picasa-vue/
-├── apps/photasa/           # Photasa app (Vue UI + Tauri shell)
-│   ├── src/                # Renderer: Vue, Zhenguan services, legacy-api compat
-│   └── src-tauri/          # Rust: commands, crates integration
-├── crates/                 # Rust workspace (scan, import, thumbnail, config, …)
-├── packages/               # Shared TS packages (@photasa/common, …)
-├── .spec/rfc/              # Photasa / Tauri RFCs (active + completed)
-├── docs/                   # Guides, design, legacy Electron RFCs
-├── ROADMAP.md              # Migration status & next priorities
-└── TASK_TRACKING.md        # Sprint checklists
+├── apps/photasa/ # Photasa app (Vue UI + Tauri shell)
+│ ├── src/ # Renderer: Vue, Zhenguan services, legacy-api compat
+│ └── src-tauri/ # Rust: commands, crates integration
+├── crates/ # Rust workspace (scan, import, thumbnail, config, …)
+├── packages/ # Shared TS packages (@photasa/common, …)
+├── .spec/rfc/ # Photasa / Tauri RFCs (active + completed)
+├── docs/ # Guides, design, legacy RFCs
+├── ROADMAP.md # Migration status & next priorities
+└── TASK_TRACKING.md # Sprint checklists
 ```
 
 ## Architecture (short)
@@ -68,10 +68,10 @@ Workflow: [`.github/workflows/photasa-build.yml`](./.github/workflows/photasa-bu
 
 ## Documentation
 
-- [Development Guide](docs/DEV_GUIDE.md) — setup (partially legacy Electron; prefer this README + `apps/photasa`)
+- [Development Guide](docs/DEV_GUIDE.md) — setup (partially legacy; prefer this README + `apps/photasa`)
 - [Debug Guide](docs/DEBUG.md) · [MCP Debug](docs/DEBUG_MCP.md)
 - [ROADMAP.md](./ROADMAP.md) — what’s done / next (e.g. `legacy-api` retirement)
-- RFCs: `.spec/rfc/` (Photasa) · `docs/rfc/` (historical / Electron)
+- RFCs: `.spec/rfc/` (Photasa) · `docs/rfc/` (historical)
 
 ## Technology Stack
 

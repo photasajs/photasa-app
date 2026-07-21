@@ -38,12 +38,12 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="your-password"
 
 ```json
 "plugins": {
-  "updater": {
-    "pubkey": "<CONTENT FROM .key.pub>",
-    "endpoints": [
-      "https://releases.example.com/photasa/{{target}}/{{arch}}/{{current_version}}"
-    ]
-  }
+ "updater": {
+ "pubkey": "<CONTENT FROM .key.pub>",
+ "endpoints": [
+ "https://releases.example.com/photasa/{{target}}/{{arch}}/{{current_version}}"
+ ]
+ }
 }
 ```
 
@@ -68,4 +68,4 @@ cargo test update_config:: -- --nocapture
 cargo test update_periodic:: -- --nocapture
 ```
 
-手动：在偏好设置中关闭自动更新 → 重启应用 → 日志应显示 `enabled=false`；定时轮询应跳过 scheduled check（启动 5 秒检查仍会执行，与 Electron 一致）。
+手动：在偏好设置中关闭自动更新 → 重启应用 → 日志应显示 `enabled=false`；定时轮询应跳过 scheduled check（启动 5 秒检查仍会执行，与 legacy-api 一致）。

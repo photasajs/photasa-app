@@ -3,13 +3,13 @@
 - **Start Date**: 2026-06-06
 - **Status**: Implemented
 - **Depends on**: RFC 0069（缩略图）、RFC 0073（UI/适配层）、RFC 0075（legacy-api）、[Tauri Asset Protocol 文档](https://v2.tauri.app/security/asset-protocol)
-- **Related**: RFC 0102（RAW 占位缩略图）、RFC 0098（Electron `registerFileProtocol` 对照）
+- **Related**: RFC 0102（RAW 占位缩略图）、RFC 0098（contract reference `registerFileProtocol` 对照）
 
 ## Implementation principle (Photasa / Tauri)
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron 的 `file://` + `protocol.registerFileProtocol("file", …)` **仅作行为对照**，不是 Tauri 的实现路径。
+- contract reference 的 `file://` + `protocol.registerFileProtocol("file", …)` **仅作行为对照**，不是 Tauri 的实现路径。
 - Tauri 下显示本地文件必须使用 **`convertFileSrc()` → asset 协议 URL**，并由 `tauri.conf.json` 的 `security.assetProtocol` 授权路径。
 - `fs:scope`（capabilities）管 **`@tauri-apps/plugin-fs` IPC 读写**，**不**管 `<img src>` 能否加载。
 
@@ -31,14 +31,14 @@ Photasa（Tauri）在图库列表/预览中无法显示缩略图，控制台报 
 | ---------------------------------------- | ------------------------------------ | ------------------------------- |
 | `capabilities/default.json` → `fs:scope` | `@tauri-apps/plugin-fs` 读写字库路径 | **否**                          |
 | CSP 增加 `file:`                         | 仍被 WebView 跨源策略拒绝            | **否**（引擎层限制）            |
-| Rust `file_url_from_path` 返回 `file://` | 与 Electron preload 形状一致         | **在 Tauri WebView 中无效**     |
+| Rust `file_url_from_path` 返回 `file://` | 与 legacy preload 形状一致           | **在 Tauri WebView 中无效**     |
 
-### Electron 为何能用 `file://`
+### contract reference 为何能用 `file://`
 
 主进程注册自定义 file 协议，WebView 请求 `file://` 时由主进程映射到磁盘路径：
 
 ```typescript
-// apps/desktop/src/main/index.ts
+// historical main/index.ts
 protocol.registerFileProtocol("file", (request, callback) => {
     const pathname = decodeURIComponent(request.url.replace("file:///", ""));
     callback(pathname);
@@ -63,13 +63,13 @@ preload 的 `fileUrlFromPath()` 产出 `file://` URL，与上述拦截配合。*
 ## Goals
 
 1. 图库列表、预览、`BaseImage` 预加载能在 Tauri WebView 中显示本地缩略图/原图。
-2. 保留 Electron 路径下 `file://` 行为（`toFileProtocol` 命名可保留，运行时分支）。
+2. 保留 旧路径下 `file://` 行为（`toFileProtocol` 命名可保留，运行时分支）。
 3. 统一 URL 编解码：`convertFileSrc` ↔ Rust invoke ↔ 缓存键。
 4. 文档化「为何不能靠 CSP 放行 `file://`」以免回归。
 
 ## Non-Goals
 
-- 在 Tauri 中复刻 Electron `registerFileProtocol("file")`（平台不支持）。
+- 在 Tauri 中复刻 contract reference `registerFileProtocol("file")`（平台不支持）。
 - 用 `@tauri-apps/plugin-fs` 读文件再转 `blob:` 作为默认路径（性能差，仅作极端回退）。
 - 修改 `.photasa.json` on-disk 格式。
 
@@ -79,20 +79,20 @@ preload 的 `fileUrlFromPath()` 产出 `file://` URL，与上述拦截配合。*
 
 ```
 .photoList 相对路径
-    → toAbsoluteMediaPath(folder, relative)
-    → convertFileSrc(absolute)          // media-url.ts
-    → asset://localhost/%2FVolumes%2F…
-    → WebView <img src="…">           // assetProtocol.scope 校验
-    → 显示 PNG/JPEG
+ → toAbsoluteMediaPath(folder, relative)
+ → convertFileSrc(absolute) // media-url.ts
+ → asset://localhost/%2FVolumes%2F…
+ → WebView <img src="…"> // assetProtocol.scope 校验
+ → 显示 PNG/JPEG
 ```
 
 Rust invoke（缩略图生成、元数据）走反向：
 
 ```
 asset:// 或 file:// 或绝对路径
-    → webviewMediaUrlToAbsolutePath()
-    → normalize_path (Rust)
-    → create_thumbnail / get_file_metadata
+ → webviewMediaUrlToAbsolutePath()
+ → normalize_path (Rust)
+ → create_thumbnail / get_file_metadata
 ```
 
 ### 三层配置
@@ -101,17 +101,17 @@ asset:// 或 file:// 或绝对路径
 
 ```json
 "security": {
-  "csp": {
-    "img-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:",
-    "media-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:"
-  },
-  "assetProtocol": {
-    "enable": true,
-    "scope": {
-      "requireLiteralLeadingDot": false,
-      "allow": ["$HOME/**", "/Volumes/**", "**"]
-    }
-  }
+ "csp": {
+ "img-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:",
+ "media-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:"
+ },
+ "assetProtocol": {
+ "enable": true,
+ "scope": {
+ "requireLiteralLeadingDot": false,
+ "allow": ["$HOME/**", "/Volumes/**", "**"]
+ }
+ }
 }
 ```
 
@@ -155,12 +155,12 @@ asset:// 或 file:// 或绝对路径
 | `apps/photasa/src-tauri/tauri.conf.json`           | `assetProtocol` + CSP                                               |
 | `apps/photasa/src-tauri/capabilities/default.json` | `fs:scope`（IPC 读写，与显示无关但图库仍需）                        |
 
-### Electron 对照（不变）
+### contract reference 对照（不变）
 
-| 环境     | WebView URL                                            |
-| -------- | ------------------------------------------------------ |
-| Electron | `file://…` + `registerFileProtocol`                    |
-| Tauri    | `asset://localhost/…` 或 `http(s)://asset.localhost/…` |
+| 环境               | WebView URL                                            |
+| ------------------ | ------------------------------------------------------ |
+| contract reference | `file://…` + `registerFileProtocol`                    |
+| Tauri              | `asset://localhost/…` 或 `http(s)://asset.localhost/…` |
 
 API 名称 **`toFileProtocol` / `fileUrlFromPath`** 保留语义「转为可在 WebView 加载的本地媒体 URL」，实现按运行时分支。
 
@@ -260,15 +260,18 @@ because it does not appear in the img-src directive of the Content Security Poli
 **修复**：
 
 1. **`tauri.conf.json` CSP** — `img-src` 和 `media-src` 加入 `asset://localhost`：
-    ```json
-    "img-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:"
-    ```
+
+```json
+"img-src": "'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:"
+```
+
 2. **`media-url.ts` 重构** — 增强 URL 解析，新增：
-    - `isAssetWebviewUrl()` — 识别 `asset://` 和 `http(s)://asset.localhost` 双格式
-    - `parseAssetWebviewUrl()` — 正确 decode `asset://localhost/{encodeURIComponent(path)}`
-    - `ensureWebviewMediaUrl()` — 兼容遗留 `file://`、asset URL、磁盘绝对路径
-    - `isTauriRuntime()` fallback 到 `__TAURI_INTERNALS__` 检测
-    - `absoluteThumbnailPathForSource()` 先调 `webviewMediaUrlToAbsolutePath()` 再算路径
+
+- `isAssetWebviewUrl()` — 识别 `asset://` 和 `http(s)://asset.localhost` 双格式
+- `parseAssetWebviewUrl()` — 正确 decode `asset://localhost/{encodeURIComponent(path)}`
+- `ensureWebviewMediaUrl()` — 兼容遗留 `file://`、asset URL、磁盘绝对路径
+- `isTauriRuntime()` fallback 到 `__TAURI_INTERNALS__` 检测
+- `absoluteThumbnailPathForSource()` 先调 `webviewMediaUrlToAbsolutePath()` 再算路径
 
 **评估过的替代方案**：
 

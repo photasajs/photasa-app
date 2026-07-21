@@ -1,6 +1,6 @@
 # Photasa 系统架构设计文档
 
-> **历史文档（Electron 时代）**：路径与进程模型以 `apps/desktop` 为准。当前实现为 **Tauri**（`apps/photasa` + `crates/photasa-*`）。请参阅 [ROADMAP.md](../../ROADMAP.md) 与 `docs/DEV_GUIDE.md`。
+> **历史文档（historical）**：路径与进程模型以 `legacy-api contract` 为准。当前实现为 **Tauri**（`apps/photasa` + `crates/photasa-*`）。请参阅 [ROADMAP.md](../../ROADMAP.md) 与 `docs/DEV_GUIDE.md`。
 
 > **版本**: 2.0.0
 > **创建日期**: 2025-01-23
@@ -40,63 +40,63 @@ Photasa 采用基于中国古代神话主题的三界分层架构，通过双通
 
 ```mermaid
 graph TB
-    subgraph World["🌍 世界 World - Electron应用"]
-        subgraph Main["🌌 天界 Celestial Realm - Main进程"]
-            subgraph Tianting["🏛️ 天庭 Tianting - 传统服务"]
-                ScanService[scan-service<br/>传统扫描服务]
-                ConfigService[config-service<br/>传统配置服务]
-            end
+ subgraph World["🌍 世界 World - 桌面应用"]
+ subgraph Main["🌌 天界 Celestial Realm - Main进程"]
+ subgraph Tianting["🏛️ 天庭 Tianting - 传统服务"]
+ ScanService[scan-service<br/>传统扫描服务]
+ ConfigService[config-service<br/>传统配置服务]
+ end
 
-            subgraph Deity["👑 神位 Deity - 新式服务"]
-                TianshuService[天枢服务<br/>TianshuService]
-                TaiyiService[太乙服务<br/>TaiyiService]
-            end
+ subgraph Deity["👑 神位 Deity - 新式服务"]
+ TianshuService[天枢服务<br/>TianshuService]
+ TaiyiService[太乙服务<br/>TaiyiService]
+ end
 
-            subgraph Engines["⚙️ 引擎库 Engines"]
-                Tianshu[天枢引擎<br/>工作流编排]
-                Taiyi[太乙引擎<br/>适配器注册中心]
-                Qianliyan[千里眼引擎<br/>扫描执行]
-                Shunfenger[顺风耳引擎<br/>文件监听]
-                Sibu[司簿引擎<br/>配置管理]
-                Siming[司命引擎<br/>appState持久化]
-                Wenchang[文昌引擎<br/>偏好管理]
-                Maliang[马良引擎<br/>图像处理]
-            end
-        end
+ subgraph Engines["⚙️ 引擎库 Engines"]
+ Tianshu[天枢引擎<br/>工作流编排]
+ Taiyi[太乙引擎<br/>适配器注册中心]
+ Qianliyan[千里眼引擎<br/>扫描执行]
+ Shunfenger[顺风耳引擎<br/>文件监听]
+ Sibu[司簿引擎<br/>配置管理]
+ Siming[司命引擎<br/>appState持久化]
+ Wenchang[文昌引擎<br/>偏好管理]
+ Maliang[马良引擎<br/>图像处理]
+ end
+ end
 
-        subgraph Renderer["🏛️ 人界 Human Realm - Renderer进程"]
-            subgraph Services["👥 人界服务"]
-                Lishimin[李世民<br/>中央协调者]
-                FangXuanLing[房玄龄<br/>Store管理]
-                ChuSuiLiang[褚遂良<br/>路径管理]
-                YuChiGong[尉迟恭<br/>扫描编排]
-                YuanTianGang[袁天罡<br/>IPC通信]
-                WeiZheng[魏征<br/>appState监察]
-                QinQiong[秦琼<br/>文件守护]
-                DuRuHui[杜如晦<br/>通道管理]
-            end
+ subgraph Renderer["🏛️ 人界 Human Realm - Renderer进程"]
+ subgraph Services["👥 人界服务"]
+ Lishimin[李世民<br/>中央协调者]
+ FangXuanLing[房玄龄<br/>Store管理]
+ ChuSuiLiang[褚遂良<br/>路径管理]
+ YuChiGong[尉迟恭<br/>扫描编排]
+ YuanTianGang[袁天罡<br/>IPC通信]
+ WeiZheng[魏征<br/>appState监察]
+ QinQiong[秦琼<br/>文件守护]
+ DuRuHui[杜如晦<br/>通道管理]
+ end
 
-            subgraph Stores["📚 Store层"]
-                PreferenceStore[PreferenceStore<br/>用户偏好]
-                ScanningStore[ScanningStore<br/>扫描队列]
-                AppStateStore[AppStateStore<br/>应用状态]
-                PhotosStore[PhotosStore<br/>照片数据]
-            end
+ subgraph Stores["📚 Store层"]
+ PreferenceStore[PreferenceStore<br/>用户偏好]
+ ScanningStore[ScanningStore<br/>扫描队列]
+ AppStateStore[AppStateStore<br/>应用状态]
+ PhotosStore[PhotosStore<br/>照片数据]
+ end
 
-            subgraph UI["🖼️ UI层"]
-                App[App.vue<br/>主应用]
-                Components[组件层]
-            end
-        end
-    end
+ subgraph UI["🖼️ UI层"]
+ App[App.vue<br/>主应用]
+ Components[组件层]
+ end
+ end
+ end
 
-    UI --> Services
-    Services --> Stores
-    Services -->|IPC| Main
-    TianshuService --> Tianshu
-    Tianshu --> Taiyi
-    Taiyi --> Engines
-    Engines -->|事件| Main
+ UI --> Services
+ Services --> Stores
+ Services -->|IPC| Main
+ TianshuService --> Tianshu
+ Tianshu --> Taiyi
+ Taiyi --> Engines
+ Engines -->|事件| Main
 ```
 
 ---
@@ -107,31 +107,31 @@ graph TB
 
 ```mermaid
 graph LR
-    subgraph World["🌍 世界 World"]
-        subgraph Main["🌌 天界 Main进程"]
-            A1[天枢<br/>工作流编排]
-            A2[太乙<br/>适配器注册]
-            A3[千里眼<br/>扫描执行]
-            A4[司簿<br/>配置管理]
-            A5[司命<br/>状态持久化]
-            A6[文昌<br/>偏好管理]
-        end
+ subgraph World["🌍 世界 World"]
+ subgraph Main["🌌 天界 Main进程"]
+ A1[天枢<br/>工作流编排]
+ A2[太乙<br/>适配器注册]
+ A3[千里眼<br/>扫描执行]
+ A4[司簿<br/>配置管理]
+ A5[司命<br/>状态持久化]
+ A6[文昌<br/>偏好管理]
+ end
 
-        subgraph Renderer["🏛️ 人界 Renderer进程"]
-            R1[李世民<br/>中央协调]
-            R2[房玄龄<br/>Store管理]
-            R3[尉迟恭<br/>扫描编排]
-            R4[袁天罡<br/>IPC通信]
-        end
-    end
+ subgraph Renderer["🏛️ 人界 Renderer进程"]
+ R1[李世民<br/>中央协调]
+ R2[房玄龄<br/>Store管理]
+ R3[尉迟恭<br/>扫描编排]
+ R4[袁天罡<br/>IPC通信]
+ end
+ end
 
-    R1 -->|启奏/圣旨| R3
-    R3 -->|奏折| R2
-    R2 -->|诏令| R4
-    R4 -->|符箓| A1
-    A1 -->|工作流| A2
-    A2 -->|调度| A3
-    A3 -->|事件| R4
+ R1 -->|启奏/圣旨| R3
+ R3 -->|奏折| R2
+ R2 -->|诏令| R4
+ R4 -->|符箓| A1
+ A1 -->|工作流| A2
+ A2 -->|调度| A3
+ A3 -->|事件| R4
 ```
 
 ### 三界详细说明
@@ -150,29 +150,29 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph Main["🌌 天界 Main进程"]
-        TianshuService[天枢服务<br/>TianshuService]
+ subgraph Main["🌌 天界 Main进程"]
+ TianshuService[天枢服务<br/>TianshuService]
 
-        subgraph Engines["⚙️ 引擎层"]
-            Tianshu[天枢引擎<br/>TianshuEngine]
-            Taiyi[太乙引擎<br/>TaiyiEngine]
+ subgraph Engines["⚙️ 引擎层"]
+ Tianshu[天枢引擎<br/>TianshuEngine]
+ Taiyi[太乙引擎<br/>TaiyiEngine]
 
-            subgraph Specialized["专业引擎"]
-                Qianliyan[千里眼<br/>扫描引擎]
-                Shunfenger[顺风耳<br/>监听引擎]
-                Sibu[司簿<br/>配置引擎]
-                Siming[司命<br/>状态引擎]
-                Wenchang[文昌<br/>偏好引擎]
-                Maliang[马良<br/>图像引擎]
-            end
-        end
-    end
+ subgraph Specialized["专业引擎"]
+ Qianliyan[千里眼<br/>扫描引擎]
+ Shunfenger[顺风耳<br/>监听引擎]
+ Sibu[司簿<br/>配置引擎]
+ Siming[司命<br/>状态引擎]
+ Wenchang[文昌<br/>偏好引擎]
+ Maliang[马良<br/>图像引擎]
+ end
+ end
+ end
 
-    TianshuService --> Tianshu
-    Tianshu --> Taiyi
-    Taiyi -->|callEngine| Specialized
-    Specialized -->|事件| Taiyi
-    Taiyi -->|反馈| Tianshu
+ TianshuService --> Tianshu
+ Tianshu --> Taiyi
+ Taiyi -->|callEngine| Specialized
+ Specialized -->|事件| Taiyi
+ Taiyi -->|反馈| Tianshu
 ```
 
 ### 1. 天枢引擎 (Tianshu Engine)
@@ -199,22 +199,22 @@ executeWorkflow(workflow: WorkflowDefinition): Promise<void>
 
 ```mermaid
 sequenceDiagram
-    participant UI as UI层
-    participant YTG as 袁天罡
-    participant TS as 天枢引擎
-    participant TY as 太乙引擎
-    participant QLY as 千里眼引擎
+ participant UI as UI层
+ participant YTG as 袁天罡
+ participant TS as 天枢引擎
+ participant TY as 太乙引擎
+ participant QLY as 千里眼引擎
 
-    UI->>YTG: 发送诏令
-    YTG->>TS: 转换符箓为UICommand
-    TS->>TS: 选择工作流 (selectWorkflow)
-    TS->>TS: 加载YAML工作流
-    TS->>TY: 调用引擎 (callEngine)
-    TY->>QLY: 执行方法 (planScan)
-    QLY-->>TY: 返回结果
-    TY-->>TS: 返回结果
-    TS-->>YTG: 工作流完成
-    YTG-->>UI: 返回结果
+ UI->>YTG: 发送诏令
+ YTG->>TS: 转换符箓为UICommand
+ TS->>TS: 选择工作流 (selectWorkflow)
+ TS->>TS: 加载YAML工作流
+ TS->>TY: 调用引擎 (callEngine)
+ TY->>QLY: 执行方法 (planScan)
+ QLY-->>TY: 返回结果
+ TY-->>TS: 返回结果
+ TS-->>YTG: 工作流完成
+ YTG-->>UI: 返回结果
 ```
 
 **位置**: `src/engines/tianshu/`
@@ -238,16 +238,16 @@ sequenceDiagram
 
 ```mermaid
 graph LR
-    A[引擎实现] -->|@Adapter装饰器| B[AdapterRegistry]
-    B -->|注册| C[适配器实例]
-    C -->|initialize| D[引擎初始化]
-    D -->|ready| E[可调用]
+ A[引擎实现] -->|@Adapter装饰器| B[AdapterRegistry]
+ B -->|注册| C[适配器实例]
+ C -->|initialize| D[引擎初始化]
+ D -->|ready| E[可调用]
 
-    F[天枢调用] -->|callEngine| G[太乙引擎]
-    G -->|查找适配器| C
-    C -->|调用方法| A
-    A -->|返回结果| G
-    G -->|返回| F
+ F[天枢调用] -->|callEngine| G[太乙引擎]
+ G -->|查找适配器| C
+ C -->|调用方法| A
+ A -->|返回结果| G
+ G -->|返回| F
 ```
 
 **核心能力**:
@@ -258,9 +258,9 @@ callEngine<T>(engineName: string, methodName: string, ...args: any[]): Promise<E
 
 // 适配器注册
 @Adapter({
-    name: "qianliyan",
-    priority: AdapterPriority.High,
-    engineType: "scan"
+ name: "qianliyan",
+ priority: AdapterPriority.High,
+ engineType: "scan"
 })
 class QianliyanAdapter implements IAdapter { ... }
 ```
@@ -285,28 +285,28 @@ class QianliyanAdapter implements IAdapter { ... }
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending: 创建任务
-    pending --> processing: 开始执行
-    processing --> [*]: 成功完成（删除）
-    processing --> failed: 执行失败
-    failed --> pending: 重试（retryCount < maxRetries）
-    failed --> [*]: 达到重试上限（删除）
+ [*] --> pending: 创建任务
+ pending --> processing: 开始执行
+ processing --> [*]: 成功完成（删除）
+ processing --> failed: 执行失败
+ failed --> pending: 重试（retryCount < maxRetries）
+ failed --> [*]: 达到重试上限（删除）
 
-    note right of pending
-        等待执行
-        持久化到scanning.json
-    end note
+ note right of pending
+ 等待执行
+ 持久化到scanning.json
+ end note
 
-    note right of processing
-        正在执行
-        更新进度
-    end note
+ note right of processing
+ 正在执行
+ 更新进度
+ end note
 
-    note right of failed
-        执行失败
-        记录错误信息
-        支持重试
-    end note
+ note right of failed
+ 执行失败
+ 记录错误信息
+ 支持重试
+ end note
 ```
 
 **核心能力**:
@@ -352,18 +352,18 @@ reportResult(result: ScanResult): void
 
 ```mermaid
 sequenceDiagram
-    participant FS as 文件系统
-    participant SF as 顺风耳引擎
-    participant TS as 天枢引擎
-    participant QLY as 千里眼引擎
+ participant FS as 文件系统
+ participant SF as 顺风耳引擎
+ participant TS as 天枢引擎
+ participant QLY as 千里眼引擎
 
-    FS->>SF: 文件变化事件
-    SF->>SF: 事件归一化
-    SF->>SF: 事件缓冲/去重
-    SF->>TS: 发送FileObservation
-    TS->>TS: 工作流编排
-    TS->>QLY: 调度扫描任务
-    QLY->>QLY: 执行扫描
+ FS->>SF: 文件变化事件
+ SF->>SF: 事件归一化
+ SF->>SF: 事件缓冲/去重
+ SF->>TS: 发送FileObservation
+ TS->>TS: 工作流编排
+ TS->>QLY: 调度扫描任务
+ QLY->>QLY: 执行扫描
 ```
 
 **位置**: `src/engines/shunfenger/`
@@ -464,16 +464,16 @@ getRevision(): number
 
 ```mermaid
 graph TB
-    ML[马良引擎] --> BR[Brush注册中心]
-    BR --> SB[SharpBrush<br/>JPEG/PNG/WebP]
-    BR --> HB[HeicBrush<br/>HEIC/HEIF]
-    BR --> FB[FFmpegBrush<br/>视频格式]
-    BR --> FB2[FallbackBrush<br/>通用处理]
+ ML[马良引擎] --> BR[Brush注册中心]
+ BR --> SB[SharpBrush<br/>JPEG/PNG/WebP]
+ BR --> HB[HeicBrush<br/>HEIC/HEIF]
+ BR --> FB[FFmpegBrush<br/>视频格式]
+ BR --> FB2[FallbackBrush<br/>通用处理]
 
-    ML -->|selectBrush| BR
-    BR -->|paint| SB
-    BR -->|paint| HB
-    BR -->|paint| FB
+ ML -->|selectBrush| BR
+ BR -->|paint| SB
+ BR -->|paint| HB
+ BR -->|paint| FB
 ```
 
 **位置**: `src/engines/maliang/`
@@ -487,30 +487,30 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph Renderer["🏛️ 人界 Renderer进程"]
-        LSM[李世民<br/>中央协调者]
+ subgraph Renderer["🏛️ 人界 Renderer进程"]
+ LSM[李世民<br/>中央协调者]
 
-        subgraph Services["👥 人界服务"]
-            FXL[房玄龄<br/>Store管理]
-            CSL[褚遂良<br/>路径管理]
-            YCG[尉迟恭<br/>扫描编排]
-            YTG[袁天罡<br/>IPC通信]
-            WZ[魏征<br/>appState监察]
-            QQ[秦琼<br/>文件守护]
-            DRH[杜如晦<br/>通道管理]
-        end
+ subgraph Services["👥 人界服务"]
+ FXL[房玄龄<br/>Store管理]
+ CSL[褚遂良<br/>路径管理]
+ YCG[尉迟恭<br/>扫描编排]
+ YTG[袁天罡<br/>IPC通信]
+ WZ[魏征<br/>appState监察]
+ QQ[秦琼<br/>文件守护]
+ DRH[杜如晦<br/>通道管理]
+ end
 
-        subgraph Stores["📚 Store层"]
-            PS[PreferenceStore]
-            SS[ScanningStore]
-            AS[AppStateStore]
-            PHS[PhotosStore]
-        end
-    end
+ subgraph Stores["📚 Store层"]
+ PS[PreferenceStore]
+ SS[ScanningStore]
+ AS[AppStateStore]
+ PHS[PhotosStore]
+ end
+ end
 
-    LSM -->|路由决策| Services
-    Services -->|管理| Stores
-    YTG -->|IPC| Main[天界]
+ LSM -->|路由决策| Services
+ Services -->|管理| Stores
+ YTG -->|IPC| Main[天界]
 ```
 
 ### 1. 李世民 (LiShimin) - 中央协调者
@@ -528,18 +528,18 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph System["启奏-圣旨系统"]
-        QZ[启奏 Qizou<br/>mitt事件总线]
-        LSM[李世民<br/>中央路由器]
-        DRH[杜如晦<br/>MessageChannel管理]
-        SZ[圣旨 Shengzhi<br/>MessageChannel]
+ subgraph System["启奏-圣旨系统"]
+ QZ[启奏 Qizou<br/>mitt事件总线]
+ LSM[李世民<br/>中央路由器]
+ DRH[杜如晦<br/>MessageChannel管理]
+ SZ[圣旨 Shengzhi<br/>MessageChannel]
 
-        QZ -->|监听| LSM
-        LSM -->|查询路由| ER[event-routing.yml]
-        LSM -->|委托下旨| DRH
-        DRH -->|创建通道| SZ
-        SZ -->|传递| Service[各服务]
-    end
+ QZ -->|监听| LSM
+ LSM -->|查询路由| ER[event-routing.yml]
+ LSM -->|委托下旨| DRH
+ DRH -->|创建通道| SZ
+ SZ -->|传递| Service[各服务]
+ end
 ```
 
 **核心能力**:
@@ -578,22 +578,22 @@ issueShengzhi(serviceName: string, shengzhi: Shengzhi): void
 
 ```mermaid
 graph TB
-    Service[人界服务] -->|发送奏折| FXL[房玄龄]
-    FXL -->|处理奏折| Process[processZouzhe]
-    Process -->|构造诏令| YTG[袁天罡]
-    YTG -->|执行诏令| TS[天枢工作流]
-    TS -->|返回结果| FXL
-    FXL -->|自动同步| Store[Store层]
+ Service[人界服务] -->|发送奏折| FXL[房玄龄]
+ FXL -->|处理奏折| Process[processZouzhe]
+ Process -->|构造诏令| YTG[袁天罡]
+ YTG -->|执行诏令| TS[天枢工作流]
+ TS -->|返回结果| FXL
+ FXL -->|自动同步| Store[Store层]
 
-    subgraph Stores["Store层"]
-        PS[PreferenceStore]
-        SS[ScanningStore]
-        AS[AppStateStore]
-    end
+ subgraph Stores["Store层"]
+ PS[PreferenceStore]
+ SS[ScanningStore]
+ AS[AppStateStore]
+ end
 
-    FXL -->|matter-sync.yml| PS
-    FXL -->|matter-sync.yml| SS
-    FXL -->|matter-sync.yml| AS
+ FXL -->|matter-sync.yml| PS
+ FXL -->|matter-sync.yml| SS
+ FXL -->|matter-sync.yml| AS
 ```
 
 **核心能力**:
@@ -659,23 +659,23 @@ emitQizou(matter: string, content: unknown): void
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending: 创建任务到Store
-    pending --> processing: p-queue执行
-    processing --> [*]: 成功完成（立即删除）
-    processing --> failed: 执行失败
-    failed --> pending: 重试（retryCount < maxRetries）
-    failed --> [*]: 达到重试上限（删除）
+ [*] --> pending: 创建任务到Store
+ pending --> processing: p-queue执行
+ processing --> [*]: 成功完成（立即删除）
+ processing --> failed: 执行失败
+ failed --> pending: 重试（retryCount < maxRetries）
+ failed --> [*]: 达到重试上限（删除）
 
-    note right of pending
-        Store SSOT
-        持久化到Store
-    end note
+ note right of pending
+ Store SSOT
+ 持久化到Store
+ end note
 
-    note right of processing
-        执行扫描
-        window.api.scanPhotos()
-        发现子文件夹
-    end note
+ note right of processing
+ 执行扫描
+ window.api.scanPhotos()
+ 发现子文件夹
+ end note
 ```
 
 **核心能力**:
@@ -687,16 +687,16 @@ handleRemoveScanTask(shengzhi: Shengzhi): Promise<void>
 
 // 执行扫描
 private async executeScan(
-    path: string,
-    action: "scan" | "rescan" | "current",
-    operationType: "directory" | "file"
+ path: string,
+ action: "scan" | "rescan" | "current",
+ operationType: "directory" | "file"
 ): Promise<void>
 
 // 状态管理
 private async updateTaskStatus(
-    path: string,
-    status: "pending" | "processing" | "failed",
-    updates: Partial<ScanQueueItem>
+ path: string,
+ status: "pending" | "processing" | "failed",
+ updates: Partial<ScanQueueItem>
 ): Promise<void>
 ```
 
@@ -720,23 +720,23 @@ private async updateTaskStatus(
 
 ```mermaid
 sequenceDiagram
-    participant Main as 天界Main进程
-    participant IPC as IPC通道
-    participant YTG as 袁天罡
-    participant TS as 天枢引擎
+ participant Main as 天界Main进程
+ participant IPC as IPC通道
+ participant YTG as 袁天罡
+ participant TS as 天枢引擎
 
-    Main->>IPC: 发送事件 (picasa:find-photo)
-    IPC->>YTG: 监听事件
-    YTG->>YTG: 构造启奏 (Qizou)
-    YTG->>LSM: 发送启奏 (mitt.emit)
+ Main->>IPC: 发送事件 (picasa:find-photo)
+ IPC->>YTG: 监听事件
+ YTG->>YTG: 构造启奏 (Qizou)
+ YTG->>LSM: 发送启奏 (mitt.emit)
 
-    Service->>YTG: 发送奏折 (Zouzhe)
-    YTG->>YTG: 构造诏令 (Zhaoling)
-    YTG->>YTG: 转换为符箓 (Fulu)
-    YTG->>YTG: 转换为UICommand
-    YTG->>TS: window.tianshu.processCommand()
-    TS-->>YTG: 返回结果
-    YTG-->>Service: 返回结果
+ Service->>YTG: 发送奏折 (Zouzhe)
+ YTG->>YTG: 构造诏令 (Zhaoling)
+ YTG->>YTG: 转换为符箓 (Fulu)
+ YTG->>YTG: 转换为UICommand
+ YTG->>TS: window.tianshu.processCommand()
+ TS-->>YTG: 返回结果
+ YTG-->>Service: 返回结果
 ```
 
 **核心能力**:
@@ -772,16 +772,16 @@ convertFuluToUICommand(fulu: Fulu): UICommand
 
 ```mermaid
 graph TB
-    Flow1[Flow 1: 扫描完成事件] --> WZ[魏征]
-    Flow2[Flow 2: File Watcher事件] --> WZ
-    Flow3[Flow 3: 扫描任务添加] --> WZ
+ Flow1[Flow 1: 扫描完成事件] --> WZ[魏征]
+ Flow2[Flow 2: File Watcher事件] --> WZ
+ Flow3[Flow 3: 扫描任务添加] --> WZ
 
-    WZ -->|发送奏折| FXL[房玄龄]
-    FXL -->|构造诏令| YTG[袁天罡]
-    YTG -->|执行工作流| TS[天枢]
-    TS -->|持久化| SM[司命引擎]
-    SM -->|返回结果| FXL
-    FXL -->|自动同步| AS[AppStateStore]
+ WZ -->|发送奏折| FXL[房玄龄]
+ FXL -->|构造诏令| YTG[袁天罡]
+ YTG -->|执行工作流| TS[天枢]
+ TS -->|持久化| SM[司命引擎]
+ SM -->|返回结果| FXL
+ FXL -->|自动同步| AS[AppStateStore]
 ```
 
 **核心能力**:
@@ -832,13 +832,13 @@ private findRootPathForPath(folderPath: string): string | null
 
 ```mermaid
 graph LR
-    DRH[杜如晦] -->|创建| MC[MessageChannel]
-    MC -->|port1| LSM[李世民持有]
-    MC -->|port2| Service[服务持有]
+ DRH[杜如晦] -->|创建| MC[MessageChannel]
+ MC -->|port1| LSM[李世民持有]
+ MC -->|port2| Service[服务持有]
 
-    LSM -->|postMessage| MC
-    MC -->|onmessage| Service
-    Service -->|处理圣旨| Process[processShengzhi]
+ LSM -->|postMessage| MC
+ MC -->|onmessage| Service
+ Service -->|处理圣旨| Process[processShengzhi]
 ```
 
 **核心能力**:
@@ -873,23 +873,23 @@ Photasa 采用双通信系统实现天界和人界的协调工作：
 
 ```mermaid
 sequenceDiagram
-    participant Service as 人界服务
-    participant QZ as 启奏 Qizou
-    participant LSM as 李世民
-    participant ER as event-routing.yml
-    participant DRH as 杜如晦
-    participant MC as MessageChannel
-    participant Target as 目标服务
+ participant Service as 人界服务
+ participant QZ as 启奏 Qizou
+ participant LSM as 李世民
+ participant ER as event-routing.yml
+ participant DRH as 杜如晦
+ participant MC as MessageChannel
+ participant Target as 目标服务
 
-    Service->>QZ: 发送启奏 (mitt.emit)
-    QZ->>LSM: 监听启奏事件
-    LSM->>ER: 查询路由规则
-    ER-->>LSM: 返回路由配置
-    LSM->>DRH: 委托下旨
-    DRH->>MC: 查找服务通道
-    MC->>Target: postMessage(圣旨)
-    Target->>Target: processShengzhi()
-    Target->>QZ: 发送启奏汇报结果
+ Service->>QZ: 发送启奏 (mitt.emit)
+ QZ->>LSM: 监听启奏事件
+ LSM->>ER: 查询路由规则
+ ER-->>LSM: 返回路由配置
+ LSM->>DRH: 委托下旨
+ DRH->>MC: 查找服务通道
+ MC->>Target: postMessage(圣旨)
+ Target->>Target: processShengzhi()
+ Target->>QZ: 发送启奏汇报结果
 ```
 
 **关键组件**:
@@ -903,15 +903,15 @@ sequenceDiagram
 
 ```yaml
 scan_completed:
-    - when:
-          from: "袁天罡"
-          matter: "scan_completed"
-      then:
-          service: "魏征"
-          shengzhi:
-              command: "update_folder_tree"
-              content:
-                  paths: "{{qizou.content.paths}}"
+ - when:
+ from: "袁天罡"
+ matter: "scan_completed"
+ then:
+ service: "魏征"
+ shengzhi:
+ command: "update_folder_tree"
+ content:
+ paths: "{{qizou.content.paths}}"
 ```
 
 ---
@@ -924,29 +924,29 @@ scan_completed:
 
 ```mermaid
 sequenceDiagram
-    participant Service as 人界服务
-    participant FXL as 房玄龄
-    participant ZZ as 奏折 Zouzhe
-    participant ZL as 诏令 Zhaoling
-    participant YTG as 袁天罡
-    participant FL as 符箓 Fulu
-    participant TS as 天枢引擎
-    participant Engine as 天界引擎
+ participant Service as 人界服务
+ participant FXL as 房玄龄
+ participant ZZ as 奏折 Zouzhe
+ participant ZL as 诏令 Zhaoling
+ participant YTG as 袁天罡
+ participant FL as 符箓 Fulu
+ participant TS as 天枢引擎
+ participant Engine as 天界引擎
 
-    Service->>FXL: 发送奏折 (processZouzhe)
-    FXL->>FXL: 处理奏折
-    FXL->>ZL: 构造诏令
-    FXL->>YTG: 发送诏令 (executeZhaoling)
-    YTG->>FL: 转换为符箓
-    YTG->>TS: 转换为UICommand
-    YTG->>TS: window.tianshu.processCommand()
-    TS->>TS: 选择工作流
-    TS->>Engine: 通过太乙调度引擎
-    Engine-->>TS: 返回结果
-    TS-->>YTG: 返回结果
-    YTG-->>FXL: 返回结果
-    FXL->>FXL: 自动同步Store
-    FXL-->>Service: 返回结果
+ Service->>FXL: 发送奏折 (processZouzhe)
+ FXL->>FXL: 处理奏折
+ FXL->>ZL: 构造诏令
+ FXL->>YTG: 发送诏令 (executeZhaoling)
+ YTG->>FL: 转换为符箓
+ YTG->>TS: 转换为UICommand
+ YTG->>TS: window.tianshu.processCommand()
+ TS->>TS: 选择工作流
+ TS->>Engine: 通过太乙调度引擎
+ Engine-->>TS: 返回结果
+ TS-->>YTG: 返回结果
+ YTG-->>FXL: 返回结果
+ FXL->>FXL: 自动同步Store
+ FXL-->>Service: 返回结果
 ```
 
 **关键组件**:
@@ -974,58 +974,58 @@ add_scan_action:
 
 ```mermaid
 graph TB
-    subgraph User["👤 用户操作"]
-        U1[添加扫描路径]
-        U2[删除扫描路径]
-        U3[修改偏好设置]
-    end
+ subgraph User["👤 用户操作"]
+ U1[添加扫描路径]
+ U2[删除扫描路径]
+ U3[修改偏好设置]
+ end
 
-    subgraph Renderer["🏛️ 人界 Renderer进程"]
-        subgraph Services["服务层"]
-            CSL[褚遂良]
-            YCG[尉迟恭]
-            WZ[魏征]
-        end
+ subgraph Renderer["🏛️ 人界 Renderer进程"]
+ subgraph Services["服务层"]
+ CSL[褚遂良]
+ YCG[尉迟恭]
+ WZ[魏征]
+ end
 
-        FXL[房玄龄]
-        YTG[袁天罡]
-        LSM[李世民]
+ FXL[房玄龄]
+ YTG[袁天罡]
+ LSM[李世民]
 
-        subgraph Stores["Store层"]
-            PS[PreferenceStore]
-            SS[ScanningStore]
-            AS[AppStateStore]
-        end
-    end
+ subgraph Stores["Store层"]
+ PS[PreferenceStore]
+ SS[ScanningStore]
+ AS[AppStateStore]
+ end
+ end
 
-    subgraph Main["🌌 天界 Main进程"]
-        TS[天枢引擎]
-        TY[太乙引擎]
-        QLY[千里眼引擎]
-        SM[司命引擎]
-        WC[文昌引擎]
-    end
+ subgraph Main["🌌 天界 Main进程"]
+ TS[天枢引擎]
+ TY[太乙引擎]
+ QLY[千里眼引擎]
+ SM[司命引擎]
+ WC[文昌引擎]
+ end
 
-    U1 --> CSL
-    CSL -->|启奏| LSM
-    LSM -->|圣旨| YCG
-    YCG -->|奏折| FXL
-    FXL -->|诏令| YTG
-    YTG -->|符箓| TS
-    TS --> TY
-    TY --> QLY
-    QLY -->|事件| YTG
-    YTG -->|同步| FXL
-    FXL --> SS
+ U1 --> CSL
+ CSL -->|启奏| LSM
+ LSM -->|圣旨| YCG
+ YCG -->|奏折| FXL
+ FXL -->|诏令| YTG
+ YTG -->|符箓| TS
+ TS --> TY
+ TY --> QLY
+ QLY -->|事件| YTG
+ YTG -->|同步| FXL
+ FXL --> SS
 
-    U3 --> FXL
-    FXL --> YTG
-    YTG --> TS
-    TS --> TY
-    TY --> WC
-    WC -->|事件| YTG
-    YTG --> FXL
-    FXL --> PS
+ U3 --> FXL
+ FXL --> YTG
+ YTG --> TS
+ TS --> TY
+ TY --> WC
+ WC -->|事件| YTG
+ YTG --> FXL
+ FXL --> PS
 ```
 
 ### 关键数据流场景
@@ -1034,88 +1034,88 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant UI as UI组件
-    participant LSM as 李世民
-    participant YCG as 尉迟恭
-    participant FXL as 房玄龄
-    participant YTG as 袁天罡
-    participant TS as 天枢引擎
-    participant QLY as 千里眼引擎
-    participant SS as ScanningStore
+ participant UI as UI组件
+ participant LSM as 李世民
+ participant YCG as 尉迟恭
+ participant FXL as 房玄龄
+ participant YTG as 袁天罡
+ participant TS as 天枢引擎
+ participant QLY as 千里眼引擎
+ participant SS as ScanningStore
 
-    UI->>LSM: 用户添加扫描路径
-    LSM->>LSM: 查询event-routing.yml
-    LSM->>YCG: 下发圣旨 (add_scan_task)
-    YCG->>YCG: 创建ScanAction
-    YCG->>FXL: 发送奏折 (ADD_SCAN_ACTION)
-    FXL->>YTG: 发送诏令 (add_scan_action)
-    YTG->>TS: 执行工作流 (add_scan_action.zouwu)
-    TS->>QLY: 恢复队列
-    TS->>QLY: 追加任务
-    TS->>QLY: 持久化队列
-    QLY-->>TS: 返回队列快照
-    TS-->>YTG: 返回结果
-    YTG-->>FXL: 返回结果
-    FXL->>FXL: 自动同步Store (matter-sync.yml)
-    FXL->>SS: 更新队列
-    SS-->>UI: Vue响应式更新
+ UI->>LSM: 用户添加扫描路径
+ LSM->>LSM: 查询event-routing.yml
+ LSM->>YCG: 下发圣旨 (add_scan_task)
+ YCG->>YCG: 创建ScanAction
+ YCG->>FXL: 发送奏折 (ADD_SCAN_ACTION)
+ FXL->>YTG: 发送诏令 (add_scan_action)
+ YTG->>TS: 执行工作流 (add_scan_action.zouwu)
+ TS->>QLY: 恢复队列
+ TS->>QLY: 追加任务
+ TS->>QLY: 持久化队列
+ QLY-->>TS: 返回队列快照
+ TS-->>YTG: 返回结果
+ YTG-->>FXL: 返回结果
+ FXL->>FXL: 自动同步Store (matter-sync.yml)
+ FXL->>SS: 更新队列
+ SS-->>UI: Vue响应式更新
 ```
 
 #### 场景2: 扫描执行流程
 
 ```mermaid
 sequenceDiagram
-    participant YCG as 尉迟恭
-    participant SS as ScanningStore
-    participant PQ as p-queue
-    participant Main as Main进程
-    participant QLY as 千里眼引擎
-    participant YTG as 袁天罡
-    participant LSM as 李世民
-    participant WZ as 魏征
+ participant YCG as 尉迟恭
+ participant SS as ScanningStore
+ participant PQ as p-queue
+ participant Main as Main进程
+ participant QLY as 千里眼引擎
+ participant YTG as 袁天罡
+ participant LSM as 李世民
+ participant WZ as 魏征
 
-    YCG->>SS: 创建pending任务
-    YCG->>PQ: 添加到执行队列
-    PQ->>YCG: 执行executeScan()
-    YCG->>SS: 更新为processing
-    YCG->>Main: window.api.scanPhotos()
-    Main->>QLY: 执行扫描
-    QLY->>QLY: 发现子文件夹
-    QLY-->>Main: 返回结果
-    Main-->>YCG: IPC事件 (picasa:find-photo)
-    YTG->>YTG: 监听IPC事件
-    YTG->>LSM: 发送启奏 (scan_completed)
-    LSM->>WZ: 下发圣旨 (update_folder_tree)
-    WZ->>FXL: 发送奏折 (UPDATE_FOLDER_TREE)
-    YCG->>SS: 删除任务（成功完成）
-    YCG->>LSM: 发送启奏 (scan_completed)
+ YCG->>SS: 创建pending任务
+ YCG->>PQ: 添加到执行队列
+ PQ->>YCG: 执行executeScan()
+ YCG->>SS: 更新为processing
+ YCG->>Main: window.api.scanPhotos()
+ Main->>QLY: 执行扫描
+ QLY->>QLY: 发现子文件夹
+ QLY-->>Main: 返回结果
+ Main-->>YCG: IPC事件 (picasa:find-photo)
+ YTG->>YTG: 监听IPC事件
+ YTG->>LSM: 发送启奏 (scan_completed)
+ LSM->>WZ: 下发圣旨 (update_folder_tree)
+ WZ->>FXL: 发送奏折 (UPDATE_FOLDER_TREE)
+ YCG->>SS: 删除任务（成功完成）
+ YCG->>LSM: 发送启奏 (scan_completed)
 ```
 
 #### 场景3: 偏好设置更新
 
 ```mermaid
 sequenceDiagram
-    participant UI as UI组件
-    participant FXL as 房玄龄
-    participant YTG as 袁天罡
-    participant TS as 天枢引擎
-    participant TY as 太乙引擎
-    participant WC as 文昌引擎
-    participant PS as PreferenceStore
+ participant UI as UI组件
+ participant FXL as 房玄龄
+ participant YTG as 袁天罡
+ participant TS as 天枢引擎
+ participant TY as 太乙引擎
+ participant WC as 文昌引擎
+ participant PS as PreferenceStore
 
-    UI->>FXL: 发送奏折 (UPDATE_PREFERENCE)
-    FXL->>YTG: 发送诏令 (update_preference)
-    YTG->>TS: 执行工作流 (update_preference.yml)
-    TS->>TY: 调用引擎 (wenchang)
-    TY->>WC: applyDelta()
-    WC->>WC: 持久化偏好
-    WC-->>TY: 返回新快照
-    TY-->>TS: 返回结果
-    TS-->>YTG: 返回结果
-    YTG-->>FXL: 返回结果
-    FXL->>FXL: 自动同步Store
-    FXL->>PS: 更新偏好
-    PS-->>UI: Vue响应式更新
+ UI->>FXL: 发送奏折 (UPDATE_PREFERENCE)
+ FXL->>YTG: 发送诏令 (update_preference)
+ YTG->>TS: 执行工作流 (update_preference.yml)
+ TS->>TY: 调用引擎 (wenchang)
+ TY->>WC: applyDelta()
+ WC->>WC: 持久化偏好
+ WC-->>TY: 返回新快照
+ TY-->>TS: 返回结果
+ TS-->>YTG: 返回结果
+ YTG-->>FXL: 返回结果
+ FXL->>FXL: 自动同步Store
+ FXL->>PS: 更新偏好
+ PS-->>UI: Vue响应式更新
 ```
 
 ---
@@ -1126,19 +1126,19 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph Stores["📚 Store层"]
-        PS[PreferenceStore<br/>用户偏好]
-        SS[ScanningStore<br/>扫描队列]
-        AS[AppStateStore<br/>应用状态]
-        PHS[PhotosStore<br/>照片数据]
-        SBS[StatusBarStore<br/>状态栏]
-        NS[NotificationStore<br/>通知]
-        US[UpdateStore<br/>更新状态]
-    end
+ subgraph Stores["📚 Store层"]
+ PS[PreferenceStore<br/>用户偏好]
+ SS[ScanningStore<br/>扫描队列]
+ AS[AppStateStore<br/>应用状态]
+ PHS[PhotosStore<br/>照片数据]
+ SBS[StatusBarStore<br/>状态栏]
+ NS[NotificationStore<br/>通知]
+ US[UpdateStore<br/>更新状态]
+ end
 
-    FXL[房玄龄] -->|统一管理| Stores
-    Services[人界服务] -->|通过房玄龄| FXL
-    FXL -->|自动同步| Stores
+ FXL[房玄龄] -->|统一管理| Stores
+ Services[人界服务] -->|通过房玄龄| FXL
+ FXL -->|自动同步| Stores
 ```
 
 ### Store职责划分
@@ -1159,18 +1159,18 @@ graph TB
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending: 创建任务到Store
-    pending --> processing: p-queue执行
-    processing --> [*]: 成功完成（立即删除）
-    processing --> failed: 执行失败
-    failed --> pending: 重试
-    failed --> [*]: 达到重试上限（删除）
+ [*] --> pending: 创建任务到Store
+ pending --> processing: p-queue执行
+ processing --> [*]: 成功完成（立即删除）
+ processing --> failed: 执行失败
+ failed --> pending: 重试
+ failed --> [*]: 达到重试上限（删除）
 
-    note right of [*]
-        Store SSOT
-        状态机制驱动
-        立即清理
-    end note
+ note right of [*]
+ Store SSOT
+ 状态机制驱动
+ 立即清理
+ end note
 ```
 
 **状态转换规则**:
@@ -1190,18 +1190,18 @@ stateDiagram-v2
 
 ```mermaid
 graph TB
-    subgraph Persistence["💾 持久化架构"]
-        subgraph Main["🌌 天界持久化"]
-            QLY[千里眼引擎<br/>~/.photasa/scan/scanning.json]
-            SM[司命引擎<br/>~/.photasa/appState/]
-            WC[文昌引擎<br/>~/.photasa/preferences/]
-            SB[司簿引擎<br/>/path/to/photos/.photasa.json]
-        end
+ subgraph Persistence["💾 持久化架构"]
+ subgraph Main["🌌 天界持久化"]
+ QLY[千里眼引擎<br/>~/.photasa/scan/scanning.json]
+ SM[司命引擎<br/>~/.photasa/appState/]
+ WC[文昌引擎<br/>~/.photasa/preferences/]
+ SB[司簿引擎<br/>/path/to/photos/.photasa.json]
+ end
 
-        subgraph Renderer["🏛️ 人界持久化"]
-            PS[PreferenceStore<br/>localStorage<br/>仅偏好设置]
-        end
-    end
+ subgraph Renderer["🏛️ 人界持久化"]
+ PS[PreferenceStore<br/>localStorage<br/>仅偏好设置]
+ end
+ end
 ```
 
 ### 持久化职责划分
@@ -1218,23 +1218,23 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant Service as 人界服务
-    participant FXL as 房玄龄
-    participant YTG as 袁天罡
-    participant TS as 天枢引擎
-    participant Engine as 天界引擎
-    participant FS as 文件系统
+ participant Service as 人界服务
+ participant FXL as 房玄龄
+ participant YTG as 袁天罡
+ participant TS as 天枢引擎
+ participant Engine as 天界引擎
+ participant FS as 文件系统
 
-    Service->>FXL: 发送奏折
-    FXL->>YTG: 发送诏令
-    YTG->>TS: 执行工作流
-    TS->>Engine: 调用引擎方法
-    Engine->>FS: 持久化数据
-    FS-->>Engine: 确认
-    Engine-->>TS: 返回结果
-    TS-->>YTG: 返回结果
-    YTG-->>FXL: 返回结果
-    FXL->>FXL: 自动同步Store
+ Service->>FXL: 发送奏折
+ FXL->>YTG: 发送诏令
+ YTG->>TS: 执行工作流
+ TS->>Engine: 调用引擎方法
+ Engine->>FS: 持久化数据
+ FS-->>Engine: 确认
+ Engine-->>TS: 返回结果
+ TS-->>YTG: 返回结果
+ YTG-->>FXL: 返回结果
+ FXL->>FXL: 自动同步Store
 ```
 
 ---
@@ -1245,111 +1245,111 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant User as 用户
-    participant UI as UI组件
-    participant CSL as 褚遂良
-    participant LSM as 李世民
-    participant YCG as 尉迟恭
-    participant FXL as 房玄龄
-    participant YTG as 袁天罡
-    participant TS as 天枢引擎
-    participant QLY as 千里眼引擎
-    participant SS as ScanningStore
+ participant User as 用户
+ participant UI as UI组件
+ participant CSL as 褚遂良
+ participant LSM as 李世民
+ participant YCG as 尉迟恭
+ participant FXL as 房玄龄
+ participant YTG as 袁天罡
+ participant TS as 天枢引擎
+ participant QLY as 千里眼引擎
+ participant SS as ScanningStore
 
-    User->>UI: 点击添加路径
-    UI->>CSL: 调用addPath()
-    CSL->>CSL: 验证路径
-    CSL->>LSM: 发送启奏 (add_path_completed)
-    LSM->>LSM: 查询event-routing.yml
-    LSM->>YCG: 下发圣旨 (add_scan_task)
-    YCG->>YCG: 创建ScanAction
-    YCG->>FXL: 发送奏折 (ADD_SCAN_ACTION)
-    FXL->>YTG: 发送诏令 (add_scan_action)
-    YTG->>TS: 执行工作流
-    TS->>QLY: restoreQueue()
-    TS->>QLY: 追加任务
-    TS->>QLY: persistQueue()
-    QLY-->>TS: 返回队列快照
-    TS-->>YTG: 返回结果
-    YTG-->>FXL: 返回结果
-    FXL->>SS: 自动同步队列
-    SS-->>UI: Vue响应式更新
-    YCG->>YCG: 添加到p-queue
-    YCG->>YCG: 执行扫描
+ User->>UI: 点击添加路径
+ UI->>CSL: 调用addPath()
+ CSL->>CSL: 验证路径
+ CSL->>LSM: 发送启奏 (add_path_completed)
+ LSM->>LSM: 查询event-routing.yml
+ LSM->>YCG: 下发圣旨 (add_scan_task)
+ YCG->>YCG: 创建ScanAction
+ YCG->>FXL: 发送奏折 (ADD_SCAN_ACTION)
+ FXL->>YTG: 发送诏令 (add_scan_action)
+ YTG->>TS: 执行工作流
+ TS->>QLY: restoreQueue()
+ TS->>QLY: 追加任务
+ TS->>QLY: persistQueue()
+ QLY-->>TS: 返回队列快照
+ TS-->>YTG: 返回结果
+ YTG-->>FXL: 返回结果
+ FXL->>SS: 自动同步队列
+ SS-->>UI: Vue响应式更新
+ YCG->>YCG: 添加到p-queue
+ YCG->>YCG: 执行扫描
 ```
 
 ### 流程2: 扫描执行完整流程
 
 ```mermaid
 sequenceDiagram
-    participant YCG as 尉迟恭
-    participant SS as ScanningStore
-    participant PQ as p-queue
-    participant Main as Main进程scan-service
-    participant Worker as scan-worker
-    participant YTG as 袁天罡
-    participant LSM as 李世民
-    participant WZ as 魏征
-    participant FXL as 房玄龄
-    participant TS as 天枢引擎
-    participant SM as 司命引擎
-    participant AS as AppStateStore
+ participant YCG as 尉迟恭
+ participant SS as ScanningStore
+ participant PQ as p-queue
+ participant Main as Main进程scan-service
+ participant Worker as scan-worker
+ participant YTG as 袁天罡
+ participant LSM as 李世民
+ participant WZ as 魏征
+ participant FXL as 房玄龄
+ participant TS as 天枢引擎
+ participant SM as 司命引擎
+ participant AS as AppStateStore
 
-    YCG->>SS: 创建pending任务
-    YCG->>PQ: 添加到执行队列
-    PQ->>YCG: 执行executeScan()
-    YCG->>SS: 更新为processing
-    YCG->>Main: window.api.scanPhotos()
-    Main->>Worker: 创建worker线程
-    Worker->>Worker: 扫描文件系统
-    Worker->>Main: 发送进度事件
-    Main-->>YCG: IPC事件 (picasa:find-photo)
-    Worker->>Main: 扫描完成
-    Main-->>YCG: IPC事件 (complete)
-    YTG->>YTG: 监听IPC事件
-    YTG->>LSM: 发送启奏 (scan_completed)
-    LSM->>WZ: 下发圣旨 (update_folder_tree)
-    WZ->>FXL: 发送奏折 (UPDATE_FOLDER_TREE)
-    FXL->>YTG: 发送诏令
-    YTG->>TS: 执行工作流
-    TS->>SM: persistFolderTree()
-    SM-->>TS: 返回结果
-    TS-->>YTG: 返回结果
-    YTG-->>FXL: 返回结果
-    FXL->>AS: 自动同步folderTree
-    YCG->>SS: 删除任务（成功完成）
+ YCG->>SS: 创建pending任务
+ YCG->>PQ: 添加到执行队列
+ PQ->>YCG: 执行executeScan()
+ YCG->>SS: 更新为processing
+ YCG->>Main: window.api.scanPhotos()
+ Main->>Worker: 创建worker线程
+ Worker->>Worker: 扫描文件系统
+ Worker->>Main: 发送进度事件
+ Main-->>YCG: IPC事件 (picasa:find-photo)
+ Worker->>Main: 扫描完成
+ Main-->>YCG: IPC事件 (complete)
+ YTG->>YTG: 监听IPC事件
+ YTG->>LSM: 发送启奏 (scan_completed)
+ LSM->>WZ: 下发圣旨 (update_folder_tree)
+ WZ->>FXL: 发送奏折 (UPDATE_FOLDER_TREE)
+ FXL->>YTG: 发送诏令
+ YTG->>TS: 执行工作流
+ TS->>SM: persistFolderTree()
+ SM-->>TS: 返回结果
+ TS-->>YTG: 返回结果
+ YTG-->>FXL: 返回结果
+ FXL->>AS: 自动同步folderTree
+ YCG->>SS: 删除任务（成功完成）
 ```
 
 ### 流程3: 偏好设置更新完整流程
 
 ```mermaid
 sequenceDiagram
-    participant User as 用户
-    participant UI as UI组件
-    participant FXL as 房玄龄
-    participant YTG as 袁天罡
-    participant TS as 天枢引擎
-    participant TY as 太乙引擎
-    participant WC as 文昌引擎
-    participant PS as PreferenceStore
+ participant User as 用户
+ participant UI as UI组件
+ participant FXL as 房玄龄
+ participant YTG as 袁天罡
+ participant TS as 天枢引擎
+ participant TY as 太乙引擎
+ participant WC as 文昌引擎
+ participant PS as PreferenceStore
 
-    User->>UI: 修改偏好设置
-    UI->>FXL: 发送奏折 (UPDATE_PREFERENCE)
-    FXL->>YTG: 发送诏令 (update_preference)
-    YTG->>TS: 执行工作流 (update_preference.yml)
-    TS->>TY: 调用引擎 (wenchang)
-    TY->>WC: applyDelta(delta)
-    WC->>WC: 持久化偏好
-    WC->>WC: 更新版本号
-    WC-->>TY: 返回新快照
-    TY-->>TS: 返回结果
-    TS-->>YTG: 返回结果
-    YTG-->>FXL: 返回结果
-    FXL->>FXL: 自动同步Store
-    FXL->>PS: 更新偏好
-    PS-->>UI: Vue响应式更新
-    WC->>WC: 广播偏好变更事件
-    WC-->>UI: IPC事件 (preference.changed)
+ User->>UI: 修改偏好设置
+ UI->>FXL: 发送奏折 (UPDATE_PREFERENCE)
+ FXL->>YTG: 发送诏令 (update_preference)
+ YTG->>TS: 执行工作流 (update_preference.yml)
+ TS->>TY: 调用引擎 (wenchang)
+ TY->>WC: applyDelta(delta)
+ WC->>WC: 持久化偏好
+ WC->>WC: 更新版本号
+ WC-->>TY: 返回新快照
+ TY-->>TS: 返回结果
+ TS-->>YTG: 返回结果
+ YTG-->>FXL: 返回结果
+ FXL->>FXL: 自动同步Store
+ FXL->>PS: 更新偏好
+ PS-->>UI: Vue响应式更新
+ WC->>WC: 广播偏好变更事件
+ WC-->>UI: IPC事件 (preference.changed)
 ```
 
 ---
@@ -1404,14 +1404,14 @@ sequenceDiagram
 
 ### 后端技术栈
 
-- **Electron**: 桌面应用框架
+- **contract reference**: 桌面应用框架
 - **Node.js**: 主进程运行时
 - **Worker Threads**: 异步任务处理
 - **YAML**: 工作流配置
 
 ### 通信技术
 
-- **IPC**: Electron进程间通信
+- **IPC**: 进程间通信
 - **MessageChannel**: 浏览器原生API，圣旨传递
 - **mitt**: 轻量级事件总线，启奏机制
 
@@ -1429,72 +1429,72 @@ sequenceDiagram
 
 ```
 src/engines/
-├── common/              # 通用契约和测试基架
-│   ├── contracts.ts     # 统一数据契约
-│   ├── fixtures.ts      # 测试数据
-│   └── test-harness.ts # 测试基架
-├── tianshu/             # 天枢引擎（工作流编排）
-│   ├── core/
-│   │   ├── TianshuEngine.ts
-│   │   └── WorkflowLoader.ts
-│   ├── orchestration/
-│   │   ├── WorkflowOrchestrator.ts
-│   │   └── VariableResolver.ts
-│   └── workflows/       # YAML工作流定义
-├── taiyi/               # 太乙引擎（适配器注册中心）
-│   ├── core/
-│   │   ├── TaiyiEngine.ts
-│   │   ├── AdapterRegistry.ts
-│   │   └── adapter-decorators.ts
-│   └── __tests__/
-├── qianliyan/           # 千里眼引擎（扫描执行）
-│   ├── core/
-│   │   └── QianliyanEngine.ts
-│   └── adapters/
-│       └── QianliyanAdapter.ts
-├── shunfenger/          # 顺风耳引擎（文件监听）
-├── sibu/                # 司簿引擎（配置管理）
-├── siming/              # 司命引擎（appState持久化）
-├── wenchang/            # 文昌引擎（偏好管理）
-└── maliang/             # 马良引擎（图像处理）
+├── common/ # 通用契约和测试基架
+│ ├── contracts.ts # 统一数据契约
+│ ├── fixtures.ts # 测试数据
+│ └── test-harness.ts # 测试基架
+├── tianshu/ # 天枢引擎（工作流编排）
+│ ├── core/
+│ │ ├── TianshuEngine.ts
+│ │ └── WorkflowLoader.ts
+│ ├── orchestration/
+│ │ ├── WorkflowOrchestrator.ts
+│ │ └── VariableResolver.ts
+│ └── workflows/ # YAML工作流定义
+├── taiyi/ # 太乙引擎（适配器注册中心）
+│ ├── core/
+│ │ ├── TaiyiEngine.ts
+│ │ ├── AdapterRegistry.ts
+│ │ └── adapter-decorators.ts
+│ └── __tests__/
+├── qianliyan/ # 千里眼引擎（扫描执行）
+│ ├── core/
+│ │ └── QianliyanEngine.ts
+│ └── adapters/
+│ └── QianliyanAdapter.ts
+├── shunfenger/ # 顺风耳引擎（文件监听）
+├── sibu/ # 司簿引擎（配置管理）
+├── siming/ # 司命引擎（appState持久化）
+├── wenchang/ # 文昌引擎（偏好管理）
+└── maliang/ # 马良引擎（图像处理）
 ```
 
 ### 人界服务结构
 
 ```
 src/renderer/src/services/
-├── lishimin/            # 李世民（中央协调者）
-│   ├── lishimin.ts
-│   └── router.ts       # 启奏路由器
-├── fangxuanling/       # 房玄龄（Store管理）
-│   ├── fangxuanling.ts
-│   └── stores/         # Store定义
-├── yuchigong/          # 尉迟恭（扫描编排）
-│   └── yuchigong.ts
-├── yuantiangang/       # 袁天罡（IPC通信）
-│   └── yuantiangang.ts
-├── weizheng/           # 魏征（appState监察）
-│   └── weizheng.ts
-├── chusuiliang/        # 褚遂良（路径管理）
-│   └── chusuiliang.ts
-├── qinqiong/           # 秦琼（文件守护）
-│   └── qinqiong.ts
-└── duruhui/            # 杜如晦（通道管理）
-    └── duruhui.ts
+├── lishimin/ # 李世民（中央协调者）
+│ ├── lishimin.ts
+│ └── router.ts # 启奏路由器
+├── fangxuanling/ # 房玄龄（Store管理）
+│ ├── fangxuanling.ts
+│ └── stores/ # Store定义
+├── yuchigong/ # 尉迟恭（扫描编排）
+│ └── yuchigong.ts
+├── yuantiangang/ # 袁天罡（IPC通信）
+│ └── yuantiangang.ts
+├── weizheng/ # 魏征（appState监察）
+│ └── weizheng.ts
+├── chusuiliang/ # 褚遂良（路径管理）
+│ └── chusuiliang.ts
+├── qinqiong/ # 秦琼（文件守护）
+│ └── qinqiong.ts
+└── duruhui/ # 杜如晦（通道管理）
+ └── duruhui.ts
 ```
 
 ### Store结构
 
 ```
 src/renderer/src/stores/
-├── preference.ts       # PreferenceStore
-├── scanning-types.ts   # ScanningStore类型定义
-├── scanning-store.ts     # ScanningStore（通过房玄龄）
-├── appstate-store.ts   # AppStateStore（通过房玄龄）
-├── photos.ts           # PhotosStore
-├── statusBar.ts        # StatusBarStore
-├── notification.ts     # NotificationStore
-└── update.ts           # UpdateStore
+├── preference.ts # PreferenceStore
+├── scanning-types.ts # ScanningStore类型定义
+├── scanning-store.ts # ScanningStore（通过房玄龄）
+├── appstate-store.ts # AppStateStore（通过房玄龄）
+├── photos.ts # PhotosStore
+├── statusBar.ts # StatusBarStore
+├── notification.ts # NotificationStore
+└── update.ts # UpdateStore
 ```
 
 ---

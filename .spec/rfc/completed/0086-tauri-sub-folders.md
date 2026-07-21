@@ -9,13 +9,13 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-One Tauri command: **sub_folders(folder_path)**. List immediate subfolders of the given path; return list of paths. Replaces Electron `picasa:sub-folders`. Rust std::fs or walkdir; no Node.
+One Tauri command: **sub_folders(folder_path)**. List immediate subfolders of the given path; return list of paths. Replaces contract reference `picasa:sub-folders`. Rust std::fs or walkdir; no Node.
 
 ## Motivation
 

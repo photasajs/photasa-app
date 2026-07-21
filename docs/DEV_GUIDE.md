@@ -11,18 +11,18 @@
 
 ## Project Structure
 
-**Photasa** is a **Tauri 2 + Vue 3 + Rust** desktop app (`apps/photasa`). Electron `apps/desktop` was removed in 2026-07 (RFC 0153).
+**Photasa** is a **Tauri 2 + Vue 3 + Rust** desktop app (`apps/photasa`). The removed desktop tree was removed in 2026-07 (RFC 0153).
 
 ```
 picasa-vue/
 ├── apps/
-│   └── photasa/              # Tauri 应用 (@photasa/photasa)
-│       ├── src/              # Vue 3 前端（贞观服务层）
-│       └── src-tauri/        # Rust 命令与 Tauri 插件
-├── crates/                   # photasa-scan, photasa-thumbnail, …
-├── packages/                 # 共享 TS 包（@photasa/common 等）
-├── docs/                     # 文档
-└── .spec/rfc/                # Photasa RFC（canonical）
+│ └── photasa/ # Tauri 应用 (@photasa/photasa)
+│ ├── src/ # Vue 3 前端（贞观服务层）
+│ └── src-tauri/ # Rust 命令与 Tauri 插件
+├── crates/ # photasa-scan, photasa-thumbnail, …
+├── packages/ # 共享 TS 包（@photasa/common 等）
+├── docs/ # 文档
+└── .spec/rfc/ # Photasa RFC（canonical）
 ```
 
 ### 包与 crate
@@ -48,8 +48,8 @@ pnpm install
 ### Running Development
 
 ```bash
-pnpm dev                    # Tauri 开发
-pnpm run vite:dev:photasa   # 仅 Vite，无原生窗口
+pnpm dev # Tauri 开发
+pnpm run vite:dev:photasa # 仅 Vite，无原生窗口
 ```
 
 ### Running Tests
@@ -71,15 +71,17 @@ pnpm run clippy
 ### Vue Component Guidelines
 
 1. **Component organization**:
-    - Use component library philosophy for UI design
-    - Split complex components into sub-components with clear responsibilities
-    - Base components should start with `Base` prefix
-    - Domain-specific components should use `Primitive` prefix
+
+- Use component library philosophy for UI design
+- Split complex components into sub-components with clear responsibilities
+- Base components should start with `Base` prefix
+- Domain-specific components should use `Primitive` prefix
 
 2. **Component structure**:
-    - Prefer TSX for component design
-    - Organize components in independent directories
-    - Use multiple support files when necessary
+
+- Prefer TSX for component design
+- Organize components in independent directories
+- Use multiple support files when necessary
 
 ### General Rules
 
@@ -371,7 +373,7 @@ If tests hang indefinitely:
 
 ## 架构：贞观服务与 Rust 后端
 
-> **注意**：下文「天界」在 Tauri 中对应 **Rust**（`src-tauri/`、`crates/`），不再使用 Electron `src/main/` 或 zouwu/Tianshu 工作流（RFC 0153 已移除）。
+> **注意**：下文「天界」在 Tauri 中对应 **Rust**（`src-tauri/`、`crates/`），不再使用 contract reference `src/main/` 或 zouwu/Tianshu 工作流（RFC 0153 已移除）。
 
 ### 服务层（Vue — 人界）
 
@@ -395,9 +397,9 @@ If tests hang indefinitely:
 
 ```
 UI → 奏折 (Zouzhe) → 房玄龄
-    → 诏令 (Zhaoling) → 袁天罡.executeZhaoling()
-    → Tauri invoke → Rust 命令 (crates/photasa-*)
-    → 事件 / Store 同步
+ → 诏令 (Zhaoling) → 袁天罡.executeZhaoling()
+ → Tauri invoke → Rust 命令 (crates/photasa-*)
+ → 事件 / Store 同步
 ```
 
 跨部门协调仍用 **启奏 (Qizou) + 圣旨 (Shengzhi)**；内政持久化用 **奏折 (Zouzhe)**。详见 `CLAUDE.md` 双通信系统说明。
@@ -441,13 +443,13 @@ UI → 奏折 (Zouzhe) → 房玄龄
 4. 袁天罡或 `legacy-api.ts` 映射 `invoke` 名
 5. `cargo test` + Vitest 覆盖
 
-历史 Electron 适配器/天枢工作流文档见 `docs/architecture/MYTHOLOGY.md`（已标 legacy）。
+历史 适配器/天枢工作流文档见 `docs/architecture/MYTHOLOGY.md`（已标 legacy）。
 
 ## Resources
 
 - [Debug Guide](DEBUG.md) - Tauri 调试与故障排除
 - [MCP Debug](DEBUG_MCP.md) - Tauri MCP 调试
-- [Mythology Architecture](architecture/MYTHOLOGY.md) - 神话架构（含 Electron 时代参考）
+- [Mythology Architecture](architecture/MYTHOLOGY.md) - 神话架构（含 historical参考）
 - [RFC / ROADMAP](../ROADMAP.md) - 设计决策与 RFC 索引（canonical）
 - [Design Documents](design/) - 架构和设计文档（部分为历史稿）
 - [Tauri v2 Documentation](https://v2.tauri.app/)

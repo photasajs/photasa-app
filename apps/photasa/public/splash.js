@@ -1,6 +1,6 @@
 /**
  * Enhanced Animated Splash Screen Controller (Tauri variant)
- * - Reuses Electron resources/splash.js behavior
+ * - Reuses legacy splash behavior
  * - Replaces `window.splashAPI` IPC bridge with Tauri window events:
  *   - splash:theme-changed
  *   - splash:status-update

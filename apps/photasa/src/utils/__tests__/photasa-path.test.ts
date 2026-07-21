@@ -6,7 +6,7 @@ import {
     toThumbnailName,
 } from "../photasa-path";
 
-describe("photasa-path (Electron contract)", () => {
+describe("photasa-path (legacy-api contract)", () => {
     it("toRelativeThumbnailPath matches config-core", () => {
         expect(toRelativeThumbnailPath("/album/vacation.jpg")).toBe(
             ".photasaoriginals/thumbnail-vacation.jpg.png",
