@@ -17,14 +17,14 @@ description: >-
 
 若 **`AGENTS.md`** 另有规定，以其为准。
 
-| 路径                                    | 用途                                                                                      |
-| --------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 根目录 **`ROADMAP.md`**                 | **权威进度表**：各 RFC 状态（✅/🔨/⏳）、阶段、备注。**回答「进度」优先认此文件。**       |
-| `ROADMAP.md`（RFC 流程）                | **命名与流程**；**进度与全表**另见根目录 `TASK_TRACKING.md`。                             |
-| `docs/rfc/NNN-kebab-title.md`           | 单个 RFC 规格正文；**依赖**写在各篇元数据与 Dependencies 节。                             |
-| `docs/rfc/TAURI_RUST_REWRITE_POLICY.md` | **Photasa 黄金规则**：Rust 重写，TS/Electron 仅作行为规格；所有 `*tauri*.md` RFC 必须链接 |
-| `docs/rfc/assets/`                      | RFC 配图、流程图等资源                                                                    |
-| 根目录 `TASK_TRACKING.md`（可选）       | **当前冲刺**：正在实现的 RFC 的检查清单与日期备注                                         |
+| 路径                                    | 用途                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------------- |
+| 根目录 **`ROADMAP.md`**                 | **权威进度表**：各 RFC 状态（✅/🔨/⏳）、阶段、备注。**回答「进度」优先认此文件。** |
+| `ROADMAP.md`（RFC 流程）                | **命名与流程**；**进度与全表**另见根目录 `TASK_TRACKING.md`。                       |
+| `docs/rfc/NNN-kebab-title.md`           | 单个 RFC 规格正文；**依赖**写在各篇元数据与 Dependencies 节。                       |
+| `docs/rfc/TAURI_RUST_REWRITE_POLICY.md` | **Photasa 黄金规则**：Rust 重写，TS 仅作行为规格；所有 `*tauri*.md` RFC 必须链接    |
+| `docs/rfc/assets/`                      | RFC 配图、流程图等资源                                                              |
+| 根目录 `TASK_TRACKING.md`（可选）       | **当前冲刺**：正在实现的 RFC 的检查清单与日期备注                                   |
 
 ## 何时更新什么
 
@@ -62,7 +62,7 @@ description: >-
 3. 文首元数据：编号、标题、状态（默认 Draft）、阶段、作者、创建日期、最后更新、**依赖**
 4. 正文建议章节：Summary、Context / Problem、Goals、**Implementation principle (Photasa / Tauri)**（链接 [TAURI_RUST_REWRITE_POLICY.md](../docs/rfc/TAURI_RUST_REWRITE_POLICY.md)）、Proposed Solution、Implementation Details（含检查清单）、Alternatives、Risks、Testing Strategy、Dependencies。
 5. 在 **`ROADMAP.md`** 进度表中**增加一行**（初始 ⏳）。
-6. **Photasa Active 门禁**：若 RFC 后端交付物不是 Rust（`src-tauri` / `crates/`），不得登记为 **Photasa Active**；Electron-only 工作标 **Deferred** 或 **Legacy backlog**（见 [TAURI_RUST_REWRITE_POLICY.md](../docs/rfc/TAURI_RUST_REWRITE_POLICY.md) → Active RFC gate）。
+6. **Photasa Active 门禁**：若 RFC 后端交付物不是 Rust（`src-tauri` / `crates/`），不得登记为 **Photasa Active**；deferred 工作标 **Deferred** 或 **Legacy backlog**（见 [TAURI_RUST_REWRITE_POLICY.md](../docs/rfc/TAURI_RUST_REWRITE_POLICY.md) → Active RFC gate）。
 7. **不要**在尚未开工时把大段检查清单塞进 `TASK_TRACKING.md`；开工时再复制。
 
 ## 更新现有 RFC 步骤
