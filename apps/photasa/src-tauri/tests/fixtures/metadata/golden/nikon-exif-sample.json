@@ -1,0 +1,20 @@
+{
+  "fixture": "nikon-exif-sample.jpg",
+  "expectDateTimePrefix": "2024-03-15",
+  "expect": {
+    "type": "image",
+    "format": "jpg",
+    "dateSource": "exif",
+    "width": 32,
+    "height": 24,
+    "cameraInfo": {
+      "make": "NIKON CORPORATION",
+      "model": "NIKON Z 9",
+      "lens": "NIKKOR Z 24-70mm f/2.8 S",
+      "iso": 400,
+      "focalLength": 70.0,
+      "aperture": 2.8,
+      "shutterSpeed": 0.004
+    }
+  }
+}

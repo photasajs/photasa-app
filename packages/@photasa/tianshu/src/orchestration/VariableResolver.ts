@@ -6,11 +6,7 @@
  */
 
 import { IVariableResolver, Logger } from "../types/runtime-interfaces";
-import {
-    parseExpressionToAST,
-    evaluateAST,
-    EvaluationContext,
-} from "@zouwu-wf/expression-parser";
+import { parseExpressionToAST, evaluateAST, EvaluationContext } from "@zouwu-wf/expression-parser";
 
 /**
  * 变量解析器配置

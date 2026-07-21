@@ -125,7 +125,7 @@ npm test
 1. **Each change should have corresponding tests**
 2. **Never use `console.log`** - Use the logger instead
 3. **No `!important` in CSS** - Causes maintenance issues
-4. **Document using RFCs** - Read `docs/rfc/README.md` for RFC management
+4. **Document using RFCs** - Index and tables: root `ROADMAP.md` + `TASK_TRACKING.md`; RFC files under `docs/rfc/` and `docs/rfc/completed/`
 
 ## Testing Guidelines
 
@@ -621,7 +621,7 @@ export class MyAdapter implements IAdapter {
 
 - [Debug Guide](DEBUG.md) - 调试设置和故障排除
 - [Mythology Architecture](architecture/MYTHOLOGY.md) - 神话架构详细说明
-- [RFC Index](rfc/README.md) - 设计决策和RFC文档
+- [RFC / ROADMAP](../ROADMAP.md) - 设计决策与 RFC 索引（canonical）
 - [Design Documents](design/) - 架构和设计文档
 - [Electron Documentation](https://www.electronjs.org/docs)
 - [Vue 3 Documentation](https://vuejs.org/)

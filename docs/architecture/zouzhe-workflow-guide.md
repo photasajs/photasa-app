@@ -153,6 +153,7 @@ export const ZOUZHE_MATTERS = {
 ```
 
 **命名规范**:
+
 - 常量名：`UPPER_SNAKE_CASE`（如 `UPDATE_SCAN_ACTION_STATUS`）
 - 值：`lower_snake_case`（如 `"update_scan_action_status"`）
 
@@ -214,7 +215,7 @@ export class YourAccessor implements ZouzheAccessor {
 your_new_matter:
     autoSync: true
     targetStore: "yourStore"
-    syncStrategy: "merge"  # 或 "replace"
+    syncStrategy: "merge" # 或 "replace"
     propertyPath: "yourProperty"
 ```
 
@@ -253,6 +254,7 @@ const intentToWorkflowMap: Record<UserIntent, string> = {
 ```
 
 **路径格式**: `domain/workflow_name`
+
 - `domain`: 工作流所属领域（如 `scan`, `preference`, `appstate`）
 - `workflow_name`: 工作流文件名（不含 `.yml` 后缀）
 
@@ -320,25 +322,25 @@ outputs:
 
 **已实现的 builtin actions**：
 
-| Action | 用途 | 返回值 |
-|--------|------|--------|
-| `return` | 返回工作流结果 | 任意数据 |
-| `setVariable` | 设置工作流变量 | `{ success, message }` |
-| `log` | 记录日志 | `{ success, timestamp }` |
-| `delay` | 延迟执行 | `{ success, actualDelay }` |
-| `noop` | 空操作 | `{ success, message }` |
-| `throwError` | 抛出错误 | 永不返回 |
-| `branch` | 条件分支 | `{ success, result, branch }` |
-| `transform` | 数据转换 | `{ success, result, operation }` |
-| `arrayAppend` | 数组追加 | 新数组 |
-| `arrayConcat` | 数组连接 | 新数组 |
-| `arrayCount` | 数组计数 | 数字 |
-| `arrayFilter` | 数组过滤 | 新数组 |
-| `arrayFind` | 数组查找 | 元素或索引 |
-| `arrayGet` | 数组取值 | 元素 |
-| `arraySet` | 数组设值 | 新数组 |
-| `conditional` | 条件判断 | onTrue或onFalse的值 |
-| `objectMerge` | 对象合并 | 合并后的对象 |
+| Action        | 用途           | 返回值                           |
+| ------------- | -------------- | -------------------------------- |
+| `return`      | 返回工作流结果 | 任意数据                         |
+| `setVariable` | 设置工作流变量 | `{ success, message }`           |
+| `log`         | 记录日志       | `{ success, timestamp }`         |
+| `delay`       | 延迟执行       | `{ success, actualDelay }`       |
+| `noop`        | 空操作         | `{ success, message }`           |
+| `throwError`  | 抛出错误       | 永不返回                         |
+| `branch`      | 条件分支       | `{ success, result, branch }`    |
+| `transform`   | 数据转换       | `{ success, result, operation }` |
+| `arrayAppend` | 数组追加       | 新数组                           |
+| `arrayConcat` | 数组连接       | 新数组                           |
+| `arrayCount`  | 数组计数       | 数字                             |
+| `arrayFilter` | 数组过滤       | 新数组                           |
+| `arrayFind`   | 数组查找       | 元素或索引                       |
+| `arrayGet`    | 数组取值       | 元素                             |
+| `arraySet`    | 数组设值       | 新数组                           |
+| `conditional` | 条件判断       | onTrue或onFalse的值              |
+| `objectMerge` | 对象合并       | 合并后的对象                     |
 
 **验证方法**：
 
@@ -412,7 +414,7 @@ const intentMapping: Record<string, string> = {
 // src/engines/tianshu/types/commands.ts
 export type UserIntent =
     // ...
-    | "update_scan_action_status";
+    "update_scan_action_status";
 ```
 
 ### 4. intentToWorkflowMap 映射
@@ -480,6 +482,7 @@ outputs:
 **原因**: 天界缺少 `UserIntent` 类型或 `intentToWorkflowMap` 映射
 
 **解决**:
+
 1. 检查 `commands.ts` 中是否添加了 `UserIntent` 类型
 2. 检查 `TianshuEngine.ts` 中是否添加了 `intentToWorkflowMap` 映射
 3. 检查工作流文件是否存在且路径正确
@@ -495,6 +498,7 @@ outputs:
 **原因**: 工作流文件使用了 BuiltinAdapter 中未实现的 action
 
 **解决**:
+
 1. 检查 `BuiltinAdapter.ts` 中是否有对应的方法
 2. 如果缺失，在 `BuiltinAdapter.ts` 中实现该方法
 3. 参考步骤8中的已实现 actions 列表

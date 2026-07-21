@@ -1,30 +1,35 @@
 # 📜 工作流: 打开外部链接
+
 > 接收外部链接 URL，通过太白金星适配器打开
 
 ## 📑 基本信息
+
 - **标识 (ID)**: `shell_openExternal`
 - **版本 (Version)**: `1.0.0`
 - **作者 (Author)**: Tianshu Engine
 
 ## 📥 输入参数 (Inputs)
-| 参数名 | 类型 | 必填 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `url` | `string` | ✅ | 要打开的外部链接 URL |
+
+| 参数名 | 类型     | 必填 | 描述                 |
+| :----- | :------- | :--- | :------------------- |
+| `url`  | `string` | ✅   | 要打开的外部链接 URL |
 
 ## 📤 输出规范 (Outputs)
+
 定义输出：
+
 ```json
 {
-  "success": {
-    "description": "是否成功打开链接",
-    "type": "boolean",
-    "path": "success"
-  },
-  "message": {
-    "description": "操作结果消息",
-    "type": "string",
-    "path": "message"
-  }
+    "success": {
+        "description": "是否成功打开链接",
+        "type": "boolean",
+        "path": "success"
+    },
+    "message": {
+        "description": "操作结果消息",
+        "type": "string",
+        "path": "message"
+    }
 }
 ```
 

@@ -1,0 +1,16 @@
+{
+  "fixture": "sample-video.mp4",
+  "expect": {
+    "type": "video",
+    "format": "mp4",
+    "dateSource": "file_modified",
+    "codec": "h264",
+    "duration": 1.0,
+    "width": 640,
+    "height": 480,
+    "resolution": {
+      "width": 640,
+      "height": 480
+    }
+  }
+}

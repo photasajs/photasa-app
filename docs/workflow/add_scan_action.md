@@ -1,23 +1,28 @@
 # 📜 工作流: 添加扫描任务
+
 > 接收ScanAction数组，恢复队列，批量添加，持久化，返回完整队列
 
 ## 📑 基本信息
+
 - **标识 (ID)**: `add_scan_action`
 - **版本 (Version)**: `1.0.0`
 
 ## 📥 输入参数 (Inputs)
-| 参数名 | 类型 | 必填 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `actions` | `array` | ✅ | ScanAction对象数组（支持单个路径传[action]） |
+
+| 参数名    | 类型    | 必填 | 描述                                         |
+| :-------- | :------ | :--- | :------------------------------------------- |
+| `actions` | `array` | ✅   | ScanAction对象数组（支持单个路径传[action]） |
 
 ## 📤 输出规范 (Outputs)
+
 工作流执行完成后返回如下结构：
+
 ```json
 {
-  "success": true,
-  "queue": "{{steps.append_actions}}",
-  "queueSize": "{{steps.calculate_size}}",
-  "persisted": true
+    "success": true,
+    "queue": "{{steps.append_actions}}",
+    "queueSize": "{{steps.calculate_size}}",
+    "persisted": true
 }
 ```
 

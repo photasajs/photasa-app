@@ -1,0 +1,600 @@
+{
+    "app": {
+        "title": "Photasa",
+        "folderList": "Elenco cartelle"
+    },
+    "preference": {
+        "settings": "Impostazioni",
+        "tabs": {
+            "general": "Generale",
+            "about": "Informazioni",
+            "theme": "Tema",
+            "advanced": "Avanzate",
+            "autoUpdate": "Aggiornamento Automatico",
+            "scanMonitoring": "Scan Monitoring"
+        },
+        "folderList": "Elenco cartelle",
+        "folderListUsage": "Modalità d'uso",
+        "folderListDesc": "Dopo aver aggiunto una cartella all'elenco, Photasa può gestire in tempo reale le foto e i video nella cartella.",
+        "watchFolderList": "Photasa può gestire foto e video nelle seguenti cartelle.",
+        "chooseDirectory": "Scegli la cartella e aggiungila all'elenco",
+        "thumbnailSize": "Dimensione miniatura",
+        "darkMode": "Modalità scura",
+        "language": "Lingua",
+        "scanning": "Scansione in corso",
+        "resetFolders": {
+            "title": "Azione Avanzata: Ripristina Archiviazione Directory",
+            "desc": "Questo cancellerà tutte le impostazioni delle directory e ricostruirà immediatamente la cache. Questa azione è irreversibile. Procedere con cautela!",
+            "button": "Ripristina Archiviazione Directory"
+        }
+    },
+    "import": {
+        "title": "Importa foto",
+        "photos": "Importa foto",
+        "chooseDirectory": "Scegli cartella",
+        "targetDirectory": "Cartella di destinazione",
+        "selectTarget": "Seleziona cartella di destinazione",
+        "allowDuplicateRename": "Consenti ridenominazione file duplicati",
+        "button": {
+            "import": "Importa",
+            "cancel": "Annulla"
+        },
+        "sourceDirectories": "Cartelle di origine",
+        "addSource": "Aggiungi cartella di origine",
+        "browse": "Sfoglia",
+        "options": "Opzioni di importazione",
+        "fileTypes": {
+            "label": "Tipi di file",
+            "images": "Immagini",
+            "videos": "Video"
+        },
+        "images": "Immagini",
+        "videos": "Video",
+        "includeSubfolders": "Includi sottocartelle",
+        "duplicateHandling": "Gestione duplicati",
+        "duplicate": {
+            "label": "Duplicato",
+            "rename": "Rinomina",
+            "skip": "Salta",
+            "overwrite": "Sovrascrivi",
+            "keepBoth": "Mantieni entrambi"
+        },
+        "useMD5ForDuplicates": "Usa verifica MD5 per rilevamento duplicati",
+        "useMD5ForDuplicatesDescription": "Quando abilitato, i file verranno confrontati utilizzando hash MD5 per un rilevamento accurato dei duplicati, indipendentemente dalle date di modifica",
+        "preview": {
+            "scanning": "Scansione File",
+            "filesFound": "File Trovati",
+            "directoriesScanned": "Directory Scansionate",
+            "progress": "Progresso Scansione",
+            "currentPath": "Percorso Corrente",
+            "recentlyFound": "Trovati di Recente",
+            "noFilesFound": "Nessun File Trovato"
+        },
+        "totalFiles": "File totali",
+        "totalSize": "Dimensione totale",
+        "duplicates": "File duplicati",
+        "moreFiles": "Ci sono altri {count} file",
+        "group": "{count} file",
+        "processing": "Elaborazione in corso",
+        "previewButton": "Anteprima",
+        "importButton": "Importa",
+        "cancelButton": "Annulla",
+        "cancelSetupButton": "Annulla importazione",
+        "pauseButton": "Pausa",
+        "resumeButton": "Riprendi",
+        "closeButton": "Chiudi",
+        "nextButton": "Avanti",
+        "backButton": "Indietro",
+        "editSettingsButton": "Modifica opzioni di importazione",
+        "doneButton": "Fatto",
+        "importFailed": "Importazione fallita",
+        "importCompleted": "Importazione completata",
+        "importCompletedDesc": "Importati con successo {count} file",
+        "filePreview": "Anteprima file",
+        "selectAll": "Seleziona tutto",
+        "deselectAll": "Deseleziona tutto",
+        "invertSelection": "Inverti selezione",
+        "selected": "Selezionati",
+        "selectedSize": "Dimensione selezionata",
+        "fileGroups": "Gruppi di file",
+        "pagination": "{start}-{end} di {total} elementi",
+        "toggleSelection": "Cambia selezione",
+        "viewDetails": "Visualizza dettagli",
+        "image": "Immagine",
+        "video": "Video",
+        "unknown": "Sconosciuto",
+        "fileDetails": "Dettagli file",
+        "basicInfo": "Informazioni di base",
+        "fileName": "Nome file",
+        "fileSize": "Dimensione file",
+        "fileType": "Tipo di file",
+        "dateTime": "Data e ora",
+        "modifiedTime": "Data di modifica",
+        "groupFiles": "File del gruppo",
+        "targetPath": "Percorso di destinazione",
+        "metadata": "Metadati",
+        "dimensions": "Dimensioni",
+        "duration": "Durata",
+        "format": "Formato",
+        "location": "Posizione",
+        "processed": "Elaborati",
+        "percentage": "Percentuale",
+        "speed": "Velocità",
+        "filesPerSec": "file/sec",
+        "filesPerMin": "file/min",
+        "remaining": "Tempo rimanente",
+        "errors": "Errori ({count})",
+        "warnings": "Avvisi ({count})",
+        "moreErrors": "Ci sono altri {count} errori",
+        "moreWarnings": "Ci sono altri {count} avvisi",
+        "retry": "Riprova",
+        "showLess": "Mostra meno",
+        "showMore": "Mostra altri {count} elementi",
+        "status": {
+            "preparing": "Preparazione",
+            "processing": "Elaborazione",
+            "paused": "In pausa",
+            "completed": "Completato",
+            "cancelled": "Annullato",
+            "error": "Errore",
+            "unknown": "Sconosciuto"
+        },
+        "now": "Adesso",
+        "filters": "Filtri",
+        "resetFilters": "Ripristina filtri",
+        "showAdvanced": "Mostra opzioni avanzate",
+        "hideAdvanced": "Nascondi opzioni avanzate",
+        "advancedFilters": "Filtri avanzati",
+        "fileSizeRange": "Intervallo dimensione file",
+        "fileSizeHelp": "Filtra per intervallo di dimensione file",
+        "dateRange": "Intervallo di date",
+        "dateRangeHelp": "Filtra file per data di creazione",
+        "startDate": "Data di inizio",
+        "endDate": "Data di fine",
+        "quickDateFilters": "Filtri data rapidi",
+        "fileNamePattern": "Modello nome file",
+        "fileNamePatternHelp": "Filtra per modello di nome file, supporta caratteri jolly (* e ?)",
+        "fileNamePatternPlaceholder": "Esempio: IMG_*.jpg",
+        "excludePatterns": "Modelli di esclusione",
+        "excludePatternsHelp": "Modelli per escludere file, uno per riga",
+        "excludePatternsPlaceholder": "Esempio: .DS_Store, Thumbs.db",
+        "reset": "Ripristina",
+        "filteredFiles": "File filtrati",
+        "datePresets": {
+            "today": "Oggi",
+            "yesterday": "Ieri",
+            "thisWeek": "Questa settimana",
+            "thisMonth": "Questo mese",
+            "lastMonth": "Mese scorso"
+        },
+        "dateSource": {
+            "label": "Origine data",
+            "exif": "Metadati EXIF",
+            "file_created": "Data creazione file",
+            "file_modified": "Data modifica file",
+            "custom": "Personalizzato"
+        },
+        "duplicateFiles": "File duplicati",
+        "duplicatesFound": "Duplicati trovati",
+        "wastedSpace": "Spazio sprecato",
+        "batchStrategy": "Strategia batch",
+        "applyToAll": "Applica a tutti",
+        "autoResolve": "Risoluzione automatica",
+        "originalFile": "File originale",
+        "existing": "Esistente",
+        "duplicateFile": "File duplicato",
+        "importing": "Importazione",
+        "action": "Azione",
+        "strategy": {
+            "skip": {
+                "label": "Salta",
+                "description": "Salta l'importazione di questo file"
+            },
+            "rename": {
+                "label": "Rinomina",
+                "description": "Rinomina il file prima dell'importazione"
+            },
+            "overwrite": {
+                "label": "Sovrascrivi",
+                "description": "Sovrascrivi il file esistente"
+            },
+            "keepBoth": {
+                "label": "Mantieni entrambi",
+                "description": "Mantieni entrambi i file con nomi diversi"
+            }
+        },
+        "recommendation": "Raccomandazione",
+        "recommendations": {
+            "keep_original": "Mantieni file originale",
+            "keep_duplicate": "Mantieni file duplicato",
+            "keep_both": "Mantieni entrambi",
+            "skipIdentical": "Salta (file identici)",
+            "keepLarger": "Mantieni il file più grande"
+        },
+        "warning": {
+            "overwriteLarger": "Attenzione: Stai per sovrascrivere un file più grande",
+            "overwriteNewer": "Attenzione: Stai per sovrascrivere un file più recente"
+        },
+        "compare": "Confronta",
+        "fileComparison": "Confronto file",
+        "comparisonAnalysis": "Analisi comparativa",
+        "sizeDifference": "Differenza di dimensione",
+        "timeDifference": "Differenza di tempo",
+        "sameSize": "Stessa dimensione",
+        "sameTime": "Stesso tempo",
+        "daysNewer": "{days} giorni più recente",
+        "daysOlder": "{days} giorni più vecchio",
+        "hoursNewer": "{hours} ore più recente",
+        "hoursOlder": "{hours} ore più vecchio",
+        "newer": "Più recente",
+        "older": "Più vecchio",
+        "confirmBatchAction": "Conferma azione batch",
+        "apply": "Applica",
+        "cancel": "Annulla",
+        "batchConfirmMessage": "Applicare {strategy} a {count} file selezionati?",
+        "overwriteWarning": "Attenzione: La sovrascrittura dei file non può essere annullata",
+        "batchProgress": "Avanzamento batch",
+        "directories": "Cartelle",
+        "complete": "Completato",
+        "overallProgress": "Avanzamento totale",
+        "currentDirectory": "Cartella corrente",
+        "eta": "Tempo stimato",
+        "completed": "Completato",
+        "error": {
+            "label": "Errore",
+            "title": "Operazione fallita",
+            "network": "Connessione di rete fallita, controlla la connessione e riprova",
+            "validation": "Validazione configurazione fallita, controlla le impostazioni delle directory",
+            "permission": "Permessi insufficienti, assicurati di avere accesso alle directory",
+            "api": "Errore del server, riprova più tardi",
+            "unknown": "Si è verificato un errore sconosciuto, riprova",
+            "retry": "Riprova",
+            "dismiss": "Ignora"
+        },
+        "paused": "In pausa",
+        "pending": "In attesa",
+        "finishing": "Completamento",
+        "pauseAll": "Metti tutto in pausa",
+        "resumeAll": "Riprendi tutto",
+        "cancelAll": "Annulla tutto",
+        "close": "Chiudi",
+        "confirmCancelAll": "Conferma annullamento totale",
+        "yes": "Sì",
+        "no": "No",
+        "cancelAllWarning": "Sei sicuro di voler annullare tutte le attività di importazione rimanenti?",
+        "cancelAllProgress": "{completed} / {total} cartelle completate",
+        "recentFiles": "File recenti",
+        "elapsed": "Tempo trascorso",
+        "files": "File",
+        "successful": "Riuscito",
+        "skipped": "Saltato",
+        "steps": {
+            "configuration": "Configurazione",
+            "configurationDesc": "Seleziona cartelle di origine e destinazione",
+            "preview": "Anteprima",
+            "previewDesc": "Rivedi e seleziona i file da importare",
+            "importing": "Importazione",
+            "importingDesc": "Importa file nella cartella di destinazione"
+        },
+        "loading": {
+            "text": "Caricamento...",
+            "preview": "Caricamento dati anteprima...",
+            "directories": "Selezione directory...",
+            "label": "Caricamento...",
+            "switchingFolder": "Cambio cartella..."
+        }
+    },
+    "menu": {
+        "getInfo": "Informazioni foto",
+        "open": "Apri nel gestore file",
+        "rebuildThumbnail": "Ricostruisci miniatura",
+        "getConfig": "Ottieni informazioni libreria foto",
+        "rescan": "Riscansiona cartella",
+        "app": {
+            "menu": "App",
+            "about": "Informazioni su Photasa",
+            "services": "Servizi",
+            "hide": "Nascondi Photasa",
+            "hideOthers": "Nascondi altri",
+            "unhide": "Mostra tutto",
+            "quit": "Esci"
+        },
+        "view": {
+            "menu": "Visualizza",
+            "reload": "Ricarica",
+            "forceReload": "Forza ricarica",
+            "toggleDevTools": "Attiva strumenti sviluppatore",
+            "resetZoom": "Reimposta zoom",
+            "zoomIn": "Ingrandisci",
+            "zoomOut": "Riduci",
+            "toggleFullScreen": "Attiva schermo intero"
+        },
+        "window": {
+            "menu": "Finestra",
+            "minimize": "Minimizza",
+            "maximize": "Massimizza",
+            "close": "Chiudi",
+            "restore": "Ripristina"
+        },
+        "help": {
+            "menu": "Aiuto",
+            "learnMore": "Scopri di più",
+            "about": "Informazioni su Photasa"
+        },
+        "separator": "Separatore"
+    },
+    "notification": {
+        "info": "Informazione",
+        "warn": "Attenzione",
+        "error": "Errore",
+        "scan": {
+            "title": "Scansione cartella",
+            "message": "Scansione cartella completata, le foto sono state importate in Photasa."
+        },
+        "duplicatePath": {
+            "title": "Cartella duplicata",
+            "message": "La cartella [{folder}] esiste già in Photasa."
+        },
+        "emptyPath": {
+            "title": "Scegli cartella",
+            "message": "Seleziona una cartella e completa l'aggiunta."
+        },
+        "scanError": {
+            "title": "Errore di Scansione",
+            "message": "Impossibile scansionare le sottocartelle di [{path}]. Errore: {error}. La cartella principale verrà comunque aggiunta."
+        },
+        "unknownError": "Si è verificato un errore sconosciuto",
+        "resetFolders": {
+            "title": "Ripristino completato",
+            "message": "Tutte le cache delle cartelle sono state ricostruite."
+        }
+    },
+    "status": {
+        "initializing": "Inizializzazione in corso",
+        "idle": "Inattivo",
+        "updating": "Aggiornamento in corso",
+        "ready": "Pronto",
+        "readingConfig": "Caricamento informazioni libreria [{config}]",
+        "loadingConfig": "Lettura informazioni libreria",
+        "processing": "Elaborazione [{file}]",
+        "scanned": "Completato",
+        "scanComplete": "La cartella [{path}] è stata elaborata.",
+        "start": "Inizio scansione",
+        "progress": "Avanzamento scansione",
+        "processingFile": "Elaborazione: {fileName}",
+        "scanningPath": "Scansione: {path}",
+        "complete": "Scansione completata",
+        "error": "Errore scansione",
+        "scanFailed": "Scansione fallita: {path}"
+    },
+    "button": {
+        "import": "Importa",
+        "cancel": "Annulla",
+        "ok": "OK",
+        "fixConfig": "Correggi informazioni libreria"
+    },
+    "about": {
+        "antvDescription": "Soluzione di visualizzazione dati",
+        "introduction": {
+            "title": "Introduzione",
+            "content": "Ciao! Questo è uno strumento per gestire e organizzare le foto.",
+            "summary": "Questa applicazione si concentra su",
+            "highlight": "interfaccia user-friendly",
+            "userExperience": "esperienza utente",
+            "focus": "."
+        },
+        "resources": {
+            "title": "Risorse",
+            "content": "Le seguenti risorse sono disponibili:",
+            "download": "Scarica risorse"
+        },
+        "press": "Premi",
+        "toExit": "per uscire",
+        "markdown": "# Informazioni su Photasa\n\nPhotasa è uno strumento moderno e rispettoso della privacy per la gestione locale delle foto, ispirato al classico Photasa.\nSupporta la navigazione, l'organizzazione e la gestione efficiente di foto e video, con un'interfaccia elegante e potenti funzionalità locali, senza dipendenza dal cloud.\n\n## Caratteristiche principali\n\n- Importazione e gestione intelligente di foto e video locali\n- Generazione rapida di miniature e anteprima\n- Interfaccia multilingue e cambio tema\n- Operazioni batch e ricerca efficiente\n- Protezione della privacy e sicurezza dei dati\n\nPremi `Esc` per uscire"
+    },
+    "preferences": {
+        "title": "Preferenze",
+        "language": {
+            "title": "Lingua",
+            "description": "Scegli la lingua preferita per l'interfaccia dell'applicazione."
+        },
+        "thumbnail": {
+            "title": "Dimensione miniatura",
+            "description": "Regola la dimensione delle miniature delle foto nella vista galleria."
+        },
+        "theme": {
+            "title": "Tema",
+            "description": "Passa tra modalità chiara e scura.",
+            "light": "Chiaro",
+            "dark": "Scuro"
+        }
+    },
+    "scan": {
+        "queueTitle": "Coda scansione",
+        "queueEmpty": "Coda vuota",
+        "processing": "Elaborazione coda",
+        "allTasksCompleted": "Tutti i task di scansione completati",
+        "pathHeader": "Percorso",
+        "timestampHeader": "Creato",
+        "actionHeader": "Azione",
+        "unknownFolder": "Cartella sconosciuta",
+        "noTimestamp": "Nessun timestamp",
+        "timeJustNow": "Proprio ora",
+        "timeMinutesAgo": "{count}m fa",
+        "timeHoursAgo": "{count}h fa",
+        "timeDaysAgo": "{count}g fa",
+        "priority": "Priorità",
+        "actions": {
+            "scan": "Scansiona",
+            "rescan": "Riscansiona",
+            "current": "Scansione corrente"
+        },
+        "processed": "Elaborato",
+        "incrementalCache": "Cache incrementale: salvataggio progressi in tempo reale, evitare la riscansione"
+    },
+    "advancedSettings": {
+        "title": "Impostazioni avanzate",
+        "resetFoldersTitle": "Azione avanzata: Ripristina archiviazione cartelle",
+        "resetFoldersDesc": "Questa azione cancellerà tutte le impostazioni delle cartelle e ricostruirà immediatamente la cache. Questa azione è irreversibile. Procedi con cautela!",
+        "resetFoldersBtn": "Ripristina archiviazione cartelle"
+    },
+    "empty": {
+        "image": "Nessuna immagine",
+        "openConfigDirBtn": "Apri cartella configurazione",
+        "importBtn": "Importa immagini"
+    },
+    "fileInfo": {
+        "title": "Informazioni file",
+        "fileName": "Nome file",
+        "fileType": "Tipo file",
+        "format": "Formato",
+        "size": "Dimensione",
+        "imageWidth": "Larghezza immagine",
+        "imageHeight": "Altezza immagine",
+        "resolution": "Risoluzione",
+        "aspectRatio": "Rapporto aspetto",
+        "duration": "Durata",
+        "codec": "Codec",
+        "dateTaken": "Data scatto",
+        "dateSource": "Origine data",
+        "modified": "Modificato",
+        "created": "Creato",
+        "location": "Posizione",
+        "gpsLatitude": "Latitudine GPS",
+        "gpsLongitude": "Longitudine GPS",
+        "cameraMake": "Marca fotocamera",
+        "cameraModel": "Modello fotocamera",
+        "rawMetadata": "Metadati grezzi",
+        "unknown": "Sconosciuto",
+        "showRawData": "Mostra dati grezzi",
+        "hideRawData": "Nascondi dati grezzi",
+        "infoTitle": "{name} - Informazioni {type}",
+        "dateSources": {
+            "exif": "Dati EXIF",
+            "video_metadata": "Metadati video",
+            "file_created": "Ora creazione file",
+            "file_modified": "Ora modifica file",
+            "current_date": "Data corrente"
+        },
+        "basicInfo": "Informazioni di base",
+        "mediaProperties": "Proprietà media",
+        "videoProperties": "Proprietà video",
+        "timeInfo": "Informazioni temporali",
+        "technicalInfo": "Informazioni tecniche",
+        "createdAt": "Creato il",
+        "modifiedAt": "Modificato il",
+        "camera": "Fotocamera",
+        "lens": "Obiettivo",
+        "iso": "ISO",
+        "aperture": "Diaframma",
+        "dimensions": "Dimensioni",
+        "noMetadata": "Nessun metadato"
+    },
+    "common": {
+        "close": "Chiudi",
+        "file": "file",
+        "files": "file",
+        "counting": "Conteggio..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} file",
+            "images": "{count} immagini",
+            "videos": "{count} video",
+            "mixed": "{images} immagini, {videos} video",
+            "empty": "Nessun file"
+        },
+        "placeholderThumbnail": "Placeholder preview"
+    },
+    "imageInfo": {
+        "title": "Informazioni immagine",
+        "lastUpdated": "Ultimo aggiornamento",
+        "openInFinder": "Apri nel Finder",
+        "repairLibrary": "Ripara libreria foto",
+        "fileCount": "Numero di file",
+        "folderSize": "Dimensione cartella",
+        "basicInfo": "Informazioni di base",
+        "location": "Posizione",
+        "scanDate": "Data scansione",
+        "configVersion": "Versione configurazione",
+        "configuration": "Configurazione",
+        "showRaw": "Mostra configurazione grezza",
+        "hideRaw": "Nascondi configurazione grezza",
+        "totalImages": "Totale immagini",
+        "totalVideos": "Totale video",
+        "scannedFolders": "Cartelle scansionate",
+        "rawConfiguration": "Configurazione grezza",
+        "copyPath": "Copia percorso",
+        "copyConfig": "Copia configurazione",
+        "operationHistory": "Cronologia operazioni",
+        "lastScan": "Ultima scansione",
+        "configCreated": "Configurazione creata",
+        "never": "Mai",
+        "statusTypes": {
+            "completed": "Completato",
+            "success": "Successo",
+            "warning": "Avviso",
+            "partial": "Parziale",
+            "error": "Errore",
+            "failed": "Fallito",
+            "unknown": "Sconosciuto"
+        }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "Ultima ora",
+            "6h": "Ultime 6 ore",
+            "24h": "Ultime 24 ore"
+        }
+    },
+    "logViewer": {
+        "title": "Visualizzatore Log",
+        "levels": {
+            "all": "Tutti i livelli",
+            "error": "Errore",
+            "warn": "Avviso",
+            "info": "Informazioni",
+            "debug": "Debug"
+        },
+        "buttons": {
+            "clear": "Cancella",
+            "export": "Esporta",
+            "opacity": "Opacità",
+            "close": "Chiudi"
+        },
+        "search": "Cerca nei log...",
+        "messages": {
+            "noLogs": "Nessun log disponibile",
+            "logsCleared": "Log cancellati",
+            "logsExported": "Log esportati in {fileName}",
+            "exportFailed": "Esportazione log fallita: {error}"
+        },
+        "dragInfo": "Trascina per spostare la finestra"
+    },
+    "update": {
+        "notification": {
+            "title": "Nuova versione disponibile",
+            "message": "La versione {version} è disponibile",
+            "cancel": "Annulla",
+            "install": "Installa",
+            "cancelDownload": "Annulla download",
+            "installNow": "Installa ora",
+            "viewDetails": "Visualizza dettagli"
+        },
+        "popup": {
+            "title": "Nuova versione disponibile",
+            "message": "La versione {version} è disponibile",
+            "cancel": "Annulla",
+            "install": "Installa",
+            "cancelDownload": "Annulla download",
+            "installNow": "Installa ora",
+            "close": "Chiudi"
+        }
+    },
+    "window": {
+        "minimize": "Riduci",
+        "maximize": "Ingrandisci",
+        "restore": "Ripristina",
+        "close": "Chiudi"
+    }
+}

@@ -1,0 +1,329 @@
+# 李世民事件路由配置
+# 定义如何处理启奏事件（mitt qizou）
+
+metadata:
+    version: "1.0.0"
+    description: "李世民中央事件路由配置 - qizou-shengzhi架构"
+    lastUpdated: "2025-10-16"
+    rfc: "RFC 0038 Phase 7"
+
+# 启奏路由规则（mitt.on('qizou')）
+# 李世民只处理跨部门协调事务，不处理部门内部常规工作
+qizou_routes:
+    # 袁天罡汇报路径持久化完成 → 李世民协调
+    add_path_completed:
+        # 圣旨1：尉迟恭添加扫描任务
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "add_scan_task"
+                  content:
+                      path: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "路径添加完成后，下旨尉迟恭添加扫描任务"
+        # 圣旨2：魏征添加根节点到folderTree
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_root"
+                  content:
+                      rootPath: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "路径添加完成后，下旨魏征添加根节点到folderTree"
+
+    # 袁天罡汇报路径移除持久化完成 → 李世民协调
+    remove_path_completed:
+        # 圣旨1：尉迟恭清理扫描队列（移除监控文件夹时，清理该路径及其所有子目录的未扫描任务）
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "cleanup_scan_queue_for_path"
+                  content:
+                      path: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "路径移除完成后，下旨尉迟恭清理扫描队列（包括所有子目录的未扫描任务）"
+        # 圣旨2：魏征移除根节点
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "remove_root"
+                  content:
+                      rootPath: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "路径移除完成后，下旨魏征移除根节点"
+
+    # ✅ 尉迟恭报告扫描开始 → 虞世南状态栏 + 魏征立即把扫描路径写入 folderTree
+    scan_started:
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_status_notification"
+                  content:
+                      type: "scan"
+                      task: "{{qizou.content.path}}"
+                      status: "progress"
+                  priority: "normal"
+              description: "尉迟恭报告扫描开始后，下旨虞世南更新状态栏显示"
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_paths"
+                  content:
+                      paths:
+                          - "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "扫描开始即把当前目录加入 folderTree，不等 scan_completed"
+
+    # ✅ RFC 0136: 袁天罡报告发现直属子目录 → 李世民下旨尉迟恭持久化准入并排入同一 PQueue
+    scan_directory_discovered:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "add_scan_task"
+                  content:
+                      path: "{{qizou.content.directoryPath}}"
+                      source: "discovered"
+                  priority: "normal"
+              description: "袁天罡报告发现直属子目录后，下旨尉迟恭添加扫描任务到队列"
+        # ✅ RFC 0136 方案 A: 发现即更新 folder tree（不等子目录 scan_completed）
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_paths"
+                  content:
+                      paths:
+                          - "{{qizou.content.directoryPath}}"
+                  priority: "normal"
+              description: "袁天罡发现直属子目录后，下旨魏征立即加入 folderTree"
+
+    # ✅ RFC 0137: 袁天罡报告文件监视合并批次 → 尉迟恭入扫描执行队列
+    watch_scan_queue_add:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "schedule_watch_file_operations"
+                  content:
+                      operations: "{{qizou.content.operations}}"
+                  priority: "normal"
+              description: "文件监视合并批次后，下旨尉迟恭将 FileOperation 排入扫描队列"
+
+    # ✅ RFC 0057 Phase 3: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
+    scan_progress:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_scan_progress"
+                  content:
+                      filePath: "{{qizou.content.filePath}}"
+                      scanPath: "{{qizou.content.scanPath}}"
+                      progress: "{{qizou.content.progress}}"
+                      total: "{{qizou.content.total}}"
+                      type: "{{qizou.content.type}}"
+                  priority: "normal"
+              description: "扫描进度更新后，下旨虞世南更新状态栏显示"
+
+    # ✅ RFC 0057: 尉迟恭报告扫描队列为空 → 李世民下旨虞世南清空状态
+    scan_queue_empty:
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_scan_progress"
+                  content:
+                      filePath: ""
+                      progress: 0
+                      type: "complete"
+                  priority: "normal"
+              description: "扫描队列为空后，下旨虞世南清空扫描状态"
+
+    # ✅ RFC 0057: 袁天罡报告状态通知 → 李世民下旨虞世南更新状态栏
+    status_notification:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "虞世南"
+              shengzhi:
+                  command: "update_status_notification"
+                  content:
+                      type: "{{qizou.content.type}}"
+                      task: "{{qizou.content.task}}"
+                      status: "{{qizou.content.status}}"
+                      error: "{{qizou.content.error}}"
+                      timestamp: "{{qizou.content.timestamp}}"
+                      data: "{{qizou.content.data}}"
+                  priority: "normal"
+              description: "主进程状态通知后，下旨虞世南更新状态栏显示"
+
+    # ✅ RFC 0058: 袁天罡报告菜单点击事件 → 李世民下旨长孙无忌处理
+    menu_action:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "长孙无忌"
+              shengzhi:
+                  command: "menu_action"
+                  content:
+                      key: "{{qizou.content.key}}"
+                      label: "{{qizou.content.label}}"
+                      shortcut: "{{qizou.content.shortcut}}"
+                      role: "{{qizou.content.role}}"
+                      url: "{{qizou.content.url}}"
+                  priority: "normal"
+              description: "菜单点击事件后，下旨长孙无忌处理菜单操作"
+
+    # ✅ RFC 0058: 打开外部链接 → 李世民下旨袁天罡发送 IPC
+    # 支持来源：长孙无忌（服务调用）或百姓（DOM 事件），统一通过 qizou 路由处理
+    open_external:
+        - when:
+              from: "长孙无忌"
+              type: "request"
+          then:
+              service: "袁天罡"
+              shengzhi:
+                  command: "open_external"
+                  content:
+                      url: "{{qizou.content.url}}"
+                  priority: "normal"
+              description: "长孙无忌启奏打开外部链接，下旨袁天罡发送 IPC 到主进程"
+        - when:
+              from: "百姓"
+              type: "request"
+          then:
+              service: "袁天罡"
+              shengzhi:
+                  command: "open_external"
+                  content:
+                      url: "{{qizou.content.url}}"
+                  priority: "normal"
+              description: "百姓通过 DOM 事件上书打开外部链接，下旨袁天罡发送 IPC 到主进程"
+
+    # ✅ RFC 0058: 在 Finder 中显示文件 → 李世民下旨袁天罡发送 IPC
+    # 支持来源：长孙无忌（服务调用）或百姓（DOM 事件），统一通过 qizou 路由处理
+    open_in_finder:
+        - when:
+              from: "长孙无忌"
+              type: "request"
+          then:
+              service: "袁天罡"
+              shengzhi:
+                  command: "open_in_finder"
+                  content:
+                      path: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "长孙无忌启奏在 Finder 中显示文件，下旨袁天罡发送 IPC 到主进程"
+        - when:
+              from: "百姓"
+              type: "request"
+          then:
+              service: "袁天罡"
+              shengzhi:
+                  command: "open_in_finder"
+                  content:
+                      path: "{{qizou.content.path}}"
+                  priority: "normal"
+              description: "百姓通过 DOM 事件上书在 Finder 中显示文件，下旨袁天罡发送 IPC 到主进程"
+
+    # ✅ RFC 0042 Step 2.5: 袁天罡报告扫描完成 → 李世民下旨魏征批量更新
+    scan_ready:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_paths"
+                  content:
+                      paths: "{{qizou.content.paths}}"
+                  priority: "normal"
+              description: "扫描完成后，下旨魏征批量更新folderTree"
+
+    # ✅ RFC 0042 Step 2.5: 秦琼报告文件夹发现 → 李世民下旨魏征添加
+    folder_discovered:
+        - when:
+              from: "秦琼"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "folder_discovered"
+                  content:
+                      folderPath: "{{qizou.content.folderPath}}"
+                  priority: "normal"
+              description: "秦琼发现新文件夹后，下旨魏征添加到folderTree"
+
+    # ✅ RFC 0042 Step 2.5: 秦琼报告文件夹移除 → 李世民下旨魏征移除
+    folder_removed:
+        - when:
+              from: "秦琼"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "folder_removed"
+                  content:
+                      folderPath: "{{qizou.content.folderPath}}"
+                  priority: "normal"
+              description: "秦琼发现文件夹移除后，下旨魏征从folderTree中移除"
+
+    scan_completed:
+        - when:
+              from: "尉迟恭"
+              type: "report"
+          then:
+              service: "魏征"
+              shengzhi:
+                  command: "add_paths"
+                  content:
+                      paths:
+                          - "{{qizou.content.path}}"
+              description: "扫描完成后，下旨魏征更新树"
+
+    # ✅ 用户手动请求重新扫描（百姓启奏）
+    request_rescan:
+        - when:
+              from: "百姓"
+              type: "request"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "add_scan_task"
+                  content:
+                      path: "{{qizou.content.path}}"
+                      action: "rescan"
+                      source: "user"
+                  priority: "normal"
+              description: "百姓请求重新扫描文件夹，下旨尉迟恭添加重新扫描任务"

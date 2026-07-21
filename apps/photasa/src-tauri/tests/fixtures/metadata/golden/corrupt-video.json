@@ -1,0 +1,9 @@
+{
+  "fixture": "corrupt-video.mp4",
+  "expect": {
+    "type": "video",
+    "format": "mp4",
+    "dateSource": "file_modified"
+  },
+  "expectKeys": []
+}

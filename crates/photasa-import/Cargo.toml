@@ -1,0 +1,24 @@
+[package]
+name = "photasa-import"
+version = "0.1.0"
+edition = "2021"
+description = "Photasa import algorithm (path filter, copy loop, session)"
+license = "MIT"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["clock", "serde"] }
+filetime = "0.2"
+log = "0.4"
+walkdir = "2"
+photasa-media = { workspace = true }
+
+[dev-dependencies]
+
+[lints.rust]
+warnings = "warn"
+[lints.clippy]
+all = "warn"

@@ -260,7 +260,14 @@ export async function restoreCachedFiles(
         const configContent = await fs.readFile(configPath, "utf8");
 
         // RFC 0015 修复：增强JSON解析错误处理
-        let config: { photoList?: Array<{ path: string; thumbnail?: string; isImage?: boolean; isVideo?: boolean }> };
+        let config: {
+            photoList?: Array<{
+                path: string;
+                thumbnail?: string;
+                isImage?: boolean;
+                isVideo?: boolean;
+            }>;
+        };
         try {
             config = JSON.parse(configContent) as typeof config;
         } catch (parseError) {

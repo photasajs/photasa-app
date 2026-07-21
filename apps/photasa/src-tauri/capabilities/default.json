@@ -1,0 +1,37 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "default",
+    "description": "主窗口：核心 IPC、用户图库 fs 作用域、MCP 调试",
+    "windows": ["*"],
+    "permissions": [
+        "core:default",
+        "core:window:allow-start-dragging",
+        "shell:default",
+        "dialog:default",
+        "fs:default",
+        "fs:read-files",
+        "fs:allow-read-file",
+        "fs:allow-read-dir",
+        "fs:allow-exists",
+        "fs:allow-stat",
+        "fs:allow-write-file",
+        "fs:allow-mkdir",
+        {
+            "identifier": "fs:scope",
+            "allow": [
+                "$HOME/**",
+                "$PICTURE/**",
+                "$DOCUMENT/**",
+                "$DOWNLOAD/**",
+                "$DESKTOP/**",
+                "/Volumes/**",
+                "**"
+            ]
+        },
+        "mcp-bridge:default",
+        "updater:default",
+        "global-shortcut:allow-register",
+        "global-shortcut:allow-unregister",
+        "global-shortcut:allow-is-registered"
+    ]
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Circle -->
+    <circle cx="512" cy="512" r="412" fill="#FF6B35"/>
+
+    <!-- Simple Photo Frame -->
+    <rect x="306" y="306" width="412" height="412" rx="25.75" stroke="white" stroke-width="51.5" fill="none"/>
+
+    <!-- Camera Lens -->
+    <circle cx="512" cy="512" r="103" stroke="white" stroke-width="51.5" fill="none"/>
+</svg>

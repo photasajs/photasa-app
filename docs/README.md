@@ -15,7 +15,7 @@ Welcome to the Photasa documentation hub. This directory contains all project do
 
 - [Development Guide](DEV_GUIDE.md) - Get started with development
 - [Debug Guide](DEBUG.md) - Debugging and troubleshooting
-- [RFC Index](rfc/README.md) - All RFCs and design decisions
+- [RFC / ROADMAP](../ROADMAP.md) - RFC index and design decisions (canonical)
 - [Design Documents](design/) - Architecture and design docs
 - [Issues](issue/) - Known issues and solutions
 

@@ -159,7 +159,10 @@ describe("Debug Time Extraction Issues", () => {
                 ],
             };
 
-            vi.mocked(ffmpeg.ffprobe).mockImplementation(((_filePath: string, callback: (err: Error | null, data: unknown) => void) => {
+            vi.mocked(ffmpeg.ffprobe).mockImplementation(((
+                _filePath: string,
+                callback: (err: Error | null, data: unknown) => void,
+            ) => {
                 callback(null, mockFfprobeOutput as any);
                 return {} as any;
             }) as any);
@@ -198,7 +201,10 @@ describe("Debug Time Extraction Issues", () => {
                 ],
             };
 
-            vi.mocked(ffmpeg.ffprobe).mockImplementation(((_filePath: string, callback: (err: Error | null, data: unknown) => void) => {
+            vi.mocked(ffmpeg.ffprobe).mockImplementation(((
+                _filePath: string,
+                callback: (err: Error | null, data: unknown) => void,
+            ) => {
                 callback(null, mockFfprobeOutput as any);
                 return {} as any;
             }) as any);
@@ -243,7 +249,10 @@ describe("Debug Time Extraction Issues", () => {
                 ],
             };
 
-            vi.mocked(ffmpeg.ffprobe).mockImplementation(((_filePath: string, callback: (err: Error | null, data: unknown) => void) => {
+            vi.mocked(ffmpeg.ffprobe).mockImplementation(((
+                _filePath: string,
+                callback: (err: Error | null, data: unknown) => void,
+            ) => {
                 callback(null, mockFfprobeOutput as any);
                 return {} as any;
             }) as any);

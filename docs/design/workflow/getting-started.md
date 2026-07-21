@@ -27,20 +27,20 @@ npm install @zouwu-wf/expression-parser
 ### 使用核心包验证工作流
 
 ```typescript
-import { validateWorkflow } from '@zouwu-wf/workflow';
+import { validateWorkflow } from "@zouwu-wf/workflow";
 
 const workflow = {
-    id: 'example_workflow',
-    name: '示例工作流',
-    version: '1.0.0',
+    id: "example_workflow",
+    name: "示例工作流",
+    version: "1.0.0",
     steps: [
         {
-            id: 'hello_world',
-            type: 'builtin',
-            action: 'log',
+            id: "hello_world",
+            type: "builtin",
+            action: "log",
             input: {
-                level: 'info',
-                message: 'Hello, World!',
+                level: "info",
+                message: "Hello, World!",
             },
         },
     ],
@@ -48,9 +48,9 @@ const workflow = {
 
 const result = validateWorkflow(workflow);
 if (result.valid) {
-    console.log('工作流验证通过');
+    console.log("工作流验证通过");
 } else {
-    console.error('验证失败:', result.errors);
+    console.error("验证失败:", result.errors);
 }
 ```
 
@@ -70,9 +70,9 @@ workflow validate -f my-workflow.yml
 ### 使用表达式解析器
 
 ```typescript
-import { extractTemplateExpressions } from '@zouwu-wf/expression-parser';
+import { extractTemplateExpressions } from "@zouwu-wf/expression-parser";
 
-const result = extractTemplateExpressions('Hello \{\{inputs.name\}\}!');
+const result = extractTemplateExpressions("Hello \{\{inputs.name\}\}!");
 console.log(result.variables); // [{ type: 'inputs', path: 'name', ... }]
 ```
 

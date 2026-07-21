@@ -31,18 +31,16 @@ jest.mock("../config-storage", () => ({
 jest.mock("glob", () => ({
     Glob: jest.fn().mockImplementation(() => ({
         stream: jest.fn().mockReturnValue({
-            on: jest
-                .fn()
-                .mockImplementation((event: any, callback: any) => {
-                    if (event === "data") {
-                        setTimeout(() => callback("file1.photasa.json"), 10);
-                    } else if (event === "end") {
-                        setTimeout(() => callback(), 20);
-                    }
-                    return {
-                        on: jest.fn().mockReturnThis(),
-                    };
-                }),
+            on: jest.fn().mockImplementation((event: any, callback: any) => {
+                if (event === "data") {
+                    setTimeout(() => callback("file1.photasa.json"), 10);
+                } else if (event === "end") {
+                    setTimeout(() => callback(), 20);
+                }
+                return {
+                    on: jest.fn().mockReturnThis(),
+                };
+            }),
         }),
     })),
 }));

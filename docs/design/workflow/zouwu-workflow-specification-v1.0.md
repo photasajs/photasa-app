@@ -150,7 +150,7 @@ interface WorkflowDefinition {
     retry?: {
         maxAttempts: number;
         delay: number;
-        backoff?: 'linear' | 'exponential';
+        backoff?: "linear" | "exponential";
     };
     /** 触发器定义 */
     triggers?: TriggerDefinition[];
@@ -174,7 +174,7 @@ interface WorkflowStep {
     /** 步骤描述 */
     description?: string;
     /** 驺吾颜色标识（可选） */
-    color?: 'blue' | 'red' | 'yellow' | 'white' | 'black';
+    color?: "blue" | "red" | "yellow" | "white" | "black";
     /** 服务名称（用于 action 类型） */
     service?: string;
     /** 动作名称（用于 action 类型） */
@@ -222,15 +222,15 @@ interface WorkflowStep {
 
 ```typescript
 type StepType =
-    | 'action' // 调用业务适配器方法
-    | 'condition' // 条件判断分支
-    | 'loop' // 循环执行
-    | 'builtin' // 内置操作
-    | 'parallel' // 并行执行
-    | 'sequence' // 序列执行
-    | 'delay' // 延迟执行
-    | 'retry' // 重试步骤
-    | 'error_handler'; // 错误处理
+    | "action" // 调用业务适配器方法
+    | "condition" // 条件判断分支
+    | "loop" // 循环执行
+    | "builtin" // 内置操作
+    | "parallel" // 并行执行
+    | "sequence" // 序列执行
+    | "delay" // 延迟执行
+    | "retry" // 重试步骤
+    | "error_handler"; // 错误处理
 ```
 
 ### 2.4 ExecutionContext（执行上下文）
@@ -250,7 +250,7 @@ interface ExecutionContext {
     /** 当前步骤 ID */
     currentStepId?: string;
     /** 执行状态 */
-    status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+    status: "pending" | "running" | "completed" | "failed" | "cancelled";
     /** 输入参数 */
     input: Record<string, any>;
     /** 输出结果 */
@@ -279,7 +279,7 @@ interface StepResult {
     /** 步骤 ID */
     stepId: string;
     /** 执行状态 */
-    status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+    status: "pending" | "running" | "completed" | "failed" | "skipped";
     /** 开始时间戳 */
     startTime: number;
     /** 结束时间戳 */
@@ -445,14 +445,14 @@ steps:
       service: builtin
       action: return
       input:
-          data: '/path/to/folder'
+          data: "/path/to/folder"
 
     - id: scan_folder
       type: action
       service: qianliyan
       action: scanDirectory
       input:
-          path: '{{steps.get_path.output}}' # 解析为 "/path/to/folder"
+          path: "{{steps.get_path.output}}" # 解析为 "/path/to/folder"
 ```
 
 ### 3.4 错误处理机制
@@ -485,11 +485,11 @@ try {
 // 2. 工作流级错误处理
 try {
     await orchestrator.executeWorkflow(workflow, command, options);
-    context.status = 'completed';
+    context.status = "completed";
 } catch (error) {
-    context.status = 'failed';
+    context.status = "failed";
     context.error = error.message;
-    emit('workflowFailed', context);
+    emit("workflowFailed", context);
 }
 ```
 
@@ -499,50 +499,50 @@ try {
 
 ```yaml
 # ===== 驺吾元数据 =====
-id: 'workflow_unique_identifier' # 必需：工作流唯一标识符
-name: '驺吾工作流名称' # 必需：人类可读的名称
-description: '工作流功能详细描述' # 可选：功能说明
-version: '1.0.0' # 必需：语义版本号
-author: '作者名称' # 可选：创建者
+id: "workflow_unique_identifier" # 必需：工作流唯一标识符
+name: "驺吾工作流名称" # 必需：人类可读的名称
+description: "工作流功能详细描述" # 可选：功能说明
+version: "1.0.0" # 必需：语义版本号
+author: "作者名称" # 可选：创建者
 createdAt: 1727544000000 # 可选：创建时间戳
 updatedAt: 1727544000000 # 可选：最后更新时间
 
 # ===== 触发器定义 =====
 triggers: # 可选：工作流触发条件
-    - intent: 'workflow_intent' # 意图标识符
-    - event: 'zouwu_awakens' # 事件触发
-    - schedule: '0 */6 * * *' # 定时触发（cron格式）
+    - intent: "workflow_intent" # 意图标识符
+    - event: "zouwu_awakens" # 事件触发
+    - schedule: "0 */6 * * *" # 定时触发（cron格式）
 
 # ===== 输入输出规范 =====
 inputs: # 可选：输入参数定义
     paramName: # 参数名作为键
-        type: 'string|number|boolean|object|array' # 数据类型
+        type: "string|number|boolean|object|array" # 数据类型
         required: true # 是否必需
-        description: '参数描述' # 参数说明
-        default: '默认值' # 默认值
+        description: "参数描述" # 参数说明
+        default: "默认值" # 默认值
         validation: # 验证规则
-            pattern: '^[a-z]+$'
+            pattern: "^[a-z]+$"
             min: 0
             max: 100
 
 outputs: # 可选：输出结果定义
     resultName: # 输出名作为键
-        type: 'string|number|boolean|object|array'
-        description: '输出描述'
+        type: "string|number|boolean|object|array"
+        description: "输出描述"
 
 # ===== 全局变量 =====
 variables: # 可选：工作流级变量
-    requestId: '{{uuid()}}'
-    timestamp: '{{Date.now()}}'
+    requestId: "{{uuid()}}"
+    timestamp: "{{Date.now()}}"
     maxRetries: 3
 
 # ===== 驺吾五彩步骤 =====
 colors: # 驺吾特色：五彩步骤（兼容steps）
-    - id: 'step_unique_id' # 必需：步骤唯一标识
-      name: '步骤显示名称' # 可选：人类可读名称
+    - id: "step_unique_id" # 必需：步骤唯一标识
+      name: "步骤显示名称" # 可选：人类可读名称
       color: blue|red|yellow|white|black # 驺吾特色：颜色映射
       type: condition|action|builtin|parallel|loop # 步骤类型
-      description: '步骤描述' # 可选：功能说明
+      description: "步骤描述" # 可选：功能说明
 
       # 驺吾特性
       guardian: # 守护特性
@@ -554,8 +554,8 @@ colors: # 驺吾特色：五彩步骤（兼容steps）
           preserveOriginal: true # 保留原始数据
 
       wings: # 双翼特性（并行专用）
-          left: 'left_branch'
-          right: 'right_branch'
+          left: "left_branch"
+          right: "right_branch"
 
       tail: # 长尾特性（链式专用）
           long: true
@@ -571,23 +571,23 @@ zouwu: # 驺吾专属配置
     fiveColors: true # 启用五彩步骤
     guardian: true # 启用守护模式
     preserveData: true # 不食活物（保护数据）
-    tailLength: 'long|medium|short' # 长尾特性级别
+    tailLength: "long|medium|short" # 长尾特性级别
 
 # ===== 错误处理 =====
 error_handling: # 可选：全局错误处理
     default:
-        type: 'gentle_recovery' # 驺吾特色：温和恢复
+        type: "gentle_recovery" # 驺吾特色：温和恢复
         response:
             success: false
-            message: '驺吾温和地处理了异常'
+            message: "驺吾温和地处理了异常"
 
 # ===== 工作流配置 =====
 enabled: true # 可选：是否启用
 timeout: 30000 # 可选：超时时间（毫秒）
-priority: 'user' # 可选：优先级
+priority: "user" # 可选：优先级
 retryOnFailure: true # 可选：失败时重试
 maxRetries: 2 # 可选：最大重试次数
-tags: ['zouwu', 'workflow'] # 可选：标签分类
+tags: ["zouwu", "workflow"] # 可选：标签分类
 ```
 
 ### 2. 驺吾五彩步骤类型
@@ -597,14 +597,14 @@ tags: ['zouwu', 'workflow'] # 可选：标签分类
 条件判断步骤，驺吾以仁德之心进行判断：
 
 ```yaml
-- id: 'guardian_check'
-  name: '驺吾守护检查'
+- id: "guardian_check"
+  name: "驺吾守护检查"
   color: blue # 青色标识
-  type: 'condition'
+  type: "condition"
   condition:
-      field: '{{inputs.data}}'
-      operator: 'eq|ne|gt|gte|lt|lte|in|nin|exists|matches|and|or'
-      value: 'expected_value'
+      field: "{{inputs.data}}"
+      operator: "eq|ne|gt|gte|lt|lte|in|nin|exists|matches|and|or"
+      value: "expected_value"
   guardian: # 驺吾守护特性
       gentle: true
       safe: true
@@ -619,19 +619,19 @@ tags: ['zouwu', 'workflow'] # 可选：标签分类
 动作执行步骤，驺吾温和地执行外部服务调用：
 
 ```yaml
-- id: 'benevolent_action'
-  name: '驺吾仁德处理'
+- id: "benevolent_action"
+  name: "驺吾仁德处理"
   color: red # 赤色标识
-  type: 'action'
-  service: 'wenchang|taiyi|qianliyan|maliang'
-  action: 'methodName'
+  type: "action"
+  service: "wenchang|taiyi|qianliyan|maliang"
+  action: "methodName"
   benevolent: # 仁德特性
       nonDestructive: true
       preserveOriginal: true
   input:
-      param: '{{inputs.data}}'
+      param: "{{inputs.data}}"
   output:
-      result: 'result'
+      result: "result"
   output_schema: # 输出模式定义
       result:
           type: object
@@ -642,14 +642,14 @@ tags: ['zouwu', 'workflow'] # 可选：标签分类
 内置操作步骤，驺吾的基础能力：
 
 ```yaml
-- id: 'gentle_log'
-  name: '驺吾记录'
+- id: "gentle_log"
+  name: "驺吾记录"
   color: yellow # 黄色标识
-  type: 'builtin'
-  action: 'return|setVariable|log|delay|transform|error'
+  type: "builtin"
+  action: "return|setVariable|log|delay|transform|error"
   input:
-      level: 'info'
-      message: '🎨 驺吾五彩处理中...'
+      level: "info"
+      message: "🎨 驺吾五彩处理中..."
 ```
 
 #### 2.4 白色步骤 (White - Parallel)
@@ -657,22 +657,22 @@ tags: ['zouwu', 'workflow'] # 可选：标签分类
 并行处理步骤，驺吾展开双翼：
 
 ```yaml
-- id: 'dual_wings'
-  name: '驺吾双翼'
+- id: "dual_wings"
+  name: "驺吾双翼"
   color: white # 白色标识
-  type: 'parallel'
+  type: "parallel"
   wings: # 双翼配置
-      left: 'validation'
-      right: 'transformation'
+      left: "validation"
+      right: "transformation"
   branches:
-      - name: 'validation'
+      - name: "validation"
         steps:
             -  # 左翼步骤
-      - name: 'transformation'
+      - name: "transformation"
         steps:
             -  # 右翼步骤
-  waitFor: 'all|any|majority'
-  failOn: 'any|all|majority'
+  waitFor: "all|any|majority"
+  failOn: "any|all|majority"
 ```
 
 #### 2.5 玄色步骤 (Black - Loop)
@@ -680,22 +680,22 @@ tags: ['zouwu', 'workflow'] # 可选：标签分类
 循环处理步骤，驺吾长尾递归：
 
 ```yaml
-- id: 'tail_recursion'
-  name: '驺吾长尾'
+- id: "tail_recursion"
+  name: "驺吾长尾"
   color: black # 玄色标识
-  type: 'loop'
+  type: "loop"
   tail: # 长尾特性
       long: true
       graceful: true
   iterator:
-      source: '{{inputs.array}}'
-      variable: 'item'
-      index: 'index'
+      source: "{{inputs.array}}"
+      variable: "item"
+      index: "index"
   steps:
       -  # 循环体步骤
   breakCondition:
-      operator: 'gte'
-      value: '{{index}}'
+      operator: "gte"
+      value: "{{index}}"
       test: 10
 ```
 
@@ -730,8 +730,8 @@ tags: ['zouwu', 'workflow'] # 可选：标签分类
 
 ```yaml
 id: scan/folder_scan
-name: '文件夹扫描工作流'
-version: '1.0.0'
+name: "文件夹扫描工作流"
+version: "1.0.0"
 enabled: true
 createdAt: 1700000000000
 updatedAt: 1700000000000
@@ -740,90 +740,90 @@ inputs:
     path:
         type: string
         required: true
-        description: '扫描路径'
+        description: "扫描路径"
 
 outputs:
     fileCount:
         type: number
-        description: '文件数量'
+        description: "文件数量"
     processedFiles:
         type: array
-        description: '已处理文件列表'
+        description: "已处理文件列表"
 
 steps:
     # 1. 验证输入路径
     - id: validate_path
-      name: '验证路径'
+      name: "验证路径"
       type: condition
       color: blue
       condition:
-          field: 'inputs.path'
+          field: "inputs.path"
           operator: isNotEmpty
           value: true
       onTrue:
           - id: scan
-            name: '执行扫描'
+            name: "执行扫描"
             type: action
             color: red
             service: qianliyan
             action: scanDirectory
             input:
-                path: '{{inputs.path}}'
+                path: "{{inputs.path}}"
                 recursive: true
             output:
                 files: result
       onFalse:
           - id: error
-            name: '路径为空错误'
+            name: "路径为空错误"
             type: action
             color: yellow
             service: builtin
             action: error
             input:
-                message: '路径不能为空'
-                code: 'INVALID_PATH'
+                message: "路径不能为空"
+                code: "INVALID_PATH"
 
     # 2. 检查扫描结果
     - id: check_results
-      name: '检查结果'
+      name: "检查结果"
       type: condition
       color: blue
       condition:
-          field: 'steps.scan.output.files.length'
+          field: "steps.scan.output.files.length"
           operator: gt
           value: 0
       onTrue:
           - id: process_files
-            name: '处理文件'
+            name: "处理文件"
             type: loop
             color: black
             loop:
                 variable: file
-                count: '{{steps.scan.output.files}}'
+                count: "{{steps.scan.output.files}}"
                 steps:
                     - id: generate_thumbnail
-                      name: '生成缩略图'
+                      name: "生成缩略图"
                       type: action
                       color: red
                       service: media
                       action: generateThumbnail
                       input:
-                          path: '{{file.path}}'
+                          path: "{{file.path}}"
                           size: 200
       onFalse:
           - id: log_empty
-            name: '记录空结果'
+            name: "记录空结果"
             type: action
             color: yellow
             service: builtin
             action: log
             input:
                 level: warn
-                message: '未找到文件'
+                message: "未找到文件"
 
     # 3. 返回结果
     - id: return_result
-      name: '返回结果'
+      name: "返回结果"
       type: action
       color: yellow
       service: builtin
@@ -831,8 +831,8 @@ steps:
       input:
           success: true
           data:
-              fileCount: '{{steps.scan.output.files.length}}'
-              processedFiles: '{{steps.process_files.output}}'
+              fileCount: "{{steps.scan.output.files.length}}"
+              processedFiles: "{{steps.process_files.output}}"
 ```
 
 ## 5. 工作流最佳实践
@@ -883,7 +883,7 @@ steps:
   service: builtin
   action: log
   input:
-      message: '处理完成'
+      message: "处理完成"
   ignoreError: true # 日志失败不影响工作流
 ```
 
@@ -895,7 +895,7 @@ steps:
   service: media
   action: processFile
   input:
-      path: '{{file.path}}'
+      path: "{{file.path}}"
   errorHandler:
       steps:
           - id: log_error
@@ -904,7 +904,7 @@ steps:
             action: log
             input:
                 level: error
-                message: '处理失败: {{error.message}}'
+                message: "处理失败: {{error.message}}"
       continue: true # 记录错误后继续
 ```
 
@@ -914,7 +914,7 @@ steps:
 - id: validate_critical_input
   type: condition
   condition:
-      field: 'inputs.required_field'
+      field: "inputs.required_field"
       operator: exists
       value: true
   onFalse:
@@ -923,8 +923,8 @@ steps:
         service: builtin
         action: error
         input:
-            message: '缺少必需参数'
-            code: 'VALIDATION_ERROR'
+            message: "缺少必需参数"
+            code: "VALIDATION_ERROR"
 ```
 
 ### 5.3 性能优化
@@ -981,13 +981,13 @@ steps:
   type: loop
   loop:
       variable: batch
-      count: '{{variables.file_batches}}'
+      count: "{{variables.file_batches}}"
       steps:
           - id: process_batch
             type: parallel
             parallel:
                 maxConcurrency: 10
-                steps: '{{batch.items}}'
+                steps: "{{batch.items}}"
 ```
 
 ### 5.4 可维护性建议
@@ -1009,8 +1009,8 @@ steps:
 
 ```yaml
 - id: complex_validation
-  name: '复杂业务验证'
-  description: '验证用户权限、配额和文件格式'
+  name: "复杂业务验证"
+  description: "验证用户权限、配额和文件格式"
   type: condition
   # ...
 ```
@@ -1024,12 +1024,12 @@ steps:
   action: processPayment
   output_schema:
       type: object
-      required: ['transactionId', 'status']
+      required: ["transactionId", "status"]
       properties:
           transactionId:
               type: string
           status:
-              enum: ['success', 'pending', 'failed']
+              enum: ["success", "pending", "failed"]
           amount:
               type: number
 ```
@@ -1045,10 +1045,10 @@ steps:
   action: log
   input:
       level: debug
-      message: '当前变量状态'
+      message: "当前变量状态"
       metadata:
-          fileCount: '{{steps.scan.output.files.length}}'
-          currentIndex: '{{loopContext.index}}'
+          fileCount: "{{steps.scan.output.files.length}}"
+          currentIndex: "{{loopContext.index}}"
 ```
 
 #### 条件步骤添加详细分支日志
@@ -1057,7 +1057,7 @@ steps:
 - id: check_condition
   type: condition
   condition:
-      field: 'steps.validate.output.valid'
+      field: "steps.validate.output.valid"
       operator: eq
       value: true
   onTrue:
@@ -1066,7 +1066,7 @@ steps:
         service: builtin
         action: log
         input:
-            message: '验证成功，进入处理流程'
+            message: "验证成功，进入处理流程"
   onFalse:
       - id: log_failure_path
         type: action
@@ -1074,7 +1074,7 @@ steps:
         action: log
         input:
             level: warn
-            message: '验证失败，跳过处理'
+            message: "验证失败，跳过处理"
 ```
 
 ## 6. 语法规范 v1.0
@@ -1112,14 +1112,14 @@ value: "{{zouwu.benevolent(action)}}"      # 仁德执行
 
 ```yaml
 colors:
-    - id: 'step_a'
+    - id: "step_a"
       # 步骤定义
 
-    - id: 'step_b'
-      dependsOn: ['step_a'] # 单个依赖
+    - id: "step_b"
+      dependsOn: ["step_a"] # 单个依赖
 
-    - id: 'step_c'
-      dependsOn: ['step_a', 'step_b'] # 多个依赖
+    - id: "step_c"
+      dependsOn: ["step_a", "step_b"] # 多个依赖
 ```
 
 ### 6.5 错误处理规范
@@ -1129,16 +1129,16 @@ colors:
 ```yaml
 error_handling:
     validation_error:
-        type: 'benevolent_failure' # 仁德失败
+        type: "benevolent_failure" # 仁德失败
         response:
             success: false
-            error: '驺吾检测到验证未通过'
-            guardian: 'zouwu_protected'
+            error: "驺吾检测到验证未通过"
+            guardian: "zouwu_protected"
 
     engine_error:
-        type: 'gentle_retry' # 温和重试
+        type: "gentle_retry" # 温和重试
         maxRetries: 3
-        backoff: 'linear'
+        backoff: "linear"
         delay: 1000
 ```
 
@@ -1157,8 +1157,8 @@ zouwu:
     safeMode: true # 安全模式
 
     # 性能配置
-    tailLength: 'long' # 长尾级别
-    wingSpan: 'wide' # 双翼展开度
+    tailLength: "long" # 长尾级别
+    wingSpan: "wide" # 双翼展开度
 ```
 
 ## 向后兼容性

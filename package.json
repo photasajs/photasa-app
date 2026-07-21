@@ -3,24 +3,27 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "build": "nx run-many -t build",
-        "test": "nx run-many -t test",
-        "lint": "nx run-many -t lint",
-        "typecheck": "nx run-many -t typecheck",
+        "dev": "pnpm --filter @photasa/photasa run dev",
+        "build": "turbo run build",
+        "test": "turbo run test",
+        "lint": "turbo run lint",
+        "typecheck": "turbo run typecheck",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "prepare": "husky",
-        "validate": "pnpm --filter @photasa/desktop run validate",
-        "dev:desktop": "pnpm --filter @photasa/desktop dev",
-        "build:desktop": "pnpm --filter @photasa/desktop build",
-        "test:desktop": "pnpm --filter @photasa/desktop test",
-        "typecheck:desktop": "pnpm --filter @photasa/desktop typecheck",
-        "workflow:validate": "pnpm --filter @photasa/desktop run workflow:validate"
+        "dev:photasa": "pnpm --filter @photasa/photasa run dev",
+        "vite:dev:photasa": "pnpm --filter @photasa/photasa run vite:dev",
+        "build:photasa": "pnpm --filter @photasa/photasa run build",
+        "tauri:dev": "pnpm --filter @photasa/photasa run dev",
+        "tauri:build": "pnpm --filter @photasa/photasa run build",
+        "clippy": "pnpm --filter @photasa/photasa run clippy"
     },
     "devDependencies": {
+        "@systembug/pangu": "^0.0.12",
         "eslint": "^8.57.0",
         "husky": "^9.1.7",
-        "nx": "^22.3.3",
+        "lint-staged": "^17.1.0",
         "prettier": "^3.2.5",
+        "turbo": "^2.3.0",
         "typescript": "^5.3.3"
     },
     "packageManager": "pnpm@9.0.0"

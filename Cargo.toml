@@ -1,0 +1,34 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/libheif-sys",
+    "crates/photasa-preference",
+    "crates/photasa-import",
+    "crates/photasa-thumbnail",
+    "crates/photasa-types",
+    "crates/photasa-scan",
+    "crates/photasa-watch",
+    "crates/photasa-config",
+    "crates/photasa-media",
+    "crates/photasa-folder-tree",
+    "apps/photasa/src-tauri",
+]
+
+[patch.crates-io]
+libheif-sys = { path = "crates/libheif-sys" }
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+thiserror = "1"
+photasa-preference = { path = "crates/photasa-preference" }
+photasa-import = { path = "crates/photasa-import" }
+photasa-thumbnail = { path = "crates/photasa-thumbnail" }
+photasa-types = { path = "crates/photasa-types" }
+photasa-scan = { path = "crates/photasa-scan" }
+photasa-watch = { path = "crates/photasa-watch" }
+photasa-media = { path = "crates/photasa-media" }
+photasa-config = { path = "crates/photasa-config" }
+photasa-folder-tree = { path = "crates/photasa-folder-tree" }

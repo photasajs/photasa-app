@@ -214,9 +214,10 @@ export async function extractMetadata(
 
         const type = typeOfMedia(filePath);
 
-        const extractor = type in MediaExtractorTypeMap
-            ? MediaExtractorTypeMap[type as keyof typeof MediaExtractorTypeMap]
-            : undefined;
+        const extractor =
+            type in MediaExtractorTypeMap
+                ? MediaExtractorTypeMap[type as keyof typeof MediaExtractorTypeMap]
+                : undefined;
 
         if (extractor) {
             const metadata = await extractor(filePath, logger);

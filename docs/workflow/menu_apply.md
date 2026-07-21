@@ -1,23 +1,28 @@
 # 📜 工作流: 应用系统菜单
+
 > 接收菜单数据，通过太白金星适配器设置系统菜单
 
 ## 📑 基本信息
+
 - **标识 (ID)**: `menu_apply`
 - **版本 (Version)**: `1.0.0`
 - **作者 (Author)**: Tianshu Engine
 
 ## 📥 输入参数 (Inputs)
-| 参数名 | 类型 | 必填 | 描述 |
-| :--- | :--- | :--- | :--- |
-| `menus` | `array` | ✅ | 菜单数据数组 MenuItemData[] |
+
+| 参数名  | 类型    | 必填 | 描述                        |
+| :------ | :------ | :--- | :-------------------------- |
+| `menus` | `array` | ✅   | 菜单数据数组 MenuItemData[] |
 
 ## 📤 输出规范 (Outputs)
+
 工作流执行完成后返回如下结构：
+
 ```json
 {
-  "success": true,
-  "message": "菜单已成功设置",
-  "timestamp": "{{now()}}"
+    "success": true,
+    "message": "菜单已成功设置",
+    "timestamp": "{{now()}}"
 }
 ```
 

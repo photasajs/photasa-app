@@ -2,12 +2,17 @@
 <html lang="zh-CN">
     <head>
         <meta charset="UTF-8" />
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Photasa</title>
+        <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+        <!-- Tauri 本地图：asset 协议（convertFileSrc），非 file:// -->
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; media-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; font-src 'self' data:;"
+        />
     </head>
+
     <body>
-        <div id="app"></div>
+        <div id="app" data-theme></div>
         <script type="module" src="/src/main.ts"></script>
     </body>
 </html>

@@ -1,0 +1,10 @@
+{
+  "fixture": "minimal-no-exif.jpg",
+  "expect": {
+    "type": "image",
+    "format": "jpg",
+    "dateSource": "file_modified",
+    "width": 32,
+    "height": 24
+  }
+}

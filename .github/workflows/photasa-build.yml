@@ -1,0 +1,46 @@
+name: Photasa PR Build Matrix
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Lint & Test (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Toolchain
+        uses: ./.github/actions/setup-photasa-toolchain
+
+      - name: Run ESLint
+        run: pnpm --filter @photasa/photasa run lint
+
+      - name: Run TypeScript Typecheck
+        run: pnpm --filter @photasa/photasa run typecheck
+
+      - name: Run Frontend Unit Tests
+        run: pnpm --filter @photasa/photasa run test:unit
+
+      - name: Run Rust Clippy
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Run Rust Unit Tests
+        run: cargo test --workspace
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Setup Toolchain
+        uses: ./.github/actions/setup-photasa-toolchain
+
+      - name: Build Tauri App (Debug Profile)
+        run: pnpm --filter @photasa/photasa tauri build --debug

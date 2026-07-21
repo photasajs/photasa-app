@@ -1,1 +1,36 @@
+pub mod config;
+pub mod directory;
+pub mod engine_status;
+pub mod extract_metadata;
+mod extract_metadata_exif;
+mod extract_metadata_video;
+pub mod import_date_util;
+pub mod import_execute;
+pub mod import_file_groups;
+pub mod import_legacy;
+pub mod import_path_filter;
+pub mod import_preview;
+pub mod import_scan_directories;
+pub mod import_session_store;
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+pub mod log_toggle_shortcut;
+pub mod log_viewer;
+pub mod menu;
+#[cfg(test)]
+pub mod metadata_golden;
+pub mod path;
+pub mod platform;
+pub mod scan_queue;
+pub mod scan_runner;
+pub mod shell;
+pub mod folder_tree;
+pub mod preferences;
+pub mod splash_bridge;
+pub mod stubs;
+pub mod thumbnail;
+pub mod update;
+pub mod update_config;
+pub mod update_periodic;
+pub mod watch;
+pub mod watch_scan_queue;
 pub mod window;

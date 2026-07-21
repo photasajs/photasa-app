@@ -129,7 +129,7 @@ interface WorkflowDefinition {
     retry?: {
         maxAttempts: number;
         delay: number;
-        backoff?: 'linear' | 'exponential';
+        backoff?: "linear" | "exponential";
     };
 }
 ```
@@ -181,7 +181,7 @@ interface WorkflowStep {
     retry?: {
         maxAttempts: number;
         delay: number;
-        backoff?: 'linear' | 'exponential';
+        backoff?: "linear" | "exponential";
         retryCondition?: ConditionExpression;
     };
     /** 错误处理 */
@@ -205,15 +205,15 @@ interface WorkflowStep {
 
 ```typescript
 type StepType =
-    | 'action' // 调用业务适配器方法
-    | 'condition' // 条件判断分支
-    | 'loop' // 循环执行
-    | 'builtin' // 内置操作
-    | 'parallel' // 并行执行
-    | 'sequence' // 序列执行
-    | 'delay' // 延迟执行
-    | 'retry' // 重试步骤
-    | 'error_handler'; // 错误处理
+    | "action" // 调用业务适配器方法
+    | "condition" // 条件判断分支
+    | "loop" // 循环执行
+    | "builtin" // 内置操作
+    | "parallel" // 并行执行
+    | "sequence" // 序列执行
+    | "delay" // 延迟执行
+    | "retry" // 重试步骤
+    | "error_handler"; // 错误处理
 ```
 
 ### 2.4 ExecutionContext（执行上下文）
@@ -233,7 +233,7 @@ interface ExecutionContext {
     /** 当前步骤 ID */
     currentStepId?: string;
     /** 执行状态 */
-    status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+    status: "pending" | "running" | "completed" | "failed" | "cancelled";
     /** 输入参数 */
     input: Record<string, any>;
     /** 输出结果 */
@@ -262,7 +262,7 @@ interface StepResult {
     /** 步骤 ID */
     stepId: string;
     /** 执行状态 */
-    status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+    status: "pending" | "running" | "completed" | "failed" | "skipped";
     /** 开始时间戳 */
     startTime: number;
     /** 结束时间戳 */
@@ -424,14 +424,14 @@ steps:
       service: builtin
       action: return
       input:
-          data: '/path/to/folder'
+          data: "/path/to/folder"
 
     - id: scan_folder
       type: action
       service: qianliyan
       action: scanDirectory
       input:
-          path: '{{steps.get_path.output}}' # 解析为 "/path/to/folder"
+          path: "{{steps.get_path.output}}" # 解析为 "/path/to/folder"
 ```
 
 ### 3.4 错误处理机制
@@ -464,11 +464,11 @@ try {
 // 2. 工作流级错误处理
 try {
     await orchestrator.executeWorkflow(workflow, command, options);
-    context.status = 'completed';
+    context.status = "completed";
 } catch (error) {
-    context.status = 'failed';
+    context.status = "failed";
     context.error = error.message;
-    emit('workflowFailed', context);
+    emit("workflowFailed", context);
 }
 ```
 
@@ -481,10 +481,10 @@ try {
 ```yaml
 # 工作流元数据
 id: scan/folder_scan
-name: '文件夹扫描工作流'
-description: '扫描指定文件夹并生成缩略图'
-version: '1.0.0'
-author: 'System'
+name: "文件夹扫描工作流"
+description: "扫描指定文件夹并生成缩略图"
+version: "1.0.0"
+author: "System"
 enabled: true
 createdAt: 1700000000000
 updatedAt: 1700000000000
@@ -492,11 +492,11 @@ updatedAt: 1700000000000
 # 输入参数 Schema（可选）
 inputSchema:
     type: object
-    required: ['path']
+    required: ["path"]
     properties:
         path:
             type: string
-            description: '扫描路径'
+            description: "扫描路径"
         recursive:
             type: boolean
             default: true
@@ -535,18 +535,18 @@ retry:
 
 ```yaml
 - id: scan_directory
-  name: '扫描文件夹'
+  name: "扫描文件夹"
   type: action
   service: qianliyan # 适配器名称
   action: scanDirectory # 适配器方法
   input:
-      path: '{{inputs.path}}'
+      path: "{{inputs.path}}"
       recursive: true
   output:
       files: result.files # 将输出映射到变量
   output_schema: # 验证输出结构
       type: object
-      required: ['files']
+      required: ["files"]
       properties:
           files:
               type: array
@@ -556,63 +556,63 @@ retry:
 
 ```yaml
 - id: return_result
-  name: '返回结果'
+  name: "返回结果"
   type: action
   service: builtin
   action: return
   input:
       success: true
       data:
-          fileCount: '{{steps.scan_directory.output.files.length}}'
-          duration: '{{variables.duration}}'
+          fileCount: "{{steps.scan_directory.output.files.length}}"
+          duration: "{{variables.duration}}"
 ```
 
 #### 4.2.3 condition 步骤（条件分支）
 
 ```yaml
 - id: check_file_count
-  name: '检查文件数量'
+  name: "检查文件数量"
   type: condition
   condition:
-      field: 'steps.scan_directory.output.files.length'
+      field: "steps.scan_directory.output.files.length"
       operator: gt
       value: 0
   onTrue:
       - id: process_files
-        name: '处理文件'
+        name: "处理文件"
         type: action
         service: media
         action: processFiles
         input:
-            files: '{{steps.scan_directory.output.files}}'
+            files: "{{steps.scan_directory.output.files}}"
   onFalse:
       - id: log_empty
-        name: '记录空结果'
+        name: "记录空结果"
         type: action
         service: builtin
         action: log
         input:
             level: warn
-            message: '未找到任何文件'
+            message: "未找到任何文件"
 ```
 
 #### 4.2.4 loop 步骤（循环执行）
 
 ```yaml
 - id: process_each_file
-  name: '逐个处理文件'
+  name: "逐个处理文件"
   type: loop
   loop:
       variable: file
-      count: '{{steps.scan_directory.output.files}}'
+      count: "{{steps.scan_directory.output.files}}"
       steps:
           - id: generate_thumbnail
-            name: '生成缩略图'
+            name: "生成缩略图"
             type: action
             service: media
             action: generateThumbnail
             input:
-                path: '{{file.path}}'
+                path: "{{file.path}}"
                 size: 200
 ```
 
@@ -620,7 +620,7 @@ retry:
 
 ```yaml
 - id: parallel_processing
-  name: '并行处理'
+  name: "并行处理"
   type: parallel
   parallel:
       maxConcurrency: 5
@@ -637,7 +637,7 @@ retry:
             action: log
             input:
                 level: info
-                message: '并行任务 2'
+                message: "并行任务 2"
 ```
 
 ### 4.3 条件操作符
@@ -691,22 +691,22 @@ steps:
       service: builtin
       action: log
       input:
-          message: '当前主题: {{steps.get_config.output.theme}}'
+          message: "当前主题: {{steps.get_config.output.theme}}"
 ```
 
 ### 4.5 完整工作流示例
 
 ```yaml
 id: scan/folder_scan
-name: '文件夹扫描工作流'
-version: '1.0.0'
+name: "文件夹扫描工作流"
+version: "1.0.0"
 enabled: true
 createdAt: 1700000000000
 updatedAt: 1700000000000
 
 inputSchema:
     type: object
-    required: ['path']
+    required: ["path"]
     properties:
         path:
             type: string
@@ -714,78 +714,78 @@ inputSchema:
 steps:
     # 1. 验证输入路径
     - id: validate_path
-      name: '验证路径'
+      name: "验证路径"
       type: condition
       condition:
-          field: 'inputs.path'
+          field: "inputs.path"
           operator: isNotEmpty
           value: true
       onTrue:
           - id: scan
-            name: '执行扫描'
+            name: "执行扫描"
             type: action
             service: qianliyan
             action: scanDirectory
             input:
-                path: '{{inputs.path}}'
+                path: "{{inputs.path}}"
                 recursive: true
             output:
                 files: result
       onFalse:
           - id: error
-            name: '路径为空错误'
+            name: "路径为空错误"
             type: action
             service: builtin
             action: throwError
             input:
-                message: '路径不能为空'
-                code: 'INVALID_PATH'
+                message: "路径不能为空"
+                code: "INVALID_PATH"
 
     # 2. 检查扫描结果
     - id: check_results
-      name: '检查结果'
+      name: "检查结果"
       type: condition
       condition:
-          field: 'steps.scan.output.files.length'
+          field: "steps.scan.output.files.length"
           operator: gt
           value: 0
       onTrue:
           - id: process_files
-            name: '处理文件'
+            name: "处理文件"
             type: loop
             loop:
                 variable: file
-                count: '{{steps.scan.output.files}}'
+                count: "{{steps.scan.output.files}}"
                 steps:
                     - id: generate_thumbnail
-                      name: '生成缩略图'
+                      name: "生成缩略图"
                       type: action
                       service: media
                       action: generateThumbnail
                       input:
-                          path: '{{file.path}}'
+                          path: "{{file.path}}"
                           size: 200
       onFalse:
           - id: log_empty
-            name: '记录空结果'
+            name: "记录空结果"
             type: action
             service: builtin
             action: log
             input:
                 level: warn
-                message: '未找到文件'
+                message: "未找到文件"
 
     # 3. 返回结果
     - id: return_result
-      name: '返回结果'
+      name: "返回结果"
       type: action
       service: builtin
       action: return
       input:
           success: true
           data:
-              fileCount: '{{steps.scan.output.files.length}}'
-              processedFiles: '{{steps.process_files.output.length}}'
+              fileCount: "{{steps.scan.output.files.length}}"
+              processedFiles: "{{steps.process_files.output.length}}"
 ```
 
 ## 5. 工作流最佳实践
@@ -836,7 +836,7 @@ steps:
   service: builtin
   action: log
   input:
-      message: '处理完成'
+      message: "处理完成"
   ignoreError: true # 日志失败不影响工作流
 ```
 
@@ -848,7 +848,7 @@ steps:
   service: media
   action: processFile
   input:
-      path: '{{file.path}}'
+      path: "{{file.path}}"
   errorHandler:
       steps:
           - id: log_error
@@ -857,7 +857,7 @@ steps:
             action: log
             input:
                 level: error
-                message: '处理失败: {{error.message}}'
+                message: "处理失败: {{error.message}}"
       continue: true # 记录错误后继续
 ```
 
@@ -867,7 +867,7 @@ steps:
 - id: validate_critical_input
   type: condition
   condition:
-      field: 'inputs.required_field'
+      field: "inputs.required_field"
       operator: exists
       value: true
   onFalse:
@@ -876,8 +876,8 @@ steps:
         service: builtin
         action: throwError
         input:
-            message: '缺少必需参数'
-            code: 'VALIDATION_ERROR'
+            message: "缺少必需参数"
+            code: "VALIDATION_ERROR"
 ```
 
 ### 5.3 性能优化
@@ -933,13 +933,13 @@ steps:
   type: loop
   loop:
       variable: batch
-      count: '{{variables.file_batches}}'
+      count: "{{variables.file_batches}}"
       steps:
           - id: process_batch
             type: parallel
             parallel:
                 maxConcurrency: 10
-                steps: '{{batch.items}}'
+                steps: "{{batch.items}}"
 ```
 
 ### 5.4 可维护性建议
@@ -961,8 +961,8 @@ steps:
 
 ```yaml
 - id: complex_validation
-  name: '复杂业务验证'
-  description: '验证用户权限、配额和文件格式'
+  name: "复杂业务验证"
+  description: "验证用户权限、配额和文件格式"
   type: condition
   # ...
 ```
@@ -976,12 +976,12 @@ steps:
   action: processPayment
   output_schema:
       type: object
-      required: ['transactionId', 'status']
+      required: ["transactionId", "status"]
       properties:
           transactionId:
               type: string
           status:
-              enum: ['success', 'pending', 'failed']
+              enum: ["success", "pending", "failed"]
           amount:
               type: number
 ```
@@ -997,10 +997,10 @@ steps:
   action: log
   input:
       level: debug
-      message: '当前变量状态'
+      message: "当前变量状态"
       metadata:
-          fileCount: '{{steps.scan.output.files.length}}'
-          currentIndex: '{{loop.index}}'
+          fileCount: "{{steps.scan.output.files.length}}"
+          currentIndex: "{{loop.index}}"
 ```
 
 #### 条件步骤添加详细分支日志
@@ -1009,7 +1009,7 @@ steps:
 - id: check_condition
   type: condition
   condition:
-      field: 'steps.validate.output.valid'
+      field: "steps.validate.output.valid"
       operator: eq
       value: true
   onTrue:
@@ -1018,7 +1018,7 @@ steps:
         service: builtin
         action: log
         input:
-            message: '验证成功，进入处理流程'
+            message: "验证成功，进入处理流程"
   onFalse:
       - id: log_failure_path
         type: action
@@ -1026,7 +1026,7 @@ steps:
         action: log
         input:
             level: warn
-            message: '验证失败，跳过处理'
+            message: "验证失败，跳过处理"
 ```
 
 ## 6. 参考资料

@@ -1,0 +1,22 @@
+[package]
+name = "photasa-preference"
+version = "0.1.0"
+edition = "2021"
+description = "Application-level preferences persistence (Photasa); Tauri service layer name: Wenchang"
+license = "MIT"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+uuid = { version = "1.0", features = ["v4"] }
+
+[dev-dependencies]
+tokio = { workspace = true }
+
+[lints.rust]
+warnings = "warn"
+[lints.clippy]
+all = "warn"
+

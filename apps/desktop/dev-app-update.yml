@@ -1,3 +1,0 @@
-provider: generic
-url: https://photasa.me/api/updates/releases
-updaterCacheDirName: photasa-updater

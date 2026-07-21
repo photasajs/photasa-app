@@ -36,6 +36,9 @@ out
 *.sln
 *.sw?
 
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
 # Playwright test results and reports
 test-results/
 playwright-report/
@@ -46,6 +49,7 @@ blob-report/
 *.log*
 .history
 coverage/
+coverage-*/
 
 # TypeScript build info files (should be ignored in CI/CD)
 *.tsbuildinfo
@@ -53,6 +57,9 @@ guide
 
 # Vite cache and build artifacts
 .vite/
+
+# Vitest local storage roots (e.g. shunfenger engine tests)
+.vitest/
 
 # VitePress build artifacts
 .vitepress/.temp
@@ -68,7 +75,10 @@ guide
 static/
 graph.html
 
-# Tauri (Rust build and codegen)
+# Rust workspace: `cargo build` at repo root writes here (members share one tree)
+/target/
+
+# Tauri codegen / nested-only builds (e.g. `cargo` run inside `src-tauri`)
 **/src-tauri/target/
 **/src-tauri/gen/
 
@@ -77,3 +87,4 @@ release/
 
 # Test output (project-specific)
 packages/@photasa/maliang/src/__tests__/output
+.codegraph/

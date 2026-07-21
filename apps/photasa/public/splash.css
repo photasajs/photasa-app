@@ -1,0 +1,375 @@
+/* Copied from Electron resources/splash.css, used by Tauri splash.html */
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #111827;
+    --bg-color: #111827;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --accent-color: #60a5fa;
+    --progress-bg: rgba(96, 165, 250, 0.1);
+    --progress-fill: rgba(96, 165, 250, 0.8);
+    --logo-primary: #60a5fa;
+    --logo-secondary: #3b82f6;
+    --name-shadow: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Display", system-ui, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-primary);
+    overflow: hidden;
+    user-select: none;
+    -webkit-app-region: drag;
+    height: 100vh;
+    width: 100vw;
+    cursor: default;
+}
+
+/* Theme color variables */
+[data-theme="light"] {
+    --bg-color: #ffffff;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --accent-color: #3b82f6;
+    --progress-bg: rgba(59, 130, 246, 0.1);
+    --progress-fill: rgba(59, 130, 246, 0.8);
+    --logo-primary: #3b82f6;
+    --logo-secondary: #1d4ed8;
+    --name-shadow: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg-color: #111827;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --accent-color: #60a5fa;
+    --progress-bg: rgba(96, 165, 250, 0.1);
+    --progress-fill: rgba(96, 165, 250, 0.8);
+    --logo-primary: #60a5fa;
+    --logo-secondary: #3b82f6;
+    --name-shadow: rgba(255, 255, 255, 0.1);
+}
+
+/* Main container */
+.splash-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 40px;
+    position: relative;
+}
+
+/* Logo section with animations */
+.logo-section {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.app-logo {
+    width: 128px;
+    height: 128px;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SVG logo animations */
+.logo-svg {
+    width: 100%;
+    height: 100%;
+    color: var(--accent-color);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    transition: all 0.3s ease;
+}
+
+.logo-bg {
+    animation: logoPulse 3s ease-in-out infinite;
+    transform-origin: center;
+}
+
+.camera-lens {
+    animation: lensRotate 8s linear infinite;
+    transform-origin: center;
+}
+
+.aperture-blades {
+    animation: apertureOpen 2s ease-in-out infinite alternate;
+    transform-origin: 64px 64px;
+}
+
+.camera-flash {
+    animation: flashBlink 4s ease-in-out infinite;
+}
+
+.shutter-btn {
+    animation: shutterPress 3s ease-in-out infinite;
+    transform-origin: center;
+}
+
+/* Logo animations keyframes */
+@keyframes logoPulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes lensRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes apertureOpen {
+    from {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    to {
+        transform: scale(1.1);
+        opacity: 0.6;
+    }
+}
+
+@keyframes flashBlink {
+    0%,
+    90%,
+    100% {
+        opacity: 1;
+    }
+    95% {
+        opacity: 0.3;
+    }
+}
+
+@keyframes shutterPress {
+    0%,
+    90%,
+    100% {
+        transform: scale(1);
+    }
+    95% {
+        transform: scale(0.9);
+    }
+}
+
+/* Animated name container */
+.name-container {
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-name {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+    transition: all 0.5s ease-in-out;
+    text-shadow: 0 2px 4px var(--name-shadow);
+    animation: nameEntrance 0.8s ease-out 0.2s both;
+}
+
+.app-subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    transition: all 0.5s ease-in-out;
+    animation: subtitleEntrance 0.8s ease-out 0.4s both;
+}
+
+/* Name change animations */
+.app-name.changing {
+    animation: nameChangeOut 0.3s ease-in forwards;
+}
+
+.app-name.changing-in {
+    animation: nameChangeIn 0.3s ease-out 0.3s forwards;
+}
+
+.app-subtitle.changing {
+    animation: subtitleChangeOut 0.3s ease-in forwards;
+}
+
+.app-subtitle.changing-in {
+    animation: subtitleChangeIn 0.3s ease-out 0.3s forwards;
+}
+
+/* Entrance animations */
+@keyframes nameEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes subtitleEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes nameChangeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+}
+
+@keyframes nameChangeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes subtitleChangeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes subtitleChangeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading section */
+.loading-section {
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.progress-container {
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--progress-bg);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--progress-fill);
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Indeterminate animation (when width not set) */
+.progress-fill:not(.determinate) {
+    width: 30%;
+    animation: indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+    0% {
+        transform: translateX(-120%);
+    }
+    100% {
+        transform: translateX(320%);
+    }
+}
+
+.status-text {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    transition: opacity 0.2s ease;
+}
+
+.status-text.updating {
+    opacity: 0.5;
+}
+
+/* Version section */
+.version-section {
+    position: absolute;
+    bottom: 16px;
+    right: 18px;
+    opacity: 0.6;
+    animation: fadeIn 1s ease-out 0.6s both;
+}
+
+.version-text {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* Fade in helpers */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+

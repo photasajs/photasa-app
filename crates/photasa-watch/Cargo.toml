@@ -1,0 +1,22 @@
+[package]
+name = "photasa-watch"
+version = "0.1.0"
+edition = "2021"
+description = "Photasa watch queue coalescer (dedupe / debounce / FileOperation)"
+license = "MIT"
+
+[dependencies]
+photasa-types = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { version = "1.0", features = ["v4"] }
+log = "0.4"
+tokio = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt", "macros", "time", "test-util"] }
+
+[lints.rust]
+warnings = "warn"
+[lints.clippy]
+all = "warn"

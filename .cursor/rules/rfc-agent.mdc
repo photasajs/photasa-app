@@ -1,0 +1,15 @@
+---
+description: >-
+  When the user asks for RFC work (authoring, roadmap sync, implement-per-RFC), prefer
+  the generic skills rfc-management and rfc-workflow under .cursor/skills/. This repo
+  uses root ROADMAP.md and docs/rfc/ per AGENTS.md.
+alwaysApply: false
+---
+
+# RFC 代理提示
+
+- **技能**：`.cursor/skills/rfc-management/SKILL.md`（意图与自检）与 `.cursor/skills/rfc-workflow/SKILL.md`（文件职责与步骤）。
+- **本仓库**：进度与「下一步」以根目录 **`ROADMAP.md`** 为准；**Active/Implemented 全表**在 **`TASK_TRACKING.md`**；RFC 正文在 **`docs/rfc/`** 与 **`docs/rfc/completed/`**（命名约定见 ROADMAP **RFC 流程**小节）；勿在 `docs/rfc/` 随意新增与 ROADMAP 重复的总体规划文件（见 **`AGENTS.md`**）。
+- **Photasa 黄金规则**：Tauri 后端 **Rust 重写**，禁止复制/复用 Electron TS 或 `@photasa/*` Node 包 — 见 **`docs/rfc/TAURI_RUST_REWRITE_POLICY.md`**。
+- **Photasa Active RFC**：仅允许 **Rust 目标**（`src-tauri` / `crates/`）；0098 与 v2.0 Electron Draft **不得**标为 Photasa Active — 见 **`TASK_TRACKING.md`** → Photasa Active RFCs。
+- **可选**：若存在 **`TASK_TRACKING.md`**，与 `rfc-workflow` 中的冲刺同步规则一致。

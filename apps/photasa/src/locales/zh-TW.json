@@ -1,0 +1,593 @@
+{
+    "app": {
+        "title": "倉廩圖司",
+        "folderList": "目錄列表"
+    },
+    "logViewer": {
+        "title": "系統日誌控制台",
+        "searchPlaceholder": "搜尋日誌...",
+        "allLevels": "所有級別",
+        "debug": "除錯",
+        "info": "資訊",
+        "warn": "警告",
+        "error": "錯誤",
+        "clear": "清空",
+        "export": "匯出",
+        "opacity": "透明度",
+        "noLogs": "暫無日誌",
+        "showing": "顯示 {filtered} / {total} 條日誌",
+        "autoScroll": "自動捲動"
+    },
+    "preference": {
+        "settings": "設置",
+        "tabs": {
+            "general": "常規",
+            "about": "關於",
+            "theme": "主題",
+            "advanced": "進階設定",
+            "autoUpdate": "自動更新",
+            "scanMonitoring": "掃描監控"
+        },
+        "folderList": "目錄列表",
+        "folderListUsage": "使用方式",
+        "folderListDesc": "將目錄添加到列表後，倉廩圖司可以實時管理目錄下的照片和視頻",
+        "watchFolderList": "倉廩圖司可以管理下列目錄中的照片和視頻",
+        "chooseDirectory": "選擇目錄並添加到列表",
+        "thumbnailSize": "縮略圖大小",
+        "darkMode": "深色模式",
+        "language": "語言",
+        "scanning": "掃描中",
+        "resetFolders": {
+            "title": "高級操作：重設目錄儲存",
+            "desc": "這將清除所有目錄設定並立即重新構建快取。此操作不可逆轉。請謹慎進行！",
+            "button": "重設目錄儲存"
+        }
+    },
+    "import": {
+        "title": "導入照片",
+        "photos": "導入照片",
+        "chooseDirectory": "選擇導入目錄",
+        "targetDirectory": "導出目錄",
+        "selectTarget": "選擇目標目錄",
+        "allowDuplicateRename": "允許重命名重複的照片",
+        "button": {
+            "import": "導入",
+            "cancel": "取消"
+        },
+        "sourceDirectories": "來源目錄",
+        "addSource": "新增來源目錄",
+        "browse": "瀏覽",
+        "options": "導入選項",
+        "fileTypes": {
+            "label": "檔案類型",
+            "images": "圖片",
+            "videos": "影片",
+            "image": "圖片",
+            "video": "影片",
+            "other": "其他"
+        },
+        "images": "圖片",
+        "videos": "影片",
+        "includeSubfolders": "包含子資料夾",
+        "duplicateHandling": "重複處理",
+        "duplicate": {
+            "label": "重複",
+            "rename": "重新命名",
+            "skip": "跳過",
+            "overwrite": "覆寫",
+            "keepBoth": "保留兩者"
+        },
+        "useMD5ForDuplicates": "使用MD5驗證進行重複檔案偵測",
+        "useMD5ForDuplicatesDescription": "啟用後，將使用MD5雜湊值比較檔案內容，實現精確的重複檔案偵測，不受檔案修改時間影響",
+        "preview": {
+            "scanning": "檔案掃描中",
+            "filesFound": "找到檔案",
+            "directoriesScanned": "已掃描目錄",
+            "progress": "掃描進度",
+            "currentPath": "目前路徑",
+            "recentlyFound": "最近發現的檔案",
+            "noFilesFound": "未找到檔案"
+        },
+        "totalFiles": "總檔案數",
+        "totalSize": "總大小",
+        "duplicates": "重複檔案",
+        "moreFiles": "還有 {count} 個檔案",
+        "group": "{count} 個檔案",
+        "processing": "處理中",
+        "previewButton": "預覽",
+        "importButton": "導入",
+        "pauseButton": "暫停",
+        "resumeButton": "繼續",
+        "cancelButton": "取消",
+        "cancelSetupButton": "取消匯入",
+        "closeButton": "關閉",
+        "nextButton": "下一步",
+        "backButton": "返回",
+        "editSettingsButton": "編輯匯入選項",
+        "doneButton": "完成",
+        "importFailed": "匯入失敗",
+        "importCompleted": "匯入完成",
+        "importCompletedDesc": "成功匯入 {count} 個檔案",
+        "filePreview": "檔案預覽",
+        "selectAll": "全選",
+        "deselectAll": "取消全選",
+        "invertSelection": "反選",
+        "selected": "已選擇",
+        "selectedSize": "已選擇大小",
+        "fileGroups": "檔案群組",
+        "pagination": "第 {start}-{end} 項，共 {total} 項",
+        "toggleSelection": "切換選擇",
+        "viewDetails": "查看詳情",
+        "image": "圖片",
+        "video": "影片",
+        "unknown": "未知",
+        "fileDetails": "檔案詳情",
+        "basicInfo": "基本資訊",
+        "fileName": "檔案名稱",
+        "fileSize": "檔案大小",
+        "fileType": "檔案類型",
+        "dateTime": "日期和時間",
+        "modifiedTime": "修改時間",
+        "groupFiles": "群組檔案",
+        "targetPath": "目標路徑",
+        "metadata": "中繼資料",
+        "dimensions": "尺寸",
+        "duration": "時長",
+        "format": "格式",
+        "location": "位置",
+        "processed": "已處理",
+        "percentage": "百分比",
+        "speed": "速度",
+        "filesPerSec": "檔案/秒",
+        "filesPerMin": "檔案/分鐘",
+        "remaining": "剩餘時間",
+        "errors": "錯誤 ({count})",
+        "warnings": "警告 ({count})",
+        "moreErrors": "還有 {count} 個錯誤",
+        "moreWarnings": "還有 {count} 個警告",
+        "retry": "重試",
+        "showLess": "顯示更少",
+        "showMore": "顯示更多 {count} 項",
+        "status": {
+            "preparing": "準備中",
+            "processing": "處理中",
+            "paused": "已暫停",
+            "completed": "已完成",
+            "cancelled": "已取消",
+            "error": "錯誤",
+            "unknown": "未知"
+        },
+        "now": "現在",
+        "filters": "過濾器",
+        "resetFilters": "重置過濾器",
+        "showAdvanced": "顯示高級選項",
+        "hideAdvanced": "隱藏高級選項",
+        "advancedFilters": "高級過濾器",
+        "fileSizeRange": "檔案大小範圍",
+        "fileSizeHelp": "按檔案大小範圍過濾",
+        "dateRange": "日期範圍",
+        "dateRangeHelp": "按創建日期過濾檔案",
+        "startDate": "開始日期",
+        "endDate": "結束日期",
+        "quickDateFilters": "快速日期過濾",
+        "fileNamePattern": "檔案名稱模式",
+        "fileNamePatternHelp": "按檔案名稱模式過濾，支持通配符（* 和 ?）",
+        "fileNamePatternPlaceholder": "例如：IMG_*.jpg",
+        "excludePatterns": "排除模式",
+        "excludePatternsHelp": "排除檔案的模式，每行一個",
+        "excludePatternsPlaceholder": "例如：.DS_Store, Thumbs.db",
+        "reset": "重置",
+        "filteredFiles": "已過濾檔案",
+        "datePresets": {
+            "today": "今天",
+            "yesterday": "昨天",
+            "thisWeek": "本週",
+            "thisMonth": "本月",
+            "lastMonth": "上個月"
+        },
+        "dateSource": {
+            "label": "日期來源",
+            "exif": "EXIF 中繼資料",
+            "file_created": "檔案創建時間",
+            "file_modified": "檔案修改時間",
+            "custom": "自訂"
+        },
+        "duplicateFiles": "重複檔案",
+        "duplicatesFound": "發現重複",
+        "wastedSpace": "浪費空間",
+        "batchStrategy": "批次策略",
+        "applyToAll": "套用到全部",
+        "autoResolve": "自動解決",
+        "originalFile": "原始檔案",
+        "existing": "已存在",
+        "duplicateFile": "重複檔案",
+        "importing": "導入中",
+        "action": "操作",
+        "strategy": {
+            "skip": {
+                "label": "跳過",
+                "description": "跳過導入此檔案"
+            },
+            "rename": {
+                "label": "重新命名",
+                "description": "導入前重新命名檔案"
+            },
+            "overwrite": {
+                "label": "覆寫",
+                "description": "覆寫已存在的檔案"
+            },
+            "keepBoth": {
+                "label": "保留兩者",
+                "description": "使用不同的名稱保留兩個檔案"
+            }
+        },
+        "recommendation": "建議",
+        "recommendations": {
+            "keep_original": "保留原始檔案",
+            "keep_duplicate": "保留重複檔案",
+            "keep_both": "保留兩者",
+            "skipIdentical": "跳過（完全相同的檔案）",
+            "keepLarger": "保留較大的檔案"
+        },
+        "warning": {
+            "overwriteLarger": "警告：你將要覆寫一個更大的檔案",
+            "overwriteNewer": "警告：你將要覆寫一個更新的檔案"
+        },
+        "compare": "比較",
+        "fileComparison": "檔案比較",
+        "comparisonAnalysis": "比較分析",
+        "sizeDifference": "大小差異",
+        "timeDifference": "時間差異",
+        "sameSize": "相同大小",
+        "sameTime": "相同時間",
+        "daysNewer": "新 {days} 天",
+        "daysOlder": "舊 {days} 天",
+        "hoursNewer": "新 {hours} 小時",
+        "hoursOlder": "舊 {hours} 小時",
+        "newer": "較新",
+        "older": "較舊",
+        "confirmBatchAction": "確認批次操作",
+        "apply": "套用",
+        "cancel": "取消",
+        "batchConfirmMessage": "將 {strategy} 套用到 {count} 個選定的檔案？",
+        "overwriteWarning": "警告：覆寫檔案操作無法撤銷",
+        "batchProgress": "批次進度",
+        "directories": "目錄",
+        "complete": "完成",
+        "overallProgress": "總體進度",
+        "currentDirectory": "當前目錄",
+        "eta": "預計完成時間",
+        "completed": "已完成",
+        "error": {
+            "label": "錯誤",
+            "title": "操作失敗",
+            "network": "網路連線失敗，請檢查連線後重試",
+            "validation": "設定驗證失敗，請檢查目錄設定",
+            "permission": "權限不足，請確保有存取目錄的權限",
+            "api": "伺服器錯誤，請稍後重試",
+            "unknown": "發生未知錯誤，請重試",
+            "retry": "重試",
+            "dismiss": "忽略"
+        },
+        "paused": "已暫停",
+        "pending": "等待中",
+        "finishing": "即將完成",
+        "pauseAll": "全部暫停",
+        "resumeAll": "全部繼續",
+        "cancelAll": "全部取消",
+        "close": "關閉",
+        "confirmCancelAll": "確認取消全部",
+        "yes": "是",
+        "no": "否",
+        "cancelAllWarning": "確定要取消所有剩餘的導入任務嗎？",
+        "cancelAllProgress": "{completed} / {total} 個目錄已完成",
+        "recentFiles": "最近檔案",
+        "elapsed": "已用時間",
+        "files": "檔案",
+        "successful": "成功",
+        "skipped": "已跳過",
+        "steps": {
+            "configuration": "設定",
+            "configurationDesc": "選擇來源和目標目錄",
+            "preview": "預覽",
+            "previewDesc": "查看並選擇要匯入的檔案",
+            "importing": "匯入中",
+            "importingDesc": "將檔案匯入到目標目錄"
+        },
+        "loading": {
+            "label": "載入中...",
+            "preview": "正在載入預覽資料...",
+            "directories": "正在選擇目錄...",
+            "switchingFolder": "切換資料夾中..."
+        }
+    },
+    "menu": {
+        "getInfo": "照片資訊",
+        "open": "在檔案總管中開啟",
+        "rebuildThumbnail": "重建縮略圖",
+        "getConfig": "獲取照片庫資訊",
+        "rescan": "重新掃描目錄",
+        "app": {
+            "menu": "應用",
+            "about": "關於倉廩圖司",
+            "services": "服務",
+            "hide": "隱藏倉廩圖司",
+            "hideOthers": "隱藏其他",
+            "unhide": "顯示全部",
+            "quit": "退出"
+        },
+        "view": {
+            "menu": "視圖",
+            "reload": "重新加載",
+            "forceReload": "強制重新加載",
+            "toggleDevTools": "切換開發者工具",
+            "resetZoom": "重置縮放",
+            "zoomIn": "放大",
+            "zoomOut": "縮小",
+            "toggleFullScreen": "切換全屏"
+        },
+        "window": {
+            "menu": "窗口",
+            "minimize": "最小化",
+            "maximize": "最大化",
+            "close": "關閉",
+            "restore": "還原"
+        },
+        "help": {
+            "menu": "幫助",
+            "learnMore": "了解更多",
+            "about": "關於倉廩圖司"
+        },
+        "separator": "分隔符"
+    },
+    "notification": {
+        "info": "提示",
+        "warn": "注意",
+        "error": "錯誤",
+        "scan": {
+            "title": "掃描目錄",
+            "message": "目錄已掃描完畢，照片已導入到倉廩圖司。"
+        },
+        "duplicatePath": {
+            "title": "重複的目錄",
+            "message": "目錄[{folder}]已存在於倉廩圖司中。"
+        },
+        "emptyPath": {
+            "title": "選擇目錄",
+            "message": "請選擇目錄，然後完成添加操作。"
+        },
+        "scanError": {
+            "title": "掃描錯誤",
+            "message": "無法掃描 [{path}] 的子目錄。錯誤：{error}。主目錄仍將被添加。"
+        },
+        "unknownError": "發生未知錯誤",
+        "resetFolders": {
+            "title": "重置完成",
+            "message": "所有目錄緩存已重建。"
+        }
+    },
+    "status": {
+        "initializing": "正在初始化",
+        "idle": "空閒",
+        "updating": "正在更新",
+        "ready": "準備就緒",
+        "readingConfig": "載入照片庫資訊 [{config}]",
+        "loadingConfig": "讀取照片庫資訊",
+        "processing": "正在處理 [{file}]",
+        "scanned": "處理完畢",
+        "scanComplete": "目錄[{path}]已處理完畢",
+        "start": "開始掃描",
+        "progress": "掃描進度",
+        "processingFile": "正在處理: {fileName}",
+        "scanningPath": "正在掃描: {path}",
+        "complete": "掃描完成",
+        "error": "掃描錯誤",
+        "scanFailed": "掃描失敗: {path}"
+    },
+    "button": {
+        "import": "導入",
+        "cancel": "取消",
+        "ok": "確定",
+        "fixConfig": "修復照片庫資訊"
+    },
+    "about": {
+        "antvDescription": "數據可視化解決方案",
+        "introduction": {
+            "title": "介紹",
+            "content": "你好！這是一個用於管理和整理照片的工具。",
+            "summary": "這個應用程式專注於",
+            "highlight": "使用者友善的介面",
+            "userExperience": "使用者體驗",
+            "focus": "。"
+        },
+        "resources": {
+            "title": "資源",
+            "content": "以下資源可用：",
+            "download": "下載資源"
+        },
+        "press": "按",
+        "toExit": "退出",
+        "markdown": "# 關於倉廩圖司\n\n倉廩圖司是一款現代化、隱私友善的本地照片管理工具。\n它支援高效地瀏覽、整理和管理您的照片與影片，擁有美觀的介面和強大的本地功能，無需雲端依賴。\n\n## 主要特性\n\n- 本地照片與影片智慧導入與管理\n- 快速縮略圖生成與預覽\n- 多語言介面與主題切換\n- 支援批次操作與高效搜尋\n- 資料隱私與安全保障\n\n按 `Esc` 退出"
+    },
+    "preferences": {
+        "title": "偏好設置",
+        "language": {
+            "title": "語言",
+            "description": "選擇您偏好的應用程式介面語言。"
+        },
+        "thumbnail": {
+            "title": "縮略圖大小",
+            "description": "調整圖庫視圖中照片縮略圖的大小。"
+        },
+        "theme": {
+            "title": "主題",
+            "description": "在淺色和深色模式之間切換。",
+            "light": "淺色",
+            "dark": "深色"
+        }
+    },
+    "scan": {
+        "queueTitle": "掃描隊列",
+        "queueEmpty": "隊列為空",
+        "processing": "正在處理隊列",
+        "allTasksCompleted": "所有掃描任務已完成",
+        "pathHeader": "路徑",
+        "timestampHeader": "建立時間",
+        "actionHeader": "操作",
+        "unknownFolder": "未知資料夾",
+        "noTimestamp": "無時間資訊",
+        "timeJustNow": "剛剛",
+        "timeMinutesAgo": "{count} 分鐘前",
+        "timeHoursAgo": "{count} 小時前",
+        "timeDaysAgo": "{count} 天前",
+        "priority": "優先級",
+        "actions": {
+            "scan": "掃描",
+            "rescan": "重新掃描",
+            "current": "當前掃描"
+        },
+        "processed": "已處理",
+        "incrementalCache": "增量快取：即時保存掃描進度，避免重複掃描"
+    },
+    "advancedSettings": {
+        "title": "進階設定",
+        "resetFoldersTitle": "進階操作：重設目錄儲存",
+        "resetFoldersDesc": "此操作將清空所有目錄設定並立即重建快取，操作不可逆，請謹慎！",
+        "resetFoldersBtn": "重設目錄儲存"
+    },
+    "empty": {
+        "image": "暫無圖片",
+        "openConfigDirBtn": "開啟設定目錄",
+        "importBtn": "導入圖片"
+    },
+    "fileInfo": {
+        "title": "檔案資訊",
+        "fileName": "檔案名稱",
+        "fileType": "檔案類型",
+        "format": "格式",
+        "size": "大小",
+        "imageWidth": "圖片寬度",
+        "imageHeight": "圖片高度",
+        "resolution": "解析度",
+        "aspectRatio": "長寬比",
+        "duration": "時長",
+        "codec": "編碼器",
+        "dateTaken": "拍攝日期",
+        "dateSource": "日期來源",
+        "modified": "修改時間",
+        "created": "建立時間",
+        "location": "位置",
+        "gpsLatitude": "GPS緯度",
+        "gpsLongitude": "GPS經度",
+        "cameraMake": "相機品牌",
+        "cameraModel": "相機型號",
+        "rawMetadata": "原始中繼資料",
+        "unknown": "未知",
+        "showRawData": "顯示原始資料",
+        "hideRawData": "隱藏原始資料",
+        "infoTitle": "{name} - {type} 資訊",
+        "dateSources": {
+            "exif": "EXIF 資料",
+            "video_metadata": "影片中繼資料",
+            "file_created": "檔案建立時間",
+            "file_modified": "檔案修改時間",
+            "current_date": "目前日期"
+        },
+        "basicInfo": "基本資訊",
+        "mediaProperties": "媒體屬性",
+        "videoProperties": "影片屬性",
+        "timeInfo": "時間資訊",
+        "technicalInfo": "技術資訊",
+        "createdAt": "建立時間",
+        "modifiedAt": "修改時間",
+        "camera": "相機",
+        "lens": "鏡頭",
+        "iso": "ISO",
+        "aperture": "光圈",
+        "dimensions": "尺寸",
+        "noMetadata": "無中繼資料"
+    },
+    "common": {
+        "close": "關閉",
+        "file": "檔案",
+        "files": "檔案",
+        "counting": "統計中..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count} 個檔案",
+            "images": "{count} 張圖片",
+            "videos": "{count} 個影片",
+            "mixed": "{images} 張圖片，{videos} 個影片",
+            "empty": "無檔案"
+        },
+        "placeholderThumbnail": "佔位預覽"
+    },
+    "imageInfo": {
+        "title": "圖片資訊",
+        "lastUpdated": "最後更新",
+        "openInFinder": "開啟資料夾",
+        "repairLibrary": "修復庫資訊",
+        "fileCount": "檔案數量",
+        "folderSize": "資料夾大小",
+        "basicInfo": "基本資訊",
+        "location": "位置",
+        "scanDate": "掃描日期",
+        "configVersion": "設定版本",
+        "configuration": "設定資訊",
+        "showRaw": "顯示原始設定",
+        "hideRaw": "隱藏原始設定",
+        "totalImages": "圖片總數",
+        "totalVideos": "影片總數",
+        "scannedFolders": "已掃描資料夾",
+        "rawConfiguration": "原始設定",
+        "copyPath": "複製路徑",
+        "copyConfig": "複製設定",
+        "operationHistory": "操作歷史",
+        "lastScan": "最後掃描",
+        "configCreated": "設定建立",
+        "never": "從未",
+        "statusTypes": {
+            "completed": "已完成",
+            "success": "成功",
+            "warning": "警告",
+            "partial": "部分完成",
+            "error": "錯誤",
+            "failed": "失敗",
+            "unknown": "未知"
+        }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "最近1小時",
+            "6h": "最近6小時",
+            "24h": "最近24小時"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "發現新版本",
+            "message": "版本 {version} 可用",
+            "cancel": "取消",
+            "install": "安裝",
+            "cancelDownload": "取消下載",
+            "installNow": "立即安裝",
+            "viewDetails": "查看詳情"
+        },
+        "popup": {
+            "title": "發現新版本",
+            "message": "版本 {version} 可用",
+            "cancel": "取消",
+            "install": "安裝",
+            "cancelDownload": "取消下載",
+            "installNow": "立即安裝",
+            "close": "關閉"
+        }
+    },
+    "window": {
+        "minimize": "最小化",
+        "maximize": "最大化",
+        "restore": "還原",
+        "close": "關閉"
+    }
+}

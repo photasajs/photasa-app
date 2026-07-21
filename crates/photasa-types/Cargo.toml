@@ -1,0 +1,14 @@
+[package]
+name = "photasa-types"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+ts-rs = { version = "10.1", features = ["serde-compat"] }
+
+[lints.rust]
+warnings = "warn"
+[lints.clippy]
+all = "warn"

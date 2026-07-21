@@ -1,0 +1,624 @@
+{
+    "app": {
+        "title": "倉廩図司",
+        "folderList": "ディレクトリリスト"
+    },
+    "logViewer": {
+        "title": "システムログコンソール",
+        "searchPlaceholder": "ログを検索...",
+        "allLevels": "すべてのレベル",
+        "debug": "デバッグ",
+        "info": "情報",
+        "warn": "警告",
+        "error": "エラー",
+        "clear": "クリア",
+        "export": "エクスポート",
+        "opacity": "透明度",
+        "noLogs": "ログがありません",
+        "showing": "{filtered} / {total} 件のログを表示",
+        "autoScroll": "自動スクロール"
+    },
+    "preference": {
+        "settings": "設定",
+        "tabs": {
+            "general": "一般",
+            "about": "概要",
+            "theme": "テーマ",
+            "advanced": "高度な設定",
+            "autoUpdate": "自動更新",
+            "scanMonitoring": "スキャンモニタリング"
+        },
+        "folderList": "ディレクトリリスト",
+        "folderListUsage": "使い方",
+        "folderListDesc": "ディレクトリをリストに追加すると、倉廩図司はそのディレクトリ内の写真と動画をリアルタイムで管理できます。",
+        "watchFolderList": "倉廩図司は以下のディレクトリ内の写真と動画を管理できます。",
+        "chooseDirectory": "ディレクトリを選択してリストに追加",
+        "thumbnailSize": "サムネイルサイズ",
+        "darkMode": "ダークモード",
+        "language": "言語",
+        "scanning": "スキャン中",
+        "resetFolders": {
+            "title": "高度な操作: ディレクトリストレージのリセット",
+            "desc": "これにより、すべてのディレクトリ設定がクリアされ、キャッシュが即座に再構築されます。この操作は元に戻せません。慎重に進めてください！",
+            "button": "ディレクトリストレージをリセット"
+        },
+        "autoUpdate": {
+            "title": "自動更新",
+            "description": "アプリケーションの自動更新を設定して、常にPhotasaの最新バージョンを利用できるようにします",
+            "enabled": "自動更新を有効にする",
+            "checkInterval": "チェック間隔",
+            "prerelease": "プレリリース版を含める",
+            "prereleaseDescription": "有効にすると、テストされていない機能を含む可能性があるBetaおRRCバージョンの更新を受け取ります",
+            "autoInstall": "自動で更新をインストール",
+            "autoInstallDescription": "有効にすると、更新がバックグラウンドで自動的にインストールされ、次回の再起動時に有効になります",
+            "checkNow": "今すぐチェック",
+            "downloadUpdate": "更新をダウンロード",
+            "installUpdate": "インストールして再起動",
+            "currentVersion": "現在のバージョン",
+            "latestVersion": "最新バージョン",
+            "lastCheck": "最後のチェック",
+            "intervals": {
+                "hourly": "毎時間",
+                "sixHours": "6時間ごと",
+                "daily": "毎日",
+                "weekly": "毎週"
+            },
+            "status": {
+                "idle": "待機中",
+                "checking": "更新をチェック中...",
+                "downloading": "ダウンロード中 ({progress}%)",
+                "downloaded": "更新をダウンロード完了",
+                "upToDate": "既に最新バージョンです",
+                "error": "更新のチェックでエラーが発生しました"
+            }
+        }
+    },
+    "import": {
+        "title": "写真をインポート",
+        "photos": "写真をインポート",
+        "chooseDirectory": "ディレクトリを選択",
+        "targetDirectory": "ターゲットディレクトリ",
+        "allowDuplicateRename": "重複ファイルのリネームを許可",
+        "button": {
+            "import": "インポート",
+            "cancel": "キャンセル"
+        },
+        "sourceDirectories": "ソースディレクトリ",
+        "addSource": "ソースディレクトリを追加",
+        "browse": "参照",
+        "options": "インポートオプション",
+        "fileTypes": {
+            "label": "ファイルタイプ",
+            "images": "画像",
+            "videos": "動画",
+            "image": "画像",
+            "video": "動画",
+            "other": "その他"
+        },
+        "images": "画像",
+        "videos": "動画",
+        "includeSubfolders": "サブフォルダを含む",
+        "duplicateHandling": "重複ファイルの処理",
+        "duplicate": {
+            "label": "重複",
+            "rename": "リネーム",
+            "skip": "スキップ",
+            "overwrite": "上書き",
+            "keepBoth": "両方を保持"
+        },
+        "useMD5ForDuplicates": "重複検出にMD5検証を使用",
+        "useMD5ForDuplicatesDescription": "有効にすると、ファイルの変更日時に関係なく、MD5ハッシュを使用してファイルを比較し、正確な重複検出を行います",
+        "preview": {
+            "scanning": "ファイルスキャン中",
+            "filesFound": "見つかったファイル",
+            "directoriesScanned": "スキャンしたディレクトリ",
+            "progress": "スキャン進行状況",
+            "currentPath": "現在のパス",
+            "recentlyFound": "最近見つかったファイル",
+            "noFilesFound": "ファイルが見つかりません"
+        },
+        "totalFiles": "総ファイル数",
+        "totalSize": "総サイズ",
+        "duplicates": "重複ファイル",
+        "moreFiles": "他に{count}個のファイル",
+        "group": "{count}個のファイル",
+        "processing": "処理中",
+        "previewButton": "プレビュー",
+        "importButton": "インポート",
+        "cancelButton": "キャンセル",
+        "cancelSetupButton": "インポートをキャンセル",
+        "pauseButton": "一時停止",
+        "resumeButton": "再開",
+        "closeButton": "閉じる",
+        "nextButton": "次へ",
+        "backButton": "戻る",
+        "editSettingsButton": "インポートオプションを編集",
+        "doneButton": "完了",
+        "importFailed": "インポート失敗",
+        "importCompleted": "インポート完了",
+        "importCompletedDesc": "{count}個のファイルを正常にインポートしました",
+        "selectTarget": "ターゲットディレクトリを選択",
+        "filePreview": "ファイルプレビュー",
+        "selectAll": "すべて選択",
+        "deselectAll": "すべて選択解除",
+        "invertSelection": "選択を反転",
+        "selected": "選択済み",
+        "selectedSize": "選択済みサイズ",
+        "fileGroups": "ファイルグループ",
+        "pagination": "{start}-{end} / {total}",
+        "toggleSelection": "選択を切り替え",
+        "viewDetails": "詳細を表示",
+        "image": "画像",
+        "video": "動画",
+        "unknown": "不明",
+        "fileDetails": "ファイル詳細",
+        "basicInfo": "基本情報",
+        "fileName": "ファイル名",
+        "fileSize": "ファイルサイズ",
+        "fileType": "ファイルタイプ",
+        "dateTime": "日付と時刻",
+        "modifiedTime": "変更時刻",
+        "groupFiles": "グループファイル",
+        "targetPath": "ターゲットパス",
+        "metadata": "メタデータ",
+        "dimensions": "寸法",
+        "duration": "再生時間",
+        "format": "フォーマット",
+        "location": "場所",
+        "processed": "処理済み",
+        "percentage": "パーセンテージ",
+        "speed": "速度",
+        "filesPerSec": "ファイル/秒",
+        "filesPerMin": "ファイル/分",
+        "remaining": "残り時間",
+        "errors": "エラー ({count})",
+        "warnings": "警告 ({count})",
+        "moreErrors": "他に{count}個のエラー",
+        "moreWarnings": "他に{count}個の警告",
+        "retry": "再試行",
+        "showLess": "表示を減らす",
+        "showMore": "他に{count}個を表示",
+        "status": {
+            "preparing": "準備中",
+            "processing": "処理中",
+            "paused": "一時停止",
+            "completed": "完了",
+            "cancelled": "キャンセル",
+            "error": "エラー",
+            "unknown": "不明"
+        },
+        "now": "今",
+        "filters": "フィルター",
+        "resetFilters": "フィルターをリセット",
+        "showAdvanced": "詳細を表示",
+        "hideAdvanced": "詳細を非表示",
+        "advancedFilters": "詳細フィルター",
+        "fileSizeRange": "ファイルサイズ範囲",
+        "fileSizeHelp": "サイズ範囲でファイルをフィルター",
+        "dateRange": "日付範囲",
+        "dateRangeHelp": "作成日でファイルをフィルター",
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "quickDateFilters": "クイック日付フィルター",
+        "fileNamePattern": "ファイル名パターン",
+        "fileNamePatternHelp": "名前パターンでファイルをフィルター、ワイルドカード（*と?）をサポート",
+        "fileNamePatternPlaceholder": "例：IMG_*.jpg",
+        "excludePatterns": "除外パターン",
+        "excludePatternsHelp": "ファイルを除外するパターン、1行に1つ",
+        "excludePatternsPlaceholder": "例：.DS_Store, Thumbs.db",
+        "reset": "リセット",
+        "filteredFiles": "フィルター済みファイル",
+        "datePresets": {
+            "today": "今日",
+            "yesterday": "昨日",
+            "thisWeek": "今週",
+            "thisMonth": "今月",
+            "lastMonth": "先月"
+        },
+        "dateSource": {
+            "label": "日付ソース",
+            "exif": "EXIFメタデータ",
+            "file_created": "ファイル作成日",
+            "file_modified": "ファイル変更日",
+            "custom": "カスタム"
+        },
+        "duplicateFiles": "重複ファイル",
+        "duplicatesFound": "重複が見つかりました",
+        "wastedSpace": "無駄な容量",
+        "batchStrategy": "バッチ戦略",
+        "applyToAll": "すべてに適用",
+        "autoResolve": "自動解決",
+        "originalFile": "元のファイル",
+        "existing": "既存",
+        "duplicateFile": "重複ファイル",
+        "importing": "インポート中",
+        "action": "アクション",
+        "strategy": {
+            "skip": {
+                "label": "スキップ",
+                "description": "このファイルのインポートをスキップ"
+            },
+            "rename": {
+                "label": "リネーム",
+                "description": "インポート前にファイルをリネーム"
+            },
+            "overwrite": {
+                "label": "上書き",
+                "description": "既存のファイルを上書き"
+            },
+            "keepBoth": {
+                "label": "両方を保持",
+                "description": "異なる名前で両方のファイルを保持"
+            }
+        },
+        "recommendation": "推奨",
+        "recommendations": {
+            "keep_original": "元のファイルを保持",
+            "keep_duplicate": "重複ファイルを保持",
+            "keep_both": "両方を保持",
+            "skipIdentical": "スキップ（同一ファイル）",
+            "keepLarger": "大きいファイルを保持"
+        },
+        "warning": {
+            "overwriteLarger": "警告：より大きなファイルを上書きしようとしています",
+            "overwriteNewer": "警告：より新しいファイルを上書きしようとしています"
+        },
+        "compare": "比較",
+        "fileComparison": "ファイル比較",
+        "comparisonAnalysis": "比較分析",
+        "sizeDifference": "サイズの違い",
+        "timeDifference": "時間の違い",
+        "sameSize": "同じサイズ",
+        "sameTime": "同じ時間",
+        "daysNewer": "{days}日新しい",
+        "daysOlder": "{days}日古い",
+        "hoursNewer": "{hours}時間新しい",
+        "hoursOlder": "{hours}時間古い",
+        "newer": "新しい",
+        "older": "古い",
+        "confirmBatchAction": "バッチアクションを確認",
+        "apply": "適用",
+        "cancel": "キャンセル",
+        "batchConfirmMessage": "{strategy}を{count}個の選択されたファイルに適用しますか？",
+        "overwriteWarning": "警告：ファイルの上書きは元に戻せません",
+        "batchProgress": "バッチ進行状況",
+        "directories": "ディレクトリ",
+        "complete": "完了",
+        "overallProgress": "全体の進行状況",
+        "currentDirectory": "現在のディレクトリ",
+        "eta": "予想完了時刻",
+        "completed": "完了",
+        "error": {
+            "label": "エラー",
+            "title": "操作が失敗しました",
+            "network": "ネットワーク接続に失敗しました。接続を確認してもう一度お試しください",
+            "validation": "設定の検証に失敗しました。ディレクトリ設定を確認してください",
+            "permission": "権限が不足しています。ディレクトリへのアクセス権があることを確認してください",
+            "api": "サーバーエラーが発生しました。後でもう一度お試しください",
+            "unknown": "不明なエラーが発生しました。もう一度お試しください",
+            "retry": "再試行",
+            "dismiss": "無視"
+        },
+        "paused": "一時停止",
+        "pending": "待機中",
+        "finishing": "完了中",
+        "pauseAll": "すべて一時停止",
+        "resumeAll": "すべて再開",
+        "cancelAll": "すべてキャンセル",
+        "close": "閉じる",
+        "confirmCancelAll": "すべてキャンセルを確認",
+        "yes": "はい",
+        "no": "いいえ",
+        "cancelAllWarning": "残りのすべてのインポートをキャンセルしてもよろしいですか？",
+        "cancelAllProgress": "{completed} / {total} ディレクトリが完了",
+        "recentFiles": "最近のファイル",
+        "elapsed": "経過時間",
+        "files": "ファイル",
+        "successful": "成功",
+        "skipped": "スキップ",
+        "steps": {
+            "configuration": "設定",
+            "configurationDesc": "ソースディレクトリとターゲットディレクトリを選択",
+            "preview": "プレビュー",
+            "previewDesc": "インポートするファイルを確認・選択",
+            "importing": "インポート中",
+            "importingDesc": "ファイルをターゲットディレクトリにインポート"
+        },
+        "loading": {
+            "text": "読み込み中...",
+            "preview": "プレビューデータを読み込んでいます...",
+            "directories": "ディレクトリを選択しています...",
+            "label": "読み込み中...",
+            "switchingFolder": "フォルダを切り替え中..."
+        }
+    },
+    "about": {
+        "antvDescription": "データ可視化ソリューション",
+        "introduction": {
+            "title": "紹介",
+            "content": "こんにちは！これは写真を管理・整理するためのツールです。",
+            "summary": "このアプリケーションは",
+            "highlight": "ユーザーフレンドリーなインターフェース",
+            "userExperience": "ユーザー体験",
+            "focus": "。"
+        },
+        "resources": {
+            "title": "リソース",
+            "content": "以下のリソースが利用可能です：",
+            "download": "リソースをダウンロード"
+        },
+        "press": "押す",
+        "toExit": "終了",
+        "markdown": "# 倉廩図司について\n\n倉廩図司は、現代的でプライバシーに配慮したローカル写真管理ツールです。\n美しいインターフェースと強力なローカル機能で、写真や動画を効率的に閲覧・整理・管理できます。クラウド不要。\n\n## 主な機能\n\n- ローカル写真・動画のスマートなインポートと管理\n- 高速サムネイル生成とプレビュー\n- 多言語インターフェースとテーマ切替\n- バッチ操作と効率的な検索\n- データのプライバシーとセキュリティ保護\n\n`Esc`キーで終了"
+    },
+    "preferences": {
+        "title": "設定",
+        "language": {
+            "title": "言語",
+            "description": "アプリケーションインターフェースの希望言語を選択してください。"
+        },
+        "thumbnail": {
+            "title": "サムネイルサイズ",
+            "description": "ギャラリービューで写真のサムネイルサイズを調整します。"
+        },
+        "theme": {
+            "title": "テーマ",
+            "description": "ライトモードとダークモードを切り替えます。",
+            "light": "ライト",
+            "dark": "ダーク"
+        }
+    },
+    "notification": {
+        "info": "お知らせ",
+        "warn": "注意",
+        "error": "エラー",
+        "scan": {
+            "title": "ディレクトリのスキャン",
+            "message": "ディレクトリのスキャンが完了し、写真が倉廩図司にインポートされました。"
+        },
+        "duplicatePath": {
+            "title": "重複したディレクトリ",
+            "message": "ディレクトリ[{folder}]はすでに倉廩図司に存在します。"
+        },
+        "emptyPath": {
+            "title": "ディレクトリを選択",
+            "message": "ディレクトリを選択し、追加操作を完了してください。"
+        },
+        "scanError": {
+            "title": "スキャンエラー",
+            "message": "[{path}]のサブディレクトリをスキャンできませんでした。エラー: {error}。メインディレクトリは追加されます。"
+        },
+        "unknownError": "不明なエラーが発生しました",
+        "resetFolders": {
+            "title": "リセット完了",
+            "message": "すべてのディレクトリキャッシュが再構築されました。"
+        }
+    },
+    "status": {
+        "initializing": "初期化中",
+        "idle": "アイドル",
+        "updating": "更新中",
+        "ready": "準備完了",
+        "readingConfig": "フォトライブラリ情報を読み込み中 [{config}]",
+        "loadingConfig": "フォトライブラリ情報を読込中",
+        "processing": "処理中 [{file}]",
+        "scanned": "処理完了",
+        "scanComplete": "ディレクトリ[{path}]の処理が完了しました",
+        "start": "スキャン開始",
+        "progress": "スキャン進行状況",
+        "processingFile": "処理中: {fileName}",
+        "scanningPath": "スキャン中: {path}",
+        "complete": "スキャン完了",
+        "error": "スキャンエラー",
+        "scanFailed": "スキャン失敗: {path}"
+    },
+    "button": {
+        "import": "インポート",
+        "cancel": "キャンセル",
+        "ok": "OK",
+        "fixConfig": "フォトライブラリ情報を修復"
+    },
+    "scan": {
+        "queueTitle": "スキャンキュー",
+        "queueEmpty": "キューは空です",
+        "processing": "キューを処理中",
+        "allTasksCompleted": "すべてのスキャンタスクが完了しました",
+        "pathHeader": "パス",
+        "timestampHeader": "作成時刻",
+        "actionHeader": "アクション",
+        "unknownFolder": "不明なフォルダ",
+        "noTimestamp": "タイムスタンプなし",
+        "timeJustNow": "たった今",
+        "timeMinutesAgo": "{count}分前",
+        "timeHoursAgo": "{count}時間前",
+        "timeDaysAgo": "{count}日前",
+        "priority": "優先度",
+        "actions": {
+            "scan": "スキャン",
+            "rescan": "再スキャン",
+            "current": "現在のスキャン"
+        },
+        "processed": "処理済み",
+        "incrementalCache": "増分キャッシュ：リアルタイム進捗保存、再スキャン回避"
+    },
+    "advancedSettings": {
+        "title": "高度な設定",
+        "resetFoldersTitle": "高度な操作：ディレクトリストレージのリセット",
+        "resetFoldersDesc": "この操作はすべてのディレクトリ設定をクリアし、キャッシュを即座に再構築します。この操作は元に戻せません。ご注意ください！",
+        "resetFoldersBtn": "ディレクトリストレージをリセット"
+    },
+    "menu": {
+        "getInfo": "写真情報",
+        "open": "ファイルマネージャーで開く",
+        "rebuildThumbnail": "サムネイルを再構築",
+        "getConfig": "写真ライブラリ情報を取得",
+        "rescan": "ディレクトリを再スキャン",
+        "app": {
+            "menu": "アプリケーション",
+            "about": "倉廩図司について",
+            "services": "サービス",
+            "hide": "倉廩図司を隠す",
+            "hideOthers": "他を隠す",
+            "unhide": "すべてを表示",
+            "quit": "終了"
+        },
+        "view": {
+            "menu": "表示",
+            "reload": "再読み込み",
+            "forceReload": "強制再読み込み",
+            "toggleDevTools": "開発者ツールの切替",
+            "resetZoom": "ズームをリセット",
+            "zoomIn": "ズームイン",
+            "zoomOut": "ズームアウト",
+            "toggleFullScreen": "全画面切替"
+        },
+        "window": {
+            "menu": "ウィンドウ",
+            "minimize": "最小化",
+            "maximize": "最大化",
+            "close": "閉じる",
+            "restore": "元に戻す"
+        },
+        "help": {
+            "menu": "ヘルプ",
+            "learnMore": "詳細を見る",
+            "about": "倉廩図司について"
+        },
+        "separator": "区切り"
+    },
+    "empty": {
+        "image": "画像がありません",
+        "openConfigDirBtn": "設定ディレクトリを開く",
+        "importBtn": "画像をインポート"
+    },
+    "fileInfo": {
+        "title": "ファイル情報",
+        "fileName": "ファイル名",
+        "fileType": "ファイルタイプ",
+        "format": "フォーマット",
+        "size": "サイズ",
+        "imageWidth": "画像の幅",
+        "imageHeight": "画像の高さ",
+        "resolution": "解像度",
+        "aspectRatio": "アスペクト比",
+        "duration": "再生時間",
+        "codec": "コーデック",
+        "dateTaken": "撮影日時",
+        "dateSource": "日付のソース",
+        "modified": "更新日時",
+        "created": "作成日時",
+        "location": "場所",
+        "gpsLatitude": "GPS緯度",
+        "gpsLongitude": "GPS経度",
+        "cameraMake": "カメラメーカー",
+        "cameraModel": "カメラモデル",
+        "rawMetadata": "生のメタデータ",
+        "unknown": "不明",
+        "showRawData": "生データを表示",
+        "hideRawData": "生データを非表示",
+        "infoTitle": "{name} - {type} 情報",
+        "dateSources": {
+            "exif": "EXIFデータ",
+            "video_metadata": "動画メタデータ",
+            "file_created": "ファイル作成日時",
+            "file_modified": "ファイル更新日時",
+            "current_date": "現在の日付"
+        },
+        "basicInfo": "基本情報",
+        "mediaProperties": "メディアプロパティ",
+        "videoProperties": "動画プロパティ",
+        "timeInfo": "時間情報",
+        "technicalInfo": "技術情報",
+        "createdAt": "作成日時",
+        "modifiedAt": "更新日時",
+        "camera": "カメラ",
+        "lens": "レンズ",
+        "iso": "ISO",
+        "aperture": "絞り",
+        "dimensions": "寸法",
+        "noMetadata": "メタデータなし"
+    },
+    "common": {
+        "close": "閉じる",
+        "file": "ファイル",
+        "files": "ファイル",
+        "counting": "集計中..."
+    },
+    "imageList": {
+        "fileCount": {
+            "total": "{count}件のファイル",
+            "images": "{count}枚の画像",
+            "videos": "{count}件の動画",
+            "mixed": "画像{images}枚、動画{videos}件",
+            "empty": "ファイルなし"
+        },
+        "placeholderThumbnail": "Placeholder preview"
+    },
+    "imageInfo": {
+        "title": "画像情報",
+        "lastUpdated": "最終更新",
+        "openInFinder": "フォルダを開く",
+        "repairLibrary": "ライブラリ修復",
+        "fileCount": "ファイル数",
+        "folderSize": "フォルダサイズ",
+        "basicInfo": "基本情報",
+        "location": "場所",
+        "scanDate": "スキャン日",
+        "configVersion": "設定バージョン",
+        "configuration": "設定",
+        "showRaw": "生設定を表示",
+        "hideRaw": "生設定を非表示",
+        "totalImages": "画像総数",
+        "totalVideos": "動画総数",
+        "scannedFolders": "スキャン済みフォルダ",
+        "rawConfiguration": "生設定",
+        "copyPath": "パスをコピー",
+        "copyConfig": "設定をコピー",
+        "operationHistory": "操作履歴",
+        "lastScan": "最終スキャン",
+        "configCreated": "設定作成",
+        "never": "なし",
+        "statusTypes": {
+            "completed": "完了",
+            "success": "成功",
+            "warning": "警告",
+            "partial": "部分的",
+            "error": "エラー",
+            "failed": "失敗",
+            "unknown": "不明"
+        }
+    },
+    "queue": {
+        "timeRange": {
+            "1h": "過去1時間",
+            "6h": "過去6時間",
+            "24h": "過去24時間"
+        }
+    },
+    "update": {
+        "notification": {
+            "title": "新しいバージョンが利用可能",
+            "message": "バージョン {version} が利用可能です",
+            "cancel": "キャンセル",
+            "install": "インストール",
+            "cancelDownload": "ダウンロードをキャンセル",
+            "installNow": "今すぐインストール",
+            "viewDetails": "詳細を表示"
+        },
+        "popup": {
+            "title": "新しいバージョンが利用可能",
+            "message": "バージョン {version} が利用可能です",
+            "cancel": "キャンセル",
+            "install": "インストール",
+            "cancelDownload": "ダウンロードをキャンセル",
+            "installNow": "今すぐインストール",
+            "close": "閉じる"
+        }
+    },
+    "window": {
+        "minimize": "最小化",
+        "maximize": "最大化",
+        "restore": "元に戻す",
+        "close": "閉じる"
+    }
+}
