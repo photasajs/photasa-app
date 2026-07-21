@@ -1,31 +1,20 @@
-# RFCs (Request for Comments)
+# Photasa Roadmap & RFC Index
 
-This directory contains RFCs for significant changes to the photo management application. RFCs help us track, discuss, and document major features and architectural decisions.
+Canonical RFC files: `.spec/rfc/`. This file is the **roadmap and RFC index** (replaces `.spec/rfc/README.md`).
+
+Update this file whenever RFC status changes.
 
 ## RFC Statistics
 
-- **Total RFCs**: 51
-- **Completed**: 30 (58.8%)
-- **In Progress**: 2 (3.9%)
-- **Draft**: 19 (37.3%)
-- **Rejected**: 0 (0%)
+- **Total RFCs**: 45
+- **Completed**: 30 (66.7%)
+- **In Progress**: 2 (4.4%)
+- **Draft**: 13 (28.9%)
+- **Rejected**: 6 (13.3%)
 
 ### By Version
 
-- **v2.0.0**: 50 RFCs
-- **v2.1.0 (Tauri Migration)**: 1 RFC (0067 + 子 RFCs)
-
-## Tauri 迁移 RFC 系列
-
-### 主 RFC
-- **[RFC 0067](./0067-tauri-app-photasa.md)**: 创建 Tauri 应用 Photasa - 总体架构与迁移策略
-
-### 子 RFC（服务迁移详细计划）
-- **[RFC 0068](./0068-tauri-scan-service-migration.md)**: 扫描服务迁移到 Tauri ✅
-- **RFC 0069**: 缩略图服务迁移到 Tauri (待创建)
-- **RFC 0070**: 导入服务迁移到 Tauri (待创建)
-- **RFC 0071**: 配置服务迁移到 Tauri (待创建)
-- **RFC 0072**: 天枢服务迁移到 Tauri (待创建)
+- **v2.0.0**: 45 RFCs (Electron monorepo, `apps/desktop` + `packages/@photasa/*`)
 
 ## RFC Process
 
@@ -112,8 +101,6 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0056](./0056-yuchigong-code-quality-improvements.md)             | 尉迟恭代码质量改进                                       | Draft          | AI     | v2.0.0         |
 | [0058](./0058-zhangsunwuji-menu-service.md)                       | 长孙无忌菜单服务 - 统一菜单管理到qizou流程               | 🔨 In Progress | AI     | v2.0.0         |
 | [0061](./0061-zouwu-workflow-visualization.md)                    | 驺吾工作流可视化 (Workflow Visualization)                | Draft          | AI     | v2.0.0         |
-| [0067](./0067-tauri-app-photasa.md)                               | 创建 Tauri 应用 Photasa - 总体架构与迁移策略            | Draft          | AI     | v2.1.0         |
-| [0068](./0068-tauri-scan-service-migration.md)                   | 扫描服务迁移到 Tauri                                     | Draft          | AI     | v2.1.0         |
 
 ## Implemented RFCs
 
@@ -154,7 +141,7 @@ What parts of the design do you expect to resolve through the RFC process before
 
 | RFC | Title | Rejection Reason | Date |
 | --- | ----- | ---------------- | ---- |
-| -   | -     | -                | -    |
+| [0067-0072](./rejected/0067-0072-tauri-migration-rejected.md) | Tauri 迁移系列 (0067–0072) | 项目专注 Electron monorepo；Tauri 路径已放弃 | 2026-07-21 |
 
 ## RFC Guidelines
 
@@ -240,9 +227,13 @@ Withdrawn            Rejected
 
 ## Tools and Automation
 
-### RFC Validation
+RFC lifecycle is **manual** (no `rfc-manager` CLI). When creating or closing an RFC:
 
-We use automated tools to validate RFCs:
+1. Add or move the markdown file under `.spec/rfc/` (`completed/` or `rejected/` as appropriate).
+2. Update the tables in this file (`.spec/ROADMAP.md`) in the same change set.
+3. Fix cross-links in `docs/` if the RFC is referenced from design or architecture docs.
+
+### Optional checks
 
 - **Markdown Linting**: Ensure proper formatting
 - **Link Checking**: Verify all links work

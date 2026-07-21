@@ -3,15 +3,16 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "build": "nx run-many -t build",
-        "test": "nx run-many -t test",
-        "lint": "nx run-many -t lint",
-        "typecheck": "nx run-many -t typecheck",
+        "build": "pnpm -r run build",
+        "test": "pnpm -r run --if-present test",
+        "lint": "pnpm -r run --if-present lint",
+        "typecheck": "pnpm -r run --if-present typecheck",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "prepare": "husky",
         "validate": "pnpm --filter @photasa/desktop run validate",
-        "dev:desktop": "pnpm --filter @photasa/desktop dev",
-        "build:desktop": "pnpm --filter @photasa/desktop build",
+        "build:packages": "pnpm -r --filter \"@photasa/desktop^...\" --filter \"!@photasa/desktop\" run build",
+        "dev:desktop": "pnpm build:packages && pnpm --filter @photasa/desktop dev",
+        "build:desktop": "pnpm build:packages && pnpm --filter @photasa/desktop build",
         "test:desktop": "pnpm --filter @photasa/desktop test",
         "typecheck:desktop": "pnpm --filter @photasa/desktop typecheck",
         "workflow:validate": "pnpm --filter @photasa/desktop run workflow:validate"
@@ -19,7 +20,6 @@
     "devDependencies": {
         "eslint": "^8.57.0",
         "husky": "^9.1.7",
-        "nx": "^22.3.3",
         "prettier": "^3.2.5",
         "typescript": "^5.3.3"
     },

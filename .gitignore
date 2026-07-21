@@ -59,18 +59,11 @@ guide
 .vitepress/cache
 .vitepress/dist
 
-# TurboRepo cache
+# Turbo cache
 .turbo
 
-# Nx cache and artifacts
-.nx/cache
-.nx/workspace-data
 static/
 graph.html
-
-# Tauri (Rust build and codegen)
-**/src-tauri/target/
-**/src-tauri/gen/
 
 # Electron builder release output (installers, unpacked)
 release/
