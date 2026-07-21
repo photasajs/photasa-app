@@ -12,9 +12,8 @@ function prefetchImage(src: string): Promise<void> {
 }
 
 export const prefetchImageTask = useTask(function* (_, imageSrc: string) {
-    // RegEx to remove query string
-    const src = imageSrc.replace(/\?.*$/, "");
-    yield prefetchImage(src);
+    // 保留 query（如 ?t= 缓存破坏）；剥离会导致「重建缩略图」后 UI 仍显示旧图
+    yield prefetchImage(imageSrc);
 })
     .enqueue()
     .maxConcurrency(10);

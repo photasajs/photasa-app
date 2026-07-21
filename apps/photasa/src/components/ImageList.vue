@@ -89,9 +89,24 @@ const videoCount = computed(() => {
 // 文件元数据（支持图片/视频/文件信息）
 const fileMeta = ref<FileMetadata | null>(null);
 
+/** 重建缩略图后的显示 URL（按 image.key）；card 为 computed，不能原地改 image.thumbnail */
+const rebuiltThumbnailSrcByKey = ref<Record<string, string>>({});
+
+function thumbnailDisplaySrc(image: Image): string {
+    return rebuiltThumbnailSrcByKey.value[image.key] ?? image.thumbnail;
+}
+
 // 重建缩略图
-async function rebuildThumbnail(image: Image) {
-    await requestThumbnail(image, safeThumbnailSize.value);
+async function rebuildThumbnail(image: Image): Promise<void> {
+    try {
+        const newSrc = await requestThumbnail(image, safeThumbnailSize.value);
+        rebuiltThumbnailSrcByKey.value = {
+            ...rebuiltThumbnailSrcByKey.value,
+            [image.key]: newSrc,
+        };
+    } catch (error) {
+        logger.error("🏛️ 重建缩略图失败", error);
+    }
 }
 
 // 打开文件元数据（支持图片/视频/文件）
@@ -234,6 +249,7 @@ const clearDataState = () => {
     fileMeta.value = null;
     showInfo.value = false;
     loadingInfo.value = false;
+    rebuiltThumbnailSrcByKey.value = {};
 };
 
 // 初始化虚拟滚动器
@@ -436,9 +452,10 @@ onUnmounted(() => {
                                                 }"
                                             >
                                                 <BaseImage
+                                                    :key="thumbnailDisplaySrc(image)"
                                                     :width="safeThumbnailSize"
                                                     :height="safeThumbnailSize"
-                                                    :src="image.thumbnail"
+                                                    :src="thumbnailDisplaySrc(image)"
                                                     :fallback="fallback"
                                                     :raw="image.raw"
                                                     :is-video="image.isVideo"

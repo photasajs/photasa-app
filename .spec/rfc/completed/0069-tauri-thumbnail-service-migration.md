@@ -3,14 +3,14 @@
 - **作者**: AI Assistant
 - **状态**: ✅ 已完成（本文档 2026-07-18 重写，对齐实际实现 — 见下方「Rewrite note」）
 - **创建日期**: 2025-01-02
-- **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
+- **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](../0067-tauri-app-photasa.md)
 - **延伸（RAW 占位）**: [RFC 0102: RAW 缩略图回退](./completed/0102-tauri-thumbnail-raw-fallback.md)（`ThumbnailResponse.fallback`、无解码器时的 JPEG 占位）
 - **被引用（scan crate 拆分）**: [0132](./completed/0132-tauri-photasa-scan-crate.md)（P1b；async `ThumbnailBridge` 消费 0134）
 - **后续（crate 拆分）**: [0134](./completed/0134-tauri-photasa-thumbnail-crate.md)（P1a first；thumbnail → async `photasa-thumbnail` crate，✅ Implemented）
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.

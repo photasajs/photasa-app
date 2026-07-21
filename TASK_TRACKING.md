@@ -296,10 +296,19 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0139](./.spec/rfc/0139-tauri-zouwu-retirement-plan.md)                     | zouwu 逐域退场排期             | 📋 Draft       | 仅排期分析，不含代码；scan/config/preference 已核实，appstate/shell/menu/engine 未核实 |
 | [0140](./.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md)        | zouwu Adapter→command 迁移模式 | 📋 Draft       | 通用模式定义 + 验收标准，首个案例（0138）已验证可行，保持开放供后续域引用              |
 | [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) | preference 贞观 + 退 zouwu     | ✅ Implemented | `preferences_get`/`preferences_update`；袁天罡启奏；删 adapter                         |
+| [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md)   | 单张重建缩略图 UI 契约         | ✅ Implemented | `create_thumbnail` 直连；`rebuiltThumbnailSrcByKey`；非 Rescan（2026-07-21）           |
 
-**已归档**：[0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photasa-folder-tree` ✅ / [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) preference 整域退出 zouwu ✅。
+**已归档**：[0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photosa-folder-tree` ✅ / [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) preference 整域退出 zouwu ✅ / [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md) 单张重建缩略图 UI ✅。
 
 **Gap/T3 铁律：** 一事一 RFC = **一域** 一事。config/media 族：**… / 0145 folder-tree ✅ / 0147 preference ✅ / …**
+
+### RFC 0148 — 单张重建缩略图 UI（✅ Implemented — 2026-07-21）
+
+- [x] 明确契约：`create_thumbnail(always:true)` 直连，非 Rescan / 非贞观
+- [x] `requestThumbnail` 目标路径取自 `photo.thumbnail`（`image.thumbnail`）
+- [x] `rebuiltThumbnailSrcByKey` + `thumbnailDisplaySrc`（修复 computed `card` 不刷新）
+- [x] `image-prefetch` 保留 `?t=` 查询串
+- [x] 测试：`ImageListHelper.test.ts`、`image-prefetch.test.ts`
 
 ### RFC 0147 — preference 贞观 + 退 zouwu（✅ 已完成，归档 `completed/`）
 
@@ -357,74 +366,74 @@ v2.0 Electron RFC（Draft / In Progress）**不算** Photasa 活跃项。若要�
 
 路径相对仓库根。状态与正文头部不一致时，以 RFC 文件内 **Status** 为准并回写本表。
 
-| RFC                                                                            | Title                                                | Status                           | Author | Target Release |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------- | -------------------------------- | ------ | -------------- |
-| [0004](./docs/rfc/0004-ai-file-preview-service.md)                             | AI文件在线预览服务                                   | Draft                            | 李鹏   | v2.0.0         |
-| [0008](./docs/rfc/0008-scan-strategy-optimization.md)                          | 扫描策略优化                                         | Draft                            | 李鹏   | v2.0.0         |
-| [0010](./docs/rfc/0010-folder-statistics-display.md)                           | 文件夹树节点统计信息显示                             | Draft                            | 李鹏   | v2.0.0         |
-| [0012](./docs/rfc/0012-unified-path-handling-architecture.md)                  | 统一路径处理架构重构                                 | Draft                            | 李鹏   | v2.0.0         |
-| [0014](./docs/rfc/0014-file-scan-folder-tree-update.md)                        | 文件扫描时文件夹树更新优化                           | Draft                            | 李鹏   | v2.0.0         |
-| [0018](./docs/rfc/0018-scanning-folder-priority-sorting.md)                    | 扫描文件夹优先级排序优化                             | Draft                            | 李鹏   | v2.0.0         |
-| [0020](./docs/rfc/0020-auto-update-server.md)                                  | Auto-Update System - Server Implementation           | Draft                            | 李鹏   | v2.0.0         |
-| [0021](./docs/rfc/0021-playwright-e2e-testing-architecture-enhancement.md)     | Playwright E2E Testing Architecture Enhancement      | Draft                            | 李鹏   | v2.0.0         |
-| [0022](./docs/rfc/0022-test-stabilization-issues-and-solutions.md)             | Test Stabilization Issues and Solutions              | Draft                            | 李鹏   | v2.0.0         |
-| [0023](./docs/rfc/0023-startup-performance-optimization.md)                    | Startup Performance Optimization                     | Draft                            | 李鹏   | v2.0.0         |
-| [0025](./docs/rfc/0025-tree-auto-focus-on-expand.md)                           | 树组件自动聚焦展开优化                               | Draft                            | 李鹏   | v2.0.0         |
-| [0029](./docs/rfc/0029-scan-skip-strategy-completion-fix.md)                   | 扫描跳过策略完成修复                                 | Draft                            | 李鹏   | v2.0.0         |
-| [0032](./docs/rfc/0032-qianliyan-scan-engine.md)                               | 千里眼扫描引擎 (含scan-service迁移)                  | 🔨 In Progress                   | 李鹏   | v2.0.0         |
-| [0033](./docs/rfc/0033-shunfenger-watch-engine.md)                             | 顺风耳监听引擎                                       | Draft                            | 李鹏   | v2.0.0         |
-| [0034](./docs/rfc/0034-linglong-vision-engine.md)                              | 玲珑视觉引擎                                         | Draft                            | 李鹏   | v2.0.0         |
-| [0037](./docs/rfc/0037-zouwu-workflow-dsl.md)                                  | 驺吾(Zouwu)工作流DSL                                 | Draft                            | 李鹏   | v2.0.0         |
-| [0039](./docs/rfc/0039-tianshu-workflow-syntax-specification.md)               | 天枢工作流语法规范                                   | Draft                            | 李鹏   | v2.0.0         |
-| [0043](./docs/rfc/0043-useqinqiong-access-pattern.md)                          | useQinQiong()访问模式 - appState统一访问             | Draft                            | AI     | v2.0.0         |
-| [0049](./docs/rfc/0049-correct-e2e-testing-architecture.md)                    | 正确的E2E测试架构设计                                | Draft                            | AI     | v2.0.0         |
-| [0050](./docs/rfc/0050-taiyi-workflow-adapter-engine.md)                       | 太乙 - 工作流适配器与执行引擎                        | Draft                            | AI     | v2.0.0         |
-| [0056](./docs/rfc/0056-yuchigong-code-quality-improvements.md)                 | 尉迟恭代码质量改进                                   | Draft                            | AI     | v2.0.0         |
-| [0058](./docs/rfc/0058-zhangsunwuji-menu-service.md)                           | 长孙无忌菜单服务 - 统一菜单管理到qizou流程           | 🔨 In Progress                   | AI     | v2.0.0         |
-| [0061](./docs/rfc/0061-zouwu-workflow-visualization.md)                        | 驺吾工作流可视化 (Workflow Visualization)            | Draft                            | AI     | v2.0.0         |
-| [0067](./.spec/rfc/0067-tauri-app-photasa.md)                                  | 创建 Tauri 应用 Photasa - 总体架构与迁移策略         | Implemented（总体索引）          | AI     | v2.1.0         |
-| [0068](./.spec/rfc/0068-tauri-scan-service-migration.md)                       | 扫描服务迁移到 Tauri                                 | Implemented                      | AI     | v2.1.0         |
-| [0069](./.spec/rfc/0069-tauri-thumbnail-service-migration.md)                  | 缩略图服务迁移到 Tauri                               | Implemented（RAW 占位见 0102）   | AI     | v2.1.0         |
-| [0070](./.spec/rfc/completed/0070-tauri-import-service-migration.md)           | 导入服务迁移到 Tauri                                 | Implemented（细项对拍见 0097）   | AI     | v2.1.0         |
-| [0071](./.spec/rfc/0071-tauri-config-service-migration.md)                     | 配置服务迁移到 Tauri                                 | Implemented                      | AI     | v2.1.0         |
-| [0072](./.spec/rfc/0072-tauri-tianshu-service-migration.md)                    | 天枢服务迁移到 Tauri                                 | Implemented                      | AI     | v2.1.0         |
-| [0073](./.spec/rfc/0073-tauri-ui-migration-adapter.md)                         | UI 迁移与适配层设计                                  | Implemented                      | AI     | v2.1.0         |
-| [0074](./docs/rfc/completed/0074-tauri-adapter-concept.md)                     | Tauri adapter concept and env detection              | Draft                            | AI     | v2.1.0         |
-| [0075](./docs/rfc/completed/0075-tauri-flat-legacy-api-layer.md)               | Flat legacy API layer (window.api shape)             | Draft                            | AI     | v2.1.0         |
-| [0076](./docs/rfc/completed/0076-tauri-path-utilities-rust.md)                 | Path utilities in Rust (1:1 from Node, zero Node)    | Draft                            | AI     | v2.1.0         |
-| [0077](./docs/rfc/completed/0077-tauri-get-photasa-config.md)                  | get_photasa_config command                           | Draft                            | AI     | v2.1.0         |
-| [0078](./docs/rfc/completed/0078-tauri-add-to-photo-list.md)                   | add_to_photo_list command                            | Draft                            | AI     | v2.1.0         |
-| [0079](./docs/rfc/completed/0079-tauri-remove-from-photo-list.md)              | remove_from_photo_list command                       | Draft                            | AI     | v2.1.0         |
-| [0080](./docs/rfc/completed/0080-tauri-reset-photasa-config.md)                | reset_photasa_config command                         | Draft                            | AI     | v2.1.0         |
-| [0081](./docs/rfc/completed/0081-tauri-fix-photasa-config.md)                  | fix_photasa_config command                           | Draft                            | AI     | v2.1.0         |
-| [0082](./docs/rfc/completed/0082-tauri-watch-start-stop-commands.md)           | Watch start/stop commands                            | Draft                            | AI     | v2.1.0         |
-| [0083](./docs/rfc/completed/0083-tauri-watch-event-contract.md)                | Watch event contract                                 | Draft                            | AI     | v2.1.0         |
-| [0084](./docs/rfc/completed/0084-tauri-choose-directory.md)                    | choose_directory command                             | Draft                            | AI     | v2.1.0         |
-| [0085](./docs/rfc/completed/0085-tauri-get-directory.md)                       | get_directory command                                | Draft                            | AI     | v2.1.0         |
-| [0086](./docs/rfc/completed/0086-tauri-sub-folders.md)                         | sub_folders command                                  | Draft                            | AI     | v2.1.0         |
-| [0087](./docs/rfc/completed/0087-tauri-check-photasa-config-folder.md)         | check_photasa_config (folder validation) command     | Draft                            | AI     | v2.1.0         |
-| [0088](./docs/rfc/completed/0088-tauri-log-viewer-open.md)                     | Log viewer open/state command                        | Draft                            | AI     | v2.1.0         |
-| [0089](./docs/rfc/completed/0089-tauri-log-stream-events.md)                   | Log stream events                                    | Draft                            | AI     | v2.1.0         |
-| [0090](./docs/rfc/completed/0090-tauri-update-service.md)                      | Update service                                       | Draft                            | AI     | v2.1.0         |
-| [0091](./docs/rfc/completed/0091-tauri-platform-is-mac.md)                     | Platform / isMac / get_platform                      | Draft                            | AI     | v2.1.0         |
-| [0092](./docs/rfc/completed/0092-tauri-menu-api.md)                            | Menu (applySystemMenu, onMenuAction)                 | Draft                            | AI     | v2.1.0         |
-| [0093](./docs/rfc/completed/0093-tauri-import-photos-legacy.md)                | importPhotos legacy copy flow                        | Draft                            | AI     | v2.1.0         |
-| [0094](./docs/rfc/completed/0094-tauri-choose-directories-multi.md)            | choose_directories（单/多选目录）                    | Draft                            | AI     | v2.1.0         |
-| [0095](./docs/rfc/completed/0095-tauri-get-path-root.md)                       | get_path_root                                        | Draft                            | AI     | v2.1.0         |
-| [0096](./docs/rfc/completed/0096-tauri-import-pause-resume.md)                 | pause_import / resume_import                         | Draft                            | AI     | v2.1.0         |
-| [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md)                   | legacy-api 与 Electron 1:1 跟踪                      | ✅ Implemented（Photasa Active） | AI     | v2.1.0         |
-| [0098](./docs/rfc/0098-main-module-extraction-to-packages.md)                  | src/main 模块提取为 packages（Electron-only）        | ⏸️ Deferred                      | AI     | v2.1.0         |
-| [0101](./docs/rfc/completed/0101-tauri-startup-splash.md)                      | Tauri 启动 Splash                                    | Implemented                      | AI     | v2.1.0         |
-| [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md)              | 缩略图 RAW 回退策略                                  | Implemented                      | AI     | v2.1.0         |
-| [0103](./docs/rfc/completed/0103-tauri-native-deps-build-strategy.md)          | 原生依赖构建策略                                     | Implemented                      | AI     | v2.1.0         |
-| [0104](./.spec/rfc/completed/0104-tauri-execute-import-date-folder.md)         | execute_import date-based folder organization        | ✅ Implemented                   | AI     | v2.1.0         |
-| [0105](./.spec/rfc/completed/0105-tauri-scan-incremental-cache.md)             | Scan incremental cache (.photasa-folder.json)        | ✅ Implemented                   | AI     | v2.1.0         |
-| [0106](./.spec/rfc/completed/0106-tauri-update-periodic-check.md)              | Updater background periodic check                    | ✅ Implemented                   | AI     | v2.1.0         |
-| [0107](./.spec/rfc/0107-tauri-wenchang-preferences-storage.md)                 | Wenchang preferences storage                         | 🔨 In Progress（生产打包缺失）   | AI     | v2.1.0         |
-| [0111](./.spec/rfc/completed/0111-tauri-scan-notify-status-bridge.md)          | Scan notify:status Rust bridge                       | ✅ Implemented                   | AI     | v2.1.0         |
-| [0112](./.spec/rfc/completed/0112-tauri-extract-metadata-golden-parity.md)     | extract_metadata golden parity                       | ✅ Implemented                   | AI     | v2.1.0         |
-| [0114](./.spec/rfc/completed/0114-tauri-get-directory-os-paths.md)             | get_directory OS 路径 + scan_directories FileGroup[] | ✅ Implemented                   | AI     | v2.1.0         |
-| [0115](./.spec/rfc/completed/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片 asset 协议（非 file://）            | ✅ Implemented                   | AI     | v2.1.0         |
+| RFC                                                                            | Title                                                | Status                                   | Author | Target Release |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------- | ------ | -------------- |
+| [0004](./docs/rfc/0004-ai-file-preview-service.md)                             | AI文件在线预览服务                                   | Draft                                    | 李鹏   | v2.0.0         |
+| [0008](./docs/rfc/0008-scan-strategy-optimization.md)                          | 扫描策略优化                                         | Draft                                    | 李鹏   | v2.0.0         |
+| [0010](./docs/rfc/0010-folder-statistics-display.md)                           | 文件夹树节点统计信息显示                             | Draft                                    | 李鹏   | v2.0.0         |
+| [0012](./docs/rfc/0012-unified-path-handling-architecture.md)                  | 统一路径处理架构重构                                 | Draft                                    | 李鹏   | v2.0.0         |
+| [0014](./docs/rfc/0014-file-scan-folder-tree-update.md)                        | 文件扫描时文件夹树更新优化                           | Draft                                    | 李鹏   | v2.0.0         |
+| [0018](./docs/rfc/0018-scanning-folder-priority-sorting.md)                    | 扫描文件夹优先级排序优化                             | Draft                                    | 李鹏   | v2.0.0         |
+| [0020](./docs/rfc/0020-auto-update-server.md)                                  | Auto-Update System - Server Implementation           | Draft                                    | 李鹏   | v2.0.0         |
+| [0021](./docs/rfc/0021-playwright-e2e-testing-architecture-enhancement.md)     | Playwright E2E Testing Architecture Enhancement      | Draft                                    | 李鹏   | v2.0.0         |
+| [0022](./docs/rfc/0022-test-stabilization-issues-and-solutions.md)             | Test Stabilization Issues and Solutions              | Draft                                    | 李鹏   | v2.0.0         |
+| [0023](./docs/rfc/0023-startup-performance-optimization.md)                    | Startup Performance Optimization                     | Draft                                    | 李鹏   | v2.0.0         |
+| [0025](./docs/rfc/0025-tree-auto-focus-on-expand.md)                           | 树组件自动聚焦展开优化                               | Draft                                    | 李鹏   | v2.0.0         |
+| [0029](./docs/rfc/0029-scan-skip-strategy-completion-fix.md)                   | 扫描跳过策略完成修复                                 | Draft                                    | 李鹏   | v2.0.0         |
+| [0032](./docs/rfc/0032-qianliyan-scan-engine.md)                               | 千里眼扫描引擎 (含scan-service迁移)                  | 🔨 In Progress                           | 李鹏   | v2.0.0         |
+| [0033](./docs/rfc/0033-shunfenger-watch-engine.md)                             | 顺风耳监听引擎                                       | Draft                                    | 李鹏   | v2.0.0         |
+| [0034](./docs/rfc/0034-linglong-vision-engine.md)                              | 玲珑视觉引擎                                         | Draft                                    | 李鹏   | v2.0.0         |
+| [0037](./docs/rfc/0037-zouwu-workflow-dsl.md)                                  | 驺吾(Zouwu)工作流DSL                                 | Draft                                    | 李鹏   | v2.0.0         |
+| [0039](./docs/rfc/0039-tianshu-workflow-syntax-specification.md)               | 天枢工作流语法规范                                   | Draft                                    | 李鹏   | v2.0.0         |
+| [0043](./docs/rfc/0043-useqinqiong-access-pattern.md)                          | useQinQiong()访问模式 - appState统一访问             | Draft                                    | AI     | v2.0.0         |
+| [0049](./docs/rfc/0049-correct-e2e-testing-architecture.md)                    | 正确的E2E测试架构设计                                | Draft                                    | AI     | v2.0.0         |
+| [0050](./docs/rfc/0050-taiyi-workflow-adapter-engine.md)                       | 太乙 - 工作流适配器与执行引擎                        | Draft                                    | AI     | v2.0.0         |
+| [0056](./docs/rfc/0056-yuchigong-code-quality-improvements.md)                 | 尉迟恭代码质量改进                                   | Draft                                    | AI     | v2.0.0         |
+| [0058](./docs/rfc/0058-zhangsunwuji-menu-service.md)                           | 长孙无忌菜单服务 - 统一菜单管理到qizou流程           | 🔨 In Progress                           | AI     | v2.0.0         |
+| [0061](./docs/rfc/0061-zouwu-workflow-visualization.md)                        | 驺吾工作流可视化 (Workflow Visualization)            | Draft                                    | AI     | v2.0.0         |
+| [0067](./.spec/rfc/completed/0067-tauri-app-photasa.md)                        | 创建 Tauri 应用 Photasa - 总体架构与迁移策略         | Implemented（总体索引，2026-07-21 归档） | AI     | v2.1.0         |
+| [0068](./.spec/rfc/completed/0068-tauri-scan-service-migration.md)             | 扫描服务迁移到 Tauri                                 | Implemented                              | AI     | v2.1.0         |
+| [0069](./.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md)        | 缩略图服务迁移到 Tauri                               | Implemented（RAW 占位见 0102）           | AI     | v2.1.0         |
+| [0070](./.spec/rfc/completed/0070-tauri-import-service-migration.md)           | 导入服务迁移到 Tauri                                 | Implemented（细项对拍见 0097）           | AI     | v2.1.0         |
+| [0071](./.spec/rfc/0071-tauri-config-service-migration.md)                     | 配置服务迁移到 Tauri                                 | Implemented                              | AI     | v2.1.0         |
+| [0072](./.spec/rfc/completed/0072-tauri-tianshu-service-migration.md)          | 天枢服务迁移到 Tauri                                 | Implemented                              | AI     | v2.1.0         |
+| [0073](./.spec/rfc/0073-tauri-ui-migration-adapter.md)                         | UI 迁移与适配层设计                                  | Implemented                              | AI     | v2.1.0         |
+| [0074](./docs/rfc/completed/0074-tauri-adapter-concept.md)                     | Tauri adapter concept and env detection              | Draft                                    | AI     | v2.1.0         |
+| [0075](./docs/rfc/completed/0075-tauri-flat-legacy-api-layer.md)               | Flat legacy API layer (window.api shape)             | Draft                                    | AI     | v2.1.0         |
+| [0076](./docs/rfc/completed/0076-tauri-path-utilities-rust.md)                 | Path utilities in Rust (1:1 from Node, zero Node)    | Draft                                    | AI     | v2.1.0         |
+| [0077](./docs/rfc/completed/0077-tauri-get-photasa-config.md)                  | get_photasa_config command                           | Draft                                    | AI     | v2.1.0         |
+| [0078](./docs/rfc/completed/0078-tauri-add-to-photo-list.md)                   | add_to_photo_list command                            | Draft                                    | AI     | v2.1.0         |
+| [0079](./docs/rfc/completed/0079-tauri-remove-from-photo-list.md)              | remove_from_photo_list command                       | Draft                                    | AI     | v2.1.0         |
+| [0080](./docs/rfc/completed/0080-tauri-reset-photasa-config.md)                | reset_photasa_config command                         | Draft                                    | AI     | v2.1.0         |
+| [0081](./docs/rfc/completed/0081-tauri-fix-photasa-config.md)                  | fix_photasa_config command                           | Draft                                    | AI     | v2.1.0         |
+| [0082](./docs/rfc/completed/0082-tauri-watch-start-stop-commands.md)           | Watch start/stop commands                            | Draft                                    | AI     | v2.1.0         |
+| [0083](./docs/rfc/completed/0083-tauri-watch-event-contract.md)                | Watch event contract                                 | Draft                                    | AI     | v2.1.0         |
+| [0084](./docs/rfc/completed/0084-tauri-choose-directory.md)                    | choose_directory command                             | Draft                                    | AI     | v2.1.0         |
+| [0085](./docs/rfc/completed/0085-tauri-get-directory.md)                       | get_directory command                                | Draft                                    | AI     | v2.1.0         |
+| [0086](./docs/rfc/completed/0086-tauri-sub-folders.md)                         | sub_folders command                                  | Draft                                    | AI     | v2.1.0         |
+| [0087](./docs/rfc/completed/0087-tauri-check-photasa-config-folder.md)         | check_photasa_config (folder validation) command     | Draft                                    | AI     | v2.1.0         |
+| [0088](./docs/rfc/completed/0088-tauri-log-viewer-open.md)                     | Log viewer open/state command                        | Draft                                    | AI     | v2.1.0         |
+| [0089](./docs/rfc/completed/0089-tauri-log-stream-events.md)                   | Log stream events                                    | Draft                                    | AI     | v2.1.0         |
+| [0090](./docs/rfc/completed/0090-tauri-update-service.md)                      | Update service                                       | Draft                                    | AI     | v2.1.0         |
+| [0091](./docs/rfc/completed/0091-tauri-platform-is-mac.md)                     | Platform / isMac / get_platform                      | Draft                                    | AI     | v2.1.0         |
+| [0092](./docs/rfc/completed/0092-tauri-menu-api.md)                            | Menu (applySystemMenu, onMenuAction)                 | Draft                                    | AI     | v2.1.0         |
+| [0093](./docs/rfc/completed/0093-tauri-import-photos-legacy.md)                | importPhotos legacy copy flow                        | Draft                                    | AI     | v2.1.0         |
+| [0094](./docs/rfc/completed/0094-tauri-choose-directories-multi.md)            | choose_directories（单/多选目录）                    | Draft                                    | AI     | v2.1.0         |
+| [0095](./docs/rfc/completed/0095-tauri-get-path-root.md)                       | get_path_root                                        | Draft                                    | AI     | v2.1.0         |
+| [0096](./docs/rfc/completed/0096-tauri-import-pause-resume.md)                 | pause_import / resume_import                         | Draft                                    | AI     | v2.1.0         |
+| [0097](./docs/rfc/0097-tauri-legacy-api-deferred-surface.md)                   | legacy-api 与 Electron 1:1 跟踪                      | ✅ Implemented（Photasa Active）         | AI     | v2.1.0         |
+| [0098](./docs/rfc/0098-main-module-extraction-to-packages.md)                  | src/main 模块提取为 packages（Electron-only）        | ⏸️ Deferred                              | AI     | v2.1.0         |
+| [0101](./docs/rfc/completed/0101-tauri-startup-splash.md)                      | Tauri 启动 Splash                                    | Implemented                              | AI     | v2.1.0         |
+| [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md)              | 缩略图 RAW 回退策略                                  | Implemented                              | AI     | v2.1.0         |
+| [0103](./docs/rfc/completed/0103-tauri-native-deps-build-strategy.md)          | 原生依赖构建策略                                     | Implemented                              | AI     | v2.1.0         |
+| [0104](./.spec/rfc/completed/0104-tauri-execute-import-date-folder.md)         | execute_import date-based folder organization        | ✅ Implemented                           | AI     | v2.1.0         |
+| [0105](./.spec/rfc/completed/0105-tauri-scan-incremental-cache.md)             | Scan incremental cache (.photasa-folder.json)        | ✅ Implemented                           | AI     | v2.1.0         |
+| [0106](./.spec/rfc/completed/0106-tauri-update-periodic-check.md)              | Updater background periodic check                    | ✅ Implemented                           | AI     | v2.1.0         |
+| [0107](./.spec/rfc/0107-tauri-wenchang-preferences-storage.md)                 | Wenchang preferences storage                         | 🔨 In Progress（生产打包缺失）           | AI     | v2.1.0         |
+| [0111](./.spec/rfc/completed/0111-tauri-scan-notify-status-bridge.md)          | Scan notify:status Rust bridge                       | ✅ Implemented                           | AI     | v2.1.0         |
+| [0112](./.spec/rfc/completed/0112-tauri-extract-metadata-golden-parity.md)     | extract_metadata golden parity                       | ✅ Implemented                           | AI     | v2.1.0         |
+| [0114](./.spec/rfc/completed/0114-tauri-get-directory-os-paths.md)             | get_directory OS 路径 + scan_directories FileGroup[] | ✅ Implemented                           | AI     | v2.1.0         |
+| [0115](./.spec/rfc/completed/0115-tauri-webview-local-image-asset-protocol.md) | WebView 本地图片 asset 协议（非 file://）            | ✅ Implemented                           | AI     | v2.1.0         |
 
 > **说明**：**Photasa sprint 只看上一节「Photasa Active RFCs」。** 本表含 v2.0 Legacy 与历史快照；Tauri 0074–0107 在 [ROADMAP.md](./ROADMAP.md) 已标 Implemented 的，以实现为准。
 

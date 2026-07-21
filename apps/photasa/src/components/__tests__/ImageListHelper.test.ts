@@ -157,18 +157,23 @@ describe("ImageListHelper", () => {
     });
 
     describe("requestThumbnail", () => {
+        const thumbRel = "file:///test/.photasaoriginals/thumbnail-test.jpg.png";
+
         beforeEach(() => {
             vi.clearAllMocks();
         });
 
-        it("应该调用createThumbnailTask.perform", async () => {
+        it("应该调用createThumbnailTask.perform（目标路径取自 config 缩略图）", async () => {
             const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue(undefined);
+            mockPerform.mockResolvedValue({
+                success: true,
+                file: "/test/.photasaoriginals/thumbnail-test.jpg.png",
+            });
 
             const image: Image = {
                 key: "test.jpg",
-                src: "file:///test/thumb.jpg",
-                thumbnail: "file:///test/thumb.jpg",
+                src: thumbRel,
+                thumbnail: thumbRel,
                 preview: "file:///test/preview.jpg",
                 raw: "file:///test/test.jpg",
                 isVideo: false,
@@ -188,14 +193,15 @@ describe("ImageListHelper", () => {
 
         it("应该在缺少raw属性时使用preview", async () => {
             const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue(undefined);
+            mockPerform.mockResolvedValue({ success: true });
 
+            const previewThumb = "file:///test/.photasaoriginals/thumbnail-preview.jpg.png";
             const image: Image = {
                 key: "test.jpg",
-                src: "file:///test/thumb.jpg",
-                thumbnail: "file:///test/thumb.jpg",
+                src: previewThumb,
+                thumbnail: previewThumb,
                 preview: "file:///test/preview.jpg",
-                raw: null as any,
+                raw: null as unknown as string,
                 isVideo: false,
             };
 
@@ -211,39 +217,56 @@ describe("ImageListHelper", () => {
             });
         });
 
-        it("应该更新缩略图URL以强制重新渲染", async () => {
+        it("应该返回带缓存破坏的 WebView URL", async () => {
             const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue(undefined);
+            mockPerform.mockResolvedValue({ success: true });
 
-            // Mock Date.now
             const mockDate = 1234567890;
             vi.spyOn(Date, "now").mockReturnValue(mockDate);
 
             const image: Image = {
                 key: "test.jpg",
-                src: "file:///test/thumb.jpg",
-                thumbnail: "file:///test/thumb.jpg",
+                src: thumbRel,
+                thumbnail: thumbRel,
                 preview: "file:///test/preview.jpg",
                 raw: "file:///test/test.jpg",
                 isVideo: false,
             };
 
-            const originalThumbnail = image.thumbnail;
-            await requestThumbnail(image, 180);
+            const newSrc = await requestThumbnail(image, 180);
 
-            expect(image.thumbnail).toBe(`${originalThumbnail}?${mockDate}`);
+            expect(newSrc).toBe(
+                `file:///test/.photasaoriginals/thumbnail-test.jpg.png?t=${mockDate}`,
+            );
 
             vi.restoreAllMocks();
         });
 
-        it("应该处理视频文件", async () => {
+        it("createThumbnail 失败时应抛错", async () => {
             const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue(undefined);
+            mockPerform.mockResolvedValue({ success: false, error: "decode failed" });
 
             const image: Image = {
+                key: "test.jpg",
+                src: thumbRel,
+                thumbnail: thumbRel,
+                preview: "file:///test/preview.jpg",
+                raw: "file:///test/test.jpg",
+                isVideo: false,
+            };
+
+            await expect(requestThumbnail(image, 180)).rejects.toThrow("decode failed");
+        });
+
+        it("应该处理视频文件", async () => {
+            const mockPerform = vi.mocked(createThumbnailTask.perform);
+            mockPerform.mockResolvedValue({ success: true });
+
+            const videoThumb = "file:///test/.photasaoriginals/thumbnail-test.mp4.png";
+            const image: Image = {
                 key: "test.mp4",
-                src: "file:///test/thumb.jpg",
-                thumbnail: "file:///test/thumb.jpg",
+                src: videoThumb,
+                thumbnail: videoThumb,
                 preview: "file:///test/preview.jpg",
                 raw: "file:///test/test.mp4",
                 isVideo: true,

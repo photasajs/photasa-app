@@ -1,10 +1,7 @@
 import { createThumbnailTask } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@photasa/common";
 import { toImage } from "@renderer/common/image";
-import {
-    absoluteThumbnailPathForSource,
-    webviewMediaUrlToAbsolutePath,
-} from "@renderer/utils/media-url";
+import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 
 import type { Image } from "@renderer/common/image";
 
@@ -32,11 +29,11 @@ export function toImageList(currentFolder: string, currentFolderConfig: PhotasaC
  * @param thumbnailSize 缩略图大小
  * @returns
  */
-export async function requestThumbnail(image: Image, thumbnailSize: number): Promise<void> {
+export async function requestThumbnail(image: Image, thumbnailSize: number): Promise<string> {
     const sourcePath = webviewMediaUrlToAbsolutePath(image.raw || image.preview);
-    const thumbnailPath = absoluteThumbnailPathForSource(sourcePath);
+    const thumbnailPath = webviewMediaUrlToAbsolutePath(image.thumbnail || image.src);
 
-    await createThumbnailTask.perform({
+    const result = await createThumbnailTask.perform({
         path: sourcePath,
         thumbnail: thumbnailPath,
         width: thumbnailSize,
@@ -45,7 +42,12 @@ export async function requestThumbnail(image: Image, thumbnailSize: number): Pro
         preview: "",
     });
 
-    image.thumbnail = `${image.src}?${Date.now()}`;
+    if (!result?.success) {
+        throw new Error(result?.error ?? "缩略图重建失败");
+    }
+
+    // 返回带缓存破坏的 WebView URL；勿写回 image — card 为 computed，原地赋值不触发渲染
+    return `${toWebviewMediaUrl(thumbnailPath)}?t=${Date.now()}`;
 }
 
 const DEFAULT_GAP = 16;
