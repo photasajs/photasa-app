@@ -10,11 +10,16 @@ import {
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
 const mockInvoke = vi.fn();
+const mockListen = vi.fn();
 const mockIsTauri = vi.fn(() => true);
 const mockQizouEmit = vi.fn();
 
 vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => mockInvoke(...args),
+}));
+
+vi.mock("@tauri-apps/api/event", () => ({
+    listen: (...args: unknown[]) => mockListen(...args),
 }));
 
 vi.mock("@renderer/api/env", () => ({
@@ -32,9 +37,15 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
 
     beforeEach(() => {
         mockInvoke.mockReset();
+        mockListen.mockReset();
+        mockListen.mockResolvedValue(() => {});
         mockQizouEmit.mockReset();
         mockIsTauri.mockReturnValue(true);
         service = createServiceWithQizouBus();
+    });
+
+    it("Tauri 模式下 menu:action 直连 listen(picasa:menu-action)（RFC 0149）", () => {
+        expect(mockListen).toHaveBeenCalledWith("picasa:menu-action", expect.any(Function));
     });
 
     it("UPDATE_FOLDER_TREE invoke folder_tree_update", async () => {
@@ -136,5 +147,54 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         expect(mockInvoke).toHaveBeenCalledWith(PREFERENCES_COMMANDS.GET);
         expect(result.acknowledged).toBe(true);
         expect(result.data).toEqual(prefs);
+    });
+
+    it("UPDATE_MENU invoke apply_system_menu（RFC 0149/0150）", async () => {
+        const menus = [{ key: "file", label: "File" }];
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.UPDATE_MENU,
+            context: { menus },
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("apply_system_menu", { menus });
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("OPEN_EXTERNAL invoke open_external（RFC 0149/0150）", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.OPEN_EXTERNAL,
+            context: { url: "https://example.com" },
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("open_external", { url: "https://example.com" });
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("OPEN_IN_FINDER invoke show_in_folder（RFC 0149/0150）", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.OPEN_IN_FINDER,
+            context: { path: "/tmp/photo.jpg" },
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("show_in_folder", { path: "/tmp/photo.jpg" });
+        expect(result.acknowledged).toBe(true);
     });
 });

@@ -17,3 +17,13 @@ export const PREFERENCES_COMMANDS = {
     GET: "preferences_get",
     UPDATE: "preferences_update",
 } as const;
+
+/** RFC 0149/0150: shell + menu 直连（不经 zouwu） */
+export const SHELL_COMMANDS = {
+    OPEN_EXTERNAL: "open_external",
+    SHOW_IN_FOLDER: "show_in_folder",
+} as const;
+
+export const MENU_COMMANDS = {
+    APPLY: "apply_system_menu",
+} as const;

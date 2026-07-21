@@ -48,6 +48,8 @@ import type { Emitter } from "mitt";
 import { IService } from "@renderer/interfaces/service.interface";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 import { loggers } from "@photasa/common";
+import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
+import { webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 
 const logger = loggers.zhangsunwuji;
 
@@ -290,10 +292,8 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
             return;
         }
 
-        // ✅ 在服务层统一处理 file:// URL 到 OS 路径的转换
-        // 使用 window.api.normalizePath（来自 preload，调用 shared/path-util.ts）
-        // 这样可以避免每个组件都重复转换逻辑
-        const osPath = window.api.normalizePath?.(path) || path;
+        // RFC 0149: 服务层统一 file:// / asset URL → 磁盘路径（禁止 window.api）
+        const osPath = canonicalFolderPath(webviewMediaUrlToAbsolutePath(path));
 
         logger.info(`📋 长孙无忌：启奏在 Finder 中显示文件 ${osPath}（原始路径：${path}）`);
 

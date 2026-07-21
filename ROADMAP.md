@@ -77,9 +77,9 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 ### Tauri 迁移 RFC 系列（架构与服务）
 
 - **主 RFC**：[RFC 0067](.spec/rfc/completed/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略（✅ 已完成/归档，伞形索引文档）
-- **已完成（服务层）**：[0073](.spec/rfc/completed/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/completed/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/completed/0072-tauri-tianshu-service-migration.md) 天枢
+- **已完成（服务层）**：[0073](.spec/rfc/completed/0073-tauri-ui-migration-adapter.md) UI/适配层 ✅ **已关闭**（余项 [0149](.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)）；[0068](.spec/rfc/completed/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/completed/0072-tauri-tianshu-service-migration.md) 天枢
 
-**建议实施顺序**：0073（UI+适配）→ 0071 → 0068 → 0069 → 0070 → 0072。
+**建议实施顺序（0073 已关闭）**：0149 跟踪项 → **0137**（贞观直连 IPC）→ **0139** shell/menu/engine 退场。
 
 ### Tauri small RFCs（0074+）：一事一表
 
@@ -156,6 +156,8 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0145](.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md)                | folder tree 持久化退出 zouwu（`photasa-folder-tree` crate）                            | ✅ Implemented                                                    |
 | [0147](.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md)          | preference 贞观对齐 + 退 zouwu（`preferences_get`/`preferences_update`，袁天罡启奏）   | ✅ Implemented                                                    |
 | [0148](.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md)            | 单张「重建缩略图」UI 契约（`create_thumbnail` 直连 + 网格刷新）                        | ✅ Implemented                                                    |
+| [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)                | 0073 关闭后 UI 适配层剩余项跟踪                                                        | ✅ Implemented                                                    |
+| [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md)            | shell/menu 退出 zouwu（贞观直连 invoke）                                               | ✅ Implemented                                                    |
 
 ### Photasa next priorities（2026-07）
 

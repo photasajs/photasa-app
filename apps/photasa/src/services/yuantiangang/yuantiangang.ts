@@ -28,8 +28,10 @@ import { computeScannedFilePaths } from "./utils";
 import { IntentToFuluMapping } from "./intent";
 import {
     FOLDER_TREE_COMMANDS,
+    MENU_COMMANDS,
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
+    SHELL_COMMANDS,
 } from "./tauri-command-names";
 import { extractFolderTreeFromContext } from "./folder-tree-payload";
 import { buildPreferencesDelta, PREFERENCE_ZHAOLING_MATTERS } from "./preferences-delta";
@@ -96,10 +98,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     break;
                 case ShengzhiCommands.OPEN_EXTERNAL:
                 case ShengzhiCommands.OPEN_IN_FINDER:
-                    // ✅ RFC 0058: Shell 操作通过天枢引擎工作流处理
-                    // 将圣旨转换为诏令，通过 executeZhaoling 发送到天枢引擎
-                    // 注意：圣旨的 command 是 ShengzhiCommands.OPEN_EXTERNAL/OPEN_IN_FINDER (值为 "open_external"/"open_in_finder")
-                    // 这与 ZOUZHE_MATTERS.OPEN_EXTERNAL/OPEN_IN_FINDER 的值相同，可以直接用作符箓的 intent
+                    // RFC 0149/0150: Shell 操作经 executeZhaoling 直连 Rust command
                     const zhaoling: Zhaoling = {
                         command: shengzhi.command, // "open_external" 或 "open_in_finder"
                         context: (shengzhi.content as Record<string, unknown>) || {},
@@ -442,20 +441,25 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * @private
      */
     private setupMenuActionEventListening(): void {
-        // Tauri 模式：通过 legacy-api onMenuAction 监听 picasa:menu-action
-        if (!(window as any).electron) {
-            const off = (window as any).api?.onMenuAction?.((payload: MenuActionPayload) => {
-                this.reportMenuAction(payload);
-            });
-            if (typeof off === "function") {
-                this.menuActionCleanupFn = off;
-            }
-            logger.info("🔮 袁天罡：已建立 menu:action 事件监听（Tauri模式）");
-            return;
-        }
-
-        // Electron 模式
         try {
+            if (isTauri()) {
+                listen<MenuActionPayload>("picasa:menu-action", (event) => {
+                    this.reportMenuAction(event.payload);
+                })
+                    .then((unlisten) => {
+                        this.menuActionCleanupFn = unlisten;
+                    })
+                    .catch((error: Error | unknown) => {
+                        logger.warn(
+                            "🔮 建立 menu:action 事件监听失败（Tauri模式）",
+                            error instanceof Error ? error.message : String(error),
+                        );
+                    });
+                logger.info("🔮 袁天罡：已建立 menu:action 事件监听（Tauri 直连）");
+                return;
+            }
+
+            // Electron 模式
             const ipc = (window as any).electron?.ipcRenderer;
             if (!ipc) {
                 logger.warn("🔮 无法访问IPC，跳过 menu:action 事件监听");
@@ -702,6 +706,61 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     blessing: "folder tree 更新失败",
                     timestamp: Date.now(),
                     error: error instanceof Error ? error.message : "folder tree 持久化异常",
+                };
+            }
+        }
+
+        // RFC 0149/0150：shell + menu — 袁天罡 executeZhaoling 内直连 invoke（不经 zouwu）
+        if (
+            zhaoling.command === ZOUZHE_MATTERS.UPDATE_MENU ||
+            zhaoling.command === ZOUZHE_MATTERS.OPEN_EXTERNAL ||
+            zhaoling.command === ZOUZHE_MATTERS.OPEN_IN_FINDER
+        ) {
+            try {
+                if (!isTauri()) {
+                    throw new Error("shell/menu 仅支持 Tauri 环境");
+                }
+                const context = (zhaoling.context ?? {}) as Record<string, unknown>;
+
+                if (zhaoling.command === ZOUZHE_MATTERS.UPDATE_MENU) {
+                    await invoke(MENU_COMMANDS.APPLY, { menus: context.menus ?? [] });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.OPEN_EXTERNAL) {
+                    await invoke(SHELL_COMMANDS.OPEN_EXTERNAL, {
+                        url: String(context.url ?? ""),
+                    });
+                } else {
+                    await invoke(SHELL_COMMANDS.SHOW_IN_FOLDER, {
+                        path: String(context.path ?? ""),
+                    });
+                }
+
+                logger.info(`🔮 shell/menu 直连成功: ${zhaoling.command}`);
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data: { success: true },
+                    blessing: "shell/menu 已执行",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "shell-menu-direct",
+                        processTime: Date.now() - startTime,
+                        urgency:
+                            zhaoling.priority === "imperial"
+                                ? "critical"
+                                : zhaoling.priority === "urgent"
+                                  ? "high"
+                                  : "normal",
+                    },
+                };
+            } catch (error) {
+                logger.error(`🔮 shell/menu 直连失败: ${zhaoling.command}`, error);
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "shell/menu 执行失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "shell/menu 异常",
                 };
             }
         }

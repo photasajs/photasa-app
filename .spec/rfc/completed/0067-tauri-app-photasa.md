@@ -682,10 +682,10 @@ notify = "6.0"   # 文件系统监听
     - [ ] 状态管理
     - [ ] 事件系统
 
-#### 阶段 2.5：UI 与扁平 API 兼容层（见 [RFC 0073](./0073-tauri-ui-migration-adapter.md)）
+#### 阶段 2.5：UI 与扁平 API 兼容层（见 [RFC 0073](./0073-tauri-ui-migration-adapter.md)）— ✅ 已关闭（2026-07-21，余项 [0149](./0149-tauri-ui-adapter-post-closure.md)）
 
-- [ ] 提供与 `preload/legacy.ts` 一致的扁平 `window.api`，使现有 Vue/utils 无需改调用即可在 Tauri 下运行
-- [ ] 复制/同步 renderer 内容后验证 `npm run tauri dev` 可启动且无 `window.api.xxx` 未定义错误
+- [x] 提供与 `preload/legacy.ts` 一致的扁平 `window.api`，使现有 Vue/utils 无需改调用即可在 Tauri 下运行（[0075](./0075-tauri-flat-legacy-api-layer.md) `legacy-api.ts`）
+- [x] 复制/同步 renderer 内容后验证 `npm run tauri dev` 可启动且无 `window.api.xxx` 未定义错误
 
 #### 阶段五：测试和验证
 

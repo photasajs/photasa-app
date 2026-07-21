@@ -45,9 +45,9 @@ This RFC migrates Zhenguan service IPC capability by capability. It does not rem
 
 Initial order:
 
-1. Scan command invocation and scan event subscription.
-2. Watch command invocation and watch event subscription.
-3. Other Zhenguan service capabilities, each with direct-call inventory, Rust contract tests, and wrapper caller removal.
+1. ✅ Scan command invocation and scan event subscription（0136 完成；`yuantiangang.ts`/`yuchigong.ts` 零 `window.api`/`legacy-api` 引用，2026-07-21 复核确认）。
+2. ✅ Watch command invocation and watch event subscription（0133 完成）。
+3. **已知未迁移项**（2026-07-21）：~~`yuantiangang.ts::setupMenuActionEventListening` 经 `window.api.onMenuAction`~~ ✅ 0149 已改 Tauri `listen()`。~~shell/menu 下发经 zouwu~~ ✅ 0150 直连 invoke。
 4. Delete a `legacy-api.ts` capability only after its caller count is zero.
 
 ## Required Evidence Per Capability

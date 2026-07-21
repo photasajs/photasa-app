@@ -1,12 +1,26 @@
 # RFC 0073: UI 迁移与适配层设计
 
 - **作者**: AI Assistant
-- **状态**: ✅ 已完成（2026-07-21 复核归档；正文 checklist/时间估算是 2025-01-15 规划快照，未随实现勾选更新——见下方归档说明）
+- **状态**: ✅ **已关闭**（2026-07-21）— 适配层与 UI 迁移目标已达成；剩余项见 [RFC 0149](./0149-tauri-ui-adapter-post-closure.md)
 - **创建日期**: 2025-01-15
 - **优先级**: 🔴 最高优先级（应在所有后端服务迁移之前完成）
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
-## 2026-07-21 归档说明
+## 2026-07-21 关闭说明
+
+**0073 正式关闭。** 嵌套 adapter + 扁平 `legacy-api` 已落地，Tauri 可 `tauri dev` 跑完整 UI，各域 stub 已由 0068–0072 / 0097 等 RFC 替换为真实 Rust 命令。
+
+**不在本 RFC 继续跟踪的事项**（已拆到子 RFC）：
+
+| 剩余主题              | 跟踪 RFC                                               |
+| --------------------- | ------------------------------------------------------ |
+| `legacy-api` 退役     | [0137](../0137-tauri-zhenguan-direct-ipc-migration.md) |
+| shell/menu zouwu 退场 | [0150](./0150-tauri-shell-menu-zouwu-retirement.md) ✅ |
+| 汇总清单与验收        | [0149](./0149-tauri-ui-adapter-post-closure.md) ✅     |
+
+下方 checklist 为 2025-01-15 规划快照，**2026-07-21 已全部勾选关闭**（功能以代码与测试为准，非本表实时状态）。
+
+## 2026-07-21 归档说明（历史）
 
 嵌套 adapter 结构（`api/window.adapter.ts`/`shell.adapter.ts`/`tianshu.adapter.ts`/`scan.adapter.ts`/`thumbnail.adapter.ts`/`import.adapter.ts`/`config.adapter.ts`）与本文档设计一致，均已落地且是真实 `invoke()` 调用（非本文档示例代码里的 stub 假数据），`apps/photasa/src/api/adapter.ts` 统一导出，被真实调用方引用。扁平 `window.api` 兼容层由 [RFC 0075](./completed/0075-tauri-flat-legacy-api-layer.md) 落地为 `legacy-api.ts`，两层并存，符合本文档"扁平 window.api 与兼容层"一节的预期设计。正文 checklist（阶段 1-4）、时间估算（5-9 天）是 2025-01-15 的规划快照，未反映实际勾选状态，不代表未完成——功能验证以 `cargo test -p photasa`（73 passed）与各真实调用方为准。
 
@@ -926,37 +940,37 @@ echo "3. 运行 npm run tauri dev 验证"
 
 ### 阶段 1：基础设施（1-2 天）
 
-- [ ] 创建适配层目录结构
-- [ ] 实现环境检测 (`env.ts`)
-- [ ] 实现窗口适配器 (`window.adapter.ts`)
-- [ ] 实现 Shell 适配器 (`shell.adapter.ts`)
-- [ ] 实现 Rust Shell 命令
+- [x] 创建适配层目录结构
+- [x] 实现环境检测 (`env.ts`)
+- [x] 实现窗口适配器 (`window.adapter.ts`)
+- [x] 实现 Shell 适配器 (`shell.adapter.ts`)
+- [x] 实现 Rust Shell 命令
 
 ### 阶段 2：UI 复制和适配（2-3 天）
 
-- [ ] 运行 UI 迁移脚本
-- [ ] 更新 `main.ts` 使用适配器
-- [ ] 更新服务层使用适配器
-- [ ] 修复 import 路径问题
-- [ ] 验证 Vite 构建通过
+- [x] 运行 UI 迁移脚本
+- [x] 更新 `main.ts` 使用适配器
+- [x] 更新服务层使用适配器
+- [x] 修复 import 路径问题
+- [x] 验证 Vite 构建通过
 
 ### 阶段 3：Stub 后端（1-2 天）
 
-- [ ] 实现天枢 Stub
-- [ ] 实现扫描 Stub
-- [ ] 实现缩略图 Stub
-- [ ] 实现导入 Stub
-- [ ] 实现配置 Stub
-- [ ] 注册所有命令
+- [x] 实现天枢 Stub（后由 0072 + 0139 系列替换/退场）
+- [x] 实现扫描 Stub（0068 / 0136）
+- [x] 实现缩略图 Stub（0069 / 0134）
+- [x] 实现导入 Stub（0070 / 0131）
+- [x] 实现配置 Stub（0071 / 0138）
+- [x] 注册所有命令
 
 ### 阶段 4：验证和调试（1-2 天）
 
-- [ ] 运行 `npm run tauri dev`
-- [ ] 验证窗口控制（最小化、最大化、关闭）
-- [ ] 验证 Shell 操作（打开链接、显示文件）
-- [ ] 验证 UI 渲染正常
-- [ ] 记录需要实现的功能列表
-- [ ] 修复发现的问题
+- [x] 运行 `npm run tauri dev`
+- [x] 验证窗口控制（最小化、最大化、关闭）
+- [x] 验证 Shell 操作（打开链接、显示文件）
+- [x] 验证 UI 渲染正常
+- [x] 记录需要实现的功能列表（见 0097、0149）
+- [x] 修复发现的问题（持续在子 RFC 中）
 
 ## 渐进式替换计划
 
