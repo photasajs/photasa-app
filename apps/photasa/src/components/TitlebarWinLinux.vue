@@ -1,9 +1,9 @@
 <template>
-    <header class="app-header drag-region">
+    <header class="app-header drag-region" data-tauri-drag-region>
         <!-- 应用图标（主题自适应） -->
         <AppIcon />
         <!-- 标题 -->
-        <span class="title-text">{{ t("app.title") }}</span>
+        <span class="title-text" data-tauri-drag-region>{{ t("app.title") }}</span>
         <!-- 菜单栏（横向一级菜单） -->
         <nav class="menu-bar no-drag-region" ref="menuBarRef">
             <div

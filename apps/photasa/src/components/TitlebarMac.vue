@@ -1,10 +1,10 @@
 <template>
-    <header class="titlebar-container">
+    <header class="titlebar-container" data-tauri-drag-region>
         <!-- Traffic lights click-through protector -->
         <div class="traffic-placeholder" />
         
-        <div class="app-header-content">
-            <span class="app-title">{{ t("app.title") }}</span>
+        <div class="app-header-content" data-tauri-drag-region>
+            <span class="app-title" data-tauri-drag-region>{{ t("app.title") }}</span>
             
             <div class="setting-header">
                 <CoffeeOutlined class="system-icon" @click="openScanList" />
