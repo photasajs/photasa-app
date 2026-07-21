@@ -28,8 +28,8 @@
 2. **删除 `*_adapter.rs`**，不保留任何 `impl Adapter for XxxAdapter` 代码。
 3. **新增对应 `#[tauri::command]`**，一个 zouwu action 对应一个具体类型化 command（不是一个大 command 接 `action: String` 参数模拟原来的分发——那只是把 adapter 换了个壳，没有解决类型擦除问题）。
 4. **`services/tianshu.rs` 移除该 adapter 的 `AdapterRegistry` 注册**。
-5. **TS 侧调用方（trace 出实际是谁——袁天罡或其他角色）改为直接 `invoke("command_name", …)`**，不再经 Zouzhe→Tianshu→zouwu AdapterRegistry 路由。必须先读代码确认当前调用链，不能假设。
-6. **验证**：`grep zouwu_core` 该域源码零命中；新旧响应形状逐字段比对一致（前端 store-sync 依赖响应形状，见 RFC 0107 记录的 preference 链路教训）。
+5. **TS 侧调用方（trace 出实际是谁——袁天罡或其他角色）改为直接 `invoke("command_name", …)`**，不再经 Zouzhe→Tianshu→zouwu AdapterRegistry 路由。必须先读代码确认当前调用链，不能假设。**`invoke()` 调用点必须写在该角色的主文件本体里（如 `yuantiangang.ts::executeZhaoling` 内联），不得拆成独立的 `executeXxxZhaoling(command, context)` 转发函数放进单独"bridge"文件**——0145 曾短暂引入 `siming-bridge.ts` 又收回，教训见该 RFC"设计铁律"节：拆出去的中间转发层跟 adapter 类型擦除层是同一种反模式换皮，即使参数是具体类型也不例外。允许拆分的仅限纯函数（无 IPC/无副作用的数据转换）和纯常量（command 名字符串表）——判断标准：拆出去的文件单测是否需要 mock `invoke`/Tauri 运行时，需要则不允许拆。
+6. **验证**：`grep zouwu_core` 该域源码零命中；新旧响应形状逐字段比对一致（前端 store-sync 依赖响应形状，见 RFC 0107 记录的 preference 链路教训）；`grep -rn "^export async function execute.*Zhaoling"` 该域调用方源码零命中（确认没有转发函数残留）。
 
 ## 首个迁移对象：`ConfigAdapter`（已验证，对应 0138/0142）
 
@@ -49,6 +49,7 @@ TS 侧调用链已 trace 确认（0142）：不是袁天罡直接归口，而是
 2. 迁移完成的域，不存在保留但改了实现的 `*_adapter.rs`——文件本身不存在。
 3. 新增的每个 `#[tauri::command]` 参数是具体类型（`String`/`bool`/自定义 struct），不是 `Value` + `action: String` 的二次分发。
 4. TS 侧调用链 trace 记录在对应域的迁移 RFC 里（谁调用、旧路径、新路径），不是"看起来应该没问题"。**验证手段而非只读几个文件就当作 trace 完成**：迁移前先 `grep -rn` 该域旧 matter/action 字符串（如 `"getCurrentSnapshot"`、`service: "config"` 之类）在整个 renderer 源码里的命中列表，作为"必须全部改掉"的清单；迁移后重跑同一 grep，必须零命中（或命中位置全部确认是注释/历史记录，不是活代码）。清单和迁移后复查结果都要记录在对应域的 RFC 里。
+5. **无 bridge 文件**：`invoke()` 直连调用点在角色主文件本体内联，不存在独立的 `*-bridge.ts`/`executeXxxZhaoling` 转发函数文件。
 
 ## Risks
 
