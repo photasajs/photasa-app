@@ -43,8 +43,8 @@ const paths = computed(() => chuSuiLiang.paths);
 // 使用computed创建双向绑定的getter/setter
 const thumbnailSize = computed({
     get: () => chuSuiLiang.thumbnailSize,
-    set: (value: number) => {
-        chuSuiLiang.thumbnailSize = value;
+    set: (value: number | string) => {
+        chuSuiLiang.thumbnailSize = typeof value === "string" ? parseInt(value, 10) : value;
     },
 });
 
@@ -178,7 +178,7 @@ async function handleRemove(item: string): Promise<void> {
             <div class="custom-slider-container">
                 <input
                     type="range"
-                    v-model="thumbnailSize"
+                    v-model.number="thumbnailSize"
                     :min="150"
                     :max="400"
                     class="custom-slider"

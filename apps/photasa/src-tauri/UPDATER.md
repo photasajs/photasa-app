@@ -1,6 +1,6 @@
 # Photasa Tauri Updater（生产配置）
 
-RFC：[0113](../../docs/rfc/0113-tauri-updater-production-and-prefs-sync.md) · 实现：[0090](../../docs/rfc/completed/0090-tauri-update-service.md)
+RFC：[0113](../../.spec/rfc/0113-tauri-updater-production-and-prefs-sync.md) · 实现：[0090](../../.spec/rfc/completed/0090-tauri-update-service.md)
 
 ## 运行时行为
 

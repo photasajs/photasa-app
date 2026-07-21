@@ -134,7 +134,8 @@ export class ChusuiliangService implements IChusuiliangService, IService {
         return this.fangXuanLingService.preference.thumbnailSize;
     }
     set thumbnailSize(size: number) {
-        this.updateThumbnailSize(size);
+        const parsedSize = typeof size === "string" ? parseInt(size, 10) : size;
+        this.updateThumbnailSize(parsedSize);
     }
 
     /**
@@ -243,10 +244,11 @@ export class ChusuiliangService implements IChusuiliangService, IService {
      */
     async updateThumbnailSize(size: number): Promise<void> {
         try {
-            logger.info(`🎨 褚遂良收到用户缩略图大小变更请求: ${size}`);
+            const parsedSize = typeof size === "string" ? parseInt(size, 10) : size;
+            logger.info(`🎨 褚遂良收到用户缩略图大小变更请求: ${parsedSize}`);
 
             // 验证缩略图大小范围
-            const validSize = size >= 150 && size <= 400 ? size : 150;
+            const validSize = parsedSize >= 150 && parsedSize <= 400 ? parsedSize : 150;
 
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.CHU_SUILIANG,
