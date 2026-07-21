@@ -899,6 +899,58 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             }
         }
 
+        // RFC 0137/0139：切换当前文件夹 — 直连 get_photasa_config（不经 zouwu switch_current_folder workflow）
+        if (zhaoling.command === ZOUZHE_MATTERS.SWITCH_FOLDER) {
+            try {
+                if (!isTauri()) {
+                    throw new Error("切换文件夹仅支持 Tauri 环境");
+                }
+                const context = (zhaoling.context ?? {}) as Record<string, unknown>;
+                const folderPath = String(context.folderPath ?? context.folder ?? "");
+                if (!folderPath) {
+                    throw new Error("folderPath 不能为空");
+                }
+
+                const config = await invoke<Record<string, unknown> | null>("get_photasa_config", {
+                    folder: folderPath,
+                });
+
+                const data = {
+                    currentFolder: folderPath,
+                    currentFolderConfig: config,
+                };
+
+                logger.info(`🔮 文件夹切换成功: ${folderPath}`);
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "文件夹已切换",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "config-direct",
+                        processTime: Date.now() - startTime,
+                        urgency:
+                            zhaoling.priority === "imperial"
+                                ? "critical"
+                                : zhaoling.priority === "urgent"
+                                  ? "high"
+                                  : "normal",
+                    },
+                };
+            } catch (error) {
+                logger.error(`🔮 文件夹切换失败: ${zhaoling.command}`, error);
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "文件夹切换失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "文件夹切换异常",
+                };
+            }
+        }
+
         // ✅ RFC 0142: 魏征监管的文件夹配置事务直连天界 (不经过Tianshu workflow)
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG ||

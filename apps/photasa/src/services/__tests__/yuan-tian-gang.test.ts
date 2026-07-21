@@ -3,7 +3,7 @@ import { YuanTianGangService } from "../yuantiangang";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 import type { Zhaoling } from "../../interfaces/fang-xuan-ling.interface";
 import { PREFERENCES_COMMANDS } from "../yuantiangang/tauri-command-names";
-import { IntentToFuluMapping } from "../yuantiangang/intent";
+import { IntentToFuluMapping, RETIRED_ZOUWU_MATTERS } from "../yuantiangang/intent";
 import { PREFERENCE_ZHAOLING_MATTERS } from "../yuantiangang/preferences-delta";
 
 const mockInvoke = vi.fn();
@@ -111,41 +111,34 @@ describe("YuanTianGangService", () => {
         });
     });
 
-    describe("符箓映射验证", () => {
+    describe("符箓映射验证（RFC 0137/0139 zouwu 退场）", () => {
         it("preference matter 不在 zouwu intent 映射中", () => {
             for (const matter of PREFERENCE_ZHAOLING_MATTERS) {
                 expect(IntentToFuluMapping[matter]).toBeUndefined();
             }
         });
 
-        it("非 preference matter 仍走天枢映射", async () => {
-            mockIsTauri.mockReturnValue(false);
-            const testCases = [
-                { input: ZOUZHE_MATTERS.NOTIFICATION_SHOW, expected: "get_status" },
-                { input: ZOUZHE_MATTERS.PHOTO_SWITCH, expected: "scan_folder" },
-            ];
-
-            for (const { input, expected } of testCases) {
-                vi.clearAllMocks();
-                mockTianshu.processCommand.mockResolvedValue({
-                    status: "completed",
-                    success: true,
-                });
-
-                const zhaoling: Zhaoling = {
-                    command: input,
-                    context: {},
-                    timestamp: Date.now(),
-                    source: "测试部门",
-                    priority: "normal",
-                };
-
-                await yuanTianGangService.executeZhaoling(zhaoling);
-
-                expect(mockTianshu.processCommand).toHaveBeenCalledWith(
-                    expect.objectContaining({ intent: expected }),
-                );
+        it("已退场 matter 均不在 zouwu intent 映射中", () => {
+            for (const matter of RETIRED_ZOUWU_MATTERS) {
+                expect(IntentToFuluMapping[matter]).toBeUndefined();
             }
+        });
+
+        it("遗留 matter 调用应失败且不经过天枢", async () => {
+            mockIsTauri.mockReturnValue(false);
+
+            const zhaoling: Zhaoling = {
+                command: ZOUZHE_MATTERS.NOTIFICATION_SHOW,
+                context: {},
+                timestamp: Date.now(),
+                source: "测试部门",
+                priority: "normal",
+            };
+
+            const response = await yuanTianGangService.executeZhaoling(zhaoling);
+
+            expect(response.acknowledged).toBe(false);
+            expect(mockTianshu.processCommand).not.toHaveBeenCalled();
         });
 
         it("应该为未知命令返回错误响应", async () => {
@@ -197,33 +190,23 @@ describe("YuanTianGangService", () => {
     });
 
     describe("优先级映射", () => {
-        it("应该正确映射诏令优先级到天枢优先级", async () => {
-            mockIsTauri.mockReturnValue(false);
-            const priorityTestCases = [
-                { zhaolingSriority: "imperial", expected: "system" },
-                { zhaolingSriority: "urgent", expected: "user" },
-                { zhaolingSriority: "normal", expected: "background" },
-            ];
+        it("SWITCH_FOLDER 直连 invoke 不经过天枢优先级映射", async () => {
+            mockIsTauri.mockReturnValue(true);
+            mockInvoke.mockResolvedValue({ version: "1", photoList: [] });
 
-            for (const testCase of priorityTestCases) {
-                mockTianshu.processCommand.mockResolvedValue({
-                    status: "completed",
-                    success: true,
-                });
+            const zhaoling: Zhaoling = {
+                command: ZOUZHE_MATTERS.SWITCH_FOLDER,
+                context: { folderPath: "/photos" },
+                timestamp: Date.now(),
+                source: "魏征",
+                priority: "imperial",
+            };
 
-                const zhaoling: Zhaoling = {
-                    command: ZOUZHE_MATTERS.NOTIFICATION_SHOW,
-                    context: {},
-                    timestamp: Date.now(),
-                    source: "测试部门",
-                    priority: testCase.zhaolingSriority as Zhaoling["priority"],
-                };
+            const response = await yuanTianGangService.executeZhaoling(zhaoling);
 
-                await yuanTianGangService.executeZhaoling(zhaoling);
-
-                const lastCall = mockTianshu.processCommand.mock.calls.slice(-1)[0];
-                expect(lastCall[0].priority).toBe(testCase.expected);
-            }
+            expect(response.acknowledged).toBe(true);
+            expect(mockInvoke).toHaveBeenCalledWith("get_photasa_config", { folder: "/photos" });
+            expect(mockTianshu.processCommand).not.toHaveBeenCalled();
         });
     });
 });

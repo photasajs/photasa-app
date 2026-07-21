@@ -221,4 +221,27 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         expect(mockInvoke).toHaveBeenCalledWith("show_in_folder", { path: "/tmp/photo.jpg" });
         expect(result.acknowledged).toBe(true);
     });
+
+    it("SWITCH_FOLDER invoke get_photasa_config（RFC 0137/0139）", async () => {
+        const config = { version: "1", photoList: [] };
+        mockInvoke.mockResolvedValue(config);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.SWITCH_FOLDER,
+            context: { folderPath: "/Volumes/photos" },
+            timestamp: Date.now(),
+            source: "魏征",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("get_photasa_config", {
+            folder: "/Volumes/photos",
+        });
+        expect(result.acknowledged).toBe(true);
+        expect(result.data).toEqual({
+            currentFolder: "/Volumes/photos",
+            currentFolderConfig: config,
+        });
+    });
 });

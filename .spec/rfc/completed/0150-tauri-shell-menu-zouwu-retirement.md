@@ -5,7 +5,7 @@
 - **Priority**: P2
 - **Area**: Photasa / Tauri / 贞观 / zouwu 退场
 - **Parent tracker**: [0149](./0149-tauri-ui-adapter-post-closure.md) ✅
-- **Depends on**: [0139](../0139-tauri-zouwu-retirement-plan.md)、[0140](../0140-tauri-zouwu-adapter-to-command-migration.md)、[0137](../0137-tauri-zhenguan-direct-ipc-migration.md)
+- **Depends on**: [0139](./0139-tauri-zouwu-retirement-plan.md)、[0140](./0140-tauri-zouwu-adapter-to-command-migration.md)、[0137](./0137-tauri-zhenguan-direct-ipc-migration.md)
 
 ## Summary
 

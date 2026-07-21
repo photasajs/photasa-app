@@ -8,7 +8,7 @@ High-level plans and “what’s next” live here. Do not duplicate this as ran
 
 - **Runtime**: Tauri only (no Electron in target). Vue for frontend.
 - **Backend**: 100% Rust. **1:1 mapping** from current Node/Electron main and preload logic to Rust; **no Node usage** in Tauri backend.
-- **Frontend–backend boundary**: Legacy Vue callers may use the adapter / flat `window.api` compatibility surface during migration. Zhenguan services and every new Tauri path use `YuanTianGang` as the only IPC boundary, with direct Rust `invoke` and Tauri events; they must never use `window.api`. See [0137](.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md).
+- **Frontend–backend boundary**: Legacy Vue callers may use the adapter / flat `window.api` compatibility surface during migration. Zhenguan services and every new Tauri path use `YuanTianGang` as the only IPC boundary, with direct Rust `invoke` and Tauri events; they must never use `window.api`. See [0137](.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md).
 
 ### Golden rule: Rust rewrite, not TypeScript copy
 
@@ -79,7 +79,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 - **主 RFC**：[RFC 0067](.spec/rfc/completed/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略（✅ 已完成/归档，伞形索引文档）
 - **已完成（服务层）**：[0073](.spec/rfc/completed/0073-tauri-ui-migration-adapter.md) UI/适配层 ✅ **已关闭**（余项 [0149](.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)）；[0068](.spec/rfc/completed/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/completed/0072-tauri-tianshu-service-migration.md) 天枢
 
-**建议实施顺序（0073 已关闭）**：0149 跟踪项 → **0137**（贞观直连 IPC）→ **0139** shell/menu/engine 退场。
+**建议实施顺序（0073 已关闭）**：~~0137~~ ✅ / ~~0139~~ ✅ / ~~0140~~ ✅ → `zouwu-core` workspace 移除（新 RFC）。
 
 ### Tauri small RFCs（0074+）：一事一表
 
@@ -145,10 +145,10 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0133](.spec/rfc/completed/0133-tauri-photasa-watch-crate.md)                      | `photasa-watch` 独立 crate（queue 算法，零 Tauri）                                     | ✅ Implemented                                                    |
 | [0135](.spec/rfc/completed/0135-tauri-watch-ui-contract-fix.md)                    | watch UI 契约（`WatchState` / camelCase `isFile` / add·delete×file·folder）            | ✅ Implemented                                                    |
 | [0136](.spec/rfc/completed/0136-tauri-scan-runtime-contract.md)                    | Tauri persisted queue scan pipeline（贞观职责 + 千里眼一层报告）                       | ✅ Implemented                                                    |
-| [0137](.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md)                      | Zhenguan direct Tauri IPC; staged `window.api` compatibility removal                   | 📋 Draft                                                          |
+| [0137](.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md)            | Zhenguan direct Tauri IPC; staged `window.api` compatibility removal                   | ✅ Implemented                                                    |
 | [0138](.spec/rfc/completed/0138-tauri-photasa-config-crate.md)                     | `photasa-config` crate（folder-level `.photasa.json`，退出 zouwu）                     | ✅ Implemented                                                    |
-| [0139](.spec/rfc/0139-tauri-zouwu-retirement-plan.md)                              | zouwu/Tianshu workflow 引擎逐域退场排期                                                | 📋 Draft（仅排期分析）                                            |
-| [0140](.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md)                 | zouwu Adapter → Tauri command 直调迁移（通用模式）                                     | 📋 Draft（仅模式定义）                                            |
+| [0139](.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md)                    | zouwu/Tianshu workflow 引擎逐域退场排期                                                | ✅ Implemented                                                    |
+| [0140](.spec/rfc/completed/0140-tauri-zouwu-adapter-to-command-migration.md)       | zouwu Adapter → Tauri command 直调迁移（通用模式）                                     | ✅ Implemented                                                    |
 | [0141](.spec/rfc/completed/0141-tauri-photasa-media-crate.md)                      | `photasa-media` crate（统一图片/视频扩展名判定，修复四处分叉）                         | ✅ Implemented                                                    |
 | [0142](.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) | 文件夹配置命令贞观之治对齐（魏征接管）                                                 | ✅ Implemented                                                    |
 | [0143](.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md)        | 扫描与队列命令贞观之治对齐（百姓/尉迟恭/袁天罡）                                       | ✅ Implemented                                                    |
@@ -190,7 +190,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | **P1j**      | 扫描队列持久化对齐（并发锁 + 脱离 zouwu 类型）            | **0144** ✅ |
 | **P1k**      | folder tree 持久化退出 zouwu（`photasa-folder-tree`）     | **0145** ✅ |
 | **P0**       | preference 贞观对齐：袁天罡 `executeZhaoling` 内 `invoke` | **0147** ✅ |
-| **P2a**      | zouwu Adapter → command 迁移模式（通用，供后续域引用）    | **0140** 📋 |
+| **P2a**      | zouwu Adapter → command 迁移模式（通用，供后续域引用）    | **0140** ✅ |
 | **P2b**      | zouwu 逐域退场排期（scan 已排除，config/preference 优先） | **0139** 📋 |
 | **P3h**      | Quit 恢复                                                 | **0120** ✅ |
 | **P3i**      | Settings 导入                                             | **0121** ✅ |
@@ -325,14 +325,13 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **RFC 0092 扩展：** 已用 `tauri-plugin-global-shortcut` 注册与 Electron 相同的日志查看器全局快捷键（macOS `cmd+shift+alt+KeyL` / 其他 `ctrl+shift+alt+KeyL`），按下时发射 `log:toggle-viewer`；系统菜单仍为 macOS `apply_system_menu`（既有实现）。
 - **RFC 0097（迁移跟踪）：** ✅ Implemented。导入表面已 Rust：`preview_import` / `execute_import` / history·undo / `extract_metadata`（0112 golden）/ 日期目录（0104）/ pause·resume（0096）。`tauri-import-stubs` = 前端兜底形状 only，**不是**未接入后端。导入历史落盘 `import_history_v1.json`。Updater 接线见 **0113** + `UPDATER.md`（生产密钥走 CI/运维，不进仓库）。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
-- **Next step（以「Photasa next priorities」为准）：** **0137** direct IPC 迁移 / shell·menu·engine / **0139** zouwu 退场 polish。
+- **Next step（以「Photasa next priorities」为准）：** `zouwu-core` / `TianshuService` workspace 物理移除（新 RFC）；`legacy-api.ts` 逐 capability 退役。
 - **0136（2026-07-21）：** ✅ Implemented——千里眼一层目录/文件分流；`scan_directory_discovered` 双 Shengzhi；删 `SCAN_SUBFOLDERS`/reconcile 多入口；`joinFolderSegment`+`sanitizeFolderTree`；袁天罡静态 `invoke` 修复并发队列持久化。
 - **0147（2026-07-21）：** ✅ Implemented——删 `preferences_adapter`；`preferences_get`/`preferences_update`；袁天罡 `executeZhaoling` 内联 invoke；袁天罡启奏 `add_path_completed`；`intent.ts` 清 zouwu 映射。
 - **0145（2026-07-21）：** ✅ Implemented——`photasa-folder-tree` crate；删 `siming_adapter`；`siming-bridge` 单路径；`intent.ts` 移除 zouwu 映射；matter-sync `folderTree` 对齐。
 - **0141（2026-07-20）：** ✅ Implemented——`crates/photasa-media` 落地，`path.rs`/`photasa-import`/`photasa-thumbnail`/`photasa-scan` 四处 Rust 消费方全部切换依赖；`apps/photasa/src/api/watch-event.ts` 前端扩展名表补齐 `dng`/`raf`/`orf` 对齐权威表，新增回归测试，`vitest run` 11 passed，`eslint` 零错误。
 - **0138（2026-07-20）：** ✅ Implemented——`config_adapter.rs` 已删，`commands/config.rs` 直连 `photasa-config` crate，零 zouwu 依赖，renderer 调用链（魏征）已 trace 记录于 0142。
-- **0140：** 通用迁移模式定义，Draft 保持开放——preference/shell/menu/engine 四域仍待迁移（appstate 见 **0145** ✅），首个案例（0138）已验证模式可行。
-- **0139：** 排期文档，Draft 保持开放——scan/config/preference/appstate 已核实，shell/menu/engine 三域仍待盘点。
+- **0140：** ✅ 6 步迁移模式；8 域验证表（2026-07-21）。
 - **0142/0143/0144（2026-07-20）：** ✅ Implemented。0142：`FolderList.vue` 改用 `useWeiZheng()`，5 个 folder-config command 直连。0143：`FolderList.vue` rescan → 百姓上书 → 李世民 → 尉迟恭，`BaseTreeNode.vue` slot prop 保留字冲突（`key`→`node-key`）一并修复。0144：`ScanQueueRepository`（`Mutex` 单写者 + 原子落盘）解决并发写丢失，`ScanQueueError` 脱离 `zouwu_core`，状态机白名单校验。
 - **0135（2026-07-18）：** ✅ archived — `watch-event.ts` + camelCase `isFile`；四类 add/delete 通路 A。
 - **0133（2026-07-18）：** ✅ archived — `crates/photasa-watch`；`cargo test -p photasa-watch` **7 passed**；Tauri sink → UI queue。

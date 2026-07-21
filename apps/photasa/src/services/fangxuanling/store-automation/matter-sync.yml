@@ -117,13 +117,13 @@ matters:
         autoSync: true
         description: "更新扫描任务状态 - 从response.data.queue提取更新后的完整队列，替换scanning store的queue字段"
 
-    # ✅ RFC 0043: 切换当前文件夹
-    switch_current_folder:
-        propertyPath: "currentFolder"
+    # ✅ RFC 0043 / 0137：切换当前文件夹（直连 get_photasa_config，不经 zouwu）
+    switch_folder:
+        propertyPath: "."
         syncStrategy: "merge"
         storeName: "appState"
         autoSync: true
-        description: "切换当前文件夹 - 从response.data提取完整appState对象，深度合并到preferences store"
+        description: "切换当前文件夹 - 从 response.data 合并 currentFolder + currentFolderConfig 到 appState store"
 
     # ✅ RFC 0043: 添加文件夹到树
     add_folder_to_tree:

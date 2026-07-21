@@ -5,7 +5,7 @@
 - **Status**: ✅ Implemented
 - **Priority**: P0（监控路径无法添加；主题/语言/缩略图等 preference 变更同根因）
 - **Area**: Photasa / Tauri / application preferences (`~/.photasa/preferences/`)
-- **Depends on**: [0137](../0137-tauri-zhenguan-direct-ipc-migration.md)、[0107](./0107-tauri-wenchang-preferences-storage.md)、[0140](../0140-tauri-zouwu-adapter-to-command-migration.md)、[0142](./0142-tauri-zhenguan-config-commands-personification.md)、[0145](./0145-tauri-siming-adapter-retirement.md)
+- **Depends on**: [0137](./0137-tauri-zhenguan-direct-ipc-migration.md)、[0107](./0107-tauri-wenchang-preferences-storage.md)、[0140](./0140-tauri-zouwu-adapter-to-command-migration.md)、[0142](./0142-tauri-zhenguan-config-commands-personification.md)、[0145](./0145-tauri-siming-adapter-retirement.md)
 - **Path**: `.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md`
 - **Supersedes**: `0147-tauri-watch-path-add-preferences-bridge.md`、`0147-tauri-wenchang-preferences-bridge-retirement.md`（含错误的 `*-bridge.ts` 方案）
 

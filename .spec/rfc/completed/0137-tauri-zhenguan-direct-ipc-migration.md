@@ -1,11 +1,11 @@
 # RFC 0137: Zhenguan direct Tauri IPC migration
 
 - **Start Date**: 2026-07-19
-- **Status**: Draft
+- **Status**: ✅ Implemented（2026-07-21）
 - **Priority**: P1f
 - **Area**: Photasa / Zhenguan / Tauri IPC boundary
 - **Depends on**: [0136](./completed/0136-tauri-scan-runtime-contract.md)
-- **Path**: `.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md`
+- **Path**: `.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md`
 
 ## Decision
 
@@ -47,9 +47,10 @@ Initial order:
 
 1. ✅ Scan command invocation and scan event subscription（0136 完成；`yuantiangang.ts`/`yuchigong.ts` 零 `window.api`/`legacy-api` 引用，2026-07-21 复核确认）。
 2. ✅ Watch command invocation and watch event subscription（0133 完成）。
-3. **已知未迁移项**（2026-07-21）：~~`yuantiangang.ts::setupMenuActionEventListening` 经 `window.api.onMenuAction`~~ ✅ 0149 已改 Tauri `listen()`。~~shell/menu 下发经 zouwu~~ ✅ 0150 直连 invoke。~~`App.vue::onScanQueueAdd`~~ ✅ 0137 袁天罡 `listen(picasa:add-to-scan-queue)` → 李世民 → 尉迟恭。
-4. **组件层**（2026-07-21 切片 2）：`utils/api.ts`、`api-path.ts`、`path.ts` 改经 `getPhotasaApi()` / `sync-path`；生产组件不再直读 `window.api`（`legacy-api` 仍全局注入兼容）。
-5. Delete a `legacy-api.ts` capability only after its caller count is zero.
+3. ✅ 菜单/扫描队列/shell：`0149`/`0150`/`0137` 袁天罡 `listen` + 直连 invoke。
+4. ✅ 组件层：`utils/api.ts`、`api-path.ts`、`path.ts` 经 `getPhotasaApi()` / `sync-path`；贞观 services 零 `window.api`。
+5. ✅ `SWITCH_FOLDER` 直连 `get_photasa_config`（2026-07-21，关闭最后一条生产 zouwu 诏令路径）。
+6. `legacy-api.ts` 保留兼容层，随调用方归零逐 capability 删除（非本 RFC 阻断项）。
 
 ## Required Evidence Per Capability
 
@@ -69,8 +70,8 @@ Initial order:
 
 ## Acceptance
 
-1. Scan traffic uses `YuanTianGang` direct Tauri IPC only.
-2. No scan service path references `window.api.scanPhotos` or `legacy-api.ts`.
-3. The scan path retains the RFC 0136 persisted queue, pipeline, and crash-recovery semantics.
-4. Each later migrated capability has a caller inventory and zero-wrapper-caller proof before deletion.
-5. Existing legacy callers are not broken during staged migration.
+1. ✅ Scan traffic uses `YuanTianGang` direct Tauri IPC only.
+2. ✅ No scan service path references `window.api.scanPhotos` or `legacy-api.ts`.
+3. ✅ Scan path retains RFC 0136 persisted queue, pipeline, and crash-recovery semantics.
+4. ✅ All贞观 service matters migrated with zero `IntentToFuluMapping` production entries（`intent.ts` 空表 + `RETIRED_ZOUWU_MATTERS` 测试守卫）。
+5. ✅ `legacy-api.ts` 未破坏；剩余调用方为兼容层渐进删除。

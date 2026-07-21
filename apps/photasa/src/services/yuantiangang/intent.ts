@@ -1,20 +1,35 @@
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
 
-// 符箓意图到天枢UserIntent的映射（使用ZOUZHE_MATTERS常量值）
+/**
+ * 符箓意图到天枢 UserIntent 的映射（遗留 zouwu 路径）
+ *
+ * RFC 0137/0139：贞观各域已迁出 zouwu，生产路径全部在 executeZhaoling 内直连 invoke。
+ * 本表仅保留类型导出；若仍有 matter 落入 sendFuluToTianshu，convertFuluToUICommand 会抛错。
+ */
 export const IntentToFuluMapping: Record<string, string> = {
-    [ZOUZHE_MATTERS.NOTIFICATION_SHOW]: "get_status",
-    [ZOUZHE_MATTERS.PHOTO_SWITCH]: "scan_folder",
-    [ZOUZHE_MATTERS.SCAN_FOLDER]: "scan_folder",
-    [ZOUZHE_MATTERS.GET_STATUS]: "get_status",
-    // RFC 0147: preference matters 由袁天罡 executeZhaoling 直连，不在此映射
-    // RFC 0145: UPDATE_FOLDER_TREE / RESTORE_APP_STATE 由袁天罡 executeZhaoling 直连，不在此映射
-    // ✅ RFC 0042 Phase 2.4: 扫描队列管理映射
-    [ZOUZHE_MATTERS.GET_SCANNING_QUEUE]: "get_scanning_queue",
-    [ZOUZHE_MATTERS.ADD_SCAN_ACTION]: "add_scan_action",
-    [ZOUZHE_MATTERS.REMOVE_SCAN_ACTION]: "remove_scan_action",
-    // ✅ RFC 0048 v3 Phase 3: 扫描任务状态更新映射
-    [ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS]: "update_scan_action_status",
-    // RFC 0145: UPDATE_FOLDER_TREE / RESTORE_APP_STATE 由袁天罡 executeZhaoling 直连，不在此映射
-    [ZOUZHE_MATTERS.SWITCH_FOLDER]: "switch_current_folder",
-    // RFC 0149/0150: UPDATE_MENU / OPEN_* 由袁天罡 executeZhaoling 直连，不在此映射
+    // 已退场域（直连 invoke，不在此映射）：
+    // preference → 0147
+    // scan queue → 0136/0143
+    // folder tree / app state → 0145
+    // shell / menu → 0150
+    // switch_folder → 0137
+    // folder config / scan_photos → 0142
 };
+
+/** 曾走 zouwu、现已直连的 matter（用于测试断言零映射） */
+export const RETIRED_ZOUWU_MATTERS = [
+    ZOUZHE_MATTERS.NOTIFICATION_SHOW,
+    ZOUZHE_MATTERS.PHOTO_SWITCH,
+    ZOUZHE_MATTERS.SCAN_FOLDER,
+    ZOUZHE_MATTERS.GET_STATUS,
+    ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+    ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+    ZOUZHE_MATTERS.REMOVE_SCAN_ACTION,
+    ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS,
+    ZOUZHE_MATTERS.SWITCH_FOLDER,
+    ZOUZHE_MATTERS.UPDATE_FOLDER_TREE,
+    ZOUZHE_MATTERS.RESTORE_APP_STATE,
+    ZOUZHE_MATTERS.UPDATE_MENU,
+    ZOUZHE_MATTERS.OPEN_EXTERNAL,
+    ZOUZHE_MATTERS.OPEN_IN_FINDER,
+] as const;

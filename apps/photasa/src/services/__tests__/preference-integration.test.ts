@@ -4,7 +4,7 @@ import { YuanTianGangService } from "../yuantiangang";
 import { ZOUZHE_MATTERS } from "../../interfaces/fang-xuan-ling.interface";
 import { createPinia, setActivePinia } from "pinia";
 import { PREFERENCES_COMMANDS } from "../yuantiangang/tauri-command-names";
-import { IntentToFuluMapping } from "../yuantiangang/intent";
+import { IntentToFuluMapping, RETIRED_ZOUWU_MATTERS } from "../yuantiangang/intent";
 import { PREFERENCE_ZHAOLING_MATTERS } from "../yuantiangang/preferences-delta";
 
 const mockInvoke = vi.fn();
@@ -164,7 +164,9 @@ describe("偏好设置集成测试", () => {
             for (const matter of PREFERENCE_ZHAOLING_MATTERS) {
                 expect(IntentToFuluMapping[matter]).toBeUndefined();
             }
-            expect(IntentToFuluMapping[ZOUZHE_MATTERS.NOTIFICATION_SHOW]).toBe("get_status");
+            for (const matter of RETIRED_ZOUWU_MATTERS) {
+                expect(IntentToFuluMapping[matter]).toBeUndefined();
+            }
         });
     });
 

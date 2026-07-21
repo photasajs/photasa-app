@@ -17,7 +17,7 @@
 
 ## ~~2026-07-18 复核：生产 workflow 打包~~（已 superseded，非 0107 交付项）
 
-> **2026-07-21 结论**：preference 域已由 [0147](./0147-tauri-wenchang-preferences-retirement.md) 退出 zouwu，**不再依赖 `.zouwu` workflow**。bundle Electron workflows 违背 [0139](../0139-tauri-zouwu-retirement-plan.md) Tauri 退场方向，**不是** 0107 正交付路径。其余仍走 zouwu 的 matter 归 0139/0140 跟踪。
+> **2026-07-21 结论**：preference 域已由 [0147](./0147-tauri-wenchang-preferences-retirement.md) 退出 zouwu。**全部生产域**已由 [0139](./0139-tauri-zouwu-retirement-plan.md) 退场完成。
 
 ## 历史记录：2026-07-18 复核发现（zouwu 时代，已被 0147 取代）
 
