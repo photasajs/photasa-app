@@ -58,8 +58,8 @@ function openPreference() {
 .titlebar-container {
     height: var(--photasa-header-height, 36px);
     width: 100%;
-    background: var(--color-header-bg, var(--color-bg));
-    border-bottom: 1px solid var(--color-header-border, var(--color-border));
+    background: var(--color-bg-secondary, var(--color-bg));
+    border-bottom: 1px solid var(--color-border);
 }
 
 .app-header {
@@ -77,8 +77,10 @@ function openPreference() {
 }
 
 .app-title {
-    color: var(--color-primary);
-    font-weight: 500;
+    color: var(--color-text-primary, var(--color-text));
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: -0.01em;
 }
 .setting-header {
     float: right;
