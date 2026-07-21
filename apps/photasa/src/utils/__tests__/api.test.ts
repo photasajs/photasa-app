@@ -39,7 +39,7 @@ vi.mock("@photasa/common", () => ({
     },
 }));
 
-// Mock window.api
+// Mock getPhotasaApi（RFC 0137：utils/api 不再直读 window.api）
 const mockWindowApi = {
     scanDirectories: vi.fn(),
     previewImport: vi.fn(),
@@ -64,11 +64,9 @@ const mockWindowApi = {
     importPhotos: vi.fn(),
 };
 
-// Mock window object
-Object.defineProperty(window, "api", {
-    value: mockWindowApi,
-    writable: true,
-});
+vi.mock("@renderer/ipc/api-access", () => ({
+    getPhotasaApi: () => mockWindowApi,
+}));
 
 describe("Enhanced Import API Functions", () => {
     beforeEach(() => {
@@ -366,7 +364,7 @@ describe("Enhanced Import API Functions", () => {
     describe("importPhotosEnhanced", () => {
         it("should use enhanced import for enhanced callback", () => {
             const mockExecuteImport = vi
-                .spyOn(window.api, "executeImport")
+                .spyOn(mockWindowApi, "executeImport")
                 .mockResolvedValue({ importId: "test" });
 
             const enhancedCallback = {
@@ -409,7 +407,7 @@ describe("Enhanced Import API Functions", () => {
 
         it("should detect onDuplicateFound as enhanced callback", () => {
             const mockExecuteImport = vi
-                .spyOn(window.api, "executeImport")
+                .spyOn(mockWindowApi, "executeImport")
                 .mockResolvedValue({ importId: "test" });
 
             const enhancedCallback = {
@@ -423,7 +421,7 @@ describe("Enhanced Import API Functions", () => {
 
         it("should detect onFileGroupDetected as enhanced callback", () => {
             const mockExecuteImport = vi
-                .spyOn(window.api, "executeImport")
+                .spyOn(mockWindowApi, "executeImport")
                 .mockResolvedValue({ importId: "test" });
 
             const enhancedCallback = {

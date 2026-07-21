@@ -120,6 +120,20 @@ qizou_routes:
                   priority: "normal"
               description: "袁天罡发现直属子目录后，下旨魏征立即加入 folderTree"
 
+    # ✅ RFC 0137: 袁天罡报告文件监视合并批次 → 尉迟恭入扫描执行队列
+    watch_scan_queue_add:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "尉迟恭"
+              shengzhi:
+                  command: "schedule_watch_file_operations"
+                  content:
+                      operations: "{{qizou.content.operations}}"
+                  priority: "normal"
+              description: "文件监视合并批次后，下旨尉迟恭将 FileOperation 排入扫描队列"
+
     # ✅ RFC 0057 Phase 3: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
     scan_progress:
         - when:

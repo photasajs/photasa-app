@@ -17,7 +17,7 @@ import {
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@photasa/common";
-import type { FileOperation } from "@photasa/common";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
 
 import UserPreference from "./components/UserPreference.vue";
 import ScanQueueDialog from "./components/ScanQueueDialog.vue";
@@ -43,7 +43,6 @@ import { scanMonitoringService } from "@renderer/services/yushinan/scan-monitori
 import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
-import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
@@ -60,12 +59,7 @@ const themeManager = useChuSuiLiang().themeManager;
 const chuSuiLiang = useChuSuiLiang();
 const { t } = useI18n();
 const preferenceStore = usePreferenceStore();
-const { paths, currentFolder, thumbnailSize } = storeToRefs(preferenceStore);
-
-/**
- * YuChiGong service
- */
-const yuChiGong = useYuChiGong();
+const { paths, currentFolder } = storeToRefs(preferenceStore);
 
 /**
  * QinQiong service
@@ -90,7 +84,15 @@ const currentThemeId = ref<string>("");
 // ✅ RFC 0057: statusBarStore 已迁移到 yuShiNan 服务管理，通过房玄龄访问
 const zhangSunWuJi = useZhangSunWuJi();
 
-const isMac = window.api.isMac();
+const isMac = ref(false);
+void getPhotasaApi()
+    .isMac()
+    .then((value) => {
+        isMac.value = Boolean(value);
+    })
+    .catch(() => {
+        isMac.value = typeof navigator !== "undefined" && navigator.platform.includes("Mac");
+    });
 
 // ⚠️ Do NOT auto-open showScanList modal when queue receives tasks.
 // Users can open the queue modal manually when desired.
@@ -306,13 +308,11 @@ function handlePreferenceOk(): void {
 // 更新处理函数
 function handleUpdateInstall(): void {
     updateStore.startDownload();
-    // 调用主进程开始下载
-    window.api?.downloadUpdate?.();
+    void getPhotasaApi().downloadUpdate?.();
 }
 
 function handleUpdateInstallNow(): void {
-    // 调用主进程安装更新
-    window.api?.installUpdate?.();
+    void getPhotasaApi().installUpdate?.();
 }
 // Update title
 const title = computed(() => {
@@ -320,16 +320,7 @@ const title = computed(() => {
 });
 useTitle(title);
 
-// 监听统一队列事件，处理文件监视产生的批量操作
-window.api?.onScanQueueAdd((operations: FileOperation[]) => {
-    logger.debug(`👑 Received ${operations.length} file operations from watch service`);
-
-    void yuChiGong
-        .scheduleFileOperationsFromWatch(operations, thumbnailSize.value)
-        .catch((error) => {
-            logger.error("👑 Failed to schedule watch scan operations", error);
-        });
-});
+// RFC 0137：picasa:add-to-scan-queue 由袁天罡 listen → 李世民 → 尉迟恭处理（不再在 App.vue 订阅）
 </script>
 
 <template>

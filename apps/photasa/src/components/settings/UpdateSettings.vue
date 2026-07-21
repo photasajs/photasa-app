@@ -11,12 +11,14 @@ import {
 } from "@phosphor-icons/vue";
 import { BaseButton, BaseSwitch, BaseSelect, BaseInlineFormField } from "@renderer/components/ui";
 import { notification } from "@renderer/services/notification-manager";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
 
 defineOptions({
     name: "UpdateSettings",
 });
 
 const { t } = useI18n();
+const photasaApi = getPhotasaApi();
 
 // 获取更新状态和配置的响应式数据
 const updateStatus = ref<string>("idle"); // idle | checking | downloading | downloaded | error
@@ -98,7 +100,7 @@ async function updateConfig<K extends keyof typeof autoUpdate.value>(
     value: (typeof autoUpdate.value)[K],
 ): Promise<void> {
     try {
-        await window.api?.updateAutoUpdateConfig?.({ [key]: value });
+        await photasaApi?.updateAutoUpdateConfig?.({ [key]: value });
         preferenceStore.updateAutoUpdateConfig({ [key]: value });
         notification.success({
             title: t("notification.configUpdated.title"),
@@ -122,7 +124,7 @@ async function checkForUpdates(): Promise<void> {
     updateError.value = "";
 
     try {
-        const result = await window.api?.checkForUpdates?.();
+        const result = await photasaApi?.checkForUpdates?.();
         if (result?.hasUpdate) {
             updateStatus.value = "idle";
             latestVersion.value = result.version;
@@ -158,7 +160,7 @@ async function downloadUpdate(): Promise<void> {
     updateProgress.value = 0;
 
     try {
-        await window.api?.downloadUpdate?.();
+        await photasaApi?.downloadUpdate?.();
         // 进度监听通过 IPC 事件处理
     } catch (error: unknown) {
         updateStatus.value = "error";
@@ -177,7 +179,7 @@ async function installUpdate(): Promise<void> {
     if (updateStatus.value !== "downloaded") return;
 
     try {
-        await window.api?.installUpdate?.();
+        await photasaApi?.installUpdate?.();
         notification.info({
             title: t("notification.installing.title"),
             message: t("notification.installing.message"),
@@ -196,11 +198,11 @@ async function installUpdate(): Promise<void> {
 onMounted(async () => {
     try {
         // 获取当前版本
-        const version = await window.api?.getAppVersion?.();
+        const version = await photasaApi?.getAppVersion?.();
         if (version) currentVersion.value = version;
 
         // 获取更新状态
-        const status = await window.api?.getUpdateStatus?.();
+        const status = await photasaApi?.getUpdateStatus?.();
         if (status) {
             updateStatus.value = status.status;
             updateProgress.value = status.progress || 0;
@@ -209,14 +211,14 @@ onMounted(async () => {
         }
 
         // 监听更新事件
-        if (window.api?.onUpdateProgress) {
-            window.api.onUpdateProgress((progress: number) => {
+        if (photasaApi?.onUpdateProgress) {
+            photasaApi.onUpdateProgress((progress: number) => {
                 updateProgress.value = progress;
             });
         }
 
-        if (window.api?.onUpdateDownloaded) {
-            window.api.onUpdateDownloaded(() => {
+        if (photasaApi?.onUpdateDownloaded) {
+            photasaApi.onUpdateDownloaded(() => {
                 updateStatus.value = "downloaded";
                 notification.success({
                     title: t("notification.downloadComplete.title"),
@@ -225,8 +227,8 @@ onMounted(async () => {
             });
         }
 
-        if (window.api?.onUpdateError) {
-            window.api.onUpdateError((error: string) => {
+        if (photasaApi?.onUpdateError) {
+            photasaApi.onUpdateError((error: string) => {
                 updateStatus.value = "error";
                 updateError.value = error;
                 notification.error({

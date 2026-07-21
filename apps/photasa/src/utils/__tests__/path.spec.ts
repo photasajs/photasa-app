@@ -1,42 +1,23 @@
-import { normalizePath } from "../path";
-import { describe, it, expect, beforeAll } from "vitest";
-
-// mock window.api.normalizePath for test environment
-if (!window.api) {
-    window.api = {} as any;
-}
-window.api.normalizePath = (p: string) => (p.endsWith("/") ? p : p + "/");
-window.api.mergePath = (l: string, r = "") => l + (r ? "/" + r : "");
+import { normalizePath, mergePath } from "../path";
+import { describe, it, expect } from "vitest";
 
 describe("normalizePath", () => {
-    it("should append a slash to the end of the path", () => {
+    it("统一斜杠并规范化路径", () => {
         const path = "/Users/albert.li/Desktop";
-        expect(normalizePath(path)).toBe("/Users/albert.li/Desktop/");
+        expect(normalizePath(path)).toBe("/Users/albert.li/Desktop");
+    });
+
+    it("去除多余斜杠", () => {
+        expect(normalizePath("/foo//bar")).toBe("/foo/bar");
     });
 });
 
-describe.each([
-    ["win32", "C:\\foo\\bar", "C:\\foo\\bar\\"],
-    ["posix", "/foo/bar", "/foo/bar/"],
-])("normalizePath %s", (platform, input, expected) => {
-    beforeAll(() => {
-        window.api.normalizePath = (p) =>
-            platform === "win32" ? p.replace(/\//g, "\\") + "\\" : p + "/";
+describe("mergePath", () => {
+    it("合并 posix 路径段", () => {
+        expect(mergePath("/foo/bar", "baz")).toBe("/foo/bar/baz");
     });
-    it(`should normalize ${platform} path`, () => {
-        expect(normalizePath(input)).toBe(expected);
-    });
-});
 
-describe.each([
-    ["win32", "C:\\foo\\bar", "baz", "C:\\foo\\bar\\baz"],
-    ["posix", "/foo/bar", "baz", "/foo/bar/baz"],
-])("mergePath %s", (platform, left, right, expected) => {
-    beforeAll(() => {
-        window.api.mergePath = (l, r = "") =>
-            platform === "win32" ? l.replace(/\//g, "\\") + "\\" + r : l + "/" + r;
-    });
-    it(`should merge ${platform} path`, () => {
-        expect(window.api.mergePath(left, right)).toBe(expected);
+    it("空 right 返回规范化 left", () => {
+        expect(mergePath("/foo/bar", "")).toBe("/foo/bar");
     });
 });

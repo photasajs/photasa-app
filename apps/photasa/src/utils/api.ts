@@ -22,23 +22,32 @@ import type {
     FileMetadata,
 } from "@photasa/common";
 import { loggers } from "@photasa/common";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
+import {
+    isHiddenFileSync,
+    shouldIgnorePhotasaPathSync,
+    shortenThumbnailNameSync,
+    toFileNameSync,
+    toThumbnailNameSync,
+} from "@renderer/utils/sync-path";
 
 const logger = loggers.api;
+const api = () => getPhotasaApi();
 
 export function startWatching(config: WatchConfig, callback: WatchCallback): void {
-    window.api.startWatching(config, callback);
+    api().startWatching(config, callback);
 }
 
 export function stopWatching(): Promise<void> {
-    return window.api.stopWatching();
+    return api().stopWatching();
 }
 
 export function importPhotos(paths: string[], target: string, callback: ImportCallback): void {
-    window.api.importPhotos(paths, target, callback);
+    api().importPhotos(paths, target, callback);
 }
 
 export function chooseDirectory(): Promise<DirectorySelection> {
-    return window.api.chooseDirectory();
+    return api().chooseDirectory();
 }
 
 export interface MenuCallback {
@@ -52,49 +61,49 @@ export function setupMenu(callback: MenuCallback): void {
 }
 
 export function getDirectory(name: PathName): Promise<string> {
-    return window.api.getDirectory(name);
+    return api().getDirectory(name);
 }
 
 export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const result = yield window.api.createThumbnail(request);
+    const result = yield api().createThumbnail(request);
     return result;
 })
     .enqueue()
     .maxConcurrency(2);
 
 export const removeThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const result = yield window.api.removeThumbnail(request);
+    const result = yield api().removeThumbnail(request);
     return result;
 })
     .enqueue()
     .maxConcurrency(1);
 
 export function getImageType(path: string): Promise<ImageInfo> {
-    return window.api.getImageType(path);
+    return api().getImageType(path);
 }
 
 export function getFileMetadata(pathOrUrl: string): Promise<FileMetadata> {
-    return window.api.getFileMetadata(pathOrUrl);
+    return api().getFileMetadata(pathOrUrl);
 }
 
 export function scanPhotos(folder: ScanAction): Promise<ScanArgs> {
-    return window.api.scanPhotos(folder);
+    return api().scanPhotos(folder);
 }
 
 export async function addToPhotoList(
     photoPath: string,
 ): Promise<{ path: string; config: PhotasaConfig }> {
-    return window.api.addToPhotoList(photoPath);
+    return api().addToPhotoList(photoPath);
 }
 
 export async function removeFromPhotoList(
     photoPath: string,
 ): Promise<{ path: string; config: PhotasaConfig }> {
-    return window.api.removeFromPhotoList(photoPath);
+    return api().removeFromPhotoList(photoPath);
 }
 
 export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    return window.api.getPhotasaConfig(folder);
+    return api().getPhotasaConfig(folder);
 }
 
 export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
@@ -105,57 +114,57 @@ export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
     .maxConcurrency(1);
 
 export const cleanupScanQueue = (folderPath: string): void => {
-    window.api.cleanupScanQueue(folderPath);
+    api().cleanupScanQueue(folderPath);
 };
 
 export function scanSubfolders(folder: string): Promise<string[]> {
-    return window.api.scanSubfolders(folder);
+    return api().scanSubfolders(folder);
 }
 
 export function checkPhotasaConfig(
     folderPath: string,
 ): Promise<{ hasConfig: boolean; photoCount?: number; reason: string }> {
-    return window.api.checkPhotasaConfig(folderPath);
+    return api().checkPhotasaConfig(folderPath);
 }
 
 export function isFileUnderFolder(file: string, folder: string): boolean {
-    return window.api.isFileUnderFolder(file, folder);
+    return api().isFileUnderFolder(file, folder);
 }
 
 export function resetPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    return window.api.resetPhotasaConfig(folder);
+    return api().resetPhotasaConfig(folder);
 }
 
 export function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    return window.api.fixPhotasaConfig(folder);
+    return api().fixPhotasaConfig(folder);
 }
 
 export function isHiddenFile(fileName: string): boolean {
-    return window.api.isHiddenFile(fileName);
+    return isHiddenFileSync(fileName);
 }
 
 export function shouldIgnorePhotasaPath(fileName: string): boolean {
-    return window.api.shouldIgnorePhotasaPath(fileName);
+    return shouldIgnorePhotasaPathSync(fileName);
 }
 
 export function isVideoFile(fileName: string): boolean {
-    return window.api.isVideoFile(fileName);
+    return api().isVideoFile(fileName);
 }
 
 export function isImageFile(fileName: string): boolean {
-    return window.api.isImageFile(fileName);
+    return api().isImageFile(fileName);
 }
 
 export function toFileName(fileName: string): string {
-    return window.api.toFileName(fileName);
+    return toFileNameSync(fileName);
 }
 
 export function toThumbnailName(fileName: string): string {
-    return window.api.toThumbnailName(fileName);
+    return toThumbnailNameSync(fileName);
 }
 
 export function shortenThumbnailName(fileName: string): string {
-    return window.api.shortenThumbnailName(fileName);
+    return shortenThumbnailNameSync(fileName);
 }
 
 // ==================== 增强的导入功能 API ====================
@@ -167,7 +176,7 @@ export function shortenThumbnailName(fileName: string): string {
  * @returns 文件组数组
  */
 export function scanDirectories(paths: string[], filters?: ImportFilters): Promise<FileGroup[]> {
-    return window.api.scanDirectories(paths, filters);
+    return api().scanDirectories(paths, filters);
 }
 
 /**
@@ -176,7 +185,7 @@ export function scanDirectories(paths: string[], filters?: ImportFilters): Promi
  * @returns 导入预览信息
  */
 export function previewImport(config: ImportConfig): Promise<ImportPreview> {
-    return window.api.previewImport(config);
+    return api().previewImport(config);
 }
 
 /**
@@ -185,7 +194,7 @@ export function previewImport(config: ImportConfig): Promise<ImportPreview> {
  * @returns 导入ID
  */
 export function executeImport(config: ImportConfig): Promise<{ importId: string }> {
-    return window.api.executeImport(config);
+    return api().executeImport(config);
 }
 
 /**
@@ -194,7 +203,7 @@ export function executeImport(config: ImportConfig): Promise<{ importId: string 
  * @returns 清理函数
  */
 export function onImportProgress(callback: (progress: ImportProgress) => void): () => void {
-    return window.api.onImportProgress(callback);
+    return api().onImportProgress(callback);
 }
 
 /**
@@ -203,7 +212,7 @@ export function onImportProgress(callback: (progress: ImportProgress) => void): 
  * @returns 清理函数
  */
 export function onPreviewProgress(callback: (progress: any, files?: any[]) => void): () => void {
-    return window.api.onPreviewProgress(callback);
+    return api().onPreviewProgress(callback);
 }
 
 /**
@@ -212,7 +221,7 @@ export function onPreviewProgress(callback: (progress: any, files?: any[]) => vo
  * @returns 清理函数
  */
 export function onImportComplete(callback: (result: ImportResult) => void): () => void {
-    return window.api.onImportComplete(callback);
+    return api().onImportComplete(callback);
 }
 
 /**
@@ -221,14 +230,14 @@ export function onImportComplete(callback: (result: ImportResult) => void): () =
  * @returns 清理函数
  */
 export function onImportError(callback: (error: any) => void): () => void {
-    return window.api.onImportError(callback);
+    return api().onImportError(callback);
 }
 
 /**
  * 移除所有导入相关的事件监听器
  */
 export function removeImportListeners(): void {
-    return window.api.removeImportListeners();
+    return api().removeImportListeners();
 }
 
 /**
@@ -237,7 +246,7 @@ export function removeImportListeners(): void {
  * @returns 取消结果
  */
 export function cancelImport(importId: string): Promise<boolean> {
-    return window.api.cancelImport(importId);
+    return api().cancelImport(importId);
 }
 
 /**
@@ -246,7 +255,7 @@ export function cancelImport(importId: string): Promise<boolean> {
  * @returns 暂停结果
  */
 export function pauseImport(importId: string): Promise<boolean> {
-    return window.api.pauseImport(importId);
+    return api().pauseImport(importId);
 }
 
 /**
@@ -255,7 +264,7 @@ export function pauseImport(importId: string): Promise<boolean> {
  * @returns 恢复结果
  */
 export function resumeImport(importId: string): Promise<ImportResumeResult> {
-    return window.api.resumeImport(importId);
+    return api().resumeImport(importId);
 }
 
 /**
@@ -264,7 +273,7 @@ export function resumeImport(importId: string): Promise<ImportResumeResult> {
  * @returns 导入历史数组
  */
 export function getImportHistory(limit?: number): Promise<ImportHistory[]> {
-    return window.api.getImportHistory(limit);
+    return api().getImportHistory(limit);
 }
 
 /**
@@ -273,7 +282,7 @@ export function getImportHistory(limit?: number): Promise<ImportHistory[]> {
  * @returns 导入详情
  */
 export function getImportDetails(historyId: string): Promise<ImportHistory | null> {
-    return window.api.getImportDetails(historyId);
+    return api().getImportDetails(historyId);
 }
 
 /**
@@ -282,7 +291,7 @@ export function getImportDetails(historyId: string): Promise<ImportHistory | nul
  * @returns 撤销预览信息
  */
 export function previewUndo(historyId: string): Promise<any> {
-    return window.api.previewUndo(historyId);
+    return api().previewUndo(historyId);
 }
 
 /**
@@ -291,7 +300,7 @@ export function previewUndo(historyId: string): Promise<any> {
  * @returns 撤销结果
  */
 export function undoImport(historyId: string): Promise<UndoResult> {
-    return window.api.undoImport(historyId);
+    return api().undoImport(historyId);
 }
 
 /**
@@ -300,19 +309,19 @@ export function undoImport(historyId: string): Promise<UndoResult> {
  * @returns 进度信息
  */
 export function getImportProgress(importId: string): Promise<ImportProgress> {
-    return window.api.getImportProgress(importId);
+    return api().getImportProgress(importId);
 }
 
 export function getRecoverableImports(): Promise<RecoverableImport[]> {
-    return window.api.getRecoverableImports();
+    return api().getRecoverableImports();
 }
 
 export function cleanupRecoverableImport(importId: string): Promise<RecoverableImportActionResult> {
-    return window.api.cleanupRecoverableImport(importId);
+    return api().cleanupRecoverableImport(importId);
 }
 
 export function keepRecoverableImport(importId: string): Promise<RecoverableImportActionResult> {
-    return window.api.keepRecoverableImport(importId);
+    return api().keepRecoverableImport(importId);
 }
 
 /**
@@ -322,7 +331,7 @@ export function keepRecoverableImport(importId: string): Promise<RecoverableImpo
  */
 export function chooseDirectories(multiSelect = true): Promise<DirectorySelection> {
     logger.debug(`调用 chooseDirectories，multiSelect: ${multiSelect}`);
-    const result = window.api.chooseDirectories(multiSelect);
+    const result = api().chooseDirectories(multiSelect);
     result
         .then((res: DirectorySelection) => logger.debug(`chooseDirectories 结果:`, res))
         .catch((err: unknown) => logger.error(`chooseDirectories 错误:`, err));

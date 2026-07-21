@@ -5,6 +5,7 @@ import {
     FOLDER_TREE_COMMANDS,
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
+    WATCH_EVENTS,
 } from "../tauri-command-names";
 
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
@@ -46,6 +47,29 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
 
     it("Tauri 模式下 menu:action 直连 listen(picasa:menu-action)（RFC 0149）", () => {
         expect(mockListen).toHaveBeenCalledWith("picasa:menu-action", expect.any(Function));
+    });
+
+    it("Tauri 模式下 picasa:add-to-scan-queue 直连 listen（RFC 0137）", () => {
+        expect(mockListen).toHaveBeenCalledWith(WATCH_EVENTS.SCAN_QUEUE_ADD, expect.any(Function));
+    });
+
+    it("picasa:add-to-scan-queue 事件触发后启奏 watch_scan_queue_add", async () => {
+        const listenCall = mockListen.mock.calls.find(
+            (call) => call[0] === WATCH_EVENTS.SCAN_QUEUE_ADD,
+        );
+        expect(listenCall).toBeDefined();
+        const handler = listenCall![1] as (event: { payload: unknown[] }) => void;
+        const operations = [{ id: "op-1", type: "add", path: "/photos/a.jpg" }];
+        handler({ payload: operations });
+
+        expect(mockQizouEmit).toHaveBeenCalledWith(
+            "qizou",
+            expect.objectContaining({
+                matter: QizouMatters.WATCH_SCAN_QUEUE_ADD,
+                from: "袁天罡",
+                content: { operations },
+            }),
+        );
     });
 
     it("UPDATE_FOLDER_TREE invoke folder_tree_update", async () => {

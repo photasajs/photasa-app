@@ -47,8 +47,9 @@ Initial order:
 
 1. ✅ Scan command invocation and scan event subscription（0136 完成；`yuantiangang.ts`/`yuchigong.ts` 零 `window.api`/`legacy-api` 引用，2026-07-21 复核确认）。
 2. ✅ Watch command invocation and watch event subscription（0133 完成）。
-3. **已知未迁移项**（2026-07-21）：~~`yuantiangang.ts::setupMenuActionEventListening` 经 `window.api.onMenuAction`~~ ✅ 0149 已改 Tauri `listen()`。~~shell/menu 下发经 zouwu~~ ✅ 0150 直连 invoke。
-4. Delete a `legacy-api.ts` capability only after its caller count is zero.
+3. **已知未迁移项**（2026-07-21）：~~`yuantiangang.ts::setupMenuActionEventListening` 经 `window.api.onMenuAction`~~ ✅ 0149 已改 Tauri `listen()`。~~shell/menu 下发经 zouwu~~ ✅ 0150 直连 invoke。~~`App.vue::onScanQueueAdd`~~ ✅ 0137 袁天罡 `listen(picasa:add-to-scan-queue)` → 李世民 → 尉迟恭。
+4. **组件层**（2026-07-21 切片 2）：`utils/api.ts`、`api-path.ts`、`path.ts` 改经 `getPhotasaApi()` / `sync-path`；生产组件不再直读 `window.api`（`legacy-api` 仍全局注入兼容）。
+5. Delete a `legacy-api.ts` capability only after its caller count is zero.
 
 ## Required Evidence Per Capability
 

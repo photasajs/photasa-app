@@ -1,56 +1,87 @@
+import {
+    getSeparatorSync,
+    isAbsolutePathSync,
+    isHiddenFileSync,
+    joinPathSync,
+    mergePathSync,
+    normalizePathSync,
+    shortenThumbnailNameSync,
+    splitPathSync,
+    toDirNameSync,
+    toFileNameSync,
+    toThumbnailNameSync,
+} from "@renderer/utils/sync-path";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
+import { isTauri } from "@renderer/api/env";
+
 export function normalizePath(path: string) {
-    return window.api.normalizePath(path);
-}
-export function mergePath(left: string, right = "") {
-    return window.api.mergePath(left, right);
-}
-export function splitPath(path: string) {
-    return window.api.splitPath(path);
-}
-export function joinPath(...parts: string[]) {
-    return window.api.joinPath(...parts);
-}
-export function getSeparator() {
-    return window.api.getSeparator();
-}
-export function toFileName(path: string) {
-    return window.api.toFileName(path);
-}
-export function toDirName(path: string) {
-    return window.api.toDirName(path);
-}
-export function isFileUnderFolder(file: string, folder: string) {
-    return window.api.isFileUnderFolder(file, folder);
-}
-export function isHiddenFile(path: string) {
-    return window.api.isHiddenFile(path);
-}
-export function isAbsolutePath(path: string) {
-    return window.api.isAbsolutePath(path);
-}
-export function relativePath(from: string, to: string) {
-    return window.api.relativePath(from, to);
-}
-export function resolvePath(...segments: string[]) {
-    return window.api.resolvePath(...segments);
-}
-export function getRoot(path: string) {
-    return window.api.getRoot(path);
+    return normalizePathSync(path);
 }
 
-import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
+export function mergePath(left: string, right = "") {
+    return mergePathSync(left, right);
+}
+
+export function splitPath(path: string) {
+    return splitPathSync(path);
+}
+
+export function joinPath(...parts: string[]) {
+    return joinPathSync(...parts);
+}
+
+export function getSeparator() {
+    return getSeparatorSync();
+}
+
+export function toFileName(path: string) {
+    return toFileNameSync(path);
+}
+
+export function toDirName(path: string) {
+    return toDirNameSync(path);
+}
+
+export function isFileUnderFolder(file: string, folder: string) {
+    if (!isTauri()) {
+        return getPhotasaApi().isFileUnderFolder(file, folder) as boolean;
+    }
+    return getPhotasaApi().isFileUnderFolder(file, folder);
+}
+
+export function isHiddenFile(path: string) {
+    return isHiddenFileSync(path);
+}
+
+export function isAbsolutePath(path: string) {
+    return isAbsolutePathSync(path);
+}
+
+export function relativePath(from: string, to: string) {
+    return getPhotasaApi().relativePath(from, to);
+}
+
+export function resolvePath(...segments: string[]) {
+    return getPhotasaApi().resolvePath(...segments);
+}
+
+export function getRoot(path: string) {
+    return getPhotasaApi().getRoot(path);
+}
+
+export function toThumbnailName(path: string) {
+    return toThumbnailNameSync(path);
+}
+
+export function shortenThumbnailName(path: string) {
+    return shortenThumbnailNameSync(path);
+}
 
 /**
  * 打开文件夹 - 通过长孙无忌服务，使用 qizou 流程
- * @param path 文件夹路径（可能是 file:// URL 或普通路径）
- *
- * 注意：此函数现在通过 qizou-shengzhi 流程处理：
- * 长孙无忌 → 房玄龄 → 袁天罡 → 天枢引擎工作流 → 太白金星适配器
- *
- * 如果需要 file:// URL 转换，应该在调用此函数前处理
  */
 export function openInFinder(path: string): void {
-    // ✅ RFC 0058: 使用新的服务架构，通过 qizou 流程
     const zhangSunWuJi = useZhangSunWuJi();
     zhangSunWuJi.openInFinder(path);
 }

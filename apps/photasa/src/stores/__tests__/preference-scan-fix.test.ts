@@ -11,8 +11,17 @@ import { usePreferenceStore } from "../preference";
 // import type { PhotasaLogger } from "@photasa/common";
 
 // Mock the API module
+vi.mock("@renderer/ipc/api-access", () => ({
+    getPhotasaApi: () => ({}),
+}));
+
 vi.mock("@renderer/utils/api", () => ({
     checkPhotasaConfig: vi.fn(),
+    cleanupScanQueue: vi.fn(),
+    isVideoFile: vi.fn(),
+    resetPhotasaConfig: vi.fn(),
+    shortenThumbnailName: vi.fn((f: string) => f),
+    toFileName: vi.fn((f: string) => f),
 }));
 
 // Mock logger

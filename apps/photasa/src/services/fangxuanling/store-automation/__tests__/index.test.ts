@@ -6,6 +6,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("@renderer/ipc/api-access", () => ({
+    getPhotasaApi: () => ({}),
+}));
+
 import { loadMatterSyncConfig, validateMatterSyncConfig } from "../index";
 import type { MatterSyncMetadata } from "../index";
 

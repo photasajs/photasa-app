@@ -115,7 +115,9 @@ import { storeToRefs } from "pinia";
 import { useMenusStore } from "@renderer/stores/menus";
 import { BaseSpace } from "@renderer/components/ui";
 import MenuDropdown from "./common/MenuDropdown.vue";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
 const { t } = useI18n();
+const photasaApi = getPhotasaApi();
 
 const emit = defineEmits([
     "openScanList",
@@ -137,46 +139,46 @@ function openPreference() {
 }
 
 function minimizeWindow() {
-    window.api.minimizeWindow();
+    photasaApi.minimizeWindow();
 }
 function maximizeWindow() {
-    window.api.maximizeWindow();
+    photasaApi.maximizeWindow();
 }
 function unmaximizeWindow() {
-    window.api.unmaximizeWindow();
+    photasaApi.unmaximizeWindow();
 }
 function closeWindow() {
-    window.api.closeWindow();
+    photasaApi.closeWindow();
 }
 
 const isMaximized = ref(false);
 
 onMounted(() => {
     // 监听主进程窗口最大化/还原事件
-    window.api.onWindowMaximized(() => {
+    photasaApi.onWindowMaximized(() => {
         isMaximized.value = true;
     });
 
     // 监听主进程窗口还原事件
-    window.api.onWindowUnmaximized(() => {
+    photasaApi.onWindowUnmaximized(() => {
         isMaximized.value = false;
     });
 
     // 监听主进程窗口最大化状态
-    window.api.onWindowMaximizedState((_e, state) => {
+    photasaApi.onWindowMaximizedState((_e, state) => {
         isMaximized.value = !!state;
     });
     // 初始化时主动请求主进程同步状态
-    window.api.queryMaximized();
+    photasaApi.queryMaximized();
 });
 onBeforeUnmount(() => {
-    window.api.offWindowMaximized(() => {
+    photasaApi.offWindowMaximized(() => {
         isMaximized.value = true;
     });
-    window.api.offWindowUnmaximized(() => {
+    photasaApi.offWindowUnmaximized(() => {
         isMaximized.value = false;
     });
-    window.api.offWindowMaximizedState((_e, state) => {
+    photasaApi.offWindowMaximizedState((_e, state) => {
         isMaximized.value = !!state;
     });
 });

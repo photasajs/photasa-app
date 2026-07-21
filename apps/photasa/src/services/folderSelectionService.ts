@@ -9,7 +9,7 @@
  * - 不调用任何扫描相关函数
  */
 
-import { getDirectory } from "@renderer/utils/api";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
 import { loggers } from "@photasa/common";
 
 const logger = loggers.app;
@@ -109,6 +109,10 @@ export const folderSelectionService: FolderSelectionService = {
         }
     },
 };
+
+async function getDirectory(name: string): Promise<string | null> {
+    return getPhotasaApi().getDirectory(name) as Promise<string | null>;
+}
 
 /**
  * 获取默认路径，按优先级回退

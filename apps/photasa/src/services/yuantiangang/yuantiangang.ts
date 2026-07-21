@@ -32,6 +32,7 @@ import {
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
     SHELL_COMMANDS,
+    WATCH_EVENTS,
 } from "./tauri-command-names";
 import { extractFolderTreeFromContext } from "./folder-tree-payload";
 import { buildPreferencesDelta, PREFERENCE_ZHAOLING_MATTERS } from "./preferences-delta";
@@ -41,6 +42,7 @@ import {
     scanActionToPersistedEntry,
 } from "./scan-queue-payload";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
+import type { FileOperation } from "@photasa/common";
 
 const logger = loggers.yuantiangang;
 
@@ -55,6 +57,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     private qianliyanCleanupFn?: () => void;
     private notifyStatusCleanupFn?: () => void;
     private menuActionCleanupFn?: () => void; // ✅ RFC 0058: 菜单点击事件清理函数
+    private scanQueueAddCleanupFn?: () => void; // ✅ RFC 0137: 文件监视合并批次
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
     /** 圣旨接收通道 */
     private shengzhiPort?: MessagePort;
@@ -65,6 +68,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
         this.setupMenuActionEventListening(); // ✅ RFC 0058: 监听 menu:action IPC 事件
+        this.setupScanQueueAddEventListening(); // ✅ RFC 0137: 监听 picasa:add-to-scan-queue
     }
 
     /**
@@ -481,6 +485,67 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     }
 
     /**
+     * ✅ RFC 0137: 监听文件监视合并批次，启奏李世民协调尉迟恭入队
+     * @private
+     */
+    private setupScanQueueAddEventListening(): void {
+        try {
+            if (!isTauri()) {
+                return;
+            }
+
+            listen<FileOperation[]>(WATCH_EVENTS.SCAN_QUEUE_ADD, (event) => {
+                const operations = Array.isArray(event.payload) ? event.payload : [];
+                this.reportWatchScanQueueAdd(operations);
+            })
+                .then((unlisten) => {
+                    this.scanQueueAddCleanupFn = unlisten;
+                })
+                .catch((error: Error | unknown) => {
+                    logger.warn(
+                        "🔮 建立 picasa:add-to-scan-queue 事件监听失败（Tauri模式）",
+                        error instanceof Error ? error.message : String(error),
+                    );
+                });
+            logger.info("🔮 袁天罡：已建立 picasa:add-to-scan-queue 事件监听（RFC 0137）");
+        } catch (error: Error | unknown) {
+            logger.warn(
+                "🔮 建立 picasa:add-to-scan-queue 事件监听失败",
+                error instanceof Error ? error.message : String(error),
+            );
+        }
+    }
+
+    /**
+     * ✅ RFC 0137: 向李世民启奏文件监视合并批次
+     * @private
+     */
+    private reportWatchScanQueueAdd(operations: FileOperation[]): void {
+        try {
+            if (!this._qizouBus) {
+                logger.error("🔮 启奏通道未建立，无法发送 watch 扫描队列启奏");
+                return;
+            }
+
+            const qizou: Qizou = {
+                matter: QizouMatters.WATCH_SCAN_QUEUE_ADD,
+                content: { operations },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: {
+                    type: "report",
+                    priority: "normal",
+                },
+            };
+
+            this._qizouBus.emit("qizou", qizou);
+            logger.debug(`🔮 启奏李世民: watch 扫描队列批次 (${operations.length} 项)`);
+        } catch (error) {
+            logger.error("🔮 发送 watch 扫描队列启奏失败:", error);
+        }
+    }
+
+    /**
      * ✅ RFC 0058: 向李世民发送菜单点击事件启奏
      *
      * @param payload 菜单点击事件载荷
@@ -576,6 +641,9 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         }
         if (this.menuActionCleanupFn) {
             this.menuActionCleanupFn();
+        }
+        if (this.scanQueueAddCleanupFn) {
+            this.scanQueueAddCleanupFn();
         }
         logger.info("🔮 事件监听已清理");
     }

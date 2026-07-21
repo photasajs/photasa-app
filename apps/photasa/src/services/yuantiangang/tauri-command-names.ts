@@ -27,3 +27,8 @@ export const SHELL_COMMANDS = {
 export const MENU_COMMANDS = {
     APPLY: "apply_system_menu",
 } as const;
+
+/** RFC 0137：文件监视合并批次事件（Rust photasa-watch → 前端） */
+export const WATCH_EVENTS = {
+    SCAN_QUEUE_ADD: "picasa:add-to-scan-queue",
+} as const;

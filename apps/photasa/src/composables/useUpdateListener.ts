@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 import { useUpdateStore } from "@renderer/stores/update";
 import { useNotificationStore } from "@renderer/stores/notification";
 import { loggers } from "@photasa/common";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
 
 /**
  * 更新事件监听器
@@ -62,20 +63,21 @@ export function useUpdateListener() {
 
     // 注册事件监听器
     const registerListeners = () => {
-        if (window.api?.onUpdateAvailable) {
-            const cleanup = window.api.onUpdateAvailable(handleUpdateAvailable);
+        const api = getPhotasaApi();
+        if (api.onUpdateAvailable) {
+            const cleanup = api.onUpdateAvailable(handleUpdateAvailable);
             cleanupFunctions.push(cleanup);
         }
-        if (window.api?.onUpdateProgress) {
-            const cleanup = window.api.onUpdateProgress(handleDownloadProgress);
+        if (api.onUpdateProgress) {
+            const cleanup = api.onUpdateProgress(handleDownloadProgress);
             cleanupFunctions.push(cleanup);
         }
-        if (window.api?.onUpdateDownloaded) {
-            const cleanup = window.api.onUpdateDownloaded(handleDownloadComplete);
+        if (api.onUpdateDownloaded) {
+            const cleanup = api.onUpdateDownloaded(handleDownloadComplete);
             cleanupFunctions.push(cleanup);
         }
-        if (window.api?.onStatusChanged) {
-            const cleanup = window.api.onStatusChanged(handleStatusChanged);
+        if (api.onStatusChanged) {
+            const cleanup = api.onStatusChanged(handleStatusChanged);
             cleanupFunctions.push(cleanup);
         }
     };

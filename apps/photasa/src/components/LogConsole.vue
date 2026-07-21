@@ -87,8 +87,10 @@ import { useI18n } from "vue-i18n";
 import type { LogEntry } from "@photasa/common";
 import { globalLogInterceptor } from "@photasa/common";
 import BaseSelect from "./ui/BaseSelect.vue";
+import { getPhotasaApi } from "@renderer/ipc/api-access";
 
 const { t } = useI18n();
+const photasaApi = getPhotasaApi();
 
 const visible = ref(false);
 const logs = ref<LogEntry[]>([]);
@@ -166,7 +168,7 @@ const toggle = async () => {
     visible.value = !visible.value;
     if (visible.value) {
         // 通知主进程开始收集日志
-        const result = await window.api.log.viewerOpen();
+        const result = await photasaApi.log.viewerOpen();
         if (result.success) {
             logs.value = []; // 清空旧日志
 
@@ -190,7 +192,7 @@ const toggle = async () => {
         }
     } else {
         // 通知主进程停止收集日志
-        await window.api.log.viewerClose();
+        await photasaApi.log.viewerClose();
 
         // 取消订阅 renderer 进程的日志
         if (unsubscribeRendererLogs) {
@@ -213,7 +215,7 @@ const toggle = async () => {
 
 const close = () => {
     visible.value = false;
-    window.api.log.viewerClose();
+    photasaApi.log.viewerClose();
 
     // 取消订阅 renderer 进程的日志
     if (unsubscribeRendererLogs) {
@@ -438,12 +440,12 @@ onMounted(() => {
     document.addEventListener("keydown", handleKeyDown);
 
     // 监听全局快捷键触发
-    window.api.log.onToggleViewer(() => {
+    photasaApi.log.onToggleViewer(() => {
         toggle();
     });
 
     // 监听新日志
-    window.api.log.onEntry((entry: LogEntry) => {
+    photasaApi.log.onEntry((entry: LogEntry) => {
         logs.value.push(entry);
         // 限制最大条数
         if (logs.value.length > 5000) {
@@ -455,7 +457,7 @@ onMounted(() => {
 onUnmounted(() => {
     document.removeEventListener("keydown", handleKeyDown);
     if (visible.value) {
-        window.api.log.viewerClose();
+        photasaApi.log.viewerClose();
     }
 
     // 清理 renderer 进程的日志订阅

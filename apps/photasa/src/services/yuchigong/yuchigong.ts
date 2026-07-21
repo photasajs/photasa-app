@@ -12,7 +12,7 @@ import {
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 // ✅ RFC 0048 v3 Phase 4: QizouMatters 导入已删除（随persistToStore()一起删除）
-import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import type { FileOperation, ScanAction } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import { loggers, mapFileOperationToScanAction } from "@photasa/common";
@@ -426,6 +426,9 @@ export class YuChiGongService implements IService, IYuChiGongService {
                 case "cleanup_scan_queue_for_path":
                     await this.handleCleanupScanQueueForPath(shengzhi);
                     break;
+                case ShengzhiCommands.SCHEDULE_WATCH_FILE_OPERATIONS:
+                    await this.handleScheduleWatchFileOperations(shengzhi);
+                    break;
                 // ✅ RFC 0042 Step 2.5: update_folder_tree已迁移到魏征服务
                 default:
                     logger.warn(`🛡️ 尉迟恭收到未知圣旨命令: ${shengzhi.command}`);
@@ -509,6 +512,22 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
             throw error;
         }
+    }
+
+    /**
+     * ✅ RFC 0137: 处理文件监视合并批次圣旨（原 App.vue onScanQueueAdd）
+     */
+    private async handleScheduleWatchFileOperations(shengzhi: Shengzhi): Promise<void> {
+        const content = (shengzhi.content ?? {}) as Record<string, unknown>;
+        const operations = content.operations;
+
+        if (!Array.isArray(operations) || operations.length === 0) {
+            logger.debug("🛡️ 尉迟恭：watch 批次为空，跳过");
+            return;
+        }
+
+        const thumbnailSize = this.fangXuanLingService.preference.thumbnailSize;
+        await this.scheduleFileOperationsFromWatch(operations as FileOperation[], thumbnailSize);
     }
 
     /**

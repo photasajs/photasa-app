@@ -1,7 +1,9 @@
+import { normalizePathSync, mergePathSync } from "@renderer/utils/sync-path";
+
 export function normalizePath(path: string): string {
-    return window.api.normalizePath(path);
+    return normalizePathSync(path);
 }
 
 export function mergePath(left: string, right = ""): string {
-    return window.api.mergePath(left, right);
+    return mergePathSync(left, right);
 }

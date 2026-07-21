@@ -1,12 +1,17 @@
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
 import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import { cleanupScanQueue } from "@renderer/utils/api";
+import {
+    cleanupScanQueue,
+    isVideoFile,
+    resetPhotasaConfig,
+    shortenThumbnailName,
+    toFileName,
+} from "@renderer/utils/api";
 import type { DuplicateStrategy, ImportPreferences, PhotasaConfig } from "@photasa/common";
 import type { FileOperationInput } from "@photasa/common";
 import type { ThumbnailRequest } from "@photasa/common";
 import { addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
-import { isVideoFile, toFileName, shortenThumbnailName } from "@renderer/utils/api";
 import { toDirName } from "@renderer/utils/api-path";
 // 导入优先级排序工具
 import {
@@ -742,7 +747,7 @@ export const usePreferenceStore = defineStore("preference", {
             this.appState.scanningFolder = [];
             for (const dir of newDirs) {
                 this.addPath(dir);
-                await window.api?.resetPhotasaConfig?.(dir);
+                await resetPhotasaConfig(dir);
             }
         },
         /**
