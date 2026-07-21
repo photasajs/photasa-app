@@ -49,6 +49,7 @@ blob-report/
 *.log*
 .history
 coverage/
+coverage-*/
 
 # TypeScript build info files (should be ignored in CI/CD)
 *.tsbuildinfo

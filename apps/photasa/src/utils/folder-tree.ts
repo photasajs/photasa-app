@@ -149,17 +149,19 @@ function dedupeSiblingNodes(parentKey: string | null, children: FolderNode[]): F
     const grouped = new Map<string, FolderNode>();
 
     for (const child of children) {
-        const resolved =
-            parentKey === null
-                ? canonicalFolderPath(child.key)
-                : resolveFolderNodeKey(parentKey, child);
+        let resolved: string | null;
+        if (parentKey === null) {
+            resolved = canonicalFolderPath(child.key);
+        } else {
+            resolved = resolveFolderNodeKey(parentKey, child);
+        }
         if (!resolved) {
             continue;
         }
 
         child.key = resolved;
         if (typeof child.title !== "string" || !child.title.trim()) {
-            child.title = resolved.split("/").pop() ?? resolved;
+            child.title = resolved.split("/").pop() || resolved;
         }
 
         child.children = child.children?.length ? dedupeSiblingNodes(resolved, child.children) : [];
@@ -170,10 +172,7 @@ function dedupeSiblingNodes(parentKey: string | null, children: FolderNode[]): F
             continue;
         }
 
-        existing.children = dedupeSiblingNodes(resolved, [
-            ...(existing.children ?? []),
-            ...(child.children ?? []),
-        ]);
+        existing.children = dedupeSiblingNodes(resolved, [...existing.children, ...child.children]);
     }
 
     return [...grouped.values()].sort((a, b) => String(a.key).localeCompare(String(b.key)));

@@ -4,9 +4,10 @@ import {
     addFolderToTree,
     cleanDataNode,
     sanitizeFolderTree,
+    dedupeFolderTree,
 } from "../folder-tree";
 import type { FolderNode } from "@photasa/common";
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 
 beforeAll(() => {
     (globalThis as Record<string, unknown>).window = Object.assign(globalThis.window || {}, {
@@ -221,6 +222,219 @@ describe("Folder Tree", () => {
         ];
         sanitizeFolderTree(roots);
         expect(roots[0].children?.length).toBe(2);
+    });
+
+    it("addRoot 忽略空路径", () => {
+        const roots: FolderNode[] = [];
+        addRoot(roots, "   ");
+        expect(roots).toEqual([]);
+    });
+
+    it("addFolderToTree 忽略无效 path", () => {
+        const roots: FolderNode[] = [];
+        addRoot(roots, "/Volumes/SUCAI/Test");
+        addFolderToTree(roots, { path: null as unknown as string, thumbnail: "", isVideo: false });
+        addFolderToTree(roots, { path: "   ", thumbnail: "", isVideo: false });
+        expect(roots[0].children?.length ?? 0).toBe(0);
+    });
+
+    it("cleanDataNode 对仅根级路径无操作", () => {
+        const roots: FolderNode[] = [];
+        addRoot(roots, "root1");
+        cleanDataNode(roots, { path: "root1", thumbnail: "", isVideo: false });
+        expect(roots.length).toBe(1);
+    });
+
+    it("dedupeFolderTree 委托 sanitizeFolderTree", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI/Test",
+                title: "/Volumes/SUCAI/Test",
+                children: [
+                    { key: "/Volumes/SUCAI/Test/2018", title: "2018", children: [] },
+                    { key: "/Volumes/SUCAI/Test/2018", title: "2018", children: [] },
+                ],
+            },
+        ];
+        dedupeFolderTree(roots);
+        expect(roots[0].children?.length).toBe(1);
+    });
+
+    it("addFolderToTree 复用已有子节点时规范化 key", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI/Test",
+                title: "/Volumes/SUCAI/Test",
+                children: [{ key: "2018", title: "2018", children: [] }],
+            },
+        ];
+        addFolderToTree(roots, {
+            path: "/Volumes/SUCAI/Test/2018/nested",
+            thumbnail: "",
+            isVideo: false,
+        });
+        expect(roots[0].children?.[0]?.key).toBe("/Volumes/SUCAI/Test/2018");
+        expect(roots[0].children?.[0]?.children?.[0]?.key).toBe("/Volumes/SUCAI/Test/2018/nested");
+    });
+
+    it("sanitizeFolderTree 为空 title 补全段名", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI/Test",
+                title: "/Volumes/SUCAI/Test",
+                children: [{ key: "/Volumes/SUCAI/Test/2018", title: "  ", children: [] }],
+            },
+        ];
+        sanitizeFolderTree(roots);
+        expect(roots[0].children?.[0]?.title).toBe("2018");
+    });
+
+    it("cleanDataNode 直接删除一级子节点", () => {
+        const roots: FolderNode[] = [];
+        addRoot(roots, "root1");
+        addFolderToTree(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        cleanDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        expect(roots[0].children?.length ?? 0).toBe(0);
+    });
+
+    it("sanitizeFolderTree 为空 title 的根级 key 补全 title", () => {
+        const roots: FolderNode[] = [{ key: "/", title: "", children: [] }];
+        sanitizeFolderTree(roots);
+        expect(roots[0].title).toBe("/");
+    });
+
+    it("sanitizeFolderTree 跳过无法解析 key 的节点", () => {
+        const roots: FolderNode[] = [
+            { key: {} as unknown as string, title: "", children: [] },
+            { key: "/Volumes/SUCAI/Test", title: "/Volumes/SUCAI/Test", children: [] },
+        ];
+        sanitizeFolderTree(roots);
+        expect(roots.length).toBe(1);
+        expect(roots[0].key).toBe("/Volumes/SUCAI/Test");
+    });
+
+    it("sanitizeFolderTree 合并时 existing 无 children", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI/Test",
+                title: "/Volumes/SUCAI/Test",
+                children: [
+                    { key: "/Volumes/SUCAI/Test/2018", title: "2018" },
+                    {
+                        key: "/Volumes/SUCAI/Test/2018",
+                        title: "dup",
+                        children: [
+                            {
+                                key: "/Volumes/SUCAI/Test/2018/nested",
+                                title: "nested",
+                                children: [],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+        sanitizeFolderTree(roots);
+        expect(roots[0].children?.length).toBe(1);
+        expect(roots[0].children?.[0]?.children?.length).toBe(1);
+    });
+
+    it("sanitizeFolderTree 合并重复兄弟的子树", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI/Test",
+                title: "/Volumes/SUCAI/Test",
+                children: [
+                    {
+                        key: "/Volumes/SUCAI/Test/2018",
+                        title: "2018",
+                        children: [
+                            {
+                                key: "/Volumes/SUCAI/Test/2018/a",
+                                title: "a",
+                                children: [],
+                            },
+                        ],
+                    },
+                    {
+                        key: "/Volumes/SUCAI/Test/2018",
+                        title: 2018 as unknown as string,
+                        children: [
+                            {
+                                key: "/Volumes/SUCAI/Test/2018/b",
+                                title: "b",
+                                children: undefined,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+        sanitizeFolderTree(roots);
+        expect(roots[0].children?.length).toBe(1);
+        expect(roots[0].children?.[0]?.children?.map((c) => c.key).sort()).toEqual([
+            "/Volumes/SUCAI/Test/2018/a",
+            "/Volumes/SUCAI/Test/2018/b",
+        ]);
+    });
+
+    it("addFolderToTree 路径等于根时不添加子段", () => {
+        const roots: FolderNode[] = [];
+        addRoot(roots, "/Volumes/SUCAI/Test");
+        addFolderToTree(roots, {
+            path: "/Volumes/SUCAI/Test",
+            thumbnail: "",
+            isVideo: false,
+        });
+        expect(roots[0].children?.length ?? 0).toBe(0);
+    });
+
+    it("addFolderToTree 在找不到根节点时安全返回", async () => {
+        vi.resetModules();
+        vi.doMock("@renderer/utils/folder-tree-path", async (importOriginal) => {
+            const actual =
+                await importOriginal<typeof import("@renderer/utils/folder-tree-path")>();
+            return {
+                ...actual,
+                findLongestRootKey: () => "/ghost-root",
+            };
+        });
+        const { addFolderToTree: addWithMock } = await import("../folder-tree");
+        const roots: FolderNode[] = [{ key: "/Volumes/SUCAI/Test", title: "Test", children: [] }];
+        addWithMock(roots, {
+            path: "/Volumes/SUCAI/Test/2018",
+            thumbnail: "",
+            isVideo: false,
+        });
+        expect(roots[0].children?.length ?? 0).toBe(0);
+        vi.doUnmock("@renderer/utils/folder-tree-path");
+        vi.resetModules();
+    });
+
+    it("addFolderToTree 在根 key 不一致时安全返回", () => {
+        const roots: FolderNode[] = [{ key: "legacy-key", title: "legacy", children: [] }];
+        addFolderToTree(roots, {
+            path: "/Volumes/SUCAI/Test/2018",
+            thumbnail: "",
+            isVideo: false,
+        });
+        expect(roots[0].children?.length ?? 0).toBe(0);
+    });
+
+    it("cleanDataNode 在根无 children 时无操作", () => {
+        const roots: FolderNode[] = [{ key: "root1", title: "root1" }];
+        cleanDataNode(roots, { path: "root1/child1", thumbnail: "", isVideo: false });
+        expect(roots[0].children).toBeUndefined();
+    });
+
+    it("traverseTree 为无 children 的节点补全数组", () => {
+        const roots: FolderNode[] = [{ key: "/Volumes/SUCAI/Test", title: "Test" }];
+        addFolderToTree(roots, {
+            path: "/Volumes/SUCAI/Test/2018",
+            thumbnail: "",
+            isVideo: false,
+        });
+        expect(Array.isArray(roots[0].children)).toBe(true);
     });
 
     it("sanitizeFolderTree 应合并 Promise 序列化 {} 与全路径 2018", () => {

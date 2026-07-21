@@ -7,18 +7,20 @@ import {
 } from "../siming-bridge";
 
 const mockInvoke = vi.fn();
+const mockIsTauri = vi.fn(() => true);
 
 vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => mockInvoke(...args),
 }));
 
 vi.mock("@renderer/api/env", () => ({
-    isTauri: () => true,
+    isTauri: () => mockIsTauri(),
 }));
 
 describe("siming-bridge", () => {
     beforeEach(() => {
         mockInvoke.mockReset();
+        mockIsTauri.mockReturnValue(true);
     });
 
     it("extractFolderTreeFromContext 要求 tree 数组", () => {
@@ -46,5 +48,19 @@ describe("siming-bridge", () => {
 
         expect(mockInvoke).toHaveBeenCalledWith(SIMING_COMMANDS.RESTORE_APP_STATE);
         expect(result).toEqual(appState);
+    });
+
+    it("非 Tauri 环境应拒绝司命持久化", async () => {
+        mockIsTauri.mockReturnValue(false);
+
+        await expect(executeSimingZhaoling(ZOUZHE_MATTERS.RESTORE_APP_STATE, {})).rejects.toThrow(
+            "司命持久化仅支持 Tauri 环境",
+        );
+    });
+
+    it("未支持的诏令应抛错", async () => {
+        await expect(
+            executeSimingZhaoling("unknown_command" as typeof ZOUZHE_MATTERS.RESTORE_APP_STATE, {}),
+        ).rejects.toThrow("未支持的司命诏令");
     });
 });

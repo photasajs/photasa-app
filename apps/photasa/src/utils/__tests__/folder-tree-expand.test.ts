@@ -47,4 +47,13 @@ describe("folder-tree-expand", () => {
         expect(result).toContain("/photos");
         expect(result).toContain("/photos/vacation");
     });
+
+    it("collectAncestorKeys 空路径或无匹配根返回空数组", () => {
+        expect(collectAncestorKeys("", ["/photos"])).toEqual([]);
+        expect(collectAncestorKeys("/other/path", ["/photos"])).toEqual([]);
+    });
+
+    it("collectAllFolderKeys 空树返回空数组", () => {
+        expect(collectAllFolderKeys([])).toEqual([]);
+    });
 });

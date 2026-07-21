@@ -89,6 +89,30 @@ describe("rescan → folderTree（Test / 2026 / 子目录）", () => {
         expect(batchTree).toEqual(stepTree);
     });
 
+    it("应跳过无效发现路径", () => {
+        const tree = emptyTreeWithWatchRoot();
+        mergeDiscoveredPathsIntoTree(
+            tree,
+            ["", null as unknown as string, YEAR_2026],
+            [WATCH_ROOT],
+        );
+        expect(childKeysUnder(tree, WATCH_ROOT)).toEqual([YEAR_2026]);
+    });
+
+    it("子路径发现时若根未入树应先 addRoot", () => {
+        const tree: FolderNode[] = [];
+        mergeDiscoveredPathsIntoTree(tree, [YEAR_2026], [WATCH_ROOT]);
+        expect(tree.map((n) => n.key)).toContain(WATCH_ROOT);
+        expect(childKeysUnder(tree, WATCH_ROOT)).toContain(YEAR_2026);
+    });
+
+    it("simulateRescanDirectoryDiscoveries 跳过无目录条目的 scanRoot", () => {
+        const ordered = simulateRescanDirectoryDiscoveries(WATCH_ROOT, {
+            [YEAR_2026]: [DAY_20260103],
+        });
+        expect(ordered).toEqual([DAY_20260103]);
+    });
+
     it("重复 merge 同一批子目录不应复制兄弟节点（reconcile / scan 回归）", () => {
         const tree = emptyTreeWithWatchRoot();
         const subs = ["2018", "2020", "2021", "2023", "2025", "2026", "Luigi's Mension"].map(

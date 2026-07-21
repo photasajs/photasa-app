@@ -34,6 +34,13 @@ describe("文件夹树辅助函数（纯函数）", () => {
         it("应该处理空数组", () => {
             expect(isRootPath("/root1", [])).toBe(false);
         });
+
+        it("空白路径与非 string 根路径应被忽略", () => {
+            expect(isRootPath("   ", ["/root1"])).toBe(false);
+            expect(isRootPath("/root1", ["", "  ", null as unknown as string, "/root1"])).toBe(
+                true,
+            );
+        });
     });
 
     describe("findRootPathForPath", () => {
@@ -55,6 +62,18 @@ describe("文件夹树辅助函数（纯函数）", () => {
 
         it("应该处理空数组", () => {
             expect(findRootPathForPath("/root1", [])).toBe(null);
+        });
+
+        it("应选择最长前缀根路径", () => {
+            const rootPaths = ["/root1", "/root1/sub"];
+            expect(findRootPathForPath("/root1/sub/deep", rootPaths)).toBe("/root1/sub");
+        });
+
+        it("空白子路径应返回 null", () => {
+            expect(findRootPathForPath("   ", ["/root1"])).toBe(null);
+            expect(
+                findRootPathForPath("/root1/sub", [undefined as unknown as string, "/root1"]),
+            ).toBe("/root1");
         });
     });
 

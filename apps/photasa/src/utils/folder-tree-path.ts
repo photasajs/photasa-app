@@ -64,9 +64,6 @@ export function resolveFolderNodeKey(
 
     if (isUsableFolderKeyString(node.key)) {
         const normalized = canonicalFolderPath(node.key);
-        if (!normalized) {
-            return null;
-        }
         if (normalized === parent || normalized.startsWith(`${parent}/`)) {
             return normalized;
         }
