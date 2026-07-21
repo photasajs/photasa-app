@@ -1,23 +1,25 @@
 # RFC 0107 – Tauri Wenchang: application preferences storage parity
 
-**Status**: 🔨 In Progress — Rust crate + adapters done; **production packaging broken** (see 2026-07-18 finding below)  
+**Status**: ✅ Implemented — crate + 直连 IPC（[0147](./0147-tauri-wenchang-preferences-retirement.md)）；**2026-07-21 手测 E2E 通过**  
 **Created**: 2026-04-06  
-**Area**: Tauri / Preferences / Tianshu
+**Area**: Tauri / Preferences
 
-## Implementation checklist（补记，原文档缺失）
+## Implementation checklist
 
-- [x] `crates/wenchang-preferences` workspace crate（`cargo test -p wenchang-preferences` → 5 passed）
+- [x] `crates/photasa-preference` workspace crate（`cargo test -p photasa-preference` → 5 passed）
 - [x] `config_adapter.rs::name()` → `"config"`（folder-level `.photasa.json`）
-- [x] `preferences_adapter.rs::name()` → `"wenchang"`
-- [x] `TianshuService` 注册 `PreferencesAdapter` + `ConfigAdapter`（`services/tianshu.rs:142-144`）
-- [x] 11 个 workflow action 全部实现（非 stub）：`getCurrentSnapshot`/`updatePreferences`/`resetToDefaults`/`exportPreferences`/`importPreferences`/`getHistory`/`restoreRevision`/`validate`/`sanitize`/`emitEvent`/`formatResponse`
-- [x] 前端真实调用（非孤立代码）：`yuantiangang/intent.ts`、`fangxuanling/store-automation/store-sync-utils.ts`
+- [x] ~~`PreferencesAdapter`~~ → **已由 [0147](./0147-tauri-wenchang-preferences-retirement.md) 删除**；运行时走 `preferences_get` / `preferences_update`
+- [x] `yuantiangang.ts`：`PREFERENCE_ZHAOLING_MATTERS` → `invoke(PREFERENCES_COMMANDS.*)`
+- [x] 房玄龄 `matter-sync.yml` → `preferences` store 自动同步
+- [x] **手测 E2E（2026-07-21）**：主题/语言/缩略图/路径变更 → 磁盘 `~/.photasa/preferences/preferences.json` 更新 + Renderer store 同步
 
-**验证证据（2026-07-18 复核，非仅信任 Status 字段）**：`cargo test -p wenchang-preferences` 5 passed；`config_adapter.rs`/`preferences_adapter.rs` 的 `name()` 直接读源码确认；11 个 action 逐一 grep 确认非 stub（有真实 match arm body）；`yuantiangang/intent.ts` 中 `THEME_CHANGE`/`LANGUAGE_CHANGE`/`ADD_PATH` 等真实 UI matter 映射到 `update_preferences`/`get_preferences`（非仅测试文件引用）。
+**验证证据**：`cargo test -p photasa-preference` 5 passed；[0147](./0147-tauri-wenchang-preferences-retirement.md) 实现摘要；用户手测确认 preference 链路可用。
 
-**⚠️ 未验证（静态代码分析范围之外）**：未实际运行 app 手动触发 preference 变更；未确认磁盘写入端到端生效需人工：改主题/语言/缩略图尺寸 → 确认磁盘文件更新 + Renderer store 同步。
+## ~~2026-07-18 复核：生产 workflow 打包~~（已 superseded，非 0107 交付项）
 
-## 🔴 2026-07-18 复核发现：生产环境工作流打包缺失（真实 bug，非文档滞后）
+> **2026-07-21 结论**：preference 域已由 [0147](./0147-tauri-wenchang-preferences-retirement.md) 退出 zouwu，**不再依赖 `.zouwu` workflow**。bundle Electron workflows 违背 [0139](../0139-tauri-zouwu-retirement-plan.md) Tauri 退场方向，**不是** 0107 正交付路径。其余仍走 zouwu 的 matter 归 0139/0140 跟踪。
+
+## 历史记录：2026-07-18 复核发现（zouwu 时代，已被 0147 取代）
 
 **完整链路已 trace 确认（非仅 grep 命中）**：
 
