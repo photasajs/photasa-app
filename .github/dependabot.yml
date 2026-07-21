@@ -1,5 +1,21 @@
 version: 2
 updates:
+    # Tauri / Photasa Rust backend
+    - package-ecosystem: "cargo"
+      directory: "/apps/photasa/src-tauri"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "09:00"
+      open-pull-requests-limit: 5
+      reviewers:
+          - "systembugtj"
+      assignees:
+          - "systembugtj"
+      commit-message:
+          prefix: "deps"
+          include: "scope"
+
     # Enable version updates for npm
     - package-ecosystem: "npm"
       directory: "/"

@@ -5,7 +5,7 @@
 - **创建日期**: 2025-01-02
 - **关联项目**: Photasa Desktop (Electron)
 - **关联 RFC**:
-    - [RFC 0073: UI 迁移与适配层](../0073-tauri-ui-migration-adapter.md)（最高优先级，先于后端迁移）
+    - [RFC 0073: UI 迁移与适配层](./0073-tauri-ui-migration-adapter.md)（最高优先级，先于后端迁移）
     - [RFC 0068: 扫描服务迁移](./completed/0068-tauri-scan-service-migration.md)
     - [RFC 0069: 缩略图服务迁移](./completed/0069-tauri-thumbnail-service-migration.md)
     - [RFC 0070: 导入服务迁移](./0070-tauri-import-service-migration.md)
@@ -682,7 +682,7 @@ notify = "6.0"   # 文件系统监听
     - [ ] 状态管理
     - [ ] 事件系统
 
-#### 阶段 2.5：UI 与扁平 API 兼容层（见 [RFC 0073](../0073-tauri-ui-migration-adapter.md)）
+#### 阶段 2.5：UI 与扁平 API 兼容层（见 [RFC 0073](./0073-tauri-ui-migration-adapter.md)）
 
 - [ ] 提供与 `preload/legacy.ts` 一致的扁平 `window.api`，使现有 Vue/utils 无需改调用即可在 Tauri 下运行
 - [ ] 复制/同步 renderer 内容后验证 `npm run tauri dev` 可启动且无 `window.api.xxx` 未定义错误

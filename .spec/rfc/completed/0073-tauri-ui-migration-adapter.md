@@ -1,14 +1,18 @@
 # RFC 0073: UI 迁移与适配层设计
 
 - **作者**: AI Assistant
-- **状态**: ✅ 已完成
+- **状态**: ✅ 已完成（2026-07-21 复核归档；正文 checklist/时间估算是 2025-01-15 规划快照，未随实现勾选更新——见下方归档说明）
 - **创建日期**: 2025-01-15
 - **优先级**: 🔴 最高优先级（应在所有后端服务迁移之前完成）
 - **关联 RFC**: [RFC 0067: 创建 Tauri 应用 Photasa](./0067-tauri-app-photasa.md)
 
+## 2026-07-21 归档说明
+
+嵌套 adapter 结构（`api/window.adapter.ts`/`shell.adapter.ts`/`tianshu.adapter.ts`/`scan.adapter.ts`/`thumbnail.adapter.ts`/`import.adapter.ts`/`config.adapter.ts`）与本文档设计一致，均已落地且是真实 `invoke()` 调用（非本文档示例代码里的 stub 假数据），`apps/photasa/src/api/adapter.ts` 统一导出，被真实调用方引用。扁平 `window.api` 兼容层由 [RFC 0075](./completed/0075-tauri-flat-legacy-api-layer.md) 落地为 `legacy-api.ts`，两层并存，符合本文档"扁平 window.api 与兼容层"一节的预期设计。正文 checklist（阶段 1-4）、时间估算（5-9 天）是 2025-01-15 的规划快照，未反映实际勾选状态，不代表未完成——功能验证以 `cargo test -p photasa`（73 passed）与各真实调用方为准。
+
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Electron/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.

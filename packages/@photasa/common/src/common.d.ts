@@ -27,7 +27,8 @@ import type { ThumbnailRequest } from "./thumbnail-types";
  */
 declare global {
     interface Window {
-        electron: ElectronAPI;
+        /** Desktop Electron preload only; undefined under Tauri. */
+        electron?: unknown;
 
         tianshu: {
             processCommand: (command: unknown) => Promise<unknown>;
