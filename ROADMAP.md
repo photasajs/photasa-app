@@ -32,11 +32,11 @@ Canonical policy lives in this section. **All Photasa/Tauri RFCs must comply.**
 
 **Only Rust-targeting RFCs may be Active for Photasa.** See [`TASK_TRACKING.md`](./TASK_TRACKING.md) → **Photasa Active RFCs**.
 
-| Photasa Active                                                                                    | Not Photasa Active                                                                                              |
-| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **[0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md)** — close gaps via **Rust commands** | **[0098](docs/rfc/0098-main-module-extraction-to-packages.md)** — **Deferred** (Electron `@photasa/*` packages) |
-| Future Tauri RFCs (`0110+`) with Rust implementation in `src-tauri` / `crates/`                   | v2.0 Electron Draft RFCs (0004–0061) — **legacy backlog** unless superseded by a Rust RFC                       |
-| Completed **0074–0107** (maintenance fixes still Rust-only)                                       | Any RFC whose primary deliverable is Node/TS backend for Photasa                                                |
+| Photasa Active                                                                                               | Not Photasa Active                                                                                              |
+| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **[0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)** — close gaps via **Rust commands** | **[0098](docs/rfc/0098-main-module-extraction-to-packages.md)** — **Deferred** (Electron `@photasa/*` packages) |
+| Future Tauri RFCs (`0110+`) with Rust implementation in `src-tauri` / `crates/`                              | v2.0 Electron Draft RFCs (0004–0061) — **legacy backlog** unless superseded by a Rust RFC                       |
+| Completed **0074–0107** (maintenance fixes still Rust-only)                                                  | Any RFC whose primary deliverable is Node/TS backend for Photasa                                                |
 
 New Photasa features: **new Tauri RFC + Rust impl** — never activate Electron-only RFCs as the migration path.
 
@@ -77,7 +77,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 ### Tauri 迁移 RFC 系列（架构与服务）
 
 - **主 RFC**：[RFC 0067](.spec/rfc/completed/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略（✅ 已完成/归档，伞形索引文档）
-- **已完成（服务层）**：[0073](.spec/rfc/completed/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/completed/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/completed/0072-tauri-tianshu-service-migration.md) 天枢
+- **已完成（服务层）**：[0073](.spec/rfc/completed/0073-tauri-ui-migration-adapter.md) UI/适配层；[0068](.spec/rfc/completed/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/completed/0072-tauri-tianshu-service-migration.md) 天枢
 
 **建议实施顺序**：0073（UI+适配）→ 0071 → 0068 → 0069 → 0070 → 0072。
 
@@ -108,7 +108,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0094](docs/rfc/completed/0094-tauri-choose-directories-multi.md)                  | choose_directories（单/多选目录）                                                      | ✅ Implemented                                                    |
 | [0095](docs/rfc/completed/0095-tauri-get-path-root.md)                             | get_path_root（api-path getRoot）                                                      | ✅ Implemented                                                    |
 | [0096](docs/rfc/completed/0096-tauri-import-pause-resume.md)                       | pause_import / resume_import                                                           | ✅ Implemented                                                    |
-| [0097](docs/rfc/0097-tauri-legacy-api-deferred-surface.md)                         | legacy-api 与 Electron 1:1 跟踪                                                        | ✅ Implemented（Phase 7 全部完成）                                |
+| [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)              | legacy-api 与 Electron 1:1 跟踪                                                        | ✅ Implemented（Phase 7 全部完成）                                |
 | [0098](docs/rfc/0098-main-module-extraction-to-packages.md)                        | src/main 模块提取为 packages（**Electron-only**）                                      | ⏸️ Deferred（非 Photasa Active；Phase 2 冻结）                    |
 | [0099](docs/rfc/completed/0099-tauri-window-reload.md)                             | window_reload（对齐 Electron reload）                                                  | ✅ Implemented                                                    |
 | [0100](docs/rfc/completed/0100-tauri-single-instance.md)                           | 单实例（对齐 Electron）                                                                | ✅ Implemented                                                    |
@@ -159,7 +159,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 
 ### Photasa next priorities（2026-07）
 
-**迁移** [0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md) ✅。政策：本文件 **Golden rule**。
+**迁移** [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md) ✅。政策：本文件 **Golden rule**。
 
 **铁律：** Gap / T3 残留 → **一事一 RFC**。禁止 mono「contract polish」袋。
 
@@ -345,7 +345,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 
 ## Electron → Rust parity audit（2026-06）
 
-**规则：** 本文件 **Golden rule** — 后端 **仅 Rust**；Electron/TS **仅作契约对照**。跟踪 RFC：**[0097](.spec/rfc/0097-tauri-legacy-api-deferred-surface.md)**（Photasa Active）。
+**规则：** 本文件 **Golden rule** — 后端 **仅 Rust**；Electron/TS **仅作契约对照**。跟踪 RFC：**[0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)**（Photasa Active）。
 
 ### 总结
 
