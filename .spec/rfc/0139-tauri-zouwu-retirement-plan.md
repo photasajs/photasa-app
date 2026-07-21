@@ -28,14 +28,14 @@ Tauri 里这个问题不存在：
 
 `apps/desktop/src/main/engines/tianshu/workflows/` 下 6 个域、20 个 `.zouwu` 文件：
 
-| 域         | 文件数 | Tauri 侧 Adapter                                                              | 状态                                                  |
-| ---------- | ------ | ----------------------------------------------------------------------------- | ----------------------------------------------------- |
-| scan       | 5      | 无独立 adapter，走 `YuChiGong`/`FangXuanLing` 持久化路径                      | 已在 RFC 0136 决定退出 zouwu，直调 Rust command       |
-| preference | 8      | `preferences_adapter.rs`（`name() == "wenchang"`）                            | 待退场，见下                                          |
-| appstate   | 3      | ~~`siming_adapter.rs`~~ → **0145 ✅** `photasa-folder-tree` + `siming-bridge` | ✅ 已退场（`update_folder_tree`/`restore_app_state`） |
-| shell      | 2      | 未查                                                                          | 待排查                                                |
-| menu       | 1      | 未查                                                                          | 待排查                                                |
-| engine     | 1      | 未查                                                                          | 待排查                                                |
+| 域         | 文件数 | Tauri 侧 Adapter                                                                               | 状态                                                  |
+| ---------- | ------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| scan       | 5      | 无独立 adapter，走 `YuChiGong`/`FangXuanLing` 持久化路径                                       | 已在 RFC 0136 决定退出 zouwu，直调 Rust command       |
+| preference | 8      | ~~`preferences_adapter.rs`~~ → **0147 ✅** `preferences_get`/`preferences_update` + 袁天罡启奏 | ✅ 已退场（0147）                                     |
+| appstate   | 3      | ~~`siming_adapter.rs`~~ → **0145 ✅** `photasa-folder-tree` + `siming-bridge`                  | ✅ 已退场（`update_folder_tree`/`restore_app_state`） |
+| shell      | 2      | 未查                                                                                           | 待排查                                                |
+| menu       | 1      | 未查                                                                                           | 待排查                                                |
+| engine     | 1      | 未查                                                                                           | 待排查                                                |
 
 `config`（folder-level `.photasa.json`）严格说不是这 6 个域之一——它没有对应 `.zouwu` 文件，`ConfigAdapter` 只是注册进了 zouwu 的 `AdapterRegistry`，本身没有 workflow YAML 驱动。这是退出成本最低的第一块，已单独立项为 RFC 0138。
 

@@ -34,4 +34,4 @@ Status bar scan progress works in Photasa without TS worker packages.
 
 ## 2026-07-20 补记：0136 落地时的具体改造点（✅ 已完成）
 
-`notify_source_from_scan_report` / `emit_scan_report_with_notify` 已从 `ScanReport` 派生 `ScanWorkerNotifySource`；`Directory` 不产出 `notify:status`。见 [RFC 0136](../0136-tauri-scan-runtime-contract.md)。
+`notify_source_from_scan_report` / `emit_scan_report_with_notify` 已从 `ScanReport` 派生 `ScanWorkerNotifySource`；`Directory` 不产出 `notify:status`。见 [RFC 0136](./0136-tauri-scan-runtime-contract.md)。

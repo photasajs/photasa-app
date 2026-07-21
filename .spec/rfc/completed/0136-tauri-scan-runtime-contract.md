@@ -2,12 +2,12 @@
 
 - **Start Date**: 2026-07-18
 - **Last updated**: 2026-07-21
-- **Status**: 🔨 **Partial** — Rust 扫描管线 + 队列持久化（0144）+ `scan_directory_discovered` 路由 ✅；**renderer folder tree 与贞观边界未收口** ❌（见 §2026-07-21 Postmortem、§Known violations、§Folder tree invariants）
+- **Status**: ✅ **Implemented**
 - **Priority**: P1e
 - **Area**: Photasa / Tauri scan queue / scan pipeline / scan UI
 - **Depends on**: [0117](./0117-tauri-scan-pipeline-parity.md), [0132](./0132-tauri-photasa-scan-crate.md), [0133](./0133-tauri-photasa-watch-crate.md), [0138](./0138-tauri-photasa-config-crate.md), [0111](./0111-tauri-scan-notify-status-bridge.md)
 - **Related**: RFC 0137（`window.api` staged removal；本 RFC 不定义 wrapper）
-- **Path**: `.spec/rfc/0136-tauri-scan-runtime-contract.md`
+- **Path**: `.spec/rfc/completed/0136-tauri-scan-runtime-contract.md`
 
 ## Decision
 
@@ -478,8 +478,8 @@ UI consumes processed-file projection. It does not consume raw scanner reports, 
 6. PQueue has one current task; Rust worker has one current scan.
 7. One request has exactly one pipeline terminal result.
 8. UI shows durable queue state and processed-file progress only.
-9. `scan_directory_discovered` 触发时即下旨魏征 `add_paths`（方案 A）——路由层 ✅；**renderer 树幂等与单写路径**见 §Folder tree invariants，**未验收** ❌。
-10. **Folder tree**：仅圣旨路径写树；无重复兄弟；`photasa.json` 中节点 `key` 均为非空全路径 string；启动 + 扫描 + 重复 merge 后兄弟数稳定。
+9. ✅ `scan_directory_discovered` 触发时即下旨魏征 `add_paths`（方案 A）；renderer `joinFolderSegment` + `sanitizeFolderTree` + 单写路径（2026-07-21）。
+10. ✅ **Folder tree**：仅圣旨路径写树；无重复兄弟；`buildFolderKey` 纯同步；重复 merge 幂等（`folder-tree.test.ts` / `rescan-folder-tree.test.ts`）；启动 `sanitizeFolderTree` 清理历史 `key: {}`。
 
 ## Folder tree invariants（normative，2026-07-21）
 
@@ -502,7 +502,7 @@ UI consumes processed-file projection. It does not consume raw scanner reports, 
 | 尉迟恭 `SCAN_SUBFOLDERS` + 子目录预入队 + `SCAN_TASK_ADDED`    | `yuchigong.ts` `executeScan`     | ✅ 已删（2026-07-21）                                          |
 | `scan_task_added` → 魏征 `add_paths`                           | `event-routing.yml`              | ✅ 已删                                                        |
 | 魏征 `reconcileTreeWithWatchPaths` + `listImmediateSubFolders` | `weizheng.ts`, `sub-folders.ts`  | ✅ 已删                                                        |
-| 魏征 `persistFolderTreeIfChanged` 先 `$patch` Pinia            | `weizheng.ts`                    | ✅ 已删                                                        |
+| 魏征 `persistFolderTreeIfChanged` 先 `$patch` Pinia            | `weizheng.ts`                    | ✅ 已删（Zouzhe → matter-sync）                                |
 | 启动双次 reconcile                                             | `initializeAppState` + `App.vue` | ✅ 已删 `App.vue` 二次调用                                     |
 | 司命 folder tree zouwu 双轨                                    | `yuantiangang.ts`                | ✅ [0145](./completed/0145-tauri-siming-adapter-retirement.md) |
 
@@ -536,13 +536,8 @@ UI consumes processed-file projection. It does not consume raw scanner reports, 
 - `router.test.ts` + `yuantiangang-scan-events.test.ts` 路由/报告 ✅
 - `notify:status` 从 `ScanReport` 派生 ✅
 
-**未完成（folder tree 验收 — 阻塞标 ✅）**：
+**已完成（含 folder tree 验收 — 2026-07-21）**：
 
-4. **验收** §Folder tree invariants + Acceptance #10（含 Tauri/`Promise` mergePath 测试、重复 merge、可选 `photasa.json` golden）。
+4. ✅ 验收 §Folder tree invariants + Acceptance #10（`joinFolderSegment`、`sanitizeFolderTree`、Promise `mergePath` 测试、重复 merge、袁天罡静态 `invoke` 修复并发持久化）。
 
-**曾错误标为已完成（2026-07-21 撤销）**：
-
-- ~~`scan_completed` → `add_paths`「已核实幂等」~~ — 仅在 mock 环境成立，生产已证伪。
-- ~~「不需要额外去重逻辑」~~ — 须 `joinFolderSegment` + `sanitizeFolderTree` + 删多写入口。
-
-**验证**（对应 Acceptance）：crash recovery（0144 ✅）、child non-waiting、durable child admission、file-stage ordering、direct YuanTianGang IPC（扫描 command ✅）、UI queue projection ✅；**folder tree 单路径 + 幂等 ❌ 待 (1)–(4)**。
+**验证**（对应 Acceptance）：crash recovery（0144 ✅）、child non-waiting、durable child admission、file-stage ordering、direct YuanTianGang IPC（扫描 command ✅）、UI queue projection ✅、**folder tree 单路径 + 幂等 ✅**。

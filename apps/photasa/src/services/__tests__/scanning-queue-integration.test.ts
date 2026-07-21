@@ -27,7 +27,53 @@ import { createScanQueueItem } from "@renderer/stores/scanning-types";
 import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/tauri-command-names";
 
 const mockTauriInvoke = vi.hoisted(() => vi.fn());
+const mockInvokeLock = vi.hoisted(() => ({
+    chain: Promise.resolve() as Promise<unknown>,
+}));
 let mockPersistedQueue: Record<string, unknown>[] = [];
+
+function runSerializedMockInvoke<T>(operation: () => Promise<T>): Promise<T> {
+    const next = mockInvokeLock.chain.then(() => operation());
+    mockInvokeLock.chain = next.then(
+        () => undefined,
+        () => undefined,
+    );
+    return next;
+}
+
+function handleMockScanQueueInvoke(
+    command: string,
+    args?: Record<string, unknown>,
+): Record<string, unknown>[] | null {
+    if (command === SCAN_QUEUE_COMMANDS.GET) {
+        return [...mockPersistedQueue];
+    }
+    if (command === SCAN_QUEUE_COMMANDS.ADD) {
+        const actions = (args?.actions ?? []) as Record<string, unknown>[];
+        for (const action of actions) {
+            const path = String(action.path);
+            if (!mockPersistedQueue.some((item) => item.path === path)) {
+                mockPersistedQueue.push(action);
+            }
+        }
+        return [...mockPersistedQueue];
+    }
+    if (command === SCAN_QUEUE_COMMANDS.REMOVE) {
+        const path = String(args?.path ?? "");
+        mockPersistedQueue = mockPersistedQueue.filter((item) => item.path !== path);
+        return [...mockPersistedQueue];
+    }
+    if (command === SCAN_QUEUE_COMMANDS.UPDATE) {
+        const path = String(args?.path ?? "");
+        const status = String(args?.status ?? "pending");
+        const updates = (args?.updates ?? {}) as Record<string, unknown>;
+        mockPersistedQueue = mockPersistedQueue.map((item) =>
+            item.path === path ? { ...item, status, ...updates } : item,
+        );
+        return [...mockPersistedQueue];
+    }
+    return null;
+}
 
 vi.mock("@tauri-apps/api/core", () => ({
     invoke: (...args: unknown[]) => mockTauriInvoke(...args),
@@ -59,38 +105,16 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
         setActivePinia(pinia);
 
         mockPersistedQueue = [];
+        mockInvokeLock.chain = Promise.resolve();
         mockTauriInvoke.mockReset();
-        mockTauriInvoke.mockImplementation(
-            async (command: string, args?: Record<string, unknown>) => {
-                if (command === SCAN_QUEUE_COMMANDS.GET) {
-                    return [...mockPersistedQueue];
+        mockTauriInvoke.mockImplementation((command: string, args?: Record<string, unknown>) =>
+            runSerializedMockInvoke(async () => {
+                const result = handleMockScanQueueInvoke(command, args);
+                if (result === null) {
+                    throw new Error(`未 mock 的 Tauri command: ${command}`);
                 }
-                if (command === SCAN_QUEUE_COMMANDS.ADD) {
-                    const actions = (args?.actions ?? []) as Record<string, unknown>[];
-                    for (const action of actions) {
-                        const path = String(action.path);
-                        if (!mockPersistedQueue.some((item) => item.path === path)) {
-                            mockPersistedQueue.push(action);
-                        }
-                    }
-                    return [...mockPersistedQueue];
-                }
-                if (command === SCAN_QUEUE_COMMANDS.REMOVE) {
-                    const path = String(args?.path ?? "");
-                    mockPersistedQueue = mockPersistedQueue.filter((item) => item.path !== path);
-                    return [...mockPersistedQueue];
-                }
-                if (command === SCAN_QUEUE_COMMANDS.UPDATE) {
-                    const path = String(args?.path ?? "");
-                    const status = String(args?.status ?? "pending");
-                    const updates = (args?.updates ?? {}) as Record<string, unknown>;
-                    mockPersistedQueue = mockPersistedQueue.map((item) =>
-                        item.path === path ? { ...item, status, ...updates } : item,
-                    );
-                    return [...mockPersistedQueue];
-                }
-                return null;
-            },
+                return result;
+            }),
         );
 
         // Mock天枢和千里眼的IPC调用
@@ -544,25 +568,7 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
         });
 
         it("应该正确处理并发的添加和移除操作", async () => {
-            // Mock天枢处理添加
-            window.api.tianshu.processCommand = vi
-                .fn()
-                .mockImplementation((params: { command: string }) => {
-                    if (params.command === "add_scan_action") {
-                        return Promise.resolve({
-                            success: true,
-                            result: { success: true, queueSize: 1 },
-                        });
-                    } else if (params.command === "remove_scan_action") {
-                        return Promise.resolve({
-                            success: true,
-                            result: { success: true, queueSize: 0 },
-                        });
-                    }
-                    return Promise.resolve({ success: false });
-                });
-
-            // 并发执行添加和移除
+            // 并发执行添加和移除（RFC 0143/0136：队列经袁天罡 invoke，非天枢 processCommand）
             const addZouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,

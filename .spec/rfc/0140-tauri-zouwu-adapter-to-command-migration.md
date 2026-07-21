@@ -5,7 +5,7 @@
 - **Priority**: P1
 - **Area**: Photasa / Tauri / Tianshu / zouwu
 - **Depends on**: [0138](./completed/0138-tauri-photasa-config-crate.md)（`photasa-config` crate，第一个迁移对象，已完成）
-- **Related**: [0139](./0139-tauri-zouwu-retirement-plan.md)（域退场排期）、[0136](./0136-tauri-scan-runtime-contract.md)（scan 已决定不走 zouwu，本 RFC 定义的是通用迁移模式，不含 scan）
+- **Related**: [0139](./0139-tauri-zouwu-retirement-plan.md)（域退场排期）、[0136](./completed/0136-tauri-scan-runtime-contract.md)（scan 已决定不走 zouwu，本 RFC 定义的是通用迁移模式，不含 scan）
 - **Path**: `.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md`
 
 ## Decision

@@ -6,7 +6,7 @@
 - **Priority**: P1
 - **Area**: Photasa / Rust crates / Config
 - **Depends on**: [0132](./0132-tauri-photasa-scan-crate.md)（crate 抽取模式参照）、[0141](./0141-tauri-photasa-media-crate.md)（已完成，`is_video`/`is_image` 判定权威来源，本 crate 不自行维护扩展名表）
-- **Blocks**: [0136](../0136-tauri-scan-runtime-contract.md)（扫描发现媒体文件写入 `.photasa.json` 依赖本 crate 的 `add_photo_to_folder_list`）、[0139](../0139-tauri-zouwu-retirement-plan.md)（zouwu 退场顺序计划第一项）
+- **Blocks**: [0136](./0136-tauri-scan-runtime-contract.md)（扫描发现媒体文件写入 `.photasa.json` 依赖本 crate 的 `add_photo_to_folder_list`）、[0139](../0139-tauri-zouwu-retirement-plan.md)（zouwu 退场顺序计划第一项）
 - **Adapter 迁移模式**: [0140](../0140-tauri-zouwu-adapter-to-command-migration.md)（`config_adapter.rs` 删除+改 command 的具体步骤和验收标准以 0140 为准，本 RFC 只声明"要做"，不重复定义"怎么做"）
 - **Path**: `.spec/rfc/completed/0138-tauri-photasa-config-crate.md`
 

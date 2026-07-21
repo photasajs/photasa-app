@@ -189,27 +189,18 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 - [x] `scan_runner.rs` — progress / complete / error 双 emit
 - [x] **2026-07-20**：`notify_source_from_scan_report` 从 `ScanReport` 派生 notify（RFC 0136 路由层）；`Directory` 不产出 notify
 
-### RFC 0136 — 持久化队列扫描流水线（🔨 Partial — 见 RFC §2026-07-21）
+### RFC 0136 — 持久化队列扫描流水线（✅ Implemented — 2026-07-21）
 
-**已完成（Rust / 路由 / 队列）**：
+**已完成**：
 
 - [x] 千里眼一层目录/文件分流 + `ScanReport` IPC 类型
 - [x] Tauri 组合根 file pipeline（thumb + `.photasa.json`）
 - [x] 扫描队列持久化（0144 `ScanQueueRepository`）
-- [x] `scan_directory_discovered` → 尉迟恭 `add_scan_task` + 魏征 `add_paths`（路由层方案 A）
-- [x] 修复 `yuantiangang` 启奏 `matter` 字段（此前 `name` 导致路由未命中）
-- [x] `notify:status` 从 `ScanReport` 派生（0111 0136 联合收口）
-- [x] 测试：`router.test.ts`、`yuantiangang-scan-events.test.ts`、`cargo test -p photasa-scan notify`
-
-**未完成（阻塞标 ✅ — 2026-07-21 从 RFC 撤销假验收）**：
-
-- [ ] 删除尉迟恭 `SCAN_SUBFOLDERS` / `SCAN_TASK_ADDED` 子目录预发现（Electron 遗留）
-- [ ] 删除魏征 `reconcileTreeWithWatchPaths` / `listImmediateSubFolders` / App 二次 reconcile
-- [ ] 删除魏征 `persistFolderTreeIfChanged` 内 Pinia `$patch`
-- [ ] 验收 §Folder tree invariants（Tauri `Promise` mergePath 测试、重复 merge、无 `key: {}`）
-- [ ] 评估删除 `scan_task_added` 路由（在 `SCAN_SUBFOLDERS` 删除后）
-
-**Postmortem**：RFC L440「已核实幂等」在 mock 同步 `mergePath` 下错误；生产 `Promise` key → 重复节点 + `photasa.json` `key: {}`。
+- [x] `scan_directory_discovered` → 尉迟恭 `add_scan_task` + 魏征 `add_paths`（方案 A）
+- [x] 删尉迟恭 `SCAN_SUBFOLDERS` / `scan_task_added` 路由 / 魏征 reconcile 多入口
+- [x] `joinFolderSegment` + `sanitizeFolderTree`；`buildFolderKey` 禁止 `mergePath`
+- [x] 袁天罡 `executeZhaoling` 静态 `invoke`（并发队列持久化）
+- [x] 测试：`folder-tree.test.ts`、`rescan-folder-tree.test.ts`、`router.test.ts`、`scanning-queue-integration.test.ts`
 
 ### RFC 0112 — extract_metadata golden
 
@@ -295,28 +286,32 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0132](./.spec/rfc/completed/0132-tauri-photasa-scan-crate.md)                 | `photasa-types` + `photasa-scan` 独立 crate              | ✅ Implemented | shared DTO；strategy/cache/media/notify/cleanup 零 Tauri；32 scan tests             |
 | [0133](./.spec/rfc/completed/0133-tauri-photasa-watch-crate.md)                | `photasa-watch` 独立 crate（queue 算法，零 Tauri）       | ✅ Implemented | `cargo test -p photasa-watch` **7 passed**；Tauri sink→UI queue（2026-07-18）       |
 | [0135](./.spec/rfc/completed/0135-tauri-watch-ui-contract-fix.md)              | watch UI 契约修复（legacy-api→WatchState）               | ✅ Implemented | camelCase `isFile`；`watch-event.ts`；Vitest 6 + cargo watch 2（2026-07-18）        |
-| [0136](./.spec/rfc/0136-tauri-scan-runtime-contract.md)                        | 持久化队列扫描流水线                                     | 🔨 Partial     | Rust/队列/路由 ✅；folder tree 单路径+幂等 ❌（§2026-07-21）                        |
+| [0136](./.spec/rfc/completed/0136-tauri-scan-runtime-contract.md)              | 持久化队列扫描流水线                                     | ✅ Implemented | folder tree 单路径 + 幂等 + 千里眼一层发现（2026-07-21）                            |
 
 ## Photasa UI RFC drafts（非 Active）
 
-| RFC                                                                  | Title                           | Status     | Scope                                                                                  |
-| -------------------------------------------------------------------- | ------------------------------- | ---------- | -------------------------------------------------------------------------------------- |
-| [0137](./.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md)      | 贞观直连 Tauri IPC 迁移         | 📋 Draft   | 袁天罡唯一 IPC 边界；扫描先迁移，`window.api` 仅兼容层                                 |
-| [0139](./.spec/rfc/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期              | 📋 Draft   | 仅排期分析，不含代码；scan/config/preference 已核实，appstate/shell/menu/engine 未核实 |
-| [0140](./.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式  | 📋 Draft   | 通用模式定义 + 验收标准，首个案例（0138）已验证可行，保持开放供后续域引用              |
-| [0147](./.spec/rfc/0147-tauri-wenchang-preferences-retirement.md)    | 文昌 preference 贞观 + 退 zouwu | ⏳ Planned | 袁天罡 `executeZhaoling` 内 `invoke`；无 `wenchang-bridge`；删 adapter                 |
+| RFC                                                                         | Title                          | Status         | Scope                                                                                  |
+| --------------------------------------------------------------------------- | ------------------------------ | -------------- | -------------------------------------------------------------------------------------- |
+| [0137](./.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md)             | 贞观直连 Tauri IPC 迁移        | 📋 Draft       | 袁天罡唯一 IPC 边界；扫描先迁移，`window.api` 仅兼容层                                 |
+| [0139](./.spec/rfc/0139-tauri-zouwu-retirement-plan.md)                     | zouwu 逐域退场排期             | 📋 Draft       | 仅排期分析，不含代码；scan/config/preference 已核实，appstate/shell/menu/engine 未核实 |
+| [0140](./.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md)        | zouwu Adapter→command 迁移模式 | 📋 Draft       | 通用模式定义 + 验收标准，首个案例（0138）已验证可行，保持开放供后续域引用              |
+| [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) | preference 贞观 + 退 zouwu     | ✅ Implemented | `preferences_get`/`preferences_update`；袁天罡启奏；删 adapter                         |
 
-**已归档**：[0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photasa-folder-tree` ✅。
+**已归档**：[0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photasa-folder-tree` ✅ / [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) preference 整域退出 zouwu ✅。
 
-**Gap/T3 铁律：** 一事一 RFC = **一域** 一事。config/media 族：**… / 0145 folder-tree ✅ / 0147 preference 整域 ⏳ / …**
+**Gap/T3 铁律：** 一事一 RFC = **一域** 一事。config/media 族：**… / 0145 folder-tree ✅ / 0147 preference ✅ / …**
 
-### RFC 0147 — 文昌 preference 贞观 + 退 zouwu（⏳ Planned）
+### RFC 0147 — preference 贞观 + 退 zouwu（✅ 已完成，归档 `completed/`）
 
-- [ ] **删** `preferences_adapter.rs` + registry
-- [ ] **`yuantiangang.ts`**：`executeZhaoling` 内联 `invoke(wenchang_*)` — **禁止** `wenchang-bridge.ts`
-- [ ] 可选 `preferences-delta.ts`（纯函数，无 invoke）
-- [ ] 贞观流转；褚遂良 `approved` 门控；`App.vue`；尉迟恭 cleanup
-- [ ] 验收：`invoke("wenchang_` 仅 `yuantiangang.ts` + 测试
+- [x] **删** `preferences_adapter.rs` + registry
+- [x] **`commands/preferences.rs`**：`preferences_get` / `preferences_update`（功能名，非 `wenchang_*`）
+- [x] **`yuantiangang.ts`**：`PREFERENCE_ZHAOLING_MATTERS` + 内联 `invoke` — **禁止** bridge 文件
+- [x] **`preferences-delta.ts`**（纯函数，invoke 前剥离 `path` 协调字段）
+- [x] **`intent.ts`** 清 preference → zouwu 映射
+- [x] 贞观流转：褚遂良奏折；房玄龄 matter-sync；**袁天罡**启奏 `add_path_completed` / `remove_path_completed`
+- [x] 褚遂良 `approved` 门控；`App.vue` → `chuSuiLiang.addPath`；尉迟恭 cleanup 改日志
+- [x] `event-routing.yml`：`when.from: "袁天罡"`
+- [x] 验证：`cargo test -p photasa -p photasa-preference` 78 passed；vitest preference/yuantiangang/router 通过
 
 ### RFC 0145 — `photasa-folder-tree`（✅ 已完成，归档 `completed/`）
 

@@ -4,7 +4,7 @@
 - **Status**: Draft
 - **Priority**: P1f
 - **Area**: Photasa / Zhenguan / Tauri IPC boundary
-- **Depends on**: [0136](./0136-tauri-scan-runtime-contract.md)
+- **Depends on**: [0136](./completed/0136-tauri-scan-runtime-contract.md)
 - **Path**: `.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md`
 
 ## Decision

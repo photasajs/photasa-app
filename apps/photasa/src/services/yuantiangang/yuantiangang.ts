@@ -16,6 +16,7 @@ import { IService } from "@renderer/interfaces/service.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
 import { scanAdapter, type ScanResult } from "@renderer/api/scan.adapter";
 import { isTauri } from "@renderer/api/env";
@@ -593,7 +594,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 if (!isTauri()) {
                     throw new Error("扫描队列持久化仅支持 Tauri 环境");
                 }
-                const { invoke } = await import("@tauri-apps/api/core");
                 const context = (zhaoling.context ?? {}) as Record<string, unknown>;
                 let rawQueue: Record<string, unknown>[];
 
@@ -665,7 +665,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 if (!isTauri()) {
                     throw new Error("folder tree 持久化仅支持 Tauri 环境");
                 }
-                const { invoke } = await import("@tauri-apps/api/core");
                 const context = (zhaoling.context ?? {}) as Record<string, unknown>;
                 let data: unknown;
 
@@ -713,7 +712,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 if (!isTauri()) {
                     throw new Error("偏好持久化仅支持 Tauri 环境");
                 }
-                const { invoke } = await import("@tauri-apps/api/core");
                 const context = (zhaoling.context ?? {}) as Record<string, unknown>;
                 let data: unknown;
 
@@ -786,7 +784,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         ) {
             try {
                 let data: any = null;
-                const { invoke } = await import("@tauri-apps/api/core");
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG) {
                     data = await invoke("get_photasa_config", { folder: zhaoling.context.folder });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG) {

@@ -5,7 +5,7 @@
 - **Status**: ✅ Implemented
 - **Priority**: P1
 - **Area**: Photasa / Tauri / folder tree persistence
-- **Depends on**: [0136](../0136-tauri-scan-runtime-contract.md)、[0107](../0107-tauri-wenchang-preferences-storage.md)、[0140](../0140-tauri-zouwu-adapter-to-command-migration.md)
+- **Depends on**: [0136](./0136-tauri-scan-runtime-contract.md)、[0107](../0107-tauri-wenchang-preferences-storage.md)、[0140](../0140-tauri-zouwu-adapter-to-command-migration.md)
 - **Path**: `.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md`
 
 ## Decision

@@ -5,7 +5,7 @@
 - **Status**: ✅ Implemented
 - **Priority**: P1
 - **Area**: Photasa / Tauri scan queue / persistence
-- **Depends on**: [0048](./0048-scan-orchestration-business-logic-migration.md)（Store SSOT + 状态机权威设计）、[0136](../0136-tauri-scan-runtime-contract.md)（当前扫描队列契约）
+- **Depends on**: [0048](./0048-scan-orchestration-business-logic-migration.md)（Store SSOT + 状态机权威设计）、[0136](./0136-tauri-scan-runtime-contract.md)（当前扫描队列契约）
 - **Path**: `.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md`
 
 ## Decision
