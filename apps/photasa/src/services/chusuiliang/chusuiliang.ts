@@ -322,16 +322,11 @@ export class ChusuiliangService implements IChusuiliangService, IService {
                 normalizedPath: duplicationResult.normalizedPath,
                 pathType: pathType.type,
             });
-            await this.fangXuanLingService.processZouzhe(zouzhe);
+            const response = await this.fangXuanLingService.processZouzhe(zouzhe);
+            if (!response.approved) {
+                throw new Error(response.instruction ?? "偏好持久化未获准");
+            }
             logger.info(`📝 路径添加工作完成: ${duplicationResult.normalizedPath}`);
-
-            // 完成后向朝廷启奏（触发跨部门协调）
-            this.emitQizou(
-                "add_path_completed",
-                { path: duplicationResult.normalizedPath },
-                "report",
-            );
-            logger.info(`📝 褚遂良已向朝廷启奏路径添加完成`);
         } catch (error) {
             logger.error(`📝 路径添加失败: ${path}`, error);
             throw error;
@@ -395,16 +390,11 @@ export class ChusuiliangService implements IChusuiliangService, IService {
                 normalizedPath: validationResult.normalizedPath,
                 pathType: pathType.type,
             });
-            await this.fangXuanLingService.processZouzhe(zouzhe);
+            const response = await this.fangXuanLingService.processZouzhe(zouzhe);
+            if (!response.approved) {
+                throw new Error(response.instruction ?? "偏好持久化未获准");
+            }
             logger.info(`📝 路径移除工作完成: ${validationResult.normalizedPath}`);
-
-            // 完成后向朝廷启奏（触发跨部门协调）
-            this.emitQizou(
-                "remove_path_completed",
-                { path: validationResult.normalizedPath },
-                "report",
-            );
-            logger.info(`📝 褚遂良已向朝廷启奏路径移除完成`);
         } catch (error) {
             logger.error(`📝 路径移除失败: ${path}`, error);
             throw error;

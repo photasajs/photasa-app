@@ -201,7 +201,8 @@ export class FangXuanLingService implements IFangXuanLingService {
             ) {
                 const pathsDelta = this.computePathsDelta(zouzhe.matter, zouzhe.content || {});
                 if (pathsDelta) {
-                    context = pathsDelta;
+                    const path = zouzhe.content?.path as string | undefined;
+                    context = path ? { ...pathsDelta, path } : pathsDelta;
                     logger.info(
                         `📚 房玄龄已计算paths delta，新paths数组长度: ${(pathsDelta.scanning as Record<string, unknown> | undefined)?.paths ? ((pathsDelta.scanning as Record<string, unknown>).paths as unknown[]).length : 0}`,
                     );

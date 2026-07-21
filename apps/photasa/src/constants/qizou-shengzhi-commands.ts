@@ -5,7 +5,7 @@
  * 启奏（Qizou）：服务向李世民（中央路由器）汇报的事务
  */
 export const QizouMatters = {
-    // 褚遂良 - 偏好设置相关
+    // 袁天罡 - 偏好路径持久化完成（跨部门协调）
     ADD_PATH_COMPLETED: "add_path_completed",
     REMOVE_PATH_COMPLETED: "remove_path_completed",
 

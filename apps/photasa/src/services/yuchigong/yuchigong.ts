@@ -524,20 +524,12 @@ export class YuChiGongService implements IService, IYuChiGongService {
         // 路径参数验证
         if (!path || typeof path !== "string") {
             logger.error("🛡️ 尉迟恭：圣旨缺少path参数或类型错误");
-            this.emitQizou("scan_queue_cleanup_failed", {
-                shengzhiId: shengzhi.id,
-                error: "缺少path参数或类型错误",
-            });
             return;
         }
 
         // 路径安全验证：不能为空字符串
         if (path.trim() === "") {
             logger.error("🛡️ 尉迟恭：圣旨path为空字符串");
-            this.emitQizou("scan_queue_cleanup_failed", {
-                shengzhiId: shengzhi.id,
-                error: "path为空字符串",
-            });
             return;
         }
 
@@ -568,12 +560,6 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
             if (pathsToRemove.length === 0) {
                 logger.info(`🛡️ 尉迟恭：扫描队列中无相关任务需要清理 ${normalizedPathToRemove}`);
-                // 即使没有任务，也向李世民启奏汇报
-                this.emitQizou("scan_queue_cleanup_completed", {
-                    shengzhiId: shengzhi.id,
-                    path: normalizedPathToRemove,
-                    removedCount: 0,
-                });
                 return;
             }
 
@@ -620,31 +606,13 @@ export class YuChiGongService implements IService, IYuChiGongService {
             if (failedCount > 0) {
                 logger.warn(
                     `🛡️ 尉迟恭：清理扫描队列部分失败，成功 ${successCount} 个，失败 ${failedCount} 个`,
+                    { errors },
                 );
-                this.emitQizou("scan_queue_cleanup_partially_completed", {
-                    shengzhiId: shengzhi.id,
-                    path: normalizedPathToRemove,
-                    removedCount: successCount,
-                    failedCount,
-                    errors,
-                });
             } else {
                 logger.info(`🛡️ 尉迟恭：成功清理 ${successCount} 个扫描任务（包括子目录）`);
-                this.emitQizou("scan_queue_cleanup_completed", {
-                    shengzhiId: shengzhi.id,
-                    path: normalizedPathToRemove,
-                    removedCount: successCount,
-                });
             }
         } catch (error) {
             logger.error(`🛡️ 尉迟恭：清理扫描队列失败 ${normalizedPathToRemove}`, error);
-
-            // 向李世民启奏汇报失败
-            this.emitQizou("scan_queue_cleanup_failed", {
-                shengzhiId: shengzhi.id,
-                path: normalizedPathToRemove,
-                error: String(error),
-            });
 
             throw error;
         }

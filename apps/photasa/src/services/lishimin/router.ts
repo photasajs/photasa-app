@@ -165,10 +165,10 @@ export class QiZouRouter {
      *
      * @example
      * ```typescript
-     * // 褚遂良启奏：路径添加完成
+     * // 袁天罡启奏：路径 preference 持久化完成
      * const qizou = {
      *   matter: "add_path_completed",
-     *   from: "褚遂良",
+     *   from: "袁天罡",
      *   content: { path: "/photos" },
      *   metadata: { type: "report" }
      * };

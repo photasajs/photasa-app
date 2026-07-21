@@ -16,7 +16,8 @@ use commands::update_periodic::UpdatePeriodicHandle;
 use commands::{
     config, directory, engine_status, extract_metadata, import_execute, import_legacy,
     import_preview, import_scan_directories, import_session_store, log_viewer, menu, path,
-    platform, scan_queue, shell, siming, splash_bridge, stubs, thumbnail, update, watch, window,
+    platform, preferences, scan_queue, shell, folder_tree, splash_bridge, stubs, thumbnail, update,
+    watch, window,
 };
 use services::{tianshu::resolve_workflows_dir, TianshuService};
 use std::collections::HashMap;
@@ -139,6 +140,12 @@ fn main() {
             let update_state = UpdateState::default();
             commands::update_config::sync_update_state_from_preferences(&update_state);
             app.manage(update_state);
+            let preferences_state = tauri::async_runtime::block_on(preferences::PreferencesState::initialize())
+                .map_err(|e| {
+                    log::error!("❌ 偏好存储初始化失败：{e}");
+                    std::io::Error::other(e)
+                })?;
+            app.manage(preferences_state);
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             {
                 let periodic =
@@ -236,8 +243,10 @@ fn main() {
             scan_queue::scan_queue_add_actions,
             scan_queue::scan_queue_remove_action,
             scan_queue::scan_queue_update_action_status,
-            siming::siming_update_folder_tree,
-            siming::siming_restore_app_state,
+            folder_tree::folder_tree_update,
+            folder_tree::app_state_restore,
+            preferences::preferences_get,
+            preferences::preferences_update,
             thumbnail::create_thumbnail,
             thumbnail::remove_thumbnail,
             // 系统菜单

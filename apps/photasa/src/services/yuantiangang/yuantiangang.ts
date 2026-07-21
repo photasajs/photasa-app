@@ -25,8 +25,19 @@ import type { NotifyPayload } from "@photasa/common";
 import type { MenuActionPayload } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
 import { computeScannedFilePaths } from "./utils";
 import { IntentToFuluMapping } from "./intent";
-import { executeScanQueueZhaoling } from "./scan-queue-bridge";
-import { executeSimingZhaoling } from "./siming-bridge";
+import {
+    FOLDER_TREE_COMMANDS,
+    PREFERENCES_COMMANDS,
+    SCAN_QUEUE_COMMANDS,
+} from "./tauri-command-names";
+import { extractFolderTreeFromContext } from "./folder-tree-payload";
+import { buildPreferencesDelta, PREFERENCE_ZHAOLING_MATTERS } from "./preferences-delta";
+import {
+    extractActionsFromContext,
+    normalizeRestoredQueue,
+    scanActionToPersistedEntry,
+} from "./scan-queue-payload";
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 
 const logger = loggers.yuantiangang;
 
@@ -221,6 +232,31 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             this.reportScanProgress(args);
             // ✅ 保留：发送 SCAN_READY qizou 给魏征
             this.reportScanCompletion(computeScannedFilePaths(args), args);
+        }
+    }
+
+    /**
+     * 路径 preference 持久化成功后向李世民启奏（跨部门协调由李世民路由）
+     */
+    private reportPathPreferenceCompleted(matter: string, path: string): void {
+        try {
+            if (!this._qizouBus) {
+                logger.error("🔮 启奏通道未建立，无法汇报路径持久化完成");
+                return;
+            }
+
+            const qizou: Qizou = {
+                matter,
+                content: { path },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: { type: "report" },
+            };
+
+            this._qizouBus.emit("qizou", qizou);
+            logger.info(`🔮 启奏李世民: ${matter} (${path})`);
+        } catch (error) {
+            logger.error(`🔮 发送 ${matter} 启奏失败:`, error);
         }
     }
 
@@ -546,7 +582,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
         const startTime = Date.now();
 
-        // RFC 0143 + 0136：队列奏折 → Rust scanning.json（对齐 Electron 千里眼工作流）
+        // RFC 0136/0143：扫描队列 — 袁天罡 executeZhaoling 内唯一 invoke（无 *-bridge.ts）
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE ||
             zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION ||
@@ -554,21 +590,50 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             zhaoling.command === ZOUZHE_MATTERS.UPDATE_SCAN_ACTION_STATUS
         ) {
             try {
-                const data = await executeScanQueueZhaoling(
-                    zhaoling.command,
-                    (zhaoling.context ?? {}) as Record<string, unknown>,
-                );
-                logger.info(
-                    `🔮 钦天监队列已同步 scanning.json: ${zhaoling.command}，${data.queue.length} 项`,
-                );
+                if (!isTauri()) {
+                    throw new Error("扫描队列持久化仅支持 Tauri 环境");
+                }
+                const { invoke } = await import("@tauri-apps/api/core");
+                const context = (zhaoling.context ?? {}) as Record<string, unknown>;
+                let rawQueue: Record<string, unknown>[];
+
+                if (zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE) {
+                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.GET);
+                } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
+                    const actions = extractActionsFromContext(context).map(
+                        scanActionToPersistedEntry,
+                    );
+                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.ADD, {
+                        actions,
+                    });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
+                    const path = String(context.path ?? "");
+                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.REMOVE, {
+                        path,
+                    });
+                } else {
+                    const path = String(context.path ?? "");
+                    const status = String(context.status ?? "pending");
+                    const updates = (context.updates ?? {}) as Record<string, unknown>;
+                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.UPDATE, {
+                        path,
+                        status,
+                        updates,
+                    });
+                }
+
+                const data: { queue: ScanQueueItem[] } = {
+                    queue: normalizeRestoredQueue(rawQueue),
+                };
+                logger.info(`🔮 扫描队列已同步: ${zhaoling.command}，${data.queue.length} 项`);
                 return {
                     acknowledged: true,
                     command: zhaoling.command,
                     data,
-                    blessing: "钦天监队列持久化成功",
+                    blessing: "扫描队列持久化成功",
                     timestamp: Date.now(),
                     metadata: {
-                        engineName: "qianliyan-scan-queue",
+                        engineName: "scan-queue-direct",
                         processTime: Date.now() - startTime,
                         urgency:
                             zhaoling.priority === "imperial"
@@ -579,38 +644,47 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     },
                 };
             } catch (error) {
-                logger.error(`🔮 钦天监队列持久化失败: ${zhaoling.command}`, error);
+                logger.error(`🔮 扫描队列持久化失败: ${zhaoling.command}`, error);
                 return {
                     acknowledged: false,
                     command: zhaoling.command,
                     data: null,
-                    blessing: "钦天监队列持久化失败",
+                    blessing: "扫描队列持久化失败",
                     timestamp: Date.now(),
                     error: error instanceof Error ? error.message : "队列持久化异常",
                 };
             }
         }
 
-        // RFC 0145: folderTree 持久化直连司命 command（Photasa 唯一路径）
+        // RFC 0145：folder tree — 袁天罡 executeZhaoling 内 invoke（无 siming-bridge）
         if (
             zhaoling.command === ZOUZHE_MATTERS.UPDATE_FOLDER_TREE ||
             zhaoling.command === ZOUZHE_MATTERS.RESTORE_APP_STATE
         ) {
             try {
-                const data = await executeSimingZhaoling(
-                    zhaoling.command,
-                    (zhaoling.context ?? {}) as Record<string, unknown>,
-                );
+                if (!isTauri()) {
+                    throw new Error("folder tree 持久化仅支持 Tauri 环境");
+                }
+                const { invoke } = await import("@tauri-apps/api/core");
+                const context = (zhaoling.context ?? {}) as Record<string, unknown>;
+                let data: unknown;
 
-                logger.info(`🔮 司命直连持久化成功: ${zhaoling.command}`);
+                if (zhaoling.command === ZOUZHE_MATTERS.UPDATE_FOLDER_TREE) {
+                    const tree = extractFolderTreeFromContext(context);
+                    data = await invoke(FOLDER_TREE_COMMANDS.UPDATE, { tree });
+                } else {
+                    data = await invoke(FOLDER_TREE_COMMANDS.RESTORE_APP_STATE);
+                }
+
+                logger.info(`🔮 folder tree 持久化成功: ${zhaoling.command}`);
                 return {
                     acknowledged: true,
                     command: zhaoling.command,
                     data,
-                    blessing: "司命卷轴已更新",
+                    blessing: "folder tree 已更新",
                     timestamp: Date.now(),
                     metadata: {
-                        engineName: "siming-direct",
+                        engineName: "folder-tree-direct",
                         processTime: Date.now() - startTime,
                         urgency:
                             zhaoling.priority === "imperial"
@@ -621,14 +695,81 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     },
                 };
             } catch (error) {
-                logger.error(`🔮 司命直连持久化失败: ${zhaoling.command}`, error);
+                logger.error(`🔮 folder tree 持久化失败: ${zhaoling.command}`, error);
                 return {
                     acknowledged: false,
                     command: zhaoling.command,
                     data: null,
-                    blessing: "司命卷轴更新失败",
+                    blessing: "folder tree 更新失败",
                     timestamp: Date.now(),
-                    error: error instanceof Error ? error.message : "司命持久化异常",
+                    error: error instanceof Error ? error.message : "folder tree 持久化异常",
+                };
+            }
+        }
+
+        // RFC 0147：preference 域 — 袁天罡 executeZhaoling 内唯一 invoke（无 *-bridge.ts）
+        if (PREFERENCE_ZHAOLING_MATTERS.has(zhaoling.command)) {
+            try {
+                if (!isTauri()) {
+                    throw new Error("偏好持久化仅支持 Tauri 环境");
+                }
+                const { invoke } = await import("@tauri-apps/api/core");
+                const context = (zhaoling.context ?? {}) as Record<string, unknown>;
+                let data: unknown;
+
+                if (zhaoling.command === ZOUZHE_MATTERS.GET_PREFERENCES) {
+                    data = await invoke(PREFERENCES_COMMANDS.GET);
+                } else {
+                    const delta = buildPreferencesDelta(zhaoling.command, context);
+                    data = await invoke(PREFERENCES_COMMANDS.UPDATE, {
+                        delta,
+                        source: zhaoling.source,
+                    });
+                }
+
+                logger.info(`🔮 偏好持久化成功: ${zhaoling.command}`);
+
+                if (zhaoling.command === ZOUZHE_MATTERS.ADD_PATH) {
+                    const path = String(context.path ?? "");
+                    if (path) {
+                        this.reportPathPreferenceCompleted(QizouMatters.ADD_PATH_COMPLETED, path);
+                    }
+                } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_PATH) {
+                    const path = String(context.path ?? "");
+                    if (path) {
+                        this.reportPathPreferenceCompleted(
+                            QizouMatters.REMOVE_PATH_COMPLETED,
+                            path,
+                        );
+                    }
+                }
+
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "偏好已同步",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "preferences-direct",
+                        processTime: Date.now() - startTime,
+                        urgency:
+                            zhaoling.priority === "imperial"
+                                ? "critical"
+                                : zhaoling.priority === "urgent"
+                                  ? "high"
+                                  : "normal",
+                    },
+                };
+            } catch (error) {
+                logger.error(`🔮 偏好持久化失败: ${zhaoling.command}`, error);
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "偏好持久化失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "偏好持久化异常",
                 };
             }
         }

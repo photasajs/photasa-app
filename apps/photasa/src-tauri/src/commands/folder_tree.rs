@@ -1,14 +1,12 @@
 /*!
- * 司命 Tauri commands — RFC 0145：`photasa-folder-tree` crate，不经 zouwu Adapter
- *
- * command 名保留 siming_*（贞观拟人化 IPC）；实现 crate 跟功能命名。
+ * folder tree / appState 持久化 Tauri commands（RFC 0145，贞观：功能名 command，无 siming adapter）
  */
 use photasa_folder_tree::FolderTreeStore;
 use serde_json::{json, Value};
 
-/// 持久化 folderTree 并返回册库同步所需 payload
+/// 持久化 folderTree 并返回 matter-sync payload
 #[tauri::command]
-pub async fn siming_update_folder_tree(tree: Value) -> Result<Value, String> {
+pub async fn folder_tree_update(tree: Value) -> Result<Value, String> {
     let store = FolderTreeStore::new();
     store
         .persist_folder_tree(tree.clone())
@@ -20,9 +18,9 @@ pub async fn siming_update_folder_tree(tree: Value) -> Result<Value, String> {
     }))
 }
 
-/// 恢复完整 appState（启动时 restore_app_state 奏折）
+/// 启动时恢复完整 appState
 #[tauri::command]
-pub async fn siming_restore_app_state() -> Result<Value, String> {
+pub async fn app_state_restore() -> Result<Value, String> {
     let store = FolderTreeStore::new();
     store.restore_app_state().map_err(|e| e.to_string())
 }
@@ -35,7 +33,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[tokio::test]
-    async fn siming_update_folder_tree_roundtrip() {
+    async fn folder_tree_update_roundtrip() {
         let path = std::env::temp_dir().join(format!(
             "photasa-folder-tree-cmd-{}.json",
             uuid::Uuid::new_v4()

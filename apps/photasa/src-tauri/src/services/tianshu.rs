@@ -21,10 +21,7 @@ use zouwu_core::engine::{EngineError, WorkflowResolver, ZouwuEngine};
 use zouwu_core::parser::parse_workflow;
 use zouwu_core::types::WorkflowDefinition;
 
-use crate::adapters::{
-    PreferencesAdapter, ScanAdapter, TaibaijinxingAdapter,
-    TaiyiAdapter,
-};
+use crate::adapters::{ScanAdapter, TaibaijinxingAdapter, TaiyiAdapter};
 
 // ============================================================
 // TianshuError
@@ -139,19 +136,11 @@ impl TianshuService {
 
         // 2. 构建 AdapterRegistry（含太乙路由层）
         let builtin = Arc::new(BuiltinAdapter::new());
-        let preferences =
-            Arc::new(PreferencesAdapter::new().await.map_err(|e| {
-                TianshuError::Parse(format!("preferences adapter init error: {e}"))
-            })?);
         let scan = Arc::new(ScanAdapter::new(app_handle.clone()));
         let taibaijinxing = Arc::new(TaibaijinxingAdapter::new(app_handle));
 
         let mut taiyi_engines: HashMap<String, Arc<dyn Adapter>> = HashMap::new();
         taiyi_engines.insert("builtin".to_string(), builtin.clone() as Arc<dyn Adapter>);
-        taiyi_engines.insert(
-            "wenchang".to_string(),
-            preferences.clone() as Arc<dyn Adapter>,
-        );
         taiyi_engines.insert("qianliyan".to_string(), scan.clone() as Arc<dyn Adapter>);
         taiyi_engines.insert(
             "taibaijinxing".to_string(),
@@ -162,7 +151,6 @@ impl TianshuService {
 
         let mut registry = AdapterRegistry::new();
         registry.register(builtin);
-        registry.register(preferences);
         registry.register(scan);
         registry.register(taibaijinxing);
         registry.register(taiyi);

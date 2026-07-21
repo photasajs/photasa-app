@@ -299,15 +299,24 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 ## Photasa UI RFC drafts（非 Active）
 
-| RFC                                                                  | Title                          | Status   | Scope                                                                                  |
-| -------------------------------------------------------------------- | ------------------------------ | -------- | -------------------------------------------------------------------------------------- |
-| [0137](./.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md)      | 贞观直连 Tauri IPC 迁移        | 📋 Draft | 袁天罡唯一 IPC 边界；扫描先迁移，`window.api` 仅兼容层                                 |
-| [0139](./.spec/rfc/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期             | 📋 Draft | 仅排期分析，不含代码；scan/config/preference 已核实，appstate/shell/menu/engine 未核实 |
-| [0140](./.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式 | 📋 Draft | 通用模式定义 + 验收标准，首个案例（0138）已验证可行，保持开放供后续域引用              |
+| RFC                                                                  | Title                           | Status     | Scope                                                                                  |
+| -------------------------------------------------------------------- | ------------------------------- | ---------- | -------------------------------------------------------------------------------------- |
+| [0137](./.spec/rfc/0137-tauri-zhenguan-direct-ipc-migration.md)      | 贞观直连 Tauri IPC 迁移         | 📋 Draft   | 袁天罡唯一 IPC 边界；扫描先迁移，`window.api` 仅兼容层                                 |
+| [0139](./.spec/rfc/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期              | 📋 Draft   | 仅排期分析，不含代码；scan/config/preference 已核实，appstate/shell/menu/engine 未核实 |
+| [0140](./.spec/rfc/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式  | 📋 Draft   | 通用模式定义 + 验收标准，首个案例（0138）已验证可行，保持开放供后续域引用              |
+| [0147](./.spec/rfc/0147-tauri-wenchang-preferences-retirement.md)    | 文昌 preference 贞观 + 退 zouwu | ⏳ Planned | 袁天罡 `executeZhaoling` 内 `invoke`；无 `wenchang-bridge`；删 adapter                 |
 
 **已归档**：[0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photasa-folder-tree` ✅。
 
-**Gap/T3 铁律：** 一事一 RFC。scan 族：**0131 import ✅ / 0132 scan+types ✅ / 0134 thumbnail ✅ / 0133 watch ✅ / 0135 watch UI ✅ / 0136 queue pipeline 🔨（违规路径已删，Acceptance #10 待验）**。config/media 族：**0138 config ✅ / 0141 media ✅ / 0142 config 拟人化 ✅ / 0143 scan 拟人化 ✅ / 0144 队列并发 ✅ / 0145 folder-tree 持久化 ✅ / 0140 迁移模式 📋 / 0139 排期 📋**。
+**Gap/T3 铁律：** 一事一 RFC = **一域** 一事。config/media 族：**… / 0145 folder-tree ✅ / 0147 preference 整域 ⏳ / …**
+
+### RFC 0147 — 文昌 preference 贞观 + 退 zouwu（⏳ Planned）
+
+- [ ] **删** `preferences_adapter.rs` + registry
+- [ ] **`yuantiangang.ts`**：`executeZhaoling` 内联 `invoke(wenchang_*)` — **禁止** `wenchang-bridge.ts`
+- [ ] 可选 `preferences-delta.ts`（纯函数，无 invoke）
+- [ ] 贞观流转；褚遂良 `approved` 门控；`App.vue`；尉迟恭 cleanup
+- [ ] 验收：`invoke("wenchang_` 仅 `yuantiangang.ts` + 测试
 
 ### RFC 0145 — `photasa-folder-tree`（✅ 已完成，归档 `completed/`）
 

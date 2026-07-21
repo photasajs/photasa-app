@@ -84,7 +84,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 content: {
                     path: "/test/photos",
                 },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: {
                     type: "report",
@@ -142,7 +142,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 content: {
                     path: "/test/old-photos",
                 },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: {
                     type: "report",
@@ -173,7 +173,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const matchingQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/photos" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -212,7 +212,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const wrongSourceQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/photos" },
-                from: "未知服务", // 期望from="褚遂良"
+                from: "未知服务", // 期望 from="袁天罡"
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -234,7 +234,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const testQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: testPath },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -254,7 +254,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const testQizou: Qizou = {
                 matter: "add_path_completed",
                 content: {}, // 缺少path字段
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -410,7 +410,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const qizou1: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/path1" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -418,7 +418,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const qizou2: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/path2" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -441,7 +441,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const testQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/photos" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -462,7 +462,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const testQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/photos" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -486,7 +486,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const testQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/photos" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -513,7 +513,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const testQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/photos" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -566,7 +566,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 qizous.push({
                     matter: "add_path_completed",
                     content: { path: `/photos-${i}` },
-                    from: "褚遂良",
+                    from: "袁天罡",
                     timestamp: Date.now() + i,
                     metadata: { type: "report" },
                 });
@@ -590,7 +590,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 (router as any).qizouBus.emit("qizou", {
                     matter: "add_path_completed",
                     content: { path: `/fast-${i}` },
-                    from: "褚遂良",
+                    from: "袁天罡",
                     timestamp: Date.now(),
                     metadata: { type: "report" },
                 });
@@ -610,7 +610,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const emptyContentQizou: Qizou = {
                 matter: "add_path_completed",
                 content: {},
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 metadata: { type: "report" },
             };
@@ -630,7 +630,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
             const noMetadataQizou: Qizou = {
                 matter: "add_path_completed",
                 content: { path: "/photos" },
-                from: "褚遂良",
+                from: "袁天罡",
                 timestamp: Date.now(),
                 // 没有metadata字段
             };

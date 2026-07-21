@@ -57,10 +57,10 @@ import type { RecoverableImport } from "@photasa/common";
  */
 const logger = loggers.lishimin;
 const themeManager = useChuSuiLiang().themeManager;
+const chuSuiLiang = useChuSuiLiang();
 const { t } = useI18n();
 const preferenceStore = usePreferenceStore();
 const { paths, currentFolder, thumbnailSize } = storeToRefs(preferenceStore);
-const { addPath } = preferenceStore;
 
 /**
  * YuChiGong service
@@ -125,7 +125,7 @@ async function initializeApp(): Promise<void> {
 
         // Desktop directory is ready
         if (paths.value.length === 0) {
-            addPath(dir);
+            await chuSuiLiang.addPath(dir);
         }
 
         loading.value = false;
@@ -215,7 +215,6 @@ async function detectRecoverableImports(): Promise<void> {
     }
 }
 
-const chuSuiLiang = useChuSuiLiang();
 const weiZheng = useWeiZheng();
 
 onMounted(async () => {
