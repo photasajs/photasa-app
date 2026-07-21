@@ -357,6 +357,7 @@ defineExpose({
         border-radius: 6px;
         color: var(--color-text-secondary, #cccccc);
         font-weight: 500;
+        font-size: 13px;
         transition:
             background-color 0.15s ease,
             color 0.15s ease;

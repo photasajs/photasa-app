@@ -87,6 +87,7 @@ const view = computed(() => {
     background: var(--color-bg-secondary, #f3f3f3);
     color: var(--color-statusbar-fg, var(--color-text));
     padding: 0 12px;
+    font-size: 12px;
 }
 
 .status-content {
