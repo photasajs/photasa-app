@@ -6,39 +6,49 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { QueueMonitoringService } from "@renderer/services/queue-monitoring-service";
 import type { QueueMonitoringConfig } from "@photasa/common";
-import { usePreferenceStore } from "@renderer/stores/preference";
-
-// Mock preference store
-vi.mock("@renderer/stores/preference", () => ({
-    usePreferenceStore: vi.fn(() => ({
-        scanningFolder: [],
-    })),
-}));
+import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 
 // Mock logger
-vi.mock("@photasa/common", () => ({
-    loggers: {
-        app: {
-            info: vi.fn(),
-            debug: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
+vi.mock("@photasa/common", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@photasa/common")>();
+    return {
+        ...actual,
+        loggers: {
+            app: {
+                info: vi.fn(),
+                debug: vi.fn(),
+                warn: vi.fn(),
+                error: vi.fn(),
+            },
         },
-    },
-}));
+    };
+});
+
+function createQueueItem(
+    overrides: Partial<ScanQueueItem> & Pick<ScanQueueItem, "path">,
+): ScanQueueItem {
+    return {
+        action: "scan",
+        status: "pending",
+        createdAt: Date.now(),
+        source: "user",
+        retryCount: 0,
+        maxRetries: 3,
+        operationType: "directory",
+        thumbnailSize: 150,
+        ...overrides,
+    };
+}
 
 describe("QueueMonitoringService", () => {
     let service: QueueMonitoringService;
-    let mockPreferenceStore: any;
+    let mockQueue: ScanQueueItem[];
 
     beforeEach(() => {
         service = new QueueMonitoringService();
-        mockPreferenceStore = {
-            scanningFolder: [],
-        };
-        (usePreferenceStore as any).mockReturnValue(mockPreferenceStore);
+        mockQueue = [];
+        service.setQueueProvider(() => mockQueue);
 
-        // Clear any existing timers
         vi.clearAllTimers();
         vi.useFakeTimers();
     });
@@ -79,7 +89,7 @@ describe("QueueMonitoringService", () => {
             service.startMonitoring();
             const firstMonitoringState = service.isMonitoring.value;
 
-            service.startMonitoring(); // 尝试再次启动
+            service.startMonitoring();
 
             expect(service.isMonitoring.value).toBe(firstMonitoringState);
         });
@@ -143,10 +153,10 @@ describe("QueueMonitoringService", () => {
 
     describe("Metrics collection", () => {
         it("应该从空队列收集基础指标", () => {
-            mockPreferenceStore.scanningFolder = [];
+            mockQueue = [];
 
             service.startMonitoring();
-            vi.advanceTimersByTime(100); // 触发初始收集
+            vi.advanceTimersByTime(100);
 
             const metrics = service.metrics.value;
             expect(metrics.currentSize).toBe(0);
@@ -157,43 +167,50 @@ describe("QueueMonitoringService", () => {
         });
 
         it("应该正确计算队列大小", () => {
-            mockPreferenceStore.scanningFolder = [
-                { path: "/test1", action: "scan", status: "pending" },
-                { path: "/test2", action: "scan", status: "processing" },
-                { path: "/test3", action: "scan", status: "completed" },
+            mockQueue = [
+                createQueueItem({ path: "/test1", status: "pending" }),
+                createQueueItem({ path: "/test2", status: "processing" }),
             ];
 
             service.startMonitoring();
             vi.advanceTimersByTime(100);
 
-            expect(service.metrics.value.currentSize).toBe(3);
+            expect(service.metrics.value.currentSize).toBe(2);
         });
 
         it("应该正确计算状态统计", () => {
-            mockPreferenceStore.scanningFolder = [
-                { path: "/test1", action: "scan", status: "pending" },
-                { path: "/test2", action: "scan", status: "processing" },
-                { path: "/test3", action: "scan", status: "completed" },
-                { path: "/test4", action: "scan", status: "failed" },
-                { path: "/test5", action: "scan" }, // 默认为pending
+            mockQueue = [
+                createQueueItem({ path: "/test1", status: "pending" }),
+                createQueueItem({ path: "/test2", status: "processing" }),
+                createQueueItem({ path: "/test3", status: "failed" }),
             ];
 
             service.startMonitoring();
             vi.advanceTimersByTime(100);
 
             const statusCounts = service.metrics.value.statusCounts;
-            expect(statusCounts.pending).toBe(2);
+            expect(statusCounts.pending).toBe(1);
             expect(statusCounts.processing).toBe(1);
-            expect(statusCounts.completed).toBe(1);
             expect(statusCounts.failed).toBe(1);
+            expect(statusCounts.completed).toBe(0);
+        });
+
+        it("应该累计本会话完成数", () => {
+            mockQueue = [createQueueItem({ path: "/test1", status: "processing" })];
+            service.startMonitoring();
+            vi.advanceTimersByTime(100);
+
+            mockQueue = [];
+            vi.advanceTimersByTime(5000);
+
+            expect(service.metrics.value.statusCounts.completed).toBe(1);
         });
 
         it("应该正确计算事件类型分布", () => {
-            mockPreferenceStore.scanningFolder = [
-                { path: "/test1", action: "scan", status: "pending" },
-                { path: "/test2", action: "scan", status: "processing" },
-                { path: "/test3", action: "rescan", status: "completed" },
-                { path: "/test4", status: "failed" }, // 默认为unknown
+            mockQueue = [
+                createQueueItem({ path: "/test1", action: "scan", status: "pending" }),
+                createQueueItem({ path: "/test2", action: "scan", status: "processing" }),
+                createQueueItem({ path: "/test3", action: "rescan", status: "failed" }),
             ];
 
             service.startMonitoring();
@@ -202,22 +219,19 @@ describe("QueueMonitoringService", () => {
             const eventTypes = service.metrics.value.eventTypes;
             expect(eventTypes["scan"]).toBe(2);
             expect(eventTypes["rescan"]).toBe(1);
-            expect(eventTypes["unknown"]).toBe(1);
         });
 
         it("应该估算内存使用量", () => {
-            mockPreferenceStore.scanningFolder = new Array(100).fill(0).map((_, i) => ({
-                path: `/test${i}`,
-                action: "scan",
-                status: "pending",
-            }));
+            mockQueue = Array.from({ length: 100 }, (_, i) =>
+                createQueueItem({ path: `/test${i}`, status: "pending" }),
+            );
 
             service.startMonitoring();
             vi.advanceTimersByTime(100);
 
             const memoryUsage = service.metrics.value.memoryUsage;
             expect(memoryUsage).toBeGreaterThan(0);
-            expect(memoryUsage).toBeLessThan(1); // 应该小于1MB对于100项
+            expect(memoryUsage).toBeLessThan(1);
         });
 
         it("应该更新最后更新时间", () => {
@@ -236,9 +250,7 @@ describe("QueueMonitoringService", () => {
 
     describe("Queue health calculation", () => {
         it("应该计算良好的队列健康状态", () => {
-            mockPreferenceStore.scanningFolder = [
-                { path: "/test1", action: "scan", status: "pending" },
-            ];
+            mockQueue = [createQueueItem({ path: "/test1", status: "pending" })];
 
             service.startMonitoring();
             vi.advanceTimersByTime(100);
@@ -248,10 +260,10 @@ describe("QueueMonitoringService", () => {
 
         it("应该在队列过大时显示警告", () => {
             service.updateConfig({ queueSizeWarningThreshold: 2 });
-            mockPreferenceStore.scanningFolder = [
-                { path: "/test1", action: "scan", status: "pending" },
-                { path: "/test2", action: "scan", status: "pending" },
-                { path: "/test3", action: "scan", status: "pending" },
+            mockQueue = [
+                createQueueItem({ path: "/test1", status: "pending" }),
+                createQueueItem({ path: "/test2", status: "pending" }),
+                createQueueItem({ path: "/test3", status: "pending" }),
             ];
 
             service.startMonitoring();
@@ -264,32 +276,32 @@ describe("QueueMonitoringService", () => {
     describe("Control actions", () => {
         it("应该处理暂停操作", async () => {
             const result = await service.executeControlAction("pause");
-            expect(result).toBe(false); // 当前为TODO实现
+            expect(result).toBe(false);
         });
 
         it("应该处理恢复操作", async () => {
             const result = await service.executeControlAction("resume");
-            expect(result).toBe(false); // 当前为TODO实现
+            expect(result).toBe(false);
         });
 
         it("应该处理清理已完成操作", async () => {
             const result = await service.executeControlAction("clear-completed");
-            expect(result).toBe(true); // 模拟成功
+            expect(result).toBe(true);
         });
 
         it("应该处理清理失败操作", async () => {
             const result = await service.executeControlAction("clear-failed");
-            expect(result).toBe(true); // 模拟成功
+            expect(result).toBe(true);
         });
 
         it("应该处理清理所有操作", async () => {
             const result = await service.executeControlAction("clear-all");
-            expect(result).toBe(true); // 模拟成功
+            expect(result).toBe(true);
         });
 
         it("应该处理重试失败操作", async () => {
             const result = await service.executeControlAction("retry-failed");
-            expect(result).toBe(true); // 模拟成功
+            expect(result).toBe(true);
         });
 
         it("应该处理未知操作", async () => {
@@ -313,19 +325,15 @@ describe("QueueMonitoringService", () => {
         });
 
         it("应该重置所有数据", () => {
-            mockPreferenceStore.scanningFolder = [
-                { path: "/test1", action: "scan", status: "pending" },
-            ];
+            mockQueue = [createQueueItem({ path: "/test1", status: "pending" })];
 
             service.startMonitoring();
             vi.advanceTimersByTime(100);
 
-            // 验证有数据
             expect(service.metrics.value.currentSize).toBeGreaterThan(0);
 
             service.reset();
 
-            // 验证已重置
             expect(service.metrics.value.currentSize).toBe(0);
             expect(service.status.value).toBe("idle");
             expect(service.chartDataHistory).toEqual([]);
@@ -342,24 +350,22 @@ describe("QueueMonitoringService", () => {
         });
 
         it("应该限制图表数据点数量", () => {
-            service.updateConfig({ updateInterval: 100 }); // 更快的更新间隔
+            service.updateConfig({ updateInterval: 100 });
             service.startMonitoring();
 
-            // 模拟长时间运行
             for (let i = 0; i < 100; i++) {
                 vi.advanceTimersByTime(100);
             }
 
-            const maxDataPoints = Math.ceil(3600 / (100 / 1000)); // 1小时的数据点
+            const maxDataPoints = Math.ceil(3600 / (100 / 1000));
             expect(service.chartDataHistory.length).toBeLessThanOrEqual(maxDataPoints);
         });
     });
 
     describe("Error handling", () => {
         it("应该处理收集指标时的错误", () => {
-            // Mock preference store 抛出错误
-            (usePreferenceStore as any).mockImplementation(() => {
-                throw new Error("Store error");
+            service.setQueueProvider(() => {
+                throw new Error("Provider error");
             });
 
             service.startMonitoring();
@@ -367,11 +373,20 @@ describe("QueueMonitoringService", () => {
 
             expect(service.status.value).toBe("error");
         });
+
+        it("未设置队列来源时应标记错误", () => {
+            const freshService = new QueueMonitoringService();
+            freshService.startMonitoring();
+            vi.advanceTimersByTime(100);
+
+            expect(freshService.status.value).toBe("error");
+            freshService.stopMonitoring();
+        });
     });
 
     describe("Status updates", () => {
         it("应该在空队列时设置闲置状态", () => {
-            mockPreferenceStore.scanningFolder = [];
+            mockQueue = [];
 
             service.startMonitoring();
             vi.advanceTimersByTime(100);
@@ -380,9 +395,7 @@ describe("QueueMonitoringService", () => {
         });
 
         it("应该在有处理中操作时设置活跃状态", () => {
-            mockPreferenceStore.scanningFolder = [
-                { path: "/test1", action: "scan", status: "processing" },
-            ];
+            mockQueue = [createQueueItem({ path: "/test1", status: "processing" })];
 
             service.startMonitoring();
             vi.advanceTimersByTime(100);

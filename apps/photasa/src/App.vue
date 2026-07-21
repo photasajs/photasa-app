@@ -218,6 +218,7 @@ async function detectRecoverableImports(): Promise<void> {
 }
 
 const weiZheng = useWeiZheng();
+const scanningStore = useScanningStore();
 
 onMounted(async () => {
     // 应用启动时全局初始化菜单栏数据（国际化）
@@ -260,6 +261,7 @@ onMounted(async () => {
 
     // 初始化扫描监控服务
     scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
+    queueMonitoringService.setQueueProvider(() => scanningStore.queue);
     scanMonitoringService.startMonitoring(() => {
         logger.info("👑 [扫描监控] 自动恢复触发");
         // ✅ RFC 0048: 尉迟恭的watch会自动触发扫描

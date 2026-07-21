@@ -1,15 +1,15 @@
-# RFC 0151: Tauri CI/CD 全面重设计（PR 构建/测试 + release 联动）
+# RFC 0151: 重建 Tauri PR 构建流水线（替换 Electron build-matrix）
 
 - **Start Date**: 2026-07-21
 - **Status**: Draft
 - **Priority**: P1
-- **Area**: Photasa / CI/CD / GitHub Actions
-- **Depends on**: [0113](./0113-tauri-updater-production-and-prefs-sync.md)（release/updater workflow 设计，本 RFC 只管 PR 阶段构建测试，两者共同替换现有三个 Electron workflow）
+- **Area**: Photasa / Tauri build / GitHub Actions
+- **Depends on**: [0113](./0113-tauri-updater-production-and-prefs-sync.md)（release/updater workflow 设计，本 RFC 只管 PR 阶段构建，两者共同替换现有三个 Electron workflow）
 - **Path**: `.spec/rfc/0151-tauri-cicd-redesign.md`
 
 ## Decision
 
-`.github/workflows/build-matrix.yml` 是 Electron 专属 PR 构建/测试流水线（`npm run build:linux/mac/win`，全部定义在 `apps/desktop/package.json`，与 `apps/photasa` 无关）。仓库已是 Photasa 专属（`photasajs/photasa-app`），删除该 workflow，替换为 Tauri-only 的 PR 构建/测试 workflow。本 RFC 与 [0113](./0113-tauri-updater-production-and-prefs-sync.md) 共同构成完整 CI/CD 重设计：0113 管 `main` 分支 release/updater 发布，本 RFC 管 PR/`develop` 阶段的构建与测试门禁。
+`.github/workflows/build-matrix.yml` 构建的是 `apps/desktop`（Electron，`electron-builder`），仓库已是 Photasa 专属，这条流水线**编译的是错误的 app**。删除它，为 `apps/photasa/src-tauri`（Rust + Tauri）**从零重建**一条 PR 构建流水线——核心是"三平台 Tauri 应用能否编译通过"，测试/lint 是同一条流水线里的配套步骤，不是本 RFC 的重点，重点是 build。
 
 ## 背景
 
@@ -21,7 +21,8 @@
 
 ## Goals
 
-1. **新增 PR 构建/测试 workflow**（`.github/workflows/photasa-ci.yml`），触发条件：
+1. **核心：三平台 Tauri 构建验证**（`.github/workflows/photasa-ci.yml`，矩阵 macOS/Windows/Linux）：`cargo build -p photasa`（或 `tauri build --debug`），确认 `apps/photasa/src-tauri` 在三平台都能编译通过。这是本 RFC 要解决的主问题——当前仓库没有任何 workflow 编译 Photasa，PR 阶段发现不了跨平台编译错误（含 libheif/ffmpeg 原生依赖问题），只能等到手动本地构建或发布时才暴露。矩阵化不是可选项，是本 RFC 的存在理由。
+2. **触发条件**：
     ```yaml
     on:
         pull_request:
@@ -29,11 +30,9 @@
         push:
             branches: [develop]
     ```
-    （`develop` push 和 PR 都跑构建测试，不产出 Release；Release 只在 0113 定义的 `main` 分支路径触发，两个 workflow 触发条件不重叠但可能同时运行）。
-2. **Rust 侧检查**：`cargo test --workspace`、`cargo clippy --workspace -- -D warnings`（复用仓库根 `rust-toolchain.toml` 锁定版本，参照本仓库已确认过的 toolchain 冲突教训——CI runner 上没有 Homebrew cargo 干扰问题，但仍应显式用 `dtolnay/rust-toolchain` 或等价 action 读取 `rust-toolchain.toml`，不依赖 runner 预装的 cargo 版本）。
-3. **前端侧检查**：`apps/photasa` 的 `vitest run`、`eslint`（矩阵内单一 runner 即可，不需要跨平台跑前端测试，前端测试与 OS 无关）。
-4. **Tauri 应用构建验证**（可选，视 CI 时长决定是否矩阵化到三平台）：`cargo build -p photasa` 或 `tauri build --debug`，确认三平台（macOS/Windows/Linux）都能编译通过——这是当前 `build-matrix.yml` 唯一还有价值的部分（跨平台编译问题在 PR 阶段发现，而不是发布时才发现），需要保留等价能力，只是目标从 electron-builder 换成 `cargo build`/`tauri build`。
-5. **删除 `build-matrix.yml`**，随 0113 一并处理 Electron workflow 清理（是否在同一个 PR 里删三个文件还是分开，留给实施阶段决定，不在本 RFC 强制顺序）。
+    （`develop` push 和 PR 都跑构建，不产出 Release；Release 只在 0113 定义的 `main` 分支路径触发，两个 workflow 触发条件不重叠但可能同时运行）。
+3. **配套检查（同一 workflow 内，非本 RFC 重点但顺手接入）**：`cargo test --workspace`、`cargo clippy --workspace -- -D warnings`（复用仓库根 `rust-toolchain.toml`，显式用 `dtolnay/rust-toolchain` 或等价 action 读取，不依赖 runner 预装 cargo 版本）；`apps/photasa` 的 `vitest run`/`eslint`（单一 runner 即可，前端测试与 OS 无关，不需要矩阵化）。
+4. **删除 `build-matrix.yml`**，随 0113 一并处理 Electron workflow 清理（是否在同一个 PR 里删三个文件还是分开，留给实施阶段决定，不在本 RFC 强制顺序）。
 
 ## Non-goals
 
@@ -48,11 +47,10 @@
 
 ## Acceptance
 
-1. `.github/workflows/photasa-ci.yml` 存在，`build-matrix.yml` 已删除。
-2. PR 到 `main`/`develop` 触发 `cargo test`/`cargo clippy`/`vitest`/`eslint` 全部执行并在 PR 状态检查中可见。
-3. 三平台（macOS/Windows/Linux）Tauri 应用构建验证纳入 CI（矩阵或至少记录为何简化）。
-4. GitHub 仓库分支保护规则（Settings → Branches）已将新 workflow 的检查项设为必需——这一步是仓库设置变更，需要有仓库管理权限的人执行，AI/CI 配置本身不能自动完成，需人工确认后勾选。
-5. `develop` push 不触发任何 Release 相关 workflow（与 0113 Acceptance 第 6 条呼应，两份 RFC 共同验证"只有 main 能发布"这条边界）。
+1. `.github/workflows/photasa-ci.yml` 存在，`build-matrix.yml` 已删除，三平台（macOS/Windows/Linux）矩阵均执行 `apps/photasa/src-tauri` 构建并通过。
+2. PR 到 `main`/`develop` 触发配套的 `cargo test`/`cargo clippy`/`vitest`/`eslint`，全部在 PR 状态检查中可见。
+3. GitHub 仓库分支保护规则（Settings → Branches）已将新 workflow 的检查项设为必需——这一步是仓库设置变更，需要有仓库管理权限的人执行，AI/CI 配置本身不能自动完成，需人工确认后勾选。
+4. `develop` push 不触发任何 Release 相关 workflow（与 0113 Acceptance 第 6 条呼应，两份 RFC 共同验证"只有 main 能发布"这条边界）。
 
 ## Risks
 

@@ -294,7 +294,7 @@ const getStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
         pending: "待处理",
         processing: "处理中",
-        completed: "已完成",
+        completed: "本会话已完成",
         failed: "失败",
     };
     return labels[status] || status;
