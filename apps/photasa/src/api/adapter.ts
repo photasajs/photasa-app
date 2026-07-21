@@ -7,7 +7,6 @@
 import { isTauri } from "./env";
 import { windowAdapter } from "./window.adapter";
 import { shellAdapter } from "./shell.adapter";
-import { tianshuAdapter } from "./tianshu.adapter";
 import { scanAdapter } from "./scan.adapter";
 import { thumbnailAdapter } from "./thumbnail.adapter";
 import { importAdapter } from "./import.adapter";
@@ -23,9 +22,6 @@ export const api = {
 
     /** Shell 操作 */
     shell: shellAdapter,
-
-    /** 天枢工作流引擎 */
-    tianshu: tianshuAdapter,
 
     /** 扫描服务 */
     scan: scanAdapter,

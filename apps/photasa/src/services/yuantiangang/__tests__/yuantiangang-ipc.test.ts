@@ -244,4 +244,19 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
             currentFolderConfig: config,
         });
     });
+
+    it("未直连 matter 明确失败（RFC 0153 zouwu 已移除）", async () => {
+        const result = await service.executeZhaoling({
+            command: "retired_zouwu_matter",
+            context: {},
+            timestamp: Date.now(),
+            source: "测试",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(result.acknowledged).toBe(false);
+        expect(result.error).toContain("RFC 0153");
+        expect(mockInvoke).not.toHaveBeenCalled();
+    });
 });

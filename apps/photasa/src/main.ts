@@ -42,10 +42,6 @@ app.provide(LISSHIMING_TOKEN, lishiminService);
 // 先同步就位；恢复 appState / 扫描队列后再挂载，避免空树覆盖磁盘或 SKIP 扫描竞态
 lishiminService.prepareCourt();
 
-if (isTauri()) {
-    const { tianshuAdapter } = await import("./api/tianshu.adapter");
-    await tianshuAdapter.waitUntilReady();
-}
 await lishiminService.initializeDepartments();
 
 logger.info("📦 挂载 App.vue 应用");

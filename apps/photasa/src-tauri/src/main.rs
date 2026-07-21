@@ -1,9 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod adapters;
 mod commands;
-mod services;
 mod utils;
 
 use commands::import_execute::ImportTaskRegistry;
@@ -19,11 +17,9 @@ use commands::{
     platform, preferences, scan_queue, shell, folder_tree, splash_bridge, stubs, thumbnail, update,
     watch, window,
 };
-use services::{tianshu::resolve_workflows_dir, TianshuService};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
-use tokio::sync::RwLock;
 use utils::scan_queue_repository::{ScanQueueRepository, ScanQueueRepositoryHandle};
 
 /// 与 `tauri.conf.json` 首窗默认 label 一致（未显式写 `label` 时为 `main`）
@@ -153,36 +149,9 @@ fn main() {
                 app.manage(periodic);
             }
 
-            // 先注册占位，保证命令提取 State 不 panic
-            let tianshu_slot: Arc<RwLock<Option<TianshuService>>> = Arc::new(RwLock::new(None));
-            app.manage(tianshu_slot.clone());
-
             engine_status::emit_engine_status(&app_handle, "ready");
-
-            // 异步初始化天枢服务，完成后填入 slot
-            let handle = app.handle().clone();
-            splash_bridge::emit_splash_status(&app_handle, "载入天枢典籍...");
-            splash_bridge::emit_splash_progress(&app_handle, 55);
-            let workflows_dir = resolve_workflows_dir(&handle);
-            log::info!("🌌 天枢开坛，工作流典籍路径：{}", workflows_dir.display());
-
-            tauri::async_runtime::spawn(async move {
-                match TianshuService::new(workflows_dir, handle.clone()).await {
-                    Ok(service) => {
-                        let slot = handle.state::<Arc<RwLock<Option<TianshuService>>>>();
-                        *slot.write().await = Some(service);
-                        log::info!("🌌 天枢天书已开启，万仙归位");
-                        splash_bridge::emit_splash_status(&handle, "加载用户界面...");
-                        splash_bridge::emit_splash_progress(&handle, 80);
-                    }
-                    Err(e) => {
-                        log::error!("❌ 天枢初始化失败：{e}");
-                        engine_status::emit_engine_status(&handle, "error");
-                        splash_bridge::emit_splash_status(&handle, "天枢初始化失败");
-                        splash_bridge::emit_splash_progress(&handle, -1);
-                    }
-                }
-            });
+            splash_bridge::emit_splash_status(&app_handle, "加载用户界面...");
+            splash_bridge::emit_splash_progress(&app_handle, 80);
 
             Ok(())
         })
@@ -251,9 +220,6 @@ fn main() {
             thumbnail::remove_thumbnail,
             // 系统菜单
             menu::apply_system_menu,
-            // 天枢命令（真实引擎）
-            tianshu_command,
-            tianshu_status,
             // Stub 命令（待逐步替换）
             stubs::scan_photos,
             import_scan_directories::scan_directories,
@@ -314,111 +280,4 @@ fn main() {
                 let _ = (app_handle, event);
             }
         });
-}
-
-// ============================================================
-// 天枢命令（替换 stubs）
-// ============================================================
-
-#[derive(Debug, serde::Deserialize)]
-struct TianshuCommandInput {
-    pub intent: Option<String>,
-    #[serde(default)]
-    pub inputs: Option<serde_json::Value>,
-    /// UICommand 使用 params；Electron 工作流使用 inputs
-    #[serde(default)]
-    pub params: Option<serde_json::Value>,
-}
-
-fn resolve_tianshu_inputs(input: &TianshuCommandInput) -> serde_json::Value {
-    input
-        .inputs
-        .clone()
-        .or_else(|| input.params.clone())
-        .filter(|value| !value.is_null())
-        .unwrap_or_else(|| serde_json::json!({}))
-}
-
-#[cfg(test)]
-mod tianshu_command_tests {
-    use super::{resolve_tianshu_inputs, TianshuCommandInput};
-
-    #[test]
-    fn prefers_inputs_over_params() {
-        let input = TianshuCommandInput {
-            intent: Some("get_preferences".to_string()),
-            inputs: Some(serde_json::json!({ "key": "ui.theme" })),
-            params: Some(serde_json::json!({ "key": "ignored" })),
-        };
-        let resolved = resolve_tianshu_inputs(&input);
-        assert_eq!(resolved["key"], "ui.theme");
-    }
-
-    #[test]
-    fn falls_back_to_params_when_inputs_missing() {
-        let input = TianshuCommandInput {
-            intent: Some("update_preferences".to_string()),
-            inputs: None,
-            params: Some(serde_json::json!({ "action": "update" })),
-        };
-        let resolved = resolve_tianshu_inputs(&input);
-        assert_eq!(resolved["action"], "update");
-    }
-}
-
-#[derive(Debug, serde::Serialize)]
-struct TianshuResponse {
-    pub success: bool,
-    pub result: Option<serde_json::Value>,
-    pub error: Option<String>,
-}
-
-/// 天枢命令 — 通过 intent 路由到对应工作流
-#[tauri::command]
-async fn tianshu_command(
-    service: tauri::State<'_, Arc<RwLock<Option<TianshuService>>>>,
-    command: serde_json::Value,
-) -> Result<TianshuResponse, String> {
-    let input: TianshuCommandInput =
-        serde_json::from_value(command).map_err(|e| format!("invalid command: {e}"))?;
-
-    let inputs = resolve_tianshu_inputs(&input);
-    let intent = input
-        .intent
-        .ok_or_else(|| "missing intent field".to_string())?;
-
-    let guard = service.read().await;
-    match guard.as_ref() {
-        None => Ok(TianshuResponse {
-            success: false,
-            result: None,
-            error: Some("天枢服务尚未就绪".to_string()),
-        }),
-        Some(svc) => match svc.execute_intent(&intent, inputs).await {
-            Ok(result) => Ok(TianshuResponse {
-                success: true,
-                result: Some(result),
-                error: None,
-            }),
-            Err(e) => Ok(TianshuResponse {
-                success: false,
-                result: None,
-                error: Some(e.to_string()),
-            }),
-        },
-    }
-}
-
-/// 天枢状态查询
-#[tauri::command]
-async fn tianshu_status(
-    service: tauri::State<'_, Arc<RwLock<Option<TianshuService>>>>,
-) -> Result<serde_json::Value, String> {
-    match service.try_read() {
-        Ok(guard) => match guard.as_ref() {
-            None => Ok(serde_json::json!({ "status": "initializing", "workflows": 0 })),
-            Some(svc) => Ok(svc.status().await),
-        },
-        Err(_) => Ok(serde_json::json!({ "status": "initializing", "workflows": 0 })),
-    }
 }

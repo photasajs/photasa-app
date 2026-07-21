@@ -14,8 +14,6 @@ tauri-build = { version = "2.0", features = [] }
 
 [dependencies]
 # workspace crates
-zouwu-core = { workspace = true }
-zouwu-builtin = { workspace = true }
 photasa-preference = { workspace = true }
 photasa-import = { workspace = true }
 photasa-thumbnail = { workspace = true }

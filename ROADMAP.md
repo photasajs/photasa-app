@@ -79,7 +79,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 - **主 RFC**：[RFC 0067](.spec/rfc/completed/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略（✅ 已完成/归档，伞形索引文档）
 - **已完成（服务层）**：[0073](.spec/rfc/completed/0073-tauri-ui-migration-adapter.md) UI/适配层 ✅ **已关闭**（余项 [0149](.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)）；[0068](.spec/rfc/completed/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 Electron 细粒度对拍见 [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/completed/0072-tauri-tianshu-service-migration.md) 天枢
 
-**建议实施顺序（0073 已关闭）**：~~0137~~ ✅ / ~~0139~~ ✅ / ~~0140~~ ✅ → `zouwu-core` workspace 移除（新 RFC）。
+**建议实施顺序（0073 已关闭）**：~~0137~~ ✅ / ~~0139~~ ✅ / ~~0140~~ ✅ / ~~0153~~ ✅ `zouwu-core` workspace 物理移除。
 
 ### Tauri small RFCs（0074+）：一事一表
 
@@ -158,6 +158,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0148](.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md)            | 单张「重建缩略图」UI 契约（`create_thumbnail` 直连 + 网格刷新）                        | ✅ Implemented                                                    |
 | [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)                | 0073 关闭后 UI 适配层剩余项跟踪                                                        | ✅ Implemented                                                    |
 | [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md)            | shell/menu 退出 zouwu（贞观直连 invoke）                                               | ✅ Implemented                                                    |
+| [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)                | `zouwu-core` / `TianshuService` workspace 物理移除                                   | ✅ Implemented                                                    |
 
 ### Photasa next priorities（2026-07）
 
@@ -191,7 +192,8 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | **P1k**      | folder tree 持久化退出 zouwu（`photasa-folder-tree`）     | **0145** ✅ |
 | **P0**       | preference 贞观对齐：袁天罡 `executeZhaoling` 内 `invoke` | **0147** ✅ |
 | **P2a**      | zouwu Adapter → command 迁移模式（通用，供后续域引用）    | **0140** ✅ |
-| **P2b**      | zouwu 逐域退场排期（scan 已排除，config/preference 优先） | **0139** 📋 |
+| **P2b**      | zouwu 逐域退场排期（scan 已排除，config/preference 优先） | **0139** ✅ |
+| **P2c**      | zouwu workspace 物理移除（`zouwu-core` / `TianshuService`） | **0153** ✅ |
 | **P3h**      | Quit 恢复                                                 | **0120** ✅ |
 | **P3i**      | Settings 导入                                             | **0121** ✅ |
 | —            | Legacy importPhotos UX                                    | **0122** ❌ |
@@ -325,7 +327,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 - **RFC 0092 扩展：** 已用 `tauri-plugin-global-shortcut` 注册与 Electron 相同的日志查看器全局快捷键（macOS `cmd+shift+alt+KeyL` / 其他 `ctrl+shift+alt+KeyL`），按下时发射 `log:toggle-viewer`；系统菜单仍为 macOS `apply_system_menu`（既有实现）。
 - **RFC 0097（迁移跟踪）：** ✅ Implemented。导入表面已 Rust：`preview_import` / `execute_import` / history·undo / `extract_metadata`（0112 golden）/ 日期目录（0104）/ pause·resume（0096）。`tauri-import-stubs` = 前端兜底形状 only，**不是**未接入后端。导入历史落盘 `import_history_v1.json`。Updater 接线见 **0113** + `UPDATER.md`（生产密钥走 CI/运维，不进仓库）。
 - **Watch / 扫描队列（对齐 Electron `WatchService`）：** `notify` 回调在发射既有 `picasa:file-*` 事件的同时，经 `commands/watch_scan_queue.rs` 的 `ScanQueueCoalescer` 合并去重与防抖后发射 `picasa:add-to-scan-queue`（载荷为与 `createFileOperation` 同形的 JSON 数组）；`start_file_watch` 配置可选 `thumbnail_size`（默认 150）；`stop_file_watch` 清空待合并项。
-- **Next step（以「Photasa next priorities」为准）：** `zouwu-core` / `TianshuService` workspace 物理移除（新 RFC）；`legacy-api.ts` 逐 capability 退役。
+- **Next step（以「Photasa next priorities」为准）：** `legacy-api.ts` 逐 capability 退役。
 - **0136（2026-07-21）：** ✅ Implemented——千里眼一层目录/文件分流；`scan_directory_discovered` 双 Shengzhi；删 `SCAN_SUBFOLDERS`/reconcile 多入口；`joinFolderSegment`+`sanitizeFolderTree`；袁天罡静态 `invoke` 修复并发队列持久化。
 - **0147（2026-07-21）：** ✅ Implemented——删 `preferences_adapter`；`preferences_get`/`preferences_update`；袁天罡 `executeZhaoling` 内联 invoke；袁天罡启奏 `add_path_completed`；`intent.ts` 清 zouwu 映射。
 - **0145（2026-07-21）：** ✅ Implemented——`photasa-folder-tree` crate；删 `siming_adapter`；`siming-bridge` 单路径；`intent.ts` 移除 zouwu 映射；matter-sync `folderTree` 对齐。

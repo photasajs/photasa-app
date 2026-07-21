@@ -3,14 +3,4 @@ import type { ScanDirectoryPayload } from "./scan_directory_payload";
 import type { ScanFilePayload } from "./scan_file_payload";
 import type { ScanProgressPayload } from "./scan_progress_payload";
 
-export type ScanReport =
-    | {
-          type: "file";
-          requestId: string;
-          rootPath: string;
-          file: ScanFilePayload;
-          progress: ScanProgressPayload;
-      }
-    | { type: "directory"; requestId: string; rootPath: string; directory: ScanDirectoryPayload }
-    | { type: "complete"; requestId: string; rootPath: string }
-    | { type: "error"; requestId: string; rootPath: string; error: string };
+export type ScanReport = { "type": "file", requestId: string, rootPath: string, file: ScanFilePayload, progress: ScanProgressPayload, } | { "type": "directory", requestId: string, rootPath: string, directory: ScanDirectoryPayload, } | { "type": "complete", requestId: string, rootPath: string, } | { "type": "error", requestId: string, rootPath: string, error: string, };

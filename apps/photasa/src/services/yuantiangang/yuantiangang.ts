@@ -5,8 +5,6 @@
 
 import type {
     IYuanTianGangService,
-    Fulu,
-    FuluResponse,
 } from "../../interfaces/yuan-tian-gang.interface";
 import type { Zhaoling, ZhaolingResponse } from "../../interfaces/fang-xuan-ling.interface";
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
@@ -17,7 +15,6 @@ import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { tianshuAdapter, type Fulu as TianshuCommand } from "@renderer/api/tianshu.adapter";
 import { scanAdapter, type ScanResult } from "@renderer/api/scan.adapter";
 import { isTauri } from "@renderer/api/env";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
@@ -25,7 +22,6 @@ import { ScanActionEvent } from "@photasa/common";
 import type { NotifyPayload } from "@photasa/common";
 import type { MenuActionPayload } from "@renderer/interfaces/zhang-sun-wu-ji.interface";
 import { computeScannedFilePaths } from "./utils";
-import { IntentToFuluMapping } from "./intent";
 import {
     FOLDER_TREE_COMMANDS,
     MENU_COMMANDS,
@@ -1047,322 +1043,15 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             }
         }
 
-        try {
-            // 房玄龄既然发诏令给袁天罡，必定需要天界通信
-            // 袁天罡作为钦天监，职责是执行通信，无需再次判断
-            const fulu: Fulu = {
-                intent: zhaoling.command, // 直接使用诏令命令，不包装
-                context: zhaoling.context,
-                timestamp: Date.now(),
-                source: zhaoling.source,
-                urgency:
-                    zhaoling.priority === "imperial"
-                        ? "critical"
-                        : zhaoling.priority === "urgent"
-                          ? "high"
-                          : "normal",
-            };
-
-            const fuluResponse = await this.sendFuluToTianshu(fulu);
-            const processTime = Date.now() - startTime;
-
-            // 袁天罡职责：拆箱天枢结果，装箱为钦天监格式
-            const unboxedData = this.unboxTianshuResponse(fuluResponse);
-            const reboxedResponse = this.reboxAsZhaolingResponse(
-                zhaoling,
-                unboxedData,
-                fuluResponse,
-                processTime,
-            );
-
-            logger.info(
-                `🔮 天枢响应: ${fuluResponse.success ? "成功" : "失败"}, 意图: ${fuluResponse.intent}`,
-            );
-            logger.debug(`🔮 拆箱结果: ${unboxedData ? "有数据" : "无数据"}`);
-            logger.debug(
-                `🔮 装箱完成: 确认=${reboxedResponse.acknowledged}, 加持=${reboxedResponse.blessing}`,
-            );
-
-            const response: ZhaolingResponse = reboxedResponse;
-
-            logger.info(`🔮 完成诏令执行: ${zhaoling.command}`, response);
-            return response;
-        } catch (error) {
-            logger.error(`🔮 诏令执行失败: ${zhaoling.command}`, error);
-
-            return {
-                acknowledged: false,
-                command: zhaoling.command,
-                data: null,
-                blessing: "天界暂时无法响应",
-                timestamp: Date.now(),
-                error: error instanceof Error ? error.message : "诏令处理异常",
-            };
-        }
-    }
-
-    /**
-     * 向天枢发送符箓（内部方法）
-     * 实现符箓到UICommand的转换并调用天枢引擎
-     */
-    private async sendFuluToTianshu(fulu: Fulu): Promise<FuluResponse> {
-        logger.info(`🔮 向天枢发送符箓: ${fulu.intent}, 紧急程度: ${fulu.urgency}`);
-
-        try {
-            // 符箓到UICommand的转换
-            const uiCommand = this.convertFuluToUICommand(fulu) as TianshuCommand & {
-                id: string;
-                intent: string;
-                params: Record<string, unknown>;
-                priority: string;
-                context: unknown;
-                createdAt: number;
-            };
-            logger.info(`🔮 符箓转换为天枢命令: ${uiCommand.intent}, ID: ${uiCommand.id}`);
-
-            // 通过适配器调用天枢引擎（兼容 Tauri invoke 和 Electron IPC）
-            const tianshuResponse = await tianshuAdapter.processCommand(uiCommand);
-            const status = tianshuResponse.success ? "completed" : "failed";
-            logger.info(
-                `🔮 天枢响应: ${status}, 引擎: ${(tianshuResponse.result as any)?.engineName || "unknown"}`,
-            );
-
-            // 转换天枢响应为符箓响应
-            const errorMessage =
-                tianshuResponse.error ?? (tianshuResponse.success ? undefined : "天枢处理失败");
-
-            const fuluResponse: FuluResponse = {
-                success: tianshuResponse.success,
-                intent: fulu.intent,
-                context: fulu.context,
-                timestamp: Date.now(),
-                error: errorMessage,
-                response: {
-                    approved: tianshuResponse.success,
-                    message: errorMessage ?? "天枢已处理符箓请求",
-                    result: tianshuResponse.result,
-                    status,
-                },
-                blessing: this.generateBlessing(fulu.urgency, status),
-            };
-
-            logger.info(`🔮 天枢回馈符箓: ${fulu.intent}`, fuluResponse);
-            return fuluResponse;
-        } catch (error) {
-            logger.error(`🔮 符箓发送失败: ${fulu.intent}`, error);
-
-            return {
-                success: false,
-                intent: fulu.intent,
-                context: fulu.context,
-                timestamp: Date.now(),
-                error: error instanceof Error ? error.message : "天枢通信失败",
-            };
-        }
-    }
-
-    /**
-     * 将符箓转换为天枢UICommand
-     */
-    private convertFuluToUICommand(fulu: Fulu): unknown {
-        // 紧急程度到命令优先级的映射
-        const priorityMapping = {
-            critical: "system" as const,
-            high: "user" as const,
-            normal: "background" as const,
-        };
-
-        const intent = IntentToFuluMapping[fulu.intent];
-        if (!intent) {
-            throw new Error(
-                `🏛️ 袁天罡：符箓意图"${fulu.intent}"未列入典籍，无法转换为天界诏令。请检查intentMapping是否包含此matter的映射。`,
-            );
-        }
-        const priority = priorityMapping[fulu.urgency];
-
-        // 根据不同的诏令命令，构造相应的参数
-        let params = fulu.context ? { ...fulu.context } : {};
-
-        // 针对偏好变更类命令，需要添加action参数和格式转换
-        if (
-            fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE ||
-            fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE ||
-            fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE ||
-            fulu.intent === ZOUZHE_MATTERS.ADD_PATH ||
-            fulu.intent === ZOUZHE_MATTERS.REMOVE_PATH ||
-            fulu.intent === ZOUZHE_MATTERS.ADD_SCAN_FOLDER
-        ) {
-            // 转换人界格式到天界统一偏好格式
-            let convertedDelta: Record<string, unknown> = {};
-
-            if (fulu.intent === ZOUZHE_MATTERS.THEME_CHANGE && fulu.context?.themeId) {
-                convertedDelta = {
-                    ui: {
-                        theme: fulu.context.themeId,
-                    },
-                };
-            } else if (fulu.intent === ZOUZHE_MATTERS.LANGUAGE_CHANGE && fulu.context?.locale) {
-                convertedDelta = {
-                    ui: {
-                        language: fulu.context.locale,
-                    },
-                };
-            } else if (fulu.intent === ZOUZHE_MATTERS.THUMBNAIL_SIZE_CHANGE && fulu.context?.size) {
-                convertedDelta = {
-                    display: {
-                        thumbnailSize: fulu.context.size,
-                    },
-                };
-            } else if (
-                fulu.intent === ZOUZHE_MATTERS.ADD_PATH ||
-                fulu.intent === ZOUZHE_MATTERS.REMOVE_PATH ||
-                fulu.intent === ZOUZHE_MATTERS.ADD_SCAN_FOLDER
-            ) {
-                // ✅ 路径操作：context已经是完整的delta格式 { scanning: { paths: [...] } }
-                // 由FangXuanLing.computePreferenceDelta计算好的
-                convertedDelta = fulu.context || {};
-            } else {
-                // 如果已经是统一格式，直接使用
-                convertedDelta = fulu.context || {};
-            }
-
-            params = {
-                action: "update",
-                delta: convertedDelta,
-                source: fulu.source,
-                ...params,
-            };
-
-            logger.debug("🔮 [调试] 转换后的params:", JSON.stringify(params, null, 2));
-        }
-
+        // RFC 0153：zouwu / TianshuService 已物理移除；未直连的 matter 明确失败
+        logger.error(`🔮 诏令无贞观直连 handler: ${zhaoling.command}`);
         return {
-            id: `fulu-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-            intent,
-            params,
-            priority,
-            context: {
-                source: "api" as const,
-                metadata: {
-                    originalFuluIntent: fulu.intent,
-                    fuluSource: fulu.source,
-                    fuluTimestamp: fulu.timestamp,
-                },
-            },
-            createdAt: Date.now(),
-        };
-    }
-
-    /**
-     * 拆箱天枢响应 - 严格按契约提取业务数据
-     * 袁天罡职责：理解天枢的数据结构，提取纯业务数据
-     *
-     * 天枢标准格式优先级：
-     * 1. response.result.data (标准格式)
-     * 2. response.result (简化格式)
-     * 3. response (原始格式)
-     */
-    private unboxTianshuResponse(fuluResponse: FuluResponse): unknown {
-        logger.info("🔮 开始拆箱天枢响应");
-
-        // 早返回：检查基本状态
-        if (!fuluResponse.success) {
-            const response = fuluResponse.response as Record<string, unknown> | undefined;
-            const failureMessage =
-                fuluResponse.error ??
-                (typeof response?.message === "string" ? response.message : "天枢处理失败");
-            logger.error("🔮 天枢处理失败", failureMessage);
-            return null;
-        }
-
-        if (!fuluResponse.response) {
-            logger.error("🔮 天枢无响应数据");
-            return null;
-        }
-
-        const response = fuluResponse.response as Record<string, unknown>;
-
-        // 早返回：按优先级尝试提取数据
-        const result = response.result as Record<string, unknown> | undefined;
-
-        if (result?.data) {
-            logger.info("🔮 提取路径: response.result.data");
-            return result.data;
-        }
-
-        if (result) {
-            logger.info("🔮 提取路径: response.result");
-            return result;
-        }
-
-        logger.info("🔮 提取路径: response (原始)");
-        return response;
-    }
-
-    /**
-     * 装箱为钦天监格式 - 严格按ZhaolingResponse契约
-     * 袁天罡职责：将业务数据包装为自己的响应格式
-     */
-    private reboxAsZhaolingResponse(
-        originalZhaoling: Zhaoling,
-        businessData: unknown,
-        fuluResponse: FuluResponse,
-        processTime: number,
-    ): ZhaolingResponse {
-        logger.info(`🔮 开始装箱为钦天监格式: ${originalZhaoling.command}`);
-
-        // 映射优先级（避免重复代码）
-        const urgency =
-            originalZhaoling.priority === "imperial"
-                ? "critical"
-                : originalZhaoling.priority === "urgent"
-                  ? "high"
-                  : "normal";
-
-        const hasData = businessData !== null && businessData !== undefined;
-        const responseObj = fuluResponse.response as Record<string, unknown> | undefined;
-        const engineName =
-            (responseObj?.engineName as string) ||
-            ((responseObj?.result as Record<string, unknown>)?.engineName as string) ||
-            "unknown";
-
-        const response: ZhaolingResponse = {
-            acknowledged: fuluResponse.success,
-            command: originalZhaoling.command,
-            data: businessData,
-            blessing:
-                fuluResponse.blessing ||
-                this.generateBlessing(urgency, fuluResponse.success ? "completed" : "failed"),
+            acknowledged: false,
+            command: zhaoling.command,
+            data: null,
+            blessing: "诏令已退役",
             timestamp: Date.now(),
-            metadata: {
-                engineName,
-                processTime,
-                urgency,
-            },
+            error: `未支持的诏令: ${zhaoling.command}（zouwu 已移除，RFC 0153）`,
         };
-
-        logger.info(
-            `🔮 装箱完成: 确认=${response.acknowledged}, 数据=${hasData ? "有" : "无"}, 引擎=${engineName}, 耗时=${processTime}ms`,
-        );
-
-        return response;
-    }
-
-    /**
-     * 根据紧急程度和天枢状态生成加持祝福
-     */
-    private generateBlessing(urgency: string, status: string): string {
-        if (status === "failed") {
-            return "天枢暂时忙碌，需再次祈请";
-        }
-
-        switch (urgency) {
-            case "critical":
-                return "天枢特别加持，星君庇佑";
-            case "high":
-                return "天枢恩典降临，诸事顺遂";
-            default:
-                return "天枢常规庇佑，平安吉祥";
-        }
     }
 }

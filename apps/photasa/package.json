@@ -30,8 +30,6 @@
         "@vueuse/components": "^13.2.0",
         "@vueuse/core": "^13.2.0",
         "@vueuse/rxjs": "^13.2.0",
-        "@zouwu-wf/expression-parser": "^0.0.7",
-        "@zouwu-wf/workflow": "^0.0.7",
         "dayjs": "^1.11.18",
         "exifreader": "^4.41.3",
         "file-type": "^21.0.0",

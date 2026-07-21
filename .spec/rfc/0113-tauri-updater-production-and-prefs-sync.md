@@ -77,8 +77,8 @@ jobs:
 ```
 
 - 矩阵：macOS（arm64 + x86_64，或 universal）、Windows、Linux——与 `apps/photasa/src-tauri` 目标平台一致。
-- 步骤：checkout → setup Rust（用仓库根 `rust-toolchain.toml` 锁定版本）→ setup Node → `pnpm install` → `tauri-apps/tauri-action@v0` 指向 `apps/photasa` 工作目录。
-- 密钥：`TAURI_SIGNING_PRIVATE_KEY`/`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 走 GitHub Secrets（`UPDATER.md` 已记录这两个变量约定，直接复用，不用新造）。
+- 步骤：checkout → **共享 composite action**（见 [0151](./0151-tauri-cicd-redesign.md) Goal 5，`.github/actions/setup-photasa-toolchain`，封装 setup Rust + setup Node + `pnpm install`，与 `photasa-build.yml` 共用，不在本 workflow 内联重复）→ `tauri-apps/tauri-action@v0` 指向 `apps/photasa` 工作目录。
+- 密钥：`TAURI_SIGNING_PRIVATE_KEY`/`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 走 GitHub Secrets（`UPDATER.md` 已记录这两个变量约定，直接复用，不用新造）。**失败路径**：若这两个 secret 未配置，`tauri-action` 的签名步骤必须清晰失败并终止 workflow，不能静默产出未签名安装包——未签名包会被 Tauri updater 客户端拒绝，若 CI 没有在构建阶段就报错，问题会一直拖到用户端更新失败才被发现。落地时需要显式检查这两个环境变量是否为空并提前 fail-fast（例如构建步骤前加一个 `if: env.TAURI_SIGNING_PRIVATE_KEY == ''` 的失败步骤），不能依赖 `tauri-action` 自身的默认行为。
 - **`develop` 分支的 push/PR 只跑构建+测试（现有 CI 逻辑，不产出 Release）**，`main` 分支的 push 才触发这条发布 workflow——这是"main 才发布"的实际执行边界，不是靠人工记住不要在 develop 手动触发。
 
 **`tauri.conf.json` 配置**：
@@ -103,7 +103,7 @@ jobs:
 ### Non-goals（本次不做）
 
 - 不搭建独立更新服务器（RFC 0020 描述的自建方案，已被 GitHub Release 方案取代，不需要）。
-- 不在本 RFC 内实施三个 Electron workflow 的删除动作——本 RFC 只记录该删除，具体执行需要用户确认（涉及删除现有 CI 配置，是需要人工确认的操作）。
+- 实施阶段与新 `photasa-release.yml`/`photasa-build.yml`（0151）落地一并执行删除，不单独拆步骤。
 
 ### Acceptance（新增）
 
@@ -113,9 +113,10 @@ jobs:
 4. 私钥全程不出现在仓库或日志中（GitHub Secrets 遮蔽验证）。
 5. `UPDATER.md` 更新为反映真实已配置状态，不再是"如何配置"的纯手册，仓库链接改为 `photasajs/photasa-app`。
 6. 在 `develop` 分支 push 或打 tag，均不触发 `photasa-release.yml`（手动验证：`develop` 分支打一个测试 tag push 后确认 workflow 未运行）；只有 `main` 分支的 push 或 `main` 上的 tag 才触发。
+7. **失败路径**：临时移除/清空 `TAURI_SIGNING_PRIVATE_KEY` secret 后触发一次 workflow，确认在签名步骤明确失败（fail-fast），不产出未签名安装包或成功状态的假阳性 Release。
 
 ### Risks
 
 - `tauri-action` 的默认 GitHub Release 行为可能是"draft"或"prerelease"，需要明确配置发布状态，避免 updater 端点读到未发布的草稿 Release（草稿 Release 资产不可通过公开 URL 访问，会导致 updater 静默失败）。
 - 首次签名密钥生成后需要安全存档（如密钥丢失，所有已发布版本的用户都无法验证后续更新签名，需要重新分发新公钥——这是不可逆操作，需谨慎执行一次即可，不要重复生成）。
-- 删除现有三个 Electron workflow 是不可逆操作（虽可从 git 历史恢复），需要用户明确确认后再执行，不在本 RFC 自动进行。
+- 删除现有三个 Electron workflow 是不可逆操作（虽可从 git 历史恢复），随本 RFC 实施时一并执行。

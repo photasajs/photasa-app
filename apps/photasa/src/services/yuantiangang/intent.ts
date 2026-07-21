@@ -3,8 +3,7 @@ import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
 /**
  * 符箓意图到天枢 UserIntent 的映射（遗留 zouwu 路径）
  *
- * RFC 0137/0139：贞观各域已迁出 zouwu，生产路径全部在 executeZhaoling 内直连 invoke。
- * 本表仅保留类型导出；若仍有 matter 落入 sendFuluToTianshu，convertFuluToUICommand 会抛错。
+ * RFC 0137/0139/0153：贞观各域已迁出 zouwu；未直连 matter 在 executeZhaoling 末尾明确失败。
  */
 export const IntentToFuluMapping: Record<string, string> = {
     // 已退场域（直连 invoke，不在此映射）：
