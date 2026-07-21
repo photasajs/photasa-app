@@ -173,35 +173,33 @@ function handleTouchMove(event: TouchEvent) {
 .Handle {
     user-select: none;
     box-sizing: border-box;
-    transition: all 0.3s ease;
-    z-index: 1;
-    background: var(--color-splitter-bg);
-    border-color: var(--color-splitter-border);
+    transition:
+        background-color 0.2s ease,
+        opacity 0.2s ease;
+    z-index: 10;
+    background-color: var(--color-splitter-border, rgba(255, 255, 255, 0.12));
+    background-clip: content-box; /* Clip background to center content box to allow transparent borders */
     touch-action: none;
 
     &.isHorizontal {
-        width: 11px;
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
-        margin: 0 -5px;
+        width: 10px; /* 4px border + 2px content + 4px border */
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        margin: 0 -4px;
         cursor: col-resize;
     }
 
     &.isVertical {
-        height: 11px;
-        border-top: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        margin: -5px 0;
+        height: 10px;
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+        margin: -4px 0;
         cursor: row-resize;
     }
 
     &:hover,
     &:active {
-        border-color: var(--color-splitter-hover);
-    }
-
-    &:active {
-        border-width: 4px;
+        background-color: var(--color-splitter-hover, var(--color-primary, #3794ff));
     }
 }
 
