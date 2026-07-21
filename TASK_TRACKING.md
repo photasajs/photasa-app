@@ -21,6 +21,19 @@
 | 启动 Splash 屏幕     | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md)                      | 🟢 Low    | Done                                       | 否                                  |
 | 应用偏好（文昌）落盘 | [0107](./.spec/rfc/completed/0107-tauri-wenchang-preferences-storage.md)       | 🔴 High   | Done（0147 直连 IPC；2026-07-21 手测通过） | 否                                  |
 | 缩略图 EXIF/旋转修复 | [0146](./.spec/rfc/completed/0146-tauri-thumbnail-orientation-aspect-ratio.md) | 🔴 High   | Done                                       | 否                                  |
+| macOS 标题栏与拖动   | [0152](./.spec/rfc/0152-tauri-macos-custom-titlebar-overlay-and-drag.md)      | 🔴 High   | Done（Tauri 2.0 窗口 Overlay 及拖拽权限）   | 否                                  |
+
+### RFC 0152 — macOS 标题栏与拖动 ✅ Done
+
+**目标**：实现 macOS 平台下自定义窗口标题栏的 Overlay 融合、拖拽支持，并解决按钮点击拦截及重影问题。
+
+- [x] `tauri.conf.json`：配置 `"titleBarStyle": "Overlay"`, `"hiddenTitle": true`, `"decorations": true`
+- [x] `default.json` capability：向安全沙箱注册 `"core:window:allow-start-dragging"` 拖动权限
+- [x] `TitlebarMac.vue`：引入绝对定位 `z-index: 0` 的 `.titlebar-drag-handle` 拖动背景层
+- [x] `TitlebarMac.vue`：使用绝对居中对齐 `left: 50%; transform: translateX(-50%)`，保持 macOS 设计均衡
+- [x] `TitlebarMac.vue`：对 `.titlebar-content` 应用 `pointer-events: none` 穿透，对 `.setting-header` 应用 `pointer-events: auto` 保障按钮可点击
+- [x] `TitlebarMac.vue` / `TitlebarWinLinux.vue`：清理 CSS `-webkit-app-region` 规则，改用 Tauri 原生 `data-tauri-drag-region`
+- [x] 手测：窗口双标题重影消失，自定义标题绝对居中，空白区域和标题支持完美拖拽，且 settings 等功能按钮完全可点。
 
 ### RFC 0107 — 应用偏好（文昌）落盘 ✅ Done
 
