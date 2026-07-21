@@ -359,7 +359,7 @@ onUnmounted(() => {
     >
         <!-- 标题区 -->
         <div
-            class="px-4 py-2 border-b flex items-center justify-between"
+            class="px-4 h-12 border-b flex items-center justify-between"
             style="border-color: var(--color-border); background: var(--color-bg-secondary)"
         >
             <BaseBreadcrumb>

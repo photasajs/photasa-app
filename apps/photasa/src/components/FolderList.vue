@@ -247,7 +247,7 @@ defineExpose({
 <template>
     <div class="folder-list-card">
         <div
-            class="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between"
+            class="px-4 h-12 border-b border-[var(--color-border)] flex items-center justify-between"
         >
             <span
                 class="text-xs font-semibold tracking-widest uppercase text-[var(--color-text-secondary)]"
