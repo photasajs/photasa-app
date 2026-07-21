@@ -5,7 +5,7 @@
 - **Priority**: P1
 - **Area**: Photasa / Tauri build / GitHub Actions
 - **Depends on**: [0113](./0113-tauri-updater-production-and-prefs-sync.md)（release/updater workflow 设计，本 RFC 只管 PR 阶段构建，两者共同替换现有三个 Electron workflow）
-- **Path**: `.spec/rfc/0151-tauri-cicd-redesign.md`
+- **Path**: `.spec/rfc/completed/0151-tauri-cicd-redesign.md`
 
 ## Decision
 

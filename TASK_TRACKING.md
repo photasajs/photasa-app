@@ -21,8 +21,8 @@
 | 启动 Splash 屏幕     | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md)                      | 🟢 Low    | Done                                       | 否                                  |
 | 应用偏好（文昌）落盘 | [0107](./.spec/rfc/completed/0107-tauri-wenchang-preferences-storage.md)       | 🔴 High   | Done（0147 直连 IPC；2026-07-21 手测通过） | 否                                  |
 | 缩略图 EXIF/旋转修复 | [0146](./.spec/rfc/completed/0146-tauri-thumbnail-orientation-aspect-ratio.md) | 🔴 High   | Done                                       | 否                                  |
-| macOS 标题栏与拖动   | [0152](./.spec/rfc/0152-tauri-macos-custom-titlebar-overlay-and-drag.md)       | 🔴 High   | Done（Tauri 2.0 窗口 Overlay 及拖拽权限）  | 否                                  |
-| 重建 Tauri PR 流水线  | [0151](./.spec/rfc/0151-tauri-cicd-redesign.md)                               | 🔴 High   | Done（三平台编译矩阵及复合 Action）        | 否                                  |
+| macOS 标题栏与拖动   | [0152](./.spec/rfc/completed/0152-tauri-macos-custom-titlebar-overlay-and-drag.md) | 🔴 High   | Done（Tauri 2.0 窗口 Overlay 及拖拽权限）  | 否                                  |
+| 重建 Tauri PR 流水线  | [0151](./.spec/rfc/completed/0151-tauri-cicd-redesign.md)                     | 🔴 High   | Done（三平台编译矩阵及复合 Action）        | 否                                  |
 | zouwu workspace 物理移除 | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)          | 🔴 High   | Done（废弃 crate 及代码物理删除）          | 否                                  |
 
 ### RFC 0153 — zouwu workspace 物理移除 ✅ Done
