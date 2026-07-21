@@ -3,9 +3,13 @@
 - **Start Date**: 2026-03-28
 - **RFC PR**: (leave this empty)
 - **Implementation Issue**: (leave this empty)
-- **Status**: ⏸️ Deferred for Photasa (Electron-only maintenance). Partially Implemented — Phase 1 done；Phase 2 **frozen**（见 Compliance Audit）
+- **Status**: ❌ Rejected (2026-07-20)
 - **Author**: AI
 - **Target Release**: v2.1.0
+
+## Rejection Reason
+
+Photasa / Tauri architecture uses Rust-first backend architecture (`crates/` and direct Rust IPC). Extracting Node/TypeScript main packages (`@photasa/*`) is Electron legacy backlog and not maintained for Photasa. See [ROADMAP.md](../../ROADMAP.md) Golden Rule.
 
 ## Out of scope (Photasa / Tauri)
 
