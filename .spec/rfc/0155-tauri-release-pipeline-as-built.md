@@ -4,7 +4,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: 🔨 In Progress（Acceptance 1/2/3/5 done，4/6/7 pending）
+**Status**: ✅ Implemented（Acceptance 1/2/3/4/5/6/7/8 done；Acceptance 4 的"手动删除配置触发一次 workflow"验证步骤本身需实跑 CI 一次，见 Risks）
 **Created**: 2026-07-22
 **Area**: Tauri / Update / CI
 **Supersedes（文档层面，非代码）**: [0113](./completed/0113-tauri-updater-production-and-prefs-sync.md) 第41-123行「GitHub Release 作为 updater 后端」章节、[0151](./completed/0151-tauri-cicd-redesign.md) 中对 `photasa-release.yml` 的引用
@@ -101,13 +101,14 @@ push main
 1. ✅ `tauri.conf.json` 的 `bundle.createUpdaterArtifacts` 为 `true`。
 2. ✅ `tauri.conf.json` 的 `plugins.updater.pubkey` 为非空真实公钥（`D83AB98591C7FA55`，用户本人持有密码备份）。
 3. ✅ 本地执行一次 `tauri build`（release profile），确认产出 `.sig` 文件（`target/release/bundle/macos/Photasa.app.tar.gz.sig`，2026-07-22 已验证两次：初版密钥 + 最终密钥）。`latest.json` 由 `tauri-action` 在实际 GitHub Release 发布流程中生成，本地单机 build 不产出该文件，留待 CI 实跑验证。
-4. ⏳ `upload-release-assets.yml` 新增产物存在性断言步骤，人为删除 `createUpdaterArtifacts` 配置后触发一次 workflow，确认该断言步骤正确失败。**未实施**。
+4. ✅ `upload-release-assets.yml` 新增「Verify updater artifact was published」步骤，`tauri-action` 之后用 `gh release view --json assets` 校验 `latest.json` 存在，不存在则 fail-fast。**「人为删除配置后触发一次 workflow 确认断言生效」这一手动验证动作尚未实跑**——断言代码已落地，但未在真实 CI 环境验证过它会在预期场景下正确触发失败。
 5. ✅ `completed/0113-...md` 与 `completed/0151-...md` 顶部已各加一行指向本 RFC 的说明。
-6. ⏳ `UPDATER.md:13` 更新为准确描述（不再与第37-50行矛盾）。**未实施**。
-7. ⏳ `release.yml` 顶部新增注释：标注 `name: Release Please` 为跨文件契约。**未实施**。
-8. ⏳（新增，本次审查发现）`upload-release-assets.yml` 第25-34行 matrix 的 `bundle_globs` 字段是死配置——`tauri-action@v0` 自行管理构建产物与上传，正文步骤从未引用 `matrix.bundle_globs`。清理或说明保留原因。**未实施**。
+6. ✅ `UPDATER.md:13` 已更新为准确描述，不再与配置现状矛盾。
+7. ✅ `release.yml` 顶部已加注释标注 `name: Release Please` 为跨文件契约。
+8. ✅（新增，本次审查发现）`upload-release-assets.yml` 原 matrix 的 `bundle_globs` 死字段已清理，matrix 简化为仅 `os` 列表，加注释说明 `tauri-action` 自管构建产物。
 
 ## Risks
 
 - 密钥生成与写入 `pubkey` 是一次性操作，写错或用占位符提交会导致后续排查困难——执行前确认密钥来源可靠、私钥已安全存入 Secret。
-- `workflow_run` 名字匹配耦合（`upload-release-assets.yml:9` ↔ `release.yml:1`）在 Acceptance 7 落实前仍是隐性风险，本 RFC 用注释缓解，未做结构性根除（结构性根除需改用 `workflow_call` 显式调用，超出本 RFC 范围，如需要另开 RFC）。
+- `workflow_run` 名字匹配耦合（`upload-release-assets.yml:9` ↔ `release.yml:1`）已用注释缓解（Acceptance 7），未做结构性根除（结构性根除需改用 `workflow_call` 显式调用，超出本 RFC 范围，如需要另开 RFC）。
+- Acceptance 4 的产物存在性断言代码已落地，但**未经真实 CI 运行验证**——下一次 `main` 分支产生真实 release 时才是第一次实战验证机会；若断言逻辑本身有误（如 `gh release view` 权限不足、`jq` 过滤条件写错），要等到那次 release 才会暴露。

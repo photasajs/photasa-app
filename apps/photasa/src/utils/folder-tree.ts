@@ -175,6 +175,18 @@ function dedupeSiblingNodes(parentKey: string | null, children: FolderNode[]): F
             child.title = resolved.split("/").pop() || resolved;
         }
 
+        if (parentKey !== null) {
+            const title = String(child.title).trim();
+            if (
+                title.startsWith(".") ||
+                /\.(jpg|jpeg|png|gif|bmp|webp|tiff?|svg|ico|psd|heic|heif|avif|raw|cr2|cr3|nef|arw|dng|raf|orf|mp4|mov|avi|mkv|m4v|3gp|wmv|flv|webm|mpg|mpeg|m2v|mts|m2ts|ts|vob|rmvb|rm)$/i.test(
+                    title,
+                )
+            ) {
+                continue;
+            }
+        }
+
         child.children = child.children?.length ? dedupeSiblingNodes(resolved, child.children) : [];
 
         const existing = grouped.get(resolved);

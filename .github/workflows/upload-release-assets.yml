@@ -21,18 +21,9 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                include:
-                    - os: ubuntu-latest
-                      bundle_globs: |
-                          apps/photasa/src-tauri/target/release/bundle/**/*.deb
-                          apps/photasa/src-tauri/target/release/bundle/**/*.AppImage
-                    - os: macos-latest
-                      bundle_globs: |
-                          apps/photasa/src-tauri/target/release/bundle/macos/**/*.app
-                    - os: windows-latest
-                      bundle_globs: |
-                          apps/photasa/src-tauri/target/release/bundle/**/*.msi
-                          apps/photasa/src-tauri/target/release/bundle/**/*.exe
+                # tauri-action manages its own build outputs & upload per OS;
+                # this matrix only selects the runner (no per-OS glob config needed).
+                os: [ubuntu-latest, macos-latest, windows-latest]
 
         steps:
             - name: Checkout release commit
@@ -92,3 +83,20 @@ jobs:
                   releaseName: "Photasa ${{ steps.release.outputs.tag_name }}"
                   releaseBody: "See release notes on GitHub."
                   releaseId: ${{ steps.release.outputs.tag_name }}
+
+            # RFC 0155 Acceptance 4/8: createUpdaterArtifacts silently no-ops if unset —
+            # this turns "workflow green" into "updater artifact actually exists".
+            - name: Verify updater artifact was published
+              if: steps.release.outputs.should_upload == 'true'
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  set -euo pipefail
+                  tag="${{ steps.release.outputs.tag_name }}"
+                  if ! gh release view "$tag" --repo "${{ github.repository }}" --json assets \
+                      --jq '.assets[].name' | grep -qx "latest.json"; then
+                    echo "::error::latest.json missing from release $tag — createUpdaterArtifacts may be disabled or signing failed. Updater will be unreachable."
+                    exit 1
+                  fi
+                  echo "latest.json present on release $tag."
