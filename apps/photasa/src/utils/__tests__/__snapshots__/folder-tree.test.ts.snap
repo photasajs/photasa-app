@@ -27,13 +27,7 @@ exports[`Folder Tree > should build folder tree when root exists 1`] = `
   {
     "children": [
       {
-        "children": [
-          {
-            "children": [],
-            "key": "/test/google.com/test.jpg",
-            "title": "test.jpg",
-          },
-        ],
+        "children": [],
         "key": "/test/google.com",
         "title": "google.com",
       },
