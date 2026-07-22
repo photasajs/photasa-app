@@ -6,10 +6,16 @@
  * Windows/Linux 暂不实现系统菜单（与 legacy-api 行为一致）。
  */
 use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
-use tauri::menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
-use tauri::{AppHandle, Emitter};
+use tauri::AppHandle;
 
+#[cfg(target_os = "macos")]
+use std::sync::OnceLock;
+#[cfg(target_os = "macos")]
+use tauri::menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
+#[cfg(target_os = "macos")]
+use tauri::Emitter;
+
+#[cfg(target_os = "macos")]
 static MENU_LISTENER_REGISTERED: OnceLock<()> = OnceLock::new();
 
 // ============================================================
@@ -31,8 +37,9 @@ pub struct MenuItemData {
  pub item_type: Option<String>,
 }
 
+#[cfg(target_os = "macos")]
 #[derive(Debug, Serialize, Clone)]
-pub struct MenuActionPayload {
+struct MenuActionPayload {
  pub key: String,
 }
 

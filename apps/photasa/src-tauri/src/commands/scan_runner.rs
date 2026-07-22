@@ -413,39 +413,36 @@ fn scan_directory_at<'a>(
  decision.strategy, decision.reason
  );
 
- let file_count;
-
- if decision.strategy == ScanStrategy::Skip {
- // SKIP：标记 folder 缓存完成（contract reference initialize + markScanComplete），再重发 photoList。
- if let Ok(mut cache_mgr) =
- IncrementalCacheManager::initialize(Path::new(&folder), false)
- {
- if let Err(err) = cache_mgr.mark_scan_complete() {
- error!("🌌 千里眼 SKIP 缓存完成标记失败: {err}");
- }
- }
- restore_cached_files(app, request_id, &folder);
- emit_immediate_subdirectory_reports(app, request_id, &folder);
- file_count = read_config_sync(&folder)
- .ok()
- .flatten()
- .map(|c| c.photo_list.len())
- .unwrap_or(0);
+ let file_count = if decision.strategy == ScanStrategy::Skip {
+  // SKIP：标记 folder 缓存完成（contract reference initialize + markScanComplete），再重发 photoList。
+  if let Ok(mut cache_mgr) =
+   IncrementalCacheManager::initialize(Path::new(&folder), false)
+  {
+   if let Err(err) = cache_mgr.mark_scan_complete() {
+    error!("🌌 千里眼 SKIP 缓存完成标记失败: {err}");
+   }
+  }
+  restore_cached_files(app, request_id, &folder);
+  emit_immediate_subdirectory_reports(app, request_id, &folder);
+  read_config_sync(&folder)
+   .ok()
+   .flatten()
+   .map(|c| c.photo_list.len())
+   .unwrap_or(0)
  } else {
- file_count = match IncrementalCacheManager::initialize(Path::new(&folder), force_rescan)
- {
- Ok(cache_mgr) => {
- match run_full_directory_scan(app, request_id, scan, cache_mgr).await {
- Ok(n) => n,
- Err(err) => return Err(err),
- }
- }
- Err(err) => {
- warn!("🌌 【警示】增量缓存初始化失败，降级传统扫描: {err}");
- run_traditional_directory_scan(app, request_id, scan).await?
- }
+  match IncrementalCacheManager::initialize(Path::new(&folder), force_rescan) {
+   Ok(cache_mgr) => {
+    match run_full_directory_scan(app, request_id, scan, cache_mgr).await {
+     Ok(n) => n,
+     Err(err) => return Err(err),
+    }
+   }
+   Err(err) => {
+    warn!("🌌 【警示】增量缓存初始化失败，降级传统扫描: {err}");
+    run_traditional_directory_scan(app, request_id, scan).await?
+   }
+  }
  };
- }
 
  Ok(file_count)
  })

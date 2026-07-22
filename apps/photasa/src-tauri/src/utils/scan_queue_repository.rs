@@ -4,8 +4,7 @@
 
 use crate::utils::scan_queue_error::{ScanQueueError, ScanQueueResult};
 use crate::utils::scan_queue_storage::{
- action_path, build_scanning_queue_document, extract_queue_array, queue_contains_path,
- scanning_queue_path,
+ action_path, build_scanning_queue_document, queue_contains_path, scanning_queue_path,
 };
 use serde_json::Value;
 use std::path::{Path, PathBuf};
@@ -79,11 +78,6 @@ impl ScanQueueRepository {
  }
  }
 
- /// 对齐 legacy-api `get_scanning_queue` / `restoreQueue`
- pub async fn get_json_array(&self) -> ScanQueueResult<Value> {
- Ok(Value::Array(self.get().await?))
- }
-
  /// 对齐 legacy-api `add_scan_action`
  pub async fn add_actions(&self, actions: &[Value]) -> ScanQueueResult<Vec<Value>> {
  self.mutate(|queue| {
@@ -141,22 +135,6 @@ impl ScanQueueRepository {
  Ok(())
  })
  .await
- }
-
- /// 千里眼 legacy `persistQueue`：整表替换
- pub async fn replace_all(&self, input: Value) -> ScanQueueResult<Vec<Value>> {
- let queue = extract_queue_array(&input)?;
- self.mutate(|current| {
- *current = queue;
- Ok(())
- })
- .await
- }
-
- /// 千里眼 legacy `persistQueue` 副作用包装
- pub async fn persist_external(&self, input: Value) -> ScanQueueResult<Value> {
- let queue = self.replace_all(input).await?;
- Ok(serde_json::json!({ "success": true, "queueSize": queue.len() }))
  }
 
  /// 单写者临界区：内存修改 + 原子落盘
