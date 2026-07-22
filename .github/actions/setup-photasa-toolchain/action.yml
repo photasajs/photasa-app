@@ -29,9 +29,25 @@ runs:
 
         - name: Install system dependencies (Windows)
           if: runner.os == 'Windows'
-          run: |
-              choco install nasm
           shell: pwsh
+          run: |
+              choco install llvm nasm --yes --no-progress
+              echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+
+        # FFmpeg configure needs cl.exe with INCLUDE/LIB; without this it fails with
+        # "cl.exe is unable to create an executable file".
+        - name: Setup MSVC environment (Windows)
+          if: runner.os == 'Windows'
+          uses: ilammy/setup-msvc-dev@v1
+          with:
+              arch: x64
+
+        # Append MSYS2 after MSVC so MSYS2 link.exe does not shadow MSVC linker.
+        # sh/make/perl are required by ffmpeg-sys-next configure on Windows.
+        - name: Append MSYS2 and NASM to PATH (Windows)
+          if: runner.os == 'Windows'
+          shell: pwsh
+          run: echo "PATH=$env:PATH;C:\msys64\usr\bin;C:\Program Files\NASM" >> $env:GITHUB_ENV
 
         - name: Install Rust toolchain
           uses: dtolnay/rust-toolchain@master
@@ -42,7 +58,7 @@ runs:
         - name: Rust Cache
           uses: Swatinem/rust-cache@v2
           with:
-              workspaces: "apps/photasa/src-tauri -> target"
+              workspaces: ". -> target"
 
         - name: Setup pnpm
           uses: pnpm/action-setup@v3

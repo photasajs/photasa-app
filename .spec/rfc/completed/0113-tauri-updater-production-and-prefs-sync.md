@@ -8,7 +8,9 @@
 **Created**: 2026-06-06
 **Area**: Tauri / Update
 **Depends on**: RFC 0090, RFC 0106, RFC 0107
-**Related**: [0151](./completed/0151-tauri-cicd-redesign.md)（PR 阶段构建/测试 workflow 重设计）
+**Related**: [0151](./0151-tauri-cicd-redesign.md)（PR 阶段构建/测试 workflow 重设计）
+
+> ⚠️ **2026-07-22**：本文档「2026-07-21 补充：GitHub Release 作为 updater 后端」章节（第41-123行）中 `photasa-release.yml` 相关设计已被 [0155](../0155-tauri-release-pipeline-as-built.md) 取代——实际实现未新建该文件，而是复用 `release.yml`（release-please）+ `upload-release-assets.yml`（workflow_run 响应）两段式架构。实际架构、以及生产阻断级配置缺口（`createUpdaterArtifacts`/`pubkey`）详见 0155，本文档正文其余部分不再修改，作为历史意图记录保留。
 
 ---
 

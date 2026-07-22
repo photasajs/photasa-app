@@ -7,6 +7,8 @@
 - **Depends on**: [0113](./0113-tauri-updater-production-and-prefs-sync.md)（release/updater workflow 设计，本 RFC 只管 PR 阶段构建，两者共同替换现有三个 retired workflow）
 - **Path**: `.spec/rfc/completed/0151-tauri-cicd-redesign.md`
 
+> ⚠️ **2026-07-22**：本文档中对 `photasa-release.yml` 的引用（见 Depends on 及正文）已被 [0155](../0155-tauri-release-pipeline-as-built.md) 取代——实际 release 流水线未新建该文件，架构见 0155。本 RFC 自身负责的 PR 构建流水线（`photasa-build.yml`）部分不受影响，仍按本文档描述实现。
+
 ## Decision
 
 `.github/workflows/build-matrix.yml` 构建的是 `legacy-api contract`（contract reference，`legacy packager`），仓库已是 Photasa 专属，这条流水线**编译的是错误的 app**。删除它，为 `apps/photasa/src-tauri`（Rust + Tauri）**从零重建**一条 PR 构建流水线——核心是"三平台 Tauri 应用能否编译通过"，测试/lint 是同一条流水线里的配套步骤，不是本 RFC 的重点，重点是 build。

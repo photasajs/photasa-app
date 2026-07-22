@@ -72,6 +72,7 @@
     "bundle": {
         "active": true,
         "targets": ["app"],
+        "createUpdaterArtifacts": true,
         "icon": [
             "icons/32x32.png",
             "icons/128x128.png",
@@ -89,7 +90,7 @@
             "requireLiteralLeadingDot": false
         },
         "updater": {
-            "pubkey": "",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdCREZDNDQzMjhEQzJFNDIKUldSQ0x0d29ROFRmZTZtSExaSG4xL1ZtSE4rL0NyeEdDeGlEeVVPYjB4S2JZUzZOaThvY1l6MDcK",
             "endpoints": [
                 "https://github.com/photasajs/photasa-app/releases/latest/download/latest.json"
             ]
