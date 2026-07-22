@@ -28,7 +28,10 @@ pub fn action_path(action: &Value) -> Option<&str> {
 }
 
 pub fn queue_contains_path(queue: &[Value], path: &str) -> bool {
-    queue.iter().any(|item| action_path(item) == Some(path))
+    let clean_path = path.trim_end_matches('/');
+    queue.iter().any(|item| {
+        action_path(item).map(|p| p.trim_end_matches('/')) == Some(clean_path)
+    })
 }
 
 #[cfg(test)]

@@ -97,8 +97,15 @@ impl ScanQueueRepository {
 
  /// 对齐 legacy-api `remove_scan_action`
  pub async fn remove_action(&self, path: &str) -> ScanQueueResult<Vec<Value>> {
+ let clean_path = path.trim_end_matches('/');
  self.mutate(|queue| {
- queue.retain(|item| action_path(item) != Some(path));
+ queue.retain(|item| {
+ if let Some(item_p) = action_path(item) {
+ item_p.trim_end_matches('/') != clean_path
+ } else {
+ true
+ }
+ });
  Ok(())
  })
  .await
@@ -115,10 +122,11 @@ impl ScanQueueRepository {
  return Err(ScanQueueError::InvalidStatus(status.to_string()));
  }
 
+ let clean_path = path.trim_end_matches('/');
  self.mutate(|queue| {
  let index = queue
  .iter()
- .position(|item| action_path(item) == Some(path))
+ .position(|item| action_path(item).map(|p| p.trim_end_matches('/')) == Some(clean_path))
  .ok_or_else(|| ScanQueueError::invalid_input(format!("任务不存在: {path}")))?;
 
  let mut task = queue[index]
