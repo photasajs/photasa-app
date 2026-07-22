@@ -27,7 +27,6 @@ pub async fn app_state_restore() -> Result<Value, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use photasa_folder_tree::FolderTreeStore;
     use serde_json::json;
     use std::path::PathBuf;

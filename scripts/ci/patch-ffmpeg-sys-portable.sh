@@ -18,7 +18,7 @@ TUNE_REPLACEMENT="${FFMPEG_CI_MTUNE:-generic}"
 MANIFEST="apps/photasa/src-tauri/Cargo.toml"
 
 if [[ -f "${MANIFEST}" ]]; then
-    cargo fetch --manifest-path "${MANIFEST}" -p ffmpeg-sys-next
+    cargo fetch --manifest-path "${MANIFEST}"
 else
     echo "manifest missing (${MANIFEST}); skipping cargo fetch"
 fi

@@ -59,4 +59,4 @@ jobs:
 
             - name: Build Tauri App (Debug Profile)
               # PR/matrix CI has no signing secret; keep pubkey in config for release only.
-              run: pnpm --filter @photasa/photasa tauri build --debug -- -c '{"bundle":{"createUpdaterArtifacts":false}}'
+              run: pnpm --filter @photasa/photasa run tauri:build:ci
