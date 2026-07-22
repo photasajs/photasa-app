@@ -15,7 +15,7 @@
 Three remaining items from RFC 0097 (Phase 7 closure):
 
 1. `get_directory` must resolve OS standard paths (`desktop`, `documents`, `home`, …) via `app.getPath(name)` equivalent — previously always returned `null` for these names.
-2. `scan_directories` must return `FileGroup[]` (with optional `filters`) instead of a flat `string[]` — matching Electron `import-worker` `handleScanDirectories` → `detectEnhancedFileGroups`.
+2. `scan_directories` must return `FileGroup[]` (with optional `filters`) instead of a flat `string[]` — matching contract reference `import-worker` `handleScanDirectories` → `detectEnhancedFileGroups`.
 3. Remove deprecated WASM stub commands (`load_wasm_module`, `call_wasm_function`) and their supporting `wasm.rs` files.
 
 ---
@@ -24,10 +24,10 @@ Three remaining items from RFC 0097 (Phase 7 closure):
 
 ### `get_directory`
 
-Electron `DirectoryService` delegates to `app.getPath(name)` directly:
+contract reference `DirectoryService` delegates to `app.getPath(name)` directly:
 
 ```typescript
-// apps/desktop/src/main/directory/directory-service.ts:74
+// historical main/directory/directory-service.ts:74
 this.ipcMain.handle("picasa:get-directory", async (_, args) => {
     return this.app.getPath(args.name);
 });
@@ -37,7 +37,7 @@ The old Tauri implementation only looked up `DirectoryStore` (an in-memory map p
 
 ### `scan_directories`
 
-The Electron worker returns `FileGroup[]` after running `detectEnhancedFileGroups`. The old Tauri stub returned a flat `Vec<String>` (raw paths), which was incompatible with the TypeScript `FileGroup` shape consumed by the import flow.
+The contract reference worker returns `FileGroup[]` after running `detectEnhancedFileGroups`. The old Tauri stub returned a flat `Vec<String>` (raw paths), which was incompatible with the TypeScript `FileGroup` shape consumed by the import flow.
 
 ### WASM cleanup
 
@@ -51,17 +51,17 @@ The Electron worker returns `FileGroup[]` after running `detectEnhancedFileGroup
 
 ```rust
 pub fn resolve_known_directory_path(name: &str) -> Option<String> {
-    let path = match name {
-        "home"      => dirs::home_dir(),
-        "desktop"   => dirs::desktop_dir(),
-        "documents" => dirs::document_dir(),
-        "downloads" => dirs::download_dir(),
-        "music"     => dirs::audio_dir(),
-        "pictures"  => dirs::picture_dir(),
-        "videos"    => dirs::video_dir(),
-        _           => None,
-    }?;
-    Some(path.to_string_lossy().into_owned())
+ let path = match name {
+ "home" => dirs::home_dir(),
+ "desktop" => dirs::desktop_dir(),
+ "documents" => dirs::document_dir(),
+ "downloads" => dirs::download_dir(),
+ "music" => dirs::audio_dir(),
+ "pictures" => dirs::picture_dir(),
+ "videos" => dirs::video_dir(),
+ _ => None,
+ }?;
+ Some(path.to_string_lossy().into_owned())
 }
 ```
 
@@ -81,7 +81,7 @@ Replaces stub `stubs::scan_directories`:
 
 - Walks each source path with `walkdir`
 - Applies `filters` (fileTypes, sizeRange, includeSubfolders, hidden/photasa exclusions)
-- Calls `extract_metadata_request` per file (matching Electron `createFileInfo`)
+- Calls `extract_metadata_request` per file (matching contract reference `createFileInfo`)
 - Groups result via `detect_enhanced_file_groups`
 - Returns `Vec<Value>` in camelCase `FileGroup` shape
 

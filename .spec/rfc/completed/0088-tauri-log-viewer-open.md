@@ -9,7 +9,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
@@ -19,12 +19,12 @@ One concern: **log viewer open/state**. If the app needs a command to signal “
 
 ## Motivation
 
-Electron log-viewer-service may have an “open” signal. Tauri must match so existing UI (e.g. `window.api.viewerOpen()`) works via flat legacy API (RFC 0075).
+contract reference log-viewer-service may have an “open” signal. Tauri must match so existing UI (e.g. `window.api.viewerOpen()`) works via flat legacy API (RFC 0075).
 
 ## Detailed design
 
 - **Command** (if needed): `log_viewer_open()` or equivalent. Side effect: e.g. start buffering, or no-op if stream (0089) is always-on.
-- **Rust**: Optional; depends on current Electron contract. No Node.
+- **Rust**: Optional; depends on current legacy-api contract. No Node.
 
 ## Drawbacks
 
@@ -36,4 +36,4 @@ None.
 
 ## Unresolved questions
 
-Confirm exact Electron contract (viewerOpen vs no-op).
+Confirm exact legacy-api contract (viewerOpen vs no-op).

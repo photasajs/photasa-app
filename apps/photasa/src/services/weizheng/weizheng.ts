@@ -493,6 +493,12 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
             const restoredTree = this.folderTree;
             const cleanedTree: FolderNode[] = deepClone(restoredTree);
+            const watchRootPaths = this.fangXuanLingService.preference.paths || [];
+            for (const rootPath of watchRootPaths) {
+                if (rootPath && typeof rootPath === "string") {
+                    addRoot(cleanedTree, rootPath);
+                }
+            }
             sanitizeFolderTree(cleanedTree);
             await this.persistFolderTreeIfChanged(restoredTree, cleanedTree);
 
@@ -631,6 +637,7 @@ export class WeiZhengService implements IService, IWeiZhengService {
             department: GUANYUAN_NAMES.WEI_ZHENG,
             matter: ZOUZHE_MATTERS.GET_FOLDER_CONFIG,
             content: { folder },
+            timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
         });
         return response.data;
@@ -645,6 +652,7 @@ export class WeiZhengService implements IService, IWeiZhengService {
             department: GUANYUAN_NAMES.WEI_ZHENG,
             matter: ZOUZHE_MATTERS.FIX_FOLDER_CONFIG,
             content: { folder },
+            timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
         });
         return response.data;
@@ -659,6 +667,7 @@ export class WeiZhengService implements IService, IWeiZhengService {
             department: GUANYUAN_NAMES.WEI_ZHENG,
             matter: ZOUZHE_MATTERS.RESET_FOLDER_CONFIG,
             content: { folder },
+            timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
         });
         return response.data;

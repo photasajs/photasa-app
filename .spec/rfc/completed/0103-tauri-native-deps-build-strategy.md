@@ -8,7 +8,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
@@ -54,16 +54,16 @@ ffmpeg-next = { version = "8.1", default-features = false, features = ["build", 
 
 ```yaml
 - name: Install NASM (macOS)
-  if: runner.os == 'macOS'
-  run: brew install nasm
+ if: runner.os == 'macOS'
+ run: brew install nasm
 
 - name: Install NASM (Linux)
-  if: runner.os == 'Linux'
-  run: sudo apt-get install -y nasm
+ if: runner.os == 'Linux'
+ run: sudo apt-get install -y nasm
 
 - name: Install NASM (Windows)
-  if: runner.os == 'Windows'
-  uses: ilammy/setup-nasm@v1
+ if: runner.os == 'Windows'
+ uses: ilammy/setup-nasm@v1
 ```
 
 **注意：** `ffmpeg-next` 静态构建会显著增加 Cargo build 时间（首次约 5-10 分钟）。启用 `sccache` 或 `Swatinem/rust-cache` 缓解。
@@ -110,7 +110,7 @@ ldd apps/photasa/src-tauri/target/release/photasa | grep -E "avcodec|heif"
 
 ## Alternatives
 
-- **动态链接 + 打包 FFmpeg 二进制**：RFC 0028 已记录 Electron 侧的 FFmpeg 二进制打包方案；Tauri 侧可类似处理，但需额外的打包配置
+- **动态链接 + 打包 FFmpeg 二进制**：RFC 0028 已记录 reference implementation的 FFmpeg 二进制打包方案；Tauri 侧可类似处理，但需额外的打包配置
 - **剥离 FFmpeg 依赖**：仅用 `extract_metadata_exif.rs`（`kamadak-exif`）处理图片，视频元数据改用轻量 MP4 解析（如 `mp4ameta`）；但覆盖范围不如 ffmpeg-next
 
 ## Implementation Checklist

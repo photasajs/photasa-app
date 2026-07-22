@@ -12,7 +12,10 @@
         "prettier --write",
         "eslint --fix --quiet --cache --cache-location apps/photasa/node_modules/.cache/eslint/lint-staged --no-eslintrc -c apps/photasa/.eslintrc.cjs"
     ],
-    "apps/desktop/src/**/*.{ts,tsx,vue,js}": ["prettier --write"],
+    "apps/photasa/*.{ts,js,mjs,cjs}": [
+        "prettier --write",
+        "eslint --fix --quiet --cache --cache-location apps/photasa/node_modules/.cache/eslint/lint-staged --no-eslintrc -c apps/photasa/.eslintrc.cjs"
+    ],
     "packages/**/*.{ts,tsx}": ["prettier --write"],
     "**/*.{json,md,yaml,yml}": ["prettier --write"]
 }

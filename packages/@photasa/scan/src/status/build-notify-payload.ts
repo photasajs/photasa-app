@@ -37,7 +37,7 @@ function formatScanWorkerError(error: unknown): string {
 
 /**
  * 将扫描 worker 消息转换为状态条用的 {@link NotifyPayload}；无需通知时返回 `undefined`。
- * 纯函数，无 Electron、无 IO。
+ * 纯函数，无 contract reference、无 IO。
  */
 export function buildScanNotifyPayload(data: ScanWorkerNotifySource): NotifyPayload | undefined {
     const timestamp = Date.now();

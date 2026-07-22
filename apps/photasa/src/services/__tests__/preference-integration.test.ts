@@ -89,7 +89,7 @@ Object.defineProperty(window, "tianshu", {
     writable: true,
 });
 
-Object.defineProperty(window, "electronAPI", {
+Object.defineProperty(window, "legacyPreloadAPI", {
     value: { tianshu: mockTianshu },
     writable: true,
 });

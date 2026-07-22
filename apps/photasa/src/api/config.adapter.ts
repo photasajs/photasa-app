@@ -4,6 +4,7 @@
  */
 
 import { isTauri } from "./env";
+import { callLegacyPreloadSection } from "./legacy-preload-access";
 
 export const configAdapter = {
     /**
@@ -13,9 +14,8 @@ export const configAdapter = {
         if (isTauri()) {
             const { invoke } = await import("@tauri-apps/api/core");
             return await invoke("query_config", { paths });
-        } else {
-            return await (window as any).electronAPI?.config?.query(paths);
         }
+        return (await callLegacyPreloadSection("config", "query", paths)) as string[];
     },
 
     /**
@@ -26,7 +26,7 @@ export const configAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("add_config", { paths });
         } else {
-            await (window as any).electronAPI?.config?.add(paths);
+            await callLegacyPreloadSection("config", "add", paths);
         }
     },
 
@@ -38,7 +38,7 @@ export const configAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("remove_config", { paths });
         } else {
-            await (window as any).electronAPI?.config?.remove(paths);
+            await callLegacyPreloadSection("config", "remove", paths);
         }
     },
 };

@@ -11,11 +11,11 @@ Photasa / Tauri architecture uses Rust-first backend architecture (`crates/phota
 
 ## Abstract
 
-Extract the `Siming` engine and its adapter from `apps/desktop` to a dedicated package `@photasa/siming`. This improves modularity and allows other applications to use the app state management capabilities.
+Extract the `Siming` engine and its adapter from `legacy-api contract` to a dedicated package `@photasa/siming`. This improves modularity and allows other applications to use the app state management capabilities.
 
 ## Motivation
 
-Currently, `SimingEngine` resides in `apps/desktop`. As we scale to more applications (e.g., mobile), we need a centralized way to manage application state (like folder trees, preferences, etc.) that can be shared or easily adapted. Moving Siming to its own package isolates this logic.
+Currently, `SimingEngine` resides in `legacy-api contract`. As we scale to more applications (e.g., mobile), we need a centralized way to manage application state (like folder trees, preferences, etc.) that can be shared or easily adapted. Moving Siming to its own package isolates this logic.
 
 ## Design
 
@@ -29,11 +29,11 @@ packages/@photasa/siming/
 ├── tsconfig.json
 ├── vite.config.ts
 ├── src/
-│   ├── core/
-│   │   └── SimingEngine.ts  <-- Moved from apps/desktop
-│   ├── adapters/
-│   │   └── SimingAdapter.ts <-- Moved from apps/desktop
-│   └── index.ts             <-- Exports
+│ ├── core/
+│ │ └── SimingEngine.ts <-- Moved from legacy-api contract
+│ ├── adapters/
+│ │ └── SimingAdapter.ts <-- Moved from legacy-api contract
+│ └── index.ts <-- Exports
 ```
 
 ### Dependencies
@@ -43,11 +43,11 @@ packages/@photasa/siming/
 
 ### Integration
 
-`apps/desktop` will depend on `@photasa/siming` and import `SimingAdapter` from it during adapter registration.
+`legacy-api contract` will depend on `@photasa/siming` and import `SimingAdapter` from it during adapter registration.
 
 ## Migration Strategy
 
-1.  Create `@photasa/siming` package.
-2.  Move code.
-3.  Update `apps/desktop` dependencies and imports.
-4.  Verify functionality.
+1. Create `@photasa/siming` package.
+2. Move code.
+3. Update `legacy-api contract` dependencies and imports.
+4. Verify functionality.

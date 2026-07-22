@@ -16,11 +16,13 @@ export function useUpdateListener() {
     const logger = loggers.update;
 
     // 监听更新可用事件
-    const handleUpdateAvailable = (data: { version: string; info: any }) => {
+    const handleUpdateAvailable = (data: { version: string; info?: unknown }) => {
         logger.info("[UpdateListener] 收到更新可用事件:", data);
 
         // 显示更新通知
-        updateStore.showUpdateNotification(data.info);
+        updateStore.showUpdateNotification(
+            data.info as Parameters<typeof updateStore.showUpdateNotification>[0],
+        );
 
         // 显示系统通知
         notificationStore.add({

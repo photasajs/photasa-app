@@ -9,13 +9,13 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-One Tauri command: **get_directory(name)**. Return the stored directory path for the given key `name` (e.g. from app preferences/store). Same as Electron `picasa:get-directory` with `{ name }`. Rust only; no Node.
+One Tauri command: **get_directory(name)**. Return the stored directory path for the given key `name` (e.g. from app preferences/store). Same as contract reference `picasa:get-directory` with `{ name }`. Rust only; no Node.
 
 ## Motivation
 

@@ -12,18 +12,18 @@
 
 0139/0140 已完成**逻辑退场**（8 域生产路径零 zouwu workflow；`IntentToFuluMapping` 空表）。本 RFC 做**物理删除**：从 Photasa Tauri 二进制与 workspace 中移除 `zouwu-core`、`zouwu-builtin`、`TianshuService`、剩余 `*_adapter.rs`、`tianshu_command` IPC，以及前端 `tianshu.adapter.ts` 死路径。
 
-**不触碰** Electron `apps/desktop` 的 `@zouwu-wf/workflow`（TS 包，独立生命周期）。
+**不触碰** The removed desktop tree 的 `@zouwu-wf/workflow`（TS 包，独立生命周期）。
 
 ## 背景（2026-07-21 源码核实）
 
-| 残留物 | 路径 | 生产流量 |
-| ------ | ---- | -------- |
-| `TianshuService` | `apps/photasa/src-tauri/src/services/tianshu.rs` | 无（启动时初始化，无 matter 路由） |
-| 死 adapter | `adapters/scan_adapter.rs`、`taiyi_adapter.rs`、`taibaijinxing_adapter.rs` | 无 |
-| IPC | `main.rs`：`tianshu_command`、`tianshu_status` | 无生产 matter |
-| workspace crate | `crates/zouwu-core`、`crates/zouwu-builtin` | 仅 `photasa` 依赖 |
-| TS 适配器 | `apps/photasa/src/api/tianshu.adapter.ts` | 仅 `yuantiangang.sendFuluToTianshu` 失败路径；`main.ts` 启动 `waitUntilReady()` |
-| workflow 目录解析 | `resolve_workflows_dir` → `apps/desktop/.../workflows`（dev） | 0107 已否决 bundle workflows 进 Tauri |
+| 残留物            | 路径                                                                       | 生产流量                                                                        |
+| ----------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `TianshuService`  | `apps/photasa/src-tauri/src/services/tianshu.rs`                           | 无（启动时初始化，无 matter 路由）                                              |
+| 死 adapter        | `adapters/scan_adapter.rs`、`taiyi_adapter.rs`、`taibaijinxing_adapter.rs` | 无                                                                              |
+| IPC               | `main.rs`：`tianshu_command`、`tianshu_status`                             | 无生产 matter                                                                   |
+| workspace crate   | `crates/zouwu-core`、`crates/zouwu-builtin`                                | 仅 `photasa` 依赖                                                               |
+| TS 适配器         | `apps/photasa/src/api/tianshu.adapter.ts`                                  | 仅 `yuantiangang.sendFuluToTianshu` 失败路径；`main.ts` 启动 `waitUntilReady()` |
+| workflow 目录解析 | `resolve_workflows_dir` → `legacy-api contract/.../workflows`（dev）       | 0107 已否决 bundle workflows 进 Tauri                                           |
 
 ## Goals
 
@@ -72,18 +72,18 @@
 
 ## Non-goals
 
-- **不删** Electron `apps/desktop` 的 `@zouwu-wf/workflow` / workflow YAML（Legacy 参考实现）。
+- **不删** The removed desktop tree 的 `@zouwu-wf/workflow` / workflow YAML（Legacy 参考实现）。
 - **不删** `docs/rfc/0037-zouwu-workflow-dsl.md` 等历史文档。
 - **`legacy-api.ts` 逐 capability 退役** — 独立跟踪（0097 后续项），非本 RFC。
 - **不迁移** workflow 可视化 / CLI 到 Rust。
 
 ## Risks
 
-| 风险 | 缓解 |
-| ---- | ---- |
-| 遗漏隐藏 `invoke("tianshu_command")` | Phase A `rg` + vitest IPC 测试 |
-| 删除后启动变慢/变快需回归 | 移除 `waitUntilReady` 应缩短冷启动；手测 splash→主窗 |
-| workspace 其他 crate 间接依赖 zouwu | `cargo tree -i zouwu-core` 实施前确认仅 photasa |
+| 风险                                 | 缓解                                                 |
+| ------------------------------------ | ---------------------------------------------------- |
+| 遗漏隐藏 `invoke("tianshu_command")` | Phase A `rg` + vitest IPC 测试                       |
+| 删除后启动变慢/变快需回归            | 移除 `waitUntilReady` 应缩短冷启动；手测 splash→主窗 |
+| workspace 其他 crate 间接依赖 zouwu  | `cargo tree -i zouwu-core` 实施前确认仅 photasa      |
 
 ## 与 0139/0140 关系
 

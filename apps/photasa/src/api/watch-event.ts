@@ -1,5 +1,5 @@
 /**
- * Tauri watch 事件 → `WatchState`（对齐 Electron `apps/desktop/src/preload/fs-watch.ts`）
+ * Tauri watch 事件 → `WatchState`（对齐 legacy-api `historical preload/fs-watch.ts`）
  * RFC 0133：通路 A 必须收到完整 `action` / `isFile` / media 字段。
  */
 import type { WatchAction, WatchState } from "@photasa/common";

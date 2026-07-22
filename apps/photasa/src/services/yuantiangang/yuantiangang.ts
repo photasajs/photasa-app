@@ -3,9 +3,7 @@
  * 负责与天界(Main进程)通信，处理房玄龄的诏令
  */
 
-import type {
-    IYuanTianGangService,
-} from "../../interfaces/yuan-tian-gang.interface";
+import type { IYuanTianGangService } from "../../interfaces/yuan-tian-gang.interface";
 import type { Zhaoling, ZhaolingResponse } from "../../interfaces/fang-xuan-ling.interface";
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
@@ -131,24 +129,8 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * 袁天罡持续监听天界动态，以便及时回报房玄龄
      */
     private setupTianshuEventListening(): void {
-        // 在 Tauri 环境下，天枢事件通过 Tauri event system 传递
-        // 在 Electron 环境下，通过 window.tianshu IPC 监听
-        if ((window as any).tianshu) {
-            try {
-                this.progressCleanupFn = (window as any).tianshu.onProgress((progress: any) => {
-                    logger.info("🔮 收到天枢进度更新", progress);
-                });
-                this.statusCleanupFn = (window as any).tianshu.onStatus((status: any) => {
-                    logger.info("🔮 收到天枢状态变更", status);
-                });
-                logger.info("🔮 天枢事件监听已建立（Electron模式）");
-            } catch (error) {
-                logger.warn("🔮 建立天枢事件监听失败", error);
-            }
-        } else {
-            // Tauri 模式：事件通过 picasa:tianshu-* 传递，暂不需要主动监听
-            logger.info("🔮 天枢事件监听已建立（Tauri模式）");
-        }
+        // Tauri：天枢事件经 picasa:tianshu-* 传递，暂不需要主动监听
+        logger.info("🔮 天枢事件监听已建立（Tauri模式）");
     }
 
     /**
@@ -164,45 +146,20 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * @private
      */
     private setupQianliyanEventListening(): void {
-        // Tauri 模式：通过 scan adapter 监听 picasa:find-photo 事件
-        if (!(window as any).electron) {
-            scanAdapter
-                .onScanResult((result) => {
-                    this.handleQianliyanEvent(result as unknown as ScanActionEvent);
-                })
-                .then((unlisten) => {
-                    this.qianliyanCleanupFn = unlisten;
-                })
-                .catch((error: Error | unknown) => {
-                    logger.warn(
-                        "🔮 建立千里眼事件监听失败（Tauri模式）",
-                        error instanceof Error ? error.message : String(error),
-                    );
-                });
-            logger.info("🔮 千里眼事件监听已建立（Tauri模式）");
-            return;
-        }
-
-        // Electron 模式：通过 IPC 监听
-        try {
-            const ipc = (window as any).electron.ipcRenderer;
-            if (!ipc) {
-                logger.warn("🔮 无法访问IPC，跳过千里眼事件监听");
-                return;
-            }
-
-            const handler = (_: unknown, args: ScanActionEvent) => {
-                this.handleQianliyanEvent(args);
-            };
-
-            this.qianliyanCleanupFn = ipc.on("picasa:find-photo", handler);
-            logger.info("🔮 千里眼事件监听已建立（Electron模式）");
-        } catch (error: Error | unknown) {
-            logger.warn(
-                "🔮 建立千里眼事件监听失败",
-                error instanceof Error ? error.message : String(error),
-            );
-        }
+        scanAdapter
+            .onScanResult((result) => {
+                this.handleQianliyanEvent(result);
+            })
+            .then((unlisten) => {
+                this.qianliyanCleanupFn = unlisten;
+            })
+            .catch((error: Error | unknown) => {
+                logger.warn(
+                    "🔮 建立千里眼事件监听失败（Tauri模式）",
+                    error instanceof Error ? error.message : String(error),
+                );
+            });
+        logger.info("🔮 千里眼事件监听已建立（Tauri模式）");
     }
 
     /**
@@ -231,7 +188,10 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             // ✅ RFC 0057: 发送 SCAN_PROGRESS qizou 给虞世南（type: "complete"）以清空进度
             this.reportScanProgress(args);
             // ✅ 保留：发送 SCAN_READY qizou 给魏征
-            this.reportScanCompletion(computeScannedFilePaths(args), args);
+            this.reportScanCompletion(
+                computeScannedFilePaths(args as unknown as ScanActionEvent),
+                args as unknown as ScanActionEvent,
+            );
         }
     }
 
@@ -395,37 +355,19 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      */
     private setupNotifyStatusEventListening(): void {
         try {
-            if (!(window as any).electron) {
-                listen<NotifyPayload>("notify:status", (event) => {
-                    this.reportStatusNotification(event.payload);
+            listen<NotifyPayload>("notify:status", (event) => {
+                this.reportStatusNotification(event.payload);
+            })
+                .then((unlisten) => {
+                    this.notifyStatusCleanupFn = unlisten;
                 })
-                    .then((unlisten) => {
-                        this.notifyStatusCleanupFn = unlisten;
-                    })
-                    .catch((error: Error | unknown) => {
-                        logger.warn(
-                            "🔮 建立 notify:status 事件监听失败（Tauri模式）",
-                            error instanceof Error ? error.message : String(error),
-                        );
-                    });
-                logger.info("🔮 notify:status 事件监听已建立（Tauri模式）");
-                return;
-            }
-
-            const ipc = window.electron?.ipcRenderer;
-            if (!ipc) {
-                logger.warn("🔮 无法访问IPC，跳过 notify:status 事件监听");
-                return;
-            }
-
-            // 监听主进程的状态通知
-            const handler = (_: unknown, payload: NotifyPayload) => {
-                this.reportStatusNotification(payload);
-            };
-
-            this.notifyStatusCleanupFn = ipc.on("notify:status", handler);
-
-            logger.info("🔮 notify:status 事件监听已建立");
+                .catch((error: Error | unknown) => {
+                    logger.warn(
+                        "🔮 建立 notify:status 事件监听失败（Tauri模式）",
+                        error instanceof Error ? error.message : String(error),
+                    );
+                });
+            logger.info("🔮 notify:status 事件监听已建立（Tauri模式）");
         } catch (error: Error | unknown) {
             logger.warn(
                 "🔮 建立 notify:status 事件监听失败",
@@ -442,36 +384,19 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      */
     private setupMenuActionEventListening(): void {
         try {
-            if (isTauri()) {
-                listen<MenuActionPayload>("picasa:menu-action", (event) => {
-                    this.reportMenuAction(event.payload);
+            listen<MenuActionPayload>("picasa:menu-action", (event) => {
+                this.reportMenuAction(event.payload);
+            })
+                .then((unlisten) => {
+                    this.menuActionCleanupFn = unlisten;
                 })
-                    .then((unlisten) => {
-                        this.menuActionCleanupFn = unlisten;
-                    })
-                    .catch((error: Error | unknown) => {
-                        logger.warn(
-                            "🔮 建立 menu:action 事件监听失败（Tauri模式）",
-                            error instanceof Error ? error.message : String(error),
-                        );
-                    });
-                logger.info("🔮 袁天罡：已建立 menu:action 事件监听（Tauri 直连）");
-                return;
-            }
-
-            // Electron 模式
-            const ipc = (window as any).electron?.ipcRenderer;
-            if (!ipc) {
-                logger.warn("🔮 无法访问IPC，跳过 menu:action 事件监听");
-                return;
-            }
-
-            const handler = (_: unknown, payload: MenuActionPayload) => {
-                this.reportMenuAction(payload);
-            };
-
-            this.menuActionCleanupFn = ipc.on("menu:action", handler);
-            logger.info("🔮 袁天罡：已建立 menu:action 事件监听，可接收主进程菜单点击");
+                .catch((error: Error | unknown) => {
+                    logger.warn(
+                        "🔮 建立 menu:action 事件监听失败（Tauri模式）",
+                        error instanceof Error ? error.message : String(error),
+                    );
+                });
+            logger.info("🔮 袁天罡：已建立 menu:action 事件监听（Tauri 直连）");
         } catch (error: Error | unknown) {
             logger.warn(
                 "🔮 建立 menu:action 事件监听失败",
@@ -958,27 +883,32 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
             zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS
         ) {
             try {
+                const context = (zhaoling.context ?? {}) as Record<string, unknown>;
                 let data: any = null;
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG) {
-                    data = await invoke("get_photasa_config", { folder: zhaoling.context.folder });
+                    data = await invoke("get_photasa_config", { folder: context.folder });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG) {
-                    data = await invoke("fix_photasa_config", { folder: zhaoling.context.folder });
+                    data = await invoke("fix_photasa_config", { folder: context.folder });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG) {
                     data = await invoke("reset_photasa_config", {
-                        folder: zhaoling.context.folder,
+                        folder: context.folder,
                     });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_PHOTO_TO_LIST) {
                     data = await invoke("add_to_photo_list", {
-                        photoPath: zhaoling.context.photoPath,
+                        photoPath: context.photoPath,
                     });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_PHOTO_FROM_LIST) {
                     data = await invoke("remove_from_photo_list", {
-                        photoPath: zhaoling.context.photoPath,
+                        photoPath: context.photoPath,
                     });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.TO_DIR_NAME) {
-                    data = await invoke("to_dir_name", { path: zhaoling.context.path });
+                    data = await invoke("to_dir_name", { path: context.path });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.SCAN_PHOTOS) {
-                    const { path, action, thumbnailSize } = zhaoling.context as any;
+                    const { path, action, thumbnailSize } = context as {
+                        path: string;
+                        action: string;
+                        thumbnailSize: number;
+                    };
                     const requestId = `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
                     const scanAction = {
                         path,

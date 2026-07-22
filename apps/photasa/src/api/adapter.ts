@@ -1,6 +1,6 @@
 /**
  * Tauri API 适配层
- * 提供统一的 API 接口，将 Electron API 调用转换为 Tauri API
+ * 提供统一的 API 接口，将 legacy preload API 调用转换为 Tauri API
  * RFC 0074/0075: 在 Tauri 下注入扁平 legacy API，与 legacy.ts 同形
  */
 
@@ -38,7 +38,7 @@ export const api = {
     /** 环境信息 */
     env: {
         isTauri: isTauri(),
-        platform: isTauri() ? "tauri" : "electron",
+        platform: isTauri() ? "tauri" : "legacy",
     },
 };
 

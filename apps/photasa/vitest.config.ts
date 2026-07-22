@@ -9,7 +9,14 @@ export default defineConfig({
         alias: {
             "@": path.resolve(__dirname, "./src"),
             "@renderer": path.resolve(__dirname, "./src"),
-            "@photasa/common": path.resolve(__dirname, "../../packages/@photasa/common/dist/index.mjs"),
+            "@photasa/common": path.resolve(
+                __dirname,
+                "../../packages/@photasa/common/src/index.ts",
+            ),
+            "@photasa/common/types": path.resolve(
+                __dirname,
+                "../../packages/@photasa/common/src/types.ts",
+            ),
         },
     },
     test: {

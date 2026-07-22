@@ -15,7 +15,7 @@
 
 - Scan **algorithm** lives in **`crates/photasa-scan`** — **zero Tauri**.
 - Shared scan/watch DTOs live in **`crates/photasa-types`** — **zero Tauri**.
-- Electron `@photasa/scan` = **behavioral contract only**; do **not** import Node/TS into Tauri.
+- contract reference `@photasa/scan` = **behavioral contract only**; do **not** import Node/TS into Tauri.
 - Thumbnail decode / FFmpeg / `create_thumbnail_*` moved first to `crates/photasa-thumbnail` ([0134](./0134-tauri-photasa-thumbnail-crate.md)); scan crate exposes async **`ThumbnailBridge`**.
 - `.photasa.json` IPC / write commands stay in src-tauri (0071 / 0116); scan crate sees config via **`PhotasaConfigView`** only.
 
@@ -42,7 +42,7 @@ Directory/file scan pipeline (strategy, cache, walk, notify payload builders, cl
 ```bash
 cargo test -p photasa-types
 cargo test -p photasa-scan
-cargo tree -p photasa-scan | grep -i tauri   # must be empty
+cargo tree -p photasa-scan | grep -i tauri # must be empty
 ```
 
 `apps/photasa/src-tauri` keeps thin `spawn_scan_job` / `AppHandle::emit` / `PhotasaConfigView` adapters only. `ThumbnailBridge` awaits `photasa_thumbnail::create_thumbnail`.
@@ -79,9 +79,11 @@ Call sites that must keep working after move: `adapters/scan_adapter.rs`, `comma
 3. **Reuse `photasa-import`** for media classify / ignore / hidden — **delete** duplicate `PHOTO_EXTENSIONS` table in media module（统一走 `classify_media`）.
     > **⚠️ 2026-07-20 补记**：这条硬门在当时（无 `photasa-media` crate）是避免第三份扩展名表的唯一办法，合理。[0141](./0141-tauri-photasa-media-crate.md) 落地后已建立权威共享判定 crate，这条"复用 import"的决定**已过时，应被替换为"依赖 `photasa-media`"**——[0136](./0136-tauri-scan-runtime-contract.md) 进一步发现该复用路径本身有隐藏 bug：`classify_media` 按扩展名判定，目录条目必然不匹配而被过滤器跳过，导致 0136 要求的"目录报告"分支从未被触发。此条不再是当前有效设计，修复方向见 0136，不在本 RFC（已 Implemented，不重开）处理。
 4. **Config：定案 `PhotasaConfigView` trait**（禁止拖整份 `photasa_config` command 进 crate）:
-    - Trait 提供 strategy 所需：`has_config` / `photo_list`（或等价只读视图）.
-    - src-tauri 用现有 `read_config_sync`（0071）实现.
-    - 常量 `PHOTASA_FOLDER_CACHE_FILE` / `PHOTASA_ORIGINALS_DIR` 可进 crate；**不**在 crate 内写 `.photasa.json`.
+
+- Trait 提供 strategy 所需：`has_config` / `photo_list`（或等价只读视图）.
+- src-tauri 用现有 `read_config_sync`（0071）实现.
+- 常量 `PHOTASA_FOLDER_CACHE_FILE` / `PHOTASA_ORIGINALS_DIR` 可进 crate；**不**在 crate 内写 `.photasa.json`.
+
 5. **`ScanEventSink`** — `picasa:find-photo` + `notify:status` JSON；Tauri `app.emit`.
 6. **`ThumbnailBridge`** — async trait；直接 await `photasa_thumbnail::create_thumbnail`（0134）。scan crate **不**依赖 `ffmpeg-next` / `libheif`，只依赖 thumbnail crate public API。**v1 无真实调用方**：thumbnail 派发目前只在 `scan_runner.rs`（不在本 RFC v1 迁移范围）内，本次移动的 5 个文件（strategy/cache/media/notify/cleanup）零调用缩略图。`ThumbnailBridge` 是为未来 `scan_runner` 迁入 crate（v2）预置的接口——v1 阶段该 trait 编译通过即可，**不作为验收硬门**（`cargo test -p photasa-scan` 无法验证其形状是否正确，因为没有真实调用方）。`scan_runner.rs` 已在 0134 中直接 await `photasa_thumbnail::create_thumbnail(...)`。
 7. **No behavior change** — 0116 / 0117 契约不变.
@@ -91,25 +93,25 @@ Call sites that must keep working after move: `adapters/scan_adapter.rs`, `comma
 
 ```
 crates/photasa-types/
-  Cargo.toml          # serde, serde_json; NO tauri
-  src/
-    lib.rs
-    scan.rs           # ScanAction / PhotoFileRequest / validation DTOs
-    config.rs         # PhotasaConfigView + shared config constants
-    notify.rs         # notify payload/source DTOs
-    file_operation.rs # watch queue FileOperation DTO
+ Cargo.toml # serde, serde_json; NO tauri
+ src/
+ lib.rs
+ scan.rs # ScanAction / PhotoFileRequest / validation DTOs
+ config.rs # PhotasaConfigView + shared config constants
+ notify.rs # notify payload/source DTOs
+ file_operation.rs # watch queue FileOperation DTO
 
 crates/photasa-scan/
-  Cargo.toml          # serde, serde_json, walkdir, sha2, async-trait, photasa-import, photasa-thumbnail, photasa-types; NO tauri
-  src/
-    lib.rs
-    strategy.rs       # from scan_strategy.rs (+ PhotasaConfigView)
-    cache.rs          # from scan_cache.rs
-    media.rs          # from scan_media.rs（无重复扩展名表）
-    notify.rs         # from scan_notify.rs
-    cleanup.rs        # from scan_cleanup.rs
-    sink.rs           # async ScanEventSink + async ThumbnailBridge
-    # pipeline.rs   — NOT in v1（见 Acceptance）
+ Cargo.toml # serde, serde_json, walkdir, sha2, async-trait, photasa-import, photasa-thumbnail, photasa-types; NO tauri
+ src/
+ lib.rs
+ strategy.rs # from scan_strategy.rs (+ PhotasaConfigView)
+ cache.rs # from scan_cache.rs
+ media.rs # from scan_media.rs（无重复扩展名表）
+ notify.rs # from scan_notify.rs
+ cleanup.rs # from scan_cleanup.rs
+ sink.rs # async ScanEventSink + async ThumbnailBridge
+ # pipeline.rs — NOT in v1（见 Acceptance）
 ```
 
 ### What stays in `src-tauri`（v1）

@@ -6,11 +6,11 @@
 
 ## Summary
 
-Enhancement of the existing Playwright-based E2E testing infrastructure to provide comprehensive, maintainable, and scalable testing coverage for the Electron-based Photasa application.
+Enhancement of the existing Playwright-based E2E testing infrastructure to provide comprehensive, maintainable, and scalable testing coverage for the contract reference-based Photasa application.
 
 ## Motivation
 
-The current E2E testing setup using Playwright is minimal and lacks the robust architecture needed for comprehensive testing of a complex Electron photo management application. We need:
+The current E2E testing setup using Playwright is minimal and lacks the robust architecture needed for comprehensive testing of a complex contract reference photo management application. We need:
 
 1. **Comprehensive Coverage**: Test critical user journeys including photo import, management, and viewing workflows
 2. **Maintainable Architecture**: Page Object Model and reusable test fixtures to reduce maintenance overhead
@@ -26,52 +26,52 @@ The expected outcome is a production-ready E2E testing system that ensures appli
 
 ```
 src/e2e/
-├── fixtures/              # 测试固件和辅助工具
-│   ├── electron-app.ts    # Electron 应用启动和管理
-│   ├── test-data.ts       # 测试数据管理
-│   └── database.ts        # 数据库测试工具
-├── pages/                 # 页面对象模型 (POM)
-│   ├── base-page.ts       # 基础页面类
-│   ├── main-page.ts       # 主界面页面对象
-│   ├── import-wizard-page.ts  # 导入向导页面对象
-│   ├── settings-page.ts   # 设置页面对象
-│   └── photo-viewer-page.ts  # 照片查看器页面对象
-├── tests/                 # 测试用例
-│   ├── app-lifecycle/     # 应用生命周期测试
-│   ├── photo-import/      # 照片导入测试
-│   ├── photo-management/  # 照片管理测试
-│   ├── settings/          # 设置功能测试
-│   └── performance/       # 性能测试
-├── utils/                 # 工具函数
-│   ├── helpers.ts         # 通用测试辅助函数
-│   ├── constants.ts       # 测试常量
-│   ├── file-utils.ts      # 文件操作工具
-│   └── assertions.ts      # 自定义断言
-└── test-data/             # 测试数据文件
-    ├── sample-photos/     # 示例照片文件
-    └── test-configs/      # 测试配置文件
+├── fixtures/ # 测试固件和辅助工具
+│ ├── desktop-app.ts # 桌面应用启动和管理
+│ ├── test-data.ts # 测试数据管理
+│ └── database.ts # 数据库测试工具
+├── pages/ # 页面对象模型 (POM)
+│ ├── base-page.ts # 基础页面类
+│ ├── main-page.ts # 主界面页面对象
+│ ├── import-wizard-page.ts # 导入向导页面对象
+│ ├── settings-page.ts # 设置页面对象
+│ └── photo-viewer-page.ts # 照片查看器页面对象
+├── tests/ # 测试用例
+│ ├── app-lifecycle/ # 应用生命周期测试
+│ ├── photo-import/ # 照片导入测试
+│ ├── photo-management/ # 照片管理测试
+│ ├── settings/ # 设置功能测试
+│ └── performance/ # 性能测试
+├── utils/ # 工具函数
+│ ├── helpers.ts # 通用测试辅助函数
+│ ├── constants.ts # 测试常量
+│ ├── file-utils.ts # 文件操作工具
+│ └── assertions.ts # 自定义断言
+└── test-data/ # 测试数据文件
+ ├── sample-photos/ # 示例照片文件
+ └── test-configs/ # 测试配置文件
 ```
 
 ### Core Components
 
-#### 1. Electron App Fixture (`fixtures/electron-app.ts`)
+#### 1. desktop app Fixture (`fixtures/desktop-app.ts`)
 
 ```typescript
-export class ElectronAppFixture {
-    private app: ElectronApplication | null = null;
-    private page: Page | null = null;
+export classAppFixture {
+ private app:Application | null = null;
+ private page: Page | null = null;
 
-    async launch(options?: LaunchOptions): Promise<Page> {
-        // 启动 Electron 应用
-        // 管理多窗口场景
-        // 提供应用状态检查方法
-    }
+ async launch(options?: LaunchOptions): Promise<Page> {
+ // 启动 桌面应用
+ // 管理多窗口场景
+ // 提供应用状态检查方法
+ }
 
-    async cleanup(): Promise<void> {
-        // 清理应用状态
-        // 关闭所有窗口
-        // 重置数据库状态
-    }
+ async cleanup(): Promise<void> {
+ // 清理应用状态
+ // 关闭所有窗口
+ // 重置数据库状态
+ }
 }
 ```
 
@@ -80,7 +80,7 @@ export class ElectronAppFixture {
 ```typescript
 export abstract class BasePage {
     protected page: Page;
-    protected app: ElectronApplication;
+    protected app: Application;
 
     // 通用页面交互方法
     // 等待和断言工具
@@ -95,16 +95,16 @@ export abstract class BasePage {
 export default defineConfig({
     projects: [
         {
-            name: "electron-dev",
+            name: "desktop-dev",
             use: {
-                ...electronConfig,
+                ...desktopConfig,
                 // 开发环境配置
             },
         },
         {
-            name: "electron-prod",
+            name: "desktop-prod",
             use: {
-                ...electronConfig,
+                ...desktopConfig,
                 // 生产构建配置
             },
         },
@@ -116,47 +116,51 @@ export default defineConfig({
 ### Key Testing Scenarios
 
 1. **Application Lifecycle**
-    - 应用启动和初始化
-    - 窗口管理（最小化、最大化、关闭）
-    - 应用退出和数据持久化
+
+- 应用启动和初始化
+- 窗口管理（最小化、最大化、关闭）
+- 应用退出和数据持久化
 
 2. **Photo Import Workflow**
-    - 文件夹选择和扫描
-    - 批量照片导入
-    - 导入进度和错误处理
-    - EXIF 数据提取验证
+
+- 文件夹选择和扫描
+- 批量照片导入
+- 导入进度和错误处理
+- EXIF 数据提取验证
 
 3. **Photo Management**
-    - 照片浏览和导航
-    - 照片搜索和过滤
-    - 照片组织和标签
-    - 照片删除和恢复
+
+- 照片浏览和导航
+- 照片搜索和过滤
+- 照片组织和标签
+- 照片删除和恢复
 
 4. **Settings Management**
-    - 设置更改和持久化
-    - 主题切换
-    - 语言切换
-    - 存储路径配置
+
+- 设置更改和持久化
+- 主题切换
+- 语言切换
+- 存储路径配置
 
 ## Drawbacks
 
 1. **Increased Maintenance**: 更多的测试代码需要维护
 2. **CI/CD Complexity**: 跨平台测试增加 CI/CD 复杂性
 3. **Test Execution Time**: 完整的 E2E 测试套件会增加构建时间
-4. **Resource Usage**: Electron 应用测试需要更多系统资源
+4. **Resource Usage**: 桌面应用测试需要更多系统资源
 5. **Test Data Management**: 需要管理测试用的照片和数据文件
 
 ## Alternatives
 
-### 1. WebdriverIO + wdio-electron-service
+### 1. WebdriverIO + wdio-desktop-service
 
 - **优点**: 成熟的测试生态系统
-- **缺点**: 社区维护的 Electron 支持，文档较少
+- **缺点**: 社区维护的 contract reference 支持，文档较少
 
-### 2. Cypress + cypress-electron-plugin
+### 2. Cypress + cypress-desktop-plugin
 
 - **优点**: 优秀的开发体验和调试工具
-- **缺点**: Electron 支持有限，主要关注渲染进程
+- **缺点**: contract reference 支持有限，主要关注渲染进程
 
 ### 3. 保持现状（最小化 Playwright 设置）
 
@@ -171,7 +175,7 @@ export default defineConfig({
 ### Phase 1: 核心架构建立 (2 weeks)
 
 - [ ] 增强 `playwright.config.ts` 配置
-- [ ] 创建 `ElectronAppFixture` 基础设施
+- [ ] 创建 `DesktopAppFixture` 基础设施
 - [ ] 实现 `BasePage` 和核心页面对象
 - [ ] 建立测试数据管理系统
 - [ ] 重构现有测试用例
@@ -211,7 +215,7 @@ export default defineConfig({
 ## Future Possibilities
 
 1. **视觉回归测试**: 集成 Playwright 的视觉比较功能
-2. **API 测试**: 扩展测试覆盖到 Electron 主进程 API
+2. **API 测试**: 扩展测试覆盖到 legacy main process API
 3. **性能监控**: 集成性能指标收集和回归检测
 4. **移动端支持**: 为可能的移动版本预留测试架构
 5. **自动化测试生成**: 基于用户操作录制自动生成测试用例

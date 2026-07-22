@@ -1,4 +1,4 @@
-// toolkit electronAPI 类型（可根据 @electron-toolkit/preload 类型声明导入）
+// Legacy preload window globals
 declare global {
     const ComlinkWorker: {
         new <T>(url: URL): T;
@@ -11,9 +11,8 @@ declare global {
     }
 
     interface Window {
-        api: any;
-        electron?: any;
-        tianshu?: any;
+        api: unknown;
+        tianshu?: unknown;
     }
 }
 export {};

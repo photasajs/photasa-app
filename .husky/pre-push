@@ -1,1 +1,5 @@
+pnpm --filter @photasa/photasa run lint
+pnpm --filter @photasa/photasa run typecheck
 pnpm --filter @photasa/photasa run test:unit
+pnpm run clippy
+pnpm run test:rust

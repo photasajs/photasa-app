@@ -1,4 +1,4 @@
-//! 扫描任务编排：Electron `scanPhotos` 管线 Rust 重写（RFC 0117）
+//! 扫描任务编排：contract reference `scanPhotos` 管线 Rust 重写（RFC 0117）
 
 use std::fs;
 use std::future::Future;
@@ -9,730 +9,727 @@ use std::sync::{mpsc, Arc};
 use log::{error, info, warn};
 use photasa_scan::cache::IncrementalCacheManager;
 use photasa_scan::media::{
-    absolute_thumbnail_path_for_source, build_thumbnail_path, classify_media,
-    is_photasa_media_file, list_scan_subdirectories, normalize_path_string,
-    relative_thumbnail_path_for_source, validate_scan_params, walkthrough_photos_in_folder,
+ absolute_thumbnail_path_for_source, build_thumbnail_path, classify_media,
+ is_photasa_media_file, list_scan_subdirectories, normalize_path_string,
+ relative_thumbnail_path_for_source, validate_scan_params, walkthrough_photos_in_folder,
 };
 use photasa_scan::notify::{
-    build_scan_notify_payload, notify_source_from_file_complete, notify_source_from_scan_report,
+ build_scan_notify_payload, notify_source_from_file_complete, notify_source_from_scan_report,
 };
 use photasa_scan::strategy::{
-    decide_scan_strategy_with_config, should_process_file_with_config, ScanDecision, ScanStrategy,
+ decide_scan_strategy_with_config, should_process_file_with_config, ScanDecision, ScanStrategy,
 };
 use photasa_thumbnail::{create_thumbnail as create_thumbnail_async, ThumbnailRequest};
 pub use photasa_types::ScanAction;
 use photasa_types::{
-    PhotasaConfigPhoto, PhotasaConfigView, PhotoFileRequest, ScanDirectoryPayload,
-    ScanFilePayload, ScanProgressPayload, ScanReport, ScanWorkerNotifySource, PHOTASA_CONFIG_FILE,
+ PhotasaConfigPhoto, PhotasaConfigView, PhotoFileRequest, ScanDirectoryPayload,
+ ScanFilePayload, ScanProgressPayload, ScanReport, ScanWorkerNotifySource, PHOTASA_CONFIG_FILE,
 };
 use tauri::{AppHandle, Emitter};
 
 use photasa_config::{read_config_sync, PhotasaConfigData};
 
 fn routes_to_directory_scan(scan: &ScanAction) -> bool {
-    scan.operation_type != "file"
+ scan.operation_type != "file"
 }
 
 struct TauriPhotasaConfigView;
 
 impl PhotasaConfigView for TauriPhotasaConfigView {
-    fn has_config(&self, folder: &str) -> bool {
-        Path::new(folder).join(PHOTASA_CONFIG_FILE).exists()
-    }
+ fn has_config(&self, folder: &str) -> bool {
+ Path::new(folder).join(PHOTASA_CONFIG_FILE).exists()
+ }
 
-    fn photo_list(&self, folder: &str) -> Result<Option<Vec<PhotasaConfigPhoto>>, String> {
-        read_config_sync(folder).map(|config: Option<PhotasaConfigData>| {
-            config.map(|c| {
-                c.photo_list
-                    .into_iter()
-                    .map(|photo| PhotasaConfigPhoto { path: photo.path })
-                    .collect()
-            })
-        })
-    }
+ fn photo_list(&self, folder: &str) -> Result<Option<Vec<PhotasaConfigPhoto>>, String> {
+ read_config_sync(folder).map(|config: Option<PhotasaConfigData>| {
+ config.map(|c| {
+ c.photo_list
+ .into_iter()
+ .map(|photo| PhotasaConfigPhoto { path: photo.path })
+ .collect()
+ })
+ })
+ }
 }
 
 fn should_process_scan_file(file_path: &str, action: &str) -> bool {
-    should_process_file_with_config(&TauriPhotasaConfigView, file_path, action)
+ should_process_file_with_config(&TauriPhotasaConfigView, file_path, action)
 }
 
 fn decide_scan_strategy_for_folder(folder: &str, action: &str) -> ScanDecision {
-    decide_scan_strategy_with_config(&TauriPhotasaConfigView, folder, action)
+ decide_scan_strategy_with_config(&TauriPhotasaConfigView, folder, action)
 }
 
 fn emit_scan_event(app: &AppHandle, payload: serde_json::Value) {
-    let _ = app.emit("picasa:find-photo", payload);
+ let _ = app.emit("picasa:find-photo", payload);
 }
 
 fn emit_status_notify(app: &AppHandle, source: ScanWorkerNotifySource) {
-    if let Some(payload) = build_scan_notify_payload(&source) {
-        let _ = app.emit("notify:status", &payload);
-    }
+ if let Some(payload) = build_scan_notify_payload(&source) {
+ let _ = app.emit("notify:status", &payload);
+ }
 }
 
 fn emit_scan_report_with_notify(app: &AppHandle, report: &ScanReport) {
-    if let Some(source) = notify_source_from_scan_report(report) {
-        emit_status_notify(app, source);
-    }
-    if let Ok(payload) = serde_json::to_value(report) {
-        emit_scan_event(app, payload);
-    }
+ if let Some(source) = notify_source_from_scan_report(report) {
+ emit_status_notify(app, source);
+ }
+ if let Ok(payload) = serde_json::to_value(report) {
+ emit_scan_event(app, payload);
+ }
 }
 
 /// SKIP 扫描不重走 walkthrough，仍需把一层子目录报告给前端以更新 folderTree（RFC 0136 方案 A）
 fn emit_immediate_subdirectory_reports(app: &AppHandle, request_id: &str, scan_root: &str) {
-    let folder_path = Path::new(scan_root);
-    let subdirs = match list_scan_subdirectories(folder_path) {
-        Ok(paths) => paths,
-        Err(err) => {
-            warn!("🌌 【警示】SKIP 子目录枚举失败: {err}");
-            return;
-        }
-    };
+ let folder_path = Path::new(scan_root);
+ let subdirs = match list_scan_subdirectories(folder_path) {
+ Ok(paths) => paths,
+ Err(err) => {
+ warn!("🌌 【警示】SKIP 子目录枚举失败: {err}");
+ return;
+ }
+ };
 
-    for subdir in subdirs {
-        let dir = PhotoFileRequest {
-            path: normalize_path_string(&subdir),
-            thumbnail: String::new(),
-            is_image: false,
-            is_video: false,
-            is_directory: true,
-        };
-        emit_directory_report(app, request_id, scan_root, &dir);
-    }
+ for subdir in subdirs {
+ let dir = PhotoFileRequest {
+ path: normalize_path_string(&subdir),
+ thumbnail: String::new(),
+ is_image: false,
+ is_video: false,
+ is_directory: true,
+ };
+ emit_directory_report(app, request_id, scan_root, &dir);
+ }
 }
 
 fn emit_directory_report(
-    app: &AppHandle,
-    request_id: &str,
-    scan_root: &str,
-    dir: &PhotoFileRequest,
+ app: &AppHandle,
+ request_id: &str,
+ scan_root: &str,
+ dir: &PhotoFileRequest,
 ) {
-    let report = ScanReport::Directory {
-        request_id: request_id.to_string(),
-        root_path: scan_root.to_string(),
-        directory: ScanDirectoryPayload {
-            path: dir.path.clone(),
-            is_directory: true,
-        },
-    };
-    emit_scan_report_with_notify(app, &report);
+ let report = ScanReport::Directory {
+ request_id: request_id.to_string(),
+ root_path: scan_root.to_string(),
+ directory: ScanDirectoryPayload {
+ path: dir.path.clone(),
+ is_directory: true,
+ },
+ };
+ emit_scan_report_with_notify(app, &report);
 }
 
-/// Electron `buildDirectoryScanProgressMessage` — `currentFile` 仅当 `path && !isDirectory`
+/// contract reference `buildDirectoryScanProgressMessage` — `currentFile` 仅当 `path && !isDirectory`
 fn emit_file_progress(
-    app: &AppHandle,
-    request_id: &str,
-    scan_root: &str,
-    file: &PhotoFileRequest,
-    processed: usize,
-    total: usize,
+ app: &AppHandle,
+ request_id: &str,
+ scan_root: &str,
+ file: &PhotoFileRequest,
+ processed: usize,
+ total: usize,
 ) {
-    let report = ScanReport::File {
-        request_id: request_id.to_string(),
-        root_path: scan_root.to_string(),
-        file: ScanFilePayload {
-            path: file.path.clone(),
-            is_directory: false,
-        },
-        progress: ScanProgressPayload { processed, total },
-    };
-    emit_scan_report_with_notify(app, &report);
+ let report = ScanReport::File {
+ request_id: request_id.to_string(),
+ root_path: scan_root.to_string(),
+ file: ScanFilePayload {
+ path: file.path.clone(),
+ is_directory: false,
+ },
+ progress: ScanProgressPayload { processed, total },
+ };
+ emit_scan_report_with_notify(app, &report);
 }
 
 fn emit_error(app: &AppHandle, request_id: &str, message: &str, action_path: Option<&str>) {
-    let root_path = action_path.unwrap_or("");
-    let report = ScanReport::Error {
-        request_id: request_id.to_string(),
-        root_path: root_path.to_string(),
-        error: message.to_string(),
-    };
-    emit_scan_report_with_notify(app, &report);
+ let root_path = action_path.unwrap_or("");
+ let report = ScanReport::Error {
+ request_id: request_id.to_string(),
+ root_path: root_path.to_string(),
+ error: message.to_string(),
+ };
+ emit_scan_report_with_notify(app, &report);
 }
 
 fn emit_directory_complete(
-    app: &AppHandle,
-    request_id: &str,
-    scan_root: &str,
+ app: &AppHandle,
+ request_id: &str,
+ scan_root: &str,
 ) {
-    let report = ScanReport::Complete {
-        request_id: request_id.to_string(),
-        root_path: scan_root.to_string(),
-    };
-    emit_scan_report_with_notify(app, &report);
+ let report = ScanReport::Complete {
+ request_id: request_id.to_string(),
+ root_path: scan_root.to_string(),
+ };
+ emit_scan_report_with_notify(app, &report);
 }
 
 fn emit_file_complete(app: &AppHandle, request_id: &str, file_path: &str) {
-    let report = ScanReport::Complete {
-        request_id: request_id.to_string(),
-        root_path: file_path.to_string(),
-    };
-    if let Some(payload) = build_scan_notify_payload(&notify_source_from_file_complete(file_path))
-    {
-        let _ = app.emit("notify:status", &payload);
-    }
-    if let Ok(payload) = serde_json::to_value(&report) {
-        emit_scan_event(app, payload);
-    }
+ let report = ScanReport::Complete {
+ request_id: request_id.to_string(),
+ root_path: file_path.to_string(),
+ };
+ if let Some(payload) = build_scan_notify_payload(&notify_source_from_file_complete(file_path))
+ {
+ let _ = app.emit("notify:status", &payload);
+ }
+ if let Ok(payload) = serde_json::to_value(&report) {
+ emit_scan_event(app, payload);
+ }
 }
 
 fn should_create_thumbnail(thumbnail_path: &str, action: &str) -> bool {
-    !Path::new(thumbnail_path).exists() || action == "rescan"
+ !Path::new(thumbnail_path).exists() || action == "rescan"
 }
 
 async fn create_thumbnail_for_file(file: &PhotoFileRequest, scan: &ScanAction) -> bool {
-    let thumb_size = scan.thumbnail_size.unwrap_or(256);
-    let always = scan.action == "rescan";
-    if !should_create_thumbnail(&file.thumbnail, &scan.action) {
-        return false;
-    }
-    let result = create_thumbnail_async(ThumbnailRequest {
-        path: file.path.clone(),
-        thumbnail: file.thumbnail.clone(),
-        width: Some(thumb_size),
-        height: Some(thumb_size),
-        without_enlargement: Some(true),
-        preview: Some(file.thumbnail.clone()),
-        always: Some(always),
-    })
-    .await;
-    if !result.success {
-        if let Some(err) = result.error {
-            error!("🌌 千里眼缩略图生成失败 {}: {}", file.path, err);
-        }
-        return false;
-    }
-    true
+ let thumb_size = scan.thumbnail_size.unwrap_or(256);
+ let always = scan.action == "rescan";
+ if !should_create_thumbnail(&file.thumbnail, &scan.action) {
+ return false;
+ }
+ let result = create_thumbnail_async(ThumbnailRequest {
+ path: file.path.clone(),
+ thumbnail: file.thumbnail.clone(),
+ width: Some(thumb_size),
+ height: Some(thumb_size),
+ without_enlargement: Some(true),
+ preview: Some(file.thumbnail.clone()),
+ always: Some(always),
+ })
+ .await;
+ if !result.success {
+ if let Some(err) = result.error {
+ error!("🌌 千里眼缩略图生成失败 {}: {}", file.path, err);
+ }
+ return false;
+ }
+ true
 }
 
 /// `processPhotoFile` — process→record 顺序由调用方负责
 async fn process_photo_file(file: &PhotoFileRequest, scan: &ScanAction) -> bool {
-    let thumb_created = create_thumbnail_for_file(file, scan).await;
-    if let Some(folder) = Path::new(&file.path).parent().and_then(|p| p.to_str()) {
-        if let Err(err) = photasa_config::add_photo_to_folder_list(folder, &file.path) {
-            error!("🌌 千里眼写入 .photasa.json 失败 {}: {}", file.path, err);
-        }
-    }
-    thumb_created
+ let thumb_created = create_thumbnail_for_file(file, scan).await;
+ if let Some(folder) = Path::new(&file.path).parent().and_then(|p| p.to_str()) {
+ if let Err(err) = photasa_config::add_photo_to_folder_list(folder, &file.path) {
+ error!("🌌 千里眼写入 .photasa.json 失败 {}: {}", file.path, err);
+ }
+ }
+ thumb_created
 }
 
 /// 从 photoList 条目构造 `PhotoFileRequest`（`restoreCachedFiles` 映射）
 fn cached_photo_to_request(folder: &str, photo: &serde_json::Value) -> Option<PhotoFileRequest> {
-    let file_name = photo.get("path").and_then(|v| v.as_str())?;
-    if file_name.is_empty() {
-        return None;
-    }
-    let full_path = normalize_path_string(&Path::new(folder).join(file_name));
-    let thumbnail = photo
-        .get("thumbnail")
-        .and_then(|v| v.as_str())
-        .filter(|t| !t.is_empty())
-        .map(String::from)
-        .unwrap_or_else(|| relative_thumbnail_path_for_source(&full_path));
-    let is_video = photo
-        .get("isVideo")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
-    let is_image = if is_video {
-        false
-    } else {
-        classify_media(Path::new(&full_path))
-            .map(|(img, _)| img)
-            .unwrap_or(true)
-    };
-    Some(PhotoFileRequest {
-        path: full_path,
-        thumbnail,
-        is_image,
-        is_video,
-        is_directory: false,
-    })
+ let file_name = photo.get("path").and_then(|v| v.as_str())?;
+ if file_name.is_empty() {
+ return None;
+ }
+ let full_path = normalize_path_string(&Path::new(folder).join(file_name));
+ let thumbnail = photo
+ .get("thumbnail")
+ .and_then(|v| v.as_str())
+ .filter(|t| !t.is_empty())
+ .map(String::from)
+ .unwrap_or_else(|| relative_thumbnail_path_for_source(&full_path));
+ let is_video = photo
+ .get("isVideo")
+ .and_then(|v| v.as_bool())
+ .unwrap_or(false);
+ let is_image = if is_video {
+ false
+ } else {
+ classify_media(Path::new(&full_path))
+ .map(|(img, _)| img)
+ .unwrap_or(true)
+ };
+ Some(PhotoFileRequest {
+ path: full_path,
+ thumbnail,
+ is_image,
+ is_video,
+ is_directory: false,
+ })
 }
 
 /// `restoreCachedFiles` — 从 `.photasa.json` 重新发出 photoList。
 ///
-/// 进度计数对齐 Electron `mergeDirectoryScanProgressWithCache`：SKIP 视所有条目已处理，
+/// 进度计数对齐 legacy-api `mergeDirectoryScanProgressWithCache`：SKIP 视所有条目已处理，
 /// 故 `total = processed = N`（photoList 长度），而非空缓存的 `(0,0)`（RFC 0117 BUG②）。
 fn restore_cached_files(app: &AppHandle, request_id: &str, folder: &str) {
-    let config_path = Path::new(folder).join(PHOTASA_CONFIG_FILE);
-    if !config_path.exists() {
-        warn!(
-            "🌌 【警示】配置文件不存在，跳过缓存恢复: {}",
-            config_path.display()
-        );
-        return;
-    }
+ let config_path = Path::new(folder).join(PHOTASA_CONFIG_FILE);
+ if !config_path.exists() {
+ warn!(
+ "🌌 【警示】配置文件不存在，跳过缓存恢复: {}",
+ config_path.display()
+ );
+ return;
+ }
 
-    let content = match fs::read_to_string(&config_path) {
-        Ok(c) => c,
-        Err(e) => {
-            error!("🌌 千里眼读取配置失败: {e}");
-            return;
-        }
-    };
+ let content = match fs::read_to_string(&config_path) {
+ Ok(c) => c,
+ Err(e) => {
+ error!("🌌 千里眼读取配置失败: {e}");
+ return;
+ }
+ };
 
-    let value: serde_json::Value = match serde_json::from_str(&content) {
-        Ok(v) => v,
-        Err(e) => {
-            error!("🌌 千里眼配置 JSON 解析失败: {e}");
-            return;
-        }
-    };
+ let value: serde_json::Value = match serde_json::from_str(&content) {
+ Ok(v) => v,
+ Err(e) => {
+ error!("🌌 千里眼配置 JSON 解析失败: {e}");
+ return;
+ }
+ };
 
-    let photo_list = match value.get("photoList").and_then(|v| v.as_array()) {
-        Some(arr) => arr,
-        None => {
-            warn!("🌌 【警示】photoList 无效: {}", config_path.display());
-            return;
-        }
-    };
+ let photo_list = match value.get("photoList").and_then(|v| v.as_array()) {
+ Some(arr) => arr,
+ None => {
+ warn!("🌌 【警示】photoList 无效: {}", config_path.display());
+ return;
+ }
+ };
 
-    let files: Vec<PhotoFileRequest> = photo_list
-        .iter()
-        .filter_map(|photo| cached_photo_to_request(folder, photo))
-        .collect();
-    let total = files.len();
+ let files: Vec<PhotoFileRequest> = photo_list
+ .iter()
+ .filter_map(|photo| cached_photo_to_request(folder, photo))
+ .collect();
+ let total = files.len();
 
-    for (idx, file) in files.iter().enumerate() {
-        emit_file_progress(app, request_id, folder, file, idx + 1, total);
-    }
+ for (idx, file) in files.iter().enumerate() {
+ emit_file_progress(app, request_id, folder, file, idx + 1, total);
+ }
 }
 
 async fn process_file_list(
-    app: &AppHandle,
-    request_id: &str,
-    files: &[PhotoFileRequest],
-    scan: &ScanAction,
-    cache_mgr: &mut IncrementalCacheManager,
+ app: &AppHandle,
+ request_id: &str,
+ files: &[PhotoFileRequest],
+ scan: &ScanAction,
+ cache_mgr: &mut IncrementalCacheManager,
 ) {
-    for file in files {
-        if file.is_directory {
-            emit_directory_report(app, request_id, &scan.path, file);
-            continue;
-        }
-        let should = should_process_scan_file(&file.path, &scan.action);
-        if should {
-            let thumb = process_photo_file(file, scan).await;
-            if let Err(err) = cache_mgr.record_file_processed(&file.path, thumb) {
-                error!("🌌 千里眼缓存记录失败: {err}");
-            }
-        }
-        let (processed, total) = cache_mgr.progress_counts();
-        emit_file_progress(app, request_id, &scan.path, file, processed, total);
-    }
-    if let Err(err) = cache_mgr.mark_scan_complete() {
-        error!("🌌 千里眼标记扫描完成失败: {err}");
-    }
+ for file in files {
+ if file.is_directory {
+ emit_directory_report(app, request_id, &scan.path, file);
+ continue;
+ }
+ let should = should_process_scan_file(&file.path, &scan.action);
+ if should {
+ let thumb = process_photo_file(file, scan).await;
+ if let Err(err) = cache_mgr.record_file_processed(&file.path, thumb) {
+ error!("🌌 千里眼缓存记录失败: {err}");
+ }
+ }
+ let (processed, total) = cache_mgr.progress_counts();
+ emit_file_progress(app, request_id, &scan.path, file, processed, total);
+ }
+ if let Err(err) = cache_mgr.mark_scan_complete() {
+ error!("🌌 千里眼标记扫描完成失败: {err}");
+ }
 }
 
 async fn run_traditional_directory_scan(
-    app: &AppHandle,
-    request_id: &str,
-    scan: &ScanAction,
+ app: &AppHandle,
+ request_id: &str,
+ scan: &ScanAction,
 ) -> Result<usize, String> {
-    let files = walkthrough_photos_in_folder(scan)?;
-    let total = files.len();
-    let mut processed = 0usize;
-    for file in &files {
-        if file.is_directory {
-            emit_directory_report(app, request_id, &scan.path, file);
-            continue;
-        }
-        if should_process_scan_file(&file.path, &scan.action) {
-            process_photo_file(file, scan).await;
-        }
-        processed += 1;
-        emit_file_progress(app, request_id, &scan.path, file, processed, total);
-    }
-    Ok(processed)
+ let files = walkthrough_photos_in_folder(scan)?;
+ let total = files.len();
+ let mut processed = 0usize;
+ for file in &files {
+ if file.is_directory {
+ emit_directory_report(app, request_id, &scan.path, file);
+ continue;
+ }
+ if should_process_scan_file(&file.path, &scan.action) {
+ process_photo_file(file, scan).await;
+ }
+ processed += 1;
+ emit_file_progress(app, request_id, &scan.path, file, processed, total);
+ }
+ Ok(processed)
 }
 
 /// 处理 FULL 分支文件遍历结果（fresh 或 resume）。返回处理文件数。
 async fn run_full_directory_scan(
-    app: &AppHandle,
-    request_id: &str,
-    scan: &ScanAction,
-    mut cache_mgr: IncrementalCacheManager,
+ app: &AppHandle,
+ request_id: &str,
+ scan: &ScanAction,
+ mut cache_mgr: IncrementalCacheManager,
 ) -> Result<usize, String> {
-    let all_files = walkthrough_photos_in_folder(scan)?;
+ let all_files = walkthrough_photos_in_folder(scan)?;
 
-    if cache_mgr.is_resume_scan() {
-        let unprocessed: Vec<PhotoFileRequest> = all_files
-            .iter()
-            .filter(|f| !cache_mgr.is_file_processed(&f.path))
-            .cloned()
-            .collect();
-        let paths: Vec<String> = unprocessed.iter().map(|f| f.path.clone()).collect();
-        if let Err(err) = cache_mgr.set_pending_files(paths) {
-            error!("🌌 千里眼设置待处理列表失败: {err}");
-        }
-        process_file_list(app, request_id, &unprocessed, scan, &mut cache_mgr).await;
-    } else {
-        for file in &all_files {
-            if file.is_directory {
-                emit_directory_report(app, request_id, &scan.path, file);
-                continue;
-            }
-            if should_process_scan_file(&file.path, &scan.action) {
-                let thumb = process_photo_file(file, scan).await;
-                if let Err(err) = cache_mgr.record_file_processed(&file.path, thumb) {
-                    error!("🌌 千里眼缓存记录失败: {err}");
-                }
-            }
-            let (processed, total) = cache_mgr.progress_counts();
-            emit_file_progress(app, request_id, &scan.path, file, processed, total);
-        }
-        if let Err(err) = cache_mgr.mark_scan_complete() {
-            error!("🌌 千里眼标记扫描完成失败: {err}");
-        }
-    }
-    Ok(cache_mgr.cache().processed_files.len())
+ if cache_mgr.is_resume_scan() {
+ let unprocessed: Vec<PhotoFileRequest> = all_files
+ .iter()
+ .filter(|f| !cache_mgr.is_file_processed(&f.path))
+ .cloned()
+ .collect();
+ let paths: Vec<String> = unprocessed.iter().map(|f| f.path.clone()).collect();
+ if let Err(err) = cache_mgr.set_pending_files(paths) {
+ error!("🌌 千里眼设置待处理列表失败: {err}");
+ }
+ process_file_list(app, request_id, &unprocessed, scan, &mut cache_mgr).await;
+ } else {
+ for file in &all_files {
+ if file.is_directory {
+ emit_directory_report(app, request_id, &scan.path, file);
+ continue;
+ }
+ if should_process_scan_file(&file.path, &scan.action) {
+ let thumb = process_photo_file(file, scan).await;
+ if let Err(err) = cache_mgr.record_file_processed(&file.path, thumb) {
+ error!("🌌 千里眼缓存记录失败: {err}");
+ }
+ }
+ let (processed, total) = cache_mgr.progress_counts();
+ emit_file_progress(app, request_id, &scan.path, file, processed, total);
+ }
+ if let Err(err) = cache_mgr.mark_scan_complete() {
+ error!("🌌 千里眼标记扫描完成失败: {err}");
+ }
+ }
+ Ok(cache_mgr.cache().processed_files.len())
 }
 
 fn scan_directory_at<'a>(
-    app: &'a AppHandle,
-    request_id: &'a str,
-    scan: &'a ScanAction,
+ app: &'a AppHandle,
+ request_id: &'a str,
+ scan: &'a ScanAction,
 ) -> Pin<Box<dyn Future<Output = Result<usize, String>> + Send + 'a>> {
-    Box::pin(async move {
-        let folder = scan.path.clone();
-        let force_rescan = scan.action == "rescan";
-        info!(
-            "🌌 千里眼目录扫描: {} (action: {})",
-            folder,
-            if scan.action.is_empty() {
-                "scan"
-            } else {
-                &scan.action
-            }
-        );
+ Box::pin(async move {
+ let folder = scan.path.clone();
+ let force_rescan = scan.action == "rescan";
+ info!(
+ "🌌 千里眼目录扫描: {} (action: {})",
+ folder,
+ if scan.action.is_empty() {
+ "scan"
+ } else {
+ &scan.action
+ }
+ );
 
-        let decision = decide_scan_strategy_for_folder(&folder, &scan.action);
-        info!(
-            "🌌 千里眼策略决策: {:?} — {}",
-            decision.strategy, decision.reason
-        );
+ let decision = decide_scan_strategy_for_folder(&folder, &scan.action);
+ info!(
+ "🌌 千里眼策略决策: {:?} — {}",
+ decision.strategy, decision.reason
+ );
 
-        let file_count;
+ let file_count = if decision.strategy == ScanStrategy::Skip {
+  // SKIP：标记 folder 缓存完成（contract reference initialize + markScanComplete），再重发 photoList。
+  if let Ok(mut cache_mgr) =
+   IncrementalCacheManager::initialize(Path::new(&folder), false)
+  {
+   if let Err(err) = cache_mgr.mark_scan_complete() {
+    error!("🌌 千里眼 SKIP 缓存完成标记失败: {err}");
+   }
+  }
+  restore_cached_files(app, request_id, &folder);
+  emit_immediate_subdirectory_reports(app, request_id, &folder);
+  read_config_sync(&folder)
+   .ok()
+   .flatten()
+   .map(|c| c.photo_list.len())
+   .unwrap_or(0)
+ } else {
+  match IncrementalCacheManager::initialize(Path::new(&folder), force_rescan) {
+   Ok(cache_mgr) => {
+    match run_full_directory_scan(app, request_id, scan, cache_mgr).await {
+     Ok(n) => n,
+     Err(err) => return Err(err),
+    }
+   }
+   Err(err) => {
+    warn!("🌌 【警示】增量缓存初始化失败，降级传统扫描: {err}");
+    run_traditional_directory_scan(app, request_id, scan).await?
+   }
+  }
+ };
 
-        if decision.strategy == ScanStrategy::Skip {
-            // SKIP：标记 folder 缓存完成（Electron initialize + markScanComplete），再重发 photoList。
-            if let Ok(mut cache_mgr) =
-                IncrementalCacheManager::initialize(Path::new(&folder), false)
-            {
-                if let Err(err) = cache_mgr.mark_scan_complete() {
-                    error!("🌌 千里眼 SKIP 缓存完成标记失败: {err}");
-                }
-            }
-            restore_cached_files(app, request_id, &folder);
-            emit_immediate_subdirectory_reports(app, request_id, &folder);
-            file_count = read_config_sync(&folder)
-                .ok()
-                .flatten()
-                .map(|c| c.photo_list.len())
-                .unwrap_or(0);
-        } else {
-            file_count = match IncrementalCacheManager::initialize(Path::new(&folder), force_rescan)
-            {
-                Ok(cache_mgr) => {
-                    match run_full_directory_scan(app, request_id, scan, cache_mgr).await {
-                        Ok(n) => n,
-                        Err(err) => return Err(err),
-                    }
-                }
-                Err(err) => {
-                    warn!("🌌 【警示】增量缓存初始化失败，降级传统扫描: {err}");
-                    run_traditional_directory_scan(app, request_id, scan).await?
-                }
-            };
-        }
-
-        Ok(file_count)
-    })
+ Ok(file_count)
+ })
 }
 
 pub(crate) async fn run_directory_scan(
-    app: Arc<AppHandle>,
-    request_id: String,
-    scan: ScanAction,
-    _recursive: bool,
+ app: Arc<AppHandle>,
+ request_id: String,
+ scan: ScanAction,
+ _recursive: bool,
 ) -> Result<usize, String> {
-    let validation = validate_scan_params(&scan);
-    if !validation.is_valid {
-        let msg = validation.error.unwrap_or_else(|| "参数验证失败".into());
-        emit_error(&app, &request_id, &msg, Some(&scan.path));
-        return Err(msg);
-    }
+ let validation = validate_scan_params(&scan);
+ if !validation.is_valid {
+ let msg = validation.error.unwrap_or_else(|| "参数验证失败".into());
+ emit_error(&app, &request_id, &msg, Some(&scan.path));
+ return Err(msg);
+ }
 
-    match scan_directory_at(&app, &request_id, &scan).await {
-        Ok(file_count) => {
-            info!("🌌 千里眼目录扫描完功: {}", scan.path);
-            Ok(file_count)
-        }
-        Err(err) => {
-            emit_error(&app, &request_id, &err, Some(&scan.path));
-            Err(err)
-        }
-    }
+ match scan_directory_at(&app, &request_id, &scan).await {
+ Ok(file_count) => {
+ info!("🌌 千里眼目录扫描完功: {}", scan.path);
+ Ok(file_count)
+ }
+ Err(err) => {
+ emit_error(&app, &request_id, &err, Some(&scan.path));
+ Err(err)
+ }
+ }
 }
 
 /// `processMediaFile` — 单文件扫描
 async fn process_media_file(app: &AppHandle, request_id: &str, scan: &ScanAction) {
-    let file_path = normalize_path_string(Path::new(&scan.path));
-    let thumb_path = build_thumbnail_path(&file_path);
-    let thumb_size = scan.thumbnail_size.unwrap_or(256);
+ let file_path = normalize_path_string(Path::new(&scan.path));
+ let thumb_path = build_thumbnail_path(&file_path);
+ let thumb_size = scan.thumbnail_size.unwrap_or(256);
 
-    match scan.action.as_str() {
-        "scan" => {
-            if !should_process_scan_file(&file_path, "scan") {
-                return;
-            }
-            if should_create_thumbnail(&thumb_path, "scan") {
-                let _ = create_thumbnail_async(ThumbnailRequest {
-                    path: file_path.clone(),
-                    thumbnail: thumb_path.clone(),
-                    width: Some(thumb_size),
-                    height: Some(thumb_size),
-                    without_enlargement: Some(true),
-                    preview: Some(thumb_path.clone()),
-                    always: Some(false),
-                })
-                .await;
-            }
-            if let Some(folder) = Path::new(&file_path).parent().and_then(|p| p.to_str()) {
-                let _ = photasa_config::add_photo_to_folder_list(folder, &file_path);
-            }
-        }
-        "rescan" => {
-            let _ = create_thumbnail_async(ThumbnailRequest {
-                path: file_path.clone(),
-                thumbnail: thumb_path.clone(),
-                width: Some(thumb_size),
-                height: Some(thumb_size),
-                without_enlargement: Some(true),
-                preview: Some(thumb_path),
-                always: Some(true),
-            })
-            .await;
-            if let Some(folder) = Path::new(&file_path).parent().and_then(|p| p.to_str()) {
-                let _ = photasa_config::add_photo_to_folder_list(folder, &file_path);
-            }
-        }
-        "current" => {
-            if Path::new(&thumb_path).exists() {
-                let _ = fs::remove_file(&thumb_path);
-            }
-            if let Some(folder) = Path::new(&file_path).parent().and_then(|p| p.to_str()) {
-                let _ = photasa_config::remove_photo_from_folder_list(folder, &file_path);
-            }
-        }
-        other => {
-            warn!("🌌 【警示】未知扫描操作: {other} @ {file_path}");
-        }
-    }
+ match scan.action.as_str() {
+ "scan" => {
+ if !should_process_scan_file(&file_path, "scan") {
+ return;
+ }
+ if should_create_thumbnail(&thumb_path, "scan") {
+ let _ = create_thumbnail_async(ThumbnailRequest {
+ path: file_path.clone(),
+ thumbnail: thumb_path.clone(),
+ width: Some(thumb_size),
+ height: Some(thumb_size),
+ without_enlargement: Some(true),
+ preview: Some(thumb_path.clone()),
+ always: Some(false),
+ })
+ .await;
+ }
+ if let Some(folder) = Path::new(&file_path).parent().and_then(|p| p.to_str()) {
+ let _ = photasa_config::add_photo_to_folder_list(folder, &file_path);
+ }
+ }
+ "rescan" => {
+ let _ = create_thumbnail_async(ThumbnailRequest {
+ path: file_path.clone(),
+ thumbnail: thumb_path.clone(),
+ width: Some(thumb_size),
+ height: Some(thumb_size),
+ without_enlargement: Some(true),
+ preview: Some(thumb_path),
+ always: Some(true),
+ })
+ .await;
+ if let Some(folder) = Path::new(&file_path).parent().and_then(|p| p.to_str()) {
+ let _ = photasa_config::add_photo_to_folder_list(folder, &file_path);
+ }
+ }
+ "current" => {
+ if Path::new(&thumb_path).exists() {
+ let _ = fs::remove_file(&thumb_path);
+ }
+ if let Some(folder) = Path::new(&file_path).parent().and_then(|p| p.to_str()) {
+ let _ = photasa_config::remove_photo_from_folder_list(folder, &file_path);
+ }
+ }
+ other => {
+ warn!("🌌 【警示】未知扫描操作: {other} @ {file_path}");
+ }
+ }
 
-    if let Some((is_image, is_video)) = classify_media(Path::new(&file_path)) {
-        let file = PhotoFileRequest {
-            path: file_path.clone(),
-            thumbnail: absolute_thumbnail_path_for_source(&file_path),
-            is_image,
-            is_video,
-            is_directory: false,
-        };
-        emit_file_progress(app, request_id, &scan.path, &file, 1, 1);
-    }
+ if let Some((is_image, is_video)) = classify_media(Path::new(&file_path)) {
+ let file = PhotoFileRequest {
+ path: file_path.clone(),
+ thumbnail: absolute_thumbnail_path_for_source(&file_path),
+ is_image,
+ is_video,
+ is_directory: false,
+ };
+ emit_file_progress(app, request_id, &scan.path, &file, 1, 1);
+ }
 }
 
 async fn run_file_scan(
-    app: Arc<AppHandle>,
-    request_id: String,
-    scan: ScanAction,
+ app: Arc<AppHandle>,
+ request_id: String,
+ scan: ScanAction,
 ) -> Result<(), String> {
-    let validation = validate_scan_params(&scan);
-    if !validation.is_valid {
-        let msg = validation.error.unwrap_or_else(|| "参数验证失败".into());
-        return Err(msg);
-    }
+ let validation = validate_scan_params(&scan);
+ if !validation.is_valid {
+ let msg = validation.error.unwrap_or_else(|| "参数验证失败".into());
+ return Err(msg);
+ }
 
-    info!(
-        "🌌 千里眼开坛，文件扫描: {} (requestId: {})",
-        scan.path, request_id
-    );
+ info!(
+ "🌌 千里眼开坛，文件扫描: {} (requestId: {})",
+ scan.path, request_id
+ );
 
-    if !Path::new(&scan.path).exists() {
-        let err = format!("File does not exist: {}", scan.path);
-        return Err(err);
-    }
+ if !Path::new(&scan.path).exists() {
+ let err = format!("File does not exist: {}", scan.path);
+ return Err(err);
+ }
 
-    if !is_photasa_media_file(Path::new(&scan.path)) {
-        return Ok(());
-    }
+ if !is_photasa_media_file(Path::new(&scan.path)) {
+ return Ok(());
+ }
 
-    process_media_file(&app, &request_id, &scan).await;
-    Ok(())
+ process_media_file(&app, &request_id, &scan).await;
+ Ok(())
 }
 
 struct ScanJob {
-    request_id: String,
-    scan: ScanAction,
+ request_id: String,
+ scan: ScanAction,
 }
 
 pub struct ScanWorker {
-    sender: mpsc::Sender<ScanJob>,
+ sender: mpsc::Sender<ScanJob>,
 }
 
 impl ScanWorker {
-    pub fn new(app: AppHandle) -> Result<Self, String> {
-        let (sender, receiver) = mpsc::channel();
-        std::thread::Builder::new()
-            .name("photasa-scan-worker".into())
-            .spawn(move || run_scan_worker(app, receiver))
-            .map_err(|error| format!("启动扫描线程失败: {error}"))?;
-        Ok(Self { sender })
-    }
+ pub fn new(app: AppHandle) -> Result<Self, String> {
+ let (sender, receiver) = mpsc::channel();
+ std::thread::Builder::new()
+ .name("photasa-scan-worker".into())
+ .spawn(move || run_scan_worker(app, receiver))
+ .map_err(|error| format!("启动扫描线程失败: {error}"))?;
+ Ok(Self { sender })
+ }
 
-    pub fn submit(&self, request_id: String, scan: ScanAction) -> Result<(), String> {
-        self.sender
-            .send(ScanJob { request_id, scan })
-            .map_err(|_| "扫描线程已停止".into())
-    }
+ pub fn submit(&self, request_id: String, scan: ScanAction) -> Result<(), String> {
+ self.sender
+ .send(ScanJob { request_id, scan })
+ .map_err(|_| "扫描线程已停止".into())
+ }
 }
 
 fn run_scan_worker(app: AppHandle, receiver: mpsc::Receiver<ScanJob>) {
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .expect("创建扫描线程 Tokio runtime 失败");
-    for job in receiver {
-        let scan_root = job.scan.path.clone();
-        let is_directory = routes_to_directory_scan(&job.scan);
-        let result = if is_directory {
-            runtime
-                .block_on(run_directory_scan(
-                    Arc::new(app.clone()),
-                    job.request_id.clone(),
-                    job.scan,
-                    true,
-                ))
-                .map(|file_count| (file_count, Vec::<String>::new()))
-        } else {
-            runtime
-                .block_on(run_file_scan(
-                    Arc::new(app.clone()),
-                    job.request_id.clone(),
-                    job.scan,
-                ))
-                .map(|()| (0, Vec::<String>::new()))
-        };
-        match result {
-            Ok((_file_count, _paths)) if is_directory => {
-                emit_directory_complete(&app, &job.request_id, &scan_root);
-            }
-            Ok(_) => emit_file_complete(&app, &job.request_id, &scan_root),
-            Err(error) => emit_error(&app, &job.request_id, &error, Some(&scan_root)),
-        }
-    }
+ let runtime = tokio::runtime::Builder::new_current_thread()
+ .enable_all()
+ .build()
+ .expect("创建扫描线程 Tokio runtime 失败");
+ for job in receiver {
+ let scan_root = job.scan.path.clone();
+ let is_directory = routes_to_directory_scan(&job.scan);
+ let result = if is_directory {
+ runtime
+ .block_on(run_directory_scan(
+ Arc::new(app.clone()),
+ job.request_id.clone(),
+ job.scan,
+ true,
+ ))
+ .map(|file_count| (file_count, Vec::<String>::new()))
+ } else {
+ runtime
+ .block_on(run_file_scan(
+ Arc::new(app.clone()),
+ job.request_id.clone(),
+ job.scan,
+ ))
+ .map(|()| (0, Vec::<String>::new()))
+ };
+ match result {
+ Ok((_file_count, _paths)) if is_directory => {
+ emit_directory_complete(&app, &job.request_id, &scan_root);
+ }
+ Ok(_) => emit_file_complete(&app, &job.request_id, &scan_root),
+ Err(error) => emit_error(&app, &job.request_id, &error, Some(&scan_root)),
+ }
+ }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+ use super::*;
 
-    #[test]
-    fn routes_file_operation_when_operation_type_file() {
-        let scan = ScanAction {
-            path: "/tmp/a.jpg".into(),
-            operation_type: "file".into(),
-            action: "scan".into(),
-            thumbnail_size: Some(256),
-            is_directory: false,
-        };
-        assert!(!routes_to_directory_scan(&scan));
-    }
+ #[test]
+ fn routes_file_operation_when_operation_type_file() {
+ let scan = ScanAction {
+ path: "/tmp/a.jpg".into(),
+ operation_type: "file".into(),
+ action: "scan".into(),
+ thumbnail_size: Some(256),
+ is_directory: false,
+ };
+ assert!(!routes_to_directory_scan(&scan));
+ }
 
-    #[test]
-    fn routes_directory_by_default() {
-        let scan = ScanAction {
-            path: "/tmp/album".into(),
-            operation_type: String::new(),
-            action: "scan".into(),
-            thumbnail_size: Some(256),
-            is_directory: true,
-        };
-        assert!(routes_to_directory_scan(&scan));
-    }
+ #[test]
+ fn routes_directory_by_default() {
+ let scan = ScanAction {
+ path: "/tmp/album".into(),
+ operation_type: String::new(),
+ action: "scan".into(),
+ thumbnail_size: Some(256),
+ is_directory: true,
+ };
+ assert!(routes_to_directory_scan(&scan));
+ }
 
-    #[test]
-    fn should_create_thumbnail_when_missing() {
-        assert!(should_create_thumbnail("/nonexistent/thumb.png", "scan"));
-    }
+ #[test]
+ fn should_create_thumbnail_when_missing() {
+ assert!(should_create_thumbnail("/nonexistent/thumb.png", "scan"));
+ }
 
-    #[test]
-    fn should_create_thumbnail_on_rescan_even_if_exists() {
-        assert!(should_create_thumbnail("/etc/hosts", "rescan"));
-    }
+ #[test]
+ fn should_create_thumbnail_on_rescan_even_if_exists() {
+ assert!(should_create_thumbnail("/etc/hosts", "rescan"));
+ }
 
-    // ── RFC 0117 BUG①: subdir recursion is SKIP-only + honors `current` ──
+ // ── RFC 0117 BUG①: subdir recursion is SKIP-only + honors `current` ──
 
 
 
-    // ── RFC 0117 BUG②: restore maps photoList entries correctly ──
+ // ── RFC 0117 BUG②: restore maps photoList entries correctly ──
 
-    #[test]
-    fn cached_photo_maps_filename_to_full_path() {
-        let photo = serde_json::json!({
-            "path": "vacation.jpg",
-            "thumbnail": ".photasaoriginals/thumbnail-vacation.jpg.png",
-            "isVideo": false
-        });
-        let req = cached_photo_to_request("/photos/trip", &photo).expect("mapped");
-        assert_eq!(req.path, "/photos/trip/vacation.jpg");
-        assert_eq!(
-            req.thumbnail,
-            ".photasaoriginals/thumbnail-vacation.jpg.png"
-        );
-        assert!(!req.is_video);
-        assert!(!req.is_directory);
-    }
+ #[test]
+ fn cached_photo_maps_filename_to_full_path() {
+ let photo = serde_json::json!({
+ "path": "vacation.jpg",
+ "thumbnail": ".photasaoriginals/thumbnail-vacation.jpg.png",
+ "isVideo": false
+ });
+ let req = cached_photo_to_request("/photos/trip", &photo).expect("mapped");
+ assert_eq!(req.path, "/photos/trip/vacation.jpg");
+ assert_eq!(
+ req.thumbnail,
+ ".photasaoriginals/thumbnail-vacation.jpg.png"
+ );
+ assert!(!req.is_video);
+ assert!(!req.is_directory);
+ }
 
-    #[test]
-    fn cached_photo_falls_back_thumbnail_when_empty() {
-        let photo = serde_json::json!({ "path": "a.jpg", "thumbnail": "", "isVideo": false });
-        let req = cached_photo_to_request("/d", &photo).expect("mapped");
-        assert_eq!(
-            req.thumbnail,
-            relative_thumbnail_path_for_source("/d/a.jpg")
-        );
-    }
+ #[test]
+ fn cached_photo_falls_back_thumbnail_when_empty() {
+ let photo = serde_json::json!({ "path": "a.jpg", "thumbnail": "", "isVideo": false });
+ let req = cached_photo_to_request("/d", &photo).expect("mapped");
+ assert_eq!(
+ req.thumbnail,
+ relative_thumbnail_path_for_source("/d/a.jpg")
+ );
+ }
 
-    #[test]
-    fn cached_photo_skips_empty_or_missing_path() {
-        assert!(cached_photo_to_request("/d", &serde_json::json!({ "path": "" })).is_none());
-        assert!(cached_photo_to_request("/d", &serde_json::json!({ "thumbnail": "t" })).is_none());
-    }
+ #[test]
+ fn cached_photo_skips_empty_or_missing_path() {
+ assert!(cached_photo_to_request("/d", &serde_json::json!({ "path": "" })).is_none());
+ assert!(cached_photo_to_request("/d", &serde_json::json!({ "thumbnail": "t" })).is_none());
+ }
 
-    /// RFC 0117 BUG②：SKIP 恢复进度应为 `(idx+1, N)`，与 Electron `mergeDirectoryScanProgressWithCache` 一致。
-    #[test]
-    fn skip_restore_progress_uses_photo_list_length() {
-        let photos: Vec<serde_json::Value> = (0..5)
-            .map(|i| {
-                serde_json::json!({
-                    "path": format!("pic{i}.jpg"),
-                    "thumbnail": format!(".photasaoriginals/thumbnail-pic{i}.jpg.png"),
-                    "isVideo": false
-                })
-            })
-            .collect();
-        let files: Vec<PhotoFileRequest> = photos
-            .iter()
-            .filter_map(|p| cached_photo_to_request("/album", p))
-            .collect();
-        let total = files.len();
-        assert_eq!(total, 5);
-        for (idx, _file) in files.iter().enumerate() {
-            let processed = idx + 1;
-            assert_eq!(processed, idx + 1);
-            assert_eq!(total, 5);
-        }
-    }
+ /// RFC 0117 BUG②：SKIP 恢复进度应为 `(idx+1, N)`，与 legacy-api `mergeDirectoryScanProgressWithCache` 一致。
+ #[test]
+ fn skip_restore_progress_uses_photo_list_length() {
+ let photos: Vec<serde_json::Value> = (0..5)
+ .map(|i| {
+ serde_json::json!({
+ "path": format!("pic{i}.jpg"),
+ "thumbnail": format!(".photasaoriginals/thumbnail-pic{i}.jpg.png"),
+ "isVideo": false
+ })
+ })
+ .collect();
+ let files: Vec<PhotoFileRequest> = photos
+ .iter()
+ .filter_map(|p| cached_photo_to_request("/album", p))
+ .collect();
+ let total = files.len();
+ assert_eq!(total, 5);
+ for (idx, _file) in files.iter().enumerate() {
+ let processed = idx + 1;
+ assert_eq!(processed, idx + 1);
+ assert_eq!(total, 5);
+ }
+ }
 }

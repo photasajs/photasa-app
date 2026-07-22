@@ -66,7 +66,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { BaseNotification, BaseButton, BaseProgress } from "@renderer/components/ui";
 import type { NotificationItem } from "@renderer/types/notification";
-import type { UpdateInfo } from "electron-updater";
+import type { UpdateInfo } from "legacy auto-updater";
 
 interface Props {
     /** 更新信息 */

@@ -10,7 +10,7 @@
 
 ## Decision
 
-zouwu（`zouwu-core`/`zouwu-builtin`，Electron `TaiyiEngine`/`.zouwu` workflow 的 Rust 移植）在 Tauri 架构下不再有存在理由，逐域退场，改为 Tauri `#[tauri::command]` 直调 + 具体 crate。**Adapter 层本身与 zouwu 一并退场**。
+zouwu（`zouwu-core`/`zouwu-builtin`，contract reference `TaiyiEngine`/`.zouwu` workflow 的 Rust 移植）在 Tauri 架构下不再有存在理由，逐域退场，改为 Tauri `#[tauri::command]` 直调 + 具体 crate。**Adapter 层本身与 zouwu 一并退场**。
 
 **2026-07-21 结论**：贞观全部生产 matter 已由袁天罡 `executeZhaoling` 直连 invoke；`IntentToFuluMapping` 空表。`TianshuService` / `zouwu-core` 仍驻留代码库但**无生产流量**，crate /workspace 移除需另开 RFC。
 
@@ -29,7 +29,7 @@ zouwu（`zouwu-core`/`zouwu-builtin`，Electron `TaiyiEngine`/`.zouwu` workflow 
 
 ## 为什么 zouwu 在 Tauri 净值为负
 
-（原文保留）Tauri `#[tauri::command]` 是编译期检查的 Rust 直调；bundle `.zouwu` 既不带来 Electron 式热更新收益，又引入模板解析与生产打包遗漏风险（0107 历史教训，已由 0147 关闭 preference 路径）。
+（原文保留）Tauri `#[tauri::command]` 是编译期检查的 Rust 直调；bundle `.zouwu` 既不带来 contract reference 式热更新收益，又引入模板解析与生产打包遗漏风险（0107 历史教训，已由 0147 关闭 preference 路径）。
 
 ## 每域退场模式
 

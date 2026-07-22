@@ -12,24 +12,24 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Rewrite note（2026-07-18）
 
-本文档原版（2025-01-02）设想了 `services/thumbnail/{thumbnail_service,generator,cache}.rs` 架构，依赖 `image`/`imageproc`/`resize`/`ffmpeg-next` 作为顶层 crate 直接调用。**这套 service 分层从未被构建**——0134 前实际是扁平 `commands/thumbnail.rs` + `commands/thumbnail_placeholder.rs`（RAW 占位，见 0102）；0134 后算法已迁入 `crates/photasa-thumbnail`，app 侧只留 Tauri command 壳。CLAUDE.md 中记载的「马良（MaLiang）神笔工坊」多引擎架构（BmpBrush/HeicBrush/FFmpegBrush/SharpBrush/FallbackBrush）**是 Electron 桌面端**（`packages/@photasa/maliang*`）的设计，**不适用于 Photasa/Tauri**——两者是完全独立的实现，不要混淆。
+本文档原版（2025-01-02）设想了 `services/thumbnail/{thumbnail_service,generator,cache}.rs` 架构，依赖 `image`/`imageproc`/`resize`/`ffmpeg-next` 作为顶层 crate 直接调用。**这套 service 分层从未被构建**——0134 前实际是扁平 `commands/thumbnail.rs` + `commands/thumbnail_placeholder.rs`（RAW 占位，见 0102）；0134 后算法已迁入 `crates/photasa-thumbnail`，app 侧只留 Tauri command 壳。CLAUDE.md 中记载的「马良（MaLiang）神笔工坊」多引擎架构（BmpBrush/HeicBrush/FFmpegBrush/SharpBrush/FallbackBrush）**是 contract reference 桌面端**（`packages/@photasa/maliang*`）的设计，**不适用于 Photasa/Tauri**——两者是完全独立的实现，不要混淆。
 
 ## 实际架构（Actual, 2026-07-18）
 
 ```
 crates/photasa-thumbnail/src/
-├── thumbnail.rs   — async create_thumbnail/remove_thumbnail + private decode_thumbnail_blocking
+├── thumbnail.rs — async create_thumbnail/remove_thumbnail + private decode_thumbnail_blocking
 ├── placeholder.rs — RAW 占位图生成（RFC 0102）
-└── video.rs       — ffmpeg-next 视频截帧 helper
+└── video.rs — ffmpeg-next 视频截帧 helper
 
 apps/photasa/src-tauri/src/commands/
-└── thumbnail.rs   — create_thumbnail/remove_thumbnail Tauri command thin shell
+└── thumbnail.rs — create_thumbnail/remove_thumbnail Tauri command thin shell
 ```
 
 真实依赖：`image = "0.25"`、`libheif-rs`（HEIC 解码，`embedded-libheif` feature，见 RFC 0103）、`ffmpeg-next`（视频帧提取）。**无** `imageproc`、**无** `resize` 作为独立 crate。
@@ -44,39 +44,43 @@ apps/photasa/src-tauri/src/commands/
 
 ## 摘要（原版，2025-01-02，已过时，仅存档）
 
-本文档详细说明如何将 Electron 的缩略图服务迁移到 Tauri Rust 实现。缩略图服务负责生成和管理照片/视频的缩略图，是 Photasa 的核心功能之一。
+本文档详细说明如何将 contract reference 的缩略图服务迁移到 Tauri Rust 实现。缩略图服务负责生成和管理照片/视频的缩略图，是 Photasa 的核心功能之一。
 
 ## 当前架构分析
 
-### Electron 实现结构
+### 旧实现结构
 
 ```
-apps/desktop/src/main/thumbnail/
-├── thumbnail-service.ts      # 主服务（IPC 处理、Worker 管理）
-├── thumbnail-worker.ts        # Worker 线程实现
-├── thumbnail-handler.ts       # 缩略图处理逻辑
-└── utils.ts                   # 工具函数
+historical main/thumbnail/
+├── thumbnail-service.ts # 主服务（IPC 处理、Worker 管理）
+├── thumbnail-worker.ts # Worker 线程实现
+├── thumbnail-handler.ts # 缩略图处理逻辑
+└── utils.ts # 工具函数
 ```
 
 ### 核心功能
 
 1. **IPC 通信**
-    - `picasa:create-thumbnail` - 创建缩略图（`ThumbnailServiceAction.create`，invoke，参数 `ThumbnailRequest`）
-    - `picasa:remove-thumbnail` - 删除缩略图（`ThumbnailServiceAction.remove`，invoke）
+
+- `picasa:create-thumbnail` - 创建缩略图（`ThumbnailServiceAction.create`，invoke，参数 `ThumbnailRequest`）
+- `picasa:remove-thumbnail` - 删除缩略图（`ThumbnailServiceAction.remove`，invoke）
 
 2. **Worker 线程**
-    - 使用 Node.js Worker Threads
-    - 处理缩略图生成任务
+
+- 使用 Node.js Worker Threads
+- 处理缩略图生成任务
 
 3. **图像处理引擎**
-    - MaLiang 引擎（统一图像处理）
-    - 支持多种格式：BMP, HEIC, 视频等
-    - 使用 Sharp, FFmpeg, WASM-HEIF 等
+
+- MaLiang 引擎（统一图像处理）
+- 支持多种格式：BMP, HEIC, 视频等
+- 使用 Sharp, FFmpeg, WASM-HEIF 等
 
 4. **缩略图生成**
-    - 支持图片和视频
-    - 可配置尺寸
-    - 缓存管理
+
+- 支持图片和视频
+- 可配置尺寸
+- 缓存管理
 
 ## Tauri Rust 迁移计划
 
@@ -87,12 +91,12 @@ apps/desktop/src/main/thumbnail/
 ```
 apps/photasa/src-tauri/src/
 ├── services/
-│   └── thumbnail/
-│       ├── mod.rs                    # 模块导出
-│       ├── thumbnail_service.rs     # 主服务
-│       ├── generator.rs              # 缩略图生成器
-│       ├── cache.rs                  # 缓存管理
-│       └── types.rs                  # 类型定义
+│ └── thumbnail/
+│ ├── mod.rs # 模块导出
+│ ├── thumbnail_service.rs # 主服务
+│ ├── generator.rs # 缩略图生成器
+│ ├── cache.rs # 缓存管理
+│ └── types.rs # 类型定义
 ```
 
 #### 1.2 依赖添加
@@ -100,12 +104,12 @@ apps/photasa/src-tauri/src/
 ```toml
 [dependencies]
 # 图像处理
-image = "0.24"              # 基础图像处理
-imageproc = "0.24"          # 图像处理算法
-resize = "0.8"              # 图像缩放
+image = "0.24" # 基础图像处理
+imageproc = "0.24" # 图像处理算法
+resize = "0.8" # 图像缩放
 
 # FFmpeg 绑定（可选，通过 FFI）
-ffmpeg-next = "6.0"         # FFmpeg Rust 绑定
+ffmpeg-next = "6.0" # FFmpeg Rust 绑定
 
 # 异步处理
 tokio = { version = "1.0", features = ["full"] }
@@ -123,20 +127,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThumbnailRequest {
-    pub path: String,
-    pub thumbnail: String,
-    pub width: Option<u32>,
-    pub height: Option<u32>,
-    pub without_enlargement: bool,
-    pub preview: Option<String>,
-    pub always: bool,
+ pub path: String,
+ pub thumbnail: String,
+ pub width: Option<u32>,
+ pub height: Option<u32>,
+ pub without_enlargement: bool,
+ pub preview: Option<String>,
+ pub always: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThumbnailResponse {
-    pub success: bool,
-    pub file: Option<String>,
-    pub error: Option<String>,
+ pub success: bool,
+ pub file: Option<String>,
+ pub error: Option<String>,
 }
 ```
 
@@ -154,32 +158,32 @@ use anyhow::Result;
 pub struct ThumbnailGenerator;
 
 impl ThumbnailGenerator {
-    /// 生成图片缩略图
-    pub async fn generate_image_thumbnail(
-        &self,
-        source_path: &str,
-        output_path: &str,
-        width: u32,
-        height: u32,
-    ) -> Result<()> {
-        let img = image::open(source_path)?;
-        let thumbnail = img.thumbnail(width, height);
-        thumbnail.save(output_path)?;
-        Ok(())
-    }
+ /// 生成图片缩略图
+ pub async fn generate_image_thumbnail(
+ &self,
+ source_path: &str,
+ output_path: &str,
+ width: u32,
+ height: u32,
+ ) -> Result<()> {
+ let img = image::open(source_path)?;
+ let thumbnail = img.thumbnail(width, height);
+ thumbnail.save(output_path)?;
+ Ok(())
+ }
 
-    /// 生成视频缩略图（需要 FFmpeg）
-    pub async fn generate_video_thumbnail(
-        &self,
-        source_path: &str,
-        output_path: &str,
-        width: u32,
-        height: u32,
-    ) -> Result<()> {
-        // 使用 FFmpeg 提取视频帧
-        // 实现 FFmpeg 调用逻辑
-        todo!("Implement video thumbnail generation")
-    }
+ /// 生成视频缩略图（需要 FFmpeg）
+ pub async fn generate_video_thumbnail(
+ &self,
+ source_path: &str,
+ output_path: &str,
+ width: u32,
+ height: u32,
+ ) -> Result<()> {
+ // 使用 FFmpeg 提取视频帧
+ // 实现 FFmpeg 调用逻辑
+ todo!("Implement video thumbnail generation")
+ }
 }
 ```
 
@@ -194,77 +198,77 @@ use tauri::Window;
 use tokio::task;
 
 pub struct ThumbnailService {
-    generator: ThumbnailGenerator,
+ generator: ThumbnailGenerator,
 }
 
 impl ThumbnailService {
-    pub fn new() -> Self {
-        Self {
-            generator: ThumbnailGenerator,
-        }
-    }
+ pub fn new() -> Self {
+ Self {
+ generator: ThumbnailGenerator,
+ }
+ }
 
-    /// 创建缩略图
-    pub async fn create_thumbnail(
-        &self,
-        request: ThumbnailRequest,
-    ) -> Result<ThumbnailResponse, anyhow::Error> {
-        // 检查缩略图是否已存在
-        if Path::new(&request.thumbnail).exists() && !request.always {
-            return Ok(ThumbnailResponse {
-                success: true,
-                file: Some(request.thumbnail),
-                error: None,
-            });
-        }
+ /// 创建缩略图
+ pub async fn create_thumbnail(
+ &self,
+ request: ThumbnailRequest,
+ ) -> Result<ThumbnailResponse, anyhow::Error> {
+ // 检查缩略图是否已存在
+ if Path::new(&request.thumbnail).exists() && !request.always {
+ return Ok(ThumbnailResponse {
+ success: true,
+ file: Some(request.thumbnail),
+ error: None,
+ });
+ }
 
-        // 在后台任务中生成缩略图
-        let generator = self.generator.clone();
-        let request_clone = request.clone();
+ // 在后台任务中生成缩略图
+ let generator = self.generator.clone();
+ let request_clone = request.clone();
 
-        task::spawn(async move {
-            // 判断文件类型
-            if is_image_file(&request_clone.path)? {
-                generator.generate_image_thumbnail(
-                    &request_clone.path,
-                    &request_clone.thumbnail,
-                    request_clone.width.unwrap_or(200),
-                    request_clone.height.unwrap_or(200),
-                ).await?;
-            } else if is_video_file(&request_clone.path)? {
-                generator.generate_video_thumbnail(
-                    &request_clone.path,
-                    &request_clone.thumbnail,
-                    request_clone.width.unwrap_or(200),
-                    request_clone.height.unwrap_or(200),
-                ).await?;
-            }
+ task::spawn(async move {
+ // 判断文件类型
+ if is_image_file(&request_clone.path)? {
+ generator.generate_image_thumbnail(
+ &request_clone.path,
+ &request_clone.thumbnail,
+ request_clone.width.unwrap_or(200),
+ request_clone.height.unwrap_or(200),
+ ).await?;
+ } else if is_video_file(&request_clone.path)? {
+ generator.generate_video_thumbnail(
+ &request_clone.path,
+ &request_clone.thumbnail,
+ request_clone.width.unwrap_or(200),
+ request_clone.height.unwrap_or(200),
+ ).await?;
+ }
 
-            Ok::<(), anyhow::Error>(())
-        }).await??;
+ Ok::<(), anyhow::Error>(())
+ }).await??;
 
-        Ok(ThumbnailResponse {
-            success: true,
-            file: Some(request.thumbnail),
-            error: None,
-        })
-    }
+ Ok(ThumbnailResponse {
+ success: true,
+ file: Some(request.thumbnail),
+ error: None,
+ })
+ }
 
-    /// 删除缩略图
-    pub async fn remove_thumbnail(
-        &self,
-        request: ThumbnailRequest,
-    ) -> Result<ThumbnailResponse, anyhow::Error> {
-        if Path::new(&request.thumbnail).exists() {
-            fs::remove_file(&request.thumbnail).await?;
-        }
+ /// 删除缩略图
+ pub async fn remove_thumbnail(
+ &self,
+ request: ThumbnailRequest,
+ ) -> Result<ThumbnailResponse, anyhow::Error> {
+ if Path::new(&request.thumbnail).exists() {
+ fs::remove_file(&request.thumbnail).await?;
+ }
 
-        Ok(ThumbnailResponse {
-            success: true,
-            file: Some(request.thumbnail),
-            error: None,
-        })
-    }
+ Ok(ThumbnailResponse {
+ success: true,
+ file: Some(request.thumbnail),
+ error: None,
+ })
+ }
 }
 ```
 
@@ -283,32 +287,32 @@ type ThumbnailServiceState = State<'_, Arc<Mutex<ThumbnailService>>>;
 
 #[tauri::command]
 pub async fn create_thumbnail(
-    service: ThumbnailServiceState,
-    request: ThumbnailRequest,
+ service: ThumbnailServiceState,
+ request: ThumbnailRequest,
 ) -> Result<ThumbnailResponse, String> {
-    let service = service.lock().await;
-    service
-        .create_thumbnail(request)
-        .await
-        .map_err(|e| e.to_string())
+ let service = service.lock().await;
+ service
+ .create_thumbnail(request)
+ .await
+ .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn remove_thumbnail(
-    service: ThumbnailServiceState,
-    request: ThumbnailRequest,
+ service: ThumbnailServiceState,
+ request: ThumbnailRequest,
 ) -> Result<ThumbnailResponse, String> {
-    let service = service.lock().await;
-    service
-        .remove_thumbnail(request)
-        .await
-        .map_err(|e| e.to_string())
+ let service = service.lock().await;
+ service
+ .remove_thumbnail(request)
+ .await
+ .map_err(|e| e.to_string())
 }
 ```
 
 ## Image processing support plan (Tauri)
 
-Electron 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处理：SharpBrush（JPEG/PNG/WebP/TIFF/GIF/AVIF）、BmpBrush（Jimp+Sharp）、HeicBrush（WASM，一次解码同时出预览+缩略图）、FfmpegBrush（视频）、FallbackBrush。Tauri 侧采用分阶段、按格式选方案的策略，不新增独立 RFC，以本 RFC 为唯一说明。
+contract reference 当前在 `thumbnail-handler.ts` 中通过 **Ma-Liang** 引擎统一处理：SharpBrush（JPEG/PNG/WebP/TIFF/GIF/AVIF）、BmpBrush（Jimp+Sharp）、HeicBrush（WASM，一次解码同时出预览+缩略图）、FfmpegBrush（视频）、FallbackBrush。Tauri 侧采用分阶段、按格式选方案的策略，不新增独立 RFC，以本 RFC 为唯一说明。
 
 | 阶段 | 格式/范围                        | 方案                                                                                                                                                                                     |
 | ---- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -4,30 +4,30 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
-**Status**: ✅ Implemented  
-**Created**: 2026-04-05  
-**Last updated**: 2026-07-20  
-**Area**: Tauri / Update  
+**Status**: ✅ Implemented
+**Created**: 2026-04-05
+**Last updated**: 2026-07-20
+**Area**: Tauri / Update
 **Path**: `.spec/rfc/completed/0106-tauri-update-periodic-check.md`
 
 ---
 
 ## Problem
 
-The Electron `UpdateService` runs a `setInterval` background timer that
+The contract reference `UpdateService` runs a `setInterval` background timer that
 periodically calls `checkForUpdates()` based on the user's configured
 `checkInterval` (in hours):
 
 ```ts
 private startPeriodicCheck(): void {
-    const intervalMs = this.config.checkInterval * 60 * 60 * 1000;
-    this.checkTimer = setInterval(() => {
-        this.checkForUpdates().catch(…);
-    }, intervalMs);
+ const intervalMs = this.config.checkInterval * 60 * 60 * 1000;
+ this.checkTimer = setInterval(() => {
+ this.checkForUpdates().catch(…);
+ }, intervalMs);
 }
 ```
 
@@ -52,7 +52,7 @@ Wire a background Tokio task in `apps/photasa/src-tauri/src/main.rs` (inside
 `setup`) that:
 
 1. **Initial delay**: `tokio::time::sleep(Duration::from_secs(5))` before the
-   first check, matching the Electron 5-second startup delay.
+   first check, matching the contract reference 5-second startup delay.
 2. **Periodic loop**: after each check, sleep for
    `auto_config.check_interval` hours (default `24`) before re-checking.
 3. **Config-driven**: read `auto_config.enabled` and `auto_config.check_interval`
@@ -66,18 +66,18 @@ Wire a background Tokio task in `apps/photasa/src-tauri/src/main.rs` (inside
 
 ```rust
 tauri::async_runtime::spawn(async move {
-    tokio::time::sleep(Duration::from_secs(5)).await;
-    loop {
-        let (enabled, interval_h) = {
-            let cfg = update_state.auto_config.lock().unwrap();
-            (cfg.enabled, cfg.check_interval.max(1))
-        };
-        if enabled {
-            // invoke check_for_updates logic inline or via Arc<UpdateState>
-            let _ = do_check_for_updates(&app_handle, &update_state).await;
-        }
-        tokio::time::sleep(Duration::from_secs(interval_h as u64 * 3600)).await;
-    }
+ tokio::time::sleep(Duration::from_secs(5)).await;
+ loop {
+ let (enabled, interval_h) = {
+ let cfg = update_state.auto_config.lock().unwrap();
+ (cfg.enabled, cfg.check_interval.max(1))
+ };
+ if enabled {
+ // invoke check_for_updates logic inline or via Arc<UpdateState>
+ let _ = do_check_for_updates(&app_handle, &update_state).await;
+ }
+ tokio::time::sleep(Duration::from_secs(interval_h as u64 * 3600)).await;
+ }
 });
 ```
 
@@ -105,7 +105,7 @@ cd apps/photasa/src-tauri && cargo build -p photasa
 ## Impact
 
 - Users with auto-update enabled will receive update notifications without
-  manually opening Settings, matching Electron behaviour.
+  manually opening Settings, matching contract reference behaviour.
 - The background task is cheap (sleeps most of the time) and uses the existing
   `tauri-plugin-updater` machinery already wired.
 

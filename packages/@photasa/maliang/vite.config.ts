@@ -20,7 +20,6 @@ export default defineConfig({
         },
         rollupOptions: {
             external: [
-                "electron",
                 ...builtinModules,
                 ...builtinModules.map((m) => `node:${m}`),
                 "@photasa/common",

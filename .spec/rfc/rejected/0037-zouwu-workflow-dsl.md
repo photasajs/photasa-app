@@ -48,47 +48,47 @@ updatedAt: 1727544000000 # 可选: 最后更新时间戳
 
 # ===== 触发器 =====
 triggers: # 可选: 工作流触发条件
-    - intent: "workflow_intent" # 意图标识符
-    - event: "event_name" # 事件触发
-    - schedule: "0 */6 * * *" # Cron调度
+ - intent: "workflow_intent" # 意图标识符
+ - event: "event_name" # 事件触发
+ - schedule: "0 */6 * * *" # Cron调度
 
 # ===== 输入输出Schema =====
 inputs: # 可选: 输入参数定义
-    paramName: # 参数名作为键
-        type: "string|number|boolean|object|array"
-        required: true
-        description: "参数描述"
-        default: "默认值"
-        validation:
-            pattern: "^[a-z]+$"
-            min: 0
-            max: 100
+ paramName: # 参数名作为键
+ type: "string|number|boolean|object|array"
+ required: true
+ description: "参数描述"
+ default: "默认值"
+ validation:
+ pattern: "^[a-z]+$"
+ min: 0
+ max: 100
 
 outputs: # 可选: 输出定义
-    resultName:
-        type: "string|number|boolean|object|array"
-        description: "输出描述"
+ resultName:
+ type: "string|number|boolean|object|array"
+ description: "输出描述"
 
 # ===== 全局变量 =====
 variables: # 可选: 工作流级变量
-    requestId: "{{uuid()}}"
-    timestamp: "{{Date.now()}}"
-    maxRetries: 3
+ requestId: "{{uuid()}}"
+ timestamp: "{{Date.now()}}"
+ maxRetries: 3
 
 # ===== 工作流步骤 =====
 steps: # 必需: 工作流步骤
-    - id: "step_unique_id" # 必需: 步骤唯一ID
-      name: "步骤显示名称" # 可选: 人类可读名称
-      type: "condition|action|builtin|parallel|loop"
-      description: "步骤描述" # 可选
+ - id: "step_unique_id" # 必需: 步骤唯一ID
+ name: "步骤显示名称" # 可选: 人类可读名称
+ type: "condition|action|builtin|parallel|loop"
+ description: "步骤描述" # 可选
 
 # ===== 错误处理 =====
 error_handling: # 可选: 全局错误处理
-    default:
-        type: "gentle_recovery"
-        response:
-            success: false
-            message: "温和地处理了错误"
+ default:
+ type: "gentle_recovery"
+ response:
+ success: false
+ message: "温和地处理了错误"
 
 # ===== 工作流配置 =====
 enabled: true # 可选: 是否启用
@@ -107,17 +107,17 @@ tags: ["workflow", "scan"] # 可选: 分类标签
 
 ```yaml
 - id: "validate_input"
-  name: "验证输入"
-  type: "condition"
-  description: "检查输入是否有效"
-  condition:
-      field: "{{inputs.action}}"
-      operator: "in" # eq, ne, in, gt, lt, gte, lte, exists, matches, and, or
-      value: ["get", "update", "reset"]
-  onTrue:
-      -  # 条件为真时执行的步骤
-  onFalse:
-      -  # 条件为假时执行的步骤
+ name: "验证输入"
+ type: "condition"
+ description: "检查输入是否有效"
+ condition:
+ field: "{{inputs.action}}"
+ operator: "in" # eq, ne, in, gt, lt, gte, lte, exists, matches, and, or
+ value: ["get", "update", "reset"]
+ onTrue:
+ - # 条件为真时执行的步骤
+ onFalse:
+ - # 条件为假时执行的步骤
 ```
 
 **支持的操作符**:
@@ -135,25 +135,25 @@ tags: ["workflow", "scan"] # 可选: 分类标签
 
 ```yaml
 - id: "get_preferences"
-  name: "获取用户偏好"
-  type: "action"
-  description: "通过文昌获取当前偏好"
-  service: "wenchang" # 目标服务/适配器。注意：可用服务列表由执行引擎在运行时定义。
-  action: "getCurrentSnapshot" # 要调用的方法。
-  input:
-      # 输入参数
-  output:
-      snapshot: "result.data" # 输出映射
-  output_schema: # 输出验证schema
-      type: "object"
-      properties:
-          snapshot:
-              type: "object"
-  dependsOn: ["validate_input"] # 依赖项
-  timeout: 10000
-  retryOnFailure: true
-  maxRetries: 3
-  ignoreError: false
+ name: "获取用户偏好"
+ type: "action"
+ description: "通过文昌获取当前偏好"
+ service: "wenchang" # 目标服务/适配器。注意：可用服务列表由执行引擎在运行时定义。
+ action: "getCurrentSnapshot" # 要调用的方法。
+ input:
+ # 输入参数
+ output:
+ snapshot: "result.data" # 输出映射
+ output_schema: # 输出验证schema
+ type: "object"
+ properties:
+ snapshot:
+ type: "object"
+ dependsOn: ["validate_input"] # 依赖项
+ timeout: 10000
+ retryOnFailure: true
+ maxRetries: 3
+ ignoreError: false
 ```
 
 #### 2.3 内置步骤 (builtin)
@@ -162,13 +162,13 @@ tags: ["workflow", "scan"] # 可选: 分类标签
 
 ```yaml
 - id: "return_result"
-  name: "返回结果"
-  type: "builtin"
-  action: "return" # 内置操作类型。注意：可用动作列表由执行引擎在运行时定义。
-  input:
-      success: true
-      data: "{{steps.get_preferences.output.snapshot}}"
-      message: "操作完成"
+ name: "返回结果"
+ type: "builtin"
+ action: "return" # 内置操作类型。注意：可用动作列表由执行引擎在运行时定义。
+ input:
+ success: true
+ data: "{{steps.get_preferences.output.snapshot}}"
+ message: "操作完成"
 ```
 
 **内置动作**:
@@ -186,18 +186,18 @@ tags: ["workflow", "scan"] # 可选: 分类标签
 
 ```yaml
 - id: "parallel_processing"
-  name: "并行处理"
-  type: "parallel"
-  description: "并行执行验证和转换"
-  branches:
-      - name: "validation"
-        steps:
-            -  # 验证步骤
-      - name: "transformation"
-        steps:
-            -  # 转换步骤
-  waitFor: "all" # all, any, majority
-  failOn: "any" # any, all, majority
+ name: "并行处理"
+ type: "parallel"
+ description: "并行执行验证和转换"
+ branches:
+ - name: "validation"
+ steps:
+ - # 验证步骤
+ - name: "transformation"
+ steps:
+ - # 转换步骤
+ waitFor: "all" # all, any, majority
+ failOn: "any" # any, all, majority
 ```
 
 #### 2.5 循环步骤 (loop)
@@ -206,19 +206,19 @@ tags: ["workflow", "scan"] # 可选: 分类标签
 
 ```yaml
 - id: "process_files"
-  name: "处理文件"
-  type: "loop"
-  description: "处理列表中的每个文件"
-  iterator:
-      source: "{{inputs.files}}" # 数据源
-      variable: "currentFile" # 循环变量名
-      index: "index" # 索引变量名
-  steps:
-      -  # 为每个项目执行的步骤
-  breakCondition: # 可选: 中断条件
-      operator: "gte"
-      value: "{{index}}"
-      test: 10
+ name: "处理文件"
+ type: "loop"
+ description: "处理列表中的每个文件"
+ iterator:
+ source: "{{inputs.files}}" # 数据源
+ variable: "currentFile" # 循环变量名
+ index: "index" # 索引变量名
+ steps:
+ - # 为每个项目执行的步骤
+ breakCondition: # 可选: 中断条件
+ operator: "gte"
+ value: "{{index}}"
+ test: 10
 ```
 
 ### 3. 变量解析
@@ -237,18 +237,18 @@ tags: ["workflow", "scan"] # 可选: 分类标签
 
 ```yaml
 steps:
-    - id: "get_path"
-      type: "builtin"
-      action: "return"
-      input:
-          data: "/path/to/folder"
+ - id: "get_path"
+ type: "builtin"
+ action: "return"
+ input:
+ data: "/path/to/folder"
 
-    - id: "scan_folder"
-      type: "action"
-      service: "qianliyan"
-      action: "scanDirectory"
-      input:
-          path: "{{steps.get_path.output}}" # 解析为 "/path/to/folder"
+ - id: "scan_folder"
+ type: "action"
+ service: "qianliyan"
+ action: "scanDirectory"
+ input:
+ path: "{{steps.get_path.output}}" # 解析为 "/path/to/folder"
 ```
 
 ### 4. 验证架构 (Validation Architecture)
@@ -292,7 +292,7 @@ steps:
 `@zouwu-wf/cli`包提供工具：
 
 - **验证**: `zouwu validate <workflow.yml> --context <context.json>`
-    - 使用 `--context` 参数提供运行时特定的限制（如 `supportedServices`）。
+- 使用 `--context` 参数提供运行时特定的限制（如 `supportedServices`）。
 - **类型生成**: `zouwu generate-types <schema.json>`
 - **代码检查**: `zouwu lint <workflow.yml>`
 
@@ -302,29 +302,29 @@ steps:
 
 ```
 @zouwu-wf/workflow/
-├── schemas/                    # JSON Schema定义
-│   ├── workflow.schema.json
-│   ├── step-types.schema.json
-│   └── template-syntax.schema.json
+├── schemas/ # JSON Schema定义
+│ ├── workflow.schema.json
+│ ├── step-types.schema.json
+│ └── template-syntax.schema.json
 ├── src/
-│   ├── schemas/               # Schema加载器
-│   ├── types/                 # TypeScript类型定义
-│   ├── validators/            # 运行时验证器
-│   └── index.ts
+│ ├── schemas/ # Schema加载器
+│ ├── types/ # TypeScript类型定义
+│ ├── validators/ # 运行时验证器
+│ └── index.ts
 
 @zouwu-wf/expression-parser/
 ├── src/
-│   ├── parser.ts              # 表达式解析器
-│   ├── validator.ts           # 表达式验证器
-│   └── types.ts
+│ ├── parser.ts # 表达式解析器
+│ ├── validator.ts # 表达式验证器
+│ └── types.ts
 
 @zouwu-wf/cli/
 ├── src/
-│   ├── commands/
-│   │   ├── validate.ts        # 验证命令
-│   │   ├── generate.ts        # 代码生成
-│   │   └── lint.ts           # 代码检查命令
-│   └── index.ts
+│ ├── commands/
+│ │ ├── validate.ts # 验证命令
+│ │ ├── generate.ts # 代码生成
+│ │ └── lint.ts # 代码检查命令
+│ └── index.ts
 ```
 
 ### 与天枢的集成
@@ -368,11 +368,11 @@ steps:
 
 天枢 (@systembug/tianshu) - 统一工作流执行引擎包
 ├── src/core/
-│   ├── TianshuEngine.ts - 引擎入口
-│   └── WorkflowLoader.ts - 文件读取 (使用Node.js fs -> Zouwu Parser)
+│ ├── TianshuEngine.ts - 引擎入口
+│ └── WorkflowLoader.ts - 文件读取 (使用Node.js fs -> Zouwu Parser)
 └── src/orchestration/
-    ├── WorkflowOrchestrator.ts - 核心编排逻辑
-    └── executors/ - 步骤执行器
+ ├── WorkflowOrchestrator.ts - 核心编排逻辑
+ └── executors/ - 步骤执行器
 ```
 
 ### Phase 1: 驺吾包增强 (Parser)
@@ -380,9 +380,9 @@ steps:
 目标：将解析逻辑 (YAML/JSON Parsing) 移入 Zouwu。
 
 - 添加 `parsers/WorkflowParser.ts`：
-    - 封装 `js-yaml`。
-    - 提供 `parse(content: string): WorkflowDefinition`。
-    - 集成 `Validator`，在解析后自动验证。
+- 封装 `js-yaml`。
+- 提供 `parse(content: string): WorkflowDefinition`。
+- 集成 `Validator`，在解析后自动验证。
 - 导出 `WorkflowParser`。
 
 ### Phase 2: 天枢调用流程
@@ -391,8 +391,10 @@ steps:
 
 1. **读取**: `NodeWorkflowLoader` 使用 `fs.readFile` 读取文件内容 (String)。
 2. **解析**: 调用 `Zouwu.WorkflowParser.parse(content)`。
-    - Zouwu 内部处理 YAML/JSON 转换。
-    - Zouwu 内部进行 Schema 验证。
+
+- Zouwu 内部处理 YAML/JSON 转换。
+- Zouwu 内部进行 Schema 验证。
+
 3. **执行**: 获取验证后的 `WorkflowDefinition` 对象，传递给 `WorkflowOrchestrator`。
 
 ### Phase 3: 职责划分总结
@@ -407,9 +409,9 @@ steps:
 
 ### Phase 4: 依赖关系
 
-- `apps/desktop` -> `@zouwu-wf/workflow` (Types, Validators)
-- `apps/desktop` -> `@zouwu-wf/expression-parser` (Expression Evaluation)
-- `apps/desktop` -> `@systembug/diting` (Logging)
+- `legacy-api contract` -> `@zouwu-wf/workflow` (Types, Validators)
+- `legacy-api contract` -> `@zouwu-wf/expression-parser` (Expression Evaluation)
+- `legacy-api contract` -> `@systembug/diting` (Logging)
 
 ### Phase 5: CLI工具 (计划中)
 

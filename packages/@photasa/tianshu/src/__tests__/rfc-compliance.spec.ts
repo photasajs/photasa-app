@@ -329,11 +329,8 @@ describe("RFC 0037 工作流语法规范合规性", () => {
         // 查找所有工作流YAML文件
         const PROJECT_ROOT = path.resolve(__dirname, "../../../../../");
         const DOCS_DIR = path.join(PROJECT_ROOT, "docs");
-        // 工作流源文件位于 main 进程（Electron）目录，与运行时 TianshuEngine 使用的路径一致
-        const WORKFLOW_DIR = path.join(
-            PROJECT_ROOT,
-            "apps/desktop/src/main/engines/tianshu/workflows",
-        );
+        // 工作流源文件位于 main 进程（contract reference）目录，与运行时 TianshuEngine 使用的路径一致
+        const WORKFLOW_DIR = path.join(PROJECT_ROOT, "historical main/engines/tianshu/workflows");
         const pattern = path.join(WORKFLOW_DIR, "**/*.{yml,yaml,zouwu}").replace(/\\/g, "/");
         workflowFiles = await glob(pattern);
 
@@ -354,7 +351,7 @@ describe("RFC 0037 工作流语法规范合规性", () => {
             if (errors.length > 0) {
                 console.log(`\n${relativePath} RFC合规性错误:`);
                 errors.forEach((error, index) => {
-                    console.log(`  ${index + 1}. ${error}`);
+                    console.log(` ${index + 1}. ${error}`);
                 });
             }
 
@@ -380,7 +377,7 @@ describe("RFC 0037 工作流语法规范合规性", () => {
             allErrors.forEach(({ file, errors }) => {
                 console.log(`\n❌ ${file}:`);
                 errors.forEach((error, index) => {
-                    console.log(`   ${index + 1}. ${error}`);
+                    console.log(` ${index + 1}. ${error}`);
                 });
             });
             console.log(`\n总计: ${allErrors.length} 个文件存在 RFC 合规性问题`);

@@ -9,13 +9,13 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-One Tauri command: **check_photasa_config(folder_path)**. Check whether the folder has a valid `.photasa.json` (exists and optionally validate structure). Return boolean or small struct as UI expects. Replaces Electron `picasa:check-photasa-config`. Rust only; no Node.
+One Tauri command: **check_photasa_config(folder_path)**. Check whether the folder has a valid `.photasa.json` (exists and optionally validate structure). Return boolean or small struct as UI expects. Replaces contract reference `picasa:check-photasa-config`. Rust only; no Node.
 
 ## Motivation
 

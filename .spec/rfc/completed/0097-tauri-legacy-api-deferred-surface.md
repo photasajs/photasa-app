@@ -9,19 +9,19 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-本 RFC 是 **Photasa 唯一的 Active 跟踪 RFC**：对照 Electron 全量后端能力，列出 **已在 Rust 重写**、**Partial**、**未重写/禁止路径**。对拍方式 = Rust 实现 + Electron 契约，见 [ROADMAP.md](../../../ROADMAP.md) → **Electron → Rust parity audit**。
+本 RFC 是 **Photasa 唯一的 Active 跟踪 RFC**：对照 contract reference 全量后端能力，列出 **已在 Rust 重写**、**Partial**、**未重写/禁止路径**。对拍方式 = Rust 实现 + legacy-api 契约，见 [ROADMAP.md](../../../ROADMAP.md) → **contract reference → Rust parity audit**。
 
 ---
 
-## Electron 能力 → Rust 状态总表
+## v2.0 能力 → Rust 状态总表
 
-| 能力域              | Electron                 | Rust                                              | 状态                                                                  |
+| 能力域              | contract reference       | Rust                                              | 状态                                                                  |
 | ------------------- | ------------------------ | ------------------------------------------------- | --------------------------------------------------------------------- |
 | 窗口 / Shell / 平台 | preload + main           | `window`, `shell`, `platform`                     | ✅                                                                    |
 | 路径                | Node path-util           | `path.rs` + 少量 Vue 纯 TS                        | ✅                                                                    |
@@ -40,7 +40,7 @@
 | 天枢 / 偏好         | tianshu + wenchang       | `TianshuService` + `photasa-preference`           | 🔨（0107，crate/adapter 完成，生产打包 workflow 加载缺失，详见 0107） |
 | Splash / 单实例     | splash + single-instance | 0100/0101                                         | 🚧 UI polish 可选                                                     |
 | WASM 命令           | （历史）                 | ✅ **已删除**（0114）                             |
-| `@photasa/*` 包     | 0098 Electron            | **禁止** Tauri 引用                               | ⛔                                                                    |
+| `@photasa/*` 包     | 0098 contract reference  | **禁止** Tauri 引用                               | ⛔                                                                    |
 
 ---
 
@@ -75,12 +75,12 @@
 
 ## ⛔ 不是 Photasa 重写目标（勿误标为缺口）
 
-| 项                                     | 原因                                      |
-| -------------------------------------- | ----------------------------------------- |
-| **RFC 0098** `@photasa/*` 抽包         | Electron-only，Deferred                   |
-| **Ma-Liang / `@photasa/maliang` WASM** | 已由 Rust `image` + libheif + ffmpeg 替代 |
-| **preload 本地 `importPhotos` fs**     | 已由 `import_photos_legacy` Rust 替代     |
-| **v2.0 Electron RFC（0032 等）**       | Legacy 索引；Photasa 用 0068/0105         |
+| 项                                         | 原因                                      |
+| ------------------------------------------ | ----------------------------------------- |
+| **RFC 0098** `@photasa/*` 抽包             | deferred，Deferred                        |
+| **Ma-Liang / `@photasa/maliang` WASM**     | 已由 Rust `image` + libheif + ffmpeg 替代 |
+| **preload 本地 `importPhotos` fs**         | 已由 `import_photos_legacy` Rust 替代     |
+| **v2.0 contract reference RFC（0032 等）** | Legacy 索引；Photasa 用 0068/0105         |
 
 ---
 
@@ -97,5 +97,5 @@
 
 ## 说明
 
-- `cleanupScanQueue`：Electron 空实现；Tauri 保持空操作。
+- `cleanupScanQueue`：contract reference 空实现；Tauri 保持空操作。
 - 从本清单移除某项时：同步 ROADMAP parity audit、`TASK_TRACKING.md` Photasa Active 表。

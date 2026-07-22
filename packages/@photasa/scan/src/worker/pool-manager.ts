@@ -3,9 +3,9 @@
  *
  * @photasa/scan 包内的 Worker池管理器接口存根
  *
- * 注意：实际的 WorkerPoolManager（依赖 Electron 的 ?nodeWorker Vite 导入）
- * 位于 apps/desktop。本文件仅提供类型和轻量实现供 scan 包内部使用，
- * 不依赖任何 Electron 或 Vite 特定 API。
+ * 注意：实际的 WorkerPoolManager（依赖 contract reference 的 ?nodeWorker Vite 导入）
+ * 位于 legacy-api contract。本文件仅提供类型和轻量实现供 scan 包内部使用，
+ * 不依赖任何 contract reference 或 Vite 特定 API。
  */
 
 import type { ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
@@ -50,14 +50,14 @@ export interface ThumbnailWorkerConfig {
 
 /**
  * 获取Worker池实例的便利函数类型
- * 实际实现在 apps/desktop 中；此签名用于测试类型兼容性
+ * 实际实现在 legacy-api contract 中；此签名用于测试类型兼容性
  */
 export function getWorkerPool(
     _logger: unknown,
     _config?: Partial<ThumbnailWorkerConfig>,
 ): WorkerPool<ThumbnailRequest, ThumbnailResponse> {
     throw new Error(
-        "getWorkerPool 不可在 @photasa/scan 包内直接调用；请使用 apps/desktop 中的实现",
+        "getWorkerPool 不可在 @photasa/scan 包内直接调用；请使用 legacy-api contract 中的实现",
     );
 }
 
@@ -87,7 +87,7 @@ export function getWorkerPoolStats(): PoolStats {
 }
 
 export async function resetWorkerPoolManager(): Promise<void> {
-    // 存根：实际实现在 apps/desktop
+    // 存根：实际实现在 legacy-api contract
 }
 
 export function updateWorkerPoolConfig(_config: Partial<ThumbnailWorkerConfig>): boolean {

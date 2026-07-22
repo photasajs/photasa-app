@@ -33,24 +33,24 @@
 ```
 photasa.me Update Server Architecture
 ┌─────────────────────────────────────────────────────────────┐
-│                        Next.js App                         │
+│ Next.js App │
 ├─────────────────────────────────────────────────────────────┤
-│  API Routes           │  Pages              │  Components   │
-│  ├── /api/updates/    │  ├── /updates/     │  ├── UI       │
-│  │   ├── releases/    │  │   ├── download  │  ├── Analytics│
-│  │   ├── download/    │  │   └── changelog │  └── Admin    │
-│  │   └── stats        │  └── /admin/       │              │
+│ API Routes │ Pages │ Components │
+│ ├── /api/updates/ │ ├── /updates/ │ ├── UI │
+│ │ ├── releases/ │ │ ├── download │ ├── Analytics│
+│ │ ├── download/ │ │ └── changelog │ └── Admin │
+│ │ └── stats │ └── /admin/ │ │
 ├─────────────────────────────────────────────────────────────┤
-│                    Supabase Integration                     │
-│  ├── PostgreSQL Database                                   │
-│  ├── Realtime Subscriptions                               │
-│  ├── Edge Functions                                       │
-│  └── Storage (Optional)                                   │
+│ Supabase Integration │
+│ ├── PostgreSQL Database │
+│ ├── Realtime Subscriptions │
+│ ├── Edge Functions │
+│ └── Storage (Optional) │
 ├─────────────────────────────────────────────────────────────┤
-│  File Storage & CDN    │  Analytics       │  Monitoring    │
-│  ├── Vercel Blob      │  ├── Supabase    │  ├── Sentry     │
-│  ├── AWS S3 (Option)  │  ├── Vercel      │  ├── Vercel     │
-│  └── Vercel CDN       │  └── Custom      │  └── Custom     │
+│ File Storage & CDN │ Analytics │ Monitoring │
+│ ├── Vercel Blob │ ├── Supabase │ ├── Sentry │
+│ ├── AWS S3 (Option) │ ├── Vercel │ ├── Vercel │
+│ └── Vercel CDN │ └── Custom │ └── Custom │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -87,30 +87,30 @@ photasa.me Update Server Architecture
 ```
 photasa.me/
 ├── pages/api/updates/
-│   ├── check.ts           # 版本检查API
-│   ├── download/[id].ts   # 下载统计和重定向
-│   ├── feedback.ts        # 更新反馈收集
-│   └── releases/
-│       ├── latest.yml.ts      # Windows版本信息API
-│       ├── latest-mac.yml.ts  # macOS版本信息API
-│       └── [platform]/[file].ts  # 文件下载API
+│ ├── check.ts # 版本检查API
+│ ├── download/[id].ts # 下载统计和重定向
+│ ├── feedback.ts # 更新反馈收集
+│ └── releases/
+│ ├── latest.yml.ts # Windows版本信息API
+│ ├── latest-mac.yml.ts # macOS版本信息API
+│ └── [platform]/[file].ts # 文件下载API
 ├── pages/updates/
-│   ├── changelog.tsx      # 版本更新日志页面
-│   └── download.tsx       # 手动下载页面
+│ ├── changelog.tsx # 版本更新日志页面
+│ └── download.tsx # 手动下载页面
 ├── pages/admin/
-│   ├── releases.tsx       # 版本管理界面
-│   └── analytics.tsx      # 下载统计面板
+│ ├── releases.tsx # 版本管理界面
+│ └── analytics.tsx # 下载统计面板
 └── lib/
-    ├── supabase.ts        # Supabase客户端配置
-    ├── storage.ts         # 文件存储服务
-    └── analytics.ts       # 统计分析服务
+ ├── supabase.ts # Supabase客户端配置
+ ├── storage.ts # 文件存储服务
+ └── analytics.ts # 统计分析服务
 ```
 
 ### 🔄 URL 重写代理方案
 
 #### 核心问题解决
 
-**问题描述**：UploadThing CDN生成的文件URL包含冒号字符（`https://utfs.io/f/xxx`），导致electron-updater下载时创建包含冒号的临时文件路径，在Windows和macOS系统中被禁止。
+**问题描述**：UploadThing CDN生成的文件URL包含冒号字符（`https://utfs.io/f/xxx`），导致legacy auto-updater下载时创建包含冒号的临时文件路径，在Windows和macOS系统中被禁止。
 
 **解决策略**：通过服务端URL重写代理，让客户端看到安全的文件路径，服务端负责重定向到实际的UploadThing URL。
 
@@ -119,13 +119,13 @@ photasa.me/
 **重要：自动更新使用ZIP格式，不是EXE/DMG**
 
 - **所有平台**: 统一使用 ZIP 格式进行自动更新
-    - **Windows**: `Photasa-1.6.0-win.zip`
-    - **macOS**: `Photasa-1.6.0-mac.zip`
-    - **Linux**: `Photasa-1.6.0-linux.zip`
-- **原因**: ZIP格式是electron-updater的标准自动更新格式
-    - 跨平台一致性
-    - 更好的压缩率和下载速度
-    - electron-updater原生支持
+- **Windows**: `Photasa-1.6.0-win.zip`
+- **macOS**: `Photasa-1.6.0-mac.zip`
+- **Linux**: `Photasa-1.6.0-linux.zip`
+- **原因**: ZIP格式是legacy auto-updater的标准自动更新格式
+- 跨平台一致性
+- 更好的压缩率和下载速度
+- legacy auto-updater原生支持
 
 #### ⚠️ 客户端配置要求
 
@@ -139,9 +139,9 @@ autoUpdater.setFeedURL({
 });
 
 // ✅ 正确：使用配置文件驱动
-// electron-updater 会自动从以下文件读取配置：
+// legacy auto-updater 会自动从以下文件读取配置：
 // 开发环境：dev-app-update.yml
-// 生产环境：app-update.yml (由 electron-builder.yml 生成)
+// 生产环境：app-update.yml (由 legacy packager.yml 生成)
 ```
 
 **必需的配置文件**：
@@ -154,7 +154,7 @@ updaterCacheDirName: photasa-updater
 ```
 
 ```yaml
-# electron-builder.yml (publish 配置)
+# legacy packager.yml (publish 配置)
 publish:
     provider: generic
     url: https://photasa.me/api/updates/releases
@@ -163,12 +163,12 @@ publish:
 #### 代理架构设计
 
 ```
-Client (electron-updater)
-    ↓ GET /api/updates/releases/latest.yml
+Client (legacy auto-updater)
+ ↓ GET /api/updates/releases/latest.yml
 Server Response: { "files": [{ "url": "Photasa-1.6.0-win.zip" }] }
-    ↓ GET /api/updates/releases/Photasa-1.6.0-win.zip
+ ↓ GET /api/updates/releases/Photasa-1.6.0-win.zip
 Server Proxy: 302 Redirect → https://utfs.io/f/4CQT2JNmMDi7rIPL
-    ↓
+ ↓
 UploadThing CDN
 ```
 
@@ -177,34 +177,34 @@ UploadThing CDN
 ```sql
 -- 文件下载映射表
 CREATE TABLE download_mappings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    version VARCHAR(50) NOT NULL,
-    platform VARCHAR(20) NOT NULL, -- 'win', 'mac', 'linux'
-    safe_filename VARCHAR(255) NOT NULL, -- 'Photasa-1.6.0-win.zip'
-    actual_url TEXT NOT NULL, -- 'https://utfs.io/f/xxx'
-    file_size BIGINT NOT NULL,
-    sha512_hash VARCHAR(128) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ version VARCHAR(50) NOT NULL,
+ platform VARCHAR(20) NOT NULL, -- 'win', 'mac', 'linux'
+ safe_filename VARCHAR(255) NOT NULL, -- 'Photasa-1.6.0-win.zip'
+ actual_url TEXT NOT NULL, -- 'https://utfs.io/f/xxx'
+ file_size BIGINT NOT NULL,
+ sha512_hash VARCHAR(128) NOT NULL,
+ created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-    -- 约束和索引
-    UNIQUE(version, platform),
-    UNIQUE(safe_filename), -- 确保安全文件名唯一性
-    INDEX idx_version_platform (version, platform),
-    INDEX idx_safe_filename (safe_filename), -- 支持通过文件名快速查找
-    INDEX idx_created_at (created_at DESC) -- 支持按时间排序查询最新版本
+ -- 约束和索引
+ UNIQUE(version, platform),
+ UNIQUE(safe_filename), -- 确保安全文件名唯一性
+ INDEX idx_version_platform (version, platform),
+ INDEX idx_safe_filename (safe_filename), -- 支持通过文件名快速查找
+ INDEX idx_created_at (created_at DESC) -- 支持按时间排序查询最新版本
 );
 
 -- 下载统计表
 CREATE TABLE download_stats (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    mapping_id UUID REFERENCES download_mappings(id),
-    user_agent TEXT,
-    ip_address INET,
-    country_code CHAR(2),
-    downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ mapping_id UUID REFERENCES download_mappings(id),
+ user_agent TEXT,
+ ip_address INET,
+ country_code CHAR(2),
+ downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-    INDEX idx_mapping_downloaded (mapping_id, downloaded_at),
-    INDEX idx_downloaded_at (downloaded_at)
+ INDEX idx_mapping_downloaded (mapping_id, downloaded_at),
+ INDEX idx_downloaded_at (downloaded_at)
 );
 ```
 
@@ -221,7 +221,7 @@ interface SafeFilenameConfig {
 function generateSafeFilename(config: SafeFilenameConfig): string {
     const { appName, version, platform, extension } = config;
 
-    // 基于实际的 electron-builder.yml 配置
+    // 基于实际的 legacy packager.yml 配置
     // 注意：自动更新使用 ZIP 格式，不是 EXE/DMG
     switch (platform) {
         case "win":
@@ -244,8 +244,8 @@ function generateSafeFilename(config: SafeFilenameConfig): string {
 
     // 示例（自动更新文件，统一使用 ZIP）：
     // Windows: "Photasa-1.6.0-win.zip"
-    // macOS:   "Photasa-1.6.0-mac.zip"
-    // Linux:   "Photasa-1.6.0-linux.zip"
+    // macOS: "Photasa-1.6.0-mac.zip"
+    // Linux: "Photasa-1.6.0-linux.zip"
 }
 ```
 
@@ -380,9 +380,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const yamlContent = `version: ${mapping.version}
 files:
-  - url: ${safeFilename}
-    sha512: ${mapping.sha512_hash}
-    size: ${mapping.file_size}
+ - url: ${safeFilename}
+ sha512: ${mapping.sha512_hash}
+ size: ${mapping.file_size}
 path: ${safeFilename}
 sha512: ${mapping.sha512_hash}
 releaseDate: '${mapping.created_at}'`;
@@ -542,39 +542,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 ```sql
 -- 版本信息表
 CREATE TABLE versions (
-  id SERIAL PRIMARY KEY,
-  version VARCHAR(20) NOT NULL UNIQUE,
-  platform VARCHAR(10) NOT NULL,
-  file_url TEXT NOT NULL,
-  file_size BIGINT NOT NULL,
-  sha512 TEXT NOT NULL,
-  release_notes TEXT,
-  is_prerelease BOOLEAN DEFAULT FALSE,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  released_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+ id SERIAL PRIMARY KEY,
+ version VARCHAR(20) NOT NULL UNIQUE,
+ platform VARCHAR(10) NOT NULL,
+ file_url TEXT NOT NULL,
+ file_size BIGINT NOT NULL,
+ sha512 TEXT NOT NULL,
+ release_notes TEXT,
+ is_prerelease BOOLEAN DEFAULT FALSE,
+ is_active BOOLEAN DEFAULT TRUE,
+ created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+ released_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 下载统计详情表
 CREATE TABLE download_stats (
-  id SERIAL PRIMARY KEY,
-  file_id VARCHAR(50) NOT NULL,
-  version VARCHAR(20) NOT NULL,
-  platform VARCHAR(10) NOT NULL,
-  user_agent TEXT,
-  ip_address INET,
-  country VARCHAR(2),
-  downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+ id SERIAL PRIMARY KEY,
+ file_id VARCHAR(50) NOT NULL,
+ version VARCHAR(20) NOT NULL,
+ platform VARCHAR(10) NOT NULL,
+ user_agent TEXT,
+ ip_address INET,
+ country VARCHAR(2),
+ downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 下载计数器表 (优化查询性能)
 CREATE TABLE download_counters (
-  file_id VARCHAR(50) PRIMARY KEY,
-  version VARCHAR(20) NOT NULL,
-  total_downloads INTEGER DEFAULT 0,
-  win_downloads INTEGER DEFAULT 0,
-  mac_downloads INTEGER DEFAULT 0,
-  last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+ file_id VARCHAR(50) PRIMARY KEY,
+ version VARCHAR(20) NOT NULL,
+ total_downloads INTEGER DEFAULT 0,
+ win_downloads INTEGER DEFAULT 0,
+ mac_downloads INTEGER DEFAULT 0,
+ last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 索引优化
@@ -588,45 +588,45 @@ CREATE INDEX idx_versions_platform_active ON versions(platform, is_active);
 ```sql
 -- 原子性更新下载计数器
 CREATE OR REPLACE FUNCTION increment_download_counter(
-  file_id_param VARCHAR(50),
-  platform_param VARCHAR(10)
+ file_id_param VARCHAR(50),
+ platform_param VARCHAR(10)
 ) RETURNS VOID AS $$
 BEGIN
-  INSERT INTO download_counters (file_id, version, total_downloads, win_downloads, mac_downloads)
-  VALUES (
-    file_id_param,
-    (SELECT version FROM versions WHERE id = file_id_param::INTEGER),
-    CASE WHEN platform_param = 'win' THEN 1 ELSE 0 END,
-    CASE WHEN platform_param = 'win' THEN 1 ELSE 0 END,
-    CASE WHEN platform_param = 'mac' THEN 1 ELSE 0 END
-  )
-  ON CONFLICT (file_id) DO UPDATE SET
-    total_downloads = download_counters.total_downloads + 1,
-    win_downloads = download_counters.win_downloads +
-                   CASE WHEN platform_param = 'win' THEN 1 ELSE 0 END,
-    mac_downloads = download_counters.mac_downloads +
-                   CASE WHEN platform_param = 'mac' THEN 1 ELSE 0 END,
-    last_updated = NOW();
+ INSERT INTO download_counters (file_id, version, total_downloads, win_downloads, mac_downloads)
+ VALUES (
+ file_id_param,
+ (SELECT version FROM versions WHERE id = file_id_param::INTEGER),
+ CASE WHEN platform_param = 'win' THEN 1 ELSE 0 END,
+ CASE WHEN platform_param = 'win' THEN 1 ELSE 0 END,
+ CASE WHEN platform_param = 'mac' THEN 1 ELSE 0 END
+ )
+ ON CONFLICT (file_id) DO UPDATE SET
+ total_downloads = download_counters.total_downloads + 1,
+ win_downloads = download_counters.win_downloads +
+ CASE WHEN platform_param = 'win' THEN 1 ELSE 0 END,
+ mac_downloads = download_counters.mac_downloads +
+ CASE WHEN platform_param = 'mac' THEN 1 ELSE 0 END,
+ last_updated = NOW();
 END;
-$$ LANGUAGE plpgsql;  -- PostgreSQL procedural language (PL/pgSQL)
+$$ LANGUAGE plpgsql; -- PostgreSQL procedural language (PL/pgSQL)
 
 -- 触发器：自动更新计数器
 CREATE OR REPLACE FUNCTION update_download_counters()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- 更新对应的计数器
-  UPDATE download_counters SET
-    total_downloads = download_counters.total_downloads + 1,
-    win_downloads = download_counters.win_downloads + CASE WHEN NEW.platform = 'win' THEN 1 ELSE 0 END,
-    mac_downloads = download_counters.mac_downloads + CASE WHEN NEW.platform = 'mac' THEN 1 ELSE 0 END,
-    last_updated = NOW();
-  RETURN NEW;
+ -- 更新对应的计数器
+ UPDATE download_counters SET
+ total_downloads = download_counters.total_downloads + 1,
+ win_downloads = download_counters.win_downloads + CASE WHEN NEW.platform = 'win' THEN 1 ELSE 0 END,
+ mac_downloads = download_counters.mac_downloads + CASE WHEN NEW.platform = 'mac' THEN 1 ELSE 0 END,
+ last_updated = NOW();
+ RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;  -- PostgreSQL procedural language (PL/pgSQL)
+$$ LANGUAGE plpgsql; -- PostgreSQL procedural language (PL/pgSQL)
 
 CREATE TRIGGER trigger_update_download_counters
-  AFTER INSERT ON download_stats
-  FOR EACH ROW EXECUTE FUNCTION update_download_counters();
+ AFTER INSERT ON download_stats
+ FOR EACH ROW EXECUTE FUNCTION update_download_counters();
 ```
 
 ### Supabase Integration
@@ -1054,36 +1054,42 @@ WEBHOOK_SECRET=your-webhook-secret
 ### Security Considerations
 
 1. **API访问控制**：
-    - 管理API需要认证
-    - 使用Supabase RLS (Row Level Security)
-    - API速率限制
+
+- 管理API需要认证
+- 使用Supabase RLS (Row Level Security)
+- API速率限制
 
 2. **文件安全**：
-    - 文件完整性校验 (SHA512)
-    - 签名验证 (可选)
-    - 恶意软件扫描
+
+- 文件完整性校验 (SHA512)
+- 签名验证 (可选)
+- 恶意软件扫描
 
 3. **数据隐私**：
-    - IP地址匿名化选项
-    - GDPR合规性考虑
-    - 用户数据保护
+
+- IP地址匿名化选项
+- GDPR合规性考虑
+- 用户数据保护
 
 ### Performance Optimization
 
 1. **CDN配置**：
-    - Vercel Edge Network
-    - 文件缓存策略
-    - 地理分布优化
+
+- Vercel Edge Network
+- 文件缓存策略
+- 地理分布优化
 
 2. **数据库优化**：
-    - 适当的索引设计
-    - 查询优化
-    - 连接池管理
+
+- 适当的索引设计
+- 查询优化
+- 连接池管理
 
 3. **缓存策略**：
-    - API响应缓存
-    - 静态文件缓存
-    - 实时数据缓存
+
+- API响应缓存
+- 静态文件缓存
+- 实时数据缓存
 
 ## Implementation Timeline
 

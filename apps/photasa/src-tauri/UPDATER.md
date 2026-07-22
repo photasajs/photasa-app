@@ -10,9 +10,9 @@ RFC：[0113](../../.spec/rfc/0113-tauri-updater-production-and-prefs-sync.md) ·
 
 ## `tauri.conf.json`（开发默认）
 
-当前仓库内 `plugins.updater.pubkey` 与 `endpoints` 为空，**开发构建不会连生产更新服务器**。这是预期行为。
+`plugins.updater.pubkey` 与 `endpoints` 均已配置为生产真实值（公钥非敏感信息，直接提交进仓库；`endpoints` 指向 GitHub Release 的 `latest.json`）。私钥不进仓库，存于 CI 的 `TAURI_SIGNING_PRIVATE_KEY`/`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` Secrets（见 [0155](../../.spec/rfc/0155-tauri-release-pipeline-as-built.md)）。
 
-生产发布前必须在 CI 或受控构建环境中注入真实值（**勿将私钥提交进 Git**）。
+密钥丢失或密码丢失将导致无法为该密钥对签发新更新——生成密钥后，密码必须由持有者本人另行备份，不能只存在单一 CI Secret 里。
 
 ## 生产构建清单
 
@@ -34,20 +34,20 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="your-password"
 
 ### 2. 更新端点 `endpoints`
 
-在 `tauri.conf.json` 中配置至少一个 HTTPS 端点，支持动态变量，例如：
+在 `tauri.conf.json` 中已配置 GitHub Releases 静态 `latest.json` 端点：
 
 ```json
 "plugins": {
   "updater": {
     "pubkey": "<CONTENT FROM .key.pub>",
     "endpoints": [
-      "https://releases.example.com/photasa/{{target}}/{{arch}}/{{current_version}}"
+      "https://github.com/photasajs/photasa-app/releases/latest/download/latest.json"
     ]
   }
 }
 ```
 
-或使用静态 `latest.json`（GitHub Releases 等）。端点 URL 与签名后的更新包须与 [RFC 0020](../../docs/rfc/completed/0020-auto-update-server.md) 服务端约定一致。
+CI 工作流 (`.github/workflows/upload-release-assets.yml`) 使用 `tauri-apps/tauri-action@v0` 自动在 GitHub Releases 上构建并更新 `latest.json` 及签名产物。
 
 ### 3. 更新产物
 
@@ -68,4 +68,4 @@ cargo test update_config:: -- --nocapture
 cargo test update_periodic:: -- --nocapture
 ```
 
-手动：在偏好设置中关闭自动更新 → 重启应用 → 日志应显示 `enabled=false`；定时轮询应跳过 scheduled check（启动 5 秒检查仍会执行，与 Electron 一致）。
+手动：在偏好设置中关闭自动更新 → 重启应用 → 日志应显示 `enabled=false`；定时轮询应跳过 scheduled check（启动 5 秒检查仍会执行，与 legacy-api 一致）。

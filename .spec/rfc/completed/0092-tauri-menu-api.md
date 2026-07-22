@@ -9,17 +9,17 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-One concern: **application menu**. Map Electron’s applySystemMenu / onMenuAction to Tauri’s menu API. Flat legacy API (RFC 0075) exposes same methods; adapter calls Tauri menu when in Tauri. No Node.
+One concern: **application menu**. Map contract reference’s applySystemMenu / onMenuAction to Tauri’s menu API. Flat legacy API (RFC 0075) exposes same methods; adapter calls Tauri menu when in Tauri. No Node.
 
 ## Motivation
 
-ROADMAP: “applySystemMenu / onMenuAction – Main: menu service, Electron.Menu. Tauri menu API; map in adapter.” One RFC for this single capability.
+ROADMAP: “applySystemMenu / onMenuAction – Main: menu service, contract reference.Menu. Tauri menu API; map in adapter.” One RFC for this single capability.
 
 ## Detailed design
 
@@ -28,7 +28,7 @@ ROADMAP: “applySystemMenu / onMenuAction – Main: menu service, Electron.Menu
 
 ## Drawbacks
 
-Menu structure/API differs between Electron and Tauri; mapping layer may be non-trivial.
+Menu structure/API differs between contract reference and Tauri; mapping layer may be non-trivial.
 
 ## Alternatives
 
@@ -36,4 +36,4 @@ Stub (no-op menu) until needed; this RFC defines the contract.
 
 ## Unresolved questions
 
-Exact Electron menu item shape and event payload.
+Exact contract reference menu item shape and event payload.

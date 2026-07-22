@@ -25,6 +25,7 @@ import {
 import { useScanningStore } from "../fangxuanling/stores/scanning-store";
 import { createScanQueueItem } from "@renderer/stores/scanning-types";
 import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/tauri-command-names";
+import { getLegacyPreloadApi, getLegacyShell } from "@/api/legacy-preload-access";
 
 const mockTauriInvoke = vi.hoisted(() => vi.fn());
 const mockInvokeLock = vi.hoisted(() => ({
@@ -144,11 +145,16 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
             offProgress: vi.fn(),
         };
 
-        (window as any).electronAPI = {
-            get tianshu() {
-                return (window as any).tianshu;
+        Object.defineProperty(window, "legacyPreloadAPI", {
+            configurable: true,
+            get() {
+                return {
+                    get tianshu() {
+                        return (window as { tianshu?: unknown }).tianshu;
+                    },
+                };
             },
-        };
+        });
 
         // 某些服务可能使用 window.api
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

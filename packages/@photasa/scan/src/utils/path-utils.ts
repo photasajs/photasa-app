@@ -2,7 +2,7 @@
  * path-utils.ts
  *
  * 扫描模块内部路径工具函数
- * 这些函数来自 apps/desktop/src/shared/path-util.ts，在提取包时内联
+ * 这些函数来自 historical shared/path-util.ts，在提取包时内联
  */
 
 import path from "path";

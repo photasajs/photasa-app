@@ -1,5 +1,7 @@
 # 插件系统设计方案（VSCode风格，main/render双入口）
 
+> **历史文档（legacy main/renderer）**：插件系统未按此文在 Tauri 落地。
+
 ## 1. 设计目标
 
 - 支持插件扩展主进程（main）和渲染进程（render）能力
@@ -11,11 +13,11 @@
 
 ```
 plugins/
-  my-plugin/
-    package.json         # 插件描述文件
-    main.js              # 主进程入口（可选）
-    render.js            # 渲染进程入口（可选）
-    assets/
+ my-plugin/
+ package.json # 插件描述文件
+ main.js # 主进程入口（可选）
+ render.js # 渲染进程入口（可选）
+ assets/
 ```
 
 ## 3. 插件描述文件（package.json）示例
@@ -39,16 +41,16 @@ plugins/
 ## 4. 插件加载与生命周期
 
 - **主进程插件管理器**
-    - 启动时扫描 plugins 目录，读取 package.json
-    - 动态 require main.js，注册 IPC、服务、命令
-    - 监听插件启用/禁用/卸载事件，管理插件状态
+- 启动时扫描 plugins 目录，读取 package.json
+- 动态 require main.js，注册 IPC、服务、命令
+- 监听插件启用/禁用/卸载事件，管理插件状态
 - **渲染进程插件管理器**
-    - 启动时扫描 plugins 目录，读取 package.json
-    - 动态 import render.js，注册 UI 组件、菜单、命令
-    - 支持插件与主进程通信（IPC）
+- 启动时扫描 plugins 目录，读取 package.json
+- 动态 import render.js，注册 UI 组件、菜单、命令
+- 支持插件与主进程通信（IPC）
 - **激活机制**
-    - 支持 onStartup、onCommand、onEvent 等激活事件
-    - 插件按需加载，提升性能
+- 支持 onStartup、onCommand、onEvent 等激活事件
+- 插件按需加载，提升性能
 
 ## 5. 插件接口与通信
 
@@ -59,7 +61,7 @@ plugins/
 
 ## 6. 安全与隔离
 
-- 插件仅能访问白名单 API，禁止直接访问敏感 Node/Electron 能力
+- 插件仅能访问白名单 API，禁止直接访问敏感 legacy Node 能力
 - 插件运行时捕获异常，防止崩溃主程序
 - 支持插件沙箱/权限声明（可选）
 

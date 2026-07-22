@@ -20,6 +20,10 @@ vi.mock("@renderer/api/scan.adapter", () => ({
     },
 }));
 
+vi.mock("@renderer/api/env", () => ({
+    isTauri: () => true,
+}));
+
 describe("YuanTianGangService - Scan Events & Status Bar Progress", () => {
     let yuanTianGang: YuanTianGangService;
     let qizouBus: ReturnType<typeof mitt>;

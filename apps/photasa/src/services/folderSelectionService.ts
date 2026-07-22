@@ -10,6 +10,7 @@
  */
 
 import { getPhotasaApi } from "@renderer/ipc/api-access";
+import type { PathName } from "@photasa/common/types";
 import { loggers } from "@photasa/common";
 
 const logger = loggers.app;
@@ -111,7 +112,7 @@ export const folderSelectionService: FolderSelectionService = {
 };
 
 async function getDirectory(name: string): Promise<string | null> {
-    return getPhotasaApi().getDirectory(name) as Promise<string | null>;
+    return getPhotasaApi().getDirectory(name as PathName);
 }
 
 /**

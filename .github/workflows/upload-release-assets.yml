@@ -1,8 +1,6 @@
-# 说明：
-# 本 workflow 采用 on: workflow_run 触发，解决 release-please 创建 Release 时 on: release 不会被激活的问题。
-# 仅当 main 分支最新 commit 与最新 tag 指向同一 commit 时才继续上传产物，确保只在 Release PR 合并后处理。
-# 详见：https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-# 注意：workflows 名称需与 release-please workflow 的 name 字段完全一致。
+# Triggered after release-please finishes on main. Builds Tauri bundles per OS and
+# uploads them to the GitHub Release when the latest v* tag points at that commit.
+# See docs/design/20250704-release-please-upload-best-practice.md
 
 name: Upload Release Assets
 
@@ -12,51 +10,97 @@ on:
         types:
             - completed
 
+permissions:
+    contents: write
+    actions: read
+
 jobs:
     build-and-upload:
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         runs-on: ${{ matrix.os }}
         strategy:
+            fail-fast: false
             matrix:
+                # tauri-action manages its own build outputs & upload per OS;
+                # this matrix only selects the runner (no per-OS glob config needed).
                 os: [ubuntu-latest, macos-latest, windows-latest]
-                build_script: [build:linux, build:mac, build:win]
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
 
-            - name: Check if latest tag matches main commit
-              id: check_release
+        steps:
+            - name: Checkout release commit
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.workflow_run.head_sha }}
+                  fetch-depth: 0
+
+            - name: Detect new release tag on main
+              id: release
               shell: bash
               run: |
-                  git fetch --tags origin main
-                  latest_tag=$(git describe --tags --abbrev=0 origin/main)
-                  tag_commit=$(git rev-list -n 1 $latest_tag)
-                  main_commit=$(git rev-parse origin/main)
-                  echo "Latest tag: $latest_tag -> $tag_commit"
-                  echo "Main commit: $main_commit"
-                  if [ "$tag_commit" != "$main_commit" ]; then
-                    echo "No new release/tag for this commit, skipping upload."
+                  set -euo pipefail
+                  release_sha="${{ github.event.workflow_run.head_sha }}"
+                  latest_tag="$(git tag -l "v*" --sort=-version:refname | head -n 1 || true)"
+                  if [ -z "$latest_tag" ]; then
+                    echo "No v* tags found; skipping asset upload."
+                    echo "should_upload=false" >> "$GITHUB_OUTPUT"
                     exit 0
                   fi
-                  echo "New release/tag detected: $latest_tag"
+                  tag_sha="$(git rev-list -n 1 "$latest_tag")"
+                  echo "Latest tag: $latest_tag -> $tag_sha"
+                  echo "Release commit: $release_sha"
+                  if [ "$tag_sha" != "$release_sha" ]; then
+                    echo "Tag does not point at this commit; skipping asset upload."
+                    echo "should_upload=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+                  echo "should_upload=true" >> "$GITHUB_OUTPUT"
+                  echo "tag_name=$latest_tag" >> "$GITHUB_OUTPUT"
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
+            - name: Verify signing key secret presence
+              if: steps.release.outputs.should_upload == 'true'
+              shell: bash
+              run: |
+                  if [ -z "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
+                    echo "::error::TAURI_SIGNING_PRIVATE_KEY is missing in repository secrets. Fail-fast to prevent unsigned releases."
+                    exit 1
+                  fi
+
+            - name: Setup Toolchain
+              if: steps.release.outputs.should_upload == 'true'
+              uses: ./.github/actions/setup-photasa-toolchain
               with:
-                  node-version: 20
+                  checkout: "false"
 
-            - name: Install dependencies
-              run: npm install
+            - name: Setup Windows MSVC (FFmpeg)
+              if: steps.release.outputs.should_upload == 'true' && runner.os == 'Windows'
+              uses: ./.github/actions/setup-photasa-windows-msvc
 
-            - name: Build app
-              run: npm run ${{ matrix.build_script }}
-
-            - name: Upload Release Asset
-              uses: softprops/action-gh-release@v2
-              with:
-                  files: |
-                      dist/**
-                      out/**
-                      release/**
-                      build/**
+            - name: Build & Publish Tauri Release Assets
+              if: steps.release.outputs.should_upload == 'true'
+              uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+              with:
+                  projectPath: apps/photasa
+                  tagName: ${{ steps.release.outputs.tag_name }}
+                  releaseName: "Photasa ${{ steps.release.outputs.tag_name }}"
+                  releaseBody: "See release notes on GitHub."
+                  releaseId: ${{ steps.release.outputs.tag_name }}
+
+            # RFC 0155 Acceptance 4/8: createUpdaterArtifacts silently no-ops if unset —
+            # this turns "workflow green" into "updater artifact actually exists".
+            - name: Verify updater artifact was published
+              if: steps.release.outputs.should_upload == 'true'
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  set -euo pipefail
+                  tag="${{ steps.release.outputs.tag_name }}"
+                  if ! gh release view "$tag" --repo "${{ github.repository }}" --json assets \
+                      --jq '.assets[].name' | grep -qx "latest.json"; then
+                    echo "::error::latest.json missing from release $tag — createUpdaterArtifacts may be disabled or signing failed. Updater will be unreachable."
+                    exit 1
+                  fi
+                  echo "latest.json present on release $tag."

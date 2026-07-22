@@ -32,7 +32,7 @@ export interface MenuActionPayload {
     label: string;
     /** 快捷键（如果有） */
     shortcut?: string;
-    /** Electron role（如果有） */
+    /** contract reference role（如果有） */
     role?: string;
     /** 自定义 URL（如果有，如 help.learnMore） */
     url?: string;
@@ -69,7 +69,7 @@ export interface IZhangSunWuJiService {
      *
      * @example
      * const zhangSunWuJi = useZhangSunWuJi();
-     * const menus = zhangSunWuJi.menus;  // MenuItemData[]
+     * const menus = zhangSunWuJi.menus; // MenuItemData[]
      */
     readonly menus: MenuItemData[];
 
@@ -103,9 +103,9 @@ export interface IZhangSunWuJiService {
      * @example
      * // 由李世民路由调用
      * zhangSunWuJi.handleMenuAction({
-     *     key: "help.learnMore",
-     *     label: "Learn More",
-     *     url: "https://example.com"
+     * key: "help.learnMore",
+     * label: "Learn More",
+     * url: "https://example.com"
      * });
      */
     handleMenuAction(payload: MenuActionPayload): void;

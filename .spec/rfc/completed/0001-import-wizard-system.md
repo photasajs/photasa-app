@@ -43,24 +43,28 @@ This RFC proposes a comprehensive **multi-step import wizard system** for Photas
 ### ✅ **Major Achievements**
 
 1. **Complete Import Wizard System**
-    - Multi-step guided import process
-    - Real-time file discovery and preview
-    - Comprehensive validation and error handling
+
+- Multi-step guided import process
+- Real-time file discovery and preview
+- Comprehensive validation and error handling
 
 2. **Critical HEIC Processing Fix**
-    - Resolved EXIF date parsing failures (`NaN` paths)
-    - Cross-platform WASM-based HEIC decoding
-    - Robust fallback mechanisms for both Windows and Mac
+
+- Resolved EXIF date parsing failures (`NaN` paths)
+- Cross-platform WASM-based HEIC decoding
+- Robust fallback mechanisms for both Windows and Mac
 
 3. **Cross-Platform Verification**
-    - ✅ **Windows testing completed** - All HEIC import functionality verified
-    - ✅ **Mac testing completed** - All HEIC import functionality verified
-    - Removed platform-specific dependencies (sips, sharp direct HEIC)
+
+- ✅ **Windows testing completed** - All HEIC import functionality verified
+- ✅ **Mac testing completed** - All HEIC import functionality verified
+- Removed platform-specific dependencies (sips, sharp direct HEIC)
 
 4. **Comprehensive Test Coverage**
-    - 90%+ test coverage across all components
-    - End-to-end integration testing
-    - Edge case handling and error scenarios
+
+- 90%+ test coverage across all components
+- End-to-end integration testing
+- Edge case handling and error scenarios
 
 ### 🏆 **Final Status: Production Ready**
 
@@ -93,40 +97,40 @@ This RFC proposes a comprehensive **multi-step import wizard system** for Photas
 %%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
 %%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
 graph TB
-    subgraph "Import Wizard System"
-        A[ImportPhotos.vue] --> B[BaseWizard]
-        A --> C[Configuration Step]
-        A --> D[Preview Step]
-        A --> E[Progress Modal]
+ subgraph "Import Wizard System"
+ A[ImportPhotos.vue] --> B[BaseWizard]
+ A --> C[Configuration Step]
+ A --> D[Preview Step]
+ A --> E[Progress Modal]
 
-        B --> F[WizardIndicator]
-        B --> G[WizardNavigation]
+ B --> F[WizardIndicator]
+ B --> G[WizardNavigation]
 
-        C --> H[Directory Selection]
-        C --> I[File Filtering]
+ C --> H[Directory Selection]
+ C --> I[File Filtering]
 
-        D --> J[Virtual File List]
-        D --> K[Statistics Display]
+ D --> J[Virtual File List]
+ D --> K[Statistics Display]
 
-        E --> L[Progress Tracking]
-        E --> M[Error Recovery]
-    end
+ E --> L[Progress Tracking]
+ E --> M[Error Recovery]
+ end
 
-    subgraph "Core Utilities"
-        N[import-wizard-helpers.ts]
-        O[import-helpers.ts]
-        P[HEIC Metadata Processor]
-    end
+ subgraph "Core Utilities"
+ N[import-wizard-helpers.ts]
+ O[import-helpers.ts]
+ P[HEIC Metadata Processor]
+ end
 
-    subgraph "Testing"
-        Q[Unit Tests]
-        R[Integration Tests]
-        S[E2E Tests]
-    end
+ subgraph "Testing"
+ Q[Unit Tests]
+ R[Integration Tests]
+ S[E2E Tests]
+ end
 
-    A --> N
-    A --> O
-    A --> P
+ A --> N
+ A --> O
+ A --> P
 ```
 
 ### Key Components
@@ -221,15 +225,15 @@ const dateStr = exifDateStr.replace(/^(\d{4}):(\d{2}):(\d{2})/, "$1-$2-$3");
 %%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
 %%{init: {'theme':'base', 'themeVariables': { 'fontSize': '18px', 'primaryTextColor': '#333', 'primaryColor': '#4f46e5', 'lineColor': '#6b7280'}}}%%
 graph LR
-    A[HEIC File] --> B{EXIF DateTime}
-    B -->|Valid| C[Use EXIF Date]
-    B -->|Invalid| D{File Created Time}
-    D -->|Valid| E[Use Created Time]
-    D -->|Invalid| F[Use Today's Date]
+ A[HEIC File] --> B{EXIF DateTime}
+ B -->|Valid| C[Use EXIF Date]
+ B -->|Invalid| D{File Created Time}
+ D -->|Valid| E[Use Created Time]
+ D -->|Invalid| F[Use Today's Date]
 
-    C --> G[Generate Path: YYYY/YYYYMMDD]
-    E --> G
-    F --> G
+ C --> G[Generate Path: YYYY/YYYYMMDD]
+ E --> G
+ F --> G
 ```
 
 **Impact**:
@@ -318,17 +322,17 @@ graph LR
 
 ```
 ├── Unit Tests (100% coverage)
-│   ├── Pure Functions ✅
-│   ├── Component Logic ✅
-│   └── HEIC Processing ✅
+│ ├── Pure Functions ✅
+│ ├── Component Logic ✅
+│ └── HEIC Processing ✅
 ├── Integration Tests (90% coverage)
-│   ├── Wizard Flow ✅
-│   ├── API Integration ✅
-│   └── Error Scenarios ✅
+│ ├── Wizard Flow ✅
+│ ├── API Integration ✅
+│ └── Error Scenarios ✅
 └── E2E Tests (80% coverage)
-    ├── Happy Path ✅
-    ├── Error Recovery 🚧
-    └── Performance 🚧
+ ├── Happy Path ✅
+ ├── Error Recovery 🚧
+ └── Performance 🚧
 ```
 
 ### Test File Structure
@@ -336,16 +340,16 @@ graph LR
 ```
 src/
 ├── main/import/__tests__/
-│   ├── heic-exif-debug.test.ts
-│   ├── heic-exif-datetime-fix.test.ts
-│   ├── heic-exif-integration.test.ts
-│   ├── heic-exif-fallback.test.ts
-│   └── heic-date-validation.test.ts
+│ ├── heic-exif-debug.test.ts
+│ ├── heic-exif-datetime-fix.test.ts
+│ ├── heic-exif-integration.test.ts
+│ ├── heic-exif-fallback.test.ts
+│ └── heic-date-validation.test.ts
 ├── renderer/src/utils/__tests__/
-│   └── import-wizard-helpers.test.ts
+│ └── import-wizard-helpers.test.ts
 └── renderer/src/components/__tests__/
-    ├── ImportPhotos.test.ts
-    └── ImportProgressModal.test.ts
+ ├── ImportPhotos.test.ts
+ └── ImportProgressModal.test.ts
 ```
 
 ## Alternatives & Trade-offs
@@ -353,16 +357,19 @@ src/
 ### Considered Alternatives
 
 1. **Incremental Improvement**
-    - ✅ Pros: Less disruptive, smaller scope
-    - ❌ Cons: Doesn't solve architecture issues
+
+- ✅ Pros: Less disruptive, smaller scope
+- ❌ Cons: Doesn't solve architecture issues
 
 2. **Third-party Wizard Library**
-    - ✅ Pros: Faster development, proven solution
-    - ❌ Cons: Less control, potential bloat
+
+- ✅ Pros: Faster development, proven solution
+- ❌ Cons: Less control, potential bloat
 
 3. **Single-step with Preview**
-    - ✅ Pros: Simpler implementation
-    - ❌ Cons: Cramped UI, poor UX
+
+- ✅ Pros: Simpler implementation
+- ❌ Cons: Cramped UI, poor UX
 
 ### Selected Approach: Custom Multi-step Wizard
 
@@ -417,27 +424,27 @@ During implementation, a critical "An object could not be cloned" IPC serializat
 
 ```
 Renderer → executeImport(config, callback)
-    ↓
-Preload → electronAPI.ipcRenderer.invoke("import:execute", config, callback) // ❌ 回调函数无法序列化
-    ↓
+ ↓
+Preload → legacyPreloadAPI.ipcRenderer.invoke("import:execute", config, callback) // ❌ 回调函数无法序列化
+ ↓
 Main Process → executeImport(config, callback) // 永远不会执行到这里
 ```
 
-**Root Cause**: JavaScript callback functions cannot be serialized across Electron IPC boundaries.
+**Root Cause**: JavaScript callback functions cannot be serialized across contract reference IPC boundaries.
 
 ### **Architecture Redesign: Event-Driven Import System**
 
 #### **New Communication Pattern**
 
 ```
-Renderer                 Preload                    Main Process                Worker
-   ↓                        ↓                           ↓                         ↓
+Renderer Preload Main Process Worker
+ ↓ ↓ ↓ ↓
 executeImport(config) → startImport(config) → startImport(config) → executeImport()
-   ↑                        ↑                           ↓                         ↓
+ ↑ ↑ ↓ ↓
 onProgress ←───── onImportProgress ←───── import:progress ←───── sendProgress
-   ↑                        ↑                           ↓                         ↓
+ ↑ ↑ ↓ ↓
 onComplete ←───── onImportComplete ←───── import:complete ←───── sendComplete
-   ↑                        ↑                           ↓                         ↓
+ ↑ ↑ ↓ ↓
 cancelImport ────→ cancelImport ────→ cancelImport ────→ setCancelFlag
 ```
 
@@ -455,16 +462,16 @@ Based on user feedback analysis:
 ```typescript
 // ❌ BEFORE: Passing callback functions through IPC
 executeImport: (config: any, callback?: any) =>
-    electronAPI.ipcRenderer.invoke("import:execute", config, callback),
+ legacyPreloadAPI.ipcRenderer.invoke("import:execute", config, callback),
 
 // ✅ AFTER: Event-driven with cleanup
 executeImport: (config: any, callback?: any) => {
-    if (callback) {
-        const importId = generateImportId();
-        registerEventListeners(importId, callback);
-        return electronAPI.ipcRenderer.invoke("import:start", { ...config, importId });
-    }
-    return electronAPI.ipcRenderer.invoke("import:start", config);
+ if (callback) {
+ const importId = generateImportId();
+ registerEventListeners(importId, callback);
+ return legacyPreloadAPI.ipcRenderer.invoke("import:start", { ...config, importId });
+ }
+ return legacyPreloadAPI.ipcRenderer.invoke("import:start", config);
 }
 ```
 
@@ -473,19 +480,19 @@ executeImport: (config: any, callback?: any) => {
 ```typescript
 // ❌ BEFORE: Receiving unserialized callbacks
 this.ipc.handle("import:execute", async (_, config, callback) => {
-    return await this.executeImport(config, callback);
+ return await this.executeImport(config, callback);
 });
 
 // ✅ AFTER: Session-based async execution
 this.ipc.handle("import:start", async (_, config) => {
-    const importId = this.generateImportId();
-    this.startImportInBackground(importId, config);
-    return { importId };
+ const importId = this.generateImportId();
+ this.startImportInBackground(importId, config);
+ return { importId };
 });
 
 private async startImportInBackground(importId: string, config: ImportConfig) {
-    // Send progress events via webContents.send
-    this.mainWindow?.webContents.send("import:progress", { importId, progress });
+ // Send progress events via webContents.send
+ this.mainWindow?.webContents.send("import:progress", { importId, progress });
 }
 ```
 
@@ -584,67 +591,69 @@ Current duplicate handling strategies are too simplistic and lack intelligent co
 #### **Proposed Enhancements**:
 
 1. **Smart SKIP Strategy with MD5 Verification**
-    - Optional MD5 hash comparison for accurate duplicate detection
-    - File modification time comparison
-    - File size pre-check for performance
-    - Decision logic based on actual content differences
+
+- Optional MD5 hash comparison for accurate duplicate detection
+- File modification time comparison
+- File size pre-check for performance
+- Decision logic based on actual content differences
 
 2. **Strategy Constants Standardization**
 
-    ```typescript
-    // src/common/constants.ts
-    export const DuplicateStrategies = {
-        SKIP: "skip", // Smart skip with optional MD5
-        RENAME: "rename", // Simple incremental rename
-        OVERWRITE: "overwrite", // Replace existing file
-        KEEP_BOTH: "keep_both", // Smart naming based on differences
-    } as const;
-    ```
+```typescript
+// src/common/constants.ts
+export const DuplicateStrategies = {
+    SKIP: "skip", // Smart skip with optional MD5
+    RENAME: "rename", // Simple incremental rename
+    OVERWRITE: "overwrite", // Replace existing file
+    KEEP_BOTH: "keep_both", // Smart naming based on differences
+} as const;
+```
 
 3. **Configuration Options**
 
-    ```typescript
-    export interface ImportConfig {
-        duplicateStrategy: DuplicateStrategy;
-        useMD5ForDuplicates?: boolean; // New: Enable MD5 verification
-    }
-    ```
+```typescript
+export interface ImportConfig {
+    duplicateStrategy: DuplicateStrategy;
+    useMD5ForDuplicates?: boolean; // New: Enable MD5 verification
+}
+```
 
 4. **Strategy Descriptions in UI**
-    - **SKIP**: "智能跳过：检查文件内容，只跳过真正相同的文件"
-    - **RENAME**: "重命名导入：新文件重命名为 filename_1.jpg 等"
-    - **OVERWRITE**: "覆盖原文件：用新文件替换现有文件"
-    - **KEEP_BOTH**: "智能保留：根据差异添加有意义后缀（如 \_newer, \_larger）"
+
+- **SKIP**: "智能跳过：检查文件内容，只跳过真正相同的文件"
+- **RENAME**: "重命名导入：新文件重命名为 filename_1.jpg 等"
+- **OVERWRITE**: "覆盖原文件：用新文件替换现有文件"
+- **KEEP_BOTH**: "智能保留：根据差异添加有意义后缀（如 \_newer, \_larger）"
 
 5. **Enhanced SkipDuplicateHandler**
 
-    ```typescript
-    export class SkipDuplicateHandler {
-        async handle(original, duplicate, targetPath, config) {
-            // Quick size check
-            if (original.size !== duplicate.size) {
-                return this.handleDifferentFiles(original, duplicate);
-            }
-
-            // Optional MD5 verification
-            if (config?.useMD5) {
-                const originalHash = await this.calculateMD5(original.path);
-                const duplicateHash = await this.calculateMD5(duplicate.path);
-
-                if (originalHash === duplicateHash) {
-                    return { action: "skip", message: "文件内容完全相同" };
-                }
-            }
-
-            // Time-based decision
-            if (duplicate.modifiedTime > original.modifiedTime) {
-                return { action: "skip", message: "检测到新版本文件" };
-            }
-
-            return { action: "skip", message: "文件已存在" };
+```typescript
+export class SkipDuplicateHandler {
+    async handle(original, duplicate, targetPath, config) {
+        // Quick size check
+        if (original.size !== duplicate.size) {
+            return this.handleDifferentFiles(original, duplicate);
         }
+
+        // Optional MD5 verification
+        if (config?.useMD5) {
+            const originalHash = await this.calculateMD5(original.path);
+            const duplicateHash = await this.calculateMD5(duplicate.path);
+
+            if (originalHash === duplicateHash) {
+                return { action: "skip", message: "文件内容完全相同" };
+            }
+        }
+
+        // Time-based decision
+        if (duplicate.modifiedTime > original.modifiedTime) {
+            return { action: "skip", message: "检测到新版本文件" };
+        }
+
+        return { action: "skip", message: "文件已存在" };
     }
-    ```
+}
+```
 
 #### **Implementation Steps**:
 
@@ -676,12 +685,12 @@ Import preview takes significant time for large directories (10+ seconds) but on
 ```vue
 <!-- ❌ CURRENT: Static loading with no progress feedback -->
 <div v-if="loadingState.preview" class="h-full flex items-center justify-center">
-    <div class="text-center">
-        <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
-        <p class="text-[var(--color-text-secondary)]">
-            {{ t("import.loading.preview") }}
-        </p>
-    </div>
+ <div class="text-center">
+ <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
+ <p class="text-[var(--color-text-secondary)]">
+ {{ t("import.loading.preview") }}
+ </p>
+ </div>
 </div>
 ```
 
@@ -698,13 +707,13 @@ Import preview takes significant time for large directories (10+ seconds) but on
 
 ```
 generateImportPreview() Process:
-   ↓
+ ↓
 scanDirectoriesForFiles() → Send scan progress events
-   ↓                         (current directory, files found)
+ ↓ (current directory, files found)
 processFileGroups() → Send processing progress events
-   ↓                  (files processed, groups created)
+ ↓ (files processed, groups created)
 calculateStatistics() → Send statistics updates
-   ↓                    (file counts, size totals)
+ ↓ (file counts, size totals)
 Final Result → Complete preview with all data
 ```
 
@@ -760,30 +769,30 @@ async function generateImportPreview(config: ImportConfig): Promise<ImportPrevie
 ```vue
 <!-- ✅ ENHANCED: Real-time preview progress with file discovery -->
 <div v-if="loadingState.preview" class="h-full flex flex-col">
-    <div class="text-center mb-6">
-        <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
-        <h3 class="text-lg font-medium mb-2">{{ t('import.preview.scanning') }}</h3>
-        <p class="text-sm text-[var(--color-text-secondary)]">
-            {{ previewProgress.message }}
-        </p>
-    </div>
+ <div class="text-center mb-6">
+ <BaseSpinner class="w-8 h-8 mx-auto mb-4" />
+ <h3 class="text-lg font-medium mb-2">{{ t('import.preview.scanning') }}</h3>
+ <p class="text-sm text-[var(--color-text-secondary)]">
+ {{ previewProgress.message }}
+ </p>
+ </div>
 
-    <div class="flex-1 max-h-64 overflow-y-auto">
-        <div class="space-y-2">
-            <div v-for="file in discoveredFiles" :key="file.path"
-                 class="flex items-center p-2 bg-[var(--color-bg-secondary)] rounded">
-                <PhotoIcon class="w-4 h-4 mr-2 text-blue-500" />
-                <span class="text-sm truncate">{{ file.name }}</span>
-                <span class="text-xs text-[var(--color-text-secondary)] ml-auto">
-                    {{ formatFileSize(file.size) }}
-                </span>
-            </div>
-        </div>
-    </div>
+ <div class="flex-1 max-h-64 overflow-y-auto">
+ <div class="space-y-2">
+ <div v-for="file in discoveredFiles" :key="file.path"
+ class="flex items-center p-2 bg-[var(--color-bg-secondary)] rounded">
+ <PhotoIcon class="w-4 h-4 mr-2 text-blue-500" />
+ <span class="text-sm truncate">{{ file.name }}</span>
+ <span class="text-xs text-[var(--color-text-secondary)] ml-auto">
+ {{ formatFileSize(file.size) }}
+ </span>
+ </div>
+ </div>
+ </div>
 
-    <div class="mt-4 text-center text-sm text-[var(--color-text-secondary)]">
-        已发现 {{ previewProgress.filesFound }} 个文件，扫描了 {{ previewProgress.directoriesScanned }} 个目录
-    </div>
+ <div class="mt-4 text-center text-sm text-[var(--color-text-secondary)]">
+ 已发现 {{ previewProgress.filesFound }} 个文件，扫描了 {{ previewProgress.directoriesScanned }} 个目录
+ </div>
 </div>
 ```
 
@@ -846,18 +855,18 @@ Import progress information is not updating in the UI during import operations, 
 ```typescript
 // ❌ BUG: Worker progress not monitored or forwarded
 private async executeImportInBackground(importId: string): Promise<void> {
-    const session = this.activeSessions.get(importId);
-    // ... setup code ...
+ const session = this.activeSessions.get(importId);
+ // ... setup code ...
 
-    const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
-        this.worker,
-        "execute_import",
-        { /* ... */ }
-    );
+ const response = await sendWorkerTask<ImportWorker, ImportRequest, ImportResponse>(
+ this.worker,
+ "execute_import",
+ { /* ... */ }
+ );
 
-    // ❌ BUG: Only final result processed, no progress events sent
-    session.status = "completed";
-    this.sendImportEvent(importId, "import:complete", result);
+ // ❌ BUG: Only final result processed, no progress events sent
+ session.status = "completed";
+ this.sendImportEvent(importId, "import:complete", result);
 }
 ```
 
@@ -882,33 +891,33 @@ private async executeImportInBackground(importId: string): Promise<void> {
 ```typescript
 // ✅ CORRECTED: Monitor worker progress and forward to UI
 private async executeImportInBackground(importId: string): Promise<void> {
-    const session = this.activeSessions.get(importId);
-    if (!session) return;
+ const session = this.activeSessions.get(importId);
+ if (!session) return;
 
-    try {
-        session.status = "processing";
+ try {
+ session.status = "processing";
 
-        // Create progress callback to update session and send events
-        const onProgress = (progress: Partial<ImportProgress>) => {
-            Object.assign(session.progress, progress);
-            this.sendImportEvent(importId, "import:progress", { progress: session.progress });
-        };
+ // Create progress callback to update session and send events
+ const onProgress = (progress: Partial<ImportProgress>) => {
+ Object.assign(session.progress, progress);
+ this.sendImportEvent(importId, "import:progress", { progress: session.progress });
+ };
 
-        // Execute import with progress monitoring
-        const response = await sendWorkerTaskWithProgress(
-            this.worker,
-            "execute_import",
-            { /* config */ },
-            onProgress
-        );
+ // Execute import with progress monitoring
+ const response = await sendWorkerTaskWithProgress(
+ this.worker,
+ "execute_import",
+ { /* config */ },
+ onProgress
+ );
 
-        // Handle completion
-        session.status = "completed";
-        this.sendImportEvent(importId, "import:complete", response.data);
-    } catch (error) {
-        session.status = "failed";
-        this.sendImportEvent(importId, "import:error", { error: error.message });
-    }
+ // Handle completion
+ session.status = "completed";
+ this.sendImportEvent(importId, "import:complete", response.data);
+ } catch (error) {
+ session.status = "failed";
+ this.sendImportEvent(importId, "import:error", { error: error.message });
+ }
 }
 ```
 

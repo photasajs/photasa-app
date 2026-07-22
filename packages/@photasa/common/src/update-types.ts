@@ -40,7 +40,7 @@ export interface UpdateProgressInfo {
     progress?: number;
     error?: string;
     version?: string;
-    info?: unknown; // electron-updater的UpdateInfo类型
+    info?: unknown; // legacy auto-updater的UpdateInfo类型
 }
 
 /**

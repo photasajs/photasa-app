@@ -8,13 +8,13 @@
 - **类型**: 测试架构
 - **目标版本**: v2.0.0
 - **依赖RFC**:
-    - RFC 0048: 扫描编排业务逻辑迁移（测试目标）
+- RFC 0048: 扫描编排业务逻辑迁移（测试目标）
 
 ---
 
 ## 摘要
 
-**从零设计正确的E2E测试架构**，解决现有架构的根本性问题（Electron单实例锁冲突、测试隔离性差、过度依赖内部API）。
+**从零设计正确的E2E测试架构**，解决现有架构的根本性问题（桌面单实例锁冲突、测试隔离性差、过度依赖内部API）。
 
 **核心原则** - "简洁、实用、正确"（Linus风格）：
 
@@ -31,22 +31,22 @@
 
 ### 现有架构的致命问题
 
-#### 问题1：Electron单实例锁冲突（根本原因）
+#### 问题1：桌面单实例锁冲突（根本原因）
 
 ```typescript
 // 生产环境：
 app.requestSingleInstanceLock() // ✅ 正常运行
 
 // 现有测试：
-test1: electron.launch() // ✅ 获得锁
-test2: electron.launch() // ❌ "Another instance running, quitting..."
-test3-6: electron.launch() // ❌ 全部失败
+test1: desktopShell.launch() // ✅ 获得锁
+test2: desktopShell.launch() // ❌ "Another instance running, quitting..."
+test3-6: desktopShell.launch() // ❌ 全部失败
 ```
 
 **问题本质**：
 
 - Playwright并发运行测试
-- 每个测试启动独立Electron进程
+- 每个测试启动独立桌面进程
 - 单实例锁机制拒绝后续所有测试
 - **34/36测试失败**（94%失败率）
 
@@ -80,15 +80,15 @@ await page.waitForTimeout(30000); // 等待扫描完成
 - 慢速机器：超时失败
 - 不符合事件驱动架构
 
-#### 问题4：ElectronAppManager过度设计
+#### 问题4：DesktopAppManager过度设计
 
 ```typescript
-// ElectronAppManager.ts - 215行代码
+//AppManager.ts - 215行代码
 // 但没有解决核心问题！
-export class ElectronAppManager {
-    private app: ElectronApplication | null = null;
-    private page: Page | null = null;
-    // ... 复杂的启动、等待、清理逻辑
+export classAppManager {
+ private app:Application | null = null;
+ private page: Page | null = null;
+ // ... 复杂的启动、等待、清理逻辑
 }
 ```
 
@@ -144,15 +144,15 @@ await fs.remove(testDataDir); // 清理可能失败
 
 ```
 并发测试启动
-├─ Test 1: electron.launch() ✅ 获得单实例锁
-├─ Test 2: electron.launch() ❌ 锁冲突失败
-├─ Test 3: electron.launch() ❌ 锁冲突失败
+├─ Test 1: desktopShell.launch() ✅ 获得单实例锁
+├─ Test 2: desktopShell.launch() ❌ 锁冲突失败
+├─ Test 3: desktopShell.launch() ❌ 锁冲突失败
 └─ Test 4-36: 全部失败 ❌
 
 每个测试：
-  window.yuChiGong.addScanTasks() ← 直接操作内部API
-  await page.waitForTimeout(2000) ← 固定延迟
-  window.weiZheng.folderTree ← 检查内部状态
+ window.yuChiGong.addScanTasks() ← 直接操作内部API
+ await page.waitForTimeout(2000) ← 固定延迟
+ window.weiZheng.folderTree ← 检查内部状态
 ```
 
 **问题**：
@@ -168,17 +168,17 @@ await fs.remove(testDataDir); // 清理可能失败
 
 ```
 串行测试模式（workers: 1）
-└─ 单个Electron进程
-   ├─ Test 1: 使用共享应用 ✅
-   ├─ Test 2: 使用共享应用 ✅
-   ├─ Test 3: 使用共享应用 ✅
-   └─ Test N: 使用共享应用 ✅
+└─ 单个桌面进程
+ ├─ Test 1: 使用共享应用 ✅
+ ├─ Test 2: 使用共享应用 ✅
+ ├─ Test 3: 使用共享应用 ✅
+ └─ Test N: 使用共享应用 ✅
 
 每个测试：
-  1. 准备测试数据（beforeEach）
-  2. 通过UI交互触发功能 ← 真实用户操作
-  3. 监听启奏事件验证结果 ← 事件驱动
-  4. 清理测试数据（afterEach）
+ 1. 准备测试数据（beforeEach）
+ 2. 通过UI交互触发功能 ← 真实用户操作
+ 3. 监听启奏事件验证结果 ← 事件驱动
+ 4. 清理测试数据（afterEach）
 ```
 
 **优势**：
@@ -244,15 +244,15 @@ export default defineConfig({
 ```typescript
 // global-setup.ts
 export default async function globalSetup() {
-    const app = await electron.launch({ args: [process.cwd()] });
+    const app = await desktopShell.launch({ args: [process.cwd()] });
     // 存储进程信息供测试使用
-    await writeFile(".electron-pid", app.process().pid!.toString());
+    await writeFile(".desktop-pid", app.process().pid!.toString());
     // 不关闭，让测试使用
 }
 
 // global-teardown.ts
 export default async function globalTeardown() {
-    const pid = await readFile(".electron-pid", "utf-8");
+    const pid = await readFile(".desktop-pid", "utf-8");
     process.kill(parseInt(pid));
 }
 ```
@@ -450,19 +450,19 @@ export default defineConfig({
 
 ```typescript
 // global-setup.ts
-import { _electron as electron } from "@playwright/test";
+import { _legacy as legacy } from "@playwright/test";
 import fs from "fs-extra";
 import path from "path";
 
 export default async function globalSetup() {
-    console.log("🚀 启动Electron应用...");
+    console.log("🚀 启动桌面应用...");
 
-    const app = await electron.launch({
+    const app = await desktopShell.launch({
         args: [process.cwd()],
         env: {
             ...process.env,
             NODE_ENV: "test",
-            ELECTRON_IS_DEV: "false",
+            DESKTOP_IS_DEV: "false",
         },
     });
 
@@ -472,10 +472,10 @@ export default async function globalSetup() {
     await page.waitForTimeout(2000);
 
     // 存储进程信息
-    const pidPath = path.join(process.cwd(), ".test-electron.pid");
+    const pidPath = path.join(process.cwd(), ".test-desktop.pid");
     await fs.writeFile(pidPath, app.process().pid!.toString());
 
-    console.log("✅ Electron应用启动完成");
+    console.log("✅ 桌面应用启动完成");
 
     // 不关闭应用，让测试使用
 }
@@ -485,10 +485,10 @@ import fs from "fs-extra";
 import path from "path";
 
 export default async function globalTeardown() {
-    console.log("🛑 关闭Electron应用...");
+    console.log("🛑 关闭桌面应用...");
 
     try {
-        const pidPath = path.join(process.cwd(), ".test-electron.pid");
+        const pidPath = path.join(process.cwd(), ".test-desktop.pid");
         const pid = parseInt(await fs.readFile(pidPath, "utf-8"));
 
         process.kill(pid, "SIGTERM");
@@ -496,7 +496,7 @@ export default async function globalTeardown() {
         // 清理pid文件
         await fs.remove(pidPath);
 
-        console.log("✅ Electron应用已关闭");
+        console.log("✅ 桌面应用已关闭");
     } catch (error) {
         console.warn("⚠️ 关闭应用失败:", error);
     }
@@ -510,7 +510,7 @@ export default async function globalTeardown() {
 ```typescript
 // fixtures/test-fixture.ts
 import { test as base } from "@playwright/test";
-import { _electron as electron } from "@playwright/test";
+import { _legacy as legacy } from "@playwright/test";
 import { TestDataManager } from "../utils/test-data-manager";
 
 export interface TestFixtures {
@@ -526,10 +526,10 @@ export const test = base.extend<TestFixtures>({
         await manager.cleanupAll();
     },
 
-    // 共享的Electron Page
+    // 共享的contract reference Page
     page: async ({}, use) => {
-        // 连接到已启动的Electron应用
-        const app = await electron.launch({ args: [process.cwd()] });
+        // 连接到已启动的桌面应用
+        const app = await desktopShell.launch({ args: [process.cwd()] });
         const page = await app.firstWindow();
         await use(page);
     },
@@ -801,7 +801,7 @@ export function initTestHooks(): void {
  */
 // import { initTestHooks } from './test-hooks';
 // onMounted(() => {
-//   initTestHooks();
+// initTestHooks();
 // });
 ```
 
@@ -813,7 +813,8 @@ export function initTestHooks(): void {
 
 **现有架构**：
 
-- ElectronAppManager: 215行
+-AppManager: 215行
+
 - auto-scan.test.ts: 150行
 - 总计: ~365行
 
@@ -971,7 +972,7 @@ export function initTestHooks(): void {
 ### 符合Linus哲学
 
 - ✅ **"好品味"** - 拥抱单实例锁，不对抗设计特性
-- ✅ **"简洁执念"** - 删除ElectronAppManager复杂层
+- ✅ **"简洁执念"** - 删除DesktopAppManager复杂层
 - ✅ **"实用主义"** - 串行测试解决实际问题
 - ✅ **"Never break userspace"** - 测试验证用户体验
 
@@ -1031,7 +1032,7 @@ if (process.env.NODE_ENV === "test") {
 
 **实现**：
 
-- 使用Vitest模拟Electron API
+- 使用Vitest模拟legacy preload API
 - 纯单元测试，不启动真实应用
 
 **优点**：
@@ -1074,131 +1075,133 @@ if (process.env.NODE_ENV === "test") {
 
 1. **等待所有窗口创建**
 
-    ```typescript
-    private async waitForAllWindows(): Promise<void> {
-      if (!this.app) throw new Error("App not initialized");
+```typescript
+private async waitForAllWindows(): Promise<void> {
+if (!this.app) throw new Error("App not initialized");
 
-      let attempts = 0;
-      const maxAttempts = 60; // 最多等待30秒（60 * 500ms）
+let attempts = 0;
+const maxAttempts = 60; // 最多等待30秒（60 * 500ms）
 
-      while (attempts < maxAttempts) {
-        const windows = this.app.windows();
+while (attempts < maxAttempts) {
+const windows = this.app.windows();
 
-        // 检查是否有主窗口（有 #app 元素的窗口）
-        for (const window of windows) {
-          try {
-            const url = window.url();
+// 检查是否有主窗口（有 #app 元素的窗口）
+for (const window of windows) {
+try {
+const url = window.url();
 
-            // 跳过启动画面窗口（URL 包含 splash）
-            if (url.includes("splash")) continue;
+// 跳过启动画面窗口（URL 包含 splash）
+if (url.includes("splash")) continue;
 
-            // 检查是否有 #app 元素（主窗口标识）
-            const hasApp = await window
-              .evaluate(() => !!document.getElementById("app"))
-              .catch(() => false);
+// 检查是否有 #app 元素（主窗口标识）
+const hasApp = await window
+.evaluate(() => !!document.getElementById("app"))
+.catch(() => false);
 
-            if (hasApp) return; // 找到主窗口
-          } catch {
-            // 窗口可能还在加载，继续检查下一个
-            continue;
-          }
-        }
+if (hasApp) return; // 找到主窗口
+} catch {
+// 窗口可能还在加载，继续检查下一个
+continue;
+}
+}
 
-        // 等待500ms再重试
-        await new Promise(resolve => setTimeout(resolve, 500));
-        attempts++;
-      }
+// 等待500ms再重试
+await new Promise(resolve => setTimeout(resolve, 500));
+attempts++;
+}
 
-      // 超时后兜底检查：至少确保有窗口
-      const windows = this.app.windows();
-      if (windows.length === 0) {
-        throw new Error("No windows created after timeout");
-      }
-    }
-    ```
+// 超时后兜底检查：至少确保有窗口
+const windows = this.app.windows();
+if (windows.length === 0) {
+throw new Error("No windows created after timeout");
+}
+}
+```
 
 2. **获取主窗口页面**
 
-    ```typescript
-    private async getMainWindowPage(): Promise<Page> {
-      if (!this.app) throw new Error("App not initialized");
+```typescript
+private async getMainWindowPage(): Promise<Page> {
+if (!this.app) throw new Error("App not initialized");
 
-      const windows = this.app.windows();
+const windows = this.app.windows();
 
-      // 优先查找主窗口（有 #app 元素且 URL 不包含 splash）
-      for (const window of windows) {
-        try {
-          const url = window.url();
+// 优先查找主窗口（有 #app 元素且 URL 不包含 splash）
+for (const window of windows) {
+try {
+const url = window.url();
 
-          // 跳过启动画面窗口
-          if (url.includes("splash")) continue;
+// 跳过启动画面窗口
+if (url.includes("splash")) continue;
 
-          // 检查是否有 #app 元素
-          const hasApp = await window
-            .evaluate(() => !!document.getElementById("app"))
-            .catch(() => false);
+// 检查是否有 #app 元素
+const hasApp = await window
+.evaluate(() => !!document.getElementById("app"))
+.catch(() => false);
 
-          if (hasApp) return window;
-        } catch {
-          // 窗口可能还在加载，继续查找下一个
-          continue;
-        }
-      }
+if (hasApp) return window;
+} catch {
+// 窗口可能还在加载，继续查找下一个
+continue;
+}
+}
 
-      // Fallback 1: 返回第一个非启动画面窗口
-      for (const window of windows) {
-        try {
-          const url = window.url();
-          if (!url.includes("splash")) {
-            return window;
-          }
-        } catch {
-          continue;
-        }
-      }
+// Fallback 1: 返回第一个非启动画面窗口
+for (const window of windows) {
+try {
+const url = window.url();
+if (!url.includes("splash")) {
+return window;
+}
+} catch {
+continue;
+}
+}
 
-      // Fallback 2: 返回第一个窗口
-      if (windows.length > 0) {
-        return windows[0];
-      }
+// Fallback 2: 返回第一个窗口
+if (windows.length > 0) {
+return windows[0];
+}
 
-      throw new Error("No windows available");
-    }
-    ```
+throw new Error("No windows available");
+}
+```
 
 3. **等待应用就绪**
 
-    ```typescript
-    private async waitForAppReady(): Promise<void> {
-      // 等待 DOM 准备就绪
-      await this.page.waitForLoadState("domcontentloaded");
+```typescript
+private async waitForAppReady(): Promise<void> {
+// 等待 DOM 准备就绪
+await this.page.waitForLoadState("domcontentloaded");
 
-      // 等待页面完全加载
-      await this.page.waitForFunction(() =>
-        document.readyState === "complete"
-      );
+// 等待页面完全加载
+await this.page.waitForFunction(() =>
+document.readyState === "complete"
+);
 
-      // 等待 Vue 应用挂载
-      await this.page.waitForFunction(() => {
-        const app = document.getElementById("app");
-        return app && app.children.length > 0;
-      });
+// 等待 Vue 应用挂载
+await this.page.waitForFunction(() => {
+const app = document.getElementById("app");
+return app && app.children.length > 0;
+});
 
-      // 检查页面是否仍然有效，避免在页面关闭后调用 waitForTimeout
-      if (this.page && !this.page.isClosed()) {
-        await this.page.waitForTimeout(2000);
-      }
-    }
-    ```
+// 检查页面是否仍然有效，避免在页面关闭后调用 waitForTimeout
+if (this.page && !this.page.isClosed()) {
+await this.page.waitForTimeout(2000);
+}
+}
+```
 
 **关键点**：
 
 - ✅ **不假设 `firstWindow()` 返回主窗口** - 启动画面可能先创建
 - ✅ **通过 URL 和内容识别主窗口** - 检查 URL 不含 "splash" 且有 #app 元素
 - ✅ **完整的 fallback 机制**：
-    1. 优先：有 #app 元素且 URL 不含 splash
-    2. Fallback 1：第一个 URL 不含 splash 的窗口
-    3. Fallback 2：第一个窗口（极端情况）
+
+1.  优先：有 #app 元素且 URL 不含 splash
+2.  Fallback 1：第一个 URL 不含 splash 的窗口
+3.  Fallback 2：第一个窗口（极端情况）
+
 - ✅ **错误处理完善** - 所有 evaluate 操作都有 try-catch
 - ✅ **超时兜底检查** - 30秒后至少确保有窗口创建
 - ✅ **处理页面关闭情况** - 避免 `waitForTimeout` 在关闭的页面上调用
@@ -1220,7 +1223,7 @@ if (process.env.NODE_ENV === "test") {
 
 ```typescript
 // global-setup.ts
-const app = await electron.launch({
+const app = await desktopShell.launch({
     args: [process.cwd()],
     env: {
         ...process.env,
@@ -1239,16 +1242,19 @@ const app = await electron.launch({
 ## 未解决问题
 
 1. **是否需要并行测试？**
-    - 当前：串行执行（workers: 1）
-    - 待确认：测试数量增长后是否需要优化
+
+- 当前：串行执行（workers: 1）
+- 待确认：测试数量增长后是否需要优化
 
 2. **测试数据持久化？**
-    - 当前：每次测试创建临时数据
-    - 待确认：是否需要固定测试数据集
+
+- 当前：每次测试创建临时数据
+- 待确认：是否需要固定测试数据集
 
 3. **CI/CD集成？**
-    - 当前：本地运行
-    - 待确认：GitHub Actions配置
+
+- 当前：本地运行
+- 待确认：GitHub Actions配置
 
 ---
 
@@ -1264,16 +1270,16 @@ const app = await electron.launch({
 ## 更新历史
 
 - **2025-11-15**: 初始设计
-    - 分析现有架构问题
-    - 设计全新架构
-    - 定义实施计划
+- 分析现有架构问题
+- 设计全新架构
+- 定义实施计划
 
 - **2025-11-16**: 启动画面处理设计和完善
-    - 添加启动画面处理章节
-    - 说明应用启动流程（启动画面 → 主窗口）
-    - 设计主窗口识别和等待机制
-    - 处理页面关闭情况，避免 waitForTimeout 错误
-    - 完善代码示例，同步实际实现（electron-app.ts）
-    - 添加完整的 fallback 机制（3层）
-    - 添加错误处理和超时兜底检查
-    - 添加测试环境配置建议（保留启动画面 vs 禁用）
+- 添加启动画面处理章节
+- 说明应用启动流程（启动画面 → 主窗口）
+- 设计主窗口识别和等待机制
+- 处理页面关闭情况，避免 waitForTimeout 错误
+- 完善代码示例，同步实际实现（desktop-app.ts）
+- 添加完整的 fallback 机制（3层）
+- 添加错误处理和超时兜底检查
+- 添加测试环境配置建议（保留启动画面 vs 禁用）

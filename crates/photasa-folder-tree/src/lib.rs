@@ -1,6 +1,6 @@
 //! 侧边栏 folderTree 持久化 — `~/.photasa/appState/photasa.json`
 //!
-//! 与 Electron `@photasa/siming` / `SimingEngine` 契约对齐。
+//! 与 legacy-api `@photasa/siming` / `SimingEngine` 契约对齐。
 //! 贞观「司命」是此能力的拟人化名，crate 名跟功能走（同 `photasa-scan` 不用千里眼）。
 
 use std::io;
@@ -91,7 +91,16 @@ impl FolderTreeStore {
 
     fn read_app_state(&self) -> FolderTreeResult<Value> {
         match std::fs::read_to_string(&self.app_state_path) {
-            Ok(content) => parse_app_state(&content),
+            Ok(content) => match parse_app_state(&content) {
+                Ok(val) => Ok(val),
+                Err(err) => {
+                    eprintln!(
+                        "⚠️ photasa-folder-tree: read_app_state 遇到损坏的 JSON，自动重置：{:?} - {}",
+                        self.app_state_path, err
+                    );
+                    Ok(default_app_state_value())
+                }
+            },
             Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(default_app_state_value()),
             Err(err) => Err(FolderTreeError::Io(err)),
         }
@@ -103,7 +112,9 @@ impl FolderTreeStore {
         }
 
         let payload = serde_json::to_string_pretty(state)?;
-        std::fs::write(&self.app_state_path, payload)?;
+        let tmp_path = self.app_state_path.with_extension("json.tmp");
+        std::fs::write(&tmp_path, payload)?;
+        std::fs::rename(&tmp_path, &self.app_state_path)?;
         Ok(())
     }
 }
@@ -123,11 +134,11 @@ fn default_app_state_path() -> PathBuf {
 
 fn default_app_state_value() -> Value {
     json!({
-        "version": "1.0",
-        "timestamp": Utc::now().timestamp_millis(),
-        "folderTree": [],
-        "currentFolder": "",
-        "lastOpenedFolder": ""
+    "version": "1.0",
+    "timestamp": Utc::now().timestamp_millis(),
+    "folderTree": [],
+    "currentFolder": "",
+    "lastOpenedFolder": ""
     })
 }
 
@@ -139,20 +150,20 @@ fn parse_app_state(content: &str) -> FolderTreeResult<Value> {
     }
 
     Ok(json!({
-        "version": parsed.get("version").and_then(|v| v.as_str()).unwrap_or("1.0"),
-        "timestamp": parsed
-            .get("timestamp")
-            .and_then(|v| v.as_i64())
-            .unwrap_or_else(|| Utc::now().timestamp_millis()),
-        "folderTree": parsed.get("folderTree").cloned().unwrap_or(json!([])),
-        "currentFolder": parsed
-            .get("currentFolder")
-            .and_then(|v| v.as_str())
-            .unwrap_or(""),
-        "lastOpenedFolder": parsed
-            .get("lastOpenedFolder")
-            .and_then(|v| v.as_str())
-            .unwrap_or(""),
+    "version": parsed.get("version").and_then(|v| v.as_str()).unwrap_or("1.0"),
+    "timestamp": parsed
+    .get("timestamp")
+    .and_then(|v| v.as_i64())
+    .unwrap_or_else(|| Utc::now().timestamp_millis()),
+    "folderTree": parsed.get("folderTree").cloned().unwrap_or(json!([])),
+    "currentFolder": parsed
+    .get("currentFolder")
+    .and_then(|v| v.as_str())
+    .unwrap_or(""),
+    "lastOpenedFolder": parsed
+    .get("lastOpenedFolder")
+    .and_then(|v| v.as_str())
+    .unwrap_or(""),
     }))
 }
 
@@ -207,9 +218,9 @@ mod tests {
         ));
         let store = FolderTreeStore::with_path(path.clone());
         let new_tree = json!([
-            { "key": "/photos", "title": "photos", "children": [
-                { "key": "/photos/vacation", "title": "vacation", "children": [] }
-            ]}
+        { "key": "/photos", "title": "photos", "children": [
+        { "key": "/photos/vacation", "title": "vacation", "children": [] }
+        ]}
         ]);
 
         store.persist_folder_tree(new_tree.clone()).unwrap();
@@ -219,6 +230,19 @@ mod tests {
 
         let full_state = store.restore_app_state().unwrap();
         assert_eq!(full_state["currentFolder"], "");
+    }
+
+    #[test]
+    fn restore_app_state_falls_back_on_corrupt_json() {
+        let path = std::env::temp_dir().join(format!(
+            "photasa-folder-tree-corrupt-{}.json",
+            uuid::Uuid::new_v4()
+        ));
+        let corrupt_payload = r#"{"version":"1.0","folderTree":[]} trailing junk at end"#;
+        std::fs::write(&path, corrupt_payload).unwrap();
+        let store = FolderTreeStore::with_path(path);
+        let state = store.restore_app_state().unwrap();
+        assert!(state.get("folderTree").unwrap().is_array());
     }
 
     #[test]

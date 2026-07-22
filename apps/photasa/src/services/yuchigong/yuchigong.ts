@@ -12,7 +12,7 @@ import {
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
 // ✅ RFC 0048 v3 Phase 4: QizouMatters 导入已删除（随persistToStore()一起删除）
-import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
+import { ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import type { FileOperation, ScanAction } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import { loggers, mapFileOperationToScanAction } from "@photasa/common";
@@ -134,6 +134,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     department: GUANYUAN_NAMES.YU_CHI_GONG,
                     matter: ZOUZHE_MATTERS.RESET_FOLDER_CONFIG,
                     content: { folder: path },
+                    timestamp: Date.now(),
                     priority: ZOUZHE_PRIORITIES.NORMAL,
                 });
             }
@@ -145,9 +146,10 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     department: GUANYUAN_NAMES.YU_CHI_GONG,
                     matter: ZOUZHE_MATTERS.TO_DIR_NAME,
                     content: { path },
+                    timestamp: Date.now(),
                     priority: ZOUZHE_PRIORITIES.NORMAL,
                 });
-                parentDir = res.data;
+                parentDir = typeof res.data === "string" ? res.data : null;
             }
 
             // 5. 执行扫描（子目录发现由千里眼 ScanDirectoryReport → scan_directory_discovered，RFC 0136）
@@ -160,6 +162,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
                     thumbnailSize,
                     isDirectory: operationType !== "file",
                 },
+                timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             });
 

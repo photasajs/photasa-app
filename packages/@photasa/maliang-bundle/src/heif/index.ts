@@ -52,7 +52,7 @@ export async function initializeHeifModule(quiet = false): Promise<any> {
     // 构建可能的WASM文件路径
     const possiblePaths: string[] = [];
 
-    // 1. 优先：使用process.resourcesPath（Electron标准方式）
+    // 1. 优先：使用 process.resourcesPath（桌面壳标准方式）
     if ((process as any).resourcesPath) {
         possiblePaths.push(path.join((process as any).resourcesPath, "wasm_heif.wasm"));
     }

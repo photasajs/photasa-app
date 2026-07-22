@@ -4,7 +4,7 @@
 - **Status**: Completed
 - **Priority**: P1
 - **Area**: Photasa / UI / Tauri Window decorations
-- **Path**: `.spec/rfc/0152-tauri-macos-custom-titlebar-overlay-and-drag.md`
+- **Path**: `.spec/rfc/completed/0152-tauri-macos-custom-titlebar-overlay-and-drag.md`
 
 ## Background & Root Causes
 

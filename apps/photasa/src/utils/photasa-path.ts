@@ -1,6 +1,6 @@
 /**
- * Electron path contract for `.photasa.json` thumbnails.
- * Mirrors `apps/desktop/src/shared/path-util.ts` / `@photasa/config-core`.
+ * contract reference path contract for `.photasa.json` thumbnails.
+ * Mirrors `historical shared/path-util.ts` / `@photasa/config-core`.
  */
 import { PHOTASA_ORIGINALS } from "@photasa/common";
 

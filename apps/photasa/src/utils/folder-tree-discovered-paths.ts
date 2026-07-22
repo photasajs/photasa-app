@@ -17,6 +17,9 @@ export function mergeDiscoveredPathsIntoTree(
         }
 
         const normalizedPath = canonicalFolderPath(rawPath);
+        if (normalizedPath.split("/").some((part) => part.startsWith("."))) {
+            continue;
+        }
         const rootToAdd = determineRootPathToAdd(normalizedPath, [...watchRootPaths], tree);
         if (rootToAdd) {
             addRoot(tree, rootToAdd);

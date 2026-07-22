@@ -1,7 +1,7 @@
 # RFC 0107 – Tauri Wenchang: application preferences storage parity
 
-**Status**: ✅ Implemented — crate + 直连 IPC（[0147](./0147-tauri-wenchang-preferences-retirement.md)）；**2026-07-21 手测 E2E 通过**  
-**Created**: 2026-04-06  
+**Status**: ✅ Implemented — crate + 直连 IPC（[0147](./0147-tauri-wenchang-preferences-retirement.md)）；**2026-07-21 手测 E2E 通过**
+**Created**: 2026-04-06
 **Area**: Tauri / Preferences
 
 ## Implementation checklist
@@ -34,11 +34,11 @@
 `resolve_workflows_dir()`（`services/tianshu.rs:280-298`）逻辑：
 
 1. 先查 `resource_dir/workflows` 是否存在（生产路径）
-2. 不存在则回退到**源码路径** `apps/desktop/src/main/engines/tianshu/workflows`（开发路径，硬编码相对路径找 monorepo 源码树）
+2. 不存在则回退到**源码路径** `historical main/engines/tianshu/workflows`（开发路径，硬编码相对路径找 monorepo 源码树）
 
 生产安装包**没有 monorepo 源码树**，回退路径在生产环境下也不存在 → **`TianshuEngine` 在生产构建中加载不到任何 `.zouwu` workflow 文件** → 不只是 preference 功能，**所有依赖 Tianshu workflow 的功能在生产环境下全部失效**（scan queue、appState 同步、folder tree 等，凡是 `matter-sync.yml` 列出的 matter 全部涉及）。
 
-RFC 0107 原文本身已经预见此风险（"Bundling workflows in production is a separate packaging concern; dev path already points to Electron workflows" / "tracked separately if needed"）——但从未真正开新 RFC 跟踪或修复。
+RFC 0107 原文本身已经预见此风险（"Bundling workflows in production is a separate packaging concern; dev path already points to retired workflows" / "tracked separately if needed"）——但从未真正开新 RFC 跟踪或修复。
 
 **修复方向（未实施，留给专门 RFC）**：
 
@@ -53,16 +53,16 @@ RFC 0107 原文本身已经预见此风险（"Bundling workflows in production i
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-Electron stores **application-level preferences** via the **Wenchang engine** and exposes them to the Renderer through Tianshu workflows (`get_preferences`, `update_preferences`, etc).  
+contract reference stores **application-level preferences** via the **Wenchang engine** and exposes them to the Renderer through Tianshu workflows (`get_preferences`, `update_preferences`, etc).
 Tauri currently mis-registers a folder-level `.photasa.json` adapter as `service: "wenchang"`, so preference workflows cannot execute.
 
-This RFC introduces a **dedicated Rust workspace crate** for Wenchang preferences, plus a Tauri adapter named `wenchang` that provides the same workflow actions as Electron.
+This RFC introduces a **dedicated Rust workspace crate** for Wenchang preferences, plus a Tauri adapter named `wenchang` that provides the same workflow actions as contract reference.
 
 ---
 
@@ -77,40 +77,43 @@ We need 1:1 parity for:
 Current Tauri state:
 
 - `apps/photasa/src-tauri/src/adapters/config_adapter.rs` is named `"wenchang"` but only reads/writes per-folder `.photasa.json`.
-- Preference workflows from Electron (`apps/desktop/src/main/engines/tianshu/workflows/preference/*.zouwu`) require Wenchang-specific actions (e.g. `validate`, `sanitize`, `updatePreferences`, `getHistory`, etc).
+- Preference workflows from contract reference (`historical main/engines/tianshu/workflows/preference/*.zouwu`) require Wenchang-specific actions (e.g. `validate`, `sanitize`, `updatePreferences`, `getHistory`, etc).
 
 ---
 
 ## Goals
 
 1. **Correct responsibility split**
-    - `.photasa.json` (folder-level) is no longer implemented under adapter name `"wenchang"`.
-    - `"wenchang"` is reserved for application-level preferences.
+
+- `.photasa.json` (folder-level) is no longer implemented under adapter name `"wenchang"`.
+- `"wenchang"` is reserved for application-level preferences.
 
 2. **Dedicated crate**
-    - Implement preferences persistence in a new Rust workspace crate under `crates/`.
-    - Keep Tauri adapter as a thin boundary layer.
+
+- Implement preferences persistence in a new Rust workspace crate under `crates/`.
+- Keep Tauri adapter as a thin boundary layer.
 
 3. **Workflow parity**
-    - Implement the minimal action surface needed by Electron preference workflows:
-        - `getCurrentSnapshot`
-        - `updatePreferences`
-        - `resetToDefaults`
-        - `exportPreferences`
-        - `importPreferences`
-        - `getHistory`
-        - `restoreRevision`
-        - `validate`
-        - `sanitize`
-        - `emitEvent`
-        - `formatResponse`
+
+- Implement the minimal action surface needed by contract reference preference workflows:
+- `getCurrentSnapshot`
+- `updatePreferences`
+- `resetToDefaults`
+- `exportPreferences`
+- `importPreferences`
+- `getHistory`
+- `restoreRevision`
+- `validate`
+- `sanitize`
+- `emitEvent`
+- `formatResponse`
 
 ---
 
 ## Non-goals
 
-- Re-implementing all Electron-side UI flows for preference export/import dialogs.
-- Adding YAML/TOML preferences formats. Storage is JSON to match Electron.
+- Re-implementing all contract reference-side UI flows for preference export/import dialogs.
+- Adding YAML/TOML preferences formats. Storage is JSON to match legacy-api.
 
 ---
 
@@ -122,12 +125,12 @@ Default directory:
 
 ```
 ~/.photasa/preferences/
-  preferences.json
-  history.json
-  revisions/
-    00000001.json
-    00000002.json
-    ...
+ preferences.json
+ history.json
+ revisions/
+ 00000001.json
+ 00000002.json
+ ...
 ```
 
 ### Data model
@@ -144,9 +147,9 @@ Align with `packages/@photasa/wenchang/src/types/index.ts`:
 
 ### Workflow directory
 
-Tauri dev mode uses Electron workflows at:
+Tauri dev mode uses retired workflows at:
 
-`apps/desktop/src/main/engines/tianshu/workflows`
+`historical main/engines/tianshu/workflows`
 
 Production builds must bundle `workflows/` into `resource_dir/workflows` (tracked separately if needed).
 
@@ -155,20 +158,20 @@ Production builds must bundle `workflows/` into `resource_dir/workflows` (tracke
 ## Testing strategy
 
 - Rust unit tests in the new crate:
-    - default initialization (no file) → defaults written
-    - apply delta → revision increments, deep merge works, `preferences.json` persists
-    - history + revisions files updated
-    - restoreRevision loads previous snapshot
+- default initialization (no file) → defaults written
+- apply delta → revision increments, deep merge works, `preferences.json` persists
+- history + revisions files updated
+- restoreRevision loads previous snapshot
 - Tauri compile proof:
-    - `cargo test -p wenchang-preferences`
-    - `cargo build -p photasa`
+- `cargo test -p wenchang-preferences`
+- `cargo build -p photasa`
 - Optional manual validation:
-    - Renderer triggers `get_preferences` and sees preferences store replaced via `matter-sync.yml`
-    - Update theme/language/thumbnailSize triggers `update_preferences` and persists to `~/.photasa/preferences/preferences.json`
+- Renderer triggers `get_preferences` and sees preferences store replaced via `matter-sync.yml`
+- Update theme/language/thumbnailSize triggers `update_preferences` and persists to `~/.photasa/preferences/preferences.json`
 
 ---
 
 ## Risks
 
-- If workflow action shapes differ, store automation may not sync; mitigate by matching Electron workflow expectations precisely.
-- Bundling workflows in production is a separate packaging concern; dev path already points to Electron workflows.
+- If workflow action shapes differ, store automation may not sync; mitigate by matching retired workflow expectations precisely.
+- Bundling workflows in production is a separate packaging concern; dev path already points to retired workflows.

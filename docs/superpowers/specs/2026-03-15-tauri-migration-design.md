@@ -1,14 +1,13 @@
 # Tauri 迁移设计文档
 
 **日期**: 2026-03-15
-**状态**: 已审查
-**策略**: B — 先构建 Rust 工作流引擎，再在其之上构建 Tauri 应用层
+**状态**: 已完成（`legacy-api contract` 已删除，RFC 0153；zouwu workspace 已移除）
 
 ---
 
 ## 1. 目标
 
-将 `apps/desktop`（Electron）完全替换为 `apps/photasa`（Tauri）。Tauri 不是过渡方案，而是最终形态。Electron 代码库在迁移完成后废弃。
+将 `legacy-api contract`（contract reference）完全替换为 `apps/photasa`（Tauri）。**已完成**：旧代码库已删除。
 
 ---
 
@@ -16,8 +15,8 @@
 
 ### 2.1 全量替换，非并行运行
 
-- Tauri 完全替换 Electron，不存在"两套并行"阶段
-- `apps/desktop` 作为参考实现保留，直到 Tauri 功能完备后删除
+- Tauri 完全替换 contract reference，不存在"两套并行"阶段
+- ~~`retired-desktop 作为参考实现保留~~ → **已删除**（2026-07）
 
 ### 2.2 完整 Rust 后端重写
 
@@ -45,21 +44,19 @@
 ```
 picasa-vue/
 ├── apps/
-│   ├── desktop/                  # Electron（保留参考，迁移完成后删除）
-│   └── photasa/                  # Tauri 应用
-│       ├── src/                  # Vue 3 前端
-│       │   └── api/              # 适配器层（window.api 兼容 Electron preload）
-│       └── src-tauri/            # Rust 命令层
-│           ├── src/
-│           │   ├── commands/     # Tauri 命令（tianshu、scan、thumbnail 等）
-│           │   ├── adapters/     # Tauri 侧 Adapter 实现
-│           │   └── services/     # TianshuService（工作流引擎封装）
-│           └── Cargo.toml        # 引用 workspace crates
-├── crates/                       # Rust workspace（新建）
-│   ├── zouwu-core/               # 引擎核心
-│   ├── zouwu-builtin/            # BuiltinAdapter
-│   └── zouwu-wasm/               # 将来 WASM 导出（Phase 4）
-└── Cargo.toml                    # Rust workspace 根
+│ └── photasa/ # Tauri 应用（唯一桌面交付）
+│ ├── src/ # Vue 3 前端
+│ │ └── api/ # legacy-api（invoke 兼容层）
+│ └── src-tauri/ # Rust 命令层
+│ ├── src/
+│ │ ├── commands/ # Tauri 命令
+│ │ └── services/ # TianshuService（工作流引擎封装）
+│ └── Cargo.toml # 引用 workspace crates
+├── crates/ # Rust workspace（新建）
+│ ├── zouwu-core/ # 引擎核心
+│ ├── zouwu-builtin/ # BuiltinAdapter
+│ └── zouwu-wasm/ # 将来 WASM 导出（Phase 4）
+└── Cargo.toml # Rust workspace 根
 ```
 
 ---
@@ -68,36 +65,36 @@ picasa-vue/
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│               Vue 3 前端 (apps/photasa/src)           │
-│   组件 → window.api.* → Tauri invoke / 事件监听       │
+│ Vue 3 前端 (apps/photasa/src) │
+│ 组件 → window.api.* → Tauri invoke / 事件监听 │
 └──────────────────────────────────────────────────────┘
-                           │  invoke / emit
+ │ invoke / emit
 ┌──────────────────────────────────────────────────────┐
-│           Tauri 命令层 (src-tauri/commands)           │
-│  tianshu_command / scan_photos / create_thumbnail ... │
+│ Tauri 命令层 (src-tauri/commands) │
+│ tianshu_command / scan_photos / create_thumbnail ... │
 └──────────────────────────────────────────────────────┘
-                           │
+ │
 ┌──────────────────────────────────────────────────────┐
-│          TianshuService (src-tauri/services)          │
-│  加载工作流 YAML → 注册 Adapter → 驱动引擎执行         │
-│  持有 Arc<AppHandle> 注入给需要推送事件的 Adapter      │
+│ TianshuService (src-tauri/services) │
+│ 加载工作流 YAML → 注册 Adapter → 驱动引擎执行 │
+│ 持有 Arc<AppHandle> 注入给需要推送事件的 Adapter │
 └──────────────────────────────────────────────────────┘
-                           │
+ │
 ┌──────────────────────────────────────────────────────┐
-│              zouwu-core (crates/zouwu-core)           │
-│                                                      │
-│  Parser (pest)  │  Engine (tokio)  │  AdapterRegistry │
-│  两阶段解析      │  步骤调度         │  Adapter trait   │
-│  Expression     │  ExecutionContext │  AdapterError    │
+│ zouwu-core (crates/zouwu-core) │
+│ │
+│ Parser (pest) │ Engine (tokio) │ AdapterRegistry │
+│ 两阶段解析 │ 步骤调度 │ Adapter trait │
+│ Expression │ ExecutionContext │ AdapterError │
 └──────────────────────────────────────────────────────┘
-         │                                    │
-┌────────────────┐               ┌────────────────────┐
-│ zouwu-builtin  │               │ Tauri Adapters      │
-│ BuiltinAdapter │               │ ScanAdapter         │
-│ return/log/    │               │ ThumbnailAdapter    │
-│ delay/setVar/  │               │ ConfigAdapter       │
-│ transform/error│               │ ShellAdapter        │
-└────────────────┘               └────────────────────┘
+ │ │
+┌────────────────┐ ┌────────────────────┐
+│ zouwu-builtin │ │ Tauri Adapters │
+│ BuiltinAdapter │ │ ScanAdapter │
+│ return/log/ │ │ ThumbnailAdapter │
+│ delay/setVar/ │ │ ConfigAdapter │
+│ transform/error│ │ ShellAdapter │
+└────────────────┘ └────────────────────┘
 ```
 
 ---
@@ -108,21 +105,21 @@ picasa-vue/
 
 ```rust
 pub struct WorkflowDefinition {
-    pub id: String,
-    pub name: String,
-    pub steps: Vec<WorkflowStep>,
-    pub inputs: Option<Vec<ParameterDefinition>>,
-    pub outputs: Option<Vec<ParameterDefinition>>,
-    pub variables: Option<HashMap<String, Value>>,
+ pub id: String,
+ pub name: String,
+ pub steps: Vec<WorkflowStep>,
+ pub inputs: Option<Vec<ParameterDefinition>>,
+ pub outputs: Option<Vec<ParameterDefinition>>,
+ pub variables: Option<HashMap<String, Value>>,
 }
 
 pub enum WorkflowStep {
-    Action(ActionStep),
-    Builtin(BuiltinStep),
-    Condition(ConditionStep),
-    Loop(LoopStep),
-    Parallel(ParallelStep),
-    Workflow(WorkflowCallStep),
+ Action(ActionStep),
+ Builtin(BuiltinStep),
+ Condition(ConditionStep),
+ Loop(LoopStep),
+ Parallel(ParallelStep),
+ Workflow(WorkflowCallStep),
 }
 ```
 
@@ -132,19 +129,19 @@ pub enum WorkflowStep {
 
 ```rust
 pub struct ExecutionContext {
-    /// 工作流输入参数（对应 {{inputs.xxx}}）
-    pub inputs: Value,
-    /// 工作流级变量（对应 {{variables.xxx}}）
-    pub variables: HashMap<String, Value>,
-    /// 已完成步骤的输出（对应 {{steps.id.output.xxx}}）
-    pub step_outputs: HashMap<String, Value>,
-    /// 当前 loop 上下文（对应 {{loop.item}}、{{loop.index}}）
-    pub loop_context: Option<LoopContext>,
+ /// 工作流输入参数（对应 {{inputs.xxx}}）
+ pub inputs: Value,
+ /// 工作流级变量（对应 {{variables.xxx}}）
+ pub variables: HashMap<String, Value>,
+ /// 已完成步骤的输出（对应 {{steps.id.output.xxx}}）
+ pub step_outputs: HashMap<String, Value>,
+ /// 当前 loop 上下文（对应 {{loop.item}}、{{loop.index}}）
+ pub loop_context: Option<LoopContext>,
 }
 
 pub struct LoopContext {
-    pub item: Value,
-    pub index: usize,
+ pub item: Value,
+ pub index: usize,
 }
 ```
 
@@ -153,37 +150,37 @@ pub struct LoopContext {
 ```rust
 #[derive(Debug, thiserror::Error)]
 pub enum AdapterError {
-    #[error("adapter not found: {0}")]
-    NotFound(String),
-    #[error("invalid input: {0}")]
-    InvalidInput(String),
-    #[error("io error: {0}")]
-    Io(#[from] std::io::Error),
-    #[error("internal error: {0}")]
-    Internal(String),
+ #[error("adapter not found: {0}")]
+ NotFound(String),
+ #[error("invalid input: {0}")]
+ InvalidInput(String),
+ #[error("io error: {0}")]
+ Io(#[from] std::io::Error),
+ #[error("internal error: {0}")]
+ Internal(String),
 }
 
 #[async_trait]
 pub trait Adapter: Send + Sync {
-    fn name(&self) -> &str;
+ fn name(&self) -> &str;
 
-    async fn execute(
-        &self,
-        action: &str,
-        input: Value,
-        ctx: &ExecutionContext,
-    ) -> Result<Value, AdapterError>;
+ async fn execute(
+ &self,
+ action: &str,
+ input: Value,
+ ctx: &ExecutionContext,
+ ) -> Result<Value, AdapterError>;
 
-    fn supported_actions(&self) -> &[&str] { &[] }
+ fn supported_actions(&self) -> &[&str] { &[] }
 }
 
 pub struct AdapterRegistry {
-    adapters: HashMap<String, Arc<dyn Adapter>>,
+ adapters: HashMap<String, Arc<dyn Adapter>>,
 }
 
 impl AdapterRegistry {
-    pub fn register(&mut self, adapter: Arc<dyn Adapter>);
-    pub fn get(&self, name: &str) -> Option<&Arc<dyn Adapter>>;
+ pub fn register(&mut self, adapter: Arc<dyn Adapter>);
+ pub fn get(&self, name: &str) -> Option<&Arc<dyn Adapter>>;
 }
 ```
 
@@ -191,17 +188,17 @@ impl AdapterRegistry {
 
 ```rust
 pub struct ZouwuEngine {
-    registry: Arc<AdapterRegistry>,
+ registry: Arc<AdapterRegistry>,
 }
 
 impl ZouwuEngine {
-    pub fn new(registry: AdapterRegistry) -> Self;
+ pub fn new(registry: AdapterRegistry) -> Self;
 
-    pub async fn execute(
-        &self,
-        workflow: &WorkflowDefinition,
-        inputs: Value,
-    ) -> Result<ExecutionResult, EngineError>;
+ pub async fn execute(
+ &self,
+ workflow: &WorkflowDefinition,
+ inputs: Value,
+ ) -> Result<ExecutionResult, EngineError>;
 }
 ```
 
@@ -219,22 +216,22 @@ input:
 
 ```
 阶段 1 — 原始文本预处理
-  读取 .zouwu 文件字节
-  → pest 扫描所有 {{...}}，用占位字符串替换
-    （例如 {{inputs.paths}} → "__EXPR_0__"）
-  → 建立占位符 → 原始表达式 的映射表
+ 读取 .zouwu 文件字节
+ → pest 扫描所有 {{...}}，用占位字符串替换
+ （例如 {{inputs.paths}} → "__EXPR_0__"）
+ → 建立占位符 → 原始表达式 的映射表
 
 阶段 2 — YAML 反序列化 + 表达式还原
-  → serde_yaml 解析为中间 Value 树
-  → 递归遍历 Value 树，将 "__EXPR_N__" 字符串替换回 ExprNode
-  → 得到 WorkflowDefinition（steps 中含有待求值的 ExprNode）
+ → serde_yaml 解析为中间 Value 树
+ → 递归遍历 Value 树，将 "__EXPR_N__" 字符串替换回 ExprNode
+ → 得到 WorkflowDefinition（steps 中含有待求值的 ExprNode）
 
 运行时求值（执行步骤时）
-  → 对 ExprNode 求值，传入 ExecutionContext
-  → 得到具体 Value
+ → 对 ExprNode 求值，传入 ExecutionContext
+ → 得到具体 Value
 ```
 
-这与 Electron 侧 Peggy 预处理逻辑一致，保持现有 `.zouwu` 文件零改动可用。
+这与 reference implementation Peggy 预处理逻辑一致，保持现有 `.zouwu` 文件零改动可用。
 
 ### 5.6 依赖
 
@@ -258,27 +255,27 @@ thiserror = "1"
 
 ```rust
 pub struct ScanAdapter {
-    app_handle: Arc<AppHandle>,
+ app_handle: Arc<AppHandle>,
 }
 
 impl ScanAdapter {
-    pub fn new(app_handle: Arc<AppHandle>) -> Self {
-        Self { app_handle: Arc::new(app_handle) }
-    }
+ pub fn new(app_handle: Arc<AppHandle>) -> Self {
+ Self { app_handle: Arc::new(app_handle) }
+ }
 }
 
 #[async_trait]
 impl Adapter for ScanAdapter {
-    fn name(&self) -> &str { "qianliyan" }
+ fn name(&self) -> &str { "qianliyan" }
 
-    async fn execute(&self, action: &str, input: Value, _ctx: &ExecutionContext)
-        -> Result<Value, AdapterError>
-    {
-        // 发现照片时推送事件给前端
-        self.app_handle.emit("picasa:find-photo", &payload)
-            .map_err(|e| AdapterError::Internal(e.to_string()))?;
-        Ok(Value::Null)
-    }
+ async fn execute(&self, action: &str, input: Value, _ctx: &ExecutionContext)
+ -> Result<Value, AdapterError>
+ {
+ // 发现照片时推送事件给前端
+ self.app_handle.emit("picasa:find-photo", &payload)
+ .map_err(|e| AdapterError::Internal(e.to_string()))?;
+ Ok(Value::Null)
+ }
 }
 ```
 
@@ -286,14 +283,14 @@ impl Adapter for ScanAdapter {
 
 ```rust
 pub fn build_registry(app_handle: AppHandle) -> AdapterRegistry {
-    let handle = Arc::new(app_handle);
-    let mut registry = AdapterRegistry::new();
-    registry.register(Arc::new(BuiltinAdapter::new()));
-    registry.register(Arc::new(ScanAdapter::new(Arc::clone(&handle))));
-    registry.register(Arc::new(ThumbnailAdapter::new()));
-    registry.register(Arc::new(ConfigAdapter::new()));
-    registry.register(Arc::new(ShellAdapter::new(Arc::clone(&handle))));
-    registry
+ let handle = Arc::new(app_handle);
+ let mut registry = AdapterRegistry::new();
+ registry.register(Arc::new(BuiltinAdapter::new()));
+ registry.register(Arc::new(ScanAdapter::new(Arc::clone(&handle))));
+ registry.register(Arc::new(ThumbnailAdapter::new()));
+ registry.register(Arc::new(ConfigAdapter::new()));
+ registry.register(Arc::new(ShellAdapter::new(Arc::clone(&handle))));
+ registry
 }
 ```
 
@@ -312,36 +309,15 @@ pub fn build_registry(app_handle: AppHandle) -> AdapterRegistry {
 
 ## 7. 工作流文件打包与运行时路径
 
-`.zouwu` 工作流文件需要随应用打包，在运行时通过 Tauri 资源 API 访问：
+**已废弃（RFC 0153）**：zouwu `.zouwu` 工作流与 `TianshuService` 已移除；业务逻辑在 `crates/photasa-*` + Tauri 命令中实现。本节仅作迁移史留存。
 
-**`tauri.conf.json` 配置：**
-
-```json
-{
-    "bundle": {
-        "resources": ["../../apps/desktop/src/main/engines/tianshu/workflows/**"]
-    }
-}
-```
-
-**运行时路径解析：**
-
-```rust
-// TianshuService 初始化时
-let workflows_dir = app_handle
-    .path()
-    .resource_dir()
-    .expect("resource dir not found")
-    .join("workflows");
-```
-
-不使用硬编码路径，确保 macOS app bundle、Linux AppImage、Windows 安装包均可正确访问。
+~~`tauri.conf.json` bundle `legacy-api contract/.../workflows`~~ — 不再适用。
 
 ---
 
 ## 8. 前端适配器层（window.api）
 
-`apps/photasa/src/api/` 已实现平坦 legacy API，与 Electron preload `legacy.ts` 接口兼容。
+`apps/photasa/src/api/` 已实现平坦 legacy API，与历史 legacy preload `legacy.ts` 接口兼容（contract reference 已移除）。
 所有方法最终调用 `invoke("command_name", args)` 或监听 Tauri 事件。
 前端 Vue 组件无需修改。
 
@@ -382,18 +358,16 @@ let workflows_dir = app_handle
 3. 验证 Pinia store 初始化流程
 4. 端到端功能测试（扫描 → 缩略图 → 展示）
 
-### Phase 4 — 提取到 zouwu-wf（后续规划）
+### Phase 4 — 提取到 zouwu-wf
 
-1. 将 `crates/zouwu-core`、`crates/zouwu-builtin` 提取到独立 repo
-2. 实现 `crates/zouwu-wasm`（wasm-bindgen 导出）
-3. 发布 `@zouwu-wf/workflow-wasm` npm 包，替换 TS 工作流库
+**已取消**：RFC 0153 移除 `zouwu-core` / `zouwu-builtin`；后端以 `crates/photasa-*` + Tauri 命令为唯一路径。
 
 ---
 
 ## 10. 成功标准
 
-- [ ] `cargo test --workspace` 全部通过，用现有 `.zouwu` 文件验证引擎
-- [ ] `wasmtime` 依赖已删除，stubs.rs 已替换
-- [ ] `pnpm tauri:dev` 正常启动，扫描和缩略图功能可用
-- [ ] `pnpm tauri:build` 打包成功，工作流文件正确 bundle
-- [ ] `apps/desktop`（Electron）可以安全删除
+- [x] `cargo test --workspace` 全部通过
+- [x] `wasmtime` / zouwu 工作流路径已移除（RFC 0153）
+- [x] `pnpm dev` / Tauri 开发启动，扫描和缩略图可用
+- [x] `legacy-api contract`（contract reference）已删除
+- [ ] `legacy-api.ts` 逐 capability 退役（RFC 0097，进行中）

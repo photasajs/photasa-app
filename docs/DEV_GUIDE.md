@@ -11,92 +11,53 @@
 
 ## Project Structure
 
-This is an Electron + Vite application with TypeScript, targeting Windows and Mac desktop platforms.
+**Photasa** is a **Tauri 2 + Vue 3 + Rust** desktop app (`apps/photasa`). The removed desktop tree was removed in 2026-07 (RFC 0153).
 
 ```
 picasa-vue/
 ├── apps/
-│   └── desktop/        # Electron 应用 (@photasa/desktop)
-│       ├── src/main/       # 主进程
-│       ├── src/preload/    # 预加载脚本
-│       └── src/renderer/   # Vue 前端
-├── packages/
-│   ├── common/         # 共享工具 (@photasa/common) - 私有
-│   └── @photasa/       # 公共/共享包
-│       └── tianshu/    # 工作流引擎 (@photasa/tianshu)
-├── docs/               # 文档
-└── resources/          # 静态资源
+│ └── photasa/ # Tauri 应用 (@photasa/photasa)
+│ ├── src/ # Vue 3 前端（贞观服务层）
+│ └── src-tauri/ # Rust 命令与 Tauri 插件
+├── crates/ # photasa-scan, photasa-thumbnail, …
+├── packages/ # 共享 TS 包（@photasa/common 等）
+├── docs/ # 文档
+└── .spec/rfc/ # Photasa RFC（canonical）
 ```
 
-### 包结构说明
+### 包与 crate
 
-- **`@photasa/common`** (`packages/common`):
-    - 私有工具包，供应用的所有部分（Main, Preload, Renderer）使用。
-    - 包含类型定义、配置、日志记录器和工具函数。
-    - **导入规则**: 必须从 `@photasa/common` 导入，**严禁**使用 `../../common` 等相对路径。
-    - 示例: `import { config } from "@photasa/common"`
-
-- **`@photasa/tianshu`** (`packages/@photasa/tianshu`):
-    - 公共工作流引擎包。
-    - 从 `@systembug/tianshu` 迁移而来。
-    - **导入规则**: 从 `@photasa/tianshu` 导入。
-
-### Cross-Process Code Sharing and Build Strategy
-
-Photasa uses a **Unified Packaging Strategy** for all internal packages (monorepo packages):
-
-#### Unified Vite Library Mode Strategy
-
-All packages (whether shared, node-only, or renderer-only) must be built using **Vite Library Mode**. We do not use source code sharing (no `ts-node` or direct `src/` imports).
-
-1.  **Build Tool**: `vite` with `vite-plugin-dts`.
-2.  **Output Format**:
-    - **CJS**: `dist/index.cjs` (for Main process/Node)
-    - **ESM**: `dist/index.mjs` (for Renderer/Vite)
-    - **Types**: `dist/index.d.ts`
-3.  **`package.json` Standard**:
-    ```json
-    {
-        "type": "module",
-        "main": "./dist/index.cjs",
-        "module": "./dist/index.mjs",
-        "types": "./dist/index.d.ts",
-        "exports": {
-            ".": {
-                "types": "./dist/index.d.ts",
-                "import": "./dist/index.mjs",
-                "require": "./dist/index.cjs"
-            }
-        },
-        "files": ["dist"]
-    }
-    ```
-4.  **Consumption**: Consumers (apps) install the package and use it as a standard node module. No build configuration (externalization vs bundling) is needed in the consumer's `vite.config.ts` other than standard dependency handling.
+- **`apps/photasa`** — 唯一桌面交付；IPC 经 `YuanTianGang.executeZhaoling` → `invoke()`
+- **`crates/photasa-*`** — 扫描、缩略图、配置、文件夹树等 Rust 实现
+- **`packages/common`** — 共享类型与工具；从 `@photasa/common` 导入
 
 ## Development Setup
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- Node.js 20+、pnpm
+- Rust stable、平台 C 工具链（见 RFC 0103 原生依赖）
 - Git
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Running Development
 
 ```bash
-npm run dev
+pnpm dev # Tauri 开发
+pnpm run vite:dev:photasa # 仅 Vite，无原生窗口
 ```
 
 ### Running Tests
 
 ```bash
-npm test
+pnpm --filter @photasa/photasa run test:unit
+cargo test --workspace
+pnpm run clippy
 ```
 
 ## Coding Standards
@@ -110,15 +71,17 @@ npm test
 ### Vue Component Guidelines
 
 1. **Component organization**:
-    - Use component library philosophy for UI design
-    - Split complex components into sub-components with clear responsibilities
-    - Base components should start with `Base` prefix
-    - Domain-specific components should use `Primitive` prefix
+
+- Use component library philosophy for UI design
+- Split complex components into sub-components with clear responsibilities
+- Base components should start with `Base` prefix
+- Domain-specific components should use `Primitive` prefix
 
 2. **Component structure**:
-    - Prefer TSX for component design
-    - Organize components in independent directories
-    - Use multiple support files when necessary
+
+- Prefer TSX for component design
+- Organize components in independent directories
+- Use multiple support files when necessary
 
 ### General Rules
 
@@ -396,9 +359,9 @@ If tests hang indefinitely:
 
 ### Build Issues
 
-1. Clear node_modules and reinstall: `rm -rf node_modules && npm install`
-2. Clear Electron cache: `npm run clear-cache`
-3. Check Node.js version compatibility
+1. Reinstall: `rm -rf node_modules && pnpm install`
+2. Rust clean build: `cd apps/photasa/src-tauri && cargo clean && cargo build`
+3. Lockfile sync: ensure `pnpm-lock.yaml` matches workspace `package.json` files
 
 ## Contributing
 
@@ -408,223 +371,87 @@ If tests hang indefinitely:
 4. Create RFC for significant changes
 5. Submit PR with clear description
 
-## 架构：服务和适配器
+## 架构：贞观服务与 Rust 后端
 
-### 服务层 (Renderer 进程 - 人界)
+> **注意**：下文「天界」在 Tauri 中对应 **Rust**（`src-tauri/`、`crates/`），不再使用 contract reference `src/main/` 或 zouwu/Tianshu 工作流（RFC 0153 已移除）。
 
-服务位于 `src/renderer/src/services/`，遵循唐朝神话命名规范。
+### 服务层（Vue — 人界）
 
-#### 服务职责
+服务位于 `apps/photasa/src/services/`，神话命名保留。
 
-| 服务名称                | 中文名称 | 位置            | 主要职责                                    | 核心功能                                                                      |
-| ----------------------- | -------- | --------------- | ------------------------------------------- | ----------------------------------------------------------------------------- |
-| **LishiminService**     | 李世民   | `lishimin/`     | 中央协调者，应用启动，启奏-圣旨路由         | - 服务初始化<br>- 通过 `event-routing.yml` 进行启奏路由<br>- 应用生命周期管理 |
-| **FangXuanLingService** | 房玄龄   | `fangxuanling/` | Store 管理，奏折处理，天枢编排              | - Pinia Store 访问器<br>- 奏折 (Zouzhe) 到天枢<br>- 状态管理协调              |
-| **DuRuHuiService**      | 杜如晦   | `duruhui/`      | MessageChannel 管理，圣旨传递，DOM 事件监听 | - MessageChannel 创建<br>- 圣旨 (Shengzhi) 传递<br>- DOM 事件转换为启奏       |
-| **YuanTianGangService** | 袁天罡   | `yuantiangang/` | Renderer 和 Main 进程间的 IPC 桥梁          | - 诏令 (Zhaoling) 转换为符箓 (Fulu)<br>- 天枢引擎通信<br>- IPC 事件处理       |
-| **ChuSuiLiangService**  | 褚遂良   | `chusuiliang/`  | 偏好设置 UI 管理                            | - 主题管理<br>- 语言设置<br>- 路径管理                                        |
-| **YuChiGongService**    | 尉迟恭   | `yuchigong/`    | 扫描队列 UI 管理                            | - 队列状态显示<br>- 扫描进度监控                                              |
-| **ZhangSunWuJiService** | 长孙无忌 | `zhangsunwuji/` | 菜单管理和 Shell 操作                       | - 菜单状态管理<br>- `openExternal()` / `openInFinder()`<br>- 菜单操作路由     |
-| **WeiZhengService**     | 魏征     | `weizheng/`     | AppState 监控和文件夹树管理                 | - 文件夹树更新<br>- AppState 验证                                             |
-| **QinQiongService**     | 秦琼     | `qinqiong/`     | 文件系统事件守护者                          | - 文件系统事件路由<br>- 事件协调                                              |
-| **XuanzangService**     | 玄奘     | `xuanzang/`     | 国际化                                      | - 多语言支持<br>- 语言环境管理                                                |
-| **YuShiNanService**     | 虞世南   | `yushinan/`     | 扫描进度显示                                | - 进度监控<br>- 状态报告                                                      |
+| 服务                    | 中文     | 职责                                                   |
+| ----------------------- | -------- | ------------------------------------------------------ |
+| **LishiminService**     | 李世民   | 启奏-圣旨路由、`event-routing.yml`                     |
+| **FangXuanLingService** | 房玄龄   | Pinia、奏折 (Zouzhe) 编排                              |
+| **DuRuHuiService**      | 杜如晦   | MessageChannel、百姓上书 → 启奏                        |
+| **YuanTianGangService** | 袁天罡   | **Tauri `invoke()`**；`executeZhaoling` 直连 Rust 命令 |
+| **ChuSuiLiangService**  | 褚遂良   | 偏好 UI                                                |
+| **YuChiGongService**    | 尉迟恭   | 扫描队列 UI                                            |
+| **ZhangSunWuJiService** | 长孙无忌 | 菜单、Shell                                            |
+| **WeiZhengService**     | 魏征     | 文件夹树、AppState                                     |
+| **QinQiongService**     | 秦琼     | 文件系统事件                                           |
+| **XuanzangService**     | 玄奘     | i18n                                                   |
+| **YuShiNanService**     | 虞世南   | 扫描进度                                               |
 
-#### 服务通信流程
+#### 持久化与 IPC 流程（当前）
 
 ```
-UI 组件 (百姓)
-    ↓ DOM 事件 (picasa:shangshu)
-DuRuHuiService (杜如晦)
-    ↓ 转换为启奏 (Qizou)
-QiZouRouter (李世民路由器)
-    ↓ 通过 event-routing.yml 路由
-    ↓ 下发圣旨 (Shengzhi)
-目标服务 (通过 MessageChannel)
-    ↓ 执行操作
-    ↓ 如需要，发送启奏 (Qizou)
-QiZouRouter
-    ↓ 路由到房玄龄
-FangXuanLingService
-    ↓ 转换为奏折 (Zouzhe)
-YuanTianGangService (袁天罡)
-    ↓ 转换为符箓 (Fulu)
-Tianshu Engine (天枢)
-    ↓ 执行工作流
+UI → 奏折 (Zouzhe) → 房玄龄
+ → 诏令 (Zhaoling) → 袁天罡.executeZhaoling()
+ → Tauri invoke → Rust 命令 (crates/photasa-*)
+ → 事件 / Store 同步
 ```
 
-#### 服务边界规则
+跨部门协调仍用 **启奏 (Qizou) + 圣旨 (Shengzhi)**；内政持久化用 **奏折 (Zouzhe)**。详见 `CLAUDE.md` 双通信系统说明。
 
-**清晰的边界：**
+#### 服务边界（仍适用）
 
-1. **服务必须实现 `IService` 接口** - 提供生命周期管理
-2. **服务通过启奏-圣旨通信** - 服务间禁止直接方法调用
-3. **仅通过房玄龄访问 Store** - 服务不能直接访问 Pinia stores
-4. **DOM 事件由杜如晦处理** - UI 组件分发事件，杜如晦转换为启奏
-5. **仅通过袁天罡进行 IPC 通信** - 服务不能直接使用 `window.api`
+1. 服务实现 `IService`，生命周期由李世民管理
+2. 服务间经启奏-圣旨，禁止直接互调
+3. Store 仅经房玄龄 accessor
+4. IPC 仅经袁天罡 / `legacy-api`，禁止裸 `invoke` 散落组件
 
-**如何修复边界违规：**
+### Rust 层（天界）
 
-- ❌ **错误**：从 `serviceB` 直接调用 `serviceA.doSomething()`
-- ✅ **正确**：`serviceB` 发送启奏 → 路由器 → 向 `serviceA` 下发圣旨
-- ❌ **错误**：在服务中直接访问 `store.value`
-- ✅ **正确**：使用 `fangXuanLingService.getAccessor('storeName')`
-- ❌ **错误**：在服务中使用 `window.api.openExternal()`
-- ✅ **正确**：发送启奏 → 路由到长孙无忌 → 袁天罡 → 天枢
+| Crate / 模块                            | 职责                      |
+| --------------------------------------- | ------------------------- |
+| `photasa-scan`                          | 目录扫描                  |
+| `photasa-thumbnail`                     | 缩略图（含 HEIC、FFmpeg） |
+| `photasa-preference` / `photasa-config` | 偏好与配置                |
+| `photasa-folder-tree`                   | 文件夹树                  |
+| `photasa-import` / `photasa-watch`      | 导入与监视                |
+| `src-tauri/src/commands/`               | Tauri 命令注册            |
 
-### 适配器层 (Main 进程 - 天界)
+新能力：**Rust 命令 + RFC**，不再添加 `@Adapter` / YAML 工作流。
 
-适配器位于 `src/engines/adapters/`，使用 `@Adapter` 装饰器注册到太乙引擎。
+### UI：图片列表虚拟化
 
-#### 适配器职责
-
-| 适配器名称               | 中文名称 | 位置                      | 主要职责             | 支持的操作                                                                                                                                                                                                                                                                           |
-| ------------------------ | -------- | ------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **BuiltinAdapter**       | 内置操作 | `BuiltinAdapter.ts`       | 内置工作流操作       | - `return` - 返回工作流结果<br>- `setVariable` - 设置工作流变量<br>- `log` - 日志记录<br>- `delay` - 延迟执行<br>- `noop` - 空操作<br>- `objectMerge` - 对象合并<br>- `arrayAppend` - 数组追加<br>- `arrayFilter` - 数组过滤<br>- `arrayCount` - 数组计数<br>- `arraySet` - 数组设值 |
-| **WenchangAdapter**      | 文昌     | `WenchangAdapter.ts`      | 用户偏好管理         | - `getCurrentSnapshot` - 获取偏好<br>- `applyDelta` - 更新偏好<br>- `getRevision` - 获取版本号<br>- `getHistory` - 获取偏好历史                                                                                                                                                      |
-| **QianliyanAdapter**     | 千里眼   | `QianliyanAdapter.ts`     | 文件扫描操作         | - `scanFolder` - 扫描目录<br>- `getScanStatus` - 获取扫描状态<br>- `cancelScan` - 取消扫描<br>- `getScanQueue` - 获取扫描队列                                                                                                                                                        |
-| **SimingAdapter**        | 司命     | `SimingAdapter.ts`        | AppState 持久化      | - `saveAppState` - 保存应用状态<br>- `loadAppState` - 加载应用状态<br>- `updateFolderTree` - 更新文件夹树                                                                                                                                                                            |
-| **TaibaijinxingAdapter** | 太白金星 | `TaibaijinxingAdapter.ts` | Shell 操作和菜单管理 | - `openExternal` - 打开外部链接<br>- `openInFinder` - 在 Finder 中显示文件<br>- `updateMenu` - 更新应用菜单                                                                                                                                                                          |
-
-#### 适配器注册
-
-所有适配器通过 `src/engines/adapters/index.ts` 导入时自动注册：
-
-```typescript
-// src/engines/adapters/index.ts
-import "./BuiltinAdapter";
-import "./WenchangAdapter";
-import "./QianliyanAdapter";
-import "./SimingAdapter";
-import "./TaibaijinxingAdapter";
-```
-
-`@Adapter` 装饰器处理注册：
-
-```typescript
-@Adapter({
-    name: "adapter-name",
-    displayName: "显示名称",
-    priority: AdapterPriority.High,
-    description: "适配器描述",
-    engineType: "type",
-    dependencies: [],
-    retryOnFailure: true,
-    maxRetries: 3,
-})
-export class MyAdapter implements IAdapter {
-    // 实现
-}
-```
-
-#### 适配器边界规则
-
-**清晰的边界：**
-
-1. **适配器必须实现 `IAdapter` 接口** - 提供 `initialize()` 和 `shutdown()`
-2. **适配器通过 `@Adapter` 装饰器注册** - 导入时自动注册
-3. **适配器由太乙引擎调用** - 服务不能直接调用适配器
-4. **适配器接受工作流步骤输入** - 参数来自工作流 YAML
-5. **适配器返回工作流步骤输出** - 结果流向下一个工作流步骤
-
-**如何修复边界违规：**
-
-- ❌ **错误**：在服务中直接实例化适配器
-- ✅ **正确**：使用天枢工作流 → 太乙 → 适配器
-- ❌ **错误**：适配器直接调用另一个适配器
-- ✅ **正确**：使用工作流步骤链式调用适配器
-- ❌ **错误**：适配器访问 renderer 进程 API
-- ✅ **正确**：适配器仅使用 Node.js/Electron main 进程 API
-
-### 名称映射：神话名称到代码
-
-#### Renderer 服务 (人界)
-
-| 神话名称 | 服务类                | 文件路径                                | Token/接口              |
-| -------- | --------------------- | --------------------------------------- | ----------------------- |
-| 李世民   | `LishiminService`     | `services/lishimin/lishimin.ts`         | `ILishiminService`      |
-| 房玄龄   | `FangXuanLingService` | `services/fangxuanling/fangxuanling.ts` | `FANG_XUAN_LING_TOKEN`  |
-| 杜如晦   | `DuRuHuiService`      | `services/duruhui/duruhui.ts`           | N/A (内部使用)          |
-| 袁天罡   | `YuanTianGangService` | `services/yuantiangang/yuantiangang.ts` | `YUAN_TIAN_GANG_TOKEN`  |
-| 褚遂良   | `ChusuiliangService`  | `services/chusuiliang/chusuiliang.ts`   | `CHU_SUI_LIANG_TOKEN`   |
-| 尉迟恭   | `YuChiGongService`    | `services/yuchigong/yuchigong.ts`       | `YU_CHI_GONG_TOKEN`     |
-| 长孙无忌 | `ZhangSunWuJiService` | `services/zhangsunwuji/zhangsunwuji.ts` | `ZHANG_SUN_WU_JI_TOKEN` |
-| 魏征     | `WeiZhengService`     | `services/weizheng/weizheng.ts`         | `WEI_ZHENG_TOKEN`       |
-| 秦琼     | `QinQiongService`     | `services/qinqiong/qinqiong.ts`         | `QIN_QIONG_TOKEN`       |
-| 玄奘     | `XuanzangService`     | `services/xuanzang/xuanzang.ts`         | `XUANZANG_TOKEN`        |
-| 虞世南   | `YuShiNanService`     | `services/yushinan/yushinan.ts`         | `YU_SHINAN_TOKEN`       |
-
-#### Main 进程适配器 (天界)
-
-| 神话名称 | 适配器类               | 文件路径                                   | 引擎类型     |
-| -------- | ---------------------- | ------------------------------------------ | ------------ |
-| 内置操作 | `BuiltinAdapter`       | `engines/adapters/BuiltinAdapter.ts`       | `builtin`    |
-| 文昌     | `WenchangAdapter`      | `engines/adapters/WenchangAdapter.ts`      | `preference` |
-| 千里眼   | `QianliyanAdapter`     | `engines/adapters/QianliyanAdapter.ts`     | `scan`       |
-| 司命     | `SimingAdapter`        | `engines/adapters/SimingAdapter.ts`        | `appstate`   |
-| 太白金星 | `TaibaijinxingAdapter` | `engines/adapters/TaibaijinxingAdapter.ts` | `shell`      |
-
-#### Main 进程引擎 (天界)
-
-| 神话名称 | 引擎类             | 文件路径                                      | 状态      |
-| -------- | ------------------ | --------------------------------------------- | --------- |
-| 天枢     | `TianshuEngine`    | `engines/tianshu/core/TianshuEngine.ts`       | ✅ 已实现 |
-| 太乙     | `TaiyiEngine`      | `engines/taiyi/core/TaiyiEngine.ts`           | ✅ 已实现 |
-| 千里眼   | `QianliyanEngine`  | `engines/qianliyan/core/QianliyanEngine.ts`   | ✅ 已实现 |
-| 顺风耳   | `ShunfengerEngine` | `engines/shunfenger/core/ShunfengerEngine.ts` | ✅ 已实现 |
-| 司命     | `SimingEngine`     | `engines/siming/core/SimingEngine.ts`         | ✅ 已实现 |
-| 司簿     | `SibuEngine`       | `engines/sibu/core/SibuEngine.ts`             | ✅ 已实现 |
-| 文昌     | `WenchangEngine`   | `engines/wenchang/core/WenchangEngine.ts`     | ✅ 已实现 |
-| 马良     | `MaLiangEngine`    | `engines/maliang/core/MaLiangEngine.ts`       | ✅ 已实现 |
-| 玲珑     | `LinglongEngine`   | `engines/linglong/`                           | 🚧 规划中 |
+`ImageList.vue` 已使用 **`@tanstack/vue-virtual`**（`useVirtualizer`）按行虚拟化网格；另有 `VirtualizedGrid.vue`、`VirtualList.vue`。无需新 RFC（RFC 0011 / 0148 已覆盖）。
 
 ### 如何添加新服务
 
-1. **创建服务文件**：`src/renderer/src/services/[name]/[name].ts`
-2. **实现 `IService` 接口**：
-    ```typescript
-    export class MyService implements IService {
-        readonly name = "服务名称";
-        async initialize(): Promise<void> {}
-        async shutdown(): Promise<void> {}
-        setQizouBus(bus: Emitter<{ qizou: Qizou }>): void {}
-        setShengzhiPort(port: MessagePort): void {}
-    }
-    ```
-3. **在 `LishiminService` 中注册**：添加到服务初始化
-4. **创建接口**：`src/renderer/src/interfaces/[name].interface.ts`
-5. **添加路由规则**：更新 `src/renderer/src/services/lishimin/event-routing.yml`
+1. `apps/photasa/src/services/[name]/[name].ts`，实现 `IService`
+2. 接口：`apps/photasa/src/interfaces/`
+3. 在 `LishiminService` 注册；路由更新 `event-routing.yml`
+4. 若需持久化：扩展 `ZOUZHE_MATTERS` + Rust 命令（见 ROADMAP / `.spec/rfc/`）
 
-### 如何添加新适配器
+### 如何添加 Rust 能力
 
-1. **创建适配器文件**：`src/engines/adapters/[Name]Adapter.ts`
-2. **实现 `IAdapter` 接口**：
-    ```typescript
-    @Adapter({
-        name: "adapter-name",
-        displayName: "显示名称",
-        priority: AdapterPriority.High,
-        description: "描述",
-        engineType: "type",
-    })
-    export class MyAdapter implements IAdapter {
-        readonly name = "adapter-name";
-        async initialize(): Promise<void> {}
-        async shutdown(): Promise<void> {}
-        // 添加操作方法
-    }
-    ```
-3. **在 index 中导入**：添加到 `src/engines/adapters/index.ts`
-4. **创建工作流 YAML**：在 `src/engines/tianshu/workflows/` 中添加工作流文件
+1. 在对应 `crates/photasa-*` 实现逻辑
+2. `src-tauri/src/commands/` 暴露 `#[tauri::command]`
+3. `main.rs` 注册 handler；capabilities 授权
+4. 袁天罡或 `legacy-api.ts` 映射 `invoke` 名
+5. `cargo test` + Vitest 覆盖
+
+历史 适配器/天枢工作流文档见 `docs/architecture/MYTHOLOGY.md`（已标 legacy）。
 
 ## Resources
 
-- [Debug Guide](DEBUG.md) - 调试设置和故障排除
-- [Mythology Architecture](architecture/MYTHOLOGY.md) - 神话架构详细说明
+- [Debug Guide](DEBUG.md) - Tauri 调试与故障排除
+- [MCP Debug](DEBUG_MCP.md) - Tauri MCP 调试
+- [Mythology Architecture](architecture/MYTHOLOGY.md) - 神话架构（含 historical参考）
 - [RFC / ROADMAP](../ROADMAP.md) - 设计决策与 RFC 索引（canonical）
-- [Design Documents](design/) - 架构和设计文档
-- [Electron Documentation](https://www.electronjs.org/docs)
+- [Design Documents](design/) - 架构和设计文档（部分为历史稿）
+- [Tauri v2 Documentation](https://v2.tauri.app/)
 - [Vue 3 Documentation](https://vuejs.org/)
-- [Vite Documentation](https://vitejs.dev/)
 - [Vitest Documentation](https://vitest.dev/)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs/)

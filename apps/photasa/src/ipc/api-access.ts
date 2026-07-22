@@ -3,9 +3,10 @@
  * `adapter.ts` 仍将同一实例挂到 `window.api` 供遗留调用；新代码应 import 本模块。
  */
 import { createLegacyApi } from "@renderer/api/legacy-api";
+import type { PhotasaFlatApi } from "./photasa-flat-api";
 
-/** 与 Electron preload `window.api` 同形的扁平 API */
-export type PhotasaFlatApi = ReturnType<typeof createLegacyApi>;
+/** 与 legacy preload `window.api` 同形的扁平 API */
+export type { PhotasaFlatApi };
 
 let cachedApi: PhotasaFlatApi | null = null;
 

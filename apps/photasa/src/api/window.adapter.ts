@@ -4,6 +4,7 @@
  */
 
 import { isTauri } from "./env";
+import { callLegacyPreloadSection } from "./legacy-preload-access";
 
 export const windowAdapter = {
     /**
@@ -14,7 +15,7 @@ export const windowAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("minimize_window");
         } else {
-            await (window as any).electronAPI?.window?.minimize();
+            await callLegacyPreloadSection("window", "minimize");
         }
     },
 
@@ -26,7 +27,7 @@ export const windowAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("maximize_window");
         } else {
-            await (window as any).electronAPI?.window?.maximize();
+            await callLegacyPreloadSection("window", "maximize");
         }
     },
 
@@ -38,7 +39,7 @@ export const windowAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             await invoke("close_window");
         } else {
-            await (window as any).electronAPI?.window?.close();
+            await callLegacyPreloadSection("window", "close");
         }
     },
 
@@ -49,8 +50,10 @@ export const windowAdapter = {
         if (isTauri()) {
             const { invoke } = await import("@tauri-apps/api/core");
             return await invoke<boolean>("is_maximized");
-        } else {
-            return (await (window as any).electronAPI?.window?.isMaximized()) ?? false;
         }
+        return (
+            ((await callLegacyPreloadSection("window", "isMaximized")) as boolean | undefined) ??
+            false
+        );
     },
 };

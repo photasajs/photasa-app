@@ -1,9 +1,10 @@
 /**
  * 扁平 legacy API 层 (RFC 0075)
- * 与 apps/desktop/src/preload/legacy.ts 的 window.api 形状 1:1 一致，
+ * 与 legacy-api.ts (RFC 0075) 的 window.api 形状 1:1 一致，
  * 在 Tauri 下委托给嵌套 adapter 或 invoke，未实现的用 stub，避免 window.api.xxx 未定义。
  */
 
+import type { PhotasaFlatApi } from "@renderer/ipc/photasa-flat-api";
 import { isTauri } from "./env";
 import { api } from "./adapter";
 import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
@@ -22,6 +23,11 @@ import type {
     UndoResult,
 } from "@photasa/common";
 import { shouldIgnorePhotasaPath as ignorePhotasaPathUtil } from "@photasa/common";
+import {
+    callLegacyPreloadNested,
+    callLegacyPreloadSection,
+    getLegacyPreloadApi,
+} from "./legacy-preload-access";
 import {
     shortenThumbnailName as shortenThumbnailRelativePath,
     toFileNameFromPath,
@@ -75,7 +81,7 @@ function parseIsoDate(value: unknown): Date {
     return new Date(0);
 }
 
-/** RFC 0093：Rust 事件 JSON 中 `created` 为 RFC3339 字符串，与 Electron preload 传入的 `Date` 对齐 */
+/** RFC 0093：Rust 事件 JSON 中 `created` 为 RFC3339 字符串，与 legacy preload 传入的 `Date` 对齐 */
 function normalizeImportPhotosActionFromRust(action: unknown): unknown {
     if (!action || typeof action !== "object") return action;
     const a = { ...(action as Record<string, unknown>) };
@@ -313,12 +319,12 @@ function normalizeFileMetadataFromRust(raw: unknown): FileMetadata {
 /**
  * 构建扁平 window.api（与 legacy.ts 同形）
  */
-export function createLegacyApi(): Record<string, unknown> {
+export function createLegacyApi() {
     return {
         // ---------- 监听与导入 ----------
         startWatching: (config: unknown, callback: unknown) => {
             if (!isTauri())
-                return (window as any).electronAPI?.api?.startWatching?.(config, callback);
+                return callLegacyPreloadSection("api", "startWatching", config, callback);
             (async () => {
                 const invoke = await ensureInvoke();
                 const c = config as {
@@ -339,7 +345,7 @@ export function createLegacyApi(): Record<string, unknown> {
                     const { listen } = await import("@tauri-apps/api/event");
                     const cb = callback as (state: unknown) => void;
                     const unlistens: Array<() => void> = [];
-                    // RFC 0133：事件名 → 完整 WatchState（对齐 Electron fs-watch.ts）
+                    // RFC 0133：事件名 → 完整 WatchState（对齐 legacy-api fs-watch.ts）
                     for (const name of WATCH_FILE_EVENTS) {
                         const un = await listen(name, (e) => {
                             const state = buildWatchStateFromEvent(
@@ -358,13 +364,13 @@ export function createLegacyApi(): Record<string, unknown> {
             return undefined;
         },
         stopWatching: () => {
-            if (!isTauri()) return (window as any).electronAPI?.api?.stopWatching?.();
+            if (!isTauri()) return callLegacyPreloadSection("api", "stopWatching");
             (window as any).__offFileWatch?.();
             return ensureInvoke().then((invoke) => invoke("stop_file_watch"));
         },
         importPhotos: (paths: string[], target: string, callback: (arg: any) => void) => {
             if (!isTauri())
-                return (window as any).electronAPI?.api?.importPhotos?.(paths, target, callback);
+                return callLegacyPreloadSection("api", "importPhotos", paths, target, callback);
             // RFC 0093：复制与遍历在 Rust `import_photos_legacy`；此处仅 invoke + 事件转发
             void (async () => {
                 try {
@@ -413,8 +419,13 @@ export function createLegacyApi(): Record<string, unknown> {
 
         // ---------- 扫描 ----------
         scanPhotos: (scan: ScanAction): Promise<ScanResult> => {
-            if (!isTauri())
-                return (window as any).electronAPI?.api?.scanPhotos?.(scan) ?? stubAsync();
+            if (!isTauri()) {
+                return (
+                    (callLegacyPreloadSection("api", "scanPhotos", scan) as
+                        | Promise<ScanResult>
+                        | undefined) ?? stubAsync()
+                );
+            }
             const requestId = `scan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
             return new Promise<ScanResult>((resolve, reject) => {
                 (async () => {
@@ -439,7 +450,7 @@ export function createLegacyApi(): Record<string, unknown> {
 
         // ---------- 目录与配置 ----------
         chooseDirectory: () => {
-            if (!isTauri()) return (window as any).electronAPI?.api?.chooseDirectory?.();
+            if (!isTauri()) return callLegacyPreloadSection("api", "chooseDirectory");
             return (async () => {
                 const { open } = await import("@tauri-apps/plugin-dialog");
                 const selected = await open({ directory: true, multiple: false });
@@ -448,7 +459,7 @@ export function createLegacyApi(): Record<string, unknown> {
             })();
         },
         getDirectory: (name: string) => {
-            if (!isTauri()) return (window as any).electronAPI?.api?.getDirectory?.(name);
+            if (!isTauri()) return callLegacyPreloadSection("api", "getDirectory", name);
             return ensureInvoke().then((invoke) =>
                 invoke<string | null>("get_directory", { name }),
             );
@@ -513,7 +524,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       invoke<boolean>("is_file_under_folder", { file, folder }),
                   )
                 : Promise.resolve(
-                      Boolean((window as any).electronAPI?.api?.isFileUnderFolder?.(file, folder)),
+                      Boolean(callLegacyPreloadSection("api", "isFileUnderFolder", file, folder)),
                   ),
         toFileName: (path: string) =>
             isTauri()
@@ -542,7 +553,7 @@ export function createLegacyApi(): Record<string, unknown> {
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<boolean>("is_image_file", { path }))
                 : stubAsync(),
-        // Electron `query-config.cleanupScanQueue` 为空实现，Tauri 对齐为同步空操作
+        // contract reference `query-config.cleanupScanQueue` 为空实现，Tauri 对齐为同步空操作
         cleanupScanQueue: (_folderPath: string) => undefined,
         mergePath: (left: string, right = "") => {
             const safeLeft = typeof left === "string" ? left : "";
@@ -565,7 +576,7 @@ export function createLegacyApi(): Record<string, unknown> {
         normalizePath: (path: unknown): string =>
             typeof path === "string" ? path.replace(/\\/g, "/").replace(/\/+/g, "/") : "",
         isMac: async () => {
-            if (!isTauri()) return (window as any).electronAPI?.api?.isMac?.() ?? false;
+            if (!isTauri()) return callLegacyPreloadSection("api", "isMac") ?? false;
             try {
                 const invoke = await ensureInvoke();
                 const p = await invoke<string>("get_platform");
@@ -583,13 +594,13 @@ export function createLegacyApi(): Record<string, unknown> {
             return invoke("unmaximize_window");
         },
         closeWindow: () => api.window.close(),
-        /** RFC 0099：Tauri 调 Rust `reload_window`；Electron 无 preload 项时用 `location.reload` */
+        /** RFC 0099：Tauri 调 Rust `reload_window`；contract reference 无 preload 项时用 `location.reload` */
         reloadWindow: () => {
             if (!isTauri()) {
-                const elApi = (
-                    window as { electronAPI?: { api?: { reloadWindow?: () => Promise<void> } } }
-                ).electronAPI?.api;
-                if (typeof elApi?.reloadWindow === "function") return elApi.reloadWindow();
+                const elApi = getLegacyPreloadApi() as {
+                    api?: { reloadWindow?: () => Promise<void> };
+                };
+                if (typeof elApi?.api?.reloadWindow === "function") return elApi.api.reloadWindow();
                 window.location.reload();
                 return Promise.resolve();
             }
@@ -659,33 +670,33 @@ export function createLegacyApi(): Record<string, unknown> {
                           "check_for_updates",
                       ),
                   )
-                : ((window as any).electronAPI?.api?.checkForUpdates?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "checkForUpdates") ?? stubAsync()),
         downloadUpdate: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<void>("download_update"))
-                : ((window as any).electronAPI?.api?.downloadUpdate?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "downloadUpdate") ?? stubAsync()),
         installUpdate: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<void>("install_update"))
-                : ((window as any).electronAPI?.api?.installUpdate?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "installUpdate") ?? stubAsync()),
         getUpdateStatus: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke("get_update_status"))
-                : ((window as any).electronAPI?.api?.getUpdateStatus?.() ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getUpdateStatus") ?? stubAsync()),
         getAppVersion: () =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<string>("get_app_version"))
-                : ((window as any).electronAPI?.api?.getAppVersion?.() ?? Promise.resolve("")),
+                : (callLegacyPreloadSection("api", "getAppVersion") ?? Promise.resolve("")),
         updateAutoUpdateConfig: (config: unknown) =>
             isTauri()
                 ? ensureInvoke().then((invoke) =>
                       invoke<boolean>("update_auto_update_config", { patch: config }),
                   )
-                : ((window as any).electronAPI?.api?.updateAutoUpdateConfig?.(config) ??
+                : (callLegacyPreloadSection("api", "updateAutoUpdateConfig", config) ??
                   stubAsync()),
         onUpdateProgress: (cb: (progress: number) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onUpdateProgress?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateProgress", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen<number>("picasa:update-progress", (e) => cb(e.payload)).then((un) =>
@@ -696,7 +707,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onUpdateDownloaded: (cb: (info?: unknown) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onUpdateDownloaded?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateDownloaded", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("picasa:update-downloaded", (e) => cb(e.payload as unknown)).then((un) =>
@@ -707,7 +718,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onUpdateError: (cb: (error: string) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onUpdateError?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateError", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen<string>("picasa:update-error", (e) => cb(e.payload)).then((un) =>
@@ -718,7 +729,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onUpdateAvailable: (cb: (data: { version: string; info?: unknown }) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onUpdateAvailable?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onUpdateAvailable", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("picasa:update-available", (e) =>
@@ -729,7 +740,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onStatusChanged: (cb: (status: unknown) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onStatusChanged?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onStatusChanged", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("picasa:update-status-changed", (e) => cb(e.payload)).then((un) =>
@@ -740,7 +751,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         removeAllUpdateListeners: () => {
             if (!isTauri()) {
-                (window as any).electronAPI?.api?.removeAllUpdateListeners?.();
+                callLegacyPreloadSection("api", "removeAllUpdateListeners");
                 return;
             }
             const subs = getUpdateUnsubs();
@@ -755,7 +766,7 @@ export function createLegacyApi(): Record<string, unknown> {
                 ? ensureInvoke().then((invoke) =>
                       invoke("scan_directories", { paths, filters: filters ?? null }),
                   )
-                : ((window as any).electronAPI?.api?.scanDirectories?.(paths, filters) ??
+                : (callLegacyPreloadSection("api", "scanDirectories", paths, filters) ??
                   stubAsync()),
         previewImport: (config: unknown) =>
             isTauri()
@@ -763,13 +774,13 @@ export function createLegacyApi(): Record<string, unknown> {
                       const invoke = await ensureInvoke();
                       return await invoke<ImportPreview>("preview_import", { config });
                   })()
-                : ((window as any).electronAPI?.api?.previewImport?.(config) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "previewImport", config) ?? stubAsync()),
         executeImport: (config: ImportConfig): Promise<{ importId: string }> =>
             api.import.execute(config as ImportConfig).then((id) => ({ importId: id })),
         onImportProgress: (callback: (progress: ImportProgress) => void) => {
             if (!isTauri()) {
                 return (
-                    (window as any).electronAPI?.api?.onImportProgress?.(callback) ?? noopListener()
+                    callLegacyPreloadSection("api", "onImportProgress", callback) ?? noopListener()
                 );
             }
             void api.import.onProgress(callback).then((un) => {
@@ -781,7 +792,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onPreviewProgress: (cb: (progress: unknown, files?: unknown[]) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onPreviewProgress?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onPreviewProgress", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen(EVENT_IMPORT_PREVIEW_PROGRESS, (e) => {
@@ -800,7 +811,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onImportComplete: (cb: (result: any) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onImportComplete?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onImportComplete", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("import:complete", (e) => cb(e.payload)).then((un) =>
@@ -811,7 +822,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         onImportError: (cb: (error: any) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onImportError?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onImportError", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen("import:error", (e) => cb(e.payload)).then((un) =>
@@ -822,7 +833,7 @@ export function createLegacyApi(): Record<string, unknown> {
         },
         removeImportListeners: () => {
             if (!isTauri()) {
-                (window as any).electronAPI?.api?.removeImportListeners?.();
+                callLegacyPreloadSection("api", "removeImportListeners");
                 return;
             }
             const subs = getImportUnsubs();
@@ -840,7 +851,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const rows = await invoke<ImportHistory[]>("get_import_history", { limit });
                       return Array.isArray(rows) ? rows : [];
                   })()
-                : ((window as any).electronAPI?.api?.getImportHistory?.(limit) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getImportHistory", limit) ?? stubAsync()),
         getImportDetails: (historyId: string) =>
             isTauri()
                 ? (async () => {
@@ -850,7 +861,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       });
                       return row ?? null;
                   })()
-                : ((window as any).electronAPI?.api?.getImportDetails?.(historyId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getImportDetails", historyId) ?? stubAsync()),
         previewUndo: (historyId: string) =>
             isTauri()
                 ? (async () => {
@@ -858,7 +869,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("preview_undo_import", { historyId });
                       return normalizeUndoPreviewFromRust(raw, historyId);
                   })()
-                : ((window as any).electronAPI?.api?.previewUndo?.(historyId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "previewUndo", historyId) ?? stubAsync()),
         undoImport: (historyId: string) =>
             isTauri()
                 ? (async () => {
@@ -866,7 +877,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("undo_import_execute", { historyId });
                       return normalizeUndoResultFromRust(raw);
                   })()
-                : ((window as any).electronAPI?.api?.undoImport?.(historyId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "undoImport", historyId) ?? stubAsync()),
         getImportProgress: (importId: string) =>
             isTauri()
                 ? (async () => {
@@ -874,7 +885,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("get_import_progress", { importId });
                       return normalizeImportProgressPayload(raw);
                   })()
-                : ((window as any).electronAPI?.api?.getImportProgress?.(importId) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "getImportProgress", importId) ?? stubAsync()),
         getRecoverableImports: () =>
             isTauri()
                 ? (async () => {
@@ -882,8 +893,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const rows = await invoke<unknown[]>("get_recoverable_imports");
                       return Array.isArray(rows) ? rows.map(normalizeRecoverableImport) : [];
                   })()
-                : ((window as any).electronAPI?.api?.getRecoverableImports?.() ??
-                  Promise.resolve([])),
+                : (callLegacyPreloadSection("api", "getRecoverableImports") ?? Promise.resolve([])),
         cleanupRecoverableImport: (importId: string) =>
             isTauri()
                 ? (async () => {
@@ -891,7 +901,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("cleanup_recoverable_import", { importId });
                       return normalizeRecoverableImportActionResult(raw);
                   })()
-                : ((window as any).electronAPI?.api?.cleanupRecoverableImport?.(importId) ??
+                : (callLegacyPreloadSection("api", "cleanupRecoverableImport", importId) ??
                   stubAsync()),
         keepRecoverableImport: (importId: string) =>
             isTauri()
@@ -900,7 +910,7 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("keep_recoverable_import", { importId });
                       return normalizeRecoverableImportActionResult(raw);
                   })()
-                : ((window as any).electronAPI?.api?.keepRecoverableImport?.(importId) ??
+                : (callLegacyPreloadSection("api", "keepRecoverableImport", importId) ??
                   stubAsync()),
         chooseDirectories: (multiSelect = true) => api.import.chooseDirectories(multiSelect),
         extractMetadata: (request: unknown) =>
@@ -910,10 +920,10 @@ export function createLegacyApi(): Record<string, unknown> {
                       const raw = await invoke<unknown>("extract_metadata", { request });
                       return normalizeFileMetadataFromRust(raw);
                   })()
-                : ((window as any).electronAPI?.api?.extractMetadata?.(request) ?? stubAsync()),
+                : (callLegacyPreloadSection("api", "extractMetadata", request) ?? stubAsync()),
         onScanQueueAdd: (cb: (operations: unknown[]) => void) => {
             if (!isTauri()) {
-                return (window as any).electronAPI?.api?.onScanQueueAdd?.(cb) ?? noopListener();
+                return callLegacyPreloadSection("api", "onScanQueueAdd", cb) ?? noopListener();
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen(EVENT_SCAN_QUEUE_ADD, (e) => cb((e.payload as unknown[]) ?? [])).then((un) =>
@@ -930,17 +940,18 @@ export function createLegacyApi(): Record<string, unknown> {
                     ? ensureInvoke().then((invoke) =>
                           invoke<{ success: boolean; message: string }>("log_viewer_open"),
                       )
-                    : ((window as any).electronAPI?.api?.log?.viewerOpen?.() ?? stubAsync()),
+                    : (callLegacyPreloadNested(["api", "log"], "viewerOpen") ?? stubAsync()),
             viewerClose: () =>
                 isTauri()
                     ? ensureInvoke().then((invoke) =>
                           invoke<{ success: boolean; message: string }>("log_viewer_close"),
                       )
-                    : ((window as any).electronAPI?.api?.log?.viewerClose?.() ?? stubAsync()),
+                    : (callLegacyPreloadNested(["api", "log"], "viewerClose") ?? stubAsync()),
             onEntry: (callback: (entry: unknown) => void) => {
                 if (!isTauri()) {
                     return (
-                        (window as any).electronAPI?.api?.log?.onEntry?.(callback) ?? noopListener()
+                        callLegacyPreloadNested(["api", "log"], "onEntry", callback) ??
+                        noopListener()
                     );
                 }
                 let unlisten: (() => void) | undefined;
@@ -956,7 +967,7 @@ export function createLegacyApi(): Record<string, unknown> {
             onToggleViewer: (callback: () => void) => {
                 if (!isTauri()) {
                     return (
-                        (window as any).electronAPI?.api?.log?.onToggleViewer?.(callback) ??
+                        callLegacyPreloadNested(["api", "log"], "onToggleViewer", callback) ??
                         noopListener()
                     );
                 }
@@ -999,5 +1010,5 @@ export function createLegacyApi(): Record<string, unknown> {
             }
             return Promise.resolve("");
         },
-    };
+    } as unknown as PhotasaFlatApi;
 }

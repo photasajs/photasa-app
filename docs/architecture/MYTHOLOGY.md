@@ -1,5 +1,7 @@
 # 神话大唐架构 - Mythology Architecture
 
+> **历史参考文档**：撰写时目标为 contract reference（`legacy-api contract`、`src/main/` 引擎）。**当前交付为 Tauri + Rust**（`apps/photasa`、`crates/photasa-*`）；contract reference 与 zouwu/Tianshu 工作流已移除（RFC 0153）。实现以 [ROADMAP.md](../../ROADMAP.md) 与 `.spec/rfc/` 为准。
+
 > **Picasa Vue 照片管理应用的中国古代神话主题架构设计**
 
 本文档详细说明了项目中所有基于中国古代神话和历史人物的架构组件及其职责。
@@ -9,39 +11,39 @@
 ## 📚 目录
 
 - [神话大唐架构 - Mythology Architecture](#神话大唐架构---mythology-architecture)
-    - [📚 目录](#-目录)
-    - [架构概览](#架构概览)
-        - [三界分层](#三界分层)
-    - [天界 (Main进程)](#天界-main进程)
-        - [天枢 - Tianshu](#天枢---tianshu)
-        - [太乙 - Taiyi](#太乙---taiyi)
-        - [千里眼 - Qianliyan](#千里眼---qianliyan)
-        - [顺风耳 - Shunfenger](#顺风耳---shunfenger)
-        - [司命 - Siming](#司命---siming)
-        - [司簿 - Sibu](#司簿---sibu)
-        - [文昌 - Wenchang](#文昌---wenchang)
-        - [马良 - MaLiang](#马良---maliang)
-        - [玲珑 - Linglong](#玲珑---linglong)
-    - [人界 (Renderer进程)](#人界-renderer进程)
-        - [李世民 - LiShiming](#李世民---lishiming)
-        - [房玄龄 - FangXuanLing](#房玄龄---fangxuanling)
-        - [褚遂良 - ChuSuiLiang](#褚遂良---chusuiliang)
-        - [尉迟恭 - YuChiGong](#尉迟恭---yuchigong)
-        - [袁天罡 - YuanTianGang](#袁天罡---yuantiangang)
-        - [玄奘 - Xuanzang](#玄奘---xuanzang)
-        - [杜如晦 - DuRuHui](#杜如晦---duruhui)
-    - [通信系统](#通信系统)
-        - [奏折系统 - Zouzhe](#奏折系统---zouzhe)
-        - [诏令系统 - Zhaoling](#诏令系统---zhaoling)
-        - [符箓系统 - Fulu](#符箓系统---fulu)
-        - [圣旨/启奏 - Shengzhi/Qizou](#圣旨启奏---shengzhiqizou)
-    - [日志风格规范](#日志风格规范)
-        - [天界风格（Main进程）](#天界风格main进程)
-        - [人界风格（Renderer进程）](#人界风格renderer进程)
-    - [快速参考表](#快速参考表)
-        - [引擎对比表](#引擎对比表)
-        - [人界服务对比表](#人界服务对比表)
-    - [参考文档](#参考文档)
+- [📚 目录](#-目录)
+- [架构概览](#架构概览)
+- [三界分层](#三界分层)
+- [天界 (Main进程)](#天界-main进程)
+- [天枢 - Tianshu](#天枢---tianshu)
+- [太乙 - Taiyi](#太乙---taiyi)
+- [千里眼 - Qianliyan](#千里眼---qianliyan)
+- [顺风耳 - Shunfenger](#顺风耳---shunfenger)
+- [司命 - Siming](#司命---siming)
+- [司簿 - Sibu](#司簿---sibu)
+- [文昌 - Wenchang](#文昌---wenchang)
+- [马良 - MaLiang](#马良---maliang)
+- [玲珑 - Linglong](#玲珑---linglong)
+- [人界 (Renderer进程)](#人界-renderer进程)
+- [李世民 - LiShiming](#李世民---lishiming)
+- [房玄龄 - FangXuanLing](#房玄龄---fangxuanling)
+- [褚遂良 - ChuSuiLiang](#褚遂良---chusuiliang)
+- [尉迟恭 - YuChiGong](#尉迟恭---yuchigong)
+- [袁天罡 - YuanTianGang](#袁天罡---yuantiangang)
+- [玄奘 - Xuanzang](#玄奘---xuanzang)
+- [杜如晦 - DuRuHui](#杜如晦---duruhui)
+- [通信系统](#通信系统)
+- [奏折系统 - Zouzhe](#奏折系统---zouzhe)
+- [诏令系统 - Zhaoling](#诏令系统---zhaoling)
+- [符箓系统 - Fulu](#符箓系统---fulu)
+- [圣旨/启奏 - Shengzhi/Qizou](#圣旨启奏---shengzhiqizou)
+- [日志风格规范](#日志风格规范)
+- [天界风格（Main进程）](#天界风格main进程)
+- [人界风格（Renderer进程）](#人界风格renderer进程)
+- [快速参考表](#快速参考表)
+- [引擎对比表](#引擎对比表)
+- [人界服务对比表](#人界服务对比表)
+- [参考文档](#参考文档)
 
 ---
 
@@ -51,27 +53,27 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    【世界 World】                        │
-│                   Electron 应用宇宙                      │
+│ 【世界 World】 │
+│ 桌面应用宇宙 │
 ├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌────────────────────────────────────────────────┐    │
-│  │              【天界 Celestial Realm】           │    │
-│  │                Main 进程 - 核心业务              │    │
-│  │  ┌──────────────────────────────────────────┐  │    │
-│  │  │  天枢、太乙、千里眼、顺风耳、司命🚧    │  │    │
-│  │  │  司簿、文昌、马良、玲珑🚧              │  │    │
-│  │  └──────────────────────────────────────────┘  │    │
-│  └────────────────────────────────────────────────┘    │
-│                                                          │
-│  ┌────────────────────────────────────────────────┐    │
-│  │              【人界 Human Realm】               │    │
-│  │              Renderer 进程 - UI 层               │    │
-│  │  ┌──────────────────────────────────────────┐  │    │
-│  │  │  李世民、房玄龄、褚遂良、尉迟恭、袁天罡 │  │    │
-│  │  └──────────────────────────────────────────┘  │    │
-│  └────────────────────────────────────────────────┘    │
-│                                                          │
+│ │
+│ ┌────────────────────────────────────────────────┐ │
+│ │ 【天界 Celestial Realm】 │ │
+│ │ Main 进程 - 核心业务 │ │
+│ │ ┌──────────────────────────────────────────┐ │ │
+│ │ │ 天枢、太乙、千里眼、顺风耳、司命🚧 │ │ │
+│ │ │ 司簿、文昌、马良、玲珑🚧 │ │ │
+│ │ └──────────────────────────────────────────┘ │ │
+│ └────────────────────────────────────────────────┘ │
+│ │
+│ ┌────────────────────────────────────────────────┐ │
+│ │ 【人界 Human Realm】 │ │
+│ │ Renderer 进程 - UI 层 │ │
+│ │ ┌──────────────────────────────────────────┐ │ │
+│ │ │ 李世民、房玄龄、褚遂良、尉迟恭、袁天罡 │ │ │
+│ │ └──────────────────────────────────────────┘ │ │
+│ └────────────────────────────────────────────────┘ │
+│ │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -433,8 +435,8 @@ logger.info("🌌 仙术成功：偏好已更新");
 
 ```typescript
 // 神笔架构（Brush Pattern）
-extractEssence(imagePath: string): Promise<ImageData>      // 提取图像精华
-createMiniature(imagePath: string): Promise<Thumbnail>     // 创建缩略图
+extractEssence(imagePath: string): Promise<ImageData> // 提取图像精华
+createMiniature(imagePath: string): Promise<Thumbnail> // 创建缩略图
 transform(imagePath: string, options: TransformOptions): Promise<ImageData>
 edit(imagePath: string, edits: EditOptions): Promise<ImageData>
 ```
@@ -494,13 +496,13 @@ onProgress(listener: (progress: TranscodeProgress) => void): () => void
 
 ```
 ┌───────────────────────────────────────┐
-│         Linglong Vision Engine         │
+│ Linglong Vision Engine │
 ├───────────────────────────────────────┤
-│ 1. Format Detector   │ 格式探测        │
-│ 2. Strategy Planner  │ 策略决策        │
-│ 3. FFmpeg Adapter    │ FFmpeg执行适配   │
-│ 4. Cache Manager     │ 缓存管理        │
-│ 5. Status Bus        │ 进度/日志输出    │
+│ 1. Format Detector │ 格式探测 │
+│ 2. Strategy Planner │ 策略决策 │
+│ 3. FFmpeg Adapter │ FFmpeg执行适配 │
+│ 4. Cache Manager │ 缓存管理 │
+│ 5. Status Bus │ 进度/日志输出 │
 └───────────────────────────────────────┘
 ```
 
@@ -620,15 +622,15 @@ const theme = fangXuanLing.preference.currentTheme
 const queueSize = fangXuanLing.scanning.queueSize
 
 // ❌ 错误：直接修改（编译时错误）
-fangXuanLing.scanning.addToQueue(action)  // 不存在此方法！
+fangXuanLing.scanning.addToQueue(action) // 不存在此方法！
 
 // ✅ 正确：通过奏折修改
 const zouzhe: Zouzhe = {
-    department: "YuChiGong",
-    matter: "UPDATE_SCANNING_QUEUE",
-    content: { queue: [...] },
-    timestamp: Date.now(),
-    priority: "normal"
+ department: "YuChiGong",
+ matter: "UPDATE_SCANNING_QUEUE",
+ content: { queue: [...] },
+ timestamp: Date.now(),
+ priority: "normal"
 }
 await fangXuanLing.processZouzhe(zouzhe)
 ```
@@ -854,11 +856,11 @@ cleanup(): void
 
 ```
 李世民 ←→ 杜如晦中书侍郎 ←→ 各官员服务
-        (持有port1)      (接收port2)
-            ↓
-        圣旨下发
-            ↓
-    尉迟恭、褚遂良等服务
+ (持有port1) (接收port2)
+ ↓
+ 圣旨下发
+ ↓
+ 尉迟恭、褚遂良等服务
 ```
 
 **日志风格**: 人界风格

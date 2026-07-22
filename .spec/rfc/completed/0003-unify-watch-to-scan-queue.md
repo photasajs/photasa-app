@@ -64,9 +64,9 @@ Renderer Process:
 App.vue: startFileWatching(paths, preferenceStore) →
 file-handler.ts: startWatching(config, callback) where callback =
 └── handleFileTask.perform(state, preferenceStore) (vue-concurrency maxConcurrency: 1)
-    ├── handleAddFile: createThumbnailTask + addToPhotoList + preferenceStore updates
-    ├── handleChangeFile: recreate thumbnail (always: true)
-    └── handleDeleteFile: removeThumbnailTask + removeFromPhotoList + clean folder tree
+ ├── handleAddFile: createThumbnailTask + addToPhotoList + preferenceStore updates
+ ├── handleChangeFile: recreate thumbnail (always: true)
+ └── handleDeleteFile: removeThumbnailTask + removeFromPhotoList + clean folder tree
 ```
 
 #### Directory Scan System (Persistent Queue) - Current Implementation
@@ -74,11 +74,11 @@ file-handler.ts: startWatching(config, callback) where callback =
 ```
 User action → preferenceStore.addScanFolder(folder, action) → scanningFolder[] (pinia with persist: true)
 └── watchArray(scanningFolder) triggers → startScanning() if scanPhotosTask.isIdle
-    └── scanPhotosTask.perform(scanAction) (vue-concurrency maxConcurrency: 1)
-        └── IPC send("picasa:scan-photos", {requestId, scanAction})
-            └── ScanService.scanPhotos(requestId, scanAction)
-                └── worker.postMessage({action: "scan", requestId, scan: scanAction})
-                    └── scan-worker.ts: execute(requestId, scan) → scanPhotos(scan, logger).subscribe()
+ └── scanPhotosTask.perform(scanAction) (vue-concurrency maxConcurrency: 1)
+ └── IPC send("picasa:scan-photos", {requestId, scanAction})
+ └── ScanService.scanPhotos(requestId, scanAction)
+ └── worker.postMessage({action: "scan", requestId, scan: scanAction})
+ └── scan-worker.ts: execute(requestId, scan) → scanPhotos(scan, logger).subscribe()
 ```
 
 **Persistence Details**:
@@ -109,14 +109,14 @@ chokidar events → WatchService → Event Deduplication & Batching → IPC send
 Renderer Process:
 IPC receive("picasa:add-to-scan-queue") → preferenceStore.addFileOperation(fileOperation)
 └── scanningFolder[] (persistent) → watchArray() → startScanning() if scanPhotosTask.isIdle
-    └── scanPhotosTask.perform(scanAction) → ScanService → worker
-        └── execute() → route by operation type
-            ├── if operationType === "file": executeFileOperation() (new)
-            │   ├── file-add: validate media → create thumbnail → add to config
-            │   ├── file-change: validate media → recreate thumbnail → update config
-            │   └── file-delete: remove thumbnail → remove from config
-            └── if operationType === "directory": executeDirectoryScan() (existing)
-                └── walkthroughPhotosInFolder() → klaw directory scan → existing processing pipeline
+ └── scanPhotosTask.perform(scanAction) → ScanService → worker
+ └── execute() → route by operation type
+ ├── if operationType === "file": executeFileOperation() (new)
+ │ ├── file-add: validate media → create thumbnail → add to config
+ │ ├── file-change: validate media → recreate thumbnail → update config
+ │ └── file-delete: remove thumbnail → remove from config
+ └── if operationType === "directory": executeDirectoryScan() (existing)
+ └── walkthroughPhotosInFolder() → klaw directory scan → existing processing pipeline
 ```
 
 #### Key Changes
@@ -319,7 +319,7 @@ export default class WatchService {
 
 ```typescript
 // Add IPC handler in onMounted or setup
-electronAPI.ipcRenderer.on("picasa:add-to-scan-queue", (_, operations: FileOperation[]) => {
+legacyPreloadAPI.ipcRenderer.on("picasa:add-to-scan-queue", (_, operations: FileOperation[]) => {
     // Process batch of file operations
     operations.forEach((operation) => {
         preferenceStore.addFileOperation(operation);
@@ -335,38 +335,38 @@ import type { FileOperationInput } from "@common/scan-types";
 
 // Add new method for file operations
 addFileOperation(operation: FileOperationInput) {
-    logger.debug("Adding file operation:", operation);
+ logger.debug("Adding file operation:", operation);
 
-    // Convert FileOperationInput to ScanAction for unified processing
-    const scanAction: ScanAction = {
-        path: operation.path,
-        action: operation.action,
-        thumbnailSize: operation.thumbnailSize,
-        operationType: operation.operationType,
-        priority: operation.priority,
-        retryCount: operation.retryCount,
-        createdAt: operation.createdAt,
-        fileOperationId: operation.fileOperationId
-    };
+ // Convert FileOperationInput to ScanAction for unified processing
+ const scanAction: ScanAction = {
+ path: operation.path,
+ action: operation.action,
+ thumbnailSize: operation.thumbnailSize,
+ operationType: operation.operationType,
+ priority: operation.priority,
+ retryCount: operation.retryCount,
+ createdAt: operation.createdAt,
+ fileOperationId: operation.fileOperationId
+ };
 
-    // Add to persistent queue
-    this.scanningFolder.push(scanAction);
+ // Add to persistent queue
+ this.scanningFolder.push(scanAction);
 }
 
 private getScanActionFromFileOperation(operation: FileOperation): ScanAction['action'] {
-    // Map file operations to scan actions
-    switch (operation.type) {
-        case 'add':
-        case 'addDir':
-            return 'scan';
-        case 'change':
-            return 'rescan';
-        case 'delete':
-        case 'deleteDir':
-            return 'current'; // Special handling for deletes
-        default:
-            return 'scan';
-    }
+ // Map file operations to scan actions
+ switch (operation.type) {
+ case 'add':
+ case 'addDir':
+ return 'scan';
+ case 'change':
+ return 'rescan';
+ case 'delete':
+ case 'deleteDir':
+ return 'current'; // Special handling for deletes
+ default:
+ return 'scan';
+ }
 }
 ```
 
@@ -872,10 +872,10 @@ export function scanPhotos(scan: ScanAction, logger: PhotasaLogger): Observable<
 - **Error Classification**: Distinguish between retryable and permanent errors
 - **Dead Letter Queue**: Move permanently failed operations to separate queue for manual review
 - **Recovery Actions**:
-    - File lock errors: Wait and retry
-    - Permission errors: Skip and log
-    - Disk full errors: Pause queue and alert user
-    - Network errors: Retry with longer intervals
+- File lock errors: Wait and retry
+- Permission errors: Skip and log
+- Disk full errors: Pause queue and alert user
+- Network errors: Retry with longer intervals
 
 ## Alternatives
 
@@ -1525,7 +1525,7 @@ class UserControlledEventProcessor {
 
 **Architecture Compliance:**
 
-- ✅ Electron security architecture (preload layer)
+- ✅ contract reference security architecture (preload layer)
 - ✅ Pure function design (11 pure functions in file-operation-utils.ts)
 - ✅ Consistent PascalCase naming conventions
 - ✅ IPC communication through `onScanQueueAdd` API
@@ -1566,7 +1566,7 @@ class UserControlledEventProcessor {
 - **Event Deduplication**: 100% effective within configured time windows
 - **Batch Processing**: 8K events per batch prevents memory overflow
 - **Test Coverage**: 202 test cases, 100% of core functionality
-- **Architecture Compliance**: Full adherence to Electron security patterns
+- **Architecture Compliance**: Full adherence to contract reference security patterns
 - **Code Quality**: Pure functions, deterministic testing, comprehensive logging
 
 ### 🎯 Business Impact
@@ -1586,7 +1586,7 @@ The implementation successfully addresses the original problems:
 - **Error Recovery**: ✅ Completed - retry logic with exponential backoff
 - **UI Enhancements**: [ ] Future - queue management interface
 - **Advanced Features**:
-    - [ ] File operation history and audit trail
-    - [ ] User-configurable retry policies UI
-    - [ ] User-controlled queue prioritization interface
-    - [ ] Real-time performance metrics dashboard
+- [ ] File operation history and audit trail
+- [ ] User-configurable retry policies UI
+- [ ] User-controlled queue prioritization interface
+- [ ] Real-time performance metrics dashboard

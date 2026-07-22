@@ -8,9 +8,9 @@
 - **类型**: 架构实现
 - **目标版本**: v2.0.0
 - **依赖RFC**:
-    - RFC 0042: scanningFolder四步渐进式迁移（Step 1已完成 - ScanningStore创建）✅
-    - RFC 0038: 偏好设置工作流集成与Store边界统一（已完成）✅
-    - RFC 0035: 五引擎编排架构（已完成）✅
+- RFC 0042: scanningFolder四步渐进式迁移（Step 1已完成 - ScanningStore创建）✅
+- RFC 0038: 偏好设置工作流集成与Store边界统一（已完成）✅
+- RFC 0035: 五引擎编排架构（已完成）✅
 
 ---
 
@@ -33,17 +33,19 @@
 ### 当前架构问题
 
 1. **localStorage不可靠**
-    - 浏览器可能清空（配额限制、用户清理缓存）
-    - Electron的localStorage在某些情况下可能丢失
-    - 不适合存储关键运行时数据
+
+- 浏览器可能清空（配额限制、用户清理缓存）-的localStorage在某些情况下可能丢失
+- 不适合存储关键运行时数据
 
 2. **概念混淆**
-    - 扫描队列是运行时状态，不应与用户偏好设置混合
-    - PreferenceStore不应该管理运行时队列
+
+- 扫描队列是运行时状态，不应与用户偏好设置混合
+- PreferenceStore不应该管理运行时队列
 
 3. **职责不清**
-    - 扫描队列应由千里眼引擎管理（RFC 0032架构）
-    - 需要天界级别的持久化保障
+
+- 扫描队列应由千里眼引擎管理（RFC 0032架构）
+- 需要天界级别的持久化保障
 
 ### 目标
 
@@ -66,55 +68,55 @@
 ```
 【人界 Renderer】
 1. 尉迟恭（YuChiGong）接收add_scan_task圣旨
-   ↓
+ ↓
 2. 尉迟恭创建单个ScanAction对象（不维护队列状态！）
-   ↓
+ ↓
 3. 尉迟恭发ADD_SCAN_ACTION奏折给房玄龄
-   content: { action: ScanAction }  // ← 单个action对象
-   ↓
+ content: { action: ScanAction } // ← 单个action对象
+ ↓
 4. 房玄龄（FangXuanLing）接收奏折 → processZouzhe()
-   ↓
+ ↓
 5. 房玄龄创建诏令（Zhaoling）给袁天罡：add_scan_action
-   context: { action: ScanAction }  // ← 只包含单个action
-   ↓
+ context: { action: ScanAction } // ← 只包含单个action
+ ↓
 6. 袁天罡（YuanTianGang）转换诏令为符箓（Fulu）
-   ↓
+ ↓
 7. 袁天罡转换符箓为UICommand
-   ↓
+ ↓
 8. 袁天罡调用window.tianshu.processCommand()
-   ↓
+ ↓
 【天界 Main】
 9. TianshuService接收命令（ipcMain.handle("tianshu.command")）
-   ↓
+ ↓
 10. TianshuEngine.processCommand()
-   ↓
+ ↓
 11. selectWorkflow() → "scan/add_scan_action.zouwu"
-   ↓
+ ↓
 12. WorkflowOrchestrator执行add_scan_action.zouwu工作流
-   ↓
-   Step 1: restore_queue
-   ├─ 千里眼.restoreQueue()
-   └─ 从~/.photasa/scan/scanning.json恢复队列
-      result.queue = [action1, action2, ...]
-   ↓
-   Step 2: append_action
-   ├─ 千里眼将新action追加到队列
-   └─ queue.push(新action)
-   ↓
-   Step 3: persist_queue
-   ├─ 千里眼.persistQueue(queue)
-   └─ 保存完整队列到~/.photasa/scan/scanning.json
-   ↓
-   Step 4: return_snapshot
-   └─ 返回完整队列快照 { queue: [...] }
-   ↓
+ ↓
+ Step 1: restore_queue
+ ├─ 千里眼.restoreQueue()
+ └─ 从~/.photasa/scan/scanning.json恢复队列
+ result.queue = [action1, action2, ...]
+ ↓
+ Step 2: append_action
+ ├─ 千里眼将新action追加到队列
+ └─ queue.push(新action)
+ ↓
+ Step 3: persist_queue
+ ├─ 千里眼.persistQueue(queue)
+ └─ 保存完整队列到~/.photasa/scan/scanning.json
+ ↓
+ Step 4: return_snapshot
+ └─ 返回完整队列快照 { queue: [...] }
+ ↓
 【回到人界】
 13. 房玄龄Store Automation（matter-sync.yml）
-    ├─ 匹配add_scan_action配置
-    ├─ 提取propertyPath: "queue"
-    ├─ syncStrategy: "replace"
-    └─ 自动同步快照到ScanningStore
-   ↓
+ ├─ 匹配add_scan_action配置
+ ├─ 提取propertyPath: "queue"
+ ├─ syncStrategy: "replace"
+ └─ 自动同步快照到ScanningStore
+ ↓
 14. ScanningStore.queue更新 → Vue响应式 → UI自动刷新
 ```
 
@@ -271,67 +273,67 @@ name: "添加扫描任务"
 description: "添加单个扫描任务到队列并持久化"
 
 inputs:
-    action:
-        type: object
-        description: "扫描任务对象（ScanAction）"
-        required: true
+ action:
+ type: object
+ description: "扫描任务对象（ScanAction）"
+ required: true
 
 steps:
-    - id: "restore_queue"
-      name: "千里眼：恢复队列"
-      type: "action"
-      service: "taiyi"
-      action: "callEngine"
-      input:
-          engineName: "qianliyan"
-          methodName: "restoreScanningQueue"
-      output_schema:
-          type: array
-          description: "恢复的扫描队列（ScanTask[]）"
+ - id: "restore_queue"
+ name: "千里眼：恢复队列"
+ type: "action"
+ service: "taiyi"
+ action: "callEngine"
+ input:
+ engineName: "qianliyan"
+ methodName: "restoreScanningQueue"
+ output_schema:
+ type: array
+ description: "恢复的扫描队列（ScanTask[]）"
 
-    - id: "append_action"
-      name: "千里眼：追加任务"
-      type: "builtin"
-      action: "arrayAppend"
-      input:
-          array: "{{steps.restore_queue}}"
-          item: "{{inputs.action}}"
-      output_schema:
-          type: array
-          description: "追加后的队列"
-      dependsOn: ["restore_queue"]
+ - id: "append_action"
+ name: "千里眼：追加任务"
+ type: "builtin"
+ action: "arrayAppend"
+ input:
+ array: "{{steps.restore_queue}}"
+ item: "{{inputs.action}}"
+ output_schema:
+ type: array
+ description: "追加后的队列"
+ dependsOn: ["restore_queue"]
 
-    - id: "persist_queue"
-      name: "千里眼：持久化队列"
-      type: "action"
-      service: "taiyi"
-      action: "callEngine"
-      input:
-          engineName: "qianliyan"
-          methodName: "persistScanningQueue"
-          methodArgs:
-              - "{{steps.append_action}}"
-      dependsOn: ["append_action"]
+ - id: "persist_queue"
+ name: "千里眼：持久化队列"
+ type: "action"
+ service: "taiyi"
+ action: "callEngine"
+ input:
+ engineName: "qianliyan"
+ methodName: "persistScanningQueue"
+ methodArgs:
+ - "{{steps.append_action}}"
+ dependsOn: ["append_action"]
 
-    - id: "format_response"
-      name: "返回队列快照"
-      type: "builtin"
-      action: "return"
-      input:
-          success: true
-          queue: "{{steps.append_action}}"
-          persisted: true
-      dependsOn: ["persist_queue"]
+ - id: "format_response"
+ name: "返回队列快照"
+ type: "builtin"
+ action: "return"
+ input:
+ success: true
+ queue: "{{steps.append_action}}"
+ persisted: true
+ dependsOn: ["persist_queue"]
 
 outputs:
-    queue:
-        description: "完整队列快照（用于Store同步）"
-        type: "array"
-        path: "queue"
-    persisted:
-        description: "是否成功持久化"
-        type: "boolean"
-        path: "persisted"
+ queue:
+ description: "完整队列快照（用于Store同步）"
+ type: "array"
+ path: "queue"
+ persisted:
+ description: "是否成功持久化"
+ type: "boolean"
+ path: "persisted"
 ```
 
 ##### remove_scan_action.zouwu
@@ -345,67 +347,67 @@ name: "移除扫描任务"
 description: "从队列移除扫描任务并持久化"
 
 inputs:
-    path:
-        type: string
-        description: "要移除的任务路径"
-        required: true
+ path:
+ type: string
+ description: "要移除的任务路径"
+ required: true
 
 steps:
-    - id: "restore_queue"
-      name: "千里眼：恢复队列"
-      type: "action"
-      service: "taiyi"
-      action: "callEngine"
-      input:
-          engineName: "qianliyan"
-          methodName: "restoreScanningQueue"
-      output_schema:
-          type: array
-          description: "恢复的扫描队列"
+ - id: "restore_queue"
+ name: "千里眼：恢复队列"
+ type: "action"
+ service: "taiyi"
+ action: "callEngine"
+ input:
+ engineName: "qianliyan"
+ methodName: "restoreScanningQueue"
+ output_schema:
+ type: array
+ description: "恢复的扫描队列"
 
-    - id: "filter_queue"
-      name: "千里眼：过滤任务"
-      type: "builtin"
-      action: "arrayFilter"
-      input:
-          array: "{{steps.restore_queue}}"
-          filterExpression: "item.path !== '{{inputs.path}}'"
-      output_schema:
-          type: array
-          description: "过滤后的队列"
-      dependsOn: ["restore_queue"]
+ - id: "filter_queue"
+ name: "千里眼：过滤任务"
+ type: "builtin"
+ action: "arrayFilter"
+ input:
+ array: "{{steps.restore_queue}}"
+ filterExpression: "item.path !== '{{inputs.path}}'"
+ output_schema:
+ type: array
+ description: "过滤后的队列"
+ dependsOn: ["restore_queue"]
 
-    - id: "persist_queue"
-      name: "千里眼：持久化队列"
-      type: "action"
-      service: "taiyi"
-      action: "callEngine"
-      input:
-          engineName: "qianliyan"
-          methodName: "persistScanningQueue"
-          methodArgs:
-              - "{{steps.filter_queue}}"
-      dependsOn: ["filter_queue"]
+ - id: "persist_queue"
+ name: "千里眼：持久化队列"
+ type: "action"
+ service: "taiyi"
+ action: "callEngine"
+ input:
+ engineName: "qianliyan"
+ methodName: "persistScanningQueue"
+ methodArgs:
+ - "{{steps.filter_queue}}"
+ dependsOn: ["filter_queue"]
 
-    - id: "format_response"
-      name: "返回队列快照"
-      type: "builtin"
-      action: "return"
-      input:
-          success: true
-          queue: "{{steps.filter_queue}}"
-          removed: true
-      dependsOn: ["persist_queue"]
+ - id: "format_response"
+ name: "返回队列快照"
+ type: "builtin"
+ action: "return"
+ input:
+ success: true
+ queue: "{{steps.filter_queue}}"
+ removed: true
+ dependsOn: ["persist_queue"]
 
 outputs:
-    queue:
-        description: "完整队列快照"
-        type: "array"
-        path: "queue"
-    removed:
-        description: "是否成功移除"
-        type: "boolean"
-        path: "removed"
+ queue:
+ description: "完整队列快照"
+ type: "array"
+ path: "queue"
+ removed:
+ description: "是否成功移除"
+ type: "boolean"
+ path: "removed"
 ```
 
 ##### get_scanning_queue.zouwu
@@ -421,45 +423,45 @@ description: "从千里眼恢复扫描队列"
 inputs: {}
 
 steps:
-    - id: "restore_queue"
-      name: "千里眼：恢复队列"
-      type: "action"
-      service: "taiyi"
-      action: "callEngine"
-      input:
-          engineName: "qianliyan"
-          methodName: "restoreScanningQueue"
-      output_schema:
-          type: array
-          description: "恢复的扫描队列"
+ - id: "restore_queue"
+ name: "千里眼：恢复队列"
+ type: "action"
+ service: "taiyi"
+ action: "callEngine"
+ input:
+ engineName: "qianliyan"
+ methodName: "restoreScanningQueue"
+ output_schema:
+ type: array
+ description: "恢复的扫描队列"
 
-    - id: "count_items"
-      name: "统计队列数量"
-      type: "builtin"
-      action: "arrayCount"
-      input:
-          array: "{{steps.restore_queue}}"
-      dependsOn: ["restore_queue"]
+ - id: "count_items"
+ name: "统计队列数量"
+ type: "builtin"
+ action: "arrayCount"
+ input:
+ array: "{{steps.restore_queue}}"
+ dependsOn: ["restore_queue"]
 
-    - id: "format_response"
-      name: "返回结果"
-      type: "builtin"
-      action: "return"
-      input:
-          success: true
-          queue: "{{steps.restore_queue}}"
-          count: "{{steps.count_items}}"
-      dependsOn: ["count_items"]
+ - id: "format_response"
+ name: "返回结果"
+ type: "builtin"
+ action: "return"
+ input:
+ success: true
+ queue: "{{steps.restore_queue}}"
+ count: "{{steps.count_items}}"
+ dependsOn: ["count_items"]
 
 outputs:
-    queue:
-        description: "扫描队列"
-        type: "array"
-        path: "queue"
-    count:
-        description: "队列任务数量"
-        type: "number"
-        path: "count"
+ queue:
+ description: "扫描队列"
+ type: "array"
+ path: "queue"
+ count:
+ description: "队列任务数量"
+ type: "number"
+ path: "count"
 ```
 
 #### 4. 袁天罡诏令映射
@@ -469,10 +471,10 @@ outputs:
 ```typescript
 // 添加诏令映射
 private intentMapping: Record<string, string> = {
-    // ... 现有映射
-    [ZOUZHE_MATTERS.ADD_SCAN_ACTION]: "add_scan_action",
-    [ZOUZHE_MATTERS.REMOVE_SCAN_ACTION]: "remove_scan_action",
-    [ZOUZHE_MATTERS.GET_SCANNING_QUEUE]: "get_scanning_queue",
+ // ... 现有映射
+ [ZOUZHE_MATTERS.ADD_SCAN_ACTION]: "add_scan_action",
+ [ZOUZHE_MATTERS.REMOVE_SCAN_ACTION]: "remove_scan_action",
+ [ZOUZHE_MATTERS.GET_SCANNING_QUEUE]: "get_scanning_queue",
 };
 ```
 
@@ -498,63 +500,63 @@ export const ZOUZHE_MATTERS = {
  * 处理添加扫描任务圣旨
  */
 private async handleAddScanTask(shengzhi: Shengzhi): Promise<void> {
-    const path = shengzhi.content.path;
+ const path = shengzhi.content.path;
 
-    // 1. 使用Accessor去重检查，不维护本地状态
-    if (this.fangXuanLingService.scanning.isInQueue(path)) {
-        logger.warn(`🏛️ 尉迟恭：此路已在案中，恕不重录 ${path}`);
-        return;
-    }
+ // 1. 使用Accessor去重检查，不维护本地状态
+ if (this.fangXuanLingService.scanning.isInQueue(path)) {
+ logger.warn(`🏛️ 尉迟恭：此路已在案中，恕不重录 ${path}`);
+ return;
+ }
 
-    // 2. 创建ScanAction对象
-    const scanAction: ScanAction = {
-        path,
-        action: shengzhi.content.action || "scan",
-        source: shengzhi.content.source || "user",
-        addedAt: Date.now(),
-    };
+ // 2. 创建ScanAction对象
+ const scanAction: ScanAction = {
+ path,
+ action: shengzhi.content.action || "scan",
+ source: shengzhi.content.source || "user",
+ addedAt: Date.now(),
+ };
 
-    // 3. 发送ADD_SCAN_ACTION奏折给房玄龄
-    const zouzhe: Zouzhe = {
-        department: GUANYUAN_NAMES.YU_CHI_GONG,
-        matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
-        content: { action: scanAction },
-        timestamp: Date.now(),
-        priority: ZOUZHE_PRIORITIES.NORMAL,
-    };
+ // 3. 发送ADD_SCAN_ACTION奏折给房玄龄
+ const zouzhe: Zouzhe = {
+ department: GUANYUAN_NAMES.YU_CHI_GONG,
+ matter: ZOUZHE_MATTERS.ADD_SCAN_ACTION,
+ content: { action: scanAction },
+ timestamp: Date.now(),
+ priority: ZOUZHE_PRIORITIES.NORMAL,
+ };
 
-    const response = await this.fangXuanLingService.processZouzhe(zouzhe);
+ const response = await this.fangXuanLingService.processZouzhe(zouzhe);
 
-    // 4. 启奏汇报任务已添加
-    this.emitQizou("scan_task_added", {
-        shengzhiId: shengzhi.id,
-        path,
-        persisted: response.data?.persisted,
-    });
+ // 4. 启奏汇报任务已添加
+ this.emitQizou("scan_task_added", {
+ shengzhiId: shengzhi.id,
+ path,
+ persisted: response.data?.persisted,
+ });
 }
 
 /**
  * 处理移除扫描任务圣旨
  */
 private async handleRemoveScanTask(shengzhi: Shengzhi): Promise<void> {
-    const path = shengzhi.content.path;
+ const path = shengzhi.content.path;
 
-    // 发送REMOVE_SCAN_ACTION奏折
-    const zouzhe: Zouzhe = {
-        department: GUANYUAN_NAMES.YU_CHI_GONG,
-        matter: ZOUZHE_MATTERS.REMOVE_SCAN_ACTION,
-        content: { path },
-        timestamp: Date.now(),
-        priority: ZOUZHE_PRIORITIES.NORMAL,
-    };
+ // 发送REMOVE_SCAN_ACTION奏折
+ const zouzhe: Zouzhe = {
+ department: GUANYUAN_NAMES.YU_CHI_GONG,
+ matter: ZOUZHE_MATTERS.REMOVE_SCAN_ACTION,
+ content: { path },
+ timestamp: Date.now(),
+ priority: ZOUZHE_PRIORITIES.NORMAL,
+ };
 
-    const response = await this.fangXuanLingService.processZouzhe(zouzhe);
+ const response = await this.fangXuanLingService.processZouzhe(zouzhe);
 
-    this.emitQizou("scan_task_removed", {
-        shengzhiId: shengzhi.id,
-        path,
-        removed: response.data?.removed,
-    });
+ this.emitQizou("scan_task_removed", {
+ shengzhiId: shengzhi.id,
+ path,
+ removed: response.data?.removed,
+ });
 }
 ```
 
@@ -564,26 +566,26 @@ private async handleRemoveScanTask(shengzhi: Shengzhi): Promise<void> {
 
 ```yaml
 matters:
-    add_scan_action:
-        storeName: "scanning"
-        propertyPath: "queue"
-        syncStrategy: "replace"
-        autoSync: true
-        description: "添加扫描任务 - 天界返回完整队列快照，替换scanning store"
+ add_scan_action:
+ storeName: "scanning"
+ propertyPath: "queue"
+ syncStrategy: "replace"
+ autoSync: true
+ description: "添加扫描任务 - 天界返回完整队列快照，替换scanning store"
 
-    remove_scan_action:
-        storeName: "scanning"
-        propertyPath: "queue"
-        syncStrategy: "replace"
-        autoSync: true
-        description: "移除扫描任务 - 天界返回过滤后队列快照，替换scanning store"
+ remove_scan_action:
+ storeName: "scanning"
+ propertyPath: "queue"
+ syncStrategy: "replace"
+ autoSync: true
+ description: "移除扫描任务 - 天界返回过滤后队列快照，替换scanning store"
 
-    get_scanning_queue:
-        storeName: "scanning"
-        propertyPath: "queue"
-        syncStrategy: "replace"
-        autoSync: true
-        description: "获取扫描队列 - 从天界恢复队列并同步到scanning store"
+ get_scanning_queue:
+ storeName: "scanning"
+ propertyPath: "queue"
+ syncStrategy: "replace"
+ autoSync: true
+ description: "获取扫描队列 - 从天界恢复队列并同步到scanning store"
 ```
 
 ---
@@ -670,22 +672,26 @@ matters:
 ### 高风险
 
 1. **文件I/O失败**
-    - 缓解：完善错误处理，写入失败不阻塞UI
-    - 回退：降级到内存队列
+
+- 缓解：完善错误处理，写入失败不阻塞UI
+- 回退：降级到内存队列
 
 2. **大队列性能**
-    - 缓解：添加队列大小限制（建议<1000）
-    - 监控：添加性能日志
+
+- 缓解：添加队列大小限制（建议<1000）
+- 监控：添加性能日志
 
 ### 中风险
 
 1. **文件格式迁移**
-    - 缓解：版本号管理，兼容旧格式
-    - 测试：数据迁移测试
+
+- 缓解：版本号管理，兼容旧格式
+- 测试：数据迁移测试
 
 2. **并发写入冲突**
-    - 缓解：千里眼内部队列锁
-    - 监控：冲突检测日志
+
+- 缓解：千里眼内部队列锁
+- 监控：冲突检测日志
 
 ---
 
@@ -725,16 +731,19 @@ matters:
 ## 未解决问题
 
 1. **队列大小限制策略？**
-    - 建议：1000个任务上限，超过后FIFO淘汰
-    - 待确认：是否需要用户配置
+
+- 建议：1000个任务上限，超过后FIFO淘汰
+- 待确认：是否需要用户配置
 
 2. **是否需要队列备份？**
-    - 建议：不需要，scanning.json本身就是持久化
-    - 待确认：是否需要定期备份到`.bak`文件
+
+- 建议：不需要，scanning.json本身就是持久化
+- 待确认：是否需要定期备份到`.bak`文件
 
 3. **队列数据清理策略？**
-    - 建议：已完成任务保留7天，自动清理
-    - 待确认：清理时机和策略
+
+- 建议：已完成任务保留7天，自动清理
+- 待确认：清理时机和策略
 
 ---
 
@@ -834,20 +843,20 @@ restore_queue → append_action → persist_queue → format_response
 **matter-sync.yml** (`src/renderer/src/services/fangxuanling/store-automation/matter-sync.yml`):
 
 - **Line 89-94**: `get_scanning_queue`
-    - `propertyPath: "queue"` - 提取 `response.data.queue` ✅
-    - `syncStrategy: "replace"` - 完全替换 ✅
-    - `storeName: "scanning"` - 同步到ScanningStore ✅
-    - `autoSync: true` ✅
+- `propertyPath: "queue"` - 提取 `response.data.queue` ✅
+- `syncStrategy: "replace"` - 完全替换 ✅
+- `storeName: "scanning"` - 同步到ScanningStore ✅
+- `autoSync: true` ✅
 
 - **Line 96-102**: `add_scan_action`
-    - `propertyPath: "queue"` ✅
-    - `syncStrategy: "replace"` ✅
-    - `storeName: "scanning"` ✅
+- `propertyPath: "queue"` ✅
+- `syncStrategy: "replace"` ✅
+- `storeName: "scanning"` ✅
 
 - **Line 104-110**: `remove_scan_action`
-    - `propertyPath: "queue"` ✅
-    - `syncStrategy: "replace"` ✅
-    - `storeName: "scanning"` ✅
+- `propertyPath: "queue"` ✅
+- `syncStrategy: "replace"` ✅
+- `storeName: "scanning"` ✅
 
 **完全符合RFC设计，所有matter正确配置为自动同步到ScanningStore.queue字段。**
 
@@ -856,20 +865,20 @@ restore_queue → append_action → persist_queue → format_response
 **实际实现** (`src/renderer/src/services/yuchigong/yuchigong.ts`):
 
 - **Lines 159-239**: `handleAddScanTask()` - 处理添加扫描任务圣旨
-    - Line 186: 使用Accessor去重检查 `fangXuanLingService.scanning.isInQueue(path)` ✅
-    - Line 196-203: 创建 `ScanAction` 对象 ✅
-    - Line 207-213: 发送 `ADD_SCAN_ACTION` 奏折给房玄龄（单个action） ✅
-    - **不维护本地队列状态** ✅
+- Line 186: 使用Accessor去重检查 `fangXuanLingService.scanning.isInQueue(path)` ✅
+- Line 196-203: 创建 `ScanAction` 对象 ✅
+- Line 207-213: 发送 `ADD_SCAN_ACTION` 奏折给房玄龄（单个action） ✅
+- **不维护本地队列状态** ✅
 
 - **Lines 245-313**: `handleRemoveScanTask()` - 处理移除扫描任务圣旨
-    - Line 272: 使用Accessor检查 `fangXuanLingService.scanning.isInQueue(path)` ✅
-    - Line 278-284: 发送 `REMOVE_SCAN_ACTION` 奏折给房玄龄（只含path） ✅
-    - Line 294-298: 启奏李世民 `scan_task_removed` ✅
+- Line 272: 使用Accessor检查 `fangXuanLingService.scanning.isInQueue(path)` ✅
+- Line 278-284: 发送 `REMOVE_SCAN_ACTION` 奏折给房玄龄（只含path） ✅
+- Line 294-298: 启奏李世民 `scan_task_removed` ✅
 
 - **Lines 536-562**: `initializeScanningQueue()` - 应用启动初始化
-    - Line 541-546: 发送 `GET_SCANNING_QUEUE` 奏折给房玄龄 ✅
-    - Line 552: 委托房玄龄，队列在Store中 ✅
-    - 失败时使用空队列，不影响启动 ✅
+- Line 541-546: 发送 `GET_SCANNING_QUEUE` 奏折给房玄龄 ✅
+- Line 552: 委托房玄龄，队列在Store中 ✅
+- 失败时使用空队列，不影响启动 ✅
 
 **完全符合RFC设计：尉迟恭不维护队列状态，通过奏折系统委托房玄龄，房玄龄通过Store Automation自动同步到ScanningStore。**
 
@@ -878,25 +887,30 @@ restore_queue → append_action → persist_queue → format_response
 #### ✅ Linus强制要求合规性检查
 
 1. **使用工作流系统（RFC 0038）** ✅
-    - 所有操作通过 Zouzhe → YuanTianGang → Tianshu 工作流
-    - 无直接IPC调用
+
+- 所有操作通过 Zouzhe → YuanTianGang → Tianshu 工作流
+- 无直接IPC调用
 
 2. **使用天枢命令系统（RFC 0035）** ✅
-    - 所有天界操作通过 `window.tianshu.processCommand()`
-    - 无独立IPC handlers
+
+- 所有天界操作通过 `window.tianshu.processCommand()`
+- 无独立IPC handlers
 
 3. **遵守Zouzhe系统（RFC 0036-0041）** ✅
-    - FangXuanLing不直接调用IPC
-    - 通过YuanTianGang转换为符箓
+
+- FangXuanLing不直接调用IPC
+- 通过YuanTianGang转换为符箓
 
 4. **遵守天界/人界规范（CLAUDE.md）** ✅
-    - 千里眼日志: "🌌 千里眼仙君归位"、"仙术成功"
-    - 尉迟恭日志: "🛡️ 尉迟恭接旨"、"向房玄龄呈递奏折"
+
+- 千里眼日志: "🌌 千里眼仙君归位"、"仙术成功"
+- 尉迟恭日志: "🛡️ 尉迟恭接旨"、"向房玄龄呈递奏折"
 
 5. **保持职责清晰** ✅
-    - 尉迟恭不维护状态，完全委托房玄龄
-    - 房玄龄通过ScanningStore统一管理队列
-    - 千里眼负责文件系统持久化
+
+- 尉迟恭不维护状态，完全委托房玄龄
+- 房玄龄通过ScanningStore统一管理队列
+- 千里眼负责文件系统持久化
 
 ### 实际运行验证
 
@@ -928,14 +942,16 @@ restore_queue → append_action → persist_queue → format_response
 虽然代码功能完全正确，但为了与RFC文档保持最佳一致性，可以考虑（但不强制）：
 
 1. **类型名称**: `ScanAction` vs `ScanTask`
-    - 当前: 代码使用 `ScanAction`
-    - RFC: 使用 `ScanTask`
-    - 建议: 保持 `ScanAction`（更准确描述队列项）
+
+- 当前: 代码使用 `ScanAction`
+- RFC: 使用 `ScanTask`
+- 建议: 保持 `ScanAction`（更准确描述队列项）
 
 2. **方法命名**: `persistQueue` vs `persistScanningQueue`
-    - 当前: `persistQueue(queue: ScanAction[])`
-    - RFC: `persistScanningQueue(queue: ScanTask[])`
-    - 建议: 保持 `persistQueue`（更简洁，引擎上下文已明确）
+
+- 当前: `persistQueue(queue: ScanAction[])`
+- RFC: `persistScanningQueue(queue: ScanTask[])`
+- 建议: 保持 `persistQueue`（更简洁，引擎上下文已明确）
 
 **Linus评价**: "这是好品味的命名演进，简洁优于冗长。RFC应该记录实际实现，而不是相反。"
 

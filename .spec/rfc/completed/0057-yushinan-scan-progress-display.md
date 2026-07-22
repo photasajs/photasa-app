@@ -29,26 +29,26 @@
 // ❌ 问题1: 袁天罡监听 IPC 事件（只处理 complete）
 // src/renderer/src/services/yuantiangang/yuantiangang.ts:84-106
 private setupQianliyanEventListening(): void {
-    const ipc = window.electron.ipcRenderer;
-    this.qianliyanCleanupFn = ipc.on("picasa:find-photo", handler);
+ const ipc = window.legacyShell.ipcRenderer;
+ this.qianliyanCleanupFn = ipc.on("picasa:find-photo", handler);
 }
 
 // ❌ 问题2: findPhotoService 同样监听同一个 IPC 事件（处理所有类型）
 // src/renderer/src/services/find-photo-service.ts:11-21
 export class FindPhotoServiceIpc implements IFindPhotoService {
-    onFindPhoto(callback: (args: FindPhotoEvent) => void) {
-        ipc.on("picasa:find-photo", (_event, args: FindPhotoEvent) => {
-            callback(args);
-        });
-    }
+ onFindPhoto(callback: (args: FindPhotoEvent) => void) {
+ ipc.on("picasa:find-photo", (_event, args: FindPhotoEvent) => {
+ callback(args);
+ });
+ }
 }
 
 // ❌ 问题3: App.vue 直接使用 findPhotoService 更新 UI
 // src/renderer/src/App.vue:285-309
 findPhotoService.onFindPhoto((args: FindPhotoEvent) => {
-    // 直接更新状态栏、记录扫描活动
-    scanMonitoringService.recordActivity();
-    processingFile.value = `${t("status.scanning")} ${fullFilePath}`;
+ // 直接更新状态栏、记录扫描活动
+ scanMonitoringService.recordActivity();
+ processingFile.value = `${t("status.scanning")} ${fullFilePath}`;
 });
 ```
 
@@ -97,19 +97,19 @@ findPhotoService.onFindPhoto((args: FindPhotoEvent) => {
 
 ```
 Main 进程 IPC "picasa:find-photo" 事件
-    ↓
+ ↓
 袁天罡监听（统一 IPC 入口）
-    ├─ type === "progress" → 发送 SCAN_PROGRESS qizou
-    └─ type === "complete" → 发送 SCAN_READY qizou
-         ↓
+ ├─ type === "progress" → 发送 SCAN_PROGRESS qizou
+ └─ type === "complete" → 发送 SCAN_READY qizou
+ ↓
 李世民接收 qizou（中央协调）
-    ├─ SCAN_PROGRESS → 下旨虞世南（更新 UI 状态栏）
-    └─ SCAN_READY → 下旨魏征（更新 folderTree）
-         ↓
+ ├─ SCAN_PROGRESS → 下旨虞世南（更新 UI 状态栏）
+ └─ SCAN_READY → 下旨魏征（更新 folderTree）
+ ↓
 虞世南接收 shengzhi
-    ├─ 更新状态栏显示（processingFile.value）
-    ├─ 记录扫描活动（scanMonitoringService.recordActivity()）
-    └─ 提供响应式状态给 App.vue
+ ├─ 更新状态栏显示（processingFile.value）
+ ├─ 记录扫描活动（scanMonitoringService.recordActivity()）
+ └─ 提供响应式状态给 App.vue
 ```
 
 **关键改进**：
@@ -315,65 +315,65 @@ const statusText = computed(() => {
 import { ScanActionEvent } from "@common/scan-types";
 
 private handleQianliyanEvent(args: ScanActionEvent): void {
-    logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path);
+ logger.debug("🔮 收到千里眼事件:", args.type, args.action?.path);
 
-    if (args.type === "progress") {
-        // ✅ RFC 0057 Phase 2: 发送 SCAN_PROGRESS qizou 给虞世南
-        this.reportScanProgress(args);
-    } else if (args.type === "complete") {
-        // ✅ 保留：发送 SCAN_READY qizou 给魏征
-        this.reportScanCompletion(computeScannedFilePaths(args), args);
-    }
-    // error 类型暂不处理
+ if (args.type === "progress") {
+ // ✅ RFC 0057 Phase 2: 发送 SCAN_PROGRESS qizou 给虞世南
+ this.reportScanProgress(args);
+ } else if (args.type === "complete") {
+ // ✅ 保留：发送 SCAN_READY qizou 给魏征
+ this.reportScanCompletion(computeScannedFilePaths(args), args);
+ }
+ // error 类型暂不处理
 }
 
 /**
  * ✅ RFC 0057 Phase 2: 向李世民发送扫描进度启奏
  */
 private reportScanProgress(scanEvent: ScanActionEvent): void {
-    try {
-        if (!this._qizouBus) {
-            logger.error("🔮 启奏通道未建立，无法发送启奏");
-            return;
-        }
+ try {
+ if (!this._qizouBus) {
+ logger.error("🔮 启奏通道未建立，无法发送启奏");
+ return;
+ }
 
-        // 构造完整文件路径
-        let filePath = "";
-        if (scanEvent.action?.isDirectory === false) {
-            // 如果是文件，直接使用 action.path
-            filePath = scanEvent.action.path;
-        } else if (scanEvent.action?.path && scanEvent.currentFile) {
-            // 如果是目录，拼接目录路径和当前文件名
-            filePath = `${scanEvent.action.path}/${scanEvent.currentFile}`.replace(/\/+/g, "/");
-        } else if (scanEvent.action?.path) {
-            // 如果只有目录路径，使用目录路径
-            filePath = scanEvent.action.path;
-        }
+ // 构造完整文件路径
+ let filePath = "";
+ if (scanEvent.action?.isDirectory === false) {
+ // 如果是文件，直接使用 action.path
+ filePath = scanEvent.action.path;
+ } else if (scanEvent.action?.path && scanEvent.currentFile) {
+ // 如果是目录，拼接目录路径和当前文件名
+ filePath = `${scanEvent.action.path}/${scanEvent.currentFile}`.replace(/\/+/g, "/");
+ } else if (scanEvent.action?.path) {
+ // 如果只有目录路径，使用目录路径
+ filePath = scanEvent.action.path;
+ }
 
-        // 获取进度值（已处理的文件数）
-        const progress = scanEvent.progress?.processed ?? 0;
+ // 获取进度值（已处理的文件数）
+ const progress = scanEvent.progress?.processed ?? 0;
 
-        // 构建启奏
-        const qizou: Qizou = {
-            matter: QizouMatters.SCAN_PROGRESS,
-            content: {
-                filePath,
-                progress,
-                type: "progress",
-            },
-            from: "袁天罡",
-            timestamp: Date.now(),
-            metadata: {
-                type: "report",
-                priority: "normal",
-            },
-        };
+ // 构建启奏
+ const qizou: Qizou = {
+ matter: QizouMatters.SCAN_PROGRESS,
+ content: {
+ filePath,
+ progress,
+ type: "progress",
+ },
+ from: "袁天罡",
+ timestamp: Date.now(),
+ metadata: {
+ type: "report",
+ priority: "normal",
+ },
+ };
 
-        this._qizouBus.emit("qizou", qizou);
-        logger.debug(`🔮 启奏李世民: 扫描进度更新 - ${filePath} (进度: ${progress})`);
-    } catch (error) {
-        logger.error(`🔮 发送扫描进度启奏失败:`, error);
-    }
+ this._qizouBus.emit("qizou", qizou);
+ logger.debug(`🔮 启奏李世民: 扫描进度更新 - ${filePath} (进度: ${progress})`);
+ } catch (error) {
+ logger.error(`🔮 发送扫描进度启奏失败:`, error);
+ }
 }
 ```
 
@@ -391,35 +391,35 @@ private reportScanProgress(scanEvent: ScanActionEvent): void {
 # src/renderer/src/services/lishimin/event-routing.yml
 
 qizou_routes:
-    # ✅ RFC 0057: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
-    scan_progress:
-        - when:
-              from: "袁天罡"
-              type: "report"
-          then:
-              service: "虞世南"
-              shengzhi:
-                  command: "update_scan_progress"
-                  content:
-                      filePath: "{{qizou.content.filePath}}"
-                      progress: "{{qizou.content.progress}}"
-                      type: "{{qizou.content.type}}"
-                  priority: "normal"
-              description: "扫描进度更新后，下旨虞世南更新状态栏显示"
+ # ✅ RFC 0057: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
+ scan_progress:
+ - when:
+ from: "袁天罡"
+ type: "report"
+ then:
+ service: "虞世南"
+ shengzhi:
+ command: "update_scan_progress"
+ content:
+ filePath: "{{qizou.content.filePath}}"
+ progress: "{{qizou.content.progress}}"
+ type: "{{qizou.content.type}}"
+ priority: "normal"
+ description: "扫描进度更新后，下旨虞世南更新状态栏显示"
 
-    # ✅ 保留：袁天罡报告扫描完成 → 李世民下旨魏征批量更新
-    scan_ready:
-        - when:
-              from: "袁天罡"
-              type: "report"
-          then:
-              service: "魏征"
-              shengzhi:
-                  command: "add_paths"
-                  content:
-                      paths: "{{qizou.content.paths}}"
-                  priority: "normal"
-              description: "扫描完成后，下旨魏征批量更新folderTree"
+ # ✅ 保留：袁天罡报告扫描完成 → 李世民下旨魏征批量更新
+ scan_ready:
+ - when:
+ from: "袁天罡"
+ type: "report"
+ then:
+ service: "魏征"
+ shengzhi:
+ command: "add_paths"
+ content:
+ paths: "{{qizou.content.paths}}"
+ priority: "normal"
+ description: "扫描完成后，下旨魏征批量更新folderTree"
 ```
 
 #### 4. App.vue 迁移
@@ -636,7 +636,7 @@ describe("YuanTianGangService - Scan Progress", () => {
         };
 
         // 触发事件处理（通过模拟 IPC 事件）
-        // 注意：实际测试需要 mock window.electron.ipcRenderer
+        // 注意：实际测试需要 mock window.legacyShell.ipcRenderer
 
         expect(qizouBus.emit).toHaveBeenCalledWith(
             "qizou",
@@ -682,7 +682,7 @@ describe("扫描进度集成测试", () => {
                 return vi.fn();
             }),
         };
-        (window as any).electron = { ipcRenderer: ipcMock };
+        (window as any).legacy = { ipcRenderer: ipcMock };
 
         // 2. 挂载 App
         const wrapper = mount(App);
@@ -733,22 +733,27 @@ describe("扫描进度集成测试", () => {
 ### 修改的文件
 
 1. **src/renderer/src/services/yuantiangang/yuantiangang.ts**
-    - 新增 `reportScanProgress` 方法（约 30 行）
-    - 修改 `handleQianliyanEvent` 方法（约 10 行）
+
+- 新增 `reportScanProgress` 方法（约 30 行）
+- 修改 `handleQianliyanEvent` 方法（约 10 行）
 
 2. **src/renderer/src/constants/qizou-shengzhi-commands.ts**
-    - 新增 `SCAN_PROGRESS` 常量（1 行）
+
+- 新增 `SCAN_PROGRESS` 常量（1 行）
 
 3. **src/renderer/src/services/lishimin/event-routing.yml**
-    - 新增 `scan_progress` 路由规则（约 15 行）
+
+- 新增 `scan_progress` 路由规则（约 15 行）
 
 4. **src/renderer/src/App.vue**
-    - 删除 findPhotoService 依赖（约 30 行）
-    - 新增 useYuShiNan() 使用（约 10 行）
+
+- 删除 findPhotoService 依赖（约 30 行）
+- 新增 useYuShiNan() 使用（约 10 行）
 
 5. **src/renderer/src/main.ts**
-    - 删除 findPhotoService 注册（约 5 行）
-    - 新增 YuShiNanService 注册（约 5 行）
+
+- 删除 findPhotoService 注册（约 5 行）
+- 新增 YuShiNanService 注册（约 5 行）
 
 **总计修改**：约 106 行（净增 51 行）
 
@@ -813,28 +818,28 @@ export class YuShiNanService implements IYuShiNanService {
 private batchShengzhiQueue: Map<string, Shengzhi[]> = new Map();
 
 private sendShengzhiWithBatching(service: string, shengzhi: Shengzhi): void {
-    if (shengzhi.command === "update_scan_progress") {
-        // 批处理 scan_progress shengzhi
-        if (!this.batchShengzhiQueue.has(service)) {
-            this.batchShengzhiQueue.set(service, []);
+ if (shengzhi.command === "update_scan_progress") {
+ // 批处理 scan_progress shengzhi
+ if (!this.batchShengzhiQueue.has(service)) {
+ this.batchShengzhiQueue.set(service, []);
 
-            // 每 50ms 批量发送一次
-            setTimeout(() => {
-                const batch = this.batchShengzhiQueue.get(service) || [];
-                if (batch.length > 0) {
-                    // 只发送最新的 shengzhi
-                    const latest = batch[batch.length - 1];
-                    this.sendShengzhi(service, latest);
-                    this.batchShengzhiQueue.delete(service);
-                }
-            }, 50);
-        }
+ // 每 50ms 批量发送一次
+ setTimeout(() => {
+ const batch = this.batchShengzhiQueue.get(service) || [];
+ if (batch.length > 0) {
+ // 只发送最新的 shengzhi
+ const latest = batch[batch.length - 1];
+ this.sendShengzhi(service, latest);
+ this.batchShengzhiQueue.delete(service);
+ }
+ }, 50);
+ }
 
-        this.batchShengzhiQueue.get(service)!.push(shengzhi);
-    } else {
-        // 其他 shengzhi 立即发送
-        this.sendShengzhi(service, shengzhi);
-    }
+ this.batchShengzhiQueue.get(service)!.push(shengzhi);
+ } else {
+ // 其他 shengzhi 立即发送
+ this.sendShengzhi(service, shengzhi);
+ }
 }
 ```
 
@@ -1093,19 +1098,22 @@ export class YuShiNanService {
 统一类型定义，消除重复：
 
 1. **扩展 `ScanActionEvent`**：
-    - 从 `type` 改为 `interface`，支持更完整的类型定义
-    - 添加 `requestId?: string`（IPC 事件必需）
-    - 添加 `progress?: { processed: number; total: number }`（统一进度对象格式）
-    - 添加 `error?: unknown`（错误信息）
-    - `ScanType` 更新为 `"action" | "progress" | "complete" | "error"`
+
+- 从 `type` 改为 `interface`，支持更完整的类型定义
+- 添加 `requestId?: string`（IPC 事件必需）
+- 添加 `progress?: { processed: number; total: number }`（统一进度对象格式）
+- 添加 `error?: unknown`（错误信息）
+- `ScanType` 更新为 `"action" | "progress" | "complete" | "error"`
 
 2. **标记 `FindPhotoEvent` 为 deprecated**：
-    - `FindPhotoEvent` 现在定义为 `ScanActionEvent` 的类型别名
-    - 保留仅为向后兼容，新代码应使用 `ScanActionEvent`
+
+- `FindPhotoEvent` 现在定义为 `ScanActionEvent` 的类型别名
+- 保留仅为向后兼容，新代码应使用 `ScanActionEvent`
 
 3. **更新代码引用**：
-    - `yuantiangang.ts` 统一使用 `ScanActionEvent`
-    - 移除对 `FindPhotoEvent` 的直接导入
+
+- `yuantiangang.ts` 统一使用 `ScanActionEvent`
+- 移除对 `FindPhotoEvent` 的直接导入
 
 ### 实施状态
 

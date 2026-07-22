@@ -1,6 +1,6 @@
 /**
  * 导入适配器
- * 适配导入服务 API（类型与 @photasa/common 一致，便于与 Electron / Rust 事件对齐）
+ * 适配导入服务 API（类型与 @photasa/common 一致，便于与 legacy-api / Rust 事件对齐）
  */
 
 import type {
@@ -12,6 +12,7 @@ import type {
 import { ImportEvents } from "@photasa/common";
 import { isTauri } from "./env";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { callLegacyPreloadSection, getLegacyPreloadApi } from "./legacy-preload-access";
 
 export type { DirectorySelection, ImportConfig, ImportProgress, ImportResumeResult };
 
@@ -35,7 +36,7 @@ const DEFAULT_PROGRESS: ImportProgress = {
 };
 
 /**
- * 将 Rust `import:progress` 或 Electron IPC 的 JSON 规范为 ImportProgress（含 startTime 为 Date）
+ * 将 Rust `import:progress` 或 contract reference IPC 的 JSON 规范为 ImportProgress（含 startTime 为 Date）
  */
 export function normalizeImportProgressPayload(raw: unknown): ImportProgress {
     if (raw === null || raw === undefined || typeof raw !== "object") {
@@ -73,12 +74,14 @@ export const importAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             return await invoke("scan_directories", { paths, filters: filters ?? null });
         }
-        const out = await (window as any).electronAPI?.api?.scanDirectories?.(paths, filters);
+        const out = (await callLegacyPreloadSection("api", "scanDirectories", paths, filters)) as
+            | unknown[]
+            | undefined;
         return out ?? [];
     },
 
     /**
-     * 单选/多选目录（与 Electron `chooseDirectories` 返回形状一致）
+     * 单选/多选目录（与 legacy-api `chooseDirectories` 返回形状一致）
      */
     chooseDirectories: async (multiSelect = true): Promise<DirectorySelection> => {
         if (isTauri()) {
@@ -91,7 +94,9 @@ export const importAdapter = {
             }
             return { filePaths: [] };
         }
-        const out = await (window as any).electronAPI?.api?.chooseDirectories?.(multiSelect);
+        const out = (await callLegacyPreloadSection("api", "chooseDirectories", multiSelect)) as
+            | DirectorySelection
+            | undefined;
         return out ?? { filePaths: [] };
     },
 
@@ -103,7 +108,8 @@ export const importAdapter = {
             const { invoke } = await import("@tauri-apps/api/core");
             return await invoke("execute_import", { config });
         }
-        return await (window as any).electronAPI?.api?.executeImport?.(config);
+        const result = await callLegacyPreloadSection("api", "executeImport", config);
+        return typeof result === "string" ? result : "";
     },
 
     /**
@@ -117,16 +123,17 @@ export const importAdapter = {
                 callback(normalizeImportProgressPayload(event.payload));
             });
         }
-        const w = window as any;
         const wrapped = (_event: unknown, eventData: unknown) => {
             const ed = eventData as Record<string, unknown> & { progress?: unknown };
             callback(normalizeImportProgressPayload(ed?.progress ?? ed));
         };
-        const ipc = w.electronAPI?.ipcRenderer;
-        if (ipc?.on) {
+        const ipc = getLegacyPreloadApi()?.ipcRenderer;
+        if (ipc && typeof ipc.on === "function") {
             ipc.on(ImportEvents.PROGRESS, wrapped);
             return () => {
-                ipc.removeListener(ImportEvents.PROGRESS, wrapped);
+                if (typeof ipc.removeListener === "function") {
+                    ipc.removeListener(ImportEvents.PROGRESS, wrapped);
+                }
             };
         }
         return () => {};
@@ -141,7 +148,7 @@ export const importAdapter = {
             await invoke("cancel_import", { importId });
             return;
         }
-        await (window as any).electronAPI?.api?.cancelImport?.(importId);
+        await callLegacyPreloadSection("api", "cancelImport", importId);
     },
 
     /**
@@ -153,7 +160,7 @@ export const importAdapter = {
             await invoke("pause_import", { importId });
             return;
         }
-        await (window as any).electronAPI?.api?.pauseImport?.(importId);
+        await callLegacyPreloadSection("api", "pauseImport", importId);
     },
 
     /**
@@ -165,9 +172,13 @@ export const importAdapter = {
             await invoke("resume_import", { importId });
             return { importId };
         }
-        const r = await (window as any).electronAPI?.api?.resumeImport?.(importId);
-        if (r && typeof r === "object" && typeof r.importId === "string") {
-            return { importId: r.importId };
+        const r = await callLegacyPreloadSection("api", "resumeImport", importId);
+        if (
+            r &&
+            typeof r === "object" &&
+            typeof (r as { importId?: unknown }).importId === "string"
+        ) {
+            return { importId: (r as { importId: string }).importId };
         }
         return { importId };
     },

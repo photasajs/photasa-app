@@ -11,7 +11,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Import **backend already rewritten** in Rust. This RFC does **not** re-port Electron import-worker or `@photasa/import`.
+- Import **backend already rewritten** in Rust. This RFC does **not** re-port contract reference import-worker or `@photasa/import`.
 - Vue UI only; Rust change only if proven necessary (default: **zero**).
 
 ---
@@ -52,18 +52,18 @@ Reviewed against: `ImportProgressModal.vue`, `ImportPhotos.vue`, `legacy-api` im
 
 **Related one-thing RFCs** (not G1–G14; each own file — **no mono “contract polish”**):
 
-| Topic                                              | RFC                                                                  |
-| -------------------------------------------------- | -------------------------------------------------------------------- |
-| `checksum`                                         | **[0119](./0119-tauri-import-checksum.md)**                          |
-| `duplicateCount`                                   | **[0123](./0123-tauri-import-duplicate-count.md)**                   |
-| `resumeImport` return                              | **[0124](./0124-tauri-import-resume-return-shape.md)**               |
-| pause → `status: "paused"` emit                    | **[0125](./0125-tauri-import-paused-progress-emit.md)**              |
-| Electron desktop same UX                           | **[0126](../rejected/0126-electron-import-background-ux-parity.md)** |
-| `import:error` payload shape                       | **[0127](./0127-tauri-import-error-payload-shape.md)**               |
-| `status: "paused"` emit / cancelled-payload fields | **[0125](./0125-tauri-import-paused-progress-emit.md)**              |
-| `import:progress` missing `importId`               | **[0128](./0128-tauri-import-progress-import-id.md)**                |
-| `import:progress` emit throttling                  | **[0129](./0129-tauri-import-progress-throttle.md)**                 |
-| `import_legacy.rs` copy dedup                      | **[0130](./0130-tauri-import-legacy-copy-dedup.md)**                 |
+| Topic                                              | RFC                                                                |
+| -------------------------------------------------- | ------------------------------------------------------------------ |
+| `checksum`                                         | **[0119](./0119-tauri-import-checksum.md)**                        |
+| `duplicateCount`                                   | **[0123](./0123-tauri-import-duplicate-count.md)**                 |
+| `resumeImport` return                              | **[0124](./0124-tauri-import-resume-return-shape.md)**             |
+| pause → `status: "paused"` emit                    | **[0125](./0125-tauri-import-paused-progress-emit.md)**            |
+| contract reference same UX                         | **[0126](../rejected/0126-legacy-import-background-ux-parity.md)** |
+| `import:error` payload shape                       | **[0127](./0127-tauri-import-error-payload-shape.md)**             |
+| `status: "paused"` emit / cancelled-payload fields | **[0125](./0125-tauri-import-paused-progress-emit.md)**            |
+| `import:progress` missing `importId`               | **[0128](./0128-tauri-import-progress-import-id.md)**              |
+| `import:progress` emit throttling                  | **[0129](./0129-tauri-import-progress-throttle.md)**               |
+| `import_legacy.rs` copy dedup                      | **[0130](./0130-tauri-import-legacy-copy-dedup.md)**               |
 
 ### Gap ownership checklist (0118 only)
 
@@ -96,7 +96,7 @@ G10 / G11 / G12 were intentionally kept out of 0118. Final disposition: 0120 ✅
 | **0123**        | `duplicateCount` only                   | **P3**      |
 | **0124**        | `resumeImport` return shape only        | **P3**      |
 | **0125**        | `status: "paused"` emit only            | **P3**      |
-| **0126**        | Electron desktop UX parity only         | Rejected    |
+| **0126**        | contract reference UX parity only       | Rejected    |
 | **0127**        | `import:error` payload shape only       | **P3**      |
 | **0093**        | Legacy importPhotos Rust API            | ✅          |
 | **0070 / 0096** | Execute / pause Rust                    | ✅          |
@@ -114,7 +114,7 @@ G10 / G11 / G12 were intentionally kept out of 0118. Final disposition: 0120 ✅
 | Quit mid-import recovery         | **0120**    |
 | Settings Import panel            | **0121**    |
 | Legacy importPhotos chip/dismiss | **0122**    |
-| Electron desktop same UX         | **0126**    |
+| contract reference same UX       | **0126**    |
 | Re-write import Rust kernel      | **0070** ✅ |
 
 ---
@@ -305,7 +305,7 @@ Default **no change**. Revisit only if product requires progress `importId` fiel
 | Quit/crash recovery               | **0120**    |
 | Settings Import panel             | **0121**    |
 | Legacy importPhotos background UX | **0122**    |
-| Electron desktop same UX          | **0126**    |
+| contract reference same UX        | **0126**    |
 | MakerNote / metadata golden       | **0112** ✅ |
 
 ---

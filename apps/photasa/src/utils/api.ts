@@ -23,6 +23,7 @@ import type {
 } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import { getPhotasaApi } from "@renderer/ipc/api-access";
+import { getLegacyShell } from "@/api/legacy-preload-access";
 import {
     isHiddenFileSync,
     shouldIgnorePhotasaPathSync,
@@ -56,11 +57,12 @@ export interface MenuCallback {
 }
 
 export function setupMenu(callback: MenuCallback): void {
-    window.electron.ipcRenderer.on("picasa:open-preference", callback.onPreference);
-    window.electron.ipcRenderer.on("picasa:import-photos", callback.onImportPhotos);
+    const ipc = getLegacyShell()?.ipcRenderer;
+    ipc?.on("picasa:open-preference", callback.onPreference);
+    ipc?.on("picasa:import-photos", callback.onImportPhotos);
 }
 
-export function getDirectory(name: PathName): Promise<string> {
+export function getDirectory(name: PathName): Promise<string | null> {
     return api().getDirectory(name);
 }
 
@@ -127,7 +129,7 @@ export function checkPhotasaConfig(
     return api().checkPhotasaConfig(folderPath);
 }
 
-export function isFileUnderFolder(file: string, folder: string): boolean {
+export function isFileUnderFolder(file: string, folder: string): boolean | Promise<boolean> {
     return api().isFileUnderFolder(file, folder);
 }
 
@@ -147,11 +149,11 @@ export function shouldIgnorePhotasaPath(fileName: string): boolean {
     return shouldIgnorePhotasaPathSync(fileName);
 }
 
-export function isVideoFile(fileName: string): boolean {
+export function isVideoFile(fileName: string): boolean | Promise<boolean> {
     return api().isVideoFile(fileName);
 }
 
-export function isImageFile(fileName: string): boolean {
+export function isImageFile(fileName: string): boolean | Promise<boolean> {
     return api().isImageFile(fileName);
 }
 

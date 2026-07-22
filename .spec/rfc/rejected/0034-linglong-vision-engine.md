@@ -6,7 +6,7 @@
 
 ## Summary
 
-设计名为「玲珑」的统一影像播放引擎，解决浏览器原生能力无法完整支持 MPG/AVI/3GP 等视频与 BMP/SVG/ICN 等图像格式的问题。引擎保持环境无关，提供标准化的解码、转封装与渲染管线，由外层服务将其接入 Electron 主进程与渲染层，实现多格式一致播放体验。
+设计名为「玲珑」的统一影像播放引擎，解决浏览器原生能力无法完整支持 MPG/AVI/3GP 等视频与 BMP/SVG/ICN 等图像格式的问题。引擎保持环境无关，提供标准化的解码、转封装与渲染管线，由外层服务将其接入 legacy main process与渲染层，实现多格式一致播放体验。
 
 ## Motivation
 
@@ -50,7 +50,7 @@
 | 方案                                                | 描述                                                                                     | 优点                                                             | 缺点                                                                     | 维护成本 | 推荐程度           |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ | -------- | ------------------ |
 | **A. 主进程 FFmpeg 转封装/转码**                    | 使用 FFmpeg（本地命令或 Node 绑定）将不支持格式转为 H.264/MP4（视频）或 PNG/WebP（图像） | 成熟稳定；与现有 FFmpeg 配置一致；可批量与离线任务结合；易于缓存 | 首次转码耗时；CPU/GPU 消耗较高；需管理输出缓存与清理；实时播放时首帧延迟 | 中       | ⭐️⭐️⭐️⭐️（推荐）   |
-| **B. 内嵌媒体引擎 libmpv/libVLC**                   | 作为子进程/原生扩展接入 libmpv 或 libVLC，直接渲染到纹理                                 | 全格式支持；播放质量高；自带字幕/滤镜                            | 与 Electron 渲染层集成复杂；原生依赖大；UI 层需处理纹理同步              | 高       | ⭐️⭐️⭐️（中期考量） |
+| **B. 内嵌媒体引擎 libmpv/libVLC**                   | 作为子进程/原生扩展接入 libmpv 或 libVLC，直接渲染到纹理                                 | 全格式支持；播放质量高；自带字幕/滤镜                            | 与 legacy-api 渲染层集成复杂；原生依赖大；UI 层需处理纹理同步            | 高       | ⭐️⭐️⭐️（中期考量） |
 | **C. 渲染层 wasm 解码 (ffmpeg.wasm)**               | 在渲染进程使用 wasm 版 FFmpeg 解码后通过 canvas/WebGL 播放                               | 不依赖主进程；易于跨平台                                         | CPU/内存消耗巨大；大文件体验差；包体积爆炸                               | 高       | ⭐️⭐️（不推荐）     |
 | **D. 系统原生解码 (AVFoundation/Media Foundation)** | 针对 macOS/Windows 编写原生模块调用系统播放器                                            | 原生硬解码，流畅度最佳                                           | 跨平台重复实现；Linux 缺乏统一接口；测试复杂                             | 高       | ⭐️⭐️⭐️（长期探索） |
 | **E. 云端转码服务**                                 | 上传服务器转换后回传                                                                     | 后端统一管理；轻端负载低                                         | 需联网；隐私/时延问题；增加服务器成本                                    | 中       | ⭐️⭐️（备选）       |
@@ -61,30 +61,30 @@
 
 ```
 ┌───────────────────────────────────────┐
-│             Linglong Engine           │
-│  (格式探测 + 策略决策 + 执行适配 + 缓存)  │
+│ Linglong Engine │
+│ (格式探测 + 策略决策 + 执行适配 + 缓存) │
 ├───────────────────────────────────────┤
-│ 1. Format Detector   │ BMP/AVI/MPEG/SVG/…
-│ 2. Strategy Planner  │ 转封装 / 转码 / 原生通路
+│ 1. Format Detector │ BMP/AVI/MPEG/SVG/…
+│ 2. Strategy Planner │ 转封装 / 转码 / 原生通路
 │ 3. Execution Adapter │ FFmpeg Adapter, libmpv Adapter (预留)
-│ 4. Cache Manager     │ 首帧缓存、媒体片段、缩略图
-│ 5. Status Bus        │ 解码日志、进度、指标、警报
+│ 4. Cache Manager │ 首帧缓存、媒体片段、缩略图
+│ 5. Status Bus │ 解码日志、进度、指标、警报
 └───────────────────────────────────────┘
-         ▲                    │
-         │                    ▼
+ ▲ │
+ │ ▼
 ┌───────────────────────────────────────┐
-│        PlaybackService (主进程)        │
-│  - 注入 Linglong 引擎实例              │
-│  - 统一 IPC：`picasa:play-media` 等     │
-│  - 将引擎事件转为 notifyStatus/UI 更新 │
+│ PlaybackService (主进程) │
+│ - 注入 Linglong 引擎实例 │
+│ - 统一 IPC：`picasa:play-media` 等 │
+│ - 将引擎事件转为 notifyStatus/UI 更新 │
 └───────────────────────────────────────┘
-         ▲                    │
-         │                    ▼
+ ▲ │
+ │ ▼
 ┌───────────────────────────────────────┐
-│         Renderer (前端组件)          │
-│  - 媒体查看器/时间线/幻灯片播放器    │
-│  - 通过 preload API 请求播放         │
-│  - 处理进度提示/错误提醒             │
+│ Renderer (前端组件) │
+│ - 媒体查看器/时间线/幻灯片播放器 │
+│ - 通过 preload API 请求播放 │
+│ - 处理进度提示/错误提醒 │
 └───────────────────────────────────────┘
 ```
 
@@ -92,21 +92,28 @@
 
 1. **Format Detector**：利用扩展名、魔数、FFprobe 探测器识别格式与编解码器。
 2. **Strategy Planner**：根据支持矩阵决定路径：
-    - 原生支持 → 直接播放（返回文件 URL）。
-    - 需转封装 → 调用 FFmpeg Adapter `copy codec` 输出 `mp4`。
-    - 需转码 → 调用 FFmpeg Adapter 生成 `h264/aac` `mp4` 或 `png`。
-    - 图像矢量（SVG） → 调用 resvg/Sharp 转栅格。
+
+- 原生支持 → 直接播放（返回文件 URL）。
+- 需转封装 → 调用 FFmpeg Adapter `copy codec` 输出 `mp4`。
+- 需转码 → 调用 FFmpeg Adapter 生成 `h264/aac` `mp4` 或 `png`。
+- 图像矢量（SVG） → 调用 resvg/Sharp 转栅格。
+
 3. **Execution Adapter**：
-    - `FFmpegAdapter`：封装命令/节点绑定，提供进度回调、错误处理。
-    - `SharpAdapter`：处理位图/矢量转栅格。
-    - 预留 `mpvAdapter`、`NativeAdapter` 接口以便未来扩展。
+
+- `FFmpegAdapter`：封装命令/节点绑定，提供进度回调、错误处理。
+- `SharpAdapter`：处理位图/矢量转栅格。
+- 预留 `mpvAdapter`、`NativeAdapter` 接口以便未来扩展。
+
 4. **Cache Manager**：
-    - 保存转封装结果（`cache/media/mp4`）。
-    - 保存缩略图/首帧（`cache/thumbnails`）。
-    - 维护 LRU 和引用计数。
+
+- 保存转封装结果（`cache/media/mp4`）。
+- 保存缩略图/首帧（`cache/thumbnails`）。
+- 维护 LRU 和引用计数。
+
 5. **Status Bus**：
-    - 事件类型：`detect:start`、`decode:progress`、`decode:complete`、`error` 等。
-    - 提供给 PlaybackService / 监控仪表盘。
+
+- 事件类型：`detect:start`、`decode:progress`、`decode:complete`、`error` 等。
+- 提供给 PlaybackService / 监控仪表盘。
 
 ### API 草案
 
@@ -171,7 +178,7 @@ interface PlaybackEngine {
 
 1. **继续零散处理**：在各模块内临时转码或提示不支持，放弃统一引擎。→ 维护困难，严重影响体验。
 2. **纯 wasm 解码**：全部放到渲染层完成。→ 性能不足，无法覆盖大文件长视频。
-3. **完全原生播放器嵌入**：如直接使用 VLC UI。→ UI 一致性差，与现有 Electron 框架不契合。
+3. **完全原生播放器嵌入**：如直接使用 VLC UI。→ UI 一致性差，与现有 contract reference 框架不契合。
 
 ## Unresolved Questions
 

@@ -107,18 +107,14 @@ fn compile_libheif() -> String {
         "ENABLE_EXPERIMENTAL_FEATURES",
         "ENABLE_PLUGIN_LOADING",
         "BUILD_DOCUMENTATION",
+        // 零系统依赖：禁用 libsharpyuv，避免 libheif.pc 的 Requires.private 依赖系统 pkg-config
+        "WITH_LIBSHARPYUV",
     ] {
         build_config.define(key, "OFF");
     }
 
     // Enable some options
     build_config.define("WITH_REDUCED_VISIBILITY", "ON");
-    // WITH_LIBSHARPYUV 需要系统库，关闭以实现零依赖
-    // TODO: Try to enable this in the future.
-    //       Right now it is the reason of linker's errors like
-    //       "undefined reference to `BrotliEncoderDestroyInstance'"
-    // "WITH_UNCOMPRESSED_CODEC",
-    // "WITH_HEADER_COMPRESSION",
 
     // List of encoders and decoders that have corresponding plugins
     let encoders_decoders = [
@@ -182,11 +178,75 @@ fn compile_libheif() -> String {
     }
 
     let libheif_build = build_config.build();
+    install_embedded_libde265_pkg_config(&libheif_build, &out_path);
 
     libheif_build
         .join("lib/pkgconfig")
         .to_string_lossy()
         .to_string()
+}
+
+/// 内嵌 libde265 不会随 cmake install 落到 lib/ 与 pkgconfig/，但 libheif.pc 的
+/// Requires.private 仍引用 libde265；CI 无系统 libde265-dev 时 pkg-config --static 会失败。
+fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
+    let Some(de265_archive) = find_libde265_static_library(libheif_build) else {
+        panic!(
+            "embedded libde265 static library not found under {}",
+            libheif_build.display()
+        );
+    };
+
+    let lib_dir = libheif_build.join("lib");
+    let pkg_dir = lib_dir.join("pkgconfig");
+    std::fs::create_dir_all(&pkg_dir).expect("failed to create pkgconfig directory");
+
+    let installed_de265 = lib_dir.join("libde265.a");
+    if de265_archive != installed_de265 {
+        std::fs::copy(&de265_archive, &installed_de265)
+            .unwrap_or_else(|err| panic!("failed to copy {}: {err}", de265_archive.display()));
+    }
+
+    // vendored 头文件在 OUT_DIR/libde265（见 prepare_libheif_src）
+    let de265_include_dir = out_path.join("libde265");
+    let prefix = libheif_build.to_string_lossy();
+    let include_dir = de265_include_dir.to_string_lossy();
+    let libde265_pc = format!(
+        "prefix={prefix}\n\
+         exec_prefix=${{prefix}}\n\
+         libdir=${{prefix}}/lib\n\
+         includedir={include_dir}\n\
+         \n\
+         Name: libde265\n\
+         Description: H.265/HEVC video decoder (embedded).\n\
+         URL: https://github.com/strukturag/libde265\n\
+         Version: 1.0.15\n\
+         Requires:\n\
+         Libs: -L${{libdir}} -lde265\n\
+         Libs.private:\n\
+         Cflags: -I${{includedir}}\n"
+    );
+    std::fs::write(pkg_dir.join("libde265.pc"), libde265_pc)
+        .expect("failed to write libde265.pc");
+}
+
+fn find_libde265_static_library(libheif_build: &Path) -> Option<PathBuf> {
+    find_file_named(libheif_build, "libde265.a")
+}
+
+fn find_file_named(root: &Path, file_name: &str) -> Option<PathBuf> {
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        let entries = std::fs::read_dir(&dir).ok()?;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else if path.file_name().is_some_and(|name| name == file_name) {
+                return Some(path);
+            }
+        }
+    }
+    None
 }
 
 #[cfg(not(all(target_os = "windows", target_env = "msvc")))]

@@ -463,4 +463,38 @@ describe("Folder Tree", () => {
         expect(roots[0].children?.[0]?.key).toBe("/Volumes/SUCAI/Test/2018");
         expect(roots[0].children?.[0]?.children?.length).toBe(1);
     });
+
+    it("sanitizeFolderTree 应从树中清理旧有 media 文件节点", () => {
+        const roots: FolderNode[] = [
+            {
+                key: "/Volumes/SUCAI",
+                title: "SUCAI",
+                children: [
+                    {
+                        key: "/Volumes/SUCAI/20260520",
+                        title: "20260520",
+                        children: [
+                            {
+                                key: "/Volumes/SUCAI/20260520/20260520_145038.jpg",
+                                title: "20260520_145038.jpg",
+                            },
+                            {
+                                key: "/Volumes/SUCAI/20260520/20260520_145039.jpg",
+                                title: "20260520_145039.jpg",
+                            },
+                            {
+                                key: "/Volumes/SUCAI/20260520/subfolder",
+                                title: "subfolder",
+                                children: [],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+        sanitizeFolderTree(roots);
+        const children = roots[0].children?.[0]?.children;
+        expect(children?.length).toBe(1);
+        expect(children?.[0]?.title).toBe("subfolder");
+    });
 });

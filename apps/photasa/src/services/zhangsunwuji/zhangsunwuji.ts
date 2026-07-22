@@ -196,7 +196,7 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
      * 由主进程菜单点击事件触发（通过 qizou-shengzhi）
      *
      * 根据菜单项 key 分发到相应服务或处理：
-     * - 有 role 的菜单项：由 Electron 自动处理（如 reload, quit, about 等）
+     * - 有 role 的菜单项：由 contract reference 自动处理（如 reload, quit, about 等）
      * - 有 url 的菜单项：打开外部链接（如 help.learnMore）
      * - 其他菜单项：根据 key 分发到相应服务或 emit 事件
      */
@@ -219,10 +219,10 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
                 return;
             }
 
-            // 1. 有 role 的菜单项：由 Electron 自动处理，无需额外操作
+            // 1. 有 role 的菜单项：由 contract reference 自动处理，无需额外操作
             if (payload.role) {
                 logger.debug(
-                    `📋 长孙无忌：菜单项 ${payload.key} 有 role (${payload.role})，由 Electron 自动处理`,
+                    `📋 长孙无忌：菜单项 ${payload.key} 有 role (${payload.role})，由 contract reference 自动处理`,
                 );
                 return;
             }
@@ -276,7 +276,7 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
      * 在 Finder 中显示文件
      * 通过 qizou 流程，由袁天罡发送 IPC 到主进程执行
      *
-     * 架构原则：Electron 各层职责分工
+     * 架构原则：contract reference 各层职责分工
      * - Renderer 层：关心 file:// URL（浏览器环境）
      * - Main 层：关心 OS 路径（Node.js 环境）
      * - 服务层：负责两者之间的转换

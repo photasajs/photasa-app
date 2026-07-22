@@ -7,7 +7,7 @@
 
 ## Summary
 
-优化 Electron 应用启动性能，通过延迟初始化、并行加载和服务分级策略，减少首屏显示时间 30-40%，显著改善用户体验。
+优化 桌面应用启动性能，通过延迟初始化、并行加载和服务分级策略，减少首屏显示时间 30-40%，显著改善用户体验。
 
 ## Motivation
 
@@ -36,7 +36,7 @@
 ```typescript
 // main/index.ts line 30-45
 if (!isDev) {
-    Sentry.init({...}); // 同步阻塞初始化
+ Sentry.init({...}); // 同步阻塞初始化
 }
 ```
 
@@ -77,17 +77,17 @@ function initSentry() {
 ```typescript
 // 分为关键和非关键处理器
 function setupCriticalIpcHandlers(): void {
-    // 仅注册启动必需的处理器
-    ipcMain.handle("picasa:get-directory", async (_, args) => {
-        return app.getPath(args.name);
-    });
+ // 仅注册启动必需的处理器
+ ipcMain.handle("picasa:get-directory", async (_, args) => {
+ return app.getPath(args.name);
+ });
 }
 
 function setupDeferredIpcHandlers(): void {
-    // 延迟注册文件系统相关处理器
-    ipcMain.on("picasa:choose-directory", () => {...});
-    ipcMain.handle("picasa:check-photasa-config", async () => {...});
-    ipcMain.handle("picasa:sub-folders", async () => {...});
+ // 延迟注册文件系统相关处理器
+ ipcMain.on("picasa:choose-directory", () => {...});
+ ipcMain.handle("picasa:check-photasa-config", async () => {...});
+ ipcMain.handle("picasa:sub-folders", async () => {...});
 }
 
 // 在 createWindow 中
@@ -103,29 +103,29 @@ setTimeout(() => setupDeferredIpcHandlers(), 2000);
 
 ```typescript
 private defineServicePriorities(): ServicePriority {
-    return {
-        // 关键服务：仅保留最少必需
-        critical: [
-            () => this.createConfigService(),
-            () => this.createWindowService(),
-        ],
+ return {
+ // 关键服务：仅保留最少必需
+ critical: [
+ () => this.createConfigService(),
+ () => this.createWindowService(),
+ ],
 
-        // 重要服务：窗口显示后立即初始化
-        important: [
-            () => this.createLogViewerService(),
-            () => this.createMenuService(),
-            () => this.createShellService(),
-        ],
+ // 重要服务：窗口显示后立即初始化
+ important: [
+ () => this.createLogViewerService(),
+ () => this.createMenuService(),
+ () => this.createShellService(),
+ ],
 
-        // 后台服务：延迟 3 秒初始化
-        background: [
-            () => this.createUpdateService(),
-            () => this.createThumbnailService(),
-            () => this.createScanService(),
-            () => this.createWatchService(),
-            () => this.createImportService(),
-        ],
-    };
+ // 后台服务：延迟 3 秒初始化
+ background: [
+ () => this.createUpdateService(),
+ () => this.createThumbnailService(),
+ () => this.createScanService(),
+ () => this.createWatchService(),
+ () => this.createImportService(),
+ ],
+ };
 }
 ```
 
@@ -133,30 +133,30 @@ private defineServicePriorities(): ServicePriority {
 
 ```typescript
 private scheduleBackgroundServices(backgroundServices: Array<() => Promise<any> | any>): void {
-    // 延迟更长时间，减少资源竞争
-    setTimeout(async () => {
-        logger.debug("Starting background services initialization...");
+ // 延迟更长时间，减少资源竞争
+ setTimeout(async () => {
+ logger.debug("Starting background services initialization...");
 
-        // 使用优先级队列
-        const priorityQueue = [
-            { service: backgroundServices[0], delay: 0 },    // UpdateService - 立即
-            { service: backgroundServices[1], delay: 500 },  // ThumbnailService - 0.5s 后
-            { service: backgroundServices[2], delay: 1000 }, // ScanService - 1s 后
-            { service: backgroundServices[3], delay: 1500 }, // WatchService - 1.5s 后
-            { service: backgroundServices[4], delay: 2000 }, // ImportService - 2s 后
-        ];
+ // 使用优先级队列
+ const priorityQueue = [
+ { service: backgroundServices[0], delay: 0 }, // UpdateService - 立即
+ { service: backgroundServices[1], delay: 500 }, // ThumbnailService - 0.5s 后
+ { service: backgroundServices[2], delay: 1000 }, // ScanService - 1s 后
+ { service: backgroundServices[3], delay: 1500 }, // WatchService - 1.5s 后
+ { service: backgroundServices[4], delay: 2000 }, // ImportService - 2s 后
+ ];
 
-        for (const { service, delay } of priorityQueue) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-            try {
-                await service();
-            } catch (error) {
-                logger.error("Background service initialization failed:", error);
-            }
-        }
+ for (const { service, delay } of priorityQueue) {
+ await new Promise(resolve => setTimeout(resolve, delay));
+ try {
+ await service();
+ } catch (error) {
+ logger.error("Background service initialization failed:", error);
+ }
+ }
 
-        logger.info("All background services initialized");
-    }, 3000); // 延迟到 3 秒后开始
+ logger.info("All background services initialized");
+ }, 3000); // 延迟到 3 秒后开始
 }
 ```
 
@@ -533,22 +533,22 @@ mainWindow.once("ready-to-show", () => {
 
 ```typescript
 public fadeOut(callback: () => void): void {
-    if (!this.window) {
-        callback();
-        return;
-    }
+ if (!this.window) {
+ callback();
+ return;
+ }
 
-    let opacity = 1.0;
-    const fadeInterval = setInterval(() => {
-        opacity -= 0.1;
-        if (opacity <= 0) {
-            clearInterval(fadeInterval);
-            this.hide();
-            callback();
-        } else {
-            this.window?.setOpacity(opacity);
-        }
-    }, 30); // 300ms 淡出动画
+ let opacity = 1.0;
+ const fadeInterval = setInterval(() => {
+ opacity -= 0.1;
+ if (opacity <= 0) {
+ clearInterval(fadeInterval);
+ this.hide();
+ callback();
+ } else {
+ this.window?.setOpacity(opacity);
+ }
+ }, 30); // 300ms 淡出动画
 }
 ```
 
@@ -576,11 +576,11 @@ async function loadRenderer(): Promise<void> {
 
 ```typescript
 // 在开发模式下预热渲染器
-if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+if (is.dev && process.env["DESKTOP_RENDERER_URL"]) {
     // 预先检查开发服务器是否就绪
     const checkDevServer = async () => {
         try {
-            const response = await fetch(process.env["ELECTRON_RENDERER_URL"]);
+            const response = await fetch(process.env["DESKTOP_RENDERER_URL"]);
             return response.ok;
         } catch {
             return false;
@@ -690,51 +690,61 @@ app.whenReady().then(async () => {
 引入服务管理架构后，相比硬编码方式带来以下优势：
 
 1. **可维护性提升**
-    - 服务定义集中管理，易于查看和修改
-    - 通过配置文件调整服务优先级，无需修改代码
-    - 服务依赖关系清晰明确
+
+- 服务定义集中管理，易于查看和修改
+- 通过配置文件调整服务优先级，无需修改代码
+- 服务依赖关系清晰明确
 
 2. **灵活性增强**
-    - 支持动态加载/卸载服务
-    - 可根据环境或用户配置调整服务启动策略
-    - 易于添加新服务或移除旧服务
+
+- 支持动态加载/卸载服务
+- 可根据环境或用户配置调整服务启动策略
+- 易于添加新服务或移除旧服务
 
 3. **可靠性改进**
-    - 自动健康检查和服务恢复
-    - 服务失败隔离，不影响其他服务
-    - 支持服务重试和降级策略
+
+- 自动健康检查和服务恢复
+- 服务失败隔离，不影响其他服务
+- 支持服务重试和降级策略
 
 4. **性能优化**
-    - 按需加载（lazy loading）减少内存占用
-    - 智能依赖解析，避免重复初始化
-    - 支持并行和串行初始化策略
+
+- 按需加载（lazy loading）减少内存占用
+- 智能依赖解析，避免重复初始化
+- 支持并行和串行初始化策略
 
 5. **开发体验**
-    - 装饰器模式简化服务定义
-    - 统一的服务接口规范
-    - 更好的类型安全和 IDE 支持
+
+- 装饰器模式简化服务定义
+- 统一的服务接口规范
+- 更好的类型安全和 IDE 支持
 
 ## Drawbacks
 
 1. **复杂性增加**：
-    - 启动流程变得更复杂，需要更仔细的错误处理
-    - 服务管理系统本身增加了代码复杂度
+
+- 启动流程变得更复杂，需要更仔细的错误处理
+- 服务管理系统本身增加了代码复杂度
 
 2. **调试困难**：
-    - 异步和延迟初始化可能使问题定位更困难
-    - 服务依赖关系可能导致级联故障
+
+- 异步和延迟初始化可能使问题定位更困难
+- 服务依赖关系可能导致级联故障
 
 3. **功能延迟**：
-    - 某些功能在启动后不会立即可用
-    - 需要处理服务未就绪的边界情况
+
+- 某些功能在启动后不会立即可用
+- 需要处理服务未就绪的边界情况
 
 4. **测试挑战**：
-    - 需要更多的集成测试来确保启动流程正确
-    - 服务管理系统本身需要充分测试
+
+- 需要更多的集成测试来确保启动流程正确
+- 服务管理系统本身需要充分测试
 
 5. **学习成本**：
-    - 开发者需要理解新的服务管理架构
-    - 需要文档和培训支持
+
+- 开发者需要理解新的服务管理架构
+- 需要文档和培训支持
 
 ## Alternatives
 
@@ -750,7 +760,7 @@ app.whenReady().then(async () => {
 **缺点**：
 
 - 需要大量重构
-- Worker 线程不能直接访问 Electron API
+- Worker 线程不能直接访问 legacy preload API
 - 增加了进程间通信的复杂性
 
 ### 方案 B：预编译和缓存
@@ -793,70 +803,74 @@ app.whenReady().then(async () => {
 ## Success Criteria
 
 1. **性能指标**：
-    - 首屏显示时间减少 30% 以上
-    - 冷启动时间 < 3 秒（普通硬件）
-    - 热启动时间 < 1.5 秒
+
+- 首屏显示时间减少 30% 以上
+- 冷启动时间 < 3 秒（普通硬件）
+- 热启动时间 < 1.5 秒
 
 2. **用户体验**：
-    - 启动画面平滑过渡
-    - 核心功能立即可用
-    - 无明显的功能延迟感
+
+- 启动画面平滑过渡
+- 核心功能立即可用
+- 无明显的功能延迟感
 
 3. **稳定性**：
-    - 启动失败率 < 0.1%
-    - 无新增崩溃或挂起
-    - 所有现有功能正常工作
+
+- 启动失败率 < 0.1%
+- 无新增崩溃或挂起
+- 所有现有功能正常工作
 
 4. **可维护性**：
-    - 代码复杂度可控
-    - 有完整的性能监控
-    - 易于调试和故障排查
+
+- 代码复杂度可控
+- 有完整的性能监控
+- 易于调试和故障排查
 
 ## Implementation Checklist
 
 ### 阶段 1：服务管理架构（2-3天）
 
 - [ ] 创建服务管理基础架构
-    - [ ] 实现 ServiceRegistry 类
-    - [ ] 实现 ServiceMetadata 接口
-    - [ ] 创建服务配置文件
+- [ ] 实现 ServiceRegistry 类
+- [ ] 实现 ServiceMetadata 接口
+- [ ] 创建服务配置文件
 - [ ] 实现动态服务加载器
-    - [ ] DynamicServiceLoader 类
-    - [ ] 依赖解析机制
-    - [ ] 懒加载支持
+- [ ] DynamicServiceLoader 类
+- [ ] 依赖解析机制
+- [ ] 懒加载支持
 - [ ] 添加服务健康监控
-    - [ ] ServiceHealthMonitor 类
-    - [ ] 健康检查接口
-    - [ ] 自动恢复机制
+- [ ] ServiceHealthMonitor 类
+- [ ] 健康检查接口
+- [ ] 自动恢复机制
 
 ### 阶段 2：核心优化（1-2天）
 
 - [ ] 创建性能监控基础设施
 - [ ] 实施 Sentry 延迟初始化
 - [ ] 重构 IPC 处理器注册
-    - [ ] 拆分关键和非关键处理器
-    - [ ] 实现延迟注册机制
+- [ ] 拆分关键和非关键处理器
+- [ ] 实现延迟注册机制
 
 ### 阶段 3：服务迁移（2-3天）
 
 - [ ] 迁移现有服务到新架构
-    - [ ] ConfigService
-    - [ ] WindowService
-    - [ ] LogViewerService
-    - [ ] MenuService
-    - [ ] UpdateService
-    - [ ] ThumbnailService
-    - [ ] ScanService
-    - [ ] WatchService
-    - [ ] ImportService
+- [ ] ConfigService
+- [ ] WindowService
+- [ ] LogViewerService
+- [ ] MenuService
+- [ ] UpdateService
+- [ ] ThumbnailService
+- [ ] ScanService
+- [ ] WatchService
+- [ ] ImportService
 - [ ] 调整服务启动优先级
 - [ ] 实现服务装饰器模式
 
 ### 阶段 4：UI 和加载优化（1-2天）
 
 - [ ] 优化启动画面过渡
-    - [ ] 实现淡出动画
-    - [ ] 移除固定延迟
+- [ ] 实现淡出动画
+- [ ] 移除固定延迟
 - [ ] 实现渲染器预热机制
 - [ ] 调整渲染器超时时间
 
@@ -870,7 +884,7 @@ app.whenReady().then(async () => {
 
 ## References
 
-- [Electron Performance](https://www.electronjs.org/docs/latest/tutorial/performance)
+- [contract reference Performance](https://www.desktop-shell.dev/docs/latest/tutorial/performance)
 - [V8 Startup Snapshot](https://v8.dev/blog/custom-startup-snapshots)
 - [Chrome DevTools Performance](https://developer.chrome.com/docs/devtools/performance/)
 - [Node.js Performance Best Practices](https://nodejs.org/en/docs/guides/simple-profiling/)

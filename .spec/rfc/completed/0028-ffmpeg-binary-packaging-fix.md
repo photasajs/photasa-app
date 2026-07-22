@@ -7,7 +7,7 @@
 
 ## Summary
 
-修复 Electron 应用打包后 ffmpeg 和 ffprobe 二进制文件无法访问的问题，确保视频处理功能在生产环境正常工作。
+修复 桌面应用打包后 ffmpeg 和 ffprobe 二进制文件无法访问的问题，确保视频处理功能在生产环境正常工作。
 
 ## Motivation
 
@@ -107,7 +107,7 @@ installFFmpeg().catch(console.error);
 ```json
 {
     "scripts": {
-        "postinstall": "electron-builder install-app-deps && node scripts/install-ffmpeg.js",
+        "postinstall": "legacy packager install-app-deps && node scripts/install-ffmpeg.js",
         "verify:ffmpeg": "node scripts/verify-ffmpeg.js"
     }
 }
@@ -115,7 +115,7 @@ installFFmpeg().catch(console.error);
 
 #### 2. 配置 asarUnpack
 
-##### 2.1 更新 electron-builder.yml
+##### 2.1 更新 legacy packager.yml
 
 ```yaml
 asarUnpack:
@@ -139,7 +139,7 @@ asarUnpack:
 ```typescript
 import * as path from "path";
 import * as fs from "fs-extra";
-import { app } from "electron";
+import { app } from "desktop-shell";
 import ffmpegStatic from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 import ffmpeg from "fluent-ffmpeg";
@@ -252,7 +252,7 @@ function getFfmpegPath(): string {
     logger.error("FFmpeg binary not found. Tried locations:");
     strategies.forEach((s) => {
         const p = s.path();
-        if (p) logger.error(`  - ${s.name}: ${p}`);
+        if (p) logger.error(` - ${s.name}: ${p}`);
     });
 
     throw new Error("FFmpeg binary not found in any expected location");
@@ -410,9 +410,9 @@ function performChecks(checks) {
                     })
                         .toString()
                         .split("\n")[0];
-                    console.log(`    Version: ${version}`);
+                    console.log(` Version: ${version}`);
                 } catch (e) {
-                    log("warning", `    Could not get version: ${e.message}`);
+                    log("warning", ` Could not get version: ${e.message}`);
                 }
             }
         } catch (error) {
@@ -466,17 +466,20 @@ module.exports = { verifyDevelopment, verifyProduction };
 ### 实施步骤
 
 1. **Phase 1: 配置更新**
-    - 更新 electron-builder.yml
-    - 测试开发环境兼容性
+
+- 更新 legacy packager.yml
+- 测试开发环境兼容性
 
 2. **Phase 2: 路径逻辑增强**
-    - 改进 ffmpeg-config.ts
-    - 添加详细日志和错误处理
+
+- 改进 ffmpeg-config.ts
+- 添加详细日志和错误处理
 
 3. **Phase 3: 验证和测试**
-    - 实现构建验证脚本
-    - Windows 和 macOS 打包测试
-    - 集成到 CI/CD 流程
+
+- 实现构建验证脚本
+- Windows 和 macOS 打包测试
+- 集成到 CI/CD 流程
 
 ### 平台特定处理
 
@@ -504,16 +507,19 @@ module.exports = { verifyDevelopment, verifyProduction };
 ## Drawbacks
 
 1. **安装包大小增加**
-    - ffmpeg 二进制文件会同时存在于 asar 和 unpacked 中
-    - 每个平台约增加 70-100MB
+
+- ffmpeg 二进制文件会同时存在于 asar 和 unpacked 中
+- 每个平台约增加 70-100MB
 
 2. **构建时间延长**
-    - 解包过程增加构建时间
-    - 需要额外的验证步骤
+
+- 解包过程增加构建时间
+- 需要额外的验证步骤
 
 3. **复杂性增加**
-    - 需要维护平台特定的配置
-    - 增加了故障点
+
+- 需要维护平台特定的配置
+- 增加了故障点
 
 ## Alternatives
 
@@ -585,7 +591,7 @@ if (platform === "linux") {
 ```json
 {
     "scripts": {
-        "build:linux": "npm run build && npm run sharp:linux && electron-builder --linux --config && node scripts/generate-sha512.js",
+        "build:linux": "npm run build && npm run sharp:linux && legacy packager --linux --config && node scripts/generate-sha512.js",
         "sharp:linux": "del-cli ./node_modules/sharp && npm install --platform=linux --arch=x64 sharp --legacy-peer-deps",
         "verify:linux-deps": "node scripts/check-linux-deps.js"
     }
@@ -631,14 +637,14 @@ function checkLinuxDependencies() {
         if (missingLibs.length > 0) {
             console.error("✗ Missing libraries:", missingLibs.join(", "));
             console.log("\nTo install on Ubuntu/Debian:");
-            console.log("  sudo apt-get update");
+            console.log(" sudo apt-get update");
             console.log(
-                "  sudo apt-get install libavcodec-extra libavformat-dev libavutil-dev libswscale-dev",
+                " sudo apt-get install libavcodec-extra libavformat-dev libavutil-dev libswscale-dev",
             );
             console.log("\nTo install on Fedora/RHEL:");
-            console.log("  sudo dnf install ffmpeg-libs");
+            console.log(" sudo dnf install ffmpeg-libs");
             console.log("\nTo install on Arch:");
-            console.log("  sudo pacman -S ffmpeg");
+            console.log(" sudo pacman -S ffmpeg");
             process.exit(1);
         } else {
             console.log("✓ All required libraries are present");
@@ -689,23 +695,26 @@ describe("FFmpeg Config", () => {
 ## Success Criteria
 
 1. **功能恢复**
-    - 视频缩略图生成正常
-    - 视频元数据提取正常
-    - 无 ENOENT 错误
+
+- 视频缩略图生成正常
+- 视频元数据提取正常
+- 无 ENOENT 错误
 
 2. **性能指标**
-    - 启动时间增加 < 100ms
-    - 安装包增加 < 150MB
+
+- 启动时间增加 < 100ms
+- 安装包增加 < 150MB
 
 3. **兼容性**
-    - Windows 10/11 支持
-    - macOS 11+ (Intel & Apple Silicon) 支持
-    - Linux (主流发行版) 支持
-    - 开发环境无影响
+
+- Windows 10/11 支持
+- macOS 11+ (Intel & Apple Silicon) 支持
+- Linux (主流发行版) 支持
+- 开发环境无影响
 
 ## Implementation Checklist
 
-- [ ] 更新 electron-builder.yml 配置
+- [ ] 更新 legacy packager.yml 配置
 - [ ] 增强 ffmpeg-config.ts 路径逻辑
 - [ ] 创建构建验证脚本
 - [ ] Windows 平台测试
@@ -718,9 +727,9 @@ describe("FFmpeg Config", () => {
 
 ## References
 
-- [Electron ASAR Unpacking](https://www.electron.build/configuration/configuration#configuration-asarUnpack)
+- [contract reference ASAR Unpacking](https://www.legacy.build/configuration/configuration#configuration-asarUnpack)
 - [ffmpeg-static npm package](https://www.npmjs.com/package/ffmpeg-static)
-- [Electron Builder Configuration](https://www.electron.build/configuration/configuration)
+- [contract reference Builder Configuration](https://www.legacy.build/configuration/configuration)
 
 ## 路径传递架构实现
 

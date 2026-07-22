@@ -7,13 +7,13 @@
 
 ## Summary
 
-Extract the Sibu Engine (Configuration Management) relative logic from `apps/desktop` into a standalone workspace package `@photasa/sibu`. This follows the architectural pattern established by `@photasa/wenchang`.
+Extract the Sibu Engine (Configuration Management) relative logic from `legacy-api contract` into a standalone workspace package `@photasa/sibu`. This follows the architectural pattern established by `@photasa/wenchang`.
 
 ## Motivation
 
-1.  **Decoupling**: Separate configuration management logic from the desktop application shell.
-2.  **Testability**: Enable isolated unit testing with a target of 100% code coverage.
-3.  **Reusability**: Allow other potential apps (e.g., CLI tools) to use the configuration engine.
+1. **Decoupling**: Separate configuration management logic from the desktop application shell.
+2. **Testability**: Enable isolated unit testing with a target of 100% code coverage.
+3. **Reusability**: Allow other potential apps (e.g., CLI tools) to use the configuration engine.
 
 ## Detailed Design
 
@@ -25,26 +25,29 @@ New package at `packages/@photasa/sibu`:
 packages/@photasa/sibu/
 ├── package.json
 ├── tsconfig.json
-├── vite.config.ts      # For bundling
-├── vitest.config.ts    # For testing
+├── vite.config.ts # For bundling
+├── vitest.config.ts # For testing
 └── src/
-    ├── index.ts        # Public API
-    ├── core/           # Core engine logic (SibuEngine.ts)
-    ├── services/       # Setup, migration, validation services
-    ├── support/        # Defaults and constants
-    └── types/          # Shared type definitions
+ ├── index.ts # Public API
+ ├── core/ # Core engine logic (SibuEngine.ts)
+ ├── services/ # Setup, migration, validation services
+ ├── support/ # Defaults and constants
+ └── types/ # Shared type definitions
 ```
 
 ### Key Changes
 
-1.  **Move Code**: Transfer `apps/desktop/src/engines/sibu` contents to the new package.
-2.  **Dependencies**:
-    - `@photasa/common`: For logging and utilities.
-    - `fs-extra`, `js-yaml`: For file operations and parsing.
-    - `zod`: For validation (if used).
-3.  **Desktop Integration**:
-    - `apps/desktop` will depend on `@photasa/sibu`.
-    - `SibuAdapter` in desktop will import from the new package.
+1. **Move Code**: Transfer `historical engines/sibu` contents to the new package.
+2. **Dependencies**:
+
+- `@photasa/common`: For logging and utilities.
+- `fs-extra`, `js-yaml`: For file operations and parsing.
+- `zod`: For validation (if used).
+
+3. **Desktop Integration**:
+
+- `legacy-api contract` will depend on `@photasa/sibu`.
+- `SibuAdapter` in desktop will import from the new package.
 
 ## Verification Plan
 
@@ -52,9 +55,9 @@ packages/@photasa/sibu/
 
 - **Coverage Goal**: 100% Statement, Branch, Function, and Line coverage.
 - **Scope**:
-    - Core Engine logic (initialization, loading, saving).
-    - Migration services (version upgrades).
-    - Validation logic (schema checks).
+- Core Engine logic (initialization, loading, saving).
+- Migration services (version upgrades).
+- Validation logic (schema checks).
 
 ### Manual Verification
 

@@ -11,11 +11,11 @@
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
 - Import algorithm in **`crates/photasa-import`** only — **no** `@photasa/import` Node/TS in Tauri backend.
-- Electron/TS = behavior spec only.
+- legacy TypeScript = behavior spec only.
 
 ## Goal
 
-Import **algorithm** lives in workspace crate `crates/photasa-import` with **zero Tauri**.  
+Import **algorithm** lives in workspace crate `crates/photasa-import` with **zero Tauri**.
 `apps/photasa/src-tauri` keeps **thin** `#[tauri::command]` + metadata bridge only.
 
 ## Design criteria

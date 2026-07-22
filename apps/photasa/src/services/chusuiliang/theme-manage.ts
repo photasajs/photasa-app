@@ -53,11 +53,11 @@ export class ThemeManager implements IThemeManager {
     // 加载本地主题包
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async loadLocalThemes(_themeDir: string): Promise<void> {
-        // TODO伪代码：实际需用Node/Electron API读取目录和json
+        // TODO伪代码：实际需用legacy Node API读取目录和json
         // const themeFolders = await fs.readdir(themeDir);
         // for (const folder of themeFolders) {
-        //   const meta = await fs.readJson(`${themeDir}/${folder}/theme.json`);
-        //   this.themes.value.push({ ...meta, id: folder });
+        // const meta = await fs.readJson(`${themeDir}/${folder}/theme.json`);
+        // this.themes.value.push({ ...meta, id: folder });
         // }
     }
 

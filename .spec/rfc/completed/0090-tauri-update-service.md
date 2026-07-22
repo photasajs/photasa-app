@@ -9,13 +9,13 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## Summary
 
-One concern: **update service**. Implement checkForUpdates and related behavior in Tauri (Tauri update plugin or custom). Same surface as Electron (e.g. `window.api.checkForUpdates()`) so flat legacy API (RFC 0075) can delegate. Rust/Tauri only; no Node.
+One concern: **update service**. Implement checkForUpdates and related behavior in Tauri (Tauri update plugin or custom). Same surface as contract reference (e.g. `window.api.checkForUpdates()`) so flat legacy API (RFC 0075) can delegate. Rust/Tauri only; no Node.
 
 ## Motivation
 
@@ -36,4 +36,4 @@ Stub until Phase 4; this RFC defines the contract.
 
 ## Unresolved questions
 
-Exact method names and return types from current Electron update-service.
+Exact method names and return types from current contract reference update-service.

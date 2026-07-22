@@ -5,7 +5,7 @@ import { prefetchImageTask } from "@renderer/utils/image-prefetch";
 import { ensureWebviewMediaUrl } from "@renderer/utils/media-url";
 import { BaseSpinner, FileTypeBadge } from "@renderer/components/ui";
 
-// 与 Electron BaseImage 相同：6 个 prop；Tauri 仅在 prefetch / @error 时规范化 URL
+// 与 legacy-api BaseImage 相同：6 个 prop；Tauri 仅在 prefetch / @error 时规范化 URL
 const props = defineProps<{
     src: string;
     height: number;

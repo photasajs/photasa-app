@@ -320,7 +320,9 @@ onClickOutside(menuBarRef, () => {
     font-size: 16px;
     cursor: pointer;
     color: var(--color-text-secondary, #cccccc);
-    transition: color 0.15s ease, opacity 0.15s ease;
+    transition:
+        color 0.15s ease,
+        opacity 0.15s ease;
     opacity: 0.85;
 
     &:hover {

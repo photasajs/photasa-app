@@ -1,53 +1,82 @@
 # Photasa
 
-Another Picasa App powered by [Electron Vite](https://evite.netlify.app/)
+Desktop photo manager — **Tauri 2 + Vue 3 + Rust**. Legacy Node desktop and zouwu workflow engine removed; backend in `apps/photasa/src-tauri` and `crates/`.
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 pnpm install
 
-# Development
-npm run dev
+# Tauri dev (default)
+pnpm dev
+# or: pnpm run tauri:dev
 
-# Build
-npm run build:mac    # macOS
-npm run build:win    # Windows
-npm run build:linux  # Linux
+# Frontend only (no native window)
+pnpm run vite:dev:photasa
+
+# Production build
+pnpm run build:photasa
 ```
 
-### 从根目录 / 包内启动 Tauri 应用 (Photasa)
+| Task       | Root command                                   | `apps/photasa`       |
+| ---------- | ---------------------------------------------- | -------------------- |
+| Dev        | `pnpm dev`                                     | `pnpm run dev`       |
+| Vite only  | `pnpm run vite:dev:photasa`                    | `pnpm run vite:dev`  |
+| Build      | `pnpm run build:photasa`                       | `pnpm run build`     |
+| Unit tests | `pnpm --filter @photasa/photasa run test:unit` | `pnpm run test:unit` |
+| Rust tests | `cargo test --workspace`                       | —                    |
+| Clippy     | `pnpm run clippy`                              | `pnpm run clippy`    |
 
-| 场景                             | 根目录 (repo root)                                         | 包内 (apps/photasa) |
-| -------------------------------- | ---------------------------------------------------------- | ------------------- |
-| 启动 Tauri 开发                  | `pnpm dev` / `pnpm run tauri:dev` / `pnpm run dev:photasa` | `pnpm run dev`      |
-| 仅浏览器调试前端 (无 Tauri 窗口) | `pnpm run vite:dev:photasa`                                | `pnpm run vite:dev` |
-| Tauri 生产构建                   | `pnpm run build:photasa` / `pnpm run tauri:build`          | `pnpm run build`    |
+### Prerequisites
 
-## Documentation
-
-- 📖 **[Development Guide](docs/DEV_GUIDE.md)** - Complete development setup and workflow
-- 🐛 **[Debug Guide](docs/DEBUG.md)** - Debugging setup and troubleshooting
-- 🔍 **[MCP Debug Guide](docs/DEBUG_MCP.md)** - Advanced MCP debugging scenarios
-- 📋 **[RFCs](docs/rfc/)** - Request for Comments and design decisions
-- 🎨 **[Design Docs](docs/design/)** - Architecture and design documentation
-- 🐛 **[Issues](docs/issue/)** - Known issues and resolutions
+- Node.js 20+ and **pnpm 9**
+- Rust stable (see `rust-toolchain.toml`)
+- Platform deps for Tauri (WebKit, etc.) — see [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ## Project Structure
 
 ```
-src/
-├── main/          # Electron main process
-├── preload/       # Preload scripts
-├── renderer/      # Vue.js renderer process
-├── common/        # Shared utilities (pure functions)
-└── shared/        # Node.js utilities (main/preload only)
+picasa-vue/
+├── apps/photasa/ # Photasa app (Vue UI + Tauri shell)
+│ ├── src/ # Renderer: Vue, Zhenguan services, legacy-api compat
+│ └── src-tauri/ # Rust: commands, crates integration
+├── crates/ # Rust workspace (scan, import, thumbnail, config, …)
+├── packages/ # Shared TS packages (@photasa/common, …)
+├── .spec/rfc/ # Photasa / Tauri RFCs (active + completed)
+├── docs/ # Guides, design, legacy RFCs
+├── ROADMAP.md # Migration status & next priorities
+└── TASK_TRACKING.md # Sprint checklists
 ```
+
+## Architecture (short)
+
+- **UI**: Vue 3 + Pinia + Tailwind; domain services (“贞观”) orchestrate flows.
+- **IPC**: `YuanTianGang.executeZhaoling` is the production boundary — direct `invoke()` to typed `#[tauri::command]` handlers (RFC 0137). No zouwu / `tianshu_command` path.
+- **Rust**: Feature logic in workspace crates (`photasa-scan`, `photasa-import`, `photasa-thumbnail`, `photasa-config`, …); Tauri commands stay thin.
+- **Compat**: `legacy-api.ts` still exposes flat `window.api` for unmigrated callers; being retired per RFC 0097.
+
+Policy: **Rust rewrite, not TS copy** — see [ROADMAP.md](./ROADMAP.md) (Golden rule) and [TAURI_RUST_REWRITE_POLICY.md](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md).
+
+## CI & Branches
+
+| Branch    | Role            | Protection (rulesets)                                               |
+| --------- | --------------- | ------------------------------------------------------------------- |
+| `develop` | Integration     | No force-push / delete; **Lint & Test (Ubuntu)** required on update |
+| `main`    | Release default | PR required; same CI check + strict up-to-date                      |
+
+Workflow: [`.github/workflows/photasa-build.yml`](./.github/workflows/photasa-build.yml) — lint, typecheck, vitest, `cargo clippy`, `cargo test`, three-platform Tauri debug build.
+
+## Documentation
+
+- [Development Guide](docs/DEV_GUIDE.md) — setup (partially legacy; prefer this README + `apps/photasa`)
+- [Debug Guide](docs/DEBUG.md) · [MCP Debug](docs/DEBUG_MCP.md)
+- [ROADMAP.md](./ROADMAP.md) — what’s done / next (e.g. `legacy-api` retirement)
+- RFCs: `.spec/rfc/` (Photasa) · `docs/rfc/` (historical)
 
 ## Technology Stack
 
-- **Frontend**: Vue 3 + TypeScript + Tailwind CSS
-- **Backend**: Electron + Node.js
-- **Build**: Vite + electron-vite
-- **Testing**: Vitest + Playwright
+- **Shell**: Tauri 2
+- **Frontend**: Vue 3, TypeScript, Vite, Tailwind CSS
+- **Backend**: Rust (workspace crates + `src-tauri`)
+- **Monorepo**: pnpm workspaces + Turborepo
+- **Testing**: Vitest (renderer), `cargo test` (Rust)

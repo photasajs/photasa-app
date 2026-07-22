@@ -9,54 +9,58 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
 ## 摘要
 
-本文档详细说明如何将 Electron 的天枢服务迁移到 Tauri Rust 实现。天枢服务是工作流编排引擎，负责处理用户意图、协调各引擎、执行工作流。这是最复杂的服务迁移。
+本文档详细说明如何将 contract reference 的天枢服务迁移到 Tauri Rust 实现。天枢服务是工作流编排引擎，负责处理用户意图、协调各引擎、执行工作流。这是最复杂的服务迁移。
 
 ## 当前架构分析
 
-### Electron 实现结构
+### 旧实现结构
 
 ```
-apps/desktop/src/main/deity/
-├── tianshu-service.ts      # 主服务（IPC 处理、引擎管理）
-└── taiyi-service.ts        # 太乙服务（引擎协调）
+historical main/deity/
+├── tianshu-service.ts # 主服务（IPC 处理、引擎管理）
+└── taiyi-service.ts # 太乙服务（引擎协调）
 
-packages/@photasa/tianshu/  # 工作流引擎包
+packages/@photasa/tianshu/ # 工作流引擎包
 ├── src/
-│   ├── TianshuEngine.ts    # 工作流引擎核心
-│   ├── WorkflowParser.ts   # 工作流解析器
-│   ├── WorkflowExecutor.ts # 工作流执行器
-│   └── ...
-└── workflows/              # 工作流定义文件（.zouwu YAML）
+│ ├── TianshuEngine.ts # 工作流引擎核心
+│ ├── WorkflowParser.ts # 工作流解析器
+│ ├── WorkflowExecutor.ts # 工作流执行器
+│ └── ...
+└── workflows/ # 工作流定义文件（.zouwu YAML）
 ```
 
 ### 核心功能
 
 1. **IPC 通信**
-    - `tianshu.command` - 处理工作流命令
-    - `tianshu.status` - 查询系统状态
+
+- `tianshu.command` - 处理工作流命令
+- `tianshu.status` - 查询系统状态
 
 2. **工作流引擎**
-    - 解析 YAML 工作流定义（.zouwu 文件）
-    - 执行工作流步骤
-    - 管理工作流状态
-    - 事件系统
+
+- 解析 YAML 工作流定义（.zouwu 文件）
+- 执行工作流步骤
+- 管理工作流状态
+- 事件系统
 
 3. **引擎协调**
-    - 通过太乙服务调用各引擎
-    - 管理引擎依赖关系
-    - 处理引擎调用结果
+
+- 通过太乙服务调用各引擎
+- 管理引擎依赖关系
+- 处理引擎调用结果
 
 4. **工作流特性**
-    - 步骤依赖管理
-    - 条件执行
-    - 错误处理
-    - 内置操作（arrayConcat, return 等）
+
+- 步骤依赖管理
+- 条件执行
+- 错误处理
+- 内置操作（arrayConcat, return 等）
 
 ## Tauri Rust 迁移计划
 
@@ -67,18 +71,18 @@ packages/@photasa/tianshu/  # 工作流引擎包
 ```
 apps/photasa/src-tauri/src/
 ├── services/
-│   └── tianshu/
-│       ├── mod.rs                    # 模块导出
-│       ├── tianshu_service.rs       # 主服务
-│       ├── engine.rs                 # 工作流引擎
-│       ├── parser.rs                 # 工作流解析器
-│       ├── executor.rs               # 工作流执行器
-│       ├── builtin/                  # 内置操作
-│       │   ├── mod.rs
-│       │   ├── array_ops.rs         # 数组操作
-│       │   ├── object_ops.rs         # 对象操作
-│       │   └── control_flow.rs      # 控制流
-│       └── types.rs                  # 类型定义
+│ └── tianshu/
+│ ├── mod.rs # 模块导出
+│ ├── tianshu_service.rs # 主服务
+│ ├── engine.rs # 工作流引擎
+│ ├── parser.rs # 工作流解析器
+│ ├── executor.rs # 工作流执行器
+│ ├── builtin/ # 内置操作
+│ │ ├── mod.rs
+│ │ ├── array_ops.rs # 数组操作
+│ │ ├── object_ops.rs # 对象操作
+│ │ └── control_flow.rs # 控制流
+│ └── types.rs # 类型定义
 ```
 
 #### 1.2 依赖添加
@@ -94,7 +98,7 @@ tokio = { version = "1.0", features = ["full"] }
 futures = "0.3"
 
 # 表达式求值（用于工作流中的 {{}} 语法）
-rhai = "1.19"              # 脚本引擎，用于表达式求值
+rhai = "1.19" # 脚本引擎，用于表达式求值
 
 # 文件系统
 walkdir = "2.0"
@@ -114,49 +118,49 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TianshuCommand {
-    pub id: String,
-    pub intent: String,
-    pub inputs: serde_json::Value,
+ pub id: String,
+ pub intent: String,
+ pub inputs: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TianshuResponse {
-    pub success: bool,
-    pub result: Option<serde_json::Value>,
-    pub error: Option<String>,
+ pub success: bool,
+ pub result: Option<serde_json::Value>,
+ pub error: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowDefinition {
-    pub id: String,
-    pub name: String,
-    pub version: String,
-    pub triggers: Vec<WorkflowTrigger>,
-    pub inputs: serde_json::Value,
-    pub steps: Vec<WorkflowStep>,
-    pub outputs: serde_json::Value,
+ pub id: String,
+ pub name: String,
+ pub version: String,
+ pub triggers: Vec<WorkflowTrigger>,
+ pub inputs: serde_json::Value,
+ pub steps: Vec<WorkflowStep>,
+ pub outputs: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowTrigger {
-    pub intent: String,
+ pub intent: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowStep {
-    pub id: String,
-    pub name: String,
-    pub r#type: StepType,
-    pub service: Option<String>,
-    pub action: String,
-    pub input: serde_json::Value,
-    pub depends_on: Option<Vec<String>>,
+ pub id: String,
+ pub name: String,
+ pub r#type: StepType,
+ pub service: Option<String>,
+ pub action: String,
+ pub input: serde_json::Value,
+ pub depends_on: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum StepType {
-    Action,
-    Builtin,
+ Action,
+ Builtin,
 }
 ```
 
@@ -174,25 +178,25 @@ use anyhow::Result;
 pub struct WorkflowParser;
 
 impl WorkflowParser {
-    /// 解析工作流文件
-    pub fn parse_workflow(&self, path: &Path) -> Result<WorkflowDefinition> {
-        let content = std::fs::read_to_string(path)?;
-        let workflow: WorkflowDefinition = serde_yaml::from_str(&content)?;
-        Ok(workflow)
-    }
+ /// 解析工作流文件
+ pub fn parse_workflow(&self, path: &Path) -> Result<WorkflowDefinition> {
+ let content = std::fs::read_to_string(path)?;
+ let workflow: WorkflowDefinition = serde_yaml::from_str(&content)?;
+ Ok(workflow)
+ }
 
-    /// 加载所有工作流
-    pub fn load_workflows(&self, workflow_dir: &str) -> Result<Vec<WorkflowDefinition>> {
-        let mut workflows = Vec::new();
+ /// 加载所有工作流
+ pub fn load_workflows(&self, workflow_dir: &str) -> Result<Vec<WorkflowDefinition>> {
+ let mut workflows = Vec::new();
 
-        for entry in glob::glob(&format!("{}/**/*.zouwu", workflow_dir))? {
-            let path = entry?;
-            let workflow = self.parse_workflow(&path)?;
-            workflows.push(workflow);
-        }
+ for entry in glob::glob(&format!("{}/**/*.zouwu", workflow_dir))? {
+ let path = entry?;
+ let workflow = self.parse_workflow(&path)?;
+ workflows.push(workflow);
+ }
 
-        Ok(workflows)
-    }
+ Ok(workflows)
+ }
 }
 ```
 
@@ -207,64 +211,64 @@ use anyhow::Result;
 use std::collections::HashMap;
 
 pub struct WorkflowExecutor {
-    builtin_ops: builtin::BuiltinOperations,
-    step_results: HashMap<String, serde_json::Value>,
+ builtin_ops: builtin::BuiltinOperations,
+ step_results: HashMap<String, serde_json::Value>,
 }
 
 impl WorkflowExecutor {
-    pub fn new() -> Self {
-        Self {
-            builtin_ops: builtin::BuiltinOperations::new(),
-            step_results: HashMap::new(),
-        }
-    }
+ pub fn new() -> Self {
+ Self {
+ builtin_ops: builtin::BuiltinOperations::new(),
+ step_results: HashMap::new(),
+ }
+ }
 
-    /// 执行工作流
-    pub async fn execute_workflow(
-        &mut self,
-        workflow: &WorkflowDefinition,
-        inputs: serde_json::Value,
-    ) -> Result<serde_json::Value> {
-        // 1. 解析步骤依赖关系
-        let execution_order = self.resolve_dependencies(&workflow.steps)?;
+ /// 执行工作流
+ pub async fn execute_workflow(
+ &mut self,
+ workflow: &WorkflowDefinition,
+ inputs: serde_json::Value,
+ ) -> Result<serde_json::Value> {
+ // 1. 解析步骤依赖关系
+ let execution_order = self.resolve_dependencies(&workflow.steps)?;
 
-        // 2. 按顺序执行步骤
-        for step_id in execution_order {
-            let step = workflow.steps.iter()
-                .find(|s| s.id == step_id)
-                .ok_or_else(|| anyhow::anyhow!("Step not found: {}", step_id))?;
+ // 2. 按顺序执行步骤
+ for step_id in execution_order {
+ let step = workflow.steps.iter()
+ .find(|s| s.id == step_id)
+ .ok_or_else(|| anyhow::anyhow!("Step not found: {}", step_id))?;
 
-            let result = self.execute_step(step, &inputs).await?;
-            self.step_results.insert(step_id, result);
-        }
+ let result = self.execute_step(step, &inputs).await?;
+ self.step_results.insert(step_id, result);
+ }
 
-        // 3. 构建输出
-        self.build_outputs(&workflow.outputs)
-    }
+ // 3. 构建输出
+ self.build_outputs(&workflow.outputs)
+ }
 
-    async fn execute_step(
-        &self,
-        step: &WorkflowStep,
-        inputs: &serde_json::Value,
-    ) -> Result<serde_json::Value> {
-        match step.r#type {
-            StepType::Builtin => {
-                // 执行内置操作
-                self.builtin_ops.execute(&step.action, &step.input, inputs, &self.step_results).await
-            }
-            StepType::Action => {
-                // 调用服务操作
-                // TODO: 通过太乙服务调用引擎
-                todo!("Implement service action execution")
-            }
-        }
-    }
+ async fn execute_step(
+ &self,
+ step: &WorkflowStep,
+ inputs: &serde_json::Value,
+ ) -> Result<serde_json::Value> {
+ match step.r#type {
+ StepType::Builtin => {
+ // 执行内置操作
+ self.builtin_ops.execute(&step.action, &step.input, inputs, &self.step_results).await
+ }
+ StepType::Action => {
+ // 调用服务操作
+ // TODO: 通过太乙服务调用引擎
+ todo!("Implement service action execution")
+ }
+ }
+ }
 
-    fn resolve_dependencies(&self, steps: &[WorkflowStep]) -> Result<Vec<String>> {
-        // 实现拓扑排序，解析步骤依赖关系
-        // 返回执行顺序
-        todo!("Implement dependency resolution")
-    }
+ fn resolve_dependencies(&self, steps: &[WorkflowStep]) -> Result<Vec<String>> {
+ // 实现拓扑排序，解析步骤依赖关系
+ // 返回执行顺序
+ todo!("Implement dependency resolution")
+ }
 }
 ```
 
@@ -283,26 +287,26 @@ use std::collections::HashMap;
 pub struct BuiltinOperations;
 
 impl BuiltinOperations {
-    pub fn new() -> Self {
-        Self
-    }
+ pub fn new() -> Self {
+ Self
+ }
 
-    pub async fn execute(
-        &self,
-        action: &str,
-        input: &Value,
-        workflow_inputs: &Value,
-        step_results: &HashMap<String, Value>,
-    ) -> Result<Value, anyhow::Error> {
-        match action {
-            "arrayConcat" => array_ops::array_concat(input, step_results),
-            "arrayCount" => array_ops::array_count(input, step_results),
-            "arrayFilter" => array_ops::array_filter(input, step_results),
-            "return" => control_flow::return_value(input, step_results),
-            "setVariable" => control_flow::set_variable(input, step_results),
-            _ => Err(anyhow::anyhow!("Unknown builtin action: {}", action)),
-        }
-    }
+ pub async fn execute(
+ &self,
+ action: &str,
+ input: &Value,
+ workflow_inputs: &Value,
+ step_results: &HashMap<String, Value>,
+ ) -> Result<Value, anyhow::Error> {
+ match action {
+ "arrayConcat" => array_ops::array_concat(input, step_results),
+ "arrayCount" => array_ops::array_count(input, step_results),
+ "arrayFilter" => array_ops::array_filter(input, step_results),
+ "return" => control_flow::return_value(input, step_results),
+ "setVariable" => control_flow::set_variable(input, step_results),
+ _ => Err(anyhow::anyhow!("Unknown builtin action: {}", action)),
+ }
+ }
 }
 ```
 
@@ -318,54 +322,54 @@ use std::collections::HashMap;
 use anyhow::Result;
 
 pub struct TianshuService {
-    parser: WorkflowParser,
-    executor: WorkflowExecutor,
-    workflows: HashMap<String, WorkflowDefinition>,
+ parser: WorkflowParser,
+ executor: WorkflowExecutor,
+ workflows: HashMap<String, WorkflowDefinition>,
 }
 
 impl TianshuService {
-    pub fn new(workflow_dir: &str) -> Result<Self> {
-        let parser = WorkflowParser;
-        let workflows = parser.load_workflows(workflow_dir)?;
+ pub fn new(workflow_dir: &str) -> Result<Self> {
+ let parser = WorkflowParser;
+ let workflows = parser.load_workflows(workflow_dir)?;
 
-        let mut workflow_map = HashMap::new();
-        for workflow in workflows {
-            workflow_map.insert(workflow.id.clone(), workflow);
-        }
+ let mut workflow_map = HashMap::new();
+ for workflow in workflows {
+ workflow_map.insert(workflow.id.clone(), workflow);
+ }
 
-        Ok(Self {
-            parser,
-            executor: WorkflowExecutor::new(),
-            workflows: workflow_map,
-        })
-    }
+ Ok(Self {
+ parser,
+ executor: WorkflowExecutor::new(),
+ workflows: workflow_map,
+ })
+ }
 
-    /// 处理命令
-    pub async fn process_command(&mut self, command: TianshuCommand) -> Result<TianshuResponse> {
-        // 1. 根据 intent 查找工作流
-        let workflow = self.find_workflow_by_intent(&command.intent)?;
+ /// 处理命令
+ pub async fn process_command(&mut self, command: TianshuCommand) -> Result<TianshuResponse> {
+ // 1. 根据 intent 查找工作流
+ let workflow = self.find_workflow_by_intent(&command.intent)?;
 
-        // 2. 执行工作流
-        match self.executor.execute_workflow(workflow, command.inputs).await {
-            Ok(result) => Ok(TianshuResponse {
-                success: true,
-                result: Some(result),
-                error: None,
-            }),
-            Err(e) => Ok(TianshuResponse {
-                success: false,
-                result: None,
-                error: Some(e.to_string()),
-            }),
-        }
-    }
+ // 2. 执行工作流
+ match self.executor.execute_workflow(workflow, command.inputs).await {
+ Ok(result) => Ok(TianshuResponse {
+ success: true,
+ result: Some(result),
+ error: None,
+ }),
+ Err(e) => Ok(TianshuResponse {
+ success: false,
+ result: None,
+ error: Some(e.to_string()),
+ }),
+ }
+ }
 
-    fn find_workflow_by_intent(&self, intent: &str) -> Result<&WorkflowDefinition> {
-        self.workflows
-            .values()
-            .find(|w| w.triggers.iter().any(|t| t.intent == intent))
-            .ok_or_else(|| anyhow::anyhow!("Workflow not found for intent: {}", intent))
-    }
+ fn find_workflow_by_intent(&self, intent: &str) -> Result<&WorkflowDefinition> {
+ self.workflows
+ .values()
+ .find(|w| w.triggers.iter().any(|t| t.intent == intent))
+ .ok_or_else(|| anyhow::anyhow!("Workflow not found for intent: {}", intent))
+ }
 }
 ```
 
@@ -384,25 +388,25 @@ type TianshuServiceState = State<'_, Arc<Mutex<TianshuService>>>;
 
 #[tauri::command]
 pub async fn tianshu_command(
-    service: TianshuServiceState,
-    command: TianshuCommand,
+ service: TianshuServiceState,
+ command: TianshuCommand,
 ) -> Result<TianshuResponse, String> {
-    let mut service = service.lock().await;
-    service
-        .process_command(command)
-        .await
-        .map_err(|e| e.to_string())
+ let mut service = service.lock().await;
+ service
+ .process_command(command)
+ .await
+ .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn tianshu_status(
-    service: TianshuServiceState,
+ service: TianshuServiceState,
 ) -> Result<serde_json::Value, String> {
-    let service = service.lock().await;
-    Ok(serde_json::json!({
-        "workflows": service.workflows.len(),
-        "status": "ready"
-    }))
+ let service = service.lock().await;
+ Ok(serde_json::json!({
+ "workflows": service.workflows.len(),
+ "status": "ready"
+ }))
 }
 ```
 

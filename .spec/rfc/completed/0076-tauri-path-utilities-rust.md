@@ -9,7 +9,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-- Electron/Node code is a **behavioral specification** only—not a library for Photasa.
+- contract reference/Node code is a **behavioral specification** only—not a library for Photasa.
 - Implement in `apps/photasa/src-tauri` and `crates/`; **do not** import `@photasa/scan`, `@photasa/import`, or other Node packages from Tauri.
 - **1:1 parity** = same IPC/events/on-disk formats; **not** porting TypeScript source.
 
@@ -25,14 +25,14 @@ Implement path-related behavior used by the app (normalizePath, mergePath, toFil
 ## Detailed design
 
 - **Rust module**: One module (or a small set) in the Tauri app (e.g. `src-tauri/src/path.rs` or under a `path` crate) that implements:
-    - `normalize_path` (handle `file://`, resolve, separators)
-    - `merge_path` (join)
-    - `to_file_name` (basename), `to_dir_name` (dirname)
-    - `get_separator` (platform-specific)
-    - `is_hidden_file` (e.g. dot-prefix on Unix, hidden attribute on Windows if needed)
-    - `resolve_path`, `relative_path` if used by the app
+- `normalize_path` (handle `file://`, resolve, separators)
+- `merge_path` (join)
+- `to_file_name` (basename), `to_dir_name` (dirname)
+- `get_separator` (platform-specific)
+- `is_hidden_file` (e.g. dot-prefix on Unix, hidden attribute on Windows if needed)
+- `resolve_path`, `relative_path` if used by the app
 - **Commands**: Each function exposed as a Tauri command so the frontend adapter can `invoke('normalize_path', { path })` etc. No Node in the call chain.
-- **Semantics**: Match existing Electron/preload behavior on Windows and macOS (separators, `file://`, drive letters, UNC if applicable). Add tests for edge cases (file://, trailing slash, empty segments).
+- **Semantics**: Match existing contract reference/preload behavior on Windows and macOS (separators, `file://`, drive letters, UNC if applicable). Add tests for edge cases (file://, trailing slash, empty segments).
 
 ## Drawbacks
 

@@ -22,14 +22,16 @@
 - `apps/photasa/src-tauri/src/adapters/config_adapter.rs`（152 行）：`ConfigAdapter` 实现 `zouwu_core::adapter::Adapter` trait，`name()` 返回 `"config"`，5 个 action（`getCurrentSnapshot`/`getSnapshot`/`updateConfig`/`resetConfig`/`fixConfig`），内部直接调用 `photasa_config` 模块函数（`fixConfig` 用 `spawn_blocking` 包同步函数）。
 - 这是 zouwu 五个仍在用的域之一（scan/preference/appstate/shell/menu/engine 中的 config 严格说不算独立域，是被 preference 一起注册，见 `services/tianshu.rs` adapter 注册列表）。
 
-对齐上一轮结论（0136 讨论中确认）：zouwu 的价值在 Electron 的 preload 隔离 + 跨 engine 编排，Tauri 里 Rust command 已经是同进程直调，不需要这层。`.photasa.json` 逻辑本身已经是纯函数、无跨 engine 依赖，是退出 zouwu 成本最低的第一块——没有 workflow YAML 文件依赖（zero `.zouwu` files reference `config`），只是 adapter 注册用了 zouwu 的 trait，去掉即可。
+对齐上一轮结论（0136 讨论中确认）：zouwu 的价值在 contract reference 的 preload 隔离 + 跨 engine 编排，Tauri 里 Rust command 已经是同进程直调，不需要这层。`.photasa.json` 逻辑本身已经是纯函数、无跨 engine 依赖，是退出 zouwu 成本最低的第一块——没有 workflow YAML 文件依赖（zero `.zouwu` files reference `config`），只是 adapter 注册用了 zouwu 的 trait，去掉即可。
 
 ## Goals
 
 1. `crates/photasa-config`：零 Tauri 依赖，独立 `cargo test`。
-    - 迁入 `PhotasaConfigData`/`PhotoEntry`、`read_config_sync`/`write_config_sync`/`fix_config_sync`/`add_photo_to_folder_list`/`remove_photo_from_folder_list`/`parse_photo_list`/`config_to_json_value`/`parse_config_value`/`to_relative_thumbnail_path`/`shorten_thumbnail_relative_path`。
-    - 迁入全部 9 个现有单元测试，保持断言不变（不允许"修测试适配代码"，必须先证明行为一致）。
-    - `is_video_file` 依赖：不在本 crate 复制扩展名表，直接 `use photasa_media::is_video_file`（0141 已完成）。`to_file_name` 是几行纯字符串操作（basename 提取），无判定表分叉风险，crate 内部本地实现即可，不需要抽取。
+
+- 迁入 `PhotasaConfigData`/`PhotoEntry`、`read_config_sync`/`write_config_sync`/`fix_config_sync`/`add_photo_to_folder_list`/`remove_photo_from_folder_list`/`parse_photo_list`/`config_to_json_value`/`parse_config_value`/`to_relative_thumbnail_path`/`shorten_thumbnail_relative_path`。
+- 迁入全部 9 个现有单元测试，保持断言不变（不允许"修测试适配代码"，必须先证明行为一致）。
+- `is_video_file` 依赖：不在本 crate 复制扩展名表，直接 `use photasa_media::is_video_file`（0141 已完成）。`to_file_name` 是几行纯字符串操作（basename 提取），无判定表分叉风险，crate 内部本地实现即可，不需要抽取。
+
 2. `apps/photasa/src-tauri/src/adapters/config_adapter.rs` 的删除与 `#[tauri::command]` 迁移，按 0140 定义的通用模式执行（不在本 RFC 重复展开步骤）。
 3. `photasa-config` crate 必须支持 0136 的文件流水线场景：扫描发现媒体文件 → `add_photo_to_folder_list` 写入 `.photasa.json`——这是本 crate 对外的核心能力之一，不只是 folder-config 页面的 CRUD 后端。crate 签名统一为纯 Rust 类型进出（`&str`/`PhotasaConfigData`/`Result<_, String>`），不掺 `Value`/JSON——与 0141 的签名原则一致。0136 的 Tauri 组合根和未来的 `#[tauri::command]` 都只是直接调用同一套函数，不需要两种签名，JSON 序列化只在真正的 IPC 边界（`#[tauri::command]` 入口本身）发生。
 
