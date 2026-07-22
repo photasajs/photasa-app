@@ -172,6 +172,23 @@ pub fn merge_extract_into_file_info(
  }
 }
 
+/// 纯逻辑：给定路径、FS RFC3339 时间与提取元数据，计算导入日期子路径（可单测，不触盘）
+pub fn date_subpath_for_file_times(
+ path_str: &str,
+ created_rfc: &str,
+ modified_rfc: &str,
+ extracted: &Value,
+) -> String {
+ let mut fi = json!({
+ "path": path_str,
+ "createdTime": created_rfc,
+ "modifiedTime": modified_rfc,
+ });
+ merge_extract_into_file_info(&mut fi, extracted, created_rfc, modified_rfc);
+ let target_dt = determine_group_target_utc(&fi);
+ generate_date_path_utc(target_dt)
+}
+
 /// 单文件：元数据提取 + 与预览相同的日期链 → `YYYY/YYYYMMDD` 子路径
 pub fn date_subpath_for_import_source(src: &Path, extractor: &impl MetadataExtractor) -> String {
  let path_str = src.to_string_lossy().replace('\\', "/");
@@ -179,15 +196,8 @@ pub fn date_subpath_for_import_source(src: &Path, extractor: &impl MetadataExtra
  return generate_date_path_utc(Utc::now());
  };
  let (created_rfc, modified_rfc) = rfc3339_pair_from_fs_meta(&fs_meta);
- let mut fi = json!({
- "path": path_str,
- "createdTime": created_rfc,
- "modifiedTime": modified_rfc,
- });
  let extracted = extractor.extract_json(src);
- merge_extract_into_file_info(&mut fi, &extracted, &created_rfc, &modified_rfc);
- let target_dt = determine_group_target_utc(&fi);
- generate_date_path_utc(target_dt)
+ date_subpath_for_file_times(&path_str, &created_rfc, &modified_rfc, &extracted)
 }
 
 pub fn join_date_subpath(root: &Path, date_subpath: &str) -> PathBuf {
@@ -210,8 +220,6 @@ pub fn relative_target_path_for_import(date_subpath: &str, dest_file_name: &str)
 #[cfg(test)]
 mod tests {
  use super::*;
- use filetime::{set_file_times, FileTime};
- use std::io::Write;
 
  #[test]
  fn generate_date_path_matches_maliang_example() {
@@ -261,26 +269,30 @@ mod tests {
  assert_eq!(generate_date_path_utc(dt), "2024/20240315");
  }
 
- /// RFC 0104：无 EXIF 的 JPEG 依文件时间落入对应日期目录
+ /// RFC 0104：无 EXIF 时取较早的 created/modified（mock 时间，不依赖 OS 文件时间语义）
  #[test]
- fn date_subpath_follows_file_mtime_when_no_exif() {
- let dir = std::env::temp_dir().join(format!("photasa-date-sub-{}", uuid::Uuid::new_v4()));
- std::fs::create_dir_all(&dir).unwrap();
- let path = dir.join("shot.jpg");
- let mut f = std::fs::File::create(&path).unwrap();
- f.write_all(&[0xff, 0xd8, 0xff, 0xd9]).unwrap();
- drop(f);
-
- let fixed = DateTime::parse_from_rfc3339("2024-03-15T12:00:00+00:00")
- .unwrap()
- .with_timezone(&Utc);
- let ft = FileTime::from_unix_time(fixed.timestamp(), 0);
- set_file_times(&path, ft, ft).unwrap();
-
- let sub = date_subpath_for_import_source(&path, &EmptyMetadata);
+ fn date_subpath_uses_earlier_fs_time_when_no_exif() {
+ let sub = date_subpath_for_file_times(
+ "/tmp/shot.jpg",
+ "2026-07-22T10:00:00+00:00",
+ "2024-03-15T12:00:00+00:00",
+ &json!({}),
+ );
  assert_eq!(sub, "2024/20240315");
+ }
 
- let _ = std::fs::remove_dir_all(&dir);
+ #[test]
+ fn date_subpath_prefers_exif_date_time_over_fs_times() {
+ let sub = date_subpath_for_file_times(
+ "/tmp/shot.jpg",
+ "2026-07-22T10:00:00+00:00",
+ "2024-03-15T12:00:00+00:00",
+ &json!({
+ "dateTime": "2020-06-01T12:00:00+00:00",
+ "dateSource": "exif",
+ }),
+ );
+ assert_eq!(sub, "2020/20200601");
  }
 
  #[test]
