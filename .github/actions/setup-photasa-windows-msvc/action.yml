@@ -23,8 +23,15 @@ runs:
               }
               & $bash -lc "pacman -S --noconfirm --needed make diffutils"
 
-        # Append MSYS2 after MSVC so MSYS2 link.exe does not shadow MSVC linker.
-        # sh/make/perl are required by ffmpeg-sys-next configure on Windows.
-        - name: Append MSYS2 and NASM to PATH
+        # MSYS2 gawk/sh/make must win over Git\usr\bin (Git awk breaks ffmpeg make rules).
+        # Keep MSVC earlier in PATH so link.exe is not shadowed by MSYS2.
+        - name: Prioritize MSYS2 tools for FFmpeg build
           shell: pwsh
-          run: echo "PATH=$env:PATH;C:\msys64\usr\bin;C:\Program Files\NASM" >> $env:GITHUB_ENV
+          run: |
+              $msys = 'C:\msys64\usr\bin'
+              $nasm = 'C:\Program Files\NASM'
+              $filtered = $env:PATH -split ';' | Where-Object {
+                  $_ -and $_ -notmatch '[/\\]Git[/\\]usr[/\\]bin' -and $_ -notmatch '[/\\]Git[/\\]mingw64[/\\]bin'
+              }
+              $newPath = ($msys, $nasm) + $filtered
+              echo "PATH=$($newPath -join ';')" >> $env:GITHUB_ENV

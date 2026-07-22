@@ -10,20 +10,42 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
 
-    // Tell cargo to tell rustc to link the heif library.
+    // Photasa policy (RFC 0103): embedded-libheif on all platforms — no vcpkg in CI.
+    #[cfg(all(
+        target_os = "windows",
+        target_env = "msvc",
+        feature = "embedded-libheif"
+    ))]
+    {
+        let include_paths = find_libheif();
+        #[cfg(feature = "use-bindgen")]
+        run_bindgen(&include_paths);
+        #[cfg(not(feature = "use-bindgen"))]
+        let _ = include_paths;
+        return;
+    }
+
+    #[cfg(all(
+        target_os = "windows",
+        target_env = "msvc",
+        not(feature = "embedded-libheif")
+    ))]
+    {
+        let include_paths: Vec<String> = Vec::new();
+        install_libheif_by_vcpkg();
+        #[cfg(feature = "use-bindgen")]
+        run_bindgen(&include_paths);
+        return;
+    }
 
     #[cfg(not(all(target_os = "windows", target_env = "msvc")))]
-    #[allow(unused_variables)]
-    let include_paths = find_libheif();
-
-    #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    #[allow(unused_variables)]
-    let include_paths: Vec<String> = Vec::new();
-    #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    install_libheif_by_vcpkg();
-
-    #[cfg(feature = "use-bindgen")]
-    run_bindgen(&include_paths);
+    {
+        let include_paths = find_libheif();
+        #[cfg(feature = "use-bindgen")]
+        run_bindgen(&include_paths);
+        #[cfg(not(feature = "use-bindgen"))]
+        let _ = include_paths;
+    }
 }
 
 #[allow(dead_code)]
@@ -200,7 +222,7 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
     let pkg_dir = lib_dir.join("pkgconfig");
     std::fs::create_dir_all(&pkg_dir).expect("failed to create pkgconfig directory");
 
-    let installed_de265 = lib_dir.join("libde265.a");
+    let installed_de265 = lib_dir.join(static_library_filename("de265"));
     if de265_archive != installed_de265 {
         std::fs::copy(&de265_archive, &installed_de265)
             .unwrap_or_else(|err| panic!("failed to copy {}: {err}", de265_archive.display()));
@@ -225,12 +247,36 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
          Libs.private:\n\
          Cflags: -I${{includedir}}\n"
     );
-    std::fs::write(pkg_dir.join("libde265.pc"), libde265_pc)
-        .expect("failed to write libde265.pc");
+    std::fs::write(pkg_dir.join("libde265.pc"), libde265_pc).expect("failed to write libde265.pc");
+}
+
+fn static_library_filename(stem: &str) -> String {
+    if cfg!(all(target_os = "windows", target_env = "msvc")) {
+        format!("{stem}.lib")
+    } else {
+        format!("lib{stem}.a")
+    }
 }
 
 fn find_libde265_static_library(libheif_build: &Path) -> Option<PathBuf> {
-    find_file_named(libheif_build, "libde265.a")
+    for name in static_library_candidates("de265") {
+        if let Some(path) = find_file_named(libheif_build, &name) {
+            return Some(path);
+        }
+    }
+    None
+}
+
+fn static_library_candidates(stem: &str) -> Vec<String> {
+    if cfg!(all(target_os = "windows", target_env = "msvc")) {
+        vec![
+            format!("{stem}.lib"),
+            format!("lib{stem}.lib"),
+            format!("lib{stem}.a"),
+        ]
+    } else {
+        vec![format!("lib{stem}.a"), format!("{stem}.a")]
+    }
 }
 
 fn find_file_named(root: &Path, file_name: &str) -> Option<PathBuf> {
@@ -249,7 +295,6 @@ fn find_file_named(root: &Path, file_name: &str) -> Option<PathBuf> {
     None
 }
 
-#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
 fn find_libheif() -> Vec<String> {
     #[allow(unused_mut)]
     let mut config = system_deps::Config::new();

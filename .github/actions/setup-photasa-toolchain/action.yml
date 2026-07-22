@@ -45,7 +45,7 @@ runs:
           with:
               workspaces: ". -> target"
               # Bust caches from ffmpeg-sys-next -march=native builds (Linux SIGILL / Windows configure fail).
-              shared-key: "ffmpeg-ci-v2"
+              shared-key: "ffmpeg-ci-v3"
 
         - name: Prepare FFmpeg CI patch (Linux / Windows)
           if: runner.os == 'Linux' || runner.os == 'Windows'
