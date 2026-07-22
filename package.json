@@ -15,7 +15,8 @@
         "build:photasa": "pnpm --filter @photasa/photasa run build",
         "tauri:dev": "pnpm --filter @photasa/photasa run dev",
         "tauri:build": "pnpm --filter @photasa/photasa run build",
-        "clippy": "cargo clippy --workspace -- -D warnings"
+        "clippy": "cargo clippy --workspace -- -D warnings",
+        "test:rust": "cargo test --workspace"
     },
     "devDependencies": {
         "@systembug/pangu": "^0.0.12",

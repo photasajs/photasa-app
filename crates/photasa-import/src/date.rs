@@ -68,27 +68,22 @@ pub fn compute_fallback_date_utc(created_rfc: &str, modified_rfc: &str) -> DateT
 
 /// 与 `@photasa/import` `determineGroupTargetDate` 一致（1:1 contract reference 预览分桶日期）
 pub fn determine_group_target_utc(main: &Value) -> DateTime<Utc> {
- if let Some(ds) = main.get("dateTime").and_then(|v| v.as_str()) {
- if is_plausible_datetime_str(ds) {
- if let Ok(dt) = DateTime::parse_from_rfc3339(ds) {
- return dt.with_timezone(&Utc);
- }
- }
- }
- if let Some(cs) = main.get("createdTime").and_then(|v| v.as_str()) {
- if let Some(dt) = parse_rfc3339_utc(cs) {
- return dt;
- }
- }
- let created = main
- .get("createdTime")
- .and_then(|v| v.as_str())
- .unwrap_or("");
- let modified = main
- .get("modifiedTime")
- .and_then(|v| v.as_str())
- .unwrap_or("");
- compute_fallback_date_utc(created, modified)
+	if let Some(ds) = main.get("dateTime").and_then(|v| v.as_str()) {
+		if is_plausible_datetime_str(ds) {
+			if let Ok(dt) = DateTime::parse_from_rfc3339(ds) {
+				return dt.with_timezone(&Utc);
+			}
+		}
+	}
+	let created = main
+		.get("createdTime")
+		.and_then(|v| v.as_str())
+		.unwrap_or("");
+	let modified = main
+		.get("modifiedTime")
+		.and_then(|v| v.as_str())
+		.unwrap_or("");
+	compute_fallback_date_utc(created, modified)
 }
 
 fn system_time_to_rfc3339(t: SystemTime) -> Option<String> {
@@ -229,6 +224,16 @@ mod tests {
  fn compute_fallback_picks_earlier_timestamp() {
  let e = compute_fallback_date_utc("2022-01-02T00:00:00+00:00", "2021-12-31T00:00:00+00:00");
  assert_eq!(e.date_naive().to_string(), "2021-12-31");
+ }
+
+ #[test]
+ fn determine_group_uses_earlier_fs_time_when_no_exif() {
+ let main = json!({
+ "createdTime": "2026-07-22T10:00:00+00:00",
+ "modifiedTime": "2024-03-15T12:00:00+00:00",
+ });
+ let dt = determine_group_target_utc(&main);
+ assert_eq!(generate_date_path_utc(dt), "2024/20240315");
  }
 
  /// RFC 0104：无 EXIF 的 JPEG 依文件时间落入对应日期目录
