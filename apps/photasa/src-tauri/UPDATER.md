@@ -34,20 +34,20 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="your-password"
 
 ### 2. 更新端点 `endpoints`
 
-在 `tauri.conf.json` 中配置至少一个 HTTPS 端点，支持动态变量，例如：
+在 `tauri.conf.json` 中已配置 GitHub Releases 静态 `latest.json` 端点：
 
 ```json
 "plugins": {
- "updater": {
- "pubkey": "<CONTENT FROM .key.pub>",
- "endpoints": [
- "https://releases.example.com/photasa/{{target}}/{{arch}}/{{current_version}}"
- ]
- }
+  "updater": {
+    "pubkey": "<CONTENT FROM .key.pub>",
+    "endpoints": [
+      "https://github.com/photasajs/photasa-app/releases/latest/download/latest.json"
+    ]
+  }
 }
 ```
 
-或使用静态 `latest.json`（GitHub Releases 等）。端点 URL 与签名后的更新包须与 [RFC 0020](../../docs/rfc/completed/0020-auto-update-server.md) 服务端约定一致。
+CI 工作流 (`.github/workflows/upload-release-assets.yml`) 使用 `tauri-apps/tauri-action@v0` 自动在 GitHub Releases 上构建并更新 `latest.json` 及签名产物。
 
 ### 3. 更新产物
 

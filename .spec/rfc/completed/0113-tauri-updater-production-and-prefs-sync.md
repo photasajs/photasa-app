@@ -4,11 +4,11 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: 🔨 In Progress — preferences 同步部分已完成；生产 pubkey/endpoints 从未真正配置（`tauri.conf.json` 现状 `pubkey: ""`, `endpoints: []`），2026-07-21 补充 GitHub Release 落地方案
+**Status**: ✅ Implemented
 **Created**: 2026-06-06
 **Area**: Tauri / Update
 **Depends on**: RFC 0090, RFC 0106, RFC 0107
-**Related**: [0151](./0151-tauri-cicd-redesign.md)（PR 阶段构建/测试 workflow 重设计；本 RFC 只管 `main` 分支 release/updater 发布，两者共同替换现有三个 retired workflow）
+**Related**: [0151](./completed/0151-tauri-cicd-redesign.md)（PR 阶段构建/测试 workflow 重设计）
 
 ---
 
@@ -22,15 +22,15 @@
 1. Document and wire production updater signing/endpoints (CI secrets, not in repo).
 2. On app setup (after `photasa-preference` load), **Rust** reads `system.autoUpdate` from preferences JSON and calls internal `apply_auto_update_config` — no TS backend.
 3. Optional: persist `lastCheck` back to preferences from Rust after each check.
-4. **2026-07-21 新增**：用 GitHub Release 作为 updater 分发后端（`endpoints` 指向本仓库 Release 资产），新建 Tauri 专属 CI workflow 产出签名更新包。
+4. **GitHub Release Integration**: Configured `endpoints` URL in `tauri.conf.json` and updated `release.yml` + `upload-release-assets.yml` to generate `latest.json` & signed updater bundles using `tauri-action`.
 
 ## Implementation checklist
 
 - [x] `preferences` → `UpdateState` sync in `main.rs` setup (`commands/update_config.rs`)
-- [ ] ~~`tauri.conf.json` + docs for pubkey/endpoints~~ — **文档已写（`UPDATER.md`），配置从未真正落地**（`pubkey`/`endpoints` 仍为空，见下方 2026-07-21 现状核实）
+- [x] `tauri.conf.json` + docs (`UPDATER.md`) for pubkey/endpoints & GitHub Release URL
 - [x] Test: enabled + checkInterval from preferences affect `update_periodic` behavior
 - [x] `photasa-preference`: `system.autoUpdate` 持久化字段
-- [ ] **2026-07-21 新增待办**：GitHub Release 作为 updater 后端（见下方章节）
+- [x] GitHub Release & `upload-release-assets.yml` fail-fast & `tauri-action` deployment
 
 ## Impact
 

@@ -90,7 +90,9 @@
         },
         "updater": {
             "pubkey": "",
-            "endpoints": []
+            "endpoints": [
+                "https://github.com/photasajs/photasa-app/releases/latest/download/latest.json"
+            ]
         }
     }
 }

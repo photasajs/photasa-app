@@ -8,7 +8,7 @@ High-level plans and “what’s next” live here. Do not duplicate this as ran
 
 - **Runtime**: Tauri only (no contract reference in target). Vue for frontend.
 - **Backend**: 100% Rust. **1:1 mapping** from current legacy Node main and preload logic to Rust; **no Node usage** in Tauri backend.
-- **Frontend–backend boundary**: Legacy Vue callers may use the adapter / flat `window.api` compatibility surface during migration. Zhenguan services and every new Tauri path use `YuanTianGang` as the only IPC boundary, with direct Rust `invoke` and Tauri events; they must never use `window.api`. See [0137](.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md).
+- **Frontend–backend boundary**: Vue UI uses `apps/photasa/src/ipc/*` domain modules or Zhenguan persons (`YuanTianGang` for stateful/cross-cutting IPC). **`window.api` / `legacy-api.ts` are being removed** per [0154](.spec/rfc/0154-tauri-legacy-api-retirement.md). Zhenguan services must never use `window.api`. See [0137](.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md).
 
 ### Golden rule: Rust rewrite, not TypeScript copy
 
@@ -79,7 +79,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 - **主 RFC**：[RFC 0067](.spec/rfc/completed/0067-tauri-app-photasa.md) — Photasa 总体架构与迁移策略（✅ 已完成/归档，伞形索引文档）
 - **已完成（服务层）**：[0073](.spec/rfc/completed/0073-tauri-ui-migration-adapter.md) UI/适配层 ✅ **已关闭**（余项 [0149](.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)）；[0068](.spec/rfc/completed/0068-tauri-scan-service-migration.md) 扫描；[0069](.spec/rfc/completed/0069-tauri-thumbnail-service-migration.md) 缩略图；[0070](.spec/rfc/completed/0070-tauri-import-service-migration.md) 导入（Rust 执行流已落地；与 legacy-api 细粒度对拍见 [0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)）；[0071](.spec/rfc/completed/0071-tauri-config-service-migration.md) 配置；[0072](.spec/rfc/completed/0072-tauri-tianshu-service-migration.md) 天枢
 
-**建议实施顺序（0073 已关闭）**：~~0137~~ ✅ / ~~0139~~ ✅ / ~~0140~~ ✅ / ~~0153~~ ✅ `zouwu-core` workspace 物理移除。
+**建议实施顺序（0073 已关闭）**：~~0137~~ ✅ / ~~0139~~ ✅ / ~~0140~~ ✅ / ~~0153~~ ✅ → **0154** `legacy-api` / `window.api` 退役。
 
 ### Tauri small RFCs（0074+）：一事一表
 
@@ -121,7 +121,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0107](.spec/rfc/completed/0107-tauri-wenchang-preferences-storage.md)             | Wenchang preferences storage parity (Tauri)                                              | ✅ Implemented                                                    |
 | [0111](.spec/rfc/completed/0111-tauri-scan-notify-status-bridge.md)                | Scan `notify:status` Rust bridge (0057)                                                  | ✅ Implemented                                                    |
 | [0112](.spec/rfc/completed/0112-tauri-extract-metadata-golden-parity.md)           | extract_metadata golden parity + MakerNote                                               | ✅ Implemented                                                    |
-| [0113](docs/rfc/0113-tauri-updater-production-and-prefs-sync.md)                   | Updater production config + prefs → UpdateState                                          | ✅ Implemented                                                    |
+| [0113](.spec/rfc/completed/0113-tauri-updater-production-and-prefs-sync.md)        | Updater production config + prefs → UpdateState                                          | ✅ Implemented                                                    |
 | [0114](.spec/rfc/completed/0114-tauri-get-directory-os-paths.md)                   | get_directory OS paths + scan_directories FileGroup[]                                    | ✅ Implemented                                                    |
 | [0115](.spec/rfc/completed/0115-tauri-webview-local-image-asset-protocol.md)       | WebView 本地图片（asset 协议，非 file://）                                               | ✅ Implemented                                                    |
 | [0116](.spec/rfc/completed/0116-tauri-photasa-config-thumbnail-parity.md)          | `.photasa.json` 缩略图路径 legacy-api 契约 + rescan/切换文件夹修复                       | ✅ Implemented                                                    |
@@ -159,6 +159,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)                | 0073 关闭后 UI 适配层剩余项跟踪                                                          | ✅ Implemented                                                    |
 | [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md)            | shell/menu 退出 zouwu（贞观直连 invoke）                                                 | ✅ Implemented                                                    |
 | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)                | `zouwu-core` / `TianshuService` workspace 物理移除                                       | ✅ Implemented                                                    |
+| [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 退役 `legacy-api` / `utils/api` → 贞观人物 + 袁天罡唯一 IPC                              | ⏳ Draft                                                          |
 
 ### Photasa next priorities（2026-07）
 
@@ -407,7 +408,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------- |
 | **[0111](.spec/rfc/completed/0111-tauri-scan-notify-status-bridge.md)**          | 扫描 `notify:status` Rust 桥                                                      | ✅ Implemented |
 | **[0112](.spec/rfc/completed/0112-tauri-extract-metadata-golden-parity.md)**     | `extract_metadata` golden 对拍                                                    | ✅ Implemented |
-| **[0113](docs/rfc/0113-tauri-updater-production-and-prefs-sync.md)**             | updater 生产配置 + 启动同步 `UpdateState`                                         | ✅ Implemented |
+| **[0113](.spec/rfc/completed/0113-tauri-updater-production-and-prefs-sync.md)**  | updater 生产配置 + 启动同步 `UpdateState`                                         | ✅ Implemented |
 | **[0114](.spec/rfc/completed/0114-tauri-get-directory-os-paths.md)**             | `get_directory` OS 路径 + `scan_directories` FileGroup[] + WASM 清理              | ✅ Implemented |
 | **[0115](.spec/rfc/completed/0115-tauri-webview-local-image-asset-protocol.md)** | WebView 本地图片：`convertFileSrc` + assetProtocol + CSP（修复 file:// 不可加载） | ✅ Implemented |
 
