@@ -16,7 +16,7 @@ const MEDIA_EXTENSION_REGEX =
 /** 文件路径取父目录；已是目录路径则原样返回 */
 function directoryPathForFolderTree(file: Photo | { path: string; isDirectory?: boolean }): string {
     const raw = canonicalFolderPath(file.path);
-    if (file.isDirectory) {
+    if ("isDirectory" in file && file.isDirectory) {
         return raw;
     }
     const basename = raw.split("/").pop() || "";
