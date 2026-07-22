@@ -83,7 +83,27 @@ pub fn determine_group_target_utc(main: &Value) -> DateTime<Utc> {
 		.get("modifiedTime")
 		.and_then(|v| v.as_str())
 		.unwrap_or("");
-	compute_fallback_date_utc(created, modified)
+ compute_fallback_date_utc(created, modified)
+}
+
+/// 与 maliang `computeFallbackDate` 一致：取较早时间并返回对应 `dateSource`
+fn fallback_date_with_source(created_rfc: &str, modified_rfc: &str) -> (DateTime<Utc>, &'static str) {
+ let created = parse_rfc3339_utc(created_rfc);
+ let modified = parse_rfc3339_utc(modified_rfc);
+ let dt = compute_fallback_date_utc(created_rfc, modified_rfc);
+ let source = match (created, modified) {
+ (Some(c), Some(m)) => {
+ if m <= c {
+ "file_modified"
+ } else {
+ "file_created"
+ }
+ }
+ (Some(_), None) => "file_created",
+ (None, Some(_)) => "file_modified",
+ (None, None) => "file_created",
+ };
+ (dt, source)
 }
 
 fn system_time_to_rfc3339(t: SystemTime) -> Option<String> {
@@ -130,17 +150,9 @@ pub fn merge_extract_into_file_info(
  }
  }
  if !from_meta {
- if parse_rfc3339_utc(created_rfc).is_some() {
- obj.insert("dateTime".to_string(), json!(created_rfc));
- obj.insert("dateSource".to_string(), json!("file_created"));
- } else if parse_rfc3339_utc(modified_rfc).is_some() {
- obj.insert("dateTime".to_string(), json!(modified_rfc));
- obj.insert("dateSource".to_string(), json!("file_modified"));
- } else {
- let u = compute_fallback_date_utc(created_rfc, modified_rfc);
- obj.insert("dateTime".to_string(), json!(u.to_rfc3339()));
- obj.insert("dateSource".to_string(), json!("file_created"));
- }
+ let (fallback, source) = fallback_date_with_source(created_rfc, modified_rfc);
+ obj.insert("dateTime".to_string(), json!(fallback.to_rfc3339()));
+ obj.insert("dateSource".to_string(), json!(source));
  }
  for key in [
  "width",
@@ -233,6 +245,19 @@ mod tests {
  "modifiedTime": "2024-03-15T12:00:00+00:00",
  });
  let dt = determine_group_target_utc(&main);
+ assert_eq!(generate_date_path_utc(dt), "2024/20240315");
+ }
+
+ #[test]
+ fn merge_extract_uses_earlier_fs_time_when_no_exif() {
+ let mut fi = json!({
+ "path": "/tmp/shot.jpg",
+ "createdTime": "2026-07-22T10:00:00+00:00",
+ "modifiedTime": "2024-03-15T12:00:00+00:00",
+ });
+ merge_extract_into_file_info(&mut fi, &json!({}), "2026-07-22T10:00:00+00:00", "2024-03-15T12:00:00+00:00");
+ assert_eq!(fi["dateSource"], "file_modified");
+ let dt = determine_group_target_utc(&fi);
  assert_eq!(generate_date_path_utc(dt), "2024/20240315");
  }
 
