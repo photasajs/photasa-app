@@ -8,6 +8,17 @@ import {
     folderSegmentsUnderRoot,
     resolveFolderNodeKey,
 } from "@renderer/utils/folder-tree-path";
+import { toDirNameSync } from "@renderer/utils/sync-path";
+
+/** 文件路径取父目录；已是目录路径则原样返回 */
+function directoryPathForFolderTree(filePath: string): string {
+    const raw = canonicalFolderPath(filePath);
+    const basename = raw.split("/").pop() || "";
+    if (/\.[a-zA-Z0-9]+$/i.test(basename)) {
+        return toDirNameSync(raw);
+    }
+    return raw;
+}
 
 function normalizeRoot(root: FolderNode): void {
     if (!root.children) {
@@ -91,7 +102,7 @@ export function addFolderToTree(roots: FolderNode[], file: Photo): void {
     if (!file?.path || typeof file.path !== "string") {
         return;
     }
-    const folderPath = canonicalFolderPath(file.path);
+    const folderPath = directoryPathForFolderTree(file.path);
     if (!folderPath) {
         return;
     }
