@@ -70,6 +70,10 @@ jobs:
               with:
                   checkout: "false"
 
+            - name: Setup Windows MSVC (FFmpeg)
+              if: steps.release.outputs.should_upload == 'true' && runner.os == 'Windows'
+              uses: ./.github/actions/setup-photasa-windows-msvc
+
             - name: Build & Publish Tauri Release Assets
               if: steps.release.outputs.should_upload == 'true'
               uses: tauri-apps/tauri-action@v0

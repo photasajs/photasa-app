@@ -52,5 +52,10 @@ jobs:
               with:
                   checkout: "false"
 
+            # Workflow-level if skips action download on Linux/macOS (composite inner if does not).
+            - name: Setup Windows MSVC (FFmpeg)
+              if: runner.os == 'Windows'
+              uses: ./.github/actions/setup-photasa-windows-msvc
+
             - name: Build Tauri App (Debug Profile)
               run: pnpm --filter @photasa/photasa tauri build --debug

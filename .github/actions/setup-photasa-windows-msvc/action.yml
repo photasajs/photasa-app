@@ -1,0 +1,18 @@
+name: Setup Photasa Windows MSVC (FFmpeg)
+description: "MSVC dev prompt + MSYS2/NASM PATH for ffmpeg-sys-next on windows-latest"
+
+runs:
+    using: "composite"
+    steps:
+        # FFmpeg configure needs cl.exe with INCLUDE/LIB; without this it fails with
+        # "cl.exe is unable to create an executable file".
+        - name: Setup MSVC environment
+          uses: ilammy/msvc-dev-cmd@v1
+          with:
+              arch: x64
+
+        # Append MSYS2 after MSVC so MSYS2 link.exe does not shadow MSVC linker.
+        # sh/make/perl are required by ffmpeg-sys-next configure on Windows.
+        - name: Append MSYS2 and NASM to PATH
+          shell: pwsh
+          run: echo "PATH=$env:PATH;C:\msys64\usr\bin;C:\Program Files\NASM" >> $env:GITHUB_ENV
