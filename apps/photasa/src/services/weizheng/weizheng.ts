@@ -493,6 +493,12 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
             const restoredTree = this.folderTree;
             const cleanedTree: FolderNode[] = deepClone(restoredTree);
+            const watchRootPaths = this.fangXuanLingService.preference.paths || [];
+            for (const rootPath of watchRootPaths) {
+                if (rootPath && typeof rootPath === "string") {
+                    addRoot(cleanedTree, rootPath);
+                }
+            }
             sanitizeFolderTree(cleanedTree);
             await this.persistFolderTreeIfChanged(restoredTree, cleanedTree);
 

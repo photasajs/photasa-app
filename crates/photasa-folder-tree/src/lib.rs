@@ -89,13 +89,22 @@ impl FolderTreeStore {
  Ok(Value::Null)
  }
 
- fn read_app_state(&self) -> FolderTreeResult<Value> {
- match std::fs::read_to_string(&self.app_state_path) {
- Ok(content) => parse_app_state(&content),
- Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(default_app_state_value()),
- Err(err) => Err(FolderTreeError::Io(err)),
- }
- }
+    fn read_app_state(&self) -> FolderTreeResult<Value> {
+        match std::fs::read_to_string(&self.app_state_path) {
+            Ok(content) => match parse_app_state(&content) {
+                Ok(val) => Ok(val),
+                Err(err) => {
+                    eprintln!(
+                        "⚠️ photasa-folder-tree: read_app_state 遇到损坏的 JSON，自动重置：{:?} - {}",
+                        self.app_state_path, err
+                    );
+                    Ok(default_app_state_value())
+                }
+            },
+            Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(default_app_state_value()),
+            Err(err) => Err(FolderTreeError::Io(err)),
+        }
+    }
 
  fn write_app_state(&self, state: &Value) -> FolderTreeResult<()> {
  if let Some(parent) = self.app_state_path.parent() {
@@ -220,6 +229,19 @@ mod tests {
  let full_state = store.restore_app_state().unwrap();
  assert_eq!(full_state["currentFolder"], "");
  }
+
+    #[test]
+    fn restore_app_state_falls_back_on_corrupt_json() {
+        let path = std::env::temp_dir().join(format!(
+            "photasa-folder-tree-corrupt-{}.json",
+            uuid::Uuid::new_v4()
+        ));
+        let corrupt_payload = r#"{"version":"1.0","folderTree":[]} trailing junk at end"#;
+        std::fs::write(&path, corrupt_payload).unwrap();
+        let store = FolderTreeStore::with_path(path);
+        let state = store.restore_app_state().unwrap();
+        assert!(state.get("folderTree").unwrap().is_array());
+    }
 
  #[test]
  fn persist_folder_tree_rejects_non_array_input() {
