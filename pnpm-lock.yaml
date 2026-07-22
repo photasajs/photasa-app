@@ -72,8 +72,8 @@ importers:
         specifier: ^5.2.0
         version: 5.2.0
       json-tree-view-vue3:
-        specifier: ^0.2.3
-        version: 0.2.3(typescript@5.9.3)
+        specifier: ^2.0.0
+        version: 2.0.0(vue@3.5.26(typescript@5.9.3))
       log4js:
         specifier: ^6.9.1
         version: 6.9.1
@@ -3408,9 +3408,6 @@ packages:
   copy-anything@2.0.6:
     resolution: {integrity: sha512-1j20GZTsvKNkc4BY3NpMOM8tt///wY3FpIzozTOFO2ffuZcV61nojHXVKIy3WM+7ADCy5FVhdZYHYDdgTU0yJw==}
 
-  core-js@3.47.0:
-    resolution: {integrity: sha512-c3Q2VVkGAUyupsjRnaNX6u8Dq2vAdzm9iuPj5FW0fRxzlxgq9Q39MDq10IvmQSpLgHQNyQzQmOo6bgGHmH3NNg==}
-
   create-jest@29.7.0:
     resolution: {integrity: sha512-Adz2bdH0Vq3F53KEMJOoftQFutWCukm6J24wbPWRO4k1kMY7gS7ds/uoJkNuV8wDCtWWnuwGcJwpWcih+zEW1Q==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -4466,8 +4463,11 @@ packages:
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
 
-  json-tree-view-vue3@0.2.3:
-    resolution: {integrity: sha512-DEt6uu0TdXzNhbOh2+VWq4c80n23ryxfvhcLr0Q0PLUC2YbNZqcxrNOQ3vo0/JDJNkn1WCgVnCHz2asy1fOxJA==}
+  json-tree-view-vue3@2.0.0:
+    resolution: {integrity: sha512-Ad314AYTQjOQK6lDivJA/u5MrfGExDn8YiS01FnNbGYrkeiID7LJJpMnkJxrQZsmP0MIs4irts3IPMMX+cs22w==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    peerDependencies:
+      vue: '>=3.2.0'
 
   json5@2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
@@ -5559,9 +5559,6 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
-
-  switch-ts@1.1.1:
-    resolution: {integrity: sha512-i+6Yv5VGvalCP5KvvhnIoejfjrpqNftgaJqCvd9RwvV9L4eWFw+pDCL4utDLRq2fBAXWq5unXyRb96OhejxeFQ==}
 
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
@@ -9139,8 +9136,6 @@ snapshots:
     dependencies:
       is-what: 3.14.1
 
-  core-js@3.47.0: {}
-
   create-jest@29.7.0(@types/node@18.19.130):
     dependencies:
       '@jest/types': 29.6.3
@@ -10611,13 +10606,9 @@ snapshots:
 
   json-stable-stringify-without-jsonify@1.0.1: {}
 
-  json-tree-view-vue3@0.2.3(typescript@5.9.3):
+  json-tree-view-vue3@2.0.0(vue@3.5.26(typescript@5.9.3)):
     dependencies:
-      core-js: 3.47.0
-      switch-ts: 1.1.1
       vue: 3.5.26(typescript@5.9.3)
-    transitivePeerDependencies:
-      - typescript
 
   json5@2.2.3: {}
 
@@ -11733,8 +11724,6 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
-
-  switch-ts@1.1.1: {}
 
   symbol-tree@3.2.4:
     optional: true
