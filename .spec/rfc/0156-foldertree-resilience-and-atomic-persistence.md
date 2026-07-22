@@ -26,8 +26,9 @@
 
 To guarantee disk storage integrity across crashes or restarts:
 
-- `FolderTreeStore::write_app_state` writes payload into a sibling temporary file (`photasa.json.tmp`) and executes an OS-level atomic rename (`std::fs::rename`).
-- Ensures `photasa.json` is never left partially written or corrupted with trailing characters.
+- `FolderTreeStore::write_app_state` writes state payloads atomically using sibling temporary file transactions (`photasa.json.tmp` or `tempfile::NamedTempFile`) followed by OS-level atomic replacement (`std::fs::rename`).
+- **Recommended Crate**: `tempfile` (`NamedTempFile::persist()`) or standard tempfile atomic rename pattern.
+- Ensures `photasa.json` is never left partially written, truncated, or corrupted with trailing characters.
 
 ### 2. Self-Healing State Deserialization (`crates/photasa-folder-tree`)
 
