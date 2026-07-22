@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use photasa_media::is_video_file;
+use photasa_media::{basename_hidden, is_video_file, should_ignore_photasa_path};
 
 pub const PHOTASA_ORIGINALS_DIR: &str = ".photasaoriginals";
 pub const PHOTASA_CONFIG_FILE: &str = ".photasa.json";
@@ -126,6 +126,10 @@ pub fn parse_photo_list(value: Option<&Value>) -> Vec<PhotoEntry> {
  continue;
  };
 
+ if basename_hidden(Path::new(&entry.path)) || should_ignore_photasa_path(&entry.path) {
+ continue;
+ }
+
  if seen.insert(entry.path.clone()) {
  photos.push(entry);
  }
@@ -207,45 +211,52 @@ pub fn remove_photo_from_folder_list(
 
 /// contract reference `addToPhotoList` — 扫描发现媒体文件时调用，写入 `.photasa.json`
 pub fn add_photo_to_folder_list(
- folder: &str,
- photo_path: &str,
+    folder: &str,
+    photo_path: &str,
 ) -> Result<PhotasaConfigData, String> {
- let mut config = read_config_sync(folder)?.unwrap_or_else(PhotasaConfigData::empty);
- let file_name = normalize_photo_file_name(photo_path);
- let thumbnail_name = to_relative_thumbnail_path(photo_path);
+    let mut config = read_config_sync(folder)?.unwrap_or_else(PhotasaConfigData::empty);
+    let file_name = normalize_photo_file_name(photo_path);
+    if basename_hidden(Path::new(&file_name)) || should_ignore_photasa_path(&file_name) {
+        return Ok(config);
+    }
+    let thumbnail_name = to_relative_thumbnail_path(photo_path);
 
- if let Some(existing) = config.photo_list.iter_mut().find(|p| p.path == file_name) {
- if existing.thumbnail.is_empty() {
- existing.thumbnail = thumbnail_name;
- config.last_modified = now_millis();
- write_config_sync(folder, &config)?;
- }
- return Ok(config);
- }
+    if let Some(existing) = config.photo_list.iter_mut().find(|p| p.path == file_name) {
+        if existing.thumbnail.is_empty() {
+            existing.thumbnail = thumbnail_name;
+            config.last_modified = now_millis();
+            write_config_sync(folder, &config)?;
+        }
+        return Ok(config);
+    }
 
- config.photo_list.push(PhotoEntry {
- path: file_name.clone(),
- thumbnail: thumbnail_name,
- is_video: is_video_file(photo_path),
- history: Vec::new(),
- });
- config.last_modified = now_millis();
- write_config_sync(folder, &config)?;
- Ok(config)
+    config.photo_list.push(PhotoEntry {
+        path: file_name.clone(),
+        thumbnail: thumbnail_name,
+        is_video: is_video_file(photo_path),
+        history: Vec::new(),
+    });
+    config.last_modified = now_millis();
+    write_config_sync(folder, &config)?;
+    Ok(config)
 }
 
 /// contract reference `fixPhotasaConfig`
 pub fn fix_config_sync(folder: &str) -> Result<PhotasaConfigData, String> {
- let Some(mut config) = read_config_sync(folder)? else {
- return Ok(PhotasaConfigData::empty());
- };
- for photo in &mut config.photo_list {
- photo.path = normalize_photo_file_name(&photo.path);
- photo.thumbnail = shorten_thumbnail_relative_path(&photo.thumbnail);
- }
- config.last_modified = now_millis();
- write_config_sync(folder, &config)?;
- Ok(config)
+    let Some(mut config) = read_config_sync(folder)? else {
+        return Ok(PhotasaConfigData::empty());
+    };
+    config.photo_list.retain(|photo| {
+        let p = normalize_photo_file_name(&photo.path);
+        !basename_hidden(Path::new(&p)) && !should_ignore_photasa_path(&p)
+    });
+    for photo in &mut config.photo_list {
+        photo.path = normalize_photo_file_name(&photo.path);
+        photo.thumbnail = shorten_thumbnail_relative_path(&photo.thumbnail);
+    }
+    config.last_modified = now_millis();
+    write_config_sync(folder, &config)?;
+    Ok(config)
 }
 
 #[cfg(test)]
@@ -280,6 +291,22 @@ mod tests {
  ".photasaoriginals/.photasaoriginals/20250101_195246097_iOS.heic.png"
  );
  }
+    #[test]
+    fn parse_photo_list_filters_dotfiles() {
+        let raw = json!([
+            "a.jpg",
+            "._a.jpg",
+            ".DS_Store",
+            {
+                "path": "._20260715_184902.mp4",
+                "thumbnail": ".photasaoriginals/thumbnail-._20260715_184902.mp4.png",
+                "isVideo": true
+            }
+        ]);
+        let list = parse_photo_list(Some(&raw));
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].path, "a.jpg");
+    }
 
  #[test]
  fn parse_photo_list_migrates_legacy_strings() {
