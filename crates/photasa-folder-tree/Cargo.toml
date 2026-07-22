@@ -11,6 +11,7 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 dirs = "5"
+tempfile = "3"
 
 [dev-dependencies]
 uuid = { version = "1.0", features = ["v4"] }
