@@ -29,6 +29,9 @@ jobs:
             - name: Run Frontend Unit Tests
               run: pnpm --filter @photasa/photasa run test:unit
 
+            - name: Guard prod CI from dev build channel (RFC 0157)
+              run: bash scripts/ci/guard-prod-build-channel.sh
+
             - name: Run Rust Clippy
               run: cargo clippy --workspace -- -D warnings
 

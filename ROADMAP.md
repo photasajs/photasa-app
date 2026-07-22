@@ -161,7 +161,7 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)                | `zouwu-core` / `TianshuService` workspace 物理移除                                       | ✅ Implemented                                                                                                                                       |
 | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 退役 `legacy-api` / `utils/api` → 贞观人物 + 袁天罡唯一业务 IPC                          | ⏳ UI Draft（非 Photasa Active）                                                                                                                     |
 | [0155](.spec/rfc/0155-tauri-release-pipeline-as-built.md)                          | Release/updater 流水线如实记录 + 修复 `createUpdaterArtifacts`/`pubkey` 生产阻断缺口     | ✅ Implemented                                                                                                                                       |
-| [0157](.spec/rfc/0157-tauri-dev-prod-side-by-side.md)                              | Dev/Prod 版 Photasa 同机并存（独立 identifier/数据目录）                                 | ⏳ Draft                                                                                                                                             |
+| [0157](.spec/rfc/0157-tauri-dev-prod-side-by-side.md)                              | Dev/Prod 版 Photasa 同机并存（独立 identifier/数据目录）                                 | ⏳ Draft — 脚本表见 [apps/photasa/DEVELOPMENT.md](apps/photasa/DEVELOPMENT.md)                                                                       |
 
 ### Photasa next priorities（2026-07）
 
