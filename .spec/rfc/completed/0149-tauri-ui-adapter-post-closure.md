@@ -71,7 +71,7 @@
 - [x] 0137 标 ✅ Implemented（贞观 service 范围）；Renderer 全边界与 `legacy-api` 全量退役转交 **0154**
 - [x] 0139 表中 shell / menu / engine：R3/R4 经 **0150** ✅；R5 engine 无 zouwu 残留
 - [x] `apps/photasa/src/services/**` 贞观人物零 `window.api`（测试 mock 除外）
-- [ ] `legacy-api.ts` 删除（后继 **0154** 按能力切片；不阻塞 0149 跟踪职责关闭）
+- [x] `legacy-api.ts` 删除未在本 RFC 实施，剩余成果已明确转交后继 **0154**；不阻塞 0149 跟踪职责关闭
 
 **0149 跟踪职责已完成**；`legacy-api` 删除不归本 RFC 阻塞。
 

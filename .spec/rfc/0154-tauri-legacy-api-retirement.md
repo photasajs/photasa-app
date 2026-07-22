@@ -1,7 +1,7 @@
 # RFC 0154: 退役 `legacy-api` / `utils/api` — 回归贞观 IPC 边界
 
 - **Start Date**: 2026-07-21
-- **Last updated**: 2026-07-21
+- **Last updated**: 2026-07-22
 - **Status**: Draft（Photasa UI RFC，**非 Active**；Rust 命令面 [0097](./completed/0097-tauri-legacy-api-deferred-surface.md) ✅）
 - **Priority**: P1
 - **Area**: Photasa / Vue / 贞观之治 / IPC 边界
@@ -223,8 +223,8 @@ Rust event
 
 ### Phase 4 — 文档
 
-- [ ] [0149](./completed/0149-tauri-ui-adapter-post-closure.md) R1/R2 ✅
-- [ ] `ROADMAP.md` 前端边界改为「贞观 + 袁天罡」
+- [ ] 完成 [0149](./completed/0149-tauri-ui-adapter-post-closure.md) 转交的 R1/R2 成果；不重新关闭已完成的 0149
+- [x] `ROADMAP.md` 前端边界已改为「负责人物 → 袁天罡业务 IPC」（2026-07-22）
 - [ ] `README.md` 去掉 legacy-api compat 表述
 
 ## 袁天罡膨胀控制
@@ -260,7 +260,7 @@ Rust event
 - [ ] 0137 Golden Rules 2–3 对 **全 Renderer** 成立（不仅 services/）
 - [ ] 零 `utils/api`、`legacy-api`、`window.api`
 - [ ] 仅 `yuantiangang/**`（及测试 mock）消费业务 `invoke` / `listen`；`env.ts` / `media-url.ts` 仅保留批准的非业务 IPC 白名单
-- [ ] [0149](./completed/0149-tauri-ui-adapter-post-closure.md) R1 + R2 关闭
+- [ ] [0149](./completed/0149-tauri-ui-adapter-post-closure.md) 转交的 R1 + R2 成果完成
 - [ ] Vitest `*.test.ts` + `*.spec.ts` 全绿
 - [ ] 导入早到事件/单飞语义与扫描单 transport 语义均有回归测试
 - [ ] Splash 只关闭一次，且仍在首屏初始化完成后关闭

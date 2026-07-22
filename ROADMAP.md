@@ -67,7 +67,7 @@ RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRA
 | 已归档于 `.spec/rfc/completed/`                                   | 75                        |
 | 已归档于 `.spec/rfc/rejected/`                                    | 2                         |
 
-Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Photasa Active RFCs** 与 **Legacy backlog** 为准。
+Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Photasa Active RFCs**、**Photasa UI RFC drafts（非 Active）** 与 **Legacy backlog** 为准。
 
 ### By version（概览）
 
