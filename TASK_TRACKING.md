@@ -26,7 +26,7 @@
 | zouwu workspace 物理移除    | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)                | 🔴 High   | Done（废弃 crate 及代码物理删除）                        | 否                                  |
 | legacy-api / utils/api 退役 | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | Draft（贞观人物 + 袁天罡；**非** ipc/\* 旁路）           | 否                                  |
 | Tauri Release / Updater     | [0155](./.spec/rfc/0155-tauri-release-pipeline-as-built.md)                        | 🔴 High   | Done（GitHub Release 校验 + Tauri Action 产物断言）      | 否                                  |
-| FolderTree 原子落盘与自愈   | [0156](./.spec/rfc/0156-foldertree-resilience-and-atomic-persistence.md)           | 🔴 High   | Done（Rust tempfile 原子写 + 媒体扩展名过滤 + 启动自愈） | 否                                  |
+| FolderTree 原子落盘与自愈   | [0156](./.spec/rfc/completed/0156-foldertree-resilience-and-atomic-persistence.md) | 🔴 High   | Done（Rust tempfile 原子写 + 媒体扩展名过滤 + 启动自愈） | 否                                  |
 
 ### RFC 0153 — zouwu workspace 物理移除 ✅ Done
 
