@@ -44,6 +44,13 @@ runs:
           uses: Swatinem/rust-cache@v2
           with:
               workspaces: ". -> target"
+              # Bust caches from ffmpeg-sys-next -march=native builds (SIGILL across runner CPUs).
+              shared-key: "ffmpeg-portable-linux-v1"
+
+        - name: Prepare portable FFmpeg build (Linux)
+          if: runner.os == 'Linux'
+          run: bash scripts/ci/patch-ffmpeg-sys-portable.sh
+          shell: bash
 
         - name: Setup pnpm
           uses: pnpm/action-setup@v3
