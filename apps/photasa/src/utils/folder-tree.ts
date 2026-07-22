@@ -10,11 +10,17 @@ import {
 } from "@renderer/utils/folder-tree-path";
 import { toDirNameSync } from "@renderer/utils/sync-path";
 
+const MEDIA_EXTENSION_REGEX =
+    /\.(jpg|jpeg|png|gif|bmp|webp|tiff?|svg|ico|psd|heic|heif|avif|raw|cr2|cr3|nef|arw|dng|raf|orf|mp4|mov|avi|mkv|m4v|3gp|wmv|flv|webm|mpg|mpeg|m2v|mts|m2ts|ts|vob|rmvb|rm)$/i;
+
 /** 文件路径取父目录；已是目录路径则原样返回 */
-function directoryPathForFolderTree(filePath: string): string {
-    const raw = canonicalFolderPath(filePath);
+function directoryPathForFolderTree(file: Photo | { path: string; isDirectory?: boolean }): string {
+    const raw = canonicalFolderPath(file.path);
+    if (file.isDirectory) {
+        return raw;
+    }
     const basename = raw.split("/").pop() || "";
-    if (/\.[a-zA-Z0-9]+$/i.test(basename)) {
+    if (MEDIA_EXTENSION_REGEX.test(basename)) {
         return toDirNameSync(raw);
     }
     return raw;
@@ -102,7 +108,7 @@ export function addFolderToTree(roots: FolderNode[], file: Photo): void {
     if (!file?.path || typeof file.path !== "string") {
         return;
     }
-    const folderPath = directoryPathForFolderTree(file.path);
+    const folderPath = directoryPathForFolderTree(file);
     if (!folderPath) {
         return;
     }
@@ -171,20 +177,15 @@ function dedupeSiblingNodes(parentKey: string | null, children: FolderNode[]): F
         }
 
         child.key = resolved;
-        if (typeof child.title !== "string" || !child.title.trim()) {
-            child.title = resolved.split("/").pop() || resolved;
-        }
 
         if (parentKey !== null) {
-            const title = String(child.title).trim();
-            if (
-                title.startsWith(".") ||
-                /\.(jpg|jpeg|png|gif|bmp|webp|tiff?|svg|ico|psd|heic|heif|avif|raw|cr2|cr3|nef|arw|dng|raf|orf|mp4|mov|avi|mkv|m4v|3gp|wmv|flv|webm|mpg|mpeg|m2v|mts|m2ts|ts|vob|rmvb|rm)$/i.test(
-                    title,
-                )
-            ) {
+            const basename = resolved.split("/").pop() || resolved;
+            child.title = basename;
+            if (basename.startsWith(".") || MEDIA_EXTENSION_REGEX.test(basename)) {
                 continue;
             }
+        } else if (typeof child.title !== "string" || !child.title.trim()) {
+            child.title = resolved;
         }
 
         child.children = child.children?.length ? dedupeSiblingNodes(resolved, child.children) : [];
