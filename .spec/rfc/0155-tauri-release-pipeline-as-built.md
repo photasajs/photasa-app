@@ -4,7 +4,7 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: 🔨 Draft
+**Status**: 🔨 In Progress（Acceptance 1/2/3/5 done，4/6/7 pending）
 **Created**: 2026-07-22
 **Area**: Tauri / Update / CI
 **Supersedes（文档层面，非代码）**: [0113](./completed/0113-tauri-updater-production-and-prefs-sync.md) 第41-123行「GitHub Release 作为 updater 后端」章节、[0151](./completed/0151-tauri-cicd-redesign.md) 中对 `photasa-release.yml` 的引用
@@ -83,6 +83,13 @@ push main
 
 **风险**：密钥一旦生成并有用户安装了用该密钥签名的版本，后续不可更换公钥（换了所有已装用户都验证失败、拿不到新版本）——生成前确认这是最终密钥，不要重复生成占位密钥。
 
+**✅ 2026-07-22 已执行**（密钥经过一次重新生成，见下）：
+
+- 第一次生成：`tauri-cli 2.9.6` 无密码密钥在非交互终端签名必崩（`incorrect updater private key password: Device not configured (os error 6)`）——`--ci`/`-p ""`/unset 三种"求无密码"方式均触发同一个 CLI bug，与配置正确性无关。CI runner 正是非交互环境，无密码密钥在 CI 里会同样失败。
+- 改用带密码密钥后本地验证通过，但密码由 AI 生成、只写入 GitHub Secret，用户本人未持有明文——不满足"密钥丢失可恢复"的备份要求。
+- **最终版**：重新生成第二对密钥对，密码由用户本人提供并留存，公钥 `D83AB98591C7FA55` 已写入 `tauri.conf.json`，私钥+密码已更新进 `photasajs/photasa-app` 仓库的 `TAURI_SIGNING_PRIVATE_KEY`/`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` Secrets（2026-07-22T19:07 UTC）。本地 `tauri build`（release profile）验证产出 `target/release/bundle/macos/Photasa.app.tar.gz.sig`，签名机制确认可用。
+- **结论**：CI 若使用无密码密钥需先确认 tauri-cli 版本是否修复此 bug，否则必须使用带密码密钥；密钥生成后密码必须由密钥所有者本人持有备份，不能只存在单一 CI Secret 里（唯一副本风险）。
+
 ## Non-goals
 
 - 不新建独立更新服务器（RFC 0020 方案已被 GitHub Release 方案取代）。
@@ -91,13 +98,14 @@ push main
 
 ## Acceptance
 
-1. `tauri.conf.json` 的 `bundle.createUpdaterArtifacts` 为 `true`。
-2. `tauri.conf.json` 的 `plugins.updater.pubkey` 为非空真实公钥（非占位符）。
-3. 本地执行一次 `tauri build`（release profile），确认产出 `.sig` 文件与 `latest.json`，且 `latest.json` 内容包含正确版本号与签名（Kent 建议：先本地验证，再进 CI，缩短反馈环）。
-4. `upload-release-assets.yml` 新增产物存在性断言步骤，人为删除 `createUpdaterArtifacts` 配置后触发一次 workflow，确认该断言步骤正确失败（验证断言本身有效，不是摆设）。
-5. `completed/0113-...md` 与 `completed/0151-...md` 顶部各加一行：「⚠️ 本 RFC 中 `photasa-release.yml` 相关设计已被 0155 取代，实际架构见 0155」，不改动两者正文其余部分。
-6. `UPDATER.md:13` 更新为准确描述（不再与第37-50行矛盾）。
-7. `release.yml` 顶部新增注释：标注 `name: Release Please` 为跨文件契约。
+1. ✅ `tauri.conf.json` 的 `bundle.createUpdaterArtifacts` 为 `true`。
+2. ✅ `tauri.conf.json` 的 `plugins.updater.pubkey` 为非空真实公钥（`D83AB98591C7FA55`，用户本人持有密码备份）。
+3. ✅ 本地执行一次 `tauri build`（release profile），确认产出 `.sig` 文件（`target/release/bundle/macos/Photasa.app.tar.gz.sig`，2026-07-22 已验证两次：初版密钥 + 最终密钥）。`latest.json` 由 `tauri-action` 在实际 GitHub Release 发布流程中生成，本地单机 build 不产出该文件，留待 CI 实跑验证。
+4. ⏳ `upload-release-assets.yml` 新增产物存在性断言步骤，人为删除 `createUpdaterArtifacts` 配置后触发一次 workflow，确认该断言步骤正确失败。**未实施**。
+5. ✅ `completed/0113-...md` 与 `completed/0151-...md` 顶部已各加一行指向本 RFC 的说明。
+6. ⏳ `UPDATER.md:13` 更新为准确描述（不再与第37-50行矛盾）。**未实施**。
+7. ⏳ `release.yml` 顶部新增注释：标注 `name: Release Please` 为跨文件契约。**未实施**。
+8. ⏳（新增，本次审查发现）`upload-release-assets.yml` 第25-34行 matrix 的 `bundle_globs` 字段是死配置——`tauri-action@v0` 自行管理构建产物与上传，正文步骤从未引用 `matrix.bundle_globs`。清理或说明保留原因。**未实施**。
 
 ## Risks
 

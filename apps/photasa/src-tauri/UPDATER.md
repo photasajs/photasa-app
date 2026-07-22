@@ -10,9 +10,9 @@ RFC：[0113](../../.spec/rfc/0113-tauri-updater-production-and-prefs-sync.md) ·
 
 ## `tauri.conf.json`（开发默认）
 
-当前仓库内 `plugins.updater.pubkey` 与 `endpoints` 为空，**开发构建不会连生产更新服务器**。这是预期行为。
+`plugins.updater.pubkey` 与 `endpoints` 均已配置为生产真实值（公钥非敏感信息，直接提交进仓库；`endpoints` 指向 GitHub Release 的 `latest.json`）。私钥不进仓库，存于 CI 的 `TAURI_SIGNING_PRIVATE_KEY`/`TAURI_SIGNING_PRIVATE_KEY_PASSWORD` Secrets（见 [0155](../../.spec/rfc/0155-tauri-release-pipeline-as-built.md)）。
 
-生产发布前必须在 CI 或受控构建环境中注入真实值（**勿将私钥提交进 Git**）。
+密钥丢失或密码丢失将导致无法为该密钥对签发新更新——生成密钥后，密码必须由持有者本人另行备份，不能只存在单一 CI Secret 里。
 
 ## 生产构建清单
 

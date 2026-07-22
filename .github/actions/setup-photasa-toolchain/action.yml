@@ -38,7 +38,7 @@ runs:
         # "cl.exe is unable to create an executable file".
         - name: Setup MSVC environment (Windows)
           if: runner.os == 'Windows'
-          uses: ilammy/setup-msvc-dev@v1
+          uses: ilammy/msvc-dev-cmd@v1
           with:
               arch: x64
 

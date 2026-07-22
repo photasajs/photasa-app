@@ -90,7 +90,7 @@
             "requireLiteralLeadingDot": false
         },
         "updater": {
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdCREZDNDQzMjhEQzJFNDIKUldSQ0x0d29ROFRmZTZtSExaSG4xL1ZtSE4rL0NyeEdDeGlEeVVPYjB4S2JZUzZOaThvY1l6MDcK",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ4M0FCOTg1OTFDN0ZBNTUKUldSVitzZVJoYms2MkFsUC9DMHpPVjF0RnI0cE9ZckxydytZaVhmbWRPQlZEdHJoYVpYZ3p2cWcK",
             "endpoints": [
                 "https://github.com/photasajs/photasa-app/releases/latest/download/latest.json"
             ]

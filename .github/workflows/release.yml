@@ -1,3 +1,7 @@
+# NOTE: `name:` below is a cross-file contract. upload-release-assets.yml listens
+# for this exact workflow name via `workflow_run: workflows: ["Release Please"]`.
+# Renaming this workflow silently breaks that listener (no error, it just stops firing).
+# See RFC 0155.
 name: Release Please
 
 on:
