@@ -12,19 +12,21 @@
 
 以下 5 个任务来自 legacy vs Tauri 全面对比分析。每项对应一个 RFC，优先级见下表。
 
-| 任务                        | RFC                                                                                | 优先级    | 状态                                           | 阻断 CI？                           |
-| --------------------------- | ---------------------------------------------------------------------------------- | --------- | ---------------------------------------------- | ----------------------------------- |
-| 单实例管理                  | [0100](./docs/rfc/completed/0100-tauri-single-instance.md)                         | 🔴 High   | Done                                           | 否（UX 问题）                       |
-| 原生依赖构建策略            | [0103](./docs/rfc/completed/0103-tauri-native-deps-build-strategy.md)              | 🔴 High   | Done                                           | 否（embedded-libheif；FFmpeg 仍重） |
-| window_reload 命令          | [0099](./docs/rfc/completed/0099-tauri-window-reload.md)                           | 🟡 Medium | Done                                           | 否                                  |
-| RAW 缩略图回退              | [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md)                  | 🟢 Low    | Done                                           | 否                                  |
-| 启动 Splash 屏幕            | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md)                          | 🟢 Low    | Done                                           | 否                                  |
-| 应用偏好（文昌）落盘        | [0107](./.spec/rfc/completed/0107-tauri-wenchang-preferences-storage.md)           | 🔴 High   | Done（0147 直连 IPC；2026-07-21 手测通过）     | 否                                  |
-| 缩略图 EXIF/旋转修复        | [0146](./.spec/rfc/completed/0146-tauri-thumbnail-orientation-aspect-ratio.md)     | 🔴 High   | Done                                           | 否                                  |
-| macOS 标题栏与拖动          | [0152](./.spec/rfc/completed/0152-tauri-macos-custom-titlebar-overlay-and-drag.md) | 🔴 High   | Done（Tauri 2.0 窗口 Overlay 及拖拽权限）      | 否                                  |
-| 重建 Tauri PR 流水线        | [0151](./.spec/rfc/completed/0151-tauri-cicd-redesign.md)                          | 🔴 High   | Done（三平台编译矩阵及复合 Action）            | 否                                  |
-| zouwu workspace 物理移除    | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)                | 🔴 High   | Done（废弃 crate 及代码物理删除）              | 否                                  |
-| legacy-api / utils/api 退役 | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | Draft（贞观人物 + 袁天罡；**非** ipc/\* 旁路） | 否                                  |
+| 任务                        | RFC                                                                                | 优先级    | 状态                                                     | 阻断 CI？                           |
+| --------------------------- | ---------------------------------------------------------------------------------- | --------- | -------------------------------------------------------- | ----------------------------------- |
+| 单实例管理                  | [0100](./docs/rfc/completed/0100-tauri-single-instance.md)                         | 🔴 High   | Done                                                     | 否（UX 问题）                       |
+| 原生依赖构建策略            | [0103](./docs/rfc/completed/0103-tauri-native-deps-build-strategy.md)              | 🔴 High   | Done                                                     | 否（embedded-libheif；FFmpeg 仍重） |
+| window_reload 命令          | [0099](./docs/rfc/completed/0099-tauri-window-reload.md)                           | 🟡 Medium | Done                                                     | 否                                  |
+| RAW 缩略图回退              | [0102](./docs/rfc/completed/0102-tauri-thumbnail-raw-fallback.md)                  | 🟢 Low    | Done                                                     | 否                                  |
+| 启动 Splash 屏幕            | [0101](./docs/rfc/completed/0101-tauri-startup-splash.md)                          | 🟢 Low    | Done                                                     | 否                                  |
+| 应用偏好（文昌）落盘        | [0107](./.spec/rfc/completed/0107-tauri-wenchang-preferences-storage.md)           | 🔴 High   | Done（0147 直连 IPC；2026-07-21 手测通过）               | 否                                  |
+| 缩略图 EXIF/旋转修复        | [0146](./.spec/rfc/completed/0146-tauri-thumbnail-orientation-aspect-ratio.md)     | 🔴 High   | Done                                                     | 否                                  |
+| macOS 标题栏与拖动          | [0152](./.spec/rfc/completed/0152-tauri-macos-custom-titlebar-overlay-and-drag.md) | 🔴 High   | Done（Tauri 2.0 窗口 Overlay 及拖拽权限）                | 否                                  |
+| 重建 Tauri PR 流水线        | [0151](./.spec/rfc/completed/0151-tauri-cicd-redesign.md)                          | 🔴 High   | Done（三平台编译矩阵及复合 Action）                      | 否                                  |
+| zouwu workspace 物理移除    | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)                | 🔴 High   | Done（废弃 crate 及代码物理删除）                        | 否                                  |
+| legacy-api / utils/api 退役 | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | Draft（贞观人物 + 袁天罡；**非** ipc/\* 旁路）           | 否                                  |
+| Tauri Release / Updater     | [0155](./.spec/rfc/0155-tauri-release-pipeline-as-built.md)                        | 🔴 High   | Done（GitHub Release 校验 + Tauri Action 产物断言）      | 否                                  |
+| FolderTree 原子落盘与自愈   | [0156](./.spec/rfc/0156-foldertree-resilience-and-atomic-persistence.md)           | 🔴 High   | Done（Rust tempfile 原子写 + 媒体扩展名过滤 + 启动自愈） | 否                                  |
 
 ### RFC 0153 — zouwu workspace 物理移除 ✅ Done
 
