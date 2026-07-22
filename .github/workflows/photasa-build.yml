@@ -58,4 +58,5 @@ jobs:
               uses: ./.github/actions/setup-photasa-windows-msvc
 
             - name: Build Tauri App (Debug Profile)
-              run: pnpm --filter @photasa/photasa tauri build --debug
+              # PR/matrix CI has no signing secret; keep pubkey in config for release only.
+              run: pnpm --filter @photasa/photasa tauri build --debug -- -c '{"bundle":{"createUpdaterArtifacts":false}}'
