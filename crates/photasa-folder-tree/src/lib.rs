@@ -107,14 +107,17 @@ impl FolderTreeStore {
     }
 
     fn write_app_state(&self, state: &Value) -> FolderTreeResult<()> {
-        if let Some(parent) = self.app_state_path.parent() {
-            std::fs::create_dir_all(parent)?;
-        }
+        let parent = self
+            .app_state_path
+            .parent()
+            .unwrap_or_else(|| std::path::Path::new("."));
+        std::fs::create_dir_all(parent)?;
 
         let payload = serde_json::to_string_pretty(state)?;
-        let tmp_path = self.app_state_path.with_extension("json.tmp");
-        std::fs::write(&tmp_path, payload)?;
-        std::fs::rename(&tmp_path, &self.app_state_path)?;
+        let mut temp = tempfile::NamedTempFile::new_in(parent)?;
+        std::io::Write::write_all(&mut temp, payload.as_bytes())?;
+        temp.persist(&self.app_state_path)
+            .map_err(|e| FolderTreeError::Io(e.error))?;
         Ok(())
     }
 }
