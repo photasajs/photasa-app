@@ -44,11 +44,11 @@ runs:
           uses: Swatinem/rust-cache@v2
           with:
               workspaces: ". -> target"
-              # Bust caches from ffmpeg-sys-next -march=native builds (SIGILL across runner CPUs).
-              shared-key: "ffmpeg-portable-linux-v1"
+              # Bust caches from ffmpeg-sys-next -march=native builds (Linux SIGILL / Windows configure fail).
+              shared-key: "ffmpeg-ci-v2"
 
-        - name: Prepare portable FFmpeg build (Linux)
-          if: runner.os == 'Linux'
+        - name: Prepare FFmpeg CI patch (Linux / Windows)
+          if: runner.os == 'Linux' || runner.os == 'Windows'
           run: bash scripts/ci/patch-ffmpeg-sys-portable.sh
           shell: bash
 
