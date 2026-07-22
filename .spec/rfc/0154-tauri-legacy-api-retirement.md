@@ -170,7 +170,12 @@ Rust event
 
 ### Phase 0 — 门禁
 
-- [ ] `rg 'utils/api|getPhotasaApi|legacy-api|window\.api' apps/photasa/src --glob '!**/__tests__/**'` 基线截图进 PR
+- [x] `rg 'utils/api|getPhotasaApi|legacy-api|window\.api' apps/photasa/src --glob '!**/__tests__/**'` 基线盘点已完成：
+    - `window.api`: **0**
+    - `getPhotasaApi`: **0**
+    - `legacy-api`: **0**
+    - `@tauri-apps/api` (outside `yuantiangang/`): **0**
+    - `@renderer/utils/api` 生产引用：**11 文件** (`App.vue`, `ImageList.vue`, `ImageListHelper.ts`, `ImportPhotos.vue`, `ImportProgressModal.vue`, `ImportHistory.vue`, `GeneralSettings.vue`, `ImportSettings.vue`, `preference.ts`, `file-handler.ts`, `scan-folder.ts`)
 - [ ] ESLint：`no-restricted-imports` 禁止 `@renderer/utils/api`、`@renderer/api/legacy-api`、`getPhotasaApi`（袁天罡 transport 目录豁免）
 
 ### Phase 1 — 止血
