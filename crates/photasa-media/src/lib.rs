@@ -63,8 +63,12 @@ pub fn classify_media_flags(path: &Path) -> Option<(bool, bool)> {
     }
 }
 
-/// 忽略 photasa/picasa 内部文件、配置、缓存及 OS 垃圾文件
+/// 忽略 photasa/picasa 内部文件、配置、缓存及 OS 垃圾文件 (包含 ._ / .DS_Store 等点开头隐藏文件)
 pub fn should_ignore_photasa_path(path: &str) -> bool {
+    let p = Path::new(path);
+    if basename_hidden(p) {
+        return true;
+    }
     let lower = path.to_lowercase();
     lower.contains(".photasa")
         || lower.contains(".picasa")
@@ -110,5 +114,14 @@ mod tests {
         assert_eq!(classify_media("test.cr2"), MediaType::Raw);
         assert_eq!(classify_media("test.mp4"), MediaType::Video);
         assert_eq!(classify_media("test.txt"), MediaType::Unknown);
+    }
+
+    #[test]
+    fn test_should_ignore_photasa_path() {
+        assert!(should_ignore_photasa_path("._20260715_184902.mp4"));
+        assert!(should_ignore_photasa_path("/path/to/._20260715_184902.mp4"));
+        assert!(should_ignore_photasa_path(".DS_Store"));
+        assert!(should_ignore_photasa_path("picasa.ini"));
+        assert!(!should_ignore_photasa_path("20260715_184902.mp4"));
     }
 }

@@ -110,7 +110,7 @@ export function addFolderToTree(roots: FolderNode[], file: Photo): void {
     }
 
     const segments = folderSegmentsUnderRoot(folderPath, rootKey);
-    if (segments.length === 0) {
+    if (segments.length === 0 || segments.some((s) => s.startsWith("."))) {
         return;
     }
 
