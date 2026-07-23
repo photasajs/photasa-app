@@ -21,7 +21,7 @@ runs:
                   Write-Error "MSYS2 bash not found at $bash"
                   exit 1
               }
-              & $bash -lc "pacman -S --noconfirm --needed make diffutils"
+              & $bash -lc "pacman -S --noconfirm --needed make diffutils pkgconf"
 
         # Strip Git usr/mingw64 (broken gawk for ffmpeg); append MSYS2/NASM at END so
         # MSVC link.exe stays ahead of MSYS2's link.exe (Rust msvc target requires MSVC linker).
