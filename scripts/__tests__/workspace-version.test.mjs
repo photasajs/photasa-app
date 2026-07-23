@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
     getWorkspaceVersionTargets,
@@ -39,4 +40,13 @@ test("root package.json version matches every tracked target", () => {
     const canonical = readCanonicalVersion();
     const mismatches = collectVersionMismatches(canonical);
     assert.deepEqual(mismatches, []);
+});
+
+test("release-please root package tag format", () => {
+    const config = JSON.parse(
+        readFileSync(new URL("../../.release-please-config.json", import.meta.url)),
+    );
+    const rootPackage = config.packages["."];
+    assert.equal(rootPackage["package-name"], "photasa");
+    assert.equal(rootPackage["include-component-in-tag"], false);
 });
