@@ -1,6 +1,6 @@
 [package]
 name = "photasa-import"
-version = "0.1.0"
+version = "1.7.0"
 edition = "2021"
 description = "Photasa import algorithm (path filter, copy loop, session)"
 license = "MIT"

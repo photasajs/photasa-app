@@ -11,8 +11,8 @@ runs:
           with:
               arch: x64
 
-        # FFmpeg configure + make need MSYS2 utilities. `shell: msys2` requires
-        # msys2/setup-msys2; windows-latest only ships C:\msys64 — invoke bash directly.
+        # FFmpeg dep tracking in ffbuild/common.mak requires GNU awk (gsub(/\\/, "/")).
+        # Git for Windows ships a broken awk — install MSYS2 gawk and point $AWK at it.
         - name: Install MSYS2 build tools (FFmpeg)
           shell: pwsh
           run: |
@@ -21,7 +21,22 @@ runs:
                   Write-Error "MSYS2 bash not found at $bash"
                   exit 1
               }
-              & $bash -lc "pacman -S --noconfirm --needed make diffutils"
+              & $bash -lc "pacman -S --noconfirm --needed make diffutils pkgconf gawk"
+
+        - name: Verify MSYS2 gawk (FFmpeg dep awk one-liner)
+          shell: pwsh
+          run: |
+              $gawk = 'C:\msys64\usr\bin\gawk.exe'
+              if (-not (Test-Path $gawk)) {
+                  Write-Error "gawk not found at $gawk"
+                  exit 1
+              }
+              $bash = 'C:\msys64\usr\bin\bash.exe'
+              & $bash -lc @"
+              set -euo pipefail
+              out=\$(echo 'note: including file: C:\foo\bar.h' | gawk '/including/ { sub(/^.*file: */, ""); gsub(/\\\\/, "/"); print }')
+              test "\$out" = 'C:/foo/bar.h'
+              "@
 
         # Strip Git usr/mingw64 (broken gawk for ffmpeg); append MSYS2/NASM at END so
         # MSVC link.exe stays ahead of MSYS2's link.exe (Rust msvc target requires MSVC linker).
@@ -36,3 +51,4 @@ runs:
               $newPath = ($filtered + @($msys, $nasm)) -join ';'
               echo "PATH=$newPath" >> $env:GITHUB_ENV
               echo "AWK=$msys\gawk.exe" >> $env:GITHUB_ENV
+              echo "MAKE=$msys\make.exe" >> $env:GITHUB_ENV
