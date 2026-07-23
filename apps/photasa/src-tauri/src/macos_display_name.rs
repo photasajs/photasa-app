@@ -4,8 +4,6 @@
 //! 不会读窗口 `title` 或运行时 `productName`。需尽早 `setProcessName`，并在 dev 配置里用 `mainBinaryName`
 //! 让 Tauri CLI 把二进制重命名为 `Photasa Dev`。
 
-use serde_json::Value;
-
 /// 在 `main()` 最开头调用（早于 Tauri 初始化），避免 Dock 已缓存 `photasa`。
 #[cfg(target_os = "macos")]
 pub fn apply_process_display_name_early() {
@@ -36,6 +34,8 @@ pub fn apply_process_display_name(_name: &str) {}
 
 #[cfg(target_os = "macos")]
 fn resolve_display_name() -> Option<String> {
+    use serde_json::Value;
+
     if let Ok(overlay) = std::env::var("TAURI_CONFIG") {
         if let Ok(value) = serde_json::from_str::<Value>(&overlay) {
             if let Some(name) = value

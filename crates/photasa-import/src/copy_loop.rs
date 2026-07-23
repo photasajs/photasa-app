@@ -397,30 +397,10 @@ mod tests {
  }
 
  fn run_loop(
- import_id: &str,
- files: &[String],
- target_path: &Path,
- strategy: &str,
- cancel: &AtomicBool,
- paused: &AtomicBool,
- start_iso: &str,
- meta: &EmptyMetadata,
- on_progress: impl FnMut(Value),
+  request: ImportLoopRequest<'_, EmptyMetadata>,
+  on_progress: impl FnMut(Value),
  ) -> Result<ImportLoopEnd, String> {
- run_import_file_loop(
- ImportLoopRequest {
- import_id,
- files,
- target_path,
- strategy,
- cancel,
- paused,
- start_iso,
- meta,
- },
- on_progress,
- |_| {},
- )
+  run_import_file_loop(request, on_progress, |_| {})
  }
 
  #[test]
@@ -626,14 +606,16 @@ mod tests {
  let meta = EmptyMetadata;
 
  let end = run_loop(
- "id-1",
- &files,
- &dst,
- "rename",
- &cancel,
- &paused,
- "2024-01-01T00:00:00Z",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &files,
+ target_path: &dst,
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "2024-01-01T00:00:00Z",
+ meta: &meta,
+ },
  |_| {
  progress_count.fetch_add(1, Ordering::SeqCst);
  },
@@ -731,14 +713,16 @@ mod tests {
  let meta = EmptyMetadata;
 
  let end1 = run_loop(
- "id-1",
- &files,
- &dst,
- "rename",
- &cancel,
- &paused,
- "t0",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &files,
+ target_path: &dst,
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t0",
+ meta: &meta,
+ },
  |_| {},
  )
  .unwrap();
@@ -748,14 +732,16 @@ mod tests {
  ));
 
  let end2 = run_loop(
- "id-2",
- &files,
- &dst,
- "skip",
- &cancel,
- &paused,
- "t1",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-2",
+ files: &files,
+ target_path: &dst,
+ strategy: "skip",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t1",
+ meta: &meta,
+ },
  |_| {},
  )
  .unwrap();
@@ -787,26 +773,30 @@ mod tests {
  let meta = EmptyMetadata;
 
  let _ = run_loop(
- "id-1",
- &files,
- &dst,
- "rename",
- &cancel,
- &paused,
- "t0",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &files,
+ target_path: &dst,
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t0",
+ meta: &meta,
+ },
  |_| {},
  )
  .unwrap();
  let end = run_loop(
- "id-2",
- &files,
- &dst,
- "rename",
- &cancel,
- &paused,
- "t1",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-2",
+ files: &files,
+ target_path: &dst,
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t1",
+ meta: &meta,
+ },
  |_| {},
  )
  .unwrap();
@@ -852,14 +842,16 @@ mod tests {
  let mut emitted = Vec::new();
 
  let end = run_loop(
- "id-1",
- &files,
- &dst,
- "rename",
- &cancel,
- &paused,
- "t",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &files,
+ target_path: &dst,
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t",
+ meta: &meta,
+ },
  |payload| emitted.push(payload),
  )
  .unwrap();
@@ -898,14 +890,16 @@ mod tests {
  let paused = AtomicBool::new(false);
  let meta = EmptyMetadata;
  let end = run_loop(
- "id-1",
- &[dir_as_src.to_string_lossy().to_string()],
- &dst,
- "rename",
- &cancel,
- &paused,
- "t",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &[dir_as_src.to_string_lossy().to_string()],
+ target_path: &dst,
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t",
+ meta: &meta,
+ },
  |_| {},
  )
  .unwrap();
@@ -937,14 +931,16 @@ mod tests {
  let paused = AtomicBool::new(false);
  let meta = EmptyMetadata;
  let r = run_loop(
- "id-1",
- &["/tmp/nope.jpg".to_string()],
- Path::new("/dev/null/photasa-cannot-create"),
- "rename",
- &cancel,
- &paused,
- "t",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &["/tmp/nope.jpg".to_string()],
+ target_path: Path::new("/dev/null/photasa-cannot-create"),
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t",
+ meta: &meta,
+ },
  |_| {},
  );
  assert!(r.is_err());
@@ -960,14 +956,16 @@ mod tests {
  let paused = AtomicBool::new(false);
  let meta = EmptyMetadata;
  let end = run_loop(
- "id-1",
- &[src.to_string_lossy().to_string()],
- &dst,
- "rename",
- &cancel,
- &paused,
- "t",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &[src.to_string_lossy().to_string()],
+ target_path: &dst,
+ strategy: "rename",
+ cancel: &cancel,
+ paused: &paused,
+ start_iso: "t",
+ meta: &meta,
+ },
  |_| {},
  )
  .unwrap();
@@ -994,14 +992,16 @@ mod tests {
  let meta = EmptyMetadata;
 
  let end = run_loop(
- "id-1",
- &files,
- &dst,
- "rename",
- &cancel,
- &paused,
- "t",
- &meta,
+ ImportLoopRequest {
+ import_id: "id-1",
+ files: &files,
+ target_path: &dst,
+ strategy: "rename",
+ cancel: cancel.as_ref(),
+ paused: &paused,
+ start_iso: "t",
+ meta: &meta,
+ },
  |_| {
  let n = calls.fetch_add(1, Ordering::SeqCst);
  if n >= 1 {

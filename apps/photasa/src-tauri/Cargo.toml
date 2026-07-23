@@ -59,12 +59,12 @@ tauri-plugin-mcp-bridge = "0.10.0"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-single-instance = "2"
 
+# 视频元数据：自包含 — 编译期由 ffmpeg-sys-next 构建并静态链接 FFmpeg（不依赖系统安装的 ffmpeg / pkg-config）
+ffmpeg-next = { version = "8.1", default-features = false, features = ["build", "build-zlib", "format", "codec", "software-scaling"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
 objc2-foundation = "0.3"
-
-# 视频元数据：自包含 — 编译期由 ffmpeg-sys-next 构建并静态链接 FFmpeg（不依赖系统安装的 ffmpeg / pkg-config）
-ffmpeg-next = { version = "8.1", default-features = false, features = ["build", "build-zlib", "format", "codec", "software-scaling"] }
 
 # Clippy：all 启用常规检查；脚本中 -D warnings 将警告视为错误
 [lints.rust]

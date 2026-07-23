@@ -33,7 +33,7 @@ jobs:
               run: bash scripts/ci/guard-prod-build-channel.sh
 
             - name: Run Rust Clippy
-              run: cargo clippy --workspace -- -D warnings
+              run: cargo clippy --workspace --all-targets -- -D warnings
 
             - name: Run Rust Unit Tests
               run: cargo test --workspace

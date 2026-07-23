@@ -13,7 +13,7 @@
         "build:photasa": "pnpm --filter @photasa/photasa run build",
         "build:debug:photasa": "pnpm --filter @photasa/photasa run build:debug",
         "vite:dev:photasa": "pnpm --filter @photasa/photasa run vite:dev",
-        "clippy": "cargo clippy --workspace -- -D warnings",
+        "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
         "test:rust": "cargo test --workspace"
     },
     "devDependencies": {
