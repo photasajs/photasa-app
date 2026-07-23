@@ -53,6 +53,8 @@ CI 工作流 (`.github/workflows/upload-release-assets.yml`) 使用 `tauri-apps/
 
 `bundle.createUpdaterArtifacts` 为 `true` 时，`tauri build` 会生成签名更新包。确保 CI 上传产物到 `endpoints` 所指向的位置。
 
+**平台 bundle target（RFC 0158）**：主配置 `tauri.conf.json` 的 `bundle.targets: ["app"]` 仅适用于 macOS（生成 `.app.tar.gz`）。Linux 通过 `tauri.linux.conf.json` 覆盖为 `["appimage", "deb", "rpm"]`：`appimage` 供 updater（`AppImage.tar.gz`）；`deb`/`rpm` 供 Release 页手动安装。否则 `tauri build` 在 Linux 只编译二进制，CI 会报 `No artifacts were found`。
+
 ## 环境变量摘要
 
 | 变量                                 | 用途                                |
