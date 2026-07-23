@@ -23,7 +23,7 @@ on:
                 required: true
                 type: string
             release_sha:
-                description: "Optional commit SHA; when empty, resolved from the tag ref"
+                description: "Commit to build from. Defaults to the workflow branch HEAD (main). Use tag SHA only when rebuilding that exact snapshot."
                 required: false
                 type: string
 
@@ -44,17 +44,11 @@ jobs:
             release_sha: ${{ steps.coords.outputs.release_sha }}
             matrix: ${{ steps.platforms.outputs.matrix }}
         steps:
-            - name: Checkout tag (manual dispatch without SHA)
-              if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_sha == '' }}
-              uses: actions/checkout@v4
-              with:
-                  ref: ${{ github.event.inputs.tag_name }}
-                  fetch-depth: 0
-                  fetch-tags: true
-
             - name: Resolve tag and commit
               id: coords
               shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   set -euo pipefail
                   if [ "${{ github.event_name }}" = "workflow_call" ]; then
@@ -64,14 +58,19 @@ jobs:
                     tag_name="${{ github.event.inputs.tag_name }}"
                     release_sha="${{ github.event.inputs.release_sha }}"
                     if [ -z "$release_sha" ]; then
-                      release_sha="$(git rev-parse HEAD)"
+                      # Manual re-upload: build from workflow branch (CI fixes), upload to existing tag.
+                      release_sha="${{ github.sha }}"
                     fi
                   fi
                   if [ -z "$tag_name" ] || [ -z "$release_sha" ]; then
                     echo "::error::tag_name and release_sha are required."
                     exit 1
                   fi
-                  echo "Publishing assets for tag=$tag_name sha=$release_sha"
+                  if ! gh release view "$tag_name" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+                    echo "::error::GitHub Release not found for tag $tag_name"
+                    exit 1
+                  fi
+                  echo "Publishing assets for tag=$tag_name build_sha=$release_sha"
                   echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
                   echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
 
