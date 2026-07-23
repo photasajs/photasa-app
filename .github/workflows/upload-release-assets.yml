@@ -9,6 +9,12 @@ on:
         workflows: ["Release Please"]
         types:
             - completed
+    workflow_dispatch:
+        inputs:
+            tag_name:
+                description: "Release tag to build and upload (e.g. photasa-v2.0.0 or v2.0.0)"
+                required: true
+                type: string
 
 # Flip to "true" to publish Windows release assets again.
 env:
@@ -21,7 +27,7 @@ permissions:
 jobs:
     platforms:
         name: Resolve release platforms
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
         runs-on: ubuntu-latest
         outputs:
             matrix: ${{ steps.resolve.outputs.matrix }}
@@ -39,7 +45,7 @@ jobs:
 
     build-and-upload:
         needs: platforms
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
@@ -52,7 +58,7 @@ jobs:
             - name: Checkout release commit
               uses: actions/checkout@v4
               with:
-                  ref: ${{ github.event.workflow_run.head_sha }}
+                  ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.event.workflow_run.head_sha }}
                   fetch-depth: 0
 
             - name: Detect new release tag on main
@@ -60,15 +66,31 @@ jobs:
               shell: bash
               run: |
                   set -euo pipefail
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                    tag_name="${{ github.event.inputs.tag_name }}"
+                    if [ -z "$tag_name" ]; then
+                      echo "::error::workflow_dispatch requires tag_name input."
+                      exit 1
+                    fi
+                    echo "Manual dispatch for tag: $tag_name"
+                    echo "should_upload=true" >> "$GITHUB_OUTPUT"
+                    echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+
                   release_sha="${{ github.event.workflow_run.head_sha }}"
-                  latest_tag="$(git tag -l "v*" --sort=-version:refname | head -n 1 || true)"
-                  if [ -z "$latest_tag" ]; then
-                    echo "No v* tags found; skipping asset upload."
+                  # release-please uses photasa-v* when package-name is set; legacy tags are v*.
+                  release_tag="$(git tag -l --points-at "$release_sha" \
+                    | grep -E '^(v|photasa-v)[0-9]+\.[0-9]+\.[0-9]+' \
+                    | sort -V \
+                    | tail -n 1 || true)"
+                  if [ -z "$release_tag" ]; then
+                    echo "No semver release tag on commit $release_sha; skipping asset upload."
                     echo "should_upload=false" >> "$GITHUB_OUTPUT"
                     exit 0
                   fi
-                  tag_sha="$(git rev-list -n 1 "$latest_tag")"
-                  echo "Latest tag: $latest_tag -> $tag_sha"
+                  tag_sha="$(git rev-list -n 1 "$release_tag")"
+                  echo "Release tag: $release_tag -> $tag_sha"
                   echo "Release commit: $release_sha"
                   if [ "$tag_sha" != "$release_sha" ]; then
                     echo "Tag does not point at this commit; skipping asset upload."
@@ -76,7 +98,7 @@ jobs:
                     exit 0
                   fi
                   echo "should_upload=true" >> "$GITHUB_OUTPUT"
-                  echo "tag_name=$latest_tag" >> "$GITHUB_OUTPUT"
+                  echo "tag_name=$release_tag" >> "$GITHUB_OUTPUT"
 
             - name: Verify signing key secret presence
               if: steps.release.outputs.should_upload == 'true'
