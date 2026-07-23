@@ -4,7 +4,8 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: ✅ Implemented（Acceptance 1/2/3/4/5/6/7/8 done；Acceptance 4 的"手动删除配置触发一次 workflow"验证步骤本身需实跑 CI 一次，见 Risks）
+**Status**: ✅ Implemented（Acceptance 1/2/3/4/5/6/7/8 done；Acceptance 4 的"手动删除配置触发一次 workflow"验证步骤本身需实跑 CI 一次，见 Risks）  
+**Superseded in part by**: [0158](./0158-tauri-release-assets-and-updater-followup.md)（`workflow_run` 触发与 tag 猜测描述；现网链路以 0158 为准）  
 **Created**: 2026-07-22
 **Area**: Tauri / Update / CI
 **Supersedes（文档层面，非代码）**: [0113](./completed/0113-tauri-updater-production-and-prefs-sync.md) 第41-123行「GitHub Release 作为 updater 后端」章节、[0151](./completed/0151-tauri-cicd-redesign.md) 中对 `photasa-release.yml` 的引用
