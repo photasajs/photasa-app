@@ -3,6 +3,7 @@
 #
 # Linux: replace -march=native with portable flags (rust-cache SIGILL across runner CPUs).
 # Windows/MSVC: skip -march=native entirely — cl.exe rejects GCC-only flags and configure fails.
+# Requires MSYS2 gawk on PATH (see setup-photasa-windows-msvc); Git for Windows awk breaks ffbuild/common.mak.
 # See RFC 0103 / photasa-build CI.
 set -euo pipefail
 

@@ -10,12 +10,35 @@ on:
         types:
             - completed
 
+# Flip to "true" to publish Windows release assets again.
+env:
+    PHOTASA_CI_WINDOWS_ENABLED: "false"
+
 permissions:
     contents: write
     actions: read
 
 jobs:
+    platforms:
+        name: Resolve release platforms
+        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        runs-on: ubuntu-latest
+        outputs:
+            matrix: ${{ steps.resolve.outputs.matrix }}
+        steps:
+            - name: Resolve matrix OS list
+              id: resolve
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  platforms='["ubuntu-latest","macos-latest"]'
+                  if [ "${{ env.PHOTASA_CI_WINDOWS_ENABLED }}" = "true" ]; then
+                    platforms='["ubuntu-latest","macos-latest","windows-latest"]'
+                  fi
+                  echo "matrix=$platforms" >> "$GITHUB_OUTPUT"
+
     build-and-upload:
+        needs: platforms
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
         runs-on: ${{ matrix.os }}
         strategy:
@@ -23,7 +46,7 @@ jobs:
             matrix:
                 # tauri-action manages its own build outputs & upload per OS;
                 # this matrix only selects the runner (no per-OS glob config needed).
-                os: [ubuntu-latest, macos-latest, windows-latest]
+                os: ${{ fromJSON(needs.platforms.outputs.matrix) }}
 
         steps:
             - name: Checkout release commit

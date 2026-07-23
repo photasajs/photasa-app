@@ -265,7 +265,7 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
     let pkg_dir = lib_dir.join("pkgconfig");
     std::fs::create_dir_all(&pkg_dir).expect("failed to create pkgconfig directory");
 
-    let installed_de265 = lib_dir.join(static_library_filename("de265"));
+    let installed_de265 = lib_dir.join(embedded_libde265_install_lib_name());
     if de265_archive != installed_de265 {
         std::fs::copy(&de265_archive, &installed_de265)
             .unwrap_or_else(|err| panic!("failed to copy {}: {err}", de265_archive.display()));
@@ -293,6 +293,15 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
     std::fs::write(pkg_dir.join("libde265.pc"), libde265_pc).expect("failed to write libde265.pc");
 }
 
+fn embedded_libde265_install_lib_name() -> String {
+    // MSVC libde265 target uses PREFIX "lib" → libde265.lib；pkg-config -lde265 也按此解析。
+    if cfg!(all(target_os = "windows", target_env = "msvc")) {
+        "libde265.lib".to_string()
+    } else {
+        static_library_filename("de265")
+    }
+}
+
 fn static_library_filename(stem: &str) -> String {
     if cfg!(all(target_os = "windows", target_env = "msvc")) {
         format!("{stem}.lib")
@@ -302,12 +311,30 @@ fn static_library_filename(stem: &str) -> String {
 }
 
 fn find_libde265_static_library(search_roots: &[&Path]) -> Option<PathBuf> {
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    if let Some(libheif_build) = search_roots.first() {
+        for path in msvc_libde265_release_candidates(libheif_build) {
+            if path.is_file() {
+                return Some(path);
+            }
+        }
+    }
+
     for root in search_roots {
         if let Some(path) = find_de265_archive_under(root) {
             return Some(path);
         }
     }
     None
+}
+
+#[cfg(all(target_os = "windows", target_env = "msvc"))]
+fn msvc_libde265_release_candidates(libheif_build: &Path) -> Vec<PathBuf> {
+    vec![
+        libheif_build.join("build/libde265_build/libde265/Release/libde265.lib"),
+        libheif_build.join("build/libde265_build/libde265/libde265.lib"),
+        libheif_build.join("lib/libde265.lib"),
+    ]
 }
 
 /// 在 MSVC 上可能是 `libde265.lib`、`de265.lib`（import lib）或 Debug 后缀变体。
@@ -631,5 +658,24 @@ mod tests {
             assert!(contents.contains("add_subdirectory(\"${LIBDE265_SOURCE_DIR}\""));
             assert!(!contents.contains("find_package(LIBDE265)"));
         }
+    }
+
+    #[test]
+    fn embedded_libde265_install_lib_name_on_msvc() {
+        if cfg!(all(target_os = "windows", target_env = "msvc")) {
+            assert_eq!(embedded_libde265_install_lib_name(), "libde265.lib");
+        } else {
+            assert_eq!(embedded_libde265_install_lib_name(), "libde265.a");
+        }
+    }
+
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    #[test]
+    fn msvc_libde265_release_candidates_include_vs_out_dir() {
+        let root = Path::new("D:/out/libheif_build");
+        let paths = msvc_libde265_release_candidates(root);
+        assert!(paths
+            .iter()
+            .any(|p| p.ends_with("Release/libde265.lib")));
     }
 }

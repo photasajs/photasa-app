@@ -1,7 +1,7 @@
 {
     "name": "@photasa/maliang-cli",
     "private": true,
-    "version": "0.0.1",
+    "version": "1.7.0",
     "description": "CLI tools for Photasa setup and maintenance",
     "type": "module",
     "bin": {

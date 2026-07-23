@@ -1,6 +1,6 @@
 {
     "name": "@photasa/sibu",
-    "version": "0.0.1",
+    "version": "1.7.0",
     "description": "Sibu Engine - Configuration Management for Photasa",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",
