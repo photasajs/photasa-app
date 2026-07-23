@@ -48,6 +48,63 @@ fn main() {
     }
 }
 
+const LIBDE265_FIND_ANCHOR: &str = "if (WITH_LIBDE265)\n    find_package(LIBDE265)\nendif()";
+
+/// Windows checkout 可能是 CRLF；补丁按 LF 锚点匹配，需先归一化。
+fn normalize_cmake_text(raw: &str) -> String {
+    raw.replace("\r\n", "\n").replace('\r', "\n")
+}
+
+/// CMake 双引号字符串里反斜杠是转义符（`D:\a\...` 会坏），统一用正斜杠。
+fn cmake_quoted_path(path: &Path) -> String {
+    path.to_string_lossy().replace('\\', "/")
+}
+
+fn patch_libde265_minimum_cmake(cmake_lists: &Path) {
+    let mut contents = normalize_cmake_text(
+        &std::fs::read_to_string(cmake_lists)
+            .unwrap_or_else(|err| panic!("failed to read {}: {err}", cmake_lists.display())),
+    );
+    contents = contents.replace(
+        "cmake_minimum_required (VERSION 3.3.2)",
+        "cmake_minimum_required (VERSION 3.5)",
+    );
+    std::fs::write(cmake_lists, contents)
+        .unwrap_or_else(|err| panic!("failed to write {}: {err}", cmake_lists.display()));
+}
+
+fn apply_libde265_embed_patch(contents: &mut String, libde265_source_dir: &str) {
+    if contents.contains("add_subdirectory(\"${LIBDE265_SOURCE_DIR}\"") {
+        return;
+    }
+
+    if !contents.contains(LIBDE265_FIND_ANCHOR) {
+        panic!(
+            "failed to patch libheif for embedded libde265: anchor not found \
+             (check vendor/CMakeLists.txt or line endings)"
+        );
+    }
+
+    let new_find = format!(
+        "if (WITH_LIBDE265)\n    \
+         set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)\n    \
+         set(ENABLE_SDL OFF CACHE BOOL \"\" FORCE)\n    \
+         set(ENABLE_DECODER OFF CACHE BOOL \"\" FORCE)\n    \
+         set(ENABLE_ENCODER OFF CACHE BOOL \"\" FORCE)\n    \
+         set(LIBDE265_SOURCE_DIR \"{libde265_source_dir}\")\n    \
+         set(LIBDE265_BINARY_DIR \"${{CMAKE_CURRENT_BINARY_DIR}}/libde265_build\")\n    \
+         add_subdirectory(\"${{LIBDE265_SOURCE_DIR}}\" \"${{LIBDE265_BINARY_DIR}}\" EXCLUDE_FROM_ALL)\n    \
+         set(LIBDE265_FOUND TRUE)\n    \
+         set(LIBDE265_INCLUDE_DIR \"${{LIBDE265_SOURCE_DIR}}\")\n    \
+         set(LIBDE265_INCLUDE_DIRS \"${{LIBDE265_SOURCE_DIR}}\" \"${{LIBDE265_BINARY_DIR}}\")\n    \
+         set(LIBDE265_LIBRARY de265)\n    \
+         set(LIBDE265_LIBRARIES de265)\n    \
+         set(HAVE_LIBDE265 TRUE)\n\
+         endif()"
+    );
+    *contents = contents.replace(LIBDE265_FIND_ANCHOR, &new_find);
+}
+
 #[allow(dead_code)]
 fn prepare_libheif_src() -> PathBuf {
     let out_path = PathBuf::from(std::env::var("OUT_DIR").unwrap());
@@ -59,50 +116,27 @@ fn prepare_libheif_src() -> PathBuf {
     // 复制 vendored libde265 源码到 OUT_DIR，供 add_subdirectory 使用
     let libde265_src = crate_dir.join("vendor/libde265");
     let libde265_dst = out_path.join("libde265");
-    if libde265_src.exists() {
-        copy_dir_all(libde265_src, &libde265_dst).unwrap();
-        // Patch libde265 CMakeLists.txt：升级最低 CMake 版本要求
-        let de265_cmake = libde265_dst.join("CMakeLists.txt");
-        if de265_cmake.exists() {
-            let mut c = std::fs::read_to_string(&de265_cmake).unwrap();
-            c = c.replace(
-                "cmake_minimum_required (VERSION 3.3.2)",
-                "cmake_minimum_required (VERSION 3.5)",
-            );
-            std::fs::write(&de265_cmake, c).unwrap();
-        }
+    if !libde265_src.exists() {
+        panic!(
+            "embedded libde265 vendor sources missing at {}",
+            libde265_src.display()
+        );
     }
+    copy_dir_all(libde265_src, &libde265_dst).unwrap();
+    patch_libde265_minimum_cmake(&libde265_dst.join("CMakeLists.txt"));
 
     // Patch CMakeLists.txt:
     // 1. 禁用 heifio（示例程序）
     // 2. 将 find_package(LIBDE265) 替换为 add_subdirectory，零系统依赖
     let cmake_lists_path = dst_dir.join("CMakeLists.txt");
-    let mut contents =
-        std::fs::read_to_string(&cmake_lists_path).expect("failed to read libheif/CMakeLists.txt");
+    let mut contents = normalize_cmake_text(
+        &std::fs::read_to_string(&cmake_lists_path)
+            .expect("failed to read libheif/CMakeLists.txt"),
+    );
     contents = contents.replace("add_subdirectory(heifio)", "");
 
-    // 把 find_package(LIBDE265) 替换为内嵌构建（vendored libde265）
-    // LIBDE265_INCLUDE_DIRS 指向 vendored 源码根目录（包含 libde265/de265.h）
-    // LIBDE265_LIBRARIES 指向 add_subdirectory 产生的 de265 target
-    let libde265_dst_str = libde265_dst.to_string_lossy();
-    let old_find = "if (WITH_LIBDE265)\n    find_package(LIBDE265)\nendif()";
-    let new_find = format!(
-        "if (WITH_LIBDE265)\n    \
-         set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)\n    \
-         set(LIBDE265_SOURCE_DIR \"{libde265_dst_str}\")\n    \
-         set(LIBDE265_BINARY_DIR \"${{CMAKE_CURRENT_BINARY_DIR}}/libde265_build\")\n    \
-         add_subdirectory(\"${{LIBDE265_SOURCE_DIR}}\" \"${{LIBDE265_BINARY_DIR}}\" EXCLUDE_FROM_ALL)\n    \
-         set(LIBDE265_FOUND TRUE)\n    \
-         set(LIBDE265_INCLUDE_DIR \"${{LIBDE265_SOURCE_DIR}}\")\n    \
-         set(LIBDE265_INCLUDE_DIRS \"${{LIBDE265_SOURCE_DIR}}\" \"${{LIBDE265_BINARY_DIR}}\")\n    \
-         set(LIBDE265_LIBRARY de265)\n    \
-         set(LIBDE265_LIBRARIES de265)\n    \
-         set(HAVE_LIBDE265 TRUE)\n\
-         endif()"
-    );
-    if contents.contains(old_find) {
-        contents = contents.replace(old_find, &new_find);
-    }
+    let libde265_dst_str = cmake_quoted_path(&libde265_dst);
+    apply_libde265_embed_patch(&mut contents, &libde265_dst_str);
 
     std::fs::write(&cmake_lists_path, contents).expect("failed to write libheif/CMakeLists.txt");
     dst_dir
@@ -220,9 +254,10 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
     let search_roots = [libheif_build, out_path];
     let Some(de265_archive) = find_libde265_static_library(&search_roots) else {
         panic!(
-            "embedded libde265 static library not found under {} or {}",
+            "embedded libde265 static library not found under {} or {} ({})",
             libheif_build.display(),
-            out_path.display()
+            out_path.display(),
+            diagnose_missing_de265_archive(&search_roots)
         );
     };
 
@@ -340,6 +375,55 @@ fn find_file_named(root: &Path, file_name: &str) -> Option<PathBuf> {
         }
     }
     None
+}
+
+fn diagnose_missing_de265_archive(search_roots: &[&Path]) -> String {
+    let mut archives = Vec::new();
+    for root in search_roots {
+        collect_static_library_paths(root, &mut archives, 32);
+    }
+    if archives.is_empty() {
+        return "no .lib/.a archives under search roots".to_string();
+    }
+    archives.sort();
+    archives.dedup();
+    format!(
+        "sample archives: {}",
+        archives
+            .iter()
+            .map(|path| path.display().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    )
+}
+
+fn collect_static_library_paths(root: &Path, out: &mut Vec<PathBuf>, limit: usize) {
+    if out.len() >= limit {
+        return;
+    }
+    let entries = match std::fs::read_dir(root) {
+        Ok(entries) => entries,
+        Err(_) => return,
+    };
+    for entry in entries.flatten() {
+        if out.len() >= limit {
+            return;
+        }
+        let path = entry.path();
+        if path.is_dir() {
+            collect_static_library_paths(&path, out, limit);
+        } else if is_static_archive_file_name(&path) {
+            out.push(path);
+        }
+    }
+}
+
+fn is_static_archive_file_name(path: &Path) -> bool {
+    let Some(name) = path.file_name() else {
+        return false;
+    };
+    let lower = name.to_string_lossy().to_ascii_lowercase();
+    lower.ends_with(".lib") || lower.ends_with(".a")
 }
 
 fn find_libheif() -> Vec<String> {
@@ -521,4 +605,31 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_cmake_text_strips_crlf() {
+        assert_eq!(normalize_cmake_text("a\r\nb\rc"), "a\nb\nc");
+    }
+
+    #[test]
+    fn cmake_quoted_path_uses_forward_slashes_on_windows_paths() {
+        let path = Path::new(r"D:\a\photasa-app\out\libde265");
+        assert_eq!(cmake_quoted_path(path), "D:/a/photasa-app/out/libde265");
+    }
+
+    #[test]
+    fn apply_libde265_embed_patch_replaces_lf_and_crlf_anchors() {
+        let body = format!("prefix\n{LIBDE265_FIND_ANCHOR}\nsuffix");
+        for input in [body.clone(), body.replace('\n', "\r\n")] {
+            let mut contents = normalize_cmake_text(&input);
+            apply_libde265_embed_patch(&mut contents, "D:/out/libde265");
+            assert!(contents.contains("add_subdirectory(\"${LIBDE265_SOURCE_DIR}\""));
+            assert!(!contents.contains("find_package(LIBDE265)"));
+        }
+    }
 }
