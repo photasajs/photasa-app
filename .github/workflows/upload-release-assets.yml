@@ -55,6 +55,8 @@ jobs:
             - name: Resolve tag and commit
               id: coords
               shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   set -euo pipefail
                   if [ "${{ github.event_name }}" = "workflow_call" ]; then
@@ -71,7 +73,11 @@ jobs:
                     echo "::error::tag_name and release_sha are required."
                     exit 1
                   fi
-                  echo "Publishing assets for tag=$tag_name sha=$release_sha"
+                  if ! gh release view "$tag_name" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+                    echo "::error::GitHub Release not found for tag $tag_name"
+                    exit 1
+                  fi
+                  echo "Publishing assets for tag=$tag_name build_sha=$release_sha"
                   echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
                   echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
 
@@ -129,6 +135,7 @@ jobs:
                   projectPath: apps/photasa
                   tagName: ${{ needs.resolve.outputs.tag_name }}
                   releaseCommitish: ${{ needs.resolve.outputs.release_sha }}
+                  args: ${{ runner.os == 'Linux' && '--bundles appimage,deb,rpm' || runner.os == 'macOS' && '--bundles app,dmg' || '' }}
 
     # RFC 0155: verify once after all platform legs finish (not per-matrix — avoids races).
     verify-updater-artifact:

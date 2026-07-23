@@ -35,7 +35,7 @@
         "exifreader": "^4.41.3",
         "file-type": "^21.0.0",
         "image-type": "^5.2.0",
-        "json-tree-view-vue3": "^0.2.3",
+        "json-tree-view-vue3": "^2.0.0",
         "log4js": "^6.9.1",
         "mitt": "^3.0.1",
         "p-queue": "^8.1.1",
@@ -52,7 +52,7 @@
     },
     "devDependencies": {
         "@rollup/plugin-yaml": "^4.1.2",
-        "@rushstack/eslint-patch": "^1.2.0",
+        "@rushstack/eslint-patch": "^1.16.1",
         "@tauri-apps/cli": "^2.0.0",
         "@videojs-player/vue": "^1.0.0",
         "@vitejs/plugin-vue": "^5.0.0",
