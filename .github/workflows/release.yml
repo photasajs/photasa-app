@@ -1,6 +1,5 @@
-# NOTE: `name:` below is a cross-file contract. upload-release-assets.yml listens
-# for this exact workflow name via `workflow_run: workflows: ["Release Please"]`.
-# Renaming this workflow silently breaks that listener (no error, it just stops firing).
+# release-please on main; when a release is created, calls upload-release-assets.yml
+# via workflow_call with explicit tag_name + sha (no tag guessing).
 # See RFC 0155.
 name: Release Please
 
@@ -17,9 +16,23 @@ permissions:
 jobs:
     release-please:
         runs-on: ubuntu-latest
+        outputs:
+            release_created: ${{ steps.release.outputs.release_created }}
+            tag_name: ${{ steps.release.outputs.tag_name }}
+            sha: ${{ steps.release.outputs.sha }}
         steps:
             - name: Release Please
+              id: release
               uses: googleapis/release-please-action@v4
               with:
                   config-file: .release-please-config.json
                   manifest-file: .release-please-manifest.json
+
+    upload-release-assets:
+        needs: release-please
+        if: ${{ needs.release-please.outputs.release_created == 'true' }}
+        uses: ./.github/workflows/upload-release-assets.yml
+        with:
+            tag_name: ${{ needs.release-please.outputs.tag_name }}
+            release_sha: ${{ needs.release-please.outputs.sha }}
+        secrets: inherit
