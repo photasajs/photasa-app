@@ -10,7 +10,7 @@ const BUILD_CHANNEL = {
     PACKAGE_JSON_REL: "package.json",
     DEV_IDENTIFIER: "me.photasa.app.dev",
     DEV_CONFIG_BASENAME: "tauri.dev.conf.json",
-    DEV_TAURI_SCRIPTS: ["dev", "tauri:dev", "build:debug"] as const,
+    DEV_TAURI_SCRIPTS: ["dev", "build:debug"] as const,
     PROD_CI_SCRIPT: "tauri:build:ci",
     DEV_WINDOW_TITLE: "Photasa (Dev)",
 } as const;

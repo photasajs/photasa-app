@@ -434,7 +434,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 
 3. **Tauri 全量构建**
 
-- `cd apps/photasa && pnpm run tauri:build`
+- `cd apps/photasa && pnpm run build`
 - 成功：产出可执行包。同样依赖图标等资源就绪。
 
 4. **Lint（若该子项目配置了）**

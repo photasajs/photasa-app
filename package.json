@@ -10,11 +10,9 @@
         "typecheck": "turbo run typecheck",
         "format": "prettier --write \"**/*.{ts,tsx,md}\"",
         "prepare": "husky",
-        "dev:photasa": "pnpm --filter @photasa/photasa run dev",
-        "vite:dev:photasa": "pnpm --filter @photasa/photasa run vite:dev",
         "build:photasa": "pnpm --filter @photasa/photasa run build",
-        "tauri:dev": "pnpm --filter @photasa/photasa run dev",
-        "tauri:build": "pnpm --filter @photasa/photasa run build",
+        "build:debug:photasa": "pnpm --filter @photasa/photasa run build:debug",
+        "vite:dev:photasa": "pnpm --filter @photasa/photasa run vite:dev",
         "clippy": "cargo clippy --workspace -- -D warnings",
         "test:rust": "cargo test --workspace"
     },

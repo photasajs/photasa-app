@@ -11,8 +11,6 @@
         "build:debug": "tauri build --debug --config src-tauri/tauri.dev.conf.json",
         "preview": "vite preview",
         "tauri": "tauri",
-        "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
-        "tauri:build": "tauri build",
         "tauri:build:ci": "tauri build --debug -c \"{\\\"bundle\\\":{\\\"createUpdaterArtifacts\\\":false}}\"",
         "clippy": "cargo clippy --workspace --manifest-path ../../Cargo.toml -- -D warnings",
         "lint": "eslint src vite.config.ts vitest.config.ts postcss.config.js tailwind.config.js --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --quiet --cache --cache-location node_modules/.cache/eslint/package",
