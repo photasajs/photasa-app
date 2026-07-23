@@ -23,9 +23,9 @@ runs:
               }
               & $bash -lc "pacman -S --noconfirm --needed make diffutils"
 
-        # MSYS2 gawk/sh/make must win over Git\usr\bin (Git awk breaks ffmpeg make rules).
-        # Keep MSVC earlier in PATH so link.exe is not shadowed by MSYS2.
-        - name: Prioritize MSYS2 tools for FFmpeg build
+        # Strip Git usr/mingw64 (broken gawk for ffmpeg); append MSYS2/NASM at END so
+        # MSVC link.exe stays ahead of MSYS2's link.exe (Rust msvc target requires MSVC linker).
+        - name: Append MSYS2 and NASM to PATH (FFmpeg)
           shell: pwsh
           run: |
               $msys = 'C:\msys64\usr\bin'
@@ -33,5 +33,6 @@ runs:
               $filtered = $env:PATH -split ';' | Where-Object {
                   $_ -and $_ -notmatch '[/\\]Git[/\\]usr[/\\]bin' -and $_ -notmatch '[/\\]Git[/\\]mingw64[/\\]bin'
               }
-              $newPath = ($msys, $nasm) + $filtered
-              echo "PATH=$($newPath -join ';')" >> $env:GITHUB_ENV
+              $newPath = ($filtered + @($msys, $nasm)) -join ';'
+              echo "PATH=$newPath" >> $env:GITHUB_ENV
+              echo "AWK=$msys\gawk.exe" >> $env:GITHUB_ENV
