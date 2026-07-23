@@ -11,8 +11,28 @@ runs:
           with:
               arch: x64
 
-        # Append MSYS2 after MSVC so MSYS2 link.exe does not shadow MSVC linker.
-        # sh/make/perl are required by ffmpeg-sys-next configure on Windows.
-        - name: Append MSYS2 and NASM to PATH
+        # FFmpeg configure + make need MSYS2 utilities. `shell: msys2` requires
+        # msys2/setup-msys2; windows-latest only ships C:\msys64 — invoke bash directly.
+        - name: Install MSYS2 build tools (FFmpeg)
           shell: pwsh
-          run: echo "PATH=$env:PATH;C:\msys64\usr\bin;C:\Program Files\NASM" >> $env:GITHUB_ENV
+          run: |
+              $bash = 'C:\msys64\usr\bin\bash.exe'
+              if (-not (Test-Path $bash)) {
+                  Write-Error "MSYS2 bash not found at $bash"
+                  exit 1
+              }
+              & $bash -lc "pacman -S --noconfirm --needed make diffutils"
+
+        # Strip Git usr/mingw64 (broken gawk for ffmpeg); append MSYS2/NASM at END so
+        # MSVC link.exe stays ahead of MSYS2's link.exe (Rust msvc target requires MSVC linker).
+        - name: Append MSYS2 and NASM to PATH (FFmpeg)
+          shell: pwsh
+          run: |
+              $msys = 'C:\msys64\usr\bin'
+              $nasm = 'C:\Program Files\NASM'
+              $filtered = $env:PATH -split ';' | Where-Object {
+                  $_ -and $_ -notmatch '[/\\]Git[/\\]usr[/\\]bin' -and $_ -notmatch '[/\\]Git[/\\]mingw64[/\\]bin'
+              }
+              $newPath = ($filtered + @($msys, $nasm)) -join ';'
+              echo "PATH=$newPath" >> $env:GITHUB_ENV
+              echo "AWK=$msys\gawk.exe" >> $env:GITHUB_ENV

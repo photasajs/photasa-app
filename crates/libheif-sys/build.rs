@@ -10,20 +10,42 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
 
-    // Tell cargo to tell rustc to link the heif library.
+    // Photasa policy (RFC 0103): embedded-libheif on all platforms — no vcpkg in CI.
+    #[cfg(all(
+        target_os = "windows",
+        target_env = "msvc",
+        feature = "embedded-libheif"
+    ))]
+    {
+        let include_paths = find_libheif();
+        #[cfg(feature = "use-bindgen")]
+        run_bindgen(&include_paths);
+        #[cfg(not(feature = "use-bindgen"))]
+        let _ = include_paths;
+        return;
+    }
+
+    #[cfg(all(
+        target_os = "windows",
+        target_env = "msvc",
+        not(feature = "embedded-libheif")
+    ))]
+    {
+        let include_paths: Vec<String> = Vec::new();
+        install_libheif_by_vcpkg();
+        #[cfg(feature = "use-bindgen")]
+        run_bindgen(&include_paths);
+        return;
+    }
 
     #[cfg(not(all(target_os = "windows", target_env = "msvc")))]
-    #[allow(unused_variables)]
-    let include_paths = find_libheif();
-
-    #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    #[allow(unused_variables)]
-    let include_paths: Vec<String> = Vec::new();
-    #[cfg(all(target_os = "windows", target_env = "msvc"))]
-    install_libheif_by_vcpkg();
-
-    #[cfg(feature = "use-bindgen")]
-    run_bindgen(&include_paths);
+    {
+        let include_paths = find_libheif();
+        #[cfg(feature = "use-bindgen")]
+        run_bindgen(&include_paths);
+        #[cfg(not(feature = "use-bindgen"))]
+        let _ = include_paths;
+    }
 }
 
 #[allow(dead_code)]
@@ -66,6 +88,7 @@ fn prepare_libheif_src() -> PathBuf {
     let old_find = "if (WITH_LIBDE265)\n    find_package(LIBDE265)\nendif()";
     let new_find = format!(
         "if (WITH_LIBDE265)\n    \
+         set(BUILD_SHARED_LIBS OFF CACHE BOOL \"\" FORCE)\n    \
          set(LIBDE265_SOURCE_DIR \"{libde265_dst_str}\")\n    \
          set(LIBDE265_BINARY_DIR \"${{CMAKE_CURRENT_BINARY_DIR}}/libde265_build\")\n    \
          add_subdirectory(\"${{LIBDE265_SOURCE_DIR}}\" \"${{LIBDE265_BINARY_DIR}}\" EXCLUDE_FROM_ALL)\n    \
@@ -95,6 +118,11 @@ fn compile_libheif() -> String {
     let mut build_config = cmake::Config::new(libheif_dir);
     build_config.out_dir(out_path.join("libheif_build"));
     build_config.define("CMAKE_INSTALL_LIBDIR", "lib");
+
+    // MSVC 多配置生成器在 Cargo Debug 下用 --config Debug 时，内嵌 libde265 的
+    // 静态库常落在 build 树而非 install 前缀；Release 产物与 Rust debug 链接兼容。
+    #[cfg(all(target_os = "windows", target_env = "msvc"))]
+    build_config.profile("Release");
 
     // Disable some options
     for key in [
@@ -189,10 +217,12 @@ fn compile_libheif() -> String {
 /// 内嵌 libde265 不会随 cmake install 落到 lib/ 与 pkgconfig/，但 libheif.pc 的
 /// Requires.private 仍引用 libde265；CI 无系统 libde265-dev 时 pkg-config --static 会失败。
 fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
-    let Some(de265_archive) = find_libde265_static_library(libheif_build) else {
+    let search_roots = [libheif_build, out_path];
+    let Some(de265_archive) = find_libde265_static_library(&search_roots) else {
         panic!(
-            "embedded libde265 static library not found under {}",
-            libheif_build.display()
+            "embedded libde265 static library not found under {} or {}",
+            libheif_build.display(),
+            out_path.display()
         );
     };
 
@@ -200,7 +230,7 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
     let pkg_dir = lib_dir.join("pkgconfig");
     std::fs::create_dir_all(&pkg_dir).expect("failed to create pkgconfig directory");
 
-    let installed_de265 = lib_dir.join("libde265.a");
+    let installed_de265 = lib_dir.join(static_library_filename("de265"));
     if de265_archive != installed_de265 {
         std::fs::copy(&de265_archive, &installed_de265)
             .unwrap_or_else(|err| panic!("failed to copy {}: {err}", de265_archive.display()));
@@ -225,12 +255,75 @@ fn install_embedded_libde265_pkg_config(libheif_build: &Path, out_path: &Path) {
          Libs.private:\n\
          Cflags: -I${{includedir}}\n"
     );
-    std::fs::write(pkg_dir.join("libde265.pc"), libde265_pc)
-        .expect("failed to write libde265.pc");
+    std::fs::write(pkg_dir.join("libde265.pc"), libde265_pc).expect("failed to write libde265.pc");
 }
 
-fn find_libde265_static_library(libheif_build: &Path) -> Option<PathBuf> {
-    find_file_named(libheif_build, "libde265.a")
+fn static_library_filename(stem: &str) -> String {
+    if cfg!(all(target_os = "windows", target_env = "msvc")) {
+        format!("{stem}.lib")
+    } else {
+        format!("lib{stem}.a")
+    }
+}
+
+fn find_libde265_static_library(search_roots: &[&Path]) -> Option<PathBuf> {
+    for root in search_roots {
+        if let Some(path) = find_de265_archive_under(root) {
+            return Some(path);
+        }
+    }
+    None
+}
+
+/// 在 MSVC 上可能是 `libde265.lib`、`de265.lib`（import lib）或 Debug 后缀变体。
+fn find_de265_archive_under(root: &Path) -> Option<PathBuf> {
+    for name in static_library_candidates("de265") {
+        if let Some(path) = find_file_named(root, &name) {
+            return Some(path);
+        }
+    }
+
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(dir) = stack.pop() {
+        let entries = std::fs::read_dir(&dir).ok()?;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else if is_de265_static_library_file_name(&path) {
+                return Some(path);
+            }
+        }
+    }
+    None
+}
+
+fn is_de265_static_library_file_name(path: &Path) -> bool {
+    let Some(name) = path.file_name() else {
+        return false;
+    };
+    let lower = name.to_string_lossy().to_ascii_lowercase();
+    if !(lower.ends_with(".lib") || lower.ends_with(".a")) {
+        return false;
+    }
+    if lower.contains("heif") && !lower.contains("de265") {
+        return false;
+    }
+    lower.contains("de265")
+}
+
+fn static_library_candidates(stem: &str) -> Vec<String> {
+    if cfg!(all(target_os = "windows", target_env = "msvc")) {
+        vec![
+            format!("lib{stem}.lib"),
+            format!("{stem}.lib"),
+            format!("lib{stem}d.lib"),
+            format!("{stem}d.lib"),
+            format!("lib{stem}.a"),
+        ]
+    } else {
+        vec![format!("lib{stem}.a"), format!("{stem}.a")]
+    }
 }
 
 fn find_file_named(root: &Path, file_name: &str) -> Option<PathBuf> {
@@ -249,7 +342,6 @@ fn find_file_named(root: &Path, file_name: &str) -> Option<PathBuf> {
     None
 }
 
-#[cfg(not(all(target_os = "windows", target_env = "msvc")))]
 fn find_libheif() -> Vec<String> {
     #[allow(unused_mut)]
     let mut config = system_deps::Config::new();

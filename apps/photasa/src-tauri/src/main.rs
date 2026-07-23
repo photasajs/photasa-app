@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod macos_display_name;
 mod utils;
 
 use commands::import_execute::ImportTaskRegistry;
@@ -46,6 +47,8 @@ fn restore_main_window(app: &tauri::AppHandle) {
 }
 
 fn main() {
+    macos_display_name::apply_process_display_name_early();
+
     let mut builder = tauri::Builder::default();
 
     // RFC 0100：须尽早注册；第二实例被插件终止前，首实例在此回调聚焦主窗
@@ -83,6 +86,10 @@ fn main() {
 
     builder
         .setup(|app| {
+            if let Some(name) = app.config().product_name.as_deref() {
+                macos_display_name::apply_process_display_name(name);
+            }
+
             log_viewer::init_log_emit_bridge(app.handle());
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             log_toggle_shortcut::register_log_toggle_shortcut(app.handle());
