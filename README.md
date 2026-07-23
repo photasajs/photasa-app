@@ -9,23 +9,26 @@ pnpm install
 
 # Tauri dev (default)
 pnpm dev
-# or: pnpm run tauri:dev
 
 # Frontend only (no native window)
 pnpm run vite:dev:photasa
 
 # Production build
 pnpm run build:photasa
+
+# Dev-channel debug build (side-by-side with prod install)
+pnpm run build:debug:photasa
 ```
 
-| Task       | Root command                                   | `apps/photasa`       |
-| ---------- | ---------------------------------------------- | -------------------- |
-| Dev        | `pnpm dev`                                     | `pnpm run dev`       |
-| Vite only  | `pnpm run vite:dev:photasa`                    | `pnpm run vite:dev`  |
-| Build      | `pnpm run build:photasa`                       | `pnpm run build`     |
-| Unit tests | `pnpm --filter @photasa/photasa run test:unit` | `pnpm run test:unit` |
-| Rust tests | `cargo test --workspace`                       | —                    |
-| Clippy     | `pnpm run clippy`                              | `pnpm run clippy`    |
+| Task       | Root command                                   | `apps/photasa`         |
+| ---------- | ---------------------------------------------- | ---------------------- |
+| Dev        | `pnpm dev`                                     | `pnpm run dev`         |
+| Vite only  | `pnpm run vite:dev:photasa`                    | `pnpm run vite:dev`    |
+| Build      | `pnpm run build:photasa`                       | `pnpm run build`       |
+| Dev build  | `pnpm run build:debug:photasa`                 | `pnpm run build:debug` |
+| Unit tests | `pnpm --filter @photasa/photasa run test:unit` | `pnpm run test:unit`   |
+| Rust tests | `cargo test --workspace`                       | —                      |
+| Clippy     | `pnpm run clippy`                              | `pnpm run clippy`      |
 
 ### Prerequisites
 
