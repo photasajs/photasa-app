@@ -14,11 +14,11 @@ if grep -rE "${DEV_MARKERS}" .github/workflows/ >/dev/null 2>&1; then
 fi
 
 tauri_build_ci="$(
-    node -e "const p=require('./apps/photasa/package.json'); process.stdout.write(p.scripts['tauri:build:ci']||'')"
+    node -e "const p=require('./apps/photasa/package.json'); process.stdout.write(p.scripts['build:ci']||'')"
 )"
 
 if echo "${tauri_build_ci}" | grep -qE "${DEV_MARKERS}"; then
-    echo "::error::apps/photasa/package.json tauri:build:ci must not reference dev channel"
+    echo "::error::apps/photasa/package.json build:ci must not reference dev channel"
     echo "${tauri_build_ci}"
     exit 1
 fi

@@ -13,10 +13,10 @@ Tauri v2 的 `--config` 对**数组字段整段替换**（非按项合并）。`
 | `dev`（根目录 `pnpm dev`）                         | 开发者         | Dev  | `me.photasa.app.dev` | `tauri.dev.conf.json`                              | 否，CI/CD 从不构建 Dev 通道 |
 | `build:debug`（根目录 `pnpm build:debug:photasa`） | 开发者         | Dev  | `me.photasa.app.dev` | `tauri.dev.conf.json`                              | 否                          |
 | `build`（根目录 `pnpm build:photasa`）             | 开发者（少见） | Prod | `me.photasa.app`     | 无                                                 | 否（本地产物，非发布渠道）  |
-| `tauri:build:ci`（仅 `photasa-build.yml`）         | **仅 CI**      | Prod | `me.photasa.app`     | 无（主配置 + 内联 `createUpdaterArtifacts:false`） | 否，仅编译门禁              |
+| `build:ci`（仅 `photasa-build.yml`）               | **仅 CI**      | Prod | `me.photasa.app`     | 无（主配置 + 内联 `createUpdaterArtifacts:false`） | 否，仅编译门禁              |
 | `upload-release-assets.yml`（`tauri-action`）      | **仅 CI**      | Prod | `me.photasa.app`     | 无（主配置 release profile）                       | **是**，唯一对外发布路径    |
 
-**铁律：** `tauri.dev.conf.json` 不得出现在任何 `.github/workflows/**` 或 `tauri:build:ci` 中（由 `scripts/ci/guard-prod-build-channel.sh` 门禁）。
+**铁律：** `tauri.dev.conf.json` 不得出现在任何 `.github/workflows/**` 或 `build:ci` 中（由 `scripts/ci/guard-prod-build-channel.sh` 门禁）。
 
 ## 切换 Dev identifier 后
 
