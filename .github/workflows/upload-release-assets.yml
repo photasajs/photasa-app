@@ -19,7 +19,7 @@ on:
     workflow_dispatch:
         inputs:
             tag_name:
-                description: "Git tag to build and upload (e.g. photasa-v2.0.0 or v2.0.0)"
+                description: "Git tag to build and upload (e.g. v2.0.0; legacy photasa-v* still works)"
                 required: true
                 type: string
             release_sha:

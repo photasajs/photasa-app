@@ -20,6 +20,8 @@ const RELEASE_PLEASE_CONFIG = {
         ".": {
             "release-type": "node",
             "package-name": "photasa",
+            // v1.7.0-era tags are `v*`. Root package must not prefix tags with `photasa-`.
+            "include-component-in-tag": false,
             "changelog-path": "CHANGELOG.md",
             "extra-files": [],
         },
