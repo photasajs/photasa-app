@@ -3692,6 +3692,8 @@ dependencies = [
  "log",
  "md-5",
  "notify",
+ "objc2 0.6.4",
+ "objc2-foundation 0.3.2",
  "pathdiff",
  "photasa-config",
  "photasa-folder-tree",
