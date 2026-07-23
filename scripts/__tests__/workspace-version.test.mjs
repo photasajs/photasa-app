@@ -49,4 +49,8 @@ test("release-please root package tag format", () => {
     const rootPackage = config.packages["."];
     assert.equal(rootPackage["package-name"], "photasa");
     assert.equal(rootPackage["include-component-in-tag"], false);
+    assert.equal(
+        rootPackage["bootstrap-sha"],
+        "45ea2950cbf31f157480f056ff863582aa613be2",
+    );
 });
