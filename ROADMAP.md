@@ -8,7 +8,7 @@ High-level plans and “what’s next” live here. Do not duplicate this as ran
 
 - **Runtime**: Tauri only (no contract reference in target). Vue for frontend.
 - **Backend**: 100% Rust. **1:1 mapping** from current legacy Node main and preload logic to Rust; **no Node usage** in Tauri backend.
-- **Frontend–backend boundary**: Vue UI uses `apps/photasa/src/ipc/*` domain modules or Zhenguan persons (`YuanTianGang` for stateful/cross-cutting IPC). **`window.api` / `legacy-api.ts` are being removed** per [0154](.spec/rfc/0154-tauri-legacy-api-retirement.md). Zhenguan services must never use `window.api`. See [0137](.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md).
+- **Frontend–backend boundary**: Vue UI submits intent through the responsible Zhenguan person; `YuanTianGang` owns business `invoke` / `listen` transport. Public `apps/photasa/src/ipc/*` domain modules are not UI entry points. **`window.api` / `legacy-api.ts` are being removed** per [0154](.spec/rfc/0154-tauri-legacy-api-retirement.md). Approved non-business Tauri runtime helpers such as `convertFileSrc` remain explicit exceptions. See [0137](.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md).
 
 ### Golden rule: Rust rewrite, not TypeScript copy
 
@@ -67,7 +67,7 @@ RFC 索引与流程说明**以本节与根目录 [`TASK_TRACKING.md`](./TASK_TRA
 | 已归档于 `.spec/rfc/completed/`                                   | 75                        |
 | 已归档于 `.spec/rfc/rejected/`                                    | 2                         |
 
-Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Photasa Active RFCs** 与 **Legacy backlog** 为准。
+Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **Photasa Active RFCs**、**Photasa UI RFC drafts（非 Active）** 与 **Legacy backlog** 为准。
 
 ### By version（概览）
 
@@ -159,8 +159,9 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)                | 0073 关闭后 UI 适配层剩余项跟踪                                                          | ✅ Implemented                                                                                                                                       |
 | [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md)            | shell/menu 退出 zouwu（贞观直连 invoke）                                                 | ✅ Implemented                                                                                                                                       |
 | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)                | `zouwu-core` / `TianshuService` workspace 物理移除                                       | ✅ Implemented                                                                                                                                       |
-| [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 退役 `legacy-api` / `utils/api` → 贞观人物 + 袁天罡唯一 IPC                              | ⏳ Draft                                                                                                                                             |
-| [0155](.spec/rfc/0155-tauri-release-pipeline-as-built.md)                          | Release/updater 流水线如实记录 + 修复 `createUpdaterArtifacts`/`pubkey` 生产阻断缺口     | ⏳ Draft                                                                                                                                             |
+| [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 退役 `legacy-api` / `utils/api` → 贞观人物 + 袁天罡唯一业务 IPC                          | ⏳ UI Draft（非 Photasa Active）                                                                                                                     |
+| [0155](.spec/rfc/0155-tauri-release-pipeline-as-built.md)                          | Release/updater 流水线如实记录 + 修复 `createUpdaterArtifacts`/`pubkey` 生产阻断缺口     | ✅ Implemented                                                                                                                                       |
+| [0157](.spec/rfc/0157-tauri-dev-prod-side-by-side.md)                              | Dev/Prod 版 Photasa 同机并存（独立 identifier/数据目录）                                 | ⏳ Draft — 脚本表见 [apps/photasa/DEVELOPMENT.md](apps/photasa/DEVELOPMENT.md)                                                                       |
 
 ### Photasa next priorities（2026-07）
 
@@ -433,7 +434,7 @@ Markdown 与链接检查；状态可用 PR label / 看板。流程参考 [Rust R
 
 3. **Tauri 全量构建**
 
-- `cd apps/photasa && pnpm run tauri:build`
+- `cd apps/photasa && pnpm run build`
 - 成功：产出可执行包。同样依赖图标等资源就绪。
 
 4. **Lint（若该子项目配置了）**
