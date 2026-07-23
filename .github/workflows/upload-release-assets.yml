@@ -1,19 +1,30 @@
-# Triggered after release-please finishes on main. Builds Tauri bundles per OS and
-# uploads them to the GitHub Release when the latest v* tag points at that commit.
-# See docs/design/20250704-release-please-upload-best-practice.md
+# Builds Tauri bundles per OS and uploads to an existing GitHub Release.
+# Invoked by release.yml via workflow_call when release-please creates a release,
+# or manually via workflow_dispatch to retry a specific tag.
+# See RFC 0155 and docs/design/20250704-release-please-upload-best-practice.md
 
 name: Upload Release Assets
 
 on:
-    workflow_run:
-        workflows: ["Release Please"]
-        types:
-            - completed
+    workflow_call:
+        inputs:
+            tag_name:
+                description: "Git tag for the GitHub Release (from release-please tag_name output)"
+                required: true
+                type: string
+            release_sha:
+                description: "Commit SHA release-please tagged (from release-please sha output)"
+                required: true
+                type: string
     workflow_dispatch:
         inputs:
             tag_name:
-                description: "Release tag to build and upload (e.g. photasa-v2.0.0 or v2.0.0)"
+                description: "Git tag to build and upload (e.g. photasa-v2.0.0 or v2.0.0)"
                 required: true
+                type: string
+            release_sha:
+                description: "Optional commit SHA; when empty, resolved from the tag ref"
+                required: false
                 type: string
 
 # Flip to "true" to publish Windows release assets again.
@@ -25,15 +36,55 @@ permissions:
     actions: read
 
 jobs:
-    platforms:
-        name: Resolve release platforms
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    resolve:
+        name: Resolve release coordinates
         runs-on: ubuntu-latest
         outputs:
-            matrix: ${{ steps.resolve.outputs.matrix }}
+            tag_name: ${{ steps.coords.outputs.tag_name }}
+            release_sha: ${{ steps.coords.outputs.release_sha }}
+            matrix: ${{ steps.platforms.outputs.matrix }}
         steps:
+            - name: Checkout tag (manual dispatch without SHA)
+              if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_sha == '' }}
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.inputs.tag_name }}
+                  fetch-depth: 0
+                  fetch-tags: true
+
+            - name: Resolve tag and commit
+              id: coords
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  if [ "${{ github.event_name }}" = "workflow_call" ]; then
+                    tag_name="${{ inputs.tag_name }}"
+                    release_sha="${{ inputs.release_sha }}"
+                  else
+                    tag_name="${{ github.event.inputs.tag_name }}"
+                    release_sha="${{ github.event.inputs.release_sha }}"
+                    if [ -z "$release_sha" ]; then
+                      release_sha="$(git rev-parse HEAD)"
+                    fi
+                  fi
+                  if [ -z "$tag_name" ] || [ -z "$release_sha" ]; then
+                    echo "::error::tag_name and release_sha are required."
+                    exit 1
+                  fi
+                  echo "Publishing assets for tag=$tag_name sha=$release_sha"
+                  echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+                  echo "release_sha=$release_sha" >> "$GITHUB_OUTPUT"
+
+            - name: Verify signing key secret presence
+              shell: bash
+              run: |
+                  if [ -z "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
+                    echo "::error::TAURI_SIGNING_PRIVATE_KEY is missing in repository secrets. Fail-fast to prevent unsigned releases."
+                    exit 1
+                  fi
+
             - name: Resolve matrix OS list
-              id: resolve
+              id: platforms
               shell: bash
               run: |
                   set -euo pipefail
@@ -44,83 +95,31 @@ jobs:
                   echo "matrix=$platforms" >> "$GITHUB_OUTPUT"
 
     build-and-upload:
-        needs: platforms
-        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+        needs: resolve
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
             matrix:
-                # tauri-action manages its own build outputs & upload per OS;
-                # this matrix only selects the runner (no per-OS glob config needed).
-                os: ${{ fromJSON(needs.platforms.outputs.matrix) }}
+                os: ${{ fromJSON(needs.resolve.outputs.matrix) }}
 
         steps:
             - name: Checkout release commit
               uses: actions/checkout@v4
               with:
-                  ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name || github.event.workflow_run.head_sha }}
+                  ref: ${{ needs.resolve.outputs.release_sha }}
                   fetch-depth: 0
-
-            - name: Detect new release tag on main
-              id: release
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-                    tag_name="${{ github.event.inputs.tag_name }}"
-                    if [ -z "$tag_name" ]; then
-                      echo "::error::workflow_dispatch requires tag_name input."
-                      exit 1
-                    fi
-                    echo "Manual dispatch for tag: $tag_name"
-                    echo "should_upload=true" >> "$GITHUB_OUTPUT"
-                    echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-
-                  release_sha="${{ github.event.workflow_run.head_sha }}"
-                  # release-please uses photasa-v* when package-name is set; legacy tags are v*.
-                  release_tag="$(git tag -l --points-at "$release_sha" \
-                    | grep -E '^(v|photasa-v)[0-9]+\.[0-9]+\.[0-9]+' \
-                    | sort -V \
-                    | tail -n 1 || true)"
-                  if [ -z "$release_tag" ]; then
-                    echo "No semver release tag on commit $release_sha; skipping asset upload."
-                    echo "should_upload=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-                  tag_sha="$(git rev-list -n 1 "$release_tag")"
-                  echo "Release tag: $release_tag -> $tag_sha"
-                  echo "Release commit: $release_sha"
-                  if [ "$tag_sha" != "$release_sha" ]; then
-                    echo "Tag does not point at this commit; skipping asset upload."
-                    echo "should_upload=false" >> "$GITHUB_OUTPUT"
-                    exit 0
-                  fi
-                  echo "should_upload=true" >> "$GITHUB_OUTPUT"
-                  echo "tag_name=$release_tag" >> "$GITHUB_OUTPUT"
-
-            - name: Verify signing key secret presence
-              if: steps.release.outputs.should_upload == 'true'
-              shell: bash
-              run: |
-                  if [ -z "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" ]; then
-                    echo "::error::TAURI_SIGNING_PRIVATE_KEY is missing in repository secrets. Fail-fast to prevent unsigned releases."
-                    exit 1
-                  fi
+                  fetch-tags: true
 
             - name: Setup Toolchain
-              if: steps.release.outputs.should_upload == 'true'
               uses: ./.github/actions/setup-photasa-toolchain
               with:
                   checkout: "false"
 
             - name: Setup Windows MSVC (FFmpeg)
-              if: steps.release.outputs.should_upload == 'true' && runner.os == 'Windows'
+              if: runner.os == 'Windows'
               uses: ./.github/actions/setup-photasa-windows-msvc
 
             - name: Build & Publish Tauri Release Assets
-              if: steps.release.outputs.should_upload == 'true'
               uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -128,21 +127,22 @@ jobs:
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
               with:
                   projectPath: apps/photasa
-                  tagName: ${{ steps.release.outputs.tag_name }}
-                  releaseName: "Photasa ${{ steps.release.outputs.tag_name }}"
-                  releaseBody: "See release notes on GitHub."
-                  releaseId: ${{ steps.release.outputs.tag_name }}
+                  tagName: ${{ needs.resolve.outputs.tag_name }}
+                  releaseCommitish: ${{ needs.resolve.outputs.release_sha }}
 
-            # RFC 0155 Acceptance 4/8: createUpdaterArtifacts silently no-ops if unset —
-            # this turns "workflow green" into "updater artifact actually exists".
+    # RFC 0155: verify once after all platform legs finish (not per-matrix — avoids races).
+    verify-updater-artifact:
+        needs: [resolve, build-and-upload]
+        if: ${{ needs.build-and-upload.result == 'success' }}
+        runs-on: ubuntu-latest
+        steps:
             - name: Verify updater artifact was published
-              if: steps.release.outputs.should_upload == 'true'
               shell: bash
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   set -euo pipefail
-                  tag="${{ steps.release.outputs.tag_name }}"
+                  tag="${{ needs.resolve.outputs.tag_name }}"
                   if ! gh release view "$tag" --repo "${{ github.repository }}" --json assets \
                       --jq '.assets[].name' | grep -qx "latest.json"; then
                     echo "::error::latest.json missing from release $tag — createUpdaterArtifacts may be disabled or signing failed. Updater will be unreachable."
