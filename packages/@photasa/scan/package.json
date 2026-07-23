@@ -1,6 +1,6 @@
 {
     "name": "@photasa/scan",
-    "version": "0.0.1",
+    "version": "1.7.0",
     "description": "Scan - Photo scanning, strategy, and cache management",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",

@@ -1,6 +1,6 @@
 {
     "name": "@photasa/qianliyan",
-    "version": "1.0.0",
+    "version": "1.7.0",
     "description": "Qianliyan File Scanning Engine",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",

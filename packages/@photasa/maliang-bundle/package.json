@@ -1,6 +1,6 @@
 {
     "name": "@photasa/maliang-bundle",
-    "version": "1.0.0",
+    "version": "1.7.0",
     "description": "Bundled binaries and decoders for Photasa (FFmpeg, HEIF)",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
