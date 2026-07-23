@@ -16,3 +16,7 @@
 
 // 导出核心类型和引擎
 export * from "./core";
+
+// 太乙适配器（导入时自动注册）
+export { QianliyanAdapter } from "./adapters/QianliyanAdapter";
+import "./adapters/QianliyanAdapter";

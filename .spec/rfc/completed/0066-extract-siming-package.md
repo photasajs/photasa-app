@@ -1,7 +1,7 @@
 # RFC 0066: Extract Siming Package
 
 - **Author**: AI Assistant
-- **Status**: Draft
+- **Status**: Implemented (2026-07-23)
 - **Created**: 2025-12-30
 
 ## Abstract

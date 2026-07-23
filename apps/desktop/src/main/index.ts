@@ -54,6 +54,7 @@ if (!isDev) {
 let mainWindow: BrowserWindow | undefined | null;
 let splashWindow: SplashWindow | undefined;
 let startupOptimizer: StartupOptimizerV2 | undefined;
+let isQuitting = false;
 const singleInstanceManager = new SingleInstanceManager({
     appName: "Photasa",
     focusOnSecondInstance: true,
@@ -437,28 +438,51 @@ app.whenReady().then(async () => {
 });
 
 /**
+ * 优雅关闭所有服务（含 chokidar/fsevents 文件监听），避免 Electron 退出时 native 模块崩溃。
+ */
+async function shutdownServices(): Promise<void> {
+    if (!startupOptimizer) {
+        return;
+    }
+
+    try {
+        await startupOptimizer.shutdownAllServices();
+    } catch (error) {
+        logger.error("Failed to shutdown services:", error);
+    }
+
+    startupOptimizer = undefined;
+    mainWindow = null;
+    logger.info("Application services cleaned up");
+}
+
+/**
+ * macOS Cmd+Q 或 dev server 重启时，在 Node 环境销毁前先关闭 fsevents 监听。
+ */
+app.on("before-quit", (event) => {
+    if (isQuitting) {
+        return;
+    }
+
+    event.preventDefault();
+    isQuitting = true;
+
+    void shutdownServices().finally(() => {
+        app.quit();
+    });
+});
+
+/**
  * 当所有窗口关闭时退出，除了 macOS。
  * 在 macOS 上，应用程序和菜单栏通常会保持活动状态，直到用户显式退出。
  */
-app.on("window-all-closed", async () => {
+app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
+        return;
     }
 
-    // 清理服务
-    if (startupOptimizer) {
-        try {
-            await startupOptimizer.shutdownAllServices();
-        } catch (error) {
-            logger.error("Failed to shutdown services:", error);
-        }
-    }
-
-    // 清理全局变量
-    mainWindow = null;
-    startupOptimizer = undefined;
-
-    logger.info("Application windows closed, services cleaned up");
+    void shutdownServices();
 });
 
 /**

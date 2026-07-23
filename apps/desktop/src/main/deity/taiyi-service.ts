@@ -18,9 +18,14 @@ import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
 import { TaiyiEngine, TaiyiEngineConfig, EngineCallResult } from "@photasa/taiyi";
 import { loggers } from "@photasa/common";
-import { ActionStep, BuiltinStep, WorkflowStep, ExecutionContext } from "@photasa/tianshu";
-
-import { IStepExecutor, StepExecutionResult } from "@main/engines/common/interfaces";
+import {
+    ActionStep,
+    BuiltinStep,
+    WorkflowStep,
+    ExecutionContext,
+    IStepExecutor,
+    StepExecutionResult,
+} from "@photasa/tianshu";
 
 const logger = loggers.taiyi;
 

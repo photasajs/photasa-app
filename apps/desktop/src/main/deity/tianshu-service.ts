@@ -19,10 +19,9 @@ import { type IpcMain, BrowserWindow, app } from "electron";
 import path from "path";
 import { Service } from "@main/tianting/decorators/service-decorators";
 import { ServicePriority, IService } from "@main/tianting/core/service-types";
-import { TianshuEngine } from "@photasa/tianshu";
+import { TianshuEngine, resolveTianshuWorkflowsDir, type IStepExecutor } from "@photasa/tianshu";
 import { loggers } from "@photasa/common";
 import type TaiyiService from "./taiyi-service";
-import { IStepExecutor } from "@main/engines/common/interfaces";
 
 const logger = loggers.tianshu || loggers.main;
 
@@ -33,12 +32,9 @@ const logger = loggers.tianshu || loggers.main;
  * 在开发环境中，工作流目录在源代码位置
  */
 function getWorkflowDir() {
-    // Determine workflow directory based on environment
-    // In production, workflows are in resources/workflows (copied via extraResources)
-    // In development, they are in their source location
     return app.isPackaged
         ? path.join(process.resourcesPath, "workflows")
-        : path.resolve(process.cwd(), "src/main/engines/tianshu/workflows");
+        : resolveTianshuWorkflowsDir();
 }
 
 @Service({

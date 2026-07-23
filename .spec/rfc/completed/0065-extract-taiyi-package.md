@@ -3,7 +3,7 @@
 - Start Date: 2025-12-29
 - RFC PR: (To be added)
 - Implementation PR: (To be added)
-- Status: Implemented
+- Status: Implemented (2026-07-23)
 
 ## Summary
 

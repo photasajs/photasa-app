@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SimingAdapter } from "../SimingAdapter";
+import { SimingAdapter } from "@photasa/siming";
 
 // Mock SimingEngine
 vi.mock("@photasa/siming", () => ({

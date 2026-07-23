@@ -111,8 +111,7 @@ import {
 import { useI18n } from "vue-i18n";
 import { onClickOutside } from "@vueuse/core";
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
-import { storeToRefs } from "pinia";
-import { useMenusStore } from "@renderer/stores/menus";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import { BaseSpace } from "@renderer/components/ui";
 import MenuDropdown from "./common/MenuDropdown.vue";
 const { t } = useI18n();
@@ -181,9 +180,9 @@ onBeforeUnmount(() => {
     });
 });
 
-// menus store 响应式菜单栏
-const menusStore = useMenusStore();
-const { menus } = storeToRefs(menusStore);
+// RFC 0058: 通过长孙无忌服务访问菜单数据
+const zhangSunWuJi = useZhangSunWuJi();
+const menus = zhangSunWuJi.menus;
 
 // 当前激活的一级菜单 key，决定 dropdown 是否显示及内容
 const activeMenuKey = ref<string | null>(null);

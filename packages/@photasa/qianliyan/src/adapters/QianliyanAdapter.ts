@@ -6,11 +6,10 @@
 import { Adapter, AdapterPriority, IAdapter } from "@photasa/taiyi";
 import {
     QianliyanEngine,
-    ScanCommand,
-    // ScanResult,
-    ScanProgress,
-    ScanStatus,
-} from "@photasa/qianliyan";
+    type ScanCommand,
+    type ScanProgress,
+    type ScanStatus,
+} from "../core/QianliyanEngine";
 import type { ScanAction } from "@photasa/common";
 import { loggers } from "@photasa/common";
 

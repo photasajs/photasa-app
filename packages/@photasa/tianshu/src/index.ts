@@ -26,6 +26,12 @@
 export { TianshuEngine } from "./core";
 export type { TianshuEngineConfig } from "./core";
 
+// 工作流目录解析
+export { resolveTianshuWorkflowsDir } from "./paths";
+
+// 步骤执行器契约（供 desktop 薄服务层实现）
+export type { IStepExecutor, StepExecutionResult, StepProgressReport } from "./common/interfaces";
+
 // 公共类型
 export type {
     // 命令和响应

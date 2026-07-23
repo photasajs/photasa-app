@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
-import { WenchangAdapter } from "../WenchangAdapter";
+import { WenchangAdapter } from "@photasa/wenchang";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";

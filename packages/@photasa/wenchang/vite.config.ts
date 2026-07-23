@@ -19,7 +19,7 @@ export default defineConfig({
             formats: ["es", "cjs"],
         },
         rollupOptions: {
-            external: ["electron", "fs-extra", "path", "events", "fs/promises", "@photasa/common"],
+            external: ["electron", "fs-extra", "path", "events", "fs/promises", "@photasa/common", "@photasa/taiyi", "os"],
         },
         sourcemap: true,
         emptyOutDir: true,

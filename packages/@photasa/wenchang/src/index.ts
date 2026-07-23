@@ -36,3 +36,6 @@ export type {
     PreferenceHistory,
     WenchangConfig,
 } from "./types/index";
+
+export { WenchangAdapter, type WenchangAdapterConfig } from "./adapters/WenchangAdapter";
+import "./adapters/WenchangAdapter";

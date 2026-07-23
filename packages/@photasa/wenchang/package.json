@@ -28,6 +28,7 @@
     },
     "dependencies": {
         "@photasa/common": "workspace:*",
+        "@photasa/taiyi": "workspace:*",
         "fs-extra": "^11.1.1"
     },
     "devDependencies": {

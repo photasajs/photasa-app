@@ -606,7 +606,7 @@ function setupProgram(): Command {
         .version("1.0.0");
 
     program
-        .option("-d, --dir <path>", "指定典籍库目录", "src/engines/tianshu/workflows")
+        .option("-d, --dir <path>", "指定典籍库目录", "packages/@photasa/tianshu/workflows")
         .option("-f, --fix", "尝试自动修复常见问题", false)
         .option("-v, --verbose", "显示详细输出", false)
         .option("--format <type>", "输出格式 (simple|table|json)", "simple")

@@ -101,21 +101,7 @@ export const api = {
         electronAPI.ipcRenderer.removeListener("window:unmaximized", cb),
     offWindowMaximizedState: (cb: (...args: any[]) => void) =>
         electronAPI.ipcRenderer.removeListener("window:maximizedState", cb),
-    /**
-     * Mac 菜单同步：将 menus 数据通过 IPC 发送到主进程，由主进程设置 Electron.Menu
-     * @param menus 菜单数据（已翻译 label，结构兼容 Electron.Menu）
-     */
-    applySystemMenu: (menus: any) => {
-        electronAPI.ipcRenderer.send("menu:applySystemMenu", menus);
-    },
-    /**
-     * Mac 菜单点击事件桥接：监听主进程发来的菜单点击事件，转发到 renderer
-     * @param cb 回调函数，参数为菜单事件 payload
-     */
-    onMenuAction: (cb: (payload: any) => void) => {
-        electronAPI.ipcRenderer.on("menu:action", (_event, payload) => cb(payload));
-    },
-    // ✅ RFC 0058: openExternal 已迁移到服务架构，使用 useZhangSunWuJi().openExternal()
+    // ✅ RFC 0058: applySystemMenu/onMenuAction 已迁移到 zouzhe + 天枢引擎流程
 
     // ==================== 自动更新功能 API ====================
     ...updateApi,

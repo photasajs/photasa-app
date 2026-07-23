@@ -100,10 +100,6 @@ vi.mock("../window/window-service", () => ({
     default: vi.fn(),
 }));
 
-vi.mock("../menu/menu-service", () => ({
-    default: vi.fn(),
-}));
-
 vi.mock("../shell/shell-service", () => ({
     default: vi.fn(),
 }));

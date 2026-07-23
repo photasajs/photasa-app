@@ -29,6 +29,7 @@
     "license": "MIT",
     "dependencies": {
         "@photasa/common": "workspace:*",
+        "@photasa/taiyi": "workspace:*",
         "events": "^1.0.0"
     },
     "devDependencies": {

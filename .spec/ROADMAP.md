@@ -7,9 +7,9 @@ Update this file whenever RFC status changes.
 ## RFC Statistics
 
 - **Total RFCs**: 45
-- **Completed**: 30 (66.7%)
-- **In Progress**: 2 (4.4%)
-- **Draft**: 13 (28.9%)
+- **Completed**: 36 (80.0%)
+- **In Progress**: 1 (2.2%)
+- **Draft**: 22 (48.9%)
 - **Rejected**: 6 (13.3%)
 
 ### By Version
@@ -99,7 +99,6 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0050](./0050-taiyi-workflow-engine.md)                           | 太乙工作流引擎                                           | Draft          | AI     | v2.0.0         |
 | [0055](./0055-taiyi-workflow-summary.md)                          | 太乙工作流总结                                           | Draft          | AI     | v2.0.0         |
 | [0056](./0056-yuchigong-code-quality-improvements.md)             | 尉迟恭代码质量改进                                       | Draft          | AI     | v2.0.0         |
-| [0058](./0058-zhangsunwuji-menu-service.md)                       | 长孙无忌菜单服务 - 统一菜单管理到qizou流程               | 🔨 In Progress | AI     | v2.0.0         |
 | [0061](./0061-zouwu-workflow-visualization.md)                    | 驺吾工作流可视化 (Workflow Visualization)                | Draft          | AI     | v2.0.0         |
 
 ## Implemented RFCs
@@ -136,6 +135,12 @@ What parts of the design do you expect to resolve through the RFC process before
 | [0047](./completed/0047-foldertree-persistence-initialization.md)                      | folderTree持久化与初始化 - 魏征appState管理              | AI     | v2.0.0         | 三条数据流汇聚魏征，司命引擎持久化，Store Automation自动同步，核心功能100%完成                |
 | [0048](./completed/0048-scan-orchestration-business-logic-migration.md)                | 扫描编排业务逻辑迁移 - 职责自洽架构                      | AI     | v2.0.0         | Store SSOT + 状态机制 + 立即清理，删除AppHelper.ts (306行)，App.vue减少~180行，已通过测试验证 |
 | [0057](./completed/0057-yushinan-scan-progress-display.md)                             | 虞世南扫描进度展示服务 - 统一findPhotoService到qizou流程 | AI     | v2.0.0         | 统一findPhotoService到qizou流程，创建虞世南服务，消除双重监听反模式，所有Vue组件遵循服务模式  |
+| [0058](./completed/0058-zhangsunwuji-menu-service.md)                                  | 长孙无忌菜单服务 - 统一菜单管理到qizou流程               | AI     | v2.0.0         | zouzhe+天枢菜单同步，TaibaijinxingAdapter，消除直接IPC/Store访问，6项单元测试通过             |
+| [0062](./completed/0062-extract-wenchang-package.md)                                   | Extract Wenchang Engine to Package                       | Photasa Team | v2.0.0     | `@photasa/wenchang` 独立包，偏好管理引擎模块化                                                |
+| [0063](./completed/0063-extract-sibu-package.md)                                       | Extract Sibu Engine to Package                           | Photasa Team | v2.0.0     | `@photasa/sibu` 独立包，清单管理引擎模块化                                                    |
+| [0064](./completed/0064-maliang-migration-polish.md)                                   | Ma-Liang Migration Polish                                | Photasa Team | v2.0.0     | `@photasa/maliang` 包迁移收尾                                                                 |
+| [0065](./completed/0065-extract-taiyi-package.md)                                      | Extract Taiyi Package                                    | AI     | v2.0.0         | `@photasa/taiyi` 独立包，适配器注册中心与工作流标准器模块化                                   |
+| [0066](./completed/0066-extract-siming-package.md)                                     | Extract Siming Package                                   | AI     | v2.0.0         | `@photasa/siming` 独立包，appState 管理引擎模块化                                             |
 
 ## Rejected RFCs
 

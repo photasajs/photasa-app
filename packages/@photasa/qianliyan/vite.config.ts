@@ -32,6 +32,7 @@ export default defineConfig({
                 "path",
                 "os",
                 "@photasa/common",
+                "@photasa/taiyi",
             ],
             output: {
                 preserveModules: false,
