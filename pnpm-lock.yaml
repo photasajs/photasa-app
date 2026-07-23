@@ -41,6 +41,9 @@ importers:
       '@photasa/base-tree':
         specifier: workspace:*
         version: link:../../packages/@photasa/base-tree
+      '@photasa/common':
+        specifier: workspace:*
+        version: link:../../packages/@photasa/common
       '@systembug/diting':
         specifier: ^0.0.7
         version: 0.0.7
@@ -4964,7 +4967,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.2.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.0)(@types/node@20.19.27)(@vitest/coverage-v8@4.1.10)(happy-dom@20.11.0)(jsdom@23.2.0(canvas@3.2.0))(vite@6.4.3(@types/node@20.19.27)(jiti@2.6.1)(less@4.5.1)(sass@1.97.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.9.0))
+      vitest: 4.1.10(@opentelemetry/api@1.9.0)(@types/node@20.19.27)(@vitest/coverage-v8@4.1.10)(happy-dom@20.11.0)(jsdom@23.2.0(canvas@3.2.0))(vite@6.4.3(@types/node@20.19.27)(jiti@1.21.7)(less@4.5.1)(sass@1.97.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.9.0))
 
   '@vitest/expect@4.0.16':
     dependencies:
