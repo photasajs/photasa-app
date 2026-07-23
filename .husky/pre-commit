@@ -1,2 +1,3 @@
 pnpm exec lint-staged
 bash scripts/husky-clippy-if-rust-staged.sh
+bash scripts/husky-version-align-if-version-staged.sh

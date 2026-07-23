@@ -1,6 +1,6 @@
 [package]
 name = "photasa"
-version = "0.1.0"
+version = "1.7.0"
 description = "Photasa - A Tauri-based photo manager"
 authors = ["Albert Li <albert_lee@hotmail.com>"]
 license = ""

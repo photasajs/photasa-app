@@ -24,6 +24,9 @@ jobs:
               with:
                   checkout: "false"
 
+            - name: Verify workspace version alignment
+              run: pnpm run check-version
+
             - name: Run ESLint
               run: pnpm --filter @photasa/photasa run lint
 

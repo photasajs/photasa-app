@@ -1,6 +1,6 @@
 {
     "name": "@photasa/thumbnail",
-    "version": "0.0.1",
+    "version": "1.7.0",
     "description": "Thumbnail - Pure Node.js thumbnail generation logic",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",

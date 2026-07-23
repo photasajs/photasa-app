@@ -1,6 +1,6 @@
 {
     "name": "picasa-vue-monorepo",
-    "version": "0.0.0",
+    "version": "1.7.0",
     "private": true,
     "scripts": {
         "dev": "pnpm --filter @photasa/photasa run dev",
@@ -14,7 +14,11 @@
         "build:debug:photasa": "pnpm --filter @photasa/photasa run build:debug",
         "vite:dev:photasa": "pnpm --filter @photasa/photasa run vite:dev",
         "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
-        "test:rust": "cargo test --workspace"
+        "test:rust": "cargo test --workspace",
+        "sync-version": "node scripts/sync-workspace-version.mjs",
+        "check-version": "node scripts/sync-workspace-version.mjs --check",
+        "generate:release-please": "node scripts/generate-release-please-config.mjs",
+        "test:scripts": "node --test scripts/__tests__/*.test.mjs"
     },
     "devDependencies": {
         "@systembug/pangu": "^0.0.12",
