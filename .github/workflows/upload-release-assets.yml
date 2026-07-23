@@ -125,6 +125,16 @@ jobs:
               if: runner.os == 'Windows'
               uses: ./.github/actions/setup-photasa-windows-msvc
 
+            # rust-cache (workspaces: ". -> target") caches the whole target/ tree,
+            # including target/*/bundle/ — Tauri's packaging output, not a Rust build
+            # artifact. Stale bundles from earlier config/productName revisions survive
+            # across cache hits and get shipped alongside fresh ones (duplicate/renamed
+            # files), which breaks tauri-action's artifact glob. Force a clean bundle
+            # dir before every release build so only this run's output exists.
+            - name: Clean stale Tauri bundle output
+              shell: bash
+              run: rm -rf target/*/bundle
+
             - name: Build & Publish Tauri Release Assets
               uses: tauri-apps/tauri-action@v0
               env:
@@ -136,6 +146,22 @@ jobs:
                   tagName: ${{ needs.resolve.outputs.tag_name }}
                   releaseCommitish: ${{ needs.resolve.outputs.release_sha }}
                   args: ${{ runner.os == 'Linux' && '--bundles appimage,deb,rpm' || runner.os == 'macOS' && '--bundles app,dmg' || '' }}
+
+            # Guard: productName ("Photasa") must be the only naming source for bundle
+            # output — macOS best practice is Photasa.app, not a Cargo-crate-name variant.
+            # Fail loudly if a second, differently-cased artifact set appears (config
+            # drift or a cache-cleanup regression), instead of silently uploading both.
+            - name: Verify single naming convention in bundle output
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  bundle_dir="target/release/bundle"
+                  lower_count=$(find "$bundle_dir" -type f -iname "photasa_*" ! -iname "Photasa_*" 2>/dev/null | wc -l | tr -d ' ')
+                  if [ "$lower_count" -gt 0 ]; then
+                    echo "::error::Found $lower_count artifact(s) using a lowercase 'photasa' naming variant alongside 'Photasa' — productName must be the single naming source. Check for stale cache or a config override."
+                    find "$bundle_dir" -type f -iname "photasa_*" ! -iname "Photasa_*"
+                    exit 1
+                  fi
 
     # RFC 0155: verify once after all platform legs finish (not per-matrix — avoids races).
     verify-updater-artifact:
