@@ -143,9 +143,20 @@ jobs:
               run: |
                   set -euo pipefail
                   tag="${{ needs.resolve.outputs.tag_name }}"
-                  if ! gh release view "$tag" --repo "${{ github.repository }}" --json assets \
+                  repo="${{ github.repository }}"
+                  if ! gh release view "$tag" --repo "$repo" --json assets \
                       --jq '.assets[].name' | grep -qx "latest.json"; then
                     echo "::error::latest.json missing from release $tag — createUpdaterArtifacts may be disabled or signing failed. Updater will be unreachable."
                     exit 1
                   fi
-                  echo "latest.json present on release $tag."
+                  tmpdir="$(mktemp -d)"
+                  gh release download "$tag" --repo "$repo" --pattern "latest.json" --dir "$tmpdir"
+                  latest_json="$tmpdir/latest.json"
+                  for platform in darwin-aarch64 linux-x86_64; do
+                    if ! jq -e --arg p "$platform" '.platforms[$p] | type == "object" and (.url | type == "string" and length > 0) and (.signature | type == "string" and length > 0)' "$latest_json" >/dev/null; then
+                      echo "::error::latest.json on $tag missing updater entry for platform $platform (url + signature required)."
+                      jq '.platforms | keys' "$latest_json" || true
+                      exit 1
+                    fi
+                  done
+                  echo "latest.json present on release $tag with darwin-aarch64 and linux-x86_64 updater entries."
