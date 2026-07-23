@@ -3,4 +3,5 @@
 .*
 !/.gitignore
 !/.gitmodules
+!/.gitattributes
 Cargo.lock
