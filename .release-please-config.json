@@ -5,6 +5,7 @@
             "release-type": "node",
             "package-name": "photasa",
             "include-component-in-tag": false,
+            "bootstrap-sha": "45ea2950cbf31f157480f056ff863582aa613be2",
             "changelog-path": "CHANGELOG.md",
             "extra-files": [
                 {
