@@ -480,6 +480,12 @@ export function createLegacyApi() {
                       }),
                   )
                 : stubAsync(),
+        getFilesModified: (paths: string[]) =>
+            isTauri()
+                ? ensureInvoke().then((invoke) =>
+                      invoke<Record<string, number>>("get_files_modified", { paths }),
+                  )
+                : Promise.resolve({}),
         fileUrlFromPath: (path: string) =>
             isTauri()
                 ? Promise.resolve(toWebviewMediaUrl(webviewMediaUrlToAbsolutePath(path)))

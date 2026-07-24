@@ -114,6 +114,26 @@ rebuildThumbnail(image)
 
 路径不变、仅 PNG 字节变；缓存破坏只需让 WebView 视为新 URL，无需写 config。
 
+## 2026-07-24 Postmortem：页面重载后缩略图「回退」
+
+### 现象
+
+重建 + 切树节点正常；**整页重载（Cmd+R）** 后又显示旧缩略图。
+
+### 根因
+
+会话级 `bustTimestampByThumbnailPath` 随 WebView 重载清空；`image.thumbnail` 仍是无 query 的 asset URL → WebView 命中旧缓存。
+
+### 修复
+
+| 层                        | 变更                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| Rust `get_files_modified` | 批量 `fs::metadata` → `{ path: modifiedMs }`                                    |
+| `thumbnail-display.ts`    | `hydrateThumbnailMtimes`；`getThumbnailDisplaySrc` 用 `max(mtime, sessionBust)` |
+| `ImageList.vue`           | 文件夹 config 加载后 `hydrateThumbnailMtimes`                                   |
+
+重载后从磁盘读缩略图 mtime 拼 `?t=`，与覆盖写盘后的真实修改时间一致。
+
 ## 实现检查清单
 
 - [x] `requestThumbnail` → `always: true`，路径来自 config 缩略图字段
@@ -122,6 +142,7 @@ rebuildThumbnail(image)
 - [x] `prefetchImageTask` 不剥离 `?t=`
 - [x] 失败 `logger.error`，不静默
 - [x] 测试：`ImageListHelper.test.ts`、`image-prefetch.test.ts`、`thumbnail-display.test.ts`
+- [x] `get_files_modified` 批量 mtime；重载页面后 `hydrateThumbnailMtimes` 恢复 `?t=`
 
 ## Acceptance
 
@@ -129,9 +150,11 @@ rebuildThumbnail(image)
 2. `invoke("create_thumbnail")` 的 `request.always === true`；`request.thumbnail` 对应当前 `photo.thumbnail` 磁盘路径。
 3. 不触发 `request_rescan` / 扫描队列 / 贞观启奏。
 4. `pnpm --filter @photasa/photasa exec vitest run src/components/__tests__/ImageListHelper.test.ts src/utils/__tests__/image-prefetch.test.ts src/utils/__tests__/thumbnail-display.test.ts` 通过。
+5. 页面重载后同一文件夹仍显示重建后的缩略图（mtime hydrate）。
 
 ```bash
 # 无独立 CLI；验收为 Vitest + 手动右键单图
+cd apps/photasa/src-tauri && cargo test get_files_modified
 pnpm --filter @photasa/photasa exec vitest run \
  src/components/__tests__/ImageListHelper.test.ts \
  src/utils/__tests__/image-prefetch.test.ts \

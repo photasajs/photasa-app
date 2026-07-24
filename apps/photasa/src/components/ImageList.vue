@@ -32,7 +32,12 @@ import MediaPreview from "./MediaPreview.vue";
 import EmptyState from "./common/EmptyState.vue";
 import LoadingState from "./common/LoadingState.vue";
 import FileInfoDrawer from "./FileInfoDrawer.vue";
-import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
+import {
+    computeColumns,
+    hydrateFolderThumbnailMtimes,
+    requestThumbnail,
+    toImageList,
+} from "./ImageListHelper";
 import { getThumbnailDisplaySrc, getThumbnailRenderKey } from "@renderer/utils/thumbnail-display";
 import { safePositiveNumber } from "@renderer/common/number";
 
@@ -228,6 +233,18 @@ watch(
     currentFolderConfig,
     () => {
         loadingPhotasaConfig.value = false;
+    },
+    { immediate: true },
+);
+
+// 缩略图 mtime → ?t=；页面重载后仍能从磁盘恢复缓存破坏（RFC 0148）
+watch(
+    () => [currentFolder.value, currentFolderConfig.value.photoList] as const,
+    ([folder, photoList]) => {
+        if (!folder || !photoList?.length) {
+            return;
+        }
+        void hydrateFolderThumbnailMtimes(folder, photoList);
     },
     { immediate: true },
 );

@@ -1,8 +1,17 @@
-import { createThumbnailTask } from "@renderer/utils/api";
+import { createThumbnailTask, getFilesModified } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@photasa/common";
+import type { Photo } from "@photasa/common";
 import { toImage } from "@renderer/common/image";
-import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
-import { appendCacheBust, markThumbnailRebuilt } from "@renderer/utils/thumbnail-display";
+import {
+    toAbsoluteMediaPath,
+    toWebviewMediaUrl,
+    webviewMediaUrlToAbsolutePath,
+} from "@renderer/utils/media-url";
+import {
+    appendCacheBust,
+    applyThumbnailMtimes,
+    markThumbnailRebuilt,
+} from "@renderer/utils/thumbnail-display";
 
 import type { Image } from "@renderer/common/image";
 
@@ -50,6 +59,20 @@ export async function requestThumbnail(image: Image, thumbnailSize: number): Pro
     // 会话级 bust：切树节点再回来仍带 ?t=，避免 WebView 显示旧缓存
     const timestamp = markThumbnailRebuilt(image);
     return appendCacheBust(toWebviewMediaUrl(thumbnailPath), timestamp);
+}
+
+/** 文件夹 config 加载后批量读取缩略图 mtime（页面重载后仍有效，RFC 0148） */
+export async function hydrateFolderThumbnailMtimes(
+    currentFolder: string,
+    photoList: readonly Photo[],
+): Promise<void> {
+    if (photoList.length === 0) {
+        return;
+    }
+
+    const paths = photoList.map((photo) => toAbsoluteMediaPath(currentFolder, photo.thumbnail));
+    const modified = await getFilesModified(paths);
+    applyThumbnailMtimes(modified);
 }
 
 const DEFAULT_GAP = 16;

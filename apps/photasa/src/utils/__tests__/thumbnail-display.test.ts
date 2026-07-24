@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import type { Image } from "@renderer/common/image";
 import {
     appendCacheBust,
+    applyThumbnailMtimes,
     getThumbnailBustKey,
     getThumbnailDisplaySrc,
     getThumbnailRenderKey,
@@ -62,6 +63,26 @@ describe("thumbnail-display", () => {
 
         expect(getThumbnailDisplaySrc(imageAfterFolderSwitch)).toContain("?t=12345");
         expect(getThumbnailRenderKey(imageAfterFolderSwitch)).toBe("photo.jpg:12345");
+    });
+
+    it("页面重载模拟：hydrate mtime 后无会话 bust 仍带 ?t=", () => {
+        const image = sampleImage();
+        const key = getThumbnailBustKey(image);
+        applyThumbnailMtimes({ [key]: 8888 });
+
+        expect(getThumbnailDisplaySrc(image)).toBe(
+            `file:///Volumes/Photos/.photasaoriginals/thumbnail-photo.jpg.png?${THUMBNAIL_CACHE_BUST_PARAM}=8888`,
+        );
+        expect(getThumbnailRenderKey(image)).toBe("photo.jpg:8888");
+    });
+
+    it("mtime 与会话 bust 取较大值", () => {
+        const image = sampleImage();
+        const key = getThumbnailBustKey(image);
+        applyThumbnailMtimes({ [key]: 1000 });
+        markThumbnailRebuilt(image, 2000);
+
+        expect(getThumbnailDisplaySrc(image)).toContain("?t=2000");
     });
 
     it("未重建时 getThumbnailDisplaySrc 应返回原始 thumbnail", () => {

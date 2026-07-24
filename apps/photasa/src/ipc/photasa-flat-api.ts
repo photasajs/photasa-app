@@ -39,6 +39,7 @@ export interface PhotasaFlatApi {
     removeThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailResponse>;
     getImageType: (path: string) => Promise<ImageInfo>;
     getFileMetadata: (path: string) => Promise<FileMetadata>;
+    getFilesModified: (paths: string[]) => Promise<Record<string, number>>;
     scanPhotos: (scan: ScanAction) => Promise<ScanArgs>;
     addToPhotoList: (photoPath: string) => Promise<{ path: string; config: PhotasaConfig }>;
     removeFromPhotoList: (photoPath: string) => Promise<{ path: string; config: PhotasaConfig }>;

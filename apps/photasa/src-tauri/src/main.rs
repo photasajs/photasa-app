@@ -202,6 +202,7 @@ fn main() {
             path::get_image_type,
             path::file_url_from_path,
             path::get_file_metadata,
+            path::get_files_modified,
             // 目录与对话框
             directory::choose_directory,
             directory::choose_directories,

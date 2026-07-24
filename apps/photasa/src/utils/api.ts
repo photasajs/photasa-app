@@ -88,6 +88,10 @@ export function getFileMetadata(pathOrUrl: string): Promise<FileMetadata> {
     return api().getFileMetadata(pathOrUrl);
 }
 
+export function getFilesModified(paths: string[]): Promise<Record<string, number>> {
+    return api().getFilesModified(paths);
+}
+
 export function scanPhotos(folder: ScanAction): Promise<ScanArgs> {
     return api().scanPhotos(folder);
 }
