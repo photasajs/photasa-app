@@ -6,6 +6,7 @@ import {
     FOLDER_TREE_COMMANDS,
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
+    WATCH_COMMANDS,
     WATCH_EVENTS,
 } from "../tauri-command-names";
 import { SCAN_QUEUE_RESTORE_FROM_DISK } from "../scan-queue-contract";
@@ -56,6 +57,25 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         expect(mockListen).toHaveBeenCalledWith(WATCH_EVENTS.SCAN_QUEUE_ADD, expect.any(Function));
     });
 
+    it("Tauri 模式下文件删除事件由袁天罡唯一监听并启奏", () => {
+        const listenCall = mockListen.mock.calls.find(
+            (call) => call[0] === WATCH_EVENTS.FILE_UNLINK,
+        );
+        expect(listenCall).toBeDefined();
+
+        const handler = listenCall![1] as (event: { payload: unknown }) => void;
+        handler({ payload: { path: "/photos/a.jpg", isFile: true } });
+
+        expect(mockQizouEmit).toHaveBeenCalledWith(
+            "qizou",
+            expect.objectContaining({
+                matter: QizouMatters.WATCH_PATH_REMOVED,
+                content: { path: "/photos/a.jpg", isFile: true },
+                from: "袁天罡",
+            }),
+        );
+    });
+
     it("picasa:add-to-scan-queue 事件触发后启奏 watch_scan_queue_add", async () => {
         const listenCall = mockListen.mock.calls.find(
             (call) => call[0] === WATCH_EVENTS.SCAN_QUEUE_ADD,
@@ -73,6 +93,73 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
                 content: { operations },
             }),
         );
+    });
+
+    it("START_FILE_WATCH invokes Rust watch command with config", async () => {
+        const config = {
+            paths: ["/photos", "/archive"],
+            recursive: true,
+            thumbnailSize: 240,
+        };
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.START_FILE_WATCH,
+            context: config,
+            timestamp: Date.now(),
+            source: "秦琼",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith(WATCH_COMMANDS.START, { config });
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("STOP_FILE_WATCH invokes Rust watch command", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.STOP_FILE_WATCH,
+            context: {},
+            timestamp: Date.now(),
+            source: "秦琼",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith(WATCH_COMMANDS.STOP);
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("REMOVE_WATCH_FILE removes thumbnail and photo-list entry", async () => {
+        mockInvoke
+            .mockResolvedValueOnce({ success: true })
+            .mockResolvedValueOnce({ path: "/photos/.photasa.json", config: { photoList: [] } });
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.REMOVE_WATCH_FILE,
+            context: { path: "/photos/a.jpg" },
+            timestamp: Date.now(),
+            source: "秦琼",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenNthCalledWith(1, "remove_thumbnail", {
+            request: {
+                path: "/photos/a.jpg",
+                thumbnail: "/photos/.photasaoriginals/thumbnail-a.jpg.png",
+            },
+        });
+        expect(mockInvoke).toHaveBeenNthCalledWith(2, "remove_from_photo_list", {
+            photoPath: "/photos/a.jpg",
+        });
+        expect(result.acknowledged).toBe(true);
+        expect(result.data).toEqual({
+            folder: "/photos",
+            config: { photoList: [] },
+        });
     });
 
     it("UPDATE_FOLDER_TREE invoke folder_tree_update", async () => {

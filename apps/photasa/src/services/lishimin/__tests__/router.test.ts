@@ -46,6 +46,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
     let duruhui: DuRuHuiService;
     let chusuiliangService: MockService;
     let yuchiGongService: MockService;
+    let qinQiongService: MockService;
 
     beforeEach(() => {
         // 初始化服务链
@@ -55,10 +56,12 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
         // 初始化mock服务
         chusuiliangService = new MockService("褚遂良");
         yuchiGongService = new MockService("尉迟恭");
+        qinQiongService = new MockService("秦琼");
 
         // 连接服务到杜如晦
         duruhui.connect(chusuiliangService);
         duruhui.connect(yuchiGongService);
+        duruhui.connect(qinQiongService);
     });
 
     afterEach(() => {
@@ -133,6 +136,25 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                     });
                     resolve();
                 }, 20);
+            });
+        });
+
+        it("watch_path_removed 应将删除载荷原样下旨秦琼", async () => {
+            router.route({
+                matter: "watch_path_removed",
+                content: { path: "/photos/a.jpg", isFile: true },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: { type: "report" },
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 20));
+
+            expect(qinQiongService.receivedShengzhis).toHaveLength(1);
+            expect(qinQiongService.receivedShengzhis[0]).toMatchObject({
+                command: "handle_watch_path_removed",
+                content: { path: "/photos/a.jpg", isFile: true },
+                from: "李世民",
             });
         });
 

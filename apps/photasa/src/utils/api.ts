@@ -4,7 +4,6 @@
 import type { ImportCallback } from "@photasa/common";
 import type { DirectorySelection, PathName } from "@photasa/common";
 import { useTask } from "vue-concurrency";
-import type { WatchConfig, WatchCallback } from "@photasa/common";
 import type { ThumbnailRequest } from "@photasa/common";
 import type { ImageInfo } from "@photasa/common";
 import type { PhotasaConfig } from "@photasa/common";
@@ -36,14 +35,6 @@ import {
 
 const logger = loggers.api;
 const api = () => getPhotasaApi();
-
-export function startWatching(config: WatchConfig, callback: WatchCallback): void {
-    api().startWatching(config, callback);
-}
-
-export function stopWatching(): Promise<void> {
-    return api().stopWatching();
-}
 
 export function importPhotos(paths: string[], target: string, callback: ImportCallback): void {
     api().importPhotos(paths, target, callback);

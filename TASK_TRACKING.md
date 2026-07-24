@@ -27,7 +27,7 @@
 | Tauri Release / Updater      | [0155](./.spec/rfc/completed/0155-tauri-release-pipeline-as-built.md)              | 🔴 High   | Done（GitHub Release 校验 + Tauri Action 产物断言）                           | 否                                  |
 | Release 多平台产物 / updater | [0158](./.spec/rfc/0158-tauri-release-assets-and-updater-followup.md)              | 🔴 High   | Active — Linux 上传失败；补全 `latest.json` 平台键                            | 否                                  |
 | FolderTree 原子落盘与自愈    | [0156](./.spec/rfc/completed/0156-foldertree-resilience-and-atomic-persistence.md) | 🔴 High   | Done（Rust tempfile 原子写 + 媒体扩展名过滤 + 启动自愈）                      | 否                                  |
-| legacy-api / utils/api 退役  | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | UI Draft Phase 2a ✅（扫描域退出 legacy task；Phase 2b 监视域待实施）         | 否                                  |
+| legacy-api / utils/api 退役  | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | UI Draft Phase 2a–2b ✅（扫描/监视域退出 legacy；Phase 2c 配置域待实施）      | 否                                  |
 | Tauri 生产主题 CSS 打包      | [0159](./.spec/rfc/completed/0159-tauri-production-theme-css-bundling.md)          | 🟡 Medium | Done（`?raw` 同步注入；弃 `/src/themes`）                                     | 否                                  |
 | 移除队列健康监控 Dashboard   | [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md)     | 🟢 Low    | Done（删 dashboard；保留 ScanQueueDialog）                                    | 否                                  |
 | ImageList TanStack 虚拟网格  | [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                        | 🟡 Medium | Draft — 整合 `VirtualizedGrid`，精简 `ImageList` inline virtualizer           | 否                                  |
@@ -44,7 +44,7 @@
 - [x] Phase 0c：Vitest 同时收集 `*.test.ts` / `*.spec.ts`（104 files passed；1125 passed / 3 skipped）
 - [x] Phase 1：停 `window.api` 注入与启动副作用，移除 window fallback，标记 legacy 入口 `@deprecated`（108 files / 1169 passed / 3 skipped；lint/typecheck/build ✅）
 - [x] Phase 2a：扫描域迁移（删除死 `scan-folder.ts` / `utils/api.scanPhotos`；App 空闲检查改读尉迟恭真实队列；109 files / 1174 passed / 3 skipped；lint/typecheck/build ✅）
-- [ ] Phase 2b：监视域迁移 (`file-handler.ts` $\rightarrow$ 秦琼 + 袁天罡)
+- [x] Phase 2b：监视域迁移（删 `file-handler.ts` / legacy watch 门面；秦琼串行生命周期；删除分流不再伪装扫描；110 files / 1188 passed / 3 skipped；lint/typecheck/build ✅）
 - [ ] Phase 2c：配置域迁移 (`preference.ts` $\rightarrow$ 魏征)
 - [ ] Phase 2d：导入域迁移 (`import-session`, `ImportPhotos.vue`, `ImportProgressModal.vue`, `ImportHistory.vue` $\rightarrow$ 房玄龄 + 袁天罡)
 - [ ] Phase 2e：缩略图/元数据域迁移 (`ImageList.vue`, `ImageListHelper.ts` $\rightarrow$ 袁天罡)

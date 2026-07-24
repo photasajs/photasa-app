@@ -26,6 +26,7 @@ import {
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
     SHELL_COMMANDS,
+    WATCH_COMMANDS,
     WATCH_EVENTS,
 } from "./tauri-command-names";
 import { extractFolderTreeFromContext } from "./folder-tree-payload";
@@ -43,6 +44,8 @@ import { SCAN_QUEUE_RESTORE_FROM_DISK } from "./scan-queue-contract";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { FileOperation } from "@photasa/common";
+import { joinPathSync, toDirNameSync } from "@renderer/utils/sync-path";
+import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
 
 const logger = loggers.yuantiangang;
 
@@ -58,6 +61,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     private notifyStatusCleanupFn?: () => void;
     private menuActionCleanupFn?: () => void; // ✅ RFC 0058: 菜单点击事件清理函数
     private scanQueueAddCleanupFn?: () => void; // ✅ RFC 0137: 文件监视合并批次
+    private watchRemovalCleanupFns: Array<() => void> = [];
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
     /** 圣旨接收通道 */
     private shengzhiPort?: MessagePort;
@@ -69,6 +73,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
         this.setupMenuActionEventListening(); // ✅ RFC 0058: 监听 menu:action IPC 事件
         this.setupScanQueueAddEventListening(); // ✅ RFC 0137: 监听 picasa:add-to-scan-queue
+        this.setupWatchRemovalEventListening();
     }
 
     /**
@@ -472,6 +477,40 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         }
     }
 
+    private setupWatchRemovalEventListening(): void {
+        if (!isTauri()) {
+            return;
+        }
+        for (const [eventName, isFile] of [
+            [WATCH_EVENTS.FILE_UNLINK, true],
+            [WATCH_EVENTS.DIRECTORY_UNLINK, false],
+        ] as const) {
+            listen<{ path?: string }>(eventName, (event) => {
+                const path = event.payload?.path;
+                if (path) {
+                    this.reportWatchPathRemoved(path, isFile);
+                }
+            })
+                .then((unlisten) => this.watchRemovalCleanupFns.push(unlisten))
+                .catch((error: unknown) => {
+                    logger.warn(`🔮 建立 ${eventName} 监听失败`, error);
+                });
+        }
+    }
+
+    private reportWatchPathRemoved(path: string, isFile: boolean): void {
+        if (!this._qizouBus) {
+            return;
+        }
+        this._qizouBus.emit("qizou", {
+            matter: QizouMatters.WATCH_PATH_REMOVED,
+            content: { path, isFile },
+            from: "袁天罡",
+            timestamp: Date.now(),
+            metadata: { type: "report" },
+        });
+    }
+
     /**
      * ✅ RFC 0058: 向李世民发送菜单点击事件启奏
      *
@@ -572,6 +611,8 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         if (this.scanQueueAddCleanupFn) {
             this.scanQueueAddCleanupFn();
         }
+        this.watchRemovalCleanupFns.forEach((cleanup) => cleanup());
+        this.watchRemovalCleanupFns = [];
         logger.info("🔮 事件监听已清理");
     }
 
@@ -581,6 +622,82 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         );
 
         const startTime = Date.now();
+
+        if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_WATCH_FILE) {
+            try {
+                if (!isTauri()) {
+                    throw new Error("文件删除清理仅支持 Tauri 环境");
+                }
+                const path = String(zhaoling.context?.path ?? "");
+                const folder = toDirNameSync(path);
+                const thumbnail = joinPathSync(folder, toRelativeThumbnailPath(path));
+                await invoke("remove_thumbnail", {
+                    request: { path, thumbnail },
+                });
+                const result = await invoke<{ config: unknown }>("remove_from_photo_list", {
+                    photoPath: path,
+                });
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data: { folder, config: result.config },
+                    blessing: "watch 文件删除清理成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "watch-delete-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "watch 文件删除清理失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "文件删除清理异常",
+                };
+            }
+        }
+
+        if (
+            zhaoling.command === ZOUZHE_MATTERS.START_FILE_WATCH ||
+            zhaoling.command === ZOUZHE_MATTERS.STOP_FILE_WATCH
+        ) {
+            try {
+                if (!isTauri()) {
+                    throw new Error("文件监视仅支持 Tauri 环境");
+                }
+                const data =
+                    zhaoling.command === ZOUZHE_MATTERS.START_FILE_WATCH
+                        ? await invoke(WATCH_COMMANDS.START, {
+                              config: zhaoling.context ?? {},
+                          })
+                        : await invoke(WATCH_COMMANDS.STOP);
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "文件监视命令执行成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "watch-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "文件监视命令执行失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "文件监视异常",
+                };
+            }
+        }
 
         // RFC 0136/0143/0162：扫描队列 — Ack IPC + 本地 patch（禁止突变回传全表）
         if (

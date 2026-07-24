@@ -9,12 +9,10 @@ import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import {
     getDirectory,
-    stopWatching,
     getRecoverableImports,
     cleanupRecoverableImport,
     keepRecoverableImport,
 } from "@renderer/utils/api";
-import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@photasa/common";
 import { getPhotasaApi } from "@renderer/ipc/api-access";
 
@@ -127,8 +125,7 @@ async function initializeApp(): Promise<void> {
         }
 
         if (paths.value.length > 0) {
-            // ✅ RFC 0042: 使用秦琼处理文件系统事件
-            startFileWatching(paths.value, preferenceStore, qinQiong);
+            await qinQiong.startWatching(paths.value, preferenceStore.thumbnailSize);
         } else {
             // Open preference to config
             showPreference.value = true;
@@ -275,6 +272,7 @@ onMounted(async () => {
 // 组件卸载时清理监控服务
 onUnmounted(() => {
     scanMonitoringService.stopMonitoring();
+    void qinQiong.stopWatching();
     logger.info("👑 [App] 扫描监控服务已停止");
 });
 
@@ -282,10 +280,7 @@ onUnmounted(() => {
 watchArray(
     paths,
     () => {
-        // Stop current watching, then start a new one
-        stopWatching().then(() => {
-            startFileWatching(paths.value, preferenceStore, qinQiong);
-        });
+        void qinQiong.restartWatching(paths.value, preferenceStore.thumbnailSize);
     },
     { deep: true },
 );

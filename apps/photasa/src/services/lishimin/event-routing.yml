@@ -134,6 +134,20 @@ qizou_routes:
                   priority: "normal"
               description: "文件监视合并批次后，下旨尉迟恭将 FileOperation 排入扫描队列"
 
+    watch_path_removed:
+        - when:
+              from: "袁天罡"
+              type: "report"
+          then:
+              service: "秦琼"
+              shengzhi:
+                  command: "handle_watch_path_removed"
+                  content:
+                      path: "{{qizou.content.path}}"
+                      isFile: "{{qizou.content.isFile}}"
+                  priority: "normal"
+              description: "袁天罡收到 Rust 删除事件后，下旨秦琼清理文件或目录状态"
+
     # ✅ RFC 0057 Phase 3: 袁天罡报告扫描进度 → 李世民下旨虞世南更新 UI
     scan_progress:
         - when:

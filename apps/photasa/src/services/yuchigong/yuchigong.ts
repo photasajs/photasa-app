@@ -931,6 +931,9 @@ export class YuChiGongService implements IService, IYuChiGongService {
         const pending: ScanAction[] = [];
 
         for (const operation of operations) {
+            if (operation.type === "delete" || operation.type === "deleteDir") {
+                continue;
+            }
             const normalizedPath = normalizePath(operation.path);
             if (!normalizedPath || normalizedPath.trim() === "") {
                 logger.warn("🛡️ 尉迟恭：跳过空 watch 扫描路径", operation);

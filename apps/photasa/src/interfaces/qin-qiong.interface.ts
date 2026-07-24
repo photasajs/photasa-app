@@ -25,6 +25,18 @@ export interface IQinQiongService {
      */
     readonly name: string;
 
+    /** 启动 Rust 文件监视。 */
+    startWatching(paths: string[], thumbnailSize: number): Promise<void>;
+
+    /** 停止 Rust 文件监视。 */
+    stopWatching(): Promise<void>;
+
+    /** 串行停止旧 watcher，再按新路径启动。 */
+    restartWatching(paths: string[], thumbnailSize: number): Promise<void>;
+
+    /** 处理 Rust watch 删除事件。 */
+    handleWatchPathRemoved(path: string, isFile: boolean): Promise<void>;
+
     /**
      * 处理文件夹发现事件
      * 当扫描到新文件夹时调用

@@ -67,25 +67,21 @@ Rust event
 | `api/legacy-api.ts`                | ~1000 行 Electron 扁平形状 + 内嵌 invoke                           |
 | `ipc/api-access.ts`                | `getPhotasaApi()` 鼓励旁路                                         |
 | `utils/api.ts`                     | 组件事实上的 IPC 门面（424 行）                                    |
-| `utils/scan-folder.ts`             | `scanPhotos` / `createThumbnailTask` 直调 utils/api                |
-| `utils/file-handler.ts`            | `startWatching` / 缩略图 / photo list 直调 utils/api               |
 | `stores/import-session.ts`         | **直接** `listen` from `@tauri-apps/api/event`（0137 规则 3 违规） |
 | `composables/useUpdateListener.ts` | `getPhotasaApi()` 更新事件                                         |
 | `api/*.adapter.ts`                 | 第二套嵌套 IPC（仅 legacy-api 消费，应并入袁天罡后删除）           |
 
 ### `utils/api.ts` 生产调用方（须迁出，不得迁到 `ipc/*`）
 
-| 调用方                                 | 能力                                    | 目标人物 / 路径                                               |
-| -------------------------------------- | --------------------------------------- | ------------------------------------------------------------- |
-| `App.vue`                              | watch、recoverable import、getDirectory | 秦琼 + 房玄龄奏折；目录 → 魏征/褚遂良                         |
-| `scan-folder.ts`                       | scan、thumbnail、addToPhotoList         | **尉迟恭** 队列 + 袁天罡 `scan_photos`；缩略图见下表          |
-| `file-handler.ts`                      | watch 回调内 thumbnail、photo list      | 秦琼协调 → 魏征；I/O 经袁天罡                                 |
-| `ImportPhotos.vue`                     | chooseDirectories、preview              | 百姓上书或 **房玄龄** accessor + 袁天罡 preview               |
-| `ImportProgressModal.vue`              | execute/cancel/pause/resume             | `import-session` store ← **仅**袁天罡事件，store 不 listen    |
-| `ImportHistory.vue`                    | history、undo                           | 房玄龄 Zouzhe 或 dedicated accessor                           |
-| `ImageList.vue` / `ImageListHelper.ts` | metadata、thumbnail                     | 网格只读：投影 + 袁天罡 `create_thumbnail`（0148 契约经人物） |
-| `settings/*.vue`                       | chooseDirectory                         | 长孙无忌 / 褚遂良 / 百姓上书                                  |
-| `stores/preference.ts`                 | checkPhotasaConfig                      | 魏征 `useWeiZheng()` 或 Zouzhe                                |
+| 调用方                                 | 能力                             | 目标人物 / 路径                                               |
+| -------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
+| `App.vue`                              | recoverable import、getDirectory | 房玄龄奏折；目录 → 魏征/褚遂良                                |
+| `ImportPhotos.vue`                     | chooseDirectories、preview       | 百姓上书或 **房玄龄** accessor + 袁天罡 preview               |
+| `ImportProgressModal.vue`              | execute/cancel/pause/resume      | `import-session` store ← **仅**袁天罡事件，store 不 listen    |
+| `ImportHistory.vue`                    | history、undo                    | 房玄龄 Zouzhe 或 dedicated accessor                           |
+| `ImageList.vue` / `ImageListHelper.ts` | metadata、thumbnail              | 网格只读：投影 + 袁天罡 `create_thumbnail`（0148 契约经人物） |
+| `settings/*.vue`                       | chooseDirectory                  | 长孙无忌 / 褚遂良 / 百姓上书                                  |
+| `stores/preference.ts`                 | checkPhotasaConfig               | 魏征 `useWeiZheng()` 或 Zouzhe                                |
 
 ## Goals
 
@@ -216,6 +212,7 @@ Rust event
 7. `*.test.ts` + `*.spec.ts` 全绿
 
 - [x] Phase 2a 验证：删除无生产执行者的 `scan-folder.ts` 与 `utils/api.scanPhotos`；`App.vue` 扫描空闲状态改读 `useYuChiGong().queueSize`；Preference 删除无效 legacy task cancel；尉迟恭仍经 `ZOUZHE_MATTERS.SCAN_PHOTOS` 送房玄龄/袁天罡。定向 160/160；全量 109 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+- [x] Phase 2b 验证：删除 `file-handler.ts` 与 `utils/api.startWatching/stopWatching`；App watch 生命周期经秦琼 → 房玄龄 → 袁天罡 → Rust 串行 start/stop。Rust batch 的 add/change 仍交尉迟恭；unlink/unlinkDir 由袁天罡唯一监听并下旨秦琼，文件清理复用 Rust `remove_thumbnail` + `remove_from_photo_list`，目录删除交魏征；尉迟恭不再把 delete 伪装成 scan。定向 98/98；全量 110 files、1188 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
 
 ### Phase 3 — 删尸
 

@@ -15,6 +15,7 @@ export const QizouMatters = {
     SCAN_PROGRESS: "scan_progress", // ✅ RFC 0057: 扫描进度更新事件
     SCAN_DIRECTORY_DISCOVERED: "scan_directory_discovered", // ✅ RFC 0136: 千里眼发现直属子目录
     WATCH_SCAN_QUEUE_ADD: "watch_scan_queue_add", // ✅ RFC 0137: 文件监视合并批次入扫描队列
+    WATCH_PATH_REMOVED: "watch_path_removed", // RFC 0154: 删除事件交秦琼处理
 
     // 尉迟恭 - 扫描队列事件相关
     SCAN_TASK_ADDED: "scan_task_added", // ✅ 扫描任务已添加到队列
@@ -54,6 +55,7 @@ export const ShengzhiCommands = {
     ADD_SCAN_TASK: "add_scan_task",
     REMOVE_SCAN_TASK: "remove_scan_task",
     SCHEDULE_WATCH_FILE_OPERATIONS: "schedule_watch_file_operations",
+    HANDLE_WATCH_PATH_REMOVED: "handle_watch_path_removed",
 
     // 魏征 - appState管理
     ADD_ROOT: "add_root",

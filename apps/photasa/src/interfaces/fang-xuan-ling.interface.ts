@@ -3,7 +3,7 @@
  * 定义统一Store API的标准接口，避免直接依赖具体实现
  */
 
-import type { FolderNode } from "@photasa/common";
+import type { FolderNode, PhotasaConfig } from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { MenuItemData } from "@photasa/common";
 
@@ -27,6 +27,7 @@ export interface IPreference extends IBaseStore {
     // 路径管理 - 只读访问
     // TODO: should clean up
     readonly paths: string[];
+    replaceCurrentFolderConfig(folderPath: string, config: PhotasaConfig): void;
 }
 
 /**
@@ -244,6 +245,9 @@ export const ZOUZHE_MATTERS = {
     TO_DIR_NAME: "to_dir_name", // 获取父目录名
     SCAN_SUBFOLDERS: "scan_subfolders", // 扫描子文件夹
     SCAN_PHOTOS: "scan_photos", // 执行照片扫描
+    START_FILE_WATCH: "start_file_watch", // 秦琼启动 Rust 文件监视
+    STOP_FILE_WATCH: "stop_file_watch", // 秦琼停止 Rust 文件监视
+    REMOVE_WATCH_FILE: "remove_watch_file", // watch 删除文件：缩略图 + photo list
 } as const;
 
 /**
