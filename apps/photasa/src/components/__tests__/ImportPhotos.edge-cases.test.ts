@@ -16,13 +16,16 @@ import { createI18n } from "vue-i18n";
 import { createPinia, setActivePinia } from "pinia";
 import { nextTick } from "vue";
 import ImportPhotos from "../ImportPhotos.vue";
-import { chooseDirectories, previewImport } from "@renderer/utils/api";
 
-// Mock API functions
-vi.mock("@renderer/utils/api", () => ({
-    chooseDirectories: vi.fn(),
+const { chooseDirectoriesThroughZhang, previewImport } = vi.hoisted(() => ({
+    chooseDirectoriesThroughZhang: vi.fn(),
     previewImport: vi.fn(),
-    onPreviewProgress: vi.fn(() => () => {}), // Mock cleanup function
+}));
+
+vi.mock("@renderer/composables/useZhangSunWuJi", () => ({
+    useZhangSunWuJi: () => ({
+        chooseDirectories: chooseDirectoriesThroughZhang,
+    }),
 }));
 
 vi.mock("@renderer/composables/useImportOperations", () => ({
@@ -135,6 +138,8 @@ describe("ImportPhotos - Edge Cases", () => {
     beforeEach(() => {
         setActivePinia(createPinia());
         vi.clearAllMocks();
+        chooseDirectoriesThroughZhang.mockReset();
+        previewImport.mockReset();
         // Reset console mocks
         vi.spyOn(console, "error").mockImplementation(() => {});
         vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -352,7 +357,7 @@ describe("ImportPhotos - Edge Cases", () => {
 
     describe("Permission and File System Errors", () => {
         it("should handle permission denied errors", async () => {
-            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockChooseDirectories = chooseDirectoriesThroughZhang;
             mockChooseDirectories.mockRejectedValue(new Error("PERMISSION_DENIED"));
 
             const wrapper = createWrapper();
@@ -365,7 +370,7 @@ describe("ImportPhotos - Edge Cases", () => {
         });
 
         it.skip("should handle non-existent directories", async () => {
-            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockChooseDirectories = chooseDirectoriesThroughZhang;
             mockChooseDirectories.mockResolvedValue({
                 filePaths: ["/non/existent/path"],
             });
@@ -395,7 +400,7 @@ describe("ImportPhotos - Edge Cases", () => {
         });
 
         it("should handle read-only directories", async () => {
-            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockChooseDirectories = chooseDirectoriesThroughZhang;
             mockChooseDirectories.mockResolvedValue({
                 filePaths: ["/readonly/directory"],
             });
@@ -480,7 +485,7 @@ describe("ImportPhotos - Edge Cases", () => {
 
     describe("Concurrent Operations", () => {
         it("should handle multiple simultaneous directory selections", async () => {
-            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockChooseDirectories = chooseDirectoriesThroughZhang;
             let callCount = 0;
             mockChooseDirectories.mockImplementation(() => {
                 callCount++;

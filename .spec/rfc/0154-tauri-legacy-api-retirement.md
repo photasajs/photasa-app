@@ -193,7 +193,7 @@ Rust event
 | 2c 配置             | `preference.ts` checkPhotasaConfig → 魏征                                              | config 类 api 方法               |
 | 2d 导入 ✅          | `import-session` 去掉直 `listen`；袁天罡转发 import 事件；组件改 composable            | import 类 api + modal 直调       |
 | 2e 缩略图/元数据 ✅ | `ImageListHelper` 纯依赖 + `useGalleryMedia()` → 魏征图库 accessor → 袁天罡            | thumbnail/metadata API + adapter |
-| 2f 对话框/目录      | settings → 褚遂良/长孙无忌                                                             | `chooseDirectory*`               |
+| 2f 对话框/目录 ✅   | Import/Settings → 长孙无忌 → 房玄龄 → 袁天罡私有 dialog transport                      | `chooseDirectory*`               |
 | 2g 更新/日志/窗口   | `useUpdateListener`、`UpdateSettings`、`LogConsole`、titlebar、`App.vue` 更新动作      | 对应 getPhotasaApi               |
 | 2h 平台/Splash/路径 | `App.vue` / `main.ts` Splash、`App.vue` isMac、`folderSelectionService`、`api-path.ts` | 剩余业务 invoke / getPhotasaApi  |
 
@@ -212,6 +212,7 @@ Rust event
 - [x] Phase 2c 验证：`preference.ts` 零 `utils/api`，删除无生产调用的 legacy Store 扫描编排；配置检查统一为 Rust `bool` → 袁天罡 → 魏征 `boolean`，修复旧 `{ hasConfig }` 假类型；AdvancedSettings 经魏征串行重置配置，再更新 Pinia 投影；删除 `utils/api`、flat contract、legacy-api 的 config 能力。定向 38/38；全量 111 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。Tauri release 编译及 macOS bundle 成功，最终 updater 签名因本机未设置 `TAURI_SIGNING_PRIVATE_KEY` 退出。
 - [x] Phase 2d 验证：导入 preview/execute/control/history/undo/recovery 全部经 `useImportOperations()` → 房玄龄 typed accessor → 袁天罡；`import-session` 零 Tauri/import-adapter 依赖，保留 listener-before-execute、importId 前缓冲/claim、错 ID 丢弃与单飞语义；袁天罡生命周期内唯一注册 `import:progress/complete/error/preview-progress`，并修正 Rust struct 参数为 `{ args: {...} }`；删除 utils/api、flat contract、legacy-api、import.adapter 的 `importPhotos`、`scanDirectories` 及其余导入业务能力，`chooseDirectories` 留至 Phase 2f。全量 112 files、1146 passed / 3 skipped；typecheck、lint、Vite production build 全绿。Tauri release 编译及 macOS app bundle 成功；updater 产物签名因本机未设置 `TAURI_SIGNING_PRIVATE_KEY` 未完成。
 - [x] Phase 2e 验证：`ImageList.vue` 与 `ImageListHelper.ts` 零 `utils/api`；缩略图创建、富元数据提取、缩略图 mtime 批量读取统一经 `useGalleryMedia()` → 魏征图库 accessor → 房玄龄奏折 → 袁天罡私有 `media-transport`；`vue-concurrency` 限流留在 UI composable，helper 改为纯依赖；元数据改用真实 `extract_metadata` 契约并在人物边界恢复 `Date`。删除 `thumbnail.adapter.ts`、utils/api、flat contract、legacy-api 的 thumbnail/metadata surface 与无行为的 drawer 假测试。全量 `vitest --maxWorkers=1`：114 files、1153 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+- [x] Phase 2f 验证：`ImportPhotos.vue`、`GeneralSettings.vue`、`ImportSettings.vue` 零 `utils/api` 目录调用；单选/多选统一经 `useZhangSunWuJi()` → 长孙无忌奏折 → 房玄龄 → 袁天罡私有 `dialog-transport` → Tauri dialog plugin，并在 transport 边界把单值、数组、取消统一为 `DirectorySelection`。删除 utils/flat/legacy 的 `chooseDirectory*` surface、只剩目录能力的 `import.adapter.ts` 及旧 adapter/helper 测试；`getDirectory` 保留至 Phase 2h。全量 `vitest --maxWorkers=1`：114 files、1157 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
 
 ### Phase 3 — 删尸
 

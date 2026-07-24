@@ -18,7 +18,7 @@
 
 import type { InjectionKey } from "vue";
 import type { Emitter } from "mitt";
-import type { MenuItemData } from "@photasa/common";
+import type { DirectorySelection, MenuItemData } from "@photasa/common";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 
 /**
@@ -131,6 +131,11 @@ export interface IZhangSunWuJiService {
      * zhangSunWuJi.openInFinder("/path/to/file");
      */
     openInFinder(path: string): void;
+
+    /**
+     * 打开系统目录选择对话框。
+     */
+    chooseDirectories(multiple?: boolean): Promise<DirectorySelection>;
 
     /**
      * 设置启奏事件总线

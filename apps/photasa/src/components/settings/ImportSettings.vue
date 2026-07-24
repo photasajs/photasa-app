@@ -3,8 +3,8 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { PhFolderOpen, PhX } from "@phosphor-icons/vue";
 import { DuplicateStrategies, type DuplicateStrategy } from "@photasa/common";
-import { chooseDirectory } from "@renderer/utils/api";
 import { usePreferenceStore } from "@renderer/stores/preference";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import { notification } from "@renderer/services/notification-manager";
 import { BaseButton, BaseInput, BaseSelect, BaseSwitch } from "@renderer/components/ui";
 
@@ -14,6 +14,7 @@ defineOptions({
 
 const { t } = useI18n();
 const preferenceStore = usePreferenceStore();
+const zhangSunWuJi = useZhangSunWuJi();
 
 const defaultTargetPath = computed({
     get: () => preferenceStore.importing.defaultTargetPath,
@@ -45,7 +46,7 @@ const duplicateStrategyOptions = computed(() => [
 ]);
 
 async function chooseDefaultTarget(): Promise<void> {
-    const { filePaths } = await chooseDirectory();
+    const { filePaths } = await zhangSunWuJi.chooseDirectories(false);
     if (!filePaths?.[0]) {
         notification.info({
             title: t("notification.emptyPath.title"),

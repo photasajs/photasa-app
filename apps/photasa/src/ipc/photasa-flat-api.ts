@@ -1,22 +1,13 @@
 /**
  * Typed surface for `window.api` / `getPhotasaApi()` until RFC 0097 retires legacy-api.ts.
  */
-import type {
-    DirectorySelection,
-    PathName,
-    ScanAction,
-    ScanArgs,
-    WatchCallback,
-    WatchConfig,
-} from "@photasa/common";
+import type { PathName, ScanAction, ScanArgs, WatchCallback, WatchConfig } from "@photasa/common";
 
 type Unsubscribe = () => void;
 
 export interface PhotasaFlatApi {
     startWatching: (config: WatchConfig, callback: WatchCallback) => void;
     stopWatching: () => Promise<void>;
-    chooseDirectory: () => Promise<DirectorySelection>;
-    chooseDirectories: (multiSelect?: boolean) => Promise<DirectorySelection>;
     getDirectory: (name: PathName) => Promise<string | null>;
     scanPhotos: (scan: ScanAction) => Promise<ScanArgs>;
     scanSubfolders: (folder: string) => Promise<string[]>;

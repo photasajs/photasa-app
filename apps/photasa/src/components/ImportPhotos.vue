@@ -34,8 +34,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { chooseDirectories } from "@renderer/utils/api";
 import { useImportOperations } from "@renderer/composables/useImportOperations";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import { getLogger } from "@photasa/common";
 import {
     createDefaultFilters,
@@ -120,6 +120,7 @@ const emit = defineEmits<ImportPhotosEmits>();
 // Logger instance for this component
 const logger = getLogger("import-photos");
 const imports = useImportOperations();
+const zhangSunWuJi = useZhangSunWuJi();
 
 // Wizard state reference - declared early to avoid initialization order issues
 const wizardStateRef = ref<any>(null);
@@ -388,7 +389,7 @@ const addSourceDirectory = async (
     await executeWithErrorHandling(
         async () => {
             loadingState.directories = true;
-            const result = await chooseDirectories(true);
+            const result = await zhangSunWuJi.chooseDirectories(true);
             if (result.filePaths && result.filePaths.length > 0) {
                 const newSourcePaths = addSourceDirectories(
                     stepData.sourcePaths || [],
@@ -433,7 +434,7 @@ const selectTargetDirectory = async (
     await executeWithErrorHandling(
         async () => {
             loadingState.directories = true;
-            const result = await chooseDirectories(false);
+            const result = await zhangSunWuJi.chooseDirectories(false);
             if (result.filePaths && result.filePaths.length > 0) {
                 setStepData("configuration", { ...stepData, targetPath: result.filePaths[0] });
             }

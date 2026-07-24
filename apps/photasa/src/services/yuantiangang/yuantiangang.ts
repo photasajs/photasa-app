@@ -48,6 +48,7 @@ import { joinPathSync, toDirNameSync } from "@renderer/utils/sync-path";
 import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
 import { ImportTransport } from "./transport/import-transport";
 import { MediaTransport, type MediaMatter } from "./transport/media-transport";
+import { DialogTransport } from "./transport/dialog-transport";
 
 const logger = loggers.yuantiangang;
 const IMPORT_ZHAOLING_MATTERS = new Set<string>([
@@ -79,6 +80,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     readonly name = "袁天罡";
     readonly importEvents: ImportTransport;
     private readonly media: MediaTransport;
+    private readonly dialog: DialogTransport;
     private progressCleanupFn?: () => void;
     private statusCleanupFn?: () => void;
     private qianliyanCleanupFn?: () => void;
@@ -94,6 +96,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         logger.info("🔮 就任，开始处理天界通信");
         this.importEvents = new ImportTransport({ enabled: isTauri() });
         this.media = new MediaTransport({ invoke });
+        this.dialog = new DialogTransport();
         this.setupTianshuEventListening();
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
@@ -649,6 +652,36 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         );
 
         const startTime = Date.now();
+
+        if (zhaoling.command === ZOUZHE_MATTERS.CHOOSE_DIRECTORIES) {
+            try {
+                if (!isTauri()) throw new Error("目录选择仅支持 Tauri 环境");
+                const data = await this.dialog.chooseDirectories(
+                    Boolean(zhaoling.context?.multiple),
+                );
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "目录选择成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "dialog-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "目录选择失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "目录选择异常",
+                };
+            }
+        }
 
         if (IMPORT_ZHAOLING_MATTERS.has(zhaoling.command)) {
             try {

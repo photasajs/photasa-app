@@ -300,6 +300,7 @@ export const ZOUZHE_MATTERS = {
     CREATE_THUMBNAIL: "create_thumbnail",
     EXTRACT_METADATA: "extract_metadata",
     GET_FILES_MODIFIED: "get_files_modified",
+    CHOOSE_DIRECTORIES: "choose_directories",
 } as const;
 
 /**

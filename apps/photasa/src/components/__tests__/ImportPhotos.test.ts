@@ -7,13 +7,16 @@ import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { nextTick } from "vue";
 import ImportPhotos from "../ImportPhotos.vue";
-import { chooseDirectories, previewImport } from "@renderer/utils/api";
 
-// Mock the API functions
-vi.mock("@renderer/utils/api", () => ({
-    chooseDirectories: vi.fn(),
+const { chooseDirectoriesThroughZhang, previewImport } = vi.hoisted(() => ({
+    chooseDirectoriesThroughZhang: vi.fn(),
     previewImport: vi.fn(),
-    onPreviewProgress: vi.fn(() => () => {}), // Mock cleanup function
+}));
+
+vi.mock("@renderer/composables/useZhangSunWuJi", () => ({
+    useZhangSunWuJi: () => ({
+        chooseDirectories: chooseDirectoriesThroughZhang,
+    }),
 }));
 
 vi.mock("@renderer/composables/useImportOperations", () => ({
@@ -293,6 +296,8 @@ describe("ImportPhotos", () => {
     beforeEach(() => {
         setActivePinia(createPinia());
         vi.clearAllMocks();
+        chooseDirectoriesThroughZhang.mockReset();
+        previewImport.mockReset();
         vi.useFakeTimers();
     });
 
@@ -643,11 +648,13 @@ describe("ImportPhotos", () => {
     describe("Integration Tests - Complete Wizard Flow", () => {
         beforeEach(() => {
             vi.clearAllMocks();
+            chooseDirectoriesThroughZhang.mockReset();
+            previewImport.mockReset();
         });
 
         it("should complete full wizard flow from configuration to import", async () => {
             // Mock API responses
-            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockChooseDirectories = chooseDirectoriesThroughZhang;
             const mockPreviewImport = vi.mocked(previewImport);
 
             mockChooseDirectories.mockResolvedValue({
@@ -803,19 +810,15 @@ describe("ImportPhotos", () => {
         });
 
         it("should handle directory selection", async () => {
-            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockChooseDirectories = chooseDirectoriesThroughZhang;
             mockChooseDirectories.mockResolvedValue({
                 filePaths: ["/new/source"],
             });
 
             const wrapper = createWrapper();
+            await (wrapper.vm as any).addSourceDirectory({}, vi.fn());
 
-            // Find and click add source button
-            const addSourceButton = wrapper.find('[data-testid="add-source-button"]');
-            if (addSourceButton.exists()) {
-                await addSourceButton.trigger("click");
-                expect(mockChooseDirectories).toHaveBeenCalledWith(true);
-            }
+            expect(mockChooseDirectories).toHaveBeenCalledWith(true);
         });
 
         it("should validate step data before allowing navigation", () => {
@@ -858,7 +861,7 @@ describe("ImportPhotos", () => {
             const wrapper = createWrapper();
 
             // Mock slow directory selection
-            const mockChooseDirectories = vi.mocked(chooseDirectories);
+            const mockChooseDirectories = chooseDirectoriesThroughZhang;
             mockChooseDirectories.mockImplementation(() => {
                 return new Promise((resolve) => {
                     setTimeout(() => {

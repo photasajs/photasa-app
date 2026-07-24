@@ -15,6 +15,7 @@ import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
 const mockInvoke = vi.fn();
 const mockListen = vi.fn();
+const mockDialogOpen = vi.fn();
 const mockIsTauri = vi.fn(() => true);
 const mockQizouEmit = vi.fn();
 
@@ -24,6 +25,10 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 vi.mock("@tauri-apps/api/event", () => ({
     listen: (...args: unknown[]) => mockListen(...args),
+}));
+
+vi.mock("@tauri-apps/plugin-dialog", () => ({
+    open: (...args: unknown[]) => mockDialogOpen(...args),
 }));
 
 vi.mock("@renderer/api/env", () => ({
@@ -44,6 +49,7 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         mockInvoke.mockReset();
         mockListen.mockReset();
         mockListen.mockResolvedValue(() => {});
+        mockDialogOpen.mockReset();
         mockQizouEmit.mockReset();
         mockIsTauri.mockReturnValue(true);
         service = createServiceWithQizouBus();
@@ -122,6 +128,27 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
                     filePath: "/photos/a.jpg",
                 },
             },
+        });
+    });
+
+    it("目录选择诏令只经袁天罡 private transport", async () => {
+        mockDialogOpen.mockResolvedValue(["/photos/a", "/photos/b"]);
+
+        const response = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.CHOOSE_DIRECTORIES,
+            context: { multiple: true },
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+        });
+
+        expect(response).toMatchObject({
+            acknowledged: true,
+            data: { filePaths: ["/photos/a", "/photos/b"] },
+        });
+        expect(mockDialogOpen).toHaveBeenCalledWith({
+            directory: true,
+            multiple: true,
         });
     });
 

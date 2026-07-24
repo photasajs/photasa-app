@@ -139,15 +139,6 @@ export function createLegacyApi() {
         },
 
         // ---------- 目录与配置 ----------
-        chooseDirectory: () => {
-            if (!isTauri()) return callLegacyPreloadSection("api", "chooseDirectory");
-            return (async () => {
-                const { open } = await import("@tauri-apps/plugin-dialog");
-                const selected = await open({ directory: true, multiple: false });
-                const paths = Array.isArray(selected) ? selected : selected ? [selected] : [];
-                return { filePaths: paths };
-            })();
-        },
         getDirectory: (name: string) => {
             if (!isTauri()) return callLegacyPreloadSection("api", "getDirectory", name);
             return ensureInvoke().then((invoke) =>
@@ -406,8 +397,6 @@ export function createLegacyApi() {
             }
         },
 
-        // ---------- 导入增强 ----------
-        chooseDirectories: (multiSelect = true) => api.import.chooseDirectories(multiSelect),
         onScanQueueAdd: (cb: (operations: unknown[]) => void) => {
             if (!isTauri()) {
                 return callLegacyPreloadSection("api", "onScanQueueAdd", cb) ?? noopListener();

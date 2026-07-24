@@ -1,8 +1,7 @@
 /**
  * @deprecated RFC 0154：组件改用负责人物服务；本模块将在 Phase 3 删除。
  */
-import type { DirectorySelection, PathName } from "@photasa/common";
-import { loggers } from "@photasa/common";
+import type { PathName } from "@photasa/common";
 import { getPhotasaApi } from "@renderer/ipc/api-access";
 import { getLegacyShell } from "@/api/legacy-preload-access";
 import {
@@ -13,12 +12,7 @@ import {
     toThumbnailNameSync,
 } from "@renderer/utils/sync-path";
 
-const logger = loggers.api;
 const api = () => getPhotasaApi();
-
-export function chooseDirectory(): Promise<DirectorySelection> {
-    return api().chooseDirectory();
-}
 
 export interface MenuCallback {
     onPreference: () => void;
@@ -69,18 +63,4 @@ export function toThumbnailName(fileName: string): string {
 
 export function shortenThumbnailName(fileName: string): string {
     return shortenThumbnailNameSync(fileName);
-}
-
-/**
- * 选择多个目录（扩展现有的chooseDirectory功能）
- * @param multiSelect 是否允许多选
- * @returns 目录选择结果
- */
-export function chooseDirectories(multiSelect = true): Promise<DirectorySelection> {
-    logger.debug(`调用 chooseDirectories，multiSelect: ${multiSelect}`);
-    const result = api().chooseDirectories(multiSelect);
-    result
-        .then((res: DirectorySelection) => logger.debug(`chooseDirectories 结果:`, res))
-        .catch((err: unknown) => logger.error(`chooseDirectories 错误:`, err));
-    return result;
 }

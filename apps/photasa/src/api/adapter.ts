@@ -7,7 +7,6 @@ import { isTauri } from "./env";
 import { windowAdapter } from "./window.adapter";
 import { shellAdapter } from "./shell.adapter";
 import { scanAdapter } from "./scan.adapter";
-import { importAdapter } from "./import.adapter";
 import { configAdapter } from "./config.adapter";
 
 /**
@@ -22,9 +21,6 @@ export const api = {
 
     /** 扫描服务 */
     scan: scanAdapter,
-
-    /** 导入服务 */
-    import: importAdapter,
 
     /** 配置服务 */
     config: configAdapter,
