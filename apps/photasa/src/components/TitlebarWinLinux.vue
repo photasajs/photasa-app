@@ -30,10 +30,6 @@
         <div class="window-controls no-drag-region">
             <BaseSpace class="setting-header no-drag-region">
                 <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
-                <DashboardOutlined
-                    class="system-icon"
-                    @click="openQueueDashboard"
-                ></DashboardOutlined>
                 <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
                 <SettingOutlined class="system-icon" @click="openPreference" />
             </BaseSpace>
@@ -106,7 +102,6 @@ import {
     PhClock as CoffeeOutlined,
     PhFolder as ImportOutlined,
     PhGear as SettingOutlined,
-    PhChartLineUp as DashboardOutlined,
 } from "@phosphor-icons/vue";
 import { useI18n } from "vue-i18n";
 import { onClickOutside } from "@vueuse/core";
@@ -121,15 +116,11 @@ const photasaApi = getPhotasaApi();
 
 const emit = defineEmits([
     "openScanList",
-    "openQueueDashboard",
     "openImportPhotos",
     "openPreference",
 ]);
 function openScanList() {
     emit("openScanList");
-}
-function openQueueDashboard() {
-    emit("openQueueDashboard");
 }
 function openImportPhotos() {
     emit("openImportPhotos");

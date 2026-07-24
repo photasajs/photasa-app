@@ -1,6 +1,99 @@
 /* eslint-env node */
 require("@rushstack/eslint-patch/modern-module-resolution");
 
+const legacyImportPaths = [
+    "@renderer/utils/api",
+    "@renderer/api/legacy-api",
+    "@renderer/ipc/api-access",
+];
+
+const legacyImportDebtFiles = [
+    "src/ipc/api-access.ts",
+    "src/composables/useUpdateListener.ts",
+    "src/stores/preference.ts",
+    "src/utils/api.ts",
+    "src/utils/api-path.ts",
+    "src/utils/file-handler.ts",
+    "src/utils/scan-folder.ts",
+    "src/services/folderSelectionService.ts",
+    "src/components/ImageList.vue",
+    "src/components/ImageListHelper.ts",
+    "src/components/ImportPhotos.vue",
+    "src/components/ImportProgressModal.vue",
+    "src/components/LogConsole.vue",
+    "src/components/TitlebarWinLinux.vue",
+    "src/components/import/ImportHistory.vue",
+    "src/components/settings/GeneralSettings.vue",
+    "src/components/settings/ImportSettings.vue",
+    "src/components/settings/UpdateSettings.vue",
+];
+
+const tauriTransportDebtFiles = [
+    "src/main.ts",
+    "src/api/config.adapter.ts",
+    "src/api/import.adapter.ts",
+    "src/api/legacy-api.ts",
+    "src/api/scan.adapter.ts",
+    "src/api/shell.adapter.ts",
+    "src/api/thumbnail.adapter.ts",
+    "src/api/window.adapter.ts",
+    "src/stores/import-session.ts",
+];
+
+const legacyStaticImportRule = [
+    "error",
+    {
+        paths: legacyImportPaths.map((name) => ({
+            name,
+            message: "RFC 0154: use responsible Zhenguan service, not legacy API.",
+        })),
+    },
+];
+
+const tauriStaticImportRule = [
+    "error",
+    {
+        paths: [
+            {
+                name: "@tauri-apps/api/core",
+                message: "RFC 0154: business transport belongs to YuanTianGang.",
+            },
+            {
+                name: "@tauri-apps/api/event",
+                message: "RFC 0154: business event transport belongs to YuanTianGang.",
+            },
+        ],
+        patterns: [
+            {
+                group: ["@tauri-apps/plugin-*"],
+                message: "RFC 0154: Tauri plugins cannot bypass YuanTianGang.",
+            },
+        ],
+    },
+];
+
+const legacyDynamicImportRule = [
+    "error",
+    {
+        selector:
+            "ImportExpression[source.value=/^@renderer\\x2F(utils\\x2Fapi|api\\x2Flegacy-api|ipc\\x2Fapi-access)$/]",
+        message: "RFC 0154: dynamic import cannot bypass Zhenguan service boundary.",
+    },
+];
+
+const tauriDynamicImportRule = [
+    "error",
+    {
+        selector:
+            "ImportExpression[source.value=/^@tauri-apps\\x2Fapi\\x2F(core|event)$/]",
+        message: "RFC 0154: dynamic Tauri transport belongs to YuanTianGang.",
+    },
+    {
+        selector: "ImportExpression[source.value=/^@tauri-apps\\x2Fplugin-/]",
+        message: "RFC 0154: dynamic Tauri plugin cannot bypass YuanTianGang.",
+    },
+];
+
 module.exports = {
     root: true,
     env: {
@@ -27,5 +120,55 @@ module.exports = {
                 varsIgnorePattern: "^_",
             },
         ],
+        "no-restricted-imports": [
+            "error",
+            {
+                paths: [
+                    ...legacyStaticImportRule[1].paths,
+                    ...tauriStaticImportRule[1].paths,
+                ],
+                patterns: tauriStaticImportRule[1].patterns,
+            },
+        ],
+        "no-restricted-syntax": [
+            "error",
+            ...legacyDynamicImportRule.slice(1),
+            ...tauriDynamicImportRule.slice(1),
+        ],
     },
+    overrides: [
+        {
+            files: legacyImportDebtFiles,
+            rules: {
+                "no-restricted-imports": tauriStaticImportRule,
+                "no-restricted-syntax": tauriDynamicImportRule,
+            },
+        },
+        {
+            files: [
+                ...tauriTransportDebtFiles,
+                "src/api/env.ts",
+                "src/utils/media-url.ts",
+                "src/services/yuantiangang/**/*.ts",
+            ],
+            rules: {
+                "no-restricted-imports": legacyStaticImportRule,
+                "no-restricted-syntax": legacyDynamicImportRule,
+            },
+        },
+        {
+            files: ["src/App.vue"],
+            rules: {
+                "no-restricted-imports": "off",
+                "no-restricted-syntax": "off",
+            },
+        },
+        {
+            files: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+            rules: {
+                "no-restricted-imports": "off",
+                "no-restricted-syntax": "off",
+            },
+        },
+    ],
 };

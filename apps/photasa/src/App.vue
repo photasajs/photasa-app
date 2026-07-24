@@ -37,8 +37,6 @@ import {
     BaseSpinner,
     UpdateNotification,
 } from "@renderer/components/ui";
-import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
-import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
 import { scanMonitoringService } from "@renderer/services/yushinan/scan-monitoring-service";
 import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
@@ -75,7 +73,6 @@ const { queue: scanningFolder } = storeToRefs(useScanningStore());
 const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
-const showQueueDashboard = ref(false);
 const loading = ref(false);
 
 const themes = ref<ThemeMeta[]>([]);
@@ -99,13 +96,6 @@ void getPhotasaApi()
 function handleOpenScanList() {
     logger.debug("Opening scan list dialog...");
     showScanList.value = true;
-}
-function handleOpenQueueDashboard() {
-    logger.debug("Opening queue dashboard dialog...");
-    showQueueDashboard.value = true;
-    if (!queueMonitoringService.isMonitoring.value) {
-        queueMonitoringService.startMonitoring();
-    }
 }
 function handleOpenImportPhotos() {
     logger.debug("Opening import photos dialog...");
@@ -217,7 +207,6 @@ async function detectRecoverableImports(): Promise<void> {
 }
 
 const weiZheng = useWeiZheng();
-const scanningStore = useScanningStore();
 
 onMounted(async () => {
     // 应用启动时全局初始化菜单栏数据（国际化）
@@ -260,7 +249,6 @@ onMounted(async () => {
 
     // 初始化扫描监控服务
     scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
-    queueMonitoringService.setQueueProvider(() => scanningStore.queue);
     scanMonitoringService.startMonitoring(() => {
         logger.info("👑 [扫描监控] 自动恢复触发");
         // ✅ RFC 0048: 尉迟恭的watch会自动触发扫描
@@ -331,14 +319,12 @@ useTitle(title);
         <TitlebarMac
             v-if="isMac"
             @openScanList="handleOpenScanList"
-            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
         <TitlebarWinLinux
             v-else
             @openScanList="handleOpenScanList"
-            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
@@ -395,20 +381,6 @@ useTitle(title);
             }
         "
     />
-    <BaseModal
-        :open="showQueueDashboard"
-        title="队列健康监控"
-        size="custom"
-        :style="{ '--modal-width': '1200px' }"
-        @close="
-            () => {
-                showQueueDashboard = false;
-                queueMonitoringService.stopMonitoring();
-            }
-        "
-    >
-        <QueueHealthDashboard />
-    </BaseModal>
 
     <!-- 通知容器 -->
     <NotificationContainer />

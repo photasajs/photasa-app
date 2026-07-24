@@ -27,16 +27,19 @@
 | Tauri Release / Updater      | [0155](./.spec/rfc/completed/0155-tauri-release-pipeline-as-built.md)              | 🔴 High   | Done（GitHub Release 校验 + Tauri Action 产物断言）          | 否                                  |
 | Release 多平台产物 / updater | [0158](./.spec/rfc/0158-tauri-release-assets-and-updater-followup.md)              | 🔴 High   | Active — Linux 上传失败；补全 `latest.json` 平台键           | 否                                  |
 | FolderTree 原子落盘与自愈    | [0156](./.spec/rfc/completed/0156-foldertree-resilience-and-atomic-persistence.md) | 🔴 High   | Done（Rust tempfile 原子写 + 媒体扩展名过滤 + 启动自愈）     | 否                                  |
-| legacy-api / utils/api 退役  | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | Active Phase 0 (基线盘点 ✅；ESLint 门禁与 2a-2g 切片待实施) | 否                                  |
+| legacy-api / utils/api 退役  | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | UI Draft Phase 0（基线 + Vitest ✅；ESLint 门禁待实施）      | 否                                  |
 | Tauri 生产主题 CSS 打包      | [0159](./.spec/rfc/completed/0159-tauri-production-theme-css-bundling.md)          | 🟡 Medium | Done（`?raw` 同步注入；弃 `/src/themes`）                    | 否                                  |
 | 移除队列健康监控 Dashboard   | [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md)     | 🟢 Low    | Done（删 dashboard；保留 ScanQueueDialog）                   | 否                                  |
+| ImageList TanStack 虚拟网格  | [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                      | 🟡 Medium | Draft — 整合 `VirtualizedGrid`，精简 `ImageList` inline virtualizer | 否                                  |
+| 设计文件本地预览（`.ai`）    | [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                       | 🟡 Medium | Draft — `photasa-design` + PDFium；废止原云预览                     | 否                                  |
 
-### RFC 0154 — 退役 legacy-api / utils/api (回归贞观 IPC 边界) ⏳ Active
+### RFC 0154 — 退役 legacy-api / utils/api (回归贞观 IPC 边界) ⏳ UI Draft
 
 **目标**：消除 `utils/api.ts` 与 `legacy-api.ts` 的组件级旁路，按能力彻底迁移至贞观人物与 `YuanTianGangService` 私有 `transport/` 模块，全面清理反模式。
 
-- [x] Phase 0a：`rg 'utils/api|getPhotasaApi|legacy-api|window\.api'` 盘点基线（完成：`window.api` 0 / `getPhotasaApi` 0 / `legacy-api` 0 / 生产 `utils/api` 引用 11 文件）
-- [ ] Phase 0b：ESLint 门禁 `no-restricted-imports` 配置（禁止 `@renderer/utils/api` 新增引用）
+- [x] Phase 0a：按定义、消费者、注释分别盘点真实基线（`window.api` 仍有 1 处赋值；`getPhotasaApi` / `legacy-api` 仍在生产链；生产 `utils/api` import 11 文件）
+- [ ] Phase 0b：ESLint AST 门禁（legacy 三入口静态/动态 import ✅；袁天罡外业务 IPC 与插件旁路待实施）
+- [x] Phase 0c：Vitest 同时收集 `*.test.ts` / `*.spec.ts`（104 files passed；1125 passed / 3 skipped）
 - [ ] Phase 1：停 `window.api` 注入，标记 `utils/api` `@deprecated`
 - [ ] Phase 2a：扫描域迁移 (`scan-folder.ts` $\rightarrow$ 尉迟恭 + 袁天罡)
 - [ ] Phase 2b：监视域迁移 (`file-handler.ts` $\rightarrow$ 秦琼 + 袁天罡)
@@ -361,8 +364,10 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0155](./.spec/rfc/0155-tauri-release-pipeline-as-built.md)                    | Release/updater 流水线如实记录 + 生产缺口修复 | ✅ Implemented           | `createUpdaterArtifacts`/`pubkey` 已修复；产物存在性断言已加；取代 0113/0151 中 `photasa-release.yml` 描述          |
 | [0158](./.spec/rfc/0158-tauri-release-assets-and-updater-followup.md)          | Release 多平台产物 + `latest.json` 验收       | ⏳ Active                | Linux `tauri-action` `No artifacts were found`；`photasa-v2.0.0` 仅 darwin aarch64；workflow_call 取代 workflow_run |
 | [0159](./.spec/rfc/completed/0159-tauri-production-theme-css-bundling.md)      | Tauri 生产主题 CSS 打包                       | ✅ Implemented           | Vite `?raw` + `<style id="theme-style">`；skill: `.cursor/skills/tauri-theme-management/`                           |
-| [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md) | 移除队列健康监控 Dashboard                    | ✅ Implemented           | 真队列 `~/.photasa/scan/scanning.json`；UI 仅 `ScanQueueDialog`                                                     |
-| [0157](./.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)              | Dev/Prod 版 Photasa 同机并存                  | ✅ Implemented           | 独立 `identifier`/`productName`/数据目录；`build-channels.test.ts` 9/9 通过；guard 已接入 `photasa-build.yml`       |
+| [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md) | 移除队列健康监控 Dashboard                    | ✅ Implemented           | 真队列 `~/.photasa/scan/scanning.json`；UI 仅 `ScanQueueDialog`                                                      |
+| [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                  | ImageList TanStack 虚拟网格整合               | ⏳ Draft                 | 已有 inline `useVirtualizer`；目标统一到 `VirtualizedGrid` + 测试                                                  |
+| [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                   | 设计文件本地预览（Rust / PDFium）             | ⏳ Draft                 | `.ai` Phase 1；废止原在线预览服务                                                                                  |
+| [0157](./.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)              | Dev/Prod 版 Photasa 同机并存                  | ✅ Implemented          | 独立 `identifier`/`productName`/数据目录；`build-channels.test.ts` 9/9 通过；guard 已接入 `photasa-build.yml`         |
 
 **已归档**：[0137](./.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md) 贞观直连 IPC ✅ / [0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0139](./.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md) zouwu 全域退场 ✅ / [0140](./.spec/rfc/completed/0140-tauri-zouwu-adapter-to-command-migration.md) zouwu→command 迁移模式 ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photosa-folder-tree` ✅ / [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) preference 整域退出 zouwu ✅ / [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md) 单张重建缩略图 UI ✅ / [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md) 0073 后适配层跟踪 ✅ / [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md) shell/menu 直连 invoke ✅。
 
@@ -424,7 +429,7 @@ v2.0 contract reference RFC（Draft / In Progress）**不算** Photasa 活跃项
 | RFC                                                                                                          | Title                        | Status      | 说明                                      |
 | ------------------------------------------------------------------------------------------------------------ | ---------------------------- | ----------- | ----------------------------------------- |
 | [0098](./docs/rfc/0098-main-module-extraction-to-packages.md)                                                | main → `@photasa/*` packages | ⏸️ Deferred | **deferred**；Phase 2 冻结；非 Photasa    |
-| [0004](./docs/rfc/0004-ai-file-preview-service.md) … [0061](./docs/rfc/0061-zouwu-workflow-visualization.md) | （v2.0 能力草案）            | Draft / 🔨  | Legacy contract reference；见下表全量索引 |
+| [0004](./.spec/rfc/0004-local-design-file-preview-rust.md) … [0061](./docs/rfc/0061-zouwu-workflow-visualization.md) | （v2.0 能力草案；**0004 已改为 Rust 本地预览**） | Draft / 🔨  | Legacy contract reference；见下表全量索引 |
 
 ---
 
@@ -434,7 +439,7 @@ v2.0 contract reference RFC（Draft / In Progress）**不算** Photasa 活跃项
 
 | RFC                                                                            | Title                                                | Status                                    | Author | Target Release |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------- | ------ | -------------- |
-| [0004](./docs/rfc/0004-ai-file-preview-service.md)                             | AI文件在线预览服务                                   | Draft                                     | 李鹏   | v2.0.0         |
+| [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                             | 设计文件本地预览（Rust / 全离线）                    | ⏳ Draft（Photasa Active）                | 废止云方案；`.ai` → PDFium + `photasa-design` |
 | [0008](./docs/rfc/0008-scan-strategy-optimization.md)                          | 扫描策略优化                                         | Draft                                     | 李鹏   | v2.0.0         |
 | [0010](./docs/rfc/0010-folder-statistics-display.md)                           | 文件夹树节点统计信息显示                             | Draft                                     | 李鹏   | v2.0.0         |
 | [0012](./docs/rfc/0012-unified-path-handling-architecture.md)                  | 统一路径处理架构重构                                 | Draft                                     | 李鹏   | v2.0.0         |

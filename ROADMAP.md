@@ -35,7 +35,8 @@ Canonical policy lives in this section. **All Photasa/Tauri RFCs must comply.**
 | Photasa Active                                                                                               | Not Photasa Active                                                                                              |
 | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | **[0097](.spec/rfc/completed/0097-tauri-legacy-api-deferred-surface.md)** — close gaps via **Rust commands** | **[0098](docs/rfc/0098-main-module-extraction-to-packages.md)** — **Deferred** (deferred `@photasa/*` packages) |
-| Future Tauri RFCs (`0110+`) with Rust implementation in `src-tauri` / `crates/`                              | v2.0 draft RFCs (0004–0061) — **legacy backlog** unless superseded by a Rust RFC                                |
+| Future Tauri RFCs (`0110+`) with Rust implementation in `src-tauri` / `crates/`                              | v2.0 draft RFCs (**0005–0061**) — **legacy backlog** unless superseded by a Rust RFC                           |
+| **[0004](.spec/rfc/0004-local-design-file-preview-rust.md)** — 设计文件本地预览（`.ai` / PDFium / 全离线）   | 原 0004「在线预览服务」已废止（2026-07-24）                                                                    |
 | Completed **0074–0107** (maintenance fixes still Rust-only)                                                  | Any RFC whose primary deliverable is Node/TS backend for Photasa                                                |
 
 New Photasa features: **new Tauri RFC + Rust impl** — never activate deferred RFCs as the migration path.
@@ -163,7 +164,9 @@ Draft / In Progress 等细分以 [`TASK_TRACKING.md`](./TASK_TRACKING.md) 中 **
 | [0155](.spec/rfc/0155-tauri-release-pipeline-as-built.md)                          | Release/updater 流水线如实记录 + 修复 `createUpdaterArtifacts`/`pubkey` 生产阻断缺口     | ✅ Implemented                                                                                                                                       |
 | [0158](.spec/rfc/0158-tauri-release-assets-and-updater-followup.md)                | Release 多平台产物上传 + `latest.json` 验收 + `photasa-v2.0.0` 补发                      | ⏳ Active — Linux `tauri-action` 上传失败；`latest.json` 仅 darwin aarch64                                                                           |
 | [0159](.spec/rfc/completed/0159-tauri-production-theme-css-bundling.md)            | Tauri 生产主题 CSS 打包（`?raw` 同步注入，弃 `/src/themes`）                             | ✅ Implemented — 本地 `/Applications` 手测通过                                                                                                       |
-| [0157](.spec/rfc/0157-tauri-dev-prod-side-by-side.md)                              | Dev/Prod 版 Photasa 同机并存（独立 identifier/数据目录）                                 | ⏳ Draft — 脚本表见 [apps/photasa/DEVELOPMENT.md](apps/photasa/DEVELOPMENT.md)                                                                       |
+| [0160](.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md)       | 移除队列健康监控 Dashboard（假指标/无落盘/与 ScanQueueDialog 重复）                      | ✅ Implemented — 保留扫描队列对话框                                                                                                                |
+| [0161](.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                          | ImageList TanStack 虚拟网格整合（统一 VirtualizedGrid，去 inline virtualizer）           | ⏳ Draft                                                                                                                                           |
+| [0157](.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)                    | Dev/Prod 版 Photasa 同机并存（独立 identifier/数据目录）                                 | ✅ Implemented — 脚本表见 [apps/photasa/DEVELOPMENT.md](apps/photasa/DEVELOPMENT.md)                                                                 |
 
 ### Photasa next priorities（2026-07）
 

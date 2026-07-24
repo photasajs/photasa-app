@@ -863,43 +863,65 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     /**
-     * 文件监视服务批量事件入扫描执行队列
+     * 文件监视服务批量事件入扫描执行队列（单次持久化批次，避免 N 次 IPC 写盘）
      */
     async scheduleFileOperationsFromWatch(
         operations: FileOperation[],
         thumbnailSize: number,
     ): Promise<void> {
+        const pending: ScanAction[] = [];
+
         for (const operation of operations) {
-            try {
-                const normalizedPath = normalizePath(operation.path);
-                if (!normalizedPath || normalizedPath.trim() === "") {
-                    logger.warn("🛡️ 尉迟恭：跳过空 watch 扫描路径", operation);
+            const normalizedPath = normalizePath(operation.path);
+            if (!normalizedPath || normalizedPath.trim() === "") {
+                logger.warn("🛡️ 尉迟恭：跳过空 watch 扫描路径", operation);
+                continue;
+            }
+
+            const action = mapFileOperationToScanAction(operation.type);
+            if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
+                if (action !== "rescan") {
+                    logger.warn(`🛡️ 尉迟恭：watch 扫描任务已存在，跳过 ${normalizedPath}`);
                     continue;
                 }
-
-                const action = mapFileOperationToScanAction(operation.type);
-                if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
-                    if (action !== "rescan") {
-                        logger.warn(`🛡️ 尉迟恭：watch 扫描任务已存在，跳过 ${normalizedPath}`);
-                        continue;
-                    }
-                    await this.removeScanTask(normalizedPath, { force: true });
-                }
-
-                await this.scheduleScanAction({
-                    path: normalizedPath,
-                    action,
-                    thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize,
-                    source: "auto",
-                    timestamp: operation.timestamp,
-                    operationType: operation.metadata?.isFile ? "file" : "directory",
-                    retryCount: operation.retryCount,
-                    fileOperationId: operation.id,
-                    priority: operation.priority,
-                });
-            } catch (error) {
-                logger.error(`🛡️ 尉迟恭：watch 扫描任务入队失败 ${operation.path}`, error);
+                await this.removeScanTask(normalizedPath, { force: true });
             }
+
+            pending.push({
+                path: normalizedPath,
+                action,
+                thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize,
+                source: "auto",
+                timestamp: operation.timestamp,
+                operationType: operation.metadata?.isFile ? "file" : "directory",
+                retryCount: operation.retryCount,
+                fileOperationId: operation.id,
+                priority: operation.priority,
+            });
+        }
+
+        if (pending.length === 0) {
+            return;
+        }
+
+        await this.createTasks(pending);
+
+        for (const scanAction of pending) {
+            logger.info(
+                `🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`,
+            );
+            this.scanQueue
+                .add(() =>
+                    this.executeScan(
+                        scanAction.path,
+                        scanAction.action,
+                        scanAction.operationType,
+                        scanAction.thumbnailSize,
+                    ),
+                )
+                .catch((error) => {
+                    logger.error(`🛡️ 尉迟恭：任务执行失败 ${scanAction.path}`, error);
+                });
         }
     }
 

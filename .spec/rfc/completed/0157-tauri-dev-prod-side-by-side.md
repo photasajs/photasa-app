@@ -2,9 +2,9 @@
 
 ## Implementation principle (Photasa / Tauri)
 
-> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
+> **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../../ROADMAP.md).
 
-**Status**: 🔨 Draft
+**Status**: ✅ Implemented（2026-07-23 归档核实：`tauri.dev.conf.json`、`package.json` dev/build:debug/build:ci 三脚本、`apps/photasa/DEVELOPMENT.md`、`apps/photasa/src/__tests__/build-channels.test.ts`（9/9 通过）、`scripts/ci/guard-prod-build-channel.sh`（已接入 `photasa-build.yml:40`）均落地并实测通过；Acceptance 0 的深浅合并疑问已由测试断言确认为浅合并/array-replace，`tauri.dev.conf.json` 相应补全全部窗口字段。Acceptance 6（单实例双开运行时验证）为人工项，未随本次归档核实）
 **Created**: 2026-07-22
 **Area**: Tauri / Build / CI
 **Related**: 0155（release 流水线）、0100（单实例，`identifier` 作用域——**已用 `tauri-plugin-single-instance` 2.4.1 三平台源码验证，见 Problem 节**）
@@ -17,7 +17,7 @@
 
 Tauri 的 `app_data_dir()`（`apps/photasa/src-tauri/src/main.rs:125`）由 `identifier` 派生——macOS 上是 `~/Library/Application Support/me.photasa.app`，Windows/Linux 同理按 identifier 生成路径。**同一 identifier 意味着 dev 和 prod 两个进程会读写同一份 `preferences.json`、同一个 scan 队列持久化文件、同一套 folder tree 状态**——不是"能不能同时开两个窗口"的问题，是同时开着会互相破坏对方数据。
 
-**✅ 已用源码验证**（三方审查曾指出此前只是推测，现已核实）：[RFC 0100](./completed/0100-tauri-single-instance.md) 的 `tauri-plugin-single-instance`（本仓库锁定版本 `2.4.1`，见 `apps/photasa/src-tauri/Cargo.toml:60`）**确实**以 `identifier` 为锁作用域，三平台源码逐一确认：
+**✅ 已用源码验证**（三方审查曾指出此前只是推测，现已核实）：[RFC 0100](./0100-tauri-single-instance.md) 的 `tauri-plugin-single-instance`（本仓库锁定版本 `2.4.1`，见 `apps/photasa/src-tauri/Cargo.toml:60`）**确实**以 `identifier` 为锁作用域，三平台源码逐一确认：
 
 - **macOS**（`platform_impl/macos.rs:60-61`）：`socket_path()` 直接用 `config.identifier` 拼出 `/tmp/{identifier}_si.sock`，`config` 即运行时 `app.config()`（经 `--config` overlay 合并后的结果）。
 - **Windows**（`platform_impl/windows.rs:58,67`）：`app.config().identifier` 拼出 mutex 名 `{id}-sim`，`CreateMutexW` 用该名字创建互斥体。
