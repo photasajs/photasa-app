@@ -32,7 +32,7 @@
 | 移除队列健康监控 Dashboard   | [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md)     | 🟢 Low    | Done（删 dashboard；保留 ScanQueueDialog）                          | 否                                  |
 | ImageList TanStack 虚拟网格  | [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                        | 🟡 Medium | Draft — 整合 `VirtualizedGrid`，精简 `ImageList` inline virtualizer | 否                                  |
 | 设计文件本地预览（`.ai`）    | [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                         | 🟡 Medium | Draft — `photasa-design` + PDFium；废止原云预览                     | 否                                  |
-| 扫描队列非阻塞 IPC           | [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)                   | 🔴 High   | Done — Ack IPC、防抖落盘、discovered 批量；见 Tauri command 规范    | 否                                  |
+| 扫描队列非阻塞 IPC           | [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)                   | 🔴 High   | Closed — Ack IPC、ScanQueueDialog 虚拟卡片、locale、100 Vitest 通过 | 否                                  |
 
 ### RFC 0154 — 退役 legacy-api / utils/api (回归贞观 IPC 边界) ⏳ UI Draft
 
@@ -368,12 +368,22 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md) | 移除队列健康监控 Dashboard                    | ✅ Implemented           | 真队列 `~/.photasa/scan/scanning.json`；UI 仅 `ScanQueueDialog`                                                     |
 | [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                    | ImageList TanStack 虚拟网格整合               | ⏳ Draft                 | 已有 inline `useVirtualizer`；目标统一到 `VirtualizedGrid` + 测试                                                   |
 | [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                     | 设计文件本地预览（Rust / PDFium）             | ⏳ Draft                 | `.ai` Phase 1；废止原在线预览服务                                                                                   |
-| [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)               | 扫描队列非阻塞 IPC                            | ✅ Implemented           | `ScanQueueAck`、300ms 落盘防抖、Renderer 本地 patch、discovered 250ms 批量                                          |
+| [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)               | 扫描队列非阻塞 IPC                            | ✅ Closed                | `ScanQueueAck`、防抖落盘、虚拟卡片 UI、`scan-queue-display`、15 locale、Vitest 100 通过                             |
 | [0157](./.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)              | Dev/Prod 版 Photasa 同机并存                  | ✅ Implemented           | 独立 `identifier`/`productName`/数据目录；`build-channels.test.ts` 9/9 通过；guard 已接入 `photasa-build.yml`       |
 
 **已归档**：[0137](./.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md) 贞观直连 IPC ✅ / [0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0139](./.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md) zouwu 全域退场 ✅ / [0140](./.spec/rfc/completed/0140-tauri-zouwu-adapter-to-command-migration.md) zouwu→command 迁移模式 ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photosa-folder-tree` ✅ / [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) preference 整域退出 zouwu ✅ / [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md) 单张重建缩略图 UI ✅ / [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md) 0073 后适配层跟踪 ✅ / [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md) shell/menu 直连 invoke ✅。
 
 **Gap/T3 铁律：** 一事一 RFC = **一域** 一事。config/media 族：**… / 0145 folder-tree ✅ / 0147 preference ✅ / …**
+
+### RFC 0162 — 扫描队列非阻塞 IPC（✅ Closed — 2026-07-24）
+
+- [x] `ScanQueueAck` 突变 IPC + `PersistCoalescer` 300ms 防抖落盘
+- [x] `applyScanQueue*` 本地 patch；`discovered` 250ms 批量入队
+- [x] `ScanQueueDialog`：`useVirtualizer` 单列表虚拟卡片（功能对等 legacy）
+- [x] `scan-queue-display.ts` 纯函数 + `ScanQueueDialog.spec.ts` / `scan-queue-display.test.ts`
+- [x] 15 locale `scan.*` 键对齐；`check:locales` 通过
+- [x] `BaseBreadcrumb` 长路径单行 ellipsis（ImageList 标题栏）
+- [x] Vitest 100 通过（含 `yuantiangang-ipc`、`yuchigong`、`scanning-queue-integration`）
 
 ### RFC 0148 — 单张重建缩略图 UI（✅ Implemented — 2026-07-21）
 

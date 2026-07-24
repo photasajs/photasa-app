@@ -1419,6 +1419,9 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             );
             expect(getQueueZouzhe).toBeDefined();
             expect(getQueueZouzhe?.department).toBe(GUANYUAN_NAMES.YU_CHI_GONG);
+            expect((getQueueZouzhe?.content as Record<string, unknown>)?.restoreFromDisk).toBe(
+                true,
+            );
         });
 
         it("应该处理房玄龄拒绝的情况", async () => {

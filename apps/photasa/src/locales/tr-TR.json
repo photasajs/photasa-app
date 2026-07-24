@@ -416,6 +416,7 @@
         "queueTitle": "Tarama Kuyruğu",
         "queueEmpty": "Kuyruk boş",
         "processing": "Kuyruk işleniyor",
+        "pendingTasks": "{count} görev bekliyor",
         "allTasksCompleted": "Tüm tarama görevleri tamamlandı",
         "pathHeader": "Yol",
         "timestampHeader": "Oluşturuldu",
@@ -427,6 +428,12 @@
         "timeHoursAgo": "{count}sa önce",
         "timeDaysAgo": "{count}gn önce",
         "priority": "Öncelik",
+        "retryState": "Yeniden dene {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Beklemede",
+            "processing": "İşleniyor",
+            "failed": "Başarısız"
+        },
         "actions": {
             "scan": "Tara",
             "rescan": "Yeniden Tara",

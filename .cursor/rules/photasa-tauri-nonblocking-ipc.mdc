@@ -18,9 +18,11 @@ alwaysApply: true
 | --- | --- |
 | Rust 突变 command | 返回 `ScanQueueAck { queueLen, revision }`；`mutate()` 不 await 磁盘 |
 | Rust 持久化 | `PersistCoalescer` 300ms 防抖 + `spawn_blocking` 序列化 |
-| Rust 查询 | 仅 `scan_queue_get` 返回全量 |
-| Renderer 袁天罡 | 突变：`invoke` Ack + `applyScanQueueAdd/Remove/Update` 本地 patch Pinia |
-| Renderer 尉迟恭 | `source === "auto"` 发现目录：`SCAN_QUEUE_DISCOVERED_BATCH_MS`（250ms）批量 `createTasks` |
+| Rust 查询 | **仅** `initializeScanningQueue` + `context.restoreFromDisk: true` 时 `scan_queue_get` |
+| Renderer 袁天罡 GET | 无 `restoreFromDisk` → **只读 Pinia**，禁止 invoke（打开队列 UI 走此路径） |
+| Renderer 袁天罡 突变 | `invoke` Ack + `applyScanQueueAdd/Remove/Update` 本地 patch Pinia |
+| Renderer 尉迟恭 | `source === "auto"` 发现目录：250ms 批量 `createTasks` |
+| ScanQueueDialog | `@tanstack/vue-virtual` `useVirtualizer` 单列表虚拟卡片；禁止全量 v-for + per-item `getComputedStyle` |
 
 关键文件：
 
@@ -41,6 +43,7 @@ alwaysApply: true
 
 ## 变更检查清单
 
+- [ ] 打开队列 UI / 普通 GET 未 invoke `scan_queue_get`
 - [ ] 突变 IPC 未回传 `Vec`/全表 queue
 - [ ] 前端未对每次突变 `normalizeRestoredQueue` 全表
 - [ ] `discovered` 未逐目录单条 `ADD_SCAN_ACTION`

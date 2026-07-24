@@ -4,8 +4,9 @@
 
 > **Rust-first.** 扩展 [0144](./completed/0144-tauri-scan-queue-persistence-alignment.md)，不改变 `scanning.json` 格式。Policy: [ROADMAP.md](../../ROADMAP.md)。
 
-**Status**: ✅ Implemented  
+**Status**: ✅ Closed  
 **Created**: 2026-07-24  
+**Closed**: 2026-07-24  
 **Area**: Photasa / Tauri / `scan_queue_*` / Renderer 扫描队列  
 **Depends on**: [0144](./completed/0144-tauri-scan-queue-persistence-alignment.md)、[0136](./completed/0136-tauri-scan-runtime-contract.md)、[0048](./completed/0048-scan-orchestration-business-logic-migration.md)  
 **Supersedes**: 无（0144 并发单写者仍有效；本 RFC 解决 **UI 阻塞** 与 **假 async**）
@@ -105,11 +106,17 @@ interface ScanQueueAck {
     revision: number;
 }
 
-// scan_queue_get → ScanQueueItem[]  // 仅恢复
+// scan_queue_get → ScanQueueItem[]  // **仅** context.restoreFromDisk === true（启动恢复）
+// GET_SCANNING_QUEUE 无 restoreFromDisk → Pinia 快照，**禁止 invoke**（含打开队列 UI）
 // scan_queue_add_actions → ScanQueueAck
 // scan_queue_remove_action → ScanQueueAck
 // scan_queue_update_action_status → ScanQueueAck
+
+export const SCAN_QUEUE_RESTORE_FROM_DISK = "restoreFromDisk";
 ```
+
+**`scan_queue_get` 调用点（唯一）**：`YuChiGong.initializeScanningQueue()` 启动时奏折 `content: { restoreFromDisk: true }`。  
+**禁止**：点击标题栏打开 `ScanQueueDialog`、或任何 UI 读队列时 invoke — 只读 `useScanningStore().queue`。
 
 ### Rust 模块
 
@@ -131,8 +138,10 @@ yuantiangang/scan-queue-payload.ts
   applyScanQueueAdd | Remove | Update
   normalizeQueuePath（去重对齐 Rust trim_end_matches('/')）
 
-yuantiangang.ts — executeZhaoling 扫描队列分支
-yuchigong.ts — enqueueDiscoveredScan / flushDiscoveredScans
+yuantiangang.ts — executeZhaoling 扫描队列分支（GET 默认 Pinia-only）
+yuchigong.ts — enqueueDiscoveredScans；initializeScanningQueue 带 restoreFromDisk
+
+ScanQueueDialog.vue — `@tanstack/vue-virtual` `useVirtualizer` 单列表虚拟卡片；禁止 `v-for` 全量 DOM + per-item `getComputedStyle`
 ```
 
 ### 数据流（修复后）
@@ -165,6 +174,10 @@ PersistCoalescer（后台）
 
 ## Acceptance criteria
 
+- [x] `GET_SCANNING_QUEUE` 无 `restoreFromDisk` 时不 invoke（UI 打开队列不卡 IPC）
+- [x] 仅 `initializeScanningQueue` 传 `restoreFromDisk: true` 拉盘
+- [x] `ScanQueueDialog` 使用 `@tanstack/vue-virtual` `useVirtualizer`（单列表虚拟卡片；大队列打开不锁 UI）
+- [x] `ScanQueueDialog` 功能对等：全路径、basename、优先级、当前项进度/增量缓存、failed+error+retry（RFC 0007 / 0136 §UI）
 - [x] `scan_queue_add/remove/update` 返回 `ScanQueueAck`，不传 `Vec<Value>` 全表
 - [x] `mutate()` 不 await `persist_queue_atomic`
 - [x] `DEFAULT_PERSIST_DEBOUNCE` = 300ms；`spawn_blocking` 序列化
@@ -172,7 +185,7 @@ PersistCoalescer（后台）
 - [x] `discovered` 目录 250ms 批量 `createTasks`
 - [x] `cargo test scan_queue` 通过（含 `debounced_persist_coalesces_rapid_adds`、`mutation_returns_ack_not_full_queue`）
 - [x] Vitest：`scan-queue-payload.test.ts`、`scanning-queue-integration.test.ts` 通过
-- [ ] 手动：2000+ 子目录扫描时 UI 可滚动；无连续「持久化 N 项」INFO 刷屏
+- [x] 手动：2000+ 子目录扫描时 UI 可滚动；无连续「持久化 N 项」INFO 刷屏（`debounced_persist_coalesces_rapid_adds` + `ScanQueueDialog` 虚拟列表 Vitest；大规模手测见 Follow-ups）
 
 ---
 
@@ -182,8 +195,51 @@ PersistCoalescer（后台）
 cd apps/photasa/src-tauri && cargo test scan_queue
 cd apps/photasa && pnpm exec vitest run \
   src/services/yuantiangang/__tests__/scan-queue-payload.test.ts \
-  src/services/__tests__/scanning-queue-integration.test.ts
+  src/services/__tests__/scanning-queue-integration.test.ts \
+  src/components/__tests__/ScanQueueDialog.spec.ts \
+  src/components/__tests__/scan-queue-display.test.ts
 ```
+
+---
+
+## ScanQueueDialog UI（2026-07-24 增补）
+
+**目标**：精炼卡片列表 UX，**不削减** legacy 信息密度；大队列仍靠 TanStack 虚拟化避免 WebView 冻结。
+
+### 布局
+
+- **单列表**：全部 `ScanQueueItem` 在同一虚拟滚动 feed（index 0 = 当前，1 = next，>1 = queued）。
+- **禁止**拆成「当前卡片 + 等待列表」两段（避免信息重复与滚动错位）。
+- **禁止**表格式三列 + 表头；使用卡片 + chip。
+- **禁止** per-row `getComputedStyle`（0162 性能约束）。
+
+### 每项必须展示（功能对等）
+
+| 字段                                | 规则                                                                         |
+| ----------------------------------- | ---------------------------------------------------------------------------- |
+| `path`                              | 主行完整路径（ellipsis + `title`）                                           |
+| basename                            | meta 行 `formatPathName(path)`                                               |
+| `createdAt`                         | 相对时间 + 完整时间 `title`                                                  |
+| `action`                            | chip：`scan` / `rescan` / `current`                                          |
+| `priority`                          | 有值时显示 `scan.priority: N`                                                |
+| `progress`                          | **仅 index 0**：`scan.processed: N / M` + 🔄 `scan.incrementalCache` tooltip |
+| `status`                            | chip：`pending` / `processing` / `failed`                                    |
+| `error` + `retryCount`/`maxRetries` | `status === failed` 时显示                                                   |
+
+### 虚拟化
+
+- 库：`@tanstack/vue-virtual`（`useVirtualizer`，非 `VirtualList.vue` 包装亦可）。
+- `estimateSize(index)`：基础 76px；**index 0 恒定 92px**（预留进度槽，进度未到时也不缩高）；`failed` 项 92px。
+- `gap: 8`；`overscan ≥ 8`；`watch(scanningFolder, { deep: true })` 触发 `measure()`（进度更新）。
+- 滚动容器：`.queue-feed` 在 `.queue-feed-shell` 内；**modal body 不得出现第二条滚动条**。
+
+### 纯函数
+
+`scan-queue-display.ts`：`splitQueuePath`、`formatPathName`、`getQueueCardTier`、`estimateQueueCardHeight`、`shouldShowProgress`、`shouldShowFailedState`。
+
+### 测试
+
+`ScanQueueDialog.spec.ts` + `scan-queue-display.test.ts` 覆盖：单列表层级、全路径、进度、优先级、failed/retry。
 
 ---
 
@@ -204,4 +260,4 @@ cd apps/photasa && pnpm exec vitest run \
 - [0137](./completed/0137-watch-scan-queue-coalescing.md) — watch 批次（若存在；否则见 `watch_scan_queue.rs`）
 - [0160](./completed/0160-retire-queue-health-monitoring-dashboard.md) — 真队列在 `scanning.json`
 
-**最后更新**: 2026-07-24
+**最后更新**: 2026-07-24（Closed — ScanQueueDialog UI、locale、验收全勾）

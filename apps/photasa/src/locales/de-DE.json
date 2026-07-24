@@ -461,6 +461,7 @@
         "queueTitle": "Scan-Warteschlange",
         "queueEmpty": "Warteschlange ist leer",
         "processing": "Warteschlange wird verarbeitet",
+        "pendingTasks": "{count} Aufgaben ausstehend",
         "allTasksCompleted": "Alle Scan-Aufgaben abgeschlossen",
         "pathHeader": "Pfad",
         "timestampHeader": "Erstellt",
@@ -472,6 +473,12 @@
         "timeHoursAgo": "vor {count}h",
         "timeDaysAgo": "vor {count}d",
         "priority": "Priorität",
+        "retryState": "Wiederholung {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Ausstehend",
+            "processing": "In Bearbeitung",
+            "failed": "Fehlgeschlagen"
+        },
         "actions": {
             "scan": "Scannen",
             "rescan": "Erneut scannen",

@@ -416,6 +416,7 @@
         "queueTitle": "스캔 대기열",
         "queueEmpty": "대기열이 비어있습니다",
         "processing": "대기열 처리 중",
+        "pendingTasks": "{count}개 작업 대기 중",
         "allTasksCompleted": "모든 스캔 작업이 완료되었습니다",
         "pathHeader": "경로",
         "timestampHeader": "생성시간",
@@ -427,6 +428,12 @@
         "timeHoursAgo": "{count}시간 전",
         "timeDaysAgo": "{count}일 전",
         "priority": "우선순위",
+        "retryState": "재시도 {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "대기 중",
+            "processing": "처리 중",
+            "failed": "실패"
+        },
         "actions": {
             "scan": "스캔",
             "rescan": "다시 스캔",

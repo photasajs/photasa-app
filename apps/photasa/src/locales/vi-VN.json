@@ -416,6 +416,7 @@
         "queueTitle": "Hàng đợi quét",
         "queueEmpty": "Hàng đợi trống",
         "processing": "Xử lý hàng đợi",
+        "pendingTasks": "{count} tác vụ đang chờ",
         "allTasksCompleted": "Tất cả tác vụ quét đã hoàn thành",
         "pathHeader": "Đường dẫn",
         "timestampHeader": "Đã tạo",
@@ -427,6 +428,12 @@
         "timeHoursAgo": "{count}h trước",
         "timeDaysAgo": "{count}ng trước",
         "priority": "Ưu tiên",
+        "retryState": "Thử lại {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Đang chờ",
+            "processing": "Đang xử lý",
+            "failed": "Thất bại"
+        },
         "actions": {
             "scan": "Quét",
             "rescan": "Quét lại",

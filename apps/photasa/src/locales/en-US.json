@@ -519,6 +519,7 @@
         "queueTitle": "Scan Queue",
         "queueEmpty": "Queue is empty",
         "processing": "Processing queue",
+        "pendingTasks": "{count} tasks pending",
         "allTasksCompleted": "All scan tasks completed",
         "pathHeader": "Path",
         "timestampHeader": "Created",
@@ -530,6 +531,12 @@
         "timeHoursAgo": "{count}h ago",
         "timeDaysAgo": "{count}d ago",
         "priority": "Priority",
+        "retryState": "Retry {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Pending",
+            "processing": "Processing",
+            "failed": "Failed"
+        },
         "actions": {
             "scan": "Scan",
             "rescan": "Rescan",

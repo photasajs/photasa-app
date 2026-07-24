@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { YuanTianGangService } from "../yuantiangang";
 import {
@@ -7,6 +8,7 @@ import {
     SCAN_QUEUE_COMMANDS,
     WATCH_EVENTS,
 } from "../tauri-command-names";
+import { SCAN_QUEUE_RESTORE_FROM_DISK } from "../scan-queue-contract";
 
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
@@ -37,6 +39,7 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
     let service: YuanTianGangService;
 
     beforeEach(() => {
+        setActivePinia(createPinia());
         mockInvoke.mockReset();
         mockListen.mockReset();
         mockListen.mockResolvedValue(() => {});
@@ -108,12 +111,27 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         expect(result.data).toEqual(appState);
     });
 
-    it("GET_SCANNING_QUEUE invoke scan_queue_get", async () => {
+    it("GET_SCANNING_QUEUE 默认只读 Pinia，不 invoke scan_queue_get", async () => {
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+            context: {},
+            timestamp: Date.now(),
+            source: "尉迟恭",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).not.toHaveBeenCalled();
+        expect(result.acknowledged).toBe(true);
+        expect((result.data as { queue: unknown[] }).queue).toEqual([]);
+    });
+
+    it("GET_SCANNING_QUEUE restoreFromDisk 时 invoke scan_queue_get", async () => {
         mockInvoke.mockResolvedValue([{ path: "/restored", action: "scan", timestamp: 1 }]);
 
         const result = await service.executeZhaoling({
             command: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
-            context: {},
+            context: { [SCAN_QUEUE_RESTORE_FROM_DISK]: true },
             timestamp: Date.now(),
             source: "尉迟恭",
             priority: "normal",

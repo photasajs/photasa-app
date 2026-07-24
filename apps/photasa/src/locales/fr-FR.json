@@ -467,6 +467,7 @@
         "queueTitle": "File d'attente de scan",
         "queueEmpty": "La file d'attente est vide",
         "processing": "Traitement de la file d'attente",
+        "pendingTasks": "{count} tâches en attente",
         "allTasksCompleted": "Toutes les tâches de scan terminées",
         "pathHeader": "Chemin",
         "timestampHeader": "Créé",
@@ -478,6 +479,12 @@
         "timeHoursAgo": "il y a {count}h",
         "timeDaysAgo": "il y a {count}j",
         "priority": "Priorité",
+        "retryState": "Nouvelle tentative {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "En attente",
+            "processing": "En cours",
+            "failed": "Échec"
+        },
         "actions": {
             "scan": "Scanner",
             "rescan": "Rescanner",

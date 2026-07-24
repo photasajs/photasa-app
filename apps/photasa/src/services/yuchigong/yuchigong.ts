@@ -24,7 +24,10 @@ import {
     calculateNextRetryCount,
     getTaskStatusDisplayText,
 } from "./task-helpers";
-import { SCAN_QUEUE_DISCOVERED_BATCH_MS } from "@renderer/services/yuantiangang/scan-queue-contract";
+import {
+    SCAN_QUEUE_DISCOVERED_BATCH_MS,
+    SCAN_QUEUE_RESTORE_FROM_DISK,
+} from "@renderer/services/yuantiangang/scan-queue-contract";
 
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
@@ -1060,6 +1063,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+                content: { [SCAN_QUEUE_RESTORE_FROM_DISK]: true },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             };

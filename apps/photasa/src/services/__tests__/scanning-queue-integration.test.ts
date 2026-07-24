@@ -26,6 +26,7 @@ import { useScanningStore } from "../fangxuanling/stores/scanning-store";
 import { createScanQueueItem } from "@renderer/stores/scanning-types";
 import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/tauri-command-names";
 import type { ScanQueueAck } from "../yuantiangang/scan-queue-contract";
+import { SCAN_QUEUE_RESTORE_FROM_DISK } from "../yuantiangang/scan-queue-contract";
 import { getLegacyPreloadApi, getLegacyShell } from "@/api/legacy-preload-access";
 
 const mockTauriInvoke = vi.hoisted(() => vi.fn());
@@ -255,6 +256,7 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+                content: { [SCAN_QUEUE_RESTORE_FROM_DISK]: true },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             };
@@ -293,20 +295,19 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
                 }),
             ];
 
-            // Mock天枢返回恢复的队列
-            window.api.tianshu.processCommand = vi.fn().mockResolvedValue({
-                success: true,
-                result: {
-                    success: true,
-                    queue: mockQueueBeforeCrash,
-                    queueSize: mockQueueBeforeCrash.length,
-                },
-            });
+            // Mock 磁盘队列（启动恢复走 scan_queue_get）
+            mockPersistedQueue = mockQueueBeforeCrash.map((action) => ({
+                path: action.path,
+                action: action.action,
+                status: "pending",
+                timestamp: action.timestamp,
+            }));
 
             // 模拟应用重启：请求恢复队列
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+                content: { [SCAN_QUEUE_RESTORE_FROM_DISK]: true },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             };

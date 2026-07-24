@@ -39,6 +39,7 @@ import {
     scanActionToPersistedEntry,
     type ScanQueueAck,
 } from "./scan-queue-payload";
+import { SCAN_QUEUE_RESTORE_FROM_DISK } from "./scan-queue-contract";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { FileOperation } from "@photasa/common";
@@ -596,10 +597,15 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 let queue: ScanQueueItem[];
 
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE) {
-                    const rawQueue = await invoke<Record<string, unknown>[]>(
-                        SCAN_QUEUE_COMMANDS.GET,
-                    );
-                    queue = normalizeRestoredQueue(rawQueue);
+                    // UI / 普通 GET：只读 Pinia，禁止同步拉全表（RFC 0162）
+                    if (context[SCAN_QUEUE_RESTORE_FROM_DISK] === true) {
+                        const rawQueue = await invoke<Record<string, unknown>[]>(
+                            SCAN_QUEUE_COMMANDS.GET,
+                        );
+                        queue = normalizeRestoredQueue(rawQueue);
+                    } else {
+                        queue = [...useScanningStore().queue];
+                    }
                 } else {
                     const scanningStore = useScanningStore();
                     if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {

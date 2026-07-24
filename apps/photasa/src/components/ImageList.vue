@@ -359,17 +359,16 @@ onUnmounted(() => {
     >
         <!-- 标题区 -->
         <div
-            class="px-4 h-12 border-b flex items-center justify-between"
+            class="px-4 h-12 border-b flex items-center justify-between gap-3 min-w-0"
             style="border-color: var(--color-border); background: var(--color-bg-secondary)"
         >
-            <BaseBreadcrumb>
+            <BaseBreadcrumb class="min-w-0 flex-1 overflow-hidden">
                 <BaseBreadcrumbItem
                     v-for="(part, index) in card.parts"
-                    :key="part"
+                    :key="`${index}-${part}`"
+                    :text="part"
                     :isLast="index === card.parts.length - 1"
-                >
-                    {{ part }}
-                </BaseBreadcrumbItem>
+                />
             </BaseBreadcrumb>
 
             <!-- 文件统计 -->

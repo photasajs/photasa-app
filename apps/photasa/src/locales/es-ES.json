@@ -464,6 +464,7 @@
         "queueTitle": "Cola de escaneo",
         "queueEmpty": "La cola está vacía",
         "processing": "Procesando cola",
+        "pendingTasks": "{count} tareas pendientes",
         "allTasksCompleted": "Todas las tareas de escaneo completadas",
         "pathHeader": "Ruta",
         "timestampHeader": "Creado",
@@ -475,6 +476,12 @@
         "timeHoursAgo": "hace {count}h",
         "timeDaysAgo": "hace {count}d",
         "priority": "Prioridad",
+        "retryState": "Reintento {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Pendiente",
+            "processing": "Procesando",
+            "failed": "Fallido"
+        },
         "actions": {
             "scan": "Escanear",
             "rescan": "Volver a escanear",

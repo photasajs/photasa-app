@@ -18,9 +18,15 @@ withDefaults(defineProps<Props>(), {
 
 <style scoped lang="less">
 .base-breadcrumb {
+    min-width: 0;
+    overflow: hidden;
+
     .breadcrumb-list {
         display: flex;
         align-items: center;
+        flex-wrap: nowrap;
+        min-width: 0;
+        overflow: hidden;
         list-style: none;
         margin: 0;
         padding: 0;

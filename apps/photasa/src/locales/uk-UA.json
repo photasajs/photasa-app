@@ -416,6 +416,7 @@
         "queueTitle": "Черга сканування",
         "queueEmpty": "Черга порожня",
         "processing": "Обробка черги",
+        "pendingTasks": "{count} завдань у черзі",
         "allTasksCompleted": "Всі завдання сканування завершено",
         "pathHeader": "Шлях",
         "timestampHeader": "Створено",
@@ -427,6 +428,12 @@
         "timeHoursAgo": "{count}г тому",
         "timeDaysAgo": "{count}д тому",
         "priority": "Пріоритет",
+        "retryState": "Повтор {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Очікування",
+            "processing": "Обробка",
+            "failed": "Помилка"
+        },
         "actions": {
             "scan": "Сканувати",
             "rescan": "Пересканувати",

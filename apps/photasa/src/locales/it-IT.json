@@ -413,6 +413,7 @@
         "queueTitle": "Coda scansione",
         "queueEmpty": "Coda vuota",
         "processing": "Elaborazione coda",
+        "pendingTasks": "{count} attività in attesa",
         "allTasksCompleted": "Tutti i task di scansione completati",
         "pathHeader": "Percorso",
         "timestampHeader": "Creato",
@@ -424,6 +425,12 @@
         "timeHoursAgo": "{count}h fa",
         "timeDaysAgo": "{count}g fa",
         "priority": "Priorità",
+        "retryState": "Riprova {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "In attesa",
+            "processing": "In elaborazione",
+            "failed": "Non riuscito"
+        },
         "actions": {
             "scan": "Scansiona",
             "rescan": "Riscansiona",

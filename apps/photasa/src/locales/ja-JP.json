@@ -422,6 +422,7 @@
         "queueTitle": "スキャンキュー",
         "queueEmpty": "キューは空です",
         "processing": "キューを処理中",
+        "pendingTasks": "{count} 件のタスクが待機中",
         "allTasksCompleted": "すべてのスキャンタスクが完了しました",
         "pathHeader": "パス",
         "timestampHeader": "作成時刻",
@@ -433,6 +434,12 @@
         "timeHoursAgo": "{count}時間前",
         "timeDaysAgo": "{count}日前",
         "priority": "優先度",
+        "retryState": "再試行 {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "待機中",
+            "processing": "処理中",
+            "failed": "失敗"
+        },
         "actions": {
             "scan": "スキャン",
             "rescan": "再スキャン",

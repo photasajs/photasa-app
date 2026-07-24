@@ -416,6 +416,7 @@
         "queueTitle": "قائمة انتظار المسح",
         "queueEmpty": "القائمة فارغة",
         "processing": "معالجة القائمة",
+        "pendingTasks": "{count} مهام قيد الانتظار",
         "allTasksCompleted": "اكتملت جميع مهام المسح",
         "pathHeader": "المسار",
         "timestampHeader": "تم الإنشاء",
@@ -427,6 +428,12 @@
         "timeHoursAgo": "منذ {count} س",
         "timeDaysAgo": "منذ {count} ي",
         "priority": "الأولوية",
+        "retryState": "إعادة المحاولة {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "قيد الانتظار",
+            "processing": "قيد المعالجة",
+            "failed": "فشل"
+        },
         "actions": {
             "scan": "مسح",
             "rescan": "إعادة مسح",

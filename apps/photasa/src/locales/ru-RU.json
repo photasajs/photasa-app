@@ -416,6 +416,7 @@
         "queueTitle": "Очередь сканирования",
         "queueEmpty": "Очередь пуста",
         "processing": "Обработка очереди",
+        "pendingTasks": "{count} задач в очереди",
         "allTasksCompleted": "Все задачи сканирования завершены",
         "pathHeader": "Путь",
         "timestampHeader": "Создано",
@@ -427,6 +428,12 @@
         "timeHoursAgo": "{count}ч назад",
         "timeDaysAgo": "{count}д назад",
         "priority": "Приоритет",
+        "retryState": "Повтор {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Ожидание",
+            "processing": "Обработка",
+            "failed": "Ошибка"
+        },
         "actions": {
             "scan": "Сканировать",
             "rescan": "Пересканировать",

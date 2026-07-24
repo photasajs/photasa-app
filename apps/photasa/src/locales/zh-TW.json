@@ -430,6 +430,7 @@
         "queueTitle": "掃描隊列",
         "queueEmpty": "隊列為空",
         "processing": "正在處理隊列",
+        "pendingTasks": "{count} 個任務待處理",
         "allTasksCompleted": "所有掃描任務已完成",
         "pathHeader": "路徑",
         "timestampHeader": "建立時間",
@@ -441,6 +442,12 @@
         "timeHoursAgo": "{count} 小時前",
         "timeDaysAgo": "{count} 天前",
         "priority": "優先級",
+        "retryState": "重試 {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "等待",
+            "processing": "處理中",
+            "failed": "失敗"
+        },
         "actions": {
             "scan": "掃描",
             "rescan": "重新掃描",
