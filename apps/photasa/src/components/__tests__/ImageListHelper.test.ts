@@ -4,6 +4,10 @@ import type { PhotasaConfig } from "@photasa/common";
 import type { Photo } from "@photasa/common";
 import type { Image } from "@renderer/common/image";
 import { createThumbnailTask } from "@renderer/utils/api";
+import {
+    getThumbnailDisplaySrc,
+    resetThumbnailBustStateForTests,
+} from "@renderer/utils/thumbnail-display";
 
 // Mock createThumbnailTask
 vi.mock("@renderer/utils/api", () => ({
@@ -161,6 +165,7 @@ describe("ImageListHelper", () => {
 
         beforeEach(() => {
             vi.clearAllMocks();
+            resetThumbnailBustStateForTests();
         });
 
         it("应该调用createThumbnailTask.perform（目标路径取自 config 缩略图）", async () => {
@@ -238,6 +243,7 @@ describe("ImageListHelper", () => {
             expect(newSrc).toBe(
                 `file:///test/.photasaoriginals/thumbnail-test.jpg.png?t=${mockDate}`,
             );
+            expect(getThumbnailDisplaySrc(image)).toBe(newSrc);
 
             vi.restoreAllMocks();
         });

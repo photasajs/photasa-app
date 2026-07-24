@@ -357,7 +357,7 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0139](./.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期                            | ✅ Implemented           | 8 域全部退出 zouwu 生产路径；物理移除见 [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md) ✅      |
 | [0140](./.spec/rfc/completed/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式                | ✅ Implemented           | 6 步模式；8 域验证表；`IntentToFuluMapping` 空表守卫                                                                |
 | [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md)    | preference 贞观 + 退 zouwu                    | ✅ Implemented           | `preferences_get`/`preferences_update`；袁天罡启奏；删 adapter                                                      |
-| [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md)      | 单张重建缩略图 UI 契约                        | ✅ Implemented           | `create_thumbnail` 直连；`rebuiltThumbnailSrcByKey`；非 Rescan（2026-07-21）                                        |
+| [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md)      | 单张重建缩略图 UI 契约                        | ✅ Implemented           | `thumbnail-display` 会话 bust；切树节点不 revert（2026-07-24）                                                      |
 | [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)            | 0073 关闭后 UI 适配层剩余项                   | ✅ Implemented           | R3–R5 ✅；贞观 services 零 window.api；Renderer R1/R2 → 0154                                                        |
 | [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md)        | shell/menu 退出 zouwu                         | ✅ Implemented           | executeZhaoling 直连 apply_system_menu / open_external / show_in_folder                                             |
 | [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)            | zouwu workspace 物理移除                      | ✅ Implemented           | 删 zouwu crates/TianshuService/adapters/tianshu.adapter.ts；vitest 825                                              |
@@ -385,13 +385,13 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 - [x] `BaseBreadcrumb` 长路径单行 ellipsis（ImageList 标题栏）
 - [x] Vitest 100 通过（含 `yuantiangang-ipc`、`yuchigong`、`scanning-queue-integration`）
 
-### RFC 0148 — 单张重建缩略图 UI（✅ Implemented — 2026-07-21）
+### RFC 0148 — 单张重建缩略图 UI（✅ Implemented — 2026-07-24）
 
 - [x] 明确契约：`create_thumbnail(always:true)` 直连，非 Rescan / 非贞观
 - [x] `requestThumbnail` 目标路径取自 `photo.thumbnail`（`image.thumbnail`）
-- [x] `rebuiltThumbnailSrcByKey` + `thumbnailDisplaySrc`（修复 computed `card` 不刷新）
+- [x] `thumbnail-display.ts` 会话 bust + `getThumbnailDisplaySrc`（`clearDataState` 不清 bust）
 - [x] `image-prefetch` 保留 `?t=` 查询串
-- [x] 测试：`ImageListHelper.test.ts`、`image-prefetch.test.ts`
+- [x] 测试：`ImageListHelper.test.ts`、`image-prefetch.test.ts`、`thumbnail-display.test.ts`
 
 ### RFC 0147 — preference 贞观 + 退 zouwu（✅ 已完成，归档 `completed/`）
 

@@ -33,6 +33,7 @@ import EmptyState from "./common/EmptyState.vue";
 import LoadingState from "./common/LoadingState.vue";
 import FileInfoDrawer from "./FileInfoDrawer.vue";
 import { computeColumns, requestThumbnail, toImageList } from "./ImageListHelper";
+import { getThumbnailDisplaySrc, getThumbnailRenderKey } from "@renderer/utils/thumbnail-display";
 import { safePositiveNumber } from "@renderer/common/number";
 
 // 定义组件事件
@@ -89,21 +90,10 @@ const videoCount = computed(() => {
 // 文件元数据（支持图片/视频/文件信息）
 const fileMeta = ref<FileMetadata | null>(null);
 
-/** 重建缩略图后的显示 URL（按 image.key）；card 为 computed，不能原地改 image.thumbnail */
-const rebuiltThumbnailSrcByKey = ref<Record<string, string>>({});
-
-function thumbnailDisplaySrc(image: Image): string {
-    return rebuiltThumbnailSrcByKey.value[image.key] ?? image.thumbnail;
-}
-
 // 重建缩略图
 async function rebuildThumbnail(image: Image): Promise<void> {
     try {
-        const newSrc = await requestThumbnail(image, safeThumbnailSize.value);
-        rebuiltThumbnailSrcByKey.value = {
-            ...rebuiltThumbnailSrcByKey.value,
-            [image.key]: newSrc,
-        };
+        await requestThumbnail(image, safeThumbnailSize.value);
     } catch (error) {
         logger.error("🏛️ 重建缩略图失败", error);
     }
@@ -249,7 +239,6 @@ const clearDataState = () => {
     fileMeta.value = null;
     showInfo.value = false;
     loadingInfo.value = false;
-    rebuiltThumbnailSrcByKey.value = {};
 };
 
 // 初始化虚拟滚动器
@@ -451,10 +440,10 @@ onUnmounted(() => {
                                                 }"
                                             >
                                                 <BaseImage
-                                                    :key="thumbnailDisplaySrc(image)"
+                                                    :key="getThumbnailRenderKey(image)"
                                                     :width="safeThumbnailSize"
                                                     :height="safeThumbnailSize"
-                                                    :src="thumbnailDisplaySrc(image)"
+                                                    :src="getThumbnailDisplaySrc(image)"
                                                     :fallback="fallback"
                                                     :raw="image.raw"
                                                     :is-video="image.isVideo"

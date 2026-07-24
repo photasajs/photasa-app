@@ -1,7 +1,7 @@
 # RFC 0148: 单张「重建缩略图」UI 契约（Tauri）
 
 - **Start Date**: 2026-07-21
-- **Last updated**: 2026-07-21
+- **Last updated**: 2026-07-24
 - **Status**: ✅ Implemented
 - **Priority**: P2（用户可见：右键重建后缩略图不刷新）
 - **Area**: Photasa / Renderer / `ImageList` / `create_thumbnail` IPC
@@ -19,7 +19,7 @@
 | 源路径：`image.raw`（无则 `image.preview`）                                                         | 整夹 Rescan（`REQUEST_RESCAN`）                |
 | 目标路径：`.photasa.json` 里已有的 `photo.thumbnail`（经 `image.thumbnail` / `image.src`）          | 重算路径后写错目录                             |
 | `always: true` 强制覆盖 PNG                                                                         | 更新 `.photasa.json` / Pinia                   |
-| UI 层 `rebuiltThumbnailSrcByKey` + `?t=` 缓存破坏                                                   | 原地改 `image.thumbnail`（`card` 为 computed） |
+| 会话级 `thumbnail-display` + `?t=` 缓存破坏（按绝对缩略图路径；**不**随 `clearDataState` 清空）     | 原地改 `image.thumbnail`（`card` 为 computed） |
 
 **无独立 CLI / npm script / cargo 子命令。** 用户入口仅应用内右键菜单。
 
@@ -38,8 +38,9 @@ rebuildThumbnail(image)
  → window.api.createThumbnail // legacy-api → thumbnail.adapter
  → invoke("create_thumbnail", { request }) // normalize_path 后
  → photasa_thumbnail::create_thumbnail (Rust)
- → rebuiltThumbnailSrcByKey[image.key] = webviewUrl + "?t=" + Date.now()
- → BaseImage :src="thumbnailDisplaySrc(image)" :key="..."
+ → markThumbnailRebuilt(image) // thumbnail-display.ts（会话级，键=绝对缩略图路径）
+ → getThumbnailDisplaySrc(image) → webviewUrl + "?t=" + bust
+ → BaseImage :src="getThumbnailDisplaySrc(image)" :key="getThumbnailRenderKey(image)"
 ```
 
 ### 路径契约
@@ -84,32 +85,57 @@ rebuildThumbnail(image)
 
 ### 修复
 
-| 文件                 | 变更                                                                                              |
+| 文件                 | 变更（2026-07-21；bust 作用域见 2026-07-24 postmortem）                                           |
 | -------------------- | ------------------------------------------------------------------------------------------------- |
-| `ImageList.vue`      | `rebuiltThumbnailSrcByKey` + `thumbnailDisplaySrc()`；`clearDataState` 清空；`BaseImage` `:key`   |
+| `ImageList.vue`      | `getThumbnailDisplaySrc()` + `getThumbnailRenderKey()`；`BaseImage` `:key`                        |
 | `ImageListHelper.ts` | `requestThumbnail` 返回新 WebView URL；`createThumbnail` 失败抛错；目标路径取自 `image.thumbnail` |
 | `image-prefetch.ts`  | 加载时**保留** query 串                                                                           |
+
+## 2026-07-24 Postmortem：切换树节点后缩略图「回退」
+
+### 现象
+
+重建后当前文件夹内显示新图；切换到其他树节点再回来，网格又显示旧缩略图（磁盘 PNG 已覆盖）。
+
+### 根因
+
+1. **`?t=` 必要性**：`always: true` 覆盖同路径 PNG，但 WebView 按 **URL** 缓存 `<img>`；无 query 时仍可能用旧解码缓存。
+2. **bust 作用域错误**：`rebuiltThumbnailSrcByKey` 存在 `ImageList.vue` 组件内，`clearDataState()` 在 `currentFolder` / `card` 切换时清空 → 回来只剩无 `?t=` 的 `image.thumbnail` → 旧缓存再现。
+
+### 修复
+
+| 文件                   | 变更                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `thumbnail-display.ts` | 会话级 `bustTimestampByThumbnailPath`（键=`getThumbnailBustKey(image)` 绝对缩略图路径）；`getThumbnailDisplaySrc` / `getThumbnailRenderKey` |
+| `ImageListHelper.ts`   | `requestThumbnail` 成功后 `markThumbnailRebuilt(image)`                                                                                     |
+| `ImageList.vue`        | 使用 `getThumbnailDisplaySrc`；**不再**在 `clearDataState` 清 bust                                                                          |
+
+### 为何不用改 `.photasa.json`
+
+路径不变、仅 PNG 字节变；缓存破坏只需让 WebView 视为新 URL，无需写 config。
 
 ## 实现检查清单
 
 - [x] `requestThumbnail` → `always: true`，路径来自 config 缩略图字段
-- [x] `rebuiltThumbnailSrcByKey` 驱动 UI，不 mutate computed 内 `Image`
+- [x] `thumbnail-display` 会话 bust 驱动 UI，不 mutate computed 内 `Image`
+- [x] `clearDataState` **不**清空 bust map
 - [x] `prefetchImageTask` 不剥离 `?t=`
 - [x] 失败 `logger.error`，不静默
-- [x] 测试：`ImageListHelper.test.ts`、`image-prefetch.test.ts`
+- [x] 测试：`ImageListHelper.test.ts`、`image-prefetch.test.ts`、`thumbnail-display.test.ts`
 
 ## Acceptance
 
-1. 右键单图重建后，**同一 session** 内网格显示新缩略图（无需切换文件夹）。
+1. 右键单图重建后，**同一 session** 内网格显示新缩略图（含切换树节点再返回同一文件夹）。
 2. `invoke("create_thumbnail")` 的 `request.always === true`；`request.thumbnail` 对应当前 `photo.thumbnail` 磁盘路径。
 3. 不触发 `request_rescan` / 扫描队列 / 贞观启奏。
-4. `pnpm --filter @photasa/photasa exec vitest run src/components/__tests__/ImageListHelper.test.ts src/utils/__tests__/image-prefetch.test.ts` 通过。
+4. `pnpm --filter @photasa/photasa exec vitest run src/components/__tests__/ImageListHelper.test.ts src/utils/__tests__/image-prefetch.test.ts src/utils/__tests__/thumbnail-display.test.ts` 通过。
 
 ```bash
 # 无独立 CLI；验收为 Vitest + 手动右键单图
 pnpm --filter @photasa/photasa exec vitest run \
  src/components/__tests__/ImageListHelper.test.ts \
- src/utils/__tests__/image-prefetch.test.ts
+ src/utils/__tests__/image-prefetch.test.ts \
+ src/utils/__tests__/thumbnail-display.test.ts
 ```
 
 ## Out of scope

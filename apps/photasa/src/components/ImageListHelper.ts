@@ -2,6 +2,7 @@ import { createThumbnailTask } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@photasa/common";
 import { toImage } from "@renderer/common/image";
 import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
+import { appendCacheBust, markThumbnailRebuilt } from "@renderer/utils/thumbnail-display";
 
 import type { Image } from "@renderer/common/image";
 
@@ -46,8 +47,9 @@ export async function requestThumbnail(image: Image, thumbnailSize: number): Pro
         throw new Error(result?.error ?? "缩略图重建失败");
     }
 
-    // 返回带缓存破坏的 WebView URL；勿写回 image — card 为 computed，原地赋值不触发渲染
-    return `${toWebviewMediaUrl(thumbnailPath)}?t=${Date.now()}`;
+    // 会话级 bust：切树节点再回来仍带 ?t=，避免 WebView 显示旧缓存
+    const timestamp = markThumbnailRebuilt(image);
+    return appendCacheBust(toWebviewMediaUrl(thumbnailPath), timestamp);
 }
 
 const DEFAULT_GAP = 16;
