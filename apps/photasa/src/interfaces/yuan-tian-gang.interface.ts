@@ -29,12 +29,22 @@ export interface FuluResponse {
 
 import type { Emitter } from "mitt";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
+import type { ImportProgress, ImportResult } from "@photasa/common";
+
+export interface ImportEventPort {
+    ready(): Promise<void>;
+    onProgress(callback: (progress: ImportProgress) => void): () => void;
+    onComplete(callback: (result: ImportResult) => void): () => void;
+    onError(callback: (error: { importId?: string; error: Error }) => void): () => void;
+    onPreviewProgress(callback: (progress: unknown, files?: unknown[]) => void): () => void;
+}
 
 /**
  * 袁天罡钦天监服务接口
  * 接收房玄龄的诏令，与天枢引擎通信
  */
 export interface IYuanTianGangService {
+    readonly importEvents: ImportEventPort;
     /**
      * 接收并执行房玄龄的诏令
      * @param zhaoling 诏令

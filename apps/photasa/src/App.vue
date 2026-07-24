@@ -7,12 +7,8 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import {
-    getDirectory,
-    getRecoverableImports,
-    cleanupRecoverableImport,
-    keepRecoverableImport,
-} from "@renderer/utils/api";
+import { getDirectory } from "@renderer/utils/api";
+import { useImportOperations } from "@renderer/composables/useImportOperations";
 import { loggers } from "@photasa/common";
 import { getPhotasaApi } from "@renderer/ipc/api-access";
 
@@ -50,6 +46,7 @@ import type { RecoverableImport } from "@photasa/common";
  * 日志记录器
  */
 const logger = loggers.lishimin;
+const imports = useImportOperations();
 const themeManager = useChuSuiLiang().themeManager;
 const chuSuiLiang = useChuSuiLiang();
 const { t } = useI18n();
@@ -140,7 +137,7 @@ async function initializeApp(): Promise<void> {
 }
 
 async function cleanupInterruptedImport(item: RecoverableImport): Promise<void> {
-    const result = await cleanupRecoverableImport(item.id);
+    const result = await imports.cleanupRecoverable(item.id);
     if (result.success) {
         notification.success({
             title: t("import.recovery.cleanedTitle"),
@@ -157,7 +154,7 @@ async function cleanupInterruptedImport(item: RecoverableImport): Promise<void> 
 }
 
 async function keepInterruptedImport(item: RecoverableImport): Promise<void> {
-    const result = await keepRecoverableImport(item.id);
+    const result = await imports.keepRecoverable(item.id);
     notification.info({
         title: t("import.recovery.keptTitle"),
         message: t("import.recovery.keptMessage", {
@@ -197,8 +194,8 @@ function notifyInterruptedImport(item: RecoverableImport): void {
 async function detectRecoverableImports(): Promise<void> {
     if (!isTauri()) return;
     try {
-        const imports = await getRecoverableImports();
-        imports.forEach(notifyInterruptedImport);
+        const recoverableImports = await imports.recoverable();
+        recoverableImports.forEach(notifyInterruptedImport);
     } catch (error) {
         logger.warn("⚠️ 导入恢复检查失败", error);
     }

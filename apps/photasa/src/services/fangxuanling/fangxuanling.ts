@@ -12,6 +12,7 @@ import type {
     IAppState,
     IStatusBar,
     IMenus,
+    IImportOperations,
     Zouzhe,
     ZouzheResponse,
     Zhaoling,
@@ -36,6 +37,7 @@ import {
     createStatusBarService,
     createMenusService,
 } from "./accessors/service-builders";
+import { createImportOperations } from "./accessors/import-operations";
 
 const logger = loggers.fangxuanling;
 
@@ -73,6 +75,7 @@ export class FangXuanLingService implements IFangXuanLingService {
      * ✅ RFC 0058: 菜单访问器
      */
     private _menus: IMenus;
+    private _imports: IImportOperations;
 
     constructor(yuanTianGang: IYuanTianGangService) {
         if (!yuanTianGang) {
@@ -94,6 +97,10 @@ export class FangXuanLingService implements IFangXuanLingService {
         this._appState = createAppStateService();
         this._statusBar = createStatusBarService(); // ✅ RFC 0057: 状态栏访问器
         this._menus = createMenusService(); // ✅ RFC 0058: 菜单访问器
+        this._imports = createImportOperations({
+            processZouzhe: (zouzhe) => this.processZouzhe(zouzhe),
+            events: yuanTianGang.importEvents,
+        });
 
         logger.info("🏛️ 房玄龄：扫描队列Store已就绪");
     }
@@ -132,6 +139,10 @@ export class FangXuanLingService implements IFangXuanLingService {
      */
     get menus(): IMenus {
         return this._menus;
+    }
+
+    get imports(): IImportOperations {
+        return this._imports;
     }
 
     /**

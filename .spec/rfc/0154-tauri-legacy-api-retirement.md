@@ -61,26 +61,23 @@ Rust event
 
 ### 仍在生产的反模式文件
 
-| 文件                               | 问题                                                               |
-| ---------------------------------- | ------------------------------------------------------------------ |
-| `api/adapter.ts`                   | `window.api = createLegacyApi()` 全局污染                          |
-| `api/legacy-api.ts`                | ~1000 行 Electron 扁平形状 + 内嵌 invoke                           |
-| `ipc/api-access.ts`                | `getPhotasaApi()` 鼓励旁路                                         |
-| `utils/api.ts`                     | 组件事实上的 IPC 门面（424 行）                                    |
-| `stores/import-session.ts`         | **直接** `listen` from `@tauri-apps/api/event`（0137 规则 3 违规） |
-| `composables/useUpdateListener.ts` | `getPhotasaApi()` 更新事件                                         |
-| `api/*.adapter.ts`                 | 第二套嵌套 IPC（仅 legacy-api 消费，应并入袁天罡后删除）           |
+| 文件                               | 问题                                                     |
+| ---------------------------------- | -------------------------------------------------------- |
+| `api/adapter.ts`                   | `window.api = createLegacyApi()` 全局污染                |
+| `api/legacy-api.ts`                | ~1000 行 Electron 扁平形状 + 内嵌 invoke                 |
+| `ipc/api-access.ts`                | `getPhotasaApi()` 鼓励旁路                               |
+| `utils/api.ts`                     | 组件事实上的 IPC 门面（424 行）                          |
+| `composables/useUpdateListener.ts` | `getPhotasaApi()` 更新事件                               |
+| `api/*.adapter.ts`                 | 第二套嵌套 IPC（仅 legacy-api 消费，应并入袁天罡后删除） |
 
 ### `utils/api.ts` 生产调用方（须迁出，不得迁到 `ipc/*`）
 
-| 调用方                                 | 能力                             | 目标人物 / 路径                                               |
-| -------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
-| `App.vue`                              | recoverable import、getDirectory | 房玄龄奏折；目录 → 魏征/褚遂良                                |
-| `ImportPhotos.vue`                     | chooseDirectories、preview       | 百姓上书或 **房玄龄** accessor + 袁天罡 preview               |
-| `ImportProgressModal.vue`              | execute/cancel/pause/resume      | `import-session` store ← **仅**袁天罡事件，store 不 listen    |
-| `ImportHistory.vue`                    | history、undo                    | 房玄龄 Zouzhe 或 dedicated accessor                           |
-| `ImageList.vue` / `ImageListHelper.ts` | metadata、thumbnail              | 网格只读：投影 + 袁天罡 `create_thumbnail`（0148 契约经人物） |
-| `settings/*.vue`                       | chooseDirectory                  | 长孙无忌 / 褚遂良 / 百姓上书                                  |
+| 调用方                                 | 能力                | 目标人物 / 路径                                               |
+| -------------------------------------- | ------------------- | ------------------------------------------------------------- |
+| `App.vue`                              | getDirectory        | 目录 → 魏征/褚遂良                                            |
+| `ImportPhotos.vue`                     | chooseDirectories   | 百姓上书或 **房玄龄** accessor                                |
+| `ImageList.vue` / `ImageListHelper.ts` | metadata、thumbnail | 网格只读：投影 + 袁天罡 `create_thumbnail`（0148 契约经人物） |
+| `settings/*.vue`                       | chooseDirectory     | 长孙无忌 / 褚遂良 / 百姓上书                                  |
 
 ## Goals
 
@@ -151,9 +148,9 @@ Rust event
 | 监视副作用           | `file-handler` thumbnail/photo list      | 秦琼 → 魏征树更新；缩略图/列表经袁天罡，**不**在 handler 里调 api                                                      |
 | 文件夹配置           | `getPhotasaConfig`、`addToPhotoList`、…  | Phase 2c ✅：魏征 → 房玄龄 Zouzhe → 袁天罡唯一 invoke                                                                  |
 | 目录对话框           | `chooseDirectory(s)`                     | 长孙无忌或褚遂良服务方法 → 袁天罡 `choose_directory*`                                                                  |
-| 导入 preview/execute | `previewImport`、`executeImport`         | import composable 只调用房玄龄 accessor → 袁天罡；**禁止** composable/store 直达 transport 或直接 listen               |
-| 导入事件             | `onImportProgress`、…                    | 袁天罡 `listen('import:*')` → 回调 / 启奏 → `import-session` store 订阅人物事件                                        |
-| 导入历史/undo        | `getImportHistory`、`undoImport`         | 房玄龄 Zouzhe + 袁天罡 invoke                                                                                          |
+| 导入 preview/execute | `previewImport`、`executeImport`         | Phase 2d ✅：import composable 只调用房玄龄 accessor → 袁天罡；store 不直达 transport                                  |
+| 导入事件             | `onImportProgress`、…                    | Phase 2d ✅：袁天罡唯一 `listen('import:*')` → typed projection → `import-session`                                     |
+| 导入历史/undo        | `getImportHistory`、`undoImport`         | Phase 2d ✅：房玄龄 Zouzhe + 袁天罡 invoke                                                                             |
 | 缩略图               | `createThumbnail`                        | 组件 → 网格 composable → 魏征图库 accessor → 袁天罡 `create_thumbnail`（0148）；`vue-concurrency` task 留在 composable |
 | 元数据               | `getFileMetadata`                        | 组件 → 网格 composable → 魏征图库 accessor → 袁天罡 `extract_metadata`                                                 |
 | Shell                | `openExternal`、…                        | 已完成：长孙无忌 / 百姓上书 → 0150                                                                                     |
@@ -194,7 +191,7 @@ Rust event
 | 2a 扫描             | `scan-folder.ts` → 尉迟恭 + 袁天罡；`App.vue` 删 `scanPhotosTask` 直链 api             | `scanPhotos` from utils/api                 |
 | 2b 监视             | `file-handler.ts` → 秦琼/袁天罡；`App.vue` watch 经人物启动                            | `startWatching`/`stopWatching`              |
 | 2c 配置             | `preference.ts` checkPhotasaConfig → 魏征                                              | config 类 api 方法                          |
-| 2d 导入             | `import-session` 去掉直 `listen`；袁天罡转发 import 事件；组件改 composable            | import 类 api + modal 直调                  |
+| 2d 导入 ✅          | `import-session` 去掉直 `listen`；袁天罡转发 import 事件；组件改 composable            | import 类 api + modal 直调                  |
 | 2e 缩略图/元数据    | `ImageListHelper` composable → 袁天罡                                                  | `createThumbnailTask` export from utils/api |
 | 2f 对话框/目录      | settings → 褚遂良/长孙无忌                                                             | `chooseDirectory*`                          |
 | 2g 更新/日志/窗口   | `useUpdateListener`、`UpdateSettings`、`LogConsole`、titlebar、`App.vue` 更新动作      | 对应 getPhotasaApi                          |
@@ -213,6 +210,7 @@ Rust event
 - [x] Phase 2a 验证：删除无生产执行者的 `scan-folder.ts` 与 `utils/api.scanPhotos`；`App.vue` 扫描空闲状态改读 `useYuChiGong().queueSize`；Preference 删除无效 legacy task cancel；尉迟恭仍经 `ZOUZHE_MATTERS.SCAN_PHOTOS` 送房玄龄/袁天罡。定向 160/160；全量 109 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
 - [x] Phase 2b 验证：删除 `file-handler.ts` 与 `utils/api.startWatching/stopWatching`；App watch 生命周期经秦琼 → 房玄龄 → 袁天罡 → Rust 串行 start/stop。Rust batch 的 add/change 仍交尉迟恭；unlink/unlinkDir 由袁天罡唯一监听并下旨秦琼，文件清理复用 Rust `remove_thumbnail` + `remove_from_photo_list`，目录删除交魏征；尉迟恭不再把 delete 伪装成 scan。定向 98/98；全量 110 files、1188 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
 - [x] Phase 2c 验证：`preference.ts` 零 `utils/api`，删除无生产调用的 legacy Store 扫描编排；配置检查统一为 Rust `bool` → 袁天罡 → 魏征 `boolean`，修复旧 `{ hasConfig }` 假类型；AdvancedSettings 经魏征串行重置配置，再更新 Pinia 投影；删除 `utils/api`、flat contract、legacy-api 的 config 能力。定向 38/38；全量 111 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。Tauri release 编译及 macOS bundle 成功，最终 updater 签名因本机未设置 `TAURI_SIGNING_PRIVATE_KEY` 退出。
+- [x] Phase 2d 验证：导入 preview/execute/control/history/undo/recovery 全部经 `useImportOperations()` → 房玄龄 typed accessor → 袁天罡；`import-session` 零 Tauri/import-adapter 依赖，保留 listener-before-execute、importId 前缓冲/claim、错 ID 丢弃与单飞语义；袁天罡生命周期内唯一注册 `import:progress/complete/error/preview-progress`，并修正 Rust struct 参数为 `{ args: {...} }`；删除 utils/api、flat contract、legacy-api、import.adapter 的 `importPhotos`、`scanDirectories` 及其余导入业务能力，`chooseDirectories` 留至 Phase 2f。全量 112 files、1146 passed / 3 skipped；typecheck、lint、Vite production build 全绿。Tauri release 编译及 macOS app bundle 成功；updater 产物签名因本机未设置 `TAURI_SIGNING_PRIVATE_KEY` 未完成。
 
 ### Phase 3 — 删尸
 
@@ -262,7 +260,7 @@ Rust event
 - [ ] 仅 `yuantiangang/**`（及测试 mock）消费业务 `invoke` / `listen`；`env.ts` / `media-url.ts` 仅保留批准的非业务 IPC 白名单
 - [ ] [0149](./completed/0149-tauri-ui-adapter-post-closure.md) 转交的 R1 + R2 成果完成
 - [ ] Vitest `*.test.ts` + `*.spec.ts` 全绿
-- [ ] 导入早到事件/单飞语义与扫描单 transport 语义均有回归测试
+- [ ] 导入早到事件/单飞语义已有回归测试；扫描单 transport 仍待完成
 - [ ] Splash 只关闭一次，且仍在首屏初始化完成后关闭
 
 ## Implementation checklist（开工时 → TASK_TRACKING）

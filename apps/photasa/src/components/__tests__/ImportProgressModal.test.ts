@@ -17,11 +17,17 @@ const cancelImport = vi.fn();
 const pauseImport = vi.fn();
 const resumeImport = vi.fn();
 
-vi.mock("@renderer/utils/api", () => ({
-    executeImport: (...args: unknown[]) => executeImport(...args),
-    cancelImport: (...args: unknown[]) => cancelImport(...args),
-    pauseImport: (...args: unknown[]) => pauseImport(...args),
-    resumeImport: (...args: unknown[]) => resumeImport(...args),
+vi.mock("@renderer/composables/useImportOperations", () => ({
+    useImportOperations: () => ({
+        ready: vi.fn().mockResolvedValue(undefined),
+        execute: (...args: unknown[]) => executeImport(...args),
+        cancel: (...args: unknown[]) => cancelImport(...args),
+        pause: (...args: unknown[]) => pauseImport(...args),
+        resume: (...args: unknown[]) => resumeImport(...args),
+        onProgress: vi.fn(() => () => {}),
+        onComplete: vi.fn(() => () => {}),
+        onError: vi.fn(() => () => {}),
+    }),
 }));
 
 vi.mock("@renderer/utils/import-helpers", () => ({
@@ -110,6 +116,8 @@ describe("ImportProgressModal (RFC 0118)", () => {
         vi.clearAllMocks();
         executeImport.mockResolvedValue({ importId: "imp-1" });
         cancelImport.mockResolvedValue(undefined);
+        pauseImport.mockResolvedValue(undefined);
+        resumeImport.mockResolvedValue({ importId: "imp-1" });
     });
 
     it("renders when show is true", () => {
@@ -199,7 +207,38 @@ describe("ImportProgressModal (RFC 0118)", () => {
         await flushPromises();
 
         expect(cancelImport).toHaveBeenCalledWith("imp-1");
-        expect(useImportSessionStore().phase).toBe("cancelled");
+        expect(useImportSessionStore().phase).toBe("running");
+        expect(wrapper.emitted("cancel")).toBeTruthy();
+    });
+
+    it("pause and resume update session only after the persona operation succeeds", async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(ImportProgressModal, {
+            props: {
+                show: true,
+                config: sampleConfig(),
+                mode: IMPORT_MODAL_MODE_START,
+            },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const pauseButton = wrapper
+            .findAllComponents({ name: "BaseButton" })
+            .find((button) => button.text().includes("import.pauseButton"));
+        await pauseButton!.trigger("click");
+        await flushPromises();
+        expect(pauseImport).toHaveBeenCalledWith("imp-1");
+        expect(useImportSessionStore().phase).toBe("paused");
+
+        const resumeButton = wrapper
+            .findAllComponents({ name: "BaseButton" })
+            .find((button) => button.text().includes("import.resumeButton"));
+        await resumeButton!.trigger("click");
+        await flushPromises();
+        expect(resumeImport).toHaveBeenCalledWith("imp-1");
+        expect(useImportSessionStore().phase).toBe("running");
     });
 
     it("canClose is true while processing (dismiss allowed)", async () => {

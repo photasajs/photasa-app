@@ -46,8 +46,24 @@ import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { FileOperation } from "@photasa/common";
 import { joinPathSync, toDirNameSync } from "@renderer/utils/sync-path";
 import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
+import { ImportTransport } from "./transport/import-transport";
 
 const logger = loggers.yuantiangang;
+const IMPORT_ZHAOLING_MATTERS = new Set<string>([
+    ZOUZHE_MATTERS.PREVIEW_IMPORT,
+    ZOUZHE_MATTERS.EXECUTE_IMPORT,
+    ZOUZHE_MATTERS.CANCEL_IMPORT,
+    ZOUZHE_MATTERS.PAUSE_IMPORT,
+    ZOUZHE_MATTERS.RESUME_IMPORT,
+    ZOUZHE_MATTERS.GET_IMPORT_HISTORY,
+    ZOUZHE_MATTERS.GET_IMPORT_DETAILS,
+    ZOUZHE_MATTERS.PREVIEW_UNDO_IMPORT,
+    ZOUZHE_MATTERS.UNDO_IMPORT,
+    ZOUZHE_MATTERS.GET_IMPORT_PROGRESS,
+    ZOUZHE_MATTERS.GET_RECOVERABLE_IMPORTS,
+    ZOUZHE_MATTERS.CLEANUP_RECOVERABLE_IMPORT,
+    ZOUZHE_MATTERS.KEEP_RECOVERABLE_IMPORT,
+]);
 
 /**
  * 袁天罡钦天监服务实现
@@ -55,6 +71,7 @@ const logger = loggers.yuantiangang;
  */
 export class YuanTianGangService implements IService, IYuanTianGangService {
     readonly name = "袁天罡";
+    readonly importEvents: ImportTransport;
     private progressCleanupFn?: () => void;
     private statusCleanupFn?: () => void;
     private qianliyanCleanupFn?: () => void;
@@ -68,6 +85,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
     constructor() {
         logger.info("🔮 就任，开始处理天界通信");
+        this.importEvents = new ImportTransport({ enabled: isTauri() });
         this.setupTianshuEventListening();
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
@@ -613,6 +631,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         }
         this.watchRemovalCleanupFns.forEach((cleanup) => cleanup());
         this.watchRemovalCleanupFns = [];
+        this.importEvents.destroy();
         logger.info("🔮 事件监听已清理");
     }
 
@@ -622,6 +641,37 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         );
 
         const startTime = Date.now();
+
+        if (IMPORT_ZHAOLING_MATTERS.has(zhaoling.command)) {
+            try {
+                if (!isTauri()) throw new Error("导入操作仅支持 Tauri 环境");
+                const data = await this.importEvents.execute(
+                    zhaoling.command,
+                    zhaoling.context ?? {},
+                );
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "导入政务执行成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "import-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "导入政务执行失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "导入操作异常",
+                };
+            }
+        }
 
         if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_WATCH_FILE) {
             try {

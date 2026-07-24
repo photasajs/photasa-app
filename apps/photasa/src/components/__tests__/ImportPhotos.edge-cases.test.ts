@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import { createPinia, setActivePinia } from "pinia";
 import { nextTick } from "vue";
@@ -23,6 +23,14 @@ vi.mock("@renderer/utils/api", () => ({
     chooseDirectories: vi.fn(),
     previewImport: vi.fn(),
     onPreviewProgress: vi.fn(() => () => {}), // Mock cleanup function
+}));
+
+vi.mock("@renderer/composables/useImportOperations", () => ({
+    useImportOperations: () => ({
+        ready: vi.fn().mockResolvedValue(undefined),
+        preview: (...args: unknown[]) => previewImport(...args),
+        onPreviewProgress: vi.fn(() => () => {}),
+    }),
 }));
 
 // Mock UI components
@@ -187,6 +195,7 @@ describe("ImportPhotos - Edge Cases", () => {
             // Measure performance
             const startTime = performance.now();
             await baseWizard.vm.$emit("step-change", "preview", 1, mockWizardState);
+            await flushPromises();
             const endTime = performance.now();
 
             // Should complete within reasonable time (< 1 second)

@@ -16,6 +16,14 @@ vi.mock("@renderer/utils/api", () => ({
     onPreviewProgress: vi.fn(() => () => {}), // Mock cleanup function
 }));
 
+vi.mock("@renderer/composables/useImportOperations", () => ({
+    useImportOperations: () => ({
+        ready: vi.fn().mockResolvedValue(undefined),
+        preview: (...args: unknown[]) => previewImport(...args),
+        onPreviewProgress: vi.fn(() => () => {}),
+    }),
+}));
+
 // Mock the logger
 vi.mock("@photasa/common", () => ({
     getLogger: vi.fn(() => ({

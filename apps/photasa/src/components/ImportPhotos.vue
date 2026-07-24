@@ -34,7 +34,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { chooseDirectories, previewImport, onPreviewProgress } from "@renderer/utils/api";
+import { chooseDirectories } from "@renderer/utils/api";
+import { useImportOperations } from "@renderer/composables/useImportOperations";
 import { getLogger } from "@photasa/common";
 import {
     createDefaultFilters,
@@ -118,6 +119,7 @@ const emit = defineEmits<ImportPhotosEmits>();
 
 // Logger instance for this component
 const logger = getLogger("import-photos");
+const imports = useImportOperations();
 
 // Wizard state reference - declared early to avoid initialization order issues
 const wizardStateRef = ref<any>(null);
@@ -622,7 +624,8 @@ const loadPreviewData = async (wizardState: any) => {
             // 设置预览进度监听
             let cleanupProgress: (() => void) | null = null;
             try {
-                cleanupProgress = onPreviewProgress((progress, files) => {
+                await imports.ready();
+                cleanupProgress = imports.onPreviewProgress((progress, files) => {
                     logger.debug(
                         `Preview progress: stage=${progress.stage}, filesFound=${progress.filesFound}, discoveredFiles=${progress.discoveredFiles?.length || 0}, currentCount=${discoveredFiles.length}`,
                     );
@@ -655,7 +658,7 @@ const loadPreviewData = async (wizardState: any) => {
                 logger.debug("Preview config before API call:", config);
 
                 // 调用后端API获取预览数据
-                const previewResponse = await previewImport(config);
+                const previewResponse = await imports.preview(config);
 
                 // 将API响应转换为前端组件所需的数据格式
                 const previewData = transformPreviewResponse(previewResponse);

@@ -8,20 +8,9 @@ import type { PhotasaFlatApi } from "@renderer/ipc/photasa-flat-api";
 import { isTauri } from "./env";
 import { api } from "./adapter";
 import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
-import { normalizeImportProgressPayload } from "./import.adapter";
 import type { ScanAction, ScanResult } from "./scan.adapter";
 import type { ThumbnailRequest } from "./thumbnail.adapter";
-import type { ImportConfig } from "./import.adapter";
-import type {
-    FileMetadata,
-    ImportHistory,
-    ImportPreview,
-    ImportProgress,
-    RecoverableImport,
-    RecoverableImportActionResult,
-    UndoPreview,
-    UndoResult,
-} from "@photasa/common";
+import type { FileMetadata } from "@photasa/common";
 import { shouldIgnorePhotasaPath as ignorePhotasaPathUtil } from "@photasa/common";
 import {
     callLegacyPreloadNested,
@@ -33,11 +22,6 @@ import {
     toFileNameFromPath,
     toThumbnailName as toThumbnailFileName,
 } from "@renderer/utils/photasa-path";
-import {
-    EVENT_IMPORT_PREVIEW_PROGRESS,
-    EVENT_SCAN_QUEUE_ADD,
-    emptyUndoPreview,
-} from "./tauri-import-stubs";
 import {
     WATCH_FILE_EVENTS,
     buildWatchStateFromEvent,
@@ -53,14 +37,12 @@ function getUpdateUnsubs(): Array<() => void> {
     return g.__photasaUpdateUnsubs;
 }
 
-/** 与 `src-tauri/commands/import_legacy.rs` 中 `IMPORT_PHOTOS_LEGACY_EVENT` 一致（仅桥接，无业务逻辑） */
-const IMPORT_PHOTOS_LEGACY_EVENT = "picasa:import-photos-legacy" as const;
+const EVENT_SCAN_QUEUE_ADD = "picasa:add-to-scan-queue" as const;
 
-/** Tauri：导入事件取消订阅收集（供 removeImportListeners）；用 globalThis 以便 Vitest/node 与 webview 一致 */
-function getImportUnsubs(): Array<() => void> {
-    const g = globalThis as unknown as { __photasaImportUnsubs?: Array<() => void> };
-    if (!g.__photasaImportUnsubs) g.__photasaImportUnsubs = [];
-    return g.__photasaImportUnsubs;
+function getScanEventUnsubs(): Array<() => void> {
+    const g = globalThis as unknown as { __photasaScanEventUnsubs?: Array<() => void> };
+    if (!g.__photasaScanEventUnsubs) g.__photasaScanEventUnsubs = [];
+    return g.__photasaScanEventUnsubs;
 }
 
 function stubAsync<T = never>(): Promise<T> {
@@ -79,140 +61,6 @@ function parseIsoDate(value: unknown): Date {
     if (value instanceof Date) return value;
     if (typeof value === "string" || typeof value === "number") return new Date(value);
     return new Date(0);
-}
-
-/** RFC 0093：Rust 事件 JSON 中 `created` 为 RFC3339 字符串，与 legacy preload 传入的 `Date` 对齐 */
-function normalizeImportPhotosActionFromRust(action: unknown): unknown {
-    if (!action || typeof action !== "object") return action;
-    const a = { ...(action as Record<string, unknown>) };
-    if ("created" in a && a.created != null && !(a.created instanceof Date)) {
-        a.created = parseIsoDate(a.created);
-    }
-    return a;
-}
-
-function normalizeUndoPreviewFromRust(raw: unknown, fallbackId: string): UndoPreview {
-    if (!raw || typeof raw !== "object") {
-        return emptyUndoPreview(fallbackId);
-    }
-    const r = raw as Record<string, unknown>;
-    const dirs = r.directoriesToCleanup;
-    const dirSet =
-        dirs instanceof Set
-            ? (dirs as Set<string>)
-            : new Set(Array.isArray(dirs) ? (dirs as string[]) : []);
-
-    const filesRaw = Array.isArray(r.filesToDelete) ? r.filesToDelete : [];
-    const filesToDelete = filesRaw.map((f) => {
-        const x = f as Record<string, unknown>;
-        return {
-            path: String(x.path ?? ""),
-            size: Number(x.size ?? 0),
-            originalPath: String(x.originalPath ?? ""),
-            importTime: parseIsoDate(x.importTime),
-        };
-    });
-
-    const issuesRaw = Array.isArray(r.potentialIssues) ? r.potentialIssues : [];
-    const potentialIssues = issuesRaw.map((p) => {
-        const x = p as Record<string, unknown>;
-        const sev = x.severity;
-        const severity: "info" | "warning" | "error" =
-            sev === "warning" || sev === "error" || sev === "info" ? sev : "info";
-        return {
-            file: String(x.file ?? ""),
-            issue: String(x.issue ?? ""),
-            severity,
-        };
-    });
-
-    return {
-        historyId: typeof r.historyId === "string" ? r.historyId : fallbackId,
-        canUndo: Boolean(r.canUndo),
-        reason: typeof r.reason === "string" ? r.reason : "",
-        filesToDelete,
-        directoriesToCleanup: dirSet,
-        potentialIssues,
-        estimatedTime: typeof r.estimatedTime === "number" ? r.estimatedTime : 0,
-    };
-}
-
-function normalizeUndoResultFromRust(raw: unknown): UndoResult {
-    const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-    const errList = Array.isArray(r.errors) ? r.errors : [];
-    const errors = errList.map((e) => {
-        const x = e as Record<string, unknown>;
-        return { file: String(x.file ?? ""), error: String(x.error ?? "") };
-    });
-    const rd = r.restoredDirectories;
-    const restoredDirectories =
-        rd instanceof Set
-            ? (rd as Set<string>)
-            : new Set(Array.isArray(rd) ? (rd as string[]) : []);
-    return {
-        success: Boolean(r.success),
-        deletedFiles: Array.isArray(r.deletedFiles) ? (r.deletedFiles as string[]) : [],
-        errors,
-        restoredDirectories,
-        undoId: String(r.undoId ?? ""),
-        timestamp: parseIsoDate(r.timestamp),
-    };
-}
-
-function normalizeRecoverableImport(raw: unknown): RecoverableImport {
-    const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-    const filesRaw = Array.isArray(r.fileList) ? r.fileList : [];
-    const fileList = filesRaw.map((file) => {
-        const f = file as Record<string, unknown>;
-        return {
-            originalPath: String(f.originalPath ?? ""),
-            targetPath: String(f.targetPath ?? ""),
-            size: Number(f.size ?? 0),
-            checksum: f.checksum == null ? null : String(f.checksum),
-            importTime: parseIsoDate(f.importTime),
-        };
-    });
-    const status =
-        r.status === "running" || r.status === "paused" || r.status === "interrupted"
-            ? r.status
-            : "interrupted";
-
-    return {
-        id: String(r.id ?? r.importId ?? ""),
-        importId: typeof r.importId === "string" ? r.importId : undefined,
-        status,
-        sourcePaths: Array.isArray(r.sourcePaths) ? (r.sourcePaths as string[]) : [],
-        targetPath: String(r.targetPath ?? ""),
-        totalFiles: Number(r.totalFiles ?? 0),
-        config:
-            r.config && typeof r.config === "object"
-                ? (r.config as RecoverableImport["config"])
-                : undefined,
-        progress:
-            r.progress && typeof r.progress === "object"
-                ? (r.progress as RecoverableImport["progress"])
-                : undefined,
-        fileList,
-        startedAt: parseIsoDate(r.startedAt),
-        updatedAt: parseIsoDate(r.updatedAt),
-    };
-}
-
-function normalizeRecoverableImportActionResult(raw: unknown): RecoverableImportActionResult {
-    const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-    const errList = Array.isArray(r.errors) ? r.errors : [];
-    const errors = errList.map((e) => {
-        const x = e as Record<string, unknown>;
-        return { file: String(x.file ?? ""), error: String(x.error ?? "") };
-    });
-    return {
-        success: Boolean(r.success),
-        importId: String(r.importId ?? ""),
-        deletedFiles: Array.isArray(r.deletedFiles) ? (r.deletedFiles as string[]) : undefined,
-        keptFiles: typeof r.keptFiles === "number" ? r.keptFiles : undefined,
-        errors,
-        timestamp: parseIsoDate(r.timestamp),
-    };
 }
 
 function normalizeFileMetadataFromRust(raw: unknown): FileMetadata {
@@ -368,55 +216,6 @@ export function createLegacyApi() {
             (window as any).__offFileWatch?.();
             return ensureInvoke().then((invoke) => invoke("stop_file_watch"));
         },
-        importPhotos: (paths: string[], target: string, callback: (arg: any) => void) => {
-            if (!isTauri())
-                return callLegacyPreloadSection("api", "importPhotos", paths, target, callback);
-            // RFC 0093：复制与遍历在 Rust `import_photos_legacy`；此处仅 invoke + 事件转发
-            void (async () => {
-                try {
-                    const invoke = await ensureInvoke();
-                    const { listen } = await import("@tauri-apps/api/event");
-                    const sessionId = await invoke<string>("import_photos_legacy", {
-                        folders: paths,
-                        target,
-                    });
-                    const unlisten = await listen<{
-                        sessionId: string;
-                        type: string;
-                        error?: string | null;
-                        action: unknown;
-                    }>(IMPORT_PHOTOS_LEGACY_EVENT, (event) => {
-                        const payload = event.payload;
-                        if (payload.sessionId !== sessionId) return;
-                        if (payload.type === "next") {
-                            callback({
-                                type: "next",
-                                error: null,
-                                action: normalizeImportPhotosActionFromRust(payload.action),
-                            });
-                        } else if (payload.type === "error") {
-                            callback({
-                                type: "error",
-                                error: payload.error ?? "unknown",
-                                action: {},
-                            });
-                        } else if (payload.type === "complete") {
-                            callback({ type: "complete", error: null, action: {} });
-                            unlisten();
-                            const subs = getImportUnsubs();
-                            const ix = subs.lastIndexOf(unlisten);
-                            if (ix >= 0) subs.splice(ix, 1);
-                        }
-                    });
-                    getImportUnsubs().push(unlisten);
-                } catch (e) {
-                    const msg = e instanceof Error ? e.message : String(e);
-                    callback({ type: "error", error: msg, action: {} });
-                }
-            })();
-            return undefined;
-        },
-
         // ---------- 扫描 ----------
         scanPhotos: (scan: ScanAction): Promise<ScanResult> => {
             if (!isTauri()) {
@@ -738,157 +537,6 @@ export function createLegacyApi() {
         },
 
         // ---------- 导入增强 ----------
-        scanDirectories: (paths: string[], filters?: unknown) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) =>
-                      invoke("scan_directories", { paths, filters: filters ?? null }),
-                  )
-                : (callLegacyPreloadSection("api", "scanDirectories", paths, filters) ??
-                  stubAsync()),
-        previewImport: (config: unknown) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      return await invoke<ImportPreview>("preview_import", { config });
-                  })()
-                : (callLegacyPreloadSection("api", "previewImport", config) ?? stubAsync()),
-        executeImport: (config: ImportConfig): Promise<{ importId: string }> =>
-            api.import.execute(config as ImportConfig).then((id) => ({ importId: id })),
-        onImportProgress: (callback: (progress: ImportProgress) => void) => {
-            if (!isTauri()) {
-                return (
-                    callLegacyPreloadSection("api", "onImportProgress", callback) ?? noopListener()
-                );
-            }
-            void api.import.onProgress(callback).then((un) => {
-                getImportUnsubs().push(un);
-            });
-            return () => {
-                /* 单次清理由 removeImportListeners 统一处理 */
-            };
-        },
-        onPreviewProgress: (cb: (progress: unknown, files?: unknown[]) => void) => {
-            if (!isTauri()) {
-                return callLegacyPreloadSection("api", "onPreviewProgress", cb) ?? noopListener();
-            }
-            void import("@tauri-apps/api/event").then(({ listen }) => {
-                listen(EVENT_IMPORT_PREVIEW_PROGRESS, (e) => {
-                    const payload = e.payload as {
-                        progress?: unknown;
-                        files?: unknown[];
-                    };
-                    if (payload && typeof payload === "object" && "progress" in payload) {
-                        cb(payload.progress, payload.files);
-                    } else {
-                        cb(e.payload, undefined);
-                    }
-                }).then((un) => getImportUnsubs().push(un));
-            });
-            return () => {};
-        },
-        onImportComplete: (cb: (result: any) => void) => {
-            if (!isTauri()) {
-                return callLegacyPreloadSection("api", "onImportComplete", cb) ?? noopListener();
-            }
-            void import("@tauri-apps/api/event").then(({ listen }) => {
-                listen("import:complete", (e) => cb(e.payload)).then((un) =>
-                    getImportUnsubs().push(un),
-                );
-            });
-            return () => {};
-        },
-        onImportError: (cb: (error: any) => void) => {
-            if (!isTauri()) {
-                return callLegacyPreloadSection("api", "onImportError", cb) ?? noopListener();
-            }
-            void import("@tauri-apps/api/event").then(({ listen }) => {
-                listen("import:error", (e) => cb(e.payload)).then((un) =>
-                    getImportUnsubs().push(un),
-                );
-            });
-            return () => {};
-        },
-        removeImportListeners: () => {
-            if (!isTauri()) {
-                callLegacyPreloadSection("api", "removeImportListeners");
-                return;
-            }
-            const subs = getImportUnsubs();
-            while (subs.length) {
-                subs.pop()?.();
-            }
-        },
-        cancelImport: (importId: string) => api.import.cancel(importId).then(() => true),
-        pauseImport: (importId: string) => api.import.pause(importId).then(() => true),
-        resumeImport: (importId: string) => api.import.resume(importId),
-        getImportHistory: (limit?: number) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const rows = await invoke<ImportHistory[]>("get_import_history", { limit });
-                      return Array.isArray(rows) ? rows : [];
-                  })()
-                : (callLegacyPreloadSection("api", "getImportHistory", limit) ?? stubAsync()),
-        getImportDetails: (historyId: string) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const row = await invoke<ImportHistory | null>("get_import_details", {
-                          historyId,
-                      });
-                      return row ?? null;
-                  })()
-                : (callLegacyPreloadSection("api", "getImportDetails", historyId) ?? stubAsync()),
-        previewUndo: (historyId: string) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const raw = await invoke<unknown>("preview_undo_import", { historyId });
-                      return normalizeUndoPreviewFromRust(raw, historyId);
-                  })()
-                : (callLegacyPreloadSection("api", "previewUndo", historyId) ?? stubAsync()),
-        undoImport: (historyId: string) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const raw = await invoke<unknown>("undo_import_execute", { historyId });
-                      return normalizeUndoResultFromRust(raw);
-                  })()
-                : (callLegacyPreloadSection("api", "undoImport", historyId) ?? stubAsync()),
-        getImportProgress: (importId: string) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const raw = await invoke<unknown>("get_import_progress", { importId });
-                      return normalizeImportProgressPayload(raw);
-                  })()
-                : (callLegacyPreloadSection("api", "getImportProgress", importId) ?? stubAsync()),
-        getRecoverableImports: () =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const rows = await invoke<unknown[]>("get_recoverable_imports");
-                      return Array.isArray(rows) ? rows.map(normalizeRecoverableImport) : [];
-                  })()
-                : (callLegacyPreloadSection("api", "getRecoverableImports") ?? Promise.resolve([])),
-        cleanupRecoverableImport: (importId: string) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const raw = await invoke<unknown>("cleanup_recoverable_import", { importId });
-                      return normalizeRecoverableImportActionResult(raw);
-                  })()
-                : (callLegacyPreloadSection("api", "cleanupRecoverableImport", importId) ??
-                  stubAsync()),
-        keepRecoverableImport: (importId: string) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const raw = await invoke<unknown>("keep_recoverable_import", { importId });
-                      return normalizeRecoverableImportActionResult(raw);
-                  })()
-                : (callLegacyPreloadSection("api", "keepRecoverableImport", importId) ??
-                  stubAsync()),
         chooseDirectories: (multiSelect = true) => api.import.chooseDirectories(multiSelect),
         extractMetadata: (request: unknown) =>
             isTauri()
@@ -904,7 +552,7 @@ export function createLegacyApi() {
             }
             void import("@tauri-apps/api/event").then(({ listen }) => {
                 listen(EVENT_SCAN_QUEUE_ADD, (e) => cb((e.payload as unknown[]) ?? [])).then((un) =>
-                    getImportUnsubs().push(un),
+                    getScanEventUnsubs().push(un),
                 );
             });
             return () => {};

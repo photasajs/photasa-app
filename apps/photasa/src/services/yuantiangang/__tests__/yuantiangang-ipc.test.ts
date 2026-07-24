@@ -76,6 +76,31 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         );
     });
 
+    it("导入诏令由袁天罡用 Rust args 契约执行", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const response = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.PAUSE_IMPORT,
+            context: { importId: "import-1" },
+            timestamp: Date.now(),
+            source: "房玄龄",
+            priority: "normal",
+        });
+
+        expect(response.acknowledged).toBe(true);
+        expect(mockInvoke).toHaveBeenCalledWith("pause_import", {
+            args: { importId: "import-1" },
+        });
+        for (const eventName of [
+            "import:progress",
+            "import:complete",
+            "import:error",
+            "import:preview-progress",
+        ]) {
+            expect(mockListen.mock.calls.filter(([name]) => name === eventName)).toHaveLength(1);
+        }
+    });
+
     it("picasa:add-to-scan-queue 事件触发后启奏 watch_scan_queue_add", async () => {
         const listenCall = mockListen.mock.calls.find(
             (call) => call[0] === WATCH_EVENTS.SCAN_QUEUE_ADD,
