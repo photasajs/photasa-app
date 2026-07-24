@@ -14,7 +14,7 @@ import darkTheme from "@renderer/themes/dark/theme.json";
 import solarizedLightTheme from "@renderer/themes/solarized-light/theme.json";
 import solarizedDarkTheme from "@renderer/themes/solarized-dark/theme.json";
 import type { IThemeManager, ThemeMeta } from "@renderer/interfaces/chu-sui-liang.interface";
-import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
+import { THEME_STYLESHEETS } from "./theme-styles";
 
 // 导出ThemeMeta类型供其他模块使用
 export type { ThemeMeta };
@@ -65,24 +65,26 @@ export class ThemeManager implements IThemeManager {
      * 应用主题（仅负责视觉呈现，不直接操作Store）
      * Store更新应通过房玄龄服务处理，维护天人合一架构
      */
-    async applyTheme(themeId: string, themeDir: string): Promise<void> {
+    async applyTheme(themeId: string): Promise<void> {
         const theme = this.themes.value.find((t) => t.id === themeId);
         if (!theme) throw new Error("Theme not found");
 
-        // 1. 设置CSS变量
+        // 1. 设置 CSS 变量（theme.json 子集）
         Object.entries(theme.colors).forEach(([key, value]) => {
             document.documentElement.style.setProperty(`--color-${key}`, value);
         });
 
-        // 2. 加载附加CSS
+        // 2. 注入打包进 bundle 的 theme.css（含 tree-bg、splitter 等完整变量）
         this._removeOldThemeStyle();
-        if (theme.css) {
-            const styleEl = document.createElement("link");
-            styleEl.rel = "stylesheet";
-            styleEl.href = `${themeDir}/${theme.id}/${theme.css}`;
+        const stylesheet = THEME_STYLESHEETS[themeId];
+        if (stylesheet) {
+            const styleEl = document.createElement("style");
+            styleEl.textContent = stylesheet;
             styleEl.id = "theme-style";
             document.head.appendChild(styleEl);
         }
+
+        document.documentElement.setAttribute("data-theme", themeId);
 
         // 3. 记录当前主题（仅用于内部状态跟踪）
         this.currentThemeId.value = themeId;
@@ -149,7 +151,7 @@ export class ThemeManager implements IThemeManager {
     async initTheme(userConfigThemeId?: string) {
         await this.loadBuiltInThemes();
         const themeId = userConfigThemeId || this.getDefaultThemeId();
-        await this.applyTheme(themeId, THEME_BASE_PATH);
+        await this.applyTheme(themeId);
     }
 
     // 获取默认主题id（无配置时fallback到dark）

@@ -47,7 +47,6 @@ import { useQinQiong } from "@renderer/composables/useQinQiong";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { isTauri } from "./api/env";
-import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
 import { notification } from "@renderer/services/notification-manager";
 import type { RecoverableImport } from "@photasa/common";
 
@@ -232,7 +231,7 @@ onMounted(async () => {
     // 应用主题到DOM
     if (currentThemeId.value) {
         try {
-            await themeManager.applyTheme(currentThemeId.value, THEME_BASE_PATH);
+            await themeManager.applyTheme(currentThemeId.value);
             logger.info("👑 应用主题成功:", currentThemeId.value);
         } catch (error) {
             logger.error("👑 应用主题失败:", error);
@@ -248,7 +247,7 @@ onMounted(async () => {
         async (newThemeId) => {
             if (newThemeId && newThemeId !== currentThemeId.value) {
                 try {
-                    await themeManager.applyTheme(newThemeId, THEME_BASE_PATH);
+                    await themeManager.applyTheme(newThemeId);
                     currentThemeId.value = newThemeId;
                     logger.info("👑 主题切换成功:", newThemeId);
                 } catch (error) {
