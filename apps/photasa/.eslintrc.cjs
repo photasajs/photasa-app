@@ -84,8 +84,7 @@ const legacyDynamicImportRule = [
 const tauriDynamicImportRule = [
     "error",
     {
-        selector:
-            "ImportExpression[source.value=/^@tauri-apps\\x2Fapi\\x2F(core|event)$/]",
+        selector: "ImportExpression[source.value=/^@tauri-apps\\x2Fapi\\x2F(core|event)$/]",
         message: "RFC 0154: dynamic Tauri transport belongs to YuanTianGang.",
     },
     {
@@ -123,10 +122,7 @@ module.exports = {
         "no-restricted-imports": [
             "error",
             {
-                paths: [
-                    ...legacyStaticImportRule[1].paths,
-                    ...tauriStaticImportRule[1].paths,
-                ],
+                paths: [...legacyStaticImportRule[1].paths, ...tauriStaticImportRule[1].paths],
                 patterns: tauriStaticImportRule[1].patterns,
             },
         ],
@@ -154,6 +150,13 @@ module.exports = {
             rules: {
                 "no-restricted-imports": legacyStaticImportRule,
                 "no-restricted-syntax": legacyDynamicImportRule,
+            },
+        },
+        {
+            files: ["src/services/yuantiangang/**/*.ts"],
+            rules: {
+                "no-restricted-imports": "off",
+                "no-restricted-syntax": "off",
             },
         },
         {
