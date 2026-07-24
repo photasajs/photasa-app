@@ -3,7 +3,7 @@
  * 验证修复后的 BMP 文件通过 MaLiang 引擎处理缩略图
  */
 
-import { promises as fs } from "fs";
+import { promises as fs, existsSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { createThumbnail } from "../thumbnail-handler";
@@ -12,26 +12,17 @@ import type { Logger } from "log4js";
 import sharp from "sharp";
 import { describe, it, beforeEach, afterEach, expect } from "@jest/globals";
 
-// 使用真实的 lena.bmp 文件
+// 使用真实的 lena.bmp 文件（本地未放置 fixture 时跳过集成测试）
 const REAL_BMP_PATH = join(__dirname, "data", "lena.bmp");
+const describeBmpIntegration = existsSync(REAL_BMP_PATH) ? describe : describe.skip;
 
-describe("BMP + MaLiang Integration (修复后)", () => {
+describeBmpIntegration("BMP + MaLiang Integration (修复后)", () => {
     let tempDir: string;
     let logger: Logger;
 
     beforeEach(async () => {
         // 创建临时目录（用于存放输出的缩略图）
         tempDir = await fs.mkdtemp(join(tmpdir(), "maliang-fixed-test-"));
-
-        // 验证真实的 lena.bmp 文件存在
-        const bmpExists = await fs
-            .access(REAL_BMP_PATH)
-            .then(() => true)
-            .catch(() => false);
-
-        if (!bmpExists) {
-            throw new Error(`Real BMP file not found: ${REAL_BMP_PATH}`);
-        }
 
         // 初始化模拟日志记录器
         logger = {
