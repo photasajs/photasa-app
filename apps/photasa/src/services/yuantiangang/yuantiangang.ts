@@ -1020,6 +1020,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         // ✅ RFC 0142: 魏征监管的文件夹配置事务直连天界 (不经过Tianshu workflow)
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG ||
+            zhaoling.command === ZOUZHE_MATTERS.CHECK_FOLDER_CONFIG ||
             zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG ||
             zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG ||
             zhaoling.command === ZOUZHE_MATTERS.ADD_PHOTO_TO_LIST ||
@@ -1032,6 +1033,10 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 let data: any = null;
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG) {
                     data = await invoke("get_photasa_config", { folder: context.folder });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.CHECK_FOLDER_CONFIG) {
+                    data = await invoke("check_photasa_config", {
+                        folderPath: context.folderPath,
+                    });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG) {
                     data = await invoke("fix_photasa_config", { folder: context.folder });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG) {

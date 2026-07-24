@@ -6,7 +6,6 @@ import type { DirectorySelection, PathName } from "@photasa/common";
 import { useTask } from "vue-concurrency";
 import type { ThumbnailRequest } from "@photasa/common";
 import type { ImageInfo } from "@photasa/common";
-import type { PhotasaConfig } from "@photasa/common";
 import type {
     ImportConfig,
     ImportPreview,
@@ -85,53 +84,12 @@ export function getFilesModified(paths: string[]): Promise<Record<string, number
     return api().getFilesModified(paths);
 }
 
-export async function addToPhotoList(
-    photoPath: string,
-): Promise<{ path: string; config: PhotasaConfig }> {
-    return api().addToPhotoList(photoPath);
-}
-
-export async function removeFromPhotoList(
-    photoPath: string,
-): Promise<{ path: string; config: PhotasaConfig }> {
-    return api().removeFromPhotoList(photoPath);
-}
-
-export async function getPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    return api().getPhotasaConfig(folder);
-}
-
-export const getPhotasaConfigTask = useTask(function* (_, folder: string) {
-    const result = yield getPhotasaConfig(folder);
-    return result;
-})
-    .enqueue()
-    .maxConcurrency(1);
-
-export const cleanupScanQueue = (folderPath: string): void => {
-    api().cleanupScanQueue(folderPath);
-};
-
 export function scanSubfolders(folder: string): Promise<string[]> {
     return api().scanSubfolders(folder);
 }
 
-export function checkPhotasaConfig(
-    folderPath: string,
-): Promise<{ hasConfig: boolean; photoCount?: number; reason: string }> {
-    return api().checkPhotasaConfig(folderPath);
-}
-
 export function isFileUnderFolder(file: string, folder: string): boolean | Promise<boolean> {
     return api().isFileUnderFolder(file, folder);
-}
-
-export function resetPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    return api().resetPhotasaConfig(folder);
-}
-
-export function fixPhotasaConfig(folder: string): Promise<PhotasaConfig> {
-    return api().fixPhotasaConfig(folder);
 }
 
 export function isHiddenFile(fileName: string): boolean {

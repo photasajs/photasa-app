@@ -238,6 +238,7 @@ export const ZOUZHE_MATTERS = {
     OPEN_EXTERNAL: "open_external", // ✅ RFC 0058: 打开外部链接（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
     OPEN_IN_FINDER: "open_in_finder", // ✅ RFC 0058: 在 Finder 中显示文件（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
     GET_FOLDER_CONFIG: "get_folder_config", // 获取文件夹配置
+    CHECK_FOLDER_CONFIG: "check_folder_config", // 检查文件夹配置是否有效
     FIX_FOLDER_CONFIG: "fix_folder_config", // 修复文件夹配置
     RESET_FOLDER_CONFIG: "reset_folder_config", // 重置文件夹配置
     ADD_PHOTO_TO_LIST: "add_photo_to_list", // 照片归档到配置

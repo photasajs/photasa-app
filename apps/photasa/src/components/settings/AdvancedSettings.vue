@@ -35,6 +35,7 @@
 
 <script setup lang="ts">
 import { usePreferenceStore } from "@renderer/stores/preference";
+import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { themeNotification } from "@renderer/utils/theme-notification";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
@@ -45,6 +46,7 @@ const { t } = useI18n();
 
 // 获取 Pinia store
 const preferenceStore = usePreferenceStore();
+const weiZheng = useWeiZheng();
 const paths = computed(() => preferenceStore.paths);
 
 /**
@@ -54,7 +56,9 @@ const paths = computed(() => preferenceStore.paths);
  * 3. 操作完成后弹窗提示
  */
 async function onResetFolders() {
-    await preferenceStore.resetAllFolders([...paths.value]);
+    const folders = [...paths.value];
+    await weiZheng.resetFolderConfigs(folders);
+    preferenceStore.resetAllFolders(folders);
 
     // 使用主题化通知工具
     themeNotification.success({

@@ -491,36 +491,9 @@ export function createLegacyApi() {
                 ? Promise.resolve(toWebviewMediaUrl(webviewMediaUrlToAbsolutePath(path)))
                 : Promise.resolve(path.startsWith("/") ? `file://${path}` : `file:///${path}`),
 
-        // ---------- 配置内容级 (RFC 0077-0081) ----------
-        addToPhotoList: (photoPath: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) => invoke("add_to_photo_list", { photoPath }))
-                : stubAsync(),
-        removeFromPhotoList: (photoPath: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) => invoke("remove_from_photo_list", { photoPath }))
-                : stubAsync(),
-        getPhotasaConfig: (folder: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) => invoke("get_photasa_config", { folder }))
-                : stubAsync(),
         scanSubfolders: (folderPath: string) =>
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<string[]>("sub_folders", { folderPath }))
-                : stubAsync(),
-        checkPhotasaConfig: (folderPath: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) =>
-                      invoke<boolean>("check_photasa_config", { folderPath }),
-                  )
-                : stubAsync(),
-        fixPhotasaConfig: (folder: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) => invoke("fix_photasa_config", { folder }))
-                : stubAsync(),
-        resetPhotasaConfig: (folder: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) => invoke("reset_photasa_config", { folder }))
                 : stubAsync(),
 
         // ---------- 路径与工具 ----------
@@ -559,8 +532,6 @@ export function createLegacyApi() {
             isTauri()
                 ? ensureInvoke().then((invoke) => invoke<boolean>("is_image_file", { path }))
                 : stubAsync(),
-        // contract reference `query-config.cleanupScanQueue` 为空实现，Tauri 对齐为同步空操作
-        cleanupScanQueue: (_folderPath: string) => undefined,
         mergePath: (left: string, right = "") => {
             const safeLeft = typeof left === "string" ? left : "";
             const safeRight = typeof right === "string" ? right : "";

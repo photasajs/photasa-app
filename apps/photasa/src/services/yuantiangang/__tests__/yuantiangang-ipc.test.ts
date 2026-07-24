@@ -132,6 +132,27 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         expect(result.acknowledged).toBe(true);
     });
 
+    it("CHECK_FOLDER_CONFIG invokes Rust command and preserves boolean", async () => {
+        mockInvoke.mockResolvedValue(true);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.CHECK_FOLDER_CONFIG,
+            context: { folderPath: "/photos" },
+            timestamp: Date.now(),
+            source: "魏征",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("check_photasa_config", {
+            folderPath: "/photos",
+        });
+        expect(result).toMatchObject({
+            acknowledged: true,
+            data: true,
+        });
+    });
+
     it("REMOVE_WATCH_FILE removes thumbnail and photo-list entry", async () => {
         mockInvoke
             .mockResolvedValueOnce({ success: true })

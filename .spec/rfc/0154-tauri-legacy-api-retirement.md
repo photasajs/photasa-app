@@ -81,7 +81,6 @@ Rust event
 | `ImportHistory.vue`                    | history、undo                    | 房玄龄 Zouzhe 或 dedicated accessor                           |
 | `ImageList.vue` / `ImageListHelper.ts` | metadata、thumbnail              | 网格只读：投影 + 袁天罡 `create_thumbnail`（0148 契约经人物） |
 | `settings/*.vue`                       | chooseDirectory                  | 长孙无忌 / 褚遂良 / 百姓上书                                  |
-| `stores/preference.ts`                 | checkPhotasaConfig               | 魏征 `useWeiZheng()` 或 Zouzhe                                |
 
 ## Goals
 
@@ -150,7 +149,7 @@ Rust event
 | 扫描队列 UI          | `cleanupScanQueue`                       | `useYuChiGong().scanningQueue`                                                                                         |
 | 文件监视             | `startWatching` / `stopWatching`         | 袁天罡 `start_file_watch` + 事件 → 启奏 `WATCH_SCAN_QUEUE_ADD` → 尉迟恭（0133/0136）                                   |
 | 监视副作用           | `file-handler` thumbnail/photo list      | 秦琼 → 魏征树更新；缩略图/列表经袁天罡，**不**在 handler 里调 api                                                      |
-| 文件夹配置           | `getPhotasaConfig`、`addToPhotoList`、…  | 魏征 / 房玄龄 Zouzhe（袁天罡已有 invoke 分支）                                                                         |
+| 文件夹配置           | `getPhotasaConfig`、`addToPhotoList`、…  | Phase 2c ✅：魏征 → 房玄龄 Zouzhe → 袁天罡唯一 invoke                                                                  |
 | 目录对话框           | `chooseDirectory(s)`                     | 长孙无忌或褚遂良服务方法 → 袁天罡 `choose_directory*`                                                                  |
 | 导入 preview/execute | `previewImport`、`executeImport`         | import composable 只调用房玄龄 accessor → 袁天罡；**禁止** composable/store 直达 transport 或直接 listen               |
 | 导入事件             | `onImportProgress`、…                    | 袁天罡 `listen('import:*')` → 回调 / 启奏 → `import-session` store 订阅人物事件                                        |
@@ -213,6 +212,7 @@ Rust event
 
 - [x] Phase 2a 验证：删除无生产执行者的 `scan-folder.ts` 与 `utils/api.scanPhotos`；`App.vue` 扫描空闲状态改读 `useYuChiGong().queueSize`；Preference 删除无效 legacy task cancel；尉迟恭仍经 `ZOUZHE_MATTERS.SCAN_PHOTOS` 送房玄龄/袁天罡。定向 160/160；全量 109 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
 - [x] Phase 2b 验证：删除 `file-handler.ts` 与 `utils/api.startWatching/stopWatching`；App watch 生命周期经秦琼 → 房玄龄 → 袁天罡 → Rust 串行 start/stop。Rust batch 的 add/change 仍交尉迟恭；unlink/unlinkDir 由袁天罡唯一监听并下旨秦琼，文件清理复用 Rust `remove_thumbnail` + `remove_from_photo_list`，目录删除交魏征；尉迟恭不再把 delete 伪装成 scan。定向 98/98；全量 110 files、1188 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+- [x] Phase 2c 验证：`preference.ts` 零 `utils/api`，删除无生产调用的 legacy Store 扫描编排；配置检查统一为 Rust `bool` → 袁天罡 → 魏征 `boolean`，修复旧 `{ hasConfig }` 假类型；AdvancedSettings 经魏征串行重置配置，再更新 Pinia 投影；删除 `utils/api`、flat contract、legacy-api 的 config 能力。定向 38/38；全量 111 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。Tauri release 编译及 macOS bundle 成功，最终 updater 签名因本机未设置 `TAURI_SIGNING_PRIVATE_KEY` 退出。
 
 ### Phase 3 — 删尸
 

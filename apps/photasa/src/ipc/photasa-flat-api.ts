@@ -14,7 +14,6 @@ import type {
     ImportResumeResult,
     ImportResult,
     PathName,
-    PhotasaConfig,
     RecoverableImport,
     RecoverableImportActionResult,
     ScanAction,
@@ -41,17 +40,8 @@ export interface PhotasaFlatApi {
     getFileMetadata: (path: string) => Promise<FileMetadata>;
     getFilesModified: (paths: string[]) => Promise<Record<string, number>>;
     scanPhotos: (scan: ScanAction) => Promise<ScanArgs>;
-    addToPhotoList: (photoPath: string) => Promise<{ path: string; config: PhotasaConfig }>;
-    removeFromPhotoList: (photoPath: string) => Promise<{ path: string; config: PhotasaConfig }>;
-    getPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
-    cleanupScanQueue: (folderPath: string) => void;
     scanSubfolders: (folder: string) => Promise<string[]>;
-    checkPhotasaConfig: (
-        folderPath: string,
-    ) => Promise<{ hasConfig: boolean; photoCount?: number; reason: string }>;
     isFileUnderFolder: (file: string, folder: string) => boolean | Promise<boolean>;
-    resetPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
-    fixPhotasaConfig: (folder: string) => Promise<PhotasaConfig>;
     isVideoFile: (fileName: string) => boolean | Promise<boolean>;
     isImageFile: (fileName: string) => boolean | Promise<boolean>;
     scanDirectories: (paths: string[], filters?: ImportFilters) => Promise<FileGroup[]>;
