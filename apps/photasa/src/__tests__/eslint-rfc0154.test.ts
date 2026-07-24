@@ -51,14 +51,13 @@ describe("RFC 0154 Tauri transport gate", () => {
         expect(messages.some(({ ruleId }) => ruleId === "no-restricted-imports")).toBe(true);
     });
 
-    it.each([
-        "@tauri-apps/api/core",
-        "@tauri-apps/api/event",
-        "@tauri-apps/plugin-dialog",
-    ])("rejects dynamic import from %s outside YuanTianGang", async (moduleName) => {
-        const messages = await lintProbe(`void import("${moduleName}");\n`);
-        expect(messages.some(({ ruleId }) => ruleId === "no-restricted-syntax")).toBe(true);
-    });
+    it.each(["@tauri-apps/api/core", "@tauri-apps/api/event", "@tauri-apps/plugin-dialog"])(
+        "rejects dynamic import from %s outside YuanTianGang",
+        async (moduleName) => {
+            const messages = await lintProbe(`void import("${moduleName}");\n`);
+            expect(messages.some(({ ruleId }) => ruleId === "no-restricted-syntax")).toBe(true);
+        },
+    );
 
     it("allows transport imports inside YuanTianGang", async () => {
         const messages = await lintProbe(
@@ -85,5 +84,26 @@ describe("RFC 0154 Tauri transport gate", () => {
                 ["no-restricted-imports", "no-restricted-syntax"].includes(ruleId ?? ""),
             ),
         ).toEqual([]);
+    });
+
+    it.each([
+        [
+            "src/api/env.ts",
+            'import { listen } from "@tauri-apps/api/event";\nvoid listen;\n',
+            "no-restricted-imports",
+        ],
+        [
+            "src/utils/media-url.ts",
+            'import { open } from "@tauri-apps/plugin-dialog";\nvoid open;\n',
+            "no-restricted-imports",
+        ],
+        [
+            "src/utils/media-url.ts",
+            'void import("@tauri-apps/api/core");\n',
+            "no-restricted-syntax",
+        ],
+    ])("keeps reviewed helper whitelist narrow in %s", async (relativePath, source, ruleId) => {
+        const messages = await lintProbe(source, relativePath);
+        expect(messages.some((message) => message.ruleId === ruleId)).toBe(true);
     });
 });

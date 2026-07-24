@@ -34,7 +34,9 @@
 
 1. 并发写保护：`scan_queue_storage.rs` 的 restore/modify/persist 三步操作需要在同一临界区内完成（进程内 `Mutex`/`RwLock` 保护磁盘路径级读写，或改为单一 actor/task 串行处理所有队列写请求）。设计需明确排除的场景：两个 `invoke()` 并发调用 `add_scan_actions`/`update_scan_action_status`/`remove_scan_action` 中任意两个，不得发生更新丢失。
 2. 移除 `use zouwu_core::adapter::AdapterError`，改用扫描域自己的错误类型（或 `photasa-scan`/`photasa-types` 里已有的错误类型，需先确认是否已有可复用类型，不新造重复的错误枚举）。
-3. （可选，视范围决定是否本 RFC 处理）`update_scan_action_status` 增加状态转移合法性校验，拒绝非 `pending`/`processing`/`failed` 之外的状态值。
+3. ✅ （可选，视范围决定是否本 RFC 处理）`update_scan_action_status` 增加状态转移合法性校验，拒绝非 `pending`/`processing`/`failed` 之外的状态值。
+
+**后续（2026-07-24）**：[0162](./0162-scan-queue-nonblocking-ipc.md) 在同一 Repository 上增加防抖落盘、`ScanQueueAck` 轻量 IPC 与 Renderer 本地 patch，解决大队列扫描时 UI 阻塞（`async` command 仍 await 全量序列化的问题）。
 
 ## Non-goals
 
