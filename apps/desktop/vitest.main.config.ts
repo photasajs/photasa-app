@@ -8,7 +8,7 @@ export default defineConfig({
             "@renderer": resolve("src/renderer/src"),
             "@preload": resolve("src/preload/"),
             "@shared": resolve("src/shared/"),
-            "@engines/common/*": resolve("src/main/engines/common/*"),
+            "@engines/common/*": resolve("../../packages/@photasa/engine-contracts/src/*"),
             "@photasa/ffmpeg": resolve("../../packages/@photasa/ffmpeg/src/index.ts"),
         },
     },

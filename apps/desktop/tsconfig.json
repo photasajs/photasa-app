@@ -28,7 +28,7 @@
             "@renderer/*": ["./src/renderer/src/*"],
             "@tianshu/*": ["./src/main/engines/tianshu/*"],
             "@engines/*": ["./src/main/engines/*"],
-            "@engines/common/*": ["./src/main/engines/common/*"],
+            "@engines/common/*": ["../../packages/@photasa/engine-contracts/src/*"],
             "@photasa/common/*": ["../../packages/common/src/*"],
             "@photasa/tianshu/*": ["../../packages/@photasa/tianshu/src/*"],
             "@photasa/wenchang/*": ["../../packages/@photasa/wenchang/src/*"],

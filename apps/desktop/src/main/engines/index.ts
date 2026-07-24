@@ -33,5 +33,4 @@ export * from "@photasa/qianliyan";
 // 思补 - 缓存存储引擎
 export * from "./adapters/SibuAdapter"; // Export adapter instead of folder
 
-// 引擎通用类型和接口
-// export type { EngineCallResult } from "./workflow"; // Moved to @photasa/taiyi
+// 跨引擎契约见 @photasa/engine-contracts（避免与顺风耳 FileObservation 类型冲突，不在此 re-export）

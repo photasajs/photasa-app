@@ -26,13 +26,15 @@ import type {
     CommandDispatcher,
     EngineEventListener,
     FileObservation,
+    StartWatchingRequest,
     WatchProfile,
 } from "./types";
 import { StatusBus } from "./status-bus";
 import { ProfileStore } from "./profile-store";
 import { EventBuffer } from "./event-buffer";
 import { CommandAdapter } from "./command-adapter";
-// import { WatcherFactory } from "./watcher-factory";
+import { WatcherFactory } from "./watcher-factory";
+import { createObservationFromChokidar } from "./observation";
 
 const logger = loggers.shunfenger || loggers.watch;
 
@@ -45,6 +47,7 @@ export interface ShunfengerEngineOptions {
 export interface ShunfengerEngine {
     initialize(): Promise<void>;
     configure(profile: WatchProfile): Promise<void>;
+    startWatching(request: StartWatchingRequest): Promise<void>;
     removeProfile(profileId: string): Promise<void>;
     listProfiles(): WatchProfile[];
     pause(profileId?: string): Promise<void>;
@@ -61,9 +64,9 @@ class ShunfengerEngineImpl implements ShunfengerEngine {
     private readonly profileStore: ProfileStore;
     private readonly eventBuffer: EventBuffer;
     private readonly commandAdapter: CommandAdapter;
-    // TODO: WatcherFactory将在后续版本中用于多类型文件监视器创建
-    // private readonly watcherFactory = new WatcherFactory();
+    private readonly watcherFactory = new WatcherFactory();
     private watcher: FSWatcher | null = null;
+    private activeProfileId: string | null = null;
 
     constructor(options: ShunfengerEngineOptions) {
         this.options = {
@@ -107,6 +110,53 @@ class ShunfengerEngineImpl implements ShunfengerEngine {
         });
     }
 
+    async startWatching(request: StartWatchingRequest): Promise<void> {
+        await this.profileStore.upsert(request.profile);
+        this.activeProfileId = request.profile.id;
+
+        await this.closeWatcher();
+        this.eventBuffer.clear();
+
+        this.watcher = this.watcherFactory.create({
+            paths: request.paths,
+            options: request.options,
+        });
+
+        const profileId = request.profile.id;
+        const enqueue = (kind: FileObservation["kind"], filePath: string, isDirectory: boolean) => {
+            const observation = createObservationFromChokidar(kind, filePath, isDirectory, profileId);
+            this.eventBuffer.enqueue(observation);
+        };
+
+        this.watcher
+            .on("add", (filePath) => enqueue("add", filePath, false))
+            .on("addDir", (filePath) => enqueue("addDir", filePath, true))
+            .on("change", (filePath) => enqueue("change", filePath, false))
+            .on("unlink", (filePath) => enqueue("delete", filePath, false))
+            .on("unlinkDir", (filePath) => enqueue("deleteDir", filePath, true))
+            .on("error", (error) => {
+                logger.error("[Shunfenger] 天劫降临，监听中断", error);
+                this.statusBus.emit({
+                    type: "status",
+                    profileId,
+                    state: "error",
+                    error: error instanceof Error ? error : new Error(String(error)),
+                    timestamp: Date.now(),
+                });
+            })
+            .on("ready", () => {
+                logger.info("[Shunfenger] 顺风耳已就位，开始聆听文件变化");
+                this.statusBus.emit({
+                    type: "status",
+                    profileId,
+                    state: "ready",
+                    timestamp: Date.now(),
+                });
+            });
+
+        logger.info("[Shunfenger] 启动文件监听", request.paths);
+    }
+
     async removeProfile(profileId: string): Promise<void> {
         await this.profileStore.remove(profileId);
         this.statusBus.emit({
@@ -125,6 +175,7 @@ class ShunfengerEngineImpl implements ShunfengerEngine {
     async pause(): Promise<void> {
         this.eventBuffer.clear();
         await this.closeWatcher();
+        this.activeProfileId = null;
         this.statusBus.emit({
             type: "status",
             state: "paused",
@@ -163,7 +214,9 @@ class ShunfengerEngineImpl implements ShunfengerEngine {
     }
 
     async shutdown(): Promise<void> {
+        await this.flush();
         await this.closeWatcher();
+        this.activeProfileId = null;
         this.eventBuffer.clear();
         this.statusBus.emit({
             type: "status",
@@ -174,12 +227,15 @@ class ShunfengerEngineImpl implements ShunfengerEngine {
     }
 
     private handleObservation(observation: FileObservation): void {
-        const profile = this.profileStore.get(observation.profileId);
+        const profileId = observation.profileId || this.activeProfileId;
+        if (!profileId) {
+            logger.warn("[Shunfenger] 收到无 profile 的观察事件", observation.path);
+            return;
+        }
+
+        const profile = this.profileStore.get(profileId);
         if (!profile) {
-            logger.warn(
-                "[Shunfenger] Received observation for unknown profile",
-                observation.profileId,
-            );
+            logger.warn("[Shunfenger] Received observation for unknown profile", profileId);
             return;
         }
         this.statusBus.emit({
@@ -212,9 +268,12 @@ export type {
     ShunfengerObservationEvent,
     ShunfengerCommandEvent,
     ShunfengerCommand,
+    ShunfengerFileOperationCommand,
+    ShunfengerScanCommand,
     CommandDispatcher,
     EngineEventListener,
     ObservationListener,
+    StartWatchingRequest,
 } from "./types";
 
 // 导出内部组件（用于测试）
@@ -223,3 +282,4 @@ export { ProfileStore } from "./profile-store";
 export { EventBuffer } from "./event-buffer";
 export { CommandAdapter } from "./command-adapter";
 export { WatcherFactory } from "./watcher-factory";
+export { createObservationFromChokidar, isMediaFile } from "./observation";

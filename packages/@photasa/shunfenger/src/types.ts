@@ -1,4 +1,5 @@
 import type { FileOperation, ScanAction } from "@photasa/common";
+import type { WatchOptions } from "chokidar";
 
 export type WatchEventKind =
     | "add"
@@ -82,16 +83,33 @@ export interface FileOperationPayload {
     operation: FileOperation;
 }
 
-export interface ShunfengerCommand {
+export interface ShunfengerFileOperationCommand {
     id: string;
-    type: ShunfengerCommandType;
+    type: "file-operation";
     profileId: string;
-    payload: ScanCommandPayload | FileOperationPayload;
+    payload: FileOperationPayload;
     createdAt: number;
 }
+
+export interface ShunfengerScanCommand {
+    id: string;
+    type: "scan-command";
+    profileId: string;
+    payload: ScanCommandPayload;
+    createdAt: number;
+}
+
+export type ShunfengerCommand = ShunfengerFileOperationCommand | ShunfengerScanCommand;
 
 export type CommandDispatcher = (command: ShunfengerCommand) => void;
 
 export type ObservationListener = (event: FileObservation) => void;
 
 export type EngineEventListener = (event: ShunfengerEngineEvent) => void;
+
+/** 启动文件监听的请求参数 */
+export interface StartWatchingRequest {
+    paths: string[];
+    options: WatchOptions;
+    profile: WatchProfile;
+}

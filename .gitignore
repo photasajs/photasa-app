@@ -53,6 +53,7 @@ guide
 
 # Vite cache and build artifacts
 .vite/
+.vitest/
 
 # VitePress build artifacts
 .vitepress/.temp

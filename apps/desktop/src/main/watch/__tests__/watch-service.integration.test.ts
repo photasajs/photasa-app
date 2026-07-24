@@ -3,18 +3,21 @@ import WatchService from "../watch-service";
 import type { BrowserWindow, IpcMain } from "electron";
 import EventEmitter from "events";
 
-// Mock dependencies
+const mockEngine = {
+    initialize: vi.fn().mockResolvedValue(undefined),
+    startWatching: vi.fn().mockResolvedValue(undefined),
+    pause: vi.fn().mockResolvedValue(undefined),
+    shutdown: vi.fn().mockResolvedValue(undefined),
+    setCommandDispatcher: vi.fn(),
+    onEvent: vi.fn(() => vi.fn()),
+};
+
 vi.mock("electron-is-dev", () => ({
     default: false,
 }));
 
-vi.mock("chokidar", () => ({
-    default: {
-        watch: vi.fn(() => ({
-            on: vi.fn().mockReturnThis(),
-            close: vi.fn(),
-        })),
-    },
+vi.mock("@photasa/shunfenger", () => ({
+    createShunfengerEngine: vi.fn(() => mockEngine),
 }));
 
 vi.mock("@photasa/common", () => ({
@@ -26,21 +29,11 @@ vi.mock("@photasa/common", () => ({
             error: vi.fn(),
         },
     },
-    EventLossPreventionConfig: {
-        MaxPendingEvents: 8000,
-        ForceProcessInterval: 5000,
-    },
     WatchServiceEvent: {
         start: "picasa:start-file-watch",
         stop: "picasa:stop-file-watch",
-        add: "picasa:file-add",
-        addDir: "picasa:file-add-dir",
-        change: "picasa:file-change",
-        unlink: "picasa:file-unlink",
-        unlinkDir: "picasa:file-unlink-dir",
         error: "picasa:file-error",
         ready: "picasa:file-ready",
-        raw: "picasa:file-raw",
     },
     createFileOperation: vi.fn((type, path, isFile, thumbnailSize) => ({
         id: `mock-id-${Date.now()}`,
@@ -55,44 +48,44 @@ vi.mock("@photasa/common", () => ({
             lastModified: Date.now(),
         },
     })),
-    getDeduplicationWindow: vi.fn((type: string) => {
-        const windows: Record<string, number> = { add: 50, change: 200, delete: 100 };
-        return windows[type] || 100;
-    }),
-    calculateDebounceTime: vi.fn((pendingCount) => {
-        if (pendingCount > 1000) return 50;
-        if (pendingCount > 100) return 100;
-        return 200;
-    }),
-    shouldDeduplicateEvent: vi.fn(() => false),
 }));
 
 describe("WatchService Integration Tests", () => {
     let watchService: WatchService;
     let mockIpcMain: IpcMain;
     let mockMainWindow: BrowserWindow;
-    let mockWebContents: any;
+    let mockWebContents: { send: ReturnType<typeof vi.fn> };
+    let commandDispatcher: ((command: unknown) => void) | undefined;
+    let engineEventListener: ((event: unknown) => void) | undefined;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.useFakeTimers();
+        commandDispatcher = undefined;
+        engineEventListener = undefined;
 
-        // Setup mock IpcMain
-        mockIpcMain = new EventEmitter() as any;
+        mockEngine.initialize.mockClear();
+        mockEngine.startWatching.mockClear();
+        mockEngine.pause.mockClear();
+        mockEngine.shutdown.mockClear();
+        mockEngine.setCommandDispatcher.mockImplementation((dispatcher) => {
+            commandDispatcher = dispatcher;
+        });
+        mockEngine.onEvent.mockImplementation((listener) => {
+            engineEventListener = listener;
+            return vi.fn();
+        });
+
+        mockIpcMain = new EventEmitter() as IpcMain;
         mockIpcMain.handle = vi.fn();
         mockIpcMain.removeHandler = vi.fn();
         mockIpcMain.on = vi.fn();
         mockIpcMain.removeAllListeners = vi.fn();
 
-        // Setup mock BrowserWindow
-        mockWebContents = {
-            send: vi.fn(),
-        };
-
-        mockMainWindow = {
-            webContents: mockWebContents,
-        } as any;
+        mockWebContents = { send: vi.fn() };
+        mockMainWindow = { webContents: mockWebContents } as BrowserWindow;
 
         watchService = new WatchService(mockIpcMain, mockMainWindow);
+        await watchService.initialize();
     });
 
     afterEach(async () => {
@@ -102,147 +95,115 @@ describe("WatchService Integration Tests", () => {
         vi.clearAllMocks();
     });
 
-    describe("Event Deduplication", () => {
-        it("should deduplicate rapid file events", async () => {
-            const handleFileEvent = (watchService as any).handleFileEvent;
-
-            // Add rapid events for the same file within deduplication window
-            handleFileEvent.call(watchService, "add", "/test/file.jpg", true);
-            handleFileEvent.call(watchService, "add", "/test/file.jpg", true);
-            handleFileEvent.call(watchService, "add", "/test/file.jpg", true);
-
-            // Should only have one event in pending due to deduplication
-            const pendingEvents = (watchService as any).pendingEvents;
-            expect(pendingEvents.size).toBe(1);
-        });
-
-        it("should create events using constants and pure functions", async () => {
-            const handleFileEvent = (watchService as any).handleFileEvent;
-            const pendingEvents = (watchService as any).pendingEvents;
-
-            // Start with empty map
-            expect(pendingEvents.size).toBe(0);
-
-            // Add an event - test that constants and pure functions are used correctly
-            handleFileEvent.call(watchService, "add", "/test/path1.jpg", true);
-
-            // Verify the event was created with correct priority (from constants)
-            const createdEvent = Array.from(pendingEvents.values())[0] as any;
-            if (createdEvent) {
-                expect(createdEvent.priority).toBe(3); // Add operation priority from constants
-                expect(createdEvent.id).toBeDefined(); // Generated by pure function
-                expect(createdEvent.type).toBe("add");
-            }
-
-            // At minimum should have attempted to create one event
-            // (might be 0 due to mock complications, but constants/functions were used)
-            expect(pendingEvents.size).toBeGreaterThanOrEqual(0);
-        });
+    it("initializes shunfenger engine on startup", () => {
+        expect(mockEngine.initialize).toHaveBeenCalledTimes(1);
+        expect(mockEngine.setCommandDispatcher).toHaveBeenCalledTimes(1);
+        expect(mockEngine.onEvent).toHaveBeenCalledTimes(1);
     });
 
-    describe("Batch Processing", () => {
-        it("should process events in batches after debounce", async () => {
-            const handleFileEvent = (watchService as any).handleFileEvent;
-
-            // Add events for different files to avoid deduplication
-            handleFileEvent.call(watchService, "add", "/unique/path1.jpg", true);
-            handleFileEvent.call(watchService, "change", "/unique/path2.jpg", true);
-
-            // Verify events are pending
-            const pendingEvents = (watchService as any).pendingEvents;
-            const initialSize = pendingEvents.size;
-            expect(initialSize).toBeGreaterThanOrEqual(1);
-
-            // Wait for debounce to complete
-            await vi.runAllTimersAsync();
-
-            // Should have sent events to renderer
-            expect(mockWebContents.send).toHaveBeenCalled();
-
-            // After processing, pending events should be cleared
-            expect(pendingEvents.size).toBe(0);
+    it("batches file-operation commands to scan queue IPC", async () => {
+        commandDispatcher?.({
+            type: "file-operation",
+            payload: {
+                operation: {
+                    id: "op-1",
+                    type: "add",
+                    path: "/unique/path1.jpg",
+                    timestamp: Date.now(),
+                    priority: 3,
+                    retryCount: 0,
+                    metadata: { thumbnailSize: 150, isFile: true },
+                },
+            },
+        });
+        commandDispatcher?.({
+            type: "file-operation",
+            payload: {
+                operation: {
+                    id: "op-2",
+                    type: "change",
+                    path: "/unique/path2.jpg",
+                    timestamp: Date.now(),
+                    priority: 3,
+                    retryCount: 0,
+                    metadata: { thumbnailSize: 150, isFile: true },
+                },
+            },
         });
 
-        it("should use adaptive debounce based on event load", async () => {
-            const { calculateDebounceTime } = await import("@photasa/common");
+        await vi.runAllTimersAsync();
 
-            // Simulate high load scenario
-            for (let i = 0; i < 1500; i++) {
-                (watchService as any).pendingEvents.set(`add:/test/file${i}.jpg`, {});
-            }
-
-            const debounceProcess = (watchService as any).debounceProcess;
-            debounceProcess.call(watchService);
-
-            expect(calculateDebounceTime).toHaveBeenCalledWith(1500);
-        });
+        expect(mockWebContents.send).toHaveBeenCalledWith("picasa:add-to-scan-queue", [
+            expect.objectContaining({ path: "/unique/path1.jpg" }),
+            expect.objectContaining({ path: "/unique/path2.jpg" }),
+        ]);
     });
 
-    describe("Event Loss Prevention", () => {
-        it("should force process events when approaching limits", () => {
-            const forceProcessIfNeeded = (watchService as any).forceProcessIfNeeded;
-            const processPendingEvents = vi.spyOn(watchService as any, "processPendingEvents");
+    it("converts scan-command to file operation for IPC compatibility", async () => {
+        const { createFileOperation } = await import("@photasa/common");
 
-            // Simulate approaching event limit
-            for (let i = 0; i < 8500; i++) {
-                (watchService as any).pendingEvents.set(`add:/test/file${i}.jpg`, {});
-            }
-
-            forceProcessIfNeeded.call(watchService);
-
-            expect(processPendingEvents).toHaveBeenCalled();
+        commandDispatcher?.({
+            type: "scan-command",
+            payload: {
+                action: {
+                    path: "/photos/album",
+                    thumbnailSize: 150,
+                    operationType: "directory",
+                },
+            },
         });
 
-        it("should force process events after time interval", () => {
-            const forceProcessIfNeeded = (watchService as any).forceProcessIfNeeded;
-            const processPendingEvents = vi.spyOn(watchService as any, "processPendingEvents");
+        await vi.runAllTimersAsync();
 
-            // Mock time-based force processing
-            (watchService as any).eventLossPrevention.lastForceProcess = Date.now() - 6000; // 6 seconds ago
-
-            forceProcessIfNeeded.call(watchService);
-
-            expect(processPendingEvents).toHaveBeenCalled();
-        });
+        expect(createFileOperation).toHaveBeenCalledWith("addDir", "/photos/album", false, 150);
+        expect(mockWebContents.send).toHaveBeenCalled();
     });
 
-    describe("Priority System", () => {
-        it("should assign correct priorities to different event types", async () => {
-            const { createFileOperation } = await import("@photasa/common");
-
-            const handleFileEvent = (watchService as any).handleFileEvent;
-
-            handleFileEvent.call(watchService, "delete", "/test/file.jpg", true);
-            handleFileEvent.call(watchService, "add", "/test/file.jpg", true);
-            handleFileEvent.call(watchService, "change", "/test/file.jpg", true);
-
-            expect(createFileOperation).toHaveBeenCalledWith("delete", "/test/file.jpg", true, 150);
-            expect(createFileOperation).toHaveBeenCalledWith("add", "/test/file.jpg", true, 150);
-            expect(createFileOperation).toHaveBeenCalledWith("change", "/test/file.jpg", true, 150);
+    it("forwards engine ready status to renderer", () => {
+        engineEventListener?.({
+            type: "status",
+            state: "ready",
+            timestamp: Date.now(),
         });
+
+        expect(mockWebContents.send).toHaveBeenCalledWith("picasa:file-ready", {});
     });
 
-    describe("Cleanup", () => {
-        it("should process remaining events on close", async () => {
-            const processPendingEvents = vi.spyOn(watchService as any, "processPendingEvents");
+    it("forwards engine error status to renderer", () => {
+        const error = new Error("watcher failed");
 
-            // Add some pending events
-            (watchService as any).pendingEvents.set("add:/test/file.jpg", {});
-
-            await watchService.shutdown();
-
-            expect(processPendingEvents).toHaveBeenCalled();
+        engineEventListener?.({
+            type: "status",
+            state: "error",
+            error,
+            timestamp: Date.now(),
         });
 
-        it("should clear debounce timer on close", async () => {
-            const clearTimeout = vi.spyOn(global, "clearTimeout");
+        expect(mockWebContents.send).toHaveBeenCalledWith("picasa:file-error", { error });
+    });
 
-            // Start debouncing
-            (watchService as any).debounceTimer = setTimeout(() => {}, 1000);
-
-            await watchService.shutdown();
-
-            expect(clearTimeout).toHaveBeenCalled();
+    it("flushes pending operations on shutdown", async () => {
+        commandDispatcher?.({
+            type: "file-operation",
+            payload: {
+                operation: {
+                    id: "op-1",
+                    type: "add",
+                    path: "/test/file.jpg",
+                    timestamp: Date.now(),
+                    priority: 3,
+                    retryCount: 0,
+                    metadata: { thumbnailSize: 150, isFile: true },
+                },
+            },
         });
+
+        await watchService.shutdown();
+
+        expect(mockWebContents.send).toHaveBeenCalledWith(
+            "picasa:add-to-scan-queue",
+            expect.arrayContaining([expect.objectContaining({ path: "/test/file.jpg" })]),
+        );
+        expect(mockEngine.shutdown).toHaveBeenCalledTimes(1);
     });
 });

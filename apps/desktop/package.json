@@ -61,6 +61,7 @@
         "@photasa/scan": "workspace:*",
         "@photasa/thumbnail": "workspace:*",
         "@photasa/config-core": "workspace:*",
+        "@photasa/engine-contracts": "workspace:*",
         "@photasa/maliang": "workspace:*",
         "@photasa/maliang-bundle": "workspace:*",
         "@photasa/maliang-cli": "workspace:*",

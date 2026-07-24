@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { FileOperation, ScanAction } from "@photasa/common";
-import type { FileObservation, ShunfengerCommand, CommandDispatcher, WatchProfile } from "./types";
+import type {
+    FileObservation,
+    ShunfengerFileOperationCommand,
+    ShunfengerScanCommand,
+    CommandDispatcher,
+    WatchProfile,
+} from "./types";
 
 export interface CommandAdapterOptions {
     defaultPriority: "user" | "background";
@@ -21,22 +27,31 @@ export class CommandAdapter {
     handleObservation(observation: FileObservation, profile: WatchProfile): void {
         if (!this.dispatcher) return;
 
-        const command: ShunfengerCommand = {
+        if (observation.isDirectory) {
+            const command: ShunfengerScanCommand = {
+                id: randomUUID(),
+                type: "scan-command",
+                profileId: profile.id,
+                createdAt: Date.now(),
+                payload: {
+                    action: this.createScanAction(observation, profile),
+                    source: "watch",
+                    priority: profile.priority ?? this.options.defaultPriority,
+                },
+            };
+            this.dispatcher(command);
+            return;
+        }
+
+        const command: ShunfengerFileOperationCommand = {
             id: randomUUID(),
-            type: observation.isDirectory ? "scan-command" : "file-operation",
+            type: "file-operation",
             profileId: profile.id,
             createdAt: Date.now(),
-            payload: observation.isDirectory
-                ? {
-                      action: this.createScanAction(observation, profile),
-                      source: "watch",
-                      priority: profile.priority ?? this.options.defaultPriority,
-                  }
-                : {
-                      operation: this.createFileOperation(observation, profile),
-                  },
+            payload: {
+                operation: this.createFileOperation(observation, profile),
+            },
         };
-
         this.dispatcher(command);
     }
 

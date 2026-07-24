@@ -39,7 +39,7 @@ module.exports = {
                         "@main/*": ["./src/main/*"],
                         "@renderer/*": ["./src/renderer/*"],
                         "@shared/*": ["./src/shared/*"],
-                        "@engines/common/*": ["./src/main/engines/common/*"],
+                        "@engines/common/*": ["../../packages/@photasa/engine-contracts/src/*"],
                         "@engines/*": ["./src/main/engines/*"],
                         "@zouwu-wf/workflow/runtime/*": [
                             "../../packages/@zouwu-wf/workflow/src/runtime/*",
@@ -69,7 +69,7 @@ module.exports = {
         "^@shared/(.*)$": "<rootDir>/src/shared/$1",
         "^@tianshu$": "<rootDir>/src/main/engines/tianshu/index",
         "^@tianshu/(.*)$": "<rootDir>/src/main/engines/tianshu/$1",
-        "^@engines/common/(.*)$": "<rootDir>/src/main/engines/common/$1",
+        "^@engines/common/(.*)$": "<rootDir>/../../packages/@photasa/engine-contracts/src/$1",
         "^@engines/(.*)$": "<rootDir>/src/main/engines/$1",
         // Map ?nodeWorker query parameter to the actual module
         "^(.+)\\?nodeWorker$": "$1",
