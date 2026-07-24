@@ -19,6 +19,7 @@ import {
 } from "@phosphor-icons/vue";
 import type { ImportConfig, ImportProgress, ImportResult } from "@photasa/common";
 import { loggers } from "@photasa/common";
+import posthog from "posthog-js";
 import { IMPORT_ALREADY_RUNNING, useImportSessionStore } from "@renderer/stores/import-session";
 import { notification } from "@renderer/services/notification-manager";
 import {
@@ -263,6 +264,12 @@ const resetLocalTerminalState = (): void => {
 const handleComplete = (): void => {
     const finalResult = importResult.value ?? sessionResult.value;
     if (finalResult) {
+        posthog.capture("import_completed", {
+            total_files: finalResult.totalFiles ?? 0,
+            successful_files: finalResult.successfulFiles ?? 0,
+            skipped_files: finalResult.skippedFiles ?? 0,
+            error_files: finalResult.errorFiles ?? 0,
+        });
         emit("complete", finalResult);
     }
     logger.info("📚 导入完成确认，清会话");

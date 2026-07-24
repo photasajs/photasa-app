@@ -41,6 +41,7 @@
         "p-queue": "^8.1.1",
         "pinia": "^2.1.6",
         "pinia-plugin-persistedstate": "3.1.0",
+        "posthog-js": "^1.407.2",
         "radash": "^10.8.1",
         "ramda": "^0.29.0",
         "rxjs": "^7.8.1",

@@ -6,6 +6,7 @@ import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import { useI18n } from "vue-i18n";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { loggers } from "@photasa/common";
+import posthog from "posthog-js";
 
 const zhangSunWuJi = useZhangSunWuJi();
 const { t } = useI18n();
@@ -26,6 +27,7 @@ async function selectLocale(locale: Locale) {
         await chuSuiLiang.updateLanguage(locale);
 
         logger.info(`📚 语言切换完成: ${locale}`);
+        posthog.capture("language_changed", { locale });
     } catch (error) {
         logger.error(`📚 语言切换失败: ${locale}`, error);
     }

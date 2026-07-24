@@ -47,6 +47,7 @@ import { useScanningStore } from "@renderer/services/fangxuanling/stores/scannin
 import { isTauri } from "./api/env";
 import { notification } from "@renderer/services/notification-manager";
 import type { RecoverableImport } from "@photasa/common";
+import posthog from "posthog-js";
 
 /**
  * 日志记录器
@@ -96,15 +97,18 @@ void getPhotasaApi()
 function handleOpenScanList() {
     logger.debug("Opening scan list dialog...");
     showScanList.value = true;
+    posthog.capture("scan_queue_viewed");
 }
 function handleOpenImportPhotos() {
     logger.debug("Opening import photos dialog...");
     showImportDialog.value = true;
     logger.debug("showImportDialog.value:", showImportDialog.value);
+    posthog.capture("import_wizard_opened");
 }
 function handleOpenPreference() {
     logger.debug("Opening preference dialog...");
     showPreference.value = true;
+    posthog.capture("settings_opened");
 }
 
 /**

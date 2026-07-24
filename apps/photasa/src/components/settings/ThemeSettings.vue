@@ -20,6 +20,7 @@ import { useI18n } from "vue-i18n";
 import { useChuSuiLiang, type ThemeMeta } from "@renderer/composables/useChuSuiLiang";
 import ThemePreviewBox from "./ThemePreviewBox.vue";
 import { loggers } from "@photasa/common";
+import posthog from "posthog-js";
 /**
  * 日志记录器
  */
@@ -78,6 +79,8 @@ async function switchTheme(themeId: string) {
         // 2. 通过褚遂良中书令发送奏折，触发完整通信链路：
         // 阎立本 -> 褚遂良(奏折) -> 房玄龄(转发) -> 袁天罡(诏令) -> 天枢(符箓) -> 文昌(存储)
         await chuSuiLiang.updateTheme(themeId);
+
+        posthog.capture("theme_changed", { theme_id: themeId });
 
         // 阎立本确认主题更新完成
         logger.info(`🎨 确认主题已更新为 ${currentThemeId.value}`);

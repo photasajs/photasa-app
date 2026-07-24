@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import VueEasyLightbox from "./LightBox";
 import { ensureWebviewMediaUrl } from "@renderer/utils/media-url";
+import posthog from "posthog-js";
 
 const props = defineProps<{
     images: Array<{
@@ -26,6 +27,12 @@ watch(
     () => props.visible,
     (val) => {
         show.value = val;
+        if (val) {
+            const current = props.images[props.index];
+            posthog.capture("media_preview_opened", {
+                media_type: current?.isVideo ? "video" : "image",
+            });
+        }
     },
 );
 watch(
