@@ -13,6 +13,7 @@ import {
     detectPathType,
 } from "@renderer/services/chusuiliang/path-utils";
 import { loggers } from "@photasa/common";
+import posthog from "posthog-js";
 
 const logger = loggers.lishimin;
 
@@ -124,6 +125,7 @@ async function onChoose(): Promise<void> {
         // 添加到 watched folder list 后，李世民路由会自动触发尉迟恭添加扫描任务
         // UI层不再负责子文件夹扫描和批量添加扫描任务（后端职责）
         await chuSuiLiang.addPath(path);
+        posthog.capture("folder_added");
     } catch (error: unknown) {
         const errorMessage =
             error instanceof Error ? error.message : t("notification.unknownError");
@@ -136,6 +138,7 @@ async function onChoose(): Promise<void> {
 
 async function handleRemove(item: string): Promise<void> {
     await chuSuiLiang.removePath(item);
+    posthog.capture("folder_removed");
 }
 </script>
 

@@ -2,6 +2,7 @@ import "./assets/css/styles.less";
 import "./assets/css/tailwind.css";
 import "video.js/dist/video-js.css";
 
+import posthog from "posthog-js";
 import { createApp } from "vue";
 import App from "./App.vue";
 import { createPinia } from "pinia";
@@ -18,6 +19,21 @@ import { isTauri } from "./api/env";
 import "./api/adapter";
 
 const logger = loggers.app;
+
+const _posthogToken = import.meta.env.VITE_POSTHOG_PROJECT_TOKEN as string | undefined;
+const _posthogHost = import.meta.env.VITE_POSTHOG_HOST as string | undefined;
+
+if (_posthogToken) {
+    posthog.init(_posthogToken, {
+        api_host: _posthogHost || "https://us.i.posthog.com",
+        defaults: "2026-01-30",
+    });
+} else if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.error(
+        "VITE_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_POSTHOG_PROJECT_TOKEN is configured",
+    );
+}
 
 logger.info("📦 开天辟地");
 const app = createApp(App);
@@ -44,8 +60,18 @@ lishiminService.prepareCourt();
 
 await lishiminService.initializeDepartments();
 
+app.config.errorHandler = (err) => {
+    if (_posthogToken) {
+        posthog.captureException(err);
+    }
+};
+
 logger.info("📦 挂载 App.vue 应用");
 app.mount("#app");
+
+if (_posthogToken) {
+    posthog.capture("app_launched");
+}
 
 // 壳层已挂载：关闭 Splash、显示主窗（RFC 0101）
 if (isTauri()) {

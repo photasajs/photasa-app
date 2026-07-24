@@ -79,6 +79,7 @@ import ImportProgressModal from "./ImportProgressModal.vue";
 import PreviewProgressDisplay from "./import/PreviewProgressDisplay.vue";
 import { useImportSessionStore } from "@renderer/stores/import-session";
 import { notification } from "@renderer/services/notification-manager";
+import posthog from "posthog-js";
 import {
     IMPORT_MODAL_MODE_REATTACH,
     IMPORT_MODAL_MODE_START,
@@ -221,6 +222,13 @@ const handleWizardComplete = (data: any) => {
         importConfig.value = transformToImportConfig(configData, previewData);
         progressModalMode.value = IMPORT_MODAL_MODE_START;
 
+        posthog.capture("import_started", {
+            total_files: previewData.totalCount ?? 0,
+            image_files: previewData.statistics?.imageFiles ?? 0,
+            video_files: previewData.statistics?.videoFiles ?? 0,
+            duplicate_strategy: configData.duplicateStrategy ?? "rename",
+        });
+
         // Close wizard and show progress modal
         emit("update:show", false);
         showProgressModal.value = true;
@@ -232,6 +240,7 @@ const handleWizardComplete = (data: any) => {
 };
 
 const handleWizardCancel = () => {
+    posthog.capture("import_cancelled");
     // Close wizard
     emit("update:show", false);
 };
