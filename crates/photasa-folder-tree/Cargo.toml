@@ -1,6 +1,6 @@
 [package]
 name = "photasa-folder-tree"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2021"
 description = "Sidebar folder tree persistence (~/.photasa/appState/photasa.json); Tauri service: Siming"
 license = "MIT"
