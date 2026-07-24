@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { QianliyanEngine } from "../index";
+import { QianliyanEngine } from "../core";
 
 /**
  * 占位冒烟测试：确保包导出的引擎类可被测试运行器加载。
