@@ -38,7 +38,11 @@ import {
     requestThumbnail,
     toImageList,
 } from "./ImageListHelper";
-import { getThumbnailDisplaySrc, getThumbnailRenderKey } from "@renderer/utils/thumbnail-display";
+import {
+    getThumbnailDisplaySrc,
+    getThumbnailRenderKey,
+    thumbnailDisplayEpoch,
+} from "@renderer/utils/thumbnail-display";
 import { safePositiveNumber } from "@renderer/common/number";
 
 // 定义组件事件
@@ -435,7 +439,10 @@ onUnmounted(() => {
                             class="w-full flex justify-start pl-4"
                             style="gap: 16px; max-width: 100%"
                         >
-                            <template v-for="(image, colIndex) in rows[row.index]" :key="image.key">
+                            <template
+                                v-for="(image, colIndex) in rows[row.index]"
+                                :key="`${thumbnailDisplayEpoch}-${getThumbnailRenderKey(image)}`"
+                            >
                                 <BaseContextMenu>
                                     <div @click="openPreview(row.index, colIndex)">
                                         <BaseTooltip
@@ -457,7 +464,7 @@ onUnmounted(() => {
                                                 }"
                                             >
                                                 <BaseImage
-                                                    :key="getThumbnailRenderKey(image)"
+                                                    :key="`${thumbnailDisplayEpoch}-${getThumbnailRenderKey(image)}`"
                                                     :width="safeThumbnailSize"
                                                     :height="safeThumbnailSize"
                                                     :src="getThumbnailDisplaySrc(image)"

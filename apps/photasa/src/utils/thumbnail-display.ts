@@ -22,8 +22,30 @@ export function appendCacheBust(url: string, timestamp: number): string {
 }
 
 /** 缩略图 bust map 的稳定键：绝对磁盘路径，避免不同文件夹同名文件冲突 */
+export function normalizeThumbnailBustPath(path: string): string {
+    const normalized = path.replace(/\\/g, "/").trim();
+    if (!normalized) {
+        return normalized;
+    }
+    const decoded = (() => {
+        try {
+            return decodeURIComponent(normalized);
+        } catch {
+            return normalized;
+        }
+    })();
+    return decoded.startsWith("/") ? decoded : `/${decoded}`;
+}
+
 export function getThumbnailBustKey(image: Image): string {
-    return webviewMediaUrlToAbsolutePath(image.thumbnail || image.src);
+    return normalizeThumbnailBustPath(webviewMediaUrlToAbsolutePath(image.thumbnail || image.src));
+}
+
+/** hydrate / bust 更新后递增，强制 ImageList 重渲染缩略图 URL */
+export const thumbnailDisplayEpoch = ref(0);
+
+function bumpThumbnailDisplayEpoch(): void {
+    thumbnailDisplayEpoch.value += 1;
 }
 
 function resolveThumbnailCacheToken(image: Image): number | undefined {
@@ -46,6 +68,7 @@ export function markThumbnailRebuilt(image: Image, timestamp: number = Date.now(
         ...mtimeMsByThumbnailPath.value,
         [key]: timestamp,
     };
+    bumpThumbnailDisplayEpoch();
     return timestamp;
 }
 
@@ -66,14 +89,20 @@ export function getThumbnailRenderKey(image: Image): string {
 
 /** 写入磁盘 mtime 映射（由 ImageListHelper.hydrateFolderThumbnailMtimes 调用） */
 export function applyThumbnailMtimes(entries: Record<string, number>): void {
+    const normalized: Record<string, number> = {};
+    for (const [path, mtime] of Object.entries(entries)) {
+        normalized[normalizeThumbnailBustPath(path)] = mtime;
+    }
     mtimeMsByThumbnailPath.value = {
         ...mtimeMsByThumbnailPath.value,
-        ...entries,
+        ...normalized,
     };
+    bumpThumbnailDisplayEpoch();
 }
 
 /** 仅测试：重置状态 */
 export function resetThumbnailBustStateForTests(): void {
     bustTimestampByThumbnailPath.value = {};
     mtimeMsByThumbnailPath.value = {};
+    thumbnailDisplayEpoch.value = 0;
 }

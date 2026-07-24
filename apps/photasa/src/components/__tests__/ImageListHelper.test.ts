@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { toImageList, computeColumns, requestThumbnail } from "../ImageListHelper";
+import {
+    toImageList,
+    computeColumns,
+    requestThumbnail,
+    hydrateFolderThumbnailMtimes,
+} from "../ImageListHelper";
 import type { PhotasaConfig } from "@photasa/common";
 import type { Photo } from "@photasa/common";
 import type { Image } from "@renderer/common/image";
 import { createThumbnailTask } from "@renderer/utils/api";
 import {
+    getThumbnailBustKey,
     getThumbnailDisplaySrc,
     resetThumbnailBustStateForTests,
 } from "@renderer/utils/thumbnail-display";
@@ -14,6 +20,7 @@ vi.mock("@renderer/utils/api", () => ({
     createThumbnailTask: {
         perform: vi.fn(),
     },
+    getFilesModified: vi.fn(),
 }));
 
 describe("ImageListHelper", () => {
@@ -288,6 +295,33 @@ describe("ImageListHelper", () => {
                 always: true,
                 preview: "",
             });
+        });
+    });
+
+    describe("hydrateFolderThumbnailMtimes", () => {
+        it("应使用与 getThumbnailBustKey 相同的路径键 stat 磁盘", async () => {
+            const { getFilesModified } = await import("@renderer/utils/api");
+            const mockGetFilesModified = vi.mocked(getFilesModified);
+            mockGetFilesModified.mockResolvedValue({});
+
+            const folder = "/Volumes/Photos";
+            const config: PhotasaConfig = {
+                version: "1.0",
+                photoList: [
+                    {
+                        path: "a.jpg",
+                        thumbnail: ".photasaoriginals/thumbnail-a.jpg.png",
+                        isVideo: false,
+                    },
+                ],
+                lastModified: 0,
+            };
+            const image = toImageList(folder, config).images[0];
+            const bustKey = getThumbnailBustKey(image);
+
+            await hydrateFolderThumbnailMtimes(folder, config.photoList);
+
+            expect(mockGetFilesModified).toHaveBeenCalledWith([bustKey]);
         });
     });
 });

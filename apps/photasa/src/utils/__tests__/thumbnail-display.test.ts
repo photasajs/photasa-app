@@ -9,6 +9,7 @@ import {
     markThumbnailRebuilt,
     resetThumbnailBustStateForTests,
     stripUrlQuery,
+    thumbnailDisplayEpoch,
     THUMBNAIL_CACHE_BUST_PARAM,
 } from "../thumbnail-display";
 
@@ -83,6 +84,12 @@ describe("thumbnail-display", () => {
         markThumbnailRebuilt(image, 2000);
 
         expect(getThumbnailDisplaySrc(image)).toContain("?t=2000");
+    });
+
+    it("applyThumbnailMtimes 应递增 thumbnailDisplayEpoch", () => {
+        const before = thumbnailDisplayEpoch.value;
+        applyThumbnailMtimes({ "/a/thumb.png": 1 });
+        expect(thumbnailDisplayEpoch.value).toBe(before + 1);
     });
 
     it("未重建时 getThumbnailDisplaySrc 应返回原始 thumbnail", () => {

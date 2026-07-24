@@ -2,14 +2,11 @@ import { createThumbnailTask, getFilesModified } from "@renderer/utils/api";
 import type { PhotasaConfig } from "@photasa/common";
 import type { Photo } from "@photasa/common";
 import { toImage } from "@renderer/common/image";
-import {
-    toAbsoluteMediaPath,
-    toWebviewMediaUrl,
-    webviewMediaUrlToAbsolutePath,
-} from "@renderer/utils/media-url";
+import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 import {
     appendCacheBust,
     applyThumbnailMtimes,
+    getThumbnailBustKey,
     markThumbnailRebuilt,
 } from "@renderer/utils/thumbnail-display";
 
@@ -70,7 +67,7 @@ export async function hydrateFolderThumbnailMtimes(
         return;
     }
 
-    const paths = photoList.map((photo) => toAbsoluteMediaPath(currentFolder, photo.thumbnail));
+    const paths = photoList.map((photo) => getThumbnailBustKey(toImage(currentFolder, photo)));
     const modified = await getFilesModified(paths);
     applyThumbnailMtimes(modified);
 }
