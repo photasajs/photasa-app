@@ -246,8 +246,14 @@ mod tests {
             child.add_actions(&child_actions)
         );
 
-        assert_eq!(parent_result.expect("parent add").queue_len, 2);
-        child_result.expect("child add");
+        let parent_ack = parent_result.expect("parent add");
+        let child_ack = child_result.expect("child add");
+        // Ack 反映各次 mutation 完成时的长度；并发下先后不定，但合计应为 1+2
+        assert_eq!(parent_ack.queue_len + child_ack.queue_len, 3);
+        assert!(
+            (parent_ack.queue_len == 1 && child_ack.queue_len == 2)
+                || (parent_ack.queue_len == 2 && child_ack.queue_len == 1)
+        );
         flush_repo(&repo).await;
 
         let queue = repo.get().await.expect("get queue");
