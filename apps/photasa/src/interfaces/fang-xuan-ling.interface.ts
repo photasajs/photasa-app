@@ -301,6 +301,7 @@ export const ZOUZHE_MATTERS = {
     EXTRACT_METADATA: "extract_metadata",
     GET_FILES_MODIFIED: "get_files_modified",
     CHOOSE_DIRECTORIES: "choose_directories",
+    RELOAD_WINDOW: "reload_window",
 } as const;
 
 /**

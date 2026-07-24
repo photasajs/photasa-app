@@ -410,6 +410,18 @@ watch(
 
 **设计原则**: 体现了"简单优于复杂"、"利用现有机制"、"数据驱动"、"时序无关"的工程智慧。
 
+## 后续修订（2026-07-24，RFC 0165 Phase A）
+
+**缺口**：RFC 0013 原始实现只恢复 `selectedKeys`，未恢复 `expandedKeys`。`BaseTree` 虚拟模式仅渲染已展开祖先下的节点；深路径时 ImageList/面包屑正确（`currentFolder` 已 persist），树仍看似「未选中」。
+
+**补充行为**（`FolderList.vue` + `folder-tree-expand.ts`）：
+
+1. `watch([currentFolder, paths])` — 处理 `paths` 晚于 `currentFolder` 的启动时序
+2. `mergeExpandedKeysForCurrentFolder` — 合并 `currentFolder` 全部祖先到 `expandedKeys`
+3. `canonicalFolderPath` — `selectedKeys` 与树节点 `key` 对齐
+
+详见 [RFC 0165: `@photasa/base-tree` 包抽取与启动目录树恢复](../0165-base-tree-package-and-folder-restore.md)。
+
 ## 架构审查与改进建议
 
 ### 当前实现的问题分析

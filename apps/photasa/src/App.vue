@@ -7,10 +7,8 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { getDirectory } from "@renderer/utils/api";
 import { useImportOperations } from "@renderer/composables/useImportOperations";
 import { loggers } from "@photasa/common";
-import { getPhotasaApi } from "@renderer/ipc/api-access";
 
 import UserPreference from "./components/UserPreference.vue";
 import ScanQueueDialog from "./components/ScanQueueDialog.vue";
@@ -37,6 +35,7 @@ import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
 import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
+import { useYuanTianGang } from "@renderer/composables/useYuanTianGang";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { isTauri } from "./api/env";
 import { notification } from "@renderer/services/notification-manager";
@@ -58,6 +57,7 @@ const { paths, currentFolder } = storeToRefs(preferenceStore);
  */
 const qinQiong = useQinQiong();
 const yuChiGong = useYuChiGong();
+const yuanTianGang = useYuanTianGang();
 
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
@@ -77,7 +77,7 @@ const currentThemeId = ref<string>("");
 const zhangSunWuJi = useZhangSunWuJi();
 
 const isMac = ref(false);
-void getPhotasaApi()
+void yuanTianGang.desktop
     .isMac()
     .then((value) => {
         isMac.value = Boolean(value);
@@ -108,11 +108,12 @@ function handleOpenPreference() {
  */
 async function initializeApp(): Promise<void> {
     try {
-        const dir = await getDirectory("desktop");
-
         // Desktop directory is ready
         if (paths.value.length === 0) {
-            await chuSuiLiang.addPath(dir);
+            const selection = await zhangSunWuJi.chooseDirectories(false);
+            if (selection.filePaths.length > 0) {
+                await chuSuiLiang.addPath(selection.filePaths[0]);
+            }
         }
 
         loading.value = false;
@@ -257,8 +258,7 @@ onMounted(async () => {
         // RFC 0101：主界面首屏就绪后关闭 Splash、显示主窗
         if (isTauri()) {
             try {
-                const { invoke } = await import("@tauri-apps/api/core");
-                await invoke("close_splashscreen");
+                await yuanTianGang.desktop.closeSplashscreen();
             } catch (e) {
                 logger.warn("⚠️ 告示：关闭启动画面未果", e);
             }
@@ -290,11 +290,11 @@ function handlePreferenceOk(): void {
 // 更新处理函数
 function handleUpdateInstall(): void {
     updateStore.startDownload();
-    void getPhotasaApi().downloadUpdate?.();
+    void yuanTianGang.updates.download();
 }
 
 function handleUpdateInstallNow(): void {
-    void getPhotasaApi().installUpdate?.();
+    void yuanTianGang.updates.install();
 }
 // Update title
 const title = computed(() => {

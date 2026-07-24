@@ -13,7 +13,17 @@ import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { scanAdapter, type ScanResult } from "@renderer/api/scan.adapter";
+import { open } from "@tauri-apps/plugin-dialog";
+export interface ScanResult {
+    type?: string;
+    directory?: { path: string };
+    file?: { path: string; isDirectory?: boolean };
+    action?: { path: string; isDirectory?: boolean };
+    rootPath?: string;
+    currentFile?: string;
+    progress?: { processed?: number; total?: number };
+}
+
 import { isTauri } from "@renderer/api/env";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@photasa/common";
@@ -49,6 +59,12 @@ import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
 import { ImportTransport } from "./transport/import-transport";
 import { MediaTransport, type MediaMatter } from "./transport/media-transport";
 import { DialogTransport } from "./transport/dialog-transport";
+import { DesktopTransport } from "./transport/desktop-transport";
+import type {
+    LogViewerCapability,
+    UpdateCapability,
+    WindowCapability,
+} from "@renderer/interfaces/yuan-tian-gang.interface";
 
 const logger = loggers.yuantiangang;
 const IMPORT_ZHAOLING_MATTERS = new Set<string>([
@@ -79,6 +95,10 @@ const MEDIA_ZHAOLING_MATTERS = new Set<string>([
 export class YuanTianGangService implements IService, IYuanTianGangService {
     readonly name = "袁天罡";
     readonly importEvents: ImportTransport;
+    readonly updates: UpdateCapability;
+    readonly logs: LogViewerCapability;
+    readonly windows: WindowCapability;
+    readonly desktop: DesktopTransport;
     private readonly media: MediaTransport;
     private readonly dialog: DialogTransport;
     private progressCleanupFn?: () => void;
@@ -96,7 +116,15 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         logger.info("🔮 就任，开始处理天界通信");
         this.importEvents = new ImportTransport({ enabled: isTauri() });
         this.media = new MediaTransport({ invoke });
-        this.dialog = new DialogTransport();
+        this.dialog = new DialogTransport({ open: open as never, invoke });
+        const desktop = new DesktopTransport({
+            invoke,
+            listen: listen as never,
+        });
+        this.desktop = desktop;
+        this.updates = desktop;
+        this.logs = desktop;
+        this.windows = desktop;
         this.setupTianshuEventListening();
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
@@ -186,10 +214,9 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * @private
      */
     private setupQianliyanEventListening(): void {
-        scanAdapter
-            .onScanResult((result) => {
-                this.handleQianliyanEvent(result);
-            })
+        listen<ScanResult>("picasa:find-photo", (event) => {
+            this.handleQianliyanEvent(event.payload);
+        })
             .then((unlisten) => {
                 this.qianliyanCleanupFn = unlisten;
             })

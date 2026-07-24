@@ -152,6 +152,22 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         });
     });
 
+    it("桌面能力门面不向 UI 暴露 command 字符串", async () => {
+        mockInvoke.mockResolvedValue({ hasUpdate: false });
+
+        await expect(service.updates.check()).resolves.toEqual({ hasUpdate: false });
+        await service.logs.close();
+        await service.windows.minimize();
+
+        expect(mockInvoke.mock.calls).toEqual(
+            expect.arrayContaining([
+                ["check_for_updates"],
+                ["log_viewer_close"],
+                ["minimize_window"],
+            ]),
+        );
+    });
+
     it("picasa:add-to-scan-queue 事件触发后启奏 watch_scan_queue_add", async () => {
         const listenCall = mockListen.mock.calls.find(
             (call) => call[0] === WATCH_EVENTS.SCAN_QUEUE_ADD,

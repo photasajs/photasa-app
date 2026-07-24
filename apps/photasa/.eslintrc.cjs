@@ -18,14 +18,9 @@ function withLintStagedPaths(relativePaths) {
 }
 
 const legacyImportDebtFiles = [
-    "src/ipc/api-access.ts",
     "src/composables/useUpdateListener.ts",
     "src/stores/preference.ts",
-    "src/utils/api.ts",
     "src/utils/api-path.ts",
-    "src/utils/file-handler.ts",
-    "src/utils/scan-folder.ts",
-    "src/services/folderSelectionService.ts",
     "src/components/ImageList.vue",
     "src/components/ImageListHelper.ts",
     "src/components/ImportPhotos.vue",
@@ -40,13 +35,6 @@ const legacyImportDebtFiles = [
 
 const tauriTransportDebtFiles = [
     "src/main.ts",
-    "src/api/config.adapter.ts",
-    "src/api/import.adapter.ts",
-    "src/api/legacy-api.ts",
-    "src/api/scan.adapter.ts",
-    "src/api/shell.adapter.ts",
-    "src/api/thumbnail.adapter.ts",
-    "src/api/window.adapter.ts",
     "src/stores/import-session.ts",
     "src/services/yuantiangang/yuantiangang.ts",
     "src/services/yuantiangang/**/*.ts",

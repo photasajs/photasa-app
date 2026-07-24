@@ -1,25 +1,29 @@
 import type { FolderNode } from "@photasa/common";
-import { joinFolderSegment } from "@renderer/utils/folder-tree-path";
+import { canonicalFolderPath, joinFolderSegment } from "@renderer/utils/folder-tree-path";
 
 /**
  * 收集文件夹路径在树中可见所需的祖先节点 key（不含自身）
  */
 export function collectAncestorKeys(folderPath: string, rootPaths: readonly string[]): string[] {
-    if (!folderPath) {
+    const normalizedFolder = canonicalFolderPath(folderPath);
+    if (!normalizedFolder) {
         return [];
     }
 
-    const root = rootPaths.find((rp) => folderPath === rp || folderPath.startsWith(`${rp}/`));
+    const normalizedRoots = rootPaths.map(canonicalFolderPath).filter(Boolean);
+    const root = normalizedRoots.find(
+        (rp) => normalizedFolder === rp || normalizedFolder.startsWith(`${rp}/`),
+    );
     if (!root) {
         return [];
     }
 
     const keys: string[] = [root];
-    if (folderPath === root) {
+    if (normalizedFolder === root) {
         return keys;
     }
 
-    const relative = folderPath.slice(root.length + 1);
+    const relative = normalizedFolder.slice(root.length + 1);
     const parts = relative.split("/").filter(Boolean);
     let current = root;
 
@@ -64,4 +68,21 @@ export function mergeExpandedKeysForNewFolders(
     }
 
     return [...merged];
+}
+
+/**
+ * 为当前文件夹合并展开 key（启动恢复 / 切换目录时保证祖先节点可见）
+ * RFC 0013：选中态；RFC 0047：folderTree 自 photasa.json 恢复后需展开到 currentFolder
+ */
+export function mergeExpandedKeysForCurrentFolder(
+    currentExpanded: readonly string[],
+    folderPath: string,
+    rootPaths: readonly string[],
+): string[] {
+    const normalized = canonicalFolderPath(folderPath);
+    if (!normalized) {
+        return [...currentExpanded];
+    }
+
+    return mergeExpandedKeysForNewFolders(currentExpanded, [normalized], rootPaths);
 }

@@ -223,13 +223,17 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
                 payload.key === MENU_KEY_VIEW_RELOAD ||
                 payload.key === MENU_KEY_VIEW_FORCE_RELOAD
             ) {
-                void Promise.resolve(
-                    (
-                        window as { api?: { reloadWindow?: () => Promise<void> } }
-                    ).api?.reloadWindow?.(),
-                ).catch((err: unknown) => {
-                    logger.error(`📋 长孙无忌：重新加载失败（${payload.key}）`, err);
-                });
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.RELOAD_WINDOW,
+                        content: {},
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error(`📋 长孙无忌：重新加载失败（${payload.key}）`, err);
+                    });
                 return;
             }
 

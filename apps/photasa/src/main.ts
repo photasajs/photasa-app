@@ -12,8 +12,6 @@ import { i18n } from "./i18n/config";
 
 import { LishiminService, LISSHIMING_TOKEN } from "./services";
 import { loggers } from "@photasa/common";
-import { isTauri } from "./api/env";
-
 const logger = loggers.app;
 
 logger.info("📦 开天辟地");
@@ -43,10 +41,3 @@ await lishiminService.initializeDepartments();
 
 logger.info("📦 挂载 App.vue 应用");
 app.mount("#app");
-
-// 壳层已挂载：关闭 Splash、显示主窗（RFC 0101）
-if (isTauri()) {
-    import("@tauri-apps/api/core")
-        .then(({ invoke }) => invoke("close_splashscreen"))
-        .catch((err) => logger.warn("告示：关闭启动画面未果", err));
-}

@@ -27,31 +27,24 @@
 | Tauri Release / Updater      | [0155](./.spec/rfc/completed/0155-tauri-release-pipeline-as-built.md)              | 🔴 High   | Done（GitHub Release 校验 + Tauri Action 产物断言）                           | 否                                  |
 | Release 多平台产物 / updater | [0158](./.spec/rfc/0158-tauri-release-assets-and-updater-followup.md)              | 🔴 High   | Active — Linux 上传失败；补全 `latest.json` 平台键                            | 否                                  |
 | FolderTree 原子落盘与自愈    | [0156](./.spec/rfc/completed/0156-foldertree-resilience-and-atomic-persistence.md) | 🔴 High   | Done（Rust tempfile 原子写 + 媒体扩展名过滤 + 启动自愈）                      | 否                                  |
-| legacy-api / utils/api 退役  | [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                            | 🔴 High   | UI Draft Phase 2a–2f ✅（扫描/监视/配置/导入/图库/对话框域退出 legacy）       | 否                                  |
+| legacy-api / utils/api 退役  | [0154](./.spec/rfc/completed/0154-tauri-legacy-api-retirement.md)                  | 🔴 High   | ✅ Done — Phase 0–4；legacy 层已删；袁天罡唯一业务 IPC                        | 否                                  |
 | Tauri 生产主题 CSS 打包      | [0159](./.spec/rfc/completed/0159-tauri-production-theme-css-bundling.md)          | 🟡 Medium | Done（`?raw` 同步注入；弃 `/src/themes`）                                     | 否                                  |
 | 移除队列健康监控 Dashboard   | [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md)     | 🟢 Low    | Done（删 dashboard；保留 ScanQueueDialog）                                    | 否                                  |
 | ImageList TanStack 虚拟网格  | [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                        | 🟡 Medium | Draft — 整合 `VirtualizedGrid`，精简 `ImageList` inline virtualizer           | 否                                  |
 | 设计文件本地预览（`.ai`）    | [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                         | 🟡 Medium | Draft — `photasa-design` + PDFium；废止原云预览                               | 否                                  |
 | 扫描队列非阻塞 IPC           | [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)                   | 🔴 High   | Closed — Ack IPC、ScanQueueDialog 虚拟卡片、locale、100 Vitest 通过           | 否                                  |
 | 物理清理 14 个废弃 Node 包   | [0164](./.spec/rfc/0164-cleanup-legacy-node-packages.md)                           | 🔴 High   | Draft — 物理清理 `packages/@photasa/` 14 个 Node 包，仅保留 `@photasa/common` | 否                                  |
+| BaseTree 包 + 启动树恢复     | [0165](./.spec/rfc/0165-base-tree-package-and-folder-restore.md)                   | 🟡 Medium | Active — ①`@photasa/base-tree` ②启动展开+选中 ✅ ③虚拟化抽包复验              | 否                                  |
 
-### RFC 0154 — 退役 legacy-api / utils/api (回归贞观 IPC 边界) ⏳ UI Draft
+### RFC 0154 — 退役 legacy-api / utils/api ✅ Done（2026-07-24）
 
-**目标**：消除 `utils/api.ts` 与 `legacy-api.ts` 的组件级旁路，按能力彻底迁移至贞观人物与 `YuanTianGangService` 私有 `transport/` 模块，全面清理反模式。
+**目标**：消除 `utils/api.ts` 与 `legacy-api.ts` 的组件级旁路，按能力彻底迁移至贞观人物与 `YuanTianGangService` 私有 `transport/` 模块。
 
-- [x] Phase 0a：按定义、消费者、注释分别盘点真实基线（`window.api` 仍有 1 处赋值；`getPhotasaApi` / `legacy-api` 仍在生产链；生产 `utils/api` import 11 文件）
-- [x] Phase 0b：ESLint AST 门禁（legacy 三入口、袁天罡外 Tauri transport、插件旁路、非业务白名单均已覆盖；21/21）
-- [x] Phase 0c：Vitest 同时收集 `*.test.ts` / `*.spec.ts`（104 files passed；1125 passed / 3 skipped）
-- [x] Phase 1：停 `window.api` 注入与启动副作用，移除 window fallback，标记 legacy 入口 `@deprecated`（108 files / 1169 passed / 3 skipped；lint/typecheck/build ✅）
-- [x] Phase 2a：扫描域迁移（删除死 `scan-folder.ts` / `utils/api.scanPhotos`；App 空闲检查改读尉迟恭真实队列；109 files / 1174 passed / 3 skipped；lint/typecheck/build ✅）
-- [x] Phase 2b：监视域迁移（删 `file-handler.ts` / legacy watch 门面；秦琼串行生命周期；删除分流不再伪装扫描；110 files / 1188 passed / 3 skipped；lint/typecheck/build ✅）
-- [x] Phase 2c：配置域迁移（Preference 零 `utils/api`；Rust bool 契约；魏征配置事务；111 files / 1174 passed / 3 skipped；typecheck/lint/Vite build ✅）
-- [x] Phase 2d：导入域迁移（`App.vue` recovery、`import-session`、Import UI、legacy/flat/utils/import.adapter 业务 surface $\rightarrow$ 房玄龄 + 袁天罡；112 files / 1146 passed / 3 skipped；typecheck/lint/Vite build ✅）
-- [x] Phase 2e：缩略图/元数据域迁移（`ImageList.vue` / helper $\rightarrow$ `useGalleryMedia()` $\rightarrow$ 魏征图库 accessor $\rightarrow$ 袁天罡私有 media transport；`vitest --maxWorkers=1`：114 files / 1153 passed / 3 skipped；typecheck/lint/Vite build ✅）
-- [x] Phase 2f：对话框域迁移（Import/Settings $\rightarrow$ 长孙无忌 $\rightarrow$ 房玄龄 $\rightarrow$ 袁天罡私有 dialog transport；删除 `chooseDirectory*` legacy surface 与 `import.adapter.ts`；`vitest --maxWorkers=1`：114 files / 1157 passed / 3 skipped；typecheck/lint/Vite build ✅）
-- [ ] Phase 2g：更新/日志/窗口监听清理
-- [ ] Phase 3：删除 `legacy-api.ts` / `utils/api.ts` / `*.adapter.ts`
-- [ ] Phase 4：文档收口，关闭 RFC 0149 R1/R2
+- [x] Phase 0a–0c：基线 + ESLint 门禁 + Vitest 双后缀
+- [x] Phase 1：停 `window.api` 注入
+- [x] Phase 2a–2h：扫描/监视/配置/导入/缩略图/对话框/桌面/平台/Splash
+- [x] Phase 3：删除 legacy-api、utils/api、adapters、flat-api、api-access、legacy-preload-access
+- [x] Phase 4：0149 R1/R2 成果落地；ROADMAP 边界已更新
 
 ### RFC 0153 — zouwu workspace 物理移除 ✅ Done
 
@@ -352,25 +345,26 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 
 ## Photasa UI RFC drafts（非 Active）
 
-| RFC                                                                            | Title                                         | Status                   | Scope                                                                                                               |
-| ------------------------------------------------------------------------------ | --------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| [0137](./.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md)      | 贞观直连 Tauri IPC 迁移                       | ✅ Implemented           | 袁天罡唯一 IPC 边界；`IntentToFuluMapping` 空表；`legacy-api` 仅兼容层                                              |
-| [0139](./.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期                            | ✅ Implemented           | 8 域全部退出 zouwu 生产路径；物理移除见 [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md) ✅      |
-| [0140](./.spec/rfc/completed/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式                | ✅ Implemented           | 6 步模式；8 域验证表；`IntentToFuluMapping` 空表守卫                                                                |
-| [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md)    | preference 贞观 + 退 zouwu                    | ✅ Implemented           | `preferences_get`/`preferences_update`；袁天罡启奏；删 adapter                                                      |
-| [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md)      | 单张重建缩略图 UI 契约                        | ✅ Implemented           | `thumbnail-display` 会话 bust；切树节点不 revert（2026-07-24）                                                      |
-| [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)            | 0073 关闭后 UI 适配层剩余项                   | ✅ Implemented           | R3–R5 ✅；贞观 services 零 window.api；Renderer R1/R2 → 0154                                                        |
-| [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md)        | shell/menu 退出 zouwu                         | ✅ Implemented           | executeZhaoling 直连 apply_system_menu / open_external / show_in_folder                                             |
-| [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)            | zouwu workspace 物理移除                      | ✅ Implemented           | 删 zouwu crates/TianshuService/adapters/tianshu.adapter.ts；vitest 825                                              |
-| [0154](./.spec/rfc/0154-tauri-legacy-api-retirement.md)                        | legacy-api / utils/api 退役                   | ⏳ UI Draft（非 Active） | 0149 R1/R2；组件走贞观人物；袁天罡唯一业务 invoke/listen；**拒绝 ipc/\* 旁路**                                      |
-| [0155](./.spec/rfc/0155-tauri-release-pipeline-as-built.md)                    | Release/updater 流水线如实记录 + 生产缺口修复 | ✅ Implemented           | `createUpdaterArtifacts`/`pubkey` 已修复；产物存在性断言已加；取代 0113/0151 中 `photasa-release.yml` 描述          |
-| [0158](./.spec/rfc/0158-tauri-release-assets-and-updater-followup.md)          | Release 多平台产物 + `latest.json` 验收       | ⏳ Active                | Linux `tauri-action` `No artifacts were found`；`photasa-v2.0.0` 仅 darwin aarch64；workflow_call 取代 workflow_run |
-| [0159](./.spec/rfc/completed/0159-tauri-production-theme-css-bundling.md)      | Tauri 生产主题 CSS 打包                       | ✅ Implemented           | Vite `?raw` + `<style id="theme-style">`；skill: `.cursor/skills/tauri-theme-management/`                           |
-| [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md) | 移除队列健康监控 Dashboard                    | ✅ Implemented           | 真队列 `~/.photasa/scan/scanning.json`；UI 仅 `ScanQueueDialog`                                                     |
-| [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                    | ImageList TanStack 虚拟网格整合               | ⏳ Draft                 | 已有 inline `useVirtualizer`；目标统一到 `VirtualizedGrid` + 测试                                                   |
-| [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                     | 设计文件本地预览（Rust / PDFium）             | ⏳ Draft                 | `.ai` Phase 1；废止原在线预览服务                                                                                   |
-| [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)               | 扫描队列非阻塞 IPC                            | ✅ Closed                | `ScanQueueAck`、防抖落盘、虚拟卡片 UI、`scan-queue-display`、15 locale、Vitest 100 通过                             |
-| [0157](./.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)              | Dev/Prod 版 Photasa 同机并存                  | ✅ Implemented           | 独立 `identifier`/`productName`/数据目录；`build-channels.test.ts` 9/9 通过；guard 已接入 `photasa-build.yml`       |
+| RFC                                                                            | Title                                         | Status         | Scope                                                                                                               |
+| ------------------------------------------------------------------------------ | --------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [0137](./.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md)      | 贞观直连 Tauri IPC 迁移                       | ✅ Implemented | 袁天罡唯一 IPC 边界；`IntentToFuluMapping` 空表；`legacy-api` 仅兼容层                                              |
+| [0139](./.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md)              | zouwu 逐域退场排期                            | ✅ Implemented | 8 域全部退出 zouwu 生产路径；物理移除见 [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md) ✅      |
+| [0140](./.spec/rfc/completed/0140-tauri-zouwu-adapter-to-command-migration.md) | zouwu Adapter→command 迁移模式                | ✅ Implemented | 6 步模式；8 域验证表；`IntentToFuluMapping` 空表守卫                                                                |
+| [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md)    | preference 贞观 + 退 zouwu                    | ✅ Implemented | `preferences_get`/`preferences_update`；袁天罡启奏；删 adapter                                                      |
+| [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md)      | 单张重建缩略图 UI 契约                        | ✅ Implemented | `thumbnail-display` 会话 bust；切树节点不 revert（2026-07-24）                                                      |
+| [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md)            | 0073 关闭后 UI 适配层剩余项                   | ✅ Implemented | R3–R5 ✅；贞观 services 零 window.api；Renderer R1/R2 → 0154                                                        |
+| [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md)        | shell/menu 退出 zouwu                         | ✅ Implemented | executeZhaoling 直连 apply_system_menu / open_external / show_in_folder                                             |
+| [0153](./.spec/rfc/completed/0153-tauri-zouwu-workspace-removal.md)            | zouwu workspace 物理移除                      | ✅ Implemented | 删 zouwu crates/TianshuService/adapters/tianshu.adapter.ts；vitest 825                                              |
+| [0154](./.spec/rfc/completed/0154-tauri-legacy-api-retirement.md)              | legacy-api / utils/api 退役                   | ✅ Implemented | Phase 0–4 完成；零 legacy 生产路径；袁天罡唯一业务 IPC                                                              |
+| [0155](./.spec/rfc/0155-tauri-release-pipeline-as-built.md)                    | Release/updater 流水线如实记录 + 生产缺口修复 | ✅ Implemented | `createUpdaterArtifacts`/`pubkey` 已修复；产物存在性断言已加；取代 0113/0151 中 `photasa-release.yml` 描述          |
+| [0158](./.spec/rfc/0158-tauri-release-assets-and-updater-followup.md)          | Release 多平台产物 + `latest.json` 验收       | ⏳ Active      | Linux `tauri-action` `No artifacts were found`；`photasa-v2.0.0` 仅 darwin aarch64；workflow_call 取代 workflow_run |
+| [0159](./.spec/rfc/completed/0159-tauri-production-theme-css-bundling.md)      | Tauri 生产主题 CSS 打包                       | ✅ Implemented | Vite `?raw` + `<style id="theme-style">`；skill: `.cursor/skills/tauri-theme-management/`                           |
+| [0160](./.spec/rfc/completed/0160-retire-queue-health-monitoring-dashboard.md) | 移除队列健康监控 Dashboard                    | ✅ Implemented | 真队列 `~/.photasa/scan/scanning.json`；UI 仅 `ScanQueueDialog`                                                     |
+| [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                    | ImageList TanStack 虚拟网格整合               | ⏳ Draft       | 已有 inline `useVirtualizer`；目标统一到 `VirtualizedGrid` + 测试                                                   |
+| [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                     | 设计文件本地预览（Rust / PDFium）             | ⏳ Draft       | `.ai` Phase 1；废止原在线预览服务                                                                                   |
+| [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)               | 扫描队列非阻塞 IPC                            | ✅ Closed      | `ScanQueueAck`、防抖落盘、虚拟卡片 UI、`scan-queue-display`、15 locale、Vitest 100 通过                             |
+| [0165](./.spec/rfc/0165-base-tree-package-and-folder-restore.md)               | `@photasa/base-tree` + 启动树 + 虚拟化        | 🔨 Active      | ①包 Draft ②选中 Vitest ✅ ③`BaseTree.test` 抽包后复验                                                               |
+| [0157](./.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)              | Dev/Prod 版 Photasa 同机并存                  | ✅ Implemented | 独立 `identifier`/`productName`/数据目录；`build-channels.test.ts` 9/9 通过；guard 已接入 `photasa-build.yml`       |
 
 **已归档**：[0137](./.spec/rfc/completed/0137-tauri-zhenguan-direct-ipc-migration.md) 贞观直连 IPC ✅ / [0138](./.spec/rfc/completed/0138-tauri-photasa-config-crate.md) `photasa-config` crate ✅ / [0139](./.spec/rfc/completed/0139-tauri-zouwu-retirement-plan.md) zouwu 全域退场 ✅ / [0140](./.spec/rfc/completed/0140-tauri-zouwu-adapter-to-command-migration.md) zouwu→command 迁移模式 ✅ / [0141](./.spec/rfc/completed/0141-tauri-photasa-media-crate.md) `photasa-media` crate ✅ / [0142](./.spec/rfc/completed/0142-tauri-zhenguan-config-commands-personification.md) 文件夹配置命令魏征接管 ✅ / [0143](./.spec/rfc/completed/0143-tauri-zhenguan-scanning-personification.md) 扫描队列命令贞观对齐 ✅ / [0144](./.spec/rfc/completed/0144-tauri-scan-queue-persistence-alignment.md) 扫描队列持久化并发锁+脱离zouwu ✅ / [0145](./.spec/rfc/completed/0145-tauri-siming-adapter-retirement.md) folder tree 持久化 `photosa-folder-tree` ✅ / [0147](./.spec/rfc/completed/0147-tauri-wenchang-preferences-retirement.md) preference 整域退出 zouwu ✅ / [0148](./.spec/rfc/completed/0148-tauri-rebuild-thumbnail-ui-contract.md) 单张重建缩略图 UI ✅ / [0149](./.spec/rfc/completed/0149-tauri-ui-adapter-post-closure.md) 0073 后适配层跟踪 ✅ / [0150](./.spec/rfc/completed/0150-tauri-shell-menu-zouwu-retirement.md) shell/menu 直连 invoke ✅。
 

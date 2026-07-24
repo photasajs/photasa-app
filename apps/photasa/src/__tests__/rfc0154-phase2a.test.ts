@@ -29,10 +29,8 @@ describe("RFC 0154 Phase 2a scan domain", () => {
         expect(preferenceSource).not.toContain("scanPhotosTask");
     });
 
-    it("removes scanPhotos from legacy utils facade", () => {
-        const apiSource = readSource("src/utils/api.ts");
-        expect(apiSource).not.toMatch(/export function scanPhotos\b/);
-        expect(apiSource).not.toContain("ScanArgs");
+    it("removes legacy utils facade (utils/api.ts)", () => {
+        expect(existsSync(join(packageRoot, "src/utils/api.ts"))).toBe(false);
     });
 
     it("keeps real scan execution behind YuChiGong decree flow", () => {

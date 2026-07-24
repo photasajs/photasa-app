@@ -27,8 +27,6 @@ import { createScanQueueItem } from "@renderer/stores/scanning-types";
 import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/tauri-command-names";
 import type { ScanQueueAck } from "../yuantiangang/scan-queue-contract";
 import { SCAN_QUEUE_RESTORE_FROM_DISK } from "../yuantiangang/scan-queue-contract";
-import { getLegacyPreloadApi, getLegacyShell } from "@/api/legacy-preload-access";
-
 const mockTauriInvoke = vi.hoisted(() => vi.fn());
 const mockInvokeLock = vi.hoisted(() => ({
     chain: Promise.resolve() as Promise<unknown>,

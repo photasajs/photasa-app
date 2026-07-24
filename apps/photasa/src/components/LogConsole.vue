@@ -87,10 +87,11 @@ import { useI18n } from "vue-i18n";
 import type { LogEntry } from "@photasa/common";
 import { globalLogInterceptor } from "@photasa/common";
 import BaseSelect from "./ui/BaseSelect.vue";
-import { getPhotasaApi } from "@renderer/ipc/api-access";
+import { useYuanTianGang } from "@renderer/composables/useYuanTianGang";
 
 const { t } = useI18n();
-const photasaApi = getPhotasaApi();
+const logViewer = useYuanTianGang().logs;
+let desktopLogCleanups: Array<() => void> = [];
 
 const visible = ref(false);
 const logs = ref<LogEntry[]>([]);
@@ -168,7 +169,7 @@ const toggle = async () => {
     visible.value = !visible.value;
     if (visible.value) {
         // 通知主进程开始收集日志
-        const result = await photasaApi.log.viewerOpen();
+        const result = await logViewer.open();
         if (result.success) {
             logs.value = []; // 清空旧日志
 
@@ -192,7 +193,7 @@ const toggle = async () => {
         }
     } else {
         // 通知主进程停止收集日志
-        await photasaApi.log.viewerClose();
+        await logViewer.close();
 
         // 取消订阅 renderer 进程的日志
         if (unsubscribeRendererLogs) {
@@ -215,7 +216,7 @@ const toggle = async () => {
 
 const close = () => {
     visible.value = false;
-    photasaApi.log.viewerClose();
+    void logViewer.close();
 
     // 取消订阅 renderer 进程的日志
     if (unsubscribeRendererLogs) {
@@ -436,29 +437,29 @@ watch(filteredLogs, async () => {
     }
 });
 
-onMounted(() => {
+onMounted(async () => {
     document.addEventListener("keydown", handleKeyDown);
 
-    // 监听全局快捷键触发
-    photasaApi.log.onToggleViewer(() => {
-        toggle();
-    });
-
-    // 监听新日志
-    photasaApi.log.onEntry((entry: LogEntry) => {
-        logs.value.push(entry);
-        // 限制最大条数
-        if (logs.value.length > 5000) {
-            logs.value.shift();
-        }
-    });
+    desktopLogCleanups = await Promise.all([
+        logViewer.onToggle(() => {
+            void toggle();
+        }),
+        logViewer.onEntry((entry: LogEntry) => {
+            logs.value.push(entry);
+            if (logs.value.length > 5000) {
+                logs.value.shift();
+            }
+        }),
+    ]);
 });
 
 onUnmounted(() => {
     document.removeEventListener("keydown", handleKeyDown);
     if (visible.value) {
-        photasaApi.log.viewerClose();
+        void logViewer.close();
     }
+    desktopLogCleanups.forEach((cleanup) => cleanup());
+    desktopLogCleanups = [];
 
     // 清理 renderer 进程的日志订阅
     if (unsubscribeRendererLogs) {

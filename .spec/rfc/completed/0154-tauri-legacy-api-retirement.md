@@ -2,7 +2,7 @@
 
 - **Start Date**: 2026-07-21
 - **Last updated**: 2026-07-24
-- **Status**: Draft（Photasa UI RFC，**非 Active**；Rust 命令面 [0097](./completed/0097-tauri-legacy-api-deferred-surface.md) ✅）
+- **Status**: ? Implemented?2026-07-24 ? Phase 0?4 ???0149 R1/R2 ????????
 - **Priority**: P1
 - **Area**: Photasa / Vue / 贞观之治 / IPC 边界
 - **Parent**: [0149](./completed/0149-tauri-ui-adapter-post-closure.md) R1 + R2
@@ -216,10 +216,10 @@ Rust event
 
 ### Phase 3 — 删尸
 
-- [ ] 删 `legacy-api.ts`、`legacy-preload-access.ts`、`photasa-flat-api.ts`、`ipc/api-access.ts`
-- [ ] 删 `utils/api.ts`
-- [ ] 删 `api/adapter.ts`、`api/*.adapter.ts`（逻辑已在 `yuantiangang/transport/`）
-- [ ] 删 `legacy-api-*.test.ts` 或改为测袁天罡 transport
+- [x] 删 `legacy-api.ts`、`legacy-preload-access.ts`、`photasa-flat-api.ts`、`ipc/api-access.ts`
+- [x] 删 `utils/api.ts`
+- [x] 删 `api/adapter.ts`、`api/*.adapter.ts`（逻辑已在 `yuantiangang/transport/`）
+- [x] 删 `legacy-api-*.test.ts` 或改为测袁天罡 transport
 
 ### Phase 4 — 文档
 

@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import { useUpdateStore } from "@renderer/stores/update";
 import { useNotificationStore } from "@renderer/stores/notification";
 import { loggers } from "@photasa/common";
-import { getPhotasaApi } from "@renderer/ipc/api-access";
+import { useYuanTianGang } from "@renderer/composables/useYuanTianGang";
 
 /**
  * 更新事件监听器
@@ -14,6 +14,7 @@ export function useUpdateListener() {
     const updateStore = useUpdateStore();
     const notificationStore = useNotificationStore();
     const logger = loggers.update;
+    const updates = useYuanTianGang().updates;
 
     // 监听更新可用事件
     const handleUpdateAvailable = (data: { version: string; info?: unknown }) => {
@@ -64,24 +65,19 @@ export function useUpdateListener() {
     let cleanupFunctions: (() => void)[] = [];
 
     // 注册事件监听器
-    const registerListeners = () => {
-        const api = getPhotasaApi();
-        if (api.onUpdateAvailable) {
-            const cleanup = api.onUpdateAvailable(handleUpdateAvailable);
-            cleanupFunctions.push(cleanup);
+    let active = false;
+    const registerListeners = async () => {
+        const cleanups = await Promise.all([
+            updates.onAvailable(handleUpdateAvailable),
+            updates.onProgress(handleDownloadProgress),
+            updates.onDownloaded(handleDownloadComplete),
+            updates.onStatus(handleStatusChanged),
+        ]);
+        if (!active) {
+            cleanups.forEach((cleanup) => cleanup());
+            return;
         }
-        if (api.onUpdateProgress) {
-            const cleanup = api.onUpdateProgress(handleDownloadProgress);
-            cleanupFunctions.push(cleanup);
-        }
-        if (api.onUpdateDownloaded) {
-            const cleanup = api.onUpdateDownloaded(handleDownloadComplete);
-            cleanupFunctions.push(cleanup);
-        }
-        if (api.onStatusChanged) {
-            const cleanup = api.onStatusChanged(handleStatusChanged);
-            cleanupFunctions.push(cleanup);
-        }
+        cleanupFunctions.push(...cleanups);
     };
 
     // 移除事件监听器
@@ -91,10 +87,12 @@ export function useUpdateListener() {
     };
 
     onMounted(() => {
-        registerListeners();
+        active = true;
+        void registerListeners();
     });
 
     onUnmounted(() => {
+        active = false;
         removeListeners();
     });
 
