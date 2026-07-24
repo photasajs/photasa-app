@@ -1,5 +1,41 @@
 # Changelog
 
+## [2.1.0](https://github.com/photasajs/photasa-app/compare/v2.0.0...v2.1.0) (2026-07-24)
+
+
+### Features
+
+* **photasa:** close RFC 0162 with virtual scan queue UI and breadcrumb truncation ([e01ca85](https://github.com/photasajs/photasa-app/commit/e01ca85c9631c3c5742a7df0b64e0eaf4b321edf))
+* **rfc:** implement RFC 0160 dashboard retirement, ESLint RFC 0154 gate, scan queue persistence, and update RFCs ([1c76045](https://github.com/photasajs/photasa-app/commit/1c7604524dcc29e3c9d3b88bcf6c33dfce4daef8))
+
+
+### Bug Fixes
+
+* **ci:** detect photasa-v* release tags for Tauri asset upload ([1352da1](https://github.com/photasajs/photasa-app/commit/1352da168e9895cf0396916de72855747407ecd3))
+* **ci:** force per-OS tauri bundles when re-uploading tagged releases ([3631d72](https://github.com/photasajs/photasa-app/commit/3631d72f77230469df983daef878a4332bdfd129))
+* **ci:** force per-OS tauri bundles when re-uploading tagged releases ([0584af3](https://github.com/photasajs/photasa-app/commit/0584af3543e46b325d036916840c53782c0c2a64))
+* **ci:** grant actions:read on release.yml for workflow_call permission inheritance ([2530b5f](https://github.com/photasajs/photasa-app/commit/2530b5fc56bf09c2bdbd1a6b6ccc7a30dde5768f))
+* **ci:** grant actions:read on release.yml for workflow_call permission inheritance ([37d07c4](https://github.com/photasajs/photasa-app/commit/37d07c40257bd3dd229f53c28859c93bc475f75a))
+* **ci:** manual release upload builds from workflow branch, not tag SHA ([7ac8303](https://github.com/photasajs/photasa-app/commit/7ac830345e3ba75fde4850684a5e3d53ead313ce))
+* **ci:** manual release upload builds from workflow branch, not tag SHA ([5cab584](https://github.com/photasajs/photasa-app/commit/5cab5843b4f274e9352f982675f2884634369499))
+* **ci:** repair release asset upload pipeline for Tauri binaries ([a7ab83e](https://github.com/photasajs/photasa-app/commit/a7ab83efbd54d7049e0d020a8585afde951252c3))
+* **ci:** wire release asset upload to release-please outputs via workflow_call ([bdd41e3](https://github.com/photasajs/photasa-app/commit/bdd41e370b05271eb9d5fe941d63cd2c871a3fb8))
+* **photasa:** add TypeScript module declaration for CSS ?raw imports ([63a0d45](https://github.com/photasajs/photasa-app/commit/63a0d45c48b2eb7b67e4bf542b156afe0e5c8fd3))
+* **photasa:** bundle theme CSS for Tauri production builds ([c16c820](https://github.com/photasajs/photasa-app/commit/c16c82008f1fff5b8bc10a3a6d037a575e6c7482))
+* **photasa:** bust thumbnail URLs from disk mtime after page reload (RFC 0148) ([1bc13f7](https://github.com/photasajs/photasa-app/commit/1bc13f7fa536b8554f182a5ba1685edae062f4ee))
+* **photasa:** defer Pinia access to scan queue mutations only ([4ec25af](https://github.com/photasajs/photasa-app/commit/4ec25af9b6a8a1fca923941d48fb8ca60283bef5))
+* **photasa:** make thumbnail mtime hydrate actually refresh the grid (RFC 0148) ([e1ef752](https://github.com/photasajs/photasa-app/commit/e1ef752475fdc408ff39c5431155cebbbb86eb0f))
+* **photasa:** persist thumbnail cache bust across folder navigation (RFC 0148) ([dcdcc62](https://github.com/photasajs/photasa-app/commit/dcdcc629fedaeb813c70a601b2c4f82356442701))
+* **release:** enable Linux appimage/deb/rpm bundles for tauri-action … ([c7d29e0](https://github.com/photasajs/photasa-app/commit/c7d29e0a260e0137a7ff1cfc305b23b250684714))
+* **release:** enable Linux appimage/deb/rpm bundles for tauri-action upload ([840566e](https://github.com/photasajs/photasa-app/commit/840566efa344635f5929be457d35261d791a183e))
+* **release:** enable Linux appimage/deb/rpm bundles for tauri-action upload ([f42385d](https://github.com/photasajs/photasa-app/commit/f42385d2f43c55960b53bc5d861f0874f6df92ec))
+* **release:** Linux bundle targets for tauri-action upload ([cf4d657](https://github.com/photasajs/photasa-app/commit/cf4d6574f08013acae781fbc29f15bdeb6b5ce2c))
+* **release:** pin release-please bootstrap-sha to v2.0.0 merge commit ([cdd1dd8](https://github.com/photasajs/photasa-app/commit/cdd1dd87b873fffc69339c95aa592c7a4f6e1d85))
+* **release:** standardize release-please tags to v* format ([a2be349](https://github.com/photasajs/photasa-app/commit/a2be349df7eec0593a0f5c0b4ef29c20c055db0a))
+* **release:** standardize release-please tags to v* format ([9f03c34](https://github.com/photasajs/photasa-app/commit/9f03c34e2914ac756609fdfdec7032c28b6c2059))
+* **tauri:** fix clippy warnings and configure ESLint for YuanTianGang ([a5cf85f](https://github.com/photasajs/photasa-app/commit/a5cf85f622093cbfcb2e6de1888dac9e989f56da))
+* **tauri:** resolve clippy warnings and include scan_queue modules ([b4841b5](https://github.com/photasajs/photasa-app/commit/b4841b5b51ad0f6033a18089b3f113bb6906f2d3))
+
 ## [2.0.0](https://github.com/photasajs/photasa-app/compare/photasa-v1.7.0...photasa-v2.0.0) (2026-07-23)
 
 
