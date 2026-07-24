@@ -31,12 +31,7 @@ import {
 
 const { t } = useI18n();
 
-const emit = defineEmits([
-    "openScanList",
-    "openImportPhotos",
-    "openPreference",
-    "menu-action",
-]);
+const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference", "menu-action"]);
 
 function openScanList() {
     emit("openScanList");

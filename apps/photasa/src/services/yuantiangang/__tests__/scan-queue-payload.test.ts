@@ -52,28 +52,20 @@ describe("scan-queue-payload", () => {
 
     it("applyScanQueueAdd 去重并追加", () => {
         const existing = [createScanQueueItem({ path: "/a" })];
-        const actions = [
-            createTestAction({ path: "/a" }),
-            createTestAction({ path: "/b/" }),
-        ];
+        const actions = [createTestAction({ path: "/a" }), createTestAction({ path: "/b/" })];
         const next = applyScanQueueAdd(existing, actions);
         expect(next).toHaveLength(2);
         expect(next.map((item) => item.path)).toEqual(["/a", "/b/"]);
     });
 
     it("applyScanQueueRemove 按路径移除", () => {
-        const existing = [
-            createScanQueueItem({ path: "/a" }),
-            createScanQueueItem({ path: "/b" }),
-        ];
+        const existing = [createScanQueueItem({ path: "/a" }), createScanQueueItem({ path: "/b" })];
         expect(applyScanQueueRemove(existing, "/a/")).toHaveLength(1);
         expect(applyScanQueueRemove(existing, "/a/")[0].path).toBe("/b");
     });
 
     it("applyScanQueueUpdate 合并状态与 updates", () => {
-        const existing = [
-            createScanQueueItem({ path: "/a", status: "pending", retryCount: 0 }),
-        ];
+        const existing = [createScanQueueItem({ path: "/a", status: "pending", retryCount: 0 })];
         const next = applyScanQueueUpdate(existing, "/a/", "running", {
             startedAt: 42,
             retryCount: 1,

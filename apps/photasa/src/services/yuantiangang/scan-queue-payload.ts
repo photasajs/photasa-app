@@ -46,8 +46,7 @@ export function applyScanQueueUpdate(
         return {
             ...item,
             status,
-            startedAt:
-                typeof updates.startedAt === "number" ? updates.startedAt : item.startedAt,
+            startedAt: typeof updates.startedAt === "number" ? updates.startedAt : item.startedAt,
             error: typeof updates.error === "string" ? updates.error : item.error,
             retryCount:
                 typeof updates.retryCount === "number" ? updates.retryCount : item.retryCount,

@@ -356,9 +356,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
 
         for (const scanAction of batch) {
             const operationType = scanAction.operationType || "directory";
-            logger.info(
-                `🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`,
-            );
+            logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`);
             this.scanQueue
                 .add(() =>
                     this.executeScan(
@@ -965,9 +963,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
         await this.createTasks(pending);
 
         for (const scanAction of pending) {
-            logger.info(
-                `🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`,
-            );
+            logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`);
             this.scanQueue
                 .add(() =>
                     this.executeScan(

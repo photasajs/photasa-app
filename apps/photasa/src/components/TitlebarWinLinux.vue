@@ -114,11 +114,7 @@ import { getPhotasaApi } from "@renderer/ipc/api-access";
 const { t } = useI18n();
 const photasaApi = getPhotasaApi();
 
-const emit = defineEmits([
-    "openScanList",
-    "openImportPhotos",
-    "openPreference",
-]);
+const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference"]);
 function openScanList() {
     emit("openScanList");
 }

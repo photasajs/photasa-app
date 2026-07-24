@@ -7,6 +7,16 @@ const legacyImportPaths = [
     "@renderer/ipc/api-access",
 ];
 
+const PHOTASA_PKG = "apps/photasa";
+
+/** lint-staged 从 monorepo 根目录传入 apps/photasa/src/... 路径，需双前缀匹配 override */
+function withLintStagedPaths(relativePaths) {
+    return relativePaths.flatMap((relativePath) => [
+        relativePath,
+        `${PHOTASA_PKG}/${relativePath}`,
+    ]);
+}
+
 const legacyImportDebtFiles = [
     "src/ipc/api-access.ts",
     "src/composables/useUpdateListener.ts",
@@ -175,52 +185,52 @@ module.exports = {
     },
     overrides: [
         {
-            files: legacyImportDebtFiles,
+            files: withLintStagedPaths(legacyImportDebtFiles),
             rules: {
                 "no-restricted-imports": tauriStaticImportRule,
                 "no-restricted-syntax": tauriDynamicImportRule,
             },
         },
         {
-            files: [...tauriTransportDebtFiles],
+            files: withLintStagedPaths(tauriTransportDebtFiles),
             rules: {
                 "no-restricted-imports": legacyStaticImportRule,
                 "no-restricted-syntax": legacyDynamicImportRule,
             },
         },
         {
-            files: ["src/api/env.ts"],
+            files: withLintStagedPaths(["src/api/env.ts"]),
             rules: {
                 "no-restricted-imports": reviewedCoreStaticImportRule,
                 "no-restricted-syntax": reviewedCoreDynamicImportRule,
             },
         },
         {
-            files: ["src/utils/media-url.ts"],
+            files: withLintStagedPaths(["src/utils/media-url.ts"]),
             rules: {
                 "no-restricted-imports": reviewedCoreStaticImportRule,
                 "no-restricted-syntax": reviewedStaticCoreOnlyDynamicImportRule,
             },
         },
         {
-            files: [
+            files: withLintStagedPaths([
                 "src/services/yuantiangang/yuantiangang.ts",
                 "src/services/yuantiangang/**/*.ts",
-            ],
+            ]),
             rules: {
                 "no-restricted-imports": "off",
                 "no-restricted-syntax": "off",
             },
         },
         {
-            files: ["src/App.vue"],
+            files: withLintStagedPaths(["src/App.vue"]),
             rules: {
                 "no-restricted-imports": "off",
                 "no-restricted-syntax": "off",
             },
         },
         {
-            files: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+            files: withLintStagedPaths(["src/**/*.test.ts", "src/**/*.spec.ts"]),
             rules: {
                 "no-restricted-imports": "off",
                 "no-restricted-syntax": "off",
