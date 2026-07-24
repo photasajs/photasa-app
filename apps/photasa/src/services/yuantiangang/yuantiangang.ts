@@ -593,7 +593,6 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     throw new Error("扫描队列持久化仅支持 Tauri 环境");
                 }
                 const context = (zhaoling.context ?? {}) as Record<string, unknown>;
-                const scanningStore = useScanningStore();
                 let queue: ScanQueueItem[];
 
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE) {
@@ -601,38 +600,43 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                         SCAN_QUEUE_COMMANDS.GET,
                     );
                     queue = normalizeRestoredQueue(rawQueue);
-                } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
-                    const actions = extractActionsFromContext(context);
-                    const persisted = actions.map(scanActionToPersistedEntry);
-                    const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.ADD, {
-                        actions: persisted,
-                    });
-                    queue = applyScanQueueAdd(scanningStore.queue, actions);
-                    logger.debug(
-                        `🔮 扫描队列入队 ack: len=${ack.queueLen} revision=${ack.revision}`,
-                    );
-                } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
-                    const path = String(context.path ?? "");
-                    const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.REMOVE, {
-                        path,
-                    });
-                    queue = applyScanQueueRemove(scanningStore.queue, path);
-                    logger.debug(
-                        `🔮 扫描队列移除 ack: len=${ack.queueLen} revision=${ack.revision}`,
-                    );
                 } else {
-                    const path = String(context.path ?? "");
-                    const status = String(context.status ?? "pending") as ScanQueueItem["status"];
-                    const updates = (context.updates ?? {}) as Record<string, unknown>;
-                    const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.UPDATE, {
-                        path,
-                        status,
-                        updates,
-                    });
-                    queue = applyScanQueueUpdate(scanningStore.queue, path, status, updates);
-                    logger.debug(
-                        `🔮 扫描队列更新 ack: len=${ack.queueLen} revision=${ack.revision}`,
-                    );
+                    const scanningStore = useScanningStore();
+                    if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
+                        const actions = extractActionsFromContext(context);
+                        const persisted = actions.map(scanActionToPersistedEntry);
+                        const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.ADD, {
+                            actions: persisted,
+                        });
+                        queue = applyScanQueueAdd(scanningStore.queue, actions);
+                        logger.debug(
+                            `🔮 扫描队列入队 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                        );
+                    } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
+                        const path = String(context.path ?? "");
+                        const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.REMOVE, {
+                            path,
+                        });
+                        queue = applyScanQueueRemove(scanningStore.queue, path);
+                        logger.debug(
+                            `🔮 扫描队列移除 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                        );
+                    } else {
+                        const path = String(context.path ?? "");
+                        const status = String(
+                            context.status ?? "pending",
+                        ) as ScanQueueItem["status"];
+                        const updates = (context.updates ?? {}) as Record<string, unknown>;
+                        const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.UPDATE, {
+                            path,
+                            status,
+                            updates,
+                        });
+                        queue = applyScanQueueUpdate(scanningStore.queue, path, status, updates);
+                        logger.debug(
+                            `🔮 扫描队列更新 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                        );
+                    }
                 }
 
                 const data: { queue: ScanQueueItem[] } = { queue };
