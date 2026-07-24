@@ -1,3 +1,6 @@
+/**
+ * @deprecated RFC 0154：组件改用负责人物服务；本模块将在 Phase 3 删除。
+ */
 import type { ImportCallback } from "@photasa/common";
 import type { DirectorySelection, PathName } from "@photasa/common";
 import { useTask } from "vue-concurrency";

@@ -1,6 +1,6 @@
 /**
- * RFC 0137：扁平 Photasa API 单例（Tauri invoke + 事件），替代组件层直接读 `window.api`。
- * `adapter.ts` 仍将同一实例挂到 `window.api` 供遗留调用；新代码应 import 本模块。
+ * RFC 0137：扁平 Photasa API 模块单例（Tauri invoke + 事件）。
+ * RFC 0154：迁移期兼容入口；新代码禁止使用。
  */
 import { createLegacyApi } from "@renderer/api/legacy-api";
 import type { PhotasaFlatApi } from "./photasa-flat-api";
@@ -10,11 +10,12 @@ export type { PhotasaFlatApi };
 
 let cachedApi: PhotasaFlatApi | null = null;
 
-/** 惰性单例，避免重复构建 legacy 兼容层 */
+/**
+ * 惰性模块单例，避免重复构建 legacy 兼容层。
+ *
+ * @deprecated RFC 0154：改用负责人物服务；Phase 3 删除。
+ */
 export function getPhotasaApi(): PhotasaFlatApi {
-    if (typeof window !== "undefined" && (window as Window & { api?: PhotasaFlatApi }).api) {
-        return (window as Window & { api: PhotasaFlatApi }).api;
-    }
     if (!cachedApi) {
         cachedApi = createLegacyApi();
     }

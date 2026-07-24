@@ -187,9 +187,10 @@ Rust event
 
 ### Phase 1 — 止血
 
-- [ ] 删除 `adapter.ts` 的 `window.api = createLegacyApi()`
-- [ ] 标记 `getPhotasaApi` / `utils/api` `@deprecated`（迁移完成前临时保留）
-- [ ] **禁止新增** `utils/api` 调用（lint）
+- [x] 2026-07-24 删除 `adapter.ts` 的 `window.api = createLegacyApi()`、`main.ts` 副作用 import，以及 `getPhotasaApi()` 的 `window.api` fallback；模块 singleton 继续承接迁移期调用。
+- [x] 标记 `getPhotasaApi` / `utils/api` `@deprecated`（迁移完成前临时保留）。
+- [x] **禁止新增** `utils/api` 调用（lint）。
+- [x] Phase 1 验证：生产注入与启动副作用 0 命中；RFC/legacy 定向 55/55；全量 108 files、1169 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
 
 ### Phase 2 — 按域迁贞观（每域一 PR，顺序建议）
 

@@ -14,9 +14,6 @@ import { LishiminService, LISSHIMING_TOKEN } from "./services";
 import { loggers } from "@photasa/common";
 import { isTauri } from "./api/env";
 
-// 导入 API 适配层
-import "./api/adapter";
-
 const logger = loggers.app;
 
 logger.info("📦 开天辟地");

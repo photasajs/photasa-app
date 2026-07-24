@@ -1,7 +1,6 @@
 /**
  * Tauri API 适配层
- * 提供统一的 API 接口，将 legacy preload API 调用转换为 Tauri API
- * RFC 0074/0075: 在 Tauri 下注入扁平 legacy API，与 legacy.ts 同形
+ * RFC 0154 迁移期内部聚合：仅供 legacy-api 委托，Phase 3 删除。
  */
 
 import { isTauri } from "./env";
@@ -11,7 +10,6 @@ import { scanAdapter } from "./scan.adapter";
 import { thumbnailAdapter } from "./thumbnail.adapter";
 import { importAdapter } from "./import.adapter";
 import { configAdapter } from "./config.adapter";
-import { createLegacyApi } from "./legacy-api";
 
 /**
  * 统一 API 接口（嵌套形态，供 legacy-api 内部委托）
@@ -41,10 +39,5 @@ export const api = {
         platform: isTauri() ? "tauri" : "legacy",
     },
 };
-
-// 全局注入：始终使用扁平 legacy API（RFC 0075），与 legacy.ts 同形，避免 window.api.xxx 未定义
-if (typeof window !== "undefined") {
-    (window as any).api = createLegacyApi();
-}
 
 export default api;
