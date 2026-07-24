@@ -1,7 +1,7 @@
 # RFC 0154: 退役 `legacy-api` / `utils/api` — 回归贞观 IPC 边界
 
 - **Start Date**: 2026-07-21
-- **Last updated**: 2026-07-22
+- **Last updated**: 2026-07-24
 - **Status**: Draft（Photasa UI RFC，**非 Active**；Rust 命令面 [0097](./completed/0097-tauri-legacy-api-deferred-surface.md) ✅）
 - **Priority**: P1
 - **Area**: Photasa / Vue / 贞观之治 / IPC 边界
@@ -214,6 +214,8 @@ Rust event
 5. `rg` 该域零 `utils/api`
 6. 该域零袁天罡外业务 `invoke` / `listen`
 7. `*.test.ts` + `*.spec.ts` 全绿
+
+- [x] Phase 2a 验证：删除无生产执行者的 `scan-folder.ts` 与 `utils/api.scanPhotos`；`App.vue` 扫描空闲状态改读 `useYuChiGong().queueSize`；Preference 删除无效 legacy task cancel；尉迟恭仍经 `ZOUZHE_MATTERS.SCAN_PHOTOS` 送房玄龄/袁天罡。定向 160/160；全量 109 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
 
 ### Phase 3 — 删尸
 

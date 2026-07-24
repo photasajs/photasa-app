@@ -7,7 +7,6 @@ import { useTask } from "vue-concurrency";
 import type { WatchConfig, WatchCallback } from "@photasa/common";
 import type { ThumbnailRequest } from "@photasa/common";
 import type { ImageInfo } from "@photasa/common";
-import type { ScanAction, ScanArgs } from "@photasa/common";
 import type { PhotasaConfig } from "@photasa/common";
 import type {
     ImportConfig,
@@ -93,10 +92,6 @@ export function getFileMetadata(pathOrUrl: string): Promise<FileMetadata> {
 
 export function getFilesModified(paths: string[]): Promise<Record<string, number>> {
     return api().getFilesModified(paths);
-}
-
-export function scanPhotos(folder: ScanAction): Promise<ScanArgs> {
-    return api().scanPhotos(folder);
 }
 
 export async function addToPhotoList(

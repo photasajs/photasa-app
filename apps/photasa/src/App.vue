@@ -14,7 +14,6 @@ import {
     cleanupRecoverableImport,
     keepRecoverableImport,
 } from "@renderer/utils/api";
-import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import { startFileWatching } from "./utils/file-handler";
 import { loggers } from "@photasa/common";
 import { getPhotasaApi } from "@renderer/ipc/api-access";
@@ -42,6 +41,7 @@ import LogConsole from "./components/LogConsole.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
+import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { isTauri } from "./api/env";
@@ -62,6 +62,7 @@ const { paths, currentFolder } = storeToRefs(preferenceStore);
  * QinQiong service
  */
 const qinQiong = useQinQiong();
+const yuChiGong = useYuChiGong();
 
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
@@ -248,7 +249,7 @@ onMounted(async () => {
     );
 
     // 初始化扫描监控服务
-    scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
+    scanMonitoringService.setScanIdleChecker(() => yuChiGong.queueSize === 0);
     scanMonitoringService.startMonitoring(() => {
         logger.info("👑 [扫描监控] 自动恢复触发");
         // ✅ RFC 0048: 尉迟恭的watch会自动触发扫描

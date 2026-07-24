@@ -4,7 +4,6 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 
 // Mock all dependencies to prevent complex component loading
 vi.mock("@renderer/utils/api");
-vi.mock("@renderer/utils/scan-folder");
 vi.mock("./utils/file-handler");
 vi.mock("@renderer/services/theme-manager");
 vi.mock("@renderer/stores/photos");

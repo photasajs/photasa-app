@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
-import { scanPhotosTask } from "@renderer/utils/scan-folder";
 import {
     cleanupScanQueue,
     isVideoFile,
@@ -607,12 +606,6 @@ export const usePreferenceStore = defineStore("preference", {
                 this.folderTree.splice(found, 1);
             }
 
-            // Cancel any running scan tasks
-            if (scanPhotosTask.isRunning) {
-                logger.info("✍️ 取消正在运行的扫描任务");
-                scanPhotosTask.cancelAll();
-            }
-
             // Clean up the scan queue
             logger.info("✍️ 清理扫描队列");
             cleanupScanQueue(path);
@@ -740,10 +733,6 @@ export const usePreferenceStore = defineStore("preference", {
          * 2. 逐一 addPath 并调用 resetPhotasaConfig 重建缓存
          */
         async resetAllFolders(newDirs: string[]) {
-            // 停止所有扫描任务
-            if (scanPhotosTask.isRunning) {
-                scanPhotosTask.cancelAll();
-            }
             this.scanning.paths = [];
             this.appState.folderTree = [];
             this.appState.scanningFolder = [];
