@@ -38,6 +38,8 @@ const tauriTransportDebtFiles = [
     "src/api/thumbnail.adapter.ts",
     "src/api/window.adapter.ts",
     "src/stores/import-session.ts",
+    "src/services/yuantiangang/yuantiangang.ts",
+    "src/services/yuantiangang/**/*.ts",
 ];
 
 const legacyStaticImportRule = [
@@ -81,16 +83,55 @@ const legacyDynamicImportRule = [
     },
 ];
 
+const tauriCoreDynamicRestriction = {
+    selector: "ImportExpression[source.value='@tauri-apps/api/core']",
+    message: "RFC 0154: dynamic Tauri transport belongs to YuanTianGang.",
+};
+
+const tauriEventDynamicRestriction = {
+    selector: "ImportExpression[source.value='@tauri-apps/api/event']",
+    message: "RFC 0154: dynamic Tauri event transport belongs to YuanTianGang.",
+};
+
+const tauriPluginDynamicRestriction = {
+    selector: "ImportExpression[source.value=/^@tauri-apps\\x2Fplugin-/]",
+    message: "RFC 0154: dynamic Tauri plugin cannot bypass YuanTianGang.",
+};
+
 const tauriDynamicImportRule = [
     "error",
+    tauriCoreDynamicRestriction,
+    tauriEventDynamicRestriction,
+    tauriPluginDynamicRestriction,
+];
+
+const reviewedCoreStaticImportRule = [
+    "error",
     {
-        selector: "ImportExpression[source.value=/^@tauri-apps\\x2Fapi\\x2F(core|event)$/]",
-        message: "RFC 0154: dynamic Tauri transport belongs to YuanTianGang.",
+        paths: [
+            ...legacyStaticImportRule[1].paths,
+            {
+                name: "@tauri-apps/api/core",
+                importNames: ["invoke"],
+                message: "RFC 0154: business invoke belongs to YuanTianGang.",
+            },
+            tauriStaticImportRule[1].paths[1],
+        ],
+        patterns: tauriStaticImportRule[1].patterns,
     },
-    {
-        selector: "ImportExpression[source.value=/^@tauri-apps\\x2Fplugin-/]",
-        message: "RFC 0154: dynamic Tauri plugin cannot bypass YuanTianGang.",
-    },
+];
+
+const reviewedCoreDynamicImportRule = [
+    "error",
+    ...legacyDynamicImportRule.slice(1),
+    tauriEventDynamicRestriction,
+    tauriPluginDynamicRestriction,
+];
+
+const reviewedStaticCoreOnlyDynamicImportRule = [
+    "error",
+    ...legacyDynamicImportRule.slice(1),
+    ...tauriDynamicImportRule.slice(1),
 ];
 
 module.exports = {
@@ -141,19 +182,31 @@ module.exports = {
             },
         },
         {
-            files: [
-                ...tauriTransportDebtFiles,
-                "src/api/env.ts",
-                "src/utils/media-url.ts",
-                "src/services/yuantiangang/**/*.ts",
-            ],
+            files: [...tauriTransportDebtFiles],
             rules: {
                 "no-restricted-imports": legacyStaticImportRule,
                 "no-restricted-syntax": legacyDynamicImportRule,
             },
         },
         {
-            files: ["src/services/yuantiangang/**/*.ts"],
+            files: ["src/api/env.ts"],
+            rules: {
+                "no-restricted-imports": reviewedCoreStaticImportRule,
+                "no-restricted-syntax": reviewedCoreDynamicImportRule,
+            },
+        },
+        {
+            files: ["src/utils/media-url.ts"],
+            rules: {
+                "no-restricted-imports": reviewedCoreStaticImportRule,
+                "no-restricted-syntax": reviewedStaticCoreOnlyDynamicImportRule,
+            },
+        },
+        {
+            files: [
+                "src/services/yuantiangang/yuantiangang.ts",
+                "src/services/yuantiangang/**/*.ts",
+            ],
             rules: {
                 "no-restricted-imports": "off",
                 "no-restricted-syntax": "off",

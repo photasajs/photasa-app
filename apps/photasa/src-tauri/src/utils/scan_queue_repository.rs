@@ -239,9 +239,11 @@ mod tests {
             "source": "discovered",
             "status": "pending"
         });
+        let parent_actions = [parent_action];
+        let child_actions = [child_action];
         let (parent_result, child_result) = tokio::join!(
-            parent.add_actions(&[parent_action]),
-            child.add_actions(&[child_action])
+            parent.add_actions(&parent_actions),
+            child.add_actions(&child_actions)
         );
 
         assert_eq!(parent_result.expect("parent add").queue_len, 2);
@@ -277,13 +279,14 @@ mod tests {
         let updater = repo.clone();
         let adder = repo.clone();
         let updates = json!({ "startedAt": 1_700_000_000_001_i64 });
+        let new_actions = [json!({
+            "path": "/new-child",
+            "action": "scan",
+            "status": "pending"
+        })];
         let (update_result, add_result) = tokio::join!(
             updater.update_action_status("/existing", "processing", &updates),
-            adder.add_actions(&[json!({
-                "path": "/new-child",
-                "action": "scan",
-                "status": "pending"
-            })])
+            adder.add_actions(&new_actions)
         );
 
         update_result.expect("update");

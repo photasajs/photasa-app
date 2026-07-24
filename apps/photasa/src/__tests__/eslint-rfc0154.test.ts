@@ -102,6 +102,16 @@ describe("RFC 0154 Tauri transport gate", () => {
             'void import("@tauri-apps/api/core");\n',
             "no-restricted-syntax",
         ],
+        [
+            "src/api/env.ts",
+            'import { invoke } from "@tauri-apps/api/core";\nvoid invoke;\n',
+            "no-restricted-imports",
+        ],
+        [
+            "src/utils/media-url.ts",
+            'import { invoke } from "@tauri-apps/api/core";\nvoid invoke;\n',
+            "no-restricted-imports",
+        ],
     ])("keeps reviewed helper whitelist narrow in %s", async (relativePath, source, ruleId) => {
         const messages = await lintProbe(source, relativePath);
         expect(messages.some((message) => message.ruleId === ruleId)).toBe(true);

@@ -39,7 +39,7 @@
 **目标**：消除 `utils/api.ts` 与 `legacy-api.ts` 的组件级旁路，按能力彻底迁移至贞观人物与 `YuanTianGangService` 私有 `transport/` 模块，全面清理反模式。
 
 - [x] Phase 0a：按定义、消费者、注释分别盘点真实基线（`window.api` 仍有 1 处赋值；`getPhotasaApi` / `legacy-api` 仍在生产链；生产 `utils/api` import 11 文件）
-- [ ] Phase 0b：ESLint AST 门禁（legacy 三入口静态/动态 import ✅；袁天罡外业务 IPC 与插件旁路待实施）
+- [x] Phase 0b：ESLint AST 门禁（legacy 三入口、袁天罡外 Tauri transport、插件旁路、非业务白名单均已覆盖；21/21）
 - [x] Phase 0c：Vitest 同时收集 `*.test.ts` / `*.spec.ts`（104 files passed；1125 passed / 3 skipped）
 - [ ] Phase 1：停 `window.api` 注入，标记 `utils/api` `@deprecated`
 - [ ] Phase 2a：扫描域迁移 (`scan-folder.ts` $\rightarrow$ 尉迟恭 + 袁天罡)

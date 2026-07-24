@@ -31,10 +31,15 @@ import {
 import { extractFolderTreeFromContext } from "./folder-tree-payload";
 import { buildPreferencesDelta, PREFERENCE_ZHAOLING_MATTERS } from "./preferences-delta";
 import {
+    applyScanQueueAdd,
+    applyScanQueueRemove,
+    applyScanQueueUpdate,
     extractActionsFromContext,
     normalizeRestoredQueue,
     scanActionToPersistedEntry,
+    type ScanQueueAck,
 } from "./scan-queue-payload";
+import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { FileOperation } from "@photasa/common";
 
@@ -576,7 +581,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
         const startTime = Date.now();
 
-        // RFC 0136/0143：扫描队列 — 袁天罡 executeZhaoling 内唯一 invoke（无 *-bridge.ts）
+        // RFC 0136/0143/0162：扫描队列 — Ack IPC + 本地 patch（禁止突变回传全表）
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE ||
             zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION ||
@@ -588,37 +593,50 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     throw new Error("扫描队列持久化仅支持 Tauri 环境");
                 }
                 const context = (zhaoling.context ?? {}) as Record<string, unknown>;
-                let rawQueue: Record<string, unknown>[];
+                const scanningStore = useScanningStore();
+                let queue: ScanQueueItem[];
 
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE) {
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.GET);
-                } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
-                    const actions = extractActionsFromContext(context).map(
-                        scanActionToPersistedEntry,
+                    const rawQueue = await invoke<Record<string, unknown>[]>(
+                        SCAN_QUEUE_COMMANDS.GET,
                     );
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.ADD, {
-                        actions,
+                    queue = normalizeRestoredQueue(rawQueue);
+                } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
+                    const actions = extractActionsFromContext(context);
+                    const persisted = actions.map(scanActionToPersistedEntry);
+                    const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.ADD, {
+                        actions: persisted,
                     });
+                    queue = applyScanQueueAdd(scanningStore.queue, actions);
+                    logger.debug(
+                        `🔮 扫描队列入队 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                    );
                 } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
                     const path = String(context.path ?? "");
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.REMOVE, {
+                    const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.REMOVE, {
                         path,
                     });
+                    queue = applyScanQueueRemove(scanningStore.queue, path);
+                    logger.debug(
+                        `🔮 扫描队列移除 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                    );
                 } else {
                     const path = String(context.path ?? "");
-                    const status = String(context.status ?? "pending");
+                    const status = String(context.status ?? "pending") as ScanQueueItem["status"];
                     const updates = (context.updates ?? {}) as Record<string, unknown>;
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.UPDATE, {
+                    const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.UPDATE, {
                         path,
                         status,
                         updates,
                     });
+                    queue = applyScanQueueUpdate(scanningStore.queue, path, status, updates);
+                    logger.debug(
+                        `🔮 扫描队列更新 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                    );
                 }
 
-                const data: { queue: ScanQueueItem[] } = {
-                    queue: normalizeRestoredQueue(rawQueue),
-                };
-                logger.info(`🔮 扫描队列已同步: ${zhaoling.command}，${data.queue.length} 项`);
+                const data: { queue: ScanQueueItem[] } = { queue };
+                logger.debug(`🔮 扫描队列已同步: ${zhaoling.command}，${data.queue.length} 项`);
                 return {
                     acknowledged: true,
                     command: zhaoling.command,

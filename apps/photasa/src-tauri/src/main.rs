@@ -258,6 +258,14 @@ fn main() {
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
+                // RFC 0162：退出前刷尽防抖落盘队列，避免丢 scanning.json
+                if let Some(repo) = app_handle.try_state::<ScanQueueRepositoryHandle>() {
+                    tauri::async_runtime::block_on(async {
+                        if let Err(error) = repo.flush_persist().await {
+                            log::warn!("⚠️ 退出前扫描队列落盘失败: {error}");
+                        }
+                    });
+                }
                 #[cfg(not(any(target_os = "android", target_os = "ios")))]
                 if let Some(periodic) = app_handle.try_state::<UpdatePeriodicHandle>() {
                     periodic.stop();

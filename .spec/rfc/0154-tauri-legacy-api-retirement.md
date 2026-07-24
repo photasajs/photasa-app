@@ -179,10 +179,10 @@ Rust event
     - `getPhotasaApi`：定义仍在 `ipc/api-access.ts`；生产消费者包括 `App.vue`、`LogConsole.vue`、`TitlebarWinLinux.vue`、`UpdateSettings.vue`、`useUpdateListener.ts`、`folderSelectionService.ts`、`api-path.ts`、`utils/api.ts`。
     - `@renderer/utils/api` 精确生产 import：**11 文件**（原清单不变）。
     - 袁天罡外 `@tauri-apps/api`：仍有 adapter、legacy、`App.vue`、`main.ts`、`import-session.ts`、`env.ts`、`media-url.ts` 等；其中 `env.ts` / `media-url.ts` 含允许的非业务 IPC 能力。
-- [ ] ESLint AST 门禁同时覆盖 `ImportDeclaration` 与 `ImportExpression`：
+- [x] 2026-07-23 ESLint AST 门禁同时覆盖 `ImportDeclaration` 与 `ImportExpression`：
     - [x] 2026-07-23 禁止新文件静态或动态导入 `@renderer/utils/api`、`@renderer/api/legacy-api`、`@renderer/ipc/api-access`；现有 19 个生产消费者列入临时债务清单，测试 mock 显式豁免。
-    - [ ] 袁天罡 transport 外禁止导入/动态导入业务 `invoke`、`listen`，并禁止以 `@tauri-apps/plugin-*` 绕过。
-    - [ ] 非业务 IPC 白名单仅含经审查的 `api/env.ts` runtime 检测与 `utils/media-url.ts` `convertFileSrc`。
+    - [x] 袁天罡 transport 外禁止新文件静态或动态导入 Tauri core/event/plugin；现有 adapter、legacy、`App.vue`、`main.ts`、`import-session.ts` 保留为临时债务。
+    - [x] 非业务 IPC 白名单收窄到 `api/env.ts` 与 `utils/media-url.ts`：两者禁止 event/plugin 和静态 `invoke`，`media-url.ts` 另禁动态 core；门禁回归测试 21/21 通过。
 - [x] 2026-07-23 Vitest 配置同时纳入 `src/**/*.test.ts` 与 `src/**/*.spec.ts`；配置回归测试已锁定两类 glob，全量结果为 104 files passed、1125 passed / 3 skipped。
 
 ### Phase 1 — 止血

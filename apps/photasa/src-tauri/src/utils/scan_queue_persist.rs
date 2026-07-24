@@ -72,12 +72,10 @@ impl PersistCoalescer {
         loop {
             self.notify.notified().await;
 
-            loop {
-                match tokio::time::timeout(self.debounce, self.notify.notified()).await {
-                    Ok(_) => continue,
-                    Err(_) => break,
-                }
-            }
+            while tokio::time::timeout(self.debounce, self.notify.notified())
+                .await
+                .is_ok()
+            {}
 
             let snapshot = {
                 let mut guard = self.latest.lock().await;

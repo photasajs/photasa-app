@@ -1,0 +1,53 @@
+---
+description: >-
+  Photasa Tauri IPC must follow RFC 0162 (scan queue) and the project-wide
+  non-blocking command rules. Apply when editing scan_queue_* commands,
+  yuantiangang/yuchigong scan queue paths, or any Tauri invoke that mutates SSOT.
+alwaysApply: true
+---
+
+# Photasa — RFC 0162 / 非阻塞 Tauri IPC
+
+**权威规格**：`.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md`
+
+实现或审查扫描队列与同类 Tauri command 时 **必须** 与 RFC 一致，不得回退为「突变回传全表 + 同步落盘 + Pinia 整表 replace」。
+
+## 扫描队列（RFC 0162）
+
+| 层 | 要求 |
+| --- | --- |
+| Rust 突变 command | 返回 `ScanQueueAck { queueLen, revision }`；`mutate()` 不 await 磁盘 |
+| Rust 持久化 | `PersistCoalescer` 300ms 防抖 + `spawn_blocking` 序列化 |
+| Rust 查询 | 仅 `scan_queue_get` 返回全量 |
+| Renderer 袁天罡 | 突变：`invoke` Ack + `applyScanQueueAdd/Remove/Update` 本地 patch Pinia |
+| Renderer 尉迟恭 | `source === "auto"` 发现目录：`SCAN_QUEUE_DISCOVERED_BATCH_MS`（250ms）批量 `createTasks` |
+
+关键文件：
+
+- `apps/photasa/src-tauri/src/utils/scan_queue_*.rs`
+- `apps/photasa/src-tauri/src/commands/scan_queue.rs`
+- `apps/photasa/src/services/yuantiangang/scan-queue-{contract,payload}.ts`
+- `apps/photasa/src/services/yuantiangang/yuantiangang.ts`
+- `apps/photasa/src/services/yuchigong/yuchigong.ts`
+
+## 项目级 Tauri command 规范（0162 §6）
+
+1. `async` ≠ 非阻塞：禁止热路径 await 大序列化、全量磁盘 I/O、O(n) clone 回传。
+2. 突变 vs 查询分离：突变返回 Ack / delta / revision。
+3. 重 CPU/IO → `spawn_blocking` 或后台 task；command 只更新内存 SSOT。
+4. Renderer 乐观/本地 patch；勿每次突变拉全量 SSOT。
+5. 风暴事件 coalesce/debounce。
+6. 热路径 `debug` 日志；`info` 仅里程碑。
+
+## 变更检查清单
+
+- [ ] 突变 IPC 未回传 `Vec`/全表 queue
+- [ ] 前端未对每次突变 `normalizeRestoredQueue` 全表
+- [ ] `discovered` 未逐目录单条 `ADD_SCAN_ACTION`
+- [ ] `cargo test scan_queue` 与相关 Vitest 已更新并通过
+
+## RFC 总则
+
+- 进度与 Active RFC：`ROADMAP.md`、`TASK_TRACKING.md`
+- RFC 正文：`.spec/rfc/`、`.spec/rfc/completed/`
+- Photasa 实现须 **Rust-first**；Electron/Node 仅作行为参考（见 `AGENTS.md`）

@@ -25,6 +25,7 @@ import {
 import { useScanningStore } from "../fangxuanling/stores/scanning-store";
 import { createScanQueueItem } from "@renderer/stores/scanning-types";
 import { SCAN_QUEUE_COMMANDS } from "../yuantiangang/tauri-command-names";
+import type { ScanQueueAck } from "../yuantiangang/scan-queue-contract";
 import { getLegacyPreloadApi, getLegacyShell } from "@/api/legacy-preload-access";
 
 const mockTauriInvoke = vi.hoisted(() => vi.fn());
@@ -32,6 +33,12 @@ const mockInvokeLock = vi.hoisted(() => ({
     chain: Promise.resolve() as Promise<unknown>,
 }));
 let mockPersistedQueue: Record<string, unknown>[] = [];
+let mockQueueRevision = 0;
+
+function makeScanQueueAck(): ScanQueueAck {
+    mockQueueRevision += 1;
+    return { queueLen: mockPersistedQueue.length, revision: mockQueueRevision };
+}
 
 function runSerializedMockInvoke<T>(operation: () => Promise<T>): Promise<T> {
     const next = mockInvokeLock.chain.then(() => operation());
@@ -45,7 +52,7 @@ function runSerializedMockInvoke<T>(operation: () => Promise<T>): Promise<T> {
 function handleMockScanQueueInvoke(
     command: string,
     args?: Record<string, unknown>,
-): Record<string, unknown>[] | null {
+): Record<string, unknown>[] | ScanQueueAck | null {
     if (command === SCAN_QUEUE_COMMANDS.GET) {
         return [...mockPersistedQueue];
     }
@@ -57,12 +64,12 @@ function handleMockScanQueueInvoke(
                 mockPersistedQueue.push(action);
             }
         }
-        return [...mockPersistedQueue];
+        return makeScanQueueAck();
     }
     if (command === SCAN_QUEUE_COMMANDS.REMOVE) {
         const path = String(args?.path ?? "");
         mockPersistedQueue = mockPersistedQueue.filter((item) => item.path !== path);
-        return [...mockPersistedQueue];
+        return makeScanQueueAck();
     }
     if (command === SCAN_QUEUE_COMMANDS.UPDATE) {
         const path = String(args?.path ?? "");
@@ -71,7 +78,7 @@ function handleMockScanQueueInvoke(
         mockPersistedQueue = mockPersistedQueue.map((item) =>
             item.path === path ? { ...item, status, ...updates } : item,
         );
-        return [...mockPersistedQueue];
+        return makeScanQueueAck();
     }
     return null;
 }
@@ -106,6 +113,7 @@ describe("扫描队列集成测试 - RFC 0042 Phase 2.6", () => {
         setActivePinia(pinia);
 
         mockPersistedQueue = [];
+        mockQueueRevision = 0;
         mockInvokeLock.chain = Promise.resolve();
         mockTauriInvoke.mockReset();
         mockTauriInvoke.mockImplementation((command: string, args?: Record<string, unknown>) =>
