@@ -2,10 +2,6 @@
  * @deprecated RFC 0154：组件改用负责人物服务；本模块将在 Phase 3 删除。
  */
 import type { DirectorySelection, PathName } from "@photasa/common";
-import { useTask } from "vue-concurrency";
-import type { ThumbnailRequest } from "@photasa/common";
-import type { ImageInfo } from "@photasa/common";
-import type { FileMetadata } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import { getPhotasaApi } from "@renderer/ipc/api-access";
 import { getLegacyShell } from "@/api/legacy-preload-access";
@@ -37,32 +33,6 @@ export function setupMenu(callback: MenuCallback): void {
 
 export function getDirectory(name: PathName): Promise<string | null> {
     return api().getDirectory(name);
-}
-
-export const createThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const result = yield api().createThumbnail(request);
-    return result;
-})
-    .enqueue()
-    .maxConcurrency(2);
-
-export const removeThumbnailTask = useTask(function* (_, request: ThumbnailRequest) {
-    const result = yield api().removeThumbnail(request);
-    return result;
-})
-    .enqueue()
-    .maxConcurrency(1);
-
-export function getImageType(path: string): Promise<ImageInfo> {
-    return api().getImageType(path);
-}
-
-export function getFileMetadata(pathOrUrl: string): Promise<FileMetadata> {
-    return api().getFileMetadata(pathOrUrl);
-}
-
-export function getFilesModified(paths: string[]): Promise<Record<string, number>> {
-    return api().getFilesModified(paths);
 }
 
 export function scanSubfolders(folder: string): Promise<string[]> {

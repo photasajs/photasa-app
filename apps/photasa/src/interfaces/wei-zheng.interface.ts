@@ -1,5 +1,17 @@
 import type { InjectionKey } from "vue";
-import type { FolderNode, PhotasaConfig } from "@photasa/common";
+import type {
+    FileMetadata,
+    FolderNode,
+    PhotasaConfig,
+    ThumbnailRequest,
+    ThumbnailResponse,
+} from "@photasa/common";
+
+export interface IGalleryMediaOperations {
+    createThumbnail(request: ThumbnailRequest): Promise<ThumbnailResponse>;
+    fileMetadata(path: string): Promise<FileMetadata>;
+    filesModified(paths: string[]): Promise<Record<string, number>>;
+}
 
 /**
  * 魏征服务接口
@@ -24,6 +36,7 @@ import type { FolderNode, PhotasaConfig } from "@photasa/common";
  * 在架构中负责监察和管理应用运行时状态
  */
 export interface IWeiZhengService {
+    readonly gallery: IGalleryMediaOperations;
     /**
      * 服务名称（IService接口要求）
      */

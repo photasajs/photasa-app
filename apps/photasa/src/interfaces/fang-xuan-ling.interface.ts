@@ -297,6 +297,9 @@ export const ZOUZHE_MATTERS = {
     GET_RECOVERABLE_IMPORTS: "get_recoverable_imports",
     CLEANUP_RECOVERABLE_IMPORT: "cleanup_recoverable_import",
     KEEP_RECOVERABLE_IMPORT: "keep_recoverable_import",
+    CREATE_THUMBNAIL: "create_thumbnail",
+    EXTRACT_METADATA: "extract_metadata",
+    GET_FILES_MODIFIED: "get_files_modified",
 } as const;
 
 /**

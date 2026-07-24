@@ -47,6 +47,7 @@ import type { FileOperation } from "@photasa/common";
 import { joinPathSync, toDirNameSync } from "@renderer/utils/sync-path";
 import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
 import { ImportTransport } from "./transport/import-transport";
+import { MediaTransport, type MediaMatter } from "./transport/media-transport";
 
 const logger = loggers.yuantiangang;
 const IMPORT_ZHAOLING_MATTERS = new Set<string>([
@@ -64,6 +65,11 @@ const IMPORT_ZHAOLING_MATTERS = new Set<string>([
     ZOUZHE_MATTERS.CLEANUP_RECOVERABLE_IMPORT,
     ZOUZHE_MATTERS.KEEP_RECOVERABLE_IMPORT,
 ]);
+const MEDIA_ZHAOLING_MATTERS = new Set<string>([
+    ZOUZHE_MATTERS.CREATE_THUMBNAIL,
+    ZOUZHE_MATTERS.EXTRACT_METADATA,
+    ZOUZHE_MATTERS.GET_FILES_MODIFIED,
+]);
 
 /**
  * 袁天罡钦天监服务实现
@@ -72,6 +78,7 @@ const IMPORT_ZHAOLING_MATTERS = new Set<string>([
 export class YuanTianGangService implements IService, IYuanTianGangService {
     readonly name = "袁天罡";
     readonly importEvents: ImportTransport;
+    private readonly media: MediaTransport;
     private progressCleanupFn?: () => void;
     private statusCleanupFn?: () => void;
     private qianliyanCleanupFn?: () => void;
@@ -86,6 +93,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
     constructor() {
         logger.info("🔮 就任，开始处理天界通信");
         this.importEvents = new ImportTransport({ enabled: isTauri() });
+        this.media = new MediaTransport({ invoke });
         this.setupTianshuEventListening();
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
@@ -669,6 +677,37 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     blessing: "导入政务执行失败",
                     timestamp: Date.now(),
                     error: error instanceof Error ? error.message : "导入操作异常",
+                };
+            }
+        }
+
+        if (MEDIA_ZHAOLING_MATTERS.has(zhaoling.command)) {
+            try {
+                if (!isTauri()) throw new Error("图库操作仅支持 Tauri 环境");
+                const data = await this.media.execute(
+                    zhaoling.command as MediaMatter,
+                    zhaoling.context ?? {},
+                );
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "图库政务执行成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "media-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "图库政务执行失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "图库操作异常",
                 };
             }
         }

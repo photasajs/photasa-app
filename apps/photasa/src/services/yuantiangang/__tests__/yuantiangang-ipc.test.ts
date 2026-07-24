@@ -101,6 +101,30 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         }
     });
 
+    it("图库元数据诏令只经袁天罡 private transport", async () => {
+        mockInvoke.mockResolvedValue({ name: "a.jpg" });
+
+        const response = await service.executeZhaoling({
+            command: "extract_metadata",
+            context: { path: "file:///photos/a.jpg" },
+            timestamp: Date.now(),
+            source: "魏征",
+            priority: "normal",
+        });
+
+        expect(response).toMatchObject({
+            acknowledged: true,
+            data: { name: "a.jpg" },
+        });
+        expect(mockInvoke).toHaveBeenCalledWith("extract_metadata", {
+            args: {
+                request: {
+                    filePath: "/photos/a.jpg",
+                },
+            },
+        });
+    });
+
     it("picasa:add-to-scan-queue 事件触发后启奏 watch_scan_queue_add", async () => {
         const listenCall = mockListen.mock.calls.find(
             (call) => call[0] === WATCH_EVENTS.SCAN_QUEUE_ADD,

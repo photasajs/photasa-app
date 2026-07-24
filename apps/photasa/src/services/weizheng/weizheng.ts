@@ -24,6 +24,8 @@ import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengz
 import { deepClone } from "@photasa/common";
 import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
 import { isSameFolderTree } from "@renderer/utils/folder-tree-compare";
+import { createGalleryMediaOperations } from "./gallery-media";
+import type { IGalleryMediaOperations } from "@renderer/interfaces/wei-zheng.interface";
 
 const logger = loggers.weizheng;
 
@@ -57,6 +59,7 @@ const logger = loggers.weizheng;
  * @date 2025-10-30
  */
 export class WeiZhengService implements IService, IWeiZhengService {
+    readonly gallery: IGalleryMediaOperations;
     /**
      * 启奏事件总线
      * 用于向李世民发送qizou启奏
@@ -65,6 +68,9 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
     constructor(private fangXuanLingService: IFangXuanLingService) {
         logger.info("🏛️ 魏征上朝，负责监察应用状态");
+        this.gallery = createGalleryMediaOperations({
+            processZouzhe: (zouzhe) => this.fangXuanLingService.processZouzhe(zouzhe),
+        });
     }
 
     /**

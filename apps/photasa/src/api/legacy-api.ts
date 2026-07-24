@@ -9,8 +9,6 @@ import { isTauri } from "./env";
 import { api } from "./adapter";
 import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 import type { ScanAction, ScanResult } from "./scan.adapter";
-import type { ThumbnailRequest } from "./thumbnail.adapter";
-import type { FileMetadata } from "@photasa/common";
 import { shouldIgnorePhotasaPath as ignorePhotasaPathUtil } from "@photasa/common";
 import {
     callLegacyPreloadNested,
@@ -55,113 +53,6 @@ function noopListener(): () => void {
 async function ensureInvoke() {
     const { invoke } = await import("@tauri-apps/api/core");
     return invoke;
-}
-
-function parseIsoDate(value: unknown): Date {
-    if (value instanceof Date) return value;
-    if (typeof value === "string" || typeof value === "number") return new Date(value);
-    return new Date(0);
-}
-
-function normalizeFileMetadataFromRust(raw: unknown): FileMetadata {
-    const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-    const ds = r.dateSource;
-    const dateSource: FileMetadata["dateSource"] =
-        ds === "file_modified" ||
-        ds === "file_created" ||
-        ds === "exif" ||
-        ds === "video_metadata" ||
-        ds === "current_date"
-            ? ds
-            : "file_modified";
-    const ft = r.type;
-    const type: FileMetadata["type"] =
-        ft === "image" || ft === "video" || ft === "ai" || ft === "other" ? ft : "other";
-    const dateTime =
-        r.dateTime != null && (typeof r.dateTime === "string" || typeof r.dateTime === "number")
-            ? parseIsoDate(r.dateTime)
-            : undefined;
-
-    let gpsInfo: FileMetadata["gpsInfo"];
-    const g = r.gpsInfo;
-    if (g && typeof g === "object" && !Array.isArray(g)) {
-        const o = g as Record<string, unknown>;
-        const lat = Number(o.latitude);
-        const lon = Number(o.longitude);
-        if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
-            const alt = o.altitude;
-            gpsInfo = {
-                latitude: lat,
-                longitude: lon,
-                altitude:
-                    alt === null || alt === undefined
-                        ? null
-                        : Number.isNaN(Number(alt))
-                          ? null
-                          : Number(alt),
-            };
-        }
-    }
-
-    let cameraInfo: FileMetadata["cameraInfo"];
-    const c = r.cameraInfo;
-    if (c && typeof c === "object" && !Array.isArray(c)) {
-        const o = c as Record<string, unknown>;
-        const mk = (x: unknown) => (x == null ? null : String(x));
-        const num = (x: unknown) =>
-            x == null || x === "" ? null : Number.isNaN(Number(x)) ? null : Number(x);
-        cameraInfo = {
-            make: mk(o.make),
-            model: mk(o.model),
-            lens: mk(o.lens),
-            iso: num(o.iso),
-            focalLength: num(o.focalLength),
-            aperture: num(o.aperture),
-            shutterSpeed: num(o.shutterSpeed),
-        };
-    }
-
-    const rawMeta = r.rawMetadata;
-    const rawMetadata =
-        rawMeta && typeof rawMeta === "object" && !Array.isArray(rawMeta)
-            ? (rawMeta as Record<string, unknown>)
-            : undefined;
-
-    const res = r.resolution;
-    const resolution =
-        res && typeof res === "object" && !Array.isArray(res)
-            ? {
-                  width: Number((res as Record<string, unknown>).width ?? 0),
-                  height: Number((res as Record<string, unknown>).height ?? 0),
-              }
-            : undefined;
-
-    return {
-        path: String(r.path ?? ""),
-        name: String(r.name ?? ""),
-        size: Number(r.size ?? 0),
-        type,
-        modifiedTime: parseIsoDate(r.modifiedTime),
-        createdTime: parseIsoDate(r.createdTime),
-        dateSource,
-        format: typeof r.format === "string" ? r.format : undefined,
-        width: typeof r.width === "number" ? r.width : undefined,
-        height: typeof r.height === "number" ? r.height : undefined,
-        duration: typeof r.duration === "number" ? r.duration : undefined,
-        codec: typeof r.codec === "string" ? r.codec : undefined,
-        resolution:
-            resolution &&
-            resolution.width > 0 &&
-            resolution.height > 0 &&
-            !Number.isNaN(resolution.width) &&
-            !Number.isNaN(resolution.height)
-                ? resolution
-                : undefined,
-        dateTime,
-        gpsInfo,
-        cameraInfo,
-        rawMetadata,
-    };
 }
 
 /**
@@ -264,27 +155,6 @@ export function createLegacyApi() {
             );
         },
 
-        // ---------- 缩略图 ----------
-        createThumbnail: (request: ThumbnailRequest) => api.thumbnail.create(request),
-        removeThumbnail: (request: ThumbnailRequest) => api.thumbnail.remove(request),
-        getImageType: (path: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) => invoke<string>("get_image_type", { path }))
-                : stubAsync(),
-        getFileMetadata: (path: string) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) =>
-                      invoke("get_file_metadata", {
-                          path: webviewMediaUrlToAbsolutePath(path),
-                      }),
-                  )
-                : stubAsync(),
-        getFilesModified: (paths: string[]) =>
-            isTauri()
-                ? ensureInvoke().then((invoke) =>
-                      invoke<Record<string, number>>("get_files_modified", { paths }),
-                  )
-                : Promise.resolve({}),
         fileUrlFromPath: (path: string) =>
             isTauri()
                 ? Promise.resolve(toWebviewMediaUrl(webviewMediaUrlToAbsolutePath(path)))
@@ -538,14 +408,6 @@ export function createLegacyApi() {
 
         // ---------- 导入增强 ----------
         chooseDirectories: (multiSelect = true) => api.import.chooseDirectories(multiSelect),
-        extractMetadata: (request: unknown) =>
-            isTauri()
-                ? (async () => {
-                      const invoke = await ensureInvoke();
-                      const raw = await invoke<unknown>("extract_metadata", { request });
-                      return normalizeFileMetadataFromRust(raw);
-                  })()
-                : (callLegacyPreloadSection("api", "extractMetadata", request) ?? stubAsync()),
         onScanQueueAdd: (cb: (operations: unknown[]) => void) => {
             if (!isTauri()) {
                 return callLegacyPreloadSection("api", "onScanQueueAdd", cb) ?? noopListener();

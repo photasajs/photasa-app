@@ -8,20 +8,11 @@ import {
 import type { PhotasaConfig } from "@photasa/common";
 import type { Photo } from "@photasa/common";
 import type { Image } from "@renderer/common/image";
-import { createThumbnailTask } from "@renderer/utils/api";
 import {
     getThumbnailBustKey,
     getThumbnailDisplaySrc,
     resetThumbnailBustStateForTests,
 } from "@renderer/utils/thumbnail-display";
-
-// Mock createThumbnailTask
-vi.mock("@renderer/utils/api", () => ({
-    createThumbnailTask: {
-        perform: vi.fn(),
-    },
-    getFilesModified: vi.fn(),
-}));
 
 describe("ImageListHelper", () => {
     describe("toImageList", () => {
@@ -169,15 +160,15 @@ describe("ImageListHelper", () => {
 
     describe("requestThumbnail", () => {
         const thumbRel = "file:///test/.photasaoriginals/thumbnail-test.jpg.png";
+        const createThumbnail = vi.fn();
 
         beforeEach(() => {
             vi.clearAllMocks();
             resetThumbnailBustStateForTests();
         });
 
-        it("应该调用createThumbnailTask.perform（目标路径取自 config 缩略图）", async () => {
-            const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue({
+        it("应把 config 缩略图目标交给图库创建能力", async () => {
+            createThumbnail.mockResolvedValue({
                 success: true,
                 file: "/test/.photasaoriginals/thumbnail-test.jpg.png",
             });
@@ -191,9 +182,9 @@ describe("ImageListHelper", () => {
                 isVideo: false,
             };
 
-            await requestThumbnail(image, 200);
+            await requestThumbnail(image, 200, createThumbnail);
 
-            expect(mockPerform).toHaveBeenCalledWith({
+            expect(createThumbnail).toHaveBeenCalledWith({
                 path: "/test/test.jpg",
                 thumbnail: "/test/.photasaoriginals/thumbnail-test.jpg.png",
                 width: 200,
@@ -204,8 +195,7 @@ describe("ImageListHelper", () => {
         });
 
         it("应该在缺少raw属性时使用preview", async () => {
-            const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue({ success: true });
+            createThumbnail.mockResolvedValue({ success: true });
 
             const previewThumb = "file:///test/.photasaoriginals/thumbnail-preview.jpg.png";
             const image: Image = {
@@ -217,9 +207,9 @@ describe("ImageListHelper", () => {
                 isVideo: false,
             };
 
-            await requestThumbnail(image, 150);
+            await requestThumbnail(image, 150, createThumbnail);
 
-            expect(mockPerform).toHaveBeenCalledWith({
+            expect(createThumbnail).toHaveBeenCalledWith({
                 path: "/test/preview.jpg",
                 thumbnail: "/test/.photasaoriginals/thumbnail-preview.jpg.png",
                 width: 150,
@@ -230,8 +220,7 @@ describe("ImageListHelper", () => {
         });
 
         it("应该返回带缓存破坏的 WebView URL", async () => {
-            const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue({ success: true });
+            createThumbnail.mockResolvedValue({ success: true });
 
             const mockDate = 1234567890;
             vi.spyOn(Date, "now").mockReturnValue(mockDate);
@@ -245,7 +234,7 @@ describe("ImageListHelper", () => {
                 isVideo: false,
             };
 
-            const newSrc = await requestThumbnail(image, 180);
+            const newSrc = await requestThumbnail(image, 180, createThumbnail);
 
             expect(newSrc).toBe(
                 `file:///test/.photasaoriginals/thumbnail-test.jpg.png?t=${mockDate}`,
@@ -256,8 +245,7 @@ describe("ImageListHelper", () => {
         });
 
         it("createThumbnail 失败时应抛错", async () => {
-            const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue({ success: false, error: "decode failed" });
+            createThumbnail.mockResolvedValue({ success: false, error: "decode failed" });
 
             const image: Image = {
                 key: "test.jpg",
@@ -268,12 +256,13 @@ describe("ImageListHelper", () => {
                 isVideo: false,
             };
 
-            await expect(requestThumbnail(image, 180)).rejects.toThrow("decode failed");
+            await expect(requestThumbnail(image, 180, createThumbnail)).rejects.toThrow(
+                "decode failed",
+            );
         });
 
         it("应该处理视频文件", async () => {
-            const mockPerform = vi.mocked(createThumbnailTask.perform);
-            mockPerform.mockResolvedValue({ success: true });
+            createThumbnail.mockResolvedValue({ success: true });
 
             const videoThumb = "file:///test/.photasaoriginals/thumbnail-test.mp4.png";
             const image: Image = {
@@ -285,9 +274,9 @@ describe("ImageListHelper", () => {
                 isVideo: true,
             };
 
-            await requestThumbnail(image, 250);
+            await requestThumbnail(image, 250, createThumbnail);
 
-            expect(mockPerform).toHaveBeenCalledWith({
+            expect(createThumbnail).toHaveBeenCalledWith({
                 path: "/test/test.mp4",
                 thumbnail: "/test/.photasaoriginals/thumbnail-test.mp4.png",
                 width: 250,
@@ -300,9 +289,7 @@ describe("ImageListHelper", () => {
 
     describe("hydrateFolderThumbnailMtimes", () => {
         it("应使用与 getThumbnailBustKey 相同的路径键 stat 磁盘", async () => {
-            const { getFilesModified } = await import("@renderer/utils/api");
-            const mockGetFilesModified = vi.mocked(getFilesModified);
-            mockGetFilesModified.mockResolvedValue({});
+            const filesModified = vi.fn().mockResolvedValue({});
 
             const folder = "/Volumes/Photos";
             const config: PhotasaConfig = {
@@ -319,9 +306,9 @@ describe("ImageListHelper", () => {
             const image = toImageList(folder, config).images[0];
             const bustKey = getThumbnailBustKey(image);
 
-            await hydrateFolderThumbnailMtimes(folder, config.photoList);
+            await hydrateFolderThumbnailMtimes(folder, config.photoList, filesModified);
 
-            expect(mockGetFilesModified).toHaveBeenCalledWith([bustKey]);
+            expect(filesModified).toHaveBeenCalledWith([bustKey]);
         });
     });
 });

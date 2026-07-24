@@ -2,7 +2,6 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
-import { getFileMetadata } from "@renderer/utils/api";
 import type { FileMetadata } from "@photasa/common";
 import { type Card, type Image, toImageMeta, groupImagesByColumns } from "@renderer/common/image";
 // removeFileProtocol 通过 preload API 使用
@@ -44,6 +43,7 @@ import {
     thumbnailDisplayEpoch,
 } from "@renderer/utils/thumbnail-display";
 import { safePositiveNumber } from "@renderer/common/number";
+import { useGalleryMedia } from "@renderer/composables/useGalleryMedia";
 
 // 定义组件事件
 const emit = defineEmits<{
@@ -55,6 +55,7 @@ const { t } = useI18n();
 const logger = loggers.renderer;
 // ✅ RFC 0058: 使用长孙无忌服务
 const zhangSunWuJi = useZhangSunWuJi();
+const galleryMedia = useGalleryMedia();
 // 偏好设置
 const preferenceStore = usePreferenceStore();
 // 偏好设置的引用
@@ -102,7 +103,7 @@ const fileMeta = ref<FileMetadata | null>(null);
 // 重建缩略图
 async function rebuildThumbnail(image: Image): Promise<void> {
     try {
-        await requestThumbnail(image, safeThumbnailSize.value);
+        await requestThumbnail(image, safeThumbnailSize.value, galleryMedia.createThumbnail);
     } catch (error) {
         logger.error("🏛️ 重建缩略图失败", error);
     }
@@ -114,8 +115,7 @@ async function openImageMeta(image: Image): Promise<void> {
     loadingInfo.value = true;
 
     try {
-        // 直接使用 file:// URL，path 处理在 preload 层完成
-        const metadata = await getFileMetadata(image.raw);
+        const metadata = await galleryMedia.fileMetadata(image.raw);
         fileMeta.value = metadata;
     } catch (error) {
         logger.error("Failed to load file metadata:", error);
@@ -248,7 +248,7 @@ watch(
         if (!folder || !photoList?.length) {
             return;
         }
-        void hydrateFolderThumbnailMtimes(folder, photoList);
+        void hydrateFolderThumbnailMtimes(folder, photoList, galleryMedia.filesModified);
     },
     { immediate: true },
 );

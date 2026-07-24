@@ -3,15 +3,12 @@
  */
 import type {
     DirectorySelection,
-    FileMetadata,
-    ImageInfo,
     PathName,
     ScanAction,
     ScanArgs,
     WatchCallback,
     WatchConfig,
 } from "@photasa/common";
-import type { ThumbnailRequest, ThumbnailResponse } from "@renderer/api/thumbnail.adapter";
 
 type Unsubscribe = () => void;
 
@@ -21,11 +18,6 @@ export interface PhotasaFlatApi {
     chooseDirectory: () => Promise<DirectorySelection>;
     chooseDirectories: (multiSelect?: boolean) => Promise<DirectorySelection>;
     getDirectory: (name: PathName) => Promise<string | null>;
-    createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailResponse>;
-    removeThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailResponse>;
-    getImageType: (path: string) => Promise<ImageInfo>;
-    getFileMetadata: (path: string) => Promise<FileMetadata>;
-    getFilesModified: (paths: string[]) => Promise<Record<string, number>>;
     scanPhotos: (scan: ScanAction) => Promise<ScanArgs>;
     scanSubfolders: (folder: string) => Promise<string[]>;
     isFileUnderFolder: (file: string, folder: string) => boolean | Promise<boolean>;

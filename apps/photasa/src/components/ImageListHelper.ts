@@ -1,6 +1,4 @@
-import { createThumbnailTask, getFilesModified } from "@renderer/utils/api";
-import type { PhotasaConfig } from "@photasa/common";
-import type { Photo } from "@photasa/common";
+import type { PhotasaConfig, Photo, ThumbnailRequest, ThumbnailResponse } from "@photasa/common";
 import { toImage } from "@renderer/common/image";
 import { toWebviewMediaUrl, webviewMediaUrlToAbsolutePath } from "@renderer/utils/media-url";
 import {
@@ -36,11 +34,15 @@ export function toImageList(currentFolder: string, currentFolderConfig: PhotasaC
  * @param thumbnailSize 缩略图大小
  * @returns
  */
-export async function requestThumbnail(image: Image, thumbnailSize: number): Promise<string> {
+export async function requestThumbnail(
+    image: Image,
+    thumbnailSize: number,
+    createThumbnail: (request: ThumbnailRequest) => Promise<ThumbnailResponse>,
+): Promise<string> {
     const sourcePath = webviewMediaUrlToAbsolutePath(image.raw || image.preview);
     const thumbnailPath = webviewMediaUrlToAbsolutePath(image.thumbnail || image.src);
 
-    const result = await createThumbnailTask.perform({
+    const result = await createThumbnail({
         path: sourcePath,
         thumbnail: thumbnailPath,
         width: thumbnailSize,
@@ -62,13 +64,14 @@ export async function requestThumbnail(image: Image, thumbnailSize: number): Pro
 export async function hydrateFolderThumbnailMtimes(
     currentFolder: string,
     photoList: readonly Photo[],
+    filesModified: (paths: string[]) => Promise<Record<string, number>>,
 ): Promise<void> {
     if (photoList.length === 0) {
         return;
     }
 
     const paths = photoList.map((photo) => getThumbnailBustKey(toImage(currentFolder, photo)));
-    const modified = await getFilesModified(paths);
+    const modified = await filesModified(paths);
     applyThumbnailMtimes(modified);
 }
 
