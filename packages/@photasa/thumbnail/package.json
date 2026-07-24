@@ -18,7 +18,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite build --watch",
-        "test": "jest --config jest.config.js && vitest run",
+        "test": "jest --config jest.config.js --forceExit && vitest run",
         "test:watch": "vitest",
         "lint": "eslint . --ext .ts",
         "typecheck": "tsc --noEmit",
