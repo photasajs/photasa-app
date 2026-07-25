@@ -1,4 +1,7 @@
-#![doc = include_str!("../README.md")]
+//! FFI bindings to [libheif](https://github.com/strukturag/libheif) for Photasa.
+//!
+//! Built with `embedded-libheif` (static libheif in the workspace). Higher-level
+//! HEIC decoding lives in `libheif-rs`. See RFC 0103 for native-deps policy.
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]

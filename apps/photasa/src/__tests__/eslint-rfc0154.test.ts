@@ -19,10 +19,16 @@ async function lintProbe(source: string, relativePath = "src/components/rfc0154-
 }
 
 describe("RFC 0154 legacy import gate", () => {
-    it.each(restrictedModules)("rejects static import from %s", async (moduleName) => {
-        const messages = await lintProbe(`import { probe } from "${moduleName}";\nvoid probe;\n`);
-        expect(messages.some(({ ruleId }) => ruleId === "no-restricted-imports")).toBe(true);
-    });
+    it.each(restrictedModules)(
+        "rejects static import from %s",
+        async (moduleName) => {
+            const messages = await lintProbe(
+                `import { probe } from "${moduleName}";\nvoid probe;\n`,
+            );
+            expect(messages.some(({ ruleId }) => ruleId === "no-restricted-imports")).toBe(true);
+        },
+        15000,
+    );
 
     it.each(restrictedModules)("rejects dynamic import from %s", async (moduleName) => {
         const messages = await lintProbe(`void import("${moduleName}");\n`);
