@@ -7,7 +7,7 @@
         <!-- Tauri 本地图：asset 协议（convertFileSrc），非 file:// -->
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; media-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; font-src 'self' data:;"
+            content="default-src 'self' ipc: ipc://* asset: asset://localhost http://asset.localhost https://asset.localhost; script-src 'self' 'unsafe-eval' http://localhost:1421; style-src 'self' 'unsafe-inline' http://localhost:1421; img-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; media-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; font-src 'self' data:; connect-src 'self' ipc: ipc://* ipc://localhost http://ipc.localhost http://localhost:1421 ws://localhost:1421;"
         />
         <!-- 主窗首帧：在 main.ts 加载前从 localStorage 恢复主题，避免 loading 白屏 -->
         <script src="/bootstrap-theme.js"></script>
