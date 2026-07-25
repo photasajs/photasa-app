@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.2.0](https://github.com/photasajs/photasa-app/compare/v2.1.1...v2.2.0) (2026-07-25)
+
+
+### Features
+
+* **desktop:** disable browser context menu and persist window geometry ([a42ba03](https://github.com/photasajs/photasa-app/commit/a42ba03600384d26961e2c1c0612ef59a840eb35))
+
+
+### Bug Fixes
+
+* **base-tree:** skip scrollToNode when target is already in viewport ([cb9a41f](https://github.com/photasajs/photasa-app/commit/cb9a41f6c880504769d0d8fb0da0a27d392925eb))
+* **ci:** PR-only validation, Linux deb smoke build, Node 22 ([9a0a553](https://github.com/photasajs/photasa-app/commit/9a0a55334ef7899856cdb97461efc6e472f424d0))
+* **ci:** PR-only validation, Linux deb smoke build, Node 22 local pin ([4448e2f](https://github.com/photasajs/photasa-app/commit/4448e2f682ab4da9f786b7fef550e64b83fab5cf))
+* **ci:** upgrade GitHub Actions to Node 24-compatible action majors ([85d3345](https://github.com/photasajs/photasa-app/commit/85d334578149ddf34586e1f2ea6832dd89c3f2c6))
+* **folder-tree:** scroll into view only on startup folder restore ([1717c3e](https://github.com/photasajs/photasa-app/commit/1717c3ec0d6d060b1616a0ca731a30301e8c4882))
+* **folder-tree:** scroll restored folder into view on reopen ([45f805d](https://github.com/photasajs/photasa-app/commit/45f805d7265be3f043f568b4fd6e268fb74a141d))
+* **folder-tree:** stop sidebar jump-to-top on expand (RFC 0165 amendment) ([8294b6f](https://github.com/photasajs/photasa-app/commit/8294b6f66be2fa55b40e3be26c6f5c390b5fc4ec))
+
 ## [2.1.1](https://github.com/photasajs/photasa-app/compare/v2.1.0...v2.1.1) (2026-07-25)
 
 
