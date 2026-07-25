@@ -47,7 +47,14 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="your-password"
 }
 ```
 
-CI 工作流 (`.github/workflows/upload-release-assets.yml`) 使用 `tauri-apps/tauri-action@v0` 自动在 GitHub Releases 上构建并更新 `latest.json` 及签名产物。
+CI 工作流 (`.github/workflows/upload-release-assets.yml`) 使用 `tauri-apps/tauri-action@v0` 自动在 GitHub Releases 上构建并更新 `latest.json` 及签名产物。`verify-updater-artifact` job 在 matrix 全部成功后断言 `darwin-aarch64` 与 `linux-x86_64` 均存在；任一 leg 失败则 job **fail**（非 skip）。
+
+补发或验收 release 后，可本地运行：
+
+```bash
+pnpm run verify:release:latest-json -- --tag photasa-v2.0.1
+pnpm run verify:release:latest-json -- --url https://github.com/photasajs/photasa-app/releases/latest/download/latest.json
+```
 
 ### 3. 更新产物
 
