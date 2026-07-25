@@ -276,6 +276,11 @@ fn main() {
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
+                telemetry::capture_from_app(
+                    app_handle,
+                    "app_exit",
+                    serde_json::json!({ "surface": "rust" }),
+                );
                 // RFC 0162：退出前刷尽防抖落盘队列，避免丢 scanning.json
                 if let Some(repo) = app_handle.try_state::<ScanQueueRepositoryHandle>() {
                     tauri::async_runtime::block_on(async {

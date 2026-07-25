@@ -7,6 +7,7 @@ use photasa_preference::{
 use posthog_rs::{client, Client, Event};
 use serde_json::json;
 use std::sync::{Arc, OnceLock};
+use tauri::{AppHandle, Manager};
 
 pub const POSTHOG_API_KEY: &str = "phc_ohBeDHC9RNkG6HkWdbJdjPtacoDTxDjEnZbnYGuVmmja";
 pub const POSTHOG_API_HOST: &str = "https://us.i.posthog.com/i/v0/e/";
@@ -19,6 +20,11 @@ pub struct TelemetryState {
 impl TelemetryState {
     pub fn disabled() -> Self {
         Self { client: None }
+    }
+
+    #[cfg(test)]
+    pub fn is_enabled(&self) -> bool {
+        self.client.is_some()
     }
 
     /// 非阻塞上报：后台线程发送，错误仅写日志。
@@ -87,6 +93,13 @@ pub fn initialize_from_consent(consent_status: &str) -> Arc<TelemetryState> {
 
 static PANIC_HOOK_STATE: OnceLock<Arc<TelemetryState>> = OnceLock::new();
 
+/// 从 Tauri 托管状态非阻塞上报（未同意或无客户端时静默跳过）。
+pub fn capture_from_app(app: &AppHandle, event_name: &str, properties: serde_json::Value) {
+    if let Some(state) = app.try_state::<Arc<TelemetryState>>() {
+        state.capture(event_name, properties);
+    }
+}
+
 /// 安装 panic hook：在原有处理之外尝试上报崩溃事件。
 pub fn install_panic_hook(state: Arc<TelemetryState>) {
     let _ = PANIC_HOOK_STATE.set(state.clone());
@@ -103,4 +116,29 @@ pub fn install_panic_hook(state: Arc<TelemetryState>) {
         }
         default_hook(panic_info);
     }));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use photasa_preference::TELEMETRY_CONSENT_DENIED;
+
+    #[test]
+    fn disabled_state_capture_is_noop() {
+        let state = TelemetryState::disabled();
+        state.capture("test_event", json!({ "surface": "rust" }));
+        assert!(!state.is_enabled());
+    }
+
+    #[test]
+    fn initialize_from_consent_denied_is_disabled() {
+        let state = initialize_from_consent(TELEMETRY_CONSENT_DENIED);
+        assert!(!state.is_enabled());
+    }
+
+    #[test]
+    fn initialize_from_consent_undecided_is_disabled() {
+        let state = initialize_from_consent(TELEMETRY_CONSENT_UNDECIDED);
+        assert!(!state.is_enabled());
+    }
 }

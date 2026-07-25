@@ -4,8 +4,9 @@
 
 > **Rust rewrite, not TypeScript copy.** Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: 🔨 Draft
+**Status**: ✅ Implemented
 **Created**: 2026-07-24
+**Completed**: 2026-07-24
 **Area**: Tauri / Observability
 **Related**: 无（首次引入遥测/错误追踪能力）
 
@@ -104,3 +105,19 @@ posthog-rs = "0.3"
 - opt-in 默认关的代价是大多数用户不会主动开启，数据量会偏少——这是已知取舍（隐私优先于采集覆盖率），不是需要后续重新讨论的开放问题。
 - `posthog-rs` 相对年轻（对比 `sentry` Rust SDK 生态成熟度），API 可能随版本演进变化，锁定具体版本号并在升级时人工验证 breaking change。
 - 免费额度 100 万事件/月对个人项目通常充裕，但若事件粒度设计过细（比如每次鼠标移动都上报），可能意外快速消耗额度——Decision 里已限定"关键节点埋点"而非细粒度追踪，实现时需遵守这个粒度边界，不要事后逐步加码到细粒度。
+
+## Implementation summary（2026-07-24）
+
+| 交付                      | 路径                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| Rust PostHog + panic hook | `src-tauri/src/telemetry/mod.rs`, `main.rs`                                    |
+| 偏好三态字段              | `crates/photasa-preference`, `preference.ts`                                   |
+| 前端 PostHog + 错误捕获   | `services/telemetry/posthog-client.ts`, `main.ts`                              |
+| 首次同意对话框            | `TelemetryConsentDialog.vue`, `App.vue`                                        |
+| Settings 撤回/重授        | `TelemetrySettings.vue`                                                        |
+| 13 locale 文案            | `locales/*.json`                                                               |
+| 单元测试                  | `telemetry-consent.test.ts`, `posthog-client.test.ts`, Rust `telemetry::tests` |
+
+**事件（无路径/照片内容）**：`app_started` / `app_exit` / `rust_panic` / `scan_completed` / `scan_failed` / `settings_opened` / `import_completed` / `import_failed` / `vue_error` / `window_error` / `unhandled_rejection`
+
+**手测待办**：PostHog Dashboard 验收（acceptance #8–#10）；`consentStatus=granted` 触发 panic/前端异常可见，`denied` 无新事件。

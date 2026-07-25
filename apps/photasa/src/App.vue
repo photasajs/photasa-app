@@ -36,7 +36,9 @@ import {
 import {
     initPosthogIfGranted,
     installGlobalErrorHandlers,
+    captureTelemetryEvent,
 } from "@renderer/services/telemetry/posthog-client";
+import { TELEMETRY_EVENTS } from "@renderer/constants/telemetry-events";
 import LogConsole from "./components/LogConsole.vue";
 import TelemetryConsentDialog from "./components/TelemetryConsentDialog.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
@@ -110,6 +112,7 @@ function handleOpenImportPhotos() {
 }
 function handleOpenPreference() {
     logger.debug("Opening preference dialog...");
+    captureTelemetryEvent(TELEMETRY_EVENTS.SETTINGS_OPENED);
     showPreference.value = true;
 }
 
@@ -222,8 +225,8 @@ onMounted(async () => {
     if (reconciledTelemetry.consentStatus !== preferenceStore.telemetry.consentStatus) {
         preferenceStore.$patch({ telemetry: reconciledTelemetry });
     }
-    initPosthogIfGranted(preferenceStore.telemetry.consentStatus);
-    showTelemetryConsent.value = needsConsentDialog(preferenceStore.telemetry.consentStatus);
+    initPosthogIfGranted(reconciledTelemetry.consentStatus);
+    showTelemetryConsent.value = needsConsentDialog(reconciledTelemetry.consentStatus);
 
     // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();

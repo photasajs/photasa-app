@@ -2,7 +2,9 @@ import type { ImportProgress, ImportResult } from "@photasa/common";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { listen as tauriListen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { ImportEventPort } from "@renderer/interfaces/yuan-tian-gang.interface";
+import { TELEMETRY_EVENTS } from "@renderer/constants/telemetry-events";
 import { normalizeImportProgress } from "@renderer/services/import-contract";
+import { captureTelemetryEvent } from "@renderer/services/telemetry/posthog-client";
 
 type ImportEventName =
     | "import:progress"
@@ -89,10 +91,21 @@ export class ImportTransport implements ImportEventPort {
                 this.listeners.progress.forEach((callback) => callback(progress));
             }),
             listen("import:complete", ({ payload }) => {
-                this.listeners.complete.forEach((callback) => callback(payload as ImportResult));
+                const result = payload as ImportResult;
+                captureTelemetryEvent(TELEMETRY_EVENTS.IMPORT_COMPLETED, {
+                    success: result.success,
+                    totalFiles: result.totalFiles,
+                    successfulFiles: result.successfulFiles,
+                    errorFiles: result.errorFiles,
+                    duration: result.duration,
+                });
+                this.listeners.complete.forEach((callback) => callback(result));
             }),
             listen("import:error", ({ payload }) => {
                 const error = normalizeImportError(payload);
+                captureTelemetryEvent(TELEMETRY_EVENTS.IMPORT_FAILED, {
+                    hasImportId: Boolean(error.importId),
+                });
                 this.listeners.error.forEach((callback) => callback(error));
             }),
             listen("import:preview-progress", ({ payload }) => {
