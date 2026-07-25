@@ -433,6 +433,10 @@ watch(
     },
     { deep: true, flush: "post" },
 );
+
+defineExpose({
+    scrollToNode,
+});
 </script>
 
 <style scoped>

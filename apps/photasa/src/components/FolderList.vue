@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, reactive, computed } from "vue";
+import { ref, watch, reactive, computed, nextTick } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import type { PhotasaConfig } from "@photasa/common";
@@ -17,6 +17,7 @@ import {
 import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
 import type { TreeNode } from "@photasa/base-tree";
+import { findTreeNode } from "@photasa/base-tree";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
@@ -99,6 +100,12 @@ watch(
  */
 const selectedKeys = ref<string[]>([]);
 
+/** BaseTree ref — 启动恢复时 scrollToNode */
+const folderTreeRef = ref<InstanceType<typeof BaseTree> | null>(null);
+
+/** 每个 currentFolder 只滚动一次；folderTree 晚到时允许重试 */
+const scrolledIntoViewFor = ref<string | null>(null);
+
 /**
  * Show config modal
  */
@@ -115,11 +122,15 @@ const selectFolder = (folderPath: string) => {
     }
 };
 
-/** RFC 0013/0047：恢复 currentFolder 时展开祖先并同步选中 */
+/** RFC 0013/0047：恢复 currentFolder 时展开祖先、选中并滚入视口 */
 function syncTreeViewForCurrentFolder(folderPath: string): void {
     const normalized = canonicalFolderPath(folderPath);
     if (!normalized) {
         return;
+    }
+
+    if (scrolledIntoViewFor.value !== normalized) {
+        scrolledIntoViewFor.value = null;
     }
 
     expandedKeys.value = mergeExpandedKeysForCurrentFolder(
@@ -128,21 +139,38 @@ function syncTreeViewForCurrentFolder(folderPath: string): void {
         paths.value,
     );
     selectFolder(normalized);
+    void scrollCurrentFolderIntoView(normalized);
 }
 
-// Watch currentFolder + paths：持久化恢复时 paths 可能晚于 currentFolder
+/** 虚拟树：祖先展开后把选中节点滚入可见区域（重开 app 深路径） */
+async function scrollCurrentFolderIntoView(folderPath: string): Promise<void> {
+    const normalized = canonicalFolderPath(folderPath);
+    if (!normalized || scrolledIntoViewFor.value === normalized) {
+        return;
+    }
+
+    if (!findTreeNode(normalized, folderTree.value as TreeNode[])) {
+        return;
+    }
+
+    await nextTick();
+    folderTreeRef.value?.scrollToNode(normalized, { align: "center", behavior: "auto" });
+    scrolledIntoViewFor.value = normalized;
+}
+
+// Watch currentFolder + paths + folderTree：持久化恢复时 paths/tree 可能晚于 currentFolder
 watch(
-    [currentFolder, paths],
+    [currentFolder, paths, folderTree],
     ([newFolder]) => {
         if (newFolder) {
             logger.debug(
-                "[FolderList] currentFolder changed, syncing tree expand + select:",
+                "[FolderList] currentFolder changed, syncing tree expand + select + scroll:",
                 newFolder,
             );
             syncTreeViewForCurrentFolder(newFolder);
         }
     },
-    { immediate: true },
+    { immediate: true, deep: true },
 );
 /**
  * Watch the selected keys
@@ -278,6 +306,7 @@ defineExpose({
         </div>
         <div class="flex-1 min-h-0 overflow-auto tree-container">
             <BaseTree
+                ref="folderTreeRef"
                 class="folder-tree"
                 v-model:expandedKeys="expandedKeys"
                 v-model:selectedKeys="selectedKeys"

@@ -4,10 +4,17 @@ import { nextTick } from "vue";
 import BaseTree from "../BaseTree.vue";
 import type { TreeNode } from "../types";
 
+const { scrollToIndexMock } = vi.hoisted(() => ({
+    scrollToIndexMock: vi.fn(),
+}));
+
 vi.mock("../internal/VirtualList.vue", () => ({
     default: {
         name: "VirtualList",
         props: ["items", "itemHeight", "containerHeight", "getItemKey"],
+        methods: {
+            scrollToIndex: scrollToIndexMock,
+        },
         template: `
             <div class="mock-virtual-list">
                 <div v-for="(item, index) in items" :key="getItemKey ? getItemKey(item) : index">
@@ -346,6 +353,50 @@ describe("BaseTree", () => {
             await nextTick();
 
             expect(mockGetBoundingClientRect).toHaveBeenCalled();
+        });
+    });
+
+    describe("scrollToNode", () => {
+        it("exposes scrollToNode and scrolls virtual list to visible node index", async () => {
+            scrollToIndexMock.mockClear();
+            const treeData: TreeNode[] = [
+                {
+                    key: "root",
+                    title: "Root",
+                    children: [
+                        {
+                            key: "child",
+                            title: "Child",
+                            children: [{ key: "deep", title: "Deep" }],
+                        },
+                    ],
+                },
+            ];
+
+            const wrapper = mount(BaseTree, {
+                props: {
+                    treeData,
+                    virtual: true,
+                    height: 200,
+                    itemHeight: 28,
+                    expandedKeys: ["root", "child"],
+                },
+            });
+
+            await nextTick();
+
+            const exposed = wrapper.vm as unknown as {
+                scrollToNode: (
+                    key: string,
+                    options?: { align?: string; behavior?: string },
+                ) => void;
+            };
+            exposed.scrollToNode("deep", { align: "center", behavior: "auto" });
+
+            expect(scrollToIndexMock).toHaveBeenCalledWith(
+                2,
+                expect.objectContaining({ align: "center", behavior: "auto" }),
+            );
         });
     });
 });
