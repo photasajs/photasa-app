@@ -3,6 +3,7 @@
 
 mod commands;
 mod macos_display_name;
+mod telemetry;
 mod utils;
 
 use commands::import_execute::ImportTaskRegistry;
@@ -97,8 +98,7 @@ fn main() {
             let app_handle = app.handle().clone();
             engine_status::emit_engine_status(&app_handle, "initializing");
 
-            // RFC 0101：尽早向 Splash 报告启动进度与系统主题
-            splash_bridge::sync_splash_theme(&app_handle);
+            // RFC 0101：尽早向 Splash 报告启动进度（主题在偏好加载后同步）
             splash_bridge::emit_splash_status(&app_handle, "启动应用程序...");
             splash_bridge::emit_splash_progress(&app_handle, -1);
 
@@ -143,12 +143,26 @@ fn main() {
             let update_state = UpdateState::default();
             commands::update_config::sync_update_state_from_preferences(&update_state);
             app.manage(update_state);
-            let preferences_state = tauri::async_runtime::block_on(preferences::PreferencesState::initialize())
-                .map_err(|e| {
-                    log::error!("❌ 偏好存储初始化失败：{e}");
-                    std::io::Error::other(e)
-                })?;
+            let preferences_state = tauri::async_runtime::block_on(async {
+                let state = preferences::PreferencesState::initialize()
+                    .await
+                    .map_err(|e| {
+                        log::error!("❌ 偏好存储初始化失败：{e}");
+                        std::io::Error::other(e)
+                    })?;
+                let mut store = state.0.write().await;
+                let telemetry =
+                    telemetry::reconcile_telemetry_consent(&mut store).await;
+                drop(store);
+                Ok::<_, std::io::Error>((state, telemetry.consent_status))
+            })?;
+            let (preferences_state, telemetry_consent_status) = preferences_state;
             app.manage(preferences_state);
+            splash_bridge::sync_splash_theme(&app_handle);
+            let telemetry_state =
+                telemetry::initialize_from_consent(&telemetry_consent_status);
+            telemetry::install_panic_hook(telemetry_state.clone());
+            app.manage(telemetry_state);
             #[cfg(not(any(target_os = "android", target_os = "ios")))]
             {
                 let periodic =
@@ -159,6 +173,9 @@ fn main() {
             engine_status::emit_engine_status(&app_handle, "ready");
             splash_bridge::emit_splash_status(&app_handle, "加载用户界面...");
             splash_bridge::emit_splash_progress(&app_handle, 80);
+
+            // Splash JS 已加载后再同步一次，避免 setup 首帧 emit 无人监听
+            splash_bridge::sync_splash_theme(&app_handle);
 
             Ok(())
         })
@@ -202,6 +219,7 @@ fn main() {
             path::get_image_type,
             path::file_url_from_path,
             path::get_file_metadata,
+            path::get_files_modified,
             // 目录与对话框
             directory::choose_directory,
             directory::choose_directories,
@@ -258,6 +276,19 @@ fn main() {
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             if let tauri::RunEvent::ExitRequested { .. } = event {
+                telemetry::capture_from_app(
+                    app_handle,
+                    "app_exit",
+                    serde_json::json!({ "surface": "rust" }),
+                );
+                // RFC 0162：退出前刷尽防抖落盘队列，避免丢 scanning.json
+                if let Some(repo) = app_handle.try_state::<ScanQueueRepositoryHandle>() {
+                    tauri::async_runtime::block_on(async {
+                        if let Err(error) = repo.flush_persist().await {
+                            log::warn!("⚠️ 退出前扫描队列落盘失败: {error}");
+                        }
+                    });
+                }
                 #[cfg(not(any(target_os = "android", target_os = "ios")))]
                 if let Some(periodic) = app_handle.try_state::<UpdatePeriodicHandle>() {
                     periodic.stop();

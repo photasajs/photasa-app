@@ -5,10 +5,8 @@
 
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import { listen } from "@tauri-apps/api/event";
 import type { ImportProgress, ImportResult } from "@photasa/common";
-import { normalizeImportProgressPayload } from "@renderer/api/import.adapter";
-import { isTauri } from "@renderer/api/env";
+import type { ImportEventPort } from "@renderer/interfaces/yuan-tian-gang.interface";
 import { notification } from "@renderer/services/notification-manager";
 import { loggers } from "@photasa/common";
 
@@ -27,16 +25,6 @@ type BufferedImportEvent =
     | { type: "progress"; importId: string; progress: ImportProgress }
     | { type: "complete"; importId: string; result: ImportResult }
     | { type: "error"; importId: string; error: Error };
-
-/** Rust `import:error` payload：{message, importId}，非 JS Error */
-function normalizeImportErrorPayload(payload: unknown): Error {
-    if (payload instanceof Error) return payload;
-    if (payload && typeof payload === "object" && "message" in payload) {
-        const message = (payload as { message?: unknown }).message;
-        if (typeof message === "string") return new Error(message);
-    }
-    return new Error(String(payload ?? "未知错误"));
-}
 
 /** 单飞冲突错误码（UI / 调用方匹配） */
 export const IMPORT_ALREADY_RUNNING = "IMPORT_ALREADY_RUNNING" as const;
@@ -124,14 +112,11 @@ export const useImportSessionStore = defineStore("importSession", () => {
         }
     }
 
-    async function startListeners(): Promise<void> {
+    async function startListeners(events?: ImportEventPort): Promise<void> {
         stopListeners();
-        if (!isTauri()) {
-            logger.debug("📚 非 Tauri：跳过导入会话事件监听");
-            return;
-        }
-        progressUnlisten = await listen<unknown>("import:progress", (event) => {
-            const next = normalizeImportProgressPayload(event.payload);
+        if (!events) return;
+        await events.ready();
+        progressUnlisten = events.onProgress((next) => {
             if (
                 !eventMatchesCurrent(next.importId, "progress", {
                     type: "progress",
@@ -142,8 +127,7 @@ export const useImportSessionStore = defineStore("importSession", () => {
                 return;
             applyProgress(next);
         });
-        completeUnlisten = await listen<unknown>("import:complete", (event) => {
-            const res = event.payload as ImportResult | null;
+        completeUnlisten = events.onComplete((res) => {
             const eventId = res?.importId;
             if (
                 !res ||
@@ -156,13 +140,11 @@ export const useImportSessionStore = defineStore("importSession", () => {
                 return;
             complete(res);
         });
-        errorUnlisten = await listen<unknown>("import:error", (event) => {
-            const payload = event.payload as { importId?: string } | null;
-            const err = normalizeImportErrorPayload(event.payload);
+        errorUnlisten = events.onError(({ importId: eventId, error: err }) => {
             if (
-                !eventMatchesCurrent(payload?.importId, "error", {
+                !eventMatchesCurrent(eventId, "error", {
                     type: "error",
-                    importId: payload?.importId ?? "",
+                    importId: eventId ?? "",
                     error: err,
                 })
             )
@@ -179,6 +161,7 @@ export const useImportSessionStore = defineStore("importSession", () => {
             phase.value = "paused";
         } else if (next.status === "cancelled") {
             phase.value = "cancelled";
+            stopListeners();
         } else if (
             phase.value !== "paused" &&
             (next.status === "processing" || next.status === "preparing")
@@ -199,7 +182,10 @@ export const useImportSessionStore = defineStore("importSession", () => {
         logger.info(paused ? "📚 导入会话已暂停" : "📚 导入会话已继续", idSnippet());
     }
 
-    async function prepareStart(initial?: Partial<ImportProgress>): Promise<void> {
+    async function prepareStart(
+        initial?: Partial<ImportProgress>,
+        events?: ImportEventPort,
+    ): Promise<void> {
         assertCanStart();
         clearTerminalState();
         bufferedEvents = [];
@@ -224,7 +210,7 @@ export const useImportSessionStore = defineStore("importSession", () => {
             currentFile: "",
             ...initial,
         };
-        await startListeners();
+        await startListeners(events);
         logger.info("📚 导入会话预备，等待 importId", {
             totalFiles: progress.value?.totalFiles ?? 0,
         });
@@ -239,8 +225,12 @@ export const useImportSessionStore = defineStore("importSession", () => {
         flushBufferedEvents();
     }
 
-    async function begin(id: string, initial?: Partial<ImportProgress>): Promise<void> {
-        await prepareStart(initial);
+    async function begin(
+        id: string,
+        initial?: Partial<ImportProgress>,
+        events?: ImportEventPort,
+    ): Promise<void> {
+        await prepareStart(initial, events);
         claimImportId(id);
         logger.info("📚 导入会话开衙", {
             importId: idSnippet(),

@@ -233,6 +233,26 @@ pub fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
  })
 }
 
+/// 批量读取文件修改时间（Unix ms），用于缩略图 URL 缓存破坏（RFC 0148）
+#[tauri::command]
+pub fn get_files_modified(paths: Vec<String>) -> Result<std::collections::HashMap<String, u64>, String> {
+ let mut out = std::collections::HashMap::new();
+ for path in paths {
+ if let Ok(meta) = std::fs::metadata(&path) {
+ let modified = meta
+ .modified()
+ .ok()
+ .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+ .map(|d| d.as_millis() as u64)
+ .unwrap_or(0);
+ if modified > 0 {
+ out.insert(path, modified);
+ }
+ }
+ }
+ Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
  use super::*;
@@ -277,5 +297,24 @@ mod tests {
  i += 1;
  }
  out
+ }
+
+ #[test]
+ fn get_files_modified_returns_mtime_ms() {
+ let dir = std::env::temp_dir().join(format!(
+ "photasa-get-files-modified-{}",
+ std::process::id()
+ ));
+ std::fs::create_dir_all(&dir).expect("temp dir");
+ let file = dir.join("thumb.png");
+ std::fs::write(&file, b"png").expect("write thumb");
+ std::thread::sleep(std::time::Duration::from_millis(5));
+ let map = get_files_modified(vec![file.to_string_lossy().into_owned()]).expect("mtime");
+ let mtime = map
+ .get(file.to_string_lossy().as_ref())
+ .copied()
+ .unwrap_or(0);
+ assert!(mtime > 0);
+ let _ = std::fs::remove_dir_all(dir);
  }
 }

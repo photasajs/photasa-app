@@ -328,11 +328,18 @@ src/renderer/src/components/ui/
 - [x] ✅ All existing functionality preserved
 - [x] ✅ Virtual scrolling handles 50k+ nodes smoothly
 
+## Follow-up（2026-07-24）
+
+**Workspace 包抽取**：[RFC 0165](./0165-base-tree-package-and-folder-restore.md) Phase B 将 `BaseTree` / `BaseTreeNode` 及树内 `VirtualList` 迁入 **`@photasa/base-tree`**（制品名对齐组件，不用 `ui` / `tree` / `virtual-tree` 泛名）。`FolderList` 与 `folder-tree-expand` 留在 `apps/photasa`。
+
+**启动恢复**：RFC 0013 选中同步 + RFC 0165 Phase A 祖先展开；虚拟树可见性依赖 `expandedKeys`，非 BaseTree API 变更。
+
 ## References
 
 - [RFC 0002: Headless UI Components](./0002-headless-ui-components.md)
+- [RFC 0165: `@photasa/base-tree` 包抽取与启动目录树恢复](./0165-base-tree-package-and-folder-restore.md)
 - [ant-design-vue Tree Documentation](https://antdv.com/components/tree)
-- [Vue VirtualList Implementation](../src/renderer/src/components/ui/VirtualList.vue)
+- [Vue VirtualList Implementation](../../../apps/photasa/src/components/ui/VirtualList.vue)
 
 ---
 

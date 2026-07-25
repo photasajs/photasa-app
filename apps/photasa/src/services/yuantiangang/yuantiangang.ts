@@ -13,7 +13,17 @@ import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import { loggers } from "@photasa/common";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { scanAdapter, type ScanResult } from "@renderer/api/scan.adapter";
+import { open } from "@tauri-apps/plugin-dialog";
+export interface ScanResult {
+    type?: string;
+    directory?: { path: string };
+    file?: { path: string; isDirectory?: boolean };
+    action?: { path: string; isDirectory?: boolean };
+    rootPath?: string;
+    currentFile?: string;
+    progress?: { processed?: number; total?: number };
+}
+
 import { isTauri } from "@renderer/api/env";
 import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengzhi-commands";
 import { ScanActionEvent } from "@photasa/common";
@@ -26,19 +36,57 @@ import {
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
     SHELL_COMMANDS,
+    WATCH_COMMANDS,
     WATCH_EVENTS,
 } from "./tauri-command-names";
 import { extractFolderTreeFromContext } from "./folder-tree-payload";
 import { buildPreferencesDelta, PREFERENCE_ZHAOLING_MATTERS } from "./preferences-delta";
 import {
+    applyScanQueueAdd,
+    applyScanQueueRemove,
+    applyScanQueueUpdate,
     extractActionsFromContext,
     normalizeRestoredQueue,
     scanActionToPersistedEntry,
+    type ScanQueueAck,
 } from "./scan-queue-payload";
+import { SCAN_QUEUE_RESTORE_FROM_DISK } from "./scan-queue-contract";
+import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { FileOperation } from "@photasa/common";
+import { joinPathSync, toDirNameSync } from "@renderer/utils/sync-path";
+import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
+import { ImportTransport } from "./transport/import-transport";
+import { MediaTransport, type MediaMatter } from "./transport/media-transport";
+import { DialogTransport } from "./transport/dialog-transport";
+import { DesktopTransport } from "./transport/desktop-transport";
+import type {
+    LogViewerCapability,
+    UpdateCapability,
+    WindowCapability,
+} from "@renderer/interfaces/yuan-tian-gang.interface";
 
 const logger = loggers.yuantiangang;
+const IMPORT_ZHAOLING_MATTERS = new Set<string>([
+    ZOUZHE_MATTERS.PREVIEW_IMPORT,
+    ZOUZHE_MATTERS.EXECUTE_IMPORT,
+    ZOUZHE_MATTERS.CANCEL_IMPORT,
+    ZOUZHE_MATTERS.PAUSE_IMPORT,
+    ZOUZHE_MATTERS.RESUME_IMPORT,
+    ZOUZHE_MATTERS.GET_IMPORT_HISTORY,
+    ZOUZHE_MATTERS.GET_IMPORT_DETAILS,
+    ZOUZHE_MATTERS.PREVIEW_UNDO_IMPORT,
+    ZOUZHE_MATTERS.UNDO_IMPORT,
+    ZOUZHE_MATTERS.GET_IMPORT_PROGRESS,
+    ZOUZHE_MATTERS.GET_RECOVERABLE_IMPORTS,
+    ZOUZHE_MATTERS.CLEANUP_RECOVERABLE_IMPORT,
+    ZOUZHE_MATTERS.KEEP_RECOVERABLE_IMPORT,
+]);
+const MEDIA_ZHAOLING_MATTERS = new Set<string>([
+    ZOUZHE_MATTERS.CREATE_THUMBNAIL,
+    ZOUZHE_MATTERS.EXTRACT_METADATA,
+    ZOUZHE_MATTERS.GET_FILES_MODIFIED,
+]);
 
 /**
  * 袁天罡钦天监服务实现
@@ -46,23 +94,43 @@ const logger = loggers.yuantiangang;
  */
 export class YuanTianGangService implements IService, IYuanTianGangService {
     readonly name = "袁天罡";
+    readonly importEvents: ImportTransport;
+    readonly updates: UpdateCapability;
+    readonly logs: LogViewerCapability;
+    readonly windows: WindowCapability;
+    readonly desktop: DesktopTransport;
+    private readonly media: MediaTransport;
+    private readonly dialog: DialogTransport;
     private progressCleanupFn?: () => void;
     private statusCleanupFn?: () => void;
     private qianliyanCleanupFn?: () => void;
     private notifyStatusCleanupFn?: () => void;
     private menuActionCleanupFn?: () => void; // ✅ RFC 0058: 菜单点击事件清理函数
     private scanQueueAddCleanupFn?: () => void; // ✅ RFC 0137: 文件监视合并批次
+    private watchRemovalCleanupFns: Array<() => void> = [];
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
     /** 圣旨接收通道 */
     private shengzhiPort?: MessagePort;
 
     constructor() {
         logger.info("🔮 就任，开始处理天界通信");
+        this.importEvents = new ImportTransport({ enabled: isTauri() });
+        this.media = new MediaTransport({ invoke });
+        this.dialog = new DialogTransport({ open: open as never, invoke });
+        const desktop = new DesktopTransport({
+            invoke,
+            listen: listen as never,
+        });
+        this.desktop = desktop;
+        this.updates = desktop;
+        this.logs = desktop;
+        this.windows = desktop;
         this.setupTianshuEventListening();
         this.setupQianliyanEventListening(); // ⏳ 临时：监听千里眼IPC事件
         this.setupNotifyStatusEventListening(); // ✅ RFC 0057: 监听 notify:status IPC 事件
         this.setupMenuActionEventListening(); // ✅ RFC 0058: 监听 menu:action IPC 事件
         this.setupScanQueueAddEventListening(); // ✅ RFC 0137: 监听 picasa:add-to-scan-queue
+        this.setupWatchRemovalEventListening();
     }
 
     /**
@@ -146,10 +214,9 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
      * @private
      */
     private setupQianliyanEventListening(): void {
-        scanAdapter
-            .onScanResult((result) => {
-                this.handleQianliyanEvent(result);
-            })
+        listen<ScanResult>("picasa:find-photo", (event) => {
+            this.handleQianliyanEvent(event.payload);
+        })
             .then((unlisten) => {
                 this.qianliyanCleanupFn = unlisten;
             })
@@ -466,6 +533,40 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         }
     }
 
+    private setupWatchRemovalEventListening(): void {
+        if (!isTauri()) {
+            return;
+        }
+        for (const [eventName, isFile] of [
+            [WATCH_EVENTS.FILE_UNLINK, true],
+            [WATCH_EVENTS.DIRECTORY_UNLINK, false],
+        ] as const) {
+            listen<{ path?: string }>(eventName, (event) => {
+                const path = event.payload?.path;
+                if (path) {
+                    this.reportWatchPathRemoved(path, isFile);
+                }
+            })
+                .then((unlisten) => this.watchRemovalCleanupFns.push(unlisten))
+                .catch((error: unknown) => {
+                    logger.warn(`🔮 建立 ${eventName} 监听失败`, error);
+                });
+        }
+    }
+
+    private reportWatchPathRemoved(path: string, isFile: boolean): void {
+        if (!this._qizouBus) {
+            return;
+        }
+        this._qizouBus.emit("qizou", {
+            matter: QizouMatters.WATCH_PATH_REMOVED,
+            content: { path, isFile },
+            from: "袁天罡",
+            timestamp: Date.now(),
+            metadata: { type: "report" },
+        });
+    }
+
     /**
      * ✅ RFC 0058: 向李世民发送菜单点击事件启奏
      *
@@ -566,6 +667,9 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         if (this.scanQueueAddCleanupFn) {
             this.scanQueueAddCleanupFn();
         }
+        this.watchRemovalCleanupFns.forEach((cleanup) => cleanup());
+        this.watchRemovalCleanupFns = [];
+        this.importEvents.destroy();
         logger.info("🔮 事件监听已清理");
     }
 
@@ -576,7 +680,175 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
 
         const startTime = Date.now();
 
-        // RFC 0136/0143：扫描队列 — 袁天罡 executeZhaoling 内唯一 invoke（无 *-bridge.ts）
+        if (zhaoling.command === ZOUZHE_MATTERS.CHOOSE_DIRECTORIES) {
+            try {
+                if (!isTauri()) throw new Error("目录选择仅支持 Tauri 环境");
+                const data = await this.dialog.chooseDirectories(
+                    Boolean(zhaoling.context?.multiple),
+                );
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "目录选择成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "dialog-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "目录选择失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "目录选择异常",
+                };
+            }
+        }
+
+        if (IMPORT_ZHAOLING_MATTERS.has(zhaoling.command)) {
+            try {
+                if (!isTauri()) throw new Error("导入操作仅支持 Tauri 环境");
+                const data = await this.importEvents.execute(
+                    zhaoling.command,
+                    zhaoling.context ?? {},
+                );
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "导入政务执行成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "import-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "导入政务执行失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "导入操作异常",
+                };
+            }
+        }
+
+        if (MEDIA_ZHAOLING_MATTERS.has(zhaoling.command)) {
+            try {
+                if (!isTauri()) throw new Error("图库操作仅支持 Tauri 环境");
+                const data = await this.media.execute(
+                    zhaoling.command as MediaMatter,
+                    zhaoling.context ?? {},
+                );
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "图库政务执行成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "media-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "图库政务执行失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "图库操作异常",
+                };
+            }
+        }
+
+        if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_WATCH_FILE) {
+            try {
+                if (!isTauri()) {
+                    throw new Error("文件删除清理仅支持 Tauri 环境");
+                }
+                const path = String(zhaoling.context?.path ?? "");
+                const folder = toDirNameSync(path);
+                const thumbnail = joinPathSync(folder, toRelativeThumbnailPath(path));
+                await invoke("remove_thumbnail", {
+                    request: { path, thumbnail },
+                });
+                const result = await invoke<{ config: unknown }>("remove_from_photo_list", {
+                    photoPath: path,
+                });
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data: { folder, config: result.config },
+                    blessing: "watch 文件删除清理成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "watch-delete-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "watch 文件删除清理失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "文件删除清理异常",
+                };
+            }
+        }
+
+        if (
+            zhaoling.command === ZOUZHE_MATTERS.START_FILE_WATCH ||
+            zhaoling.command === ZOUZHE_MATTERS.STOP_FILE_WATCH
+        ) {
+            try {
+                if (!isTauri()) {
+                    throw new Error("文件监视仅支持 Tauri 环境");
+                }
+                const data =
+                    zhaoling.command === ZOUZHE_MATTERS.START_FILE_WATCH
+                        ? await invoke(WATCH_COMMANDS.START, {
+                              config: zhaoling.context ?? {},
+                          })
+                        : await invoke(WATCH_COMMANDS.STOP);
+                return {
+                    acknowledged: true,
+                    command: zhaoling.command,
+                    data,
+                    blessing: "文件监视命令执行成功",
+                    timestamp: Date.now(),
+                    metadata: {
+                        engineName: "watch-direct",
+                        processTime: Date.now() - startTime,
+                        urgency: "normal",
+                    },
+                };
+            } catch (error) {
+                return {
+                    acknowledged: false,
+                    command: zhaoling.command,
+                    data: null,
+                    blessing: "文件监视命令执行失败",
+                    timestamp: Date.now(),
+                    error: error instanceof Error ? error.message : "文件监视异常",
+                };
+            }
+        }
+
+        // RFC 0136/0143/0162：扫描队列 — Ack IPC + 本地 patch（禁止突变回传全表）
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE ||
             zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION ||
@@ -588,37 +860,59 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                     throw new Error("扫描队列持久化仅支持 Tauri 环境");
                 }
                 const context = (zhaoling.context ?? {}) as Record<string, unknown>;
-                let rawQueue: Record<string, unknown>[];
+                let queue: ScanQueueItem[];
 
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_SCANNING_QUEUE) {
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.GET);
-                } else if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
-                    const actions = extractActionsFromContext(context).map(
-                        scanActionToPersistedEntry,
-                    );
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.ADD, {
-                        actions,
-                    });
-                } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
-                    const path = String(context.path ?? "");
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.REMOVE, {
-                        path,
-                    });
+                    // UI / 普通 GET：只读 Pinia，禁止同步拉全表（RFC 0162）
+                    if (context[SCAN_QUEUE_RESTORE_FROM_DISK] === true) {
+                        const rawQueue = await invoke<Record<string, unknown>[]>(
+                            SCAN_QUEUE_COMMANDS.GET,
+                        );
+                        queue = normalizeRestoredQueue(rawQueue);
+                    } else {
+                        queue = [...useScanningStore().queue];
+                    }
                 } else {
-                    const path = String(context.path ?? "");
-                    const status = String(context.status ?? "pending");
-                    const updates = (context.updates ?? {}) as Record<string, unknown>;
-                    rawQueue = await invoke<Record<string, unknown>[]>(SCAN_QUEUE_COMMANDS.UPDATE, {
-                        path,
-                        status,
-                        updates,
-                    });
+                    const scanningStore = useScanningStore();
+                    if (zhaoling.command === ZOUZHE_MATTERS.ADD_SCAN_ACTION) {
+                        const actions = extractActionsFromContext(context);
+                        const persisted = actions.map(scanActionToPersistedEntry);
+                        const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.ADD, {
+                            actions: persisted,
+                        });
+                        queue = applyScanQueueAdd(scanningStore.queue, actions);
+                        logger.debug(
+                            `🔮 扫描队列入队 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                        );
+                    } else if (zhaoling.command === ZOUZHE_MATTERS.REMOVE_SCAN_ACTION) {
+                        const path = String(context.path ?? "");
+                        const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.REMOVE, {
+                            path,
+                        });
+                        queue = applyScanQueueRemove(scanningStore.queue, path);
+                        logger.debug(
+                            `🔮 扫描队列移除 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                        );
+                    } else {
+                        const path = String(context.path ?? "");
+                        const status = String(
+                            context.status ?? "pending",
+                        ) as ScanQueueItem["status"];
+                        const updates = (context.updates ?? {}) as Record<string, unknown>;
+                        const ack = await invoke<ScanQueueAck>(SCAN_QUEUE_COMMANDS.UPDATE, {
+                            path,
+                            status,
+                            updates,
+                        });
+                        queue = applyScanQueueUpdate(scanningStore.queue, path, status, updates);
+                        logger.debug(
+                            `🔮 扫描队列更新 ack: len=${ack.queueLen} revision=${ack.revision}`,
+                        );
+                    }
                 }
 
-                const data: { queue: ScanQueueItem[] } = {
-                    queue: normalizeRestoredQueue(rawQueue),
-                };
-                logger.info(`🔮 扫描队列已同步: ${zhaoling.command}，${data.queue.length} 项`);
+                const data: { queue: ScanQueueItem[] } = { queue };
+                logger.debug(`🔮 扫描队列已同步: ${zhaoling.command}，${data.queue.length} 项`);
                 return {
                     acknowledged: true,
                     command: zhaoling.command,
@@ -875,6 +1169,7 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
         // ✅ RFC 0142: 魏征监管的文件夹配置事务直连天界 (不经过Tianshu workflow)
         if (
             zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG ||
+            zhaoling.command === ZOUZHE_MATTERS.CHECK_FOLDER_CONFIG ||
             zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG ||
             zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG ||
             zhaoling.command === ZOUZHE_MATTERS.ADD_PHOTO_TO_LIST ||
@@ -887,6 +1182,10 @@ export class YuanTianGangService implements IService, IYuanTianGangService {
                 let data: any = null;
                 if (zhaoling.command === ZOUZHE_MATTERS.GET_FOLDER_CONFIG) {
                     data = await invoke("get_photasa_config", { folder: context.folder });
+                } else if (zhaoling.command === ZOUZHE_MATTERS.CHECK_FOLDER_CONFIG) {
+                    data = await invoke("check_photasa_config", {
+                        folderPath: context.folderPath,
+                    });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.FIX_FOLDER_CONFIG) {
                     data = await invoke("fix_photasa_config", { folder: context.folder });
                 } else if (zhaoling.command === ZOUZHE_MATTERS.RESET_FOLDER_CONFIG) {

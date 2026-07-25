@@ -4,37 +4,40 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 
 // Mock all dependencies to prevent complex component loading
 vi.mock("@renderer/utils/api");
-vi.mock("@renderer/utils/scan-folder");
-vi.mock("./utils/file-handler");
 vi.mock("@renderer/services/theme-manager");
 vi.mock("@renderer/stores/photos");
 vi.mock("@renderer/stores/statusBar");
 vi.mock("@renderer/stores/menus");
 
-vi.mock("@photasa/common", () => ({
-    loggers: {
-        app: {
+vi.mock("@photasa/common", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@photasa/common")>();
+    return {
+        ...actual,
+        loggers: {
+            ...actual.loggers,
+            app: {
+                debug: vi.fn(),
+                info: vi.fn(),
+                warn: vi.fn(),
+                error: vi.fn(),
+            },
+        },
+        getLogger: vi.fn(() => ({
             debug: vi.fn(),
             info: vi.fn(),
             warn: vi.fn(),
             error: vi.fn(),
-        },
-    },
-    getLogger: vi.fn(() => ({
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-    })),
-    mapFileOperationToScanAction: vi.fn((type: string) => {
-        const mapping = {
-            add: "scan",
-            change: "rescan",
-            delete: "current",
-        };
-        return mapping[type] || "scan";
-    }),
-}));
+        })),
+        mapFileOperationToScanAction: vi.fn((type: string) => {
+            const mapping = {
+                add: "scan",
+                change: "rescan",
+                delete: "current",
+            };
+            return mapping[type] || "scan";
+        }),
+    };
+});
 
 // Mock window.api
 const mockOnScanQueueAdd = vi.fn();

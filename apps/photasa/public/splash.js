@@ -1,14 +1,15 @@
 /**
  * Enhanced Animated Splash Screen Controller (Tauri variant)
- * - Reuses legacy splash behavior
- * - Replaces `window.splashAPI` IPC bridge with Tauri window events:
- *   - splash:theme-changed
- *   - splash:status-update
- *   - splash:progress-update
- *   - splash:fade-out
  */
 class SplashController {
     constructor() {
+        this.PREFERENCE_THEME = {
+            LIGHT: "light",
+            DARK: "dark",
+            SOLARIZED_LIGHT: "solarized-light",
+            SOLARIZED_DARK: "solarized-dark",
+        };
+
         this.statusElement = document.querySelector(".status-text");
         this.progressElement = document.querySelector(".progress-fill");
         this.versionElement = document.querySelector(".version-text");
@@ -43,8 +44,9 @@ class SplashController {
     }
 
     init() {
+        this.setupWindowDrag();
         this.setupEventListeners();
-        this.detectSystemTheme();
+        void this.resolveInitialTheme();
         this.updateVersion();
         this.startLanguageAnimation();
 
@@ -127,6 +129,34 @@ class SplashController {
         }
     }
 
+    setupWindowDrag() {
+        const dragLayer = document.querySelector(".splash-drag-layer");
+        if (!dragLayer) {
+            return;
+        }
+
+        const startDrag = (event) => {
+            if (event.button !== 0) {
+                return;
+            }
+            event.preventDefault();
+
+            const getCurrentWindow =
+                window.__TAURI__?.window?.getCurrentWindow ??
+                window.__TAURI__?.webviewWindow?.getCurrentWebviewWindow;
+            if (typeof getCurrentWindow !== "function") {
+                return;
+            }
+
+            const currentWindow = getCurrentWindow();
+            if (typeof currentWindow?.startDragging === "function") {
+                void currentWindow.startDragging();
+            }
+        };
+
+        dragLayer.addEventListener("pointerdown", startDrag);
+    }
+
     setupEventListeners() {
         // Tauri window events
         const tauri = window.__TAURI__;
@@ -147,6 +177,51 @@ class SplashController {
         }
 
         window.addEventListener("beforeunload", () => this.cleanup());
+    }
+
+    preferenceThemeToSplashAppearance(themeId) {
+        if (typeof themeId !== "string" || themeId.length === 0) {
+            return null;
+        }
+        const { LIGHT, DARK, SOLARIZED_LIGHT, SOLARIZED_DARK } = this.PREFERENCE_THEME;
+        if (themeId === DARK || themeId === SOLARIZED_DARK) {
+            return "dark";
+        }
+        if (themeId === LIGHT || themeId === SOLARIZED_LIGHT) {
+            return "light";
+        }
+        return null;
+    }
+
+    async resolveInitialTheme() {
+        const invoke = window.__TAURI__?.core?.invoke;
+        if (typeof invoke === "function") {
+            try {
+                const preferences = await invoke("preferences_get");
+                const appearance = this.preferenceThemeToSplashAppearance(preferences?.ui?.theme);
+                if (appearance) {
+                    this.setTheme(appearance);
+                    return;
+                }
+            } catch {
+                /* 偏好尚未就绪，继续 fallback */
+            }
+        }
+
+        const getCurrentWindow = window.__TAURI__?.window?.getCurrentWindow;
+        if (typeof getCurrentWindow === "function") {
+            try {
+                const currentWindow = getCurrentWindow();
+                if (typeof currentWindow.theme === "function") {
+                    const nativeTheme = await currentWindow.theme();
+                    this.setTheme(nativeTheme === "dark" ? "dark" : "light");
+                    return;
+                }
+            } catch {
+                /* fallback below */
+            }
+        }
+        this.detectSystemTheme();
     }
 
     detectSystemTheme() {

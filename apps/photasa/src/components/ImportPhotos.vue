@@ -34,7 +34,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, reactive } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import { chooseDirectories, previewImport, onPreviewProgress } from "@renderer/utils/api";
+import { useImportOperations } from "@renderer/composables/useImportOperations";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import { getLogger } from "@photasa/common";
 import {
     createDefaultFilters,
@@ -118,6 +119,8 @@ const emit = defineEmits<ImportPhotosEmits>();
 
 // Logger instance for this component
 const logger = getLogger("import-photos");
+const imports = useImportOperations();
+const zhangSunWuJi = useZhangSunWuJi();
 
 // Wizard state reference - declared early to avoid initialization order issues
 const wizardStateRef = ref<any>(null);
@@ -386,7 +389,7 @@ const addSourceDirectory = async (
     await executeWithErrorHandling(
         async () => {
             loadingState.directories = true;
-            const result = await chooseDirectories(true);
+            const result = await zhangSunWuJi.chooseDirectories(true);
             if (result.filePaths && result.filePaths.length > 0) {
                 const newSourcePaths = addSourceDirectories(
                     stepData.sourcePaths || [],
@@ -431,7 +434,7 @@ const selectTargetDirectory = async (
     await executeWithErrorHandling(
         async () => {
             loadingState.directories = true;
-            const result = await chooseDirectories(false);
+            const result = await zhangSunWuJi.chooseDirectories(false);
             if (result.filePaths && result.filePaths.length > 0) {
                 setStepData("configuration", { ...stepData, targetPath: result.filePaths[0] });
             }
@@ -622,7 +625,8 @@ const loadPreviewData = async (wizardState: any) => {
             // 设置预览进度监听
             let cleanupProgress: (() => void) | null = null;
             try {
-                cleanupProgress = onPreviewProgress((progress, files) => {
+                await imports.ready();
+                cleanupProgress = imports.onPreviewProgress((progress, files) => {
                     logger.debug(
                         `Preview progress: stage=${progress.stage}, filesFound=${progress.filesFound}, discoveredFiles=${progress.discoveredFiles?.length || 0}, currentCount=${discoveredFiles.length}`,
                     );
@@ -655,7 +659,7 @@ const loadPreviewData = async (wizardState: any) => {
                 logger.debug("Preview config before API call:", config);
 
                 // 调用后端API获取预览数据
-                const previewResponse = await previewImport(config);
+                const previewResponse = await imports.preview(config);
 
                 // 将API响应转换为前端组件所需的数据格式
                 const previewData = transformPreviewResponse(previewResponse);

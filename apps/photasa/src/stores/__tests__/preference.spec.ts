@@ -12,22 +12,33 @@ vi.mock("@renderer/utils/folder-tree", () => ({
     cleanDataNode: vi.fn(),
 }));
 
-vi.mock("@photasa/common", () => ({
-    loggers: {
-        app: {
-            debug: vi.fn(),
-            info: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
+vi.mock("@photasa/common", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@photasa/common")>();
+    return {
+        ...actual,
+        loggers: {
+            ...actual.loggers,
+            app: {
+                debug: vi.fn(),
+                info: vi.fn(),
+                warn: vi.fn(),
+                error: vi.fn(),
+            },
+            preference: {
+                debug: vi.fn(),
+                info: vi.fn(),
+                warn: vi.fn(),
+                error: vi.fn(),
+            },
+            fangxuanling: {
+                debug: vi.fn(),
+                info: vi.fn(),
+                warn: vi.fn(),
+                error: vi.fn(),
+            },
         },
-        preference: {
-            debug: vi.fn(),
-            info: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
-        },
-    },
-}));
+    };
+});
 
 describe("preferenceStore.addFileOperation", () => {
     beforeEach(async () => {
@@ -233,7 +244,7 @@ describe("preferenceStore.addFileOperation", () => {
         });
     });
 
-    it("should not call updateFolderTree for file operations", async () => {
+    it("should update the parent folder for file operations", async () => {
         const store = usePreferenceStore();
         const { addFolderToTree } = vi.mocked(await import("@renderer/utils/folder-tree"));
 
@@ -246,10 +257,14 @@ describe("preferenceStore.addFileOperation", () => {
 
         await store.addFileOperation(operation);
 
-        expect(addFolderToTree).not.toHaveBeenCalled();
+        expect(addFolderToTree).toHaveBeenCalledWith(store.folderTree, {
+            path: "/test",
+            thumbnail: "",
+            isVideo: false,
+        });
     });
 
-    it("should not call updateFolderTree for file non-add operations", async () => {
+    it("should update the parent folder for file non-add operations", async () => {
         const store = usePreferenceStore();
         const { addFolderToTree } = vi.mocked(await import("@renderer/utils/folder-tree"));
 
@@ -262,12 +277,16 @@ describe("preferenceStore.addFileOperation", () => {
 
         await store.addFileOperation(operation);
 
-        expect(addFolderToTree).not.toHaveBeenCalled();
+        expect(addFolderToTree).toHaveBeenCalledWith(store.folderTree, {
+            path: "/test",
+            thumbnail: "",
+            isVideo: false,
+        });
     });
 
     it("should log debug messages during operation", async () => {
         const store = usePreferenceStore();
-        const mockLogger = vi.mocked(await import("@photasa/common")).loggers.chusuiliang;
+        const mockLogger = vi.mocked(await import("@photasa/common")).loggers.fangxuanling;
 
         const operation = {
             path: "/test/file.jpg",
@@ -280,12 +299,12 @@ describe("preferenceStore.addFileOperation", () => {
 
         expect(mockLogger.debug).toHaveBeenNthCalledWith(
             1,
-            "Adding file operation to queue:",
+            "✍️ Adding file operation to queue:",
             operation,
         );
         expect(mockLogger.debug).toHaveBeenNthCalledWith(
             2,
-            "[PreferenceStore] Adding new file operation to queue:",
+            "✍️ 添加新文件操作到队列:",
             "/test/file.jpg",
         );
     });

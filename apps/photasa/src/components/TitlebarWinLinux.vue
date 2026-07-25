@@ -30,10 +30,6 @@
         <div class="window-controls no-drag-region">
             <BaseSpace class="setting-header no-drag-region">
                 <CoffeeOutlined class="system-icon" @click="openScanList"></CoffeeOutlined>
-                <DashboardOutlined
-                    class="system-icon"
-                    @click="openQueueDashboard"
-                ></DashboardOutlined>
                 <ImportOutlined class="system-icon" @click="openImportPhotos"></ImportOutlined>
                 <SettingOutlined class="system-icon" @click="openPreference" />
             </BaseSpace>
@@ -106,7 +102,6 @@ import {
     PhClock as CoffeeOutlined,
     PhFolder as ImportOutlined,
     PhGear as SettingOutlined,
-    PhChartLineUp as DashboardOutlined,
 } from "@phosphor-icons/vue";
 import { useI18n } from "vue-i18n";
 import { onClickOutside } from "@vueuse/core";
@@ -115,21 +110,14 @@ import { storeToRefs } from "pinia";
 import { useMenusStore } from "@renderer/stores/menus";
 import { BaseSpace } from "@renderer/components/ui";
 import MenuDropdown from "./common/MenuDropdown.vue";
-import { getPhotasaApi } from "@renderer/ipc/api-access";
+import { useYuanTianGang } from "@renderer/composables/useYuanTianGang";
 const { t } = useI18n();
-const photasaApi = getPhotasaApi();
+const windows = useYuanTianGang().windows;
+let windowCleanups: Array<() => void> = [];
 
-const emit = defineEmits([
-    "openScanList",
-    "openQueueDashboard",
-    "openImportPhotos",
-    "openPreference",
-]);
+const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference"]);
 function openScanList() {
     emit("openScanList");
-}
-function openQueueDashboard() {
-    emit("openQueueDashboard");
 }
 function openImportPhotos() {
     emit("openImportPhotos");
@@ -139,48 +127,37 @@ function openPreference() {
 }
 
 function minimizeWindow() {
-    photasaApi.minimizeWindow();
+    void windows.minimize();
 }
 function maximizeWindow() {
-    photasaApi.maximizeWindow();
+    void windows.maximize();
 }
 function unmaximizeWindow() {
-    photasaApi.unmaximizeWindow();
+    void windows.unmaximize();
 }
 function closeWindow() {
-    photasaApi.closeWindow();
+    void windows.closeWindow();
 }
 
 const isMaximized = ref(false);
 
-onMounted(() => {
-    // 监听主进程窗口最大化/还原事件
-    photasaApi.onWindowMaximized(() => {
-        isMaximized.value = true;
-    });
-
-    // 监听主进程窗口还原事件
-    photasaApi.onWindowUnmaximized(() => {
-        isMaximized.value = false;
-    });
-
-    // 监听主进程窗口最大化状态
-    photasaApi.onWindowMaximizedState((_e, state) => {
-        isMaximized.value = !!state;
-    });
-    // 初始化时主动请求主进程同步状态
-    photasaApi.queryMaximized();
+onMounted(async () => {
+    windowCleanups = await Promise.all([
+        windows.onMaximized(() => {
+            isMaximized.value = true;
+        }),
+        windows.onUnmaximized(() => {
+            isMaximized.value = false;
+        }),
+        windows.onMaximizedState((state) => {
+            isMaximized.value = state;
+        }),
+    ]);
+    isMaximized.value = await windows.isMaximized();
 });
 onBeforeUnmount(() => {
-    photasaApi.offWindowMaximized(() => {
-        isMaximized.value = true;
-    });
-    photasaApi.offWindowUnmaximized(() => {
-        isMaximized.value = false;
-    });
-    photasaApi.offWindowMaximizedState((_e, state) => {
-        isMaximized.value = !!state;
-    });
+    windowCleanups.forEach((cleanup) => cleanup());
+    windowCleanups = [];
 });
 
 // menus store 响应式菜单栏

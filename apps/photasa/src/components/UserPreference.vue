@@ -11,6 +11,7 @@ import ThemeSettings from "./settings/ThemeSettings.vue";
 import AdvancedSettings from "./settings/AdvancedSettings.vue";
 import UpdateSettings from "./settings/UpdateSettings.vue";
 import ScanMonitoringSettings from "./settings/ScanMonitoringSettings.vue";
+import TelemetrySettings from "./settings/TelemetrySettings.vue";
 import ImportSettings from "./settings/ImportSettings.vue";
 
 defineOptions({
@@ -41,6 +42,7 @@ const label = computed(() => {
             theme: t("preference.tabs.theme"),
             advanced: t("preference.tabs.advanced"),
             autoUpdate: t("preference.tabs.autoUpdate"),
+            telemetry: t("preference.tabs.telemetry"),
             scanMonitoring: t("preference.tabs.scanMonitoring"),
             import: t("preference.tabs.import"),
         },
@@ -52,6 +54,7 @@ const tabsData = computed(() => [
     { key: "theme", label: label.value.tabs.theme },
     { key: "language", label: label.value.language },
     { key: "autoUpdate", label: label.value.tabs.autoUpdate },
+    { key: "telemetry", label: label.value.tabs.telemetry },
     { key: "import", label: label.value.tabs.import },
     { key: "scanMonitoring", label: label.value.tabs.scanMonitoring },
     { key: "about", label: label.value.tabs.about },
@@ -78,6 +81,9 @@ const tabsData = computed(() => [
         </template>
         <template #autoUpdate>
             <UpdateSettings />
+        </template>
+        <template #telemetry>
+            <TelemetrySettings />
         </template>
         <template #import>
             <ImportSettings />

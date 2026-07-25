@@ -11,7 +11,8 @@
             "theme": "테마",
             "advanced": "고급 설정",
             "autoUpdate": "자동 업데이트",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "원격 분석"
         },
         "folderList": "폴더 목록",
         "folderListUsage": "사용 방법",
@@ -416,6 +417,7 @@
         "queueTitle": "스캔 대기열",
         "queueEmpty": "대기열이 비어있습니다",
         "processing": "대기열 처리 중",
+        "pendingTasks": "{count}개 작업 대기 중",
         "allTasksCompleted": "모든 스캔 작업이 완료되었습니다",
         "pathHeader": "경로",
         "timestampHeader": "생성시간",
@@ -427,6 +429,12 @@
         "timeHoursAgo": "{count}시간 전",
         "timeDaysAgo": "{count}일 전",
         "priority": "우선순위",
+        "retryState": "재시도 {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "대기 중",
+            "processing": "처리 중",
+            "failed": "실패"
+        },
         "actions": {
             "scan": "스캔",
             "rescan": "다시 스캔",
@@ -599,5 +607,24 @@
         "maximize": "최대화",
         "restore": "복원",
         "close": "닫기"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Photasa 개선에 도움 주기",
+            "purpose": "안정성과 사용 경험 개선을 위해 익명 사용 및 충돌 데이터를 수집할 수 있습니다.",
+            "scope": "사진 내용, 파일 이름 또는 폴더 경로는 포함되지 않습니다.",
+            "destination": "데이터는 PostHog(미국)로 전송되며 동의 후에만 활성화됩니다.",
+            "grant": "허용",
+            "deny": "허용 안 함"
+        },
+        "settings": {
+            "title": "원격 분석",
+            "description": "제품 개선을 위해 익명 사용 및 충돌 데이터 전송 여부를 제어합니다.",
+            "enabled": "원격 분석 사용",
+            "enabledDescription": "켜면 익명 이벤트가 전송됩니다. 끄면 즉시 중지됩니다.",
+            "savedTitle": "원격 분석 설정 저장됨",
+            "savedMessage": "선택이 적용되었습니다.",
+            "errorTitle": "원격 분석 설정 저장 실패"
+        }
     }
 }

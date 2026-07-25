@@ -72,6 +72,14 @@ export function createPreferenceService(): IPreference {
             return store.scanning.paths || [];
         },
 
+        replaceCurrentFolderConfig(folderPath, config) {
+            if (store.currentFolder === folderPath) {
+                store.$patch((state) => {
+                    state.appState.currentFolderConfig = config;
+                });
+            }
+        },
+
         /**
          * 重置偏好管理器
          * 清空偏好设置

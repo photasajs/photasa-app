@@ -313,12 +313,13 @@ import {
     PhWarning,
 } from "@phosphor-icons/vue";
 import { BaseButton, BaseInput, BaseSelect, BaseModal } from "@renderer/components/ui";
-import { getImportHistory, undoImport } from "@renderer/utils/api";
+import { useImportOperations } from "@renderer/composables/useImportOperations";
 import type { ImportHistory, UndoPreview } from "@photasa/common";
 import { getLogger } from "@photasa/common";
 import path from "path";
 
 const logger = getLogger("import-history");
+const imports = useImportOperations();
 
 const { t } = useI18n();
 
@@ -382,7 +383,7 @@ const filteredHistory = computed(() => {
 const loadHistory = async () => {
     try {
         isLoading.value = true;
-        importHistory.value = await getImportHistory();
+        importHistory.value = await imports.history();
     } catch (error) {
         logger.error("Failed to load import history:", error);
     } finally {
@@ -410,9 +411,7 @@ const confirmUndo = async (entry: ImportHistory) => {
     undoEntry.value = entry;
 
     try {
-        // 获取撤销预览
-        // TODO: Implement previewUndoImport function
-        undoPreview.value = null;
+        undoPreview.value = await imports.previewUndo(entry.id);
     } catch (error) {
         logger.error("Failed to preview undo:", error);
         undoPreview.value = null;
@@ -424,7 +423,7 @@ const executeUndo = async () => {
 
     try {
         isUndoing.value = true;
-        await undoImport(undoEntry.value.id);
+        await imports.undo(undoEntry.value.id);
 
         // 重新加载历史记录
         await loadHistory();

@@ -26,7 +26,8 @@
             "theme": "Thème",
             "advanced": "Paramètres avancés",
             "autoUpdate": "Mise à Jour Auto",
-            "scanMonitoring": "Surveillance du Scan"
+            "scanMonitoring": "Surveillance du Scan",
+            "telemetry": "Télémétrie"
         },
         "folderList": "Liste des dossiers",
         "folderListUsage": "Utilisation",
@@ -467,6 +468,7 @@
         "queueTitle": "File d'attente de scan",
         "queueEmpty": "La file d'attente est vide",
         "processing": "Traitement de la file d'attente",
+        "pendingTasks": "{count} tâches en attente",
         "allTasksCompleted": "Toutes les tâches de scan terminées",
         "pathHeader": "Chemin",
         "timestampHeader": "Créé",
@@ -478,6 +480,12 @@
         "timeHoursAgo": "il y a {count}h",
         "timeDaysAgo": "il y a {count}j",
         "priority": "Priorité",
+        "retryState": "Nouvelle tentative {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "En attente",
+            "processing": "En cours",
+            "failed": "Échec"
+        },
         "actions": {
             "scan": "Scanner",
             "rescan": "Rescanner",
@@ -620,5 +628,24 @@
         "maximize": "Agrandir",
         "restore": "Restaurer",
         "close": "Fermer"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Aidez à améliorer Photasa",
+            "purpose": "Nous pouvons collecter des données d'utilisation et de plantage anonymes pour améliorer la stabilité et l'expérience.",
+            "scope": "N'inclut pas le contenu des photos, les noms de fichiers ou les chemins de dossiers.",
+            "destination": "Les données sont envoyées à PostHog (États-Unis) et ne sont activées qu'après votre consentement.",
+            "grant": "Autoriser",
+            "deny": "Refuser"
+        },
+        "settings": {
+            "title": "Télémétrie",
+            "description": "Contrôlez l'envoi de données d'utilisation et de plantage anonymes pour améliorer le produit.",
+            "enabled": "Activer la télémétrie",
+            "enabledDescription": "Lorsqu'elle est activée, des événements anonymes sont envoyés ; la désactivation s'arrête immédiatement.",
+            "savedTitle": "Paramètres de télémétrie enregistrés",
+            "savedMessage": "Votre choix a été appliqué.",
+            "errorTitle": "Échec de l'enregistrement des paramètres de télémétrie"
+        }
     }
 }

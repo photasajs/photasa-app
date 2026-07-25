@@ -1,18 +1,6 @@
 import { describe, it, beforeEach, expect, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 
-vi.mock("@renderer/ipc/api-access", () => ({
-    getPhotasaApi: () => ({}),
-}));
-
-vi.mock("@renderer/utils/api", () => ({
-    cleanupScanQueue: vi.fn(),
-    isVideoFile: vi.fn(),
-    resetPhotasaConfig: vi.fn(),
-    shortenThumbnailName: vi.fn((f: string) => f),
-    toFileName: vi.fn((f: string) => f),
-}));
-
 import { usePreferenceStore } from "../preference";
 
 vi.mock("@renderer/utils/path", () => ({
@@ -24,16 +12,21 @@ vi.mock("@renderer/utils/folder-tree", () => ({
     cleanDataNode: vi.fn(),
 }));
 
-vi.mock("@photasa/common", () => ({
-    loggers: {
-        fangxuanling: {
-            debug: vi.fn(),
-            info: vi.fn(),
-            warn: vi.fn(),
-            error: vi.fn(),
+vi.mock("@photasa/common", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@photasa/common")>();
+    return {
+        ...actual,
+        loggers: {
+            ...actual.loggers,
+            fangxuanling: {
+                debug: vi.fn(),
+                info: vi.fn(),
+                warn: vi.fn(),
+                error: vi.fn(),
+            },
         },
-    },
-}));
+    };
+});
 
 describe("preferenceStore.importing", () => {
     beforeEach(() => {

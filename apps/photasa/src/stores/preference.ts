@@ -1,26 +1,13 @@
 import { defineStore } from "pinia";
 import { normalizePath } from "@renderer/utils/path";
-import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import {
-    cleanupScanQueue,
-    isVideoFile,
-    resetPhotasaConfig,
-    shortenThumbnailName,
-    toFileName,
-} from "@renderer/utils/api";
 import type { DuplicateStrategy, ImportPreferences, PhotasaConfig } from "@photasa/common";
 import type { FileOperationInput } from "@photasa/common";
 import type { ThumbnailRequest } from "@photasa/common";
 import { addFolderToTree, cleanDataNode } from "@renderer/utils/folder-tree";
 import { toDirName } from "@renderer/utils/api-path";
 // 导入优先级排序工具
-import {
-    createScanAction,
-    sortScanningFolders,
-    updateScanActionPriority,
-    shouldUpdateScanAction,
-    debugPrintScanningFolders,
-} from "@renderer/utils/scan-priority";
+import { isVideoPath } from "@renderer/utils/media-type";
+import { shortenThumbnailNameSync, toFileNameSync } from "@renderer/utils/sync-path";
 
 import { loggers } from "@photasa/common";
 import { FolderNode } from "@photasa/common";
@@ -117,6 +104,12 @@ export interface PreferenceState {
     system: {
         /** 自动更新配置 */
         autoUpdate: AutoUpdateConfig;
+    };
+
+    /** 遥测同意偏好（RFC 0163） */
+    telemetry: {
+        consentStatus: "undecided" | "granted" | "denied";
+        consentPolicyVersion: string;
     };
 
     /**
@@ -220,6 +213,11 @@ export const usePreferenceStore = defineStore("preference", {
                 },
             },
 
+            telemetry: {
+                consentStatus: "undecided",
+                consentPolicyVersion: "",
+            },
+
             /**
              * 应用运行时状态 - Store特有
              * ✅ RFC 0038: 移除paths、excludePaths、autoUpdate，已迁移到preferences
@@ -271,6 +269,8 @@ export const usePreferenceStore = defineStore("preference", {
          */
         /** 自动更新配置 */
         autoUpdate: (state) => state.system.autoUpdate,
+        /** 遥测同意状态 */
+        telemetry: (state) => state.telemetry,
 
         /**
          * 应用状态getter - 运行时状态
@@ -327,125 +327,6 @@ export const usePreferenceStore = defineStore("preference", {
                 });
                 this.scanning.paths = this.scanning.paths.sort();
             }
-        },
-        async addScanFolder(
-            folder: string,
-            action: "scan" | "rescan" | "current",
-            source: "user" | "auto" = "user",
-        ) {
-            logger.debug(`✍️ 添加扫描文件夹: ${folder}, 动作: ${action}, 来源: ${source}`);
-
-            if (!Array.isArray(this.appState.scanningFolder)) {
-                logger.debug("✍️ 初始化扫描文件夹数组");
-                this.appState.scanningFolder = [];
-            }
-
-            // Normalize the folder path
-            folder = normalizePath(folder);
-
-            // Check if the folder is already in the scanning queue
-            const existingIndex = this.appState.scanningFolder.findIndex((p) => p.path === folder);
-
-            if (existingIndex >= 0) {
-                const existing = this.appState.scanningFolder[existingIndex];
-
-                // 检查是否应该更新现有项（基于优先级）
-                if (shouldUpdateScanAction(existing, action, source)) {
-                    logger.debug(`✍️ 更新现有文件夹: ${folder}`);
-                    logger.debug(
-                        `✍️ Previous: ${existing.action}(${existing.source}) -> New: ${action}(${source})`,
-                    );
-
-                    this.appState.scanningFolder[existingIndex] = updateScanActionPriority(
-                        existing,
-                        action,
-                        source,
-                    );
-                    this.appState.scanningFolder = sortScanningFolders(
-                        this.appState.scanningFolder,
-                    );
-                } else {
-                    logger.debug(
-                        `✍️ 文件夹已经在扫描队列中:`,
-                        `${existing.action}(${existing.source}) >= ${action}(${source})`,
-                    );
-                }
-                return;
-            }
-
-            // 智能检查：如果文件夹已扫描且不是强制重新扫描，则跳过
-            // 注意：对于用户手动添加的文件夹，需要确保子目录能被发现并添加到队列
-            if (action === "scan" && source === "auto") {
-                try {
-                    const { checkPhotasaConfig } = await import("@renderer/utils/api");
-                    const configCheck = await checkPhotasaConfig(folder);
-
-                    if (configCheck.hasConfig) {
-                        // 文件夹已扫描过，跳过扫描
-                        this.updateFolderTree(folder);
-                        logger.debug(`✍️ 文件夹已经扫描过 (自动来源), 跳过: ${folder}`);
-                        return; // 跳过添加到队列
-                    }
-                } catch (error) {
-                    logger.warn(`✍️ 检查 photasa 配置失败: ${folder}:`, error);
-                    // 如果检查失败，继续正常流程
-                }
-            } else if (action === "scan" && source === "user") {
-                // 对于用户手动添加的文件夹，始终添加到扫描队列以确保子目录被发现
-                logger.debug(`✍️ 用户发起的扫描, 添加到队列: ${folder}`);
-            }
-
-            // 创建新的扫描动作（带优先级信息）
-            const newScanAction = createScanAction(
-                {
-                    path: folder,
-                    action,
-                    thumbnailSize: this.display.thumbnailSize,
-                    operationType: "directory", // Default to directory for legacy compatibility
-                },
-                source,
-            );
-
-            // Add the new folder to scan
-            logger.debug("✍️ 添加新文件夹到扫描:", folder);
-            this.appState.scanningFolder.push(newScanAction);
-
-            // 排序所有扫描文件夹
-            this.appState.scanningFolder = sortScanningFolders(this.appState.scanningFolder);
-
-            // 更新文件夹树
-            this.updateFolderTree(folder);
-
-            // Debug: show current queue state
-            debugPrintScanningFolders(this.appState.scanningFolder, "updated_scanning_queue");
-        },
-
-        /**
-         * 批量添加扫描文件夹
-         * RFC 0018: 支持优先级排序的批量添加
-         */
-        async addFoldersForScan(
-            folders: string[],
-            action: "scan" | "rescan" | "current" = "scan",
-            source: "user" | "auto" = "user",
-        ) {
-            logger.debug(
-                `✍️ 批量添加 ${folders.length} 个文件夹: 动作: ${action}, 来源: ${source}`,
-            );
-
-            // 导入优先级排序工具
-            const { debugPrintScanningFolders } = await import("@renderer/utils/scan-priority");
-
-            // 批量添加所有文件夹
-            for (const folder of folders) {
-                await this.addScanFolder(folder, action, source);
-            }
-
-            // Final debug log: show complete queue state
-            debugPrintScanningFolders(
-                this.appState.scanningFolder,
-                `batch_add_completed_${folders.length}_folders`,
-            );
         },
         async addFileOperation(operation: FileOperationInput) {
             logger.debug("✍️ Adding file operation to queue:", operation);
@@ -607,16 +488,6 @@ export const usePreferenceStore = defineStore("preference", {
                 this.folderTree.splice(found, 1);
             }
 
-            // Cancel any running scan tasks
-            if (scanPhotosTask.isRunning) {
-                logger.info("✍️ 取消正在运行的扫描任务");
-                scanPhotosTask.cancelAll();
-            }
-
-            // Clean up the scan queue
-            logger.info("✍️ 清理扫描队列");
-            cleanupScanQueue(path);
-
             // Remove from scanning queue and all its subdirectories
             const originalLength = this.scanningFolder.length;
             // Ensure the path to be removed is consistently normalized
@@ -652,20 +523,19 @@ export const usePreferenceStore = defineStore("preference", {
             }
         },
         addToCurrentPhotasaConfig(request: ThumbnailRequest): void {
-            const relativePath = toFileName(request.path);
+            const relativePath = toFileNameSync(request.path);
             if (this.currentFolderConfig.photoList.find((photo) => photo.path === relativePath)) {
                 return;
             }
-            const videoFlag = isVideoFile(request.path);
             this.currentFolderConfig.photoList.push({
                 path: relativePath,
-                thumbnail: shortenThumbnailName(request.thumbnail),
-                isVideo: videoFlag instanceof Promise ? false : videoFlag,
+                thumbnail: shortenThumbnailNameSync(request.thumbnail),
+                isVideo: isVideoPath(request.path),
                 history: [],
             });
         },
         removeFromCurrentPhotasaConfig(request: ThumbnailRequest): void {
-            const relativePath = toFileName(request.path);
+            const relativePath = toFileNameSync(request.path);
             const index = this.currentFolderConfig.photoList.findIndex(
                 (photo) => photo.path === relativePath,
             );
@@ -737,19 +607,14 @@ export const usePreferenceStore = defineStore("preference", {
          *
          * @param newDirs 需要重建的目录数组
          * 1. 清空 paths、folderTree、scanningFolder
-         * 2. 逐一 addPath 并调用 resetPhotasaConfig 重建缓存
+         * 2. 逐一 addPath 重建本地投影；配置 I/O 由魏征负责
          */
-        async resetAllFolders(newDirs: string[]) {
-            // 停止所有扫描任务
-            if (scanPhotosTask.isRunning) {
-                scanPhotosTask.cancelAll();
-            }
+        resetAllFolders(newDirs: string[]) {
             this.scanning.paths = [];
             this.appState.folderTree = [];
             this.appState.scanningFolder = [];
             for (const dir of newDirs) {
                 this.addPath(dir);
-                await resetPhotasaConfig(dir);
             }
         },
         /**

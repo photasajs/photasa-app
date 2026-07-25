@@ -148,6 +148,11 @@ fn emit_error(app: &AppHandle, request_id: &str, message: &str, action_path: Opt
  error: message.to_string(),
  };
  emit_scan_report_with_notify(app, &report);
+ crate::telemetry::capture_from_app(
+  app,
+  "scan_failed",
+  serde_json::json!({ "surface": "rust" }),
+ );
 }
 
 fn emit_directory_complete(
@@ -160,6 +165,11 @@ fn emit_directory_complete(
  root_path: scan_root.to_string(),
  };
  emit_scan_report_with_notify(app, &report);
+ crate::telemetry::capture_from_app(
+  app,
+  "scan_completed",
+  serde_json::json!({ "surface": "rust" }),
+ );
 }
 
 fn emit_file_complete(app: &AppHandle, request_id: &str, file_path: &str) {

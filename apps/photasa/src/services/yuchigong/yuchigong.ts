@@ -24,6 +24,10 @@ import {
     calculateNextRetryCount,
     getTaskStatusDisplayText,
 } from "./task-helpers";
+import {
+    SCAN_QUEUE_DISCOVERED_BATCH_MS,
+    SCAN_QUEUE_RESTORE_FROM_DISK,
+} from "@renderer/services/yuantiangang/scan-queue-contract";
 
 // ✅ RFC 0042 Step 2.5: folderTree管理已迁移到魏征服务，不再需要folder-tree相关导入
 
@@ -67,6 +71,11 @@ export class YuChiGongService implements IService, IYuChiGongService {
      * 使用 p-queue 确保任务按序执行，同时只运行一个扫描任务
      */
     private scanQueue: PQueue;
+
+    /** RFC 0162：scan_directory_discovered 批量入队 */
+    private pendingDiscoveredScans: ScanAction[] = [];
+    private discoveredScanFlushTimer: ReturnType<typeof setTimeout> | null = null;
+    private discoveredScanFlushChain: Promise<void> = Promise.resolve();
 
     constructor(private fangXuanLingService: IFangXuanLingService) {
         logger.info("🛡️ 尉迟恭就任，负责扫描队列业务逻辑管理");
@@ -306,14 +315,64 @@ export class YuChiGongService implements IService, IYuChiGongService {
         action: "scan" | "rescan" | "current",
         source: "user" | "auto",
     ): Promise<void> {
-        await this.scheduleScanAction({
+        const scanAction: ScanAction = {
             path,
             action,
             thumbnailSize: this.getCurrentThumbnailSize(),
             source,
             timestamp: Date.now(),
             operationType: "directory",
-        });
+        };
+
+        if (source === "auto") {
+            this.enqueueDiscoveredScan(scanAction);
+            return;
+        }
+
+        await this.scheduleScanAction(scanAction);
+    }
+
+    /** RFC 0162：合并 discovered 风暴为单批 createTasks */
+    private enqueueDiscoveredScan(scanAction: ScanAction): void {
+        this.pendingDiscoveredScans.push(scanAction);
+        if (this.discoveredScanFlushTimer) {
+            return;
+        }
+        this.discoveredScanFlushTimer = setTimeout(() => {
+            this.discoveredScanFlushTimer = null;
+            this.discoveredScanFlushChain = this.discoveredScanFlushChain
+                .then(() => this.flushDiscoveredScans())
+                .catch((error) => {
+                    logger.error("🛡️ 尉迟恭：批量发现入队失败", error);
+                });
+        }, SCAN_QUEUE_DISCOVERED_BATCH_MS);
+    }
+
+    private async flushDiscoveredScans(): Promise<void> {
+        const batch = this.pendingDiscoveredScans.splice(0);
+        if (batch.length === 0) {
+            return;
+        }
+
+        logger.info(`🛡️ 尉迟恭：批量发现入队 ${batch.length} 个目录`);
+        await this.createTasks(batch);
+
+        for (const scanAction of batch) {
+            const operationType = scanAction.operationType || "directory";
+            logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`);
+            this.scanQueue
+                .add(() =>
+                    this.executeScan(
+                        scanAction.path,
+                        scanAction.action,
+                        operationType,
+                        scanAction.thumbnailSize,
+                    ),
+                )
+                .catch((error) => {
+                    logger.error(`🛡️ 尉迟恭：任务执行失败 ${scanAction.path}`, error);
+                });
+        }
     }
 
     /**
@@ -863,43 +922,66 @@ export class YuChiGongService implements IService, IYuChiGongService {
     }
 
     /**
-     * 文件监视服务批量事件入扫描执行队列
+     * 文件监视服务批量事件入扫描执行队列（单次持久化批次，避免 N 次 IPC 写盘）
      */
     async scheduleFileOperationsFromWatch(
         operations: FileOperation[],
         thumbnailSize: number,
     ): Promise<void> {
+        const pending: ScanAction[] = [];
+
         for (const operation of operations) {
-            try {
-                const normalizedPath = normalizePath(operation.path);
-                if (!normalizedPath || normalizedPath.trim() === "") {
-                    logger.warn("🛡️ 尉迟恭：跳过空 watch 扫描路径", operation);
+            if (operation.type === "delete" || operation.type === "deleteDir") {
+                continue;
+            }
+            const normalizedPath = normalizePath(operation.path);
+            if (!normalizedPath || normalizedPath.trim() === "") {
+                logger.warn("🛡️ 尉迟恭：跳过空 watch 扫描路径", operation);
+                continue;
+            }
+
+            const action = mapFileOperationToScanAction(operation.type);
+            if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
+                if (action !== "rescan") {
+                    logger.warn(`🛡️ 尉迟恭：watch 扫描任务已存在，跳过 ${normalizedPath}`);
                     continue;
                 }
-
-                const action = mapFileOperationToScanAction(operation.type);
-                if (this.fangXuanLingService.scanning.isInQueue(normalizedPath)) {
-                    if (action !== "rescan") {
-                        logger.warn(`🛡️ 尉迟恭：watch 扫描任务已存在，跳过 ${normalizedPath}`);
-                        continue;
-                    }
-                    await this.removeScanTask(normalizedPath, { force: true });
-                }
-
-                await this.scheduleScanAction({
-                    path: normalizedPath,
-                    action,
-                    thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize,
-                    source: "auto",
-                    timestamp: operation.timestamp,
-                    operationType: operation.metadata?.isFile ? "file" : "directory",
-                    retryCount: operation.retryCount,
-                    fileOperationId: operation.id,
-                    priority: operation.priority,
-                });
-            } catch (error) {
-                logger.error(`🛡️ 尉迟恭：watch 扫描任务入队失败 ${operation.path}`, error);
+                await this.removeScanTask(normalizedPath, { force: true });
             }
+
+            pending.push({
+                path: normalizedPath,
+                action,
+                thumbnailSize: operation.metadata?.thumbnailSize || thumbnailSize,
+                source: "auto",
+                timestamp: operation.timestamp,
+                operationType: operation.metadata?.isFile ? "file" : "directory",
+                retryCount: operation.retryCount,
+                fileOperationId: operation.id,
+                priority: operation.priority,
+            });
+        }
+
+        if (pending.length === 0) {
+            return;
+        }
+
+        await this.createTasks(pending);
+
+        for (const scanAction of pending) {
+            logger.info(`🛡️ 尉迟恭：添加任务到执行队列 ${scanAction.path} (${scanAction.action})`);
+            this.scanQueue
+                .add(() =>
+                    this.executeScan(
+                        scanAction.path,
+                        scanAction.action,
+                        scanAction.operationType,
+                        scanAction.thumbnailSize,
+                    ),
+                )
+                .catch((error) => {
+                    logger.error(`🛡️ 尉迟恭：任务执行失败 ${scanAction.path}`, error);
+                });
         }
     }
 
@@ -984,6 +1066,7 @@ export class YuChiGongService implements IService, IYuChiGongService {
             const zouzhe: Zouzhe = {
                 department: GUANYUAN_NAMES.YU_CHI_GONG,
                 matter: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+                content: { [SCAN_QUEUE_RESTORE_FROM_DISK]: true },
                 timestamp: Date.now(),
                 priority: ZOUZHE_PRIORITIES.NORMAL,
             };

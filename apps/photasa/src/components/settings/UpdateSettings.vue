@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { usePreferenceStore } from "@renderer/stores/preference";
@@ -11,14 +11,15 @@ import {
 } from "@phosphor-icons/vue";
 import { BaseButton, BaseSwitch, BaseSelect, BaseInlineFormField } from "@renderer/components/ui";
 import { notification } from "@renderer/services/notification-manager";
-import { getPhotasaApi } from "@renderer/ipc/api-access";
+import { useYuanTianGang } from "@renderer/composables/useYuanTianGang";
 
 defineOptions({
     name: "UpdateSettings",
 });
 
 const { t } = useI18n();
-const photasaApi = getPhotasaApi();
+const updates = useYuanTianGang().updates;
+let updateCleanups: Array<() => void> = [];
 
 // 获取更新状态和配置的响应式数据
 const updateStatus = ref<string>("idle"); // idle | checking | downloading | downloaded | error
@@ -100,7 +101,7 @@ async function updateConfig<K extends keyof typeof autoUpdate.value>(
     value: (typeof autoUpdate.value)[K],
 ): Promise<void> {
     try {
-        await photasaApi?.updateAutoUpdateConfig?.({ [key]: value });
+        await updates.configure({ [key]: value });
         preferenceStore.updateAutoUpdateConfig({ [key]: value });
         notification.success({
             title: t("notification.configUpdated.title"),
@@ -124,8 +125,8 @@ async function checkForUpdates(): Promise<void> {
     updateError.value = "";
 
     try {
-        const result = await photasaApi?.checkForUpdates?.();
-        if (result?.hasUpdate) {
+        const result = await updates.check();
+        if (result.hasUpdate) {
             updateStatus.value = "idle";
             latestVersion.value = result.version;
             updateInfo.value = result.info;
@@ -160,7 +161,7 @@ async function downloadUpdate(): Promise<void> {
     updateProgress.value = 0;
 
     try {
-        await photasaApi?.downloadUpdate?.();
+        await updates.download();
         // 进度监听通过 IPC 事件处理
     } catch (error: unknown) {
         updateStatus.value = "error";
@@ -179,7 +180,7 @@ async function installUpdate(): Promise<void> {
     if (updateStatus.value !== "downloaded") return;
 
     try {
-        await photasaApi?.installUpdate?.();
+        await updates.install();
         notification.info({
             title: t("notification.installing.title"),
             message: t("notification.installing.message"),
@@ -198,48 +199,46 @@ async function installUpdate(): Promise<void> {
 onMounted(async () => {
     try {
         // 获取当前版本
-        const version = await photasaApi?.getAppVersion?.();
+        const version = await updates.version();
         if (version) currentVersion.value = version;
 
         // 获取更新状态
-        const status = await photasaApi?.getUpdateStatus?.();
+        const status = await updates.status();
         if (status) {
-            updateStatus.value = status.status;
-            updateProgress.value = status.progress || 0;
-            if (status.error) updateError.value = status.error;
-            if (status.version) latestVersion.value = status.version;
+            if (typeof status.status === "string") updateStatus.value = status.status;
+            if (typeof status.progress === "number") updateProgress.value = status.progress;
+            if (typeof status.error === "string") updateError.value = status.error;
+            if (typeof status.version === "string") latestVersion.value = status.version;
         }
 
-        // 监听更新事件
-        if (photasaApi?.onUpdateProgress) {
-            photasaApi.onUpdateProgress((progress: number) => {
+        updateCleanups = await Promise.all([
+            updates.onProgress((progress: number) => {
                 updateProgress.value = progress;
-            });
-        }
-
-        if (photasaApi?.onUpdateDownloaded) {
-            photasaApi.onUpdateDownloaded(() => {
+            }),
+            updates.onDownloaded(() => {
                 updateStatus.value = "downloaded";
                 notification.success({
                     title: t("notification.downloadComplete.title"),
                     message: t("notification.downloadComplete.message"),
                 });
-            });
-        }
-
-        if (photasaApi?.onUpdateError) {
-            photasaApi.onUpdateError((error: string) => {
+            }),
+            updates.onError((error: string) => {
                 updateStatus.value = "error";
                 updateError.value = error;
                 notification.error({
                     title: t("notification.updateError.title"),
                     message: error,
                 });
-            });
-        }
+            }),
+        ]);
     } catch (error) {
         console.warn("Failed to initialize update settings:", error);
     }
+});
+
+onUnmounted(() => {
+    updateCleanups.forEach((cleanup) => cleanup());
+    updateCleanups = [];
 });
 </script>
 

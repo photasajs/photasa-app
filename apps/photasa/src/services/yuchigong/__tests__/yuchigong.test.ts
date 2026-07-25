@@ -1302,6 +1302,40 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             });
         });
 
+        it("watch 删除操作不应伪装成扫描任务", async () => {
+            await yuchiGong.scheduleFileOperationsFromWatch(
+                [
+                    {
+                        id: "watch-delete-file",
+                        type: "delete",
+                        path: "/test/watch/deleted.jpg",
+                        timestamp: 1_700_000_000_000,
+                        priority: 1,
+                        retryCount: 0,
+                        metadata: { thumbnailSize: 150, isFile: true },
+                    },
+                    {
+                        id: "watch-delete-dir",
+                        type: "deleteDir",
+                        path: "/test/watch/deleted-dir",
+                        timestamp: 1_700_000_000_001,
+                        priority: 1,
+                        retryCount: 0,
+                        metadata: { thumbnailSize: 150, isFile: false },
+                    },
+                ],
+                150,
+            );
+
+            expect(
+                mockFangXuanLing.receivedZouzhes.some(
+                    (z) =>
+                        z.matter === ZOUZHE_MATTERS.ADD_SCAN_ACTION ||
+                        z.matter === ZOUZHE_MATTERS.SCAN_PHOTOS,
+                ),
+            ).toBe(false);
+        });
+
         it("目录扫描仅 invoke 当前路径（子目录由千里眼报告入队）", async () => {
             const testPath = "/test/parent";
             mockFangXuanLing.mockSubfolders = ["/test/parent/sub1", "/test/parent/sub2"];
@@ -1419,6 +1453,9 @@ describe("🛡️ 尉迟恭（YuChiGong）扫描队列UI状态管理", () => {
             );
             expect(getQueueZouzhe).toBeDefined();
             expect(getQueueZouzhe?.department).toBe(GUANYUAN_NAMES.YU_CHI_GONG);
+            expect((getQueueZouzhe?.content as Record<string, unknown>)?.restoreFromDisk).toBe(
+                true,
+            );
         });
 
         it("应该处理房玄龄拒绝的情况", async () => {

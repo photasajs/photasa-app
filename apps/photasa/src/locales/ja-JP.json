@@ -26,7 +26,8 @@
             "theme": "テーマ",
             "advanced": "高度な設定",
             "autoUpdate": "自動更新",
-            "scanMonitoring": "スキャンモニタリング"
+            "scanMonitoring": "スキャンモニタリング",
+            "telemetry": "テレメトリ"
         },
         "folderList": "ディレクトリリスト",
         "folderListUsage": "使い方",
@@ -422,6 +423,7 @@
         "queueTitle": "スキャンキュー",
         "queueEmpty": "キューは空です",
         "processing": "キューを処理中",
+        "pendingTasks": "{count} 件のタスクが待機中",
         "allTasksCompleted": "すべてのスキャンタスクが完了しました",
         "pathHeader": "パス",
         "timestampHeader": "作成時刻",
@@ -433,6 +435,12 @@
         "timeHoursAgo": "{count}時間前",
         "timeDaysAgo": "{count}日前",
         "priority": "優先度",
+        "retryState": "再試行 {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "待機中",
+            "processing": "処理中",
+            "failed": "失敗"
+        },
         "actions": {
             "scan": "スキャン",
             "rescan": "再スキャン",
@@ -620,5 +628,24 @@
         "maximize": "最大化",
         "restore": "元に戻す",
         "close": "閉じる"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "倉廩図司の改善にご協力ください",
+            "purpose": "安定性と体験向上のため、匿名の利用状況およびクラッシュデータを収集する場合があります。",
+            "scope": "写真の内容、ファイル名、フォルダパスは含まれません。",
+            "destination": "データは PostHog（米国）に送信され、同意後にのみ有効になります。",
+            "grant": "許可する",
+            "deny": "許可しない"
+        },
+        "settings": {
+            "title": "テレメトリ",
+            "description": "製品改善のため匿名の利用・クラッシュデータを送信するかどうかを制御します。",
+            "enabled": "テレメトリを有効にする",
+            "enabledDescription": "オンにすると匿名イベントが送信されます。オフにすると直ちに停止します。",
+            "savedTitle": "テレメトリ設定を保存しました",
+            "savedMessage": "選択内容が反映されました。",
+            "errorTitle": "テレメトリ設定の保存に失敗しました"
+        }
     }
 }

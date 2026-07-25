@@ -7,17 +7,8 @@ import ImageList from "./components/ImageList.vue";
 import FolderList from "./components/FolderList.vue";
 import { usePhotosStore } from "@renderer/stores/photos";
 import { usePreferenceStore } from "@renderer/stores/preference";
-import {
-    getDirectory,
-    stopWatching,
-    getRecoverableImports,
-    cleanupRecoverableImport,
-    keepRecoverableImport,
-} from "@renderer/utils/api";
-import { scanPhotosTask } from "@renderer/utils/scan-folder";
-import { startFileWatching } from "./utils/file-handler";
+import { useImportOperations } from "@renderer/composables/useImportOperations";
 import { loggers } from "@photasa/common";
-import { getPhotasaApi } from "@renderer/ipc/api-access";
 
 import UserPreference from "./components/UserPreference.vue";
 import ScanQueueDialog from "./components/ScanQueueDialog.vue";
@@ -37,17 +28,27 @@ import {
     BaseSpinner,
     UpdateNotification,
 } from "@renderer/components/ui";
-import QueueHealthDashboard from "./components/queue-monitoring/QueueHealthDashboard.vue";
-import { queueMonitoringService } from "@renderer/services/queue-monitoring-service";
 import { scanMonitoringService } from "@renderer/services/yushinan/scan-monitoring-service";
+import {
+    needsConsentDialog,
+    reconcileTelemetryConsent,
+} from "@renderer/services/telemetry/telemetry-consent";
+import {
+    initPosthogIfGranted,
+    installGlobalErrorHandlers,
+    captureTelemetryEvent,
+} from "@renderer/services/telemetry/posthog-client";
+import { TELEMETRY_EVENTS } from "@renderer/constants/telemetry-events";
 import LogConsole from "./components/LogConsole.vue";
+import TelemetryConsentDialog from "./components/TelemetryConsentDialog.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
+import { useYuChiGong } from "@renderer/composables/useYuChiGong";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
+import { useYuanTianGang } from "@renderer/composables/useYuanTianGang";
 import { useScanningStore } from "@renderer/services/fangxuanling/stores/scanning-store";
 import { isTauri } from "./api/env";
-import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
 import { notification } from "@renderer/services/notification-manager";
 import type { RecoverableImport } from "@photasa/common";
 
@@ -55,6 +56,7 @@ import type { RecoverableImport } from "@photasa/common";
  * 日志记录器
  */
 const logger = loggers.lishimin;
+const imports = useImportOperations();
 const themeManager = useChuSuiLiang().themeManager;
 const chuSuiLiang = useChuSuiLiang();
 const { t } = useI18n();
@@ -65,6 +67,8 @@ const { paths, currentFolder } = storeToRefs(preferenceStore);
  * QinQiong service
  */
 const qinQiong = useQinQiong();
+const yuChiGong = useYuChiGong();
+const yuanTianGang = useYuanTianGang();
 
 // 初始化更新监听器
 const { updateStore } = useUpdateListener();
@@ -76,7 +80,7 @@ const { queue: scanningFolder } = storeToRefs(useScanningStore());
 const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
-const showQueueDashboard = ref(false);
+const showTelemetryConsent = ref(false);
 const loading = ref(false);
 
 const themes = ref<ThemeMeta[]>([]);
@@ -85,7 +89,7 @@ const currentThemeId = ref<string>("");
 const zhangSunWuJi = useZhangSunWuJi();
 
 const isMac = ref(false);
-void getPhotasaApi()
+void yuanTianGang.desktop
     .isMac()
     .then((value) => {
         isMac.value = Boolean(value);
@@ -101,13 +105,6 @@ function handleOpenScanList() {
     logger.debug("Opening scan list dialog...");
     showScanList.value = true;
 }
-function handleOpenQueueDashboard() {
-    logger.debug("Opening queue dashboard dialog...");
-    showQueueDashboard.value = true;
-    if (!queueMonitoringService.isMonitoring.value) {
-        queueMonitoringService.startMonitoring();
-    }
-}
 function handleOpenImportPhotos() {
     logger.debug("Opening import photos dialog...");
     showImportDialog.value = true;
@@ -115,6 +112,7 @@ function handleOpenImportPhotos() {
 }
 function handleOpenPreference() {
     logger.debug("Opening preference dialog...");
+    captureTelemetryEvent(TELEMETRY_EVENTS.SETTINGS_OPENED);
     showPreference.value = true;
 }
 
@@ -123,11 +121,12 @@ function handleOpenPreference() {
  */
 async function initializeApp(): Promise<void> {
     try {
-        const dir = await getDirectory("desktop");
-
         // Desktop directory is ready
         if (paths.value.length === 0) {
-            await chuSuiLiang.addPath(dir);
+            const selection = await zhangSunWuJi.chooseDirectories(false);
+            if (selection.filePaths.length > 0) {
+                await chuSuiLiang.addPath(selection.filePaths[0]);
+            }
         }
 
         loading.value = false;
@@ -137,8 +136,7 @@ async function initializeApp(): Promise<void> {
         }
 
         if (paths.value.length > 0) {
-            // ✅ RFC 0042: 使用秦琼处理文件系统事件
-            startFileWatching(paths.value, preferenceStore, qinQiong);
+            await qinQiong.startWatching(paths.value, preferenceStore.thumbnailSize);
         } else {
             // Open preference to config
             showPreference.value = true;
@@ -153,7 +151,7 @@ async function initializeApp(): Promise<void> {
 }
 
 async function cleanupInterruptedImport(item: RecoverableImport): Promise<void> {
-    const result = await cleanupRecoverableImport(item.id);
+    const result = await imports.cleanupRecoverable(item.id);
     if (result.success) {
         notification.success({
             title: t("import.recovery.cleanedTitle"),
@@ -170,7 +168,7 @@ async function cleanupInterruptedImport(item: RecoverableImport): Promise<void> 
 }
 
 async function keepInterruptedImport(item: RecoverableImport): Promise<void> {
-    const result = await keepRecoverableImport(item.id);
+    const result = await imports.keepRecoverable(item.id);
     notification.info({
         title: t("import.recovery.keptTitle"),
         message: t("import.recovery.keptMessage", {
@@ -210,17 +208,26 @@ function notifyInterruptedImport(item: RecoverableImport): void {
 async function detectRecoverableImports(): Promise<void> {
     if (!isTauri()) return;
     try {
-        const imports = await getRecoverableImports();
-        imports.forEach(notifyInterruptedImport);
+        const recoverableImports = await imports.recoverable();
+        recoverableImports.forEach(notifyInterruptedImport);
     } catch (error) {
         logger.warn("⚠️ 导入恢复检查失败", error);
     }
 }
 
 const weiZheng = useWeiZheng();
-const scanningStore = useScanningStore();
+let teardownGlobalErrorHandlers: (() => void) | undefined;
 
 onMounted(async () => {
+    teardownGlobalErrorHandlers = installGlobalErrorHandlers();
+
+    const reconciledTelemetry = reconcileTelemetryConsent(preferenceStore.telemetry);
+    if (reconciledTelemetry.consentStatus !== preferenceStore.telemetry.consentStatus) {
+        preferenceStore.$patch({ telemetry: reconciledTelemetry });
+    }
+    initPosthogIfGranted(reconciledTelemetry.consentStatus);
+    showTelemetryConsent.value = needsConsentDialog(reconciledTelemetry.consentStatus);
+
     // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
     themes.value = themeManager.getThemes();
@@ -232,7 +239,7 @@ onMounted(async () => {
     // 应用主题到DOM
     if (currentThemeId.value) {
         try {
-            await themeManager.applyTheme(currentThemeId.value, THEME_BASE_PATH);
+            await themeManager.applyTheme(currentThemeId.value);
             logger.info("👑 应用主题成功:", currentThemeId.value);
         } catch (error) {
             logger.error("👑 应用主题失败:", error);
@@ -248,7 +255,7 @@ onMounted(async () => {
         async (newThemeId) => {
             if (newThemeId && newThemeId !== currentThemeId.value) {
                 try {
-                    await themeManager.applyTheme(newThemeId, THEME_BASE_PATH);
+                    await themeManager.applyTheme(newThemeId);
                     currentThemeId.value = newThemeId;
                     logger.info("👑 主题切换成功:", newThemeId);
                 } catch (error) {
@@ -260,8 +267,7 @@ onMounted(async () => {
     );
 
     // 初始化扫描监控服务
-    scanMonitoringService.setScanIdleChecker(() => scanPhotosTask.isIdle);
-    queueMonitoringService.setQueueProvider(() => scanningStore.queue);
+    scanMonitoringService.setScanIdleChecker(() => yuChiGong.queueSize === 0);
     scanMonitoringService.startMonitoring(() => {
         logger.info("👑 [扫描监控] 自动恢复触发");
         // ✅ RFC 0048: 尉迟恭的watch会自动触发扫描
@@ -271,22 +277,16 @@ onMounted(async () => {
     try {
         await initializeApp();
         await detectRecoverableImports();
-    } finally {
-        // RFC 0101：主界面首屏就绪后关闭 Splash、显示主窗
-        if (isTauri()) {
-            try {
-                const { invoke } = await import("@tauri-apps/api/core");
-                await invoke("close_splashscreen");
-            } catch (e) {
-                logger.warn("⚠️ 告示：关闭启动画面未果", e);
-            }
-        }
+    } catch (error) {
+        logger.error("👑 应用初始化失败:", error);
     }
 });
 
 // 组件卸载时清理监控服务
 onUnmounted(() => {
     scanMonitoringService.stopMonitoring();
+    void qinQiong.stopWatching();
+    teardownGlobalErrorHandlers?.();
     logger.info("👑 [App] 扫描监控服务已停止");
 });
 
@@ -294,10 +294,7 @@ onUnmounted(() => {
 watchArray(
     paths,
     () => {
-        // Stop current watching, then start a new one
-        stopWatching().then(() => {
-            startFileWatching(paths.value, preferenceStore, qinQiong);
-        });
+        void qinQiong.restartWatching(paths.value, preferenceStore.thumbnailSize);
     },
     { deep: true },
 );
@@ -310,11 +307,11 @@ function handlePreferenceOk(): void {
 // 更新处理函数
 function handleUpdateInstall(): void {
     updateStore.startDownload();
-    void getPhotasaApi().downloadUpdate?.();
+    void yuanTianGang.updates.download();
 }
 
 function handleUpdateInstallNow(): void {
-    void getPhotasaApi().installUpdate?.();
+    void yuanTianGang.updates.install();
 }
 // Update title
 const title = computed(() => {
@@ -326,20 +323,20 @@ useTitle(title);
 </script>
 
 <template>
-    <BaseSpinner v-if="loading" />
+    <div v-if="loading" class="app-loading-screen">
+        <BaseSpinner size="xl" />
+    </div>
     <div v-else class="app-layout">
         <!-- 分平台 titlebar -->
         <TitlebarMac
             v-if="isMac"
             @openScanList="handleOpenScanList"
-            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
         <TitlebarWinLinux
             v-else
             @openScanList="handleOpenScanList"
-            @openQueueDashboard="handleOpenQueueDashboard"
             @openImportPhotos="handleOpenImportPhotos"
             @openPreference="handleOpenPreference"
         />
@@ -396,20 +393,6 @@ useTitle(title);
             }
         "
     />
-    <BaseModal
-        :open="showQueueDashboard"
-        title="队列健康监控"
-        size="custom"
-        :style="{ '--modal-width': '1200px' }"
-        @close="
-            () => {
-                showQueueDashboard = false;
-                queueMonitoringService.stopMonitoring();
-            }
-        "
-    >
-        <QueueHealthDashboard />
-    </BaseModal>
 
     <!-- 通知容器 -->
     <NotificationContainer />
@@ -433,6 +416,8 @@ useTitle(title);
     <PortalProvider />
     <!-- 日志控制台 -->
     <LogConsole />
+
+    <TelemetryConsentDialog v-if="showTelemetryConsent" @completed="showTelemetryConsent = false" />
 </template>
 
 <style lang="less">
@@ -452,6 +437,15 @@ useTitle(title);
     display: flex;
     flex-direction: column;
     background: var(--color-bg); /* 确保整个应用使用主题背景色 */
+}
+
+.app-loading-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
 }
 
 .import-chip-dock {

@@ -33,6 +33,7 @@
             "theme": "Theme",
             "advanced": "Advanced",
             "autoUpdate": "Auto Update",
+            "telemetry": "Telemetry",
             "scanMonitoring": "Scan Monitoring",
             "import": "Import"
         },
@@ -519,6 +520,7 @@
         "queueTitle": "Scan Queue",
         "queueEmpty": "Queue is empty",
         "processing": "Processing queue",
+        "pendingTasks": "{count} tasks pending",
         "allTasksCompleted": "All scan tasks completed",
         "pathHeader": "Path",
         "timestampHeader": "Created",
@@ -530,6 +532,12 @@
         "timeHoursAgo": "{count}h ago",
         "timeDaysAgo": "{count}d ago",
         "priority": "Priority",
+        "retryState": "Retry {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Pending",
+            "processing": "Processing",
+            "failed": "Failed"
+        },
         "actions": {
             "scan": "Scan",
             "rescan": "Rescan",
@@ -671,5 +679,24 @@
         "maximize": "Maximize",
         "restore": "Restore",
         "close": "Close"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Help improve Photasa",
+            "purpose": "We may collect anonymous usage and crash data to improve stability and experience.",
+            "scope": "Does not include photo content, file names, or folder paths.",
+            "destination": "Data is sent to PostHog (US) and only enabled after you consent.",
+            "grant": "Allow",
+            "deny": "Don't allow"
+        },
+        "settings": {
+            "title": "Telemetry",
+            "description": "Control whether anonymous usage and crash data is sent to improve the product.",
+            "enabled": "Enable telemetry",
+            "enabledDescription": "When on, anonymous events are sent; turning off stops immediately.",
+            "savedTitle": "Telemetry settings saved",
+            "savedMessage": "Your choice has been applied.",
+            "errorTitle": "Failed to save telemetry settings"
+        }
     }
 }

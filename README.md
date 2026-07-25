@@ -41,7 +41,7 @@ pnpm run build:debug:photasa
 ```
 picasa-vue/
 ├── apps/photasa/ # Photasa app (Vue UI + Tauri shell)
-│ ├── src/ # Renderer: Vue, Zhenguan services, legacy-api compat
+│ ├── src/ # Renderer: Vue, Zhenguan services, YuanTianGang IPC
 │ └── src-tauri/ # Rust: commands, crates integration
 ├── crates/ # Rust workspace (scan, import, thumbnail, config, …)
 ├── packages/ # Shared TS packages (@photasa/common, …)
@@ -56,9 +56,7 @@ picasa-vue/
 - **UI**: Vue 3 + Pinia + Tailwind; domain services (“贞观”) orchestrate flows.
 - **IPC**: `YuanTianGang.executeZhaoling` is the production boundary — direct `invoke()` to typed `#[tauri::command]` handlers (RFC 0137). No zouwu / `tianshu_command` path.
 - **Rust**: Feature logic in workspace crates (`photasa-scan`, `photasa-import`, `photasa-thumbnail`, `photasa-config`, …); Tauri commands stay thin.
-- **Compat**: `legacy-api.ts` still exposes flat `window.api` for unmigrated callers; being retired per RFC 0097.
-
-Policy: **Rust rewrite, not TS copy** — see [ROADMAP.md](./ROADMAP.md) (Golden rule) and [TAURI_RUST_REWRITE_POLICY.md](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md).
+  Policy: **Rust rewrite, not TS copy** — see [ROADMAP.md](./ROADMAP.md) (Golden rule) and [TAURI_RUST_REWRITE_POLICY.md](./docs/rfc/TAURI_RUST_REWRITE_POLICY.md).
 
 ## CI & Branches
 
@@ -73,7 +71,7 @@ Workflow: [`.github/workflows/photasa-build.yml`](./.github/workflows/photasa-bu
 
 - [Development Guide](docs/DEV_GUIDE.md) — setup (partially legacy; prefer this README + `apps/photasa`)
 - [Debug Guide](docs/DEBUG.md) · [MCP Debug](docs/DEBUG_MCP.md)
-- [ROADMAP.md](./ROADMAP.md) — what’s done / next (e.g. `legacy-api` retirement)
+- [ROADMAP.md](./ROADMAP.md) — what’s done / next
 - RFCs: `.spec/rfc/` (Photasa) · `docs/rfc/` (historical)
 
 ## Technology Stack

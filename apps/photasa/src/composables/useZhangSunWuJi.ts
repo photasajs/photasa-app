@@ -48,6 +48,7 @@ export function useZhangSunWuJi() {
             openInFinder: () => {
                 // No-op if service is not available
             },
+            chooseDirectories: async () => ({ filePaths: [] }),
         };
     }
 
@@ -96,6 +97,8 @@ export function useZhangSunWuJi() {
         zhangSunWuJiService.openInFinder(path);
     };
 
+    const chooseDirectories = (multiple = false) => zhangSunWuJiService.chooseDirectories(multiple);
+
     return {
         menus,
         refreshMenus,
@@ -103,5 +106,6 @@ export function useZhangSunWuJi() {
         handleMenuAction,
         openExternal,
         openInFinder,
+        chooseDirectories,
     };
 }

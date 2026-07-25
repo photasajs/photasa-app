@@ -46,6 +46,8 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
     let duruhui: DuRuHuiService;
     let chusuiliangService: MockService;
     let yuchiGongService: MockService;
+    let weizhengService: MockService;
+    let qinQiongService: MockService;
 
     beforeEach(() => {
         // 初始化服务链
@@ -55,10 +57,14 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
         // 初始化mock服务
         chusuiliangService = new MockService("褚遂良");
         yuchiGongService = new MockService("尉迟恭");
+        weizhengService = new MockService("魏征");
+        qinQiongService = new MockService("秦琼");
 
         // 连接服务到杜如晦
         duruhui.connect(chusuiliangService);
         duruhui.connect(yuchiGongService);
+        duruhui.connect(weizhengService);
+        duruhui.connect(qinQiongService);
     });
 
     afterEach(() => {
@@ -133,6 +139,25 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                     });
                     resolve();
                 }, 20);
+            });
+        });
+
+        it("watch_path_removed 应将删除载荷原样下旨秦琼", async () => {
+            router.route({
+                matter: "watch_path_removed",
+                content: { path: "/photos/a.jpg", isFile: true },
+                from: "袁天罡",
+                timestamp: Date.now(),
+                metadata: { type: "report" },
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 20));
+
+            expect(qinQiongService.receivedShengzhis).toHaveLength(1);
+            expect(qinQiongService.receivedShengzhis[0]).toMatchObject({
+                command: "handle_watch_path_removed",
+                content: { path: "/photos/a.jpg", isFile: true },
+                from: "李世民",
             });
         });
 
@@ -263,11 +288,10 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
 
             await new Promise<void>((resolve) => {
                 setTimeout(() => {
-                    if (yuchiGongService.receivedShengzhis.length > 0) {
-                        const shengzhi = yuchiGongService.receivedShengzhis[0];
-                        // 缺失的变量应该保持原模板或为undefined
-                        expect((shengzhi.content as Record<string, unknown>).path).toBeDefined();
-                    }
+                    expect(yuchiGongService.receivedShengzhis).toHaveLength(1);
+                    const shengzhi = yuchiGongService.receivedShengzhis[0];
+                    // 可选叶子字段缺失时 template-resolver 返回 undefined
+                    expect((shengzhi.content as Record<string, unknown>).path).toBeUndefined();
                     resolve();
                 }, 20);
             });
@@ -283,10 +307,7 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
                 metadata: { type: "report" },
             };
 
-            // 需要添加魏征服务来接收圣旨
-            const weizhengService = new MockService("魏征");
-            duruhui.connect(weizhengService);
-
+            // 魏征已在 beforeEach 连接
             (router as any).qizouBus.emit("qizou", testQizou);
 
             await new Promise<void>((resolve) => {
@@ -340,9 +361,6 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
         });
 
         it("RFC 0136: scan_directory_discovered 应同时下旨尉迟恭与魏征", async () => {
-            const weizhengService = new MockService("魏征");
-            duruhui.connect(weizhengService);
-
             const testQizou: Qizou = {
                 matter: "scan_directory_discovered",
                 content: {
@@ -378,9 +396,6 @@ describe("👑 启奏路由器（QiZouRouter）", () => {
         });
 
         it("RFC 0136: scan_started 应下旨魏征立即 add_paths（不等 scan_completed）", async () => {
-            const weizhengService = new MockService("魏征");
-            duruhui.connect(weizhengService);
-
             const testQizou: Qizou = {
                 matter: "scan_started",
                 content: { path: "/Volumes/SUCAI/Test/2026" },

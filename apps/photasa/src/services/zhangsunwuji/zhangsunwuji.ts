@@ -41,7 +41,7 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
-import type { MenuItemData } from "@photasa/common";
+import type { DirectorySelection, MenuItemData } from "@photasa/common";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
@@ -119,6 +119,20 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
      */
     get menus(): MenuItemData[] {
         return this.fangXuanLingService.menus.menus;
+    }
+
+    async chooseDirectories(multiple = false): Promise<DirectorySelection> {
+        const response = await this.fangXuanLingService.processZouzhe({
+            department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+            matter: ZOUZHE_MATTERS.CHOOSE_DIRECTORIES,
+            content: { multiple },
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        });
+        if (!response.approved) {
+            throw new Error(response.instruction || "目录选择失败");
+        }
+        return response.data as DirectorySelection;
     }
 
     /**
@@ -209,13 +223,17 @@ export class ZhangSunWuJiService implements IService, IZhangSunWuJiService {
                 payload.key === MENU_KEY_VIEW_RELOAD ||
                 payload.key === MENU_KEY_VIEW_FORCE_RELOAD
             ) {
-                void Promise.resolve(
-                    (
-                        window as { api?: { reloadWindow?: () => Promise<void> } }
-                    ).api?.reloadWindow?.(),
-                ).catch((err: unknown) => {
-                    logger.error(`📋 长孙无忌：重新加载失败（${payload.key}）`, err);
-                });
+                void this.fangXuanLingService
+                    .processZouzhe({
+                        department: GUANYUAN_NAMES.ZHANG_SUN_WU_JI,
+                        matter: ZOUZHE_MATTERS.RELOAD_WINDOW,
+                        content: {},
+                        timestamp: Date.now(),
+                        priority: ZOUZHE_PRIORITIES.NORMAL,
+                    })
+                    .catch((err: unknown) => {
+                        logger.error(`📋 长孙无忌：重新加载失败（${payload.key}）`, err);
+                    });
                 return;
             }
 

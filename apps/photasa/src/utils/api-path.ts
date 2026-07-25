@@ -12,8 +12,6 @@ import {
     toThumbnailNameSync,
 } from "@renderer/utils/sync-path";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
-import { getPhotasaApi } from "@renderer/ipc/api-access";
-import { isTauri } from "@renderer/api/env";
 
 export function normalizePath(path: string) {
     return normalizePathSync(path);
@@ -43,11 +41,10 @@ export function toDirName(path: string) {
     return toDirNameSync(path);
 }
 
-export function isFileUnderFolder(file: string, folder: string) {
-    if (!isTauri()) {
-        return getPhotasaApi().isFileUnderFolder(file, folder) as boolean;
-    }
-    return getPhotasaApi().isFileUnderFolder(file, folder);
+export function isFileUnderFolder(file: string, folder: string): boolean {
+    const normFile = normalizePathSync(file);
+    const normFolder = normalizePathSync(folder);
+    return normFile.startsWith(normFolder.endsWith("/") ? normFolder : `${normFolder}/`);
 }
 
 export function isHiddenFile(path: string) {
@@ -58,16 +55,30 @@ export function isAbsolutePath(path: string) {
     return isAbsolutePathSync(path);
 }
 
-export function relativePath(from: string, to: string) {
-    return getPhotasaApi().relativePath(from, to);
+export function relativePath(from: string, to: string): string {
+    const normFrom = normalizePathSync(from).split("/").filter(Boolean);
+    const normTo = normalizePathSync(to).split("/").filter(Boolean);
+    let common = 0;
+    while (
+        common < normFrom.length &&
+        common < normTo.length &&
+        normFrom[common] === normTo[common]
+    ) {
+        common++;
+    }
+    const up = normFrom.length - common;
+    const rel = [...Array(up).fill(".."), ...normTo.slice(common)];
+    return rel.join("/") || ".";
 }
 
-export function resolvePath(...segments: string[]) {
-    return getPhotasaApi().resolvePath(...segments);
+export function resolvePath(...segments: string[]): string {
+    return joinPathSync(...segments);
 }
 
-export function getRoot(path: string) {
-    return getPhotasaApi().getRoot(path);
+export function getRoot(path: string): string {
+    const norm = normalizePathSync(path);
+    const parts = norm.split("/").filter(Boolean);
+    return parts.length > 0 ? `/${parts[0]}` : "/";
 }
 
 export function toThumbnailName(path: string) {

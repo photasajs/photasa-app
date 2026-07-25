@@ -3,7 +3,20 @@
  * 定义统一Store API的标准接口，避免直接依赖具体实现
  */
 
-import type { FolderNode } from "@photasa/common";
+import type {
+    FolderNode,
+    PhotasaConfig,
+    ImportConfig,
+    ImportHistory,
+    ImportPreview,
+    ImportProgress,
+    ImportResult,
+    ImportResumeResult,
+    RecoverableImport,
+    RecoverableImportActionResult,
+    UndoPreview,
+    UndoResult,
+} from "@photasa/common";
 import type { ScanQueueItem } from "@renderer/stores/scanning-types";
 import type { MenuItemData } from "@photasa/common";
 
@@ -27,6 +40,7 @@ export interface IPreference extends IBaseStore {
     // 路径管理 - 只读访问
     // TODO: should clean up
     readonly paths: string[];
+    replaceCurrentFolderConfig(folderPath: string, config: PhotasaConfig): void;
 }
 
 /**
@@ -126,6 +140,27 @@ export interface IMenus extends IBaseStore {
     setMenuDisabled(key: string, disabled: boolean): void;
 }
 
+export interface IImportOperations {
+    ready(): Promise<void>;
+    preview(config: ImportConfig): Promise<ImportPreview>;
+    execute(config: ImportConfig): Promise<{ importId: string }>;
+    cancel(importId: string): Promise<void>;
+    pause(importId: string): Promise<void>;
+    resume(importId: string): Promise<ImportResumeResult>;
+    history(limit?: number): Promise<ImportHistory[]>;
+    details(historyId: string): Promise<ImportHistory | null>;
+    previewUndo(historyId: string): Promise<UndoPreview>;
+    undo(historyId: string): Promise<UndoResult>;
+    progress(importId: string): Promise<ImportProgress>;
+    recoverable(): Promise<RecoverableImport[]>;
+    cleanupRecoverable(importId: string): Promise<RecoverableImportActionResult>;
+    keepRecoverable(importId: string): Promise<RecoverableImportActionResult>;
+    onProgress(callback: (progress: ImportProgress) => void): () => void;
+    onComplete(callback: (result: ImportResult) => void): () => void;
+    onError(callback: (error: { importId?: string; error: Error }) => void): () => void;
+    onPreviewProgress(callback: (progress: unknown, files?: unknown[]) => void): () => void;
+}
+
 /**
  * 房玄龄宰相服务主接口
  * 统一管理所有Store API，提供类型安全的契约
@@ -141,6 +176,7 @@ export interface IFangXuanLingService {
     readonly statusBar: IStatusBar;
     /** ✅ RFC 0058: 菜单管理接口 */
     readonly menus: IMenus;
+    readonly imports: IImportOperations;
 
     // 全局重置
     resetAll(): void;
@@ -237,6 +273,7 @@ export const ZOUZHE_MATTERS = {
     OPEN_EXTERNAL: "open_external", // ✅ RFC 0058: 打开外部链接（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
     OPEN_IN_FINDER: "open_in_finder", // ✅ RFC 0058: 在 Finder 中显示文件（百姓/长孙无忌 → 袁天罡 → 天枢引擎）
     GET_FOLDER_CONFIG: "get_folder_config", // 获取文件夹配置
+    CHECK_FOLDER_CONFIG: "check_folder_config", // 检查文件夹配置是否有效
     FIX_FOLDER_CONFIG: "fix_folder_config", // 修复文件夹配置
     RESET_FOLDER_CONFIG: "reset_folder_config", // 重置文件夹配置
     ADD_PHOTO_TO_LIST: "add_photo_to_list", // 照片归档到配置
@@ -244,6 +281,27 @@ export const ZOUZHE_MATTERS = {
     TO_DIR_NAME: "to_dir_name", // 获取父目录名
     SCAN_SUBFOLDERS: "scan_subfolders", // 扫描子文件夹
     SCAN_PHOTOS: "scan_photos", // 执行照片扫描
+    START_FILE_WATCH: "start_file_watch", // 秦琼启动 Rust 文件监视
+    STOP_FILE_WATCH: "stop_file_watch", // 秦琼停止 Rust 文件监视
+    REMOVE_WATCH_FILE: "remove_watch_file", // watch 删除文件：缩略图 + photo list
+    PREVIEW_IMPORT: "preview_import",
+    EXECUTE_IMPORT: "execute_import",
+    CANCEL_IMPORT: "cancel_import",
+    PAUSE_IMPORT: "pause_import",
+    RESUME_IMPORT: "resume_import",
+    GET_IMPORT_HISTORY: "get_import_history",
+    GET_IMPORT_DETAILS: "get_import_details",
+    PREVIEW_UNDO_IMPORT: "preview_undo_import",
+    UNDO_IMPORT: "undo_import_execute",
+    GET_IMPORT_PROGRESS: "get_import_progress",
+    GET_RECOVERABLE_IMPORTS: "get_recoverable_imports",
+    CLEANUP_RECOVERABLE_IMPORT: "cleanup_recoverable_import",
+    KEEP_RECOVERABLE_IMPORT: "keep_recoverable_import",
+    CREATE_THUMBNAIL: "create_thumbnail",
+    EXTRACT_METADATA: "extract_metadata",
+    GET_FILES_MODIFIED: "get_files_modified",
+    CHOOSE_DIRECTORIES: "choose_directories",
+    RELOAD_WINDOW: "reload_window",
 } as const;
 
 /**

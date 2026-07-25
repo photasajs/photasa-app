@@ -237,14 +237,13 @@ export type FileType = "image" | "video" | "ai" | "all";
 
 ## 未来扩展
 
-1. **在线预览服务**：为订阅用户提供更强大的在线预览功能
-2. **更多格式支持**：逐步添加对更多设计文件格式的支持
 3. **高级功能**：图层预览、元数据编辑等高级功能
-4. **性能优化**：WebAssembly、多线程处理等性能优化
+4. **性能优化**：多线程处理等性能优化
+5. **Photasa 实现**：以 [RFC 0004（Rust 本地预览）](../0004-local-design-file-preview-rust.md) 为准，非本 RFC Electron 路径
 
 ## 相关文档
 
-- [RFC 0004: AI文件在线预览服务](./0004-ai-file-preview-service.md)
+- [RFC 0004: 设计文件本地预览（Rust）](../0004-local-design-file-preview-rust.md)（废止原在线服务草案）
 - [RFC 0001: 导入向导系统](./0001-import-wizard-system.md)
 - [RFC 0002: 无头UI组件](./0002-headless-ui-components.md)
 - [RFC 0003: 统一监控到扫描队列](./0003-unify-watch-to-scan-queue.md)

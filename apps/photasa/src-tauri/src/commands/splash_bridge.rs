@@ -2,12 +2,19 @@
 
 use tauri::{AppHandle, Emitter, Manager, Runtime, Theme, WebviewWindow};
 
+use super::preferences::PreferencesState;
+
 pub const SPLASH_WEBVIEW_LABEL: &str = "splash";
 pub const MAIN_WEBVIEW_LABEL: &str = "main";
 
 pub const EVENT_SPLASH_THEME: &str = "splash:theme-changed";
 pub const EVENT_SPLASH_STATUS: &str = "splash:status-update";
 pub const EVENT_SPLASH_PROGRESS: &str = "splash:progress-update";
+
+const THEME_LIGHT: &str = "light";
+const THEME_DARK: &str = "dark";
+const THEME_SOLARIZED_LIGHT: &str = "solarized-light";
+const THEME_SOLARIZED_DARK: &str = "solarized-dark";
 
 /// Tauri `Theme` → Splash 前端 `light` | `dark`。
 pub fn theme_payload(theme: Theme) -> &'static str {
@@ -16,6 +23,15 @@ pub fn theme_payload(theme: Theme) -> &'static str {
  Theme::Light => "light",
  // Tauri 未来若扩展枚举，默认浅色以保持可读性
  _ => "light",
+ }
+}
+
+/// 偏好 `ui.theme` → Splash 浅/深外观（solarized 按明暗归类）。
+pub fn preference_theme_id_to_native(theme_id: &str) -> Option<Theme> {
+ match theme_id {
+ THEME_LIGHT | THEME_SOLARIZED_LIGHT => Some(Theme::Light),
+ THEME_DARK | THEME_SOLARIZED_DARK => Some(Theme::Dark),
+ _ => None,
  }
 }
 
@@ -29,6 +45,19 @@ pub fn resolve_app_theme<R: Runtime>(app: &AppHandle<R>) -> Theme {
  }
  }
  Theme::Light
+}
+
+/// 优先用户偏好主题，其次系统主题。
+pub fn resolve_splash_theme<R: Runtime>(app: &AppHandle<R>) -> Theme {
+ if let Some(state) = app.try_state::<PreferencesState>() {
+ let theme_id = tauri::async_runtime::block_on(async {
+ state.0.read().await.get_current_snapshot().data.ui.theme.clone()
+ });
+ if let Some(theme) = preference_theme_id_to_native(&theme_id) {
+ return theme;
+ }
+ }
+ resolve_app_theme(app)
 }
 
 fn emit_to_splash<R: Runtime, P: serde::Serialize + Clone>(
@@ -48,7 +77,7 @@ pub fn emit_splash_theme<R: Runtime>(app: &AppHandle<R>, theme: Theme) {
 
 /// 向 Splash 同步主题（启动时与 `RunEvent::ThemeChanged` 时调用）。
 pub fn sync_splash_theme<R: Runtime>(app: &AppHandle<R>) {
- emit_splash_theme(app, resolve_app_theme(app));
+ emit_splash_theme(app, resolve_splash_theme(app));
 }
 
 pub fn emit_splash_status<R: Runtime>(app: &AppHandle<R>, message: impl Into<String>) {
@@ -72,5 +101,26 @@ mod tests {
  fn theme_payload_maps_light_and_dark() {
  assert_eq!(theme_payload(Theme::Light), "light");
  assert_eq!(theme_payload(Theme::Dark), "dark");
+ }
+
+ #[test]
+ fn preference_theme_id_maps_to_native_appearance() {
+ assert_eq!(
+ preference_theme_id_to_native(THEME_DARK),
+ Some(Theme::Dark)
+ );
+ assert_eq!(
+ preference_theme_id_to_native(THEME_SOLARIZED_DARK),
+ Some(Theme::Dark)
+ );
+ assert_eq!(
+ preference_theme_id_to_native(THEME_LIGHT),
+ Some(Theme::Light)
+ );
+ assert_eq!(
+ preference_theme_id_to_native(THEME_SOLARIZED_LIGHT),
+ Some(Theme::Light)
+ );
+ assert_eq!(preference_theme_id_to_native("paper"), None);
  }
 }

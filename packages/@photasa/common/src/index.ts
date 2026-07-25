@@ -10,7 +10,6 @@ export * from "./import-types";
 export * from "./logger";
 export * from "./menu-types";
 export * from "./object/clone";
-export * from "./queue-monitoring-types";
 export * from "./scan-types";
 export * from "./gen/scan_report";
 export * from "./thumbnail-types";

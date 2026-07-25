@@ -20,8 +20,6 @@ import { useI18n } from "vue-i18n";
 import { useChuSuiLiang, type ThemeMeta } from "@renderer/composables/useChuSuiLiang";
 import ThemePreviewBox from "./ThemePreviewBox.vue";
 import { loggers } from "@photasa/common";
-import { THEME_BASE_PATH } from "@renderer/constants/theme-base-path";
-
 /**
  * 日志记录器
  */
@@ -75,7 +73,7 @@ async function switchTheme(themeId: string) {
         logger.info(`🎨 接收主题变更指令 ${themeId}`);
 
         // 1. 先立即更新UI显示，提供即时反馈
-        await themeManager.applyTheme(themeId, THEME_BASE_PATH);
+        await themeManager.applyTheme(themeId);
 
         // 2. 通过褚遂良中书令发送奏折，触发完整通信链路：
         // 阎立本 -> 褚遂良(奏折) -> 房玄龄(转发) -> 袁天罡(诏令) -> 天枢(符箓) -> 文昌(存储)

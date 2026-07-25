@@ -5,19 +5,24 @@ const SPLASH_WEBVIEW_LABEL: &str = "splash";
 /// 主窗 label，须与首窗 `label` 或 Tauri 默认 `main` 一致
 const MAIN_WEBVIEW_LABEL: &str = "main";
 
+/// 关闭 Splash 并显示主窗（Rust setup 与 IPC 共用）
+pub async fn present_main_window<R: tauri::Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+    if let Some(splash) = app.get_webview_window(SPLASH_WEBVIEW_LABEL) {
+        let _ = splash.emit("splash:fade-out", ());
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+        splash.close().map_err(|e| e.to_string())?;
+    }
+    if let Some(main) = app.get_webview_window(MAIN_WEBVIEW_LABEL) {
+        let _ = main.show();
+        let _ = main.set_focus();
+    }
+    Ok(())
+}
+
 /// 主界面就绪后关闭 Splash 并显示主窗（RFC 0101）
 #[tauri::command]
 pub async fn close_splashscreen(app: AppHandle) -> Result<(), String> {
- if let Some(splash) = app.get_webview_window(SPLASH_WEBVIEW_LABEL) {
- let _ = splash.emit("splash:fade-out", ());
- tokio::time::sleep(std::time::Duration::from_millis(300)).await;
- splash.close().map_err(|e| e.to_string())?;
- }
- if let Some(main) = app.get_webview_window(MAIN_WEBVIEW_LABEL) {
- let _ = main.show();
- let _ = main.set_focus();
- }
- Ok(())
+    present_main_window(&app).await
 }
 
 /// 重新加载主 WebView（RFC 0099，与 legacy-api window:reload / 菜单「重新加载」对齐）

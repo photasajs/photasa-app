@@ -5,6 +5,7 @@
 import type { WatchAction, WatchState } from "@photasa/common";
 import { WatchServiceEvent } from "@photasa/common";
 import { toRelativeThumbnailPath } from "@renderer/utils/photasa-path";
+import { isVideoPath } from "@renderer/utils/media-type";
 
 /** 与 `photasa-media`（RFC 0141 权威表：IMAGE_EXTS ∪ HEIC_EXTS ∪ RAW_EXTS）对齐（前端纯函数，无 Node/Rust invoke） */
 const IMAGE_EXTS = new Set([
@@ -30,28 +31,6 @@ const IMAGE_EXTS = new Set([
     "dng",
     "raf",
     "orf",
-]);
-
-/** 与 `photasa-media` VIDEO_EXTS 对齐 */
-const VIDEO_EXTS = new Set([
-    "mp4",
-    "mov",
-    "avi",
-    "mkv",
-    "m4v",
-    "3gp",
-    "wmv",
-    "flv",
-    "webm",
-    "mpg",
-    "mpeg",
-    "m2v",
-    "mts",
-    "m2ts",
-    "ts",
-    "vob",
-    "rmvb",
-    "rm",
 ]);
 
 const WATCH_FILE_EVENTS = [
@@ -91,7 +70,7 @@ export function classifyWatchMedia(path: string): { isImage: boolean; isVideo: b
         return { isImage: false, isVideo: false };
     }
     const isImage = IMAGE_EXTS.has(ext);
-    const isVideo = VIDEO_EXTS.has(ext);
+    const isVideo = isVideoPath(path);
     return { isImage, isVideo };
 }
 

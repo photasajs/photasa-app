@@ -10,7 +10,7 @@ import {
     GUANYUAN_NAMES,
     type Zouzhe,
 } from "@renderer/interfaces/fang-xuan-ling.interface";
-import type { FolderNode } from "@photasa/common";
+import type { FolderNode, PhotasaConfig } from "@photasa/common";
 import { loggers } from "@photasa/common";
 import {
     addRoot,
@@ -24,6 +24,8 @@ import { QizouMatters, ShengzhiCommands } from "@renderer/constants/qizou-shengz
 import { deepClone } from "@photasa/common";
 import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
 import { isSameFolderTree } from "@renderer/utils/folder-tree-compare";
+import { createGalleryMediaOperations } from "./gallery-media";
+import type { IGalleryMediaOperations } from "@renderer/interfaces/wei-zheng.interface";
 
 const logger = loggers.weizheng;
 
@@ -57,6 +59,7 @@ const logger = loggers.weizheng;
  * @date 2025-10-30
  */
 export class WeiZhengService implements IService, IWeiZhengService {
+    readonly gallery: IGalleryMediaOperations;
     /**
      * 启奏事件总线
      * 用于向李世民发送qizou启奏
@@ -65,6 +68,9 @@ export class WeiZhengService implements IService, IWeiZhengService {
 
     constructor(private fangXuanLingService: IFangXuanLingService) {
         logger.info("🏛️ 魏征上朝，负责监察应用状态");
+        this.gallery = createGalleryMediaOperations({
+            processZouzhe: (zouzhe) => this.fangXuanLingService.processZouzhe(zouzhe),
+        });
     }
 
     /**
@@ -631,7 +637,7 @@ export class WeiZhengService implements IService, IWeiZhengService {
     /**
      * 获取指定文件夹的配置 (.photasa.json)
      */
-    async getFolderConfig(folder: string): Promise<any> {
+    async getFolderConfig(folder: string): Promise<PhotasaConfig | null> {
         logger.info(`🏛️ 魏征：奏请获取文件夹配置：${folder}`);
         const response = await this.fangXuanLingService.processZouzhe({
             department: GUANYUAN_NAMES.WEI_ZHENG,
@@ -640,13 +646,27 @@ export class WeiZhengService implements IService, IWeiZhengService {
             timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
         });
-        return response.data;
+        this.requireApproval(response.approved, response.instruction);
+        return (response.data as PhotasaConfig | null) ?? null;
+    }
+
+    async checkFolderConfig(folder: string): Promise<boolean> {
+        logger.info(`🏛️ 魏征：奏请检查文件夹配置：${folder}`);
+        const response = await this.fangXuanLingService.processZouzhe({
+            department: GUANYUAN_NAMES.WEI_ZHENG,
+            matter: ZOUZHE_MATTERS.CHECK_FOLDER_CONFIG,
+            content: { folderPath: folder },
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        });
+        this.requireApproval(response.approved, response.instruction);
+        return response.data === true;
     }
 
     /**
      * 修复指定文件夹的配置 (.photasa.json)
      */
-    async fixFolderConfig(folder: string): Promise<any> {
+    async fixFolderConfig(folder: string): Promise<void> {
         logger.info(`🏛️ 魏征：奏请修复文件夹配置：${folder}`);
         const response = await this.fangXuanLingService.processZouzhe({
             department: GUANYUAN_NAMES.WEI_ZHENG,
@@ -655,13 +675,13 @@ export class WeiZhengService implements IService, IWeiZhengService {
             timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
         });
-        return response.data;
+        this.requireApproval(response.approved, response.instruction);
     }
 
     /**
      * 重置指定文件夹的配置 (.photasa.json)
      */
-    async resetFolderConfig(folder: string): Promise<any> {
+    async resetFolderConfig(folder: string): Promise<void> {
         logger.info(`🏛️ 魏征：奏请重置文件夹配置：${folder}`);
         const response = await this.fangXuanLingService.processZouzhe({
             department: GUANYUAN_NAMES.WEI_ZHENG,
@@ -670,6 +690,18 @@ export class WeiZhengService implements IService, IWeiZhengService {
             timestamp: Date.now(),
             priority: ZOUZHE_PRIORITIES.NORMAL,
         });
-        return response.data;
+        this.requireApproval(response.approved, response.instruction);
+    }
+
+    async resetFolderConfigs(folders: string[]): Promise<void> {
+        for (const folder of folders) {
+            await this.resetFolderConfig(folder);
+        }
+    }
+
+    private requireApproval(approved: boolean, instruction: string): void {
+        if (!approved) {
+            throw new Error(instruction);
+        }
     }
 }

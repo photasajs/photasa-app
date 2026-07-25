@@ -11,7 +11,8 @@
             "theme": "السمة",
             "advanced": "متقدم",
             "autoUpdate": "التحديث التلقائي",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "القياس عن بُعد"
         },
         "folderList": "قائمة المجلدات",
         "folderListUsage": "طريقة الاستخدام",
@@ -416,6 +417,7 @@
         "queueTitle": "قائمة انتظار المسح",
         "queueEmpty": "القائمة فارغة",
         "processing": "معالجة القائمة",
+        "pendingTasks": "{count} مهام قيد الانتظار",
         "allTasksCompleted": "اكتملت جميع مهام المسح",
         "pathHeader": "المسار",
         "timestampHeader": "تم الإنشاء",
@@ -427,6 +429,12 @@
         "timeHoursAgo": "منذ {count} س",
         "timeDaysAgo": "منذ {count} ي",
         "priority": "الأولوية",
+        "retryState": "إعادة المحاولة {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "قيد الانتظار",
+            "processing": "قيد المعالجة",
+            "failed": "فشل"
+        },
         "actions": {
             "scan": "مسح",
             "rescan": "إعادة مسح",
@@ -599,5 +607,24 @@
         "maximize": "تكبير",
         "restore": "استعادة",
         "close": "إغلاق"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "ساعد في تحسين Photasa",
+            "purpose": "قد نجمع بيانات استخدام وأعطال مجهولة لتحسين الاستقرار والتجربة.",
+            "scope": "لا تتضمن محتوى الصور أو أسماء الملفات أو مسارات المجلدات.",
+            "destination": "تُرسل البيانات إلى PostHog (الولايات المتحدة) ولا تُفعَّل إلا بعد موافقتك.",
+            "grant": "السماح",
+            "deny": "عدم السماح"
+        },
+        "settings": {
+            "title": "القياس عن بُعد",
+            "description": "تحكم في إرسال بيانات الاستخدام والأعطال المجهولة لتحسين المنتج.",
+            "enabled": "تفعيل القياس عن بُعد",
+            "enabledDescription": "عند التفعيل، تُرسل أحداث مجهولة؛ الإيقاف يتوقف فوراً.",
+            "savedTitle": "تم حفظ إعدادات القياس عن بُعد",
+            "savedMessage": "تم تطبيق اختيارك.",
+            "errorTitle": "فشل حفظ إعدادات القياس عن بُعد"
+        }
     }
 }

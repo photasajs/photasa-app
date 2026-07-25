@@ -32,12 +32,25 @@ export function resolveTemplateValue(value: string, qizou: Qizou): unknown {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = { qizou };
-    for (const part of parts) {
-        current = current[part];
-        if (current === undefined) {
+    for (let index = 0; index < parts.length; index += 1) {
+        const part = parts[index];
+        const isLeaf = index === parts.length - 1;
+
+        if (current == null || typeof current !== "object") {
             logger.warn(`👑 李世民：无法解析模板变量 ${value}`);
-            return value; // 返回原始值
+            return value;
         }
+
+        if (!(part in current)) {
+            // 可选叶子字段（如 error/data）缺失时静默返回 undefined，避免刷屏
+            if (isLeaf) {
+                return undefined;
+            }
+            logger.warn(`👑 李世民：无法解析模板变量 ${value}`);
+            return value;
+        }
+
+        current = current[part];
     }
 
     return current;

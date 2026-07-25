@@ -3,8 +3,14 @@ import { IQinQiongService } from "@renderer/interfaces/qin-qiong.interface";
 import type { Shengzhi } from "@renderer/interfaces/shengzhi.interface";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
 import type { Emitter } from "mitt";
-import { loggers } from "@photasa/common";
+import { loggers, type PhotasaConfig } from "@photasa/common";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import type { IFangXuanLingService } from "@renderer/interfaces/fang-xuan-ling.interface";
+import {
+    GUANYUAN_NAMES,
+    ZOUZHE_MATTERS,
+    ZOUZHE_PRIORITIES,
+} from "@renderer/interfaces/fang-xuan-ling.interface";
 
 const logger = loggers.qinqiong;
 
@@ -40,8 +46,9 @@ export class QinQiongService implements IService, IQinQiongService {
      * 用于向李世民发送qizou启奏
      */
     private _qizouBus: Emitter<{ qizou: Qizou }> | null = null;
+    private watchLifecycle: Promise<void> = Promise.resolve();
 
-    constructor() {
+    constructor(private fangXuanLingService: IFangXuanLingService) {
         logger.info("🛡️ 秦琼就任，守护文件系统边界");
     }
 
@@ -50,6 +57,57 @@ export class QinQiongService implements IService, IQinQiongService {
      */
     get name(): string {
         return "秦琼";
+    }
+
+    async startWatching(paths: string[], thumbnailSize: number): Promise<void> {
+        return this.enqueueWatchLifecycle(() =>
+            this.submitWatchMatter(ZOUZHE_MATTERS.START_FILE_WATCH, {
+                paths,
+                recursive: true,
+                thumbnailSize,
+            }),
+        );
+    }
+
+    async stopWatching(): Promise<void> {
+        return this.enqueueWatchLifecycle(() =>
+            this.submitWatchMatter(ZOUZHE_MATTERS.STOP_FILE_WATCH, {}),
+        );
+    }
+
+    async restartWatching(paths: string[], thumbnailSize: number): Promise<void> {
+        return this.enqueueWatchLifecycle(async () => {
+            await this.submitWatchMatter(ZOUZHE_MATTERS.STOP_FILE_WATCH, {});
+            if (paths.length > 0) {
+                await this.submitWatchMatter(ZOUZHE_MATTERS.START_FILE_WATCH, {
+                    paths: [...paths],
+                    recursive: true,
+                    thumbnailSize,
+                });
+            }
+        });
+    }
+
+    private enqueueWatchLifecycle(operation: () => Promise<void>): Promise<void> {
+        const result = this.watchLifecycle.then(operation);
+        this.watchLifecycle = result.catch(() => undefined);
+        return result;
+    }
+
+    private async submitWatchMatter(
+        matter: string,
+        content: Record<string, unknown>,
+    ): Promise<void> {
+        const response = await this.fangXuanLingService.processZouzhe({
+            department: GUANYUAN_NAMES.QIN_QIONG,
+            matter,
+            content,
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        });
+        if (!response.approved) {
+            throw new Error(response.instruction);
+        }
     }
 
     /**
@@ -89,7 +147,13 @@ export class QinQiongService implements IService, IQinQiongService {
      * 秦琼的三个公开方法（handleFolderDiscovered/Removed/ScanCompleted）
      * 由外部直接调用，不通过圣旨系统
      */
-    private async processShengzhi(_shengzhi: Shengzhi): Promise<void> {}
+    private async processShengzhi(shengzhi: Shengzhi): Promise<void> {
+        if (shengzhi.command !== "handle_watch_path_removed") {
+            return;
+        }
+        const content = (shengzhi.content ?? {}) as Record<string, unknown>;
+        await this.handleWatchPathRemoved(String(content.path ?? ""), content.isFile === true);
+    }
 
     /**
      * 发送启奏给李世民
@@ -110,6 +174,36 @@ export class QinQiongService implements IService, IQinQiongService {
 
         logger.debug("🛡️ 秦琼启奏:", qizou);
         this._qizouBus.emit("qizou", qizou);
+    }
+
+    async handleWatchPathRemoved(path: string, isFile: boolean): Promise<void> {
+        if (!path) {
+            return;
+        }
+        if (!isFile) {
+            await this.removePath(path);
+            return;
+        }
+
+        const response = await this.fangXuanLingService.processZouzhe({
+            department: GUANYUAN_NAMES.QIN_QIONG,
+            matter: ZOUZHE_MATTERS.REMOVE_WATCH_FILE,
+            content: { path },
+            timestamp: Date.now(),
+            priority: ZOUZHE_PRIORITIES.NORMAL,
+        });
+        if (!response.approved) {
+            throw new Error(response.instruction);
+        }
+        const data = (response.data ?? {}) as Record<string, unknown>;
+        const folder = data.folder;
+        const config = data.config;
+        if (typeof folder === "string" && config) {
+            this.fangXuanLingService.preference.replaceCurrentFolderConfig(
+                folder,
+                config as PhotasaConfig,
+            );
+        }
     }
 
     /**

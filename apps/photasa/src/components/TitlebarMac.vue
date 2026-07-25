@@ -14,7 +14,6 @@
             <!-- Action buttons area (clickable) -->
             <div class="setting-header">
                 <CoffeeOutlined class="system-icon" @click="openScanList" />
-                <DashboardOutlined class="system-icon" @click="openQueueDashboard" />
                 <ImportOutlined class="system-icon" @click="openImportPhotos" />
                 <SettingOutlined class="system-icon" @click="openPreference" />
             </div>
@@ -28,24 +27,14 @@ import {
     PhClock as CoffeeOutlined,
     PhFolder as ImportOutlined,
     PhGear as SettingOutlined,
-    PhChartLineUp as DashboardOutlined,
 } from "@phosphor-icons/vue";
 
 const { t } = useI18n();
 
-const emit = defineEmits([
-    "openScanList",
-    "openQueueDashboard",
-    "openImportPhotos",
-    "openPreference",
-    "menu-action",
-]);
+const emit = defineEmits(["openScanList", "openImportPhotos", "openPreference", "menu-action"]);
 
 function openScanList() {
     emit("openScanList");
-}
-function openQueueDashboard() {
-    emit("openQueueDashboard");
 }
 function openImportPhotos() {
     emit("openImportPhotos");

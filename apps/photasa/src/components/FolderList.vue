@@ -16,15 +16,17 @@ import {
 } from "@renderer/components/ui";
 import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
-import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
+import type { TreeNode } from "@photasa/base-tree";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
 import { useAppStateStore } from "@renderer/services/fangxuanling/stores/appstate-store";
 import { EventNames } from "@renderer/constants/event-names";
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
+import { canonicalFolderPath } from "@renderer/utils/folder-tree-path";
 import {
     collectAllFolderKeys,
+    mergeExpandedKeysForCurrentFolder,
     mergeExpandedKeysForNewFolders,
 } from "@renderer/utils/folder-tree-expand";
 
@@ -106,19 +108,38 @@ const showConfigModal = ref(false);
  * Select folder method - called by parent component
  */
 const selectFolder = (folderPath: string) => {
-    if (folderPath && folderPath !== selectedKeys.value[0]) {
-        logger.debug("[FolderList] selectFolder called with:", folderPath);
-        selectedKeys.value = [folderPath];
+    const normalized = canonicalFolderPath(folderPath);
+    if (normalized && normalized !== selectedKeys.value[0]) {
+        logger.debug("[FolderList] selectFolder called with:", normalized);
+        selectedKeys.value = [normalized];
     }
 };
 
-// Watch currentFolder changes and notify FolderList to select it
+/** RFC 0013/0047：恢复 currentFolder 时展开祖先并同步选中 */
+function syncTreeViewForCurrentFolder(folderPath: string): void {
+    const normalized = canonicalFolderPath(folderPath);
+    if (!normalized) {
+        return;
+    }
+
+    expandedKeys.value = mergeExpandedKeysForCurrentFolder(
+        expandedKeys.value,
+        normalized,
+        paths.value,
+    );
+    selectFolder(normalized);
+}
+
+// Watch currentFolder + paths：持久化恢复时 paths 可能晚于 currentFolder
 watch(
-    currentFolder,
-    (newFolder) => {
+    [currentFolder, paths],
+    ([newFolder]) => {
         if (newFolder) {
-            logger.debug("[App] currentFolder changed, notifying FolderList to select:", newFolder);
-            selectFolder(newFolder);
+            logger.debug(
+                "[FolderList] currentFolder changed, syncing tree expand + select:",
+                newFolder,
+            );
+            syncTreeViewForCurrentFolder(newFolder);
         }
     },
     { immediate: true },

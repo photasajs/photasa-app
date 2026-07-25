@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { chooseDirectory } from "@renderer/utils/api";
 import { PhFolder as FolderTwoTone, PhX as CloseOutlined } from "@phosphor-icons/vue";
 import { notification } from "@renderer/services/notification-manager";
 import { BaseButton, BaseSpace } from "@renderer/components/ui";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
+import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 import {
     validateAndNormalizePath,
     checkPathDuplication,
@@ -27,6 +27,7 @@ const logger = loggers.lishimin;
  * 与房玄龄宰相协作，确保界面设置与用户偏好保持一致
  */
 const chuSuiLiang = useChuSuiLiang();
+const zhangSunWuJi = useZhangSunWuJi();
 
 /**
  * 通用设置组件
@@ -67,7 +68,7 @@ function isDuplicate(path: string): boolean {
 
 async function onChoose(): Promise<void> {
     try {
-        const { filePaths } = await chooseDirectory();
+        const { filePaths } = await zhangSunWuJi.chooseDirectories(false);
         if (!filePaths || filePaths.length === 0) {
             notification.info({
                 title: t("notification.emptyPath.title"),

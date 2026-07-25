@@ -11,7 +11,8 @@
             "theme": "Тема",
             "advanced": "Додатково",
             "autoUpdate": "Автооновлення",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "Телеметрія"
         },
         "folderList": "Список папок",
         "folderListUsage": "Спосіб використання",
@@ -416,6 +417,7 @@
         "queueTitle": "Черга сканування",
         "queueEmpty": "Черга порожня",
         "processing": "Обробка черги",
+        "pendingTasks": "{count} завдань у черзі",
         "allTasksCompleted": "Всі завдання сканування завершено",
         "pathHeader": "Шлях",
         "timestampHeader": "Створено",
@@ -427,6 +429,12 @@
         "timeHoursAgo": "{count}г тому",
         "timeDaysAgo": "{count}д тому",
         "priority": "Пріоритет",
+        "retryState": "Повтор {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Очікування",
+            "processing": "Обробка",
+            "failed": "Помилка"
+        },
         "actions": {
             "scan": "Сканувати",
             "rescan": "Пересканувати",
@@ -599,5 +607,24 @@
         "maximize": "Розгорнути",
         "restore": "Відновити",
         "close": "Закрити"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Допоможіть покращити Photasa",
+            "purpose": "Ми можемо збирати анонімні дані про використання та збої для покращення стабільності та досвіду.",
+            "scope": "Не містить вмісту фото, імен файлів або шляхів до папок.",
+            "destination": "Дані надсилаються до PostHog (США) і вмикаються лише після вашої згоди.",
+            "grant": "Дозволити",
+            "deny": "Не дозволяти"
+        },
+        "settings": {
+            "title": "Телеметрія",
+            "description": "Керуйте надсиланням анонімних даних про використання та збої для покращення продукту.",
+            "enabled": "Увімкнути телеметрію",
+            "enabledDescription": "Увімкнено — надсилаються анонімні події; вимкнення зупиняє негайно.",
+            "savedTitle": "Налаштування телеметрії збережено",
+            "savedMessage": "Ваш вибір застосовано.",
+            "errorTitle": "Не вдалося зберегти налаштування телеметрії"
+        }
     }
 }

@@ -150,7 +150,7 @@ export class LishiminService implements ILishiminService {
         this.app.provide(WEI_ZHENG_TOKEN, this.weiZhengService);
 
         logger.info("👑 秦琼守门大将服务就任");
-        this.qinQiongService = new QinQiongService();
+        this.qinQiongService = new QinQiongService(this.fangXuanLingService);
         this.app.provide(QIN_QIONG_TOKEN, this.qinQiongService);
 
         logger.info("👑 玄奘法师服务就任");

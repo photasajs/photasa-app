@@ -31,7 +31,7 @@ export interface IThemeManager {
     loadBuiltInThemes(): Promise<void>;
     initTheme(userConfigThemeId?: string): Promise<void>;
     getDefaultThemeId(): string;
-    applyTheme(themeId: string, themeDir: string): Promise<void>;
+    applyTheme(themeId: string): Promise<void>;
     unloadTheme(): void;
     importTheme(file: File, themeDir: string): Promise<void>;
     exportTheme(themeId: string, themeDir: string): Promise<Blob>;

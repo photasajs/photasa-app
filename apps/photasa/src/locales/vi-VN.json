@@ -11,7 +11,8 @@
             "theme": "Chủ đề",
             "advanced": "Nâng cao",
             "autoUpdate": "Tự động cập nhật",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "Thu thập dữ liệu"
         },
         "folderList": "Danh sách thư mục",
         "folderListUsage": "Cách sử dụng",
@@ -416,6 +417,7 @@
         "queueTitle": "Hàng đợi quét",
         "queueEmpty": "Hàng đợi trống",
         "processing": "Xử lý hàng đợi",
+        "pendingTasks": "{count} tác vụ đang chờ",
         "allTasksCompleted": "Tất cả tác vụ quét đã hoàn thành",
         "pathHeader": "Đường dẫn",
         "timestampHeader": "Đã tạo",
@@ -427,6 +429,12 @@
         "timeHoursAgo": "{count}h trước",
         "timeDaysAgo": "{count}ng trước",
         "priority": "Ưu tiên",
+        "retryState": "Thử lại {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Đang chờ",
+            "processing": "Đang xử lý",
+            "failed": "Thất bại"
+        },
         "actions": {
             "scan": "Quét",
             "rescan": "Quét lại",
@@ -599,5 +607,24 @@
         "maximize": "Phóng to",
         "restore": "Khôi phục",
         "close": "Đóng"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Giúp cải thiện Photasa",
+            "purpose": "Chúng tôi có thể thu thập dữ liệu sử dụng và lỗi ẩn danh để cải thiện độ ổn định và trải nghiệm.",
+            "scope": "Không bao gồm nội dung ảnh, tên tệp hoặc đường dẫn thư mục.",
+            "destination": "Dữ liệu được gửi tới PostHog (Mỹ) và chỉ bật sau khi bạn đồng ý.",
+            "grant": "Cho phép",
+            "deny": "Không cho phép"
+        },
+        "settings": {
+            "title": "Thu thập dữ liệu",
+            "description": "Kiểm soát việc gửi dữ liệu sử dụng và lỗi ẩn danh để cải thiện sản phẩm.",
+            "enabled": "Bật thu thập dữ liệu",
+            "enabledDescription": "Khi bật, sự kiện ẩn danh được gửi; tắt sẽ dừng ngay.",
+            "savedTitle": "Đã lưu cài đặt thu thập dữ liệu",
+            "savedMessage": "Lựa chọn của bạn đã được áp dụng.",
+            "errorTitle": "Không thể lưu cài đặt thu thập dữ liệu"
+        }
     }
 }

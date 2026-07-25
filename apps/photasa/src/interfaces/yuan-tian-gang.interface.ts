@@ -29,12 +29,63 @@ export interface FuluResponse {
 
 import type { Emitter } from "mitt";
 import type { Qizou } from "@renderer/interfaces/qizou.interface";
+import type { ImportProgress, ImportResult, LogEntry } from "@photasa/common";
+
+type Unlisten = () => void;
+
+export interface UpdateCapability {
+    check(): Promise<{ hasUpdate: boolean; version?: string; info?: unknown }>;
+    download(): Promise<void>;
+    install(): Promise<void>;
+    status(): Promise<Record<string, unknown>>;
+    version(): Promise<string>;
+    configure(patch: Record<string, unknown>): Promise<boolean>;
+    onAvailable(callback: (data: { version: string; info?: unknown }) => void): Promise<Unlisten>;
+    onProgress(callback: (progress: number) => void): Promise<Unlisten>;
+    onDownloaded(callback: (info: unknown) => void): Promise<Unlisten>;
+    onError(callback: (error: string) => void): Promise<Unlisten>;
+    onStatus(callback: (status: unknown) => void): Promise<Unlisten>;
+}
+
+export interface LogViewerCapability {
+    open(): Promise<{ success: boolean; message: string }>;
+    close(): Promise<{ success: boolean; message: string }>;
+    onEntry(callback: (entry: LogEntry) => void): Promise<Unlisten>;
+    onToggle(callback: () => void): Promise<Unlisten>;
+}
+
+export interface WindowCapability {
+    minimize(): Promise<void>;
+    maximize(): Promise<void>;
+    unmaximize(): Promise<void>;
+    closeWindow(): Promise<void>;
+    closeSplashscreen(): Promise<void>;
+    reload(): Promise<void>;
+    isMac(): Promise<boolean>;
+    isMaximized(): Promise<boolean>;
+    onMaximized(callback: () => void): Promise<Unlisten>;
+    onUnmaximized(callback: () => void): Promise<Unlisten>;
+    onMaximizedState(callback: (state: boolean) => void): Promise<Unlisten>;
+}
+
+export interface ImportEventPort {
+    ready(): Promise<void>;
+    onProgress(callback: (progress: ImportProgress) => void): () => void;
+    onComplete(callback: (result: ImportResult) => void): () => void;
+    onError(callback: (error: { importId?: string; error: Error }) => void): () => void;
+    onPreviewProgress(callback: (progress: unknown, files?: unknown[]) => void): () => void;
+}
 
 /**
  * 袁天罡钦天监服务接口
  * 接收房玄龄的诏令，与天枢引擎通信
  */
 export interface IYuanTianGangService {
+    readonly importEvents: ImportEventPort;
+    readonly updates: UpdateCapability;
+    readonly logs: LogViewerCapability;
+    readonly windows: WindowCapability;
+    readonly desktop: UpdateCapability & LogViewerCapability & WindowCapability;
     /**
      * 接收并执行房玄龄的诏令
      * @param zhaoling 诏令

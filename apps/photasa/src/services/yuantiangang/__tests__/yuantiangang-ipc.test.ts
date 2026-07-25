@@ -1,17 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 import { ZOUZHE_MATTERS } from "@renderer/interfaces/fang-xuan-ling.interface";
 import { YuanTianGangService } from "../yuantiangang";
 import {
     FOLDER_TREE_COMMANDS,
     PREFERENCES_COMMANDS,
     SCAN_QUEUE_COMMANDS,
+    WATCH_COMMANDS,
     WATCH_EVENTS,
 } from "../tauri-command-names";
+import { SCAN_QUEUE_RESTORE_FROM_DISK } from "../scan-queue-contract";
 
 import { QizouMatters } from "@renderer/constants/qizou-shengzhi-commands";
 
 const mockInvoke = vi.fn();
 const mockListen = vi.fn();
+const mockDialogOpen = vi.fn();
 const mockIsTauri = vi.fn(() => true);
 const mockQizouEmit = vi.fn();
 
@@ -21,6 +25,10 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 vi.mock("@tauri-apps/api/event", () => ({
     listen: (...args: unknown[]) => mockListen(...args),
+}));
+
+vi.mock("@tauri-apps/plugin-dialog", () => ({
+    open: (...args: unknown[]) => mockDialogOpen(...args),
 }));
 
 vi.mock("@renderer/api/env", () => ({
@@ -37,9 +45,11 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
     let service: YuanTianGangService;
 
     beforeEach(() => {
+        setActivePinia(createPinia());
         mockInvoke.mockReset();
         mockListen.mockReset();
         mockListen.mockResolvedValue(() => {});
+        mockDialogOpen.mockReset();
         mockQizouEmit.mockReset();
         mockIsTauri.mockReturnValue(true);
         service = createServiceWithQizouBus();
@@ -51,6 +61,111 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
 
     it("Tauri 模式下 picasa:add-to-scan-queue 直连 listen（RFC 0137）", () => {
         expect(mockListen).toHaveBeenCalledWith(WATCH_EVENTS.SCAN_QUEUE_ADD, expect.any(Function));
+    });
+
+    it("Tauri 模式下文件删除事件由袁天罡唯一监听并启奏", () => {
+        const listenCall = mockListen.mock.calls.find(
+            (call) => call[0] === WATCH_EVENTS.FILE_UNLINK,
+        );
+        expect(listenCall).toBeDefined();
+
+        const handler = listenCall![1] as (event: { payload: unknown }) => void;
+        handler({ payload: { path: "/photos/a.jpg", isFile: true } });
+
+        expect(mockQizouEmit).toHaveBeenCalledWith(
+            "qizou",
+            expect.objectContaining({
+                matter: QizouMatters.WATCH_PATH_REMOVED,
+                content: { path: "/photos/a.jpg", isFile: true },
+                from: "袁天罡",
+            }),
+        );
+    });
+
+    it("导入诏令由袁天罡用 Rust args 契约执行", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const response = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.PAUSE_IMPORT,
+            context: { importId: "import-1" },
+            timestamp: Date.now(),
+            source: "房玄龄",
+            priority: "normal",
+        });
+
+        expect(response.acknowledged).toBe(true);
+        expect(mockInvoke).toHaveBeenCalledWith("pause_import", {
+            args: { importId: "import-1" },
+        });
+        for (const eventName of [
+            "import:progress",
+            "import:complete",
+            "import:error",
+            "import:preview-progress",
+        ]) {
+            expect(mockListen.mock.calls.filter(([name]) => name === eventName)).toHaveLength(1);
+        }
+    });
+
+    it("图库元数据诏令只经袁天罡 private transport", async () => {
+        mockInvoke.mockResolvedValue({ name: "a.jpg" });
+
+        const response = await service.executeZhaoling({
+            command: "extract_metadata",
+            context: { path: "file:///photos/a.jpg" },
+            timestamp: Date.now(),
+            source: "魏征",
+            priority: "normal",
+        });
+
+        expect(response).toMatchObject({
+            acknowledged: true,
+            data: { name: "a.jpg" },
+        });
+        expect(mockInvoke).toHaveBeenCalledWith("extract_metadata", {
+            args: {
+                request: {
+                    filePath: "/photos/a.jpg",
+                },
+            },
+        });
+    });
+
+    it("目录选择诏令只经袁天罡 private transport", async () => {
+        mockDialogOpen.mockResolvedValue(["/photos/a", "/photos/b"]);
+
+        const response = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.CHOOSE_DIRECTORIES,
+            context: { multiple: true },
+            timestamp: Date.now(),
+            source: "长孙无忌",
+            priority: "normal",
+        });
+
+        expect(response).toMatchObject({
+            acknowledged: true,
+            data: { filePaths: ["/photos/a", "/photos/b"] },
+        });
+        expect(mockDialogOpen).toHaveBeenCalledWith({
+            directory: true,
+            multiple: true,
+        });
+    });
+
+    it("桌面能力门面不向 UI 暴露 command 字符串", async () => {
+        mockInvoke.mockResolvedValue({ hasUpdate: false });
+
+        await expect(service.updates.check()).resolves.toEqual({ hasUpdate: false });
+        await service.logs.close();
+        await service.windows.minimize();
+
+        expect(mockInvoke.mock.calls).toEqual(
+            expect.arrayContaining([
+                ["check_for_updates"],
+                ["log_viewer_close"],
+                ["minimize_window"],
+            ]),
+        );
     });
 
     it("picasa:add-to-scan-queue 事件触发后启奏 watch_scan_queue_add", async () => {
@@ -70,6 +185,94 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
                 content: { operations },
             }),
         );
+    });
+
+    it("START_FILE_WATCH invokes Rust watch command with config", async () => {
+        const config = {
+            paths: ["/photos", "/archive"],
+            recursive: true,
+            thumbnailSize: 240,
+        };
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.START_FILE_WATCH,
+            context: config,
+            timestamp: Date.now(),
+            source: "秦琼",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith(WATCH_COMMANDS.START, { config });
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("STOP_FILE_WATCH invokes Rust watch command", async () => {
+        mockInvoke.mockResolvedValue(undefined);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.STOP_FILE_WATCH,
+            context: {},
+            timestamp: Date.now(),
+            source: "秦琼",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith(WATCH_COMMANDS.STOP);
+        expect(result.acknowledged).toBe(true);
+    });
+
+    it("CHECK_FOLDER_CONFIG invokes Rust command and preserves boolean", async () => {
+        mockInvoke.mockResolvedValue(true);
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.CHECK_FOLDER_CONFIG,
+            context: { folderPath: "/photos" },
+            timestamp: Date.now(),
+            source: "魏征",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenCalledWith("check_photasa_config", {
+            folderPath: "/photos",
+        });
+        expect(result).toMatchObject({
+            acknowledged: true,
+            data: true,
+        });
+    });
+
+    it("REMOVE_WATCH_FILE removes thumbnail and photo-list entry", async () => {
+        mockInvoke
+            .mockResolvedValueOnce({ success: true })
+            .mockResolvedValueOnce({ path: "/photos/.photasa.json", config: { photoList: [] } });
+
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.REMOVE_WATCH_FILE,
+            context: { path: "/photos/a.jpg" },
+            timestamp: Date.now(),
+            source: "秦琼",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).toHaveBeenNthCalledWith(1, "remove_thumbnail", {
+            request: {
+                path: "/photos/a.jpg",
+                thumbnail: "/photos/.photasaoriginals/thumbnail-a.jpg.png",
+            },
+        });
+        expect(mockInvoke).toHaveBeenNthCalledWith(2, "remove_from_photo_list", {
+            photoPath: "/photos/a.jpg",
+        });
+        expect(result.acknowledged).toBe(true);
+        expect(result.data).toEqual({
+            folder: "/photos",
+            config: { photoList: [] },
+        });
     });
 
     it("UPDATE_FOLDER_TREE invoke folder_tree_update", async () => {
@@ -108,12 +311,27 @@ describe("YuanTianGangService executeZhaoling IPC", () => {
         expect(result.data).toEqual(appState);
     });
 
-    it("GET_SCANNING_QUEUE invoke scan_queue_get", async () => {
+    it("GET_SCANNING_QUEUE 默认只读 Pinia，不 invoke scan_queue_get", async () => {
+        const result = await service.executeZhaoling({
+            command: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
+            context: {},
+            timestamp: Date.now(),
+            source: "尉迟恭",
+            priority: "normal",
+            requiresTianshuApproval: true,
+        });
+
+        expect(mockInvoke).not.toHaveBeenCalled();
+        expect(result.acknowledged).toBe(true);
+        expect((result.data as { queue: unknown[] }).queue).toEqual([]);
+    });
+
+    it("GET_SCANNING_QUEUE restoreFromDisk 时 invoke scan_queue_get", async () => {
         mockInvoke.mockResolvedValue([{ path: "/restored", action: "scan", timestamp: 1 }]);
 
         const result = await service.executeZhaoling({
             command: ZOUZHE_MATTERS.GET_SCANNING_QUEUE,
-            context: {},
+            context: { [SCAN_QUEUE_RESTORE_FROM_DISK]: true },
             timestamp: Date.now(),
             source: "尉迟恭",
             priority: "normal",

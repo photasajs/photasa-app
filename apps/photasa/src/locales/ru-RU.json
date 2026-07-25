@@ -11,7 +11,8 @@
             "theme": "Тема",
             "advanced": "Дополнительно",
             "autoUpdate": "Автообновление",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "Телеметрия"
         },
         "folderList": "Список папок",
         "folderListUsage": "Способ использования",
@@ -416,6 +417,7 @@
         "queueTitle": "Очередь сканирования",
         "queueEmpty": "Очередь пуста",
         "processing": "Обработка очереди",
+        "pendingTasks": "{count} задач в очереди",
         "allTasksCompleted": "Все задачи сканирования завершены",
         "pathHeader": "Путь",
         "timestampHeader": "Создано",
@@ -427,6 +429,12 @@
         "timeHoursAgo": "{count}ч назад",
         "timeDaysAgo": "{count}д назад",
         "priority": "Приоритет",
+        "retryState": "Повтор {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Ожидание",
+            "processing": "Обработка",
+            "failed": "Ошибка"
+        },
         "actions": {
             "scan": "Сканировать",
             "rescan": "Пересканировать",
@@ -599,5 +607,24 @@
         "maximize": "Развернуть",
         "restore": "Восстановить",
         "close": "Закрыть"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Помогите улучшить Photasa",
+            "purpose": "Мы можем собирать анонимные данные об использовании и сбоях для повышения стабильности и удобства.",
+            "scope": "Не включает содержимое фотографий, имена файлов или пути к папкам.",
+            "destination": "Данные отправляются в PostHog (США) и включаются только после вашего согласия.",
+            "grant": "Разрешить",
+            "deny": "Запретить"
+        },
+        "settings": {
+            "title": "Телеметрия",
+            "description": "Управляйте отправкой анонимных данных об использовании и сбоях для улучшения продукта.",
+            "enabled": "Включить телеметрию",
+            "enabledDescription": "При включении отправляются анонимные события; отключение останавливает сразу.",
+            "savedTitle": "Настройки телеметрии сохранены",
+            "savedMessage": "Ваш выбор применён.",
+            "errorTitle": "Не удалось сохранить настройки телеметрии"
+        }
     }
 }

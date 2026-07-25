@@ -15,77 +15,12 @@
                 },
                 {
                     "type": "json",
+                    "path": "packages/@photasa/base-tree/package.json",
+                    "jsonpath": "$.version"
+                },
+                {
+                    "type": "json",
                     "path": "packages/@photasa/common/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/config-core/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/import/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/maliang-bundle/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/maliang-cli/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/maliang/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/qianliyan/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/scan/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/shunfenger/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/sibu/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/siming/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/taiyi/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/thumbnail/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/tianshu/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "packages/@photasa/wenchang/package.json",
                     "jsonpath": "$.version"
                 },
                 {

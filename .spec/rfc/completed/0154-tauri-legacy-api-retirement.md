@@ -1,0 +1,274 @@
+# RFC 0154: 退役 `legacy-api` / `utils/api` — 回归贞观 IPC 边界
+
+- **Start Date**: 2026-07-21
+- **Last updated**: 2026-07-24
+- **Status**: ? Implemented?2026-07-24 ? Phase 0?4 ???0149 R1/R2 ????????
+- **Priority**: P1
+- **Area**: Photasa / Vue / 贞观之治 / IPC 边界
+- **Parent**: [0149](./completed/0149-tauri-ui-adapter-post-closure.md) R1 + R2
+- **Depends on**: [0137](./completed/0137-tauri-zhenguan-direct-ipc-migration.md)、[0136](./completed/0136-tauri-scan-runtime-contract.md)、[0150](./completed/0150-tauri-shell-menu-zouwu-retirement.md)、[0153](./completed/0153-tauri-zouwu-workspace-removal.md)
+
+## Implementation principle (Photasa / Tauri)
+
+> Policy: [ROADMAP.md](../../ROADMAP.md) Golden rule — Rust 后端已齐；本 RFC **只改 Renderer 边界**，不新增 Node 包。按项目规则，纯 Renderer RFC 不标记为 Photasa Active。
+
+**本 RFC 的第一性原理是 [0137](./completed/0137-tauri-zhenguan-direct-ipc-migration.md) 已写明的决策，不是另起炉灶。**
+
+## Summary
+
+贞观服务层（0137 ✅）与 zouwu 移除（0153 ✅）之后，生产代码里仍有一条 **反贞观** 的旁路：
+
+```text
+❌ 当前（错误 — 组件级假 preload）
+
+Vue / stores / utils
+  → utils/api.ts
+    → getPhotasaApi()
+      → window.api
+        → legacy-api.ts
+          → *.adapter.ts
+            → invoke / listen
+```
+
+这条链 **同时违反** 0137 三条铁律：
+
+| 铁律                           | 违反点                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| 2. 组件不得直调 Rust           | `utils/api` 对组件暴露 `invoke` 语义扁平 API                                |
+| 3. 仅袁天罡可 import Tauri IPC | `legacy-api.ts`、`import-session.ts`、`*.adapter.ts` 多处 `invoke`/`listen` |
+| 人物职责                       | 扫描/导入/监视/缩略图 **绕过** 尉迟恭、房玄龄路由，由「api 工具层」代行     |
+
+**0137 说贞观人物已零 `window.api`，但 0149 R1 仍开着：** 组件与 `utils/*` **仍经 `utils/api.ts`** — 等于 **换壳的 legacy IPC**。
+
+```text
+✅ 目标（0137 原文）
+
+UI 意图
+  → 百姓上书 / use人物() / 启奏（跨部门）
+  → 李世民 / 房玄龄（路由或奏折持久化）
+  → 袁天罡（唯一 invoke + listen）
+  → Rust command / Tauri event
+
+Rust event
+  → 袁天罡
+  → 启奏 / 圣旨
+  → 目标人物 → Pinia 投影（只读）
+```
+
+**禁止** 用 `apps/photasa/src/ipc/*.ts` 域模块作为组件的新入口 — 那只是把 `utils/api` 改名，**仍不是贞观**。
+
+## Problem
+
+### 仍在生产的反模式文件
+
+| 文件                               | 问题                                                     |
+| ---------------------------------- | -------------------------------------------------------- |
+| `api/adapter.ts`                   | `window.api = createLegacyApi()` 全局污染                |
+| `api/legacy-api.ts`                | ~1000 行 Electron 扁平形状 + 内嵌 invoke                 |
+| `ipc/api-access.ts`                | `getPhotasaApi()` 鼓励旁路                               |
+| `utils/api.ts`                     | 组件事实上的 IPC 门面（424 行）                          |
+| `composables/useUpdateListener.ts` | `getPhotasaApi()` 更新事件                               |
+| `api/*.adapter.ts`                 | 第二套嵌套 IPC（仅 legacy-api 消费，应并入袁天罡后删除） |
+
+### `utils/api.ts` 生产调用方（须迁出，不得迁到 `ipc/*`）
+
+| 调用方                                 | 能力                | 目标人物 / 路径                                               |
+| -------------------------------------- | ------------------- | ------------------------------------------------------------- |
+| `App.vue`                              | getDirectory        | 目录 → 魏征/褚遂良                                            |
+| `ImportPhotos.vue`                     | chooseDirectories   | 百姓上书或 **房玄龄** accessor                                |
+| `ImageList.vue` / `ImageListHelper.ts` | metadata、thumbnail | 网格只读：投影 + 袁天罡 `create_thumbnail`（0148 契约经人物） |
+| `settings/*.vue`                       | chooseDirectory     | 长孙无忌 / 褚遂良 / 百姓上书                                  |
+
+## Goals
+
+1. **零**生产路径：`window.api`、`legacy-api.ts`、`getPhotasaApi()`、`utils/api.ts`。
+2. **零**袁天罡外的业务 `invoke` / `listen`；静态与动态 import 都受门禁。`convertFileSrc`、纯 runtime 检测等非业务 IPC 能力按显式白名单保留。
+3. 每个原 `utils/api` 能力映射到 **已有人物** 或 **奏折/启奏**；仅当无归属时才在 RFC 修订中提议新人物（默认不新增）。
+4. `*.adapter.ts` 的业务 transport 逻辑迁入 `YuanTianGangService` 私有 transport 子模块后删除 adapter 目录；不得向 UI 导出 transport。
+
+## Non-Goals
+
+- 重写 Rust（0097 ✅）。
+- 恢复 Electron / contract reference。
+- 新建 `ipc/foo.ts` 给 Vue `import`（**明确拒绝**）。
+- 一次性删掉所有 Pinia store；store 可作 **人物投影**，但不得持有 IPC。
+
+## Alternatives
+
+### 方案 A — 贞观人物 + 袁天罡（推荐）
+
+按能力把 `utils/api` 调用改为 `useYuChiGong()` / `useWeiZheng()` / 百姓上书 / 房玄龄 accessor；所有 `invoke`/`listen` 收拢到 `yuantiangang.ts`。
+
+- **优点**：与 0136/0137/0143 一致；职责清晰；可逐 PR 迁移。
+- **风险**：`YuanTianGangService` 膨胀 → 用 **私有** `transport/` 子模块（**不** export 给组件）。
+
+### 方案 B — `ipc/*` 域模块替代 `utils/api`
+
+组件 `import { executeImport } from '@/ipc/import'`。
+
+- **优点**：改动面直观。
+- **缺点**：**不是贞观**；组件仍直调 Rust 契约；与 0137 规则 2 冲突；人物层空心化。
+- **结论**：**拒绝**。
+
+**自动决策：方案 A。**
+
+## Proposed Solution
+
+### 架构分层（迁移后）
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ Vue 组件 / composable                                    │
+│  - useYuChiGong / useWeiZheng / useZhangSunWuJi / …      │
+│  - 百姓上书 EventNames.BAIXING_SHANGSHU（简单意图）        │
+│  - store 只读投影（scanningQueue、importSession、…）       │
+└───────────────────────────┬─────────────────────────────┘
+                            │ 意图 / 奏折 / 启奏
+┌───────────────────────────▼─────────────────────────────┐
+│ 李世民 / 房玄龄 / 各部门人物                              │
+└───────────────────────────┬─────────────────────────────┘
+                            │ 需 Rust I/O 时
+┌───────────────────────────▼─────────────────────────────┐
+│ YuanTianGangService（唯一业务 invoke / listen 消费者）     │
+│  可选内部：services/yuantiangang/transport/*.ts（私有）   │
+└───────────────────────────┬─────────────────────────────┘
+                            │ invoke / listen
+┌───────────────────────────▼─────────────────────────────┐
+│ Rust commands / events（已有）                             │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 能力 → 人物映射表（验收依据）
+
+| 域                   | 原 `utils/api` / legacy                  | 目标                                                                                                               |
+| -------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 扫描命令             | `scanPhotos`                             | 尉迟恭入队 → 袁天罡 `scan_photos`（0143 ✅ 模式；删 `scan-folder` 直调）                                           |
+| 扫描队列 UI          | `cleanupScanQueue`                       | `useYuChiGong().scanningQueue`                                                                                     |
+| 文件监视             | `startWatching` / `stopWatching`         | 袁天罡 `start_file_watch` + 事件 → 启奏 `WATCH_SCAN_QUEUE_ADD` → 尉迟恭（0133/0136）                               |
+| 监视副作用           | `file-handler` thumbnail/photo list      | 秦琼 → 魏征树更新；缩略图/列表经袁天罡，**不**在 handler 里调 api                                                  |
+| 文件夹配置           | `getPhotasaConfig`、`addToPhotoList`、…  | Phase 2c ✅：魏征 → 房玄龄 Zouzhe → 袁天罡唯一 invoke                                                              |
+| 目录对话框           | `chooseDirectory(s)`                     | 长孙无忌或褚遂良服务方法 → 袁天罡 `choose_directory*`                                                              |
+| 导入 preview/execute | `previewImport`、`executeImport`         | Phase 2d ✅：import composable 只调用房玄龄 accessor → 袁天罡；store 不直达 transport                              |
+| 导入事件             | `onImportProgress`、…                    | Phase 2d ✅：袁天罡唯一 `listen('import:*')` → typed projection → `import-session`                                 |
+| 导入历史/undo        | `getImportHistory`、`undoImport`         | Phase 2d ✅：房玄龄 Zouzhe + 袁天罡 invoke                                                                         |
+| 缩略图               | `createThumbnail`                        | Phase 2e ✅：组件 → `useGalleryMedia()` → 魏征图库 accessor → 袁天罡 `create_thumbnail`；并发 task 留在 composable |
+| 元数据               | `getFileMetadata`                        | Phase 2e ✅：组件 → `useGalleryMedia()` → 魏征图库 accessor → 袁天罡 `extract_metadata`                            |
+| Shell                | `openExternal`、…                        | 已完成：长孙无忌 / 百姓上书 → 0150                                                                                 |
+| 菜单                 | `setupMenu`                              | 删除；长孙无忌 + 袁天罡 `menu:action`（0149）                                                                      |
+| 更新                 | `onUpdate*`                              | 袁天罡 listen `picasa:update-*` → `useUpdateListener` 订阅人物                                                     |
+| 日志                 | log viewer                               | 袁天罡 `log_viewer_*` + stream 事件                                                                                |
+| 窗口                 | reload、maximize                         | 标题栏组件 → 袁天罡 window commands（0099）                                                                        |
+| Splash               | `close_splashscreen`                     | 单一启动协调点 → 袁天罡 window command；保留“首屏初始化结束后关闭”时序，删除 `App.vue` / `main.ts` 双调用          |
+| 平台信息             | `isMac` / `get_platform`                 | 袁天罡 platform command；纯 `isTauri` runtime 检测允许留在 `api/env.ts`                                            |
+| 默认目录             | `getDirectory`                           | `folderSelectionService` → 褚遂良/长孙无忌 → 袁天罡                                                                |
+| 路径运算             | `relativePath`、`resolvePath`、`getRoot` | 能本地纯函数化者并入 `sync-path.ts`；必须读 OS/Rust 者经负责人物 → 袁天罡，禁止继续走 `api-path → getPhotasaApi`   |
+| WebView URL          | `convertFileSrc` / `isTauri`             | 保留 `media-url.ts` 非业务 IPC 白名单；不得为了“唯一 import”塞进袁天罡                                             |
+
+### Phase 0 — 真实基线 + 门禁
+
+- [x] 2026-07-22 生产基线已按“定义 / 消费者 / 注释”分开盘点，不再用子串命中冒充零引用：
+    - `window.api`：`api/adapter.ts` 仍有 **1 处真实赋值** `(window as any).api = createLegacyApi()`。
+    - `getPhotasaApi`：定义仍在 `ipc/api-access.ts`；生产消费者包括 `App.vue`、`LogConsole.vue`、`TitlebarWinLinux.vue`、`UpdateSettings.vue`、`useUpdateListener.ts`、`folderSelectionService.ts`、`api-path.ts`、`utils/api.ts`。
+    - `@renderer/utils/api` 精确生产 import：**11 文件**（原清单不变）。
+    - 袁天罡外 `@tauri-apps/api`：仍有 adapter、legacy、`App.vue`、`main.ts`、`import-session.ts`、`env.ts`、`media-url.ts` 等；其中 `env.ts` / `media-url.ts` 含允许的非业务 IPC 能力。
+- [x] 2026-07-23 ESLint AST 门禁同时覆盖 `ImportDeclaration` 与 `ImportExpression`：
+    - [x] 2026-07-23 禁止新文件静态或动态导入 `@renderer/utils/api`、`@renderer/api/legacy-api`、`@renderer/ipc/api-access`；现有 19 个生产消费者列入临时债务清单，测试 mock 显式豁免。
+    - [x] 袁天罡 transport 外禁止新文件静态或动态导入 Tauri core/event/plugin；现有 adapter、legacy、`App.vue`、`main.ts`、`import-session.ts` 保留为临时债务。
+    - [x] 非业务 IPC 白名单收窄到 `api/env.ts` 与 `utils/media-url.ts`：两者禁止 event/plugin 和静态 `invoke`，`media-url.ts` 另禁动态 core；门禁回归测试 21/21 通过。
+- [x] 2026-07-23 Vitest 配置同时纳入 `src/**/*.test.ts` 与 `src/**/*.spec.ts`；配置回归测试已锁定两类 glob，全量结果为 104 files passed、1125 passed / 3 skipped。
+
+### Phase 1 — 止血
+
+- [x] 2026-07-24 删除 `adapter.ts` 的 `window.api = createLegacyApi()`、`main.ts` 副作用 import，以及 `getPhotasaApi()` 的 `window.api` fallback；模块 singleton 继续承接迁移期调用。
+- [x] 标记 `getPhotasaApi` / `utils/api` `@deprecated`（迁移完成前临时保留）。
+- [x] **禁止新增** `utils/api` 调用（lint）。
+- [x] Phase 1 验证：生产注入与启动副作用 0 命中；RFC/legacy 定向 55/55；全量 108 files、1169 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+
+### Phase 2 — 按域迁贞观（每域一 PR，顺序建议）
+
+| 切片                | 工作                                                                                   | 删除                             |
+| ------------------- | -------------------------------------------------------------------------------------- | -------------------------------- |
+| 2a 扫描             | `scan-folder.ts` → 尉迟恭 + 袁天罡；`App.vue` 删 `scanPhotosTask` 直链 api             | `scanPhotos` from utils/api      |
+| 2b 监视             | `file-handler.ts` → 秦琼/袁天罡；`App.vue` watch 经人物启动                            | `startWatching`/`stopWatching`   |
+| 2c 配置             | `preference.ts` checkPhotasaConfig → 魏征                                              | config 类 api 方法               |
+| 2d 导入 ✅          | `import-session` 去掉直 `listen`；袁天罡转发 import 事件；组件改 composable            | import 类 api + modal 直调       |
+| 2e 缩略图/元数据 ✅ | `ImageListHelper` 纯依赖 + `useGalleryMedia()` → 魏征图库 accessor → 袁天罡            | thumbnail/metadata API + adapter |
+| 2f 对话框/目录 ✅   | Import/Settings → 长孙无忌 → 房玄龄 → 袁天罡私有 dialog transport                      | `chooseDirectory*`               |
+| 2g 更新/日志/窗口   | `useUpdateListener`、`UpdateSettings`、`LogConsole`、titlebar、`App.vue` 更新动作      | 对应 getPhotasaApi               |
+| 2h 平台/Splash/路径 | `App.vue` / `main.ts` Splash、`App.vue` isMac、`folderSelectionService`、`api-path.ts` | 剩余业务 invoke / getPhotasaApi  |
+
+每切片 0137 证据清单：
+
+1. Inventory 调用方
+2. Rust 契约（已有）
+3. 人物 API / 启奏路由
+4. 袁天罡 transport 实现（可从 `*.adapter.ts` 搬迁）
+5. `rg` 该域零 `utils/api`
+6. 该域零袁天罡外业务 `invoke` / `listen`
+7. `*.test.ts` + `*.spec.ts` 全绿
+
+- [x] Phase 2a 验证：删除无生产执行者的 `scan-folder.ts` 与 `utils/api.scanPhotos`；`App.vue` 扫描空闲状态改读 `useYuChiGong().queueSize`；Preference 删除无效 legacy task cancel；尉迟恭仍经 `ZOUZHE_MATTERS.SCAN_PHOTOS` 送房玄龄/袁天罡。定向 160/160；全量 109 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+- [x] Phase 2b 验证：删除 `file-handler.ts` 与 `utils/api.startWatching/stopWatching`；App watch 生命周期经秦琼 → 房玄龄 → 袁天罡 → Rust 串行 start/stop。Rust batch 的 add/change 仍交尉迟恭；unlink/unlinkDir 由袁天罡唯一监听并下旨秦琼，文件清理复用 Rust `remove_thumbnail` + `remove_from_photo_list`，目录删除交魏征；尉迟恭不再把 delete 伪装成 scan。定向 98/98；全量 110 files、1188 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+- [x] Phase 2c 验证：`preference.ts` 零 `utils/api`，删除无生产调用的 legacy Store 扫描编排；配置检查统一为 Rust `bool` → 袁天罡 → 魏征 `boolean`，修复旧 `{ hasConfig }` 假类型；AdvancedSettings 经魏征串行重置配置，再更新 Pinia 投影；删除 `utils/api`、flat contract、legacy-api 的 config 能力。定向 38/38；全量 111 files、1174 passed / 3 skipped；typecheck、lint、Vite production build 全绿。Tauri release 编译及 macOS bundle 成功，最终 updater 签名因本机未设置 `TAURI_SIGNING_PRIVATE_KEY` 退出。
+- [x] Phase 2d 验证：导入 preview/execute/control/history/undo/recovery 全部经 `useImportOperations()` → 房玄龄 typed accessor → 袁天罡；`import-session` 零 Tauri/import-adapter 依赖，保留 listener-before-execute、importId 前缓冲/claim、错 ID 丢弃与单飞语义；袁天罡生命周期内唯一注册 `import:progress/complete/error/preview-progress`，并修正 Rust struct 参数为 `{ args: {...} }`；删除 utils/api、flat contract、legacy-api、import.adapter 的 `importPhotos`、`scanDirectories` 及其余导入业务能力，`chooseDirectories` 留至 Phase 2f。全量 112 files、1146 passed / 3 skipped；typecheck、lint、Vite production build 全绿。Tauri release 编译及 macOS app bundle 成功；updater 产物签名因本机未设置 `TAURI_SIGNING_PRIVATE_KEY` 未完成。
+- [x] Phase 2e 验证：`ImageList.vue` 与 `ImageListHelper.ts` 零 `utils/api`；缩略图创建、富元数据提取、缩略图 mtime 批量读取统一经 `useGalleryMedia()` → 魏征图库 accessor → 房玄龄奏折 → 袁天罡私有 `media-transport`；`vue-concurrency` 限流留在 UI composable，helper 改为纯依赖；元数据改用真实 `extract_metadata` 契约并在人物边界恢复 `Date`。删除 `thumbnail.adapter.ts`、utils/api、flat contract、legacy-api 的 thumbnail/metadata surface 与无行为的 drawer 假测试。全量 `vitest --maxWorkers=1`：114 files、1153 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+- [x] Phase 2f 验证：`ImportPhotos.vue`、`GeneralSettings.vue`、`ImportSettings.vue` 零 `utils/api` 目录调用；单选/多选统一经 `useZhangSunWuJi()` → 长孙无忌奏折 → 房玄龄 → 袁天罡私有 `dialog-transport` → Tauri dialog plugin，并在 transport 边界把单值、数组、取消统一为 `DirectorySelection`。删除 utils/flat/legacy 的 `chooseDirectory*` surface、只剩目录能力的 `import.adapter.ts` 及旧 adapter/helper 测试；`getDirectory` 保留至 Phase 2h。全量 `vitest --maxWorkers=1`：114 files、1157 passed / 3 skipped；typecheck、lint、Vite production build 全绿。
+
+### Phase 3 — 删尸
+
+- [x] 删 `legacy-api.ts`、`legacy-preload-access.ts`、`photasa-flat-api.ts`、`ipc/api-access.ts`
+- [x] 删 `utils/api.ts`
+- [x] 删 `api/adapter.ts`、`api/*.adapter.ts`（逻辑已在 `yuantiangang/transport/`）
+- [x] 删 `legacy-api-*.test.ts` 或改为测袁天罡 transport
+
+### Phase 4 ? ??
+
+- [x] ?? [0149](./completed/0149-tauri-ui-adapter-post-closure.md) ??? R1/R2 ???????????? 0149
+- [x] `ROADMAP.md` ???????????? ? ????? IPC??2026-07-22?
+- [x] ? `README.md` ?? legacy-api compat ?????? README ?????????? README???? RFC ???
+
+## 袁天罡膨胀控制
+
+`yuantiangang.ts` 已大。迁移时：
+
+- 新增 `services/yuantiangang/transport/`（**private**，仅 `YuanTianGangService` import）
+- 按域拆分：`watch-transport.ts`、`import-transport.ts`、`thumbnail-transport.ts` …
+- **不**创建 `ipc/` 或 `api/` 对 UI 导出
+- 单元测试测 transport 纯函数 + `yuantiangang-ipc.test.ts` 集成
+
+## Testing Strategy
+
+- 每切片：`pnpm --filter @photasa/photasa run test:unit` + `typecheck` + `lint`
+- 精确 import 门禁：`@renderer/utils/api`、`@renderer/api/legacy-api`、`@renderer/ipc/api-access` 生产代码 → **0**；不以注释或 `api-path` 子串命中代替 AST 结果。
+- 全量盘点 `rg -n '@tauri-apps/(api|plugin-)' apps/photasa/src --glob '!**/__tests__/**'`；除显式非业务 IPC 白名单外，仅 `services/yuantiangang/**` 可消费业务 `invoke` / `listen`。
+- 导入事件契约测试：监听必须先于 execute invoke；`importId` 返回前的 progress / complete / error 必须缓冲，claim 后按序冲刷；重复订阅和卸载不得丢事件或重复投影。
+- 扫描 transport 测试：迁移后仅保留一套 `scan_photos` invoke 与 `picasa:find-photo` listener，禁止 legacy adapter 与袁天罡双监听。
+- 手测：导入向导、监视入队、缩略图网格、偏好目录、更新、窗口
+
+## Risks
+
+| 风险                    | 缓解                                                     |
+| ----------------------- | -------------------------------------------------------- |
+| 误建 `ipc/*` 新旁路     | RFC 明确拒绝；code review + eslint                       |
+| import-session 事件竞态 | 袁天罡单点 listen + 0118 单飞语义不变                    |
+| 人物 API 膨胀           | composable 薄包装；重逻辑仍在人物/房玄龄                 |
+| 门禁假绿                | AST lint 覆盖静态/动态 import；Vitest 同时纳入 test/spec |
+| 扫描双 transport/listen | 切片内选择袁天罡实现；删除 legacy adapter 后再验收零重复 |
+
+## Acceptance
+
+- [ ] 0137 Golden Rules 2–3 对 **全 Renderer** 成立（不仅 services/）
+- [ ] 零 `utils/api`、`legacy-api`、`window.api`
+- [ ] 仅 `yuantiangang/**`（及测试 mock）消费业务 `invoke` / `listen`；`env.ts` / `media-url.ts` 仅保留批准的非业务 IPC 白名单
+- [ ] [0149](./completed/0149-tauri-ui-adapter-post-closure.md) 转交的 R1 + R2 成果完成
+- [ ] Vitest `*.test.ts` + `*.spec.ts` 全绿
+- [ ] 导入早到事件/单飞语义已有回归测试；扫描单 transport 仍待完成
+- [ ] Splash 只关闭一次，且仍在首屏初始化完成后关闭
+
+## Implementation checklist（开工时 → TASK_TRACKING）
+
+1. Phase 0 真实基线 + ESLint/Vitest 门禁
+2. Phase 1 停 `window.api` 注入
+3. Phase 2a–2h 贞观切片（**禁止** `ipc/*` 公共模块）
+4. Phase 3 删除 legacy 层
+5. Phase 4 文档收口

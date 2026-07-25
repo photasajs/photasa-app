@@ -25,6 +25,8 @@ pub struct UserPreferences {
     pub performance: PerformancePreferences,
     #[serde(default)]
     pub system: SystemPreferences,
+    #[serde(default)]
+    pub telemetry: TelemetryPreferences,
     pub last_modified: u64,
 }
 
@@ -96,6 +98,38 @@ impl Default for AutoUpdatePreferences {
 pub struct SystemPreferences {
     pub auto_update: AutoUpdatePreferences,
 }
+
+/// 遥测同意偏好（RFC 0163）
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct TelemetryPreferences {
+    #[serde(default = "default_telemetry_consent_status")]
+    pub consent_status: String,
+    #[serde(default = "default_telemetry_consent_policy_version")]
+    pub consent_policy_version: String,
+}
+
+fn default_telemetry_consent_status() -> String {
+    "undecided".to_string()
+}
+
+fn default_telemetry_consent_policy_version() -> String {
+    String::new()
+}
+
+impl Default for TelemetryPreferences {
+    fn default() -> Self {
+        Self {
+            consent_status: default_telemetry_consent_status(),
+            consent_policy_version: default_telemetry_consent_policy_version(),
+        }
+    }
+}
+
+pub const TELEMETRY_CONSENT_UNDECIDED: &str = "undecided";
+pub const TELEMETRY_CONSENT_GRANTED: &str = "granted";
+pub const TELEMETRY_CONSENT_DENIED: &str = "denied";
+pub const CURRENT_TELEMETRY_POLICY_VERSION: &str = "1";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PreferenceSnapshot {
@@ -369,6 +403,7 @@ fn default_preferences(now: u64) -> UserPreferences {
             enable_gpu_acceleration: true,
         },
         system: SystemPreferences::default(),
+        telemetry: TelemetryPreferences::default(),
         last_modified: now,
     }
 }
@@ -422,6 +457,36 @@ mod tests {
         assert!(dir.join(PREFERENCES_FILE_NAME).exists());
         assert!(dir.join(HISTORY_FILE_NAME).exists());
         assert!(dir.join(REVISIONS_DIR_NAME).exists());
+    }
+
+    #[tokio::test]
+    async fn telemetry_defaults_to_undecided() {
+        let dir = temp_preferences_dir();
+        let store = PreferencesStore::initialize(&dir).await.unwrap();
+        let telemetry = &store.get_current_snapshot().data.telemetry;
+        assert_eq!(telemetry.consent_status, TELEMETRY_CONSENT_UNDECIDED);
+        assert_eq!(telemetry.consent_policy_version, "");
+    }
+
+    #[tokio::test]
+    async fn update_preferences_persists_telemetry_consent() {
+        let dir = temp_preferences_dir();
+        let mut store = PreferencesStore::initialize(&dir).await.unwrap();
+        store
+            .update_preferences(
+                serde_json::json!({
+                    "telemetry": {
+                        "consentStatus": "granted",
+                        "consentPolicyVersion": "1"
+                    }
+                }),
+                "user",
+            )
+            .await
+            .unwrap();
+        let telemetry = &store.get_current_snapshot().data.telemetry;
+        assert_eq!(telemetry.consent_status, TELEMETRY_CONSENT_GRANTED);
+        assert_eq!(telemetry.consent_policy_version, "1");
     }
 
     #[tokio::test]

@@ -78,9 +78,9 @@ export { default as BaseImage } from "./BaseImage.vue";
 export { default as VirtualizedGrid } from "./VirtualizedGrid.vue";
 export { default as VirtualList } from "./VirtualList.vue";
 
-// === 树形组件 ===
-export { default as BaseTree } from "./BaseTree.vue";
-export { default as BaseTreeNode } from "./BaseTreeNode.vue";
+// === 树形组件（@photasa/base-tree）===
+export { BaseTree, BaseTreeNode } from "@photasa/base-tree";
+export type { Key, TreeNode } from "@photasa/base-tree";
 
 // === 布局组件 ===
 export { default as BaseRow } from "./BaseRow.vue";

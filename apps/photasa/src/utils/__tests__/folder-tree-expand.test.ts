@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import {
     collectAncestorKeys,
     collectAllFolderKeys,
+    mergeExpandedKeysForCurrentFolder,
     mergeExpandedKeysForNewFolders,
 } from "../folder-tree-expand";
 import type { FolderNode } from "@photasa/common";
@@ -46,6 +47,18 @@ describe("folder-tree-expand", () => {
         );
         expect(result).toContain("/photos");
         expect(result).toContain("/photos/vacation");
+    });
+
+    it("mergeExpandedKeysForCurrentFolder 启动恢复深路径时应展开祖先", () => {
+        const result = mergeExpandedKeysForCurrentFolder(["/photos"], "/photos/vacation/2024", [
+            "/photos",
+        ]);
+        expect(result).toContain("/photos");
+        expect(result).toContain("/photos/vacation");
+    });
+
+    it("collectAncestorKeys 应规范化反斜杠路径", () => {
+        expect(collectAncestorKeys("C:\\photos\\vacation", ["C:/photos"])).toEqual(["C:/photos"]);
     });
 
     it("collectAncestorKeys 空路径或无匹配根返回空数组", () => {

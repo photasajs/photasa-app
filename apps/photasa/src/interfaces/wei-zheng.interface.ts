@@ -1,5 +1,17 @@
 import type { InjectionKey } from "vue";
-import type { FolderNode } from "@photasa/common";
+import type {
+    FileMetadata,
+    FolderNode,
+    PhotasaConfig,
+    ThumbnailRequest,
+    ThumbnailResponse,
+} from "@photasa/common";
+
+export interface IGalleryMediaOperations {
+    createThumbnail(request: ThumbnailRequest): Promise<ThumbnailResponse>;
+    fileMetadata(path: string): Promise<FileMetadata>;
+    filesModified(paths: string[]): Promise<Record<string, number>>;
+}
 
 /**
  * 魏征服务接口
@@ -24,6 +36,7 @@ import type { FolderNode } from "@photasa/common";
  * 在架构中负责监察和管理应用运行时状态
  */
 export interface IWeiZhengService {
+    readonly gallery: IGalleryMediaOperations;
     /**
      * 服务名称（IService接口要求）
      */
@@ -126,7 +139,10 @@ export interface IWeiZhengService {
      * CRUD分类：Read操作
      * @param folder 文件夹路径
      */
-    getFolderConfig(folder: string): Promise<any>;
+    getFolderConfig(folder: string): Promise<PhotasaConfig | null>;
+
+    /** 检查指定文件夹是否含有效配置。 */
+    checkFolderConfig(folder: string): Promise<boolean>;
 
     /**
      * 修复指定文件夹的配置 (.photasa.json)
@@ -134,7 +150,7 @@ export interface IWeiZhengService {
      * CRUD分类：Update操作
      * @param folder 文件夹路径
      */
-    fixFolderConfig(folder: string): Promise<any>;
+    fixFolderConfig(folder: string): Promise<void>;
 
     /**
      * 重置指定文件夹的配置 (.photasa.json)
@@ -142,7 +158,10 @@ export interface IWeiZhengService {
      * CRUD分类：Update操作
      * @param folder 文件夹路径
      */
-    resetFolderConfig(folder: string): Promise<any>;
+    resetFolderConfig(folder: string): Promise<void>;
+
+    /** 按顺序重置多个文件夹配置。 */
+    resetFolderConfigs(folders: string[]): Promise<void>;
 }
 
 /**

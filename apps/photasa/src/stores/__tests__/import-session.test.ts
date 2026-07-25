@@ -3,26 +3,12 @@ import { setActivePinia, createPinia } from "pinia";
 import { IMPORT_ALREADY_RUNNING, useImportSessionStore } from "../import-session";
 import type { ImportProgress, ImportResult } from "@photasa/common";
 
-const { mockEnv, mockListeners } = vi.hoisted(() => ({
-    mockEnv: { isTauri: false },
+const { mockListeners } = vi.hoisted(() => ({
     mockListeners: {
         "import:progress": [] as any[],
         "import:complete": [] as any[],
         "import:error": [] as any[],
     },
-}));
-
-vi.mock("@renderer/api/env", () => ({
-    isTauri: () => mockEnv.isTauri,
-}));
-
-vi.mock("@tauri-apps/api/event", () => ({
-    listen: vi.fn(async (name: string, handler: any) => {
-        if (name === "import:progress") mockListeners["import:progress"].push(handler);
-        if (name === "import:complete") mockListeners["import:complete"].push(handler);
-        if (name === "import:error") mockListeners["import:error"].push(handler);
-        return () => {};
-    }),
 }));
 
 vi.mock("@renderer/services/notification-manager", () => ({
@@ -49,6 +35,41 @@ vi.mock("@photasa/common", async () => {
         },
     };
 });
+
+const importEvents = {
+    ready: vi.fn().mockResolvedValue(undefined),
+    onProgress: (callback: (progress: ImportProgress) => void) => {
+        const handler = (event: { payload: ImportProgress }) => callback(event.payload);
+        mockListeners["import:progress"].push(handler);
+        return () => {
+            mockListeners["import:progress"] = mockListeners["import:progress"].filter(
+                (item) => item !== handler,
+            );
+        };
+    },
+    onComplete: (callback: (result: ImportResult) => void) => {
+        const handler = (event: { payload: ImportResult }) => callback(event.payload);
+        mockListeners["import:complete"].push(handler);
+        return () => {
+            mockListeners["import:complete"] = mockListeners["import:complete"].filter(
+                (item) => item !== handler,
+            );
+        };
+    },
+    onError: (callback: (value: { importId?: string; error: Error }) => void) => {
+        const handler = (event: { payload: { importId?: string; message: string } }) =>
+            callback({
+                importId: event.payload.importId,
+                error: new Error(event.payload.message),
+            });
+        mockListeners["import:error"].push(handler);
+        return () => {
+            mockListeners["import:error"] = mockListeners["import:error"].filter(
+                (item) => item !== handler,
+            );
+        };
+    },
+} as never;
 
 function sampleProgress(partial: Partial<ImportProgress> = {}): ImportProgress {
     return {
@@ -249,13 +270,12 @@ describe("useImportSessionStore (RFC 0118)", () => {
     });
 
     it("buffers a fast complete event before executeImport returns", async () => {
-        mockEnv.isTauri = true;
         mockListeners["import:progress"] = [];
         mockListeners["import:complete"] = [];
         mockListeners["import:error"] = [];
 
         const store = useImportSessionStore();
-        await store.prepareStart({ totalFiles: 1 });
+        await store.prepareStart({ totalFiles: 1 }, importEvents);
 
         const result: ImportResult = {
             success: true,
@@ -287,14 +307,78 @@ describe("useImportSessionStore (RFC 0118)", () => {
         expect(store.result?.importId).toBe("fast-id");
     });
 
+    it("flushes early progress events in order before early complete", async () => {
+        mockListeners["import:progress"] = [];
+        mockListeners["import:complete"] = [];
+        mockListeners["import:error"] = [];
+        const store = useImportSessionStore();
+        await store.prepareStart({ totalFiles: 2 }, importEvents);
+
+        for (const processedFiles of [1, 2]) {
+            mockListeners["import:progress"].forEach((callback) =>
+                callback({
+                    payload: sampleProgress({
+                        importId: "ordered-id",
+                        totalFiles: 2,
+                        processedFiles,
+                    }),
+                }),
+            );
+        }
+        mockListeners["import:complete"].forEach((callback) =>
+            callback({ payload: sampleResult({ importId: "ordered-id", totalFiles: 2 }) }),
+        );
+
+        expect(store.progress?.processedFiles).toBe(0);
+        store.claimImportId("ordered-id");
+        expect(store.phase).toBe("completed");
+        expect(store.progress?.processedFiles).toBe(2);
+    });
+
+    it("buffers an early Rust error until the import id is claimed", async () => {
+        mockListeners["import:progress"] = [];
+        mockListeners["import:complete"] = [];
+        mockListeners["import:error"] = [];
+        const store = useImportSessionStore();
+        await store.prepareStart(undefined, importEvents);
+
+        mockListeners["import:error"].forEach((callback) =>
+            callback({
+                payload: { importId: "error-id", message: "copy failed" },
+            }),
+        );
+
+        expect(store.phase).toBe("running");
+        store.claimImportId("error-id");
+        expect(store.phase).toBe("failed");
+        expect((store.error as Error).message).toBe("copy failed");
+    });
+
+    it("drops buffered events for a stale import id when claiming the current id", async () => {
+        mockListeners["import:progress"] = [];
+        mockListeners["import:complete"] = [];
+        mockListeners["import:error"] = [];
+        const store = useImportSessionStore();
+        await store.prepareStart(undefined, importEvents);
+
+        mockListeners["import:progress"].forEach((callback) =>
+            callback({
+                payload: sampleProgress({ importId: "stale-id", processedFiles: 9 }),
+            }),
+        );
+        store.claimImportId("current-id");
+
+        expect(store.phase).toBe("running");
+        expect(store.progress?.processedFiles).toBe(0);
+    });
+
     it("RFC 0128: ignores progress, complete, and error events with mismatched importId", async () => {
-        mockEnv.isTauri = true;
         mockListeners["import:progress"] = [];
         mockListeners["import:complete"] = [];
         mockListeners["import:error"] = [];
 
         const store = useImportSessionStore();
-        await store.begin("current-id");
+        await store.begin("current-id", undefined, importEvents);
 
         // Simulate progress from old/cancelled import
         const oldProgress = sampleProgress({ importId: "stale-id", processedFiles: 5 });
@@ -333,7 +417,7 @@ describe("useImportSessionStore (RFC 0118)", () => {
 
         // Re-begin store to test error
         store.clear();
-        await store.begin("current-id-2");
+        await store.begin("current-id-2", undefined, importEvents);
 
         // Simulate error from old/cancelled import
         mockListeners["import:error"].forEach((cb) =>
@@ -349,14 +433,13 @@ describe("useImportSessionStore (RFC 0118)", () => {
     });
 
     it("RFC 0127: stores Rust import:error message instead of [object Object]", async () => {
-        mockEnv.isTauri = true;
         mockListeners["import:progress"] = [];
         mockListeners["import:complete"] = [];
         mockListeners["import:error"] = [];
         const { notification } = await import("@renderer/services/notification-manager");
 
         const store = useImportSessionStore();
-        await store.begin("id-error");
+        await store.begin("id-error", undefined, importEvents);
         store.setModalVisible(false);
 
         mockListeners["import:error"].forEach((cb) =>
@@ -375,5 +458,31 @@ describe("useImportSessionStore (RFC 0118)", () => {
             title: "导入失败",
             message: "创建目标目录失败: permission denied",
         });
+    });
+
+    it("uses Rust cancelled progress as terminal state and releases projections", async () => {
+        mockListeners["import:progress"] = [];
+        mockListeners["import:complete"] = [];
+        mockListeners["import:error"] = [];
+        const store = useImportSessionStore();
+        await store.begin("id-cancel", undefined, importEvents);
+
+        mockListeners["import:progress"].forEach((callback) =>
+            callback({
+                payload: sampleProgress({
+                    importId: "id-cancel",
+                    status: "cancelled",
+                    processedFiles: 4,
+                    successfulFiles: 3,
+                }),
+            }),
+        );
+
+        expect(store.phase).toBe("cancelled");
+        expect(store.progress?.processedFiles).toBe(4);
+        expect(store.progress?.successfulFiles).toBe(3);
+        expect(mockListeners["import:progress"]).toHaveLength(0);
+        expect(mockListeners["import:complete"]).toHaveLength(0);
+        expect(mockListeners["import:error"]).toHaveLength(0);
     });
 });

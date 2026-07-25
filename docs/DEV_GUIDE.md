@@ -426,7 +426,7 @@ UI → 奏折 (Zouzhe) → 房玄龄
 
 ### UI：图片列表虚拟化
 
-`ImageList.vue` 已使用 **`@tanstack/vue-virtual`**（`useVirtualizer`）按行虚拟化网格；另有 `VirtualizedGrid.vue`、`VirtualList.vue`。无需新 RFC（RFC 0011 / 0148 已覆盖）。
+`ImageList.vue` 已使用 **`@tanstack/vue-virtual`** 按行虚拟化，但逻辑 inline 且与 `VirtualizedGrid.vue` 重复。整合规范见 **[RFC 0161](.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)**（Draft）。`VirtualList.vue` 供 `BaseTree` 使用。
 
 ### 如何添加新服务
 

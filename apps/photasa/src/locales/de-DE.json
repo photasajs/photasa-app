@@ -26,7 +26,8 @@
             "theme": "Thema",
             "advanced": "Erweiterte Einstellungen",
             "autoUpdate": "Auto-Update",
-            "scanMonitoring": "Scan-Überwachung"
+            "scanMonitoring": "Scan-Überwachung",
+            "telemetry": "Telemetrie"
         },
         "folderList": "Ordnerliste",
         "folderListUsage": "Verwendung",
@@ -461,6 +462,7 @@
         "queueTitle": "Scan-Warteschlange",
         "queueEmpty": "Warteschlange ist leer",
         "processing": "Warteschlange wird verarbeitet",
+        "pendingTasks": "{count} Aufgaben ausstehend",
         "allTasksCompleted": "Alle Scan-Aufgaben abgeschlossen",
         "pathHeader": "Pfad",
         "timestampHeader": "Erstellt",
@@ -472,6 +474,12 @@
         "timeHoursAgo": "vor {count}h",
         "timeDaysAgo": "vor {count}d",
         "priority": "Priorität",
+        "retryState": "Wiederholung {retryCount}/{maxRetries}",
+        "statusLabels": {
+            "pending": "Ausstehend",
+            "processing": "In Bearbeitung",
+            "failed": "Fehlgeschlagen"
+        },
         "actions": {
             "scan": "Scannen",
             "rescan": "Erneut scannen",
@@ -620,5 +628,24 @@
         "maximize": "Maximieren",
         "restore": "Wiederherstellen",
         "close": "Schließen"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Helfen Sie, Photasa zu verbessern",
+            "purpose": "Wir können anonyme Nutzungs- und Absturzdaten erfassen, um Stabilität und Erfahrung zu verbessern.",
+            "scope": "Enthält keine Fotoinhalte, Dateinamen oder Ordnerpfade.",
+            "destination": "Daten werden an PostHog (USA) gesendet und nur nach Ihrer Einwilligung aktiviert.",
+            "grant": "Zulassen",
+            "deny": "Nicht zulassen"
+        },
+        "settings": {
+            "title": "Telemetrie",
+            "description": "Steuern Sie, ob anonyme Nutzungs- und Absturzdaten zur Produktverbesserung gesendet werden.",
+            "enabled": "Telemetrie aktivieren",
+            "enabledDescription": "Wenn aktiviert, werden anonyme Ereignisse gesendet; Deaktivierung stoppt sofort.",
+            "savedTitle": "Telemetrie-Einstellungen gespeichert",
+            "savedMessage": "Ihre Auswahl wurde übernommen.",
+            "errorTitle": "Telemetrie-Einstellungen konnten nicht gespeichert werden"
+        }
     }
 }

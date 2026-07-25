@@ -9,6 +9,10 @@ export default defineConfig({
         alias: {
             "@": path.resolve(__dirname, "./src"),
             "@renderer": path.resolve(__dirname, "./src"),
+            "@photasa/base-tree": path.resolve(
+                __dirname,
+                "../../packages/@photasa/base-tree/src/index.ts",
+            ),
             "@photasa/common": path.resolve(
                 __dirname,
                 "../../packages/@photasa/common/src/index.ts",
@@ -21,9 +25,10 @@ export default defineConfig({
     },
     test: {
         environment: "happy-dom",
-        include: ["src/**/*.test.ts"],
+        include: ["src/**/*.test.ts", "src/**/*.spec.ts"],
         passWithNoTests: true,
         globals: true,
+        css: true,
         coverage: {
             provider: "v8",
             include: ["src/api/watch-event.ts"],

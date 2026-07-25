@@ -31,4 +31,11 @@ export const MENU_COMMANDS = {
 /** RFC 0137：文件监视合并批次事件（Rust photasa-watch → 前端） */
 export const WATCH_EVENTS = {
     SCAN_QUEUE_ADD: "picasa:add-to-scan-queue",
+    FILE_UNLINK: "picasa:file-unlink",
+    DIRECTORY_UNLINK: "picasa:file-unlink-dir",
+} as const;
+
+export const WATCH_COMMANDS = {
+    START: "start_file_watch",
+    STOP: "stop_file_watch",
 } as const;

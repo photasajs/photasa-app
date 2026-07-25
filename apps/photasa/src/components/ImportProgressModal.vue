@@ -5,7 +5,7 @@
 import { ref, reactive, watch, computed, onUnmounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import { executeImport, cancelImport, pauseImport, resumeImport } from "@renderer/utils/api";
+import { useImportOperations } from "@renderer/composables/useImportOperations";
 import { formatProcessingSpeed, formatRemainingTime } from "@renderer/utils/import-helpers";
 import { createSerializableConfig } from "@renderer/utils/import-wizard-helpers";
 import { BaseModal, BaseButton } from "@renderer/components/ui";
@@ -50,6 +50,7 @@ const emit = defineEmits<Emits>();
 const { t } = useI18n();
 const logger = loggers.importProgress;
 const session = useImportSessionStore();
+const imports = useImportOperations();
 const {
     importId: sessionImportId,
     phase,
@@ -181,13 +182,16 @@ const startImport = async (): Promise<void> => {
             currentFile: "",
         });
 
-        await session.prepareStart({
-            totalFiles: props.config.selectedFiles.length,
-            status: "processing",
-        });
+        await session.prepareStart(
+            {
+                totalFiles: props.config.selectedFiles.length,
+                status: "processing",
+            },
+            imports,
+        );
 
         const serializableConfig = createSerializableConfig(props.config, false);
-        const { importId: newImportId } = await executeImport(serializableConfig);
+        const { importId: newImportId } = await imports.execute(serializableConfig);
         session.claimImportId(newImportId);
         logger.debug("📚 导入已开衙，会话就位", newImportId);
     } catch (error) {
@@ -212,7 +216,7 @@ const pauseImportProcess = async (): Promise<void> => {
     const id = sessionImportId.value;
     if (!id) return;
     try {
-        await pauseImport(id);
+        await imports.pause(id);
         isPaused.value = true;
         importProgress.status = "paused";
         session.setPaused(true);
@@ -225,7 +229,7 @@ const resumeImportProcess = async (): Promise<void> => {
     const id = sessionImportId.value;
     if (!id) return;
     try {
-        await resumeImport(id);
+        await imports.resume(id);
         isPaused.value = false;
         importProgress.status = "processing";
         session.setPaused(false);
@@ -238,9 +242,8 @@ const cancelImportProcess = async (): Promise<void> => {
     const id = sessionImportId.value;
     if (!id) return;
     try {
-        await cancelImport(id);
+        await imports.cancel(id);
         importProgress.status = "cancelled";
-        session.markCancelled();
         emit("cancel");
     } catch (error) {
         logger.error("❌ 取消导入失败", error);
