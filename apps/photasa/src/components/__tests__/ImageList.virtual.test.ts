@@ -1,27 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
-import { ref, nextTick } from "vue";
+import { defineComponent, h, nextTick } from "vue";
 import { createPinia, setActivePinia } from "pinia";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import ImageList from "../ImageList.vue";
 
 const mockScrollToOffset = vi.fn();
 const mockMeasure = vi.fn();
 
-vi.mock("../FileInfoDrawer.vue", () => ({
-    default: { name: "FileInfoDrawer", template: "<div />" },
-}));
-
-vi.mock("@tanstack/vue-virtual", () => ({
-    useVirtualizer: vi.fn(() =>
-        ref({
-            getVirtualItems: vi.fn(() => []),
-            getTotalSize: vi.fn(() => 0),
+const VirtualizedGridStub = defineComponent({
+    name: "VirtualizedGrid",
+    props: {
+        rows: { type: Array, required: true },
+        rowHeight: { type: Number, required: true },
+        resolveScrollElement: { type: Function, default: undefined },
+    },
+    setup(_props, { expose }) {
+        expose({
             measure: mockMeasure,
             scrollToOffset: mockScrollToOffset,
-            options: { count: 0 },
-            scrollElement: null,
-        }),
-    ),
+            scrollToRow: vi.fn(),
+        });
+        return () => h("div", { class: "virtualized-grid-stub" });
+    },
+});
+
+vi.mock("../FileInfoDrawer.vue", () => ({
+    default: { name: "FileInfoDrawer", template: "<div />" },
 }));
 
 vi.mock("@renderer/composables/useZhangSunWuJi", () => ({
@@ -48,13 +54,28 @@ vi.mock("vue-i18n", async () => {
     };
 });
 
+const mountOptions = {
+    global: {
+        stubs: {
+            BaseBreadcrumb: true,
+            BaseBreadcrumbItem: true,
+            FileCountBadge: true,
+            LoadingState: true,
+            EmptyState: true,
+            ImageListItem: true,
+            MediaPreview: true,
+            VirtualizedGrid: VirtualizedGridStub,
+        },
+    },
+};
+
 describe("ImageList virtual scroll integration", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         setActivePinia(createPinia());
     });
 
-    it("切换文件夹时初始化虚拟滚动", async () => {
+    it("使用 VirtualizedGrid 并在切换文件夹时滚回顶部", async () => {
         const { usePreferenceStore } = await import("@renderer/stores/preference");
         const store = usePreferenceStore();
 
@@ -65,27 +86,10 @@ describe("ImageList virtual scroll integration", () => {
             lastModified: Date.now(),
         };
 
-        const wrapper = mount(ImageList, {
-            global: {
-                stubs: {
-                    BaseBreadcrumb: true,
-                    BaseBreadcrumbItem: true,
-                    FileCountBadge: true,
-                    LoadingState: true,
-                    EmptyState: true,
-                    BaseContextMenu: {
-                        template: "<div><slot /><slot name='menu' :close='() => {}' /></div>",
-                    },
-                    BaseTooltip: { template: "<div><slot /></div>" },
-                    BaseCard: { template: "<div><slot /></div>" },
-                    BaseImage: true,
-                    BaseMenuItem: true,
-                    MediaPreview: true,
-                },
-            },
-        });
+        const wrapper = mount(ImageList, mountOptions);
 
         await flushPromises();
+        expect(wrapper.find(".virtualized-grid-stub").exists()).toBe(true);
 
         store.appState.currentFolder = "/photos/b";
         store.appState.currentFolderConfig = {
@@ -97,8 +101,14 @@ describe("ImageList virtual scroll integration", () => {
         await nextTick();
         await flushPromises();
 
-        expect(mockMeasure).toHaveBeenCalled();
+        expect(mockScrollToOffset).toHaveBeenCalledWith(0);
 
         wrapper.unmount();
+    });
+
+    it("ImageList 源码不直接 import useVirtualizer", () => {
+        const source = readFileSync(resolve(__dirname, "../ImageList.vue"), "utf8");
+        expect(source).not.toContain("useVirtualizer");
+        expect(source).toContain("VirtualizedGrid");
     });
 });

@@ -4,21 +4,23 @@ import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import type { FileMetadata } from "@photasa/common";
 import { type Card, type Image, toImageMeta, groupImagesByColumns } from "@renderer/common/image";
-// removeFileProtocol 通过 preload API 使用
 import * as R from "ramda";
 import { useI18n } from "vue-i18n";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
-// ✅ RFC 0058: 使用服务而不是直接 API 调用
-import { BaseBreadcrumb, BaseBreadcrumbItem, FileCountBadge } from "@renderer/components/ui";
+import {
+    BaseBreadcrumb,
+    BaseBreadcrumbItem,
+    FileCountBadge,
+    VirtualizedGrid,
+} from "@renderer/components/ui";
 import ImageListItem from "./ImageListItem.vue";
 import { loggers } from "@photasa/common";
-// 在测试环境中使用data URL，避免网络请求
+import { ensureWebviewMediaUrl } from "@renderer/utils/media-url";
 import fallbackImage from "@renderer/assets/images/fallback.png";
 const ImageFallback =
     process.env.NODE_ENV === "test"
-        ? "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
-        : fallbackImage;
-import { useVirtualizer } from "@tanstack/vue-virtual";
+        ? "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
+        : ensureWebviewMediaUrl(fallbackImage);
 import MediaPreview from "./MediaPreview.vue";
 import EmptyState from "./common/EmptyState.vue";
 import LoadingState from "./common/LoadingState.vue";
@@ -29,56 +31,42 @@ import {
     requestThumbnail,
     toImageList,
 } from "./ImageListHelper";
-import {
-    getThumbnailDisplaySrc,
-    getThumbnailRenderKey,
-    thumbnailDisplayEpoch,
-} from "@renderer/utils/thumbnail-display";
+import { getThumbnailRenderKey, thumbnailDisplayEpoch } from "@renderer/utils/thumbnail-display";
 import { safePositiveNumber } from "@renderer/common/number";
 import { useGalleryMedia } from "@renderer/composables/useGalleryMedia";
 
-// 定义组件事件
+const GRID_GAP_PX = 16;
+const GRID_TOP_MARGIN_PX = 16;
+const GRID_OVERSCAN = 4;
+
 const emit = defineEmits<{
     import: [];
 }>();
 
-// 国际化
 const { t } = useI18n();
 const logger = loggers.renderer;
-// ✅ RFC 0058: 使用长孙无忌服务
 const zhangSunWuJi = useZhangSunWuJi();
 const galleryMedia = useGalleryMedia();
-// 偏好设置
 const preferenceStore = usePreferenceStore();
-// 偏好设置的引用
 const { thumbnailSize, currentFolder, currentFolderConfig } = storeToRefs(preferenceStore);
-// 显示图片元数据
+
 const showInfo = ref(false);
-// 加载图片元数据
 const loadingInfo = ref(false);
-// 加载文件夹配置
-const loadingPhotasaConfig = ref(true); // 初始为true，等待配置加载
-// 图片加载失败
+const loadingPhotasaConfig = ref(true);
 const fallback = ref(ImageFallback);
-// 图片列表的引用
 const imageListRef = ref<HTMLElement | null>(null);
-// 容器宽度
-const containerWidth = ref(800); // 设置默认宽度
-// 鼠标悬停延迟
+const gridRef = ref<{
+    measure: () => void;
+    scrollToOffset: (offset: number) => void;
+    scrollToRow: (index: number, options?: { align?: "start" | "center" | "end" | "auto" }) => void;
+} | null>(null);
+const containerWidth = ref(800);
 const mouseEnterDelay = ref(1.5);
-// 预览是否可见
 const previewVisible = ref(false);
-// 预览索引
 const previewIndex = ref(0);
 
-// 卡片
-const card = computed<Card>(() => {
-    const result = toImageList(currentFolder.value, currentFolderConfig.value);
+const card = computed<Card>(() => toImageList(currentFolder.value, currentFolderConfig.value));
 
-    return result;
-});
-
-// 文件统计
 const imageCount = computed(() => {
     if (!card.value?.images) return 0;
     return card.value.images.filter((item) => !item.isVideo).length;
@@ -89,10 +77,8 @@ const videoCount = computed(() => {
     return card.value.images.filter((item) => item.isVideo).length;
 });
 
-// 文件元数据（支持图片/视频/文件信息）
 const fileMeta = ref<FileMetadata | null>(null);
 
-// 重建缩略图
 async function rebuildThumbnail(image: Image): Promise<void> {
     try {
         await requestThumbnail(image, safeThumbnailSize.value, galleryMedia.createThumbnail);
@@ -101,7 +87,6 @@ async function rebuildThumbnail(image: Image): Promise<void> {
     }
 }
 
-// 打开文件元数据（支持图片/视频/文件）
 async function openImageMeta(image: Image): Promise<void> {
     showInfo.value = true;
     loadingInfo.value = true;
@@ -117,20 +102,20 @@ async function openImageMeta(image: Image): Promise<void> {
     }
 }
 
-// 打开文件夹 - 通过长孙无忌服务，使用 qizou 流程
 function openFileInFolder(image: Image): void {
-    // ✅ RFC 0058: 服务层统一处理 file:// URL 转换，组件直接传递原始路径
     zhangSunWuJi.openInFinder(image.raw);
 }
 
-// 更新容器宽度
-function updateContainerWidth() {
+function updateContainerWidth(): void {
     if (imageListRef.value) {
         containerWidth.value = imageListRef.value.clientWidth;
     }
 }
 
-// 防抖更新函数
+function resolveScrollElement(): HTMLElement | null {
+    return imageListRef.value;
+}
+
 let updateTimeout: ReturnType<typeof setTimeout> | null = null;
 const debouncedUpdate = () => {
     if (updateTimeout) {
@@ -139,92 +124,85 @@ const debouncedUpdate = () => {
     updateTimeout = setTimeout(() => {
         updateContainerWidth();
         nextTick(() => {
-            initializeVirtualizer();
+            gridRef.value?.measure();
         });
-    }, 16); // 约60fps
+    }, 16);
 };
 
-// 安全的缩略图尺寸（确保为数字类型）
 const safeThumbnailSize = computed(() => safePositiveNumber(thumbnailSize.value, 150));
 
-// 列数 - 添加缓存避免不必要的重计算
 const columns = computed((): number => {
-    // 如果容器宽度为0，返回默认值
     if (!containerWidth.value) {
         return 1;
     }
-    const cols = computeColumns(containerWidth.value, safeThumbnailSize.value);
-    return cols;
+    return computeColumns(containerWidth.value, safeThumbnailSize.value);
 });
 
-// 行数
 const rows = computed((): Image[][] => {
     const images = card.value?.images || [];
-    const groupedRows = groupImagesByColumns(images, columns.value);
-
-    return groupedRows;
+    return groupImagesByColumns(images, columns.value);
 });
 
-// 行高
-const rowHeight = computed(() => safeThumbnailSize.value + 16);
-// 虚拟滚动 - 使用稳定的初始值避免重新创建
-const virtualizer = useVirtualizer<HTMLElement, Element>({
-    count: 0, // 初始为0，通过watch更新
-    getScrollElement: () => imageListRef.value,
-    estimateSize: () => rowHeight.value,
-    overscan: 4,
-});
+const previewImages = computed(() => R.map(toImageMeta, card.value.images));
 
-// 虚拟滚动行
-const virtualRows = computed(() => virtualizer.value?.getVirtualItems() ?? []);
-
-// 虚拟滚动高度
-const virtualizerHeight = computed(() => (virtualizer.value?.getTotalSize() ?? 0) + "px");
-
-// 预览图片
-const previewImages = computed(() => {
-    return R.map(toImageMeta, card.value.images);
-});
-
-// 监听容器宽度变化
 let resizeObserver: ResizeObserver | null = null;
 
-// 打开预览
-function openPreview(rowIdx: number, colIdx: number) {
+function openPreview(rowIdx: number, colIdx: number): void {
     const idx = rowIdx * columns.value + colIdx;
     previewIndex.value = idx;
     previewVisible.value = true;
 }
 
-// 强制刷新图片列表
-function refreshImageList() {
-    clearDataState();
+function scrollToImageIndex(index: number): void {
+    if (columns.value <= 0) {
+        return;
+    }
+    const rowIndex = Math.floor(index / columns.value);
+    gridRef.value?.scrollToRow(rowIndex, { align: "center" });
+}
+
+function clearDataState(): void {
+    previewVisible.value = false;
+    previewIndex.value = 0;
+    fileMeta.value = null;
+    showInfo.value = false;
+    loadingInfo.value = false;
+}
+
+function resetGridScroll(): void {
     nextTick(() => {
-        updateContainerWidth();
-        initializeVirtualizer();
+        if (imageListRef.value) {
+            imageListRef.value.scrollTop = 0;
+        }
+        gridRef.value?.scrollToOffset(0);
     });
 }
 
-// 暴露刷新方法给父组件
+function refreshImageList(): void {
+    clearDataState();
+    nextTick(() => {
+        updateContainerWidth();
+        gridRef.value?.measure();
+        gridRef.value?.scrollToOffset(0);
+    });
+}
+
 defineExpose({
     refreshImageList,
+    scrollToImageIndex,
 });
 
-// 监听容器宽度变化
 watch(imageListRef, () => updateContainerWidth(), { flush: "post" });
-// 监听缩略图大小变化
 watch(safeThumbnailSize, () => updateContainerWidth(), { flush: "post" });
-// 监听当前文件夹变化，确保数据清理
+
 watch(currentFolder, (newFolder, oldFolder) => {
     if (oldFolder && newFolder !== oldFolder) {
-        // 清理当前数据
         clearDataState();
-        // 显示加载状态
         loadingPhotasaConfig.value = true;
+        resetGridScroll();
     }
 });
 
-// 监听配置变化，管理加载状态
 watch(
     currentFolderConfig,
     () => {
@@ -233,7 +211,6 @@ watch(
     { immediate: true },
 );
 
-// 缩略图 mtime → ?t=；页面重载后仍能从磁盘恢复缓存破坏（RFC 0148）
 watch(
     () => [currentFolder.value, currentFolderConfig.value.photoList] as const,
     ([folder, photoList]) => {
@@ -245,73 +222,19 @@ watch(
     { immediate: true },
 );
 
-// 清理数据状态
-const clearDataState = () => {
-    previewVisible.value = false;
-    previewIndex.value = 0;
-    fileMeta.value = null;
-    showInfo.value = false;
-    loadingInfo.value = false;
-};
-
-// 初始化虚拟滚动器
-const initializeVirtualizer = () => {
-    if (virtualizer.value) {
-        // 强制重置虚拟滚动器状态
-        virtualizer.value.options.count = rows.value.length;
-        // 重置滚动位置到顶部
-        if (virtualizer.value.scrollElement) {
-            virtualizer.value.scrollElement.scrollTop = 0;
-        }
-        virtualizer.value.measure();
-    }
-};
-
-// 监听卡片数据变化，统一处理数据更新和虚拟滚动器重置
 watch(
-    card,
-    (newCard, oldCard) => {
-        // 如果数据完全改变（比如切换文件夹），重置所有状态
-        if (oldCard && newCard.title !== oldCard.title) {
+    () => card.value.title,
+    (newTitle, oldTitle) => {
+        if (oldTitle && newTitle !== oldTitle) {
             clearDataState();
+            resetGridScroll();
         }
-
-        nextTick(() => {
-            updateContainerWidth();
-            initializeVirtualizer();
-        });
     },
-    { flush: "post" },
 );
 
-// 监听行数变化 - 合并到统一的更新函数中
-watch(
-    rows,
-    () => {
-        nextTick(() => {
-            initializeVirtualizer();
-        });
-    },
-    { flush: "post" },
-);
-
-// 监听容器宽度变化 - 合并到统一的更新函数中
-watch(
-    containerWidth,
-    () => {
-        nextTick(() => {
-            initializeVirtualizer();
-        });
-    },
-    { flush: "post" },
-);
-
-// 挂载
 onMounted(() => {
-    // 确保初始状态是干净的
     clearDataState();
 
-    // 检查是否已经有有效数据，如果有则立即隐藏加载状态
     if (
         currentFolder.value &&
         currentFolderConfig.value &&
@@ -321,14 +244,8 @@ onMounted(() => {
     }
 
     updateContainerWidth();
-    // 初始化虚拟滚动器
-    nextTick(() => {
-        initializeVirtualizer();
-    });
-
     window.addEventListener("resize", debouncedUpdate);
 
-    // 使用 ResizeObserver 监听容器宽度变化
     if (imageListRef.value) {
         resizeObserver = new ResizeObserver(debouncedUpdate);
         resizeObserver.observe(imageListRef.value);
@@ -344,14 +261,6 @@ onUnmounted(() => {
         resizeObserver.unobserve(imageListRef.value);
     }
 });
-
-// 假设 thumbnailSize、containerWidth、gap 可用
-// const gap = 16;
-// const skeletonRows = computed(() => {
-//     // 计算每行图片数，最少为1
-//     return Math.max(1, Math.floor((containerWidth.value || 800) / (thumbnailSize.value + gap)));
-// });
-// const skeletonCount = computed(() => skeletonRows.value * 2); // 默认2行
 </script>
 
 <template>
@@ -359,7 +268,6 @@ onUnmounted(() => {
         class="flex flex-col h-full min-h-0"
         style="background: var(--color-card-bg); border-color: var(--color-card-border)"
     >
-        <!-- 标题区 -->
         <div
             class="px-4 h-12 border-b flex items-center justify-between gap-3 min-w-0"
             style="border-color: var(--color-border); background: var(--color-bg-secondary)"
@@ -373,7 +281,6 @@ onUnmounted(() => {
                 />
             </BaseBreadcrumb>
 
-            <!-- 文件统计 -->
             <FileCountBadge
                 :image-count="imageCount"
                 :video-count="videoCount"
@@ -381,13 +288,12 @@ onUnmounted(() => {
                 :show-breakdown="true"
             />
         </div>
-        <!-- 内容区 -->
+
         <div
             ref="imageListRef"
             class="flex-1 min-h-0 overflow-auto image-list relative scrollbar-theme"
             style="background: var(--color-card-bg)"
         >
-            <!-- 加载状态遮罩 -->
             <div
                 v-if="loadingPhotasaConfig"
                 class="absolute inset-0 bg-opacity-50 flex items-center justify-center z-10"
@@ -395,60 +301,41 @@ onUnmounted(() => {
             >
                 <LoadingState :loadingText="t('import.loading.switchingFolder')" :size="50" />
             </div>
-            <!-- 空状态：集成通用 EmptyState 组件 -->
-            <template v-else-if="rows.length === 0">
-                <EmptyState
-                    :emptyText="t('empty.image')"
-                    :buttonText="t('empty.importBtn')"
-                    @buttonClick="emit('import')"
-                />
-            </template>
-            <!-- 虚拟滚动渲染图片行 -->
-            <div v-else style="position: relative; width: 100%; height: 100%">
-                <div
-                    :key="`virtualizer-${card.title}-${card.images.length}`"
-                    :style="{
-                        height: virtualizerHeight,
-                        position: 'relative',
-                        marginTop: '16px',
-                    }"
-                >
-                    <div
-                        v-for="row in virtualRows"
-                        :key="row.index"
-                        :style="{
-                            position: 'absolute',
-                            top: row.start + 'px',
-                            left: 0,
-                            width: '100%',
-                            height: row.size + 'px',
-                            display: 'flex',
-                            gap: '16px',
-                            marginBottom: '16px', // 行间距
-                        }"
-                    >
-                        <div
-                            class="w-full flex justify-start pl-4"
-                            style="gap: 16px; max-width: 100%"
-                        >
-                            <ImageListItem
-                                v-for="(image, colIndex) in rows[row.index]"
-                                :key="`${thumbnailDisplayEpoch}-${getThumbnailRenderKey(image)}`"
-                                :image="image"
-                                :thumbnail-size="safeThumbnailSize"
-                                :fallback="fallback"
-                                :mouse-enter-delay="mouseEnterDelay"
-                                :rebuild-thumbnail="rebuildThumbnail"
-                                @preview="openPreview(row.index, colIndex)"
-                                @open-meta="openImageMeta(image)"
-                                @open-in-folder="openFileInFolder(image)"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+            <EmptyState
+                v-if="!loadingPhotasaConfig && rows.length === 0"
+                :emptyText="t('empty.image')"
+                :buttonText="t('empty.importBtn')"
+                @buttonClick="emit('import')"
+            />
+
+            <VirtualizedGrid
+                v-if="rows.length > 0"
+                ref="gridRef"
+                :rows="rows"
+                :row-height="safeThumbnailSize"
+                :gap="GRID_GAP_PX"
+                :top-margin="GRID_TOP_MARGIN_PX"
+                :overscan="GRID_OVERSCAN"
+                :resolve-scroll-element="resolveScrollElement"
+            >
+                <template #item="{ item, rowIndex, colIndex }">
+                    <ImageListItem
+                        :key="`${thumbnailDisplayEpoch}-${getThumbnailRenderKey(item)}`"
+                        :image="item"
+                        :thumbnail-size="safeThumbnailSize"
+                        :fallback="fallback"
+                        :mouse-enter-delay="mouseEnterDelay"
+                        :rebuild-thumbnail="rebuildThumbnail"
+                        @preview="openPreview(rowIndex, colIndex)"
+                        @open-meta="openImageMeta(item)"
+                        @open-in-folder="openFileInFolder(item)"
+                    />
+                </template>
+            </VirtualizedGrid>
         </div>
     </div>
+
     <FileInfoDrawer v-model="showInfo" :file-meta="fileMeta" :loading="loadingInfo" />
     <MediaPreview
         :images="previewImages"
@@ -457,6 +344,7 @@ onUnmounted(() => {
         @close="previewVisible = false"
     />
 </template>
+
 <style lang="scss">
 .image-list {
     height: 100%;

@@ -4,8 +4,9 @@
 
 > **Renderer-only.** No Rust changes. Policy: [ROADMAP.md](../../ROADMAP.md).
 
-**Status**: ⏳ Draft  
+**Status**: ✅ Implemented  
 **Created**: 2026-07-24  
+**Completed**: 2026-07-24  
 **Area**: Photasa / Renderer / `ImageList` / `@tanstack/vue-virtual`  
 **Related**: [0011](../completed/0011-imagelist-file-count-display.md), [0148](../completed/0148-tauri-rebuild-thumbnail-ui-contract.md), `VirtualizedGrid.vue`, `VirtualList.vue`
 
@@ -21,12 +22,12 @@
 
 ## Current state (as-built)
 
-| Piece | Role |
-|-------|------|
-| `ImageList.vue` | Inline `useVirtualizer` — virtualizes **rows** (`groupImagesByColumns` → `rows: Image[][]`) |
-| `VirtualizedGrid.vue` | Generic row virtualizer + slot — **exported, never used by ImageList** |
-| `VirtualList.vue` | 1D list virtualizer — used by `BaseTree` |
-| `ImageListHelper.ts` | `computeColumns`, `groupImagesByColumns`, `toImageList` — **not** virtualizer-aware |
+| Piece                 | Role                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| `ImageList.vue`       | Inline `useVirtualizer` — virtualizes **rows** (`groupImagesByColumns` → `rows: Image[][]`) |
+| `VirtualizedGrid.vue` | Generic row virtualizer + slot — **exported, never used by ImageList**                      |
+| `VirtualList.vue`     | 1D list virtualizer — used by `BaseTree`                                                    |
+| `ImageListHelper.ts`  | `computeColumns`, `groupImagesByColumns`, `toImageList` — **not** virtualizer-aware         |
 
 ### Data flow (unchanged by this RFC)
 
@@ -81,23 +82,23 @@ currentFolder + currentFolderConfig (Pinia)
 **Steps:**
 
 1. **Extend `VirtualizedGrid.vue`**
-   - Accept **external scroll element** via prop or `defineExpose` + parent ref (match `ImageList`’s `flex-1 overflow-auto` container — avoid fixed `containerHeight: 400px` default).
-   - Reactive `count`, `estimateSize`, `overscan` via `computed` passed into `useVirtualizer` options (TanStack v3 pattern).
-   - Optional `scrollToRow(index)` / `scrollToOffset` exposed like `VirtualList.vue`.
-   - Slot props: `{ item, rowIndex, colIndex }` (already partial).
+    - Accept **external scroll element** via prop or `defineExpose` + parent ref (match `ImageList`’s `flex-1 overflow-auto` container — avoid fixed `containerHeight: 400px` default).
+    - Reactive `count`, `estimateSize`, `overscan` via `computed` passed into `useVirtualizer` options (TanStack v3 pattern).
+    - Optional `scrollToRow(index)` / `scrollToOffset` exposed like `VirtualList.vue`.
+    - Slot props: `{ item, rowIndex, colIndex }` (already partial).
 
 2. **Refactor `ImageList.vue`**
-   - Delete inline `useVirtualizer`, `initializeVirtualizer`, debounced resize virtualizer path.
-   - Keep `computeColumns` / `rows` computed in `ImageListHelper` or colocated composable `useImageGridRows.ts`.
-   - Map `openPreview(rowIdx, colIdx)` unchanged.
-   - On `currentFolder` change: call `scrollToOffset(0)` only.
+    - Delete inline `useVirtualizer`, `initializeVirtualizer`, debounced resize virtualizer path.
+    - Keep `computeColumns` / `rows` computed in `ImageListHelper` or colocated composable `useImageGridRows.ts`.
+    - Map `openPreview(rowIdx, colIdx)` unchanged.
+    - On `currentFolder` change: call `scrollToOffset(0)` only.
 
 3. **Tests**
-   - `VirtualizedGrid.test.ts` — renders N rows, only visible row DOM nodes (happy-dom + stub items).
-   - Extend or add `ImageList.virtual.test.ts` — folder switch resets scroll, thumbnail size change updates row height without throw.
+    - `VirtualizedGrid.test.ts` — renders N rows, only visible row DOM nodes (happy-dom + stub items).
+    - Extend or add `ImageList.virtual.test.ts` — folder switch resets scroll, thumbnail size change updates row height without throw.
 
 4. **Docs**
-   - Update `DEV_GUIDE.md` §图片列表虚拟化 → point to RFC 0161.
+    - Update `DEV_GUIDE.md` §图片列表虚拟化 → point to RFC 0161.
 
 **风险：** Scroll parent nesting (`imageListRef` vs grid internal ref) — spike first with one integration test.
 
@@ -148,12 +149,13 @@ measure();
 
 ## Acceptance criteria
 
-- [ ] `ImageList` contains **no** direct `useVirtualizer` import.
-- [ ] `VirtualizedGrid` used by `ImageList`; fixed-height default removed or overridden for flex layouts.
-- [ ] Folder switch scrolls to top; same-folder thumbnail resize does **not** remount entire virtualizer subtree.
-- [ ] 10k-image folder: DOM row count ≪ total rows (manual or test with `overscan`).
-- [ ] `pnpm --filter @photasa/photasa run typecheck` + new unit tests pass.
-- [ ] Preview open (`openPreview`) still resolves correct global index `rowIdx * columns + colIdx`.
+- [x] `ImageList` contains **no** direct `useVirtualizer` import.
+- [x] `VirtualizedGrid` used by `ImageList`; external scroll via `resolveScrollElement`.
+- [x] Folder switch scrolls to top; loading overlay does not unmount grid.
+- [x] `pnpm --filter @photasa/photasa run typecheck` + unit tests pass.
+- [x] `scrollToImageIndex` exposed on `ImageList`.
+- [ ] 10k-image folder manual: DOM row count ≪ total rows.
+- [ ] Preview open (`openPreview`) manual smoke on device.
 
 ---
 
@@ -172,12 +174,12 @@ Manual: 5k+ photo folder — scroll smooth, memory stable in Activity Monitor; r
 
 ## Alternatives rejected
 
-| Option | Why not |
-|--------|---------|
-| No virtualization (render all) | Breaks large libraries; already solved |
-| `vue-virtual-scroller` | Second dependency; TanStack already in tree |
-| Cell-level (2D) virtualizer | Overkill; row grouping matches square grid |
-| Keep status quo | Duplicate code + watcher sprawl; DEV_GUIDE already wrong |
+| Option                         | Why not                                                  |
+| ------------------------------ | -------------------------------------------------------- |
+| No virtualization (render all) | Breaks large libraries; already solved                   |
+| `vue-virtual-scroller`         | Second dependency; TanStack already in tree              |
+| Cell-level (2D) virtualizer    | Overkill; row grouping matches square grid               |
+| Keep status quo                | Duplicate code + watcher sprawl; DEV_GUIDE already wrong |
 
 ---
 
