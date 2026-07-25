@@ -25,7 +25,7 @@ use tauri::Manager;
 use utils::scan_queue_repository::{ScanQueueRepository, ScanQueueRepositoryHandle};
 
 /// 与 `tauri.conf.json` 首窗默认 label 一致（未显式写 `label` 时为 `main`）
-const MAIN_WEBVIEW_LABEL: &str = "main";
+const MAIN_WEBVIEW_LABEL: &str = window::MAIN_WEBVIEW_LABEL;
 
 /// macOS Dock 重开且无可见窗口：恢复或按配置重建主窗（RFC 0100）
 #[cfg(target_os = "macos")]
@@ -76,6 +76,22 @@ fn main() {
     #[cfg(debug_assertions)]
     {
         builder = builder.plugin(tauri_plugin_mcp_bridge::init());
+    }
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    {
+        use tauri_plugin_window_state::{Builder as WindowStateBuilder, StateFlags};
+
+        // 不持久化 visible：主窗启动时 hidden，由 RFC 0101 splash 流程控制 show/focus
+        let window_state_flags =
+            StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED;
+
+        builder = builder.plugin(
+            WindowStateBuilder::default()
+                .with_state_flags(window_state_flags)
+                .with_denylist(&[window::SPLASH_WEBVIEW_LABEL])
+                .build(),
+        );
     }
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]

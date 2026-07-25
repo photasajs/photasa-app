@@ -13,6 +13,7 @@ import { installVueErrorHandler } from "./services/telemetry/posthog-client";
 
 import { LishiminService, LISSHIMING_TOKEN } from "./services";
 import { applyPersistedThemeBootstrap } from "./bootstrap/apply-persisted-theme";
+import { installDisableBrowserContextMenu } from "./bootstrap/disable-browser-context-menu";
 import { getThemeManager } from "./services/chusuiliang/theme-manage";
 import { usePreferenceStore } from "./stores/preference";
 import { isTauri } from "./api/env";
@@ -21,6 +22,7 @@ const logger = loggers.app;
 
 // 模块加载后再次同步（与 index.html 阻塞脚本互补；initializeDepartments 前首屏已着色）
 applyPersistedThemeBootstrap();
+installDisableBrowserContextMenu();
 
 logger.info("📦 开天辟地");
 const app = createApp(App);
