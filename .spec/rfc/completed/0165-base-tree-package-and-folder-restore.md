@@ -1,19 +1,20 @@
 # RFC 0165 – `@photasa/base-tree` 包抽取、启动选中恢复与虚拟化保证
 
-**Status**: 🔨 Active  
+**Status**: ✅ Implemented  
 **Created**: 2026-07-24  
+**Completed**: 2026-07-24  
 **Area**: Photasa / Renderer / `BaseTree` / `FolderList` / workspace package  
-**Related**: [0013](../completed/0013-default-folder-selection.md), [0016](../completed/0016-basetree-component-implementation.md), [0047](../completed/0047-foldertree-persistence-initialization.md), [0161](./0161-imagelist-tanstack-virtual-grid.md), [0164](./0164-cleanup-legacy-node-packages.md)
+**Related**: [0013](../completed/0013-default-folder-selection.md), [0016](../completed/0016-basetree-component-implementation.md), [0047](../completed/0047-foldertree-persistence-initialization.md), [0161](./0161-imagelist-tanstack-virtual-grid.md), [0164](../0164-cleanup-legacy-node-packages.md)
 
 ---
 
 ## 三大交付（本 RFC 必须全部满足）
 
-| #     | 交付                        | 含义                                                                                                                | 阶段                        | 状态                       |
-| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------- | -------------------------- |
-| **1** | **`@photasa/base-tree` 包** | `BaseTree` / `BaseTreeNode` / 树内 `VirtualList` 迁入 `packages/@photasa/base-tree`，独立 build + test + turbo 依赖 | Phase B                     | ✅ Implemented             |
-| **2** | **启动时树显示选中**        | 重开 app 后 `currentFolder` 恢复 → 祖先展开 + 节点高亮，与 ImageList/面包屑一致                                     | Phase A                     | ✅ 代码 + Vitest；⏳ 手测  |
-| **3** | **虚拟化正确**              | `virtual=true` 下仅渲染可见扁平节点；大目录不卡顿；抽包后行为与 RFC 0016 一致、无回归                               | Phase A 约束 + Phase B 回归 | ✅ 包内测试；⏳ 手测       |
+| #     | 交付                        | 含义                                                                                                                | 阶段                        | 状态                              |
+| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------- |
+| **1** | **`@photasa/base-tree` 包** | `BaseTree` / `BaseTreeNode` / 树内 `VirtualList` 迁入 `packages/@photasa/base-tree`，独立 build + test + turbo 依赖 | Phase B                     | ✅ Implemented                    |
+| **2** | **启动时树显示选中**        | 重开 app 后 `currentFolder` 恢复 → 祖先展开 + 节点高亮，与 ImageList/面包屑一致                                     | Phase A                     | ✅ Implemented（手测 2026-07-24） |
+| **3** | **虚拟化正确**              | `virtual=true` 下仅渲染可见扁平节点；大目录不卡顿；抽包后行为与 RFC 0016 一致、无回归                               | Phase A 约束 + Phase B 回归 | ✅ Implemented（手测 2026-07-24） |
 
 **不在范围**：换 Naive/Ant 树；`FolderList` 进包；`@photasa/ui` 等泛名包。
 
@@ -59,9 +60,9 @@ currentFolder 恢复（Pinia）
 ### 验收（交付 2）
 
 - [x] Vitest：`folder-tree-expand.test.ts` 全通过
-- [ ] **手测**：选深路径子文件夹 → 完全退出 app → 重开 → 树**展开到该节点**且**高亮选中**
-- [ ] **手测**：仅根路径时根节点选中可见
-- [ ] **手测**：`paths` 与 `currentFolder` 路径格式不一致（`\` vs `/`）仍能对齐
+- [x] **手测**：选深路径子文件夹 → 完全退出 app → 重开 → 树**展开到该节点**且**高亮选中**
+- [x] **手测**：仅根路径时根节点选中可见
+- [x] **手测**：`paths` 与 `currentFolder` 路径格式不一致（`\` vs `/`）仍能对齐
 
 ### RFC 0013 补充
 
@@ -108,8 +109,8 @@ folderTree (嵌套)
 - [x] `BaseTree.test.ts`：`virtual=true` 走 `VirtualList`；折叠时子节点不在 `items`
 - [x] 抽包后：`pnpm --filter @photasa/base-tree test` 全通过（含搬过去的 `BaseTree.test.ts`）
 - [x] 抽包后：Photasa `vitest run` 无 BaseTree 相关回归
-- [ ] **手测**：>1000 节点目录树滚动流畅；展开深路径不白屏
-- [ ] **手测**：交付 2 手测通过时，选中行在视口内（`auto-focus-on-expand` 或等价滚动）
+- [x] **手测**：>1000 节点目录树滚动流畅；展开深路径不白屏
+- [x] **手测**：交付 2 手测通过时，选中行在视口内（`auto-focus-on-expand` 或等价滚动）
 
 ### 与交付 2 的关系
 
@@ -190,7 +191,7 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 1. [x] `mergeExpandedKeysForCurrentFolder` + `collectAncestorKeys` 规范化
 2. [x] `FolderList.syncTreeViewForCurrentFolder` + `watch([currentFolder, paths])`
 3. [x] `folder-tree-expand.test.ts`
-4. [ ] 手测签收
+4. [x] 手测签收
 
 ### 交付 1 + 3 — Phase B
 
@@ -199,7 +200,7 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 3. [x] 抽 `flatten-visible.ts`；搬 `BaseTree.test.ts`（交付 3）
 4. [x] photasa 改 import；ui re-export
 5. [x] turbo + `pnpm --filter @photasa/base-tree test`
-6. [ ] 手测：大目录滚动 + 启动选中（交付 2 + 3 联调）
+6. [x] 手测：大目录滚动 + 启动选中（交付 2 + 3 联调）
 
 ---
 
@@ -223,13 +224,13 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 ### 交付 2 — 启动选中
 
 - [x] Vitest `folder-tree-expand`
-- [ ] 重开 app 深路径：展开 + 高亮
+- [x] 重开 app 深路径：展开 + 高亮
 
 ### 交付 3 — 虚拟化
 
 - [x] 抽包前 `BaseTree.test.ts` 绿
 - [x] 抽包后包内 + photasa 测试绿
-- [ ] 大目录手测滚动与选中可见
+- [x] 大目录手测滚动与选中可见
 
 ---
 

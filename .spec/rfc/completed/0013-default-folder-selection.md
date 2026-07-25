@@ -420,7 +420,7 @@ watch(
 2. `mergeExpandedKeysForCurrentFolder` — 合并 `currentFolder` 全部祖先到 `expandedKeys`
 3. `canonicalFolderPath` — `selectedKeys` 与树节点 `key` 对齐
 
-详见 [RFC 0165: `@photasa/base-tree` 包抽取与启动目录树恢复](../0165-base-tree-package-and-folder-restore.md)。
+详见 [RFC 0165: `@photasa/base-tree` 包抽取与启动目录树恢复](./0165-base-tree-package-and-folder-restore.md)。
 
 ## 架构审查与改进建议
 
