@@ -35,7 +35,7 @@ picasa-vue/
 
 ### Prerequisites
 
-- Node.js 20+、pnpm
+- Node.js **22+**、pnpm
 - Rust stable、平台 C 工具链（见 RFC 0103 原生依赖）
 - Git
 

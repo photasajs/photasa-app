@@ -16,10 +16,19 @@ fi
 tauri_build_ci="$(
     node -e "const p=require('./apps/photasa/package.json'); process.stdout.write(p.scripts['build:ci']||'')"
 )"
+tauri_build_ci_linux="$(
+    node -e "const p=require('./apps/photasa/package.json'); process.stdout.write(p.scripts['build:ci:linux']||'')"
+)"
 
 if echo "${tauri_build_ci}" | grep -qE "${DEV_MARKERS}"; then
     echo "::error::apps/photasa/package.json build:ci must not reference dev channel"
     echo "${tauri_build_ci}"
+    exit 1
+fi
+
+if echo "${tauri_build_ci_linux}" | grep -qE "${DEV_MARKERS}"; then
+    echo "::error::apps/photasa/package.json build:ci:linux must not reference dev channel"
+    echo "${tauri_build_ci_linux}"
     exit 1
 fi
 

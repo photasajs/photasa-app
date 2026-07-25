@@ -32,7 +32,7 @@ pnpm run build:debug:photasa
 
 ### Prerequisites
 
-- Node.js 20+ and **pnpm 9**
+- Node.js **22+** and **pnpm 9**
 - Rust stable (see `rust-toolchain.toml`)
 - Platform deps for Tauri (WebKit, etc.) — see [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
 
