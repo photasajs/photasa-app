@@ -35,6 +35,7 @@
 | 扫描队列非阻塞 IPC           | [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)                   | 🔴 High   | Closed — Ack IPC、ScanQueueDialog 虚拟卡片、locale、100 Vitest 通过           | 否                                  |
 | 物理清理 14 个废弃 Node 包   | [0164](./.spec/rfc/0164-cleanup-legacy-node-packages.md)                           | 🔴 High   | Draft — 物理清理 `packages/@photasa/` 14 个 Node 包，仅保留 `@photasa/common` | 否                                  |
 | BaseTree 包 + 启动树恢复     | [0165](./.spec/rfc/0165-base-tree-package-and-folder-restore.md)                   | 🟡 Medium | Active — ①`@photasa/base-tree` ✅ ②启动展开+选中 ✅ ③虚拟化 ✅；⏳手测签收    | 否                                  |
+| ImageList 悬停操作栏         | [0166](./.spec/rfc/completed/0166-imagelist-hover-action-bar.md)                   | 🟢 Low    | ✅ Done — `ImageListItem` 三按钮悬停栏 + Vitest（2026-07-24）                 | 否                                  |
 
 ### RFC 0154 — 退役 legacy-api / utils/api ✅ Done（2026-07-24）
 
@@ -363,6 +364,7 @@ Deep line-by-line review of every Rust command file against its TypeScript equiv
 | [0161](./.spec/rfc/0161-imagelist-tanstack-virtual-grid.md)                    | ImageList TanStack 虚拟网格整合               | ⏳ Draft       | 已有 inline `useVirtualizer`；目标统一到 `VirtualizedGrid` + 测试                                                   |
 | [0004](./.spec/rfc/0004-local-design-file-preview-rust.md)                     | 设计文件本地预览（Rust / PDFium）             | ⏳ Draft       | `.ai` Phase 1；废止原在线预览服务                                                                                   |
 | [0162](./.spec/rfc/completed/0162-scan-queue-nonblocking-ipc.md)               | 扫描队列非阻塞 IPC                            | ✅ Closed      | `ScanQueueAck`、防抖落盘、虚拟卡片 UI、`scan-queue-display`、15 locale、Vitest 100 通过                             |
+| [0166](./.spec/rfc/completed/0166-imagelist-hover-action-bar.md)               | ImageList 悬停操作栏                          | ✅ Implemented | `ImageListItem`、半透明主题化悬停栏、无右键菜单；Vitest `ImageListItem.test.ts` 4 passed                            |
 | [0165](./.spec/rfc/0165-base-tree-package-and-folder-restore.md)               | `@photasa/base-tree` + 启动树 + 虚拟化        | 🔨 Active      | ①包 ✅ ②选中 Vitest ✅ ③包内+photasa 测试 ✅；⏳手测签收                                                            |
 | [0157](./.spec/rfc/completed/0157-tauri-dev-prod-side-by-side.md)              | Dev/Prod 版 Photasa 同机并存                  | ✅ Implemented | 独立 `identifier`/`productName`/数据目录；`build-channels.test.ts` 9/9 通过；guard 已接入 `photasa-build.yml`       |
 

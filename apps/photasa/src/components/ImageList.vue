@@ -9,16 +9,8 @@ import * as R from "ramda";
 import { useI18n } from "vue-i18n";
 import { useZhangSunWuJi } from "@renderer/composables/useZhangSunWuJi";
 // ✅ RFC 0058: 使用服务而不是直接 API 调用
-import {
-    BaseImage,
-    BaseContextMenu,
-    BaseMenuItem,
-    BaseBreadcrumb,
-    BaseBreadcrumbItem,
-    BaseTooltip,
-    BaseCard,
-    FileCountBadge,
-} from "@renderer/components/ui";
+import { BaseBreadcrumb, BaseBreadcrumbItem, FileCountBadge } from "@renderer/components/ui";
+import ImageListItem from "./ImageListItem.vue";
 import { loggers } from "@photasa/common";
 // 在测试环境中使用data URL，避免网络请求
 import fallbackImage from "@renderer/assets/images/fallback.png";
@@ -439,71 +431,18 @@ onUnmounted(() => {
                             class="w-full flex justify-start pl-4"
                             style="gap: 16px; max-width: 100%"
                         >
-                            <template
+                            <ImageListItem
                                 v-for="(image, colIndex) in rows[row.index]"
                                 :key="`${thumbnailDisplayEpoch}-${getThumbnailRenderKey(image)}`"
-                            >
-                                <BaseContextMenu>
-                                    <div @click="openPreview(row.index, colIndex)">
-                                        <BaseTooltip
-                                            placement="right"
-                                            :mouse-enter-delay="mouseEnterDelay"
-                                            :title="image.raw"
-                                        >
-                                            <BaseCard
-                                                hoverable
-                                                :bodyPadding="false"
-                                                :style="{
-                                                    height: safeThumbnailSize + 'px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    background: 'var(--color-image-item-bg)', // 独立图片项背景色，支持主题
-                                                    padding: 0,
-                                                    minWidth: safeThumbnailSize + 'px',
-                                                }"
-                                            >
-                                                <BaseImage
-                                                    :key="`${thumbnailDisplayEpoch}-${getThumbnailRenderKey(image)}`"
-                                                    :width="safeThumbnailSize"
-                                                    :height="safeThumbnailSize"
-                                                    :src="getThumbnailDisplaySrc(image)"
-                                                    :fallback="fallback"
-                                                    :raw="image.raw"
-                                                    :is-video="image.isVideo"
-                                                />
-                                            </BaseCard>
-                                        </BaseTooltip>
-                                    </div>
-
-                                    <template #menu="{ close }">
-                                        <BaseMenuItem
-                                            @click="
-                                                openImageMeta(image);
-                                                close();
-                                            "
-                                        >
-                                            {{ t("menu.getInfo") }}
-                                        </BaseMenuItem>
-                                        <BaseMenuItem
-                                            @click="
-                                                rebuildThumbnail(image);
-                                                close();
-                                            "
-                                        >
-                                            {{ t("menu.rebuildThumbnail") }}
-                                        </BaseMenuItem>
-                                        <BaseMenuItem
-                                            @click="
-                                                openFileInFolder(image);
-                                                close();
-                                            "
-                                        >
-                                            {{ t("menu.open") }}
-                                        </BaseMenuItem>
-                                    </template>
-                                </BaseContextMenu>
-                            </template>
+                                :image="image"
+                                :thumbnail-size="safeThumbnailSize"
+                                :fallback="fallback"
+                                :mouse-enter-delay="mouseEnterDelay"
+                                :rebuild-thumbnail="rebuildThumbnail"
+                                @preview="openPreview(row.index, colIndex)"
+                                @open-meta="openImageMeta(image)"
+                                @open-in-folder="openFileInFolder(image)"
+                            />
                         </div>
                     </div>
                 </div>
