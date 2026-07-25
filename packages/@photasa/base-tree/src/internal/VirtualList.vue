@@ -44,6 +44,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useVirtualizer } from "@tanstack/vue-virtual";
+import { isFixedItemIndexInScrollViewport } from "../tree-scroll";
 
 interface VirtualListProps {
     items: any[];
@@ -130,6 +131,26 @@ const getVisibleRange = () => {
     };
 };
 
+/** 固定行高：节点 index 是否已在滚动视口内（无需 scrollToIndex） */
+const isIndexVisible = (index: number): boolean => {
+    const container = containerRef.value;
+    if (!container || index < 0 || index >= props.items.length) {
+        return false;
+    }
+
+    if (props.enableDynamicSize) {
+        const { start, end } = getVisibleRange();
+        return index >= start && index <= end;
+    }
+
+    return isFixedItemIndexInScrollViewport({
+        index,
+        itemHeight: props.itemHeight,
+        scrollTop: container.scrollTop,
+        viewportHeight: container.clientHeight,
+    });
+};
+
 // 重新测量所有项目（当内容动态变化时使用）
 const measureAll = () => {
     virtualizer.value.measure();
@@ -212,6 +233,7 @@ defineExpose({
     scrollToIndex,
     scrollToOffset,
     getVisibleRange,
+    isIndexVisible,
     measureAll,
     virtualizer: computed(() => virtualizer.value),
 });

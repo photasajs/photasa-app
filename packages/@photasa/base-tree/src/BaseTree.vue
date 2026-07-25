@@ -107,6 +107,7 @@ import {
     findTreeNode,
     flattenVisibleTreeNodes,
 } from "./flatten-visible";
+import { isElementInScrollContainer } from "./tree-scroll";
 import type {
     CheckInfo,
     CheckedKeys,
@@ -289,6 +290,9 @@ const scrollToNode = (
         const nodeIndex = flatNodes.findIndex((item) => item.key === nodeKey);
 
         if (nodeIndex >= 0 && virtualListRef.value) {
+            if (virtualListRef.value.isIndexVisible(nodeIndex)) {
+                return;
+            }
             virtualListRef.value.scrollToIndex(nodeIndex, options);
         }
         return;
@@ -296,6 +300,9 @@ const scrollToNode = (
 
     const nodeElement = containerRef.value.querySelector(`[data-node-key="${nodeKey}"]`);
     if (nodeElement) {
+        if (isElementInScrollContainer(nodeElement, containerRef.value)) {
+            return;
+        }
         nodeElement.scrollIntoView({
             behavior: options?.behavior || "smooth",
             block: (options?.align as ScrollLogicalPosition) || "center",

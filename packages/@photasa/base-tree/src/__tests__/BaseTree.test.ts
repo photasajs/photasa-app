@@ -4,8 +4,9 @@ import { nextTick } from "vue";
 import BaseTree from "../BaseTree.vue";
 import type { TreeNode } from "../types";
 
-const { scrollToIndexMock } = vi.hoisted(() => ({
+const { scrollToIndexMock, isIndexVisibleMock } = vi.hoisted(() => ({
     scrollToIndexMock: vi.fn(),
+    isIndexVisibleMock: vi.fn(() => false),
 }));
 
 vi.mock("../internal/VirtualList.vue", () => ({
@@ -14,6 +15,7 @@ vi.mock("../internal/VirtualList.vue", () => ({
         props: ["items", "itemHeight", "containerHeight", "getItemKey"],
         methods: {
             scrollToIndex: scrollToIndexMock,
+            isIndexVisible: isIndexVisibleMock,
         },
         template: `
             <div class="mock-virtual-list">
@@ -359,6 +361,7 @@ describe("BaseTree", () => {
     describe("scrollToNode", () => {
         it("exposes scrollToNode and scrolls virtual list to visible node index", async () => {
             scrollToIndexMock.mockClear();
+            isIndexVisibleMock.mockReturnValue(false);
             const treeData: TreeNode[] = [
                 {
                     key: "root",
@@ -397,6 +400,38 @@ describe("BaseTree", () => {
                 2,
                 expect.objectContaining({ align: "center", behavior: "auto" }),
             );
+        });
+
+        it("skips scrollToNode when virtual item is already visible", async () => {
+            scrollToIndexMock.mockClear();
+            isIndexVisibleMock.mockReturnValue(true);
+            const treeData: TreeNode[] = [
+                {
+                    key: "root",
+                    title: "Root",
+                    children: [{ key: "child", title: "Child" }],
+                },
+            ];
+
+            const wrapper = mount(BaseTree, {
+                props: {
+                    treeData,
+                    virtual: true,
+                    height: 200,
+                    itemHeight: 28,
+                    expandedKeys: ["root"],
+                },
+            });
+
+            await nextTick();
+
+            const exposed = wrapper.vm as unknown as {
+                scrollToNode: (key: string) => void;
+            };
+            exposed.scrollToNode("child");
+
+            expect(isIndexVisibleMock).toHaveBeenCalledWith(1);
+            expect(scrollToIndexMock).not.toHaveBeenCalled();
         });
     });
 });
