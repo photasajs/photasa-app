@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/photasajs/photasa-app/compare/v2.1.0...v2.1.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **ci:** release upload coords + RFC 0158 verification + CSP MCP ([5c20d34](https://github.com/photasajs/photasa-app/commit/5c20d34844b924b0d8444df860eecd0b94388e98))
+* **ci:** resolve release coords when upload workflow called from release.yml ([dde25c1](https://github.com/photasajs/photasa-app/commit/dde25c14ff85a2b11826a396dd6714c96ca9409c))
+
 ## [2.1.0](https://github.com/photasajs/photasa-app/compare/v2.0.0...v2.1.0) (2026-07-25)
 
 
