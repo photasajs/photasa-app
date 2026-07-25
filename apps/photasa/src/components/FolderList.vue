@@ -100,11 +100,11 @@ watch(
  */
 const selectedKeys = ref<string[]>([]);
 
-/** BaseTree ref — 启动恢复时 scrollToNode */
+/** BaseTree ref — 启动恢复 lastOpenedFolder 时 scrollToNode */
 const folderTreeRef = ref<InstanceType<typeof BaseTree> | null>(null);
 
-/** 每个 currentFolder 只滚动一次；folderTree 晚到时允许重试 */
-const scrolledIntoViewFor = ref<string | null>(null);
+/** 仅启动恢复时滚入视口一次；用户展开/切换文件夹不滚动 */
+const didRestoreScrollIntoView = ref(false);
 
 /**
  * Show config modal
@@ -122,15 +122,11 @@ const selectFolder = (folderPath: string) => {
     }
 };
 
-/** RFC 0013/0047：恢复 currentFolder 时展开祖先、选中并滚入视口 */
+/** RFC 0013/0047：恢复 currentFolder 时展开祖先并同步选中 */
 function syncTreeViewForCurrentFolder(folderPath: string): void {
     const normalized = canonicalFolderPath(folderPath);
     if (!normalized) {
         return;
-    }
-
-    if (scrolledIntoViewFor.value !== normalized) {
-        scrolledIntoViewFor.value = null;
     }
 
     expandedKeys.value = mergeExpandedKeysForCurrentFolder(
@@ -139,23 +135,23 @@ function syncTreeViewForCurrentFolder(folderPath: string): void {
         paths.value,
     );
     selectFolder(normalized);
-    void scrollCurrentFolderIntoView(normalized);
+    void scrollRestoredFolderIntoViewOnce(normalized);
 }
 
-/** 虚拟树：祖先展开后把选中节点滚入可见区域（重开 app 深路径） */
-async function scrollCurrentFolderIntoView(folderPath: string): Promise<void> {
-    const normalized = canonicalFolderPath(folderPath);
-    if (!normalized || scrolledIntoViewFor.value === normalized) {
+/** 重开 app 恢复深路径时滚入视口；folderTree 晚到可重试，仅执行一次 */
+async function scrollRestoredFolderIntoViewOnce(folderPath: string): Promise<void> {
+    if (didRestoreScrollIntoView.value) {
         return;
     }
 
-    if (!findTreeNode(normalized, folderTree.value as TreeNode[])) {
+    const normalized = canonicalFolderPath(folderPath);
+    if (!normalized || !findTreeNode(normalized, folderTree.value as TreeNode[])) {
         return;
     }
 
     await nextTick();
     folderTreeRef.value?.scrollToNode(normalized, { align: "center", behavior: "auto" });
-    scrolledIntoViewFor.value = normalized;
+    didRestoreScrollIntoView.value = true;
 }
 
 // Watch currentFolder + paths + folderTree：持久化恢复时 paths/tree 可能晚于 currentFolder
@@ -164,7 +160,7 @@ watch(
     ([newFolder]) => {
         if (newFolder) {
             logger.debug(
-                "[FolderList] currentFolder changed, syncing tree expand + select + scroll:",
+                "[FolderList] currentFolder changed, syncing tree expand + select:",
                 newFolder,
             );
             syncTreeViewForCurrentFolder(newFolder);
@@ -318,7 +314,6 @@ defineExpose({
                 :show-line="false"
                 :selectable="true"
                 :checkable="false"
-                :auto-focus-on-expand="true"
             >
                 <!-- 文件夹图标 -->
                 <template #icon>
