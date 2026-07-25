@@ -9,6 +9,10 @@ export default defineConfig({
         alias: {
             "@": path.resolve(__dirname, "./src"),
             "@renderer": path.resolve(__dirname, "./src"),
+            "@photasa/base-tree": path.resolve(
+                __dirname,
+                "../../packages/@photasa/base-tree/src/index.ts",
+            ),
             "@photasa/common": path.resolve(
                 __dirname,
                 "../../packages/@photasa/common/src/index.ts",

@@ -2,10 +2,9 @@ import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import BaseTree from "../BaseTree.vue";
-import type { TreeNode } from "../BaseTree.vue";
+import type { TreeNode } from "../types";
 
-// Mock VirtualList component
-vi.mock("../VirtualList.vue", () => ({
+vi.mock("../internal/VirtualList.vue", () => ({
     default: {
         name: "VirtualList",
         props: ["items", "itemHeight", "containerHeight", "getItemKey"],
@@ -351,7 +350,8 @@ describe("BaseTree", () => {
     });
 });
 
-// 辅助函数测试
+import { flattenVisibleTreeNodes } from "../flatten-visible";
+
 describe("BaseTree 辅助函数", () => {
     describe("扁平化算法", () => {
         it("应该正确扁平化树结构", () => {
@@ -367,28 +367,12 @@ describe("BaseTree 辅助函数", () => {
                 { key: "b", title: "B" },
             ];
 
-            // 模拟扁平化逻辑
-            const expandedKeys = new Set(["a"]);
-            const flatten = (
-                nodes: TreeNode[],
-                level = 0,
-            ): Array<{ key: string; level: number }> => {
-                const result: Array<{ key: string; level: number }> = [];
+            const flattened = flattenVisibleTreeNodes(treeData, new Set(["a"])).map((node) => ({
+                key: node.key as string,
+                level: node.level,
+            }));
 
-                for (const node of nodes) {
-                    result.push({ key: node.key as string, level });
-
-                    if (node.children && expandedKeys.has(node.key as string)) {
-                        result.push(...flatten(node.children, level + 1));
-                    }
-                }
-
-                return result;
-            };
-
-            const flattened = flatten(treeData);
-
-            expect(flattened).toHaveLength(4); // a, a1, a2, b
+            expect(flattened).toHaveLength(4);
             expect(flattened[0]).toEqual({ key: "a", level: 0 });
             expect(flattened[1]).toEqual({ key: "a1", level: 1 });
             expect(flattened[2]).toEqual({ key: "a2", level: 1 });

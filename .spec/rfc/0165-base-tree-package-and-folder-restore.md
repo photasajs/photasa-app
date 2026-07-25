@@ -11,9 +11,9 @@
 
 | #     | 交付                        | 含义                                                                                                                | 阶段                        | 状态                       |
 | ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------- | -------------------------- |
-| **1** | **`@photasa/base-tree` 包** | `BaseTree` / `BaseTreeNode` / 树内 `VirtualList` 迁入 `packages/@photasa/base-tree`，独立 build + test + turbo 依赖 | Phase B                     | ⏳ Draft                   |
+| **1** | **`@photasa/base-tree` 包** | `BaseTree` / `BaseTreeNode` / 树内 `VirtualList` 迁入 `packages/@photasa/base-tree`，独立 build + test + turbo 依赖 | Phase B                     | ✅ Implemented             |
 | **2** | **启动时树显示选中**        | 重开 app 后 `currentFolder` 恢复 → 祖先展开 + 节点高亮，与 ImageList/面包屑一致                                     | Phase A                     | ✅ 代码 + Vitest；⏳ 手测  |
-| **3** | **虚拟化正确**              | `virtual=true` 下仅渲染可见扁平节点；大目录不卡顿；抽包后行为与 RFC 0016 一致、无回归                               | Phase A 约束 + Phase B 回归 | ✅ 现有实现；⏳ 抽包后复验 |
+| **3** | **虚拟化正确**              | `virtual=true` 下仅渲染可见扁平节点；大目录不卡顿；抽包后行为与 RFC 0016 一致、无回归                               | Phase A 约束 + Phase B 回归 | ✅ 包内测试；⏳ 手测       |
 
 **不在范围**：换 Naive/Ant 树；`FolderList` 进包；`@photasa/ui` 等泛名包。
 
@@ -106,8 +106,8 @@ folderTree (嵌套)
 ### 验收（交付 3）
 
 - [x] `BaseTree.test.ts`：`virtual=true` 走 `VirtualList`；折叠时子节点不在 `items`
-- [ ] 抽包后：`pnpm --filter @photasa/base-tree test` 全通过（含搬过去的 `BaseTree.test.ts`）
-- [ ] 抽包后：Photasa `vitest run` 无 BaseTree 相关回归
+- [x] 抽包后：`pnpm --filter @photasa/base-tree test` 全通过（含搬过去的 `BaseTree.test.ts`）
+- [x] 抽包后：Photasa `vitest run` 无 BaseTree 相关回归
 - [ ] **手测**：>1000 节点目录树滚动流畅；展开深路径不白屏
 - [ ] **手测**：交付 2 手测通过时，选中行在视口内（`auto-focus-on-expand` 或等价滚动）
 
@@ -176,10 +176,10 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 
 ### 验收（交付 1）
 
-- [ ] `packages/@photasa/base-tree` 存在且 `pnpm --filter @photasa/base-tree build` 成功
-- [ ] `apps/photasa` 无 `components/ui/BaseTree.vue` 副本（仅 re-export 或零 re-export）
-- [ ] turbo pipeline 已接线
-- [ ] 交付 3 测试门禁全绿
+- [x] `packages/@photasa/base-tree` 存在且 `pnpm --filter @photasa/base-tree build` 成功
+- [x] `apps/photasa` 无 `components/ui/BaseTree.vue` 副本（`ui/index.ts` re-export）
+- [x] turbo pipeline 已接线（`build` → `^build`）
+- [x] 交付 3 测试门禁全绿
 
 ---
 
@@ -194,11 +194,11 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 
 ### 交付 1 + 3 — Phase B
 
-1. [ ] 创建 `packages/@photasa/base-tree`
-2. [ ] 迁移 `BaseTree` / `BaseTreeNode` / internal `VirtualList`
-3. [ ] 抽 `flatten-visible.ts`；搬 `BaseTree.test.ts`（交付 3）
-4. [ ] photasa 改 import；ui re-export
-5. [ ] turbo + `pnpm --filter @photasa/base-tree test`
+1. [x] 创建 `packages/@photasa/base-tree`
+2. [x] 迁移 `BaseTree` / `BaseTreeNode` / internal `VirtualList`
+3. [x] 抽 `flatten-visible.ts`；搬 `BaseTree.test.ts`（交付 3）
+4. [x] photasa 改 import；ui re-export
+5. [x] turbo + `pnpm --filter @photasa/base-tree test`
 6. [ ] 手测：大目录滚动 + 启动选中（交付 2 + 3 联调）
 
 ---
@@ -217,8 +217,8 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 
 ### 交付 1 — 包
 
-- [ ] `@photasa/base-tree` build/test/turbo 就绪
-- [ ] photasa 单一来源引用包
+- [x] `@photasa/base-tree` build/test/turbo 就绪
+- [x] photasa 单一来源引用包
 
 ### 交付 2 — 启动选中
 
@@ -228,7 +228,7 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 ### 交付 3 — 虚拟化
 
 - [x] 抽包前 `BaseTree.test.ts` 绿
-- [ ] 抽包后包内 + photasa 测试绿
+- [x] 抽包后包内 + photasa 测试绿
 - [ ] 大目录手测滚动与选中可见
 
 ---
@@ -238,5 +238,5 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 - RFC 0013 — `currentFolder` → `selectedKeys`
 - RFC 0016 — BaseTree 虚拟滚动设计
 - RFC 0047 — `folderTree` 恢复
-- `apps/photasa/src/components/ui/BaseTree.vue`
+- `packages/@photasa/base-tree/src/BaseTree.vue`
 - `apps/photasa/src/components/FolderList.vue`

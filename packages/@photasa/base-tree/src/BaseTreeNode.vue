@@ -142,21 +142,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { FolderNode } from "@photasa/common";
-
-export type Key = string | number;
-
-interface TreeNode extends FolderNode {
-    key: Key;
-    title: string;
-    children?: TreeNode[];
-    isLeaf?: boolean;
-    disabled?: boolean;
-    selectable?: boolean;
-    disableCheckbox?: boolean;
-    icon?: any;
-    [key: string]: any;
-}
+import type { Key, TreeNode } from "./types";
 
 interface Props {
     node: TreeNode;

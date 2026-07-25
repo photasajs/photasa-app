@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "jsx": "preserve",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "declaration": true,
+        "isolatedModules": true,
+        "types": ["vitest/globals"]
+    },
+    "include": ["src/**/*.ts", "src/**/*.vue"],
+    "exclude": ["src/**/__tests__/**"]
+}

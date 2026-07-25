@@ -16,7 +16,7 @@ import {
 } from "@renderer/components/ui";
 import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
-import type { TreeNode } from "@renderer/components/ui/BaseTree.vue";
+import type { TreeNode } from "@photasa/base-tree";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
