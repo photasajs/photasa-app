@@ -6,7 +6,7 @@
         <title>Photasa - Photo Management</title>
         <link rel="stylesheet" href="splash.css" />
     </head>
-    <body data-theme="dark">
+    <body class="drag-region">
         <div class="splash-container">
             <div class="logo-section">
                 <div class="app-logo">
@@ -144,6 +144,9 @@
                 <span class="version-text">Version 0.1.0</span>
             </div>
         </div>
+
+        <!-- 透明拖拽层置于内容之上，避免子元素挡住 data-tauri-drag-region -->
+        <div class="splash-drag-layer" data-tauri-drag-region aria-hidden="true"></div>
 
         <script src="splash.js"></script>
     </body>

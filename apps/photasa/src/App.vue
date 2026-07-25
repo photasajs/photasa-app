@@ -29,7 +29,16 @@ import {
     UpdateNotification,
 } from "@renderer/components/ui";
 import { scanMonitoringService } from "@renderer/services/yushinan/scan-monitoring-service";
+import {
+    needsConsentDialog,
+    reconcileTelemetryConsent,
+} from "@renderer/services/telemetry/telemetry-consent";
+import {
+    initPosthogIfGranted,
+    installGlobalErrorHandlers,
+} from "@renderer/services/telemetry/posthog-client";
 import LogConsole from "./components/LogConsole.vue";
+import TelemetryConsentDialog from "./components/TelemetryConsentDialog.vue";
 import { useUpdateListener } from "@renderer/composables/useUpdateListener";
 import { useChuSuiLiang } from "@renderer/composables/useChuSuiLiang";
 import { useQinQiong } from "@renderer/composables/useQinQiong";
@@ -69,6 +78,7 @@ const { queue: scanningFolder } = storeToRefs(useScanningStore());
 const showImportDialog = ref(false);
 const showPreference = ref(false);
 const showScanList = ref(false);
+const showTelemetryConsent = ref(false);
 const loading = ref(false);
 
 const themes = ref<ThemeMeta[]>([]);
@@ -203,8 +213,18 @@ async function detectRecoverableImports(): Promise<void> {
 }
 
 const weiZheng = useWeiZheng();
+let teardownGlobalErrorHandlers: (() => void) | undefined;
 
 onMounted(async () => {
+    teardownGlobalErrorHandlers = installGlobalErrorHandlers();
+
+    const reconciledTelemetry = reconcileTelemetryConsent(preferenceStore.telemetry);
+    if (reconciledTelemetry.consentStatus !== preferenceStore.telemetry.consentStatus) {
+        preferenceStore.$patch({ telemetry: reconciledTelemetry });
+    }
+    initPosthogIfGranted(preferenceStore.telemetry.consentStatus);
+    showTelemetryConsent.value = needsConsentDialog(preferenceStore.telemetry.consentStatus);
+
     // 应用启动时全局初始化菜单栏数据（国际化）
     await themeManager.loadBuiltInThemes();
     themes.value = themeManager.getThemes();
@@ -254,15 +274,8 @@ onMounted(async () => {
     try {
         await initializeApp();
         await detectRecoverableImports();
-    } finally {
-        // RFC 0101：主界面首屏就绪后关闭 Splash、显示主窗
-        if (isTauri()) {
-            try {
-                await yuanTianGang.desktop.closeSplashscreen();
-            } catch (e) {
-                logger.warn("⚠️ 告示：关闭启动画面未果", e);
-            }
-        }
+    } catch (error) {
+        logger.error("👑 应用初始化失败:", error);
     }
 });
 
@@ -270,6 +283,7 @@ onMounted(async () => {
 onUnmounted(() => {
     scanMonitoringService.stopMonitoring();
     void qinQiong.stopWatching();
+    teardownGlobalErrorHandlers?.();
     logger.info("👑 [App] 扫描监控服务已停止");
 });
 
@@ -306,7 +320,9 @@ useTitle(title);
 </script>
 
 <template>
-    <BaseSpinner v-if="loading" />
+    <div v-if="loading" class="app-loading-screen">
+        <BaseSpinner size="xl" />
+    </div>
     <div v-else class="app-layout">
         <!-- 分平台 titlebar -->
         <TitlebarMac
@@ -397,6 +413,8 @@ useTitle(title);
     <PortalProvider />
     <!-- 日志控制台 -->
     <LogConsole />
+
+    <TelemetryConsentDialog v-if="showTelemetryConsent" @completed="showTelemetryConsent = false" />
 </template>
 
 <style lang="less">
@@ -416,6 +434,15 @@ useTitle(title);
     display: flex;
     flex-direction: column;
     background: var(--color-bg); /* 确保整个应用使用主题背景色 */
+}
+
+.app-loading-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text);
 }
 
 .import-chip-dock {

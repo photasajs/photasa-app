@@ -31,10 +31,22 @@ describe("模板变量解析器（纯函数）", () => {
             expect(result).toBe("nested-value");
         });
 
-        it("应该处理无法解析的模板变量", () => {
+        it("可选叶子字段缺失时应返回 undefined", () => {
             const qizou = createTestQizou({ path: "/test/path" });
             const result = resolveTemplateValue("{{qizou.content.nonexistent}}", qizou);
-            expect(result).toBe("{{qizou.content.nonexistent}}");
+            expect(result).toBeUndefined();
+        });
+
+        it("可选叶子字段值为 undefined 时应返回 undefined", () => {
+            const qizou = createTestQizou({ error: undefined });
+            const result = resolveTemplateValue("{{qizou.content.error}}", qizou);
+            expect(result).toBeUndefined();
+        });
+
+        it("中间路径缺失时应返回原始模板字符串", () => {
+            const qizou = createTestQizou({ path: "/test/path" });
+            const result = resolveTemplateValue("{{qizou.content.nested.value}}", qizou);
+            expect(result).toBe("{{qizou.content.nested.value}}");
         });
 
         it("应该直接返回非模板字符串", () => {

@@ -106,6 +106,12 @@ export interface PreferenceState {
         autoUpdate: AutoUpdateConfig;
     };
 
+    /** 遥测同意偏好（RFC 0163） */
+    telemetry: {
+        consentStatus: "undecided" | "granted" | "denied";
+        consentPolicyVersion: string;
+    };
+
     /**
      * 应用运行时状态 - Store特有
      * ✅ RFC 0038: paths、excludePaths、autoUpdate已迁移到preferences
@@ -207,6 +213,11 @@ export const usePreferenceStore = defineStore("preference", {
                 },
             },
 
+            telemetry: {
+                consentStatus: "undecided",
+                consentPolicyVersion: "",
+            },
+
             /**
              * 应用运行时状态 - Store特有
              * ✅ RFC 0038: 移除paths、excludePaths、autoUpdate，已迁移到preferences
@@ -258,6 +269,8 @@ export const usePreferenceStore = defineStore("preference", {
          */
         /** 自动更新配置 */
         autoUpdate: (state) => state.system.autoUpdate,
+        /** 遥测同意状态 */
+        telemetry: (state) => state.telemetry,
 
         /**
          * 应用状态getter - 运行时状态

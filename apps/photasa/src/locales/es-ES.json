@@ -23,7 +23,8 @@
             "theme": "Tema",
             "advanced": "Configuración avanzada",
             "autoUpdate": "Auto Actualización",
-            "scanMonitoring": "Monitoreo de Escaneo"
+            "scanMonitoring": "Monitoreo de Escaneo",
+            "telemetry": "Telemetría"
         },
         "folderList": "Lista de carpetas",
         "folderListUsage": "Uso",
@@ -624,5 +625,24 @@
         "maximize": "Maximizar",
         "restore": "Restaurar",
         "close": "Cerrar"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Ayude a mejorar Photasa",
+            "purpose": "Podemos recopilar datos anónimos de uso y fallos para mejorar la estabilidad y la experiencia.",
+            "scope": "No incluye contenido de fotos, nombres de archivos ni rutas de carpetas.",
+            "destination": "Los datos se envían a PostHog (EE. UU.) y solo se activan tras su consentimiento.",
+            "grant": "Permitir",
+            "deny": "No permitir"
+        },
+        "settings": {
+            "title": "Telemetría",
+            "description": "Controle si se envían datos anónimos de uso y fallos para mejorar el producto.",
+            "enabled": "Activar telemetría",
+            "enabledDescription": "Cuando está activada, se envían eventos anónimos; al desactivarla se detiene de inmediato.",
+            "savedTitle": "Configuración de telemetría guardada",
+            "savedMessage": "Su elección se ha aplicado.",
+            "errorTitle": "Error al guardar la configuración de telemetría"
+        }
     }
 }

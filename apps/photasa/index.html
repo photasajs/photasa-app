@@ -9,10 +9,12 @@
             http-equiv="Content-Security-Policy"
             content="default-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; media-src 'self' asset: asset://localhost http://asset.localhost https://asset.localhost blob: data:; font-src 'self' data:;"
         />
+        <!-- 主窗首帧：在 main.ts 加载前从 localStorage 恢复主题，避免 loading 白屏 -->
+        <script src="/bootstrap-theme.js"></script>
     </head>
 
     <body>
-        <div id="app" data-theme></div>
+        <div id="app"></div>
         <script type="module" src="/src/main.ts"></script>
     </body>
 </html>

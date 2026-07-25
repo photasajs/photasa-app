@@ -33,6 +33,7 @@
             "theme": "主题",
             "advanced": "高级配置",
             "autoUpdate": "自动更新",
+            "telemetry": "遥测",
             "scanMonitoring": "扫描监控",
             "import": "导入"
         },
@@ -719,5 +720,24 @@
         "maximize": "最大化",
         "restore": "还原",
         "close": "关闭"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "帮助改进仓廪图司",
+            "purpose": "我们可收集匿名使用与崩溃信息，用于改进稳定性与体验。",
+            "scope": "不包含照片内容、文件名或文件夹路径。",
+            "destination": "数据发送至 PostHog（美国），仅在您同意后启用。",
+            "grant": "同意",
+            "deny": "不同意"
+        },
+        "settings": {
+            "title": "遥测",
+            "description": "控制是否发送匿名使用与崩溃数据以改进产品。",
+            "enabled": "启用遥测",
+            "enabledDescription": "开启后发送匿名事件；关闭后立即停止。",
+            "savedTitle": "遥测设置已保存",
+            "savedMessage": "您的选择已生效。",
+            "errorTitle": "遥测设置失败"
+        }
     }
 }

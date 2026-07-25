@@ -26,7 +26,8 @@
             "theme": "Theme",
             "advanced": "Advanced",
             "autoUpdate": "Auto Update",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "Telemetry"
         },
         "folderList": "Folder List",
         "folderListUsage": "Usage",
@@ -569,5 +570,24 @@
         "maximize": "Maximise",
         "restore": "Restore",
         "close": "Close"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Help improve Photasa",
+            "purpose": "We may collect anonymous usage and crash data to improve stability and experience.",
+            "scope": "Does not include photo content, file names, or folder paths.",
+            "destination": "Data is sent to PostHog (US) and only enabled after you consent.",
+            "grant": "Allow",
+            "deny": "Do not allow"
+        },
+        "settings": {
+            "title": "Telemetry",
+            "description": "Control whether anonymous usage and crash data is sent to improve the product.",
+            "enabled": "Enable telemetry",
+            "enabledDescription": "When on, anonymous events are sent; turning off stops immediately.",
+            "savedTitle": "Telemetry settings saved",
+            "savedMessage": "Your choice has been applied.",
+            "errorTitle": "Failed to save telemetry settings"
+        }
     }
 }

@@ -11,7 +11,8 @@
             "theme": "Tema",
             "advanced": "Gelişmiş",
             "autoUpdate": "Otomatik Güncelleme",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "Telemetri"
         },
         "folderList": "Klasör Listesi",
         "folderListUsage": "Kullanım Şekli",
@@ -606,5 +607,24 @@
         "maximize": "Büyüt",
         "restore": "Geri yükle",
         "close": "Kapat"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Photasa'yı iyileştirmeye yardımcı olun",
+            "purpose": "Kararlılık ve deneyimi iyileştirmek için anonim kullanım ve çökme verileri toplayabiliriz.",
+            "scope": "Fotoğraf içeriği, dosya adları veya klasör yolları dahil değildir.",
+            "destination": "Veriler PostHog'a (ABD) gönderilir ve yalnızca onayınızdan sonra etkinleştirilir.",
+            "grant": "İzin ver",
+            "deny": "İzin verme"
+        },
+        "settings": {
+            "title": "Telemetri",
+            "description": "Ürünü iyileştirmek için anonim kullanım ve çökme verilerinin gönderilip gönderilmeyeceğini kontrol edin.",
+            "enabled": "Telemetriyi etkinleştir",
+            "enabledDescription": "Açıkken anonim olaylar gönderilir; kapatınca hemen durur.",
+            "savedTitle": "Telemetri ayarları kaydedildi",
+            "savedMessage": "Seçiminiz uygulandı.",
+            "errorTitle": "Telemetri ayarları kaydedilemedi"
+        }
     }
 }

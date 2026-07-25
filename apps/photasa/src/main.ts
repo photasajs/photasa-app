@@ -9,10 +9,18 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 
 import VueVideoPlayer from "@videojs-player/vue";
 import { i18n } from "./i18n/config";
+import { installVueErrorHandler } from "./services/telemetry/posthog-client";
 
 import { LishiminService, LISSHIMING_TOKEN } from "./services";
+import { applyPersistedThemeBootstrap } from "./bootstrap/apply-persisted-theme";
+import { getThemeManager } from "./services/chusuiliang/theme-manage";
+import { usePreferenceStore } from "./stores/preference";
+import { isTauri } from "./api/env";
 import { loggers } from "@photasa/common";
 const logger = loggers.app;
+
+// 模块加载后再次同步（与 index.html 阻塞脚本互补；initializeDepartments 前首屏已着色）
+applyPersistedThemeBootstrap();
 
 logger.info("📦 开天辟地");
 const app = createApp(App);
@@ -30,6 +38,8 @@ app.use(VueVideoPlayer);
 logger.info("📦 挂载 pinia");
 app.use(pinia);
 
+installVueErrorHandler(app);
+
 // 大唐李世民登基
 const lishiminService = new LishiminService(app);
 app.provide(LISSHIMING_TOKEN, lishiminService);
@@ -39,5 +49,30 @@ lishiminService.prepareCourt();
 
 await lishiminService.initializeDepartments();
 
+logger.info("📦 预应用用户主题（首屏 loading 与偏好一致）");
+const themeManager = getThemeManager();
+await themeManager.loadBuiltInThemes();
+const preferenceStore = usePreferenceStore();
+const savedThemeId = preferenceStore.ui.theme;
+if (savedThemeId) {
+    try {
+        await themeManager.applyTheme(savedThemeId);
+        logger.info("📦 启动主题已应用:", savedThemeId);
+    } catch (error) {
+        logger.warn("📦 启动主题预应用失败，沿用默认样式", error);
+    }
+}
+
 logger.info("📦 挂载 App.vue 应用");
 app.mount("#app");
+
+// RFC 0101：Vue 首帧挂载后关 Splash、显示主窗（勿在 Rust setup 过早关闭）
+if (isTauri()) {
+    try {
+        const { invoke } = await import("@tauri-apps/api/core");
+        await invoke("close_splashscreen");
+        logger.info("📦 启动画面已关闭");
+    } catch (error) {
+        logger.warn("📦 关闭启动画面失败", error);
+    }
+}

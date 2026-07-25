@@ -11,7 +11,8 @@
             "theme": "Tema",
             "advanced": "Avanzate",
             "autoUpdate": "Aggiornamento Automatico",
-            "scanMonitoring": "Scan Monitoring"
+            "scanMonitoring": "Scan Monitoring",
+            "telemetry": "Telemetria"
         },
         "folderList": "Elenco cartelle",
         "folderListUsage": "Modalità d'uso",
@@ -603,5 +604,24 @@
         "maximize": "Ingrandisci",
         "restore": "Ripristina",
         "close": "Chiudi"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "Aiuta a migliorare Photasa",
+            "purpose": "Potremmo raccogliere dati anonimi sull'utilizzo e sui crash per migliorare stabilità ed esperienza.",
+            "scope": "Non include contenuti fotografici, nomi file o percorsi cartelle.",
+            "destination": "I dati vengono inviati a PostHog (USA) e sono attivati solo dopo il consenso.",
+            "grant": "Consenti",
+            "deny": "Non consentire"
+        },
+        "settings": {
+            "title": "Telemetria",
+            "description": "Controlla se inviare dati anonimi sull'utilizzo e sui crash per migliorare il prodotto.",
+            "enabled": "Abilita telemetria",
+            "enabledDescription": "Se attivata, vengono inviati eventi anonimi; disattivandola si interrompe immediatamente.",
+            "savedTitle": "Impostazioni telemetria salvate",
+            "savedMessage": "La scelta è stata applicata.",
+            "errorTitle": "Impossibile salvare le impostazioni di telemetria"
+        }
     }
 }

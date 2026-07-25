@@ -26,7 +26,8 @@
             "theme": "主題",
             "advanced": "進階設定",
             "autoUpdate": "自動更新",
-            "scanMonitoring": "掃描監控"
+            "scanMonitoring": "掃描監控",
+            "telemetry": "遙測"
         },
         "folderList": "目錄列表",
         "folderListUsage": "使用方式",
@@ -596,5 +597,24 @@
         "maximize": "最大化",
         "restore": "還原",
         "close": "關閉"
+    },
+    "telemetry": {
+        "consent": {
+            "title": "幫助改進倉廩圖司",
+            "purpose": "我們可收集匿名使用與崩潰資訊，用於改進穩定性與體驗。",
+            "scope": "不包含照片內容、檔案名稱或資料夾路徑。",
+            "destination": "資料傳送至 PostHog（美國），僅在您同意後啟用。",
+            "grant": "同意",
+            "deny": "不同意"
+        },
+        "settings": {
+            "title": "遙測",
+            "description": "控制是否傳送匿名使用與崩潰資料以改進產品。",
+            "enabled": "啟用遙測",
+            "enabledDescription": "開啟後傳送匿名事件；關閉後立即停止。",
+            "savedTitle": "遙測設定已儲存",
+            "savedMessage": "您的選擇已生效。",
+            "errorTitle": "遙測設定失敗"
+        }
     }
 }
