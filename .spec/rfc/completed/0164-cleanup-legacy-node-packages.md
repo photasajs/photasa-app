@@ -2,7 +2,8 @@
 
 - **Start Date**: 2026-07-24
 - **Last updated**: 2026-07-24
-- **Status**: Draft（⏳ Photasa Active — **Workspace 瘦身与架构债清理**）
+- **Completed**: 2026-07-24
+- **Status**: ✅ Implemented
 - **Priority**: P1
 - **Area**: Photasa / Monorepo / Package Management
 - **Depends on**: [0067](./completed/0067-tauri-app-photasa.md), [0131](./completed/0131-tauri-photasa-import-crate.md), [0132](./completed/0132-tauri-photasa-scan-crate.md), [0134](./completed/0134-tauri-photasa-thumbnail-crate.md), [0153](./completed/0153-tauri-zouwu-workspace-removal.md)

@@ -4,7 +4,7 @@
 **Created**: 2026-07-24  
 **Completed**: 2026-07-24  
 **Area**: Photasa / Renderer / `BaseTree` / `FolderList` / workspace package  
-**Related**: [0013](../completed/0013-default-folder-selection.md), [0016](../completed/0016-basetree-component-implementation.md), [0047](../completed/0047-foldertree-persistence-initialization.md), [0161](./0161-imagelist-tanstack-virtual-grid.md), [0164](../0164-cleanup-legacy-node-packages.md)
+**Related**: [0013](../completed/0013-default-folder-selection.md), [0016](../completed/0016-basetree-component-implementation.md), [0047](../completed/0047-foldertree-persistence-initialization.md), [0161](./0161-imagelist-tanstack-virtual-grid.md), [0164](./0164-cleanup-legacy-node-packages.md)
 
 ---
 
