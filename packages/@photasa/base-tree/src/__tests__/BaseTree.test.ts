@@ -4,10 +4,21 @@ import { nextTick } from "vue";
 import BaseTree from "../BaseTree.vue";
 import type { TreeNode } from "../types";
 
+const { scrollToIndexMock, isIndexVisibleMock, captureScrollOffsetMock } = vi.hoisted(() => ({
+    scrollToIndexMock: vi.fn(),
+    isIndexVisibleMock: vi.fn(() => false),
+    captureScrollOffsetMock: vi.fn(),
+}));
+
 vi.mock("../internal/VirtualList.vue", () => ({
     default: {
         name: "VirtualList",
         props: ["items", "itemHeight", "containerHeight", "getItemKey"],
+        methods: {
+            scrollToIndex: scrollToIndexMock,
+            isIndexVisible: isIndexVisibleMock,
+            captureScrollOffset: captureScrollOffsetMock,
+        },
         template: `
             <div class="mock-virtual-list">
                 <div v-for="(item, index) in items" :key="getItemKey ? getItemKey(item) : index">
@@ -149,6 +160,28 @@ describe("BaseTree", () => {
             expect(rootKeys).toContain("file3");
         });
 
+        it("uses stable node key without index for virtual list", async () => {
+            const treeData = createTestData();
+            const wrapper = mount(BaseTree, {
+                props: {
+                    treeData,
+                    virtual: true,
+                    expandedKeys: ["folder1"],
+                },
+            });
+
+            await nextTick();
+
+            const virtualList = wrapper.findComponent({ name: "VirtualList" });
+            const getItemKey = virtualList.props("getItemKey") as (
+                item: { key: string },
+                index: number,
+            ) => string;
+
+            expect(getItemKey({ key: "folder1" } as never, 0)).toBe("folder1");
+            expect(getItemKey({ key: "folder1" } as never, 9)).toBe("folder1");
+        });
+
         it("应该正确处理节点展开状态", async () => {
             const treeData = createTestData();
             const expandedKeys = ["folder1"];
@@ -173,6 +206,26 @@ describe("BaseTree", () => {
 
             // 不应该包含 folder2 的子节点（未展开）
             expect(keys).not.toContain("subfile1");
+        });
+
+        it("captures virtual scroll before node expand", async () => {
+            captureScrollOffsetMock.mockClear();
+            const treeData = createTestData();
+            const wrapper = mount(BaseTree, {
+                props: {
+                    treeData,
+                    virtual: true,
+                    height: 200,
+                    expandedKeys: [],
+                },
+            });
+
+            await nextTick();
+
+            const node = wrapper.findComponent({ name: "BaseTreeNode" });
+            await node.vm.$emit("expand", treeData[0], true);
+
+            expect(captureScrollOffsetMock).toHaveBeenCalled();
         });
     });
 
@@ -346,6 +399,83 @@ describe("BaseTree", () => {
             await nextTick();
 
             expect(mockGetBoundingClientRect).toHaveBeenCalled();
+        });
+    });
+
+    describe("scrollToNode", () => {
+        it("exposes scrollToNode and scrolls virtual list to visible node index", async () => {
+            scrollToIndexMock.mockClear();
+            isIndexVisibleMock.mockReturnValue(false);
+            const treeData: TreeNode[] = [
+                {
+                    key: "root",
+                    title: "Root",
+                    children: [
+                        {
+                            key: "child",
+                            title: "Child",
+                            children: [{ key: "deep", title: "Deep" }],
+                        },
+                    ],
+                },
+            ];
+
+            const wrapper = mount(BaseTree, {
+                props: {
+                    treeData,
+                    virtual: true,
+                    height: 200,
+                    itemHeight: 28,
+                    expandedKeys: ["root", "child"],
+                },
+            });
+
+            await nextTick();
+
+            const exposed = wrapper.vm as unknown as {
+                scrollToNode: (
+                    key: string,
+                    options?: { align?: string; behavior?: string },
+                ) => void;
+            };
+            exposed.scrollToNode("deep", { align: "center", behavior: "auto" });
+
+            expect(scrollToIndexMock).toHaveBeenCalledWith(
+                2,
+                expect.objectContaining({ align: "center", behavior: "auto" }),
+            );
+        });
+
+        it("skips scrollToNode when virtual item is already visible", async () => {
+            scrollToIndexMock.mockClear();
+            isIndexVisibleMock.mockReturnValue(true);
+            const treeData: TreeNode[] = [
+                {
+                    key: "root",
+                    title: "Root",
+                    children: [{ key: "child", title: "Child" }],
+                },
+            ];
+
+            const wrapper = mount(BaseTree, {
+                props: {
+                    treeData,
+                    virtual: true,
+                    height: 200,
+                    itemHeight: 28,
+                    expandedKeys: ["root"],
+                },
+            });
+
+            await nextTick();
+
+            const exposed = wrapper.vm as unknown as {
+                scrollToNode: (key: string) => void;
+            };
+            exposed.scrollToNode("child");
+
+            expect(isIndexVisibleMock).toHaveBeenCalledWith(1);
+            expect(scrollToIndexMock).not.toHaveBeenCalled();
         });
     });
 });

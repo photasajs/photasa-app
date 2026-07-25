@@ -12,6 +12,7 @@ const BUILD_CHANNEL = {
     DEV_CONFIG_BASENAME: "tauri.dev.conf.json",
     DEV_TAURI_SCRIPTS: ["dev", "build:debug"] as const,
     PROD_CI_SCRIPT: "build:ci",
+    PROD_CI_LINUX_SCRIPT: "build:ci:linux",
     DEV_WINDOW_TITLE: "Photasa (Dev)",
     DEV_MAIN_BINARY_NAME: "Photasa Dev",
     DEV_INFO_PLIST: "Info.dev.plist",
@@ -116,9 +117,14 @@ describe("RFC 0157 build channels", () => {
     });
 
     it("build:ci stays on prod channel", () => {
-        const ciScript = packageJson.scripts[BUILD_CHANNEL.PROD_CI_SCRIPT];
-        expect(ciScript).toBeDefined();
-        expect(ciScript).not.toContain(BUILD_CHANNEL.DEV_CONFIG_BASENAME);
-        expect(ciScript).not.toContain(BUILD_CHANNEL.DEV_IDENTIFIER);
+        for (const scriptName of [
+            BUILD_CHANNEL.PROD_CI_SCRIPT,
+            BUILD_CHANNEL.PROD_CI_LINUX_SCRIPT,
+        ]) {
+            const ciScript = packageJson.scripts[scriptName];
+            expect(ciScript, `missing script ${scriptName}`).toBeDefined();
+            expect(ciScript).not.toContain(BUILD_CHANNEL.DEV_CONFIG_BASENAME);
+            expect(ciScript).not.toContain(BUILD_CHANNEL.DEV_IDENTIFIER);
+        }
     });
 });

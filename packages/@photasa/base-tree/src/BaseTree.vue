@@ -14,7 +14,7 @@
                 :items="uniqueVisibleNodes"
                 :item-height="itemHeight"
                 :container-height="actualHeight"
-                :get-item-key="(item: VirtualTreeNode, index: number) => `${item.key}-${index}`"
+                :get-item-key="(item: VirtualTreeNode) => String(item.key)"
                 class="base-tree__virtual-list"
             >
                 <template #default="{ item }">
@@ -107,6 +107,7 @@ import {
     findTreeNode,
     flattenVisibleTreeNodes,
 } from "./flatten-visible";
+import { isElementInScrollContainer } from "./tree-scroll";
 import type {
     CheckInfo,
     CheckedKeys,
@@ -289,6 +290,9 @@ const scrollToNode = (
         const nodeIndex = flatNodes.findIndex((item) => item.key === nodeKey);
 
         if (nodeIndex >= 0 && virtualListRef.value) {
+            if (virtualListRef.value.isIndexVisible(nodeIndex)) {
+                return;
+            }
             virtualListRef.value.scrollToIndex(nodeIndex, options);
         }
         return;
@@ -296,6 +300,9 @@ const scrollToNode = (
 
     const nodeElement = containerRef.value.querySelector(`[data-node-key="${nodeKey}"]`);
     if (nodeElement) {
+        if (isElementInScrollContainer(nodeElement, containerRef.value)) {
+            return;
+        }
         nodeElement.scrollIntoView({
             behavior: options?.behavior || "smooth",
             block: (options?.align as ScrollLogicalPosition) || "center",
@@ -304,7 +311,15 @@ const scrollToNode = (
     }
 };
 
+const captureVirtualScrollBeforeMutation = (): void => {
+    if (props.virtual) {
+        virtualListRef.value?.captureScrollOffset();
+    }
+};
+
 const handleNodeExpand = (node: TreeNode, expanded?: boolean) => {
+    captureVirtualScrollBeforeMutation();
+
     const newExpanded = expanded !== undefined ? expanded : !expandedKeysSet.value.has(node.key);
     const newExpandedKeys = newExpanded
         ? [...currentExpandedKeys.value, node.key]
@@ -433,6 +448,22 @@ watch(
     },
     { deep: true, flush: "post" },
 );
+
+// 父组件直接改 expandedKeys（非点击展开）时，在列表重算前捕获滚动
+watch(
+    () => props.expandedKeys.length,
+    (newLength, oldLength) => {
+        if (!props.virtual || oldLength === undefined || newLength === oldLength) {
+            return;
+        }
+        captureVirtualScrollBeforeMutation();
+    },
+    { flush: "sync" },
+);
+
+defineExpose({
+    scrollToNode,
+});
 </script>
 
 <style scoped>
@@ -456,6 +487,8 @@ watch(
 
 .base-tree--virtual {
     overflow: hidden;
+    min-height: 0;
+    flex: 1;
 }
 
 .base-tree--show-line .base-tree-node {

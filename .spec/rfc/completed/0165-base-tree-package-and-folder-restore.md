@@ -3,6 +3,7 @@
 **Status**: ✅ Implemented  
 **Created**: 2026-07-24  
 **Completed**: 2026-07-24  
+**Last updated**: 2026-07-25（展开滚动跳顶修复，见下方 Amendment）  
 **Area**: Photasa / Renderer / `BaseTree` / `FolderList` / workspace package  
 **Related**: [0013](../completed/0013-default-folder-selection.md), [0016](../completed/0016-basetree-component-implementation.md), [0047](../completed/0047-foldertree-persistence-initialization.md), [0161](./0161-imagelist-tanstack-virtual-grid.md), [0164](./0164-cleanup-legacy-node-packages.md)
 
@@ -10,13 +11,83 @@
 
 ## 三大交付（本 RFC 必须全部满足）
 
-| #     | 交付                        | 含义                                                                                                                | 阶段                        | 状态                              |
-| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------- |
-| **1** | **`@photasa/base-tree` 包** | `BaseTree` / `BaseTreeNode` / 树内 `VirtualList` 迁入 `packages/@photasa/base-tree`，独立 build + test + turbo 依赖 | Phase B                     | ✅ Implemented                    |
-| **2** | **启动时树显示选中**        | 重开 app 后 `currentFolder` 恢复 → 祖先展开 + 节点高亮，与 ImageList/面包屑一致                                     | Phase A                     | ✅ Implemented（手测 2026-07-24） |
-| **3** | **虚拟化正确**              | `virtual=true` 下仅渲染可见扁平节点；大目录不卡顿；抽包后行为与 RFC 0016 一致、无回归                               | Phase A 约束 + Phase B 回归 | ✅ Implemented（手测 2026-07-24） |
+| #     | 交付                        | 含义                                                                                                                | 阶段                        | 状态                                                                                                 |
+| ----- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **1** | **`@photasa/base-tree` 包** | `BaseTree` / `BaseTreeNode` / 树内 `VirtualList` 迁入 `packages/@photasa/base-tree`，独立 build + test + turbo 依赖 | Phase B                     | ✅ Implemented                                                                                       |
+| **2** | **启动时树显示选中**        | 重开 app 后 `currentFolder` 恢复 → 祖先展开 + 节点高亮，与 ImageList/面包屑一致                                     | Phase A                     | ✅ Implemented（手测 2026-07-24）                                                                    |
+| **3** | **虚拟化正确**              | `virtual=true` 下仅渲染可见扁平节点；大目录不卡顿；抽包后行为与 RFC 0016 一致、无回归                               | Phase A 约束 + Phase B 回归 | ✅ Implemented（手测 2026-07-24）；**FolderList 侧栏 2026-07-25 改 `virtual=false`（见 Amendment）** |
 
 **不在范围**：换 Naive/Ant 树；`FolderList` 进包；`@photasa/ui` 等泛名包。
+
+---
+
+## Amendment — 2026-07-25：展开节点滚动跳顶（FolderList）
+
+### 现象
+
+用户滚到较深目录后点击展开箭头，侧栏树**跳回顶部**。启动恢复 `scrollToNode` 与手动展开行为混淆，多次虚拟列表修补仍无法在 Photasa 实机稳定复现通过。
+
+### 根因（两层，须同时处理）
+
+| #   | 层                    | 根因                                                                                                                      | 为何像「跳顶」                                                                                                                             |
+| --- | --------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **FolderList 应用层** | `watch(() => folderTree.value)` 在每次树数据更新时调用 `scrollRestoredFolderIntoViewOnce` → `scrollToNode(currentFolder)` | 启动恢复若未完成（`didRestoreScrollIntoView === false`），扫描/ reconcile 更新 `folderTree` 时会把视口拽回 **currentFolder**（常在树顶部） |
+| 2   | **虚拟滚动层**        | `@photasa/base-tree` 内 TanStack Virtual：`getItemKey` 曾含 `index`、列表变更后 `scrollTop` 在 watcher 之前被清零         | 单元测试可过，但嵌套 flex + 双层 `overflow` 在 WebView 中仍不稳定                                                                          |
+
+### 最终 as-built（已手测通过 2026-07-25）
+
+**FolderList（应用策略 — 侧栏默认非虚拟）**
+
+```vue
+<div class="flex-1 min-h-0 overflow-auto tree-container">
+    <BaseTree
+        :virtual="false"
+        v-model:expandedKeys="expandedKeys"
+        @expand="onTreeExpand"
+        ...
+    />
+</div>
+```
+
+| 规则                               | 说明                                                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **单滚动容器**                     | `.tree-container` `overflow-auto`；展开由浏览器保持 `scrollTop`                                          |
+| **启动滚动仅一次**                 | `scrollRestoredFolderIntoViewOnce` 仅在 `currentFolder/paths` 变化，或 `folderTree.length` 从 0→N 时调用 |
+| **禁止 folderTree 深监听触发滚动** | `watch(folderTree)` 只 `mergeExpandedKeysForCurrentFolder`，**不** `scrollToNode`                        |
+| **用户展开即放弃自动滚**           | `@expand` → `markTreeScrollRestoreComplete()`，防止迟到的恢复滚动覆盖用户位置                            |
+| **不用 `auto-focus-on-expand`**    | 展开/切换文件夹不自动 `scrollToNode`（仅启动恢复一次）                                                   |
+
+**`@photasa/base-tree`（包层 — 供其他 `virtual=true` 消费方）**
+
+仍保留虚拟化能力与下列修补（`pnpm --filter @photasa/base-tree test` 31 项通过）：
+
+- 稳定 `getItemKey`: `String(item.key)`（禁止 `` `${key}-${index}` ``）
+- `useVirtualizer(computed(() => ({ getItemKey, count, ... })))`
+- `captureScrollOffset()` **在** `handleNodeExpand` / `expandedKeys.length` 变化**之前**调用；`items.length` 变更后 `restoreScrollOffset`
+- `BaseTree.scroll.integration.test.ts`：真实组件无 mock 的展开滚动测试
+
+### 变更文件
+
+| 文件                                                       | 变更                                                           |
+| ---------------------------------------------------------- | -------------------------------------------------------------- |
+| `apps/photasa/src/components/FolderList.vue`               | `virtual=false`；滚动 watch 拆分；`onTreeExpand`               |
+| `packages/@photasa/base-tree/src/BaseTree.vue`             | 展开前 `captureScrollOffset`；`expandedKeys.length` 同步 watch |
+| `packages/@photasa/base-tree/src/internal/VirtualList.vue` | `getItemKey` 传入 virtualizer；突变前捕获/后恢复 scroll        |
+| `packages/@photasa/base-tree/src/tree-scroll.ts`           | `restoreScrollContainerOffset`                                 |
+| `packages/@photasa/base-tree/src/__tests__/*.test.ts`      | VirtualList / 集成滚动测试                                     |
+
+### 验收（Amendment）
+
+- [x] 手测：滚至深层目录 → 展开任意祖先节点 → **不跳顶**
+- [x] 手测：完全退出 → 重开 → 深路径 `currentFolder` **仅滚动一次**入视口
+- [x] `pnpm --filter @photasa/base-tree exec vitest run` 全通过
+
+### 教训（写入代理技能 `base-tree-folder-scroll`）
+
+1. **先查应用层是否在偷偷 `scrollToNode`**，再改 VirtualList。
+2. **`watch(folderTree, { deep })` + 恢复滚动 = 高危**；树数据与 UI 展开状态必须解耦。
+3. **侧栏目录树优先 `virtual=false` + 单 `overflow-auto`**；万级节点再评估 `virtual=true` 并用手测门禁。
+4. 虚拟列表保存 `scrollTop` 须在 **items 变更之前**（`handleNodeExpand` 内），items watcher 里保存往往已晚。
 
 ---
 
@@ -81,19 +152,23 @@ folderTree (嵌套)
   → BaseTreeNode 渲染可见行
 ```
 
-`FolderList` 固定配置：
+`FolderList` 固定配置（**2026-07-25 as-built：侧栏非虚拟**；包内仍支持 `virtual=true` 供大列表场景）：
 
 ```vue
-<BaseTree
-    :virtual="true"
-    height="100%"
-    :item-height="34"
-    :auto-focus-on-expand="true"
-    v-model:expandedKeys="expandedKeys"
-    v-model:selectedKeys="selectedKeys"
-    :tree-data="folderTree"
-/>
+<div class="flex-1 min-h-0 overflow-auto tree-container">
+    <BaseTree
+        :virtual="false"
+        height="100%"
+        :item-height="34"
+        v-model:expandedKeys="expandedKeys"
+        v-model:selectedKeys="selectedKeys"
+        :tree-data="folderTree"
+        @expand="onTreeExpand"
+    />
+</div>
 ```
+
+> **历史**：2026-07-24 初版为 `virtual=true` + `auto-focus-on-expand`；2026-07-25 Amendment 改为侧栏 `virtual=false`，见上文 **Amendment — 展开节点滚动跳顶**。
 
 ### 必须保持的不变量
 
@@ -231,6 +306,7 @@ import { BaseTree, type TreeNode } from "@photasa/base-tree";
 - [x] 抽包前 `BaseTree.test.ts` 绿
 - [x] 抽包后包内 + photasa 测试绿
 - [x] 大目录手测滚动与选中可见
+- [x] **2026-07-25**：FolderList 展开不跳顶（Amendment）；`base-tree` 包内虚拟滚动修补 + 集成测试
 
 ---
 

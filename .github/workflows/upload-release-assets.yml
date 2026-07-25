@@ -46,7 +46,7 @@ jobs:
         steps:
             - name: Checkout tag (manual dispatch without SHA)
               if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_sha == '' }}
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   ref: ${{ github.event.inputs.tag_name }}
                   fetch-depth: 0
@@ -111,7 +111,7 @@ jobs:
 
         steps:
             - name: Checkout release commit
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   ref: ${{ needs.resolve.outputs.release_sha }}
                   fetch-depth: 0

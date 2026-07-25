@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, reactive, computed } from "vue";
+import { ref, watch, reactive, computed, nextTick } from "vue";
 import { usePreferenceStore } from "@renderer/stores/preference";
 import { storeToRefs } from "pinia";
 import type { PhotasaConfig } from "@photasa/common";
@@ -17,6 +17,7 @@ import {
 import { PhFolder } from "@phosphor-icons/vue";
 import EnhancedImageInfoModal from "./EnhancedImageInfoModal.vue";
 import type { TreeNode } from "@photasa/base-tree";
+import { findTreeNode } from "@photasa/base-tree";
 import { loggers } from "@photasa/common";
 import { useWeiZheng } from "@renderer/composables/useWeiZheng";
 import { useXuanzang } from "@renderer/composables/useXuanzang";
@@ -99,6 +100,21 @@ watch(
  */
 const selectedKeys = ref<string[]>([]);
 
+/** BaseTree ref — 启动恢复 lastOpenedFolder 时 scrollToNode */
+const folderTreeRef = ref<InstanceType<typeof BaseTree> | null>(null);
+
+/** 用户已操作树或已完成启动滚动恢复后，禁止再自动 scrollToNode */
+const didRestoreScrollIntoView = ref(false);
+
+function markTreeScrollRestoreComplete(): void {
+    didRestoreScrollIntoView.value = true;
+}
+
+/** 用户手动展开/折叠后不再做启动恢复滚动 */
+function onTreeExpand(): void {
+    markTreeScrollRestoreComplete();
+}
+
 /**
  * Show config modal
  */
@@ -128,9 +144,26 @@ function syncTreeViewForCurrentFolder(folderPath: string): void {
         paths.value,
     );
     selectFolder(normalized);
+    void scrollRestoredFolderIntoViewOnce(normalized);
 }
 
-// Watch currentFolder + paths：持久化恢复时 paths 可能晚于 currentFolder
+/** 重开 app 恢复深路径时滚入视口；folderTree 晚到可重试，仅执行一次 */
+async function scrollRestoredFolderIntoViewOnce(folderPath: string): Promise<void> {
+    if (didRestoreScrollIntoView.value) {
+        return;
+    }
+
+    const normalized = canonicalFolderPath(folderPath);
+    if (!normalized || !findTreeNode(normalized, folderTree.value as TreeNode[])) {
+        return;
+    }
+
+    await nextTick();
+    folderTreeRef.value?.scrollToNode(normalized, { align: "center", behavior: "auto" });
+    markTreeScrollRestoreComplete();
+}
+
+// currentFolder / paths 变化时同步展开与选中（勿 deep watch folderTree，避免扫描更新触发滚动）
 watch(
     [currentFolder, paths],
     ([newFolder]) => {
@@ -143,6 +176,33 @@ watch(
         }
     },
     { immediate: true },
+);
+
+// folderTree 晚到：仅补展开祖先，不触发滚动（扫描更新也不滚）
+watch(
+    () => folderTree.value,
+    () => {
+        const folder = currentFolder.value;
+        if (!folder) {
+            return;
+        }
+
+        expandedKeys.value = mergeExpandedKeysForCurrentFolder(
+            expandedKeys.value,
+            folder,
+            paths.value,
+        );
+    },
+);
+
+// folderTree 从空变为有数据时，补一次启动恢复滚动
+watch(
+    () => folderTree.value.length,
+    (length, previousLength) => {
+        if (length > 0 && previousLength === 0 && currentFolder.value) {
+            void scrollRestoredFolderIntoViewOnce(currentFolder.value);
+        }
+    },
 );
 /**
  * Watch the selected keys
@@ -278,18 +338,19 @@ defineExpose({
         </div>
         <div class="flex-1 min-h-0 overflow-auto tree-container">
             <BaseTree
+                ref="folderTreeRef"
                 class="folder-tree"
                 v-model:expandedKeys="expandedKeys"
                 v-model:selectedKeys="selectedKeys"
                 :tree-data="folderTree as TreeNode[]"
-                :virtual="true"
+                :virtual="false"
                 height="100%"
                 :item-height="34"
                 :show-icon="true"
                 :show-line="false"
                 :selectable="true"
                 :checkable="false"
-                :auto-focus-on-expand="true"
+                @expand="onTreeExpand"
             >
                 <!-- 文件夹图标 -->
                 <template #icon>
@@ -368,8 +429,9 @@ defineExpose({
 }
 
 .folder-tree {
-    min-height: 100%;
+    height: 100%;
     width: 100%;
+    min-height: 0;
 
     /* Modern directory tree row styling */
     .base-tree-node {

@@ -3838,7 +3838,7 @@ dependencies = [
 
 [[package]]
 name = "photasa"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3879,6 +3879,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
+ "tauri-plugin-window-state",
  "thiserror 1.0.69",
  "tokio",
  "uuid",
@@ -3887,7 +3888,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-config"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "photasa-media",
  "serde",
@@ -3897,7 +3898,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-folder-tree"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "chrono",
  "dirs 5.0.1",
@@ -3910,7 +3911,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-import"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "chrono",
  "filetime",
@@ -3925,14 +3926,14 @@ dependencies = [
 
 [[package]]
 name = "photasa-media"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "photasa-types",
 ]
 
 [[package]]
 name = "photasa-preference"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -3943,7 +3944,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-scan"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "async-trait",
  "filetime",
@@ -3959,7 +3960,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-thumbnail"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "ffmpeg-next",
  "image",
@@ -3971,7 +3972,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-types"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -3980,7 +3981,7 @@ dependencies = [
 
 [[package]]
 name = "photasa-watch"
-version = "2.0.0"
+version = "2.1.1"
 dependencies = [
  "log",
  "photasa-types",
@@ -5853,6 +5854,21 @@ dependencies = [
  "url",
  "windows-sys 0.60.2",
  "zip",
+]
+
+[[package]]
+name = "tauri-plugin-window-state"
+version = "2.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73736611e14142408d15353e21e3cca2f12a3cfb523ad0ce85999b6d2ef1a704"
+dependencies = [
+ "bitflags 2.11.0",
+ "log",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

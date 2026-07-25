@@ -1,9 +1,9 @@
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow, Window};
 
 /// Splash 窗口 label，须与 `tauri.conf.json` 中第二窗一致（RFC 0101）
-const SPLASH_WEBVIEW_LABEL: &str = "splash";
+pub const SPLASH_WEBVIEW_LABEL: &str = "splash";
 /// 主窗 label，须与首窗 `label` 或 Tauri 默认 `main` 一致
-const MAIN_WEBVIEW_LABEL: &str = "main";
+pub const MAIN_WEBVIEW_LABEL: &str = "main";
 
 /// 关闭 Splash 并显示主窗（Rust setup 与 IPC 共用）
 pub async fn present_main_window<R: tauri::Runtime>(app: &AppHandle<R>) -> Result<(), String> {

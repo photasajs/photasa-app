@@ -44,6 +44,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useVirtualizer } from "@tanstack/vue-virtual";
+import { isFixedItemIndexInScrollViewport, restoreScrollContainerOffset } from "../tree-scroll";
+
+const LARGE_LIST_LENGTH_DELTA = 100;
 
 interface VirtualListProps {
     items: any[];
@@ -75,25 +78,57 @@ const props = withDefaults(defineProps<VirtualListProps>(), {
 
 const containerRef = ref<HTMLElement>();
 
-// 使用 @tanstack/vue-virtual 的 useVirtualizer
-const virtualizer = useVirtualizer({
-    count: props.items.length,
-    getScrollElement: () => containerRef.value || null,
-    estimateSize: props.estimateSize || (() => props.itemHeight),
-    overscan: props.overscan,
-    horizontal: props.horizontal,
-    initialOffset: props.initialScrollOffset,
-    scrollMargin: props.scrollMargin,
-    // 启用动态尺寸测量
-    measureElement: props.enableDynamicSize
-        ? (element) => {
-              if (props.horizontal) {
-                  return element?.getBoundingClientRect().width ?? props.itemHeight;
+const resolveItemKey = (index: number): string | number => {
+    const item = props.items[index];
+    return props.getItemKey(item, index);
+};
+
+const estimateItemSize = (index: number): number =>
+    props.estimateSize ? props.estimateSize(index) : props.itemHeight;
+
+/** 列表突变前由 BaseTree 调用，保存当前 scrollTop */
+let pendingRestoreOffset: number | null = null;
+
+const getScrollOffset = (): number => containerRef.value?.scrollTop ?? 0;
+
+const captureScrollOffset = (): void => {
+    pendingRestoreOffset = getScrollOffset();
+};
+
+const restoreScrollOffset = (offset?: number): void => {
+    const container = containerRef.value;
+    if (!container) {
+        pendingRestoreOffset = null;
+        return;
+    }
+
+    const top = offset ?? pendingRestoreOffset ?? 0;
+    pendingRestoreOffset = null;
+    restoreScrollContainerOffset(container, top, (value) => {
+        virtualizer.value.scrollToOffset(value, { align: "start", behavior: "auto" });
+    });
+};
+
+// 使用 @tanstack/vue-virtual 的 useVirtualizer（响应式 options + 稳定 getItemKey 保持展开时滚动位置）
+const virtualizer = useVirtualizer(
+    computed(() => ({
+        count: props.items.length,
+        getScrollElement: () => containerRef.value || null,
+        estimateSize: estimateItemSize,
+        overscan: props.overscan,
+        horizontal: props.horizontal,
+        scrollMargin: props.scrollMargin,
+        getItemKey: resolveItemKey,
+        measureElement: props.enableDynamicSize
+            ? (element: Element) => {
+                  if (props.horizontal) {
+                      return element?.getBoundingClientRect().width ?? props.itemHeight;
+                  }
+                  return element?.getBoundingClientRect().height ?? props.itemHeight;
               }
-              return element?.getBoundingClientRect().height ?? props.itemHeight;
-          }
-        : undefined,
-});
+            : undefined,
+    })),
+);
 
 // 虚拟化项目和总尺寸
 const virtualItems = computed(() => virtualizer.value.getVirtualItems());
@@ -130,53 +165,67 @@ const getVisibleRange = () => {
     };
 };
 
+/** 固定行高：节点 index 是否已在滚动视口内（无需 scrollToIndex） */
+const isIndexVisible = (index: number): boolean => {
+    const container = containerRef.value;
+    if (!container || index < 0 || index >= props.items.length) {
+        return false;
+    }
+
+    if (props.enableDynamicSize) {
+        const { start, end } = getVisibleRange();
+        return index >= start && index <= end;
+    }
+
+    return isFixedItemIndexInScrollViewport({
+        index,
+        itemHeight: props.itemHeight,
+        scrollTop: container.scrollTop,
+        viewportHeight: container.clientHeight,
+    });
+};
+
 // 重新测量所有项目（当内容动态变化时使用）
 const measureAll = () => {
     virtualizer.value.measure();
 };
 
-// 监听项目数量变化，自动重新测量
+// items 数量变化后恢复突变前捕获的 scrollTop（须在 TanStack 重排后执行）
 watch(
     () => props.items.length,
     (newLength, oldLength) => {
-        // 更新 virtualizer 的 count
-        if (virtualizer.value) {
-            virtualizer.value.options.count = newLength;
-            virtualizer.value.measure();
+        if (pendingRestoreOffset === null || oldLength === undefined) {
+            return;
         }
-        // 如果项目数量大幅变化，滚动到顶部
-        if (Math.abs(newLength - oldLength) > 100) {
+
+        const lengthDelta = Math.abs(newLength - oldLength);
+        if (lengthDelta > LARGE_LIST_LENGTH_DELTA) {
+            pendingRestoreOffset = null;
             nextTick(() => scrollToTop());
+            return;
         }
+
+        if (lengthDelta === 0) {
+            pendingRestoreOffset = null;
+            return;
+        }
+
+        const savedOffset = pendingRestoreOffset;
+        pendingRestoreOffset = null;
+        nextTick(() => restoreScrollOffset(savedOffset));
     },
+    { flush: "post" },
 );
 
-// 监听容器高度变化，重新测量
+// 监听容器高度变化，重新测量并保留滚动位置
 watch(
     () => props.containerHeight,
     () => {
-        nextTick(() => measureAll());
-    },
-);
-
-// 监听其他配置变化
-watch(
-    () => props.overscan,
-    (newOverscan) => {
-        if (virtualizer.value) {
-            virtualizer.value.options.overscan = newOverscan;
-            virtualizer.value.measure();
-        }
-    },
-);
-
-watch(
-    () => props.horizontal,
-    (newHorizontal) => {
-        if (virtualizer.value) {
-            virtualizer.value.options.horizontal = newHorizontal;
-            virtualizer.value.measure();
-        }
+        const savedOffset = getScrollOffset();
+        nextTick(() => {
+            measureAll();
+            restoreScrollOffset(savedOffset);
+        });
     },
 );
 
@@ -211,7 +260,11 @@ defineExpose({
     scrollToTop,
     scrollToIndex,
     scrollToOffset,
+    getScrollOffset,
+    captureScrollOffset,
+    restoreScrollOffset,
     getVisibleRange,
+    isIndexVisible,
     measureAll,
     virtualizer: computed(() => virtualizer.value),
 });
