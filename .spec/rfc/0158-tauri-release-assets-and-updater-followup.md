@@ -162,7 +162,15 @@ macOS 与 Linux 并行上传同一 tag；若 Linux 失败，macOS 已写入 **`l
 ### 验证命令
 
 ```bash
-# CI 绿后
+# 本地自动化（CI 同款契约）
+pnpm run test:scripts
+pnpm --filter @photasa/photasa run test:unit -- src/__tests__/bundle-targets.test.ts
+
+# CI 绿后 / workflow_dispatch 补发后
+pnpm run verify:release:latest-json -- --url https://github.com/photasajs/photasa-app/releases/latest/download/latest.json
+pnpm run verify:release:latest-json -- --tag photasa-v2.0.0
+pnpm run verify:release:latest-json -- --file ./latest.json
+
 curl -sL https://github.com/photasajs/photasa-app/releases/latest/download/latest.json | jq '.platforms | keys'
 
 gh release view photasa-v2.0.0 --json assets --jq '.assets[].name'
@@ -170,6 +178,15 @@ gh release view photasa-v2.0.0 --json assets --jq '.assets[].name'
 # 本地（已安装旧版时）
 # 设置 → 自动更新 → 立即检查更新
 ```
+
+### 测试准备（2026-07-24）
+
+| 层        | 文件                                                | 作用                                                                    |
+| --------- | --------------------------------------------------- | ----------------------------------------------------------------------- |
+| Vitest    | `apps/photasa/src/__tests__/bundle-targets.test.ts` | 锁定 `tauri.conf.json` / `tauri.linux.conf.json` / workflow bundle args |
+| Node test | `scripts/__tests__/updater-latest-json.test.mjs`    | `latest.json` 平台键 + url/signature 契约                               |
+| CLI       | `scripts/verify-release-latest-json.mjs`            | 手测 / 补发后验收（`--tag` / `--url` / `--file`）                       |
+| CI        | `verify-updater-artifact`                           | matrix 任一 leg 失败 → job **fail**（非 skip）；成功后再断言双平台      |
 
 ---
 
