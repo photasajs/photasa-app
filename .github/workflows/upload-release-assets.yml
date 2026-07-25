@@ -59,15 +59,16 @@ jobs:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   set -euo pipefail
-                  if [ "${{ github.event_name }}" = "workflow_call" ]; then
-                    tag_name="${{ inputs.tag_name }}"
-                    release_sha="${{ inputs.release_sha }}"
-                  else
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                     tag_name="${{ github.event.inputs.tag_name }}"
                     release_sha="${{ github.event.inputs.release_sha }}"
                     if [ -z "$release_sha" ]; then
                       release_sha="$(git rev-parse HEAD)"
                     fi
+                  else
+                    # Reusable workflow from release.yml: event_name is the caller's "push", not "workflow_call".
+                    tag_name="${{ inputs.tag_name }}"
+                    release_sha="${{ inputs.release_sha }}"
                   fi
                   if [ -z "$tag_name" ] || [ -z "$release_sha" ]; then
                     echo "::error::tag_name and release_sha are required."
